@@ -268,6 +268,38 @@ void BackendWindowHandler::setup_backend_service(const std::shared_ptr<Registry:
 
         return true;
     };
+
+    display_service->ensure_depth_attachment = [this](const std::shared_ptr<void>& window_ptr) {
+        auto window = std::static_pointer_cast<Window>(window_ptr);
+        auto* ctx = find_window_context(window);
+        if (!ctx) {
+            MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
+                "ensure_depth_attachment: window '{}' not registered",
+                window->get_create_info().title);
+            return;
+        }
+        ensure_depth_image(*ctx);
+    };
+
+    display_service->get_depth_image_view = [this](const std::shared_ptr<void>& window_ptr) -> void* {
+        auto window = std::static_pointer_cast<Window>(window_ptr);
+        auto* ctx = find_window_context(window);
+        if (!ctx || !ctx->depth_image || !ctx->depth_image->is_initialized()) {
+            return nullptr;
+        }
+        static thread_local vk::ImageView view;
+        view = ctx->depth_image->get_image_view();
+        return static_cast<void*>(&view);
+    };
+
+    display_service->get_depth_format = [this](const std::shared_ptr<void>& window_ptr) -> uint32_t {
+        auto window = std::static_pointer_cast<Window>(window_ptr);
+        auto* ctx = find_window_context(window);
+        if (!ctx || !ctx->depth_image || !ctx->depth_image->is_initialized()) {
+            return static_cast<uint32_t>(vk::Format::eUndefined);
+        }
+        return static_cast<uint32_t>(ctx->depth_image->get_format());
+    };
 }
 
 WindowRenderContext* BackendWindowHandler::find_window_context(const std::shared_ptr<Window>& window)

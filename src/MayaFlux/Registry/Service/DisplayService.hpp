@@ -132,6 +132,33 @@ struct MAYAFLUX_API DisplayService {
         uint32_t pixel_height,
         size_t byte_count)>
         readback_swapchain_region;
+
+    /**
+     * @brief Ensure a depth attachment image exists for the window
+     * @param window_handle Window handle
+     *
+     * Lazily creates a D32_SFLOAT depth image matching the current
+     * swapchain extent. Recreates if extent has changed. No-op if
+     * depth image already exists at correct size.
+     */
+    std::function<void(const std::shared_ptr<void>&)> ensure_depth_attachment;
+
+    /**
+     * @brief Get depth image view for the window
+     * @param window_handle Window handle
+     * @return vk::ImageView cast to void*, or nullptr if no depth image
+     *
+     * Returns nullptr if ensure_depth_attachment has not been called
+     * or if depth image creation failed.
+     */
+    std::function<void*(const std::shared_ptr<void>&)> get_depth_image_view;
+
+    /**
+     * @brief Get depth image format for the window
+     * @param window_handle Window handle
+     * @return vk::Format cast to uint32_t, or eUndefined if no depth image
+     */
+    std::function<uint32_t(const std::shared_ptr<void>&)> get_depth_format;
 };
 
 } // namespace MayaFlux::Registry::Services
