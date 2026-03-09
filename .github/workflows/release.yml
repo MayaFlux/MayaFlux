@@ -1,0 +1,201 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      force_release:
+        description: "Force recreate release if tag already exists"
+        required: false
+        default: false
+        type: boolean
+      run_tests:
+        description: "Run tests before release"
+        required: false
+        default: false
+        type: boolean
+      target_os:
+        description: "Target operating system"
+        required: false
+        default: "all"
+        type: choice
+        options:
+          - all
+          - macos
+          - linux
+          - windows
+
+permissions:
+  contents: write
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify actor has write permission
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: perm } = await github.rest.repos.getCollaboratorPermissionLevel({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              username: context.actor,
+            });
+            const level = perm.permission;
+            if (level !== 'admin' && level !== 'write') {
+              core.setFailed(`Actor ${context.actor} has permission '${level}' — release requires write or admin.`);
+            }
+
+  determine_version:
+    needs: guard
+    runs-on: ubuntu-latest
+    outputs:
+      VERSION: ${{ steps.ver.outputs.VERSION }}
+      CLEAN_VERSION: ${{ steps.ver.outputs.CLEAN_VERSION }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Determine version
+        id: ver
+        run: |
+          CLEAN_VERSION=$(grep -Eo 'VERSION [0-9]+\.[0-9]+\.[0-9]+' CMakeLists.txt | awk '{print $2}')
+          echo "VERSION=$CLEAN_VERSION" >> $GITHUB_OUTPUT
+          echo "CLEAN_VERSION=$CLEAN_VERSION" >> $GITHUB_OUTPUT
+
+  build_macos:
+    needs: determine_version
+    if: ${{ inputs.target_os == 'macos' || inputs.target_os == 'all' }}
+    uses: ./.github/workflows/build-macos.yml
+    with:
+      version: ${{ needs.determine_version.outputs.VERSION }}
+      clean_version: ${{ needs.determine_version.outputs.CLEAN_VERSION }}
+      is_dev: "0"
+      run_tests: ${{ inputs.run_tests }}
+      create_distribution: true
+
+  build_linux:
+    needs: determine_version
+    if: ${{ inputs.target_os == 'linux' || inputs.target_os == 'all' }}
+    uses: ./.github/workflows/build-linux.yml
+    with:
+      version: ${{ needs.determine_version.outputs.VERSION }}
+      clean_version: ${{ needs.determine_version.outputs.CLEAN_VERSION }}
+      is_dev: "0"
+      run_tests: ${{ inputs.run_tests }}
+      create_distribution: true
+      artifact_name: MayaFlux-${{ needs.determine_version.outputs.VERSION }}-linux-fedora43-x64
+      distribution_name: linux-fedora43-x64
+      os_display_name: Linux
+
+  build_windows:
+    needs: determine_version
+    if: ${{ inputs.target_os == 'windows' || inputs.target_os == 'all' }}
+    uses: ./.github/workflows/build-windows.yml
+    with:
+      version: ${{ needs.determine_version.outputs.VERSION }}
+      clean_version: ${{ needs.determine_version.outputs.CLEAN_VERSION }}
+      is_dev: "0"
+      run_tests: ${{ inputs.run_tests }}
+      create_distribution: true
+      artifact_name: MayaFlux-${{ needs.determine_version.outputs.VERSION }}-windows-x64
+      distribution_name: windows-x64
+      os_display_name: Windows
+
+  create_release:
+    needs: [determine_version, build_macos, build_linux, build_windows]
+    if: ${{ success() }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          pattern: MayaFlux-*
+
+      - name: Calculate release metadata
+        id: meta
+        run: |
+          SHORT_SHA=${GITHUB_SHA:0:8}
+          PLATFORMS=""
+          ls artifacts/MayaFlux-*-macos-arm64.* 1>/dev/null 2>&1 && PLATFORMS="${PLATFORMS}macOS "
+          ls artifacts/MayaFlux-*-linux-fedora43-x64.* 1>/dev/null 2>&1 && PLATFORMS="${PLATFORMS}Linux "
+          ls artifacts/MayaFlux-*-windows-x64.* 1>/dev/null 2>&1 && PLATFORMS="${PLATFORMS}Windows "
+          echo "SHORT_SHA=$SHORT_SHA" >> $GITHUB_OUTPUT
+          echo "PLATFORMS=$PLATFORMS" >> $GITHUB_OUTPUT
+
+      - name: Process release template
+        run: |
+          MACOS_SECTION=$(cat .github/workflows/distribution/macos/section.md)
+          LINUX_SECTION=$(cat .github/workflows/distribution/linux/section.md)
+          WINDOWS_SECTION=$(cat .github/workflows/distribution/windows/section.md)
+
+          awk -v version="${{ needs.determine_version.outputs.VERSION }}" \
+              -v commit_sha="${{ steps.meta.outputs.SHORT_SHA }}" \
+              -v repository="${{ github.repository }}" \
+              -v os_name="Multi-Platform (${{ steps.meta.outputs.PLATFORMS }})" \
+              -v macos_section="$MACOS_SECTION" \
+              -v linux_section="$LINUX_SECTION" \
+              -v windows_section="$WINDOWS_SECTION" \
+          '
+          {
+            gsub("{{VERSION}}", version);
+            gsub("{{COMMIT_SHA}}", commit_sha);
+            gsub("{{REPOSITORY}}", repository);
+            gsub("{{OS_NAME}}", os_name);
+            gsub("{{MACOS_SECTION}}", macos_section);
+            gsub("{{LINUX_SECTION}}", linux_section);
+            gsub("{{WINDOWS_SECTION}}", windows_section);
+            print
+          }
+          ' .github/workflows/distribution/shared/release_body.md > release_body.md
+
+      - name: Delete existing release if force
+        if: ${{ inputs.force_release }}
+        run: |
+          STABLE_TAG="v${{ needs.determine_version.outputs.CLEAN_VERSION }}"
+          gh release delete "$STABLE_TAG" --yes || true
+          git push --delete origin "$STABLE_TAG" || true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Tag stable build
+        run: |
+          STABLE_TAG="v${{ needs.determine_version.outputs.CLEAN_VERSION }}"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+
+          if git rev-parse "$STABLE_TAG" >/dev/null 2>&1; then
+            EXISTING_SHA=$(git rev-parse "$STABLE_TAG")
+            if [ "$EXISTING_SHA" != "${GITHUB_SHA}" ]; then
+              echo "ERROR: Tag $STABLE_TAG exists and points to a different commit."
+              echo "Use force_release to override."
+              exit 1
+            fi
+          else
+            git tag "$STABLE_TAG" "${GITHUB_SHA}"
+            git push origin "$STABLE_TAG"
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish stable release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ needs.determine_version.outputs.CLEAN_VERSION }}
+          name: MayaFlux ${{ needs.determine_version.outputs.VERSION }} (${{ steps.meta.outputs.PLATFORMS }})
+          body_path: release_body.md
+          prerelease: false
+          draft: false
+          files: artifacts/**
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

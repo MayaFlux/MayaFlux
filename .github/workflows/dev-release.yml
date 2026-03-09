@@ -1,0 +1,132 @@
+name: Dev Release
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+env:
+  BUILD_TYPE: RelWithDebInfo
+
+jobs:
+  determine_version:
+    runs-on: ubuntu-latest
+    outputs:
+      VERSION: ${{ steps.ver.outputs.VERSION }}
+      CLEAN_VERSION: ${{ steps.ver.outputs.CLEAN_VERSION }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Determine version
+        id: ver
+        run: |
+          CLEAN_VERSION=$(grep -Eo 'VERSION [0-9]+\.[0-9]+\.[0-9]+' CMakeLists.txt | awk '{print $2}')
+          echo "VERSION=${CLEAN_VERSION}-dev" >> $GITHUB_OUTPUT
+          echo "CLEAN_VERSION=$CLEAN_VERSION" >> $GITHUB_OUTPUT
+
+  build_macos:
+    needs: determine_version
+    uses: ./.github/workflows/build-macos.yml
+    with:
+      version: ${{ needs.determine_version.outputs.VERSION }}
+      clean_version: ${{ needs.determine_version.outputs.CLEAN_VERSION }}
+      is_dev: "1"
+      run_tests: false
+      create_distribution: true
+
+  build_linux:
+    needs: determine_version
+    uses: ./.github/workflows/build-linux.yml
+    with:
+      version: ${{ needs.determine_version.outputs.VERSION }}
+      clean_version: ${{ needs.determine_version.outputs.CLEAN_VERSION }}
+      is_dev: "1"
+      run_tests: false
+      create_distribution: true
+      artifact_name: MayaFlux-${{ needs.determine_version.outputs.VERSION }}-linux-fedora43-x64
+      distribution_name: linux-fedora43-x64
+      os_display_name: Linux
+
+  build_windows:
+    needs: determine_version
+    uses: ./.github/workflows/build-windows.yml
+    with:
+      version: ${{ needs.determine_version.outputs.VERSION }}
+      clean_version: ${{ needs.determine_version.outputs.CLEAN_VERSION }}
+      is_dev: "1"
+      run_tests: false
+      create_distribution: true
+      artifact_name: MayaFlux-${{ needs.determine_version.outputs.VERSION }}-windows-x64
+      distribution_name: windows-x64
+      os_display_name: Windows
+
+  create_dev_release:
+    needs: [determine_version, build_macos, build_linux, build_windows]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          pattern: MayaFlux-*
+
+      - name: Build changelog
+        id: changelog
+        run: |
+          PREVIOUS_TAG=$(git tag --list 'v[0-9]*.[0-9]*.[0-9]*' | grep -v -- '-' | sort -V | tail -n1 2>/dev/null || echo "")
+
+          if [ -z "$PREVIOUS_TAG" ]; then
+            PREVIOUS_TAG=$(git describe --tags --abbrev=0 --match "v[0-9]*.[0-9]*.[0-9]*" 2>/dev/null || echo "")
+          fi
+
+          if [ -z "$PREVIOUS_TAG" ]; then
+            CHANGELOG=$(git log --oneline --decorate=short -n 50)
+            HEADER="## Full changelog (first release)"
+          else
+            CHANGELOG=$(git log --oneline --decorate=short "${PREVIOUS_TAG}..${GITHUB_SHA}")
+            HEADER="## Changes since ${PREVIOUS_TAG}"
+          fi
+
+          cat > release_body.md <<EOF
+          ${HEADER}
+
+          \`\`\`
+          ${CHANGELOG}
+          \`\`\`
+
+          **Note:** This is a development build from \`main\`. For stable releases, visit the [Releases page](https://github.com/${{ github.repository }}/releases).
+          EOF
+
+      - name: Tag dev build
+        run: |
+          DEV_TAG="v${{ needs.determine_version.outputs.CLEAN_VERSION }}-dev"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git tag -f "$DEV_TAG" "${GITHUB_SHA}"
+          git push -f origin "$DEV_TAG"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish dev release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ needs.determine_version.outputs.CLEAN_VERSION }}-dev
+          name: MayaFlux ${{ needs.determine_version.outputs.CLEAN_VERSION }}-dev
+          body_path: release_body.md
+          prerelease: true
+          draft: false
+          files: artifacts/**
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,47 @@
+name: PR Build Check
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+
+permissions:
+  contents: read
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  build_macos:
+    uses: ./.github/workflows/build-macos.yml
+    with:
+      version: "pr-${{ github.event.pull_request.number }}"
+      clean_version: "0.0.0"
+      is_dev: "1"
+      run_tests: false
+      create_distribution: false
+
+  build_linux:
+    uses: ./.github/workflows/build-linux.yml
+    with:
+      version: "pr-${{ github.event.pull_request.number }}"
+      clean_version: "0.0.0"
+      is_dev: "1"
+      run_tests: false
+      create_distribution: false
+      artifact_name: "pr-${{ github.event.pull_request.number }}-linux"
+      distribution_name: linux-fedora43-x64
+      os_display_name: Linux
+
+  build_windows:
+    uses: ./.github/workflows/build-windows.yml
+    with:
+      version: "pr-${{ github.event.pull_request.number }}"
+      clean_version: "0.0.0"
+      is_dev: "1"
+      run_tests: false
+      create_distribution: false
+      artifact_name: "pr-${{ github.event.pull_request.number }}-windows"
+      distribution_name: windows-x64
+      os_display_name: Windows
