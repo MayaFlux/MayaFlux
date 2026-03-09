@@ -719,7 +719,11 @@ CommandBufferID ShaderFoundry::begin_commands(CommandBufferType type)
     CommandBufferID id = m_next_command_id++;
 
     CommandBufferState& state = m_command_buffers[id];
-    state.cmd = cmd_manager.begin_single_time_commands();
+
+    state.cmd = (type == CommandBufferType::COMPUTE)
+        ? cmd_manager.begin_single_time_commands_compute()
+        : cmd_manager.begin_single_time_commands();
+
     state.type = type;
     state.is_active = true;
 

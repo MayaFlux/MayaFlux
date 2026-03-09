@@ -370,7 +370,7 @@ template <typename ProcessorType, typename... Args>
 auto create_processor(const std::shared_ptr<Buffers::VKBuffer> buffer, Args&&... args) -> std::shared_ptr<ProcessorType>
 {
     auto processor = std::make_shared<ProcessorType>(std::forward<Args>(args)...);
-    add_processor(processor, buffer);
+    add_processor(processor, buffer, Buffers::ProcessingToken::GRAPHICS_BACKEND);
     return processor;
 }
 

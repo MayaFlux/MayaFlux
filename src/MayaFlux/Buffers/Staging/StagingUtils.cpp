@@ -173,18 +173,18 @@ void download_device_local(const std::shared_ptr<VKBuffer>& source, const std::s
             Journal::Component::Buffers,
             Journal::Context::BufferProcessing,
             std::source_location::current(),
-            "upload_host_visible requires a valid buffer service");
+            "download_device_local requires a valid buffer service");
     }
 
+    vk::BufferCopy copy_region;
+    copy_region.srcOffset = 0;
+    copy_region.dstOffset = 0;
+    copy_region.size = source->get_size_bytes();
+
     buffer_service->execute_immediate([&](void* ptr) {
-        vk::BufferCopy copy_region;
-        copy_region.srcOffset = 0;
-        copy_region.dstOffset = 0;
-        copy_region.size = source->get_size_bytes();
+        vk::CommandBuffer cmd(static_cast<VkCommandBuffer>(ptr));
 
-        auto cmd = static_cast<vk::CommandBuffer*>(ptr);
-
-        cmd->copyBuffer(
+        cmd.copyBuffer(
             source->get_buffer(),
             staging_buffer->get_buffer(),
             1, &copy_region);
@@ -324,6 +324,19 @@ void download_from_gpu(
 
     auto temp_target = std::make_shared<VKBuffer>(
         size, VKBuffer::Usage::STAGING, Kakshya::DataModality::UNKNOWN);
+
+    auto buffer_service = Registry::BackendRegistry::instance()
+                              .get_service<Registry::Service::BufferService>();
+
+    if (!buffer_service) {
+        error<std::runtime_error>(
+            Journal::Component::Buffers,
+            Journal::Context::BufferProcessing,
+            std::source_location::current(),
+            "download_from_gpu requires a valid buffer service");
+    }
+
+    buffer_service->initialize_buffer(temp_target);
 
     if (source->is_host_visible()) {
         download_host_visible(source, temp_target);

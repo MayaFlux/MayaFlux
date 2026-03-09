@@ -74,6 +74,7 @@
 #include "Buffers/Node/NodeFeedProcessor.hpp"
 #include "Buffers/Node/PolynomialProcessor.hpp"
 #include "Buffers/Recursive/FeedbackBuffer.hpp"
+#include "Buffers/Shaders/ComputeProcessor.hpp"
 #include "Buffers/Shaders/DescriptorBindingsProcessor.hpp"
 #include "Buffers/Shaders/RenderProcessor.hpp"
 #include "Buffers/Staging/BufferDownloadProcessor.hpp"
