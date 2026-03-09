@@ -345,6 +345,780 @@ void bouncing_v2()
 
 </details>
 
+## In Practice: Rhythm as Topology
+
+The previous examples showed how a single modal resonator could become an entirely different compositional instrument by changing 20 lines. The same principle applies at larger scale.
+
+The three examples below share the same audio engine: a four-voice rhythm section (kick, snare, hat, clap) built from phasors, envelopes, and noise filters. What changes across them is the visual substrate, the relationship between rhythmic events and spatial form, and eventually the computational depth of those relationships.
+
+Each step adds a layer. Each layer opens a different creative universe. By Example 3, audio envelope nodes feed directly into GPU push constants through `NodeBindingsProcessor`, the same `Polynomial` node that shapes a kick's decay curve is simultaneously warping a fragment shader's radial distortion. No bridging code, no callback extraction, no domain translation. The node outputs a number; the GPU consumes it.
+
+<a href="https://youtu.be/SHWebquQbZs" target="_blank">
+ <img src="https://img.youtube.com/vi/SHWebquQbZs/maxresdefault.jpg?v=1" alt="Rhythm as Topology" width="600" />
+</a>
+
+<details>
+<summary>Example 1: Living Topology</summary>
+
+A four-voice rhythm engine drives a point cloud connected by proximity topology. Kick expands the field radially. Snare triggers topology regeneration and applies rotational shear. Hat cycles between proximity algorithms (minimum spanning tree, k-nearest, nearest neighbor, sequential) every 16 hits. Clap injects positional jitter into individual points.
+
+The topology IS the content. Rhythm becomes spatial relationship.
+
+```cpp
+void rhythm_topology_live()
+{
+    auto window = create_window({ .title = "Living Topology",
+        .width = 1920,
+        .height = 1080 });
+
+    constexpr size_t N = 34;
+
+    struct State {
+        bool sequencing {};
+        bool chaos_mode {};
+        float expansion {};
+        float shear {};
+        uint32_t hat_count {};
+        uint32_t mode_idx {};
+        std::vector<glm::vec3> home = std::vector<glm::vec3>(N);
+        std::vector<glm::vec3> jitter = std::vector<glm::vec3>(N, glm::vec3(0.0F));
+    };
+    auto state = std::make_shared<State>();
+
+    // === AUDIO ===
+
+    auto kick_phasor = vega.Phasor(20.0, 1.0);
+    auto kick_env = vega.Polynomial([](double x) { return std::exp(-x * 15.0); });
+    kick_env->set_input_node(kick_phasor);
+    auto kick = vega.Sine(55.0)[0] | Audio;
+    kick->set_amplitude_modulator(kick_env);
+
+    auto snare_phasor = vega.Phasor(30.0, 1.0);
+    auto snare_env = vega.Polynomial([](double x) { return std::exp(-x * 25.0); })[1] | Audio;
+    snare_env->set_input_node(snare_phasor);
+    auto snare_noise = vega.Random();
+    auto snare = (vega.FIR(snare_noise, std::vector { 0.3, 0.4, 0.3 })) * snare_env;
+    register_audio_node(snare, 1);
+
+    auto hat_phasor = vega.Phasor(50.0, 1.0);
+    auto hat_env = vega.Polynomial([](double x) { return std::exp(-x * 50.0); });
+    hat_env->set_input_node(hat_phasor);
+    auto hat = vega.Sine(8000.0)[0] | Audio;
+    hat->set_amplitude_modulator(hat_env);
+
+    auto clap_phasor = vega.Phasor(40.0, 1.0);
+    auto clap_env = vega.Polynomial([](double x) {
+        return std::exp(-x * 35.0) * (1.0 + 0.3 * std::sin(x * 200.0));
+    });
+    clap_env->set_input_node(clap_phasor);
+    auto clap = (vega.FIR(vega.Random(), std::vector { 0.1, 0.2, 0.4, 0.2, 0.1 })) * clap_env;
+    register_audio_node(clap, 0);
+
+    auto bass = vega.Sine(42.0)[{ 0, 1 }] | Audio;
+    bass->set_amplitude_modulator(vega.Sine(0.15, 0.12));
+
+    // === TOPOLOGY ===
+
+    auto topo = vega.TopologyGeneratorNode(
+                    Kinesis::ProximityMode::MINIMUM_SPANNING_TREE,
+                    false,
+                    N)
+        | Graphics;
+
+    {
+        Kinesis::Stochastic::Stochastic rng;
+        Kinesis::SamplerBounds bounds { glm::vec3(-0.65F), glm::vec3(0.65F) };
+        auto samples = Kinesis::generate_samples(
+            Kinesis::SpatialDistribution::LISSAJOUS, N, bounds, rng);
+        for (size_t i = 0; i < N; ++i) {
+            state->home[i] = samples[i].position;
+            topo->add_point({ .position = samples[i].position,
+                .color = samples[i].color,
+                .thickness = 1.5F });
+        }
+        topo->regenerate_topology();
+    }
+
+    auto buffer = vega.GeometryBuffer(topo) | Graphics;
+    buffer->setup_rendering({ .target_window = window,
+        .topology = Portal::Graphics::PrimitiveTopology::LINE_LIST });
+
+    window->show();
+
+    // === SEQUENCING ===
+
+    schedule_metro(0.5, [kick_phasor, state]() {
+        if (!state->sequencing) return;
+        kick_phasor->reset();
+        state->expansion = std::min(state->expansion + 0.25F, 1.2F);
+    }, "kick_layer");
+
+    /// @brief Snare: regenerate topology from current deformed positions
+    schedule_pattern(
+        [state](uint64_t step) {
+            if (state->chaos_mode)
+                return get_uniform_random(0.0, 1.0) > 0.6;
+            return (step % 4 == 2);
+        },
+        [snare_phasor, topo, state](std::any hit) {
+            if (!state->sequencing)
+                return;
+            if (std::any_cast<bool>(hit)) {
+                snare_phasor->reset();
+                state->shear += 0.2F;
+                topo->regenerate_topology();
+            }
+        },
+        0.25, "snare_pattern");
+
+    /// @brief Hat: cycle proximity mode every 16 hits
+    schedule_pattern(
+        [state](uint64_t step) {
+            if (state->chaos_mode)
+                return get_uniform_random(0.0, 1.0) > 0.5;
+            return true;
+        },
+        [hat_phasor, topo, state](std::any hit) {
+            if (!state->sequencing)
+                return;
+            if (std::any_cast<bool>(hit)) {
+                hat_phasor->reset();
+                state->hat_count++;
+                if (state->hat_count >= 16) {
+                    state->hat_count = 0;
+                    static constexpr std::array modes = {
+                        Kinesis::ProximityMode::MINIMUM_SPANNING_TREE,
+                        Kinesis::ProximityMode::K_NEAREST,
+                        Kinesis::ProximityMode::NEAREST_NEIGHBOR,
+                        Kinesis::ProximityMode::SEQUENTIAL,
+                    };
+                    state->mode_idx = (state->mode_idx + 1) % modes.size();
+                    topo->set_connection_mode(modes[state->mode_idx]);
+                }
+            }
+        },
+        0.125, "hat_pattern");
+
+    /// @brief Clap: jitter burst
+    schedule_pattern(
+        [state](uint64_t step) {
+            if (state->chaos_mode)
+                return get_uniform_random(0.0, 1.0) > 0.8;
+            return (step % 8 == 5);
+        },
+        [clap_phasor, state](std::any hit) {
+            if (!state->sequencing)
+                return;
+            if (std::any_cast<bool>(hit)) {
+                clap_phasor->reset();
+                for (auto& j : state->jitter)
+                    j = glm::vec3(
+                        static_cast<float>(get_uniform_random(-0.1, 0.1)),
+                        static_cast<float>(get_uniform_random(-0.1, 0.1)),
+                        0.0F);
+            }
+        },
+        0.25, "clap_pattern");
+
+    // === DEFORMATION ===
+
+    schedule_metro(0.016, [topo, kick, bass, state]() {
+        float kick_e = static_cast<float>(std::abs(kick->get_last_output()));
+        float bass_e = static_cast<float>(std::abs(bass->get_last_output()));
+
+        state->expansion *= 0.97F;
+        state->shear *= 0.985F;
+
+        for (size_t i = 0; i < N; ++i) {
+            glm::vec3 home = state->home[i];
+            glm::vec3 pos = home;
+
+            float dist = glm::length(glm::vec2(home));
+            if (dist > 0.001F) {
+                glm::vec3 radial = glm::normalize(glm::vec3(home.x, home.y, 0.0F));
+                pos += radial * state->expansion * 0.25F;
+            }
+
+            float sign = (home.y > 0.0F) ? 1.0F : -1.0F;
+            float a = state->shear * sign;
+            pos = glm::vec3(
+                pos.x * std::cos(a) - pos.y * std::sin(a),
+                pos.x * std::sin(a) + pos.y * std::cos(a),
+                pos.z);
+
+            state->jitter[i] *= 0.93F;
+            pos += state->jitter[i];
+
+            float brightness = 0.3F + kick_e * 2.0F;
+            float pct = i / static_cast<float>(N);
+            brightness *= pct;
+            topo->update_point(i, { .position = pos,
+                .color = glm::vec3(brightness * 0.6F, brightness * 0.8F,
+                    std::min(1.0F, brightness)),
+                .thickness = 1.0F + (bass_e * 1.2F) * pct });
+        }
+    });
+
+    // === INTERACTION ===
+
+    on_key_pressed(window, IO::Keys::Space, [state]() {
+        state->sequencing = !state->sequencing;
+    });
+
+    on_key_pressed(window, IO::Keys::C, [state]() {
+        state->chaos_mode = !state->chaos_mode;
+    });
+
+    auto regen_homes = [topo, state](Kinesis::SpatialDistribution dist) {
+        Kinesis::Stochastic::Stochastic rng;
+        Kinesis::SamplerBounds bounds { glm::vec3(-0.65F), glm::vec3(0.65F) };
+        auto samples = Kinesis::generate_samples(dist, N, bounds, rng);
+        for (size_t i = 0; i < N; ++i)
+            state->home[i] = samples[i].position;
+        topo->regenerate_topology();
+    };
+
+    on_key_pressed(window, IO::Keys::Q, [regen_homes]() {
+        regen_homes(Kinesis::SpatialDistribution::LISSAJOUS);
+    });
+    on_key_pressed(window, IO::Keys::W, [regen_homes]() {
+        regen_homes(Kinesis::SpatialDistribution::FIBONACCI_SPHERE);
+    });
+    on_key_pressed(window, IO::Keys::E, [regen_homes]() {
+        regen_homes(Kinesis::SpatialDistribution::TORUS);
+    });
+
+    on_mouse_pressed(window, IO::MouseButtons::Left,
+        [window, topo](double x, double y) {
+            glm::vec2 pos = normalize_coords(x, y, window);
+            topo->add_point({ .position = glm::vec3(pos, 0.0F),
+                .color = glm::vec3(1.0F, 0.9F, 0.4F),
+                .thickness = 2.5F });
+            topo->regenerate_topology();
+        });
+}
+```
+
+</details>
+
+<details>
+<summary>Example 2: Living Curve</summary>
+
+The audio engine is identical. The visual substrate changes from discrete topology to continuous path.
+
+`TopologyGeneratorNode` becomes `PathGeneratorNode`. Proximity algorithms become interpolation modes (Catmull-Rom, B-spline, linear). Points no longer connect through geometric relationship; they define a parametric curve that flows through space.
+
+What changed:
+
+- **Snare** no longer regenerates topology. It toggles curve tension between tight (0.8) and loose (0.15), snapping the curve between rigid and fluid states.
+- **Hat** cycles interpolation mode every 12 hits instead of proximity mode every 16. The visual character of the curve itself transforms.
+- **Clap** injects angular jitter into orbital phases rather than positional jitter into coordinates. The perturbation is rotational, not translational.
+- **Deformation** drives points along Lissajous orbits with per-point phase accumulation. Points are no longer displaced from fixed home positions; they travel continuous paths.
+
+Same rhythm. Same timing. Different spatial ontology entirely.
+
+```cpp
+void rhythm_path_live()
+{
+    auto window = create_window({ .title = "Living Curve",
+        .width = 1920,
+        .height = 1080 });
+
+    constexpr size_t N = 18;
+
+    struct State {
+        bool sequencing {};
+        bool chaos_mode {};
+        float expansion {};
+        float tension { 0.5F };
+        bool tension_tight { true };
+        uint32_t hat_count {};
+        uint32_t mode_idx {};
+        std::array<float, N> phases {};
+        std::array<float, N> jitter {};
+    };
+    auto state = std::make_shared<State>();
+
+    for (size_t i = 0; i < N; ++i) {
+        state->phases[i] = static_cast<float>(i) / static_cast<float>(N) * 6.2832F;
+    }
+
+    // === AUDIO (identical engine) ===
+
+    auto kick_phasor = vega.Phasor(20.0, 1.0);
+    auto kick_env = vega.Polynomial([](double x) { return std::exp(-x * 15.0); });
+    kick_env->set_input_node(kick_phasor);
+    auto kick = vega.Sine(55.0)[0] | Audio;
+    kick->set_amplitude_modulator(kick_env);
+
+    auto snare_phasor = vega.Phasor(30.0, 1.0);
+    auto snare_env = vega.Polynomial([](double x) { return std::exp(-x * 25.0); })[1] | Audio;
+    snare_env->set_input_node(snare_phasor);
+    auto snare = (vega.FIR(vega.Random(), std::vector { 0.3, 0.4, 0.3 })) * snare_env;
+    register_audio_node(snare, 1);
+
+    auto hat_phasor = vega.Phasor(50.0, 1.0);
+    auto hat_env = vega.Polynomial([](double x) { return std::exp(-x * 50.0); });
+    hat_env->set_input_node(hat_phasor);
+    auto hat = vega.Sine(8000.0)[0] | Audio;
+    hat->set_amplitude_modulator(hat_env);
+
+    auto clap_phasor = vega.Phasor(40.0, 1.0);
+    auto clap_env = vega.Polynomial([](double x) {
+        return std::exp(-x * 35.0) * (1.0 + 0.3 * std::sin(x * 200.0));
+    });
+    clap_env->set_input_node(clap_phasor);
+    auto clap = (vega.FIR(vega.Random(), std::vector { 0.1, 0.2, 0.4, 0.2, 0.1 })) * clap_env;
+    register_audio_node(clap, 0);
+
+    auto bass = vega.Sine(42.0)[{ 0, 1 }] | Audio;
+    bass->set_amplitude_modulator(vega.Sine(0.15, 0.12));
+
+    // === PATH (replaces topology) ===
+
+    auto path = vega.PathGeneratorNode(
+                    Kinesis::InterpolationMode::CATMULL_ROM,
+                    24, N, 0.5)
+        | Graphics;
+
+    for (size_t i = 0; i < N; ++i) {
+        float phase = state->phases[i];
+        float x = std::sin(phase) * 0.5F;
+        float y = std::sin(phase * 1.5F) * 0.4F;
+        float hue = static_cast<float>(i) / static_cast<float>(N);
+        path->add_control_point({ .position = glm::vec3(x, y, 0.0F),
+            .color = glm::vec3(0.4F + hue * 0.5F, 0.6F, 1.0F - hue * 0.4F),
+            .thickness = 2.0F });
+    }
+
+    path->set_path_color(glm::vec3(0.5F, 0.7F, 1.0F), false);
+    path->set_path_thickness(2.0F, false);
+
+    auto buffer = vega.GeometryBuffer(path) | Graphics;
+    buffer->setup_rendering({ .target_window = window,
+        .topology = Portal::Graphics::PrimitiveTopology::LINE_LIST });
+
+    window->show();
+
+    // === SEQUENCING (same timing, different targets) ===
+
+    schedule_metro(0.5, [kick_phasor, state]() {
+        if (!state->sequencing) return;
+        kick_phasor->reset();
+        state->expansion = std::min(state->expansion + 0.2F, 0.8F);
+    }, "kick_layer");
+
+    /// @brief Snare toggles tension between tight and loose
+    schedule_pattern(
+        [state](uint64_t step) {
+            if (state->chaos_mode)
+                return get_uniform_random(0.0, 1.0) > 0.6;
+            return (step % 4 == 2);
+        },
+        [snare_phasor, path, state](std::any hit) {
+            if (!state->sequencing)
+                return;
+            if (std::any_cast<bool>(hit)) {
+                snare_phasor->reset();
+                state->tension_tight = !state->tension_tight;
+                state->tension = state->tension_tight ? 0.8F : 0.15F;
+                path->set_tension(static_cast<double>(state->tension));
+            }
+        },
+        0.25, "snare_pattern");
+
+    /// @brief Hat cycles interpolation mode every 12 hits
+    schedule_pattern(
+        [state](uint64_t step) {
+            if (state->chaos_mode)
+                return get_uniform_random(0.0, 1.0) > 0.5;
+            return true;
+        },
+        [hat_phasor, path, state](std::any hit) {
+            if (!state->sequencing)
+                return;
+            if (std::any_cast<bool>(hit)) {
+                hat_phasor->reset();
+                state->hat_count++;
+                if (state->hat_count >= 12) {
+                    state->hat_count = 0;
+                    static constexpr std::array modes = {
+                        Kinesis::InterpolationMode::CATMULL_ROM,
+                        Kinesis::InterpolationMode::BSPLINE,
+                        Kinesis::InterpolationMode::LINEAR,
+                    };
+                    state->mode_idx = (state->mode_idx + 1) % modes.size();
+                    path->set_interpolation_mode(modes[state->mode_idx]);
+                }
+            }
+        },
+        0.125, "hat_pattern");
+
+    /// @brief Clap injects angular jitter into orbital phases
+    schedule_pattern(
+        [state](uint64_t step) {
+            if (state->chaos_mode)
+                return get_uniform_random(0.0, 1.0) > 0.8;
+            return (step % 8 == 5);
+        },
+        [clap_phasor, state](std::any hit) {
+            if (!state->sequencing)
+                return;
+            if (std::any_cast<bool>(hit)) {
+                clap_phasor->reset();
+                for (auto& j : state->jitter)
+                    j = static_cast<float>(get_uniform_random(-0.6, 0.6));
+            }
+        },
+        0.25, "clap_pattern");
+
+    // === DEFORMATION (orbital, not displacement) ===
+
+    schedule_metro(0.016, [path, kick, bass, state]() {
+        float kick_e = static_cast<float>(std::abs(kick->get_last_output()));
+        float bass_e = static_cast<float>(std::abs(bass->get_last_output()));
+
+        state->expansion *= 0.97F;
+
+        for (size_t i = 0; i < N; ++i) {
+            state->phases[i] += 0.008F + static_cast<float>(i) * 0.001F;
+            state->jitter[i] *= 0.94F;
+
+            float phase = state->phases[i] + state->jitter[i];
+            float base_x = std::sin(phase) * 0.5F;
+            float base_y = std::sin(phase * 1.5F) * 0.4F;
+
+            float dist = std::sqrt(base_x * base_x + base_y * base_y);
+            float expand = (dist > 0.001F) ? state->expansion * 0.3F / dist : 0.0F;
+            float x = base_x * (1.0F + expand);
+            float y = base_y * (1.0F + expand);
+
+            float hue = static_cast<float>(i) / static_cast<float>(N);
+            float brightness = 0.4F + kick_e * 1.5F;
+
+            path->update_control_point(i, { .position = glm::vec3(x, y, 0.0F),
+                .color = glm::vec3(
+                    brightness * (0.4F + hue * 0.5F),
+                    brightness * 0.7F,
+                    brightness * (1.0F - hue * 0.3F)),
+                .thickness = 1.5F + bass_e * 4.0F });
+        }
+    });
+
+    // === INTERACTION ===
+
+    on_key_pressed(window, IO::Keys::Space, [state]() {
+        state->sequencing = !state->sequencing;
+    });
+
+    on_key_pressed(window, IO::Keys::C, [state]() {
+        state->chaos_mode = !state->chaos_mode;
+    });
+
+    on_mouse_pressed(window, IO::MouseButtons::Left,
+        [window, path](double x, double y) {
+            glm::vec2 pos = normalize_coords(x, y, window);
+            path->add_control_point({ .position = glm::vec3(pos, 0.0F),
+                .color = glm::vec3(1.0F, 0.9F, 0.4F),
+                .thickness = 3.0F });
+        });
+}
+```
+
+</details>
+
+<details>
+<summary>Example 3: Curve Over Texture</summary>
+
+The audio engine is still identical. The visual substrate gains a second layer: a textured backdrop driven by audio through custom fragment shaders and node-to-push-constant bindings.
+
+What changed from Example 2:
+
+- **Layer 1 (new): Textured backdrop.** `vega.read_image()` loads a texture. `setup_rendering()` receives a custom fragment shader (`polar_warp.frag`). Alpha blending is enabled on the render processor. Three `Polynomial` nodes derive shader parameters from audio envelopes: kick drives radial distortion scale, snare drives angular velocity, bass drives chromatic aberration split. A `NodeBindingsProcessor` binds these nodes to push constant offsets, injecting audio-reactive values directly into the GPU shader every frame. This is the same node architecture used everywhere else in MayaFlux. The `Polynomial` that scales the kick envelope doesn't know it's feeding a shader; it just outputs a number. The GPU doesn't know the number came from an audio envelope. The binding is structural, not conceptual.
+- **Layer 2: The living curve** from Example 2, rendered on top with its own custom fragment shader (`line_glow.frag`). The curve deformation logic is unchanged.
+- **Stereo routing controls** added: keys 1/2/3 route the entire rhythm section hard left, hard right, or center stereo.
+- **Commented camera alternative** shows the same textured layer could source from a live camera device instead of a static image, with identical shader pipeline. The swap is one block of code.
+
+The audio engine drives both layers simultaneously. The curve deforms the same way. The texture warps from the same envelopes. Two visual ontologies layered from one rhythmic source.
+
+```cpp
+void rhythm_path_textured()
+{
+    auto window = create_window({ .title = "Curve Over Texture",
+        .width = 3840,
+        .height = 2160 });
+
+    constexpr size_t N = 18;
+
+    struct State {
+        bool sequencing { true };
+        bool chaos_mode {};
+        float expansion {};
+        float tension { 0.5F };
+        bool tension_tight { true };
+        uint32_t hat_count {};
+        uint32_t mode_idx {};
+        std::array<float, N> phases {};
+        std::array<float, N> jitter {};
+    };
+    auto state = std::make_shared<State>();
+
+    for (size_t i = 0; i < N; ++i) {
+        state->phases[i] = static_cast<float>(i) / static_cast<float>(N) * 6.2832F;
+    }
+
+    // === AUDIO (identical engine) ===
+
+    auto kick_phasor = vega.Phasor(20.0, 1.0);
+    auto kick_env = vega.Polynomial([](double x) { return std::exp(-x * 15.0); });
+    kick_env->set_input_node(kick_phasor);
+    auto kick = vega.Sine(55.0)[0] | Audio;
+    kick->set_amplitude_modulator(kick_env);
+
+    auto snare_phasor = vega.Phasor(30.0, 1.0);
+    auto snare_env = vega.Polynomial([](double x) { return std::exp(-x * 25.0); })[1] | Audio;
+    snare_env->set_input_node(snare_phasor);
+    auto snare = (vega.FIR(vega.Random(), std::vector { 0.3, 0.4, 0.3 })) * snare_env;
+    register_audio_node(snare, 1);
+
+    auto hat_phasor = vega.Phasor(50.0, 1.0);
+    auto hat_env = vega.Polynomial([](double x) { return std::exp(-x * 50.0); });
+    hat_env->set_input_node(hat_phasor);
+    auto hat = vega.Sine(8000.0)[0] | Audio;
+    hat->set_amplitude_modulator(hat_env);
+
+    auto clap_phasor = vega.Phasor(40.0, 1.0);
+    auto clap_env = vega.Polynomial([](double x) {
+        return std::exp(-x * 35.0) * (1.0 + 0.3 * std::sin(x * 200.0));
+    });
+    clap_env->set_input_node(clap_phasor);
+    auto clap = (vega.FIR(vega.Random(), std::vector { 0.1, 0.2, 0.4, 0.2, 0.1 })) * clap_env;
+    register_audio_node(clap, 0);
+
+    auto bass = vega.Sine(42.0)[{ 0, 1 }] | Audio;
+    bass->set_amplitude_modulator(vega.Sine(0.15, 0.12));
+
+    // === LAYER 1: TEXTURED BACKDROP ===
+
+    auto tex = vega.read_image("res/texture.png") | Graphics;
+
+    // Alternative: live camera source with identical shader pipeline
+    // auto manager = get_io_manager();
+    // auto container = manager->open_camera({
+    //     .device_name = "/dev/video0",
+    //     .target_width = 1920, .target_height = 1080, .target_fps = 30.0
+    // });
+    // auto tex = manager->hook_camera_to_buffer(container);
+
+    tex->setup_rendering({
+        .target_window = window,
+        .fragment_shader = "polar_warp.frag",
+    });
+
+    tex->get_render_processor()->enable_alpha_blending();
+
+    window->show();
+
+    struct Params {
+        float radial_scale = 0.0F;
+        float angular_velocity = 0.0F;
+        float chroma_split = 0.0F;
+    };
+
+    auto radial_node = vega.Polynomial([](double x) {
+        return std::abs(x) * 0.5;
+    }) | Graphics;
+    radial_node->set_input_node(kick_env);
+
+    auto angular_node = vega.Polynomial([](double x) {
+        return std::abs(x) * 2.5;
+    }) | Graphics;
+    angular_node->set_input_node(snare_env);
+
+    auto chroma_node = vega.Polynomial([](double x) {
+        return std::abs(x) * 0.15;
+    }) | Graphics;
+    chroma_node->set_input_node(bass);
+
+    auto shader_config = Buffers::ShaderConfig { "polar_warp.frag" };
+    shader_config.push_constant_size = sizeof(Params);
+
+    auto node_bindings = std::make_shared<Buffers::NodeBindingsProcessor>(shader_config);
+    node_bindings->set_push_constant_size<Params>();
+    node_bindings->bind_node("radial", radial_node,
+        offsetof(Params, radial_scale), sizeof(float));
+    node_bindings->bind_node("angular", angular_node,
+        offsetof(Params, angular_velocity), sizeof(float));
+    node_bindings->bind_node("chroma", chroma_node,
+        offsetof(Params, chroma_split), sizeof(float));
+
+    add_processor(node_bindings, tex, Buffers::ProcessingToken::GRAPHICS_BACKEND);
+
+    // === LAYER 2: LIVING CURVE ===
+
+    auto path = vega.PathGeneratorNode(
+                    Kinesis::InterpolationMode::CATMULL_ROM,
+                    24, N, 0.5)
+        | Graphics;
+
+    for (size_t i = 0; i < N; ++i) {
+        float phase = state->phases[i];
+        path->add_control_point({ .position = glm::vec3(
+                                      std::sin(phase) * 0.5F,
+                                      std::sin(phase * 1.5F) * 0.4F, 0.0F),
+            .color = glm::vec3(1.0F, 0.85F, 0.6F),
+            .thickness = 2.5F });
+    }
+
+    path->set_path_color(glm::vec3(1.0F, 0.85F, 0.6F), false);
+
+    auto line_buf = vega.GeometryBuffer(path) | Graphics;
+    line_buf->setup_rendering({ .target_window = window,
+        .fragment_shader = "line_glow.frag",
+        .topology = Portal::Graphics::PrimitiveTopology::LINE_LIST });
+
+    // === SEQUENCING (identical timing) ===
+
+    schedule_metro(0.5, [kick_phasor, state]() {
+        if (!state->sequencing) return;
+        kick_phasor->reset();
+        state->expansion = std::min(state->expansion + 0.2F, 0.8F);
+    }, "kick_layer");
+
+    schedule_pattern(
+        [state](uint64_t step) {
+            if (state->chaos_mode)
+                return get_uniform_random(0.0, 1.0) > 0.6;
+            return (step % 4 == 2);
+        },
+        [snare_phasor, path, state](std::any hit) {
+            if (!state->sequencing)
+                return;
+            if (std::any_cast<bool>(hit)) {
+                snare_phasor->reset();
+                state->tension_tight = !state->tension_tight;
+                state->tension = state->tension_tight ? 0.8F : 0.15F;
+                path->set_tension(static_cast<double>(state->tension));
+            }
+        },
+        0.25, "snare_pattern");
+
+    schedule_pattern(
+        [state](uint64_t step) {
+            if (state->chaos_mode)
+                return get_uniform_random(0.0, 1.0) > 0.5;
+            return true;
+        },
+        [hat_phasor, path, state](std::any hit) {
+            if (!state->sequencing)
+                return;
+            if (std::any_cast<bool>(hit)) {
+                hat_phasor->reset();
+                state->hat_count++;
+                if (state->hat_count >= 12) {
+                    state->hat_count = 0;
+                    static constexpr std::array modes = {
+                        Kinesis::InterpolationMode::CATMULL_ROM,
+                        Kinesis::InterpolationMode::BSPLINE,
+                        Kinesis::InterpolationMode::LINEAR,
+                    };
+                    state->mode_idx = (state->mode_idx + 1) % modes.size();
+                    path->set_interpolation_mode(modes[state->mode_idx]);
+                }
+            }
+        },
+        0.125, "hat_pattern");
+
+    schedule_pattern(
+        [state](uint64_t step) {
+            if (state->chaos_mode)
+                return get_uniform_random(0.0, 1.0) > 0.8;
+            return (step % 8 == 5);
+        },
+        [clap_phasor, state](std::any hit) {
+            if (!state->sequencing)
+                return;
+            if (std::any_cast<bool>(hit)) {
+                clap_phasor->reset();
+                for (auto& j : state->jitter)
+                    j = static_cast<float>(get_uniform_random(-0.6, 0.6));
+            }
+        },
+        0.25, "clap_pattern");
+
+    // === PATH DEFORMATION (unchanged from Example 2) ===
+
+    schedule_metro(0.016, [path, kick, bass, state]() {
+        float kick_e = static_cast<float>(std::abs(kick->get_last_output()));
+        float bass_e = static_cast<float>(std::abs(bass->get_last_output()));
+
+        state->expansion *= 0.97F;
+
+        for (size_t i = 0; i < N; ++i) {
+            state->phases[i] += 0.008F + static_cast<float>(i) * 0.001F;
+            state->jitter[i] *= 0.94F;
+
+            float phase = state->phases[i] + state->jitter[i];
+            float base_x = std::sin(phase) * 0.5F;
+            float base_y = std::sin(phase * 1.5F) * 0.4F;
+
+            float dist = std::sqrt(base_x * base_x + base_y * base_y);
+            float expand = (dist > 0.001F) ? state->expansion * 0.3F / dist : 0.0F;
+
+            float brightness = 0.6F + kick_e * 1.0F;
+
+            path->update_control_point(i, { .position = glm::vec3(
+                                                base_x * (1.0F + expand),
+                                                base_y * (1.0F + expand), 0.0F),
+                .color = glm::vec3(brightness, brightness * 0.85F,
+                    brightness * 0.6F),
+                .thickness = 2.0F + bass_e * 3.0F });
+        }
+    });
+
+    // === INTERACTION ===
+
+    on_key_pressed(window, IO::Keys::Space, [state]() {
+        state->sequencing = !state->sequencing;
+    });
+
+    on_key_pressed(window, IO::Keys::C, [state]() {
+        state->chaos_mode = !state->chaos_mode;
+    });
+
+    on_key_pressed(window, IO::Keys::N1, [kick, snare, hat, clap]() {
+        route_node(kick, { 0 }, 1.5);
+        route_node(snare, { 0 }, 1.5);
+        route_node(hat, { 0 }, 1.5);
+        route_node(clap, { 0 }, 1.5);
+    });
+
+    on_key_pressed(window, IO::Keys::N2, [kick, snare, hat, clap]() {
+        route_node(kick, { 1 }, 1.5);
+        route_node(snare, { 1 }, 1.5);
+        route_node(hat, { 1 }, 1.5);
+        route_node(clap, { 1 }, 1.5);
+    });
+
+    on_key_pressed(window, IO::Keys::N3, [kick, snare, hat, clap]() {
+        route_node(kick, { 0, 1 }, 2.0);
+        route_node(snare, { 0, 1 }, 2.0);
+        route_node(hat, { 0, 1 }, 2.0);
+        route_node(clap, { 0, 1 }, 2.0);
+    });
+
+    on_mouse_pressed(window, IO::MouseButtons::Left,
+        [window, path](double x, double y) {
+            glm::vec2 pos = normalize_coords(x, y, window);
+            path->add_control_point({ .position = glm::vec3(pos, 0.0F),
+                .color = glm::vec3(1.0F, 0.9F, 0.4F),
+                .thickness = 3.0F });
+        });
+}
+```
+
+</details>
+
 ---
 
 ## Current Implementation Status
