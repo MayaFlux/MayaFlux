@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Kinesis/ViewTransform.hpp"
 #include "MayaFlux/Portal/Graphics/RenderFlow.hpp"
 #include "ShaderProcessor.hpp"
 
@@ -109,6 +110,46 @@ public:
         const std::shared_ptr<VKBuffer>& buffer,
         const Kakshya::VertexLayout& layout);
 
+    /**
+     * @brief Set blend mode for color attachment
+     * @param config Blend attachment configuration
+     */
+    inline void set_blend_attachment(const Portal::Graphics::BlendAttachmentConfig& config)
+    {
+        m_blend_attachment = config;
+        m_needs_pipeline_rebuild = true;
+    }
+
+    /** @brief Enable standard alpha blending (src_alpha, one_minus_src_alpha) */
+    void enable_alpha_blending();
+
+    /**
+     * @brief Enable depth testing for this processor's pipeline
+     * @param compare_op Depth comparison operation (default: LESS)
+     *
+     * Marks the owning buffer as requiring a depth attachment.
+     * Pipeline will be created with D32_SFLOAT depth format.
+     */
+    void enable_depth_test(Portal::Graphics::CompareOp compare_op = Portal::Graphics::CompareOp::LESS);
+
+    /**
+     * @brief Set static view transform (evaluated once)
+     * @param vt View and projection matrices
+     *
+     * Automatically enables depth testing and configures push
+     * constant size for the 128-byte ViewTransform block.
+     */
+    void set_view_transform(const Kinesis::ViewTransform& vt);
+
+    /**
+     * @brief Set dynamic view transform source (evaluated every frame)
+     * @param fn Callable returning ViewTransform, invoked each execute_shader
+     *
+     * Automatically enables depth testing and configures push
+     * constant size for the 128-byte ViewTransform block.
+     */
+    void set_view_transform_source(std::function<Kinesis::ViewTransform()> fn);
+
 protected:
     void initialize_pipeline(const std::shared_ptr<VKBuffer>& buffer) override;
     void execute_shader(const std::shared_ptr<VKBuffer>& buffer) override;
@@ -144,8 +185,16 @@ private:
     };
     std::unordered_map<uint32_t, TextureBinding> m_texture_bindings;
 
+    std::optional<Portal::Graphics::BlendAttachmentConfig> m_blend_attachment;
+
+    Portal::Graphics::DepthStencilConfig m_depth_stencil;
+
+    bool m_depth_enabled {};
     uint32_t m_first_vertex { 0 };
     uint32_t m_vertex_count { 0 };
+
+    std::optional<Kinesis::ViewTransform> m_view_transform;
+    std::function<Kinesis::ViewTransform()> m_view_transform_source;
 
     const Kakshya::VertexLayout* get_or_cache_vertex_layout(
         std::unordered_map<std::shared_ptr<VKBuffer>, VertexInfo>& buffer_info,

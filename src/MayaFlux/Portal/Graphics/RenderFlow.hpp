@@ -118,14 +118,17 @@ public:
      * @param window Target window
      * @param swapchain_image Swapchain image to render to
      * @param clear_color Clear color (RGBA)
+     * @param depth_image_view Optional depth attachment view (nullptr = no depth)
      *
      * Uses vkCmdBeginRendering - no render pass objects needed.
+     * When depth_image_view is provided, depth clear value is 1.0.
      */
     void begin_rendering(
         CommandBufferID cmd_id,
         const std::shared_ptr<Core::Window>& window,
         vk::Image swapchain_image,
-        const std::array<float, 4>& clear_color = default_color);
+        const std::array<float, 4>& clear_color = default_color,
+        vk::ImageView depth_image_view = nullptr);
 
     /**
      * @brief End dynamic rendering
