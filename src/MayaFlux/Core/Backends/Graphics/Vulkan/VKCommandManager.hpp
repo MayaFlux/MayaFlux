@@ -20,9 +20,11 @@ public:
      * @brief Initialize command manager
      * @param device Logical device
      * @param graphics_queue_family Graphics queue family index
+     * @param compute_queue_family Compute queue family index (optional, for compute operations)
      * @return True if initialization succeeded
      */
-    bool initialize(vk::Device device, uint32_t graphics_queue_family);
+    // bool initialize(vk::Device device, uint32_t graphics_queue_family);
+    bool initialize(vk::Device device, uint32_t graphics_queue_family, uint32_t compute_queue_family);
 
     /**
      * @brief Cleanup all command pools and buffers
@@ -65,12 +67,21 @@ public:
      */
     [[nodiscard]] vk::CommandPool get_pool() const { return m_command_pool; }
 
+    /**
+     * @brief Begin single-time command for compute operations
+     * @return Command buffer ready for recording
+     */
+    [[nodiscard]] vk::CommandBuffer begin_single_time_commands_compute();
+
 private:
     vk::Device m_device;
     vk::CommandPool m_command_pool;
+    vk::CommandPool m_compute_command_pool;
     uint32_t m_graphics_queue_family = 0;
+    uint32_t m_compute_queue_family = 0;
 
     std::vector<vk::CommandBuffer> m_allocated_buffers;
+    std::vector<vk::CommandBuffer> m_compute_allocated_buffers;
 };
 
 } // namespace MayaFlux::Core
