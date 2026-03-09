@@ -1,11 +1,33 @@
 name: Trigger COPR Build
+
 on:
-  push:
-    branches: [main]
+  schedule:
+    - cron: "0 2 * * *"
   workflow_dispatch:
 
 jobs:
+  check_changes:
+    runs-on: ubuntu-latest
+    outputs:
+      has_changes: ${{ steps.check.outputs.has_changes }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for commits in last 24 hours
+        id: check
+        run: |
+          CHANGES=$(git log --oneline --since="24 hours ago" origin/main)
+          if [ -n "$CHANGES" ]; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          fi
+
   rebuild:
+    needs: check_changes
+    if: ${{ needs.check_changes.outputs.has_changes == 'true' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     steps:
       - name: Install copr-cli
