@@ -251,7 +251,6 @@ jobs:
       - name: Copy distribution files
         shell: bash
         run: |
-          cp .github/workflows/distribution/macos/README.md dist_staging/
           cp .github/workflows/distribution/macos/verify_components.sh dist_staging/
           chmod +x dist_staging/verify_components.sh
 

@@ -144,7 +144,6 @@ jobs:
       - name: Copy distribution files
         if: ${{ inputs.create_distribution != false }}
         run: |
-          cp .github/workflows/distribution/linux/README.md dist_staging/ || true
           cp .github/workflows/distribution/linux/verify_components.sh dist_staging/ || true
           chmod +x dist_staging/verify_components.sh 2>/dev/null || true
 
