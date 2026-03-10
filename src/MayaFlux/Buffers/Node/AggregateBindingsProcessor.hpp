@@ -35,10 +35,16 @@ namespace MayaFlux::Buffers {
  */
 class MAYAFLUX_API AggregateBindingsProcessor : public VKBufferProcessor {
 public:
+    enum class ProcessingMode : uint8_t {
+        INTERNAL, ///< Processor calls extract_single_sample() or processes node context
+        EXTERNAL ///< Processor reads node's current state (get_last_output/get_last_context)
+    };
+
     struct AggregateBinding {
         std::vector<std::shared_ptr<Nodes::Node>> nodes;
         std::shared_ptr<VKBuffer> target_buffer;
         std::vector<float> staging_data;
+        std::atomic<ProcessingMode> processing_mode { ProcessingMode::INTERNAL };
     };
 
     /**
@@ -51,6 +57,7 @@ public:
      * @param aggregate_name Name of the aggregate group
      * @param node Node to add
      * @param target Target buffer for this aggregate
+     * @param mode Processing mode for this aggregate (default: INTERNAL)
      *
      * Nodes with the same aggregate_name are grouped together and uploaded
      * to the same target buffer. Nodes are ordered by insertion.
@@ -58,7 +65,8 @@ public:
     void add_node(
         const std::string& aggregate_name,
         const std::shared_ptr<Nodes::Node>& node,
-        const std::shared_ptr<VKBuffer>& target);
+        const std::shared_ptr<VKBuffer>& target,
+        ProcessingMode mode = ProcessingMode::INTERNAL);
 
     /**
      * @brief Remove a node from an aggregate
