@@ -102,6 +102,10 @@ public:
         , GpuVectorData(gpu_data)
     {
     }
+
+    friend class Filter;
+
+    std::vector<float> gpu_float_buffer;
 };
 
 /**

@@ -246,6 +246,13 @@ void Filter::update_context(double value)
 {
     if (m_gpu_compatible) {
         m_context_gpu.value = value;
+
+        const auto& src = m_context_gpu.input_history;
+        m_context_gpu.gpu_float_buffer.resize(src.size());
+        for (size_t i = 0; i < src.size(); ++i)
+            m_context_gpu.gpu_float_buffer[i] = static_cast<float>(src[i]);
+
+        m_context_gpu.m_gpu_data = std::span<const float>(m_context_gpu.gpu_float_buffer);
     } else {
         m_context.value = value;
     }
