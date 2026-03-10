@@ -17,13 +17,7 @@ HTML_DYNAMIC_SECTIONS = YES
 FULL_PATH_NAMES       = NO
 
 # Input settings
-INPUT                 = src README.md CODE_OF_CONDUCT.md CONTRIBUTING.md docs/
-RECURSIVE             = YES
-USE_MDFILE_AS_MAINPAGE = README.md
-
-# Input settings
-INPUT                 = src README.md CODE_OF_CONDUCT.md CONTRIBUTING.md docs/
-# INPUT                 = src README.md docs/Getting_Started.md docs/
+INPUT                 = src README.md CODE_OF_CONDUCT.md CONTRIBUTING.md docs/Getting_Started.md
 RECURSIVE             = YES
 USE_MDFILE_AS_MAINPAGE = docs/Getting_Started.md
 FILE_PATTERNS         = *.cpp *.hpp *.h *.md

@@ -408,6 +408,11 @@ MayaFlux is built around five fundamental digital paradigms that replace traditi
 - **Buffers**: Temporal gathering spaces for data accumulation
 - **Compute Matrix**: Declarative semantic pipelines
 
+> **Note:** This document was written against an earlier version of MayaFlux.
+> The concepts are directionally correct but some APIs and architectural details
+> have changed. An updated version is in progress. For current API reference,
+> see the [auto-generated docs](https://mayaflux.github.io/MayaFlux/).
+
 **Deep dive:** Read the [Digital Transformation Paradigm](Digital_Transformation_Paradigm.md) for comprehensive architectural understanding.
 
 Explore the shape of things to come!
@@ -465,7 +470,7 @@ Each section in Sculpting Data teaches one core idea and builds on the previous:
 4. **Section 3: Timing** - Understand timing control (how you schedule)
 5. **Section 4:** (Coming) BufferOperation (how you compose)
 
-**Start here:** Open [Sculpting Data Part I](Tutorials/SculptingData/SculptingData.md) and begin with Section 1.
+**Start here:** Open [Sculpting Data Part I: Foundations of Form](https://mayaflux.org/tutorials/sculpting-data/foundations/) and begin with Section 1.
 
 Each section is designed to be executed immediately:
 
@@ -480,9 +485,9 @@ You'll have working audio within 5 minutes.
 ### If You've Already Started
 
 If you have already completed the aforementioned tutorial, proceed to the next tutorial at
-[Sculpting Data Part II, Processing Expression](Tutorials/SculptingData/ProcessingExpression.md) which covers buffers, processors, math as expression, logic as creative decisions and more.
+[Sculpting Data Part II, Processing Expression](https://mayaflux.org/tutorials/sculpting-data/processing_expression/) which covers buffers, processors, math as expression, logic as creative decisions and more.
 
-For graphics starting points, check out [Graphics Basics](/docs/Tutorials/SculptingData/VisualMateriality.md)
+For graphics starting points, check out [Graphics Basics](https://mayaflux.org/tutorials/sculpting-data/visual_materiality_i/)
 
 ## FAQ (macOS)
 

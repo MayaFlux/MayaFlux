@@ -1352,22 +1352,20 @@ live_interpreter.eval(R"(
 )");
 ```
 
-For contextual overview start with [Digital Transformation Paradigm](docs/Digital_Transformation_Paradigm.md).
-
 ---
 
 ## Documentation
 
 - **[Getting Started](docs/Getting_Started.md)** — Setup, basic usage, first program
-- **[Digital Transformation Paradigm](docs/Digital_Transformation_Paradigm.md)** — Core architectural philosophy and design rationale
-- **[Domain and Control](docs/Domain_and_Control.md)** — Processing tokens, domain composition, cross-modal coordination
-- **[Advanced Context Control](docs/Advanced_Context_Control.md)** — Backend customization and specialized architectures
+- **[Onboarding from different tools](https://mayaflux.org/onboarding/)** — A rosetta stone for users coming from various multimedia tools and environments
+- **[Entry point from professions](https://mayaflux.org/personas/)** — Guides for artists, musicians, researchers, and developers
+- **[Release Notes](https://mayaflux.org/releases/)** — Quick changelong and rationale for each release
 
 ### Tutorials
 
-- **[Sculpting Data Part I](docs/Tutorials/SculptingData/SculptingData.md)**: Foundational concepts, data-driven workflow, containers, buffers, processors. Runnable code examples with optional deep-dive expansions. [Getting Started](docs/Getting_Started.md) is a prerequisite.
-- **[Processing Expression](docs/Tutorials/SculptingData/ProcessingExpression.md)**: Buffers, processors, math as expression, logic as creative decisions, processing chains and buffer architecture.
-- **[Visual Materiality](docs/Tutorials/SculptingData/VisualMateriality.md)**: Graphics basics, geometry nodes, the Vulkan rendering pipeline from a user perspective, multi-window rendering.
+- **[Sculpting Data Part I](https://mayaflux.org/tutorials/sculpting-data/foundations/)**: Foundational concepts, data-driven workflow, containers, buffers, processors. Runnable code examples with optional deep-dive expansions. [Getting Started](docs/Getting_Started.md) is a prerequisite.
+- **[Processing Expression](https://mayaflux.org/tutorials/sculpting-data/processing_expression/)**: Buffers, processors, math as expression, logic as creative decisions, processing chains and buffer architecture.
+- **[Visual Materiality](https://mayaflux.org/tutorials/sculpting-data/visual_materiality_i/)**: Graphics basics, geometry nodes, the Vulkan rendering pipeline from a user perspective, multi-window rendering.
 
 ### API Documentation
 
