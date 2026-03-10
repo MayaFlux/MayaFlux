@@ -99,6 +99,10 @@ public:
     {
         type_id = typeid(PolynomialContextGpu).name();
     }
+
+    friend class Polynomial;
+
+    std::vector<float> gpu_float_buffer;
 };
 
 /**

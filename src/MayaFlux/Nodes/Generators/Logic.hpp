@@ -139,6 +139,10 @@ public:
     {
         type_id = typeid(LogicContextGpu).name();
     }
+
+    friend class Logic;
+
+    std::vector<float> gpu_float_buffer;
 };
 
 /**
