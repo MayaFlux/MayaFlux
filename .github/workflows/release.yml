@@ -135,29 +135,10 @@ jobs:
 
       - name: Process release template
         run: |
-          MACOS_SECTION=$(cat .github/workflows/distribution/macos/section.md)
-          LINUX_SECTION=$(cat .github/workflows/distribution/linux/section.md)
-          WINDOWS_SECTION=$(cat .github/workflows/distribution/windows/section.md)
-
-          awk -v version="${{ needs.determine_version.outputs.VERSION }}" \
-              -v commit_sha="${{ steps.meta.outputs.SHORT_SHA }}" \
-              -v repository="${{ github.repository }}" \
-              -v os_name="Multi-Platform (${{ steps.meta.outputs.PLATFORMS }})" \
-              -v macos_section="$MACOS_SECTION" \
-              -v linux_section="$LINUX_SECTION" \
-              -v windows_section="$WINDOWS_SECTION" \
-          '
-          {
-            gsub("{{VERSION}}", version);
-            gsub("{{COMMIT_SHA}}", commit_sha);
-            gsub("{{REPOSITORY}}", repository);
-            gsub("{{OS_NAME}}", os_name);
-            gsub("{{MACOS_SECTION}}", macos_section);
-            gsub("{{LINUX_SECTION}}", linux_section);
-            gsub("{{WINDOWS_SECTION}}", windows_section);
-            print
-          }
-          ' .github/workflows/distribution/shared/release_body.md > release_body.md
+          sed \
+            -e "s/{{VERSION}}/${{ needs.determine_version.outputs.VERSION }}/g" \
+            -e "s/{{COMMIT_SHA}}/${{ steps.meta.outputs.SHORT_SHA }}/g" \
+            .github/workflows/distribution/shared/release_body.md > release_body_020.md
 
       - name: Delete existing release if force
         if: ${{ inputs.force_release }}
