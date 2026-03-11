@@ -70,6 +70,42 @@ struct ShaderSource {
 };
 
 /**
+ * @enum DescriptorRole
+ * @brief Semantic descriptor type — maps to Vulkan descriptor types internally.
+ *
+ * Users declare what role a binding plays rather than which Vulkan type to use.
+ * The mapping is:
+ *   UNIFORM      → vk::DescriptorType::eUniformBuffer        (small, frequently updated values)
+ *   STORAGE      → vk::DescriptorType::eStorageBuffer        (large or write-capable arrays)
+ *   TEXTURE      → vk::DescriptorType::eCombinedImageSampler (sampled image + sampler)
+ *   STORAGE_IMAGE → vk::DescriptorType::eStorageImage        (compute read/write image)
+ */
+enum class DescriptorRole : uint8_t {
+    UNIFORM, ///< Small, read-only, frequently updated (scalars, param structs)
+    STORAGE, ///< Large arrays or buffers the shader may write (SSBO)
+    TEXTURE, ///< Sampled image + sampler combined
+    STORAGE_IMAGE ///< Compute-writable image
+};
+
+/**
+ * @brief Convert DescriptorRole to the corresponding vk::DescriptorType.
+ */
+[[nodiscard]] inline vk::DescriptorType to_vk_descriptor_type(DescriptorRole role)
+{
+    switch (role) {
+    case DescriptorRole::UNIFORM:
+        return vk::DescriptorType::eUniformBuffer;
+    case DescriptorRole::STORAGE:
+        return vk::DescriptorType::eStorageBuffer;
+    case DescriptorRole::TEXTURE:
+        return vk::DescriptorType::eCombinedImageSampler;
+    case DescriptorRole::STORAGE_IMAGE:
+        return vk::DescriptorType::eStorageImage;
+    }
+    return vk::DescriptorType::eStorageBuffer;
+}
+
+/**
  * @struct DescriptorBindingConfig
  * @brief Portal-level descriptor binding configuration
  */
