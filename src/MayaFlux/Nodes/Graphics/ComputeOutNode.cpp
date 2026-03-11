@@ -26,6 +26,8 @@ ComputeOutNode::ComputeOutNode(const std::shared_ptr<Buffers::VKBuffer>& buffer,
             "Cannot create ComputeOutNode with zero element count");
     }
 
+    m_node_capability = NodeCapability::VECTOR;
+
     size_t required_size = element_count * sizeof(double);
     if (m_gpu_buffer->get_size_bytes() < required_size) {
         MF_WARN(Journal::Component::Nodes, Journal::Context::NodeProcessing,

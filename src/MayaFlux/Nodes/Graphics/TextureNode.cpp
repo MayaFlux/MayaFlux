@@ -18,6 +18,8 @@ TextureNode::TextureNode(uint32_t width, uint32_t height)
             width, height);
     }
 
+    m_node_capability = NodeCapability::VECTOR;
+
     m_pixel_data_dirty = true;
 
     MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
