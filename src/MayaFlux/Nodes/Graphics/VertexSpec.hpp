@@ -17,4 +17,16 @@ struct LineVertex {
     glm::vec2 uv = glm::vec2(0.F);
 };
 
+/**
+ * @struct TextureQuadVertex
+ * @brief Vertex layout for textured quad geometry (position + UV).
+ *
+ * Matches the vertex input expected by texture.vert.spv:
+ * location 0 → vec3 position, location 1 → vec2 texcoord.
+ */
+struct TextureQuadVertex {
+    glm::vec3 position;
+    glm::vec2 texcoord;
+};
+
 } // MayaFlux::Nodes

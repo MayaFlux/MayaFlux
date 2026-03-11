@@ -4,6 +4,16 @@
 
 namespace MayaFlux::Kinesis {
 
+namespace {
+    constexpr std::array<Nodes::TextureQuadVertex, 4> k_unit_quad = { {
+        { .position = { -1.0F, -1.0F, 0.0F }, .texcoord = { 0.0F, 1.0F } },
+        { .position = { 1.0F, -1.0F, 0.0F }, .texcoord = { 1.0F, 1.0F } },
+        { .position = { -1.0F, 1.0F, 0.0F }, .texcoord = { 0.0F, 0.0F } },
+        { .position = { 1.0F, 1.0F, 0.0F }, .texcoord = { 1.0F, 0.0F } },
+    } };
+
+} // namespace
+
 //==============================================================================
 // Primitive Generation
 //==============================================================================
@@ -650,6 +660,28 @@ std::vector<Nodes::LineVertex> apply_vertex_colors(
     }
 
     return vertices;
+}
+
+QuadGeometry generate_quad(glm::vec2 position, glm::vec2 scale, float rotation)
+{
+    const float cos_r = std::cos(rotation);
+    const float sin_r = std::sin(rotation);
+
+    QuadGeometry out { .layout = Kakshya::VertexLayout::for_textured_quad() };
+
+    for (size_t i = 0; i < 4; ++i) {
+        const float x = k_unit_quad[i].position.x * scale.x;
+        const float y = k_unit_quad[i].position.y * scale.y;
+
+        out.vertices[i].position = {
+            x * cos_r - y * sin_r + position.x,
+            x * sin_r + y * cos_r + position.y,
+            0.0F,
+        };
+        out.vertices[i].texcoord = k_unit_quad[i].texcoord;
+    }
+
+    return out;
 }
 
 } // namespace MayaFlux::Kinesis

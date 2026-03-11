@@ -2,18 +2,12 @@
 
 #include "MayaFlux/Buffers/BufferProcessingChain.hpp"
 #include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
+#include "MayaFlux/Kinesis/GeometryPrimitives.hpp"
 #include "TextureProcessor.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux::Buffers {
-
-const std::vector<TextureBuffer::QuadVertex> base_quad = {
-    { { -0.5F, -0.5F, 0.0F }, { 0.0F, 1.0F } }, // Bottom-left
-    { { 0.5F, -0.5F, 0.0F }, { 1.0F, 1.0F } }, // Bottom-right
-    { { -0.5F, 0.5F, 0.0F }, { 0.0F, 0.0F } }, // Top-left
-    { { 0.5F, 0.5F, 0.0F }, { 1.0F, 0.0F } } // Top-right
-};
 
 TextureBuffer::TextureBuffer(
     uint32_t width,
@@ -188,7 +182,7 @@ void TextureBuffer::set_rotation(float angle_radians)
 // Custom Geometry
 // =========================================================================
 
-void TextureBuffer::set_custom_vertices(const std::vector<QuadVertex>& vertices)
+void TextureBuffer::set_custom_vertices(const std::vector<Nodes::TextureQuadVertex>& vertices)
 {
     if (vertices.size() != 4) {
         MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
@@ -196,7 +190,7 @@ void TextureBuffer::set_custom_vertices(const std::vector<QuadVertex>& vertices)
         return;
     }
 
-    m_vertex_bytes.resize(vertices.size() * sizeof(QuadVertex));
+    m_vertex_bytes.resize(vertices.size() * sizeof(Nodes::TextureQuadVertex));
     std::memcpy(m_vertex_bytes.data(), vertices.data(), m_vertex_bytes.size());
     m_uses_custom_vertices = true;
     m_geometry_dirty = true;
@@ -223,30 +217,18 @@ void TextureBuffer::use_default_quad()
 
 size_t TextureBuffer::calculate_quad_vertex_size()
 {
-    return 4 * sizeof(QuadVertex);
+    return 4 * sizeof(Nodes::TextureQuadVertex);
 }
 
 void TextureBuffer::generate_default_quad()
 {
-    m_vertex_bytes.resize(base_quad.size() * sizeof(QuadVertex));
-    std::memcpy(m_vertex_bytes.data(), base_quad.data(), m_vertex_bytes.size());
-
-    Kakshya::VertexLayout vertex_layout {
-        .vertex_count = 4,
-        .stride_bytes = sizeof(QuadVertex),
-        .attributes = {
-            { .component_modality = Kakshya::DataModality::VERTEX_POSITIONS_3D,
-                .offset_in_vertex = offsetof(QuadVertex, position),
-                .name = "position" },
-            { .component_modality = Kakshya::DataModality::TEXTURE_COORDS_2D,
-                .offset_in_vertex = offsetof(QuadVertex, texcoord),
-                .name = "texcoord" } }
-    };
-
-    set_vertex_layout(vertex_layout);
+    auto geo = Kinesis::generate_quad(m_position, m_scale);
+    m_vertex_bytes.resize(geo.vertices.size() * sizeof(Nodes::TextureQuadVertex));
+    std::memcpy(m_vertex_bytes.data(), geo.vertices.data(), m_vertex_bytes.size());
+    set_vertex_layout(geo.layout);
 
     MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-        "TextureBuffer: generated default fullscreen quad");
+        "TextureBuffer: generated default quad");
 }
 
 void TextureBuffer::generate_quad_with_transform()
@@ -257,28 +239,9 @@ void TextureBuffer::generate_quad_with_transform()
         return;
     }
 
-    float cos_rot = std::cos(m_rotation);
-    float sin_rot = std::sin(m_rotation);
-
-    std::vector<QuadVertex> transformed(4);
-    for (size_t i = 0; i < 4; ++i) {
-        glm::vec3 pos = base_quad[i].position;
-
-        pos.x *= m_scale.x;
-        pos.y *= m_scale.y;
-
-        float rotated_x = pos.x * cos_rot - pos.y * sin_rot;
-        float rotated_y = pos.x * sin_rot + pos.y * cos_rot;
-
-        pos.x = rotated_x + m_position.x;
-        pos.y = rotated_y + m_position.y;
-
-        transformed[i].position = pos;
-        transformed[i].texcoord = base_quad[i].texcoord;
-    }
-
-    m_vertex_bytes.resize(transformed.size() * sizeof(QuadVertex));
-    std::memcpy(m_vertex_bytes.data(), transformed.data(), m_vertex_bytes.size());
+    auto geo = Kinesis::generate_quad(m_position, m_scale, m_rotation);
+    m_vertex_bytes.resize(geo.vertices.size() * sizeof(Nodes::TextureQuadVertex));
+    std::memcpy(m_vertex_bytes.data(), geo.vertices.data(), m_vertex_bytes.size());
 
     MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
         "TextureBuffer: regenerated quad with transform (pos={},{}, scale={},{}, rot={})",

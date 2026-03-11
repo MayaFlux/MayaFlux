@@ -249,4 +249,31 @@ std::vector<Nodes::LineVertex> apply_vertex_colors(
     const std::vector<glm::vec3>& colors,
     float default_thickness = 1.0F);
 
+/**
+ * @struct QuadGeometry
+ * @brief Textured quad vertex data together with its semantic layout descriptor.
+ *
+ * Returned by generate_quad(). Callers memcpy vertices into their staging
+ * buffer and forward layout to set_vertex_layout().
+ */
+struct QuadGeometry {
+    std::array<Nodes::TextureQuadVertex, 4> vertices;
+    Kakshya::VertexLayout layout;
+};
+
+/**
+ * @brief Generate a textured quad centred on the origin.
+ * @param position Translation in XY (z remains 0). Default: no translation.
+ * @param scale Extents in XY before rotation. Default: {1,1} → NDC-spanning quad.
+ * @param rotation Rotation angle in radians around Z axis. Default: 0.
+ * @return QuadGeometry ready for TRIANGLE_STRIP draw.
+ *
+ * UV origin is bottom-left (0,1) to match Vulkan image layout.
+ * Base vertices sit at ±scale before rotation and translation are applied.
+ */
+[[nodiscard]] QuadGeometry generate_quad(
+    glm::vec2 position = glm::vec2(0.0F),
+    glm::vec2 scale = glm::vec2(1.0F),
+    float rotation = 0.0F);
+
 } // namespace MayaFlux::Kinesis

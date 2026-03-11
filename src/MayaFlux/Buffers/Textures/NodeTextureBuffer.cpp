@@ -2,6 +2,7 @@
 
 #include "MayaFlux/Buffers/BufferProcessingChain.hpp"
 #include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
+#include "MayaFlux/Kinesis/GeometryPrimitives.hpp"
 #include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
@@ -171,35 +172,10 @@ size_t NodeTextureBuffer::calculate_buffer_size(
 
 void NodeTextureBuffer::generate_fullscreen_quad()
 {
-    struct QuadVertex {
-        glm::vec3 position;
-        glm::vec2 texcoord;
-    };
-
-    const std::vector<QuadVertex> quad = {
-        { { -1.0F, -1.0F, 0.0F }, { 0.0F, 1.0F } },
-        { { 1.0F, -1.0F, 0.0F }, { 1.0F, 1.0F } },
-        { { -1.0F, 1.0F, 0.0F }, { 0.0F, 0.0F } },
-        { { 1.0F, 1.0F, 0.0F }, { 1.0F, 0.0F } }
-    };
-
-    m_vertex_bytes.resize(quad.size() * sizeof(QuadVertex));
-    std::memcpy(m_vertex_bytes.data(), quad.data(), m_vertex_bytes.size());
-
-    // Set vertex layout
-    Kakshya::VertexLayout vertex_layout {
-        .vertex_count = 4,
-        .stride_bytes = sizeof(QuadVertex),
-        .attributes = {
-            { .component_modality = Kakshya::DataModality::VERTEX_POSITIONS_3D,
-                .offset_in_vertex = offsetof(QuadVertex, position),
-                .name = "position" },
-            { .component_modality = Kakshya::DataModality::TEXTURE_COORDS_2D,
-                .offset_in_vertex = offsetof(QuadVertex, texcoord),
-                .name = "texcoord" } }
-    };
-
-    set_vertex_layout(vertex_layout);
+    auto geo = Kinesis::generate_quad();
+    m_vertex_bytes.resize(geo.vertices.size() * sizeof(Nodes::TextureQuadVertex));
+    std::memcpy(m_vertex_bytes.data(), geo.vertices.data(), m_vertex_bytes.size());
+    set_vertex_layout(geo.layout);
 
     MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
         "NodeTextureBuffer: generated fullscreen quad");
@@ -207,11 +183,7 @@ void NodeTextureBuffer::generate_fullscreen_quad()
 
 size_t NodeTextureBuffer::calculate_quad_vertex_size()
 {
-    struct QuadVertex {
-        glm::vec3 position;
-        glm::vec2 texcoord;
-    };
-    return 4 * sizeof(QuadVertex);
+    return 4 * sizeof(Nodes::TextureQuadVertex);
 }
 
 } // namespace MayaFlux::Buffers

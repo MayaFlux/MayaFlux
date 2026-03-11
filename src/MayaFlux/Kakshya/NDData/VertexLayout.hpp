@@ -135,6 +135,30 @@ struct VertexLayout {
         return layout;
     }
 
+    /**
+     * @brief Factory: Create layout for textured quad primitives (position, texcoord).
+     * @param vertex_count Number of vertices in the buffer (default: 4).
+     * @return VertexLayout configured for Nodes::TextureQuadVertex.
+     */
+    static VertexLayout for_textured_quad(uint32_t vertex_count = 4)
+    {
+        VertexLayout layout;
+        layout.vertex_count = vertex_count;
+        layout.stride_bytes = static_cast<uint32_t>(sizeof(glm::vec3) + sizeof(glm::vec2)); // 20
+
+        layout.attributes.push_back(VertexAttributeLayout {
+            .component_modality = DataModality::VERTEX_POSITIONS_3D,
+            .offset_in_vertex = 0,
+            .name = "position" });
+
+        layout.attributes.push_back(VertexAttributeLayout {
+            .component_modality = DataModality::TEXTURE_COORDS_2D,
+            .offset_in_vertex = static_cast<uint32_t>(sizeof(glm::vec3)),
+            .name = "texcoord" });
+
+        return layout;
+    }
+
 private:
     /**
      * Get size in bytes for a given modality
