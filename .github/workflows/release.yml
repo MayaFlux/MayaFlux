@@ -133,12 +133,35 @@ jobs:
           echo "SHORT_SHA=$SHORT_SHA" >> $GITHUB_OUTPUT
           echo "PLATFORMS=$PLATFORMS" >> $GITHUB_OUTPUT
 
+      - name: Build changelog
+        id: changelog
+        run: |
+          PREVIOUS_TAG=$(git tag --list 'v[0-9]*.[0-9]*.[0-9]*' | grep -v -- '-' | sort -V | tail -n1 2>/dev/null || echo "")
+
+          if [ -z "$PREVIOUS_TAG" ]; then
+            CHANGELOG=$(git log --no-merges --oneline --decorate=short)
+            HEADER="## Full changelog (first release)"
+          else
+            CHANGELOG=$(git log --no-merges --oneline --decorate=short "${PREVIOUS_TAG}..${GITHUB_SHA}")
+            HEADER="## Changes since ${PREVIOUS_TAG}"
+          fi
+
+          {
+            echo "$HEADER"
+            echo ""
+            echo '```'
+            echo "$CHANGELOG"
+            echo '```'
+          } > changelog.md
+
       - name: Process release template
         run: |
           sed \
             -e "s/{{VERSION}}/${{ needs.determine_version.outputs.VERSION }}/g" \
             -e "s/{{COMMIT_SHA}}/${{ steps.meta.outputs.SHORT_SHA }}/g" \
-            .github/workflows/distribution/shared/release_body.md > release_body_020.md
+            .github/workflows/distribution/shared/release_body_020.md > release_body.md
+
+          cat changelog.md >> release_body.md
 
       - name: Delete existing release if force
         if: ${{ inputs.force_release }}

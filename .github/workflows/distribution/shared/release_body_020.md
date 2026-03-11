@@ -41,6 +41,7 @@ The live signal matrix completes: audio files, video files, live camera devices,
 - macOS line rendering fallback via CPU-side quad expansion
 - Mesh shader infrastructure present, paused pending MoltenVK upstream merge
 - Compute shader infrastructure: `ComputePress` dispatch, dedicated compute command pool
+- DescriptorBindingsProcessor now supports buffers and node networks as sources, in addition to nodes
 
 ## IO and Containers
 
