@@ -192,6 +192,12 @@ void Polynomial::update_context(double value)
         m_context_gpu.m_buffer_size = m_buffer_size;
         m_context_gpu.m_input_buffer = view;
         m_context_gpu.m_output_buffer = view;
+
+        m_context_gpu.gpu_float_buffer.resize(view.size());
+        for (size_t i = 0; i < view.size(); ++i)
+            m_context_gpu.gpu_float_buffer[i] = static_cast<float>(view[i]);
+
+        m_context_gpu.m_gpu_data = std::span<const float>(m_context_gpu.gpu_float_buffer);
     } else {
         m_context.value = value;
         m_context.m_mode = m_mode;

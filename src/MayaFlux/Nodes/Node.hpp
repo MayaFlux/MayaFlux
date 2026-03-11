@@ -320,7 +320,7 @@ public:
      * @brief Sets whether the node is compatible with GPU processing
      * @param compatible True if the node supports GPU processing, false otherwise
      */
-    void set_gpu_compatible(bool compatible) { m_gpu_compatible = compatible; }
+    virtual void set_gpu_compatible(bool compatible) { m_gpu_compatible = compatible; }
 
     /**
      * @brief Checks if the node supports GPU processing
@@ -429,6 +429,8 @@ protected:
     bool m_state_saved {};
 
     uint32_t m_sample_rate { 48000 }; ///< Sample rate for audio processing, used for normalization
+
+    uint8_t m_node_capability { NodeCapability::SCALAR }; ///< Bitmask of capabilities declared by this node
 
 public:
     /**
@@ -617,6 +619,28 @@ public:
     [[nodiscard]] bool needs_channel_routing() const
     {
         return m_routing_state.phase & (RoutingState::ACTIVE | RoutingState::COMPLETED);
+    }
+
+    /**
+     * @brief Declare which data shapes this node's context can produce.
+     *
+     * Override to advertise capabilities beyond SCALAR. The default reflects
+     * the Node interface guarantee: every node produces a scalar.
+     * Combine flags with bitwise OR for nodes whose context implements
+     * multiple GpuContext mixins.
+     *
+     * @return Bitmask of NodeCapability flags.
+     */
+    [[nodiscard]] virtual uint8_t node_capabilities() const { return m_node_capability; }
+
+    /**
+     * @brief Query a single capability.
+     * @param cap Capability flag to test.
+     * @return true if this node supports the requested data shape.
+     */
+    [[nodiscard]] bool has_capability(NodeCapability cap) const
+    {
+        return (m_node_capability & cap) != 0U;
     }
 
 private:

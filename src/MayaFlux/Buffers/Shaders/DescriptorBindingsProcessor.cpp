@@ -1,7 +1,11 @@
 #include "DescriptorBindingsProcessor.hpp"
 
+#include "MayaFlux/Buffers/AudioBuffer.hpp"
+
 #include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
-#include "MayaFlux/Nodes/Node.hpp"
+
+#include "MayaFlux/Nodes/Network/NodeNetwork.hpp"
+#include "MayaFlux/Nodes/Network/Operators/GraphicsOperator.hpp"
 
 #include "MayaFlux/Registry/BackendRegistry.hpp"
 #include "MayaFlux/Registry/Service/BufferService.hpp"
@@ -214,7 +218,180 @@ void DescriptorBindingsProcessor::bind_structured_node(
         "Bound structured node '{}' to descriptor '{}'", name, descriptor_name);
 }
 
-void DescriptorBindingsProcessor::unbind_node(const std::string& name)
+void DescriptorBindingsProcessor::bind_audio_buffer(
+    const std::string& name,
+    const std::shared_ptr<AudioBuffer>& buffer,
+    const std::string& descriptor_name,
+    uint32_t set,
+    vk::DescriptorType type)
+{
+    if (!buffer) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "Cannot bind null AudioBuffer '{}'", name);
+        return;
+    }
+
+    if (m_config.bindings.find(descriptor_name) == m_config.bindings.end()) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "Descriptor '{}' not found in shader config", descriptor_name);
+        return;
+    }
+
+    const auto& binding_config = m_config.bindings[descriptor_name];
+    size_t initial_size = buffer->get_num_samples() * sizeof(float);
+    auto gpu_buffer = create_descriptor_buffer(initial_size, type);
+
+    auto [it, inserted] = m_bindings.try_emplace(name);
+    auto& binding = it->second;
+
+    binding.buffer = buffer;
+    binding.descriptor_name = descriptor_name;
+    binding.set_index = set;
+    binding.binding_index = binding_config.binding;
+    binding.type = type;
+    binding.binding_type = BindingType::VECTOR;
+    binding.source_type = SourceType::AUDIO_BUFFER;
+    binding.gpu_buffer = gpu_buffer;
+    binding.buffer_offset = 0;
+    binding.buffer_size = initial_size;
+
+    bind_buffer(descriptor_name, gpu_buffer);
+    m_needs_descriptor_rebuild = true;
+
+    MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+        "Bound AudioBuffer '{}' to descriptor '{}' ({} samples)",
+        name, descriptor_name, buffer->get_num_samples());
+}
+
+void DescriptorBindingsProcessor::bind_host_vk_buffer(
+    const std::string& name,
+    const std::shared_ptr<VKBuffer>& buffer,
+    const std::string& descriptor_name,
+    uint32_t set,
+    vk::DescriptorType type)
+{
+    if (!buffer) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "Cannot bind null VKBuffer '{}'", name);
+        return;
+    }
+
+    if (!buffer->is_host_visible()) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "VKBuffer '{}' is device-local. Binding device-local buffers as descriptor "
+            "sources requires a GPU-side copy via compute shader, not CPU readback. "
+            "Use a host-visible buffer or restructure the pipeline.",
+            name);
+        return;
+    }
+
+    if (m_config.bindings.find(descriptor_name) == m_config.bindings.end()) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "Descriptor '{}' not found in shader config", descriptor_name);
+        return;
+    }
+
+    const auto& binding_config = m_config.bindings[descriptor_name];
+    auto gpu_buffer = create_descriptor_buffer(buffer->get_size_bytes(), type);
+
+    auto [it, inserted] = m_bindings.try_emplace(name);
+    auto& binding = it->second;
+
+    binding.buffer = buffer;
+    binding.descriptor_name = descriptor_name;
+    binding.set_index = set;
+    binding.binding_index = binding_config.binding;
+    binding.type = type;
+    binding.binding_type = BindingType::VECTOR;
+    binding.source_type = SourceType::HOST_VK_BUFFER;
+    binding.gpu_buffer = gpu_buffer;
+    binding.buffer_offset = 0;
+    binding.buffer_size = buffer->get_size_bytes();
+
+    bind_buffer(descriptor_name, gpu_buffer);
+    m_needs_descriptor_rebuild = true;
+
+    MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+        "Bound host VKBuffer '{}' to descriptor '{}' ({} bytes)",
+        name, descriptor_name, buffer->get_size_bytes());
+}
+
+void DescriptorBindingsProcessor::bind_network(
+    const std::string& name,
+    const std::shared_ptr<Nodes::Network::NodeNetwork>& network,
+    const std::string& descriptor_name,
+    uint32_t set,
+    vk::DescriptorType type)
+{
+    if (!network) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "Cannot bind null network '{}'", name);
+        return;
+    }
+
+    if (m_config.bindings.find(descriptor_name) == m_config.bindings.end()) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "Descriptor '{}' not found in shader config", descriptor_name);
+        return;
+    }
+
+    SourceType resolved {};
+    BindingType binding_type {};
+    size_t initial_size {};
+
+    auto network_mode = network->get_output_mode();
+    if (network_mode == Nodes::Network::OutputMode::AUDIO_SINK || network_mode == Nodes::Network::OutputMode::AUDIO_COMPUTE) {
+        resolved = SourceType::NETWORK_AUDIO;
+        binding_type = BindingType::VECTOR;
+        auto probe = network->get_audio_buffer();
+        if (probe) {
+            initial_size = probe->size() * sizeof(float);
+        } else {
+            MF_WARN(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                "Network '{}' is configured for audio output but has no audio buffer. "
+                "Binding will be created with default size of 4096 samples (16 KB).",
+                name);
+            initial_size = 4096 * sizeof(float);
+        }
+    } else if (network->has_operator() && dynamic_cast<Nodes::Network::GraphicsOperator*>(network->get_operator())) {
+        resolved = SourceType::NETWORK_GPU;
+        binding_type = BindingType::STRUCTURED;
+        initial_size = static_cast<size_t>(1024) * 64;
+    } else {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "Network '{}' produces neither audio nor GPU geometry. "
+            "Bind is only valid for networks with audio output or a GraphicsOperator.",
+            name);
+        return;
+    }
+
+    const auto& binding_config = m_config.bindings[descriptor_name];
+    auto gpu_buffer = create_descriptor_buffer(initial_size, type);
+
+    auto [it, inserted] = m_bindings.try_emplace(name);
+    auto& binding = it->second;
+
+    binding.network = network;
+    binding.descriptor_name = descriptor_name;
+    binding.set_index = set;
+    binding.binding_index = binding_config.binding;
+    binding.type = type;
+    binding.binding_type = binding_type;
+    binding.source_type = resolved;
+    binding.gpu_buffer = gpu_buffer;
+    binding.buffer_offset = 0;
+    binding.buffer_size = initial_size;
+
+    bind_buffer(descriptor_name, gpu_buffer);
+    m_needs_descriptor_rebuild = true;
+
+    MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+        "Bound network '{}' to descriptor '{}' (source: {})",
+        name, descriptor_name,
+        resolved == SourceType::NETWORK_AUDIO ? "NETWORK_AUDIO" : "NETWORK_GPU");
+}
+
+void DescriptorBindingsProcessor::unbind(const std::string& name)
 {
     auto it = m_bindings.find(name);
     if (it != m_bindings.end()) {
@@ -224,7 +401,7 @@ void DescriptorBindingsProcessor::unbind_node(const std::string& name)
         m_needs_descriptor_rebuild = true;
 
         MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-            "Unbound node '{}'", name);
+            "Unbound '{}'", name);
     }
 }
 
@@ -316,68 +493,138 @@ void DescriptorBindingsProcessor::on_pipeline_created(Portal::Graphics::ComputeP
 
 void DescriptorBindingsProcessor::update_descriptor_from_node(DescriptorBinding& binding)
 {
-    if (!binding.node) {
-        MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-            "Binding has null node");
-        return;
-    }
+    switch (binding.source_type) {
 
-    float value {};
-
-    if (binding.processing_mode.load(std::memory_order_acquire) == ProcessingMode::INTERNAL) {
-        value = static_cast<float>(Buffers::extract_single_sample(binding.node));
-    } else {
-        value = static_cast<float>(binding.node->get_last_output());
-    }
-    Nodes::NodeContext& ctx = binding.node->get_last_context();
-
-    switch (binding.binding_type) {
-    case BindingType::SCALAR: {
-        ensure_buffer_capacity(binding, sizeof(float));
-        upload_to_gpu(&value, sizeof(float), binding.gpu_buffer, nullptr);
-        break;
-    }
-
-    case BindingType::VECTOR: {
-        auto* gpu_vec = dynamic_cast<Nodes::GpuVectorData*>(&ctx);
-        if (!gpu_vec || !gpu_vec->has_gpu_data()) {
+    case SourceType::NODE: {
+        if (!binding.node) {
             MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-                "Node context does not provide GpuVectorData");
+                "Binding has null node");
             return;
         }
 
-        auto data = gpu_vec->gpu_data();
+        float value {};
 
-        ensure_buffer_capacity(binding, data.size_bytes());
-        upload_to_gpu(data.data(), data.size_bytes(), binding.gpu_buffer, nullptr);
+        if (binding.processing_mode.load(std::memory_order_acquire) == ProcessingMode::INTERNAL) {
+            value = static_cast<float>(Buffers::extract_single_sample(binding.node));
+        } else {
+            value = static_cast<float>(binding.node->get_last_output());
+        }
+        Nodes::NodeContext& ctx = binding.node->get_last_context();
+
+        switch (binding.binding_type) {
+
+        case BindingType::SCALAR: {
+            ensure_buffer_capacity(binding, sizeof(float));
+            upload_to_gpu(&value, sizeof(float), binding.gpu_buffer, nullptr);
+            break;
+        }
+
+        case BindingType::VECTOR: {
+            auto* gpu_vec = dynamic_cast<Nodes::GpuVectorData*>(&ctx);
+            if (!gpu_vec || !gpu_vec->has_gpu_data()) {
+                MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                    "Node context does not provide GpuVectorData");
+                return;
+            }
+
+            auto data = gpu_vec->gpu_data();
+
+            ensure_buffer_capacity(binding, data.size_bytes());
+            upload_to_gpu(data.data(), data.size_bytes(), binding.gpu_buffer, nullptr);
+            break;
+        }
+
+        case BindingType::MATRIX: {
+            auto* gpu_mat = dynamic_cast<Nodes::GpuMatrixData*>(&ctx);
+            if (!gpu_mat || !gpu_mat->has_gpu_data()) {
+                MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                    "Node context does not provide GpuMatrixData");
+                return;
+            }
+
+            auto data = gpu_mat->gpu_data();
+            ensure_buffer_capacity(binding, data.size_bytes());
+            upload_to_gpu(data.data(), data.size_bytes(), binding.gpu_buffer, nullptr);
+            break;
+        }
+
+        case BindingType::STRUCTURED: {
+            auto* gpu_struct = dynamic_cast<Nodes::GpuStructuredData*>(&ctx);
+            if (!gpu_struct || !gpu_struct->has_gpu_data()) {
+                MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                    "Node context does not provide GpuStructuredData");
+                return;
+            }
+
+            auto data = gpu_struct->gpu_data();
+            ensure_buffer_capacity(binding, data.size_bytes());
+            upload_to_gpu(data.data(), data.size_bytes(), binding.gpu_buffer, nullptr);
+            break;
+        }
+        }
+    }
+
+    case SourceType::AUDIO_BUFFER: {
+        auto audio = std::dynamic_pointer_cast<AudioBuffer>(binding.buffer);
+        const auto& samples = audio->get_data();
+        size_t required = samples.size() * sizeof(float);
+        ensure_buffer_capacity(binding, required);
+
+        thread_local std::vector<float> conv;
+        conv.resize(samples.size());
+        std::ranges::transform(samples, conv.begin(),
+            [](double d) { return static_cast<float>(d); });
+
+        upload_to_gpu(conv.data(), required, binding.gpu_buffer, nullptr);
         break;
     }
 
-    case BindingType::MATRIX: {
-        auto* gpu_mat = dynamic_cast<Nodes::GpuMatrixData*>(&ctx);
-        if (!gpu_mat || !gpu_mat->has_gpu_data()) {
-            MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-                "Node context does not provide GpuMatrixData");
+    case SourceType::HOST_VK_BUFFER: {
+        auto vk = std::dynamic_pointer_cast<VKBuffer>(binding.buffer);
+        auto data = vk->get_data();
+        if (data.empty()) {
+            MF_RT_WARN(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                "Host VKBuffer binding '{}' returned no data", binding.descriptor_name);
             return;
         }
-
-        auto data = gpu_mat->gpu_data();
-        ensure_buffer_capacity(binding, data.size_bytes());
-        upload_to_gpu(data.data(), data.size_bytes(), binding.gpu_buffer, nullptr);
+        auto& raw = std::get<std::vector<uint8_t>>(data[0]);
+        ensure_buffer_capacity(binding, raw.size());
+        upload_to_gpu(raw.data(), raw.size(), binding.gpu_buffer, nullptr);
         break;
     }
 
-    case BindingType::STRUCTURED: {
-        auto* gpu_struct = dynamic_cast<Nodes::GpuStructuredData*>(&ctx);
-        if (!gpu_struct || !gpu_struct->has_gpu_data()) {
-            MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-                "Node context does not provide GpuStructuredData");
+    case SourceType::NETWORK_AUDIO: {
+
+        auto data = binding.network->get_audio_buffer();
+        if (!data) {
+            MF_RT_WARN(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                "Network audio binding '{}' has no audio buffer", binding.descriptor_name);
             return;
         }
+        const auto& samples = *data;
+        size_t required = samples.size() * sizeof(float);
 
-        auto data = gpu_struct->gpu_data();
-        ensure_buffer_capacity(binding, data.size_bytes());
-        upload_to_gpu(data.data(), data.size_bytes(), binding.gpu_buffer, nullptr);
+        thread_local std::vector<float> conv;
+        conv.resize(samples.size());
+
+        std::ranges::transform(samples, conv.begin(),
+            [](double d) { return static_cast<float>(d); });
+
+        upload_to_gpu(conv.data(), required, binding.gpu_buffer, nullptr);
+        break;
+    }
+
+    case SourceType::NETWORK_GPU: {
+        auto gpu_data = extract_network_gpu_data(binding.network, binding.descriptor_name);
+        if (gpu_data.vertex_data.empty()) {
+            return;
+        }
+        ensure_buffer_capacity(binding, gpu_data.vertex_data.size_bytes());
+        upload_to_gpu(
+            gpu_data.vertex_data.data(),
+            gpu_data.vertex_data.size_bytes(),
+            binding.gpu_buffer,
+            nullptr);
         break;
     }
     }

@@ -99,6 +99,10 @@ public:
     {
         type_id = typeid(PolynomialContextGpu).name();
     }
+
+    friend class Polynomial;
+
+    std::vector<float> gpu_float_buffer;
 };
 
 /**
@@ -353,6 +357,16 @@ public:
      * about the generator's state at the time of the last output generation.
      */
     NodeContext& get_last_context() override;
+
+    void set_gpu_compatible(bool compatible) override
+    {
+        m_gpu_compatible = compatible;
+        if (compatible) {
+            m_node_capability |= NodeCapability::VECTOR;
+        } else {
+            m_node_capability &= ~NodeCapability::VECTOR;
+        }
+    }
 
 protected:
     /**

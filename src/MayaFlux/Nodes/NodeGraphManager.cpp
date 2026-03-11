@@ -22,6 +22,10 @@ void NodeGraphManager::add_to_root(const std::shared_ptr<Node>& node,
     set_channel_mask(node, channel);
     node->set_sample_rate(m_registered_sample_rate);
 
+    if (token == ProcessingToken::VISUAL_RATE) {
+        node->set_gpu_compatible(true);
+    }
+
     auto& root = get_root_node(token, channel);
     root.register_node(node);
 }

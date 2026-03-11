@@ -1,6 +1,7 @@
 #include "BufferUtils.hpp"
 
-#include "MayaFlux/Nodes/Node.hpp"
+#include "MayaFlux/Nodes/Network/NodeNetwork.hpp"
+#include "MayaFlux/Nodes/Network/Operators/GraphicsOperator.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
@@ -317,6 +318,54 @@ void update_buffer_with_node_data(
             node->request_buffer_reset();
         }
     }
+}
+
+NetworkGpuData extract_network_gpu_data(
+    const std::shared_ptr<Nodes::Network::NodeNetwork>& network,
+    std::string_view name)
+{
+    auto* op = network->get_operator();
+    if (!op) {
+        MF_RT_TRACE(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "Network '{}' has no operator", name);
+        return {};
+    }
+
+    auto* graphics_op = dynamic_cast<Nodes::Network::GraphicsOperator*>(op);
+    if (!graphics_op) {
+        MF_RT_WARN(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "Network '{}' operator '{}' is not a GraphicsOperator",
+            name, op->get_type_name());
+        return {};
+    }
+
+    auto vertex_data = graphics_op->get_vertex_data();
+    size_t vertex_count = graphics_op->get_vertex_count();
+
+    if (vertex_data.empty() || vertex_count == 0) {
+        MF_RT_TRACE(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "Network '{}' has no vertex data this frame", name);
+        return {};
+    }
+
+    return {
+        .vertex_data = vertex_data,
+        .vertex_count = vertex_count,
+        .layout = graphics_op->get_vertex_layout()
+    };
+}
+
+std::span<const double> extract_network_audio_data(
+    const std::shared_ptr<Nodes::Network::NodeNetwork>& network,
+    std::string_view name)
+{
+    auto buf = network->get_audio_buffer();
+    if (!buf || buf->empty()) {
+        MF_RT_TRACE(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "Network '{}' has no audio buffer this cycle", name);
+        return {};
+    }
+    return { buf->data(), buf->size() };
 }
 
 } // namespace MayaFlux::Buffers

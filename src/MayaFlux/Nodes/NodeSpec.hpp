@@ -83,4 +83,29 @@ struct RoutingState {
     } phase { Phase::NONE };
 };
 
+/**
+ * @enum NodeCapability
+ * @brief Bitmask flags declaring what data shapes a node's context can produce.
+ *
+ * SCALAR is guaranteed by the Node interface itself (process_sample always returns double).
+ * All other flags are opt-in: a node sets them when its NodeContext also derives from
+ * the corresponding GpuContext mixin (GpuVectorData, GpuMatrixData, GpuStructuredData).
+ *
+ * Flags are combinable; a node may expose multiple shapes simultaneously.
+ *
+ * Example:
+ * @code
+ * // Node whose context derives from GpuVectorData:
+ * uint32_t node_capabilities() const override {
+ *     return NodeCapability::SCALAR | NodeCapability::VECTOR;
+ * }
+ * @endcode
+ */
+enum NodeCapability : uint8_t {
+    SCALAR = 1U << 0, ///< Single double from process_sample — always present
+    VECTOR = 1U << 1, ///< Context also implements GpuVectorData
+    MATRIX = 1U << 2, ///< Context also implements GpuMatrixData
+    STRUCTURED = 1U << 3, ///< Context also implements GpuStructuredData
+};
+
 }

@@ -8,6 +8,8 @@ class Node;
 
 namespace MayaFlux::Buffers {
 
+class AudioBuffer;
+
 /**
  * @class DescriptorBindingsProcessor
  * @brief ShaderProcessor that uploads node outputs to descriptor sets
@@ -43,13 +45,24 @@ public:
         STRUCTURED ///< Array of structs from StructuredContext
     };
 
+    enum class SourceType : uint8_t {
+        NODE,
+        AUDIO_BUFFER,
+        HOST_VK_BUFFER,
+        NETWORK_AUDIO,
+        NETWORK_GPU
+    };
+
     struct DescriptorBinding {
         std::shared_ptr<Nodes::Node> node;
+        std::shared_ptr<Buffers::Buffer> buffer;
+        std::shared_ptr<Nodes::Network::NodeNetwork> network;
         std::string descriptor_name; ///< Matches ShaderProcessor binding name
         uint32_t set_index;
         uint32_t binding_index;
         vk::DescriptorType type; ///< UBO or SSBO
         BindingType binding_type;
+        SourceType source_type { SourceType::NODE };
         std::shared_ptr<VKBuffer> gpu_buffer; ///< UBO/SSBO backing storage
         size_t buffer_offset {}; ///< Offset within buffer (for packed UBOs)
         size_t buffer_size; ///< Size to write
@@ -130,9 +143,70 @@ public:
         ProcessingMode mode = ProcessingMode::INTERNAL);
 
     /**
+     * @brief Bind an AudioBuffer as a descriptor source.
+     *
+     * Reads the buffer's double sample data each cycle, converts to float,
+     * and uploads to the descriptor. Always treated as VECTOR binding.
+     *
+     * @param name        Logical binding name
+     * @param buffer      AudioBuffer to read from
+     * @param descriptor_name Name in shader config bindings
+     * @param set         Descriptor set index
+     * @param type        Descriptor type (default: eStorageBuffer)
+     */
+    void bind_audio_buffer(
+        const std::string& name,
+        const std::shared_ptr<AudioBuffer>& buffer,
+        const std::string& descriptor_name,
+        uint32_t set,
+        vk::DescriptorType type = vk::DescriptorType::eStorageBuffer);
+
+    /**
+     * @brief Bind a host-visible VKBuffer as a descriptor source.
+     *
+     * Fails hard at bind time if the buffer is not host-visible.
+     * Reads mapped memory each cycle and uploads to the descriptor.
+     * Always treated as VECTOR binding.
+     *
+     * @param name        Logical binding name
+     * @param buffer      Host-visible VKBuffer to read from
+     * @param descriptor_name Name in shader config bindings
+     * @param set         Descriptor set index
+     * @param type        Descriptor type (default: eStorageBuffer)
+     */
+    void bind_host_vk_buffer(
+        const std::string& name,
+        const std::shared_ptr<VKBuffer>& buffer,
+        const std::string& descriptor_name,
+        uint32_t set,
+        vk::DescriptorType type = vk::DescriptorType::eStorageBuffer);
+
+    /**
+     * @brief Bind a NodeNetwork to a descriptor.
+     *
+     * Resolves source type at bind time:
+     * - Networks with get_audio_buffer() output → NETWORK_AUDIO (VECTOR binding)
+     * - Networks with a GraphicsOperator         → NETWORK_GPU   (STRUCTURED binding)
+     *
+     * Fails hard if the network satisfies neither condition.
+     *
+     * @param name            Logical binding name
+     * @param network         NodeNetwork to read from
+     * @param descriptor_name Name in shader config bindings
+     * @param set             Descriptor set index
+     * @param type            Descriptor type (default: eStorageBuffer)
+     */
+    void bind_network(
+        const std::string& name,
+        const std::shared_ptr<Nodes::Network::NodeNetwork>& network,
+        const std::string& descriptor_name,
+        uint32_t set,
+        vk::DescriptorType type = vk::DescriptorType::eStorageBuffer);
+
+    /**
      * @brief Remove a binding
      */
-    void unbind_node(const std::string& name);
+    void unbind(const std::string& name);
 
     /**
      * @brief Check if binding exists

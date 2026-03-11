@@ -1,9 +1,14 @@
 #pragma once
 
 #include "MayaFlux/Core/ProcessingTokens.hpp"
+#include "MayaFlux/Kakshya/NDData/VertexLayout.hpp"
 
 namespace MayaFlux::Nodes {
 class Node;
+
+namespace Network {
+    class NodeNetwork;
+}
 }
 
 namespace MayaFlux::Buffers {
@@ -178,6 +183,45 @@ void update_buffer_with_node_data(
     const std::shared_ptr<Nodes::Node>& node,
     std::span<double> buffer,
     double mix = 1.0);
+
+/**
+ * @struct NetworkGpuData
+ * @brief Result of extracting GPU-ready data from a NodeNetwork operator.
+ */
+struct NetworkGpuData {
+    std::span<const uint8_t> vertex_data; ///< Raw bytes ready for GPU upload
+    size_t vertex_count {}; ///< Number of vertices
+    std::optional<Kakshya::VertexLayout> layout; ///< Vertex layout, if available
+};
+
+/**
+ * @brief Extract GPU geometry data from a NodeNetwork via its GraphicsOperator.
+ *
+ * Returns empty NetworkGpuData if the network has no operator, the operator
+ * is not a GraphicsOperator, or the operator has no vertex data this frame.
+ * Logs at TRACE level for empty/missing data, WARN for operator type mismatch.
+ *
+ * @param network  Network to extract from
+ * @param name     Logical name used in log messages
+ * @return Populated NetworkGpuData, or empty if not available
+ */
+MAYAFLUX_API NetworkGpuData extract_network_gpu_data(
+    const std::shared_ptr<Nodes::Network::NodeNetwork>& network,
+    std::string_view name);
+
+/**
+ * @brief Extract audio buffer data from a NodeNetwork.
+ *
+ * Returns empty span if the network has no audio buffer this cycle.
+ * Intended for networks using OutputMode::AUDIO_SINK.
+ *
+ * @param network  Network to extract from
+ * @param name     Logical name used in log messages
+ * @return Span of double samples, or empty
+ */
+MAYAFLUX_API std::span<const double> extract_network_audio_data(
+    const std::shared_ptr<Nodes::Network::NodeNetwork>& network,
+    std::string_view name);
 
 } // namespace MayaFlux::Buffers
 

@@ -9,7 +9,8 @@ namespace MayaFlux::Buffers {
 void AggregateBindingsProcessor::add_node(
     const std::string& aggregate_name,
     const std::shared_ptr<Nodes::Node>& node,
-    const std::shared_ptr<VKBuffer>& target)
+    const std::shared_ptr<VKBuffer>& target,
+    ProcessingMode mode)
 {
     if (!node) {
         MF_WARN(Journal::Component::Buffers, Journal::Context::BufferProcessing,
@@ -29,6 +30,7 @@ void AggregateBindingsProcessor::add_node(
 
     if (aggregate.nodes.empty()) {
         aggregate.target_buffer = target;
+        aggregate.processing_mode.store(mode, std::memory_order_release);
     } else if (aggregate.target_buffer != target) {
         MF_WARN(Journal::Component::Buffers, Journal::Context::BufferProcessing,
             "Aggregate '{}' already has a different target buffer. Ignoring new target.",
@@ -151,34 +153,29 @@ void AggregateBindingsProcessor::processing_function(const std::shared_ptr<Buffe
             continue;
         }
 
-        for (size_t i = 0; i < aggregate.nodes.size(); i++) {
-            aggregate.staging_data[i] = static_cast<float>(
-                aggregate.nodes[i]->get_last_output());
+        auto& target = aggregate.target_buffer ? aggregate.target_buffer : vk_buffer;
+
+        ProcessingMode mode = aggregate.processing_mode.load(std::memory_order_acquire);
+
+        for (size_t i = 0; i < aggregate.nodes.size(); ++i) {
+            if (!aggregate.nodes[i]) {
+                MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                    "Aggregate '{}' node at index {} is null", aggregate_name, i);
+                aggregate.staging_data[i] = 0.0F;
+                continue;
+            }
+
+            double value = (mode == ProcessingMode::INTERNAL)
+                ? Buffers::extract_single_sample(aggregate.nodes[i])
+                : aggregate.nodes[i]->get_last_output();
+
+            aggregate.staging_data[i] = static_cast<float>(value);
         }
 
         upload_to_gpu(
             aggregate.staging_data.data(),
             aggregate.staging_data.size() * sizeof(float),
-            aggregate.target_buffer);
-    }
-
-    bool attached_is_target = false;
-    for (const auto& [name, aggregate] : m_aggregates) {
-        if (aggregate.target_buffer == vk_buffer) {
-            attached_is_target = true;
-            break;
-        }
-    }
-
-    if (!attached_is_target && !m_aggregates.empty()) {
-        auto& first_aggregate = m_aggregates.begin()->second;
-
-        if (!first_aggregate.nodes.empty()) {
-            upload_to_gpu(
-                first_aggregate.staging_data.data(),
-                first_aggregate.staging_data.size() * sizeof(float),
-                vk_buffer);
-        }
+            target);
     }
 }
 

@@ -6,6 +6,8 @@ namespace MayaFlux::Nodes::GpuSync {
 
 GeometryWriterNode::GeometryWriterNode(uint32_t initial_capacity)
 {
+    m_node_capability = NodeCapability::STRUCTURED;
+
     if (initial_capacity > 0 && m_vertex_stride == 0) {
         m_vertex_stride = sizeof(glm::vec3);
     }

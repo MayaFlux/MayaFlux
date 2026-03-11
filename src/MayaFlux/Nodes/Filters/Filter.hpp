@@ -102,6 +102,10 @@ public:
         , GpuVectorData(gpu_data)
     {
     }
+
+    friend class Filter;
+
+    std::vector<float> gpu_float_buffer;
 };
 
 /**
@@ -482,6 +486,16 @@ public:
      * @return Reference to the last FilterContext object
      */
     NodeContext& get_last_context() override;
+
+    void set_gpu_compatible(bool compatible) override
+    {
+        m_gpu_compatible = compatible;
+        if (compatible) {
+            m_node_capability |= NodeCapability::VECTOR;
+        } else {
+            m_node_capability &= ~NodeCapability::VECTOR;
+        }
+    }
 
 protected:
     /**

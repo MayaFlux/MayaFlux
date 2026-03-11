@@ -139,6 +139,10 @@ public:
     {
         type_id = typeid(LogicContextGpu).name();
     }
+
+    friend class Logic;
+
+    std::vector<float> gpu_float_buffer;
 };
 
 /**
@@ -544,6 +548,16 @@ public:
      * the node's state at the time of the last output generation.
      */
     NodeContext& get_last_context() override;
+
+    void set_gpu_compatible(bool compatible) override
+    {
+        m_gpu_compatible = compatible;
+        if (compatible) {
+            m_node_capability |= NodeCapability::VECTOR;
+        } else {
+            m_node_capability &= ~NodeCapability::VECTOR;
+        }
+    }
 
 protected:
     /**

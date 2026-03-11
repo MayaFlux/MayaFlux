@@ -483,6 +483,12 @@ void Logic::update_context(double value)
         m_context_gpu.m_threshold = m_threshold;
         m_context_gpu.m_edge_detected = m_edge_detected;
         m_context_gpu.m_edge_type = m_edge_type;
+
+        m_context_gpu.gpu_float_buffer.resize(m_history_count);
+        for (size_t i = 0; i < m_history_count; ++i)
+            m_context_gpu.gpu_float_buffer[i] = m_history_linear[i] ? 1.0F : 0.0F;
+
+        m_context_gpu.m_gpu_data = std::span<const float>(m_context_gpu.gpu_float_buffer);
     } else {
         m_context.value = value;
         m_context.m_mode = m_mode;
