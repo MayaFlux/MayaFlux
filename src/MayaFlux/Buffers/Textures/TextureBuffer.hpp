@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MayaFlux/Buffers/VKBuffer.hpp"
+#include "MayaFlux/Nodes/Graphics/VertexSpec.hpp"
 #include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
 
 namespace MayaFlux::Buffers {
@@ -128,19 +129,7 @@ public:
     // Advanced: Custom Geometry
     // =========================================================================
 
-    /**
-     * @brief Use custom vertex geometry instead of default quad
-     * @param vertices Custom quad vertices (must be 4 vertices with position + texcoord)
-     *
-     * For power users who want non-rectangular meshes or different vertex layouts.
-     * Marks geometry as dirty.
-     */
-    struct QuadVertex {
-        glm::vec3 position;
-        glm::vec2 texcoord;
-    };
-
-    void set_custom_vertices(const std::vector<QuadVertex>& vertices);
+    void set_custom_vertices(const std::vector<Nodes::TextureQuadVertex>& vertices);
 
     /**
      * @brief Reset to default fullscreen quad

@@ -15,7 +15,21 @@ struct ShaderBinding {
     vk::DescriptorType type = vk::DescriptorType::eStorageBuffer;
 
     ShaderBinding() = default;
-    ShaderBinding(uint32_t s, uint32_t b, vk::DescriptorType t = vk::DescriptorType::eStorageBuffer)
+
+    /**
+     * @brief Construct with semantic role — preferred public API.
+     */
+    ShaderBinding(uint32_t s, uint32_t b, Portal::Graphics::DescriptorRole role = Portal::Graphics::DescriptorRole::STORAGE)
+        : set(s)
+        , binding(b)
+        , type(to_vk_descriptor_type(role))
+    {
+    }
+
+    /**
+     * @brief Construct with explicit Vulkan type — internal / advanced use only.
+     */
+    ShaderBinding(uint32_t s, uint32_t b, vk::DescriptorType t)
         : set(s)
         , binding(b)
         , type(t)

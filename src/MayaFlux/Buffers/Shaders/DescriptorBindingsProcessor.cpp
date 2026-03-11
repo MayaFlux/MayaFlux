@@ -33,7 +33,7 @@ void DescriptorBindingsProcessor::bind_scalar_node(
     const std::shared_ptr<Nodes::Node>& node,
     const std::string& descriptor_name,
     uint32_t set,
-    vk::DescriptorType type,
+    Portal::Graphics::DescriptorRole role,
     ProcessingMode mode)
 {
     if (!node) {
@@ -50,7 +50,7 @@ void DescriptorBindingsProcessor::bind_scalar_node(
 
     const auto& binding_config = m_config.bindings[descriptor_name];
 
-    auto gpu_buffer = create_descriptor_buffer(sizeof(float), type);
+    auto gpu_buffer = create_descriptor_buffer(sizeof(float), role);
 
     auto [it, inserted] = m_bindings.try_emplace(name);
     auto& binding = it->second;
@@ -59,7 +59,7 @@ void DescriptorBindingsProcessor::bind_scalar_node(
     binding.descriptor_name = descriptor_name;
     binding.set_index = set;
     binding.binding_index = binding_config.binding;
-    binding.type = type;
+    binding.role = role;
     binding.binding_type = BindingType::SCALAR;
     binding.gpu_buffer = gpu_buffer;
     binding.buffer_offset = 0;
@@ -80,7 +80,7 @@ void DescriptorBindingsProcessor::bind_vector_node(
     const std::shared_ptr<Nodes::Node>& node,
     const std::string& descriptor_name,
     uint32_t set,
-    vk::DescriptorType type,
+    Portal::Graphics::DescriptorRole role,
     ProcessingMode mode)
 {
     if (!node) {
@@ -98,7 +98,7 @@ void DescriptorBindingsProcessor::bind_vector_node(
     const auto& binding_config = m_config.bindings[descriptor_name];
 
     size_t initial_size = 4096 * sizeof(float);
-    auto gpu_buffer = create_descriptor_buffer(initial_size, type);
+    auto gpu_buffer = create_descriptor_buffer(initial_size, role);
 
     auto [it, inserted] = m_bindings.try_emplace(name);
     auto& binding = it->second;
@@ -107,7 +107,7 @@ void DescriptorBindingsProcessor::bind_vector_node(
     binding.descriptor_name = descriptor_name;
     binding.set_index = set;
     binding.binding_index = binding_config.binding;
-    binding.type = type;
+    binding.role = role;
     binding.binding_type = BindingType::VECTOR;
     binding.gpu_buffer = gpu_buffer;
     binding.buffer_offset = 0;
@@ -128,7 +128,7 @@ void DescriptorBindingsProcessor::bind_matrix_node(
     const std::shared_ptr<Nodes::Node>& node,
     const std::string& descriptor_name,
     uint32_t set,
-    vk::DescriptorType type,
+    Portal::Graphics::DescriptorRole role,
     ProcessingMode mode)
 {
     if (!node) {
@@ -146,7 +146,7 @@ void DescriptorBindingsProcessor::bind_matrix_node(
     const auto& binding_config = m_config.bindings[descriptor_name];
 
     size_t initial_size = static_cast<long>(1024) * 1024 * sizeof(float);
-    auto gpu_buffer = create_descriptor_buffer(initial_size, type);
+    auto gpu_buffer = create_descriptor_buffer(initial_size, role);
 
     auto [it, inserted] = m_bindings.try_emplace(name);
     auto& binding = it->second;
@@ -155,7 +155,7 @@ void DescriptorBindingsProcessor::bind_matrix_node(
     binding.descriptor_name = descriptor_name;
     binding.set_index = set;
     binding.binding_index = binding_config.binding;
-    binding.type = type;
+    binding.role = role;
     binding.binding_type = BindingType::MATRIX;
     binding.gpu_buffer = gpu_buffer;
     binding.buffer_offset = 0;
@@ -176,7 +176,7 @@ void DescriptorBindingsProcessor::bind_structured_node(
     const std::shared_ptr<Nodes::Node>& node,
     const std::string& descriptor_name,
     uint32_t set,
-    vk::DescriptorType type,
+    Portal::Graphics::DescriptorRole role,
     ProcessingMode mode)
 {
     if (!node) {
@@ -194,7 +194,7 @@ void DescriptorBindingsProcessor::bind_structured_node(
     const auto& binding_config = m_config.bindings[descriptor_name];
 
     size_t initial_size = static_cast<long>(1024) * 64;
-    auto gpu_buffer = create_descriptor_buffer(initial_size, type);
+    auto gpu_buffer = create_descriptor_buffer(initial_size, role);
 
     auto [it, inserted] = m_bindings.try_emplace(name);
     auto& binding = it->second;
@@ -203,7 +203,7 @@ void DescriptorBindingsProcessor::bind_structured_node(
     binding.descriptor_name = descriptor_name;
     binding.set_index = set;
     binding.binding_index = binding_config.binding;
-    binding.type = type;
+    binding.role = role;
     binding.binding_type = BindingType::STRUCTURED;
     binding.gpu_buffer = gpu_buffer;
     binding.buffer_offset = 0;
@@ -223,7 +223,7 @@ void DescriptorBindingsProcessor::bind_audio_buffer(
     const std::shared_ptr<AudioBuffer>& buffer,
     const std::string& descriptor_name,
     uint32_t set,
-    vk::DescriptorType type)
+    Portal::Graphics::DescriptorRole role)
 {
     if (!buffer) {
         MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
@@ -239,7 +239,7 @@ void DescriptorBindingsProcessor::bind_audio_buffer(
 
     const auto& binding_config = m_config.bindings[descriptor_name];
     size_t initial_size = buffer->get_num_samples() * sizeof(float);
-    auto gpu_buffer = create_descriptor_buffer(initial_size, type);
+    auto gpu_buffer = create_descriptor_buffer(initial_size, role);
 
     auto [it, inserted] = m_bindings.try_emplace(name);
     auto& binding = it->second;
@@ -248,7 +248,7 @@ void DescriptorBindingsProcessor::bind_audio_buffer(
     binding.descriptor_name = descriptor_name;
     binding.set_index = set;
     binding.binding_index = binding_config.binding;
-    binding.type = type;
+    binding.role = role;
     binding.binding_type = BindingType::VECTOR;
     binding.source_type = SourceType::AUDIO_BUFFER;
     binding.gpu_buffer = gpu_buffer;
@@ -268,7 +268,7 @@ void DescriptorBindingsProcessor::bind_host_vk_buffer(
     const std::shared_ptr<VKBuffer>& buffer,
     const std::string& descriptor_name,
     uint32_t set,
-    vk::DescriptorType type)
+    Portal::Graphics::DescriptorRole role)
 {
     if (!buffer) {
         MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
@@ -292,7 +292,7 @@ void DescriptorBindingsProcessor::bind_host_vk_buffer(
     }
 
     const auto& binding_config = m_config.bindings[descriptor_name];
-    auto gpu_buffer = create_descriptor_buffer(buffer->get_size_bytes(), type);
+    auto gpu_buffer = create_descriptor_buffer(buffer->get_size_bytes(), role);
 
     auto [it, inserted] = m_bindings.try_emplace(name);
     auto& binding = it->second;
@@ -301,7 +301,7 @@ void DescriptorBindingsProcessor::bind_host_vk_buffer(
     binding.descriptor_name = descriptor_name;
     binding.set_index = set;
     binding.binding_index = binding_config.binding;
-    binding.type = type;
+    binding.role = role;
     binding.binding_type = BindingType::VECTOR;
     binding.source_type = SourceType::HOST_VK_BUFFER;
     binding.gpu_buffer = gpu_buffer;
@@ -321,7 +321,7 @@ void DescriptorBindingsProcessor::bind_network(
     const std::shared_ptr<Nodes::Network::NodeNetwork>& network,
     const std::string& descriptor_name,
     uint32_t set,
-    vk::DescriptorType type)
+    Portal::Graphics::DescriptorRole role)
 {
     if (!network) {
         MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
@@ -366,7 +366,7 @@ void DescriptorBindingsProcessor::bind_network(
     }
 
     const auto& binding_config = m_config.bindings[descriptor_name];
-    auto gpu_buffer = create_descriptor_buffer(initial_size, type);
+    auto gpu_buffer = create_descriptor_buffer(initial_size, role);
 
     auto [it, inserted] = m_bindings.try_emplace(name);
     auto& binding = it->second;
@@ -375,7 +375,7 @@ void DescriptorBindingsProcessor::bind_network(
     binding.descriptor_name = descriptor_name;
     binding.set_index = set;
     binding.binding_index = binding_config.binding;
-    binding.type = type;
+    binding.role = role;
     binding.binding_type = binding_type;
     binding.source_type = resolved;
     binding.gpu_buffer = gpu_buffer;
@@ -469,7 +469,7 @@ void DescriptorBindingsProcessor::execute_shader(const std::shared_ptr<VKBuffer>
         if (!found) {
             bindings_list.push_back({ .set = binding.set_index,
                 .binding = binding.binding_index,
-                .type = binding.type,
+                .type = to_vk_descriptor_type(binding.role),
                 .buffer_info = vk::DescriptorBufferInfo {
                     binding.gpu_buffer->get_buffer(),
                     binding.buffer_offset,
@@ -653,11 +653,11 @@ void DescriptorBindingsProcessor::ensure_buffer_capacity(
 
 std::shared_ptr<VKBuffer> DescriptorBindingsProcessor::create_descriptor_buffer(
     size_t size,
-    vk::DescriptorType type)
+    Portal::Graphics::DescriptorRole role)
 {
     VKBuffer::Usage usage {};
 
-    if (type == vk::DescriptorType::eUniformBuffer) {
+    if (role == Portal::Graphics::DescriptorRole::UNIFORM) {
         usage = VKBuffer::Usage::UNIFORM;
     } else { // SSBO
         usage = VKBuffer::Usage::COMPUTE;

@@ -25,11 +25,11 @@ class AudioBuffer;
  *
  *   // Bind scalar node to UBO
  *   processor->bind_scalar_node("frequency", freq_node,
- *                                "params", 0, vk::DescriptorType::eUniformBuffer);
+ *                                "params", 0, Portal::Graphics::DescriptorRole::UNIFORM);
  *
  *   // Bind vector node to SSBO
  *   processor->bind_vector_node("spectrum", spectrum_node,
- *                                "spectrum_data", 0, vk::DescriptorType::eStorageBuffer);
+ *                                "spectrum_data", 0, Portal::Graphics::DescriptorRole::STORAGE);
  */
 class MAYAFLUX_API DescriptorBindingsProcessor : public ShaderProcessor {
 public:
@@ -60,7 +60,7 @@ public:
         std::string descriptor_name; ///< Matches ShaderProcessor binding name
         uint32_t set_index;
         uint32_t binding_index;
-        vk::DescriptorType type; ///< UBO or SSBO
+        Portal::Graphics::DescriptorRole role; ///< UBO or SSBO
         BindingType binding_type;
         SourceType source_type { SourceType::NODE };
         std::shared_ptr<VKBuffer> gpu_buffer; ///< UBO/SSBO backing storage
@@ -87,7 +87,7 @@ public:
      * @param node Node to read from
      * @param descriptor_name Name in shader config bindings
      * @param set Descriptor set index
-     * @param type UBO or SSBO
+     * @param role UBO or SSBO
      * @param mode Processing mode (default: INTERNAL)
      */
     void bind_scalar_node(
@@ -95,7 +95,7 @@ public:
         const std::shared_ptr<Nodes::Node>& node,
         const std::string& descriptor_name,
         uint32_t set,
-        vk::DescriptorType type = vk::DescriptorType::eUniformBuffer,
+        Portal::Graphics::DescriptorRole role = Portal::Graphics::DescriptorRole::UNIFORM,
         ProcessingMode mode = ProcessingMode::INTERNAL);
 
     /**
@@ -104,7 +104,7 @@ public:
      * @param node Node that creates VectorContext
      * @param descriptor_name Name in shader config bindings
      * @param set Descriptor set index
-     * @param type Typically eStorageBuffer for arrays
+     * @param role Typically STORAGE for arrays
      * @param mode Processing mode (default: INTERNAL)
      */
     void bind_vector_node(
@@ -112,7 +112,7 @@ public:
         const std::shared_ptr<Nodes::Node>& node,
         const std::string& descriptor_name,
         uint32_t set,
-        vk::DescriptorType type = vk::DescriptorType::eStorageBuffer,
+        Portal::Graphics::DescriptorRole role = Portal::Graphics::DescriptorRole::STORAGE,
         ProcessingMode mode = ProcessingMode::INTERNAL);
 
     /**
@@ -123,7 +123,7 @@ public:
         const std::shared_ptr<Nodes::Node>& node,
         const std::string& descriptor_name,
         uint32_t set,
-        vk::DescriptorType type = vk::DescriptorType::eStorageBuffer,
+        Portal::Graphics::DescriptorRole role = Portal::Graphics::DescriptorRole::STORAGE,
         ProcessingMode mode = ProcessingMode::INTERNAL);
 
     /**
@@ -132,14 +132,14 @@ public:
      * @param node Node that creates context with GpuStructuredData
      * @param descriptor_name Name in shader config bindings
      * @param set Descriptor set index
-     * @param type Typically eStorageBuffer for structured arrays
+     * @param role Typically STORAGE for structured arrays
      */
     void bind_structured_node(
         const std::string& name,
         const std::shared_ptr<Nodes::Node>& node,
         const std::string& descriptor_name,
         uint32_t set,
-        vk::DescriptorType type = vk::DescriptorType::eStorageBuffer,
+        Portal::Graphics::DescriptorRole role = Portal::Graphics::DescriptorRole::STORAGE,
         ProcessingMode mode = ProcessingMode::INTERNAL);
 
     /**
@@ -152,14 +152,14 @@ public:
      * @param buffer      AudioBuffer to read from
      * @param descriptor_name Name in shader config bindings
      * @param set         Descriptor set index
-     * @param type        Descriptor type (default: eStorageBuffer)
+     * @param role        Descriptor role (default: STORAGE)
      */
     void bind_audio_buffer(
         const std::string& name,
         const std::shared_ptr<AudioBuffer>& buffer,
         const std::string& descriptor_name,
         uint32_t set,
-        vk::DescriptorType type = vk::DescriptorType::eStorageBuffer);
+        Portal::Graphics::DescriptorRole role = Portal::Graphics::DescriptorRole::STORAGE);
 
     /**
      * @brief Bind a host-visible VKBuffer as a descriptor source.
@@ -172,14 +172,14 @@ public:
      * @param buffer      Host-visible VKBuffer to read from
      * @param descriptor_name Name in shader config bindings
      * @param set         Descriptor set index
-     * @param type        Descriptor type (default: eStorageBuffer)
+     * @param role        Descriptor role (default: STORAGE)
      */
     void bind_host_vk_buffer(
         const std::string& name,
         const std::shared_ptr<VKBuffer>& buffer,
         const std::string& descriptor_name,
         uint32_t set,
-        vk::DescriptorType type = vk::DescriptorType::eStorageBuffer);
+        Portal::Graphics::DescriptorRole role = Portal::Graphics::DescriptorRole::STORAGE);
 
     /**
      * @brief Bind a NodeNetwork to a descriptor.
@@ -194,14 +194,14 @@ public:
      * @param network         NodeNetwork to read from
      * @param descriptor_name Name in shader config bindings
      * @param set             Descriptor set index
-     * @param type            Descriptor type (default: eStorageBuffer)
+     * @param role            Descriptor role (default: STORAGE)
      */
     void bind_network(
         const std::string& name,
         const std::shared_ptr<Nodes::Network::NodeNetwork>& network,
         const std::string& descriptor_name,
         uint32_t set,
-        vk::DescriptorType type = vk::DescriptorType::eStorageBuffer);
+        Portal::Graphics::DescriptorRole role = Portal::Graphics::DescriptorRole::STORAGE);
 
     /**
      * @brief Remove a binding
@@ -273,7 +273,7 @@ private:
      */
     std::shared_ptr<VKBuffer> create_descriptor_buffer(
         size_t size,
-        vk::DescriptorType type);
+        Portal::Graphics::DescriptorRole role);
 };
 
 } // namespace MayaFlux::Buffers
