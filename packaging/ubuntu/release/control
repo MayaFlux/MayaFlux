@@ -9,6 +9,8 @@ Build-Depends:
     pkg-config,
     g++-15,
     clang-21,
+    doxygen,
+    graphviz,
     llvm-21,
     llvm-21-dev,
     libclang-21-dev,
@@ -34,6 +36,9 @@ Build-Depends:
     libavcodec-dev,
     libavformat-dev,
     libswscale-dev,
+    libavdevice-dev,
+    libhidapi-dev,
+    librtmidi-dev,
     git
 Standards-Version: 4.7.0
 Homepage: https://mayaflux.org
@@ -73,7 +78,10 @@ Depends:
     librtaudio-dev,
     libavcodec-dev,
     libavformat-dev,
-    libswscale-dev
+    libswscale-dev,
+    libavdevice-dev,
+    libhidapi-dev,
+    librtmidi-dev
 Suggests:
     mayaflux-doc
 Description: Modern C++ framework for real-time graphics and audio with JIT

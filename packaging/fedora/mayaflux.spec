@@ -1,5 +1,5 @@
 Name:           mayaflux
-Version:        0.1.2
+Version:        0.2.0
 Release:        1%{?dist}
 Summary:        Modern C++ framework for real-time graphics and audio with JIT compilation
 
@@ -41,6 +41,8 @@ BuildRequires:  gtest-devel
 BuildRequires:  libshaderc-devel
 BuildRequires:  glslc
 BuildRequires:  wayland-devel
+BuildRequires:  hidapi-devel
+BuildRequires:  rtmidi-devel
 BuildRequires:  git
 
 # Runtime = BuildRequires (all needed for live coding/JIT)
@@ -72,6 +74,8 @@ Requires:       gtest-devel
 Requires:       libshaderc-devel
 Requires:       glslc
 Requires:       wayland-devel
+Requires:       hidapi-devel
+Requires:       rtmidi-devel
 
 Provides:       mayaflux = %{version}-%{release}
 Conflicts:      mayaflux-dev
@@ -144,7 +148,7 @@ EOF
 %postun -p /sbin/ldconfig
 
 %changelog
-* Sun Jan 18 2026 MayaFlux Collective <mayafluxcollective@proton.me> - 0.1.2-1
+* Wed Mar 11 2026 MayaFlux Collective <mayafluxcollective@proton.me> - 0.2.0-1
 - Initial stable release
 - Full source build with C++23 support
 - All development dependencies included for JIT/live coding
