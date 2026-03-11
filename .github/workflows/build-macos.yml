@@ -217,6 +217,7 @@ jobs:
           echo "Installation completed to dist_staging/"
 
       - name: Verify version file
+        if: ${{ inputs.create_distribution != false }}
         shell: bash
         run: |
           echo "=== Version Metadata ==="
@@ -249,9 +250,9 @@ jobs:
           find dist_staging/share/MayaFlux/runtime -type f | head -5 || echo "No runtime files found"
 
       - name: Copy distribution files
+        if: ${{ inputs.create_distribution != false }}
         shell: bash
         run: |
-          cp .github/workflows/distribution/macos/README.md dist_staging/
           cp .github/workflows/distribution/macos/verify_components.sh dist_staging/
           chmod +x dist_staging/verify_components.sh
 

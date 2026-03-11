@@ -331,7 +331,7 @@ jobs:
       #   run: ctest --output-on-failure --parallel 4
 
       - name: Install to staging directory
-        # if: ${{ inputs.create_distribution != false }}
+        if: ${{ inputs.create_distribution != false }}
         shell: pwsh
         run: |
           cmake --install build --prefix dist_staging --config ${{ env.BUILD_TYPE }}
@@ -348,7 +348,7 @@ jobs:
           fi
 
       - name: Bundle runtime DLLs
-        # if: ${{ inputs.create_distribution != false }}
+        if: ${{ inputs.create_distribution != false }}
         shell: pwsh
         run: |
           Write-Host "=== Bundling Runtime DLLs ===" -ForegroundColor Magenta
@@ -378,7 +378,7 @@ jobs:
           Write-Host "✓ DLLs bundled: $dllCount files" -ForegroundColor Green
 
       - name: Copy distribution assets
-        # if: ${{ inputs.create_distribution != false }}
+        if: ${{ inputs.create_distribution != false }}
         shell: pwsh
         run: |
           Write-Host "=== Copying Distribution Assets ===" -ForegroundColor Magenta
@@ -471,6 +471,7 @@ jobs:
           retention-days: 30
 
       - name: Display build summary
+        if: ${{ inputs.create_distribution != false }}
         shell: pwsh
         run: |
           Write-Host "`n" -ForegroundColor White
