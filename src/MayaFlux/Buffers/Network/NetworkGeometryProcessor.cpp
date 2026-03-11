@@ -2,7 +2,6 @@
 
 #include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
 #include "MayaFlux/Nodes/Network/NodeNetwork.hpp"
-#include "MayaFlux/Nodes/Network/Operators/GraphicsOperator.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
@@ -119,25 +118,14 @@ void NetworkGeometryProcessor::processing_function(const std::shared_ptr<Buffer>
             continue;
         }
 
-        auto* operator_ptr = binding.network->get_operator();
-        if (!operator_ptr) {
-            MF_RT_WARN(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-                "Network '{}' has no operator", name);
+        auto gpu_data = extract_network_gpu_data(binding.network, name);
+        if (gpu_data.vertex_data.empty()) {
+            if (binding.gpu_vertex_buffer->is_host_visible())
+                binding.gpu_vertex_buffer->clear();
             continue;
         }
 
-        auto* graphics_op = dynamic_cast<Nodes::Network::GraphicsOperator*>(operator_ptr);
-        if (!graphics_op) {
-            MF_RT_WARN(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-                "Network '{}' operator '{}' is not a GraphicsOperator",
-                name, operator_ptr->get_type_name());
-            continue;
-        }
-
-        auto vertex_data = graphics_op->get_vertex_data();
-        size_t vertex_count = graphics_op->get_vertex_count();
-
-        if (vertex_data.empty() || vertex_count == 0) {
+        if (gpu_data.vertex_data.empty() || gpu_data.vertex_count == 0) {
             if (binding.gpu_vertex_buffer->is_host_visible()) {
                 binding.gpu_vertex_buffer->clear();
             }
@@ -146,11 +134,11 @@ void NetworkGeometryProcessor::processing_function(const std::shared_ptr<Buffer>
             continue;
         }
 
-        size_t required_size = vertex_data.size();
+        size_t required_size = gpu_data.vertex_data.size();
         size_t available_size = binding.gpu_vertex_buffer->get_size_bytes();
 
         if (required_size > available_size) {
-            auto new_size = static_cast<size_t>(required_size * 1.5F);
+            auto new_size = static_cast<size_t>((float)required_size * 1.5F);
 
             MF_RT_TRACE(Journal::Component::Buffers, Journal::Context::BufferProcessing,
                 "Network '{}' growing: resizing GPU buffer from {} → {} bytes",
@@ -166,18 +154,18 @@ void NetworkGeometryProcessor::processing_function(const std::shared_ptr<Buffer>
         }
 
         upload_to_gpu(
-            vertex_data.data(),
-            vertex_data.size(),
+            gpu_data.vertex_data.data(),
+            gpu_data.vertex_data.size(),
             binding.gpu_vertex_buffer,
             binding.staging_buffer);
 
-        auto layout = graphics_op->get_vertex_layout();
+        auto layout = gpu_data.layout;
 
-        binding.gpu_vertex_buffer->set_vertex_layout(layout);
+        binding.gpu_vertex_buffer->set_vertex_layout(layout.value());
 
         MF_RT_TRACE(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-            "Uploaded {} vertices from network '{}' ({} bytes, {} operator)",
-            vertex_count, name, vertex_data.size(), operator_ptr->get_type_name());
+            "Uploaded {} vertices from network '{}' ({} bytes)",
+            gpu_data.vertex_count, name, gpu_data.vertex_data.size());
     }
 }
 
