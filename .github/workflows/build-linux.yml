@@ -112,6 +112,7 @@ jobs:
           cmake --install build --prefix dist_staging
 
       - name: Verify version file
+        if: ${{ inputs.create_distribution != false }}
         run: |
           echo "=== Version Metadata ==="
           if [ -f "dist_staging/share/MayaFlux/.version" ]; then
