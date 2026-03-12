@@ -1,666 +1,273 @@
 #include "ExtractionHelper.hpp"
 
-#include "MayaFlux/Yantra/Analyzers/EnergyAnalyzer.hpp"
-#include "MayaFlux/Yantra/Analyzers/StatisticalAnalyzer.hpp"
-
 #include "MayaFlux/Kinesis/Discrete/Analysis.hpp"
-
-namespace {
-
-/**
- * @brief Remove duplicate indices from extracted window positions
- * @param window_positions Vector of [start, end] pairs
- * @return Merged non-overlapping regions
- */
-std::vector<std::pair<size_t, size_t>> merge_overlapping_windows(
-    const std::vector<std::pair<size_t, size_t>>& window_positions)
-{
-    if (window_positions.empty()) {
-        return {};
-    }
-
-    auto sorted_windows = window_positions;
-    std::ranges::sort(sorted_windows, [](const auto& a, const auto& b) {
-        return a.first < b.first;
-    });
-
-    std::vector<std::pair<size_t, size_t>> merged;
-    merged.push_back(sorted_windows[0]);
-
-    for (size_t i = 1; i < sorted_windows.size(); ++i) {
-        auto& last_merged = merged.back();
-        const auto& current = sorted_windows[i];
-
-        if (current.first <= last_merged.second) {
-            last_merged.second = std::max(last_merged.second, current.second);
-        } else {
-
-            merged.push_back(current);
-        }
-    }
-
-    return merged;
-}
-}
+#include "MayaFlux/Kinesis/Discrete/Extract.hpp"
 
 namespace MayaFlux::Yantra {
 
-std::vector<std::vector<double>> extract_high_energy_data(
-    const std::vector<std::span<const double>>& data,
+namespace D = Kinesis::Discrete;
+
+std::vector<std::vector<double>> extract_high_energy(
+    const std::vector<std::span<const double>>& channels,
     double energy_threshold,
     uint32_t window_size,
     uint32_t hop_size)
 {
     std::vector<std::vector<double>> result;
-    result.reserve(data.size());
-
-    for (const auto& channel : data) {
-        if (channel.empty()) {
+    result.reserve(channels.size());
+    for (const auto& ch : channels) {
+        if (ch.empty()) {
             result.emplace_back();
             continue;
         }
-
-        uint32_t effective_window_size = std::min(window_size, static_cast<uint32_t>(channel.size()));
-        uint32_t effective_hop_size = std::min(hop_size, effective_window_size / 2);
-        if (effective_hop_size == 0)
-            effective_hop_size = 1;
-
-        if (!validate_extraction_parameters(effective_window_size, effective_hop_size, channel.size())) {
-            result.emplace_back();
-            continue;
+        const uint32_t w = std::min(window_size, static_cast<uint32_t>(ch.size()));
+        const uint32_t h = std::max(1U, std::min(hop_size, w / 2));
+        const auto energy = D::rms(ch, D::num_windows(ch.size(), w, h), h, w);
+        std::vector<size_t> starts;
+        for (size_t i = 0; i < energy.size(); ++i) {
+            if (energy[i] > energy_threshold)
+                starts.push_back(i * h);
         }
-
-        try {
-            auto energy_analyzer = std::make_shared<EnergyAnalyzer<std::vector<Kakshya::DataVariant>, Eigen::VectorXd>>(
-                effective_window_size, effective_hop_size);
-            energy_analyzer->set_parameter("method", "rms");
-
-            std::vector<Kakshya::DataVariant> data_variant { Kakshya::DataVariant { std::vector<double>(channel.begin(), channel.end()) } };
-            EnergyAnalysis energy_result = energy_analyzer->analyze_energy(data_variant);
-
-            if (energy_result.channels.empty() || energy_result.channels[0].energy_values.empty() || energy_result.channels[0].window_positions.empty()) {
-                result.emplace_back();
-                continue;
-            }
-
-            std::vector<std::pair<size_t, size_t>> qualifying_windows;
-            const auto& ch_energy = energy_result.channels[0].energy_values;
-            const auto& ch_windows = energy_result.channels[0].window_positions;
-            for (size_t i = 0; i < ch_energy.size(); ++i) {
-                if (ch_energy[i] > energy_threshold) {
-                    auto [start_idx, end_idx] = ch_windows[i];
-                    if (start_idx < channel.size() && end_idx <= channel.size() && start_idx < end_idx) {
-                        qualifying_windows.emplace_back(start_idx, end_idx);
-                    }
-                }
-            }
-
-            auto merged_windows = merge_overlapping_windows(qualifying_windows);
-
-            std::vector<double> extracted_data;
-            for (const auto& [start_idx, end_idx] : merged_windows) {
-                std::ranges::copy(channel.subspan(start_idx, end_idx - start_idx),
-                    std::back_inserter(extracted_data));
-            }
-
-            result.push_back(std::move(extracted_data));
-        } catch (const std::exception&) {
-            result.emplace_back();
-        }
+        result.push_back(D::slice_intervals(ch,
+            D::merge_intervals(D::intervals_from_window_starts(starts, w, ch.size()))));
     }
-
     return result;
 }
 
-std::vector<std::vector<double>> extract_peak_data(
-    const std::vector<std::span<const double>>& data,
+std::vector<std::vector<double>> extract_peaks(
+    const std::vector<std::span<const double>>& channels,
     double threshold,
     double min_distance,
     uint32_t region_size)
 {
     std::vector<std::vector<double>> result;
-    result.reserve(data.size());
-
-    for (const auto& channel : data) {
-        if (channel.size() < 3) {
+    result.reserve(channels.size());
+    for (const auto& ch : channels) {
+        if (ch.size() < 3) {
             result.emplace_back();
             continue;
         }
 
-        try {
-            auto analyzer = std::make_shared<EnergyAnalyzer<std::vector<Kakshya::DataVariant>, Eigen::VectorXd>>(
-                512, 256);
-            analyzer->set_parameter("method", "peak");
-            analyzer->set_parameter("threshold", threshold);
-
-            std::vector<Kakshya::DataVariant> data_variant {
-                Kakshya::DataVariant { std::vector<double>(channel.begin(), channel.end()) }
-            };
-            EnergyAnalysis energy_result = analyzer->analyze_energy(data_variant);
-
-            if (energy_result.channels.empty()) {
-                result.emplace_back();
-                continue;
-            }
-
-            const auto& peak_positions = energy_result.channels[0].event_positions;
-
-            if (peak_positions.empty()) {
-                result.emplace_back();
-                continue;
-            }
-
-            std::vector<size_t> filtered_positions;
-            size_t last_position = 0;
-
-            for (size_t pos : peak_positions) {
-                if (filtered_positions.empty() || (pos - last_position) >= static_cast<size_t>(min_distance)) {
-                    filtered_positions.push_back(pos);
-                    last_position = pos;
-                }
-            }
-
-            std::vector<double> extracted_data;
-            for (size_t peak_pos : filtered_positions) {
-                const size_t half_region = region_size / 2;
-                const size_t start_idx = (peak_pos >= half_region) ? peak_pos - half_region : 0;
-                const size_t end_idx = std::min(peak_pos + half_region, channel.size());
-
-                if (start_idx < channel.size() && end_idx <= channel.size() && start_idx < end_idx) {
-                    std::ranges::copy(channel.subspan(start_idx, end_idx - start_idx),
-                        std::back_inserter(extracted_data));
-                }
-            }
-
-            result.push_back(std::move(extracted_data));
-        } catch (const std::exception&) {
+        const auto [lo, hi] = std::ranges::minmax_element(ch);
+        if (*hi - *lo < std::numeric_limits<double>::epsilon()) {
             result.emplace_back();
+            continue;
         }
+        const auto pos = D::peak_positions(ch, threshold, static_cast<size_t>(min_distance));
+        result.push_back(D::slice_intervals(ch,
+            D::merge_intervals(D::regions_around_positions(pos, region_size / 2, ch.size()))));
     }
 
     return result;
 }
 
-std::vector<std::vector<double>> extract_outlier_data(
-    const std::vector<std::span<const double>>& data,
+std::vector<std::vector<double>> extract_outliers(
+    const std::vector<std::span<const double>>& channels,
     double std_dev_threshold,
     uint32_t window_size,
     uint32_t hop_size)
 {
     std::vector<std::vector<double>> result;
-    result.reserve(data.size());
+    result.reserve(channels.size());
+    for (const auto& ch : channels) {
+        if (ch.empty()) {
+            result.emplace_back();
+            continue;
+        }
+        const uint32_t w = std::min(window_size, static_cast<uint32_t>(ch.size()));
+        const uint32_t h = std::max(1U, std::min(hop_size, w / 2));
+        const size_t nw = D::num_windows(ch.size(), w, h);
+        const auto means = D::mean(ch, nw, h, w);
 
-    for (const auto& channel : data) {
-        if (channel.empty()) {
+        if (means.empty()) {
             result.emplace_back();
             continue;
         }
 
-        uint32_t effective_window_size = std::min(window_size, static_cast<uint32_t>(channel.size()));
-        uint32_t effective_hop_size = std::min(hop_size, effective_window_size / 2);
-        if (effective_hop_size == 0)
-            effective_hop_size = 1;
+        double gm = 0.0;
+        for (double v : means)
+            gm += v;
+        gm /= static_cast<double>(means.size());
 
-        if (!validate_extraction_parameters(effective_window_size, effective_hop_size, channel.size())) {
+        double var = 0.0;
+        for (double v : means)
+            var += (v - gm) * (v - gm);
+        const double gs = std::sqrt(var / static_cast<double>(means.size()));
+
+        if (gs <= 0.0) {
             result.emplace_back();
             continue;
         }
 
-        try {
-            auto stat_analyzer = std::make_shared<StatisticalAnalyzer<std::vector<Kakshya::DataVariant>, Eigen::VectorXd>>(
-                effective_window_size, effective_hop_size);
-            stat_analyzer->set_parameter("method", "mean");
-
-            std::vector<Kakshya::DataVariant> data_variant { Kakshya::DataVariant { std::vector<double>(channel.begin(), channel.end()) } };
-            ChannelStatistics stat_result = stat_analyzer->analyze_statistics(data_variant).channel_statistics[0];
-
-            if (stat_result.statistical_values.empty() || stat_result.window_positions.empty() || stat_result.stat_std_dev <= 0.0) {
-                result.emplace_back();
-                continue;
-            }
-
-            const double global_mean = stat_result.mean_stat;
-            const double global_std_dev = stat_result.stat_std_dev;
-            const double outlier_threshold = std_dev_threshold * global_std_dev;
-
-            std::vector<std::pair<size_t, size_t>> qualifying_windows;
-            for (size_t i = 0; i < stat_result.statistical_values.size(); ++i) {
-                if (std::abs(stat_result.statistical_values[i] - global_mean) > outlier_threshold) {
-                    auto [start_idx, end_idx] = stat_result.window_positions[i];
-                    if (start_idx < channel.size() && end_idx <= channel.size() && start_idx < end_idx) {
-                        qualifying_windows.emplace_back(start_idx, end_idx);
-                    }
-                }
-            }
-
-            auto merged_windows = merge_overlapping_windows(qualifying_windows);
-
-            std::vector<double> extracted_data;
-            for (const auto& [start_idx, end_idx] : merged_windows) {
-                std::ranges::copy(channel.subspan(start_idx, end_idx - start_idx),
-                    std::back_inserter(extracted_data));
-            }
-
-            result.push_back(std::move(extracted_data));
-        } catch (const std::exception&) {
-            result.emplace_back();
+        std::vector<size_t> starts;
+        for (size_t i = 0; i < means.size(); ++i) {
+            if (std::abs(means[i] - gm) > std_dev_threshold * gs)
+                starts.push_back(i * h);
         }
+
+        result.push_back(D::slice_intervals(ch,
+            D::merge_intervals(D::intervals_from_window_starts(starts, w, ch.size()))));
     }
 
     return result;
 }
 
-std::vector<std::vector<double>> extract_high_spectral_data(
-    const std::vector<std::span<const double>>& data,
+std::vector<std::vector<double>> extract_high_spectral(
+    const std::vector<std::span<const double>>& channels,
     double spectral_threshold,
     uint32_t window_size,
     uint32_t hop_size)
 {
     std::vector<std::vector<double>> result;
-    result.reserve(data.size());
-
-    for (const auto& channel : data) {
-        if (channel.empty()) {
+    result.reserve(channels.size());
+    for (const auto& ch : channels) {
+        if (ch.empty()) {
             result.emplace_back();
             continue;
         }
+        const uint32_t w = std::min(window_size, static_cast<uint32_t>(ch.size()));
+        const uint32_t h = std::max(1U, std::min(hop_size, w / 2));
+        const auto energy = D::spectral_energy(ch, D::num_windows(ch.size(), w, h), h, w);
 
-        uint32_t effective_window_size = std::min(window_size, static_cast<uint32_t>(channel.size()));
-        uint32_t effective_hop_size = std::min(hop_size, effective_window_size / 2);
-        if (effective_hop_size == 0)
-            effective_hop_size = 1;
-
-        if (!validate_extraction_parameters(effective_window_size, effective_hop_size, channel.size())) {
-            result.emplace_back();
-            continue;
+        std::vector<size_t> starts;
+        for (size_t i = 0; i < energy.size(); ++i) {
+            if (energy[i] > spectral_threshold)
+                starts.push_back(i * h);
         }
 
-        try {
-            auto energy_analyzer = std::make_shared<EnergyAnalyzer<std::vector<Kakshya::DataVariant>, Eigen::VectorXd>>(
-                effective_window_size, effective_hop_size);
-            energy_analyzer->set_parameter("method", "spectral");
-
-            std::vector<Kakshya::DataVariant> data_variant { Kakshya::DataVariant { std::vector<double>(channel.begin(), channel.end()) } };
-            EnergyAnalysis energy_result = energy_analyzer->analyze_energy(data_variant);
-
-            if (energy_result.channels.empty() || energy_result.channels[0].energy_values.empty() || energy_result.channels[0].window_positions.empty()) {
-                result.emplace_back();
-                continue;
-            }
-
-            std::vector<std::pair<size_t, size_t>> qualifying_windows;
-            const auto& ch_energy = energy_result.channels[0].energy_values;
-            const auto& ch_windows = energy_result.channels[0].window_positions;
-            for (size_t i = 0; i < ch_energy.size(); ++i) {
-                if (ch_energy[i] > spectral_threshold) {
-                    auto [start_idx, end_idx] = ch_windows[i];
-                    if (start_idx < channel.size() && end_idx <= channel.size() && start_idx < end_idx) {
-                        qualifying_windows.emplace_back(start_idx, end_idx);
-                    }
-                }
-            }
-
-            auto merged_windows = merge_overlapping_windows(qualifying_windows);
-
-            std::vector<double> extracted_data;
-            for (const auto& [start_idx, end_idx] : merged_windows) {
-                std::ranges::copy(channel.subspan(start_idx, end_idx - start_idx),
-                    std::back_inserter(extracted_data));
-            }
-
-            result.push_back(std::move(extracted_data));
-        } catch (const std::exception&) {
-            result.emplace_back();
-        }
+        result.push_back(D::slice_intervals(ch,
+            D::merge_intervals(D::intervals_from_window_starts(starts, w, ch.size()))));
     }
-
     return result;
 }
 
-std::vector<std::vector<double>> extract_above_mean_data(
-    const std::vector<std::span<const double>>& data,
+std::vector<std::vector<double>> extract_above_mean(
+    const std::vector<std::span<const double>>& channels,
     double mean_multiplier,
     uint32_t window_size,
     uint32_t hop_size)
 {
     std::vector<std::vector<double>> result;
-    result.reserve(data.size());
-
-    for (const auto& channel : data) {
-        if (channel.empty()) {
+    result.reserve(channels.size());
+    for (const auto& ch : channels) {
+        if (ch.empty()) {
             result.emplace_back();
             continue;
         }
+        const uint32_t w = std::min(window_size, static_cast<uint32_t>(ch.size()));
+        const uint32_t h = std::max(1U, std::min(hop_size, w / 2));
+        const auto means = D::mean(ch, D::num_windows(ch.size(), w, h), h, w);
+        double gm = 0.0;
 
-        uint32_t effective_window_size = std::min(window_size, static_cast<uint32_t>(channel.size()));
-        uint32_t effective_hop_size = std::min(hop_size, effective_window_size / 2);
-        if (effective_hop_size == 0)
-            effective_hop_size = 1;
+        for (double v : means)
+            gm += v;
 
-        if (!validate_extraction_parameters(effective_window_size, effective_hop_size, channel.size())) {
-            result.emplace_back();
-            continue;
+        if (!means.empty())
+            gm /= static_cast<double>(means.size());
+
+        const double thr = gm * mean_multiplier;
+
+        std::vector<size_t> starts;
+        for (size_t i = 0; i < means.size(); ++i) {
+            if (means[i] > thr)
+                starts.push_back(i * h);
         }
 
-        try {
-            auto stat_analyzer = std::make_shared<StatisticalAnalyzer<std::vector<Kakshya::DataVariant>, Eigen::VectorXd>>(
-                effective_window_size, effective_hop_size);
-            stat_analyzer->set_parameter("method", "mean");
-
-            std::vector<Kakshya::DataVariant> data_variant { Kakshya::DataVariant { std::vector<double>(channel.begin(), channel.end()) } };
-            ChannelStatistics stat_result = stat_analyzer->analyze_statistics(data_variant).channel_statistics[0];
-
-            if (stat_result.statistical_values.empty() || stat_result.window_positions.empty()) {
-                result.emplace_back();
-                continue;
-            }
-
-            const double threshold = stat_result.mean_stat * mean_multiplier;
-
-            std::vector<std::pair<size_t, size_t>> qualifying_windows;
-            for (size_t i = 0; i < stat_result.statistical_values.size(); ++i) {
-                if (stat_result.statistical_values[i] > threshold) {
-                    auto [start_idx, end_idx] = stat_result.window_positions[i];
-                    if (start_idx < channel.size() && end_idx <= channel.size() && start_idx < end_idx) {
-                        qualifying_windows.emplace_back(start_idx, end_idx);
-                    }
-                }
-            }
-
-            auto merged_windows = merge_overlapping_windows(qualifying_windows);
-
-            std::vector<double> extracted_data;
-            for (const auto& [start_idx, end_idx] : merged_windows) {
-                std::ranges::copy(channel.subspan(start_idx, end_idx - start_idx),
-                    std::back_inserter(extracted_data));
-            }
-
-            result.push_back(std::move(extracted_data));
-        } catch (const std::exception&) {
-            result.emplace_back();
-        }
+        result.push_back(D::slice_intervals(ch,
+            D::merge_intervals(D::intervals_from_window_starts(starts, w, ch.size()))));
     }
-
     return result;
 }
 
 std::vector<std::vector<double>> extract_overlapping_windows(
-    const std::vector<std::span<const double>>& data,
+    const std::vector<std::span<const double>>& channels,
     uint32_t window_size,
     double overlap)
 {
     std::vector<std::vector<double>> result;
-    result.reserve(data.size());
-
-    if (window_size == 0 || overlap < 0.0 || overlap >= 1.0) {
-        for (size_t i = 0; i < data.size(); ++i)
-            result.emplace_back();
-        return result;
-    }
-
-    for (const auto& channel : data) {
-        if (channel.empty() || window_size > channel.size()) {
-            result.emplace_back();
-            continue;
-        }
-
-        const auto hop_size = std::max(1U, static_cast<uint32_t>(window_size * (1.0 - overlap)));
-        std::vector<double> channel_windows;
-
-        for (size_t start = 0; start + window_size <= channel.size(); start += hop_size) {
-            channel_windows.insert(channel_windows.end(),
-                channel.begin() + start,
-                channel.begin() + start + window_size);
-        }
-
-        result.push_back(std::move(channel_windows));
-    }
-
+    result.reserve(channels.size());
+    for (const auto& ch : channels)
+        result.push_back(D::overlapping_windows(ch, window_size, overlap));
     return result;
 }
 
-std::vector<std::vector<double>> extract_windowed_data_by_indices(
-    const std::vector<std::span<const double>>& data,
-    const std::vector<size_t>& window_indices,
-    uint32_t window_size)
-{
-    std::vector<std::vector<double>> result;
-    result.reserve(data.size());
-
-    for (const auto& channel : data) {
-        std::vector<double> channel_windows;
-        if (channel.empty() || window_size == 0) {
-            result.emplace_back();
-            continue;
-        }
-
-        for (size_t start_idx : window_indices) {
-            if (start_idx + window_size <= channel.size()) {
-                auto window_span = channel.subspan(start_idx, window_size);
-                channel_windows.insert(channel_windows.end(), window_span.begin(), window_span.end());
-            }
-        }
-        result.push_back(std::move(channel_windows));
-    }
-
-    return result;
-}
-
-std::vector<std::string> get_available_extraction_methods()
-{
-    return {
-        "high_energy_data",
-        "peak_data",
-        "outlier_data",
-        "high_spectral_data",
-        "above_mean_data",
-        "overlapping_windows",
-        "data_from_regions"
-    };
-}
-
-bool validate_extraction_parameters(uint32_t window_size, uint32_t hop_size, size_t data_size)
-{
-    if (window_size == 0 || hop_size == 0) {
-        return false;
-    }
-
-    if (data_size == 0) {
-        return true;
-    }
-
-    if (data_size < window_size) {
-        return data_size >= 3;
-    }
-
-    return true;
-}
-
-std::vector<std::vector<double>> extract_zero_crossing_data(
-    const std::vector<std::span<const double>>& data,
+std::vector<std::vector<double>> extract_zero_crossings(
+    const std::vector<std::span<const double>>& channels,
     double threshold,
     double min_distance,
     uint32_t region_size)
 {
     std::vector<std::vector<double>> result;
-    result.reserve(data.size());
-
-    for (const auto& channel : data) {
-        if (channel.empty() || region_size == 0) {
+    result.reserve(channels.size());
+    for (const auto& ch : channels) {
+        if (ch.empty() || region_size == 0) {
             result.emplace_back();
             continue;
         }
-
-        try {
-            auto analyzer = std::make_shared<EnergyAnalyzer<std::vector<Kakshya::DataVariant>, Eigen::VectorXd>>(
-                region_size * 2, static_cast<uint32_t>(min_distance));
-            analyzer->set_parameter("method", "zero_crossing");
-
-            std::vector<Kakshya::DataVariant> data_variant {
-                Kakshya::DataVariant { std::vector<double>(channel.begin(), channel.end()) }
-            };
-            EnergyAnalysis energy_result = analyzer->analyze_energy(data_variant);
-
-            if (energy_result.channels.empty()) {
-                result.emplace_back();
-                continue;
+        auto all = D::zero_crossing_positions(ch, threshold);
+        std::vector<size_t> filtered;
+        size_t last = 0;
+        for (size_t p : all) {
+            if (filtered.empty() || (p - last) >= static_cast<size_t>(min_distance)) {
+                filtered.push_back(p);
+                last = p;
             }
-
-            const auto& crossing_positions = energy_result.channels[0].event_positions;
-
-            if (crossing_positions.empty()) {
-                result.emplace_back();
-                continue;
-            }
-
-            std::vector<size_t> filtered_positions;
-            size_t last_position = 0;
-
-            for (size_t pos : crossing_positions) {
-                if (filtered_positions.empty() || (pos - last_position) >= static_cast<size_t>(min_distance)) {
-                    filtered_positions.push_back(pos);
-                    last_position = pos;
-                }
-            }
-
-            std::vector<size_t> qualified_positions;
-            for (size_t pos : filtered_positions) {
-                if (pos < channel.size() && std::abs(channel[pos]) >= threshold) {
-                    qualified_positions.push_back(pos);
-                }
-            }
-
-            std::vector<double> extracted_data;
-            for (size_t pos : qualified_positions) {
-                const size_t half_region = region_size / 2;
-                const size_t region_start = (pos >= half_region) ? pos - half_region : 0;
-                const size_t region_end = std::min(pos + half_region, channel.size());
-
-                if (region_start < region_end) {
-                    auto region = channel.subspan(region_start, region_end - region_start);
-                    std::ranges::copy(region, std::back_inserter(extracted_data));
-                }
-            }
-
-            result.push_back(std::move(extracted_data));
-        } catch (const std::exception&) {
-            result.emplace_back();
         }
-    }
 
+        result.push_back(D::slice_intervals(ch,
+            D::merge_intervals(D::regions_around_positions(filtered, region_size / 2, ch.size()))));
+    }
     return result;
 }
 
-std::vector<std::vector<double>> extract_silence_data(
-    const std::vector<std::span<const double>>& data,
+std::vector<std::vector<double>> extract_silence(
+    const std::vector<std::span<const double>>& channels,
     double silence_threshold,
     uint32_t min_duration,
     uint32_t window_size,
     uint32_t hop_size)
 {
     std::vector<std::vector<double>> result;
-    result.reserve(data.size());
-
-    for (const auto& channel : data) {
-        if (channel.empty()) {
+    result.reserve(channels.size());
+    for (const auto& ch : channels) {
+        if (ch.empty()) {
             result.emplace_back();
             continue;
         }
-
-        uint32_t effective_window = std::min(window_size, static_cast<uint32_t>(channel.size()));
-        uint32_t effective_hop = std::max(1U, std::min(hop_size, window_size / 2));
-
-        try {
-            auto analyzer = std::make_shared<EnergyAnalyzer<std::vector<Kakshya::DataVariant>, Eigen::VectorXd>>(
-                effective_window, effective_hop);
-            analyzer->set_parameter("method", "rms");
-            analyzer->set_energy_thresholds(0.0, silence_threshold, silence_threshold * 2.0, silence_threshold * 5.0);
-            analyzer->enable_classification(true);
-
-            std::vector<Kakshya::DataVariant> data_variant { Kakshya::DataVariant { std::vector<double>(channel.begin(), channel.end()) } };
-            EnergyAnalysis energy_result = analyzer->analyze_energy(data_variant);
-
-            if (energy_result.channels.empty() || energy_result.channels[0].energy_values.empty() || energy_result.channels[0].window_positions.empty() || energy_result.channels[0].classifications.empty()) {
-                result.emplace_back();
-                continue;
+        const uint32_t w = std::min(window_size, static_cast<uint32_t>(ch.size()));
+        const uint32_t h = std::max(1U, std::min(hop_size, w / 2));
+        const auto energy = D::rms(ch, D::num_windows(ch.size(), w, h), h, w);
+        std::vector<size_t> starts;
+        for (size_t i = 0; i < energy.size(); ++i) {
+            if (energy[i] <= silence_threshold && w >= min_duration) {
+                starts.push_back(i * h);
             }
-
-            const auto& classifications = energy_result.channels[0].classifications;
-            const auto& window_positions = energy_result.channels[0].window_positions;
-
-            std::vector<std::pair<size_t, size_t>> regions;
-            for (size_t idx = 0; idx < classifications.size(); ++idx) {
-                if (classifications[idx] == EnergyLevel::SILENT) {
-                    auto [start_idx, end_idx] = window_positions[idx];
-                    if (end_idx > start_idx && (end_idx - start_idx) >= min_duration) {
-                        regions.emplace_back(start_idx, end_idx);
-                    }
-                }
-            }
-
-            auto merged_regions = merge_overlapping_windows(regions);
-
-            std::vector<double> extracted_data;
-            for (const auto& [start_idx, end_idx] : merged_regions) {
-                if (start_idx < channel.size() && end_idx <= channel.size() && start_idx < end_idx) {
-                    auto region = channel.subspan(start_idx, end_idx - start_idx);
-                    std::ranges::copy(region, std::back_inserter(extracted_data));
-                }
-            }
-
-            result.push_back(std::move(extracted_data));
-        } catch (const std::exception&) {
-            result.emplace_back();
         }
+        result.push_back(D::slice_intervals(ch,
+            D::merge_intervals(D::intervals_from_window_starts(starts, w, ch.size()))));
     }
-
     return result;
 }
 
-std::vector<std::vector<double>> extract_onset_data(
-    const std::vector<std::span<const double>>& data,
+std::vector<std::vector<double>> extract_onsets(
+    const std::vector<std::span<const double>>& channels,
     double threshold,
     uint32_t region_size,
-    uint32_t window_size,
+    uint32_t fft_window_size,
     uint32_t hop_size)
 {
     std::vector<std::vector<double>> result;
-    result.reserve(data.size());
-
-    for (const auto& channel : data) {
-        if (channel.empty()) {
+    result.reserve(channels.size());
+    for (const auto& ch : channels) {
+        if (ch.empty()) {
             result.emplace_back();
             continue;
         }
-
-        try {
-            std::vector<size_t> onset_positions = Kinesis::Discrete::onset_positions(
-                channel, window_size, hop_size, threshold);
-
-            if (onset_positions.empty()) {
-                result.emplace_back();
-                continue;
-            }
-
-            std::vector<double> extracted_data;
-            for (size_t onset_pos : onset_positions) {
-                const size_t half_region = region_size / 2;
-                const size_t region_start = (onset_pos >= half_region) ? onset_pos - half_region : 0;
-                const size_t region_end = std::min(onset_pos + half_region, channel.size());
-
-                if (region_start < region_end) {
-                    auto region = channel.subspan(region_start, region_end - region_start);
-                    std::ranges::copy(region, std::back_inserter(extracted_data));
-                }
-            }
-
-            result.push_back(std::move(extracted_data));
-        } catch (const std::exception&) {
-            result.emplace_back();
-        }
+        const auto pos = D::onset_positions(ch, fft_window_size, hop_size, threshold);
+        result.push_back(D::slice_intervals(ch,
+            D::merge_intervals(D::regions_around_positions(pos, region_size / 2, ch.size()))));
     }
-
     return result;
 }
 
-}
+} // namespace MayaFlux::Yantra

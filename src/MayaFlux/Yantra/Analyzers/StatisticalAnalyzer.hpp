@@ -350,7 +350,7 @@ protected:
     output_type analyze_implementation(const input_type& input) override
     {
         if (input.data.empty()) {
-            throw std::runtime_error("Input is empty");
+            error<std::runtime_error>(Journal::Component::Yantra, Journal::Context::ComputeMatrix, std::source_location::current(), "Input is empty");
         }
         try {
             auto [data_span, structure_info] = OperationHelper::extract_structured_double(
@@ -372,7 +372,7 @@ protected:
             this->store_current_analysis(analysis_result);
             return create_pipeline_output(input, analysis_result, structure_info);
         } catch (const std::exception& e) {
-            std::cerr << "Energy analysis failed: " << e.what() << '\n';
+            MF_ERROR(Journal::Component::Yantra, Journal::Context::ComputeMatrix, "Statistical analysis failed: {}", e.what());
             output_type error_result;
             error_result.metadata = input.metadata;
             error_result.metadata["error"] = std::string("Analysis failed: ") + e.what();
@@ -418,7 +418,7 @@ protected:
                 base_type::set_analysis_parameter(name, std::move(value));
             }
         } catch (const std::runtime_error& e) {
-            throw std::invalid_argument("Failed to set parameter '" + name + "': " + e.what());
+            error_rethrow(Journal::Component::Yantra, Journal::Context::ComputeMatrix, std::source_location::current(), "Failed to set parameter '{}': {}", name, e.what());
         }
     }
 
@@ -473,10 +473,10 @@ private:
     void validate_window_parameters() const
     {
         if (m_window_size == 0 || m_hop_size == 0) {
-            throw std::invalid_argument("Window size and hop size must be greater than 0");
+            error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ComputeMatrix, std::source_location::current(), "Window size and hop size must be greater than 0");
         }
         if (m_hop_size > m_window_size) {
-            throw std::invalid_argument("Hop size should not exceed window size");
+            error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ComputeMatrix, std::source_location::current(), "Hop size should not exceed window size");
         }
     }
 

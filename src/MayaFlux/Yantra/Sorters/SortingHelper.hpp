@@ -43,7 +43,7 @@ void sort_compute_data_inplace(Datum<T>& data,
 {
     if constexpr (RequiresContainer<T>) {
         if (!data.has_container()) {
-            throw std::runtime_error("Region-like types require container use UniversalSorter instead");
+            error<std::runtime_error>(Journal::Component::Yantra, Journal::Context::ComputeMatrix, std::source_location::current(), "Region-like types require container - use UniversalSorter instead");
         }
         auto channels = OperationHelper::extract_numeric_data(data.data, data.container.value());
         Kinesis::Discrete::sort_channels(channels, direction, algorithm);
