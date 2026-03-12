@@ -101,14 +101,24 @@ void fade(std::span<double> data, double fade_in_ratio, double fade_out_ratio) n
 
     const double pi = std::numbers::pi;
 
-    for (size_t i = 0; i < in_end; ++i) {
-        const double t = static_cast<double>(i) / static_cast<double>(in_end);
-        data[i] *= std::sin(t * pi * 0.5);
+    if (in_end > 0) {
+        const auto in_len = static_cast<double>(in_end - 1);
+        for (size_t i = 0; i < in_end; ++i) {
+            const double t = (in_len > 0.0)
+                ? static_cast<double>(i) / in_len
+                : 1.0;
+            data[i] *= std::sin(t * pi * 0.5);
+        }
     }
 
-    for (size_t i = out_start; i < n; ++i) {
-        const double t = static_cast<double>(i - out_start) / static_cast<double>(n - out_start);
-        data[i] *= std::cos(t * pi * 0.5);
+    if (out_start < n) {
+        const auto out_len = static_cast<double>(n - 1 - out_start);
+        for (size_t i = out_start; i < n; ++i) {
+            const double t = (out_len > 0.0)
+                ? static_cast<double>(i - out_start) / out_len
+                : 1.0;
+            data[i] *= std::cos(t * pi * 0.5);
+        }
     }
 }
 

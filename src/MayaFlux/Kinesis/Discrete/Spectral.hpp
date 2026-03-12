@@ -86,10 +86,9 @@ using SpectrumProcessor = std::function<void(std::vector<std::complex<double>>&,
  * @brief Linear spectral tilt: scale each bin by a factor that rises
  *        linearly from 1 at bin 0 to @p enhancement_factor at the Nyquist bin
  *
- * Ported from the existing SpectralHelper behaviour. This is a first-order
- * spectral emphasis, not a true harmonic detector; caller should be aware
- * that it brightens high-frequency energy uniformly regardless of harmonic
- * structure.
+ * This is a first-order spectral emphasis, not a true harmonic detector;
+ * caller should be aware that it brightens high-frequency energy
+ * uniformly regardless of harmonic * structure.
  *
  * @param src                Input samples
  * @param enhancement_factor Gain at the Nyquist bin (> 1 brightens, < 1 darkens)

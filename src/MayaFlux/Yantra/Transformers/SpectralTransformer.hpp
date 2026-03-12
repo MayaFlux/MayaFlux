@@ -74,7 +74,7 @@ protected:
      * reconstructs the typed output via OperationHelper.
      *
      * FREQUENCY_SHIFT is implemented as a bandpass repositioning matching
-     * the prior SpectralHelper behaviour. True single-sideband frequency
+     * the prior behaviour. True single-sideband frequency
      * shift (complex exponential modulation) is a separate primitive.
      */
     output_type transform_implementation(input_type& input) override
