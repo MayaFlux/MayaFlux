@@ -199,8 +199,11 @@ private:
     mutable std::vector<std::vector<double>> m_working_buffer; ///< Buffer for out-of-place operations
 
     /**
-     * @brief Extracts per-channel spans, applies an in-place func to each, and reconstructs
+     * @brief Extracts per-channel spans, applies an in-place func to each, and reconstructs.
      * @tparam Func Callable matching void(std::span<double>)
+     *
+     * In-place: results are copied back into the original channel spans of @p input before
+     * reconstruction. Out-of-place: input is not mutated.
      */
     template <typename Func>
     output_type apply_per_channel(input_type& input, Func&& func)
@@ -211,6 +214,9 @@ private:
             m_working_buffer[i].assign(channels[i].begin(), channels[i].end());
             func(std::span<double> { m_working_buffer[i] });
         }
+        if (this->is_in_place())
+            for (size_t i = 0; i < channels.size(); ++i)
+                std::ranges::copy(m_working_buffer[i], channels[i].begin());
         return create_output(
             OperationHelper::reconstruct_from_double<InputType>(m_working_buffer, structure_info));
     }
