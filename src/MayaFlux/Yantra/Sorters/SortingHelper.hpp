@@ -1,239 +1,33 @@
 #pragma once
 
-#include <numeric>
+#include "MayaFlux/Yantra/Data/DataIO.hpp"
 
 #include "MayaFlux/Yantra/OperationSpec/OperationHelper.hpp"
 
-#include "UniversalSorter.hpp"
-
-#include "MayaFlux/Transitive/Parallel/Execution.hpp"
-
-/**
- * @file SortingHelpers.hpp
- * @brief Digital-first sorting utilities and algorithm implementations
- *
- * Provides concept-based sorting utilities that integrate with the modern UniversalSorter
- * architecture. Unlike traditional sorting helpers, this focuses on digital paradigms:
- * algorithmic sorting, multi-dimensional operations, and cross-modal capabilities.
- *
- * Following the same pattern as OperationHelper - standalone functions with templated
- * implementations in header and non-templated ones in .cpp file.
- */
+#include "MayaFlux/Kinesis/Discrete/Sort.hpp"
 
 namespace MayaFlux::Yantra {
 
+using SortingDirection = Kinesis::Discrete::SortingDirection;
+using SortingAlgorithm = Kinesis::Discrete::SortingAlgorithm;
+
 /**
- * @enum SortingAlgorithm
- * @brief Available sorting algorithms for different use cases
+ * @struct SortKey
+ * @brief Multi-dimensional sort key specification for complex sorting
  */
-enum class SortingAlgorithm : uint8_t {
-    STANDARD, ///< std::sort with comparator
-    STABLE, ///< std::stable_sort for equal element preservation
-    PARTIAL, ///< std::partial_sort for top-K selection
-    NTH_ELEMENT, ///< std::nth_element for median/percentile
-    HEAP, ///< Heap sort for memory-constrained scenarios
-    PARALLEL, ///< Parallel sorting (std::execution::par_unseq)
-    RADIX, ///< Radix sort for integer types
-    COUNTING, ///< Counting sort for limited range integers
-    BUCKET, ///< Bucket sort for floating point
-    MERGE_EXTERNAL, ///< External merge sort for large datasets
-    QUICK_OPTIMIZED, ///< Optimized quicksort with hybrid pivot selection
-    // Future algorithms for coroutine integration
-    LAZY_STREAMING, ///< Lazy evaluation with coroutines (Vruta/Kriya)
-    PREDICTIVE_ML, ///< Machine learning based predictive sorting
-    EIGEN_OPTIMIZED, ///< Eigen-specific mathematical sorting
-    GPU_ACCELERATED ///< GPU-based sorting (future Vulkan integration)
+struct MAYAFLUX_API SortKey {
+    std::string name;
+    std::function<double(const std::any&)> extractor; ///< Extract sort value from data
+    SortingDirection direction = SortingDirection::ASCENDING;
+    double weight = 1.0; ///< Weight for multi-key sorting
+    bool normalize = false; ///< Normalize values before sorting
+
+    SortKey(std::string n, std::function<double(const std::any&)> e)
+        : name(std::move(n))
+        , extractor(std::move(e))
+    {
+    }
 };
-
-/**
- * @brief Sort a single span of doubles in-place
- * @param data Span of data to sort
- * @param direction Sort direction
- * @param algorithm Sort algorithm
- */
-void sort_span_inplace(std::span<double> data,
-    SortingDirection direction,
-    SortingAlgorithm algorithm);
-
-/**
- * @brief Sort a single span and return copy in output vector
- * @param data Input span to sort
- * @param output_storage Output vector to store sorted data
- * @param direction Sort direction
- * @param algorithm Sort algorithm
- * @return Span view of sorted data in output_storage
- */
-std::span<double> sort_span_extract(std::span<const double> data,
-    std::vector<double>& output_storage,
-    SortingDirection direction,
-    SortingAlgorithm algorithm);
-
-/**
- * @brief Sort multiple channels (spans) in-place
- * @param channels Vector of spans, each representing a channel
- * @param direction Sort direction
- * @param algorithm Sort algorithm
- */
-void sort_channels_inplace(std::vector<std::span<double>>& channels,
-    SortingDirection direction,
-    SortingAlgorithm algorithm);
-
-/**
- * @brief Sort multiple channels and return copies
- * @param channels Vector of input spans
- * @param output_storage Vector of vectors to store sorted data per channel
- * @param direction Sort direction
- * @param algorithm Sort algorithm
- * @return Vector of spans pointing to sorted data in output_storage
- */
-std::vector<std::span<double>> sort_channels_extract(
-    const std::vector<std::span<const double>>& channels,
-    std::vector<std::vector<double>>& output_storage,
-    SortingDirection direction,
-    SortingAlgorithm algorithm);
-
-/**
- * @brief Generate sort indices for a single span
- * @param data Input span
- * @param direction Sort direction
- * @return Vector of sorted indices
- */
-std::vector<size_t> generate_span_sort_indices(std::span<double> data,
-    SortingDirection direction);
-
-/**
- * @brief Generate sort indices for multiple channels
- * @param channels Vector of input spans
- * @param direction Sort direction
- * @return Vector of index vectors (one per channel)
- */
-std::vector<std::vector<size_t>> generate_channels_sort_indices(
-    const std::vector<std::span<double>>& channels,
-    SortingDirection direction);
-
-// ============================================================================
-// ALGORITHM EXECUTION
-// ============================================================================
-
-/**
- * @brief Execute sorting algorithm on iterator range
- * @tparam Iterator Random access iterator type
- * @tparam Comparator Comparison function type
- * @param begin Start iterator
- * @param end End iterator
- * @param comp Comparator function
- * @param algorithm Algorithm to use
- */
-template <std::random_access_iterator Iterator, typename Comparator>
-void execute_sorting_algorithm(Iterator begin, Iterator end,
-    Comparator comp, SortingAlgorithm algorithm)
-{
-    switch (algorithm) {
-    case SortingAlgorithm::STANDARD:
-        std::ranges::sort(begin, end, comp);
-        break;
-
-    case SortingAlgorithm::STABLE:
-        std::ranges::stable_sort(begin, end, comp);
-        break;
-
-    case SortingAlgorithm::PARTIAL: {
-        if (std::distance(begin, end) > 1) {
-            auto middle = begin + std::distance(begin, end) / 2;
-            std::partial_sort(begin, middle, end, comp);
-        }
-        break;
-    }
-
-    case SortingAlgorithm::NTH_ELEMENT: {
-        if (std::distance(begin, end) > 1) {
-            auto middle = begin + std::distance(begin, end) / 2;
-            std::nth_element(begin, middle, end, comp);
-        }
-        break;
-    }
-
-    case SortingAlgorithm::HEAP: {
-        std::make_heap(begin, end, comp);
-        std::sort_heap(begin, end, comp);
-        break;
-    }
-
-    case SortingAlgorithm::PARALLEL:
-        MayaFlux::Parallel::sort(MayaFlux::Parallel::par_unseq, begin, end, comp);
-        break;
-
-    case SortingAlgorithm::RADIX:
-    case SortingAlgorithm::COUNTING:
-    case SortingAlgorithm::BUCKET:
-    case SortingAlgorithm::MERGE_EXTERNAL:
-    case SortingAlgorithm::QUICK_OPTIMIZED:
-    case SortingAlgorithm::LAZY_STREAMING:
-    case SortingAlgorithm::PREDICTIVE_ML:
-    case SortingAlgorithm::GPU_ACCELERATED:
-        // TODO: Implement specialized algorithms
-    default:
-        std::ranges::sort(begin, end, comp);
-        break;
-    }
-}
-
-// ============================================================================
-// COMPARATOR CREATION
-// ============================================================================
-
-/**
- * @brief Create standard direction-based comparator for doubles
- * @param direction Sort direction (ASCENDING/DESCENDING)
- * @return Lambda comparator function
- */
-inline auto create_double_comparator(SortingDirection direction)
-{
-    return [direction](double a, double b) -> bool {
-        return direction == SortingDirection::ASCENDING ? a < b : a > b;
-    };
-}
-
-/**
- * @brief Create magnitude-based comparator for complex numbers
- * @tparam T Complex number type (std::complex<float/double>)
- * @param direction Sort direction
- * @return Lambda comparator based on magnitude
- */
-template <ComplexData T>
-auto create_complex_magnitude_comparator(SortingDirection direction)
-{
-    return [direction](const T& a, const T& b) -> bool {
-        auto mag_a = std::abs(a);
-        auto mag_b = std::abs(b);
-        return direction == SortingDirection::ASCENDING ? mag_a < mag_b : mag_a > mag_b;
-    };
-}
-
-/**
- * @brief Generate sort indices for any container with custom comparator
- * @tparam Container Container type
- * @tparam Comparator Comparison function type
- * @param container Container to generate indices for
- * @param comp Comparator function
- * @return Vector of sorted indices
- */
-template <typename Container, typename Comparator>
-std::vector<size_t> generate_sort_indices(const Container& container, Comparator comp)
-{
-    std::vector<size_t> indices(container.size());
-    std::iota(indices.begin(), indices.end(), 0);
-
-    std::ranges::sort(indices, [&](size_t a, size_t b) {
-        return comp(container[a], container[b]);
-    });
-
-    return indices;
-}
-
-// ============================================================================
-// UNIVERSAL COMPUTE DATA FUNCTIONS
-// ============================================================================
 
 /**
  * @brief Universal sort function - handles extraction/conversion internally
@@ -249,15 +43,15 @@ void sort_compute_data_inplace(Datum<T>& data,
 {
     if constexpr (RequiresContainer<T>) {
         if (!data.has_container()) {
-            throw std::runtime_error("Region-like types require container use UniversalSorter instead");
+            error<std::runtime_error>(Journal::Component::Yantra, Journal::Context::ComputeMatrix, std::source_location::current(), "Region-like types require container - use UniversalSorter instead");
         }
         auto channels = OperationHelper::extract_numeric_data(data.data, data.container.value());
-        sort_channels_inplace(channels, direction, algorithm);
+        Kinesis::Discrete::sort_channels(channels, direction, algorithm);
         return;
     }
 
     auto channels = OperationHelper::extract_numeric_data(data.data, data.needs_processig());
-    sort_channels_inplace(channels, direction, algorithm);
+    Kinesis::Discrete::sort_channels(channels, direction, algorithm);
 }
 
 /**
@@ -283,7 +77,7 @@ T sort_compute_data_extract(const T& data,
     auto [working_spans, structure_info] = OperationHelper::setup_operation_buffer(
         const_cast<T&>(data), working_buffer);
 
-    sort_channels_inplace(working_spans, direction, algorithm);
+    Kinesis::Discrete::sort_channels(working_spans, direction, algorithm);
 
     return OperationHelper::reconstruct_from_double<T>(working_buffer, structure_info);
 }
@@ -305,7 +99,7 @@ T sort_compute_data_extract(const Datum<T>& data,
     auto [working_spans, structure_info] = OperationHelper::setup_operation_buffer(
         const_cast<Datum<T>&>(data), working_buffer);
 
-    sort_channels_inplace(working_spans, direction, algorithm);
+    Kinesis::Discrete::sort_channels(working_spans, direction, algorithm);
 
     return OperationHelper::reconstruct_from_double<T>(working_buffer, structure_info);
 }
@@ -336,15 +130,15 @@ std::vector<std::vector<size_t>> generate_compute_data_indices(const Datum<T>& d
 {
     if constexpr (RequiresContainer<T>) {
         auto channels = OperationHelper::extract_numeric_data(data.data, data.container.value());
-        return generate_channels_sort_indices(channels, direction);
+        return Kinesis::Discrete::channels_sort_indices(channels, direction);
     }
 
     if constexpr (SingleVariant<T>) {
         auto channel = OperationHelper::extract_numeric_data(data.data);
-        return { generate_span_sort_indices({ channel }, direction) };
+        return { Kinesis::Discrete::span_sort_indices({ channel }, direction) };
     } else {
         auto channels = OperationHelper::extract_numeric_data(data.data, data.needs_processig());
-        return generate_channels_sort_indices(channels, direction);
+        return Kinesis::Discrete::channels_sort_indices(channels, direction);
     }
 }
 

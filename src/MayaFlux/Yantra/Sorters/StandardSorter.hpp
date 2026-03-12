@@ -1,6 +1,5 @@
 #pragma once
 
-#include "SortingHelper.hpp"
 #include "UniversalSorter.hpp"
 
 /**
@@ -150,7 +149,7 @@ private:
             auto [working_spans, structure_info] = OperationHelper::setup_operation_buffer(
                 const_cast<input_type&>(input), working_buffer);
 
-            sort_channels_inplace(working_spans, this->get_direction(), m_algorithm);
+            Kinesis::Discrete::sort_channels(working_spans, this->get_direction(), m_algorithm);
 
             output_type result = this->convert_result(working_buffer, structure_info);
             result.metadata = input.metadata;
@@ -269,7 +268,7 @@ private:
                 auto chunk_span = channels[ch].subspan(start, end - start);
 
                 chunk_data[ch].assign(chunk_span.begin(), chunk_span.end());
-                sort_span_inplace(std::span<double>(chunk_data[ch]), this->get_direction(), m_algorithm);
+                Kinesis::Discrete::sort_span(std::span<double>(chunk_data[ch]), this->get_direction(), m_algorithm);
             }
 
             chunks.push_back(OperationHelper::reconstruct_from_double<InputType>(chunk_data, info));
@@ -344,7 +343,7 @@ private:
         auto [working_spans, structure_info] = OperationHelper::setup_operation_buffer(
             const_cast<input_type&>(input), working_buffer);
 
-        sort_channels_inplace(working_spans, this->get_direction(), SortingAlgorithm::PARTIAL);
+        Kinesis::Discrete::sort_channels(working_spans, this->get_direction(), SortingAlgorithm::PARTIAL);
         return this->convert_result(working_buffer, structure_info);
     }
 

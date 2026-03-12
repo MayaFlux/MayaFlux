@@ -3,6 +3,8 @@
 #include "MayaFlux/Transitive/Reflect/EnumReflect.hpp"
 #include "MayaFlux/Yantra/ComputeOperation.hpp"
 
+#include "SortingHelper.hpp"
+
 /**
  * @file UniversalSorter.hpp
  * @brief Modern, digital-first universal sorting framework for Maya Flux
@@ -76,17 +78,6 @@ enum class SortingStrategy : uint8_t {
 };
 
 /**
- * @enum SortingDirection
- * @brief Basic sort direction for simple comparisons
- */
-enum class SortingDirection : uint8_t {
-    ASCENDING, ///< Smallest to largest
-    DESCENDING, ///< Largest to smallest
-    CUSTOM, ///< Use custom comparator function
-    BIDIRECTIONAL ///< Sort with both directions (for special algorithms)
-};
-
-/**
  * @enum SortingGranularity
  * @brief Output granularity control for sorting results
  */
@@ -95,24 +86,6 @@ enum class SortingGranularity : uint8_t {
     ATTRIBUTED_INDICES, ///< Sort indices with metadata
     ORGANIZED_GROUPS, ///< Hierarchically organized sorted data
     DETAILED_ANALYSIS ///< Sorting analysis with statistics
-};
-
-/**
- * @struct SortKey
- * @brief Multi-dimensional sort key specification for complex sorting
- */
-struct MAYAFLUX_API SortKey {
-    std::string name;
-    std::function<double(const std::any&)> extractor; ///< Extract sort value from data
-    SortingDirection direction = SortingDirection::ASCENDING;
-    double weight = 1.0; ///< Weight for multi-key sorting
-    bool normalize = false; ///< Normalize values before sorting
-
-    SortKey(std::string n, std::function<double(const std::any&)> e)
-        : name(std::move(n))
-        , extractor(std::move(e))
-    {
-    }
 };
 
 /**
@@ -478,5 +451,9 @@ using VectorContainerSorter = UniversalSorter<std::vector<std::vector<T>>, Outpu
 /// Sorter for indices generation
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>>
 using IndexSorter = UniversalSorter<InputType, std::vector<std::vector<size_t>>>;
+
+// ============================================================================
+// UNIVERSAL COMPUTE DATA FUNCTIONS
+// ============================================================================
 
 } // namespace MayaFlux::Yantra

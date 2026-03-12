@@ -4,9 +4,9 @@
 #include "MayaFlux/Yantra/OperationSpec/OperationHelper.hpp"
 
 #include "UniversalAnalyzer.hpp"
-#include <Eigen/Dense>
 
-#include "AnalysisHelper.hpp"
+#include "MayaFlux/Kinesis/Discrete/Analysis.hpp"
+#include <Eigen/Dense>
 
 /**
  * @file StatisticalAnalyzer_new.hpp
@@ -350,7 +350,7 @@ protected:
     output_type analyze_implementation(const input_type& input) override
     {
         if (input.data.empty()) {
-            throw std::runtime_error("Input is empty");
+            error<std::runtime_error>(Journal::Component::Yantra, Journal::Context::ComputeMatrix, std::source_location::current(), "Input is empty");
         }
         try {
             auto [data_span, structure_info] = OperationHelper::extract_structured_double(
@@ -372,7 +372,7 @@ protected:
             this->store_current_analysis(analysis_result);
             return create_pipeline_output(input, analysis_result, structure_info);
         } catch (const std::exception& e) {
-            std::cerr << "Energy analysis failed: " << e.what() << '\n';
+            MF_ERROR(Journal::Component::Yantra, Journal::Context::ComputeMatrix, "Statistical analysis failed: {}", e.what());
             output_type error_result;
             error_result.metadata = input.metadata;
             error_result.metadata["error"] = std::string("Analysis failed: ") + e.what();
@@ -418,7 +418,7 @@ protected:
                 base_type::set_analysis_parameter(name, std::move(value));
             }
         } catch (const std::runtime_error& e) {
-            throw std::invalid_argument("Failed to set parameter '" + name + "': " + e.what());
+            error_rethrow(Journal::Component::Yantra, Journal::Context::ComputeMatrix, std::source_location::current(), "Failed to set parameter '{}': {}", name, e.what());
         }
     }
 
@@ -473,10 +473,10 @@ private:
     void validate_window_parameters() const
     {
         if (m_window_size == 0 || m_hop_size == 0) {
-            throw std::invalid_argument("Window size and hop size must be greater than 0");
+            error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ComputeMatrix, std::source_location::current(), "Window size and hop size must be greater than 0");
         }
         if (m_hop_size > m_window_size) {
-            throw std::invalid_argument("Hop size should not exceed window size");
+            error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ComputeMatrix, std::source_location::current(), "Hop size should not exceed window size");
         }
     }
 
@@ -487,45 +487,47 @@ private:
     {
         const size_t num_windows = calculate_num_windows(data.size());
 
+        namespace D = MayaFlux::Kinesis::Discrete;
+
         switch (method) {
         case StatisticalMethod::MEAN:
-            return compute_mean_statistic(data, num_windows, m_hop_size, m_window_size);
+            return D::mean(data, num_windows, m_hop_size, m_window_size);
         case StatisticalMethod::VARIANCE:
-            return compute_variance_statistic(data, num_windows, m_hop_size, m_window_size, m_sample_variance);
+            return D::variance(data, num_windows, m_hop_size, m_window_size, m_sample_variance);
         case StatisticalMethod::STD_DEV:
-            return compute_std_dev_statistic(data, num_windows, m_hop_size, m_window_size, m_sample_variance);
+            return D::std_dev(data, num_windows, m_hop_size, m_window_size, m_sample_variance);
         case StatisticalMethod::SKEWNESS:
-            return compute_skewness_statistic(data, num_windows, m_hop_size, m_window_size);
+            return D::skewness(data, num_windows, m_hop_size, m_window_size);
         case StatisticalMethod::KURTOSIS:
-            return compute_kurtosis_statistic(data, num_windows, m_hop_size, m_window_size);
+            return D::kurtosis(data, num_windows, m_hop_size, m_window_size);
         case StatisticalMethod::MEDIAN:
-            return compute_median_statistic(data, num_windows, m_hop_size, m_window_size);
+            return D::median(data, num_windows, m_hop_size, m_window_size);
         case StatisticalMethod::PERCENTILE:
-            return compute_percentile_statistic(data, num_windows, m_hop_size, m_window_size, m_percentile_value);
+            return D::percentile(data, num_windows, m_hop_size, m_window_size, m_percentile_value);
         case StatisticalMethod::ENTROPY:
-            return compute_entropy_statistic(data, num_windows, m_hop_size, m_window_size);
+            return D::entropy(data, num_windows, m_hop_size, m_window_size);
         case StatisticalMethod::MIN:
-            return compute_min_statistic(data, num_windows, m_hop_size, m_window_size);
+            return D::min(data, num_windows, m_hop_size, m_window_size);
         case StatisticalMethod::MAX:
-            return compute_max_statistic(data, num_windows, m_hop_size, m_window_size);
+            return D::max(data, num_windows, m_hop_size, m_window_size);
         case StatisticalMethod::RANGE:
-            return compute_range_statistic(data, num_windows, m_hop_size, m_window_size);
+            return D::range(data, num_windows, m_hop_size, m_window_size);
         case StatisticalMethod::SUM:
-            return compute_sum_statistic(data, num_windows, m_hop_size, m_window_size);
+            return D::sum(data, num_windows, m_hop_size, m_window_size);
         case StatisticalMethod::COUNT:
-            return compute_count_statistic(data, num_windows, m_hop_size, m_window_size);
+            return D::count(data, num_windows, m_hop_size, m_window_size);
         case StatisticalMethod::RMS:
-            return compute_rms_energy(data, num_windows, m_hop_size, m_window_size);
+            return D::rms(data, num_windows, m_hop_size, m_window_size);
         case StatisticalMethod::MAD:
-            return compute_mad_statistic(data, num_windows, m_hop_size, m_window_size);
+            return D::mad(data, num_windows, m_hop_size, m_window_size);
         case StatisticalMethod::CV:
-            return compute_cv_statistic(data, num_windows, m_hop_size, m_window_size, m_sample_variance);
+            return D::coefficient_of_variation(data, num_windows, m_hop_size, m_window_size, m_sample_variance);
         case StatisticalMethod::MODE:
-            return compute_mode_statistic(data, num_windows, m_hop_size, m_window_size);
+            return D::mode(data, num_windows, m_hop_size, m_window_size);
         case StatisticalMethod::ZSCORE:
-            return compute_zscore_statistic(data, num_windows, m_hop_size, m_window_size, m_sample_variance);
+            return D::mean_zscore(data, num_windows, m_hop_size, m_window_size, m_sample_variance);
         default:
-            return compute_mean_statistic(data, num_windows, m_hop_size, m_window_size);
+            return D::mean(data, num_windows, m_hop_size, m_window_size);
         }
     }
 
@@ -545,6 +547,8 @@ private:
     StatisticalAnalysis create_analysis_result(const std::vector<std::vector<double>>& stat_values,
         std::vector<std::span<const double>> original_data, const auto& /*structure_info*/) const
     {
+        namespace D = MayaFlux::Kinesis::Discrete;
+
         StatisticalAnalysis result;
         result.method_used = m_method;
         result.window_size = m_window_size;
@@ -569,28 +573,22 @@ private:
             channel_result.min_stat = *min_it;
             channel_result.max_stat = *max_it;
 
-            auto mean_result = compute_mean_statistic(std::span<const double>(ch_stats), 1, 0, ch_stats.size());
-            channel_result.mean_stat = mean_result.empty() ? 0.0 : mean_result[0];
+            const std::span<const double> sp(ch_stats);
+            const auto sz = static_cast<uint32_t>(ch_stats.size());
 
-            auto variance_result = compute_variance_statistic(std::span<const double>(ch_stats), 1, 0, ch_stats.size(), m_sample_variance);
-            channel_result.stat_variance = variance_result.empty() ? 0.0 : variance_result[0];
+            const auto single = [&](auto fn) { return fn(sp, 1, 0, sz)[0]; };
+
+            channel_result.mean_stat = single([](auto&&... a) { return D::mean(a...); });
+            channel_result.stat_variance = single([&](auto&&... a) { return D::variance(a..., m_sample_variance); });
             channel_result.stat_std_dev = std::sqrt(channel_result.stat_variance);
+            channel_result.skewness = single([](auto&&... a) { return D::skewness(a...); });
+            channel_result.kurtosis = single([](auto&&... a) { return D::kurtosis(a...); });
+            channel_result.median = single([](auto&&... a) { return D::median(a...); });
 
-            auto skew_result = compute_skewness_statistic(std::span<const double>(ch_stats), 1, 0, ch_stats.size());
-            channel_result.skewness = skew_result.empty() ? 0.0 : skew_result[0];
-
-            auto kurt_result = compute_kurtosis_statistic(std::span<const double>(ch_stats), 1, 0, ch_stats.size());
-            channel_result.kurtosis = kurt_result.empty() ? 0.0 : kurt_result[0];
-
-            auto median_result = compute_median_statistic(std::span<const double>(ch_stats), 1, 0, ch_stats.size());
-            channel_result.median = median_result.empty() ? 0.0 : median_result[0];
-
-            auto q25_result = compute_percentile_statistic(std::span<const double>(ch_stats), 1, 0, ch_stats.size(), 25.0);
-            auto q75_result = compute_percentile_statistic(std::span<const double>(ch_stats), 1, 0, ch_stats.size(), 75.0);
             channel_result.percentiles = {
-                q25_result.empty() ? 0.0 : q25_result[0], // Q1
-                channel_result.median, // Q2
-                q75_result.empty() ? 0.0 : q75_result[0] // Q3
+                D::percentile(sp, 1, 0, sz, 25.0)[0],
+                channel_result.median,
+                D::percentile(sp, 1, 0, sz, 75.0)[0]
             };
 
             const size_t data_size = (ch < original_data.size()) ? original_data[ch].size() : 0;

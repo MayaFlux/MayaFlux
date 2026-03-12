@@ -1,6 +1,7 @@
 #include "../mock_signalsourcecontainer.hpp"
-#include "MayaFlux/Yantra/Sorters/SortingHelper.hpp"
 #include "MayaFlux/Yantra/Sorters/StandardSorter.hpp"
+
+#include "MayaFlux/Kinesis/Discrete/Sort.hpp"
 
 #include <random>
 

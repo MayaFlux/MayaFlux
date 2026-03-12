@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ExtractionHelper.hpp"
+#include "MayaFlux/Kinesis/Discrete/Extract.hpp"
 #include "MayaFlux/Transitive/Reflect/EnumReflect.hpp"
 #include "UniversalExtractor.hpp"
 
@@ -194,11 +195,11 @@ public:
             if (numeric_data.empty())
                 return false;
             for (const auto& span : numeric_data) {
-                return validate_extraction_parameters(m_window_size, m_hop_size, span.size());
+                return Kinesis::Discrete::validate_window_parameters(m_window_size, m_hop_size, span.size());
             }
             return true;
         } catch (const std::exception& e) {
-            std::cerr << e.what() << "\n";
+            MF_ERROR(Journal::Component::Yantra, Journal::Context::ComputeMatrix, "Input validation failed: {}", e.what());
             return false;
         }
     }
@@ -224,70 +225,76 @@ protected:
             auto [numeric_data, info] = OperationHelper::extract_structured_double(const_cast<input_type&>(input));
             DataStructureInfo structure_info = info;
 
-            std::vector<std::span<const double>> data_span;
-            data_span.reserve(numeric_data.size());
-
-            for (auto& span : numeric_data) {
-                data_span.emplace_back(span.data(), span.size());
-            }
+            std::vector<std::span<const double>> channels;
+            channels.reserve(numeric_data.size());
+            for (auto& s : numeric_data)
+                channels.emplace_back(s.data(), s.size());
 
             std::vector<std::vector<double>> extracted_data;
 
             switch (m_method) {
-            case ExtractionMethod::HIGH_ENERGY_DATA: {
-                double energy_threshold = this->template get_parameter_or_default<double>("energy_threshold", 0.1);
-                extracted_data = extract_high_energy_data(data_span, energy_threshold, m_window_size, m_hop_size);
+
+            case ExtractionMethod::HIGH_ENERGY_DATA:
+                extracted_data = extract_high_energy(channels,
+                    this->template get_parameter_or_default<double>("energy_threshold", 0.1),
+                    m_window_size, m_hop_size);
                 break;
-            }
-            case ExtractionMethod::PEAK_DATA: {
-                double threshold = this->template get_parameter_or_default<double>("threshold", 0.1);
-                double min_distance = this->template get_parameter_or_default<double>("min_distance", 10.0);
-                uint32_t region_size = this->template get_parameter_or_default<uint32_t>("region_size", 256);
-                extracted_data = extract_peak_data(data_span, threshold, min_distance, region_size);
+
+            case ExtractionMethod::PEAK_DATA:
+                extracted_data = extract_peaks(channels,
+                    this->template get_parameter_or_default<double>("threshold", 0.1),
+                    this->template get_parameter_or_default<double>("min_distance", 10.0),
+                    this->template get_parameter_or_default<uint32_t>("region_size", 256));
                 break;
-            }
-            case ExtractionMethod::OUTLIER_DATA: {
-                double std_dev_threshold = this->template get_parameter_or_default<double>("std_dev_threshold", 2.0);
-                extracted_data = extract_outlier_data(data_span, std_dev_threshold, m_window_size, m_hop_size);
+
+            case ExtractionMethod::OUTLIER_DATA:
+                extracted_data = extract_outliers(channels,
+                    this->template get_parameter_or_default<double>("std_dev_threshold", 2.0),
+                    m_window_size, m_hop_size);
                 break;
-            }
-            case ExtractionMethod::HIGH_SPECTRAL_DATA: {
-                double spectral_threshold = this->template get_parameter_or_default<double>("spectral_threshold", 0.1);
-                extracted_data = extract_high_spectral_data(data_span, spectral_threshold, m_window_size, m_hop_size);
+
+            case ExtractionMethod::HIGH_SPECTRAL_DATA:
+                extracted_data = extract_high_spectral(channels,
+                    this->template get_parameter_or_default<double>("spectral_threshold", 0.1),
+                    m_window_size, m_hop_size);
                 break;
-            }
-            case ExtractionMethod::ABOVE_MEAN_DATA: {
-                double mean_multiplier = this->template get_parameter_or_default<double>("mean_multiplier", 1.5);
-                extracted_data = extract_above_mean_data(data_span, mean_multiplier, m_window_size, m_hop_size);
+
+            case ExtractionMethod::ABOVE_MEAN_DATA:
+                extracted_data = extract_above_mean(channels,
+                    this->template get_parameter_or_default<double>("mean_multiplier", 1.5),
+                    m_window_size, m_hop_size);
                 break;
-            }
-            case ExtractionMethod::OVERLAPPING_WINDOWS: {
-                double overlap = this->template get_parameter_or_default<double>("overlap", 0.5);
-                extracted_data = extract_overlapping_windows(data_span, m_window_size, overlap);
+
+            case ExtractionMethod::OVERLAPPING_WINDOWS:
+                extracted_data = extract_overlapping_windows(channels,
+                    m_window_size,
+                    this->template get_parameter_or_default<double>("overlap", 0.5));
                 break;
-            }
-            case ExtractionMethod::ZERO_CROSSING_DATA: {
-                double threshold = this->template get_parameter_or_default<double>("threshold", 0.0);
-                double min_distance = this->template get_parameter_or_default<double>("min_distance", 1.0);
-                uint32_t region_size = this->template get_parameter_or_default<uint32_t>("region_size", 1);
-                extracted_data = extract_zero_crossing_data(data_span, threshold, min_distance, region_size);
+
+            case ExtractionMethod::ZERO_CROSSING_DATA:
+                extracted_data = extract_zero_crossings(channels,
+                    this->template get_parameter_or_default<double>("threshold", 0.0),
+                    this->template get_parameter_or_default<double>("min_distance", 1.0),
+                    this->template get_parameter_or_default<uint32_t>("region_size", 1));
                 break;
-            }
-            case ExtractionMethod::SILENCE_DATA: {
-                double silence_threshold = this->template get_parameter_or_default<double>("silence_threshold", 0.01);
-                uint32_t min_duration = this->template get_parameter_or_default<uint32_t>("min_duration", 1024);
-                extracted_data = extract_silence_data(data_span, silence_threshold, min_duration, m_window_size, m_hop_size);
+
+            case ExtractionMethod::SILENCE_DATA:
+                extracted_data = extract_silence(channels,
+                    this->template get_parameter_or_default<double>("silence_threshold", 0.01),
+                    this->template get_parameter_or_default<uint32_t>("min_duration", 1024),
+                    m_window_size, m_hop_size);
                 break;
-            }
-            case ExtractionMethod::ONSET_DATA: {
-                double threshold = this->template get_parameter_or_default<double>("threshold", 0.3);
-                uint32_t region_size = this->template get_parameter_or_default<uint32_t>("region_size", 512);
-                uint32_t fft_window = this->template get_parameter_or_default<uint32_t>("fft_window_size", 1024);
-                extracted_data = extract_onset_data(data_span, threshold, region_size, fft_window, m_hop_size);
+
+            case ExtractionMethod::ONSET_DATA:
+                extracted_data = extract_onsets(channels,
+                    this->template get_parameter_or_default<double>("threshold", 0.3),
+                    this->template get_parameter_or_default<uint32_t>("region_size", 512),
+                    this->template get_parameter_or_default<uint32_t>("fft_window_size", 1024),
+                    m_hop_size);
                 break;
-            }
+
             default:
-                throw std::invalid_argument("Unknown extraction method");
+                error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ComputeMatrix, std::source_location::current(), "Unknown extraction method");
             }
 
             output_type output = this->convert_result(extracted_data, structure_info);
@@ -297,12 +304,12 @@ protected:
             output.template set_metadata<uint32_t>("window_size", static_cast<uint32_t>(m_window_size));
             output.template set_metadata<uint32_t>("hop_size", static_cast<uint32_t>(m_hop_size));
             output.template set_metadata<size_t>("extracted_samples", extracted_data.size());
-            output.template set_metadata<size_t>("original_samples", data_span.size());
 
             return output;
 
         } catch (const std::exception& e) {
-            throw std::runtime_error(std::string("FeatureExtractor failed: ") + e.what());
+            MF_ERROR(Journal::Component::Yantra, Journal::Context::ComputeMatrix, "Feature extraction failed: {}", e.what());
+            return output_type {};
         }
     }
 
@@ -320,8 +327,9 @@ protected:
                 m_method = *method_enum;
                 return;
             }
-            throw std::invalid_argument("Method parameter must be string or ExtractionMethod enum");
+            error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ComputeMatrix, std::source_location::current(), "Method parameter must be string or ExtractionMethod enum");
         }
+
         if (name == "window_size") {
             if (auto* size = std::any_cast<uint32_t>(&value)) {
                 m_window_size = *size;
@@ -366,13 +374,13 @@ private:
     void validate_parameters() const
     {
         if (m_window_size == 0) {
-            throw std::invalid_argument("Window size must be greater than 0");
+            error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ComputeMatrix, std::source_location::current(), "Window size must be greater than 0");
         }
         if (m_hop_size == 0) {
-            throw std::invalid_argument("Hop size must be greater than 0");
+            error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ComputeMatrix, std::source_location::current(), "Hop size must be greater than 0");
         }
         if (m_hop_size > m_window_size) {
-            throw std::invalid_argument("Hop size should not exceed window size for optimal coverage");
+            error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ComputeMatrix, std::source_location::current(), "Hop size should not exceed window size for optimal coverage");
         }
     }
 };

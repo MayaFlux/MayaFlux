@@ -6,7 +6,9 @@
 #include "UniversalAnalyzer.hpp"
 #include <Eigen/Dense>
 
-#include "AnalysisHelper.hpp"
+#include "MayaFlux/Kinesis/Discrete/Analysis.hpp"
+
+#include "MayaFlux/Journal/Archivist.hpp"
 
 /**
  * @file EnergyAnalyzer.hpp
@@ -207,7 +209,7 @@ public:
     void set_energy_thresholds(double silent, double quiet, double moderate, double loud)
     {
         if (silent >= quiet || quiet >= moderate || moderate >= loud) {
-            throw std::invalid_argument("Energy thresholds must be in ascending order");
+            error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ComputeMatrix, std::source_location::current(), "Energy thresholds must be in ascending order");
         }
         m_silent_threshold = silent;
         m_quiet_threshold = quiet;
@@ -310,7 +312,7 @@ protected:
 
             for (const auto& channel_span : channel_spans) {
                 if (channel_span.size() < m_window_size) {
-                    throw std::runtime_error("One or more channels in input data are smaller than window size (" + std::to_string(m_window_size) + ")");
+                    error<std::runtime_error>(Journal::Component::Yantra, Journal::Context::ComputeMatrix, std::source_location::current(), "One or more channels in input data are smaller than window size ({} samples)", m_window_size);
                 }
             }
 
@@ -327,7 +329,7 @@ protected:
 
             return create_pipeline_output(input, analysis_result, structure_info);
         } catch (const std::exception& e) {
-            std::cerr << "Energy analysis failed: " << e.what() << '\n';
+            MF_ERROR(Journal::Component::Yantra, Journal::Context::ComputeMatrix, "Energy analysis failed: {}", e.what());
             output_type error_result;
             error_result.metadata = input.metadata;
             error_result.metadata["error"] = std::string("Analysis failed: ") + e.what();
@@ -346,7 +348,7 @@ protected:
                 m_method = string_to_method(method_str);
                 return;
             } catch (const std::runtime_error&) {
-                throw std::invalid_argument("Invalid method parameter - expected string or EnergyMethod enum");
+                error_rethrow(Journal::Component::Yantra, Journal::Context::ComputeMatrix, std::source_location::current(), "Invalid method parameter - expected string or EnergyMethod enum");
             }
             if (auto* method_enum = std::any_cast<EnergyMethod>(&value)) {
                 m_method = *method_enum;
@@ -405,13 +407,13 @@ private:
     void validate_window_parameters() const
     {
         if (m_window_size == 0) {
-            throw std::invalid_argument("Window size must be greater than 0");
+            error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ComputeMatrix, std::source_location::current(), "Window size must be greater than 0");
         }
         if (m_hop_size == 0) {
-            throw std::invalid_argument("Hop size must be greater than 0");
+            error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ComputeMatrix, std::source_location::current(), "Hop size must be greater than 0");
         }
         if (m_hop_size > m_window_size) {
-            throw std::invalid_argument("Hop size should not exceed window size");
+            error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ComputeMatrix, std::source_location::current(), "Hop size should not exceed window size");
         }
     }
 
@@ -468,13 +470,13 @@ private:
             if (ch < original_data.size()) {
                 switch (m_method) {
                 case EnergyMethod::ZERO_CROSSING:
-                    channel_result.event_positions = find_zero_crossing_positions(
+                    channel_result.event_positions = Kinesis::Discrete::zero_crossing_positions(
                         original_data[ch], 0.0);
                     break;
 
                 case EnergyMethod::PEAK: {
                     double peak_threshold = m_classification_enabled ? m_quiet_threshold : 0.01;
-                    channel_result.event_positions = find_peak_positions(
+                    channel_result.event_positions = Kinesis::Discrete::peak_positions(
                         original_data[ch], peak_threshold, m_hop_size / 4);
                     break;
                 }
@@ -554,24 +556,25 @@ private:
      */
     [[nodiscard]] std::vector<double> compute_energy_values(std::span<const double> data, EnergyMethod method) const
     {
+        namespace D = MayaFlux::Kinesis::Discrete;
         const size_t num_windows = calculate_num_windows(data.size());
 
         switch (method) {
         case EnergyMethod::PEAK:
-            return compute_peak_energy(data, num_windows, m_hop_size, m_window_size);
+            return D::peak(data, num_windows, m_hop_size, m_window_size);
         case EnergyMethod::ZERO_CROSSING:
-            return compute_zero_crossing_energy(data, num_windows, m_hop_size, m_window_size);
+            return D::zero_crossing_rate(data, num_windows, m_hop_size, m_window_size);
         case EnergyMethod::POWER:
-            return compute_power_energy(data, num_windows, m_hop_size, m_window_size);
+            return D::power(data, num_windows, m_hop_size, m_window_size);
         case EnergyMethod::DYNAMIC_RANGE:
-            return compute_dynamic_range_energy(data, num_windows, m_hop_size, m_window_size);
+            return D::dynamic_range(data, num_windows, m_hop_size, m_window_size);
         case EnergyMethod::SPECTRAL:
-            return compute_spectral_energy(data, num_windows, m_hop_size, m_window_size);
+            return D::spectral_energy(data, num_windows, m_hop_size, m_window_size);
         case EnergyMethod::HARMONIC:
-            return compute_harmonic_energy(data, num_windows, m_hop_size, m_window_size);
+            return D::low_frequency_energy(data, num_windows, m_hop_size, m_window_size);
         case EnergyMethod::RMS:
         default:
-            return compute_rms_energy(data, num_windows, m_hop_size, m_window_size);
+            return D::rms(data, num_windows, m_hop_size, m_window_size);
         }
     }
 

@@ -1,9 +1,11 @@
 #pragma once
 
+#include "MayaFlux/Kinesis/Discrete/Convolution.hpp"
 #include "UniversalTransformer.hpp"
-#include "helpers/ConvolutionHelper.hpp"
 
 namespace MayaFlux::Yantra {
+
+namespace D = MayaFlux::Kinesis::Discrete;
 
 /**
  * @enum ConvolutionOperation
@@ -63,64 +65,57 @@ public:
 
 protected:
     /**
-     * @brief Core transformation implementation for convolution operations
-     * @param input Input data to transform using convolution methods
-     * @return Transformed output data
+     * @brief Applies the configured convolution operation
+     * @param input Input data
+     * @return Transformed output
      *
-     * Performs the convolution operation specified by m_operation on the input data.
-     * Operations include direct convolution, cross-correlation, matched filtering,
-     * deconvolution, and auto-correlation. These operations are fundamental for
-     * signal processing tasks such as filtering, pattern matching, and system
-     * identification. Supports both in-place and out-of-place transformations.
+     * Extracts per-channel double spans, calls the corresponding
+     * Kinesis::Discrete::Convolution primitive on each channel, then
+     * reconstructs the typed output via OperationHelper.
      */
     output_type transform_implementation(input_type& input) override
     {
         switch (m_operation) {
-        case ConvolutionOperation::DIRECT_CONVOLUTION: {
-            auto impulse_response = get_parameter_or<std::vector<double>>("impulse_response", std::vector<double> { 1.0 });
 
-            if (this->is_in_place()) {
-                return create_output(transform_convolve(input, impulse_response));
-            }
-            return create_output(transform_convolve(input, impulse_response, m_working_buffer));
+        case ConvolutionOperation::DIRECT_CONVOLUTION: {
+            const auto ir = get_parameter_or<std::vector<double>>(
+                "impulse_response", std::vector<double> { 1.0 });
+            return apply_per_channel(input, [&ir](std::span<const double> ch) {
+                return D::convolve(ch, ir);
+            });
         }
 
         case ConvolutionOperation::CROSS_CORRELATION: {
-            auto template_signal = get_parameter_or<std::vector<double>>("template_signal", std::vector<double> { 1.0 });
-            auto normalize = get_parameter_or<bool>("normalize", true);
-
-            if (this->is_in_place()) {
-                return create_output(transform_cross_correlate(input, template_signal, normalize));
-            }
-            return create_output(transform_cross_correlate(input, template_signal, normalize, m_working_buffer));
+            const auto tmpl = get_parameter_or<std::vector<double>>(
+                "template_signal", std::vector<double> { 1.0 });
+            const auto norm = get_parameter_or<bool>("normalize", true);
+            return apply_per_channel(input, [&tmpl, norm](std::span<const double> ch) {
+                return D::cross_correlate(ch, tmpl, norm);
+            });
         }
 
         case ConvolutionOperation::MATCHED_FILTER: {
-            auto reference_signal = get_parameter_or<std::vector<double>>("reference_signal", std::vector<double> { 1.0 });
-
-            if (this->is_in_place()) {
-                return create_output(transform_matched_filter(input, reference_signal));
-            }
-            return create_output(transform_matched_filter(input, reference_signal, m_working_buffer));
+            const auto ref = get_parameter_or<std::vector<double>>(
+                "reference_signal", std::vector<double> { 1.0 });
+            return apply_per_channel(input, [&ref](std::span<const double> ch) {
+                return D::matched_filter(ch, ref);
+            });
         }
 
         case ConvolutionOperation::DECONVOLUTION: {
-            auto impulse_response = get_parameter_or<std::vector<double>>("impulse_response", std::vector<double> { 1.0 });
-            auto regularization = get_parameter_or<double>("regularization", 1e-6);
-
-            if (this->is_in_place()) {
-                return create_output(transform_deconvolve(input, impulse_response, regularization));
-            }
-            return create_output(transform_deconvolve(input, impulse_response, regularization, m_working_buffer));
+            const auto ir = get_parameter_or<std::vector<double>>(
+                "impulse_response", std::vector<double> { 1.0 });
+            const auto reg = get_parameter_or<double>("regularization", 1e-6);
+            return apply_per_channel(input, [&ir, reg](std::span<const double> ch) {
+                return D::deconvolve(ch, ir, reg);
+            });
         }
 
         case ConvolutionOperation::AUTO_CORRELATION: {
-            auto normalize = get_parameter_or<bool>("normalize", true);
-
-            if (this->is_in_place()) {
-                return create_output(transform_auto_correlate_fft(input, normalize));
-            }
-            return create_output(transform_auto_correlate_fft(input, m_working_buffer, normalize));
+            const auto norm = get_parameter_or<bool>("normalize", true);
+            return apply_per_channel(input, [norm](std::span<const double> ch) {
+                return D::auto_correlate(ch, norm);
+            });
         }
 
         default:
@@ -146,13 +141,13 @@ protected:
     void set_transformation_parameter(const std::string& name, std::any value) override
     {
         if (name == "operation") {
-            if (auto op_result = safe_any_cast<ConvolutionOperation>(value)) {
-                m_operation = *op_result.value;
+            if (auto r = safe_any_cast<ConvolutionOperation>(value)) {
+                m_operation = *r.value;
                 return;
             }
-            if (auto str_result = safe_any_cast<std::string>(value)) {
-                if (auto op_enum = Reflect::string_to_enum_case_insensitive<ConvolutionOperation>(*str_result.value)) {
-                    m_operation = *op_enum;
+            if (auto r = safe_any_cast<std::string>(value)) {
+                if (auto e = Reflect::string_to_enum_case_insensitive<ConvolutionOperation>(*r.value)) {
+                    m_operation = *e;
                     return;
                 }
             }
@@ -164,6 +159,34 @@ protected:
 private:
     ConvolutionOperation m_operation; ///< Current convolution operation
     mutable std::vector<std::vector<double>> m_working_buffer; ///< Buffer for out-of-place convolution operations
+
+    /**
+     * @brief Extracts per-channel spans, applies func to each, and reconstructs.
+     * @tparam Func Callable matching either void(std::span<double>) or
+     *         std::vector<double>(std::span<const double>)
+     *
+     * In-place: results are copied back into the original channel spans of @p input.
+     * Out-of-place: input is not mutated.
+     */
+    template <typename Func>
+    output_type apply_per_channel(input_type& input, Func&& func)
+    {
+        auto [channels, structure_info] = OperationHelper::extract_structured_double(input);
+        m_working_buffer.resize(channels.size());
+        for (size_t i = 0; i < channels.size(); ++i) {
+            if constexpr (std::is_void_v<std::invoke_result_t<Func, std::span<double>>>) {
+                m_working_buffer[i].assign(channels[i].begin(), channels[i].end());
+                func(std::span<double> { m_working_buffer[i] });
+            } else {
+                m_working_buffer[i] = func(std::span<const double> { channels[i] });
+            }
+        }
+        if (this->is_in_place())
+            for (size_t i = 0; i < channels.size(); ++i)
+                std::ranges::copy(m_working_buffer[i], channels[i].begin());
+        return create_output(
+            OperationHelper::reconstruct_from_double<InputType>(m_working_buffer, structure_info));
+    }
 
     /**
      * @brief Sets default parameter values for all convolution operations

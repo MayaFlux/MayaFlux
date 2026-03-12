@@ -1,10 +1,12 @@
 #pragma once
 
+#include "MayaFlux/Kinesis/Discrete/Transform.hpp"
+#include "MayaFlux/Nodes/Generators/Polynomial.hpp"
 #include "UniversalTransformer.hpp"
-#include "helpers/MathematicalHelper.hpp"
 
 namespace MayaFlux::Yantra {
 
+namespace D = MayaFlux::Kinesis::Discrete;
 /**
  * @enum MathematicalOperation
  * @brief Specific mathematical operations supported
@@ -78,104 +80,87 @@ protected:
     output_type transform_implementation(input_type& input) override
     {
         switch (m_operation) {
+
         case MathematicalOperation::GAIN: {
-            auto gain_factor = get_parameter_or<double>("gain_factor", 1.0);
-            if (this->is_in_place()) {
-                return create_output(transform_linear(input, gain_factor, 0.0));
-            }
-            return create_output(transform_linear(input, gain_factor, 0.0, m_working_buffer));
+            const auto a = get_parameter_or<double>("gain_factor", 1.0);
+            return apply_per_channel(input, [a](std::span<double> ch) {
+                D::linear(ch, a, 0.0);
+            });
         }
 
         case MathematicalOperation::OFFSET: {
-            auto offset_value = get_parameter_or<double>("offset_value", 0.0);
-            if (this->is_in_place()) {
-                return create_output(transform_linear(input, 1.0, offset_value));
-            }
-            return create_output(transform_linear(input, 1.0, offset_value, m_working_buffer));
+            const auto b = get_parameter_or<double>("offset_value", 0.0);
+            return apply_per_channel(input, [b](std::span<double> ch) {
+                D::linear(ch, 1.0, b);
+            });
         }
 
         case MathematicalOperation::POWER: {
-            auto exponent = get_parameter_or<double>("exponent", 2.0);
-
-            if (this->is_in_place()) {
-                return create_output(transform_power(input, exponent));
-            }
-            return create_output(transform_power(input, exponent, m_working_buffer));
+            const auto exp = get_parameter_or<double>("exponent", 2.0);
+            return apply_per_channel(input, [exp](std::span<double> ch) {
+                D::power(ch, exp);
+            });
         }
 
         case MathematicalOperation::LOGARITHMIC: {
-            auto scale = get_parameter_or<double>("scale", 1.0);
-            auto input_scale = get_parameter_or<double>("input_scale", 1.0);
-            auto offset = get_parameter_or<double>("offset", 1.0);
-            auto base = get_parameter_or<double>("base", std::numbers::e);
-
-            if (this->is_in_place()) {
-                return create_output(transform_logarithmic(input, scale, input_scale, offset, base));
-            }
-            return create_output(transform_logarithmic(input, scale, input_scale, offset, m_working_buffer, base));
+            const auto a = get_parameter_or<double>("scale", 1.0);
+            const auto b = get_parameter_or<double>("input_scale", 1.0);
+            const auto c = get_parameter_or<double>("offset", 1.0);
+            const auto base = get_parameter_or<double>("base", std::numbers::e);
+            return apply_per_channel(input, [a, b, c, base](std::span<double> ch) {
+                D::logarithmic(ch, a, b, c, base);
+            });
         }
 
         case MathematicalOperation::EXPONENTIAL: {
-            auto scale = get_parameter_or<double>("scale", 1.0);
-            auto rate = get_parameter_or<double>("rate", 1.0);
-            auto base = get_parameter_or<double>("base", std::numbers::e);
-
-            if (this->is_in_place()) {
-                return create_output(transform_exponential(input, scale, rate, base));
-            }
-            return create_output(transform_exponential(input, scale, rate, m_working_buffer, base));
+            const auto a = get_parameter_or<double>("scale", 1.0);
+            const auto b = get_parameter_or<double>("rate", 1.0);
+            const auto base = get_parameter_or<double>("base", std::numbers::e);
+            return apply_per_channel(input, [a, b, base](std::span<double> ch) {
+                D::exponential(ch, a, b, base);
+            });
         }
 
         case MathematicalOperation::TRIGONOMETRIC: {
-            auto trig_function = get_parameter_or<std::string>("trig_function", "sin");
-            auto frequency = get_parameter_or<double>("frequency", 1.0);
-            auto amplitude = get_parameter_or<double>("amplitude", 1.0);
-            auto phase = get_parameter_or<double>("phase", 0.0);
-
-            if (trig_function == "sin") {
-                if (this->is_in_place()) {
-                    return create_output(transform_trigonometric(input, [](double x) { return std::sin(x); }, frequency, amplitude, phase));
-                }
-                return create_output(transform_trigonometric(input, [](double x) { return std::sin(x); }, frequency, amplitude, phase, m_working_buffer));
-            }
-            if (trig_function == "cos") {
-                if (this->is_in_place()) {
-                    return create_output(transform_trigonometric(input, [](double x) { return std::cos(x); }, frequency, amplitude, phase));
-                }
-                return create_output(transform_trigonometric(input, [](double x) { return std::cos(x); }, frequency, amplitude, phase, m_working_buffer));
-            }
-            if (trig_function == "tan") {
-                if (this->is_in_place()) {
-                    return create_output(transform_trigonometric(input, [](double x) { return std::tan(x); }, frequency, amplitude, phase));
-                }
-                return create_output(transform_trigonometric(input, [](double x) { return std::tan(x); }, frequency, amplitude, phase, m_working_buffer));
-            }
-            return create_output(input);
+            const auto fn = get_parameter_or<std::string>("trig_function", "sin");
+            const auto freq = get_parameter_or<double>("frequency", 1.0);
+            const auto amp = get_parameter_or<double>("amplitude", 1.0);
+            const auto ph = get_parameter_or<double>("phase", 0.0);
+            if (fn == "cos")
+                return apply_per_channel(input, [freq, amp, ph](std::span<double> ch) {
+                    D::apply_trig(ch, [](double x) { return std::cos(x); }, freq, amp, ph);
+                });
+            if (fn == "tan")
+                return apply_per_channel(input, [freq, amp, ph](std::span<double> ch) {
+                    D::apply_trig(ch, [](double x) { return std::tan(x); }, freq, amp, ph);
+                });
+            return apply_per_channel(input, [freq, amp, ph](std::span<double> ch) {
+                D::apply_trig(ch, [](double x) { return std::sin(x); }, freq, amp, ph);
+            });
         }
 
         case MathematicalOperation::QUANTIZE: {
-            auto bits = get_parameter_or<uint8_t>("bits", 16);
-            if (this->is_in_place()) {
-                return create_output(transform_quantize(input, bits));
-            }
-            return create_output(transform_quantize(input, bits, m_working_buffer));
+            const auto bits = get_parameter_or<uint8_t>("bits", 16);
+            return apply_per_channel(input, [bits](std::span<double> ch) {
+                D::quantize(ch, bits);
+            });
         }
 
         case MathematicalOperation::NORMALIZE: {
-            auto target_peak = get_parameter_or<double>("target_peak", 1.0);
-            std::pair<double, double> target_range = { -target_peak, target_peak };
-            if (this->is_in_place()) {
-                return create_output(transform_normalize(input, target_range));
-            }
-            return create_output(transform_normalize(input, target_range, m_working_buffer));
+            const auto peak = get_parameter_or<double>("target_peak", 1.0);
+            return apply_per_channel(input, [peak](std::span<double> ch) {
+                D::normalize(ch, -peak, peak);
+            });
         }
 
         case MathematicalOperation::POLYNOMIAL: {
-            auto coefficients = get_parameter_or<std::vector<double>>("coefficients", std::vector<double> { 0.0, 1.0 });
-            if (this->is_in_place()) {
-                return create_output(transform_polynomial(input, coefficients));
-            }
-            return create_output(transform_polynomial(input, coefficients, m_working_buffer));
+            const auto coeffs = get_parameter_or<std::vector<double>>(
+                "coefficients", std::vector<double> { 0.0, 1.0 });
+            auto poly = std::make_shared<Nodes::Generator::Polynomial>(coeffs);
+            return apply_per_channel(input, [&poly](std::span<double> ch) {
+                std::ranges::transform(ch, ch.begin(),
+                    [&poly](double x) { return poly->process_sample(x); });
+            });
         }
 
         default:
@@ -194,13 +179,13 @@ protected:
     void set_transformation_parameter(const std::string& name, std::any value) override
     {
         if (name == "operation") {
-            if (auto op_result = safe_any_cast<MathematicalOperation>(value)) {
-                m_operation = *op_result.value;
+            if (auto r = safe_any_cast<MathematicalOperation>(value)) {
+                m_operation = *r.value;
                 return;
             }
-            if (auto str_result = safe_any_cast<std::string>(value)) {
-                if (auto op_enum = Reflect::string_to_enum_case_insensitive<MathematicalOperation>(*str_result.value)) {
-                    m_operation = *op_enum;
+            if (auto r = safe_any_cast<std::string>(value)) {
+                if (auto e = Reflect::string_to_enum_case_insensitive<MathematicalOperation>(*r.value)) {
+                    m_operation = *e;
                     return;
                 }
             }
@@ -212,6 +197,29 @@ protected:
 private:
     MathematicalOperation m_operation; ///< Current mathematical operation
     mutable std::vector<std::vector<double>> m_working_buffer; ///< Buffer for out-of-place operations
+
+    /**
+     * @brief Extracts per-channel spans, applies an in-place func to each, and reconstructs.
+     * @tparam Func Callable matching void(std::span<double>)
+     *
+     * In-place: results are copied back into the original channel spans of @p input before
+     * reconstruction. Out-of-place: input is not mutated.
+     */
+    template <typename Func>
+    output_type apply_per_channel(input_type& input, Func&& func)
+    {
+        auto [channels, structure_info] = OperationHelper::extract_structured_double(input);
+        m_working_buffer.resize(channels.size());
+        for (size_t i = 0; i < channels.size(); ++i) {
+            m_working_buffer[i].assign(channels[i].begin(), channels[i].end());
+            func(std::span<double> { m_working_buffer[i] });
+        }
+        if (this->is_in_place())
+            for (size_t i = 0; i < channels.size(); ++i)
+                std::ranges::copy(m_working_buffer[i], channels[i].begin());
+        return create_output(
+            OperationHelper::reconstruct_from_double<InputType>(m_working_buffer, structure_info));
+    }
 
     /**
      * @brief Sets default parameter values for all mathematical operations

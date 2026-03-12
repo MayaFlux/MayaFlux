@@ -7,6 +7,8 @@
 #include "MayaFlux/Yantra/Transformers/MathematicalTransformer.hpp"
 #include "MayaFlux/Yantra/Transformers/TemporalTransformer.hpp"
 
+#include "MayaFlux/Kinesis/Discrete/Analysis.hpp"
+
 namespace MayaFlux {
 
 static bool is_same_size(const std::vector<std::span<double>>& data)
@@ -420,7 +422,7 @@ std::vector<double> detect_onsets(const std::vector<double>& data, double sample
 {
     std::span<const double> data_span(data.data(), data.size());
 
-    auto onset_sample_positions = Yantra::find_onset_positions(
+    auto onset_sample_positions = Kinesis::Discrete::onset_positions(
         data_span,
         1024,
         512,
@@ -440,7 +442,7 @@ std::vector<double> detect_onsets(const Kakshya::DataVariant& data, double sampl
     auto double_data = std::get<std::vector<double>>(data);
     std::span<const double> data_span(double_data.data(), double_data.size());
 
-    auto onset_sample_positions = Yantra::find_onset_positions(
+    auto onset_sample_positions = Kinesis::Discrete::onset_positions(
         data_span,
         1024,
         512,
@@ -464,7 +466,7 @@ std::vector<std::vector<double>> detect_onsets_per_channel(const std::vector<Kak
         auto double_data = std::get<std::vector<double>>(channel);
         std::span<const double> data_span(double_data.data(), double_data.size());
 
-        auto onset_sample_positions = Yantra::find_onset_positions(
+        auto onset_sample_positions = Kinesis::Discrete::onset_positions(
             data_span,
             1024,
             512,

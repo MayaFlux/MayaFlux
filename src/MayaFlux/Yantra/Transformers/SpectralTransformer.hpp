@@ -1,20 +1,22 @@
 #pragma once
 
+#include "MayaFlux/Kinesis/Discrete/Spectral.hpp"
 #include "UniversalTransformer.hpp"
-#include "helpers/SpectralHelper.hpp"
 
 namespace MayaFlux::Yantra {
 
+namespace D = MayaFlux::Kinesis::Discrete;
+
 /**
  * @enum SpectralOperation
- * @brief Specific spectral operations supported
+ * @brief Spectral operations supported by SpectralTransformer
  */
 enum class SpectralOperation : uint8_t {
-    FREQUENCY_SHIFT, ///< Shift entire spectrum
-    PITCH_SHIFT, ///< Pitch-preserving shift
-    SPECTRAL_FILTER, ///< Filter frequency bands
-    HARMONIC_ENHANCE, ///< Enhance harmonics
-    SPECTRAL_GATE, ///< Spectral gating
+    FREQUENCY_SHIFT, ///< Bandpass repositioning (approximate frequency shift)
+    PITCH_SHIFT, ///< Phase-vocoder pitch shift, duration preserved
+    SPECTRAL_FILTER, ///< Hard bandpass filter
+    HARMONIC_ENHANCE, ///< Linear spectral tilt
+    SPECTRAL_GATE, ///< Hard magnitude gate
 };
 
 /**
@@ -63,148 +65,81 @@ public:
 
 protected:
     /**
-     * @brief Core transformation implementation for spectral operations
-     * @param input Input data to transform in the frequency domain
-     * @return Transformed output data
+     * @brief Applies the configured spectral operation
+     * @param input Input data
+     * @return Transformed output
      *
-     * Performs the spectral operation specified by m_operation on the input data.
-     * Operations are performed using FFT/IFFT transforms with windowing for overlap-add processing.
-     * Supports both in-place and out-of-place transformations.
+     * Extracts per-channel double spans, calls the corresponding
+     * Kinesis::Discrete::Spectral primitive on each channel, then
+     * reconstructs the typed output via OperationHelper.
+     *
+     * FREQUENCY_SHIFT is implemented as a bandpass repositioning matching
+     * the prior behaviour. True single-sideband frequency
+     * shift (complex exponential modulation) is a separate primitive.
      */
     output_type transform_implementation(input_type& input) override
     {
         switch (m_operation) {
+
         case SpectralOperation::FREQUENCY_SHIFT: {
-            auto shift_hz = get_parameter_or<double>("shift_hz", 0.0);
-            auto window_size = get_parameter_or<uint32_t>("window_size", 1024);
-            auto hop_size = get_parameter_or<uint32_t>("hop_size", 512);
-            auto sample_rate = get_parameter_or<double>("sample_rate", 48000.0);
+            const auto shift_hz = get_parameter_or<double>("shift_hz", 0.0);
+            const auto window_size = get_parameter_or<uint32_t>("window_size", 1024);
+            const auto hop_size = get_parameter_or<uint32_t>("hop_size", 512);
+            const auto sample_rate = get_parameter_or<double>("sample_rate", 48000.0);
+            const double lo = std::max(0.0, shift_hz);
+            const double hi = sample_rate / 2.0 + shift_hz;
 
-            auto low_freq = std::max(0.0, shift_hz);
-            auto high_freq = sample_rate / 2.0 + shift_hz;
-
-            if (this->is_in_place()) {
-                return create_output(transform_spectral_filter(input, low_freq, high_freq, sample_rate, window_size, hop_size));
-            }
-            return create_output(transform_spectral_filter(input, low_freq, high_freq, sample_rate, window_size, hop_size, m_working_buffer));
+            return apply_per_channel(input,
+                [lo, hi, sample_rate, window_size, hop_size](std::span<double> ch) {
+                    return D::spectral_filter(ch, lo, hi, sample_rate, window_size, hop_size);
+                });
         }
 
         case SpectralOperation::PITCH_SHIFT: {
-            auto pitch_ratio = get_parameter_or<double>("pitch_ratio", 1.0);
-            auto window_size = get_parameter_or<uint32_t>("window_size", 1024);
-            auto hop_size = get_parameter_or<uint32_t>("hop_size", 512);
+            const auto pitch_ratio = get_parameter_or<double>("pitch_ratio", 1.0);
+            const auto window_size = get_parameter_or<uint32_t>("window_size", 2048);
+            const auto hop_size = get_parameter_or<uint32_t>("hop_size", 512);
+            const double semitones = 12.0 * std::log2(pitch_ratio);
 
-            double semitones = 12.0 * std::log2(pitch_ratio);
-
-            if (this->is_in_place()) {
-                return create_output(transform_pitch_shift(input, semitones, window_size, hop_size));
-            }
-            return create_output(transform_pitch_shift(input, semitones, window_size, hop_size, m_working_buffer));
+            return apply_per_channel(input,
+                [semitones, window_size, hop_size](std::span<double> ch) {
+                    return D::pitch_shift(ch, semitones, window_size, hop_size);
+                });
         }
 
         case SpectralOperation::SPECTRAL_FILTER: {
-            auto low_freq = get_parameter_or<double>("low_freq", 20.0);
-            auto high_freq = get_parameter_or<double>("high_freq", 20000.0);
-            auto window_size = get_parameter_or<uint32_t>("window_size", 1024);
-            auto hop_size = get_parameter_or<uint32_t>("hop_size", 512);
-            auto sample_rate = get_parameter_or<double>("sample_rate", 48000.0);
+            const auto lo_freq = get_parameter_or<double>("low_freq", 20.0);
+            const auto hi_freq = get_parameter_or<double>("high_freq", 20000.0);
+            const auto sample_rate = get_parameter_or<double>("sample_rate", 48000.0);
+            const auto window_size = get_parameter_or<uint32_t>("window_size", 1024);
+            const auto hop_size = get_parameter_or<uint32_t>("hop_size", 512);
 
-            if (this->is_in_place()) {
-                return create_output(transform_spectral_filter(input, low_freq, high_freq, sample_rate, window_size, hop_size));
-            }
-            return create_output(transform_spectral_filter(input, low_freq, high_freq, sample_rate, window_size, hop_size, m_working_buffer));
+            return apply_per_channel(input,
+                [lo_freq, hi_freq, sample_rate, window_size, hop_size](std::span<double> ch) {
+                    return D::spectral_filter(ch, lo_freq, hi_freq, sample_rate, window_size, hop_size);
+                });
         }
 
         case SpectralOperation::HARMONIC_ENHANCE: {
-            auto enhancement_factor = get_parameter_or<double>("enhancement_factor", 2.0);
-            auto window_size = get_parameter_or<uint32_t>("window_size", 1024);
-            auto hop_size = get_parameter_or<uint32_t>("hop_size", 512);
+            const auto factor = get_parameter_or<double>("enhancement_factor", 2.0);
+            const auto window_size = get_parameter_or<uint32_t>("window_size", 1024);
+            const auto hop_size = get_parameter_or<uint32_t>("hop_size", 512);
 
-            if (this->is_in_place()) {
-                auto [data_span, structure_info] = OperationHelper::extract_structured_double(input);
-
-                auto processor = [enhancement_factor](Eigen::VectorXcd& spectrum, size_t) {
-                    for (int i = 1; i < spectrum.size() / 2; ++i) {
-                        double freq_factor = 1.0 + (enhancement_factor - 1.0) * (double(i) / (spectrum.size() / 2));
-                        spectrum[i] *= freq_factor;
-                        spectrum[spectrum.size() - i] *= freq_factor;
-                    }
-                };
-
-                for (auto& span : data_span) {
-                    auto result = process_spectral_windows(span, window_size, hop_size, processor);
-                    std::ranges::copy(result, span.begin());
-                }
-
-                auto reconstructed_data = data_span
-                    | std::views::transform([](const auto& span) {
-                          return std::vector<double>(span.begin(), span.end());
-                      })
-                    | std::ranges::to<std::vector>();
-
-                return create_output(OperationHelper::reconstruct_from_double<InputType>(reconstructed_data, structure_info));
-            }
-
-            auto [target_data, structure_info] = OperationHelper::setup_operation_buffer(input, m_working_buffer);
-            auto processor = [enhancement_factor](Eigen::VectorXcd& spectrum, size_t) {
-                for (int i = 1; i < spectrum.size() / 2; ++i) {
-                    double freq_factor = 1.0 + (enhancement_factor - 1.0) * (double(i) / (spectrum.size() / 2));
-                    spectrum[i] *= freq_factor;
-                    spectrum[spectrum.size() - i] *= freq_factor;
-                }
-            };
-
-            for (size_t i = 0; i < target_data.size(); ++i) {
-                auto result = process_spectral_windows(target_data[i], window_size, hop_size, processor);
-                m_working_buffer[i] = std::move(result);
-            }
-
-            return create_output(OperationHelper::reconstruct_from_double<InputType>(m_working_buffer, structure_info));
+            return apply_per_channel(input,
+                [factor, window_size, hop_size](std::span<double> ch) {
+                    return D::harmonic_enhance(ch, factor, window_size, hop_size);
+                });
         }
 
         case SpectralOperation::SPECTRAL_GATE: {
-            auto threshold = get_parameter_or<double>("threshold", -40.0);
-            auto window_size = get_parameter_or<uint32_t>("window_size", 1024);
-            auto hop_size = get_parameter_or<uint32_t>("hop_size", 512);
+            const auto threshold = get_parameter_or<double>("threshold", -40.0);
+            const auto window_size = get_parameter_or<uint32_t>("window_size", 1024);
+            const auto hop_size = get_parameter_or<uint32_t>("hop_size", 512);
 
-            double linear_threshold = std::pow(10.0, threshold / 20.0);
-
-            if (this->is_in_place()) {
-                auto [data_span, structure_info] = OperationHelper::extract_structured_double(input);
-
-                auto processor = [linear_threshold](Eigen::VectorXcd& spectrum, size_t) {
-                    std::ranges::transform(spectrum, spectrum.begin(), [linear_threshold](const std::complex<double>& bin) {
-                        return (std::abs(bin) > linear_threshold) ? bin : std::complex<double>(0.0, 0.0);
-                    });
-                };
-
-                for (auto& span : data_span) {
-                    auto result = process_spectral_windows(span, window_size, hop_size, processor);
-                    std::ranges::copy(result, span.begin());
-                }
-
-                auto reconstructed_data = data_span
-                    | std::views::transform([](const auto& span) {
-                          return std::vector<double>(span.begin(), span.end());
-                      })
-                    | std::ranges::to<std::vector>();
-
-                return create_output(OperationHelper::reconstruct_from_double<InputType>(reconstructed_data, structure_info));
-            }
-
-            auto [target_data, structure_info] = OperationHelper::setup_operation_buffer(input, m_working_buffer);
-            auto processor = [linear_threshold](Eigen::VectorXcd& spectrum, size_t) {
-                std::ranges::transform(spectrum, spectrum.begin(), [linear_threshold](const std::complex<double>& bin) {
-                    return (std::abs(bin) > linear_threshold) ? bin : std::complex<double>(0.0, 0.0);
+            return apply_per_channel(input,
+                [threshold, window_size, hop_size](std::span<double> ch) {
+                    return D::spectral_gate(ch, threshold, window_size, hop_size);
                 });
-            };
-
-            for (size_t i = 0; i < target_data.size(); ++i) {
-                auto result = process_spectral_windows(target_data[i], window_size, hop_size, processor);
-                m_working_buffer[i] = std::move(result);
-            }
-
-            return create_output(OperationHelper::reconstruct_from_double<InputType>(m_working_buffer, structure_info));
         }
 
         default:
@@ -231,13 +166,13 @@ protected:
     void set_transformation_parameter(const std::string& name, std::any value) override
     {
         if (name == "operation") {
-            if (auto op_result = safe_any_cast<SpectralOperation>(value)) {
-                m_operation = *op_result.value;
+            if (auto r = safe_any_cast<SpectralOperation>(value)) {
+                m_operation = *r.value;
                 return;
             }
-            if (auto str_result = safe_any_cast<std::string>(value)) {
-                if (auto op_enum = Reflect::string_to_enum_case_insensitive<SpectralOperation>(*str_result.value)) {
-                    m_operation = *op_enum;
+            if (auto r = safe_any_cast<std::string>(value)) {
+                if (auto e = Reflect::string_to_enum_case_insensitive<SpectralOperation>(*r.value)) {
+                    m_operation = *e;
                     return;
                 }
             }
@@ -249,6 +184,31 @@ protected:
 private:
     SpectralOperation m_operation; ///< Current spectral operation
     mutable std::vector<std::vector<double>> m_working_buffer; ///< Buffer for out-of-place spectral operations
+
+    /**
+     * @brief Extracts per-channel spans, applies func to each, and reconstructs.
+     * @tparam Func Callable matching std::vector<double>(std::span<double>)
+     *
+     * In-place: results are written back into the channel spans of @p input before
+     * reconstruction, leaving no second allocation of channel data live at the same time.
+     * Out-of-place: results land in m_working_buffer; the original channel data in
+     * @p input is not touched.
+     */
+    template <typename Func>
+    output_type apply_per_channel(input_type& input, Func&& func)
+    {
+        auto [channels, structure_info] = OperationHelper::extract_structured_double(input);
+        m_working_buffer.resize(channels.size());
+        for (size_t i = 0; i < channels.size(); ++i)
+            m_working_buffer[i] = func(channels[i]);
+
+        if (this->is_in_place())
+            for (size_t i = 0; i < channels.size(); ++i)
+                std::ranges::copy(m_working_buffer[i], channels[i].begin());
+
+        return create_output(
+            OperationHelper::reconstruct_from_double<InputType>(m_working_buffer, structure_info));
+    }
 
     /**
      * @brief Sets default parameter values for all spectral operations

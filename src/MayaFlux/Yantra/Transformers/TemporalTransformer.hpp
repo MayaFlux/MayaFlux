@@ -2,9 +2,11 @@
 
 #include "UniversalTransformer.hpp"
 
-#include "helpers/TemporalHelper.hpp"
+#include "MayaFlux/Kinesis/Discrete/Transform.hpp"
 
 namespace MayaFlux::Yantra {
+
+namespace D = MayaFlux::Kinesis::Discrete;
 
 /**
  * @enum TemporalOperation
@@ -77,71 +79,56 @@ protected:
     output_type transform_implementation(input_type& input) override
     {
         switch (m_operation) {
-        case TemporalOperation::TIME_REVERSE: {
-            if (this->is_in_place()) {
-                return create_output(transform_time_reverse(input));
-            }
 
-            return create_output(transform_time_reverse(input, m_working_buffer));
+        case TemporalOperation::TIME_REVERSE:
+            return apply_per_channel(input, [](std::span<double> ch) {
+                D::reverse(ch);
+            });
+
+        case TemporalOperation::FADE_IN_OUT: {
+            const auto fi = get_parameter_or<double>("fade_in_ratio", 0.1);
+            const auto fo = get_parameter_or<double>("fade_out_ratio", 0.1);
+            return apply_per_channel(input, [fi, fo](std::span<double> ch) {
+                D::fade(ch, fi, fo);
+            });
         }
 
         case TemporalOperation::TIME_STRETCH: {
-            auto stretch_factor = get_parameter_or<double>("stretch_factor", 1.0);
-            if (this->is_in_place()) {
-                return create_output(transform_time_stretch(input, stretch_factor));
-            }
-
-            return create_output(transform_time_stretch(input, stretch_factor, m_working_buffer));
+            const auto factor = get_parameter_or<double>("stretch_factor", 1.0);
+            return apply_per_channel(input, [factor](std::span<const double> ch) {
+                return D::time_stretch(ch, factor);
+            });
         }
 
         case TemporalOperation::DELAY: {
-            auto delay_samples = get_parameter_or<uint32_t>("delay_samples", 1000);
-            auto fill_value = get_parameter_or<double>("fill_value", 0.0);
-            if (this->is_in_place()) {
-                return create_output(transform_delay(input, delay_samples, fill_value));
-            }
-
-            return create_output(transform_delay(input, delay_samples, fill_value, m_working_buffer));
-        }
-
-        case TemporalOperation::FADE_IN_OUT: {
-            auto fade_in_ratio = get_parameter_or<double>("fade_in_ratio", 0.1);
-            auto fade_out_ratio = get_parameter_or<double>("fade_out_ratio", 0.1);
-            if (this->is_in_place()) {
-                return create_output(transform_fade(input, fade_in_ratio, fade_out_ratio));
-            }
-
-            return create_output(transform_fade(input, fade_in_ratio, fade_out_ratio, m_working_buffer));
+            const auto samples = get_parameter_or<uint32_t>("delay_samples", 1000);
+            const auto fill = get_parameter_or<double>("fill_value", 0.0);
+            return apply_per_channel(input, [samples, fill](std::span<const double> ch) {
+                return D::delay(ch, samples, fill);
+            });
         }
 
         case TemporalOperation::SLICE: {
-            auto start_ratio = get_parameter_or<double>("start_ratio", 0.0);
-            auto end_ratio = get_parameter_or<double>("end_ratio", 1.0);
-            if (this->is_in_place()) {
-                return create_output(transform_slice(input, start_ratio, end_ratio));
-            }
-
-            return create_output(transform_slice(input, start_ratio, end_ratio, m_working_buffer));
+            const auto start = get_parameter_or<double>("start_ratio", 0.0);
+            const auto end = get_parameter_or<double>("end_ratio", 1.0);
+            return apply_per_channel(input, [start, end](std::span<const double> ch) {
+                return D::slice(ch, start, end);
+            });
         }
 
         case TemporalOperation::INTERPOLATE: {
-            auto target_size = get_parameter_or<size_t>("target_size", 0);
-            auto use_cubic = get_parameter_or<bool>("use_cubic", false);
-            if (target_size > 0) {
-                if (use_cubic) {
-                    if (this->is_in_place()) {
-                        return create_output(interpolate_cubic(input, target_size));
-                    }
-
-                    return create_output(interpolate_cubic(input, target_size, m_working_buffer));
-                }
-
-                if (this->is_in_place()) {
-                    return create_output(interpolate_linear(input, target_size));
-                }
-                return create_output(interpolate_linear(input, target_size, m_working_buffer));
-            }
-            return create_output(input);
+            const auto target = get_parameter_or<size_t>("target_size", size_t { 0 });
+            const auto cubic = get_parameter_or<bool>("use_cubic", false);
+            if (target == 0)
+                return create_output(input);
+            return apply_per_channel(input, [target, cubic](std::span<const double> ch) {
+                std::vector<double> out(target);
+                if (cubic)
+                    D::interpolate_cubic(ch, out);
+                else
+                    D::interpolate_linear(ch, out);
+                return out;
+            });
         }
 
         default:
@@ -169,24 +156,53 @@ protected:
     void set_transformation_parameter(const std::string& name, std::any value) override
     {
         if (name == "operation") {
-            if (auto op_result = safe_any_cast<TemporalOperation>(value)) {
-                m_operation = *op_result.value;
+            if (auto r = safe_any_cast<TemporalOperation>(value)) {
+                m_operation = *r.value;
                 return;
             }
-            if (auto str_result = safe_any_cast<std::string>(value)) {
-                if (auto op_enum = Reflect::string_to_enum_case_insensitive<TemporalOperation>(*str_result.value)) {
-                    m_operation = *op_enum;
+            if (auto r = safe_any_cast<std::string>(value)) {
+                if (auto e = Reflect::string_to_enum_case_insensitive<TemporalOperation>(*r.value)) {
+                    m_operation = *e;
                     return;
                 }
             }
         }
-
         UniversalTransformer<InputType, OutputType>::set_transformation_parameter(name, std::move(value));
     }
 
 private:
     TemporalOperation m_operation; ///< Current temporal operation
     mutable std::vector<std::vector<double>> m_working_buffer; ///< Buffer for out-of-place temporal operations
+
+    /**
+     * @brief Extracts per-channel spans, applies func to each, and reconstructs.
+     * @tparam Func Callable matching either void(std::span<double>) for same-size
+     *         operations or std::vector<double>(std::span<const double>) for
+     *         operations that may resize the channel.
+     *
+     * In-place: results are copied back into the original channel spans of @p input.
+     * Out-of-place: input is not mutated.
+     */
+    template <typename Func>
+    output_type apply_per_channel(input_type& input, Func&& func)
+    {
+        auto [channels, structure_info] = OperationHelper::extract_structured_double(input);
+        m_working_buffer.resize(channels.size());
+        for (size_t i = 0; i < channels.size(); ++i) {
+            if constexpr (std::is_void_v<std::invoke_result_t<Func, std::span<double>>>) {
+                m_working_buffer[i].assign(channels[i].begin(), channels[i].end());
+                func(std::span<double> { m_working_buffer[i] });
+            } else {
+                m_working_buffer[i] = func(std::span<const double> { channels[i] });
+            }
+        }
+
+        if (this->is_in_place())
+            for (size_t i = 0; i < channels.size(); ++i)
+                std::ranges::copy(m_working_buffer[i], channels[i].begin());
+        return create_output(
+            OperationHelper::reconstruct_from_double<InputType>(m_working_buffer, structure_info));
+    }
 
     /**
      * @brief Sets default parameter values for all temporal operations
