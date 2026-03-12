@@ -3,6 +3,8 @@
 #include "MayaFlux/Yantra/Analyzers/EnergyAnalyzer.hpp"
 #include "MayaFlux/Yantra/Analyzers/StatisticalAnalyzer.hpp"
 
+#include "MayaFlux/Kinesis/Discrete/Analysis.hpp"
+
 namespace {
 
 /**
@@ -632,7 +634,7 @@ std::vector<std::vector<double>> extract_onset_data(
         }
 
         try {
-            std::vector<size_t> onset_positions = find_onset_positions(
+            std::vector<size_t> onset_positions = Kinesis::Discrete::onset_positions(
                 channel, window_size, hop_size, threshold);
 
             if (onset_positions.empty()) {

@@ -6,7 +6,7 @@
 #include "UniversalAnalyzer.hpp"
 #include <Eigen/Dense>
 
-#include "AnalysisHelper.hpp"
+#include "MayaFlux/Kinesis/Discrete/Analysis.hpp"
 
 /**
  * @file EnergyAnalyzer.hpp
@@ -468,13 +468,13 @@ private:
             if (ch < original_data.size()) {
                 switch (m_method) {
                 case EnergyMethod::ZERO_CROSSING:
-                    channel_result.event_positions = find_zero_crossing_positions(
+                    channel_result.event_positions = Kinesis::Discrete::zero_crossing_positions(
                         original_data[ch], 0.0);
                     break;
 
                 case EnergyMethod::PEAK: {
                     double peak_threshold = m_classification_enabled ? m_quiet_threshold : 0.01;
-                    channel_result.event_positions = find_peak_positions(
+                    channel_result.event_positions = Kinesis::Discrete::peak_positions(
                         original_data[ch], peak_threshold, m_hop_size / 4);
                     break;
                 }
@@ -554,24 +554,25 @@ private:
      */
     [[nodiscard]] std::vector<double> compute_energy_values(std::span<const double> data, EnergyMethod method) const
     {
+        namespace D = MayaFlux::Kinesis::Discrete;
         const size_t num_windows = calculate_num_windows(data.size());
 
         switch (method) {
         case EnergyMethod::PEAK:
-            return compute_peak_energy(data, num_windows, m_hop_size, m_window_size);
+            return D::peak(data, num_windows, m_hop_size, m_window_size);
         case EnergyMethod::ZERO_CROSSING:
-            return compute_zero_crossing_energy(data, num_windows, m_hop_size, m_window_size);
+            return D::zero_crossing_rate(data, num_windows, m_hop_size, m_window_size);
         case EnergyMethod::POWER:
-            return compute_power_energy(data, num_windows, m_hop_size, m_window_size);
+            return D::power(data, num_windows, m_hop_size, m_window_size);
         case EnergyMethod::DYNAMIC_RANGE:
-            return compute_dynamic_range_energy(data, num_windows, m_hop_size, m_window_size);
+            return D::dynamic_range(data, num_windows, m_hop_size, m_window_size);
         case EnergyMethod::SPECTRAL:
-            return compute_spectral_energy(data, num_windows, m_hop_size, m_window_size);
+            return D::spectral_energy(data, num_windows, m_hop_size, m_window_size);
         case EnergyMethod::HARMONIC:
-            return compute_harmonic_energy(data, num_windows, m_hop_size, m_window_size);
+            return D::low_frequency_energy(data, num_windows, m_hop_size, m_window_size);
         case EnergyMethod::RMS:
         default:
-            return compute_rms_energy(data, num_windows, m_hop_size, m_window_size);
+            return D::rms(data, num_windows, m_hop_size, m_window_size);
         }
     }
 
