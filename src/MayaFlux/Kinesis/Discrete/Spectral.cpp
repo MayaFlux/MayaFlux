@@ -100,9 +100,10 @@ std::vector<double> apply_spectral(
         Eigen::VectorXcd full = to_full_spectrum(onesided, N);
         fft.inv(ifft_out, full);
 
+        const double inv_N = 1.0 / static_cast<double>(N);
         for (uint32_t k = 0; k < N && pos + k < src.size(); ++k) {
             const double w = win[k];
-            output[pos + k] += ifft_out(static_cast<Eigen::Index>(k)) * w;
+            output[pos + k] += ifft_out(static_cast<Eigen::Index>(k)) * inv_N * w;
             norm[pos + k] += w * w;
         }
     }
@@ -259,9 +260,10 @@ std::vector<double> phase_vocoder_stretch(
         fft.inv(ifft_out, full);
 
         const size_t out_pos = f * Hs;
+        const double inv_N = 1.0 / static_cast<double>(N);
         for (uint32_t k = 0; k < N && out_pos + k < out_len; ++k) {
             const double w = win[k];
-            output[out_pos + k] += ifft_out(static_cast<Eigen::Index>(k)) * w;
+            output[out_pos + k] += ifft_out(static_cast<Eigen::Index>(k)) * inv_N * w;
             norm[out_pos + k] += w * w;
         }
     }
