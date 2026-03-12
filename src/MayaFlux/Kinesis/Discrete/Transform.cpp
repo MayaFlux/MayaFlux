@@ -1,5 +1,7 @@
 #include "Transform.hpp"
 
+#include "MayaFlux/Transitive/Parallel/Execution.hpp"
+
 namespace MayaFlux::Kinesis::Discrete {
 
 // ============================================================================
@@ -166,13 +168,16 @@ void interpolate_linear(std::span<const double> src, std::span<double> dst) noex
 
     const double step = static_cast<double>(src_n - 1) / static_cast<double>(dst_n - 1);
 
-    for (size_t i = 0; i < dst_n; ++i) {
-        const double pos = static_cast<double>(i) * step;
-        const auto idx = static_cast<size_t>(pos);
-        const size_t idx1 = std::min(idx + 1, src_n - 1);
-        const double frac = pos - static_cast<double>(idx);
-        dst[i] = src[idx] + frac * (src[idx1] - src[idx]);
-    }
+    Parallel::for_each(Parallel::par_unseq,
+        std::views::iota(size_t { 0 }, dst_n).begin(),
+        std::views::iota(size_t { 0 }, dst_n).end(),
+        [&src, &dst, step, src_n](size_t i) {
+            const double pos = static_cast<double>(i) * step;
+            const auto idx = static_cast<size_t>(pos);
+            const size_t idx1 = std::min(idx + 1, src_n - 1);
+            const double frac = pos - static_cast<double>(idx);
+            dst[i] = src[idx] + frac * (src[idx1] - src[idx]);
+        });
 }
 
 void interpolate_cubic(std::span<const double> src, std::span<double> dst) noexcept
@@ -191,27 +196,25 @@ void interpolate_cubic(std::span<const double> src, std::span<double> dst) noexc
     const double step = static_cast<double>(src_n - 1) / static_cast<double>(dst_n - 1);
     const size_t last = src_n - 1;
 
-    for (size_t i = 0; i < dst_n; ++i) {
-        const double pos = static_cast<double>(i) * step;
-        const auto idx = static_cast<size_t>(pos);
-        const double f = pos - static_cast<double>(idx);
+    Parallel::for_each(Parallel::par_unseq,
+        std::views::iota(size_t { 0 }, dst_n).begin(),
+        std::views::iota(size_t { 0 }, dst_n).end(),
+        [&src, &dst, step, last](size_t i) {
+            const double pos = static_cast<double>(i) * step;
+            const auto idx = static_cast<size_t>(pos);
+            const double f = pos - static_cast<double>(idx);
 
-        const size_t i0 = idx > 0 ? idx - 1 : 0;
-        const size_t i1 = idx;
-        const size_t i2 = std::min(idx + 1, last);
-        const size_t i3 = std::min(idx + 2, last);
+            const size_t i0 = idx > 0 ? idx - 1 : 0;
+            const size_t i1 = idx;
+            const size_t i2 = std::min(idx + 1, last);
+            const size_t i3 = std::min(idx + 2, last);
 
-        const double y0 = src[i0];
-        const double y1 = src[i1];
-        const double y2 = src[i2];
-        const double y3 = src[i3];
-
-        const double a = -0.5 * y0 + 1.5 * y1 - 1.5 * y2 + 0.5 * y3;
-        const double b = y0 - 2.5 * y1 + 2.0 * y2 - 0.5 * y3;
-        const double c = -0.5 * y0 + 0.5 * y2;
-
-        dst[i] = ((a * f + b) * f + c) * f + y1;
-    }
+            const double y0 = src[i0], y1 = src[i1], y2 = src[i2], y3 = src[i3];
+            const double a = -0.5 * y0 + 1.5 * y1 - 1.5 * y2 + 0.5 * y3;
+            const double b = y0 - 2.5 * y1 + 2.0 * y2 - 0.5 * y3;
+            const double c = -0.5 * y0 + 0.5 * y2;
+            dst[i] = ((a * f + b) * f + c) * f + y1;
+        });
 }
 
 std::vector<double> time_stretch(std::span<const double> data, double stretch_factor)
