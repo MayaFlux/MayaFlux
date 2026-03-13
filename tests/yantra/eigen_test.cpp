@@ -1,7 +1,8 @@
 #include "../mock_signalsourcecontainer.hpp"
 
+#include "MayaFlux/Kinesis/MatrixTransforms.hpp"
 #include "MayaFlux/Yantra/Analyzers/StatisticalAnalyzer.hpp"
-#include "MayaFlux/Yantra/Transformers/helpers/MatrixHelper.hpp"
+#include "MayaFlux/Yantra/OperationSpec/MatrixHelper.hpp"
 
 using namespace MayaFlux::Yantra;
 using namespace MayaFlux::Kakshya;
@@ -257,12 +258,12 @@ TEST_F(MatrixHelperTest, EmptyDataHandling)
 
 TEST_F(MatrixHelperTest, UtilityMatrixCreation)
 {
-    auto rotation = create_rotation_matrix(M_PI / 4, 2, 2);
+    auto rotation = MayaFlux::Kinesis::create_rotation_matrix(M_PI / 4, 2, 2);
     EXPECT_EQ(rotation.rows(), 2);
     EXPECT_EQ(rotation.cols(), 2);
 
     std::vector<double> scales = { 2.0, 0.5 };
-    auto scaling = create_scaling_matrix(scales);
+    auto scaling = MayaFlux::Kinesis::create_scaling_matrix(scales);
     EXPECT_EQ(scaling.rows(), 2);
     EXPECT_EQ(scaling.cols(), 2);
     EXPECT_DOUBLE_EQ(scaling(0, 0), 2.0);

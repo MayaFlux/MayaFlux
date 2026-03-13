@@ -1,6 +1,6 @@
-#include "MatrixHelper.hpp"
+#include "MatrixTransforms.hpp"
 
-namespace MayaFlux::Yantra {
+namespace MayaFlux::Kinesis {
 
 Eigen::MatrixXd create_rotation_matrix(double angle, uint32_t axis, uint32_t dimensions)
 {
@@ -44,14 +44,37 @@ Eigen::MatrixXd create_scaling_matrix(const std::vector<double>& scale_factors)
         return Eigen::MatrixXd::Identity(1, 1);
     }
 
-    Eigen::MatrixXd scaling = Eigen::MatrixXd::Zero(scale_factors.size(), scale_factors.size());
+    Eigen::MatrixXd scaling = Eigen::MatrixXd::Zero(
+        scale_factors.size(), scale_factors.size());
 
-    auto indices = std::views::iota(size_t { 0 }, scale_factors.size());
-    std::ranges::for_each(indices, [&](size_t i) {
+    for (size_t i = 0; i < scale_factors.size(); ++i) {
         scaling(i, i) = scale_factors[i];
-    });
+    }
 
     return scaling;
 }
 
-} // namespace MayaFlux::Yantra
+Eigen::MatrixXd create_uniform_scaling_matrix(double scale, uint32_t dimensions)
+{
+    return Eigen::MatrixXd::Identity(dimensions, dimensions) * scale;
+}
+
+Eigen::VectorXd create_translation_vector(const std::vector<double>& offsets)
+{
+    Eigen::VectorXd vec(offsets.size());
+    for (size_t i = 0; i < offsets.size(); ++i) {
+        vec(static_cast<Eigen::Index>(i)) = offsets[i];
+    }
+    return vec;
+}
+
+Eigen::MatrixXd create_rotation_scaling_matrix(
+    double angle,
+    const std::vector<double>& scale_factors,
+    uint32_t axis,
+    uint32_t dimensions)
+{
+    return create_scaling_matrix(scale_factors) * create_rotation_matrix(angle, axis, dimensions);
+}
+
+} // namespace MayaFlux::Kinesis
