@@ -1,8 +1,6 @@
 #pragma once
 
-#include "NDData.hpp"
-
-#include "MayaFlux/Journal/Archivist.hpp"
+#include "MayaFlux/Kakshya/Utils/DataUtils.hpp"
 
 #include <glm/gtc/type_ptr.hpp>
 
@@ -19,7 +17,7 @@ namespace MayaFlux::Kakshya {
  * Design principle: All types are equal. GLM specializations exist for
  * ergonomics, not privileged status.
  */
-class MAYALFUX_API DataInsertion {
+class MAYAFLUX_API DataInsertion {
 public:
     DataInsertion(DataVariant& variant,
         std::vector<DataDimension>& dimensions,
@@ -116,25 +114,15 @@ public:
     void insert_converted(const std::vector<From>& source, DataModality target_modality)
     {
         std::vector<To> converted;
-        converted.reserve(source.size());
+        auto source_span = std::span<From>(
+            const_cast<From*>(source.data()), source.size());
+        convert_data<From, To>(source_span, converted);
 
-        if constexpr (std::is_arithmetic_v<From> && std::is_arithmetic_v<To>) {
-            std::ranges::transform(source, std::back_inserter(converted),
-                [](From val) { return static_cast<To>(val); });
-        } else if constexpr (std::is_same_v<From, std::complex<float>> || std::is_same_v<From, std::complex<double>>) {
-            std::ranges::transform(source, std::back_inserter(converted),
-                [](From val) { return static_cast<To>(std::abs(val)); });
+        if constexpr (GlmType<To>) {
+            insert_structured(std::move(converted), target_modality);
         } else {
-            error<std::invalid_argument>(
-                Journal::Component::Kakshya,
-                Journal::Context::Runtime,
-                std::source_location::current(),
-                "Unsupported conversion from {} to {}",
-                typeid(From).name(),
-                typeid(To).name());
+            insert_scalar(std::move(converted), target_modality);
         }
-
-        insert_scalar(std::move(converted), target_modality);
     }
 
     /**

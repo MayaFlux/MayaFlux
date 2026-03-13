@@ -1,9 +1,11 @@
 #pragma once
 
+#include "OperationHelper.hpp"
+
 #include "MayaFlux/Kakshya/Region/Region.hpp"
 #include "MayaFlux/Yantra/Analyzers/EnergyAnalyzer.hpp"
 #include "MayaFlux/Yantra/Analyzers/StatisticalAnalyzer.hpp"
-#include "MayaFlux/Yantra/OperationSpec/OperationHelper.hpp"
+
 #include <Eigen/Dense>
 
 /**
@@ -669,8 +671,5 @@ std::vector<Kakshya::Region> detect_regions_by_energy(const DataType& input,
 
     return regions;
 }
-
-Eigen::MatrixXd create_rotation_matrix(double angle, uint32_t axis = 2, uint32_t dimensions = 2);
-Eigen::MatrixXd create_scaling_matrix(const std::vector<double>& scale_factors);
 
 } // namespace MayaFlux::Yantra
