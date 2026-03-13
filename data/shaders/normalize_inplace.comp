@@ -1,0 +1,45 @@
+#version 450
+
+layout(local_size_x = 256) in;
+
+layout(set = 0, binding = 0) buffer DataBuffer {
+    float data[];
+};
+
+layout(push_constant) uniform PushConstants {
+    uint element_count;
+    float target_peak;
+} pc;
+
+shared float shared_max[256];
+
+void main()
+{
+    uint tid = gl_LocalInvocationID.x;
+    uint gid = gl_GlobalInvocationID.x;
+
+    // Phase 1: find local max absolute value
+    shared_max[tid] = (gid < pc.element_count) ? abs(data[gid]) : 0.0;
+    barrier();
+
+    // Parallel reduction for workgroup max
+    for (uint s = gl_WorkGroupSize.x / 2; s > 0; s >>= 1) {
+        if (tid < s) {
+            shared_max[tid] = max(shared_max[tid], shared_max[tid + s]);
+        }
+        barrier();
+    }
+
+    // Phase 2: normalize (single-workgroup version)
+    // For multi-workgroup, a two-pass approach or atomic max is needed.
+    // This version is correct for data that fits in one dispatch group.
+    // For larger data, the host pre-computes peak and passes it as target_peak ratio.
+    float peak = shared_max[0];
+    if (peak == 0.0) return;
+
+    float scale = pc.target_peak / peak;
+
+    if (gid < pc.element_count) {
+        data[gid] *= scale;
+    }
+}

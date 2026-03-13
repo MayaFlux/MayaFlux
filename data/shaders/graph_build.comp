@@ -1,0 +1,67 @@
+#version 450
+
+layout(local_size_x = 256) in;
+
+/// @brief Positions: vec2 packed as [x0,y0, x1,y1, ...] or vec3 as [x0,y0,z0, ...]
+layout(set = 0, binding = 0) buffer PositionBuffer {
+    float positions[];
+};
+
+/// @brief Per-point attribute used for connection criterion weighting
+layout(set = 0, binding = 1) buffer AttributeBuffer {
+    float attributes[];
+};
+
+/// @brief Output edge pairs as [src0, dst0, src1, dst1, ...]
+layout(set = 0, binding = 2) buffer EdgeBuffer {
+    float edges[];
+};
+
+/// @brief Atomic counter for number of edges written
+layout(set = 0, binding = 3) buffer CountBuffer {
+    uint edge_count;
+};
+
+layout(push_constant) uniform PushConstants {
+    uint point_count;
+    uint stride; // 2 for 2D, 3 for 3D
+    float radius; // connection radius
+    float attr_threshold; // max attribute difference for connection
+    uint max_edges; // capacity of EdgeBuffer (in pairs)
+} pc;
+
+void main()
+{
+    uint i = gl_GlobalInvocationID.x;
+    if (i >= pc.point_count) return;
+
+    uint base_i = i * pc.stride;
+    float ix = positions[base_i];
+    float iy = positions[base_i + 1];
+    float iz = (pc.stride > 2) ? positions[base_i + 2] : 0.0;
+    float ia = attributes[i];
+
+    float r2 = pc.radius * pc.radius;
+
+    for (uint j = i + 1; j < pc.point_count; ++j) {
+        uint base_j = j * pc.stride;
+        float dx = positions[base_j] - ix;
+        float dy = positions[base_j + 1] - iy;
+        float dz = (pc.stride > 2) ? (positions[base_j + 2] - iz) : 0.0;
+
+        float dist2 = dx * dx + dy * dy + dz * dz;
+        if (dist2 > r2) continue;
+
+        float attr_diff = abs(attributes[j] - ia);
+        if (attr_diff > pc.attr_threshold) continue;
+
+        uint slot = atomicAdd(edge_count, 1);
+        if (slot >= pc.max_edges) {
+            atomicAdd(edge_count, uint(-1));
+            return;
+        }
+
+        edges[slot * 2] = float(i);
+        edges[slot * 2 + 1] = float(j);
+    }
+}
