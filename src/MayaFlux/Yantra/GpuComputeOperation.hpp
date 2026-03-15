@@ -117,6 +117,11 @@ public:
         m_output_size_overrides[index] = byte_size;
     }
 
+    [[nodiscard]] OperationType get_operation_type() const override
+    {
+        return OperationType::CUSTOM;
+    }
+
 protected:
     output_type apply_operation_internal(const input_type& input,
         const ExecutionContext& ctx) override

@@ -100,6 +100,11 @@ public:
         return get_analyzer_name();
     }
 
+    [[nodiscard]] OperationType get_operation_type() const override
+    {
+        return OperationType::ANALYZER;
+    }
+
     /**
      * @brief Type-safe parameter management with analysis-specific defaults
      */

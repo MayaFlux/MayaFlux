@@ -123,6 +123,11 @@ public:
     [[nodiscard]] virtual std::string get_name() const { return "ComputeOperation"; }
 
     /**
+     * @brief Returns the category of this operation for grammar and registry discovery.
+     */
+    [[nodiscard]] virtual OperationType get_operation_type() const = 0;
+
+    /**
      * @brief OpUnit interface - operations can act as units in dependency graphs
      */
     output_type execute(const input_type& input)

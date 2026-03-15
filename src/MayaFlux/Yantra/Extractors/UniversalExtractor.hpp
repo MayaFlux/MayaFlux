@@ -104,6 +104,11 @@ public:
         return get_extractor_name();
     }
 
+    [[nodiscard]] OperationType get_operation_type() const override
+    {
+        return OperationType::EXTRACTOR;
+    }
+
     /**
      * @brief Type-safe parameter management with extraction-specific defaults
      */
