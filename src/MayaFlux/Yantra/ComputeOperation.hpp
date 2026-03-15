@@ -206,7 +206,7 @@ protected:
      */
     virtual output_type apply_operation_internal(const input_type& input, const ExecutionContext& context)
     {
-        if (m_gpu_backend && m_gpu_backend->is_gpu_ready()) {
+        if (m_gpu_backend && m_gpu_backend->ensure_gpu_ready()) {
             return m_gpu_backend->execute(input, context);
         }
 

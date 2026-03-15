@@ -151,6 +151,19 @@ public:
      */
     [[nodiscard]] bool is_gpu_ready() const { return m_resources.is_ready(); }
 
+    /**
+     * @brief Ensure GPU resources are initialised. If already ready, does nothing.
+     * @return True if GPU is ready after this call, false if initialisation failed.
+     */
+    bool ensure_gpu_ready()
+    {
+        if (m_resources.is_ready()) {
+            return true;
+        }
+        m_bindings = declare_buffer_bindings();
+        return m_resources.initialise(m_gpu_config, m_bindings);
+    }
+
 protected:
     //==========================================================================
     // Subclass declaration points
@@ -366,15 +379,6 @@ private:
     //==========================================================================
     // Internal helpers
     //==========================================================================
-
-    bool ensure_gpu_ready()
-    {
-        if (m_resources.is_ready()) {
-            return true;
-        }
-        m_bindings = declare_buffer_bindings();
-        return m_resources.initialise(m_gpu_config, m_bindings);
-    }
 
     /**
      * @brief Flatten planar double channels to a float staging buffer.
