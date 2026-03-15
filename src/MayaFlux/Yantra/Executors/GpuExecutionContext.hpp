@@ -266,10 +266,14 @@ protected:
     }
 
     /**
-     * @brief Read back GPU results and reconstruct IO.
+     * @brief Read back GPU results and reconstruct output Datum.
      *
-     * Default: read first OUTPUT/INPUT_OUTPUT buffer, split back into
-     * per-channel doubles.
+     * Reads the first OUTPUT or INPUT_OUTPUT buffer back into per-channel
+     * doubles when m_staging_floats is non-empty. When m_staging_floats is
+     * empty (all inputs pre-staged via set_binding_data), falls back to
+     * largest_binding_data_element_count() to determine the readback size.
+     * Additional OUTPUT bindings with explicit size overrides are written
+     * to result.metadata keyed as "gpu_output_N".
      */
     virtual output_type collect_gpu_outputs(
         const std::vector<std::vector<double>>& channels,
@@ -277,8 +281,17 @@ protected:
     {
         output_type result;
 
-        const size_t float_count = m_staging_floats.size();
-        if (float_count > 0) {
+        const size_t float_count = m_staging_floats.empty()
+            ? largest_binding_data_element_count()
+            : m_staging_floats.size();
+
+        const size_t total_channel_elements = std::accumulate(
+            channels.begin(), channels.end(), size_t { 0 },
+            [](size_t sum, const auto& ch) { return sum + ch.size(); });
+
+        if (float_count > 0 && !channels.empty()
+            && float_count >= total_channel_elements) {
+
             const size_t readback_index = find_first_output_index();
             const size_t allocated = m_resources.buffer_allocated_bytes(readback_index);
             const size_t byte_size = std::min(float_count * sizeof(float), allocated);

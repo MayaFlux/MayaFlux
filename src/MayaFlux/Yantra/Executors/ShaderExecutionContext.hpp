@@ -157,6 +157,48 @@ public:
     }
 
     /**
+     * @brief Declare an INPUT_OUTPUT binding without pre-staging data.
+     *
+     * The binding direction is registered but no data is uploaded at
+     * configuration time. Dispatch stages data from the input Datum
+     * automatically. Use when the shader reads and writes the same buffer
+     * and the input arrives via apply_operation rather than set_binding_data.
+     *
+     * @param type  Element type hint for the shader (default: FLOAT32).
+     * @return Reference to this executor for chaining.
+     */
+    ShaderExecutionContext& in_out(uint32_t binding,
+        GpuBufferBinding::ElementType type = GpuBufferBinding::ElementType::FLOAT32)
+    {
+        m_bindings.push_back({ .set = 0,
+            .binding = binding,
+            .direction = GpuBufferBinding::Direction::INPUT_OUTPUT,
+            .element_type = type });
+
+        return *this;
+    }
+
+    /**
+     * @brief Declare an INPUT_OUTPUT binding at an explicit index without
+     *        pre-staging data.
+     *
+     * @param binding Binding index.
+     * @param type    Element type hint for the shader (default: FLOAT32).
+     * @return Reference to this executor for chaining.
+     */
+    ShaderExecutionContext& in_out(
+        GpuBufferBinding::ElementType type = GpuBufferBinding::ElementType::FLOAT32)
+    {
+        const uint32_t idx = next_binding_index();
+        m_bindings.push_back({ .set = 0,
+            .binding = idx,
+            .direction = GpuBufferBinding::Direction::INPUT_OUTPUT,
+            .element_type = type });
+
+        return *this;
+    }
+
+    /**
      * @brief Add an OUTPUT binding, inferring the next available binding index.
      * @param byte_size Allocation size in bytes.
      * @param type      Element type hint for the shader (default: FLOAT32).
