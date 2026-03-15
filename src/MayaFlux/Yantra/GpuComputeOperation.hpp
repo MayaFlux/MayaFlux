@@ -62,7 +62,7 @@ struct GpuResourceManagerImpl;
  */
 class GpuResourceManager {
 public:
-    GpuResourceManager() = default;
+    GpuResourceManager();
     ~GpuResourceManager();
 
     GpuResourceManager(const GpuResourceManager&) = delete;
@@ -142,6 +142,76 @@ public:
     GpuComputeOperation(GpuComputeOperation&&) = delete;
     GpuComputeOperation& operator=(GpuComputeOperation&&) = delete;
 
+    /**
+     * @brief Set push constant data to be passed to the shader on dispatch.
+     * @param data Pointer to raw push constant data.
+     * @param bytes Size of the push constant data in bytes.
+     */
+    void set_push_constants(const void* data, size_t bytes)
+    {
+        m_push_constants.resize(bytes);
+        std::memcpy(m_push_constants.data(), data, bytes);
+    }
+
+    /**
+     * @brief Templated convenience for setting push constants from a struct or value.
+     *        The data will be copied as raw bytes, so ensure it is trivially copyable
+     *        and matches the shader's expected layout.
+     *
+     * @tparam T Type of the push constant data (e.g., a struct).
+     * @param data The push constant data to set.
+     */
+    template <typename T>
+    void set_push_constants(const T& data)
+    {
+        set_push_constants(&data, sizeof(T));
+    }
+
+    /**
+     * @brief Supply pre-built typed data for a specific binding slot.
+     *
+     * Follows the same set_parameter pattern used across all Yantra operations.
+     * When set, prepare_gpu_inputs uploads this data verbatim for the given
+     * binding index, bypassing the default channel-flattening path.
+     *
+     * @tparam T    Trivially copyable element type.
+     * @param index Binding index matching declare_buffer_bindings order.
+     * @param data  Elements to upload.
+     */
+    template <typename T>
+    void set_binding_data(size_t index, std::span<const T> data)
+    {
+        if (index >= m_binding_data.size()) {
+            m_binding_data.resize(index + 1);
+        }
+        auto& slot = m_binding_data[index];
+        slot.resize(data.size_bytes());
+        std::memcpy(slot.data(), data.data(), data.size_bytes());
+    }
+
+    template <typename T>
+    void set_binding_data(size_t index, const std::vector<T>& data)
+    {
+        set_binding_data(index, std::span<const T>(data));
+    }
+
+    /**
+     * @brief Declare the byte capacity of an output binding independently of input data.
+     *
+     * Required when output size cannot be derived from the input (edge lists,
+     * count buffers, histograms, etc.). Must be called before process().
+     *
+     * @param index     Binding index matching declare_buffer_bindings order.
+     * @param byte_size Required allocation in bytes.
+     */
+    void set_output_size(size_t index, size_t byte_size)
+    {
+        if (index >= m_output_size_overrides.size()) {
+            m_output_size_overrides.resize(index + 1, 0);
+        }
+        m_output_size_overrides[index] = byte_size;
+    }
+
 protected:
     output_type apply_operation_internal(const input_type& input,
         const ExecutionContext& ctx) override
@@ -166,8 +236,8 @@ protected:
     [[nodiscard]] virtual std::vector<GpuBufferBinding> declare_buffer_bindings() const
     {
         return {
-            { 0, 0, GpuBufferBinding::Direction::INPUT, GpuBufferBinding::ElementType::FLOAT32 },
-            { 0, 1, GpuBufferBinding::Direction::OUTPUT, GpuBufferBinding::ElementType::FLOAT32 },
+            { .set = 0, .binding = 0, .direction = GpuBufferBinding::Direction::INPUT, .element_type = GpuBufferBinding::ElementType::FLOAT32 },
+            { .set = 0, .binding = 1, .direction = GpuBufferBinding::Direction::OUTPUT, .element_type = GpuBufferBinding::ElementType::FLOAT32 },
         };
     }
 
@@ -203,8 +273,21 @@ protected:
         for (size_t i = 0; i < m_bindings.size(); ++i) {
             const auto& b = m_bindings[i];
 
+            if (i < m_binding_data.size() && !m_binding_data[i].empty()) {
+                m_resources.ensure_buffer(i, m_binding_data[i].size());
+                m_resources.upload_raw(i, m_binding_data[i].data(), m_binding_data[i].size());
+                continue;
+            }
+
             if (b.direction == GpuBufferBinding::Direction::OUTPUT) {
-                m_resources.ensure_buffer(i, fallback_bytes);
+                const size_t sz = (i < m_output_size_overrides.size() && m_output_size_overrides[i] > 0)
+                    ? m_output_size_overrides[i]
+                    : fallback_bytes;
+                m_resources.ensure_buffer(i, sz);
+                if (i < m_output_size_overrides.size() && m_output_size_overrides[i] > 0) {
+                    std::vector<uint8_t> zeros(sz, 0);
+                    m_resources.upload_raw(i, zeros.data(), sz);
+                }
                 continue;
             }
 
@@ -251,14 +334,32 @@ protected:
         const std::vector<std::vector<double>>& channels,
         const DataStructureInfo& structure_info)
     {
-        const size_t readback_index = find_first_output_index();
+        output_type result;
+
         const size_t float_count = m_staging_floats.size();
-        const size_t byte_size = float_count * sizeof(float);
+        if (float_count > 0) {
+            const size_t readback_index = find_first_output_index();
+            const size_t allocated = m_resources.buffer_allocated_bytes(readback_index);
+            const size_t byte_size = std::min(float_count * sizeof(float), allocated);
+            const size_t capped_count = byte_size / sizeof(float);
+            std::vector<float> result_f(capped_count);
+            m_resources.download(readback_index, result_f.data(), byte_size);
+            result = reconstruct_from_floats(result_f, channels, structure_info);
+        }
 
-        std::vector<float> result_f(float_count);
-        m_resources.download(readback_index, result_f.data(), byte_size);
+        for (size_t i = 0; i < m_bindings.size(); ++i) {
+            if ((m_bindings[i].direction == GpuBufferBinding::Direction::OUTPUT
+                    || m_bindings[i].direction == GpuBufferBinding::Direction::INPUT_OUTPUT)
+                && i < m_output_size_overrides.size()
+                && m_output_size_overrides[i] > 0) {
+                const size_t sz = m_output_size_overrides[i];
+                std::vector<uint8_t> raw(sz);
+                m_resources.download(i, reinterpret_cast<float*>(raw.data()), sz);
+                result.metadata["gpu_output_" + std::to_string(i)] = std::move(raw);
+            }
+        }
 
-        return reconstruct_from_floats(result_f, channels, structure_info);
+        return result;
     }
 
     /**
@@ -296,26 +397,14 @@ protected:
         if (sz_x > 0) {
             return {
                 static_cast<uint32_t>((sz_x + m_gpu_config.workgroup_size[0] - 1) / m_gpu_config.workgroup_size[0]),
-                sz_y > 0 ? static_cast<uint32_t>((sz_y + m_gpu_config.workgroup_size[1] - 1) / m_gpu_config.workgroup_size[1]) : 1u,
-                sz_z > 0 ? static_cast<uint32_t>((sz_z + m_gpu_config.workgroup_size[2] - 1) / m_gpu_config.workgroup_size[2]) : 1u,
+                sz_y > 0 ? static_cast<uint32_t>((sz_y + m_gpu_config.workgroup_size[1] - 1) / m_gpu_config.workgroup_size[1]) : 1U,
+                sz_z > 0 ? static_cast<uint32_t>((sz_z + m_gpu_config.workgroup_size[2] - 1) / m_gpu_config.workgroup_size[2]) : 1U,
             };
         }
 
         const auto gx = static_cast<uint32_t>(
             (total_elements + m_gpu_config.workgroup_size[0] - 1) / m_gpu_config.workgroup_size[0]);
         return { gx, 1, 1 };
-    }
-
-    void set_push_constants(const void* data, size_t bytes)
-    {
-        m_push_constants.resize(bytes);
-        std::memcpy(m_push_constants.data(), data, bytes);
-    }
-
-    template <typename T>
-    void set_push_constants(const T& data)
-    {
-        set_push_constants(&data, sizeof(T));
     }
 
     /**
@@ -343,7 +432,9 @@ private:
     std::vector<GpuBufferBinding> m_bindings;
     std::vector<float> m_staging_floats;
     std::vector<uint8_t> m_push_constants;
+    std::vector<size_t> m_output_size_overrides;
     std::vector<std::vector<uint8_t>> m_passthrough_bytes;
+    std::vector<std::vector<uint8_t>> m_binding_data;
 
     //==========================================================================
     // Internal helpers
@@ -376,31 +467,68 @@ private:
             return;
         }
 
+        const auto& bindings = m_bindings;
+        bool all_inputs_staged = !bindings.empty();
+        for (size_t i = 0; i < bindings.size(); ++i) {
+            const auto dir = bindings[i].direction;
+            if (dir == GpuBufferBinding::Direction::OUTPUT)
+                continue;
+            if (i >= m_binding_data.size() || m_binding_data[i].empty()) {
+                all_inputs_staged = false;
+                break;
+            }
+        }
+
+        if (all_inputs_staged)
+            return;
+
         size_t total = 0;
         for (const auto& ch : channels) {
             total += ch.size();
         }
+
         m_staging_floats.reserve(total);
+
         for (const auto& ch : channels) {
-            for (double v : ch) {
+            for (double v : ch)
                 m_staging_floats.push_back(static_cast<float>(v));
-            }
         }
     }
 
     [[nodiscard]] size_t find_first_output_index() const
     {
+        size_t first_input_output = SIZE_MAX;
         for (size_t i = 0; i < m_bindings.size(); ++i) {
-            if (m_bindings[i].direction == GpuBufferBinding::Direction::OUTPUT
-                || m_bindings[i].direction == GpuBufferBinding::Direction::INPUT_OUTPUT) {
+            if (m_bindings[i].direction == GpuBufferBinding::Direction::OUTPUT) {
                 return i;
             }
+            if (m_bindings[i].direction == GpuBufferBinding::Direction::INPUT_OUTPUT
+                && first_input_output == SIZE_MAX) {
+                first_input_output = i;
+            }
+        }
+        if (first_input_output != SIZE_MAX) {
+            return first_input_output;
         }
         error<std::runtime_error>(
             Journal::Component::Yantra,
             Journal::Context::BufferProcessing,
             std::source_location::current(),
             "GpuComputeOperation: no output buffer declared");
+    }
+
+    [[nodiscard]] size_t largest_binding_data_element_count() const
+    {
+        size_t max_bytes = 0;
+        for (size_t i = 0; i < m_bindings.size(); ++i) {
+            if (m_bindings[i].direction == GpuBufferBinding::Direction::OUTPUT)
+                continue;
+            if (i < m_binding_data.size() && !m_binding_data[i].empty()) {
+                max_bytes = std::max(max_bytes, m_binding_data[i].size());
+            }
+        }
+        const size_t element_bytes = sizeof(float);
+        return element_bytes > 0 ? max_bytes / element_bytes : 0;
     }
 
     static output_type reconstruct_from_floats(
@@ -416,7 +544,7 @@ private:
                 result_channels[c][i] = static_cast<double>(result_f[offset++]);
             }
         }
-        return IO<OutputType>(
+        return Datum<OutputType>(
             OperationHelper::reconstruct_from_double<OutputType>(
                 result_channels, structure_info));
     }
@@ -439,7 +567,10 @@ private:
 
         on_before_gpu_dispatch(channel_copies, structure_info);
 
-        const auto groups = calculate_dispatch_size(m_staging_floats.size(), structure_info);
+        const size_t effective_elements = m_staging_floats.empty()
+            ? largest_binding_data_element_count()
+            : m_staging_floats.size();
+        const auto groups = calculate_dispatch_size(effective_elements, structure_info);
 
         m_resources.dispatch(
             groups, m_bindings,

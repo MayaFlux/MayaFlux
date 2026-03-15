@@ -258,6 +258,22 @@ protected:
 
     ExecutionContext m_last_execution_context;
 
+    output_type apply_hooks(const input_type& input, const ExecutionContext& context)
+    {
+        if (context.pre_execution_hook) {
+            std::any input_any = const_cast<input_type&>(input);
+            context.pre_execution_hook(input_any);
+        }
+
+        auto result = operation_function(input);
+
+        if (context.post_execution_hook) {
+            std::any result_any = &result;
+            context.post_execution_hook(result_any);
+        }
+        return result;
+    }
+
 private:
     std::vector<std::shared_ptr<ComputeOperation>> m_dependencies;
 
@@ -287,22 +303,6 @@ private:
         } else if constexpr (std::is_same_v<OutputType, std::vector<Kakshya::RegionSegment>>) {
             std::cerr << "OPERATION INFO: OutputType 'RegionSegments' will create segments with results in metadata.\n";
         }
-    }
-
-    output_type apply_hooks(const input_type& input, const ExecutionContext& context)
-    {
-        if (context.pre_execution_hook) {
-            std::any input_any = const_cast<input_type&>(input);
-            context.pre_execution_hook(input_any);
-        }
-
-        auto result = operation_function(input);
-
-        if (context.post_execution_hook) {
-            std::any result_any = &result;
-            context.post_execution_hook(result_any);
-        }
-        return result;
     }
 
     friend class ComputeMatrix;

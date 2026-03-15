@@ -95,6 +95,8 @@ namespace {
 // Lifecycle
 //==============================================================================
 
+GpuResourceManager::GpuResourceManager() = default;
+
 GpuResourceManager::~GpuResourceManager()
 {
     cleanup();
@@ -218,7 +220,7 @@ void GpuResourceManager::download(size_t index, float* dest, size_t byte_size)
     auto device = foundry.get_device();
     auto& vk_slot = m_impl->buffers[index];
 
-    void* mapped = device.mapMemory(vk_slot.memory, 0, byte_size);
+    void* mapped = device.mapMemory(vk_slot.memory, 0, VK_WHOLE_SIZE);
     std::memcpy(dest, mapped, byte_size);
     device.unmapMemory(vk_slot.memory);
 }
