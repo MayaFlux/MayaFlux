@@ -1,0 +1,7 @@
+<map id="MayaFlux::Portal::Graphics::ShaderFoundry::allocate_descriptor_set" name="MayaFlux::Portal::Graphics::ShaderFoundry::allocate_descriptor_set">
+<area shape="rect" id="Node000001" title="Allocate descriptor set for a pipeline." alt="" coords="279,45,476,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ComputePress_a2a89913f2111c24ad129ab7205bdc133.html#a2a89913f2111c24ad129ab7205bdc133" title="All&#45;in&#45;one: allocate descriptors for pipeline." alt="" coords="19,5,217,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="265,58,216,50,217,45,266,53"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1RenderFlow_a3bf1aa793a70a6f25285ef13de6498fb.html#a3bf1aa793a70a6f25285ef13de6498fb" title="Allocate descriptor sets for pipeline." alt="" coords="5,84,231,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="266,92,231,97,230,92,265,87"/>
+</map>

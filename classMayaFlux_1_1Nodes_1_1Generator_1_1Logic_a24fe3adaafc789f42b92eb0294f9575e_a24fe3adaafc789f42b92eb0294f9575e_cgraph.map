@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Generator::Logic::update_context" name="MayaFlux::Nodes::Generator::Logic::update_context">
+<area shape="rect" id="Node000001" title="Updates the context with the latest sample value." alt="" coords="5,5,213,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Logic_ad95a9cc80e842eb783fc2e9063c9990d.html#ad95a9cc80e842eb783fc2e9063c9990d" title=" " alt="" coords="261,5,488,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="213,23,248,23,248,28,213,28"/>
+</map>

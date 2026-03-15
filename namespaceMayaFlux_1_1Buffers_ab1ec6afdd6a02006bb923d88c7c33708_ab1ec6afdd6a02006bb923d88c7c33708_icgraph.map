@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::extract_network_gpu_data" name="MayaFlux::Buffers::extract_network_gpu_data">
+<area shape="rect" id="Node000001" title="Extract GPU geometry data from a NodeNetwork via its GraphicsOperator." alt="" coords="533,53,728,93"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1NetworkGeometryProcessor_ac6c764a77a3082815a103b602eddaf77.html#ac6c764a77a3082815a103b602eddaf77" title="BufferProcessor interface &#45; aggregates and uploads network geometry." alt="" coords="271,5,476,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="519,58,476,51,477,46,520,53"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1DescriptorBindingsProcessor_a238425e8a4b5fa24981002245c3b804a.html#a238425e8a4b5fa24981002245c3b804a" title="Update descriptor from node context." alt="" coords="261,84,485,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="520,92,486,97,485,92,519,87"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1DescriptorBindingsProcessor_a7f3868a3f75b5b5b82dcac442b63db4b.html#a7f3868a3f75b5b5b82dcac442b63db4b" title=" " alt="" coords="5,84,213,139"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="248,114,213,114,213,109,248,109"/>
+</map>

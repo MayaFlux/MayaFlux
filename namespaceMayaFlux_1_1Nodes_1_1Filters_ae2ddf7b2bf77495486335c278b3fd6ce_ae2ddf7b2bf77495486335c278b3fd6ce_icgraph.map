@@ -1,0 +1,9 @@
+<map id="MayaFlux::Nodes::Filters::shift_parser" name="MayaFlux::Nodes::Filters::shift_parser">
+<area shape="rect" id="Node000001" title="Parses a string representation of filter order into input/output shift configuration." alt="" coords="236,69,419,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Filters_1_1Filter_a93e70961576f4a04dfbf3b73fdd9270d.html#a93e70961576f4a04dfbf3b73fdd9270d" title="Constructor using string&#45;based filter configuration." alt="" coords="5,5,188,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="241,68,169,48,170,43,242,63"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Filters_1_1Filter_a130070e53c152e62f147c26f4a284456.html#a130070e53c152e62f147c26f4a284456" title="Constructor using explicit coefficient vectors." alt="" coords="5,69,188,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="223,92,188,92,188,87,223,87"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Filters_1_1Filter_a64db44a74c60791ac582c78157b6c9ec.html#a64db44a74c60791ac582c78157b6c9ec" title="Updates the filter&#39;s shift configuration." alt="" coords="5,133,188,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="242,116,170,136,169,131,241,110"/>
+</map>

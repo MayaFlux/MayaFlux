@@ -1,0 +1,9 @@
+<map id="MayaFlux::Yantra::ShaderExecutionContext&lt; InputType, OutputType &gt;" name="MayaFlux::Yantra::ShaderExecutionContext&lt; InputType, OutputType &gt;">
+<area shape="rect" id="Node000001" title="Concrete GpuExecutionContext for a single fixed shader with fixed bindings." alt="" coords="121,1241,332,1676"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1GpuExecutionContext.html" title="Standalone GPU compute executor attachable to any ComputeOperation." alt="" coords="107,448,347,1192"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="229,1206,229,1241,224,1241,224,1206"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Yantra_1_1GpuShaderConfig.html" title="Plain&#45;data description of the compute shader to dispatch." alt="" coords="5,135,211,255"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="122,255,156,432,150,433,117,256"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1GpuResourceManager.html" title="Encapsulates all Vulkan resource lifecycle behind Portal facades." alt="" coords="235,5,455,385"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="312,386,303,432,298,431,307,385"/>
+</map>

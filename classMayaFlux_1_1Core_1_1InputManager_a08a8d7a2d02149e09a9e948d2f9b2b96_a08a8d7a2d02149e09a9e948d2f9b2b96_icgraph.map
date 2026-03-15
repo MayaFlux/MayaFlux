@@ -1,0 +1,12 @@
+<map id="MayaFlux::Core::InputManager::register_node" name="MayaFlux::Core::InputManager::register_node">
+<area shape="rect" id="Node000001" title="Register a node to receive input." alt="" coords="595,37,817,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_a020579332529de276f3dac3895d084f0.html#a020579332529de276f3dac3895d084f0" title="Register an input node with specified binding." alt="" coords="403,37,547,77"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="581,60,547,60,547,55,581,55"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Creator_a3f13054bc7cb54e7fe398d590a394354.html#a3f13054bc7cb54e7fe398d590a394354" title="Create and register HID input node." alt="" coords="204,5,355,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="388,46,354,40,355,35,389,41"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Creator_ac8f6b05c2d93b495ff3e853809a63848.html#ac8f6b05c2d93b495ff3e853809a63848" title="Create and register MIDI input node." alt="" coords="204,69,355,109"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="389,74,355,80,354,74,388,69"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Creator_a0239b7b00b9af2304fc807745e38e182.html#a0239b7b00b9af2304fc807745e38e182" title="Create and register generic input node." alt="" coords="5,37,156,77"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="191,42,157,48,156,43,190,37"/>
+<area shape="poly" id="edge5_Node000005_Node000004" title=" " alt="" coords="190,78,156,72,157,67,191,72"/>
+</map>

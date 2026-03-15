@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::download_device_local" name="MayaFlux::Buffers::download_device_local">
+<area shape="rect" id="Node000001" title="Download data from a device&#45;local buffer using a staging buffer." alt="" coords="5,49,179,89"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_a0c7a59c0847791ed0915dcd64e8df783.html#a0c7a59c0847791ed0915dcd64e8df783" title="Query for a backend service." alt="" coords="244,5,411,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="179,53,230,45,231,50,180,58"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aa28c6f5592e5893508bafb62aefcc496.html#aa28c6f5592e5893508bafb62aefcc496" title="Get the global registry instance." alt="" coords="227,85,428,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="180,79,214,85,213,90,179,85"/>
+</map>

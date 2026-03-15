@@ -1,0 +1,43 @@
+<map id="MayaFlux::Core::InputSubsystem::initialize" name="MayaFlux::Core::InputSubsystem::initialize">
+<area shape="rect" id="Node000001" title="Initialize with a handle provided by SubsystemManager." alt="" coords="5,197,243,237"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1InputSubsystem_a511002cb78abaf10abf6a602ed114b49.html#a511002cb78abaf10abf6a602ed114b49" title=" " alt="" coords="291,133,528,173"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="213,195,306,174,307,179,215,200"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Core_1_1InputSubsystem_a04932575dede3a84e7ef9fc7f7194059.html#a04932575dede3a84e7ef9fc7f7194059" title=" " alt="" coords="291,69,528,109"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="153,195,215,157,290,119,310,111,312,116,292,124,217,161,156,199"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1Core_1_1InputSubsystem_a6e4aa960464963b654bf019bde3cad2d.html#a6e4aa960464963b654bf019bde3cad2d" title=" " alt="" coords="291,197,528,237"/>
+<area shape="poly" id="edge15_Node000001_Node000014" title=" " alt="" coords="243,215,277,215,277,220,243,220"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1Core_1_1InputSubsystem_ac13a677ca76355d0167e4ebcdedd2471.html#ac13a677ca76355d0167e4ebcdedd2471" title=" " alt="" coords="291,261,528,301"/>
+<area shape="poly" id="edge16_Node000001_Node000015" title=" " alt="" coords="215,235,307,256,306,261,213,240"/>
+<area shape="rect" id="Node000016" href="$classMayaFlux_1_1Core_1_1InputSubsystem_a6f9cf774257cc158f8fc92072571bbbf.html#a6f9cf774257cc158f8fc92072571bbbf" title=" " alt="" coords="291,325,528,365"/>
+<area shape="poly" id="edge17_Node000001_Node000016" title=" " alt="" coords="156,235,217,273,292,311,312,318,310,323,290,316,215,278,153,240"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1InputSubsystem_a392f50d02d313ee019e64ec4aa4d1a68.html#a392f50d02d313ee019e64ec4aa4d1a68" title="Add a custom input backend." alt="" coords="576,133,813,173"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="528,151,562,151,562,156,528,156"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Core_1_1InputSubsystem_afc698feff083f6a1d22445cd612e7bde.html#afc698feff083f6a1d22445cd612e7bde" title="Get a backend by type." alt="" coords="576,69,813,109"/>
+<area shape="poly" id="edge7_Node000002_Node000008" title=" " alt="" coords="499,131,591,110,592,115,500,136"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Core_1_1HIDBackend_a264e6881e95350659f7cf7ff8b0ce0eb.html#a264e6881e95350659f7cf7ff8b0ce0eb" title="Open a device for input." alt="" coords="589,197,800,237"/>
+<area shape="poly" id="edge8_Node000002_Node000009" title=" " alt="" coords="500,171,592,192,591,197,499,176"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1InputSubsystem_aa39185dc1ba2417bbf7f877f4533ee8e.html#aa39185dc1ba2417bbf7f877f4533ee8e" title=" " alt="" coords="861,133,1099,173"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="813,151,848,151,848,156,813,156"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Core_1_1InputManagerHandle_a749e51b8d80f770e72fbad4982360609.html#a749e51b8d80f770e72fbad4982360609" title="enqueue input value to InputManager" alt="" coords="1147,197,1370,237"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="1069,171,1158,192,1157,197,1067,176"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Core_1_1IInputBackend_a4cea806b061a5e1828d19d1f16fca168.html#a4cea806b061a5e1828d19d1f16fca168" title="Register callback for device connect/disconnect events." alt="" coords="1147,69,1371,109"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="1067,131,1157,110,1158,115,1069,136"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Core_1_1IInputBackend_a604f7428339fce1bc3d9d7dd225ce9ce.html#a604f7428339fce1bc3d9d7dd225ce9ce" title="Register callback for input values." alt="" coords="1147,133,1371,173"/>
+<area shape="poly" id="edge6_Node000004_Node000007" title=" " alt="" coords="1099,151,1133,151,1133,156,1099,156"/>
+<area shape="poly" id="edge10_Node000010_Node000003" title=" " alt="" coords="500,107,592,128,591,133,499,112"/>
+<area shape="poly" id="edge11_Node000010_Node000008" title=" " alt="" coords="528,87,562,87,562,92,528,92"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Core_1_1MIDIBackend_af5321d0a8077dd224ef1b73b7d342bb0.html#af5321d0a8077dd224ef1b73b7d342bb0" title="Open a device for input." alt="" coords="586,5,803,45"/>
+<area shape="poly" id="edge12_Node000010_Node000011" title=" " alt="" coords="499,67,591,46,592,51,500,72"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Core_1_1MIDIBackend_a8a6d9228ae8398f286b89c1b15b525c3.html#a8a6d9228ae8398f286b89c1b15b525c3" title=" " alt="" coords="871,5,1089,45"/>
+<area shape="poly" id="edge13_Node000011_Node000012" title=" " alt="" coords="804,23,858,23,858,28,804,28"/>
+<area shape="rect" id="Node000013" href="$structMayaFlux_1_1Core_1_1InputValue_a300d836c2ed09dc3d5feb5798a345331.html#a300d836c2ed09dc3d5feb5798a345331" title=" " alt="" coords="1158,5,1359,45"/>
+<area shape="poly" id="edge14_Node000012_Node000013" title=" " alt="" coords="1089,23,1144,23,1144,28,1089,28"/>
+<area shape="rect" id="Node000017" href="$classMayaFlux_1_1Core_1_1InputSubsystem_a279a254ce54f48c6af4ab36f8141b743.html#a279a254ce54f48c6af4ab36f8141b743" title="Close a device." alt="" coords="576,261,813,301"/>
+<area shape="poly" id="edge18_Node000016_Node000017" title=" " alt="" coords="499,323,591,302,592,307,500,328"/>
+<area shape="rect" id="Node000018" href="$classMayaFlux_1_1Core_1_1InputSubsystem_a1fc629b7ad997596226ae7edbc9bd2f7.html#a1fc629b7ad997596226ae7edbc9bd2f7" title="Get all available input devices across all backends." alt="" coords="576,325,813,365"/>
+<area shape="poly" id="edge19_Node000016_Node000018" title=" " alt="" coords="528,343,562,343,562,348,528,348"/>
+<area shape="rect" id="Node000019" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aa28c6f5592e5893508bafb62aefcc496.html#aa28c6f5592e5893508bafb62aefcc496" title="Get the global registry instance." alt="" coords="594,389,795,429"/>
+<area shape="poly" id="edge20_Node000016_Node000019" title=" " alt="" coords="500,363,592,384,591,389,499,368"/>
+<area shape="rect" id="Node000020" href="$classMayaFlux_1_1Core_1_1InputSubsystem_a5978f7321cc8d4d29871e1814f9aa0fe.html#a5978f7321cc8d4d29871e1814f9aa0fe" title="Open a device." alt="" coords="576,453,813,493"/>
+<area shape="poly" id="edge21_Node000016_Node000020" title=" " alt="" coords="441,363,502,401,577,439,597,446,595,451,575,444,500,406,439,368"/>
+</map>

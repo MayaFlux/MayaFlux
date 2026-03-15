@@ -1,0 +1,9 @@
+<map id="MayaFlux::IO::SoundFileReader::seek_internal" name="MayaFlux::IO::SoundFileReader::seek_internal">
+<area shape="rect" id="Node000001" title="Seek the demuxer and flush the codec to the given frame position." alt="" coords="552,37,777,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1SoundFileReader_a8bfd1aa043b76cab1172b2d00705066f.html#a8bfd1aa043b76cab1172b2d00705066f" title="Read a specific number of frames from the file." alt="" coords="279,5,504,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="538,45,504,41,504,36,539,40"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1SoundFileReader_acf94587cbb30d6a656daff698288498f.html#acf94587cbb30d6a656daff698288498f" title="Seek to a specific position in the file." alt="" coords="279,69,504,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="539,75,504,79,504,74,538,69"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1SoundFileReader_a8b9c5ab6495003a5a1b17edaf5cc4e3f.html#a8b9c5ab6495003a5a1b17edaf5cc4e3f" title="Read a specific region from the file." alt="" coords="5,5,231,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="265,28,231,28,231,23,265,23"/>
+</map>

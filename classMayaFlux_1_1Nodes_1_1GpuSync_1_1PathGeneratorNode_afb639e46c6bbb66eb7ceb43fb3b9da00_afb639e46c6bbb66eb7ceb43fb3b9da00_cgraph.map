@@ -1,0 +1,21 @@
+<map id="MayaFlux::Nodes::GpuSync::PathGeneratorNode::generate_curve_segment" name="MayaFlux::Nodes::GpuSync::PathGeneratorNode::generate_curve_segment">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,166,228,221"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_a20bcc988582b6b8dfd3de3c199455fa6.html#a20bcc988582b6b8dfd3de3c199455fa6" title="Generate interpolated points from control points." alt="" coords="279,126,445,181"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="228,173,265,166,266,172,229,178"/>
+<area shape="rect" id="Node000010" href="$namespaceMayaFlux_1_1Kinesis_a1c4c541fccbd2b4cc60a8d2933b82a32.html#a1c4c541fccbd2b4cc60a8d2933b82a32" title="Resample path vertices for arc&#45;length parameterization." alt="" coords="276,205,448,259"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="229,208,263,214,262,219,228,214"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_a3dc95aa4f4532c63baab8739169a3813.html#a3dc95aa4f4532c63baab8739169a3813" title="Generic interpolation dispatcher." alt="" coords="496,133,645,173"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="445,151,482,151,482,156,445,156"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_a3f28e2188e03c01335a8e40c284f5428.html#a3f28e2188e03c01335a8e40c284f5428" title="Uniform B&#45;spline interpolation using Eigen matrices." alt="" coords="694,5,843,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="592,131,637,94,692,55,702,49,705,54,695,60,640,98,596,135"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kinesis_afdb1ec2f9c871867b5a8e1e8ee7d488d.html#afdb1ec2f9c871867b5a8e1e8ee7d488d" title="Catmull&#45;Rom spline interpolation using Eigen matrices." alt="" coords="693,69,844,109"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="632,131,693,111,694,116,634,136"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Kinesis_a7936a84c20fc9580ada9f401d81c1853.html#a7936a84c20fc9580ada9f401d81c1853" title="Cubic Bezier interpolation using Eigen matrices." alt="" coords="694,133,843,173"/>
+<area shape="poly" id="edge6_Node000003_Node000007" title=" " alt="" coords="646,151,680,151,680,156,646,156"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Kinesis_a670cd0a74c8ee3ecebf3355794a83339.html#a670cd0a74c8ee3ecebf3355794a83339" title="Cubic Hermite interpolation using Eigen matrices." alt="" coords="694,197,843,237"/>
+<area shape="poly" id="edge7_Node000003_Node000008" title=" " alt="" coords="634,171,694,191,693,196,632,176"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_1_1Kinesis_ad75c60659787b7670802a72a799a31f2.html#ad75c60659787b7670802a72a799a31f2" title="Quadratic Bezier interpolation using Eigen matrices." alt="" coords="694,261,843,301"/>
+<area shape="poly" id="edge8_Node000003_Node000009" title=" " alt="" coords="596,172,640,209,695,247,705,253,702,257,692,252,637,213,592,176"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Kinesis_1_1BasisMatrices_a818351b64ca1e3653ad9c97cca70e765.html#a818351b64ca1e3653ad9c97cca70e765" title=" " alt="" coords="892,62,1063,117"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="844,87,879,87,879,92,844,92"/>
+</map>

@@ -1,0 +1,23 @@
+<map id="MayaFlux::Nodes::Network::ModalNetwork::process_batch" name="MayaFlux::Nodes::Network::ModalNetwork::process_batch">
+<area shape="rect" id="Node000001" title="Process the network for the given number of samples." alt="" coords="5,185,232,225"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1NodeNetwork_a32f35c709a82b7729fc066314401db44.html#a32f35c709a82b7729fc066314401db44" title="Apply m_output_scale to m_last_audio_buffer." alt="" coords="280,5,533,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="134,183,193,120,234,85,279,55,293,48,296,53,281,60,237,89,197,124,138,187"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ModalNetwork_a7d9a6e807ca45bf4308355b8840695d9.html#a7d9a6e807ca45bf4308355b8840695d9" title="Apply modal coupling energy transfer." alt="" coords="307,70,506,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="163,183,279,135,302,127,304,132,281,140,165,188"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Network_1_1NodeNetwork_abeaa7af1c52486d16ee4a761a1960706.html#abeaa7af1c52486d16ee4a761a1960706" title="Ensure initialize() is called exactly once." alt="" coords="285,149,528,189"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="232,189,271,184,272,189,233,194"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ModalNetwork_a7f91709c2b6508dcdf0504cbad15f267.html#a7f91709c2b6508dcdf0504cbad15f267" title="Generate exciter signal for current sample." alt="" coords="307,214,506,269"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="233,217,294,225,293,230,232,222"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1Network_1_1NodeNetwork_a47fc83e277fdcdb355b43d6d3065e9ec.html#a47fc83e277fdcdb355b43d6d3065e9ec" title="Check if network is enabled." alt="" coords="307,293,506,333"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="159,223,216,251,281,278,309,287,308,292,279,282,214,255,157,228"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ModalNetwork_ab9885453720654773f64c5011ddea493.html#ab9885453720654773f64c5011ddea493" title="Update mapped parameters before processing." alt="" coords="307,358,506,413"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="140,223,199,282,239,315,281,343,296,350,293,355,279,348,235,319,195,286,136,227"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1Network_1_1NodeNetwork_a46eab2ced115fa80605195fa154e3973.html#a46eab2ced115fa80605195fa154e3973" title="Called once before first process_batch()" alt="" coords="602,149,801,189"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="528,167,588,167,588,172,528,172"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ModalNetwork_a7872fe7bca886ea3f8d5656cdc3680df.html#a7872fe7bca886ea3f8d5656cdc3680df" title="Apply broadcast parameter to all modes." alt="" coords="581,318,821,373"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="506,369,567,361,568,366,506,375"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ModalNetwork_a3114da2133cf2be8051b4146a57803f5.html#a3114da2133cf2be8051b4146a57803f5" title="Apply one&#45;to&#45;one parameter from another network." alt="" coords="601,397,801,451"/>
+<area shape="poly" id="edge10_Node000008_Node000011" title=" " alt="" coords="506,396,588,406,587,412,506,401"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ModalNetwork_a9bdd3fe841d3ba0849ea4cf32cab3f5c.html#a9bdd3fe841d3ba0849ea4cf32cab3f5c" title="Set base frequency (fundamental)" alt="" coords="869,325,1112,365"/>
+<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="821,343,856,343,856,348,821,348"/>
+</map>

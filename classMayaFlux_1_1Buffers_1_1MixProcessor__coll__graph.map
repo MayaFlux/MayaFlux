@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::MixProcessor" name="MayaFlux::Buffers::MixProcessor">
+<area shape="rect" id="Node000001" title="Processes multiple audio buffers and mixes their data into a single output buffer." alt="" coords="11,313,180,493"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferProcessor.html" title="Central computational transformation interface for continuous buffer processing." alt="" coords="5,5,185,265"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="98,279,98,313,93,313,93,279"/>
+</map>

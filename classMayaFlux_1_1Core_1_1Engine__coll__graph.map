@@ -1,0 +1,31 @@
+<map id="MayaFlux::Core::Engine" name="MayaFlux::Core::Engine">
+<area shape="rect" id="Node000001" title="Central lifecycle manager and component orchestrator for the MayaFlux processing system." alt="" coords="1140,711,1329,1196"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Core_1_1GlobalStreamInfo.html" title="Comprehensive configuration for digital audio stream processing." alt="" coords="230,363,469,648"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="470,564,1126,894,1124,899,468,569"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Core_1_1GlobalStreamInfo_1_1ChannelConfig.html" title="Configuration for input or output data channels." alt="" coords="5,75,219,215"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="160,214,248,347,244,350,156,217"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Core_1_1GlobalStreamInfo_1_1MidiConfig.html" title="Configuration for MIDI data channels." alt="" coords="243,95,456,195"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="352,196,352,346,347,346,347,196"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Core_1_1GlobalGraphicsConfig.html" title=" " alt="" coords="899,445,1122,565"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="1043,564,1135,748,1130,750,1038,567"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Core_1_1GlfwPreInitConfig.html" title="Configuration hints for GLFW initialization." alt="" coords="480,65,675,225"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="637,224,689,283,735,327,786,367,889,435,886,439,783,371,732,331,685,287,633,227"/>
+<area shape="rect" id="Node000007" href="$structMayaFlux_1_1Core_1_1GraphicsSurfaceInfo.html" title="System&#45;wide configuration for visual stream processing." alt="" coords="699,25,896,265"/>
+<area shape="poly" id="edge6_Node000005_Node000007" title=" " alt="" coords="869,264,912,337,968,430,964,433,907,340,864,267"/>
+<area shape="rect" id="Node000008" href="$structMayaFlux_1_1Core_1_1GraphicsBackendInfo.html" title="Configuration for graphics API backend (Vulkan/OpenGL/etc.)" alt="" coords="920,5,1101,285"/>
+<area shape="poly" id="edge7_Node000005_Node000008" title=" " alt="" coords="1013,286,1013,428,1008,428,1008,286"/>
+<area shape="rect" id="Node000009" href="$structMayaFlux_1_1Core_1_1GraphicsResourceLimits.html" title="Resource limits and budgets for graphics subsystem." alt="" coords="1125,55,1320,235"/>
+<area shape="poly" id="edge8_Node000005_Node000009" title=" " alt="" coords="1178,237,1120,340,1061,433,1057,430,1115,337,1173,234"/>
+<area shape="rect" id="Node000010" href="$structMayaFlux_1_1Core_1_1GlobalInputConfig.html" title="Configuration for the InputSubsystem." alt="" coords="1487,425,1686,585"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="1526,587,1342,821,1338,817,1522,584"/>
+<area shape="rect" id="Node000011" href="$structMayaFlux_1_1Core_1_1HIDBackendInfo.html" title="HID backend configuration." alt="" coords="1345,53,1573,238"/>
+<area shape="poly" id="edge10_Node000010_Node000011" title=" " alt="" coords="1494,237,1555,409,1550,410,1489,239"/>
+<area shape="rect" id="Node000012" href="$structMayaFlux_1_1Core_1_1MIDIBackendInfo.html" title="MIDI backend configuration." alt="" coords="1597,53,1832,238"/>
+<area shape="poly" id="edge11_Node000010_Node000012" title=" " alt="" coords="1684,239,1623,410,1618,409,1679,237"/>
+<area shape="rect" id="Node000013" href="$structMayaFlux_1_1Core_1_1OSCBackendInfo.html" title="OSC backend configuration." alt="" coords="1857,53,2087,238"/>
+<area shape="poly" id="edge12_Node000010_Node000013" title=" " alt="" coords="1898,240,1846,287,1806,312,1771,326,1737,339,1699,365,1651,414,1647,410,1696,361,1735,335,1769,321,1803,307,1842,283,1894,236"/>
+<area shape="rect" id="Node000014" href="$structMayaFlux_1_1Core_1_1SerialBackendInfo.html" title="Serial backend configuration." alt="" coords="2111,83,2353,208"/>
+<area shape="poly" id="edge13_Node000010_Node000014" title=" " alt="" coords="2189,210,2150,252,2101,288,2066,305,2034,317,1978,328,1919,332,1846,341,1803,345,1768,345,1736,349,1699,365,1669,387,1644,414,1640,411,1666,383,1696,360,1735,344,1768,340,1803,340,1845,336,1919,327,1977,323,2033,312,2064,300,2099,283,2146,248,2186,206"/>
+<area shape="rect" id="Node000015" href="$structMayaFlux_1_1Nodes_1_1NodeConfig.html" title="Configuration settings for individual audio nodes." alt="" coords="1709,423,1920,588"/>
+<area shape="poly" id="edge14_Node000001_Node000015" title=" " alt="" coords="1757,590,1700,650,1612,723,1518,789,1426,848,1345,896,1342,891,1424,843,1515,785,1609,718,1697,646,1753,586"/>
+</map>

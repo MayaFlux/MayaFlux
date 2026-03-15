@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::GeometryBuffer::setup_rendering" name="MayaFlux::Buffers::GeometryBuffer::setup_rendering">
+<area shape="rect" id="Node000001" title="Setup rendering with RenderProcessor." alt="" coords="5,34,176,89"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_a6cf409969c192851ab2cf7f0315d2a49.html#a6cf409969c192851ab2cf7f0315d2a49" title="Access the buffer&#39;s processing chain." alt="" coords="224,5,451,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="176,46,210,41,211,47,177,52"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_acb563960a9f338d6e93cf7bae6f64f46.html#acb563960a9f338d6e93cf7bae6f64f46" title="Called by derived classes to set their context&#45;specific defaults." alt="" coords="257,70,417,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="177,71,244,81,243,86,176,76"/>
+</map>

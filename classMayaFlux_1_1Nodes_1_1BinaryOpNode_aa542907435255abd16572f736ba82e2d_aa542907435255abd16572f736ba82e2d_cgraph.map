@@ -1,0 +1,47 @@
+<map id="MayaFlux::Nodes::BinaryOpNode::process_batch" name="MayaFlux::Nodes::BinaryOpNode::process_batch">
+<area shape="rect" id="Node000001" title="Processes multiple samples through both nodes and combines the results." alt="" coords="5,197,208,237"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1BinaryOpNode_a8fae564fe72bb7d724f53eb5ace2b6ef.html#a8fae564fe72bb7d724f53eb5ace2b6ef" title="Processes a single sample through both nodes and combines the results." alt="" coords="256,197,459,237"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="208,215,242,215,242,220,208,220"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Nodes_a2b661b58f860423fa6cf1d12c5accbd8.html#a2b661b58f860423fa6cf1d12c5accbd8" title="Atomically adds a flag to a node state." alt="" coords="514,5,702,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="370,195,424,127,462,88,505,55,516,49,519,54,508,60,466,92,428,131,374,199"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Nodes_aa4e4a2ece2a22b6774a5978e557ea25e.html#aa4e4a2ece2a22b6774a5978e557ea25e" title="Atomically decrements the modulator count by a specified amount." alt="" coords="514,69,702,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="384,195,438,157,505,119,522,112,524,117,508,124,441,161,387,199"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Nodes_a7d0374eb13e0238f520338b13823a627.html#a7d0374eb13e0238f520338b13823a627" title="Atomically increments the modulator count by a specified amount." alt="" coords="514,133,702,173"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="436,195,515,174,517,179,437,200"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1BinaryOpNode_a4ace2e51cdec1304fdf524a635253d32.html#a4ace2e51cdec1304fdf524a635253d32" title="Initializes the binary operation node." alt="" coords="507,197,709,237"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="459,215,493,215,493,220,459,220"/>
+<area shape="rect" id="Node000018" href="$classMayaFlux_1_1Nodes_1_1BinaryOpNode_a5b414570d2c7d97ac8b3ccc5dae7c3cd.html#a5b414570d2c7d97ac8b3ccc5dae7c3cd" title=" " alt="" coords="507,261,709,301"/>
+<area shape="poly" id="edge19_Node000002_Node000018" title=" " alt="" coords="437,235,517,255,515,261,436,240"/>
+<area shape="rect" id="Node000019" href="$classMayaFlux_1_1Nodes_1_1BinaryOpNode_a5e0afbc4f741b02333c4293660bb7a6e.html#a5e0afbc4f741b02333c4293660bb7a6e" title="Notifies all registered callbacks about a new output value." alt="" coords="507,331,709,371"/>
+<area shape="poly" id="edge20_Node000002_Node000019" title=" " alt="" coords="387,235,442,273,508,311,535,323,533,328,505,316,439,277,384,240"/>
+<area shape="rect" id="Node000022" href="$namespaceMayaFlux_1_1Nodes_a7c82f258078606084a01f72dfba3bb92.html#a7c82f258078606084a01f72dfba3bb92" title="Attempts to reset the processed state of a node." alt="" coords="521,395,695,435"/>
+<area shape="poly" id="edge23_Node000002_Node000022" title=" " alt="" coords="374,236,427,307,465,346,508,380,519,387,516,391,505,385,461,350,423,310,369,239"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_ab23bef98f4641dfb378e3e6d916e3d0e.html#ab23bef98f4641dfb378e3e6d916e3d0e" title="Add node to specific processing token and channel." alt="" coords="757,191,973,231"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="710,212,744,211,744,216,710,217"/>
+<area shape="rect" id="Node000013" href="$namespaceMayaFlux_1_1Nodes_a59d09b556b30502af09a3682481b8560.html#a59d09b556b30502af09a3682481b8560" title="Extracts active channel list from a node&#39;s channel mask." alt="" coords="783,279,947,319"/>
+<area shape="poly" id="edge12_Node000006_Node000013" title=" " alt="" coords="673,235,789,272,788,277,671,240"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_af36a43f11ffe7356d9ef06260866f5f1.html#af36a43f11ffe7356d9ef06260866f5f1" title="Gets the current node configuration." alt="" coords="757,63,973,103"/>
+<area shape="poly" id="edge14_Node000006_Node000014" title=" " alt="" coords="688,195,708,183,723,166,731,149,739,131,756,113,764,107,767,112,759,117,743,133,736,151,728,169,711,187,691,200"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_ac75b54bb1112aada3dc0463f2a22654a.html#ac75b54bb1112aada3dc0463f2a22654a" title="Remove node from a specific processing token and channel." alt="" coords="757,127,973,167"/>
+<area shape="poly" id="edge15_Node000006_Node000015" title=" " alt="" coords="681,195,778,168,779,173,682,200"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_ab7485f6b5bd28a3d64ffaa5034d3ed9a.html#ab7485f6b5bd28a3d64ffaa5034d3ed9a" title="Gets or creates the root node for a specific token and channel." alt="" coords="1025,159,1241,199"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="973,195,1011,191,1012,196,974,200"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_aac0cc5e48a5b2e7ce20b7d754a9b6f53.html#aac0cc5e48a5b2e7ce20b7d754a9b6f53" title="Adds the specified channel mask to a node&#39;s global registration." alt="" coords="1025,223,1241,263"/>
+<area shape="poly" id="edge9_Node000007_Node000010" title=" " alt="" coords="974,221,1012,226,1011,231,973,226"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_a9c43d6dbcd53013e4d61fa43f038384a.html#a9c43d6dbcd53013e4d61fa43f038384a" title="Ensures a root node exists for the given token and channel." alt="" coords="1293,159,1509,199"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="1241,176,1279,176,1279,181,1241,181"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_a7659ea2f416c5ebdd7beb68e93e98722.html#a7659ea2f416c5ebdd7beb68e93e98722" title="Registers a node globally if not already registered." alt="" coords="1293,223,1509,263"/>
+<area shape="poly" id="edge10_Node000010_Node000011" title=" " alt="" coords="1241,240,1279,240,1279,245,1241,245"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_ab960be6ecd39c89e51248962d77f94ab.html#ab960be6ecd39c89e51248962d77f94ab" title="Checks if a node is registered with this manager." alt="" coords="1557,223,1773,263"/>
+<area shape="poly" id="edge11_Node000011_Node000012" title=" " alt="" coords="1509,240,1544,240,1544,245,1509,245"/>
+<area shape="poly" id="edge13_Node000013_Node000013" title=" " alt="" coords="818,279,815,269,823,260,839,254,865,252,895,255,911,262,909,267,894,260,865,257,841,259,826,264,820,270,823,277"/>
+<area shape="poly" id="edge16_Node000015_Node000008" title=" " alt="" coords="974,157,1012,162,1011,167,973,162"/>
+<area shape="rect" id="Node000016" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_a5b7627b25ad4de317b0c6ca93d1001c9.html#a5b7627b25ad4de317b0c6ca93d1001c9" title="Unsets the specified channel mask from a node&#39;s global registration." alt="" coords="1021,95,1245,135"/>
+<area shape="poly" id="edge17_Node000015_Node000016" title=" " alt="" coords="973,131,1007,127,1008,132,974,136"/>
+<area shape="rect" id="Node000017" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_a4cd923129ef6f6c0b41c9900f81f3e7d.html#a4cd923129ef6f6c0b41c9900f81f3e7d" title="Unregisters a node globally." alt="" coords="1293,95,1509,135"/>
+<area shape="poly" id="edge18_Node000016_Node000017" title=" " alt="" coords="1246,112,1280,112,1280,117,1246,117"/>
+<area shape="rect" id="Node000020" href="$classMayaFlux_1_1Nodes_1_1BinaryOpNode_a5d303a09086c07dad83ccad1580b95d5.html#a5d303a09086c07dad83ccad1580b95d5" title="Retrieves the last created context object." alt="" coords="764,343,967,383"/>
+<area shape="poly" id="edge21_Node000019_Node000020" title=" " alt="" coords="710,353,750,355,750,360,709,358"/>
+<area shape="rect" id="Node000021" href="$classMayaFlux_1_1Nodes_1_1BinaryOpNode_a317868165be2d04b058937355768e805.html#a317868165be2d04b058937355768e805" title="updates context object for callbacks" alt="" coords="764,407,967,447"/>
+<area shape="poly" id="edge22_Node000019_Node000021" title=" " alt="" coords="677,368,785,400,783,405,676,373"/>
+</map>

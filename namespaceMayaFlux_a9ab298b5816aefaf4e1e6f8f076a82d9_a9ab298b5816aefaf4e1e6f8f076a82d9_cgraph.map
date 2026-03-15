@@ -1,0 +1,17 @@
+<map id="MayaFlux::rms_combined" name="MayaFlux::rms_combined">
+<area shape="rect" id="Node000001" title="Calculate RMS energy across all channels (mix then analyze)" alt="" coords="5,120,196,145"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_abbe8d18bbd3a804a06a3beb23139ad87.html#abbe8d18bbd3a804a06a3beb23139ad87" title=" " alt="" coords="255,5,447,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="117,118,171,80,243,41,268,32,270,37,245,46,174,84,120,122"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1OperationHelper_ad367bd6ef37555bb3918e5545cac03bd.html#ad367bd6ef37555bb3918e5545cac03bd" title="extract numeric data from single&#45;variant types" alt="" coords="244,55,459,95"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="156,117,250,96,251,101,158,123"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_a7f9908e44c97d44ca091d25680f754af.html#a7f9908e44c97d44ca091d25680f754af" title=" " alt="" coords="261,120,442,145"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="196,130,247,130,247,135,196,135"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_a61d20bae4fc7bd5ad68fe80712b53d9c.html#a61d20bae4fc7bd5ad68fe80712b53d9c" title="Calculate RMS (Root Mean Square) energy of single&#45;channel data." alt="" coords="292,169,411,195"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="166,143,279,165,278,170,165,148"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_aef8a2bf82f5584ed69b10596e5c238a9.html#aef8a2bf82f5584ed69b10596e5c238a9" title="Calculate RMS energy per channel for multi&#45;channel data." alt="" coords="249,219,454,244"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="124,143,177,174,245,205,269,213,268,218,243,210,175,179,121,148"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kakshya_a619cf8d723774bd3554af2e67230fb10.html#a619cf8d723774bd3554af2e67230fb10" title="Convert variant to double span." alt="" coords="513,19,707,59"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="459,58,499,52,500,57,459,63"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1OperationHelper_ae302865851bb6340051d6bca19881848.html#ae302865851bb6340051d6bca19881848" title="Create DataVariant from Eigen matrix/vector." alt="" coords="507,84,713,139"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="459,88,493,92,493,98,459,93"/>
+</map>

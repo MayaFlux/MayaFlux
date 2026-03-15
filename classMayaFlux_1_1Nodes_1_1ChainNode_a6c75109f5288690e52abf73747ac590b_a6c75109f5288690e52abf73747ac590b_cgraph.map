@@ -1,0 +1,39 @@
+<map id="MayaFlux::Nodes::ChainNode::process_sample" name="MayaFlux::Nodes::ChainNode::process_sample">
+<area shape="rect" id="Node000001" title="Processes a single data sample." alt="" coords="5,165,220,205"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Nodes_a2b661b58f860423fa6cf1d12c5accbd8.html#a2b661b58f860423fa6cf1d12c5accbd8" title="Atomically adds a flag to a node state." alt="" coords="281,5,469,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="131,163,189,110,226,80,267,55,281,48,283,53,269,60,229,85,192,114,135,167"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Nodes_aa4e4a2ece2a22b6774a5978e557ea25e.html#aa4e4a2ece2a22b6774a5978e557ea25e" title="Atomically decrements the modulator count by a specified amount." alt="" coords="281,69,469,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="158,163,267,119,290,111,292,116,269,124,160,168"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Nodes_a7d0374eb13e0238f520338b13823a627.html#a7d0374eb13e0238f520338b13823a627" title="Atomically increments the modulator count by a specified amount." alt="" coords="281,133,469,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="220,170,267,164,268,169,220,175"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1ChainNode_a218d8c8509ee92e129b3f0655765522e.html#a218d8c8509ee92e129b3f0655765522e" title="Initializes the chain node." alt="" coords="268,197,483,237"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="220,196,255,200,254,205,220,201"/>
+<area shape="rect" id="Node000017" href="$classMayaFlux_1_1Nodes_1_1ChainNode_aff6d923b86874b1e0b0350d5f7074f28.html#aff6d923b86874b1e0b0350d5f7074f28" title=" " alt="" coords="268,261,483,301"/>
+<area shape="poly" id="edge18_Node000001_Node000017" title=" " alt="" coords="160,203,269,247,292,255,290,260,267,252,158,208"/>
+<area shape="rect" id="Node000018" href="$namespaceMayaFlux_1_1Nodes_a7c82f258078606084a01f72dfba3bb92.html#a7c82f258078606084a01f72dfba3bb92" title="Attempts to reset the processed state of a node." alt="" coords="288,325,463,365"/>
+<area shape="poly" id="edge19_Node000001_Node000018" title=" " alt="" coords="135,204,192,257,229,286,269,311,283,318,281,322,267,316,226,290,189,261,131,208"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_ab23bef98f4641dfb378e3e6d916e3d0e.html#ab23bef98f4641dfb378e3e6d916e3d0e" title="Add node to specific processing token and channel." alt="" coords="531,77,747,117"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="459,195,481,183,496,170,504,156,513,141,529,127,540,121,542,126,532,131,517,145,509,159,500,173,484,188,462,199"/>
+<area shape="rect" id="Node000012" href="$namespaceMayaFlux_1_1Nodes_a59d09b556b30502af09a3682481b8560.html#a59d09b556b30502af09a3682481b8560" title="Extracts active channel list from a node&#39;s channel mask." alt="" coords="557,165,721,205"/>
+<area shape="poly" id="edge11_Node000005_Node000012" title=" " alt="" coords="482,202,543,194,544,200,483,207"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_af36a43f11ffe7356d9ef06260866f5f1.html#af36a43f11ffe7356d9ef06260866f5f1" title="Gets the current node configuration." alt="" coords="531,229,747,269"/>
+<area shape="poly" id="edge13_Node000005_Node000013" title=" " alt="" coords="483,228,517,232,517,237,482,233"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_ac75b54bb1112aada3dc0463f2a22654a.html#ac75b54bb1112aada3dc0463f2a22654a" title="Remove node from a specific processing token and channel." alt="" coords="531,293,747,333"/>
+<area shape="poly" id="edge14_Node000005_Node000014" title=" " alt="" coords="454,235,484,247,508,263,532,279,549,286,547,291,529,284,505,268,481,252,452,240"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_ab7485f6b5bd28a3d64ffaa5034d3ed9a.html#ab7485f6b5bd28a3d64ffaa5034d3ed9a" title="Gets or creates the root node for a specific token and channel." alt="" coords="799,185,1015,225"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="713,115,748,127,857,177,854,181,746,132,711,120"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_aac0cc5e48a5b2e7ce20b7d754a9b6f53.html#aac0cc5e48a5b2e7ce20b7d754a9b6f53" title="Adds the specified channel mask to a node&#39;s global registration." alt="" coords="799,77,1015,117"/>
+<area shape="poly" id="edge8_Node000006_Node000009" title=" " alt="" coords="747,95,785,95,785,100,747,100"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_a9c43d6dbcd53013e4d61fa43f038384a.html#a9c43d6dbcd53013e4d61fa43f038384a" title="Ensures a root node exists for the given token and channel." alt="" coords="1067,185,1283,225"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="1015,203,1053,203,1053,208,1015,208"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_a7659ea2f416c5ebdd7beb68e93e98722.html#a7659ea2f416c5ebdd7beb68e93e98722" title="Registers a node globally if not already registered." alt="" coords="1067,77,1283,117"/>
+<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="1015,95,1053,95,1053,100,1015,100"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_ab960be6ecd39c89e51248962d77f94ab.html#ab960be6ecd39c89e51248962d77f94ab" title="Checks if a node is registered with this manager." alt="" coords="1331,77,1547,117"/>
+<area shape="poly" id="edge10_Node000010_Node000011" title=" " alt="" coords="1283,95,1317,95,1317,100,1283,100"/>
+<area shape="poly" id="edge12_Node000012_Node000012" title=" " alt="" coords="590,166,587,156,595,146,612,141,639,139,669,142,685,149,683,154,668,147,639,144,613,146,598,151,592,157,595,164"/>
+<area shape="poly" id="edge15_Node000014_Node000007" title=" " alt="" coords="711,291,746,279,854,229,857,234,748,284,713,296"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_a5b7627b25ad4de317b0c6ca93d1001c9.html#a5b7627b25ad4de317b0c6ca93d1001c9" title="Unsets the specified channel mask from a node&#39;s global registration." alt="" coords="795,293,1019,333"/>
+<area shape="poly" id="edge16_Node000014_Node000015" title=" " alt="" coords="747,311,781,311,781,316,747,316"/>
+<area shape="rect" id="Node000016" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_a4cd923129ef6f6c0b41c9900f81f3e7d.html#a4cd923129ef6f6c0b41c9900f81f3e7d" title="Unregisters a node globally." alt="" coords="1067,293,1283,333"/>
+<area shape="poly" id="edge17_Node000015_Node000016" title=" " alt="" coords="1019,311,1053,311,1053,316,1019,316"/>
+</map>

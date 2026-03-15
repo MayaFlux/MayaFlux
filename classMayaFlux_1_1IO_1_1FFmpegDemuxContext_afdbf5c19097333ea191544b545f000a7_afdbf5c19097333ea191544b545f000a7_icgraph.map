@@ -1,0 +1,9 @@
+<map id="MayaFlux::IO::FFmpegDemuxContext::is_open" name="MayaFlux::IO::FFmpegDemuxContext::is_open">
+<area shape="rect" id="Node000001" title="True if the format context is open and stream info was found." alt="" coords="253,69,469,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1AudioStreamContext_a463593071a0c4d4e507166a78a43ff45.html#a463593071a0c4d4e507166a78a43ff45" title="Open the audio stream from an already&#45;probed demux context." alt="" coords="5,5,205,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="267,69,185,48,186,43,268,63"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1VideoStreamContext_afc3578ec70340ca93f0e5871e58f9356.html#afc3578ec70340ca93f0e5871e58f9356" title="Open the video stream from an already&#45;probed demux context." alt="" coords="5,69,205,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="240,92,206,92,206,87,240,87"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1VideoStreamContext_a05609c7f47345d8bc63c9f95c6906e99.html#a05609c7f47345d8bc63c9f95c6906e99" title="Open codec only, without initialising the SwsContext scaler." alt="" coords="5,133,205,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="268,115,186,136,185,131,267,110"/>
+</map>

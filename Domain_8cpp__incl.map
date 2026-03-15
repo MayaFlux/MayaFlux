@@ -1,0 +1,19 @@
+<map id="Domain.cpp" name="Domain.cpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="178,5,278,31"/>
+<area shape="rect" id="Node000002" href="$Domain_8hpp.html" title=" " alt="" coords="5,86,107,111"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="204,33,95,83,92,78,202,28"/>
+<area shape="rect" id="Node000004" href="$BufferUtils_8hpp.html" title=" " alt="" coords="349,86,587,111"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="264,28,421,79,419,84,262,33"/>
+<area shape="rect" id="Node000008" href="$ProcessingArchitecture_8hpp.html" title="Unified processing architecture for multimodal subsystem coordination." alt="" coords="131,79,325,119"/>
+<area shape="poly" id="edge8_Node000001_Node000008" title=" " alt="" coords="231,31,231,65,225,65,225,31"/>
+<area shape="rect" id="Node000003" href="$ProcessingTokens_8hpp.html" title=" " alt="" coords="131,167,325,207"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="80,109,179,158,177,163,78,114"/>
+<area shape="poly" id="edge4_Node000004_Node000003" title=" " alt="" coords="437,114,294,165,293,160,435,109"/>
+<area shape="rect" id="Node000005" href="$VertexLayout_8hpp.html" title=" " alt="" coords="367,167,569,207"/>
+<area shape="poly" id="edge5_Node000004_Node000005" title=" " alt="" coords="471,112,471,153,465,153,465,112"/>
+<area shape="rect" id="Node000006" href="$NDData_8hpp.html" title=" " alt="" coords="417,255,519,280"/>
+<area shape="poly" id="edge6_Node000005_Node000006" title=" " alt="" coords="471,207,471,241,465,241,465,207"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="416,328,520,353"/>
+<area shape="poly" id="edge7_Node000006_Node000007" title=" " alt="" coords="471,280,471,314,465,314,465,280"/>
+<area shape="poly" id="edge9_Node000008_Node000003" title=" " alt="" coords="231,119,231,153,225,153,225,119"/>
+</map>

@@ -1,0 +1,11 @@
+<map id="MayaFlux::Kinesis::Discrete::sort_channels_into" name="MayaFlux::Kinesis::Discrete::sort_channels_into">
+<area shape="rect" id="Node000001" title="Sort all channels into caller&#45;owned output buffers." alt="" coords="5,37,212,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a3cc702d97363dcf9e86313eaa3308af7.html#a3cc702d97363dcf9e86313eaa3308af7" title="Sort a span into a caller&#45;owned output buffer." alt="" coords="260,37,439,77"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="212,55,246,55,246,60,212,60"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a344dfa7f9b1b7721dacc8c0c3ea31d24.html#a344dfa7f9b1b7721dacc8c0c3ea31d24" title="Sort a single span in&#45;place." alt="" coords="487,37,636,77"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="439,55,473,55,473,60,439,60"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_aa24f42ad7fac830cc8ebd7d7f8c9c839.html#aa24f42ad7fac830cc8ebd7d7f8c9c839" title="Direction&#45;based comparator for doubles." alt="" coords="684,5,895,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="636,44,670,39,671,45,637,49"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_ac31338d47679ac6672a20b378ed0e6ee.html#ac31338d47679ac6672a20b378ed0e6ee" title="Execute a sorting algorithm on an iterator range." alt="" coords="715,69,864,109"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="637,65,701,74,700,80,636,70"/>
+</map>

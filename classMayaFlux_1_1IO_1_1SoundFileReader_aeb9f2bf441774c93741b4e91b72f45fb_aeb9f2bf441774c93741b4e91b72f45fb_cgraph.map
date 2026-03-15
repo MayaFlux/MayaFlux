@@ -1,0 +1,5 @@
+<map id="MayaFlux::IO::SoundFileReader::get_metadata" name="MayaFlux::IO::SoundFileReader::get_metadata">
+<area shape="rect" id="Node000001" title="Get metadata for the currently open file." alt="" coords="5,5,231,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1SoundFileReader_a3606aa17789e2d01dd0685a56492bbec.html#a3606aa17789e2d01dd0685a56492bbec" title="Build and cache FileMetadata from both contexts." alt="" coords="279,5,504,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="231,23,265,23,265,28,231,28"/>
+</map>

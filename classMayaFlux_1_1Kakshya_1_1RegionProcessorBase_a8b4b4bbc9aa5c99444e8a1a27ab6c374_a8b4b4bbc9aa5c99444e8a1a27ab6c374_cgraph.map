@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::RegionProcessorBase::advance_position" name="MayaFlux::Kakshya::RegionProcessorBase::advance_position">
+<area shape="rect" id="Node000001" title="Advance position according to memory layout and looping." alt="" coords="5,5,168,60"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kakshya_1_1ContainerDataStructure_a92c9c48e9d3528b932ee453cdbdae42a.html#a92c9c48e9d3528b932ee453cdbdae42a" title="Extract frame count from video dimensions." alt="" coords="216,5,391,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="168,30,203,30,203,35,168,35"/>
+</map>

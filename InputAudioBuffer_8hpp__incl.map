@@ -1,0 +1,20 @@
+<map id="InputAudioBuffer.hpp" name="InputAudioBuffer.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="187,5,346,31"/>
+<area shape="rect" id="Node000002" href="$AudioBuffer_8hpp.html" title=" " alt="" coords="5,79,248,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="245,33,163,75,160,70,243,28"/>
+<area shape="rect" id="Node000005" href="$BufferProcessor_8hpp.html" title=" " alt="" coords="272,79,541,104"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="290,28,373,70,371,75,288,33"/>
+<area shape="rect" id="Node000003" href="$Buffer_8hpp.html" title=" " alt="" coords="71,152,159,177"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="127,105,122,139,116,138,122,104"/>
+<area shape="rect" id="Node000004" href="$ProcessingTokens_8hpp.html" title=" " alt="" coords="99,225,293,265"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="139,102,156,124,173,151,185,181,193,211,188,213,180,183,168,153,152,127,135,106"/>
+<area shape="rect" id="Node000006" href="$BufferUtils_8hpp.html" title=" " alt="" coords="347,152,466,177"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="409,104,409,138,404,138,404,104"/>
+<area shape="poly" id="edge6_Node000006_Node000004" title=" " alt="" coords="377,180,260,223,258,218,375,175"/>
+<area shape="rect" id="Node000007" href="$VertexLayout_8hpp.html" title=" " alt="" coords="318,225,519,265"/>
+<area shape="poly" id="edge7_Node000006_Node000007" title=" " alt="" coords="411,177,416,211,411,212,406,178"/>
+<area shape="rect" id="Node000008" href="$NDData_8hpp.html" title=" " alt="" coords="368,313,469,339"/>
+<area shape="poly" id="edge8_Node000007_Node000008" title=" " alt="" coords="421,266,421,299,416,299,416,266"/>
+<area shape="rect" id="Node000009" title=" " alt="" coords="367,387,471,412"/>
+<area shape="poly" id="edge9_Node000008_Node000009" title=" " alt="" coords="421,339,421,373,416,373,416,339"/>
+</map>

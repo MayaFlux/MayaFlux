@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::SpatialRegionProcessor::on_detach" name="MayaFlux::Kakshya::SpatialRegionProcessor::on_detach">
+<area shape="rect" id="Node000001" title="Detach; delegates to RegionProcessorBase::on_detach." alt="" coords="5,5,180,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1RegionProcessorBase_ab9e403016451a1002a8123264babdc62.html#ab9e403016451a1002a8123264babdc62" title="Detach this processor from its container." alt="" coords="228,5,391,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="180,30,214,30,214,35,180,35"/>
+</map>

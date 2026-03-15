@@ -1,0 +1,19 @@
+<map id="MayaFlux::Vruta::routine_promise&lt; RoutineType &gt;" name="MayaFlux::Vruta::routine_promise&lt; RoutineType &gt;">
+<area shape="rect" id="Node000001" title="Base coroutine promise type for audio processing tasks." alt="" coords="335,5,532,325"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Vruta_1_1routine__promise.html" title=" " alt="" coords="5,388,203,708"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="327,266,245,351,217,390,205,406,201,403,212,386,241,348,323,262"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Vruta_1_1routine__promise.html" title=" " alt="" coords="227,388,439,708"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="381,339,379,350,369,388,364,387,373,349,376,338"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Vruta_1_1routine__promise.html" title=" " alt="" coords="464,388,661,708"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="517,337,521,349,533,387,528,388,516,350,512,339"/>
+<area shape="rect" id="Node000008" href="$structMayaFlux_1_1Vruta_1_1routine__promise.html" title=" " alt="" coords="685,388,896,708"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="544,258,611,319,675,386,687,400,683,403,671,390,607,323,541,261"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Vruta_1_1audio__promise.html" title="Coroutine promise type for audio processing tasks with sample&#45;accurate timing." alt="" coords="20,757,188,917"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="107,722,107,757,101,757,101,722"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Vruta_1_1complex__promise.html" title="Coroutine promise type for complex processing tasks with multi&#45;rate scheduling." alt="" coords="241,767,426,907"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="336,722,336,767,331,767,331,722"/>
+<area shape="rect" id="Node000007" href="$structMayaFlux_1_1Vruta_1_1event__promise.html" title=" " alt="" coords="479,787,647,887"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="565,722,565,787,560,787,560,722"/>
+<area shape="rect" id="Node000009" href="$structMayaFlux_1_1Vruta_1_1graphics__promise.html" title="Coroutine promise type for graphics processing tasks with frame&#45;accurate timing." alt="" coords="699,757,883,917"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="793,722,793,757,788,757,788,722"/>
+</map>

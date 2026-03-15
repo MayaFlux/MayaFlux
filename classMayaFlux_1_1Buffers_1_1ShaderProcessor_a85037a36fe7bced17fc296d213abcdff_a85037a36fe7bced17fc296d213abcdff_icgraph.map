@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::ShaderProcessor::set_push_constant_size" name="MayaFlux::Buffers::ShaderProcessor::set_push_constant_size">
+<area shape="rect" id="Node000001" title="Set push constant size from type." alt="" coords="235,84,393,139"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a957293274f9de20606b567a18ebc353c.html#a957293274f9de20606b567a18ebc353c" title="Update push constant data (type&#45;safe)" alt="" coords="17,5,175,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="224,82,171,63,173,58,226,77"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_aca91b4a3093dce82bc3439a8067b2ab7.html#aca91b4a3093dce82bc3439a8067b2ab7" title="Set static view transform (evaluated once)" alt="" coords="17,84,175,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="221,114,176,114,176,109,221,109"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_af8312c677a1ba907195c4d4a54a07429.html#af8312c677a1ba907195c4d4a54a07429" title="Set dynamic view transform source (evaluated every frame)" alt="" coords="5,163,187,217"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="226,146,173,165,171,160,224,141"/>
+</map>

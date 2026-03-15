@@ -1,0 +1,9 @@
+<map id="MayaFlux::Core::MIDIBackend::refresh_devices" name="MayaFlux::Core::MIDIBackend::refresh_devices">
+<area shape="rect" id="Node000001" title="Refresh the device list." alt="" coords="5,69,223,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1MIDIBackend_a09dbf95db2415e85525ef98074842d80.html#a09dbf95db2415e85525ef98074842d80" title=" " alt="" coords="271,5,488,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="197,67,282,46,283,51,198,72"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1MIDIBackend_aecaebeea649510834adc6243b7605614.html#aecaebeea649510834adc6243b7605614" title=" " alt="" coords="271,69,488,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="223,87,257,87,257,92,223,92"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1MIDIBackend_a33add2499256b149e9d5dda8b3601a71.html#a33add2499256b149e9d5dda8b3601a71" title=" " alt="" coords="271,133,488,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="198,107,283,128,282,133,197,112"/>
+</map>

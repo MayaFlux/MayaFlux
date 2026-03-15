@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::AudioBuffer::set_default_processor" name="MayaFlux::Buffers::AudioBuffer::set_default_processor">
+<area shape="rect" id="Node000001" title="Sets the default audio transformation processor for this buffer." alt="" coords="480,41,659,96"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1SoundContainerBuffer_a249c5d9818c533d2a1ab266be6a1994c.html#a249c5d9818c533d2a1ab266be6a1994c" title="Initialize the buffer after construction." alt="" coords="254,5,418,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="466,55,418,48,418,43,466,50"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1RootAudioBuffer_aa6f2bcb7b2765492faa90d3bc7307737.html#aa6f2bcb7b2765492faa90d3bc7307737" title=" " alt="" coords="240,85,432,125"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="467,87,433,93,432,87,466,82"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1IOManager_a379f2b3ed14f3c441c69796073d75de2.html#a379f2b3ed14f3c441c69796073d75de2" title="Wire a SoundFileContainer to the audio buffer system." alt="" coords="5,5,192,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="240,35,192,35,192,30,240,30"/>
+</map>

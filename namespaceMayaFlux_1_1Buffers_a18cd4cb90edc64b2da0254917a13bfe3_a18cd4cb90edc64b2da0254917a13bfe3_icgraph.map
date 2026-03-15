@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::create_image_staging_buffer" name="MayaFlux::Buffers::create_image_staging_buffer">
+<area shape="rect" id="Node000001" title="Allocate a persistent host&#45;visible staging buffer sized for repeated streaming uploads to an image of..." alt="" coords="499,5,665,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1TextureProcessor_a7d53a8a818b65190bbb4b66f14c3aada.html#a7d53a8a818b65190bbb4b66f14c3aada" title="Re&#45;upload pixels to GPU if they changed." alt="" coords="264,5,451,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="485,35,451,35,451,30,485,30"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1TextureProcessor_a22c664d1f23e08fdf018d3a58f600e26.html#a22c664d1f23e08fdf018d3a58f600e26" title="The core processing function that must be implemented by derived classes." alt="" coords="5,5,216,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="250,35,216,35,216,30,250,30"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Network::WaveguideNetwork" name="MayaFlux::Nodes::Network::WaveguideNetwork">
+<area shape="rect" id="Node000001" title="Digital waveguide synthesis via uni&#45; and bidirectional delay&#45;line architectures." alt="" coords="5,753,237,1468"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1NodeNetwork.html" title="Abstract base class for structured collections of nodes with defined relationships." alt="" coords="23,5,220,705"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="124,719,124,753,119,753,119,719"/>
+</map>

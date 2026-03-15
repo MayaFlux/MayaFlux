@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kriya::EventAwaiter" name="MayaFlux::Kriya::EventAwaiter">
+<area shape="rect" id="Node000001" title="Awaiter for suspending on window events with optional filtering." alt="" coords="231,573,446,839"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Vruta_1_1EventSource.html" title="Awaitable event stream for window events." alt="" coords="5,5,216,511"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="218,486,230,509,256,558,251,560,226,512,214,488"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Vruta_1_1EventFilter.html" title="Filter criteria for window events." alt="" coords="239,185,438,331"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="341,331,341,557,336,557,336,331"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Core_1_1WindowEvent.html" title="Event data for window and input events." alt="" coords="463,155,676,361"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="525,362,452,512,426,560,421,557,447,509,520,360"/>
+</map>

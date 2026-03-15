@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::BufferAccessControl" name="MayaFlux::Buffers::BufferAccessControl">
+<area shape="rect" id="Node000001" title="Token&#45;aware buffer and unit access patterns." alt="" coords="92,487,324,767"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1TokenUnitManager.html" title="Token&#45;scoped unit storage and lifecycle management." alt="" coords="5,5,205,424"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="156,423,165,462,167,470,162,471,160,463,150,425"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Registry_1_1Service_1_1BufferService.html" title="Backend buffer management service interface." alt="" coords="229,105,395,325"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="309,325,300,394,285,463,283,472,278,470,280,462,295,393,304,325"/>
+</map>

@@ -1,0 +1,8 @@
+<map id="MayaFlux::Kakshya::remove_channel_dimension" name="MayaFlux::Kakshya::remove_channel_dimension">
+<area shape="rect" id="Node000001" title="Remove the channel dimension from a Region." alt="" coords="252,37,457,77"/>
+<area shape="poly" id="edge2_Node000001_Node000001" title=" " alt="" coords="397,26,382,19,355,16,331,18,316,23,311,29,314,36,309,38,306,28,313,18,330,13,355,11,383,14,399,21"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kakshya_a0b120cdfd64c4367c5c738c5bceec0bd.html#a0b120cdfd64c4367c5c738c5bceec0bd" title="Extract region data from planar storage (separate per channel/variant)" alt="" coords="25,5,184,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="238,45,184,38,185,33,239,40"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kakshya_ab04b636df167ce440f7c9dfe61234c82.html#ab04b636df167ce440f7c9dfe61234c82" title="Write or update a region of data in planar storage." alt="" coords="5,69,204,109"/>
+<area shape="poly" id="edge3_Node000001_Node000003" title=" " alt="" coords="239,75,204,79,204,74,238,70"/>
+</map>

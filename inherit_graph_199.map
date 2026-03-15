@@ -1,0 +1,17 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="Node000000" href="$classMayaFlux_1_1Kakshya_1_1DataProcessor.html" title="Interface for processing data within SignalSourceContainer objects." alt="" coords="5,101,164,141"/>
+<area shape="rect" id="Node000001" href="$classMayaFlux_1_1Kakshya_1_1ContiguousAccessProcessor.html" title=" " alt="" coords="212,5,415,45"/>
+<area shape="poly" id="edge52_Node000000_Node000001" title=" " alt="" coords="133,92,211,55,243,43,245,48,213,60,135,97"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1FrameAccessProcessor.html" title=" " alt="" coords="228,69,399,109"/>
+<area shape="poly" id="edge53_Node000000_Node000002" title=" " alt="" coords="178,106,228,99,228,104,178,111"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1RegionProcessorBase.html" title="Base class for N&#45;dimensional region processors." alt="" coords="232,133,395,173"/>
+<area shape="poly" id="edge54_Node000000_Node000003" title=" " alt="" coords="178,132,232,139,231,145,178,137"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Kakshya_1_1WindowAccessProcessor.html" title="Default DataProcessor for WindowContainer." alt="" coords="222,197,405,237"/>
+<area shape="poly" id="edge58_Node000000_Node000007" title=" " alt="" coords="135,146,213,183,245,195,243,200,211,188,133,150"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1RegionOrganizationProcessor.html" title="Data&#45;driven processor for organizing and processing non&#45;linear audio regions." alt="" coords="463,101,676,141"/>
+<area shape="poly" id="edge55_Node000003_Node000004" title=" " alt="" coords="408,139,462,132,463,137,408,144"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1SpatialRegionProcessor.html" title="Parallel spatial extraction processor for image&#45;modality containers." alt="" coords="482,165,657,205"/>
+<area shape="poly" id="edge57_Node000003_Node000006" title=" " alt="" coords="409,163,482,172,481,177,408,168"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1DynamicRegionProcessor.html" title="Extends RegionOrganizationProcessor with dynamic, runtime reorganization capabilities." alt="" coords="724,101,912,141"/>
+<area shape="poly" id="edge56_Node000004_Node000005" title=" " alt="" coords="690,119,724,119,724,124,690,124"/>
+</map>

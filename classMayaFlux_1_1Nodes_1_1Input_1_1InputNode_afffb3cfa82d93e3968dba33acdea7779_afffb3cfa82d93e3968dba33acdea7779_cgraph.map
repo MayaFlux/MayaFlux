@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Input::InputNode::on_button_release" name="MayaFlux::Nodes::Input::InputNode::on_button_release">
+<area shape="rect" id="Node000001" title="Register callback for button release (1.0 → 0.0 transition)" alt="" coords="5,5,181,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Input_1_1InputNode_a5c8dc8f0d19dd2ba5ec3d00ca650784c.html#a5c8dc8f0d19dd2ba5ec3d00ca650784c" title=" " alt="" coords="229,5,405,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="182,30,215,30,215,35,182,35"/>
+</map>

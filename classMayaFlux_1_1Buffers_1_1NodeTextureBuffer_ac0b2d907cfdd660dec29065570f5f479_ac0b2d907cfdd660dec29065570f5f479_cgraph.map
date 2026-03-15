@@ -1,0 +1,12 @@
+<map id="MayaFlux::Buffers::NodeTextureBuffer::generate_fullscreen_quad" name="MayaFlux::Buffers::NodeTextureBuffer::generate_fullscreen_quad">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,58,215,113"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_a9393731b377b158f0021b6a3c5b57d66.html#a9393731b377b158f0021b6a3c5b57d66" title="Generate a textured quad centred on the origin." alt="" coords="266,29,415,69"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="215,66,252,60,252,66,216,72"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_a16b3cbfb638d1ce2063d8b9436faf7ec.html#a16b3cbfb638d1ce2063d8b9436faf7ec" title="Set vertex layout for this buffer." alt="" coords="263,94,419,149"/>
+<area shape="poly" id="edge3_Node000001_Node000003" title=" " alt="" coords="216,99,250,104,249,110,215,104"/>
+<area shape="poly" id="edge2_Node000002_Node000002" title=" " alt="" coords="301,30,299,20,305,10,319,5,341,3,365,6,379,13,376,18,364,11,341,8,320,10,308,15,304,21,306,28"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Kakshya_1_1VertexLayout_a69d6a400c22a219150d8b28007441d5d.html#a69d6a400c22a219150d8b28007441d5d" title="Helper: compute stride from attributes if not explicitly set." alt="" coords="467,94,640,149"/>
+<area shape="poly" id="edge4_Node000003_Node000004" title=" " alt="" coords="419,119,453,119,453,124,419,124"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Kakshya_1_1VertexLayout_a544b48334c1b582e8bf50da8215d2095.html#a544b48334c1b582e8bf50da8215d2095" title="Get size in bytes for a given modality Mirrors VKBuffer::get_format() logic." alt="" coords="688,94,863,149"/>
+<area shape="poly" id="edge5_Node000004_Node000005" title=" " alt="" coords="640,119,674,119,674,124,640,124"/>
+</map>

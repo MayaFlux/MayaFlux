@@ -1,0 +1,5 @@
+<map id="MayaFlux::Yantra::EnergyAnalyzer::create_analysis_result" name="MayaFlux::Yantra::EnergyAnalyzer::create_analysis_result">
+<area shape="rect" id="Node000001" title="Create comprehensive analysis result from energy computation." alt="" coords="5,5,195,60"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_ad2f0572dfef62bb7629c7ef74ff29449.html#ad2f0572dfef62bb7629c7ef74ff29449" title="Calculate mean of single&#45;channel data." alt="" coords="243,20,373,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="195,30,229,30,229,35,195,35"/>
+</map>

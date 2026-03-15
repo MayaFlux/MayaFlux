@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::BackendResourceManager::upload_image_data_with_staging" name="MayaFlux::Core::BackendResourceManager::upload_image_data_with_staging">
+<area shape="rect" id="Node000001" title="Upload image data using a caller&#45;supplied persistent staging buffer." alt="" coords="256,5,503,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a7f5054caed552a7ae301ff8756935e4a.html#a7f5054caed552a7ae301ff8756935e4a" title="Upload pixel data reusing a caller&#45;supplied persistent staging buffer." alt="" coords="5,13,208,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="242,35,208,35,208,30,242,30"/>
+</map>

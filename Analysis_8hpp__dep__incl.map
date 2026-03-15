@@ -1,0 +1,18 @@
+<map id="Analysis.hpp" name="Analysis.hpp">
+<area shape="rect" id="Node000001" title="Discrete sequence analysis primitives for MayaFlux::Kinesis." alt="" coords="351,5,457,31"/>
+<area shape="rect" id="Node000002" href="$Analysis_8cpp.html" title=" " alt="" coords="5,79,109,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="338,35,110,82,109,77,337,30"/>
+<area shape="rect" id="Node000003" href="$EnergyAnalyzer_8hpp.html" title="Span&#45;based energy analysis for digital signals in Maya Flux." alt="" coords="329,79,479,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="407,44,407,79,401,79,401,44"/>
+<area shape="rect" id="Node000005" href="$Yantra_8cpp.html" title=" " alt="" coords="359,152,449,177"/>
+<area shape="poly" id="edge9_Node000001_Node000005" title=" " alt="" coords="447,35,469,48,487,64,498,83,494,105,483,122,468,135,436,154,433,150,465,131,479,118,490,103,492,84,483,67,465,52,444,39"/>
+<area shape="rect" id="Node000006" href="$ExtractionHelper_8cpp.html" title=" " alt="" coords="555,79,712,104"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="455,32,597,76,595,81,453,37"/>
+<area shape="rect" id="Node000007" href="$StatisticalAnalyzer_8hpp.html" title=" " alt="" coords="133,79,304,104"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="363,38,250,81,248,76,361,33"/>
+<area shape="rect" id="Node000004" href="$MatrixHelper_8hpp.html" title="Region&#45;aware and matrix transformation functions leveraging existing ecosystem." alt="" coords="177,152,311,177"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="367,112,271,154,269,149,365,107"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="407,118,407,152,401,152,401,118"/>
+<area shape="poly" id="edge7_Node000007_Node000004" title=" " alt="" coords="230,116,242,151,237,153,225,118"/>
+<area shape="poly" id="edge8_Node000007_Node000005" title=" " alt="" coords="262,106,375,149,373,154,260,111"/>
+</map>

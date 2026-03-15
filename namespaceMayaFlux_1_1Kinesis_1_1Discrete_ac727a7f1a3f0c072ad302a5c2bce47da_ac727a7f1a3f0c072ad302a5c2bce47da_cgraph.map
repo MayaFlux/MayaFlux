@@ -1,0 +1,10 @@
+<map id="MayaFlux::Kinesis::Discrete::auto_correlate" name="MayaFlux::Kinesis::Discrete::auto_correlate">
+<area shape="rect" id="Node000001" title="Auto&#45;correlation via FFT." alt="" coords="5,63,184,103"/>
+<area shape="poly" id="edge2_Node000001_Node000001" title=" " alt="" coords="50,63,48,53,55,44,71,38,95,36,122,39,137,46,135,51,121,44,95,41,72,43,58,48,53,54,56,62"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a6a6e81ae410d0fde11b29a2ff3bff6bb.html#a6a6e81ae410d0fde11b29a2ff3bff6bb" title="Core FFT convolution engine." alt="" coords="232,5,435,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="178,60,236,46,237,51,179,65"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_a878fe1820a72f64efebc516b1749f77d.html#a878fe1820a72f64efebc516b1749f77d" title="Normalize single&#45;channel data to specified peak level (in&#45;place)" alt="" coords="254,70,413,95"/>
+<area shape="poly" id="edge3_Node000001_Node000003" title=" " alt="" coords="184,80,240,80,240,85,184,85"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_aeab6358bb22d5e99a73934d063aeb7ba.html#aeab6358bb22d5e99a73934d063aeb7ba" title="Find peak amplitude in single&#45;channel data." alt="" coords="270,119,397,145"/>
+<area shape="poly" id="edge4_Node000001_Node000004" title=" " alt="" coords="185,98,258,114,257,119,184,104"/>
+</map>

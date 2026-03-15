@@ -1,0 +1,11 @@
+<map id="MayaFlux::IO::SoundFileReader::build_metadata" name="MayaFlux::IO::SoundFileReader::build_metadata">
+<area shape="rect" id="Node000001" title="Build and cache FileMetadata from both contexts." alt="" coords="549,69,775,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1SoundFileReader_aeb9f2bf441774c93741b4e91b72f45fb.html#aeb9f2bf441774c93741b4e91b72f45fb" title="Get metadata for the currently open file." alt="" coords="276,5,501,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="562,69,474,48,475,43,563,64"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1SoundFileReader_a25d2ebc2d552f532a46fbb493f8d88d3.html#a25d2ebc2d552f532a46fbb493f8d88d3" title="Open an audio file for reading." alt="" coords="276,69,501,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="536,92,501,92,501,87,536,87"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1SoundFileReader_aa4f32713ee60f510a31ede3abf5df63a.html#aa4f32713ee60f510a31ede3abf5df63a" title="Open an audio stream from an already&#45;constructed demux and stream context." alt="" coords="276,133,501,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="563,115,475,136,474,131,562,110"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1IO_1_1VideoFileReader_a78b6b19d6d9126250ded73ea4b7b6629.html#a78b6b19d6d9126250ded73ea4b7b6629" title="Load file data into an existing container." alt="" coords="5,133,228,173"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="262,156,228,156,228,151,262,151"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::TemporalWrapper&lt; T &gt;" name="MayaFlux::TemporalWrapper&lt; T &gt;">
+<area shape="rect" id="Node000001" title="Wraps an entity with a TimeSpec for temporal activation." alt="" coords="5,193,244,319"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1TimeSpec.html" title="Represents a timed activation operation for processing nodes, buffers, or networks." alt="" coords="49,5,200,131"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="127,131,127,177,122,177,122,131"/>
+</map>

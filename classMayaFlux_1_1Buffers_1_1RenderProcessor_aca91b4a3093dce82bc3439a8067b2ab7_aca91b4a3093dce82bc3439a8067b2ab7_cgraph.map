@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::RenderProcessor::set_view_transform" name="MayaFlux::Buffers::RenderProcessor::set_view_transform">
+<area shape="rect" id="Node000001" title="Set static view transform (evaluated once)" alt="" coords="5,45,164,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_a6efe2d22481e7835d5e905a40dfcd5c9.html#a6efe2d22481e7835d5e905a40dfcd5c9" title="Enable depth testing for this processor&#39;s pipeline." alt="" coords="212,5,395,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="164,55,198,49,199,54,165,61"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a85037a36fe7bced17fc296d213abcdff.html#a85037a36fe7bced17fc296d213abcdff" title="Set push constant size from type." alt="" coords="224,84,383,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="165,84,211,92,210,98,164,89"/>
+</map>

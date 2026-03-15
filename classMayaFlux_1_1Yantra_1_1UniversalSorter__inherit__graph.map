@@ -1,0 +1,13 @@
+<map id="MayaFlux::Yantra::UniversalSorter&lt; InputType, OutputType &gt;" name="MayaFlux::Yantra::UniversalSorter&lt; InputType, OutputType &gt;">
+<area shape="rect" id="Node000001" title="Template&#45;flexible sorter base with instance&#45;defined I/O types." alt="" coords="353,584,582,1319"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1GpuSorter.html" title="Concrete UniversalSorter that dispatches entirely via a ShaderExecutionContext." alt="" coords="5,1713,204,1873"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="348,1152,280,1279,218,1412,188,1490,163,1571,125,1713,120,1712,158,1569,183,1489,213,1410,275,1276,343,1150"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1StandardSorter.html" title="Concrete implementation for standard comparison&#45;based sorting." alt="" coords="228,1533,456,2053"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="413,1333,383,1533,378,1532,408,1332"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1UniversalSorter.html" title=" " alt="" coords="481,1411,710,2175"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="528,1332,540,1410,535,1411,523,1332"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Yantra_1_1UniversalSorter.html" title=" " alt="" coords="737,1418,966,2167"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="593,1081,640,1139,687,1203,731,1271,767,1342,795,1417,790,1418,762,1344,726,1273,683,1206,636,1142,589,1085"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1ComputeOperation.html" title="Base interface for all computational operations in the processing pipeline." alt="" coords="341,5,594,535"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="470,548,470,584,465,584,465,548"/>
+</map>

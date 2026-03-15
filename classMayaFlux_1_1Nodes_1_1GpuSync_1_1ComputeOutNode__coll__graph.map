@@ -1,0 +1,15 @@
+<map id="MayaFlux::Nodes::GpuSync::ComputeOutNode" name="MayaFlux::Nodes::GpuSync::ComputeOutNode">
+<area shape="rect" id="Node000001" title="Node that reads back data from GPU buffer to CPU." alt="" coords="128,1249,320,1569"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GpuSync.html" title=" " alt="" coords="21,987,213,1187"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="157,1199,173,1248,168,1250,152,1201"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Node.html" title="Base interface for all computational processing nodes." alt="" coords="5,248,203,937"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="116,951,117,986,112,986,111,951"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Nodes_1_1RoutingState.html" title="Represents the state of routing transitions for a node." alt="" coords="11,5,197,185"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="107,186,107,231,101,231,101,186"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1ComputeOutContext.html" title="Context for ComputeOutNode &#45; provides readback buffer access." alt="" coords="241,1047,433,1127"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="326,1128,288,1235,283,1233,321,1126"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1NodeContext.html" title="Base context class for node callbacks." alt="" coords="227,530,447,655"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="340,669,340,1046,335,1046,335,669"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1GpuVectorData.html" title="GPU&#45;uploadable 1D array data interface." alt="" coords="471,520,705,665"/>
+<area shape="poly" id="edge6_Node000005_Node000007" title=" " alt="" coords="567,679,524,805,495,873,461,939,420,998,377,1048,373,1045,416,995,456,936,490,871,519,803,562,678"/>
+</map>

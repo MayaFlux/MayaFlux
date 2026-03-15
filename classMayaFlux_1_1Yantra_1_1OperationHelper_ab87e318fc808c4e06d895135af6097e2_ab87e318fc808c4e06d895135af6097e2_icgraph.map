@@ -1,0 +1,27 @@
+<map id="MayaFlux::Yantra::OperationHelper::setup_operation_buffer" name="MayaFlux::Yantra::OperationHelper::setup_operation_buffer">
+<area shape="rect" id="Node000001" title="Setup operation buffer from Datum or ComputeData type." alt="" coords="508,261,731,301"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Yantra_a36d84e2b85966327017d25ebdca20625.html#a36d84e2b85966327017d25ebdca20625" title="Universal sort function &#45; returns sorted copy." alt="" coords="269,5,444,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="601,250,579,207,547,155,507,104,458,59,438,48,441,43,462,55,511,100,551,152,583,204,606,247"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Yantra_aefd8d29775269d3755674992909e379f.html#aefd8d29775269d3755674992909e379f" title="Universal sort function &#45; returns sorted copy." alt="" coords="269,69,444,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="593,252,536,187,499,153,459,124,435,112,437,107,461,119,503,149,540,183,597,248"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Yantra_ad8c64d8ffad815590c4e76d03081b92b.html#ad8c64d8ffad815590c4e76d03081b92b" title="Energy&#45;based transformation using existing EnergyAnalyzer (OUT&#45;OF&#45;PLACE)" alt="" coords="253,133,460,173"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="577,256,522,221,459,188,429,176,431,171,461,183,525,216,580,251"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Yantra_ae5ef5ea9a3dbd393bd6a31ded62b023b.html#ae5ef5ea9a3dbd393bd6a31ded62b023b" title="Channel operations using C++20 ranges (OUT&#45;OF&#45;PLACE)" alt="" coords="253,197,460,237"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="523,261,439,240,440,235,524,255"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_1_1Yantra_a6484597fe08b733e68371d05e1f9cb71.html#a6484597fe08b733e68371d05e1f9cb71" title="Cross&#45;fade between regions with smooth transitions (OUT&#45;OF&#45;PLACE)" alt="" coords="253,261,460,301"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="494,284,460,284,460,279,494,279"/>
+<area shape="rect" id="Node000010" href="$namespaceMayaFlux_1_1Yantra_a0967ddc4a7f1090abb647f978810c65a.html#a0967ddc4a7f1090abb647f978810c65a" title="Matrix transformation using existing infrastructure (OUT&#45;OF&#45;PLACE)" alt="" coords="253,325,460,365"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="524,307,440,328,439,323,523,302"/>
+<area shape="rect" id="Node000011" href="$namespaceMayaFlux_1_1Yantra_a0671817a1768c1c6f02048c930ff16a0.html#a0671817a1768c1c6f02048c930ff16a0" title="Multi&#45;channel matrix transformation with error handling (OUT&#45;OF&#45;PLACE)" alt="" coords="253,389,460,429"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="580,311,525,346,461,380,431,392,429,387,459,375,522,342,577,307"/>
+<area shape="rect" id="Node000012" href="$namespaceMayaFlux_1_1Yantra_a1c3431c18eae2938e19ad5bb781953ee.html#a1c3431c18eae2938e19ad5bb781953ee" title="Statistical outlier transformation using existing StatisticalAnalyzer (OUT&#45;OF&#45;PLACE)" alt="" coords="253,453,460,493"/>
+<area shape="poly" id="edge11_Node000001_Node000012" title=" " alt="" coords="597,314,540,379,503,414,461,444,437,456,435,451,459,439,499,410,536,376,593,311"/>
+<area shape="rect" id="Node000013" href="$namespaceMayaFlux_1_1Yantra_ae2cb746881bbc621ce72b28f453a55c7.html#ae2cb746881bbc621ce72b28f453a55c7" title="Region&#45;selective transformation using container&#45;based extraction (OUT&#45;OF&#45;PLACE)" alt="" coords="253,517,460,557"/>
+<area shape="poly" id="edge12_Node000001_Node000013" title=" " alt="" coords="606,315,583,359,551,410,511,463,462,507,441,520,438,515,458,503,507,459,547,407,579,356,601,313"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Yantra_a3deb7abab695c99ec7389cc32ef73abc.html#a3deb7abab695c99ec7389cc32ef73abc" title="Convenience function with default algorithm." alt="" coords="22,5,189,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="264,68,184,48,185,43,265,63"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1StandardSorter_a4354ccfd82da15a220f84dc53a5676e0.html#a4354ccfd82da15a220f84dc53a5676e0" title="Sort data with copy semantics." alt="" coords="5,69,205,109"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="255,92,206,92,206,87,255,87"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Yantra_1_1StandardSorter_a1ec28359434d38d74bfd4a6e9cd0fe49.html#a1ec28359434d38d74bfd4a6e9cd0fe49" title="Partial sorting implementation." alt="" coords="5,133,205,173"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="265,115,185,136,184,131,264,110"/>
+</map>

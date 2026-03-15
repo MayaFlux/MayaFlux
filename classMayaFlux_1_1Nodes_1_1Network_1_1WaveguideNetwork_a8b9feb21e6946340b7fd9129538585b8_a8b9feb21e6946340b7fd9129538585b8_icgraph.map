@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::Network::WaveguideNetwork::unmap_parameter" name="MayaFlux::Nodes::Network::WaveguideNetwork::unmap_parameter">
+<area shape="rect" id="Node000001" title="Remove parameter mapping." alt="" coords="252,45,463,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1WaveguideNetwork_a6f5769814905380c3ba54a12b2c52ff8.html#a6f5769814905380c3ba54a12b2c52ff8" title="Map external node output to network parameter." alt="" coords="5,5,204,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="238,56,204,51,204,46,239,51"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1WaveguideNetwork_ad5c209eab0a64266b3507aaf33dbcb91.html#ad5c209eab0a64266b3507aaf33dbcb91" title="Map external node network to network parameters (ONE_TO_ONE)" alt="" coords="5,84,204,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="239,93,204,99,204,94,238,88"/>
+</map>

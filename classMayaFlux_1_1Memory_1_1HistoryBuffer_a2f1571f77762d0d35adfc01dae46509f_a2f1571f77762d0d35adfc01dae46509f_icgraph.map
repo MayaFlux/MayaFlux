@@ -1,0 +1,12 @@
+<map id="MayaFlux::Memory::HistoryBuffer::linearized_view" name="MayaFlux::Memory::HistoryBuffer::linearized_view">
+<area shape="rect" id="Node000001" title="Get mutable linearized view of entire history." alt="" coords="1041,5,1244,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Polynomial_a6c5eaaf26f00522a8ee26bf0cd38c1e9.html#a6c5eaaf26f00522a8ee26bf0cd38c1e9" title="Processes a single sample." alt="" coords="261,5,477,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1027,25,993,24,759,22,525,24,478,25,478,20,525,19,759,17,993,19,1028,19"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Polynomial_a49ff94fa54ebf11a338b01956d66fab2.html#a49ff94fa54ebf11a338b01956d66fab2" title="Updates the context object with the current node state." alt="" coords="781,33,993,73"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="1028,41,994,44,993,39,1027,35"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Polynomial_afb0f9f325eeff81f429ee11b15cc5aac.html#afb0f9f325eeff81f429ee11b15cc5aac" title="Processes multiple samples at once." alt="" coords="5,5,213,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="248,28,214,28,214,23,248,23"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Polynomial_a78f2f499d75866e25ba584c19622a21f.html#a78f2f499d75866e25ba584c19622a21f" title="Notifies all registered callbacks about a new sample." alt="" coords="525,33,733,73"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="767,56,734,56,734,51,767,51"/>
+<area shape="poly" id="edge5_Node000005_Node000002" title=" " alt="" coords="512,43,477,40,478,34,512,38"/>
+</map>

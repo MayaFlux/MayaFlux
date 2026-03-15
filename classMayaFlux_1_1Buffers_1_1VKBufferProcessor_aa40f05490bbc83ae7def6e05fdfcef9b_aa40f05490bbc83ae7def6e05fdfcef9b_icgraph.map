@@ -1,0 +1,15 @@
+<map id="MayaFlux::Buffers::VKBufferProcessor::initialize_buffer_service" name="MayaFlux::Buffers::VKBufferProcessor::initialize_buffer_service">
+<area shape="rect" id="Node000001" title=" " alt="" coords="305,203,512,257"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1CompositeGeometryProcessor_a1ce9682a70041fdc63c1f282048e3ae3.html#a1ce9682a70041fdc63c1f282048e3ae3" title=" " alt="" coords="17,5,245,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="378,193,325,131,292,100,256,74,235,63,238,58,259,69,296,96,329,128,382,190"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1GeometryBindingsProcessor_ad7fe2cab033061bbcd082997c4833426.html#ad7fe2cab033061bbcd082997c4833426" title=" " alt="" coords="24,84,239,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="348,198,256,152,227,141,229,136,258,148,351,193"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1NetworkGeometryProcessor_a617e8ba68d2c47d1f24185ba6dc201fc.html#a617e8ba68d2c47d1f24185ba6dc201fc" title=" " alt="" coords="25,163,238,217"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="291,216,238,208,239,203,292,211"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1NodeTextureProcessor_adae71dd4710ab205314552ae539c8d75.html#adae71dd4710ab205314552ae539c8d75" title=" " alt="" coords="44,241,219,296"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="292,249,219,259,218,254,291,244"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_ad1cdc408cecf642a54335eae32c14c03.html#ad1cdc408cecf642a54335eae32c14c03" title="Construct processor with full configuration." alt="" coords="8,321,255,361"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="350,266,258,310,219,323,217,318,256,305,347,262"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1TextureProcessor_afb8d66e97b9ee7ccf639ce60794fe789.html#afb8d66e97b9ee7ccf639ce60794fe789" title=" " alt="" coords="5,385,257,425"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="379,270,327,324,294,352,259,375,232,387,230,382,256,370,291,348,323,321,375,266"/>
+</map>

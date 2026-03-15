@@ -1,0 +1,7 @@
+<map id="MayaFlux::Yantra::TemporalTransformer&lt; InputType, OutputType &gt;" name="MayaFlux::Yantra::TemporalTransformer&lt; InputType, OutputType &gt;">
+<area shape="rect" id="Node000001" title="Concrete transformer for time&#45;domain operations." alt="" coords="25,1368,239,1672"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1UniversalTransformer.html" title="Template&#45;flexible transformer base with instance&#45;defined I/O types." alt="" coords="25,583,239,1320"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="135,1334,135,1368,129,1368,129,1334"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1ComputeOperation.html" title="Base interface for all computational operations in the processing pipeline." alt="" coords="5,5,259,535"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="135,548,135,582,129,582,129,548"/>
+</map>

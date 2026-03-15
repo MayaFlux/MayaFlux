@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::SoundContainerBuffer::initialize" name="MayaFlux::Buffers::SoundContainerBuffer::initialize">
+<area shape="rect" id="Node000001" title="Initialize the buffer after construction." alt="" coords="240,5,404,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1IOManager_a379f2b3ed14f3c441c69796073d75de2.html#a379f2b3ed14f3c441c69796073d75de2" title="Wire a SoundFileContainer to the audio buffer system." alt="" coords="5,5,192,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="226,35,192,35,192,30,226,30"/>
+</map>

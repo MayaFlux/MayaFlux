@@ -1,0 +1,26 @@
+<map id="MayaFlux::Core::AudioSubsystem" name="MayaFlux::Core::AudioSubsystem">
+<area shape="rect" id="Node000001" title="Audio processing subsystem managing real&#45;time audio I/O and processing." alt="" coords="371,900,605,1305"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1ISubsystem.html" title="Base interface for all subsystems in the MayaFlux processing architecture." alt="" coords="32,517,232,837"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="243,832,246,836,373,980,369,983,242,839,239,835"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Core_1_1GlobalStreamInfo.html" title="Comprehensive configuration for digital audio stream processing." alt="" coords="257,535,495,820"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="414,820,428,875,430,883,425,885,423,877,408,821"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Core_1_1GlobalStreamInfo_1_1ChannelConfig.html" title="Configuration for input or output data channels." alt="" coords="5,153,219,293"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="151,292,233,439,281,519,276,522,228,441,146,294"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Core_1_1GlobalStreamInfo_1_1MidiConfig.html" title="Configuration for MIDI data channels." alt="" coords="243,173,456,273"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="355,273,369,518,364,518,350,273"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Core_1_1SubsystemTokens.html" title="Processing token configuration for subsystem operation." alt="" coords="481,163,677,283"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="580,283,568,541,555,708,536,876,535,884,530,883,531,876,549,707,562,541,574,283"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Core_1_1SubsystemProcessingHandle.html" title="Unified interface combining buffer and node processing for subsystems." alt="" coords="959,617,1185,737"/>
+<area shape="poly" id="edge12_Node000007_Node000006" title=" " alt="" coords="601,282,636,361,661,401,690,438,748,493,814,542,881,583,945,618,943,622,878,588,811,546,745,497,686,442,657,404,632,363,596,284"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="992,740,619,1010,616,1005,989,735"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Core_1_1BufferProcessingHandle.html" title="Thread&#45;safe interface for buffer operations within a processing domain." alt="" coords="701,5,934,440"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="937,430,1033,602,1029,604,932,433"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Core_1_1NodeProcessingHandle.html" title="Interface for node graph operations within a processing domain." alt="" coords="958,103,1186,343"/>
+<area shape="poly" id="edge8_Node000007_Node000009" title=" " alt="" coords="1075,343,1075,601,1069,601,1069,343"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Core_1_1TaskSchedulerHandle.html" title=" " alt="" coords="1210,133,1427,313"/>
+<area shape="poly" id="edge9_Node000007_Node000010" title=" " alt="" coords="1273,314,1114,604,1110,601,1268,311"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Core_1_1WindowManagerHandle.html" title=" " alt="" coords="1451,163,1685,283"/>
+<area shape="poly" id="edge10_Node000007_Node000011" title=" " alt="" coords="1544,284,1501,363,1473,404,1441,442,1385,493,1323,540,1261,581,1201,615,1199,611,1258,576,1320,535,1381,489,1437,438,1468,401,1496,360,1540,282"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Core_1_1InputManagerHandle.html" title=" " alt="" coords="1709,143,1923,303"/>
+<area shape="poly" id="edge11_Node000007_Node000012" title=" " alt="" coords="1791,304,1754,376,1729,411,1699,442,1642,486,1580,524,1515,557,1448,586,1318,629,1202,657,1201,652,1316,624,1446,581,1513,553,1577,520,1639,482,1696,438,1725,408,1749,373,1786,302"/>
+</map>

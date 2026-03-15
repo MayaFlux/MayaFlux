@@ -1,0 +1,7 @@
+<map id="MayaFlux::Vruta::event_promise" name="MayaFlux::Vruta::event_promise">
+<area shape="rect" id="Node000001" title=" " alt="" coords="20,757,188,857"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Vruta_1_1routine__promise.html" title=" " alt="" coords="5,388,203,708"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="107,722,107,757,101,757,101,722"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Vruta_1_1routine__promise.html" title="Base coroutine promise type for audio processing tasks." alt="" coords="5,5,203,325"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="107,339,107,388,101,388,101,339"/>
+</map>

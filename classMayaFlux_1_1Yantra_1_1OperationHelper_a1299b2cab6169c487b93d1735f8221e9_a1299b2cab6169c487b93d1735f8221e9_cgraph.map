@@ -1,0 +1,18 @@
+<map id="MayaFlux::Yantra::OperationHelper::reconstruct_data_variant_from_double" name="MayaFlux::Yantra::OperationHelper::reconstruct_data_variant_from_double">
+<area shape="rect" id="Node000001" title="Reconstruct DataVariant from double data and structure info." alt="" coords="5,95,212,150"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kakshya_a0a210554c3428315f7daa96220a8cab8.html#a0a210554c3428315f7daa96220a8cab8" title="Convenience function for direct conversion." alt="" coords="283,39,441,79"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="212,94,269,79,270,85,213,99"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Yantra_1_1detail_a2a101dcc98958b1a60de44445909c3df.html#a2a101dcc98958b1a60de44445909c3df" title=" " alt="" coords="265,103,459,143"/>
+<area shape="poly" id="edge7_Node000001_Node000007" title=" " alt="" coords="212,120,252,120,252,125,212,125"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Yantra_1_1detail_aad2e66f3c95306683880495b079fda07.html#aad2e66f3c95306683880495b079fda07" title=" " alt="" coords="260,167,464,207"/>
+<area shape="poly" id="edge8_Node000001_Node000008" title=" " alt="" coords="213,146,270,161,268,166,212,151"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1EigenInsertion_afae4fdb884bcfc31ef058a55e18ab229.html#afae4fdb884bcfc31ef058a55e18ab229" title="Insert Eigen matrix with automatic interpretation." alt="" coords="512,31,672,86"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="442,56,498,56,498,61,442,61"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Reflect_aad91118cbd25bd9e35a3ced9aa4e6dbd.html#aad91118cbd25bd9e35a3ced9aa4e6dbd" title="Universal enum to string converter using magic_enum (original case)" alt="" coords="950,5,1097,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="672,50,936,29,937,35,673,55"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1EigenInsertion_ae3c16477974cf354497bad6e2ba47932.html#ae3c16477974cf354497bad6e2ba47932" title=" " alt="" coords="720,63,896,118"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="673,68,707,73,706,78,672,73"/>
+<area shape="poly" id="edge5_Node000005_Node000004" title=" " alt="" coords="896,61,943,47,945,52,897,66"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1EigenInsertion_a01143be19f9ec5a48a84add79e896c48.html#a01143be19f9ec5a48a84add79e896c48" title=" " alt="" coords="944,70,1103,125"/>
+<area shape="poly" id="edge6_Node000005_Node000006" title=" " alt="" coords="897,91,930,92,930,97,896,96"/>
+</map>

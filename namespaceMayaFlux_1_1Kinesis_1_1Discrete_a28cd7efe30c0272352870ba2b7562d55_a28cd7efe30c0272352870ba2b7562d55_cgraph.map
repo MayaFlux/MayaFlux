@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::Discrete::deconvolve" name="MayaFlux::Kinesis::Discrete::deconvolve">
+<area shape="rect" id="Node000001" title="Frequency&#45;domain deconvolution with Tikhonov regularisation." alt="" coords="5,5,164,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a6a6e81ae410d0fde11b29a2ff3bff6bb.html#a6a6e81ae410d0fde11b29a2ff3bff6bb" title="Core FFT convolution engine." alt="" coords="212,5,415,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="164,23,198,23,198,28,164,28"/>
+</map>

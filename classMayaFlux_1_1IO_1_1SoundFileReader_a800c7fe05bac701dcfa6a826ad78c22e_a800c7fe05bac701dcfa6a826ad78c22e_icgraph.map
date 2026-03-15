@@ -1,0 +1,33 @@
+<map id="MayaFlux::IO::SoundFileReader::set_error" name="MayaFlux::IO::SoundFileReader::set_error">
+<area shape="rect" id="Node000001" title="Set the last error message." alt="" coords="1096,232,1321,272"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1SoundFileReader_accdb3a9779750c1033ec16e660ba77da.html#accdb3a9779750c1033ec16e660ba77da" title="Create a SignalSourceContainer for this file." alt="" coords="276,5,501,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1185,222,1161,188,1129,151,1091,115,1047,86,979,58,907,37,834,23,760,14,620,9,502,14,502,9,620,3,761,8,834,17,908,32,981,53,1049,82,1094,111,1133,147,1166,185,1190,219"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1SoundFileReader_a6b31f93de0d059ff79310a277024cf97.html#a6b31f93de0d059ff79310a277024cf97" title="Decode num_frames PCM frames starting at offset." alt="" coords="823,203,1048,243"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="1082,241,1048,237,1048,232,1083,236"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1IO_1_1SoundFileReader_a050d7a5e740964893ed6443b04b97108.html#a050d7a5e740964893ed6443b04b97108" title="Read the entire audio file into memory." alt="" coords="549,101,775,141"/>
+<area shape="poly" id="edge13_Node000001_Node000005" title=" " alt="" coords="1166,227,1111,195,1047,168,978,150,907,138,774,126,775,120,908,132,979,145,1049,163,1113,190,1168,222"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1IO_1_1SoundFileReader_a4f0317d6147160c47dbbc3c2663f1756.html#a4f0317d6147160c47dbbc3c2663f1756" title="Load file data into an existing SignalSourceContainer." alt="" coords="276,80,501,120"/>
+<area shape="poly" id="edge9_Node000001_Node000006" title=" " alt="" coords="1177,224,1120,174,1085,150,1047,130,978,106,906,89,832,78,758,73,619,74,502,84,501,79,619,68,758,67,832,73,907,84,979,101,1049,126,1087,146,1123,170,1181,220"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1IO_1_1SoundFileReader_a8bfd1aa043b76cab1172b2d00705066f.html#a8bfd1aa043b76cab1172b2d00705066f" title="Read a specific number of frames from the file." alt="" coords="549,271,775,311"/>
+<area shape="poly" id="edge14_Node000001_Node000007" title=" " alt="" coords="1083,264,775,285,775,280,1082,258"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1IO_1_1SoundFileReader_a8b9c5ab6495003a5a1b17edaf5cc4e3f.html#a8b9c5ab6495003a5a1b17edaf5cc4e3f" title="Read a specific region from the file." alt="" coords="276,353,501,393"/>
+<area shape="poly" id="edge15_Node000001_Node000008" title=" " alt="" coords="1187,285,1162,315,1130,347,1092,377,1049,400,971,424,889,437,806,442,724,439,647,432,575,421,459,396,460,391,576,416,647,427,725,434,806,436,888,432,969,418,1047,395,1089,373,1126,343,1158,311,1183,281"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1IO_1_1SoundFileReader_a25d2ebc2d552f532a46fbb493f8d88d3.html#a25d2ebc2d552f532a46fbb493f8d88d3" title="Open an audio file for reading." alt="" coords="823,483,1048,523"/>
+<area shape="poly" id="edge10_Node000001_Node000009" title=" " alt="" coords="1194,285,1170,326,1138,375,1097,424,1050,466,1015,485,1013,480,1046,462,1093,420,1133,371,1166,323,1189,283"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1IO_1_1SoundFileReader_aa4f32713ee60f510a31ede3abf5df63a.html#aa4f32713ee60f510a31ede3abf5df63a" title="Open an audio stream from an already&#45;constructed demux and stream context." alt="" coords="549,165,775,205"/>
+<area shape="poly" id="edge11_Node000001_Node000010" title=" " alt="" coords="1153,229,1103,209,1047,193,978,183,906,178,775,179,775,174,907,173,978,178,1049,188,1104,204,1155,224"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1IO_1_1SoundFileReader_acf94587cbb30d6a656daff698288498f.html#acf94587cbb30d6a656daff698288498f" title="Seek to a specific position in the file." alt="" coords="549,347,775,387"/>
+<area shape="poly" id="edge16_Node000001_Node000011" title=" " alt="" coords="1181,284,1124,332,1088,355,1049,372,979,388,908,395,838,394,775,389,775,383,838,389,908,389,979,383,1047,367,1085,350,1120,328,1177,280"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1IO_1_1SoundFileReader_a556fc1aa59ae42f3ecb37e33238d4642.html#a556fc1aa59ae42f3ecb37e33238d4642" title="Seek the demuxer and flush the codec to the given frame position." alt="" coords="823,317,1048,357"/>
+<area shape="poly" id="edge17_Node000001_Node000012" title=" " alt="" coords="1132,279,1001,320,999,315,1130,274"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1VideoFileReader_a78b6b19d6d9126250ded73ea4b7b6629.html#a78b6b19d6d9126250ded73ea4b7b6629" title="Load file data into an existing container." alt="" coords="5,80,228,120"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="303,52,191,83,190,77,301,46"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="878,199,774,156,737,144,739,139,776,151,881,194"/>
+<area shape="poly" id="edge7_Node000004_Node000007" title=" " alt="" coords="842,249,744,273,742,268,841,243"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="535,114,501,111,502,106,536,109"/>
+<area shape="poly" id="edge6_Node000006_Node000003" title=" " alt="" coords="262,103,228,103,228,97,262,97"/>
+<area shape="poly" id="edge8_Node000007_Node000008" title=" " alt="" coords="583,317,457,356,455,351,581,312"/>
+<area shape="poly" id="edge12_Node000010_Node000003" title=" " alt="" coords="536,173,276,135,212,123,213,117,276,129,536,167"/>
+<area shape="poly" id="edge18_Node000012_Node000007" title=" " alt="" coords="809,318,774,313,775,307,809,313"/>
+<area shape="poly" id="edge19_Node000012_Node000011" title=" " alt="" coords="809,354,775,357,774,352,809,348"/>
+</map>

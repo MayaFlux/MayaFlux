@@ -1,0 +1,8 @@
+<map id="MayaFlux::Kakshya::WindowContainer::get_region_data" name="MayaFlux::Kakshya::WindowContainer::get_region_data">
+<area shape="rect" id="Node000001" title="Extract data for all regions across all region groups that spatially intersect region." alt="" coords="5,42,172,97"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1WindowContainer_a6a0c062ee3394143e2221548134ce34c.html#a6a0c062ee3394143e2221548134ce34c" title="Acquire a lock for thread&#45;safe access." alt="" coords="220,5,392,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="172,50,206,43,207,48,173,55"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kakshya_a87a81c8814eeeda9c096e85b6aef3281.html#a87a81c8814eeeda9c096e85b6aef3281" title="Test whether two N&#45;dimensional regions overlap on every shared axis." alt="" coords="227,93,385,133"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="173,84,214,92,212,97,172,89"/>
+<area shape="poly" id="edge3_Node000003_Node000003" title=" " alt="" coords="265,94,263,84,270,74,284,69,306,67,331,70,345,77,343,82,330,75,306,72,285,74,273,79,268,85,271,92"/>
+</map>

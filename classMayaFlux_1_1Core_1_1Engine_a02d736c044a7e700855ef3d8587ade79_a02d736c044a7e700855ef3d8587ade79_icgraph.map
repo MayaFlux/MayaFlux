@@ -1,0 +1,23 @@
+<map id="MayaFlux::Core::Engine::get_stream_info" name="MayaFlux::Core::Engine::get_stream_info">
+<area shape="rect" id="Node000001" title="Gets the current stream configuration." alt="" coords="459,197,635,237"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Config_a5249afad2e4d9b92e843da6b0d089926.html#a5249afad2e4d9b92e843da6b0d089926" title="Gets the buffer size from the default engine." alt="" coords="244,5,408,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="524,187,476,123,444,89,409,60,389,48,391,43,412,55,448,85,480,120,528,184"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Config_add02a960f8fdc0d03e7d4c0aa3c2b518.html#add02a960f8fdc0d03e7d4c0aa3c2b518" title="Gets the stream configuration from the default engine." alt="" coords="244,69,408,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="509,191,463,157,409,124,384,112,387,107,412,119,466,152,512,187"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Config_aea5cc2f1c8447b25797ca248da512ff0.html#aea5cc2f1c8447b25797ca248da512ff0" title="Gets the number of output channels from the default engine." alt="" coords="244,133,408,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="463,196,395,176,396,171,465,191"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Config_ad8c6968db02415b5ba48863063076989.html#ad8c6968db02415b5ba48863063076989" title="Gets the sample rate from the default engine." alt="" coords="244,197,408,237"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="445,220,408,220,408,215,445,215"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_ae9491ecc376aeb1f55b68a86f00c9395.html#ae9491ecc376aeb1f55b68a86f00c9395" title="Converts samples to blocks based on current block size." alt="" coords="241,261,411,301"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="465,244,396,264,395,259,463,239"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_a9b0f018819c16aeaf3c79625209b8898.html#a9b0f018819c16aeaf3c79625209b8898" title="Converts a time duration in seconds to the equivalent number of processing blocks." alt="" coords="243,325,409,365"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="512,248,466,282,412,316,387,328,384,323,409,311,463,278,509,244"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_a61246cf5ed5930d655fc4ac7005ff98b.html#a61246cf5ed5930d655fc4ac7005ff98b" title="Converts a time duration in seconds to the equivalent number of audio samples." alt="" coords="243,389,409,429"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="528,251,480,315,448,349,412,380,391,392,389,387,409,375,444,345,476,312,524,247"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_a91a577cf9a518db7f561907cb51239a6.html#a91a577cf9a518db7f561907cb51239a6" title="Routes a buffer from its current channel to a target channel with fade." alt="" coords="13,333,186,358"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="229,348,186,348,186,343,229,343"/>
+<area shape="rect" id="Node000010" href="$namespaceMayaFlux_a3007544776c384d1c0e640f3a0d645e3.html#a3007544776c384d1c0e640f3a0d645e3" title="@breif Moves the network from its current channel(s) to the specified channel(s) with an optional fad..." alt="" coords="5,389,193,414"/>
+<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="229,409,193,407,193,402,229,403"/>
+<area shape="rect" id="Node000011" href="$namespaceMayaFlux_a5e7ec95e02b8766a3aee0d66f51ac239.html#a5e7ec95e02b8766a3aee0d66f51ac239" title="@breif Moves the node from its current channel(s) to the specified channel(s) with an optional fade t..." alt="" coords="16,438,183,463"/>
+<area shape="poly" id="edge10_Node000009_Node000011" title=" " alt="" coords="229,430,170,441,169,435,228,424"/>
+</map>

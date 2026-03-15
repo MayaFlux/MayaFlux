@@ -1,0 +1,13 @@
+<map id="MayaFlux::Kakshya::ContainerDataStructure::get_frame_size" name="MayaFlux::Kakshya::ContainerDataStructure::get_frame_size">
+<area shape="rect" id="Node000001" title="Extract the size of non time dimensions (channel, spatial, frequency)" alt="" coords="536,124,711,179"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1RegionProcessorBase_adfd4b78cb83865cd035277c9d82a1533.html#adfd4b78cb83865cd035277c9d82a1533" title="Attach this processor to a signal source container." alt="" coords="300,84,463,139"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="522,137,462,127,463,122,523,132"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1RegionOrganizationProcessor_a32049be6abe1a57f8bcadc6a5e58393a.html#a32049be6abe1a57f8bcadc6a5e58393a" title="Processes audio data according to the current region organization." alt="" coords="275,163,488,217"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="523,170,489,176,488,170,522,165"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1SpatialRegionProcessor_ace6bedee64ee435811d8097fdc6c5513.html#ace6bedee64ee435811d8097fdc6c5513" title="Attach to a spatial container." alt="" coords="29,5,203,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="286,86,203,61,204,56,287,81"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1RegionOrganizationProcessor_a7675770cf73a3a0b797b8ac9f05e1598.html#a7675770cf73a3a0b797b8ac9f05e1598" title="Construct a region organization processor for a given container." alt="" coords="5,84,227,139"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="286,114,227,114,227,109,286,109"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1DynamicRegionProcessor_a11876d04bdc74ab49edcc80f38eab4e9.html#a11876d04bdc74ab49edcc80f38eab4e9" title="Processes audio, performing reorganization if needed." alt="" coords="22,163,210,217"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="261,193,210,193,210,187,261,187"/>
+</map>

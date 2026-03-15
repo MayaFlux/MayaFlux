@@ -1,0 +1,7 @@
+<map id="MayaFlux::Core::BackendResourceManager::download_image_data" name="MayaFlux::Core::BackendResourceManager::download_image_data">
+<area shape="rect" id="Node000001" title="Download data from an image into a caller&#45;supplied buffer." alt="" coords="292,37,539,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a6dc90dd9ebbc53518d4b8d7badaed17c.html#a6dc90dd9ebbc53518d4b8d7badaed17c" title="Download pixel data from a texture." alt="" coords="14,5,235,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="278,45,235,40,236,35,278,40"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1BackendWindowHandler_aa812bf045d7548824a757d712b1b3e75.html#aa812bf045d7548824a757d712b1b3e75" title=" " alt="" coords="5,69,244,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="279,75,244,79,244,74,278,70"/>
+</map>

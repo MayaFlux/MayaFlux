@@ -1,0 +1,7 @@
+<map id="UniversalSorter.hpp" name="UniversalSorter.hpp">
+<area shape="rect" id="Node000001" title="Modern, digital&#45;first universal sorting framework for Maya Flux." alt="" coords="65,5,215,31"/>
+<area shape="rect" id="Node000002" href="$GpuSorter_8hpp.html" title=" " alt="" coords="5,79,120,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="119,42,77,80,74,76,116,38"/>
+<area shape="rect" id="Node000003" href="$StandardSorter_8hpp.html" title="Example concrete implementation of UniversalSorter." alt="" coords="144,79,291,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="164,38,206,76,203,80,161,42"/>
+</map>

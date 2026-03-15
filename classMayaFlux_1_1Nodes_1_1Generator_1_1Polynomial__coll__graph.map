@@ -1,0 +1,29 @@
+<map id="MayaFlux::Nodes::Generator::Polynomial" name="MayaFlux::Nodes::Generator::Polynomial">
+<area shape="rect" id="Node000001" title="Generator that produces values based on polynomial functions." alt="" coords="646,1677,850,2257"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Generator.html" title="Base class for all signal and pattern generators in Maya Flux." alt="" coords="215,1285,415,1585"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="426,1568,648,1839,644,1843,422,1571"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Node.html" title="Base interface for all computational processing nodes." alt="" coords="5,503,203,1192"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="210,1162,234,1230,255,1283,250,1285,230,1232,205,1163"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Nodes_1_1RoutingState.html" title="Represents the state of routing transitions for a node." alt="" coords="11,220,197,400"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="107,400,107,486,101,486,101,400"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1GeneratorContext.html" title="Specialized context for generator node callbacks." alt="" coords="231,250,431,370"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="306,371,283,434,265,503,239,695,234,773,234,846,244,998,265,1192,277,1268,272,1269,260,1192,239,998,228,846,229,773,233,695,260,502,278,432,301,369"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1GeneratorContextGpu.html" title=" " alt="" coords="360,807,560,887"/>
+<area shape="poly" id="edge7_Node000007_Node000005" title=" " alt="" coords="351,383,453,806,448,808,345,384"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1NodeContext.html" title="Base context class for node callbacks." alt="" coords="461,5,681,131"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="488,142,445,182,381,251,377,248,441,178,484,138"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1PolynomialContext.html" title=" " alt="" coords="713,180,913,440"/>
+<area shape="poly" id="edge12_Node000011_Node000006" title=" " alt="" coords="658,138,702,178,715,191,711,195,698,182,655,142"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="453,888,358,1269,353,1268,448,887"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Nodes_1_1GpuVectorData.html" title="GPU&#45;uploadable 1D array data interface." alt="" coords="455,237,689,383"/>
+<area shape="poly" id="edge8_Node000007_Node000008" title=" " alt="" coords="557,397,471,807,466,806,552,395"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1PolynomialContextGpu.html" title=" " alt="" coords="584,807,784,887"/>
+<area shape="poly" id="edge15_Node000012_Node000008" title=" " alt="" coords="592,395,678,806,673,807,587,397"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Memory_1_1HistoryBuffer.html" title=" " alt="" coords="859,1255,1053,1615"/>
+<area shape="poly" id="edge9_Node000001_Node000009" title=" " alt="" coords="888,1616,859,1691,854,1690,883,1614"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Memory_1_1HistoryBuffer.html" title="History buffer for difference equations and recursive relations." alt="" coords="859,667,1053,1027"/>
+<area shape="poly" id="edge10_Node000009_Node000010" title=" " alt="" coords="959,1041,959,1255,953,1255,953,1041"/>
+<area shape="poly" id="edge11_Node000001_Node000011" title=" " alt="" coords="821,440,827,662,829,954,824,1283,816,1451,805,1615,801,1661,796,1660,800,1614,811,1450,818,1283,824,954,822,662,816,440"/>
+<area shape="poly" id="edge14_Node000012_Node000011" title=" " alt="" coords="782,454,696,808,691,807,776,453"/>
+<area shape="poly" id="edge13_Node000001_Node000012" title=" " alt="" coords="685,887,680,1189,684,1399,696,1614,700,1660,695,1661,691,1615,679,1400,675,1189,680,887"/>
+</map>
