@@ -280,4 +280,69 @@ void GpuResourceManager::dispatch(
     foundry.submit_and_wait(cmd_id);
 }
 
+void GpuResourceManager::dispatch_batched(
+    uint32_t pass_count,
+    const std::array<uint32_t, 3>& groups,
+    const std::vector<GpuBufferBinding>& bindings,
+    const std::function<void(uint32_t pass, std::vector<uint8_t>&)>& push_constant_updater,
+    size_t push_constant_size,
+    const std::unordered_map<std::string, std::any>& execution_metadata)
+{
+    auto& foundry = Portal::Graphics::get_shader_foundry();
+    auto& compute_press = Portal::Graphics::get_compute_press();
+
+    const uint32_t workgroups_per_pass = groups[0] * groups[1] * groups[2];
+    const uint32_t passes_per_batch = [&] {
+        auto it = execution_metadata.find("passes_per_batch");
+        if (it != execution_metadata.end())
+            return std::any_cast<uint32_t>(it->second);
+        return std::max(1U, 65536U / std::max(1U, workgroups_per_pass));
+    }();
+
+    for (uint32_t base = 0; base < pass_count; base += passes_per_batch) {
+        const uint32_t batch_end = std::min(base + passes_per_batch, pass_count);
+
+        auto cmd_id = foundry.begin_commands(
+            Portal::Graphics::ShaderFoundry::CommandBufferType::COMPUTE);
+
+        for (uint32_t pass = base; pass < batch_end; ++pass) {
+            std::vector<uint8_t> pc_data(push_constant_size);
+            push_constant_updater(pass, pc_data);
+
+            compute_press.bind_all(
+                cmd_id, m_pipeline_id, m_descriptor_set_ids,
+                pc_data.data(), push_constant_size);
+
+            compute_press.dispatch(cmd_id, groups[0], groups[1], groups[2]);
+
+            for (size_t i = 0; i < bindings.size(); ++i) {
+                if (bindings[i].direction == GpuBufferBinding::Direction::INPUT_OUTPUT) {
+                    foundry.buffer_barrier(
+                        cmd_id,
+                        m_impl->buffers[i].buffer,
+                        vk::AccessFlagBits::eShaderWrite | vk::AccessFlagBits::eShaderRead,
+                        vk::AccessFlagBits::eShaderWrite | vk::AccessFlagBits::eShaderRead,
+                        vk::PipelineStageFlagBits::eComputeShader,
+                        vk::PipelineStageFlagBits::eComputeShader);
+                }
+            }
+        }
+
+        for (size_t i = 0; i < bindings.size(); ++i) {
+            if (bindings[i].direction == GpuBufferBinding::Direction::OUTPUT
+                || bindings[i].direction == GpuBufferBinding::Direction::INPUT_OUTPUT) {
+                foundry.buffer_barrier(
+                    cmd_id,
+                    m_impl->buffers[i].buffer,
+                    vk::AccessFlagBits::eShaderWrite,
+                    vk::AccessFlagBits::eHostRead,
+                    vk::PipelineStageFlagBits::eComputeShader,
+                    vk::PipelineStageFlagBits::eHost);
+            }
+        }
+
+        foundry.submit_and_wait(cmd_id);
+    }
+}
+
 } // namespace MayaFlux::Yantra

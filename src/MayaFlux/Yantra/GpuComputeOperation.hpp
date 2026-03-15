@@ -84,6 +84,14 @@ public:
         const uint8_t* push_constant_data,
         size_t push_constant_size);
 
+    void dispatch_batched(
+        uint32_t pass_count,
+        const std::array<uint32_t, 3>& groups,
+        const std::vector<GpuBufferBinding>& bindings,
+        const std::function<void(uint32_t pass, std::vector<uint8_t>&)>& push_constant_updater,
+        size_t push_constant_size,
+        const std::unordered_map<std::string, std::any>& execution_metadata = {});
+
     void cleanup();
 
     [[nodiscard]] bool is_ready() const { return m_ready; }
@@ -216,6 +224,9 @@ protected:
     output_type apply_operation_internal(const input_type& input,
         const ExecutionContext& ctx) override
     {
+        if (ctx.mode == ExecutionMode::CHAINED) {
+            return dispatch_gpu_chained(input, ctx);
+        }
         if (ensure_gpu_ready()) {
             return dispatch_gpu(input);
         }
@@ -576,6 +587,44 @@ private:
             groups, m_bindings,
             m_push_constants.empty() ? nullptr : m_push_constants.data(),
             m_push_constants.size());
+
+        return collect_gpu_outputs(channel_copies, structure_info);
+    }
+
+    output_type dispatch_gpu_chained(const input_type& input, const ExecutionContext& ctx)
+    {
+        ensure_gpu_ready();
+
+        auto [channels, structure_info] = OperationHelper::extract_structured_double(
+            const_cast<input_type&>(input));
+
+        std::vector<std::vector<double>> channel_copies(channels.size());
+        for (size_t c = 0; c < channels.size(); ++c)
+            channel_copies[c].assign(channels[c].begin(), channels[c].end());
+
+        flatten_channels_to_staging(channel_copies, structure_info);
+        prepare_gpu_inputs(channel_copies, structure_info);
+
+        for (size_t i = 0; i < m_bindings.size(); ++i)
+            m_resources.bind_descriptor(i, m_bindings[i]);
+
+        const size_t effective = m_staging_floats.empty()
+            ? largest_binding_data_element_count()
+            : m_staging_floats.size();
+        const auto groups = calculate_dispatch_size(effective, structure_info);
+
+        const auto pass_count = std::any_cast<uint32_t>(
+            ctx.execution_metadata.at("pass_count"));
+
+        const auto& pc_updater = std::any_cast<std::function<void(uint32_t, void*)>>(ctx.execution_metadata.at("pc_updater"));
+
+        m_resources.dispatch_batched(
+            pass_count, groups, m_bindings,
+            [&](uint32_t pass, std::vector<uint8_t>& pc_data) {
+                pc_updater(pass, pc_data.data());
+            },
+            m_gpu_config.push_constant_size,
+            ctx.execution_metadata);
 
         return collect_gpu_outputs(channel_copies, structure_info);
     }
