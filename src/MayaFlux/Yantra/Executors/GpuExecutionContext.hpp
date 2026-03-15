@@ -129,7 +129,7 @@ public:
      *              pc_updater keys in execution_metadata.
      * @throws std::runtime_error If GPU initialisation fails.
      */
-    output_type execute(const input_type& input, const ExecutionContext& ctx)
+    virtual output_type execute(const input_type& input, const ExecutionContext& ctx)
     {
         if (ctx.mode == ExecutionMode::CHAINED) {
             return dispatch_gpu_chained(input, ctx);
