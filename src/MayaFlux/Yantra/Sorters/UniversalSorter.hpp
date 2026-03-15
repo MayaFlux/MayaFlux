@@ -124,6 +124,11 @@ public:
         return get_sorter_name();
     }
 
+    [[nodiscard]] OperationType get_operation_type() const override
+    {
+        return OperationType::SORTER;
+    }
+
     /**
      * @brief Type-safe parameter management with sorting-specific defaults
      */

@@ -569,6 +569,24 @@ public:
      */
     static std::optional<ShaderStage> detect_stage_from_extension(const std::string& filepath);
 
+    //==========================================================================
+    // Device Access
+    //==========================================================================
+
+    /**
+     * @brief Get logical device handle
+     */
+    [[nodiscard]] vk::Device get_device() const;
+
+    /**
+     * @brief Get physical device handle
+     *
+     * Required by consumers that allocate raw Vulkan buffers directly
+     * (e.g. GpuComputeOperation) and need memory type selection via
+     * vk::PhysicalDevice::getMemoryProperties().
+     */
+    [[nodiscard]] vk::PhysicalDevice get_physical_device() const;
+
 private:
     /**
      * @enum DetectedSourceType
@@ -613,7 +631,6 @@ private:
     std::string generate_source_cache_key(const std::string& source, ShaderStage stage) const;
 
     std::shared_ptr<Core::VKShaderModule> create_shader_module();
-    vk::Device get_device() const;
 
     void cleanup_sync_objects();
     void cleanup_descriptor_resources();

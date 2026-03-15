@@ -1,9 +1,6 @@
 #pragma once
 
-#include "OperationSpec/ExecutionContext.hpp"
-#include "OperationSpec/OperationHelper.hpp"
-
-#include "Data/DataIO.hpp"
+#include "Executors/GpuExecutionContext.hpp"
 
 #include <future>
 
@@ -126,6 +123,11 @@ public:
     [[nodiscard]] virtual std::string get_name() const { return "ComputeOperation"; }
 
     /**
+     * @brief Returns the category of this operation for grammar and registry discovery.
+     */
+    [[nodiscard]] virtual OperationType get_operation_type() const = 0;
+
+    /**
      * @brief OpUnit interface - operations can act as units in dependency graphs
      */
     output_type execute(const input_type& input)
@@ -176,6 +178,23 @@ public:
         m_last_execution_context.reconstruction_callback = callback;
     }
 
+    /**
+     * @brief Attach a GPU execution backend.
+     *
+     * When set and ready, apply_operation_internal delegates to the backend
+     * instead of operation_function. The CPU implementation in operation_function
+     * remains the automatic fallback when no backend is attached or GPU
+     * initialisation has not yet succeeded.
+     *
+     * @param backend Configured GpuExecutionContext instance.
+     */
+    void set_gpu_backend(std::shared_ptr<GpuExecutionContext<InputType, OutputType>> backend)
+    {
+        m_gpu_backend = std::move(backend);
+    }
+
+    [[nodiscard]] bool has_gpu_backend() const { return m_gpu_backend != nullptr; }
+
 protected:
     /**
      * @brief Executes the computational transformation on the input data
@@ -192,6 +211,10 @@ protected:
      */
     virtual output_type apply_operation_internal(const input_type& input, const ExecutionContext& context)
     {
+        if (m_gpu_backend && m_gpu_backend->ensure_gpu_ready()) {
+            return m_gpu_backend->execute(input, context);
+        }
+
         switch (context.mode) {
         case ExecutionMode::ASYNC:
             // Return the result of the future (this might need different handling)
@@ -258,8 +281,25 @@ protected:
 
     ExecutionContext m_last_execution_context;
 
+    output_type apply_hooks(const input_type& input, const ExecutionContext& context)
+    {
+        if (context.pre_execution_hook) {
+            std::any input_any = const_cast<input_type&>(input);
+            context.pre_execution_hook(input_any);
+        }
+
+        auto result = operation_function(input);
+
+        if (context.post_execution_hook) {
+            std::any result_any = &result;
+            context.post_execution_hook(result_any);
+        }
+        return result;
+    }
+
 private:
     std::vector<std::shared_ptr<ComputeOperation>> m_dependencies;
+    std::shared_ptr<GpuExecutionContext<InputType, OutputType>> m_gpu_backend;
 
     /**
      * @brief Validate input/output types and warn about marker types
@@ -287,22 +327,6 @@ private:
         } else if constexpr (std::is_same_v<OutputType, std::vector<Kakshya::RegionSegment>>) {
             std::cerr << "OPERATION INFO: OutputType 'RegionSegments' will create segments with results in metadata.\n";
         }
-    }
-
-    output_type apply_hooks(const input_type& input, const ExecutionContext& context)
-    {
-        if (context.pre_execution_hook) {
-            std::any input_any = const_cast<input_type&>(input);
-            context.pre_execution_hook(input_any);
-        }
-
-        auto result = operation_function(input);
-
-        if (context.post_execution_hook) {
-            std::any result_any = &result;
-            context.post_execution_hook(result_any);
-        }
-        return result;
     }
 
     friend class ComputeMatrix;

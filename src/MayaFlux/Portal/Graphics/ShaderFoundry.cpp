@@ -1291,4 +1291,9 @@ vk::Device ShaderFoundry::get_device() const
     return m_backend->get_context().get_device();
 }
 
+vk::PhysicalDevice ShaderFoundry::get_physical_device() const
+{
+    return m_backend->get_context().get_physical_device();
+}
+
 } // namespace MayaFlux::Portal::Graphics

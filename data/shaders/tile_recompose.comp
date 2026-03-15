@@ -1,0 +1,64 @@
+#version 450
+
+layout(local_size_x = 16, local_size_y = 16) in;
+
+/// @brief Source image as flat RGBA float buffer, row-major
+layout(set = 0, binding = 0) buffer SourceBuffer {
+    float source_pixels[];
+};
+
+/// @brief Tile index map: for each tile slot, which source tile to read
+layout(set = 0, binding = 1) buffer IndexBuffer {
+    uint tile_indices[];
+};
+
+/// @brief Output recomposed image
+layout(set = 0, binding = 2) buffer OutputBuffer {
+    float output_pixels[];
+};
+
+layout(push_constant) uniform PushConstants {
+    uint image_width;
+    uint image_height;
+    uint tile_width;
+    uint tile_height;
+    uint channels; // 1 (grayscale), 3 (RGB), 4 (RGBA)
+} pc;
+
+void main()
+{
+    uint px = gl_GlobalInvocationID.x;
+    uint py = gl_GlobalInvocationID.y;
+
+    if (px >= pc.image_width || py >= pc.image_height) return;
+
+    uint tiles_x = pc.image_width / pc.tile_width;
+
+    // Which tile slot does this pixel belong to?
+    uint tile_col = px / pc.tile_width;
+    uint tile_row = py / pc.tile_height;
+    uint tile_slot = tile_row * tiles_x + tile_col;
+
+    // Which source tile should fill this slot?
+    uint source_tile = tile_indices[tile_slot];
+
+    // Source tile grid position
+    uint src_tile_col = source_tile % tiles_x;
+    uint src_tile_row = source_tile / tiles_x;
+
+    // Local pixel offset within tile
+    uint local_x = px % pc.tile_width;
+    uint local_y = py % pc.tile_height;
+
+    // Source pixel coordinates
+    uint src_px = src_tile_col * pc.tile_width + local_x;
+    uint src_py = src_tile_row * pc.tile_height + local_y;
+
+    // Copy channels
+    uint dst_idx = (py * pc.image_width + px) * pc.channels;
+    uint src_idx = (src_py * pc.image_width + src_px) * pc.channels;
+
+    for (uint c = 0; c < pc.channels; ++c) {
+        output_pixels[dst_idx + c] = source_pixels[src_idx + c];
+    }
+}

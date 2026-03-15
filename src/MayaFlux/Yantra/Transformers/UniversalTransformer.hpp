@@ -226,6 +226,11 @@ public:
         return get_transformer_name();
     }
 
+    [[nodiscard]] OperationType get_operation_type() const override
+    {
+        return OperationType::TRANSFORMER;
+    }
+
     /**
      * @brief Type-safe parameter management with transformation-specific defaults
      * @param name Parameter name
