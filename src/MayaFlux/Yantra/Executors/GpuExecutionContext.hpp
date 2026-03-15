@@ -145,6 +145,12 @@ public:
             "GpuExecutionContext: GPU initialisation failed and no CPU fallback exists at this level");
     }
 
+    /**
+     * @brief Check if GPU resources are initialised and ready for dispatch.
+     * @return True if GPU is ready, false otherwise.
+     */
+    [[nodiscard]] bool is_gpu_ready() const { return m_resources.is_ready(); }
+
 protected:
     //==========================================================================
     // Subclass declaration points
@@ -346,7 +352,6 @@ protected:
     }
 
     [[nodiscard]] const GpuShaderConfig& gpu_config() const { return m_gpu_config; }
-    [[nodiscard]] bool is_gpu_ready() const { return m_resources.is_ready(); }
 
 private:
     GpuShaderConfig m_gpu_config;

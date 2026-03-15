@@ -1,9 +1,6 @@
 #pragma once
 
-#include "OperationSpec/ExecutionContext.hpp"
-#include "OperationSpec/OperationHelper.hpp"
-
-#include "Data/DataIO.hpp"
+#include "Executors/GpuExecutionContext.hpp"
 
 #include <future>
 
@@ -176,6 +173,23 @@ public:
         m_last_execution_context.reconstruction_callback = callback;
     }
 
+    /**
+     * @brief Attach a GPU execution backend.
+     *
+     * When set and ready, apply_operation_internal delegates to the backend
+     * instead of operation_function. The CPU implementation in operation_function
+     * remains the automatic fallback when no backend is attached or GPU
+     * initialisation has not yet succeeded.
+     *
+     * @param backend Configured GpuExecutionContext instance.
+     */
+    void set_gpu_backend(std::shared_ptr<GpuExecutionContext<InputType, OutputType>> backend)
+    {
+        m_gpu_backend = std::move(backend);
+    }
+
+    [[nodiscard]] bool has_gpu_backend() const { return m_gpu_backend != nullptr; }
+
 protected:
     /**
      * @brief Executes the computational transformation on the input data
@@ -192,6 +206,10 @@ protected:
      */
     virtual output_type apply_operation_internal(const input_type& input, const ExecutionContext& context)
     {
+        if (m_gpu_backend && m_gpu_backend->is_gpu_ready()) {
+            return m_gpu_backend->execute(input, context);
+        }
+
         switch (context.mode) {
         case ExecutionMode::ASYNC:
             // Return the result of the future (this might need different handling)
@@ -276,6 +294,7 @@ protected:
 
 private:
     std::vector<std::shared_ptr<ComputeOperation>> m_dependencies;
+    std::shared_ptr<GpuExecutionContext<InputType, OutputType>> m_gpu_backend;
 
     /**
      * @brief Validate input/output types and warn about marker types
