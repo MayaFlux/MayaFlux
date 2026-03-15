@@ -1,4 +1,6 @@
-#include "GpuComputeOperation.hpp"
+#include "GpuResourceManager.hpp"
+
+#include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux::Yantra {
 
