@@ -4,34 +4,48 @@
 #include "MayaFlux/Yantra/Analyzers/EnergyAnalyzer.hpp"
 #include "MayaFlux/Yantra/Analyzers/StatisticalAnalyzer.hpp"
 #include "MayaFlux/Yantra/Extractors/FeatureExtractor.hpp"
-#include "MayaFlux/Yantra/Transformers/MathematicalTransformer.hpp"
-#include "MayaFlux/Yantra/Transformers/TemporalTransformer.hpp"
 
 #include "MayaFlux/Kinesis/Discrete/Analysis.hpp"
+#include "MayaFlux/Kinesis/Discrete/Transform.hpp"
 
 namespace MayaFlux {
 
-static bool is_same_size(const std::vector<std::span<double>>& data)
-{
-    if (data.empty())
-        return true;
+namespace D = Kinesis::Discrete;
 
-    const auto expected_size = data.front().size();
-    return std::ranges::all_of(data,
-        [&expected_size](const auto& v) { return v.size() == expected_size; });
-}
+namespace {
+    bool is_same_size(const std::vector<std::span<double>>& data)
+    {
+        if (data.empty())
+            return true;
 
-static std::vector<double> concat_vectors(const std::vector<std::span<double>>& data)
-{
-    std::vector<double> result;
-    result.reserve(std::accumulate(
-        data.begin(), data.end(), size_t(0),
-        [](size_t sum, const auto& span) { return sum + span.size(); }));
-
-    for (const auto& span : data) {
-        result.insert(result.end(), span.begin(), span.end());
+        const auto expected_size = data.front().size();
+        return std::ranges::all_of(data,
+            [&expected_size](const auto& v) { return v.size() == expected_size; });
     }
-    return result;
+
+    std::vector<double> concat_vectors(const std::vector<std::span<double>>& data)
+    {
+        std::vector<double> result;
+        result.reserve(std::accumulate(
+            data.begin(), data.end(), size_t(0),
+            [](size_t sum, const auto& span) { return sum + span.size(); }));
+
+        for (const auto& span : data) {
+            result.insert(result.end(), span.begin(), span.end());
+        }
+        return result;
+    }
+
+    std::span<double> as_span(std::vector<double>& v) noexcept
+    {
+        return { v.data(), v.size() };
+    }
+
+    std::span<double> as_span(Kakshya::DataVariant& v)
+    {
+        return Yantra::OperationHelper::extract_numeric_data(v);
+    }
+
 }
 
 //=========================================================================
@@ -58,14 +72,15 @@ double mean(const Kakshya::DataVariant& data)
     return s_op->analyze_statistics({ data }).channel_statistics[0].mean_stat;
 }
 
-std::vector<double> mean_per_channel(const std::vector<Kakshya::DataVariant>& data)
+std::vector<double> mean_per_channel(const std::vector<Kakshya::DataVariant>& channels)
 {
     static const auto s_op = [] {
         auto a = std::make_shared<Yantra::StatisticalAnalyzer<>>();
         a->set_method(Yantra::StatisticalMethod::MEAN);
         return a;
     }();
-    auto result = s_op->analyze_statistics(data);
+    auto result = s_op->analyze_statistics(channels);
+
     std::vector<double> means;
     means.reserve(result.channel_statistics.size());
     for (const auto& stats : result.channel_statistics)
@@ -78,7 +93,7 @@ double mean_combined(const std::vector<Kakshya::DataVariant>& channels)
     auto data = Yantra::OperationHelper::extract_numeric_data(channels);
     if (is_same_size(data)) {
         auto result = mean_per_channel(channels);
-        return std::accumulate(result.begin(), result.end(), 0.0) / result.size();
+        return std::accumulate(result.begin(), result.end(), 0.0) / (double)result.size();
     }
     auto mixed = concat_vectors(data);
     return mean(mixed);
@@ -115,8 +130,12 @@ std::vector<double> rms_per_channel(const std::vector<Kakshya::DataVariant>& cha
     }();
     auto result = s_op->analyze_statistics(channels);
     std::vector<double> rms_values;
-    for (const auto& stats : result.channel_statistics)
+    rms_values.reserve(result.channel_statistics.size());
+
+    for (const auto& stats : result.channel_statistics) {
         rms_values.push_back(stats.statistical_values.empty() ? 0.0 : stats.statistical_values[0]);
+    }
+
     return rms_values;
 }
 
@@ -128,7 +147,7 @@ double rms_combined(const std::vector<Kakshya::DataVariant>& channels)
         double sum_squares = 0.0;
         for (double v : result)
             sum_squares += v * v;
-        return std::sqrt(sum_squares / result.size());
+        return std::sqrt(sum_squares / (double)result.size());
     }
     auto mixed = concat_vectors(data);
     return rms(mixed);
@@ -163,8 +182,12 @@ std::vector<double> std_dev_per_channel(const std::vector<Kakshya::DataVariant>&
     }();
     auto result = s_op->analyze_statistics(channels);
     std::vector<double> std_devs;
-    for (const auto& stats : result.channel_statistics)
+
+    std_devs.reserve(result.channel_statistics.size());
+    for (const auto& stats : result.channel_statistics) {
         std_devs.push_back(stats.stat_std_dev);
+    }
+
     return std_devs;
 }
 
@@ -173,7 +196,7 @@ double std_dev_combined(const std::vector<Kakshya::DataVariant>& channels)
     auto data = Yantra::OperationHelper::extract_numeric_data(channels);
     if (is_same_size(data)) {
         auto result = std_dev_per_channel(channels);
-        return std::accumulate(result.begin(), result.end(), 0.0) / result.size();
+        return std::accumulate(result.begin(), result.end(), 0.0) / (double)result.size();
     }
     auto mixed = concat_vectors(data);
     return std_dev(mixed);
@@ -214,8 +237,12 @@ std::vector<double> dynamic_range_per_channel(const std::vector<Kakshya::DataVar
     }();
     auto result = s_op->analyze_energy(channels);
     std::vector<double> ranges;
-    for (const auto& ch : result.channels)
+
+    ranges.reserve(result.channels.size());
+    for (const auto& ch : result.channels) {
         ranges.push_back(ch.energy_values.empty() ? 0.0 : ch.energy_values[0]);
+    }
+
     return ranges;
 }
 
@@ -283,6 +310,8 @@ std::vector<double> peak_per_channel(const std::vector<Kakshya::DataVariant>& ch
     }();
     auto result = s_op->analyze_energy(channels);
     std::vector<double> peaks;
+    peaks.reserve(result.channels.size());
+
     for (const auto& ch : result.channels)
         peaks.push_back(ch.max_energy);
     return peaks;
@@ -317,9 +346,10 @@ std::vector<size_t> zero_crossings(const std::vector<double>& data, double thres
         return positions;
 
     std::vector<size_t> filtered;
-    for (size_t pos : positions)
+    for (size_t pos : positions) {
         if (pos < data.size() && std::abs(data[pos]) >= threshold)
             filtered.push_back(pos);
+    }
     return filtered;
 }
 
@@ -340,9 +370,10 @@ std::vector<size_t> zero_crossings(const Kakshya::DataVariant& data, double thre
 
     auto double_data = std::get<std::vector<double>>(data);
     std::vector<size_t> filtered;
-    for (size_t pos : positions)
+    for (size_t pos : positions) {
         if (pos < double_data.size() && std::abs(double_data[pos]) >= threshold)
             filtered.push_back(pos);
+    }
     return filtered;
 }
 
@@ -365,9 +396,10 @@ std::vector<std::vector<size_t>> zero_crossings_per_channel(const std::vector<Ka
         }
         auto double_data = std::get<std::vector<double>>(channels[ch]);
         std::vector<size_t> filtered;
-        for (size_t pos : positions)
+        for (size_t pos : positions) {
             if (pos < double_data.size() && std::abs(double_data[pos]) >= threshold)
                 filtered.push_back(pos);
+        }
         all_crossings.push_back(filtered);
     }
     return all_crossings;
@@ -401,6 +433,8 @@ std::vector<double> zero_crossing_rate_per_channel(const std::vector<Kakshya::Da
         a->set_window_parameters(window_size, window_size / 2);
     auto result = a->analyze_energy(channels);
     std::vector<double> rates;
+
+    rates.reserve(result.channels.size());
     for (const auto& ch : result.channels)
         rates.push_back(ch.mean_energy);
     return rates;
@@ -431,8 +465,11 @@ std::vector<double> spectral_centroid_per_channel(const std::vector<Kakshya::Dat
     a->set_parameter("sample_rate", sample_rate);
     auto result = a->analyze_energy(channels);
     std::vector<double> centroids;
+
+    centroids.reserve(result.channels.size());
     for (const auto& ch : result.channels)
         centroids.push_back(ch.mean_energy);
+
     return centroids;
 }
 
@@ -441,9 +478,11 @@ std::vector<double> detect_onsets(const std::vector<double>& data, double sample
     auto onset_positions = Kinesis::Discrete::onset_positions(
         std::span<const double>(data.data(), data.size()), 1024, 512, threshold);
     std::vector<double> times;
+
     times.reserve(onset_positions.size());
-    for (size_t pos : onset_positions)
+    for (size_t pos : onset_positions) {
         times.push_back(static_cast<double>(pos) / sample_rate);
+    }
     return times;
 }
 
@@ -452,7 +491,9 @@ std::vector<double> detect_onsets(const Kakshya::DataVariant& data, double sampl
     auto double_data = std::get<std::vector<double>>(data);
     auto onset_positions = Kinesis::Discrete::onset_positions(
         std::span<const double>(double_data.data(), double_data.size()), 1024, 512, threshold);
+
     std::vector<double> times;
+
     times.reserve(onset_positions.size());
     for (size_t pos : onset_positions)
         times.push_back(static_cast<double>(pos) / sample_rate);
@@ -463,46 +504,30 @@ std::vector<std::vector<double>> detect_onsets_per_channel(const std::vector<Kak
 {
     std::vector<std::vector<double>> all_onsets;
     all_onsets.reserve(channels.size());
+
     for (const auto& channel : channels)
         all_onsets.push_back(detect_onsets(channel, sample_rate, threshold));
     return all_onsets;
 }
 
 //=========================================================================
-// BASIC TRANSFORMATIONS - Use MathematicalTransformer
+// BASIC TRANSFORMATIONS - Use Kinesis
 //=========================================================================
 
 void apply_gain(std::vector<double>& data, double gain_factor)
 {
-    static const auto s_op = [] {
-        return std::make_shared<Yantra::MathematicalTransformer<>>(Yantra::MathematicalOperation::GAIN);
-    }();
-    s_op->set_parameter("gain_factor", gain_factor);
-    Yantra::Datum<std::vector<Kakshya::DataVariant>> input { { Kakshya::DataVariant(data) } };
-    auto result = s_op->apply_operation(input);
-    data = std::get<std::vector<double>>(result.data[0]);
+    D::linear(as_span(data), gain_factor, 0.0);
 }
 
 void apply_gain(Kakshya::DataVariant& data, double gain_factor)
 {
-    static const auto s_op = [] {
-        return std::make_shared<Yantra::MathematicalTransformer<>>(Yantra::MathematicalOperation::GAIN);
-    }();
-    s_op->set_parameter("gain_factor", gain_factor);
-    Yantra::Datum<std::vector<Kakshya::DataVariant>> input { { data } };
-    auto result = s_op->apply_operation(input);
-    data = result.data[0];
+    D::linear(as_span(data), gain_factor, 0.0);
 }
 
 void apply_gain_channels(std::vector<Kakshya::DataVariant>& channels, double gain_factor)
 {
-    static const auto s_op = [] {
-        return std::make_shared<Yantra::MathematicalTransformer<>>(Yantra::MathematicalOperation::GAIN);
-    }();
-    s_op->set_parameter("gain_factor", gain_factor);
-    Yantra::Datum<std::vector<Kakshya::DataVariant>> input { channels };
-    auto result = s_op->apply_operation(input);
-    channels = result.data;
+    for (auto& ch : channels)
+        apply_gain(ch, gain_factor);
 }
 
 void apply_gain_per_channel(std::vector<Kakshya::DataVariant>& channels, const std::vector<double>& gain_factors)
@@ -517,54 +542,34 @@ void apply_gain_per_channel(std::vector<Kakshya::DataVariant>& channels, const s
 
 std::vector<double> with_gain(const std::vector<double>& data, double gain_factor)
 {
-    static const auto s_op = [] {
-        return std::make_shared<Yantra::MathematicalTransformer<>>(Yantra::MathematicalOperation::GAIN);
-    }();
-    s_op->set_parameter("gain_factor", gain_factor);
-    Yantra::Datum<std::vector<Kakshya::DataVariant>> input { { Kakshya::DataVariant(data) } };
-    auto result = s_op->apply_operation(input);
-    return std::get<std::vector<double>>(result.data[0]);
+    auto out = data;
+    D::linear(as_span(out), gain_factor, 0.0);
+    return out;
 }
 
 Kakshya::DataVariant with_gain(const Kakshya::DataVariant& data, double gain_factor)
 {
-    static const auto s_op = [] {
-        return std::make_shared<Yantra::MathematicalTransformer<>>(Yantra::MathematicalOperation::GAIN);
-    }();
-    s_op->set_parameter("gain_factor", gain_factor);
-    Yantra::Datum<std::vector<Kakshya::DataVariant>> input { { data } };
-    return s_op->apply_operation(input).data[0];
+    auto out = data;
+    D::linear(as_span(out), gain_factor, 0.0);
+    return out;
 }
 
 std::vector<Kakshya::DataVariant> with_gain_channels(const std::vector<Kakshya::DataVariant>& channels, double gain_factor)
 {
-    static const auto s_op = [] {
-        return std::make_shared<Yantra::MathematicalTransformer<>>(Yantra::MathematicalOperation::GAIN);
-    }();
-    s_op->set_parameter("gain_factor", gain_factor);
-    Yantra::Datum<std::vector<Kakshya::DataVariant>> input { channels };
-    return s_op->apply_operation(input).data;
+    auto out = channels;
+    for (auto& ch : out)
+        D::linear(as_span(ch), gain_factor, 0.0);
+    return out;
 }
 
 void normalize(std::vector<double>& data, double target_peak)
 {
-    static const auto s_op = [] {
-        return std::make_shared<Yantra::MathematicalTransformer<>>(Yantra::MathematicalOperation::NORMALIZE);
-    }();
-    s_op->set_parameter("target_peak", target_peak);
-    Yantra::Datum<std::vector<Kakshya::DataVariant>> input { { Kakshya::DataVariant(data) } };
-    auto result = s_op->apply_operation(input);
-    data = std::get<std::vector<double>>(result.data[0]);
+    D::normalize(as_span(data), -target_peak, target_peak);
 }
 
 void normalize(Kakshya::DataVariant& data, double target_peak)
 {
-    static const auto s_op = [] {
-        return std::make_shared<Yantra::MathematicalTransformer<>>(Yantra::MathematicalOperation::NORMALIZE);
-    }();
-    s_op->set_parameter("target_peak", target_peak);
-    Yantra::Datum<std::vector<Kakshya::DataVariant>> input { { data } };
-    data = s_op->apply_operation(input).data[0];
+    D::normalize(as_span(data), -target_peak, target_peak);
 }
 
 void normalize_channels(std::vector<Kakshya::DataVariant>& channels, double target_peak)
@@ -575,38 +580,31 @@ void normalize_channels(std::vector<Kakshya::DataVariant>& channels, double targ
 
 void normalize_together(std::vector<Kakshya::DataVariant>& channels, double target_peak)
 {
-    double global_peak = peak(channels);
+    const double global_peak = peak(channels);
     if (global_peak > 0.0)
         apply_gain_channels(channels, target_peak / global_peak);
 }
 
 std::vector<double> normalized(const std::vector<double>& data, double target_peak)
 {
-    static const auto s_op = [] {
-        return std::make_shared<Yantra::MathematicalTransformer<>>(Yantra::MathematicalOperation::NORMALIZE);
-    }();
-    s_op->set_parameter("target_peak", target_peak);
-    Yantra::Datum<std::vector<Kakshya::DataVariant>> input { { Kakshya::DataVariant(data) } };
-    return std::get<std::vector<double>>(s_op->apply_operation(input).data[0]);
+    auto out = data;
+    D::normalize(as_span(out), -target_peak, target_peak);
+    return out;
 }
 
 Kakshya::DataVariant normalized(const Kakshya::DataVariant& data, double target_peak)
 {
-    static const auto s_op = [] {
-        return std::make_shared<Yantra::MathematicalTransformer<>>(Yantra::MathematicalOperation::NORMALIZE);
-    }();
-    s_op->set_parameter("target_peak", target_peak);
-    Yantra::Datum<std::vector<Kakshya::DataVariant>> input { { data } };
-    return s_op->apply_operation(input).data[0];
+    auto out = data;
+    D::normalize(as_span(out), -target_peak, target_peak);
+    return out;
 }
 
 std::vector<Kakshya::DataVariant> normalized_channels(const std::vector<Kakshya::DataVariant>& channels, double target_peak)
 {
-    std::vector<Kakshya::DataVariant> result;
-    result.reserve(channels.size());
-    for (const auto& ch : channels)
-        result.push_back(normalized(ch, target_peak));
-    return result;
+    auto out = channels;
+    for (auto& ch : out)
+        normalize(ch, target_peak);
+    return out;
 }
 
 //=========================================================================
@@ -615,56 +613,40 @@ std::vector<Kakshya::DataVariant> normalized_channels(const std::vector<Kakshya:
 
 void reverse(std::vector<double>& data)
 {
-    static const auto s_op = [] {
-        return std::make_shared<Yantra::TemporalTransformer<>>(Yantra::TemporalOperation::TIME_REVERSE);
-    }();
-    Yantra::Datum<std::vector<Kakshya::DataVariant>> input { { Kakshya::DataVariant(data) } };
-    data = std::get<std::vector<double>>(s_op->apply_operation(input).data[0]);
+    D::reverse(as_span(data));
 }
 
 void reverse(Kakshya::DataVariant& data)
 {
-    static const auto s_op = [] {
-        return std::make_shared<Yantra::TemporalTransformer<>>(Yantra::TemporalOperation::TIME_REVERSE);
-    }();
-    Yantra::Datum<std::vector<Kakshya::DataVariant>> input { { data } };
-    data = s_op->apply_operation(input).data[0];
+    D::reverse(as_span(data));
 }
 
 void reverse_channels(std::vector<Kakshya::DataVariant>& channels)
 {
-    static const auto s_op = [] {
-        return std::make_shared<Yantra::TemporalTransformer<>>(Yantra::TemporalOperation::TIME_REVERSE);
-    }();
-    Yantra::Datum<std::vector<Kakshya::DataVariant>> input { channels };
-    channels = s_op->apply_operation(input).data;
+    for (auto& ch : channels)
+        D::reverse(as_span(ch));
 }
 
 std::vector<double> reversed(const std::vector<double>& data)
 {
-    static const auto s_op = [] {
-        return std::make_shared<Yantra::TemporalTransformer<>>(Yantra::TemporalOperation::TIME_REVERSE);
-    }();
-    Yantra::Datum<std::vector<Kakshya::DataVariant>> input { { Kakshya::DataVariant(data) } };
-    return std::get<std::vector<double>>(s_op->apply_operation(input).data[0]);
+    auto out = data;
+    D::reverse(as_span(out));
+    return out;
 }
 
 Kakshya::DataVariant reversed(const Kakshya::DataVariant& data)
 {
-    static const auto s_op = [] {
-        return std::make_shared<Yantra::TemporalTransformer<>>(Yantra::TemporalOperation::TIME_REVERSE);
-    }();
-    Yantra::Datum<std::vector<Kakshya::DataVariant>> input { { data } };
-    return s_op->apply_operation(input).data[0];
+    auto out = data;
+    D::reverse(as_span(out));
+    return out;
 }
 
 std::vector<Kakshya::DataVariant> reversed_channels(const std::vector<Kakshya::DataVariant>& channels)
 {
-    static const auto s_op = [] {
-        return std::make_shared<Yantra::TemporalTransformer<>>(Yantra::TemporalOperation::TIME_REVERSE);
-    }();
-    Yantra::Datum<std::vector<Kakshya::DataVariant>> input { channels };
-    return s_op->apply_operation(input).data;
+    auto out = channels;
+    for (auto& ch : out)
+        D::reverse(as_span(ch));
+    return out;
 }
 
 //=========================================================================
@@ -697,8 +679,11 @@ std::vector<std::vector<double>> magnitude_spectrum_per_channel(const std::vecto
         a->set_window_parameters(window_size, window_size / 2);
     auto result = a->analyze_energy(channels);
     std::vector<std::vector<double>> spectra;
-    for (const auto& ch : result.channels)
+
+    spectra.reserve(result.channels.size());
+    for (const auto& ch : result.channels) {
         spectra.push_back(ch.energy_values);
+    }
     return spectra;
 }
 
@@ -728,8 +713,12 @@ std::vector<std::vector<double>> power_spectrum_per_channel(const std::vector<Ka
         a->set_window_parameters(window_size, window_size / 2);
     auto result = a->analyze_energy(channels);
     std::vector<std::vector<double>> spectra;
-    for (const auto& ch : result.channels)
+
+    spectra.reserve(result.channels.size());
+    for (const auto& ch : result.channels) {
         spectra.push_back(ch.energy_values);
+    }
+
     return spectra;
 }
 
@@ -768,13 +757,16 @@ std::vector<double> estimate_pitch_per_channel(const std::vector<Kakshya::DataVa
     a->set_parameter("max_freq", max_freq);
     auto result = a->analyze_energy(channels);
     std::vector<double> pitches;
-    for (const auto& ch : result.channels)
+    pitches.reserve(result.channels.size());
+
+    for (const auto& ch : result.channels) {
         pitches.push_back(ch.mean_energy * sample_rate / 1000.0);
+    }
     return pitches;
 }
 
 //=========================================================================
-// WINDOWING AND SEGMENTATION - Use FeatureExtractor and MathematicalTransformer
+// WINDOWING AND SEGMENTATION
 //=========================================================================
 
 std::vector<double> extract_silent_data(const std::vector<double>& data, double threshold, size_t min_silence_duration)
@@ -833,17 +825,19 @@ std::vector<double> extract_zero_crossing_regions(const Kakshya::DataVariant& da
 
 void apply_window(std::vector<double>& data, const std::string& window_type)
 {
-    Nodes::Generator::WindowType win_type;
-    if (window_type == "hann" || window_type == "hanning")
+    Nodes::Generator::WindowType win_type {};
+
+    if (window_type == "hann" || window_type == "hanning") {
         win_type = Nodes::Generator::WindowType::HANNING;
-    else if (window_type == "hamming")
+    } else if (window_type == "hamming") {
         win_type = Nodes::Generator::WindowType::HAMMING;
-    else if (window_type == "blackman")
+    } else if (window_type == "blackman") {
         win_type = Nodes::Generator::WindowType::BLACKMAN;
-    else if (window_type == "rectangular" || window_type == "rect")
+    } else if (window_type == "rectangular" || window_type == "rect") {
         win_type = Nodes::Generator::WindowType::RECTANGULAR;
-    else
+    } else {
         win_type = Nodes::Generator::WindowType::HANNING;
+    }
 
     auto window = Nodes::Generator::generate_window(data.size(), win_type);
     for (size_t i = 0; i < data.size() && i < window.size(); ++i)
@@ -868,7 +862,8 @@ std::vector<std::vector<double>> windowed_segments(const std::vector<double>& da
     auto e = std::make_shared<Yantra::FeatureExtractor<>>(
         static_cast<uint32_t>(window_size), static_cast<uint32_t>(hop_size),
         Yantra::ExtractionMethod::OVERLAPPING_WINDOWS);
-    e->set_parameter("overlap", double(hop_size) / window_size);
+    e->set_parameter("overlap", double(hop_size) / (double)window_size);
+
     Yantra::Datum<std::vector<Kakshya::DataVariant>> input { { Kakshya::DataVariant(data) } };
     auto extracted = e->apply_operation(input).data[0];
     std::vector<std::vector<double>> segments;
@@ -884,7 +879,7 @@ std::vector<std::vector<double>> windowed_segments(const Kakshya::DataVariant& d
     auto e = std::make_shared<Yantra::FeatureExtractor<>>(
         static_cast<uint32_t>(window_size), static_cast<uint32_t>(hop_size),
         Yantra::ExtractionMethod::OVERLAPPING_WINDOWS);
-    e->set_parameter("overlap", double(hop_size) / window_size);
+    e->set_parameter("overlap", double(hop_size) / (double)window_size);
     Yantra::Datum<std::vector<Kakshya::DataVariant>> input { { data } };
     auto extracted = e->apply_operation(input).data[0];
     std::vector<std::vector<double>> segments;
@@ -957,9 +952,10 @@ std::vector<double> mix(const std::vector<std::vector<double>>& streams)
         max_length = std::max(max_length, s.size());
 
     std::vector<double> result(max_length, 0.0);
-    for (const auto& s : streams)
+    for (const auto& s : streams) {
         for (size_t i = 0; i < s.size(); ++i)
             result[i] += s[i];
+    }
 
     apply_gain(result, 1.0 / static_cast<double>(streams.size()));
     return result;
@@ -974,9 +970,10 @@ std::vector<double> mix(const std::vector<Kakshya::DataVariant>& streams)
 
     if (is_same_size(numeric_data)) {
         std::vector<double> result(numeric_data[0].size(), 0.0);
-        for (const auto& span : numeric_data)
+        for (const auto& span : numeric_data) {
             for (size_t i = 0; i < span.size(); ++i)
                 result[i] += span[i];
+        }
         apply_gain(result, 1.0 / static_cast<double>(numeric_data.size()));
         return result;
     }
@@ -1000,9 +997,10 @@ std::vector<double> mix_with_gains(const std::vector<std::vector<double>>& strea
         max_length = std::max(max_length, s.size());
 
     std::vector<double> result(max_length, 0.0);
-    for (size_t s = 0; s < streams.size(); ++s)
+    for (size_t s = 0; s < streams.size(); ++s) {
         for (size_t i = 0; i < streams[s].size(); ++i)
             result[i] += streams[s][i] * gains[s];
+    }
     return result;
 }
 
@@ -1017,9 +1015,10 @@ std::vector<double> mix_with_gains(const std::vector<Kakshya::DataVariant>& stre
 
     if (is_same_size(numeric_data)) {
         std::vector<double> result(numeric_data[0].size(), 0.0);
-        for (size_t s = 0; s < numeric_data.size(); ++s)
+        for (size_t s = 0; s < numeric_data.size(); ++s) {
             for (size_t i = 0; i < numeric_data[s].size(); ++i)
                 result[i] += numeric_data[s][i] * gains[s];
+        }
         return result;
     }
 
