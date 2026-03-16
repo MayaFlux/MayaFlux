@@ -44,12 +44,7 @@ public:
     static MatcherFunc create_type_matcher()
     {
         return [](const std::any& input, const ExecutionContext& /*ctx*/) -> bool {
-            try {
-                std::any_cast<Datum<DataType>>(input);
-                return true;
-            } catch (const std::bad_any_cast&) {
-                return false;
-            }
+            return static_cast<bool>(safe_any_cast<Datum<DataType>>(input));
         };
     }
 
@@ -61,7 +56,11 @@ public:
     static MatcherFunc create_context_matcher(ComputationContext required_context)
     {
         return [required_context](const std::any& /*input*/, const ExecutionContext& ctx) -> bool {
-            return ctx.execution_metadata.contains("computation_context") && std::any_cast<ComputationContext>(ctx.execution_metadata.at("computation_context")) == required_context;
+            auto it = ctx.execution_metadata.find("computation_context");
+            if (it == ctx.execution_metadata.end())
+                return false;
+            auto result = safe_any_cast<ComputationContext>(it->second);
+            return result && *result.value == required_context;
         };
     }
 
@@ -126,7 +125,13 @@ std::shared_ptr<OperationType> create_configured_operation(
         try {
             operation->set_parameter(param_name, param_value);
         } catch (...) {
-            // Ignore parameters that don't apply to this operation
+            MF_DEBUG(
+                Journal::Component::Yantra,
+                Journal::Context::Runtime,
+                "Parameter '{}' with type {} does not apply to operation '{}'",
+                param_name,
+                param_value.type().name(),
+                operation->get_name());
         }
     }
 
@@ -146,7 +151,13 @@ void apply_context_parameters(std::shared_ptr<OperationType> operation, const Ex
         try {
             operation->set_parameter(ctx_name, ctx_value);
         } catch (...) {
-            // Ignore parameters that don't apply to this operation
+            MF_DEBUG(
+                Journal::Component::Yantra,
+                Journal::Context::Runtime,
+                "Context parameter '{}' with type {} does not apply to operation '{}'",
+                ctx_name,
+                ctx_value.type().name(),
+                operation->get_name());
         }
     }
 }

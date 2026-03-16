@@ -301,8 +301,14 @@ public:
         size_t binding_index)
     {
         const auto key = "gpu_output_" + std::to_string(binding_index);
-        const auto& raw = std::any_cast<const std::vector<uint8_t>&>(
-            result.metadata.at(key));
+
+        if (!result.metadata.contains(key)) {
+            error<std::runtime_error>(Journal::Component::Yantra, Journal::Context::Runtime,
+                std::source_location::current(),
+                "read_output: metadata key '{}' not found", key);
+        }
+
+        const auto& raw = safe_any_cast_or_throw<std::vector<uint8_t>>(result.metadata.at(key));
         const size_t count = raw.size() / sizeof(T);
         std::vector<T> out(count);
         std::memcpy(out.data(), raw.data(), count * sizeof(T));

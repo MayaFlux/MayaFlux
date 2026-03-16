@@ -268,14 +268,11 @@ struct MAYAFLUX_API Datum {
     std::optional<ValueType> get_metadata(const std::string& key) const
     {
         auto it = metadata.find(key);
-        if (it != metadata.end()) {
-            try {
-                return std::any_cast<ValueType>(it->second);
-            } catch (const std::bad_any_cast&) {
-                return std::nullopt;
-            }
+        if (it == metadata.end()) {
+            return std::nullopt;
         }
-        return std::nullopt;
+
+        return safe_any_cast<ValueType>(it->second);
     }
 };
 

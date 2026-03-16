@@ -85,13 +85,18 @@ public:
      * for organization and optimization.
      */
     struct MAYAFLUX_API Rule {
+        /**
+         * @brief Type alias for matcher functions used in computation rules
+         */
+        using Executor = std::function<std::any(const std::any&, const ExecutionContext&)>;
+
         std::string name; ///< Unique identifier for this rule
         std::string description; ///< Human-readable description of what the rule does
         ComputationContext context {}; ///< Computational context this rule operates in
         int priority = 0; ///< Execution priority (higher values evaluated first)
 
         UniversalMatcher::MatcherFunc matcher; ///< Function that determines if rule applies
-        std::function<std::any(const std::any&, const ExecutionContext&)> executor; ///< Function that performs the computation
+        Executor executor; ///< Function that performs the computation
 
         std::vector<std::string> dependencies; ///< Names of rules that must execute before this one
         std::unordered_map<std::string, std::any> default_parameters; ///< Default parameters for the rule's operation
@@ -267,7 +272,6 @@ public:
         rule.matcher = std::move(matcher);
         rule.target_operation_type = std::type_index(typeid(ConcreteOpType));
 
-        // Capture op_args by perfect forwarding into a tuple
         auto captured_args = std::make_tuple(std::forward<OpArgs>(op_args)...);
 
         rule.executor = [op_parameters, captured_args = std::move(captured_args)](const std::any& input, const ExecutionContext& ctx) -> std::any {
@@ -278,7 +282,7 @@ public:
 
             apply_context_parameters(operation, ctx);
 
-            auto typed_input = std::any_cast<Datum<std::vector<Kakshya::DataVariant>>>(input);
+            auto typed_input = safe_any_cast_or_throw<DataIO>(input);
             return operation->apply_operation(typed_input);
         };
 
@@ -525,9 +529,10 @@ public:
             m_rules.erase(it);
 
             auto& context_rules = m_context_index[context];
-            context_rules.erase(
-                std::remove(context_rules.begin(), context_rules.end(), rule_name),
-                context_rules.end());
+            std::erase_if(context_rules,
+                [&](const std::string& name) {
+                    return name == rule_name;
+                });
 
             return true;
         }

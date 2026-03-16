@@ -115,8 +115,8 @@ public:
     void set_parameter(const std::string& name, std::any value) override
     {
         if (name == "scope") {
-            if (auto* scope = std::any_cast<ExtractionScope>(&value)) {
-                m_scope = *scope;
+            if (auto result = safe_any_cast<ExtractionScope>(value)) {
+                m_scope = *result.value;
                 return;
             }
         }
@@ -198,15 +198,7 @@ public:
     template <typename T>
     T get_parameter_or_default(const std::string& name, const T& default_value) const
     {
-        auto param = get_extraction_parameter(name);
-        if (param.has_value()) {
-            try {
-                return std::any_cast<T>(param);
-            } catch (const std::bad_any_cast&) {
-                return default_value;
-            }
-        }
-        return default_value;
+        return safe_any_cast_or_default<T>(get_extraction_parameter(name), default_value);
     }
 
 protected:

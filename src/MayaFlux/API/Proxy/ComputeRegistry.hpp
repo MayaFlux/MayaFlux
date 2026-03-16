@@ -116,14 +116,14 @@ public:
             auto it = m_factories.find(key);
             if (it != m_factories.end()) {
                 return std::static_pointer_cast<OpClass>(
-                    std::any_cast<std::shared_ptr<void>>(it->second()));
+                    safe_any_cast_or_throw<std::shared_ptr<void>>(it->second()));
             }
         }
 
         for (const auto& [key, factory] : m_factories) {
             if (key.operation_type == std::type_index(typeid(OpClass))) {
                 return std::static_pointer_cast<OpClass>(
-                    std::any_cast<std::shared_ptr<void>>(factory()));
+                    safe_any_cast_or_throw<std::shared_ptr<void>>(factory()));
             }
         }
 

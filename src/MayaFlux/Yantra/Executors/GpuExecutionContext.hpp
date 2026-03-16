@@ -546,10 +546,14 @@ private:
             : m_staging_floats.size();
         const auto groups = calculate_dispatch_size(effective, structure_info);
 
-        const auto pass_count = std::any_cast<uint32_t>(
-            ctx.execution_metadata.at("pass_count"));
+        if (!ctx.execution_metadata.contains("pass_count") || !ctx.execution_metadata.contains("pc_updater")) {
+            error<std::runtime_error>(Journal::Component::Yantra,
+                Journal::Context::Runtime,
+                std::source_location::current(), "dispatch_gpu_chained: execution_metadata missing required keys 'pass_count' and/or 'pc_updater'");
+        }
 
-        const auto& pc_updater = std::any_cast<std::function<void(uint32_t, void*)>>(ctx.execution_metadata.at("pc_updater"));
+        const auto pass_count = safe_any_cast_or_throw<uint32_t>(ctx.execution_metadata.at("pass_count"));
+        const auto& pc_updater = safe_any_cast_or_throw<std::function<void(uint32_t, void*)>>(ctx.execution_metadata.at("pc_updater"));
 
         m_resources.dispatch_batched(
             pass_count, groups, m_bindings,

@@ -159,10 +159,17 @@ public:
 
         if (auto best_rule = m_grammar->find_best_match(current_data, current_context)) {
             if (auto rule_result = m_grammar->execute_rule(best_rule->name, current_data, current_context)) {
-                try {
-                    current_data = std::any_cast<input_type>(*rule_result);
-                } catch (const std::bad_any_cast&) {
-                    // Continue with original data if conversion fails
+                auto cast_result = safe_any_cast<input_type>(*rule_result);
+
+                if (cast_result) {
+                    current_data = *cast_result.value;
+                } else {
+                    MF_ERROR(
+                        Journal::Component::Yantra,
+                        Journal::Context::Runtime,
+                        "Grammar rule '{}' returned incompatible type: {}",
+                        best_rule->name,
+                        cast_result.error);
                 }
             }
         }
@@ -172,7 +179,9 @@ public:
                 auto result = operation->apply_operation(current_data);
                 current_data = result;
             } catch (const std::exception& e) {
-                throw std::runtime_error("Pipeline operation failed: " + name + " - " + e.what());
+                error_rethrow(
+                    Journal::Component::Yantra, Journal::Context::Runtime, std::source_location::current(),
+                    "Pipeline operation '{}' failed: {}", name, e.what());
             }
         }
 
@@ -478,10 +487,16 @@ public:
 
         if (auto best_rule = m_grammar->find_best_match(input_data, context)) {
             if (auto rule_result = m_grammar->execute_rule(best_rule->name, input_data, context)) {
-                try {
-                    input_data = std::any_cast<Datum<InputType>>(*rule_result);
-                } catch (const std::bad_any_cast&) {
-                    // Continue with original data if conversion fails
+                auto cast_result = safe_any_cast<Datum<InputType>>(*rule_result);
+                if (cast_result) {
+                    input_data = *cast_result.value;
+                } else {
+                    MF_WARN(
+                        Journal::Component::Yantra,
+                        Journal::Context::Runtime,
+                        "Grammar rule '{}' returned incompatible type: {}",
+                        best_rule->name,
+                        cast_result.error);
                 }
             }
         }
