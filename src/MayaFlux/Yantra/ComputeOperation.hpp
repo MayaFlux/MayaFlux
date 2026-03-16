@@ -265,15 +265,22 @@ protected:
     output_type convert_result(std::vector<std::vector<double>>& result_data, DataStructureInfo& metadata)
     {
         std::any any_data = metadata;
+
         if (m_last_execution_context.reconstruction_callback) {
             auto reconstructed = m_last_execution_context.reconstruction_callback(result_data, any_data);
-            try {
-                return std::any_cast<output_type>(reconstructed);
-            } catch (const std::bad_any_cast&) {
-                std::cerr << "Reconstruction callback did not return the correct output type\n";
-                return OperationHelper::reconstruct_from_double<output_type>(result_data, metadata);
+            auto result = safe_any_cast<output_type>(reconstructed);
+            if (result) {
+                return *result.value;
             }
+
+            MF_WARN(
+                Journal::Component::Yantra,
+                Journal::Context::Runtime,
+                "Reconstruction callback type mismatch: {}",
+                result.error);
+            return OperationHelper::reconstruct_from_double<output_type>(result_data, metadata);
         }
+
         return OperationHelper::reconstruct_from_double<output_type>(result_data, metadata);
     }
 
@@ -307,25 +314,37 @@ private:
     void validate_operation_data_types() const
     {
         if constexpr (std::is_same_v<InputType, Kakshya::Region>) {
-            std::cerr << "OPERATION WARNING: InputType 'Region' is an expressive marker, not a data holder.\n"
-                      << "Operations will process coordinate data rather than signal data.\n"
-                      << "Consider using DataVariant or SignalSourceContainer for signal processing.\n";
+            MF_WARN(
+                Journal::Component::Yantra,
+                Journal::Context::Runtime,
+                "InputType 'Region' is an expressive marker, not a data holder. Operations will process coordinate data rather than signal data. Consider using DataVariant or SignalSourceContainer for signal processing.");
         } else if constexpr (std::is_same_v<InputType, Kakshya::RegionGroup>) {
-            std::cerr << "OPERATION WARNING: InputType 'RegionGroup' is an expressive marker, not a data holder.\n"
-                      << "Operations will process coordinate data rather than signal data.\n"
-                      << "Consider using DataVariant or SignalSourceContainer for signal processing.\n";
+            MF_WARN(
+                Journal::Component::Yantra,
+                Journal::Context::Runtime,
+                "InputType 'RegionGroup' is an expressive marker, not a data holder. Operations will process coordinate data rather than signal data. Consider using DataVariant or SignalSourceContainer for signal processing.");
         } else if constexpr (std::is_same_v<InputType, std::vector<Kakshya::RegionSegment>>) {
-            std::cerr << "OPERATION WARNING: InputType 'RegionSegments' are expressive markers, not primary data holders.\n"
-                      << "Operations will attempt to extract data from segment metadata.\n"
-                      << "Consider using DataVariant or SignalSourceContainer for direct signal processing.\n";
+            MF_WARN(
+                Journal::Component::Yantra,
+                Journal::Context::Runtime,
+                "InputType 'RegionSegments' are expressive markers, not primary data holders. Operations will attempt to extract data from segment metadata. Consider using DataVariant or SignalSourceContainer for direct signal processing.");
         }
 
         if constexpr (std::is_same_v<OutputType, Kakshya::Region>) {
-            std::cerr << "OPERATION INFO: OutputType 'Region' will create spatial/temporal markers with results as metadata.\n";
+            MF_WARN(
+                Journal::Component::Yantra,
+                Journal::Context::Runtime,
+                "OutputType 'Region' is an expressive marker, not a data holder. Operations will create spatial/temporal markers with results as metadata.");
         } else if constexpr (std::is_same_v<OutputType, Kakshya::RegionGroup>) {
-            std::cerr << "OPERATION INFO: OutputType 'RegionGroup' will organize results into spatial/temporal groups.\n";
+            MF_WARN(
+                Journal::Component::Yantra,
+                Journal::Context::Runtime,
+                "OutputType 'RegionGroup' is an expressive marker, not a data holder. Operations will organize results into spatial/temporal groups.");
         } else if constexpr (std::is_same_v<OutputType, std::vector<Kakshya::RegionSegment>>) {
-            std::cerr << "OPERATION INFO: OutputType 'RegionSegments' will create segments with results in metadata.\n";
+            MF_WARN(
+                Journal::Component::Yantra,
+                Journal::Context::Runtime,
+                "OutputType 'RegionSegments' is an expressive marker, not a data holder. Operations will create segments with results in metadata. Consider using DataVariant or SignalSourceContainer for direct signal processing.");
         }
     }
 

@@ -319,27 +319,27 @@ protected:
     void set_extraction_parameter(const std::string& name, std::any value) override
     {
         if (name == "method") {
-            if (auto* method_str = std::any_cast<std::string>(&value)) {
-                m_method = string_to_method(*method_str);
+            if (auto result = safe_any_cast<std::string>(value)) {
+                m_method = string_to_method(*result.value);
                 return;
             }
-            if (auto* method_enum = std::any_cast<ExtractionMethod>(&value)) {
-                m_method = *method_enum;
+            if (auto result = safe_any_cast<ExtractionMethod>(value)) {
+                m_method = *result.value;
                 return;
             }
             error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ComputeMatrix, std::source_location::current(), "Method parameter must be string or ExtractionMethod enum");
         }
 
         if (name == "window_size") {
-            if (auto* size = std::any_cast<uint32_t>(&value)) {
-                m_window_size = *size;
+            if (auto result = safe_any_cast<uint32_t>(value)) {
+                m_window_size = *result.value;
                 validate_parameters();
                 return;
             }
         }
         if (name == "hop_size") {
-            if (auto* size = std::any_cast<uint32_t>(&value)) {
-                m_hop_size = *size;
+            if (auto result = safe_any_cast<uint32_t>(value)) {
+                m_hop_size = *result.value;
                 validate_parameters();
                 return;
             }

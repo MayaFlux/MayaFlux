@@ -1,7 +1,5 @@
 #include "StructureIntrospection.hpp"
 
-#include <algorithm>
-
 #include "MayaFlux/Kakshya/Utils/DataUtils.hpp"
 #include "MayaFlux/Kakshya/Utils/RegionUtils.hpp"
 
@@ -29,7 +27,8 @@ std::pair<std::vector<Kakshya::DataDimension>, Kakshya::DataModality>
 infer_from_container(const std::shared_ptr<Kakshya::SignalSourceContainer>& container)
 {
     if (!container) {
-        throw std::invalid_argument("Cannot infer structure from null container");
+        error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::Runtime, std::source_location::current(),
+            "Cannot infer structure from null container");
     }
 
     const auto& structure = container->get_structure();
@@ -117,15 +116,20 @@ infer_from_region_group(const Kakshya::RegionGroup& group, const std::shared_ptr
     auto bounds_info = Kakshya::extract_group_bounds_info(group);
 
     if (bounds_info.contains("bounding_min") && bounds_info.contains("bounding_max")) {
-        auto min_coords = std::any_cast<std::vector<uint64_t>>(bounds_info["bounding_min"]);
-        auto max_coords = std::any_cast<std::vector<uint64_t>>(bounds_info["bounding_max"]);
+        auto min_coords = safe_any_cast_or_throw<std::vector<uint64_t>>(bounds_info["bounding_min"]);
+        auto max_coords = safe_any_cast_or_throw<std::vector<uint64_t>>(bounds_info["bounding_max"]);
 
         std::vector<uint64_t> shape;
         int size = static_cast<int>(max_coords[0] - min_coords[0]);
         shape.push_back(std::abs(size) + 1);
         shape.push_back(max_coords[1]);
 
-        auto modality = group.attributes.contains("modality") ? std::any_cast<Kakshya::DataModality>(group.attributes.at("modality")) : structure.modality;
+        Kakshya::DataModality modality = structure.modality;
+        if (group.attributes.contains("modality")) {
+            auto modality_result = safe_any_cast<Kakshya::DataModality>(group.attributes.at("modality"));
+            if (modality_result)
+                modality = *modality_result.value;
+        }
 
         auto dimensions = Kakshya::DataDimension::create_dimensions(modality, shape, structure.memory_layout);
         return { dimensions, modality };

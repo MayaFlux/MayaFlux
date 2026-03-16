@@ -294,11 +294,13 @@ void GpuResourceManager::dispatch_batched(
     auto& compute_press = Portal::Graphics::get_compute_press();
 
     const uint32_t workgroups_per_pass = groups[0] * groups[1] * groups[2];
+
+    const uint32_t default_passes = std::max(1U, 65536U / std::max(1U, workgroups_per_pass));
     const uint32_t passes_per_batch = [&] {
         auto it = execution_metadata.find("passes_per_batch");
         if (it != execution_metadata.end())
-            return std::any_cast<uint32_t>(it->second);
-        return std::max(1U, 65536U / std::max(1U, workgroups_per_pass));
+            return safe_any_cast_or_default<uint32_t>(it->second, default_passes);
+        return default_passes;
     }();
 
     for (uint32_t base = 0; base < pass_count; base += passes_per_batch) {

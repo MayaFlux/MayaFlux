@@ -33,27 +33,32 @@ std::vector<Region> find_regions_with_attribute(const RegionGroup& group, const 
     std::vector<Region> result;
     std::ranges::copy_if(group.regions, std::back_inserter(result),
         [&key, &value](const Region& region) {
-            auto attr_it = region.attributes.find(key);
-            if (attr_it != region.attributes.end()) {
-                if (value.type() == typeid(std::string)) {
-                    auto region_value = get_region_attribute<std::string>(region, key);
-                    auto search_value = std::any_cast<std::string>(value);
-                    return region_value.has_value() && *region_value == search_value;
-                }
-                if (value.type() == typeid(double)) {
-                    auto region_value = get_region_attribute<double>(region, key);
-                    auto search_value = std::any_cast<double>(value);
-                    return region_value.has_value() && *region_value == search_value;
-                }
-                if (value.type() == typeid(int)) {
-                    auto region_value = get_region_attribute<int>(region, key);
-                    auto search_value = std::any_cast<int>(value);
-                    return region_value.has_value() && *region_value == search_value;
-                }
-                // TODO: Add more types as needed
-            }
+            if (!region.attributes.contains(key))
+                return false;
+
+            const auto& attr = region.attributes.at(key);
+
+            if (attr.type() != value.type())
+                return false;
+            if (attr.type() == typeid(std::string))
+                return any_equal<std::string>(attr, value);
+            if (attr.type() == typeid(double))
+                return any_equal<double>(attr, value);
+            if (attr.type() == typeid(int))
+                return any_equal<int>(attr, value);
+            if (attr.type() == typeid(float))
+                return any_equal<float>(attr, value);
+            if (attr.type() == typeid(bool))
+                return any_equal<bool>(attr, value);
+            if (attr.type() == typeid(uint32_t))
+                return any_equal<uint32_t>(attr, value);
+            if (attr.type() == typeid(int64_t))
+                return any_equal<int64_t>(attr, value);
+            if (attr.type() == typeid(uint64_t))
+                return any_equal<uint64_t>(attr, value);
             return false;
         });
+
     return result;
 }
 

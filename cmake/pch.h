@@ -272,6 +272,28 @@ T safe_any_cast_or_default(const std::any& any_val, const T& default_value)
     return safe_any_cast<T>(any_val).value_or(default_value);
 }
 
+template <typename T>
+    requires(ArithmeticData<T> || ComplexData<T> || StringData<T>)
+bool any_equal(const std::any& a, const std::any& b)
+{
+    auto va = safe_any_cast<T>(a);
+    if (!va)
+        return false;
+    return *va.value == safe_any_cast_or_throw<T>(b);
+}
+
+template <typename T>
+    requires(!ArithmeticData<T> && !ComplexData<T> && !StringData<T>)
+bool any_equal(const std::any& a, const std::any& b)
+{
+    if (a.type() != b.type())
+        return false;
+    auto va = safe_any_cast<T>(a);
+    if (!va)
+        return false;
+    return *va.value == safe_any_cast_or_throw<T>(b);
+}
+
 // === Universal Type Handler System ===
 
 template <typename T>

@@ -211,33 +211,31 @@ struct MAYAFLUX_API RegionGroup {
     std::vector<Region> find_regions_with_attribute(const std::string& key, const std::any& value) const
     {
         std::vector<Region> result;
-        for (const auto& region : regions) {
-            auto it = region.attributes.find(key);
-            if (it != region.attributes.end()) {
-                try {
-                    if (it->second.type() == value.type()) {
-                        if (value.type() == typeid(std::string)) {
-                            if (std::any_cast<std::string>(it->second) == std::any_cast<std::string>(value)) {
-                                result.push_back(region);
-                            }
-                        } else if (value.type() == typeid(double)) {
-                            if (std::any_cast<double>(it->second) == std::any_cast<double>(value)) {
-                                result.push_back(region);
-                            }
-                        } else if (value.type() == typeid(int)) {
-                            if (std::any_cast<int>(it->second) == std::any_cast<int>(value)) {
-                                result.push_back(region);
-                            }
-                        } else if (value.type() == typeid(bool)) {
-                            if (std::any_cast<bool>(it->second) == std::any_cast<bool>(value)) {
-                                result.push_back(region);
-                            }
-                        }
-                    }
-                } catch (const std::bad_any_cast&) {
-                }
-            }
-        }
+        std::ranges::copy_if(regions, std::back_inserter(result),
+            [&key, &value](const Region& region) {
+                auto it = region.attributes.find(key);
+
+                if (it == region.attributes.end() || it->second.type() != value.type())
+                    return false;
+
+                if (value.type() == typeid(std::string))
+                    return any_equal<std::string>(it->second, value);
+                if (value.type() == typeid(double))
+                    return any_equal<double>(it->second, value);
+                if (value.type() == typeid(int))
+                    return any_equal<int>(it->second, value);
+                if (value.type() == typeid(bool))
+                    return any_equal<bool>(it->second, value);
+                if (value.type() == typeid(float))
+                    return any_equal<float>(it->second, value);
+                if (value.type() == typeid(uint32_t))
+                    return any_equal<uint32_t>(it->second, value);
+                if (value.type() == typeid(int64_t))
+                    return any_equal<int64_t>(it->second, value);
+                if (value.type() == typeid(uint64_t))
+                    return any_equal<uint64_t>(it->second, value);
+                return false;
+            });
         return result;
     }
 

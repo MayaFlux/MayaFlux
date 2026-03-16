@@ -343,32 +343,34 @@ protected:
     void set_analysis_parameter(const std::string& name, std::any value) override
     {
         if (name == "method") {
-            try {
-                auto method_str = safe_any_cast_or_throw<std::string>(value);
-                m_method = string_to_method(method_str);
-                return;
-            } catch (const std::runtime_error&) {
-                error_rethrow(Journal::Component::Yantra, Journal::Context::ComputeMatrix, std::source_location::current(), "Invalid method parameter - expected string or EnergyMethod enum");
-            }
-            if (auto* method_enum = std::any_cast<EnergyMethod>(&value)) {
-                m_method = *method_enum;
+            if (auto str_result = safe_any_cast<std::string>(value)) {
+                m_method = string_to_method(*str_result.value);
                 return;
             }
+
+            if (auto enum_result = safe_any_cast<EnergyMethod>(value)) {
+                m_method = *enum_result.value;
+                return;
+            }
+
+            error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
+                std::source_location::current(),
+                "Invalid method parameter - expected string or EnergyMethod enum");
         } else if (name == "window_size") {
-            if (auto* size = std::any_cast<uint32_t>(&value)) {
-                m_window_size = *size;
+            if (auto result = safe_any_cast<uint32_t>(value)) {
+                m_window_size = *result.value;
                 validate_window_parameters();
                 return;
             }
         } else if (name == "hop_size") {
-            if (auto* size = std::any_cast<uint32_t>(&value)) {
-                m_hop_size = *size;
+            if (auto result = safe_any_cast<uint32_t>(value)) {
+                m_hop_size = *result.value;
                 validate_window_parameters();
                 return;
             }
         } else if (name == "classification_enabled") {
-            if (auto* enabled = std::any_cast<bool>(&value)) {
-                m_classification_enabled = *enabled;
+            if (auto result = safe_any_cast<bool>(value)) {
+                m_classification_enabled = *result.value;
                 return;
             }
         }
