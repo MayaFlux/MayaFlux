@@ -163,12 +163,12 @@ public:
         return m_last_execution_context;
     }
 
-    void set_pre_execution_hook(const OpererationHookCallback& hook)
+    void set_pre_execution_hook(const OperationHookCallback& hook)
     {
         m_last_execution_context.pre_execution_hook = hook;
     }
 
-    void set_post_execution_hook(const OpererationHookCallback& hook)
+    void set_post_execution_hook(const OperationHookCallback& hook)
     {
         m_last_execution_context.post_execution_hook = hook;
     }
