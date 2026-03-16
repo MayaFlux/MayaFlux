@@ -439,12 +439,11 @@ void ShaderFoundry::destroy_shader(ShaderID shader_id)
     if (it != m_shaders.end()) {
         if (!it->second.filepath.empty()) {
             m_shader_filepath_cache.erase(it->second.filepath);
-        }
-
-        if (!it->second.filepath.empty()) {
             m_shader_cache.erase(it->second.filepath);
         }
-
+        if (it->second.module) {
+            it->second.module->cleanup(get_device());
+        }
         m_shaders.erase(it);
     }
 }
