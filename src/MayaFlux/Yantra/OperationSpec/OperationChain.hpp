@@ -8,10 +8,10 @@ namespace MayaFlux::Yantra {
  * @concept ExecutorConcept
  * @brief Defines requirements for executor types that can be used with FluentExecutor
  */
-template <typename T>
-concept ExecutorConcept = requires(T t) {
-    { t.template execute<int, int, int>(std::declval<int>()) };
-};
+// template <typename T>
+// concept ExecutorConcept = requires(T t) {
+//     { t.template execute<int, int, int>(std::declval<int>()) };
+// };
 
 /**
  * @class FluentExecutor
@@ -42,32 +42,35 @@ class MAYAFLUX_API FluentExecutor {
 public:
     using executor_type = Executor;
     using data_type = DataType;
+    using io_type = Datum<DataType>;
 
     /**
      * @brief Construct with executor and initial data
      * @param executor Shared pointer to the executor instance
      * @param input Initial data to process
      */
-    FluentExecutor(std::shared_ptr<Executor> executor, const DataType& input)
+    FluentExecutor(std::shared_ptr<Executor> executor, const Datum<DataType>& input)
         : m_executor(std::move(executor))
         , m_data(input)
         , m_successful(true)
     {
         if (!m_executor) {
-            throw std::invalid_argument("FluentExecutor requires non-null executor");
+            error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ComputeMatrix, std::source_location::current(),
+                "FluentExecutor requires non-null executor");
         }
     }
 
     /**
      * @brief Move constructor for efficiency
      */
-    FluentExecutor(std::shared_ptr<Executor> executor, DataType&& input)
+    FluentExecutor(std::shared_ptr<Executor> executor, Datum<DataType>&& input)
         : m_executor(std::move(executor))
         , m_data(std::move(input))
         , m_successful(true)
     {
         if (!m_executor) {
-            throw std::invalid_argument("FluentExecutor requires non-null executor");
+            error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ComputeMatrix, std::source_location::current(),
+                "FluentExecutor requires non-null executor");
         }
     }
 
@@ -82,7 +85,8 @@ public:
     FluentExecutor<Executor, OutputType> then()
     {
         if (!m_successful) {
-            throw std::runtime_error("Cannot continue chain after failed operation");
+            error<std::runtime_error>(Journal::Component::Yantra, Journal::Context::ComputeMatrix, std::source_location::current(),
+                "Cannot continue chain after failed operation");
         }
 
         try {
@@ -90,17 +94,19 @@ public:
             if (!result) {
                 m_successful = false;
                 record_error("Operation " + std::string(typeid(OpClass).name()) + " failed");
-                throw std::runtime_error("Operation failed in fluent chain: " + std::string(typeid(OpClass).name()));
+                error<std::runtime_error>(Journal::Component::Yantra, Journal::Context::ComputeMatrix, std::source_location::current(),
+                    "Operation failed in fluent chain: {}", std::string(typeid(OpClass).name()));
             }
 
-            auto next = FluentExecutor<Executor, OutputType>(m_executor, std::move(result->data));
+            auto next = FluentExecutor<Executor, OutputType>(m_executor, std::move(*result));
             next.m_operation_history = m_operation_history;
             next.m_operation_history.push_back(typeid(OpClass).name());
             return next;
         } catch (const std::exception& e) {
             m_successful = false;
             record_error(e.what());
-            throw;
+            error_rethrow(Journal::Component::Yantra, Journal::Context::ComputeMatrix, std::source_location::current(),
+                "Exception in fluent chain: " + std::string(e.what()));
         }
     }
 
@@ -115,25 +121,28 @@ public:
     FluentExecutor<Executor, OutputType> then(const std::string& name)
     {
         if (!m_successful) {
-            throw std::runtime_error("Cannot continue chain after failed operation");
+            error<std::runtime_error>(Journal::Component::Yantra, Journal::Context::ComputeMatrix, std::source_location::current(),
+                "Cannot continue chain after failed operation: {} ", name);
         }
 
         try {
-            auto result = m_executor->template execute<OpClass, DataType, OutputType>(name, m_data);
+            auto result = m_executor->template execute_named<OpClass, DataType, OutputType>(name, m_data);
             if (!result) {
                 m_successful = false;
                 record_error("Named operation '" + name + "' failed");
-                throw std::runtime_error("Named operation failed in fluent chain: " + name);
+                error<std::runtime_error>(Journal::Component::Yantra, Journal::Context::ComputeMatrix, std::source_location::current(),
+                    "Named operation failed in fluent chain: {}", name);
             }
 
-            auto next = FluentExecutor<Executor, OutputType>(m_executor, std::move(result->data));
+            auto next = FluentExecutor<Executor, OutputType>(m_executor, std::move(*result));
             next.m_operation_history = m_operation_history;
             next.m_operation_history.push_back(name);
             return next;
         } catch (const std::exception& e) {
             m_successful = false;
             record_error(e.what());
-            throw;
+            error_rethrow(Journal::Component::Yantra, Journal::Context::ComputeMatrix, std::source_location::current(),
+                "Exception in named operation '{}': {}", name, e.what());
         }
     }
 
@@ -148,21 +157,23 @@ public:
     auto apply(Func&& func)
     {
         if (!m_successful) {
-            throw std::runtime_error("Cannot continue chain after failed operation");
+            error<std::runtime_error>(Journal::Component::Yantra, Journal::Context::ComputeMatrix, std::source_location::current(),
+                "Cannot continue chain after failed operation in apply");
         }
 
         using ResultType = std::invoke_result_t<Func, const DataType&>;
 
         try {
-            auto result = std::forward<Func>(func)(m_data);
-            auto next = FluentExecutor<Executor, ResultType>(m_executor, std::move(result));
+            auto result = std::forward<Func>(func)(m_data.data);
+            auto next = FluentExecutor<Executor, ResultType>(m_executor, Datum<ResultType>(std::move(result)));
             next.m_operation_history = m_operation_history;
             next.m_operation_history.push_back("custom_function");
             return next;
         } catch (const std::exception& e) {
             m_successful = false;
             record_error(std::string("Custom function failed: ") + e.what());
-            throw;
+            error_rethrow(Journal::Component::Yantra, Journal::Context::ComputeMatrix, std::source_location::current(),
+                "Exception in custom function: " + std::string(e.what()));
         }
     }
 
@@ -176,17 +187,19 @@ public:
     FluentExecutor& tap(Func&& func)
     {
         if (!m_successful) {
-            throw std::runtime_error("Cannot continue chain after failed operation");
+            error<std::runtime_error>(Journal::Component::Yantra, Journal::Context::ComputeMatrix, std::source_location::current(),
+                "Cannot continue chain after failed operation in tap");
         }
 
         try {
-            std::forward<Func>(func)(m_data);
+            std::forward<Func>(func)(m_data.data);
             m_operation_history.emplace_back("tap");
             return *this;
         } catch (const std::exception& e) {
             m_successful = false;
             record_error(std::string("Tap function failed: ") + e.what());
-            throw;
+            error_rethrow(Journal::Component::Yantra, Journal::Context::ComputeMatrix, std::source_location::current(),
+                "Exception in tap function: " + std::string(e.what()));
         }
     }
 
@@ -215,7 +228,7 @@ public:
         requires std::predicate<Pred, const DataType&>
     FluentExecutor& when(Pred&& predicate)
     {
-        if (m_successful && std::forward<Pred>(predicate)(m_data)) {
+        if (m_successful && std::forward<Pred>(predicate)(m_data.data)) {
             return then<OpClass>();
         }
         return *this;
@@ -230,7 +243,8 @@ public:
     auto fork()
     {
         if (!m_successful) {
-            throw std::runtime_error("Cannot fork after failed operation");
+            error<std::runtime_error>(Journal::Component::Yantra, Journal::Context::ComputeMatrix, std::source_location::current(),
+                "Cannot fork after failed operation");
         }
 
         return std::make_tuple(
@@ -244,9 +258,10 @@ public:
     const DataType& get() const
     {
         if (!m_successful) {
-            throw std::runtime_error("Cannot get result from failed chain");
+            error<std::runtime_error>(Journal::Component::Yantra, Journal::Context::ComputeMatrix, std::source_location::current(),
+                "Cannot get result from failed chain");
         }
-        return m_data;
+        return m_data.data;
     }
 
     /**
@@ -256,9 +271,10 @@ public:
     DataType& get_mutable()
     {
         if (!m_successful) {
-            throw std::runtime_error("Cannot get result from failed chain");
+            error<std::runtime_error>(Journal::Component::Yantra, Journal::Context::ComputeMatrix, std::source_location::current(),
+                "Cannot get mutable result from failed chain");
         }
-        return m_data;
+        return m_data.data;
     }
 
     /**
@@ -268,9 +284,10 @@ public:
     DataType consume() &&
     {
         if (!m_successful) {
-            throw std::runtime_error("Cannot consume result from failed chain");
+            error<std::runtime_error>(Journal::Component::Yantra, Journal::Context::ComputeMatrix, std::source_location::current(),
+                "Cannot consume result from failed chain");
         }
-        return std::move(m_data);
+        return std::move(m_data.data);
     }
 
     /**
@@ -279,7 +296,7 @@ public:
      */
     Datum<DataType> to_io() const
     {
-        Datum<DataType> result(m_data);
+        Datum<DataType> result = m_data;
         result.metadata["execution_history"] = m_operation_history;
         result.metadata["successful"] = m_successful;
         if (!m_errors.empty()) {
@@ -295,7 +312,7 @@ public:
      */
     DataType get_or(const DataType& default_value) const
     {
-        return m_successful ? m_data : default_value;
+        return m_successful ? m_data.data : default_value;
     }
 
     /**
@@ -307,7 +324,7 @@ public:
         requires std::invocable<Generator>
     DataType get_or_else(Generator&& generator) const
     {
-        return m_successful ? m_data : std::forward<Generator>(generator)();
+        return m_successful ? m_data.data : std::forward<Generator>(generator)();
     }
 
     /**
@@ -337,7 +354,7 @@ public:
      */
     FluentExecutor& reset(const DataType& new_data)
     {
-        m_data = new_data;
+        m_data.data = new_data;
         m_successful = true;
         m_operation_history.clear();
         m_errors.clear();
@@ -346,10 +363,13 @@ public:
 
 private:
     std::shared_ptr<Executor> m_executor;
-    DataType m_data;
+    io_type m_data;
     bool m_successful;
     std::vector<std::string> m_operation_history;
     std::vector<std::string> m_errors;
+
+    template <typename E, ComputeData U>
+    friend class FluentExecutor;
 
     void record_error(const std::string& error)
     {
@@ -361,11 +381,19 @@ private:
  * @brief Helper to create FluentExecutor with type deduction
  */
 template <typename Executor, ComputeData DataType>
+auto make_fluent(std::shared_ptr<Executor> executor, Datum<DataType>&& datum)
+{
+    return FluentExecutor<Executor, std::decay_t<DataType>>(
+        std::move(executor),
+        std::forward<Datum<DataType>>(datum));
+}
+
+template <typename Executor, ComputeData DataType>
 auto make_fluent(std::shared_ptr<Executor> executor, DataType&& data)
 {
     return FluentExecutor<Executor, std::decay_t<DataType>>(
         std::move(executor),
-        std::forward<DataType>(data));
+        Datum<std::decay_t<DataType>>(std::forward<DataType>(data)));
 }
 
 } // namespace MayaFlux::Yantra
