@@ -1,15 +1,16 @@
 #pragma once
 
-#include "MayaFlux/Kakshya/Region/RegionGroup.hpp"
-#include "MayaFlux/Kakshya/SignalSourceContainer.hpp"
-#include "MayaFlux/Yantra/Analyzers/EnergyAnalyzer.hpp"
-#include "MayaFlux/Yantra/Analyzers/StatisticalAnalyzer.hpp"
-#include "MayaFlux/Yantra/Analyzers/UniversalAnalyzer.hpp"
 #include "MayaFlux/Yantra/ComputeGrammar.hpp"
 #include "MayaFlux/Yantra/ComputePipeline.hpp"
-#include "MayaFlux/Yantra/Data/DataIO.hpp"
+
+#include "MayaFlux/Yantra/Analyzers/EnergyAnalyzer.hpp"
+#include "MayaFlux/Yantra/Analyzers/StatisticalAnalyzer.hpp"
 #include "MayaFlux/Yantra/Extractors/FeatureExtractor.hpp"
 #include "MayaFlux/Yantra/Sorters/StandardSorter.hpp"
+
+namespace MayaFlux::Kakshya {
+class SoundFileContainer;
+}
 
 namespace MayaFlux::Yantra::Granular {
 
@@ -17,6 +18,28 @@ namespace MayaFlux::Yantra::Granular {
  * @brief Datum specialisation for granular processing pipelines.
  */
 using GranularDatum = Datum<Kakshya::RegionGroup>;
+
+/**
+ * @brief Datum specialisation for container-output granular pipelines.
+ */
+using GranularContainerDatum = Datum<std::shared_ptr<Kakshya::SignalSourceContainer>>;
+
+/**
+ * @enum GranularOutput
+ * @brief Selects the terminal output type produced by make_granular_matrix.
+ *
+ * REGION_GROUP — pipeline terminates with a sorted RegionGroup (default).
+ *               Use when you need to inspect, analyse, or further transform
+ *               the grain pool before committing to audio.
+ *
+ * CONTAINER    — appends a reconstruct rule that stitches sorted grains into
+ *               a SoundFileContainer. Use for the offline playback workflow
+ *               where container-in container-out is all that is needed.
+ */
+enum class GranularOutput : uint8_t {
+    REGION_GROUP,
+    CONTAINER,
+};
 
 /**
  * @brief Matrix type used throughout the granular subsystem.
@@ -32,6 +55,9 @@ using GranularMatrix = GrammarAwareComputeMatrix;
  * via make_granular_context.
  */
 using AttributeExecutor = std::function<double(std::span<const double>, const ExecutionContext&)>;
+
+/// @brief Grammar rule executor for the reconstruction step.
+extern const ComputationGrammar::Rule::Executor reconstruct_grains;
 
 // ============================================================================
 // Concrete operations
@@ -145,6 +171,9 @@ private:
     static double extract_scalar(const std::any& analysis_result,
         AnalysisType type,
         const std::string& qualifier);
+
+    mutable VariantEnergyAnalyzer<> m_energy_analyzer;
+    mutable VariantStatisticalAnalyzer<> m_stat_analyzer;
 };
 
 /**
@@ -327,16 +356,22 @@ template <ComputeData InputType, ComputeData OutputType>
 // ============================================================================
 
 /**
- * @brief Construct a GranularMatrix with SegmentOp, AttributeOp, and SortOp pre-registered.
+ * @brief Construct a GranularMatrix with grammar rules appropriate for the
+ *        requested output type.
  *
- * Operations are registered under the names "segment", "attribute", "sort".
- * Grammar rules for each step are attached with appropriate ComputationContext values.
+ * REGION_GROUP: registers segment, attribute, sort (existing behaviour).
+ * CONTAINER:    registers segment, attribute, sort, then appends reconstruct.
+ *               The reconstruct rule reads the source container from
+ *               ExecutionContext::execution_metadata["container"] and writes
+ *               stitched per-channel audio into a SoundFileContainer.
  *
- * @param attribution_context ComputationContext assigned to the attribution grammar rule.
+ * @param attribution_context ComputationContext assigned to the attribution rule.
+ * @param output              Terminal output type for this pipeline.
  * @return Configured GranularMatrix instance.
  */
 [[nodiscard]] MAYAFLUX_API std::shared_ptr<GranularMatrix> make_granular_matrix(
-    ComputationContext attribution_context = ComputationContext::SPECTRAL);
+    ComputationContext attribution_context = ComputationContext::SPECTRAL,
+    GranularOutput output = GranularOutput::REGION_GROUP);
 
 // ============================================================================
 // Free process function
@@ -392,6 +427,60 @@ template <ComputeData InputType, ComputeData OutputType>
     uint32_t channel = 0,
     bool ascending = true,
     uint32_t gpu_sort_threshold = 0);
+
+/**
+ * @brief Offline granular workflow: segment, attribute, sort, reconstruct.
+ *
+ * Runs the full segment → attribute → sort pipeline on @p container, then
+ * stitches the sorted grains per channel into a SoundFileContainer ready
+ * for the standard ContiguousAccessProcessor playback path.
+ *
+ * @param container          Source signal data.
+ * @param grain_size         Samples per grain.
+ * @param hop_size           Hop size between grain onsets.
+ * @param feature_key        Attribute name written onto each grain Region.
+ * @param analysis_type      Analysis category used for attribution.
+ * @param qualifier          Scalar to extract from the analysis result. Empty uses type default.
+ * @param channel            Source channel index.
+ * @param ascending          Sort direction.
+ * @param gpu_sort_threshold Grain count at which SortOp switches to GPU path. 0 = CPU only.
+ * @return Populated SoundFileContainer containing reconstructed audio in sorted grain order.
+ */
+[[nodiscard]] MAYAFLUX_API std::shared_ptr<Kakshya::SoundFileContainer> process_to_container(
+    const std::shared_ptr<Kakshya::SignalSourceContainer>& container,
+    uint32_t grain_size,
+    uint32_t hop_size,
+    const std::string& feature_key,
+    AnalysisType analysis_type,
+    const std::string& qualifier = {},
+    uint32_t channel = 0,
+    bool ascending = true,
+    uint32_t gpu_sort_threshold = 0,
+    ComputationContext attribution_context = ComputationContext::SPECTRAL);
+
+/**
+ * @brief Offline granular workflow using a span-level attribution lambda.
+ *
+ * @param container          Source signal data.
+ * @param grain_size         Samples per grain.
+ * @param hop_size           Hop size between grain onsets.
+ * @param feature_key        Attribute name written onto each grain Region.
+ * @param executor           Lambda receiving grain samples and context, returning a scalar.
+ * @param channel            Source channel index.
+ * @param ascending          Sort direction.
+ * @param gpu_sort_threshold Grain count at which SortOp switches to GPU path. 0 = CPU only.
+ * @return Populated SoundFileContainer containing reconstructed audio in sorted grain order.
+ */
+[[nodiscard]] MAYAFLUX_API std::shared_ptr<Kakshya::SoundFileContainer> process_to_container(
+    const std::shared_ptr<Kakshya::SignalSourceContainer>& container,
+    uint32_t grain_size,
+    uint32_t hop_size,
+    const std::string& feature_key,
+    AttributeExecutor executor,
+    uint32_t channel = 0,
+    bool ascending = true,
+    uint32_t gpu_sort_threshold = 0,
+    ComputationContext attribution_context = ComputationContext::SPECTRAL);
 
 /**
  * @brief Extract raw samples for a grain directly from a container channel.

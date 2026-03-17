@@ -1,30 +1,15 @@
 #include "GranularWorkflow.hpp"
 
-#include "MayaFlux/Journal/Archivist.hpp"
-#include "MayaFlux/Kakshya/Region/Region.hpp"
-#include "MayaFlux/Kakshya/Utils/DataUtils.hpp"
-#include "MayaFlux/Yantra/Executors/ShaderExecutionContext.hpp"
 #include "MayaFlux/Yantra/Sorters/GpuSorter.hpp"
+
+#include "MayaFlux/Kakshya/Source/SoundFileContainer.hpp"
+
+#include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux::Yantra::Granular {
 
 namespace {
 
-    /* std::vector<double> extract_grain_samples(
-        const Kakshya::Region& grain,
-        const std::shared_ptr<Kakshya::SignalSourceContainer>& container,
-        uint32_t channel)
-    {
-        if (!container)
-            return {};
-        auto variants = container->get_region_data(grain);
-        if (channel >= variants.size())
-            return {};
-        auto span = Kakshya::convert_variant<double>(variants[channel]);
-        return { span.begin(), span.end() };
-    } */
-
-    /// Resolve a qualifier string to the canonical default for a given AnalysisType.
     std::string resolve_qualifier(AnalysisType type, const std::string& qualifier)
     {
         if (!qualifier.empty())
@@ -42,6 +27,78 @@ namespace {
                 "resolve_qualifier: no default qualifier for AnalysisType {}",
                 static_cast<int>(type));
         }
+    }
+
+    std::shared_ptr<Kakshya::SoundFileContainer> run_to_container(
+        const std::shared_ptr<Kakshya::SignalSourceContainer>& container,
+        const ExecutionContext& ctx,
+        ComputationContext attribution_context)
+    {
+        auto matrix = make_granular_matrix(attribution_context, GranularOutput::CONTAINER);
+
+        auto seg_op = matrix->get_operation<SegmentOp>("segment");
+        auto attr_op = matrix->get_operation<AttributeOp>("attribute");
+        auto sort_op = matrix->get_operation<SortOp>("sort");
+        apply_context_parameters(seg_op, ctx);
+        apply_context_parameters(attr_op, ctx);
+        apply_context_parameters(sort_op, ctx);
+
+        auto input = make_granular_input(container);
+        auto seg = seg_op->apply_operation(input);
+        auto attr = attr_op->apply_operation(seg);
+        auto sorted = sort_op->apply_operation(attr);
+
+        auto result_any = reconstruct_grains(std::any(sorted), ctx);
+        auto result = safe_any_cast_or_throw<
+            Datum<std::shared_ptr<Kakshya::SignalSourceContainer>>>(result_any);
+
+        return std::dynamic_pointer_cast<Kakshya::SoundFileContainer>(result.data);
+    }
+
+    double extract_scalar_energy(const EnergyAnalysis& ea, const std::string& qualifier)
+    {
+        const std::string q = qualifier.empty() ? "rms" : qualifier;
+        if (ea.channels.empty())
+            return 0.0;
+        const auto& ch = ea.channels[0];
+        if (q == "rms" || q == "mean")
+            return ch.mean_energy;
+        if (q == "peak" || q == "max")
+            return ch.max_energy;
+        if (q == "min")
+            return ch.min_energy;
+        if (q == "variance")
+            return ch.variance;
+        if (q == "dynamic_range")
+            return ch.max_energy - ch.min_energy;
+        if (q == "zero_crossing")
+            return static_cast<double>(ch.event_positions.size());
+        return ch.mean_energy;
+    }
+
+    double extract_scalar_statistical(const StatisticalAnalysis& sa, const std::string& qualifier)
+    {
+        const std::string q = qualifier.empty() ? "mean" : qualifier;
+        if (sa.channel_statistics.empty())
+            return 0.0;
+        const auto& ch = sa.channel_statistics[0];
+        if (q == "mean")
+            return ch.mean_stat;
+        if (q == "std_dev")
+            return ch.stat_std_dev;
+        if (q == "variance")
+            return ch.stat_variance;
+        if (q == "kurtosis")
+            return ch.kurtosis;
+        if (q == "skewness")
+            return ch.skewness;
+        if (q == "median")
+            return ch.median;
+        if (q == "max")
+            return ch.max_stat;
+        if (q == "min")
+            return ch.min_stat;
+        return ch.mean_stat;
     }
 
 } // namespace
@@ -72,6 +129,69 @@ std::vector<double> extract_grain_samples(
     return { full_span.begin() + start, full_span.begin() + clamped_end };
 }
 
+const ComputationGrammar::Rule::Executor reconstruct_grains =
+    [](const std::any& input, const ExecutionContext& ctx) -> std::any {
+    auto datum = safe_any_cast_or_throw<Datum<Kakshya::RegionGroup>>(input);
+
+    const auto& regions = datum.data.regions;
+
+    if (regions.empty()) {
+        error<std::runtime_error>(
+            Journal::Component::Yantra, Journal::Context::ComputeMatrix,
+            std::source_location::current(),
+            "reconstruct_grains: RegionGroup contains no grains");
+    }
+
+    std::shared_ptr<Kakshya::SignalSourceContainer> source;
+
+    if (datum.container && *datum.container) {
+        source = *datum.container;
+    } else if (ctx.execution_metadata.contains("container")) {
+        source = safe_any_cast_or_default<std::shared_ptr<Kakshya::SignalSourceContainer>>(
+            ctx.execution_metadata.at("container"), nullptr);
+    }
+
+    if (!source) {
+        error<std::runtime_error>(
+            Journal::Component::Yantra, Journal::Context::ComputeMatrix,
+            std::source_location::current(),
+            "reconstruct_grains: no source container available via Datum or context");
+    }
+
+    const auto num_channels = static_cast<uint32_t>(source->get_structure().get_channel_count());
+
+    std::vector<std::vector<double>> channel_data(num_channels);
+    for (uint32_t ch = 0; ch < num_channels; ++ch) {
+        for (const auto& grain : regions) {
+            auto variants = source->get_region_data(grain);
+            if (ch >= variants.size())
+                continue;
+            auto span = Kakshya::convert_variant<double>(variants[ch]);
+            channel_data[ch].insert(channel_data[ch].end(),
+                span.begin(), span.end());
+        }
+    }
+
+    const uint64_t total_frames = channel_data[0].size();
+
+    auto out = std::make_shared<Kakshya::SoundFileContainer>(
+        48000, num_channels, total_frames);
+
+    out->get_structure().organization = Kakshya::OrganizationStrategy::PLANAR;
+
+    std::vector<Kakshya::DataVariant> variants;
+    variants.reserve(num_channels);
+    for (auto& ch_vec : channel_data)
+        variants.emplace_back(std::move(ch_vec));
+
+    out->set_raw_data(variants);
+    out->create_default_processor();
+    out->mark_ready_for_processing(true);
+
+    return Datum<std::shared_ptr<Kakshya::SignalSourceContainer>> {
+        std::dynamic_pointer_cast<Kakshya::SignalSourceContainer>(out), {}
+    };
+};
 // ============================================================================
 // SegmentOp
 // ============================================================================
@@ -81,13 +201,14 @@ Datum<Kakshya::RegionGroup> SegmentOp::extract_implementation(
 {
     std::shared_ptr<Kakshya::SignalSourceContainer> container;
 
-    if (input.container && *input.container)
+    if (input.container && *input.container) {
         container = *input.container;
-    else {
+    } else {
         auto param = this->get_parameter("container");
-        if (param.has_value())
+        if (param.has_value()) {
             container = safe_any_cast_or_default<std::shared_ptr<Kakshya::SignalSourceContainer>>(
                 param, nullptr);
+        }
     }
 
     if (!container) {
@@ -112,6 +233,8 @@ Datum<Kakshya::RegionGroup> SegmentOp::extract_implementation(
     }
 
     const auto samples = Kakshya::convert_variant<double>(raw[channel]);
+    const auto& structure = container->get_structure();
+    const auto num_channels = structure.get_channel_count();
     const auto total = static_cast<uint64_t>(samples.size());
 
     Datum<Kakshya::RegionGroup> out { input.data, container };
@@ -121,8 +244,8 @@ Datum<Kakshya::RegionGroup> SegmentOp::extract_implementation(
 
     for (uint64_t onset = 0; onset + grain_size <= total; onset += hop_size) {
         Kakshya::Region grain {
-            std::vector { onset },
-            std::vector { onset + grain_size - 1 }
+            std::vector<uint64_t> { onset, 0 },
+            std::vector<uint64_t> { onset + grain_size - 1, num_channels - 1 }
         };
         grain.set_attribute("onset", static_cast<double>(onset));
         out.data.regions.push_back(std::move(grain));
@@ -220,84 +343,85 @@ double AttributeOp::compute_grain_attribute(
     uint32_t channel,
     const ExecutionContext& ctx) const
 {
-    // Priority 1: span lambda
+    const auto samples = extract_grain_samples(grain, container, channel);
+    if (samples.empty())
+        return 0.0;
+
     if (ctx.execution_metadata.contains("attribute_executor")) {
         auto exec = safe_any_cast_or_default<AttributeExecutor>(
             ctx.execution_metadata.at("attribute_executor"), nullptr);
-        if (exec) {
-            const auto samples = extract_grain_samples(grain, container, channel);
+        if (exec)
             return exec(std::span<const double>(samples.data(), samples.size()), ctx);
-        }
-        // try {
-        //     auto exec_direct = std::any_cast<AttributeExecutor>(
-        //         ctx.execution_metadata.at("attribute_executor"));
-        //     std::cout << "direct cast succeeded\n";
-        //     const auto samples = extract_grain_samples(grain, container, channel);
-        //     return exec_direct(std::span<const double>(samples.data(), samples.size()), ctx);
-        // } catch (const std::bad_any_cast& e) {
-        //     std::cout << "direct cast failed: " << e.what() << "\n";
-        // }
     }
 
-    auto param_exec = this->get_parameter("attribute_executor");
-    if (param_exec.has_value()) {
+    if (auto param_exec = this->get_parameter("attribute_executor"); param_exec.has_value()) {
         auto exec = safe_any_cast_or_default<AttributeExecutor>(param_exec, nullptr);
-        if (exec) {
-            const auto samples = extract_grain_samples(grain, container, channel);
+        if (exec)
             return exec(std::span<const double>(samples.data(), samples.size()), ctx);
-        }
     }
+
+    const std::vector<Kakshya::DataVariant> grain_data {
+        Kakshya::DataVariant(samples)
+    };
+
+    const std::string qualifier = [&]() -> std::string {
+        if (ctx.execution_metadata.contains("analyzer_qualifier")) {
+            return safe_any_cast_or_default<std::string>(
+                ctx.execution_metadata.at("analyzer_qualifier"), {});
+        }
+        auto p = this->get_parameter("analyzer_qualifier");
+        return p.has_value() ? safe_any_cast_or_default<std::string>(p, {}) : std::string {};
+    }();
+
+    const AnalysisType type = [&]() {
+        if (ctx.execution_metadata.contains("analysis_type")) {
+            return safe_any_cast_or_default<AnalysisType>(
+                ctx.execution_metadata.at("analysis_type"), AnalysisType::FEATURE);
+        }
+        auto p = this->get_parameter("analysis_type");
+        return p.has_value()
+            ? safe_any_cast_or_default<AnalysisType>(p, AnalysisType::FEATURE)
+            : AnalysisType::FEATURE;
+    }();
 
     std::shared_ptr<void> raw_analyzer;
-    if (ctx.execution_metadata.contains("analyzer"))
+    if (ctx.execution_metadata.contains("analyzer")) {
         raw_analyzer = safe_any_cast_or_default<std::shared_ptr<void>>(
             ctx.execution_metadata.at("analyzer"), nullptr);
-
+    }
     if (!raw_analyzer) {
         auto p = this->get_parameter("analyzer");
         if (p.has_value())
             raw_analyzer = safe_any_cast_or_default<std::shared_ptr<void>>(p, nullptr);
     }
 
-    const std::string qualifier = [&]() -> std::string {
-        if (ctx.execution_metadata.contains("analyzer_qualifier"))
-            return safe_any_cast_or_default<std::string>(
-                ctx.execution_metadata.at("analyzer_qualifier"), {});
-        auto p = this->get_parameter("analyzer_qualifier");
-        return p.has_value() ? safe_any_cast_or_default<std::string>(p, {}) : std::string {};
-    }();
-
     if (raw_analyzer) {
-        auto analyzer = std::static_pointer_cast<RegionGroupAnalyzer<Kakshya::RegionGroup>>(raw_analyzer);
-        Datum<Kakshya::RegionGroup> grain_datum { Kakshya::RegionGroup {}, container };
-        grain_datum.data.regions.push_back(grain);
-        const auto result = analyzer->analyze_data(grain_datum);
-
-        const AnalysisType type = [&]() {
-            if (ctx.execution_metadata.contains("analysis_type"))
-                return safe_any_cast_or_default<AnalysisType>(
-                    ctx.execution_metadata.at("analysis_type"), AnalysisType::STATISTICAL);
-            return analyzer->get_analysis_type();
-        }();
-
-        return extract_scalar(result, type, qualifier);
+        if (type == AnalysisType::FEATURE) {
+            return extract_scalar_energy(
+                std::static_pointer_cast<VariantEnergyAnalyzer<>>(raw_analyzer)->analyze_energy(grain_data),
+                qualifier);
+        }
+        if (type == AnalysisType::STATISTICAL) {
+            return extract_scalar_statistical(
+                std::static_pointer_cast<VariantStatisticalAnalyzer<>>(raw_analyzer)->analyze_statistics(grain_data),
+                qualifier);
+        }
+        return 0.0;
     }
 
-    AnalysisType type = AnalysisType::STATISTICAL;
-    if (ctx.execution_metadata.contains("analysis_type"))
-        type = safe_any_cast_or_default<AnalysisType>(
-            ctx.execution_metadata.at("analysis_type"), AnalysisType::STATISTICAL);
-    else {
-        auto p = this->get_parameter("analysis_type");
-        if (p.has_value())
-            type = safe_any_cast_or_default<AnalysisType>(p, AnalysisType::STATISTICAL);
+    if (type == AnalysisType::FEATURE) {
+        return extract_scalar_energy(
+            m_energy_analyzer.analyze_energy(grain_data),
+            qualifier);
     }
 
-    auto analyzer = make_default_analyzer(type);
-    Datum<Kakshya::RegionGroup> grain_datum { Kakshya::RegionGroup {}, container };
-    grain_datum.data.regions.push_back(grain);
-    const auto result = analyzer->analyze_data(grain_datum);
-    return extract_scalar(result, type, qualifier);
+    if (type == AnalysisType::STATISTICAL) {
+        return extract_scalar_statistical(
+            m_stat_analyzer.analyze_statistics(grain_data),
+            qualifier);
+    }
+
+    return 0.0;
 }
 
 // ============================================================================
@@ -312,13 +436,14 @@ Datum<Kakshya::RegionGroup> AttributeOp::analyze_implementation(
 
     std::shared_ptr<Kakshya::SignalSourceContainer> container;
 
-    if (input.container && *input.container)
+    if (input.container && *input.container) {
         container = *input.container;
-    else {
+    } else {
         auto param = this->get_parameter("container");
-        if (param.has_value())
+        if (param.has_value()) {
             container = safe_any_cast_or_default<std::shared_ptr<Kakshya::SignalSourceContainer>>(
                 param, nullptr);
+        }
     }
 
     if (!container) {
@@ -462,7 +587,8 @@ const ComputationGrammar::Rule::Executor sort_grains =
 // ============================================================================
 
 std::shared_ptr<GranularMatrix> make_granular_matrix(
-    ComputationContext attribution_context)
+    ComputationContext attribution_context,
+    GranularOutput output)
 {
     auto matrix = std::make_shared<GranularMatrix>();
 
@@ -470,11 +596,39 @@ std::shared_ptr<GranularMatrix> make_granular_matrix(
     matrix->create_operation<AttributeOp>("attribute");
     matrix->create_operation<SortOp>("sort");
 
-    matrix->get_grammar()->create_rule("segment").with_context(ComputationContext::TEMPORAL).with_priority(100).with_description("Fixed hop-size grain segmentation").matches_type<Kakshya::RegionGroup>().executes(segment_grains).build();
+    matrix->get_grammar()->create_rule("segment") //
+        .with_context(ComputationContext::TEMPORAL)
+        .with_priority(100)
+        .with_description("Fixed hop-size grain segmentation")
+        .matches_type<Kakshya::RegionGroup>()
+        .executes(segment_grains)
+        .build();
 
-    matrix->get_grammar()->create_rule("attribute").with_context(attribution_context).with_priority(75).with_description("Per-grain feature attribution via analyzer or lambda").matches_type<Kakshya::RegionGroup>().executes(attribute_grains).build();
+    matrix->get_grammar()->create_rule("attribute") //
+        .with_context(attribution_context)
+        .with_priority(75)
+        .with_description("Per-grain feature attribution via analyzer or lambda")
+        .matches_type<Kakshya::RegionGroup>()
+        .executes(attribute_grains)
+        .build();
 
-    matrix->get_grammar()->create_rule("sort").with_context(ComputationContext::STRUCTURAL).with_priority(50).with_description("Attribute-keyed grain sort, CPU or GPU").matches_type<Kakshya::RegionGroup>().executes(sort_grains).build();
+    matrix->get_grammar()->create_rule("sort") //
+        .with_context(ComputationContext::STRUCTURAL)
+        .with_priority(50)
+        .with_description("Attribute-keyed grain sort, CPU or GPU")
+        .matches_type<Kakshya::RegionGroup>()
+        .executes(sort_grains)
+        .build();
+
+    if (output == GranularOutput::CONTAINER) {
+        matrix->get_grammar()->create_rule("reconstruct") //
+            .with_context(ComputationContext::STRUCTURAL)
+            .with_priority(25)
+            .with_description("Stitch sorted grains into a SoundFileContainer")
+            .matches_type<Kakshya::RegionGroup>()
+            .executes(reconstruct_grains)
+            .build();
+    }
 
     return matrix;
 }
@@ -534,6 +688,55 @@ GranularDatum process(
         .then<AttributeOp>("attribute")
         .then<SortOp>("sort")
         .to_io();
+}
+
+// ============================================================================
+// process_to_container — AnalysisType path
+// ============================================================================
+
+std::shared_ptr<Kakshya::SoundFileContainer> process_to_container(
+    const std::shared_ptr<Kakshya::SignalSourceContainer>& container,
+    uint32_t grain_size,
+    uint32_t hop_size,
+    const std::string& feature_key,
+    AnalysisType analysis_type,
+    const std::string& qualifier,
+    uint32_t channel,
+    bool ascending,
+    uint32_t gpu_sort_threshold,
+    ComputationContext attribution_context)
+{
+    auto ctx = make_granular_context(
+        grain_size, hop_size, feature_key,
+        analysis_type, qualifier,
+        channel, ascending, gpu_sort_threshold);
+    ctx.execution_metadata["container"] = container;
+
+    return run_to_container(container, ctx, attribution_context);
+}
+
+// ============================================================================
+// process_to_container — AttributeExecutor path
+// ============================================================================
+
+std::shared_ptr<Kakshya::SoundFileContainer> process_to_container(
+    const std::shared_ptr<Kakshya::SignalSourceContainer>& container,
+    uint32_t grain_size,
+    uint32_t hop_size,
+    const std::string& feature_key,
+    AttributeExecutor executor,
+    uint32_t channel,
+    bool ascending,
+    uint32_t gpu_sort_threshold,
+    ComputationContext attribution_context)
+{
+    auto ctx = make_granular_context(
+        grain_size, hop_size, feature_key,
+        std::move(executor),
+        channel, ascending, gpu_sort_threshold);
+    ctx.execution_metadata["container"] = container;
+
+    return run_to_container(container, ctx, attribution_context);
 }
 
 } // namespace MayaFlux::Yantra::Granular
