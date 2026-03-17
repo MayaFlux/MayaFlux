@@ -149,10 +149,15 @@ public:
      * @param data Input data
      * @return StatisticalAnalysisResult directly
      */
-    StatisticalAnalysis analyze_statistics(const InputType& data)
+    StatisticalAnalysis analyze_statistics(const input_type& data)
     {
         auto result = this->analyze_data(data);
         return safe_any_cast_or_throw<StatisticalAnalysis>(result);
+    }
+
+    StatisticalAnalysis analyze_statistics(const InputType& data)
+    {
+        return this->analyze_statistics(input_type { data });
     }
 
     /**

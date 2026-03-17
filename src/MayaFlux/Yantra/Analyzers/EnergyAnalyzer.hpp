@@ -129,10 +129,15 @@ public:
      * @param data Input data
      * @return EnergyAnalysis directly
      */
-    EnergyAnalysis analyze_energy(const InputType& data)
+    EnergyAnalysis analyze_energy(const input_type& data)
     {
         auto result = this->analyze_data(data);
         return safe_any_cast_or_throw<EnergyAnalysis>(result);
+    }
+
+    EnergyAnalysis analyze_energy(const InputType& data)
+    {
+        return this->analyze_energy(input_type { data });
     }
 
     /**
