@@ -332,6 +332,38 @@ template <typename T>
 struct is_IO<Datum<T>> : std::true_type { };
 
 /**
+ * @brief Convert a vector of raw values into a vector of Datum wrappers
+ * @tparam T ComputeData type
+ * @param inputs Raw input vector to wrap
+ * @return Vector of Datum containers with inferred structure
+ */
+template <ComputeData T>
+std::vector<Datum<T>> as_io_batch(const std::vector<T>& inputs)
+{
+    std::vector<Datum<T>> wrapped;
+    wrapped.reserve(inputs.size());
+    for (const auto& i : inputs)
+        wrapped.emplace_back(i);
+    return wrapped;
+}
+
+/**
+ * @brief Convert a vector of raw values into a vector of Datum wrappers via move
+ * @tparam T ComputeData type
+ * @param inputs Raw input vector to consume
+ * @return Vector of Datum containers with inferred structure
+ */
+template <ComputeData T>
+std::vector<Datum<T>> as_io_batch(std::vector<T>&& inputs)
+{
+    std::vector<Datum<T>> wrapped;
+    wrapped.reserve(inputs.size());
+    for (auto& i : inputs)
+        wrapped.emplace_back(std::move(i));
+    return wrapped;
+}
+
+/**
  * @concept OperationReadyData
  * @brief Concept to constrain types suitable for operation units
  *

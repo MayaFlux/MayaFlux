@@ -178,11 +178,15 @@ public:
      * @param data Raw input data
      * @return Analysis results as std::any
      */
+    std::any analyze_data(const input_type& data)
+    {
+        m_current_output = this->apply_operation(data);
+        return m_current_analysis;
+    }
+
     std::any analyze_data(const InputType& data)
     {
-        input_type input_io(data);
-        m_current_output = this->apply_operation(input_io);
-        return m_current_analysis;
+        return this->analyze_data(input_type { data });
     }
 
     /**
@@ -190,7 +194,7 @@ public:
      * @param inputs Vector of input data
      * @return Vector of analysis results as std::any
      */
-    std::vector<std::any> analyze_batch(const std::vector<InputType>& inputs)
+    std::vector<std::any> analyze_batch(const std::vector<input_type>& inputs)
     {
         std::vector<std::any> analyses;
         analyses.reserve(inputs.size());
@@ -200,6 +204,11 @@ public:
         }
 
         return analyses;
+    }
+
+    std::vector<std::any> analyze_batch(const std::vector<InputType>& inputs)
+    {
+        return this->analyze_batch(as_io_batch(inputs));
     }
 
     /**

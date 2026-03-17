@@ -143,11 +143,15 @@ public:
      * @param data Input data
      * @return Extracted data directly (no Datum wrapper)
      */
+    OutputType extract_data(const input_type& data)
+    {
+        auto result = operation_function(data);
+        return result.data;
+    }
+
     OutputType extract_data(const InputType& data)
     {
-        input_type wrapped_input(data);
-        auto result = operation_function(wrapped_input);
-        return result.data;
+        return this->extract_data(input_type { data });
     }
 
     /**
@@ -156,7 +160,7 @@ public:
      * @param scope Extraction scope to use
      * @return Extracted output data
      */
-    OutputType extract_with_scope(const InputType& data, ExtractionScope scope)
+    OutputType extract_with_scope(const input_type& data, ExtractionScope scope)
     {
         auto original_scope = m_scope;
         m_scope = scope;
@@ -165,12 +169,17 @@ public:
         return result;
     }
 
+    OutputType extract_with_scope(const InputType& data, ExtractionScope scope)
+    {
+        return this->extract_with_scope(input_type { data }, scope);
+    }
+
     /**
      * @brief Batch extraction for multiple inputs
      * @param inputs Vector of input data
      * @return Vector of extracted results
      */
-    std::vector<OutputType> extract_batch(const std::vector<InputType>& inputs)
+    std::vector<OutputType> extract_batch(const std::vector<input_type>& inputs)
     {
         std::vector<OutputType> results;
         results.reserve(inputs.size());
@@ -180,6 +189,11 @@ public:
         }
 
         return results;
+    }
+
+    std::vector<OutputType> extract_batch(const std::vector<InputType>& inputs)
+    {
+        return this->extract_batch(as_io_batch(inputs));
     }
 
     /**
