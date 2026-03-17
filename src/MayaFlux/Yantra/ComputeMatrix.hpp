@@ -135,12 +135,6 @@ public:
         return execute_operation<OpClass, InputType, OutputType>(operation, input);
     }
 
-    template <typename OpClass, ComputeData InputType, ComputeData OutputType = InputType, typename... Args>
-    std::optional<Datum<OutputType>> execute(const InputType& input, Args&&... args)
-    {
-        return execute<OpClass, InputType, OutputType>(Datum<InputType>(input), std::forward<Args>(args)...);
-    }
-
     /**
      * @brief Execute a named operation from the pool
      * @tparam OpClass Operation class type
@@ -159,12 +153,6 @@ public:
         return execute_operation<OpClass, InputType, OutputType>(operation, input);
     }
 
-    template <typename OpClass, ComputeData InputType, ComputeData OutputType = InputType>
-    std::optional<Datum<OutputType>> execute_named(const std::string& name, const InputType& input)
-    {
-        return execute_named<OpClass, InputType, OutputType>(name, Datum<InputType>(input));
-    }
-
     /**
      * @brief Execute with provided operation instance
      * @tparam OpClass Operation class type
@@ -178,12 +166,6 @@ public:
     std::optional<Datum<OutputType>> execute_with(std::shared_ptr<OpClass> operation, const Datum<InputType>& input)
     {
         return execute_operation<OpClass, InputType, OutputType>(operation, input);
-    }
-
-    template <typename OpClass, ComputeData InputType, ComputeData OutputType = InputType>
-    std::optional<Datum<OutputType>> execute_with(std::shared_ptr<OpClass> operation, const InputType& input)
-    {
-        return execute_with<OpClass, InputType, OutputType>(operation, Datum<InputType>(input));
     }
 
     /**
@@ -203,12 +185,6 @@ public:
         });
     }
 
-    template <typename OpClass, ComputeData InputType, ComputeData OutputType = InputType, typename... Args>
-    std::future<std::optional<Datum<OutputType>>> execute_async(const InputType& input, Args&&... args)
-    {
-        return execute_async<OpClass, InputType, OutputType>(Datum<InputType>(input), std::forward<Args>(args)...);
-    }
-
     /**
      * @brief Execute named operation asynchronously
      */
@@ -218,12 +194,6 @@ public:
         return std::async(std::launch::async, [this, name, input]() {
             return execute_named<OpClass, InputType, OutputType>(name, input);
         });
-    }
-
-    template <typename OpClass, ComputeData InputType, ComputeData OutputType = InputType>
-    std::future<std::optional<Datum<OutputType>>> execute_named_async(const std::string& name, const InputType& input)
-    {
-        return execute_named_async<OpClass, InputType, OutputType>(name, Datum<InputType>(input));
     }
 
     /**
@@ -238,12 +208,6 @@ public:
     {
         return std::make_tuple(
             execute_async<OpClasses, InputType>(input).get()...);
-    }
-
-    template <ComputeData InputType, typename... OpClasses>
-    auto execute_parallel(const InputType& input)
-    {
-        return execute_parallel<InputType, OpClasses...>(Datum<InputType>(input));
     }
 
     /**
@@ -277,14 +241,6 @@ public:
         return results;
     }
 
-    template <typename OpClass, ComputeData InputType, ComputeData OutputType = InputType>
-    std::vector<std::optional<Datum<OutputType>>> execute_parallel_named(
-        const std::vector<std::string>& names,
-        const InputType& input)
-    {
-        return execute_parallel_named<OpClass, InputType, OutputType>(names, Datum<InputType>(input));
-    }
-
     /**
      * @brief Execute operations in sequence (type-safe chain)
      * @tparam FirstOp First operation type
@@ -308,16 +264,6 @@ public:
         return execute<SecondOp, IntermediateType, OutputType>(*first_result);
     }
 
-    template <typename FirstOp, typename SecondOp,
-        ComputeData InputType,
-        ComputeData IntermediateType,
-        ComputeData OutputType>
-    std::optional<Datum<OutputType>> execute_chain(const InputType& input)
-    {
-        return execute_chain<FirstOp, SecondOp, InputType, IntermediateType, OutputType>(
-            Datum<InputType>(input));
-    }
-
     /**
      * @brief Execute named operations in sequence
      */
@@ -335,19 +281,6 @@ public:
             return std::nullopt;
 
         return execute_named<SecondOp, IntermediateType, OutputType>(second_name, *first_result);
-    }
-
-    template <typename FirstOp, typename SecondOp,
-        ComputeData InputType,
-        ComputeData IntermediateType,
-        ComputeData OutputType>
-    std::optional<Datum<OutputType>> execute_chain_named(
-        const std::string& first_name,
-        const std::string& second_name,
-        const InputType& input)
-    {
-        return execute_chain_named<FirstOp, SecondOp, InputType, IntermediateType, OutputType>(
-            first_name, second_name, Datum<InputType>(input));
     }
 
     /**
@@ -376,18 +309,6 @@ public:
         return results;
     }
 
-    template <typename OpClass, ComputeData InputType, ComputeData OutputType = InputType, typename... Args>
-    std::vector<std::optional<Datum<OutputType>>> execute_batch(
-        const std::vector<InputType>& inputs,
-        Args&&... args)
-    {
-        std::vector<Datum<InputType>> wrapped;
-        wrapped.reserve(inputs.size());
-        for (const auto& i : inputs)
-            wrapped.emplace_back(i);
-        return execute_batch<OpClass, InputType, OutputType>(wrapped, std::forward<Args>(args)...);
-    }
-
     /**
      * @brief Execute operation on multiple inputs in parallel
      */
@@ -408,18 +329,6 @@ public:
             });
 
         return results;
-    }
-
-    template <typename OpClass, ComputeData InputType, ComputeData OutputType = InputType, typename... Args>
-    std::vector<std::optional<Datum<OutputType>>> execute_batch_parallel(
-        const std::vector<InputType>& inputs,
-        Args&&... args)
-    {
-        std::vector<Datum<InputType>> wrapped;
-        wrapped.reserve(inputs.size());
-        for (const auto& i : inputs)
-            wrapped.emplace_back(i);
-        return execute_batch_parallel<OpClass, InputType, OutputType>(wrapped, std::forward<Args>(args)...);
     }
 
     /**
