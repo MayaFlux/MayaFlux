@@ -251,7 +251,7 @@ protected:
     }
     std::shared_ptr<ComputeMatrix> matrix;
     std::vector<DataVariant> test_data;
-    std::vector<DataVariant> test_input;
+    Datum<std::vector<DataVariant>> test_input;
 };
 
 TEST_F(MatrixExecutionTest, DirectExecution)
@@ -358,7 +358,7 @@ protected:
     }
     std::shared_ptr<ComputeMatrix> matrix;
     std::vector<DataVariant> test_data;
-    std::vector<DataVariant> test_input;
+    Datum<std::vector<DataVariant>> test_input;
 };
 
 TEST_F(MatrixParallelTest, ParallelNamedExecution)
@@ -403,7 +403,7 @@ protected:
     }
     std::shared_ptr<ComputeMatrix> matrix;
     std::vector<DataVariant> test_data;
-    std::vector<DataVariant> test_input;
+    Datum<std::vector<DataVariant>> test_input;
 };
 
 TEST_F(MatrixChainTest, BasicChainExecution)
@@ -474,13 +474,13 @@ protected:
     {
         matrix = ComputeMatrix::create();
 
-        test_inputs.emplace_back(MatrixTestDataGenerator::create_test_multichannel_signal(2, 128, 1.0));
-        test_inputs.emplace_back(MatrixTestDataGenerator::create_test_multichannel_signal(2, 128, 0.5));
-        test_inputs.emplace_back(MatrixTestDataGenerator::create_ramp_multichannel_signal(2, 128));
+        test_inputs.emplace_back(Datum<std::vector<DataVariant>>(MatrixTestDataGenerator::create_test_multichannel_signal(2, 128, 1.0)));
+        test_inputs.emplace_back(Datum<std::vector<DataVariant>>(MatrixTestDataGenerator::create_test_multichannel_signal(2, 128, 0.5)));
+        test_inputs.emplace_back(Datum<std::vector<DataVariant>>(MatrixTestDataGenerator::create_ramp_multichannel_signal(2, 128)));
     }
 
     std::shared_ptr<ComputeMatrix> matrix;
-    std::vector<std::vector<DataVariant>> test_inputs;
+    std::vector<Datum<std::vector<DataVariant>>> test_inputs;
 };
 
 TEST_F(MatrixBatchTest, SequentialBatchExecution)
@@ -492,11 +492,11 @@ TEST_F(MatrixBatchTest, SequentialBatchExecution)
     for (size_t i = 0; i < results.size(); ++i) {
         if (results[i].has_value()) {
             try {
-                EXPECT_EQ(results[i]->data.size(), test_inputs[i].size()) << "Result " << i << " should preserve channel count";
+                EXPECT_EQ(results[i]->data.size(), test_inputs[i].data.size()) << "Result " << i << " should preserve channel count";
 
                 for (size_t ch = 0; ch < results[i]->data.size(); ++ch) {
                     auto result_channel = std::get<std::vector<double>>(results[i]->data[ch]);
-                    auto input_channel = std::get<std::vector<double>>(test_inputs[i][ch]);
+                    auto input_channel = std::get<std::vector<double>>(test_inputs[i].data[ch]);
                     EXPECT_EQ(result_channel.size(), input_channel.size())
                         << "Result " << i << ", channel " << ch << " should preserve size";
                 }
@@ -516,11 +516,11 @@ TEST_F(MatrixBatchTest, ParallelBatchExecution)
     for (size_t i = 0; i < results.size(); ++i) {
         if (results[i].has_value()) {
             try {
-                EXPECT_EQ(results[i]->data.size(), test_inputs[i].size()) << "Parallel result " << i << " should preserve channel count";
+                EXPECT_EQ(results[i]->data.size(), test_inputs[i].data.size()) << "Parallel result " << i << " should preserve channel count";
 
                 for (size_t ch = 0; ch < results[i]->data.size(); ++ch) {
                     auto result_channel = std::get<std::vector<double>>(results[i]->data[ch]);
-                    auto input_channel = std::get<std::vector<double>>(test_inputs[i][ch]);
+                    auto input_channel = std::get<std::vector<double>>(test_inputs[i].data[ch]);
                     EXPECT_EQ(result_channel.size(), input_channel.size())
                         << "Parallel result " << i << ", channel " << ch << " should preserve size";
                 }
@@ -546,7 +546,7 @@ protected:
 
     std::shared_ptr<ComputeMatrix> matrix;
     std::vector<DataVariant> test_data;
-    std::vector<DataVariant> test_input;
+    Datum<std::vector<DataVariant>> test_input;
 };
 
 TEST_F(MatrixConfigurationTest, ExecutionPolicyConfiguration)
@@ -633,71 +633,6 @@ protected:
 */
 
 // =========================================================================
-// GRAMMAR AWARE COMPUTE MATRIX TESTS
-// =========================================================================
-
-class GrammarAwareMatrixTest : public ::testing::Test {
-protected:
-    void SetUp() override
-    {
-        grammar = MatrixTestDataGenerator::create_test_grammar();
-        grammar_matrix = std::make_unique<GrammarAwareComputeMatrix>(grammar);
-        test_data = MatrixTestDataGenerator::create_test_multichannel_signal();
-        test_input = test_data;
-    }
-    std::shared_ptr<ComputationGrammar> grammar;
-    std::unique_ptr<GrammarAwareComputeMatrix> grammar_matrix;
-    std::vector<DataVariant> test_data;
-    std::vector<DataVariant> test_input;
-};
-
-TEST_F(GrammarAwareMatrixTest, GrammarIntegration)
-{
-    ExecutionContext parametric_ctx;
-    parametric_ctx.execution_metadata["computation_context"] = ComputationContext::PARAMETRIC;
-
-    auto result = grammar_matrix->execute_with_grammar(test_input, parametric_ctx);
-
-    try {
-        EXPECT_EQ(result.data.size(), test_data.size()) << "Should preserve channel count";
-
-        for (size_t ch = 0; ch < result.data.size(); ++ch) {
-            auto original_channel = std::get<std::vector<double>>(test_data[ch]);
-            auto result_channel = std::get<std::vector<double>>(result.data[ch]);
-            EXPECT_EQ(result_channel.size(), original_channel.size()) << "Should preserve channel " << ch << " size";
-
-            bool values_changed = false;
-            for (size_t i = 0; i < std::min(original_channel.size(), result_channel.size()); ++i) {
-                if (std::abs(result_channel[i] - original_channel[i]) > 1e-10) {
-                    values_changed = true;
-                    break;
-                }
-            }
-
-            if (values_changed) {
-                EXPECT_TRUE(true) << "Channel " << ch << " should apply grammar processing";
-            } else {
-                SUCCEED() << "Channel " << ch << " has no detectable changes, possibly all zero values";
-            }
-        }
-    } catch (const std::exception& e) {
-        SUCCEED() << "Grammar-aware execution test failed with: " << e.what();
-    }
-}
-
-TEST_F(GrammarAwareMatrixTest, GrammarManagement)
-{
-    auto original_grammar = grammar_matrix->get_grammar();
-    EXPECT_EQ(original_grammar.get(), grammar.get()) << "Should return original grammar";
-
-    auto new_grammar = std::make_shared<ComputationGrammar>();
-    grammar_matrix->set_grammar(new_grammar);
-
-    auto updated_grammar = grammar_matrix->get_grammar();
-    EXPECT_EQ(updated_grammar.get(), new_grammar.get()) << "Should return updated grammar";
-}
-
-// =========================================================================
 // EDGE CASE AND ERROR HANDLING TESTS
 // =========================================================================
 
@@ -718,7 +653,7 @@ TEST_F(MatrixEdgeCaseTest, NullOperationHandling)
 
 TEST_F(MatrixEdgeCaseTest, EmptyInputProcessing)
 {
-    std::vector<DataVariant> empty_multichannel;
+    Datum<std::vector<DataVariant>> empty_multichannel;
 
     EXPECT_NO_THROW({
         auto result = matrix->execute<MathematicalTransformer<>>(empty_multichannel, MathematicalOperation::GAIN);
@@ -727,10 +662,9 @@ TEST_F(MatrixEdgeCaseTest, EmptyInputProcessing)
 
 TEST_F(MatrixEdgeCaseTest, EmptyChannelProcessing)
 {
-    std::vector<DataVariant> empty_channels = {
+    Datum<std::vector<DataVariant>> empty_channels(std::vector<DataVariant> {
         DataVariant(std::vector<double> {}),
-        DataVariant(std::vector<double> {})
-    };
+        DataVariant(std::vector<double> {}) });
 
     EXPECT_NO_THROW({
         auto result = matrix->execute<MathematicalTransformer<>>(empty_channels, MathematicalOperation::GAIN);
@@ -742,10 +676,9 @@ TEST_F(MatrixEdgeCaseTest, NonexistentOperationAccess)
     auto result = matrix->get_operation<MathematicalTransformer<>>("nonexistent");
     EXPECT_EQ(result, nullptr) << "Should return nullptr for nonexistent operation";
 
-    std::vector<DataVariant> test_multichannel = {
+    Datum<std::vector<DataVariant>> test_multichannel(std::vector<DataVariant> {
         DataVariant(std::vector<double> { 1.0, 2.0 }),
-        DataVariant(std::vector<double> { 3.0, 4.0 })
-    };
+        DataVariant(std::vector<double> { 3.0, 4.0 }) });
 
     auto exec_result = matrix->execute_named<MathematicalTransformer<>, std::vector<DataVariant>>("nonexistent", test_multichannel);
     EXPECT_FALSE(exec_result.has_value()) << "Should fail gracefully for nonexistent operation";
@@ -761,9 +694,8 @@ TEST_F(MatrixEdgeCaseTest, TypeMismatchHandling)
 
 TEST_F(MatrixEdgeCaseTest, SingleChannelToMultiChannelCompatibility)
 {
-    std::vector<DataVariant> single_channel = {
-        DataVariant(std::vector<double> { 1.0, 2.0, 3.0 })
-    };
+    Datum<std::vector<DataVariant>> single_channel(std::vector<DataVariant> {
+        DataVariant(std::vector<double> { 1.0, 2.0, 3.0 }) });
 
     EXPECT_NO_THROW({
         auto result = matrix->execute<MathematicalTransformer<>>(single_channel, MathematicalOperation::GAIN);
@@ -776,11 +708,10 @@ TEST_F(MatrixEdgeCaseTest, SingleChannelToMultiChannelCompatibility)
 
 TEST_F(MatrixEdgeCaseTest, MixedChannelSizeHandling)
 {
-    std::vector<DataVariant> mixed_sizes = {
+    Datum<std::vector<DataVariant>> mixed_sizes(std::vector<DataVariant> {
         DataVariant(std::vector<double>(256, 0.5)),
         DataVariant(std::vector<double>(128, 0.3)),
-        DataVariant(std::vector<double>(512, 0.7))
-    };
+        DataVariant(std::vector<double>(512, 0.7)) });
 
     EXPECT_NO_THROW({
         auto result = matrix->execute<MathematicalTransformer<>>(mixed_sizes, MathematicalOperation::GAIN);
@@ -819,7 +750,7 @@ protected:
 
     std::shared_ptr<ComputeMatrix> matrix;
     std::vector<DataVariant> large_data;
-    std::vector<DataVariant> large_input;
+    Datum<std::vector<DataVariant>> large_input;
 };
 
 TEST_F(MatrixPerformanceTest, LargeDataProcessing)
@@ -928,7 +859,7 @@ TEST_F(MatrixPerformanceTest, StatisticsAccuracy)
 
 TEST_F(MatrixPerformanceTest, HighChannelCountPerformance)
 {
-    auto high_channel_data = MatrixTestDataGenerator::create_test_multichannel_signal(16, 1024, 1.0);
+    Datum<std::vector<DataVariant>> high_channel_data(MatrixTestDataGenerator::create_test_multichannel_signal(16, 1024, 1.0));
 
     auto start = std::chrono::high_resolution_clock::now();
     auto result = matrix->execute<MathematicalTransformer<>, std::vector<DataVariant>>(high_channel_data, MathematicalOperation::GAIN);
@@ -951,9 +882,9 @@ TEST_F(MatrixPerformanceTest, HighChannelCountPerformance)
 
 TEST_F(MatrixPerformanceTest, BatchPerformanceScaling)
 {
-    std::vector<std::vector<DataVariant>> batch_inputs;
+    std::vector<Datum<std::vector<DataVariant>>> batch_inputs;
     for (int i = 0; i < 8; ++i) {
-        batch_inputs.push_back(MatrixTestDataGenerator::create_test_multichannel_signal(2, 1024, 0.5 + i * 0.1));
+        batch_inputs.emplace_back(MatrixTestDataGenerator::create_test_multichannel_signal(2, 1024, 0.5 + i * 0.1));
     }
 
     auto start = std::chrono::high_resolution_clock::now();
@@ -986,7 +917,7 @@ protected:
     }
     std::shared_ptr<ComputeMatrix> matrix;
     std::vector<DataVariant> test_data;
-    std::vector<DataVariant> test_input;
+    Datum<std::vector<DataVariant>> test_input;
 };
 
 TEST_F(MatrixIntegrationTest, MultipleTransformerTypes)
@@ -1045,7 +976,8 @@ TEST_F(MatrixIntegrationTest, ChainWithDifferentOperationTypes)
     EXPECT_TRUE(intermediate.has_value()) << "First operation in chain should succeed";
 
     if (intermediate.has_value()) {
-        auto final_result = matrix->execute_named<TemporalTransformer<>, std::vector<DataVariant>>("chain_temporal", intermediate->data);
+        auto final_result = matrix->execute_named<TemporalTransformer<>, std::vector<DataVariant>>("chain_temporal", *intermediate);
+
         EXPECT_TRUE(final_result.has_value()) << "Second operation in chain should succeed";
 
         try {
@@ -1176,7 +1108,7 @@ protected:
 
     std::shared_ptr<ComputeMatrix> matrix;
     std::vector<DataVariant> test_data;
-    std::vector<DataVariant> test_input;
+    Datum<std::vector<DataVariant>> test_input;
 };
 
 TEST_F(MatrixResilienceTest, TimeoutConfiguration)
@@ -1242,11 +1174,10 @@ TEST_F(MatrixResilienceTest, StatisticsAfterErrors)
 
 TEST_F(MatrixResilienceTest, MultiChannelErrorHandling)
 {
-    std::vector<DataVariant> empty_multichannel;
-    std::vector<DataVariant> empty_channels = {
+    Datum<std::vector<DataVariant>> empty_multichannel;
+    Datum<std::vector<DataVariant>> empty_channels(std::vector<DataVariant> {
         DataVariant(std::vector<double> {}),
-        DataVariant(std::vector<double> {})
-    };
+        DataVariant(std::vector<double> {}) });
 
     EXPECT_NO_THROW({
         auto result1 = matrix->execute<MathematicalTransformer<>>(empty_multichannel, MathematicalOperation::GAIN);

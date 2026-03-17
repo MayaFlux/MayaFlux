@@ -416,7 +416,7 @@ TEST_F(GrammarAwareComputeMatrixTest, ExecuteWithGrammar)
 {
     auto parametric_ctx = PipelineTestDataGenerator::create_test_context(ComputationContext::PARAMETRIC);
 
-    auto result = matrix->execute_with_grammar(test_data, parametric_ctx);
+    auto result = matrix->execute_with_grammar(Datum { test_data }, parametric_ctx);
 
     try {
         EXPECT_EQ(result.data.size(), test_data.size()) << "Should preserve channel count";
