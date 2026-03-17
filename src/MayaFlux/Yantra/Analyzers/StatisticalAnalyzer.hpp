@@ -354,8 +354,14 @@ protected:
      */
     output_type analyze_implementation(const input_type& input) override
     {
-        if (input.data.empty()) {
-            error<std::runtime_error>(Journal::Component::Yantra, Journal::Context::ComputeMatrix, std::source_location::current(), "Input is empty");
+        if constexpr (requires { input.data.empty(); }) {
+            if (input.data.empty()) {
+                error<std::runtime_error>(Journal::Component::Yantra, Journal::Context::ComputeMatrix, std::source_location::current(), "Input is empty");
+            }
+        } else if constexpr (std::is_same_v<InputType, Kakshya::RegionGroup>) {
+            if (input.data.regions.empty()) {
+                error<std::runtime_error>(Journal::Component::Yantra, Journal::Context::ComputeMatrix, std::source_location::current(), "Input is empty");
+            }
         }
         try {
             auto [data_span, structure_info] = OperationHelper::extract_structured_double(
