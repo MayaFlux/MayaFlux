@@ -305,7 +305,7 @@ template <typename ExceptionType = std::runtime_error, typename... Args>
  * @param location The source location (file, line, function) of the log call.
  * @param additional_context Optional additional context to prepend to the exception message.
  */
-inline void error_rethrow(Component component, Context context,
+[[noreturn]] inline void error_rethrow(Component component, Context context,
     std::source_location location = std::source_location::current(),
     std::string_view additional_context = "")
 {
@@ -345,13 +345,12 @@ inline void error_rethrow(Component component, Context context,
  * @param args       The format arguments.
  */
 template <typename... Args>
-inline void error_rethrow(Component component, Context context,
+[[noreturn]] inline void error_rethrow(Component component, Context context,
     std::source_location location, const char* fmt_str, Args&&... args)
 {
     if constexpr (sizeof...(Args) == 0) {
         error_rethrow(component, context, location,
             std::string_view(fmt_str));
-        return;
     }
     auto additional_context = format_runtime(fmt_str, std::forward<Args>(args)...);
     error_rethrow(component, context, location, additional_context);

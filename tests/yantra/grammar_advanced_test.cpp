@@ -318,7 +318,7 @@ protected:
         grammar = std::make_shared<ComputationGrammar>();
     }
 
-    std::vector<DataVariant> signal;
+    Datum<std::vector<DataVariant>> signal;
     std::shared_ptr<ComputationGrammar> grammar;
 };
 
@@ -336,7 +336,7 @@ TEST_F(GrammarAwareMatrixTest, ExecuteWithGrammarAppliesMatchingRule)
     auto ctx = make_context(ComputationContext::PARAMETRIC);
     auto result = matrix.execute_with_grammar(signal, ctx);
 
-    ASSERT_EQ(result.data.size(), signal.size());
+    ASSERT_EQ(result.data.size(), signal.data.size());
     EXPECT_NEAR(channel_peak(result, 0), 1.0, 1e-9)
         << "matching gain rule should double the 0.5 amplitude signal";
 }
@@ -355,7 +355,7 @@ TEST_F(GrammarAwareMatrixTest, ExecuteWithGrammarNoMatchReturnsOriginal)
     auto ctx = make_context(ComputationContext::TEMPORAL);
     auto result = matrix.execute_with_grammar(signal, ctx);
 
-    ASSERT_EQ(result.data.size(), signal.size());
+    ASSERT_EQ(result.data.size(), signal.data.size());
     EXPECT_NEAR(channel_peak(result, 0), 0.5, 1e-9)
         << "no matching rule: original data should pass through unchanged";
 }

@@ -481,15 +481,16 @@ public:
      *       ComputeMatrix methods for actual operation execution.
      */
     template <ComputeData InputType>
-    auto execute_with_grammar(const InputType& input, const ExecutionContext& context = {})
+    Datum<InputType> execute_with_grammar(const Datum<InputType>& input, const ExecutionContext& context = {})
     {
-        Datum<InputType> input_data { input };
+        static_assert(sizeof(Datum<InputType>) > 0, "Datum incomplete");
+        Datum<InputType> current = input;
 
-        if (auto best_rule = m_grammar->find_best_match(input_data, context)) {
-            if (auto rule_result = m_grammar->execute_rule(best_rule->name, input_data, context)) {
+        if (auto best_rule = m_grammar->find_best_match(current, context)) {
+            if (auto rule_result = m_grammar->execute_rule(best_rule->name, current, context)) {
                 auto cast_result = safe_any_cast<Datum<InputType>>(*rule_result);
                 if (cast_result) {
-                    input_data = *cast_result.value;
+                    current = *cast_result.value;
                 } else {
                     MF_WARN(
                         Journal::Component::Yantra,
@@ -501,7 +502,7 @@ public:
             }
         }
 
-        return input_data;
+        return current;
     }
 
     /**
