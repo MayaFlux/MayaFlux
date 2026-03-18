@@ -35,10 +35,14 @@ using GranularContainerDatum = Datum<std::shared_ptr<Kakshya::SignalSourceContai
  * CONTAINER    — appends a reconstruct rule that stitches sorted grains into
  *               a SoundFileContainer. Use for the offline playback workflow
  *               where container-in container-out is all that is needed.
+ *
+ * CONTAINER_ADDITIVE — overlap-add reconstruct: grains accumulated at hop_size
+ *                      intervals with optional per-grain tapering.
  */
 enum class GranularOutput : uint8_t {
     REGION_GROUP,
     CONTAINER,
+    CONTAINER_ADDITIVE
 };
 
 /**
@@ -56,8 +60,24 @@ using GranularMatrix = GrammarAwareComputeMatrix;
  */
 using AttributeExecutor = std::function<double(std::span<const double>, const ExecutionContext&)>;
 
+/**
+ * @brief Per-grain taper applied before accumulation in OLA reconstruction.
+ *
+ * Receives a mutable span covering exactly one grain's samples for one channel.
+ * Applied in-place before the grain is added to the output buffer.
+ * Pass {} or nullptr to skip tapering entirely.
+ *
+ * Common use:
+ *   [](std::span<double> g){ Kinesis::Discrete::apply_hann(g); }
+ *   [](std::span<double> g){ Kinesis::Discrete::apply_trapezoid(g, g.size() / 8); }
+ */
+using GrainTaper = std::function<void(std::span<double>)>;
+
 /// @brief Grammar rule executor for the reconstruction step.
 extern const ComputationGrammar::Rule::Executor reconstruct_grains;
+
+/// @brief Grammar rule executor for additive grain reconstruction.
+extern const ComputationGrammar::Rule::Executor reconstruct_grains_additive;
 
 // ============================================================================
 // Concrete operations
@@ -360,18 +380,20 @@ template <ComputeData InputType, ComputeData OutputType>
  *        requested output type.
  *
  * REGION_GROUP: registers segment, attribute, sort (existing behaviour).
- * CONTAINER:    registers segment, attribute, sort, then appends reconstruct.
- *               The reconstruct rule reads the source container from
- *               ExecutionContext::execution_metadata["container"] and writes
- *               stitched per-channel audio into a SoundFileContainer.
+ * CONTAINER: registers segment, attribute, sort, then appends reconstruct.
+ *            The reconstruct rule reads the source container from
+ *            ExecutionContext::execution_metadata["container"] and writes
+ *            stitched per-channel audio into a SoundFileContainer.
+ * CONTAINER_ADDITIVE: same as CONTAINER but uses an overlap-add reconstruct rule
  *
  * @param attribution_context ComputationContext assigned to the attribution rule.
  * @param output              Terminal output type for this pipeline.
+ * @param taper               Optional per-grain taper for OLA output.
  * @return Configured GranularMatrix instance.
  */
 [[nodiscard]] MAYAFLUX_API std::shared_ptr<GranularMatrix> make_granular_matrix(
     ComputationContext attribution_context = ComputationContext::SPECTRAL,
-    GranularOutput output = GranularOutput::REGION_GROUP);
+    GranularOutput output = GranularOutput::REGION_GROUP, GrainTaper taper = {});
 
 // ============================================================================
 // Free process function
@@ -481,6 +503,39 @@ template <ComputeData InputType, ComputeData OutputType>
     bool ascending = true,
     uint32_t gpu_sort_threshold = 0,
     ComputationContext attribution_context = ComputationContext::SPECTRAL);
+
+/**
+ * @brief Offline granular workflow with OLA reconstruction.
+ *
+ * Runs segment → attribute → sort → overlap-add reconstruct.
+ * Grains are accumulated at hop_size intervals; @p taper is applied
+ * to each grain before accumulation.
+ *
+ * @param container          Source signal data.
+ * @param grain_size         Samples per grain.
+ * @param hop_size           Hop size between grain onsets.
+ * @param feature_key        Attribute name written onto each grain Region.
+ * @param analysis_type      Analysis category used for attribution.
+ * @param qualifier          Scalar to extract. Empty uses type default.
+ * @param channel            Source channel index.
+ * @param ascending          Sort direction.
+ * @param gpu_sort_threshold Grain count at which SortOp switches to GPU path.
+ * @param attribution_context ComputationContext for the attribution rule.
+ * @param taper              Optional per-grain taper. Pass {} for none.
+ * @return Populated SoundFileContainer with overlap-added audio.
+ */
+[[nodiscard]] MAYAFLUX_API std::shared_ptr<Kakshya::SoundFileContainer> process_to_container_additive(
+    const std::shared_ptr<Kakshya::SignalSourceContainer>& container,
+    uint32_t grain_size,
+    uint32_t hop_size,
+    const std::string& feature_key,
+    AnalysisType analysis_type,
+    const std::string& qualifier = {},
+    uint32_t channel = 0,
+    bool ascending = true,
+    uint32_t gpu_sort_threshold = 0,
+    ComputationContext attribution_context = ComputationContext::SPECTRAL,
+    GrainTaper taper = {});
 
 /**
  * @brief Extract raw samples for a grain directly from a container channel.
