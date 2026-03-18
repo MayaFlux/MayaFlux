@@ -110,27 +110,19 @@ std::vector<double> extract_grain_samples(
 {
     if (!container)
         return {};
-    const auto& raw = container->get_data();
-    if (channel >= raw.size())
+
+    auto variants = container->get_region_data(grain);
+
+    if (channel >= variants.size())
         return {};
 
-    auto full_span = Kakshya::convert_variant<double>(raw[channel]);
-
-    if (grain.start_coordinates.empty() || grain.end_coordinates.empty())
-        return {};
-
-    const auto start = static_cast<size_t>(grain.start_coordinates[0]);
-    const auto end = static_cast<size_t>(grain.end_coordinates[0]);
-
-    if (start >= full_span.size())
-        return {};
-
-    const auto clamped_end = std::min(end + 1, full_span.size());
-    return { full_span.begin() + start, full_span.begin() + clamped_end };
+    std::vector<double> storage;
+    auto sp = Kakshya::extract_from_variant<double>(variants[channel], storage);
+    return storage;
 }
 
 const ComputationGrammar::Rule::Executor reconstruct_grains =
-    [](const std::any& input, const ExecutionContext& ctx) -> std::any {
+    [](const std::any& input, const ExecutionContext& /*ctx*/) -> std::any {
     auto datum = safe_any_cast_or_throw<Datum<Kakshya::RegionGroup>>(input);
 
     const auto& regions = datum.data.regions;
@@ -144,31 +136,35 @@ const ComputationGrammar::Rule::Executor reconstruct_grains =
 
     std::shared_ptr<Kakshya::SignalSourceContainer> source;
 
-    if (datum.container && *datum.container) {
+    if (datum.container && *datum.container)
         source = *datum.container;
-    } else if (ctx.execution_metadata.contains("container")) {
-        source = safe_any_cast_or_default<std::shared_ptr<Kakshya::SignalSourceContainer>>(
-            ctx.execution_metadata.at("container"), nullptr);
-    }
 
     if (!source) {
         error<std::runtime_error>(
             Journal::Component::Yantra, Journal::Context::ComputeMatrix,
             std::source_location::current(),
-            "reconstruct_grains: no source container available via Datum or context");
+            "reconstruct_grains: no source container in datum");
     }
 
     const auto num_channels = static_cast<uint32_t>(source->get_structure().get_channel_count());
+    const auto grain_size = static_cast<size_t>(
+        safe_any_cast_or_default<uint32_t>(
+            datum.data.get_attribute<uint32_t>("grain_size").has_value()
+                ? std::any(datum.data.get_attribute<uint32_t>("grain_size").value())
+                : std::any {},
+            1024U));
 
     std::vector<std::vector<double>> channel_data(num_channels);
-    for (uint32_t ch = 0; ch < num_channels; ++ch) {
-        for (const auto& grain : regions) {
-            auto variants = source->get_region_data(grain);
+    for (uint32_t ch = 0; ch < num_channels; ++ch)
+        channel_data[ch].reserve(regions.size() * grain_size);
+
+    for (const auto& grain : regions) {
+        auto variants = source->get_region_data(grain);
+        for (uint32_t ch = 0; ch < num_channels; ++ch) {
             if (ch >= variants.size())
                 continue;
             auto span = Kakshya::convert_variant<double>(variants[ch]);
-            channel_data[ch].insert(channel_data[ch].end(),
-                span.begin(), span.end());
+            channel_data[ch].insert(channel_data[ch].end(), span.begin(), span.end());
         }
     }
 
@@ -192,6 +188,7 @@ const ComputationGrammar::Rule::Executor reconstruct_grains =
         std::dynamic_pointer_cast<Kakshya::SignalSourceContainer>(out), {}
     };
 };
+
 // ============================================================================
 // SegmentOp
 // ============================================================================
@@ -343,26 +340,24 @@ double AttributeOp::compute_grain_attribute(
     uint32_t channel,
     const ExecutionContext& ctx) const
 {
-    const auto samples = extract_grain_samples(grain, container, channel);
-    if (samples.empty())
-        return 0.0;
+    AttributeExecutor exec;
 
     if (ctx.execution_metadata.contains("attribute_executor")) {
-        auto exec = safe_any_cast_or_default<AttributeExecutor>(
+        exec = safe_any_cast_or_default<AttributeExecutor>(
             ctx.execution_metadata.at("attribute_executor"), nullptr);
-        if (exec)
-            return exec(std::span<const double>(samples.data(), samples.size()), ctx);
     }
 
-    if (auto param_exec = this->get_parameter("attribute_executor"); param_exec.has_value()) {
-        auto exec = safe_any_cast_or_default<AttributeExecutor>(param_exec, nullptr);
-        if (exec)
-            return exec(std::span<const double>(samples.data(), samples.size()), ctx);
+    if (!exec) {
+        if (auto p = this->get_parameter("attribute_executor"); p.has_value())
+            exec = safe_any_cast_or_default<AttributeExecutor>(p, nullptr);
     }
 
-    const std::vector<Kakshya::DataVariant> grain_data {
-        Kakshya::DataVariant(samples)
-    };
+    if (exec) {
+        const auto samples = extract_grain_samples(grain, container, channel);
+        return exec(std::span<const double>(samples.data(), samples.size()), ctx);
+    }
+
+    const auto grain_variants = container->get_region_data(grain);
 
     const std::string qualifier = [&]() -> std::string {
         if (ctx.execution_metadata.contains("analyzer_qualifier")) {
@@ -378,6 +373,7 @@ double AttributeOp::compute_grain_attribute(
             return safe_any_cast_or_default<AnalysisType>(
                 ctx.execution_metadata.at("analysis_type"), AnalysisType::FEATURE);
         }
+
         auto p = this->get_parameter("analysis_type");
         return p.has_value()
             ? safe_any_cast_or_default<AnalysisType>(p, AnalysisType::FEATURE)
@@ -389,21 +385,24 @@ double AttributeOp::compute_grain_attribute(
         raw_analyzer = safe_any_cast_or_default<std::shared_ptr<void>>(
             ctx.execution_metadata.at("analyzer"), nullptr);
     }
+
     if (!raw_analyzer) {
-        auto p = this->get_parameter("analyzer");
-        if (p.has_value())
+        if (auto p = this->get_parameter("analyzer"); p.has_value())
             raw_analyzer = safe_any_cast_or_default<std::shared_ptr<void>>(p, nullptr);
     }
 
     if (raw_analyzer) {
         if (type == AnalysisType::FEATURE) {
             return extract_scalar_energy(
-                std::static_pointer_cast<VariantEnergyAnalyzer<>>(raw_analyzer)->analyze_energy(grain_data),
+                std::static_pointer_cast<VariantEnergyAnalyzer<>>(raw_analyzer)
+                    ->analyze_energy(grain_variants),
                 qualifier);
         }
+
         if (type == AnalysisType::STATISTICAL) {
             return extract_scalar_statistical(
-                std::static_pointer_cast<VariantStatisticalAnalyzer<>>(raw_analyzer)->analyze_statistics(grain_data),
+                std::static_pointer_cast<VariantStatisticalAnalyzer<>>(raw_analyzer)
+                    ->analyze_statistics(grain_variants),
                 qualifier);
         }
         return 0.0;
@@ -411,14 +410,12 @@ double AttributeOp::compute_grain_attribute(
 
     if (type == AnalysisType::FEATURE) {
         return extract_scalar_energy(
-            m_energy_analyzer.analyze_energy(grain_data),
-            qualifier);
+            m_energy_analyzer.analyze_energy(grain_variants), qualifier);
     }
 
     if (type == AnalysisType::STATISTICAL) {
         return extract_scalar_statistical(
-            m_stat_analyzer.analyze_statistics(grain_data),
-            qualifier);
+            m_stat_analyzer.analyze_statistics(grain_variants), qualifier);
     }
 
     return 0.0;
@@ -653,7 +650,6 @@ GranularDatum process(
         grain_size, hop_size, feature_key,
         analysis_type, qualifier,
         channel, ascending, gpu_sort_threshold);
-    ctx.execution_metadata["container"] = container;
 
     return matrix->with(make_granular_input(container))
         .then<SegmentOp>("segment")
@@ -681,7 +677,6 @@ GranularDatum process(
         grain_size, hop_size, feature_key,
         std::move(executor),
         channel, ascending, gpu_sort_threshold);
-    ctx.execution_metadata["container"] = container;
 
     return matrix->with(make_granular_input(container))
         .then<SegmentOp>("segment")
