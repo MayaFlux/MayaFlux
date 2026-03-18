@@ -9,6 +9,24 @@
 
 namespace MayaFlux::Kakshya {
 
+/**
+ * @brief Per-region taper applied in-place before the write callback is invoked.
+ *
+ * Receives a mutable span covering exactly one region's samples for one channel.
+ * Applied after extraction, before the write function is called.
+ * Pass {} or nullptr to skip tapering entirely.
+ */
+using RegionTaper = std::function<void(std::span<double>)>;
+
+/**
+ * @brief Callback invoked once per region per channel during iteration.
+ *
+ * Receives the region index, channel index, and a mutable span of extracted
+ * (and optionally tapered) samples. Responsible for writing those samples
+ * into the caller's output buffer.
+ */
+using RegionWriteFn = std::function<void(size_t region_idx, uint32_t channel, std::span<double>)>;
+
 /** @brief Remove the channel dimension from a Region.
  * @param region The original Region.
  * @param dimensions Dimension descriptors to identify the channel dimension.
@@ -731,5 +749,28 @@ template <typename T>
 
     return extract_region_data<T>(src, clamped, dims);
 }
+
+/**
+ * @brief Iterate over a set of regions, extracting per-channel samples and
+ *        dispatching them to a write callback.
+ *
+ * For each region in @p regions and each channel in [0, @p num_channels),
+ * extracts double samples via get_region_data, optionally applies @p taper
+ * in-place, then calls @p write_fn with the region index, channel index,
+ * and sample span. Regions or channels that yield empty data are silently
+ * skipped.
+ *
+ * @param regions      Ordered set of regions to iterate.
+ * @param source       Container supplying the sample data.
+ * @param num_channels Number of channels to extract per region.
+ * @param taper        Optional in-place taper. Pass {} to skip.
+ * @param write_fn     Callback receiving (region_idx, channel, samples).
+ */
+MAYAFLUX_API void iterate_region_channels(
+    const std::vector<Region>& regions,
+    const std::shared_ptr<SignalSourceContainer>& source,
+    uint32_t num_channels,
+    const RegionTaper& taper,
+    const RegionWriteFn& write_fn);
 
 }

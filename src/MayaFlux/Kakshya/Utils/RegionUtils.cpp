@@ -1,4 +1,5 @@
 #include "RegionUtils.hpp"
+#include "DataUtils.hpp"
 
 namespace MayaFlux::Kakshya {
 
@@ -432,5 +433,28 @@ bool regions_intersect(const Region& r1, const Region& r2) noexcept
             return false;
     }
     return true;
+}
+
+void iterate_region_channels(
+    const std::vector<Region>& regions,
+    const std::shared_ptr<SignalSourceContainer>& source,
+    uint32_t num_channels,
+    const RegionTaper& taper,
+    const RegionWriteFn& write_fn)
+{
+    for (size_t ri = 0; ri < regions.size(); ++ri) {
+        auto variants = source->get_region_data(regions[ri]);
+        for (uint32_t ch = 0; ch < num_channels; ++ch) {
+            if (ch >= variants.size())
+                continue;
+            std::vector<double> storage;
+            extract_from_variant<double>(variants[ch], storage);
+            if (storage.empty())
+                continue;
+            if (taper)
+                taper(std::span<double>(storage.data(), storage.size()));
+            write_fn(ri, ch, std::span<double>(storage.data(), storage.size()));
+        }
+    }
 }
 }

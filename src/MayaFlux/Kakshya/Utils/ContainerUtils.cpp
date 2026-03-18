@@ -153,6 +153,24 @@ DataVariant extract_channel_data(const std::shared_ptr<SignalSourceContainer>& c
     return DataVariant { std::move(channel_data) };
 }
 
+std::vector<double> extract_region_channel(
+    const Region& region,
+    const std::shared_ptr<SignalSourceContainer>& container,
+    uint32_t channel)
+{
+    if (!container)
+        return {};
+
+    auto variants = container->get_region_data(region);
+
+    if (channel >= variants.size())
+        return {};
+
+    std::vector<double> storage;
+    Kakshya::extract_from_variant<double>(variants[channel], storage);
+    return storage;
+}
+
 std::pair<std::shared_ptr<SignalSourceContainer>, std::vector<DataDimension>>
 validate_container_for_analysis(const std::shared_ptr<SignalSourceContainer>& container)
 {

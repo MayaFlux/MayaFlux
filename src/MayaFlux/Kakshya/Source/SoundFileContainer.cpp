@@ -47,4 +47,32 @@ double SoundFileContainer::get_duration_seconds() const
     return position_to_time(m_num_frames);
 }
 
+std::shared_ptr<SoundFileContainer> make_sound_file_container(
+    std::vector<std::vector<double>> channel_data,
+    uint32_t num_channels,
+    uint32_t sample_rate,
+    OrganizationStrategy org)
+{
+    if (channel_data.empty() || channel_data[0].size() == 0 || num_channels != channel_data.size()) {
+        error<std::invalid_argument>(
+            Journal::Component::Kakshya, Journal::Context::Configuration,
+            std::source_location::current(),
+            "build_sound_file_container: channel_data must be non-empty and match num_channels");
+    }
+
+    auto sc = std::make_shared<SoundFileContainer>();
+    sc->setup(channel_data[0].size(), sample_rate, num_channels);
+    sc->get_structure().organization = org;
+
+    std::vector<DataVariant> variants;
+    variants.reserve(num_channels);
+    for (auto& ch : channel_data)
+        variants.emplace_back(std::move(ch));
+
+    sc->set_raw_data(variants);
+    sc->create_default_processor();
+    sc->mark_ready_for_processing(true);
+    return sc;
+}
+
 } // namespace MayaFlux::Kakshya

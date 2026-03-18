@@ -694,4 +694,59 @@ using RawStatisticalAnalyzer = StatisticalAnalyzer<InputType, std::vector<std::v
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>>
 using VariantStatisticalAnalyzer = StatisticalAnalyzer<InputType, Kakshya::DataVariant>;
 
+/**
+ * @brief Extract a named scalar from a StatisticalAnalysis result.
+ *
+ * Maps qualifier strings to scalar fields of the first channel in @p analysis.
+ * All scalar-valued fields of ChannelStatistics are addressable.
+ *
+ * Supported qualifiers:
+ * - "mean_stat"    arithmetic mean of the statistical values
+ * - "max_stat"     maximum statistical value
+ * - "min_stat"     minimum statistical value
+ * - "variance"     variance of the statistical values
+ * - "std_dev"      standard deviation
+ * - "skewness"     third moment
+ * - "kurtosis"     fourth moment
+ * - "median"       50th percentile
+ * - "window_count" number of analysis windows
+ *
+ * An empty qualifier resolves to "mean_stat".
+ * Unknown qualifiers fall back to mean_stat.
+ *
+ * @param analysis  Result produced by StatisticalAnalyzer.
+ * @param qualifier Name of the scalar to extract.
+ * @return Extracted double value, or 0.0 if channel_statistics is empty.
+ */
+[[nodiscard]] MAYAFLUX_API inline double extract_scalar_statistics(
+    const StatisticalAnalysis& analysis, const std::string& qualifier)
+{
+    if (analysis.channel_statistics.empty())
+        return 0.0;
+
+    const auto& ch = analysis.channel_statistics[0];
+    const std::string q = qualifier.empty() ? "mean_stat" : qualifier;
+
+    if (q == "mean_stat")
+        return ch.mean_stat;
+    if (q == "max_stat")
+        return ch.max_stat;
+    if (q == "min_stat")
+        return ch.min_stat;
+    if (q == "variance")
+        return ch.stat_variance;
+    if (q == "std_dev")
+        return ch.stat_std_dev;
+    if (q == "skewness")
+        return ch.skewness;
+    if (q == "kurtosis")
+        return ch.kurtosis;
+    if (q == "median")
+        return ch.median;
+    if (q == "window_count")
+        return static_cast<double>(ch.statistical_values.size());
+
+    return ch.mean_stat;
+}
+
 } // namespace MayaFlux::Yantra

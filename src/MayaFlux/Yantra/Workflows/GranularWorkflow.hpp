@@ -8,6 +8,8 @@
 #include "MayaFlux/Yantra/Extractors/FeatureExtractor.hpp"
 #include "MayaFlux/Yantra/Sorters/StandardSorter.hpp"
 
+#include "MayaFlux/Kakshya/Utils/RegionUtils.hpp"
+
 namespace MayaFlux::Kakshya {
 class SoundFileContainer;
 }
@@ -71,7 +73,7 @@ using AttributeExecutor = std::function<double(std::span<const double>, const Ex
  *   [](std::span<double> g){ Kinesis::Discrete::apply_hann(g); }
  *   [](std::span<double> g){ Kinesis::Discrete::apply_trapezoid(g, g.size() / 8); }
  */
-using GrainTaper = std::function<void(std::span<double>)>;
+using GrainTaper = Kakshya::RegionTaper;
 
 /// @brief Grammar rule executor for the reconstruction step.
 extern const ComputationGrammar::Rule::Executor reconstruct_grains;
@@ -122,14 +124,14 @@ protected:
  *
  * Attribution is resolved in the following priority order:
  *
- * 1. Span lambda — set via set_parameter("attribute_executor", AttributeExecutor)
+ * 1. Span lambda : set via set_parameter("attribute_executor", AttributeExecutor)
  *    or present in ExecutionContext. For fully custom math.
  *
- * 2. Direct analyzer — set via set_parameter("analyzer", shared_ptr<UniversalAnalyzer<...>>)
+ * 2. Direct analyzer : set via set_parameter("analyzer", shared_ptr<UniversalAnalyzer<...>>)
  *    paired with set_parameter("analyzer_qualifier", std::string).
  *    Any existing concrete analyzer can be supplied pre-configured.
  *
- * 3. Analysis type — set via set_parameter("analysis_type", AnalysisType) with
+ * 3. Analysis type : set via set_parameter("analysis_type", AnalysisType) with
  *    optional set_parameter("analyzer_qualifier", std::string). AttributeOp
  *    constructs a default-configured analyzer internally.
  *
@@ -137,9 +139,29 @@ protected:
  * - feature_key  std::string  attribute name written on each grain  (default "feature")
  * - channel      uint32_t     source channel index                  (default 0)
  *
- * Default qualifier per AnalysisType:
- * - FEATURE     -> "rms"  (also: "peak", "min", "variance", "dynamic_range", "zero_crossing")
- * - STATISTICAL -> "mean" (also: "std_dev", "variance", "kurtosis", "skewness", "median", "max", "min")
+ * Qualifier strings map directly to scalar fields of the analysis result struct.
+ * The alias "rms" is accepted for FEATURE and resolves to "mean_energy".
+ * The alias "mean" is accepted for STATISTICAL and resolves to "mean_stat".
+ *
+ * FEATURE qualifiers (EnergyAnalysis):
+ * - "mean_energy"  (default, alias: "rms")
+ * - "max_energy"
+ * - "min_energy"
+ * - "variance"
+ * - "dynamic_range"
+ * - "event_count"
+ * - "window_count"
+ *
+ * STATISTICAL qualifiers (StatisticalAnalysis):
+ * - "mean_stat"  (default, alias: "mean")
+ * - "max_stat"
+ * - "min_stat"
+ * - "variance"
+ * - "std_dev"
+ * - "skewness"
+ * - "kurtosis"
+ * - "median"
+ * - "window_count"
  */
 class MAYAFLUX_API AttributeOp final
     : public RegionGroupAnalyzer<Kakshya::RegionGroup> {
@@ -536,23 +558,5 @@ template <ComputeData InputType, ComputeData OutputType>
     uint32_t gpu_sort_threshold = 0,
     ComputationContext attribution_context = ComputationContext::SPECTRAL,
     GrainTaper taper = {});
-
-/**
- * @brief Extract raw samples for a grain directly from a container channel.
- *
- * Slices the channel data by sample index using the grain's start and end
- * coordinates. Bypasses get_region_data to avoid dimension-structure
- * interpretation overhead, which is unnecessary for flat grain boundaries.
- *
- * @param grain     Region whose start_coordinates[0] and end_coordinates[0]
- *                  define the sample range (inclusive).
- * @param container Signal data source.
- * @param channel   Channel index to slice from.
- * @return Vector of double samples for this grain, empty on any error.
- */
-[[nodiscard]] MAYAFLUX_API std::vector<double> extract_grain_samples(
-    const Kakshya::Region& grain,
-    const std::shared_ptr<Kakshya::SignalSourceContainer>& container,
-    uint32_t channel);
 
 } // namespace MayaFlux::Yantra::Granular

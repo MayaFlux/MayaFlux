@@ -66,4 +66,32 @@ public:
     double get_duration_seconds() const;
 };
 
+/**
+ * @brief Construct a fully populated SoundFileContainer from computed channel data.
+ *
+ * Produces a fixed-capacity, non-circular container suitable for any workflow
+ * that requires a materialized, ready-to-play audio buffer: grain reconstruction,
+ * offline synthesis, file-derived transforms, or any other computed source.
+ *
+ * The container is configured with @p org as its organization strategy, a
+ * ContiguousAccessProcessor as its default processor, and its processing state
+ * set to READY on return.
+ *
+ * @param channel_data  Per-channel sample vectors. Consumed by move; must be
+ *                      non-empty, each vector non-empty, and the outer size
+ *                      must equal @p num_channels.
+ * @param num_channels  Number of audio channels. Must match channel_data.size().
+ * @param sample_rate   Sample rate in Hz used for temporal calculations. *defaults to 48000 Hz.
+ * @param org           Memory organisation strategy for the container's data layout.
+ *                      Defaults to PLANAR.
+ * @return Shared pointer to a fully initialised SoundFileContainer.
+ * @throws std::invalid_argument if channel_data is empty, any channel vector is
+ *         empty, or num_channels does not match channel_data.size().
+ */
+[[nodiscard]] MAYAFLUX_API std::shared_ptr<SoundFileContainer> make_sound_file_container(
+    std::vector<std::vector<double>> channel_data,
+    uint32_t num_channels,
+    uint32_t sample_rate = 48000,
+    OrganizationStrategy org = OrganizationStrategy::PLANAR);
+
 } // namespace MayaFlux::Kakshya

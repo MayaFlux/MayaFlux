@@ -12,14 +12,18 @@ namespace {
 
     std::string resolve_qualifier(AnalysisType type, const std::string& qualifier)
     {
-        if (!qualifier.empty())
+        if (!qualifier.empty()) {
+            if (type == AnalysisType::FEATURE && qualifier == "rms")
+                return "mean_energy";
+            if (type == AnalysisType::STATISTICAL && qualifier == "mean")
+                return "mean_stat";
             return qualifier;
-
+        }
         switch (type) {
         case AnalysisType::FEATURE:
-            return "rms";
+            return "mean_energy";
         case AnalysisType::STATISTICAL:
-            return "mean";
+            return "mean_stat";
         default:
             error<std::invalid_argument>(
                 Journal::Component::Yantra, Journal::Context::ComputeMatrix,
@@ -66,117 +70,7 @@ namespace {
         return std::dynamic_pointer_cast<Kakshya::SoundFileContainer>(result.data);
     }
 
-    using GrainWriteFn = std::function<void(size_t grain_idx, uint32_t ch, std::span<double>)>;
-
-    void extract_all_grain_channels(
-        const std::vector<Kakshya::Region>& regions,
-        const std::shared_ptr<Kakshya::SignalSourceContainer>& source,
-        uint32_t num_channels,
-        const GrainTaper& taper,
-        const GrainWriteFn& write_fn)
-    {
-        for (size_t gi = 0; gi < regions.size(); ++gi) {
-            auto variants = source->get_region_data(regions[gi]);
-            for (uint32_t ch = 0; ch < num_channels; ++ch) {
-                if (ch >= variants.size())
-                    continue;
-                std::vector<double> storage;
-                Kakshya::extract_from_variant<double>(variants[ch], storage);
-                if (storage.empty())
-                    continue;
-
-                if (taper)
-                    taper(std::span<double>(storage.data(), storage.size()));
-
-                write_fn(gi, ch, std::span<double>(storage.data(), storage.size()));
-            }
-        }
-    }
-
-    std::shared_ptr<Kakshya::SoundFileContainer> build_sound_file_container(
-        std::vector<std::vector<double>> channel_data,
-        uint32_t num_channels)
-    {
-        const uint64_t total_frames = channel_data.empty() ? 0 : channel_data[0].size();
-        auto out = std::make_shared<Kakshya::SoundFileContainer>(48000, num_channels, total_frames);
-        out->get_structure().organization = Kakshya::OrganizationStrategy::PLANAR;
-
-        std::vector<Kakshya::DataVariant> variants;
-        variants.reserve(num_channels);
-        for (auto& ch : channel_data)
-            variants.emplace_back(std::move(ch));
-
-        out->set_raw_data(variants);
-        out->create_default_processor();
-        out->mark_ready_for_processing(true);
-        return out;
-    }
-
-    double extract_scalar_energy(const EnergyAnalysis& ea, const std::string& qualifier)
-    {
-        const std::string q = qualifier.empty() ? "rms" : qualifier;
-        if (ea.channels.empty())
-            return 0.0;
-        const auto& ch = ea.channels[0];
-        if (q == "rms" || q == "mean")
-            return ch.mean_energy;
-        if (q == "peak" || q == "max")
-            return ch.max_energy;
-        if (q == "min")
-            return ch.min_energy;
-        if (q == "variance")
-            return ch.variance;
-        if (q == "dynamic_range")
-            return ch.max_energy - ch.min_energy;
-        if (q == "zero_crossing")
-            return static_cast<double>(ch.event_positions.size());
-        return ch.mean_energy;
-    }
-
-    double extract_scalar_statistical(const StatisticalAnalysis& sa, const std::string& qualifier)
-    {
-        const std::string q = qualifier.empty() ? "mean" : qualifier;
-        if (sa.channel_statistics.empty())
-            return 0.0;
-        const auto& ch = sa.channel_statistics[0];
-        if (q == "mean")
-            return ch.mean_stat;
-        if (q == "std_dev")
-            return ch.stat_std_dev;
-        if (q == "variance")
-            return ch.stat_variance;
-        if (q == "kurtosis")
-            return ch.kurtosis;
-        if (q == "skewness")
-            return ch.skewness;
-        if (q == "median")
-            return ch.median;
-        if (q == "max")
-            return ch.max_stat;
-        if (q == "min")
-            return ch.min_stat;
-        return ch.mean_stat;
-    }
-
 } // namespace
-
-std::vector<double> extract_grain_samples(
-    const Kakshya::Region& grain,
-    const std::shared_ptr<Kakshya::SignalSourceContainer>& container,
-    uint32_t channel)
-{
-    if (!container)
-        return {};
-
-    auto variants = container->get_region_data(grain);
-
-    if (channel >= variants.size())
-        return {};
-
-    std::vector<double> storage;
-    auto sp = Kakshya::extract_from_variant<double>(variants[channel], storage);
-    return storage;
-}
 
 const ComputationGrammar::Rule::Executor reconstruct_grains =
     [](const std::any& input, const ExecutionContext& /*ctx*/) -> std::any {
@@ -195,6 +89,13 @@ const ComputationGrammar::Rule::Executor reconstruct_grains =
 
     auto source = *datum.container;
     const auto num_ch = static_cast<uint32_t>(source->get_structure().get_channel_count());
+    const auto org = source->get_structure().organization;
+    const uint32_t sample_rate = [&]() -> uint32_t {
+        if (auto sc = std::dynamic_pointer_cast<Kakshya::SoundStreamContainer>(source))
+            return sc->get_sample_rate();
+        return 48000U;
+    }();
+
     const auto grain_sz = safe_any_cast_or_default<uint32_t>(
         datum.data.get_attribute<uint32_t>("grain_size").has_value()
             ? std::any(datum.data.get_attribute<uint32_t>("grain_size").value())
@@ -205,14 +106,14 @@ const ComputationGrammar::Rule::Executor reconstruct_grains =
     for (uint32_t ch = 0; ch < num_ch; ++ch)
         channel_data[ch].reserve(regions.size() * grain_sz);
 
-    extract_all_grain_channels(regions, source, num_ch, {},
+    Kakshya::iterate_region_channels(regions, source, num_ch, {},
         [&channel_data](size_t /*gi*/, uint32_t ch, std::span<double> samples) {
             channel_data[ch].insert(channel_data[ch].end(), samples.begin(), samples.end());
         });
 
     return Datum<std::shared_ptr<Kakshya::SignalSourceContainer>> {
         std::dynamic_pointer_cast<Kakshya::SignalSourceContainer>(
-            build_sound_file_container(std::move(channel_data), num_ch)),
+            Kakshya::make_sound_file_container(std::move(channel_data), num_ch, sample_rate, org)),
         {}
     };
 };
@@ -234,6 +135,12 @@ const ComputationGrammar::Rule::Executor reconstruct_grains_additive =
 
     auto source = *datum.container;
     const auto num_ch = static_cast<uint32_t>(source->get_structure().get_channel_count());
+    const auto org = source->get_structure().organization;
+    const uint32_t sample_rate = [&]() -> uint32_t {
+        if (auto sc = std::dynamic_pointer_cast<Kakshya::SoundStreamContainer>(source))
+            return sc->get_sample_rate();
+        return 48000U;
+    }();
 
     const auto grain_sz = safe_any_cast_or_default<uint32_t>(
         datum.data.get_attribute<uint32_t>("grain_size").has_value()
@@ -255,7 +162,7 @@ const ComputationGrammar::Rule::Executor reconstruct_grains_additive =
     const size_t out_len = (regions.size() - 1) * hop_sz + grain_sz;
     std::vector<std::vector<double>> channel_data(num_ch, std::vector<double>(out_len, 0.0));
 
-    extract_all_grain_channels(regions, source, num_ch, taper,
+    Kakshya::iterate_region_channels(regions, source, num_ch, taper,
         [&channel_data, hop_sz](size_t gi, uint32_t ch, std::span<double> samples) {
             const size_t offset = gi * hop_sz;
             auto& dest = channel_data[ch];
@@ -265,7 +172,7 @@ const ComputationGrammar::Rule::Executor reconstruct_grains_additive =
 
     return Datum<std::shared_ptr<Kakshya::SignalSourceContainer>> {
         std::dynamic_pointer_cast<Kakshya::SignalSourceContainer>(
-            build_sound_file_container(std::move(channel_data), num_ch)),
+            Kakshya::make_sound_file_container(std::move(channel_data), num_ch, sample_rate, org)),
         {}
     };
 };
@@ -434,7 +341,7 @@ double AttributeOp::compute_grain_attribute(
     }
 
     if (exec) {
-        const auto samples = extract_grain_samples(grain, container, channel);
+        const auto samples = Kakshya::extract_region_channel(grain, container, channel);
         return exec(std::span<const double>(samples.data(), samples.size()), ctx);
     }
 
@@ -481,7 +388,7 @@ double AttributeOp::compute_grain_attribute(
         }
 
         if (type == AnalysisType::STATISTICAL) {
-            return extract_scalar_statistical(
+            return extract_scalar_statistics(
                 std::static_pointer_cast<VariantStatisticalAnalyzer<>>(raw_analyzer)
                     ->analyze_statistics(grain_variants),
                 qualifier);
@@ -495,7 +402,7 @@ double AttributeOp::compute_grain_attribute(
     }
 
     if (type == AnalysisType::STATISTICAL) {
-        return extract_scalar_statistical(
+        return extract_scalar_statistics(
             m_stat_analyzer.analyze_statistics(grain_variants), qualifier);
     }
 
