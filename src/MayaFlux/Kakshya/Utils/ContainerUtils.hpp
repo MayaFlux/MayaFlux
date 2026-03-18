@@ -93,6 +93,28 @@ DataVariant extract_channel_data(const std::shared_ptr<SignalSourceContainer>& c
     uint32_t channel_index);
 
 /**
+ * @brief Extract samples for a single channel within a Region from a container.
+ *
+ * Slices the container's channel data by the sample range defined by
+ * @p region's start_coordinates[0] and end_coordinates[0] (inclusive).
+ * Uses get_region_data for the slice, then converts the requested channel
+ * variant to double. Returns an empty vector on any error (null container,
+ * channel out of range, empty region data).
+ *
+ * This is the domain-neutral replacement for Granular::extract_grain_samples.
+ * It carries no assumption about grains, hop sizes, or granular semantics.
+ *
+ * @param region    Region whose first coordinate pair defines the sample range.
+ * @param container Signal data source.
+ * @param channel   Zero-based channel index.
+ * @return Vector of double samples for the requested region and channel.
+ */
+[[nodiscard]] MAYAFLUX_API std::vector<double> extract_region_channel(
+    const Region& region,
+    const std::shared_ptr<SignalSourceContainer>& container,
+    uint32_t channel);
+
+/**
  * @brief Validates container for analysis operations with comprehensive checks
  * @param container Container to validate
  * @return Pair of validated container and its dimensions

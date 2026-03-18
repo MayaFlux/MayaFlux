@@ -128,6 +128,22 @@ using namespace MayaFlux;
 
 #endif // MAYASIMPLE
 
+// ============================================================================
+// Workflows: opinionated, high-level processing pipelines.
+// Enable individually or use MAYAFLUX_ALL_WORKFLOWS to load all.
+// Advanced users who build directly with Yantra operations can ignore this.
+// ============================================================================
+
+#if defined(MAYAFLUX_ALL_WORKFLOWS)
+#define MAYAFLUX_WORKFLOW_GRANULAR
+// future: MAYAFLUX_WORKFLOW_MODAL, MAYAFLUX_WORKFLOW_SPECTRAL, etc.
+#endif
+
+#ifdef MAYAFLUX_WORKFLOW_GRANULAR
+#include "MayaFlux/Yantra/Workflows/Granular/GranularWorkflow.hpp"
+using namespace MayaFlux::Yantra;
+#endif
+
 /**
  * @namespace MayaFlux
  * @brief Main namespace for the Maya Flux audio engine

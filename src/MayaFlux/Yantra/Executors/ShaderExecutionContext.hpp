@@ -328,7 +328,7 @@ protected:
      * @brief Injects multipass configuration into the context before dispatch
      *        when set_multipass() has been called.
      */
-    output_type execute(const input_type& input, const ExecutionContext& ctx)
+    output_type execute(const input_type& input, const ExecutionContext& ctx) override
     {
         if (m_multipass_count > 0 && m_multipass_updater) {
             ExecutionContext chained = ctx;

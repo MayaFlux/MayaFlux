@@ -613,4 +613,53 @@ using RawEnergyAnalyzer = EnergyAnalyzer<InputType, std::vector<std::vector<doub
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>>
 using VariantEnergyAnalyzer = EnergyAnalyzer<InputType, std::vector<Kakshya::DataVariant>>;
 
+/**
+ * @brief Extract a named scalar from an EnergyAnalysis result.
+ *
+ * Maps qualifier strings to scalar fields of the first channel in @p analysis.
+ * All scalar-valued fields of ChannelEnergy are addressable.
+ *
+ * Supported qualifiers:
+ * - "mean_energy"    mean energy across analysis windows
+ * - "max_energy"     maximum window energy
+ * - "min_energy"     minimum window energy
+ * - "variance"       variance of window energy values
+ * - "dynamic_range"  max_energy - min_energy
+ * - "event_count"    number of detected energy events (peaks, zero crossings, etc.)
+ * - "window_count"   number of analysis windows
+ *
+ * An empty qualifier resolves to "mean_energy".
+ * Unknown qualifiers fall back to mean_energy.
+ *
+ * @param analysis  Result produced by EnergyAnalyzer.
+ * @param qualifier Name of the scalar to extract.
+ * @return Extracted double value, or 0.0 if channels is empty.
+ */
+[[nodiscard]] MAYAFLUX_API inline double extract_scalar_energy(
+    const EnergyAnalysis& analysis, const std::string& qualifier)
+{
+    if (analysis.channels.empty())
+        return 0.0;
+
+    const auto& ch = analysis.channels[0];
+    const std::string q = qualifier.empty() ? "mean_energy" : qualifier;
+
+    if (q == "mean_energy")
+        return ch.mean_energy;
+    if (q == "max_energy")
+        return ch.max_energy;
+    if (q == "min_energy")
+        return ch.min_energy;
+    if (q == "variance")
+        return ch.variance;
+    if (q == "dynamic_range")
+        return ch.max_energy - ch.min_energy;
+    if (q == "event_count")
+        return static_cast<double>(ch.event_positions.size());
+    if (q == "window_count")
+        return static_cast<double>(ch.energy_values.size());
+
+    return ch.mean_energy;
+}
+
 } // namespace MayaFlux::Yantra

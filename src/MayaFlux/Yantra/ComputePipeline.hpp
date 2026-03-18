@@ -506,6 +506,44 @@ public:
     }
 
     /**
+     * @brief Execute a named grammar rule explicitly by name.
+     * @tparam InputType The input data type.
+     * @param rule_name Name of the grammar rule to execute.
+     * @param input Input data to process.
+     * @param context Execution context containing parameters and metadata.
+     * @return Processed data after rule application, or original input if the
+     *         rule is not found or returns an incompatible type.
+     */
+    template <ComputeData InputType>
+    Datum<InputType> execute_with_grammar(
+        const std::string& rule_name,
+        const Datum<InputType>& input,
+        const ExecutionContext& context = {})
+    {
+        Datum<InputType> current = input;
+        if (auto rule_result = m_grammar->execute_rule(rule_name, current, context)) {
+            auto cast_result = safe_any_cast<Datum<InputType>>(*rule_result);
+            if (cast_result) {
+                current = *cast_result.value;
+            } else {
+                MF_WARN(
+                    Journal::Component::Yantra,
+                    Journal::Context::Runtime,
+                    "Grammar rule '{}' returned incompatible type: {}",
+                    rule_name,
+                    cast_result.error);
+            }
+        } else {
+            MF_WARN(
+                Journal::Component::Yantra,
+                Journal::Context::Runtime,
+                "Grammar rule '{}' not found",
+                rule_name);
+        }
+        return current;
+    }
+
+    /**
      * @brief Get the grammar instance
      * @return Shared pointer to the current ComputationGrammar
      *
