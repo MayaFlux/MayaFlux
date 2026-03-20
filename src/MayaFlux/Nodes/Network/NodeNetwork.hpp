@@ -496,6 +496,7 @@ protected:
 
     // Cached buffer from last process_batch() call
     mutable std::vector<double> m_last_audio_buffer;
+    mutable std::atomic_flag m_audio_buffer_lock = ATOMIC_FLAG_INIT; ///< Spinlock guarding m_last_audio_buffer
     double m_output_scale { 1.0 }; ///< Post-processing scalar applied to m_last_audio_buffer each batch
 
 private:

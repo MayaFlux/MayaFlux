@@ -122,16 +122,21 @@ double WaveguideNetwork::observe_sample(const WaveguideSegment& seg) const
 void WaveguideNetwork::process_batch(unsigned int num_samples)
 {
     ensure_initialized();
-    m_last_audio_buffer.clear();
 
     if (!is_enabled() || m_segments.empty()) {
+        while (m_audio_buffer_lock.test_and_set(std::memory_order_acquire))
+            std::this_thread::yield();
+
         m_last_audio_buffer.assign(num_samples, 0.0);
         m_last_output = 0.0;
+        m_audio_buffer_lock.clear(std::memory_order_release);
         return;
     }
 
     update_mapped_parameters();
-    m_last_audio_buffer.reserve(num_samples);
+
+    thread_local std::vector<double> scratch;
+    scratch.assign(num_samples, 0.0);
 
     auto& seg = m_segments[0];
 
@@ -141,8 +146,13 @@ void WaveguideNetwork::process_batch(unsigned int num_samples)
         process_bidirectional(seg, num_samples);
     }
 
+    while (m_audio_buffer_lock.test_and_set(std::memory_order_acquire))
+        std::this_thread::yield();
+
+    m_last_audio_buffer.assign(scratch.begin(), scratch.end());
     apply_output_scale();
     m_last_output = m_last_audio_buffer.back();
+    m_audio_buffer_lock.clear(std::memory_order_release);
 }
 
 void WaveguideNetwork::process_unidirectional(WaveguideSegment& seg,

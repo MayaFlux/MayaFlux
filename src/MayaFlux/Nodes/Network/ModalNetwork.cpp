@@ -262,7 +262,9 @@ void ModalNetwork::set_mode_coupling(size_t mode_a, size_t mode_b, double streng
 
     remove_mode_coupling(mode_a, mode_b);
 
-    m_couplings.push_back({ mode_a, mode_b, strength });
+    m_couplings.push_back({ .mode_a = mode_a,
+        .mode_b = mode_b,
+        .strength = strength });
 }
 
 void ModalNetwork::remove_mode_coupling(size_t mode_a, size_t mode_b)
@@ -295,15 +297,19 @@ void ModalNetwork::process_batch(unsigned int num_samples)
 {
     ensure_initialized();
 
-    m_last_audio_buffer.clear();
-
     if (!is_enabled()) {
+        while (m_audio_buffer_lock.test_and_set(std::memory_order_acquire))
+            std::this_thread::yield();
+
         m_last_audio_buffer.assign(num_samples, 0.0);
+        m_audio_buffer_lock.clear(std::memory_order_release);
         return;
     }
 
+    thread_local std::vector<double> scratch;
+    scratch.assign(num_samples, 0.0);
+
     update_mapped_parameters();
-    m_last_audio_buffer.reserve(num_samples);
 
     m_node_buffers.assign(m_modes.size(), {});
     for (auto& nb : m_node_buffers)
@@ -315,7 +321,6 @@ void ModalNetwork::process_batch(unsigned int num_samples)
         if (m_coupling_enabled && !m_couplings.empty())
             compute_mode_coupling();
 
-        double sum = 0.0;
         for (size_t m = 0; m < m_modes.size(); ++m) {
             auto& mode = m_modes[m];
 
@@ -327,12 +332,16 @@ void ModalNetwork::process_batch(unsigned int num_samples)
 
             double sample = mode.oscillator->process_sample(0.0) * mode.amplitude;
             m_node_buffers[m].push_back(sample);
-            sum += sample;
+            scratch[i] += sample;
         }
-        m_last_audio_buffer.push_back(sum);
     }
 
+    while (m_audio_buffer_lock.test_and_set(std::memory_order_acquire))
+        std::this_thread::yield();
+
+    m_last_audio_buffer.assign(scratch.begin(), scratch.end());
     apply_output_scale();
+    m_audio_buffer_lock.clear(std::memory_order_release);
 }
 
 //-----------------------------------------------------------------------------

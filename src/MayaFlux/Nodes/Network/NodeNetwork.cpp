@@ -14,13 +14,18 @@ void NodeNetwork::ensure_initialized()
 
 std::optional<std::vector<double>> NodeNetwork::get_audio_buffer() const
 {
-    if (
-        (m_output_mode == OutputMode::AUDIO_SINK
-            || m_output_mode == OutputMode::AUDIO_COMPUTE)
-        && !m_last_audio_buffer.empty()) {
-        return m_last_audio_buffer;
-    }
-    return std::nullopt;
+    if (m_output_mode != OutputMode::AUDIO_SINK && m_output_mode != OutputMode::AUDIO_COMPUTE)
+        return std::nullopt;
+
+    while (m_audio_buffer_lock.test_and_set(std::memory_order_acquire))
+        std::this_thread::yield();
+
+    auto result = m_last_audio_buffer.empty()
+        ? std::nullopt
+        : std::optional<std::vector<double>> { m_last_audio_buffer };
+    m_audio_buffer_lock.clear(std::memory_order_release);
+
+    return result;
 }
 
 void NodeNetwork::apply_output_scale()
@@ -45,14 +50,20 @@ void NodeNetwork::map_parameter(const std::string& param_name,
     const std::shared_ptr<Node>& source,
     MappingMode mode)
 {
-    m_parameter_mappings.push_back({ param_name, mode, source, nullptr });
+    m_parameter_mappings.push_back({ .param_name = param_name,
+        .mode = mode,
+        .broadcast_source = source,
+        .network_source = nullptr });
 }
 
 void NodeNetwork::map_parameter(const std::string& param_name,
     const std::shared_ptr<NodeNetwork>& source_network)
 {
     m_parameter_mappings.push_back(
-        { param_name, MappingMode::ONE_TO_ONE, nullptr, source_network });
+        { .param_name = param_name,
+            .mode = MappingMode::ONE_TO_ONE,
+            .broadcast_source = nullptr,
+            .network_source = source_network });
 }
 
 void NodeNetwork::unmap_parameter(const std::string& param_name)

@@ -205,13 +205,19 @@ void ResonatorNetwork::compute_biquad(ResonatorNode& r)
 void ResonatorNetwork::process_batch(unsigned int num_samples)
 {
     if (m_resonators.empty()) {
+        while (m_audio_buffer_lock.test_and_set(std::memory_order_acquire))
+            std::this_thread::yield();
+
         m_last_audio_buffer.assign(num_samples, 0.0);
+        m_audio_buffer_lock.clear(std::memory_order_release);
         return;
     }
 
     update_mapped_parameters();
 
-    m_last_audio_buffer.assign(num_samples, 0.0);
+    thread_local std::vector<double> scratch;
+    scratch.assign(num_samples, 0.0);
+
     const double norm = 1.0 / static_cast<double>(m_resonators.size());
 
     m_node_buffers.assign(m_resonators.size(), {});
@@ -241,11 +247,16 @@ void ResonatorNetwork::process_batch(unsigned int num_samples)
             const double out = r.filter->process_sample(excitation) * r.gain;
             r.last_output = out;
             m_node_buffers[ri].push_back(out);
-            m_last_audio_buffer[s] += out * norm;
+            scratch[s] += out * norm;
         }
     }
 
+    while (m_audio_buffer_lock.test_and_set(std::memory_order_acquire))
+        std::this_thread::yield();
+
+    m_last_audio_buffer.assign(scratch.begin(), scratch.end());
     apply_output_scale();
+    m_audio_buffer_lock.clear(std::memory_order_release);
 }
 
 std::optional<std::vector<double>> ResonatorNetwork::get_audio_buffer() const
