@@ -1296,8 +1296,8 @@ Rolling builds tagged as `x.x.x-dev` (e.g., `0.1.2-dev`, `0.2.0-dev`). These tag
 
 | Channel         | Tag Example | Stability | Use Case                           |
 | --------------- | ----------- | --------- | ---------------------------------- |
-| **Stable**      | `v0.2.0`    | Tested    | Production, learning, projects     |
-| **Development** | `0.2.0-dev` | Unstable  | Testing new features, contributing |
+| **Stable**      | `v0.2.1`    | Tested    | Production, learning, projects     |
+| **Development** | `0.3.0-dev` | Unstable  | Testing new features, contributing |
 
 Weave defaults to stable releases. Development builds require manual download from the releases page.
 
@@ -1399,7 +1399,7 @@ Auto-generated docs (enabled once CI pipelines are set up):
 | Kinesis Analysis         | In Progress | Mathematical substrate; analysis tooling planned for 0.3    |
 | Grammar-Driven Pipelines | In Progress | Core framework ready, advanced matching in progress         |
 
-**Current version**: 0.2.0-dev
+**Current version**: 0.3.0-dev
 **Trajectory**: Stable core, completing live signal matrix (file/live x audio/video)
 
 ---

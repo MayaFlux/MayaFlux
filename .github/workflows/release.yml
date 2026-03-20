@@ -159,7 +159,7 @@ jobs:
           sed \
             -e "s/{{VERSION}}/${{ needs.determine_version.outputs.VERSION }}/g" \
             -e "s/{{COMMIT_SHA}}/${{ steps.meta.outputs.SHORT_SHA }}/g" \
-            .github/workflows/distribution/shared/release_body_020.md > release_body.md
+            .github/workflows/distribution/shared/release_body_021.md > release_body.md
 
           cat changelog.md >> release_body.md
 
