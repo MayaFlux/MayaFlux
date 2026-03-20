@@ -24,6 +24,7 @@ void SoundFileBridge::setup_processors(Buffers::ProcessingToken token)
         static_cast<uint32_t>(s_registered_sample_rate),
         static_cast<uint32_t>(get_container()->get_structure().get_channel_count()));
 
+    initialize();
     m_stream_writer = std::make_shared<SoundStreamWriter>(m_capture_stream);
 
     auto chain = get_processing_chain();

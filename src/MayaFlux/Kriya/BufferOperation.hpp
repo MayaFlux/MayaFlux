@@ -248,15 +248,25 @@ namespace Kriya {
 
         /**
          * @brief Create a routing operation to AudioBuffer destination.
-         * @param target Target AudioBuffer to receive data
-         * @return BufferOperation configured for buffer routing
+         * @param target Target AudioBuffer to receive data.
+         * @return BufferOperation configured for buffer routing.
+         *
+         * ROUTE is a batch output operation. It writes the accumulated or transformed
+         * result of a pipeline into a target buffer or container after processing is
+         * complete. It is not intended for live per-cycle routing: that is covered by
+         * supply, clone, and processing chains on individual buffers. The typical use
+         * is to accumulate or transform over N cycles via CAPTURE/TRANSFORM, then
+         * route the result to a buffer or DynamicSoundStream for playback or storage
+         * via SoundContainerBuffer.
          */
         static BufferOperation route_to_buffer(std::shared_ptr<Buffers::AudioBuffer> target);
 
         /**
          * @brief Create a routing operation to DynamicSoundStream destination.
-         * @param target Target container to receive data
-         * @return BufferOperation configured for container routing
+         * @param target Target container to receive data.
+         * @return BufferOperation configured for container routing.
+         *
+         * @see route_to_buffer for usage intent and constraints.
          */
         static BufferOperation route_to_container(std::shared_ptr<Kakshya::DynamicSoundStream> target);
 
