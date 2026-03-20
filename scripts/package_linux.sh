@@ -26,12 +26,7 @@ fi
 # ---------------------------------------------
 # Append -dev for non-main branches
 # ---------------------------------------------
-if [[ "$BRANCH" == "main" || "$BRANCH" == v* ]]; then
-    # main or a tagged release -> use VERSION as-is
-    FINAL_VERSION="$VERSION"
-else
-    FINAL_VERSION="${VERSION}-dev"
-fi
+FINAL_VERSION="${VERSION}-dev"
 
 echo "[INFO] MayaFlux packaging version: $FINAL_VERSION"
 
