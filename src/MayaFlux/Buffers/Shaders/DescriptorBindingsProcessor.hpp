@@ -264,9 +264,13 @@ private:
     void ensure_buffer_capacity(DescriptorBinding& binding, size_t required_size);
 
     /**
-     * @brief Update descriptor from node context
+     * @brief Update descriptor from binding source (node, audio buffer, etc.)
      */
-    void update_descriptor_from_node(DescriptorBinding& binding);
+    void update_descriptor_data(DescriptorBinding& binding);
+
+    void update_from_node(DescriptorBinding& binding);
+    void update_from_buffer(DescriptorBinding& binding);
+    void update_from_network(DescriptorBinding& binding);
 
     /**
      * @brief Create GPU buffer for a descriptor binding
