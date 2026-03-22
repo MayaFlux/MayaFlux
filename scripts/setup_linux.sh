@@ -51,6 +51,7 @@ install_arch() {
         "stb"
         "hidapi"
         "rtmidi"
+        "asio"
     )
     echo -e "${YELLOW}Installing: ${PACKAGES[*]}${NC}"
     sudo pacman -Syu --noconfirm "${PACKAGES[@]}"
@@ -144,6 +145,7 @@ install_ubuntu() {
         "libhidapi-dev"
         "librtmidi-dev"
         "libgtest-dev"
+        "libasio-dev"
     )
 
     echo -e "${YELLOW}Installing: ${PACKAGES[*]}${NC}"

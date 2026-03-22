@@ -51,6 +51,7 @@
         glfw3      = @{}
         rtaudio    = @{}
         rtmidi     = @{}
+        asio       = @{}
     }
 
     SpecialPackages    = @{

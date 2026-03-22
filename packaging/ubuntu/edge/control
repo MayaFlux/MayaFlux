@@ -39,6 +39,7 @@ Build-Depends:
     libavdevice-dev,
     libhidapi-dev,
     librtmidi-dev,
+    libasio-dev,
     git
 Standards-Version: 4.7.0
 Homepage: https://mayaflux.org
@@ -81,7 +82,8 @@ Depends:
     libswscale-dev,
     libavdevice-dev,
     libhidapi-dev,
-    librtmidi-dev
+    librtmidi-dev,
+    libasio-dev
 Suggests:
     mayaflux-edge-doc
 Description: Modern C++ framework for real-time graphics and audio with JIT
