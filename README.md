@@ -1433,7 +1433,7 @@ If you're investigating:
 - Digital paradigms for multimedia computation
 - Live algorithmic authorship at production scale
 
-...this is the reference implementation.
+...this is the standalone (but desgined for integration) implementation.
 
 **Everything is open source. Contribute, fork it, build on it, challenge it.**
 

@@ -38,10 +38,12 @@ namespace Nodes {
         class InputNode;
         class HIDNode;
         class MIDINode;
+        class OSCNode;
 
         struct InputConfig;
         struct HIDConfig;
         struct MIDIConfig;
+        struct OSCConfig;
     }
     class Constant;
     class StreamReaderNode;

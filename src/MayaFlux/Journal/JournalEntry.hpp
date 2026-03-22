@@ -72,6 +72,7 @@ enum class Context : uint8_t {
     AudioBackend, ///< Audio processing backend (RtAudio, JACK, ASIO)
     GraphicsBackend, ///< Graphics/visual rendering backend (Vulkan, OpenGL)
     InputBackend, ///< Input device backend (HID, MIDI, OSC)
+    NetworkBackend, ///< Network transport backend (UDP, TCP, SHM)
     CustomBackend, ///< Custom user-defined backend
 
     // ============================================================================
@@ -88,6 +89,7 @@ enum class Context : uint8_t {
     WindowingSubsystem, ///< Windowing system operations (GLFW, SDL)
     GraphicsSubsystem, ///< Graphics subsystem operations (Vulkan, rendering pipeline)
     InputSubsystem, ///< Input subsystem operations (device management, event dispatch)
+    NetworkSubsystem, ///< Network subsystem operations (endpoint management, data routing)
     CustomSubsystem, ///< Custom user-defined subsystem
 
     // ============================================================================
@@ -112,6 +114,7 @@ enum class Context : uint8_t {
     AsyncIO, ///< Async I/O operations ( network, streaming)
     FileIO, ///< Filesystem I/O operations
     BackgroundCompile, ///< Background compilation/optimization tasks
+    Networking, ///< Network operations (data transfer, protocol handling)
 
     // ============================================================================
     // LIFECYCLE CONTEXTS

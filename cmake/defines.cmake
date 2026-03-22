@@ -64,3 +64,5 @@ if(MAYAFLUX_DEV)
 else()
     set(EXAMPLE_SHADER_DIR "")
 endif()
+
+add_compile_definitions(ASIO_STANDALONE)

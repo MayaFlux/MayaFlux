@@ -9,10 +9,10 @@
 #include "MayaFlux/IO/IOManager.hpp"
 #include "MayaFlux/Kakshya/Source/SoundFileContainer.hpp"
 #include "MayaFlux/Nodes/Network/NodeNetwork.hpp"
-#include "MayaFlux/Nodes/Node.hpp"
 
 #include "MayaFlux/Nodes/Input/HIDNode.hpp"
 #include "MayaFlux/Nodes/Input/MIDINode.hpp"
+#include "MayaFlux/Nodes/Input/OSCNode.hpp"
 
 namespace MayaFlux {
 
@@ -146,6 +146,15 @@ std::shared_ptr<Nodes::Input::MIDINode> Creator::read_midi(
     return node;
 }
 
+std::shared_ptr<Nodes::Input::OSCNode> Creator::read_osc(
+    const Nodes::Input::OSCConfig& config,
+    const Core::InputBinding& binding)
+{
+    auto node = std::make_shared<Nodes::Input::OSCNode>(config);
+    register_input_node(node, binding);
+    return node;
+}
+
 std::shared_ptr<Nodes::Input::InputNode> Creator::read_input(
     const Nodes::Input::InputConfig& config,
     const Core::InputBinding& binding)
@@ -155,6 +164,8 @@ std::shared_ptr<Nodes::Input::InputNode> Creator::read_input(
         return read_hid(static_cast<const Nodes::Input::HIDConfig&>(config), binding);
     case Core::InputType::MIDI:
         return read_midi(static_cast<const Nodes::Input::MIDIConfig&>(config), binding);
+    case Core::InputType::OSC:
+        return read_osc(static_cast<const Nodes::Input::OSCConfig&>(config), binding);
     default:
         MF_ERROR(Journal::Component::API, Journal::Context::Init,
             "Input type {} not yet implemented",

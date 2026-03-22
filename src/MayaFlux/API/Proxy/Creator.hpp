@@ -247,6 +247,16 @@ public:
         const Core::InputBinding& binding);
 
     /**
+     * @brief Create and register OSC input node
+     * @param config OSC input configuration
+     * @param binding OSC input binding (use InputBinding::osc("/address"))
+     * @return Shared pointer to OSCNode (already registered)
+     */
+    std::shared_ptr<Nodes::Input::OSCNode> read_osc(
+        const Nodes::Input::OSCConfig& config,
+        const Core::InputBinding& binding);
+
+    /**
      * @brief Create and register generic input node
      * @param config Generic input configuration
      * @param binding Generic input binding

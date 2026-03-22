@@ -9,6 +9,7 @@ class InputNode;
 
 namespace MayaFlux::Registry::Service {
 struct InputService;
+struct NetworkService;
 }
 
 namespace MayaFlux::Core {
@@ -131,6 +132,11 @@ public:
      */
     [[nodiscard]] size_t get_queue_depth() const;
 
+    /**
+     * @brief Setup OSC bridge if enabled in config
+     */
+    void setup_osc_bridge(const OSCConfigInfo& osc_config);
+
 private:
     // ─────────────────────────────────────────────────────────────────────
     // Processing Thread
@@ -183,6 +189,11 @@ private:
 #endif
 
     Registry::Service::InputService* m_input_service { nullptr };
+    Registry::Service::NetworkService* m_network_service { nullptr };
+
+    void teardown_osc_bridge();
+
+    uint64_t m_osc_endpoint_id { 0 };
 
     // ─────────────────────────────────────────────────────────────────────
     // Statistics

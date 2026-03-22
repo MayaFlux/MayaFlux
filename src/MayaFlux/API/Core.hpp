@@ -24,6 +24,7 @@ namespace Core {
     struct GlobalStreamInfo;
     struct GlobalGraphicsConfig;
     struct GlobalInputConfig;
+    struct GlobalNetworkConfig;
     class Engine;
 }
 
@@ -86,10 +87,11 @@ MAYAFLUX_API void Init();
  * @param stream_info Configuration for sample rate, buffer size, and channels
  * @param graphics_info Configuration for graphics/windowing backend
  * @param input_config Configuration for input handling
+ * @param network_config Configuration for network subsystem
  *
  * Convenience wrapper for Engine::Init() on the default engine.
  */
-MAYAFLUX_API void Init(Core::GlobalStreamInfo stream_info, Core::GlobalGraphicsConfig graphics_config, Core::GlobalInputConfig input_config);
+MAYAFLUX_API void Init(Core::GlobalStreamInfo stream_info, Core::GlobalGraphicsConfig graphics_config, Core::GlobalInputConfig input_config, Core::GlobalNetworkConfig network_config);
 
 /**
  * @brief Starts audio processing on the default engine

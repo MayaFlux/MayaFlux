@@ -8,10 +8,12 @@ class WindowManager;
 class AudioSubsystem;
 class InputSubsystem;
 class GraphicsSubsystem;
+class NetworkSubsystem;
 
 struct GlobalStreamInfo;
 struct GlobalGraphicsConfig;
 struct GlobalInputConfig;
+struct GlobalNetworkConfig;
 
 /**
  * @class SubsystemManager
@@ -92,6 +94,15 @@ public:
      */
     void create_input_subsystem(GlobalInputConfig& input_config);
 
+    /**
+     * @brief Create and register the network subsystem
+     * @param network_config Global network configuration
+     *
+     * Specialized creation method for NetworkSubsystem. Only one network
+     * subsystem is allowed per manager instance.
+     */
+    void create_network_subsystem(const GlobalNetworkConfig& network_config);
+
     /** @brief Start all registered subsystems in coordination */
     void start_all_subsystems();
 
@@ -137,6 +148,15 @@ public:
      * Equivalent to dynamic_cast on get_subsystem(SubsystemType::INPUT).
      */
     std::shared_ptr<InputSubsystem> get_input_subsystem();
+
+    /**
+     * @brief Get typed access to the network subsystem
+     * @return Shared pointer to NetworkSubsystem or nullptr if not created
+     *
+     * Convenience method that automatically casts to NetworkSubsystem type.
+     * Equivalent to dynamic_cast on get_subsystem(SubsystemType::NETWORK).
+     */
+    std::shared_ptr<NetworkSubsystem> get_network_subsystem();
 
     /**
      * @brief Check if a subsystem type exists

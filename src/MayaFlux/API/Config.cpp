@@ -39,6 +39,14 @@ Core::GlobalInputConfig& get_global_input_config()
     return get_context().get_input_config();
 }
 
+Core::GlobalNetworkConfig& get_global_network_config()
+{
+    if (is_initialized()) {
+        MF_WARN(Journal::Component::API, Journal::Context::Configuration, "Accessing network config while engine is running may lead to inconsistent state.");
+    }
+    return get_context().get_network_config();
+}
+
 Nodes::NodeConfig& get_node_config()
 {
     return get_context().get_node_config();

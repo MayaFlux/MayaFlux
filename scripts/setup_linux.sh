@@ -51,6 +51,7 @@ install_arch() {
         "stb"
         "hidapi"
         "rtmidi"
+        "asio"
     )
     echo -e "${YELLOW}Installing: ${PACKAGES[*]}${NC}"
     sudo pacman -Syu --noconfirm "${PACKAGES[@]}"
@@ -65,6 +66,7 @@ install_fedora() {
     echo -e "${BLUE}Installing dependencies for Fedora...${NC}"
 
     sudo dnf copr enable -y ranjithshegde/spirv-cross
+    sudo dnf copr enable -y ranjithshegde/asio-standalone
 
     PACKAGES=(
         "gcc-c++"
@@ -96,6 +98,7 @@ install_fedora() {
         "libshaderc-devel"
         "hidapi-devel"
         "rtmidi-devel"
+        "asio-standalone"
         "wayland-devel"
         "git"
     )
@@ -144,6 +147,7 @@ install_ubuntu() {
         "libhidapi-dev"
         "librtmidi-dev"
         "libgtest-dev"
+        "libasio-dev"
     )
 
     echo -e "${YELLOW}Installing: ${PACKAGES[*]}${NC}"

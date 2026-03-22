@@ -177,7 +177,7 @@ private:
      * @brief Main server loop; accepts and manages clients
      * @param stop_token Token to signal server shutdown
      */
-#ifndef MAYAFLUX_JTHREAD_BROKEN
+#if MAYAFLUX_USE_JTHREAD
     void server_loop(const std::stop_token& stop_token);
 #else
     void server_loop(const ServerThread::StopToken& stop_token);

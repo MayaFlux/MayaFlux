@@ -56,6 +56,28 @@
 #error "Unknown or unsupported architecture"
 #endif
 
+// ─────────────────────────────────────────────────────────────────────────────
+// std::jthread availability
+// ─────────────────────────────────────────────────────────────────────────────
+// Apple Clang 15.x ships <thread> with jthread declarations but the
+// implementation is broken at link time. Clang 16+ and all other
+// compilers that advertise __cpp_lib_jthread work correctly.
+// ─────────────────────────────────────────────────────────────────────────────
+
+#if defined(__cpp_lib_jthread) && __cpp_lib_jthread >= 201911L
+#if defined(MAYAFLUX_PLATFORM_MACOS) && defined(MAYAFLUX_COMPILER_CLANG)
+#if __clang_major__ == 15
+#define MAYAFLUX_USE_JTHREAD 0
+#else
+#define MAYAFLUX_USE_JTHREAD 1
+#endif
+#else
+#define MAYAFLUX_USE_JTHREAD 1
+#endif
+#else
+#define MAYAFLUX_USE_JTHREAD 0
+#endif
+
 #ifdef MAYAFLUX_PLATFORM_WINDOWS
 #if defined(MAYAFLUX_EXPORTS)
 #define MAYAFLUX_API __declspec(dllexport)

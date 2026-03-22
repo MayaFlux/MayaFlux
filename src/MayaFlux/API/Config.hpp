@@ -10,6 +10,7 @@ namespace Core {
     struct GlobalStreamInfo;
     struct GlobalGraphicsConfig;
     struct GlobalInputConfig;
+    struct GlobalNetworkConfig;
 }
 
 /**
@@ -70,6 +71,12 @@ namespace Config {
      * @return Copy of the GlobalInputConfig struct
      */
     MAYAFLUX_API Core::GlobalInputConfig& get_global_input_config();
+
+    /**
+     * @brief Gets the network configuration from the default engine
+     * @return Copy of the GlobalNetworkConfig struct
+     */
+    MAYAFLUX_API Core::GlobalNetworkConfig& get_global_network_config();
 
     /**
      * @brief Sets the minimum severity level for journal entries to be logged

@@ -1,7 +1,10 @@
 #include "InputManager.hpp"
 
+#include "OscParser.hpp"
+
 #include "MayaFlux/Registry/BackendRegistry.hpp"
 #include "MayaFlux/Registry/Service/InputService.hpp"
+#include "MayaFlux/Registry/Service/NetworkService.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Nodes/Input/InputNode.hpp"
@@ -427,5 +430,69 @@ void InputManager::retire_list(const RegistrationList* list)
     delete list;
 }
 #endif
+
+void InputManager::setup_osc_bridge(const OSCConfigInfo& osc_config)
+{
+    if (!osc_config.enabled) {
+        return;
+    }
+
+    if (!m_network_service) {
+        m_network_service = Registry::BackendRegistry::instance()
+                                .get_service<Registry::Service::NetworkService>();
+    }
+
+    if (!m_network_service) {
+        MF_WARN(Journal::Component::Core, Journal::Context::InputManagement,
+            "OSC bridge requested but NetworkService not available");
+        return;
+    }
+
+    EndpointInfo ep;
+    ep.transport = NetworkTransport::UDP;
+    ep.role = EndpointRole::BIDIRECTIONAL;
+    ep.local_port = osc_config.receive_port;
+    ep.remote_address = osc_config.send_address;
+    ep.remote_port = osc_config.send_port;
+    ep.label = "osc_input";
+
+    m_osc_endpoint_id = m_network_service->open_endpoint(ep);
+
+    if (m_osc_endpoint_id == 0) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::InputManagement,
+            "Failed to open UDP endpoint for OSC on port {}",
+            osc_config.receive_port);
+        return;
+    }
+
+    m_network_service->set_endpoint_receive_callback(m_osc_endpoint_id,
+        [this](uint64_t, const uint8_t* data, size_t size, std::string_view) {
+            auto parsed = OscParser::parse(data, size);
+            if (parsed) {
+                enqueue(*parsed);
+            }
+        });
+
+    MF_INFO(Journal::Component::Core, Journal::Context::InputManagement,
+        "OSC bridge active on port {}", osc_config.receive_port);
+}
+
+void InputManager::teardown_osc_bridge()
+{
+    if (m_osc_endpoint_id == 0) {
+        return;
+    }
+
+    if (!m_network_service) {
+        m_network_service = Registry::BackendRegistry::instance()
+                                .get_service<Registry::Service::NetworkService>();
+    }
+
+    if (m_network_service) {
+        m_network_service->close_endpoint(m_osc_endpoint_id);
+    }
+
+    m_osc_endpoint_id = 0;
+}
 
 } // namespace MayaFlux::Core

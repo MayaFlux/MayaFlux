@@ -33,7 +33,8 @@ set_target_properties(MayaFluxLib PROPERTIES
 )
 
 target_compile_definitions(MayaFluxLib PUBLIC
-                           VULKAN_HPP_DISPATCH_LOADER_DYNAMIC=1)
+                           VULKAN_HPP_DISPATCH_LOADER_DYNAMIC=1
+                           ASIO_STANDALONE)
 
 #==============================================================
 #                   Target Includes
@@ -92,6 +93,7 @@ if(WIN32)
         FFmpeg::avdevice
         hidapi::hidapi
         RtMidi::rtmidi
+        asio::asio
         gdi32
         user32
         shell32
@@ -117,6 +119,7 @@ else()
         PkgConfig::Glfw
         PkgConfig::HIDAPI
         PkgConfig::RtMidi
+        PkgConfig::Asio
         PkgConfig::LIBAVCODEC
         PkgConfig::LIBAVFORMAT
         PkgConfig::LIBAVUTIL

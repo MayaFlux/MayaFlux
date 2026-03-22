@@ -45,7 +45,7 @@ void InputSubsystem::initialize(SubsystemProcessingHandle& handle)
         initialize_midi_backend();
     }
     if (m_config.osc.enabled) {
-        initialize_osc_backend();
+        m_handle->inputs.setup_osc_bridge(m_config.osc);
     }
     if (m_config.serial.enabled) {
         initialize_serial_backend();
@@ -339,12 +339,6 @@ void InputSubsystem::initialize_midi_backend()
             }
         }
     }
-}
-
-void InputSubsystem::initialize_osc_backend()
-{
-    MF_WARN(Journal::Component::Core, Journal::Context::InputSubsystem,
-        "OSC backend not yet implemented");
 }
 
 void InputSubsystem::initialize_serial_backend()

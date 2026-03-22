@@ -52,6 +52,7 @@ jobs:
         run: |
           dnf install -y dnf-plugins-core
           dnf copr enable -y ranjithshegde/spirv-cross
+          dnf copr enable -y ranjithshegde/asio-standalone
 
       - name: Install build dependencies
         run: |
@@ -83,6 +84,7 @@ jobs:
             libshaderc-devel \
             hidapi-devel \
             rtmidi-devel \
+            asio-standalone \
             ninja-build \
             wayland-devel \
             ccache

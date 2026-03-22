@@ -33,6 +33,7 @@ class WindowManager;
 class InputManager;
 
 struct InputValue;
+struct OSCConfigInfo;
 
 /**
  * @enum HookPosition
@@ -233,6 +234,9 @@ public:
 
     /** @brief enqueue input value to InputManager */
     void enqueue_input(const InputValue& value);
+
+    /** @brief enqueue batch of input values to InputManager */
+    void setup_osc_bridge(const OSCConfigInfo& config);
 
 private:
     std::shared_ptr<InputManager> m_input_manager;
