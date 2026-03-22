@@ -112,6 +112,7 @@ enum class Context : uint8_t {
     AsyncIO, ///< Async I/O operations ( network, streaming)
     FileIO, ///< Filesystem I/O operations
     BackgroundCompile, ///< Background compilation/optimization tasks
+    Networking, ///< Network operations (data transfer, protocol handling)
 
     // ============================================================================
     // LIFECYCLE CONTEXTS
