@@ -137,9 +137,9 @@ void Engine::Init(const GlobalStreamInfo& streamInfo, const GlobalGraphicsConfig
 
     m_subsystem_manager->create_graphics_subsystem(m_graphics_config);
 
-    m_subsystem_manager->create_input_subsystem(m_input_config);
-
     m_subsystem_manager->create_network_subsystem(m_network_config);
+
+    m_subsystem_manager->create_input_subsystem(m_input_config);
 
     m_buffer_manager->initialize_buffer_service();
 

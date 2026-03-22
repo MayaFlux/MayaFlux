@@ -213,6 +213,13 @@ void InputManagerHandle::enqueue_input(const InputValue& value)
     }
 }
 
+void InputManagerHandle::setup_osc_bridge(const OSCConfigInfo& config)
+{
+    if (m_input_manager) {
+        m_input_manager->setup_osc_bridge(config);
+    }
+}
+
 SubsystemProcessingHandle::SubsystemProcessingHandle(
     std::shared_ptr<Buffers::BufferManager> buffer_manager,
     std::shared_ptr<Nodes::NodeGraphManager> node_manager,

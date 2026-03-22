@@ -106,6 +106,7 @@
 
 #include "Core/GlobalGraphicsInfo.hpp"
 #include "Core/GlobalInputConfig.hpp"
+#include "Core/GlobalNetworkConfig.hpp"
 #include "Core/GlobalStreamInfo.hpp"
 
 #include "Portal/Graphics/Graphics.hpp"

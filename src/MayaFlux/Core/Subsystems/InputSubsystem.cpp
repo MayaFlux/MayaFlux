@@ -44,6 +44,9 @@ void InputSubsystem::initialize(SubsystemProcessingHandle& handle)
     if (m_config.midi.enabled) {
         initialize_midi_backend();
     }
+    if (m_config.osc.enabled) {
+        m_handle->inputs.setup_osc_bridge(m_config.osc);
+    }
     if (m_config.serial.enabled) {
         initialize_serial_backend();
     }
