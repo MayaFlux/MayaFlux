@@ -7,6 +7,8 @@
 
 #include "Subsystems/InputSubsystem.hpp"
 
+#include "Subsystems/NetworkSubsystem.hpp"
+
 #include "MayaFlux/Journal/Archivist.hpp"
 
 #include "MayaFlux/Core/GlobalInputConfig.hpp"
@@ -81,6 +83,11 @@ void SubsystemManager::create_input_subsystem(GlobalInputConfig& input_config)
     create_subsystem_internal<InputSubsystem>(SubsystemType::INPUT, input_config);
 }
 
+void SubsystemManager::create_network_subsystem(const GlobalNetworkConfig& network_config)
+{
+    create_subsystem_internal<NetworkSubsystem>(SubsystemType::NETWORK, network_config);
+}
+
 void SubsystemManager::add_subsystem(SubsystemType type, const std::shared_ptr<ISubsystem>& subsystem)
 {
     auto tokens = subsystem->get_tokens();
@@ -118,6 +125,14 @@ std::shared_ptr<GraphicsSubsystem> SubsystemManager::get_graphics_subsystem()
 std::shared_ptr<InputSubsystem> SubsystemManager::get_input_subsystem()
 {
     if (auto subsystem = std::dynamic_pointer_cast<InputSubsystem>(get_subsystem(SubsystemType::INPUT))) {
+        return subsystem;
+    }
+    return nullptr;
+}
+
+std::shared_ptr<NetworkSubsystem> SubsystemManager::get_network_subsystem()
+{
+    if (auto subsystem = std::dynamic_pointer_cast<NetworkSubsystem>(get_subsystem(SubsystemType::NETWORK))) {
         return subsystem;
     }
     return nullptr;

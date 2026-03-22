@@ -4,6 +4,7 @@
 
 #include "GlobalGraphicsInfo.hpp"
 #include "GlobalInputConfig.hpp"
+#include "GlobalNetworkConfig.hpp"
 #include "GlobalStreamInfo.hpp"
 #include "MayaFlux/Nodes/NodeSpec.hpp"
 
@@ -142,11 +143,12 @@ public:
      * @param streamInfo Configuration for sample rate, buffer size, and channels
      * @param graphics_config Configuration for graphics/windowing backend
      * @param input_config Configuration for input handling
+     * @param network_config Configuration for network subsystem
      *
      * Configures the processing engine with the specified stream and graphics information.
      * This method must be called before starting the engine.
      */
-    void Init(const GlobalStreamInfo& streamInfo, const GlobalGraphicsConfig& graphics_config, const GlobalInputConfig& input_config);
+    void Init(const GlobalStreamInfo& streamInfo, const GlobalGraphicsConfig& graphics_config, const GlobalInputConfig& input_config, const GlobalNetworkConfig& network_config);
 
     /**
      * @brief Starts the coordinated processing of all subsystems
@@ -222,6 +224,12 @@ public:
      * @return Reference to the GlobalInputConfig struct
      */
     inline GlobalInputConfig& get_input_config() { return m_input_config; }
+
+    /**
+     * @brief Gets the current network configuration
+     * @return Reference to the GlobalNetworkConfig struct
+     */
+    inline GlobalNetworkConfig& get_network_config() { return m_network_config; }
 
     /**
      * @brief Gets the current node processing configuration
@@ -366,6 +374,7 @@ private:
     GlobalStreamInfo m_stream_info {}; ///< Stream configuration
     GlobalGraphicsConfig m_graphics_config {}; ///< Graphics/windowing configuration
     GlobalInputConfig m_input_config {}; ///< Input configuration
+    GlobalNetworkConfig m_network_config {}; ///< Network configuration
     Nodes::NodeConfig m_node_config {}; ///< Node processing configuration
 
     bool m_is_paused {}; ///< Pause state flag

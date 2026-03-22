@@ -92,15 +92,15 @@ void Engine::Init()
     }
 #endif // MAYAFLUX_PLATFORM_WINDOWS
 
-    Init(m_stream_info, m_graphics_config, m_input_config);
+    Init(m_stream_info, m_graphics_config, m_input_config, m_network_config);
 }
 
 void Engine::Init(const GlobalStreamInfo& streamInfo)
 {
-    Init(streamInfo, m_graphics_config, m_input_config);
+    Init(streamInfo, m_graphics_config, m_input_config, m_network_config);
 }
 
-void Engine::Init(const GlobalStreamInfo& streamInfo, const GlobalGraphicsConfig& graphics_config, const GlobalInputConfig& input_config)
+void Engine::Init(const GlobalStreamInfo& streamInfo, const GlobalGraphicsConfig& graphics_config, const GlobalInputConfig& input_config, const GlobalNetworkConfig& network_config)
 {
     MF_PRINT(Journal::Component::Core, Journal::Context::Init, "Engine initializing");
     m_stream_info = streamInfo;
@@ -137,6 +137,8 @@ void Engine::Init(const GlobalStreamInfo& streamInfo, const GlobalGraphicsConfig
     m_subsystem_manager->create_graphics_subsystem(m_graphics_config);
 
     m_subsystem_manager->create_input_subsystem(m_input_config);
+
+    m_subsystem_manager->create_network_subsystem(m_network_config);
 
     m_buffer_manager->initialize_buffer_service();
 
