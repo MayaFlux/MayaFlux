@@ -188,7 +188,7 @@ void Server::stop() noexcept
     LILA_INFO(Emitter::SERVER, "Server stopped");
 }
 
-#ifndef MAYAFLUX_JTHREAD_BROKEN
+#if MAYAFLUX_USE_JTHREAD
 void Server::server_loop(const std::stop_token& stop_token)
 #else
 void Server::server_loop(const ServerThread::StopToken& stop_token)

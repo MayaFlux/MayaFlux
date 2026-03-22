@@ -26,37 +26,9 @@
  * - Ranges
  */
 
-#if defined(__cpp_lib_jthread) && __cpp_lib_jthread >= 201911L
-
-#if defined(__apple_build_version__)
-// Apple Clang: need to verify version
-// Apple Clang version format: major * 10000000 + minor * 100000 + patch
-// Xcode 15.0 = Apple Clang 15.0.0 = 15000000
-// Xcode 15.4 = Apple Clang 15.0.0 = 15000309 (example)
-// Xcode 16.0 = Apple Clang 16.0.0 = 16000000
-
-#if __apple_build_version__ >= 15000000 && __apple_build_version__ < 16000000
-// Apple Clang 15.x series: known to have jthread issues
-// Despite feature test macro claiming support, implementation is buggy
-#define MAYAFLUX_JTHREAD_BROKEN 1
-#pragma message("ServerThread: Detected Apple Clang 15.x - using std::thread fallback for jthread")
-#else
-// Apple Clang < 15 or >= 16: assume working jthread
-#define MAYAFLUX_JTHREAD_WORKING 1
-#endif
-#else
-// Non-Apple compilers: trust the feature test macro
-#define MAYAFLUX_JTHREAD_WORKING 1
-#endif
-#else
-// Feature test macro says jthread is not available
-#define MAYAFLUX_JTHREAD_BROKEN 1
-#pragma message("ServerThread: std::jthread not available - using std::thread fallback")
-#endif
-
 namespace Lila {
 
-#ifdef MAYAFLUX_JTHREAD_WORKING
+#if MAYAFLUX_USE_JTHREAD
 
 /**
  * @brief Modern std::jthread-based thread wrapper
@@ -212,6 +184,6 @@ private:
     std::shared_ptr<std::atomic<bool>> m_stop_flag;
 };
 
-#endif // MAYAFLUX_JTHREAD_BROKEN / MAYAFLUX_JTHREAD_WORKING
+#endif // MAYAFLUX_USE_JTHREAD
 
 } // namespace Lila

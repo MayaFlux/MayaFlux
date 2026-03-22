@@ -175,7 +175,13 @@ private:
 
     std::unique_ptr<asio::io_context> m_io_context;
     std::unique_ptr<asio::executor_work_guard<asio::io_context::executor_type>> m_work_guard;
+
+#if MAYAFLUX_USE_JTHREAD
     std::jthread m_io_thread;
+#else
+    std::thread m_io_thread;
+    std::atomic<bool> m_io_stop_requested { false };
+#endif
 
     mutable std::shared_mutex m_backends_mutex;
     std::unordered_map<NetworkTransport, std::unique_ptr<INetworkBackend>> m_backends;

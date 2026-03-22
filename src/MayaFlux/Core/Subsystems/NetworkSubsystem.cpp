@@ -81,10 +81,8 @@ void NetworkSubsystem::start()
     m_work_guard = std::make_unique<asio::executor_work_guard<asio::io_context::executor_type>>(
         m_io_context->get_executor());
 
+#if MAYAFLUX_USE_JTHREAD
     m_io_thread = std::jthread([this](const std::stop_token& token) {
-        MF_DEBUG(Journal::Component::Core, Journal::Context::Init,
-            "Network IO thread started");
-
         while (!token.stop_requested()) {
             try {
                 m_io_context->run();
@@ -98,6 +96,23 @@ void NetworkSubsystem::start()
         MF_DEBUG(Journal::Component::Core, Journal::Context::Init,
             "Network IO thread exiting");
     });
+#else
+    m_io_stop_requested.store(false);
+    m_io_thread = std::thread([this]() {
+        while (!m_io_stop_requested.load()) {
+            try {
+                m_io_context->run();
+                break;
+            } catch (const std::exception& e) {
+                MF_ERROR(Journal::Component::Core, Journal::Context::Networking,
+                    "IO context exception: {}", e.what());
+            }
+        }
+
+        MF_DEBUG(Journal::Component::Core, Journal::Context::Init,
+            "Network IO thread exiting");
+    });
+#endif
 
     m_running.store(true);
 
@@ -133,10 +148,17 @@ void NetworkSubsystem::stop()
     m_work_guard.reset();
     m_io_context->stop();
 
+#if MAYAFLUX_USE_JTHREAD
     if (m_io_thread.joinable()) {
         m_io_thread.request_stop();
         m_io_thread.join();
     }
+#else
+    m_io_stop_requested.store(true);
+    if (m_io_thread.joinable()) {
+        m_io_thread.join();
+    }
+#endif
 
     m_io_context->restart();
 
