@@ -71,7 +71,7 @@ void UDPBackend::shutdown()
         for (auto& [port, state] : m_sockets) {
             asio::error_code ec;
             if (state->socket.close(ec)) {
-                MF_WARN(Journal::Component::Core, Journal::Context::Networking,
+                MF_WARN(Journal::Component::Core, Journal::Context::NetworkBackend,
                     "Error closing UDP socket on port {}: {}", port, ec.message());
             }
         }
@@ -111,7 +111,7 @@ uint64_t UDPBackend::open_endpoint(const EndpointInfo& info)
         asio::error_code ec;
         auto addr = asio::ip::make_address(info.remote_address, ec);
         if (ec) {
-            MF_ERROR(Journal::Component::Core, Journal::Context::Networking,
+            MF_ERROR(Journal::Component::Core, Journal::Context::NetworkBackend,
                 "Invalid remote address '{}': {}", info.remote_address, ec.message());
             release_socket(local_port);
             return 0;
@@ -129,7 +129,7 @@ uint64_t UDPBackend::open_endpoint(const EndpointInfo& info)
 
     transition_state(m_endpoints[info.id], EndpointState::OPEN);
 
-    MF_INFO(Journal::Component::Core, Journal::Context::Networking,
+    MF_INFO(Journal::Component::Core, Journal::Context::NetworkBackend,
         "UDP endpoint {} opened (local:{}, remote:{}:{})",
         info.id, local_port, info.remote_address, info.remote_port);
 
@@ -154,7 +154,7 @@ void UDPBackend::close_endpoint(uint64_t endpoint_id)
 
     release_socket(local_port);
 
-    MF_DEBUG(Journal::Component::Core, Journal::Context::Networking,
+    MF_DEBUG(Journal::Component::Core, Journal::Context::NetworkBackend,
         "UDP endpoint {} closed", endpoint_id);
 }
 
@@ -193,7 +193,7 @@ bool UDPBackend::send(uint64_t endpoint_id, const uint8_t* data, size_t size)
 
     auto& record = it->second;
     if (!record.has_default_remote) {
-        MF_WARN(Journal::Component::Core, Journal::Context::Networking,
+        MF_WARN(Journal::Component::Core, Journal::Context::NetworkBackend,
             "UDP endpoint {} has no default remote target", endpoint_id);
         return false;
     }
@@ -206,7 +206,7 @@ bool UDPBackend::send(uint64_t endpoint_id, const uint8_t* data, size_t size)
         asio::buffer(*buf), remote,
         [buf, endpoint_id](const asio::error_code& ec, size_t /*bytes_sent*/) {
             if (ec) {
-                MF_WARN(Journal::Component::Core, Journal::Context::Networking,
+                MF_WARN(Journal::Component::Core, Journal::Context::NetworkBackend,
                     "UDP send failed on endpoint {}: {}", endpoint_id, ec.message());
             }
         });
@@ -226,7 +226,7 @@ bool UDPBackend::send_to(uint64_t endpoint_id, const uint8_t* data, size_t size,
     asio::error_code ec;
     auto addr = asio::ip::make_address(address, ec);
     if (ec) {
-        MF_WARN(Journal::Component::Core, Journal::Context::Networking,
+        MF_WARN(Journal::Component::Core, Journal::Context::NetworkBackend,
             "Invalid send_to address '{}': {}", address, ec.message());
         return false;
     }
@@ -239,7 +239,7 @@ bool UDPBackend::send_to(uint64_t endpoint_id, const uint8_t* data, size_t size,
         asio::buffer(*buf), target,
         [buf, endpoint_id](const asio::error_code& send_ec, size_t) {
             if (send_ec) {
-                MF_WARN(Journal::Component::Core, Journal::Context::Networking,
+                MF_WARN(Journal::Component::Core, Journal::Context::NetworkBackend,
                     "UDP send_to failed on endpoint {}: {}", endpoint_id, send_ec.message());
             }
         });
@@ -281,13 +281,13 @@ UDPBackend::SocketState* UDPBackend::acquire_socket(uint16_t local_port)
 
     asio::error_code ec;
     if (state->socket.open(asio::ip::udp::v4(), ec)) {
-        MF_ERROR(Journal::Component::Core, Journal::Context::Networking,
+        MF_ERROR(Journal::Component::Core, Journal::Context::NetworkBackend,
             "Failed to open UDP socket: {}", ec.message());
         return nullptr;
     }
 
     if (state->socket.set_option(asio::socket_base::reuse_address(true), ec)) {
-        MF_ERROR(Journal::Component::Core, Journal::Context::Networking,
+        MF_ERROR(Journal::Component::Core, Journal::Context::NetworkBackend,
             "Failed to set SO_REUSEADDR on UDP socket: {}", ec.message());
         return nullptr;
     }
@@ -296,7 +296,7 @@ UDPBackend::SocketState* UDPBackend::acquire_socket(uint16_t local_port)
         if (
             state->socket.bind(
                 asio::ip::udp::endpoint(asio::ip::udp::v4(), local_port), ec)) {
-            MF_ERROR(Journal::Component::Core, Journal::Context::Networking,
+            MF_ERROR(Journal::Component::Core, Journal::Context::NetworkBackend,
                 "Failed to bind UDP socket to port {}: {}", local_port, ec.message());
             return nullptr;
         }
@@ -307,7 +307,7 @@ UDPBackend::SocketState* UDPBackend::acquire_socket(uint16_t local_port)
                 asio::socket_base::receive_buffer_size(
                     static_cast<int>(m_config.receive_buffer_size)),
                 ec)) {
-            MF_WARN(Journal::Component::Core, Journal::Context::Networking,
+            MF_WARN(Journal::Component::Core, Journal::Context::NetworkBackend,
                 "Failed to set receive buffer size on UDP socket: {}", ec.message());
         }
     }
@@ -317,7 +317,7 @@ UDPBackend::SocketState* UDPBackend::acquire_socket(uint16_t local_port)
 
     start_receive_loop(*raw);
 
-    MF_DEBUG(Journal::Component::Core, Journal::Context::Networking,
+    MF_DEBUG(Journal::Component::Core, Journal::Context::NetworkBackend,
         "UDP socket bound to port {}", local_port);
 
     return raw;
@@ -336,12 +336,12 @@ void UDPBackend::release_socket(uint16_t local_port)
         asio::error_code ec;
 
         if (it->second->socket.close(ec)) {
-            MF_WARN(Journal::Component::Core, Journal::Context::Networking,
+            MF_WARN(Journal::Component::Core, Journal::Context::NetworkBackend,
                 "Error closing UDP socket on port {}: {}", local_port, ec.message());
         }
         m_sockets.erase(it);
 
-        MF_DEBUG(Journal::Component::Core, Journal::Context::Networking,
+        MF_DEBUG(Journal::Component::Core, Journal::Context::NetworkBackend,
             "UDP socket on port {} released", local_port);
     }
 }
@@ -366,7 +366,7 @@ void UDPBackend::on_receive(SocketState& state, const asio::error_code& ec, size
         if (ec == asio::error::operation_aborted) {
             return;
         }
-        MF_WARN(Journal::Component::Core, Journal::Context::Networking,
+        MF_WARN(Journal::Component::Core, Journal::Context::NetworkBackend,
             "UDP receive error on port {}: {}", state.local_port, ec.message());
         start_receive_loop(state);
         return;

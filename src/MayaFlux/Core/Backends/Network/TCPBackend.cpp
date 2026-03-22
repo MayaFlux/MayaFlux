@@ -44,7 +44,7 @@ void TCPBackend::start()
 
     m_running.store(true);
 
-    MF_DEBUG(Journal::Component::Core, Journal::Context::Networking,
+    MF_DEBUG(Journal::Component::Core, Journal::Context::NetworkBackend,
         "TCP backend started");
 }
 
@@ -62,7 +62,7 @@ void TCPBackend::stop()
             asio::error_code ec;
 
             if (conn->socket.close(ec)) {
-                MF_WARN(Journal::Component::Core, Journal::Context::Networking,
+                MF_WARN(Journal::Component::Core, Journal::Context::NetworkBackend,
                     "Error closing TCP connection {}: {}", id, ec.message());
             }
 
@@ -77,7 +77,7 @@ void TCPBackend::stop()
         for (auto& [id, listener] : m_listeners) {
             asio::error_code ec;
             if (!listener->acceptor.close(ec)) {
-                MF_WARN(Journal::Component::Core, Journal::Context::Networking,
+                MF_WARN(Journal::Component::Core, Journal::Context::NetworkBackend,
                     "Error closing TCP listener {}: {}", id, ec.message());
             }
         }
@@ -125,25 +125,25 @@ uint64_t TCPBackend::open_endpoint(const EndpointInfo& info)
         auto endpoint = asio::ip::tcp::endpoint(asio::ip::tcp::v4(), info.local_port);
 
         if (listener->acceptor.open(endpoint.protocol(), ec)) {
-            MF_ERROR(Journal::Component::Core, Journal::Context::Networking,
+            MF_ERROR(Journal::Component::Core, Journal::Context::NetworkBackend,
                 "Failed to open TCP acceptor: {}", ec.message());
             return 0;
         }
 
         if (listener->acceptor.set_option(asio::socket_base::reuse_address(true), ec)) {
-            MF_ERROR(Journal::Component::Core, Journal::Context::Networking,
+            MF_ERROR(Journal::Component::Core, Journal::Context::NetworkBackend,
                 "Failed to set SO_REUSEADDR on TCP acceptor: {}", ec.message());
             return 0;
         }
 
         if (listener->acceptor.bind(endpoint, ec)) {
-            MF_ERROR(Journal::Component::Core, Journal::Context::Networking,
+            MF_ERROR(Journal::Component::Core, Journal::Context::NetworkBackend,
                 "Failed to bind TCP acceptor to port {}: {}", info.local_port, ec.message());
             return 0;
         }
 
         if (listener->acceptor.listen(asio::socket_base::max_listen_connections, ec)) {
-            MF_ERROR(Journal::Component::Core, Journal::Context::Networking,
+            MF_ERROR(Journal::Component::Core, Journal::Context::NetworkBackend,
                 "Failed to listen on port {}: {}", info.local_port, ec.message());
             return 0;
         }
@@ -163,7 +163,7 @@ uint64_t TCPBackend::open_endpoint(const EndpointInfo& info)
 
         start_accept(*raw);
 
-        MF_INFO(Journal::Component::Core, Journal::Context::Networking,
+        MF_INFO(Journal::Component::Core, Journal::Context::NetworkBackend,
             "TCP listener {} opened on port {}", info.id, info.local_port);
 
         return info.id;
@@ -183,7 +183,7 @@ uint64_t TCPBackend::open_endpoint(const EndpointInfo& info)
 
     start_connect(*raw);
 
-    MF_INFO(Journal::Component::Core, Journal::Context::Networking,
+    MF_INFO(Journal::Component::Core, Journal::Context::NetworkBackend,
         "TCP connection {} opening to {}:{}", info.id, info.remote_address, info.remote_port);
 
     return info.id;
@@ -198,7 +198,7 @@ void TCPBackend::close_endpoint(uint64_t endpoint_id)
             asio::error_code ec;
 
             if (!it->second->socket.close(ec)) {
-                MF_WARN(Journal::Component::Core, Journal::Context::Networking,
+                MF_WARN(Journal::Component::Core, Journal::Context::NetworkBackend,
                     "Error closing TCP connection {}: {}", endpoint_id, ec.message());
             }
 
@@ -207,7 +207,7 @@ void TCPBackend::close_endpoint(uint64_t endpoint_id)
             }
             m_connections.erase(it);
 
-            MF_DEBUG(Journal::Component::Core, Journal::Context::Networking,
+            MF_DEBUG(Journal::Component::Core, Journal::Context::NetworkBackend,
                 "TCP connection {} closed", endpoint_id);
             return;
         }
@@ -220,13 +220,13 @@ void TCPBackend::close_endpoint(uint64_t endpoint_id)
             asio::error_code ec;
 
             if (it->second->acceptor.close(ec)) {
-                MF_WARN(Journal::Component::Core, Journal::Context::Networking,
+                MF_WARN(Journal::Component::Core, Journal::Context::NetworkBackend,
                     "Error closing TCP listener {}: {}", endpoint_id, ec.message());
             }
 
             m_listeners.erase(it);
 
-            MF_DEBUG(Journal::Component::Core, Journal::Context::Networking,
+            MF_DEBUG(Journal::Component::Core, Journal::Context::NetworkBackend,
                 "TCP listener {} closed", endpoint_id);
         }
     }
@@ -302,7 +302,7 @@ bool TCPBackend::send(uint64_t endpoint_id, const uint8_t* data, size_t size)
         asio::buffer(*frame),
         [frame, endpoint_id, this](const asio::error_code& ec, size_t) {
             if (ec) {
-                MF_WARN(Journal::Component::Core, Journal::Context::Networking,
+                MF_WARN(Journal::Component::Core, Journal::Context::NetworkBackend,
                     "TCP write failed on endpoint {}: {}", endpoint_id, ec.message());
 
                 std::shared_lock lk(m_connections_mutex);
@@ -345,7 +345,7 @@ void TCPBackend::start_connect(ConnectionState& conn)
     asio::error_code ec;
     auto addr = asio::ip::make_address(conn.info.remote_address, ec);
     if (ec) {
-        MF_ERROR(Journal::Component::Core, Journal::Context::Networking,
+        MF_ERROR(Journal::Component::Core, Journal::Context::NetworkBackend,
             "Invalid remote address '{}': {}", conn.info.remote_address, ec.message());
         transition_state(conn.info, EndpointState::ERROR);
         return;
@@ -365,7 +365,7 @@ void TCPBackend::start_connect(ConnectionState& conn)
             auto& c = *it->second;
 
             if (connect_ec) {
-                MF_WARN(Journal::Component::Core, Journal::Context::Networking,
+                MF_WARN(Journal::Component::Core, Journal::Context::NetworkBackend,
                     "TCP connect failed for endpoint {}: {}",
                     ep_id, connect_ec.message());
 
@@ -381,7 +381,7 @@ void TCPBackend::start_connect(ConnectionState& conn)
             transition_state(c.info, EndpointState::OPEN);
             start_receive_chain(c);
 
-            MF_INFO(Journal::Component::Core, Journal::Context::Networking,
+            MF_INFO(Journal::Component::Core, Journal::Context::NetworkBackend,
                 "TCP endpoint {} connected to {}:{}",
                 ep_id, c.info.remote_address, c.info.remote_port);
         });
@@ -410,7 +410,7 @@ void TCPBackend::start_accept(ListenerState& listener)
                 if (ec == asio::error::operation_aborted) {
                     return;
                 }
-                MF_WARN(Journal::Component::Core, Journal::Context::Networking,
+                MF_WARN(Journal::Component::Core, Journal::Context::NetworkBackend,
                     "TCP accept error on listener {}: {}", listener_id, ec.message());
                 start_accept(lst);
                 return;
@@ -449,7 +449,7 @@ void TCPBackend::start_accept(ListenerState& listener)
 
             start_receive_chain(*raw);
 
-            MF_INFO(Journal::Component::Core, Journal::Context::Networking,
+            MF_INFO(Journal::Component::Core, Journal::Context::NetworkBackend,
                 "TCP accepted connection {} from {}:{} on listener {}",
                 new_id, peer_addr, peer_port, listener_id);
 
@@ -489,7 +489,7 @@ void TCPBackend::on_header_received(ConnectionState& conn,
     uint32_t payload_size = ntohl(net_len);
 
     if (payload_size == 0 || payload_size > 64 * 1024 * 1024) {
-        MF_WARN(Journal::Component::Core, Journal::Context::Networking,
+        MF_WARN(Journal::Component::Core, Journal::Context::NetworkBackend,
             "TCP endpoint {} received invalid frame length: {}",
             conn.info.id, payload_size);
         on_connection_error(conn, asio::error::message_size);
@@ -541,16 +541,16 @@ void TCPBackend::on_connection_error(ConnectionState& conn, const asio::error_co
     }
 
     if (ec == asio::error::eof) {
-        MF_INFO(Journal::Component::Core, Journal::Context::Networking,
+        MF_INFO(Journal::Component::Core, Journal::Context::NetworkBackend,
             "TCP endpoint {} peer disconnected", conn.info.id);
     } else {
-        MF_WARN(Journal::Component::Core, Journal::Context::Networking,
+        MF_WARN(Journal::Component::Core, Journal::Context::NetworkBackend,
             "TCP endpoint {} error: {}", conn.info.id, ec.message());
     }
 
     asio::error_code close_ec;
     if (!conn.socket.close(close_ec)) {
-        MF_WARN(Journal::Component::Core, Journal::Context::Networking,
+        MF_WARN(Journal::Component::Core, Journal::Context::NetworkBackend,
             "Error closing TCP socket for endpoint {}: {}", conn.info.id, close_ec.message());
     }
 
@@ -587,7 +587,7 @@ void TCPBackend::schedule_reconnect(ConnectionState& conn)
 
             c.socket = asio::ip::tcp::socket(m_context);
 
-            MF_DEBUG(Journal::Component::Core, Journal::Context::Networking,
+            MF_DEBUG(Journal::Component::Core, Journal::Context::NetworkBackend,
                 "TCP endpoint {} attempting reconnect to {}:{}",
                 ep_id, c.info.remote_address, c.info.remote_port);
 
