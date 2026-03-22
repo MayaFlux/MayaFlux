@@ -58,6 +58,7 @@
 
 #include "MayaFlux/Nodes/Input/HIDNode.hpp"
 #include "MayaFlux/Nodes/Input/MIDINode.hpp"
+#include "MayaFlux/Nodes/Input/OSCNode.hpp"
 
 #include "Buffers/BufferManager.hpp"
 #include "Buffers/BufferProcessingChain.hpp"
