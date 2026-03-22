@@ -9,6 +9,7 @@ class InputNode;
 
 namespace MayaFlux::Registry::Service {
 struct InputService;
+struct NetworkService;
 }
 
 namespace MayaFlux::Core {
@@ -183,6 +184,12 @@ private:
 #endif
 
     Registry::Service::InputService* m_input_service { nullptr };
+    Registry::Service::NetworkService* m_network_service { nullptr };
+
+    void setup_osc_bridge(const OSCConfigInfo& osc_config);
+    void teardown_osc_bridge();
+
+    uint64_t m_osc_endpoint_id { 0 };
 
     // ─────────────────────────────────────────────────────────────────────
     // Statistics

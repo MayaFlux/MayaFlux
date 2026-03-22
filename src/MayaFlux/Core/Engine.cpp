@@ -106,6 +106,7 @@ void Engine::Init(const GlobalStreamInfo& streamInfo, const GlobalGraphicsConfig
     m_stream_info = streamInfo;
     m_graphics_config = graphics_config;
     m_input_config = input_config;
+    m_network_config = network_config;
 
     m_scheduler = std::make_shared<Vruta::TaskScheduler>(m_stream_info.sample_rate);
     m_event_manager = std::make_shared<Vruta::EventManager>();

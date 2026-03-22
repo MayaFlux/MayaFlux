@@ -20,7 +20,7 @@ struct InputBinding;
  * @class InputSubsystem
  * @brief Input processing subsystem for external devices
  *
- * Coordinates input backends (HID, MIDI, OSC, Serial) and InputManager.
+ * Coordinates input backends (HID, MIDI, Serial) and InputManager.
  * Follows the same lifecycle patterns as AudioSubsystem and GraphicsSubsystem.
  *
  * Responsibilities:
@@ -142,7 +142,6 @@ private:
 
     void initialize_hid_backend();
     void initialize_midi_backend();
-    void initialize_osc_backend();
     void initialize_serial_backend();
 
     void wire_backend_to_manager(IInputBackend* backend);

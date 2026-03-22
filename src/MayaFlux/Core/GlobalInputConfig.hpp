@@ -136,7 +136,7 @@ struct MAYAFLUX_API MIDIBackendInfo {
 /**
  * @brief OSC backend configuration
  */
-struct MAYAFLUX_API OSCBackendInfo {
+struct MAYAFLUX_API OSCConfigInfo {
     bool enabled { false }; ///< Enable OSC backend
     uint16_t receive_port { 8000 }; ///< UDP port to listen on
     uint16_t send_port { 9000 }; ///< Default UDP port to send to
@@ -201,7 +201,7 @@ struct MAYAFLUX_API SerialBackendInfo {
 struct MAYAFLUX_API GlobalInputConfig {
     HIDBackendInfo hid; ///< HID backend configuration
     MIDIBackendInfo midi; ///< MIDI backend configuration
-    OSCBackendInfo osc; ///< OSC backend configuration
+    OSCConfigInfo osc; ///< OSC backend configuration
     SerialBackendInfo serial; ///< Serial backend configuration
 
     // ─────────────────────────────────────────────────────────────────────
