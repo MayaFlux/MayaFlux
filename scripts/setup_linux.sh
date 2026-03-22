@@ -66,6 +66,7 @@ install_fedora() {
     echo -e "${BLUE}Installing dependencies for Fedora...${NC}"
 
     sudo dnf copr enable -y ranjithshegde/spirv-cross
+    sudo dnf copr enable -y ranjithshegde/asio-standalone
 
     PACKAGES=(
         "gcc-c++"
@@ -97,6 +98,7 @@ install_fedora() {
         "libshaderc-devel"
         "hidapi-devel"
         "rtmidi-devel"
+        "asio-standalone"
         "wayland-devel"
         "git"
     )

@@ -1,5 +1,7 @@
 #include "OscParser.hpp"
 
+#include "bit"
+
 namespace MayaFlux::Core {
 
 size_t OscParser::padded_size(size_t len)

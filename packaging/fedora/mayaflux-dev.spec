@@ -45,6 +45,7 @@ BuildRequires:  glslc
 BuildRequires:  wayland-devel
 BuildRequires:  hidapi-devel
 BuildRequires:  rtmidi-devel
+BuildRequires:  asio-standalone
 BuildRequires:  git
 
 # Runtime = BuildRequires (all needed for live coding/JIT)
@@ -78,6 +79,7 @@ Requires:       glslc
 Requires:       wayland-devel
 Requires:       hidapi-devel
 Requires:       rtmidi-devel
+Requires:       asio-standalone
 
 Provides:       mayaflux = %{version}-%{release}
 Conflicts:      mayaflux
