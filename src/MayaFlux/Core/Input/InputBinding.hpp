@@ -237,6 +237,40 @@ struct MAYAFLUX_API InputValue {
     struct OSCMessage {
         std::string address; ///< OSC address pattern
         std::vector<OSCArg> arguments; ///< Typed arguments
+
+        /**
+         * @brief Extract a float argument by index.
+         *
+         * int32_t arguments are widened to float.
+         *
+         * @param index Argument index (0-based).
+         * @return Float value, or std::nullopt if out of range or wrong type.
+         */
+        [[nodiscard]] std::optional<float> get_float(size_t index = 0) const noexcept;
+
+        /**
+         * @brief Extract an int32 argument by index.
+         *
+         * float arguments are truncated to int32_t.
+         *
+         * @param index Argument index (0-based).
+         * @return Int value, or std::nullopt if out of range or wrong type.
+         */
+        [[nodiscard]] std::optional<int32_t> get_int(size_t index = 0) const noexcept;
+
+        /**
+         * @brief Extract a string argument by index.
+         * @param index Argument index (0-based).
+         * @return String value, or std::nullopt if out of range or wrong type.
+         */
+        [[nodiscard]] std::optional<std::string> get_string(size_t index = 0) const noexcept;
+
+        /**
+         * @brief Extract a blob argument by index.
+         * @param index Argument index (0-based).
+         * @return Raw bytes, or std::nullopt if out of range or wrong type.
+         */
+        [[nodiscard]] std::optional<std::vector<uint8_t>> get_blob(size_t index = 0) const noexcept;
     };
 
     Type type;
@@ -268,6 +302,36 @@ struct MAYAFLUX_API InputValue {
     static InputValue make_midi(uint8_t status, uint8_t d1, uint8_t d2, uint32_t dev_id);
 
     static InputValue make_osc(std::string addr, std::vector<OSCArg> args, uint32_t dev_id);
+
+    /**
+     * @brief Safe scalar extraction.
+     * @return Value, or std::nullopt if this is not a SCALAR.
+     */
+    [[nodiscard]] std::optional<double> try_scalar() const noexcept;
+
+    /**
+     * @brief Safe vector extraction.
+     * @return Pointer to vector, or nullptr if this is not a VECTOR.
+     */
+    [[nodiscard]] const std::vector<double>* try_vector() const noexcept;
+
+    /**
+     * @brief Safe bytes extraction.
+     * @return Pointer to bytes, or nullptr if this is not BYTES.
+     */
+    [[nodiscard]] const std::vector<uint8_t>* try_bytes() const noexcept;
+
+    /**
+     * @brief Safe MIDI extraction.
+     * @return Pointer to MIDIMessage, or nullptr if this is not MIDI.
+     */
+    [[nodiscard]] const MIDIMessage* try_midi() const noexcept;
+
+    /**
+     * @brief Safe OSC extraction.
+     * @return Pointer to OSCMessage, or nullptr if this is not OSC.
+     */
+    [[nodiscard]] const OSCMessage* try_osc() const noexcept;
 };
 
 } // namespace MayaFlux::Core
