@@ -12,6 +12,8 @@
 #include "MayaFlux/Vruta/ChronUtils.hpp"
 
 #include "MayaFlux/Kriya/InputEvents.hpp"
+#include "MayaFlux/Kriya/NetworkEvents.hpp"
+#include "MayaFlux/Vruta/NetworkSource.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
@@ -272,6 +274,84 @@ uint64_t samples_to_blocks(uint64_t samples)
     }
 
     return Vruta::samples_to_blocks(samples, block_size);
+}
+
+void on_network_message(
+    std::shared_ptr<Vruta::NetworkSource> source,
+    std::function<void(const Core::NetworkMessage&)> callback,
+    std::string name)
+{
+    auto event_manager = get_event_manager();
+    if (name.empty()) {
+        name = "net_msg_" + std::to_string(event_manager->get_next_event_id());
+    }
+    event_manager->add_event(
+        std::make_shared<Vruta::Event>(Kriya::on_message(std::move(source), std::move(callback))),
+        name);
+}
+
+std::shared_ptr<Vruta::NetworkSource> on_network_message(
+    const Core::EndpointInfo& info,
+    std::function<void(const Core::NetworkMessage&)> callback,
+    std::string name)
+{
+    auto source = std::make_shared<Vruta::NetworkSource>(info);
+    on_network_message(source, std::move(callback), std::move(name));
+    return source;
+}
+
+void on_network_message_from(
+    std::shared_ptr<Vruta::NetworkSource> source,
+    std::string sender_address,
+    std::function<void(const Core::NetworkMessage&)> callback,
+    std::string name)
+{
+    auto event_manager = get_event_manager();
+    if (name.empty()) {
+        name = "net_msg_from_" + std::to_string(event_manager->get_next_event_id());
+    }
+    event_manager->add_event(
+        std::make_shared<Vruta::Event>(
+            Kriya::on_message_from(std::move(source), std::move(sender_address), std::move(callback))),
+        name);
+}
+
+std::shared_ptr<Vruta::NetworkSource> on_network_message_from(
+    const Core::EndpointInfo& info,
+    std::string sender_address,
+    std::function<void(const Core::NetworkMessage&)> callback,
+    std::string name)
+{
+    auto source = std::make_shared<Vruta::NetworkSource>(info);
+    on_network_message_from(source, std::move(sender_address), std::move(callback), std::move(name));
+    return source;
+}
+
+void on_network_message_matching(
+    std::shared_ptr<Vruta::NetworkSource> source,
+    std::function<bool(const Core::NetworkMessage&)> predicate,
+    std::function<void(const Core::NetworkMessage&)> callback,
+    std::string name)
+{
+    auto event_manager = get_event_manager();
+    if (name.empty()) {
+        name = "net_msg_match_" + std::to_string(event_manager->get_next_event_id());
+    }
+    event_manager->add_event(
+        std::make_shared<Vruta::Event>(
+            Kriya::on_message_matching(std::move(source), std::move(predicate), std::move(callback))),
+        name);
+}
+
+std::shared_ptr<Vruta::NetworkSource> on_network_message_matching(
+    const Core::EndpointInfo& info,
+    std::function<bool(const Core::NetworkMessage&)> predicate,
+    std::function<void(const Core::NetworkMessage&)> callback,
+    std::string name)
+{
+    auto source = std::make_shared<Vruta::NetworkSource>(info);
+    on_network_message_matching(source, std::move(predicate), std::move(callback), std::move(name));
+    return source;
 }
 
 }
