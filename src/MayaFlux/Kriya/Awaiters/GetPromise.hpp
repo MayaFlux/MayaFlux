@@ -87,16 +87,43 @@ using GetGraphicsPromise = GetPromiseBase<Vruta::graphics_promise>;
 using GetComplexPromise = GetPromiseBase<Vruta::complex_promise>;
 
 /**
- * @brief Event-driven promise accessor
+ * @struct GetEventPromise
+ * @brief Event-domain promise accessor with optional NetworkSource ownership transfer.
  *
- * Usage in Event coroutines:
- * ```cpp
- * auto routine = []() -> Event {
- *     auto& promise = co_await GetEventPromise{};
- *     // promise is event_promise&
+ * Extends GetPromiseBase for the event domain. When constructed with a
+ * NetworkSource, deposits it into the promise's owned_sources on
+ * await_resume, binding the source lifetime to the coroutine frame.
+ *
+ * Users familiar with coroutine mechanics are expected to use this as the
+ * designated entry point for resource ownership in Event coroutines.
+ *
+ * @code
+ * auto handler = []() -> Vruta::Event {
+ *     auto source = std::make_shared<Vruta::NetworkSource>(
+ *         Core::EndpointInfo{ .transport = Core::NetworkTransport::UDP, .local_port = 8000 });
+ *     co_await Kriya::GetEventPromise{ source };
+ *     while (true) {
+ *         auto msg = co_await source->next_message();
+ *     }
  * };
- * ```
+ * @endcode
  */
-using GetEventPromise = GetPromiseBase<Vruta::event_promise>;
+struct MAYAFLUX_API GetEventPromise : public GetPromiseBase<Vruta::event_promise> {
+    explicit GetEventPromise(std::shared_ptr<Vruta::NetworkSource> source = nullptr)
+        : m_source(std::move(source))
+    {
+    }
+
+    [[nodiscard]] Vruta::event_promise& await_resume() const noexcept
+    {
+        if (m_source) {
+            promise_ptr->own(m_source);
+        }
+        return *promise_ptr;
+    }
+
+private:
+    std::shared_ptr<Vruta::NetworkSource> m_source;
+};
 
 }

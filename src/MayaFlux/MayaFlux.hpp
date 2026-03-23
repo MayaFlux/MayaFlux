@@ -85,10 +85,12 @@
 
 #include "Kriya/Awaiters/DelayAwaiters.hpp"
 #include "Kriya/Awaiters/EventAwaiter.hpp"
+#include "Kriya/Awaiters/NetworkAwaiter.hpp"
 #include "Kriya/BufferPipeline.hpp"
 #include "Kriya/Chain.hpp"
 #include "Kriya/CycleCoordinator.hpp"
 #include "Kriya/InputEvents.hpp"
+#include "Kriya/NetworkEvents.hpp"
 #include "Kriya/Tasks.hpp"
 
 #include "Vruta/Event.hpp"

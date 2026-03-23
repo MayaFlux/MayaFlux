@@ -92,10 +92,10 @@ jobs:
           fi
 
           if [ -z "$PREVIOUS_TAG" ]; then
-            CHANGELOG=$(git log --oneline --decorate=short -n 50)
+            CHANGELOG=$(git log --no-merges --oneline --decorate=short -n 50)
             HEADER="## Full changelog (first release)"
           else
-            CHANGELOG=$(git log --oneline --decorate=short "${PREVIOUS_TAG}..${GITHUB_SHA}")
+            CHANGELOG=$(git log --no-merges --oneline --decorate=short "${PREVIOUS_TAG}..${GITHUB_SHA}")
             HEADER="## Changes since ${PREVIOUS_TAG}"
           fi
 

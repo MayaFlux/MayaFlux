@@ -10,6 +10,7 @@ class SoundRoutine;
 class GraphicsRoutine;
 class ComplexRoutine;
 class Event;
+class NetworkSource;
 
 /**
  * @struct routine_promise
@@ -358,6 +359,24 @@ struct event_promise : public routine_promise<Event> {
     ProcessingToken processing_token { ProcessingToken::EVENT_DRIVEN };
 
     DelayContext active_delay_context { DelayContext::EVENT_BASED };
+
+    /**
+     * @brief Transfer ownership of a NetworkSource to this coroutine frame.
+     * @param source Source to keep alive for the coroutine's lifetime.
+     */
+    void own(std::shared_ptr<Vruta::NetworkSource> source)
+    {
+        owned_sources.push_back(std::move(source));
+    }
+
+    /**
+     * @brief Coroutine-owned NetworkSource instances.
+     *
+     * Sources deposited here via GetEventPromise live for exactly the
+     * lifetime of the coroutine frame. Populated through co_await
+     * GetEventPromise{ source } at coroutine startup.
+     */
+    std::vector<std::shared_ptr<Vruta::NetworkSource>> owned_sources;
 };
 
 }
