@@ -378,7 +378,8 @@ void UDPBackend::on_receive(SocketState& state, const asio::error_code& ec, size
 
         std::shared_lock lock(m_endpoints_mutex);
         for (const auto& [id, record] : m_endpoints) {
-            if (record.socket_state->local_port == state.local_port) {
+            if (record.socket_state->local_port == state.local_port
+                && record.info.role != EndpointRole::SEND) {
                 m_receive_callback(id, state.recv_buffer.data(), bytes_received, sender_str);
             }
         }
