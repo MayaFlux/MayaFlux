@@ -373,13 +373,15 @@ void UDPBackend::on_receive(SocketState& state, const asio::error_code& ec, size
     }
 
     if (m_receive_callback && bytes_received > 0) {
-        uint64_t ep_id = resolve_endpoint_for_sender(
-            state.local_port, state.sender_endpoint);
-
         std::string sender_str = state.sender_endpoint.address().to_string()
             + ":" + std::to_string(state.sender_endpoint.port());
 
-        m_receive_callback(ep_id, state.recv_buffer.data(), bytes_received, sender_str);
+        std::shared_lock lock(m_endpoints_mutex);
+        for (const auto& [id, record] : m_endpoints) {
+            if (record.socket_state->local_port == state.local_port) {
+                m_receive_callback(id, state.recv_buffer.data(), bytes_received, sender_str);
+            }
+        }
     }
 
     start_receive_loop(state);
