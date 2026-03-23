@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kakshya::ContainerDataStructure::get_width" name="MayaFlux::Kakshya::ContainerDataStructure::get_width">
+<area shape="rect" id="Node000001" title="Extract width from image/video dimensions." alt="" coords="313,41,488,96"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1WindowContainer_ac8065ef8ab487f991cf4b76dc5c8e33d.html#ac8065ef8ab487f991cf4b76dc5c8e33d" title="Get a single value at the specified coordinates." alt="" coords="52,5,219,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="300,58,218,47,219,41,300,52"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1WindowContainer_a2b7ca842f83285bdfa67d35ebc9f8713.html#a2b7ca842f83285bdfa67d35ebc9f8713" title="Construct from an existing managed window." alt="" coords="5,85,265,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="300,85,266,90,265,84,300,80"/>
+</map>

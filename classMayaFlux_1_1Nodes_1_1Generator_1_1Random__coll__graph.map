@@ -1,0 +1,29 @@
+<map id="MayaFlux::Nodes::Generator::Random" name="MayaFlux::Nodes::Generator::Random">
+<area shape="rect" id="Node000001" title="Node wrapper for Kinesis::Stochastic &#45; signal&#45;rate stochastic generation." alt="" coords="648,1907,848,2327"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Generator.html" title="Base class for all signal and pattern generators in Maya Flux." alt="" coords="215,1359,415,1659"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="425,1660,650,1974,646,1977,421,1663"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Node.html" title="Base interface for all computational processing nodes." alt="" coords="5,423,203,1112"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="208,1125,275,1358,270,1360,203,1126"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Nodes_1_1RoutingState.html" title="Represents the state of routing transitions for a node." alt="" coords="11,180,197,360"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="107,360,107,406,101,406,101,360"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1GeneratorContext.html" title="Specialized context for generator node callbacks." alt="" coords="231,210,431,330"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="300,331,280,376,265,423,246,526,235,614,232,692,234,765,248,917,265,1112,276,1229,291,1343,285,1343,271,1230,260,1112,243,918,228,765,227,692,230,614,241,525,260,422,275,374,295,329"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1GeneratorContextGpu.html" title=" " alt="" coords="360,727,560,807"/>
+<area shape="poly" id="edge7_Node000007_Node000005" title=" " alt="" coords="352,342,452,727,447,728,347,344"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1NodeContext.html" title="Base context class for node callbacks." alt="" coords="461,5,681,131"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="488,142,403,212,400,208,485,137"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1RandomContext.html" title="Specialized context for stochastic generator callbacks." alt="" coords="713,190,913,350"/>
+<area shape="poly" id="edge12_Node000011_Node000006" title=" " alt="" coords="658,138,719,188,716,192,655,142"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="455,808,350,1344,344,1343,450,807"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Nodes_1_1GpuVectorData.html" title="GPU&#45;uploadable 1D array data interface." alt="" coords="455,197,689,343"/>
+<area shape="poly" id="edge8_Node000007_Node000008" title=" " alt="" coords="555,357,471,728,466,726,550,356"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1RandomContextGpu.html" title=" " alt="" coords="584,727,784,807"/>
+<area shape="poly" id="edge15_Node000012_Node000008" title=" " alt="" coords="594,356,678,726,673,728,589,357"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Kinesis_1_1Stochastic_1_1Stochastic.html" title="Unified generative infrastructure for stochastic and procedural algorithms." alt="" coords="859,1175,1059,1844"/>
+<area shape="poly" id="edge9_Node000001_Node000009" title=" " alt="" coords="861,1830,843,1884,839,1892,834,1890,837,1882,856,1828"/>
+<area shape="rect" id="Node000010" href="$structMayaFlux_1_1Kinesis_1_1Stochastic_1_1GeneratorState.html" title="Encapsulates internal state for stateful generators." alt="" coords="865,667,1053,867"/>
+<area shape="poly" id="edge10_Node000009_Node000010" title=" " alt="" coords="961,868,961,1158,956,1158,956,868"/>
+<area shape="poly" id="edge11_Node000001_Node000011" title=" " alt="" coords="821,350,832,601,840,970,839,1182,834,1402,823,1626,805,1844,799,1890,794,1890,800,1844,818,1625,829,1402,834,1181,835,970,827,601,815,350"/>
+<area shape="poly" id="edge14_Node000012_Node000011" title=" " alt="" coords="792,364,697,728,692,726,787,363"/>
+<area shape="poly" id="edge13_Node000001_Node000012" title=" " alt="" coords="684,808,677,972,672,1227,675,1531,683,1689,696,1844,702,1890,697,1890,691,1844,678,1690,670,1532,666,1227,672,972,679,807"/>
+</map>

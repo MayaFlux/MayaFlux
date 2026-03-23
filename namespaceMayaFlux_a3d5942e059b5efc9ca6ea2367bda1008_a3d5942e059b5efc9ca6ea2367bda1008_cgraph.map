@@ -1,0 +1,5 @@
+<map id="MayaFlux::bind_midi_note_off" name="MayaFlux::bind_midi_note_off">
+<area shape="rect" id="Node000001" title="Create binding for MIDI Note Off messages." alt="" coords="5,5,164,45"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Core_1_1InputBinding_aa868438eb423de4b7572b22b25027886.html#aa868438eb423de4b7572b22b25027886" title="Bind to MIDI Note Off messages." alt="" coords="212,5,427,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="165,23,198,23,198,28,165,28"/>
+</map>

@@ -1,0 +1,11 @@
+<map id="MayaFlux::IO::SoundFileReader::open" name="MayaFlux::IO::SoundFileReader::open">
+<area shape="rect" id="Node000001" title="Open an audio file for reading." alt="" coords="5,101,231,141"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1SoundFileReader_a3606aa17789e2d01dd0685a56492bbec.html#a3606aa17789e2d01dd0685a56492bbec" title="Build and cache FileMetadata from both contexts." alt="" coords="279,5,504,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="165,99,278,55,302,47,304,52,280,60,167,104"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1SoundFileReader_a122f79a08e42c09b07840f9e73d344bd.html#a122f79a08e42c09b07840f9e73d344bd" title="Build and cache FileRegion list from both contexts." alt="" coords="279,69,504,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="231,105,265,101,266,107,231,111"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1SoundFileReader_aab2d8297cb01dd1d3f38fb838f0b8903.html#aab2d8297cb01dd1d3f38fb838f0b8903" title="Clear the last error message." alt="" coords="279,133,504,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="231,132,266,136,265,141,231,137"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1IO_1_1SoundFileReader_a800c7fe05bac701dcfa6a826ad78c22e.html#a800c7fe05bac701dcfa6a826ad78c22e" title="Set the last error message." alt="" coords="279,197,504,237"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="167,139,280,183,304,191,302,196,278,188,165,144"/>
+</map>

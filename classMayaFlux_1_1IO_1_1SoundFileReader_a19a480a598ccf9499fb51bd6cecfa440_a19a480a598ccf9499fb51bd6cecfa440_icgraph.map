@@ -1,0 +1,5 @@
+<map id="MayaFlux::IO::SoundFileReader::get_last_error" name="MayaFlux::IO::SoundFileReader::get_last_error">
+<area shape="rect" id="Node000001" title="Get the last error message encountered by the reader." alt="" coords="276,5,501,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1VideoFileReader_a78b6b19d6d9126250ded73ea4b7b6629.html#a78b6b19d6d9126250ded73ea4b7b6629" title="Load file data into an existing container." alt="" coords="5,5,228,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="262,28,228,28,228,23,262,23"/>
+</map>

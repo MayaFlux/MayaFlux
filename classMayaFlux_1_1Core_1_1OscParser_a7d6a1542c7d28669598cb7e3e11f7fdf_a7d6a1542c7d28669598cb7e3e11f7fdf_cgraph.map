@@ -1,0 +1,15 @@
+<map id="MayaFlux::Core::OscParser::serialize" name="MayaFlux::Core::OscParser::serialize">
+<area shape="rect" id="Node000001" title="Serialize an OSC message to wire format." alt="" coords="5,65,201,105"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1OscParser_a81a0780d4e407980661b5ce000a1c30f.html#a81a0780d4e407980661b5ce000a1c30f" title=" " alt="" coords="249,33,445,73"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="201,70,235,65,236,71,202,75"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1OscParser_a0f4f14a51b3b70aa021bebf027dc4574.html#a0f4f14a51b3b70aa021bebf027dc4574" title=" " alt="" coords="493,5,689,45"/>
+<area shape="poly" id="edge5_Node000001_Node000004" title=" " alt="" coords="138,63,189,38,249,19,307,10,368,6,480,9,479,15,368,11,308,15,250,24,191,43,140,68"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Core_1_1OscParser_ac39fb5874a44969aa98ec3bd76d2afbf.html#ac39fb5874a44969aa98ec3bd76d2afbf" title=" " alt="" coords="249,97,445,137"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="202,96,236,100,235,105,201,101"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Core_1_1OscParser_aa1ea44d2a0f5925da144b7a9e4c2df11.html#aa1ea44d2a0f5925da144b7a9e4c2df11" title=" " alt="" coords="249,161,445,201"/>
+<area shape="poly" id="edge6_Node000001_Node000006" title=" " alt="" coords="148,103,250,147,270,154,268,159,248,152,146,108"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1OscParser_a9d81ed441fd2265454b3af5f5fd77707.html#a9d81ed441fd2265454b3af5f5fd77707" title=" " alt="" coords="493,129,689,169"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="413,71,446,83,536,121,534,126,444,88,412,76"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="445,39,480,35,480,41,446,45"/>
+<area shape="poly" id="edge7_Node000006_Node000003" title=" " alt="" coords="445,166,479,161,480,167,446,171"/>
+</map>

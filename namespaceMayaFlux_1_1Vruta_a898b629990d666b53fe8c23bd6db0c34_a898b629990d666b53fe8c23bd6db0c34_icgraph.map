@@ -1,0 +1,5 @@
+<map id="MayaFlux::Vruta::samples_to_blocks" name="MayaFlux::Vruta::samples_to_blocks">
+<area shape="rect" id="Node000001" title="Convert samples to number of processing blocks." alt="" coords="223,5,415,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_ae9491ecc376aeb1f55b68a86f00c9395.html#ae9491ecc376aeb1f55b68a86f00c9395" title="Converts samples to blocks based on current block size." alt="" coords="5,5,175,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="208,28,175,28,175,23,208,23"/>
+</map>

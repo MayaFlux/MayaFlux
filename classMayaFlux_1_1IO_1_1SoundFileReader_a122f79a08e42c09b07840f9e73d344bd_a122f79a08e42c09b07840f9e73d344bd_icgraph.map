@@ -1,0 +1,14 @@
+<map id="MayaFlux::IO::SoundFileReader::build_regions" name="MayaFlux::IO::SoundFileReader::build_regions">
+<area shape="rect" id="Node000001" title="Build and cache FileRegion list from both contexts." alt="" coords="823,69,1048,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1SoundFileReader_aec0578014d8a3dbb1de7df9845e3095e.html#aec0578014d8a3dbb1de7df9845e3095e" title="Get all regions (markers, loops, etc.) from the file." alt="" coords="549,5,775,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="835,69,747,48,749,43,837,64"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1IO_1_1SoundFileReader_a25d2ebc2d552f532a46fbb493f8d88d3.html#a25d2ebc2d552f532a46fbb493f8d88d3" title="Open an audio file for reading." alt="" coords="549,69,775,109"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="809,92,775,92,775,87,809,87"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1IO_1_1SoundFileReader_aa4f32713ee60f510a31ede3abf5df63a.html#aa4f32713ee60f510a31ede3abf5df63a" title="Open an audio stream from an already&#45;constructed demux and stream context." alt="" coords="276,99,501,139"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="837,115,775,124,633,131,501,128,501,123,632,125,774,119,836,109"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1SoundFileReader_a4f0317d6147160c47dbbc3c2663f1756.html#a4f0317d6147160c47dbbc3c2663f1756" title="Load file data into an existing SignalSourceContainer." alt="" coords="276,20,501,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="536,35,502,37,501,31,536,29"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1VideoFileReader_a78b6b19d6d9126250ded73ea4b7b6629.html#a78b6b19d6d9126250ded73ea4b7b6629" title="Load file data into an existing container." alt="" coords="5,67,228,107"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="263,64,229,70,228,65,262,59"/>
+<area shape="poly" id="edge6_Node000006_Node000004" title=" " alt="" coords="262,106,228,102,228,97,263,101"/>
+</map>

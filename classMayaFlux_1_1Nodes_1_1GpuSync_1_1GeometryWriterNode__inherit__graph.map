@@ -1,0 +1,15 @@
+<map id="MayaFlux::Nodes::GpuSync::GeometryWriterNode" name="MayaFlux::Nodes::GpuSync::GeometryWriterNode">
+<area shape="rect" id="Node000001" title="Base class for nodes that generate 3D geometry data." alt="" coords="342,1011,534,1445"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1PathGeneratorNode.html" title="Generates dense vertex paths from sparse control points or freehand drawing." alt="" coords="5,1493,209,2183"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="335,1341,276,1414,224,1495,212,1519,207,1516,220,1492,272,1411,331,1337"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1PointCollectionNode.html" title="Unstructured collection of 3D points for visualization." alt="" coords="234,1688,426,1988"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="400,1459,359,1688,354,1687,395,1458"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1PointNode.html" title="Single 3D point in space." alt="" coords="450,1708,642,1968"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="481,1459,526,1707,520,1708,476,1460"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1TopologyGeneratorNode.html" title="Generates dynamic mesh topology from sparse control points." alt="" coords="667,1551,945,2125"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="545,1342,603,1414,656,1492,689,1549,684,1552,652,1495,599,1418,541,1346"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GpuSync.html" title=" " alt="" coords="342,763,534,963"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="441,977,441,1010,435,1010,435,977"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Node.html" title="Base interface for all computational processing nodes." alt="" coords="339,5,537,715"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="441,728,441,762,435,762,435,728"/>
+</map>

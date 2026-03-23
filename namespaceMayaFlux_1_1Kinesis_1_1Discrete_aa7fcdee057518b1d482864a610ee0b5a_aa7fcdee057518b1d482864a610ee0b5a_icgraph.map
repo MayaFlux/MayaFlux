@@ -1,0 +1,33 @@
+<map id="MayaFlux::Kinesis::Discrete::normalize" name="MayaFlux::Kinesis::Discrete::normalize">
+<area shape="rect" id="Node000001" title="Normalize to [target_min, target_max] in&#45;place Single&#45;pass min/max reduction followed by a single tra..." alt="" coords="967,157,1116,197"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a1ee7311abf376531fbc49bee9c7febb9.html#a1ee7311abf376531fbc49bee9c7febb9" title="Cross&#45;correlation via FFT." alt="" coords="736,28,919,68"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="995,153,917,105,861,70,863,66,920,100,997,148"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_a29087d569a277984911060e08c53ee50.html#a29087d569a277984911060e08c53ee50" title=" " alt="" coords="748,115,907,141"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="952,160,883,143,884,138,953,154"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_a878fe1820a72f64efebc516b1749f77d.html#a878fe1820a72f64efebc516b1749f77d" title="Normalize single&#45;channel data to specified peak level (in&#45;place)" alt="" coords="748,165,907,190"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="952,180,907,180,907,175,952,175"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_aa8d1afde2a88efd1d200471e4014d0cc.html#aa8d1afde2a88efd1d200471e4014d0cc" title=" " alt="" coords="744,214,911,239"/>
+<area shape="poly" id="edge9_Node000001_Node000009" title=" " alt="" coords="953,200,884,216,883,211,952,195"/>
+<area shape="rect" id="Node000010" href="$namespaceMayaFlux_ac8ded33a4e354a3259e25ea984c19053.html#ac8ded33a4e354a3259e25ea984c19053" title="Normalize single&#45;channel data (non&#45;destructive)" alt="" coords="744,321,911,346"/>
+<area shape="poly" id="edge10_Node000001_Node000010" title=" " alt="" coords="1003,208,848,323,844,318,1000,203"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_ae20bf8e05bc172b3e994128a936523ae.html#ae20bf8e05bc172b3e994128a936523ae" title="Matched filter (normalised cross&#45;correlation)" alt="" coords="497,5,676,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="722,41,676,36,677,31,723,35"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_ac727a7f1a3f0c072ad302a5c2bce47da.html#ac727a7f1a3f0c072ad302a5c2bce47da" title="Auto&#45;correlation via FFT." alt="" coords="497,93,676,133"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="765,164,662,136,663,131,766,158"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_a6a020ef96480ab2d031f28a9d57a6626.html#a6a020ef96480ab2d031f28a9d57a6626" title="Normalize each channel independently to specified peak level (in&#45;place)" alt="" coords="507,157,666,197"/>
+<area shape="poly" id="edge7_Node000005_Node000007" title=" " alt="" coords="734,180,666,180,666,175,734,175"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_ab68b941d16a78b529008447cb966a076.html#ab68b941d16a78b529008447cb966a076" title="Normalize each channel independently (non&#45;destructive)" alt="" coords="503,221,670,261"/>
+<area shape="poly" id="edge8_Node000005_Node000008" title=" " alt="" coords="766,196,737,204,663,224,661,219,735,199,765,191"/>
+<area shape="poly" id="edge6_Node000006_Node000006" title=" " alt="" coords="628,82,613,75,587,72,563,74,550,79,544,85,547,92,542,94,539,84,546,74,562,69,587,67,615,70,630,77"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Nodes_1_1Input_1_1HIDNode_aead79997c067cb55df35d99d61645983.html#aead79997c067cb55df35d99d61645983" title=" " alt="" coords="485,285,688,325"/>
+<area shape="poly" id="edge11_Node000010_Node000011" title=" " alt="" coords="730,325,688,320,689,314,730,319"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Nodes_1_1Input_1_1HIDNode_a9a5191762bc5b46f3fbfebdde29fb7a4.html#a9a5191762bc5b46f3fbfebdde29fb7a4" title="Parse axis value from HID report bytes." alt="" coords="250,311,426,351"/>
+<area shape="poly" id="edge16_Node000010_Node000012" title=" " alt="" coords="730,339,688,340,485,340,426,338,426,333,485,335,688,335,730,334"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1Nodes_1_1Network_1_1GraphicsOperator_a4ea0a4530c4a49dec79ca7c451d24cde.html#a4ea0a4530c4a49dec79ca7c451d24cde" title="Apply ONE_TO_ONE parameter mapping." alt="" coords="487,401,686,455"/>
+<area shape="poly" id="edge14_Node000010_Node000014" title=" " alt="" coords="782,354,658,403,656,398,780,349"/>
+<area shape="poly" id="edge12_Node000011_Node000012" title=" " alt="" coords="472,320,427,324,426,319,472,314"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Nodes_1_1Input_1_1HIDNode_a0c6611981fa29feaab354242db4daaf3.html#a0c6611981fa29feaab354242db4daaf3" title="Extract a scalar value from an InputValue." alt="" coords="5,311,191,351"/>
+<area shape="poly" id="edge13_Node000012_Node000013" title=" " alt="" coords="236,333,191,333,191,328,236,328"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1Nodes_1_1Network_1_1PhysicsOperator_addc9c26308edc1971470b5ab9ac7e2ff.html#addc9c26308edc1971470b5ab9ac7e2ff" title="Apply ONE_TO_ONE parameter for physics&#45;specific properties." alt="" coords="239,401,437,455"/>
+<area shape="poly" id="edge15_Node000014_Node000015" title=" " alt="" coords="474,431,437,431,437,425,474,425"/>
+</map>

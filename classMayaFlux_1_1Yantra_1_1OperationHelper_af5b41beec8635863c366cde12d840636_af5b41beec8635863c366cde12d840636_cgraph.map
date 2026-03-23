@@ -1,0 +1,24 @@
+<map id="MayaFlux::Yantra::OperationHelper::reconstruct_from_double" name="MayaFlux::Yantra::OperationHelper::reconstruct_from_double">
+<area shape="rect" id="Node000001" title="Reconstruct ComputeData type from double vector and structure info." alt="" coords="5,167,240,207"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1OperationHelper_a1299b2cab6169c487b93d1735f8221e9.html#a1299b2cab6169c487b93d1735f8221e9" title="Reconstruct DataVariant from double data and structure info." alt="" coords="295,110,501,165"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="234,164,281,156,282,161,235,169"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Yantra_1_1OperationHelper_ac31a4843228ee2de3510e5a36347a5f4.html#ac31a4843228ee2de3510e5a36347a5f4" title="Infer data structure from ComputeData type." alt="" coords="288,203,508,243"/>
+<area shape="poly" id="edge10_Node000001_Node000010" title=" " alt="" coords="240,199,275,204,274,209,240,205"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kakshya_a0a210554c3428315f7daa96220a8cab8.html#a0a210554c3428315f7daa96220a8cab8" title="Convenience function for direct conversion." alt="" coords="580,39,739,79"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="489,107,578,80,580,85,490,112"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Yantra_1_1detail_a2a101dcc98958b1a60de44445909c3df.html#a2a101dcc98958b1a60de44445909c3df" title=" " alt="" coords="563,103,756,143"/>
+<area shape="poly" id="edge8_Node000002_Node000008" title=" " alt="" coords="501,129,549,126,549,132,502,134"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_1_1Yantra_1_1detail_aad2e66f3c95306683880495b079fda07.html#aad2e66f3c95306683880495b079fda07" title=" " alt="" coords="557,167,761,207"/>
+<area shape="poly" id="edge9_Node000002_Node000009" title=" " alt="" coords="502,154,544,162,543,167,501,159"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1EigenInsertion_afae4fdb884bcfc31ef058a55e18ab229.html#afae4fdb884bcfc31ef058a55e18ab229" title="Insert Eigen matrix with automatic interpretation." alt="" coords="811,31,971,86"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="739,56,797,56,797,61,739,61"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Reflect_aad91118cbd25bd9e35a3ced9aa4e6dbd.html#aad91118cbd25bd9e35a3ced9aa4e6dbd" title="Universal enum to string converter using magic_enum (original case)" alt="" coords="1249,5,1395,45"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="971,50,1235,29,1235,35,971,55"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1EigenInsertion_ae3c16477974cf354497bad6e2ba47932.html#ae3c16477974cf354497bad6e2ba47932" title=" " alt="" coords="1019,63,1195,118"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="971,68,1006,73,1005,78,970,73"/>
+<area shape="poly" id="edge6_Node000006_Node000005" title=" " alt="" coords="1194,61,1242,47,1244,52,1196,66"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Kakshya_1_1EigenInsertion_a01143be19f9ec5a48a84add79e896c48.html#a01143be19f9ec5a48a84add79e896c48" title=" " alt="" coords="1243,70,1401,125"/>
+<area shape="poly" id="edge7_Node000006_Node000007" title=" " alt="" coords="1195,91,1229,92,1229,97,1195,96"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Yantra_1_1OperationHelper_a37ba95c5ed0e1ccd088bf4c825ac6665.html#a37ba95c5ed0e1ccd088bf4c825ac6665" title="Infer data structure from ComputeData type." alt="" coords="556,231,763,271"/>
+<area shape="poly" id="edge11_Node000010_Node000011" title=" " alt="" coords="509,232,543,236,542,241,508,237"/>
+</map>

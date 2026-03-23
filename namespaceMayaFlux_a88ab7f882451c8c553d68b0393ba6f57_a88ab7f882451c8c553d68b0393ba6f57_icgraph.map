@@ -1,0 +1,5 @@
+<map id="MayaFlux::is_in_bounds" name="MayaFlux::is_in_bounds">
+<area shape="rect" id="Node000001" title="Check if a point in window coordinates is inside the window bounds." alt="" coords="232,5,411,31"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_ab6848a5a849d0ed1d8795ec1d2a37e0e.html#ab6848a5a849d0ed1d8795ec1d2a37e0e" title="Check if a point in window coordinates is inside the window bounds." alt="" coords="5,5,184,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="218,21,184,21,184,15,218,15"/>
+</map>

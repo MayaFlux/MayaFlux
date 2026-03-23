@@ -1,0 +1,13 @@
+<map id="MayaFlux::Yantra::Granular::make_granular_context" name="MayaFlux::Yantra::Granular::make_granular_context">
+<area shape="rect" id="Node000001" title="Construct an ExecutionContext for the granular pipeline using a built&#45;in AnalysisType." alt="" coords="281,133,480,173"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Yantra_1_1Granular_a110ee57558f5543a1789aec3ba3e6464.html#a110ee57558f5543a1789aec3ba3e6464" title="Zero&#45;config entry point for the full granular pipeline using a built&#45;in AnalysisType." alt="" coords="20,5,219,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="341,127,291,92,232,60,202,48,204,43,234,55,294,88,344,123"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Yantra_1_1Granular_af1e43d396c286571f2ef34062b03d29b.html#af1e43d396c286571f2ef34062b03d29b" title="Zero&#45;config entry point for the full granular pipeline using a span&#45;level lambda." alt="" coords="20,69,219,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="284,133,201,112,202,107,286,127"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Yantra_1_1Granular_aaa49c450f61470da594298c04b39ffbc.html#aaa49c450f61470da594298c04b39ffbc" title="Offline granular workflow: segment, attribute, sort, reconstruct." alt="" coords="20,133,219,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="268,156,219,156,219,151,268,151"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Yantra_1_1Granular_a7d1e13b6ff10c7aec80df0c09b563075.html#a7d1e13b6ff10c7aec80df0c09b563075" title="Offline granular workflow using a span&#45;level attribution lambda." alt="" coords="20,197,219,237"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="286,179,202,200,201,195,284,174"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Yantra_1_1Granular_a1fadd41f7e9f210a751790cd8db23030.html#a1fadd41f7e9f210a751790cd8db23030" title="Offline granular workflow with OLA reconstruction." alt="" coords="5,261,233,301"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="344,184,294,219,234,252,204,264,202,259,232,247,291,214,341,180"/>
+</map>

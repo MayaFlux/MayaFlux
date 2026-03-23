@@ -1,0 +1,14 @@
+<map id="NetworkSource.hpp" name="NetworkSource.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="197,5,346,31"/>
+<area shape="rect" id="Node000002" href="$Chronie_8cpp.html" title=" " alt="" coords="71,79,170,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="236,39,146,81,144,76,234,34"/>
+<area shape="rect" id="Node000003" href="$NetworkAwaiter_8hpp.html" title=" " alt="" coords="194,79,349,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="274,44,274,79,269,79,269,44"/>
+<area shape="rect" id="Node000006" href="$NetworkSource_8cpp.html" title=" " alt="" coords="355,152,503,177"/>
+<area shape="poly" id="edge6_Node000001_Node000006" title=" " alt="" coords="306,36,362,77,398,115,423,150,419,153,394,119,359,81,302,40"/>
+<area shape="rect" id="Node000004" href="$NetworkAwaiter_8cpp.html" title=" " alt="" coords="5,152,159,177"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="229,111,114,154,112,149,227,106"/>
+<area shape="rect" id="Node000005" href="$NetworkEvents_8cpp.html" title=" " alt="" coords="183,152,331,177"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="269,118,262,152,256,151,264,117"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="310,107,404,149,402,154,308,112"/>
+</map>

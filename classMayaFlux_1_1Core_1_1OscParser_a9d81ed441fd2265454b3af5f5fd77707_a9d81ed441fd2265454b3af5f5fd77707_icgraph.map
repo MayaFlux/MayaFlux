@@ -1,0 +1,19 @@
+<map id="MayaFlux::Core::OscParser::padded_size" name="MayaFlux::Core::OscParser::padded_size">
+<area shape="rect" id="Node000001" title=" " alt="" coords="764,101,960,141"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1OscParser_a3995f7a3242a8d23cfedd62e7f8be45a.html#a3995f7a3242a8d23cfedd62e7f8be45a" title=" " alt="" coords="520,5,716,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="805,98,715,60,682,48,684,43,717,55,807,93"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Core_1_1OscParser_adc8c988e2e852fbd873438f1eec39334.html#adc8c988e2e852fbd873438f1eec39334" title=" " alt="" coords="520,69,716,109"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="750,109,716,105,716,100,751,104"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Core_1_1OscParser_a81a0780d4e407980661b5ce000a1c30f.html#a81a0780d4e407980661b5ce000a1c30f" title=" " alt="" coords="520,133,716,173"/>
+<area shape="poly" id="edge6_Node000001_Node000006" title=" " alt="" coords="751,139,716,143,716,138,750,133"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Core_1_1OscParser_aa1ea44d2a0f5925da144b7a9e4c2df11.html#aa1ea44d2a0f5925da144b7a9e4c2df11" title=" " alt="" coords="520,197,716,237"/>
+<area shape="poly" id="edge8_Node000001_Node000008" title=" " alt="" coords="807,150,717,188,684,200,682,195,715,183,805,145"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1OscParser_a3bef65f17b2288f02e9bc97c55164279.html#a3bef65f17b2288f02e9bc97c55164279" title="Parse a single OSC message from raw bytes." alt="" coords="276,53,472,93"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="507,50,473,57,472,51,506,45"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1InputManager_a1d40572bf2b17bd20898f5eeade44cf3.html#a1d40572bf2b17bd20898f5eeade44cf3" title="Setup OSC bridge if enabled in config." alt="" coords="5,53,228,93"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="262,76,228,76,228,71,262,71"/>
+<area shape="poly" id="edge5_Node000005_Node000003" title=" " alt="" coords="506,85,472,82,472,77,507,79"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Core_1_1OscParser_a7d6a1542c7d28669598cb7e3e11f7fdf.html#a7d6a1542c7d28669598cb7e3e11f7fdf" title="Serialize an OSC message to wire format." alt="" coords="276,149,472,189"/>
+<area shape="poly" id="edge7_Node000006_Node000007" title=" " alt="" coords="507,163,472,166,472,160,506,158"/>
+<area shape="poly" id="edge9_Node000008_Node000007" title=" " alt="" coords="506,198,472,191,473,186,507,193"/>
+</map>

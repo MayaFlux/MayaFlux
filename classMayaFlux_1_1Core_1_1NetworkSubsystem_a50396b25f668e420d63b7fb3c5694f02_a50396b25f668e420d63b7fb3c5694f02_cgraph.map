@@ -1,0 +1,13 @@
+<map id="MayaFlux::Core::NetworkSubsystem::initialize" name="MayaFlux::Core::NetworkSubsystem::initialize">
+<area shape="rect" id="Node000001" title="Initialize with a handle provided by SubsystemManager." alt="" coords="5,101,264,141"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1NetworkSubsystem_a4dd420253bb227268b36caa6c753b9a7.html#a4dd420253bb227268b36caa6c753b9a7" title=" " alt="" coords="312,5,571,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="186,99,311,55,341,46,342,51,313,60,188,104"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1NetworkSubsystem_a1f8cd7b6d2fd7a7a6e50ff67da019af6.html#a1f8cd7b6d2fd7a7a6e50ff67da019af6" title=" " alt="" coords="312,69,571,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="264,105,298,102,299,107,264,111"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1NetworkSubsystem_ad24e3a894e47bdeaeb597f41ec54bd23.html#ad24e3a894e47bdeaeb597f41ec54bd23" title=" " alt="" coords="312,133,571,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="264,132,299,136,298,141,264,137"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Core_1_1NetworkSubsystem_a17270f35941c1fe751210988e2f9adaa.html#a17270f35941c1fe751210988e2f9adaa" title=" " alt="" coords="312,197,571,237"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="188,139,313,183,342,191,341,196,311,188,186,144"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aa28c6f5592e5893508bafb62aefcc496.html#aa28c6f5592e5893508bafb62aefcc496" title="Get the global registry instance." alt="" coords="619,197,820,237"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="571,215,605,215,605,220,571,220"/>
+</map>

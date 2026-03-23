@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::StreamReaderNode" name="MayaFlux::Nodes::StreamReaderNode">
+<area shape="rect" id="Node000001" title="Node that reads sample&#45;by&#45;sample from externally provided data." alt="" coords="5,763,268,1208"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Node.html" title="Base interface for all computational processing nodes." alt="" coords="38,5,235,715"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="139,728,139,762,134,762,134,728"/>
+</map>

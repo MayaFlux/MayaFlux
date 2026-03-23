@@ -1,0 +1,5 @@
+<map id="MayaFlux::IO::AudioStreamContext::extract_cue_regions" name="MayaFlux::IO::AudioStreamContext::extract_cue_regions">
+<area shape="rect" id="Node000001" title="Extract cue/marker regions from stream metadata tags." alt="" coords="5,5,217,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1FFmpegDemuxContext_acb3638800c71f90df7d5da4094c34e77.html#acb3638800c71f90df7d5da4094c34e77" title="Access a stream by index." alt="" coords="265,5,481,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="217,23,252,23,252,28,217,28"/>
+</map>

@@ -1,0 +1,17 @@
+<map id="MayaFlux::Nodes::Network::PhysicsOperator::process" name="MayaFlux::Nodes::Network::PhysicsOperator::process">
+<area shape="rect" id="Node000001" title="Process for one batch cycle." alt="" coords="5,199,204,239"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1PhysicsOperator_a48bae9ef972d36bc989c901f2fed1c64.html#a48bae9ef972d36bc989c901f2fed1c64" title=" " alt="" coords="252,91,479,131"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="140,197,192,169,251,142,275,133,277,138,253,147,194,174,142,201"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1Network_1_1PhysicsOperator_a8bb910e17153109db8f2f4bd4cb6837a.html#a8bb910e17153109db8f2f4bd4cb6837a" title=" " alt="" coords="266,156,465,211"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="204,203,252,196,253,202,205,208"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1Network_1_1PhysicsOperator_a52f7979e872761071e5f639622e5fa9c.html#a52f7979e872761071e5f639622e5fa9c" title=" " alt="" coords="264,235,467,275"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="205,230,251,237,250,242,204,236"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Nodes_1_1Network_1_1PhysicsOperator_a82aaa0865e5861710b1949086663a6d1.html#a82aaa0865e5861710b1949086663a6d1" title=" " alt="" coords="266,300,465,355"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="148,237,253,285,272,293,270,298,251,290,145,242"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1PhysicsOperator_ac0b10c54fd28110a2d53b1f639e73d8d.html#ac0b10c54fd28110a2d53b1f639e73d8d" title=" " alt="" coords="527,5,725,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="432,89,521,61,523,67,433,94"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Network_1_1PhysicsOperator_ad891719253bca529bd4e07a545ff5266.html#ad891719253bca529bd4e07a545ff5266" title=" " alt="" coords="527,84,725,139"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="479,109,513,109,513,114,479,114"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1Network_1_1PhysicsOperator_a638c82022a7ce3c277fab3fa4a9e7cfb.html#a638c82022a7ce3c277fab3fa4a9e7cfb" title=" " alt="" coords="527,163,725,217"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="436,129,479,142,525,156,524,161,478,147,434,134"/>
+</map>

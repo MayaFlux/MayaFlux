@@ -1,0 +1,11 @@
+<map id="MayaFlux::Kinesis::Discrete::apply_spectral" name="MayaFlux::Kinesis::Discrete::apply_spectral">
+<area shape="rect" id="Node000001" title="Apply a per&#45;frame spectrum processor via WOLA analysis&#45;synthesis." alt="" coords="260,101,439,141"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_ab86a7483a0418b0ec9a00e1addeb959f.html#ab86a7483a0418b0ec9a00e1addeb959f" title="Linear spectral tilt: scale each bin by a factor that rises linearly from 1 at bin 0 to enhancement_f..." alt="" coords="5,5,212,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="295,98,211,60,178,48,179,43,213,55,298,93"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a53795bb4a1ddd9ebbaf416ae9cdde5dd.html#a53795bb4a1ddd9ebbaf416ae9cdde5dd" title="Hard bandpass filter: zero all bins outside [lo_hz, hi_hz]." alt="" coords="22,69,195,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="246,110,195,103,196,98,247,105"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a236a5ae666ed741924fba0b591aa00f0.html#a236a5ae666ed741924fba0b591aa00f0" title="Hard spectral gate: zero bins whose magnitude is below the threshold." alt="" coords="23,133,195,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="247,138,195,145,195,139,246,132"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_abd4cb2e2a637d5dbe3afcf8164ac4b65.html#abd4cb2e2a637d5dbe3afcf8164ac4b65" title="Spectral phase inversion (conjugate all bins)" alt="" coords="18,197,199,237"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="298,150,213,188,179,200,178,195,211,183,295,145"/>
+</map>

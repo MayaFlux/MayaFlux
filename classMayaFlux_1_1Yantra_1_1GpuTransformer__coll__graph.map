@@ -1,0 +1,9 @@
+<map id="MayaFlux::Yantra::GpuTransformer&lt; InputType, OutputType &gt;" name="MayaFlux::Yantra::GpuTransformer&lt; InputType, OutputType &gt;">
+<area shape="rect" id="Node000001" title="Concrete UniversalTransformer that dispatches entirely via a ShaderExecutionContext." alt="" coords="13,1833,251,2008"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1UniversalTransformer.html" title="Template&#45;flexible transformer base with instance&#45;defined I/O types." alt="" coords="25,1047,239,1784"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="135,1798,135,1833,129,1833,129,1798"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1ComputeOperation.html" title="Base interface for all computational operations in the processing pipeline." alt="" coords="5,488,259,997"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="135,1011,135,1046,129,1046,129,1011"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Yantra_1_1ExecutionContext.html" title="Context information controlling how a compute operation executes." alt="" coords="33,5,231,425"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="135,426,135,472,129,472,129,426"/>
+</map>

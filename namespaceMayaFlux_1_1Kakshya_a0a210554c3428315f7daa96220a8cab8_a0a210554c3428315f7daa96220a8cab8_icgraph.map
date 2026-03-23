@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kakshya::from_eigen_matrix" name="MayaFlux::Kakshya::from_eigen_matrix">
+<area shape="rect" id="Node000001" title="Convenience function for direct conversion." alt="" coords="543,41,701,81"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_aa81473d1a88b71d842a809e0264b10bf.html#aa81473d1a88b71d842a809e0264b10bf" title="Process DataVariant through interpolation." alt="" coords="317,5,466,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="528,49,466,40,467,34,529,44"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1OperationHelper_a1299b2cab6169c487b93d1735f8221e9.html#a1299b2cab6169c487b93d1735f8221e9" title="Reconstruct DataVariant from double data and structure info." alt="" coords="288,70,495,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="529,78,495,84,495,79,528,73"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1OperationHelper_af5b41beec8635863c366cde12d840636.html#af5b41beec8635863c366cde12d840636" title="Reconstruct ComputeData type from double vector and structure info." alt="" coords="5,77,240,117"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="275,100,240,100,240,95,275,95"/>
+</map>

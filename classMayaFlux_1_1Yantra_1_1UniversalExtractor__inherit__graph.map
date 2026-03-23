@@ -1,0 +1,15 @@
+<map id="MayaFlux::Yantra::UniversalExtractor&lt; InputType, OutputType &gt;" name="MayaFlux::Yantra::UniversalExtractor&lt; InputType, OutputType &gt;">
+<area shape="rect" id="Node000001" title="Template&#45;flexible extractor base with instance&#45;defined I/O types." alt="" coords="261,584,509,1213"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1GpuExtractor.html" title="Concrete UniversalExtractor that dispatches entirely via a ShaderExecutionContext." alt="" coords="5,1545,224,1725"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="267,1227,150,1545,145,1543,262,1225"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1UniversalExtractor.html" title=" " alt="" coords="249,1305,522,1964"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="388,1227,388,1305,383,1305,383,1227"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1UniversalExtractor.html" title=" " alt="" coords="545,1320,793,1949"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="520,1056,576,1143,600,1189,621,1236,646,1319,641,1320,616,1238,596,1191,571,1145,515,1059"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1ComputeOperation.html" title="Base interface for all computational operations in the processing pipeline." alt="" coords="259,5,512,535"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="388,549,388,584,383,584,383,549"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Yantra_1_1FeatureExtractor.html" title=" " alt="" coords="549,2013,789,2503"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="672,1963,672,2013,667,2013,667,1963"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Yantra_1_1Granular_1_1SegmentOp.html" title="Segments container audio into fixed hop&#45;size grain windows." alt="" coords="571,2552,767,2692"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="672,2516,672,2551,667,2551,667,2516"/>
+</map>

@@ -1,0 +1,25 @@
+<map id="MayaFlux::Core::InputManager::setup_osc_bridge" name="MayaFlux::Core::InputManager::setup_osc_bridge">
+<area shape="rect" id="Node000001" title="Setup OSC bridge if enabled in config." alt="" coords="5,113,228,153"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1InputManager_a6c3067fc253545e993f7442df2a7176e.html#a6c3067fc253545e993f7442df2a7176e" title="Enqueue an input value for processing." alt="" coords="276,5,499,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="154,111,211,83,275,55,297,47,299,52,277,60,213,88,157,115"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_a0c7a59c0847791ed0915dcd64e8df783.html#a0c7a59c0847791ed0915dcd64e8df783" title="Query for a backend service." alt="" coords="304,70,471,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="228,116,290,108,290,113,229,121"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aa28c6f5592e5893508bafb62aefcc496.html#aa28c6f5592e5893508bafb62aefcc496" title="Get the global registry instance." alt="" coords="287,149,488,189"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="229,145,273,152,273,157,228,151"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Core_1_1OscParser_a3bef65f17b2288f02e9bc97c55164279.html#a3bef65f17b2288f02e9bc97c55164279" title="Parse a single OSC message from raw bytes." alt="" coords="289,213,485,253"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="162,151,277,199,300,207,298,212,275,204,160,156"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Core_1_1InputValue_a6c454134d6651c8c39d017bdc2de051f.html#a6c454134d6651c8c39d017bdc2de051f" title=" " alt="" coords="547,99,748,139"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="472,211,497,199,512,189,521,178,530,167,545,155,570,142,573,147,548,160,534,171,525,181,515,193,500,204,474,216"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Core_1_1OscParser_a3995f7a3242a8d23cfedd62e7f8be45a.html#a3995f7a3242a8d23cfedd62e7f8be45a" title=" " alt="" coords="549,213,745,253"/>
+<area shape="poly" id="edge6_Node000005_Node000007" title=" " alt="" coords="486,231,535,231,535,236,486,236"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Core_1_1OscParser_a2ca8e3442e45119fa25a8777ffd80f9c.html#a2ca8e3442e45119fa25a8777ffd80f9c" title=" " alt="" coords="796,185,992,225"/>
+<area shape="poly" id="edge10_Node000005_Node000009" title=" " alt="" coords="471,211,546,199,603,195,647,195,748,199,782,199,782,205,748,204,647,200,603,200,547,204,472,216"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Core_1_1OscParser_a0a1bf55493aca2711ec88c01a8547bf8.html#a0a1bf55493aca2711ec88c01a8547bf8" title=" " alt="" coords="549,277,745,317"/>
+<area shape="poly" id="edge9_Node000005_Node000010" title=" " alt="" coords="470,251,553,271,552,277,469,256"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Core_1_1OscParser_adc8c988e2e852fbd873438f1eec39334.html#adc8c988e2e852fbd873438f1eec39334" title=" " alt="" coords="549,341,745,381"/>
+<area shape="poly" id="edge11_Node000005_Node000011" title=" " alt="" coords="419,251,477,289,548,327,565,334,563,339,546,332,474,293,416,256"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Core_1_1OscParser_a9d81ed441fd2265454b3af5f5fd77707.html#a9d81ed441fd2265454b3af5f5fd77707" title=" " alt="" coords="796,281,992,321"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="721,251,809,275,807,280,720,256"/>
+<area shape="poly" id="edge8_Node000007_Node000009" title=" " alt="" coords="745,220,782,215,783,221,746,225"/>
+<area shape="poly" id="edge12_Node000011_Node000008" title=" " alt="" coords="730,339,798,322,799,327,731,344"/>
+</map>

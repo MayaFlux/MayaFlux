@@ -1,0 +1,5 @@
+<map id="Lila::Server::stop" name="Lila::Server::stop">
+<area shape="rect" id="Node000001" title="Stops the server and disconnects all clients." alt="" coords="209,5,340,31"/>
+<area shape="rect" id="Node000002" href="$classLila_1_1Server_adfacc21753b2fcedec5e7a1f89c7d5c5.html#adfacc21753b2fcedec5e7a1f89c7d5c5" title="Destructor; stops the server if running." alt="" coords="5,5,161,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="196,21,162,21,162,15,196,15"/>
+</map>

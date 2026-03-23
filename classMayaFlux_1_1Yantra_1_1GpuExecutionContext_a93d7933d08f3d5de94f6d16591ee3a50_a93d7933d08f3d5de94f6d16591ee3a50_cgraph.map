@@ -1,0 +1,16 @@
+<map id="MayaFlux::Yantra::GpuExecutionContext::dispatch_gpu_chained" name="MayaFlux::Yantra::GpuExecutionContext::dispatch_gpu_chained">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,37,236,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1GpuResourceManager_ae1f59994277f882564c3fcfa97f5d3be.html#ae1f59994277f882564c3fcfa97f5d3be" title=" " alt="" coords="284,5,512,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="236,41,270,37,271,43,236,47"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1GpuResourceManager_a694292ed30445c9e0a719291d6415d85.html#a694292ed30445c9e0a719291d6415d85" title=" " alt="" coords="284,69,512,109"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="236,68,271,72,270,77,236,73"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a715d57394465ff2924727d7c82d87e7b.html#a715d57394465ff2924727d7c82d87e7b" title="Get the global shader compiler instance." alt="" coords="560,5,757,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="512,23,546,23,546,28,512,28"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ab22eaae6b8210236918b85f409fc4c49.html#ab22eaae6b8210236918b85f409fc4c49" title=" " alt="" coords="805,5,1003,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="758,23,792,23,792,28,758,28"/>
+<area shape="poly" id="edge7_Node000005_Node000003" title=" " alt="" coords="480,67,563,46,564,51,481,72"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_af50ca0aa0cb7511c99eaf758430efdce.html#af50ca0aa0cb7511c99eaf758430efdce" title=" " alt="" coords="560,69,757,109"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="512,87,546,87,546,92,512,92"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ComputePress_a89b259adf28ef041294928959e03fa9c.html#a89b259adf28ef041294928959e03fa9c" title=" " alt="" coords="805,69,1003,109"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="758,87,792,87,792,92,758,92"/>
+</map>

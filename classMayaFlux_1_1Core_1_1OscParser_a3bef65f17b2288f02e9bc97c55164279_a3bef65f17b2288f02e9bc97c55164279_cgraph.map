@@ -1,0 +1,17 @@
+<map id="MayaFlux::Core::OscParser::parse" name="MayaFlux::Core::OscParser::parse">
+<area shape="rect" id="Node000001" title="Parse a single OSC message from raw bytes." alt="" coords="5,120,201,160"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Core_1_1InputValue_a6c454134d6651c8c39d017bdc2de051f.html#a6c454134d6651c8c39d017bdc2de051f" title=" " alt="" coords="249,5,451,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="139,117,248,62,280,48,282,53,250,66,142,122"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1OscParser_a3995f7a3242a8d23cfedd62e7f8be45a.html#a3995f7a3242a8d23cfedd62e7f8be45a" title=" " alt="" coords="252,120,448,160"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="201,137,239,137,239,143,201,143"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Core_1_1OscParser_a2ca8e3442e45119fa25a8777ffd80f9c.html#a2ca8e3442e45119fa25a8777ffd80f9c" title=" " alt="" coords="499,92,695,132"/>
+<area shape="poly" id="edge6_Node000001_Node000005" title=" " alt="" coords="180,117,249,105,371,99,485,101,485,107,371,104,250,111,181,123"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Core_1_1OscParser_a0a1bf55493aca2711ec88c01a8547bf8.html#a0a1bf55493aca2711ec88c01a8547bf8" title=" " alt="" coords="252,184,448,224"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="182,157,260,178,259,183,181,163"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Core_1_1OscParser_adc8c988e2e852fbd873438f1eec39334.html#adc8c988e2e852fbd873438f1eec39334" title=" " alt="" coords="252,248,448,288"/>
+<area shape="poly" id="edge7_Node000001_Node000007" title=" " alt="" coords="132,158,185,196,251,234,266,241,264,245,248,238,182,200,129,163"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1OscParser_a9d81ed441fd2265454b3af5f5fd77707.html#a9d81ed441fd2265454b3af5f5fd77707" title=" " alt="" coords="499,216,695,256"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="418,158,452,170,542,208,539,213,450,174,416,163"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="448,126,485,122,486,127,448,132"/>
+<area shape="poly" id="edge8_Node000007_Node000004" title=" " alt="" coords="448,253,485,248,486,253,448,258"/>
+</map>

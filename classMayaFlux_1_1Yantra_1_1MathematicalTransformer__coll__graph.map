@@ -1,0 +1,9 @@
+<map id="MayaFlux::Yantra::MathematicalTransformer&lt; InputType, OutputType &gt;" name="MayaFlux::Yantra::MathematicalTransformer&lt; InputType, OutputType &gt;">
+<area shape="rect" id="Node000001" title="Concrete transformer for mathematical operations." alt="" coords="5,1833,272,2123"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1UniversalTransformer.html" title="Template&#45;flexible transformer base with instance&#45;defined I/O types." alt="" coords="32,1047,245,1784"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="141,1798,141,1833,136,1833,136,1798"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1ComputeOperation.html" title="Base interface for all computational operations in the processing pipeline." alt="" coords="12,488,265,997"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="141,1011,141,1046,136,1046,136,1011"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Yantra_1_1ExecutionContext.html" title="Context information controlling how a compute operation executes." alt="" coords="40,5,237,425"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="141,426,141,472,136,472,136,426"/>
+</map>

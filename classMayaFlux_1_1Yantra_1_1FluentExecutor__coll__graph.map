@@ -1,0 +1,9 @@
+<map id="MayaFlux::Yantra::FluentExecutor&lt; Executor, DataType &gt;" name="MayaFlux::Yantra::FluentExecutor&lt; Executor, DataType &gt;">
+<area shape="rect" id="Node000001" title="Fluent interface for chaining operations on any executor." alt="" coords="5,856,231,1216"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Yantra_1_1Datum.html" title=" " alt="" coords="27,433,209,793"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="121,793,121,840,115,840,115,793"/>
+<area shape="rect" id="Node000003" href="$classT.html" title=" " alt="" coords="35,155,57,221"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="52,221,73,370,81,417,76,418,67,371,47,221"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Yantra_1_1Datum.html" title="Input/Output container for computation pipeline data flow with structure preservation." alt="" coords="82,5,298,371"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="159,385,151,434,146,433,154,384"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="MayaFlux::Core::NetworkSubsystem::shutdown" name="MayaFlux::Core::NetworkSubsystem::shutdown">
+<area shape="rect" id="Node000001" title="Shutdown and cleanup subsystem resources." alt="" coords="5,41,264,81"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aa28c6f5592e5893508bafb62aefcc496.html#aa28c6f5592e5893508bafb62aefcc496" title="Get the global registry instance." alt="" coords="317,5,519,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="264,42,303,37,304,42,264,48"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_af56fb38c9e3a502f619f6205beb49384.html#af56fb38c9e3a502f619f6205beb49384" title="Unregister a service." alt="" coords="312,70,524,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="264,75,299,80,298,85,264,80"/>
+</map>

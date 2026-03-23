@@ -1,0 +1,9 @@
+<map id="MayaFlux::Core::GlobalNetworkConfig" name="MayaFlux::Core::GlobalNetworkConfig">
+<area shape="rect" id="Node000001" title="Configuration for the NetworkSubsystem." alt="" coords="265,273,487,413"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Core_1_1UDPBackendInfo.html" title="Configuration for the UDP transport backend." alt="" coords="5,5,237,211"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="234,209,290,260,286,264,230,213"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Core_1_1TCPBackendInfo.html" title="Configuration for the TCP transport backend." alt="" coords="262,25,490,191"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="379,191,379,257,373,257,373,191"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Core_1_1SharedMemoryBackendInfo.html" title="Configuration for local inter&#45;process shared memory transport." alt="" coords="514,48,737,168"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="564,170,464,264,460,260,561,166"/>
+</map>

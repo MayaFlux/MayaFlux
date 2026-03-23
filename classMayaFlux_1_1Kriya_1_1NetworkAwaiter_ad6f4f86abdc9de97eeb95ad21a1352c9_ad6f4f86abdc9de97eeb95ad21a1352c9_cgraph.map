@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kriya::NetworkAwaiter::await_suspend" name="MayaFlux::Kriya::NetworkAwaiter::await_suspend">
+<area shape="rect" id="Node000001" title="Suspend the coroutine and register with the source." alt="" coords="5,69,196,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Vruta_1_1NetworkSource_ac0d494805b4dba0accc564a024e6a3cd.html#ac0d494805b4dba0accc564a024e6a3cd" title=" " alt="" coords="244,5,436,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="176,67,251,46,252,51,177,72"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Vruta_1_1NetworkSource_a0c348c7d46e85c0cadeaa054bf65f58a.html#a0c348c7d46e85c0cadeaa054bf65f58a" title=" " alt="" coords="244,69,436,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="196,87,230,87,230,92,196,92"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Vruta_1_1NetworkSource_aa52f20a3822185e1a84f8d05f3472f3f.html#aa52f20a3822185e1a84f8d05f3472f3f" title=" " alt="" coords="244,133,436,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="177,107,252,127,251,132,176,112"/>
+</map>

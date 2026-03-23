@@ -1,0 +1,9 @@
+<map id="MayaFlux::Nodes::Input::InputConfig" name="MayaFlux::Nodes::Input::InputConfig">
+<area shape="rect" id="Node000001" title="Configuration for InputNode behavior." alt="" coords="199,5,367,165"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Nodes_1_1Input_1_1HIDConfig.html" title="Unified configuration for all HID input types." alt="" coords="5,253,173,593"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="212,178,188,215,165,254,161,252,183,212,208,175"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Nodes_1_1Input_1_1MIDIConfig.html" title="MIDI input node configuration." alt="" coords="198,213,367,633"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="285,179,285,213,280,213,280,179"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Nodes_1_1Input_1_1OSCConfig.html" title="Configuration for OSC input node argument extraction." alt="" coords="392,293,560,553"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="358,175,382,212,425,292,420,295,378,215,353,178"/>
+</map>

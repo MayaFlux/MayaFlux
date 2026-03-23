@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::VideoStreamContainer::unregister_state_change_callback" name="MayaFlux::Kakshya::VideoStreamContainer::unregister_state_change_callback">
+<area shape="rect" id="Node000001" title="Unregister the state change callback, if any." alt="" coords="5,5,196,75"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_ae700cb6f780df3a568fdc9013168089c.html#ae700cb6f780df3a568fdc9013168089c" title="Acquire a lock for thread&#45;safe access." alt="" coords="244,20,448,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="196,37,230,37,230,43,196,43"/>
+</map>

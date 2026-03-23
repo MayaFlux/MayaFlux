@@ -1,0 +1,7 @@
+<map id="MayaFlux::Yantra::GpuSorter&lt; InputType, OutputType &gt;" name="MayaFlux::Yantra::GpuSorter&lt; InputType, OutputType &gt;">
+<area shape="rect" id="Node000001" title="Concrete UniversalSorter that dispatches entirely via a ShaderExecutionContext." alt="" coords="33,1365,231,1525"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1UniversalSorter.html" title="Template&#45;flexible sorter base with instance&#45;defined I/O types." alt="" coords="17,583,247,1317"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="135,1331,135,1365,129,1365,129,1331"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1ComputeOperation.html" title="Base interface for all computational operations in the processing pipeline." alt="" coords="5,5,259,535"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="135,549,135,582,129,582,129,549"/>
+</map>

@@ -1,0 +1,11 @@
+<map id="MayaFlux::IO::IOManager::load_video" name="MayaFlux::IO::IOManager::load_video">
+<area shape="rect" id="Node000001" title="Load a video file into a VideoFileContainer." alt="" coords="5,101,192,141"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1IOManager_aa6e63ef45bab99fa31efcda9ad511aa0.html#aa6e63ef45bab99fa31efcda9ad511aa0" title=" " alt="" coords="242,5,445,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="139,99,239,55,260,47,262,52,241,60,142,104"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1IOManager_a4fc2f409942166992bd0bb0081b2a243.html#a4fc2f409942166992bd0bb0081b2a243" title=" " alt="" coords="240,69,447,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="192,107,226,102,227,107,193,112"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1IOManager_ad3b9ea0f142ad377c9f39e0f9c1642e1.html#ad3b9ea0f142ad377c9f39e0f9c1642e1" title="Assign a globally unique reader_id and take ownership of a reader." alt="" coords="250,133,437,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="193,131,237,137,236,142,192,136"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1IO_1_1IOManager_ab36381530e4c648dde95388099def431.html#ab36381530e4c648dde95388099def431" title="Release ownership of the reader identified by reader_id." alt="" coords="250,197,437,237"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="142,139,241,183,262,190,260,195,239,188,139,144"/>
+</map>

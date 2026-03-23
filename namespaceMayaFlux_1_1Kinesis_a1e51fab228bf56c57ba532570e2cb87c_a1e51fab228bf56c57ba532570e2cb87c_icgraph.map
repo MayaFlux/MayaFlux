@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::apply_transform" name="MayaFlux::Kinesis::apply_transform">
+<area shape="rect" id="Node000001" title="Apply rigid transformation to vertex set." alt="" coords="203,5,352,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_ad0006a3c5b66a1731dca159fe4d646ba.html#ad0006a3c5b66a1731dca159fe4d646ba" title="Apply rotation to vertex set around arbitrary axis." alt="" coords="5,5,155,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="189,28,155,28,155,23,189,23"/>
+</map>

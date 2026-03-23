@@ -1,0 +1,19 @@
+<map id="GpuResourceManager.hpp" name="GpuResourceManager.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="142,5,334,31"/>
+<area shape="rect" id="Node000002" href="$ComputePress_8hpp.html" title=" " alt="" coords="143,79,333,119"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="241,31,241,65,235,65,235,31"/>
+<area shape="rect" id="Node000003" href="$ShaderFoundry_8hpp.html" title=" " alt="" coords="165,167,311,192"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="241,119,241,153,235,153,235,119"/>
+<area shape="rect" id="Node000004" href="$ShaderUtils_8hpp.html" title=" " alt="" coords="175,240,301,265"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="241,192,241,226,235,226,235,192"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="5,321,145,346"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="215,268,112,317,110,312,213,263"/>
+<area shape="rect" id="Node000006" href="$GraphicsUtils_8hpp.html" title=" " alt="" coords="169,321,307,346"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="241,266,241,307,235,307,235,266"/>
+<area shape="rect" id="Node000007" href="$VertexLayout_8hpp.html" title=" " alt="" coords="331,313,532,353"/>
+<area shape="poly" id="edge6_Node000004_Node000007" title=" " alt="" coords="267,263,373,306,371,311,265,268"/>
+<area shape="rect" id="Node000008" href="$NDData_8hpp.html" title=" " alt="" coords="381,401,482,427"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="434,354,434,387,429,387,429,354"/>
+<area shape="rect" id="Node000009" title=" " alt="" coords="379,475,483,500"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="434,427,434,461,429,461,429,427"/>
+</map>

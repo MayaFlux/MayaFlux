@@ -1,0 +1,21 @@
+<map id="WaveguideNetwork.hpp" name="WaveguideNetwork.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="459,5,636,31"/>
+<area shape="rect" id="Node000002" href="$NodeNetwork_8hpp.html" title=" " alt="" coords="266,86,405,111"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="517,33,380,84,378,79,516,28"/>
+<area shape="rect" id="Node000008" href="$Stochastic_8hpp.html" title=" " alt="" coords="429,86,665,111"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="550,31,550,72,545,72,545,31"/>
+<area shape="rect" id="Node000010" href="$RingBuffer_8hpp.html" title=" " alt="" coords="690,79,869,119"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="582,28,712,72,710,77,580,33"/>
+<area shape="rect" id="Node000003" href="$NetworkOperator_8hpp.html" title=" " alt="" coords="5,167,239,207"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="308,114,183,164,181,159,306,109"/>
+<area shape="rect" id="Node000004" href="$Node_8hpp.html" title=" " alt="" coords="263,174,461,199"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="341,111,357,160,352,161,336,112"/>
+<area shape="rect" id="Node000005" href="$GpuContext_8hpp.html" title=" " alt="" coords="197,255,324,280"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="349,202,288,248,285,244,345,197"/>
+<area shape="rect" id="Node000006" href="$NodeUtils_8hpp.html" title=" " alt="" coords="349,255,575,280"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="378,197,438,244,435,248,375,202"/>
+<area shape="rect" id="Node000007" href="$NodeSpec_8hpp.html" title=" " alt="" coords="405,328,519,353"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="465,280,465,314,459,314,459,280"/>
+<area shape="rect" id="Node000009" title=" " alt="" coords="511,174,583,199"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="550,112,550,160,545,160,545,112"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Input::OSCNode::extract_from_arg" name="MayaFlux::Nodes::Input::OSCNode::extract_from_arg">
+<area shape="rect" id="Node000001" title=" " alt="" coords="241,5,452,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Input_1_1OSCNode_af1f637d7c432abd4b0a2783a4927a230.html#af1f637d7c432abd4b0a2783a4927a230" title="Extract a scalar value from an InputValue." alt="" coords="5,5,193,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="228,28,193,28,193,23,228,23"/>
+</map>

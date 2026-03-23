@@ -1,0 +1,11 @@
+<map id="MayaFlux::Portal::Graphics::ShaderFoundry::stop" name="MayaFlux::Portal::Graphics::ShaderFoundry::stop">
+<area shape="rect" id="Node000001" title="Stop active command recording and free command buffers." alt="" coords="779,37,976,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a13c39b9130452b3f5cb320082881b3fa.html#a13c39b9130452b3f5cb320082881b3fa" title="Stop all Portal::Graphics operations." alt="" coords="533,37,731,77"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="765,60,731,60,731,55,765,55"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1GraphicsSubsystem_acc5c12947dbc44adb045c15c8471cb12.html#acc5c12947dbc44adb045c15c8471cb12" title="Stop the subsystem&#39;s processing/event loops." alt="" coords="296,37,485,77"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="520,60,486,60,486,55,520,55"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1GraphicsSubsystem_add3c53f617b297ce6b56ee3109fb931e.html#add3c53f617b297ce6b56ee3109fb931e" title="Shutdown and cleanup subsystem resources." alt="" coords="32,5,221,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="282,47,221,39,222,34,282,42"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Core_1_1GraphicsSubsystem_a8edbb4e731ea5677f47b9de8cc583bcb.html#a8edbb4e731ea5677f47b9de8cc583bcb" title=" " alt="" coords="5,69,248,109"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="283,73,249,77,248,72,282,68"/>
+</map>

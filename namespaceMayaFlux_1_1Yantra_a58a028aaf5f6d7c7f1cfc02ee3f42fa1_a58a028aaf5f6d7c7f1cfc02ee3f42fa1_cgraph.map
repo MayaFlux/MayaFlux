@@ -1,0 +1,14 @@
+<map id="MayaFlux::Yantra::extract_onsets" name="MayaFlux::Yantra::extract_onsets">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,129,193,169"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a7cc7dc7848512515fc5b8d6b0f146eb9.html#a7cc7dc7848512515fc5b8d6b0f146eb9" title="Merge overlapping or adjacent half&#45;open intervals." alt="" coords="241,5,432,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="125,127,177,91,240,55,256,48,258,53,243,60,180,96,128,131"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_aa4da80d21b907296f4a31fb1f7dffc10.html#aa4da80d21b907296f4a31fb1f7dffc10" title="Sample indices of onsets detected via spectral flux." alt="" coords="243,93,430,133"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="193,132,229,127,230,132,194,138"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_ad3a1b135bd81434977f41ef8a6f49e48.html#ad3a1b135bd81434977f41ef8a6f49e48" title="Build [start, end) intervals centred on a set of positions." alt="" coords="245,158,429,213"/>
+<area shape="poly" id="edge5_Node000001_Node000005" title=" " alt="" coords="194,161,231,167,231,172,193,166"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_ab478ad739bf1293e463b0b9f254a4208.html#ab478ad739bf1293e463b0b9f254a4208" title="Copy data from a set of half&#45;open intervals into a flat vector." alt="" coords="247,237,426,277"/>
+<area shape="poly" id="edge6_Node000001_Node000006" title=" " alt="" coords="136,167,242,222,263,230,261,235,240,226,134,172"/>
+<area shape="poly" id="edge4_Node000003_Node000003" title=" " alt="" coords="293,94,291,84,298,74,313,69,337,67,364,70,378,77,376,82,362,75,337,72,314,74,301,79,296,85,298,92"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_ad2883aeb684971b088f71e1d858803bd.html#ad2883aeb684971b088f71e1d858803bd" title="Compute the number of analysis windows for a given data size." alt="" coords="480,93,657,133"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="431,111,467,111,467,116,431,116"/>
+</map>

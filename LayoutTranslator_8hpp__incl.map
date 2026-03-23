@@ -1,0 +1,15 @@
+<map id="LayoutTranslator.hpp" name="LayoutTranslator.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="206,5,363,31"/>
+<area shape="rect" id="Node000002" href="$VKGraphicsPipeline_8hpp.html" title=" " alt="" coords="5,79,295,119"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="266,33,196,74,193,69,263,29"/>
+<area shape="rect" id="Node000005" href="$VertexLayout_8hpp.html" title=" " alt="" coords="319,79,520,119"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="306,29,376,69,374,74,303,33"/>
+<area shape="rect" id="Node000003" href="$VKShaderModule_8hpp.html" title=" " alt="" coords="69,167,231,192"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="153,119,153,153,147,153,147,119"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="80,240,220,265"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="153,192,153,226,147,226,147,192"/>
+<area shape="rect" id="Node000006" href="$NDData_8hpp.html" title=" " alt="" coords="369,167,470,192"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="422,119,422,153,417,153,417,119"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="367,240,471,265"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="422,192,422,226,417,226,417,192"/>
+</map>

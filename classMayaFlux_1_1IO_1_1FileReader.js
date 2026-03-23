@@ -1,0 +1,25 @@
+var classMayaFlux_1_1IO_1_1FileReader =
+[
+    [ "~FileReader", "classMayaFlux_1_1IO_1_1FileReader_a545e89149b3926cd2319b8bbb2dc31a3.html#a545e89149b3926cd2319b8bbb2dc31a3", null ],
+    [ "can_read", "classMayaFlux_1_1IO_1_1FileReader_a8204a9696f22e498febb64b9e15a7033.html#a8204a9696f22e498febb64b9e15a7033", null ],
+    [ "close", "classMayaFlux_1_1IO_1_1FileReader_abf573b90216a12254f8c3a78ecc65918.html#abf573b90216a12254f8c3a78ecc65918", null ],
+    [ "create_container", "classMayaFlux_1_1IO_1_1FileReader_ac9f06c876a99957c886c2eb3a65a6e61.html#ac9f06c876a99957c886c2eb3a65a6e61", null ],
+    [ "get_container_type", "classMayaFlux_1_1IO_1_1FileReader_a3ea1305d720175ba3cbd1acfd43cfcfd.html#a3ea1305d720175ba3cbd1acfd43cfcfd", null ],
+    [ "get_data_type", "classMayaFlux_1_1IO_1_1FileReader_ae6786697a4e2ea9c5cd80fe790edb83d.html#ae6786697a4e2ea9c5cd80fe790edb83d", null ],
+    [ "get_dimension_sizes", "classMayaFlux_1_1IO_1_1FileReader_a4ed43bb7dd7669a72c11547cd197abf1.html#a4ed43bb7dd7669a72c11547cd197abf1", null ],
+    [ "get_last_error", "classMayaFlux_1_1IO_1_1FileReader_a99a6eb1630f241e9b21c6261e5410af2.html#a99a6eb1630f241e9b21c6261e5410af2", null ],
+    [ "get_metadata", "classMayaFlux_1_1IO_1_1FileReader_a9f7d26d2bf1739be9945a45194651daa.html#a9f7d26d2bf1739be9945a45194651daa", null ],
+    [ "get_num_dimensions", "classMayaFlux_1_1IO_1_1FileReader_a6914f6cad58f44adbc4b53ca692cd315.html#a6914f6cad58f44adbc4b53ca692cd315", null ],
+    [ "get_preferred_chunk_size", "classMayaFlux_1_1IO_1_1FileReader_a6d20fe2c03e115252b6a57bf753ce684.html#a6d20fe2c03e115252b6a57bf753ce684", null ],
+    [ "get_read_position", "classMayaFlux_1_1IO_1_1FileReader_ae842efcfd5c03d2ec7e4b7ba71215d7c.html#ae842efcfd5c03d2ec7e4b7ba71215d7c", null ],
+    [ "get_regions", "classMayaFlux_1_1IO_1_1FileReader_a3d87a23cba3d0ca20ed10378d5e69b5a.html#a3d87a23cba3d0ca20ed10378d5e69b5a", null ],
+    [ "get_supported_extensions", "classMayaFlux_1_1IO_1_1FileReader_a24ad9e0ba518255bc5898d79c3078b8f.html#a24ad9e0ba518255bc5898d79c3078b8f", null ],
+    [ "is_open", "classMayaFlux_1_1IO_1_1FileReader_abaa8d7b9c8b9f10bd50b1858befbe1ab.html#abaa8d7b9c8b9f10bd50b1858befbe1ab", null ],
+    [ "load_into_container", "classMayaFlux_1_1IO_1_1FileReader_acdbee359f63597baf77756c8816e0645.html#acdbee359f63597baf77756c8816e0645", null ],
+    [ "open", "classMayaFlux_1_1IO_1_1FileReader_a122930aed2daa0f52a3f55ff672f0fa5.html#a122930aed2daa0f52a3f55ff672f0fa5", null ],
+    [ "read_all", "classMayaFlux_1_1IO_1_1FileReader_a546063afeec466418dd58babfd104b24.html#a546063afeec466418dd58babfd104b24", null ],
+    [ "read_region", "classMayaFlux_1_1IO_1_1FileReader_a778bf8e696c9a1d44721538cef97f00d.html#a778bf8e696c9a1d44721538cef97f00d", null ],
+    [ "regions_to_groups", "classMayaFlux_1_1IO_1_1FileReader_a97ddf502da7bbc82717eea5fa733b059.html#a97ddf502da7bbc82717eea5fa733b059", null ],
+    [ "seek", "classMayaFlux_1_1IO_1_1FileReader_a350b954b9faedc9790d4fbb5437baf1b.html#a350b954b9faedc9790d4fbb5437baf1b", null ],
+    [ "supports_streaming", "classMayaFlux_1_1IO_1_1FileReader_a60beb50cf98fdcd4b0e7b0211284ca85.html#a60beb50cf98fdcd4b0e7b0211284ca85", null ]
+];

@@ -1,0 +1,10 @@
+<map id="MayaFlux::Buffers::BufferSupplyMixing" name="MayaFlux::Buffers::BufferSupplyMixing">
+<area shape="rect" id="Node000001" title="External buffer supply, mixing, and interleaved data I/O." alt="" coords="5,829,224,1153"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1TokenUnitManager.html" title="Token&#45;scoped unit storage and lifecycle management." alt="" coords="20,5,220,424"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="110,424,108,487,106,627,108,767,109,813,104,813,103,767,100,627,103,487,105,424"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1BufferAccessControl.html" title="Token&#45;aware buffer and unit access patterns." alt="" coords="237,487,469,767"/>
+<area shape="poly" id="edge3_Node000003_Node000002" title=" " alt="" coords="209,423,230,461,236,471,232,474,226,464,205,426"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="264,768,232,817,228,814,260,765"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Registry_1_1Service_1_1BufferService.html" title="Backend buffer management service interface." alt="" coords="271,105,436,325"/>
+<area shape="poly" id="edge4_Node000003_Node000004" title=" " alt="" coords="356,325,356,470,351,470,351,325"/>
+</map>

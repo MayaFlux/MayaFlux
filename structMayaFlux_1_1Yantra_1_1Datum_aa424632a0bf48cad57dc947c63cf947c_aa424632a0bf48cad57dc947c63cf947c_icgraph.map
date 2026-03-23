@@ -1,0 +1,11 @@
+<map id="MayaFlux::Yantra::Datum::needs_processig" name="MayaFlux::Yantra::Datum::needs_processig">
+<area shape="rect" id="Node000001" title="Check if processing is needed (for container types)" alt="" coords="501,37,688,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Yantra_a50bfcff81fce3d8535a738866b9e32ba.html#a50bfcff81fce3d8535a738866b9e32ba" title="Generate sort indices for any ComputeData type." alt="" coords="253,5,453,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="487,46,453,41,454,36,488,41"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Yantra_ab5e04174c73268eb0ce8a18f9d746e53.html#ab5e04174c73268eb0ce8a18f9d746e53" title="Universal sort function &#45; handles extraction/conversion internally." alt="" coords="265,69,441,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="488,74,442,80,441,75,487,69"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1StandardSorter_a1187d263424d60d6834853aa7230e081.html#a1187d263424d60d6834853aa7230e081" title="Generate sort indices only." alt="" coords="5,5,205,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="240,28,206,28,206,23,240,23"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1StandardSorter_ae15eaee8a080129c10acf51df0510867.html#ae15eaee8a080129c10acf51df0510867" title="Sort data in&#45;place." alt="" coords="5,69,205,109"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="251,92,206,92,206,87,251,87"/>
+</map>

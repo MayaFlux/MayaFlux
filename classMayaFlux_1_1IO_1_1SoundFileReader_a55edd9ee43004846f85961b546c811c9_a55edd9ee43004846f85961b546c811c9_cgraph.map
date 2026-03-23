@@ -1,0 +1,11 @@
+<map id="MayaFlux::IO::SoundFileReader::can_read" name="MayaFlux::IO::SoundFileReader::can_read">
+<area shape="rect" id="Node000001" title="Check if this reader can open the given file." alt="" coords="5,37,231,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1FFmpegDemuxContext_abb390b1cd463e5df1e2a21f735bbeddb.html#abb390b1cd463e5df1e2a21f735bbeddb" title="Find the best stream of the requested media type." alt="" coords="279,5,495,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="231,41,265,37,266,42,231,47"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1FFmpegDemuxContext_a4039ea599bf98512cea0c1999b7ffceb.html#a4039ea599bf98512cea0c1999b7ffceb" title="Open a media file and probe stream information." alt="" coords="279,69,495,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="231,68,266,72,265,78,231,73"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1FFmpegDemuxContext_a7bc6b130783fca0eb12babe697acecf8.html#a7bc6b130783fca0eb12babe697acecf8" title="Close the format context and release all demux resources." alt="" coords="543,37,759,77"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="494,74,529,69,529,75,495,79"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1IO_1_1FFmpegDemuxContext_a8ea9c7c404909356ac05d7aa28270c3e.html#a8ea9c7c404909356ac05d7aa28270c3e" title="Initialise FFmpeg logging level once per process." alt="" coords="543,101,759,141"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="495,100,529,104,529,109,494,105"/>
+</map>

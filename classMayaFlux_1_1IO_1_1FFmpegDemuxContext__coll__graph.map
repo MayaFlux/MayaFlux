@@ -1,0 +1,3 @@
+<map id="MayaFlux::IO::FFmpegDemuxContext" name="MayaFlux::IO::FFmpegDemuxContext">
+<area shape="rect" id="Node000001" title="RAII owner of a single AVFormatContext and associated demux state." alt="" coords="5,5,213,365"/>
+</map>

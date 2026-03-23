@@ -1,0 +1,11 @@
+<map id="MayaFlux::Nodes::Network::ModalNetwork::ModalNetwork" name="MayaFlux::Nodes::Network::ModalNetwork::ModalNetwork">
+<area shape="rect" id="Node000001" title="Create modal network with predefined spectrum." alt="" coords="5,117,233,157"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ModalNetwork_aba43d2e8584877bf2abe65ca99dc6a5b.html#aba43d2e8584877bf2abe65ca99dc6a5b" title="Generate frequency ratios for predefined spectra." alt="" coords="302,5,501,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="168,114,280,70,303,62,305,67,282,75,170,119"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ModalNetwork_a3e1c7458513e49c90795c92881da8c23.html#a3e1c7458513e49c90795c92881da8c23" title="Initialize modes with given frequency ratios." alt="" coords="281,85,521,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="233,121,268,117,268,122,234,126"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Network_1_1NodeNetwork_afb34b572315180e465878f1de6f5bb1b.html#afb34b572315180e465878f1de6f5bb1b" title="Set the network&#39;s output routing mode." alt="" coords="281,149,521,189"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="234,147,268,151,268,156,233,152"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1Network_1_1NodeNetwork_a3f5fa1eb97ee35881f885abc96df3a99.html#a3f5fa1eb97ee35881f885abc96df3a99" title="Set the network&#39;s topology." alt="" coords="296,213,507,253"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="168,154,282,198,308,206,307,211,280,203,166,159"/>
+</map>

@@ -1,0 +1,9 @@
+<map id="NetworkAwaiter.hpp" name="NetworkAwaiter.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="179,5,334,31"/>
+<area shape="rect" id="Node000002" href="$NetworkAwaiter_8cpp.html" title=" " alt="" coords="5,79,159,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="217,38,112,81,110,76,215,33"/>
+<area shape="rect" id="Node000003" href="$NetworkEvents_8cpp.html" title=" " alt="" coords="183,79,331,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="259,44,259,79,254,79,254,44"/>
+<area shape="rect" id="Node000004" href="$NetworkSource_8cpp.html" title=" " alt="" coords="355,79,503,104"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="298,33,402,76,400,81,296,38"/>
+</map>

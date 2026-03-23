@@ -1,0 +1,19 @@
+<map id="Granular" name="Granular">
+<area shape="rect" id="node1" href="dir_c13dddb0b2f642317b531132208641d1.html" title="Granular" alt="" coords="229,52,308,77"/>
+<area shape="rect" id="node2" href="dir_803684b81091026666df1805667fc619.html" title="Analyzers" alt="" coords="5,125,92,151"/>
+<area shape="poly" id="edge1" href="dir_000018_000000.html" alt="" coords="234,80,98,124,96,119,233,75"/>
+<area shape="rect" id="edge1-headlabel" href="dir_000018_000000.html" title="2" alt="" coords="99,120,109,135"/>
+<area shape="rect" id="node3" href="dir_81db096d2aaea48a71391bb1e7bbefd6.html" title="Extractors" alt="" coords="117,125,205,151"/>
+<area shape="poly" id="edge2" href="dir_000018_000013.html" alt="" coords="253,80,191,120,188,115,250,75"/>
+<area shape="rect" id="edge2-headlabel" href="dir_000018_000013.html" title="1" alt="" coords="193,115,203,130"/>
+<area shape="rect" id="node4" href="dir_98903ca72f3f031f88d95d1d2149bfa4.html" title="Kakshya" alt="" coords="229,125,308,151"/>
+<area shape="poly" id="edge3" href="dir_000018_000028.html" alt="" coords="271,78,271,112,266,112,266,78"/>
+<area shape="rect" id="edge3-headlabel" href="dir_000018_000028.html" title="2" alt="" coords="272,100,282,114"/>
+<area shape="rect" id="node5" href="dir_9ac7cf9947ac29e0816dea7a976a04ec.html" title="Sorters" alt="" coords="332,125,400,151"/>
+<area shape="poly" id="edge4" href="dir_000018_000055.html" alt="" coords="286,75,340,115,337,119,283,80"/>
+<area shape="rect" id="edge4-headlabel" href="dir_000018_000055.html" title="2" alt="" coords="336,100,345,115"/>
+<area shape="rect" id="node6" href="dir_ab78b5ea7d224bd3b6129089c2cbe6d1.html" title="Journal" alt="" coords="425,125,491,151"/>
+<area shape="poly" id="edge5" href="dir_000018_000027.html" alt="" coords="300,75,415,118,413,123,298,80"/>
+<area shape="rect" id="edge5-headlabel" href="dir_000018_000027.html" title="1" alt="" coords="408,104,418,118"/>
+<area shape="rect" id="clust1" href="dir_59224ee19ea8965bf15e8bfbcae6837d.html" title="Workflows" alt="" coords="218,16,319,88"/>
+</map>

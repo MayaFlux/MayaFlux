@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::Discrete::spectral_filter" name="MayaFlux::Kinesis::Discrete::spectral_filter">
+<area shape="rect" id="Node000001" title="Hard bandpass filter: zero all bins outside [lo_hz, hi_hz]." alt="" coords="5,5,179,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a2ea92db69fe2ad2d997d4bd8e5dc8b0f.html#a2ea92db69fe2ad2d997d4bd8e5dc8b0f" title="Apply a per&#45;frame spectrum processor via WOLA analysis&#45;synthesis." alt="" coords="227,5,405,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="179,23,213,23,213,28,179,28"/>
+</map>

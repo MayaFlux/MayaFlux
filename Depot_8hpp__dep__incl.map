@@ -1,0 +1,11 @@
+<map id="Depot.hpp" name="Depot.hpp">
+<area shape="rect" id="Node000001" title="Audio file loading and container management API." alt="" coords="125,5,214,31"/>
+<area shape="rect" id="Node000002" href="$Creator_8cpp.html" title=" " alt="" coords="5,79,101,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="141,40,74,81,71,76,138,35"/>
+<area shape="rect" id="Node000003" href="$Depot_8cpp.html" title=" " alt="" coords="125,79,213,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="172,44,172,79,167,79,167,44"/>
+<area shape="rect" id="Node000004" href="$MayaFlux_8hpp.html" title=" " alt="" coords="237,79,352,104"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="203,35,275,76,273,81,200,40"/>
+<area shape="rect" id="Node000005" href="$LiveAid_8hpp.html" title=" " alt="" coords="245,152,344,177"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="297,118,297,152,292,152,292,118"/>
+</map>

@@ -1,0 +1,13 @@
+<map id="MayaFlux::Core::WindowManager" name="MayaFlux::Core::WindowManager">
+<area shape="rect" id="Node000001" title="Manages window lifecycle and GLFW event polling." alt="" coords="313,531,546,956"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Core_1_1GlobalGraphicsConfig.html" title=" " alt="" coords="318,348,541,468"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="432,468,432,514,427,514,427,468"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Core_1_1GlfwPreInitConfig.html" title="Configuration hints for GLFW initialization." alt="" coords="5,65,200,225"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="155,224,198,276,250,322,304,355,302,359,246,326,194,279,151,227"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Core_1_1GraphicsSurfaceInfo.html" title="System&#45;wide configuration for visual stream processing." alt="" coords="224,25,421,265"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="374,265,401,331,396,333,369,267"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Core_1_1GraphicsBackendInfo.html" title="Configuration for graphics API backend (Vulkan/OpenGL/etc.)" alt="" coords="445,5,627,285"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="514,287,498,325,493,335,488,333,494,323,509,285"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Core_1_1GraphicsResourceLimits.html" title="Resource limits and budgets for graphics subsystem." alt="" coords="651,55,845,235"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="693,237,654,284,610,326,557,360,554,355,606,322,651,280,689,234"/>
+</map>

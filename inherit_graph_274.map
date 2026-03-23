@@ -1,0 +1,9 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="Node000000" href="$structMayaFlux_1_1Nodes_1_1Input_1_1InputConfig.html" title="Configuration for InputNode behavior." alt="" coords="5,69,181,109"/>
+<area shape="rect" id="Node000001" href="$structMayaFlux_1_1Nodes_1_1Input_1_1HIDConfig.html" title="Unified configuration for all HID input types." alt="" coords="229,5,405,45"/>
+<area shape="poly" id="edge93_Node000000_Node000001" title=" " alt="" coords="177,63,246,43,248,48,178,68"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Nodes_1_1Input_1_1MIDIConfig.html" title="MIDI input node configuration." alt="" coords="229,69,405,109"/>
+<area shape="poly" id="edge94_Node000000_Node000002" title=" " alt="" coords="195,87,229,87,229,92,195,92"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Nodes_1_1Input_1_1OSCConfig.html" title="Configuration for OSC input node argument extraction." alt="" coords="229,133,405,173"/>
+<area shape="poly" id="edge95_Node000000_Node000003" title=" " alt="" coords="178,111,248,131,246,136,177,116"/>
+</map>

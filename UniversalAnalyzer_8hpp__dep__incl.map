@@ -1,0 +1,20 @@
+<map id="UniversalAnalyzer.hpp" name="UniversalAnalyzer.hpp">
+<area shape="rect" id="Node000001" title="Modern, digital&#45;first universal analyzer framework for Maya Flux." alt="" coords="252,5,420,31"/>
+<area shape="rect" id="Node000002" href="$EnergyAnalyzer_8hpp.html" title="Span&#45;based energy analysis for digital signals in Maya Flux." alt="" coords="261,79,411,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="339,44,339,79,333,79,333,44"/>
+<area shape="rect" id="Node000007" href="$GpuAnalyzer_8hpp.html" title=" " alt="" coords="435,79,567,104"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="376,34,475,76,473,81,374,38"/>
+<area shape="rect" id="Node000008" href="$StatisticalAnalyzer_8hpp.html" title=" " alt="" coords="65,79,236,104"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="295,38,182,81,180,76,293,33"/>
+<area shape="rect" id="Node000003" href="$GranularWorkflow_8hpp.html" title=" " alt="" coords="5,152,171,177"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="284,110,129,154,127,149,282,105"/>
+<area shape="rect" id="Node000005" href="$MatrixHelper_8hpp.html" title="Region&#45;aware and matrix transformation functions leveraging existing ecosystem." alt="" coords="195,152,330,177"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="316,116,276,154,273,150,312,112"/>
+<area shape="rect" id="Node000006" href="$Yantra_8cpp.html" title=" " alt="" coords="354,152,443,177"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="357,113,391,150,387,154,353,116"/>
+<area shape="rect" id="Node000004" href="$GranularWorkflow_8cpp.html" title=" " alt="" coords="6,225,170,251"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="91,191,91,225,85,225,85,191"/>
+<area shape="poly" id="edge8_Node000008_Node000003" title=" " alt="" coords="133,116,100,154,96,150,129,113"/>
+<area shape="poly" id="edge9_Node000008_Node000005" title=" " alt="" coords="182,109,246,150,243,154,179,114"/>
+<area shape="poly" id="edge10_Node000008_Node000006" title=" " alt="" coords="204,105,359,149,358,154,203,110"/>
+</map>

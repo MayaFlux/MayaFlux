@@ -1,0 +1,29 @@
+<map id="MayaFlux::Kakshya::SoundStreamContainer::clear" name="MayaFlux::Kakshya::SoundStreamContainer::clear">
+<area shape="rect" id="Node000001" title="Clear all data in the container." alt="" coords="5,63,177,118"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_ac59ca8d9a3ed7bd4dbc766943227b44a.html#ac59ca8d9a3ed7bd4dbc766943227b44a" title="Acquire a lock for thread&#45;safe access." alt="" coords="685,5,892,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="171,61,225,48,343,32,463,24,671,20,671,25,463,29,344,38,226,53,172,66"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_a46cf2a36bf81975f79bc304b56edc004.html#a46cf2a36bf81975f79bc304b56edc004" title=" " alt="" coords="235,149,407,203"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="167,116,235,141,233,146,165,121"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_a5e0c8b987a5e6354c1e4d9c717b92b76.html#a5e0c8b987a5e6354c1e4d9c717b92b76" title="Update the processing state of the container." alt="" coords="225,63,417,118"/>
+<area shape="poly" id="edge11_Node000001_Node000012" title=" " alt="" coords="178,88,211,88,211,93,178,93"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_ac71c3404aadefac0fe97e641021e1eba.html#ac71c3404aadefac0fe97e641021e1eba" title="Create dimension descriptors for a data modality." alt="" coords="465,206,637,261"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="409,195,452,206,451,211,407,200"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_aafb5f78e7e3682f8785ef62f77e5d77a.html#aafb5f78e7e3682f8785ef62f77e5d77a" title="Calculate memory strides based on shape and layout." alt="" coords="693,70,884,125"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="584,204,630,169,684,135,698,128,700,133,687,140,633,173,587,208"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_afae79b6c7314e95d426e396efe81787a.html#afae79b6c7314e95d426e396efe81787a" title="Convenience constructor for a channel dimension." alt="" coords="697,149,880,189"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="637,208,700,190,701,196,638,213"/>
+<area shape="rect" id="Node000007" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_a6a1656bc7eafe4add39ec634481345a7.html#a6a1656bc7eafe4add39ec634481345a7" title="Convenience constructor for a frequency dimension." alt="" coords="691,213,887,253"/>
+<area shape="poly" id="edge6_Node000004_Node000007" title=" " alt="" coords="637,231,677,231,677,236,637,236"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Kakshya_aedc3538e77f59c4a4d91df28e181d066.html#aedc3538e77f59c4a4d91df28e181d066" title="Convert DataModality enum to string representation." alt="" coords="709,277,868,317"/>
+<area shape="poly" id="edge7_Node000004_Node000008" title=" " alt="" coords="638,254,701,271,700,276,637,259"/>
+<area shape="rect" id="Node000010" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_a54ded63656235da79ab98ef3a576d3d2.html#a54ded63656235da79ab98ef3a576d3d2" title="Convenience constructor for a spatial dimension." alt="" coords="701,341,876,381"/>
+<area shape="poly" id="edge9_Node000004_Node000010" title=" " alt="" coords="586,259,632,294,687,327,702,334,700,339,684,332,629,298,583,263"/>
+<area shape="rect" id="Node000011" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_aab0cac54b47602cb00e2fd99b50839c3.html#aab0cac54b47602cb00e2fd99b50839c3" title="Convenience constructor for a temporal (time) dimension." alt="" coords="708,405,869,445"/>
+<area shape="poly" id="edge10_Node000004_Node000011" title=" " alt="" coords="571,259,617,325,650,361,687,391,697,397,694,402,684,396,646,365,613,329,566,262"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_1_1Reflect_aad91118cbd25bd9e35a3ced9aa4e6dbd.html#aad91118cbd25bd9e35a3ced9aa4e6dbd" title="Universal enum to string converter using magic_enum (original case)" alt="" coords="940,277,1087,317"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="868,295,926,295,926,300,868,300"/>
+<area shape="poly" id="edge12_Node000012_Node000002" title=" " alt="" coords="417,75,671,39,672,44,418,80"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_a6b017a7f21c67f1c3faa5a30dbdc0750.html#a6b017a7f21c67f1c3faa5a30dbdc0750" title=" " alt="" coords="465,89,637,143"/>
+<area shape="poly" id="edge13_Node000012_Node000013" title=" " alt="" coords="418,99,452,102,451,108,417,104"/>
+<area shape="poly" id="edge14_Node000013_Node000002" title=" " alt="" coords="610,86,684,55,706,47,707,52,686,60,612,91"/>
+</map>

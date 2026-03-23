@@ -1,0 +1,16 @@
+<map id="MayaFlux::IO::VideoFileReader::stop_decode_thread" name="MayaFlux::IO::VideoFileReader::stop_decode_thread">
+<area shape="rect" id="Node000001" title=" " alt="" coords="547,129,769,169"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1VideoFileReader_aa7942958f72f9cc0f0549ffd9fdadd40.html#aa7942958f72f9cc0f0549ffd9fdadd40" title="Close the currently open file." alt="" coords="276,69,499,109"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="553,129,478,112,479,107,554,124"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1IO_1_1VideoFileReader_a67253a8d5bd744aa898d4f44b6814c95.html#a67253a8d5bd744aa898d4f44b6814c95" title="Seek to a specific position in the file." alt="" coords="5,133,228,173"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="532,153,228,155,228,150,532,148"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1IO_1_1VideoFileReader_a12ac2bea1489c574b3eedb216bb1d18c.html#a12ac2bea1489c574b3eedb216bb1d18c" title=" " alt="" coords="276,187,499,227"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="550,175,483,189,482,184,549,170"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1VideoFileReader_a4fde32d3018bb43d67972a0ff5fc0965.html#a4fde32d3018bb43d67972a0ff5fc0965" title="Open a file for reading." alt="" coords="5,5,228,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="288,69,201,48,202,43,289,63"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1VideoFileReader_af01d799de5c05dfbc69d9de7fcf36721.html#af01d799de5c05dfbc69d9de7fcf36721" title=" " alt="" coords="5,69,228,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="262,92,228,92,228,87,262,87"/>
+<area shape="poly" id="edge7_Node000006_Node000005" title=" " alt="" coords="271,187,218,176,219,171,273,181"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1IO_1_1VideoFileReader_a78b6b19d6d9126250ded73ea4b7b6629.html#a78b6b19d6d9126250ded73ea4b7b6629" title="Load file data into an existing container." alt="" coords="5,197,228,237"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="263,214,228,216,228,210,262,209"/>
+</map>

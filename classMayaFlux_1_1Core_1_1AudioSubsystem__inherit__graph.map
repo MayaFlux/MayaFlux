@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::AudioSubsystem" name="MayaFlux::Core::AudioSubsystem">
+<area shape="rect" id="Node000001" title="Audio processing subsystem managing real&#45;time audio I/O and processing." alt="" coords="5,373,239,839"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1ISubsystem.html" title="Base interface for all subsystems in the MayaFlux processing architecture." alt="" coords="22,5,222,325"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="125,339,125,373,119,373,119,339"/>
+</map>

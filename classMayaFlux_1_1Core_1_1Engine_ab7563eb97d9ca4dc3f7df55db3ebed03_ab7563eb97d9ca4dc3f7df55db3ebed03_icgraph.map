@@ -1,0 +1,33 @@
+<map id="MayaFlux::Core::Engine::get_event_manager" name="MayaFlux::Core::Engine::get_event_manager">
+<area shape="rect" id="Node000001" title="Gets the event manager." alt="" coords="684,268,860,308"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_a0dfe4501e157cd6e14b62baab5fa9b84.html#a0dfe4501e157cd6e14b62baab5fa9b84" title="Gets the event manager from the default engine." alt="" coords="477,268,636,308"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="670,291,636,291,636,285,670,285"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_a0425b50eb321a3acbb0f167b44112732.html#a0425b50eb321a3acbb0f167b44112732" title="Cancel an event handler by name." alt="" coords="237,5,417,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="543,256,528,211,504,158,470,105,450,81,428,59,410,48,412,43,431,55,454,77,475,102,508,156,533,209,549,254"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_af5deaf1728c7948315dc4ce7af5ef77e.html#af5deaf1728c7948315dc4ce7af5ef77e" title="Schedule a handler for any key press." alt="" coords="241,70,412,95"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="539,256,521,221,497,181,465,142,428,109,406,98,409,93,431,104,469,138,501,178,526,218,544,254"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_af9fb24f66b99c0cda04201284a219677.html#af9fb24f66b99c0cda04201284a219677" title="Schedule a key press handler." alt="" coords="227,119,426,145"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="532,259,488,207,460,180,428,158,402,147,405,142,431,154,463,176,492,203,536,255"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_aa0213ccfa76fafbb55a88f9982da7cee.html#aa0213ccfa76fafbb55a88f9982da7cee" title="Schedule a key release handler." alt="" coords="225,169,428,194"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="518,262,476,233,428,208,395,197,397,191,430,203,479,229,521,257"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_a04a9ebaa3b5d4ee64cd760f2efedf5c7.html#a04a9ebaa3b5d4ee64cd760f2efedf5c7" title="Schedule a mouse movement handler." alt="" coords="224,218,429,243"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="463,267,429,259,378,246,380,241,430,253,465,262"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_a6613e51ffdbc148b6667699e873a87a6.html#a6613e51ffdbc148b6667699e873a87a6" title="Schedule a mouse button press handler." alt="" coords="246,268,407,308"/>
+<area shape="poly" id="edge7_Node000002_Node000008" title=" " alt="" coords="464,291,408,291,408,285,464,285"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_ad19b4b6af5aacd5aa72c828b3ffa85a0.html#ad19b4b6af5aacd5aa72c828b3ffa85a0" title="Schedule a mouse button release handler." alt="" coords="246,332,407,372"/>
+<area shape="poly" id="edge8_Node000002_Node000009" title=" " alt="" coords="472,314,400,335,398,329,470,309"/>
+<area shape="rect" id="Node000010" href="$namespaceMayaFlux_ad6fcf859b38e18ae833af965e515f6e5.html#ad6fcf859b38e18ae833af965e515f6e5" title="Schedule an on_message handler with an existing NetworkSource." alt="" coords="241,396,412,436"/>
+<area shape="poly" id="edge9_Node000002_Node000010" title=" " alt="" coords="525,319,482,354,431,386,403,398,401,393,428,382,479,350,522,315"/>
+<area shape="rect" id="Node000012" href="$namespaceMayaFlux_ac0b349dedecb6eb592248541c572edb3.html#ac0b349dedecb6eb592248541c572edb3" title="Schedule an on_message_from handler with an existing NetworkSource." alt="" coords="241,460,412,500"/>
+<area shape="poly" id="edge11_Node000002_Node000012" title=" " alt="" coords="540,322,496,387,466,421,431,450,409,462,407,457,428,446,462,417,492,383,536,319"/>
+<area shape="rect" id="Node000014" href="$namespaceMayaFlux_ae589ab9156350280de0588532259d7f8.html#ae589ab9156350280de0588532259d7f8" title="Schedule an on_message_matching handler with an existing NetworkSource." alt="" coords="241,524,412,564"/>
+<area shape="poly" id="edge13_Node000002_Node000014" title=" " alt="" coords="548,322,532,366,507,417,474,469,431,514,412,526,410,522,428,510,470,466,502,415,527,363,543,320"/>
+<area shape="rect" id="Node000016" href="$namespaceMayaFlux_a07d5520bf6595375c13cc1b166a911a5.html#a07d5520bf6595375c13cc1b166a911a5" title="Schedule a mouse scroll handler." alt="" coords="251,589,403,614"/>
+<area shape="poly" id="edge15_Node000002_Node000016" title=" " alt="" coords="553,322,541,378,518,447,502,483,483,518,459,550,431,578,404,593,401,589,428,574,455,547,478,515,497,481,513,445,536,377,548,321"/>
+<area shape="rect" id="Node000011" href="$namespaceMayaFlux_a6e80fb6599a2fb68358aa5bbf01042e0.html#a6e80fb6599a2fb68358aa5bbf01042e0" title="Schedule an on_message handler, constructing the NetworkSource from config." alt="" coords="5,396,176,436"/>
+<area shape="poly" id="edge10_Node000010_Node000011" title=" " alt="" coords="228,419,176,419,176,413,228,413"/>
+<area shape="rect" id="Node000013" href="$namespaceMayaFlux_a05ba8fc9dd9c5436e2bd90b9774bdf4a.html#a05ba8fc9dd9c5436e2bd90b9774bdf4a" title="Schedule an on_message_from handler, constructing the NetworkSource from config." alt="" coords="5,460,176,500"/>
+<area shape="poly" id="edge12_Node000012_Node000013" title=" " alt="" coords="228,483,176,483,176,477,228,477"/>
+<area shape="rect" id="Node000015" href="$namespaceMayaFlux_aacc5f76e5a0aac61c4872d1a5d38e6b3.html#aacc5f76e5a0aac61c4872d1a5d38e6b3" title="Schedule an on_message_matching handler, constructing the NetworkSource from config." alt="" coords="5,524,176,564"/>
+<area shape="poly" id="edge14_Node000014_Node000015" title=" " alt="" coords="228,547,176,547,176,541,228,541"/>
+</map>

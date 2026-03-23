@@ -1,0 +1,13 @@
+<map id="MayaFlux::Nodes::Network::PhysicsOperator" name="MayaFlux::Nodes::Network::PhysicsOperator">
+<area shape="rect" id="Node000001" title="N&#45;body physics simulation with point rendering." alt="" coords="217,1000,442,1819"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1GraphicsOperator.html" title="Operator that produces GPU&#45;renderable geometry." alt="" coords="5,465,205,740"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="150,753,219,1003,214,1004,144,754"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1NetworkOperator.html" title="Domain&#45;agnostic interpretive lens for network processing." alt="" coords="10,15,201,195"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="108,209,108,465,103,465,103,209"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kinesis_1_1Stochastic_1_1Stochastic.html" title="Unified generative infrastructure for stochastic and procedural algorithms." alt="" coords="229,268,429,937"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="332,937,332,983,327,983,327,937"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Kinesis_1_1Stochastic_1_1GeneratorState.html" title="Encapsulates internal state for stateful generators." alt="" coords="235,5,423,205"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="332,206,332,252,327,252,327,206"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Kinesis_1_1SamplerBounds.html" title="Spatial domain for vertex generation." alt="" coords="453,533,595,673"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="524,673,513,814,502,896,487,977,450,1108,445,1107,481,975,497,895,508,813,519,672"/>
+</map>
