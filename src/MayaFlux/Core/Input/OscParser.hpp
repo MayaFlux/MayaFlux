@@ -50,18 +50,6 @@ public:
      */
     static std::vector<uint8_t> serialize(const std::string& address,
         const std::vector<InputValue::OSCArg>& args);
-
-private:
-    static size_t padded_size(size_t len);
-    static std::string read_string(const uint8_t* data, size_t max_len, size_t& offset);
-    static int32_t read_int32(const uint8_t* data, size_t& offset);
-    static float read_float(const uint8_t* data, size_t& offset);
-    static std::vector<uint8_t> read_blob(const uint8_t* data, size_t max_len, size_t& offset);
-
-    static void write_string(std::vector<uint8_t>& out, const std::string& str);
-    static void write_int32(std::vector<uint8_t>& out, int32_t val);
-    static void write_float(std::vector<uint8_t>& out, float val);
-    static void write_blob(std::vector<uint8_t>& out, const std::vector<uint8_t>& blob);
 };
 
 } // namespace MayaFlux::Core
