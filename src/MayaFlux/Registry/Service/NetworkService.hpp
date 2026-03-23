@@ -5,20 +5,6 @@
 namespace MayaFlux::Registry::Service {
 
 /**
- * @struct NetworkMessage
- * @brief A received datagram or framed message with sender metadata
- *
- * Passed to receive callbacks. Also the natural return type for a
- * future NetworkAwaiter (Kriya::NetworkReceive) if condition-driven
- * coroutine support is added later, following the EventAwaiter model.
- */
-struct NetworkMessage {
-    uint64_t endpoint_id {};
-    std::vector<uint8_t> data;
-    std::string sender_address;
-};
-
-/**
  * @brief Backend network transport service interface
  *
  * Registered into BackendRegistry by NetworkSubsystem. Follows the same
