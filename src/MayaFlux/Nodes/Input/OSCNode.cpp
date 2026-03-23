@@ -29,7 +29,8 @@ double OSCNode::extract_value(const Core::InputValue& value)
         return m_last_output;
     }
 
-    double raw = extract_from_arg(osc.arguments[m_config.argument_index]);
+    double raw = static_cast<double>(
+        osc.get_float(m_config.argument_index).value_or(static_cast<float>(osc.get_int(m_config.argument_index).value_or(0))));
 
     if (m_config.normalize && m_config.range_max != m_config.range_min) {
         raw = (raw - m_config.range_min) / (m_config.range_max - m_config.range_min);
@@ -37,27 +38,6 @@ double OSCNode::extract_value(const Core::InputValue& value)
     }
 
     return raw;
-}
-
-double OSCNode::extract_from_arg(const Core::InputValue::OSCArg& arg) const
-{
-    return std::visit([](const auto& val) -> double {
-        using T = std::decay_t<decltype(val)>;
-        if constexpr (std::is_same_v<T, float>) {
-            return static_cast<double>(val);
-        } else if constexpr (std::is_same_v<T, int32_t>) {
-            return static_cast<double>(val);
-        } else if constexpr (std::is_same_v<T, std::string>) {
-            try {
-                return std::stod(val);
-            } catch (...) {
-                return 0.0;
-            }
-        } else {
-            return 0.0;
-        }
-    },
-        arg);
 }
 
 void OSCNode::notify_tick(double value)
