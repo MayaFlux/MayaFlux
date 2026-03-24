@@ -626,6 +626,21 @@ int find_dimension_by_role(const std::vector<DataDimension>& dimensions, DataDim
 DataModality detect_data_modality(const std::vector<DataDimension>& dimensions);
 
 /**
+ * @brief Detect data modality from dimensions and source variant scalar type.
+ *
+ * Resolves ambiguous cases where dimension roles alone are insufficient,
+ * primarily the TIME-only case where decimal, integer, and complex types
+ * would otherwise all collapse to the same result.
+ *
+ * @param dimensions Vector of data dimensions with role information.
+ * @param source     Original DataVariant used to produce the dimensions.
+ * @return Detected DataModality type.
+ */
+DataModality detect_data_modality(
+    const std::vector<DataDimension>& dimensions,
+    const DataVariant& source);
+
+/**
  * @brief Detect data dimensions from a DataVariant
  * @param data DataVariant to analyze
  * @return Vector of DataDimension descriptors
