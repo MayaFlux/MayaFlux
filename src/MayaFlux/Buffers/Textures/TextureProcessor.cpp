@@ -1,5 +1,6 @@
 #include "TextureProcessor.hpp"
 
+#include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
 #include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
 #include "TextureBuffer.hpp"
 
@@ -58,6 +59,12 @@ void TextureProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
     }
 
     initialize_gpu_resources();
+
+    if (auto rp = tex_buffer->get_render_processor()) {
+        rp->bind_texture(
+            tex_buffer->get_render_config().default_texture_binding,
+            tex_buffer->get_texture());
+    }
 
     MF_INFO(Journal::Component::Buffers, Journal::Context::BufferProcessing,
         "TextureProcessor attached to {}x{} TextureBuffer",
