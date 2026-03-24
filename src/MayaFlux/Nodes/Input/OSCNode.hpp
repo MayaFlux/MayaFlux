@@ -144,7 +144,6 @@ private:
 
     std::vector<MessageCallback> m_message_callbacks;
 
-    [[nodiscard]] double extract_from_arg(const Core::InputValue::OSCArg& arg) const;
     void fire_osc_callbacks(const Core::InputValue::OSCMessage& osc);
 };
 

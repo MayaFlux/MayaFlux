@@ -56,13 +56,16 @@ NetworkSource::~NetworkSource()
 
 void NetworkSource::signal(const Core::NetworkMessage& message)
 {
-    (void)m_queue.push(message);
-
     auto* w = m_waiters_head.exchange(nullptr, std::memory_order_acq_rel);
-    while (w) {
-        auto* next = w->m_next.load(std::memory_order_relaxed);
-        w->deliver(message);
-        w = next;
+
+    if (w) {
+        while (w) {
+            auto* next = w->m_next.load(std::memory_order_relaxed);
+            w->deliver(message);
+            w = next;
+        }
+    } else {
+        (void)m_queue.push(message);
     }
 }
 

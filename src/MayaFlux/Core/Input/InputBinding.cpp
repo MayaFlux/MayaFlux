@@ -109,6 +109,66 @@ InputBinding& InputBinding::with_osc_pattern(const std::string& pattern)
 }
 
 // ────────────────────────────────────────────────────────────────────────────
+// OSCMessage Argument Extraction Methods
+// ────────────────────────────────────────────────────────────────────────────
+
+std::optional<float> InputValue::OSCMessage::get_float(size_t index) const noexcept
+{
+    if (index >= arguments.size())
+        return std::nullopt;
+    return std::visit([](const auto& v) -> std::optional<float> {
+        using T = std::decay_t<decltype(v)>;
+        if constexpr (std::is_same_v<T, float>)
+            return v;
+        if constexpr (std::is_same_v<T, int32_t>)
+            return static_cast<float>(v);
+        return std::nullopt;
+    },
+        arguments[index]);
+}
+
+std::optional<int32_t> InputValue::OSCMessage::get_int(size_t index) const noexcept
+{
+    if (index >= arguments.size())
+        return std::nullopt;
+    return std::visit([](const auto& v) -> std::optional<int32_t> {
+        using T = std::decay_t<decltype(v)>;
+        if constexpr (std::is_same_v<T, int32_t>)
+            return v;
+        if constexpr (std::is_same_v<T, float>)
+            return static_cast<int32_t>(v);
+        return std::nullopt;
+    },
+        arguments[index]);
+}
+
+std::optional<std::string> InputValue::OSCMessage::get_string(size_t index) const noexcept
+{
+    if (index >= arguments.size())
+        return std::nullopt;
+    return std::visit([](const auto& v) -> std::optional<std::string> {
+        using T = std::decay_t<decltype(v)>;
+        if constexpr (std::is_same_v<T, std::string>)
+            return v;
+        return std::nullopt;
+    },
+        arguments[index]);
+}
+
+std::optional<std::vector<uint8_t>> InputValue::OSCMessage::get_blob(size_t index) const noexcept
+{
+    if (index >= arguments.size())
+        return std::nullopt;
+    return std::visit([](const auto& v) -> std::optional<std::vector<uint8_t>> {
+        using T = std::decay_t<decltype(v)>;
+        if constexpr (std::is_same_v<T, std::vector<uint8_t>>)
+            return v;
+        return std::nullopt;
+    },
+        arguments[index]);
+}
+
+// ────────────────────────────────────────────────────────────────────────────
 // InputDeviceInfo Implementation (inline)
 // ────────────────────────────────────────────────────────────────────────────
 
@@ -196,6 +256,41 @@ InputValue InputValue::make_osc(std::string addr, std::vector<OSCArg> args, uint
         .device_id = dev_id,
         .source_type = InputType::OSC
     };
+}
+
+std::optional<double> InputValue::try_scalar() const noexcept
+{
+    if (type != Type::SCALAR)
+        return std::nullopt;
+    return std::get<double>(data);
+}
+
+const std::vector<double>* InputValue::try_vector() const noexcept
+{
+    if (type != Type::VECTOR)
+        return nullptr;
+    return &std::get<std::vector<double>>(data);
+}
+
+const std::vector<uint8_t>* InputValue::try_bytes() const noexcept
+{
+    if (type != Type::BYTES)
+        return nullptr;
+    return &std::get<std::vector<uint8_t>>(data);
+}
+
+const InputValue::MIDIMessage* InputValue::try_midi() const noexcept
+{
+    if (type != Type::MIDI)
+        return nullptr;
+    return &std::get<MIDIMessage>(data);
+}
+
+const InputValue::OSCMessage* InputValue::try_osc() const noexcept
+{
+    if (type != Type::OSC)
+        return nullptr;
+    return &std::get<OSCMessage>(data);
 }
 
 } // namespace MayaFlux::Core

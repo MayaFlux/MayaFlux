@@ -3,6 +3,7 @@
 #include "MayaFlux/Core/Backends/Network/TCPBackend.hpp"
 #include "MayaFlux/Core/Backends/Network/UDPBackend.hpp"
 
+#include "MayaFlux/Portal/Network/Network.hpp"
 #include "MayaFlux/Registry/BackendRegistry.hpp"
 #include "MayaFlux/Registry/Service/NetworkService.hpp"
 
@@ -52,6 +53,8 @@ void NetworkSubsystem::initialize(SubsystemProcessingHandle& handle)
     }
 
     register_backend_service();
+
+    Portal::Network::initialize(m_network_service.get());
 
     m_ready.store(true);
 
@@ -145,6 +148,10 @@ void NetworkSubsystem::stop()
         }
     }
 
+    if (Portal::Network::is_initialized()) {
+        Portal::Network::stop();
+    }
+
     m_work_guard.reset();
     m_io_context->stop();
 
@@ -186,6 +193,10 @@ void NetworkSubsystem::shutdown()
             backend->shutdown();
         }
         m_backends.clear();
+    }
+
+    if (Portal::Network::is_initialized()) {
+        Portal::Network::shutdown();
     }
 
     if (m_network_service) {
