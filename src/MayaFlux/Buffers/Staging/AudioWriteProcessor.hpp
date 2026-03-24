@@ -83,7 +83,7 @@ private:
     // Active slot: audio thread reads from here.
     std::vector<double> m_active;
     // Set when m_pending contains unseen data.
-    std::atomic_flag m_dirty { ATOMIC_FLAG_INIT };
+    std::atomic_flag m_dirty;
 
     void commit_pending();
     void write_to_buffer(AudioBuffer& buf) const;

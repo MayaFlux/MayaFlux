@@ -86,7 +86,7 @@ void GeometryWriteProcessor::processing_function(const std::shared_ptr<Buffer>& 
     }
 
     upload_to_gpu(access->data_ptr,
-        std::min(required, vk->get_size_bytes()),
+        std::min<size_t>(required, vk->get_size_bytes()),
         vk,
         m_staging);
 

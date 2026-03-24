@@ -167,6 +167,7 @@ jobs:
           pkg-config --exists eigen3 && echo "✅ eigen3 found" || echo "❌ eigen3 not found"
           pkg-config --exists magic_enum && echo "✅ magic_enum found" || echo "❌ magic_enum not found"
           pkg-config --exists glm && echo "✅ glm found" || echo "❌ glm not found"
+          pkg-config --exists asio && echo "✅ asio found" || echo "❌ asio not found"
 
       - name: Install STB headers
         shell: bash

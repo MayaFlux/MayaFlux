@@ -66,7 +66,7 @@ private:
     Kakshya::VertexAccessConfig m_config;
     GeometryWriteMode m_mode { GeometryWriteMode::POINT };
 
-    std::atomic_flag m_dirty { ATOMIC_FLAG_INIT };
+    std::atomic_flag m_dirty;
 
     std::shared_ptr<VKBuffer> m_staging;
 };

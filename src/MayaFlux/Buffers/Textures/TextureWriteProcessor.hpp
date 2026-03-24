@@ -48,7 +48,7 @@ protected:
 private:
     std::optional<Kakshya::DataVariant> m_pending;
     std::optional<Kakshya::DataVariant> m_active;
-    std::atomic_flag m_dirty { ATOMIC_FLAG_INIT };
+    std::atomic_flag m_dirty;
 };
 
 } // namespace MayaFlux::Buffers
