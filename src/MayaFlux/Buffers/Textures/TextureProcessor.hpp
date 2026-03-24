@@ -28,6 +28,17 @@ class TextureBuffer;
  */
 class MAYAFLUX_API TextureProcessor : public VKBufferProcessor {
 public:
+    /** @enum PixelSource
+     * @brief Source of pixel data for GPU uploads
+     *
+     * - BUFFER_STORAGE: Read from m_texture_buffer->m_pixel_data (default)
+     * - EXTERNAL_DATA: Call get_variant_source(), expects DataVariant supply
+     */
+    enum class PixelSource : uint8_t {
+        BUFFER_STORAGE,
+        EXTERNAL_DATA
+    };
+
     TextureProcessor();
     ~TextureProcessor() override;
 
@@ -56,9 +67,12 @@ protected:
     void on_detach(const std::shared_ptr<Buffer>& buffer) override;
     void processing_function(const std::shared_ptr<Buffer>& buffer) override;
 
-private:
+    virtual std::optional<Kakshya::DataVariant> get_variant_source() { return std::nullopt; }
+
+    PixelSource m_pixel_source { PixelSource::BUFFER_STORAGE };
     std::shared_ptr<TextureBuffer> m_texture_buffer;
 
+private:
     /**
      * @brief Persistent host-visible staging buffer for streaming pixel uploads.
      *        Allocated on first dirty update via TextureLoom::create_streaming_staging().
