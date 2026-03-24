@@ -4,6 +4,8 @@
 
 #include "GraphicsUtils.hpp"
 
+#include "MayaFlux/Kakshya/NDData/NDData.hpp"
+
 namespace MayaFlux::Core {
 class VulkanBackend;
 class BackendResourceManager;
@@ -194,6 +196,25 @@ public:
         uint32_t width,
         uint32_t height,
         ImageFormat format = ImageFormat::RGBA8);
+
+    /**
+     * @brief Create a 2D texture from a DataVariant in one shot.
+     * @param variant  Source data. Conversion and validation delegated to
+     *                 Kakshya::as_texture_access(): vec3 is promoted to vec4
+     *                 with W=0 (warned); complex<double> and mat4 are rejected.
+     * @param width    Texture width in texels.
+     * @param height   Texture height in texels.
+     * @param format   Target image format (default: RGBA32F).
+     * @return         Initialised VKImage in shader-read layout, or nullptr on failure.
+     *
+     * Validates byte count against width * height * bpp(format) before upload.
+     * Throws std::invalid_argument on mismatch.
+     */
+    [[nodiscard]] std::shared_ptr<Core::VKImage> create_2d(
+        const Kakshya::DataVariant& variant,
+        uint32_t width,
+        uint32_t height,
+        ImageFormat format = ImageFormat::RGBA32F);
 
     //==========================================================================
     // Data Upload/Download
