@@ -116,6 +116,10 @@
 #include "Portal/Graphics/ShaderFoundry.hpp"
 #include "Portal/Graphics/TextureLoom.hpp"
 
+#include "Portal/Network/MessageUtils.hpp"
+#include "Portal/Network/Network.hpp"
+#include "Portal/Network/NetworkSink.hpp"
+
 #include "IO/IOManager.hpp"
 #include "IO/ImageReader.hpp"
 
