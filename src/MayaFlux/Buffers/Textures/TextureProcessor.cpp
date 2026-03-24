@@ -1,8 +1,10 @@
 #include "TextureProcessor.hpp"
 
+#include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
 #include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
 #include "TextureBuffer.hpp"
 
+#include "MayaFlux/Kakshya/NDData/TextureAccess.hpp"
 #include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
 
 #include "MayaFlux/Registry/BackendRegistry.hpp"
@@ -57,6 +59,12 @@ void TextureProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
     }
 
     initialize_gpu_resources();
+
+    if (auto rp = tex_buffer->get_render_processor()) {
+        rp->bind_texture(
+            tex_buffer->get_render_config().default_texture_binding,
+            tex_buffer->get_texture());
+    }
 
     MF_INFO(Journal::Component::Buffers, Journal::Context::BufferProcessing,
         "TextureProcessor attached to {}x{} TextureBuffer",
@@ -178,6 +186,50 @@ void TextureProcessor::update_geometry_if_dirty()
 void TextureProcessor::update_pixels_if_dirty()
 {
     if (!m_texture_buffer || !m_texture_buffer->m_texture_dirty) {
+        return;
+    }
+
+    if (m_pixel_source == PixelSource::EXTERNAL_DATA) {
+        auto variant = get_variant_source();
+        if (!variant) {
+            m_texture_buffer->m_texture_dirty = false;
+            return;
+        }
+
+        if (!m_texture_buffer->has_texture()) {
+            m_texture_buffer->m_gpu_texture = create_gpu_texture();
+        }
+
+        auto& loom = Portal::Graphics::get_texture_manager();
+
+        if (m_streaming_mode && !m_stream_staging) {
+            m_stream_staging = create_image_staging_buffer(
+                m_texture_buffer->get_texture()->get_size_bytes());
+        }
+
+        auto access = Kakshya::as_texture_access(*variant);
+        if (!access) {
+            m_texture_buffer->m_texture_dirty = false;
+            return;
+        }
+
+        if (m_streaming_mode && m_stream_staging) {
+            loom.upload_data(
+                m_texture_buffer->get_texture(),
+                access->data_ptr,
+                access->byte_count,
+                m_stream_staging);
+        } else {
+            loom.upload_data(
+                m_texture_buffer->get_texture(),
+                access->data_ptr,
+                access->byte_count);
+        }
+
+        m_texture_buffer->m_texture_dirty = false;
+
+        MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "TextureProcessor: external variant data updated ({} bytes)", access->byte_count);
         return;
     }
 

@@ -3,6 +3,9 @@
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/BackendResoureManager.hpp"
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/VKImage.hpp"
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/VulkanBackend.hpp"
+
+#include "MayaFlux/Kakshya/NDData/TextureAccess.hpp"
+
 #include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux::Portal::Graphics {
@@ -322,6 +325,37 @@ std::shared_ptr<Core::VKImage> TextureLoom::create_storage_image(
         "Created storage image: {}x{}, format: {}",
         width, height, vk::to_string(vk_format));
     return image;
+}
+
+std::shared_ptr<Core::VKImage> TextureLoom::create_2d(
+    const Kakshya::DataVariant& variant,
+    uint32_t width,
+    uint32_t height,
+    ImageFormat format)
+{
+    if (!is_initialized()) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
+            "TextureLoom not initialized");
+        return nullptr;
+    }
+
+    const auto access = Kakshya::as_texture_access(variant);
+    if (!access) {
+        return nullptr;
+    }
+
+    const size_t expected = calculate_image_size(width, height, 1, format);
+    if (access->byte_count != expected) {
+        error<std::invalid_argument>(
+            Journal::Component::Portal,
+            Journal::Context::ImageProcessing,
+            std::source_location::current(),
+            "create_2d: byte count mismatch — {} bytes supplied, "
+            "{}x{} format {} requires {}",
+            access->byte_count, width, height, static_cast<int>(format), expected);
+    }
+
+    return create_2d(width, height, format, access->data_ptr, 1);
 }
 
 //==============================================================================

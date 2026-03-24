@@ -181,13 +181,38 @@ DataModality detect_data_modality(const std::vector<DataDimension>& dimensions)
     return DataModality::TENSOR_ND;
 }
 
+DataModality detect_data_modality(
+    const std::vector<DataDimension>& dimensions,
+    const DataVariant& source)
+{
+    const DataModality base = detect_data_modality(dimensions);
+
+    if (base != DataModality::AUDIO_1D && base != DataModality::TENSOR_ND) {
+        return base;
+    }
+
+    return std::visit([&base](const auto& vec) {
+        using V = typename std::decay_t<decltype(vec)>::value_type;
+
+        if constexpr (ComplexData<V>) {
+            return DataModality::SPECTRAL_2D;
+        } else if constexpr (IntegerData<V>) {
+            return DataModality::TENSOR_ND;
+        } else {
+            return base;
+        }
+    },
+        source);
+}
+
 std::vector<DataDimension> detect_data_dimensions(const DataVariant& data)
 {
-    std::cerr << "Inferring structure from single DataVariant...\n"
-              << "This is not advisable as the method makes naive assumptions that can lead to massive computational errors\n"
-              << "If the variant is part of a container, region, or segment, please use the appropriate method instead.\n"
-              << "If the variant is part of a vector, please use infer_from_data_variant_vector instead.\n"
-              << "If you are sure you want to proceed, please ignore this warning.\n";
+    MF_WARN(Journal::Component::Kakshya, Journal::Context::Runtime,
+        "{}\n{}\n{}\n{}",
+        "Inferring structure from single DataVariant is not advisable as the method makes naive assumptions that can lead to massive computational errors. "
+        "If the variant is part of a container, region, or segment, please use the appropriate method instead. "
+        "If the variant is part of a vector, please use infer_from_data_variant_vector instead. "
+        "If you are sure you want to proceed, please ignore this warning.");
 
     return std::visit([](const auto& vec) -> std::vector<DataDimension> {
         using ValueType = typename std::decay_t<decltype(vec)>::value_type;
@@ -201,29 +226,7 @@ std::vector<DataDimension> detect_data_dimensions(const DataVariant& data)
             dims.emplace_back(DataDimension::frequency(vec.size()));
 
         } else if constexpr (IntegerData<ValueType>) {
-            // uint8_t, uint16_t, uint32_t -> flattened 2D (images typically)
-            // Need to guess reasonable 2D dimensions from 1D size
-            uint64_t total_size = vec.size();
-
-            if (total_size == 0) {
-                dims.emplace_back(DataDimension::spatial(0, 'x'));
-                dims.emplace_back(DataDimension::spatial(0, 'y'));
-            } else {
-                auto sqrt_size = static_cast<uint64_t>(std::sqrt(total_size));
-                if (sqrt_size * sqrt_size == total_size) {
-                    dims.emplace_back(DataDimension::spatial(sqrt_size, 'x'));
-                    dims.emplace_back(DataDimension::spatial(sqrt_size, 'y'));
-                } else {
-                    uint64_t width = sqrt_size;
-                    uint64_t height = total_size / width;
-                    while (width * height != total_size && width > 1) {
-                        width--;
-                        height = total_size / width;
-                    }
-                    dims.emplace_back(DataDimension::spatial(height, 'y'));
-                    dims.emplace_back(DataDimension::spatial(width, 'x'));
-                }
-            }
+            dims.emplace_back(DataDimension::spatial(vec.size(), 'x'));
         } else if constexpr (GlmData<ValueType>) {
             constexpr size_t components = glm_component_count<ValueType>();
             DataDimension::Role role = DataDimension::Role::CUSTOM;
@@ -255,10 +258,11 @@ std::vector<DataDimension> detect_data_dimensions(const DataVariant& data)
 std::vector<DataDimension> detect_data_dimensions(
     const std::vector<DataVariant>& variants)
 {
-    std::cerr << "Inferring structure from DataVariant vector...\n"
-              << "This is not advisable as the method makes naive assumptions that can lead to massive computational errors\n"
-              << "If the variant is part of a container, region, or segment, please use the appropriate method instead.\n"
-              << "If you are sure you want to proceed, please ignore this warning.\n";
+    MF_WARN(Journal::Component::Kakshya, Journal::Context::Runtime,
+        "{}\n{}\n{}",
+        "Inferring structure from DataVariant vector is not advisable as the method makes naive assumptions that can lead to massive computational errors. "
+        "If the variants are part of a container, region, or segment, please use the appropriate method instead. "
+        "If you are sure you want to proceed, please ignore this warning.");
 
     if (variants.empty()) {
         std::vector<DataDimension> dims;

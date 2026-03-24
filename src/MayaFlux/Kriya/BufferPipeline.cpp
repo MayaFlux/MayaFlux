@@ -3,6 +3,7 @@
 #include "CycleCoordinator.hpp"
 
 #include "MayaFlux/Buffers/BufferManager.hpp"
+#include "MayaFlux/Buffers/Staging/AudioWriteProcessor.hpp"
 
 #include "MayaFlux/Kakshya/Source/DynamicSoundStream.hpp"
 #include "MayaFlux/Kriya/Awaiters/DelayAwaiters.hpp"
@@ -20,13 +21,19 @@ BufferPipeline::BufferPipeline(Vruta::TaskScheduler& scheduler, std::shared_ptr<
 
 BufferPipeline::~BufferPipeline()
 {
-    if (m_buffer_manager) {
-        for (auto& op : m_operations) {
-            if (op.get_type() == BufferOperation::OpType::MODIFY && op.m_attached_processor) {
-                m_buffer_manager->remove_processor(
-                    op.m_attached_processor,
-                    op.m_target_buffer);
+    if (!m_buffer_manager) {
+        return;
+    }
+
+    for (auto& op : m_operations) {
+        if (op.m_attached_processor) {
+            if (op.get_type() == BufferOperation::OpType::ROUTE && op.m_target_buffer) {
+                m_buffer_manager->remove_processor(op.m_attached_processor, op.m_target_buffer);
             }
+            if (op.get_type() == BufferOperation::OpType::MODIFY && op.m_target_buffer) {
+                m_buffer_manager->remove_processor(op.m_attached_processor, op.m_target_buffer);
+            }
+            op.m_attached_processor = nullptr;
         }
     }
 }
@@ -43,10 +50,10 @@ BufferPipeline& BufferPipeline::branch_if(
     }
     branch_builder(*branch_pipeline);
 
-    m_branches.push_back({ std::move(condition),
-        std::move(branch_pipeline),
-        synchronous,
-        samples_per_operation });
+    m_branches.push_back({ .condition = std::move(condition),
+        .pipeline = std::move(branch_pipeline),
+        .synchronous = synchronous,
+        .samples_per_operation = samples_per_operation });
 
     return *this;
 }
@@ -441,7 +448,22 @@ void BufferPipeline::capture_operation(BufferOperation& op, uint64_t cycle)
             if (next_it != m_operations.end() && next_it->get_type() == BufferOperation::OpType::ROUTE) {
 
                 if (next_it->m_target_buffer) {
-                    write_to_buffer(next_it->m_target_buffer, buffer_data);
+                    if (!m_buffer_manager) {
+                        error<std::invalid_argument>(Journal::Component::Kriya,
+                            Journal::Context::CoroutineScheduling,
+                            std::source_location::current(),
+                            "BufferPipeline has no BufferManager for immediate ROUTE-to-buffer");
+                    }
+
+                    if (!next_it->m_attached_processor) {
+                        auto writer = std::make_shared<Buffers::AudioWriteProcessor>();
+                        m_buffer_manager->add_processor(writer, next_it->m_target_buffer,
+                            Buffers::ProcessingToken::AUDIO_BACKEND);
+                        next_it->m_attached_processor = writer;
+                    }
+
+                    std::static_pointer_cast<Buffers::AudioWriteProcessor>(next_it->m_attached_processor)
+                        ->set_data(buffer_data);
                 } else if (next_it->m_target_container) {
                     write_to_container(next_it->m_target_container, buffer_data);
                 }
@@ -529,7 +551,23 @@ void BufferPipeline::process_operation(BufferOperation& op, uint64_t cycle)
             }
 
             if (op.m_target_buffer) {
-                write_to_buffer(op.m_target_buffer, data_to_route);
+                if (!m_buffer_manager) {
+                    error<std::invalid_argument>(Journal::Component::Kriya,
+                        Journal::Context::CoroutineScheduling,
+                        std::source_location::current(),
+                        "BufferPipeline has no BufferManager for ROUTE-to-buffer operation");
+                }
+
+                if (!op.m_attached_processor) {
+                    auto writer = std::make_shared<Buffers::AudioWriteProcessor>();
+                    m_buffer_manager->add_processor(writer, op.m_target_buffer,
+                        Buffers::ProcessingToken::AUDIO_BACKEND);
+                    op.m_attached_processor = writer;
+                }
+
+                std::static_pointer_cast<Buffers::AudioWriteProcessor>(op.m_attached_processor)
+                    ->set_data(data_to_route);
+
             } else if (op.m_target_container) {
                 write_to_container(op.m_target_container, data_to_route);
             }
@@ -701,10 +739,9 @@ void BufferPipeline::cleanup_completed_branches()
         }
     }
 
-    m_branch_tasks.erase(
-        std::remove_if(m_branch_tasks.begin(), m_branch_tasks.end(),
-            [](const auto& task) { return !task || !task->is_active(); }),
-        m_branch_tasks.end());
+    std::erase_if(m_branch_tasks, [](const auto& task) {
+        return !task || !task->is_active();
+    });
 }
 
 Vruta::SoundRoutine BufferPipeline::execute_internal(uint64_t max_cycles, uint64_t samples_per_operation)
@@ -966,14 +1003,16 @@ Vruta::SoundRoutine BufferPipeline::execute_streaming(uint64_t max_cycles, uint6
 Vruta::SoundRoutine BufferPipeline::execute_parallel(uint64_t max_cycles, uint64_t samples_per_operation)
 {
     // TODO: Implement parallel execution strategy
-    std::cout << "PARALLEL strategy not yet implemented, using PHASED\n";
+    MF_WARN(Journal::Component::Kriya, Journal::Context::CoroutineScheduling,
+        "PARALLEL strategy not yet implemented, using PHASED as fallback");
     return execute_phased(max_cycles, samples_per_operation);
 }
 
 Vruta::SoundRoutine BufferPipeline::execute_reactive(uint64_t max_cycles, uint64_t samples_per_operation)
 {
     // TODO: Implement reactive execution strategy
-    std::cout << "REACTIVE strategy not yet implemented, using PHASED\n";
+    MF_WARN(Journal::Component::Kriya, Journal::Context::CoroutineScheduling,
+        "REACTIVE strategy not yet implemented, using PHASED as fallback");
     return execute_phased(max_cycles, samples_per_operation);
 }
 
