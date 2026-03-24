@@ -11,7 +11,7 @@ namespace MayaFlux::Kakshya {
 enum class GpuDataFormat : uint8_t {
     FLOAT32, // 32-bit float (standard GPU)
     VEC2_F32, // glm::vec2 (32-bit components)
-    VEC3_F32, // glm::vec3 (32-bit components)
+    VEC3_F32, // glm::vec3 (32-bit components) — not a sampled image format
     VEC4_F32, // glm::vec4 (32-bit components)
 
     FLOAT64, // 64-bit double (audio precision)
@@ -20,7 +20,10 @@ enum class GpuDataFormat : uint8_t {
     VEC4_F64, // glm::dvec4 (64-bit components)
 
     INT32,
-    UINT32
+    UINT32,
+
+    UINT8, // uint8_t  — R8 / RGBA8 texel data
+    UINT16, // uint16_t — R16F raw half-float storage, packed formats
 };
 
 /**
