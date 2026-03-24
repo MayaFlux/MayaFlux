@@ -1,8 +1,21 @@
 #pragma once
-
 #include "VertexLayout.hpp"
 
 namespace MayaFlux::Kakshya {
+
+/**
+ * @struct VertexAccessConfig
+ * @brief Default attribute values for shader-compatible vertex conversion.
+ *
+ * Applied when DataVariant contains only positional data and the target
+ * layout requires additional attributes (color, size, thickness, uv).
+ */
+struct MAYAFLUX_API VertexAccessConfig {
+    glm::vec3 default_color { 1.0F, 1.0F, 1.0F };
+    float default_size { 3.0F };
+    float default_thickness { 1.0F };
+    glm::vec2 default_uv { 0.0F, 0.0F };
+};
 
 /**
  * @struct VertexAccess
@@ -68,5 +81,41 @@ struct MAYAFLUX_API VertexAccess {
  */
 [[nodiscard]] MAYAFLUX_API std::optional<VertexAccess>
 as_vertex_access(const DataVariant& variant);
+
+/**
+ * @brief Convert DataVariant to point-vertex-compatible bytes.
+ *
+ * Output layout matches VertexLayout::for_points(): stride 28,
+ * position (vec3, offset 0), color (vec3, offset 12), size (float, offset 24).
+ * Compatible with point.vert.spv without any user-defined shaders.
+ *
+ * All accepted DataVariant types produce a position per element:
+ * GLM types map position directly; scalar and integer types produce
+ * a waveform (x=normalised index, y=value, z=0). Color and size are
+ * filled from config defaults throughout.
+ *
+ * @param variant Source data.
+ * @param config  Default attribute values (color, size).
+ * @return Populated VertexAccess, or std::nullopt on incompatible type.
+ */
+[[nodiscard]] MAYAFLUX_API std::optional<VertexAccess>
+as_point_vertex_access(const DataVariant& variant,
+    const VertexAccessConfig& config = {});
+
+/**
+ * @brief Convert DataVariant to line-vertex-compatible bytes.
+ *
+ * Output layout matches VertexLayout::for_lines(): stride 36,
+ * position (vec3, offset 0), color (vec3, offset 12),
+ * thickness (float, offset 24), uv (vec2, offset 28).
+ * Compatible with line.vert.spv without any user-defined shaders.
+ *
+ * @param variant Source data.
+ * @param config  Default attribute values (color, thickness, uv).
+ * @return Populated VertexAccess, or std::nullopt on incompatible type.
+ */
+[[nodiscard]] MAYAFLUX_API std::optional<VertexAccess>
+as_line_vertex_access(const DataVariant& variant,
+    const VertexAccessConfig& config = {});
 
 } // namespace MayaFlux::Kakshya
