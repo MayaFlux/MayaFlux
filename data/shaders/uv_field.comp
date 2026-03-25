@@ -1,29 +1,31 @@
 #version 450
 #extension GL_EXT_shader_explicit_arithmetic_types_int32 : require
+#extension GL_EXT_scalar_block_layout : require
 
 layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
 
 // ---------------------------------------------------------------------------
-// Vertex SSBO — matches PointVertex / LineVertex 60-byte layout exactly
-//   offset  0  position  vec3   (12)
-//   offset 12  color     vec3   (12)
-//   offset 24  scalar    float   (4)   size or thickness
-//   offset 28  uv        vec2    (8)
-//   offset 36  normal    vec3   (12)
-//   offset 48  tangent   vec3   (12)
+// Vertex SSBO — matches PointVertex / LineVertex 60-byte layout exactly.
+// Uses scalar block layout to suppress std430 vec3 padding (16-byte alignment
+// would expand the struct to 80 bytes, corrupting every field after position).
 // ---------------------------------------------------------------------------
-struct Vertex {
-    vec3 position;
-    vec3 color;
-    float scalar;
-    vec2 uv;
-    vec3 normal;
-    vec3 tangent;
+#extension GL_EXT_scalar_block_layout : require
+
+layout(set = 0, binding = 0, scalar) buffer VertexBuffer {
+    float data[];
 };
 
-layout(set = 0, binding = 0) buffer VertexBuffer {
-    Vertex vertices[];
-};
+// Byte offsets within one 60-byte vertex (in float units, stride = 15 floats):
+//   position  offset  0  (3 floats)
+//   color     offset  3  (3 floats)
+//   scalar    offset  6  (1 float)
+//   uv        offset  7  (2 floats)
+//   normal    offset  9  (3 floats)
+//   tangent   offset 12  (3 floats)
+const uint STRIDE = 15u;
+const uint OFF_POS = 0u;
+const uint OFF_COLOR = 3u;
+const uint OFF_UV = 7u;
 
 layout(set = 0, binding = 1) uniform sampler2D tex_sampler;
 
@@ -132,7 +134,11 @@ void main()
     if (idx >= pc.vertex_count)
         return;
 
-    vec3 pos = vertices[idx].position;
+    uint base = idx * STRIDE;
+
+    vec3 pos = vec3(data[base + OFF_POS],
+            data[base + OFF_POS + 1u],
+            data[base + OFF_POS + 2u]);
 
     vec2 uv;
     switch (pc.mode) {
@@ -150,10 +156,14 @@ void main()
         break;
     }
 
-    vertices[idx].uv = uv;
+    data[base + OFF_UV] = uv.x;
+    data[base + OFF_UV + 1u] = uv.y;
 
     if (pc.write_colour != 0u) {
         vec2 sample_uv = fract(uv);
-        vertices[idx].color = texture(tex_sampler, sample_uv).rgb;
+        vec3 col = texture(tex_sampler, sample_uv).rgb;
+        data[base + OFF_COLOR] = col.r;
+        data[base + OFF_COLOR + 1u] = col.g;
+        data[base + OFF_COLOR + 2u] = col.b;
     }
 }
