@@ -2,7 +2,7 @@
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
-#include <glm/gtc/constants.hpp>
+#include "Operators/FieldOperator.hpp"
 
 namespace MayaFlux::Nodes::Network {
 
@@ -92,6 +92,8 @@ void PointCloudNetwork::set_operator(std::unique_ptr<NetworkOperator> op)
         vertices = old_path->extract_vertices();
     } else if (auto* old_topo = dynamic_cast<TopologyOperator*>(m_operator.get())) {
         vertices = old_topo->extract_vertices();
+    } else if (auto* old_field = dynamic_cast<FieldOperator*>(m_operator.get())) {
+        vertices = old_field->extract_line_vertices();
     } else if (!m_operator) {
         vertices = !m_cached_vertices.empty()
             ? m_cached_vertices
@@ -102,6 +104,8 @@ void PointCloudNetwork::set_operator(std::unique_ptr<NetworkOperator> op)
         new_path->initialize(vertices);
     } else if (auto* new_topo = dynamic_cast<TopologyOperator*>(op.get())) {
         new_topo->initialize(vertices);
+    } else if (auto* new_field = dynamic_cast<FieldOperator*>(op.get())) {
+        new_field->initialize(vertices);
     } else {
         MF_ERROR(Journal::Component::Nodes, Journal::Context::NodeProcessing,
             "PointCloudNetwork only supports LineVertex operators (PathOperator, TopologyOperator)");

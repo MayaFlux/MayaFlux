@@ -2,7 +2,7 @@
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
-#include <glm/gtc/constants.hpp>
+#include "Operators/FieldOperator.hpp"
 
 namespace MayaFlux::Nodes::Network {
 
@@ -200,6 +200,12 @@ void ParticleNetwork::set_operator(std::unique_ptr<NetworkOperator> op)
         MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
             "Extracted {} vertices from old operator",
             vertices.size());
+    } else if (auto* old_field = dynamic_cast<FieldOperator*>(m_operator.get())) {
+        vertices = old_field->extract_point_vertices();
+
+        MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
+            "Extracted {} vertices from old FieldOperator",
+            vertices.size());
     } else if (!m_operator) {
         vertices = generate_initial_vertices();
     }
@@ -213,6 +219,14 @@ void ParticleNetwork::set_operator(std::unique_ptr<NetworkOperator> op)
 
         MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
             "Initialized new graphics operator with {} points",
+            vertices.size());
+    }
+
+    if (auto* new_field = dynamic_cast<FieldOperator*>(op.get())) {
+        new_field->initialize(vertices);
+
+        MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
+            "Initialized new FieldOperator with {} points",
             vertices.size());
     }
 
