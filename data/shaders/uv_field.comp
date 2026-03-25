@@ -1,0 +1,159 @@
+#version 450
+#extension GL_EXT_shader_explicit_arithmetic_types_int32 : require
+
+layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
+
+// ---------------------------------------------------------------------------
+// Vertex SSBO — matches PointVertex / LineVertex 60-byte layout exactly
+//   offset  0  position  vec3   (12)
+//   offset 12  color     vec3   (12)
+//   offset 24  scalar    float   (4)   size or thickness
+//   offset 28  uv        vec2    (8)
+//   offset 36  normal    vec3   (12)
+//   offset 48  tangent   vec3   (12)
+// ---------------------------------------------------------------------------
+struct Vertex {
+    vec3 position;
+    vec3 color;
+    float scalar;
+    vec2 uv;
+    vec3 normal;
+    vec3 tangent;
+};
+
+layout(set = 0, binding = 0) buffer VertexBuffer {
+    Vertex vertices[];
+};
+
+layout(set = 0, binding = 1) uniform sampler2D tex_sampler;
+
+// ---------------------------------------------------------------------------
+// Push constants — must match UVFieldProcessor::PushConstants (48 bytes)
+//   offset  0  vertex_count  uint
+//   offset  4  mode          uint   (0 = CARTESIAN, 1 = CYLINDRICAL,
+//                                    2 = SPHERICAL,  3 = AXIAL_BLEND)
+//   offset  8  write_colour  uint   (0 = UV only, 1 = also write colour)
+//   offset 12  _pad          uint
+//   offset 16  param_origin  vec3
+//   offset 28  param_scale   float
+//   offset 32  param_axis    vec3
+//   offset 44  param_aux     float  (cylinder height / axial_blend exponent)
+// ---------------------------------------------------------------------------
+layout(push_constant) uniform PC {
+    uint vertex_count;
+    uint mode;
+    uint write_colour;
+    uint _pad;
+    vec3 param_origin;
+    float param_scale;
+    vec3 param_axis;
+    float param_aux;
+} pc;
+
+// ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
+const float PI = 3.14159265358979323846;
+const float TWO_PI = 6.28318530717958647692;
+const float EPS = 1e-6;
+
+// ---------------------------------------------------------------------------
+// Build an orthonormal frame from a normalised axis n.
+// Returns tangent t; bitangent = cross(n, t).
+// ---------------------------------------------------------------------------
+vec3 make_tangent(vec3 n)
+{
+    return (abs(n.y) <= abs(n.x) && abs(n.y) <= abs(n.z))
+    ? normalize(cross(n, vec3(0.0, 1.0, 0.0))) : normalize(cross(n, vec3(1.0, 0.0, 0.0)));
+}
+
+// ---------------------------------------------------------------------------
+// Projection functions
+// ---------------------------------------------------------------------------
+
+vec2 project_cartesian(vec3 p)
+{
+    vec3 n = normalize(pc.param_axis);
+    vec3 tangent = make_tangent(n);
+    vec3 bitangent = cross(n, tangent);
+    vec3 d = p - pc.param_origin;
+    return vec2(dot(d, tangent), dot(d, bitangent)) * pc.param_scale;
+}
+
+vec2 project_cylindrical(vec3 p)
+{
+    vec3 n = normalize(pc.param_axis);
+    vec3 tangent = make_tangent(n);
+    vec3 bitangent = cross(n, tangent);
+    vec3 d = p - pc.param_origin;
+    float axial = dot(d, n);
+    float rx = dot(d, tangent);
+    float ry = dot(d, bitangent);
+    float u = (atan(ry, rx) / PI + 1.0) * 0.5;
+    float inv_h = (abs(pc.param_aux) > EPS) ? (1.0 / pc.param_aux) : 1.0;
+    float v = axial * inv_h;
+    return vec2(u, v);
+}
+
+vec2 project_spherical(vec3 p)
+{
+    vec3 d = p - pc.param_origin;
+    float len = length(d);
+    if (len < EPS)
+        return vec2(0.0);
+    vec3 n = d / len;
+    float u = (atan(n.z, n.x) / PI + 1.0) * 0.5;
+    float v = n.y * 0.5 + 0.5;
+    return vec2(u, v);
+}
+
+vec2 project_axial_blend(vec3 p)
+{
+    vec3 d = (p - pc.param_origin) * pc.param_scale;
+    vec3 w = pow(abs(d), vec3(pc.param_aux));
+    float wsum = w.x + w.y + w.z;
+    if (wsum < EPS)
+        return vec2(0.0);
+    w /= wsum;
+
+    vec2 uv_xz = vec2(d.x, d.z);
+    vec2 uv_xy = vec2(d.x, d.y);
+    vec2 uv_yz = vec2(d.y, d.z);
+
+    return uv_xz * w.y + uv_xy * w.z + uv_yz * w.x;
+}
+
+// ---------------------------------------------------------------------------
+// Main
+// ---------------------------------------------------------------------------
+void main()
+{
+    uint idx = gl_GlobalInvocationID.x;
+    if (idx >= pc.vertex_count)
+        return;
+
+    vec3 pos = vertices[idx].position;
+
+    vec2 uv;
+    switch (pc.mode) {
+        case 1:
+        uv = project_cylindrical(pos);
+        break;
+        case 2:
+        uv = project_spherical(pos);
+        break;
+        case 3:
+        uv = project_axial_blend(pos);
+        break;
+        default:
+        uv = project_cartesian(pos);
+        break;
+    }
+
+    vertices[idx].uv = uv;
+
+    if (pc.write_colour != 0u) {
+        vec2 sample_uv = fract(uv);
+        vertices[idx].color = texture(tex_sampler, sample_uv).rgb;
+    }
+}
