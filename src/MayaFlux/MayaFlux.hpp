@@ -69,6 +69,7 @@
 #include "Buffers/Geometry/GeometryWriteProcessor.hpp"
 #include "Buffers/Network/NetworkAudioBuffer.hpp"
 #include "Buffers/Network/NetworkGeometryBuffer.hpp"
+#include "Buffers/Network/NetworkTextureBuffer.hpp"
 #include "Buffers/Node/FilterProcessor.hpp"
 #include "Buffers/Node/LogicProcessor.hpp"
 #include "Buffers/Node/NodeBindingsProcessor.hpp"
