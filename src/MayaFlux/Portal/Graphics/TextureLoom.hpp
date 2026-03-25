@@ -18,20 +18,6 @@ class VKBuffer;
 namespace MayaFlux::Portal::Graphics {
 
 /**
- * @struct SamplerConfig
- * @brief Sampler configuration
- */
-struct SamplerConfig {
-    FilterMode mag_filter = FilterMode::LINEAR;
-    FilterMode min_filter = FilterMode::LINEAR;
-    AddressMode address_mode_u = AddressMode::REPEAT;
-    AddressMode address_mode_v = AddressMode::REPEAT;
-    AddressMode address_mode_w = AddressMode::REPEAT;
-    float max_anisotropy = 1.0F; // 1.0 = disabled, 16.0 = max quality
-    bool enable_mipmaps = false;
-};
-
-/**
  * @class TextureLoom
  * @brief Portal-level texture creation and management
  *
