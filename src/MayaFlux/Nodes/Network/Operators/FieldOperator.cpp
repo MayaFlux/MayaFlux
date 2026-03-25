@@ -61,6 +61,7 @@ void FieldOperator::process(float)
     bool has_normal = !m_normal_fields.empty();
     bool has_tangent = !m_tangent_fields.empty();
     bool has_scalar = !m_scalar_fields.empty();
+    bool has_uv = !m_uv_fields.empty();
 
     for (size_t i = 0; i < m_count; ++i) {
         glm::vec3& pos = vec3_at(i, k_position_offset);
@@ -105,6 +106,15 @@ void FieldOperator::process(float)
                 value += field(pos);
             }
             float_at(i, k_scalar_offset) = value;
+        }
+
+        if (has_uv) {
+            const glm::vec3 ref = ref_position_at(i);
+            glm::vec2 uv(0.0F);
+            for (const auto& field : m_uv_fields)
+                uv += field(ref);
+            *reinterpret_cast<glm::vec2*>(
+                m_vertex_data.data() + i * k_stride + k_uv_offset) = uv;
         }
     }
 
@@ -156,6 +166,16 @@ void FieldOperator::bind(FieldTarget target, Kinesis::SpatialField field)
     }
 }
 
+void FieldOperator::bind(FieldTarget target, Kinesis::UVField field)
+{
+    if (target != FieldTarget::UV) {
+        MF_ERROR(Journal::Component::Nodes, Journal::Context::NodeProcessing,
+            "UVField can only be bound to FieldTarget::UV");
+        return;
+    }
+    m_uv_fields.push_back(std::move(field));
+}
+
 void FieldOperator::unbind(FieldTarget target)
 {
     switch (target) {
@@ -175,6 +195,7 @@ void FieldOperator::unbind(FieldTarget target)
         m_scalar_fields.clear();
         break;
     case FieldTarget::UV:
+        m_uv_fields.clear();
         break;
     }
 }
@@ -186,6 +207,7 @@ void FieldOperator::unbind_all()
     m_normal_fields.clear();
     m_tangent_fields.clear();
     m_scalar_fields.clear();
+    m_uv_fields.clear();
 }
 
 // =========================================================================
@@ -298,7 +320,9 @@ std::optional<double> FieldOperator::query_state(std::string_view query) const
     }
     if (query == "field_count") {
         return static_cast<double>(
-            m_position_fields.size() + m_color_fields.size() + m_normal_fields.size() + m_tangent_fields.size() + m_scalar_fields.size());
+            m_position_fields.size() + m_color_fields.size()
+            + m_normal_fields.size() + m_tangent_fields.size()
+            + m_scalar_fields.size() + m_uv_fields.size());
     }
     return std::nullopt;
 }

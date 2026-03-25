@@ -51,6 +51,7 @@ enum class FieldMode : uint8_t {
  *   NORMAL     VectorField direction assignment at position (auto-normalized)
  *   TANGENT    VectorField direction assignment at position (auto-normalized)
  *   SCALAR     SpatialField direct assignment (size/thickness)
+ *   UV         UVField direct assignment (UV coordinates)
  *
  * Usage with ParticleNetwork:
  * @code
@@ -105,6 +106,16 @@ public:
      * @param field SpatialField: glm::vec3 -> float
      */
     void bind(FieldTarget target, Kinesis::SpatialField field);
+
+    /**
+     * @brief Bind a UVField to the UV target
+     * @param target Must be UV
+     * @param field UVField: glm::vec3 -> glm::vec2
+     *
+     * Multiple fields accumulate additively. Evaluation order matches
+     * bind order. Use ACCUMULATE mode for animated UV drift.
+     */
+    void bind(FieldTarget target, Kinesis::UVField field);
 
     /**
      * @brief Remove all fields bound to a target
@@ -176,6 +187,7 @@ private:
     std::vector<Kinesis::VectorField> m_normal_fields;
     std::vector<Kinesis::VectorField> m_tangent_fields;
     std::vector<Kinesis::SpatialField> m_scalar_fields;
+    std::vector<Kinesis::UVField> m_uv_fields;
 
     static constexpr size_t k_stride = 60;
     static constexpr size_t k_position_offset = 0;
