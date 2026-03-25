@@ -47,15 +47,20 @@ struct SamplerBounds {
 
 /**
  * @struct SampleResult
- * @brief Position and normalised color derived from spatial sampling.
+ * @brief Position, color, orientation, and scalar derived from spatial sampling.
  *
- * Color is a spatially-derived hint (normalized position, spherical angle, etc.)
- * and may be overridden by the caller. No vertex-type-specific fields are present.
+ * Color is a spatially-derived hint (normalised position, spherical angle, etc.)
+ * and may be overridden by the caller. normal and tangent default to the
+ * canonical Z-up / X-right frame; distribution functions that have a meaningful
+ * surface orientation (sphere surface, torus) should override them.
+ * No vertex-type-specific fields are present.
  */
 struct SampleResult {
     glm::vec3 position;
     glm::vec3 color { 1.0F };
     float scalar { 1.0F }; ///< Normalised scalar; maps to size (PointVertex) or thickness (LineVertex)
+    glm::vec3 normal { 0.0F, 0.0F, 1.0F };
+    glm::vec3 tangent { 1.0F, 0.0F, 0.0F };
 };
 
 /**
@@ -101,9 +106,9 @@ struct SampleResult {
 
 /**
  * @brief Project SampleResult to PointVertex.
- * @param s Source sample
- * @param size_range Min/max point size range; scalar linearly interpolates within it
- * @return PointVertex with position, color, and size derived from sample
+ * @param s          Source sample
+ * @param size_range Min/max point size; scalar linearly interpolates within it
+ * @return PointVertex with all fields populated from sample
  */
 [[nodiscard]] inline Nodes::PointVertex to_point_vertex(
     const SampleResult& s,
@@ -112,15 +117,18 @@ struct SampleResult {
     return {
         .position = s.position,
         .color = s.color,
-        .size = glm::mix(size_range.x, size_range.y, s.scalar)
+        .size = glm::mix(size_range.x, size_range.y, s.scalar),
+        .uv = glm::vec2(0.0F),
+        .normal = s.normal,
+        .tangent = s.tangent,
     };
 }
 
 /**
  * @brief Project SampleResult to LineVertex.
- * @param s Source sample
- * @param thickness_range Min/max line thickness range; scalar linearly interpolates within it
- * @return LineVertex with position, color, and thickness derived from sample
+ * @param s               Source sample
+ * @param thickness_range Min/max line thickness; scalar linearly interpolates within it
+ * @return LineVertex with all fields populated from sample
  */
 [[nodiscard]] inline Nodes::LineVertex to_line_vertex(
     const SampleResult& s,
@@ -129,13 +137,16 @@ struct SampleResult {
     return {
         .position = s.position,
         .color = s.color,
-        .thickness = glm::mix(thickness_range.x, thickness_range.y, s.scalar)
+        .thickness = glm::mix(thickness_range.x, thickness_range.y, s.scalar),
+        .uv = glm::vec2(0.0F),
+        .normal = s.normal,
+        .tangent = s.tangent,
     };
 }
 
 /**
  * @brief Batch-project SampleResult vector to PointVertex.
- * @param samples Source samples
+ * @param samples    Source samples
  * @param size_range Size range passed to to_point_vertex
  * @return PointVertex vector of equal length
  */
@@ -145,7 +156,7 @@ struct SampleResult {
 
 /**
  * @brief Batch-project SampleResult vector to LineVertex.
- * @param samples Source samples
+ * @param samples         Source samples
  * @param thickness_range Thickness range passed to to_line_vertex
  * @return LineVertex vector of equal length
  */
