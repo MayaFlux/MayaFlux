@@ -2,6 +2,7 @@
 #include "GraphicsOperator.hpp"
 #include "MayaFlux/Nodes/Graphics/PointCollectionNode.hpp"
 
+#include "MayaFlux/Kinesis/Tendency/Tendency.hpp"
 #include "MayaFlux/Kinesis/VertexSampler.hpp"
 
 namespace MayaFlux::Nodes::Network {
@@ -227,6 +228,26 @@ public:
     void apply_impulse(size_t index, const glm::vec3& impulse);
 
     /**
+     * @brief Add an external force field evaluated per-particle per-frame
+     * @param field VectorField: glm::vec3 (position) -> glm::vec3 (force)
+     *
+     * Fields are evaluated additively alongside existing hardcoded forces
+     * (gravity, attraction, turbulence, spatial interactions). Evaluated
+     * after gravity, before integration.
+     */
+    void add_force_field(Kinesis::VectorField field);
+
+    /**
+     * @brief Remove all external force fields
+     */
+    void clear_force_fields();
+
+    /**
+     * @brief Get number of active external force fields
+     */
+    [[nodiscard]] size_t force_field_count() const { return m_force_fields.size(); }
+
+    /**
      * @brief Direct access to collections for advanced per-particle control
      * @warning Only for ParticleNetwork's ONE_TO_ONE parameter mapping
      */
@@ -253,6 +274,7 @@ protected:
 private:
     std::vector<CollectionGroup> m_collections;
     mutable std::vector<uint8_t> m_vertex_data_aggregate;
+    std::vector<Kinesis::VectorField> m_force_fields;
 
     Kinesis::Stochastic::Stochastic m_random_generator;
 

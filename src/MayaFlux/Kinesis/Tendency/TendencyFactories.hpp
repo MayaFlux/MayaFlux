@@ -1,7 +1,5 @@
 #pragma once
 
-#include <ranges>
-
 #include "Tendency.hpp"
 
 namespace MayaFlux::Kinesis {

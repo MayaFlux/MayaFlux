@@ -3,6 +3,8 @@
 #include "MayaFlux/Nodes/Network/NodeNetwork.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
+
+#include "MayaFlux/Kinesis/Tendency/ForceFields.hpp"
 #include "MayaFlux/Transitive/Reflect/EnumReflect.hpp"
 
 namespace MayaFlux::Nodes::Network {
@@ -402,17 +404,27 @@ void PhysicsOperator::apply_forces()
     if (m_spatial_interactions_enabled && m_interaction_radius > 0.0F) {
         apply_spatial_interactions();
     }
+
+    if (!m_force_fields.empty()) {
+        for (auto& group : m_collections) {
+            auto& points = group.collection->get_points();
+
+            for (size_t i = 0; i < points.size(); ++i) {
+                for (const auto& field : m_force_fields) {
+                    group.physics_state[i].force += field(points[i].position);
+                }
+            }
+        }
+    }
 }
 
 void PhysicsOperator::apply_turbulence()
 {
+    auto field = Kinesis::ForceFields::turbulence(m_turbulence_strength, m_random_generator);
+
     for (auto& group : m_collections) {
         for (auto& state : group.physics_state) {
-            glm::vec3 random_force(
-                m_random_generator(-1.0F, 1.0F),
-                m_random_generator(-1.0F, 1.0F),
-                m_random_generator(-1.0F, 1.0F));
-            state.force += random_force * m_turbulence_strength;
+            state.force += field(glm::vec3(0.0F));
         }
     }
 }
@@ -463,18 +475,13 @@ void PhysicsOperator::apply_spatial_interactions()
 
 void PhysicsOperator::apply_attraction_forces()
 {
+    auto field = Kinesis::ForceFields::point_attractor(m_attraction_point, m_attraction_strength);
+
     for (auto& group : m_collections) {
         auto& points = group.collection->get_points();
 
         for (size_t i = 0; i < points.size(); ++i) {
-            glm::vec3 to_attractor = m_attraction_point - points[i].position;
-            float distance = glm::length(to_attractor);
-
-            if (distance > 0.001F) {
-                glm::vec3 direction = to_attractor / distance;
-                float force_magnitude = m_attraction_strength / std::max(distance * distance, 0.1F);
-                group.physics_state[i].force += direction * force_magnitude * group.physics_state[i].mass;
-            }
+            group.physics_state[i].force += field(points[i].position) * group.physics_state[i].mass;
         }
     }
 }
@@ -592,6 +599,22 @@ void PhysicsOperator::apply_impulse(size_t index, const glm::vec3& impulse)
         }
         offset += group.collection->get_point_count();
     }
+}
+
+void PhysicsOperator::add_force_field(Kinesis::VectorField field)
+{
+    m_force_fields.push_back(std::move(field));
+
+    MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
+        "Added force field #{}", m_force_fields.size());
+}
+
+void PhysicsOperator::clear_force_fields()
+{
+    m_force_fields.clear();
+
+    MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
+        "Cleared all force fields");
 }
 
 } // namespace MayaFlux::Nodes::Network
