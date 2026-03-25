@@ -59,6 +59,7 @@ void FieldOperator::process(float)
     bool has_position = !m_position_fields.empty();
     bool has_color = !m_color_fields.empty();
     bool has_normal = !m_normal_fields.empty();
+    bool has_tangent = !m_tangent_fields.empty();
     bool has_scalar = !m_scalar_fields.empty();
 
     for (size_t i = 0; i < m_count; ++i) {
@@ -87,6 +88,15 @@ void FieldOperator::process(float)
             }
             float len = glm::length(normal);
             vec3_at(i, k_normal_offset) = len > 1e-6F ? normal / len : glm::vec3(0.0F, 0.0F, 1.0F);
+        }
+
+        if (has_tangent) {
+            glm::vec3 tangent(0.0F);
+            for (const auto& field : m_tangent_fields) {
+                tangent += field(pos);
+            }
+            float len = glm::length(tangent);
+            vec3_at(i, k_tangent_offset) = len > 1e-6F ? tangent / len : glm::vec3(1.0F, 0.0F, 0.0F);
         }
 
         if (has_scalar) {
@@ -119,8 +129,6 @@ void FieldOperator::bind(FieldTarget target, Kinesis::VectorField field)
         break;
     case FieldTarget::TANGENT:
         m_tangent_fields.push_back(std::move(field));
-        MF_WARN(Journal::Component::Nodes, Journal::Context::NodeProcessing,
-            "TANGENT field bound but evaluation not yet implemented");
         break;
     default:
         MF_ERROR(Journal::Component::Nodes, Journal::Context::NodeProcessing,
@@ -290,7 +298,7 @@ std::optional<double> FieldOperator::query_state(std::string_view query) const
     }
     if (query == "field_count") {
         return static_cast<double>(
-            m_position_fields.size() + m_color_fields.size() + m_normal_fields.size() + m_scalar_fields.size());
+            m_position_fields.size() + m_color_fields.size() + m_normal_fields.size() + m_tangent_fields.size() + m_scalar_fields.size());
     }
     return std::nullopt;
 }

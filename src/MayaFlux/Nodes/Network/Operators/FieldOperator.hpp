@@ -22,7 +22,7 @@ enum class FieldTarget : uint8_t {
 
 /**
  * @enum FieldMode
- * @brief How displacement fields are applied each frame
+ * @brief How fields are applied each frame
  */
 enum class FieldMode : uint8_t {
     ABSOLUTE,
@@ -49,6 +49,7 @@ enum class FieldMode : uint8_t {
  *   POSITION   VectorField displacement added to position
  *   COLOR      VectorField direct RGB assignment at position
  *   NORMAL     VectorField direction assignment at position (auto-normalized)
+ *   TANGENT    VectorField direction assignment at position (auto-normalized)
  *   SCALAR     SpatialField direct assignment (size/thickness)
  *
  * Usage with ParticleNetwork:
@@ -94,6 +95,7 @@ public:
      * POSITION fields are additive (displacement).
      * COLOR fields are direct assignment (RGB).
      * NORMAL fields are direct assignment (auto-normalized).
+     * TANGENT fields are direct assignment (auto-normalized).
      */
     void bind(FieldTarget target, Kinesis::VectorField field);
 
