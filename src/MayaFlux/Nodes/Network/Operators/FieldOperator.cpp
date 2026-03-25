@@ -14,20 +14,21 @@ FieldOperator::FieldOperator(FieldMode mode)
 // Initialization
 // =========================================================================
 
+void FieldOperator::store_reference(const void* data, size_t count)
+{
+    m_count = count;
+    size_t total = count * k_stride;
+    m_reference_data.resize(total);
+    m_vertex_data.resize(total);
+    std::memcpy(m_reference_data.data(), data, total);
+    std::memcpy(m_vertex_data.data(), data, total);
+    m_dirty = true;
+}
+
 void FieldOperator::initialize(const std::vector<PointVertex>& vertices)
 {
     m_vertex_type = VertexType::POINT;
-    m_reference_positions.clear();
-    m_reference_positions.reserve(vertices.size());
-
-    m_vertex_data.resize(vertices.size() * k_stride);
-    std::memcpy(m_vertex_data.data(), vertices.data(), vertices.size() * k_stride);
-
-    for (const auto& v : vertices) {
-        m_reference_positions.push_back(v.position);
-    }
-
-    m_dirty = true;
+    store_reference(vertices.data(), vertices.size());
 
     MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
         "FieldOperator initialized with {} PointVertex", vertices.size());
@@ -36,17 +37,7 @@ void FieldOperator::initialize(const std::vector<PointVertex>& vertices)
 void FieldOperator::initialize(const std::vector<LineVertex>& vertices)
 {
     m_vertex_type = VertexType::LINE;
-    m_reference_positions.clear();
-    m_reference_positions.reserve(vertices.size());
-
-    m_vertex_data.resize(vertices.size() * k_stride);
-    std::memcpy(m_vertex_data.data(), vertices.data(), vertices.size() * k_stride);
-
-    for (const auto& v : vertices) {
-        m_reference_positions.push_back(v.position);
-    }
-
-    m_dirty = true;
+    store_reference(vertices.data(), vertices.size());
 
     MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
         "FieldOperator initialized with {} LineVertex", vertices.size());
@@ -58,27 +49,52 @@ void FieldOperator::initialize(const std::vector<LineVertex>& vertices)
 
 void FieldOperator::process(float)
 {
-    if (m_vertex_data.empty())
+    if (m_count == 0)
         return;
 
-    size_t count = m_reference_positions.size();
-
     if (m_mode == FieldMode::ABSOLUTE) {
-        for (size_t i = 0; i < count; ++i) {
-            position_at(i) = m_reference_positions[i];
-        }
+        std::memcpy(m_vertex_data.data(), m_reference_data.data(), m_count * k_stride);
     }
 
-    for (size_t i = 0; i < count; ++i) {
-        glm::vec3 pos = position_at(i);
+    bool has_position = !m_position_fields.empty();
+    bool has_color = !m_color_fields.empty();
+    bool has_normal = !m_normal_fields.empty();
+    bool has_scalar = !m_scalar_fields.empty();
 
-        for (const auto& field : m_position_fields) {
-            pos += field(position_at(i));
+    for (size_t i = 0; i < m_count; ++i) {
+        glm::vec3& pos = vec3_at(i, k_position_offset);
+
+        if (has_position) {
+            glm::vec3 displacement(0.0F);
+            for (const auto& field : m_position_fields) {
+                displacement += field(pos);
+            }
+            pos += displacement;
         }
-        position_at(i) = pos;
 
-        for (const auto& field : m_scalar_fields) {
-            scalar_at(i) = field(position_at(i));
+        if (has_color) {
+            glm::vec3 color(0.0F);
+            for (const auto& field : m_color_fields) {
+                color += field(pos);
+            }
+            vec3_at(i, k_color_offset) = color;
+        }
+
+        if (has_normal) {
+            glm::vec3 normal(0.0F);
+            for (const auto& field : m_normal_fields) {
+                normal += field(pos);
+            }
+            float len = glm::length(normal);
+            vec3_at(i, k_normal_offset) = len > 1e-6F ? normal / len : glm::vec3(0.0F, 0.0F, 1.0F);
+        }
+
+        if (has_scalar) {
+            float value = 0.0F;
+            for (const auto& field : m_scalar_fields) {
+                value += field(pos);
+            }
+            float_at(i, k_scalar_offset) = value;
         }
     }
 
@@ -96,11 +112,15 @@ void FieldOperator::bind(FieldTarget target, Kinesis::VectorField field)
         m_position_fields.push_back(std::move(field));
         break;
     case FieldTarget::COLOR:
+        m_color_fields.push_back(std::move(field));
+        break;
     case FieldTarget::NORMAL:
+        m_normal_fields.push_back(std::move(field));
+        break;
     case FieldTarget::TANGENT:
+        m_tangent_fields.push_back(std::move(field));
         MF_WARN(Journal::Component::Nodes, Journal::Context::NodeProcessing,
-            "VectorField binding for {:d} not yet implemented",
-            static_cast<int>(target));
+            "TANGENT field bound but evaluation not yet implemented");
         break;
     default:
         MF_ERROR(Journal::Component::Nodes, Journal::Context::NodeProcessing,
@@ -118,7 +138,7 @@ void FieldOperator::bind(FieldTarget target, Kinesis::SpatialField field)
         break;
     case FieldTarget::UV:
         MF_WARN(Journal::Component::Nodes, Journal::Context::NodeProcessing,
-            "SpatialField binding for UV not yet implemented");
+            "UV field bound but evaluation not yet implemented");
         break;
     default:
         MF_ERROR(Journal::Component::Nodes, Journal::Context::NodeProcessing,
@@ -134,10 +154,19 @@ void FieldOperator::unbind(FieldTarget target)
     case FieldTarget::POSITION:
         m_position_fields.clear();
         break;
+    case FieldTarget::COLOR:
+        m_color_fields.clear();
+        break;
+    case FieldTarget::NORMAL:
+        m_normal_fields.clear();
+        break;
+    case FieldTarget::TANGENT:
+        m_tangent_fields.clear();
+        break;
     case FieldTarget::SCALAR:
         m_scalar_fields.clear();
         break;
-    default:
+    case FieldTarget::UV:
         break;
     }
 }
@@ -145,6 +174,9 @@ void FieldOperator::unbind(FieldTarget target)
 void FieldOperator::unbind_all()
 {
     m_position_fields.clear();
+    m_color_fields.clear();
+    m_normal_fields.clear();
+    m_tangent_fields.clear();
     m_scalar_fields.clear();
 }
 
@@ -152,29 +184,19 @@ void FieldOperator::unbind_all()
 // Vertex accessors
 // =========================================================================
 
-glm::vec3& FieldOperator::position_at(size_t i)
+glm::vec3& FieldOperator::vec3_at(size_t i, size_t offset)
 {
-    return *reinterpret_cast<glm::vec3*>(m_vertex_data.data() + i * k_stride + k_position_offset);
+    return *reinterpret_cast<glm::vec3*>(m_vertex_data.data() + i * k_stride + offset);
 }
 
-glm::vec3& FieldOperator::color_at(size_t i)
+float& FieldOperator::float_at(size_t i, size_t offset)
 {
-    return *reinterpret_cast<glm::vec3*>(m_vertex_data.data() + i * k_stride + k_color_offset);
+    return *reinterpret_cast<float*>(m_vertex_data.data() + i * k_stride + offset);
 }
 
-float& FieldOperator::scalar_at(size_t i)
+glm::vec3 FieldOperator::ref_position_at(size_t i) const
 {
-    return *reinterpret_cast<float*>(m_vertex_data.data() + i * k_stride + k_scalar_offset);
-}
-
-glm::vec3& FieldOperator::normal_at(size_t i)
-{
-    return *reinterpret_cast<glm::vec3*>(m_vertex_data.data() + i * k_stride + k_normal_offset);
-}
-
-glm::vec3& FieldOperator::tangent_at(size_t i)
-{
-    return *reinterpret_cast<glm::vec3*>(m_vertex_data.data() + i * k_stride + k_tangent_offset);
+    return *reinterpret_cast<const glm::vec3*>(m_reference_data.data() + i * k_stride + k_position_offset);
 }
 
 // =========================================================================
@@ -204,13 +226,13 @@ Kakshya::VertexLayout FieldOperator::get_vertex_layout() const
     default:
         return {};
     }
-    layout.vertex_count = static_cast<uint32_t>(m_reference_positions.size());
+    layout.vertex_count = static_cast<uint32_t>(m_count);
     return layout;
 }
 
 size_t FieldOperator::get_vertex_count() const
 {
-    return m_reference_positions.size();
+    return m_count;
 }
 
 bool FieldOperator::is_vertex_data_dirty() const
@@ -225,7 +247,7 @@ void FieldOperator::mark_vertex_data_clean()
 
 size_t FieldOperator::get_point_count() const
 {
-    return m_reference_positions.size();
+    return m_count;
 }
 
 const char* FieldOperator::get_vertex_type_name() const
@@ -242,17 +264,15 @@ const char* FieldOperator::get_vertex_type_name() const
 
 std::vector<PointVertex> FieldOperator::extract_point_vertices() const
 {
-    size_t count = m_reference_positions.size();
-    std::vector<PointVertex> result(count);
-    std::memcpy(result.data(), m_vertex_data.data(), count * k_stride);
+    std::vector<PointVertex> result(m_count);
+    std::memcpy(result.data(), m_vertex_data.data(), m_count * k_stride);
     return result;
 }
 
 std::vector<LineVertex> FieldOperator::extract_line_vertices() const
 {
-    size_t count = m_reference_positions.size();
-    std::vector<LineVertex> result(count);
-    std::memcpy(result.data(), m_vertex_data.data(), count * k_stride);
+    std::vector<LineVertex> result(m_count);
+    std::memcpy(result.data(), m_vertex_data.data(), m_count * k_stride);
     return result;
 }
 
@@ -266,10 +286,11 @@ void FieldOperator::set_parameter(std::string_view param, double value)
 std::optional<double> FieldOperator::query_state(std::string_view query) const
 {
     if (query == "point_count") {
-        return static_cast<double>(get_point_count());
+        return static_cast<double>(m_count);
     }
     if (query == "field_count") {
-        return static_cast<double>(m_position_fields.size() + m_scalar_fields.size());
+        return static_cast<double>(
+            m_position_fields.size() + m_color_fields.size() + m_normal_fields.size() + m_scalar_fields.size());
     }
     return std::nullopt;
 }
@@ -283,7 +304,7 @@ void FieldOperator::apply_one_to_one(
 
 void* FieldOperator::get_data_at(size_t global_index)
 {
-    if (global_index >= m_reference_positions.size())
+    if (global_index >= m_count)
         return nullptr;
     return m_vertex_data.data() + global_index * k_stride;
 }

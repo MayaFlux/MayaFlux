@@ -37,14 +37,19 @@ enum class FieldMode : uint8_t {
  * Tendency fields at each vertex position and writes results into
  * the targeted vertex attributes.
  *
- * ABSOLUTE mode: resets to reference positions before evaluation.
+ * ABSOLUTE mode: restores full reference vertex state before evaluation.
  * Deterministic, stateless, frame-rate independent.
  *
- * ACCUMULATE mode: applies displacement on top of current positions.
- * Produces drift and evolution, frame-rate dependent.
+ * ACCUMULATE mode: applies on top of current state. Produces drift
+ * and evolution, frame-rate dependent.
  *
  * Works with both PointVertex and LineVertex (identical 60-byte layout).
- * Vertex type is determined at initialize() time.
+ *
+ * Implemented targets:
+ *   POSITION   VectorField displacement added to position
+ *   COLOR      VectorField direct RGB assignment at position
+ *   NORMAL     VectorField direction assignment at position (auto-normalized)
+ *   SCALAR     SpatialField direct assignment (size/thickness)
  *
  * Usage with ParticleNetwork:
  * @code
@@ -82,15 +87,19 @@ public:
     // -----------------------------------------------------------------
 
     /**
-     * @brief Bind a VectorField to POSITION target (displacement)
-     * @param target Must be POSITION, COLOR, NORMAL, or TANGENT
+     * @brief Bind a VectorField to a vec3 target
+     * @param target POSITION, COLOR, NORMAL, or TANGENT
      * @param field VectorField: glm::vec3 -> glm::vec3
+     *
+     * POSITION fields are additive (displacement).
+     * COLOR fields are direct assignment (RGB).
+     * NORMAL fields are direct assignment (auto-normalized).
      */
     void bind(FieldTarget target, Kinesis::VectorField field);
 
     /**
-     * @brief Bind a SpatialField to SCALAR target (size/thickness modulation)
-     * @param target Must be SCALAR
+     * @brief Bind a SpatialField to a scalar target
+     * @param target SCALAR or UV
      * @param field SpatialField: glm::vec3 -> float
      */
     void bind(FieldTarget target, Kinesis::SpatialField field);
@@ -154,12 +163,16 @@ private:
 
     FieldMode m_mode;
     VertexType m_vertex_type { VertexType::NONE };
+    size_t m_count { 0 };
 
-    std::vector<glm::vec3> m_reference_positions;
+    std::vector<uint8_t> m_reference_data;
     std::vector<uint8_t> m_vertex_data;
     bool m_dirty { false };
 
     std::vector<Kinesis::VectorField> m_position_fields;
+    std::vector<Kinesis::VectorField> m_color_fields;
+    std::vector<Kinesis::VectorField> m_normal_fields;
+    std::vector<Kinesis::VectorField> m_tangent_fields;
     std::vector<Kinesis::SpatialField> m_scalar_fields;
 
     static constexpr size_t k_stride = 60;
@@ -170,11 +183,11 @@ private:
     static constexpr size_t k_normal_offset = 36;
     static constexpr size_t k_tangent_offset = 48;
 
-    glm::vec3& position_at(size_t i);
-    glm::vec3& color_at(size_t i);
-    float& scalar_at(size_t i);
-    glm::vec3& normal_at(size_t i);
-    glm::vec3& tangent_at(size_t i);
+    glm::vec3& vec3_at(size_t i, size_t offset);
+    float& float_at(size_t i, size_t offset);
+    [[nodiscard]] glm::vec3 ref_position_at(size_t i) const;
+
+    void store_reference(const void* data, size_t count);
 };
 
 } // namespace MayaFlux::Nodes::Network
