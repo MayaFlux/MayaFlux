@@ -1,8 +1,9 @@
 #include "PointCloudNetwork.hpp"
 
-#include "MayaFlux/Journal/Archivist.hpp"
-
 #include "Operators/FieldOperator.hpp"
+#include "Operators/TextureFieldOperator.hpp"
+
+#include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux::Nodes::Network {
 
@@ -94,6 +95,8 @@ void PointCloudNetwork::set_operator(std::unique_ptr<NetworkOperator> op)
         vertices = old_topo->extract_vertices();
     } else if (auto* old_field = dynamic_cast<FieldOperator*>(m_operator.get())) {
         vertices = old_field->extract_line_vertices();
+    } else if (auto* old_uv = dynamic_cast<TextureFieldOperator*>(m_operator.get())) {
+        vertices = old_uv->extract_line_vertices();
     } else if (!m_operator) {
         vertices = !m_cached_vertices.empty()
             ? m_cached_vertices
@@ -106,9 +109,11 @@ void PointCloudNetwork::set_operator(std::unique_ptr<NetworkOperator> op)
         new_topo->initialize(vertices);
     } else if (auto* new_field = dynamic_cast<FieldOperator*>(op.get())) {
         new_field->initialize(vertices);
+    } else if (auto* new_uv = dynamic_cast<TextureFieldOperator*>(op.get())) {
+        new_uv->initialize(vertices);
     } else {
         MF_ERROR(Journal::Component::Nodes, Journal::Context::NodeProcessing,
-            "PointCloudNetwork only supports LineVertex operators (PathOperator, TopologyOperator)");
+            "PointCloudNetwork: unsupported operator type '{}'", op->get_type_name());
         return;
     }
 

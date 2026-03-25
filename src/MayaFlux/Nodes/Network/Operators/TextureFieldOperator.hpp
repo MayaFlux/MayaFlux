@@ -106,6 +106,16 @@ public:
     [[nodiscard]] bool is_vertex_data_dirty() const override;
     void mark_vertex_data_clean() override;
 
+    /**
+     * @brief Extract current vertex data as PointVertex array
+     */
+    [[nodiscard]] std::vector<PointVertex> extract_point_vertices() const;
+
+    /**
+     * @brief Extract current vertex data as LineVertex array
+     */
+    [[nodiscard]] std::vector<LineVertex> extract_line_vertices() const;
+
     void set_parameter(std::string_view param, double value) override;
     [[nodiscard]] std::optional<double> query_state(std::string_view query) const override;
     [[nodiscard]] std::string_view get_type_name() const override { return "TextureField"; }

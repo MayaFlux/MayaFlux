@@ -133,6 +133,20 @@ size_t TextureFieldOperator::get_point_count() const { return m_count; }
 bool TextureFieldOperator::is_vertex_data_dirty() const { return m_dirty; }
 void TextureFieldOperator::mark_vertex_data_clean() { m_dirty = false; }
 
+std::vector<PointVertex> TextureFieldOperator::extract_point_vertices() const
+{
+    std::vector<PointVertex> result(m_count);
+    std::memcpy(result.data(), m_vertex_data.data(), m_count * k_stride);
+    return result;
+}
+
+std::vector<LineVertex> TextureFieldOperator::extract_line_vertices() const
+{
+    std::vector<LineVertex> result(m_count);
+    std::memcpy(result.data(), m_vertex_data.data(), m_count * k_stride);
+    return result;
+}
+
 const char* TextureFieldOperator::get_vertex_type_name() const
 {
     switch (m_vertex_type) {
