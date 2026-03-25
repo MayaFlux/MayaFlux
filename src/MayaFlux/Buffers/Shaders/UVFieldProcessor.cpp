@@ -56,15 +56,9 @@ void UVFieldProcessor::set_texture(
     const Portal::Graphics::SamplerConfig& config)
 {
     m_texture = std::move(image);
-
-    if (m_texture) {
-        m_sampler = Portal::Graphics::get_sampler_factory().get_or_create(config);
-        m_pc.write_colour = 1;
-    } else {
-        m_sampler = nullptr;
-        m_pc.write_colour = 0;
-    }
-
+    m_sampler_config = config;
+    m_sampler = nullptr;
+    m_pc.write_colour = m_texture ? 1U : 0U;
     m_needs_descriptor_rebuild = true;
 }
 
@@ -105,23 +99,31 @@ void UVFieldProcessor::on_descriptors_created()
 
     auto& foundry = Portal::Graphics::get_shader_foundry();
 
-    if (m_texture && m_sampler) {
-        foundry.update_descriptor_image(
-            m_descriptor_set_ids[0],
-            1,
-            m_texture->get_image_view(),
-            m_sampler,
-            vk::ImageLayout::eShaderReadOnlyOptimal);
+    if (!m_texture)
+        return;
 
-        MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-            "UVFieldProcessor: texture descriptor written (binding 1)");
-    } else {
-        auto dummy = Portal::Graphics::get_texture_manager().get_default_sampler();
-        if (dummy) {
-            MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-                "UVFieldProcessor: no texture bound, colour write disabled");
-        }
+    if (!m_sampler) {
+        auto& forge = Portal::Graphics::SamplerForge::instance();
+        m_sampler = forge.get_or_create(m_sampler_config);
     }
+
+    if (!m_sampler) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "UVFieldProcessor: sampler creation failed, texture will not be sampled");
+        return;
+    }
+
+    foundry.update_descriptor_image(
+        m_descriptor_set_ids[0],
+        1,
+        m_texture->get_image_view(),
+        m_sampler,
+        vk::ImageLayout::eShaderReadOnlyOptimal);
+
+    MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+        "UVFieldProcessor: texture descriptor written (binding 1, view={:p}, sampler={:p})",
+        static_cast<void*>(static_cast<VkImageView>(m_texture->get_image_view())),
+        static_cast<void*>(static_cast<VkSampler>(m_sampler)));
 }
 
 bool UVFieldProcessor::on_before_execute(
@@ -136,6 +138,10 @@ bool UVFieldProcessor::on_before_execute(
     if (m_pc.vertex_count == 0) {
         return false;
     }
+
+    MF_RT_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+        "UVFieldProcessor dispatch: {} vertices, mode={}, write_colour={}, has_texture={}",
+        m_pc.vertex_count, m_pc.mode, m_pc.write_colour, m_texture != nullptr);
 
     set_push_constant_data(m_pc);
     return true;

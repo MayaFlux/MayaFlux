@@ -145,6 +145,7 @@ private:
     PushConstants m_pc;
     std::shared_ptr<Core::VKImage> m_texture;
     vk::Sampler m_sampler;
+    Portal::Graphics::SamplerConfig m_sampler_config;
 };
 
 } // namespace MayaFlux::Buffers
