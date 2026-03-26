@@ -1,7 +1,6 @@
 #include "ParticleNetwork.hpp"
 
 #include "Operators/FieldOperator.hpp"
-#include "Operators/TextureFieldOperator.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
@@ -207,11 +206,6 @@ void ParticleNetwork::set_operator(std::unique_ptr<NetworkOperator> op)
         MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
             "Extracted {} vertices from old FieldOperator",
             vertices.size());
-    } else if (auto* old_uv = dynamic_cast<TextureFieldOperator*>(m_operator.get())) {
-        vertices = old_uv->extract_point_vertices();
-
-        MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
-            "Extracted {} vertices from old TextureFieldOperator", vertices.size());
     } else if (!m_operator) {
         vertices = generate_initial_vertices();
     }
@@ -234,13 +228,6 @@ void ParticleNetwork::set_operator(std::unique_ptr<NetworkOperator> op)
         MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
             "Initialized new FieldOperator with {} points",
             vertices.size());
-    }
-
-    if (auto* new_uv = dynamic_cast<TextureFieldOperator*>(op.get())) {
-        new_uv->initialize(vertices);
-
-        MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
-            "Initialized TextureFieldOperator with {} points", vertices.size());
     }
 
     m_operator = std::move(op);

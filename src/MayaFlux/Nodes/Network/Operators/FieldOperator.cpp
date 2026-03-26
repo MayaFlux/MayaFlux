@@ -155,8 +155,9 @@ void FieldOperator::bind(FieldTarget target, Kinesis::SpatialField field)
         m_scalar_fields.push_back(std::move(field));
         break;
     case FieldTarget::UV:
-        MF_WARN(Journal::Component::Nodes, Journal::Context::NodeProcessing,
-            "UV field bound but evaluation not yet implemented");
+        MF_ERROR(Journal::Component::Nodes, Journal::Context::NodeProcessing,
+            "UV target requires a UVField, not a SpatialField. "
+            "Use bind(FieldTarget::UV, Kinesis::UVField) instead.");
         break;
     default:
         MF_ERROR(Journal::Component::Nodes, Journal::Context::NodeProcessing,
