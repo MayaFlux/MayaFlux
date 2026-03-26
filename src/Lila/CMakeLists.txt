@@ -71,6 +71,7 @@ if(UNIX)
         ${LLVM_LDFLAGS}
         ${LLVM_LIBS}
         ${LLVM_SYSTEM_LIBS}
+        PkgConfig::Asio
     )
     target_link_libraries(Lila PRIVATE clang-cpp)
 else()
@@ -100,6 +101,7 @@ else()
         ws2_32
         legacy_stdio_definitions
     )
+    target_link_libraries(Lila PUBLIC Asio::asio)
     target_link_options(Lila PRIVATE
         /DEFAULTLIB:vcruntime.lib
         /DEFAULTLIB:msvcrt.lib
