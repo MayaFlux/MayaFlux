@@ -123,6 +123,16 @@ void GeometryWriterNode::set_vertex(uint32_t vertex_index, const void* data, siz
     m_vertex_data_dirty = true;
 }
 
+void GeometryWriterNode::set_indices(std::span<const uint32_t> indices)
+{
+    m_index_buffer.assign(indices.begin(), indices.end());
+    m_vertex_data_dirty = true;
+
+    MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
+        "GeometryWriterNode: Set index buffer ({} indices, {} bytes)",
+        m_index_buffer.size(), m_index_buffer.size() * sizeof(uint32_t));
+}
+
 size_t GeometryWriterNode::get_vertex_buffer_size_bytes() const
 {
     return m_vertex_buffer.size();
@@ -157,9 +167,18 @@ std::span<const uint8_t> GeometryWriterNode::get_vertex(uint32_t vertex_index) c
     return { m_vertex_buffer.data() + offset_floats, stride_floats };
 }
 
+std::span<const uint32_t> GeometryWriterNode::get_index_data() const
+{
+    return std::span<const uint32_t> { m_index_buffer.data(), m_index_buffer.size() };
+}
+
 void GeometryWriterNode::clear()
 {
     std::ranges::fill(m_vertex_buffer, 0);
+
+    if (!m_index_buffer.empty()) {
+        std::ranges::fill(m_index_buffer, 0);
+    }
 
     m_vertex_data_dirty = true;
 }
@@ -183,6 +202,7 @@ void GeometryWriterNode::save_state()
     state.vertex_count = m_vertex_count;
     state.vertex_stride = m_vertex_stride;
     state.vertex_layout = m_vertex_layout;
+    state.index_buffer = m_index_buffer;
 
     m_saved_state = std::move(state);
 
@@ -203,6 +223,7 @@ void GeometryWriterNode::restore_state()
     m_vertex_count = m_saved_state->vertex_count;
     m_vertex_stride = m_saved_state->vertex_stride;
     m_vertex_layout = m_saved_state->vertex_layout;
+    m_index_buffer = m_saved_state->index_buffer;
 
     m_needs_layout_update = true;
 
