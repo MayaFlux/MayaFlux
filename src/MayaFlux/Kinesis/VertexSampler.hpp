@@ -145,6 +145,28 @@ struct SampleResult {
 }
 
 /**
+ * @brief Project SampleResult to MeshVertex.
+ * @param s Source sample
+ * @return MeshVertex with all fields populated from sample
+ *
+ * MeshVertex doesn't have a size/thickness field, so scalar is passed through
+ * as weight for potential use in shader-based deformation or other effects.
+ */
+[[nodiscard]] inline Nodes::MeshVertex to_mesh_vertex(
+    const SampleResult& s,
+    glm::vec2 weight_range = { 0.0F, 1.0F }) noexcept
+{
+    return {
+        .position = s.position,
+        .color = s.color,
+        .weight = glm::mix(weight_range.x, weight_range.y, s.scalar),
+        .uv = glm::vec2(0.0F),
+        .normal = s.normal,
+        .tangent = s.tangent,
+    };
+}
+
+/**
  * @brief Batch-project SampleResult vector to PointVertex.
  * @param samples    Source samples
  * @param size_range Size range passed to to_point_vertex
@@ -163,5 +185,15 @@ struct SampleResult {
 [[nodiscard]] std::vector<Nodes::LineVertex> to_line_vertices(
     std::span<const SampleResult> samples,
     glm::vec2 thickness_range = { 1.0F, 2.0F });
+
+/**
+ * @brief Batch-project SampleResult vector to MeshVertex.
+ * @param samples Source samples
+ * @param weight_range Weight range passed to to_mesh_vertex (for potential shader use)
+ * @return MeshVertex vector of equal length
+ */
+[[nodiscard]] std::vector<Nodes::MeshVertex> to_mesh_vertices(
+    std::span<const SampleResult> samples,
+    glm::vec2 weight_range = { 0.0F, 1.0F });
 
 } // namespace MayaFlux::Kinesis

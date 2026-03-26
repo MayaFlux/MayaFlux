@@ -107,6 +107,27 @@ namespace {
         }
     }
 
+    /**
+     * Write N mesh vertices into dst.
+     * positions must have exactly count elements.
+     * dst must be pre-sized to count * 60 bytes.
+     */
+    void write_mesh_vertices(
+        std::span<const glm::vec3> positions,
+        const VertexAccessConfig& cfg,
+        std::byte* dst)
+    {
+        for (size_t i = 0; i < positions.size(); ++i) {
+            std::byte* v = dst + i * 60;
+            std::memcpy(v, &positions[i], 12);
+            std::memcpy(v + 12, &cfg.default_color, 12);
+            std::memcpy(v + 24, &cfg.default_weight, 4);
+            std::memcpy(v + 28, &cfg.default_uv, 8);
+            std::memcpy(v + 36, &cfg.default_normal, 12);
+            std::memcpy(v + 48, &cfg.default_tangent, 12);
+        }
+    }
+
     // =========================================================================
     // Shared position extraction — reuses existing waveform + DataConverter paths
     // =========================================================================
@@ -319,6 +340,28 @@ std::optional<VertexAccess> as_line_vertex_access(
     va.data_ptr = va.conversion_buffer.data();
     va.byte_count = va.conversion_buffer.size();
     va.layout = VertexLayout::for_lines();
+    va.layout.vertex_count = count;
+    return va;
+}
+
+std::optional<VertexAccess> as_mesh_vertex_access(
+    const DataVariant& variant,
+    const VertexAccessConfig& config)
+{
+    auto positions = extract_positions(variant);
+    if (positions.empty()) {
+        MF_ERROR(Journal::Component::Kakshya, Journal::Context::Runtime,
+            "as_mesh_vertex_access: unsupported or empty variant");
+        return std::nullopt;
+    }
+
+    const auto count = static_cast<uint32_t>(positions.size());
+    VertexAccess va;
+    va.conversion_buffer.resize((size_t)count * 60);
+    write_mesh_vertices(positions, config, va.conversion_buffer.data());
+    va.data_ptr = va.conversion_buffer.data();
+    va.byte_count = va.conversion_buffer.size();
+    va.layout = VertexLayout::for_meshes();
     va.layout.vertex_count = count;
     return va;
 }

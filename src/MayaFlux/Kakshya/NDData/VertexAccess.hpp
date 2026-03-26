@@ -14,6 +14,7 @@ struct MAYAFLUX_API VertexAccessConfig {
     glm::vec3 default_color { 1.0F, 1.0F, 1.0F };
     float default_size { 3.0F };
     float default_thickness { 1.0F };
+    float default_weight { 0.0F };
     glm::vec2 default_uv { 0.0F, 0.0F };
     glm::vec3 default_normal { 0.0F, 0.0F, 1.0F };
     glm::vec3 default_tangent { 1.0F, 0.0F, 0.0F };
@@ -120,6 +121,23 @@ as_point_vertex_access(const DataVariant& variant,
  */
 [[nodiscard]] MAYAFLUX_API std::optional<VertexAccess>
 as_line_vertex_access(const DataVariant& variant,
+    const VertexAccessConfig& config = {});
+
+/**
+ * @brief Convert DataVariant to mesh-vertex-compatible bytes.
+ *
+ * Output layout matches VertexLayout::for_meshes(): stride 60,
+ * position (vec3, offset 0), color (vec3, offset 12),
+ * weight (float, offset 24), uv (vec2, offset 28),
+ * normal (vec3, offset 36), tangent (vec3, offset 48).
+ * Compatible with mesh.vert.spv without any user-defined shaders.
+ *
+ * @param variant Source data.
+ * @param config  Default attribute values (color, weight, uv).
+ * @return Populated VertexAccess, or std::nullopt on incompatible type.
+ */
+[[nodiscard]] MAYAFLUX_API std::optional<VertexAccess>
+as_mesh_vertex_access(const DataVariant& variant,
     const VertexAccessConfig& config = {});
 
 } // namespace MayaFlux::Kakshya
