@@ -82,6 +82,12 @@ public:
      */
     void initialize(const std::vector<LineVertex>& vertices);
 
+    /**
+     * @brief Initialize from MeshVertex data
+     * @param vertices Source vertices (positions stored as reference frame)
+     */
+    void initialize(const std::vector<MeshVertex>& vertices);
+
     void process(float dt) override;
 
     // -----------------------------------------------------------------
@@ -151,6 +157,7 @@ public:
     void mark_vertex_data_clean() override;
     [[nodiscard]] std::vector<PointVertex> extract_point_vertices() const;
     [[nodiscard]] std::vector<LineVertex> extract_line_vertices() const;
+    [[nodiscard]] std::vector<MeshVertex> extract_mesh_vertices() const;
 
     void set_parameter(std::string_view param, double value) override;
     [[nodiscard]] std::optional<double> query_state(std::string_view query) const override;
@@ -172,7 +179,9 @@ private:
      */
     enum class VertexType : uint8_t { NONE,
         POINT,
-        LINE };
+        LINE,
+        MESH
+    };
 
     FieldMode m_mode;
     VertexType m_vertex_type { VertexType::NONE };
