@@ -119,13 +119,14 @@ public:
         return m_render_processor;
     }
 
-private:
+protected:
     std::shared_ptr<Nodes::Network::NodeNetwork> m_network;
     std::shared_ptr<NetworkGeometryProcessor> m_processor;
     std::string m_binding_name;
 
     std::shared_ptr<RenderProcessor> m_render_processor;
 
+private:
     /**
      * @brief Calculate initial buffer size based on network node count
      */

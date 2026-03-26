@@ -18,8 +18,7 @@ struct ShaderDispatchConfig {
         MANUAL, ///< Use explicit group counts
         BUFFER_SIZE, ///< Calculate from buffer byte size
         CUSTOM ///< User-provided calculation function
-    } mode
-        = DispatchMode::ELEMENT_COUNT;
+    } mode = DispatchMode::ELEMENT_COUNT;
 
     // Manual dispatch (MANUAL mode)
     uint32_t group_count_x = 1;

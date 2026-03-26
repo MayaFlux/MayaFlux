@@ -68,7 +68,7 @@ namespace {
     /**
      * Write N point vertices into dst.
      * positions must have exactly count elements.
-     * dst must be pre-sized to count * 28 bytes.
+     * dst must be pre-sized to count * 60 bytes.
      */
     void write_point_vertices(
         std::span<const glm::vec3> positions,
@@ -76,17 +76,20 @@ namespace {
         std::byte* dst)
     {
         for (size_t i = 0; i < positions.size(); ++i) {
-            std::byte* v = dst + i * 28;
+            std::byte* v = dst + i * 60;
             std::memcpy(v, &positions[i], 12);
             std::memcpy(v + 12, &cfg.default_color, 12);
             std::memcpy(v + 24, &cfg.default_size, 4);
+            std::memcpy(v + 28, &cfg.default_uv, 8);
+            std::memcpy(v + 36, &cfg.default_normal, 12);
+            std::memcpy(v + 48, &cfg.default_tangent, 12);
         }
     }
 
     /**
      * Write N line vertices into dst.
      * positions must have exactly count elements.
-     * dst must be pre-sized to count * 36 bytes.
+     * dst must be pre-sized to count * 60 bytes.
      */
     void write_line_vertices(
         std::span<const glm::vec3> positions,
@@ -94,11 +97,13 @@ namespace {
         std::byte* dst)
     {
         for (size_t i = 0; i < positions.size(); ++i) {
-            std::byte* v = dst + i * 36;
+            std::byte* v = dst + i * 60;
             std::memcpy(v, &positions[i], 12);
             std::memcpy(v + 12, &cfg.default_color, 12);
             std::memcpy(v + 24, &cfg.default_thickness, 4);
             std::memcpy(v + 28, &cfg.default_uv, 8);
+            std::memcpy(v + 36, &cfg.default_normal, 12);
+            std::memcpy(v + 48, &cfg.default_tangent, 12);
         }
     }
 
@@ -286,12 +291,13 @@ std::optional<VertexAccess> as_point_vertex_access(
 
     const auto count = static_cast<uint32_t>(positions.size());
     VertexAccess va;
-    va.conversion_buffer.resize((size_t)count * 28);
+    va.conversion_buffer.resize((size_t)count * 60);
     write_point_vertices(positions, config, va.conversion_buffer.data());
     va.data_ptr = va.conversion_buffer.data();
     va.byte_count = va.conversion_buffer.size();
     va.layout = VertexLayout::for_points();
     va.layout.vertex_count = count;
+
     return va;
 }
 
@@ -308,7 +314,7 @@ std::optional<VertexAccess> as_line_vertex_access(
 
     const auto count = static_cast<uint32_t>(positions.size());
     VertexAccess va;
-    va.conversion_buffer.resize((size_t)count * 36);
+    va.conversion_buffer.resize((size_t)count * 60);
     write_line_vertices(positions, config, va.conversion_buffer.data());
     va.data_ptr = va.conversion_buffer.data();
     va.byte_count = va.conversion_buffer.size();

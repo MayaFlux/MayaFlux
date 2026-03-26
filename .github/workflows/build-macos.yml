@@ -100,8 +100,12 @@ jobs:
             glslang
             molten-vk
             hidapi
-            asio
             rtmidi
+
+      - name: Install ASIO (header-only, always ensure)
+        run: |
+          brew install asio
+          echo "✅ ASIO installed (bypassing the timestamp bug in the main cache)"
 
       - name: Setup Homebrew Environment
         run: |

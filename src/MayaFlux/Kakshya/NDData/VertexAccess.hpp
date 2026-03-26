@@ -15,6 +15,8 @@ struct MAYAFLUX_API VertexAccessConfig {
     float default_size { 3.0F };
     float default_thickness { 1.0F };
     glm::vec2 default_uv { 0.0F, 0.0F };
+    glm::vec3 default_normal { 0.0F, 0.0F, 1.0F };
+    glm::vec3 default_tangent { 1.0F, 0.0F, 0.0F };
 };
 
 /**
@@ -86,7 +88,8 @@ as_vertex_access(const DataVariant& variant);
  * @brief Convert DataVariant to point-vertex-compatible bytes.
  *
  * Output layout matches VertexLayout::for_points(): stride 28,
- * position (vec3, offset 0), color (vec3, offset 12), size (float, offset 24).
+ * position (vec3, offset 0), color (vec3, offset 12), size (float, offset 24),
+ * uv (vec2, offset 28), normal (vec3, offset 36), tangent (vec3, offset 48).
  * Compatible with point.vert.spv without any user-defined shaders.
  *
  * All accepted DataVariant types produce a position per element:
@@ -107,7 +110,8 @@ as_point_vertex_access(const DataVariant& variant,
  *
  * Output layout matches VertexLayout::for_lines(): stride 36,
  * position (vec3, offset 0), color (vec3, offset 12),
- * thickness (float, offset 24), uv (vec2, offset 28).
+ * thickness (float, offset 24), uv (vec2, offset 28),
+ * normal (vec3, offset 36), tangent (vec3, offset 48).
  * Compatible with line.vert.spv without any user-defined shaders.
  *
  * @param variant Source data.

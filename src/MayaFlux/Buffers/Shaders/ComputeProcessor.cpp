@@ -230,6 +230,8 @@ void ComputeProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
         compute_press.bind_descriptor_sets(cmd_id, m_pipeline_id, m_descriptor_set_ids);
     }
 
+    on_before_execute(cmd_id, buffer);
+
     const auto& staging = buffer->get_pipeline_context();
     if (!staging.push_constant_staging.empty()) {
         compute_press.push_constants(
@@ -244,8 +246,6 @@ void ComputeProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
             m_push_constant_data.data(),
             m_push_constant_data.size());
     }
-
-    on_before_execute(cmd_id, buffer);
 
     auto dispatch_size = calculate_dispatch_size(buffer);
     compute_press.dispatch(cmd_id, dispatch_size[0], dispatch_size[1], dispatch_size[2]);

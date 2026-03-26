@@ -78,60 +78,91 @@ struct VertexLayout {
     }
 
     /**
-     * @brief Factory: Create layout for point primitives (position, color, size)
-     * @return VertexLayout configured for PointVertex
+     * @brief Factory: layout for PointVertex (position, color, size, uv, normal, tangent)
+     *
+     * Matches PointVertex field order exactly (60 bytes):
+     *   loc 0  offset  0  VERTEX_POSITIONS_3D  position
+     *   loc 1  offset 12  VERTEX_COLORS_RGB    color
+     *   loc 2  offset 24  UNKNOWN              size
+     *   loc 3  offset 28  TEXTURE_COORDS_2D    uv
+     *   loc 4  offset 36  VERTEX_NORMALS_3D    normal
+     *   loc 5  offset 48  VERTEX_TANGENTS_3D   tangent
+     *
+     * @param stride Override stride (default: sizeof(PointVertex) == 60)
      */
-    static VertexLayout for_points(uint32_t stride = 28)
+    static VertexLayout for_points(uint32_t stride = 60)
     {
         VertexLayout layout;
         layout.stride_bytes = stride;
 
-        layout.attributes.push_back(VertexAttributeLayout {
-            .component_modality = DataModality::VERTEX_POSITIONS_3D,
+        layout.attributes.push_back({ .component_modality = DataModality::VERTEX_POSITIONS_3D,
             .offset_in_vertex = 0,
             .name = "position" });
 
-        layout.attributes.push_back(VertexAttributeLayout {
-            .component_modality = DataModality::VERTEX_COLORS_RGB,
+        layout.attributes.push_back({ .component_modality = DataModality::VERTEX_COLORS_RGB,
             .offset_in_vertex = 12,
             .name = "color" });
 
-        layout.attributes.push_back(VertexAttributeLayout {
-            .component_modality = DataModality::SCALAR_F32,
+        layout.attributes.push_back({ .component_modality = DataModality::SCALAR_F32,
             .offset_in_vertex = 24,
             .name = "size" });
+
+        layout.attributes.push_back({ .component_modality = DataModality::TEXTURE_COORDS_2D,
+            .offset_in_vertex = 28,
+            .name = "uv" });
+
+        layout.attributes.push_back({ .component_modality = DataModality::VERTEX_NORMALS_3D,
+            .offset_in_vertex = 36,
+            .name = "normal" });
+
+        layout.attributes.push_back({ .component_modality = DataModality::VERTEX_TANGENTS_3D,
+            .offset_in_vertex = 48,
+            .name = "tangent" });
 
         return layout;
     }
 
     /**
-     * @brief Factory: Create layout for line primitives (position, color, thickness)
-     * @return VertexLayout configured for LineVertex
+     * @brief Factory: layout for LineVertex (position, color, thickness, uv, normal, tangent)
+     *
+     * Matches LineVertex field order exactly (60 bytes):
+     *   loc 0  offset  0  VERTEX_POSITIONS_3D  position
+     *   loc 1  offset 12  VERTEX_COLORS_RGB    color
+     *   loc 2  offset 24  UNKNOWN              thickness
+     *   loc 3  offset 28  TEXTURE_COORDS_2D    uv
+     *   loc 4  offset 36  VERTEX_NORMALS_3D    normal
+     *   loc 5  offset 48  VERTEX_TANGENTS_3D   tangent
+     *
+     * @param stride Override stride (default: sizeof(LineVertex) == 60)
      */
-    static VertexLayout for_lines(uint32_t stride = 36)
+    static VertexLayout for_lines(uint32_t stride = 60)
     {
         VertexLayout layout;
         layout.stride_bytes = stride;
 
-        layout.attributes.push_back(VertexAttributeLayout {
-            .component_modality = DataModality::VERTEX_POSITIONS_3D,
+        layout.attributes.push_back({ .component_modality = DataModality::VERTEX_POSITIONS_3D,
             .offset_in_vertex = 0,
             .name = "position" });
 
-        layout.attributes.push_back(VertexAttributeLayout {
-            .component_modality = DataModality::VERTEX_COLORS_RGB,
+        layout.attributes.push_back({ .component_modality = DataModality::VERTEX_COLORS_RGB,
             .offset_in_vertex = 12,
             .name = "color" });
 
-        layout.attributes.push_back(VertexAttributeLayout {
-            .component_modality = DataModality::SCALAR_F32,
+        layout.attributes.push_back({ .component_modality = DataModality::SCALAR_F32,
             .offset_in_vertex = 24,
             .name = "thickness" });
 
-        layout.attributes.push_back(VertexAttributeLayout {
-            .component_modality = DataModality::TEXTURE_COORDS_2D,
+        layout.attributes.push_back({ .component_modality = DataModality::TEXTURE_COORDS_2D,
             .offset_in_vertex = 28,
             .name = "uv" });
+
+        layout.attributes.push_back({ .component_modality = DataModality::VERTEX_NORMALS_3D,
+            .offset_in_vertex = 36,
+            .name = "normal" });
+
+        layout.attributes.push_back({ .component_modality = DataModality::VERTEX_TANGENTS_3D,
+            .offset_in_vertex = 48,
+            .name = "tangent" });
         return layout;
     }
 
@@ -171,17 +202,17 @@ private:
         case DataModality::VERTEX_NORMALS_3D:
         case DataModality::VERTEX_TANGENTS_3D:
         case DataModality::VERTEX_COLORS_RGB:
-            return sizeof(glm::vec3);
+            return sizeof(glm::vec3); // 12
 
         case DataModality::TEXTURE_COORDS_2D:
-            return sizeof(glm::vec2);
+            return sizeof(glm::vec2); // 8
 
         case DataModality::VERTEX_COLORS_RGBA:
-            return sizeof(glm::vec4);
+            return sizeof(glm::vec4); // 16
 
         case DataModality::AUDIO_1D:
         case DataModality::AUDIO_MULTICHANNEL:
-            return sizeof(double);
+            return sizeof(double); // 8
 
         default:
             return 4; // Conservative default

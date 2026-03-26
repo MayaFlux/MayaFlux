@@ -190,26 +190,24 @@ std::vector<Kakshya::DataVariant> ImageReader::read_region(const FileRegion& reg
 
 std::shared_ptr<Kakshya::SignalSourceContainer> ImageReader::create_container()
 {
-    // Images don't use SignalSourceContainer - they go directly to GPU
     m_last_error = "Images use direct GPU texture creation, not containers";
     return nullptr;
 }
 
 bool ImageReader::load_into_container(std::shared_ptr<Kakshya::SignalSourceContainer> /*container*/)
 {
-    // Not applicable for images
     m_last_error = "Images cannot be loaded into SignalSourceContainer";
     return false;
 }
 
 std::vector<uint64_t> ImageReader::get_read_position() const
 {
-    return { 0, 0 }; // Images don't have read position
+    return { 0, 0 };
 }
 
 bool ImageReader::seek(const std::vector<uint64_t>& /*position*/)
 {
-    return true; // No-op for static images
+    return true;
 }
 
 std::vector<std::string> ImageReader::get_supported_extensions() const
@@ -224,7 +222,7 @@ std::type_index ImageReader::get_data_type() const
 
 std::type_index ImageReader::get_container_type() const
 {
-    return typeid(void); // No container for images
+    return typeid(void);
 }
 
 std::string ImageReader::get_last_error() const
@@ -234,17 +232,17 @@ std::string ImageReader::get_last_error() const
 
 bool ImageReader::supports_streaming() const
 {
-    return false; // Images are loaded entirely into memory
+    return false;
 }
 
 uint64_t ImageReader::get_preferred_chunk_size() const
 {
-    return 0; // Not applicable
+    return 0;
 }
 
 size_t ImageReader::get_num_dimensions() const
 {
-    return 2; // width, height (channels are separate)
+    return 2;
 }
 
 std::vector<uint64_t> ImageReader::get_dimension_sizes() const
@@ -365,7 +363,7 @@ std::optional<ImageData> ImageReader::load_from_memory(const void* data, size_t 
         static_cast<int>(size),
         &width, &height, &channels);
 
-    int load_as = (channels == 3) ? 4 : 0; // Force RGBA for RGB images
+    int load_as = (channels == 3) ? 4 : 0;
 
     unsigned char* pixels = stbi_load_from_memory(
         static_cast<const unsigned char*>(data),
