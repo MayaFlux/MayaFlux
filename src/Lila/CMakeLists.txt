@@ -100,7 +100,7 @@ else()
         ws2_32
         legacy_stdio_definitions
     )
-    target_link_libraries(Lila PUBLIC Asio::asio)
+    target_link_libraries(Lila PUBLIC asio::asio)
     target_link_options(Lila PRIVATE
         /DEFAULTLIB:vcruntime.lib
         /DEFAULTLIB:msvcrt.lib
