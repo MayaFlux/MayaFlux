@@ -1,10 +1,24 @@
-file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
+set(MAYAFLUX_ALL_SOURCES "")
+set(MAYAFLUX_ALL_HEADERS "")
 
-file(GLOB_RECURSE HEADERS CONFIGURE_DEPENDS
-    ${CMAKE_CURRENT_SOURCE_DIR}/*.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/*.hpp)
+include(API/API.cmake)
+include(Buffers/Buffers.cmake)
+include(Core/Core.cmake)
+include(IO/IO.cmake)
+include(Journal/Journal.cmake)
+include(Kakshya/Kakshya.cmake)
+include(Kinesis/Kinesis.cmake)
+include(Kriya/Kriya.cmake)
+include(Nodes/Nodes.cmake)
+include(Portal/Portal.cmake)
+include(Registry/Registry.cmake)
+include(Transitive/Transitive.cmake)
+include(Vruta/Vruta.cmake)
+include(Yantra/Yantra.cmake)
 
-add_library(MayaFluxLib SHARED ${SOURCES} ${HEADERS})
+list(APPEND MAYAFLUX_ALL_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/MayaFlux.hpp")
+
+add_library(MayaFluxLib SHARED ${MAYAFLUX_ALL_SOURCES} ${MAYAFLUX_ALL_HEADERS})
 
 #==============================================================
 #               Target Definitions and Properties
