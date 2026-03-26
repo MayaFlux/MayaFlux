@@ -45,7 +45,6 @@ install(FILES
     ${CMAKE_SOURCE_DIR}/src/Lila/Lila.hpp
     ${CMAKE_SOURCE_DIR}/src/Lila/Server.hpp
     ${CMAKE_SOURCE_DIR}/src/Lila/LiveAid.hpp
-    ${CMAKE_SOURCE_DIR}/src/Lila/ServerThread.hpp
     DESTINATION include/Lila
 )
 

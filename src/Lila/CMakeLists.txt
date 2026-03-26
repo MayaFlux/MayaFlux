@@ -15,7 +15,6 @@ set(LILA_HEADERS
     LiveAid.hpp
     Lila.hpp
     Server.hpp
-    ServerThread.hpp
 )
 
 add_library(Lila SHARED ${LILA_SOURCES} ${LILA_HEADERS})

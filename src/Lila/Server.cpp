@@ -2,77 +2,127 @@
 
 #include "Commentator.hpp"
 
-#include <cerrno>
-#include <cstddef>
-#include <fcntl.h>
-
-#ifdef MAYAFLUX_PLATFORM_WINDOWS
-#include <mstcpip.h>
-using ssize_t = int;
-#else
-#include <arpa/inet.h>
-#include <netinet/tcp.h>
-#include <sys/select.h>
-#include <sys/socket.h>
-#include <unistd.h>
-#endif
-
 namespace Lila {
 
-// --- Small platform abstraction helpers ------------------------------------
+// ---------------------------------------------------------------------------
+// ClientSession: one per connected client, drives the async read chain
+// ---------------------------------------------------------------------------
 
-static int socket_errno()
-{
-#ifdef MAYAFLUX_PLATFORM_WINDOWS
-    return WSAGetLastError();
-#else
-    return errno;
-#endif
-}
+class ClientSession : public std::enable_shared_from_this<ClientSession> {
+public:
+    ClientSession(asio::ip::tcp::socket socket, int client_id, Server& server)
+        : m_socket(std::move(socket))
+        , m_server(server)
+    {
+        m_info = ClientInfo {
+            .fd = client_id,
+            .session_id = "",
+            .connected_at = std::chrono::system_clock::now()
+        };
 
-static std::string socket_error_string(int code)
-{
-#ifdef MAYAFLUX_PLATFORM_WINDOWS
-    // Keep it simple: return numeric WSA code (can be extended with FormatMessage)
-    return "WSA error " + std::to_string(code);
-#else
-    return std::string(strerror(code));
-#endif
-}
+        asio::ip::tcp::no_delay nodelay(true);
+        asio::error_code ec;
+        if (m_socket.set_option(nodelay, ec)) {
+            LILA_WARN(Emitter::SERVER,
+                "Failed to set TCP_NODELAY on client " + std::to_string(client_id)
+                    + ": " + ec.message());
+        }
+    }
 
-static void socket_close(int fd)
-{
-#ifdef MAYAFLUX_PLATFORM_WINDOWS
-    closesocket(static_cast<SOCKET>(fd));
-#else
-    ::close(fd);
-#endif
-}
+    void start() { read_line(); }
 
-static ssize_t socket_read(int fd, void* buf, size_t len)
-{
-#ifdef MAYAFLUX_PLATFORM_WINDOWS
-    // recv returns int
-    return recv(static_cast<SOCKET>(fd), static_cast<char*>(buf), static_cast<int>(len), 0);
-#else
-    return ::read(fd, buf, len);
-#endif
-}
+    void send(std::string_view message)
+    {
+        auto msg = std::make_shared<std::string>(message);
+        msg->push_back('\n');
 
-static int set_nonblocking(int fd)
-{
-#ifdef MAYAFLUX_PLATFORM_WINDOWS
-    u_long mode = 1;
-    return ioctlsocket(static_cast<SOCKET>(fd), FIONBIO, &mode);
-#else
-    int flags = fcntl(fd, F_GETFL, 0);
-    if (flags < 0)
-        return -1;
-    return fcntl(fd, F_SETFL, flags | O_NONBLOCK);
-#endif
-}
+        asio::async_write(m_socket, asio::buffer(*msg),
+            [self = shared_from_this(), msg](const asio::error_code& ec, size_t) {
+                if (ec) {
+                    LILA_WARN(Emitter::SERVER,
+                        "Write failed for client " + std::to_string(self->m_info.fd)
+                            + ": " + ec.message());
+                }
+            });
+    }
 
-// --------------------------------------------------------------------------
+    void close()
+    {
+        asio::error_code ec;
+        if (m_socket.shutdown(asio::ip::tcp::socket::shutdown_both, ec)) {
+            LILA_WARN(Emitter::SERVER,
+                "Failed to shutdown socket for client " + std::to_string(m_info.fd)
+                    + ": " + ec.message());
+        }
+
+        if (m_socket.close(ec)) {
+            LILA_WARN(Emitter::SERVER,
+                "Failed to close socket for client " + std::to_string(m_info.fd)
+                    + ": " + ec.message());
+        }
+    }
+
+    ClientInfo& info() { return m_info; }
+    const ClientInfo& info() const { return m_info; }
+
+private:
+    void read_line()
+    {
+        asio::async_read_until(m_socket, m_streambuf, '\n',
+            [self = shared_from_this()](const asio::error_code& ec, size_t bytes_transferred) {
+                self->on_line_received(ec, bytes_transferred);
+            });
+    }
+
+    void on_line_received(const asio::error_code& ec, size_t bytes_transferred)
+    {
+        if (ec) {
+            m_server.remove_session(m_info.fd);
+            return;
+        }
+
+        std::string line(buffers_begin(m_streambuf.data()),
+            buffers_begin(m_streambuf.data()) + static_cast<std::ptrdiff_t>(bytes_transferred));
+        m_streambuf.consume(bytes_transferred);
+
+        while (!line.empty() && (line.back() == '\n' || line.back() == '\r')) {
+            line.pop_back();
+        }
+
+        if (line.empty()) {
+            read_line();
+            return;
+        }
+
+        if (line.starts_with('@')) {
+            m_server.process_control_message(m_info.fd, std::string_view(line).substr(1));
+            read_line();
+            return;
+        }
+
+        if (m_server.m_message_handler) {
+            auto response = m_server.m_message_handler(line);
+            if (response) {
+                send(*response);
+            } else {
+                send(R"({"status":"error","message":")" + response.error() + "\"}");
+            }
+        }
+
+        read_line();
+    }
+
+    asio::ip::tcp::socket m_socket;
+    asio::streambuf m_streambuf;
+    ClientInfo m_info;
+    Server& m_server;
+
+    friend class Server;
+};
+
+// ---------------------------------------------------------------------------
+// Server
+// ---------------------------------------------------------------------------
 
 Server::Server(int port)
     : m_port(port)
@@ -87,372 +137,214 @@ Server::~Server()
 
 bool Server::start() noexcept
 {
-    if (m_running) {
+    if (m_running.load(std::memory_order_acquire)) {
         LILA_WARN(Emitter::SERVER, "Server already running");
         return false;
     }
 
     try {
-#ifdef MAYAFLUX_PLATFORM_WINDOWS
-        WSADATA wsaData;
-        if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
-            throw std::system_error(WSAGetLastError(), std::system_category(), "WSAStartup failed");
-        }
-#endif
-
-        m_server_fd = socket(AF_INET, SOCK_STREAM, 0);
-        if (m_server_fd < 0) {
-            throw std::system_error(socket_errno(), std::system_category(), "socket creation failed");
-        }
-
-        int opt = 1;
-        if (setsockopt(m_server_fd, SOL_SOCKET, SO_REUSEADDR, reinterpret_cast<char*>(&opt), sizeof(opt)) < 0) {
-            throw std::system_error(socket_errno(), std::system_category(), "setsockopt failed");
-        }
-
-        if (set_nonblocking(m_server_fd) < 0) {
-            throw std::system_error(socket_errno(), std::system_category(), "set non-blocking failed");
-        }
-
-        sockaddr_in address {};
-        address.sin_family = AF_INET;
-        address.sin_addr.s_addr = INADDR_ANY;
-        address.sin_port = htons(m_port);
-
-        if (bind(m_server_fd, reinterpret_cast<sockaddr*>(&address), sizeof(address)) < 0) {
-            throw std::system_error(socket_errno(), std::system_category(), "bind failed");
-        }
-
-        if (listen(m_server_fd, 10) < 0) {
-            throw std::system_error(socket_errno(), std::system_category(), "listen failed");
-        }
-
-        m_running = true;
-        m_event_bus.publish(StreamEvent { EventType::ServerStart });
-        if (m_start_handler) {
-            m_start_handler();
-        }
-
-        m_server_thread = ServerThread([this](const auto& token) { server_loop(token); });
-
-        LILA_INFO(Emitter::SERVER, "Server started on port " + std::to_string(m_port));
-
-        m_event_bus.publish(StreamEvent { EventType::ServerStart });
-
-        return true;
-
-    } catch (const std::system_error& e) {
-        LILA_ERROR(Emitter::SERVER, "Failed to start server: " + std::string(e.what()) + " (code: " + std::to_string(e.code().value()) + ")");
-        if (m_server_fd >= 0) {
-            socket_close(m_server_fd);
-            m_server_fd = -1;
-        }
-#ifdef MAYAFLUX_PLATFORM_WINDOWS
-        WSACleanup();
-#endif
+        auto endpoint = asio::ip::tcp::endpoint(asio::ip::tcp::v4(), static_cast<asio::ip::port_type>(m_port));
+        m_acceptor = std::make_unique<asio::ip::tcp::acceptor>(m_io_context);
+        m_acceptor->open(endpoint.protocol());
+        m_acceptor->set_option(asio::ip::tcp::acceptor::reuse_address(true));
+        m_acceptor->bind(endpoint);
+        m_acceptor->listen(10);
+    } catch (const asio::system_error& e) {
+        LILA_ERROR(Emitter::SERVER,
+            "Failed to start server: " + std::string(e.what()));
+        m_acceptor.reset();
         return false;
     }
+
+    m_running.store(true, std::memory_order_release);
+    m_event_bus.publish(StreamEvent { EventType::ServerStart });
+
+    if (m_start_handler) {
+        m_start_handler();
+    }
+
+    start_accept();
+
+    m_io_thread = std::thread([this]() {
+        LILA_DEBUG(Emitter::SERVER, "IO thread started");
+        m_io_context.run();
+        LILA_DEBUG(Emitter::SERVER, "IO thread exiting");
+    });
+
+    LILA_INFO(Emitter::SERVER, "Server started on port " + std::to_string(m_port));
+    return true;
 }
 
 void Server::stop() noexcept
 {
-    if (!m_running)
+    if (!m_running.exchange(false, std::memory_order_acq_rel)) {
         return;
-
-    m_running = false;
-
-    if (m_server_thread.joinable()) {
-        m_server_thread.request_stop();
-        m_server_thread.join();
     }
 
-    if (m_server_fd >= 0) {
-        socket_close(m_server_fd);
-        m_server_fd = -1;
+    asio::error_code ec;
+    if (m_acceptor) {
+        if (m_acceptor->close(ec)) {
+            LILA_WARN(Emitter::SERVER,
+                "Failed to close acceptor: " + ec.message());
+        }
     }
 
     {
         std::unique_lock lock(m_clients_mutex);
-        for (const auto& [fd, client] : m_connected_clients) {
-            socket_close(fd);
+        for (auto& [id, session] : m_sessions) {
+            session->close();
         }
-        m_connected_clients.clear();
+        m_sessions.clear();
     }
 
+    m_io_context.stop();
+
+    if (m_io_thread.joinable()) {
+        m_io_thread.join();
+    }
+
+    m_acceptor.reset();
     m_event_bus.publish(StreamEvent { EventType::ServerStop });
-
-#ifdef MAYAFLUX_PLATFORM_WINDOWS
-    WSACleanup();
-#endif
-
     LILA_INFO(Emitter::SERVER, "Server stopped");
 }
 
-#if MAYAFLUX_USE_JTHREAD
-void Server::server_loop(const std::stop_token& stop_token)
-#else
-void Server::server_loop(const ServerThread::StopToken& stop_token)
-#endif
+void Server::start_accept()
 {
-    while (!stop_token.stop_requested() && m_running) {
-        fd_set readfds;
-        FD_ZERO(&readfds);
-        FD_SET(m_server_fd, &readfds);
-
-        timeval timeout { .tv_sec = 1, .tv_usec = 0 };
-
-#ifdef MAYAFLUX_PLATFORM_WINDOWS
-        int activity = select(0, &readfds, nullptr, nullptr, &timeout); // nfds ignored on Windows
-#else
-        int activity = select(m_server_fd + 1, &readfds, nullptr, nullptr, &timeout);
-#endif
-
-        if (activity < 0) {
-            int code = socket_errno();
-#ifndef MAYAFLUX_PLATFORM_WINDOWS
-            if (code == EINTR)
-                continue;
-#endif
-            if (m_running) {
-                LILA_ERROR(Emitter::SERVER, "Select error: " + socket_error_string(code));
+    m_acceptor->async_accept(
+        [this](const asio::error_code& ec, asio::ip::tcp::socket socket) {
+            if (ec) {
+                if (m_running.load(std::memory_order_acquire)) {
+                    LILA_ERROR(Emitter::SERVER, "Accept failed: " + ec.message());
+                }
+                return;
             }
-            break;
-        }
 
-        if (activity == 0)
-            continue;
+            int client_id = m_next_client_id++;
+            auto session = std::make_shared<ClientSession>(std::move(socket), client_id, *this);
+            register_session(session);
+            session->start();
 
-        sockaddr_in client_addr {};
-        socklen_t client_len = sizeof(client_addr);
-
-#ifdef MAYAFLUX_PLATFORM_WINDOWS
-        SOCKET client_socket = accept(static_cast<SOCKET>(m_server_fd), reinterpret_cast<sockaddr*>(&client_addr), &client_len);
-        int client_fd = static_cast<int>(client_socket);
-        if (client_socket == INVALID_SOCKET) {
-            int code = socket_errno();
-            if (code == WSAEWOULDBLOCK)
-                continue;
-            if (m_running) {
-                LILA_ERROR(Emitter::SERVER, "Accept failed: " + socket_error_string(code));
-            }
-            continue;
-        }
-#else
-        int client_fd = accept(m_server_fd, reinterpret_cast<sockaddr*>(&client_addr), &client_len);
-        if (client_fd < 0) {
-            if (errno == EAGAIN || errno == EWOULDBLOCK)
-                continue;
-            if (m_running) {
-                LILA_ERROR(Emitter::SERVER, "Accept failed: " + std::string(strerror(errno)));
-            }
-            continue;
-        }
-#endif
-
-        if (set_nonblocking(client_fd) < 0) {
-            LILA_WARN(Emitter::SERVER, "Failed to set non-blocking on client fd " + std::to_string(client_fd));
-        }
-
-        handle_client(client_fd);
-    }
+            start_accept();
+        });
 }
 
-void Server::handle_client(int client_fd)
+void Server::register_session(const std::shared_ptr<ClientSession>& session)
 {
-    int enable = 1;
-    if (setsockopt(client_fd, IPPROTO_TCP, TCP_NODELAY, reinterpret_cast<char*>(&enable), sizeof(enable)) < 0) {
-        LILA_WARN(Emitter::SERVER, "Failed to set TCP_NODELAY on client fd " + std::to_string(client_fd) + ": " + socket_error_string(socket_errno()));
-    }
-
-    ClientInfo client_info {
-        .fd = client_fd,
-        .session_id = "",
-        .connected_at = std::chrono::system_clock::now()
-    };
+    int id = session->info().fd;
 
     {
         std::unique_lock lock(m_clients_mutex);
-        m_connected_clients[client_fd] = client_info;
+        m_sessions[id] = session;
     }
 
     if (m_connect_handler) {
-        m_connect_handler(client_info);
+        m_connect_handler(session->info());
     }
 
-    m_event_bus.publish(StreamEvent { EventType::ClientConnected, client_info });
-
-    LILA_INFO(Emitter::SERVER, "Client connected fd: " + std::to_string(client_fd));
-
-    while (m_running) {
-        auto message = read_message(client_fd);
-
-        if (!message) {
-            if (message.error() != "timeout" && message.error() != "would_block") {
-                break;
-            }
-            std::this_thread::sleep_for(std::chrono::milliseconds(8));
-            continue;
-        }
-
-        if (message->empty())
-            continue;
-
-        if (message->starts_with('@')) {
-            process_control_message(client_fd, message->substr(1));
-            continue;
-        }
-
-        if (m_message_handler) {
-            auto response = m_message_handler(*message);
-            if (response) {
-                if (!send_message(client_fd, *response)) {
-                    LILA_WARN(Emitter::SERVER, "Failed to send response to client fd " + std::to_string(client_fd));
-                    break;
-                }
-            } else {
-                if (!send_message(client_fd, "{\"status\":\"error\",\"message\":\"" + response.error() + "\"}")) {
-                    LILA_WARN(Emitter::SERVER, "Failed to send error response to client fd " + std::to_string(client_fd));
-                    break;
-                }
-            }
-        }
-    }
-
-    cleanup_client(client_fd);
+    m_event_bus.publish(StreamEvent { EventType::ClientConnected, session->info() });
+    LILA_INFO(Emitter::SERVER, "Client connected id: " + std::to_string(id));
 }
 
-void Server::process_control_message(int client_fd, std::string_view message)
+void Server::remove_session(int client_id)
 {
-    if (message.starts_with("session ")) {
-        std::string session_id(message.substr(8));
-        set_client_session(client_fd, session_id);
-        if (!send_message(client_fd, R"({"status":"success","message":"Session ID set to ')" + session_id + R"('"})")) {
-            LILA_WARN(Emitter::SERVER, "Failed to send session confirmation to client fd " + std::to_string(client_fd));
-        }
-    } else if (message.starts_with("ping")) {
-        if (!send_message(client_fd, R"({"status":"success","message":"pong"})")) {
-            LILA_WARN(Emitter::SERVER, "Failed to send pong to client fd " + std::to_string(client_fd));
-        }
-    } else {
-        if (!send_message(client_fd, "{\"status\":\"error\",\"message\":\"Unknown command: " + std::string(message) + "\"}")) {
-            LILA_WARN(Emitter::SERVER, "Failed to send unknown command error to client fd " + std::to_string(client_fd));
-        }
-    }
-}
-
-void Server::set_client_session(int client_fd, std::string session_id)
-{
-    std::unique_lock lock(m_clients_mutex);
-    if (auto it = m_connected_clients.find(client_fd); it != m_connected_clients.end()) {
-        it->second.session_id = std::move(session_id);
-    }
-}
-
-std::expected<std::string, std::string> Server::read_message(int client_fd)
-{
-    constexpr size_t BUFFER_SIZE = 4096;
-    std::string result;
-
-    result.reserve(BUFFER_SIZE);
-    std::array<char, BUFFER_SIZE> buffer {};
-
-    while (true) {
-        ssize_t bytes_read = socket_read(client_fd, buffer.data(), buffer.size() - 1);
-
-        if (bytes_read < 0) {
-#ifdef MAYAFLUX_PLATFORM_WINDOWS
-            int code = socket_errno();
-            if (code == WSAEWOULDBLOCK) {
-                return std::unexpected("would_block");
-            }
-            return std::unexpected("read error: " + socket_error_string(code));
-#else
-            if (errno == EAGAIN || errno == EWOULDBLOCK) {
-                return std::unexpected("would_block");
-            }
-            return std::unexpected("read error: " + std::string(strerror(errno)));
-#endif
-        }
-
-        if (bytes_read == 0) {
-            return std::unexpected("client_disconnected");
-        }
-
-        buffer[bytes_read] = '\0';
-        result.append(buffer.data());
-
-        if (!result.empty() && result.back() == '\n') {
-            result.pop_back();
-            if (!result.empty() && result.back() == '\r') {
-                result.pop_back();
-            }
-            break;
-        }
-
-        if (result.size() > static_cast<size_t>(1024 * 1024)) {
-            return std::unexpected("message_too_large");
-        }
-    }
-
-    return result;
-}
-
-bool Server::send_message(int client_fd, std::string_view message)
-{
-    std::string msg_with_newline = std::string(message) + "\n";
-#ifdef MAYAFLUX_PLATFORM_WINDOWS
-    int sent = send(static_cast<SOCKET>(client_fd), msg_with_newline.data(), static_cast<int>(msg_with_newline.size()), 0);
-    return sent == static_cast<int>(msg_with_newline.size());
-#else
-    ssize_t sent = send(client_fd, msg_with_newline.data(), msg_with_newline.size(), 0);
-    return sent == static_cast<ssize_t>(msg_with_newline.size());
-#endif
-}
-
-void Server::cleanup_client(int client_fd)
-{
-    std::optional<ClientInfo> client_info;
+    std::optional<ClientInfo> info;
 
     {
         std::unique_lock lock(m_clients_mutex);
-        if (auto it = m_connected_clients.find(client_fd); it != m_connected_clients.end()) {
-            client_info = it->second;
-            m_connected_clients.erase(it);
+        auto it = m_sessions.find(client_id);
+        if (it == m_sessions.end()) {
+            return;
         }
+        info = it->second->info();
+        it->second->close();
+        m_sessions.erase(it);
     }
 
-    if (client_info) {
+    if (info) {
         if (m_disconnect_handler) {
-            m_disconnect_handler(*client_info);
+            m_disconnect_handler(*info);
         }
-
-        m_event_bus.publish(StreamEvent { EventType::ClientDisconnected, *client_info });
-
-        LILA_INFO(Emitter::SERVER, "Client disconnected (fd: " + std::to_string(client_fd) + ")");
+        m_event_bus.publish(StreamEvent { EventType::ClientDisconnected, *info });
+        LILA_INFO(Emitter::SERVER, "Client disconnected (id: " + std::to_string(client_id) + ")");
     }
-
-    socket_close(client_fd);
 }
 
-void Server::broadcast_event(const StreamEvent& /*event*/, std::optional<std::string_view> target_session)
+void Server::process_control_message(int client_id, std::string_view message)
+{
+    if (message.starts_with("session ")) {
+        std::string session_id(message.substr(8));
+        set_client_session(client_id, session_id);
+
+        std::shared_lock lock(m_clients_mutex);
+        if (auto it = m_sessions.find(client_id); it != m_sessions.end()) {
+            it->second->send(
+                R"({"status":"success","message":"Session ID set to ')" + session_id + R"('"})");
+        }
+
+    } else if (message.starts_with("ping")) {
+        std::shared_lock lock(m_clients_mutex);
+        if (auto it = m_sessions.find(client_id); it != m_sessions.end()) {
+            it->second->send(R"({"status":"success","message":"pong"})");
+        }
+
+    } else {
+        std::shared_lock lock(m_clients_mutex);
+        if (auto it = m_sessions.find(client_id); it != m_sessions.end()) {
+            it->second->send(
+                R"({"status":"error","message":"Unknown command: )" + std::string(message) + "\"}");
+        }
+    }
+}
+
+void Server::set_client_session(int client_id, std::string session_id)
+{
+    std::unique_lock lock(m_clients_mutex);
+    if (auto it = m_sessions.find(client_id); it != m_sessions.end()) {
+        it->second->info().session_id = std::move(session_id);
+    }
+}
+
+std::optional<std::string> Server::get_client_session(int client_id) const
+{
+    std::shared_lock lock(m_clients_mutex);
+    auto it = m_sessions.find(client_id);
+    if (it == m_sessions.end()) {
+        return std::nullopt;
+    }
+    const auto& sid = it->second->info().session_id;
+    return sid.empty() ? std::nullopt : std::optional<std::string>(sid);
+}
+
+void Server::broadcast_event(const StreamEvent& /*event*/,
+    std::optional<std::string_view> target_session)
 {
     std::shared_lock lock(m_clients_mutex);
 
-    for (const auto& [fd, client] : m_connected_clients) {
-        if (target_session && client.session_id != *target_session) {
+    for (const auto& [id, session] : m_sessions) {
+        if (target_session && session->info().session_id != *target_session) {
             continue;
         }
+        session->send(R"({"status":"info","message":"Event broadcast not implemented yet"})");
+    }
+}
 
-        if (!send_message(fd, R"({"status":"info","message":"Event broadcast not implemented yet"})")) {
-            LILA_WARN(Emitter::SERVER, "Failed to send event to client fd " + std::to_string(fd));
-        }
+void Server::broadcast_to_all(std::string_view message)
+{
+    std::shared_lock lock(m_clients_mutex);
+    for (const auto& [id, session] : m_sessions) {
+        session->send(message);
     }
 }
 
 std::vector<ClientInfo> Server::get_connected_clients() const
 {
     std::shared_lock lock(m_clients_mutex);
-    return m_connected_clients | std::views::values | std::ranges::to<std::vector>();
+    std::vector<ClientInfo> result;
+    result.reserve(m_sessions.size());
+    for (const auto& [id, session] : m_sessions) {
+        result.push_back(session->info());
+    }
+    return result;
 }
 
 } // namespace Lila
