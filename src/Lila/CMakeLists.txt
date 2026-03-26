@@ -41,7 +41,7 @@ if(CLANG_DEFINITIONS)
 endif()
 
 separate_arguments(LLVM_DEFINITIONS_LIST NATIVE_COMMAND ${LLVM_DEFINITIONS})
-target_compile_definitions(Lila PUBLIC ${LLVM_DEFINITIONS_LIST})
+target_compile_definitions(Lila PUBLIC ${LLVM_DEFINITIONS_LIST} ASIO_STANDALONE)
 
 set_target_properties(Lila PROPERTIES
     VERSION ${PROJECT_VERSION}
