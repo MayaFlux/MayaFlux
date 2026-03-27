@@ -15,11 +15,13 @@ namespace MayaFlux::Kakshya {
  * empty for single-mesh files or loaders that do not expose names.
  */
 struct MAYAFLUX_API MeshSubrange {
-    uint32_t index_start = 0;
-    uint32_t index_count = 0;
-    uint32_t vertex_offset = 0; ///< Base vertex added to each index (large-mesh batching)
+    uint32_t index_start {};
+    uint32_t index_count {};
+    uint32_t vertex_offset {}; ///< Base vertex added to each index (large-mesh batching)
     std::string name;
     std::string material_name;
+    std::string diffuse_path;
+    bool diffuse_embedded {};
 
     /**
      * @brief Convert this subrange to a Region for use in RegionGroup.

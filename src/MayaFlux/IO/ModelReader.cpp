@@ -72,7 +72,7 @@ std::vector<Kakshya::MeshData> ModelReader::extract_meshes() const
             mat_name = ai_mat.C_Str();
         }
 
-        auto mesh_data = extract_single_mesh(mesh, mesh_name, mat_name);
+        auto mesh_data = extract_single_mesh(mesh, s, mesh_name, mat_name);
         if (mesh_data.is_valid()) {
             result.push_back(std::move(mesh_data));
         } else {
@@ -240,6 +240,7 @@ std::vector<std::string> ModelReader::get_supported_extensions() const
 
 Kakshya::MeshData ModelReader::extract_single_mesh(
     const void* ai_mesh_ptr,
+    const void* ai_scene,
     std::string_view mesh_name,
     std::string_view material_name) const
 {
@@ -336,16 +337,30 @@ Kakshya::MeshData ModelReader::extract_single_mesh(
     }
     data.layout = access->layout;
 
-    /**
-     * Record submesh identity as a RegionGroup so the caller can inspect
-     * material and name without needing to know anything about aiScene.
-     **/
     Kakshya::MeshSubrange sub;
     sub.index_start = 0;
     sub.index_count = static_cast<uint32_t>(indices.size());
     sub.vertex_offset = 0;
     sub.name = std::string(mesh_name);
     sub.material_name = std::string(material_name);
+
+    const auto* s = static_cast<const aiScene*>(ai_scene);
+
+    if (s->mNumMaterials > 0 && mesh->mMaterialIndex < s->mNumMaterials) {
+        aiString tex_path;
+        const aiMaterial* mat = s->mMaterials[mesh->mMaterialIndex];
+        if (mat->GetTexture(aiTextureType_DIFFUSE, 0, &tex_path) == AI_SUCCESS) {
+            sub.diffuse_path = std::string(tex_path.C_Str());
+            sub.diffuse_embedded = (!sub.diffuse_path.empty()
+                && sub.diffuse_path[0] == '*');
+
+            MF_DEBUG(Journal::Component::IO, Journal::Context::FileIO,
+                "ModelReader: mesh '{}' diffuse={} embedded={}",
+                std::string(mesh_name),
+                sub.diffuse_path,
+                sub.diffuse_embedded);
+        }
+    }
 
     Kakshya::RegionGroup rg("submeshes");
     rg.add_region(sub.to_region());

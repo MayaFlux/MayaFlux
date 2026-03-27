@@ -17,6 +17,8 @@ Region MeshSubrange::to_region() const
     r.set_attribute("material_name", material_name);
     r.set_attribute("vertex_offset", static_cast<uint64_t>(vertex_offset));
     r.set_attribute("index_count", static_cast<uint64_t>(index_count));
+    r.set_attribute("diffuse_path", diffuse_path);
+    r.set_attribute("diffuse_embedded", diffuse_embedded);
     return r;
 }
 

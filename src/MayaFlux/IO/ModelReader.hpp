@@ -129,6 +129,7 @@ private:
 
     [[nodiscard]] Kakshya::MeshData extract_single_mesh(
         const void* ai_mesh,
+        const void* ai_scene,
         std::string_view mesh_name,
         std::string_view material_name) const;
 
