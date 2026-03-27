@@ -112,7 +112,7 @@ public:
      */
     void setup_rendering(const RenderConfig& config);
 
-    std::shared_ptr<RenderProcessor> get_render_processor() const
+    std::shared_ptr<RenderProcessor> get_render_processor() const override
     {
         return m_render_processor;
     }

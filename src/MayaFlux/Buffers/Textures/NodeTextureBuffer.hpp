@@ -130,7 +130,7 @@ public:
     /**
      * @brief Get the render processor (if rendering is setup)
      */
-    std::shared_ptr<RenderProcessor> get_render_processor() const
+    std::shared_ptr<RenderProcessor> get_render_processor() const override
     {
         return m_render_processor;
     }

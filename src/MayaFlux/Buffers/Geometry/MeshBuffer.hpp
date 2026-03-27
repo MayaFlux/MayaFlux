@@ -172,7 +172,7 @@ public:
         return m_mesh_processor;
     }
 
-    [[nodiscard]] std::shared_ptr<RenderProcessor> get_render_processor() const
+    [[nodiscard]] std::shared_ptr<RenderProcessor> get_render_processor() const override
     {
         return m_render_processor;
     }
