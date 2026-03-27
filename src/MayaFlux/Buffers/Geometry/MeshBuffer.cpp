@@ -99,6 +99,10 @@ void MeshBuffer::setup_rendering(const RenderConfig& config)
     const bool textured = m_diffuse_texture != nullptr
         || !m_render_config.default_texture_binding.empty();
 
+    if (textured && m_render_config.default_texture_binding.empty()) {
+        m_render_config.default_texture_binding = m_diffuse_binding;
+    }
+
     if (m_render_config.fragment_shader.empty()) {
         m_render_config.fragment_shader = textured
             ? "mesh_textured.frag.spv"

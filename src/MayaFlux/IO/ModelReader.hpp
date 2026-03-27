@@ -3,6 +3,10 @@
 #include "MayaFlux/IO/FileReader.hpp"
 #include "MayaFlux/Kakshya/NDData/MeshData.hpp"
 
+namespace MayaFlux::Buffers {
+class MeshBuffer;
+}
+
 namespace MayaFlux::IO {
 
 /**
@@ -62,6 +66,17 @@ public:
      * @return One MeshData per aiMesh in the scene.
      */
     [[nodiscard]] std::vector<Kakshya::MeshData> extract_meshes() const;
+
+    /**
+     * @brief Construct one MeshBuffer per mesh in the currently loaded scene.
+     *
+     * Calls extract_meshes() internally. Returns empty if no scene is loaded.
+     * setup_processors() and setup_rendering() are left to the caller.
+     *
+     * @return One MeshBuffer per aiMesh in scene order.
+     */
+    [[nodiscard]] std::vector<std::shared_ptr<Buffers::MeshBuffer>>
+    create_mesh_buffers() const;
 
     // -------------------------------------------------------------------------
     // FileReader interface

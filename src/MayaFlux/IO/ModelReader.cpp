@@ -2,6 +2,7 @@
 
 #include "MayaFlux/Kakshya/NDData/MeshInsertion.hpp"
 
+#include "MayaFlux/Buffers/Geometry/MeshBuffer.hpp"
 #include "MayaFlux/Nodes/Graphics/VertexSpec.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
@@ -85,6 +86,31 @@ std::vector<Kakshya::MeshData> ModelReader::extract_meshes() const
     MF_INFO(Journal::Component::IO, Journal::Context::FileIO,
         "ModelReader: extracted {}/{} meshes",
         result.size(), s->mNumMeshes);
+
+    return result;
+}
+
+std::vector<std::shared_ptr<Buffers::MeshBuffer>>
+ModelReader::create_mesh_buffers() const
+{
+    auto meshes = extract_meshes();
+
+    std::vector<std::shared_ptr<Buffers::MeshBuffer>> result;
+    result.reserve(meshes.size());
+
+    for (auto& mesh_data : meshes) {
+        if (!mesh_data.is_valid()) {
+            MF_WARN(Journal::Component::IO, Journal::Context::FileIO,
+                "ModelReader::create_mesh_buffers: skipping invalid MeshData");
+            continue;
+        }
+        result.push_back(
+            std::make_shared<Buffers::MeshBuffer>(std::move(mesh_data)));
+    }
+
+    MF_INFO(Journal::Component::IO, Journal::Context::FileIO,
+        "ModelReader::create_mesh_buffers: created {}/{} MeshBuffers",
+        result.size(), meshes.size());
 
     return result;
 }
