@@ -97,6 +97,7 @@ void RenderProcessor::set_view_transform(const Kinesis::ViewTransform& vt)
 {
     m_view_transform = vt;
     m_view_transform_source = nullptr;
+    m_has_view_transform_slot = true;
 
     if (!m_depth_enabled) {
         enable_depth_test();
@@ -115,6 +116,7 @@ void RenderProcessor::set_view_transform_source(std::function<Kinesis::ViewTrans
 {
     m_view_transform_source = std::move(fn);
     m_view_transform.reset();
+    m_has_view_transform_slot = true;
 
     if (!m_depth_enabled) {
         enable_depth_test();
@@ -473,7 +475,7 @@ void RenderProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
         flow.bind_descriptor_sets(cmd_id, m_pipeline_id, m_descriptor_set_ids);
     }
 
-    if (m_view_transform_source || m_view_transform.has_value()) {
+    if (m_has_view_transform_slot) {
         Kinesis::ViewTransform vt = m_view_transform_source
             ? m_view_transform_source()
             : m_view_transform.value();
