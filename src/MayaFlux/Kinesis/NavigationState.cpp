@@ -20,8 +20,12 @@ NavigationState make_navigation_state(const NavigationConfig& config)
     return st;
 }
 
-ViewTransform compute_view_transform(NavigationState& st, float aspect, float dt)
+ViewTransform compute_view_transform(NavigationState& st, float aspect)
 {
+    const auto now = std::chrono::steady_clock::now();
+    const float dt = std::chrono::duration<float>(now - st.last_tick).count();
+    st.last_tick = now;
+
     const glm::vec3 forward {
         std::cos(st.pitch) * std::sin(st.yaw),
         std::sin(st.pitch),

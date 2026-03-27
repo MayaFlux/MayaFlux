@@ -54,6 +54,8 @@ struct NavigationState {
     float fov_radians { glm::radians(60.0F) };
     float near_plane { 0.01F };
     float far_plane { 1000.0F };
+
+    std::chrono::steady_clock::time_point last_tick { std::chrono::steady_clock::now() };
 };
 
 /**
@@ -71,19 +73,15 @@ struct NavigationState {
 /**
  * @brief Compute a ViewTransform from the current NavigationState.
  *
- * Advances eye position by the held movement flags scaled by
- * move_speed * dt, then constructs view and projection matrices.
- * The state is mutated in place (eye position updated).
+ * Computes dt from state.last_tick, advances eye position by held movement
+ * flags scaled by move_speed * dt, updates last_tick, then constructs view
+ * and projection matrices.
  *
- * @param state  Navigation state (eye mutated by this call)
+ * @param state  Navigation state (eye and last_tick mutated by this call)
  * @param aspect Framebuffer width / height
- * @param dt     Frame delta in seconds
  * @return ViewTransform ready for push constant upload
  */
-[[nodiscard]] ViewTransform compute_view_transform(
-    NavigationState& state,
-    float aspect,
-    float dt = 1.0F / 60.0F);
+[[nodiscard]] ViewTransform compute_view_transform(NavigationState& state, float aspect);
 
 /**
  * @brief Apply a mouse delta to yaw and pitch.
