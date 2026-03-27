@@ -18,6 +18,8 @@ class Window;
 
 namespace MayaFlux::Buffers {
 
+class RenderProcessor;
+
 /**
  * @struct VKBufferResources
  * @brief Raw Vulkan handles owned by a VKBuffer instance.
@@ -538,6 +540,15 @@ public:
      * @brief Check if this buffer requires depth attachment for rendering
      */
     [[nodiscard]] bool needs_depth_attachment() const { return m_needs_depth; }
+
+    /**
+     * @brief Get a RenderProcessor suitable for rendering this buffer
+     * @return Shared pointer to a RenderProcessor, or nullptr if not renderable
+     *
+     * By default returns nullptr. Derived classes that support rendering should
+     * override this to return an appropriate RenderProcessor instance.
+     */
+    virtual std::shared_ptr<RenderProcessor> get_render_processor() const { return nullptr; }
 
 protected:
     /**

@@ -190,6 +190,7 @@ private:
     Portal::Graphics::DepthStencilConfig m_depth_stencil;
 
     bool m_depth_enabled {};
+    bool m_has_view_transform_slot {};
     uint32_t m_first_vertex { 0 };
     uint32_t m_vertex_count { 0 };
 
