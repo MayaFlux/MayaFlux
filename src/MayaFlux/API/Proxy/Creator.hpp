@@ -178,6 +178,27 @@ private:
     mutable CreationContext m_ctx;
 };
 
+class MAYAFLUX_API MeshGroupHandle {
+public:
+    explicit MeshGroupHandle(std::vector<std::shared_ptr<Buffers::MeshBuffer>> buffers);
+    ~MeshGroupHandle();
+
+    MeshGroupHandle& operator|(Domain d);
+
+    auto begin() { return m_buffers.begin(); }
+    auto end() { return m_buffers.end(); }
+    auto begin() const { return m_buffers.begin(); }
+    auto end() const { return m_buffers.end(); }
+
+    [[nodiscard]] bool empty() const { return m_buffers.empty(); }
+    [[nodiscard]] size_t size() const { return m_buffers.size(); }
+
+    std::shared_ptr<Buffers::MeshBuffer>& operator[](size_t i) { return m_buffers[i]; }
+
+private:
+    std::vector<std::shared_ptr<Buffers::MeshBuffer>> m_buffers;
+};
+
 class MAYAFLUX_API Creator {
 public:
 #define N(method_name, full_type_name)                                            \
@@ -218,8 +239,13 @@ public:
 
     auto read_image(const std::string& filepath) -> CreationHandle<Buffers::TextureBuffer>
     {
-        auto buffer = load_buffer(filepath);
+        auto buffer = load_image_buffer(filepath);
         return CreationHandle<Buffers::TextureBuffer>(buffer);
+    }
+
+    auto read_mesh(const std::string& filepath) -> MeshGroupHandle
+    {
+        return MeshGroupHandle(load_mesh_buffers(filepath));
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -268,7 +294,8 @@ public:
 
 private:
     std::shared_ptr<Kakshya::SoundFileContainer> load_sound_container(const std::string& filepath);
-    std::shared_ptr<Buffers::TextureBuffer> load_buffer(const std::string& filepath);
+    std::shared_ptr<Buffers::TextureBuffer> load_image_buffer(const std::string& filepath);
+    std::vector<std::shared_ptr<Buffers::MeshBuffer>> load_mesh_buffers(const std::string& filepath);
 };
 
 template <typename T>

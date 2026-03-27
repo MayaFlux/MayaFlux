@@ -5,6 +5,7 @@
 #include "MayaFlux/API/Input.hpp"
 
 #include "MayaFlux/Buffers/AudioBuffer.hpp"
+#include "MayaFlux/Buffers/Geometry/MeshBuffer.hpp"
 #include "MayaFlux/Buffers/VKBuffer.hpp"
 #include "MayaFlux/IO/IOManager.hpp"
 #include "MayaFlux/Kakshya/Source/SoundFileContainer.hpp"
@@ -102,6 +103,24 @@ std::shared_ptr<Kakshya::SoundFileContainer> Creator::load_sound_container(const
     return get_io_manager()->load_audio(filepath);
 }
 
+MeshGroupHandle::MeshGroupHandle(
+    std::vector<std::shared_ptr<Buffers::MeshBuffer>> buffers)
+    : m_buffers(std::move(buffers))
+{
+}
+
+MeshGroupHandle::~MeshGroupHandle() = default;
+
+MeshGroupHandle& MeshGroupHandle::operator|(Domain d)
+{
+    CreationContext ctx(d);
+    for (const auto& buf : m_buffers) {
+        register_buffer(
+            std::static_pointer_cast<Buffers::Buffer>(buf), ctx);
+    }
+    return *this;
+}
+
 std::shared_ptr<Nodes::Node> operator|(const std::shared_ptr<Nodes::Node>& node, Domain d)
 {
     CreationContext ctx(d);
@@ -123,9 +142,14 @@ std::shared_ptr<Buffers::Buffer> operator|(const std::shared_ptr<Buffers::Buffer
     return buffer;
 }
 
-std::shared_ptr<Buffers::TextureBuffer> Creator::load_buffer(const std::string& filepath)
+std::shared_ptr<Buffers::TextureBuffer> Creator::load_image_buffer(const std::string& filepath)
 {
     return get_io_manager()->load_image(filepath);
+}
+
+std::vector<std::shared_ptr<Buffers::MeshBuffer>> Creator::load_mesh_buffers(const std::string& filepath)
+{
+    return get_io_manager()->load_mesh(filepath);
 }
 
 std::shared_ptr<Nodes::Input::HIDNode> Creator::read_hid(
