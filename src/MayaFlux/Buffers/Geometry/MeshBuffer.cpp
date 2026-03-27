@@ -3,6 +3,7 @@
 
 #include "MayaFlux/Buffers/BufferProcessingChain.hpp"
 #include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
+#include "MayaFlux/Core/Backends/Graphics/Vulkan/VKImage.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux::Buffers {
@@ -30,7 +31,6 @@ MeshBuffer::MeshBuffer(Kakshya::MeshData data)
 
     RenderConfig defaults;
     defaults.vertex_shader = "triangle.vert.spv";
-    defaults.fragment_shader = "triangle.frag.spv";
     defaults.topology = Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST;
     set_default_render_config(defaults);
 
@@ -72,40 +72,104 @@ void MeshBuffer::setup_processors(ProcessingToken token)
 
 void MeshBuffer::setup_rendering(const RenderConfig& config)
 {
-    RenderConfig resolved = config;
+    if (!config.vertex_shader.empty()) {
+        m_render_config.vertex_shader = config.vertex_shader;
+    }
+    if (!config.fragment_shader.empty()) {
+        m_render_config.fragment_shader = config.fragment_shader;
+    }
+    if (!config.default_texture_binding.empty()) {
+        m_render_config.default_texture_binding = config.default_texture_binding;
+    }
 
-    if (resolved.vertex_shader.empty()) {
-        resolved.vertex_shader = "triangle.vert.spv";
+    if (!m_render_config.default_texture_binding.empty()
+        && m_diffuse_binding != m_render_config.default_texture_binding) {
+        m_diffuse_binding = m_render_config.default_texture_binding;
     }
-    if (resolved.fragment_shader.empty()) {
-        resolved.fragment_shader = "triangle.frag.spv";
+
+    m_render_config.target_window = config.target_window;
+    m_render_config.topology = Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST;
+
+    if (!config.additional_textures.empty()) {
+        for (const auto& [name, texture] : config.additional_textures) {
+            m_render_config.additional_textures.emplace_back(name, texture);
+        }
     }
-    resolved.topology = Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST;
+
+    const bool textured = m_diffuse_texture != nullptr
+        || !m_render_config.default_texture_binding.empty();
+
+    if (m_render_config.fragment_shader.empty()) {
+        m_render_config.fragment_shader = textured
+            ? "mesh_textured.frag.spv"
+            : "triangle.frag.spv";
+    }
 
     if (!m_render_processor) {
-        m_render_processor = std::make_shared<RenderProcessor>(ShaderConfig { resolved.vertex_shader });
-    } else {
-        m_render_processor->set_shader(resolved.vertex_shader);
+        ShaderConfig sc { m_render_config.vertex_shader };
+
+        if (textured && !m_render_config.default_texture_binding.empty()) {
+            sc.bindings[m_render_config.default_texture_binding] = ShaderBinding(
+                0, 0, vk::DescriptorType::eCombinedImageSampler);
+        }
+
+        uint32_t binding_index = 1;
+        for (const auto& [name, _] : m_render_config.additional_textures) {
+            sc.bindings[name] = ShaderBinding(
+                0, binding_index++, vk::DescriptorType::eCombinedImageSampler);
+        }
+
+        m_render_processor = std::make_shared<RenderProcessor>(sc);
     }
 
-    m_render_processor->set_fragment_shader(resolved.fragment_shader);
+    m_render_processor->set_fragment_shader(m_render_config.fragment_shader);
     m_render_processor->set_target_window(
-        resolved.target_window,
+        m_render_config.target_window,
         std::dynamic_pointer_cast<VKBuffer>(shared_from_this()));
+    m_render_processor->set_primitive_topology(m_render_config.topology);
 
-    m_render_processor->set_primitive_topology(resolved.topology);
-    m_render_processor->set_polygon_mode(config.polygon_mode);
-    m_render_processor->set_cull_mode(config.cull_mode);
+    if (m_diffuse_texture && !m_render_config.default_texture_binding.empty()) {
+        m_render_processor->bind_texture(
+            m_render_config.default_texture_binding,
+            m_diffuse_texture);
+    }
+
+    for (const auto& [name, texture] : m_render_config.additional_textures) {
+        m_render_processor->bind_texture(name, texture);
+    }
 
     get_processing_chain()->add_final_processor(
         m_render_processor,
         shared_from_this());
 
-    set_default_render_config(resolved);
-
     MF_INFO(Journal::Component::Buffers, Journal::Context::Init,
-        "MeshBuffer::setup_rendering: vert={} frag={}",
-        resolved.vertex_shader, resolved.fragment_shader);
+        "MeshBuffer::setup_rendering: vert={} frag={} textured={}",
+        m_render_config.vertex_shader,
+        m_render_config.fragment_shader,
+        textured);
+}
+
+// =============================================================================
+// bind_diffuse_texture
+// =============================================================================
+
+void MeshBuffer::bind_diffuse_texture(
+    std::shared_ptr<Core::VKImage> image,
+    std::string_view binding_name)
+{
+    m_diffuse_texture = std::move(image);
+    m_diffuse_binding = std::string(binding_name);
+
+    if (m_render_processor) {
+        if (m_render_config.default_texture_binding == m_diffuse_binding) {
+            m_render_processor->bind_texture(m_diffuse_binding, m_diffuse_texture);
+        } else {
+            MF_WARN(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                "MeshBuffer::bind_diffuse_texture: pipeline was created without "
+                "binding '{}' — call before setup_rendering() for correct results",
+                m_diffuse_binding);
+        }
+    }
 }
 
 // =============================================================================

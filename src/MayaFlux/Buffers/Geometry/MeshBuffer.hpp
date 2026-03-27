@@ -4,6 +4,10 @@
 #include "MayaFlux/Kakshya/NDData/MeshAccess.hpp"
 #include "MayaFlux/Kakshya/NDData/MeshData.hpp"
 
+namespace MayaFlux::Core {
+class VKImage;
+}
+
 namespace MayaFlux::Buffers {
 
 class MeshProcessor;
@@ -173,10 +177,29 @@ public:
         return m_render_processor;
     }
 
+    /**
+     * @brief Bind a diffuse texture to the render processor, if present.
+     *
+     * The binding name must match a descriptor slot in the shader. If the
+     * render processor is not yet created, the texture will be bound on
+     * creation if the default_texture_binding matches.
+     */
+    void bind_diffuse_texture(
+        std::shared_ptr<Core::VKImage> image,
+        std::string_view binding_name = "diffuseTex");
+
+    /* Check if a diffuse texture is bound. */
+    [[nodiscard]] bool has_diffuse_texture() const noexcept { return m_diffuse_texture != nullptr; }
+
+    /* Diffuse texture is optional, so may return nullptr. */
+    [[nodiscard]] std::shared_ptr<Core::VKImage> get_diffuse_texture() const noexcept { return m_diffuse_texture; }
+
 private:
     friend class MeshProcessor;
 
     Kakshya::MeshData m_mesh_data;
+    std::shared_ptr<Core::VKImage> m_diffuse_texture;
+    std::string m_diffuse_binding { "diffuseTex" };
 
     std::atomic<bool> m_vertices_dirty { true };
     std::atomic<bool> m_indices_dirty { true };
