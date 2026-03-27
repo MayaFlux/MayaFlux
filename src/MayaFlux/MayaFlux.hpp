@@ -22,6 +22,8 @@
 
 #include "MayaFlux/API/Windowing.hpp"
 
+#include "MayaFlux/API/ViewportPreset.hpp"
+
 #include "MayaFlux/API/Yantra.hpp"
 
 #include "MayaFlux/API/Proxy/Creator.hpp"
