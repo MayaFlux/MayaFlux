@@ -68,6 +68,7 @@
 #include "Buffers/Container/VideoContainerBuffer.hpp"
 #include "Buffers/Geometry/GeometryBuffer.hpp"
 #include "Buffers/Geometry/GeometryWriteProcessor.hpp"
+#include "Buffers/Geometry/MeshBuffer.hpp"
 #include "Buffers/Network/NetworkAudioBuffer.hpp"
 #include "Buffers/Network/NetworkGeometryBuffer.hpp"
 #include "Buffers/Network/NetworkTextureBuffer.hpp"
