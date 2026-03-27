@@ -18,6 +18,10 @@ namespace MayaFlux::Buffers {
  *
  * Behavior:
  * - Uploads ALL bound geometries to their target vertex buffers
+ * - Uploads index data to a separate Usage::INDEX VKBuffer when the node
+ *   carries indices; index buffer is created lazily on first appearance.
+ * - Staging buffers are created automatically for device-local targets
+ *   (both vertex and index paths).
  * - If target is device-local: uses staging buffer (auto-created)
  * - If target is host-visible: direct upload (no staging)
  * - If attached buffer is one of the targets: uploads its geometry
@@ -37,13 +41,23 @@ namespace MayaFlux::Buffers {
 class MAYAFLUX_API GeometryBindingsProcessor : public VKBufferProcessor {
 public:
     GeometryBindingsProcessor();
+
     /**
-     * @brief Structure representing a geometry binding
+     * @struct GeometryBinding
+     * @brief Holds GPU resources for one GeometryWriterNode binding.
+     *
+     * Index buffer and its staging are created lazily in bind_geometry_node()
+     * when the node already carries index data, and in processing_function()
+     * on the first frame that index data appears. Both are null for non-indexed
+     * geometry; RenderProcessor queries has_index_buffer() before deciding
+     * which draw path to use.
      */
     struct GeometryBinding {
         std::shared_ptr<Nodes::GpuSync::GeometryWriterNode> node;
-        std::shared_ptr<VKBuffer> gpu_vertex_buffer; // Target vertex buffer
-        std::shared_ptr<VKBuffer> staging_buffer; // Staging (only if device-local)
+        std::shared_ptr<VKBuffer> gpu_vertex_buffer;
+        std::shared_ptr<VKBuffer> staging_buffer;
+        std::shared_ptr<VKBuffer> gpu_index_buffer;
+        std::shared_ptr<VKBuffer> index_staging_buffer;
     };
 
     /**
@@ -103,6 +117,14 @@ public:
 
 private:
     std::unordered_map<std::string, GeometryBinding> m_bindings;
+
+    /**
+     * @brief Upload index data for one binding, creating or growing the
+     *        GPU index buffer as needed.
+     * @param name    Logical binding name (for diagnostics only).
+     * @param binding Binding to operate on.
+     */
+    void upload_index_data(const std::string& name, GeometryBinding& binding);
 };
 
 } // namespace MayaFlux::Buffers
