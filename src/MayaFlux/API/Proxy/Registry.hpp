@@ -20,6 +20,7 @@ namespace Nodes {
         class ComputeOutNode;
         class TextureNode;
         class GeometryWriterNode;
+        class MeshWriterNode;
         class PointNode;
         class PointCollectionNode;
         class ProceduralTextureNode;
@@ -59,6 +60,7 @@ namespace Buffers {
     class NodeTextureBuffer;
     class TextureBuffer;
     class GeometryBuffer;
+    class MeshBuffer;
     class NetworkGeometryBuffer;
     class NetworkTextureBuffer;
     class NetworkAudioBuffer;
@@ -93,6 +95,7 @@ namespace IO {
     N(ComputeOutNode, MayaFlux::Nodes::GpuSync::ComputeOutNode)               \
     N(TextureNode, MayaFlux::Nodes::GpuSync::TextureNode)                     \
     N(GeometryWriterNode, MayaFlux::Nodes::GpuSync::GeometryWriterNode)       \
+    N(MeshWriterNode, MayaFlux::Nodes::GpuSync::MeshWriterNode)               \
     N(PointNode, MayaFlux::Nodes::GpuSync::PointNode)                         \
     N(PathGeneratorNode, MayaFlux::Nodes::GpuSync::PathGeneratorNode)         \
     N(PointCollectionNode, MayaFlux::Nodes::GpuSync::PointCollectionNode)     \
@@ -117,6 +120,7 @@ namespace IO {
     B(NodeTextureBuffer, MayaFlux::Buffers::NodeTextureBuffer)         \
     B(TextureBuffer, MayaFlux::Buffers::TextureBuffer)                 \
     B(GeometryBuffer, MayaFlux::Buffers::GeometryBuffer)               \
+    B(MeshBuffer, MayaFlux::Buffers::MeshBuffer)                       \
     B(NetworkGeometryBuffer, MayaFlux::Buffers::NetworkGeometryBuffer) \
     B(NetworkTextureBuffer, MayaFlux::Buffers::NetworkTextureBuffer)   \
     B(NetworkAudioBuffer, MayaFlux::Buffers::NetworkAudioBuffer)

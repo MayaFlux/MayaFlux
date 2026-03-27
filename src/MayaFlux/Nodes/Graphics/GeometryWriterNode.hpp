@@ -69,6 +69,9 @@ protected:
     /// @brief Vertex data buffer (flat array of bytes)
     std::vector<uint8_t> m_vertex_buffer;
 
+    /// @brief Optional index buffer for indexed drawing (not used by default)
+    std::vector<uint32_t> m_index_buffer;
+
     /// @brief Number of vertices in buffer
     uint32_t m_vertex_count {};
 
@@ -116,6 +119,14 @@ public:
     [[nodiscard]] std::span<const uint8_t> get_vertex_data() const { return m_vertex_buffer; }
 
     /**
+     * @brief Get raw index buffer data
+     * @return Span of uint32_t indices
+     *
+     * Only valid if set_indices() has been called. Otherwise returns empty span.
+     */
+    [[nodiscard]] std::span<const uint32_t> get_index_data() const;
+
+    /**
      * @brief Get vertex buffer size in bytes
      * @return Total size of vertex data buffer
      */
@@ -132,6 +143,20 @@ public:
      * @return Stride in bytes
      */
     [[nodiscard]] size_t get_vertex_stride() const { return m_vertex_stride; }
+
+    /**
+     * @brief Get number of indices in index buffer
+     * @return Current index count
+     *
+     * Only valid if set_indices() has been called. Otherwise returns 0.
+     */
+    [[nodiscard]] uint32_t get_index_count() const { return static_cast<uint32_t>(m_index_buffer.size()); }
+
+    /**
+     * @brief Check if index buffer has been set
+     * @return True if index buffer contains data
+     */
+    [[nodiscard]] bool has_indices() const { return !m_index_buffer.empty(); }
 
     /**
      * @brief Set vertex stride (bytes per vertex)
@@ -199,6 +224,14 @@ public:
         m_needs_layout_update = true;
         m_vertex_data_dirty = true;
     }
+
+    /**
+     * @brief Set index buffer for indexed drawing
+     * @param indices Span of uint32_t indices
+     *
+     * Optional: only needed if using indexed draw calls.
+     */
+    void set_indices(std::span<const uint32_t> indices);
 
     /**
      * @brief Set a single vertex by index from typed data
@@ -364,6 +397,7 @@ protected:
 private:
     struct GeometryState {
         std::vector<uint8_t> vertex_buffer;
+        std::vector<uint32_t> index_buffer;
         uint32_t vertex_count;
         size_t vertex_stride;
         std::optional<Kakshya::VertexLayout> vertex_layout;

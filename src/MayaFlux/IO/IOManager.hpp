@@ -14,6 +14,7 @@ namespace MayaFlux::Buffers {
 class VideoContainerBuffer;
 class SoundContainerBuffer;
 class TextureBuffer;
+class MeshBuffer;
 class BufferManager;
 }
 
@@ -24,6 +25,7 @@ class IOService;
 namespace MayaFlux::IO {
 
 class ImageReader;
+class ModelReader;
 
 struct LoadConfig {
     FileReadOptions file_options { FileReadOptions::EXTRACT_METADATA | FileReadOptions::EXTRACT_REGIONS };
@@ -313,6 +315,27 @@ public:
     [[nodiscard]] std::shared_ptr<Buffers::TextureBuffer>
     load_image(const std::string& filepath);
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // Mesh — load
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * @brief Load all meshes from a 3D model file into MeshBuffer instances.
+     *
+     * Opens the file via ModelReader, extracts all aiMesh entries as MeshData,
+     * constructs one MeshBuffer per mesh, calls setup_processors() on each,
+     * and returns them. setup_rendering() is left to the caller so window
+     * targeting and optional texture binding remain explicit.
+     *
+     * Returns an empty vector on failure; individual mesh extraction errors
+     * are logged and skipped rather than aborting the entire load.
+     *
+     * @param filepath Path to the model file (glTF, FBX, OBJ, PLY, etc.).
+     * @return One MeshBuffer per mesh in scene order, or empty on failure.
+     */
+    [[nodiscard]] std::vector<std::shared_ptr<Buffers::MeshBuffer>>
+    load_mesh(const std::string& filepath);
+
 private:
     uint64_t m_sample_rate;
 
@@ -349,6 +372,8 @@ private:
     std::vector<std::shared_ptr<SoundFileReader>> m_audio_readers;
 
     std::vector<std::shared_ptr<ImageReader>> m_image_readers;
+
+    std::vector<std::shared_ptr<ModelReader>> m_model_readers;
 
     // ── Stored buffers ─────────────────────────────────────────────────────
 

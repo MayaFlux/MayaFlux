@@ -14,7 +14,9 @@
 #include "MayaFlux/Buffers/Container/VideoContainerBuffer.hpp"
 #include "MayaFlux/Buffers/Textures/TextureBuffer.hpp"
 
+#include "MayaFlux/Buffers/Geometry/MeshBuffer.hpp"
 #include "MayaFlux/IO/ImageReader.hpp"
+#include "MayaFlux/IO/ModelReader.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
@@ -320,6 +322,41 @@ IOManager::load_image(const std::string& filepath)
         texture_buffer->get_height());
 
     return texture_buffer;
+}
+
+std::vector<std::shared_ptr<Buffers::MeshBuffer>>
+IOManager::load_mesh(const std::string& filepath)
+{
+    auto reader = std::make_shared<ModelReader>();
+
+    if (!reader->can_read(filepath)) {
+        MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
+            "IOManager::load_mesh: unsupported format '{}'", filepath);
+        return {};
+    }
+
+    if (!reader->open(filepath)) {
+        MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
+            "IOManager::load_mesh: failed to open '{}' — {}",
+            filepath, reader->get_last_error());
+        return {};
+    }
+
+    auto buffers = reader->create_mesh_buffers();
+    reader->close();
+
+    if (buffers.empty()) {
+        MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
+            "IOManager::load_mesh: no meshes in '{}'", filepath);
+        return {};
+    }
+
+    MF_INFO(Journal::Component::API, Journal::Context::FileIO,
+        "IOManager::load_mesh: {} mesh(es) from '{}'",
+        buffers.size(),
+        std::filesystem::path(filepath).filename().string());
+
+    return buffers;
 }
 
 void IOManager::configure_frame_processor(

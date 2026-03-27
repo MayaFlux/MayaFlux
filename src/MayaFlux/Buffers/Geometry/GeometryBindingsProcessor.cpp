@@ -3,6 +3,7 @@
 #include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Nodes/Graphics/GeometryWriterNode.hpp"
+#include "MayaFlux/Registry/Service/BufferService.hpp"
 
 namespace MayaFlux::Buffers {
 
@@ -55,15 +56,43 @@ void GeometryBindingsProcessor::bind_geometry_node(
             "No staging needed for host-visible geometry '{}'", name);
     }
 
+    std::shared_ptr<VKBuffer> index_buf = nullptr;
+    std::shared_ptr<VKBuffer> index_staging_buf = nullptr;
+
+    if (node->has_indices()) {
+        const size_t index_data_size = node->get_index_count() * sizeof(uint32_t);
+        index_buf = std::make_shared<VKBuffer>(
+            index_data_size,
+            VKBuffer::Usage::INDEX,
+            Kakshya::DataModality::UNKNOWN);
+
+        if (!m_buffer_service) {
+            error<std::runtime_error>(
+                Journal::Component::Buffers,
+                Journal::Context::BufferProcessing,
+                std::source_location::current(),
+                "bind_geometry_node: BufferService unavailable for index buffer '{}'", name);
+        }
+        m_buffer_service->initialize_buffer(index_buf);
+
+        index_staging_buf = create_staging_buffer(index_data_size);
+        MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "Created index staging buffer for device-local geometry '{}' ({} bytes)",
+            name, index_data_size);
+    }
+
     m_bindings[name] = GeometryBinding {
         .node = node,
         .gpu_vertex_buffer = vertex_buffer,
-        .staging_buffer = staging
+        .staging_buffer = staging,
+        .gpu_index_buffer = index_buf,
+        .index_staging_buffer = index_staging_buf
     };
 
     MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-        "Bound geometry node '{}' ({} vertices, {} bytes, stride: {})",
-        name, node->get_vertex_count(), vertex_data_size, node->get_vertex_stride());
+        "Bound geometry node '{}' ({} vertices, {} bytes, stride: {}, indices: {})",
+        name, node->get_vertex_count(), vertex_data_size, node->get_vertex_stride(),
+        node->get_index_count());
 }
 
 void GeometryBindingsProcessor::unbind_geometry_node(const std::string& name)
@@ -148,7 +177,7 @@ void GeometryBindingsProcessor::processing_function(const std::shared_ptr<Buffer
         size_t available_size = binding.gpu_vertex_buffer->get_size_bytes();
 
         if (required_size > available_size) {
-            auto new_size = static_cast<size_t>(required_size * 1.5F);
+            auto new_size = static_cast<size_t>((float)required_size * 1.5F);
 
             MF_RT_TRACE(Journal::Component::Buffers, Journal::Context::BufferProcessing,
                 "Geometry '{}' growing: resizing GPU buffer from {} → {} bytes",
@@ -187,6 +216,8 @@ void GeometryBindingsProcessor::processing_function(const std::shared_ptr<Buffer
                 "RenderProcessor may fail without layout info.",
                 name);
         }
+
+        upload_index_data(name, binding);
         binding.node->clear_gpu_update_flag();
     }
 
@@ -208,7 +239,7 @@ void GeometryBindingsProcessor::processing_function(const std::shared_ptr<Buffer
                 size_t available_size = vk_buffer->get_size_bytes();
 
                 if (required_size > available_size) {
-                    auto new_size = static_cast<size_t>(required_size * 1.5F);
+                    auto new_size = static_cast<size_t>((float)required_size * 1.5F);
 
                     MF_INFO(Journal::Component::Buffers, Journal::Context::BufferProcessing,
                         "Fallback geometry growing: resizing GPU buffer from {} → {} bytes",
@@ -233,9 +264,73 @@ void GeometryBindingsProcessor::processing_function(const std::shared_ptr<Buffer
                         first_binding.node->get_vertex_layout().value());
                 }
             }
+            upload_index_data(m_bindings.begin()->first, first_binding);
             first_binding.node->clear_gpu_update_flag();
         }
     }
+}
+
+void GeometryBindingsProcessor::upload_index_data(
+    const std::string& name,
+    GeometryBinding& binding)
+{
+    if (!binding.node->has_indices()) {
+        return;
+    }
+
+    const auto indices = binding.node->get_index_data();
+    const size_t required = indices.size_bytes();
+
+    if (required == 0) {
+        return;
+    }
+
+    if (!binding.gpu_index_buffer) {
+        binding.gpu_index_buffer = std::make_shared<VKBuffer>(
+            required,
+            VKBuffer::Usage::INDEX,
+            Kakshya::DataModality::UNKNOWN);
+
+        if (!m_buffer_service) {
+            MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                "upload_index_data: BufferService unavailable for '{}'", name);
+            binding.gpu_index_buffer = nullptr;
+            return;
+        }
+        m_buffer_service->initialize_buffer(binding.gpu_index_buffer);
+
+        binding.index_staging_buffer = create_staging_buffer(required);
+
+        MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "Lazily created index buffer for '{}' ({} bytes)", name, required);
+    }
+
+    if (required > binding.gpu_index_buffer->get_size_bytes()) {
+        const auto new_size = static_cast<size_t>((float)required * 1.5F);
+        binding.gpu_index_buffer->resize(new_size, false);
+
+        if (binding.index_staging_buffer) {
+            binding.index_staging_buffer->resize(new_size, false);
+        }
+
+        MF_RT_TRACE(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "Resized index buffer for '{}' to {} bytes", name, new_size);
+    }
+
+    upload_to_gpu(
+        indices.data(),
+        required,
+        binding.gpu_index_buffer,
+        binding.index_staging_buffer);
+
+    binding.gpu_vertex_buffer->set_index_resources(
+        binding.gpu_index_buffer->get_buffer(),
+        binding.gpu_index_buffer->get_buffer_resources().memory,
+        binding.gpu_index_buffer->get_size_bytes());
+
+    MF_RT_TRACE(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+        "Uploaded {} indices ({} bytes) for '{}'",
+        binding.node->get_index_count(), required, name);
 }
 
 } // namespace MayaFlux::Buffers

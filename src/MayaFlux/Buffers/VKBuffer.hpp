@@ -18,10 +18,23 @@ class Window;
 
 namespace MayaFlux::Buffers {
 
+/**
+ * @struct VKBufferResources
+ * @brief Raw Vulkan handles owned by a VKBuffer instance.
+ *
+ * The index_buffer / index_memory / index_size_bytes fields are populated
+ * by GeometryBindingsProcessor after index data upload and consumed by
+ * RenderProcessor to select the indexed draw path. They are null/zero for
+ * all non-indexed geometry; no separate allocation object is required.
+ */
 struct VKBufferResources {
     vk::Buffer buffer;
     vk::DeviceMemory memory;
-    void* mapped_ptr;
+    void* mapped_ptr { nullptr };
+
+    vk::Buffer index_buffer;
+    vk::DeviceMemory index_memory;
+    size_t index_size_bytes { 0 };
 };
 
 using RenderPipelineID = uint64_t;
@@ -284,8 +297,47 @@ public:
         m_resources = resources;
     }
 
+    /**
+     * @brief Store raw index buffer handles produced by the geometry upload path.
+     *
+     * Called by GeometryBindingsProcessor after allocating and uploading index
+     * data. Overwrites any previously stored handles. Pass null handles and
+     * zero size to clear (non-indexed geometry).
+     *
+     * @param buf   Allocated vk::Buffer with INDEX usage flags.
+     * @param mem   Backing vk::DeviceMemory.
+     * @param size  Byte size of the index buffer.
+     */
+    void set_index_resources(vk::Buffer buf, vk::DeviceMemory mem, size_t size)
+    {
+        m_resources.index_buffer = buf;
+        m_resources.index_memory = mem;
+        m_resources.index_size_bytes = size;
+    }
+
     /** Get all buffer resources at once */
     inline const VKBufferResources& get_buffer_resources() { return m_resources; }
+
+    /**
+     * @brief Return the raw index buffer handle.
+     * @return vk::Buffer; operator bool() returns false when non-indexed.
+     */
+    [[nodiscard]] vk::Buffer get_index_buffer() const { return m_resources.index_buffer; }
+
+    /**
+     * @brief Number of bytes in the index buffer.
+     * @return Byte count; divide by sizeof(uint32_t) for index count.
+     *         Zero when non-indexed.
+     */
+    [[nodiscard]] size_t get_index_buffer_size() const { return m_resources.index_size_bytes; }
+
+    /**
+     * @brief True when an index buffer has been associated with this buffer.
+     */
+    [[nodiscard]] bool has_index_buffer() const
+    {
+        return static_cast<bool>(m_resources.index_buffer);
+    }
 
     /**
      * @brief Whether this VKBuffer should be host-visible

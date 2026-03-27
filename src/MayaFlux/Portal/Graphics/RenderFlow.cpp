@@ -22,7 +22,7 @@ namespace {
      * @param layout Semantic vertex layout
      * @return Tuple of (bindings, attributes)
      */
-    static std::pair<
+    std::pair<
         std::vector<Core::VertexBinding>,
         std::vector<Core::VertexAttribute>>
     translate_semantic_layout(const Kakshya::VertexLayout& layout)
@@ -735,24 +735,6 @@ void RenderFlow::bind_vertex_buffers(
     vk_buffers.reserve(buffers.size());
     for (const auto& buf : buffers) {
         vk_buffers.push_back(buf->get_buffer());
-
-        /* void* mapped = buf->get_mapped_ptr();
-        if (mapped) {
-            float* data = reinterpret_cast<float*>(mapped);
-            MF_PRINT(Journal::Component::Portal, Journal::Context::Rendering,
-                "BIND_VERTEX: All vertex data:");
-            for (int v = 0; v < 3; ++v) {
-                int offset = v * 6; // 24 bytes / 4 bytes per float = 6 floats per vertex
-                MF_PRINT(Journal::Component::Portal, Journal::Context::Rendering,
-                    "  Vertex {}: pos=({}, {}, {}), color=({}, {}, {})",
-                    v,
-                    data[offset], data[offset + 1], data[offset + 2],
-                    data[offset + 3], data[offset + 4], data[offset + 5]);
-            }
-        } else {
-            MF_RT_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
-                "BIND_VERTEX: Buffer not host-mapped!");
-        } */
     }
 
     cmd.bindVertexBuffers(first_binding, vk_buffers, offsets);
@@ -770,7 +752,7 @@ void RenderFlow::bind_index_buffer(
         return;
     }
 
-    cmd.bindIndexBuffer(buffer->get_buffer(), 0, index_type);
+    cmd.bindIndexBuffer(buffer->get_index_buffer(), 0, index_type);
 }
 
 void RenderFlow::bind_descriptor_sets(

@@ -59,7 +59,13 @@ void GeometryBuffer::setup_rendering(const RenderConfig& config)
 {
     RenderConfig resolved_config = config;
 
-    switch (config.topology) {
+    if (resolved_config.topology == Portal::Graphics::PrimitiveTopology::POINT_LIST
+        && m_geometry_node->get_primitive_topology()
+            != Portal::Graphics::PrimitiveTopology::POINT_LIST) {
+        resolved_config.topology = m_geometry_node->get_primitive_topology();
+    }
+
+    switch (resolved_config.topology) {
     case Portal::Graphics::PrimitiveTopology::POINT_LIST:
         if (config.vertex_shader.empty())
             resolved_config.vertex_shader = "point.vert.spv";

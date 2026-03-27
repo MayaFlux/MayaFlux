@@ -41,6 +41,7 @@ if(WIN32)
     find_package(hidapi CONFIG REQUIRED)
     find_package(rtmidi CONFIG REQUIRED)
     find_package(asio CONFIG REQUIRED)
+    find_package(assimp CONFIG REQUIRED)
     find_package(LLVM CONFIG REQUIRED HINTS "$ENV{LLVM_DIR}")
     find_package(Clang CONFIG REQUIRED HINTS "$ENV{Clang_DIR}")
 
@@ -141,6 +142,7 @@ else()
     pkg_check_modules(magic_enum REQUIRED IMPORTED_TARGET magic_enum)
     pkg_check_modules(RtMidi QUIET IMPORTED_TARGET rtmidi)
     pkg_check_modules(Asio REQUIRED IMPORTED_TARGET asio)
+    pkg_check_modules(Assimp REQUIRED IMPORTED_TARGET assimp)
 
     pkg_check_modules(LIBAVCODEC REQUIRED IMPORTED_TARGET libavcodec)
     pkg_check_modules(LIBAVFORMAT REQUIRED IMPORTED_TARGET libavformat)
@@ -223,6 +225,7 @@ if(NOT TARGET MayaFlux::MayaFluxLib)
             hidapi::hidapi
             RtMidi::rtmidi
             asio::asio
+            assimp::assimp
             gdi32
             user32
             shell32
@@ -245,6 +248,7 @@ if(NOT TARGET MayaFlux::MayaFluxLib)
             PkgConfig::HIDAPI
             PkgConfig::RtMidi
             PkgConfig::Asio
+            PkgConfig::Assimp
             glm::glm
             spirv-cross-core
             spirv-cross-cpp

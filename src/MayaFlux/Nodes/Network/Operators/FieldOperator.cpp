@@ -43,6 +43,15 @@ void FieldOperator::initialize(const std::vector<LineVertex>& vertices)
         "FieldOperator initialized with {} LineVertex", vertices.size());
 }
 
+void FieldOperator::initialize(const std::vector<MeshVertex>& vertices)
+{
+    m_vertex_type = VertexType::MESH;
+    store_reference(vertices.data(), vertices.size());
+
+    MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
+        "FieldOperator initialized with {} MeshVertex", vertices.size());
+}
+
 // =========================================================================
 // Processing
 // =========================================================================
@@ -254,6 +263,9 @@ Kakshya::VertexLayout FieldOperator::get_vertex_layout() const
     case VertexType::LINE:
         layout = Kakshya::VertexLayout::for_lines(k_stride);
         break;
+    case VertexType::MESH:
+        layout = Kakshya::VertexLayout::for_meshes(k_stride);
+        break;
     default:
         return {};
     }
@@ -288,6 +300,8 @@ const char* FieldOperator::get_vertex_type_name() const
         return "PointVertex";
     case VertexType::LINE:
         return "LineVertex";
+    case VertexType::MESH:
+        return "MeshVertex";
     default:
         return "Unknown";
     }
@@ -304,6 +318,15 @@ std::vector<LineVertex> FieldOperator::extract_line_vertices() const
 {
     std::vector<LineVertex> result(m_count);
     std::memcpy(result.data(), m_vertex_data.data(), m_count * k_stride);
+    return result;
+}
+
+std::vector<MeshVertex> FieldOperator::extract_mesh_vertices() const
+{
+    std::vector<MeshVertex> result(m_count);
+    if (m_count > 0) {
+        std::memcpy(result.data(), m_vertex_data.data(), m_count * k_stride);
+    }
     return result;
 }
 

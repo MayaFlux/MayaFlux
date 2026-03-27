@@ -36,6 +36,7 @@ BuildRequires:  vulkan-loader-devel
 BuildRequires:  vulkan-tools
 BuildRequires:  vulkan-validation-layers
 BuildRequires:  ffmpeg-free-devel
+BuildRequires:  assimp-devel
 BuildRequires:  stb-devel
 BuildRequires:  magic_enum-devel
 BuildRequires:  tbb-devel
@@ -70,6 +71,7 @@ Requires:       vulkan-loader-devel
 Requires:       vulkan-tools
 Requires:       vulkan-validation-layers
 Requires:       ffmpeg-free-devel
+Requires:       assimp-devel
 Requires:       stb-devel
 Requires:       magic_enum-devel
 Requires:       tbb-devel

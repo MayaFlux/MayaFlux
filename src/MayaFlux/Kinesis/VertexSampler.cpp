@@ -417,4 +417,16 @@ std::vector<Nodes::LineVertex> to_line_vertices(
     return out;
 }
 
+std::vector<Nodes::MeshVertex> to_mesh_vertices(
+    std::span<const SampleResult> samples,
+    glm::vec2 weight_range)
+{
+    std::vector<Nodes::MeshVertex> out;
+    out.reserve(samples.size());
+    for (const auto& s : samples) {
+        out.push_back(to_mesh_vertex(s, weight_range));
+    }
+    return out;
+}
+
 } // namespace MayaFlux::Kinesis

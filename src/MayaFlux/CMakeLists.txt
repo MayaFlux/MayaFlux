@@ -108,6 +108,7 @@ if(WIN32)
         hidapi::hidapi
         RtMidi::rtmidi
         asio::asio
+        assimp::assimp
         gdi32
         user32
         shell32
@@ -134,6 +135,7 @@ else()
         PkgConfig::HIDAPI
         PkgConfig::RtMidi
         PkgConfig::Asio
+        PkgConfig::Assimp
         PkgConfig::LIBAVCODEC
         PkgConfig::LIBAVFORMAT
         PkgConfig::LIBAVUTIL
