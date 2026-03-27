@@ -78,6 +78,7 @@ jobs:
           tools: >
             rtaudio
             ffmpeg
+            assimp
             shaderc
             googletest
             pkg-config

@@ -48,6 +48,7 @@ install_arch() {
         "vulkan-utility-libraries"
         "vulkan-validation-layers"
         "ffmpeg"
+        "assimp"
         "stb"
         "hidapi"
         "rtmidi"
@@ -91,6 +92,7 @@ install_fedora() {
         "vulkan-tools"
         "vulkan-validation-layers"
         "ffmpeg-free-devel"
+        "assimp-devel"
         "stb-devel"
         "magic_enum-devel"
         "tbb-devel"
@@ -141,6 +143,7 @@ install_ubuntu() {
         "libstb-dev"
         "librtaudio-dev"
         "ffmpeg"
+        "libassimp"-dev
         "libavcodec-dev"
         "libavformat-dev"
         "libswscale-dev"

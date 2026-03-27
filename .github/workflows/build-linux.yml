@@ -76,6 +76,7 @@ jobs:
             vulkan-tools \
             vulkan-validation-layers \
             ffmpeg-free-devel \
+            assimp-devel \
             stb-devel \
             magic_enum-devel \
             tbb-devel \

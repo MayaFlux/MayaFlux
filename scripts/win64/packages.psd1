@@ -52,6 +52,7 @@
         rtaudio    = @{}
         rtmidi     = @{}
         asio       = @{}
+        assimp     = @{}
     }
 
     SpecialPackages    = @{
