@@ -522,7 +522,14 @@ void RenderProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
         draw_count = current_layout->vertex_count;
     }
 
-    flow.draw(cmd_id, draw_count, 1, m_first_vertex, 0);
+    if (buffer->has_index_buffer()) {
+        const auto index_count = static_cast<uint32_t>(
+            buffer->get_index_buffer_size() / sizeof(uint32_t));
+        flow.bind_index_buffer(cmd_id, buffer);
+        flow.draw_indexed(cmd_id, index_count, 1, 0, 0, 0);
+    } else {
+        flow.draw(cmd_id, draw_count, 1, m_first_vertex, 0);
+    }
 
     foundry.end_commands(cmd_id);
 
