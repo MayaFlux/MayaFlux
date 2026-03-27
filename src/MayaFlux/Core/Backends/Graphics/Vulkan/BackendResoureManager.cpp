@@ -174,24 +174,32 @@ void BackendResourceManager::cleanup_buffer(const std::shared_ptr<Buffers::VKBuf
         return;
     }
 
-    auto& [vk_buffer, memory, mapped_ptr] = it->get()->get_buffer_resources();
+    auto& res = it->get()->get_buffer_resources();
 
-    if (mapped_ptr) {
-        m_context.get_device().unmapMemory(memory);
+    if (res.mapped_ptr) {
+        m_context.get_device().unmapMemory(res.memory);
     }
 
-    if (vk_buffer) {
-        m_context.get_device().destroyBuffer(vk_buffer);
+    if (res.index_buffer) {
+        m_context.get_device().destroyBuffer(res.index_buffer);
     }
 
-    if (memory) {
-        m_context.get_device().freeMemory(memory);
+    if (res.index_memory) {
+        m_context.get_device().freeMemory(res.index_memory);
     }
 
-    m_managed_buffers.erase(it);
+    if (res.buffer) {
+        m_context.get_device().destroyBuffer(res.buffer);
+    }
+
+    if (res.memory) {
+        m_context.get_device().freeMemory(res.memory);
+    }
 
     MF_INFO(Journal::Component::Core, Journal::Context::GraphicsBackend,
-        "VulkanBuffer cleaned up: {:p}", (void*)vk_buffer);
+        "VulkanBuffer cleaned up: {:p}", static_cast<void*>(res.buffer));
+
+    m_managed_buffers.erase(it);
 }
 
 void BackendResourceManager::flush_pending_buffer_operations()
