@@ -141,9 +141,9 @@ void WaveguideNetwork::process_batch(unsigned int num_samples)
     auto& seg = m_segments[0];
 
     if (seg.mode == WaveguideSegment::PropagationMode::UNIDIRECTIONAL) {
-        process_unidirectional(seg, num_samples);
+        process_unidirectional(seg, num_samples, scratch);
     } else {
-        process_bidirectional(seg, num_samples);
+        process_bidirectional(seg, num_samples, scratch);
     }
 
     while (m_audio_buffer_lock.test_and_set(std::memory_order_acquire))
@@ -156,7 +156,7 @@ void WaveguideNetwork::process_batch(unsigned int num_samples)
 }
 
 void WaveguideNetwork::process_unidirectional(WaveguideSegment& seg,
-    unsigned int num_samples)
+    unsigned int num_samples, std::vector<double>& out)
 {
     for (unsigned int i = 0; i < num_samples; ++i) {
         const double exciter = generate_exciter_sample();
@@ -169,13 +169,12 @@ void WaveguideNetwork::process_unidirectional(WaveguideSegment& seg,
 
         seg.p_plus.push(
             exciter + filtered * seg.loss_factor * seg.reflection_closed);
-
-        m_last_audio_buffer.push_back(observe_sample(seg));
+        out[i] = observe_sample(seg);
     }
 }
 
 void WaveguideNetwork::process_bidirectional(WaveguideSegment& seg,
-    unsigned int num_samples)
+    unsigned int num_samples, std::vector<double>& out)
 {
     for (unsigned int i = 0; i < num_samples; ++i) {
         const double exciter = generate_exciter_sample();
@@ -198,8 +197,7 @@ void WaveguideNetwork::process_bidirectional(WaveguideSegment& seg,
 
         seg.p_minus.push(filtered_plus * seg.loss_factor * seg.reflection_open);
         seg.p_plus.push(exciter + filtered_minus * seg.loss_factor * seg.reflection_closed);
-
-        m_last_audio_buffer.push_back(observe_sample(seg));
+        out[i] = observe_sample(seg);
     }
 }
 

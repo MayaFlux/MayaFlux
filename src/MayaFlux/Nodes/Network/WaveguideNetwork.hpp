@@ -426,8 +426,8 @@ private:
     void apply_broadcast_parameter(const std::string& param, double value);
     void apply_one_to_one_parameter(const std::string& param, const std::shared_ptr<NodeNetwork>& source);
 
-    void process_unidirectional(WaveguideSegment& seg, unsigned int num_samples);
-    void process_bidirectional(WaveguideSegment& seg, unsigned int num_samples);
+    void process_unidirectional(WaveguideSegment& seg, unsigned int num_samples, std::vector<double>& out);
+    void process_bidirectional(WaveguideSegment& seg, unsigned int num_samples, std::vector<double>& out);
     double observe_sample(const WaveguideSegment& seg) const;
 };
 
