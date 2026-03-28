@@ -53,6 +53,7 @@
 #include "Nodes/Network/NodeNetwork.hpp"
 #include "Nodes/NodeGraphManager.hpp"
 
+#include "MayaFlux/Nodes/Network/MeshNetwork.hpp"
 #include "MayaFlux/Nodes/Network/ModalNetwork.hpp"
 #include "MayaFlux/Nodes/Network/ParticleNetwork.hpp"
 #include "MayaFlux/Nodes/Network/PointCloudNetwork.hpp"
@@ -71,6 +72,7 @@
 #include "Buffers/Geometry/GeometryBuffer.hpp"
 #include "Buffers/Geometry/GeometryWriteProcessor.hpp"
 #include "Buffers/Geometry/MeshBuffer.hpp"
+#include "Buffers/Geometry/MeshNetworkBuffer.hpp"
 #include "Buffers/Network/NetworkAudioBuffer.hpp"
 #include "Buffers/Network/NetworkGeometryBuffer.hpp"
 #include "Buffers/Network/NetworkTextureBuffer.hpp"
