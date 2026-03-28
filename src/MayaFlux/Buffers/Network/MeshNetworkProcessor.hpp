@@ -57,6 +57,16 @@ private:
     std::vector<uint8_t> m_vertex_aggregate;
     std::vector<uint32_t> m_index_aggregate;
 
+    /// @brief Per-slot world matrices in sorted_indices order. One mat4 per slot.
+    std::shared_ptr<VKBuffer> m_model_ssbo;
+    /// @brief Per-vertex slot index. One uint32_t per concatenated vertex.
+    std::shared_ptr<VKBuffer> m_slot_index_ssbo;
+
+    /// @brief CPU-side scratch for model matrices, reused each cycle.
+    std::vector<glm::mat4> m_model_aggregate;
+    /// @brief CPU-side scratch for per-vertex slot indices, reused each cycle.
+    std::vector<uint32_t> m_slot_index_aggregate;
+
     void allocate_gpu_buffers(const std::shared_ptr<VKBuffer>& vertex_buf);
     void upload_combined(const std::shared_ptr<VKBuffer>& vertex_buf);
     void link_index_resources(const std::shared_ptr<VKBuffer>& vertex_buf);
@@ -66,6 +76,10 @@ private:
 
     [[nodiscard]] size_t total_vertex_bytes() const;
     [[nodiscard]] size_t total_index_count() const;
+
+    void allocate_ssbo_buffers();
+    void upload_ssbos();
+    void push_ssbo_bindings(const std::shared_ptr<VKBuffer>& buffer);
 };
 
 } // namespace MayaFlux::Buffers
