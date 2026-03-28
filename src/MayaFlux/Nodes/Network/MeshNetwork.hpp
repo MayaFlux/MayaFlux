@@ -142,6 +142,12 @@ public:
         return m_operator != nullptr;
     }
 
+    /**
+     * @brief Get the processing order of slots as indices into m_slots.
+     *        Parents always appear before children.
+     */
+    [[nodiscard]] const std::vector<uint32_t>& sorted_indices() const { return m_sorted_indices; }
+
 private:
     std::vector<MeshSlot> m_slots;
 

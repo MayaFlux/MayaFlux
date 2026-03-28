@@ -2,32 +2,40 @@
 
 #include "MayaFlux/Nodes/Graphics/MeshWriterNode.hpp"
 
+namespace MayaFlux::Core {
+class VKImage;
+}
+
 namespace MayaFlux::Nodes::Network {
 
 /**
  * @struct MeshSlot
  * @brief Named, independently transformable mesh unit within a MeshNetwork.
  *
- * The unit of composition in MeshNetwork. Each slot owns a MeshWriterNode
- * holding its CPU-side geometry and carries a local-space transform. Parent
- * indices form a DAG; MeshNetwork resolves topological order so parents are
- * always processed before children.
+ * Each slot owns a MeshWriterNode holding its CPU-side geometry and carries
+ * a local-space transform. Parent indices form a DAG; MeshNetwork resolves
+ * topological order so parents are always processed before children.
  *
- * Transforms compose as: world = parent_world * local.
- * Operators read local, write back to local or directly to the MeshWriterNode
- * vertices. World transform is recomputed each cycle by MeshNetwork.
+ * World transform composes as: world = parent_world * local.
  *
- * No analog vocabulary: there are no bones, pivots, rigs, or joints.
- * A slot is a named matrix slot with geometry attached.
+ * slot.dirty signals the buffer layer that slot-level configuration changed
+ * (transform, texture binding, parent reassignment) independently of whether
+ * the node's vertex data changed. The processor checks both:
+ *   slot.dirty || slot.node->needs_gpu_update()
+ *
+ * diffuse_texture is optional. When set, MeshNetworkBuffer binds it to the
+ * shader's diffuse slot for this slot's draw range. Slots sharing the same
+ * texture share one descriptor. Slots with distinct textures require the
+ * texture array path (deferred).
  */
 struct MeshSlot {
-    /// @brief Logical name for this slot. Used for lookup and logging only.
+    /// @brief Logical name. Used for lookup and logging only.
     std::string name;
 
-    /// @brief The geometry node for this slot.
+    /// @brief Geometry node for this slot.
     std::shared_ptr<GpuSync::MeshWriterNode> node;
 
-    /// @brief Local-space transform relative to parent (or world if no parent).
+    /// @brief Local-space transform relative to parent (or world if root).
     glm::mat4 local_transform { 1.0F };
 
     /// @brief World-space transform, recomputed each cycle from the DAG.
@@ -39,8 +47,11 @@ struct MeshSlot {
     /// @brief Indices of child slots. Populated by MeshNetwork::add_slot().
     std::vector<uint32_t> child_indices;
 
-    /// @brief Set when local_transform or vertex data changes since last upload.
+    /// @brief Set when local_transform or slot config changes since last upload.
     bool dirty { true };
+
+    /// @brief Optional diffuse texture. Null means untextured for this slot.
+    std::shared_ptr<Core::VKImage> diffuse_texture;
 };
 
 } // namespace MayaFlux::Nodes::Network
