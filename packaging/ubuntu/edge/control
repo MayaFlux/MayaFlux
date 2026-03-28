@@ -33,7 +33,7 @@ Build-Depends:
     libstb-dev,
     librtaudio-dev,
     ffmpeg,
-    libassimp-dev
+    libassimp-dev,
     libavcodec-dev,
     libavformat-dev,
     libswscale-dev,
@@ -77,7 +77,7 @@ Depends:
     libeigen3-dev,
     libmagicenum-dev,
     libstb-dev,
-    libassimp-dev
+    libassimp-dev,
     librtaudio-dev,
     libavcodec-dev,
     libavformat-dev,
