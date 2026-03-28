@@ -23,6 +23,7 @@ layout(set = 0, binding = 1) readonly buffer SlotIndices {
 layout(location = 0) out vec3 out_color;
 layout(location = 1) out vec2 out_uv;
 layout(location = 2) out vec3 out_normal;
+layout(location = 3) flat out uint out_slot;
 
 void main()
 {
@@ -34,4 +35,5 @@ void main()
     out_color = in_color;
     out_uv = in_uv;
     out_normal = normalize(mat3(norm_mat) * in_normal);
+    out_slot = slot;
 }

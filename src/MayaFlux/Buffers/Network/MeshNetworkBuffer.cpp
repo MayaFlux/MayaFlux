@@ -31,7 +31,6 @@ MeshNetworkBuffer::MeshNetworkBuffer(
     }
 
     RenderConfig defaults;
-    defaults.vertex_shader = "triangle.vert.spv";
     defaults.topology = Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST;
     set_default_render_config(defaults);
     set_needs_depth_attachment(true);
@@ -88,30 +87,44 @@ void MeshNetworkBuffer::setup_rendering(const RenderConfig& config)
     for (const auto& [name, tex] : config.additional_textures)
         m_render_config.additional_textures.emplace_back(name, tex);
 
+    const auto slot_count = static_cast<uint32_t>(m_network->slot_count());
+
+    const bool has_slot_textures = std::ranges::any_of(
+        m_network->slots(),
+        [](const auto& slot) { return slot.diffuse_texture != nullptr; });
+
     const bool textured = m_diffuse_texture != nullptr
-        || !m_render_config.default_texture_binding.empty();
+        || !m_render_config.default_texture_binding.empty()
+        || has_slot_textures;
 
     if (textured && m_render_config.default_texture_binding.empty())
         m_render_config.default_texture_binding = m_diffuse_binding;
 
+    if (m_render_config.vertex_shader.empty())
+        m_render_config.vertex_shader = "mesh_network.vert.spv";
+
     if (m_render_config.fragment_shader.empty()) {
         m_render_config.fragment_shader = textured
-            ? "mesh_textured.frag.spv"
-            : "triangle.frag.spv";
+            ? "mesh_network_textured.frag.spv"
+            : "mesh_network.frag.spv";
     }
 
     ShaderConfig sc { m_render_config.vertex_shader };
 
-    if (textured && !m_render_config.default_texture_binding.empty()) {
+    sc.bindings["modelMatrices"] = ShaderBinding(0, 0, vk::DescriptorType::eStorageBuffer);
+    sc.bindings["slotIndices"] = ShaderBinding(0, 1, vk::DescriptorType::eStorageBuffer);
+
+    if (has_slot_textures) {
+        sc.bindings["diffuseTex"] = ShaderBinding(
+            0, 2, vk::DescriptorType::eCombinedImageSampler, slot_count);
+    } else if (textured && !m_render_config.default_texture_binding.empty()) {
         sc.bindings[m_render_config.default_texture_binding] = ShaderBinding(
-            0, 0, vk::DescriptorType::eCombinedImageSampler);
+            0, 2, vk::DescriptorType::eCombinedImageSampler);
     }
 
-    uint32_t binding_idx = 1;
-    for (const auto& [name, _] : m_render_config.additional_textures) {
-        sc.bindings[name] = ShaderBinding(
-            0, binding_idx++, vk::DescriptorType::eCombinedImageSampler);
-    }
+    uint32_t binding_idx = 3;
+    for (const auto& [name, _] : m_render_config.additional_textures)
+        sc.bindings[name] = ShaderBinding(0, binding_idx++, vk::DescriptorType::eCombinedImageSampler);
 
     m_render_processor = std::make_shared<RenderProcessor>(sc);
     m_render_processor->set_fragment_shader(m_render_config.fragment_shader);
@@ -122,8 +135,17 @@ void MeshNetworkBuffer::setup_rendering(const RenderConfig& config)
     m_render_processor->set_polygon_mode(m_render_config.polygon_mode);
     m_render_processor->set_cull_mode(m_render_config.cull_mode);
 
-    if (m_diffuse_texture && !m_render_config.default_texture_binding.empty())
+    if (has_slot_textures) {
+        const auto& slots = m_network->slots();
+        const auto& order = m_network->sorted_indices();
+        for (uint32_t i = 0; i < static_cast<uint32_t>(order.size()); ++i) {
+            const auto& slot = slots[order[i]];
+            if (slot.diffuse_texture)
+                m_render_processor->bind_texture(2 + i, slot.diffuse_texture);
+        }
+    } else if (m_diffuse_texture && !m_render_config.default_texture_binding.empty()) {
         m_render_processor->bind_texture(m_render_config.default_texture_binding, m_diffuse_texture);
+    }
 
     for (const auto& [name, tex] : m_render_config.additional_textures)
         m_render_processor->bind_texture(name, tex);
