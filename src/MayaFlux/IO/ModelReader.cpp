@@ -3,7 +3,8 @@
 #include "MayaFlux/Kakshya/NDData/MeshInsertion.hpp"
 
 #include "MayaFlux/Buffers/Geometry/MeshBuffer.hpp"
-#include "MayaFlux/Nodes/Graphics/VertexSpec.hpp"
+
+#include "MayaFlux/Nodes/Network/MeshNetwork.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
@@ -12,6 +13,25 @@
 #include <assimp/scene.h>
 
 namespace MayaFlux::IO {
+
+namespace {
+    std::string get_diffuse_path(const Kakshya::MeshData& mesh_data)
+    {
+        if (!mesh_data.submeshes.has_value())
+            return {};
+        const auto& regions = mesh_data.submeshes->regions;
+        if (regions.empty())
+            return {};
+        const auto& attrs = regions.front().attributes;
+        auto it = attrs.find("diffuse_path");
+        if (it == attrs.end())
+            return {};
+        const auto* s = std::any_cast<std::string>(&it->second);
+        if (!s || s->empty() || (*s)[0] == '*')
+            return {};
+        return *s;
+    }
+}
 
 // =============================================================================
 // PIMPL — hides Assimp headers from the public interface
@@ -91,7 +111,7 @@ std::vector<Kakshya::MeshData> ModelReader::extract_meshes() const
 }
 
 std::vector<std::shared_ptr<Buffers::MeshBuffer>>
-ModelReader::create_mesh_buffers() const
+ModelReader::create_mesh_buffers(const TextureResolver& resolver) const
 {
     auto meshes = extract_meshes();
 
@@ -104,8 +124,24 @@ ModelReader::create_mesh_buffers() const
                 "ModelReader::create_mesh_buffers: skipping invalid MeshData");
             continue;
         }
-        result.push_back(
-            std::make_shared<Buffers::MeshBuffer>(std::move(mesh_data)));
+
+        auto buf = std::make_shared<Buffers::MeshBuffer>(mesh_data);
+
+        if (resolver) {
+            const auto raw = get_diffuse_path(mesh_data);
+            if (!raw.empty()) {
+                auto image = resolver(raw);
+                if (image) {
+                    buf->bind_diffuse_texture(image);
+                } else {
+                    MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+                        "ModelReader::create_mesh_buffers: resolver returned null for '{}'",
+                        raw);
+                }
+            }
+        }
+
+        result.push_back(std::move(buf));
     }
 
     MF_INFO(Journal::Component::IO, Journal::Context::FileIO,
@@ -113,6 +149,75 @@ ModelReader::create_mesh_buffers() const
         result.size(), meshes.size());
 
     return result;
+}
+
+std::shared_ptr<Nodes::Network::MeshNetwork>
+ModelReader::create_mesh_network(const TextureResolver& resolver) const
+{
+    if (!m_impl->scene) {
+        set_error("No scene loaded");
+        return nullptr;
+    }
+
+    auto net = std::make_shared<Nodes::Network::MeshNetwork>();
+    const aiScene* s = m_impl->scene;
+
+    for (unsigned int i = 0; i < s->mNumMeshes; ++i) {
+        const aiMesh* ai_mesh = s->mMeshes[i];
+
+        std::string mesh_name(ai_mesh->mName.C_Str());
+        if (mesh_name.empty())
+            mesh_name = "mesh_" + std::to_string(i);
+
+        std::string mat_name;
+        if (s->mNumMaterials > 0 && ai_mesh->mMaterialIndex < s->mNumMaterials) {
+            aiString ai_mat;
+            s->mMaterials[ai_mesh->mMaterialIndex]->Get(AI_MATKEY_NAME, ai_mat);
+            mat_name = ai_mat.C_Str();
+        }
+
+        auto mesh_data = extract_single_mesh(ai_mesh, s, mesh_name, mat_name);
+        if (!mesh_data.is_valid()) {
+            MF_WARN(Journal::Component::IO, Journal::Context::FileIO,
+                "ModelReader::create_mesh_network: skipping invalid mesh '{}'", mesh_name);
+            continue;
+        }
+
+        const auto* vb = std::get_if<std::vector<uint8_t>>(&mesh_data.vertex_variant);
+        const auto* ib = std::get_if<std::vector<uint32_t>>(&mesh_data.index_variant);
+
+        if (!vb || !ib)
+            continue;
+
+        const size_t vertex_count = vb->size() / sizeof(Nodes::MeshVertex);
+        auto node = std::make_shared<Nodes::GpuSync::MeshWriterNode>(vertex_count);
+        node->set_mesh(
+            std::span<const Nodes::MeshVertex>(
+                reinterpret_cast<const Nodes::MeshVertex*>(vb->data()),
+                vertex_count),
+            std::span<const uint32_t>(ib->data(), ib->size()));
+
+        auto slot_idx = net->add_slot(mesh_name, node);
+
+        if (resolver) {
+            const auto raw = get_diffuse_path(mesh_data);
+            if (!raw.empty()) {
+                auto image = resolver(raw);
+                if (image) {
+                    net->get_slot(slot_idx).diffuse_texture = std::move(image);
+                } else {
+                    MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+                        "ModelReader::create_mesh_network: resolver returned null for '{}' (slot '{}')",
+                        raw, mesh_name);
+                }
+            }
+        }
+    }
+
+    MF_INFO(Journal::Component::IO, Journal::Context::FileIO,
+        "ModelReader::create_mesh_network: {} slots", net->slot_count());
+
+    return net;
 }
 
 // =============================================================================

@@ -3,11 +3,28 @@
 #include "MayaFlux/IO/FileReader.hpp"
 #include "MayaFlux/Kakshya/NDData/MeshData.hpp"
 
+namespace MayaFlux::Core {
+class VKImage;
+}
+
 namespace MayaFlux::Buffers {
 class MeshBuffer;
 }
 
+namespace MayaFlux::Nodes::Network {
+class MeshNetwork;
+}
+
 namespace MayaFlux::IO {
+
+/**
+ * @brief Callable that maps a raw material texture path to a GPU image.
+ *
+ * Receives the path exactly as stored in the model file. The default
+ * resolver resolves relative to the model file's directory via
+ * ImageReader::load_texture.
+ */
+using TextureResolver = std::function<std::shared_ptr<Core::VKImage>(const std::string& path)>;
 
 /**
  * @class ModelReader
@@ -73,10 +90,33 @@ public:
      * Calls extract_meshes() internally. Returns empty if no scene is loaded.
      * setup_processors() and setup_rendering() are left to the caller.
      *
+     * If resolver is provided, it is called with the raw diffuse path from each
+     * mesh's material. The returned VKImage is bound via bind_diffuse_texture().
+     * Null resolver skips texture binding entirely.
+     *
+     * @param resolver Optional texture resolver.
      * @return One MeshBuffer per aiMesh in scene order.
      */
     [[nodiscard]] std::vector<std::shared_ptr<Buffers::MeshBuffer>>
-    create_mesh_buffers() const;
+    create_mesh_buffers(const TextureResolver& resolver = nullptr) const;
+
+    /**
+     * @brief Construct a MeshNetwork from all meshes in the currently loaded scene.
+     *
+     * One MeshSlot per aiMesh, named from aiMesh::mName (or "mesh_N" if unnamed).
+     * Each slot's MeshWriterNode holds the extracted vertex and index data.
+     *
+     * If resolver is provided, it is called with the raw diffuse path from each
+     * mesh's material. The returned VKImage is assigned to slot.diffuse_texture.
+     * Null resolver skips texture binding entirely.
+     *
+     * Requires open(). Does not call close().
+     *
+     * @param resolver Optional texture resolver.
+     * @return Populated MeshNetwork, or nullptr if no scene is loaded.
+     */
+    [[nodiscard]] std::shared_ptr<Nodes::Network::MeshNetwork>
+    create_mesh_network(const TextureResolver& resolver = nullptr) const;
 
     // -------------------------------------------------------------------------
     // FileReader interface

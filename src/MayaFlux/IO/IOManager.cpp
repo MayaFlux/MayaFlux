@@ -4,6 +4,8 @@
 #include "MayaFlux/Registry/BackendRegistry.hpp"
 #include "MayaFlux/Registry/Service/IOService.hpp"
 
+#include "MayaFlux/Nodes/Network/MeshNetwork.hpp"
+
 #include "MayaFlux/Kakshya/Processors/ContiguousAccessProcessor.hpp"
 #include "MayaFlux/Kakshya/Processors/FrameAccessProcessor.hpp"
 #include "MayaFlux/Kakshya/Source/CameraContainer.hpp"
@@ -25,6 +27,20 @@ extern "C" {
 }
 
 namespace MayaFlux::IO {
+
+namespace {
+
+    TextureResolver make_default_resolver(const std::string& filepath)
+    {
+        const auto base_dir = std::filesystem::path(filepath).parent_path();
+        return [base_dir](const std::string& raw) -> std::shared_ptr<Core::VKImage> {
+            std::string normalized = raw;
+            std::ranges::replace(normalized, '\\', '/');
+            return IO::ImageReader::load_texture((base_dir / normalized).string());
+        };
+    }
+
+}
 
 IOManager::IOManager(uint64_t sample_rate, uint32_t buffer_size, uint32_t frame_rate, const std::shared_ptr<Buffers::BufferManager>& buffer_manager)
     : m_sample_rate(sample_rate)
@@ -325,7 +341,7 @@ IOManager::load_image(const std::string& filepath)
 }
 
 std::vector<std::shared_ptr<Buffers::MeshBuffer>>
-IOManager::load_mesh(const std::string& filepath)
+IOManager::load_mesh(const std::string& filepath, TextureResolver resolver)
 {
     auto reader = std::make_shared<ModelReader>();
 
@@ -342,7 +358,10 @@ IOManager::load_mesh(const std::string& filepath)
         return {};
     }
 
-    auto buffers = reader->create_mesh_buffers();
+    if (!resolver)
+        resolver = make_default_resolver(filepath);
+
+    auto buffers = reader->create_mesh_buffers(resolver);
     reader->close();
 
     if (buffers.empty()) {
@@ -357,6 +376,44 @@ IOManager::load_mesh(const std::string& filepath)
         std::filesystem::path(filepath).filename().string());
 
     return buffers;
+}
+
+std::shared_ptr<Nodes::Network::MeshNetwork>
+IOManager::load_mesh_network(const std::string& filepath, TextureResolver resolver)
+{
+    auto reader = std::make_shared<ModelReader>();
+
+    if (!reader->can_read(filepath)) {
+        MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
+            "IOManager::load_mesh_network: unsupported format '{}'", filepath);
+        return nullptr;
+    }
+
+    if (!reader->open(filepath)) {
+        MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
+            "IOManager::load_mesh_network: failed to open '{}' — {}",
+            filepath, reader->get_last_error());
+        return nullptr;
+    }
+
+    if (!resolver)
+        resolver = make_default_resolver(filepath);
+
+    auto net = reader->create_mesh_network(resolver);
+    reader->close();
+
+    if (!net) {
+        MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
+            "IOManager::load_mesh_network: no network from '{}'", filepath);
+        return nullptr;
+    }
+
+    MF_INFO(Journal::Component::API, Journal::Context::FileIO,
+        "IOManager::load_mesh_network: {} slots from '{}'",
+        net->slot_count(),
+        std::filesystem::path(filepath).filename().string());
+
+    return net;
 }
 
 void IOManager::configure_frame_processor(
