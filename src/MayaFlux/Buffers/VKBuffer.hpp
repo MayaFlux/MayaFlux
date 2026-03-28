@@ -620,6 +620,7 @@ protected:
 
     void initialize_buffer_service();
     void initialize_compute_service();
+    void ensure_initialized(const std::shared_ptr<VKBuffer>& buffer);
 };
 
 } // namespace MayaFlux::Buffers

@@ -419,4 +419,22 @@ void VKBufferProcessor::initialize_compute_service()
                             .get_service<Registry::Service::ComputeService>();
 }
 
+void VKBufferProcessor::ensure_initialized(const std::shared_ptr<VKBuffer>& buffer)
+{
+    if (!m_buffer_service) {
+        m_buffer_service = Registry::BackendRegistry::instance()
+                               .get_service<Registry::Service::BufferService>();
+    }
+    if (!m_buffer_service) {
+        error<std::runtime_error>(
+            Journal::Component::Buffers,
+            Journal::Context::BufferProcessing,
+            std::source_location::current(),
+            "VKBufferProcessor requires a valid BufferService");
+    }
+    if (!buffer->is_initialized()) {
+        m_buffer_service->initialize_buffer(buffer);
+    }
+}
+
 } // namespace MayaFlux::Buffers::Vulkan

@@ -66,14 +66,7 @@ void GeometryBindingsProcessor::bind_geometry_node(
             VKBuffer::Usage::INDEX,
             Kakshya::DataModality::UNKNOWN);
 
-        if (!m_buffer_service) {
-            error<std::runtime_error>(
-                Journal::Component::Buffers,
-                Journal::Context::BufferProcessing,
-                std::source_location::current(),
-                "bind_geometry_node: BufferService unavailable for index buffer '{}'", name);
-        }
-        m_buffer_service->initialize_buffer(index_buf);
+        ensure_initialized(index_buf);
 
         index_staging_buf = create_staging_buffer(index_data_size);
         MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
@@ -251,13 +244,7 @@ void GeometryBindingsProcessor::upload_index_data(
             VKBuffer::Usage::INDEX,
             Kakshya::DataModality::UNKNOWN);
 
-        if (!m_buffer_service) {
-            MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-                "upload_index_data: BufferService unavailable for '{}'", name);
-            binding.gpu_index_buffer = nullptr;
-            return;
-        }
-        m_buffer_service->initialize_buffer(binding.gpu_index_buffer);
+        ensure_initialized(binding.gpu_index_buffer);
 
         binding.index_staging_buffer = create_staging_buffer(required);
 

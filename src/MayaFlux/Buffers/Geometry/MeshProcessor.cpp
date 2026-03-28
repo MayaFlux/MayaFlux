@@ -48,9 +48,7 @@ void MeshProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
 
     m_mesh_buffer = mesh_buf;
 
-    if (!mesh_buf->is_initialized()) {
-        m_buffer_service->initialize_buffer(mesh_buf);
-    }
+    ensure_initialized(mesh_buf);
 
     allocate_gpu_buffers(mesh_buf);
     upload_vertices(mesh_buf);
@@ -134,7 +132,8 @@ void MeshProcessor::allocate_gpu_buffers(const std::shared_ptr<MeshBuffer>& buf)
         idx_bytes,
         VKBuffer::Usage::INDEX,
         Kakshya::DataModality::UNKNOWN);
-    m_buffer_service->initialize_buffer(m_gpu_index_buffer);
+
+    ensure_initialized(m_gpu_index_buffer);
     m_index_staging = create_staging_buffer(idx_bytes);
 
     MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
