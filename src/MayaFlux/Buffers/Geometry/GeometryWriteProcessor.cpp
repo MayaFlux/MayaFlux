@@ -74,21 +74,7 @@ void GeometryWriteProcessor::processing_function(const std::shared_ptr<Buffer>& 
         return;
     }
 
-    const size_t required = access->byte_count;
-    const size_t available = vk->get_size_bytes();
-
-    if (required > available) {
-        vk->resize(static_cast<size_t>((float)required * 1.5F), false);
-
-        if (m_staging) {
-            m_staging = create_staging_buffer(vk->get_size_bytes());
-        }
-    }
-
-    upload_to_gpu(access->data_ptr,
-        std::min<size_t>(required, vk->get_size_bytes()),
-        vk,
-        m_staging);
+    upload_resizing(access->data_ptr, access->byte_count, vk, m_staging);
 
     vk->set_vertex_layout(access->layout);
 }

@@ -8,6 +8,8 @@ namespace MayaFlux::Buffers {
 class VKBuffer;
 class AudioBuffer;
 
+inline constexpr float k_buffer_growth_factor = 1.5F;
+
 /**
  * @brief Upload data to a host-visible buffer
  * @param target Target VKBuffer to upload data into
@@ -108,6 +110,25 @@ void upload_to_gpu(
 }
 
 /**
+ * @brief Upload @p size bytes to @p target, growing both buffers first if needed.
+ * @param data         Source pointer.
+ * @param size         Byte count to upload.
+ * @param target       Destination GPU buffer.
+ * @param staging      Paired staging buffer, or nullptr for host-visible targets.
+ * @param growth_factor Forwarded to ensure_gpu_capacity.
+ *
+ * Combines ensure_gpu_capacity() and upload_to_gpu() into a single call.
+ * The upload is clamped to the post-resize capacity, which is always >= @p size
+ * after ensure_gpu_capacity returns.
+ */
+MAYAFLUX_API void upload_resizing(
+    const void* data,
+    size_t size,
+    const std::shared_ptr<VKBuffer>& target,
+    const std::shared_ptr<VKBuffer>& staging,
+    float growth_factor = 1.5F);
+
+/**
  * @brief Download from GPU buffer to raw data (auto-detects host-visible vs device-local)
  * @param source Source GPU buffer
  * @param data Destination data pointer
@@ -181,6 +202,24 @@ MAYAFLUX_API std::shared_ptr<VKBuffer> create_staging_buffer(size_t size);
  * @return True if buffer is device-local
  */
 MAYAFLUX_API bool is_device_local(const std::shared_ptr<VKBuffer>& buffer);
+
+/**
+ * @brief Grow a GPU buffer (and its paired staging buffer) to fit @p required bytes.
+ * @param target       Device-local or host-visible GPU buffer to resize.
+ * @param staging      Paired staging buffer, or nullptr if the target is host-visible.
+ * @param required     Bytes needed for the next upload.
+ * @param growth_factor Multiplier applied when a resize is triggered (default 1.5).
+ *
+ * No-op when @p target already has sufficient capacity. When a resize is necessary
+ * both buffers are grown to `required * growth_factor` so subsequent small
+ * increments do not trigger further allocations. Existing GPU data is not preserved
+ * (preserve_data = false) because the caller is about to overwrite it.
+ */
+MAYAFLUX_API void ensure_gpu_capacity(
+    const std::shared_ptr<VKBuffer>& target,
+    const std::shared_ptr<VKBuffer>& staging,
+    size_t required,
+    float growth_factor = k_buffer_growth_factor);
 
 /**
  * @brief Upload data from DataAccess view to GPU buffer (precision-preserving)

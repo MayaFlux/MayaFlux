@@ -269,6 +269,25 @@ std::shared_ptr<VKBuffer> create_image_staging_buffer(size_t size)
     return buf;
 }
 
+void ensure_gpu_capacity(
+    const std::shared_ptr<VKBuffer>& target,
+    const std::shared_ptr<VKBuffer>& staging,
+    size_t required,
+    float growth_factor)
+{
+    if (required <= target->get_size_bytes()) {
+        return;
+    }
+
+    const auto new_size = static_cast<size_t>(static_cast<float>(required) * growth_factor);
+
+    target->resize(new_size, false);
+
+    if (staging) {
+        staging->resize(new_size, false);
+    }
+}
+
 void upload_to_gpu(
     const void* data,
     size_t size,
@@ -302,6 +321,17 @@ void upload_to_gpu(
 
         upload_device_local(target, staging_buf, data_variant);
     }
+}
+
+void upload_resizing(
+    const void* data,
+    size_t size,
+    const std::shared_ptr<VKBuffer>& target,
+    const std::shared_ptr<VKBuffer>& staging,
+    float growth_factor)
+{
+    ensure_gpu_capacity(target, staging, size, growth_factor);
+    upload_to_gpu(data, size, target, staging);
 }
 
 void download_from_gpu(

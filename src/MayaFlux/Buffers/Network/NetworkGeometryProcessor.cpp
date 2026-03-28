@@ -137,23 +137,7 @@ void NetworkGeometryProcessor::processing_function(const std::shared_ptr<Buffer>
         size_t required_size = gpu_data.vertex_data.size();
         size_t available_size = binding.gpu_vertex_buffer->get_size_bytes();
 
-        if (required_size > available_size) {
-            auto new_size = static_cast<size_t>((float)required_size * 1.5F);
-
-            MF_RT_TRACE(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-                "Network '{}' growing: resizing GPU buffer from {} → {} bytes",
-                name, available_size, new_size);
-
-            binding.gpu_vertex_buffer->resize(new_size, false);
-
-            if (binding.staging_buffer) {
-                binding.staging_buffer->resize(new_size, false);
-                MF_RT_TRACE(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-                    "Resized staging buffer for '{}' to {} bytes", name, new_size);
-            }
-        }
-
-        upload_to_gpu(
+        upload_resizing(
             gpu_data.vertex_data.data(),
             gpu_data.vertex_data.size(),
             binding.gpu_vertex_buffer,

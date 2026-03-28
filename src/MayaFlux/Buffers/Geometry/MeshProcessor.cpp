@@ -150,17 +150,9 @@ void MeshProcessor::upload_vertices(const std::shared_ptr<MeshBuffer>& buf)
         return;
     }
 
-    const size_t required = vb->size();
-    if (required > buf->get_size_bytes()) {
-        buf->resize(required, false);
-        if (!buf->is_host_visible() && m_vertex_staging) {
-            m_vertex_staging->resize(required, false);
-        }
-    }
-
-    upload_to_gpu(
+    upload_resizing(
         vb->data(),
-        required,
+        vb->size(),
         std::dynamic_pointer_cast<VKBuffer>(buf),
         buf->is_host_visible() ? nullptr : m_vertex_staging);
 }
@@ -173,19 +165,9 @@ void MeshProcessor::upload_indices(const std::shared_ptr<MeshBuffer>& buf)
         return;
     }
 
-    const size_t required = ib->size() * sizeof(uint32_t);
-    if (required > m_gpu_index_buffer->get_size_bytes()) {
-        const size_t new_size = static_cast<size_t>(
-            static_cast<float>(required) * 1.5F);
-        m_gpu_index_buffer->resize(new_size, false);
-        if (m_index_staging) {
-            m_index_staging->resize(new_size, false);
-        }
-    }
-
-    upload_to_gpu(
+    upload_resizing(
         ib->data(),
-        required,
+        ib->size() * sizeof(uint32_t),
         m_gpu_index_buffer,
         m_index_staging);
 }

@@ -173,31 +173,9 @@ void GeometryBindingsProcessor::processing_function(const std::shared_ptr<Buffer
             continue;
         }
 
-        size_t required_size = vertices.size_bytes();
-        size_t available_size = binding.gpu_vertex_buffer->get_size_bytes();
-
-        if (required_size > available_size) {
-            auto new_size = static_cast<size_t>((float)required_size * 1.5F);
-
-            MF_RT_TRACE(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-                "Geometry '{}' growing: resizing GPU buffer from {} → {} bytes",
-                name, available_size, new_size);
-
-            binding.gpu_vertex_buffer->resize(new_size, false);
-            available_size = new_size;
-
-            if (binding.staging_buffer) {
-                binding.staging_buffer->resize(new_size, false);
-                MF_RT_TRACE(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-                    "Resized staging buffer for '{}' to {} bytes", name, new_size);
-            }
-        }
-
-        size_t upload_size = std::min<size_t>(required_size, available_size);
-
-        upload_to_gpu(
+        upload_resizing(
             vertices.data(),
-            upload_size,
+            vertices.size_bytes(),
             binding.gpu_vertex_buffer,
             binding.staging_buffer);
 
@@ -235,29 +213,11 @@ void GeometryBindingsProcessor::processing_function(const std::shared_ptr<Buffer
             auto vertices = first_binding.node->get_vertex_data();
 
             if (!vertices.empty()) {
-                size_t required_size = vertices.size_bytes();
-                size_t available_size = vk_buffer->get_size_bytes();
-
-                if (required_size > available_size) {
-                    auto new_size = static_cast<size_t>((float)required_size * 1.5F);
-
-                    MF_INFO(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-                        "Fallback geometry growing: resizing GPU buffer from {} → {} bytes",
-                        available_size, new_size);
-
-                    vk_buffer->resize(new_size, false);
-                    available_size = new_size;
-                }
-
-                size_t upload_size = std::min<size_t>(required_size, available_size);
-
-                std::shared_ptr<VKBuffer> staging = vk_buffer->is_host_visible() ? nullptr : first_binding.staging_buffer;
-
-                upload_to_gpu(
+                upload_resizing(
                     vertices.data(),
-                    upload_size,
+                    vertices.size_bytes(),
                     vk_buffer,
-                    staging);
+                    first_binding.staging_buffer);
 
                 if (first_binding.node->get_vertex_layout()) {
                     vk_buffer->set_vertex_layout(
@@ -305,19 +265,7 @@ void GeometryBindingsProcessor::upload_index_data(
             "Lazily created index buffer for '{}' ({} bytes)", name, required);
     }
 
-    if (required > binding.gpu_index_buffer->get_size_bytes()) {
-        const auto new_size = static_cast<size_t>((float)required * 1.5F);
-        binding.gpu_index_buffer->resize(new_size, false);
-
-        if (binding.index_staging_buffer) {
-            binding.index_staging_buffer->resize(new_size, false);
-        }
-
-        MF_RT_TRACE(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-            "Resized index buffer for '{}' to {} bytes", name, new_size);
-    }
-
-    upload_to_gpu(
+    upload_resizing(
         indices.data(),
         required,
         binding.gpu_index_buffer,
