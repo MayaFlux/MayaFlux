@@ -29,6 +29,9 @@ namespace MayaFlux::Nodes::Network {
  * texture array path (deferred).
  */
 struct MeshSlot {
+    /// @brief Position of this slot in MeshNetwork::m_slots. Stable after insertion.
+    uint32_t index {};
+
     /// @brief Logical name. Used for lookup and logging only.
     std::string name;
 

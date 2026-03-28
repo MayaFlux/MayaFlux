@@ -1,6 +1,7 @@
 #include "MeshNetwork.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
+#include "MayaFlux/Nodes/Network/Operators/MeshOperator.hpp"
 
 namespace MayaFlux::Nodes::Network {
 
@@ -42,6 +43,7 @@ uint32_t MeshNetwork::add_slot(
     const auto idx = static_cast<uint32_t>(m_slots.size());
 
     MeshSlot slot;
+    slot.index = idx;
     slot.name = std::move(name);
     slot.node = std::move(node);
     slot.parent_index = parent;
@@ -108,14 +110,27 @@ void MeshNetwork::process_batch(unsigned int num_samples)
         rebuild_sort();
 
     for (unsigned int frame = 0; frame < num_samples; ++frame) {
-        if (m_operator)
+        if (m_operator) {
+            if (auto* mesh_op = dynamic_cast<MeshOperator*>(m_operator.get()))
+                mesh_op->set_slots(m_slots, m_sorted_indices);
             m_operator->process(static_cast<float>(frame));
+        } else {
+            propagate_world_transforms();
+        }
 
-        if (m_operator_chain)
-            m_operator_chain->process(static_cast<float>(frame));
+        if (m_operator_chain) {
+            for (const auto& op : m_operator_chain->operators()) {
+                if (auto* mesh_op = dynamic_cast<MeshOperator*>(op.get()))
+                    mesh_op->set_slots(m_slots, m_sorted_indices);
+                op->process(static_cast<float>(frame));
+            }
+        }
     }
 
-    propagate_world_transforms();
+    for (const auto& slot : m_slots) {
+        if (slot.node)
+            slot.node->compute_frame();
+    }
 }
 
 void MeshNetwork::reset()
