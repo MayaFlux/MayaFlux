@@ -121,7 +121,7 @@ void ShaderProcessor::bind_buffer(const std::string& descriptor_name, const std:
 
     if (m_config.bindings.find(descriptor_name) == m_config.bindings.end()) {
         ShaderBinding default_binding;
-        default_binding.set = 0;
+        default_binding.set = 1;
         default_binding.binding = static_cast<uint32_t>(m_config.bindings.size());
         default_binding.type = vk::DescriptorType::eStorageBuffer;
         m_config.bindings[descriptor_name] = default_binding;
@@ -355,14 +355,14 @@ void ShaderProcessor::update_descriptors(const std::shared_ptr<VKBuffer>& buffer
     std::set<std::pair<uint32_t, uint32_t>> updated_pairs;
 
     for (const auto& binding : descriptor_bindings) {
-        if (binding.set >= m_descriptor_set_ids.size()) {
+        if (binding.set == 0 || (binding.set - 1) >= m_descriptor_set_ids.size()) {
             MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
                 "Descriptor set index {} out of range", binding.set);
             continue;
         }
 
         foundry.update_descriptor_buffer(
-            m_descriptor_set_ids[binding.set],
+            m_descriptor_set_ids[binding.set - 1],
             binding.binding,
             binding.type,
             binding.buffer_info.buffer,
@@ -385,7 +385,7 @@ void ShaderProcessor::update_descriptors(const std::shared_ptr<VKBuffer>& buffer
             continue;
         }
 
-        if (binding.set >= m_descriptor_set_ids.size()) {
+        if (binding.set == 0 || (binding.set - 1) >= m_descriptor_set_ids.size()) {
             MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
                 "Invalid descriptor set index {} for binding '{}'",
                 binding.set, descriptor_name);
@@ -393,7 +393,7 @@ void ShaderProcessor::update_descriptors(const std::shared_ptr<VKBuffer>& buffer
         }
 
         foundry.update_descriptor_buffer(
-            m_descriptor_set_ids[binding.set],
+            m_descriptor_set_ids[binding.set - 1],
             binding.binding,
             binding.type,
             buffer->get_buffer(),

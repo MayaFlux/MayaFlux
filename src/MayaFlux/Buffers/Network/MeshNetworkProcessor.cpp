@@ -294,7 +294,7 @@ void MeshNetworkProcessor::push_ssbo_bindings(const std::shared_ptr<VKBuffer>& b
 
     auto push = [&](uint32_t binding_idx, const std::shared_ptr<VKBuffer>& ssbo) {
         Portal::Graphics::DescriptorBindingInfo info;
-        info.set = 0;
+        info.set = 1;
         info.binding = binding_idx;
         info.type = vk::DescriptorType::eStorageBuffer;
         info.buffer_info.buffer = ssbo->get_buffer();

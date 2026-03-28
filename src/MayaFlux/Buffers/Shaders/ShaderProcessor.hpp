@@ -242,7 +242,7 @@ public:
      * @param data Pointer to data
      * @param size Size in bytes
      */
-    void set_push_constant_data_raw(const void* data, size_t size);
+    virtual void set_push_constant_data_raw(const void* data, size_t size);
 
     /**
      * @brief Get current push constant data

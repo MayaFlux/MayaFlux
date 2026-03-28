@@ -111,15 +111,15 @@ void MeshNetworkBuffer::setup_rendering(const RenderConfig& config)
 
     ShaderConfig sc { m_render_config.vertex_shader };
 
-    sc.bindings["modelMatrices"] = ShaderBinding(0, 0, vk::DescriptorType::eStorageBuffer);
-    sc.bindings["slotIndices"] = ShaderBinding(0, 1, vk::DescriptorType::eStorageBuffer);
+    sc.bindings["modelMatrices"] = ShaderBinding(1, 0, vk::DescriptorType::eStorageBuffer);
+    sc.bindings["slotIndices"] = ShaderBinding(1, 1, vk::DescriptorType::eStorageBuffer);
 
     if (has_slot_textures) {
         sc.bindings["diffuseTex"] = ShaderBinding(
-            0, 2, vk::DescriptorType::eCombinedImageSampler, slot_count);
+            1, 2, vk::DescriptorType::eCombinedImageSampler, slot_count);
     } else if (textured && !m_render_config.default_texture_binding.empty()) {
         sc.bindings[m_render_config.default_texture_binding] = ShaderBinding(
-            0, 2, vk::DescriptorType::eCombinedImageSampler);
+            1, 2, vk::DescriptorType::eCombinedImageSampler);
     }
 
     uint32_t binding_idx = 3;

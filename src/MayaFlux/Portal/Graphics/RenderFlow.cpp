@@ -394,6 +394,20 @@ RenderPipelineID RenderFlow::create_pipeline(
         auto layout = m_shader_foundry->get_device().createDescriptorSetLayout(layout_info);
         layouts.push_back(layout);
     }
+
+    vk::DescriptorSetLayoutBinding vt_b;
+    vt_b.binding = 0;
+    vt_b.descriptorType = vk::DescriptorType::eUniformBuffer;
+    vt_b.descriptorCount = 1;
+    vt_b.stageFlags = vk::ShaderStageFlagBits::eVertex;
+
+    vk::DescriptorSetLayoutCreateInfo vt_layout_info;
+    vt_layout_info.bindingCount = 1;
+    vt_layout_info.pBindings = &vt_b;
+
+    vk::DescriptorSetLayout vt_layout = m_shader_foundry->get_device().createDescriptorSetLayout(vt_layout_info);
+    layouts.insert(layouts.begin(), vt_layout);
+
     vk_config.descriptor_set_layouts = layouts;
 
     vk::ShaderStageFlags push_constant_stages;
@@ -451,6 +465,7 @@ RenderPipelineID RenderFlow::create_pipeline(
     state.shader_ids = { config.vertex_shader, config.fragment_shader };
     state.pipeline = pipeline;
     state.layouts = layouts;
+    state.view_transform_layout = vt_layout;
     state.layout = pipeline->get_layout();
     state.push_constant_stages = push_constant_stages;
     m_pipelines[pipeline_id] = std::move(state);
@@ -510,6 +525,16 @@ void RenderFlow::cleanup_pipelines()
 
     MF_DEBUG(Journal::Component::Portal, Journal::Context::Rendering,
         "Cleaned up all graphics pipelines");
+}
+
+vk::DescriptorSetLayout RenderFlow::get_view_transform_layout(
+    RenderPipelineID pipeline_id) const
+{
+    auto it = m_pipelines.find(pipeline_id);
+    if (it == m_pipelines.end()) {
+        return {};
+    }
+    return it->second.view_transform_layout;
 }
 
 //==============================================================================
@@ -758,7 +783,8 @@ void RenderFlow::bind_index_buffer(
 void RenderFlow::bind_descriptor_sets(
     CommandBufferID cmd_id,
     RenderPipelineID pipeline_id,
-    const std::vector<DescriptorSetID>& descriptor_sets)
+    const std::vector<DescriptorSetID>& descriptor_sets,
+    uint32_t first_set)
 {
     auto pipeline_it = m_pipelines.find(pipeline_id);
     if (pipeline_it == m_pipelines.end()) {
@@ -783,7 +809,7 @@ void RenderFlow::bind_descriptor_sets(
     cmd.bindDescriptorSets(
         vk::PipelineBindPoint::eGraphics,
         pipeline_it->second.layout,
-        0,
+        first_set,
         vk_sets,
         nullptr);
 }
@@ -792,7 +818,8 @@ void RenderFlow::push_constants(
     CommandBufferID cmd_id,
     RenderPipelineID pipeline_id,
     const void* data,
-    size_t size)
+    size_t size,
+    uint32_t offset)
 {
     auto pipeline_it = m_pipelines.find(pipeline_id);
     if (pipeline_it == m_pipelines.end()) {
@@ -811,7 +838,7 @@ void RenderFlow::push_constants(
     cmd.pushConstants(
         pipeline_it->second.layout,
         pipeline_it->second.push_constant_stages,
-        0,
+        offset,
         static_cast<uint32_t>(size),
         data);
 }
@@ -959,7 +986,8 @@ vk::ImageView RenderFlow::get_current_image_view(const std::shared_ptr<Core::Win
 //==============================================================================
 
 std::vector<DescriptorSetID> RenderFlow::allocate_pipeline_descriptors(
-    RenderPipelineID pipeline_id)
+    RenderPipelineID pipeline_id,
+    uint32_t first_layout_index)
 {
     auto pipeline_it = m_pipelines.find(pipeline_id);
     if (pipeline_it == m_pipelines.end()) {
@@ -968,9 +996,11 @@ std::vector<DescriptorSetID> RenderFlow::allocate_pipeline_descriptors(
         return {};
     }
 
+    const auto& layouts = pipeline_it->second.layouts;
     std::vector<DescriptorSetID> descriptor_set_ids;
-    for (const auto& layout : pipeline_it->second.layouts) {
-        auto ds_id = m_shader_foundry->allocate_descriptor_set(layout);
+
+    for (uint32_t i = first_layout_index; i < layouts.size(); ++i) {
+        auto ds_id = m_shader_foundry->allocate_descriptor_set(layouts[i]);
         if (ds_id == INVALID_DESCRIPTOR_SET) {
             MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
                 "Failed to allocate descriptor set for pipeline {}", pipeline_id);
@@ -980,8 +1010,8 @@ std::vector<DescriptorSetID> RenderFlow::allocate_pipeline_descriptors(
     }
 
     MF_DEBUG(Journal::Component::Portal, Journal::Context::Rendering,
-        "Allocated {} descriptor sets for pipeline {}",
-        descriptor_set_ids.size(), pipeline_id);
+        "Allocated {} descriptor sets for pipeline {} (starting at layout index {})",
+        descriptor_set_ids.size(), pipeline_id, first_layout_index);
 
     return descriptor_set_ids;
 }
