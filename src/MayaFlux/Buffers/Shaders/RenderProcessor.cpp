@@ -197,6 +197,22 @@ void RenderProcessor::initialize_pipeline(const std::shared_ptr<VKBuffer>& buffe
         return;
     }
 
+    if (!m_has_view_transform_slot) {
+        auto& foundry = Portal::Graphics::get_shader_foundry();
+        auto refl = foundry.get_shader_reflection(m_shader_id);
+        for (const auto& pc : refl.push_constant_ranges) {
+            if (pc.size == sizeof(Kinesis::ViewTransform)) {
+                m_has_view_transform_slot = true;
+                if (m_push_constant_data.size() < sizeof(Kinesis::ViewTransform)) {
+                    set_push_constant_size(sizeof(Kinesis::ViewTransform));
+                }
+                MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                    "RenderProcessor: auto-detected ViewTransform push constant block");
+                break;
+            }
+        }
+    }
+
     auto& flow = Portal::Graphics::get_render_flow();
 
     Portal::Graphics::get_render_flow().register_window_for_rendering(m_target_window);
@@ -476,9 +492,17 @@ void RenderProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
     }
 
     if (m_has_view_transform_slot) {
-        Kinesis::ViewTransform vt = m_view_transform_source
-            ? m_view_transform_source()
-            : m_view_transform.value();
+        Kinesis::ViewTransform vt;
+        if (!m_view_transform.has_value() && !m_view_transform_source) {
+            MF_RT_TRACE(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                "ViewTransform push constant slot active but no transform source set. "
+                "Pushing identity transform. Call set_view_transform() or set_view_transform_source().");
+            vt = Kinesis::ViewTransform {};
+        } else {
+            vt = m_view_transform_source
+                ? m_view_transform_source()
+                : m_view_transform.value();
+        }
 
         auto& staging = buffer->get_pipeline_context().push_constant_staging;
 
