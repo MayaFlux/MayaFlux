@@ -630,7 +630,8 @@ void ShaderFoundry::update_descriptor_image(
     uint32_t binding,
     vk::ImageView image_view,
     vk::Sampler sampler,
-    vk::ImageLayout layout)
+    vk::ImageLayout layout,
+    uint32_t array_element)
 {
     auto it = m_descriptor_sets.find(descriptor_set_id);
     if (it == m_descriptor_sets.end()) {
@@ -645,7 +646,7 @@ void ShaderFoundry::update_descriptor_image(
     vk::WriteDescriptorSet write;
     write.dstSet = it->second.descriptor_set;
     write.dstBinding = binding;
-    write.dstArrayElement = 0;
+    write.dstArrayElement = array_element;
     write.descriptorCount = 1;
     write.descriptorType = vk::DescriptorType::eCombinedImageSampler;
     write.pImageInfo = &image_info;

@@ -13,26 +13,29 @@ struct ShaderBinding {
     uint32_t set = 0; ///< Descriptor set index
     uint32_t binding = 0; ///< Binding point within set
     vk::DescriptorType type = vk::DescriptorType::eStorageBuffer;
+    uint32_t count = 1; ///< Array count for array descriptors (default 1)
 
     ShaderBinding() = default;
 
     /**
      * @brief Construct with semantic role — preferred public API.
      */
-    ShaderBinding(uint32_t s, uint32_t b, Portal::Graphics::DescriptorRole role = Portal::Graphics::DescriptorRole::STORAGE)
+    ShaderBinding(uint32_t s, uint32_t b, Portal::Graphics::DescriptorRole role = Portal::Graphics::DescriptorRole::STORAGE, uint32_t c = 1)
         : set(s)
         , binding(b)
         , type(to_vk_descriptor_type(role))
+        , count(c)
     {
     }
 
     /**
      * @brief Construct with explicit Vulkan type — internal / advanced use only.
      */
-    ShaderBinding(uint32_t s, uint32_t b, vk::DescriptorType t)
+    ShaderBinding(uint32_t s, uint32_t b, vk::DescriptorType t, uint32_t c = 1)
         : set(s)
         , binding(b)
         , type(t)
+        , count(c)
     {
     }
 };
