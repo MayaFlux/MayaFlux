@@ -187,6 +187,12 @@ public:
     [[nodiscard]] size_t count() const;
 
     /**
+     * @brief Return all entity ids and positions from the published snapshot.
+     * @return Vector of (id, position) pairs. Empty if no snapshot published.
+     */
+    [[nodiscard]] std::vector<std::pair<uint32_t, PointT>> all() const;
+
+    /**
      * @brief Remove all entities from the write side. Does not auto-publish.
      */
     void clear();

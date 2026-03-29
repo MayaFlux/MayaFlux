@@ -360,6 +360,35 @@ size_t SpatialIndex<PointT>::count() const
 #endif
 }
 
+template <typename PointT>
+std::vector<std::pair<uint32_t, PointT>> SpatialIndex<PointT>::all() const
+{
+    std::vector<std::pair<uint32_t, PointT>> result;
+
+#ifdef MAYAFLUX_PLATFORM_MACOS
+    auto [snap, slot] = acquire_snapshot();
+    if (!snap) {
+        return result;
+    }
+    result.reserve(snap->positions.size());
+    for (uint32_t i = 0; i < static_cast<uint32_t>(snap->positions.size()); ++i) {
+        result.emplace_back(snap->slot_to_id[i], snap->positions[i]);
+    }
+    release_snapshot(slot);
+#else
+    auto snap_ptr = m_snapshot.load(std::memory_order_acquire);
+    if (!snap_ptr) {
+        return result;
+    }
+    result.reserve(snap_ptr->positions.size());
+    for (uint32_t i = 0; i < static_cast<uint32_t>(snap_ptr->positions.size()); ++i) {
+        result.emplace_back(snap_ptr->slot_to_id[i], snap_ptr->positions[i]);
+    }
+#endif
+
+    return result;
+}
+
 // =========================================================================
 // Grid query
 // =========================================================================
