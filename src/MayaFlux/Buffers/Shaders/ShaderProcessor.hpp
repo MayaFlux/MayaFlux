@@ -473,6 +473,18 @@ protected:
 
     size_t m_auto_bind_index {};
 
+    /**
+     * @brief Whether the engine reserves set=0 for global resources
+     *
+     * Defaults to false. Only RenderProcessor sets this to true in its
+     * constructor. When true, resolve_ds_index() maps logical set=0 to
+     * nullopt (no user descriptor) and offsets all other sets by -1.
+     * Compute subclasses leave this false: their descriptor sets are
+     * numbered from set=0 with no engine reservation.
+     *
+     * A future subclass that needs engine-owned sets must set this
+     * explicitly and be aware of the index offset applied by resolve_ds_index.
+     */
     bool m_engine_owns_set_zero {};
 
     virtual void initialize_pipeline(const std::shared_ptr<VKBuffer>& buffer) = 0;
