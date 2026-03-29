@@ -94,6 +94,19 @@ public:
     };
 
     /**
+     * @brief Engine-internal per-frame binding state
+     *
+     * Carries descriptor bindings written by engine processors (e.g.
+     * MeshNetworkProcessor SSBOs) that must reach RenderProcessor::execute_shader
+     * without passing through the user-facing PipelineContext. Access is
+     * unrestricted by convention only: engine processors write here, user code
+     * should not.
+     */
+    struct EngineContext {
+        std::vector<Portal::Graphics::DescriptorBindingInfo> ssbo_bindings;
+    };
+
+    /**
      * @brief Construct an unregistered VKBuffer
      *
      * Creates a VKBuffer object with the requested capacity, usage intent and
@@ -515,6 +528,9 @@ public:
     /** Access the pipeline context for custom metadata (const) */
     const PipelineContext& get_pipeline_context() const { return m_pipeline_context; }
 
+    [[nodiscard]] EngineContext& get_engine_context() { return m_engine_context; }
+    [[nodiscard]] const EngineContext& get_engine_context() const { return m_engine_context; }
+
     /**
      * @brief Mark config as changed (processors will detect and react)
      * @param is_dirty Whether the config is now dirty (default: true)
@@ -611,6 +627,7 @@ private:
     std::shared_ptr<Buffers::BufferProcessingChain> m_processing_chain;
     ProcessingToken m_processing_token;
     PipelineContext m_pipeline_context;
+    EngineContext m_engine_context;
 
     std::unordered_map<RenderPipelineID, std::shared_ptr<Core::Window>> m_window_pipelines;
     std::unordered_map<RenderPipelineID, CommandBufferID> m_pipeline_commands;

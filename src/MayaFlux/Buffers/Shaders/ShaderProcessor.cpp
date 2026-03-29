@@ -377,12 +377,8 @@ void ShaderProcessor::update_descriptors(const std::shared_ptr<VKBuffer>& buffer
     for (const auto& binding : descriptor_bindings) {
         auto ds_index = resolve_ds_index(binding.set);
         if (!ds_index) {
-            if (binding.engine_internal && binding.binding != 0) {
-                // engine-owned set=0 binding, handled by RenderProcessor
-            } else {
-                MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-                    "Descriptor set index {} out of range or reserved", binding.set);
-            }
+            MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                "Descriptor set index {} out of range or reserved", binding.set);
             continue;
         }
 

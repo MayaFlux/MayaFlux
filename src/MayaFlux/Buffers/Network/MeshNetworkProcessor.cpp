@@ -290,7 +290,7 @@ void MeshNetworkProcessor::push_ssbo_bindings(const std::shared_ptr<VKBuffer>& b
     if (!m_model_ssbo || !m_slot_index_ssbo)
         return;
 
-    auto& bindings = buffer->get_pipeline_context().descriptor_buffer_bindings;
+    auto& bindings = buffer->get_engine_context().ssbo_bindings;
 
     auto push = [&](uint32_t binding_idx, const std::shared_ptr<VKBuffer>& ssbo) {
         Portal::Graphics::DescriptorBindingInfo info;
@@ -300,7 +300,6 @@ void MeshNetworkProcessor::push_ssbo_bindings(const std::shared_ptr<VKBuffer>& b
         info.buffer_info.buffer = ssbo->get_buffer();
         info.buffer_info.offset = 0;
         info.buffer_info.range = ssbo->get_size_bytes();
-        info.engine_internal = true;
 
         auto it = std::ranges::find_if(bindings, [&](const auto& b) {
             return b.set == info.set && b.binding == info.binding;

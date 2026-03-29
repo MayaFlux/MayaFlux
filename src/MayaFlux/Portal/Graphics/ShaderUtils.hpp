@@ -115,7 +115,6 @@ struct DescriptorBindingInfo {
     vk::DescriptorBufferInfo buffer_info;
     std::string name;
     uint32_t count { 1 };
-    bool engine_internal {};
 };
 
 /**

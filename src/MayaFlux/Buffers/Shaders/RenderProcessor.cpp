@@ -512,19 +512,30 @@ void RenderProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
 
     flow.bind_pipeline(cmd_id, m_pipeline_id);
 
+    auto& engine_bindings = buffer->get_engine_context().ssbo_bindings;
+    for (const auto& binding : engine_bindings) {
+        if (binding.set == 0 && binding.binding == 0) {
+            MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                "Engine SSBO at binding=0 is reserved for ViewTransform UBO");
+            continue;
+        }
+        if (m_view_transform_descriptor_set_id == Portal::Graphics::INVALID_DESCRIPTOR_SET) {
+            MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                "Engine SSBO binding {} skipped: engine descriptor set not allocated", binding.binding);
+            continue;
+        }
+        foundry.update_descriptor_buffer(
+            m_view_transform_descriptor_set_id,
+            binding.binding,
+            binding.type,
+            binding.buffer_info.buffer,
+            binding.buffer_info.offset,
+            binding.buffer_info.range);
+    }
+
     auto& descriptor_bindings = buffer->get_pipeline_context().descriptor_buffer_bindings;
     if (!descriptor_bindings.empty()) {
         for (const auto& binding : descriptor_bindings) {
-            if (binding.engine_internal) {
-                foundry.update_descriptor_buffer(
-                    m_view_transform_descriptor_set_id,
-                    binding.binding,
-                    binding.type,
-                    binding.buffer_info.buffer,
-                    binding.buffer_info.offset,
-                    binding.buffer_info.range);
-                continue;
-            }
             auto ds_index = resolve_ds_index(binding.set);
             if (!ds_index) {
                 MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
