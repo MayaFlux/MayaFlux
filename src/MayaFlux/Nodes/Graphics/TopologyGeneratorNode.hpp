@@ -4,7 +4,7 @@
 #include "MayaFlux/Transitive/Memory/RingBuffer.hpp"
 
 #include "MayaFlux/Kinesis/MotionCurves.hpp"
-#include "MayaFlux/Kinesis/ProximityGraphs.hpp"
+#include "MayaFlux/Kinesis/Spatial/ProximityGraphs.hpp"
 
 namespace MayaFlux::Nodes::GpuSync {
 
