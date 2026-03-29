@@ -290,7 +290,7 @@ void MeshNetworkProcessor::push_ssbo_bindings(const std::shared_ptr<VKBuffer>& b
     if (!m_model_ssbo || !m_slot_index_ssbo)
         return;
 
-    auto& bindings = buffer->get_pipeline_context().descriptor_buffer_bindings;
+    auto& bindings = buffer->get_engine_context().ssbo_bindings;
 
     auto push = [&](uint32_t binding_idx, const std::shared_ptr<VKBuffer>& ssbo) {
         Portal::Graphics::DescriptorBindingInfo info;
@@ -311,8 +311,8 @@ void MeshNetworkProcessor::push_ssbo_bindings(const std::shared_ptr<VKBuffer>& b
         }
     };
 
-    push(0, m_model_ssbo);
-    push(1, m_slot_index_ssbo);
+    push(1, m_model_ssbo);
+    push(2, m_slot_index_ssbo);
 }
 
 } // namespace MayaFlux::Buffers

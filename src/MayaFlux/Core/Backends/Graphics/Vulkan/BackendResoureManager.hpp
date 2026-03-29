@@ -44,6 +44,14 @@ public:
     void cleanup_buffer(const std::shared_ptr<Buffers::VKBuffer>& buffer);
 
     /**
+     * @brief Query the Vulkan device address of an initialized BDA-capable buffer
+     * @param buffer Buffer with Usage::UNIFORM_BDA or Usage::STORAGE_BDA
+     * @return vk::DeviceAddress, or 0 if the buffer was not created with eShaderDeviceAddress
+     */
+    [[nodiscard]] vk::DeviceAddress get_buffer_device_address(
+        const std::shared_ptr<Buffers::VKBuffer>& buffer) const;
+
+    /**
      * @brief Flush any pending buffer operations (e.g., uploads/downloads)
      */
     void flush_pending_buffer_operations();

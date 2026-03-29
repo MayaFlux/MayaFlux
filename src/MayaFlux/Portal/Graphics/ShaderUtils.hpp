@@ -109,12 +109,12 @@ enum class DescriptorRole : uint8_t {
  * @brief Portal-level descriptor binding configuration
  */
 struct DescriptorBindingInfo {
-    uint32_t set {};
+    uint32_t set { 1 };
     uint32_t binding {};
     vk::DescriptorType type = vk::DescriptorType::eStorageBuffer;
     vk::DescriptorBufferInfo buffer_info;
     std::string name;
-    uint32_t count = 1;
+    uint32_t count { 1 };
 };
 
 /**

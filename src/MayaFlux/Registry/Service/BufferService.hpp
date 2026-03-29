@@ -60,6 +60,13 @@ struct MAYAFLUX_API BufferService {
     std::function<void(void*, size_t, size_t)> flush_range;
 
     /**
+     * @brief Query the device address of a buffer
+     * @param buffer Buffer handle: must have been initialized with a BDA-capable usage
+     * @return Device address, or 0 if the buffer does not support device addressing
+     */
+    std::function<uint64_t(const std::shared_ptr<void>&)> get_buffer_device_address;
+
+    /**
      * @brief Invalidate mapped memory range (make device writes visible to host)
      * @param memory Memory handle
      * @param offset Offset in bytes

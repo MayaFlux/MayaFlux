@@ -37,6 +37,7 @@ const Kakshya::VertexLayout* RenderProcessor::get_or_cache_vertex_layout(
 RenderProcessor::RenderProcessor(const ShaderConfig& config)
     : ShaderProcessor(config)
 {
+    m_engine_owns_set_zero = true;
     m_shader_id = Portal::Graphics::get_shader_foundry().load_shader(config.shader_path, Portal::Graphics::ShaderStage::VERTEX, config.entry_point);
 }
 
@@ -97,36 +98,24 @@ void RenderProcessor::set_view_transform(const Kinesis::ViewTransform& vt)
 {
     m_view_transform = vt;
     m_view_transform_source = nullptr;
-    m_has_view_transform_slot = true;
+    m_view_transform_active = true;
 
     if (!m_depth_enabled) {
         enable_depth_test();
     }
-
     m_cull_mode = Portal::Graphics::CullMode::BACK;
-
-    if (m_push_constant_data.size() < sizeof(Kinesis::ViewTransform)) {
-        set_push_constant_size(sizeof(Kinesis::ViewTransform));
-    }
-
-    std::memcpy(m_push_constant_data.data(), &vt, sizeof(Kinesis::ViewTransform));
 }
 
 void RenderProcessor::set_view_transform_source(std::function<Kinesis::ViewTransform()> fn)
 {
     m_view_transform_source = std::move(fn);
     m_view_transform.reset();
-    m_has_view_transform_slot = true;
+    m_view_transform_active = true;
 
     if (!m_depth_enabled) {
         enable_depth_test();
     }
-
     m_cull_mode = Portal::Graphics::CullMode::BACK;
-
-    if (m_push_constant_data.size() < sizeof(Kinesis::ViewTransform)) {
-        set_push_constant_size(sizeof(Kinesis::ViewTransform));
-    }
 }
 
 void RenderProcessor::bind_texture(
@@ -134,7 +123,7 @@ void RenderProcessor::bind_texture(
     const std::shared_ptr<Core::VKImage>& texture,
     vk::Sampler sampler)
 {
-    if (!texture) {
+    if (!texture || !texture->is_initialized() || !texture->get_image_view()) {
         MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
             "Cannot bind null texture to binding {}", binding);
         return;
@@ -150,12 +139,40 @@ void RenderProcessor::bind_texture(
     if (m_pipeline_id != Portal::Graphics::INVALID_RENDER_PIPELINE && !m_descriptor_set_ids.empty()) {
 
         auto& foundry = Portal::Graphics::get_shader_foundry();
-        foundry.update_descriptor_image(
-            m_descriptor_set_ids[0],
-            binding,
-            texture->get_image_view(),
-            sampler,
-            vk::ImageLayout::eShaderReadOnlyOptimal);
+        auto cfg_it = std::ranges::find_if(m_config.bindings,
+            [binding](const auto& pair) {
+                return binding >= pair.second.binding
+                    && binding < pair.second.binding + pair.second.count;
+            });
+
+        if (cfg_it != m_config.bindings.end() && !m_descriptor_set_ids.empty()) {
+            const uint32_t cfg_set = cfg_it->second.set;
+            if (cfg_set == 0) {
+                if (m_view_transform_descriptor_set_id != Portal::Graphics::INVALID_DESCRIPTOR_SET) {
+                    uint32_t array_idx = 0;
+                    if (cfg_it->second.count > 1 && binding >= cfg_it->second.binding) {
+                        array_idx = binding - cfg_it->second.binding;
+                    }
+                    foundry.update_descriptor_image(
+                        m_view_transform_descriptor_set_id,
+                        cfg_it->second.binding,
+                        texture->get_image_view(),
+                        sampler,
+                        vk::ImageLayout::eShaderReadOnlyOptimal,
+                        array_idx);
+                }
+            } else {
+                auto ds_index = resolve_ds_index(cfg_set);
+                if (ds_index && *ds_index < m_descriptor_set_ids.size()) {
+                    foundry.update_descriptor_image(
+                        m_descriptor_set_ids[*ds_index],
+                        cfg_it->second.binding,
+                        texture->get_image_view(),
+                        sampler,
+                        vk::ImageLayout::eShaderReadOnlyOptimal);
+                }
+            }
+        }
     }
 
     MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
@@ -195,22 +212,6 @@ void RenderProcessor::initialize_pipeline(const std::shared_ptr<VKBuffer>& buffe
         MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
             "Target window not set");
         return;
-    }
-
-    if (!m_has_view_transform_slot) {
-        auto& foundry = Portal::Graphics::get_shader_foundry();
-        auto refl = foundry.get_shader_reflection(m_shader_id);
-        for (const auto& pc : refl.push_constant_ranges) {
-            if (pc.size == sizeof(Kinesis::ViewTransform)) {
-                m_has_view_transform_slot = true;
-                if (m_push_constant_data.size() < sizeof(Kinesis::ViewTransform)) {
-                    set_push_constant_size(sizeof(Kinesis::ViewTransform));
-                }
-                MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-                    "RenderProcessor: auto-detected ViewTransform push constant block");
-                break;
-            }
-        }
     }
 
     auto& flow = Portal::Graphics::get_render_flow();
@@ -314,7 +315,7 @@ void RenderProcessor::initialize_pipeline(const std::shared_ptr<VKBuffer>& buffe
         buffer->set_needs_depth_attachment(true);
     }
 
-    m_needs_descriptor_rebuild = !pipeline_config.descriptor_sets.empty() && m_descriptor_set_ids.empty();
+    m_needs_descriptor_rebuild = m_descriptor_set_ids.empty();
     m_needs_pipeline_rebuild = false;
 
     on_pipeline_created(m_pipeline_id);
@@ -331,16 +332,39 @@ void RenderProcessor::initialize_descriptors(const std::shared_ptr<VKBuffer>& bu
     on_before_descriptors_create();
 
     auto& flow = Portal::Graphics::get_render_flow();
+    auto& foundry = Portal::Graphics::get_shader_foundry();
 
-    m_descriptor_set_ids = flow.allocate_pipeline_descriptors(m_pipeline_id);
+    auto vt_layout = flow.get_view_transform_layout(m_pipeline_id);
+    if (vt_layout) {
+        m_view_transform_descriptor_set_id = foundry.allocate_descriptor_set(vt_layout);
 
-    if (m_descriptor_set_ids.empty()) {
-        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-            "Failed to allocate descriptor sets for pipeline");
-        return;
+        m_view_transform_ubo = std::make_shared<VKBuffer>(
+            sizeof(Kinesis::ViewTransform),
+            VKBuffer::Usage::UNIFORM,
+            Kakshya::DataModality::UNKNOWN);
+        ensure_initialized(m_view_transform_ubo);
+
+        foundry.update_descriptor_buffer(
+            m_view_transform_descriptor_set_id,
+            0,
+            vk::DescriptorType::eUniformBuffer,
+            m_view_transform_ubo->get_buffer(),
+            0,
+            sizeof(Kinesis::ViewTransform));
+
+        MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "ViewTransform UBO allocated (pipeline {})", m_pipeline_id);
     }
 
+    m_descriptor_set_ids = flow.allocate_pipeline_descriptors(m_pipeline_id, 1);
+
     for (const auto& [binding, tex_binding] : m_texture_bindings) {
+        if (!tex_binding.texture
+            || !tex_binding.texture->is_initialized()
+            || !tex_binding.texture->get_image_view()) {
+            continue;
+        }
+
         auto config_it = std::ranges::find_if(m_config.bindings,
             [binding](const auto& pair) {
                 return binding >= pair.second.binding
@@ -352,17 +376,34 @@ void RenderProcessor::initialize_descriptors(const std::shared_ptr<VKBuffer>& bu
                 "No config for binding {}", binding);
             continue;
         }
-        uint32_t set_index = config_it->second.set;
 
-        if (set_index >= m_descriptor_set_ids.size()) {
+        const uint32_t set_index = config_it->second.set;
+
+        if (set_index == 0) {
+            if (m_view_transform_descriptor_set_id == Portal::Graphics::INVALID_DESCRIPTOR_SET) {
+                MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                    "Engine descriptor set not allocated for set=0 texture binding {}", binding);
+                continue;
+            }
+            foundry.update_descriptor_image(
+                m_view_transform_descriptor_set_id,
+                config_it->second.binding,
+                tex_binding.texture->get_image_view(),
+                tex_binding.sampler,
+                vk::ImageLayout::eShaderReadOnlyOptimal,
+                binding - config_it->second.binding);
+            continue;
+        }
+
+        auto ds_index = resolve_ds_index(set_index);
+        if (!ds_index) {
             MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
                 "Descriptor set index {} out of range", binding);
             continue;
         }
 
-        auto& foundry = Portal::Graphics::get_shader_foundry();
         foundry.update_descriptor_image(
-            m_descriptor_set_ids[set_index],
+            m_descriptor_set_ids[*ds_index],
             config_it->second.binding,
             tex_binding.texture->get_image_view(),
             tex_binding.sampler,
@@ -471,17 +512,39 @@ void RenderProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
 
     flow.bind_pipeline(cmd_id, m_pipeline_id);
 
+    auto& engine_bindings = buffer->get_engine_context().ssbo_bindings;
+    for (const auto& binding : engine_bindings) {
+        if (binding.set == 0 && binding.binding == 0) {
+            MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                "Engine SSBO at binding=0 is reserved for ViewTransform UBO");
+            continue;
+        }
+        if (m_view_transform_descriptor_set_id == Portal::Graphics::INVALID_DESCRIPTOR_SET) {
+            MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                "Engine SSBO binding {} skipped: engine descriptor set not allocated", binding.binding);
+            continue;
+        }
+        foundry.update_descriptor_buffer(
+            m_view_transform_descriptor_set_id,
+            binding.binding,
+            binding.type,
+            binding.buffer_info.buffer,
+            binding.buffer_info.offset,
+            binding.buffer_info.range);
+    }
+
     auto& descriptor_bindings = buffer->get_pipeline_context().descriptor_buffer_bindings;
     if (!descriptor_bindings.empty()) {
         for (const auto& binding : descriptor_bindings) {
-            if (binding.set >= m_descriptor_set_ids.size()) {
+            auto ds_index = resolve_ds_index(binding.set);
+            if (!ds_index) {
                 MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-                    "Descriptor set index {} out of range", binding.set);
+                    "Descriptor set index {} out of range or reserved", binding.set);
                 continue;
             }
 
             foundry.update_descriptor_buffer(
-                m_descriptor_set_ids[binding.set],
+                m_descriptor_set_ids[*ds_index],
                 binding.binding,
                 binding.type,
                 binding.buffer_info.buffer,
@@ -494,29 +557,34 @@ void RenderProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
         flow.bind_descriptor_sets(cmd_id, m_pipeline_id, m_descriptor_set_ids);
     }
 
-    if (m_has_view_transform_slot) {
+    {
         Kinesis::ViewTransform vt;
-        if (!m_view_transform.has_value() && !m_view_transform_source) {
-            MF_RT_TRACE(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-                "ViewTransform push constant slot active but no transform source set. "
-                "Pushing identity transform. Call set_view_transform() or set_view_transform_source().");
-            vt = Kinesis::ViewTransform {};
-        } else {
+        if (m_view_transform_active) {
             vt = m_view_transform_source
                 ? m_view_transform_source()
-                : m_view_transform.value();
+                : m_view_transform.value_or(Kinesis::ViewTransform {});
         }
 
-        auto& staging = buffer->get_pipeline_context().push_constant_staging;
-
-        if (!staging.empty()) {
-            if (staging.size() < sizeof(Kinesis::ViewTransform)) {
-                staging.resize(std::max(staging.size(), sizeof(Kinesis::ViewTransform)));
-            }
-            std::memcpy(staging.data(), &vt, sizeof(Kinesis::ViewTransform));
-        } else {
-            std::memcpy(m_push_constant_data.data(), &vt, sizeof(Kinesis::ViewTransform));
+        if (m_view_transform_ubo && m_view_transform_ubo->get_mapped_ptr()) {
+            std::memcpy(
+                m_view_transform_ubo->get_mapped_ptr(),
+                &vt,
+                sizeof(Kinesis::ViewTransform));
         }
+    }
+
+    if (m_view_transform_descriptor_set_id != Portal::Graphics::INVALID_DESCRIPTOR_SET) {
+        flow.bind_descriptor_sets(
+            cmd_id, m_pipeline_id,
+            { m_view_transform_descriptor_set_id },
+            0);
+    }
+
+    if (!m_descriptor_set_ids.empty()) {
+        flow.bind_descriptor_sets(
+            cmd_id, m_pipeline_id,
+            m_descriptor_set_ids,
+            1);
     }
 
     const auto& staging = buffer->get_pipeline_context();
@@ -628,6 +696,10 @@ void RenderProcessor::cleanup()
         foundry.destroy_shader(m_fragment_shader_id);
         m_fragment_shader_id = Portal::Graphics::INVALID_SHADER;
     }
+
+    m_view_transform_ubo.reset();
+    m_view_transform_descriptor_set_id = Portal::Graphics::INVALID_DESCRIPTOR_SET;
+    m_view_transform_active = false;
 
     if (m_target_window) {
         flow.unregister_window(m_target_window);

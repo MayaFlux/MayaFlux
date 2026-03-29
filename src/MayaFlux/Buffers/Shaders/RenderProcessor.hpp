@@ -170,6 +170,9 @@ private:
     Portal::Graphics::ShaderID m_tess_control_shader_id = Portal::Graphics::INVALID_SHADER;
     Portal::Graphics::ShaderID m_tess_eval_shader_id = Portal::Graphics::INVALID_SHADER;
     Portal::Graphics::ShaderID m_fragment_shader_id = Portal::Graphics::INVALID_SHADER;
+    Portal::Graphics::DescriptorSetID m_view_transform_descriptor_set_id {
+        Portal::Graphics::INVALID_DESCRIPTOR_SET
+    };
     std::shared_ptr<Core::Window> m_target_window;
 
     std::unordered_map<std::shared_ptr<VKBuffer>, VertexInfo> m_buffer_info;
@@ -190,7 +193,8 @@ private:
     Portal::Graphics::DepthStencilConfig m_depth_stencil;
 
     bool m_depth_enabled {};
-    bool m_has_view_transform_slot {};
+    std::shared_ptr<VKBuffer> m_view_transform_ubo;
+    bool m_view_transform_active {};
     uint32_t m_first_vertex { 0 };
     uint32_t m_vertex_count { 0 };
 

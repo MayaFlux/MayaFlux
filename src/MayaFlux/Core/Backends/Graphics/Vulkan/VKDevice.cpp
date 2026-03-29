@@ -237,7 +237,7 @@ void VKDevice::query_supported_extensions()
     MF_PRINT(Journal::Component::Core, Journal::Context::GraphicsBackend, "End of list.");
 }
 
-bool VKDevice::create_logical_device(vk::Instance instance, const GraphicsBackendInfo& backend_info)
+bool VKDevice::create_logical_device(vk::Instance /*instance*/, const GraphicsBackendInfo& backend_info)
 {
     if (!m_queue_families.graphics_family.has_value()) {
         error<std::runtime_error>(Journal::Component::Core, Journal::Context::GraphicsBackend,
@@ -274,38 +274,46 @@ bool VKDevice::create_logical_device(vk::Instance instance, const GraphicsBacken
     device_features.multiViewport = backend_info.required_features.multi_viewport;
     device_features.fillModeNonSolid = backend_info.required_features.fill_mode_non_solid;
 
-    vk::PhysicalDeviceFeatures2 features2 {};
-    features2.features = device_features;
-
-    vk::PhysicalDeviceVulkan13Features vulkan_13_features {};
-    vulkan_13_features.dynamicRendering = VK_TRUE;
-    vulkan_13_features.synchronization2 = VK_TRUE;
-
     std::vector<const char*> device_extensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 
 #ifdef MAYAFLUX_PLATFORM_MACOS
     auto available_exts = m_physical_device.enumerateDeviceExtensionProperties();
-    bool has_portability = std::ranges::any_of(available_exts,
-        [](const auto& ext) {
+    if (std::ranges::any_of(available_exts, [](const auto& ext) {
             return strcmp(ext.extensionName, "VK_KHR_portability_subset") == 0;
-        });
-
-    if (has_portability) {
+        })) {
         device_extensions.push_back("VK_KHR_portability_subset");
     }
+
+    auto feature_chain = vk::StructureChain {
+        vk::PhysicalDeviceFeatures2 {},
+        vk::PhysicalDeviceVulkan13Features {},
+        vk::PhysicalDeviceVulkan12Features {}
+    };
+
 #else
-    vk::PhysicalDeviceMeshShaderFeaturesEXT mesh_shader_features {};
     if (m_supports_mesh_shaders) {
         device_extensions.push_back(VK_EXT_MESH_SHADER_EXTENSION_NAME);
+    }
 
-        mesh_shader_features.taskShader = VK_TRUE;
-        mesh_shader_features.meshShader = VK_TRUE;
+    auto feature_chain = vk::StructureChain {
+        vk::PhysicalDeviceFeatures2 {},
+        vk::PhysicalDeviceVulkan13Features {},
+        vk::PhysicalDeviceVulkan12Features {},
+        vk::PhysicalDeviceMeshShaderFeaturesEXT {}
+    };
 
-        vulkan_13_features.pNext = &mesh_shader_features;
+    if (!m_supports_mesh_shaders) {
+        feature_chain.unlink<vk::PhysicalDeviceMeshShaderFeaturesEXT>();
+    } else {
+        feature_chain.get<vk::PhysicalDeviceMeshShaderFeaturesEXT>().taskShader = VK_TRUE;
+        feature_chain.get<vk::PhysicalDeviceMeshShaderFeaturesEXT>().meshShader = VK_TRUE;
     }
 #endif
 
-    features2.pNext = &vulkan_13_features;
+    feature_chain.get<vk::PhysicalDeviceFeatures2>().features = device_features;
+    feature_chain.get<vk::PhysicalDeviceVulkan13Features>().dynamicRendering = VK_TRUE;
+    feature_chain.get<vk::PhysicalDeviceVulkan13Features>().synchronization2 = VK_TRUE;
+    feature_chain.get<vk::PhysicalDeviceVulkan12Features>().bufferDeviceAddress = VK_TRUE;
 
     for (const auto& ext : backend_info.required_extensions) {
         device_extensions.push_back(ext.c_str());
@@ -314,7 +322,7 @@ bool VKDevice::create_logical_device(vk::Instance instance, const GraphicsBacken
     vk::DeviceCreateInfo create_info {};
     create_info.queueCreateInfoCount = static_cast<uint32_t>(queue_create_infos.size());
     create_info.pQueueCreateInfos = queue_create_infos.data();
-    create_info.pNext = &features2;
+    create_info.pNext = &feature_chain.get<vk::PhysicalDeviceFeatures2>();
     create_info.enabledExtensionCount = static_cast<uint32_t>(device_extensions.size());
     create_info.ppEnabledExtensionNames = device_extensions.data();
 

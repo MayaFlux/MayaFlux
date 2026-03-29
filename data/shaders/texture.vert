@@ -1,6 +1,6 @@
 #version 450
 
-layout(push_constant) uniform ViewTransform {
+layout(set = 0, binding = 0) uniform ViewTransformBlock {
     mat4 view;
     mat4 projection;
 } transform;

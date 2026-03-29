@@ -28,6 +28,12 @@ void BackendResourceManager::setup_backend_service(const std::shared_ptr<Registr
         this->cleanup_buffer(buffer);
     };
 
+    buffer_service->get_buffer_device_address = [this](const std::shared_ptr<void>& vk_buf) -> uint64_t {
+        auto buffer = std::static_pointer_cast<Buffers::VKBuffer>(vk_buf);
+        auto address = this->get_buffer_device_address(buffer);
+        return static_cast<uint64_t>(address);
+    };
+
     buffer_service->execute_immediate = [this](const std::function<void(void*)>& recorder) {
         this->execute_immediate_commands([recorder](vk::CommandBuffer cmd) {
             recorder(static_cast<void*>(cmd));
@@ -240,6 +246,21 @@ void BackendResourceManager::flush_pending_buffer_operations()
                 (void*)buffer_wrapper->get_buffer());
         }
     }
+}
+
+vk::DeviceAddress BackendResourceManager::get_buffer_device_address(
+    const std::shared_ptr<Buffers::VKBuffer>& buffer) const
+{
+    if (!buffer || !buffer->is_initialized()) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "get_buffer_device_address: buffer not initialized");
+        return 0;
+    }
+
+    vk::BufferDeviceAddressInfo info {};
+    info.buffer = buffer->get_buffer();
+    // return static_cast<uint64_t>(m_context.get_device().getBufferAddress(info));
+    return m_context.get_device().getBufferAddress(info);
 }
 
 void BackendResourceManager::initialize_image(const std::shared_ptr<VKImage>& image)

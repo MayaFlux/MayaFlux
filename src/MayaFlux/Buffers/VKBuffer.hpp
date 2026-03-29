@@ -74,7 +74,9 @@ public:
         COMPUTE, ///< Storage buffer for compute shaders
         VERTEX, ///< Vertex buffer
         INDEX, ///< Index buffer
-        UNIFORM ///< Uniform buffer (host-visible when requested)
+        UNIFORM, ///< Uniform buffer (host-visible)
+        UNIFORM_BDA, ///< Uniform buffer with device address query support
+        STORAGE_BDA, ///< Storage buffer with device address query support
     };
 
     /**
@@ -89,6 +91,19 @@ public:
         std::vector<Portal::Graphics::DescriptorBindingInfo> descriptor_buffer_bindings;
 
         std::unordered_map<std::string, std::any> metadata;
+    };
+
+    /**
+     * @brief Engine-internal per-frame binding state
+     *
+     * Carries descriptor bindings written by engine processors (e.g.
+     * MeshNetworkProcessor SSBOs) that must reach RenderProcessor::execute_shader
+     * without passing through the user-facing PipelineContext. Access is
+     * unrestricted by convention only: engine processors write here, user code
+     * should not.
+     */
+    struct EngineContext {
+        std::vector<Portal::Graphics::DescriptorBindingInfo> ssbo_bindings;
     };
 
     /**
@@ -118,6 +133,17 @@ public:
      * cleanup and safe destruction semantics.
      */
     ~VKBuffer() override;
+
+    /**
+     * @brief Get the Vulkan device address for this buffer (if applicable)
+     * @return 64-bit device address, or 0 if not BDA-capable or not initialized
+     *
+     * Only buffers created with Usage::UNIFORM_BDA or Usage::STORAGE_BDA and
+     * registered with the backend will return a valid device address. This is
+     * used by processors that need to bind buffers via device address (e.g.,
+     * for ray tracing or bindless access).
+     */
+    [[nodiscard]] uint64_t get_device_address() const;
 
     /**
      * @brief Clear buffer contents
@@ -347,7 +373,10 @@ public:
      */
     bool is_host_visible() const
     {
-        return m_usage == Usage::STAGING || m_usage == Usage::UNIFORM;
+        return m_usage == Usage::STAGING
+            || m_usage == Usage::UNIFORM
+            || m_usage == Usage::UNIFORM_BDA
+            || m_usage == Usage::STORAGE_BDA;
     }
 
     /**
@@ -499,6 +528,9 @@ public:
     /** Access the pipeline context for custom metadata (const) */
     const PipelineContext& get_pipeline_context() const { return m_pipeline_context; }
 
+    [[nodiscard]] EngineContext& get_engine_context() { return m_engine_context; }
+    [[nodiscard]] const EngineContext& get_engine_context() const { return m_engine_context; }
+
     /**
      * @brief Mark config as changed (processors will detect and react)
      * @param is_dirty Whether the config is now dirty (default: true)
@@ -595,6 +627,7 @@ private:
     std::shared_ptr<Buffers::BufferProcessingChain> m_processing_chain;
     ProcessingToken m_processing_token;
     PipelineContext m_pipeline_context;
+    EngineContext m_engine_context;
 
     std::unordered_map<RenderPipelineID, std::shared_ptr<Core::Window>> m_window_pipelines;
     std::unordered_map<RenderPipelineID, CommandBufferID> m_pipeline_commands;

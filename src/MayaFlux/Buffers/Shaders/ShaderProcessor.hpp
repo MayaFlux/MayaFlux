@@ -242,7 +242,7 @@ public:
      * @param data Pointer to data
      * @param size Size in bytes
      */
-    void set_push_constant_data_raw(const void* data, size_t size);
+    virtual void set_push_constant_data_raw(const void* data, size_t size);
 
     /**
      * @brief Get current push constant data
@@ -441,6 +441,17 @@ protected:
      */
     virtual void on_after_execute(Portal::Graphics::CommandBufferID cmd_id, const std::shared_ptr<VKBuffer>& buffer);
 
+    /**
+     * @brief Resolve logical descriptor set index to actual index
+     * @param set Logical set index from ShaderBinding
+     * @return Resolved set index, or std::nullopt if invalid
+     *
+     * Handles cases where the engine reserves set 0 for global resources.
+     * If m_engine_owns_set_zero is true, logical set 0 maps to no descriptor,
+     * and logical sets are offset by +1 in the actual descriptor sets.
+     */
+    [[nodiscard]] std::optional<uint32_t> resolve_ds_index(uint32_t set) const;
+
     //==========================================================================
     // Protected State - Available to Subclasses
     //==========================================================================
@@ -462,7 +473,20 @@ protected:
 
     size_t m_auto_bind_index {};
 
-protected:
+    /**
+     * @brief Whether the engine reserves set=0 for global resources
+     *
+     * Defaults to false. Only RenderProcessor sets this to true in its
+     * constructor. When true, resolve_ds_index() maps logical set=0 to
+     * nullopt (no user descriptor) and offsets all other sets by -1.
+     * Compute subclasses leave this false: their descriptor sets are
+     * numbered from set=0 with no engine reservation.
+     *
+     * A future subclass that needs engine-owned sets must set this
+     * explicitly and be aware of the index offset applied by resolve_ds_index.
+     */
+    bool m_engine_owns_set_zero {};
+
     virtual void initialize_pipeline(const std::shared_ptr<VKBuffer>& buffer) = 0;
     virtual void initialize_descriptors(const std::shared_ptr<VKBuffer>& buffer) = 0;
     virtual void execute_shader(const std::shared_ptr<VKBuffer>& buffer) = 0;

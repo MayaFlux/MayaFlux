@@ -120,12 +120,12 @@ void NodeTextureBuffer::setup_rendering(const RenderConfig& user_config)
     if (!m_render_processor) {
         ShaderConfig shader_config { m_render_config.vertex_shader };
         shader_config.bindings[m_render_config.default_texture_binding] = ShaderBinding(
-            0, 0, vk::DescriptorType::eCombinedImageSampler);
+            0, 1, vk::DescriptorType::eCombinedImageSampler);
 
         uint32_t binding_index = 1;
         for (const auto& [name, _] : m_render_config.additional_textures) {
             shader_config.bindings[name] = ShaderBinding(
-                0, binding_index++, vk::DescriptorType::eCombinedImageSampler);
+                1, binding_index++, vk::DescriptorType::eCombinedImageSampler);
         }
 
         m_render_processor = std::make_shared<RenderProcessor>(shader_config);

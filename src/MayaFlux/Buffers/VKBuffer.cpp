@@ -46,6 +46,38 @@ void VKBuffer::clear()
     }
 }
 
+uint64_t VKBuffer::get_device_address() const
+{
+    if (!is_initialized()) {
+        MF_WARN(Journal::Component::Buffers, Journal::Context::BufferManagement,
+            "Cannot get device address of uninitialized VKBuffer");
+        return 0;
+    }
+
+    if (m_usage != Usage::UNIFORM_BDA && m_usage != Usage::STORAGE_BDA) {
+        MF_WARN(Journal::Component::Buffers, Journal::Context::BufferManagement,
+            "get_device_address() called on buffer without BDA usage flags");
+        return 0;
+    }
+
+    auto* buffer_service = Registry::BackendRegistry::instance()
+                               .get_service<Registry::Service::BufferService>();
+
+    if (!buffer_service) {
+        error<std::runtime_error>(
+            Journal::Component::Buffers,
+            Journal::Context::BufferManagement,
+            std::source_location::current(),
+            "Cannot query buffer device address: BufferService not available");
+    }
+
+    auto shared_this = std::const_pointer_cast<VKBuffer>(
+        std::static_pointer_cast<const VKBuffer>(shared_from_this()));
+
+    return buffer_service->get_buffer_device_address(
+        std::static_pointer_cast<void>(shared_this));
+}
+
 void VKBuffer::set_data(const std::vector<Kakshya::DataVariant>& data)
 {
     if (!is_initialized()) {
@@ -234,6 +266,14 @@ vk::BufferUsageFlags VKBuffer::get_usage_flags() const
         break;
     case Usage::UNIFORM:
         flags |= vk::BufferUsageFlagBits::eUniformBuffer;
+        break;
+    case Usage::UNIFORM_BDA:
+        flags |= vk::BufferUsageFlagBits::eUniformBuffer
+            | vk::BufferUsageFlagBits::eShaderDeviceAddress;
+        break;
+    case Usage::STORAGE_BDA:
+        flags |= vk::BufferUsageFlagBits::eStorageBuffer
+            | vk::BufferUsageFlagBits::eShaderDeviceAddress;
         break;
     }
 

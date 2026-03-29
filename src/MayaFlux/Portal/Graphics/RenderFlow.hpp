@@ -108,6 +108,14 @@ public:
      */
     void destroy_pipeline(RenderPipelineID pipeline_id);
 
+    /**
+     * @brief Return the reserved ViewTransform UBO layout for a pipeline
+     * @param pipeline_id Pipeline to query
+     * @return Layout handle, or null on failure
+     */
+    [[nodiscard]] vk::DescriptorSetLayout get_view_transform_layout(
+        RenderPipelineID pipeline_id) const;
+
     //==========================================================================
     // Dynamic Rendering
     //==========================================================================
@@ -175,11 +183,13 @@ public:
      * @param cmd_id Command buffer ID
      * @param pipeline Pipeline ID
      * @param descriptor_sets Descriptor set IDs
+     * @param first_set First set index in pipeline layout (default: 0)
      */
     void bind_descriptor_sets(
         CommandBufferID cmd_id,
         RenderPipelineID pipeline,
-        const std::vector<DescriptorSetID>& descriptor_sets);
+        const std::vector<DescriptorSetID>& descriptor_sets,
+        uint32_t first_set = 0);
 
     /**
      * @brief Push constants
@@ -187,12 +197,14 @@ public:
      * @param pipeline Pipeline ID
      * @param data Constant data
      * @param size Data size in bytes
+     * @param offset Byte offset in push constant range (default: 0)
      */
     void push_constants(
         CommandBufferID cmd_id,
         RenderPipelineID pipeline,
         const void* data,
-        size_t size);
+        size_t size,
+        uint32_t offset = 0);
 
     /**
      * @brief Draw command
@@ -284,9 +296,12 @@ public:
     /**
      * @brief Allocate descriptor sets for pipeline
      * @param pipeline Pipeline ID
+     * @param first_layout_index First layout index in pipeline layout to start from (default: 0)
      * @return Vector of allocated descriptor set IDs
      */
-    std::vector<DescriptorSetID> allocate_pipeline_descriptors(RenderPipelineID pipeline);
+    std::vector<DescriptorSetID> allocate_pipeline_descriptors(
+        RenderPipelineID pipeline,
+        uint32_t first_layout_index = 0);
 
 private:
     struct WindowRenderAssociation {
@@ -301,6 +316,7 @@ private:
         vk::PipelineLayout layout;
         vk::ShaderStageFlags push_constant_stages = vk::ShaderStageFlagBits::eVertex
             | vk::ShaderStageFlagBits::eFragment;
+        vk::DescriptorSetLayout view_transform_layout {};
     };
 
     std::unordered_map<RenderPipelineID, PipelineState> m_pipelines;
