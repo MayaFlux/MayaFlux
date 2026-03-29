@@ -120,23 +120,28 @@ void ShaderProcessor::bind_buffer(const std::string& descriptor_name, const std:
     }
 
     if (m_config.bindings.find(descriptor_name) == m_config.bindings.end()) {
+        auto user_binding_count = static_cast<uint32_t>(
+            std::ranges::count_if(m_config.bindings, [](const auto& pair) {
+                return pair.second.set == 1;
+            }));
+
         ShaderBinding default_binding;
         default_binding.set = 1;
-        default_binding.binding = static_cast<uint32_t>(m_config.bindings.size());
+        default_binding.binding = user_binding_count;
         default_binding.type = vk::DescriptorType::eStorageBuffer;
         m_config.bindings[descriptor_name] = default_binding;
 
-        // MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-        //     "Created default binding for '{}': set={}, binding={}",
-        //     descriptor_name, default_binding.set, default_binding.binding);
+        MF_TRACE(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "Created default binding for '{}': set={}, binding={}",
+            descriptor_name, default_binding.set, default_binding.binding);
     }
 
     m_bound_buffers[descriptor_name] = buffer;
     m_needs_descriptor_rebuild = true;
 
-    // MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-    //     "Bound buffer to descriptor '{}' (size: {} bytes)",
-    //     descriptor_name, buffer->get_size_bytes());
+    MF_TRACE(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+        "Bound buffer to descriptor '{}' (size: {} bytes)",
+        descriptor_name, buffer->get_size_bytes());
 }
 
 void ShaderProcessor::unbind_buffer(const std::string& descriptor_name)
@@ -343,6 +348,21 @@ void ShaderProcessor::initialize_shader()
         "Shader loaded: {} (ID: {})", m_config.shader_path, m_shader_id);
 }
 
+std::optional<uint32_t> ShaderProcessor::resolve_ds_index(uint32_t set) const
+{
+    if (m_engine_owns_set_zero) {
+        if (set == 0)
+            return std::nullopt;
+        const uint32_t idx = set - 1;
+        if (idx >= m_descriptor_set_ids.size())
+            return std::nullopt;
+        return idx;
+    }
+    if (set >= m_descriptor_set_ids.size())
+        return std::nullopt;
+    return set;
+}
+
 void ShaderProcessor::update_descriptors(const std::shared_ptr<VKBuffer>& buffer)
 {
     if (m_descriptor_set_ids.empty()) {
@@ -355,14 +375,19 @@ void ShaderProcessor::update_descriptors(const std::shared_ptr<VKBuffer>& buffer
     std::set<std::pair<uint32_t, uint32_t>> updated_pairs;
 
     for (const auto& binding : descriptor_bindings) {
-        if (binding.set == 0 || (binding.set - 1) >= m_descriptor_set_ids.size()) {
-            MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-                "Descriptor set index {} out of range", binding.set);
+        auto ds_index = resolve_ds_index(binding.set);
+        if (!ds_index) {
+            if (binding.engine_internal && binding.binding != 0) {
+                // engine-owned set=0 binding, handled by RenderProcessor
+            } else {
+                MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                    "Descriptor set index {} out of range or reserved", binding.set);
+            }
             continue;
         }
 
         foundry.update_descriptor_buffer(
-            m_descriptor_set_ids[binding.set - 1],
+            m_descriptor_set_ids[*ds_index],
             binding.binding,
             binding.type,
             binding.buffer_info.buffer,
@@ -372,7 +397,7 @@ void ShaderProcessor::update_descriptors(const std::shared_ptr<VKBuffer>& buffer
         updated_pairs.emplace(binding.set, binding.binding);
     }
 
-    for (const auto& [descriptor_name, buffer] : m_bound_buffers) {
+    for (const auto& [descriptor_name, buf] : m_bound_buffers) {
         auto binding_it = m_config.bindings.find(descriptor_name);
         if (binding_it == m_config.bindings.end()) {
             continue;
@@ -385,7 +410,8 @@ void ShaderProcessor::update_descriptors(const std::shared_ptr<VKBuffer>& buffer
             continue;
         }
 
-        if (binding.set == 0 || (binding.set - 1) >= m_descriptor_set_ids.size()) {
+        auto ds_index = resolve_ds_index(binding.set);
+        if (!ds_index) {
             MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
                 "Invalid descriptor set index {} for binding '{}'",
                 binding.set, descriptor_name);
@@ -393,12 +419,12 @@ void ShaderProcessor::update_descriptors(const std::shared_ptr<VKBuffer>& buffer
         }
 
         foundry.update_descriptor_buffer(
-            m_descriptor_set_ids[binding.set - 1],
+            m_descriptor_set_ids[*ds_index],
             binding.binding,
             binding.type,
-            buffer->get_buffer(),
+            buf->get_buffer(),
             0,
-            buffer->get_size_bytes());
+            buf->get_size_bytes());
     }
 }
 

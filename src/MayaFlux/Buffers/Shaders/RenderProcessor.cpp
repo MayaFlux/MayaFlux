@@ -37,6 +37,7 @@ const Kakshya::VertexLayout* RenderProcessor::get_or_cache_vertex_layout(
 RenderProcessor::RenderProcessor(const ShaderConfig& config)
     : ShaderProcessor(config)
 {
+    m_engine_owns_set_zero = true;
     m_shader_id = Portal::Graphics::get_shader_foundry().load_shader(config.shader_path, Portal::Graphics::ShaderStage::VERTEX, config.entry_point);
 }
 
@@ -144,18 +145,21 @@ void RenderProcessor::bind_texture(
                     && binding < pair.second.binding + pair.second.count;
             });
 
-        if (cfg_it != m_config.bindings.end()
-            && cfg_it->second.set > 0
-            && !m_descriptor_set_ids.empty()) {
-            uint32_t ds_index = cfg_it->second.set - 1;
-            if (ds_index < m_descriptor_set_ids.size()) {
-                auto& foundry = Portal::Graphics::get_shader_foundry();
-                foundry.update_descriptor_image(
-                    m_descriptor_set_ids[ds_index],
-                    binding,
-                    texture->get_image_view(),
-                    sampler,
-                    vk::ImageLayout::eShaderReadOnlyOptimal);
+        if (cfg_it != m_config.bindings.end() && !m_descriptor_set_ids.empty()) {
+            const uint32_t cfg_set = cfg_it->second.set;
+            if (cfg_set == 0) {
+                // engine set — update via engine descriptor set handle directly
+                // deferred until engine set=0 allocation is unified
+            } else {
+                auto ds_index = resolve_ds_index(cfg_set);
+                if (ds_index && *ds_index < m_descriptor_set_ids.size()) {
+                    foundry.update_descriptor_image(
+                        m_descriptor_set_ids[*ds_index],
+                        cfg_it->second.binding,
+                        texture->get_image_view(),
+                        sampler,
+                        vk::ImageLayout::eShaderReadOnlyOptimal);
+                }
             }
         }
     }
@@ -362,22 +366,33 @@ void RenderProcessor::initialize_descriptors(const std::shared_ptr<VKBuffer>& bu
             continue;
         }
 
-        uint32_t set_index = config_it->second.set;
+        const uint32_t set_index = config_it->second.set;
+
         if (set_index == 0) {
-            MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-                "User binding at set=0 is reserved for ViewTransform");
+            if (m_view_transform_descriptor_set_id == Portal::Graphics::INVALID_DESCRIPTOR_SET) {
+                MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                    "Engine descriptor set not allocated for set=0 texture binding {}", binding);
+                continue;
+            }
+            foundry.update_descriptor_image(
+                m_view_transform_descriptor_set_id,
+                config_it->second.binding,
+                tex_binding.texture->get_image_view(),
+                tex_binding.sampler,
+                vk::ImageLayout::eShaderReadOnlyOptimal,
+                binding - config_it->second.binding);
             continue;
         }
 
-        uint32_t ds_index = set_index - 1;
-        if (ds_index >= m_descriptor_set_ids.size()) {
+        auto ds_index = resolve_ds_index(set_index);
+        if (!ds_index) {
             MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
                 "Descriptor set index {} out of range", binding);
             continue;
         }
 
         foundry.update_descriptor_image(
-            m_descriptor_set_ids[ds_index],
+            m_descriptor_set_ids[*ds_index],
             config_it->second.binding,
             tex_binding.texture->get_image_view(),
             tex_binding.sampler,
@@ -489,14 +504,25 @@ void RenderProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
     auto& descriptor_bindings = buffer->get_pipeline_context().descriptor_buffer_bindings;
     if (!descriptor_bindings.empty()) {
         for (const auto& binding : descriptor_bindings) {
-            if (binding.set == 0 || (binding.set - 1) >= m_descriptor_set_ids.size()) {
+            if (binding.engine_internal) {
+                foundry.update_descriptor_buffer(
+                    m_view_transform_descriptor_set_id,
+                    binding.binding,
+                    binding.type,
+                    binding.buffer_info.buffer,
+                    binding.buffer_info.offset,
+                    binding.buffer_info.range);
+                continue;
+            }
+            auto ds_index = resolve_ds_index(binding.set);
+            if (!ds_index) {
                 MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-                    "Descriptor set index {} out of range", binding.set);
+                    "Descriptor set index {} out of range or reserved", binding.set);
                 continue;
             }
 
             foundry.update_descriptor_buffer(
-                m_descriptor_set_ids[binding.set - 1],
+                m_descriptor_set_ids[*ds_index],
                 binding.binding,
                 binding.type,
                 binding.buffer_info.buffer,

@@ -114,7 +114,7 @@ void MeshBuffer::setup_rendering(const RenderConfig& config)
 
         if (textured && !m_render_config.default_texture_binding.empty()) {
             sc.bindings[m_render_config.default_texture_binding] = ShaderBinding(
-                1, 0, vk::DescriptorType::eCombinedImageSampler);
+                0, 1, vk::DescriptorType::eCombinedImageSampler);
         }
 
         uint32_t binding_index = 1;

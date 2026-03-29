@@ -111,20 +111,20 @@ void MeshNetworkBuffer::setup_rendering(const RenderConfig& config)
 
     ShaderConfig sc { m_render_config.vertex_shader };
 
-    sc.bindings["modelMatrices"] = ShaderBinding(1, 0, vk::DescriptorType::eStorageBuffer);
-    sc.bindings["slotIndices"] = ShaderBinding(1, 1, vk::DescriptorType::eStorageBuffer);
+    sc.bindings["modelMatrices"] = ShaderBinding(0, 1, vk::DescriptorType::eStorageBuffer);
+    sc.bindings["slotIndices"] = ShaderBinding(0, 2, vk::DescriptorType::eStorageBuffer);
 
     if (has_slot_textures) {
         sc.bindings["diffuseTex"] = ShaderBinding(
-            1, 2, vk::DescriptorType::eCombinedImageSampler, slot_count);
+            0, 3, vk::DescriptorType::eCombinedImageSampler, slot_count);
     } else if (textured && !m_render_config.default_texture_binding.empty()) {
         sc.bindings[m_render_config.default_texture_binding] = ShaderBinding(
-            1, 2, vk::DescriptorType::eCombinedImageSampler);
+            0, 3, vk::DescriptorType::eCombinedImageSampler);
     }
 
-    uint32_t binding_idx = 3;
+    uint32_t binding_idx = 0;
     for (const auto& [name, _] : m_render_config.additional_textures)
-        sc.bindings[name] = ShaderBinding(0, binding_idx++, vk::DescriptorType::eCombinedImageSampler);
+        sc.bindings[name] = ShaderBinding(1, binding_idx++, vk::DescriptorType::eCombinedImageSampler);
 
     m_render_processor = std::make_shared<RenderProcessor>(sc);
     m_render_processor->set_fragment_shader(m_render_config.fragment_shader);

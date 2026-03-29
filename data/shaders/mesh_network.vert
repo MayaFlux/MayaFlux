@@ -12,11 +12,11 @@ layout(set = 0, binding = 0) uniform ViewTransformBlock {
     mat4 projection;
 } pc;
 
-layout(set = 1, binding = 0) readonly buffer ModelMatrices {
+layout(set = 0, binding = 1) readonly buffer ModelMatrices {
     mat4 model[];
 } models;
 
-layout(set = 1, binding = 1) readonly buffer SlotIndices {
+layout(set = 0, binding = 2) readonly buffer SlotIndices {
     uint slot_index[];
 } slots;
 

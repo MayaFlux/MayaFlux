@@ -376,37 +376,68 @@ RenderPipelineID RenderFlow::create_pipeline(
     }
 
     std::vector<vk::DescriptorSetLayout> layouts;
+    vk::DescriptorSetLayout state_vt_layout {};
+
+    {
+        std::vector<vk::DescriptorSetLayoutBinding> set0_bindings;
+
+        vk::DescriptorSetLayoutBinding vt_b;
+        vt_b.binding = 0;
+        vt_b.descriptorType = vk::DescriptorType::eUniformBuffer;
+        vt_b.descriptorCount = 1;
+        vt_b.stageFlags = vk::ShaderStageFlagBits::eVertex;
+        set0_bindings.push_back(vt_b);
+
+        if (!config.descriptor_sets.empty()) {
+            for (const auto& binding : config.descriptor_sets[0]) {
+                if (binding.set == 0 && binding.binding != 0) {
+                    vk::DescriptorSetLayoutBinding vk_b;
+                    vk_b.binding = binding.binding;
+                    vk_b.descriptorType = binding.type;
+                    vk_b.descriptorCount = binding.count > 0 ? binding.count : 1;
+                    vk_b.stageFlags = vk::ShaderStageFlagBits::eVertex
+                        | vk::ShaderStageFlagBits::eFragment;
+                    set0_bindings.push_back(vk_b);
+                }
+            }
+        }
+
+        vk::DescriptorSetLayoutCreateInfo layout_info;
+        layout_info.bindingCount = static_cast<uint32_t>(set0_bindings.size());
+        layout_info.pBindings = set0_bindings.data();
+        vk::DescriptorSetLayout vt_layout = m_shader_foundry->get_device().createDescriptorSetLayout(layout_info);
+        layouts.push_back(vt_layout);
+        state_vt_layout = vt_layout;
+    }
+
     for (const auto& desc_set : config.descriptor_sets) {
+        bool all_set_zero = std::ranges::all_of(desc_set,
+            [](const auto& b) { return b.set == 0; });
+        if (all_set_zero)
+            continue;
+
         std::vector<vk::DescriptorSetLayoutBinding> bindings;
         for (const auto& binding : desc_set) {
-            vk::DescriptorSetLayoutBinding vk_binding;
-            vk_binding.binding = binding.binding;
-            vk_binding.descriptorType = binding.type;
-            vk_binding.descriptorCount = 1;
-            vk_binding.stageFlags = vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment;
-            bindings.push_back(vk_binding);
+            if (binding.set == 0)
+                continue;
+            vk::DescriptorSetLayoutBinding vk_b;
+            vk_b.binding = binding.binding;
+            vk_b.descriptorType = binding.type;
+            vk_b.descriptorCount = binding.count > 0 ? binding.count : 1;
+            vk_b.stageFlags = vk::ShaderStageFlagBits::eVertex
+                | vk::ShaderStageFlagBits::eFragment;
+            bindings.push_back(vk_b);
         }
+
+        if (bindings.empty())
+            continue;
 
         vk::DescriptorSetLayoutCreateInfo layout_info;
         layout_info.bindingCount = static_cast<uint32_t>(bindings.size());
         layout_info.pBindings = bindings.data();
-
-        auto layout = m_shader_foundry->get_device().createDescriptorSetLayout(layout_info);
-        layouts.push_back(layout);
+        layouts.push_back(
+            m_shader_foundry->get_device().createDescriptorSetLayout(layout_info));
     }
-
-    vk::DescriptorSetLayoutBinding vt_b;
-    vt_b.binding = 0;
-    vt_b.descriptorType = vk::DescriptorType::eUniformBuffer;
-    vt_b.descriptorCount = 1;
-    vt_b.stageFlags = vk::ShaderStageFlagBits::eVertex;
-
-    vk::DescriptorSetLayoutCreateInfo vt_layout_info;
-    vt_layout_info.bindingCount = 1;
-    vt_layout_info.pBindings = &vt_b;
-
-    vk::DescriptorSetLayout vt_layout = m_shader_foundry->get_device().createDescriptorSetLayout(vt_layout_info);
-    layouts.insert(layouts.begin(), vt_layout);
 
     vk_config.descriptor_set_layouts = layouts;
 
@@ -465,7 +496,7 @@ RenderPipelineID RenderFlow::create_pipeline(
     state.shader_ids = { config.vertex_shader, config.fragment_shader };
     state.pipeline = pipeline;
     state.layouts = layouts;
-    state.view_transform_layout = vt_layout;
+    state.view_transform_layout = state_vt_layout;
     state.layout = pipeline->get_layout();
     state.push_constant_stages = push_constant_stages;
     m_pipelines[pipeline_id] = std::move(state);

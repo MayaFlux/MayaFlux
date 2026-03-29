@@ -114,7 +114,8 @@ struct DescriptorBindingInfo {
     vk::DescriptorType type = vk::DescriptorType::eStorageBuffer;
     vk::DescriptorBufferInfo buffer_info;
     std::string name;
-    uint32_t count = 1;
+    uint32_t count { 1 };
+    bool engine_internal {};
 };
 
 /**
