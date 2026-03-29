@@ -122,6 +122,17 @@ public:
     ~VKBuffer() override;
 
     /**
+     * @brief Get the Vulkan device address for this buffer (if applicable)
+     * @return 64-bit device address, or 0 if not BDA-capable or not initialized
+     *
+     * Only buffers created with Usage::UNIFORM_BDA or Usage::STORAGE_BDA and
+     * registered with the backend will return a valid device address. This is
+     * used by processors that need to bind buffers via device address (e.g.,
+     * for ray tracing or bindless access).
+     */
+    [[nodiscard]] uint64_t get_device_address() const;
+
+    /**
      * @brief Clear buffer contents
      *
      * If the buffer is host-visible and mapped the memory is zeroed. For
