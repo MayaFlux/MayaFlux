@@ -148,8 +148,19 @@ void RenderProcessor::bind_texture(
         if (cfg_it != m_config.bindings.end() && !m_descriptor_set_ids.empty()) {
             const uint32_t cfg_set = cfg_it->second.set;
             if (cfg_set == 0) {
-                // engine set — update via engine descriptor set handle directly
-                // deferred until engine set=0 allocation is unified
+                if (m_view_transform_descriptor_set_id != Portal::Graphics::INVALID_DESCRIPTOR_SET) {
+                    uint32_t array_idx = 0;
+                    if (cfg_it->second.count > 1 && binding >= cfg_it->second.binding) {
+                        array_idx = binding - cfg_it->second.binding;
+                    }
+                    foundry.update_descriptor_image(
+                        m_view_transform_descriptor_set_id,
+                        cfg_it->second.binding,
+                        texture->get_image_view(),
+                        sampler,
+                        vk::ImageLayout::eShaderReadOnlyOptimal,
+                        array_idx);
+                }
             } else {
                 auto ds_index = resolve_ds_index(cfg_set);
                 if (ds_index && *ds_index < m_descriptor_set_ids.size()) {
