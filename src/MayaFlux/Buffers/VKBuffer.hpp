@@ -74,7 +74,9 @@ public:
         COMPUTE, ///< Storage buffer for compute shaders
         VERTEX, ///< Vertex buffer
         INDEX, ///< Index buffer
-        UNIFORM ///< Uniform buffer (host-visible when requested)
+        UNIFORM, ///< Uniform buffer (host-visible)
+        UNIFORM_BDA, ///< Uniform buffer with device address query support
+        STORAGE_BDA, ///< Storage buffer with device address query support
     };
 
     /**
@@ -347,7 +349,10 @@ public:
      */
     bool is_host_visible() const
     {
-        return m_usage == Usage::STAGING || m_usage == Usage::UNIFORM;
+        return m_usage == Usage::STAGING
+            || m_usage == Usage::UNIFORM
+            || m_usage == Usage::UNIFORM_BDA
+            || m_usage == Usage::STORAGE_BDA;
     }
 
     /**

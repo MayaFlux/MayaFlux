@@ -235,6 +235,14 @@ vk::BufferUsageFlags VKBuffer::get_usage_flags() const
     case Usage::UNIFORM:
         flags |= vk::BufferUsageFlagBits::eUniformBuffer;
         break;
+    case Usage::UNIFORM_BDA:
+        flags |= vk::BufferUsageFlagBits::eUniformBuffer
+            | vk::BufferUsageFlagBits::eShaderDeviceAddress;
+        break;
+    case Usage::STORAGE_BDA:
+        flags |= vk::BufferUsageFlagBits::eStorageBuffer
+            | vk::BufferUsageFlagBits::eShaderDeviceAddress;
+        break;
     }
 
     return flags;
