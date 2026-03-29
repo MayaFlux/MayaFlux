@@ -48,6 +48,7 @@ Checks: >
   -cert-err58-cpp,
   -cppcoreguidelines-macro-usage,
   -cppcoreguidelines-avoid-c-arrays,
+  -cppcoreguidelines-avoid-do-while,
   -cppcoreguidelines-avoid-magic-numbers,
   -cppcoreguidelines-pro-type-union-access,
   -cppcoreguidelines-pro-type-reinterpret-cast,
