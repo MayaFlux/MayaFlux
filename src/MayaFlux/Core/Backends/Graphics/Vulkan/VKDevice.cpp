@@ -284,10 +284,11 @@ bool VKDevice::create_logical_device(vk::Instance /*instance*/, const GraphicsBa
         device_extensions.push_back("VK_KHR_portability_subset");
     }
 
-    auto feature_chain = vk::StructureChain
-        vk::PhysicalDeviceFeatures2,
-         vk::PhysicalDeviceVulkan13Features,
-         vk::PhysicalDeviceVulkan12Features> {};
+    auto feature_chain = vk::StructureChain {
+        vk::PhysicalDeviceFeatures2 {},
+        vk::PhysicalDeviceVulkan13Features {},
+        vk::PhysicalDeviceVulkan12Features {}
+    };
 
 #else
     if (m_supports_mesh_shaders) {
