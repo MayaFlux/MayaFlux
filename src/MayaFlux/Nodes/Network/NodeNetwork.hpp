@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MayaFlux/Nodes/Network/Operators/NetworkOperator.hpp"
+#include "MayaFlux/Nodes/Network/Operators/OperatorChain.hpp"
 #include "MayaFlux/Nodes/Node.hpp"
 
 namespace MayaFlux::Nodes::Network {
@@ -373,6 +373,21 @@ public:
     virtual bool has_operator() const { return false; }
 
     /**
+     * @brief Access the secondary operator chain.
+     *
+     * The chain holds operators that run after the primary operator each
+     * process_batch() cycle. Subclasses call get_operator_chain()->process(dt)
+     * at the appropriate point in their process_batch() implementation.
+     *
+     * Returned shared_ptr is never null -- the chain is created in NodeNetwork's
+     * constructor and lives for the lifetime of the network.
+     */
+    [[nodiscard]] std::shared_ptr<OperatorChain> get_operator_chain() const
+    {
+        return m_operator_chain;
+    }
+
+    /**
      * @brief Retrieves the current routing state of the network
      * @return Reference to the current RoutingState structure
      *
@@ -419,6 +434,8 @@ protected:
     bool m_initialized = false;
     uint32_t m_sample_rate { 48000 };
     uint32_t m_block_size { 512 };
+
+    std::shared_ptr<OperatorChain> m_operator_chain;
 
     /**
      * @brief Ensure initialize() is called exactly once

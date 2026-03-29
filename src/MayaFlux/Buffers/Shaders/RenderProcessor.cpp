@@ -280,7 +280,8 @@ void RenderProcessor::initialize_pipeline(const std::shared_ptr<VKBuffer>& buffe
                 .binding = binding.binding,
                 .type = binding.type,
                 .buffer_info = {},
-                .name = name
+                .name = name,
+                .count = binding.count
             };
         }
     }
@@ -342,7 +343,8 @@ void RenderProcessor::initialize_descriptors(const std::shared_ptr<VKBuffer>& bu
     for (const auto& [binding, tex_binding] : m_texture_bindings) {
         auto config_it = std::ranges::find_if(m_config.bindings,
             [binding](const auto& pair) {
-                return pair.second.binding == binding;
+                return binding >= pair.second.binding
+                    && binding < pair.second.binding + pair.second.count;
             });
 
         if (config_it == m_config.bindings.end()) {
@@ -364,7 +366,8 @@ void RenderProcessor::initialize_descriptors(const std::shared_ptr<VKBuffer>& bu
             config_it->second.binding,
             tex_binding.texture->get_image_view(),
             tex_binding.sampler,
-            vk::ImageLayout::eShaderReadOnlyOptimal);
+            vk::ImageLayout::eShaderReadOnlyOptimal,
+            binding - config_it->second.binding);
     }
 
     MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,

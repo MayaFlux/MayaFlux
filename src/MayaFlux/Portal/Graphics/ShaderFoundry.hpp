@@ -350,13 +350,15 @@ public:
      * @param image_view Vulkan image view to bind
      * @param sampler Vulkan sampler to bind
      * @param layout Image layout (default: eShaderReadOnlyOptimal)
+     * @param array_element Array index for array bindings (default: 0)
      */
     void update_descriptor_image(
         DescriptorSetID descriptor_set_id,
         uint32_t binding,
         vk::ImageView image_view,
         vk::Sampler sampler,
-        vk::ImageLayout layout = vk::ImageLayout::eShaderReadOnlyOptimal);
+        vk::ImageLayout layout = vk::ImageLayout::eShaderReadOnlyOptimal,
+        uint32_t array_element = 0);
 
     /**
      * @brief Update descriptor set with storage image binding

@@ -3,6 +3,14 @@
 #include "MayaFlux/IO/CameraReader.hpp"
 #include "MayaFlux/IO/VideoFileReader.hpp"
 
+namespace MayaFlux::Core {
+class VKImage;
+}
+
+namespace MayaFlux::Nodes::Network {
+class MeshNetwork;
+}
+
 namespace MayaFlux::Kakshya {
 class SignalSourceContainer;
 class VideoFileContainer;
@@ -23,6 +31,8 @@ class IOService;
 }
 
 namespace MayaFlux::IO {
+
+using TextureResolver = std::function<std::shared_ptr<Core::VKImage>(const std::string& path)>;
 
 class ImageReader;
 class ModelReader;
@@ -324,17 +334,36 @@ public:
      *
      * Opens the file via ModelReader, extracts all aiMesh entries as MeshData,
      * constructs one MeshBuffer per mesh, calls setup_processors() on each,
-     * and returns them. setup_rendering() is left to the caller so window
-     * targeting and optional texture binding remain explicit.
+     * and returns them. setup_rendering() is left to the caller.
      *
-     * Returns an empty vector on failure; individual mesh extraction errors
-     * are logged and skipped rather than aborting the entire load.
+     * If resolver is null, the default resolver is used: paths resolved
+     * relative to the model file's directory via ImageReader::load_texture.
+     * Unresolvable textures are logged and skipped.
      *
      * @param filepath Path to the model file (glTF, FBX, OBJ, PLY, etc.).
+     * @param resolver Optional texture resolver.
      * @return One MeshBuffer per mesh in scene order, or empty on failure.
      */
     [[nodiscard]] std::vector<std::shared_ptr<Buffers::MeshBuffer>>
-    load_mesh(const std::string& filepath);
+    load_mesh(
+        const std::string& filepath,
+        TextureResolver resolver = nullptr);
+
+    /**
+     * @brief Load a 3D model file as a MeshNetwork.
+     *
+     * One MeshSlot per aiMesh. Per-slot diffuse textures resolved via resolver.
+     * Null resolver uses the default: ImageReader::load_texture relative to the
+     * model file's directory.
+     *
+     * @param filepath Path to the model file.
+     * @param resolver Optional texture resolver.
+     * @return Populated MeshNetwork, or nullptr on failure.
+     */
+    [[nodiscard]] std::shared_ptr<Nodes::Network::MeshNetwork>
+    load_mesh_network(
+        const std::string& filepath,
+        TextureResolver resolver = nullptr);
 
 private:
     uint64_t m_sample_rate;

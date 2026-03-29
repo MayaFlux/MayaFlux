@@ -57,8 +57,7 @@ struct ShaderSource {
         GLSL_STRING, ///< In-memory GLSL source
         GLSL_FILE, ///< Path to .comp/.vert/.frag/etc
         SPIRV_FILE ///< Path to .spv file
-    } type
-        = SourceType::GLSL_FILE;
+    } type = SourceType::GLSL_FILE;
 
     ShaderSource() = default;
     ShaderSource(std::string content_, ShaderStage stage_, SourceType type_)
@@ -115,6 +114,7 @@ struct DescriptorBindingInfo {
     vk::DescriptorType type = vk::DescriptorType::eStorageBuffer;
     vk::DescriptorBufferInfo buffer_info;
     std::string name;
+    uint32_t count = 1;
 };
 
 /**

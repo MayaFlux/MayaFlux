@@ -5,6 +5,14 @@
 
 namespace MayaFlux {
 
+namespace Core {
+    class VKImage;
+}
+
+namespace IO {
+    using TextureResolver = std::function<std::shared_ptr<Core::VKImage>(const std::string& path)>;
+}
+
 struct CreationContext {
     std::optional<Domain> domain;
     std::optional<uint32_t> channel;
@@ -248,6 +256,15 @@ public:
         return MeshGroupHandle(load_mesh_buffers(filepath));
     }
 
+    auto read_mesh_network(
+        const std::string& filepath,
+        IO::TextureResolver resolver = nullptr)
+        -> CreationHandle<Nodes::Network::MeshNetwork>
+    {
+        auto net = load_mesh_network(filepath, std::move(resolver));
+        return CreationHandle<Nodes::Network::MeshNetwork>(net);
+    }
+
     // ═══════════════════════════════════════════════════════════════
     // Input Node Creation (Special - defined in Creator.cpp)
     // ═══════════════════════════════════════════════════════════════
@@ -296,6 +313,7 @@ private:
     std::shared_ptr<Kakshya::SoundFileContainer> load_sound_container(const std::string& filepath);
     std::shared_ptr<Buffers::TextureBuffer> load_image_buffer(const std::string& filepath);
     std::vector<std::shared_ptr<Buffers::MeshBuffer>> load_mesh_buffers(const std::string& filepath);
+    std::shared_ptr<Nodes::Network::MeshNetwork> load_mesh_network(const std::string& filepath, IO::TextureResolver resolver);
 };
 
 template <typename T>

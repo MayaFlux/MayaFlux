@@ -152,6 +152,12 @@ std::vector<std::shared_ptr<Buffers::MeshBuffer>> Creator::load_mesh_buffers(con
     return get_io_manager()->load_mesh(filepath);
 }
 
+std::shared_ptr<Nodes::Network::MeshNetwork>
+Creator::load_mesh_network(const std::string& filepath, IO::TextureResolver resolver)
+{
+    return get_io_manager()->load_mesh_network(filepath, std::move(resolver));
+}
+
 std::shared_ptr<Nodes::Input::HIDNode> Creator::read_hid(
     const Nodes::Input::HIDConfig& config,
     const Core::InputBinding& binding)
