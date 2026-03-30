@@ -49,7 +49,7 @@ mkdir -p "$BUILD_DIR" "$INSTALL_DIR"
 # Configure & build
 # ---------------------------------------------
 cmake -G Ninja -S . -B "$BUILD_DIR" \
-    -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+    -DMAYAFLUX_SHIP_DEV=ON \
     -DCMAKE_INSTALL_PREFIX="$INSTALL_DIR"
 
 cmake --build "$BUILD_DIR" --parallel

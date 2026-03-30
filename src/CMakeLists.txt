@@ -22,6 +22,10 @@ else()
     )
 endif()
 
+if(MAYAFLUX_SHIP_DEV OR MAYAFLUX_SHIP_REL)
+    return()
+endif()
+
 file(GLOB_RECURSE EXAMPLES
     "${CMAKE_CURRENT_SOURCE_DIR}/examples/*.hpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/examples/*.cpp"

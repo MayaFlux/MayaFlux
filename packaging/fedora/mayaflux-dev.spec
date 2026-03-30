@@ -111,11 +111,10 @@ and live coding features. This is intentional.
 
 %build
 %cmake -G Ninja \
-    -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_CXX_STANDARD=23 \
     -DCMAKE_INSTALL_LIBDIR=%{_libdir} \
     -DMAYAFLUX_PORTABLE=OFF \
-    -DMAYAFLUX_BUILD_TESTS=OFF
+    -DMAYAFLUX_SHIP_DEV=ON
 
 %cmake_build --parallel
 
