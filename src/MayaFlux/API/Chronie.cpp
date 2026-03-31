@@ -66,9 +66,9 @@ void schedule_sequence(std::vector<std::pair<double, std::function<void()>>> seq
     get_scheduler()->add_task(std::move(tseq), name, false);
 }
 
-Vruta::SoundRoutine create_line(float start_value, float end_value, float duration_seconds, uint32_t step_duration, bool loop)
+Vruta::SoundRoutine create_line(float start_value, float end_value, float duration_seconds, uint32_t step_duration, bool retain)
 {
-    return Kriya::line(*get_scheduler(), start_value, end_value, duration_seconds, step_duration, loop);
+    return Kriya::line(*get_scheduler(), start_value, end_value, duration_seconds, step_duration, retain);
 }
 
 Vruta::SoundRoutine create_pattern(std::function<std::any(uint64_t)> pattern_func, std::function<void(std::any)> callback, double interval_seconds)
@@ -97,7 +97,7 @@ float* get_line_value(const std::string& name)
         MF_ERROR(Journal::Component::API, Journal::Context::CoroutineScheduling, "line value not returned from task. Verify that tasks has not returned");
         return nullptr;
     }
-    MF_ERROR(Journal::Component::API, Journal::Context::CoroutineScheduling, "Task: {} not found. Verify task validity or if its been scheduled", name);
+    MF_ERROR(Journal::Component::API, Journal::Context::CoroutineScheduling, "Task: {} not found. Verify task validity or if its been scheduled, or its set to retain after completion", name);
     return nullptr;
 }
 

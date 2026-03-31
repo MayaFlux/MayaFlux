@@ -90,12 +90,12 @@ MAYAFLUX_API void schedule_sequence(std::vector<std::pair<double, std::function<
  * @param end_value Ending value
  * @param duration_seconds Total duration in seconds
  * @param step_duration Time between steps in seconds
- * @param loop Whether to loop back to start after reaching end
+ * @param retain Whether the coroutine should stay alive for potential restarts (default: true)
  * @return SoundRoutine object representing the line generator
  *
  * Uses the task scheduler from the default engine.
  */
-MAYAFLUX_API Vruta::SoundRoutine create_line(float start_value, float end_value, float duration_seconds, uint32_t step_duration, bool loop);
+MAYAFLUX_API Vruta::SoundRoutine create_line(float start_value, float end_value, float duration_seconds, uint32_t step_duration = 5, bool retain = true);
 
 /**
  * @brief Schedules a pattern generator that produces values based on a pattern function
