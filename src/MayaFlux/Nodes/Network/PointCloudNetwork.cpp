@@ -125,6 +125,8 @@ void PointCloudNetwork::reset()
                 topo_op->initialize(m_cached_vertices);
             } else if (auto* path_op = dynamic_cast<PathOperator*>(m_operator.get())) {
                 path_op->initialize(m_cached_vertices);
+            } else if (auto* field_op = dynamic_cast<FieldOperator*>(m_operator.get())) {
+                field_op->initialize(m_cached_vertices);
             }
         }
     }
