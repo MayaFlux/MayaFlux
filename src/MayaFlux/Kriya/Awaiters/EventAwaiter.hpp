@@ -83,6 +83,8 @@ private:
     std::coroutine_handle<> m_handle;
     bool m_is_suspended = false;
 
+    [[nodiscard]] bool filter_matches(const Core::WindowEvent& event) const;
+
     friend class Vruta::EventSource;
 };
 }

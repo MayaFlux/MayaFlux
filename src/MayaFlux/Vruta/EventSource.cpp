@@ -27,6 +27,17 @@ void EventSource::signal(Core::WindowEvent event)
         m_mouse_y = pos_data->y;
     }
 
+    if (m_waiters.empty()) {
+        return;
+    }
+
+    bool any_waiter_matches = std::ranges::any_of(m_waiters, [&](const Kriya::EventAwaiter* w) {
+        return w->filter_matches(event);
+    });
+
+    if (!any_waiter_matches)
+        return;
+
     m_pending_events.push(event);
 
     auto waiters = m_waiters;
