@@ -150,6 +150,21 @@ void add_processor(const std::shared_ptr<Buffers::BufferProcessor>& processor, B
     get_buffer_manager()->add_processor(processor, token);
 }
 
+void remove_processor(const std::shared_ptr<Buffers::BufferProcessor>& processor, const std::shared_ptr<Buffers::Buffer>& buffer)
+{
+    get_buffer_manager()->remove_processor(processor, buffer);
+}
+
+void remove_processor(const std::shared_ptr<Buffers::BufferProcessor>& processor, uint32_t channel, Buffers::ProcessingToken token)
+{
+    get_buffer_manager()->remove_processor_from_channel(processor, token, channel);
+}
+
+void remove_processor(const std::shared_ptr<Buffers::BufferProcessor>& processor, Buffers::ProcessingToken token)
+{
+    get_buffer_manager()->remove_processor_from_token(processor, token);
+}
+
 std::shared_ptr<Buffers::BufferProcessingChain> create_processing_chain()
 {
     return std::make_shared<Buffers::BufferProcessingChain>();
