@@ -263,39 +263,44 @@ extern const ComputationGrammar::Rule::Executor sort_grains;
 // ============================================================================
 
 /**
+ * @struct GranularConfig
+ * @brief Scalar parameters shared across all granular pipeline entry points.
+ *
+ * Replaces the repeated positional argument lists on process, process_to_container,
+ * and their async variants. Attribution type and output mode are kept as explicit
+ * parameters since they affect overload resolution and return type respectively.
+ */
+struct GranularConfig {
+    uint32_t grain_size = 1024;
+    uint32_t hop_size = 512;
+    std::string feature_key = "feature";
+    uint32_t channel = 0;
+    bool ascending = true;
+    uint32_t gpu_sort_threshold = 0;
+    ComputationContext attribution_context = ComputationContext::SPECTRAL;
+    GrainTaper taper;
+};
+
+/**
  * @brief Construct an ExecutionContext for the granular pipeline using a built-in AnalysisType.
  *
- * AttributeOp will internally construct a default-configured analyzer for the
- * given type and extract the scalar named by qualifier. Omit qualifier to use
- * the canonical default for that type.
- *
- * @param grain_size        Samples per grain.
- * @param hop_size          Hop size between grain onsets.
- * @param feature_key       Attribute name written onto each grain Region.
- * @param analysis_type     Which analysis category to use for attribution. Supported: FEATURE, STATISTICAL.
- * @param qualifier         Scalar to extract from the analysis result. Empty uses type default.
- * @param channel           Source channel index.
- * @param ascending         Sort direction for the subsequent SortOp.
- * @param gpu_sort_threshold Grain count at which SortOp switches to GPU path. 0 = CPU only.
+ * @param config             Pipeline scalar parameters.
+ * @param analysis_type      Attribution category. Supported: FEATURE, STATISTICAL.
+ * @param qualifier          Scalar to extract. Empty uses type default.
  * @return Populated ExecutionContext.
  */
 [[nodiscard]] inline ExecutionContext make_granular_context(
-    uint32_t grain_size,
-    uint32_t hop_size,
-    const std::string& feature_key,
+    const GranularConfig& config,
     AnalysisType analysis_type,
-    const std::string& qualifier = {},
-    uint32_t channel = 0,
-    bool ascending = true,
-    uint32_t gpu_sort_threshold = 0)
+    const std::string& qualifier = {})
 {
     ExecutionContext ctx;
-    ctx.execution_metadata["grain_size"] = grain_size;
-    ctx.execution_metadata["hop_size"] = hop_size;
-    ctx.execution_metadata["channel"] = channel;
-    ctx.execution_metadata["feature_key"] = feature_key;
-    ctx.execution_metadata["ascending"] = ascending;
-    ctx.execution_metadata["gpu_sort_threshold"] = gpu_sort_threshold;
+    ctx.execution_metadata["grain_size"] = config.grain_size;
+    ctx.execution_metadata["hop_size"] = config.hop_size;
+    ctx.execution_metadata["channel"] = config.channel;
+    ctx.execution_metadata["feature_key"] = config.feature_key;
+    ctx.execution_metadata["ascending"] = config.ascending;
+    ctx.execution_metadata["gpu_sort_threshold"] = config.gpu_sort_threshold;
     ctx.execution_metadata["analysis_type"] = analysis_type;
     ctx.execution_metadata["analyzer_qualifier"] = qualifier;
     return ctx;
@@ -304,39 +309,26 @@ extern const ComputationGrammar::Rule::Executor sort_grains;
 /**
  * @brief Construct an ExecutionContext supplying a pre-configured analyzer instance directly.
  *
- * Use when the default analyzer configuration is insufficient and you need
- * specific window sizes, methods, or other parameters set on the analyzer beforehand.
- *
  * @tparam InputType  Analyzer input data type.
  * @tparam OutputType Analyzer output data type.
- * @param grain_size        Samples per grain.
- * @param hop_size          Hop size between grain onsets.
- * @param feature_key       Attribute name written onto each grain Region.
- * @param analyzer          Pre-configured analyzer instance.
- * @param qualifier         Scalar to extract from the analysis result. Empty uses type default.
- * @param channel           Source channel index.
- * @param ascending         Sort direction for the subsequent SortOp.
- * @param gpu_sort_threshold Grain count at which SortOp switches to GPU path. 0 = CPU only.
+ * @param config    Pipeline scalar parameters.
+ * @param analyzer  Pre-configured analyzer instance.
+ * @param qualifier Scalar to extract. Empty uses type default.
  * @return Populated ExecutionContext.
  */
 template <ComputeData InputType, ComputeData OutputType>
 [[nodiscard]] inline ExecutionContext make_granular_context(
-    uint32_t grain_size,
-    uint32_t hop_size,
-    const std::string& feature_key,
+    const GranularConfig& config,
     std::shared_ptr<UniversalAnalyzer<InputType, OutputType>> analyzer,
-    const std::string& qualifier = {},
-    uint32_t channel = 0,
-    bool ascending = true,
-    uint32_t gpu_sort_threshold = 0)
+    const std::string& qualifier = {})
 {
     ExecutionContext ctx;
-    ctx.execution_metadata["grain_size"] = grain_size;
-    ctx.execution_metadata["hop_size"] = hop_size;
-    ctx.execution_metadata["channel"] = channel;
-    ctx.execution_metadata["feature_key"] = feature_key;
-    ctx.execution_metadata["ascending"] = ascending;
-    ctx.execution_metadata["gpu_sort_threshold"] = gpu_sort_threshold;
+    ctx.execution_metadata["grain_size"] = config.grain_size;
+    ctx.execution_metadata["hop_size"] = config.hop_size;
+    ctx.execution_metadata["channel"] = config.channel;
+    ctx.execution_metadata["feature_key"] = config.feature_key;
+    ctx.execution_metadata["ascending"] = config.ascending;
+    ctx.execution_metadata["gpu_sort_threshold"] = config.gpu_sort_threshold;
     ctx.execution_metadata["analyzer"] = std::static_pointer_cast<void>(analyzer);
     ctx.execution_metadata["analyzer_qualifier"] = qualifier;
     return ctx;
@@ -345,33 +337,21 @@ template <ComputeData InputType, ComputeData OutputType>
 /**
  * @brief Construct an ExecutionContext using a span-level lambda for fully custom attribution.
  *
- * Use when the feature computation cannot be expressed through any existing analyzer.
- *
- * @param grain_size        Samples per grain.
- * @param hop_size          Hop size between grain onsets.
- * @param feature_key       Attribute name written onto each grain Region.
- * @param executor          Lambda receiving grain samples and context, returning a scalar.
- * @param channel           Source channel index.
- * @param ascending         Sort direction for the subsequent SortOp.
- * @param gpu_sort_threshold Grain count at which SortOp switches to GPU path. 0 = CPU only.
+ * @param config   Pipeline scalar parameters.
+ * @param executor Lambda receiving grain samples and context, returning a scalar.
  * @return Populated ExecutionContext.
  */
 [[nodiscard]] inline ExecutionContext make_granular_context(
-    uint32_t grain_size,
-    uint32_t hop_size,
-    const std::string& feature_key,
-    AttributeExecutor executor,
-    uint32_t channel = 0,
-    bool ascending = true,
-    uint32_t gpu_sort_threshold = 0)
+    const GranularConfig& config,
+    AttributeExecutor executor)
 {
     ExecutionContext ctx;
-    ctx.execution_metadata["grain_size"] = grain_size;
-    ctx.execution_metadata["hop_size"] = hop_size;
-    ctx.execution_metadata["channel"] = channel;
-    ctx.execution_metadata["feature_key"] = feature_key;
-    ctx.execution_metadata["ascending"] = ascending;
-    ctx.execution_metadata["gpu_sort_threshold"] = gpu_sort_threshold;
+    ctx.execution_metadata["grain_size"] = config.grain_size;
+    ctx.execution_metadata["hop_size"] = config.hop_size;
+    ctx.execution_metadata["channel"] = config.channel;
+    ctx.execution_metadata["feature_key"] = config.feature_key;
+    ctx.execution_metadata["ascending"] = config.ascending;
+    ctx.execution_metadata["gpu_sort_threshold"] = config.gpu_sort_threshold;
     ctx.execution_metadata["attribute_executor"] = std::move(executor);
     return ctx;
 }
@@ -422,141 +402,164 @@ template <ComputeData InputType, ComputeData OutputType>
 // ============================================================================
 
 /**
- * @brief Zero-config entry point for the full granular pipeline using a built-in AnalysisType.
+ * @brief Run segment -> attribute -> sort and return the attributed RegionGroup.
  *
- * Constructs context and matrix internally, runs segment -> attribute -> sort,
- * and returns the attributed, sorted RegionGroup.
- *
- * @param container         Source signal data.
- * @param grain_size        Samples per grain.
- * @param hop_size          Hop size between grain onsets.
- * @param feature_key       Attribute name written onto each grain Region.
- * @param analysis_type     Which analysis category to use for attribution.
- * @param qualifier         Scalar to extract from the analysis result. Empty uses type default.
- * @param channel           Source channel index.
- * @param ascending         Sort direction.
- * @param gpu_sort_threshold Grain count at which SortOp switches to GPU path. 0 = CPU only.
+ * @param container     Source signal data.
+ * @param analysis_type Attribution category.
+ * @param config        Pipeline scalar parameters.
+ * @param qualifier     Scalar to extract. Empty uses type default.
  * @return GranularDatum containing the attributed, sorted RegionGroup.
  */
 [[nodiscard]] MAYAFLUX_API GranularDatum process(
     const std::shared_ptr<Kakshya::SignalSourceContainer>& container,
-    uint32_t grain_size,
-    uint32_t hop_size,
-    const std::string& feature_key,
     AnalysisType analysis_type,
-    const std::string& qualifier = {},
-    uint32_t channel = 0,
-    bool ascending = true,
-    uint32_t gpu_sort_threshold = 0);
+    const GranularConfig& config = {},
+    const std::string& qualifier = {});
 
 /**
- * @brief Zero-config entry point for the full granular pipeline using a span-level lambda.
+ * @brief Run segment -> attribute -> sort using a span-level attribution lambda.
  *
- * @param container         Source signal data.
- * @param grain_size        Samples per grain.
- * @param hop_size          Hop size between grain onsets.
- * @param feature_key       Attribute name written onto each grain Region.
- * @param executor          Lambda receiving grain samples and context, returning a scalar.
- * @param channel           Source channel index.
- * @param ascending         Sort direction.
- * @param gpu_sort_threshold Grain count at which SortOp switches to GPU path. 0 = CPU only.
+ * @param container Source signal data.
+ * @param executor  Lambda receiving grain samples and context, returning a scalar.
+ * @param config    Pipeline scalar parameters.
  * @return GranularDatum containing the attributed, sorted RegionGroup.
  */
 [[nodiscard]] MAYAFLUX_API GranularDatum process(
     const std::shared_ptr<Kakshya::SignalSourceContainer>& container,
-    uint32_t grain_size,
-    uint32_t hop_size,
-    const std::string& feature_key,
     AttributeExecutor executor,
-    uint32_t channel = 0,
-    bool ascending = true,
-    uint32_t gpu_sort_threshold = 0);
+    const GranularConfig& config = {});
 
 /**
- * @brief Offline granular workflow: segment, attribute, sort, reconstruct.
+ * @brief Offline granular pipeline terminating in a SoundFileContainer.
  *
- * Runs the full segment → attribute → sort pipeline on @p container, then
- * stitches the sorted grains per channel into a SoundFileContainer ready
- * for the standard ContiguousAccessProcessor playback path.
- *
- * @param container          Source signal data.
- * @param grain_size         Samples per grain.
- * @param hop_size           Hop size between grain onsets.
- * @param feature_key        Attribute name written onto each grain Region.
- * @param analysis_type      Analysis category used for attribution.
- * @param qualifier          Scalar to extract from the analysis result. Empty uses type default.
- * @param channel            Source channel index.
- * @param ascending          Sort direction.
- * @param gpu_sort_threshold Grain count at which SortOp switches to GPU path. 0 = CPU only.
- * @return Populated SoundFileContainer containing reconstructed audio in sorted grain order.
+ * @param container     Source signal data.
+ * @param analysis_type Attribution category.
+ * @param config        Pipeline scalar parameters.
+ * @param qualifier     Scalar to extract. Empty uses type default.
+ * @param output        CONTAINER for concatenative, CONTAINER_ADDITIVE for OLA.
+ * @return Populated SoundFileContainer.
  */
 [[nodiscard]] MAYAFLUX_API std::shared_ptr<Kakshya::SoundFileContainer> process_to_container(
     const std::shared_ptr<Kakshya::SignalSourceContainer>& container,
-    uint32_t grain_size,
-    uint32_t hop_size,
-    const std::string& feature_key,
     AnalysisType analysis_type,
+    const GranularConfig& config = {},
     const std::string& qualifier = {},
-    uint32_t channel = 0,
-    bool ascending = true,
-    uint32_t gpu_sort_threshold = 0,
-    ComputationContext attribution_context = ComputationContext::SPECTRAL);
+    GranularOutput output = GranularOutput::CONTAINER);
 
 /**
- * @brief Offline granular workflow using a span-level attribution lambda.
+ * @brief Offline granular pipeline using a span-level attribution lambda.
  *
- * @param container          Source signal data.
- * @param grain_size         Samples per grain.
- * @param hop_size           Hop size between grain onsets.
- * @param feature_key        Attribute name written onto each grain Region.
- * @param executor           Lambda receiving grain samples and context, returning a scalar.
- * @param channel            Source channel index.
- * @param ascending          Sort direction.
- * @param gpu_sort_threshold Grain count at which SortOp switches to GPU path. 0 = CPU only.
- * @return Populated SoundFileContainer containing reconstructed audio in sorted grain order.
+ * @param container Source signal data.
+ * @param executor  Lambda receiving grain samples and context, returning a scalar.
+ * @param config    Pipeline scalar parameters.
+ * @param output    CONTAINER for concatenative, CONTAINER_ADDITIVE for OLA.
+ * @return Populated SoundFileContainer.
  */
 [[nodiscard]] MAYAFLUX_API std::shared_ptr<Kakshya::SoundFileContainer> process_to_container(
     const std::shared_ptr<Kakshya::SignalSourceContainer>& container,
-    uint32_t grain_size,
-    uint32_t hop_size,
-    const std::string& feature_key,
     AttributeExecutor executor,
-    uint32_t channel = 0,
-    bool ascending = true,
-    uint32_t gpu_sort_threshold = 0,
-    ComputationContext attribution_context = ComputationContext::SPECTRAL);
+    const GranularConfig& config = {},
+    GranularOutput output = GranularOutput::CONTAINER);
 
 /**
- * @brief Offline granular workflow with OLA reconstruction.
+ * @brief Async offline granular pipeline (AnalysisType path).
  *
- * Runs segment → attribute → sort → overlap-add reconstruct.
- * Grains are accumulated at hop_size intervals; @p taper is applied
- * to each grain before accumulation.
+ * Runs the full pipeline on a background thread owned by @p matrix and
+ * invokes @p on_complete with the result. Returns immediately.
  *
- * @param container          Source signal data.
- * @param grain_size         Samples per grain.
- * @param hop_size           Hop size between grain onsets.
- * @param feature_key        Attribute name written onto each grain Region.
- * @param analysis_type      Analysis category used for attribution.
- * @param qualifier          Scalar to extract. Empty uses type default.
- * @param channel            Source channel index.
- * @param ascending          Sort direction.
- * @param gpu_sort_threshold Grain count at which SortOp switches to GPU path.
- * @param attribution_context ComputationContext for the attribution rule.
- * @param taper              Optional per-grain taper. Pass {} for none.
- * @return Populated SoundFileContainer with overlap-added audio.
+ * @param matrix        ComputeMatrix that owns the async future.
+ * @param container     Source signal data.
+ * @param analysis_type Attribution category.
+ * @param on_complete   Called on the worker thread with the finished container.
+ * @param config        Pipeline scalar parameters.
+ * @param qualifier     Scalar to extract. Empty uses type default.
+ * @param output        CONTAINER for concatenative, CONTAINER_ADDITIVE for OLA.
  */
-[[nodiscard]] MAYAFLUX_API std::shared_ptr<Kakshya::SoundFileContainer> process_to_container_additive(
+template <typename CompleteFn>
+void process_to_container_async(
+    const std::shared_ptr<GranularMatrix>& matrix,
     const std::shared_ptr<Kakshya::SignalSourceContainer>& container,
-    uint32_t grain_size,
-    uint32_t hop_size,
-    const std::string& feature_key,
     AnalysisType analysis_type,
+    CompleteFn&& on_complete,
+    const GranularConfig& config = {},
     const std::string& qualifier = {},
-    uint32_t channel = 0,
-    bool ascending = true,
-    uint32_t gpu_sort_threshold = 0,
-    ComputationContext attribution_context = ComputationContext::SPECTRAL,
-    GrainTaper taper = {});
+    GranularOutput output = GranularOutput::CONTAINER)
+{
+    auto ctx = make_granular_context(config, analysis_type, qualifier);
+
+    ctx.execution_metadata["container"] = container;
+    if (config.taper)
+        ctx.execution_metadata["grain_taper"] = config.taper;
+
+    auto seg_op = matrix->get_operation<SegmentOp>("segment");
+    auto attr_op = matrix->get_operation<AttributeOp>("attribute");
+    auto sort_op = matrix->get_operation<SortOp>("sort");
+    apply_context_parameters(seg_op, ctx);
+    apply_context_parameters(attr_op, ctx);
+    apply_context_parameters(sort_op, ctx);
+
+    matrix->with_async(make_granular_input(container), [seg_op, attr_op, sort_op, ctx, output](auto chain) {
+            auto sorted = chain
+                .template then<SegmentOp>("segment")
+                .template then<AttributeOp>("attribute")
+                .template then<SortOp>("sort")
+                .to_io();
+            if (output == GranularOutput::CONTAINER_ADDITIVE) {
+                return safe_any_cast_or_throw<
+                    Datum<std::shared_ptr<Kakshya::SignalSourceContainer>>>(
+                        reconstruct_grains_additive(std::any(sorted), ctx));
+            }
+            return safe_any_cast_or_throw<
+                Datum<std::shared_ptr<Kakshya::SignalSourceContainer>>>(
+                    reconstruct_grains(std::any(sorted), ctx)); }, std::forward<CompleteFn>(on_complete));
+}
+
+/**
+ * @brief Async offline granular pipeline (AttributeExecutor path).
+ *
+ * @param matrix      ComputeMatrix that owns the async future.
+ * @param container   Source signal data.
+ * @param executor    Lambda receiving grain samples and context, returning a scalar.
+ * @param on_complete Called on the worker thread with the finished container.
+ * @param config      Pipeline scalar parameters.
+ * @param output      CONTAINER for concatenative, CONTAINER_ADDITIVE for OLA.
+ */
+template <typename CompleteFn>
+void process_to_container_async(
+    const std::shared_ptr<GranularMatrix>& matrix,
+    const std::shared_ptr<Kakshya::SignalSourceContainer>& container,
+    AttributeExecutor executor,
+    CompleteFn&& on_complete,
+    const GranularConfig& config = {},
+    GranularOutput output = GranularOutput::CONTAINER)
+{
+    auto ctx = make_granular_context(config, std::move(executor));
+
+    ctx.execution_metadata["container"] = container;
+    if (config.taper)
+        ctx.execution_metadata["grain_taper"] = config.taper;
+
+    auto seg_op = matrix->get_operation<SegmentOp>("segment");
+    auto attr_op = matrix->get_operation<AttributeOp>("attribute");
+    auto sort_op = matrix->get_operation<SortOp>("sort");
+    apply_context_parameters(seg_op, ctx);
+    apply_context_parameters(attr_op, ctx);
+    apply_context_parameters(sort_op, ctx);
+
+    matrix->with_async(make_granular_input(container), [seg_op, attr_op, sort_op, ctx, output](auto chain) {
+            auto sorted = chain
+                .template then<SegmentOp>("segment")
+                .template then<AttributeOp>("attribute")
+                .template then<SortOp>("sort")
+                .to_io();
+            if (output == GranularOutput::CONTAINER_ADDITIVE) {
+                return safe_any_cast_or_throw<
+                    Datum<std::shared_ptr<Kakshya::SignalSourceContainer>>>(
+                        reconstruct_grains_additive(std::any(sorted), ctx));
+            }
+            return safe_any_cast_or_throw<
+                Datum<std::shared_ptr<Kakshya::SignalSourceContainer>>>(
+                    reconstruct_grains(std::any(sorted), ctx)); }, std::forward<CompleteFn>(on_complete));
+}
 
 } // namespace MayaFlux::Yantra::Granular

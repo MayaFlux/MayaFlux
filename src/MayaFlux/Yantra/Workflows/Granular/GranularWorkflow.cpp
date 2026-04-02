@@ -642,52 +642,52 @@ std::shared_ptr<GranularMatrix> make_granular_matrix(
 
 GranularDatum process(
     const std::shared_ptr<Kakshya::SignalSourceContainer>& container,
-    uint32_t grain_size,
-    uint32_t hop_size,
-    const std::string& feature_key,
     AnalysisType analysis_type,
-    const std::string& qualifier,
-    uint32_t channel,
-    bool ascending,
-    uint32_t gpu_sort_threshold)
+    const GranularConfig& config,
+    const std::string& qualifier)
 {
-    auto matrix = make_granular_matrix();
-    auto ctx = make_granular_context(
-        grain_size, hop_size, feature_key,
-        analysis_type, qualifier,
-        channel, ascending, gpu_sort_threshold);
+    auto matrix = make_granular_matrix(config.attribution_context);
+
+    auto ctx = make_granular_context(config, analysis_type, qualifier);
+
+    auto seg_op = matrix->get_operation<SegmentOp>("segment");
+    auto attr_op = matrix->get_operation<AttributeOp>("attribute");
+    auto sort_op = matrix->get_operation<SortOp>("sort");
+    apply_context_parameters(seg_op, ctx);
+    apply_context_parameters(attr_op, ctx);
+    apply_context_parameters(sort_op, ctx);
 
     return matrix->with(make_granular_input(container))
-        .then<SegmentOp>("segment")
-        .then<AttributeOp>("attribute")
-        .then<SortOp>("sort")
+        .template then<SegmentOp>("segment")
+        .template then<AttributeOp>("attribute")
+        .template then<SortOp>("sort")
         .to_io();
 }
 
 // ============================================================================
-// process — span lambda path
+// process — AttributeExecutor path
 // ============================================================================
 
 GranularDatum process(
     const std::shared_ptr<Kakshya::SignalSourceContainer>& container,
-    uint32_t grain_size,
-    uint32_t hop_size,
-    const std::string& feature_key,
     AttributeExecutor executor,
-    uint32_t channel,
-    bool ascending,
-    uint32_t gpu_sort_threshold)
+    const GranularConfig& config)
 {
-    auto matrix = make_granular_matrix();
-    auto ctx = make_granular_context(
-        grain_size, hop_size, feature_key,
-        std::move(executor),
-        channel, ascending, gpu_sort_threshold);
+    auto matrix = make_granular_matrix(config.attribution_context);
+
+    auto ctx = make_granular_context(config, std::move(executor));
+
+    auto seg_op = matrix->get_operation<SegmentOp>("segment");
+    auto attr_op = matrix->get_operation<AttributeOp>("attribute");
+    auto sort_op = matrix->get_operation<SortOp>("sort");
+    apply_context_parameters(seg_op, ctx);
+    apply_context_parameters(attr_op, ctx);
+    apply_context_parameters(sort_op, ctx);
 
     return matrix->with(make_granular_input(container))
-        .then<SegmentOp>("segment")
-        .then<AttributeOp>("attribute")
-        .then<SortOp>("sort")
+        .template then<SegmentOp>("segment")
+        .template then<AttributeOp>("attribute")
+        .template then<SortOp>("sort")
         .to_io();
 }
 
@@ -697,23 +697,16 @@ GranularDatum process(
 
 std::shared_ptr<Kakshya::SoundFileContainer> process_to_container(
     const std::shared_ptr<Kakshya::SignalSourceContainer>& container,
-    uint32_t grain_size,
-    uint32_t hop_size,
-    const std::string& feature_key,
     AnalysisType analysis_type,
+    const GranularConfig& config,
     const std::string& qualifier,
-    uint32_t channel,
-    bool ascending,
-    uint32_t gpu_sort_threshold,
-    ComputationContext attribution_context)
+    GranularOutput output)
 {
-    auto ctx = make_granular_context(
-        grain_size, hop_size, feature_key,
-        analysis_type, qualifier,
-        channel, ascending, gpu_sort_threshold);
+    auto ctx = make_granular_context(config, analysis_type, qualifier);
     ctx.execution_metadata["container"] = container;
 
-    return run_to_container(container, ctx, attribution_context);
+    return run_to_container(container, ctx, config.attribution_context,
+        output, config.taper);
 }
 
 // ============================================================================
@@ -722,44 +715,15 @@ std::shared_ptr<Kakshya::SoundFileContainer> process_to_container(
 
 std::shared_ptr<Kakshya::SoundFileContainer> process_to_container(
     const std::shared_ptr<Kakshya::SignalSourceContainer>& container,
-    uint32_t grain_size,
-    uint32_t hop_size,
-    const std::string& feature_key,
     AttributeExecutor executor,
-    uint32_t channel,
-    bool ascending,
-    uint32_t gpu_sort_threshold,
-    ComputationContext attribution_context)
+    const GranularConfig& config,
+    GranularOutput output)
 {
-    auto ctx = make_granular_context(
-        grain_size, hop_size, feature_key,
-        std::move(executor),
-        channel, ascending, gpu_sort_threshold);
+    auto ctx = make_granular_context(config, std::move(executor));
     ctx.execution_metadata["container"] = container;
 
-    return run_to_container(container, ctx, attribution_context);
-}
-
-std::shared_ptr<Kakshya::SoundFileContainer> process_to_container_additive(
-    const std::shared_ptr<Kakshya::SignalSourceContainer>& container,
-    uint32_t grain_size,
-    uint32_t hop_size,
-    const std::string& feature_key,
-    AnalysisType analysis_type,
-    const std::string& qualifier,
-    uint32_t channel,
-    bool ascending,
-    uint32_t gpu_sort_threshold,
-    ComputationContext attribution_context,
-    GrainTaper taper)
-{
-    auto ctx = make_granular_context(
-        grain_size, hop_size, feature_key,
-        analysis_type, qualifier,
-        channel, ascending, gpu_sort_threshold);
-
-    return run_to_container(container, ctx, attribution_context,
-        GranularOutput::CONTAINER_ADDITIVE, std::move(taper));
+    return run_to_container(container, ctx, config.attribution_context,
+        output, config.taper);
 }
 
 } // namespace MayaFlux::Yantra::Granular
