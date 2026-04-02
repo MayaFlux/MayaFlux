@@ -366,6 +366,60 @@ public:
     }
 
     /**
+     * @brief Execute an operation chain asynchronously.
+     *
+     * @p chain receives a FluentExecutor seeded with @p input and must return
+     * the terminal Datum. The entire sequence runs on a background thread.
+     * @p on_complete is invoked with the result on that same thread.
+     *
+     * The future is owned by this matrix instance. drain_async() and the
+     * destructor guarantee all in-flight chains finish before the matrix
+     * is destroyed. No thread management is required by the caller.
+     *
+     * @code
+     * matrix->with_async(make_granular_input(container),
+     *     [](auto chain) {
+     *         return chain.then<SegmentOp>("segment")
+     *                     .then<AttributeOp>("attribute")
+     *                     .then<SortOp>("sort")
+     *                     .to_io();
+     *     },
+     *     [ex](Datum<Kakshya::RegionGroup> result) {
+     *         ex->grains = std::move(result);
+     *         ex->ready  = true;
+     *     });
+     * @endcode
+     *
+     * @tparam StartType   Input data type.
+     * @tparam ChainFunc   Callable: (FluentExecutor<ComputeMatrix, StartType>) -> Datum<ResultType>.
+     * @tparam CompleteFn  Callable: (Datum<R>) -> void, where R is deduced from ChainFunc.
+     * @param input        Seed datum for the chain.
+     * @param chain        Lambda describing the full operation sequence.
+     * @param on_complete  Called with the final Datum on completion.
+     */
+    template <ComputeData StartType, typename ChainFunc, typename CompleteFn>
+    void with_async(Datum<StartType> input, ChainFunc&& chain, CompleteFn&& on_complete)
+    {
+        auto self = shared_from_this();
+        register_async(std::async(std::launch::async,
+            [self,
+                input = std::move(input),
+                chain = std::forward<ChainFunc>(chain),
+                on_complete = std::forward<CompleteFn>(on_complete)]() mutable {
+                on_complete(chain(
+                    FluentExecutor<ComputeMatrix, StartType>(self, std::move(input))));
+            }));
+    }
+
+    template <ComputeData StartType, typename ChainFunc, typename CompleteFn>
+    void with_async(StartType input, ChainFunc&& chain, CompleteFn&& on_complete)
+    {
+        with_async(Datum<StartType>(std::move(input)),
+            std::forward<ChainFunc>(chain),
+            std::forward<CompleteFn>(on_complete));
+    }
+
+    /**
      * @brief Set execution policy for this matrix
      * @param policy Execution policy to use
      */
@@ -510,6 +564,16 @@ private:
         m_average_execution_time.store(new_avg);
     }
 
+    void register_async(std::future<void> f)
+    {
+        std::lock_guard lk(m_async_mtx);
+
+        std::erase_if(m_async_futures, [](std::future<void>& f) {
+            return f.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
+        });
+        m_async_futures.push_back(std::move(f));
+    }
+
     OperationPool m_operations;
 
     ExecutionPolicy m_execution_policy = ExecutionPolicy::BALANCED;
@@ -520,6 +584,9 @@ private:
     std::atomic<size_t> m_failed_executions { 0 };
     std::atomic<double> m_average_execution_time { 0.0 };
     bool m_profiling_enabled = false;
+
+    std::mutex m_async_mtx;
+    std::vector<std::future<void>> m_async_futures;
 
     std::string m_last_error;
     std::type_index m_last_error_type { typeid(void) };
@@ -541,6 +608,27 @@ public:
     std::string get_last_error() const
     {
         return m_last_error;
+    }
+
+    /**
+     * @brief Block until all in-flight async chains complete.
+     *
+     * Called automatically by the destructor. May also be called explicitly
+     * before teardown of any resource a chain callback might write into.
+     */
+    void drain_async()
+    {
+        std::lock_guard lk(m_async_mtx);
+        for (auto& f : m_async_futures) {
+            f.wait();
+        }
+
+        m_async_futures.clear();
+    }
+
+    ~ComputeMatrix()
+    {
+        drain_async();
     }
 };
 
