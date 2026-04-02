@@ -76,6 +76,8 @@ void ParticleNetwork::reset()
     if (m_operator) {
         if (auto* physics = dynamic_cast<PhysicsOperator*>(m_operator.get())) {
             physics->initialize(vertices);
+        } else if (auto* field = dynamic_cast<FieldOperator*>(m_operator.get())) {
+            field->initialize(vertices);
         }
     } else {
         auto physics = std::make_unique<PhysicsOperator>();

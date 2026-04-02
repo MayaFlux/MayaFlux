@@ -44,6 +44,14 @@ auto create_container(Args&&... args) -> std::shared_ptr<ContainerType>
 }
 
 /**
+ * @brief Constructs and initializes per-channel SoundContainerBuffers without registering them.
+ * @param container Source container.
+ * @return One buffer per channel, unregistered, ready for manual routing.
+ */
+MAYAFLUX_API std::vector<std::shared_ptr<Buffers::SoundContainerBuffer>>
+prepare_audio_buffers(const std::shared_ptr<Kakshya::SoundFileContainer>& container);
+
+/**
  * @brief Checks if the given file is an audio file based on its extension
  * @param filepath Path to the file to check
  * @return true if the file is recognized as an audio file, false otherwise

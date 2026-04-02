@@ -41,4 +41,21 @@ void EventAwaiter::try_resume()
     }
 }
 
+bool EventAwaiter::filter_matches(const Core::WindowEvent& event) const
+{
+    if (m_filter.event_type && event.type != *m_filter.event_type)
+        return false;
+    if (m_filter.key_code) {
+        auto* kd = std::get_if<Core::WindowEvent::KeyData>(&event.data);
+        if (!kd || kd->key != static_cast<int16_t>(*m_filter.key_code))
+            return false;
+    }
+    if (m_filter.button) {
+        auto* bd = std::get_if<Core::WindowEvent::MouseButtonData>(&event.data);
+        if (!bd || bd->button != static_cast<int>(*m_filter.button))
+            return false;
+    }
+    return true;
+}
+
 }

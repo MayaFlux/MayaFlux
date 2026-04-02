@@ -29,7 +29,7 @@ public:
         }
     }
 
-    void start() { read_line(); }
+    void start() { read_chunk(); }
 
     void send(std::string_view message)
     {
@@ -66,54 +66,54 @@ public:
     const ClientInfo& info() const { return m_info; }
 
 private:
-    void read_line()
+    void read_chunk()
     {
-        asio::async_read_until(m_socket, m_streambuf, '\n',
-            [self = shared_from_this()](const asio::error_code& ec, size_t bytes_transferred) {
-                self->on_line_received(ec, bytes_transferred);
+        m_socket.async_read_some(asio::buffer(m_read_buf),
+            [self = shared_from_this()](const asio::error_code& ec, size_t bytes) {
+                self->on_chunk(ec, bytes);
             });
     }
 
-    void on_line_received(const asio::error_code& ec, size_t bytes_transferred)
+    void on_chunk(const asio::error_code& ec, size_t bytes)
     {
         if (ec) {
             m_server.remove_session(m_info.fd);
             return;
         }
 
-        std::string line(buffers_begin(m_streambuf.data()),
-            buffers_begin(m_streambuf.data()) + static_cast<std::ptrdiff_t>(bytes_transferred));
-        m_streambuf.consume(bytes_transferred);
+        m_block_buf.append(m_read_buf.data(), bytes);
 
-        while (!line.empty() && (line.back() == '\n' || line.back() == '\r')) {
-            line.pop_back();
-        }
-
-        if (line.empty()) {
-            read_line();
+        if (m_block_buf.size() > static_cast<size_t>(1024 * 1024)) {
+            m_block_buf.clear();
+            read_chunk();
             return;
         }
 
-        if (line.starts_with('@')) {
-            m_server.process_control_message(m_info.fd, std::string_view(line).substr(1));
-            read_line();
-            return;
-        }
+        if (m_block_buf.back() == '\n') {
+            while (!m_block_buf.empty() && (m_block_buf.back() == '\n' || m_block_buf.back() == '\r'))
+                m_block_buf.pop_back();
 
-        if (m_server.m_message_handler) {
-            auto response = m_server.m_message_handler(line);
-            if (response) {
-                send(*response);
-            } else {
-                send(R"({"status":"error","message":")" + response.error() + "\"}");
+            if (!m_block_buf.empty()) {
+                if (m_block_buf.starts_with('@')) {
+                    m_server.process_control_message(m_info.fd, std::string_view(m_block_buf).substr(1));
+                } else if (m_server.m_message_handler) {
+                    auto response = m_server.m_message_handler(m_block_buf);
+                    if (response) {
+                        send(*response);
+                    } else {
+                        send(R"({"status":"error","message":")" + response.error() + "\"}");
+                    }
+                }
             }
+            m_block_buf.clear();
         }
 
-        read_line();
+        read_chunk();
     }
 
     asio::ip::tcp::socket m_socket;
-    asio::streambuf m_streambuf;
+    std::array<char, 4096> m_read_buf {};
+    std::string m_block_buf;
     ClientInfo m_info;
     Server& m_server;
 

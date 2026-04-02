@@ -7,12 +7,15 @@
 #include "MayaFlux/Core/GlobalGraphicsInfo.hpp"
 #include "MayaFlux/Kinesis/NavigationState.hpp"
 
+#include "MayaFlux/Journal/Archivist.hpp"
+
 namespace MayaFlux {
 
 namespace {
 
     struct PresetRecord {
         Core::InputConfig saved_config;
+        std::vector<std::string> registered_events;
     };
 
     std::unordered_map<std::string, PresetRecord> s_registry;
@@ -32,10 +35,20 @@ namespace {
 void bind_viewport_preset(
     const std::shared_ptr<Core::Window>& window,
     const std::shared_ptr<Buffers::RenderProcessor>& processor,
+    ViewportPresetMode mode,
     const ViewportPresetConfig& config,
     const std::string& name)
 {
-    s_registry[make_key(window, name)] = PresetRecord { .saved_config = window->get_input_config() };
+    if (mode != ViewportPresetMode::Fly) {
+        MF_RT_ERROR(Journal::Component::API, Journal::Context::EventDispatch,
+            "ViewportPresetMode {} is not yet implemented",
+            static_cast<int>(mode));
+        return;
+    }
+
+    auto& record = s_registry[make_key(window, name)];
+    record.saved_config = window->get_input_config();
+    record.registered_events.clear();
 
     auto st = std::make_shared<Kinesis::NavigationState>(
         Kinesis::make_navigation_state(config));
@@ -99,6 +112,7 @@ void bind_viewport_preset(
 
 void bind_viewport_preset(
     const std::shared_ptr<Core::Window>& window,
+    ViewportPresetMode mode,
     const ViewportPresetConfig& config,
     const std::string& name)
 {
@@ -107,7 +121,7 @@ void bind_viewport_preset(
         if (!rp) {
             continue;
         }
-        bind_viewport_preset(window, rp, config, name);
+        bind_viewport_preset(window, rp, mode, config, name);
     }
 }
 
@@ -134,8 +148,8 @@ void unbind_viewport_preset(
         "kp1", "kp3", "kp7", "kp9"
     };
 
-    for (const char* sfx : k_suffixes) {
-        cancel_event_handler(event_name(name, sfx));
+    for (const auto& ev : it->second.registered_events) {
+        cancel_event_handler(ev);
     }
 }
 
