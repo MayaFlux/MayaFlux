@@ -45,6 +45,7 @@ enum class Component : uint8_t {
     Registry, ///< Backend and service registry
     Portal, ///< High-level user-facing API layer
     Kinesis, ///< General mathematical and physics algorithns.
+    Nexus, ///< Spatial indexing and scheduling for user-defined behaviour
     USER, ///< User code, scripts, plugins
     Unknown
 };
