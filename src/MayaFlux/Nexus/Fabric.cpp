@@ -40,10 +40,11 @@ Wiring Fabric::wire(std::shared_ptr<Emitter> emitter)
 {
     Member m = emitter;
     uint32_t id = assign_id(m);
+    Registration reg { .member = std::move(m) };
     if (emitter->m_position.has_value()) {
-        m_index->insert(*emitter->m_position);
+        reg.spatial_id = m_index->insert(*emitter->m_position);
     }
-    m_registrations[id] = Registration { .member = std::move(m) };
+    m_registrations[id] = std::move(reg);
     return Wiring { *this, id };
 }
 
@@ -51,10 +52,11 @@ Wiring Fabric::wire(std::shared_ptr<Sensor> sensor)
 {
     Member m = sensor;
     uint32_t id = assign_id(m);
+    Registration reg { .member = std::move(m) };
     if (sensor->m_position.has_value()) {
-        m_index->insert(*sensor->m_position);
+        reg.spatial_id = m_index->insert(*sensor->m_position);
     }
-    m_registrations[id] = Registration { .member = std::move(m) };
+    m_registrations[id] = std::move(reg);
     return Wiring { *this, id };
 }
 
@@ -62,10 +64,11 @@ Wiring Fabric::wire(std::shared_ptr<Agent> agent)
 {
     Member m = agent;
     uint32_t id = assign_id(m);
+    Registration reg { .member = std::move(m) };
     if (agent->m_position.has_value()) {
-        m_index->insert(*agent->m_position);
+        reg.spatial_id = m_index->insert(*agent->m_position);
     }
-    m_registrations[id] = Registration { .member = std::move(m) };
+    m_registrations[id] = std::move(reg);
     return Wiring { *this, id };
 }
 
@@ -87,13 +90,9 @@ void Fabric::remove(uint32_t id)
     if (!reg.event_name.empty()) {
         m_event_manager.cancel_event(reg.event_name);
     }
-
-    std::visit([&](const auto& ptr) {
-        if (ptr->m_position.has_value()) {
-            m_index->remove(id);
-        }
-    },
-        reg.member);
+    if (reg.spatial_id.has_value()) {
+        m_index->remove(*reg.spatial_id);
+    }
 
     m_registrations.erase(it);
 }
@@ -105,12 +104,14 @@ void Fabric::remove(uint32_t id)
 void Fabric::commit()
 {
     for (auto& [id, reg] : m_registrations) {
-        std::visit([&](const auto& ptr) {
-            if (ptr->m_position.has_value()) {
-                m_index->update(id, *ptr->m_position);
-            }
-        },
-            reg.member);
+        if (reg.spatial_id.has_value()) {
+            std::visit([&](const auto& ptr) {
+                if (ptr->m_position.has_value()) {
+                    m_index->update(*reg.spatial_id, *ptr->m_position);
+                }
+            },
+                reg.member);
+        }
     }
 
     m_index->publish();

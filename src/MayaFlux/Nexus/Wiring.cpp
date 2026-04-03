@@ -247,14 +247,15 @@ void Wiring::finalise()
         reg.chain_name = name;
 
         Kriya::EventChain chain(scheduler, name);
+        auto& fab = m_fabric;
         for (auto& step : m_move_steps) {
             glm::vec3 pos = step.position;
-            chain.then([this, pos, id]() {
+            chain.then([&fab, pos, id]() {
                 std::visit([&pos](const auto& ptr) {
                     ptr->set_position(pos);
                 },
-                    m_fabric.m_registrations[id].member);
-                m_fabric.fire(id);
+                    fab.m_registrations[id].member);
+                fab.fire(id);
             },
                 step.delay_seconds);
         }
@@ -319,31 +320,28 @@ void Wiring::finalise()
         auto pos_fn = m_position_fn;
         auto name = make_name("nexus_metro");
         reg.task_name = name;
+        auto& fab = m_fabric;
 
         scheduler.add_task(
             std::make_shared<Vruta::SoundRoutine>(
-                Kriya::metro(scheduler, *m_interval, [this, id, pos_fn]() mutable {
+                Kriya::metro(scheduler, *m_interval, [&fab, id, pos_fn]() mutable {
                     if (pos_fn.has_value()) {
                         glm::vec3 p = (*pos_fn)();
                         std::visit([&p](const auto& ptr) {
                             ptr->set_position(p);
                         },
-                            m_fabric.m_registrations[id].member);
+                            fab.m_registrations[id].member);
                     }
-                    m_fabric.fire(id);
+                    fab.fire(id);
                 })),
             name, false);
 
         if (m_duration.has_value()) {
             auto cancel_name = make_name("nexus_metro_cancel");
-            scheduler.add_task(
-                std::make_shared<Vruta::SoundRoutine>(
-                    Kriya::metro(scheduler, *m_duration,
-                        [name, cancel_name, &scheduler]() mutable {
-                            scheduler.cancel_task(name);
-                            scheduler.cancel_task(cancel_name);
-                        })),
-                cancel_name, false);
+            auto timer = std::make_shared<Kriya::Timer>(scheduler);
+            timer->schedule(*m_duration, [name, timer, &scheduler]() {
+                scheduler.cancel_task(name);
+            });
         }
     }
 }

@@ -140,6 +140,7 @@ private:
         std::string event_name;
         std::string chain_name;
         bool commit_driven { false };
+        std::optional<uint32_t> spatial_id;
     };
 
     uint32_t assign_id(Member& m);
