@@ -56,6 +56,7 @@ Checks: >
   -cppcoreguidelines-avoid-const-or-ref-data-members,
   -cppcoreguidelines-pro-bounds-constant-array-index,
   -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
+  -cppcoreguidelines-avoid-reference-coroutine-parameters,
   -cppcoreguidelines-non-private-member-variables-in-classes,
   -hicpp-no-array-decay,
   -hicpp-avoid-c-arrays,
