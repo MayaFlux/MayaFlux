@@ -43,7 +43,14 @@ public:
      * @brief Set the position, enabling spatial indexing for this object.
      * @param p World-space coordinates.
      */
-    void set_position(const glm::vec3& p) { m_position = p; }
+    void set_position(const glm::vec3& p)
+    {
+        m_position = p;
+        if (!m_render_sinks.empty()) {
+            push_geometry(m_render_sinks,
+                Kakshya::DataVariant { std::vector<glm::vec3> { p } });
+        }
+    }
 
     /**
      * @brief Clear the position, removing this object from spatial queries.
@@ -79,16 +86,16 @@ public:
     }
 
     /** @brief Register a render output targeting @p window. */
-    void render(Buffers::BufferManager& mgr, std::shared_ptr<Core::Window> window)
+    void render(Buffers::BufferManager& mgr, const Portal::Graphics::RenderConfig& config)
     {
-        add_render_sink(m_render_sinks, mgr, std::move(window));
+        add_render_sink(m_render_sinks, mgr, config, {}, m_position);
     }
 
     /** @brief Register a render output targeting @p window with a producer function. */
-    void render(Buffers::BufferManager& mgr, std::shared_ptr<Core::Window> window,
+    void render(Buffers::BufferManager& mgr, const Portal::Graphics::RenderConfig& config,
         std::function<Kakshya::DataVariant(const InfluenceContext&)> fn)
     {
-        add_render_sink(m_render_sinks, mgr, std::move(window), std::move(fn));
+        add_render_sink(m_render_sinks, mgr, config, std::move(fn), m_position);
     }
 
     /** @brief Unregister the render sink targeting @p window. */

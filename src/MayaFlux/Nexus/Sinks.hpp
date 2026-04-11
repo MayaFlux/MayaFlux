@@ -8,6 +8,10 @@ namespace MayaFlux::Core {
 class Window;
 }
 
+namespace MayaFlux::Portal::Graphics {
+struct RenderConfig;
+}
+
 namespace MayaFlux::Buffers {
 class AudioBuffer;
 class VKBuffer;
@@ -130,7 +134,7 @@ void dispatch_audio_sinks(
 void add_render_sink(
     std::vector<RenderSink>& sinks,
     Buffers::BufferManager& mgr,
-    std::shared_ptr<Core::Window> window,
+    const Portal::Graphics::RenderConfig& config,
     std::function<Kakshya::DataVariant(const InfluenceContext&)> fn = {},
     const std::optional<glm::vec3>& initial_position = {});
 

@@ -93,7 +93,7 @@ void dispatch_audio_sinks(std::vector<AudioSink>& sinks, const InfluenceContext&
 void add_render_sink(
     std::vector<RenderSink>& sinks,
     Buffers::BufferManager& mgr,
-    std::shared_ptr<Core::Window> window,
+    const Portal::Graphics::RenderConfig& config,
     std::function<Kakshya::DataVariant(const InfluenceContext&)> fn,
     const std::optional<glm::vec3>& initial_position)
 {
@@ -105,19 +105,61 @@ void add_render_sink(
         Kakshya::DataModality::VERTEX_POSITIONS_3D);
 
     auto writer = std::make_shared<Buffers::GeometryWriteProcessor>();
-    writer->set_mode(Buffers::GeometryWriteMode::POINT);
+    const bool is_line = config.topology == Portal::Graphics::PrimitiveTopology::LINE_LIST
+        || config.topology == Portal::Graphics::PrimitiveTopology::LINE_STRIP;
+    writer->set_mode(is_line ? Buffers::GeometryWriteMode::LINE : Buffers::GeometryWriteMode::POINT);
 
     buf->set_default_processor(writer);
 
     mgr.add_buffer(buf, Buffers::ProcessingToken::GRAPHICS_BACKEND);
 
-    auto renderer = std::make_shared<Buffers::RenderProcessor>(
-        Buffers::ShaderConfig { "point.vert.spv" });
+    std::string vert = config.vertex_shader;
+    std::string frag = config.fragment_shader;
+    std::string geom = config.geometry_shader;
 
-    renderer->set_fragment_shader("point.frag.spv");
-    renderer->set_primitive_topology(Portal::Graphics::PrimitiveTopology::POINT_LIST);
+    if (vert.empty() || frag.empty()) {
+        switch (config.topology) {
+        case Portal::Graphics::PrimitiveTopology::LINE_LIST:
+        case Portal::Graphics::PrimitiveTopology::LINE_STRIP:
+#ifndef MAYAFLUX_PLATFORM_MACOS
+            if (vert.empty())
+                vert = "line.vert.spv";
+            if (frag.empty())
+                frag = "line.frag.spv";
+            if (geom.empty())
+                geom = "line.geom.spv";
+#else
+            if (vert.empty())
+                vert = "line_fallback.vert.spv";
+            if (frag.empty())
+                frag = "line_fallback.frag.spv";
+#endif
+            break;
+        case Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST:
+        case Portal::Graphics::PrimitiveTopology::TRIANGLE_STRIP:
+            if (vert.empty())
+                vert = "triangle.vert.spv";
+            if (frag.empty())
+                frag = "triangle.frag.spv";
+            break;
+        default:
+            if (vert.empty())
+                vert = "point.vert.spv";
+            if (frag.empty())
+                frag = "point.frag.spv";
+            break;
+        }
+    }
 
-    renderer->set_target_window(window, buf);
+    auto renderer = std::make_shared<Buffers::RenderProcessor>(Buffers::ShaderConfig { vert });
+    renderer->set_fragment_shader(frag);
+    if (!geom.empty())
+        renderer->set_geometry_shader(geom);
+
+    renderer->set_primitive_topology(config.topology);
+    renderer->set_polygon_mode(config.polygon_mode);
+    renderer->set_cull_mode(config.cull_mode);
+    renderer->set_target_window(config.target_window, buf);
     buf->get_processing_chain()->add_final_processor(renderer, buf);
 
     auto& sink = sinks.emplace_back(RenderSink {
@@ -125,7 +167,7 @@ void add_render_sink(
         .writer = std::move(writer),
         .renderer = std::move(renderer),
         .fn = std::move(fn),
-        .window = std::move(window),
+        .window = config.target_window,
     });
 
     if (!sink.fn && initial_position.has_value()) {
