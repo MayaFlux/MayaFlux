@@ -119,6 +119,8 @@ void ShaderProcessor::bind_buffer(const std::string& descriptor_name, const std:
         return;
     }
 
+    ensure_initialized(buffer);
+
     if (m_config.bindings.find(descriptor_name) == m_config.bindings.end()) {
         auto user_binding_count = static_cast<uint32_t>(
             std::ranges::count_if(m_config.bindings, [](const auto& pair) {

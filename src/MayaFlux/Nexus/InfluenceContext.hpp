@@ -9,6 +9,33 @@ class RenderProcessor;
 namespace MayaFlux::Nexus {
 
 /**
+ * @struct InfluenceUBO
+ * @brief GPU-side std140 layout matching InfluenceContext plain data fields.
+ *
+ * Packs into two vec4 slots plus one partial (48 bytes total).
+ * GLSL declaration:
+ * @code
+ * layout(set = 1, binding = 0) uniform Influence {
+ *     vec3  position;
+ *     float intensity;
+ *     vec3  color;
+ *     float radius;
+ *     float size;
+ * };
+ * @endcode
+ */
+struct alignas(16) InfluenceUBO {
+    glm::vec3 position { 0.0F };
+    float intensity { 1.0F };
+    glm::vec3 color { 1.0F, 1.0F, 1.0F };
+    float radius { 1.0F };
+    float size { 1.0F };
+    float _pad[3] {};
+};
+
+static_assert(sizeof(InfluenceUBO) == 48, "InfluenceUBO must be 48 bytes for std140 alignment");
+
+/**
  * @struct InfluenceContext
  * @brief Data passed to an Emitter or Agent influence function on each commit.
  *

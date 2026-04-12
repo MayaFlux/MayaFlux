@@ -7,6 +7,10 @@
 
 #include "Sinks.hpp"
 
+namespace MayaFlux::Buffers {
+class VKBuffer;
+}
+
 namespace MayaFlux::Nexus {
 
 /**
@@ -186,14 +190,34 @@ public:
     /** @brief Get the current size, if set. */
     [[nodiscard]] const std::optional<float>& size() const { return m_size; }
 
-    /* @brief Set the render processor to target for this influence, if applicable. */
-    void set_influence_target(std::shared_ptr<Buffers::RenderProcessor> proc) { m_influence_target = std::move(proc); }
+    /**
+     * @brief Set the render processor to target for GPU-side influence delivery.
+     *
+     * Creates a UBO matching the InfluenceUBO layout, registers a binding
+     * named "u_influence" at set=1 binding=0 on the target processor,
+     * and binds the UBO. On each subsequent invoke(), the context fields
+     * are packed into the UBO automatically.
+     *
+     * @param proc Target render processor. Must outlive this Emitter or
+     *             be cleared via clear_influence_target() first.
+     */
+    void set_influence_target(std::shared_ptr<Buffers::RenderProcessor> proc);
 
-    /* @brief Clear the influence target, resetting it to an unset state. */
-    void clear_influence_target() { m_influence_target.reset(); }
+    /**
+     * @brief Disconnect from the current influence target.
+     *
+     * Unbinds the "u_influence" descriptor from the target processor
+     * and releases the UBO.
+     */
+    void clear_influence_target();
 
-    /* @brief Get the current influence target, if set. */
-    [[nodiscard]] std::weak_ptr<Buffers::RenderProcessor> influence_target() const { return m_influence_target; }
+    /**
+     * @brief Return the current influence target, if set.
+     */
+    [[nodiscard]] std::weak_ptr<Buffers::RenderProcessor> influence_target() const
+    {
+        return m_influence_target;
+    }
 
     /**
      * @brief Invoke the perception function with the supplied context.
@@ -217,6 +241,7 @@ public:
         }
         dispatch_audio_sinks(m_audio_sinks, ctx);
         dispatch_render_sinks(m_render_sinks, ctx);
+        upload_influence_ubo(ctx);
     }
 
 private:
@@ -227,6 +252,7 @@ private:
     float m_radius { 1.0F };
 
     std::shared_ptr<Buffers::RenderProcessor> m_influence_target;
+    std::shared_ptr<Buffers::VKBuffer> m_influence_ubo;
 
     float m_query_radius;
     PerceptionFn m_perception_fn;
@@ -235,6 +261,8 @@ private:
 
     mutable std::vector<AudioSink> m_audio_sinks;
     mutable std::vector<RenderSink> m_render_sinks;
+
+    void upload_influence_ubo(const InfluenceContext& ctx) const;
 
     friend class Fabric;
 };
