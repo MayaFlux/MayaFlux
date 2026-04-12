@@ -139,6 +139,45 @@ public:
             vertices.size_bytes(), layout);
     }
 
+    /** @brief Set the intensity, a general-purpose parameter for influence functions. */
+    void set_intensity(float i) { m_intensity = i; }
+
+    /** @brief Get the current intensity. */
+    [[nodiscard]] float intensity() const { return m_intensity; }
+
+    /** @brief Set the radius, a general-purpose parameter for influence functions. */
+    void set_radius(float r) { m_radius = r; }
+
+    /** @brief Get the current radius. */
+    [[nodiscard]] float radius() const { return m_radius; }
+
+    /** @brief Set the color, a general-purpose parameter for influence functions. */
+    void set_color(const glm::vec3& c) { m_color = c; }
+
+    /** @brief Clear the color, resetting it to an unset state. */
+    void clear_color() { m_color.reset(); }
+
+    /** @brief Get the current color, if set. */
+    [[nodiscard]] const std::optional<glm::vec3>& color() const { return m_color; }
+
+    /** @brief Set the size, a general-purpose parameter for influence functions. */
+    void set_size(float s) { m_size = s; }
+
+    /** @brief Clear the size, resetting it to an unset state. */
+    void clear_size() { m_size.reset(); }
+
+    /** @brief Get the current size, if set. */
+    [[nodiscard]] const std::optional<float>& size() const { return m_size; }
+
+    /* @brief Set the render processor to target for this influence, if applicable. */
+    void set_influence_target(std::shared_ptr<Buffers::RenderProcessor> proc) { m_influence_target = std::move(proc); }
+
+    /* @brief Clear the influence target, resetting it to an unset state. */
+    void clear_influence_target() { m_influence_target.reset(); }
+
+    /* @brief Get the current influence target, if set. */
+    [[nodiscard]] std::weak_ptr<Buffers::RenderProcessor> influence_target() const { return m_influence_target; }
+
     /**
      * @brief Invoke the influence function with the supplied context.
      * @param ctx Populated context for this commit.
@@ -154,6 +193,13 @@ public:
 
 private:
     std::optional<glm::vec3> m_position;
+    std::optional<glm::vec3> m_color;
+    std::optional<float> m_size;
+    float m_intensity { 1.0F };
+    float m_radius { 1.0F };
+
+    std::shared_ptr<Buffers::RenderProcessor> m_influence_target;
+
     InfluenceFn m_fn;
     uint32_t m_id {};
 

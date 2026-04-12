@@ -174,6 +174,11 @@ void Fabric::fire(const Registration& reg) const
             if (ptr->m_position.has_value()) {
                 ctx.position = *ptr->m_position;
             }
+            ctx.intensity = ptr->m_intensity;
+            ctx.radius = ptr->m_radius;
+            ctx.color = ptr->m_color;
+            ctx.size = ptr->m_size;
+            ctx.render_proc = ptr->m_influence_target;
             ptr->invoke(ctx);
 
         } else if constexpr (std::is_same_v<T, Sensor>) {
@@ -195,10 +200,21 @@ void Fabric::fire(const Registration& reg) const
 
                 InfluenceContext ictx;
                 ictx.position = *ptr->m_position;
+                ictx.intensity = ptr->m_intensity;
+                ictx.radius = ptr->m_radius;
+                ictx.color = ptr->m_color;
+                ictx.size = ptr->m_size;
+                ictx.render_proc = ptr->m_influence_target;
                 ptr->invoke_influence(ictx);
             } else {
                 ptr->invoke_perception(PerceptionContext {});
-                ptr->invoke_influence(InfluenceContext {});
+                InfluenceContext ictx;
+                ictx.intensity = ptr->m_intensity;
+                ictx.radius = ptr->m_radius;
+                ictx.color = ptr->m_color;
+                ictx.size = ptr->m_size;
+                ictx.render_proc = ptr->m_influence_target;
+                ptr->invoke_influence(ictx);
             }
         }
     },
