@@ -131,18 +131,16 @@ void add_render_sink(
         switch (config.topology) {
         case Portal::Graphics::PrimitiveTopology::LINE_LIST:
         case Portal::Graphics::PrimitiveTopology::LINE_STRIP:
+            if (frag.empty())
+                frag = "line.frag.spv";
 #ifndef MAYAFLUX_PLATFORM_MACOS
             if (vert.empty())
                 vert = "line.vert.spv";
-            if (frag.empty())
-                frag = "line.frag.spv";
             if (geom.empty())
                 geom = "line.geom.spv";
 #else
             if (vert.empty())
                 vert = "line_fallback.vert.spv";
-            if (frag.empty())
-                frag = "line_fallback.frag.spv";
 #endif
             break;
         case Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST:
