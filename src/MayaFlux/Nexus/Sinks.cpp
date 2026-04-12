@@ -105,9 +105,19 @@ void add_render_sink(
         Kakshya::DataModality::VERTEX_POSITIONS_3D);
 
     auto writer = std::make_shared<Buffers::GeometryWriteProcessor>();
+
     const bool is_line = config.topology == Portal::Graphics::PrimitiveTopology::LINE_LIST
         || config.topology == Portal::Graphics::PrimitiveTopology::LINE_STRIP;
-    writer->set_mode(is_line ? Buffers::GeometryWriteMode::LINE : Buffers::GeometryWriteMode::POINT);
+    const bool is_mesh = config.topology == Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST
+        || config.topology == Portal::Graphics::PrimitiveTopology::TRIANGLE_STRIP;
+
+    if (is_line) {
+        writer->set_mode(Buffers::GeometryWriteMode::LINE);
+    } else if (is_mesh) {
+        writer->set_mode(Buffers::GeometryWriteMode::MESH);
+    } else {
+        writer->set_mode(Buffers::GeometryWriteMode::POINT);
+    }
 
     buf->set_default_processor(writer);
 

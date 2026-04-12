@@ -11,7 +11,8 @@ namespace MayaFlux::Buffers {
  */
 enum class GeometryWriteMode : uint8_t {
     POINT, ///< Interpret vertex data as Nodes::PointVertex
-    LINE ///< Interpret vertex data as Nodes::LineVertex
+    LINE, ///< Interpret vertex data as Nodes::LineVertex
+    MESH ///< Interpret vertex data as Nodes::MeshVertex
 };
 
 /**

@@ -64,9 +64,18 @@ void GeometryWriteProcessor::processing_function(const std::shared_ptr<Buffer>& 
         return;
     }
 
-    auto access = (m_mode == GeometryWriteMode::LINE)
-        ? Kakshya::as_line_vertex_access(*m_active, m_config)
-        : Kakshya::as_point_vertex_access(*m_active, m_config);
+    std::optional<Kakshya::VertexAccess> access;
+    switch (m_mode) {
+    case GeometryWriteMode::LINE:
+        access = Kakshya::as_line_vertex_access(*m_active, m_config);
+        break;
+    case GeometryWriteMode::MESH:
+        access = Kakshya::as_mesh_vertex_access(*m_active, m_config);
+        break;
+    case GeometryWriteMode::POINT:
+        access = Kakshya::as_point_vertex_access(*m_active, m_config);
+        break;
+    }
 
     if (!access.has_value()) {
         MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
