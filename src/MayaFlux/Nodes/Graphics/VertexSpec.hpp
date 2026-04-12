@@ -103,4 +103,22 @@ struct TextureQuadVertex {
     glm::vec2 texcoord;
 };
 
+/**
+ * @brief Deduce a VertexLayout from a vertex struct type.
+ */
+template <typename T>
+Kakshya::VertexLayout vertex_layout_for()
+{
+    if constexpr (std::is_same_v<T, PointVertex>) {
+        return Kakshya::VertexLayout::for_points();
+    } else if constexpr (std::is_same_v<T, LineVertex>) {
+        return Kakshya::VertexLayout::for_lines();
+    } else if constexpr (std::is_same_v<T, MeshVertex>) {
+        return Kakshya::VertexLayout::for_meshes();
+    } else {
+        static_assert(!std::is_same_v<T, T>,
+            "vertex_layout_for: unrecognised vertex type");
+    }
+}
+
 } // namespace MayaFlux::Nodes
