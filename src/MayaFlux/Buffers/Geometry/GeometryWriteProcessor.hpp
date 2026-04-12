@@ -11,7 +11,17 @@ namespace MayaFlux::Buffers {
  */
 enum class GeometryWriteMode : uint8_t {
     POINT, ///< Interpret vertex data as Nodes::PointVertex
-    LINE ///< Interpret vertex data as Nodes::LineVertex
+    LINE, ///< Interpret vertex data as Nodes::LineVertex
+    MESH ///< Interpret vertex data as Nodes::MeshVertex
+};
+
+/**
+ * @struct VertexSnapshot
+ * @brief Owned copy of pre-resolved vertex bytes and their layout.
+ */
+struct VertexSnapshot {
+    std::vector<std::byte> bytes;
+    Kakshya::VertexLayout layout;
 };
 
 /**
@@ -48,6 +58,18 @@ public:
     void set_data(Kakshya::DataVariant variant);
 
     /**
+     * @brief Supply pre-resolved vertex bytes for the next cycle.
+     * @param data       Pointer to vertex data.
+     * @param byte_count Total size in bytes.
+     * @param layout     VertexLayout describing stride and attributes.
+     *
+     * Bypasses as_*_vertex_access conversion entirely. The processor
+     * copies the data and uploads it on the next graphics cycle.
+     */
+    void set_vertices(const void* data, size_t byte_count,
+        const Kakshya::VertexLayout& layout);
+
+    /**
      * @brief Returns true if a snapshot has been set and not yet consumed.
      */
     [[nodiscard]] bool has_pending() const noexcept;
@@ -61,12 +83,16 @@ protected:
     void processing_function(const std::shared_ptr<Buffer>& buffer) override;
 
 private:
-    std::optional<Kakshya::DataVariant> m_pending;
-    std::optional<Kakshya::DataVariant> m_active;
+    std::optional<Kakshya::DataVariant> m_pending_data;
+    std::optional<Kakshya::DataVariant> m_active_data;
+    std::optional<VertexSnapshot> m_pending_vertices;
+    std::optional<VertexSnapshot> m_active_vertices;
+
     Kakshya::VertexAccessConfig m_config;
     GeometryWriteMode m_mode { GeometryWriteMode::POINT };
 
-    std::atomic_flag m_dirty;
+    std::atomic_flag m_data_dirty;
+    std::atomic_flag m_vertices_dirty;
 
     std::shared_ptr<VKBuffer> m_staging;
 };

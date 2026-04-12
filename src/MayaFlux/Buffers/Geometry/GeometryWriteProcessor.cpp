@@ -12,13 +12,26 @@ GeometryWriteProcessor::GeometryWriteProcessor()
 
 void GeometryWriteProcessor::set_data(Kakshya::DataVariant variant)
 {
-    m_pending = std::move(variant);
-    m_dirty.test_and_set(std::memory_order_release);
+    m_pending_data = std::move(variant);
+    m_data_dirty.test_and_set(std::memory_order_release);
+}
+
+void GeometryWriteProcessor::set_vertices(
+    const void* data, size_t byte_count,
+    const Kakshya::VertexLayout& layout)
+{
+    VertexSnapshot snap;
+    snap.bytes.resize(byte_count);
+    std::memcpy(snap.bytes.data(), data, byte_count);
+    snap.layout = layout;
+
+    m_pending_vertices = std::move(snap);
+    m_vertices_dirty.test_and_set(std::memory_order_release);
 }
 
 bool GeometryWriteProcessor::has_pending() const noexcept
 {
-    return m_dirty.test(std::memory_order_acquire);
+    return m_data_dirty.test(std::memory_order_acquire);
 }
 
 void GeometryWriteProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
@@ -40,8 +53,10 @@ void GeometryWriteProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
 void GeometryWriteProcessor::on_detach(const std::shared_ptr<Buffer>& /*buffer*/)
 {
     m_staging.reset();
-    m_active.reset();
-    m_pending.reset();
+    m_active_data.reset();
+    m_active_vertices.reset();
+    m_pending_data.reset();
+    m_pending_vertices.reset();
 }
 
 void GeometryWriteProcessor::processing_function(const std::shared_ptr<Buffer>& buffer)
@@ -53,20 +68,53 @@ void GeometryWriteProcessor::processing_function(const std::shared_ptr<Buffer>& 
         return;
     }
 
-    if (!m_dirty.test(std::memory_order_acquire)) {
+    if (m_vertices_dirty.test(std::memory_order_acquire)) {
+        m_vertices_dirty.clear(std::memory_order_release);
+        std::swap(m_active_vertices, m_pending_vertices);
+
+        if (m_active_vertices.has_value()) {
+            const size_t required = m_active_vertices->bytes.size();
+            const size_t available = vk->get_size_bytes();
+
+            if (required > available) {
+                vk->resize(static_cast<size_t>((float)required * 1.5F), false);
+                if (m_staging) {
+                    m_staging = create_staging_buffer(vk->get_size_bytes());
+                }
+            }
+
+            upload_to_gpu(m_active_vertices->bytes.data(),
+                std::min<size_t>(required, vk->get_size_bytes()),
+                vk, m_staging);
+
+            vk->set_vertex_layout(m_active_vertices->layout);
+            return;
+        }
+    }
+
+    if (!m_data_dirty.test(std::memory_order_acquire)) {
         return;
     }
 
-    m_dirty.clear(std::memory_order_release);
-    std::swap(m_active, m_pending);
+    m_data_dirty.clear(std::memory_order_release);
+    std::swap(m_active_data, m_pending_data);
 
-    if (!m_active.has_value()) {
+    if (!m_active_data.has_value()) {
         return;
     }
 
-    auto access = (m_mode == GeometryWriteMode::LINE)
-        ? Kakshya::as_line_vertex_access(*m_active, m_config)
-        : Kakshya::as_point_vertex_access(*m_active, m_config);
+    std::optional<Kakshya::VertexAccess> access;
+    switch (m_mode) {
+    case GeometryWriteMode::LINE:
+        access = Kakshya::as_line_vertex_access(*m_active_data, m_config);
+        break;
+    case GeometryWriteMode::MESH:
+        access = Kakshya::as_mesh_vertex_access(*m_active_data, m_config);
+        break;
+    case GeometryWriteMode::POINT:
+        access = Kakshya::as_point_vertex_access(*m_active_data, m_config);
+        break;
+    }
 
     if (!access.has_value()) {
         MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,

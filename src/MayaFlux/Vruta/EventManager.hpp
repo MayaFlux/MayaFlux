@@ -1,7 +1,5 @@
 #pragma once
 
-#include <utility>
-
 #include "Event.hpp"
 
 namespace MayaFlux::Vruta {

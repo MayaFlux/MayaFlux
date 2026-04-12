@@ -3,6 +3,8 @@
 #include "MayaFlux/Nodes/Generators/Logic.hpp"
 #include "MayaFlux/Vruta/Scheduler.hpp"
 
+#include "MayaFlux/Journal/Archivist.hpp"
+
 namespace MayaFlux::Kriya {
 
 Vruta::SoundRoutine metro(Vruta::TaskScheduler& scheduler, double interval_seconds, std::function<void()> callback)
@@ -41,19 +43,19 @@ Vruta::SoundRoutine line(Vruta::TaskScheduler& scheduler, float start_value, flo
         step_duration = 1;
     }
 
-    uint64_t total_samples = duration_seconds * sample_rate;
-    float per_sample_step = (end_value - start_value) / total_samples;
-    float sample_step = per_sample_step * step_duration;
+    uint64_t total_samples = (uint64_t)duration_seconds * sample_rate;
+    float per_sample_step = (end_value - start_value) / (float)total_samples;
+    float sample_step = per_sample_step * (float)step_duration;
 
     promise_ref.set_state("step", sample_step);
 
     for (;;) {
-        float* current_value = promise_ref.get_state<float>("current_value");
-        float* last_value = promise_ref.get_state<float>("end_value");
-        float* step = promise_ref.get_state<float>("step");
+        auto current_value = promise_ref.get_state<float>("current_value");
+        auto last_value = promise_ref.get_state<float>("end_value");
+        auto step = promise_ref.get_state<float>("step");
 
         if (!current_value || !last_value || !step) {
-            std::cerr << "Error: line task state not properly initialized" << std::endl;
+            MF_ERROR(Journal::Component::Kriya, Journal::Context::CoroutineScheduling, "Line task state not properly initialized");
             co_return;
         }
 
@@ -77,7 +79,7 @@ Vruta::SoundRoutine line(Vruta::TaskScheduler& scheduler, float start_value, flo
         if (!restartable)
             break;
 
-        bool* restart_requested = promise_ref.get_state<bool>("restart");
+        auto restart_requested = promise_ref.get_state<bool>("restart");
         if (restart_requested && *restart_requested) {
             *restart_requested = false;
             continue;
@@ -113,11 +115,11 @@ Vruta::SoundRoutine Gate(
     }
 
     if (open) {
-        logic_node->while_true([callback](const Nodes::NodeContext& ctx) {
+        logic_node->while_true([callback](const Nodes::NodeContext& /*ctx*/) {
             callback();
         });
     } else {
-        logic_node->while_false([callback](const Nodes::NodeContext& ctx) {
+        logic_node->while_false([callback](const Nodes::NodeContext& /*ctx*/) {
             callback();
         });
     }
@@ -146,7 +148,7 @@ Vruta::SoundRoutine Trigger(
     }
 
     logic_node->on_change_to(target_state,
-        [callback](const Nodes::NodeContext& ctx) {
+        [callback](const Nodes::NodeContext& /*ctx*/) {
             callback();
         });
 
@@ -172,7 +174,7 @@ Vruta::SoundRoutine Toggle(
         logic_node = std::make_shared<Nodes::Generator::Logic>(0.5);
     }
 
-    logic_node->on_change([callback](const Nodes::NodeContext& ctx) {
+    logic_node->on_change([callback](const Nodes::NodeContext& /*ctx*/) {
         callback();
     });
 

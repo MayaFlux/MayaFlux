@@ -93,13 +93,13 @@ void CompositeGeometryBuffer::add_geometry(
 
     case Portal::Graphics::PrimitiveTopology::LINE_LIST:
     case Portal::Graphics::PrimitiveTopology::LINE_STRIP:
+        config.fragment_shader = "line.frag.spv";
 #ifndef MAYAFLUX_PLATFORM_MACOS
         config.vertex_shader = "line.vert.spv";
-        config.fragment_shader = "line.frag.spv";
         config.geometry_shader = "line.geom.spv";
 #else
         config.vertex_shader = "line_fallback.vert.spv";
-        config.fragment_shader = "line_fallback.frag.spv";
+        config.topology = Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST;
 #endif
         break;
 

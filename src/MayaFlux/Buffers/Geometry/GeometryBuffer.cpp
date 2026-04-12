@@ -75,27 +75,30 @@ void GeometryBuffer::setup_rendering(const RenderConfig& config)
 
     case Portal::Graphics::PrimitiveTopology::LINE_LIST:
     case Portal::Graphics::PrimitiveTopology::LINE_STRIP:
+
+        if (config.fragment_shader.empty())
+            resolved_config.fragment_shader = "line.frag.spv";
+
 #ifndef MAYAFLUX_PLATFORM_MACOS
         if (config.vertex_shader.empty())
             resolved_config.vertex_shader = "line.vert.spv";
-        if (config.fragment_shader.empty())
-            resolved_config.fragment_shader = "line.frag.spv";
         if (config.geometry_shader.empty())
             resolved_config.geometry_shader = "line.geom.spv";
 #else
         if (config.vertex_shader.empty())
             resolved_config.vertex_shader = "line_fallback.vert.spv";
-        if (config.fragment_shader.empty())
-            resolved_config.fragment_shader = "line_fallback.frag.spv";
 
         resolved_config.topology = Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST;
 #endif
+
         break;
 
     case Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST:
     case Portal::Graphics::PrimitiveTopology::TRIANGLE_STRIP:
-        resolved_config.vertex_shader = "triangle.vert.spv";
-        resolved_config.fragment_shader = "triangle.frag.spv";
+        if (config.vertex_shader.empty())
+            resolved_config.vertex_shader = "triangle.vert.spv";
+        if (config.fragment_shader.empty())
+            resolved_config.fragment_shader = "triangle.frag.spv";
         break;
 
     default:

@@ -150,6 +150,12 @@ public:
      */
     void set_view_transform_source(std::function<Kinesis::ViewTransform()> fn);
 
+    /** @brief Get current static view transform, if set */
+    const std::optional<Kinesis::ViewTransform>& get_view_transform() const { return m_view_transform; }
+
+    /** @brief Get current dynamic view transform source, if set */
+    const std::function<Kinesis::ViewTransform()>& get_view_transform_source() const { return m_view_transform_source; }
+
 protected:
     void initialize_pipeline(const std::shared_ptr<VKBuffer>& buffer) override;
     void execute_shader(const std::shared_ptr<VKBuffer>& buffer) override;
