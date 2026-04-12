@@ -640,9 +640,15 @@ void RenderProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
 
 void RenderProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
 {
-    ShaderProcessor::on_attach(buffer);
-
     auto vk_buffer = std::dynamic_pointer_cast<VKBuffer>(buffer);
+    if (!vk_buffer)
+        return;
+
+    MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+        "RenderProcessor attached to VKBuffer (size: {} bytes, modality: {})",
+        vk_buffer->get_size_bytes(),
+        static_cast<int>(vk_buffer->get_modality()));
+
     if (vk_buffer && vk_buffer->has_vertex_layout()) {
         auto vertex_layout = vk_buffer->get_vertex_layout();
         if (vertex_layout.has_value()) {

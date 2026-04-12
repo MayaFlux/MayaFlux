@@ -5,7 +5,7 @@ layout(location = 1) in vec3 in_world_pos;
 
 layout(set = 0, binding = 1) uniform sampler2D texSampler;
 
-layout(set = 1, binding = 1) uniform Influence {
+layout(set = 1, binding = 0) uniform Influence {
     vec3 position;
     float intensity;
     vec3 color;

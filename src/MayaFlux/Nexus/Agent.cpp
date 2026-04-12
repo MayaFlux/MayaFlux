@@ -24,7 +24,7 @@ void Agent::set_influence_target(std::shared_ptr<Buffers::RenderProcessor> proc)
         Kakshya::DataModality::UNKNOWN);
 
     proc->add_binding("u_influence",
-        Buffers::ShaderBinding { 1, 1, vk::DescriptorType::eUniformBuffer });
+        Buffers::ShaderBinding { 1, 0, vk::DescriptorType::eUniformBuffer });
 
     proc->bind_buffer("u_influence", m_influence_ubo);
 

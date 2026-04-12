@@ -6,7 +6,7 @@ layout(location = 2) in vec3 in_normal;
 layout(location = 3) flat in uint in_slot;
 layout(location = 4) in vec3 in_world_pos;
 
-layout(set = 1, binding = 1) uniform Influence {
+layout(set = 1, binding = 0) uniform Influence {
     vec3 position;
     float intensity;
     vec3 color;

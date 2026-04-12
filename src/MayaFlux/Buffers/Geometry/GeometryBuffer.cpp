@@ -95,8 +95,10 @@ void GeometryBuffer::setup_rendering(const RenderConfig& config)
 
     case Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST:
     case Portal::Graphics::PrimitiveTopology::TRIANGLE_STRIP:
-        resolved_config.vertex_shader = "triangle.vert.spv";
-        resolved_config.fragment_shader = "triangle.frag.spv";
+        if (config.vertex_shader.empty())
+            resolved_config.vertex_shader = "triangle.vert.spv";
+        if (config.fragment_shader.empty())
+            resolved_config.fragment_shader = "triangle.frag.spv";
         break;
 
     default:
