@@ -2,6 +2,7 @@
 
 #include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
 
+#include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux::Nexus {
@@ -24,7 +25,7 @@ void Emitter::set_influence_target(std::shared_ptr<Buffers::RenderProcessor> pro
         Kakshya::DataModality::UNKNOWN);
 
     proc->add_binding("u_influence",
-        Buffers::ShaderBinding { 1, 0, vk::DescriptorType::eUniformBuffer });
+        Buffers::ShaderBinding { 1, 1, vk::DescriptorType::eUniformBuffer });
 
     proc->bind_buffer("u_influence", m_influence_ubo);
 
@@ -41,6 +42,8 @@ void Emitter::clear_influence_target()
 void Emitter::upload_influence_ubo(const InfluenceContext& ctx) const
 {
     if (!m_influence_ubo || !m_influence_ubo->get_mapped_ptr()) {
+        MF_WARN(Journal::Component::Nexus, Journal::Context::Runtime,
+            "Cannot upload influence UBO: no target or failed to map buffer");
         return;
     }
 
@@ -52,7 +55,7 @@ void Emitter::upload_influence_ubo(const InfluenceContext& ctx) const
         .size = ctx.size.value_or(1.0F),
     };
 
-    std::memcpy(m_influence_ubo->get_mapped_ptr(), &data, sizeof(InfluenceUBO));
+    Buffers::upload_to_gpu(&data, sizeof(InfluenceUBO), m_influence_ubo, nullptr);
 }
 
 } // namespace MayaFlux::Nexus

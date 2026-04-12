@@ -24,7 +24,7 @@ void Agent::set_influence_target(std::shared_ptr<Buffers::RenderProcessor> proc)
         Kakshya::DataModality::UNKNOWN);
 
     proc->add_binding("u_influence",
-        Buffers::ShaderBinding { 1, 0, vk::DescriptorType::eUniformBuffer });
+        Buffers::ShaderBinding { 1, 1, vk::DescriptorType::eUniformBuffer });
 
     proc->bind_buffer("u_influence", m_influence_ubo);
 
@@ -41,6 +41,8 @@ void Agent::clear_influence_target()
 void Agent::upload_influence_ubo(const InfluenceContext& ctx) const
 {
     if (!m_influence_ubo || !m_influence_ubo->get_mapped_ptr()) {
+        MF_WARN(Journal::Component::Nexus, Journal::Context::Runtime,
+            "Cannot upload influence UBO: no target or failed to map buffer");
         return;
     }
 

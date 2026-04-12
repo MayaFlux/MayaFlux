@@ -15,7 +15,7 @@ namespace MayaFlux::Nexus {
  * Packs into two vec4 slots plus one partial (48 bytes total).
  * GLSL declaration:
  * @code
- * layout(set = 1, binding = 0) uniform Influence {
+ * layout(set = 1, binding = 1) uniform Influence {
  *     vec3  position;
  *     float intensity;
  *     vec3  color;
