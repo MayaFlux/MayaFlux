@@ -2,6 +2,10 @@
 
 #include "SoundStreamContainer.hpp"
 
+namespace MayaFlux::IO {
+class SoundFileReader;
+}
+
 namespace MayaFlux::Kakshya {
 
 /**
@@ -138,6 +142,8 @@ private:
     uint64_t validate(std::vector<std::span<const double>>& data, uint64_t start_frame = 0);
 
     uint64_t validate_single_channel(std::span<const double> data, uint64_t start_frame = 0, uint32_t channel = 0);
+
+    friend class MayaFlux::IO::SoundFileReader; ///< Allow SoundFileReader to access private members for loading data
 };
 
 } // namespace MayaFlux::Kakshya

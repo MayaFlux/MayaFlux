@@ -1,4 +1,5 @@
 #include "SoundFileReader.hpp"
+#include "MayaFlux/Kakshya/Source/DynamicSoundStream.hpp"
 
 extern "C" {
 #include <libavcodec/avcodec.h>
@@ -282,6 +283,71 @@ std::vector<Kakshya::DataVariant> SoundFileReader::read_region(const FileRegion&
     uint64_t end = region.end_coordinates[0];
     uint64_t n = (end > start) ? (end - start) : 1;
     return read_frames(n, start);
+}
+
+std::shared_ptr<Kakshya::DynamicSoundStream> SoundFileReader::load_bounded(
+    const std::string& filepath,
+    uint64_t max_frames,
+    std::function<void(std::shared_ptr<Kakshya::DynamicSoundStream>)> on_ready)
+{
+    if (!can_read(filepath)) {
+        set_error("load_bounded: unsupported file: " + filepath);
+        return nullptr;
+    }
+
+    if (!open(filepath, FileReadOptions::EXTRACT_METADATA)) {
+        set_error("load_bounded: open failed: " + get_last_error());
+        return nullptr;
+    }
+
+    std::shared_ptr<AudioStreamContext> audio;
+    {
+        std::shared_lock lock(m_context_mutex);
+        audio = m_audio;
+    }
+
+    if (!audio || !audio->is_valid()) {
+        set_error("load_bounded: no valid audio stream");
+        close();
+        return nullptr;
+    }
+
+    const uint64_t effective_rate = m_target_sample_rate > 0
+        ? m_target_sample_rate
+        : audio->sample_rate;
+
+    if (max_frames == 0)
+        max_frames = effective_rate * 5;
+
+    if (audio->total_frames > max_frames) {
+        set_error(std::format(
+            "load_bounded: file has {} frames, exceeds limit of {}",
+            audio->total_frames, max_frames));
+        close();
+        return nullptr;
+    }
+
+    auto data = read_all();
+    close();
+
+    if (data.empty()) {
+        set_error("load_bounded: read_all returned no data");
+        return nullptr;
+    }
+
+    auto stream = std::make_shared<Kakshya::DynamicSoundStream>(
+        effective_rate,
+        static_cast<uint32_t>(audio->channels));
+
+    stream->set_auto_resize(false);
+    stream->ensure_capacity(audio->total_frames);
+    stream->set_all_data(data);
+    stream->update_processing_state(Kakshya::ProcessingState::READY);
+
+    if (on_ready)
+        on_ready(stream);
+
+    return stream;
 }
 
 std::vector<Kakshya::DataVariant> SoundFileReader::read_frames(uint64_t num_frames,
