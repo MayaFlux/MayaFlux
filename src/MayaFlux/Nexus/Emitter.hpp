@@ -3,6 +3,8 @@
 #include "InfluenceContext.hpp"
 #include "Sinks.hpp"
 
+#include "MayaFlux/Nodes/Graphics/VertexSpec.hpp"
+
 namespace MayaFlux::Buffers {
 class BufferManager;
 }
@@ -43,14 +45,7 @@ public:
      * @brief Set the position, enabling spatial indexing for this object.
      * @param p World-space coordinates.
      */
-    void set_position(const glm::vec3& p)
-    {
-        m_position = p;
-        if (!m_render_sinks.empty()) {
-            push_geometry(m_render_sinks,
-                Kakshya::DataVariant { std::vector<glm::vec3> { p } });
-        }
-    }
+    void set_position(const glm::vec3& p) { m_position = p; }
 
     /**
      * @brief Clear the position, removing this object from spatial queries.
@@ -92,10 +87,18 @@ public:
     }
 
     /** @brief Register a render output targeting @p window with a producer function. */
-    void render(Buffers::BufferManager& mgr, const Portal::Graphics::RenderConfig& config,
-        std::function<Kakshya::DataVariant(const InfluenceContext&)> fn)
+    void render(Buffers::BufferManager& mgr, const Portal::Graphics::RenderConfig& config, RenderFn fn)
     {
         add_render_sink(m_render_sinks, mgr, config, std::move(fn), m_position);
+    }
+
+    /* @brief Return the render processor for the sink targeting @p window, or nullptr if not found. */
+    std::shared_ptr<Buffers::RenderProcessor> get_render_processor(
+        const std::shared_ptr<Core::Window>& window) const
+    {
+        auto it = std::ranges::find_if(m_render_sinks,
+            [&window](const RenderSink& s) { return s.window == window; });
+        return it != m_render_sinks.end() ? it->renderer : nullptr;
     }
 
     /** @brief Unregister the render sink targeting @p window. */
@@ -110,10 +113,30 @@ public:
         push_audio_data(m_audio_sinks, samples);
     }
 
-    /** @brief Push @p data as geometry to all registered render sinks. */
-    void set_geometry(const Kakshya::DataVariant& data)
+    /**
+     * @brief Push pre-resolved vertex bytes to all registered render sinks.
+     * @param data       Pointer to vertex data.
+     * @param byte_count Total size in bytes.
+     * @param layout     VertexLayout describing stride and attributes.
+     */
+    void set_vertices(const void* data, size_t byte_count,
+        const Kakshya::VertexLayout& layout)
     {
-        push_geometry(m_render_sinks, data);
+        push_vertices(m_render_sinks, data, byte_count, layout);
+    }
+
+    /**
+     * @brief Push typed vertex data to all registered render sinks.
+     * @tparam T One of Nodes::PointVertex, Nodes::LineVertex, Nodes::MeshVertex.
+     * @param vertices Span of vertex structs.
+     */
+    template <typename T>
+    void set_vertices(std::span<const T> vertices)
+    {
+        auto layout = Nodes::vertex_layout_for<T>();
+        layout.vertex_count = static_cast<uint32_t>(vertices.size());
+        push_vertices(m_render_sinks, vertices.data(),
+            vertices.size_bytes(), layout);
     }
 
     /**

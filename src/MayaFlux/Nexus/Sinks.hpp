@@ -3,6 +3,7 @@
 #include "InfluenceContext.hpp"
 
 #include "MayaFlux/Kakshya/NDData/NDData.hpp"
+#include "MayaFlux/Kakshya/NDData/VertexLayout.hpp"
 
 namespace MayaFlux::Core {
 class Window;
@@ -23,6 +24,8 @@ class RenderProcessor;
 }
 
 namespace MayaFlux::Nexus {
+
+using RenderFn = std::function<void(const InfluenceContext&)>;
 
 /**
  * @struct AudioSink
@@ -62,7 +65,7 @@ struct RenderSink {
     std::shared_ptr<Buffers::VKBuffer> buf;
     std::shared_ptr<Buffers::GeometryWriteProcessor> writer;
     std::shared_ptr<Buffers::RenderProcessor> renderer;
-    std::function<Kakshya::DataVariant(const InfluenceContext&)> fn;
+    RenderFn fn;
     std::shared_ptr<Core::Window> window;
 };
 
@@ -130,12 +133,13 @@ void dispatch_audio_sinks(
  * @param window Target window for presentation.
  * @param fn     Optional producer called each dispatch with InfluenceContext.
  *               Leave empty when geometry is supplied via push_geometry().
+ * @param initial_position Optional initial position to write if no producer fn is set.
  */
 void add_render_sink(
     std::vector<RenderSink>& sinks,
     Buffers::BufferManager& mgr,
     const Portal::Graphics::RenderConfig& config,
-    std::function<Kakshya::DataVariant(const InfluenceContext&)> fn = {},
+    RenderFn fn = {},
     const std::optional<glm::vec3>& initial_position = {});
 
 /**
@@ -150,13 +154,16 @@ void remove_render_sink(
     const std::shared_ptr<Core::Window>& window);
 
 /**
- * @brief Push @p data as geometry to every render sink.
- * @param sinks Sink vector owned by the calling Emitter or Agent.
- * @param data  DataVariant forwarded to GeometryWriteProcessor::set_data().
+ * @brief Push pre-resolved vertex bytes to every render sink.
+ * @param sinks      Sink vector owned by the calling Emitter or Agent.
+ * @param data       Pointer to vertex data.
+ * @param byte_count Total size in bytes.
+ * @param layout     VertexLayout describing stride and attributes.
  */
-void push_geometry(
+void push_vertices(
     std::vector<RenderSink>& sinks,
-    const Kakshya::DataVariant& data);
+    const void* data, size_t byte_count,
+    const Kakshya::VertexLayout& layout);
 
 /**
  * @brief For each sink that has a producer fn, call it and push the result.

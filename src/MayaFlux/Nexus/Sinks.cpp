@@ -94,7 +94,7 @@ void add_render_sink(
     std::vector<RenderSink>& sinks,
     Buffers::BufferManager& mgr,
     const Portal::Graphics::RenderConfig& config,
-    std::function<Kakshya::DataVariant(const InfluenceContext&)> fn,
+    RenderFn fn,
     const std::optional<glm::vec3>& initial_position)
 {
     constexpr size_t k_initial_bytes = 4096;
@@ -210,10 +210,13 @@ void remove_render_sink(
         "Nexus: render sink removed");
 }
 
-void push_geometry(std::vector<RenderSink>& sinks, const Kakshya::DataVariant& data)
+void push_vertices(
+    std::vector<RenderSink>& sinks,
+    const void* data, size_t byte_count,
+    const Kakshya::VertexLayout& layout)
 {
     for (auto& s : sinks) {
-        s.writer->set_data(data);
+        s.writer->set_vertices(data, byte_count, layout);
     }
 }
 
@@ -221,7 +224,7 @@ void dispatch_render_sinks(std::vector<RenderSink>& sinks, const InfluenceContex
 {
     for (auto& s : sinks) {
         if (s.fn) {
-            s.writer->set_data(s.fn(ctx));
+            s.fn(ctx);
         }
     }
 }
