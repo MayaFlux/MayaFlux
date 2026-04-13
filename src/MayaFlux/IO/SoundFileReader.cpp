@@ -288,7 +288,7 @@ std::vector<Kakshya::DataVariant> SoundFileReader::read_region(const FileRegion&
 std::shared_ptr<Kakshya::DynamicSoundStream> SoundFileReader::load_bounded(
     const std::string& filepath,
     uint64_t max_frames,
-    std::function<void(std::shared_ptr<Kakshya::DynamicSoundStream>)> on_ready)
+    bool truncate)
 {
     if (!can_read(filepath)) {
         set_error("load_bounded: unsupported file: " + filepath);
@@ -319,7 +319,9 @@ std::shared_ptr<Kakshya::DynamicSoundStream> SoundFileReader::load_bounded(
     if (max_frames == 0)
         max_frames = effective_rate * 5;
 
-    if (audio->total_frames > max_frames) {
+    const bool over_limit = audio->total_frames > max_frames;
+
+    if (over_limit && !truncate) {
         set_error(std::format(
             "load_bounded: file has {} frames, exceeds limit of {}",
             audio->total_frames, max_frames));
@@ -327,25 +329,38 @@ std::shared_ptr<Kakshya::DynamicSoundStream> SoundFileReader::load_bounded(
         return nullptr;
     }
 
-    auto data = read_all();
-    close();
-
-    if (data.empty()) {
-        set_error("load_bounded: read_all returned no data");
-        return nullptr;
+    if (over_limit) {
+        MF_WARN(Journal::Component::IO, Journal::Context::FileIO,
+            "load_bounded: {} has {} frames, truncating to {}",
+            filepath, audio->total_frames, max_frames);
     }
+
+    const uint64_t frames_to_load = over_limit ? max_frames : audio->total_frames;
+    const bool planar = (m_audio_options & AudioReadOptions::DEINTERLEAVE) != AudioReadOptions::NONE;
 
     auto stream = std::make_shared<Kakshya::DynamicSoundStream>(
         effective_rate,
         static_cast<uint32_t>(audio->channels));
 
-    stream->set_auto_resize(false);
-    stream->ensure_capacity(audio->total_frames);
-    stream->set_all_data(data);
-    stream->update_processing_state(Kakshya::ProcessingState::READY);
+    stream->get_structure().organization = planar
+        ? Kakshya::OrganizationStrategy::PLANAR
+        : Kakshya::OrganizationStrategy::INTERLEAVED;
 
-    if (on_ready)
-        on_ready(stream);
+    stream->set_auto_resize(false);
+    stream->ensure_capacity(frames_to_load);
+
+    auto data = over_limit
+        ? read_frames(frames_to_load, 0)
+        : read_all();
+
+    close();
+
+    if (data.empty()) {
+        set_error("load_bounded: read returned no data");
+        return nullptr;
+    }
+
+    stream->set_all_data(data);
 
     return stream;
 }

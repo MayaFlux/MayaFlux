@@ -164,25 +164,20 @@ public:
      *
      * Opens the file, reads up to @p max_frames frames into a fully resident
      * DynamicSoundStream with auto-resize disabled, then closes the file.
-     * No DataProcessor is configured on the result; the caller owns the
-     * read cursor entirely.
-     *
-     * Returns nullptr if the file cannot be opened, exceeds @p max_frames, or
-     * any read error occurs. Exceeding the frame limit is treated as an error
-     * rather than a silent truncation so callers are aware of the constraint.
+     * No DataProcessor is configured on the result; that is the caller's
+     * responsibility (see IOManager::configure_audio_processor).
      *
      * @param filepath     Path to the audio file.
      * @param max_frames   Upper bound on frame count. Defaults to 5 seconds at
-     *                     the reader's target sample rate, or 48000 * 5 if no
-     *                     target rate has been set.
-     * @param on_ready     Optional callback fired with the populated stream once
-     *                     it transitions to ProcessingState::READY.
+     *                     the target sample rate.
+     * @param truncate     If true, silently truncate files that exceed max_frames
+     *                     with an MF_WARN. If false, return nullptr on excess.
      * @return Populated DynamicSoundStream, or nullptr on failure.
      */
     [[nodiscard]] std::shared_ptr<Kakshya::DynamicSoundStream> load_bounded(
         const std::string& filepath,
         uint64_t max_frames = 0,
-        std::function<void(std::shared_ptr<Kakshya::DynamicSoundStream>)> on_ready = nullptr);
+        bool truncate = false);
 
     /**
      * @brief Create a SignalSourceContainer for this file.
