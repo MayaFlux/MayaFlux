@@ -5,6 +5,8 @@
 #include "MayaFlux/Buffers/Container/StreamSliceProcessor.hpp"
 #include "MayaFlux/Kakshya/Source/StreamSlice.hpp"
 
+#include "MayaFlux/Journal/Archivist.hpp"
+
 namespace MayaFlux::Kakshya {
 class DynamicSoundStream;
 }
@@ -161,6 +163,38 @@ public:
     void stop(size_t index = 0);
 
     /**
+     * @brief Construct a slice spanning the full stream.
+     * @param index Slot identity.
+     */
+    [[nodiscard]] Kakshya::StreamSlice slice_from_stream(uint8_t index = 0) const
+    {
+        if (!m_stream) {
+            MF_ERROR(Journal::Component::Kriya, Journal::Context::Configuration,
+                "SamplingPipeline::slice_from_stream called with null stream");
+            return {};
+        }
+        return Kakshya::StreamSlice::from_stream(m_stream, index);
+    }
+
+    /**
+     * @brief Construct a slice spanning a frame sub-region.
+     * @param start_frame Inclusive start frame.
+     * @param end_frame   Inclusive end frame.
+     * @param index       Slot identity.
+     */
+    [[nodiscard]] Kakshya::StreamSlice slice_from_range(
+        uint64_t start_frame, uint64_t end_frame, uint8_t index = 0) const
+    {
+
+        if (!m_stream) {
+            MF_ERROR(Journal::Component::Kriya, Journal::Context::Configuration,
+                "SamplingPipeline::slice_from_range called with null stream");
+            return {};
+        }
+        return Kakshya::StreamSlice::from_frame_range(m_stream, start_frame, end_frame, index);
+    }
+
+    /**
      * @brief Direct access to a voice's StreamSlice for configuration.
      *
      * Configure stream, loop_start, loop_end, speed, scale before play().
@@ -186,6 +220,16 @@ public:
      * @return Shared pointer to the internal AudioBuffer.
      */
     std::shared_ptr<Buffers::AudioBuffer> get_buffer() const { return m_buffer; }
+
+    /**
+     * @brief Get the underlying DynamicSoundStream.
+     *
+     * Exposes stream properties and allows construction of custom slices
+     * outside of the provided StreamSliceProcessor interface.
+     *
+     * @return Shared pointer to the DynamicSoundStream.
+     */
+    std::shared_ptr<Kakshya::DynamicSoundStream> get_stream() const { return m_stream; }
 
 private:
     std::shared_ptr<Kakshya::DynamicSoundStream> m_stream;

@@ -108,6 +108,7 @@ void SamplingPipeline<N>::play_continuous(size_t index)
 
     auto sl = m_processor->slice(index);
     sl.looping = true;
+    m_processor->load(index, sl);
     m_processor->bind(index);
 }
 
@@ -117,13 +118,13 @@ void SamplingPipeline<N>::play_continuous(size_t index, Kakshya::StreamSlice sli
     if (index >= N)
         return;
 
+    slice.looping = true;
+    m_processor->load(index, std::move(slice));
+
     if (!m_built) {
-        m_processor->load(index, std::move(slice));
         build();
     }
 
-    auto sl = m_processor->slice(index);
-    sl.looping = true;
     m_processor->bind(index);
 }
 

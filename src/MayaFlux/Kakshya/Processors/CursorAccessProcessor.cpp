@@ -72,9 +72,13 @@ void CursorAccessProcessor::process(const std::shared_ptr<SignalSourceContainer>
     }
 
     const uint64_t frame = m_cursor.empty() ? 0 : m_cursor[0];
+
+    const uint64_t total_frames = m_structure.get_samples_count_per_channel();
+    const uint64_t read_end = std::min(frame + m_frames_per_block - 1, total_frames - 1);
+
     const Region region {
         std::vector<uint64_t> { frame, 0 },
-        std::vector<uint64_t> { frame + m_frames_per_block - 1, m_structure.get_channel_count() - 1 }
+        std::vector<uint64_t> { read_end, m_structure.get_channel_count() - 1 }
     };
 
     auto region_data = container->get_region_data(region);
