@@ -127,10 +127,37 @@ public:
 
     uint64_t get_circular_capacity() const { return m_circular_capacity; }
 
+    /**
+     * @brief Allocate an independent processed data slot.
+     *
+     * Returns a unique index into m_dynamic_data. Intended for processors
+     * that share this stream but require independent output buffers, such
+     * as multiple CursorAccessProcessor instances reading at different
+     * cursors. The slot is empty on allocation.
+     *
+     * @return Slot index, stable until release_dynamic_slot is called.
+     */
+    uint32_t allocate_dynamic_slot();
+
+    /**
+     * @brief Release a previously allocated dynamic slot, clearing its data.
+     * @param index Slot index returned by allocate_dynamic_slot.
+     */
+    void release_dynamic_slot(uint32_t index);
+
+    /**
+     * @brief Access a dynamic processed data slot by index.
+     * @param index Slot index returned by allocate_dynamic_slot.
+     */
+    [[nodiscard]] std::vector<DataVariant>& get_dynamic_data(uint32_t index);
+    [[nodiscard]] const std::vector<DataVariant>& get_dynamic_data(uint32_t index) const;
+
 private:
     bool m_auto_resize; ///< Enable automatic capacity expansion
     bool m_is_circular {}; ///< True when operating in circular buffer mode
     uint64_t m_circular_capacity {}; ///< Fixed capacity for circular mode
+    std::vector<std::vector<DataVariant>> m_dynamic_data;
+    std::vector<bool> m_dynamic_slots;
 
     void expand_to(uint64_t target_frames);
 
