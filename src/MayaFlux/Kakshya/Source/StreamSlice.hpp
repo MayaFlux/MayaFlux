@@ -108,6 +108,24 @@ struct StreamSlice {
     [[nodiscard]] uint64_t end_frame() const { return region.end_coordinates[0]; }
     [[nodiscard]] uint32_t start_channel() const { return static_cast<uint32_t>(region.start_coordinates[1]); }
     [[nodiscard]] uint32_t end_channel() const { return static_cast<uint32_t>(region.end_coordinates[1]); }
+
+    StreamSlice& with_speed(double s)
+    {
+        speed = s;
+        return *this;
+    }
+
+    StreamSlice& with_looping(bool l)
+    {
+        looping = l;
+        return *this;
+    }
+
+    StreamSlice& with_scale(double s)
+    {
+        scale = s;
+        return *this;
+    }
 };
 
 } // namespace MayaFlux::Kakshya

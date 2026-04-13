@@ -105,10 +105,12 @@ public:
      *
      * @param index Voice index [0, N).
      * @param slice StreamSlice to load.
+     * @return Reference to the loaded StreamSlice for further configuration.
      */
-    void load(size_t index, Kakshya::StreamSlice slice)
+    Kakshya::StreamSlice& load(size_t index, Kakshya::StreamSlice slice)
     {
         m_processor->load(index, std::move(slice));
+        return m_processor->slice(index);
     }
 
     /**

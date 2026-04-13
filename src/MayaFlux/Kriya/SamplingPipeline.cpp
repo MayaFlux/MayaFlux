@@ -83,6 +83,8 @@ void SamplingPipeline<N>::play(size_t index)
 {
     if (index >= N)
         return;
+
+    m_processor->load(index, m_processor->slice(index));
     m_processor->bind(index);
 }
 
@@ -92,8 +94,8 @@ void SamplingPipeline<N>::play(size_t index, Kakshya::StreamSlice slice)
     if (index >= N)
         return;
 
+    m_processor->load(index, std::move(slice));
     if (!m_built) {
-        m_processor->load(index, std::move(slice));
         build();
     }
 
