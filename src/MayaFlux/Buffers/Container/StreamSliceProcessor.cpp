@@ -27,6 +27,18 @@ bool StreamSliceProcessor<N>::is_compatible_with(const std::shared_ptr<Buffer>& 
 }
 
 template <size_t N>
+void StreamSliceProcessor<N>::load(size_t index, Kakshya::StreamSlice slice)
+{
+    if (index >= N)
+        return;
+    slice.cursor = slice.loop_start;
+    slice.cursor_remainder = 0.0;
+    slice.active = false;
+    slice.index = static_cast<uint8_t>(index);
+    m_slices[index] = std::move(slice);
+}
+
+template <size_t N>
 void StreamSliceProcessor<N>::processing_function(const std::shared_ptr<Buffer>& buffer)
 {
     auto audio = std::dynamic_pointer_cast<AudioBuffer>(buffer);
@@ -58,6 +70,40 @@ void StreamSliceProcessor<N>::processing_function(const std::shared_ptr<Buffer>&
 
         advance(s, i);
     }
+}
+
+template <size_t N>
+void StreamSliceProcessor<N>::load(
+    size_t index,
+    std::shared_ptr<Kakshya::DynamicSoundStream> stream)
+{
+    if (index >= N || !stream)
+        return;
+    auto& s = m_slices[index];
+    s.stream = std::move(stream);
+    s.loop_start = 0;
+    s.loop_end = s.stream->get_num_frames();
+    s.cursor = 0;
+    s.cursor_remainder = 0.0;
+    s.active = false;
+}
+
+template <size_t N>
+void StreamSliceProcessor<N>::load(
+    size_t index,
+    std::shared_ptr<Kakshya::DynamicSoundStream> stream,
+    uint64_t loop_start,
+    uint64_t loop_end)
+{
+    if (index >= N || !stream)
+        return;
+    auto& s = m_slices[index];
+    s.stream = std::move(stream);
+    s.loop_start = loop_start;
+    s.loop_end = loop_end;
+    s.cursor = loop_start;
+    s.cursor_remainder = 0.0;
+    s.active = false;
 }
 
 template <size_t N>

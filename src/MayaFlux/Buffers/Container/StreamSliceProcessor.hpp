@@ -62,6 +62,36 @@ public:
      */
     void set_on_end(std::function<void(size_t)> cb) { m_on_end = std::move(cb); }
 
+    /**
+     * @brief Assign a configured StreamSlice to a slot.
+     * Resets cursor to loop_start and deactivates. Preserves all other
+     * fields from the provided slice.
+     * @param index Slot index within the pool.
+     * @param slice Configured StreamSlice to assign.
+     */
+    void load(size_t index, Kakshya::StreamSlice slice);
+
+    /**
+     * @brief Assign a stream to a slot, configuring loop bounds to the full stream.
+     * Resets cursor state. Does not activate the slice.
+     * @param index Slot index within the pool.
+     * @param stream DynamicSoundStream to read from.
+     */
+    void load(size_t index, std::shared_ptr<Kakshya::DynamicSoundStream> stream);
+
+    /**
+     * @brief Assign a stream to a slot with explicit loop bounds.
+     * Resets cursor state. Does not activate the slice.
+     * @param index      Slot index within the pool.
+     * @param stream     DynamicSoundStream to read from.
+     * @param loop_start Start frame.
+     * @param loop_end   End frame.
+     */
+    void load(size_t index,
+        std::shared_ptr<Kakshya::DynamicSoundStream> stream,
+        uint64_t loop_start,
+        uint64_t loop_end);
+
 private:
     std::array<Kakshya::StreamSlice, N> m_slices {};
     std::function<void(size_t)> m_on_end;
