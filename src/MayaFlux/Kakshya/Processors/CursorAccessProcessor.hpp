@@ -7,23 +7,29 @@ namespace MayaFlux::Kakshya {
 
 /**
  * @class CursorAccessProcessor
- * @brief DataProcessor that reads a bounded DynamicSoundStream via an owned
- *        frame cursor, writing a fixed-size block into the container's
- *        processed_data each process() call.
+ * @brief Independent cursor reader for DynamicSoundStream, writing exclusively
+ *        to a dynamic slot allocated at attach time.
  *
- * Unlike ContiguousAccessProcessor, this processor owns its read position
- * independently of the container's internal read state. The container is
- * treated as immutable memory after load; multiple CursorAccessProcessor
- * instances may attach to the same DynamicSoundStream with no contention.
+ * Intended for use cases where multiple independent cursors must read the same
+ * DynamicSoundStream simultaneously -- for example StreamSliceProcessor holding
+ * N slots over the same loaded buffer. Each instance allocates one dynamic slot
+ * via DynamicSoundStream::allocate_dynamic_slot() and writes only into that slot
+ * via get_dynamic_data(m_slot_index). The stream's processed_data, processing
+ * state, and ready/consumed machinery are never touched. Callers read output
+ * directly from get_dynamic_data(get_slot_index()).
  *
- * Output mirrors ContiguousAccessProcessor's contract: interleaved layout
- * produces one DataVariant in processed_data; planar layout produces one
- * DataVariant per channel. Block size is set once at construction or via
- * set_frames_per_block() and does not change during processing.
+ * on_attach does three things only: cache the container structure, allocate the
+ * dynamic slot, and initialise the cursor. It does not set the stream as ready
+ * for processing or register any state callbacks. on_detach releases the slot.
+ * All other container lifecycle is the caller's responsibility.
  *
- * When inactive, process() writes silence and returns immediately without
- * advancing the cursor. Activation and cursor reset are explicit operations
- * via reset(), allowing external trigger logic to remain decoupled.
+ * For default single-cursor sequential reads driven by the container's own
+ * processing state, use ContiguousAccessProcessor instead.
+ *
+ * The stream is treated as immutable memory after load. Block size is fixed at
+ * construction or via set_frames_per_block(). When inactive, process() writes
+ * silence without advancing the cursor. Activation and cursor reset are explicit
+ * via reset(), keeping trigger logic decoupled from the processor.
  */
 class MAYAFLUX_API CursorAccessProcessor : public DataProcessor {
 public:

@@ -26,18 +26,11 @@ void CursorAccessProcessor::on_attach(const std::shared_ptr<SignalSourceContaine
     m_slot_index = stream->allocate_dynamic_slot();
 
     const uint64_t num_channels = m_structure.get_channel_count();
-    m_cursor.assign(num_channels, 0);
-    m_loop_start = 0;
-    m_loop_end = stream->get_num_frames();
-
-    container->mark_ready_for_processing(true);
+    m_cursor.assign(num_channels, m_loop_start);
 }
 
 void CursorAccessProcessor::on_detach(const std::shared_ptr<SignalSourceContainer>& container)
 {
-    m_active = false;
-    m_cursor.clear();
-
     auto stream = std::dynamic_pointer_cast<DynamicSoundStream>(container);
     if (!stream) {
         MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
@@ -45,6 +38,8 @@ void CursorAccessProcessor::on_detach(const std::shared_ptr<SignalSourceContaine
         return;
     }
 
+    m_active = false;
+    m_cursor.clear();
     stream->release_dynamic_slot(m_slot_index);
 }
 
@@ -72,7 +67,6 @@ void CursorAccessProcessor::process(const std::shared_ptr<SignalSourceContainer>
             for (auto& ch : pd)
                 std::get<std::vector<double>>(ch).assign(m_frames_per_block, 0.0);
         }
-        container->update_processing_state(ProcessingState::PROCESSED);
         m_is_processing.store(false, std::memory_order_relaxed);
         return;
     }
@@ -120,7 +114,6 @@ void CursorAccessProcessor::process(const std::shared_ptr<SignalSourceContainer>
         m_cursor.assign(m_cursor.size(), next);
     }
 
-    container->update_processing_state(ProcessingState::PROCESSED);
     m_is_processing.store(false, std::memory_order_relaxed);
 }
 
