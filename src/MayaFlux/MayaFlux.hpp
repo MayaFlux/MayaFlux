@@ -30,6 +30,8 @@
 
 #include "MayaFlux/API/Proxy/Temporal.hpp"
 
+#include "MayaFlux/API/Rigs.hpp"
+
 #ifdef MAYASIMPLE
 #include "Nodes/Conduit/Constant.hpp"
 #include "Nodes/Conduit/NodeChain.hpp"
