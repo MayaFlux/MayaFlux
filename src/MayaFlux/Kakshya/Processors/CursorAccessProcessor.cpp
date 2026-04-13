@@ -98,14 +98,20 @@ void CursorAccessProcessor::process(const std::shared_ptr<SignalSourceContainer>
             safe_copy_data_variant(region_data[c], pd[c]);
     }
 
-    const uint64_t next = frame + m_frames_per_block;
+    const double raw_advance = static_cast<double>(m_frames_per_block) * m_speed + m_speed_remainder;
+    const auto int_advance = static_cast<uint64_t>(raw_advance);
+    m_speed_remainder = raw_advance - static_cast<double>(int_advance);
+
+    const uint64_t next = frame + int_advance;
     const uint64_t loop_end = m_loop_end;
 
     if (next >= loop_end) {
         if (m_looping) {
+            m_speed_remainder = 0.0;
             m_cursor.assign(m_cursor.size(), m_loop_start);
         } else {
             m_active = false;
+            m_speed_remainder = 0.0;
             m_cursor.assign(m_cursor.size(), m_loop_start);
             if (m_on_end)
                 m_on_end();
@@ -122,6 +128,12 @@ void CursorAccessProcessor::reset()
 {
     m_cursor.assign(m_cursor.size(), m_loop_start);
     m_active = true;
+}
+
+void CursorAccessProcessor::set_speed(double speed)
+{
+    if (speed > 0.0)
+        m_speed = speed;
 }
 
 void CursorAccessProcessor::stop()

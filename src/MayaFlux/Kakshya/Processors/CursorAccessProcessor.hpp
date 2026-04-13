@@ -83,7 +83,7 @@ public:
      * Defaults to [0, total_frames) on attach. Both values are clamped to the
      * container's frame count on the next process() call. All units are frames
      * (one frame = num_channels samples); conversion to sample offsets for
-     * peek_sequential happens internally.
+     * get_region_data happens internally.
      *
      * @param start_frame Inclusive loop start, in frames.
      * @param end_frame   Exclusive loop end, in frames.
@@ -96,6 +96,19 @@ public:
      */
     void set_on_end(std::function<void()> cb) { m_on_end = std::move(cb); }
 
+    /**
+     * @brief Set the playback speed relative to nominal rate.
+     *
+     * Speed is applied as a fractional frame accumulator: each process() call
+     * advances the cursor by m_frames_per_block * m_speed frames, with the
+     * sub-frame remainder carried in m_speed_remainder for the next call.
+     * Speed 1.0 is the default (no accumulator overhead). Values <= 0.0 are
+     * ignored.
+     *
+     * @param speed Playback speed multiplier (1.0 = normal).
+     */
+    void set_speed(double speed);
+
     [[nodiscard]] bool is_active() const { return m_active; }
     [[nodiscard]] uint64_t cursor() const { return m_cursor[0]; }
     [[nodiscard]] uint64_t loop_start() const { return m_loop_start; }
@@ -104,17 +117,19 @@ public:
 
 private:
     uint64_t m_frames_per_block;
-    std::vector<uint64_t> m_cursor { 0 };
-    uint64_t m_loop_start { 0 };
-    uint64_t m_loop_end { 0 };
+    std::vector<uint64_t> m_cursor {};
+    uint64_t m_loop_start {};
+    uint64_t m_loop_end {};
+    bool m_looping {};
+    bool m_active {};
+    double m_speed_remainder {};
+    double m_speed { 1.0 };
+
     uint32_t m_slot_index { std::numeric_limits<uint32_t>::max() };
 
-    ContainerDataStructure m_structure;
-
-    bool m_looping { false };
-    bool m_active { false };
-
     std::atomic<bool> m_is_processing { false };
+
+    ContainerDataStructure m_structure;
 
     std::function<void()> m_on_end;
 };
