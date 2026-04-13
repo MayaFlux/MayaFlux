@@ -1,10 +1,9 @@
 #pragma once
 
 #include "MayaFlux/Kakshya/DataProcessor.hpp"
+#include "MayaFlux/Kakshya/NDimensionalContainer.hpp"
 
 namespace MayaFlux::Kakshya {
-
-class DynamicSoundStream;
 
 /**
  * @class CursorAccessProcessor
@@ -17,8 +16,9 @@ class DynamicSoundStream;
  * treated as immutable memory after load; multiple CursorAccessProcessor
  * instances may attach to the same DynamicSoundStream with no contention.
  *
- * Output is always a single interleaved std::vector<double> written into
- * processed_data[0]. Block size is set once at construction or via
+ * Output mirrors ContiguousAccessProcessor's contract: interleaved layout
+ * produces one DataVariant in processed_data; planar layout produces one
+ * DataVariant per channel. Block size is set once at construction or via
  * set_frames_per_block() and does not change during processing.
  *
  * When inactive, process() writes silence and returns immediately without
@@ -97,15 +97,19 @@ public:
     void set_on_end(std::function<void()> cb) { m_on_end = std::move(cb); }
 
     [[nodiscard]] bool is_active() const { return m_active; }
-    [[nodiscard]] uint64_t cursor() const { return m_cursor; }
+    [[nodiscard]] uint64_t cursor() const { return m_cursor[0]; }
     [[nodiscard]] uint64_t loop_start() const { return m_loop_start; }
     [[nodiscard]] uint64_t loop_end() const { return m_loop_end; }
+    [[nodiscard]] uint32_t get_slot_index() const { return m_slot_index; }
 
 private:
     uint64_t m_frames_per_block;
-    uint64_t m_cursor { 0 };
+    std::vector<uint64_t> m_cursor { 0 };
     uint64_t m_loop_start { 0 };
     uint64_t m_loop_end { 0 };
+    uint32_t m_slot_index { std::numeric_limits<uint32_t>::max() };
+
+    ContainerDataStructure m_structure;
 
     bool m_looping { false };
     bool m_active { false };
@@ -113,10 +117,6 @@ private:
     std::atomic<bool> m_is_processing { false };
 
     std::function<void()> m_on_end;
-
-    std::weak_ptr<DynamicSoundStream> m_stream;
-
-    void write_silence(const std::shared_ptr<SignalSourceContainer>& container) const;
 };
 
 } // namespace MayaFlux::Kakshya
