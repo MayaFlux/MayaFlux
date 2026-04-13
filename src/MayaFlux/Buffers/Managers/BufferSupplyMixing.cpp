@@ -25,7 +25,7 @@ bool BufferSupplyMixing::supply_audio_buffer_to(
     const std::shared_ptr<AudioBuffer>& buffer,
     ProcessingToken token,
     uint32_t channel,
-    double mix)
+    double mix, bool force)
 {
     if (!buffer) {
         MF_ERROR(Journal::Component::Core, Journal::Context::BufferManagement,
@@ -33,7 +33,7 @@ bool BufferSupplyMixing::supply_audio_buffer_to(
         return false;
     }
 
-    if (buffer->get_channel_id() == channel) {
+    if (buffer->get_channel_id() == channel && !force) {
         MF_WARN(Journal::Component::Core, Journal::Context::BufferManagement,
             "BufferSupplyMixing: Buffer already has the correct channel ID {}", channel);
         return false;

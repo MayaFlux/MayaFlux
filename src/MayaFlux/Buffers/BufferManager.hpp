@@ -434,7 +434,7 @@ public:
         const std::shared_ptr<AudioBuffer>& buffer,
         ProcessingToken token,
         uint32_t channel,
-        double mix = 1.0);
+        double mix = 1.0, bool force = false);
 
     bool remove_supplied_buffer(
         const std::shared_ptr<AudioBuffer>& buffer,
