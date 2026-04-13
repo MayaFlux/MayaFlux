@@ -123,6 +123,7 @@ void StreamSliceProcessor<N>::processing_function(const std::shared_ptr<Buffer>&
     }
 }
 
+template class StreamSliceProcessor<2>;
 template class StreamSliceProcessor<4>;
 template class StreamSliceProcessor<8>;
 
