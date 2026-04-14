@@ -203,6 +203,12 @@ bool BufferPipeline::has_pending_data() const
         [](DataState state) { return state == DataState::READY; });
 }
 
+BufferPipeline& BufferPipeline::on_complete(std::function<void()> cb)
+{
+    m_on_complete = std::move(cb);
+    return *this;
+}
+
 Kakshya::DataVariant BufferPipeline::extract_buffer_data(const std::shared_ptr<Buffers::AudioBuffer>& buffer, bool should_process)
 {
     auto audio_buffer = std::dynamic_pointer_cast<Buffers::AudioBuffer>(buffer);
@@ -916,6 +922,9 @@ Vruta::SoundRoutine BufferPipeline::execute_phased(uint64_t max_cycles, uint64_t
         m_current_cycle++;
         cycles_executed++;
     }
+
+    if (m_on_complete)
+        m_on_complete();
 }
 
 Vruta::SoundRoutine BufferPipeline::execute_streaming(uint64_t max_cycles, uint64_t samples_per_operation)
@@ -998,6 +1007,9 @@ Vruta::SoundRoutine BufferPipeline::execute_streaming(uint64_t max_cycles, uint6
         m_current_cycle++;
         cycles_executed++;
     }
+
+    if (m_on_complete)
+        m_on_complete();
 }
 
 Vruta::SoundRoutine BufferPipeline::execute_parallel(uint64_t max_cycles, uint64_t samples_per_operation)

@@ -249,7 +249,7 @@ uint64_t seconds_to_samples(double seconds)
     if (get_context().is_running()) {
         sample_rate = get_context().get_stream_info().sample_rate;
     }
-    return static_cast<uint64_t>(seconds * sample_rate);
+    return static_cast<uint64_t>(seconds * (double)sample_rate);
 }
 
 uint64_t seconds_to_blocks(double seconds)
@@ -274,6 +274,16 @@ uint64_t samples_to_blocks(uint64_t samples)
     }
 
     return Vruta::samples_to_blocks(samples, block_size);
+}
+
+double samples_to_seconds(uint64_t samples)
+{
+    uint64_t sample_rate = 48000;
+    if (get_context().is_running()) {
+        sample_rate = get_context().get_stream_info().sample_rate;
+    }
+
+    return static_cast<double>(samples) / (double)sample_rate;
 }
 
 void on_network_message(
