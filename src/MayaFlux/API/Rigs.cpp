@@ -63,4 +63,29 @@ std::shared_ptr<Kriya::SamplingPipeline> create_sampler_from_stream(
     return sampler;
 }
 
+std::vector<std::shared_ptr<Kriya::SamplingPipeline>> create_samplers(
+    const std::string& filepath, uint32_t num_samples, bool truncate,
+    uint64_t max_dur_ms, uint32_t max_channels)
+{
+    auto stream = get_io_manager()->load_audio_bounded(filepath, num_samples, truncate);
+
+    if (!stream) {
+        MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
+            "create_samplers: failed to load '{}'", filepath);
+        return {};
+    }
+
+    const uint32_t ch_count = (max_channels == 0)
+        ? stream->get_num_channels()
+        : std::min(max_channels, stream->get_num_channels());
+
+    std::vector<std::shared_ptr<Kriya::SamplingPipeline>> result;
+    result.reserve(ch_count);
+
+    for (uint32_t i = 0; i < ch_count; ++i)
+        result.push_back(create_sampler_from_stream(stream, i, max_dur_ms));
+
+    return result;
+}
+
 } // namespace MayaFlux
