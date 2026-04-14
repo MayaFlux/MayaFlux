@@ -92,7 +92,7 @@ struct DomainSpec {
 template <typename T>
 struct PendingChannel {
     std::shared_ptr<T> obj;
-    uint32_t ch;
+    std::vector<uint32_t> channels;
 };
 
 /**
@@ -115,7 +115,7 @@ struct CreationProxy : std::shared_ptr<T> {
     {
         MF_WARN(Journal::Component::API, Journal::Context::Init,
             "object[ch] | Domain is deprecated and removed in 0.4 -- use object | Audio[ch] instead");
-        return { *this, ch };
+        return { *this, { ch } };
     }
 
     /** @deprecated Use | Audio[{ch0,ch1,...}] instead of object[{...}] | Domain. Removed in 0.4. */
@@ -123,7 +123,7 @@ struct CreationProxy : std::shared_ptr<T> {
     {
         MF_WARN(Journal::Component::API, Journal::Context::Init,
             "object[{...}] | Domain is deprecated and removed in 0.4 -- use object | Audio[{ch0,ch1,...}] instead");
-        return { *this, *chs.begin() };
+        return { *this, std::vector<uint32_t>(chs) };
     }
 };
 
@@ -303,7 +303,10 @@ std::shared_ptr<T> operator|(PendingChannel<T> p, const CreationContext& ctx)
 {
     if (!ctx.domain.has_value())
         return p.obj;
-    CreationContext merged { ctx.domain.value(), p.ch };
+    // CreationContext merged { ctx.domain.value(), std::move(p.channels) };
+    CreationContext merged = (p.channels.size() == 1)
+        ? CreationContext { ctx.domain.value(), p.channels[0] }
+        : CreationContext { ctx.domain.value(), std::move(p.channels) };
     return p.obj | merged;
 }
 
