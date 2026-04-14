@@ -2,6 +2,7 @@
 #include "MayaFlux/Core/Engine.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
+#include "MayaFlux/Transitive/Memory/Persist.hpp"
 
 namespace MayaFlux {
 
@@ -24,6 +25,7 @@ namespace internal {
                 engine_ref->End();
                 Journal::Archivist::shutdown();
             }
+            cleanup_persistent_store();
             engine_ref.reset();
             initialized = false;
         }
