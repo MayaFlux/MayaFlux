@@ -413,6 +413,13 @@ auto operator|(std::shared_ptr<T> obj, Domain d) -> CreationHandle<T>
     return handle.domain_impl(d);
 }
 
+template <typename T>
+auto operator|(std::shared_ptr<T> obj, const CreationContext& ctx) -> CreationHandle<T>
+{
+    CreationHandle<T> handle(obj);
+    return handle | ctx;
+}
+
 /**
  * @brief Domain constant for Audio domain.
  *
