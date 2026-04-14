@@ -28,6 +28,11 @@ struct CreationContext {
         , channel(ch)
     {
     }
+    CreationContext(Domain d, std::vector<uint32_t> ch)
+        : domain(d)
+        , channels(std::move(ch))
+    {
+    }
     CreationContext(uint32_t ch)
         : channel(ch)
     {
@@ -47,6 +52,43 @@ MAYAFLUX_API void register_network(const std::shared_ptr<Nodes::Network::NodeNet
 MAYAFLUX_API void register_buffer(const std::shared_ptr<Buffers::Buffer>& buffer, const CreationContext& ctx);
 MAYAFLUX_API void register_container(const std::shared_ptr<Kakshya::SoundFileContainer>& container, const Domain& domain);
 
+/**
+ * @brief Thin domain wrapper that adds subscript channel-binding syntax.
+ *
+ * Audio[0] and Audio[{0,1}] produce a CreationContext consumed immediately
+ * by operator|. Implicit conversion to Domain keeps all existing call sites
+ * that accept a plain Domain parameter working without change.
+ */
+struct DomainSpec {
+    Domain value;
+
+    /**
+     * @brief Bind a single channel to this domain.
+     * @param ch Channel index.
+     * @return CreationContext carrying domain and channel.
+     */
+    [[nodiscard]] CreationContext operator[](uint32_t ch) const
+    {
+        return CreationContext(value, ch);
+    }
+
+    /**
+     * @brief Bind multiple channels to this domain.
+     * @param chs Initializer list of channel indices.
+     * @return CreationContext carrying domain and channel list.
+     */
+    [[nodiscard]] CreationContext operator[](std::initializer_list<uint32_t> chs) const
+    {
+        return CreationContext(value, std::vector<uint32_t>(chs));
+    }
+
+    /** @brief Implicit decay to Domain for call sites that accept Domain directly. */
+    operator Domain() const { return value; }
+
+    /** @brief Implicit decay to CreationContext for bare `ptr | Audio` usage. */
+    operator CreationContext() const { return CreationContext(value); }
+};
+
 template <typename T>
 class CreationHandle : public std::shared_ptr<T> {
 public:
@@ -62,6 +104,7 @@ public:
     {
     }
 
+    /** @deprecated Use `| Audio[ch]` or `| Graphics` instead. */
     CreationHandle& domain(Domain d)
     {
         m_ctx.domain = d;
@@ -69,6 +112,7 @@ public:
         return *this;
     }
 
+    /** @deprecated Use `| Audio[ch]` instead. */
     CreationHandle& channel(uint32_t ch)
     {
         m_ctx.channel = ch;
@@ -77,6 +121,7 @@ public:
         return *this;
     }
 
+    /** @deprecated Use `| Audio[{ch0, ch1, ...}]` instead. */
     CreationHandle& channels(std::vector<uint32_t> ch)
     {
         m_ctx.channels = std::move(ch);
@@ -85,6 +130,7 @@ public:
         return *this;
     }
 
+    /** @deprecated Use `| Audio[{ch0, ch1, ...}]` instead. */
     template <typename... Args>
     CreationHandle& channels(Args... args)
     {
@@ -98,12 +144,53 @@ public:
         return *this;
     }
 
-    CreationHandle& operator|(Domain d) { return domain(d); }
-    CreationHandle& operator[](uint32_t ch) { return channel(ch); }
+    /** @deprecated Use `| Audio` or `| Graphics` instead. */
+    CreationHandle& operator|(Domain d)
+    {
+        return domain_impl(d);
+    }
+
+    CreationHandle& operator|(DomainSpec ds)
+    {
+        m_ctx.domain = ds.value;
+        apply_if_ready();
+        return *this;
+    }
+
+    CreationHandle& operator|(const CreationContext& ctx)
+    {
+        m_ctx = ctx;
+        apply_if_ready();
+        return *this;
+    }
+
+    /** @deprecated Use `| Audio[ch]` instead. */
+    CreationHandle& operator[](uint32_t ch)
+    {
+        return channel_impl(ch);
+    }
+
+    /** @deprecated Use `| Audio[{ch0, ch1, ...}]` instead. */
+    [[deprecated("use | Audio[{ch0, ch1, ...}] instead")]]
     CreationHandle& operator[](std::initializer_list<uint32_t> ch_list)
     {
         m_ctx.channels = std::vector<uint32_t>(ch_list);
         m_ctx.channel.reset();
+        apply_if_ready();
+        return *this;
+    }
+
+    CreationHandle& domain_impl(Domain d)
+    {
+        m_ctx.domain = d;
+        apply_if_ready();
+        return *this;
+    }
+
+    CreationHandle& channel_impl(uint32_t ch)
+    {
+        m_ctx.channel = ch;
+        m_ctx.channels.reset();
         apply_if_ready();
         return *this;
     }
@@ -211,6 +298,7 @@ class MAYAFLUX_API Creator {
 public:
 #define N(method_name, full_type_name)                                            \
     template <typename... Args>                                                   \
+        requires std::constructible_from<full_type_name, Args...>                 \
     auto method_name(Args&&... args) -> CreationHandle<full_type_name>            \
     {                                                                             \
         auto obj = std::make_shared<full_type_name>(std::forward<Args>(args)...); \
@@ -221,6 +309,7 @@ public:
 
 #define W(method_name, full_type_name)                                            \
     template <typename... Args>                                                   \
+        requires std::constructible_from<full_type_name, Args...>                 \
     auto method_name(Args&&... args) -> CreationHandle<full_type_name>            \
     {                                                                             \
         auto obj = std::make_shared<full_type_name>(std::forward<Args>(args)...); \
@@ -231,6 +320,7 @@ public:
 
 #define B(method_name, full_type_name)                                            \
     template <typename... Args>                                                   \
+        requires std::constructible_from<full_type_name, Args...>                 \
     auto method_name(Args&&... args) -> CreationHandle<full_type_name>            \
     {                                                                             \
         auto obj = std::make_shared<full_type_name>(std::forward<Args>(args)...); \
@@ -270,40 +360,40 @@ public:
     // ═══════════════════════════════════════════════════════════════
 
     /**
-     * @brief Create and register HID input node
-     * @param config HID input configuration
-     * @param binding HID input binding
-     * @return Shared pointer to HIDNode (already registered)
+     * @brief Create and register HID input node.
+     * @param config HID input configuration.
+     * @param binding HID input binding.
+     * @return Shared pointer to HIDNode (already registered).
      */
     std::shared_ptr<Nodes::Input::HIDNode> read_hid(
         const Nodes::Input::HIDConfig& config,
         const Core::InputBinding& binding);
 
     /**
-     * @brief Create and register MIDI input node
-     * @param config MIDI input configuration
-     * @param binding MIDI input binding
-     * @return Shared pointer to MIDINode (already registered)
+     * @brief Create and register MIDI input node.
+     * @param config MIDI input configuration.
+     * @param binding MIDI input binding.
+     * @return Shared pointer to MIDINode (already registered).
      */
     std::shared_ptr<Nodes::Input::MIDINode> read_midi(
         const Nodes::Input::MIDIConfig& config,
         const Core::InputBinding& binding);
 
     /**
-     * @brief Create and register OSC input node
-     * @param config OSC input configuration
-     * @param binding OSC input binding (use InputBinding::osc("/address"))
-     * @return Shared pointer to OSCNode (already registered)
+     * @brief Create and register OSC input node.
+     * @param config OSC input configuration.
+     * @param binding OSC input binding (use InputBinding::osc("/address")).
+     * @return Shared pointer to OSCNode (already registered).
      */
     std::shared_ptr<Nodes::Input::OSCNode> read_osc(
         const Nodes::Input::OSCConfig& config,
         const Core::InputBinding& binding);
 
     /**
-     * @brief Create and register generic input node
-     * @param config Generic input configuration
-     * @param binding Generic input binding
-     * @return Shared pointer to InputNode (already registered)
+     * @brief Create and register generic input node.
+     * @param config Generic input configuration.
+     * @param binding Generic input binding.
+     * @return Shared pointer to InputNode (already registered).
      */
     std::shared_ptr<Nodes::Input::InputNode> read_input(
         const Nodes::Input::InputConfig& config,
@@ -320,37 +410,45 @@ template <typename T>
 auto operator|(std::shared_ptr<T> obj, Domain d) -> CreationHandle<T>
 {
     CreationHandle<T> handle(obj);
-    return handle.domain(d);
+    return handle.domain_impl(d);
 }
 
 /**
  * @brief Domain constant for Audio domain.
  *
- * This domain unwraps to Nodes::ProccingToken::AUDIO_RATE | Buffers::ProcessingToken::AUDIO_BACKEND | Vruta::ProcessingToken::SAMPLE_ACCURATE;
+ * Unwraps to Nodes::ProcessingToken::AUDIO_RATE | Buffers::ProcessingToken::AUDIO_BACKEND
+ * | Vruta::ProcessingToken::SAMPLE_ACCURATE.
+ *
+ * Supports subscript syntax for channel binding:
+ * @code
+ * auto wave = vega.Sine(440.f) | Audio[0];
+ * auto net  = vega.ModalNetwork(16, 220.0) | Audio[{0, 1}];
+ * @endcode
  */
-static constexpr auto Audio = Domain::AUDIO;
+static constexpr DomainSpec Audio { Domain::AUDIO };
 
 /**
  * @brief Domain constant for Graphics domain.
  *
- * This domain unwraps to Nodes::ProccingToken::FRAME_RATE | Buffers::ProcessingToken::GRAPHICS_BACKEND | Vruta::ProcessingToken::FRAME_ACCURATE;
+ * Unwraps to Nodes::ProcessingToken::VISUAL_RATE | Buffers::ProcessingToken::GRAPHICS_BACKEND
+ * | Vruta::ProcessingToken::FRAME_ACCURATE.
+ *
+ * @code
+ * auto tex = vega.TextureBuffer(...) | Graphics;
+ * @endcode
  */
-static constexpr auto Graphics = Domain::GRAPHICS;
+static constexpr DomainSpec Graphics { Domain::GRAPHICS };
 
 /**
  * @brief Global Creator instance for creating nodes, buffers, and containers.
  *
- * This instance provides a convenient interface to create various MayaFlux components
- * such as nodes, buffers, and signal source containers. It supports method chaining
- * for setting creation context like domain and channels.
- * Each object can be registered automatically based on the provided context.
- * The contexts include domain, channel, and metadata.
- * Domains supported are AUDIO and GRAPHICS.
- * For example:
- * ```
- * auto myNode = ::vega.Sine(440.0f).domain(Audio).channel(0);
- * auto node_buffer = vega.NodeBuffer(0, 512, myNode)[{0, 1, 2}] | Graphics;
- * ```
+ * @code
+ * auto wave = vega.Sine(440.f) | Audio[0];
+ * auto buf  = vega.AudioBuffer(0, 512) | Audio[0];
+ * auto net  = vega.ModalNetwork(16, 220.0) | Audio[{0, 1}];
+ * auto tex  = vega.TextureBuffer(...) | Graphics;
+ * auto sfx  = vega.read_audio("x.wav") | Audio;
+ * @endcode
  */
 extern MAYAFLUX_API Creator vega;
 
