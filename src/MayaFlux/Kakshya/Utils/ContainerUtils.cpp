@@ -169,7 +169,7 @@ void extract_processed_data(
         thread_local std::vector<double> tmp;
         auto data_span = extract_from_variant<double>(pd[0], tmp);
 
-        const auto samples_to_copy = std::min(
+        const auto samples_to_copy = std::min<size_t>(
             output.size(),
             data_span.size() / std::max<uint64_t>(num_channels, 1));
 
