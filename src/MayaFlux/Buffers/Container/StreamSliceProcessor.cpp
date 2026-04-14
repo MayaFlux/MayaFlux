@@ -65,6 +65,7 @@ void StreamSliceProcessor::load(size_t index, Kakshya::StreamSlice slice)
     auto proc = std::make_shared<Kakshya::CursorAccessProcessor>(m_frames_per_block);
     proc->set_loop_region(slice.start_frame(), slice.end_frame());
     proc->set_looping(slice.looping);
+    proc->set_loop_count(slice.loop_count);
 
     if (slice.speed != 1.0)
         proc->set_speed(slice.speed);
@@ -94,6 +95,7 @@ void StreamSliceProcessor::unbind(size_t index)
 {
     if (index >= m_slots.size() || !m_slots[index].proc)
         return;
+
     m_slots[index].proc->stop();
     m_slots[index].slice.active = false;
 }

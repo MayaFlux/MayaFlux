@@ -97,6 +97,16 @@ public:
     void set_loop_region(uint64_t start_frame, uint64_t end_frame);
 
     /**
+     * @brief Set the number of loops to play before stopping.
+     * Loop count is decremented on each loop completion; when it reaches zero,
+     * the processor deactivates and fires m_on_end if set. Loop count is
+     * ignored if looping is disabled.
+     *
+     * @param n Number of loops to play (0 for infinite).
+     */
+    void set_loop_count(size_t n);
+
+    /**
      * @brief Register a callback fired when one-shot playback reaches the end.
      * @param cb Callback with no arguments. Called from the process() thread.
      */
@@ -128,6 +138,8 @@ private:
     uint64_t m_loop_end {};
     bool m_looping {};
     bool m_active {};
+    size_t m_loop_count {};
+    size_t m_loops_remaining {};
     double m_speed_remainder {};
     double m_speed { 1.0 };
 

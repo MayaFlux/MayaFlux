@@ -34,6 +34,7 @@ struct StreamSlice {
     bool looping {};
     bool active {};
     uint8_t index {};
+    size_t loop_count {};
 
     /**
      * @brief Construct a slice spanning the full stream across all channels.
@@ -124,6 +125,12 @@ struct StreamSlice {
     StreamSlice& with_scale(double s)
     {
         scale = s;
+        return *this;
+    }
+
+    StreamSlice& with_loop_count(size_t n)
+    {
+        loop_count = n;
         return *this;
     }
 };

@@ -105,6 +105,18 @@ void CursorAccessProcessor::process(const std::shared_ptr<SignalSourceContainer>
 
     if (next >= loop_end) {
         if (m_looping) {
+            if (m_loop_count > 0) {
+                --m_loops_remaining;
+                if (m_loops_remaining == 0) {
+                    m_active = false;
+                    m_speed_remainder = 0.0;
+                    m_cursor.assign(m_cursor.size(), m_loop_start);
+                    if (m_on_end)
+                        m_on_end();
+                    m_is_processing.store(false, std::memory_order_relaxed);
+                    return;
+                }
+            }
             m_speed_remainder = 0.0;
             m_cursor.assign(m_cursor.size(), m_loop_start);
         } else {
@@ -124,6 +136,7 @@ void CursorAccessProcessor::process(const std::shared_ptr<SignalSourceContainer>
 void CursorAccessProcessor::reset()
 {
     m_cursor.assign(m_cursor.size(), m_loop_start);
+    m_loops_remaining = m_loop_count;
     m_active = true;
 }
 
@@ -136,6 +149,12 @@ void CursorAccessProcessor::set_speed(double speed)
 void CursorAccessProcessor::stop()
 {
     m_active = false;
+}
+
+void CursorAccessProcessor::set_loop_count(size_t n)
+{
+    m_loop_count = n;
+    m_loops_remaining = n;
 }
 
 void CursorAccessProcessor::set_frames_per_block(uint64_t frames_per_block)
