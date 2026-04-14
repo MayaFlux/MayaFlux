@@ -26,10 +26,7 @@ namespace MayaFlux::Buffers {
  * Inactive slots contribute silence. Active slot outputs are accumulated into
  * the buffer in index order with no further scaling applied here beyond what
  * CursorAccessProcessor produces.
- *
- * @tparam N Maximum number of concurrent slots. Defaults to 4.
  */
-template <size_t N = 4>
 class MAYAFLUX_API StreamSliceProcessor : public BufferProcessor {
 public:
     StreamSliceProcessor() = default;
@@ -51,26 +48,39 @@ public:
      * the slice's stream, and configures the loop region from the slice's
      * Region. Any previously loaded slot processor is detached first.
      * The slot is left inactive; call bind() to start playback.
+     * Grows the slot pool if index exceeds the current size.
      *
-     * @param index Slot index in [0, N).
+     * @param index The slot is left inactive; call bind() to start playback.
      * @param slice StreamSlice describing the stream and region.
      */
     void load(size_t index, Kakshya::StreamSlice slice);
 
     /**
      * @brief Activate a slot, resetting its processor cursor to region start.
-     * @param index Slot index in [0, N).
+     * @param index Slot index
      */
     void bind(size_t index);
 
     /**
      * @brief Deactivate a slot, stopping its processor without resetting the cursor.
-     * @param index Slot index in [0, N).
+     * @param index Slot index.
      */
     void unbind(size_t index);
 
     [[nodiscard]] Kakshya::StreamSlice& slice(size_t index) { return m_slots[index].slice; }
     [[nodiscard]] const Kakshya::StreamSlice& slice(size_t index) const { return m_slots[index].slice; }
+
+    /**
+     * @brief Check if any slot is active.
+     * @return True if any slot is active, false if all are inactive.
+     */
+    [[nodiscard]] bool any_active() const;
+
+    /**
+     * @brief Get the current number of slots.
+     * @return The number of slots currently allocated.
+     */
+    [[nodiscard]] size_t slot_count() const { return m_slots.size(); }
 
     /**
      * @brief Register a callback fired when a slot's one-shot playback ends.
@@ -84,9 +94,9 @@ private:
         std::shared_ptr<Kakshya::CursorAccessProcessor> proc;
     };
 
-    std::array<Slot, N> m_slots {};
+    std::vector<Slot> m_slots;
     std::function<void(size_t)> m_on_end;
-    uint32_t m_frames_per_block { 0 };
+    uint32_t m_frames_per_block {};
 
     void detach_slot(size_t index);
 };

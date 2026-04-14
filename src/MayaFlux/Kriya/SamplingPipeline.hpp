@@ -38,10 +38,7 @@ namespace MayaFlux::Kriya {
  * lifecycle callbacks, branching, data-ready hooks, and strategy
  * selection are available through the standard BufferPipeline and
  * CaptureBuilder fluent interfaces before calling build().
- *
- * @tparam N Maximum concurrent voices.
  */
-template <size_t N = 4>
 class MAYAFLUX_API SamplingPipeline {
 public:
     /**
@@ -103,7 +100,7 @@ public:
      * Must be called after build(). Replaces any existing slice in the slot.
      * Use slice() to mutate parameters of an already-loaded slot in place.
      *
-     * @param index Voice index [0, N).
+     * @param index Voice index.
      * @param slice StreamSlice to load.
      * @return Reference to the loaded StreamSlice for further configuration.
      */
@@ -125,7 +122,7 @@ public:
 
     /**
      * @brief Activate a voice, resetting its cursor to loop_start.
-     * @param index Voice index [0, N).
+     * @param index Voice index.
      */
     void play(size_t index = 0);
 
@@ -135,14 +132,14 @@ public:
      * Equivalent to load(index, slice) followed by play(index).
      * Requires build() to have been called first.
      *
-     * @param index Voice index [0, N).
+     * @param index Voice index.
      * @param slice StreamSlice to load and activate.
      */
     void play(size_t index, Kakshya::StreamSlice slice);
 
     /**
      * @brief Activate a voice with looping enabled.
-     * @param index Voice index [0, N).
+     * @param index Voice index.
      */
     void play_continuous(size_t index = 0);
 
@@ -153,14 +150,14 @@ public:
      * slice.looping = true, calling load(index, slice), then play_continuous(index).
      * Requires build() to have been called first.
      *
-     * @param index Voice index [0, N).
+     * @param index Voice index.
      * @param slice StreamSlice to load and activate with looping.
      */
     void play_continuous(size_t index, Kakshya::StreamSlice slice);
 
     /**
      * @brief Deactivate a voice.
-     * @param index Voice index [0, N).
+     * @param index Voice index.
      */
     void stop(size_t index = 0);
 
@@ -208,7 +205,7 @@ public:
      * sampler.play(0);
      * @endcode
      *
-     * @param index Voice index [0, N).
+     * @param index Voice index.
      */
     [[nodiscard]] Kakshya::StreamSlice& slice(size_t index);
 
@@ -236,7 +233,7 @@ public:
 private:
     std::shared_ptr<Kakshya::DynamicSoundStream> m_stream;
     std::shared_ptr<Buffers::AudioBuffer> m_buffer;
-    std::shared_ptr<Buffers::StreamSliceProcessor<N>> m_processor;
+    std::shared_ptr<Buffers::StreamSliceProcessor> m_processor;
     Buffers::BufferManager& m_mgr;
     Vruta::TaskScheduler& m_scheduler;
     uint32_t m_channel;

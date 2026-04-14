@@ -7,8 +7,7 @@
 
 namespace MayaFlux::Buffers {
 
-template <size_t N>
-void StreamSliceProcessor<N>::on_attach(const std::shared_ptr<Buffer>& buffer)
+void StreamSliceProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
 {
     auto audio = std::dynamic_pointer_cast<AudioBuffer>(buffer);
     if (!audio) {
@@ -19,21 +18,18 @@ void StreamSliceProcessor<N>::on_attach(const std::shared_ptr<Buffer>& buffer)
     m_frames_per_block = static_cast<uint32_t>(audio->get_num_samples());
 }
 
-template <size_t N>
-void StreamSliceProcessor<N>::on_detach(const std::shared_ptr<Buffer>&)
+void StreamSliceProcessor::on_detach(const std::shared_ptr<Buffer>&)
 {
-    for (size_t i = 0; i < N; ++i)
+    for (size_t i = 0; i < m_slots.size(); ++i)
         detach_slot(i);
 }
 
-template <size_t N>
-bool StreamSliceProcessor<N>::is_compatible_with(const std::shared_ptr<Buffer>& buffer) const
+bool StreamSliceProcessor::is_compatible_with(const std::shared_ptr<Buffer>& buffer) const
 {
     return std::dynamic_pointer_cast<AudioBuffer>(buffer) != nullptr;
 }
 
-template <size_t N>
-void StreamSliceProcessor<N>::detach_slot(size_t index)
+void StreamSliceProcessor::detach_slot(size_t index)
 {
     auto& slot = m_slots[index];
     if (slot.proc && slot.slice.stream)
@@ -41,8 +37,7 @@ void StreamSliceProcessor<N>::detach_slot(size_t index)
     slot = {};
 }
 
-template <size_t N>
-void StreamSliceProcessor<N>::load(size_t index, Kakshya::StreamSlice slice)
+void StreamSliceProcessor::load(size_t index, Kakshya::StreamSlice slice)
 {
     if (m_frames_per_block == 0) {
         MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
@@ -50,8 +45,17 @@ void StreamSliceProcessor<N>::load(size_t index, Kakshya::StreamSlice slice)
         return;
     }
 
-    if (index >= N || !slice.stream)
+    if (!slice.stream)
         return;
+
+    if (index > m_slots.size()) {
+        MF_WARN(Journal::Component::Buffers, Journal::Context::Configuration,
+            "StreamSliceProcessor::load index {} exceeds slot count {}; use {} for next available",
+            index, m_slots.size(), m_slots.size());
+    }
+
+    if (index >= m_slots.size())
+        m_slots.resize(index + 1);
 
     detach_slot(index);
 
@@ -77,26 +81,31 @@ void StreamSliceProcessor<N>::load(size_t index, Kakshya::StreamSlice slice)
     m_slots[index].proc = std::move(proc);
 }
 
-template <size_t N>
-void StreamSliceProcessor<N>::bind(size_t index)
+void StreamSliceProcessor::bind(size_t index)
 {
-    if (index >= N || !m_slots[index].proc)
+    if (index >= m_slots.size() || !m_slots[index].proc)
         return;
+
     m_slots[index].proc->reset();
     m_slots[index].slice.active = true;
 }
 
-template <size_t N>
-void StreamSliceProcessor<N>::unbind(size_t index)
+void StreamSliceProcessor::unbind(size_t index)
 {
-    if (index >= N || !m_slots[index].proc)
+    if (index >= m_slots.size() || !m_slots[index].proc)
         return;
     m_slots[index].proc->stop();
     m_slots[index].slice.active = false;
 }
 
-template <size_t N>
-void StreamSliceProcessor<N>::processing_function(const std::shared_ptr<Buffer>& buffer)
+bool StreamSliceProcessor::any_active() const
+{
+    return std::ranges::any_of(m_slots, [](const auto& slot) {
+        return slot.slice.active;
+    });
+}
+
+void StreamSliceProcessor::processing_function(const std::shared_ptr<Buffer>& buffer)
 {
     auto audio = std::dynamic_pointer_cast<AudioBuffer>(buffer);
     if (!audio)
@@ -106,8 +115,7 @@ void StreamSliceProcessor<N>::processing_function(const std::shared_ptr<Buffer>&
     auto& dst = audio->get_data();
     std::ranges::fill(dst, 0.0);
 
-    for (size_t i = 0; i < N; ++i) {
-        auto& slot = m_slots[i];
+    for (auto& slot : m_slots) {
         if (!slot.slice.active || !slot.slice.stream || !slot.proc)
             continue;
 
@@ -125,9 +133,5 @@ void StreamSliceProcessor<N>::processing_function(const std::shared_ptr<Buffer>&
             dst[s] += tmp[s];
     }
 }
-
-template class StreamSliceProcessor<2>;
-template class StreamSliceProcessor<4>;
-template class StreamSliceProcessor<8>;
 
 } // namespace MayaFlux::Buffers
