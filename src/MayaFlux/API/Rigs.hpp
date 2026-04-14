@@ -20,6 +20,10 @@ namespace Kriya {
     class SamplingPipeline;
 }
 
+namespace Kakshya {
+    class DynamicSoundStream;
+}
+
 /**
  * @brief Construct a built SamplingPipeline from an audio file.
  *
@@ -49,6 +53,29 @@ namespace Kriya {
  */
 MAYAFLUX_API std::shared_ptr<Kriya::SamplingPipeline> create_sampler(
     const std::string& filepath, uint32_t num_samples = 48000 * 5, bool truncate = true,
+    uint32_t channel = 0, uint64_t max_dur_ms = 0);
+
+/**
+ * @brief Construct a built SamplingPipeline from an existing DynamicSoundStream.
+ *
+ * Allows multiple SamplingPipeline instances to share a single loaded stream,
+ * one per output channel, without re-reading the file. The stream is typically
+ * obtained from a previously created sampler via get_stream(), or loaded
+ * directly via get_io_manager()->load_audio_bounded().
+ *
+ * @code
+ * auto ch0 = MayaFlux::create_sampler("res/audio.wav", 48000 * 5);
+ * auto ch1 = MayaFlux::create_sampler_from_stream(ch0->get_stream(), 1);
+ * auto ch2 = MayaFlux::create_sampler_from_stream(ch0->get_stream(), 2);
+ * @endcode
+ *
+ * @param stream     Loaded DynamicSoundStream to share.
+ * @param channel    Output channel index (default: 0).
+ * @param max_dur_ms Optional maximum duration in milliseconds. 0 for infinite.
+ * @return Built SamplingPipeline, or nullptr if stream is null.
+ */
+MAYAFLUX_API std::shared_ptr<Kriya::SamplingPipeline> create_sampler_from_stream(
+    std::shared_ptr<Kakshya::DynamicSoundStream> stream,
     uint32_t channel = 0, uint64_t max_dur_ms = 0);
 
 } // namespace MayaFlux

@@ -40,4 +40,27 @@ std::shared_ptr<Kriya::SamplingPipeline> create_sampler(
     return sampler;
 }
 
+std::shared_ptr<Kriya::SamplingPipeline> create_sampler_from_stream(
+    std::shared_ptr<Kakshya::DynamicSoundStream> stream,
+    uint32_t channel, uint64_t max_dur_ms)
+{
+    if (!stream)
+        return nullptr;
+
+    auto& mgr = *get_buffer_manager();
+    auto& sched = *get_scheduler();
+    const uint32_t buf_size = Config::get_buffer_size();
+
+    auto sampler = std::make_shared<Kriya::SamplingPipeline>(
+        std::move(stream), mgr, sched, channel, buf_size);
+
+    if (max_dur_ms > 0) {
+        sampler->build_for(max_dur_ms);
+    } else {
+        sampler->build();
+    }
+
+    return sampler;
+}
+
 } // namespace MayaFlux
