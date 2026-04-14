@@ -14,7 +14,7 @@ namespace MayaFlux {
 
 std::shared_ptr<Kriya::SamplingPipeline> create_sampler(
     const std::string& filepath, uint32_t num_samples, bool truncate,
-    uint32_t channel)
+    uint32_t channel, uint64_t max_dur_ms)
 {
     auto stream = get_io_manager()->load_audio_bounded(filepath, num_samples, truncate);
 
@@ -31,7 +31,12 @@ std::shared_ptr<Kriya::SamplingPipeline> create_sampler(
     auto sampler = std::make_shared<Kriya::SamplingPipeline>(
         std::move(stream), mgr, sched, channel, buf_size);
 
-    sampler->build();
+    if (max_dur_ms > 0) {
+        sampler->build_for(max_dur_ms);
+    } else {
+        sampler->build();
+    }
+
     return sampler;
 }
 

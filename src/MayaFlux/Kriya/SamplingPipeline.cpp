@@ -4,6 +4,7 @@
 #include "MayaFlux/Buffers/BufferManager.hpp"
 
 #include "MayaFlux/Kakshya/Source/DynamicSoundStream.hpp"
+#include "MayaFlux/Vruta/ChronUtils.hpp"
 
 namespace MayaFlux::Kriya {
 
@@ -67,6 +68,49 @@ void SamplingPipeline::build()
     m_pipeline->execute_buffer_rate(0);
 
     m_built = true;
+}
+
+void SamplingPipeline::build_for(uint64_t milliseconds)
+{
+    if (m_built)
+        return;
+
+    m_mgr.supply_buffer_to(m_buffer,
+        Buffers::ProcessingToken::AUDIO_BACKEND, m_channel, 1.0, true);
+
+    m_pipeline >> static_cast<BufferOperation>(m_capture);
+
+    const double seconds = static_cast<double>(milliseconds) / 1000.0;
+    const uint64_t cycles = Vruta::seconds_to_blocks(
+        seconds, m_mgr.get_sample_rate(), m_mgr.get_buffer_size(Buffers::ProcessingToken::AUDIO_BACKEND));
+
+    m_pipeline->on_complete([this] {
+        std::ranges::fill(m_buffer->get_data(), 0.0);
+    });
+
+    m_pipeline->execute_buffer_rate(cycles);
+
+    m_built = true;
+}
+
+void SamplingPipeline::rebuild_for(uint64_t milliseconds)
+{
+    if (!m_built) {
+        MF_WARN(Journal::Component::Kriya, Journal::Context::Configuration,
+            "SamplingPipeline::rebuild_for called before build. Use build_for instead to avoid redundant setup.");
+        return;
+    }
+    m_pipeline->stop_continuous();
+
+    const double seconds = static_cast<double>(milliseconds) / 1000.0;
+    const uint64_t cycles = Vruta::seconds_to_blocks(
+        seconds, m_mgr.get_sample_rate(), m_mgr.get_buffer_size(Buffers::ProcessingToken::AUDIO_BACKEND));
+
+    m_pipeline->on_complete([this] {
+        std::ranges::fill(m_buffer->get_data(), 0.0);
+    });
+
+    m_pipeline->execute_buffer_rate(cycles);
 }
 
 void SamplingPipeline::play(size_t index)

@@ -34,6 +34,8 @@ namespace Kriya {
  * @param num_samples Number of samples to load from the file (default: 48000 * 5).
  * @param truncate    Truncate stream to num_samples if true (default: true).
  * @param channel     Output channel index (default: 0).
+ * @param max_dur_ms  Optional maximum duration to build the pipeline for (in milliseconds).
+                      Defaults to 0 which is infinite (the pipeline will run until the sampler is destroyed).
  * @return Built SamplingPipeline, or nullptr if the file could not be loaded.
  *
  * @code
@@ -47,6 +49,6 @@ namespace Kriya {
  */
 MAYAFLUX_API std::shared_ptr<Kriya::SamplingPipeline> create_sampler(
     const std::string& filepath, uint32_t num_samples = 48000 * 5, bool truncate = true,
-    uint32_t channel = 0);
+    uint32_t channel = 0, uint64_t max_dur_ms = 0);
 
 } // namespace MayaFlux

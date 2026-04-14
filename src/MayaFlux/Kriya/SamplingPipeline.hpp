@@ -121,6 +121,31 @@ public:
     void build();
 
     /**
+     * @brief Finalize configuration and start processing for a bounded duration.
+     *
+     * Converts milliseconds to pipeline cycles via sample rate and buffer size,
+     * then starts execution for exactly that many cycles. When the cycle count
+     * exhausts, the pipeline stops unconditionally regardless of voice state.
+     * Any active voice is cut immediately with no fade or drain.
+     *
+     * Must not be called if build() has already been called.
+     *
+     * @param milliseconds Duration in milliseconds.
+     */
+    void build_for(uint64_t milliseconds);
+
+    /**
+     * @brief Stop and restart pipeline execution for a bounded duration.
+     *
+     * Stops any running pipeline execution, resets the cycle counter, and
+     * restarts for the given duration. Hard-cuts all active voices at the
+     * point of restart. Document as a destructive operation.
+     *
+     * @param milliseconds Duration in milliseconds.
+     */
+    void rebuild_for(uint64_t milliseconds);
+
+    /**
      * @brief Activate a voice, resetting its cursor to loop_start.
      * @param index Voice index.
      */
