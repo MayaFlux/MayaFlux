@@ -3,6 +3,8 @@
 #include "Domain.hpp"
 #include "Registry.hpp"
 
+#include "MayaFlux/Journal/Archivist.hpp"
+
 namespace MayaFlux {
 
 namespace Core {
@@ -28,6 +30,11 @@ struct CreationContext {
         , channel(ch)
     {
     }
+    CreationContext(Domain d, std::vector<uint32_t> ch)
+        : domain(d)
+        , channels(std::move(ch))
+    {
+    }
     CreationContext(uint32_t ch)
         : channel(ch)
     {
@@ -47,143 +54,77 @@ MAYAFLUX_API void register_network(const std::shared_ptr<Nodes::Network::NodeNet
 MAYAFLUX_API void register_buffer(const std::shared_ptr<Buffers::Buffer>& buffer, const CreationContext& ctx);
 MAYAFLUX_API void register_container(const std::shared_ptr<Kakshya::SoundFileContainer>& container, const Domain& domain);
 
+/**
+ * @brief Thin domain wrapper that adds subscript channel-binding syntax.
+ *
+ * Audio[0] and Audio[{0,1}] produce a CreationContext consumed immediately
+ * by operator|. Implicit conversion to Domain keeps all existing call sites
+ * that accept a plain Domain parameter working without change.
+ */
+struct DomainSpec {
+    Domain value;
+
+    /** @brief Bind a single channel to this domain. */
+    [[nodiscard]] CreationContext operator[](uint32_t ch) const
+    {
+        return { value, ch };
+    }
+
+    /** @brief Bind multiple channels to this domain. */
+    [[nodiscard]] CreationContext operator[](std::initializer_list<uint32_t> chs) const
+    {
+        return { value, std::vector<uint32_t>(chs) };
+    }
+
+    /** @brief Implicit decay to Domain for call sites that accept Domain directly. */
+    operator Domain() const { return value; }
+
+    /** @brief Implicit decay to CreationContext for bare ptr | Audio usage. */
+    operator CreationContext() const { return { value }; }
+};
+
+/**
+ * @brief Intermediate produced by CreationProxy::operator[].
+ *
+ * Carries the object and channel index until operator| supplies the domain.
+ * Removed next release along with CreationProxy.
+ */
 template <typename T>
-class CreationHandle : public std::shared_ptr<T> {
-public:
+struct PendingChannel {
+    std::shared_ptr<T> obj;
+    std::vector<uint32_t> channels;
+};
+
+/**
+ * @brief Deprecated wrapper returned by Creator methods in 0.3.
+ *
+ * Exists solely to keep object[ch] | Domain compiling with a loud warning.
+ * Removed in 0.4. Use the pipe syntax directly: object | Audio[ch].
+ */
+template <typename T>
+struct CreationProxy : std::shared_ptr<T> {
     using std::shared_ptr<T>::shared_ptr;
 
-    CreationHandle(const std::shared_ptr<T>& ptr)
-        : std::shared_ptr<T>(ptr)
+    CreationProxy(std::shared_ptr<T> p)
+        : std::shared_ptr<T>(std::move(p))
     {
     }
 
-    CreationHandle(std::shared_ptr<T>&& ptr)
-        : std::shared_ptr<T>(std::move(ptr))
+    /** @deprecated Use | Audio[ch] instead of object[ch] | Domain. Removed in 0.4. */
+    PendingChannel<T> operator[](uint32_t ch) const
     {
+        MF_WARN(Journal::Component::API, Journal::Context::Init,
+            "object[ch] | Domain is deprecated and removed in 0.4 -- use object | Audio[ch] instead");
+        return { *this, { ch } };
     }
 
-    CreationHandle& domain(Domain d)
+    /** @deprecated Use | Audio[{ch0,ch1,...}] instead of object[{...}] | Domain. Removed in 0.4. */
+    PendingChannel<T> operator[](std::initializer_list<uint32_t> chs) const
     {
-        m_ctx.domain = d;
-        apply_if_ready();
-        return *this;
+        MF_WARN(Journal::Component::API, Journal::Context::Init,
+            "object[{...}] | Domain is deprecated and removed in 0.4 -- use object | Audio[{ch0,ch1,...}] instead");
+        return { *this, std::vector<uint32_t>(chs) };
     }
-
-    CreationHandle& channel(uint32_t ch)
-    {
-        m_ctx.channel = ch;
-        m_ctx.channels.reset();
-        apply_if_ready();
-        return *this;
-    }
-
-    CreationHandle& channels(std::vector<uint32_t> ch)
-    {
-        m_ctx.channels = std::move(ch);
-        m_ctx.channel.reset();
-        apply_if_ready();
-        return *this;
-    }
-
-    template <typename... Args>
-    CreationHandle& channels(Args... args)
-    {
-        static_assert(sizeof...(args) > 0, "channels() requires at least one argument");
-        static_assert((std::is_convertible_v<Args, uint32_t> && ...),
-            "All arguments must be convertible to uint32_t");
-
-        m_ctx.channels = std::vector<uint32_t> { static_cast<uint32_t>(args)... };
-        m_ctx.channel.reset();
-        apply_if_ready();
-        return *this;
-    }
-
-    CreationHandle& operator|(Domain d) { return domain(d); }
-    CreationHandle& operator[](uint32_t ch) { return channel(ch); }
-    CreationHandle& operator[](std::initializer_list<uint32_t> ch_list)
-    {
-        m_ctx.channels = std::vector<uint32_t>(ch_list);
-        m_ctx.channel.reset();
-        apply_if_ready();
-        return *this;
-    }
-
-private:
-    void apply_if_ready()
-    {
-        if constexpr (std::is_base_of_v<Kakshya::SignalSourceContainer, T>) {
-            if (m_ctx.domain) {
-                apply_container_context();
-                m_ctx = CreationContext {};
-            }
-        } else if (m_ctx.domain && (m_ctx.channel || m_ctx.channels)) {
-            if constexpr (std::is_base_of_v<Nodes::Node, T>) {
-                if (m_ctx.domain) {
-                    apply_node_context();
-                }
-            } else if constexpr (std::is_base_of_v<Buffers::Buffer, T>) {
-                if (m_ctx.domain) {
-                    apply_buffer_context();
-                }
-            } else if constexpr (std::is_base_of_v<Nodes::Network::NodeNetwork, T>) {
-                if (m_ctx.domain) {
-                    apply_network_context();
-                }
-            }
-            m_ctx = CreationContext {};
-        } else if (m_ctx.domain) {
-            if constexpr (std::is_base_of_v<Buffers::VKBuffer, T>) {
-                apply_buffer_context();
-            }
-            if (m_ctx.domain == Domain::GRAPHICS) {
-                if constexpr (std::is_base_of_v<Nodes::Node, T>) {
-                    apply_node_context();
-                }
-                if constexpr (std::is_base_of_v<Nodes::Network::NodeNetwork, T>) {
-                    apply_network_context();
-                }
-            }
-            m_ctx = CreationContext {};
-        }
-    }
-
-    void apply_node_context()
-    {
-        if (!*this)
-            return;
-
-        std::shared_ptr<Nodes::Node> node = std::static_pointer_cast<Nodes::Node>(*this);
-        register_node(node, m_ctx);
-    }
-
-    void apply_network_context()
-    {
-        if (!*this)
-            return;
-
-        std::shared_ptr<Nodes::Network::NodeNetwork> network = std::static_pointer_cast<Nodes::Network::NodeNetwork>(*this);
-        register_network(network, m_ctx);
-    }
-
-    void apply_buffer_context()
-    {
-        if (!*this)
-            return;
-
-        std::shared_ptr<Buffers::Buffer> buffer = std::static_pointer_cast<Buffers::Buffer>(*this);
-        register_buffer(buffer, m_ctx);
-    }
-
-    void apply_container_context()
-    {
-        if (!*this)
-            return;
-
-        std::shared_ptr<Kakshya::SoundFileContainer> container = std::static_pointer_cast<Kakshya::SoundFileContainer>(*this);
-        register_container(container, m_ctx.domain.value());
-    }
-
-    mutable CreationContext m_ctx;
 };
 
 class MAYAFLUX_API MeshGroupHandle {
@@ -195,8 +136,8 @@ public:
 
     auto begin() { return m_buffers.begin(); }
     auto end() { return m_buffers.end(); }
-    auto begin() const { return m_buffers.begin(); }
-    auto end() const { return m_buffers.end(); }
+    [[nodiscard]] auto begin() const { return m_buffers.begin(); }
+    [[nodiscard]] auto end() const { return m_buffers.end(); }
 
     [[nodiscard]] bool empty() const { return m_buffers.empty(); }
     [[nodiscard]] size_t size() const { return m_buffers.size(); }
@@ -209,46 +150,44 @@ private:
 
 class MAYAFLUX_API Creator {
 public:
-#define N(method_name, full_type_name)                                            \
-    template <typename... Args>                                                   \
-    auto method_name(Args&&... args) -> CreationHandle<full_type_name>            \
-    {                                                                             \
-        auto obj = std::make_shared<full_type_name>(std::forward<Args>(args)...); \
-        return CreationHandle<full_type_name>(obj);                               \
+#define N(method_name, full_type_name)                                        \
+    template <typename... Args>                                               \
+        requires std::constructible_from<full_type_name, Args...>             \
+    auto method_name(Args&&... args) -> CreationProxy<full_type_name>         \
+    {                                                                         \
+        return std::make_shared<full_type_name>(std::forward<Args>(args)...); \
     }
     ALL_NODE_REGISTRATIONS
 #undef N
 
-#define W(method_name, full_type_name)                                            \
-    template <typename... Args>                                                   \
-    auto method_name(Args&&... args) -> CreationHandle<full_type_name>            \
-    {                                                                             \
-        auto obj = std::make_shared<full_type_name>(std::forward<Args>(args)...); \
-        return CreationHandle<full_type_name>(obj);                               \
+#define W(method_name, full_type_name)                                        \
+    template <typename... Args>                                               \
+        requires std::constructible_from<full_type_name, Args...>             \
+    auto method_name(Args&&... args) -> CreationProxy<full_type_name>         \
+    {                                                                         \
+        return std::make_shared<full_type_name>(std::forward<Args>(args)...); \
     }
     ALL_NODE_NETWORK_REGISTRATIONS
 #undef W
 
-#define B(method_name, full_type_name)                                            \
-    template <typename... Args>                                                   \
-    auto method_name(Args&&... args) -> CreationHandle<full_type_name>            \
-    {                                                                             \
-        auto obj = std::make_shared<full_type_name>(std::forward<Args>(args)...); \
-        return CreationHandle<full_type_name>(obj);                               \
+#define B(method_name, full_type_name)                                        \
+    template <typename... Args>                                               \
+        requires std::constructible_from<full_type_name, Args...>             \
+    auto method_name(Args&&... args) -> CreationProxy<full_type_name>         \
+    {                                                                         \
+        return std::make_shared<full_type_name>(std::forward<Args>(args)...); \
     }
     ALL_BUFFER_REGISTRATION
 #undef B
 
-    auto read_audio(const std::string& filepath) -> CreationHandle<Kakshya::SoundFileContainer>
+    auto read_audio(const std::string& filepath) -> std::shared_ptr<Kakshya::SoundFileContainer>
     {
-        auto container = load_sound_container(filepath);
-        return CreationHandle<Kakshya::SoundFileContainer>(container);
+        return load_sound_container(filepath);
     }
 
-    auto read_image(const std::string& filepath) -> CreationHandle<Buffers::TextureBuffer>
+    auto read_image(const std::string& filepath) -> std::shared_ptr<Buffers::TextureBuffer>
     {
-        auto buffer = load_image_buffer(filepath);
-        return CreationHandle<Buffers::TextureBuffer>(buffer);
+        return load_image_buffer(filepath);
     }
 
     auto read_mesh(const std::string& filepath) -> MeshGroupHandle
@@ -259,10 +198,9 @@ public:
     auto read_mesh_network(
         const std::string& filepath,
         IO::TextureResolver resolver = nullptr)
-        -> CreationHandle<Nodes::Network::MeshNetwork>
+        -> std::shared_ptr<Nodes::Network::MeshNetwork>
     {
-        auto net = load_mesh_network(filepath, std::move(resolver));
-        return CreationHandle<Nodes::Network::MeshNetwork>(net);
+        return load_mesh_network(filepath, std::move(resolver));
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -270,40 +208,40 @@ public:
     // ═══════════════════════════════════════════════════════════════
 
     /**
-     * @brief Create and register HID input node
-     * @param config HID input configuration
-     * @param binding HID input binding
-     * @return Shared pointer to HIDNode (already registered)
+     * @brief Create and register HID input node.
+     * @param config HID input configuration.
+     * @param binding HID input binding.
+     * @return Shared pointer to HIDNode (already registered).
      */
     std::shared_ptr<Nodes::Input::HIDNode> read_hid(
         const Nodes::Input::HIDConfig& config,
         const Core::InputBinding& binding);
 
     /**
-     * @brief Create and register MIDI input node
-     * @param config MIDI input configuration
-     * @param binding MIDI input binding
-     * @return Shared pointer to MIDINode (already registered)
+     * @brief Create and register MIDI input node.
+     * @param config MIDI input configuration.
+     * @param binding MIDI input binding.
+     * @return Shared pointer to MIDINode (already registered).
      */
     std::shared_ptr<Nodes::Input::MIDINode> read_midi(
         const Nodes::Input::MIDIConfig& config,
         const Core::InputBinding& binding);
 
     /**
-     * @brief Create and register OSC input node
-     * @param config OSC input configuration
-     * @param binding OSC input binding (use InputBinding::osc("/address"))
-     * @return Shared pointer to OSCNode (already registered)
+     * @brief Create and register OSC input node.
+     * @param config OSC input configuration.
+     * @param binding OSC input binding (use InputBinding::osc("/address")).
+     * @return Shared pointer to OSCNode (already registered).
      */
     std::shared_ptr<Nodes::Input::OSCNode> read_osc(
         const Nodes::Input::OSCConfig& config,
         const Core::InputBinding& binding);
 
     /**
-     * @brief Create and register generic input node
-     * @param config Generic input configuration
-     * @param binding Generic input binding
-     * @return Shared pointer to InputNode (already registered)
+     * @brief Create and register generic input node.
+     * @param config Generic input configuration.
+     * @param binding Generic input binding.
+     * @return Shared pointer to InputNode (already registered).
      */
     std::shared_ptr<Nodes::Input::InputNode> read_input(
         const Nodes::Input::InputConfig& config,
@@ -316,41 +254,92 @@ private:
     std::shared_ptr<Nodes::Network::MeshNetwork> load_mesh_network(const std::string& filepath, IO::TextureResolver resolver);
 };
 
+// ═══════════════════════════════════════════════════════════════
+// New pipe operators -- shared_ptr<T> | CreationContext
+// DomainSpec converts implicitly to CreationContext so
+// | Audio, | Audio[0], | Audio[{0,1}], | Graphics all route here.
+// ═══════════════════════════════════════════════════════════════
+
 template <typename T>
-auto operator|(std::shared_ptr<T> obj, Domain d) -> CreationHandle<T>
+    requires std::is_base_of_v<Nodes::Node, T>
+std::shared_ptr<T> operator|(std::shared_ptr<T> obj, const CreationContext& ctx)
 {
-    CreationHandle<T> handle(obj);
-    return handle.domain(d);
+    register_node(std::static_pointer_cast<Nodes::Node>(obj), ctx);
+    return obj;
+}
+
+template <typename T>
+    requires std::is_base_of_v<Nodes::Network::NodeNetwork, T>
+std::shared_ptr<T> operator|(std::shared_ptr<T> obj, const CreationContext& ctx)
+{
+    register_network(std::static_pointer_cast<Nodes::Network::NodeNetwork>(obj), ctx);
+    return obj;
+}
+
+template <typename T>
+    requires std::is_base_of_v<Buffers::Buffer, T>
+std::shared_ptr<T> operator|(std::shared_ptr<T> obj, const CreationContext& ctx)
+{
+    register_buffer(std::static_pointer_cast<Buffers::Buffer>(obj), ctx);
+    return obj;
+}
+
+inline std::shared_ptr<Kakshya::SoundFileContainer> operator|(
+    std::shared_ptr<Kakshya::SoundFileContainer> obj,
+    const CreationContext& ctx)
+{
+    if (ctx.domain)
+        register_container(obj, ctx.domain.value());
+    return obj;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Deprecated bridge: PendingChannel | DomainSpec/CreationContext
+// Produced by CreationProxy::operator[]. Removed in 0.4.
+// ═══════════════════════════════════════════════════════════════
+
+template <typename T>
+std::shared_ptr<T> operator|(PendingChannel<T> p, const CreationContext& ctx)
+{
+    if (!ctx.domain.has_value())
+        return p.obj;
+    // CreationContext merged { ctx.domain.value(), std::move(p.channels) };
+    CreationContext merged = (p.channels.size() == 1)
+        ? CreationContext { ctx.domain.value(), p.channels[0] }
+        : CreationContext { ctx.domain.value(), std::move(p.channels) };
+    return p.obj | merged;
 }
 
 /**
  * @brief Domain constant for Audio domain.
  *
- * This domain unwraps to Nodes::ProccingToken::AUDIO_RATE | Buffers::ProcessingToken::AUDIO_BACKEND | Vruta::ProcessingToken::SAMPLE_ACCURATE;
+ * Supports subscript syntax for channel binding:
+ * @code
+ * auto wave = vega.Sine(440.f) | Audio[0];
+ * auto net  = vega.ModalNetwork(16, 220.0) | Audio[{0, 1}];
+ * @endcode
  */
-static constexpr auto Audio = Domain::AUDIO;
+static constexpr DomainSpec Audio { .value = Domain::AUDIO };
 
 /**
  * @brief Domain constant for Graphics domain.
  *
- * This domain unwraps to Nodes::ProccingToken::FRAME_RATE | Buffers::ProcessingToken::GRAPHICS_BACKEND | Vruta::ProcessingToken::FRAME_ACCURATE;
+ * @code
+ * auto tex = vega.TextureBuffer(...) | Graphics;
+ * @endcode
  */
-static constexpr auto Graphics = Domain::GRAPHICS;
+static constexpr DomainSpec Graphics { .value = Domain::GRAPHICS };
 
 /**
- * @brief Global Creator instance for creating nodes, buffers, and containers.
+ * @brief Global Creator instance.
  *
- * This instance provides a convenient interface to create various MayaFlux components
- * such as nodes, buffers, and signal source containers. It supports method chaining
- * for setting creation context like domain and channels.
- * Each object can be registered automatically based on the provided context.
- * The contexts include domain, channel, and metadata.
- * Domains supported are AUDIO and GRAPHICS.
- * For example:
- * ```
- * auto myNode = ::vega.Sine(440.0f).domain(Audio).channel(0);
- * auto node_buffer = vega.NodeBuffer(0, 512, myNode)[{0, 1, 2}] | Graphics;
- * ```
+ * @code
+ * auto wave = vega.Sine(440.f) | Audio[0];
+ * auto buf  = vega.AudioBuffer(0, 512) | Audio[0];
+ * auto net  = vega.ModalNetwork(16, 220.0) | Audio[{0, 1}];
+ * auto tex  = vega.TextureBuffer(...) | Graphics;
+ * auto sfx  = vega.read_audio("x.wav") | Audio;
+ * @endcode
  */
 extern MAYAFLUX_API Creator vega;
 

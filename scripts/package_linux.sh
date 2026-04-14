@@ -50,14 +50,14 @@ mkdir -p "$BUILD_DIR" "$INSTALL_DIR"
 # ---------------------------------------------
 cmake -G Ninja -S . -B "$BUILD_DIR" \
     -DMAYAFLUX_SHIP_DEV=ON \
-    -DCMAKE_INSTALL_PREFIX="$INSTALL_DIR"
+    -DCMAKE_INSTALL_PREFIX="/usr"
 
 cmake --build "$BUILD_DIR" --parallel
 
 # ---------------------------------------------
 # Install to install_root
 # ---------------------------------------------
-cmake --install "$BUILD_DIR"
+cmake --install "$BUILD_DIR" --prefix "$INSTALL_DIR"
 
 # Sanity check
 if [[ ! -d "$INSTALL_DIR/bin" ]]; then

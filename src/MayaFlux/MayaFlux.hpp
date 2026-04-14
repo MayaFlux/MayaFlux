@@ -32,6 +32,8 @@
 
 #include "MayaFlux/API/Rigs.hpp"
 
+#include "MayaFlux/Transitive/Memory/Persist.hpp"
+
 #ifdef MAYASIMPLE
 #include "Nodes/Conduit/Constant.hpp"
 #include "Nodes/Conduit/NodeChain.hpp"
