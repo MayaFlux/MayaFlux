@@ -329,6 +329,39 @@ void DynamicSoundStream::enable_circular_buffer(uint64_t capacity)
     m_is_circular = true;
 }
 
+uint32_t DynamicSoundStream::allocate_dynamic_slot()
+{
+    for (uint32_t i = 0; i < m_dynamic_slots.size(); ++i) {
+        if (!m_dynamic_slots[i]) {
+            m_dynamic_slots[i] = true;
+            m_dynamic_data[i].clear();
+            return i;
+        }
+    }
+
+    m_dynamic_data.emplace_back();
+    m_dynamic_slots.push_back(true);
+    return static_cast<uint32_t>(m_dynamic_slots.size() - 1);
+}
+
+void DynamicSoundStream::release_dynamic_slot(uint32_t index)
+{
+    if (index < m_dynamic_slots.size()) {
+        m_dynamic_slots[index] = false;
+        m_dynamic_data[index].clear();
+    }
+}
+
+std::vector<DataVariant>& DynamicSoundStream::get_dynamic_data(uint32_t index)
+{
+    return m_dynamic_data.at(index);
+}
+
+const std::vector<DataVariant>& DynamicSoundStream::get_dynamic_data(uint32_t index) const
+{
+    return m_dynamic_data.at(index);
+}
+
 void DynamicSoundStream::disable_circular_buffer()
 {
     set_looping(false);
@@ -362,7 +395,7 @@ void DynamicSoundStream::set_all_data(const std::vector<DataVariant>& data)
 
 void DynamicSoundStream::set_all_data(const DataVariant& data)
 {
-    set_all_data(std::vector<DataVariant> {data});
+    set_all_data(std::vector<DataVariant> { data });
 }
 
 void DynamicSoundStream::expand_to(uint64_t target_frames)

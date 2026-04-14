@@ -47,6 +47,9 @@ public:
      * @param token Processing domain
      * @param channel Channel index
      * @param mix Mix level (default: 1.0)
+     * @param force If true, forces supply even if buffer is already registered (default: false)
+                    The guard exists to prevent accidental multiple registrations of the same buffer to the same channel,
+                    which can cause unintended mixing behavior. Setting force to true allows bypassing this guard when intentional.
      * @return True if the buffer was successfully supplied, false otherwise
      *
      * The buffer data is added, mixed, and normalized at the end of the processing
@@ -57,7 +60,7 @@ public:
         const std::shared_ptr<AudioBuffer>& buffer,
         ProcessingToken token,
         uint32_t channel,
-        double mix = 1.0);
+        double mix = 1.0, bool force = false);
 
     /**
      * @brief Removes a previously supplied buffer from a token and channel

@@ -400,6 +400,17 @@ public:
      */
     uint32_t get_current_cycle() const { return m_current_cycle; }
 
+    /**
+     * @brief Register a callback fired once when pipeline execution ends.
+     *
+     * Fires when the cycle limit exhausts or stop_continuous() terminates the loop.
+     * Not fired if the pipeline is destroyed mid-execution.
+     *
+     * @param cb Callback with no arguments.
+     * @return Reference to this pipeline for chaining.
+     */
+    BufferPipeline& on_complete(std::function<void()> cb);
+
 private:
     enum class DataState : uint8_t {
         EMPTY, ///< No data available
@@ -427,6 +438,7 @@ private:
     std::vector<std::shared_ptr<Vruta::SoundRoutine>> m_branch_tasks;
     std::function<void(uint32_t)> m_cycle_start_callback;
     std::function<void(uint32_t)> m_cycle_end_callback;
+    std::function<void()> m_on_complete;
 
     uint64_t m_current_cycle { 0 };
     uint64_t m_max_cycles { 0 };

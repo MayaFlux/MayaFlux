@@ -88,58 +88,18 @@ void SoundStreamReader::processing_function(const std::shared_ptr<Buffer>& buffe
 
 void SoundStreamReader::extract_channel_data(std::span<double> output)
 {
-    if (!m_container) {
+    auto sc = std::dynamic_pointer_cast<Kakshya::SoundStreamContainer>(m_container);
+    if (!sc) {
         std::ranges::fill(output, 0.0);
         return;
     }
 
-    auto sound_container = std::dynamic_pointer_cast<Kakshya::SoundStreamContainer>(m_container);
-    if (!sound_container) {
-        std::ranges::fill(output, 0.0);
-        return;
-    }
+    const auto& pd = sc->get_processed_data();
+    const auto structure = sc->get_structure();
 
-    auto& processed_data = sound_container->get_processed_data();
-    if (processed_data.empty()) {
-        std::ranges::fill(output, 0.0);
-        return;
-    }
-
-    auto structure = sound_container->get_structure();
-
-    if (structure.organization == Kakshya::OrganizationStrategy::INTERLEAVED) {
-        thread_local std::vector<double> temp_storage;
-        auto data_span = Kakshya::extract_from_variant<double>(processed_data[0], temp_storage);
-
-        auto num_channels = structure.get_channel_count();
-        auto samples_to_copy = std::min(static_cast<size_t>(output.size()),
-            static_cast<size_t>(data_span.size() / num_channels));
-
-        for (auto i : std::views::iota(0UZ, samples_to_copy)) {
-            auto interleaved_idx = i * num_channels + m_source_channel;
-            output[i] = (interleaved_idx < data_span.size()) ? data_span[interleaved_idx] : 0.0;
-        }
-
-        if (samples_to_copy < output.size()) {
-            std::ranges::fill(output | std::views::drop(samples_to_copy), 0.0);
-        }
-
-    } else {
-        if (m_source_channel >= processed_data.size()) {
-            std::ranges::fill(output, 0.0);
-            return;
-        }
-
-        thread_local std::vector<double> temp_storage;
-        auto channel_data_span = Kakshya::extract_from_variant<double>(processed_data[m_source_channel], temp_storage);
-
-        auto samples_to_copy = std::min(output.size(), channel_data_span.size());
-        std::ranges::copy_n(channel_data_span.begin(), samples_to_copy, output.begin());
-
-        if (samples_to_copy < output.size()) {
-            std::ranges::fill(output | std::views::drop(samples_to_copy), 0.0);
-        }
-    }
+    Kakshya::extract_processed_data(
+        pd, structure.organization, structure.get_channel_count(),
+        m_source_channel, output);
 }
 
 void SoundStreamReader::on_attach(const std::shared_ptr<Buffer>& buffer)

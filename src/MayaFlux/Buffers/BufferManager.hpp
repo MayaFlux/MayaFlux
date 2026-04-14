@@ -146,6 +146,13 @@ public:
     [[nodiscard]] uint32_t get_buffer_size(ProcessingToken token) const;
 
     /**
+     * @brief Gets the sample rate for a token (audio-specific)
+     * @param token Processing domain
+     * @return Sample rate in Hz
+     */
+    [[nodiscard]] uint64_t get_sample_rate() const { return s_registered_sample_rate; }
+
+    /**
      * @brief Resizes buffers for a token
      * @param token Processing domain
      * @param buffer_size New buffer size
@@ -434,7 +441,7 @@ public:
         const std::shared_ptr<AudioBuffer>& buffer,
         ProcessingToken token,
         uint32_t channel,
-        double mix = 1.0);
+        double mix = 1.0, bool force = false);
 
     bool remove_supplied_buffer(
         const std::shared_ptr<AudioBuffer>& buffer,

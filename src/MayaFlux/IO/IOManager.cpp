@@ -1,6 +1,7 @@
 #include "IOManager.hpp"
 
 #include "MayaFlux/Buffers/BufferManager.hpp"
+#include "MayaFlux/Kakshya/Source/DynamicSoundStream.hpp"
 #include "MayaFlux/Registry/BackendRegistry.hpp"
 #include "MayaFlux/Registry/Service/IOService.hpp"
 
@@ -265,6 +266,35 @@ std::shared_ptr<Kakshya::SoundFileContainer> IOManager::load_audio(const std::st
     m_audio_readers.push_back(std::move(reader));
 
     return sound_container;
+}
+
+std::shared_ptr<Kakshya::DynamicSoundStream> IOManager::load_audio_bounded(
+    const std::string& filepath,
+    uint64_t max_frames,
+    bool truncate)
+{
+    auto reader = std::make_shared<IO::SoundFileReader>();
+
+    if (!reader->can_read(filepath)) {
+        MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
+            "IOManager::load_bounded: unsupported format '{}'", filepath);
+        return nullptr;
+    }
+
+    reader->set_target_sample_rate(m_sample_rate);
+
+    auto stream = reader->load_bounded(filepath, max_frames, truncate);
+    if (!stream) {
+        MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
+            "IOManager::load_bounded: failed for '{}'", filepath);
+        return nullptr;
+    }
+
+    stream->set_memory_layout(Kakshya::MemoryLayout::ROW_MAJOR);
+
+    m_audio_readers.push_back(std::move(reader));
+
+    return stream;
 }
 
 std::shared_ptr<Kakshya::CameraContainer>

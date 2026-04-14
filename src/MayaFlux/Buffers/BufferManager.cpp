@@ -427,9 +427,9 @@ bool BufferManager::supply_buffer_to(
     const std::shared_ptr<AudioBuffer>& buffer,
     ProcessingToken token,
     uint32_t channel,
-    double mix)
+    double mix, bool force)
 {
-    return m_supply_mixing->supply_audio_buffer_to(buffer, token, channel, mix);
+    return m_supply_mixing->supply_audio_buffer_to(buffer, token, channel, mix, force);
 }
 
 bool BufferManager::remove_supplied_buffer(

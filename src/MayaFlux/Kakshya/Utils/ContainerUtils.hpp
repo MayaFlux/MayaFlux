@@ -93,6 +93,29 @@ DataVariant extract_channel_data(const std::shared_ptr<SignalSourceContainer>& c
     uint32_t channel_index);
 
 /**
+ * @brief Extract one channel's samples from a processed dynamic data block.
+ *
+ * Handles both INTERLEAVED and PLANAR organization. For interleaved layout
+ * pd[0] holds all channels multiplexed; for planar layout pd[ch] holds the
+ * channel directly. In either case the result is written into @p output up
+ * to min(output.size(), available_samples) samples, with any remainder
+ * zero-filled.
+ *
+ * @param pd           Dynamic data block as returned by
+ *                     container::get_processed_data() or similar.
+ * @param organization Memory organization of the stream.
+ * @param num_channels Total channel count of the stream.
+ * @param ch           Zero-based channel index to extract.
+ * @param output       Destination buffer; size determines the copy limit.
+ */
+void extract_processed_data(
+    const std::vector<DataVariant>& pd,
+    OrganizationStrategy organization,
+    uint64_t num_channels,
+    uint32_t ch,
+    std::span<double> output);
+
+/**
  * @brief Extract samples for a single channel within a Region from a container.
  *
  * Slices the container's channel data by the sample range defined by

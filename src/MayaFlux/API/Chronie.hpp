@@ -348,6 +348,13 @@ MAYAFLUX_API uint64_t seconds_to_blocks(double seconds);
 MAYAFLUX_API uint64_t samples_to_blocks(uint64_t samples);
 
 /**
+ * @brief Converts a number of audio samples to the equivalent time duration in seconds
+ * @param samples Number of audio samples
+ * @return Time duration in seconds based on the current sample rate
+ */
+MAYAFLUX_API double samples_to_seconds(uint64_t samples);
+
+/**
  * @brief Schedule an on_message handler with an existing NetworkSource
  * @param source   Shared NetworkSource; coroutine frame takes co-ownership
  * @param callback Invoked with each received message

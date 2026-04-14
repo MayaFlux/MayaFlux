@@ -1,0 +1,91 @@
+#include "Rigs.hpp"
+
+#include "MayaFlux/API/Chronie.hpp"
+#include "MayaFlux/API/Config.hpp"
+#include "MayaFlux/API/Depot.hpp"
+#include "MayaFlux/API/Graph.hpp"
+
+#include "MayaFlux/IO/IOManager.hpp"
+#include "MayaFlux/Kriya/SamplingPipeline.hpp"
+
+#include "MayaFlux/Journal/Archivist.hpp"
+
+namespace MayaFlux {
+
+std::shared_ptr<Kriya::SamplingPipeline> create_sampler(
+    const std::string& filepath, uint32_t num_samples, bool truncate,
+    uint32_t channel, uint64_t max_dur_ms)
+{
+    auto stream = get_io_manager()->load_audio_bounded(filepath, num_samples, truncate);
+
+    if (!stream) {
+        MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
+            "create_sampler: failed to load '{}'", filepath);
+        return nullptr;
+    }
+
+    auto& mgr = *get_buffer_manager();
+    auto& sched = *get_scheduler();
+    const uint32_t buf_size = Config::get_buffer_size();
+
+    auto sampler = std::make_shared<Kriya::SamplingPipeline>(
+        std::move(stream), mgr, sched, channel, buf_size);
+
+    if (max_dur_ms > 0) {
+        sampler->build_for(max_dur_ms);
+    } else {
+        sampler->build();
+    }
+
+    return sampler;
+}
+
+std::shared_ptr<Kriya::SamplingPipeline> create_sampler_from_stream(
+    std::shared_ptr<Kakshya::DynamicSoundStream> stream,
+    uint32_t channel, uint64_t max_dur_ms)
+{
+    if (!stream)
+        return nullptr;
+
+    auto& mgr = *get_buffer_manager();
+    auto& sched = *get_scheduler();
+    const uint32_t buf_size = Config::get_buffer_size();
+
+    auto sampler = std::make_shared<Kriya::SamplingPipeline>(
+        std::move(stream), mgr, sched, channel, buf_size);
+
+    if (max_dur_ms > 0) {
+        sampler->build_for(max_dur_ms);
+    } else {
+        sampler->build();
+    }
+
+    return sampler;
+}
+
+std::vector<std::shared_ptr<Kriya::SamplingPipeline>> create_samplers(
+    const std::string& filepath, uint32_t num_samples, bool truncate,
+    uint64_t max_dur_ms, uint32_t max_channels)
+{
+    auto stream = get_io_manager()->load_audio_bounded(filepath, num_samples, truncate);
+
+    if (!stream) {
+        MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
+            "create_samplers: failed to load '{}'", filepath);
+        return {};
+    }
+
+    const uint32_t ch_count = (max_channels == 0)
+        ? stream->get_num_channels()
+        : std::min(max_channels, stream->get_num_channels());
+
+    std::vector<std::shared_ptr<Kriya::SamplingPipeline>> result;
+    result.reserve(ch_count);
+
+    for (uint32_t i = 0; i < ch_count; ++i)
+        result.push_back(create_sampler_from_stream(stream, i, max_dur_ms));
+
+    return result;
+}
+
+} // namespace MayaFlux

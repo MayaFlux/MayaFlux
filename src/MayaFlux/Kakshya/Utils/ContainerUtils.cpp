@@ -10,7 +10,7 @@ namespace MayaFlux::Kakshya {
 std::unordered_map<std::string, std::any> extract_processing_state_info(const std::shared_ptr<SignalSourceContainer>& container)
 {
     if (!container) {
-        throw std::invalid_argument("Container is null");
+        error<std::invalid_argument>(Journal::Component::Kakshya, Journal::Context::Runtime, std::source_location::current(), "Container is null");
     }
 
     std::unordered_map<std::string, std::any> state_info;
@@ -31,7 +31,7 @@ std::unordered_map<std::string, std::any> extract_processing_state_info(const st
 std::unordered_map<std::string, std::any> extract_processor_info(const std::shared_ptr<SignalSourceContainer>& container)
 {
     if (!container) {
-        throw std::invalid_argument("Container is null");
+        error<std::invalid_argument>(Journal::Component::Kakshya, Journal::Context::Runtime, std::source_location::current(), "Container is null");
     }
 
     std::unordered_map<std::string, std::any> processor_info;
@@ -79,7 +79,7 @@ std::unordered_map<std::string, std::any> analyze_access_pattern(const Region& r
     std::unordered_map<std::string, std::any> analysis;
 
     if (!container) {
-        throw std::invalid_argument("Container is null");
+        error<std::invalid_argument>(Journal::Component::Kakshya, Journal::Context::Runtime, std::source_location::current(), "Container is null");
     }
 
     const auto dimensions = container->get_dimensions();
@@ -106,21 +106,21 @@ DataVariant extract_channel_data(const std::shared_ptr<SignalSourceContainer>& c
     uint32_t channel_index)
 {
     if (!container) {
-        throw std::invalid_argument("Container is null");
+        error<std::invalid_argument>(Journal::Component::Kakshya, Journal::Context::Runtime, std::source_location::current(), "Container is null");
     }
 
     const auto structure = container->get_structure();
     auto channel_count = structure.get_channel_count();
 
     if (channel_index >= channel_count) {
-        throw std::out_of_range("Channel index out of range");
+        error<std::out_of_range>(Journal::Component::Kakshya, Journal::Context::Runtime, std::source_location::current(), "Channel index out of range: {} (available channels: {})", channel_index, channel_count);
     }
 
     auto data = container->get_data();
 
     if (structure.organization == OrganizationStrategy::PLANAR) {
         if (channel_index >= data.size()) {
-            throw std::out_of_range("Channel index out of range for planar data");
+            error<std::out_of_range>(Journal::Component::Kakshya, Journal::Context::Runtime, std::source_location::current(), "Channel index out of range for planar data: {} (available channels: {})", channel_index, data.size());
         }
         return data[channel_index];
     }
@@ -129,11 +129,11 @@ DataVariant extract_channel_data(const std::shared_ptr<SignalSourceContainer>& c
     auto interleaved_span = extract_from_variant<double>(data[0], temp_storage);
 
     if (interleaved_span.empty()) {
-        throw std::runtime_error("Failed to extract interleaved data");
+        error<std::runtime_error>(Journal::Component::Kakshya, Journal::Context::Runtime, std::source_location::current(), "Failed to extract interleaved data");
     }
 
     if (interleaved_span.size() % channel_count != 0) {
-        throw std::runtime_error("Interleaved data size is not a multiple of channel count");
+        error<std::runtime_error>(Journal::Component::Kakshya, Journal::Context::Runtime, std::source_location::current(), "Interleaved data size ({}) is not a multiple of channel count ({})", interleaved_span.size(), channel_count);
     }
 
 #ifdef MAYAFLUX_PLATFORM_MACOS
@@ -151,6 +151,50 @@ DataVariant extract_channel_data(const std::shared_ptr<SignalSourceContainer>& c
 #endif // MAYAFLUX_PLATFORM_MACOS
 
     return DataVariant { std::move(channel_data) };
+}
+
+void extract_processed_data(
+    const std::vector<DataVariant>& pd,
+    OrganizationStrategy organization,
+    uint64_t num_channels,
+    uint32_t ch,
+    std::span<double> output)
+{
+    if (pd.empty() || output.empty()) {
+        std::ranges::fill(output, 0.0);
+        return;
+    }
+
+    if (organization == OrganizationStrategy::INTERLEAVED) {
+        thread_local std::vector<double> tmp;
+        auto data_span = extract_from_variant<double>(pd[0], tmp);
+
+        const auto samples_to_copy = std::min<size_t>(
+            output.size(),
+            data_span.size() / std::max<uint64_t>(num_channels, 1));
+
+        for (auto s : std::views::iota(0UZ, samples_to_copy)) {
+            const auto idx = s * num_channels + ch;
+            output[s] = idx < data_span.size() ? data_span[idx] : 0.0;
+        }
+
+        if (samples_to_copy < output.size())
+            std::ranges::fill(output.subspan(samples_to_copy), 0.0);
+    } else {
+        if (ch >= pd.size()) {
+            std::ranges::fill(output, 0.0);
+            return;
+        }
+
+        thread_local std::vector<double> tmp;
+        auto ch_span = extract_from_variant<double>(pd[ch], tmp);
+
+        const auto samples_to_copy = std::min(output.size(), ch_span.size());
+        std::ranges::copy_n(ch_span.begin(), samples_to_copy, output.begin());
+
+        if (samples_to_copy < output.size())
+            std::ranges::fill(output.subspan(samples_to_copy), 0.0);
+    }
 }
 
 std::vector<double> extract_region_channel(
@@ -175,12 +219,12 @@ std::pair<std::shared_ptr<SignalSourceContainer>, std::vector<DataDimension>>
 validate_container_for_analysis(const std::shared_ptr<SignalSourceContainer>& container)
 {
     if (!container || !container->has_data()) {
-        throw std::invalid_argument("Container is null or has no data");
+        error<std::invalid_argument>(Journal::Component::Kakshya, Journal::Context::Runtime, std::source_location::current(), "Container is null or has no data");
     }
 
     auto dimensions = container->get_dimensions();
     if (dimensions.empty()) {
-        throw std::runtime_error("Container has no dimensions");
+        error<std::runtime_error>(Journal::Component::Kakshya, Journal::Context::Runtime, std::source_location::current(), "Container has no dimensions");
     }
 
     return std::make_pair(container, std::move(dimensions));
@@ -189,7 +233,7 @@ validate_container_for_analysis(const std::shared_ptr<SignalSourceContainer>& co
 std::vector<std::span<double>> extract_numeric_data(const std::shared_ptr<SignalSourceContainer>& container)
 {
     if (!container || !container->has_data()) {
-        throw std::invalid_argument("Container is null or has no data");
+        error<std::invalid_argument>(Journal::Component::Kakshya, Journal::Context::Runtime, std::source_location::current(), "Container is null or has no data");
     }
 
     auto container_data = container->get_data();
@@ -206,11 +250,11 @@ void validate_numeric_data_for_analysis(const std::vector<double>& data,
     size_t min_size)
 {
     if (data.empty()) {
-        throw std::invalid_argument("Cannot perform " + operation_name + " on empty data");
+        error<std::invalid_argument>(Journal::Component::Kakshya, Journal::Context::Runtime, std::source_location::current(), "Cannot perform {} on empty data", operation_name);
     }
 
     if (data.size() < min_size) {
-        throw std::invalid_argument(operation_name + " requires at least " + std::to_string(min_size) + " data points, got " + std::to_string(data.size()));
+        error<std::invalid_argument>(Journal::Component::Kakshya, Journal::Context::Runtime, std::source_location::current(), "{} requires at least {} data points, got {}", operation_name, min_size, data.size());
     }
 
     if (auto invalid_it = std::ranges::find_if_not(data, [](double val) {
@@ -219,7 +263,7 @@ void validate_numeric_data_for_analysis(const std::vector<double>& data,
         invalid_it != data.end()) {
 
         const auto index = std::distance(data.begin(), invalid_it);
-        throw std::invalid_argument(operation_name + " data contains NaN or infinite values at index " + std::to_string(index));
+        error<std::invalid_argument>(Journal::Component::Kakshya, Journal::Context::Runtime, std::source_location::current(), "{} data contains NaN or infinite values at index {}", operation_name, index);
     }
 }
 

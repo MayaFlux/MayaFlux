@@ -190,6 +190,24 @@ public:
      */
     [[nodiscard]] std::shared_ptr<Kakshya::SoundFileContainer> load_audio(const std::string& filepath, LoadConfig config = {});
 
+    /**
+     * @brief Load an audio file into a fully resident, size-bounded DynamicSoundStream.
+     *
+     * Applies the engine sample rate, ROW_MAJOR layout, and the engine buffer
+     * size as the CursorAccessProcessor block size. The result is ready for use
+     * with StreamSliceProcessor without any further configuration.
+     *
+     * @param filepath   Path to the audio file.
+     * @param max_frames Upper bound on frame count. 0 defaults to 5 s at the
+     *                   engine sample rate inside SoundFileReader::load_bounded.
+     * @param truncate   If true, silently truncate files exceeding max_frames.
+     * @return Configured DynamicSoundStream, or nullptr on failure.
+     */
+    [[nodiscard]] std::shared_ptr<Kakshya::DynamicSoundStream> load_audio_bounded(
+        const std::string& filepath,
+        uint64_t max_frames = 0,
+        bool truncate = false);
+
     // ─────────────────────────────────────────────────────────────────────────
     // Audio — hook
     // ─────────────────────────────────────────────────────────────────────────

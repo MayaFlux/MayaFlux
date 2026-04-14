@@ -7,6 +7,10 @@
 
 #include "MayaFlux/Kakshya/Source/SoundFileContainer.hpp"
 
+namespace MayaFlux::Kakshya {
+class DynamicSoundStream;
+}
+
 namespace MayaFlux::IO {
 
 /**
@@ -154,6 +158,26 @@ public:
      * @return DataVariant containing region data.
      */
     std::vector<Kakshya::DataVariant> read_region(const FileRegion& region) override;
+
+    /**
+     * @brief Load an audio file into a size-bounded DynamicSoundStream.
+     *
+     * Opens the file, reads up to @p max_frames frames into a fully resident
+     * DynamicSoundStream with auto-resize disabled, then closes the file.
+     * No DataProcessor is configured on the result; that is the caller's
+     * responsibility (see IOManager::configure_audio_processor).
+     *
+     * @param filepath     Path to the audio file.
+     * @param max_frames   Upper bound on frame count. Defaults to 5 seconds at
+     *                     the target sample rate.
+     * @param truncate     If true, silently truncate files that exceed max_frames
+     *                     with an MF_WARN. If false, return nullptr on excess.
+     * @return Populated DynamicSoundStream, or nullptr on failure.
+     */
+    [[nodiscard]] std::shared_ptr<Kakshya::DynamicSoundStream> load_bounded(
+        const std::string& filepath,
+        uint64_t max_frames = 0,
+        bool truncate = false);
 
     /**
      * @brief Create a SignalSourceContainer for this file.
