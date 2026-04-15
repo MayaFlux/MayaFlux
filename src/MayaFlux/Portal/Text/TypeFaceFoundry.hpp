@@ -6,25 +6,25 @@
 namespace MayaFlux::Portal::Text {
 
 /**
- * @class FreeTypeContext
+ * @class TypeFaceFoundry
  * @brief Singleton owner of the FT_Library handle.
  *
  * Initialised once by Portal::Text::initialize() and shut down by
  * Portal::Text::shutdown().  All FontFace instances borrow the library
  * handle via get_library(); they must not outlive this singleton.
  */
-class MAYAFLUX_API FreeTypeContext {
+class MAYAFLUX_API TypeFaceFoundry {
 public:
-    static FreeTypeContext& instance()
+    static TypeFaceFoundry& instance()
     {
-        static FreeTypeContext ctx;
+        static TypeFaceFoundry ctx;
         return ctx;
     }
 
-    FreeTypeContext(const FreeTypeContext&) = delete;
-    FreeTypeContext& operator=(const FreeTypeContext&) = delete;
-    FreeTypeContext(FreeTypeContext&&) = delete;
-    FreeTypeContext& operator=(FreeTypeContext&&) = delete;
+    TypeFaceFoundry(const TypeFaceFoundry&) = delete;
+    TypeFaceFoundry& operator=(const TypeFaceFoundry&) = delete;
+    TypeFaceFoundry(TypeFaceFoundry&&) = delete;
+    TypeFaceFoundry& operator=(TypeFaceFoundry&&) = delete;
 
     /**
      * @brief Initialise the FreeType library.
@@ -49,8 +49,8 @@ public:
     [[nodiscard]] FT_Library get_library() const { return m_library; }
 
 private:
-    FreeTypeContext() = default;
-    ~FreeTypeContext() { shutdown(); }
+    TypeFaceFoundry() = default;
+    ~TypeFaceFoundry() { shutdown(); }
 
     FT_Library m_library { nullptr };
 };

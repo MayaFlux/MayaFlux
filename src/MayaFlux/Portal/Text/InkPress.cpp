@@ -1,6 +1,6 @@
-#include "RenderText.hpp"
+#include "InkPress.hpp"
 
-#include "TextLayout.hpp"
+#include "TypeSetter.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Kakshya/Source/TextureContainer.hpp"

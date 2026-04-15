@@ -1,8 +1,10 @@
 #include "Text.hpp"
 
 #include "FontFace.hpp"
-#include "FreeTypeContext.hpp"
 #include "GlyphAtlas.hpp"
+#include "TypeFaceFoundry.hpp"
+
+#include "MayaFlux/Transitive/Platform/FontDiscovery.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
@@ -25,9 +27,9 @@ bool initialize()
     MF_INFO(Journal::Component::Portal, Journal::Context::API,
         "Initializing Portal::Text...");
 
-    if (!FreeTypeContext::instance().initialize()) {
+    if (!TypeFaceFoundry::instance().initialize()) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::API,
-            "Failed to initialize FreeTypeContext");
+            "Failed to initialize TypeFaceFoundry");
         return false;
     }
 
@@ -49,7 +51,7 @@ void shutdown()
     g_default_atlas.reset();
     g_default_face.reset();
 
-    FreeTypeContext::instance().shutdown();
+    TypeFaceFoundry::instance().shutdown();
 
     g_initialized = false;
     MF_INFO(Journal::Component::Portal, Journal::Context::API,

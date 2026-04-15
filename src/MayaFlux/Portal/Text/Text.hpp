@@ -7,7 +7,7 @@ class GlyphAtlas;
 /**
  * @brief Initialize Portal::Text.
  *
- * Initialises FreeTypeContext.  Must be called before constructing any
+ * Initialises TypeFaceFoundry.  Must be called before constructing any
  * FontFace or GlyphAtlas.  Safe to call after Portal::Graphics::initialize().
  *
  * @return true on success.

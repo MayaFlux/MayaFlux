@@ -1,14 +1,14 @@
-#include "FreeTypeContext.hpp"
+#include "TypeFaceFoundry.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux::Portal::Text {
 
-bool FreeTypeContext::initialize()
+bool TypeFaceFoundry::initialize()
 {
     if (m_library) {
         MF_WARN(Journal::Component::Portal, Journal::Context::API,
-            "FreeTypeContext already initialized");
+            "TypeFaceFoundry already initialized");
         return true;
     }
 
@@ -20,11 +20,11 @@ bool FreeTypeContext::initialize()
     }
 
     MF_INFO(Journal::Component::Portal, Journal::Context::API,
-        "FreeTypeContext initialized");
+        "TypeFaceFoundry initialized");
     return true;
 }
 
-void FreeTypeContext::shutdown()
+void TypeFaceFoundry::shutdown()
 {
     if (!m_library) {
         return;
@@ -34,7 +34,7 @@ void FreeTypeContext::shutdown()
     m_library = nullptr;
 
     MF_INFO(Journal::Component::Portal, Journal::Context::API,
-        "FreeTypeContext shutdown");
+        "TypeFaceFoundry shutdown");
 }
 
 } // namespace MayaFlux::Portal::Text

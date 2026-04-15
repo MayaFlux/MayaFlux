@@ -1,4 +1,4 @@
-#include "TextLayout.hpp"
+#include "TypeSetter.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
@@ -29,7 +29,7 @@ std::vector<GlyphQuad> lay_out(
 
         if (n <= 0) {
             MF_WARN(Journal::Component::Portal, Journal::Context::API,
-                "TextLayout: invalid UTF-8 sequence at byte offset {}, skipping byte",
+                "TypeSetter: invalid UTF-8 sequence at byte offset {}, skipping byte",
                 static_cast<size_t>(offset));
             offset += 1;
             continue;

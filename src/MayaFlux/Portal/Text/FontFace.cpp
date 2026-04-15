@@ -1,7 +1,7 @@
 #include "FontFace.hpp"
 
-#include "FreeTypeContext.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
+#include "TypeFaceFoundry.hpp"
 
 namespace MayaFlux::Portal::Text {
 
@@ -9,10 +9,10 @@ bool FontFace::load(const std::string& path, FT_Long index)
 {
     unload();
 
-    auto& ctx = FreeTypeContext::instance();
+    auto& ctx = TypeFaceFoundry::instance();
     if (!ctx.is_initialized()) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::API,
-            "FontFace::load called before FreeTypeContext is initialized");
+            "FontFace::load called before TypeFaceFoundry is initialized");
         return false;
     }
 
