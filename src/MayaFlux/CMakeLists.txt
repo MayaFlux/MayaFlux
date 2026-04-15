@@ -110,6 +110,8 @@ if(WIN32)
         RtMidi::rtmidi
         asio::asio
         assimp::assimp
+        unofficial::utf8proc::utf8proc
+        freetype
         gdi32
         user32
         shell32
@@ -143,5 +145,7 @@ else()
         PkgConfig::LIBSWRESAMPLE
         PkgConfig::LIBSWSCALE
         PkgConfig::LIBAVDEVICE
+        Freetype::Freetype
+        PkgConfig::UTF8PROC
     )
 endif()

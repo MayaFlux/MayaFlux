@@ -47,6 +47,8 @@ BuildRequires:  wayland-devel
 BuildRequires:  hidapi-devel
 BuildRequires:  rtmidi-devel
 BuildRequires:  asio-standalone
+BuildRequires:  freetype-devel
+BuildRequires:  utf8proc-devel
 BuildRequires:  git
 
 # Runtime = BuildRequires (all needed for live coding/JIT)
@@ -82,6 +84,8 @@ Requires:       wayland-devel
 Requires:       hidapi-devel
 Requires:       rtmidi-devel
 Requires:       asio-standalone
+Requires:       freetype-devel
+Requires:       utf8proc-devel
 
 Provides:       mayaflux = %{version}-%{release}
 Conflicts:      mayaflux

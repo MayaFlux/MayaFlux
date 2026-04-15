@@ -13,6 +13,8 @@
     "rtmidi",
     "assimp",
     "asio",
-    "stb"
+    "stb",
+    "utf8proc",
+     "freetype"
   ]
 }

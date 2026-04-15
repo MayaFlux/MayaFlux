@@ -53,6 +53,8 @@ install_arch() {
         "hidapi"
         "rtmidi"
         "asio"
+        "freetype2"
+        "libutf8proc"
     )
     echo -e "${YELLOW}Installing: ${PACKAGES[*]}${NC}"
     sudo pacman -Syu --noconfirm "${PACKAGES[@]}"
@@ -102,6 +104,8 @@ install_fedora() {
         "rtmidi-devel"
         "asio-standalone"
         "wayland-devel"
+        "freetype-devel"
+        "utf8proc-devel"
         "git"
     )
 
@@ -151,6 +155,8 @@ install_ubuntu() {
         "librtmidi-dev"
         "libgtest-dev"
         "libasio-dev"
+        "libfreetype-dev"
+        "libutf8proc-dev"
     )
 
     echo -e "${YELLOW}Installing: ${PACKAGES[*]}${NC}"
