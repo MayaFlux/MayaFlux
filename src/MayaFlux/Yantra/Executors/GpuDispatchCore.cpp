@@ -119,15 +119,20 @@ void GpuDispatchCore::prepare_gpu_inputs(
         }
 
         if (b.direction == GpuBufferBinding::Direction::OUTPUT) {
-            const size_t sz = (i < m_output_size_overrides.size() && m_output_size_overrides[i] > 0)
-                ? m_output_size_overrides[i]
-                : fallback_bytes;
-            m_resources.ensure_buffer(i, sz);
-            if (i < m_output_size_overrides.size() && m_output_size_overrides[i] > 0) {
-                std::vector<uint8_t> zeros(sz, 0);
-                m_resources.upload_raw(i, zeros.data(), sz);
+            const auto et = b.element_type;
+            if (et == GpuBufferBinding::ElementType::IMAGE_STORAGE
+                || et == GpuBufferBinding::ElementType::IMAGE_SAMPLED) {
+            } else {
+                const size_t sz = (i < m_output_size_overrides.size() && m_output_size_overrides[i] > 0)
+                    ? m_output_size_overrides[i]
+                    : fallback_bytes;
+                m_resources.ensure_buffer(i, sz);
+                if (i < m_output_size_overrides.size() && m_output_size_overrides[i] > 0) {
+                    std::vector<uint8_t> zeros(sz, 0);
+                    m_resources.upload_raw(i, zeros.data(), sz);
+                }
+                continue;
             }
-            continue;
         }
 
         switch (b.element_type) {
@@ -139,7 +144,7 @@ void GpuDispatchCore::prepare_gpu_inputs(
             }
             break;
 
-        case GpuBufferBinding::ElementType::IMAGE_SAMPLED: {
+        case GpuBufferBinding::ElementType::IMAGE_STORAGE: {
             if (i >= m_image_bindings.size() || !m_image_bindings[i].image)
                 continue;
             auto& img = m_image_bindings[i].image;
@@ -150,7 +155,7 @@ void GpuDispatchCore::prepare_gpu_inputs(
             m_resources.bind_image_storage(i, img, b);
         } break;
 
-        case GpuBufferBinding::ElementType::IMAGE_STORAGE: {
+        case GpuBufferBinding::ElementType::IMAGE_SAMPLED: {
             if (i >= m_image_bindings.size() || !m_image_bindings[i].image)
                 continue;
             auto& img = m_image_bindings[i].image;
@@ -225,12 +230,15 @@ GpuChannelResult GpuDispatchCore::dispatch_core(
     const std::vector<std::vector<double>>& channels,
     const DataStructureInfo& structure_info)
 {
+    on_before_gpu_dispatch(channels, structure_info);
     prepare_gpu_inputs(channels, structure_info);
 
-    for (size_t i = 0; i < m_bindings.size(); ++i)
-        m_resources.bind_descriptor(i, m_bindings[i]);
-
-    on_before_gpu_dispatch(channels, structure_info);
+    for (size_t i = 0; i < m_bindings.size(); ++i) {
+        const auto et = m_bindings[i].element_type;
+        if (et != GpuBufferBinding::ElementType::IMAGE_STORAGE
+            && et != GpuBufferBinding::ElementType::IMAGE_SAMPLED)
+            m_resources.bind_descriptor(i, m_bindings[i]);
+    }
 
     const size_t effective = m_staging_floats.empty()
         ? largest_binding_data_element_count()
@@ -253,10 +261,15 @@ GpuChannelResult GpuDispatchCore::dispatch_core_chained(
     const DataStructureInfo& structure_info,
     const ExecutionContext& ctx)
 {
+    on_before_gpu_dispatch(channels, structure_info);
     prepare_gpu_inputs(channels, structure_info);
 
-    for (size_t i = 0; i < m_bindings.size(); ++i)
-        m_resources.bind_descriptor(i, m_bindings[i]);
+    for (size_t i = 0; i < m_bindings.size(); ++i) {
+        const auto et = m_bindings[i].element_type;
+        if (et != GpuBufferBinding::ElementType::IMAGE_STORAGE
+            && et != GpuBufferBinding::ElementType::IMAGE_SAMPLED)
+            m_resources.bind_descriptor(i, m_bindings[i]);
+    }
 
     const size_t effective = m_staging_floats.empty()
         ? largest_binding_data_element_count()
@@ -292,6 +305,14 @@ GpuChannelResult GpuDispatchCore::dispatch_core_chained(
 std::vector<float> GpuDispatchCore::readback_primary(size_t float_count)
 {
     const size_t idx = find_first_output_index();
+
+    if (idx < m_bindings.size()) {
+        const auto et = m_bindings[idx].element_type;
+        if (et == GpuBufferBinding::ElementType::IMAGE_STORAGE
+            || et == GpuBufferBinding::ElementType::IMAGE_SAMPLED)
+            return {};
+    }
+
     const size_t allocated = m_resources.buffer_allocated_bytes(idx);
     const size_t byte_size = std::min(float_count * sizeof(float), allocated);
     std::vector<float> out(byte_size / sizeof(float));
@@ -303,7 +324,12 @@ void GpuDispatchCore::readback_aux(GpuChannelResult& result)
 {
     for (size_t i = 0; i < m_bindings.size(); ++i) {
         const auto dir = m_bindings[i].direction;
-        if ((dir == GpuBufferBinding::Direction::OUTPUT || dir == GpuBufferBinding::Direction::INPUT_OUTPUT)
+        const auto et = m_bindings[i].element_type;
+        const bool is_image = et == GpuBufferBinding::ElementType::IMAGE_STORAGE
+            || et == GpuBufferBinding::ElementType::IMAGE_SAMPLED;
+        if ((dir == GpuBufferBinding::Direction::OUTPUT
+                || dir == GpuBufferBinding::Direction::INPUT_OUTPUT)
+            && !is_image
             && i < m_output_size_overrides.size()
             && m_output_size_overrides[i] > 0) {
             const size_t sz = m_output_size_overrides[i];
