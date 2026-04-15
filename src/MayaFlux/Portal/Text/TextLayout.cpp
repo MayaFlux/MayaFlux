@@ -1,7 +1,6 @@
 #include "TextLayout.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
-#include "MayaFlux/Kakshya/Region/RegionGroup.hpp"
 
 #include <utf8proc.h>
 

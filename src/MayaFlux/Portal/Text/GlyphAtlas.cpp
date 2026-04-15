@@ -1,7 +1,5 @@
 #include "GlyphAtlas.hpp"
 
-#include "MayaFlux/Kakshya/Region/RegionGroup.hpp"
-
 #include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux::Portal::Text {

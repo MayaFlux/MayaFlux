@@ -1,13 +1,8 @@
 #include "RenderText.hpp"
 
-#include <cstddef>
-
-#include <cstddef>
-
 #include "TextLayout.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
-#include "MayaFlux/Kakshya/Region/RegionGroup.hpp"
 #include "MayaFlux/Kakshya/Source/TextureContainer.hpp"
 #include "MayaFlux/Portal/Graphics/GraphicsUtils.hpp"
 
