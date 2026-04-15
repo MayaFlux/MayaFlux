@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Core/Backends/Graphics/Vulkan/VKImage.hpp"
 #include "MayaFlux/Yantra/OperationSpec/ExecutionContext.hpp"
 #include "MayaFlux/Yantra/OperationSpec/OperationHelper.hpp"
 
@@ -242,6 +243,33 @@ protected:
                 }
                 break;
 
+            case GpuBufferBinding::ElementType::IMAGE_SAMPLED: {
+                if (i >= m_image_bindings.size() || !m_image_bindings[i].image)
+                    continue;
+
+                auto& img = m_image_bindings[i].image;
+                if (img->get_current_layout() != vk::ImageLayout::eGeneral) {
+                    m_resources.transition_image(img, img->get_current_layout(),
+                        vk::ImageLayout::eGeneral);
+                }
+
+                m_resources.bind_image_storage(i, img, b);
+            }
+
+            case GpuBufferBinding::ElementType::IMAGE_STORAGE: {
+                if (i >= m_image_bindings.size() || !m_image_bindings[i].image)
+                    continue;
+
+                auto& img = m_image_bindings[i].image;
+                auto sampler = m_image_bindings[i].sampler;
+                if (img->get_current_layout() != vk::ImageLayout::eShaderReadOnlyOptimal) {
+                    m_resources.transition_image(img, img->get_current_layout(),
+                        vk::ImageLayout::eShaderReadOnlyOptimal);
+                }
+
+                m_resources.bind_image_sampled(i, img, sampler, b);
+            }
+
             case GpuBufferBinding::ElementType::UINT32:
             case GpuBufferBinding::ElementType::INT32:
                 if (!channels.empty()) {
@@ -377,7 +405,64 @@ protected:
         std::memcpy(slot.data(), data, byte_size);
     }
 
+    /**
+     * @brief Register a VKImage for a storage image binding (IMAGE_STORAGE).
+     *
+     * The image must already be in eGeneral layout or will be transitioned
+     * there by prepare_gpu_inputs before dispatch. The GpuExecutionContext
+     * holds a shared_ptr reference for the duration of the dispatch only.
+     *
+     * @param binding_index Index matching the IMAGE_STORAGE declaration.
+     * @param image         Initialised VKImage.
+     */
+    void stage_image_storage(size_t binding_index,
+        std::shared_ptr<Core::VKImage> image)
+    {
+        if (binding_index >= m_image_bindings.size())
+            m_image_bindings.resize(binding_index + 1);
+        m_image_bindings[binding_index] = { std::move(image), nullptr,
+            GpuBufferBinding::ElementType::IMAGE_STORAGE };
+    }
+
+    /**
+     * @brief Register a VKImage + sampler for a combined image sampler binding
+     *        (IMAGE_SAMPLED).
+     *
+     * The image must be in eShaderReadOnlyOptimal layout or will be transitioned
+     * there by prepare_gpu_inputs before dispatch.
+     *
+     * @param binding_index Index matching the IMAGE_SAMPLED declaration.
+     * @param image         Initialised VKImage.
+     * @param sampler       Vulkan sampler handle, typically from SamplerForge.
+     */
+    void stage_image_sampled(size_t binding_index,
+        std::shared_ptr<Core::VKImage> image,
+        vk::Sampler sampler)
+    {
+        if (binding_index >= m_image_bindings.size())
+            m_image_bindings.resize(binding_index + 1);
+        m_image_bindings[binding_index] = { std::move(image), sampler,
+            GpuBufferBinding::ElementType::IMAGE_SAMPLED };
+    }
+
     [[nodiscard]] const GpuShaderConfig& gpu_config() const { return m_gpu_config; }
+
+    /**
+     * @brief Retrieve the VKImage registered at an IMAGE_STORAGE output binding.
+     *
+     * The image contents are valid after dispatch completes (dispatch_gpu is
+     * synchronous via submit_and_wait). Callers may then pass this image to
+     * TextureLoom::download_data or bind it directly to a shader.
+     *
+     * @param binding_index Index of the IMAGE_STORAGE binding.
+     * @return Shared pointer to the output VKImage, or nullptr if not found.
+     */
+    [[nodiscard]] std::shared_ptr<Core::VKImage> get_output_image(size_t binding_index) const
+    {
+        if (binding_index >= m_image_bindings.size())
+            return nullptr;
+        return m_image_bindings[binding_index].image;
+    }
 
 private:
     GpuShaderConfig m_gpu_config;
@@ -388,6 +473,14 @@ private:
     std::vector<size_t> m_output_size_overrides;
     std::vector<std::vector<uint8_t>> m_passthrough_bytes;
     std::vector<std::vector<uint8_t>> m_binding_data;
+
+    struct ImageBinding {
+        std::shared_ptr<Core::VKImage> image;
+        vk::Sampler sampler;
+        GpuBufferBinding::ElementType kind {};
+    };
+
+    std::vector<ImageBinding> m_image_bindings;
 
     //==========================================================================
     // Internal helpers
