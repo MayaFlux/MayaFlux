@@ -147,7 +147,7 @@ public:
      * @brief Setup rendering with RenderProcessor
      * @param config Rendering configuration
      */
-    void setup_rendering(const RenderConfig& config);
+    virtual void setup_rendering(const RenderConfig& config);
 
     std::shared_ptr<RenderProcessor> get_render_processor() const override
     {

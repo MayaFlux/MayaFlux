@@ -8,7 +8,7 @@
 
 namespace MayaFlux::Portal::Text {
 
-std::shared_ptr<Buffers::TextureBuffer> render_text(
+std::shared_ptr<Buffers::TextBuffer> render_text(
     std::string_view text,
     GlyphAtlas& atlas,
     glm::vec4 color)
@@ -85,13 +85,13 @@ std::shared_ptr<Buffers::TextureBuffer> render_text(
         }
     }
 
-    auto buffer = std::make_shared<Buffers::TextureBuffer>(
+    auto buffer = std::make_shared<Buffers::TextBuffer>(
         w, h,
         Portal::Graphics::ImageFormat::RGBA8,
         dst_pixels.data());
 
     MF_DEBUG(Journal::Component::Portal, Journal::Context::API,
-        "render_text: '{}' -> {}x{} TextureBuffer", std::string(text), w, h);
+        "render_text: '{}' -> {}x{} TextBuffer", std::string(text), w, h);
 
     return buffer;
 }
