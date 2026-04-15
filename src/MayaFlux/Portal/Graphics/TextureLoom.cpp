@@ -566,4 +566,27 @@ size_t TextureLoom::calculate_image_size(
     return static_cast<size_t>(width) * height * depth * get_bytes_per_pixel(format);
 }
 
+uint32_t TextureLoom::get_channel_count(ImageFormat format)
+{
+    switch (format) {
+    case ImageFormat::R8:
+    case ImageFormat::R16F:
+    case ImageFormat::R32F:
+        return 1;
+    case ImageFormat::RG8:
+    case ImageFormat::RG16F:
+    case ImageFormat::RG32F:
+        return 2;
+    case ImageFormat::RGB8:
+        return 3;
+    case ImageFormat::RGBA8:
+    case ImageFormat::RGBA8_SRGB:
+    case ImageFormat::RGBA16F:
+    case ImageFormat::RGBA32F:
+        return 4;
+    default:
+        return 4;
+    }
+}
+
 } // namespace MayaFlux::Portal::Graphics

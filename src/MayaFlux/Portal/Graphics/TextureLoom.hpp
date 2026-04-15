@@ -318,6 +318,11 @@ public:
         uint32_t depth,
         ImageFormat format);
 
+    /**
+     * @brief Get the number of color channels for a given format
+     */
+    static uint32_t get_channel_count(ImageFormat format);
+
 private:
     TextureLoom() = default;
     ~TextureLoom() { shutdown(); }
