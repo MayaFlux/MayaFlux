@@ -8,9 +8,9 @@ namespace MayaFlux::Yantra {
  * @class GpuExecutionContext
  * @brief Type-parameterised shell over GpuDispatchCore.
  *
- * Handles only the two steps that must be aware of InputType/OutputType:
- *   1. Extracting double channels from a Datum<InputType>.
- *   2. Reconstructing a Datum<OutputType> from the float readback.
+ * Handles the two type-aware boundary steps:
+ *   1. Extracting input data for dispatch_core  — overridable via extract_inputs().
+ *   2. Reconstructing a Datum<OutputType>       — overridable via collect_gpu_outputs().
  *
  * All resource management, buffer staging, dispatch orchestration, and
  * virtual override points live in GpuDispatchCore and are compiled once
@@ -18,7 +18,11 @@ namespace MayaFlux::Yantra {
  *
  * Subclasses override GpuDispatchCore virtuals (declare_buffer_bindings,
  * on_before_gpu_dispatch, prepare_gpu_inputs, calculate_dispatch_size)
- * directly; no additional template surface is required.
+ * directly;
+ * Subclasses that do not operate on numeric channels (e.g. image-only shaders)
+ * override extract_inputs() to return empty channels and override
+ * collect_gpu_outputs() to pull from get_output_image() instead of the float
+ * readback.
  *
  * @tparam InputType  ComputeData type accepted.
  * @tparam OutputType ComputeData type produced.
@@ -63,12 +67,7 @@ public:
                 "GpuExecutionContext: GPU initialisation failed");
         }
 
-        auto [channels, structure_info] = OperationHelper::extract_structured_double(
-            const_cast<input_type&>(input));
-
-        std::vector<std::vector<double>> ch_copies(channels.size());
-        for (size_t c = 0; c < channels.size(); ++c)
-            ch_copies[c].assign(channels[c].begin(), channels[c].end());
+        auto [ch_copies, structure_info] = extract_inputs(input);
 
         const GpuChannelResult raw = (ctx.mode == ExecutionMode::CHAINED)
             ? dispatch_core_chained(ch_copies, structure_info, ctx)
@@ -78,6 +77,28 @@ public:
     }
 
 protected:
+    /**
+     * @brief Extract double channels and structure metadata from the input Datum.
+     *
+     * Default replicates the previous inline behaviour: calls
+     * OperationHelper::extract_structured_double and copies spans into owned vectors.
+     *
+     * Override to return ({}, {}) when the shader reads only from pre-staged image
+     * or passthrough bindings and channel extraction is meaningless for the input type.
+     */
+    virtual std::pair<std::vector<std::vector<double>>, DataStructureInfo>
+    extract_inputs(const input_type& input)
+    {
+        auto [spans, structure_info] = OperationHelper::extract_structured_double(
+            const_cast<input_type&>(input));
+
+        std::vector<std::vector<double>> channels(spans.size());
+        for (size_t c = 0; c < spans.size(); ++c)
+            channels[c].assign(spans[c].begin(), spans[c].end());
+
+        return { std::move(channels), std::move(structure_info) };
+    }
+
     /**
      * @brief Reconstruct Datum<OutputType> from a GpuChannelResult.
      *

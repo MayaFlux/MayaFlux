@@ -253,7 +253,6 @@ GpuChannelResult GpuDispatchCore::dispatch_core_chained(
     const DataStructureInfo& structure_info,
     const ExecutionContext& ctx)
 {
-    // flatten_channels_to_staging(channels, structure_info);
     prepare_gpu_inputs(channels, structure_info);
 
     for (size_t i = 0; i < m_bindings.size(); ++i)
