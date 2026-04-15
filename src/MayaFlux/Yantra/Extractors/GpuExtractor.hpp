@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MayaFlux/Yantra/Executors/ShaderExecutionContext.hpp"
+#include "MayaFlux/Yantra/Executors/GpuExecutionContext.hpp"
 #include "UniversalExtractor.hpp"
 
 namespace MayaFlux::Yantra {
@@ -8,7 +8,7 @@ namespace MayaFlux::Yantra {
 /**
  * @class GpuExtractor
  * @brief Concrete UniversalExtractor that dispatches entirely via a
- *        ShaderExecutionContext. CPU path is a hard error.
+ *        GpuExecutionContext. CPU path is a hard error.
  *
  * @tparam InputType  ComputeData type accepted.
  * @tparam OutputType ComputeData type produced.
@@ -21,11 +21,11 @@ public:
     using output_type = Datum<OutputType>;
 
     /**
-     * @brief Construct with a configured ShaderExecutionContext.
+     * @brief Construct with a configured GpuExecutionContext.
      * @param executor Configured executor. Must not be null.
      */
     explicit GpuExtractor(
-        std::shared_ptr<ShaderExecutionContext<InputType, OutputType>> executor)
+        std::shared_ptr<GpuExecutionContext<InputType, OutputType>> executor)
     {
         assert(executor && "GpuExtractor: executor must not be null");
         m_executor = executor;
@@ -33,9 +33,9 @@ public:
     }
 
     /**
-     * @brief Returns the attached ShaderExecutionContext for further configuration.
+     * @brief Returns the attached GpuExecutionContext for further configuration.
      */
-    [[nodiscard]] std::shared_ptr<ShaderExecutionContext<InputType, OutputType>>
+    [[nodiscard]] std::shared_ptr<GpuExecutionContext<InputType, OutputType>>
     get_executor() const { return m_executor; }
 
     [[nodiscard]] std::string get_extractor_name() const override
@@ -64,7 +64,7 @@ protected:
     }
 
 private:
-    std::shared_ptr<ShaderExecutionContext<InputType, OutputType>> m_executor;
+    std::shared_ptr<GpuExecutionContext<InputType, OutputType>> m_executor;
 };
 
 } // namespace MayaFlux::Yantra
