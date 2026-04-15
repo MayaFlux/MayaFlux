@@ -401,6 +401,29 @@ void TextureLoom::download_data(
     m_resource_manager->download_image_data(image, data, size);
 }
 
+void TextureLoom::transition_layout(
+    const std::shared_ptr<Core::VKImage>& image,
+    vk::ImageLayout old_layout,
+    vk::ImageLayout new_layout,
+    uint32_t mip_levels,
+    uint32_t array_layers,
+    vk::ImageAspectFlags aspect_mask)
+{
+    if (!is_initialized() || !image) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
+            "Invalid parameters for transition_vk_image_layout");
+        return;
+    }
+
+    m_resource_manager->transition_image_layout(
+        image->get_image(),
+        old_layout,
+        new_layout,
+        mip_levels, array_layers, aspect_mask);
+
+    image->set_current_layout(new_layout);
+}
+
 //==============================================================================
 // Sampler Management
 //==============================================================================
