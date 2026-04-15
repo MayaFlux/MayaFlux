@@ -86,6 +86,24 @@ bool set_default_font(const std::string& font_path, uint32_t pixel_size, uint32_
     return true;
 }
 
+bool set_default_font(
+    std::string_view family,
+    std::string_view style,
+    uint32_t pixel_size,
+    uint32_t atlas_size)
+{
+    const auto path = Platform::find_font(family, style);
+    if (!path) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::API,
+            "set_default_font: could not locate '{}{}{}' on this system",
+            family,
+            style.empty() ? "" : " ",
+            style);
+        return false;
+    }
+    return set_default_font(*path, pixel_size, atlas_size);
+}
+
 GlyphAtlas* get_default_glyph_atlas()
 {
     return g_default_atlas.get();

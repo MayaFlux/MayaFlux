@@ -45,6 +45,25 @@ MAYAFLUX_API bool set_default_font(
     uint32_t atlas_size = 512);
 
 /**
+ * @brief Locate a system font by family and style, then load it as the default.
+ *
+ * Delegates font path resolution to Platform::find_font, then calls the
+ * path-based overload.  Returns false and logs if the family cannot be
+ * located on the current platform.
+ *
+ * @param family      Font family name, e.g. "JetBrains Mono".
+ * @param style       Style hint, e.g. "Medium", "Bold".
+ * @param pixel_size  Glyph height in pixels.
+ * @param atlas_size  Atlas texture dimension (power of two, default 512).
+ * @return true on success.
+ */
+MAYAFLUX_API bool set_default_font(
+    std::string_view family,
+    std::string_view style,
+    uint32_t pixel_size,
+    uint32_t atlas_size = 512);
+
+/**
  * @brief Return the default GlyphAtlas, or nullptr if set_default_font()
  *        has not been called successfully.
  */
