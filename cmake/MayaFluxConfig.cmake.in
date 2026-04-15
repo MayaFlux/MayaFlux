@@ -112,6 +112,7 @@ else()
 
         pkg_search_module(HIDAPI REQUIRED IMPORTED_TARGET
                 hidapi-hidraw hidapi-libusb hidapi)
+         pkg_check_modules(Fontconfig REQUIRED IMPORTED_TARGET fontconfig)
     endif()
 
     find_library(SPIRV_CROSS_CORE_LIB NAMES spirv-cross-core REQUIRED)
@@ -266,7 +267,10 @@ if(NOT TARGET MayaFlux::MayaFluxLib)
         if(APPLE)
             target_link_libraries(MayaFlux::MayaFluxLib INTERFACE Vulkan::Vulkan)
         else()
-            target_link_libraries(MayaFlux::MayaFluxLib INTERFACE PkgConfig::Vulkan)
+            target_link_libraries(MayaFlux::MayaFluxLib INTERFACE 
+            PkgConfig::Vulkan
+            PkgConfig::Fontconfig
+            )
         endif()
     endif()
 

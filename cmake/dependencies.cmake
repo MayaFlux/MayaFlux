@@ -41,6 +41,7 @@ else()
         pkg_check_modules(Vulkan REQUIRED IMPORTED_TARGET vulkan)
         pkg_search_module(HIDAPI REQUIRED IMPORTED_TARGET
             hidapi-hidraw hidapi-libusb hidapi)
+        pkg_check_modules(Fontconfig REQUIRED IMPORTED_TARGET fontconfig)
     endif()
 
     find_package(TBB REQUIRED)

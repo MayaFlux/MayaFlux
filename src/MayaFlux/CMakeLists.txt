@@ -126,7 +126,10 @@ else()
 
         message(STATUS "MayaFlux Journal: Using fmt library on macOS")
     else()
-        target_link_libraries(MayaFluxLib PUBLIC PkgConfig::Vulkan)
+        target_link_libraries(MayaFluxLib PUBLIC
+        PkgConfig::Vulkan
+        PkgConfig::Fontconfig
+        )
     endif()
 
     target_link_libraries(MayaFluxLib PUBLIC
