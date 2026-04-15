@@ -250,6 +250,27 @@ public:
         void* data,
         size_t size);
 
+    /**
+     * @brief Transition a VKImage to a new Vulkan layout via an immediate submission.
+     * @param image       Image to transition. Must be initialised.
+     * @param old_layout  Current layout of the image.
+     * @param new_layout  Target layout.
+     * @param mip_levels  Number of mip levels covered by the transition.
+     * @param array_layers Number of array layers covered by the transition.
+     * @param aspect_mask Image aspect flags (colour, depth, stencil).
+     *
+     * Delegates to BackendResourceManager and updates the image's tracked layout.
+     * Use before binding an image to a compute shader descriptor or before
+     * upload/download operations that require a specific layout.
+     */
+    void transition_layout(
+        const std::shared_ptr<Core::VKImage>& image,
+        vk::ImageLayout old_layout,
+        vk::ImageLayout new_layout,
+        uint32_t mip_levels = 1,
+        uint32_t array_layers = 1,
+        vk::ImageAspectFlags aspect_mask = vk::ImageAspectFlagBits::eColor);
+
     //==========================================================================
     // Sampler Management
     //==========================================================================
@@ -296,6 +317,11 @@ public:
         uint32_t height,
         uint32_t depth,
         ImageFormat format);
+
+    /**
+     * @brief Get the number of color channels for a given format
+     */
+    static uint32_t get_channel_count(ImageFormat format);
 
 private:
     TextureLoom() = default;

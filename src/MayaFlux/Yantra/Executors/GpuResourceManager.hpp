@@ -31,18 +31,22 @@ struct GpuBufferBinding {
     /**
      * @brief Element type the shader expects in this buffer.
      *
-     * FLOAT32      — cast double channels to float (default).
-     * UINT32       — reinterpret variant bytes as uint32_t.
-     * INT32        — reinterpret variant bytes as int32_t.
-     * PASSTHROUGH  — upload raw variant bytes with no cast; caller
-     *                must pre-stage via stage_passthrough() for
-     *                INPUT / INPUT_OUTPUT bindings.
+     * FLOAT32          — cast double channels to float (default).
+     * UINT32           — reinterpret variant bytes as uint32_t.
+     * INT32            — reinterpret variant bytes as int32_t.
+     * PASSTHROUGH      — upload raw variant bytes with no cast; caller
+     *                    must pre-stage via stage_passthrough() for
+     *                    INPUT / INPUT_OUTPUT bindings.
+     * IMAGE_STORAGE,   — writeonly/readonly image2D — eStorageImage descriptor
+     * IMAGE_SAMPLED    — sampler2D — eCombinedImageSampler descriptor
      */
     enum class ElementType : uint8_t {
         FLOAT32,
         UINT32,
         INT32,
-        PASSTHROUGH
+        PASSTHROUGH,
+        IMAGE_STORAGE,
+        IMAGE_SAMPLED
     } element_type { ElementType::FLOAT32 };
 };
 
@@ -74,6 +78,38 @@ public:
     void download(size_t index, float* dest, size_t byte_size);
     void bind_descriptor(size_t index, const GpuBufferBinding& spec);
 
+    /**
+     * @brief Bind a storage image descriptor at the given slot index.
+     * @param index   Slot index matching the binding declaration.
+     * @param image   VKImage to bind. Must be initialised and in eGeneral layout.
+     * @param spec    Binding declaration. element_type must be IMAGE_STORAGE.
+     */
+    void bind_image_storage(size_t index,
+        const std::shared_ptr<Core::VKImage>& image,
+        const GpuBufferBinding& spec);
+
+    /**
+     * @brief Bind a combined image+sampler descriptor at the given slot index.
+     * @param index   Slot index matching the binding declaration.
+     * @param image   VKImage to bind. Must be in eShaderReadOnlyOptimal layout.
+     * @param sampler Vulkan sampler handle from SamplerForge.
+     * @param spec    Binding declaration. element_type must be IMAGE_SAMPLED.
+     */
+    void bind_image_sampled(size_t index,
+        const std::shared_ptr<Core::VKImage>& image,
+        vk::Sampler sampler,
+        const GpuBufferBinding& spec);
+
+    /**
+     * @brief Transition a VKImage layout via an immediate command submission.
+     * @param image      Image to transition.
+     * @param old_layout Source layout.
+     * @param new_layout Target layout.
+     */
+    void transition_image(const std::shared_ptr<Core::VKImage>& image,
+        vk::ImageLayout old_layout,
+        vk::ImageLayout new_layout);
+
     void dispatch(const std::array<uint32_t, 3>& groups,
         const std::vector<GpuBufferBinding>& bindings,
         const uint8_t* push_constant_data,
@@ -102,7 +138,8 @@ private:
     struct BufferSlot {
         size_t allocated_bytes {};
     };
-    std::vector<BufferSlot> m_slots;
+    std::vector<BufferSlot> m_buffer_slots;
+    std::vector<std::shared_ptr<Core::VKImage>> m_image_slots;
 
     bool m_ready {};
 }; // class GpuResourceManager

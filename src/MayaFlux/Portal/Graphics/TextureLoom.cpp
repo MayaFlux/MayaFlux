@@ -401,6 +401,29 @@ void TextureLoom::download_data(
     m_resource_manager->download_image_data(image, data, size);
 }
 
+void TextureLoom::transition_layout(
+    const std::shared_ptr<Core::VKImage>& image,
+    vk::ImageLayout old_layout,
+    vk::ImageLayout new_layout,
+    uint32_t mip_levels,
+    uint32_t array_layers,
+    vk::ImageAspectFlags aspect_mask)
+{
+    if (!is_initialized() || !image) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
+            "Invalid parameters for transition_vk_image_layout");
+        return;
+    }
+
+    m_resource_manager->transition_image_layout(
+        image->get_image(),
+        old_layout,
+        new_layout,
+        mip_levels, array_layers, aspect_mask);
+
+    image->set_current_layout(new_layout);
+}
+
 //==============================================================================
 // Sampler Management
 //==============================================================================
@@ -541,6 +564,29 @@ size_t TextureLoom::calculate_image_size(
     uint32_t width, uint32_t height, uint32_t depth, ImageFormat format)
 {
     return static_cast<size_t>(width) * height * depth * get_bytes_per_pixel(format);
+}
+
+uint32_t TextureLoom::get_channel_count(ImageFormat format)
+{
+    switch (format) {
+    case ImageFormat::R8:
+    case ImageFormat::R16F:
+    case ImageFormat::R32F:
+        return 1;
+    case ImageFormat::RG8:
+    case ImageFormat::RG16F:
+    case ImageFormat::RG32F:
+        return 2;
+    case ImageFormat::RGB8:
+        return 3;
+    case ImageFormat::RGBA8:
+    case ImageFormat::RGBA8_SRGB:
+    case ImageFormat::RGBA16F:
+    case ImageFormat::RGBA32F:
+        return 4;
+    default:
+        return 4;
+    }
 }
 
 } // namespace MayaFlux::Portal::Graphics

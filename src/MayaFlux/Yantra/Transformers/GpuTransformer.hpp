@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MayaFlux/Yantra/Executors/ShaderExecutionContext.hpp"
+#include "MayaFlux/Yantra/Executors/GpuExecutionContext.hpp"
 #include "UniversalTransformer.hpp"
 
 namespace MayaFlux::Yantra {
@@ -8,16 +8,16 @@ namespace MayaFlux::Yantra {
 /**
  * @class GpuTransformer
  * @brief Concrete UniversalTransformer that dispatches entirely via a
- *        ShaderExecutionContext. CPU path is a hard error.
+ *        GpuExecutionContext. CPU path is a hard error.
  *
  * Use when no CPU fallback exists or is needed. Attach a configured
- * ShaderExecutionContext at construction. For operations where a CPU
- * fallback is available, prefer attaching a ShaderExecutionContext to
+ * GpuExecutionContext at construction. For operations where a CPU
+ * fallback is available, prefer attaching a GpuExecutionContext to
  * an existing concrete transformer via set_gpu_backend() instead.
  *
  * @code
  * auto op = std::make_shared<GpuTransformer<>>(
- *     std::make_shared<ShaderExecutionContext<>>(
+ *     std::make_shared<GpuExecutionContext<>>(
  *         GpuShaderConfig { "my_shader.comp", { 256, 1, 1 }, sizeof(MyPC) }));
  * op->get_executor()->input(data).output(output_bytes).push(pc);
  * pipeline->add_operation(op, "my_shader");
@@ -34,11 +34,11 @@ public:
     using output_type = Datum<OutputType>;
 
     /**
-     * @brief Construct with a configured ShaderExecutionContext.
+     * @brief Construct with a configured GpuExecutionContext.
      * @param executor Configured executor. Must not be null.
      */
     explicit GpuTransformer(
-        std::shared_ptr<ShaderExecutionContext<InputType, OutputType>> executor)
+        std::shared_ptr<GpuExecutionContext<InputType, OutputType>> executor)
     {
         assert(executor && "GpuTransformer: executor must not be null");
         m_executor = executor;
@@ -46,9 +46,9 @@ public:
     }
 
     /**
-     * @brief Returns the attached ShaderExecutionContext for further configuration.
+     * @brief Returns the attached GpuExecutionContext for further configuration.
      */
-    [[nodiscard]] std::shared_ptr<ShaderExecutionContext<InputType, OutputType>>
+    [[nodiscard]] std::shared_ptr<GpuExecutionContext<InputType, OutputType>>
     get_executor() const { return m_executor; }
 
     [[nodiscard]] TransformationType get_transformation_type() const override
@@ -72,7 +72,7 @@ protected:
     }
 
 private:
-    std::shared_ptr<ShaderExecutionContext<InputType, OutputType>> m_executor;
+    std::shared_ptr<GpuExecutionContext<InputType, OutputType>> m_executor;
 };
 
 } // namespace MayaFlux::Yantra
