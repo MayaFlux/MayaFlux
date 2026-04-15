@@ -16,30 +16,33 @@ using Portal::Graphics::TextureLoom;
 // Construction
 //=============================================================================
 
-TextureContainer::TextureContainer(uint32_t width, uint32_t height, ImageFormat format)
+TextureContainer::TextureContainer(uint32_t width, uint32_t height, ImageFormat format, uint32_t layers)
     : m_width(width)
     , m_height(height)
     , m_format(format)
     , m_channels(TextureLoom::get_channel_count(format))
     , m_bpp(TextureLoom::get_bytes_per_pixel(format))
 {
-    setup_dimensions();
-
     const size_t sz = byte_size();
-    m_data.emplace_back(std::vector<uint8_t>(sz, 0U));
-    m_processed_data.emplace_back(std::vector<uint8_t>(sz, 0U));
+
+    for (uint32_t i = 0; i < std::max(layers, 1u); ++i) {
+        m_data.emplace_back(std::vector<uint8_t>(sz, 0U));
+        m_processed_data.emplace_back(std::vector<uint8_t>(sz, 0U));
+    }
+
+    setup_dimensions();
 
     m_ready_for_processing.store(true);
 
     MF_INFO(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-        "TextureContainer created: {}x{} fmt={} bpp={}",
-        m_width, m_height, static_cast<int>(m_format), m_bpp);
+        "TextureContainer created: {}x{} layers={} fmt={} bpp={}",
+        m_width, m_height, m_data.size(), static_cast<int>(m_format), m_bpp);
 }
 
 TextureContainer::TextureContainer(const std::shared_ptr<Core::VKImage>& image, ImageFormat format)
     : TextureContainer(image->get_width(), image->get_height(), format)
 {
-    from_image(image);
+    from_image(image, 0);
 }
 
 //=============================================================================
@@ -51,19 +54,24 @@ void TextureContainer::setup_dimensions()
     const uint64_t h = m_height;
     const uint64_t w = m_width;
     const uint64_t c = m_channels;
+    const auto n = static_cast<uint64_t>(m_data.size());
 
     m_structure = ContainerDataStructure::image_interleaved();
-    m_structure.dimensions = DataDimension::create_dimensions(
-        DataModality::IMAGE_COLOR,
-        { h, w, c },
-        MemoryLayout::ROW_MAJOR);
+
+    if (n > 1) {
+        m_structure.dimensions = DataDimension::create_dimensions(
+            DataModality::IMAGE_COLOR, { n, h, w, c }, MemoryLayout::ROW_MAJOR);
+    } else {
+        m_structure.dimensions = DataDimension::create_dimensions(
+            DataModality::IMAGE_COLOR, { h, w, c }, MemoryLayout::ROW_MAJOR);
+    }
 }
 
 //=============================================================================
 // GPU bridge
 //=============================================================================
 
-void TextureContainer::from_image(const std::shared_ptr<Core::VKImage>& image)
+void TextureContainer::from_image(const std::shared_ptr<Core::VKImage>& image, uint32_t layer)
 {
     if (!image || !image->is_initialized()) {
         MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
@@ -71,15 +79,21 @@ void TextureContainer::from_image(const std::shared_ptr<Core::VKImage>& image)
         return;
     }
 
+    if (layer >= m_data.size()) {
+        MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+            "TextureContainer::from_image layer {} out of range ({})", layer, m_data.size());
+        return;
+    }
+
     const size_t sz = byte_size();
-    auto& buf = std::get<std::vector<uint8_t>>(m_data[0]);
+    auto& buf = std::get<std::vector<uint8_t>>(m_data[layer]);
     buf.resize(sz);
 
     TextureLoom::instance().download_data(image, buf.data(), sz);
 
     {
         std::unique_lock lock(m_data_mutex);
-        m_processed_data[0] = m_data[0];
+        m_processed_data[layer] = m_data[layer];
     }
 
     update_processing_state(ProcessingState::READY);
@@ -88,11 +102,18 @@ void TextureContainer::from_image(const std::shared_ptr<Core::VKImage>& image)
         "TextureContainer: downloaded {} bytes from VKImage", sz);
 }
 
-std::shared_ptr<Core::VKImage> TextureContainer::to_image() const
+std::shared_ptr<Core::VKImage> TextureContainer::to_image(uint32_t layer) const
 {
     std::shared_lock lock(m_data_mutex);
 
-    const auto* buf = std::get_if<std::vector<uint8_t>>(&m_data[0]);
+    if (layer >= m_data.size()) {
+        MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+            "TextureContainer::to_image layer {} out of range ({})", layer, m_data.size());
+        return nullptr;
+    }
+
+    const auto* buf = std::get_if<std::vector<uint8_t>>(&m_data[layer]);
+
     if (!buf || buf->empty()) {
         MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
             "TextureContainer::to_image called on empty buffer");
@@ -111,23 +132,29 @@ std::shared_ptr<Core::VKImage> TextureContainer::to_image() const
 // Pixel access
 //=============================================================================
 
-std::span<const uint8_t> TextureContainer::pixel_bytes() const
+std::span<const uint8_t> TextureContainer::pixel_bytes(uint32_t layer) const
 {
-    const auto* buf = std::get_if<std::vector<uint8_t>>(&m_data[0]);
+    if (layer >= m_data.size())
+        return {};
+    const auto* buf = std::get_if<std::vector<uint8_t>>(&m_data[layer]);
+
     if (!buf)
         return {};
     return { buf->data(), buf->size() };
 }
 
-std::span<uint8_t> TextureContainer::pixel_bytes()
+std::span<uint8_t> TextureContainer::pixel_bytes(uint32_t layer)
 {
-    auto* buf = std::get_if<std::vector<uint8_t>>(&m_data[0]);
+    if (layer >= m_data.size())
+        return {};
+
+    auto* buf = std::get_if<std::vector<uint8_t>>(&m_data[layer]);
     if (!buf)
         return {};
     return { buf->data(), buf->size() };
 }
 
-void TextureContainer::set_pixels(std::span<const uint8_t> data)
+void TextureContainer::set_pixels(std::span<const uint8_t> data, uint32_t layer)
 {
     const size_t expected = byte_size();
     if (data.size() != expected) {
@@ -136,10 +163,16 @@ void TextureContainer::set_pixels(std::span<const uint8_t> data)
         return;
     }
 
+    if (layer >= m_data.size()) {
+        MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+            "TextureContainer::set_pixels layer {} out of range ({})", layer, m_data.size());
+        return;
+    }
+
     std::unique_lock lock(m_data_mutex);
-    auto& buf = std::get<std::vector<uint8_t>>(m_data[0]);
+    auto& buf = std::get<std::vector<uint8_t>>(m_data[layer]);
     std::ranges::copy(data, buf.begin());
-    m_processed_data[0] = m_data[0];
+    m_processed_data[layer] = m_data[layer];
 }
 
 //=============================================================================
@@ -332,8 +365,12 @@ void TextureContainer::clear()
 {
     std::unique_lock lock(m_data_mutex);
     const size_t sz = byte_size();
-    m_data[0] = std::vector<uint8_t>(sz, 0U);
-    m_processed_data[0] = std::vector<uint8_t>(sz, 0U);
+
+    for (size_t i = 0; i < m_data.size(); ++i) {
+        m_data[i] = std::vector<uint8_t>(sz, 0U);
+        m_processed_data[i] = std::vector<uint8_t>(sz, 0U);
+    }
+
     update_processing_state(ProcessingState::IDLE);
 }
 

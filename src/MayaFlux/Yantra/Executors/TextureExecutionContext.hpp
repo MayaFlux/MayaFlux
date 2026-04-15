@@ -60,9 +60,9 @@ public:
      * @param container    Source TextureContainer.  Must be non-null.
      * @param binding_index Binding slot matching the IMAGE_SAMPLED declaration.
      */
-    void stage_input(const Kakshya::TextureContainer& container, size_t binding_index)
+    void stage_input(const Kakshya::TextureContainer& container, size_t binding_index, uint32_t layer = 0)
     {
-        auto img = container.to_image();
+        auto img = container.to_image(layer);
         auto sampler = Portal::Graphics::SamplerForge::instance().get_default_linear();
         stage_image_sampled(binding_index, std::move(img), sampler);
     }
@@ -137,7 +137,9 @@ protected:
         Portal::Graphics::TextureLoom::instance().transition_layout(
             img, vk::ImageLayout::eGeneral, vk::ImageLayout::eShaderReadOnlyOptimal);
 
-        auto container = std::make_shared<Kakshya::TextureContainer>(img, m_output_format);
+        auto container = std::make_shared<Kakshya::TextureContainer>(m_width, m_height, m_output_format);
+
+        container->from_image(img, 0);
         return ContainerDatum { std::static_pointer_cast<Kakshya::SignalSourceContainer>(container) };
     }
 

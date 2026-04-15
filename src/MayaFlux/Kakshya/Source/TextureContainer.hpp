@@ -39,10 +39,11 @@ public:
      * @param width   Texture width in pixels.
      * @param height  Texture height in pixels.
      * @param format  Pixel format; determines bytes per pixel.
+     * @param layers   Number of array layers (default 1). set when using with array textures.
      *
      * Allocates a zeroed pixel buffer. No GPU resource is created.
      */
-    TextureContainer(uint32_t width, uint32_t height, Portal::Graphics::ImageFormat format);
+    TextureContainer(uint32_t width, uint32_t height, Portal::Graphics::ImageFormat format, uint32_t layers = 1);
 
     /**
      * @brief Construct from an existing VKImage, downloading its pixel data.
@@ -63,6 +64,8 @@ public:
     TextureContainer(TextureContainer&&) = delete;
     TextureContainer& operator=(TextureContainer&&) = delete;
 
+    [[nodiscard]] uint32_t get_layer_count() const { return static_cast<uint32_t>(m_data.size()); }
+
     //=========================================================================
     // GPU bridge
     //=========================================================================
@@ -70,20 +73,22 @@ public:
     /**
      * @brief Download pixel data from a VKImage into this container.
      * @param image Source GPU texture. Must be initialized and match dimensions.
+     * @param layer Array layer index for array textures (default 0).
      *
      * Blocking. Overwrites the existing pixel buffer. Does not change
      * declared width, height, or format — caller must ensure consistency.
      */
-    void from_image(const std::shared_ptr<Core::VKImage>& image);
+    void from_image(const std::shared_ptr<Core::VKImage>& image, uint32_t layer = 0);
 
     /**
      * @brief Upload the pixel buffer to a new VKImage via TextureLoom.
+     * @param layer Array layer index for array textures (default 0).
      * @return Newly created and uploaded VKImage. Null on failure.
      *
      * Creates a fresh 2D texture each call. Does not cache the result.
      * The returned image is owned by TextureLoom's internal registry.
      */
-    [[nodiscard]] std::shared_ptr<Core::VKImage> to_image() const;
+    [[nodiscard]] std::shared_ptr<Core::VKImage> to_image(uint32_t layer = 0) const;
 
     //=========================================================================
     // Pixel access
@@ -91,21 +96,24 @@ public:
 
     /**
      * @brief Direct read-only span over the raw pixel bytes.
+     * @param layer Array layer index for array textures (default 0).
      * @return Contiguous span over the flat interleaved pixel buffer.
      */
-    [[nodiscard]] std::span<const uint8_t> pixel_bytes() const;
+    [[nodiscard]] std::span<const uint8_t> pixel_bytes(uint32_t layer = 0) const;
 
     /**
      * @brief Direct read-write span over the raw pixel bytes.
+     * @param layer Array layer index for array textures (default 0).
      * @return Contiguous span over the flat interleaved pixel buffer.
      */
-    [[nodiscard]] std::span<uint8_t> pixel_bytes();
+    [[nodiscard]] std::span<uint8_t> pixel_bytes(uint32_t layer = 0);
 
     /**
      * @brief Replace the pixel buffer contents.
+     * @param layer Array layer index for array textures (default 0).
      * @param data Source bytes. Size must equal width * height * bytes_per_pixel.
      */
-    void set_pixels(std::span<const uint8_t> data);
+    void set_pixels(std::span<const uint8_t> data, uint32_t layer = 0);
 
     //=========================================================================
     // Metadata
