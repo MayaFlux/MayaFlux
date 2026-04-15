@@ -1,5 +1,8 @@
 #include "GpuResourceManager.hpp"
 
+#include "MayaFlux/Core/Backends/Graphics/Vulkan/VKImage.hpp"
+#include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
+
 #include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux::Yantra {
@@ -146,7 +149,8 @@ bool GpuResourceManager::initialise(const GpuShaderConfig& config,
 
     m_impl = std::make_unique<GpuResourceManagerImpl>();
     m_impl->buffers.resize(bindings.size());
-    m_slots.resize(bindings.size());
+    m_buffer_slots.resize(bindings.size());
+    m_image_slots.resize(bindings.size());
 
     m_ready = true;
     return true;
@@ -168,7 +172,8 @@ void GpuResourceManager::cleanup()
         }
     }
     m_impl.reset();
-    m_slots.clear();
+    m_buffer_slots.clear();
+    m_image_slots.clear();
 
     if (m_pipeline_id != Portal::Graphics::INVALID_COMPUTE_PIPELINE) {
         compute_press.destroy_pipeline(m_pipeline_id);
@@ -199,7 +204,7 @@ void GpuResourceManager::ensure_buffer(size_t index, size_t required_bytes)
     allocate_slot(foundry.get_device(), foundry.get_physical_device(),
         vk_slot, required_bytes);
 
-    m_slots[index].allocated_bytes = required_bytes;
+    m_buffer_slots[index].allocated_bytes = required_bytes;
 }
 
 void GpuResourceManager::upload(size_t index, const float* data, size_t byte_size)
@@ -241,7 +246,60 @@ void GpuResourceManager::bind_descriptor(size_t index, const GpuBufferBinding& s
 
 size_t GpuResourceManager::buffer_allocated_bytes(size_t index) const
 {
-    return m_slots[index].allocated_bytes;
+    return m_buffer_slots[index].allocated_bytes;
+}
+
+void GpuResourceManager::bind_image_storage(
+    size_t index,
+    const std::shared_ptr<Core::VKImage>& image,
+    const GpuBufferBinding& spec)
+{
+    auto& foundry = Portal::Graphics::get_shader_foundry();
+
+    if (index >= m_image_slots.size())
+        m_image_slots.resize(index + 1);
+    m_image_slots[index] = image;
+
+    foundry.update_descriptor_storage_image(
+        m_descriptor_set_ids[spec.set],
+        spec.binding,
+        image->get_image_view(),
+        vk::ImageLayout::eGeneral);
+}
+
+void GpuResourceManager::bind_image_sampled(
+    size_t index,
+    const std::shared_ptr<Core::VKImage>& image,
+    vk::Sampler sampler,
+    const GpuBufferBinding& spec)
+{
+    auto& foundry = Portal::Graphics::get_shader_foundry();
+
+    if (index >= m_image_slots.size())
+        m_image_slots.resize(index + 1);
+    m_image_slots[index] = image;
+
+    foundry.update_descriptor_image(
+        m_descriptor_set_ids[spec.set],
+        spec.binding,
+        image->get_image_view(),
+        sampler,
+        vk::ImageLayout::eShaderReadOnlyOptimal);
+}
+
+void GpuResourceManager::transition_image(
+    const std::shared_ptr<Core::VKImage>& image,
+    vk::ImageLayout old_layout,
+    vk::ImageLayout new_layout)
+{
+    auto& foundry = Portal::Graphics::get_shader_foundry();
+    auto& backend = Portal::Graphics::get_texture_manager(); // TextureLoom -> backend ref
+
+    backend.transition_layout(
+        image,
+        old_layout,
+        new_layout,
+        1, 1, vk::ImageAspectFlagBits::eColor);
 }
 
 //==============================================================================
