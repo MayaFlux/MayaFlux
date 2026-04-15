@@ -67,6 +67,6 @@ MAYAFLUX_API bool set_default_font(
  * @brief Return the default GlyphAtlas, or nullptr if set_default_font()
  *        has not been called successfully.
  */
-MAYAFLUX_API GlyphAtlas* get_default_glyph_atlas();
+MAYAFLUX_API GlyphAtlas* get_atlas();
 
 } // namespace MayaFlux::Portal::Text
