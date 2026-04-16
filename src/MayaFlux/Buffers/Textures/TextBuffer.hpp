@@ -72,6 +72,30 @@ public:
     }
 
     /**
+     * @brief Horizontal pen position in pixels for the next impress() run.
+     *        Reset to zero by repress(). Advanced by impress().
+     */
+    [[nodiscard]] const uint32_t& get_cursor_x() const { return m_cursor_x; }
+    [[nodiscard]] uint32_t& get_cursor_x() { return m_cursor_x; }
+
+    /**
+     * @brief Vertical baseline position in pixels for the next impress() run.
+     *        Reset to zero by repress(). Advanced by impress() on line wrap.
+     */
+    [[nodiscard]] const uint32_t& get_cursor_y() const { return m_cursor_y; }
+    [[nodiscard]] uint32_t& get_cursor_y() { return m_cursor_y; }
+
+    /**
+     * @brief Resets the write cursor to the origin. Called internally by
+     *        repress(). Callers may also reset manually between logical blocks.
+     */
+    void reset_cursor()
+    {
+        m_cursor_x = 0;
+        m_cursor_y = 0;
+    }
+
+    /**
      * @brief Delegates to TextureBuffer::setup_rendering, then enables
      *        streaming mode on the TextureProcessor and alpha blending
      *        on the RenderProcessor.
@@ -82,9 +106,12 @@ public:
 private:
     /// @brief Allocated GPU texture width when a budget was requested.
     ///        Zero when the buffer was created without a budget.
-    uint32_t m_budget_width { 0 };
+    uint32_t m_budget_width {};
     /// @brief Allocated GPU texture height when a budget was requested.
-    uint32_t m_budget_height { 0 };
+    uint32_t m_budget_height {};
+
+    uint32_t m_cursor_x {};
+    uint32_t m_cursor_y {};
 };
 
 } // namespace MayaFlux::Buffers

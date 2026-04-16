@@ -15,6 +15,7 @@ namespace {
     struct CompositeResult {
         uint32_t w {};
         uint32_t h {};
+        uint32_t baseline_y {};
         std::vector<uint8_t> pixels;
     };
 
@@ -102,6 +103,7 @@ namespace {
         CompositeResult result;
         result.w = dst_w;
         result.h = dst_h;
+        result.baseline_y = static_cast<uint32_t>(std::ceil(-min_y));
         result.pixels.assign(dst_pixels.begin(), dst_pixels.end());
         return result;
     }
@@ -142,6 +144,9 @@ namespace {
 
             buffer->set_budget(budget_width, budget_height);
 
+            buffer->get_cursor_y() = result.baseline_y;
+            buffer->get_cursor_x() = result.w;
+
             MF_DEBUG(Journal::Component::Portal, Journal::Context::API,
                 "press: {}x{} content in {}x{} budget",
                 result.w, result.h, budget_width, budget_height);
@@ -158,6 +163,63 @@ namespace {
             "press: {}x{} TextBuffer", result.w, result.h);
 
         return buffer;
+    }
+
+    void composite_into(
+        const std::vector<GlyphQuad>& quads,
+        GlyphAtlas& atlas,
+        glm::vec4 color,
+        uint8_t* dst,
+        uint32_t buf_w,
+        uint32_t buf_h)
+    {
+        const uint8_t cr = static_cast<uint8_t>(std::clamp(color.r, 0.F, 1.F) * 255.F);
+        const uint8_t cg = static_cast<uint8_t>(std::clamp(color.g, 0.F, 1.F) * 255.F);
+        const uint8_t cb = static_cast<uint8_t>(std::clamp(color.b, 0.F, 1.F) * 255.F);
+
+        const Kakshya::TextureContainer& atlas_tex = atlas.texture();
+        const std::span<const uint8_t> atlas_pixels = atlas_tex.pixel_bytes(0);
+        const uint32_t atlas_size = atlas.atlas_size();
+
+        for (const auto& q : quads) {
+            const auto gx = static_cast<int32_t>(std::floor(q.x0));
+            const auto gy = static_cast<int32_t>(std::floor(q.y0));
+            const auto gw = static_cast<uint32_t>(std::ceil(q.x1 - q.x0));
+            const auto gh = static_cast<uint32_t>(std::ceil(q.y1 - q.y0));
+
+            const auto src_x = static_cast<uint32_t>(q.uv_x0 * static_cast<float>(atlas_size));
+            const auto src_y = static_cast<uint32_t>(q.uv_y0 * static_cast<float>(atlas_size));
+
+            for (uint32_t row = 0; row < gh; ++row) {
+                const int32_t dst_row = gy + static_cast<int32_t>(row);
+                if (dst_row < 0 || static_cast<uint32_t>(dst_row) >= buf_h)
+                    continue;
+
+                const uint8_t* src_row = atlas_pixels.data()
+                    + static_cast<size_t>(src_y + row) * atlas_size + src_x;
+                uint8_t* dst_row_ptr = dst
+                    + static_cast<size_t>(dst_row) * buf_w * 4;
+
+                for (uint32_t col = 0; col < gw; ++col) {
+                    const int32_t dst_col = gx + static_cast<int32_t>(col);
+                    if (dst_col < 0 || static_cast<uint32_t>(dst_col) >= buf_w)
+                        continue;
+
+                    const uint8_t coverage = src_row[col];
+                    const uint8_t alpha = static_cast<uint8_t>(
+                        (static_cast<uint32_t>(coverage)
+                            * static_cast<uint32_t>(
+                                static_cast<uint8_t>(std::clamp(color.a, 0.F, 1.F) * 255.F)))
+                        / 255U);
+
+                    uint8_t* px = dst_row_ptr + static_cast<size_t>(dst_col) * 4;
+                    px[0] = cr;
+                    px[1] = cg;
+                    px[2] = cb;
+                    px[3] = alpha;
+                }
+            }
+        }
     }
 
 } // namespace
@@ -289,6 +351,95 @@ bool repress(
         std::string(text), result->w, result->h, buf_w, buf_h);
 
     return true;
+}
+
+ImpressResult impress(
+    const std::shared_ptr<Buffers::TextBuffer>& target,
+    std::string_view text,
+    glm::vec4 color)
+{
+    GlyphAtlas* atlas = TypeFaceFoundry::instance().get_default_glyph_atlas();
+    if (!atlas) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::API,
+            "impress: no default atlas -- call set_default_font first");
+        return ImpressResult::Overflow;
+    }
+    return impress(target, *atlas, text, color);
+}
+
+ImpressResult impress(
+    const std::shared_ptr<Buffers::TextBuffer>& target,
+    GlyphAtlas& atlas,
+    std::string_view text,
+    glm::vec4 color)
+{
+    if (!target) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::API,
+            "impress: target buffer is null");
+        return ImpressResult::Overflow;
+    }
+
+    const uint32_t buf_w = target->get_budget_width();
+    const uint32_t buf_h = target->get_budget_height();
+    const float pen_x = static_cast<float>(target->get_cursor_x());
+    const float pen_y = static_cast<float>(target->get_cursor_y());
+
+    const std::vector<GlyphQuad> quads = lay_out(text, atlas, pen_x, pen_y);
+    if (quads.empty()) {
+        MF_WARN(Journal::Component::Portal, Journal::Context::API,
+            "impress: no glyphs produced for '{}'", std::string(text));
+        return ImpressResult::Ok;
+    }
+
+    float next_pen_x = pen_x;
+    float min_y = quads[0].y0;
+    float max_y = quads[0].y1;
+    for (const auto& q : quads) {
+        next_pen_x = std::max(next_pen_x, q.x1);
+        min_y = std::min(min_y, q.y0);
+        max_y = std::max(max_y, q.y1);
+    }
+
+    if (static_cast<uint32_t>(std::ceil(next_pen_x)) > buf_w) {
+        const float line_h = max_y - min_y;
+        const float new_pen_y = pen_y + line_h;
+
+        if (static_cast<uint32_t>(std::ceil(new_pen_y + line_h)) > buf_h) {
+            const auto result = composite(text, atlas, color);
+            if (!result) {
+                return ImpressResult::Overflow;
+            }
+
+            target->resize_texture(result->w, result->h);
+            target->set_budget(result->w, result->h);
+            target->set_pixel_data(result->pixels.data(), result->pixels.size());
+            target->get_cursor_x() = result->w;
+            target->get_cursor_y() = result->baseline_y;
+
+            MF_DEBUG(Journal::Component::Portal, Journal::Context::API,
+                "impress: vertical overflow, reset to {}x{} budget, cursor ({},{})",
+                result->w, result->h, result->w, result->baseline_y);
+
+            return ImpressResult::Overflow;
+        }
+
+        target->get_cursor_x() = 0;
+        target->get_cursor_y() = static_cast<uint32_t>(std::ceil(new_pen_y));
+        return impress(target, atlas, text, color);
+    }
+
+    auto& pixel_data = target->get_pixel_data_mutable();
+    composite_into(quads, atlas, color, pixel_data.data(), buf_w, buf_h);
+
+    target->mark_pixels_dirty();
+    target->get_cursor_x() = static_cast<uint32_t>(std::ceil(next_pen_x));
+
+    MF_DEBUG(Journal::Component::Portal, Journal::Context::API,
+        "impress: '{}' at ({},{}) -> cursor now ({},{})",
+        std::string(text), static_cast<uint32_t>(pen_x), static_cast<uint32_t>(pen_y),
+        target->get_cursor_x(), target->get_cursor_y());
+
+    return ImpressResult::Ok;
 }
 
 } // namespace MayaFlux::Portal::Text

@@ -151,6 +151,7 @@ public:
     void use_default_quad();
 
     [[nodiscard]] const std::vector<uint8_t>& get_pixel_data() const { return m_pixel_data; }
+    [[nodiscard]] std::vector<uint8_t>& get_pixel_data_mutable() { return m_pixel_data; }
 
     void mark_texture_dirty() { m_texture_dirty = true; }
     [[nodiscard]] bool is_texture_dirty() const { return m_texture_dirty; }
