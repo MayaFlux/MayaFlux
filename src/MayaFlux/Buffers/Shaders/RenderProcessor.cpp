@@ -135,6 +135,7 @@ void RenderProcessor::bind_texture(
     }
 
     m_texture_bindings[binding] = { .texture = texture, .sampler = sampler };
+    m_needs_descriptor_rebuild = true;
 
     if (m_pipeline_id != Portal::Graphics::INVALID_RENDER_PIPELINE && !m_descriptor_set_ids.empty()) {
 

@@ -102,6 +102,8 @@ jobs:
             molten-vk
             hidapi
             rtmidi
+            utf8proc
+            freetype
 
       - name: Install ASIO (header-only, always ensure)
         run: |

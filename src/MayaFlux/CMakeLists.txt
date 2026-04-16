@@ -110,6 +110,8 @@ if(WIN32)
         RtMidi::rtmidi
         asio::asio
         assimp::assimp
+        utf8proc::utf8proc
+        freetype
         gdi32
         user32
         shell32
@@ -124,7 +126,10 @@ else()
 
         message(STATUS "MayaFlux Journal: Using fmt library on macOS")
     else()
-        target_link_libraries(MayaFluxLib PUBLIC PkgConfig::Vulkan)
+        target_link_libraries(MayaFluxLib PUBLIC
+        PkgConfig::Vulkan
+        PkgConfig::Fontconfig
+        )
     endif()
 
     target_link_libraries(MayaFluxLib PUBLIC
@@ -143,5 +148,7 @@ else()
         PkgConfig::LIBSWRESAMPLE
         PkgConfig::LIBSWSCALE
         PkgConfig::LIBAVDEVICE
+        Freetype::Freetype
+        PkgConfig::UTF8PROC
     )
 endif()

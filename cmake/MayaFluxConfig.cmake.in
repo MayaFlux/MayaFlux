@@ -44,6 +44,8 @@ if(WIN32)
     find_package(assimp CONFIG REQUIRED)
     find_package(LLVM CONFIG REQUIRED HINTS "$ENV{LLVM_DIR}")
     find_package(Clang CONFIG REQUIRED HINTS "$ENV{Clang_DIR}")
+    find_package(freetype CONFIG REQUIRED)
+    find_package(utf8proc CONFIG REQUIRED)
 
     find_library(SPIRV_CROSS_CORE_LIB NAMES spirv-cross-core 
         PATHS "$ENV{VULKAN_SDK}/Lib" REQUIRED NO_DEFAULT_PATH)
@@ -110,6 +112,7 @@ else()
 
         pkg_search_module(HIDAPI REQUIRED IMPORTED_TARGET
                 hidapi-hidraw hidapi-libusb hidapi)
+         pkg_check_modules(Fontconfig REQUIRED IMPORTED_TARGET fontconfig)
     endif()
 
     find_library(SPIRV_CROSS_CORE_LIB NAMES spirv-cross-core REQUIRED)
@@ -135,6 +138,7 @@ else()
     find_package(LLVM CONFIG REQUIRED)
     find_package(Clang CONFIG REQUIRED)
     find_package(glm REQUIRED)
+    find_package(Freetype REQUIRED)
 
     pkg_check_modules(RtAudio REQUIRED IMPORTED_TARGET rtaudio)
     pkg_check_modules(Eigen REQUIRED IMPORTED_TARGET eigen3)
@@ -143,6 +147,7 @@ else()
     pkg_check_modules(RtMidi QUIET IMPORTED_TARGET rtmidi)
     pkg_check_modules(Asio REQUIRED IMPORTED_TARGET asio)
     pkg_check_modules(Assimp REQUIRED IMPORTED_TARGET assimp)
+    pkg_check_modules(UTF8PROC REQUIRED IMPORTED_TARGET libutf8proc)
 
     pkg_check_modules(LIBAVCODEC REQUIRED IMPORTED_TARGET libavcodec)
     pkg_check_modules(LIBAVFORMAT REQUIRED IMPORTED_TARGET libavformat)
@@ -226,6 +231,8 @@ if(NOT TARGET MayaFlux::MayaFluxLib)
             RtMidi::rtmidi
             asio::asio
             assimp::assimp
+            utf8proc::utf8proc
+            freetype
             gdi32
             user32
             shell32
@@ -249,6 +256,8 @@ if(NOT TARGET MayaFlux::MayaFluxLib)
             PkgConfig::RtMidi
             PkgConfig::Asio
             PkgConfig::Assimp
+            Freetype::Freetype
+            PkgConfig::UTF8PROC
             glm::glm
             spirv-cross-core
             spirv-cross-cpp
@@ -258,7 +267,10 @@ if(NOT TARGET MayaFlux::MayaFluxLib)
         if(APPLE)
             target_link_libraries(MayaFlux::MayaFluxLib INTERFACE Vulkan::Vulkan)
         else()
-            target_link_libraries(MayaFlux::MayaFluxLib INTERFACE PkgConfig::Vulkan)
+            target_link_libraries(MayaFlux::MayaFluxLib INTERFACE 
+            PkgConfig::Vulkan
+            PkgConfig::Fontconfig
+            )
         endif()
     endif()
 

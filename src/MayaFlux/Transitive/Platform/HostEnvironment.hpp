@@ -8,7 +8,7 @@ constexpr char PathSeparator = '\\';
 constexpr char PathSeparator = '/';
 #endif
 
-static std::string safe_getenv(const char* var);
+std::string safe_getenv(const char* var);
 
 namespace fs = std::filesystem;
 class MAYAFLUX_API SystemConfig {
@@ -27,11 +27,11 @@ public:
     static std::string get_macos_sdk_path();
 #endif // MAYAFLUX_PLATFORM_MACOS
 
-private:
     static std::string exec_command(const char* cmd);
 
     static void trim_output(std::string& str);
 
+private:
     static std::string format_library_name(const std::string& library_name);
 
     static std::vector<std::string> get_clang_includes();

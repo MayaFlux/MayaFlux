@@ -3,6 +3,8 @@
 #include "MayaFlux/Kakshya/SignalSourceContainer.hpp"
 #include "MayaFlux/Portal/Graphics/GraphicsUtils.hpp"
 
+#include "MayaFlux/Kakshya/Region/RegionGroup.hpp"
+
 namespace MayaFlux::Core {
 class VKImage;
 }

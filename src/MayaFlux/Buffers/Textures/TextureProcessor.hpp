@@ -62,6 +62,14 @@ public:
      */
     [[nodiscard]] bool is_streaming_mode() const { return m_streaming_mode; }
 
+    /**
+     * @brief Invalidate the persistent streaming staging buffer.
+     *
+     * Forces reallocation on the next dirty upload cycle, sized to the
+     * current GPU texture footprint. Call after resize_texture().
+     */
+    void invalidate_staging() { m_stream_staging.reset(); }
+
 protected:
     void on_attach(const std::shared_ptr<Buffer>& buffer) override;
     void on_detach(const std::shared_ptr<Buffer>& buffer) override;

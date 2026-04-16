@@ -86,6 +86,9 @@ jobs:
             hidapi-devel \
             rtmidi-devel \
             asio-standalone \
+            utf8proc-devel \
+            freetype-devel \
+            fontconfig-devel \
             ninja-build \
             wayland-devel \
             ccache

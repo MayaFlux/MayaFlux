@@ -141,6 +141,23 @@ void TextureBuffer::mark_pixels_dirty()
     m_texture_dirty = true;
 }
 
+void TextureBuffer::resize_texture(uint32_t new_width, uint32_t new_height)
+{
+    if (new_width == m_width && new_height == m_height) {
+        return;
+    }
+
+    m_width = new_width;
+    m_height = new_height;
+    m_gpu_texture.reset();
+    m_texture_dirty = true;
+    m_geometry_dirty = true;
+
+    if (auto proc = get_texture_processor()) {
+        proc->invalidate_staging();
+    }
+}
+
 // =========================================================================
 // Display Transform
 // =========================================================================

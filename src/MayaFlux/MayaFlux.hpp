@@ -134,6 +134,9 @@
 #include "Portal/Network/Network.hpp"
 #include "Portal/Network/NetworkSink.hpp"
 
+#include "Portal/Text/InkPress.hpp"
+#include "Portal/Text/Text.hpp"
+
 #include "IO/IOManager.hpp"
 #include "IO/ImageReader.hpp"
 
