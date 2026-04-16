@@ -91,6 +91,19 @@ public:
      */
     void mark_pixels_dirty();
 
+    /**
+     * @brief Reallocate the GPU texture at new dimensions.
+     *
+     * Resets the GPU texture handle so TextureProcessor allocates a fresh
+     * VKImage at the updated dimensions on the next processing cycle.
+     * Marks texture and geometry dirty. Invalidates the streaming staging
+     * buffer so it is reallocated at the correct size.
+     *
+     * @param new_width  New texture width in pixels.
+     * @param new_height New texture height in pixels.
+     */
+    void resize_texture(uint32_t new_width, uint32_t new_height);
+
     // =========================================================================
     // Display Transform
     // =========================================================================

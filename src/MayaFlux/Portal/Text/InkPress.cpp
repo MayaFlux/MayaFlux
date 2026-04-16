@@ -198,12 +198,8 @@ bool repress(
     }
 
     if (exceeds && policy == RedrawPolicy::Grow) {
-        // target->resize_texture(result->w, result->h);
-        // target->set_pixel_data(result->pixels.data(), result->pixels.size());
-
-        target->resize_texture(result->w * 4, result->h * 4);
-        const size_t new_bytes = static_cast<size_t>(result->w) * result->h * 4;
-        target->set_pixel_data(result->pixels.data(), new_bytes);
+        target->resize_texture(result->w, result->h);
+        target->set_pixel_data(result->pixels.data(), result->pixels.size());
 
         MF_DEBUG(Journal::Component::Portal, Journal::Context::API,
             "repress: grew buffer to {}x{}", result->w, result->h);
