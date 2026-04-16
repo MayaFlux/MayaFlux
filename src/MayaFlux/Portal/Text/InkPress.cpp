@@ -106,13 +106,70 @@ namespace {
         return result;
     }
 
+    constexpr uint32_t k_grow_width_multiplier = 2;
+    constexpr uint32_t k_grow_height_multiplier = 8;
+
+    std::shared_ptr<Buffers::TextBuffer> press_from_result(
+        const CompositeResult& result,
+        uint32_t budget_width,
+        uint32_t budget_height)
+    {
+        const bool has_budget = budget_width > 0 || budget_height > 0;
+
+        if (has_budget) {
+            if (budget_width < result.w || budget_height < result.h) {
+                MF_WARN(Journal::Component::Portal, Journal::Context::API,
+                    "press: budget {}x{} smaller than content {}x{}, clamping",
+                    budget_width, budget_height, result.w, result.h);
+                budget_width = std::max(budget_width, result.w);
+                budget_height = std::max(budget_height, result.h);
+            }
+
+            const size_t budget_bytes = static_cast<size_t>(budget_width) * budget_height * 4;
+            std::vector<uint8_t> pixels(budget_bytes, 0);
+
+            for (uint32_t row = 0; row < result.h; ++row) {
+                std::memcpy(
+                    pixels.data() + static_cast<size_t>(row) * budget_width * 4,
+                    result.pixels.data() + static_cast<size_t>(row) * result.w * 4,
+                    static_cast<size_t>(result.w) * 4);
+            }
+
+            auto buffer = std::make_shared<Buffers::TextBuffer>(
+                budget_width, budget_height,
+                Portal::Graphics::ImageFormat::RGBA8,
+                pixels.data());
+
+            buffer->set_budget(budget_width, budget_height);
+
+            MF_DEBUG(Journal::Component::Portal, Journal::Context::API,
+                "press: {}x{} content in {}x{} budget",
+                result.w, result.h, budget_width, budget_height);
+
+            return buffer;
+        }
+
+        auto buffer = std::make_shared<Buffers::TextBuffer>(
+            result.w, result.h,
+            Portal::Graphics::ImageFormat::RGBA8,
+            result.pixels.data());
+
+        MF_DEBUG(Journal::Component::Portal, Journal::Context::API,
+            "press: {}x{} TextBuffer", result.w, result.h);
+
+        return buffer;
+    }
+
 } // namespace
 
 // =========================================================================
 // press
 // =========================================================================
 
-std::shared_ptr<Buffers::TextBuffer> press(std::string_view text, glm::vec4 color)
+std::shared_ptr<Buffers::TextBuffer> press(
+    std::string_view text,
+    glm::vec4 color,
+    bool growing)
 {
     GlyphAtlas* atlas = TypeFaceFoundry::instance().get_default_glyph_atlas();
     if (!atlas) {
@@ -120,12 +177,33 @@ std::shared_ptr<Buffers::TextBuffer> press(std::string_view text, glm::vec4 colo
             "press: no default atlas -- call set_default_font first");
         return nullptr;
     }
-    return press(text, *atlas, color);
+    return press(text, *atlas, color, growing);
 }
 
 std::shared_ptr<Buffers::TextBuffer> press(
     std::string_view text,
     GlyphAtlas& atlas,
+    glm::vec4 color,
+    bool growing)
+{
+    const auto result = composite(text, atlas, color);
+    if (!result) {
+        MF_WARN(Journal::Component::Portal, Journal::Context::API,
+            "press: no glyphs produced for '{}'", std::string(text));
+        return nullptr;
+    }
+
+    const uint32_t bw = growing ? result->w * k_grow_width_multiplier : 0;
+    const uint32_t bh = growing ? result->h * k_grow_height_multiplier : 0;
+
+    return press_from_result(*result, bw, bh);
+}
+
+std::shared_ptr<Buffers::TextBuffer> press(
+    std::string_view text,
+    GlyphAtlas& atlas,
+    uint32_t budget_width,
+    uint32_t budget_height,
     glm::vec4 color)
 {
     const auto result = composite(text, atlas, color);
@@ -135,15 +213,7 @@ std::shared_ptr<Buffers::TextBuffer> press(
         return nullptr;
     }
 
-    auto buffer = std::make_shared<Buffers::TextBuffer>(
-        result->w, result->h,
-        Portal::Graphics::ImageFormat::RGBA8,
-        result->pixels.data());
-
-    MF_DEBUG(Journal::Component::Portal, Journal::Context::API,
-        "press: '{}' -> {}x{} TextBuffer", std::string(text), result->w, result->h);
-
-    return buffer;
+    return press_from_result(*result, budget_width, budget_height);
 }
 
 // =========================================================================
@@ -178,8 +248,8 @@ bool repress(
         return false;
     }
 
-    const uint32_t buf_w = target->get_width();
-    const uint32_t buf_h = target->get_height();
+    const uint32_t buf_w = target->get_budget_width();
+    const uint32_t buf_h = target->get_budget_height();
 
     const auto result = composite(text, atlas, color);
     if (!result) {
@@ -192,6 +262,7 @@ bool repress(
 
     if (exceeds && policy == RedrawPolicy::Fit) {
         target->resize_texture(result->w, result->h);
+        target->set_budget(result->w, result->h);
         target->set_pixel_data(result->pixels.data(), result->pixels.size());
 
         MF_DEBUG(Journal::Component::Portal, Journal::Context::API,
@@ -206,15 +277,15 @@ bool repress(
     const uint32_t copy_h = std::min(result->h, buf_h);
     for (uint32_t row = 0; row < copy_h; ++row) {
         std::memcpy(
-            cleared.data() + static_cast<size_t>(row * buf_w * 4),
-            result->pixels.data() + static_cast<size_t>(row * result->w * 4),
+            cleared.data() + static_cast<size_t>(row) * buf_w * 4,
+            result->pixels.data() + static_cast<size_t>(row) * result->w * 4,
             static_cast<size_t>(copy_w) * 4);
     }
 
     target->set_pixel_data(cleared.data(), buf_bytes);
 
     MF_DEBUG(Journal::Component::Portal, Journal::Context::API,
-        "repress: '{}' -> {}x{} into {}x{} buffer",
+        "repress: '{}' -> {}x{} into {}x{} budget",
         std::string(text), result->w, result->h, buf_w, buf_h);
 
     return true;
