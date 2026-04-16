@@ -13,7 +13,7 @@ if(WIN32)
     find_package(asio CONFIG REQUIRED)
     find_package(assimp CONFIG REQUIRED)
     find_package(freetype CONFIG REQUIRED)
-    find_package(unofficial-utf8proc CONFIG REQUIRED)
+    find_package(utf8proc CONFIG REQUIRED)
 
     find_package(LLVM CONFIG REQUIRED HINTS "$ENV{LLVM_DIR}")
     find_package(Clang CONFIG REQUIRED HINTS "$ENV{Clang_DIR}")

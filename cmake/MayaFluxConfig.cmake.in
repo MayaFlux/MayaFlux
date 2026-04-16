@@ -45,7 +45,7 @@ if(WIN32)
     find_package(LLVM CONFIG REQUIRED HINTS "$ENV{LLVM_DIR}")
     find_package(Clang CONFIG REQUIRED HINTS "$ENV{Clang_DIR}")
     find_package(freetype CONFIG REQUIRED)
-    find_package(unofficial-utf8proc CONFIG REQUIRED)
+    find_package(utf8proc CONFIG REQUIRED)
 
     find_library(SPIRV_CROSS_CORE_LIB NAMES spirv-cross-core 
         PATHS "$ENV{VULKAN_SDK}/Lib" REQUIRED NO_DEFAULT_PATH)
@@ -231,7 +231,7 @@ if(NOT TARGET MayaFlux::MayaFluxLib)
             RtMidi::rtmidi
             asio::asio
             assimp::assimp
-            unofficial::utf8proc::utf8proc
+            utf8proc::utf8proc
             freetype
             gdi32
             user32

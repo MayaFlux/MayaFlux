@@ -110,7 +110,7 @@ if(WIN32)
         RtMidi::rtmidi
         asio::asio
         assimp::assimp
-        unofficial::utf8proc::utf8proc
+        utf8proc::utf8proc
         freetype
         gdi32
         user32
