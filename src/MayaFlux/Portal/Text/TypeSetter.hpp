@@ -23,31 +23,38 @@ struct GlyphQuad {
 };
 
 /**
+ * @brief Result of lay_out(), carrying the quads and the final pen position.
+ *
+ * final_pen_x and final_pen_y are the pen coordinates immediately after the
+ * last codepoint was processed. impress() uses these directly to update the
+ * TextBuffer cursor, avoiding re-deriving the position from quad geometry
+ * (which is incorrect after a newline resets pen_x mid-run).
+ */
+struct LayoutResult {
+    std::vector<GlyphQuad> quads;
+    float final_pen_x { 0.F };
+    float final_pen_y { 0.F };
+};
+
+/**
  * @brief Lay out a UTF-8 string into a sequence of screen-space quads.
  *
- * Iterates codepoints via utf8proc_iterate, maps each to a glyph index
- * via FT_Get_Char_Index, queries the atlas (rasterizing on first encounter),
- * and accumulates GlyphQuad entries using standard left-to-right advance
- * arithmetic.
+ * Handles \n (advance pen_y by atlas.line_height(), reset pen_x to the
+ * initial value) and \r (consumed silently). All other control codepoints
+ * with no glyph in the face are skipped without advancing the pen.
  *
- * Codepoints with no glyph in the face (utf8proc returns 0 or
- * FT_Get_Char_Index returns 0) are silently skipped; the pen still
- * advances by zero so no gap is introduced.
+ * Bidirectional reordering and shaping are not performed. HarfBuzz slots in
+ * before the glyph index step when needed; the quad assembly loop and
+ * GlyphAtlas remain unchanged.
  *
- * This function intentionally does no line-wrapping, no bidirectional
- * reordering, and no shaping.  Those are HarfBuzz concerns; when
- * HarfBuzz is introduced it replaces the codepoint-to-glyph-index step
- * only -- the quad assembly loop and GlyphAtlas remain unchanged.
- *
- * @param text      UTF-8 encoded input string.
- * @param atlas     GlyphAtlas to query and populate.  May be modified
- *                  (dirty flag set) if new glyphs are rasterized.
- * @param pen_x     Starting horizontal pen position in pixels.
- * @param pen_y     Starting vertical pen position in pixels (baseline).
- * @return          One GlyphQuad per successfully laid-out glyph, in
- *                  left-to-right order.
+ * @param text   UTF-8 encoded input string.
+ * @param atlas  GlyphAtlas to query and populate. May be modified (dirty flag
+ *               set) if new glyphs are rasterized.
+ * @param pen_x  Starting horizontal pen position in pixels.
+ * @param pen_y  Starting vertical pen position in pixels (baseline).
+ * @return       LayoutResult containing quads and final pen position.
  */
-[[nodiscard]] std::vector<GlyphQuad> lay_out(
+[[nodiscard]] LayoutResult lay_out(
     std::string_view text,
     GlyphAtlas& atlas,
     float pen_x = 0.F,

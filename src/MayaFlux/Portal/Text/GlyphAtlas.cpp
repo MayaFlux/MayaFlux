@@ -45,6 +45,16 @@ const GlyphMetrics* GlyphAtlas::get_or_rasterize(FT_ULong codepoint)
     return get_or_rasterize(idx);
 }
 
+[[nodiscard]] uint32_t GlyphAtlas::line_height() const
+{
+    FT_Face face = m_face.get_face();
+    if (!face || face->size == nullptr) {
+        return m_pixel_size;
+    }
+    const int32_t h = (face->size->metrics.ascender - face->size->metrics.descender) >> 6;
+    return h > 0 ? static_cast<uint32_t>(h) : m_pixel_size;
+}
+
 bool GlyphAtlas::rasterize(FT_UInt glyph_index)
 {
     FT_Face face = m_face.get_face();

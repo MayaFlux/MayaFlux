@@ -16,6 +16,7 @@ namespace {
         uint32_t w {};
         uint32_t h {};
         uint32_t baseline_y {};
+        uint32_t cursor_x {};
         std::vector<uint8_t> pixels;
     };
 
@@ -26,7 +27,7 @@ namespace {
         uint32_t max_w = 0,
         uint32_t max_h = 0)
     {
-        const std::vector<GlyphQuad> quads = lay_out(text, atlas);
+        const std::vector<GlyphQuad> quads = lay_out(text, atlas).quads;
         if (quads.empty()) {
             return std::nullopt;
         }
@@ -101,10 +102,13 @@ namespace {
         }
 
         CompositeResult result;
+        const auto last_x = static_cast<uint32_t>(std::ceil(quads.back().x1 - min_x));
         result.w = dst_w;
         result.h = dst_h;
         result.baseline_y = static_cast<uint32_t>(std::ceil(-min_y));
+        result.cursor_x = last_x;
         result.pixels.assign(dst_pixels.begin(), dst_pixels.end());
+
         return result;
     }
 
@@ -144,8 +148,8 @@ namespace {
 
             buffer->set_budget(budget_width, budget_height);
 
-            buffer->get_cursor_y() = result.baseline_y;
-            buffer->get_cursor_x() = result.w;
+            buffer->get_cursor_x() = result.cursor_x;
+            buffer->get_cursor_y() = result.h;
 
             MF_DEBUG(Journal::Component::Portal, Journal::Context::API,
                 "press: {}x{} content in {}x{} budget",
@@ -381,28 +385,21 @@ ImpressResult impress(
 
     const uint32_t buf_w = target->get_budget_width();
     const uint32_t buf_h = target->get_budget_height();
-    const float pen_x = static_cast<float>(target->get_cursor_x());
-    const float pen_y = static_cast<float>(target->get_cursor_y());
+    const auto pen_x = static_cast<float>(target->get_cursor_x());
+    const auto pen_y = static_cast<float>(target->get_cursor_y());
 
-    const std::vector<GlyphQuad> quads = lay_out(text, atlas, pen_x, pen_y);
+    const LayoutResult layout = lay_out(text, atlas, pen_x, pen_y);
+    const std::vector<GlyphQuad>& quads = layout.quads;
+
     if (quads.empty()) {
         MF_WARN(Journal::Component::Portal, Journal::Context::API,
             "impress: no glyphs produced for '{}'", std::string(text));
         return ImpressResult::Ok;
     }
 
-    float next_pen_x = pen_x;
-    float min_y = quads[0].y0;
-    float max_y = quads[0].y1;
-    for (const auto& q : quads) {
-        next_pen_x = std::max(next_pen_x, q.x1);
-        min_y = std::min(min_y, q.y0);
-        max_y = std::max(max_y, q.y1);
-    }
-
-    if (static_cast<uint32_t>(std::ceil(next_pen_x)) > buf_w) {
-        const float line_h = max_y - min_y;
-        const float new_pen_y = pen_y + line_h;
+    if (static_cast<uint32_t>(std::ceil(layout.final_pen_x)) > buf_w) {
+        const auto line_h = static_cast<float>(atlas.line_height());
+        const float new_pen_y = layout.final_pen_y + line_h;
 
         if (static_cast<uint32_t>(std::ceil(new_pen_y + line_h)) > buf_h) {
             const auto result = composite(text, atlas, color);
@@ -432,7 +429,8 @@ ImpressResult impress(
     composite_into(quads, atlas, color, pixel_data.data(), buf_w, buf_h);
 
     target->mark_pixels_dirty();
-    target->get_cursor_x() = static_cast<uint32_t>(std::ceil(next_pen_x));
+    target->get_cursor_x() = static_cast<uint32_t>(std::ceil(layout.final_pen_x));
+    target->get_cursor_y() = static_cast<uint32_t>(std::ceil(layout.final_pen_y));
 
     MF_DEBUG(Journal::Component::Portal, Journal::Context::API,
         "impress: '{}' at ({},{}) -> cursor now ({},{})",

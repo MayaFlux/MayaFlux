@@ -125,6 +125,15 @@ public:
      */
     [[nodiscard]] uint32_t atlas_size() const { return m_atlas_size; }
 
+    /**
+     * @brief Line advance in pixels for this atlas's pixel_size.
+     *
+     * Derived from FT_Face metrics: (ascender - descender) in 26.6 fixed-point,
+     * shifted right by 6. Returns pixel_size as a safe fallback if the face has
+     * not yet been sized (i.e. before the first get_or_rasterize() call).
+     */
+    [[nodiscard]] uint32_t line_height() const;
+
 private:
     bool rasterize(FT_UInt glyph_index);
 

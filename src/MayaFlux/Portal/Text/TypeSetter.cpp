@@ -6,18 +6,20 @@
 
 namespace MayaFlux::Portal::Text {
 
-std::vector<GlyphQuad> lay_out(
+LayoutResult lay_out(
     std::string_view text,
     GlyphAtlas& atlas,
     float pen_x,
     float pen_y)
 {
     if (text.empty()) {
-        return {};
+        return { .quads = {}, .final_pen_x = pen_x, .final_pen_y = pen_y };
     }
 
-    std::vector<GlyphQuad> quads;
-    quads.reserve(text.size());
+    LayoutResult out;
+    out.quads.reserve(text.size());
+
+    const float origin_x = 0.F;
 
     const auto* bytes = reinterpret_cast<const utf8proc_uint8_t*>(text.data());
     auto remaining = static_cast<utf8proc_ssize_t>(text.size());
@@ -41,6 +43,16 @@ std::vector<GlyphQuad> lay_out(
             continue;
         }
 
+        if (codepoint == '\n') {
+            pen_x = origin_x;
+            pen_y += static_cast<float>(atlas.line_height());
+            continue;
+        }
+
+        if (codepoint == '\r') {
+            continue;
+        }
+
         const GlyphMetrics* m = atlas.get_or_rasterize(static_cast<FT_ULong>(codepoint));
         if (!m) {
             continue;
@@ -56,13 +68,15 @@ std::vector<GlyphQuad> lay_out(
             q.uv_y0 = m->uv_y0;
             q.uv_x1 = m->uv_x1;
             q.uv_y1 = m->uv_y1;
-            quads.push_back(q);
+            out.quads.push_back(q);
         }
 
         pen_x += static_cast<float>(m->advance_x);
     }
 
-    return quads;
+    out.final_pen_x = pen_x;
+    out.final_pen_y = pen_y;
+    return out;
 }
 
 } // namespace MayaFlux::Portal::Text
