@@ -1,20 +1,21 @@
 #include "Text.hpp"
 
-#include "FontFace.hpp"
 #include "GlyphAtlas.hpp"
 #include "TypeFaceFoundry.hpp"
 
 #include "MayaFlux/Transitive/Platform/FontDiscovery.hpp"
 
+#include "MayaFlux/Core/GlobalGraphicsInfo.hpp"
+
 #include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux::Portal::Text {
-// remove:
+
 namespace {
     bool g_initialized {};
 }
 
-bool initialize()
+bool initialize(std::optional<Core::TextConfig> config)
 {
     if (g_initialized) {
         MF_WARN(Journal::Component::Portal, Journal::Context::API,
@@ -29,6 +30,17 @@ bool initialize()
         MF_ERROR(Journal::Component::Portal, Journal::Context::API,
             "Failed to initialize TypeFaceFoundry");
         return false;
+    }
+
+    if (config) {
+        const auto& [family, style, pixel_size, atlas_size] = *config;
+        if (!set_default_font(family, style, pixel_size, atlas_size)) {
+            MF_ERROR(Journal::Component::Portal, Journal::Context::Init,
+                "Failed to set default font '{}{}{}'", family, style.empty() ? "" : " ", style);
+        }
+    } else {
+        MF_INFO(Journal::Component::Portal, Journal::Context::API,
+            "No default font configured for Portal::Text");
     }
 
     g_initialized = true;

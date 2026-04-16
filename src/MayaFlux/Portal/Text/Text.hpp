@@ -1,5 +1,9 @@
 #pragma once
 
+namespace MayaFlux::Core {
+struct TextConfig;
+}
+
 namespace MayaFlux::Portal::Text {
 
 class GlyphAtlas;
@@ -12,7 +16,7 @@ class GlyphAtlas;
  *
  * @return true on success.
  */
-MAYAFLUX_API bool initialize();
+MAYAFLUX_API bool initialize(std::optional<Core::TextConfig> config);
 
 /**
  * @brief Shutdown Portal::Text.

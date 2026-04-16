@@ -9,6 +9,7 @@
 #include "MayaFlux/Vruta/Routine.hpp"
 
 #include "MayaFlux/Portal/Graphics/Graphics.hpp"
+#include "MayaFlux/Portal/Text/Text.hpp"
 
 namespace MayaFlux::Core {
 
@@ -62,6 +63,8 @@ void GraphicsSubsystem::initialize(SubsystemProcessingHandle& handle)
     }
 
     initialize_graphics_portal();
+
+    Portal::Text::initialize(m_graphics_config.text_config);
 
     m_is_ready = true;
 
@@ -384,6 +387,8 @@ void GraphicsSubsystem::shutdown()
     stop();
 
     teardown_windows();
+
+    Portal::Text::shutdown();
 
     Portal::Graphics::shutdown();
 

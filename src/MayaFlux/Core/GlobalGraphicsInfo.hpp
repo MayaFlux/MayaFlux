@@ -35,16 +35,14 @@ struct MAYAFLUX_API GraphicsBackendInfo {
         CONSERVATIVE, ///< Minimize allocations
         BALANCED, ///< Balance speed and memory
         AGGRESSIVE ///< Maximize performance
-    } memory_strategy
-        = MemoryStrategy::BALANCED;
+    } memory_strategy = MemoryStrategy::BALANCED;
 
     /** @brief Command buffer pooling strategy */
     enum class CommandPooling : uint8_t {
         PER_THREAD, ///< One pool per thread
         SHARED, ///< Shared pool
         PER_QUEUE ///< One pool per queue family
-    } command_pooling
-        = CommandPooling::PER_THREAD;
+    } command_pooling = CommandPooling::PER_THREAD;
 
     /** @brief Maximum number of frames in flight (GPU pipelining) */
     uint32_t max_frames_in_flight = 2;
@@ -60,8 +58,7 @@ struct MAYAFLUX_API GraphicsBackendInfo {
         RUNTIME, ///< Compile at runtime
         PRECOMPILED, ///< Use pre-compiled SPIR-V
         CACHED ///< Cache compiled shaders
-    } shader_compilation
-        = ShaderCompilation::CACHED;
+    } shader_compilation = ShaderCompilation::CACHED;
 
     /** @brief Shader cache directory (if caching enabled) */
     std::filesystem::path shader_cache_dir = "cache/shaders";
@@ -204,6 +201,33 @@ struct GlfwPreInitConfig {
     bool headless {};
 };
 
+/**
+ * @struct TextConfig
+ * @brief Default font configuration for Portal::Text.
+ *
+ * When present, GraphicsSubsystem initializes Portal::Text and attempts to
+ * load the specified font as the system default.  Users may call
+ * Portal::Text::set_default_font() at any time after initialization to
+ * replace or augment this.
+ *
+ * When absent, Portal::Text is still initialized but no default atlas is
+ * created; any call to InkPress that requires a default atlas will log an
+ * error until the user sets one explicitly.
+ */
+struct TextConfig {
+    /** @brief Font family name forwarded to Platform::find_font(). */
+    std::string family;
+
+    /** @brief Optional style hint (e.g. "Regular", "Bold"). */
+    std::string style;
+
+    /** @brief Glyph rasterization height in pixels. */
+    uint32_t pixel_size { 24 };
+
+    /** @brief Atlas texture dimension (power of two). */
+    uint32_t atlas_size { 512 };
+};
+
 struct MAYAFLUX_API GlobalGraphicsConfig {
     /** @brief Pre-initialization configuration for GLFW */
     GlfwPreInitConfig glfw_preinit_config;
@@ -247,6 +271,19 @@ struct MAYAFLUX_API GlobalGraphicsConfig {
 
     /** @brief Selected graphics API for rendering */
     GraphicsApi requested_api = GraphicsApi::VULKAN;
+
+    /** @brief Default font for Portal::Text. */
+    TextConfig text_config {
+#if defined(MAYAFLUX_PLATFORM_LINUX)
+        "sans-serif", "", 24, 512
+#elif defined(MAYAFLUX_PLATFORM_MACOS)
+        "Helvetica Neue", "", 24, 512
+#elif defined(MAYAFLUX_PLATFORM_WINDOWS)
+        "Segoe UI", "", 24, 512
+#else
+        "sans-serif", "", 24, 512
+#endif
+    };
 };
 
 //==============================================================================
