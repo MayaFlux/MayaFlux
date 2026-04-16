@@ -190,19 +190,12 @@ bool repress(
 
     const bool exceeds = result->w > buf_w || result->h > buf_h;
 
-    if (exceeds && policy == RedrawPolicy::Strict) {
-        MF_WARN(Journal::Component::Portal, Journal::Context::API,
-            "repress: text {}x{} exceeds buffer {}x{} (Strict)",
-            result->w, result->h, buf_w, buf_h);
-        return false;
-    }
-
-    if (exceeds && policy == RedrawPolicy::Grow) {
+    if (exceeds && policy == RedrawPolicy::Fit) {
         target->resize_texture(result->w, result->h);
         target->set_pixel_data(result->pixels.data(), result->pixels.size());
 
         MF_DEBUG(Journal::Component::Portal, Journal::Context::API,
-            "repress: grew buffer to {}x{}", result->w, result->h);
+            "repress: fit buffer to {}x{}", result->w, result->h);
         return true;
     }
 

@@ -7,9 +7,8 @@ namespace MayaFlux::Portal::Text {
  * @brief Policy controlling TextBuffer reuse behaviour in repress().
  */
 enum class RedrawPolicy : uint8_t {
-    Strict, ///< Clear before compositing. Return false if new text exceeds buffer bounds.
-    Clear, ///< Clear before compositing. Clip text silently to buffer bounds.
-    Grow ///< Clear before compositing. Reallocate buffer if new text exceeds bounds.
+    Clip, ///< Replace content. Truncate to existing buffer bounds if text exceeds them.
+    Fit ///< Replace content. Reallocate GPU texture if text exceeds existing bounds.
 };
 
 /**
@@ -54,7 +53,7 @@ MAYAFLUX_API bool repress(
     const std::shared_ptr<Buffers::TextBuffer>& target,
     std::string_view text,
     glm::vec4 color = { 1.F, 1.F, 1.F, 1.F },
-    RedrawPolicy policy = RedrawPolicy::Strict);
+    RedrawPolicy policy = RedrawPolicy::Clip);
 
 /**
  * @brief Re-composite a UTF-8 string into an existing TextBuffer using an explicit atlas.
@@ -71,6 +70,6 @@ MAYAFLUX_API bool repress(
     GlyphAtlas& atlas,
     std::string_view text,
     glm::vec4 color = { 1.F, 1.F, 1.F, 1.F },
-    RedrawPolicy policy = RedrawPolicy::Strict);
+    RedrawPolicy policy = RedrawPolicy::Clip);
 
 } // namespace MayaFlux::Portal::Text
