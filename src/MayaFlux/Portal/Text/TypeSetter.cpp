@@ -10,7 +10,8 @@ LayoutResult lay_out(
     std::string_view text,
     GlyphAtlas& atlas,
     float pen_x,
-    float pen_y)
+    float pen_y,
+    uint32_t wrap_w)
 {
     if (text.empty()) {
         return { .quads = {}, .final_pen_x = pen_x, .final_pen_y = pen_y };
@@ -72,6 +73,11 @@ LayoutResult lay_out(
         }
 
         pen_x += static_cast<float>(m->advance_x);
+
+        if (wrap_w > 0 && static_cast<uint32_t>(std::ceil(pen_x)) > wrap_w) {
+            pen_x = 0.F;
+            pen_y += static_cast<float>(atlas.line_height());
+        }
     }
 
     out.final_pen_x = pen_x;

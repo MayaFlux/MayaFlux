@@ -36,12 +36,15 @@ enum class ImpressResult : uint8_t {
                   of the initial content dimensions. This is a heuristic based on typical UI text update patterns,
                   and is intended to reduce VKImage reallocations and staging buffer uploads on subsequent updates
                   when the content grows moderately. Set to false to allocate a GPU texture with no additional budget.
+ * @param render_bounds_h Hard vertical render bound in pixels. impress() returns Overflow when exceeded.
+ * @param render_bounds_w Hard horizontal render bound in pixels. impress() wraps to next line when exceeded.
  * @return        Initialized TextBuffer, or nullptr on failure.
  */
 [[nodiscard]] MAYAFLUX_API std::shared_ptr<Buffers::TextBuffer> press(
     std::string_view text,
     glm::vec4 color = { 1.F, 1.F, 1.F, 1.F },
-    bool growing = true);
+    bool growing = true,
+    uint32_t render_bounds_h = 720, uint32_t render_bounds_w = 1280);
 
 /**
  * @brief Composite a UTF-8 string into a new TextBuffer with an explicit atlas.
@@ -54,13 +57,16 @@ enum class ImpressResult : uint8_t {
                   of the initial content dimensions. This is a heuristic based on typical UI text update patterns,
                   and is intended to reduce VKImage reallocations and staging buffer uploads on subsequent updates
                   when the content grows moderately. Set to false to allocate a GPU texture with no additional budget.
+ * @param render_bounds_h Hard vertical render bound in pixels. impress() returns Overflow when exceeded.
+ * @param render_bounds_w Hard horizontal render bound in pixels. impress() wraps to next line when exceeded.
  * @return        Initialized TextBuffer, or nullptr on failure.
  */
 [[nodiscard]] MAYAFLUX_API std::shared_ptr<Buffers::TextBuffer> press(
     std::string_view text,
     GlyphAtlas& atlas,
     glm::vec4 color = { 1.F, 1.F, 1.F, 1.F },
-    bool growing = true);
+    bool growing = true,
+    uint32_t render_bounds_h = 720, uint32_t render_bounds_w = 1280);
 
 /**
  * @brief Composite a UTF-8 string into a new TextBuffer with explicit atlas and bounds.
@@ -69,6 +75,8 @@ enum class ImpressResult : uint8_t {
  * @param atlas         GlyphAtlas to source glyph bitmaps from.
  * @param budget_width  Pre-allocated texture width.
  * @param budget_height Pre-allocated texture height.
+ * @param render_bounds_h Hard vertical render bound in pixels.
+ * @param render_bounds_w Hard horizontal render bound in pixels.
  * @param color         RGBA glyph color.
  * @return              Initialized TextBuffer, or nullptr on failure.
  */
@@ -77,6 +85,7 @@ enum class ImpressResult : uint8_t {
     GlyphAtlas& atlas,
     uint32_t budget_width,
     uint32_t budget_height,
+    uint32_t render_bounds_h, uint32_t render_bounds_w,
     glm::vec4 color = { 1.F, 1.F, 1.F, 1.F });
 
 /**

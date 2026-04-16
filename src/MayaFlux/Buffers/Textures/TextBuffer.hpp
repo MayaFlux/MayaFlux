@@ -96,6 +96,29 @@ public:
     }
 
     /**
+     * @brief Hard render bounds. impress() wraps at render_bounds_w and
+     *        returns Overflow when render_bounds_h is exhausted.
+     */
+    void set_render_bounds(uint32_t w, uint32_t h)
+    {
+        m_render_bounds_w = w;
+        m_render_bounds_h = h;
+    }
+
+    [[nodiscard]] uint32_t get_render_bounds_w() const { return m_render_bounds_w; }
+    [[nodiscard]] uint32_t get_render_bounds_h() const { return m_render_bounds_h; }
+
+    /**
+     * @brief Full accumulated text composited into this buffer since the
+     *        last repress(). Seeded by press(), appended by impress(),
+     *        cleared by repress().
+     */
+    [[nodiscard]] const std::string& get_accumulated_text() const { return m_accumulated_text; }
+    void append_accumulated_text(std::string_view s) { m_accumulated_text += s; }
+    void clear_accumulated_text() { m_accumulated_text.clear(); }
+    void set_accumulated_text(std::string_view s) { m_accumulated_text = s; }
+
+    /**
      * @brief Delegates to TextureBuffer::setup_rendering, then enables
      *        streaming mode on the TextureProcessor and alpha blending
      *        on the RenderProcessor.
@@ -112,6 +135,10 @@ private:
 
     uint32_t m_cursor_x {};
     uint32_t m_cursor_y {};
+
+    uint32_t m_render_bounds_w { 1280 };
+    uint32_t m_render_bounds_h { 720 };
+    std::string m_accumulated_text;
 };
 
 } // namespace MayaFlux::Buffers

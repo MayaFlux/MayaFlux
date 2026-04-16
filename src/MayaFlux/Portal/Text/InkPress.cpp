@@ -25,7 +25,8 @@ namespace {
         GlyphAtlas& atlas,
         glm::vec4 color,
         uint32_t max_w = 0,
-        uint32_t max_h = 0)
+        uint32_t max_h = 0,
+        uint32_t wrap_w = 0)
     {
         const std::vector<GlyphQuad> quads = lay_out(text, atlas).quads;
         if (quads.empty()) {
@@ -80,6 +81,7 @@ namespace {
                 if (gy + row >= dst_h) {
                     break;
                 }
+
                 const uint8_t* src_row = src_pixels.data()
                     + static_cast<size_t>((src_y + row) * atlas_w) + src_x;
                 uint8_t* dst_row = dst_pixels.data()
@@ -102,13 +104,11 @@ namespace {
         }
 
         CompositeResult result;
-        const auto last_x = static_cast<uint32_t>(std::ceil(quads.back().x1 - min_x));
         result.w = dst_w;
         result.h = dst_h;
         result.baseline_y = static_cast<uint32_t>(std::ceil(-min_y));
-        result.cursor_x = last_x;
+        result.cursor_x = static_cast<uint32_t>(std::ceil(quads.back().x1 - min_x));
         result.pixels.assign(dst_pixels.begin(), dst_pixels.end());
-
         return result;
     }
 
@@ -118,18 +118,16 @@ namespace {
     std::shared_ptr<Buffers::TextBuffer> press_from_result(
         const CompositeResult& result,
         uint32_t budget_width,
-        uint32_t budget_height)
+        uint32_t budget_height,
+        std::string_view original_text,
+        uint32_t render_bounds_w,
+        uint32_t render_bounds_h)
     {
         const bool has_budget = budget_width > 0 || budget_height > 0;
 
         if (has_budget) {
-            if (budget_width < result.w || budget_height < result.h) {
-                MF_WARN(Journal::Component::Portal, Journal::Context::API,
-                    "press: budget {}x{} smaller than content {}x{}, clamping",
-                    budget_width, budget_height, result.w, result.h);
-                budget_width = std::max(budget_width, result.w);
-                budget_height = std::max(budget_height, result.h);
-            }
+            budget_width = std::max(budget_width, result.w);
+            budget_height = std::max(budget_height, result.h);
 
             const size_t budget_bytes = static_cast<size_t>(budget_width) * budget_height * 4;
             std::vector<uint8_t> pixels(budget_bytes, 0);
@@ -147,13 +145,15 @@ namespace {
                 pixels.data());
 
             buffer->set_budget(budget_width, budget_height);
-
+            buffer->set_render_bounds(render_bounds_w, render_bounds_h);
+            buffer->set_accumulated_text(original_text);
             buffer->get_cursor_x() = result.cursor_x;
             buffer->get_cursor_y() = result.h;
 
             MF_DEBUG(Journal::Component::Portal, Journal::Context::API,
-                "press: {}x{} content in {}x{} budget",
-                result.w, result.h, budget_width, budget_height);
+                "press: {}x{} content in {}x{} budget, render bounds {}x{}",
+                result.w, result.h, budget_width, budget_height,
+                render_bounds_w, render_bounds_h);
 
             return buffer;
         }
@@ -164,7 +164,7 @@ namespace {
             result.pixels.data());
 
         MF_DEBUG(Journal::Component::Portal, Journal::Context::API,
-            "press: {}x{} TextBuffer", result.w, result.h);
+            "press: {}x{} TextBuffer (no budget)", result.w, result.h);
 
         return buffer;
     }
@@ -196,8 +196,9 @@ namespace {
 
             for (uint32_t row = 0; row < gh; ++row) {
                 const int32_t dst_row = gy + static_cast<int32_t>(row);
-                if (dst_row < 0 || static_cast<uint32_t>(dst_row) >= buf_h)
+                if (dst_row < 0 || static_cast<uint32_t>(dst_row) >= buf_h) {
                     continue;
+                }
 
                 const uint8_t* src_row = atlas_pixels.data()
                     + static_cast<size_t>(src_y + row) * atlas_size + src_x;
@@ -206,8 +207,9 @@ namespace {
 
                 for (uint32_t col = 0; col < gw; ++col) {
                     const int32_t dst_col = gx + static_cast<int32_t>(col);
-                    if (dst_col < 0 || static_cast<uint32_t>(dst_col) >= buf_w)
+                    if (dst_col < 0 || static_cast<uint32_t>(dst_col) >= buf_w) {
                         continue;
+                    }
 
                     const uint8_t coverage = src_row[col];
                     const uint8_t alpha = static_cast<uint8_t>(
@@ -235,7 +237,9 @@ namespace {
 std::shared_ptr<Buffers::TextBuffer> press(
     std::string_view text,
     glm::vec4 color,
-    bool growing)
+    bool growing,
+    uint32_t render_bounds_w,
+    uint32_t render_bounds_h)
 {
     GlyphAtlas* atlas = TypeFaceFoundry::instance().get_default_glyph_atlas();
     if (!atlas) {
@@ -243,14 +247,16 @@ std::shared_ptr<Buffers::TextBuffer> press(
             "press: no default atlas -- call set_default_font first");
         return nullptr;
     }
-    return press(text, *atlas, color, growing);
+    return press(text, *atlas, color, growing, render_bounds_w, render_bounds_h);
 }
 
 std::shared_ptr<Buffers::TextBuffer> press(
     std::string_view text,
     GlyphAtlas& atlas,
     glm::vec4 color,
-    bool growing)
+    bool growing,
+    uint32_t render_bounds_w,
+    uint32_t render_bounds_h)
 {
     const auto result = composite(text, atlas, color);
     if (!result) {
@@ -259,10 +265,14 @@ std::shared_ptr<Buffers::TextBuffer> press(
         return nullptr;
     }
 
-    const uint32_t bw = growing ? result->w * k_grow_width_multiplier : 0;
-    const uint32_t bh = growing ? result->h * k_grow_height_multiplier : 0;
+    const uint32_t bw = growing
+        ? std::min(result->w * k_grow_width_multiplier, render_bounds_w)
+        : 0;
+    const uint32_t bh = growing
+        ? std::min(result->h * k_grow_height_multiplier, render_bounds_h)
+        : 0;
 
-    return press_from_result(*result, bw, bh);
+    return press_from_result(*result, bw, bh, text, render_bounds_w, render_bounds_h);
 }
 
 std::shared_ptr<Buffers::TextBuffer> press(
@@ -270,6 +280,8 @@ std::shared_ptr<Buffers::TextBuffer> press(
     GlyphAtlas& atlas,
     uint32_t budget_width,
     uint32_t budget_height,
+    uint32_t render_bounds_w,
+    uint32_t render_bounds_h,
     glm::vec4 color)
 {
     const auto result = composite(text, atlas, color);
@@ -279,7 +291,8 @@ std::shared_ptr<Buffers::TextBuffer> press(
         return nullptr;
     }
 
-    return press_from_result(*result, budget_width, budget_height);
+    return press_from_result(*result, budget_width, budget_height, text,
+        render_bounds_w, render_bounds_h);
 }
 
 // =========================================================================
@@ -313,6 +326,8 @@ bool repress(
             "repress: target buffer is null");
         return false;
     }
+
+    target->clear_accumulated_text();
 
     const uint32_t buf_w = target->get_budget_width();
     const uint32_t buf_h = target->get_budget_height();
@@ -357,6 +372,10 @@ bool repress(
     return true;
 }
 
+// =========================================================================
+// impress
+// =========================================================================
+
 ImpressResult impress(
     const std::shared_ptr<Buffers::TextBuffer>& target,
     std::string_view text,
@@ -383,12 +402,14 @@ ImpressResult impress(
         return ImpressResult::Overflow;
     }
 
-    const uint32_t buf_w = target->get_budget_width();
-    const uint32_t buf_h = target->get_budget_height();
+    const uint32_t wrap_w = target->get_render_bounds_w();
+    const uint32_t wrap_h = target->get_render_bounds_h();
     const auto pen_x = static_cast<float>(target->get_cursor_x());
     const auto pen_y = static_cast<float>(target->get_cursor_y());
 
-    const LayoutResult layout = lay_out(text, atlas, pen_x, pen_y);
+    target->append_accumulated_text(text);
+
+    const LayoutResult layout = lay_out(text, atlas, pen_x, pen_y, wrap_w);
     const std::vector<GlyphQuad>& quads = layout.quads;
 
     if (quads.empty()) {
@@ -397,32 +418,43 @@ ImpressResult impress(
         return ImpressResult::Ok;
     }
 
+    if (static_cast<uint32_t>(std::ceil(layout.final_pen_y)) > wrap_h) {
+        return ImpressResult::Overflow;
+    }
+
+    const uint32_t buf_w = target->get_budget_width();
+    const uint32_t buf_h = target->get_budget_height();
+
     if (static_cast<uint32_t>(std::ceil(layout.final_pen_x)) > buf_w) {
-        const auto line_h = static_cast<float>(atlas.line_height());
-        const float new_pen_y = layout.final_pen_y + line_h;
+        const std::string accumulated = target->get_accumulated_text();
+        const uint32_t new_w = wrap_w;
+        const uint32_t new_h = std::min(
+            static_cast<uint32_t>(std::ceil(layout.final_pen_y)) * k_grow_height_multiplier,
+            wrap_h);
 
-        if (static_cast<uint32_t>(std::ceil(new_pen_y + line_h)) > buf_h) {
-            const auto result = composite(text, atlas, color);
-            if (!result) {
-                return ImpressResult::Overflow;
+        target->resize_texture(new_w, new_h);
+        target->set_budget(new_w, new_h);
+
+        const auto full_result = composite(accumulated, atlas,
+            { 1.F, 1.F, 1.F, 1.F }, new_w, new_h, wrap_w);
+
+        if (full_result) {
+            const size_t buf_bytes = static_cast<size_t>(new_w) * new_h * 4;
+            std::vector<uint8_t> pixels(buf_bytes, 0);
+            const uint32_t copy_h = std::min(full_result->h, new_h);
+            for (uint32_t row = 0; row < copy_h; ++row) {
+                std::memcpy(
+                    pixels.data() + static_cast<size_t>(row) * new_w * 4,
+                    full_result->pixels.data() + static_cast<size_t>(row) * full_result->w * 4,
+                    static_cast<size_t>(std::min(full_result->w, new_w)) * 4);
             }
-
-            target->resize_texture(result->w, result->h);
-            target->set_budget(result->w, result->h);
-            target->set_pixel_data(result->pixels.data(), result->pixels.size());
-            target->get_cursor_x() = result->w;
-            target->get_cursor_y() = result->baseline_y;
-
-            MF_DEBUG(Journal::Component::Portal, Journal::Context::API,
-                "impress: vertical overflow, reset to {}x{} budget, cursor ({},{})",
-                result->w, result->h, result->w, result->baseline_y);
-
-            return ImpressResult::Overflow;
+            target->set_pixel_data(pixels.data(), buf_bytes);
+            target->get_cursor_x() = full_result->cursor_x;
+            target->get_cursor_y() = full_result->h;
+            target->set_accumulated_text(accumulated);
         }
 
-        target->get_cursor_x() = 0;
-        target->get_cursor_y() = static_cast<uint32_t>(std::ceil(new_pen_y));
-        return impress(target, atlas, text, color);
+        return ImpressResult::Ok;
     }
 
     auto& pixel_data = target->get_pixel_data_mutable();
@@ -433,8 +465,9 @@ ImpressResult impress(
     target->get_cursor_y() = static_cast<uint32_t>(std::ceil(layout.final_pen_y));
 
     MF_DEBUG(Journal::Component::Portal, Journal::Context::API,
-        "impress: '{}' at ({},{}) -> cursor now ({},{})",
-        std::string(text), static_cast<uint32_t>(pen_x), static_cast<uint32_t>(pen_y),
+        "impress: '{}' at ({},{}) -> cursor ({},{})",
+        std::string(text),
+        static_cast<uint32_t>(pen_x), static_cast<uint32_t>(pen_y),
         target->get_cursor_x(), target->get_cursor_y());
 
     return ImpressResult::Ok;

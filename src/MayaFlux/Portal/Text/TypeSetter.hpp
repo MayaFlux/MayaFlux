@@ -58,6 +58,7 @@ struct LayoutResult {
     std::string_view text,
     GlyphAtlas& atlas,
     float pen_x = 0.F,
-    float pen_y = 0.F);
+    float pen_y = 0.F,
+    uint32_t wrap_w = 0);
 
 } // namespace MayaFlux::Portal::Text
