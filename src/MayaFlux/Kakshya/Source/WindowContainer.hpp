@@ -39,6 +39,13 @@ namespace MayaFlux::Kakshya {
  *   - get_region_data() crops directly from processed_data[0] if it is
  *     non-empty; returns empty if no readback has occurred yet.
  *   - The container never calls process() itself — callers drive the chain.
+ * GPU bridge:
+ *   - to_image() uploads processed_data[0] to a new VKImage via TextureLoom.
+ *   - to_image(staging) does the same reusing a caller-supplied staging buffer
+ *     to avoid per-call VkBuffer allocation in per-frame paths.
+ *   - region_to_image() performs a CPU-side crop then uploads the result.
+ *   - get_image_format() returns the live swapchain format as a Portal
+ *     ImageFormat, suitable for constructing a matching TextureBuffer.
  *
  * Write semantics (compositing) are deferred to a future processor.
  */

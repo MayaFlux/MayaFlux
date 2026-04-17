@@ -25,8 +25,10 @@ namespace MayaFlux::Kakshya {
  *
  * Processing contract (process()):
  *   - Expects processed_data[0] to hold the full-surface readback as a
- *     std::vector<uint8_t> placed there by the default processor
- *     (e.g. WindowAccessProcessor) before the chain runs.
+ *     std::vector<uint8_t|uint16_t|uint32_t|float> placed there by the
+ *     default processor (e.g. WindowAccessProcessor) before the chain runs.
+ *     The element type is determined by the live swapchain format; all four
+ *     pixel-bearing types are handled natively without conversion.
  *   - Replaces processed_data with one DataVariant per active region,
  *     in group-iteration order, then region-insertion order within each group.
  *   - Each DataVariant carries the attributes from its OrganizedRegion so
