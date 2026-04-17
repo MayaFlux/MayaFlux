@@ -90,6 +90,30 @@ MAYAFLUX_API void rasterize_quads(
     uint32_t buf_h);
 
 /**
+ * @brief Rasterize a mutated quad span into an existing TextBuffer.
+ *
+ * Clears the buffer's pixel region, rasterizes @p quads via rasterize_quads(),
+ * and marks the buffer dirty for GPU upload. The scratch pixel buffer is
+ * thread-local and reused across calls, so no heap allocation occurs after
+ * the first call at a given buffer size.
+ *
+ * Typical usage:
+ * @code
+ * auto layout = Portal::Text::create_layout(text, 0.F, 0.F, wrap_w);
+ * // ... per-quad mutation ...
+ * Portal::Text::ink_quads(text_buf, layout.quads, color);
+ * @endcode
+ *
+ * @param target  TextBuffer to write into. Dimensions are read from the buffer.
+ * @param quads   Quads produced by create_layout(), optionally mutated by the caller.
+ * @param color   RGBA glyph color in [0, 1].
+ */
+MAYAFLUX_API void ink_quads(
+    const std::shared_ptr<Buffers::TextBuffer>& target,
+    std::span<const GlyphQuad> quads,
+    glm::vec4 color);
+
+/**
  * @brief Composite a UTF-8 string into a new TextBuffer.
  *
  * The returned TextBuffer has width == params.render_bounds.x and height

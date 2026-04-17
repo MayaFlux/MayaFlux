@@ -200,6 +200,33 @@ void rasterize_quads(
     }
 }
 
+void ink_quads(
+    const std::shared_ptr<Buffers::TextBuffer>& target,
+    std::span<const GlyphQuad> quads,
+    glm::vec4 color)
+{
+    if (!target) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::API,
+            "ink_quads: target buffer is null");
+        return;
+    }
+
+    GlyphAtlas* atlas = resolve_atlas(nullptr);
+    if (!atlas) {
+        return;
+    }
+
+    const uint32_t buf_w = target->get_budget_width();
+    const uint32_t buf_h = target->get_budget_height();
+    const size_t buf_bytes = static_cast<size_t>(buf_w) * buf_h * 4;
+
+    thread_local std::vector<uint8_t> pixels;
+    pixels.assign(buf_bytes, 0);
+
+    rasterize_quads(quads, *atlas, color, pixels.data(), buf_w, buf_h);
+    target->set_pixel_data(pixels.data(), buf_bytes);
+}
+
 // =========================================================================
 // press
 // =========================================================================
