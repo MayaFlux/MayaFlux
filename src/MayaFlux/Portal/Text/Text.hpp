@@ -83,7 +83,7 @@ MAYAFLUX_API bool set_default_font(
  * @return        LayoutResult containing quads and final pen position.
  * @pre           set_default_font() must have been called successfully.
  */
-[[nodiscard]] MAYAFLUX_API LayoutResult create_layout(
+[[nodiscard]] MAYAFLUX_API std::shared_ptr<LayoutResult> create_layout(
     std::string_view text,
     float pen_x = 0.F,
     float pen_y = 0.F,

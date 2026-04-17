@@ -101,7 +101,7 @@ MAYAFLUX_API void rasterize_quads(
  * @code
  * auto layout = Portal::Text::create_layout(text, 0.F, 0.F, wrap_w);
  * // ... per-quad mutation ...
- * Portal::Text::ink_quads(text_buf, layout.quads, color);
+ * Portal::Text::ink_quads(text_buf, layout->quads, color);
  * @endcode
  *
  * @param target  TextBuffer to write into. Dimensions are read from the buffer.

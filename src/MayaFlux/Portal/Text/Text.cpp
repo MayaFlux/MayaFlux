@@ -49,13 +49,13 @@ bool initialize(std::optional<Core::TextConfig> config)
     return true;
 }
 
-LayoutResult create_layout(
+std::shared_ptr<LayoutResult> create_layout(
     std::string_view text,
     float pen_x,
     float pen_y,
     uint32_t wrap_w)
 {
-    return lay_out(text, get_default_atlas(), pen_x, pen_y, wrap_w);
+    return std::make_shared<LayoutResult>(lay_out(text, get_default_atlas(), pen_x, pen_y, wrap_w));
 }
 
 void shutdown()
