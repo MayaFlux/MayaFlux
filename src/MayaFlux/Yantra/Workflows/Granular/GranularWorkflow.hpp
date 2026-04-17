@@ -12,6 +12,7 @@
 
 namespace MayaFlux::Kakshya {
 class SoundFileContainer;
+class DynamicSoundStream;
 }
 
 namespace MayaFlux::Yantra::Granular {
@@ -40,11 +41,21 @@ using GranularContainerDatum = Datum<std::shared_ptr<Kakshya::SignalSourceContai
  *
  * CONTAINER_ADDITIVE — overlap-add reconstruct: grains accumulated at hop_size
  *                      intervals with optional per-grain tapering.
+
+ * STREAM    — appends a reconstruct rule that stitches sorted grains into
+ *               a DynamicSoundStream. Use for sampling pipelines, StreamSlicing
+ *                and similar real-time workflows
+ *
+ * STREAM_ADDITIVE — overlap-add reconstruct into a DynamicSoundStream.
+ *                   grains accumulated at hop_size intervals with optional per-grain tapering.
  */
 enum class GranularOutput : uint8_t {
     REGION_GROUP,
     CONTAINER,
-    CONTAINER_ADDITIVE
+    CONTAINER_ADDITIVE,
+    STREAM,
+    STREAM_ADDITIVE
+
 };
 
 /**
@@ -80,6 +91,12 @@ extern const ComputationGrammar::Rule::Executor reconstruct_grains;
 
 /// @brief Grammar rule executor for additive grain reconstruction.
 extern const ComputationGrammar::Rule::Executor reconstruct_grains_additive;
+
+/// @brief Grammar rule executor — concatenative reconstruct into DynamicSoundStream.
+extern const ComputationGrammar::Rule::Executor reconstruct_grains_stream;
+
+/// @brief Grammar rule executor — OLA reconstruct into DynamicSoundStream.
+extern const ComputationGrammar::Rule::Executor reconstruct_grains_additive_stream;
 
 // ============================================================================
 // Concrete operations
@@ -460,6 +477,43 @@ template <ComputeData InputType, ComputeData OutputType>
     AttributeExecutor executor,
     const GranularConfig& config = {},
     GranularOutput output = GranularOutput::CONTAINER);
+
+/**
+ * @brief Offline granular pipeline terminating in a DynamicSoundStream.
+ *
+ * Reconstructed grains are written channel-by-channel via
+ * DynamicSoundStream::write_frames. The result is ready for direct use
+ * as a SamplingPipeline source.
+ *
+ * @param container     Source signal data.
+ * @param analysis_type Attribution category.
+ * @param config        Pipeline scalar parameters.
+ * @param qualifier     Scalar to extract. Empty uses type default.
+ * @param output        STREAM for concatenative, STREAM_ADDITIVE for OLA.
+ * @return Populated DynamicSoundStream.
+ */
+[[nodiscard]] MAYAFLUX_API std::shared_ptr<Kakshya::DynamicSoundStream> process_to_stream(
+    const std::shared_ptr<Kakshya::SignalSourceContainer>& container,
+    AnalysisType analysis_type,
+    const GranularConfig& config = {},
+    const std::string& qualifier = {},
+    GranularOutput output = GranularOutput::STREAM);
+
+/**
+ * @brief Offline granular pipeline using a span-level attribution lambda,
+ *        terminating in a DynamicSoundStream.
+ *
+ * @param container Source signal data.
+ * @param executor  Lambda receiving grain samples and context, returning a scalar.
+ * @param config    Pipeline scalar parameters.
+ * @param output    STREAM for concatenative, STREAM_ADDITIVE for OLA.
+ * @return Populated DynamicSoundStream.
+ */
+[[nodiscard]] MAYAFLUX_API std::shared_ptr<Kakshya::DynamicSoundStream> process_to_stream(
+    const std::shared_ptr<Kakshya::SignalSourceContainer>& container,
+    AttributeExecutor executor,
+    const GranularConfig& config = {},
+    GranularOutput output = GranularOutput::STREAM);
 
 /**
  * @brief Async offline granular pipeline (AnalysisType path).
