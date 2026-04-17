@@ -20,6 +20,7 @@ struct GlyphQuad {
     float x1, y1; ///< Bottom-right pixel position.
     float uv_x0, uv_y0; ///< Top-left UV in atlas space.
     float uv_x1, uv_y1; ///< Bottom-right UV in atlas space.
+    uint32_t codepoint { 0 }; ///< Unicode codepoint that produced this quad.
 };
 
 /**

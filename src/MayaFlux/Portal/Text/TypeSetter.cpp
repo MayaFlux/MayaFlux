@@ -68,6 +68,7 @@ LayoutResult lay_out(
             q.uv_x0 = m->uv_x0;
             q.uv_y0 = m->uv_y0;
             q.uv_x1 = m->uv_x1;
+            q.codepoint = static_cast<uint32_t>(codepoint);
             q.uv_y1 = m->uv_y1;
             out.quads.push_back(q);
         }
