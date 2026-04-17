@@ -93,9 +93,12 @@ bool set_default_font(const std::string& path, uint32_t pixel_size, uint32_t atl
     return TypeFaceFoundry::instance().set_default_font(path, pixel_size, atlas_size);
 }
 
-GlyphAtlas* get_atlas()
+GlyphAtlas& get_default_atlas()
 {
-    return TypeFaceFoundry::instance().get_default_glyph_atlas();
+    GlyphAtlas* atlas = TypeFaceFoundry::instance().get_default_glyph_atlas();
+    MF_ASSERT(Journal::Component::Portal, Journal::Context::API,
+        atlas != nullptr, "call set_default_font before get_default_atlas");
+    return *atlas;
 }
 
 } // namespace MayaFlux::Portal::Text
