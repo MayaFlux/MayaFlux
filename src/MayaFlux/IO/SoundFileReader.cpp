@@ -96,11 +96,12 @@ bool SoundFileReader::open(const std::string& filepath, FileReadOptions options)
     }
     clear_error();
 
-    m_filepath = filepath;
+    auto resolved = resolve_path(filepath);
+    m_filepath = resolved;
     m_options = options;
 
     auto demux = std::make_shared<FFmpegDemuxContext>();
-    if (!demux->open(filepath)) {
+    if (!demux->open(resolved)) {
         set_error(demux->last_error());
         return false;
     }
@@ -438,7 +439,7 @@ bool SoundFileReader::seek_internal(
 
     int64_t ts = av_rescale_q(
         static_cast<int64_t>(frame_position),
-        AVRational { 1, static_cast<int>(audio->sample_rate) },
+        AVRational { .num = 1, .den = static_cast<int>(audio->sample_rate) },
         stream->time_base);
 
     if (!demux->seek(audio->stream_index, ts)) {

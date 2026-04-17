@@ -248,7 +248,9 @@ bool ModelReader::open(const std::string& filepath, FileReadOptions /*options*/)
 {
     close();
 
-    if (!std::filesystem::exists(filepath)) {
+    auto resolved = resolve_path(filepath);
+
+    if (!std::filesystem::exists(resolved)) {
         set_error("File not found: " + filepath);
         MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
             "ModelReader: {}", m_last_error);
@@ -262,7 +264,7 @@ bool ModelReader::open(const std::string& filepath, FileReadOptions /*options*/)
         | aiProcess_JoinIdenticalVertices
         | aiProcess_SortByPType;
 
-    m_impl->scene = m_impl->importer.ReadFile(filepath, flags);
+    m_impl->scene = m_impl->importer.ReadFile(resolved, flags);
 
     if (!m_impl->scene
         || (m_impl->scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE)
@@ -277,7 +279,7 @@ bool ModelReader::open(const std::string& filepath, FileReadOptions /*options*/)
     m_is_open = true;
     MF_INFO(Journal::Component::IO, Journal::Context::FileIO,
         "ModelReader: opened '{}' — {} meshes, {} materials",
-        std::filesystem::path(filepath).filename().string(),
+        std::filesystem::path(resolved).filename().string(),
         m_impl->scene->mNumMeshes,
         m_impl->scene->mNumMaterials);
 

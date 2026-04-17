@@ -72,11 +72,12 @@ bool VideoFileReader::open(const std::string& filepath, FileReadOptions options)
 {
     close();
 
-    m_filepath = filepath;
+    auto resolved = resolve_path(filepath);
+    m_filepath = resolved;
     m_options = options;
 
     auto demux = std::make_shared<FFmpegDemuxContext>();
-    if (!demux->open(filepath)) {
+    if (!demux->open(resolved)) {
         set_error(demux->last_error());
         return false;
     }
