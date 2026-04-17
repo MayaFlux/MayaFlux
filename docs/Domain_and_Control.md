@@ -162,7 +162,7 @@ The engine's NodeGraphManager automatically:
 - Manages root node hierarchies across different processing tokens
 - Coordinates timing and execution across multiple domains
 
-When initializing using vega, `vega.Sine()[0] | Audio`, the instruction is to create node -> get default NodeGraphManger from engine -> register it for Channel 0's root -> at `Domain::Audio`, which resolves to `Nodes::ProcessingToken::AUDIO_RATE`
+When initializing using vega, `vega.Sine() | Audio[0]`, the instruction is to create node -> get default NodeGraphManger from engine -> register it for Channel 0's root -> at `Domain::Audio`, which resolves to `Nodes::ProcessingToken::AUDIO_RATE`
 
 #### Explicit user control
 
