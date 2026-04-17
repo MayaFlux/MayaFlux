@@ -87,7 +87,7 @@ struct DomainSpec {
  * @brief Intermediate produced by CreationProxy::operator[].
  *
  * Carries the object and channel index until operator| supplies the domain.
- * Removed next release along with CreationProxy.
+ * Removed in 0.3.1 along with CreationProxy.
  */
 template <typename T>
 struct PendingChannel {
@@ -99,7 +99,7 @@ struct PendingChannel {
  * @brief Deprecated wrapper returned by Creator methods in 0.3.
  *
  * Exists solely to keep object[ch] | Domain compiling with a loud warning.
- * Removed in 0.4. Use the pipe syntax directly: object | Audio[ch].
+ * Removed in 0.3.1. Use the pipe syntax directly: object | Audio[ch].
  */
 template <typename T>
 struct CreationProxy : std::shared_ptr<T> {
@@ -110,19 +110,19 @@ struct CreationProxy : std::shared_ptr<T> {
     {
     }
 
-    /** @deprecated Use | Audio[ch] instead of object[ch] | Domain. Removed in 0.4. */
+    /** @deprecated Use | Audio[ch] instead of object[ch] | Domain. Removed in 0.3.1. */
     PendingChannel<T> operator[](uint32_t ch) const
     {
         MF_WARN(Journal::Component::API, Journal::Context::Init,
-            "object[ch] | Domain is deprecated and removed in 0.4 -- use object | Audio[ch] instead");
+            "object[ch] | Domain is deprecated and removed in 0.3.1 -- use object | Audio[ch] instead");
         return { *this, { ch } };
     }
 
-    /** @deprecated Use | Audio[{ch0,ch1,...}] instead of object[{...}] | Domain. Removed in 0.4. */
+    /** @deprecated Use | Audio[{ch0,ch1,...}] instead of object[{...}] | Domain. Removed in 0.3.1. */
     PendingChannel<T> operator[](std::initializer_list<uint32_t> chs) const
     {
         MF_WARN(Journal::Component::API, Journal::Context::Init,
-            "object[{...}] | Domain is deprecated and removed in 0.4 -- use object | Audio[{ch0,ch1,...}] instead");
+            "object[{...}] | Domain is deprecated and removed in 0.3.1 -- use object | Audio[{ch0,ch1,...}] instead");
         return { *this, std::vector<uint32_t>(chs) };
     }
 };
@@ -295,7 +295,7 @@ inline std::shared_ptr<Kakshya::SoundFileContainer> operator|(
 
 // ═══════════════════════════════════════════════════════════════
 // Deprecated bridge: PendingChannel | DomainSpec/CreationContext
-// Produced by CreationProxy::operator[]. Removed in 0.4.
+// Produced by CreationProxy::operator[]. Removed in 0.3.1.
 // ═══════════════════════════════════════════════════════════════
 
 template <typename T>

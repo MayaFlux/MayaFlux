@@ -85,7 +85,9 @@ bool ImageReader::open(const std::string& filepath, FileReadOptions /*options*/)
         return false;
     }
 
-    m_image_data = load(filepath, 4); // Force RGBA
+    auto resolved = resolve_path(filepath);
+
+    m_image_data = load(resolved, 4); // Force RGBA
 
     if (!m_image_data) {
         m_last_error = "Failed to load image data";

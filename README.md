@@ -390,11 +390,11 @@ void rhythm_topology_live()
     auto kick_phasor = vega.Phasor(20.0, 1.0);
     auto kick_env = vega.Polynomial([](double x) { return std::exp(-x * 15.0); });
     kick_env->set_input_node(kick_phasor);
-    auto kick = vega.Sine(55.0)[0] | Audio;
+    auto kick = vega.Sine(55.0) | Audio[0];
     kick->set_amplitude_modulator(kick_env);
 
     auto snare_phasor = vega.Phasor(30.0, 1.0);
-    auto snare_env = vega.Polynomial([](double x) { return std::exp(-x * 25.0); })[1] | Audio;
+    auto snare_env = vega.Polynomial([](double x) { return std::exp(-x * 25.0); }) | Audio[1];
     snare_env->set_input_node(snare_phasor);
     auto snare_noise = vega.Random();
     auto snare = (vega.FIR(snare_noise, std::vector { 0.3, 0.4, 0.3 })) * snare_env;
@@ -403,7 +403,7 @@ void rhythm_topology_live()
     auto hat_phasor = vega.Phasor(50.0, 1.0);
     auto hat_env = vega.Polynomial([](double x) { return std::exp(-x * 50.0); });
     hat_env->set_input_node(hat_phasor);
-    auto hat = vega.Sine(8000.0)[0] | Audio;
+    auto hat = vega.Sine(8000.0) | Audio[0];
     hat->set_amplitude_modulator(hat_env);
 
     auto clap_phasor = vega.Phasor(40.0, 1.0);
@@ -414,7 +414,7 @@ void rhythm_topology_live()
     auto clap = (vega.FIR(vega.Random(), std::vector { 0.1, 0.2, 0.4, 0.2, 0.1 })) * clap_env;
     register_audio_node(clap, 0);
 
-    auto bass = vega.Sine(42.0)[{ 0, 1 }] | Audio;
+    auto bass = vega.Sine(42.0) | Audio[{ 0, 1 }];
     bass->set_amplitude_modulator(vega.Sine(0.15, 0.12));
 
     // === TOPOLOGY ===
@@ -648,11 +648,11 @@ void rhythm_path_live()
     auto kick_phasor = vega.Phasor(20.0, 1.0);
     auto kick_env = vega.Polynomial([](double x) { return std::exp(-x * 15.0); });
     kick_env->set_input_node(kick_phasor);
-    auto kick = vega.Sine(55.0)[0] | Audio;
+    auto kick = vega.Sine(55.0) | Audio[0];
     kick->set_amplitude_modulator(kick_env);
 
     auto snare_phasor = vega.Phasor(30.0, 1.0);
-    auto snare_env = vega.Polynomial([](double x) { return std::exp(-x * 25.0); })[1] | Audio;
+    auto snare_env = vega.Polynomial([](double x) { return std::exp(-x * 25.0); }) | Audio[1];
     snare_env->set_input_node(snare_phasor);
     auto snare = (vega.FIR(vega.Random(), std::vector { 0.3, 0.4, 0.3 })) * snare_env;
     register_audio_node(snare, 1);
@@ -660,7 +660,7 @@ void rhythm_path_live()
     auto hat_phasor = vega.Phasor(50.0, 1.0);
     auto hat_env = vega.Polynomial([](double x) { return std::exp(-x * 50.0); });
     hat_env->set_input_node(hat_phasor);
-    auto hat = vega.Sine(8000.0)[0] | Audio;
+    auto hat = vega.Sine(8000.0) | Audio[0];
     hat->set_amplitude_modulator(hat_env);
 
     auto clap_phasor = vega.Phasor(40.0, 1.0);
@@ -671,7 +671,7 @@ void rhythm_path_live()
     auto clap = (vega.FIR(vega.Random(), std::vector { 0.1, 0.2, 0.4, 0.2, 0.1 })) * clap_env;
     register_audio_node(clap, 0);
 
-    auto bass = vega.Sine(42.0)[{ 0, 1 }] | Audio;
+    auto bass = vega.Sine(42.0) | Audio[{ 0, 1 }];
     bass->set_amplitude_modulator(vega.Sine(0.15, 0.12));
 
     // === PATH (replaces topology) ===
@@ -872,11 +872,11 @@ void rhythm_path_textured()
     auto kick_phasor = vega.Phasor(20.0, 1.0);
     auto kick_env = vega.Polynomial([](double x) { return std::exp(-x * 15.0); });
     kick_env->set_input_node(kick_phasor);
-    auto kick = vega.Sine(55.0)[0] | Audio;
+    auto kick = vega.Sine(55.0) | Audio[0];
     kick->set_amplitude_modulator(kick_env);
 
     auto snare_phasor = vega.Phasor(30.0, 1.0);
-    auto snare_env = vega.Polynomial([](double x) { return std::exp(-x * 25.0); })[1] | Audio;
+    auto snare_env = vega.Polynomial([](double x) { return std::exp(-x * 25.0); }) | Audio[1];
     snare_env->set_input_node(snare_phasor);
     auto snare = (vega.FIR(vega.Random(), std::vector { 0.3, 0.4, 0.3 })) * snare_env;
     register_audio_node(snare, 1);
@@ -884,7 +884,7 @@ void rhythm_path_textured()
     auto hat_phasor = vega.Phasor(50.0, 1.0);
     auto hat_env = vega.Polynomial([](double x) { return std::exp(-x * 50.0); });
     hat_env->set_input_node(hat_phasor);
-    auto hat = vega.Sine(8000.0)[0] | Audio;
+    auto hat = vega.Sine(8000.0) | Audio[0];
     hat->set_amplitude_modulator(hat_env);
 
     auto clap_phasor = vega.Phasor(40.0, 1.0);
@@ -895,7 +895,7 @@ void rhythm_path_textured()
     auto clap = (vega.FIR(vega.Random(), std::vector { 0.1, 0.2, 0.4, 0.2, 0.1 })) * clap_env;
     register_audio_node(clap, 0);
 
-    auto bass = vega.Sine(42.0)[{ 0, 1 }] | Audio;
+    auto bass = vega.Sine(42.0) | Audio[{ 0, 1 }];
     bass->set_amplitude_modulator(vega.Sine(0.15, 0.12));
 
     // === LAYER 1: TEXTURED BACKDROP ===
@@ -1343,7 +1343,7 @@ live_interpreter.initialize();
 
 live_interpreter.eval(R"(
     auto math = vega.Polynomial([](double x){ return x*x*x; });
-    auto node_buffer = vega.NodeBuffer(0, 512, math)[0] | Audio;
+    auto node_buffer = vega.NodeBuffer(0, 512, math) | Audio[0];
 )");
 
 // Modify while running

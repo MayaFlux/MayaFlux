@@ -229,7 +229,7 @@ multiple ways of creating them.
 
 ```cpp
 // Fluent
-auto audio_buf = vega.AudioBuffer()[1] | Audio;
+auto audio_buf = vega.AudioBuffer() | Audio[1];
 auto vk_buf = vega.VKBUffer(64, ::Usage::VERTEX,
                               ::DataModality::VERTEX_COLORS_RGBA) | Graphics;
 
@@ -761,7 +761,7 @@ The power emerges from their compositional relationships:
 ```cpp
 // Data flows through unified transformation architecture
 auto spectral_node = vega.Polynomial({0.1, 0.8, 2.0});
-auto temporal_buffer = vega.AudioBuffer()[0] | Audio;
+auto temporal_buffer = vega.AudioBuffer() | Audio[0];
 auto coordination_routine = Kriya::metro(*scheduler, 0.25, [&]() {
     auto region = container->get_region_data(analysis_region);
     temporal_buffer->apply_processor(spectral_node);

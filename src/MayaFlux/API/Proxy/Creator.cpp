@@ -82,6 +82,8 @@ void register_buffer(const std::shared_ptr<Buffers::Buffer>& buffer, const Creat
             for (size_t i = 1; i < ctx.channels.value().size(); ++i) {
                 clone_buffer_to_channels(audio_buffer, { static_cast<uint32_t>(i) }, token);
             }
+        } else {
+            register_audio_buffer(audio_buffer, audio_buffer->get_channel_id());
         }
         return;
     }
