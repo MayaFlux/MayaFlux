@@ -98,7 +98,9 @@ void TextureProcessor::initialize_gpu_resources()
         return;
     }
 
-    m_texture_buffer->m_gpu_texture = create_gpu_texture();
+    if (!m_texture_buffer->has_texture()) {
+        m_texture_buffer->m_gpu_texture = create_gpu_texture();
+    }
 
     upload_initial_geometry();
 

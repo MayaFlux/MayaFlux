@@ -88,10 +88,12 @@ void WindowAccessProcessor::process(
     auto& processed = container->get_processed_data();
     processed.resize(1);
 
-    DataAccess result = readback_region(
-        window, 0U, 0U, m_width, m_height, processed[0]);
+    readback_region(window, 0U, 0U, m_width, m_height, processed[0]);
 
-    if (result.element_count() == 0) {
+    const bool has_data = std::visit(
+        [](const auto& v) { return !v.empty(); }, processed[0]);
+
+    if (!has_data) {
         MF_RT_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
             "WindowAccessProcessor: readback returned no data for '{}'",
             window->get_create_info().title);
