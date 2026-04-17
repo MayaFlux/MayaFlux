@@ -382,6 +382,18 @@ template <typename... Args>
     MayaFlux::Journal::scribe(MayaFlux::Journal::Severity::ERROR, comp, ctx, \
         std::source_location::current(), __VA_ARGS__)
 
+#define MF_ASSERT(comp, ctx, condition, ...)                       \
+    do {                                                           \
+        if (!(condition)) [[unlikely]] {                           \
+            MayaFlux::Journal::scribe(                             \
+                MayaFlux::Journal::Severity::ERROR, comp, ctx,     \
+                std::source_location::current(),                   \
+                "Assertion failed: " #condition ". " __VA_ARGS__); \
+            MayaFlux::Journal::Archivist::instance().shutdown();   \
+            std::abort();                                          \
+        }                                                          \
+    } while (false)
+
 // ============================================================================
 // CONVENIENCE MACROS for REAL-TIME LOGGING ONLY
 // ============================================================================

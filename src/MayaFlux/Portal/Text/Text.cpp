@@ -49,6 +49,15 @@ bool initialize(std::optional<Core::TextConfig> config)
     return true;
 }
 
+std::shared_ptr<LayoutResult> create_layout(
+    std::string_view text,
+    float pen_x,
+    float pen_y,
+    uint32_t wrap_w)
+{
+    return std::make_shared<LayoutResult>(lay_out(text, get_default_atlas(), pen_x, pen_y, wrap_w));
+}
+
 void shutdown()
 {
     if (!g_initialized) {
@@ -93,9 +102,12 @@ bool set_default_font(const std::string& path, uint32_t pixel_size, uint32_t atl
     return TypeFaceFoundry::instance().set_default_font(path, pixel_size, atlas_size);
 }
 
-GlyphAtlas* get_atlas()
+GlyphAtlas& get_default_atlas()
 {
-    return TypeFaceFoundry::instance().get_default_glyph_atlas();
+    GlyphAtlas* atlas = TypeFaceFoundry::instance().get_default_glyph_atlas();
+    MF_ASSERT(Journal::Component::Portal, Journal::Context::API,
+        atlas != nullptr, "call set_default_font before get_default_atlas");
+    return *atlas;
 }
 
 } // namespace MayaFlux::Portal::Text

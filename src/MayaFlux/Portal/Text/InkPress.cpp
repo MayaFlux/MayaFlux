@@ -46,74 +46,6 @@ namespace {
     }
 
     /**
-     * @brief Write glyph quads into a pre-allocated RGBA8 pixel buffer.
-     *
-     * @param quads   Quads produced by lay_out() at pen origin (0,0).
-     * @param atlas   Source atlas for coverage bitmaps.
-     * @param color   RGBA color to apply.
-     * @param dst     Destination buffer. Stride is buf_w * 4 bytes.
-     * @param buf_w   Buffer width in pixels (== render bounds width).
-     * @param buf_h   Buffer height in pixels (budget height or content height).
-     */
-    void composite_into(
-        const std::vector<GlyphQuad>& quads,
-        GlyphAtlas& atlas,
-        glm::vec4 color,
-        uint8_t* dst,
-        uint32_t buf_w,
-        uint32_t buf_h)
-    {
-        const uint8_t cr = static_cast<uint8_t>(std::clamp(color.r, 0.F, 1.F) * 255.F);
-        const uint8_t cg = static_cast<uint8_t>(std::clamp(color.g, 0.F, 1.F) * 255.F);
-        const uint8_t cb = static_cast<uint8_t>(std::clamp(color.b, 0.F, 1.F) * 255.F);
-
-        const Kakshya::TextureContainer& atlas_tex = atlas.texture();
-        const std::span<const uint8_t> atlas_pixels = atlas_tex.pixel_bytes(0);
-        const uint32_t atlas_size = atlas.atlas_size();
-
-        for (const auto& q : quads) {
-            const auto gx = static_cast<int32_t>(std::floor(q.x0));
-            const auto gy = static_cast<int32_t>(std::floor(q.y0));
-            const auto gw = static_cast<uint32_t>(std::ceil(q.x1 - q.x0));
-            const auto gh = static_cast<uint32_t>(std::ceil(q.y1 - q.y0));
-
-            const auto src_x = static_cast<uint32_t>(q.uv_x0 * static_cast<float>(atlas_size));
-            const auto src_y = static_cast<uint32_t>(q.uv_y0 * static_cast<float>(atlas_size));
-
-            for (uint32_t row = 0; row < gh; ++row) {
-                const int32_t dst_row = gy + static_cast<int32_t>(row);
-                if (dst_row < 0 || static_cast<uint32_t>(dst_row) >= buf_h) {
-                    continue;
-                }
-
-                const uint8_t* src_row = atlas_pixels.data()
-                    + static_cast<size_t>(src_y + row) * atlas_size + src_x;
-                uint8_t* dst_row_ptr = dst + static_cast<size_t>(dst_row) * buf_w * 4;
-
-                for (uint32_t col = 0; col < gw; ++col) {
-                    const int32_t dst_col = gx + static_cast<int32_t>(col);
-                    if (dst_col < 0 || static_cast<uint32_t>(dst_col) >= buf_w) {
-                        continue;
-                    }
-
-                    const uint8_t coverage = src_row[col];
-                    const uint8_t alpha = static_cast<uint8_t>(
-                        (static_cast<uint32_t>(coverage)
-                            * static_cast<uint32_t>(
-                                static_cast<uint8_t>(std::clamp(color.a, 0.F, 1.F) * 255.F)))
-                        / 255U);
-
-                    uint8_t* px = dst_row_ptr + static_cast<size_t>(dst_col) * 4;
-                    px[0] = cr;
-                    px[1] = cg;
-                    px[2] = cb;
-                    px[3] = alpha;
-                }
-            }
-        }
-    }
-
-    /**
      * @brief Lay out and rasterize text into a fresh pixel buffer.
      *
      * Always lays out from pen origin (0, 0). The pixel buffer width is
@@ -154,7 +86,7 @@ namespace {
         result.cursor_y = static_cast<uint32_t>(std::ceil(layout.final_pen_y));
         result.pixels.resize(static_cast<size_t>(buf_w) * dst_h * 4, 0);
 
-        composite_into(layout.quads, atlas, color, result.pixels.data(), buf_w, dst_h);
+        rasterize_quads(layout.quads, atlas, color, result.pixels.data(), buf_w, dst_h);
 
         return result;
     }
@@ -211,6 +143,89 @@ namespace {
     }
 
 } // namespace
+
+void rasterize_quads(
+    std::span<const GlyphQuad> quads,
+    GlyphAtlas& atlas,
+    glm::vec4 color,
+    uint8_t* dst,
+    uint32_t buf_w,
+    uint32_t buf_h)
+{
+    const uint8_t cr = static_cast<uint8_t>(std::clamp(color.r, 0.F, 1.F) * 255.F);
+    const uint8_t cg = static_cast<uint8_t>(std::clamp(color.g, 0.F, 1.F) * 255.F);
+    const uint8_t cb = static_cast<uint8_t>(std::clamp(color.b, 0.F, 1.F) * 255.F);
+    const uint8_t ca = static_cast<uint8_t>(std::clamp(color.a, 0.F, 1.F) * 255.F);
+
+    const Kakshya::TextureContainer& atlas_tex = atlas.texture();
+    const std::span<const uint8_t> atlas_pixels = atlas_tex.pixel_bytes(0);
+    const uint32_t atlas_size = atlas.atlas_size();
+
+    for (const auto& q : quads) {
+        const auto gx = static_cast<int32_t>(std::floor(q.x0));
+        const auto gy = static_cast<int32_t>(std::floor(q.y0));
+        const auto gw = static_cast<uint32_t>(std::ceil(q.x1 - q.x0));
+        const auto gh = static_cast<uint32_t>(std::ceil(q.y1 - q.y0));
+
+        const auto src_x = static_cast<uint32_t>(q.uv_x0 * static_cast<float>(atlas_size));
+        const auto src_y = static_cast<uint32_t>(q.uv_y0 * static_cast<float>(atlas_size));
+
+        for (uint32_t row = 0; row < gh; ++row) {
+            const int32_t dst_row = gy + static_cast<int32_t>(row);
+            if (dst_row < 0 || static_cast<uint32_t>(dst_row) >= buf_h) {
+                continue;
+            }
+
+            const uint8_t* src_row = atlas_pixels.data()
+                + static_cast<size_t>(src_y + row) * atlas_size + src_x;
+            uint8_t* dst_row_ptr = dst + static_cast<size_t>(dst_row) * buf_w * 4;
+
+            for (uint32_t col = 0; col < gw; ++col) {
+                const int32_t dst_col = gx + static_cast<int32_t>(col);
+                if (dst_col < 0 || static_cast<uint32_t>(dst_col) >= buf_w) {
+                    continue;
+                }
+
+                const uint8_t coverage = src_row[col];
+                const auto alpha = static_cast<uint8_t>(
+                    (static_cast<uint32_t>(coverage) * static_cast<uint32_t>(ca)) / 255U);
+
+                uint8_t* px = dst_row_ptr + static_cast<size_t>(dst_col) * 4;
+                px[0] = cr;
+                px[1] = cg;
+                px[2] = cb;
+                px[3] = alpha;
+            }
+        }
+    }
+}
+
+void ink_quads(
+    const std::shared_ptr<Buffers::TextBuffer>& target,
+    std::span<const GlyphQuad> quads,
+    glm::vec4 color)
+{
+    if (!target) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::API,
+            "ink_quads: target buffer is null");
+        return;
+    }
+
+    GlyphAtlas* atlas = resolve_atlas(nullptr);
+    if (!atlas) {
+        return;
+    }
+
+    const uint32_t buf_w = target->get_budget_width();
+    const uint32_t buf_h = target->get_budget_height();
+    const size_t buf_bytes = static_cast<size_t>(buf_w) * buf_h * 4;
+
+    thread_local std::vector<uint8_t> pixels;
+    pixels.assign(buf_bytes, 0);
+
+    rasterize_quads(quads, *atlas, color, pixels.data(), buf_w, buf_h);
+    target->set_pixel_data(pixels.data(), buf_bytes);
+}
 
 // =========================================================================
 // press
@@ -394,7 +409,7 @@ ImpressResult impress(
     }
 
     auto& pixel_data = target->get_pixel_data_mutable();
-    composite_into(layout.quads, *atlas, color, pixel_data.data(), buf_w, buf_h);
+    rasterize_quads(layout.quads, *atlas, color, pixel_data.data(), buf_w, buf_h);
     target->mark_pixels_dirty();
     target->get_cursor_x() = static_cast<uint32_t>(std::ceil(layout.final_pen_x));
     target->get_cursor_y() = new_cursor_y;
