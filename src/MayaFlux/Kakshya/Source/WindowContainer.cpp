@@ -28,9 +28,11 @@ namespace {
         using IF = Portal::Graphics::ImageFormat;
         switch (fmt) {
         case SF::B8G8R8A8_SRGB:
+            return IF::BGRA8_SRGB;
+        case SF::B8G8R8A8_UNORM:
+            return IF::BGRA8;
         case SF::R8G8B8A8_SRGB:
             return IF::RGBA8_SRGB;
-        case SF::B8G8R8A8_UNORM:
         case SF::R8G8B8A8_UNORM:
             return IF::RGBA8;
         case SF::R16G16B16A16_SFLOAT:
@@ -39,7 +41,7 @@ namespace {
         case SF::R32G32B32A32_SFLOAT:
             return IF::RGBA32F;
         default:
-            return IF::RGBA8_SRGB;
+            return IF::BGRA8_SRGB;
         }
     }
 
