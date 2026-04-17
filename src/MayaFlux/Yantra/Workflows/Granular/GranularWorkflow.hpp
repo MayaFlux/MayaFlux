@@ -616,4 +616,123 @@ void process_to_container_async(
                     reconstruct_grains(std::any(sorted), ctx)); }, std::forward<CompleteFn>(on_complete));
 }
 
+/**
+ * @brief Async offline granular pipeline terminating in a DynamicSoundStream
+ *        (AnalysisType path).
+ *
+ * Runs the full pipeline on a background thread owned by @p matrix and
+ * invokes @p on_complete with the finished stream. Returns immediately.
+ *
+ * The callback receives a @c shared_ptr<DynamicSoundStream> which is null
+ * if reconstruction produced an unexpected type. The caller is responsible
+ * for thread-safe installation of the stream into any downstream pipeline.
+ *
+ * @param matrix        ComputeMatrix that owns the async future.
+ * @param container     Source signal data.
+ * @param analysis_type Attribution category.
+ * @param on_complete   Called on the worker thread with the finished stream.
+ * @param config        Pipeline scalar parameters.
+ * @param qualifier     Scalar to extract. Empty uses type default.
+ * @param output        STREAM for concatenative, STREAM_ADDITIVE for OLA.
+ */
+template <typename CompleteFn>
+void process_to_stream_async(
+    const std::shared_ptr<GranularMatrix>& matrix,
+    const std::shared_ptr<Kakshya::SignalSourceContainer>& container,
+    AnalysisType analysis_type,
+    CompleteFn&& on_complete,
+    const GranularConfig& config = {},
+    const std::string& qualifier = {},
+    GranularOutput output = GranularOutput::STREAM)
+{
+    auto ctx = make_granular_context(config, analysis_type, qualifier);
+    ctx.execution_metadata["container"] = container;
+    if (config.taper)
+        ctx.execution_metadata["grain_taper"] = config.taper;
+
+    auto seg_op = matrix->get_operation<SegmentOp>("segment");
+    auto attr_op = matrix->get_operation<AttributeOp>("attribute");
+    auto sort_op = matrix->get_operation<SortOp>("sort");
+    apply_context_parameters(seg_op, ctx);
+    apply_context_parameters(attr_op, ctx);
+    apply_context_parameters(sort_op, ctx);
+
+    matrix->with_async(
+        make_granular_input(container),
+        [ctx, output](auto chain) {
+            auto sorted = chain
+                              .template then<SegmentOp>("segment")
+                              .template then<AttributeOp>("attribute")
+                              .template then<SortOp>("sort")
+                              .to_io();
+            if (output == GranularOutput::STREAM_ADDITIVE) {
+                return safe_any_cast_or_throw<
+                    Datum<std::shared_ptr<Kakshya::SignalSourceContainer>>>(
+                    reconstruct_grains_additive_stream(std::any(sorted), ctx));
+            }
+            return safe_any_cast_or_throw<
+                Datum<std::shared_ptr<Kakshya::SignalSourceContainer>>>(
+                reconstruct_grains_stream(std::any(sorted), ctx));
+        },
+        [on_complete = std::forward<CompleteFn>(on_complete)](
+            const Datum<std::shared_ptr<Kakshya::SignalSourceContainer>>& result) {
+            on_complete(std::dynamic_pointer_cast<Kakshya::DynamicSoundStream>(result.data));
+        });
+}
+
+/**
+ * @brief Async offline granular pipeline terminating in a DynamicSoundStream
+ *        (AttributeExecutor path).
+ *
+ * @param matrix      ComputeMatrix that owns the async future.
+ * @param container   Source signal data.
+ * @param executor    Lambda receiving grain samples and context, returning a scalar.
+ * @param on_complete Called on the worker thread with the finished stream.
+ * @param config      Pipeline scalar parameters.
+ * @param output      STREAM for concatenative, STREAM_ADDITIVE for OLA.
+ */
+template <typename CompleteFn>
+void process_to_stream_async(
+    const std::shared_ptr<GranularMatrix>& matrix,
+    const std::shared_ptr<Kakshya::SignalSourceContainer>& container,
+    AttributeExecutor executor,
+    CompleteFn&& on_complete,
+    const GranularConfig& config = {},
+    GranularOutput output = GranularOutput::STREAM)
+{
+    auto ctx = make_granular_context(config, std::move(executor));
+    ctx.execution_metadata["container"] = container;
+    if (config.taper)
+        ctx.execution_metadata["grain_taper"] = config.taper;
+
+    auto seg_op = matrix->get_operation<SegmentOp>("segment");
+    auto attr_op = matrix->get_operation<AttributeOp>("attribute");
+    auto sort_op = matrix->get_operation<SortOp>("sort");
+    apply_context_parameters(seg_op, ctx);
+    apply_context_parameters(attr_op, ctx);
+    apply_context_parameters(sort_op, ctx);
+
+    matrix->with_async(
+        make_granular_input(container),
+        [ctx, output](auto chain) {
+            auto sorted = chain
+                              .template then<SegmentOp>("segment")
+                              .template then<AttributeOp>("attribute")
+                              .template then<SortOp>("sort")
+                              .to_io();
+            if (output == GranularOutput::STREAM_ADDITIVE) {
+                return safe_any_cast_or_throw<
+                    Datum<std::shared_ptr<Kakshya::SignalSourceContainer>>>(
+                    reconstruct_grains_additive_stream(std::any(sorted), ctx));
+            }
+            return safe_any_cast_or_throw<
+                Datum<std::shared_ptr<Kakshya::SignalSourceContainer>>>(
+                reconstruct_grains_stream(std::any(sorted), ctx));
+        },
+        [on_complete = std::forward<CompleteFn>(on_complete)](
+            const Datum<std::shared_ptr<Kakshya::SignalSourceContainer>>& result) {
+            on_complete(std::dynamic_pointer_cast<Kakshya::DynamicSoundStream>(result.data));
+        });
+}
+
 } // namespace MayaFlux::Yantra::Granular
