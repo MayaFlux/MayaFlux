@@ -3,6 +3,7 @@
 #include "MayaFlux/Yantra/Executors/ShaderExecutionContext.hpp"
 #include "MayaFlux/Yantra/Sorters/GpuSorter.hpp"
 
+#include "MayaFlux/Kakshya/Source/DynamicSoundStream.hpp"
 #include "MayaFlux/Kakshya/Source/SoundFileContainer.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
@@ -69,6 +70,42 @@ namespace {
             Datum<std::shared_ptr<Kakshya::SignalSourceContainer>>>(result_any);
 
         return std::dynamic_pointer_cast<Kakshya::SoundFileContainer>(result.data);
+    }
+
+    std::shared_ptr<Kakshya::DynamicSoundStream> run_to_stream(
+        const std::shared_ptr<Kakshya::SignalSourceContainer>& container,
+        const ExecutionContext& ctx,
+        ComputationContext attribution_context,
+        GranularOutput output = GranularOutput::STREAM,
+        GrainTaper taper = {})
+    {
+        auto matrix = make_granular_matrix(attribution_context, output, std::move(taper));
+        auto seg_op = matrix->get_operation<SegmentOp>("segment");
+        auto attr_op = matrix->get_operation<AttributeOp>("attribute");
+        auto sort_op = matrix->get_operation<SortOp>("sort");
+        apply_context_parameters(seg_op, ctx);
+        apply_context_parameters(attr_op, ctx);
+        apply_context_parameters(sort_op, ctx);
+
+        auto input = make_granular_input(container);
+        auto seg = seg_op->apply_operation(input);
+        auto attr = attr_op->apply_operation(seg);
+        auto sorted = sort_op->apply_operation(attr);
+
+        std::any result_any;
+        if (output == GranularOutput::STREAM_ADDITIVE) {
+            ExecutionContext patched = ctx;
+            if (taper)
+                patched.execution_metadata["grain_taper"] = taper;
+            result_any = reconstruct_grains_additive_stream(std::any(sorted), patched);
+        } else {
+            result_any = reconstruct_grains_stream(std::any(sorted), ctx);
+        }
+
+        auto result = safe_any_cast_or_throw<
+            Datum<std::shared_ptr<Kakshya::SignalSourceContainer>>>(result_any);
+
+        return std::dynamic_pointer_cast<Kakshya::DynamicSoundStream>(result.data);
     }
 
 } // namespace
@@ -178,6 +215,125 @@ const ComputationGrammar::Rule::Executor reconstruct_grains_additive =
     };
 };
 
+const ComputationGrammar::Rule::Executor reconstruct_grains_stream =
+    [](const std::any& input, const ExecutionContext& /*ctx*/) -> std::any {
+    auto datum = safe_any_cast_or_throw<Datum<Kakshya::RegionGroup>>(input);
+    const auto& regions = datum.data.regions;
+
+    if (regions.empty()) {
+        error<std::runtime_error>(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
+            std::source_location::current(), "reconstruct_grains_stream: RegionGroup contains no grains");
+    }
+
+    if (!datum.container || !*datum.container) {
+        error<std::runtime_error>(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
+            std::source_location::current(), "reconstruct_grains_stream: no source container in datum");
+    }
+
+    auto source = *datum.container;
+    const auto num_ch = static_cast<uint32_t>(source->get_structure().get_channel_count());
+    const uint32_t sample_rate = [&]() -> uint32_t {
+        if (auto sc = std::dynamic_pointer_cast<Kakshya::SoundStreamContainer>(source))
+            return sc->get_sample_rate();
+        return 48000U;
+    }();
+
+    const auto grain_sz = safe_any_cast_or_default<uint32_t>(
+        datum.data.get_attribute<uint32_t>("grain_size").has_value()
+            ? std::any(datum.data.get_attribute<uint32_t>("grain_size").value())
+            : std::any {},
+        1024U);
+
+    std::vector<std::vector<double>> channel_data(num_ch);
+    for (uint32_t ch = 0; ch < num_ch; ++ch)
+        channel_data[ch].reserve(regions.size() * grain_sz);
+
+    Kakshya::iterate_region_channels(regions, source, num_ch, {},
+        [&channel_data](size_t /*gi*/, uint32_t ch, std::span<double> samples) {
+            channel_data[ch].insert(channel_data[ch].end(), samples.begin(), samples.end());
+        });
+
+    auto stream = std::make_shared<Kakshya::DynamicSoundStream>(sample_rate, num_ch);
+
+    std::vector<std::span<const double>> spans;
+    spans.reserve(num_ch);
+    for (auto& ch : channel_data)
+        spans.emplace_back(ch);
+
+    stream->write_frames(spans, 0);
+
+    return Datum<std::shared_ptr<Kakshya::SignalSourceContainer>> {
+        std::dynamic_pointer_cast<Kakshya::SignalSourceContainer>(stream), {}
+    };
+};
+
+const ComputationGrammar::Rule::Executor reconstruct_grains_additive_stream =
+    [](const std::any& input, const ExecutionContext& ctx) -> std::any {
+    auto datum = safe_any_cast_or_throw<Datum<Kakshya::RegionGroup>>(input);
+    const auto& regions = datum.data.regions;
+
+    if (regions.empty()) {
+        error<std::runtime_error>(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
+            std::source_location::current(), "reconstruct_grains_additive_stream: RegionGroup contains no grains");
+    }
+
+    if (!datum.container || !*datum.container) {
+        error<std::runtime_error>(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
+            std::source_location::current(), "reconstruct_grains_additive_stream: no source container in datum");
+    }
+
+    auto source = *datum.container;
+    const auto num_ch = static_cast<uint32_t>(source->get_structure().get_channel_count());
+    const uint32_t sample_rate = [&]() -> uint32_t {
+        if (auto sc = std::dynamic_pointer_cast<Kakshya::SoundStreamContainer>(source))
+            return sc->get_sample_rate();
+        return 48000U;
+    }();
+
+    const auto grain_sz = safe_any_cast_or_default<uint32_t>(
+        datum.data.get_attribute<uint32_t>("grain_size").has_value()
+            ? std::any(datum.data.get_attribute<uint32_t>("grain_size").value())
+            : std::any {},
+        1024U);
+    const auto hop_sz = safe_any_cast_or_default<uint32_t>(
+        datum.data.get_attribute<uint32_t>("hop_size").has_value()
+            ? std::any(datum.data.get_attribute<uint32_t>("hop_size").value())
+            : std::any {},
+        grain_sz);
+
+    const auto taper = safe_any_cast_or_default<GrainTaper>(
+        ctx.execution_metadata.contains("grain_taper")
+            ? ctx.execution_metadata.at("grain_taper")
+            : std::any {},
+        GrainTaper {});
+
+    const uint64_t out_frames = hop_sz * regions.size() + grain_sz;
+    std::vector<std::vector<double>> channel_data(num_ch, std::vector<double>(out_frames, 0.0));
+
+    Kakshya::iterate_region_channels(regions, source, num_ch, {},
+        [&](size_t gi, uint32_t ch, std::span<double> samples) {
+            std::vector<double> grain(samples.begin(), samples.end());
+            if (taper)
+                taper(grain);
+            const uint64_t offset = gi * hop_sz;
+            for (uint64_t i = 0; i < grain.size() && offset + i < out_frames; ++i)
+                channel_data[ch][offset + i] += grain[i];
+        });
+
+    auto stream = std::make_shared<Kakshya::DynamicSoundStream>(sample_rate, num_ch);
+
+    std::vector<std::span<const double>> spans;
+    spans.reserve(num_ch);
+    for (auto& ch : channel_data)
+        spans.emplace_back(ch);
+
+    stream->write_frames(spans, 0);
+
+    return Datum<std::shared_ptr<Kakshya::SignalSourceContainer>> {
+        std::dynamic_pointer_cast<Kakshya::SignalSourceContainer>(stream), {}
+    };
+};
+
 // ============================================================================
 // SegmentOp
 // ============================================================================
@@ -208,20 +364,18 @@ Datum<Kakshya::RegionGroup> SegmentOp::extract_implementation(
     const auto hop_size = this->template get_parameter_or_default<uint32_t>("hop_size", 512U);
     const auto channel = this->template get_parameter_or_default<uint32_t>("channel", 0U);
 
-    const auto& raw = container->get_data();
+    const auto& structure = container->get_structure();
 
-    if (channel >= raw.size()) {
+    if (channel >= structure.get_channel_count()) {
         error<std::runtime_error>(
             Journal::Component::Yantra, Journal::Context::ComputeMatrix,
             std::source_location::current(),
             "SegmentOp: channel {} out of range (container has {})",
-            channel, raw.size());
+            channel, structure.get_channel_count());
     }
 
-    const auto samples = Kakshya::convert_variant<double>(raw[channel]);
-    const auto& structure = container->get_structure();
     const auto num_channels = structure.get_channel_count();
-    const auto total = static_cast<uint64_t>(samples.size());
+    const auto total = container->get_num_frames();
 
     Datum<Kakshya::RegionGroup> out { input.data, container };
     out.data.regions.clear();
@@ -632,6 +786,30 @@ std::shared_ptr<GranularMatrix> make_granular_matrix(
             .matches_type<Kakshya::RegionGroup>()
             .executes(ola_executor)
             .build();
+    } else if (output == GranularOutput::STREAM) {
+        matrix->get_grammar()->create_rule("reconstruct") //
+            .with_context(ComputationContext::STRUCTURAL)
+            .with_priority(25)
+            .with_description("Stitch sorted grains into a DynamicSoundStream")
+            .matches_type<Kakshya::RegionGroup>()
+            .executes(reconstruct_grains_stream)
+            .build();
+    } else if (output == GranularOutput::STREAM_ADDITIVE) {
+        auto ola_executor =
+            [t = std::move(taper)](const std::any& in, const ExecutionContext& ctx) -> std::any {
+            ExecutionContext patched = ctx;
+            if (t)
+                patched.execution_metadata["grain_taper"] = t;
+            return reconstruct_grains_additive_stream(in, patched);
+        };
+
+        matrix->get_grammar()->create_rule("reconstruct") //
+            .with_context(ComputationContext::STRUCTURAL)
+            .with_priority(25)
+            .with_description("Additive grain reconstruction into DynamicSoundStream")
+            .matches_type<Kakshya::RegionGroup>()
+            .executes(ola_executor)
+            .build();
     }
 
     return matrix;
@@ -724,6 +902,41 @@ std::shared_ptr<Kakshya::SoundFileContainer> process_to_container(
     ctx.execution_metadata["container"] = container;
 
     return run_to_container(container, ctx, config.attribution_context,
+        output, config.taper);
+}
+
+// ============================================================================
+// process_to_stream — AnalysisType path
+// ============================================================================
+
+std::shared_ptr<Kakshya::DynamicSoundStream> process_to_stream(
+    const std::shared_ptr<Kakshya::SignalSourceContainer>& container,
+    AnalysisType analysis_type,
+    const GranularConfig& config,
+    const std::string& qualifier,
+    GranularOutput output)
+{
+    auto ctx = make_granular_context(config, analysis_type, qualifier);
+    ctx.execution_metadata["container"] = container;
+
+    return run_to_stream(container, ctx, config.attribution_context,
+        output, config.taper);
+}
+
+// ============================================================================
+// process_to_stream — AttributeExecutor path
+// ============================================================================
+
+std::shared_ptr<Kakshya::DynamicSoundStream> process_to_stream(
+    const std::shared_ptr<Kakshya::SignalSourceContainer>& container,
+    AttributeExecutor executor,
+    const GranularConfig& config,
+    GranularOutput output)
+{
+    auto ctx = make_granular_context(config, std::move(executor));
+    ctx.execution_metadata["container"] = container;
+
+    return run_to_stream(container, ctx, config.attribution_context,
         output, config.taper);
 }
 

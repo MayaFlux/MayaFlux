@@ -278,6 +278,10 @@ bool VideoFileReader::load_into_container(
         demux = m_demux;
     }
 
+    vc->set_source_path(m_filepath);
+    if (m_demux && m_demux->format_context)
+        vc->set_source_format(m_demux->format_context->iformat->name);
+
     const uint64_t total = video->total_frames;
     if (total == 0) {
         set_error("Video stream reports 0 frames");
