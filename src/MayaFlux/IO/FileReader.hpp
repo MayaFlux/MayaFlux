@@ -271,17 +271,20 @@ public:
     [[nodiscard]] static std::string resolve_path(const std::string& filepath)
     {
         namespace fs = std::filesystem;
-        if (fs::path(filepath).is_absolute())
-            return filepath;
-        if (fs::exists(filepath))
-            return filepath;
-        auto from_cwd = fs::current_path() / filepath;
+        auto normalized = std::string(filepath);
+        std::ranges::replace(normalized, '\\', '/');
+
+        if (fs::path(normalized).is_absolute())
+            return normalized;
+        if (fs::exists(normalized))
+            return normalized;
+        auto from_cwd = fs::current_path() / normalized;
         if (fs::exists(from_cwd))
             return from_cwd.string();
-        auto from_root = fs::path(Config::SOURCE_DIR) / filepath;
+        auto from_root = fs::path(Config::SOURCE_DIR) / normalized;
         if (fs::exists(from_root))
             return from_root.string();
-        return filepath;
+        return normalized;
     }
 
 protected:
