@@ -645,6 +645,10 @@ bool SoundFileReader::load_into_container(
         audio = m_audio;
     }
 
+    sc->set_source_path(m_filepath);
+    if (m_demux && m_demux->format_context)
+        sc->set_source_format(m_demux->format_context->iformat->name);
+
     sc->setup(audio->total_frames, audio->sample_rate, audio->channels);
 
     bool planar = (m_audio_options & AudioReadOptions::DEINTERLEAVE) != AudioReadOptions::NONE;
