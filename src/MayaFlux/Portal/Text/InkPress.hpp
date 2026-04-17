@@ -5,6 +5,8 @@
 
 namespace MayaFlux::Portal::Text {
 
+struct GlyphQuad;
+
 /**
  * @brief Policy controlling TextBuffer reuse behaviour in repress().
  */
@@ -57,6 +59,35 @@ struct PressParams {
     /// @brief Initial vertical budget in pixels. Zero applies the grow heuristic.
     uint32_t budget_h { 0 };
 };
+
+/**
+ * @brief Write glyph quads into a caller-provided RGBA8 pixel buffer.
+ *
+ * Applies coverage-multiplied alpha blend per glyph cell. The destination
+ * buffer must be row-major RGBA8 with stride == buf_w * 4 bytes. Quads
+ * that fall outside [0, buf_w) x [0, buf_h) are clipped per pixel.
+ *
+ * The typical usage pattern is:
+ * @code
+ * auto layout = lay_out(text, atlas, 0.F, 0.F, wrap_w);
+ * for (auto& q : layout.quads) { ... } // per-character transforms
+ * rasterize_quads(layout.quads, atlas, color, pixels, w, h);
+ * @endcode
+ *
+ * @param quads   Quads produced by lay_out(), optionally mutated by the caller.
+ * @param atlas   Source atlas for coverage bitmaps.
+ * @param color   RGBA glyph color in [0, 1].
+ * @param dst     Destination RGBA8 buffer. Stride is buf_w * 4 bytes.
+ * @param buf_w   Buffer width in pixels.
+ * @param buf_h   Buffer height in pixels.
+ */
+MAYAFLUX_API void rasterize_quads(
+    std::span<const GlyphQuad> quads,
+    GlyphAtlas& atlas,
+    glm::vec4 color,
+    uint8_t* dst,
+    uint32_t buf_w,
+    uint32_t buf_h);
 
 /**
  * @brief Composite a UTF-8 string into a new TextBuffer.
