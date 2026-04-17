@@ -364,20 +364,18 @@ Datum<Kakshya::RegionGroup> SegmentOp::extract_implementation(
     const auto hop_size = this->template get_parameter_or_default<uint32_t>("hop_size", 512U);
     const auto channel = this->template get_parameter_or_default<uint32_t>("channel", 0U);
 
-    const auto& raw = container->get_data();
+    const auto& structure = container->get_structure();
 
-    if (channel >= raw.size()) {
+    if (channel >= structure.get_channel_count()) {
         error<std::runtime_error>(
             Journal::Component::Yantra, Journal::Context::ComputeMatrix,
             std::source_location::current(),
             "SegmentOp: channel {} out of range (container has {})",
-            channel, raw.size());
+            channel, structure.get_channel_count());
     }
 
-    const auto samples = Kakshya::convert_variant<double>(raw[channel]);
-    const auto& structure = container->get_structure();
     const auto num_channels = structure.get_channel_count();
-    const auto total = static_cast<uint64_t>(samples.size());
+    const auto total = container->get_num_frames();
 
     Datum<Kakshya::RegionGroup> out { input.data, container };
     out.data.regions.clear();
