@@ -12,10 +12,11 @@ namespace MayaFlux::Kakshya {
  * @brief Default DataProcessor for WindowContainer.
  *
  * Reads pixel data from the last completed swapchain frame into the
- * container's processed_data. The DataVariant type is selected at
- * on_attach() time based on the live swapchain format reported by
- * DisplayService::get_swapchain_format, ensuring HDR and packed formats
- * are stored with their native precision rather than truncated to uint8.
+ * container's processed_data.
+ * The DataVariant type is determined by the live swapchain format, queried
+ * at on_attach() time and re-evaluated if the surface dimensions change.
+ * It is based on live swapchain format reported bu DisplayService::get_swapchain_format,
+ * ensuring HDR and packed formats are stored with their native precision rather than truncated to uint8.
  *
  * Format → DataVariant element type:
  *   8-bit UNORM/SRGB  → std::vector<uint8_t>

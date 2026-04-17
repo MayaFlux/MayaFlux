@@ -1,9 +1,15 @@
 #pragma once
 
 #include "MayaFlux/Kakshya/SignalSourceContainer.hpp"
+#include "MayaFlux/Portal/Graphics/GraphicsUtils.hpp"
 
 namespace MayaFlux::Core {
 class Window;
+class VKImage;
+}
+
+namespace MayaFlux::Buffers {
+class VKBuffer;
 }
 
 namespace MayaFlux::Kakshya {
@@ -33,6 +39,13 @@ namespace MayaFlux::Kakshya {
  *   - get_region_data() crops directly from processed_data[0] if it is
  *     non-empty; returns empty if no readback has occurred yet.
  *   - The container never calls process() itself — callers drive the chain.
+ * GPU bridge:
+ *   - to_image() uploads processed_data[0] to a new VKImage via TextureLoom.
+ *   - to_image(staging) does the same reusing a caller-supplied staging buffer
+ *     to avoid per-call VkBuffer allocation in per-frame paths.
+ *   - region_to_image() performs a CPU-side crop then uploads the result.
+ *   - get_image_format() returns the live swapchain format as a Portal
+ *     ImageFormat, suitable for constructing a matching TextureBuffer.
  *
  * Write semantics (compositing) are deferred to a future processor.
  */
@@ -56,6 +69,15 @@ public:
      */
     [[nodiscard]] std::shared_ptr<Core::Window> get_window() const { return m_window; }
 
+    /**
+     * @brief Portal ImageFormat corresponding to the live swapchain surface format.
+     *
+     * Derived from the actual negotiated swapchain format via DisplayService,
+     * not from the WindowCreateInfo declaration. Use this when constructing a
+     * TextureBuffer to receive the output of to_image().
+     */
+    [[nodiscard]] Portal::Graphics::ImageFormat get_image_format() const;
+
     // =========================================================================
     // NDDimensionalContainer
     // =========================================================================
@@ -72,6 +94,48 @@ public:
      *        Returns empty if no readback has been performed yet.
      */
     [[nodiscard]] std::vector<DataVariant> get_region_data(const Region& region) const override;
+
+    /**
+     * @brief Upload the full surface readback to a new VKImage.
+     *
+     * Requires at least one completed readback (processed_data[0] non-empty
+     * and of type vector<uint8_t>). A fresh VKImage is created and uploaded
+     * on each call via TextureLoom; callers driving a per-frame path should
+     * prefer the staging-buffer overload to avoid per-call VkBuffer churn.
+     *
+     * @return Newly created VKImage, or nullptr on failure.
+     */
+    [[nodiscard]] std::shared_ptr<Core::VKImage> to_image() const;
+
+    /**
+     * @brief Upload the full surface readback to a new VKImage, reusing a
+     *        caller-supplied persistent staging buffer.
+     *
+     * Allocates the VKImage without pixel data, then uploads via the
+     * provided staging buffer, bypassing the per-call VkBuffer allocation
+     * inside TextureLoom. Use TextureLoom::create_streaming_staging() to
+     * allocate the staging buffer once before the render loop.
+     *
+     * @param staging Host-visible staging VKBuffer sized to at least
+     *                width * height * bytes_per_pixel.
+     * @return Newly created VKImage, or nullptr on failure.
+     */
+    [[nodiscard]] std::shared_ptr<Core::VKImage> to_image(
+        const std::shared_ptr<Buffers::VKBuffer>& staging) const;
+
+    /**
+     * @brief Crop a region from the last readback and upload it as a VKImage.
+     *
+     * Performs a CPU-side crop via extract_region_data; no additional GPU
+     * work beyond the readback that populated processed_data[0]. Region
+     * coordinates follow IMAGE_COLOR convention: [SPATIAL_Y, SPATIAL_X].
+     * The returned image dimensions are derived from the region extent.
+     *
+     * @param region Pixel rectangle. Must have at least 2 coordinates.
+     * @return VKImage sized to the region, or nullptr on failure.
+     */
+    [[nodiscard]] std::shared_ptr<Core::VKImage> region_to_image(const Region& region) const;
+
     void set_region_data(const Region& region, const std::vector<DataVariant>& data) override;
 
     [[nodiscard]] std::vector<DataVariant> get_region_group_data(const RegionGroup& group) const override;
@@ -143,6 +207,11 @@ public:
     [[nodiscard]] std::shared_ptr<DataProcessingChain> get_processing_chain() override;
     void set_processing_chain(const std::shared_ptr<DataProcessingChain>& chain) override;
 
+    [[nodiscard]] uint64_t get_frame_size() const override;
+    [[nodiscard]] uint64_t get_num_frames() const override;
+    [[nodiscard]] std::span<const double> get_frame(uint64_t frame_index) const override;
+    void get_frames(std::span<double> output, uint64_t start_frame, uint64_t num_frames) const override;
+
     // -------------------------------------------------------------------------
     // Consumer tracking — dimension_index and reader_id are opaque slot handles.
     // Tracks whether all registered consumers have read processed_data[0] this
@@ -184,6 +253,8 @@ private:
 
     mutable std::shared_mutex m_data_mutex;
     mutable std::mutex m_state_mutex;
+
+    mutable std::vector<double> m_frame_cache;
 
     std::atomic<uint32_t> m_registered_readers { 0 };
     std::atomic<uint32_t> m_consumed_readers { 0 };

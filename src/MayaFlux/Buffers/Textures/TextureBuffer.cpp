@@ -141,6 +141,17 @@ void TextureBuffer::mark_pixels_dirty()
     m_texture_dirty = true;
 }
 
+void TextureBuffer::set_gpu_texture(std::shared_ptr<Core::VKImage> image)
+{
+    m_gpu_texture = std::move(image);
+
+    if (m_render_processor && m_gpu_texture) {
+        m_render_processor->bind_texture(
+            m_render_config.default_texture_binding,
+            m_gpu_texture);
+    }
+}
+
 void TextureBuffer::resize_texture(uint32_t new_width, uint32_t new_height)
 {
     if (new_width == m_width && new_height == m_height) {

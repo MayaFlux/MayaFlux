@@ -145,6 +145,9 @@ enum class ImageFormat : uint8_t {
     RGBA8, ///< Four channel 8-bit
     RGBA8_SRGB, ///< Four channel 8-bit sRGB
 
+    BGRA8, ///< 8-bit BGRA unsigned normalized
+    BGRA8_SRGB, ///< 8-bit BGRA sRGB
+
     // Floating point formats
     R16F, ///< Single channel 16-bit float
     RG16F, ///< Two channel 16-bit float

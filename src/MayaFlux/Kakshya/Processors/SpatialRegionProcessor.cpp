@@ -98,8 +98,10 @@ void SpatialRegionProcessor::process(const std::shared_ptr<SignalSourceContainer
         return;
     }
 
-    const auto* full_surface = std::get_if<std::vector<uint8_t>>(&processed[0]);
-    if (!full_surface || full_surface->empty()) {
+    const bool src_empty = std::visit(
+        [](const auto& v) { return v.empty(); }, processed[0]);
+
+    if (src_empty) {
         MF_RT_TRACE(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
             "SpatialRegionProcessor: processed_data[0] empty, skipping extraction");
         container->update_processing_state(ProcessingState::IDLE);
@@ -115,32 +117,49 @@ void SpatialRegionProcessor::process(const std::shared_ptr<SignalSourceContainer
     container->update_processing_state(ProcessingState::PROCESSING);
 
     const auto& dims = container->get_structure().dimensions;
-    const std::span<const uint8_t> src { full_surface->data(), full_surface->size() };
 
     std::vector<DataVariant> extracts;
     extracts.reserve(m_organized_regions.size());
 
-    for (auto& org : m_organized_regions) {
-        if (org.segments.empty()) {
-            MF_RT_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-                "SpatialRegionProcessor: OrganizedRegion '{}[{}]' has no segments, skipping",
-                org.group_name, org.region_index);
-            continue;
-        }
+    std::visit([&](const auto& src_vec) {
+        using T = typename std::decay_t<decltype(src_vec)>::value_type;
 
-        org.state = RegionState::ACTIVE;
+        if constexpr (std::is_same_v<T, uint8_t>
+            || std::is_same_v<T, uint16_t>
+            || std::is_same_v<T, uint32_t>
+            || std::is_same_v<T, float>) {
 
-        try {
-            extracts.emplace_back(
-                extract_nd_region<uint8_t>(src, org.segments[0].source_region, dims));
-            org.state = RegionState::READY;
-        } catch (const std::exception& e) {
+            const std::span<const T> src { src_vec.data(), src_vec.size() };
+
+            for (auto& org : m_organized_regions) {
+                if (org.segments.empty()) {
+                    MF_RT_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+                        "SpatialRegionProcessor: OrganizedRegion '{}[{}]' has no segments, skipping",
+                        org.group_name, org.region_index);
+                    continue;
+                }
+
+                org.state = RegionState::ACTIVE;
+
+                try {
+                    extracts.emplace_back(
+                        extract_nd_region<T>(src, org.segments[0].source_region, dims));
+                    org.state = RegionState::READY;
+                } catch (const std::exception& e) {
+                    MF_RT_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+                        "SpatialRegionProcessor: extraction failed for '{}[{}]' — {}",
+                        org.group_name, org.region_index, e.what());
+                    org.state = RegionState::IDLE;
+                }
+            }
+        } else {
             MF_RT_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-                "SpatialRegionProcessor: extraction failed for '{}[{}]' — {}",
-                org.group_name, org.region_index, e.what());
-            org.state = RegionState::IDLE;
+                "SpatialRegionProcessor: processed_data[0] holds a type not suitable "
+                "for spatial pixel extraction ({}); no regions extracted",
+                typeid(T).name());
         }
-    }
+    },
+        processed[0]);
 
     processed = std::move(extracts);
 

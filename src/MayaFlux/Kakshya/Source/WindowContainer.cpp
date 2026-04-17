@@ -7,8 +7,45 @@
 #include "MayaFlux/Kakshya/Region/RegionGroup.hpp"
 #include "MayaFlux/Kakshya/Utils/CoordUtils.hpp"
 #include "MayaFlux/Kakshya/Utils/RegionUtils.hpp"
+#include "MayaFlux/Kakshya/Utils/SurfaceUtils.hpp"
+
+#include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
 
 namespace MayaFlux::Kakshya {
+
+namespace {
+
+    /**
+     * @brief Map a MayaFlux surface format to the closest Portal ImageFormat.
+     *
+     * Packed A2B10G10R10 has no direct ImageFormat equivalent; it is widened
+     * to RGBA16F so TextureLoom can allocate a sampled image without data loss.
+     */
+    Portal::Graphics::ImageFormat surface_format_to_image_format(
+        Core::GraphicsSurfaceInfo::SurfaceFormat fmt) noexcept
+    {
+        using SF = Core::GraphicsSurfaceInfo::SurfaceFormat;
+        using IF = Portal::Graphics::ImageFormat;
+        switch (fmt) {
+        case SF::B8G8R8A8_SRGB:
+            return IF::BGRA8_SRGB;
+        case SF::B8G8R8A8_UNORM:
+            return IF::BGRA8;
+        case SF::R8G8B8A8_SRGB:
+            return IF::RGBA8_SRGB;
+        case SF::R8G8B8A8_UNORM:
+            return IF::RGBA8;
+        case SF::R16G16B16A16_SFLOAT:
+        case SF::A2B10G10R10_UNORM:
+            return IF::RGBA16F;
+        case SF::R32G32B32A32_SFLOAT:
+            return IF::RGBA32F;
+        default:
+            return IF::BGRA8_SRGB;
+        }
+    }
+
+} // namespace
 
 WindowContainer::WindowContainer(std::shared_ptr<Core::Window> window)
     : m_window(std::move(window))
@@ -22,12 +59,16 @@ WindowContainer::WindowContainer(std::shared_ptr<Core::Window> window)
     }
 
     setup_dimensions();
-    create_default_processor();
 
     MF_INFO(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
         "WindowContainer created for window '{}' ({}x{})",
         m_window->get_create_info().title,
         m_structure.get_width(), m_structure.get_height());
+}
+
+Portal::Graphics::ImageFormat WindowContainer::get_image_format() const
+{
+    return surface_format_to_image_format(query_surface_format(m_window));
 }
 
 // =========================================================================
@@ -106,6 +147,139 @@ std::vector<DataVariant> WindowContainer::get_region_data(const Region& region) 
     }
 
     return result;
+}
+
+std::shared_ptr<Core::VKImage> WindowContainer::to_image() const
+{
+    std::shared_lock lock(m_data_mutex);
+
+    if (m_processed_data.empty()) {
+        MF_RT_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+            "WindowContainer::to_image — no readback data available for '{}'",
+            m_window->get_create_info().title);
+        return nullptr;
+    }
+
+    const auto* pixels = std::get_if<std::vector<uint8_t>>(&m_processed_data[0]);
+    if (!pixels || pixels->empty()) {
+        MF_RT_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+            "WindowContainer::to_image — processed_data[0] is not uint8_t or is empty for '{}'",
+            m_window->get_create_info().title);
+        return nullptr;
+    }
+
+    const auto fmt = query_surface_format(m_window);
+    const auto img_fmt = surface_format_to_image_format(fmt);
+    const uint32_t w = m_structure.get_width();
+    const uint32_t h = m_structure.get_height();
+
+    auto img = Portal::Graphics::TextureLoom::instance().create_2d(
+        w, h, img_fmt, pixels->data());
+
+    if (!img) {
+        MF_RT_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+            "WindowContainer::to_image — TextureLoom::create_2d failed for '{}'",
+            m_window->get_create_info().title);
+    }
+
+    return img;
+}
+
+std::shared_ptr<Core::VKImage> WindowContainer::to_image(
+    const std::shared_ptr<Buffers::VKBuffer>& staging) const
+{
+    std::shared_lock lock(m_data_mutex);
+
+    if (m_processed_data.empty()) {
+        MF_RT_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+            "WindowContainer::to_image(staging) — no readback data for '{}'",
+            m_window->get_create_info().title);
+        return nullptr;
+    }
+
+    const auto* pixels = std::get_if<std::vector<uint8_t>>(&m_processed_data[0]);
+    if (!pixels || pixels->empty()) {
+        MF_RT_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+            "WindowContainer::to_image(staging) — processed_data[0] is not uint8_t or is empty for '{}'",
+            m_window->get_create_info().title);
+        return nullptr;
+    }
+
+    const auto fmt = query_surface_format(m_window);
+    const auto img_fmt = surface_format_to_image_format(fmt);
+    const uint32_t w = m_structure.get_width();
+    const uint32_t h = m_structure.get_height();
+
+    auto& loom = Portal::Graphics::TextureLoom::instance();
+
+    auto img = loom.create_2d(w, h, img_fmt, nullptr);
+    if (!img) {
+        MF_RT_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+            "WindowContainer::to_image(staging) — VKImage allocation failed for '{}'",
+            m_window->get_create_info().title);
+        return nullptr;
+    }
+
+    loom.upload_data(img, pixels->data(), pixels->size(), staging);
+    return img;
+}
+
+std::shared_ptr<Core::VKImage> WindowContainer::region_to_image(const Region& region) const
+{
+    std::shared_lock lock(m_data_mutex);
+
+    if (m_processed_data.empty()) {
+        MF_RT_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+            "WindowContainer::region_to_image — no readback data for '{}'",
+            m_window->get_create_info().title);
+        return nullptr;
+    }
+
+    const auto* src = std::get_if<std::vector<uint8_t>>(&m_processed_data[0]);
+    if (!src || src->empty()) {
+        MF_RT_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+            "WindowContainer::region_to_image — processed_data[0] is not uint8_t or is empty for '{}'",
+            m_window->get_create_info().title);
+        return nullptr;
+    }
+
+    std::vector<uint8_t> cropped;
+    try {
+        cropped = extract_region_data<uint8_t>(
+            std::span<const uint8_t> { src->data(), src->size() },
+            region,
+            m_structure.dimensions);
+    } catch (const std::exception& e) {
+        MF_RT_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+            "WindowContainer::region_to_image — crop failed for '{}': {}",
+            m_window->get_create_info().title, e.what());
+        return nullptr;
+    }
+
+    if (region.start_coordinates.size() < 2 || region.end_coordinates.size() < 2) {
+        MF_RT_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+            "WindowContainer::region_to_image — region must have at least 2 coordinates (SPATIAL_Y, SPATIAL_X)");
+        return nullptr;
+    }
+
+    const auto rh = static_cast<uint32_t>(
+        region.end_coordinates[0] - region.start_coordinates[0] + 1);
+    const auto rw = static_cast<uint32_t>(
+        region.end_coordinates[1] - region.start_coordinates[1] + 1);
+
+    const auto fmt = query_surface_format(m_window);
+    const auto img_fmt = surface_format_to_image_format(fmt);
+
+    auto img = Portal::Graphics::TextureLoom::instance().create_2d(
+        rw, rh, img_fmt, cropped.data());
+
+    if (!img) {
+        MF_RT_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+            "WindowContainer::region_to_image — TextureLoom::create_2d failed ({}x{}) for '{}'",
+            rw, rh, m_window->get_create_info().title);
+    }
+
+    return img;
 }
 
 void WindowContainer::set_region_data(const Region& /*region*/, const std::vector<DataVariant>& /*data*/)
@@ -374,6 +548,75 @@ DataAccess WindowContainer::channel_data(size_t /*channel*/)
 std::vector<DataAccess> WindowContainer::all_channel_data()
 {
     return { DataAccess(m_processed_data[0], m_structure.dimensions, DataModality::IMAGE_COLOR) };
+}
+
+uint64_t WindowContainer::get_frame_size() const
+{
+    return m_structure.get_frame_size();
+}
+
+uint64_t WindowContainer::get_num_frames() const
+{
+    return m_structure.get_height();
+}
+
+std::span<const double> WindowContainer::get_frame(uint64_t frame_index) const
+{
+    std::shared_lock lock(m_data_mutex);
+
+    const uint64_t h = m_structure.get_height();
+    if (frame_index >= h || m_processed_data.empty())
+        return {};
+
+    const auto* pixels = std::get_if<std::vector<uint8_t>>(&m_processed_data[0]);
+    if (!pixels || pixels->empty())
+        return {};
+
+    const uint64_t w = m_structure.get_width();
+    const uint64_t c = m_structure.get_channel_count();
+    const uint64_t row_elems = w * c;
+    const uint64_t offset = frame_index * row_elems;
+
+    if (offset + row_elems > pixels->size())
+        return {};
+
+    auto& cache = m_frame_cache;
+    cache.resize(row_elems);
+    for (uint64_t i = 0; i < row_elems; ++i)
+        cache[i] = static_cast<double>((*pixels)[offset + i]) / 255.0;
+
+    return { cache.data(), cache.size() };
+}
+
+void WindowContainer::get_frames(std::span<double> output, uint64_t start_frame, uint64_t num_frames) const
+{
+    std::shared_lock lock(m_data_mutex);
+
+    const uint64_t h = m_structure.get_height();
+    if (start_frame >= h || output.empty() || m_processed_data.empty()) {
+        std::ranges::fill(output, 0.0);
+        return;
+    }
+
+    const auto* pixels = std::get_if<std::vector<uint8_t>>(&m_processed_data[0]);
+    if (!pixels || pixels->empty()) {
+        std::ranges::fill(output, 0.0);
+        return;
+    }
+
+    const uint64_t w = m_structure.get_width();
+    const uint64_t c = m_structure.get_channel_count();
+    const uint64_t row_elems = w * c;
+    const uint64_t frames_to_copy = std::min(num_frames, h - start_frame);
+    const uint64_t elems_to_copy = std::min(frames_to_copy * row_elems,
+        static_cast<uint64_t>(output.size()));
+
+    const uint64_t src_offset = start_frame * row_elems;
+    for (uint64_t i = 0; i < elems_to_copy; ++i)
+        output[i] = static_cast<double>((*pixels)[src_offset + i]) / 255.0;
+
+    if (elems_to_copy < output.size())
+        std::fill(output.begin() + elems_to_copy, output.end(), 0.0);
 }
 
 } // namespace MayaFlux::Kakshya
