@@ -35,9 +35,8 @@ namespace {
     {
         const auto base_dir = std::filesystem::path(filepath).parent_path();
         return [base_dir](const std::string& raw) -> std::shared_ptr<Core::VKImage> {
-            std::string normalized = raw;
-            std::ranges::replace(normalized, '\\', '/');
-            return IO::ImageReader::load_texture((base_dir / normalized).string());
+            auto tex_path = FileReader::resolve_path((base_dir / raw).generic_string());
+            return IO::ImageReader::load_texture(tex_path);
         };
     }
 

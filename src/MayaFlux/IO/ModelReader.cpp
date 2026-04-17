@@ -483,7 +483,7 @@ Kakshya::MeshData ModelReader::extract_single_mesh(
         aiString tex_path;
         const aiMaterial* mat = s->mMaterials[mesh->mMaterialIndex];
         if (mat->GetTexture(aiTextureType_DIFFUSE, 0, &tex_path) == AI_SUCCESS) {
-            sub.diffuse_path = std::string(tex_path.C_Str());
+            sub.diffuse_path = std::filesystem::path(tex_path.C_Str()).generic_string();
             sub.diffuse_embedded = (!sub.diffuse_path.empty()
                 && sub.diffuse_path[0] == '*');
 

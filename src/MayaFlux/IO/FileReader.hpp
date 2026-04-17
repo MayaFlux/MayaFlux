@@ -258,17 +258,6 @@ public:
      */
     [[nodiscard]] virtual std::vector<uint64_t> get_dimension_sizes() const = 0;
 
-protected:
-    /**
-     * @brief Convert file regions to region groups.
-     * @param regions Vector of file regions.
-     * @return Region groups organized by type.
-     *
-     * Groups regions by their type field, producing a map from type to RegionGroup.
-     */
-    static std::unordered_map<std::string, Kakshya::RegionGroup>
-    regions_to_groups(const std::vector<FileRegion>& regions);
-
     /**
      * @brief Resolve a filepath against the project source root if not found as-is.
      *
@@ -295,7 +284,16 @@ protected:
         return filepath;
     }
 
-    friend class FileReaderRegistry;
+protected:
+    /**
+     * @brief Convert file regions to region groups.
+     * @param regions Vector of file regions.
+     * @return Region groups organized by type.
+     *
+     * Groups regions by their type field, producing a map from type to RegionGroup.
+     */
+    static std::unordered_map<std::string, Kakshya::RegionGroup>
+    regions_to_groups(const std::vector<FileRegion>& regions);
 };
 
 // Type alias for factory function
