@@ -70,6 +70,23 @@ public:
      */
     [[nodiscard]] std::shared_ptr<Core::VKImage> get_texture() const { return m_gpu_texture; }
     [[nodiscard]] bool has_texture() const { return m_gpu_texture != nullptr; }
+
+    /**
+     * @brief Inject a pre-existing GPU texture, bypassing TextureProcessor allocation.
+     *
+     * Safe to call before or after setup_processors(). When called before
+     * setup_processors(), TextureProcessor skips create_gpu_texture() and
+     * upload_initial_pixels() because has_texture() returns true. When called
+     * after setup_processors(), the RenderProcessor descriptor set is updated
+     * immediately so the new image is visible from the next rendered frame.
+     *
+     * No pixel upload occurs in either case — the image is assumed to already
+     * be resident on the GPU.
+     *
+     * @param image Initialized VKImage. Must not be null.
+     */
+    void set_gpu_texture(std::shared_ptr<Core::VKImage> image);
+
     // === Processor Access ===
     [[nodiscard]] std::shared_ptr<TextureProcessor> get_texture_processor() const
     {
