@@ -1,5 +1,7 @@
 #pragma once
 
+#include "MayaFlux/Portal/Text/TypeSetter.hpp"
+
 namespace MayaFlux::Core {
 struct TextConfig;
 }
@@ -66,6 +68,26 @@ MAYAFLUX_API bool set_default_font(
     std::string_view style,
     uint32_t pixel_size,
     uint32_t atlas_size = 512);
+
+/**
+ * @brief Lay out a UTF-8 string into screen-space glyph quads using the default atlas.
+ *
+ * Each quad in the returned LayoutResult carries pixel-space position, atlas
+ * UV coordinates, and the Unicode codepoint that produced it. The caller may
+ * mutate the quads freely before passing them to rasterize_quads().
+ *
+ * @param text    UTF-8 encoded input string.
+ * @param pen_x   Starting horizontal pen position in pixels.
+ * @param pen_y   Starting vertical pen position in pixels (baseline).
+ * @param wrap_w  Wrap boundary in pixels. Zero disables wrapping.
+ * @return        LayoutResult containing quads and final pen position.
+ * @pre           set_default_font() must have been called successfully.
+ */
+[[nodiscard]] MAYAFLUX_API LayoutResult create_layout(
+    std::string_view text,
+    float pen_x = 0.F,
+    float pen_y = 0.F,
+    uint32_t wrap_w = 0);
 
 /**
  * @brief Return the default GlyphAtlas, or nullptr if set_default_font()
