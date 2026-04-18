@@ -78,6 +78,35 @@ MayaFlux welcomes contributions across several domains:
 
 ---
 
+## 🧠 AI-Assisted Contributions
+
+MayaFlux recognizes that AI, in the hands of thoughtful and experienced practitioners, can be a powerful tool.
+
+Like any instrument, its value depends on the person using it.
+
+A master musician does not rely on the prestige of a rare instrument to create meaningful work. A Stradivarius may refine expression, but it does not replace authorship, intent, or understanding. The same applies to AI: it can extend capability, but it cannot substitute responsibility.
+
+**Policy:**
+
+* AI-assisted contributions are **welcome**.
+* AI may be used for ideation, drafting, refactoring, or bulk generation.
+* However, **all contributions must be authored, reviewed, and submitted by a human**.
+
+The individual submitting a PR is fully responsible for:
+
+* The correctness and safety of the code
+* Compliance with GPLv3 and licensing requirements
+* Alignment with MayaFlux’s architectural and conceptual principles
+
+**Non-negotiable constraint:**
+
+* Contributions **must not be authored or signed by autonomous agents**.
+* No bot-driven commits, AI identities, or automated PR generation without human ownership.
+
+If you submit work, you are the author.
+
+---
+
 ## ⚖️ Legal & Licensing
 
 By contributing, you affirm that:
