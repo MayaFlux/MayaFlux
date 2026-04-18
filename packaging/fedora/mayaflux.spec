@@ -34,6 +34,7 @@ BuildRequires:  vulkan-loader-devel
 BuildRequires:  vulkan-tools
 BuildRequires:  vulkan-validation-layers
 BuildRequires:  ffmpeg-free-devel
+BuildRequires:  assimp-devel
 BuildRequires:  stb-devel
 BuildRequires:  magic_enum-devel
 BuildRequires:  tbb-devel
@@ -43,6 +44,10 @@ BuildRequires:  glslc
 BuildRequires:  wayland-devel
 BuildRequires:  hidapi-devel
 BuildRequires:  rtmidi-devel
+BuildRequires:  asio-standalone
+BuildRequires:  freetype-devel
+BuildRequires:  utf8proc-devel
+BuildRequires:  fontconfig-devel
 BuildRequires:  git
 
 # Runtime = BuildRequires (all needed for live coding/JIT)
@@ -67,6 +72,7 @@ Requires:       vulkan-loader-devel
 Requires:       vulkan-tools
 Requires:       vulkan-validation-layers
 Requires:       ffmpeg-free-devel
+Requires:       assimp-devel
 Requires:       stb-devel
 Requires:       magic_enum-devel
 Requires:       tbb-devel
@@ -76,6 +82,10 @@ Requires:       glslc
 Requires:       wayland-devel
 Requires:       hidapi-devel
 Requires:       rtmidi-devel
+Requires:       asio-standalone
+Requires:       freetype-devel
+Requires:       utf8proc-devel
+Requires:       fontconfig-devel
 
 Provides:       mayaflux = %{version}-%{release}
 Conflicts:      mayaflux-dev
@@ -110,7 +120,7 @@ and live coding features. This is intentional.
     -DMAYAFLUX_PORTABLE=OFF \
     -DMAYAFLUX_BUILD_TESTS=OFF
 
-%cmake_build
+%cmake_build --parallel
 
 %install
 %cmake_install
