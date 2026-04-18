@@ -21,7 +21,7 @@ INPUT                 = src README.md CODE_OF_CONDUCT.md CONTRIBUTING.md docs/Ge
 RECURSIVE             = YES
 USE_MDFILE_AS_MAINPAGE = docs/Getting_Started.md
 FILE_PATTERNS         = *.cpp *.hpp *.h *.md
-EXCLUDE_PATTERNS      = */build/* */tests/* docs/html
+EXCLUDE_PATTERNS      = */build/* */tests/* docs/html docs/archive/*
 
 # Output settings
 GENERATE_HTML         = YES
@@ -30,6 +30,7 @@ HTML_OUTPUT           = html
 HTML_EXTRA_STYLESHEET = 
 SEARCHENGINE          = YES
 GENERATE_TREEVIEW     = YES
+GENERATE_TAGFILE      = docs/html/MayaFlux.tag
 
 # Extraction settings
 EXTRACT_ALL           = YES
@@ -47,6 +48,9 @@ SEPARATE_MEMBER_PAGES = YES
 SHOW_NAMESPACES       = YES
 TAB_SIZE             = 4
 OPTIMIZE_OUTPUT_FOR_C = NO
+ALPHABETICAL_INDEX = YES
+SORT_MEMBER_DOCS = YES
+SORT_BRIEF_DOCS = YES
 
 # Diagram settings
 HAVE_DOT             = YES
@@ -56,6 +60,9 @@ CALLER_GRAPH         = YES
 COLLABORATION_GRAPH  = YES
 TEMPLATE_RELATIONS   = YES
 INCLUDED_BY_GRAPH    = YES
+DOT_IMAGE_FORMAT = svg
+INTERACTIVE_SVG = YES
+DOT_GRAPH_MAX_NODES = 1000
 
 # Warning settings
 QUIET                = NO
