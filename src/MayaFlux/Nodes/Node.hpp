@@ -73,6 +73,15 @@ public:
         return nullptr;
     }
 
+    template <typename T>
+    const T* as() const
+    {
+        if (typeid(T).name() == type_id) {
+            return static_cast<const T*>(this);
+        }
+        return nullptr;
+    }
+
 protected:
     /**
      * @brief Protected constructor for NodeContext
