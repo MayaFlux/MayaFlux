@@ -58,7 +58,7 @@ If a node is a moment of transformation, a buffer is a span of time held in one 
 
 A node produces one value per evaluation. A buffer accumulates those values over a cycle, holds them, and makes them available as a block. Most useful operations on streams require a window of time: spectral analysis, convolution, onset detection, granular decomposition. None of these are possible sample by sample. The buffer creates temporal extent where none existed.
 
-Buffers are cycle-driven. They live inside the scheduler's tick. They have tokens that identify their processing domain and rate. They are registered with a `BufferManager` that knows when to process them.
+Buffers are cycle-driven. They are driven by the subsystem's tick. They have tokens that identify their processing domain and rate. They are registered with a `BufferManager` that knows when to process them.
 
 The buffer family is broad because real-time processing spans many domains.
 
@@ -78,19 +78,22 @@ The buffer family is broad because real-time processing spans many domains.
 
 ### Processors
 
-Processing happens to buffers, not inside them. A buffer holds data and coordinates with the scheduler. A processor defines what is done with that data each cycle. The two are inseparable in practice and distinct in concept.
+Processing happens to buffers, not inside them. A buffer holds data and coordinates with the subsystem (via root buffers). A processor defines what is done with that data each cycle. The two are inseparable in practice and distinct in concept.
 
 Every buffer carries a processing chain. Processors attach to that chain and execute in order when the buffer's cycle fires. The buffer coordinates timing; the processor defines the operation.
 
 `NodeFeedProcessor` evaluates a node unit by unit until the buffer is full. This is how a `NodeBuffer` drives a sine oscillator or a polynomial transform into the audio cycle. `FilterProcessor` applies IIR or FIR coefficients to the accumulated samples. `LogicProcessor` applies boolean operations. `PolynomialProcessor` applies a user-supplied polynomial function, with optional recursive mode for feedback paths. `NodeBindingsProcessor` binds node outputs to GPU descriptor slots. `AggregateBindingsProcessor` combines multiple node outputs into a single descriptor update.
 
-On the graphics side: `GeometryWriteProcessor` writes vertex data into a geometry buffer. `MeshProcessor` handles mesh topology updates. `RenderProcessor` records draw commands into a command buffer and submits them through the Portal rendering system. `ComputeProcessor` dispatches a compute shader. `DescriptorBindingsProcessor` manages descriptor set updates for shader resources. `UVFieldProcessor` evaluates UV field operators over geometry each cycle.
+On the graphics side: `GeometryBindingsProcessor` writes vertex data into a geometry buffer. `MeshProcessor` handles mesh topology updates. `RenderProcessor` records draw commands into a command buffer and submits them through the Portal rendering system. `ComputeProcessor` dispatches a compute shader. `DescriptorBindingsProcessor` manages descriptor set updates for shader resources. `UVFieldProcessor` evaluates UV field operators over geometry each cycle.
+
+`MixProcessor` combines multiple child audio buffer outputs into a root buffer. `GraphicsBatchProcessor` combines bind and draw calls into an efficient sequence. `PresentProcessor` submits the pre-drawn frame from all graphics buffers to the display.
 
 For data movement between CPU and GPU: `BufferUploadProcessor` stages CPU data to a GPU buffer. `BufferDownloadProcessor` reads GPU results back to CPU memory. `TransferProcessor` coordinates buffer-to-buffer copies.
 
-For Kakshya container access: `AccessProcessor` variants pull data from containers into audio buffers at the right rate and position. `StreamSliceProcessor` manages polyphonic slice playback within a `SamplingPipeline`.
+For Kakshya container access: `AccessProcessor` variants churn raw data from containers into processed data (type-ready, contiguous blocks for consumption) for buffers at the right rate and position. `StreamSliceProcessor` manages polyphonic slice playback within a `SamplingPipeline`.
 
-For audio output: `AudioWriteProcessor` writes computed data into an audio buffer for the hardware callback. `MixProcessor` combines multiple child buffer outputs into a root buffer.
+For NDData to audio: `AudioWriteProcessor` writes computed data into an audio buffer for the hardware callback.
+For NDData to graphics: `GeometryWriteProcessor` writes vertex data into a geometry buffer; `TextureWriteProcessor` writes pixel data into a texture buffer; `RenderProcessor` submits draw calls.
 
 The node graph and the buffer pipeline connect through these processor types. Nodes produce values on demand; processors evaluate those nodes into buffers at the right rate and in the right format for each subsystem.
 
@@ -114,7 +117,9 @@ Vruta does not know what audio or geometry or physics are. It knows tasks, time,
 
 Kriya is the language for writing time-structured processing work using Vruta's runtime.
 
-Where Vruta provides the primitives, Kriya provides the vocabulary. The awaiters `SampleDelay` and `BufferDelay` express time in terms the system understands. `ProcessingGate` suspends until a condition becomes true. `EventAwaiter` and `NetworkAwaiter` suspend until an event or a message fires.
+Where Vruta provides the primitives, Kriya provides the vocabulary. The awaiters `SampleDelay`, `BufferDelay` and `FrameDelay` express time in terms the system understands. `ProcessingGate` suspends until a condition becomes true. `EventAwaiter` and `NetworkAwaiter` suspend until an event or a message fires.
+
+`Tasks` provides the common scheduling primitives that most time-structured work reaches for first. `metro` fires a callback at a regular interval with sample-accurate timing, running indefinitely until cancelled. `sequence` fires a list of callbacks at specified time offsets relative to start, then completes. `line` interpolates a float between two values over a duration, storing the current value in the coroutine's state so external code can read it each cycle. `pattern` calls a generator function with an incrementing step index at a regular interval and passes the result to a callback, the natural primitive for algorithmic and rule-based generation. All four are `SoundRoutine` coroutines submitted to the scheduler; the API layer (`schedule_metro`, `schedule_sequence`, `schedule_pattern`) wraps them with name registration against the default engine.
 
 `BufferPipeline` is the primary composition surface for describing sequences of buffer operations as coroutine-driven chains. Capture a buffer, process it, accumulate it, route it somewhere else, branch if a condition holds, repeat for N cycles or indefinitely. The pipeline is itself a `SoundRoutine` under the hood; its fluent interface describes what that coroutine does.
 
