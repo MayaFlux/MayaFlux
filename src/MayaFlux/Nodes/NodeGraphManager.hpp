@@ -45,12 +45,13 @@ public:
      * @brief Creates a new NodeGraphManager
      * @param sample_rate Sample rate for audio processing (default: 48000 Hz)
      * @param block_size Block size for audio processing (default: 512 samples)
+     * @param frame_rate Frame rate for visual processing (default: 60 FPS)
      *
      * Initializes the manager with a root node for channel 0 (the default channel)
      * in the AUDIO_RATE domain. Additional root nodes for other tokens and channels
      * are created on demand when accessed.
      */
-    NodeGraphManager(uint32_t sample_rate = 48000, uint32_t block_size = 512);
+    NodeGraphManager(uint32_t sample_rate = 48000, uint32_t block_size = 512, uint32_t frame_rate = 60);
 
     /**
      * @brief Destroys the NodeGraphManager
@@ -569,6 +570,8 @@ private:
     std::atomic<bool> m_terminate_requested { false }; ///< Global termination flag
 
     uint32_t m_registered_sample_rate { 48000 }; ///< Sample rate for audio processing, used for normalization
+
+    uint32_t m_registered_frame_rate { 60 }; ///< Frame rate for visual processing, used for timing and normalization
 
     uint32_t m_registered_block_size { 512 }; ///< Block size for audio processing, used for normalizationbuffer
 

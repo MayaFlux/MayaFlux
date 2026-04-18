@@ -8,9 +8,10 @@
 
 namespace MayaFlux::Nodes {
 
-NodeGraphManager::NodeGraphManager(uint32_t sample_rate, uint32_t block_size)
+NodeGraphManager::NodeGraphManager(uint32_t sample_rate, uint32_t block_size, uint32_t frame_rate)
     : m_registered_sample_rate(sample_rate)
     , m_registered_block_size(block_size)
+    , m_registered_frame_rate(frame_rate)
 {
     ensure_root_exists(ProcessingToken::AUDIO_RATE, 0);
 }
@@ -21,6 +22,7 @@ void NodeGraphManager::add_to_root(const std::shared_ptr<Node>& node,
 {
     set_channel_mask(node, channel);
     node->set_sample_rate(m_registered_sample_rate);
+    node->set_frame_rate(m_registered_frame_rate);
 
     if (token == ProcessingToken::VISUAL_RATE) {
         node->set_gpu_compatible(true);

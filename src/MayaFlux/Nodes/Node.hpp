@@ -320,7 +320,15 @@ public:
      * @brief Sets whether the node is compatible with GPU processing
      * @param compatible True if the node supports GPU processing, false otherwise
      */
-    virtual void set_gpu_compatible(bool compatible) { m_gpu_compatible = compatible; }
+    virtual void set_gpu_compatible(bool compatible)
+    {
+        m_gpu_compatible = compatible;
+        if (compatible) {
+            m_timing_rate = m_frame_rate; // Use frame rate for timing calculations if GPU compatible
+        } else {
+            m_timing_rate = m_sample_rate; // Use sample rate for timing calculations if not GPU compatible
+        }
+    }
 
     /**
      * @brief Checks if the node supports GPU processing
@@ -339,6 +347,9 @@ public:
 
     void set_sample_rate(uint32_t sample_rate) { m_sample_rate = sample_rate; }
     [[nodiscard]] uint32_t get_sample_rate() const { return m_sample_rate; }
+
+    void set_frame_rate(uint32_t frame_rate) { m_frame_rate = frame_rate; }
+    [[nodiscard]] uint32_t get_frame_rate() const { return m_frame_rate; }
 
 protected:
     /**
@@ -429,6 +440,10 @@ protected:
     bool m_state_saved {};
 
     uint32_t m_sample_rate { 48000 }; ///< Sample rate for audio processing, used for normalization
+
+    uint32_t m_frame_rate { 60 }; ///< Frame rate for time-based processing, used for normalization
+
+    uint32_t m_timing_rate { m_sample_rate }; ///< Current timing rate for the node, used for timing calculations (can be sample rate or frame rate)
 
     uint8_t m_node_capability { NodeCapability::SCALAR }; ///< Bitmask of capabilities declared by this node
 
