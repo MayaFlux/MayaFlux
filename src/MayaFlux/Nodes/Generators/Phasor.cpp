@@ -58,7 +58,7 @@ void Phasor::set_frequency(float frequency)
 
 void Phasor::update_phase_increment(double frequency)
 {
-    m_phase_inc = frequency / (double)m_sample_rate;
+    m_phase_inc = frequency / (double)m_timing_rate;
 }
 
 void Phasor::set_frequency_modulator(const std::shared_ptr<Node>& modulator)

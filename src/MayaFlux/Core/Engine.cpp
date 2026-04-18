@@ -117,7 +117,8 @@ void Engine::Init(const GlobalStreamInfo& streamInfo, const GlobalGraphicsConfig
         m_stream_info.input.enabled ? m_stream_info.input.channels : 0,
         m_stream_info.sample_rate, m_stream_info.buffer_size);
 
-    m_node_graph_manager = std::make_shared<Nodes::NodeGraphManager>(m_stream_info.sample_rate, m_stream_info.buffer_size);
+    m_node_graph_manager = std::make_shared<Nodes::NodeGraphManager>(
+        m_stream_info.sample_rate, m_stream_info.buffer_size, m_graphics_config.target_frame_rate);
 
     m_node_graph_manager->set_node_config(m_node_config);
 

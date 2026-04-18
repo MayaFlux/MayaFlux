@@ -360,7 +360,7 @@ public:
 
     void set_gpu_compatible(bool compatible) override
     {
-        m_gpu_compatible = compatible;
+        Node::set_gpu_compatible(compatible);
         if (compatible) {
             m_node_capability |= NodeCapability::VECTOR;
         } else {

@@ -11,6 +11,7 @@ namespace Nodes {
         class Logic;
         class Polynomial;
         class Random;
+        class Counter;
     }
     namespace Filters {
         class IIR;
@@ -92,6 +93,7 @@ namespace IO {
     N(Logic, MayaFlux::Nodes::Generator::Logic)                               \
     N(Polynomial, MayaFlux::Nodes::Generator::Polynomial)                     \
     N(Random, MayaFlux::Nodes::Generator::Random)                             \
+    N(Counter, MayaFlux::Nodes::Generator::Counter)                           \
     N(IIR, MayaFlux::Nodes::Filters::IIR)                                     \
     N(FIR, MayaFlux::Nodes::Filters::FIR)                                     \
     N(ComputeOutNode, MayaFlux::Nodes::GpuSync::ComputeOutNode)               \

@@ -8,125 +8,134 @@ class Node;
 class NodeContext;
 
 /**
- * @typedef NodeHook
- * @brief Callback function type for node processing events
+ * @typedef TypedHook
+ * @brief Callback function type for node processing events, parameterised on context type.
  *
- * A NodeHook is a function that receives a NodeContext object containing
- * information about the node's current state. These callbacks are triggered
- * during node processing to notify external components about node activity.
+ * Defaults to NodeContext so existing code is unaffected. Concrete node classes
+ * specialise this with their own context type for their domain-specific callbacks,
+ * eliminating the need for callers to cast inside the lambda.
  *
- * Example:
+ * Example (base interface):
  * ```cpp
- * node->on_tick([](NodeContext& ctx) {
- *     std::cout << "Node produced value: " << ctx.value << std::endl;
- * });
+ * node->on_tick([](NodeContext& ctx) { ... });
+ * ```
+ * Example (concrete node):
+ * ```cpp
+ * phasor->on_phase_wrap([](GeneratorContext& ctx) { ... });
  * ```
  */
-using NodeHook = std::function<void(NodeContext&)>;
+template <typename ContextT = NodeContext>
+using TypedHook = std::function<void(ContextT&)>;
+
+/**
+ * @typedef NodeHook
+ * @brief Alias for TypedHook<NodeContext>.
+ *
+ * Preserved for backward compatibility. All existing NodeHook usage continues
+ * to compile without changes. Migrate incrementally to TypedHook<ConcreteContext>
+ * on a per-class basis.
+ */
+using NodeHook = TypedHook<>;
 
 /**
  * @typedef NodeCondition
- * @brief Predicate function type for conditional callbacks
+ * @brief Predicate function type for conditional callbacks.
  *
- * A NodeCondition is a function that evaluates whether a callback should
- * be triggered based on the node's current state. It receives a NodeContext
- * object and returns true if the condition is met, false otherwise.
+ * Evaluated each tick; the paired callback fires only when this returns true.
  *
  * Example:
  * ```cpp
  * node->on_tick_if(
  *     [](NodeContext& ctx) { return ctx.value > 0.8; },
- *     [](NodeContext& ctx) { std::cout << "Threshold exceeded!" << std::endl; }
+ *     [](NodeContext& ctx) { ... }
  * );
  * ```
  */
 using NodeCondition = std::function<bool(NodeContext&)>;
 
 /**
- * @brief Checks if a callback function already exists in a collection
- * @param callbacks The collection of callback functions to search
- * @param callback The callback function to look for
- * @return True if the callback exists in the collection, false otherwise
+ * @brief Returns true if an equivalent callback is already present in the collection.
  *
- * This function compares function pointers to determine if a specific callback
- * is already registered in a collection. It's used to prevent duplicate
- * registrations of the same callback function.
+ * Equivalence is determined by target_type() -- the same limitation as std::function
+ * comparison everywhere in the codebase.
  */
-bool callback_exists(const std::vector<NodeHook>& callbacks, const NodeHook& callback);
+template <typename ContextT>
+bool callback_exists(const std::vector<TypedHook<ContextT>>& callbacks,
+    const TypedHook<ContextT>& callback)
+{
+    return std::ranges::any_of(callbacks,
+        [&callback](const TypedHook<ContextT>& hook) {
+            return hook.target_type() == callback.target_type();
+        });
+}
 
 /**
- * @brief Checks if a condition function already exists in a collection of conditional callbacks
- * @param callbacks The collection of conditional callbacks to search
- * @param callback The condition function to look for
- * @return True if the condition exists in the collection, false otherwise
- *
- * This function compares function pointers to determine if a specific condition
- * is already used in a collection of conditional callbacks. It's used to prevent
- * duplicate registrations of the same condition function.
+ * @brief Adds a callback to the collection if an equivalent one is not already present.
+ * @return True if added, false if a duplicate was detected.
  */
-bool conditional_callback_exists(const std::vector<std::pair<NodeHook, NodeCondition>>& callbacks, const NodeCondition& callback);
+template <typename ContextT>
+bool safe_add_callback(std::vector<TypedHook<ContextT>>& callbacks,
+    const TypedHook<ContextT>& callback)
+{
+    if (!callback_exists(callbacks, callback)) {
+        callbacks.push_back(callback);
+        return true;
+    }
+    return false;
+}
 
 /**
- * @brief Checks if a specific callback and condition pair already exists
- * @param callbacks The collection of conditional callbacks to search
- * @param callback The callback function to look for
- * @param condition The condition function to look for
- * @return True if the exact pair exists in the collection, false otherwise
- *
- * This function checks if a specific combination of callback and condition
- * functions is already registered. It's used to prevent duplicate registrations
- * of the same callback-condition pair.
+ * @brief Removes all callbacks whose target_type() matches that of the supplied callback.
+ * @return True if at least one entry was removed.
  */
-bool callback_pair_exists(const std::vector<std::pair<NodeHook, NodeCondition>>& callbacks, const NodeHook& callback, const NodeCondition& condition);
+template <typename ContextT>
+bool safe_remove_callback(std::vector<TypedHook<ContextT>>& callbacks,
+    const TypedHook<ContextT>& callback)
+{
+    bool removed = false;
+    auto it = callbacks.begin();
+    while (it != callbacks.end()) {
+        if (it->target_type() == callback.target_type()) {
+            it = callbacks.erase(it);
+            removed = true;
+        } else {
+            ++it;
+        }
+    }
+    return removed;
+}
 
 /**
- * @brief Safely adds a callback to a collection if it doesn't already exist
- * @param callbacks The collection of callbacks to add to
- * @param callback The callback function to add
- * @return True if the callback was added, false if it already existed
- *
- * This function first checks if the callback already exists in the collection,
- * and only adds it if it's not already present. This prevents duplicate
- * registrations of the same callback function.
+ * @brief Returns true if a condition function is already present in a conditional callback collection.
  */
-bool safe_add_callback(std::vector<NodeHook>& callbacks, const NodeHook& callback);
+bool conditional_callback_exists(
+    const std::vector<std::pair<NodeHook, NodeCondition>>& callbacks,
+    const NodeCondition& callback);
 
 /**
- * @brief Safely adds a conditional callback if it doesn't already exist
- * @param callbacks The collection of conditional callbacks to add to
- * @param callback The callback function to add
- * @param condition The condition function to add
- * @return True if the conditional callback was added, false if it already existed
- *
- * This function first checks if the exact callback-condition pair already exists
- * in the collection, and only adds it if it's not already present. This prevents
- * duplicate registrations of the same conditional callback.
+ * @brief Returns true if the exact callback+condition pair is already present.
  */
-bool safe_add_conditional_callback(std::vector<std::pair<NodeHook, NodeCondition>>& callbacks, const NodeHook& callback, const NodeCondition& condition);
+bool callback_pair_exists(
+    const std::vector<std::pair<NodeHook, NodeCondition>>& callbacks,
+    const NodeHook& callback,
+    const NodeCondition& condition);
 
 /**
- * @brief Safely removes a callback from a collection
- * @param callbacks The collection of callbacks to remove from
- * @param callback The callback function to remove
- * @return True if the callback was found and removed, false otherwise
- *
- * This function searches for the specified callback in the collection and
- * removes it if found. It's used to unregister callbacks when they're no
- * longer needed.
+ * @brief Adds a conditional callback if the exact pair is not already present.
+ * @return True if added, false if a duplicate was detected.
  */
-bool safe_remove_callback(std::vector<NodeHook>& callbacks, const NodeHook& callback);
+bool safe_add_conditional_callback(
+    std::vector<std::pair<NodeHook, NodeCondition>>& callbacks,
+    const NodeHook& callback,
+    const NodeCondition& condition);
 
 /**
- * @brief Safely removes all conditional callbacks with a specific condition
- * @param callbacks The collection of conditional callbacks to remove from
- * @param callback The condition function to remove
- * @return True if at least one conditional callback was found and removed, false otherwise
- *
- * This function searches for all conditional callbacks that use the specified
- * condition function and removes them. It's used to unregister conditional
- * callbacks when they're no longer needed.
+ * @brief Removes all conditional callbacks whose condition target_type() matches.
+ * @return True if at least one entry was removed.
  */
-bool safe_remove_conditional_callback(std::vector<std::pair<NodeHook, NodeCondition>>& callbacks, const NodeCondition& callback);
+bool safe_remove_conditional_callback(
+    std::vector<std::pair<NodeHook, NodeCondition>>& callbacks,
+    const NodeCondition& callback);
 
 /**
  * @brief Atomically sets a node state flag with strong memory ordering

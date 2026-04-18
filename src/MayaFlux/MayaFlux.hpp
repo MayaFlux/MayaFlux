@@ -41,6 +41,7 @@
 #include "Nodes/Conduit/StreamReaderNode.hpp"
 #include "Nodes/Filters/FIR.hpp"
 #include "Nodes/Filters/IIR.hpp"
+#include "Nodes/Generators/Counter.hpp"
 #include "Nodes/Generators/Impulse.hpp"
 #include "Nodes/Generators/Phasor.hpp"
 #include "Nodes/Generators/Random.hpp"
