@@ -5,13 +5,13 @@
 [![CMake](https://img.shields.io/badge/CMake-3.20+-064F8C?logo=cmake)](https://cmake.org/)
 [![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20Windows-lightgrey)]()
 
-> **A C++20/23 multimedia framework treating audio, visual, and control data as unified numerical streams across rate-mismatched, independently executing real-time contexts.**
+> **A C++20/23 framework for real-time computation across sound, geometry, image, and network: unified at the substrate level, not bridged at the API level.**
 
-Real-time systems rarely fit a single execution model. Audio runs in hardware callbacks. Graphics render on fixed frame rates. Input arrives asynchronously. User code needs flexible timing. When these contexts must coordinate without blocking, traditional approaches fail: shared state requires mutexes that destroy real-time correctness, domain-specific rewrites multiply complexity, and the boundaries between execution contexts become walls rather than interfaces.
+Sound, geometry, image, and control data are not separate domains in MayaFlux. They are the same numerical substrate with a scheduling annotation deciding where each buffer cycle goes. A field driving mesh vertex deformation is the same field shaping granular reconstruction of audio. A network message routes into the node graph, triggers a coroutine, and reshapes geometry and audio simultaneously. Zero-copy views mean audio is not converted to texture: it is texture, accessed through a different lens over the same memory.
 
-MayaFlux is built on the premise that these execution contexts should be treated as fundamentally separate, then coordinated through lock-free patterns, C++20 coroutines, and compile-time data abstraction. The result is a system where a single computation can exist simultaneously at audio-rate precision, graphics-frame updates, input-driven events, and user-defined timing, without domain-specific rewrites or real-time correctness compromises.
+The coordination problem this creates is real: audio runs in hardware callbacks, graphics on frame-rate cycles, input arrives asynchronously, user code needs flexible timing. MayaFlux handles this through lock-free dispatch, C++20 coroutines, and compile-time data abstraction (no mutexes) in the real-time path, no domain-specific rewrites at execution context boundaries, no central scheduler overhead.
 
-This is not a plugin framework, DAW, or audio library. The infrastructure generalises to any real-time C++ system with mismatched execution models.
+The closest reference points are early Blender and openFrameworks: independent, flexible infrastructure for computation that produces sound and image. Not a DAW, plugin host, or audio library.
 
 For comprehensive onboarding, tutorials, design context, and philosophy, visit [the website](https://mayaflux.org)
 
@@ -1126,38 +1126,46 @@ void rhythm_path_textured()
 ### Nodes
 
 - Lock-free node graph with atomic compare-exchange processing coordination; networks process exactly once per cycle regardless of how many channels request output
-- Signal generators: `Sine`, `Phasor`, `Impulse`, `Polynomial`, `Random` (unified stochastic infrastructure via `Kinesis::Stochastic`, cached distributions, fast uniform RNG)
+- Signal generators: `Sine`, `Phasor`, `Impulse`, `Polynomial`, `Random` (unified stochastic infrastructure via `Kinesis::Stochastic`, cached distributions, fast uniform RNG), `Constant`, `Counter` (modulo wrap, signed step, normalized output, `on_increment` / `on_wrap` / `on_count` callbacks)
 - Filters: `FIR`, `IIR`
-- Networks: `ResonatorNetwork` (IIR biquad bandpass, formant presets, per-resonator or shared excitation), `WaveguideNetwork` (unidirectional and bidirectional propagation, explicit boundary reflections, measurement mode), `ModalNetwork` (exciter system, spatial excitation, modal coupling), `ParticleNetwork`, `PointCloudNetwork`
+- Networks: `ResonatorNetwork` (IIR biquad bandpass, formant presets, per-resonator or shared excitation), `WaveguideNetwork` (unidirectional and bidirectional propagation, explicit boundary reflections, measurement mode), `ModalNetwork` (exciter system, spatial excitation, modal coupling), `ParticleNetwork`, `PointCloudNetwork`, `MeshNetwork` (named slot DAG, parent-child world transform propagation, primary operator and operator chain)
+- Mesh operators: `MeshTransformOperator` (per-slot time-driven local transform, world transform propagation), `MeshFieldOperator` (Tendency field deformation per vertex attribute: position, color, normal, tangent, UV)
 - Compositing: `CompositeOpNode` (N-ary combination), `ChainNode` (pipeline), `BinaryOpNode` (conduit refactor)
 - Graph API: `>>` pipeline operator, `ChainNode` construction, `NodeGraphManager` with injected `NodeConfig` owned by Engine, `MAX_CHANNEL_COUNT` constant
+- `TypedHook<ContextT>` for typed callback dispatch; `NodeHook = TypedHook<>` alias for backward compatibility
 - `NodeSpec` for enhanced node metadata
 - Channel routing with block-based crossfade transitions
-- HID input via `HIDNode`, MIDI via `MIDINode`
+- HID input via `HIDNode`, MIDI via `MIDINode`, OSC via `OSCNode`
 - `NetworkAudioBuffer` and `NetworkAudioProcessor` for node network audio capture
 - `StreamReaderNode` and `NodeFeedProcessor` for buffer-to-node streaming
-- `Constant` generator node
+- Frame rate propagation through node graph for visual-rate timing
 
 ### Buffers
 
-- `SoundContainerBuffer`, `SoundStreamReader`, `SoundStreamWriter` (breaking renames from 0.1)
+- `SoundContainerBuffer`, `SoundStreamReader`, `SoundStreamWriter`
 - `VideoContainerBuffer`, `NetworkGeometryBuffer`, `CompositeGeometryBuffer`, `CompositeGeometryProcessor`
-- `TextureBuffer`, `NodeTextureBuffer`, `NodeBuffer`
+- `TextureBuffer`, `TextBuffer` (FreeType glyph texture subclass; alpha blend and streaming mode set as defaults), `NodeTextureBuffer`, `NodeBuffer`
+- `MeshBuffer` (indexed draw, per-slot SSBO transform path, diffuse texture binding), `MeshNetworkBuffer` (per-slot texture array path)
 - `FeedbackBuffer` (span-backed ring buffer, `HistoryBuffer` migration)
 - `TransferProcessor` for bidirectional audio/GPU buffer transfer
 - `BufferDownloadProcessor`, `BufferUploadProcessor` (staging)
 - `FilterProcessor`, `LogicProcessor`, `PolynomialProcessor`, `NodeBindingsProcessor`
 - `DescriptorBindingsProcessor`, `RenderProcessor`
+- `GeometryWriteProcessor` for external vertex data writes
 - INTERNAL/EXTERNAL processing modes on binding processors
 
 ### IO and Containers
 
-- `IOManager` centralising file reading, buffer wiring, and reader lifetime management for audio, video, camera, and image; replaces scattered load/hook patterns
+- `IOManager` centralising file reading, buffer wiring, and reader lifetime management for audio, video, camera, image, and mesh
+- `ModelReader`: Assimp-backed loader for glTF 2.0, FBX, OBJ, PLY, STL, DAE and any other Assimp-supported format; produces `MeshData` per mesh; `create_mesh_buffers()` and `create_mesh_network()` convenience paths; `TextureResolver` callback for diffuse texture binding
 - `FFmpegDemuxContext`, `AudioStreamContext`, `VideoStreamContext` as RAII FFmpeg resource owners
-- `SoundFileContainer`, `VideoFileContainer` (HEVC frame rate detection, decode loop error handling, black frame elimination), `VideoStreamContainer`, `CameraContainer` (single-slot live camera)
-- Live camera input: Linux (`/dev/video0`), macOS (numeric device index), Windows (DirectShow filter name via `video=<filter name>`)
-- Background decode thread on camera to prevent `av_read_frame` blocking the graphics thread
-- Deferred scaler creation via `ensure_scaler_for_format()` to handle `AV_PIX_FMT_NONE` at setup time
+- `SoundFileContainer`, `VideoFileContainer`, `VideoStreamContainer`, `CameraContainer`
+- `TextureContainer` as `SignalSourceContainer` for GPU pixel data; zero-copy view into `VKImage` via `to_image()`
+- `WindowContainer` GPU readback bridge; `WindowAccessProcessor` for pixel readback from GLFW windows into the container pipeline
+- `FileContainer` source path and format fields populated at load time
+- `StreamSlice` with loop count; `CursorAccessProcessor` with variable-speed fractional frame accumulator
+- `DynamicSoundStream` with bounded load via `load_audio_bounded`
+- Live camera: Linux (`/dev/video0`), macOS (numeric device index), Windows (DirectShow)
 - `FrameAccessProcessor`, `SpatialRegionProcessor` (parallel spatial region extraction), `RegionOrganizationProcessor`, `DynamicRegionProcessor`
 - `ContiguousAccessProcessor` for audio container access
 - `WindowContainer` and `WindowAccessProcessor` for pixel readback from GLFW windows
@@ -1167,48 +1175,91 @@ void rhythm_path_textured()
 ### Graphics
 
 - Vulkan 1.3 dynamic rendering: no `VkRenderPass` objects, no primary window concept, no manual swapchain or framebuffer management
-- Multiple simultaneous windows, each an independent rendering target; no viewport partitioning or offset hacks required
+- Multiple simultaneous windows, each an independent rendering target
 - Secondary command buffers for draw commands; `PresentProcessor` orchestrates primary command buffers per window per frame
 - `BackendResourceManager` for centralised format traits and swapchain readback
-- Geometry nodes: `PointNode`, `PointCollectionNode`, `PathGeneratorNode` (temp points, delayed resolution), `TopologyGeneratorNode` (proximity graphs), `GeometryWriterNode`, `ProceduralTextureNode`, `TextureNode`, `ComputeOutNode`
-- Graphics operator pipeline: `PhysicsOperator` (N-body, owns bounds mode and RNG), `PathOperator` (curve-based interpretation), `TopologyOperator` (proximity-based network generation)
-- `VertexSampler` for spatial generation extracted from `Kinesis`
-- Vertex layouts: static factory constructors, per-buffer layout override, vertex range drawing, `SCALAR_F32` modality
-- Mesh shader infrastructure present; paused pending MoltenVK upstream merge
+- Geometry nodes: `PointNode`, `PointCollectionNode`, `PathGeneratorNode`, `TopologyGeneratorNode`, `GeometryWriterNode`, `ProceduralTextureNode`, `TextureNode`, `ComputeOutNode`
+- Graphics operator pipeline: `PhysicsOperator`, `PathOperator`, `TopologyOperator`
+- `VertexSampler` for spatial generation; `MeshVertex` universal 60-byte layout with position, normal, tangent, UV, color
+- Influence UBO binding; influence properties (intensity, radius, color, size) and target on `Emitter` and `Agent`; lit shader variants
+- View transform via UBO at set=0; user descriptors at set=1+; buffer device address support
+- Compute shaders: `ComputePress` dispatch, `ComputeOutNode`, `TextureExecutionContext` for image-in/image-out pipelines
+- `TextureLoom` storage image creation and layout transitions
+- Shader compilation via shaderc or external GLSL to SPIR-V; SPIRV-Cross for runtime reflection
 - macOS line rendering fallback via CPU-side quad expansion
-- Compute shaders: `ComputePress` dispatch, `ComputeOutNode` for compute output; pipeline stable
-- Shader compilation via shaderc or external GLSL to SPIR-V path; SPIRV-Cross for runtime reflection
-- Dynamic dispatch loader for Vulkan extension functions
+
+### Portal::Text
+
+- FreeType-backed glyph atlas with system font discovery (fontconfig on Linux, family/style walk on macOS and Windows); no vendored assets
+- `TypeFaceFoundry` singleton; `FontFace` and `GlyphAtlas` per pixel size
+- `press()` for initial `TextBuffer` creation; `repress()` for in-place update with `RedrawPolicy::Clip` or `RedrawPolicy::Fit`; `impress()` for incremental append with automatic wrapping, budget growth, and overflow recomposite
+- `create_layout()` returning `LayoutResult` with `vector<GlyphQuad>`; `GlyphQuad` carries codepoint for per-character identification
+- `rasterize_quads()` and `ink_quads()` for caller-driven quad rasterization after arbitrary per-character transforms
+- `TextBuffer` subclass of `TextureBuffer`; alpha blend and streaming mode set as defaults; pre-allocated budget dimensions for zero-reallocation incremental updates
 
 ### Coroutines
 
-- `Vruta::TaskScheduler` with multi-domain clock management (`SampleClock`, `FrameClock`); clocks created automatically on first token use
-- `Kriya::EventChain` as the primary temporal sequencing primitive: `.then()`, `.repeat()`, `.times()`, `.wait()`, `.every()`; decoupled coroutine from instance
+- `Vruta::TaskScheduler` with multi-domain clock management (`SampleClock`, `FrameClock`)
+- `Kriya::EventChain`: `.then()`, `.repeat()`, `.times()`, `.wait()`, `.every()`
 - `Kriya::metro`, `Kriya::schedule`, `Kriya::pattern`, `Kriya::line`
 - `SampleDelay`, `FrameDelay`, `MultiRateDelay` awaiters for cross-domain coordination
 - `Kriya::Gate`, `Kriya::Trigger` for condition-driven and signal-driven suspension
-- `EventFilter` for granular GLFW windowing event filtering
-- `EventAwaiter` refactored to use `EventFilter`
-- `BufferPipeline` for coroutine-driven buffer operation chains
-- `Temporal` proxy DSL replacing `NodeTimeSpec`; `TemporalActivation` replacing `NodeTimer` (breaking)
+- `BufferPipeline` for coroutine-driven buffer operation chains; `SamplingPipeline` for polyphonic slice playback with `on_complete` callback and bounded-duration builds
+- `Kriya::on_message`, `on_message_from`, `on_message_matching` coroutine factories for network receive
+- `EventFilter`, `EventAwaiter`, `Temporal` proxy DSL, `TemporalActivation`
 - `MayaFlux::schedule_metro`, `MayaFlux::create_event_chain` convenience wrappers
-- `Await` function for main-thread blocking
+
+### Networking
+
+- `NetworkSubsystem` with UDP and TCP backends via standalone Asio
+- `NetworkService` registered into `BackendRegistry` for decoupled access
+- Persistent bidirectional endpoints; `EndpointInfo` configuration; broadcast datagrams to all matching endpoints
+- `NetworkSource` and `NetworkAwaiter` for coroutine-based receive
+- `Portal::Network`: `as_osc()` for zero-copy OSC parse from `NetworkMessage`; `serialize_osc()` for wire serialization
+- `OSCNode` for OSC message argument extraction into the node graph
+- OSC bridge wired through `InputManager` and `NetworkService` on init
+
+### Nexus
+
+- `Fabric` orchestrator and `Wiring` builder for spatial entity lifecycle
+- `Emitter`, `Agent`, `Sensor` entity types; entities carry independent audio and render sinks simultaneously
+- `InfluenceContext` with intensity, radius, color, size, render processor
+- `SpatialIndex` with lock-free snapshot publication; `HitTest` ray casting; `SpatialIndex::all()`
+- `Wiring` supports interval, duration, position functions, move steps, key/mouse/network/event triggers, immediate bind/detach, and fire-and-forget scheduling
+
+### Yantra (Offline Compute)
+
+- `GranularWorkflow`: grammar-driven offline granular pipeline; segment, attribute, sort, reconstruct; `REGION_GROUP`, `CONTAINER` (concatenative), `CONTAINER_ADDITIVE` (OLA), `STREAM`, and `STREAM_ADDITIVE` output modes; `process_to_stream_async` overloads; `GranularConfig` struct
+- `GpuExecutionContext` with `TextureExecutionContext` for image-in/image-out GPU pipelines
+- `GpuTransformer`, `GpuAnalyzer`, `GpuExtractor`, `GpuSorter`; `CHAINED` execution mode for multi-pass dispatch
+- Grammar system: `ComputationGrammar`, named rule overloads, `FluentExecutor`
+- `Datum<T>` as primary data wrapper throughout
 
 ### Lila (Live Coding)
 
 - LLVM ORC JIT via embedded Clang interpreter (requires LLVM 21+)
-- Evaluates arbitrary C++20 at runtime, one buffer/frame cycle of latency
+- Evaluates arbitrary C++20/23 at runtime including templates, coroutines, and lambdas; one buffer/frame cycle of latency
 - TCP server mode for networked live coding sessions
 - Symbol lookup and runtime introspection
 - Configurable include paths and compile flags
-- Windows JIT window responsiveness via main-thread execution
 
 ### Input
 
 - `InputSubsystem` coordinating `HIDBackend` (HIDAPI) and `MIDIBackend` (RtMidi)
-- `InputManager` for async dispatch to `InputNode` instances; lock-free registration list (platform-specific hazard pointer path on macOS)
-- `EventFilter`-based key and mouse event helpers via coroutine input event helpers in `Kriya`
+- `InputManager` for async dispatch to `InputNode` instances; lock-free registration list
+- OSC bridge via `NetworkService`
+- `EventFilter`-based key and mouse event helpers
 - `GlobalInputConfig` for unified input typing
+
+### Kinesis
+
+- `Kinesis::Discrete`: Transform, Extract, Spectral, Analysis primitive layers
+- `Kinesis::Stochastic`: unified stochastic generation, cached distributions, `VertexSampler`
+- `Tendency<D,R>` composable field primitive; vector, spatial, and UV field factories; radial pull, vortex, noise, and gravity presets; `Taper` window coefficient generation
+- `NavigationState` first-person fly navigation; `ViewTransform` screen-space math
+- Proximity graph generation: minimum spanning tree, k-nearest, nearest neighbor, sequential
+- Geometric primitive generation, transformation utilities, rotation/scaling matrix factories
+- Eigen-to-NDData semantic conversion (`EigenInsertion`, `EigenAccess`)
 
 ---
 
@@ -1395,12 +1446,18 @@ Auto-generated docs (enabled once CI pipelines are set up):
 | IO and Containers        | Stable      | Audio, video file, live camera, image; FFmpeg-backed        |
 | Graphics (Vulkan)        | Stable      | Dynamic rendering, multi-window, geometry, texture, compute |
 | Coroutine Infrastructure | Stable      | Multi-domain scheduling, EventChain, cross-domain awaiters  |
-| Input                    | Stable      | HID and MIDI backends, async dispatch                       |
-| Kinesis Analysis         | In Progress | Mathematical substrate; analysis tooling planned for 0.3    |
-| Grammar-Driven Pipelines | In Progress | Core framework ready, advanced matching in progress         |
+| Input                    | Stable      | HID, MIDI, OSC backends, async dispatch                     |
+| 3D Mesh Pipeline         | Stable      | glTF, FBX, OBJ, PLY via Assimp; MeshNetwork operator graph |
+| Networking               | Stable      | UDP/TCP transport, OSC, coroutine-based receive             |
+| Nexus                    | Stable      | Spatial entity lifecycle: Emitter, Agent, Sensor, Fabric    |
+| SamplingPipeline         | Stable      | Polyphonic slice playback, create_sampler API               |
+| Portal::Text             | Stable      | FreeType GPU text, incremental append, system font discovery|
+| Yantra/GranularWorkflow  | Stable      | Offline granular grammar pipeline, OLA reconstruction       |
+| Yantra Grammar System    | In Progress | Core framework stable, additional grammars planned for 0.4  |
 
-**Current version**: 0.3.0-dev
-**Trajectory**: Stable core, completing live signal matrix (file/live x audio/video)
+
+**Current version**: 0.3.0
+**Trajectory**: Stable core. 0.4 focuses on Nexus agent system expansion, computer vision pipeline, and Kinesis as a first-class analysis namespace.
 
 ---
 
@@ -1458,16 +1515,23 @@ If you're investigating:
 - Physical modelling primitives and classes
 - Essentially the first public-ready/production-ready release
 
-### Phase 3 (0.3)
+### Phase 3 (Complete)
 
-- 3D graphics expansion:
-  minor pipeline changes, but major opportunities for creative coding, and expanded default classes
+- 3D mesh pipeline: glTF/FBX/OBJ loading, MeshNetwork operator graph, MeshFieldOperator, indexed draw
+- Networking: UDP/TCP transport, OSC, coroutine-based receive via NetworkSource
+- Nexus spatial entity lifecycle system: Emitter, Agent, Sensor, Fabric, Wiring
+- Yantra/GranularWorkflow: offline granular grammar pipeline with OLA reconstruction
+- SamplingPipeline: polyphonic slice playback
+- Portal::Text: FreeType GPU text rendering with incremental append API
+- Public debut: TOPLAP Bengaluru live performance on Steam Deck (Arch Linux, Distrobox)
 
 ### Phase 4 (0.4)
 
-- SIMD optimisation of transformation algorithms in `Kinesis`
-- `Kinesis` as a first-class analysis namespace: Eigen-level linear algebra for graphics data, FluCoMa-level audio analysis primitives
+- Nexus/agent system build-out: Wiring snapshot and state serialization, entity function name registry, StateEncoder/StateDecoder round-trip
+- Computer vision pipeline: GPU-native via Vulkan compute shaders, optional headless OpenCV integration
+- Kinesis as a first-class analysis namespace: Eigen-level linear algebra for graphics data, FluCoMa-level audio analysis primitives
 - Yantra/Kinesis restructuring: Kinesis becomes pure mathematical substrate, Yantra becomes orchestrator and GPU dispatch coordinator
+- SIMD optimisation of transformation algorithms in Kinesis
 
 ### Phase 5 (0.5)
 
