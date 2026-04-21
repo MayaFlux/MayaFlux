@@ -3,7 +3,6 @@
 namespace MayaFlux {
 
 namespace internal {
-
     inline std::vector<std::shared_ptr<void>>& persistent_store()
     {
         static std::vector<std::shared_ptr<void>> s_store;
@@ -43,16 +42,44 @@ void store(T obj)
 }
 
 /**
- * @brief Construct a T in place, retain it for process lifetime, and return a handle.
+ * @brief Construct a T in place, retain it for process lifetime, and return a shared handle.
  * @tparam T Type to construct.
  * @tparam Args Constructor argument types.
  * @param args Forwarded to std::make_shared<T>.
  * @return Shared pointer to the newly constructed object.
  */
 template <typename T, typename... Args>
-std::shared_ptr<T> create_persistent(Args&&... args)
+std::shared_ptr<T> make_persistent_shared(Args&&... args)
 {
     return store(std::make_shared<T>(std::forward<Args>(args)...));
+}
+
+/**
+ * @brief Construct a T in place, retain it for process lifetime, and return a direct reference.
+ * @tparam T Type to construct.
+ * @tparam Args Constructor argument types.
+ * @param args Forwarded to std::make_shared<T>.
+ * @return Reference to the newly constructed object. Lifetime is the process lifetime.
+ */
+template <typename T, typename... Args>
+T& make_persistent(Args&&... args)
+{
+    return *make_persistent_shared<T>(std::forward<Args>(args)...);
+}
+
+/**
+ * @brief Store a value in the persistent store and return a reference to it.
+ * @tparam T Deduced from the argument.
+ * @param val Value to store. Moved into a shared_ptr internally.
+ * @return Reference to the stored object. Lifetime is the process lifetime.
+ */
+template <typename T>
+std::decay_t<T>& make_persistent(T&& val)
+{
+    auto ptr = std::make_shared<std::decay_t<T>>(std::forward<T>(val));
+    auto& ref = *ptr;
+    internal::persistent_store().push_back(std::static_pointer_cast<void>(std::move(ptr)));
+    return ref;
 }
 
 } // namespace MayaFlux

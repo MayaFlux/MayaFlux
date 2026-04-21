@@ -58,9 +58,11 @@ void RootGraphicsUnit::initialize(ProcessingToken token)
 
 TokenUnitManager::TokenUnitManager(
     ProcessingToken default_audio_token,
-    ProcessingToken default_graphics_token)
+    ProcessingToken default_graphics_token,
+    uint32_t preferred_buffer_size)
     : m_default_audio_token(default_audio_token)
     , m_default_graphics_token(default_graphics_token)
+    , m_preferred_buffer_size(preferred_buffer_size)
 {
 }
 
@@ -73,7 +75,7 @@ RootAudioUnit& TokenUnitManager::get_or_create_audio_unit(ProcessingToken token)
     auto it = m_audio_units.find(token);
     if (it == m_audio_units.end()) {
         std::lock_guard<std::mutex> lock(m_manager_mutex);
-        auto [inserted_it, success] = m_audio_units.emplace(token, RootAudioUnit {});
+        auto [inserted_it, success] = m_audio_units.emplace(token, RootAudioUnit { .buffer_size = m_preferred_buffer_size });
         return inserted_it->second;
     }
     return it->second;
@@ -213,6 +215,6 @@ uint32_t TokenUnitManager::get_audio_channel_count(ProcessingToken token) const
 uint32_t TokenUnitManager::get_audio_buffer_size(ProcessingToken token) const
 {
     auto it = m_audio_units.find(token);
-    return (it != m_audio_units.end()) ? it->second.buffer_size : 512;
+    return (it != m_audio_units.end()) ? it->second.buffer_size : m_preferred_buffer_size;
 }
 }

@@ -413,7 +413,7 @@ MayaFlux is built around five fundamental digital paradigms that replace traditi
 > have changed. An updated version is in progress. For current API reference,
 > see the [auto-generated docs](https://mayaflux.github.io/MayaFlux/).
 
-**Deep dive:** Read the [Digital Transformation Paradigm](Digital_Transformation_Paradigm.md) for comprehensive architectural understanding.
+**Deep dive:** Read the [Digital Architecture](Digital_Architecture.md) for comprehensive architectural understanding.
 
 Explore the shape of things to come!
 

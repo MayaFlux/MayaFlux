@@ -21,7 +21,7 @@ BufferManager::BufferManager(
     uint32_t default_buffer_size,
     ProcessingToken default_audio_token,
     ProcessingToken default_graphics_token)
-    : m_unit_manager(std::make_unique<TokenUnitManager>(default_audio_token, default_graphics_token))
+    : m_unit_manager(std::make_unique<TokenUnitManager>(default_audio_token, default_graphics_token, default_buffer_size))
     , m_access_control(std::make_unique<BufferAccessControl>(*m_unit_manager))
     , m_processor_control(std::make_unique<BufferProcessingControl>(*m_unit_manager, *m_access_control))
     , m_input_control(std::make_unique<BufferInputControl>())

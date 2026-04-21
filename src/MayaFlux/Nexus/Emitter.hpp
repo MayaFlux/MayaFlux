@@ -209,7 +209,8 @@ public:
         }
         dispatch_audio_sinks(m_audio_sinks, ctx);
         dispatch_render_sinks(m_render_sinks, ctx);
-        upload_influence_ubo(ctx);
+        if (m_influence_ubo)
+            upload_influence_ubo(ctx);
     }
 
 private:

@@ -171,6 +171,12 @@ public:
      * @brief Set the strength of attraction towards the attraction point.
      * @param strength Attraction strength value.
      */
+    void set_attraction_strength(float strength) { m_attraction_strength = strength; }
+
+    /**
+     * @brief Set the strength of attraction towards the attraction point.
+     * @param strength Attraction strength value.
+     */
     void set_turbulence_strength(float strength) { m_turbulence_strength = strength; }
 
     /**
