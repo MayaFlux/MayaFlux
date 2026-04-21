@@ -2,9 +2,9 @@ name: Dev Release
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
+    # push:
+    #   branches:
+    #     - main
 
 permissions:
   contents: write
@@ -47,7 +47,8 @@ jobs:
       is_dev: "1"
       run_tests: false
       create_distribution: true
-      artifact_name: MayaFlux-${{ needs.determine_version.outputs.VERSION }}-linux-fedora43-x64
+      artifact_name: MayaFlux-${{ needs.determine_version.outputs.VERSION
+        }}-linux-fedora43-x64
       distribution_name: linux-fedora43-x64
       os_display_name: Linux
 

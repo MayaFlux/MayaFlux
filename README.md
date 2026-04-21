@@ -15,6 +15,8 @@ The closest reference points are early Blender and openFrameworks: independent, 
 
 For comprehensive onboarding, tutorials, design context, and philosophy, visit [the website](https://mayaflux.org)
 
+For news around `0.3` release, follow this article which will receive video updates in short order: [The shape of material](https://mayaflux.org/releases/news/the_shape_of_material/)
+
 ---
 
 ## The Architecture
@@ -1339,7 +1341,7 @@ MayaFlux provides two release channels:
 
 ### Stable Releases
 
-Tagged releases (e.g., `v0.1.0`, `v0.2.0`) available on the [Releases page](https://github.com/MayaFlux/MayaFlux/releases). These are tested, documented, and recommended for most users.
+Tagged releases (e.g., `v0.1.0`, `v0.2.0`, `v0.3.0`) available on the [Releases page](https://github.com/MayaFlux/MayaFlux/releases). These are tested, documented, and recommended for most users.
 
 ### Development Builds
 
@@ -1347,8 +1349,8 @@ Rolling builds tagged as `x.x.x-dev` (e.g., `0.1.2-dev`, `0.2.0-dev`). These tag
 
 | Channel         | Tag Example | Stability | Use Case                           |
 | --------------- | ----------- | --------- | ---------------------------------- |
-| **Stable**      | `v0.2.0`    | Tested    | Production, learning, projects     |
-| **Development** | `0.3.0-dev` | Unstable  | Testing new features, contributing |
+| **Stable**      | `v0.3.0`    | Tested    | Production, learning, projects     |
+| **Development** | `0.4.0-dev` | Unstable  | Testing new features, contributing |
 
 Weave defaults to stable releases. Development builds require manual download from the releases page.
 

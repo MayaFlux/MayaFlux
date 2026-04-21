@@ -85,7 +85,8 @@ jobs:
       is_dev: "0"
       run_tests: ${{ inputs.run_tests }}
       create_distribution: true
-      artifact_name: MayaFlux-${{ needs.determine_version.outputs.VERSION }}-linux-fedora43-x64
+      artifact_name: MayaFlux-${{ needs.determine_version.outputs.VERSION
+        }}-linux-fedora43-x64
       distribution_name: linux-fedora43-x64
       os_display_name: Linux
 
@@ -159,7 +160,7 @@ jobs:
           sed \
             -e "s/{{VERSION}}/${{ needs.determine_version.outputs.VERSION }}/g" \
             -e "s/{{COMMIT_SHA}}/${{ steps.meta.outputs.SHORT_SHA }}/g" \
-            .github/workflows/distribution/shared/release_body_020.md > release_body.md
+            .github/workflows/distribution/shared/release_body_030.md > release_body.md
 
           cat changelog.md >> release_body.md
 
@@ -196,7 +197,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ needs.determine_version.outputs.CLEAN_VERSION }}
-          name: MayaFlux ${{ needs.determine_version.outputs.VERSION }} (${{ steps.meta.outputs.PLATFORMS }})
+          name: MayaFlux ${{ needs.determine_version.outputs.VERSION }} (${{
+            steps.meta.outputs.PLATFORMS }})
           body_path: release_body.md
           prerelease: false
           draft: false
