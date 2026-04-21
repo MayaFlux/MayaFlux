@@ -56,6 +56,10 @@ void TypeFaceFoundry::shutdown()
         return;
     }
 
+    if (m_default_face) {
+        m_default_face->unload();
+    }
+
     FT_Done_FreeType(m_library);
     m_library = nullptr;
 
