@@ -106,6 +106,7 @@
 #include "Kriya/CycleCoordinator.hpp"
 #include "Kriya/InputEvents.hpp"
 #include "Kriya/NetworkEvents.hpp"
+#include "Kriya/SamplingPipeline.hpp"
 #include "Kriya/Tasks.hpp"
 
 #include "Vruta/Event.hpp"
@@ -116,6 +117,7 @@
 #include "Kakshya/Source/DynamicSoundStream.hpp"
 #include "Kakshya/Source/SoundFileContainer.hpp"
 #include "Kakshya/Source/VideoFileContainer.hpp"
+#include "Kakshya/Source/WindowContainer.hpp"
 
 #include "Journal/Archivist.hpp"
 
@@ -140,6 +142,8 @@
 
 #include "IO/IOManager.hpp"
 #include "IO/ImageReader.hpp"
+
+#include "Nexus/Fabric.hpp"
 
 using namespace MayaFlux::Kakshya;
 using namespace MayaFlux::Kriya;
@@ -166,6 +170,7 @@ using namespace MayaFlux;
 #endif
 
 #ifdef MAYAFLUX_WORKFLOW_GRANULAR
+#include "MayaFlux/Kinesis/Discrete/Taper.hpp"
 #include "MayaFlux/Yantra/Workflows/Granular/GranularWorkflow.hpp"
 using namespace MayaFlux::Yantra;
 #endif
