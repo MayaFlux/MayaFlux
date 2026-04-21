@@ -26,8 +26,9 @@ AudioBuffer::AudioBuffer(uint32_t channel_id, uint32_t num_samples)
         MF_DEBUG(Journal::Component::Buffers, Journal::Context::Init,
             "AudioBuffer initialized with a non-default number of samples ({}). This may lead to unexpected behavior.",
             num_samples);
+        m_num_samples = s_preferred_buffer_size;
     }
-    m_data.resize(num_samples);
+    m_data.resize(m_num_samples);
 }
 
 void AudioBuffer::setup(uint32_t channel, uint32_t num_samples)

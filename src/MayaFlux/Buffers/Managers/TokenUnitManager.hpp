@@ -79,8 +79,9 @@ public:
         uint32_t default_buffer_size);
 
     TokenUnitManager(
-        ProcessingToken default_audio_token = ProcessingToken::AUDIO_BACKEND,
-        ProcessingToken default_graphics_token = ProcessingToken::GRAPHICS_BACKEND);
+        ProcessingToken default_audio_token,
+        ProcessingToken default_graphics_token,
+        uint32_t preferred_buffer_size);
 
     ~TokenUnitManager() = default;
 
@@ -289,6 +290,8 @@ private:
 
     /// Mutex for thread-safe access to all unit maps
     mutable std::mutex m_manager_mutex;
+
+    uint32_t m_preferred_buffer_size;
 };
 
 }
