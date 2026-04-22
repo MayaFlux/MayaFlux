@@ -67,7 +67,6 @@ bool ClangInterpreter::initialize()
     llvm::sys::DynamicLibrary::LoadLibraryPermanently("msvcp140.dll");
     llvm::sys::DynamicLibrary::LoadLibraryPermanently("vcruntime140.dll");
     llvm::sys::DynamicLibrary::LoadLibraryPermanently("ucrtbase.dll");
-    llvm::sys::DynamicLibrary::LoadLibraryPermanently("MayaFluxLib.dll");
 #endif
 
     llvm::InitializeNativeTarget();
@@ -189,6 +188,22 @@ bool ClangInterpreter::initialize()
     m_impl->interpreter = std::move(*interp);
 
     LILA_INFO(Emitter::INTERPRETER, "Clang interpreter created successfully");
+
+    {
+        const auto& lib_to_load = MayaFlux::Platform::SystemConfig::find_dep_library(
+            "MayaFluxLib", std::string(MayaFlux::Config::INSTALL_PREFIX));
+
+        LILA_DEBUG(Emitter::INTERPRETER, "Loading MayaFlux library: " + lib_to_load);
+
+        if (auto err = m_impl->interpreter->LoadDynamicLibrary(lib_to_load.c_str())) {
+            m_last_error = "Failed to load " + lib_to_load + ": "
+                + llvm::toString(std::move(err));
+            LILA_ERROR(Emitter::INTERPRETER, m_last_error);
+            return false;
+        }
+
+        LILA_DEBUG(Emitter::INTERPRETER, "Loaded " + lib_to_load);
+    }
 
     auto result = m_impl->interpreter->ParseAndExecute(
         "#include \"pch.h\"\n"

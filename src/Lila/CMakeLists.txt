@@ -116,16 +116,3 @@ if(WIN32)
 else()
     target_link_libraries(Lila PUBLIC Transitive)
 endif()
-
-if(NOT WIN32)
-    if (UNIX AND NOT APPLE)
-        target_link_libraries(Lila PUBLIC
-            -Wl,--no-as-needed
-            MayaFluxLib
-            -Wl,--as-needed
-        )
-    else()
-        target_link_libraries(Lila PUBLIC MayaFluxLib)
-    endif()
-endif()
-
