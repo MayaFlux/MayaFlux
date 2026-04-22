@@ -129,6 +129,16 @@ bool ClangInterpreter::initialize()
         LILA_WARN(Emitter::INTERPRETER,
             "Could not find Eigen include path - some features may not work");
     }
+
+    const auto& freetype_include = MayaFlux::Platform::SystemConfig::get_dep_includes("freetype2");
+    if (!freetype_include.empty()) {
+        m_impl->compile_flags.push_back("-isystem" + freetype_include);
+        LILA_DEBUG(Emitter::INTERPRETER,
+            std::string("Added FreeType include path: ") + freetype_include);
+    } else {
+        LILA_WARN(Emitter::INTERPRETER,
+            "Could not find FreeType include path - some features may not work");
+    }
 #endif
 
 #ifdef MAYAFLUX_PLATFORM_MACOS
