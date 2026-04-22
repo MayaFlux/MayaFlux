@@ -19,7 +19,7 @@ public:
 
     static const std::vector<std::string>& get_system_libraries();
 
-    static const std::string& find_library(const std::string& library_name);
+    static const std::string& find_dep_library(const std::string& library_name, const std::string& prefix = "");
 
     static const std::string& get_dep_includes(const std::string& library_name);
 

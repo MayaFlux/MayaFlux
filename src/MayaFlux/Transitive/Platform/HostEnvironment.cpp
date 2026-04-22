@@ -109,7 +109,7 @@ const std::vector<std::string>& SystemConfig::get_system_libraries()
     return lib_paths;
 }
 
-const std::string& SystemConfig::find_library(const std::string& library_name)
+const std::string& SystemConfig::find_dep_library(const std::string& library_name, const std::string& prefix)
 {
     static std::unordered_map<std::string, std::string> cache;
 
@@ -119,15 +119,22 @@ const std::string& SystemConfig::find_library(const std::string& library_name)
     }
 
     std::string& result = cache[library_name];
-
-    auto lib_paths = get_system_libraries();
     std::string search_name = format_library_name(library_name);
 
-    for (const auto& lib_path : lib_paths) {
-        fs::path full_path = fs::path(lib_path) / search_name;
-        if (fs::exists(full_path)) {
-            result = full_path.string();
-            break;
+    const fs::path resolved_prefix(prefix);
+    for (const auto& subdir : { "lib", "lib64" }) {
+        fs::path candidate = resolved_prefix / subdir / search_name;
+        if (fs::exists(candidate)) {
+            result = candidate.string();
+            return result;
+        }
+    }
+
+    for (const auto& lib_path : get_system_libraries()) {
+        fs::path candidate = fs::path(lib_path) / search_name;
+        if (fs::exists(candidate)) {
+            result = candidate.string();
+            return result;
         }
     }
 
