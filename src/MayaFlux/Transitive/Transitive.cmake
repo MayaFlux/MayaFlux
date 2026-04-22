@@ -26,6 +26,7 @@ if(WIN32)
     add_library(Transitive ALIAS Transitive_MD)
 
     target_compile_definitions(Transitive_MD PRIVATE MAYAFLUX_EXPORTS)
+    target_compile_definitions(Transitive_MT PRIVATE MAYAFLUX_EXPORTS)
 else()
     add_library(Transitive OBJECT ${TRANSITIVE_SOURCES} ${TRANSITIVE_HEADERS})
 
