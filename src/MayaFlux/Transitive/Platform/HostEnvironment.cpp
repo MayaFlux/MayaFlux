@@ -119,10 +119,10 @@ const std::string& SystemConfig::find_dep_library(const std::string& library_nam
     }
 
     std::string& result = cache[library_name];
-    std::string search_name = format_library_name(library_name);
+    std::string search_name = format_library_name(library_name, LibraryType::Shared);
 
     const fs::path resolved_prefix(prefix);
-    for (const auto& subdir : { "lib", "lib64" }) {
+    for (const auto& subdir : { "lib", "lib64", "bin" }) {
         fs::path candidate = resolved_prefix / subdir / search_name;
         if (fs::exists(candidate)) {
             result = candidate.string();
@@ -207,16 +207,20 @@ void SystemConfig::trim_output(std::string& str)
     str.erase(str.find_last_not_of(" \t") + 1);
 }
 
-std::string SystemConfig::format_library_name(const std::string& library_name)
+std::string SystemConfig::format_library_name(const std::string& library_name, LibraryType type)
 {
 #ifdef MAYAFLUX_PLATFORM_WINDOWS
-    if (library_name.find(".lib") == std::string::npos) {
-        return library_name + ".lib";
-    }
+    const std::string ext = (type == LibraryType::Shared) ? ".dll" : ".lib";
+    if (library_name.find(ext) == std::string::npos)
+        return library_name + ext;
+#elif defined(MAYAFLUX_PLATFORM_MACOS)
+    const std::string ext = (type == LibraryType::Shared) ? ".dylib" : ".a";
+    if (library_name.find(ext) == std::string::npos && library_name.find("lib") != 0)
+        return "lib" + library_name + ext;
 #else
-    if (library_name.find(".a") == std::string::npos && library_name.find(".so") == std::string::npos) {
-        return "lib" + library_name + ".a";
-    }
+    const std::string ext = (type == LibraryType::Shared) ? ".so" : ".a";
+    if (library_name.find(ext) == std::string::npos && library_name.find(".a") == std::string::npos)
+        return "lib" + library_name + ext;
 #endif
     return library_name;
 }

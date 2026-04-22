@@ -13,6 +13,12 @@ std::string safe_getenv(const char* var);
 namespace fs = std::filesystem;
 class MAYAFLUX_API SystemConfig {
 public:
+
+    enum class LibraryType : uint8_t { 
+        Static,
+        Shared 
+    };
+
     static const std::string& get_clang_resource_dir();
 
     static const std::vector<std::string>& get_system_includes();
@@ -32,7 +38,7 @@ public:
     static void trim_output(std::string& str);
 
 private:
-    static std::string format_library_name(const std::string& library_name);
+    static std::string format_library_name(const std::string& library_name, LibraryType type = LibraryType::Static);
 
     static std::vector<std::string> get_clang_includes();
 
