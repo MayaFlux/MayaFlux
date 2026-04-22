@@ -137,9 +137,11 @@ namespace Config {
 #if defined(MAYAFLUX_PLATFORM_MACOS) && (defined(__aarch64__) || defined(_M_ARM64))
     constexpr std::string_view RUNTIME_DATA_DIR = "/opt/homebrew/share/MayaFlux/runtime";
     constexpr std::string_view PCH_RUNTIME_PATH = "/opt/homebrew/share/MayaFlux/runtime/pch.h";
+    constexpr std::string_view INSTALL_PREFIX = "/opt/homebrew";
 #else
     constexpr std::string_view RUNTIME_DATA_DIR = "@CMAKE_INSTALL_PREFIX@/share/MayaFlux/runtime";
     constexpr std::string_view PCH_RUNTIME_PATH = "@CMAKE_INSTALL_PREFIX@/share/MayaFlux/runtime/pch.h";
+    constexpr std::string_view INSTALL_PREFIX = "@CMAKE_INSTALL_PREFIX@";
 #endif
 }
 

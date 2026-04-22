@@ -20,7 +20,7 @@ set(LILA_HEADERS
 add_library(Lila SHARED ${LILA_SOURCES} ${LILA_HEADERS})
 
 if(WIN32)
-    target_compile_definitions(Lila PRIVATE LILA_EXPORTS)
+    target_compile_definitions(Lila PRIVATE LILA_EXPORTS MAYAFLUX_EXPORTS)
     set_target_properties(Lila PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
     )
@@ -111,12 +111,8 @@ if(APPLE)
     target_link_libraries(Lila PRIVATE "-framework CoreFoundation")
 endif()
 
-if (UNIX AND NOT APPLE)
-    target_link_libraries(Lila PUBLIC
-        -Wl,--no-as-needed
-        MayaFluxLib
-        -Wl,--as-needed
-    )
+if(WIN32)
+    target_link_libraries(Lila PUBLIC Transitive_MT)
 else()
-    target_link_libraries(Lila PUBLIC MayaFluxLib)
+    target_link_libraries(Lila PUBLIC Transitive)
 endif()

@@ -269,7 +269,6 @@ if(NOT TARGET MayaFlux::MayaFluxLib)
         else()
             target_link_libraries(MayaFlux::MayaFluxLib INTERFACE 
             PkgConfig::Vulkan
-            PkgConfig::Fontconfig
             )
         endif()
     endif()
@@ -313,85 +312,6 @@ if(NOT TARGET MayaFlux::MayaFluxLib)
         message(STATUS "  Shader compilation: ${MAYAFLUX_USE_SHADERC}")
         message(STATUS "  Shader reflection: ${MAYAFLUX_USE_SPIRV_REFLECT}")
     endif()
-endif()
-
-# ============================================================================
-# Lila Target (JIT Live Coding - Shared Library)
-# ============================================================================
-
-set(LLVM_MIN_VERSION 21)
-
-if(NOT TARGET MayaFlux::Lila)
-    add_library(MayaFlux::Lila SHARED IMPORTED)
-
-    set_target_properties(MayaFlux::Lila PROPERTIES
-        IMPORTED_LOCATION "${PACKAGE_PREFIX_DIR}/lib/${CMAKE_SHARED_LIBRARY_PREFIX}Lila${CMAKE_SHARED_LIBRARY_SUFFIX}"
-        INTERFACE_INCLUDE_DIRECTORIES "${PACKAGE_PREFIX_DIR}/include"
-    )
-
-    # Platform-specific import lib (Windows only)
-    if(WIN32)
-        set_target_properties(MayaFlux::Lila PROPERTIES
-            IMPORTED_IMPLIB "${PACKAGE_PREFIX_DIR}/lib/Lila.lib"
-        )
-    endif()
-
-    target_link_libraries(MayaFlux::Lila INTERFACE MayaFlux::MayaFluxLib)
-
-    # LLVM/Clang linking
-    if(UNIX AND NOT WIN32)
-        execute_process(
-            COMMAND llvm-config --ldflags
-            OUTPUT_VARIABLE LLVM_LDFLAGS
-            OUTPUT_STRIP_TRAILING_WHITESPACE
-        )
-        execute_process(
-            COMMAND llvm-config --libs core orcjit native irreader support
-            OUTPUT_VARIABLE LLVM_LIBS
-            OUTPUT_STRIP_TRAILING_WHITESPACE
-        )
-        execute_process(
-            COMMAND llvm-config --system-libs
-            OUTPUT_VARIABLE LLVM_SYSTEM_LIBS
-            OUTPUT_STRIP_TRAILING_WHITESPACE
-        )
-
-        target_link_libraries(MayaFlux::Lila INTERFACE
-            ${LLVM_LDFLAGS}
-            ${LLVM_LIBS}
-            ${LLVM_SYSTEM_LIBS}
-            clang-cpp
-        )
-    else()
-        target_link_libraries(MayaFlux::Lila INTERFACE
-            LLVMSupport
-            LLVMCore
-            LLVMOrcJIT
-            LLVMIRReader
-            LLVMExecutionEngine
-            LLVMRuntimeDyld
-            LLVMTarget
-            LLVMX86CodeGen
-            LLVMMC
-            LLVMBitReader
-            LLVMAsmParser
-            LLVMTransformUtils
-            clangAST
-            clangBasic
-            clangCodeGen
-            clangDriver
-            clangFrontend
-            clangLex
-            clangParse
-            clangSema
-            clangSerialization
-            clangInterpreter
-            ws2_32
-            legacy_stdio_definitions
-        )
-    endif()
-
-    set_property(TARGET MayaFlux::Lila PROPERTY VERSION ${MayaFlux_VERSION})
 endif()
 
 # ============================================================================

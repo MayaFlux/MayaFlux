@@ -77,6 +77,12 @@ endif()
 #                   Target Links
 #==============================================================
 
+if(WIN32)
+    target_link_libraries(MayaFluxLib PUBLIC Transitive_MD)
+else()
+    target_link_libraries(MayaFluxLib PUBLIC Transitive)
+endif()
+
 target_link_libraries(MayaFluxLib PRIVATE ${SPIRV_CROSS_LIBRARIES})
 
 if(MAYAFLUX_USE_SHADERC)
