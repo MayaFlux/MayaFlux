@@ -111,14 +111,21 @@ if(APPLE)
     target_link_libraries(Lila PRIVATE "-framework CoreFoundation")
 endif()
 
-target_link_libraries(Lila PUBLIC Transitive)
-
-if (UNIX AND NOT APPLE)
-    target_link_libraries(Lila PUBLIC
-        -Wl,--no-as-needed
-        MayaFluxLib
-        -Wl,--as-needed
-    )
+if(WIN32)
+    target_link_libraries(Lila PUBLIC Transitive_MT)
 else()
-    target_link_libraries(Lila PUBLIC MayaFluxLib)
+    target_link_libraries(Lila PUBLIC Transitive)
 endif()
+
+if(NOT WIN32)
+    if (UNIX AND NOT APPLE)
+        target_link_libraries(Lila PUBLIC
+            -Wl,--no-as-needed
+            MayaFluxLib
+            -Wl,--as-needed
+        )
+    else()
+        target_link_libraries(Lila PUBLIC MayaFluxLib)
+    endif()
+endif()
+
