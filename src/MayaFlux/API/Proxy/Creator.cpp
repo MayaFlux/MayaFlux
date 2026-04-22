@@ -126,27 +126,6 @@ MeshGroupHandle& MeshGroupHandle::operator|(Domain d)
     return *this;
 }
 
-std::shared_ptr<Nodes::Node> operator|(const std::shared_ptr<Nodes::Node>& node, Domain d)
-{
-    CreationContext ctx(d);
-    register_node(node, ctx);
-    return node;
-}
-
-std::shared_ptr<Nodes::Network::NodeNetwork> operator|(const std::shared_ptr<Nodes::Network::NodeNetwork>& network, Domain d)
-{
-    CreationContext ctx(d);
-    register_network(network, ctx);
-    return network;
-}
-
-std::shared_ptr<Buffers::Buffer> operator|(const std::shared_ptr<Buffers::Buffer>& buffer, Domain d)
-{
-    CreationContext ctx(d);
-    register_buffer(buffer, ctx);
-    return buffer;
-}
-
 std::shared_ptr<Buffers::TextureBuffer> Creator::load_image_buffer(const std::string& filepath)
 {
     return get_io_manager()->load_image(filepath);
