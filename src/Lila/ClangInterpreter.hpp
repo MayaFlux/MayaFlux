@@ -50,10 +50,15 @@ public:
     ClangInterpreter& operator=(ClangInterpreter&&) noexcept;
 
     /**
-     * @brief Initializes the Clang interpreter and prepares for code evaluation
-     * @return True if initialization succeeded, false otherwise
+     * @brief Initialize the Clang interpreter.
+     *
+     * @param skip_host_library_load If true, do not call LoadDynamicLibrary
+     *        on MayaFluxLib. Pass true when the host process has already
+     *        loaded MayaFluxLib (attach scenario). Pass false for
+     *        standalone use (lila_server).
+     * @return true on success.
      */
-    bool initialize();
+    bool initialize(bool skip_host_library_load = false);
 
     /**
      * @brief Shuts down the interpreter and releases resources

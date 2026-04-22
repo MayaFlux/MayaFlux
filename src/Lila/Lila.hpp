@@ -56,12 +56,21 @@ public:
     ~Lila();
 
     /**
-     * @brief Initializes the live coding environment
-     * @param mode Operation mode (Direct, Server, Both)
-     * @param server_port TCP port for server mode (default: 9090)
-     * @return True if initialization succeeded, false otherwise
+     * @brief Initializes the live coding environment.
+     *
+     * @param mode Operation mode (Direct, Server, Both).
+     * @param server_port TCP port for server mode (default: 9090).
+     * @param skip_host_library_load If true, the interpreter will not call
+     *        LoadDynamicLibrary on MayaFluxLib at startup. Used by
+     *        in-process attach scenarios where MayaFluxLib is already
+     *        resident in the calling process. Default false preserves the
+     *        lila_server behaviour.
+     * @return True if initialization succeeded, false otherwise.
      */
-    bool initialize(OperationMode mode = OperationMode::Direct, int server_port = 9090) noexcept;
+    bool initialize(
+        OperationMode mode = OperationMode::Direct,
+        int server_port = 9090,
+        bool skip_host_library_load = false) noexcept;
 
     /**
      * @brief Evaluates a C++ code snippet directly
@@ -204,7 +213,7 @@ private:
     std::function<void()> m_success_callback; ///< Success callback
     std::function<void(const std::string&)> m_error_callback; ///< Error callback
 
-    bool initialize_interpreter();
+    bool initialize_interpreter(bool skip_host_library_load);
     bool initialize_server(int port);
     std::atomic<bool> m_shutdown_requested { false };
 

@@ -59,7 +59,7 @@ ClangInterpreter::~ClangInterpreter()
 ClangInterpreter::ClangInterpreter(ClangInterpreter&&) noexcept = default;
 ClangInterpreter& ClangInterpreter::operator=(ClangInterpreter&&) noexcept = default;
 
-bool ClangInterpreter::initialize()
+bool ClangInterpreter::initialize(bool skip_host_library_load)
 {
     LILA_INFO(Emitter::INTERPRETER, "Initializing Clang interpreter");
 
@@ -189,7 +189,10 @@ bool ClangInterpreter::initialize()
 
     LILA_INFO(Emitter::INTERPRETER, "Clang interpreter created successfully");
 
-    {
+    if (skip_host_library_load) {
+        LILA_DEBUG(Emitter::INTERPRETER,
+            "Skipping MayaFluxLib load: host process already resident");
+    } else {
         const auto& lib_to_load = MayaFlux::Platform::SystemConfig::find_dep_library(
             "MayaFluxLib", std::string(MayaFlux::Config::INSTALL_PREFIX));
 
