@@ -42,6 +42,6 @@ else()
 
     target_link_libraries(Transitive PUBLIC PkgConfig::magic_enum)
     if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
-        target_link_libraries(Transitive PUBLIC PkgConfig::Fontconfig)
+        target_link_libraries(Transitive PRIVATE PkgConfig::Fontconfig)
     endif()
 endif()
