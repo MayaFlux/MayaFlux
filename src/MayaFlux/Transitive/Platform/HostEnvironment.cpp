@@ -9,6 +9,12 @@ namespace {
         "/usr/local/include/eigen3",
         "/opt/homebrew/include/eigen3"
     };
+
+    const std::vector<std::string> freetype_includes = {
+        "/usr/include/freetype2",
+        "/usr/local/include/freetype2",
+        "/opt/homebrew/include/freetype2"
+    };
 }
 
 std::string safe_getenv(const char* var)
@@ -143,6 +149,17 @@ const std::string& SystemConfig::get_dep_includes(const std::string& library_nam
             result = Config::EIGEN_HINT;
         } else {
             for (const auto& path : eigen_includes) {
+                if (std::filesystem::exists(path)) {
+                    result = path;
+                    break;
+                }
+            }
+        }
+    } else if (library_name == "freetype2" || library_name == "freetype") {
+        if (!Config::FREETYPE_HINT.empty() && fs::exists(Config::FREETYPE_HINT)) {
+            result = Config::FREETYPE_HINT;
+        } else {
+            for (const auto& path : freetype_includes) {
                 if (std::filesystem::exists(path)) {
                     result = path;
                     break;
