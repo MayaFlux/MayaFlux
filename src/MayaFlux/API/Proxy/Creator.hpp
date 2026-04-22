@@ -45,10 +45,6 @@ struct CreationContext {
     }
 };
 
-MAYAFLUX_API std::shared_ptr<Nodes::Node> operator|(const std::shared_ptr<Nodes::Node>& node, Domain d);
-MAYAFLUX_API std::shared_ptr<Buffers::Buffer> operator|(const std::shared_ptr<Buffers::Buffer>& buffer, Domain d);
-MAYAFLUX_API std::shared_ptr<Nodes::Network::NodeNetwork> operator|(const std::shared_ptr<Nodes::Network::NodeNetwork>& network, Domain d);
-
 MAYAFLUX_API void register_node(const std::shared_ptr<Nodes::Node>& node, const CreationContext& ctx);
 MAYAFLUX_API void register_network(const std::shared_ptr<Nodes::Network::NodeNetwork>& network, const CreationContext& ctx);
 MAYAFLUX_API void register_buffer(const std::shared_ptr<Buffers::Buffer>& buffer, const CreationContext& ctx);
@@ -83,50 +79,6 @@ struct DomainSpec {
     operator CreationContext() const { return { value }; }
 };
 
-/**
- * @brief Intermediate produced by CreationProxy::operator[].
- *
- * Carries the object and channel index until operator| supplies the domain.
- * Removed in 0.3.1 along with CreationProxy.
- */
-template <typename T>
-struct PendingChannel {
-    std::shared_ptr<T> obj;
-    std::vector<uint32_t> channels;
-};
-
-/**
- * @brief Deprecated wrapper returned by Creator methods in 0.3.
- *
- * Exists solely to keep object[ch] | Domain compiling with a loud warning.
- * Removed in 0.3.1. Use the pipe syntax directly: object | Audio[ch].
- */
-template <typename T>
-struct CreationProxy : std::shared_ptr<T> {
-    using std::shared_ptr<T>::shared_ptr;
-
-    CreationProxy(std::shared_ptr<T> p)
-        : std::shared_ptr<T>(std::move(p))
-    {
-    }
-
-    /** @deprecated Use | Audio[ch] instead of object[ch] | Domain. Removed in 0.3.1. */
-    PendingChannel<T> operator[](uint32_t ch) const
-    {
-        MF_WARN(Journal::Component::API, Journal::Context::Init,
-            "object[ch] | Domain is deprecated and removed in 0.3.1 -- use object | Audio[ch] instead");
-        return { *this, { ch } };
-    }
-
-    /** @deprecated Use | Audio[{ch0,ch1,...}] instead of object[{...}] | Domain. Removed in 0.3.1. */
-    PendingChannel<T> operator[](std::initializer_list<uint32_t> chs) const
-    {
-        MF_WARN(Journal::Component::API, Journal::Context::Init,
-            "object[{...}] | Domain is deprecated and removed in 0.3.1 -- use object | Audio[{ch0,ch1,...}] instead");
-        return { *this, std::vector<uint32_t>(chs) };
-    }
-};
-
 class MAYAFLUX_API MeshGroupHandle {
 public:
     explicit MeshGroupHandle(std::vector<std::shared_ptr<Buffers::MeshBuffer>> buffers);
@@ -153,7 +105,7 @@ public:
 #define N(method_name, full_type_name)                                        \
     template <typename... Args>                                               \
         requires std::constructible_from<full_type_name, Args...>             \
-    auto method_name(Args&&... args) -> CreationProxy<full_type_name>         \
+    auto method_name(Args&&... args) -> std::shared_ptr<full_type_name>       \
     {                                                                         \
         return std::make_shared<full_type_name>(std::forward<Args>(args)...); \
     }
@@ -163,7 +115,7 @@ public:
 #define W(method_name, full_type_name)                                        \
     template <typename... Args>                                               \
         requires std::constructible_from<full_type_name, Args...>             \
-    auto method_name(Args&&... args) -> CreationProxy<full_type_name>         \
+    auto method_name(Args&&... args) -> std::shared_ptr<full_type_name>       \
     {                                                                         \
         return std::make_shared<full_type_name>(std::forward<Args>(args)...); \
     }
@@ -173,7 +125,7 @@ public:
 #define B(method_name, full_type_name)                                        \
     template <typename... Args>                                               \
         requires std::constructible_from<full_type_name, Args...>             \
-    auto method_name(Args&&... args) -> CreationProxy<full_type_name>         \
+    auto method_name(Args&&... args) -> std::shared_ptr<full_type_name>       \
     {                                                                         \
         return std::make_shared<full_type_name>(std::forward<Args>(args)...); \
     }
@@ -291,23 +243,6 @@ inline std::shared_ptr<Kakshya::SoundFileContainer> operator|(
     if (ctx.domain)
         register_container(obj, ctx.domain.value());
     return obj;
-}
-
-// ═══════════════════════════════════════════════════════════════
-// Deprecated bridge: PendingChannel | DomainSpec/CreationContext
-// Produced by CreationProxy::operator[]. Removed in 0.3.1.
-// ═══════════════════════════════════════════════════════════════
-
-template <typename T>
-std::shared_ptr<T> operator|(PendingChannel<T> p, const CreationContext& ctx)
-{
-    if (!ctx.domain.has_value())
-        return p.obj;
-    // CreationContext merged { ctx.domain.value(), std::move(p.channels) };
-    CreationContext merged = (p.channels.size() == 1)
-        ? CreationContext { ctx.domain.value(), p.channels[0] }
-        : CreationContext { ctx.domain.value(), std::move(p.channels) };
-    return p.obj | merged;
 }
 
 /**
