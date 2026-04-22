@@ -16,6 +16,7 @@ include(Registry/Registry.cmake)
 include(Transitive/Transitive.cmake)
 include(Vruta/Vruta.cmake)
 include(Yantra/Yantra.cmake)
+include(Host/Host.cmake)
 
 list(APPEND MAYAFLUX_ALL_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/MayaFlux.hpp")
 
@@ -81,6 +82,11 @@ if(WIN32)
     target_link_libraries(MayaFluxLib PUBLIC Transitive_MD)
 else()
     target_link_libraries(MayaFluxLib PUBLIC Transitive)
+endif()
+
+if(MAYAFLUX_ENABLE_LILA)
+    target_compile_definitions(MayaFluxLib PUBLIC MAYAFLUX_LILA_ENABLED)
+    target_link_libraries(MayaFluxLib PRIVATE Lila)
 endif()
 
 target_link_libraries(MayaFluxLib PRIVATE ${SPIRV_CROSS_LIBRARIES})

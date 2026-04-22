@@ -208,9 +208,13 @@ bool ClangInterpreter::initialize(bool skip_host_library_load)
         LILA_DEBUG(Emitter::INTERPRETER, "Loaded " + lib_to_load);
     }
 
-    auto result = m_impl->interpreter->ParseAndExecute(
-        "#include \"pch.h\"\n"
-        "#include \"Lila/LiveAid.hpp\"\n");
+    const char* header_include = skip_host_library_load
+        ? "#include \"pch.h\"\n"
+          "#include \"MayaFlux/MayaFlux.hpp\"\n"
+        : "#include \"pch.h\"\n"
+          "#include \"Lila/LiveAid.hpp\"\n";
+
+    auto result = m_impl->interpreter->ParseAndExecute(header_include);
 
     if (result) {
         std::string warning = "Failed to load MayaFlux headers: " + llvm::toString(std::move(result));
