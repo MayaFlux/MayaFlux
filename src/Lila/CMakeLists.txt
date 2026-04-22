@@ -111,6 +111,8 @@ if(APPLE)
     target_link_libraries(Lila PRIVATE "-framework CoreFoundation")
 endif()
 
+target_link_libraries(Lila PUBLIC Transitive)
+
 if (UNIX AND NOT APPLE)
     target_link_libraries(Lila PUBLIC
         -Wl,--no-as-needed
