@@ -43,7 +43,7 @@ set_target_properties(project_launcher PROPERTIES
 
 if(WIN32)
     set_target_properties(project_launcher PROPERTIES
-        VS_DEBUGGER_ENVIRONMENT "PATH=$<TARGET_FILE_DIR:MayaFluxLib>;$ENV{PATH}"
+        VS_DEBUGGER_ENVIRONMENT "PATH=$<TARGET_FILE_DIR:MayaFluxLib>;$<TARGET_FILE_DIR:MayaFluxHost>;$<TARGET_FILE_DIR:Lila>;$ENV{PATH}"
     )
 endif()
 

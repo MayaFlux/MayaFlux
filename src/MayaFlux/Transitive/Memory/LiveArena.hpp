@@ -4,6 +4,12 @@ namespace MayaFlux {
 
 namespace internal {
 
+#if defined(MAYAFLUX_PLATFORM_WINDOWS)
+#define MF_PRETTY_FUNCTION __FUNCSIG__
+#else
+#define MF_PRETTY_FUNCTION __PRETTY_FUNCTION__
+#endif
+
     /**
      * @brief Maximum number of objects that can be registered in the live arena.
      */
@@ -199,7 +205,7 @@ namespace internal {
     template <typename T>
     constexpr std::string_view live_type_name() noexcept
     {
-        std::string_view sv = __PRETTY_FUNCTION__;
+        std::string_view sv = MF_PRETTY_FUNCTION;
         auto eq = sv.find("T = ");
         auto end = sv.find(';', eq);
         if (end == std::string_view::npos) {
