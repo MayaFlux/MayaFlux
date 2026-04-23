@@ -1,5 +1,7 @@
 #pragma once
 
+#include "LiveArena.hpp"
+
 namespace MayaFlux {
 
 namespace internal {
@@ -30,6 +32,27 @@ std::shared_ptr<T> store(std::shared_ptr<T> obj)
 }
 
 /**
+ * @brief Transfer ownership of an existing object to the persistent store and
+ *        expose it to the live arena under @p key.
+ *
+ * The persistent store retains the object for process lifetime. The live arena
+ * entry allows JIT'd code to reach the object via live_cast<T>(key).
+ * No-op on the arena side when MAYAFLUX_LIVE is not defined.
+ *
+ * @tparam T   Any type managed by shared_ptr.
+ * @param  key Arena key used to locate the object from JIT'd code.
+ * @param  obj Object to retain and expose.
+ * @return The same shared_ptr, allowing inline chaining.
+ */
+template <typename T>
+std::shared_ptr<T> store(std::string_view key, std::shared_ptr<T> obj)
+{
+    MF_LIVE_EXPOSE(key.data(), obj);
+    internal::persistent_store().push_back(std::static_pointer_cast<void>(obj));
+    return obj;
+}
+
+/**
  * @brief Transfer ownership of a value to the persistent store for process lifetime.
  * @tparam T Any movable type.
  * @param obj Value to store. Moved into a shared_ptr internally.
@@ -51,7 +74,9 @@ void store(T obj)
 template <typename T, typename... Args>
 std::shared_ptr<T> make_persistent_shared(Args&&... args)
 {
-    return store(std::make_shared<T>(std::forward<Args>(args)...));
+    auto obj = store(std::make_shared<T>(std::forward<Args>(args)...));
+    MF_LIVE_EXPOSE_AUTO(obj);
+    return obj;
 }
 
 /**

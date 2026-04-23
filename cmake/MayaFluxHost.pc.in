@@ -1,0 +1,23 @@
+# ============================================================================
+# MayaFluxHost.pc - MayaFlux In-Process Live Coding Integration
+# ============================================================================
+# RECOMMENDATION: Use CMake find_package(MayaFlux) instead of pkg-config.
+# MayaFluxHost depends on Lila whose LLVM/Clang dependencies cannot be
+# expressed correctly in a .pc file. See Lila.pc for details.
+# ============================================================================
+
+prefix=@CMAKE_INSTALL_PREFIX@
+exec_prefix=${prefix}
+libdir=${prefix}/lib
+includedir=${prefix}/include
+
+Name: MayaFluxHost
+Description: In-process Lila live coding runtime for MayaFlux (requires Lila and LLVM 21+)
+Version: @PROJECT_VERSION@
+URL: https://github.com/MayaFlux/MayaFlux
+
+Requires: Lila
+
+Cflags: -I${includedir}
+
+Libs: -L${libdir} -lMayaFluxHost

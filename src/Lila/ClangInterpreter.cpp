@@ -59,7 +59,7 @@ ClangInterpreter::~ClangInterpreter()
 ClangInterpreter::ClangInterpreter(ClangInterpreter&&) noexcept = default;
 ClangInterpreter& ClangInterpreter::operator=(ClangInterpreter&&) noexcept = default;
 
-bool ClangInterpreter::initialize()
+bool ClangInterpreter::initialize(bool skip_host_library_load)
 {
     LILA_INFO(Emitter::INTERPRETER, "Initializing Clang interpreter");
 
@@ -189,7 +189,10 @@ bool ClangInterpreter::initialize()
 
     LILA_INFO(Emitter::INTERPRETER, "Clang interpreter created successfully");
 
-    {
+    if (skip_host_library_load) {
+        LILA_DEBUG(Emitter::INTERPRETER,
+            "Skipping MayaFluxLib load: host process already resident");
+    } else {
         const auto& lib_to_load = MayaFlux::Platform::SystemConfig::find_dep_library(
             "MayaFluxLib", std::string(MayaFlux::Config::INSTALL_PREFIX));
 
@@ -205,9 +208,13 @@ bool ClangInterpreter::initialize()
         LILA_DEBUG(Emitter::INTERPRETER, "Loaded " + lib_to_load);
     }
 
-    auto result = m_impl->interpreter->ParseAndExecute(
-        "#include \"pch.h\"\n"
-        "#include \"Lila/LiveAid.hpp\"\n");
+    const char* header_include = skip_host_library_load
+        ? "#include \"pch.h\"\n"
+          "#include \"MayaFlux/MayaFlux.hpp\"\n"
+        : "#include \"pch.h\"\n"
+          "#include \"Lila/LiveAid.hpp\"\n";
+
+    auto result = m_impl->interpreter->ParseAndExecute(header_include);
 
     if (result) {
         std::string warning = "Failed to load MayaFlux headers: " + llvm::toString(std::move(result));
@@ -254,7 +261,9 @@ ClangInterpreter::EvalResult ClangInterpreter::eval(const std::string& code)
 #elif defined(MAYAFLUX_PLATFORM_WINDOWS)
     auto completed = std::make_shared<std::atomic<bool>>(false);
 
-    auto* task = new std::function<void()>([&, completed]() {
+    auto* task = static_cast<std::function<void()>*>(
+        HeapAlloc(GetProcessHeap(), 0, sizeof(std::function<void()>)));
+    new (task) std::function<void()>([&, completed]() {
         auto eval_result = m_impl->interpreter->ParseAndExecute(code);
 
         if (!eval_result) {

@@ -29,12 +29,12 @@ Lila::~Lila()
     LILA_DEBUG(Emitter::SYSTEM, "Lila instance destroyed");
 }
 
-bool Lila::initialize(OperationMode mode, int server_port) noexcept
+bool Lila::initialize(OperationMode mode, int server_port, bool skip_host_library_load) noexcept
 {
     LILA_INFO(Emitter::SYSTEM, "Initializing Lila");
     m_current_mode = mode;
 
-    if (!initialize_interpreter()) {
+    if (!initialize_interpreter(skip_host_library_load)) {
         LILA_ERROR(Emitter::SYSTEM, "Failed to initialize interpreter");
         return false;
     }
@@ -50,10 +50,10 @@ bool Lila::initialize(OperationMode mode, int server_port) noexcept
     return true;
 }
 
-bool Lila::initialize_interpreter()
+bool Lila::initialize_interpreter(bool skip_host_library_load)
 {
     LILA_DEBUG(Emitter::SYSTEM, "Initializing interpreter subsystem");
-    return m_interpreter->initialize();
+    return m_interpreter->initialize(skip_host_library_load);
 }
 
 bool Lila::initialize_server(int port)
@@ -147,6 +147,13 @@ bool Lila::is_server_running() const
 {
     return m_server && m_server->is_running();
 }
+
+#ifdef MAYAFLUX_PLATFORM_WINDOWS
+void Lila::set_main_thread_id(uint32_t thread_id)
+{
+    MayaFlux::Parallel::g_MainThreadId = static_cast<DWORD>(thread_id);
+}
+#endif
 
 void* Lila::get_symbol_address(const std::string& name)
 {
@@ -256,7 +263,8 @@ void Lila::await_shutdown(const std::atomic<bool>* external_flag)
                 auto* task = reinterpret_cast<std::function<void()>*>(msg.lParam);
                 if (task) {
                     (*task)();
-                    delete task;
+                    task->~function();
+                    HeapFree(GetProcessHeap(), 0, task);
                 }
             } else {
                 TranslateMessage(&msg);
