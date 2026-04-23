@@ -2,6 +2,8 @@ add_subdirectory(MayaFlux)
 
 add_subdirectory(Lila)
 
+include(Host/Host.cmake)
+
 add_executable(lila_server lila_server.cpp)
 target_link_libraries(lila_server PRIVATE Lila)
 
@@ -45,7 +47,7 @@ if(WIN32)
     )
 endif()
 
-target_link_libraries(project_launcher PRIVATE MayaFluxLib)
+target_link_libraries(project_launcher PRIVATE MayaFluxLib MayaFluxHost)
 target_precompile_headers(project_launcher
     PUBLIC ${CMAKE_SOURCE_DIR}/cmake/pch.h)
 

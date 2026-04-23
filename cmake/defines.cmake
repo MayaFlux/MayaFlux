@@ -58,7 +58,6 @@ option(MAYAFLUX_PORTABLE "Build portable binaries with RPATH" OFF)
 option(MAYAFLUX_DEV "Build MayaFlux for development with debug symobls, rpath and tests" OFF)
 option(MAYAFLUX_SHIP_DEV "Build MayaFlux for dev build shipping with debug symbols" OFF)
 option(MAYAFLUX_SHIP_REL "Build MayaFlux for shipping with optimizations and no debug symbols" OFF)
-option(MAYAFLUX_ENABLE_LILA "Build MayaFluxLib with in-process Lila attach support" OFF)
 
 if(MAYAFLUX_DEV)
     message(STATUS "Development mode enabled")

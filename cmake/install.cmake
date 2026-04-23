@@ -56,6 +56,17 @@ install(FILES
 
 install(TARGETS lila_server RUNTIME DESTINATION bin)
 
+install(TARGETS MayaFluxHost
+    RUNTIME DESTINATION bin
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+)
+
+install(FILES
+    ${CMAKE_SOURCE_DIR}/src/Host/Live/Runtime.hpp
+    DESTINATION include/MayaFlux/Host/Live
+)
+
 # ============================================================================
 # CMake Config Files
 # ============================================================================

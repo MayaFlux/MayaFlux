@@ -98,6 +98,16 @@
 #define LILA_API
 #endif
 
+#ifdef MAYAFLUX_PLATFORM_WINDOWS
+#if defined(MAYAFLUX_HOST_EXPORTS)
+#define MAYAFLUX_HOST_API __declspec(dllexport)
+#else
+#define MAYAFLUX_HOST_API __declspec(dllimport)
+#endif
+#else
+#define MAYAFLUX_HOST_API
+#endif
+
 // C++20 std::format availability detection
 #ifdef MAYAFLUX_PLATFORM_MACOS
 #define MAYAFLUX_USE_FMT 1
