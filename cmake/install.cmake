@@ -27,6 +27,18 @@ if(UNIX)
         DESTINATION lib/pkgconfig)
 endif()
 
+configure_file(
+    ${CMAKE_SOURCE_DIR}/cmake/MayaFluxHost.pc.in
+    ${CMAKE_CURRENT_BINARY_DIR}/MayaFluxHost.pc
+    @ONLY
+)
+
+if(UNIX)
+    install(FILES
+        ${CMAKE_CURRENT_BINARY_DIR}/MayaFluxHost.pc
+        DESTINATION lib/pkgconfig)
+endif()
+
 install(DIRECTORY ${SHADER_OUTPUT_DIR}
     DESTINATION share/MayaFlux/
     FILES_MATCHING PATTERN "*.spv"

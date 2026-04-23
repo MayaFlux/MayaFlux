@@ -315,11 +315,118 @@ if(NOT TARGET MayaFlux::MayaFluxLib)
 endif()
 
 # ============================================================================
+# Lila Target (Shared Library)
+# ============================================================================
+
+if(NOT TARGET MayaFlux::Lila)
+    add_library(MayaFlux::Lila SHARED IMPORTED)
+
+    set_target_properties(MayaFlux::Lila PROPERTIES
+        IMPORTED_LOCATION "${PACKAGE_PREFIX_DIR}/lib/${CMAKE_SHARED_LIBRARY_PREFIX}Lila${CMAKE_SHARED_LIBRARY_SUFFIX}"
+        INTERFACE_INCLUDE_DIRECTORIES "${PACKAGE_PREFIX_DIR}/include;${PACKAGE_PREFIX_DIR}/share/MayaFlux/runtime"
+    )
+
+    if(WIN32)
+        set_target_properties(MayaFlux::Lila PROPERTIES
+            IMPORTED_IMPLIB "${PACKAGE_PREFIX_DIR}/lib/Lila.lib"
+        )
+
+        target_compile_definitions(MayaFlux::Lila INTERFACE ASIO_STANDALONE)
+
+        target_link_libraries(MayaFlux::Lila INTERFACE
+            MayaFlux::MayaFluxLib
+            LLVMSupport
+            LLVMCore
+            LLVMOrcJIT
+            LLVMIRReader
+            LLVMExecutionEngine
+            LLVMRuntimeDyld
+            LLVMTarget
+            LLVMX86CodeGen
+            LLVMMC
+            LLVMBitReader
+            LLVMAsmParser
+            LLVMTransformUtils
+            clangAST
+            clangBasic
+            clangCodeGen
+            clangDriver
+            clangFrontend
+            clangLex
+            clangParse
+            clangSema
+            clangSerialization
+            clangInterpreter
+            asio::asio
+            ws2_32
+            legacy_stdio_definitions
+        )
+    else()
+        execute_process(
+            COMMAND llvm-config --ldflags
+            OUTPUT_VARIABLE _LILA_LLVM_LDFLAGS
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
+        execute_process(
+            COMMAND llvm-config --libs core orcjit native irreader support
+            OUTPUT_VARIABLE _LILA_LLVM_LIBS
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
+        execute_process(
+            COMMAND llvm-config --system-libs
+            OUTPUT_VARIABLE _LILA_LLVM_SYSTEM_LIBS
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
+
+        separate_arguments(_LILA_LLVM_LDFLAGS_LIST UNIX_COMMAND "${_LILA_LLVM_LDFLAGS}")
+        separate_arguments(_LILA_LLVM_LIBS_LIST UNIX_COMMAND "${_LILA_LLVM_LIBS}")
+        separate_arguments(_LILA_LLVM_SYSTEM_LIBS_LIST UNIX_COMMAND "${_LILA_LLVM_SYSTEM_LIBS}")
+
+        target_compile_definitions(MayaFlux::Lila INTERFACE ASIO_STANDALONE)
+
+        target_link_libraries(MayaFlux::Lila INTERFACE
+            MayaFlux::MayaFluxLib
+            ${_LILA_LLVM_LDFLAGS_LIST}
+            ${_LILA_LLVM_LIBS_LIST}
+            ${_LILA_LLVM_SYSTEM_LIBS_LIST}
+            PkgConfig::Asio
+        )
+
+        if(APPLE)
+            target_link_libraries(MayaFlux::Lila INTERFACE "-framework CoreFoundation")
+        endif()
+    endif()
+endif()
+
+# ============================================================================
+# MayaFluxHost Target (Shared Library)
+# ============================================================================
+
+if(NOT TARGET MayaFlux::MayaFluxHost)
+    add_library(MayaFlux::MayaFluxHost SHARED IMPORTED)
+
+    set_target_properties(MayaFlux::MayaFluxHost PROPERTIES
+        IMPORTED_LOCATION "${PACKAGE_PREFIX_DIR}/lib/${CMAKE_SHARED_LIBRARY_PREFIX}MayaFluxHost${CMAKE_SHARED_LIBRARY_SUFFIX}"
+        INTERFACE_INCLUDE_DIRECTORIES "${PACKAGE_PREFIX_DIR}/include/MayaFlux/Host/Live;${PACKAGE_PREFIX_DIR}/share/MayaFlux/runtime"
+    )
+
+    if(WIN32)
+        set_target_properties(MayaFlux::MayaFluxHost PROPERTIES
+            IMPORTED_IMPLIB "${PACKAGE_PREFIX_DIR}/lib/MayaFluxHost.lib"
+        )
+    endif()
+
+    target_link_libraries(MayaFlux::MayaFluxHost INTERFACE
+        MayaFlux::Lila
+    )
+endif()
+
+# ============================================================================
 # Package Variables
 # ============================================================================
 
 set(MayaFlux_FOUND TRUE)
-set(MayaFlux_LIBRARIES MayaFlux::MayaFluxLib MayaFlux::Lila)
+set(MayaFlux_LIBRARIES MayaFlux::MayaFluxLib MayaFlux::Lila MayaFlux::MayaFluxHost)
 set(MayaFlux_INCLUDE_DIRS "${PACKAGE_PREFIX_DIR}/include")
 set(MayaFlux_LIB_DIR "${PACKAGE_PREFIX_DIR}/lib")
 set(MayaFlux_SHADER_DIR "${PACKAGE_PREFIX_DIR}/share/MayaFlux/shaders")
