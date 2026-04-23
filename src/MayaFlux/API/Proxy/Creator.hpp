@@ -3,6 +3,8 @@
 #include "Domain.hpp"
 #include "Registry.hpp"
 
+#include "MayaFlux/Transitive/Memory/LiveArena.hpp"
+
 #include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux {
@@ -102,44 +104,54 @@ private:
 
 class MAYAFLUX_API Creator {
 public:
-#define N(method_name, full_type_name)                                        \
-    template <typename... Args>                                               \
-        requires std::constructible_from<full_type_name, Args...>             \
-    auto method_name(Args&&... args) -> std::shared_ptr<full_type_name>       \
-    {                                                                         \
-        return std::make_shared<full_type_name>(std::forward<Args>(args)...); \
+#define N(method_name, full_type_name)                                            \
+    template <typename... Args>                                                   \
+        requires std::constructible_from<full_type_name, Args...>                 \
+    auto method_name(Args&&... args) -> std::shared_ptr<full_type_name>           \
+    {                                                                             \
+        auto obj = std::make_shared<full_type_name>(std::forward<Args>(args)...); \
+        MF_LIVE_EXPOSE_NAMED(#method_name, obj);                                  \
+        return obj;                                                               \
     }
     ALL_NODE_REGISTRATIONS
 #undef N
 
-#define W(method_name, full_type_name)                                        \
-    template <typename... Args>                                               \
-        requires std::constructible_from<full_type_name, Args...>             \
-    auto method_name(Args&&... args) -> std::shared_ptr<full_type_name>       \
-    {                                                                         \
-        return std::make_shared<full_type_name>(std::forward<Args>(args)...); \
+#define W(method_name, full_type_name)                                            \
+    template <typename... Args>                                                   \
+        requires std::constructible_from<full_type_name, Args...>                 \
+    auto method_name(Args&&... args) -> std::shared_ptr<full_type_name>           \
+    {                                                                             \
+        auto obj = std::make_shared<full_type_name>(std::forward<Args>(args)...); \
+        MF_LIVE_EXPOSE_NAMED(#method_name, obj);                                  \
+        return obj;                                                               \
     }
     ALL_NODE_NETWORK_REGISTRATIONS
 #undef W
 
-#define B(method_name, full_type_name)                                        \
-    template <typename... Args>                                               \
-        requires std::constructible_from<full_type_name, Args...>             \
-    auto method_name(Args&&... args) -> std::shared_ptr<full_type_name>       \
-    {                                                                         \
-        return std::make_shared<full_type_name>(std::forward<Args>(args)...); \
+#define B(method_name, full_type_name)                                            \
+    template <typename... Args>                                                   \
+        requires std::constructible_from<full_type_name, Args...>                 \
+    auto method_name(Args&&... args) -> std::shared_ptr<full_type_name>           \
+    {                                                                             \
+        auto obj = std::make_shared<full_type_name>(std::forward<Args>(args)...); \
+        MF_LIVE_EXPOSE_NAMED(#method_name, obj);                                  \
+        return obj;                                                               \
     }
     ALL_BUFFER_REGISTRATION
 #undef B
 
     auto read_audio(const std::string& filepath) -> std::shared_ptr<Kakshya::SoundFileContainer>
     {
-        return load_sound_container(filepath);
+        auto container = load_sound_container(filepath);
+        MF_LIVE_EXPOSE_AUTO(container);
+        return container;
     }
 
     auto read_image(const std::string& filepath) -> std::shared_ptr<Buffers::TextureBuffer>
     {
-        return load_image_buffer(filepath);
+        auto buffer = load_image_buffer(filepath);
+        MF_LIVE_EXPOSE_AUTO(buffer);
+        return buffer;
     }
 
     auto read_mesh(const std::string& filepath) -> MeshGroupHandle
@@ -152,7 +164,9 @@ public:
         IO::TextureResolver resolver = nullptr)
         -> std::shared_ptr<Nodes::Network::MeshNetwork>
     {
-        return load_mesh_network(filepath, std::move(resolver));
+        auto network = load_mesh_network(filepath, std::move(resolver));
+        MF_LIVE_EXPOSE_AUTO(network);
+        return network;
     }
 
     // ═══════════════════════════════════════════════════════════════
