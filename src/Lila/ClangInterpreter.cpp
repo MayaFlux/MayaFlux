@@ -261,7 +261,9 @@ ClangInterpreter::EvalResult ClangInterpreter::eval(const std::string& code)
 #elif defined(MAYAFLUX_PLATFORM_WINDOWS)
     auto completed = std::make_shared<std::atomic<bool>>(false);
 
-    auto* task = new std::function<void()>([&, completed]() {
+    auto* task = static_cast<std::function<void()>*>(
+        HeapAlloc(GetProcessHeap(), 0, sizeof(std::function<void()>)));
+    new (task) std::function<void()>([&, completed]() {
         auto eval_result = m_impl->interpreter->ParseAndExecute(code);
 
         if (!eval_result) {
