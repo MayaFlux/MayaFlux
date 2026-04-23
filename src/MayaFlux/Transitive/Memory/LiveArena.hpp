@@ -371,11 +371,21 @@ bool expose_live(const char* key, T* ptr) noexcept
 }
 
 /**
+ * @brief Internal implementation for live_cast. Resolves through the export
+ *        table so JIT'd code can reach arena globals across DLL boundaries.
+ *
+ * @param  key Null-terminated arena key.
+ * @return Raw pointer to the registered object, or nullptr.
+ */
+MAYAFLUX_API void* live_cast_impl(const char* key) noexcept;
+
+/**
  * @brief Retrieves a live-arena object by key as a shared_ptr<T>.
  *
- * Callable from both host code and JIT'd code. For shared_ptr-exposed objects
- * the returned shared_ptr shares ownership with the original. For bump-allocated
- * and raw-pointer objects the returned shared_ptr uses a no-op deleter.
+ * Delegates the directory walk to live_cast_impl so the call resolves
+ * through the DLL export table on all platforms. The returned shared_ptr
+ * uses a no-op deleter; lifetime is managed by the arena or the original
+ * expose_live caller.
  *
  * @tparam T   Expected type of the registered object.
  * @param  key Null-terminated string used at make_live or expose_live time.
@@ -384,22 +394,20 @@ bool expose_live(const char* key, T* ptr) noexcept
 template <typename T>
 std::shared_ptr<T> live_cast(const char* key) noexcept
 {
-    auto* hdr = internal::live_arena_header();
-    for (uint32_t i = 0; i < hdr->entry_count; ++i) {
-        auto& entry = hdr->entries[i];
-        if (!entry.occupied) {
-            continue;
-        }
-        if (std::strncmp(entry.key, key, internal::LIVE_ARENA_KEY_MAX) != 0) {
-            continue;
-        }
-        if (entry.offset == UINT32_MAX) {
-            return std::static_pointer_cast<T>(internal::g_live_arena_shared_ptrs[i]);
-        }
-        T* ptr = reinterpret_cast<T*>(internal::live_arena_object_region() + entry.offset);
-        return std::shared_ptr<T>(ptr, [](T*) { });
+    void* ptr = live_cast_impl(key);
+    if (!ptr) {
+        return nullptr;
     }
-    return nullptr;
+    return std::shared_ptr<T>(static_cast<T*>(ptr), [](T*) { });
 }
+
+/**
+ * @brief Dumps all live arena entries to stderr.
+ *
+ * Prints each occupied entry's index, key, and offset, followed by
+ * the total entry count and bump pointer value. Intended for diagnostic
+ * use during development; output goes to stderr unconditionally.
+ */
+MAYAFLUX_API void live_arena_dump() noexcept;
 
 } // namespace MayaFlux
