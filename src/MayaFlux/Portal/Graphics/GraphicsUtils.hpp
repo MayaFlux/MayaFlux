@@ -156,6 +156,10 @@ enum class ImageFormat : uint8_t {
     RG32F, ///< Two channel 32-bit float
     RGBA32F, ///< Four channel 32-bit float
 
+    R16, ///< Single channel 16-bit unsigned integer
+    RG16, ///< Two channel 16-bit unsigned integer
+    RGBA16, ///< Four channel 16-bit unsigned integer
+
     // Depth/stencil formats
     DEPTH16, ///< 16-bit depth
     DEPTH24, ///< 24-bit depth

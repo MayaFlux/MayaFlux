@@ -49,6 +49,41 @@ namespace MayaFlux::IO {
     return true;
 }();
 
+bool ImageData::is_consistent() const
+{
+    using F = Portal::Graphics::ImageFormat;
+
+    const bool has_u8 = std::holds_alternative<std::vector<uint8_t>>(pixels);
+    const bool has_u16 = std::holds_alternative<std::vector<uint16_t>>(pixels);
+    const bool has_f32 = std::holds_alternative<std::vector<float>>(pixels);
+
+    switch (format) {
+    case F::R8:
+    case F::RG8:
+    case F::RGBA8:
+    case F::BGRA8:
+        return has_u8;
+
+    case F::R16:
+    case F::RG16:
+    case F::RGBA16:
+        return has_u16;
+
+    case F::R16F:
+    case F::RG16F:
+    case F::RGBA16F:
+        return has_u16;
+
+    case F::R32F:
+    case F::RG32F:
+    case F::RGBA32F:
+        return has_f32;
+
+    default:
+        return false;
+    }
+}
+
 ImageReader::ImageReader()
     : m_is_open(false)
 {
@@ -147,7 +182,11 @@ std::vector<Kakshya::DataVariant> ImageReader::read_all()
         return {};
     }
 
-    return { m_image_data->pixels };
+    return std::visit(
+        [](const auto& vec) -> std::vector<Kakshya::DataVariant> {
+            return { Kakshya::DataVariant { vec } };
+        },
+        m_image_data->pixels);
 }
 
 std::vector<Kakshya::DataVariant> ImageReader::read_region(const FileRegion& region)
@@ -174,16 +213,23 @@ std::vector<Kakshya::DataVariant> ImageReader::read_region(const FileRegion& reg
 
     uint32_t region_width = x_end - x_start;
     uint32_t region_height = y_end - y_start;
-    size_t region_size = static_cast<size_t>(region_width * region_height) * m_image_data->channels;
-    std::vector<uint8_t> region_data(region_size);
+
+    const size_t bytes_per_pixel = m_image_data->byte_size() / m_image_data->element_count() * m_image_data->channels;
+    const size_t bytes_per_elem = m_image_data->byte_size() / m_image_data->element_count();
+    const size_t pixel_stride_bytes = bytes_per_elem * m_image_data->channels;
+
+    std::vector<uint8_t> region_data(
+        static_cast<size_t>(region_width) * region_height * pixel_stride_bytes);
+
+    const auto* src = static_cast<const uint8_t*>(m_image_data->data());
 
     for (uint32_t y = 0; y < region_height; ++y) {
-        size_t src_offset = (static_cast<size_t>((y_start + y) * m_image_data->width + x_start)) * m_image_data->channels;
-        size_t dst_offset = static_cast<size_t>(y * region_width) * m_image_data->channels;
-        size_t row_size = static_cast<size_t>(region_width) * m_image_data->channels;
+        size_t src_offset = (static_cast<size_t>((y_start + y) * m_image_data->width + x_start)) * pixel_stride_bytes;
+        size_t dst_offset = static_cast<size_t>(y * region_width) * pixel_stride_bytes;
+        size_t row_size = static_cast<size_t>(region_width) * pixel_stride_bytes;
         std::memcpy(
             region_data.data() + dst_offset,
-            m_image_data->pixels.data() + src_offset,
+            src + src_offset,
             row_size);
     }
 
@@ -316,9 +362,10 @@ std::optional<ImageData> ImageReader::load(const std::filesystem::path& path, in
         (channels == 3 && result_channels == 4) ? " [RGB→RGBA]" : "");
 
     ImageData result;
+    auto& buf = result.pixels.emplace<std::vector<uint8_t>>();
     size_t data_size = static_cast<size_t>(width) * height * result_channels;
-    result.pixels.resize(data_size);
-    std::memcpy(result.pixels.data(), pixels, data_size);
+    buf.resize(data_size);
+    std::memcpy(buf.data(), pixels, data_size);
 
     result.width = width;
     result.height = height;
@@ -388,9 +435,10 @@ std::optional<ImageData> ImageReader::load_from_memory(const void* data, size_t 
         (channels == 3 && result_channels == 4) ? " [RGB→RGBA]" : "");
 
     ImageData result;
+    auto& buf = result.pixels.emplace<std::vector<uint8_t>>();
     size_t data_size = static_cast<size_t>(width) * height * result_channels;
-    result.pixels.resize(data_size);
-    std::memcpy(result.pixels.data(), pixels, data_size);
+    buf.resize(data_size);
+    std::memcpy(buf.data(), pixels, data_size);
 
     result.width = width;
     result.height = height;
@@ -429,7 +477,7 @@ std::shared_ptr<Core::VKImage> ImageReader::load_texture(const std::string& path
         image_data->width,
         image_data->height,
         image_data->format,
-        image_data->pixels.data());
+        image_data->data());
 
     if (texture) {
         MF_INFO(Journal::Component::IO, Journal::Context::FileIO,
@@ -455,7 +503,7 @@ std::shared_ptr<Buffers::TextureBuffer> ImageReader::create_texture_buffer()
         m_image_data->width,
         m_image_data->height,
         m_image_data->format,
-        m_image_data->pixels.data());
+        m_image_data->data());
 
     MF_INFO(Journal::Component::IO, Journal::Context::FileIO,
         "Created TextureBuffer from image: {}x{} ({} bytes)",
@@ -476,14 +524,14 @@ bool ImageReader::load_into_buffer(const std::shared_ptr<Buffers::VKBuffer>& buf
         return false;
     }
 
-    size_t required_size = m_image_data->pixels.size();
+    size_t required_size = m_image_data->byte_size();
     if (buffer->get_size_bytes() < required_size) {
         m_last_error = "Buffer too small for image data";
         return false;
     }
 
     Buffers::upload_to_gpu(
-        m_image_data->pixels.data(),
+        m_image_data->data(),
         required_size,
         buffer);
 
