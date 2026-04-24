@@ -117,6 +117,7 @@ if(WIN32)
         asio::asio
         assimp::assimp
         utf8proc::utf8proc
+        tinyexr
         freetype
         gdi32
         user32
@@ -156,5 +157,6 @@ else()
         PkgConfig::LIBAVDEVICE
         Freetype::Freetype
         PkgConfig::UTF8PROC
+        tinyexr
     )
 endif()

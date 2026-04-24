@@ -12,6 +12,165 @@ namespace MayaFlux::Kakshya {
 using Portal::Graphics::ImageFormat;
 using Portal::Graphics::TextureLoom;
 
+namespace {
+
+    using Portal::Graphics::ImageFormat;
+
+    enum class StorageKind : uint8_t { U8,
+        U16,
+        F32 };
+
+    StorageKind storage_kind_for(ImageFormat format)
+    {
+        switch (format) {
+        case ImageFormat::R8:
+        case ImageFormat::RG8:
+        case ImageFormat::RGB8:
+        case ImageFormat::RGBA8:
+        case ImageFormat::RGBA8_SRGB:
+        case ImageFormat::BGRA8:
+        case ImageFormat::BGRA8_SRGB:
+        case ImageFormat::DEPTH24:
+        case ImageFormat::DEPTH24_STENCIL8:
+            return StorageKind::U8;
+
+        case ImageFormat::R16:
+        case ImageFormat::RG16:
+        case ImageFormat::RGBA16:
+        case ImageFormat::R16F:
+        case ImageFormat::RG16F:
+        case ImageFormat::RGBA16F:
+        case ImageFormat::DEPTH16:
+            return StorageKind::U16;
+
+        case ImageFormat::R32F:
+        case ImageFormat::RG32F:
+        case ImageFormat::RGBA32F:
+        case ImageFormat::DEPTH32F:
+            return StorageKind::F32;
+
+        default:
+            return StorageKind::U8;
+        }
+    }
+
+    bool is_float_format(ImageFormat format)
+    {
+        switch (format) {
+        case ImageFormat::R16F:
+        case ImageFormat::RG16F:
+        case ImageFormat::RGBA16F:
+        case ImageFormat::R32F:
+        case ImageFormat::RG32F:
+        case ImageFormat::RGBA32F:
+        case ImageFormat::DEPTH32F:
+            return true;
+        default:
+            return false;
+        }
+    }
+
+    DataVariant make_empty_storage(ImageFormat format, size_t element_count)
+    {
+        switch (storage_kind_for(format)) {
+        case StorageKind::U8:
+            return std::vector<uint8_t>(element_count, 0U);
+        case StorageKind::U16:
+            return std::vector<uint16_t>(element_count, 0U);
+        case StorageKind::F32:
+            return std::vector<float>(element_count, 0.0F);
+        }
+        return std::vector<uint8_t>(element_count, 0U);
+    }
+
+    // Raw byte pointer + byte size from a DataVariant that is known to be
+    // one of the three image alternatives.
+    std::pair<const uint8_t*, size_t> variant_bytes(const DataVariant& v)
+    {
+        return std::visit(
+            [](const auto& vec) -> std::pair<const uint8_t*, size_t> {
+                using T = typename std::decay_t<decltype(vec)>::value_type;
+                if constexpr (std::is_same_v<T, uint8_t>
+                    || std::is_same_v<T, uint16_t>
+                    || std::is_same_v<T, float>) {
+                    return {
+                        reinterpret_cast<const uint8_t*>(vec.data()),
+                        vec.size() * sizeof(T)
+                    };
+                } else {
+                    return { nullptr, 0 };
+                }
+            },
+            v);
+    }
+
+    std::pair<uint8_t*, size_t> variant_bytes_mut(DataVariant& v)
+    {
+        return std::visit(
+            [](auto& vec) -> std::pair<uint8_t*, size_t> {
+                using T = typename std::decay_t<decltype(vec)>::value_type;
+                if constexpr (std::is_same_v<T, uint8_t>
+                    || std::is_same_v<T, uint16_t>
+                    || std::is_same_v<T, float>) {
+                    return {
+                        reinterpret_cast<uint8_t*>(vec.data()),
+                        vec.size() * sizeof(T)
+                    };
+                } else {
+                    return { nullptr, 0 };
+                }
+            },
+            v);
+    }
+
+    double read_normalized_at(const DataVariant& v, ImageFormat format, size_t elem_index)
+    {
+        return std::visit(
+            [format, elem_index](const auto& vec) -> double {
+                using T = typename std::decay_t<decltype(vec)>::value_type;
+                if (elem_index >= vec.size())
+                    return 0.0;
+                if constexpr (std::is_same_v<T, uint8_t>) {
+                    return static_cast<double>(vec[elem_index]) / 255.0;
+                } else if constexpr (std::is_same_v<T, uint16_t>) {
+                    return is_float_format(format)
+                        ? static_cast<double>(vec[elem_index])
+                        : static_cast<double>(vec[elem_index]) / 65535.0;
+                } else if constexpr (std::is_same_v<T, float>) {
+                    return static_cast<double>(vec[elem_index]);
+                } else {
+                    return 0.0;
+                }
+            },
+            v);
+    }
+
+    void write_normalized_at(DataVariant& v, ImageFormat format, size_t elem_index, double value)
+    {
+        std::visit(
+            [format, elem_index, value](auto& vec) {
+                using T = typename std::decay_t<decltype(vec)>::value_type;
+                if (elem_index >= vec.size())
+                    return;
+                if constexpr (std::is_same_v<T, uint8_t>) {
+                    vec[elem_index] = static_cast<uint8_t>(
+                        std::clamp(value * 255.0, 0.0, 255.0));
+                } else if constexpr (std::is_same_v<T, uint16_t>) {
+                    if (is_float_format(format)) {
+                        vec[elem_index] = static_cast<uint16_t>(value);
+                    } else {
+                        vec[elem_index] = static_cast<uint16_t>(
+                            std::clamp(value * 65535.0, 0.0, 65535.0));
+                    }
+                } else if constexpr (std::is_same_v<T, float>) {
+                    vec[elem_index] = static_cast<float>(value);
+                }
+            },
+            v);
+    }
+
+} // namespace
+
 //=============================================================================
 // Construction
 //=============================================================================
@@ -23,11 +182,11 @@ TextureContainer::TextureContainer(uint32_t width, uint32_t height, ImageFormat 
     , m_channels(TextureLoom::get_channel_count(format))
     , m_bpp(TextureLoom::get_bytes_per_pixel(format))
 {
-    const size_t sz = byte_size();
+    const size_t element_count = static_cast<size_t>(m_width) * m_height * m_channels;
 
-    for (uint32_t i = 0; i < std::max(layers, 1u); ++i) {
-        m_data.emplace_back(std::vector<uint8_t>(sz, 0U));
-        m_processed_data.emplace_back(std::vector<uint8_t>(sz, 0U));
+    for (uint32_t i = 0; i < std::max(layers, 1U); ++i) {
+        m_data.emplace_back(make_empty_storage(m_format, element_count));
+        m_processed_data.emplace_back(make_empty_storage(m_format, element_count));
     }
 
     setup_dimensions();
@@ -86,10 +245,18 @@ void TextureContainer::from_image(const std::shared_ptr<Core::VKImage>& image, u
     }
 
     const size_t sz = byte_size();
-    auto& buf = std::get<std::vector<uint8_t>>(m_data[layer]);
-    buf.resize(sz);
 
-    TextureLoom::instance().download_data(image, buf.data(), sz);
+    const size_t element_count = static_cast<size_t>(m_width) * m_height * m_channels;
+    m_data[layer] = make_empty_storage(m_format, element_count);
+
+    auto [ptr, bytes] = variant_bytes_mut(m_data[layer]);
+    if (!ptr || bytes != sz) {
+        MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+            "TextureContainer::from_image variant size mismatch ({} vs {})", bytes, sz);
+        return;
+    }
+
+    TextureLoom::instance().download_data(image, ptr, sz);
 
     {
         std::unique_lock lock(m_data_mutex);
@@ -112,15 +279,14 @@ std::shared_ptr<Core::VKImage> TextureContainer::to_image(uint32_t layer) const
         return nullptr;
     }
 
-    const auto* buf = std::get_if<std::vector<uint8_t>>(&m_data[layer]);
-
-    if (!buf || buf->empty()) {
+    auto [ptr, bytes] = variant_bytes(m_data[layer]);
+    if (!ptr || bytes == 0) {
         MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-            "TextureContainer::to_image called on empty buffer");
+            "TextureContainer::to_image called on empty/invalid buffer");
         return nullptr;
     }
 
-    auto img = TextureLoom::instance().create_2d(m_width, m_height, m_format, buf->data());
+    auto img = TextureLoom::instance().create_2d(m_width, m_height, m_format, ptr);
     if (!img) {
         MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
             "TextureContainer::to_image: TextureLoom failed to create VKImage");
@@ -136,42 +302,114 @@ std::span<const uint8_t> TextureContainer::pixel_bytes(uint32_t layer) const
 {
     if (layer >= m_data.size())
         return {};
-    const auto* buf = std::get_if<std::vector<uint8_t>>(&m_data[layer]);
-
-    if (!buf)
-        return {};
-    return { buf->data(), buf->size() };
+    auto [ptr, bytes] = variant_bytes(m_data[layer]);
+    return ptr ? std::span<const uint8_t>(ptr, bytes) : std::span<const uint8_t> {};
 }
 
 std::span<uint8_t> TextureContainer::pixel_bytes(uint32_t layer)
 {
     if (layer >= m_data.size())
         return {};
+    auto [ptr, bytes] = variant_bytes_mut(m_data[layer]);
+    return ptr ? std::span<uint8_t>(ptr, bytes) : std::span<uint8_t> {};
+}
 
-    auto* buf = std::get_if<std::vector<uint8_t>>(&m_data[layer]);
-    if (!buf)
+std::span<const uint8_t> TextureContainer::as_uint8(uint32_t layer) const
+{
+    if (layer >= m_data.size())
         return {};
-    return { buf->data(), buf->size() };
+    const auto* v = std::get_if<std::vector<uint8_t>>(&m_data[layer]);
+    return v ? std::span<const uint8_t>(v->data(), v->size()) : std::span<const uint8_t> {};
+}
+
+std::span<const uint16_t> TextureContainer::as_uint16(uint32_t layer) const
+{
+    if (layer >= m_data.size())
+        return {};
+    const auto* v = std::get_if<std::vector<uint16_t>>(&m_data[layer]);
+    return v ? std::span<const uint16_t>(v->data(), v->size()) : std::span<const uint16_t> {};
+}
+
+std::span<const float> TextureContainer::as_float(uint32_t layer) const
+{
+    if (layer >= m_data.size())
+        return {};
+    const auto* v = std::get_if<std::vector<float>>(&m_data[layer]);
+    return v ? std::span<const float>(v->data(), v->size()) : std::span<const float> {};
 }
 
 void TextureContainer::set_pixels(std::span<const uint8_t> data, uint32_t layer)
 {
-    const size_t expected = byte_size();
-    if (data.size() != expected) {
-        MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-            "TextureContainer::set_pixels size mismatch: got {} expected {}", data.size(), expected);
-        return;
-    }
-
     if (layer >= m_data.size()) {
         MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-            "TextureContainer::set_pixels layer {} out of range ({})", layer, m_data.size());
+            "TextureContainer::set_pixels(u8) layer {} out of range", layer);
         return;
     }
-
+    auto* buf = std::get_if<std::vector<uint8_t>>(&m_data[layer]);
+    if (!buf) {
+        MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+            "TextureContainer::set_pixels(u8) called on non-uint8 format {}",
+            static_cast<int>(m_format));
+        return;
+    }
+    if (data.size() != buf->size()) {
+        MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+            "TextureContainer::set_pixels(u8) size mismatch: got {} expected {}",
+            data.size(), buf->size());
+        return;
+    }
     std::unique_lock lock(m_data_mutex);
-    auto& buf = std::get<std::vector<uint8_t>>(m_data[layer]);
-    std::ranges::copy(data, buf.begin());
+    std::ranges::copy(data, buf->begin());
+    m_processed_data[layer] = m_data[layer];
+}
+
+void TextureContainer::set_pixels(std::span<const uint16_t> data, uint32_t layer)
+{
+    if (layer >= m_data.size()) {
+        MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+            "TextureContainer::set_pixels(u16) layer {} out of range", layer);
+        return;
+    }
+    auto* buf = std::get_if<std::vector<uint16_t>>(&m_data[layer]);
+    if (!buf) {
+        MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+            "TextureContainer::set_pixels(u16) called on non-uint16 format {}",
+            static_cast<int>(m_format));
+        return;
+    }
+    if (data.size() != buf->size()) {
+        MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+            "TextureContainer::set_pixels(u16) size mismatch: got {} expected {}",
+            data.size(), buf->size());
+        return;
+    }
+    std::unique_lock lock(m_data_mutex);
+    std::ranges::copy(data, buf->begin());
+    m_processed_data[layer] = m_data[layer];
+}
+
+void TextureContainer::set_pixels(std::span<const float> data, uint32_t layer)
+{
+    if (layer >= m_data.size()) {
+        MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+            "TextureContainer::set_pixels(f32) layer {} out of range", layer);
+        return;
+    }
+    auto* buf = std::get_if<std::vector<float>>(&m_data[layer]);
+    if (!buf) {
+        MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+            "TextureContainer::set_pixels(f32) called on non-float format {}",
+            static_cast<int>(m_format));
+        return;
+    }
+    if (data.size() != buf->size()) {
+        MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+            "TextureContainer::set_pixels(f32) size mismatch: got {} expected {}",
+            data.size(), buf->size());
+        return;
+    }
+    std::unique_lock lock(m_data_mutex);
+    std::ranges::copy(data, buf->begin());
     m_processed_data[layer] = m_data[layer];
 }
 
@@ -211,23 +449,19 @@ uint64_t TextureContainer::get_num_frames() const
 
 std::span<const double> TextureContainer::get_frame(uint64_t frame_index) const
 {
-    // TODO: float format support — m_frame_cache normalization assumes uint8_t/255.0;
-    // float and half-float variants require direct reinterpretation without normalization.
-
     if (frame_index >= m_height)
         return {};
 
     std::shared_lock lock(m_data_mutex);
-    const auto* buf = std::get_if<std::vector<uint8_t>>(&m_data[0]);
-    if (!buf)
+    if (m_data.empty())
         return {};
 
-    const size_t row_bytes = static_cast<size_t>(m_width) * m_channels;
-    const size_t offset = frame_index * row_bytes;
+    const size_t row_elems = static_cast<size_t>(m_width) * m_channels;
+    const size_t offset = static_cast<size_t>(frame_index) * row_elems;
 
-    m_frame_cache.resize(row_bytes);
-    for (size_t i = 0; i < row_bytes; ++i)
-        m_frame_cache[i] = static_cast<double>((*buf)[offset + i]) / 255.0;
+    m_frame_cache.resize(row_elems);
+    for (size_t i = 0; i < row_elems; ++i)
+        m_frame_cache[i] = read_normalized_at(m_data[0], m_format, offset + i);
 
     return { m_frame_cache.data(), m_frame_cache.size() };
 }
@@ -235,11 +469,8 @@ std::span<const double> TextureContainer::get_frame(uint64_t frame_index) const
 void TextureContainer::get_frames(
     std::span<double> output, uint64_t start_frame, uint64_t num_frames) const
 {
-    // TODO: float format support — same as get_frame; uint8_t assumed throughout.
-
     std::shared_lock lock(m_data_mutex);
-    const auto* buf = std::get_if<std::vector<uint8_t>>(&m_data[0]);
-    if (!buf)
+    if (m_data.empty())
         return;
 
     const size_t row_elems = static_cast<size_t>(m_width) * m_channels;
@@ -248,7 +479,7 @@ void TextureContainer::get_frames(
     for (uint64_t r = start_frame; r < start_frame + num_frames && r < m_height; ++r) {
         const size_t offset = static_cast<size_t>(r) * row_elems;
         for (size_t i = 0; i < row_elems && out_idx < output.size(); ++i, ++out_idx)
-            output[out_idx] = static_cast<double>((*buf)[offset + i]) / 255.0;
+            output[out_idx] = read_normalized_at(m_data[0], m_format, offset + i);
     }
 }
 
@@ -258,15 +489,22 @@ std::vector<DataVariant> TextureContainer::get_region_data(const Region& region)
     if (m_data.empty())
         return {};
 
-    const auto* buf = std::get_if<std::vector<uint8_t>>(&m_data[0]);
-    if (!buf)
-        return {};
-
-    auto extracted = extract_region_data<uint8_t>(
-        std::span<const uint8_t>(buf->data(), buf->size()),
-        region,
-        m_structure.dimensions);
-    return { DataVariant(std::move(extracted)) };
+    return std::visit(
+        [&](const auto& vec) -> std::vector<DataVariant> {
+            using T = typename std::decay_t<decltype(vec)>::value_type;
+            if constexpr (std::is_same_v<T, uint8_t>
+                || std::is_same_v<T, uint16_t>
+                || std::is_same_v<T, float>) {
+                auto extracted = extract_region_data<T>(
+                    std::span<const T>(vec.data(), vec.size()),
+                    region,
+                    m_structure.dimensions);
+                return { DataVariant(std::move(extracted)) };
+            } else {
+                return {};
+            }
+        },
+        m_data[0]);
 }
 
 std::vector<DataVariant> TextureContainer::get_segments_data(
@@ -279,16 +517,8 @@ std::vector<DataVariant> TextureContainer::get_segments_data(
 void TextureContainer::set_region_data(
     const Region& region, const std::vector<DataVariant>& data)
 {
-    // TODO: float format support — source assumed to be vector<uint8_t>;
-    // float/half variants will carry vector<float>/vector<uint16_t> instead.
-
     if (data.empty())
         return;
-
-    const auto* src = std::get_if<std::vector<uint8_t>>(&data[0]);
-    if (!src || src->empty())
-        return;
-
     if (region.start_coordinates.size() < 2 || region.end_coordinates.size() < 2)
         return;
 
@@ -298,57 +528,60 @@ void TextureContainer::set_region_data(
     const uint64_t x1 = std::min(region.end_coordinates[1], static_cast<uint64_t>(m_width - 1));
 
     std::unique_lock lock(m_data_mutex);
-    auto* dst = std::get_if<std::vector<uint8_t>>(&m_data[0]);
-    if (!dst)
-        return;
 
-    size_t src_idx = 0;
-    for (uint64_t y = y0; y <= y1 && src_idx < src->size(); ++y) {
-        for (uint64_t x = x0; x <= x1 && src_idx < src->size(); ++x) {
-            const size_t dst_idx = (y * m_width + x) * m_channels;
-            for (uint32_t c = 0; c < m_channels && src_idx < src->size(); ++c, ++src_idx)
-                (*dst)[dst_idx + c] = (*src)[src_idx];
-        }
-    }
+    std::visit(
+        [&](auto& dst_vec) {
+            using T = typename std::decay_t<decltype(dst_vec)>::value_type;
+            if constexpr (std::is_same_v<T, uint8_t>
+                || std::is_same_v<T, uint16_t>
+                || std::is_same_v<T, float>) {
+                const auto* src = std::get_if<std::vector<T>>(&data[0]);
+                if (!src || src->empty()) {
+                    MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+                        "TextureContainer::set_region_data source variant does not match "
+                        "container element type");
+                    return;
+                }
+
+                size_t src_idx = 0;
+                for (uint64_t y = y0; y <= y1 && src_idx < src->size(); ++y) {
+                    for (uint64_t x = x0; x <= x1 && src_idx < src->size(); ++x) {
+                        const size_t dst_idx = (y * m_width + x) * m_channels;
+                        for (uint32_t c = 0; c < m_channels && src_idx < src->size(); ++c, ++src_idx) {
+                            if (dst_idx + c < dst_vec.size())
+                                dst_vec[dst_idx + c] = (*src)[src_idx];
+                        }
+                    }
+                }
+            }
+        },
+        m_data[0]);
 
     m_processed_data[0] = m_data[0];
 }
 
 double TextureContainer::get_value_at(const std::vector<uint64_t>& coordinates) const
 {
-    // TODO: float format support — R16F/RG16F/RGBA16F store uint16_t, R32F/RG32F/RGBA32F
-    // store float; normalization by 255.0 and uint8_t get_if are incorrect for those variants.
-
-    if (coordinates.size() < 3)
+    if (coordinates.size() < 3 || m_data.empty())
         return 0.0;
+
+    const size_t elem_idx = (coordinates[0] * m_width + coordinates[1]) * m_channels
+        + coordinates[2];
 
     std::shared_lock lock(m_data_mutex);
-    const auto* buf = std::get_if<std::vector<uint8_t>>(&m_data[0]);
-    if (!buf)
-        return 0.0;
-
-    const uint64_t idx = (coordinates[0] * m_width + coordinates[1]) * m_channels + coordinates[2];
-    if (idx >= buf->size())
-        return 0.0;
-    return static_cast<double>((*buf)[idx]) / 255.0;
+    return read_normalized_at(m_data[0], m_format, elem_idx);
 }
 
 void TextureContainer::set_value_at(const std::vector<uint64_t>& coordinates, double value)
 {
-    // TODO: float format support — clamp/cast to uint8_t is incorrect for float variants.
-
-    if (coordinates.size() < 3)
+    if (coordinates.size() < 3 || m_data.empty())
         return;
+
+    const size_t elem_idx = (coordinates[0] * m_width + coordinates[1]) * m_channels
+        + coordinates[2];
 
     std::unique_lock lock(m_data_mutex);
-    auto* buf = std::get_if<std::vector<uint8_t>>(&m_data[0]);
-    if (!buf)
-        return;
-
-    const uint64_t idx = (coordinates[0] * m_width + coordinates[1]) * m_channels + coordinates[2];
-    if (idx >= buf->size())
-        return;
-    (*buf)[idx] = static_cast<uint8_t>(std::clamp(value * 255.0, 0.0, 255.0));
+    write_normalized_at(m_data[0], m_format, elem_idx, value);
 }
 
 uint64_t TextureContainer::coordinates_to_linear_index(const std::vector<uint64_t>& coords) const
@@ -364,11 +597,11 @@ std::vector<uint64_t> TextureContainer::linear_index_to_coordinates(uint64_t ind
 void TextureContainer::clear()
 {
     std::unique_lock lock(m_data_mutex);
-    const size_t sz = byte_size();
+    const size_t element_count = static_cast<size_t>(m_width) * m_height * m_channels;
 
     for (size_t i = 0; i < m_data.size(); ++i) {
-        m_data[i] = std::vector<uint8_t>(sz, 0U);
-        m_processed_data[i] = std::vector<uint8_t>(sz, 0U);
+        m_data[i] = make_empty_storage(m_format, element_count);
+        m_processed_data[i] = make_empty_storage(m_format, element_count);
     }
 
     update_processing_state(ProcessingState::IDLE);
@@ -434,28 +667,15 @@ const std::vector<DataVariant>& TextureContainer::get_data()
 
 DataAccess TextureContainer::channel_data(size_t channel_index)
 {
-    // TODO: float format support — extraction assumes uint8_t interleaving;
-    // float variants require a different stride and no normalization.
+    (void)channel_index;
 
-    std::shared_lock lock(m_data_mutex);
-    if (m_data.empty() || channel_index >= m_channels)
-        return DataAccess(m_data[0], m_structure.dimensions, m_structure.modality);
+    if (m_data.empty()) {
+        static DataVariant empty = std::vector<uint8_t> {};
+        static std::vector<DataDimension> empty_dims;
+        return { empty, empty_dims, DataModality::IMAGE_COLOR };
+    }
 
-    const auto* src = std::get_if<std::vector<uint8_t>>(&m_data[0]);
-    if (!src || src->empty())
-        return DataAccess(m_data[0], m_structure.dimensions, m_structure.modality);
-
-    const size_t count = static_cast<size_t>(m_width) * m_height;
-    std::vector<uint8_t> ch_data(count);
-    for (size_t i = 0; i < count; ++i)
-        ch_data[i] = (*src)[i * m_channels + channel_index];
-
-    m_channel_cache.emplace_back(std::move(ch_data));
-
-    const std::vector<DataDimension> ch_dims = {
-        DataDimension::spatial_2d(m_height, m_width)
-    };
-    return DataAccess(m_channel_cache.back(), ch_dims, DataModality::IMAGE_2D);
+    return { m_data[0], m_structure.dimensions, DataModality::IMAGE_COLOR };
 }
 
 std::vector<DataAccess> TextureContainer::all_channel_data()
@@ -499,19 +719,22 @@ bool TextureContainer::try_lock() { return m_data_mutex.try_lock(); }
 
 const void* TextureContainer::get_raw_data() const
 {
-    std::shared_lock lock(m_data_mutex);
-    if (m_data.empty())
+    if (m_data.empty()) {
         return nullptr;
-    const auto* buf = std::get_if<std::vector<uint8_t>>(&m_data[0]);
-    return (buf && !buf->empty()) ? buf->data() : nullptr;
+    }
+
+    auto [ptr, bytes] = variant_bytes(m_data[0]);
+    return (ptr && bytes > 0) ? static_cast<const void*>(ptr) : nullptr;
 }
 
 bool TextureContainer::has_data() const
 {
-    std::shared_lock lock(m_data_mutex);
-    if (m_data.empty())
+    if (m_data.empty()) {
         return false;
-    return std::visit([](const auto& v) { return !v.empty(); }, m_data[0]);
+    }
+
+    auto [ptr, bytes] = variant_bytes(m_data[0]);
+    return ptr && bytes > 0;
 }
 
 } // namespace MayaFlux::Kakshya

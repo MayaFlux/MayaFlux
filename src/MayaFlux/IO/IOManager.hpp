@@ -1,7 +1,10 @@
 #pragma once
 
-#include "MayaFlux/IO/CameraReader.hpp"
-#include "MayaFlux/IO/VideoFileReader.hpp"
+#include "CameraReader.hpp"
+#include "ImageWriter.hpp"
+#include "VideoFileReader.hpp"
+
+#include <future>
 
 namespace MayaFlux::Core {
 class VKImage;
@@ -22,6 +25,7 @@ namespace MayaFlux::Buffers {
 class VideoContainerBuffer;
 class SoundContainerBuffer;
 class TextureBuffer;
+class TextBuffer;
 class MeshBuffer;
 class BufferManager;
 }
@@ -383,6 +387,63 @@ public:
         const std::string& filepath,
         TextureResolver resolver = nullptr);
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // Image — save
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * @brief Save image data to disk asynchronously.
+     *
+     * The source is downloaded from the GPU on the calling thread (must have
+     * command queue access) and the encode + disk flush is dispatched to a
+     * worker. Returns once the download completes and the encode task is
+     * queued; encode/flush failures are logged but do not block the caller.
+     *
+     * For synchronous semantics (e.g. shutdown flush, tests) use the
+     * IO::save_image / IO::save_texture_buffer free functions in
+     * ImageExport.hpp.
+     *
+     * The extension of @p filepath selects the writer via
+     * ImageWriterRegistry. Format-variant compatibility is the writer's
+     * responsibility (PNG wants uint8, EXR wants float, etc.).
+     *
+     * @return True if the download succeeded and the encode task was queued.
+     */
+    bool save_image(
+        const std::shared_ptr<Core::VKImage>& image,
+        const std::string& filepath,
+        const IO::ImageWriteOptions& options = {});
+
+    bool save_image(
+        const std::shared_ptr<Buffers::TextureBuffer>& buffer,
+        const std::string& filepath,
+        const IO::ImageWriteOptions& options = {});
+
+    bool save_image(
+        const std::shared_ptr<Buffers::TextBuffer>& buffer,
+        const std::string& filepath,
+        const IO::ImageWriteOptions& options = {});
+
+    /**
+     * @brief Save an already-downloaded ImageData to disk asynchronously.
+     *
+     * For callers that have an ImageData in hand (e.g. from
+     * IO::download_image) and want to avoid the GPU download step. Purely
+     * CPU-bound from here, so no thread restrictions on the caller.
+     */
+    bool save_image(
+        IO::ImageData data,
+        const std::string& filepath,
+        const IO::ImageWriteOptions& options = {});
+
+    /**
+     * @brief Wait for all in-flight save operations to complete.
+     *
+     * Called automatically by the destructor. Invoke explicitly to flush
+     * pending saves before a checkpoint.
+     */
+    void wait_for_pending_saves();
+
 private:
     uint64_t m_sample_rate;
 
@@ -425,6 +486,8 @@ private:
     // ── Stored buffers ─────────────────────────────────────────────────────
 
     mutable std::shared_mutex m_buffers_mutex;
+    std::mutex m_save_tasks_mutex;
+    std::vector<std::future<bool>> m_save_tasks;
 
     std::unordered_map<
         std::shared_ptr<Kakshya::VideoFileContainer>,

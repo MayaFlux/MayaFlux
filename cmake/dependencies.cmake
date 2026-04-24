@@ -69,3 +69,17 @@ else()
     set(MAYAFLUX_EIGEN_INCLUDE ${Eigen_INCLUDE_DIRS})
     list(GET FREETYPE_INCLUDE_DIRS 0 MAYAFLUX_FREETYPE_INCLUDE)
 endif()
+
+add_library(miniz STATIC ${CMAKE_SOURCE_DIR}/third_party/tinyexr/miniz.c)
+set_target_properties(miniz PROPERTIES LINKER_LANGUAGE C)
+target_include_directories(miniz PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/third_party/tinyexr>
+    $<INSTALL_INTERFACE:include/MayaFlux/thirdparty/tinyexr>
+)
+
+add_library(tinyexr INTERFACE)
+target_include_directories(tinyexr INTERFACE
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/third_party/tinyexr>
+    $<INSTALL_INTERFACE:include/MayaFlux/thirdparty/tinyexr>
+)
+target_link_libraries(tinyexr INTERFACE miniz)

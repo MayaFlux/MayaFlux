@@ -30,10 +30,164 @@
 #error "stb_image.h not found"
 #endif
 
+#include <tinyexr.h>
+
 #include <cstddef>
 #include <fstream>
 
 namespace MayaFlux::IO {
+
+namespace {
+
+    std::string extension_of(const std::filesystem::path& path)
+    {
+        auto ext = path.extension().string();
+        if (!ext.empty() && ext[0] == '.') {
+            ext = ext.substr(1);
+        }
+        std::ranges::transform(ext, ext.begin(),
+            [](unsigned char c) { return std::tolower(c); });
+        return ext;
+    }
+
+    /**
+     * @brief Decode an OpenEXR file from an in-memory byte buffer.
+     *
+     * Uses tinyexr's ParseEXRHeaderFromMemory + LoadEXRImageFromMemory pair to
+     * access arbitrary channel counts and names. Reinterleaves tinyexr's planar
+     * output into pixel-interleaved float layout to match ImageData's contract.
+     *
+     * Maps channel count to ImageFormat (R32F / RG32F / RGBA32F). 3-channel EXR
+     * (BGR) is promoted to 4-channel (ABGR) with A=1.0 because we don't support
+     * a 3-channel float ImageFormat.
+     *
+     * Half-precision pixel types are converted to float on the fly; EXR files
+     * with mixed pixel types are not currently supported.
+     */
+    std::optional<ImageData> load_exr_from_memory(
+        const unsigned char* bytes, size_t size)
+    {
+        using F = Portal::Graphics::ImageFormat;
+
+        EXRVersion version;
+        if (ParseEXRVersionFromMemory(&version, bytes, size) != TINYEXR_SUCCESS) {
+            MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+                "EXR: failed to parse version");
+            return std::nullopt;
+        }
+        if (version.multipart || version.non_image) {
+            MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+                "EXR: multipart and deep images are not supported");
+            return std::nullopt;
+        }
+
+        EXRHeader header;
+        InitEXRHeader(&header);
+
+        const char* err = nullptr;
+        if (ParseEXRHeaderFromMemory(&header, &version, bytes, size, &err)
+            != TINYEXR_SUCCESS) {
+            MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+                "EXR: header parse failed: {}", err ? err : "unknown");
+            if (err)
+                FreeEXRErrorMessage(err);
+            return std::nullopt;
+        }
+
+        for (int i = 0; i < header.num_channels; ++i) {
+            if (header.pixel_types[i] == TINYEXR_PIXELTYPE_UINT) {
+                MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+                    "EXR: uint pixel type channel '{}' not supported",
+                    header.channels[i].name);
+                FreeEXRHeader(&header);
+                return std::nullopt;
+            }
+            header.requested_pixel_types[i] = TINYEXR_PIXELTYPE_FLOAT;
+        }
+
+        EXRImage image;
+        InitEXRImage(&image);
+
+        if (LoadEXRImageFromMemory(&image, &header, bytes, size, &err)
+            != TINYEXR_SUCCESS) {
+            MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+                "EXR: image load failed: {}", err ? err : "unknown");
+            if (err)
+                FreeEXRErrorMessage(err);
+            FreeEXRHeader(&header);
+            return std::nullopt;
+        }
+
+        const auto width = static_cast<uint32_t>(image.width);
+        const auto height = static_cast<uint32_t>(image.height);
+        const auto src_channels = static_cast<uint32_t>(image.num_channels);
+
+        if (width == 0 || height == 0 || src_channels == 0) {
+            MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+                "EXR: zero dimensions or channels");
+            FreeEXRImage(&image);
+            FreeEXRHeader(&header);
+            return std::nullopt;
+        }
+
+        uint32_t out_channels = src_channels;
+        F format;
+        switch (src_channels) {
+        case 1:
+            format = F::R32F;
+            break;
+        case 2:
+            format = F::RG32F;
+            break;
+        case 3:
+            out_channels = 4;
+            format = F::RGBA32F;
+            break;
+        case 4:
+            format = F::RGBA32F;
+            break;
+        default:
+            MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+                "EXR: {} channels not supported (1/2/3/4 only)", src_channels);
+            FreeEXRImage(&image);
+            FreeEXRHeader(&header);
+            return std::nullopt;
+        }
+
+        const size_t pixel_count = static_cast<size_t>(width) * height;
+        const size_t element_count = pixel_count * out_channels;
+
+        ImageData result;
+        auto& dst = result.pixels.emplace<std::vector<float>>(element_count, 0.0F);
+
+        auto** planes = reinterpret_cast<float**>(image.images);
+
+        for (size_t p = 0; p < pixel_count; ++p) {
+            for (uint32_t c = 0; c < src_channels; ++c) {
+                dst[p * out_channels + c] = planes[c][p];
+            }
+            if (out_channels > src_channels) {
+                dst[p * out_channels + (out_channels - 1)] = 1.0F;
+            }
+        }
+
+        result.width = width;
+        result.height = height;
+        result.channels = out_channels;
+        result.format = format;
+
+        MF_INFO(Journal::Component::IO, Journal::Context::FileIO,
+            "Loaded EXR: {}x{}, {} channels{}",
+            width, height, out_channels,
+            (src_channels == 3) ? " [BGR→ABGR, A=1.0]" : "");
+
+        FreeEXRImage(&image);
+        FreeEXRHeader(&header);
+
+        return result;
+    }
+
+} // namespace
 
 [[maybe_unused]] static bool g_stb_simd_logged = []() {
 #ifdef STBI_SSE2
@@ -48,6 +202,41 @@ namespace MayaFlux::IO {
 #endif
     return true;
 }();
+
+bool ImageData::is_consistent() const
+{
+    using F = Portal::Graphics::ImageFormat;
+
+    const bool has_u8 = std::holds_alternative<std::vector<uint8_t>>(pixels);
+    const bool has_u16 = std::holds_alternative<std::vector<uint16_t>>(pixels);
+    const bool has_f32 = std::holds_alternative<std::vector<float>>(pixels);
+
+    switch (format) {
+    case F::R8:
+    case F::RG8:
+    case F::RGBA8:
+    case F::BGRA8:
+        return has_u8;
+
+    case F::R16:
+    case F::RG16:
+    case F::RGBA16:
+        return has_u16;
+
+    case F::R16F:
+    case F::RG16F:
+    case F::RGBA16F:
+        return has_u16;
+
+    case F::R32F:
+    case F::RG32F:
+    case F::RGBA32F:
+        return has_f32;
+
+    default:
+        return false;
+    }
+}
 
 ImageReader::ImageReader()
     : m_is_open(false)
@@ -67,7 +256,8 @@ bool ImageReader::can_read(const std::string& filepath) const
     }
 
     static const std::vector<std::string> supported = {
-        "png", "jpg", "jpeg", "bmp", "tga", "psd", "gif", "hdr", "pic", "pnm"
+        "png", "jpg", "jpeg", "bmp", "tga", "psd", "gif", "hdr", "pic", "pnm",
+        "exr"
     };
 
     return std::ranges::find(supported, ext) != supported.end();
@@ -147,7 +337,11 @@ std::vector<Kakshya::DataVariant> ImageReader::read_all()
         return {};
     }
 
-    return { m_image_data->pixels };
+    return std::visit(
+        [](const auto& vec) -> std::vector<Kakshya::DataVariant> {
+            return { Kakshya::DataVariant { vec } };
+        },
+        m_image_data->pixels);
 }
 
 std::vector<Kakshya::DataVariant> ImageReader::read_region(const FileRegion& region)
@@ -174,16 +368,23 @@ std::vector<Kakshya::DataVariant> ImageReader::read_region(const FileRegion& reg
 
     uint32_t region_width = x_end - x_start;
     uint32_t region_height = y_end - y_start;
-    size_t region_size = static_cast<size_t>(region_width * region_height) * m_image_data->channels;
-    std::vector<uint8_t> region_data(region_size);
+
+    const size_t bytes_per_pixel = m_image_data->byte_size() / m_image_data->element_count() * m_image_data->channels;
+    const size_t bytes_per_elem = m_image_data->byte_size() / m_image_data->element_count();
+    const size_t pixel_stride_bytes = bytes_per_elem * m_image_data->channels;
+
+    std::vector<uint8_t> region_data(
+        static_cast<size_t>(region_width) * region_height * pixel_stride_bytes);
+
+    const auto* src = static_cast<const uint8_t*>(m_image_data->data());
 
     for (uint32_t y = 0; y < region_height; ++y) {
-        size_t src_offset = (static_cast<size_t>((y_start + y) * m_image_data->width + x_start)) * m_image_data->channels;
-        size_t dst_offset = static_cast<size_t>(y * region_width) * m_image_data->channels;
-        size_t row_size = static_cast<size_t>(region_width) * m_image_data->channels;
+        size_t src_offset = (static_cast<size_t>((y_start + y) * m_image_data->width + x_start)) * pixel_stride_bytes;
+        size_t dst_offset = static_cast<size_t>(y * region_width) * pixel_stride_bytes;
+        size_t row_size = static_cast<size_t>(region_width) * pixel_stride_bytes;
         std::memcpy(
             region_data.data() + dst_offset,
-            m_image_data->pixels.data() + src_offset,
+            src + src_offset,
             row_size);
     }
 
@@ -214,7 +415,8 @@ bool ImageReader::seek(const std::vector<uint64_t>& /*position*/)
 
 std::vector<std::string> ImageReader::get_supported_extensions() const
 {
-    return { "png", "jpg", "jpeg", "bmp", "tga", "psd", "gif", "hdr", "pic", "pnm" };
+    return { "png", "jpg", "jpeg", "bmp", "tga", "psd", "gif", "hdr", "pic", "pnm",
+        "exr" };
 }
 
 std::type_index ImageReader::get_data_type() const
@@ -285,6 +487,12 @@ std::optional<ImageData> ImageReader::load(const std::filesystem::path& path, in
     }
     file.close();
 
+    if (extension_of(path) == "exr") {
+        (void)desired_channels;
+        return load_exr_from_memory(file_buffer.data(),
+            static_cast<size_t>(file_size));
+    }
+
     int width {}, height {}, channels {};
 
     if (desired_channels == 0) {
@@ -316,9 +524,10 @@ std::optional<ImageData> ImageReader::load(const std::filesystem::path& path, in
         (channels == 3 && result_channels == 4) ? " [RGB→RGBA]" : "");
 
     ImageData result;
+    auto& buf = result.pixels.emplace<std::vector<uint8_t>>();
     size_t data_size = static_cast<size_t>(width) * height * result_channels;
-    result.pixels.resize(data_size);
-    std::memcpy(result.pixels.data(), pixels, data_size);
+    buf.resize(data_size);
+    std::memcpy(buf.data(), pixels, data_size);
 
     result.width = width;
     result.height = height;
@@ -358,17 +567,23 @@ std::optional<ImageData> ImageReader::load_from_memory(const void* data, size_t 
         return std::nullopt;
     }
 
+    const auto* bytes = static_cast<const unsigned char*>(data);
+
+    if (size >= 4
+        && bytes[0] == 0x76 && bytes[1] == 0x2F
+        && bytes[2] == 0x31 && bytes[3] == 0x01) {
+        return load_exr_from_memory(bytes, size);
+    }
+
     int width {}, height {}, channels {};
 
-    stbi_info_from_memory(
-        static_cast<const unsigned char*>(data),
-        static_cast<int>(size),
+    stbi_info_from_memory(bytes, static_cast<int>(size),
         &width, &height, &channels);
 
     int load_as = (channels == 3) ? 4 : 0;
 
     unsigned char* pixels = stbi_load_from_memory(
-        static_cast<const unsigned char*>(data),
+        bytes,
         static_cast<int>(size),
         &width, &height, &channels,
         load_as);
@@ -388,9 +603,10 @@ std::optional<ImageData> ImageReader::load_from_memory(const void* data, size_t 
         (channels == 3 && result_channels == 4) ? " [RGB→RGBA]" : "");
 
     ImageData result;
+    auto& buf = result.pixels.emplace<std::vector<uint8_t>>();
     size_t data_size = static_cast<size_t>(width) * height * result_channels;
-    result.pixels.resize(data_size);
-    std::memcpy(result.pixels.data(), pixels, data_size);
+    buf.resize(data_size);
+    std::memcpy(buf.data(), pixels, data_size);
 
     result.width = width;
     result.height = height;
@@ -429,7 +645,7 @@ std::shared_ptr<Core::VKImage> ImageReader::load_texture(const std::string& path
         image_data->width,
         image_data->height,
         image_data->format,
-        image_data->pixels.data());
+        image_data->data());
 
     if (texture) {
         MF_INFO(Journal::Component::IO, Journal::Context::FileIO,
@@ -455,7 +671,7 @@ std::shared_ptr<Buffers::TextureBuffer> ImageReader::create_texture_buffer()
         m_image_data->width,
         m_image_data->height,
         m_image_data->format,
-        m_image_data->pixels.data());
+        m_image_data->data());
 
     MF_INFO(Journal::Component::IO, Journal::Context::FileIO,
         "Created TextureBuffer from image: {}x{} ({} bytes)",
@@ -476,14 +692,14 @@ bool ImageReader::load_into_buffer(const std::shared_ptr<Buffers::VKBuffer>& buf
         return false;
     }
 
-    size_t required_size = m_image_data->pixels.size();
+    size_t required_size = m_image_data->byte_size();
     if (buffer->get_size_bytes() < required_size) {
         m_last_error = "Buffer too small for image data";
         return false;
     }
 
     Buffers::upload_to_gpu(
-        m_image_data->pixels.data(),
+        m_image_data->data(),
         required_size,
         buffer);
 

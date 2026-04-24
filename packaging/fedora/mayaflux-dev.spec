@@ -149,6 +149,7 @@ EOF
 %{_bindir}/lila_server
 %{_libdir}/libMayaFluxLib.so*
 %{_libdir}/libLila.so*
+%{_libdir}/libminiz.a
 %{_includedir}/MayaFlux/
 %{_includedir}/Lila/
 %{_datadir}/MayaFlux/

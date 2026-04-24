@@ -107,6 +107,43 @@ struct MAYAFLUX_API BufferService {
      * Backend determines when to flush batched commands.
      */
     std::function<void(std::function<void(void*)>)> record_deferred;
+
+    /**
+     * @brief Submit commands with a fence. Non-blocking.
+     * @param recorder Lambda that records commands into command buffer.
+     * @return Opaque handle tracking the submission.
+     *
+     * Allocates a command buffer and fence, runs the recorder, submits to
+     * the graphics queue with the fence attached, and returns immediately.
+     * The returned handle owns the cmd buffer + fence lifetime.
+     *
+     * Use wait_fenced() to block until the submission completes, then
+     * release_fenced() to free the underlying resources.
+     *
+     * Unlike execute_immediate, does not drain the graphics queue. Safe
+     * to invoke from any thread; blocks only the thread that calls
+     * wait_fenced().
+     */
+    std::function<std::shared_ptr<void>(std::function<void(void*)>)> execute_fenced;
+
+    /**
+     * @brief Wait for a fenced submission to complete.
+     * @param handle Handle returned by execute_fenced.
+     *
+     * Blocks the calling thread until the fence signals. Safe to call
+     * from any thread. No-op if handle is null or already waited.
+     */
+    std::function<void(const std::shared_ptr<void>&)> wait_fenced;
+
+    /**
+     * @brief Release resources associated with a fenced submission.
+     * @param handle Handle returned by execute_fenced.
+     *
+     * Destroys the fence and frees the command buffer. Caller must have
+     * already observed completion via wait_fenced() (or equivalent) before
+     * calling this. No-op if handle is null.
+     */
+    std::function<void(const std::shared_ptr<void>&)> release_fenced;
 };
 
 } // namespace MayaFlux::Registry::Services

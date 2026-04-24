@@ -159,6 +159,30 @@ else()
 endif()
 
 # ============================================================================
+# Vendered dependencies
+# ============================================================================
+
+if(NOT TARGET miniz)
+    find_library(MINIZ_LIB NAMES miniz
+        PATHS "${PACKAGE_PREFIX_DIR}/lib"
+        NO_DEFAULT_PATH
+    )
+    add_library(miniz STATIC IMPORTED)
+    set_target_properties(miniz PROPERTIES
+        IMPORTED_LOCATION "${MINIZ_LIB}"
+        INTERFACE_INCLUDE_DIRECTORIES "${PACKAGE_PREFIX_DIR}/include/MayaFlux/thirdparty/tinyexr"
+    )
+endif()
+
+if(NOT TARGET tinyexr)
+    add_library(tinyexr INTERFACE IMPORTED)
+    set_target_properties(tinyexr PROPERTIES
+        INTERFACE_INCLUDE_DIRECTORIES "${PACKAGE_PREFIX_DIR}/include/MayaFlux/thirdparty/tinyexr"
+        INTERFACE_LINK_LIBRARIES "miniz"
+    )
+endif()
+
+# ============================================================================
 # MayaFluxLib Target (Shared Library)
 # ============================================================================
 
@@ -232,6 +256,7 @@ if(NOT TARGET MayaFlux::MayaFluxLib)
             asio::asio
             assimp::assimp
             utf8proc::utf8proc
+            tinyexr
             freetype
             gdi32
             user32
@@ -258,6 +283,7 @@ if(NOT TARGET MayaFlux::MayaFluxLib)
             PkgConfig::Assimp
             Freetype::Freetype
             PkgConfig::UTF8PROC
+            tinyexr
             glm::glm
             spirv-cross-core
             spirv-cross-cpp

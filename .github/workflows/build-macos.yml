@@ -176,7 +176,7 @@ jobs:
           pkg-config --exists glm && echo "✅ glm found" || echo "❌ glm not found"
           pkg-config --exists asio && echo "✅ asio found" || echo "❌ asio not found"
 
-      - name: Install STB headers
+      - name: Install STB
         shell: bash
         run: |
           echo "Installing STB tap..."
