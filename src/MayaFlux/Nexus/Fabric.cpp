@@ -97,6 +97,65 @@ void Fabric::remove(uint32_t id)
     m_registrations.erase(it);
 }
 
+std::vector<uint32_t> Fabric::all_ids() const
+{
+    std::vector<uint32_t> ids;
+    ids.reserve(m_registrations.size());
+    for (const auto& [id, reg] : m_registrations) {
+        ids.push_back(id);
+    }
+    return ids;
+}
+
+Fabric::Kind Fabric::kind(uint32_t id) const
+{
+    const auto& reg = m_registrations.at(id);
+    return std::visit([](const auto& ptr) -> Kind {
+        using T = std::decay_t<decltype(*ptr)>;
+        if constexpr (std::is_same_v<T, Emitter>) {
+            return Kind::Emitter;
+        } else if constexpr (std::is_same_v<T, Sensor>) {
+            return Kind::Sensor;
+        } else {
+            return Kind::Agent;
+        }
+    },
+        reg.member);
+}
+
+std::shared_ptr<Emitter> Fabric::get_emitter(uint32_t id) const
+{
+    auto it = m_registrations.find(id);
+    if (it == m_registrations.end())
+        return nullptr;
+    if (auto* ptr = std::get_if<std::shared_ptr<Emitter>>(&it->second.member)) {
+        return *ptr;
+    }
+    return nullptr;
+}
+
+std::shared_ptr<Sensor> Fabric::get_sensor(uint32_t id) const
+{
+    auto it = m_registrations.find(id);
+    if (it == m_registrations.end())
+        return nullptr;
+    if (auto* ptr = std::get_if<std::shared_ptr<Sensor>>(&it->second.member)) {
+        return *ptr;
+    }
+    return nullptr;
+}
+
+std::shared_ptr<Agent> Fabric::get_agent(uint32_t id) const
+{
+    auto it = m_registrations.find(id);
+    if (it == m_registrations.end())
+        return nullptr;
+    if (auto* ptr = std::get_if<std::shared_ptr<Agent>>(&it->second.member)) {
+        return *ptr;
+    }
+    return nullptr;
+}
+
 // =============================================================================
 // Commit
 // =============================================================================

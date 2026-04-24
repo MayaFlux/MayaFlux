@@ -36,6 +36,12 @@ namespace MayaFlux::Nexus {
  */
 class MAYAFLUX_API Fabric {
 public:
+    enum class Kind : uint8_t {
+        Emitter,
+        Sensor,
+        Agent,
+    };
+
     /**
      * @brief Construct with scheduler and event manager from the engine.
      * @param scheduler     Used to register coroutines created by Wiring.
@@ -133,6 +139,35 @@ public:
      *         or @c finalise() has not yet been called.
      */
     [[nodiscard]] const Wiring* wiring_for(uint32_t id) const;
+
+    /**
+     * @brief List all registered entity ids in insertion order.
+     */
+    [[nodiscard]] std::vector<uint32_t> all_ids() const;
+
+    /**
+     * @brief Return the kind of entity registered under @p id.
+     * @throws std::out_of_range if id is not registered.
+     */
+    [[nodiscard]] Kind kind(uint32_t id) const;
+
+    /**
+     * @brief Get the Emitter registered under @p id.
+     * @return The Emitter, or nullptr if id is not an Emitter or not registered.
+     */
+    [[nodiscard]] std::shared_ptr<Emitter> get_emitter(uint32_t id) const;
+
+    /**
+     * @brief Get the Sensor registered under @p id.
+     * @return The Sensor, or nullptr if id is not a Sensor or not registered.
+     */
+    [[nodiscard]] std::shared_ptr<Sensor> get_sensor(uint32_t id) const;
+
+    /**
+     * @brief Get the Agent registered under @p id.
+     * @return The Agent, or nullptr if id is not an Agent or not registered.
+     */
+    [[nodiscard]] std::shared_ptr<Agent> get_agent(uint32_t id) const;
 
 private:
     friend class Wiring;
