@@ -61,6 +61,7 @@ install(FILES
 )
 
 install(FILES
+    ${CMAKE_SOURCE_DIR}/cmake/pch_minimal.h
     ${CMAKE_SOURCE_DIR}/cmake/pch.h
     ${CMAKE_SOURCE_DIR}/cmake/config.h
     DESTINATION share/MayaFlux/runtime

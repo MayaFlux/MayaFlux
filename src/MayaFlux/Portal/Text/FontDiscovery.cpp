@@ -1,30 +1,14 @@
 #include "FontDiscovery.hpp"
 
-#include "HostEnvironment.hpp"
+#include "MayaFlux/Transitive/Platform/HostEnvironment.hpp"
+
+#include "MayaFlux/Journal/Archivist.hpp"
 
 #if defined(MAYAFLUX_PLATFORM_LINUX)
 #include <fontconfig/fontconfig.h>
 #endif
 
-namespace MayaFlux::Platform {
-
-namespace {
-    void log_warn(std::string_view msg)
-    {
-        std::println(std::cerr, "[Platform::FontDiscovery] WARN  {:.{}}",
-            msg.data(), static_cast<int>(msg.size()));
-    }
-
-    void log_debug(std::string_view msg)
-    {
-#if !defined(NDEBUG)
-        std::println(std::cerr, "[Platform::FontDiscovery] DEBUG {:.{}}",
-            msg.data(), static_cast<int>(msg.size()));
-#else
-        (void)msg;
-#endif
-    }
-}
+namespace MayaFlux::Portal::Text {
 
 #if defined(MAYAFLUX_PLATFORM_LINUX)
 
@@ -32,7 +16,7 @@ std::optional<std::string> find_font(std::string_view family, std::string_view s
 {
     FcConfig* cfg = FcInitLoadConfigAndFonts();
     if (!cfg) {
-        log_warn("FcInitLoadConfigAndFonts failed");
+        MF_WARN(Journal::Component::Portal, Journal::Context::Init, "FcInitLoadConfigAndFonts failed");
         return std::nullopt;
     }
 
@@ -53,11 +37,11 @@ std::optional<std::string> find_font(std::string_view family, std::string_view s
         FcChar8* file_path {};
         if (FcPatternGetString(match, FC_FILE, 0, &file_path) == FcResultMatch) {
             out = reinterpret_cast<const char*>(file_path);
-            log_debug(std::string(family) + " -> " + *out);
+            MF_DEBUG(Journal::Component::Portal, Journal::Context::Init, "{} -> {}", family, *out);
         }
         FcPatternDestroy(match);
     } else {
-        log_warn("no fontconfig match for '" + std::string(family) + "'");
+        MF_WARN(Journal::Component::Portal, Journal::Context::Init, "no fontconfig match for '{}'", family);
     }
 
     FcPatternDestroy(pat);
@@ -77,16 +61,16 @@ std::optional<std::string> find_font(std::string_view family, std::string_view s
     }
 
     const std::string cmd = "fc-match --format='%{file}' '" + query + "' 2>/dev/null";
-    std::string result = SystemConfig::exec_command(cmd.c_str());
-    SystemConfig::trim_output(result);
+    std::string result = Platform::SystemConfig::exec_command(cmd.c_str());
+    Platform::SystemConfig::trim_output(result);
 
     if (!result.empty() && fs::exists(result)) {
-        log_debug(query + " -> " + result);
+        MF_DEBUG(Journal::Component::Portal, Journal::Context::Init, "{} -> {}", query, result);
         return result;
     }
 
     const std::vector<fs::path> search_dirs = {
-        fs::path(safe_getenv("HOME")) / "Library" / "Fonts",
+        fs::path(Platform::safe_getenv("HOME")) / "Library" / "Fonts",
         "/Library/Fonts",
         "/System/Library/Fonts",
         "/System/Library/Fonts/Supplemental"
@@ -109,13 +93,13 @@ std::optional<std::string> find_font(std::string_view family, std::string_view s
             std::ranges::transform(lower_name,
                 lower_name.begin(), ::tolower);
             if (lower_name.find(lower_family) != std::string::npos) {
-                log_debug(std::string(family) + " -> " + entry.path().string());
+                MF_DEBUG(Journal::Component::Portal, Journal::Context::Init, "{} -> {}", family, entry.path().string());
                 return entry.path().string();
             }
         }
     }
 
-    log_warn("no match for '" + std::string(family) + "'");
+    MF_WARN(Journal::Component::Portal, Journal::Context::Init, "no match for '{}'", family);
     return std::nullopt;
 }
 
@@ -135,7 +119,7 @@ std::optional<std::string> find_font(std::string_view family, std::string_view /
     const fs::path fonts_dir = fs::path(windir) / "Fonts";
 
     if (!fs::exists(fonts_dir)) {
-        log_warn("fonts directory not found at " + fonts_dir.string());
+        MF_WARN(Journal::Component::Portal, Journal::Context::Init, "fonts directory not found at {}", fonts_dir.string());
         return std::nullopt;
     }
 
@@ -154,15 +138,15 @@ std::optional<std::string> find_font(std::string_view family, std::string_view /
         std::ranges::transform(lower_name, lower_name.begin(),
             [](unsigned char c) { return std::tolower(c); });
         if (lower_name.find(lower_family) != std::string::npos) {
-            log_debug(std::string(family) + " -> " + entry.path().string());
+            MF_DEBUG(Journal::Component::Portal, Journal::Context::Init, "{} -> {}", family, entry.path().string());
             return entry.path().string();
         }
     }
 
-    log_warn("no match for '" + std::string(family) + "'");
+    MF_WARN(Journal::Component::Portal, Journal::Context::Init, "no match for '{}'", family);
     return std::nullopt;
 }
 
 #endif
 
-} // namespace MayaFlux::Platform
+} // namespace MayaFlux::Portal::Text

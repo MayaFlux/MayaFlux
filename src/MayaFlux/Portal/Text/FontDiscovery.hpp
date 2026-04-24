@@ -1,6 +1,6 @@
 #pragma once
 
-namespace MayaFlux::Platform {
+namespace MayaFlux::Portal::Text {
 
 /**
  * @brief Locate a system font file by family name and optional style.
@@ -24,4 +24,4 @@ namespace MayaFlux::Platform {
     std::string_view family,
     std::string_view style = {});
 
-} // namespace MayaFlux::Platform
+} // namespace MayaFlux::Portal::Text

@@ -53,7 +53,7 @@ MAYAFLUX_API bool set_default_font(
 /**
  * @brief Locate a system font by family and style, then load it as the default.
  *
- * Delegates font path resolution to Platform::find_font, then calls the
+ * Delegates font path resolution to find_font, then calls the
  * path-based overload.  Returns false and logs if the family cannot be
  * located on the current platform.
  *

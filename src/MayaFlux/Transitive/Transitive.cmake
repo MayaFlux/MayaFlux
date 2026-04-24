@@ -21,8 +21,8 @@ if(WIN32)
     foreach(_t Transitive_MD Transitive_MT)
         set_target_properties(${_t} PROPERTIES POSITION_INDEPENDENT_CODE ON)
         target_include_directories(${_t} PUBLIC ${CMAKE_CURRENT_LIST_DIR}/../..)
-        target_precompile_headers(${_t} PRIVATE ${CMAKE_SOURCE_DIR}/cmake/pch.h)
-        target_link_libraries(${_t} PUBLIC glm::glm magic_enum::magic_enum)
+        target_precompile_headers(${_t} PRIVATE ${CMAKE_SOURCE_DIR}/cmake/pch_minimal.h)
+        target_link_libraries(${_t} PUBLIC magic_enum::magic_enum)
     endforeach()
 
     target_compile_options(Transitive_MD PRIVATE /MD)
@@ -43,10 +43,7 @@ else()
         ${CMAKE_CURRENT_LIST_DIR}/../..
     )
 
-    target_precompile_headers(Transitive PRIVATE ${CMAKE_SOURCE_DIR}/cmake/pch.h)
+    target_precompile_headers(Transitive PRIVATE ${CMAKE_SOURCE_DIR}/cmake/pch_minimal.h)
 
-    target_link_libraries(Transitive PUBLIC PkgConfig::magic_enum glm::glm)
-    if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
-        target_link_libraries(Transitive PRIVATE PkgConfig::Fontconfig)
-    endif()
+    target_link_libraries(Transitive PUBLIC PkgConfig::magic_enum)
 endif()
