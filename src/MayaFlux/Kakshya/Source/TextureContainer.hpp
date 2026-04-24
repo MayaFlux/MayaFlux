@@ -97,25 +97,67 @@ public:
     //=========================================================================
 
     /**
-     * @brief Direct read-only span over the raw pixel bytes.
+     * @brief Read-only byte-level view over the pixel buffer.
+     *
+     * The returned span covers the raw byte footprint of the layer,
+     * regardless of the underlying variant type. For uint8 formats this
+     * is the natural view; for uint16 and float formats the caller can
+     * reinterpret_cast for typed access, or prefer the as_uint16 /
+     * as_float accessors below.
+     *
      * @param layer Array layer index for array textures (default 0).
-     * @return Contiguous span over the flat interleaved pixel buffer.
      */
     [[nodiscard]] std::span<const uint8_t> pixel_bytes(uint32_t layer = 0) const;
 
     /**
-     * @brief Direct read-write span over the raw pixel bytes.
+     * @brief Read-write byte-level view over the pixel buffer.
      * @param layer Array layer index for array textures (default 0).
-     * @return Contiguous span over the flat interleaved pixel buffer.
      */
     [[nodiscard]] std::span<uint8_t> pixel_bytes(uint32_t layer = 0);
 
     /**
-     * @brief Replace the pixel buffer contents.
-     * @param layer Array layer index for array textures (default 0).
-     * @param data Source bytes. Size must equal width * height * bytes_per_pixel.
+     * @brief Typed view over the uint8 variant.
+     *        Returns an empty span if the layer's variant is not uint8.
+     */
+    [[nodiscard]] std::span<const uint8_t> as_uint8(uint32_t layer = 0) const;
+
+    /**
+     * @brief Typed view over the uint16 variant.
+     *        Returns an empty span if the layer's variant is not uint16.
+     *        16-bit UNORM formats and half-float formats both reside here;
+     *        for half-float, the uint16 bits are the IEEE-754 binary16
+     *        encoding.
+     */
+    [[nodiscard]] std::span<const uint16_t> as_uint16(uint32_t layer = 0) const;
+
+    /**
+     * @brief Typed view over the float variant.
+     *        Returns an empty span if the layer's variant is not float.
+     */
+    [[nodiscard]] std::span<const float> as_float(uint32_t layer = 0) const;
+
+    /**
+     * @brief Replace the layer's pixel buffer with a byte source.
+     *        Valid only when the declared format is uint8-backed.
+     *        Size must equal width * height * bytes_per_pixel.
      */
     void set_pixels(std::span<const uint8_t> data, uint32_t layer = 0);
+
+    /**
+     * @brief Replace the layer's pixel buffer with a uint16 source.
+     *        Valid when the declared format is uint16-backed
+     *        (R16/RG16/RGBA16, R16F/RG16F/RGBA16F).
+     *        Size must equal width * height * channels.
+     */
+    void set_pixels(std::span<const uint16_t> data, uint32_t layer = 0);
+
+    /**
+     * @brief Replace the layer's pixel buffer with a float source.
+     *        Valid when the declared format is float-backed
+     *        (R32F/RG32F/RGBA32F).
+     *        Size must equal width * height * channels.
+     */
+    void set_pixels(std::span<const float> data, uint32_t layer = 0);
 
     //=========================================================================
     // Metadata
