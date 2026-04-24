@@ -117,6 +117,7 @@ if(WIN32)
         asio::asio
         assimp::assimp
         utf8proc::utf8proc
+        nlohmann_json::nlohmann_json
         tinyexr
         freetype
         gdi32
@@ -157,6 +158,7 @@ else()
         PkgConfig::LIBAVDEVICE
         Freetype::Freetype
         PkgConfig::UTF8PROC
+        PkgConfig::nlohmann_json
         tinyexr
     )
 endif()
