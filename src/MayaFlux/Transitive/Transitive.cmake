@@ -46,7 +46,4 @@ else()
     target_precompile_headers(Transitive PRIVATE ${CMAKE_SOURCE_DIR}/cmake/pch_minimal.h)
 
     target_link_libraries(Transitive PUBLIC PkgConfig::magic_enum)
-    if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
-        target_link_libraries(Transitive PRIVATE PkgConfig::Fontconfig)
-    endif()
 endif()

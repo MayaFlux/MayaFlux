@@ -3,7 +3,7 @@
 #include "GlyphAtlas.hpp"
 #include "TypeFaceFoundry.hpp"
 
-#include "MayaFlux/Transitive/Platform/FontDiscovery.hpp"
+#include "FontDiscovery.hpp"
 
 #include "MayaFlux/Core/GlobalGraphicsInfo.hpp"
 
@@ -85,7 +85,7 @@ bool set_default_font(
     uint32_t pixel_size,
     uint32_t atlas_size)
 {
-    const auto path = Platform::find_font(family, style);
+    const auto path = find_font(family, style);
     if (!path) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::API,
             "set_default_font: could not locate '{}{}{}' on this system",
