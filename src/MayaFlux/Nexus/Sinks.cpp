@@ -19,7 +19,8 @@ void add_audio_sink(
     std::vector<AudioSink>& sinks,
     Buffers::BufferManager& mgr,
     uint32_t channel,
-    std::function<Kakshya::DataVariant(const InfluenceContext&)> fn)
+    std::function<Kakshya::DataVariant(const InfluenceContext&)> fn,
+    std::string fn_name)
 {
     auto buf = std::make_shared<Buffers::AudioBuffer>(channel, Buffers::s_preferred_buffer_size);
     auto writer = std::make_shared<Buffers::AudioWriteProcessor>();
@@ -31,6 +32,7 @@ void add_audio_sink(
         .buf = std::move(buf),
         .writer = std::move(writer),
         .fn = std::move(fn),
+        .fn_name = std::move(fn_name),
         .channel = channel,
     });
 
@@ -95,6 +97,7 @@ void add_render_sink(
     Buffers::BufferManager& mgr,
     const Portal::Graphics::RenderConfig& config,
     RenderFn fn,
+    std::string fn_name,
     const std::optional<glm::vec3>& initial_position)
 {
     constexpr size_t k_initial_bytes = 4096;
@@ -175,6 +178,7 @@ void add_render_sink(
         .writer = std::move(writer),
         .renderer = std::move(renderer),
         .fn = std::move(fn),
+        .fn_name = std::move(fn_name),
         .window = config.target_window,
     });
 

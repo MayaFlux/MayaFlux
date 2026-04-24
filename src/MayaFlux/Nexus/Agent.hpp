@@ -47,6 +47,37 @@ public:
     }
 
     /**
+     * @brief Construct with named perception and influence functions.
+     * @param query_radius        Radius passed to the spatial index on each commit.
+     * @param perception_fn_name  Identifier for the perception function.
+     * @param perception          Called first on every commit.
+     * @param influence_fn_name   Identifier for the influence function.
+     * @param influence           Called second on every commit.
+     */
+    Agent(float query_radius,
+        std::string perception_fn_name, PerceptionFn perception,
+        std::string influence_fn_name, InfluenceFn influence)
+        : m_query_radius(query_radius)
+        , m_perception_fn_name(std::move(perception_fn_name))
+        , m_perception_fn(std::move(perception))
+        , m_influence_fn_name(std::move(influence_fn_name))
+        , m_influence_fn(std::move(influence))
+    {
+    }
+
+    /** @brief Identifier assigned to the perception function, empty if anonymous. */
+    [[nodiscard]] const std::string& perception_fn_name() const { return m_perception_fn_name; }
+
+    /** @brief Identifier assigned to the influence function, empty if anonymous. */
+    [[nodiscard]] const std::string& influence_fn_name() const { return m_influence_fn_name; }
+
+    /** @brief Set or replace the perception function's identifier. */
+    void set_perception_fn_name(std::string name) { m_perception_fn_name = std::move(name); }
+
+    /** @brief Set or replace the influence function's identifier. */
+    void set_influence_fn_name(std::string name) { m_influence_fn_name = std::move(name); }
+
+    /**
      * @brief Return the current position, if set.
      */
     [[nodiscard]] const std::optional<glm::vec3>& position() const { return m_position; }
@@ -90,9 +121,10 @@ public:
 
     /** @brief Register an audio output on @p channel with a producer function. */
     void sink_audio(Buffers::BufferManager& mgr, uint32_t channel,
-        std::function<Kakshya::DataVariant(const InfluenceContext&)> fn)
+        std::function<Kakshya::DataVariant(const InfluenceContext&)> fn,
+        std::string fn_name = "")
     {
-        add_audio_sink(m_audio_sinks, mgr, channel, std::move(fn));
+        add_audio_sink(m_audio_sinks, mgr, channel, std::move(fn), std::move(fn_name));
     }
 
     /** @brief Unregister the audio sink on @p channel. */
@@ -104,14 +136,18 @@ public:
     /** @brief Register a render output targeting @p window. */
     void render(Buffers::BufferManager& mgr, const Portal::Graphics::RenderConfig& config)
     {
-        add_render_sink(m_render_sinks, mgr, config, {}, m_position);
+        add_render_sink(m_render_sinks, mgr, config, {}, "", m_position);
     }
 
     /** @brief Register a render output targeting @p window with a producer function. */
-    void render(Buffers::BufferManager& mgr, const Portal::Graphics::RenderConfig& config, RenderFn fn)
+    void render(Buffers::BufferManager& mgr, const Portal::Graphics::RenderConfig& config,
+        std::string fn_name, RenderFn fn)
     {
-        add_render_sink(m_render_sinks, mgr, config, std::move(fn), m_position);
+        add_render_sink(m_render_sinks, mgr, config, std::move(fn), std::move(fn_name), m_position);
     }
+
+    [[nodiscard]] const std::vector<AudioSink>& audio_sinks() const { return m_audio_sinks; }
+    [[nodiscard]] const std::vector<RenderSink>& render_sinks() const { return m_render_sinks; }
 
     /* @brief Return the render processor for the sink targeting @p window, or nullptr if not found. */
     std::shared_ptr<Buffers::RenderProcessor> get_render_processor(
@@ -256,7 +292,9 @@ private:
     std::shared_ptr<Buffers::VKBuffer> m_influence_ubo;
 
     float m_query_radius;
+    std::string m_perception_fn_name;
     PerceptionFn m_perception_fn;
+    std::string m_influence_fn_name;
     InfluenceFn m_influence_fn;
     uint32_t m_id {};
 

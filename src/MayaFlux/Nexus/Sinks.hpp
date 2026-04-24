@@ -43,6 +43,7 @@ struct AudioSink {
     std::shared_ptr<Buffers::AudioBuffer> buf;
     std::shared_ptr<Buffers::AudioWriteProcessor> writer;
     std::function<Kakshya::DataVariant(const InfluenceContext&)> fn;
+    std::string fn_name;
     uint32_t channel {};
 };
 
@@ -66,6 +67,7 @@ struct RenderSink {
     std::shared_ptr<Buffers::GeometryWriteProcessor> writer;
     std::shared_ptr<Buffers::RenderProcessor> renderer;
     RenderFn fn;
+    std::string fn_name;
     std::shared_ptr<Core::Window> window;
 };
 
@@ -80,12 +82,14 @@ struct RenderSink {
  * @param channel Output channel index.
  * @param fn      Optional producer called each dispatch with InfluenceContext.
  *                Leave empty when data is supplied via push_audio_data().
+ * @param fn_name  Optional identifier for state encoding, empty if anonymous.
  */
 void add_audio_sink(
     std::vector<AudioSink>& sinks,
     Buffers::BufferManager& mgr,
     uint32_t channel,
-    std::function<Kakshya::DataVariant(const InfluenceContext&)> fn = {});
+    std::function<Kakshya::DataVariant(const InfluenceContext&)> fn = {},
+    std::string fn_name = {});
 
 /**
  * @brief Unregister and destroy the audio sink on @p channel.
@@ -133,6 +137,7 @@ void dispatch_audio_sinks(
  * @param window Target window for presentation.
  * @param fn     Optional producer called each dispatch with InfluenceContext.
  *               Leave empty when geometry is supplied via push_geometry().
+ * @param fn_name  Optional identifier for state encoding, empty if anonymous.
  * @param initial_position Optional initial position to write if no producer fn is set.
  */
 void add_render_sink(
@@ -140,6 +145,7 @@ void add_render_sink(
     Buffers::BufferManager& mgr,
     const Portal::Graphics::RenderConfig& config,
     RenderFn fn = {},
+    std::string fn_name = {},
     const std::optional<glm::vec3>& initial_position = {});
 
 /**

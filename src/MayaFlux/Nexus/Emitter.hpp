@@ -37,6 +37,23 @@ public:
     }
 
     /**
+     * @brief Construct with a named influence function.
+     * @param fn_name Identifier used for state encoding.
+     * @param fn      Called on every commit with the current context.
+     */
+    Emitter(std::string fn_name, InfluenceFn fn)
+        : m_fn_name(std::move(fn_name))
+        , m_fn(std::move(fn))
+    {
+    }
+
+    /** @brief Identifier assigned to the influence function, empty if anonymous. */
+    [[nodiscard]] const std::string& fn_name() const { return m_fn_name; }
+
+    /** @brief Set or replace the influence function's identifier. */
+    void set_fn_name(std::string name) { m_fn_name = std::move(name); }
+
+    /**
      * @brief Return the current position, if set.
      */
     [[nodiscard]] const std::optional<glm::vec3>& position() const { return m_position; }
@@ -69,9 +86,10 @@ public:
 
     /** @brief Register an audio output on @p channel with a producer function. */
     void sink_audio(Buffers::BufferManager& mgr, uint32_t channel,
-        std::function<Kakshya::DataVariant(const InfluenceContext&)> fn)
+        std::function<Kakshya::DataVariant(const InfluenceContext&)> fn,
+        std::string fn_name = "")
     {
-        add_audio_sink(m_audio_sinks, mgr, channel, std::move(fn));
+        add_audio_sink(m_audio_sinks, mgr, channel, std::move(fn), std::move(fn_name));
     }
 
     /** @brief Unregister the audio sink on @p channel. */
@@ -83,14 +101,18 @@ public:
     /** @brief Register a render output targeting @p window. */
     void render(Buffers::BufferManager& mgr, const Portal::Graphics::RenderConfig& config)
     {
-        add_render_sink(m_render_sinks, mgr, config, {}, m_position);
+        add_render_sink(m_render_sinks, mgr, config, {}, "", m_position);
     }
 
     /** @brief Register a render output targeting @p window with a producer function. */
-    void render(Buffers::BufferManager& mgr, const Portal::Graphics::RenderConfig& config, RenderFn fn)
+    void render(Buffers::BufferManager& mgr, const Portal::Graphics::RenderConfig& config,
+        std::string fn_name, RenderFn fn)
     {
-        add_render_sink(m_render_sinks, mgr, config, std::move(fn), m_position);
+        add_render_sink(m_render_sinks, mgr, config, std::move(fn), std::move(fn_name), m_position);
     }
+
+    [[nodiscard]] const std::vector<AudioSink>& audio_sinks() const { return m_audio_sinks; }
+    [[nodiscard]] const std::vector<RenderSink>& render_sinks() const { return m_render_sinks; }
 
     /* @brief Return the render processor for the sink targeting @p window, or nullptr if not found. */
     std::shared_ptr<Buffers::RenderProcessor> get_render_processor(
@@ -225,6 +247,7 @@ private:
 
     InfluenceFn m_fn;
     uint32_t m_id {};
+    std::string m_fn_name;
 
     mutable std::vector<AudioSink> m_audio_sinks;
     mutable std::vector<RenderSink> m_render_sinks;

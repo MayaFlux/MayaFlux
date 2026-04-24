@@ -33,6 +33,25 @@ public:
     }
 
     /**
+     * @brief Construct with a query radius and a named perception function.
+     * @param query_radius Radius passed to the spatial index on each commit.
+     * @param fn_name      Identifier used for state encoding.
+     * @param fn           Called on every commit with the current context.
+     */
+    Sensor(float query_radius, std::string fn_name, PerceptionFn fn)
+        : m_query_radius(query_radius)
+        , m_fn_name(std::move(fn_name))
+        , m_fn(std::move(fn))
+    {
+    }
+
+    /** @brief Identifier assigned to the perception function, empty if anonymous. */
+    [[nodiscard]] const std::string& fn_name() const { return m_fn_name; }
+
+    /** @brief Set or replace the perception function's identifier. */
+    void set_fn_name(std::string name) { m_fn_name = std::move(name); }
+
+    /**
      * @brief Return the current position, if set.
      */
     [[nodiscard]] const std::optional<glm::vec3>& position() const { return m_position; }
@@ -78,6 +97,7 @@ public:
 private:
     std::optional<glm::vec3> m_position;
     float m_query_radius;
+    std::string m_fn_name;
     PerceptionFn m_fn;
     uint32_t m_id { 0 };
 
