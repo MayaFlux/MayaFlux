@@ -20,7 +20,7 @@ target_include_directories(MayaFluxHost PUBLIC
     ${CMAKE_CURRENT_LIST_DIR}/../
 )
 
-target_precompile_headers(MayaFluxHost PRIVATE ${CMAKE_SOURCE_DIR}/cmake/pch.h)
+target_precompile_headers(MayaFluxHost PRIVATE ${CMAKE_SOURCE_DIR}/cmake/pch_minimal.h)
 
 if(WIN32)
     target_link_libraries(MayaFluxHost PRIVATE Lila Transitive_MD)

@@ -32,7 +32,7 @@ target_include_directories(Lila PUBLIC
     ${CLANG_INCLUDE_DIRS}
 )
 
-target_precompile_headers(Lila PUBLIC ${CMAKE_SOURCE_DIR}/cmake/pch.h)
+target_precompile_headers(Lila PUBLIC ${CMAKE_SOURCE_DIR}/cmake/pch_minimal.h)
 target_include_directories(Lila PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 
 if(CLANG_DEFINITIONS)
