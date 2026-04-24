@@ -60,6 +60,16 @@ public:
     Fabric(Fabric&&) = delete;
     Fabric& operator=(Fabric&&) = delete;
 
+    /**
+     * @brief Assigned name, empty if the Fabric was constructed outside a Tapestry.
+     */
+    [[nodiscard]] const std::string& name() const { return m_name; }
+
+    /**
+     * @brief Set or replace the Fabric's name. Typically called by Tapestry.
+     */
+    void set_name(std::string name) { m_name = std::move(name); }
+
     // =========================================================================
     // Registration
     // =========================================================================
@@ -171,6 +181,8 @@ public:
 
 private:
     friend class Wiring;
+
+    std::string m_name;
 
     using Member = std::variant<
         std::shared_ptr<Emitter>,
