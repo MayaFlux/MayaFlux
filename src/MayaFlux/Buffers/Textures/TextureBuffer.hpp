@@ -87,6 +87,13 @@ public:
      */
     void set_gpu_texture(std::shared_ptr<Core::VKImage> image);
 
+    /**
+     * @brief Get the GPU texture image
+     * @return Shared pointer to the GPU-resident VKImage, or nullptr if not set
+     */
+    std::shared_ptr<Core::VKImage> get_gpu_texture() { return m_gpu_texture; }
+    std::shared_ptr<Core::VKImage> get_gpu_texture() const { return m_gpu_texture; }
+
     // === Processor Access ===
     [[nodiscard]] std::shared_ptr<TextureProcessor> get_texture_processor() const
     {
