@@ -126,6 +126,14 @@ public:
     [[nodiscard]] std::vector<Kinesis::QueryResult> k_nearest(
         const glm::vec3& center, uint32_t k) const;
 
+    /**
+     * @brief Access the finalised wiring for an entity for introspection.
+     * @param id Entity id assigned at registration.
+     * @return Pointer to the wiring, or nullptr if id is not registered
+     *         or @c finalise() has not yet been called.
+     */
+    [[nodiscard]] const Wiring* wiring_for(uint32_t id) const;
+
 private:
     friend class Wiring;
 
@@ -141,6 +149,7 @@ private:
         std::string chain_name;
         bool commit_driven { false };
         std::optional<uint32_t> spatial_id;
+        std::optional<Wiring> wiring;
     };
 
     uint32_t assign_id(Member& m);

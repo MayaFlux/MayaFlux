@@ -220,6 +220,53 @@ private:
 
     std::optional<std::function<void()>> m_bind_attach;
     std::optional<std::function<void()>> m_bind_detach;
+
+public:
+    // =====================================================================
+    // Move semantics
+    // =====================================================================
+    ~Wiring() = default;
+    Wiring(const Wiring&) = delete;
+    Wiring& operator=(const Wiring&) = delete;
+    Wiring(Wiring&&) noexcept = default;
+    Wiring& operator=(Wiring&&) = delete;
+
+    // =====================================================================
+    // Introspection
+    // =====================================================================
+
+    /** @brief Stable id of the wired entity. */
+    [[nodiscard]] uint32_t entity_id() const { return m_entity_id; }
+
+    /** @brief Recurring interval in seconds, if @c every was called. */
+    [[nodiscard]] std::optional<double> interval() const { return m_interval; }
+
+    /** @brief Active duration in seconds, if @c for_duration was called. */
+    [[nodiscard]] std::optional<double> duration() const { return m_duration; }
+
+    /** @brief Repetition count set by @c times, default 1. */
+    [[nodiscard]] size_t times_count() const { return m_times; }
+
+    /** @brief Choreography steps from @c move_to calls. */
+    [[nodiscard]] const std::vector<MoveStep>& move_steps() const { return m_move_steps; }
+
+    /** @brief Active trigger variant set by @c on. */
+    [[nodiscard]] const Trigger& trigger() const { return m_trigger; }
+
+    /** @brief Active factory variant set by @c use for non-Event factories. */
+    [[nodiscard]] const Factory& factory() const { return m_factory; }
+
+    /** @brief Active event-factory, if @c use(EventFactory) was called. */
+    [[nodiscard]] const EFactory& event_factory() const { return m_event_factory; }
+
+    /** @brief True if @c position_from was called. */
+    [[nodiscard]] bool has_position_fn() const { return m_position_fn.has_value(); }
+
+    /** @brief True if any @c bind overload was called. */
+    [[nodiscard]] bool has_bind() const { return m_bind_attach.has_value(); }
+
+    /** @brief True if @c bind(attach, detach) was called. */
+    [[nodiscard]] bool has_bind_detach() const { return m_bind_detach.has_value(); }
 };
 
 } // namespace MayaFlux::Nexus

@@ -344,6 +344,8 @@ void Wiring::finalise()
             });
         }
     }
+
+    m_fabric.m_registrations[m_entity_id].wiring.emplace(std::move(*this));
 }
 
 // =============================================================================

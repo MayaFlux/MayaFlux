@@ -44,7 +44,7 @@ Wiring Fabric::wire(std::shared_ptr<Emitter> emitter)
     if (emitter->m_position.has_value()) {
         reg.spatial_id = m_index->insert(*emitter->m_position);
     }
-    m_registrations[id] = std::move(reg);
+    m_registrations.try_emplace(id, std::move(reg));
     return Wiring { *this, id };
 }
 
@@ -56,7 +56,7 @@ Wiring Fabric::wire(std::shared_ptr<Sensor> sensor)
     if (sensor->m_position.has_value()) {
         reg.spatial_id = m_index->insert(*sensor->m_position);
     }
-    m_registrations[id] = std::move(reg);
+    m_registrations.try_emplace(id, std::move(reg));
     return Wiring { *this, id };
 }
 
@@ -68,7 +68,7 @@ Wiring Fabric::wire(std::shared_ptr<Agent> agent)
     if (agent->m_position.has_value()) {
         reg.spatial_id = m_index->insert(*agent->m_position);
     }
-    m_registrations[id] = std::move(reg);
+    m_registrations.try_emplace(id, std::move(reg));
     return Wiring { *this, id };
 }
 
@@ -148,6 +148,15 @@ std::vector<Kinesis::QueryResult> Fabric::k_nearest(
     const glm::vec3& center, uint32_t k) const
 {
     return m_index->k_nearest(center, k);
+}
+
+const Wiring* Fabric::wiring_for(uint32_t id) const
+{
+    auto it = m_registrations.find(id);
+    if (it == m_registrations.end() || !it->second.wiring.has_value()) {
+        return nullptr;
+    }
+    return &*it->second.wiring;
 }
 
 // =============================================================================
