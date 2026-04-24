@@ -121,8 +121,8 @@ public:
 
     /** @brief Register an audio output on @p channel with a producer function. */
     void sink_audio(Buffers::BufferManager& mgr, uint32_t channel,
-        std::string fn_name,
-        std::function<Kakshya::DataVariant(const InfluenceContext&)> fn)
+        std::function<Kakshya::DataVariant(const InfluenceContext&)> fn,
+        std::string fn_name = "")
     {
         add_audio_sink(m_audio_sinks, mgr, channel, std::move(fn), std::move(fn_name));
     }

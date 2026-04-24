@@ -101,6 +101,13 @@ public:
     Wiring& position_from(PositionFn fn);
 
     /**
+     * @brief Drive position from a named callable evaluated on each @c every() tick.
+     * @param fn_name Identifier used for state encoding.
+     * @param fn      Returns the new position on each invocation.
+     */
+    Wiring& position_from(std::string fn_name, PositionFn fn);
+
+    /**
      * @brief Repeat the configured sequence or choreography N times.
      * @param count Number of repetitions.
      */
@@ -117,6 +124,12 @@ public:
     Wiring& use(GraphicsFactory factory);
     Wiring& use(ComplexFactory factory);
     Wiring& use(EventFactory factory);
+
+    /** @brief Register a named factory. */
+    Wiring& use(std::string fn_name, SoundFactory factory);
+    Wiring& use(std::string fn_name, GraphicsFactory factory);
+    Wiring& use(std::string fn_name, ComplexFactory factory);
+    Wiring& use(std::string fn_name, EventFactory factory);
 
     // =====================================================================
     // Immediate bind — no coroutine
@@ -143,6 +156,13 @@ public:
      * @param detach Called on expiry or cancellation.
      */
     Wiring& bind(std::function<void()> attach, std::function<void()> detach);
+
+    /** @brief Call a named custom function once immediately. */
+    Wiring& bind(std::string fn_name, std::function<void()> fn);
+
+    /** @brief Call named attach/detach functions. */
+    Wiring& bind(std::string attach_name, std::function<void()> attach,
+        std::string detach_name, std::function<void()> detach);
 
     // =====================================================================
     // Terminal
@@ -211,15 +231,19 @@ private:
     std::optional<double> m_interval;
     std::optional<double> m_duration;
     std::optional<PositionFn> m_position_fn;
+    std::string m_position_fn_name;
     std::vector<MoveStep> m_move_steps;
     size_t m_times { 1 };
 
     Trigger m_trigger;
     Factory m_factory;
     EFactory m_event_factory;
+    std::string m_factory_name;
 
     std::optional<std::function<void()>> m_bind_attach;
     std::optional<std::function<void()>> m_bind_detach;
+    std::string m_bind_attach_name;
+    std::string m_bind_detach_name;
 
 public:
     // =====================================================================
@@ -267,6 +291,18 @@ public:
 
     /** @brief True if @c bind(attach, detach) was called. */
     [[nodiscard]] bool has_bind_detach() const { return m_bind_detach.has_value(); }
+
+    /** @brief Name of the position function, empty if anonymous. */
+    [[nodiscard]] const std::string& position_fn_name() const { return m_position_fn_name; }
+
+    /** @brief Name of the active factory, empty if anonymous or none. */
+    [[nodiscard]] const std::string& factory_name() const { return m_factory_name; }
+
+    /** @brief Name of the bind attach function, empty if anonymous or none. */
+    [[nodiscard]] const std::string& bind_attach_name() const { return m_bind_attach_name; }
+
+    /** @brief Name of the bind detach function, empty if anonymous or none. */
+    [[nodiscard]] const std::string& bind_detach_name() const { return m_bind_detach_name; }
 };
 
 } // namespace MayaFlux::Nexus

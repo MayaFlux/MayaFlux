@@ -99,6 +99,41 @@ Wiring& Wiring::use(EventFactory factory)
     return *this;
 }
 
+Wiring& Wiring::position_from(std::string fn_name, PositionFn fn)
+{
+    m_position_fn_name = std::move(fn_name);
+    m_position_fn = std::move(fn);
+    return *this;
+}
+
+Wiring& Wiring::use(std::string fn_name, SoundFactory factory)
+{
+    m_factory_name = std::move(fn_name);
+    m_factory = std::move(factory);
+    return *this;
+}
+
+Wiring& Wiring::use(std::string fn_name, GraphicsFactory factory)
+{
+    m_factory_name = std::move(fn_name);
+    m_factory = std::move(factory);
+    return *this;
+}
+
+Wiring& Wiring::use(std::string fn_name, ComplexFactory factory)
+{
+    m_factory_name = std::move(fn_name);
+    m_factory = std::move(factory);
+    return *this;
+}
+
+Wiring& Wiring::use(std::string fn_name, EventFactory factory)
+{
+    m_factory_name = std::move(fn_name);
+    m_event_factory = std::move(factory);
+    return *this;
+}
+
 // =============================================================================
 // Immediate bind
 // =============================================================================
@@ -118,6 +153,24 @@ Wiring& Wiring::bind(std::function<void()> fn)
 Wiring& Wiring::bind(std::function<void()> attach, std::function<void()> detach)
 {
     m_bind_attach = std::move(attach);
+    m_bind_detach = std::move(detach);
+    return *this;
+}
+
+Wiring& Wiring::bind(std::string fn_name, std::function<void()> fn)
+{
+    m_bind_attach_name = std::move(fn_name);
+    m_bind_attach = std::move(fn);
+    return *this;
+}
+
+Wiring& Wiring::bind(
+    std::string attach_name, std::function<void()> attach,
+    std::string detach_name, std::function<void()> detach)
+{
+    m_bind_attach_name = std::move(attach_name);
+    m_bind_attach = std::move(attach);
+    m_bind_detach_name = std::move(detach_name);
     m_bind_detach = std::move(detach);
     return *this;
 }
