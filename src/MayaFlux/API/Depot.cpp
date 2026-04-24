@@ -52,7 +52,7 @@ bool is_image(const fs::path& filepath)
 
     static const std::unordered_set<std::string> image_extensions = {
         ".png", ".jpg", ".jpeg", ".bmp", ".tga",
-        ".psd", ".gif", ".hdr", ".pic", ".pnm"
+        ".psd", ".gif", ".hdr", ".pic", ".pnm", ".exr"
     };
 
     return image_extensions.contains(ext);
