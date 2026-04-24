@@ -251,6 +251,29 @@ public:
         size_t size);
 
     /**
+     * @brief Download pixel data from a texture without blocking the
+     *        graphics queue.
+     *
+     * Allocates a per-call staging buffer, command buffer, and fence.
+     * Records a copy-image-to-buffer op, submits with the fence, and
+     * blocks the calling thread on vkWaitForFences until the copy
+     * completes. Unlike download_data, this does not call queue.waitIdle,
+     * so other graphics work proceeds concurrently.
+     *
+     * Intended to be called from a worker thread (e.g. via std::async).
+     * Calling from the graphics thread or any thread that must not block
+     * will stall that thread for the duration of the copy.
+     *
+     * @param image Source image.
+     * @param data  Destination host pointer, at least @p size bytes.
+     * @param size  Byte count to read.
+     */
+    void download_data_async(
+        const std::shared_ptr<Core::VKImage>& image,
+        void* data,
+        size_t size);
+
+    /**
      * @brief Transition a VKImage to a new Vulkan layout via an immediate submission.
      * @param image       Image to transition. Must be initialised.
      * @param old_layout  Current layout of the image.

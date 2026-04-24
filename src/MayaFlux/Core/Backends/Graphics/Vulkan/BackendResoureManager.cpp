@@ -10,6 +10,13 @@
 
 namespace MayaFlux::Core {
 
+namespace {
+    struct FencedSubmission {
+        vk::CommandBuffer cmd;
+        vk::Fence fence;
+    };
+}
+
 BackendResourceManager::BackendResourceManager(VKContext& context, VKCommandManager& command_manager)
     : m_context(context)
     , m_command_manager(command_manager)
@@ -72,6 +79,68 @@ void BackendResourceManager::setup_backend_service(const std::shared_ptr<Registr
     buffer_service->unmap_buffer = [this](void* memory) {
         vk::DeviceMemory mem(reinterpret_cast<VkDeviceMemory>(memory));
         m_context.get_device().unmapMemory(mem);
+    };
+
+    buffer_service->execute_fenced = [this](const std::function<void(void*)>& recorder)
+        -> std::shared_ptr<void> {
+        vk::CommandBuffer cmd = m_command_manager.begin_single_time_commands();
+
+        recorder(static_cast<void*>(cmd));
+
+        cmd.end();
+
+        auto device = m_context.get_device();
+        vk::FenceCreateInfo fence_info {};
+        vk::Fence fence = device.createFence(fence_info);
+
+        vk::SubmitInfo submit_info {};
+        submit_info.commandBufferCount = 1;
+        submit_info.pCommandBuffers = &cmd;
+
+        if (auto result = m_context.get_graphics_queue().submit(1, &submit_info, fence);
+            result != vk::Result::eSuccess) {
+            MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+                "execute_fenced: queue submit failed: {}", vk::to_string(result));
+            device.destroyFence(fence);
+            m_command_manager.free_command_buffer(cmd);
+            return nullptr;
+        }
+
+        auto handle = std::make_shared<FencedSubmission>();
+        handle->cmd = cmd;
+        handle->fence = fence;
+        return handle;
+    };
+
+    buffer_service->wait_fenced = [this](const std::shared_ptr<void>& handle) {
+        if (!handle)
+            return;
+        auto sub = std::static_pointer_cast<FencedSubmission>(handle);
+        if (!sub->fence)
+            return;
+
+        auto device = m_context.get_device();
+        if (auto result = device.waitForFences(1, &sub->fence, VK_TRUE, UINT64_MAX);
+            result != vk::Result::eSuccess) {
+            MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+                "wait_fenced: waitForFences failed: {}", vk::to_string(result));
+        }
+    };
+
+    buffer_service->release_fenced = [this](const std::shared_ptr<void>& handle) {
+        if (!handle)
+            return;
+        auto sub = std::static_pointer_cast<FencedSubmission>(handle);
+
+        auto device = m_context.get_device();
+        if (sub->fence) {
+            device.destroyFence(sub->fence);
+            sub->fence = nullptr;
+        }
+        if (sub->cmd) {
+            m_command_manager.free_command_buffer(sub->cmd);
+            sub->cmd = nullptr;
+        }
     };
 }
 

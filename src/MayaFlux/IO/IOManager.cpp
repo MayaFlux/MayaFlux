@@ -657,11 +657,48 @@ bool IOManager::save_image(
     const std::string& filepath,
     const IO::ImageWriteOptions& options)
 {
-    auto data = IO::download_image(image);
-    if (!data) {
+    if (!image) {
+        MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+            "save_image: null image");
         return false;
     }
-    return save_image(std::move(*data), filepath, options);
+
+    auto fut = std::async(std::launch::async,
+        [image, filepath, options]() -> bool {
+            auto data = IO::download_image(image);
+            if (!data) {
+                MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+                    "save_image task: download failed for '{}'", filepath);
+                return false;
+            }
+
+            auto writer = IO::ImageWriterRegistry::instance().create_writer(filepath);
+            if (!writer) {
+                MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+                    "save_image task: no writer registered for '{}'", filepath);
+                return false;
+            }
+
+            const bool ok = writer->write(filepath, *data, options);
+            if (!ok) {
+                MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+                    "save_image task: writer failed for '{}': {}",
+                    filepath, writer->get_last_error());
+            } else {
+                MF_INFO(Journal::Component::IO, Journal::Context::FileIO,
+                    "save_image task: wrote '{}'", filepath);
+            }
+            return ok;
+        });
+
+    std::lock_guard lock(m_save_tasks_mutex);
+    m_save_tasks.push_back(std::move(fut));
+
+    std::erase_if(m_save_tasks, [](std::future<bool>& f) {
+        return f.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
+    });
+
+    return true;
 }
 
 bool IOManager::save_image(

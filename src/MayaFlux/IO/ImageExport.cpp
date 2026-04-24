@@ -7,8 +7,6 @@
 #include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
 
-#include <vulkan/vulkan.hpp>
-
 namespace MayaFlux::IO {
 
 namespace {
@@ -101,7 +99,7 @@ std::optional<ImageData> download_image(
         return std::nullopt;
     }
 
-    TextureLoom::instance().download_data(
+    TextureLoom::instance().download_data_async(
         image,
         const_cast<void*>(result.data()),
         mip0_bytes);

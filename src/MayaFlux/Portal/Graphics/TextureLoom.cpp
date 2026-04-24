@@ -6,6 +6,10 @@
 
 #include "MayaFlux/Kakshya/NDData/TextureAccess.hpp"
 
+#include "MayaFlux/Buffers/VKBuffer.hpp"
+#include "MayaFlux/Registry/BackendRegistry.hpp"
+#include "MayaFlux/Registry/Service/BufferService.hpp"
+
 #include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux::Portal::Graphics {
@@ -399,6 +403,117 @@ void TextureLoom::download_data(
     }
 
     m_resource_manager->download_image_data(image, data, size);
+}
+
+void TextureLoom::download_data_async(
+    const std::shared_ptr<Core::VKImage>& image, void* data, size_t size)
+{
+    if (!is_initialized() || !image || !data) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
+            "Invalid parameters for download_data_async");
+        return;
+    }
+
+    auto buffer_service = Registry::BackendRegistry::instance()
+                              .get_service<Registry::Service::BufferService>();
+    if (!buffer_service || !buffer_service->execute_fenced
+        || !buffer_service->wait_fenced || !buffer_service->release_fenced
+        || !buffer_service->initialize_buffer || !buffer_service->destroy_buffer
+        || !buffer_service->invalidate_range) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
+            "download_data_async: BufferService unavailable or incomplete");
+        return;
+    }
+
+    auto staging = std::make_shared<Buffers::VKBuffer>(
+        size,
+        Buffers::VKBuffer::Usage::STAGING,
+        Kakshya::DataModality::IMAGE_COLOR);
+
+    buffer_service->initialize_buffer(std::static_pointer_cast<void>(staging));
+
+    auto handle = buffer_service->execute_fenced([&](void* cmd_ptr) {
+        vk::CommandBuffer cmd(static_cast<VkCommandBuffer>(cmd_ptr));
+
+        vk::ImageMemoryBarrier barrier {};
+        barrier.oldLayout = image->get_current_layout();
+        barrier.newLayout = vk::ImageLayout::eTransferSrcOptimal;
+        barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        barrier.image = image->get_image();
+        barrier.subresourceRange.aspectMask = image->get_aspect_flags();
+        barrier.subresourceRange.baseMipLevel = 0;
+        barrier.subresourceRange.levelCount = image->get_mip_levels();
+        barrier.subresourceRange.baseArrayLayer = 0;
+        barrier.subresourceRange.layerCount = image->get_array_layers();
+        barrier.srcAccessMask = vk::AccessFlagBits::eShaderRead;
+        barrier.dstAccessMask = vk::AccessFlagBits::eTransferRead;
+
+        cmd.pipelineBarrier(
+            vk::PipelineStageFlagBits::eFragmentShader,
+            vk::PipelineStageFlagBits::eTransfer,
+            vk::DependencyFlags {}, {}, {}, barrier);
+
+        vk::BufferImageCopy region {};
+        region.bufferOffset = 0;
+        region.bufferRowLength = 0;
+        region.bufferImageHeight = 0;
+        region.imageSubresource.aspectMask = image->get_aspect_flags();
+        region.imageSubresource.mipLevel = 0;
+        region.imageSubresource.baseArrayLayer = 0;
+        region.imageSubresource.layerCount = image->get_array_layers();
+        region.imageOffset = vk::Offset3D { 0, 0, 0 };
+        region.imageExtent = vk::Extent3D {
+            image->get_width(),
+            image->get_height(),
+            image->get_depth()
+        };
+
+        cmd.copyImageToBuffer(
+            image->get_image(),
+            vk::ImageLayout::eTransferSrcOptimal,
+            staging->get_buffer(),
+            1, &region);
+
+        barrier.oldLayout = vk::ImageLayout::eTransferSrcOptimal;
+        barrier.newLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
+        barrier.srcAccessMask = vk::AccessFlagBits::eTransferRead;
+        barrier.dstAccessMask = vk::AccessFlagBits::eMemoryRead;
+
+        cmd.pipelineBarrier(
+            vk::PipelineStageFlagBits::eTransfer,
+            vk::PipelineStageFlagBits::eFragmentShader,
+            vk::DependencyFlags {}, {}, {}, barrier);
+    });
+
+    if (!handle) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
+            "download_data_async: execute_fenced returned null handle");
+        buffer_service->destroy_buffer(std::static_pointer_cast<void>(staging));
+        return;
+    }
+
+    image->set_current_layout(vk::ImageLayout::eShaderReadOnlyOptimal);
+
+    buffer_service->wait_fenced(handle);
+
+    auto& resources = staging->get_buffer_resources();
+    buffer_service->invalidate_range(resources.memory, 0, 0);
+
+    void* mapped = staging->get_mapped_ptr();
+    if (mapped) {
+        std::memcpy(data, mapped, size);
+    } else {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
+            "download_data_async: staging buffer has no mapped pointer");
+    }
+
+    buffer_service->release_fenced(handle);
+    buffer_service->destroy_buffer(std::static_pointer_cast<void>(staging));
+
+    MF_DEBUG(Journal::Component::Portal, Journal::Context::ImageProcessing,
+        "download_data_async: completed {} byte download for {}x{}",
+        size, image->get_width(), image->get_height());
 }
 
 void TextureLoom::transition_layout(
