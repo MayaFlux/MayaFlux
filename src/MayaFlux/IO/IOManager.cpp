@@ -21,6 +21,7 @@
 #include "MayaFlux/Registry/BackendRegistry.hpp"
 #include "MayaFlux/Registry/Service/IOService.hpp"
 
+#include "EXRWriter.hpp"
 #include "ImageExport.hpp"
 #include "ModelReader.hpp"
 #include "STBImageWriter.hpp"
@@ -67,6 +68,7 @@ IOManager::IOManager(uint64_t sample_rate, uint32_t buffer_size, uint32_t frame_
     };
 
     STBImageWriter::register_with_registry();
+    EXRWriter::register_with_registry();
 
     MF_INFO(Journal::Component::Core, Journal::Context::Init, "IOManager initialised");
 }
