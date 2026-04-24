@@ -37,6 +37,23 @@ public:
     }
 
     /**
+     * @brief Construct with a named influence function.
+     * @param fn_name Identifier used for state encoding.
+     * @param fn      Called on every commit with the current context.
+     */
+    Emitter(std::string fn_name, InfluenceFn fn)
+        : m_fn_name(std::move(fn_name))
+        , m_fn(std::move(fn))
+    {
+    }
+
+    /** @brief Identifier assigned to the influence function, empty if anonymous. */
+    [[nodiscard]] const std::string& fn_name() const { return m_fn_name; }
+
+    /** @brief Set or replace the influence function's identifier. */
+    void set_fn_name(std::string name) { m_fn_name = std::move(name); }
+
+    /**
      * @brief Return the current position, if set.
      */
     [[nodiscard]] const std::optional<glm::vec3>& position() const { return m_position; }
@@ -225,6 +242,7 @@ private:
 
     InfluenceFn m_fn;
     uint32_t m_id {};
+    std::string m_fn_name;
 
     mutable std::vector<AudioSink> m_audio_sinks;
     mutable std::vector<RenderSink> m_render_sinks;

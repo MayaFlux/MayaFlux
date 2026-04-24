@@ -47,6 +47,37 @@ public:
     }
 
     /**
+     * @brief Construct with named perception and influence functions.
+     * @param query_radius        Radius passed to the spatial index on each commit.
+     * @param perception_fn_name  Identifier for the perception function.
+     * @param perception          Called first on every commit.
+     * @param influence_fn_name   Identifier for the influence function.
+     * @param influence           Called second on every commit.
+     */
+    Agent(float query_radius,
+        std::string perception_fn_name, PerceptionFn perception,
+        std::string influence_fn_name, InfluenceFn influence)
+        : m_query_radius(query_radius)
+        , m_perception_fn_name(std::move(perception_fn_name))
+        , m_perception_fn(std::move(perception))
+        , m_influence_fn_name(std::move(influence_fn_name))
+        , m_influence_fn(std::move(influence))
+    {
+    }
+
+    /** @brief Identifier assigned to the perception function, empty if anonymous. */
+    [[nodiscard]] const std::string& perception_fn_name() const { return m_perception_fn_name; }
+
+    /** @brief Identifier assigned to the influence function, empty if anonymous. */
+    [[nodiscard]] const std::string& influence_fn_name() const { return m_influence_fn_name; }
+
+    /** @brief Set or replace the perception function's identifier. */
+    void set_perception_fn_name(std::string name) { m_perception_fn_name = std::move(name); }
+
+    /** @brief Set or replace the influence function's identifier. */
+    void set_influence_fn_name(std::string name) { m_influence_fn_name = std::move(name); }
+
+    /**
      * @brief Return the current position, if set.
      */
     [[nodiscard]] const std::optional<glm::vec3>& position() const { return m_position; }
@@ -256,7 +287,9 @@ private:
     std::shared_ptr<Buffers::VKBuffer> m_influence_ubo;
 
     float m_query_radius;
+    std::string m_perception_fn_name;
     PerceptionFn m_perception_fn;
+    std::string m_influence_fn_name;
     InfluenceFn m_influence_fn;
     uint32_t m_id {};
 
