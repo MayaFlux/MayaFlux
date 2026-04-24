@@ -505,6 +505,12 @@ vk::Format TextureLoom::to_vulkan_format(ImageFormat format)
     case ImageFormat::BGRA8_SRGB:
         return vk::Format::eB8G8R8A8Srgb;
         return vk::Format::eR8G8B8A8Srgb;
+    case ImageFormat::R16:
+        return vk::Format::eR16Unorm;
+    case ImageFormat::RG16:
+        return vk::Format::eR16G16Unorm;
+    case ImageFormat::RGBA16:
+        return vk::Format::eR16G16B16A16Unorm;
     case ImageFormat::R16F:
         return vk::Format::eR16Sfloat;
     case ImageFormat::RG16F:
@@ -544,6 +550,12 @@ size_t TextureLoom::get_bytes_per_pixel(ImageFormat format)
     case ImageFormat::BGRA8:
     case ImageFormat::BGRA8_SRGB:
         return 4;
+    case ImageFormat::R16:
+        return 2;
+    case ImageFormat::RG16:
+        return 4;
+    case ImageFormat::RGBA16:
+        return 8;
     case ImageFormat::R16F:
         return 2;
     case ImageFormat::RG16F:
@@ -566,6 +578,57 @@ size_t TextureLoom::get_bytes_per_pixel(ImageFormat format)
     }
 }
 
+std::optional<ImageFormat> TextureLoom::from_vulkan_format(vk::Format vk_format)
+{
+    switch (vk_format) {
+    case vk::Format::eR8Unorm:
+        return ImageFormat::R8;
+    case vk::Format::eR8G8Unorm:
+        return ImageFormat::RG8;
+    case vk::Format::eR8G8B8Unorm:
+        return ImageFormat::RGB8;
+    case vk::Format::eR8G8B8A8Unorm:
+        return ImageFormat::RGBA8;
+    case vk::Format::eR8G8B8A8Srgb:
+        return ImageFormat::RGBA8_SRGB;
+    case vk::Format::eB8G8R8A8Unorm:
+        return ImageFormat::BGRA8;
+
+    case vk::Format::eR16Unorm:
+        return ImageFormat::R16;
+    case vk::Format::eR16G16Unorm:
+        return ImageFormat::RG16;
+    case vk::Format::eR16G16B16A16Unorm:
+        return ImageFormat::RGBA16;
+
+    case vk::Format::eR16Sfloat:
+        return ImageFormat::R16F;
+    case vk::Format::eR16G16Sfloat:
+        return ImageFormat::RG16F;
+    case vk::Format::eR16G16B16A16Sfloat:
+        return ImageFormat::RGBA16F;
+
+    case vk::Format::eR32Sfloat:
+        return ImageFormat::R32F;
+    case vk::Format::eR32G32Sfloat:
+        return ImageFormat::RG32F;
+    case vk::Format::eR32G32B32A32Sfloat:
+        return ImageFormat::RGBA32F;
+
+    case vk::Format::eD16Unorm:
+        return ImageFormat::DEPTH16;
+    case vk::Format::eX8D24UnormPack32:
+        return ImageFormat::DEPTH24;
+    case vk::Format::eD32Sfloat:
+        return ImageFormat::DEPTH32F;
+    case vk::Format::eD24UnormS8Uint:
+        return ImageFormat::DEPTH24_STENCIL8;
+
+    default:
+        return std::nullopt;
+    }
+}
+
 size_t TextureLoom::calculate_image_size(
     uint32_t width, uint32_t height, uint32_t depth, ImageFormat format)
 {
@@ -576,22 +639,38 @@ uint32_t TextureLoom::get_channel_count(ImageFormat format)
 {
     switch (format) {
     case ImageFormat::R8:
+    case ImageFormat::R16:
     case ImageFormat::R16F:
     case ImageFormat::R32F:
         return 1;
+
     case ImageFormat::RG8:
+    case ImageFormat::RG16:
     case ImageFormat::RG16F:
     case ImageFormat::RG32F:
         return 2;
+
     case ImageFormat::RGB8:
         return 3;
+
     case ImageFormat::RGBA8:
     case ImageFormat::RGBA8_SRGB:
+    case ImageFormat::BGRA8:
+    case ImageFormat::RGBA16:
     case ImageFormat::RGBA16F:
     case ImageFormat::RGBA32F:
         return 4;
+
+    case ImageFormat::DEPTH16:
+    case ImageFormat::DEPTH24:
+    case ImageFormat::DEPTH32F:
+        return 1;
+
+    case ImageFormat::DEPTH24_STENCIL8:
+        return 2;
+
     default:
-        return 4;
+        return 0;
     }
 }
 

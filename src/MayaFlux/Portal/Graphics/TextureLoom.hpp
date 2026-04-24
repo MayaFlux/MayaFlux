@@ -310,6 +310,14 @@ public:
     static size_t get_bytes_per_pixel(ImageFormat format);
 
     /**
+     * @brief Convert Vulkan format to Portal ImageFormat.
+     *
+     * Reverse twin of to_vulkan_format. Returns std::nullopt for Vulkan
+     * formats with no ImageFormat equivalent rather than guessing.
+     */
+    static std::optional<ImageFormat> from_vulkan_format(vk::Format vk_format);
+
+    /**
      * @brief Calculate image data size
      */
     static size_t calculate_image_size(
