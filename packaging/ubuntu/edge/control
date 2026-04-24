@@ -44,6 +44,7 @@ Build-Depends:
     libutf8proc-dev,
     libfreetype-dev,
     libfontconfig1-dev,
+    libtinyexr-dev,
     git
 Standards-Version: 4.7.0
 Homepage: https://mayaflux.org
@@ -91,6 +92,7 @@ Depends:
     libasio-dev,
     libutf8proc-dev,
     libfontconfig1-dev,
+    libtinyexr-dev,
     libfreetype-dev
 Suggests:
     mayaflux-edge-doc

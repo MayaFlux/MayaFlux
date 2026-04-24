@@ -56,6 +56,7 @@ install_arch() {
         "freetype2"
         "libutf8proc"
         "fontconfig"
+        "tinyexr"
     )
     echo -e "${YELLOW}Installing: ${PACKAGES[*]}${NC}"
     sudo pacman -Syu --noconfirm "${PACKAGES[@]}"
@@ -108,6 +109,7 @@ install_fedora() {
         "freetype-devel"
         "utf8proc-devel"
         "fontconfig-devel"
+        "tinyexr-devel"
         "git"
     )
 
@@ -160,6 +162,7 @@ install_ubuntu() {
         "libfreetype-dev"
         "libutf8proc-dev"
         "libfontconfig1-dev"
+        "libtinyexr-dev"
     )
 
     echo -e "${YELLOW}Installing: ${PACKAGES[*]}${NC}"

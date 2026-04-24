@@ -176,12 +176,13 @@ jobs:
           pkg-config --exists glm && echo "✅ glm found" || echo "❌ glm not found"
           pkg-config --exists asio && echo "✅ asio found" || echo "❌ asio not found"
 
-      - name: Install STB headers
+      - name: Install STB and TinyExr headers
         shell: bash
         run: |
           echo "Installing STB tap..."
           brew tap mayaflux/mayaflux
           brew install mayaflux/mayaflux/stb
+          brew install mayaflux/mayaflux/tinyexr --HEAD
           STB_INCLUDE_DIR="$(brew --prefix stb)/include/stb"
           echo "STB_ROOT=$STB_INCLUDE_DIR" >> $GITHUB_ENV
 
