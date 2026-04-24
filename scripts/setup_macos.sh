@@ -30,8 +30,6 @@ brew install \
     vulkan-utility-libraries vulkan-extensionlayer spirv-tools spirv-cross \
     spirv-headers shaderc glslang molten-vk hidapi rtmidi asio freetype utf8proc mayaflux/mayaflux/stb >/dev/null
 
-brew install mayaflux/mayaflux/tinyexr --HEAD >/dev/null
-
 # --- 3) Gather Paths ----------------------------------------------------------
 LLVM_PREFIX="$(brew --prefix llvm)"
 MOLTENVK_PREFIX="$(brew --prefix molten-vk)"

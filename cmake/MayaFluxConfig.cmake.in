@@ -46,7 +46,6 @@ if(WIN32)
     find_package(Clang CONFIG REQUIRED HINTS "$ENV{Clang_DIR}")
     find_package(freetype CONFIG REQUIRED)
     find_package(utf8proc CONFIG REQUIRED)
-    find_package(tinyexr CONFIG REQUIRED)
 
     find_library(SPIRV_CROSS_CORE_LIB NAMES spirv-cross-core 
         PATHS "$ENV{VULKAN_SDK}/Lib" REQUIRED NO_DEFAULT_PATH)
@@ -149,7 +148,6 @@ else()
     pkg_check_modules(Asio REQUIRED IMPORTED_TARGET asio)
     pkg_check_modules(Assimp REQUIRED IMPORTED_TARGET assimp)
     pkg_check_modules(UTF8PROC REQUIRED IMPORTED_TARGET libutf8proc)
-    pkg_check_modules(TinyEXR REQUIRED IMPORTED_TARGET tinyexr)
 
     pkg_check_modules(LIBAVCODEC REQUIRED IMPORTED_TARGET libavcodec)
     pkg_check_modules(LIBAVFORMAT REQUIRED IMPORTED_TARGET libavformat)
@@ -158,6 +156,30 @@ else()
     pkg_check_modules(LIBSWSCALE REQUIRED IMPORTED_TARGET libswscale)
     pkg_check_modules(LIBAVDEVICE REQUIRED IMPORTED_TARGET libavdevice)
 
+endif()
+
+# ============================================================================
+# Vendered dependencies
+# ============================================================================
+
+if(NOT TARGET miniz)
+    find_library(MINIZ_LIB NAMES miniz
+        PATHS "${PACKAGE_PREFIX_DIR}/lib"
+        NO_DEFAULT_PATH
+    )
+    add_library(miniz STATIC IMPORTED)
+    set_target_properties(miniz PROPERTIES
+        IMPORTED_LOCATION "${MINIZ_LIB}"
+        INTERFACE_INCLUDE_DIRECTORIES "${PACKAGE_PREFIX_DIR}/include/MayaFlux/thirdparty/tinyexr"
+    )
+endif()
+
+if(NOT TARGET tinyexr)
+    add_library(tinyexr INTERFACE IMPORTED)
+    set_target_properties(tinyexr PROPERTIES
+        INTERFACE_INCLUDE_DIRECTORIES "${PACKAGE_PREFIX_DIR}/include/MayaFlux/thirdparty/tinyexr"
+        INTERFACE_LINK_LIBRARIES "miniz"
+    )
 endif()
 
 # ============================================================================
@@ -234,7 +256,7 @@ if(NOT TARGET MayaFlux::MayaFluxLib)
             asio::asio
             assimp::assimp
             utf8proc::utf8proc
-            tinyexr::tinyexr
+            tinyexr
             freetype
             gdi32
             user32
@@ -261,7 +283,7 @@ if(NOT TARGET MayaFlux::MayaFluxLib)
             PkgConfig::Assimp
             Freetype::Freetype
             PkgConfig::UTF8PROC
-            TinyEXR::tinyexr
+            tinyexr
             glm::glm
             spirv-cross-core
             spirv-cross-cpp

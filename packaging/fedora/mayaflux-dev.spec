@@ -50,7 +50,6 @@ BuildRequires:  asio-standalone
 BuildRequires:  freetype-devel
 BuildRequires:  utf8proc-devel
 BuildRequires:  fontconfig-devel
-BuildRequires:  tinyexr-devel
 BuildRequires:  git
 
 # Runtime = BuildRequires (all needed for live coding/JIT)
@@ -88,7 +87,6 @@ Requires:       rtmidi-devel
 Requires:       asio-standalone
 Requires:       freetype-devel
 Requires:       utf8proc-devel
-Requires:       tinyexr-devel
 Requires:       fontconfig-devel
 
 Provides:       mayaflux = %{version}-%{release}
@@ -151,6 +149,7 @@ EOF
 %{_bindir}/lila_server
 %{_libdir}/libMayaFluxLib.so*
 %{_libdir}/libLila.so*
+%{_libdir}/libminiz.a
 %{_includedir}/MayaFlux/
 %{_includedir}/Lila/
 %{_datadir}/MayaFlux/

@@ -15,7 +15,6 @@
     "asio",
     "stb",
     "utf8proc",
-    "freetype",
-    "tinyexr"
+    "freetype"
   ]
 }

@@ -80,6 +80,15 @@ install(FILES
     DESTINATION include/MayaFlux/Host/Live
 )
 
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/third_party/tinyexr/
+    DESTINATION include/MayaFlux/thirdparty/tinyexr
+    FILES_MATCHING PATTERN "*.h" PATTERN "*.hh"
+)
+
+install(TARGETS miniz
+    ARCHIVE DESTINATION lib
+)
+
 # ============================================================================
 # CMake Config Files
 # ============================================================================
