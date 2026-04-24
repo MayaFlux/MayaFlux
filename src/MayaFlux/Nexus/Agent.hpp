@@ -146,6 +146,9 @@ public:
         add_render_sink(m_render_sinks, mgr, config, std::move(fn), std::move(fn_name), m_position);
     }
 
+    [[nodiscard]] const std::vector<AudioSink>& audio_sinks() const { return m_audio_sinks; }
+    [[nodiscard]] const std::vector<RenderSink>& render_sinks() const { return m_render_sinks; }
+
     /* @brief Return the render processor for the sink targeting @p window, or nullptr if not found. */
     std::shared_ptr<Buffers::RenderProcessor> get_render_processor(
         const std::shared_ptr<Core::Window>& window) const
