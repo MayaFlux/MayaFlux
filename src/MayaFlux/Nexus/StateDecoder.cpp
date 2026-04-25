@@ -11,192 +11,223 @@ namespace {
     constexpr uint32_t k_exr_rows = 3;
     constexpr uint32_t k_channels = 4;
 
+    // -------------------------------------------------------------------------
+    // Schema structs  (mirrored from StateEncoder.cpp until centralized)
+    // -------------------------------------------------------------------------
+
     struct Range {
         float min { 0.0F };
         float max { 1.0F };
+
+        static constexpr auto describe()
+        {
+            return std::make_tuple(
+                IO::member("min", &Range::min),
+                IO::member("max", &Range::max));
+        }
     };
 
-    float denormalize(float norm, const Range& r)
-    {
-        return r.min + norm * (r.max - r.min);
-    }
-
-    struct Ranges {
+    struct RangeSet {
         Range pos_x, pos_y, pos_z;
         Range intensity;
         Range color_r, color_g, color_b;
         Range size;
         Range radius;
         Range query_radius;
+
+        static constexpr auto describe()
+        {
+            return std::make_tuple(
+                IO::member("position.x", &RangeSet::pos_x),
+                IO::member("position.y", &RangeSet::pos_y),
+                IO::member("position.z", &RangeSet::pos_z),
+                IO::member("intensity", &RangeSet::intensity),
+                IO::member("color.r", &RangeSet::color_r),
+                IO::member("color.g", &RangeSet::color_g),
+                IO::member("color.b", &RangeSet::color_b),
+                IO::member("size", &RangeSet::size),
+                IO::member("radius", &RangeSet::radius),
+                IO::member("query_radius", &RangeSet::query_radius));
+        }
     };
 
-    enum class WiringKind : uint8_t { CommitDriven,
-        Every,
-        MoveTo,
-        Unsupported };
+    struct WiringStep {
+        glm::vec3 position {};
+        double delay_seconds { 0.0 };
 
-    struct WiringConfig {
-        struct Step {
-            glm::vec3 position {};
-            double delay_seconds { 0.0 };
-        };
-        WiringKind kind { WiringKind::CommitDriven };
+        static constexpr auto describe()
+        {
+            return std::make_tuple(
+                IO::member("position", &WiringStep::position),
+                IO::member("delay", &WiringStep::delay_seconds));
+        }
+    };
+
+    struct WiringRecord {
+        std::string kind { "commit_driven" };
         std::optional<double> interval;
         std::optional<double> duration;
-        size_t times { 1 };
-        std::vector<Step> steps;
+        std::optional<size_t> times;
+        std::optional<std::vector<WiringStep>> steps;
+
+        static constexpr auto describe()
+        {
+            return std::make_tuple(
+                IO::member("kind", &WiringRecord::kind),
+                IO::opt_member("interval", &WiringRecord::interval),
+                IO::opt_member("duration", &WiringRecord::duration),
+                IO::opt_member("times", &WiringRecord::times),
+                IO::opt_member("steps", &WiringRecord::steps));
+        }
     };
 
-    struct EntityEntry {
-        uint32_t id;
-        Fabric::Kind kind;
+    struct EntityRecord {
+        uint32_t id {};
+        std::string kind;
+        glm::vec3 position {};
+        float intensity { 0.0F };
+        float radius { 0.0F };
+        float query_radius { 0.0F };
+        std::optional<glm::vec3> color;
+        std::optional<float> size;
         std::string influence_fn_name;
         std::string perception_fn_name;
-        bool has_color { false };
-        bool has_size { false };
-        WiringConfig wiring;
+        WiringRecord wiring;
+
+        static constexpr auto describe()
+        {
+            return std::make_tuple(
+                IO::member("id", &EntityRecord::id),
+                IO::member("kind", &EntityRecord::kind),
+                IO::member("position", &EntityRecord::position),
+                IO::member("intensity", &EntityRecord::intensity),
+                IO::member("radius", &EntityRecord::radius),
+                IO::member("query_radius", &EntityRecord::query_radius),
+                IO::opt_member("color", &EntityRecord::color),
+                IO::opt_member("size", &EntityRecord::size),
+                IO::member("influence_fn_name", &EntityRecord::influence_fn_name),
+                IO::member("perception_fn_name", &EntityRecord::perception_fn_name),
+                IO::member("wiring", &EntityRecord::wiring));
+        }
     };
 
-    struct SchemaV2 {
+    struct FabricSchema {
+        uint32_t version { 0 };
         std::string fabric_name;
-        std::vector<EntityEntry> entities;
-        Ranges ranges;
+        std::vector<EntityRecord> entities;
+        RangeSet ranges;
+
+        static constexpr auto describe()
+        {
+            return std::make_tuple(
+                IO::member("version", &FabricSchema::version),
+                IO::member("fabric_name", &FabricSchema::fabric_name),
+                IO::member("entities", &FabricSchema::entities),
+                IO::member("ranges", &FabricSchema::ranges));
+        }
     };
 
-    Range parse_range(const nlohmann::json& ranges, const char* name)
+    // -------------------------------------------------------------------------
+    // Helpers
+    // -------------------------------------------------------------------------
+
+    float denormalize(float norm, const Range& r)
     {
-        if (!ranges.contains(name)) {
-            return {};
-        }
-        const auto& r = ranges.at(name);
-        return { .min = r.at("min").get<float>(), .max = r.at("max").get<float>() };
+        return r.min + norm * (r.max - r.min);
     }
 
-    std::optional<SchemaV2> load_schema(const std::string& json_path)
+    Fabric::Kind parse_kind(const std::string& s)
     {
-        IO::JSONSerializer serializer;
-        auto doc_opt = serializer.read(json_path);
-        if (!doc_opt) {
-            return std::nullopt;
+        if (s == "sensor") {
+            return Fabric::Kind::Sensor;
         }
-        const auto& doc = *doc_opt;
-
-        SchemaV2 schema;
-        try {
-            const auto version = doc.at("version").get<uint32_t>();
-            if (version != 2 && version != 3) {
-                return std::nullopt;
-            }
-            schema.fabric_name = doc.at("fabric_name").get<std::string>();
-
-            const auto& ranges = doc.at("ranges");
-            schema.ranges.pos_x = parse_range(ranges, "position.x");
-            schema.ranges.pos_y = parse_range(ranges, "position.y");
-            schema.ranges.pos_z = parse_range(ranges, "position.z");
-            schema.ranges.intensity = parse_range(ranges, "intensity");
-            schema.ranges.color_r = parse_range(ranges, "color.r");
-            schema.ranges.color_g = parse_range(ranges, "color.g");
-            schema.ranges.color_b = parse_range(ranges, "color.b");
-            schema.ranges.size = parse_range(ranges, "size");
-            schema.ranges.radius = parse_range(ranges, "radius");
-            schema.ranges.query_radius = parse_range(ranges, "query_radius");
-
-            for (const auto& ent : doc.at("entities")) {
-                const std::string kind_str = ent.at("kind").get<std::string>();
-                Fabric::Kind kind;
-                if (kind_str == "emitter") {
-                    kind = Fabric::Kind::Emitter;
-                } else if (kind_str == "sensor") {
-                    kind = Fabric::Kind::Sensor;
-                } else if (kind_str == "agent") {
-                    kind = Fabric::Kind::Agent;
-                } else {
-                    continue;
-                }
-
-                EntityEntry entry;
-                entry.id = ent.at("id").get<uint32_t>();
-                entry.kind = kind;
-
-                if (ent.contains("influence_fn_name")) {
-                    entry.influence_fn_name = ent.at("influence_fn_name").get<std::string>();
-                }
-                if (ent.contains("perception_fn_name")) {
-                    entry.perception_fn_name = ent.at("perception_fn_name").get<std::string>();
-                }
-                entry.has_color = ent.contains("color") && !ent.at("color").is_null();
-                entry.has_size = ent.contains("size") && !ent.at("size").is_null();
-
-                if (ent.contains("wiring")) {
-                    const auto& w = ent.at("wiring");
-                    const auto wk = w.at("kind").get<std::string>();
-                    if (wk == "every") {
-                        entry.wiring.kind = WiringKind::Every;
-                        entry.wiring.interval = w.at("interval").get<double>();
-                        if (w.contains("duration")) {
-                            entry.wiring.duration = w.at("duration").get<double>();
-                        }
-                        entry.wiring.times = w.value("times", size_t { 1 });
-                    } else if (wk == "move_to") {
-                        entry.wiring.kind = WiringKind::MoveTo;
-                        entry.wiring.times = w.value("times", size_t { 1 });
-                        for (const auto& s : w.at("steps")) {
-                            entry.wiring.steps.push_back({
-                                .position = { s.at("x").get<float>(), s.at("y").get<float>(), s.at("z").get<float>() },
-                                .delay_seconds = s.at("delay").get<double>(),
-                            });
-                        }
-                    } else if (wk == "unsupported") {
-                        entry.wiring.kind = WiringKind::Unsupported;
-                    }
-                }
-
-                schema.entities.push_back(std::move(entry));
-            }
-        } catch (const nlohmann::json::exception&) {
-            return std::nullopt;
+        if (s == "agent") {
+            return Fabric::Kind::Agent;
         }
-
-        if (schema.entities.empty()) {
-            return std::nullopt;
-        }
-        return schema;
+        return Fabric::Kind::Emitter;
     }
 
-    void apply_wiring(Wiring wiring, const WiringConfig& cfg, std::vector<std::string>& warnings)
+    bool kind_known(const std::string& s)
     {
-        switch (cfg.kind) {
-        case WiringKind::Every:
-            wiring.every(*cfg.interval);
-            if (cfg.duration) {
-                wiring.for_duration(*cfg.duration);
+        return s == "emitter" || s == "sensor" || s == "agent";
+    }
+
+    void apply_wiring(Wiring wiring, const WiringRecord& rec, std::vector<std::string>& warnings)
+    {
+        if (rec.kind == "every") {
+            wiring.every(*rec.interval);
+            if (rec.duration) {
+                wiring.for_duration(*rec.duration);
             }
-            if (cfg.times > 1) {
-                wiring.times(cfg.times);
+            if (rec.times && *rec.times > 1) {
+                wiring.times(*rec.times);
             }
-            wiring.finalise();
-            break;
-        case WiringKind::MoveTo:
-            for (const auto& step : cfg.steps) {
-                wiring.move_to(step.position, step.delay_seconds);
+        } else if (rec.kind == "move_to") {
+            if (rec.steps) {
+                for (const auto& s : *rec.steps) {
+                    wiring.move_to(s.position, s.delay_seconds);
+                }
             }
-            if (cfg.times > 1) {
-                wiring.times(cfg.times);
+            if (rec.times && *rec.times > 1) {
+                wiring.times(*rec.times);
             }
-            wiring.finalise();
-            break;
-        case WiringKind::Unsupported:
-            warnings.emplace_back("Unsupported wiring kind; entity registered as commit_driven");
-            wiring.finalise();
-            break;
-        case WiringKind::CommitDriven:
-        default:
-            wiring.finalise();
-            break;
+        } else if (rec.kind != "commit_driven") {
+            warnings.emplace_back("Unsupported wiring kind '" + rec.kind + "'; falling back to commit_driven");
         }
+        wiring.finalise();
+    }
+
+    // -------------------------------------------------------------------------
+    // EXR load + validation, shared by decode() and reconstruct()
+    // -------------------------------------------------------------------------
+
+    struct PixelView {
+        IO::ImageData image;
+        const std::vector<float>* pixels { nullptr };
+        uint32_t width { 0 };
+    };
+
+    std::optional<PixelView> load_exr(
+        const std::string& exr_path,
+        uint32_t expected_entity_count,
+        std::string& error_out)
+    {
+        auto image_opt = IO::ImageReader::load(exr_path, 0);
+        if (!image_opt) {
+            error_out = "Failed to load EXR: " + exr_path;
+            return std::nullopt;
+        }
+
+        const auto* pixels = image_opt->as_float();
+        if (!pixels || pixels->empty()) {
+            error_out = "EXR has no float pixel data: " + exr_path;
+            return std::nullopt;
+        }
+        if (image_opt->channels != k_channels) {
+            error_out = "EXR channel count mismatch: expected "
+                + std::to_string(k_channels) + " got " + std::to_string(image_opt->channels);
+            return std::nullopt;
+        }
+        if (image_opt->height != k_exr_rows) {
+            error_out = "EXR row count mismatch: expected "
+                + std::to_string(k_exr_rows) + " got " + std::to_string(image_opt->height);
+            return std::nullopt;
+        }
+        if (image_opt->width != expected_entity_count) {
+            error_out = "EXR width (" + std::to_string(image_opt->width)
+                + ") does not match entity count (" + std::to_string(expected_entity_count) + ")";
+            return std::nullopt;
+        }
+
+        const uint32_t w = image_opt->width;
+        return PixelView { std::move(*image_opt), nullptr, w };
     }
 
 } // namespace
+
+// -------------------------------------------------------------------------
+// decode()
+// -------------------------------------------------------------------------
 
 bool StateDecoder::decode(Fabric& fabric, const std::string& base_path)
 {
@@ -207,69 +238,50 @@ bool StateDecoder::decode(Fabric& fabric, const std::string& base_path)
     const std::string json_path = base_path + ".json";
     const std::string exr_path = base_path + ".exr";
 
-    // -------------------------------------------------------------------------
-    // Load and validate schema.
-    // -------------------------------------------------------------------------
-    auto schema_opt = load_schema(json_path);
+    IO::JSONSerializer ser;
+    auto schema_opt = ser.read<FabricSchema>(json_path);
     if (!schema_opt) {
-        m_last_error = "Failed to load schema v2: " + json_path;
+        m_last_error = "Failed to load schema: " + ser.last_error();
         MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
         return false;
     }
     const auto& schema = *schema_opt;
 
-    // -------------------------------------------------------------------------
-    // Load EXR pixels.
-    // -------------------------------------------------------------------------
-    auto image_opt = IO::ImageReader::load(exr_path, 0);
-    if (!image_opt) {
-        m_last_error = "Failed to load EXR: " + exr_path;
-        MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
-        return false;
-    }
-    const auto& image = *image_opt;
-
-    const auto* pixels = image.as_float();
-    if (!pixels || pixels->empty()) {
-        m_last_error = "EXR has no float pixel data: " + exr_path;
+    if (schema.version < 2 || schema.version > 3) {
+        m_last_error = "Unsupported schema version: " + std::to_string(schema.version);
         MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
         return false;
     }
 
-    if (image.channels != k_channels) {
-        m_last_error = "EXR has " + std::to_string(image.channels)
-            + " channels, expected " + std::to_string(k_channels);
+    if (schema.entities.empty()) {
+        m_last_error = "Schema contains no entities: " + json_path;
         MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
         return false;
     }
 
-    if (image.height != k_exr_rows) {
-        m_last_error = "EXR has " + std::to_string(image.height)
-            + " rows, expected " + std::to_string(k_exr_rows);
+    auto pv_opt = load_exr(exr_path, static_cast<uint32_t>(schema.entities.size()), m_last_error);
+    if (!pv_opt) {
         MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
         return false;
     }
-
-    if (image.width != static_cast<uint32_t>(schema.entities.size())) {
-        m_last_error = "EXR width (" + std::to_string(image.width)
-            + ") does not match entity count ("
-            + std::to_string(schema.entities.size()) + ")";
-        MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
-        return false;
-    }
-
-    const uint32_t width = image.width;
+    auto& pv = *pv_opt;
+    const auto* pixels = pv.image.as_float();
+    const uint32_t width = pv.width;
     const auto& r = schema.ranges;
 
-    // -------------------------------------------------------------------------
-    // Patch each entity by id and kind.
-    // -------------------------------------------------------------------------
     for (size_t i = 0; i < schema.entities.size(); ++i) {
         const auto& entry = schema.entities[i];
 
-        const size_t row0 = (static_cast<size_t>(0 * width) + i) * k_channels;
-        const size_t row1 = (static_cast<size_t>(1 * width) + i) * k_channels;
-        const size_t row2 = (static_cast<size_t>(2 * width) + i) * k_channels;
+        if (!kind_known(entry.kind)) {
+            MF_WARN(Journal::Component::Nexus, Journal::Context::Runtime,
+                "StateDecoder: unknown kind '{}' for id {}, skipping", entry.kind, entry.id);
+            ++m_missing_count;
+            continue;
+        }
+
+        const size_t row0 = (static_cast<size_t>(0) * width + i) * k_channels;
+        const size_t row1 = (static_cast<size_t>(1) * width + i) * k_channels;
+        const size_t row2 = (static_cast<size_t>(2) * width + i) * k_channels;
 
         const glm::vec3 position {
             denormalize((*pixels)[row0 + 0], r.pos_x),
@@ -277,7 +289,7 @@ bool StateDecoder::decode(Fabric& fabric, const std::string& base_path)
             denormalize((*pixels)[row0 + 2], r.pos_z),
         };
 
-        switch (entry.kind) {
+        switch (parse_kind(entry.kind)) {
         case Fabric::Kind::Emitter: {
             auto e = fabric.get_emitter(entry.id);
             if (!e) {
@@ -286,22 +298,21 @@ bool StateDecoder::decode(Fabric& fabric, const std::string& base_path)
                 ++m_missing_count;
                 continue;
             }
-            if (!entry.influence_fn_name.empty()
-                && e->fn_name() != entry.influence_fn_name) {
+            if (!entry.influence_fn_name.empty() && e->fn_name() != entry.influence_fn_name) {
                 MF_WARN(Journal::Component::Nexus, Journal::Context::Runtime,
                     "StateDecoder: Emitter {} fn_name mismatch: schema='{}' live='{}'",
                     entry.id, entry.influence_fn_name, e->fn_name());
             }
             e->set_position(position);
             e->set_intensity(denormalize((*pixels)[row0 + 3], r.intensity));
-            if (entry.has_color) {
+            if (entry.color) {
                 e->set_color(glm::vec3 {
                     denormalize((*pixels)[row1 + 0], r.color_r),
                     denormalize((*pixels)[row1 + 1], r.color_g),
                     denormalize((*pixels)[row1 + 2], r.color_b),
                 });
             }
-            if (entry.has_size) {
+            if (entry.size) {
                 e->set_size(denormalize((*pixels)[row1 + 3], r.size));
             }
             e->set_radius(denormalize((*pixels)[row2 + 0], r.radius));
@@ -315,8 +326,7 @@ bool StateDecoder::decode(Fabric& fabric, const std::string& base_path)
                 ++m_missing_count;
                 continue;
             }
-            if (!entry.perception_fn_name.empty()
-                && s->fn_name() != entry.perception_fn_name) {
+            if (!entry.perception_fn_name.empty() && s->fn_name() != entry.perception_fn_name) {
                 MF_WARN(Journal::Component::Nexus, Journal::Context::Runtime,
                     "StateDecoder: Sensor {} fn_name mismatch: schema='{}' live='{}'",
                     entry.id, entry.perception_fn_name, s->fn_name());
@@ -333,28 +343,26 @@ bool StateDecoder::decode(Fabric& fabric, const std::string& base_path)
                 ++m_missing_count;
                 continue;
             }
-            if (!entry.perception_fn_name.empty()
-                && a->perception_fn_name() != entry.perception_fn_name) {
+            if (!entry.perception_fn_name.empty() && a->perception_fn_name() != entry.perception_fn_name) {
                 MF_WARN(Journal::Component::Nexus, Journal::Context::Runtime,
                     "StateDecoder: Agent {} perception_fn_name mismatch: schema='{}' live='{}'",
                     entry.id, entry.perception_fn_name, a->perception_fn_name());
             }
-            if (!entry.influence_fn_name.empty()
-                && a->influence_fn_name() != entry.influence_fn_name) {
+            if (!entry.influence_fn_name.empty() && a->influence_fn_name() != entry.influence_fn_name) {
                 MF_WARN(Journal::Component::Nexus, Journal::Context::Runtime,
                     "StateDecoder: Agent {} influence_fn_name mismatch: schema='{}' live='{}'",
                     entry.id, entry.influence_fn_name, a->influence_fn_name());
             }
             a->set_position(position);
             a->set_intensity(denormalize((*pixels)[row0 + 3], r.intensity));
-            if (entry.has_color) {
+            if (entry.color) {
                 a->set_color(glm::vec3 {
                     denormalize((*pixels)[row1 + 0], r.color_r),
                     denormalize((*pixels)[row1 + 1], r.color_g),
                     denormalize((*pixels)[row1 + 2], r.color_b),
                 });
             }
-            if (entry.has_size) {
+            if (entry.size) {
                 a->set_size(denormalize((*pixels)[row1 + 3], r.size));
             }
             a->set_radius(denormalize((*pixels)[row2 + 0], r.radius));
@@ -373,6 +381,10 @@ bool StateDecoder::decode(Fabric& fabric, const std::string& base_path)
     return true;
 }
 
+// -------------------------------------------------------------------------
+// reconstruct()
+// -------------------------------------------------------------------------
+
 StateDecoder::ReconstructionResult StateDecoder::reconstruct(Fabric& fabric, const std::string& base_path)
 {
     ReconstructionResult result;
@@ -381,46 +393,35 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct(Fabric& fabric, con
     const std::string json_path = base_path + ".json";
     const std::string exr_path = base_path + ".exr";
 
-    auto schema_opt = load_schema(json_path);
+    IO::JSONSerializer ser;
+    auto schema_opt = ser.read<FabricSchema>(json_path);
     if (!schema_opt) {
-        m_last_error = "Failed to load schema: " + json_path;
+        m_last_error = "Failed to load schema: " + ser.last_error();
         MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
         return result;
     }
     const auto& schema = *schema_opt;
 
-    auto image_opt = IO::ImageReader::load(exr_path, 0);
-    if (!image_opt) {
-        m_last_error = "Failed to load EXR: " + exr_path;
-        MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
-        return result;
-    }
-    const auto& image = *image_opt;
-
-    const auto* pixels = image.as_float();
-    if (!pixels || pixels->empty()) {
-        m_last_error = "EXR has no float pixel data: " + exr_path;
-        MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
-        return result;
-    }
-    if (image.channels != k_channels) {
-        m_last_error = "EXR channel count mismatch: got " + std::to_string(image.channels);
-        MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
-        return result;
-    }
-    if (image.height != k_exr_rows) {
-        m_last_error = "EXR row count mismatch: got " + std::to_string(image.height);
-        MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
-        return result;
-    }
-    if (image.width != static_cast<uint32_t>(schema.entities.size())) {
-        m_last_error = "EXR width (" + std::to_string(image.width) + ") != entity count ("
-            + std::to_string(schema.entities.size()) + ")";
+    if (schema.version < 2 || schema.version > 3) {
+        m_last_error = "Unsupported schema version: " + std::to_string(schema.version);
         MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
         return result;
     }
 
-    const uint32_t width = image.width;
+    if (schema.entities.empty()) {
+        m_last_error = "Schema contains no entities: " + json_path;
+        MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
+        return result;
+    }
+
+    auto pv_opt = load_exr(exr_path, static_cast<uint32_t>(schema.entities.size()), m_last_error);
+    if (!pv_opt) {
+        MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
+        return result;
+    }
+    auto& pv = *pv_opt;
+    const auto* pixels = pv.image.as_float();
+    const uint32_t width = pv.width;
     const auto& r = schema.ranges;
 
     const auto existing_ids = fabric.all_ids();
@@ -429,9 +430,16 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct(Fabric& fabric, con
     for (size_t i = 0; i < schema.entities.size(); ++i) {
         const auto& entry = schema.entities[i];
 
-        const size_t row0 = (static_cast<size_t>(0 * width) + i) * k_channels;
-        const size_t row1 = (static_cast<size_t>(1 * width) + i) * k_channels;
-        const size_t row2 = (static_cast<size_t>(2 * width) + i) * k_channels;
+        if (!kind_known(entry.kind)) {
+            result.warnings.push_back("Unknown kind '" + entry.kind
+                + "' for id " + std::to_string(entry.id) + ", skipping");
+            ++result.skipped;
+            continue;
+        }
+
+        const size_t row0 = (static_cast<size_t>(0) * width + i) * k_channels;
+        const size_t row1 = (static_cast<size_t>(1) * width + i) * k_channels;
+        const size_t row2 = (static_cast<size_t>(2) * width + i) * k_channels;
 
         const glm::vec3 position {
             denormalize((*pixels)[row0 + 0], r.pos_x),
@@ -442,11 +450,22 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct(Fabric& fabric, con
         const float radius = denormalize((*pixels)[row2 + 0], r.radius);
         const float query_radius = denormalize((*pixels)[row2 + 1], r.query_radius);
 
+        auto read_color = [&]() -> glm::vec3 {
+            return {
+                denormalize((*pixels)[row1 + 0], r.color_r),
+                denormalize((*pixels)[row1 + 1], r.color_g),
+                denormalize((*pixels)[row1 + 2], r.color_b),
+            };
+        };
+        auto read_size = [&]() {
+            return denormalize((*pixels)[row1 + 3], r.size);
+        };
+
         if (existing.count(entry.id)) {
-            // ----------------------------------------------------------------
-            // Patch existing entity — same logic as decode().
-            // ----------------------------------------------------------------
-            switch (entry.kind) {
+            // -----------------------------------------------------------------
+            // Patch existing entity.
+            // -----------------------------------------------------------------
+            switch (parse_kind(entry.kind)) {
             case Fabric::Kind::Emitter: {
                 auto e = fabric.get_emitter(entry.id);
                 if (!e) {
@@ -460,13 +479,11 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct(Fabric& fabric, con
                 }
                 e->set_position(position);
                 e->set_intensity(intensity);
-                if (entry.has_color) {
-                    e->set_color({ denormalize((*pixels)[row1 + 0], r.color_r),
-                        denormalize((*pixels)[row1 + 1], r.color_g),
-                        denormalize((*pixels)[row1 + 2], r.color_b) });
+                if (entry.color) {
+                    e->set_color(read_color());
                 }
-                if (entry.has_size) {
-                    e->set_size(denormalize((*pixels)[row1 + 3], r.size));
+                if (entry.size) {
+                    e->set_size(read_size());
                 }
                 e->set_radius(radius);
                 break;
@@ -502,13 +519,11 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct(Fabric& fabric, con
                 }
                 a->set_position(position);
                 a->set_intensity(intensity);
-                if (entry.has_color) {
-                    a->set_color({ denormalize((*pixels)[row1 + 0], r.color_r),
-                        denormalize((*pixels)[row1 + 1], r.color_g),
-                        denormalize((*pixels)[row1 + 2], r.color_b) });
+                if (entry.color) {
+                    a->set_color(read_color());
                 }
-                if (entry.has_size) {
-                    a->set_size(denormalize((*pixels)[row1 + 3], r.size));
+                if (entry.size) {
+                    a->set_size(read_size());
                 }
                 a->set_radius(radius);
                 a->set_query_radius(query_radius);
@@ -518,10 +533,10 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct(Fabric& fabric, con
             ++result.patched;
 
         } else {
-            // ----------------------------------------------------------------
-            // Construct missing entity, resolve callable, wire.
-            // ----------------------------------------------------------------
-            switch (entry.kind) {
+            // -----------------------------------------------------------------
+            // Construct missing entity.
+            // -----------------------------------------------------------------
+            switch (parse_kind(entry.kind)) {
             case Fabric::Kind::Emitter: {
                 auto fn_ptr = fabric.resolve_influence_fn(entry.influence_fn_name);
                 Emitter::InfluenceFn fn;
@@ -536,19 +551,16 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct(Fabric& fabric, con
                 emitter->set_position(position);
                 emitter->set_intensity(intensity);
                 emitter->set_radius(radius);
-                if (entry.has_color) {
-                    emitter->set_color({ denormalize((*pixels)[row1 + 0], r.color_r),
-                        denormalize((*pixels)[row1 + 1], r.color_g),
-                        denormalize((*pixels)[row1 + 2], r.color_b) });
+                if (entry.color) {
+                    emitter->set_color(read_color());
                 }
-                if (entry.has_size) {
-                    emitter->set_size(denormalize((*pixels)[row1 + 3], r.size));
+                if (entry.size) {
+                    emitter->set_size(read_size());
                 }
                 auto wiring = fabric.wire(emitter);
-                const uint32_t new_id = emitter->id();
-                if (new_id != entry.id) {
+                if (emitter->id() != entry.id) {
                     result.warnings.push_back("Emitter schema_id=" + std::to_string(entry.id)
-                        + " reconstructed as runtime_id=" + std::to_string(new_id));
+                        + " reconstructed as runtime_id=" + std::to_string(emitter->id()));
                 }
                 apply_wiring(std::move(wiring), entry.wiring, result.warnings);
                 break;
@@ -567,10 +579,9 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct(Fabric& fabric, con
                     entry.perception_fn_name, std::move(fn));
                 sensor->set_position(position);
                 auto wiring = fabric.wire(sensor);
-                const uint32_t new_id = sensor->id();
-                if (new_id != entry.id) {
+                if (sensor->id() != entry.id) {
                     result.warnings.push_back("Sensor schema_id=" + std::to_string(entry.id)
-                        + " reconstructed as runtime_id=" + std::to_string(new_id));
+                        + " reconstructed as runtime_id=" + std::to_string(sensor->id()));
                 }
                 apply_wiring(std::move(wiring), entry.wiring, result.warnings);
                 break;
@@ -601,19 +612,16 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct(Fabric& fabric, con
                 agent->set_intensity(intensity);
                 agent->set_radius(radius);
                 agent->set_query_radius(query_radius);
-                if (entry.has_color) {
-                    agent->set_color({ denormalize((*pixels)[row1 + 0], r.color_r),
-                        denormalize((*pixels)[row1 + 1], r.color_g),
-                        denormalize((*pixels)[row1 + 2], r.color_b) });
+                if (entry.color) {
+                    agent->set_color(read_color());
                 }
-                if (entry.has_size) {
-                    agent->set_size(denormalize((*pixels)[row1 + 3], r.size));
+                if (entry.size) {
+                    agent->set_size(read_size());
                 }
                 auto wiring = fabric.wire(agent);
-                const uint32_t new_id = agent->id();
-                if (new_id != entry.id) {
+                if (agent->id() != entry.id) {
                     result.warnings.push_back("Agent schema_id=" + std::to_string(entry.id)
-                        + " reconstructed as runtime_id=" + std::to_string(new_id));
+                        + " reconstructed as runtime_id=" + std::to_string(agent->id()));
                 }
                 apply_wiring(std::move(wiring), entry.wiring, result.warnings);
                 break;

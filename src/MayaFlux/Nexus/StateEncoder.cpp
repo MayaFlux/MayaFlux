@@ -1,11 +1,5 @@
 #include "StateEncoder.hpp"
 
-#include <cstddef>
-
-#include <cstddef>
-
-#include <cstddef>
-
 #include "MayaFlux/IO/ImageWriter.hpp"
 #include "MayaFlux/IO/JSONSerializer.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
@@ -14,27 +8,128 @@ namespace MayaFlux::Nexus {
 
 namespace {
 
-    /**
-     * EXR layout: width = entity count, height = 3 rows, 4 channels (RGBA)
-     * Row 0: position.x, position.y, position.z, intensity
-     * Row 1: color.r, color.g, color.b, size
-     * Row 2: radius, query_radius, 0, 0
-     **/
     constexpr uint32_t k_exr_rows = 3;
     constexpr uint32_t k_channels = 4;
+
+    // -------------------------------------------------------------------------
+    // Schema structs
+    // -------------------------------------------------------------------------
 
     struct Range {
         float min { 0.0F };
         float max { 1.0F };
+
+        static constexpr auto describe()
+        {
+            return std::make_tuple(
+                IO::member("min", &Range::min),
+                IO::member("max", &Range::max));
+        }
     };
 
-    float normalize(float value, const Range& r)
-    {
-        if (r.max <= r.min) {
-            return 0.0F;
+    struct RangeSet {
+        Range pos_x, pos_y, pos_z;
+        Range intensity;
+        Range color_r, color_g, color_b;
+        Range size;
+        Range radius;
+        Range query_radius;
+
+        static constexpr auto describe()
+        {
+            return std::make_tuple(
+                IO::member("position.x", &RangeSet::pos_x),
+                IO::member("position.y", &RangeSet::pos_y),
+                IO::member("position.z", &RangeSet::pos_z),
+                IO::member("intensity", &RangeSet::intensity),
+                IO::member("color.r", &RangeSet::color_r),
+                IO::member("color.g", &RangeSet::color_g),
+                IO::member("color.b", &RangeSet::color_b),
+                IO::member("size", &RangeSet::size),
+                IO::member("radius", &RangeSet::radius),
+                IO::member("query_radius", &RangeSet::query_radius));
         }
-        return (value - r.min) / (r.max - r.min);
-    }
+    };
+
+    struct WiringStep {
+        glm::vec3 position {};
+        double delay_seconds { 0.0 };
+
+        static constexpr auto describe()
+        {
+            return std::make_tuple(
+                IO::member("position", &WiringStep::position),
+                IO::member("delay", &WiringStep::delay_seconds));
+        }
+    };
+
+    struct WiringRecord {
+        std::string kind { "commit_driven" };
+        std::optional<double> interval;
+        std::optional<double> duration;
+        std::optional<size_t> times;
+        std::optional<std::vector<WiringStep>> steps;
+
+        static constexpr auto describe()
+        {
+            return std::make_tuple(
+                IO::member("kind", &WiringRecord::kind),
+                IO::opt_member("interval", &WiringRecord::interval),
+                IO::opt_member("duration", &WiringRecord::duration),
+                IO::opt_member("times", &WiringRecord::times),
+                IO::opt_member("steps", &WiringRecord::steps));
+        }
+    };
+
+    struct EntityRecord {
+        uint32_t id {};
+        std::string kind;
+        glm::vec3 position {};
+        float intensity { 0.0F };
+        float radius { 0.0F };
+        float query_radius { 0.0F };
+        std::optional<glm::vec3> color;
+        std::optional<float> size;
+        std::string influence_fn_name;
+        std::string perception_fn_name;
+        WiringRecord wiring;
+
+        static constexpr auto describe()
+        {
+            return std::make_tuple(
+                IO::member("id", &EntityRecord::id),
+                IO::member("kind", &EntityRecord::kind),
+                IO::member("position", &EntityRecord::position),
+                IO::member("intensity", &EntityRecord::intensity),
+                IO::member("radius", &EntityRecord::radius),
+                IO::member("query_radius", &EntityRecord::query_radius),
+                IO::opt_member("color", &EntityRecord::color),
+                IO::opt_member("size", &EntityRecord::size),
+                IO::member("influence_fn_name", &EntityRecord::influence_fn_name),
+                IO::member("perception_fn_name", &EntityRecord::perception_fn_name),
+                IO::member("wiring", &EntityRecord::wiring));
+        }
+    };
+
+    struct FabricSchema {
+        uint32_t version { 3 };
+        std::string fabric_name;
+        std::vector<EntityRecord> entities;
+        RangeSet ranges;
+
+        static constexpr auto describe()
+        {
+            return std::make_tuple(
+                IO::member("version", &FabricSchema::version),
+                IO::member("fabric_name", &FabricSchema::fabric_name),
+                IO::member("entities", &FabricSchema::entities),
+                IO::member("ranges", &FabricSchema::ranges));
+        }
+    };
+
+    // -------------------------------------------------------------------------
+    // Range helpers
+    // -------------------------------------------------------------------------
 
     void expand_range(Range& r, float value, bool& initialized)
     {
@@ -47,51 +142,59 @@ namespace {
         }
     }
 
-    const char* kind_name(Fabric::Kind k)
+    float normalize(float value, const Range& r)
     {
-        switch (k) {
-        case Fabric::Kind::Emitter:
-            return "emitter";
-        case Fabric::Kind::Sensor:
-            return "sensor";
-        case Fabric::Kind::Agent:
-            return "agent";
+        if (r.max <= r.min) {
+            return 0.0F;
         }
-        return "unknown";
+        return (value - r.min) / (r.max - r.min);
     }
 
-    nlohmann::json encode_wiring(const Fabric& fabric, uint32_t id)
+    // -------------------------------------------------------------------------
+    // Wiring builder
+    // -------------------------------------------------------------------------
+
+    WiringRecord build_wiring(const Fabric& fabric, uint32_t id)
     {
         const Wiring* w = fabric.wiring_for(id);
         if (!w) {
-            return { { "kind", "unsupported" } };
+            return { .kind = "unsupported" };
         }
         if (!w->move_steps().empty()) {
-            nlohmann::json steps = nlohmann::json::array();
-            for (const auto& step : w->move_steps()) {
-                steps.push_back({ { "x", step.position.x }, { "y", step.position.y },
-                    { "z", step.position.z }, { "delay", step.delay_seconds } });
+            std::vector<WiringStep> steps;
+            steps.reserve(w->move_steps().size());
+            for (const auto& s : w->move_steps()) {
+                steps.push_back({ .position = s.position, .delay_seconds = s.delay_seconds });
             }
-            nlohmann::json wj = { { "kind", "move_to" }, { "steps", std::move(steps) } };
+            WiringRecord rec { .kind = "move_to", .steps = std::move(steps) };
             if (w->times_count() > 1) {
-                wj["times"] = w->times_count();
+                rec.times = w->times_count();
             }
-            return wj;
+            return rec;
         }
         if (w->interval().has_value()) {
-            nlohmann::json wj = { { "kind", "every" }, { "interval", *w->interval() } };
+            WiringRecord rec { .kind = "every", .interval = *w->interval() };
             if (w->duration().has_value()) {
-                wj["duration"] = *w->duration();
+                rec.duration = *w->duration();
             }
             if (w->times_count() > 1) {
-                wj["times"] = w->times_count();
+                rec.times = w->times_count();
             }
-            return wj;
+            return rec;
         }
-        return { { "kind", "commit_driven" } };
+        return { .kind = "commit_driven" };
     }
 
-    struct EntityRecord {
+} // namespace
+
+bool StateEncoder::encode(const Fabric& fabric, const std::string& base_path)
+{
+    m_last_error.clear();
+
+    // -------------------------------------------------------------------------
+    // Collect encodable entities.
+    // -------------------------------------------------------------------------
+    struct InternalRecord {
         uint32_t id;
         Fabric::Kind kind;
         glm::vec3 position {};
@@ -104,25 +207,7 @@ namespace {
         std::string perception_fn_name;
     };
 
-    struct Ranges {
-        Range pos_x, pos_y, pos_z;
-        Range intensity;
-        Range color_r, color_g, color_b;
-        Range size;
-        Range radius;
-        Range query_radius;
-    };
-
-} // namespace
-
-bool StateEncoder::encode(const Fabric& fabric, const std::string& base_path)
-{
-    m_last_error.clear();
-
-    // -------------------------------------------------------------------------
-    // Collect all encodable entities (those with a position).
-    // -------------------------------------------------------------------------
-    std::vector<EntityRecord> records;
+    std::vector<InternalRecord> records;
 
     for (uint32_t id : fabric.all_ids()) {
         const auto k = fabric.kind(id);
@@ -203,38 +288,38 @@ bool StateEncoder::encode(const Fabric& fabric, const std::string& base_path)
     }
 
     // -------------------------------------------------------------------------
-    // Compute per-field ranges from the data.
+    // Compute per-field ranges.
     // -------------------------------------------------------------------------
-    Ranges ranges;
+    RangeSet rs;
     bool init_pos_x = false, init_pos_y = false, init_pos_z = false;
     bool init_intensity = false, init_radius = false, init_query_radius = false;
     bool init_color_r = false, init_color_g = false, init_color_b = false;
     bool init_size = false;
 
     for (const auto& rec : records) {
-        expand_range(ranges.pos_x, rec.position.x, init_pos_x);
-        expand_range(ranges.pos_y, rec.position.y, init_pos_y);
-        expand_range(ranges.pos_z, rec.position.z, init_pos_z);
+        expand_range(rs.pos_x, rec.position.x, init_pos_x);
+        expand_range(rs.pos_y, rec.position.y, init_pos_y);
+        expand_range(rs.pos_z, rec.position.z, init_pos_z);
 
         if (rec.kind == Fabric::Kind::Emitter || rec.kind == Fabric::Kind::Agent) {
-            expand_range(ranges.intensity, rec.intensity, init_intensity);
-            expand_range(ranges.radius, rec.radius, init_radius);
+            expand_range(rs.intensity, rec.intensity, init_intensity);
+            expand_range(rs.radius, rec.radius, init_radius);
             if (rec.color) {
-                expand_range(ranges.color_r, rec.color->r, init_color_r);
-                expand_range(ranges.color_g, rec.color->g, init_color_g);
-                expand_range(ranges.color_b, rec.color->b, init_color_b);
+                expand_range(rs.color_r, rec.color->r, init_color_r);
+                expand_range(rs.color_g, rec.color->g, init_color_g);
+                expand_range(rs.color_b, rec.color->b, init_color_b);
             }
             if (rec.size) {
-                expand_range(ranges.size, *rec.size, init_size);
+                expand_range(rs.size, *rec.size, init_size);
             }
         }
         if (rec.kind == Fabric::Kind::Sensor || rec.kind == Fabric::Kind::Agent) {
-            expand_range(ranges.query_radius, rec.query_radius, init_query_radius);
+            expand_range(rs.query_radius, rec.query_radius, init_query_radius);
         }
     }
 
     // -------------------------------------------------------------------------
-    // Build RGBA32F pixel buffer: width=N, height=3.
+    // Build RGBA32F pixel buffer.
     // -------------------------------------------------------------------------
     const auto width = static_cast<uint32_t>(records.size());
 
@@ -249,25 +334,25 @@ bool StateEncoder::encode(const Fabric& fabric, const std::string& base_path)
     for (size_t i = 0; i < records.size(); ++i) {
         const auto& rec = records[i];
 
-        const size_t row0 = (static_cast<size_t>(0 * width) + i) * k_channels;
-        pixels[row0 + 0] = normalize(rec.position.x, ranges.pos_x);
-        pixels[row0 + 1] = normalize(rec.position.y, ranges.pos_y);
-        pixels[row0 + 2] = normalize(rec.position.z, ranges.pos_z);
-        pixels[row0 + 3] = normalize(rec.intensity, ranges.intensity);
+        const size_t row0 = (static_cast<size_t>(0) * width + i) * k_channels;
+        pixels[row0 + 0] = normalize(rec.position.x, rs.pos_x);
+        pixels[row0 + 1] = normalize(rec.position.y, rs.pos_y);
+        pixels[row0 + 2] = normalize(rec.position.z, rs.pos_z);
+        pixels[row0 + 3] = normalize(rec.intensity, rs.intensity);
 
-        const size_t row1 = (static_cast<size_t>(1 * width) + i) * k_channels;
+        const size_t row1 = (static_cast<size_t>(1) * width + i) * k_channels;
         if (rec.color) {
-            pixels[row1 + 0] = normalize(rec.color->r, ranges.color_r);
-            pixels[row1 + 1] = normalize(rec.color->g, ranges.color_g);
-            pixels[row1 + 2] = normalize(rec.color->b, ranges.color_b);
+            pixels[row1 + 0] = normalize(rec.color->r, rs.color_r);
+            pixels[row1 + 1] = normalize(rec.color->g, rs.color_g);
+            pixels[row1 + 2] = normalize(rec.color->b, rs.color_b);
         }
         if (rec.size) {
-            pixels[row1 + 3] = normalize(*rec.size, ranges.size);
+            pixels[row1 + 3] = normalize(*rec.size, rs.size);
         }
 
-        const size_t row2 = (static_cast<size_t>(2 * width) + i) * k_channels;
-        pixels[row2 + 0] = normalize(rec.radius, ranges.radius);
-        pixels[row2 + 1] = normalize(rec.query_radius, ranges.query_radius);
+        const size_t row2 = (static_cast<size_t>(2) * width + i) * k_channels;
+        pixels[row2 + 0] = normalize(rec.radius, rs.radius);
+        pixels[row2 + 1] = normalize(rec.query_radius, rs.query_radius);
     }
 
     image.pixels = std::move(pixels);
@@ -293,71 +378,36 @@ bool StateEncoder::encode(const Fabric& fabric, const std::string& base_path)
     }
 
     // -------------------------------------------------------------------------
-    // Build schema JSON v2.
+    // Build and write schema.
     // -------------------------------------------------------------------------
-    auto make_range_obj = [](const Range& r) {
-        return nlohmann::json { { "min", r.min }, { "max", r.max } };
-    };
+    const char* kind_names[] = { "emitter", "sensor", "agent" };
 
-    nlohmann::json entities_arr = nlohmann::json::array();
+    FabricSchema schema;
+    schema.version = 3;
+    schema.fabric_name = fabric.name();
+    schema.ranges = rs;
+    schema.entities.reserve(records.size());
+
     for (const auto& rec : records) {
-        nlohmann::json ent;
-        ent["id"] = rec.id;
-        ent["kind"] = kind_name(rec.kind);
-        ent["position"] = { rec.position.x, rec.position.y, rec.position.z };
-
-        switch (rec.kind) {
-        case Fabric::Kind::Emitter:
-            ent["influence_fn_name"] = rec.influence_fn_name;
-            ent["intensity"] = rec.intensity;
-            ent["radius"] = rec.radius;
-            ent["color"] = rec.color
-                ? nlohmann::json { rec.color->r, rec.color->g, rec.color->b }
-                : nlohmann::json(nullptr);
-            ent["size"] = rec.size ? nlohmann::json(*rec.size) : nlohmann::json(nullptr);
-            break;
-        case Fabric::Kind::Sensor:
-            ent["perception_fn_name"] = rec.perception_fn_name;
-            ent["query_radius"] = rec.query_radius;
-            break;
-        case Fabric::Kind::Agent:
-            ent["perception_fn_name"] = rec.perception_fn_name;
-            ent["influence_fn_name"] = rec.influence_fn_name;
-            ent["intensity"] = rec.intensity;
-            ent["radius"] = rec.radius;
-            ent["query_radius"] = rec.query_radius;
-            ent["color"] = rec.color
-                ? nlohmann::json { rec.color->r, rec.color->g, rec.color->b }
-                : nlohmann::json(nullptr);
-            ent["size"] = rec.size ? nlohmann::json(*rec.size) : nlohmann::json(nullptr);
-            break;
-        }
-        ent["wiring"] = encode_wiring(fabric, rec.id);
-        entities_arr.push_back(std::move(ent));
+        EntityRecord ent;
+        ent.id = rec.id;
+        ent.kind = kind_names[static_cast<int>(rec.kind)];
+        ent.position = rec.position;
+        ent.intensity = rec.intensity;
+        ent.radius = rec.radius;
+        ent.query_radius = rec.query_radius;
+        ent.color = rec.color;
+        ent.size = rec.size;
+        ent.influence_fn_name = rec.influence_fn_name;
+        ent.perception_fn_name = rec.perception_fn_name;
+        ent.wiring = build_wiring(fabric, rec.id);
+        schema.entities.push_back(std::move(ent));
     }
 
-    nlohmann::json schema_doc {
-        { "version", 3 },
-        { "fabric_name", fabric.name() },
-        { "entities", std::move(entities_arr) },
-        { "ranges", nlohmann::json {
-                        { "position.x", make_range_obj(ranges.pos_x) },
-                        { "position.y", make_range_obj(ranges.pos_y) },
-                        { "position.z", make_range_obj(ranges.pos_z) },
-                        { "intensity", make_range_obj(ranges.intensity) },
-                        { "color.r", make_range_obj(ranges.color_r) },
-                        { "color.g", make_range_obj(ranges.color_g) },
-                        { "color.b", make_range_obj(ranges.color_b) },
-                        { "size", make_range_obj(ranges.size) },
-                        { "radius", make_range_obj(ranges.radius) },
-                        { "query_radius", make_range_obj(ranges.query_radius) },
-                    } },
-    };
-
-    IO::JSONSerializer json_writer;
+    IO::JSONSerializer ser;
     const std::string json_path = base_path + ".json";
-    if (!json_writer.write(json_path, schema_doc)) {
-        m_last_error = "Failed to write schema: " + json_writer.last_error();
+    if (!ser.write(json_path, schema)) {
+        m_last_error = "Failed to write schema: " + ser.last_error();
         MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
         return false;
     }
