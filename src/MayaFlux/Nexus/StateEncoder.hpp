@@ -8,14 +8,18 @@ namespace MayaFlux::Nexus {
  * @class StateEncoder
  * @brief Serializes Fabric state to an EXR texture and JSON schema.
  *
- * v0 scope: encodes Emitter position (xyz) and intensity as RGBA32F pixels,
- * one pixel per Emitter. Ranges are computed from the data and written into
- * the schema for self-describing decode.
+ * v1 scope: encodes all three Kinds (Emitter, Sensor, Agent) that have a
+ * position set. Output:
+ *   {base}.exr   RGBA32F, width=N entities, height=3 rows:
+ *                  row 0: position.xyz, intensity
+ *                  row 1: color.rgb, size
+ *                  row 2: radius, query_radius, 0, 0
+ *   {base}.json  Schema v2 with per-entity records (id, kind, fields) and
+ *                per-channel ranges for denormalization.
  *
- * Non-Emitter entities and entities with no position are skipped in v0.
- * Output consists of two files sharing a base path:
- *   {base}.exr   RGBA32F texture, 1 row, N columns where N = emitter count
- *   {base}.json  Schema with fabric identity, id list, channel map, ranges
+ * Entities without a position are skipped. Unnamed callables emit a warning
+ * but are still encoded. Optional fields (color, size) are written as null
+ * in the schema; the EXR channels are zeroed but the decoder ignores them.
  */
 class MAYAFLUX_API StateEncoder {
 public:

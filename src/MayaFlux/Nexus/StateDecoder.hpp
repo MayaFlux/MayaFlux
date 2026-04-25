@@ -8,14 +8,12 @@ namespace MayaFlux::Nexus {
  * @class StateDecoder
  * @brief Patches Fabric state from a previously encoded EXR + JSON schema pair.
  *
- * v0 scope: reads {base_path}.exr and {base_path}.json, denormalizes
- * per-channel ranges from the schema, and patches existing Emitters in the
- * target Fabric by id. Ids present in the schema but absent from the Fabric
- * are logged and skipped. Non-Emitter entities are not touched.
- *
- * Patch semantics: position and intensity are overwritten from the decoded
- * data. The Emitter's influence function, sinks, color, size, and radius
- * are preserved.
+ * v1 scope: reads {base_path}.exr (schema v2) and patches Emitters, Sensors,
+ * and Agents by id. Dispatches per Kind; entities present in the schema but
+ * absent from the Fabric are logged and counted in missing_count(). Optional
+ * fields (color, size) are only patched when the schema records a non-null
+ * value. Callable name mismatches between schema and live entity are warned
+ * but do not abort the patch.
  */
 class MAYAFLUX_API StateDecoder {
 public:
@@ -29,8 +27,8 @@ public:
 
     /**
      * @brief Decode and apply to @p fabric.
-     * @param fabric    Target fabric. Must already contain Emitters with
-     *                  matching ids.
+     * @param fabric    Target fabric. Must already contain entities with
+     *                  ids matching the schema.
      * @param base_path Path stem without extension, same value passed to
      *                  StateEncoder::encode.
      * @return True on success. Partial patches (some ids missing) still

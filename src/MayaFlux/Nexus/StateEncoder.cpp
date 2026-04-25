@@ -8,10 +8,14 @@ namespace MayaFlux::Nexus {
 
 namespace {
 
-    constexpr size_t k_channels_per_pixel = 4;
-    constexpr const char* k_channel_names[k_channels_per_pixel] = {
-        "position.x", "position.y", "position.z", "intensity"
-    };
+    /**
+     * EXR layout: width = entity count, height = 3 rows, 4 channels (RGBA)
+     * Row 0: position.x, position.y, position.z, intensity
+     * Row 1: color.r, color.g, color.b, size
+     * Row 2: radius, query_radius, 0, 0
+     **/
+    constexpr uint32_t k_exr_rows = 3;
+    constexpr uint32_t k_channels = 4;
 
     struct Range {
         float min { 0.0F };
@@ -26,16 +30,51 @@ namespace {
         return (value - r.min) / (r.max - r.min);
     }
 
-    void update_range(Range& r, float value, bool first)
+    void expand_range(Range& r, float value, bool& initialized)
     {
-        if (first) {
-            r.min = value;
-            r.max = value;
+        if (!initialized) {
+            r.min = r.max = value;
+            initialized = true;
         } else {
             r.min = std::min(r.min, value);
             r.max = std::max(r.max, value);
         }
     }
+
+    const char* kind_name(Fabric::Kind k)
+    {
+        switch (k) {
+        case Fabric::Kind::Emitter:
+            return "emitter";
+        case Fabric::Kind::Sensor:
+            return "sensor";
+        case Fabric::Kind::Agent:
+            return "agent";
+        }
+        return "unknown";
+    }
+
+    struct EntityRecord {
+        uint32_t id;
+        Fabric::Kind kind;
+        glm::vec3 position {};
+        float intensity { 0.0F };
+        float radius { 0.0F };
+        float query_radius { 0.0F };
+        std::optional<glm::vec3> color;
+        std::optional<float> size;
+        std::string influence_fn_name;
+        std::string perception_fn_name;
+    };
+
+    struct Ranges {
+        Range pos_x, pos_y, pos_z;
+        Range intensity;
+        Range color_r, color_g, color_b;
+        Range size;
+        Range radius;
+        Range query_radius;
+    };
 
 } // namespace
 
@@ -44,32 +83,84 @@ bool StateEncoder::encode(const Fabric& fabric, const std::string& base_path)
     m_last_error.clear();
 
     // -------------------------------------------------------------------------
-    // Collect encodable Emitters (those with a position).
+    // Collect all encodable entities (those with a position).
     // -------------------------------------------------------------------------
-    struct EmitterRecord {
-        uint32_t id;
-        glm::vec3 position;
-        float intensity;
-    };
+    std::vector<EntityRecord> records;
 
-    std::vector<EmitterRecord> records;
     for (uint32_t id : fabric.all_ids()) {
-        if (fabric.kind(id) != Fabric::Kind::Emitter) {
-            continue;
+        const auto k = fabric.kind(id);
+        switch (k) {
+        case Fabric::Kind::Emitter: {
+            auto e = fabric.get_emitter(id);
+            if (!e || !e->position()) {
+                continue;
+            }
+            if (e->fn_name().empty()) {
+                MF_WARN(Journal::Component::Nexus, Journal::Context::FileIO,
+                    "StateEncoder: Emitter {} has no fn_name", id);
+            }
+            records.push_back({
+                .id = id,
+                .kind = k,
+                .position = *e->position(),
+                .intensity = e->intensity(),
+                .radius = e->radius(),
+                .color = e->color(),
+                .size = e->size(),
+                .influence_fn_name = e->fn_name(),
+            });
+            break;
         }
-        auto emitter = fabric.get_emitter(id);
-        if (!emitter || !emitter->position().has_value()) {
-            continue;
+        case Fabric::Kind::Sensor: {
+            auto s = fabric.get_sensor(id);
+            if (!s || !s->position()) {
+                continue;
+            }
+            if (s->fn_name().empty()) {
+                MF_WARN(Journal::Component::Nexus, Journal::Context::FileIO,
+                    "StateEncoder: Sensor {} has no fn_name", id);
+            }
+            records.push_back({
+                .id = id,
+                .kind = k,
+                .position = *s->position(),
+                .query_radius = s->query_radius(),
+                .perception_fn_name = s->fn_name(),
+            });
+            break;
         }
-        records.push_back(EmitterRecord {
-            .id = id,
-            .position = *emitter->position(),
-            .intensity = emitter->intensity(),
-        });
+        case Fabric::Kind::Agent: {
+            auto a = fabric.get_agent(id);
+            if (!a || !a->position()) {
+                continue;
+            }
+            if (a->perception_fn_name().empty()) {
+                MF_WARN(Journal::Component::Nexus, Journal::Context::FileIO,
+                    "StateEncoder: Agent {} has no perception_fn_name", id);
+            }
+            if (a->influence_fn_name().empty()) {
+                MF_WARN(Journal::Component::Nexus, Journal::Context::FileIO,
+                    "StateEncoder: Agent {} has no influence_fn_name", id);
+            }
+            records.push_back({
+                .id = id,
+                .kind = k,
+                .position = *a->position(),
+                .intensity = a->intensity(),
+                .radius = a->radius(),
+                .query_radius = a->query_radius(),
+                .color = a->color(),
+                .size = a->size(),
+                .influence_fn_name = a->influence_fn_name(),
+                .perception_fn_name = a->perception_fn_name(),
+            });
+            break;
+        }
+        }
     }
 
     if (records.empty()) {
-        m_last_error = "No Emitters with positions to encode";
+        m_last_error = "No entities with positions to encode";
         MF_WARN(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
         return false;
     }
@@ -77,38 +168,75 @@ bool StateEncoder::encode(const Fabric& fabric, const std::string& base_path)
     // -------------------------------------------------------------------------
     // Compute per-field ranges from the data.
     // -------------------------------------------------------------------------
-    Range ranges[k_channels_per_pixel];
-    for (size_t i = 0; i < records.size(); ++i) {
-        const bool first = (i == 0);
-        update_range(ranges[0], records[i].position.x, first);
-        update_range(ranges[1], records[i].position.y, first);
-        update_range(ranges[2], records[i].position.z, first);
-        update_range(ranges[3], records[i].intensity, first);
+    Ranges ranges;
+    bool init_pos_x = false, init_pos_y = false, init_pos_z = false;
+    bool init_intensity = false, init_radius = false, init_query_radius = false;
+    bool init_color_r = false, init_color_g = false, init_color_b = false;
+    bool init_size = false;
+
+    for (const auto& rec : records) {
+        expand_range(ranges.pos_x, rec.position.x, init_pos_x);
+        expand_range(ranges.pos_y, rec.position.y, init_pos_y);
+        expand_range(ranges.pos_z, rec.position.z, init_pos_z);
+
+        if (rec.kind == Fabric::Kind::Emitter || rec.kind == Fabric::Kind::Agent) {
+            expand_range(ranges.intensity, rec.intensity, init_intensity);
+            expand_range(ranges.radius, rec.radius, init_radius);
+            if (rec.color) {
+                expand_range(ranges.color_r, rec.color->r, init_color_r);
+                expand_range(ranges.color_g, rec.color->g, init_color_g);
+                expand_range(ranges.color_b, rec.color->b, init_color_b);
+            }
+            if (rec.size) {
+                expand_range(ranges.size, *rec.size, init_size);
+            }
+        }
+        if (rec.kind == Fabric::Kind::Sensor || rec.kind == Fabric::Kind::Agent) {
+            expand_range(ranges.query_radius, rec.query_radius, init_query_radius);
+        }
     }
 
     // -------------------------------------------------------------------------
-    // Build RGBA32F ImageData: 1 row, N columns, one pixel per Emitter.
+    // Build RGBA32F pixel buffer: width=N, height=3.
     // -------------------------------------------------------------------------
-    const auto width = static_cast<uint32_t>(records.size());
-    const uint32_t height = 1;
+    const uint32_t width = static_cast<uint32_t>(records.size());
 
     IO::ImageData image;
     image.width = width;
-    image.height = height;
-    image.channels = k_channels_per_pixel;
+    image.height = k_exr_rows;
+    image.channels = k_channels;
     image.format = Portal::Graphics::ImageFormat::RGBA32F;
 
-    std::vector<float> pixels(static_cast<size_t>(width) * height * k_channels_per_pixel);
+    std::vector<float> pixels(static_cast<size_t>(width) * k_exr_rows * k_channels, 0.0F);
+
     for (size_t i = 0; i < records.size(); ++i) {
-        pixels[i * k_channels_per_pixel + 0] = normalize(records[i].position.x, ranges[0]);
-        pixels[i * k_channels_per_pixel + 1] = normalize(records[i].position.y, ranges[1]);
-        pixels[i * k_channels_per_pixel + 2] = normalize(records[i].position.z, ranges[2]);
-        pixels[i * k_channels_per_pixel + 3] = normalize(records[i].intensity, ranges[3]);
+        const auto& rec = records[i];
+
+        const size_t row0 = (0 * width + i) * k_channels;
+        pixels[row0 + 0] = normalize(rec.position.x, ranges.pos_x);
+        pixels[row0 + 1] = normalize(rec.position.y, ranges.pos_y);
+        pixels[row0 + 2] = normalize(rec.position.z, ranges.pos_z);
+        pixels[row0 + 3] = normalize(rec.intensity, ranges.intensity);
+
+        const size_t row1 = (1 * width + i) * k_channels;
+        if (rec.color) {
+            pixels[row1 + 0] = normalize(rec.color->r, ranges.color_r);
+            pixels[row1 + 1] = normalize(rec.color->g, ranges.color_g);
+            pixels[row1 + 2] = normalize(rec.color->b, ranges.color_b);
+        }
+        if (rec.size) {
+            pixels[row1 + 3] = normalize(*rec.size, ranges.size);
+        }
+
+        const size_t row2 = (2 * width + i) * k_channels;
+        pixels[row2 + 0] = normalize(rec.radius, ranges.radius);
+        pixels[row2 + 1] = normalize(rec.query_radius, ranges.query_radius);
     }
+
     image.pixels = std::move(pixels);
 
     // -------------------------------------------------------------------------
-    // Write EXR via ImageWriterRegistry.
+    // Write EXR.
     // -------------------------------------------------------------------------
     const std::string exr_path = base_path + ".exr";
     auto writer = IO::ImageWriterRegistry::instance().create_writer(exr_path);
@@ -119,10 +247,7 @@ bool StateEncoder::encode(const Fabric& fabric, const std::string& base_path)
     }
 
     IO::ImageWriteOptions options;
-    options.channel_names = {
-        k_channel_names[0], k_channel_names[1],
-        k_channel_names[2], k_channel_names[3]
-    };
+    options.channel_names = { "R", "G", "B", "A" };
 
     if (!writer->write(exr_path, image, options)) {
         m_last_error = "EXR write failed: " + writer->get_last_error();
@@ -131,36 +256,76 @@ bool StateEncoder::encode(const Fabric& fabric, const std::string& base_path)
     }
 
     // -------------------------------------------------------------------------
-    // Write schema JSON via JSONSerializer.
+    // Build schema JSON v2.
     // -------------------------------------------------------------------------
-    nlohmann::json ids_arr = nlohmann::json::array();
+    auto make_range_obj = [](const Range& r) {
+        return nlohmann::json { { "min", r.min }, { "max", r.max } };
+    };
+
+    nlohmann::json entities_arr = nlohmann::json::array();
     for (const auto& rec : records) {
-        ids_arr.push_back(rec.id);
+        nlohmann::json ent;
+        ent["id"] = rec.id;
+        ent["kind"] = kind_name(rec.kind);
+        ent["position"] = { rec.position.x, rec.position.y, rec.position.z };
+
+        switch (rec.kind) {
+        case Fabric::Kind::Emitter:
+            ent["influence_fn_name"] = rec.influence_fn_name;
+            ent["intensity"] = rec.intensity;
+            ent["radius"] = rec.radius;
+            ent["color"] = rec.color
+                ? nlohmann::json { rec.color->r, rec.color->g, rec.color->b }
+                : nlohmann::json(nullptr);
+            ent["size"] = rec.size ? nlohmann::json(*rec.size) : nlohmann::json(nullptr);
+            break;
+        case Fabric::Kind::Sensor:
+            ent["perception_fn_name"] = rec.perception_fn_name;
+            ent["query_radius"] = rec.query_radius;
+            break;
+        case Fabric::Kind::Agent:
+            ent["perception_fn_name"] = rec.perception_fn_name;
+            ent["influence_fn_name"] = rec.influence_fn_name;
+            ent["intensity"] = rec.intensity;
+            ent["radius"] = rec.radius;
+            ent["query_radius"] = rec.query_radius;
+            ent["color"] = rec.color
+                ? nlohmann::json { rec.color->r, rec.color->g, rec.color->b }
+                : nlohmann::json(nullptr);
+            ent["size"] = rec.size ? nlohmann::json(*rec.size) : nlohmann::json(nullptr);
+            break;
+        }
+        entities_arr.push_back(std::move(ent));
     }
 
-    nlohmann::json ranges_obj;
-    for (size_t i = 0; i < k_channels_per_pixel; ++i) {
-        ranges_obj[k_channel_names[i]] = { { "min", ranges[i].min }, { "max", ranges[i].max } };
-    }
-
-    nlohmann::json schema {
-        { "version", 1 },
+    nlohmann::json schema_doc {
+        { "version", 2 },
         { "fabric_name", fabric.name() },
-        { "entity_count", records.size() },
-        { "ids", std::move(ids_arr) },
-        { "ranges", std::move(ranges_obj) },
+        { "entities", std::move(entities_arr) },
+        { "ranges", nlohmann::json {
+                        { "position.x", make_range_obj(ranges.pos_x) },
+                        { "position.y", make_range_obj(ranges.pos_y) },
+                        { "position.z", make_range_obj(ranges.pos_z) },
+                        { "intensity", make_range_obj(ranges.intensity) },
+                        { "color.r", make_range_obj(ranges.color_r) },
+                        { "color.g", make_range_obj(ranges.color_g) },
+                        { "color.b", make_range_obj(ranges.color_b) },
+                        { "size", make_range_obj(ranges.size) },
+                        { "radius", make_range_obj(ranges.radius) },
+                        { "query_radius", make_range_obj(ranges.query_radius) },
+                    } },
     };
 
     IO::JSONSerializer json_writer;
     const std::string json_path = base_path + ".json";
-    if (!json_writer.write(json_path, schema)) {
+    if (!json_writer.write(json_path, schema_doc)) {
         m_last_error = "Failed to write schema: " + json_writer.last_error();
         MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
         return false;
     }
 
     MF_INFO(Journal::Component::Nexus, Journal::Context::FileIO,
-        "StateEncoder: wrote {} emitters to {} + {}",
+        "StateEncoder: wrote {} entities to {} + {}",
         records.size(), exr_path, json_path);
 
     return true;
