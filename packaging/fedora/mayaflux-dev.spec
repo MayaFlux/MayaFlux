@@ -130,6 +130,7 @@ and live coding features. This is intentional.
 if [ "%{_libdir}" != "/usr/lib" ]; then
     mkdir -p %{buildroot}%{_libdir}
     mv %{buildroot}/usr/lib/*.so* %{buildroot}%{_libdir}/ 2>/dev/null || true
+    mv %{buildroot}/usr/lib/*.a   %{buildroot}%{_libdir}/ 2>/dev/null || true
     mv %{buildroot}/usr/lib/pkgconfig %{buildroot}%{_libdir}/ 2>/dev/null || true
     mv %{buildroot}/usr/lib/cmake %{buildroot}%{_libdir}/ 2>/dev/null || true
 fi
