@@ -104,6 +104,7 @@ jobs:
             rtmidi
             utf8proc
             freetype
+            nlohmann-json
 
       - name: Install ASIO (header-only, always ensure)
         run: |

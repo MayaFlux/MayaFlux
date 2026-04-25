@@ -89,6 +89,7 @@ jobs:
             utf8proc-devel \
             freetype-devel \
             fontconfig-devel \
+            json-devel \
             ninja-build \
             wayland-devel \
             ccache
