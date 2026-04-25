@@ -1,5 +1,7 @@
 #include "StateEncoder.hpp"
 
+#include "Sinks.hpp"
+
 #include "MayaFlux/IO/ImageWriter.hpp"
 #include "MayaFlux/IO/JSONSerializer.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
@@ -81,6 +83,28 @@ namespace {
         }
     };
 
+    struct AudioSinkRecord {
+        uint32_t channel {};
+        std::string fn_name;
+
+        static constexpr auto describe()
+        {
+            return std::make_tuple(
+                IO::member("channel", &AudioSinkRecord::channel),
+                IO::member("fn_name", &AudioSinkRecord::fn_name));
+        }
+    };
+
+    struct RenderSinkRecord {
+        std::string fn_name;
+
+        static constexpr auto describe()
+        {
+            return std::make_tuple(
+                IO::member("fn_name", &RenderSinkRecord::fn_name));
+        }
+    };
+
     struct EntityRecord {
         uint32_t id {};
         std::string kind;
@@ -93,6 +117,8 @@ namespace {
         std::string influence_fn_name;
         std::string perception_fn_name;
         WiringRecord wiring;
+        std::vector<AudioSinkRecord> audio_sinks;
+        std::vector<RenderSinkRecord> render_sinks;
 
         static constexpr auto describe()
         {
@@ -107,7 +133,9 @@ namespace {
                 IO::opt_member("size", &EntityRecord::size),
                 IO::member("influence_fn_name", &EntityRecord::influence_fn_name),
                 IO::member("perception_fn_name", &EntityRecord::perception_fn_name),
-                IO::member("wiring", &EntityRecord::wiring));
+                IO::member("wiring", &EntityRecord::wiring),
+                IO::member("audio_sinks", &EntityRecord::audio_sinks),
+                IO::member("render_sinks", &EntityRecord::render_sinks));
         }
     };
 
@@ -401,6 +429,21 @@ bool StateEncoder::encode(const Fabric& fabric, const std::string& base_path)
         ent.influence_fn_name = rec.influence_fn_name;
         ent.perception_fn_name = rec.perception_fn_name;
         ent.wiring = build_wiring(fabric, rec.id);
+
+        if (rec.kind == Fabric::Kind::Emitter) {
+            auto e = fabric.get_emitter(rec.id);
+            for (const auto& s : e->audio_sinks())
+                ent.audio_sinks.push_back({ s.channel, s.fn_name });
+            for (const auto& s : e->render_sinks())
+                ent.render_sinks.push_back({ s.fn_name });
+        } else if (rec.kind == Fabric::Kind::Agent) {
+            auto a = fabric.get_agent(rec.id);
+            for (const auto& s : a->audio_sinks())
+                ent.audio_sinks.push_back({ s.channel, s.fn_name });
+            for (const auto& s : a->render_sinks())
+                ent.render_sinks.push_back({ s.fn_name });
+        }
+
         schema.entities.push_back(std::move(ent));
     }
 
