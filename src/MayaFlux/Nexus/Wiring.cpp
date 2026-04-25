@@ -398,6 +398,31 @@ void Wiring::finalise()
         }
     }
 
+    std::visit([&](const auto& ptr) {
+        using T = std::decay_t<decltype(*ptr)>;
+        if constexpr (std::is_same_v<T, Emitter>) {
+            if (!ptr->fn_name().empty()) {
+                m_fabric.m_influence_fns.try_emplace(
+                    ptr->fn_name(), std::make_shared<Emitter::InfluenceFn>(ptr->fn()));
+            }
+        } else if constexpr (std::is_same_v<T, Sensor>) {
+            if (!ptr->fn_name().empty()) {
+                m_fabric.m_perception_fns.try_emplace(
+                    ptr->fn_name(), std::make_shared<Sensor::PerceptionFn>(ptr->fn()));
+            }
+        } else if constexpr (std::is_same_v<T, Agent>) {
+            if (!ptr->influence_fn_name().empty()) {
+                m_fabric.m_influence_fns.try_emplace(
+                    ptr->influence_fn_name(), std::make_shared<Emitter::InfluenceFn>(ptr->influence_fn()));
+            }
+            if (!ptr->perception_fn_name().empty()) {
+                m_fabric.m_perception_fns.try_emplace(
+                    ptr->perception_fn_name(), std::make_shared<Sensor::PerceptionFn>(ptr->perception_fn()));
+            }
+        }
+    },
+        m_fabric.m_registrations[m_entity_id].member);
+
     m_fabric.m_registrations[m_entity_id].wiring.emplace(std::move(*this));
 }
 

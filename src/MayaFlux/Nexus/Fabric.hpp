@@ -179,6 +179,22 @@ public:
      */
     [[nodiscard]] std::shared_ptr<Agent> get_agent(uint32_t id) const;
 
+    // =========================================================================
+    // Function registry
+    // =========================================================================
+
+    /**
+     * @brief Look up a registered influence function by name.
+     * @return Shared pointer to the stored function, or nullptr if not found.
+     */
+    [[nodiscard]] std::shared_ptr<Emitter::InfluenceFn> resolve_influence_fn(std::string_view name) const;
+
+    /**
+     * @brief Look up a registered perception function by name.
+     * @return Shared pointer to the stored function, or nullptr if not found.
+     */
+    [[nodiscard]] std::shared_ptr<Sensor::PerceptionFn> resolve_perception_fn(std::string_view name) const;
+
 private:
     friend class Wiring;
 
@@ -208,6 +224,9 @@ private:
     std::unique_ptr<Kinesis::SpatialIndex3D> m_index;
     std::unordered_map<uint32_t, Registration> m_registrations;
     uint32_t m_next_id { 1 };
+
+    std::unordered_map<std::string, std::shared_ptr<Emitter::InfluenceFn>> m_influence_fns;
+    std::unordered_map<std::string, std::shared_ptr<Sensor::PerceptionFn>> m_perception_fns;
 };
 
 } // namespace MayaFlux::Nexus

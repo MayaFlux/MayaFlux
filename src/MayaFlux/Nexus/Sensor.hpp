@@ -51,6 +51,9 @@ public:
     /** @brief Set or replace the perception function's identifier. */
     void set_fn_name(std::string name) { m_fn_name = std::move(name); }
 
+    /** @brief The perception function itself. */
+    [[nodiscard]] const PerceptionFn& fn() const { return m_fn; }
+
     /**
      * @brief Return the current position, if set.
      */

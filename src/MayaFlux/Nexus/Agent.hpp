@@ -77,6 +77,12 @@ public:
     /** @brief Set or replace the influence function's identifier. */
     void set_influence_fn_name(std::string name) { m_influence_fn_name = std::move(name); }
 
+    /** @brief The perception function itself. */
+    [[nodiscard]] const PerceptionFn& perception_fn() const { return m_perception_fn; }
+
+    /** @brief The influence function itself. */
+    [[nodiscard]] const InfluenceFn& influence_fn() const { return m_influence_fn; }
+
     /**
      * @brief Return the current position, if set.
      */

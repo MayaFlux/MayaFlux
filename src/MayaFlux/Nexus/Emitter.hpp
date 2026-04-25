@@ -53,6 +53,9 @@ public:
     /** @brief Set or replace the influence function's identifier. */
     void set_fn_name(std::string name) { m_fn_name = std::move(name); }
 
+    /** @brief The influence function itself. */
+    [[nodiscard]] const InfluenceFn& fn() const { return m_fn; }
+
     /**
      * @brief Return the current position, if set.
      */
