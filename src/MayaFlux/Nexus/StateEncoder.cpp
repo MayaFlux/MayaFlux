@@ -10,7 +10,7 @@ namespace MayaFlux::Nexus {
 
 namespace {
 
-    constexpr uint32_t k_exr_rows = 3;
+    constexpr uint32_t k_exr_rows = 5;
     constexpr uint32_t k_channels = 4;
 
     // -------------------------------------------------------------------------
@@ -140,7 +140,7 @@ namespace {
     };
 
     struct FabricSchema {
-        uint32_t version { 3 };
+        uint32_t version { 4 };
         std::string fabric_name;
         std::vector<EntityRecord> entities;
         RangeSet ranges;
@@ -213,6 +213,22 @@ namespace {
         return { .kind = "commit_driven" };
     }
 
+    void fill_wiring_pixels(const Fabric& fabric, uint32_t id, float& trigger_out, float& time_out)
+    {
+        const Wiring* w = fabric.wiring_for(id);
+        trigger_out = 0.0F;
+        time_out = 0.0F;
+        if (!w)
+            return;
+        if (!w->move_steps().empty()) {
+            time_out = 1.0F;
+        } else if (w->interval().has_value()) {
+            trigger_out = 0.2F;
+            if (w->duration().has_value())
+                time_out = 0.5F;
+        }
+    }
+
 } // namespace
 
 bool StateEncoder::encode(const Fabric& fabric, const std::string& base_path)
@@ -233,6 +249,13 @@ bool StateEncoder::encode(const Fabric& fabric, const std::string& base_path)
         std::optional<float> size;
         std::string influence_fn_name;
         std::string perception_fn_name;
+        // Layer 0
+        float entity_type_norm { 0.0F };
+        float trigger_kind { 0.0F };
+        float time_kind { 0.0F };
+        // Layer 2
+        uint32_t sink_type { 0 };
+        uint32_t first_audio_channel { 0 };
     };
 
     std::vector<InternalRecord> records;
@@ -249,7 +272,7 @@ bool StateEncoder::encode(const Fabric& fabric, const std::string& base_path)
                 MF_WARN(Journal::Component::Nexus, Journal::Context::FileIO,
                     "StateEncoder: Emitter {} has no fn_name", id);
             }
-            records.push_back({
+            auto& rec = records.emplace_back(InternalRecord {
                 .id = id,
                 .kind = k,
                 .position = *e->position(),
@@ -258,7 +281,13 @@ bool StateEncoder::encode(const Fabric& fabric, const std::string& base_path)
                 .color = e->color(),
                 .size = e->size(),
                 .influence_fn_name = e->fn_name(),
+                .entity_type_norm = 0.0F,
             });
+            fill_wiring_pixels(fabric, id, rec.trigger_kind, rec.time_kind);
+            rec.sink_type = (e->audio_sinks().empty() ? 0U : 1U)
+                          | (e->render_sinks().empty() ? 0U : 2U);
+            if (!e->audio_sinks().empty())
+                rec.first_audio_channel = e->audio_sinks().front().channel;
             break;
         }
         case Fabric::Kind::Sensor: {
@@ -270,13 +299,15 @@ bool StateEncoder::encode(const Fabric& fabric, const std::string& base_path)
                 MF_WARN(Journal::Component::Nexus, Journal::Context::FileIO,
                     "StateEncoder: Sensor {} has no fn_name", id);
             }
-            records.push_back({
+            auto& rec = records.emplace_back(InternalRecord {
                 .id = id,
                 .kind = k,
                 .position = *s->position(),
                 .query_radius = s->query_radius(),
                 .perception_fn_name = s->fn_name(),
+                .entity_type_norm = 0.333F,
             });
+            fill_wiring_pixels(fabric, id, rec.trigger_kind, rec.time_kind);
             break;
         }
         case Fabric::Kind::Agent: {
@@ -292,7 +323,7 @@ bool StateEncoder::encode(const Fabric& fabric, const std::string& base_path)
                 MF_WARN(Journal::Component::Nexus, Journal::Context::FileIO,
                     "StateEncoder: Agent {} has no influence_fn_name", id);
             }
-            records.push_back({
+            auto& rec = records.emplace_back(InternalRecord {
                 .id = id,
                 .kind = k,
                 .position = *a->position(),
@@ -303,7 +334,13 @@ bool StateEncoder::encode(const Fabric& fabric, const std::string& base_path)
                 .size = a->size(),
                 .influence_fn_name = a->influence_fn_name(),
                 .perception_fn_name = a->perception_fn_name(),
+                .entity_type_norm = 0.667F,
             });
+            fill_wiring_pixels(fabric, id, rec.trigger_kind, rec.time_kind);
+            rec.sink_type = (a->audio_sinks().empty() ? 0U : 1U)
+                          | (a->render_sinks().empty() ? 0U : 2U);
+            if (!a->audio_sinks().empty())
+                rec.first_audio_channel = a->audio_sinks().front().channel;
             break;
         }
         }
@@ -381,6 +418,16 @@ bool StateEncoder::encode(const Fabric& fabric, const std::string& base_path)
         const size_t row2 = (static_cast<size_t>(2) * width + i) * k_channels;
         pixels[row2 + 0] = normalize(rec.radius, rs.radius);
         pixels[row2 + 1] = normalize(rec.query_radius, rs.query_radius);
+
+        const size_t row3 = (static_cast<size_t>(3) * width + i) * k_channels;
+        pixels[row3 + 0] = static_cast<float>(rec.id);
+        pixels[row3 + 1] = rec.entity_type_norm;
+        pixels[row3 + 2] = rec.trigger_kind;
+        pixels[row3 + 3] = rec.time_kind;
+
+        const size_t row4 = (static_cast<size_t>(4) * width + i) * k_channels;
+        pixels[row4 + 0] = static_cast<float>(rec.sink_type);
+        pixels[row4 + 1] = static_cast<float>(rec.first_audio_channel);
     }
 
     image.pixels = std::move(pixels);
@@ -411,7 +458,7 @@ bool StateEncoder::encode(const Fabric& fabric, const std::string& base_path)
     const char* kind_names[] = { "emitter", "sensor", "agent" };
 
     FabricSchema schema;
-    schema.version = 3;
+    schema.version = 4;
     schema.fabric_name = fabric.name();
     schema.ranges = rs;
     schema.entities.reserve(records.size());

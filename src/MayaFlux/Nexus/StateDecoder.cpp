@@ -190,6 +190,7 @@ namespace {
     std::optional<PixelView> load_exr(
         const std::string& exr_path,
         uint32_t expected_entity_count,
+        uint32_t expected_rows,
         std::string& error_out)
     {
         auto image_opt = IO::ImageReader::load(exr_path, 0);
@@ -208,9 +209,9 @@ namespace {
                 + std::to_string(k_channels) + " got " + std::to_string(image_opt->channels);
             return std::nullopt;
         }
-        if (image_opt->height != k_exr_rows) {
+        if (image_opt->height != expected_rows) {
             error_out = "EXR row count mismatch: expected "
-                + std::to_string(k_exr_rows) + " got " + std::to_string(image_opt->height);
+                + std::to_string(expected_rows) + " got " + std::to_string(image_opt->height);
             return std::nullopt;
         }
         if (image_opt->width != expected_entity_count) {
@@ -247,7 +248,7 @@ bool StateDecoder::decode(Fabric& fabric, const std::string& base_path)
     }
     const auto& schema = *schema_opt;
 
-    if (schema.version < 2 || schema.version > 3) {
+    if (schema.version < 2 || schema.version > 4) {
         m_last_error = "Unsupported schema version: " + std::to_string(schema.version);
         MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
         return false;
@@ -259,7 +260,8 @@ bool StateDecoder::decode(Fabric& fabric, const std::string& base_path)
         return false;
     }
 
-    auto pv_opt = load_exr(exr_path, static_cast<uint32_t>(schema.entities.size()), m_last_error);
+    const uint32_t expected_rows = schema.version >= 4 ? 5 : k_exr_rows;
+    auto pv_opt = load_exr(exr_path, static_cast<uint32_t>(schema.entities.size()), expected_rows, m_last_error);
     if (!pv_opt) {
         MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
         return false;
@@ -402,7 +404,7 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct(Fabric& fabric, con
     }
     const auto& schema = *schema_opt;
 
-    if (schema.version < 2 || schema.version > 3) {
+    if (schema.version < 2 || schema.version > 4) {
         m_last_error = "Unsupported schema version: " + std::to_string(schema.version);
         MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
         return result;
@@ -414,7 +416,8 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct(Fabric& fabric, con
         return result;
     }
 
-    auto pv_opt = load_exr(exr_path, static_cast<uint32_t>(schema.entities.size()), m_last_error);
+    const uint32_t expected_rows = schema.version >= 4 ? 5 : k_exr_rows;
+    auto pv_opt = load_exr(exr_path, static_cast<uint32_t>(schema.entities.size()), expected_rows, m_last_error);
     if (!pv_opt) {
         MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
         return result;
