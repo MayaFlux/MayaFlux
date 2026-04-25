@@ -1,10 +1,8 @@
 #include "StateEncoder.hpp"
 
 #include "MayaFlux/IO/ImageWriter.hpp"
-#include "MayaFlux/IO/TextFileWriter.hpp"
+#include "MayaFlux/IO/JSONSerializer.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
-
-// #include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
 
 namespace MayaFlux::Nexus {
 
@@ -37,21 +35,6 @@ namespace {
             r.min = std::min(r.min, value);
             r.max = std::max(r.max, value);
         }
-    }
-
-    std::string format_float(float v)
-    {
-        std::ostringstream oss;
-        oss << std::setprecision(9) << v;
-        return oss.str();
-    }
-
-    std::string format_range_json(const char* name, const Range& r)
-    {
-        std::ostringstream oss;
-        oss << "    \"" << name << R"(": { "min": )" << format_float(r.min)
-            << ", \"max\": " << format_float(r.max) << " }";
-        return oss.str();
     }
 
 } // namespace
@@ -148,49 +131,33 @@ bool StateEncoder::encode(const Fabric& fabric, const std::string& base_path)
     }
 
     // -------------------------------------------------------------------------
-    // Write schema JSON by hand.
+    // Write schema JSON via JSONSerializer.
     // -------------------------------------------------------------------------
-    const std::string json_path = base_path + ".json";
-    IO::TextFileWriter schema_writer;
-    if (!schema_writer.open(json_path,
-            IO::FileWriteOptions::CREATE | IO::FileWriteOptions::TRUNCATE)) {
-        m_last_error = "Failed to open schema file: " + json_path;
-        MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
-        return false;
+    nlohmann::json ids_arr = nlohmann::json::array();
+    for (const auto& rec : records) {
+        ids_arr.push_back(rec.id);
     }
 
-    std::ostringstream out;
-    out << "{\n";
-    out << "  \"version\": 1,\n";
-    out << R"(  "fabric_name": ")" << fabric.name() << "\",\n";
-    out << "  \"entity_count\": " << records.size() << ",\n";
-
-    out << "  \"ids\": [";
-    for (size_t i = 0; i < records.size(); ++i) {
-        if (i > 0) {
-            out << ", ";
-        }
-        out << records[i].id;
-    }
-    out << "],\n";
-
-    out << "  \"ranges\": {\n";
+    nlohmann::json ranges_obj;
     for (size_t i = 0; i < k_channels_per_pixel; ++i) {
-        out << format_range_json(k_channel_names[i], ranges[i]);
-        if (i + 1 < k_channels_per_pixel) {
-            out << ",";
-        }
-        out << "\n";
+        ranges_obj[k_channel_names[i]] = { { "min", ranges[i].min }, { "max", ranges[i].max } };
     }
-    out << "  }\n";
-    out << "}\n";
 
-    if (!schema_writer.write_string(out.str())) {
-        m_last_error = "Failed to write schema file: " + json_path;
+    nlohmann::json schema {
+        { "version", 1 },
+        { "fabric_name", fabric.name() },
+        { "entity_count", records.size() },
+        { "ids", std::move(ids_arr) },
+        { "ranges", std::move(ranges_obj) },
+    };
+
+    IO::JSONSerializer json_writer;
+    const std::string json_path = base_path + ".json";
+    if (!json_writer.write(json_path, schema)) {
+        m_last_error = "Failed to write schema: " + json_writer.last_error();
         MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
         return false;
     }
-    schema_writer.close();
 
     MF_INFO(Journal::Component::Nexus, Journal::Context::FileIO,
         "StateEncoder: wrote {} emitters to {} + {}",

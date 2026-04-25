@@ -1,10 +1,8 @@
 #include "StateDecoder.hpp"
 
 #include "MayaFlux/IO/ImageReader.hpp"
+#include "MayaFlux/IO/JSONSerializer.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
-
-#include <fstream>
-#include <sstream>
 
 namespace MayaFlux::Nexus {
 
@@ -33,103 +31,39 @@ namespace {
         Range range_intensity;
     };
 
-    // -------------------------------------------------------------------------
-    // Hand-rolled JSON parsing for the v0 schema.
-    // -------------------------------------------------------------------------
-    std::optional<float> parse_float_after(const std::string& line, const std::string& key)
-    {
-        const auto pos = line.find(key);
-        if (pos == std::string::npos) {
-            return std::nullopt;
-        }
-        const auto colon = line.find(':', pos + key.size());
-        if (colon == std::string::npos) {
-            return std::nullopt;
-        }
-        std::stringstream ss(line.substr(colon + 1));
-        float value { 0.0F };
-        ss >> value;
-        if (!ss) {
-            return std::nullopt;
-        }
-        return value;
-    }
-
-    std::optional<std::string> parse_string_after(const std::string& line, const std::string& key)
-    {
-        const auto pos = line.find(key);
-        if (pos == std::string::npos) {
-            return std::nullopt;
-        }
-        const auto first_quote = line.find('\"', pos + key.size());
-        if (first_quote == std::string::npos) {
-            return std::nullopt;
-        }
-        const auto second_quote = line.find('\"', first_quote + 1);
-        if (second_quote == std::string::npos) {
-            return std::nullopt;
-        }
-        return line.substr(first_quote + 1, second_quote - first_quote - 1);
-    }
-
-    bool parse_range_line(const std::string& line, Range& out)
-    {
-        const auto min_val = parse_float_after(line, "\"min\"");
-        const auto max_val = parse_float_after(line, "\"max\"");
-        if (!min_val || !max_val) {
-            return false;
-        }
-        out.min = *min_val;
-        out.max = *max_val;
-        return true;
-    }
-
     std::optional<SchemaV1> parse_schema(const std::string& json_path)
     {
-        std::ifstream file(json_path);
-        if (!file.is_open()) {
+        IO::JSONSerializer serializer;
+        auto doc_opt = serializer.read(json_path);
+        if (!doc_opt) {
             return std::nullopt;
         }
+        const auto& doc = *doc_opt;
 
         SchemaV1 schema;
-        std::string line;
-        while (std::getline(file, line)) {
-            if (line.find("\"version\"") != std::string::npos) {
-                if (auto v = parse_float_after(line, "\"version\"")) {
-                    schema.version = static_cast<uint32_t>(*v);
-                }
-            } else if (line.find("\"fabric_name\"") != std::string::npos) {
-                if (auto s = parse_string_after(line, "\"fabric_name\"")) {
-                    schema.fabric_name = *s;
-                }
-            } else if (line.find("\"entity_count\"") != std::string::npos) {
-                if (auto v = parse_float_after(line, "\"entity_count\"")) {
-                    schema.entity_count = static_cast<size_t>(*v);
-                }
-            } else if (line.find("\"ids\"") != std::string::npos) {
-                const auto lbracket = line.find('[');
-                const auto rbracket = line.find(']');
-                if (lbracket != std::string::npos && rbracket != std::string::npos) {
-                    std::string inner = line.substr(lbracket + 1, rbracket - lbracket - 1);
-                    std::stringstream ss(inner);
-                    std::string tok;
-                    while (std::getline(ss, tok, ',')) {
-                        try {
-                            schema.ids.push_back(static_cast<uint32_t>(std::stoul(tok)));
-                        } catch (...) {
-                            // Skip malformed tokens.
-                        }
-                    }
-                }
-            } else if (line.find("\"position.x\"") != std::string::npos) {
-                parse_range_line(line, schema.range_x);
-            } else if (line.find("\"position.y\"") != std::string::npos) {
-                parse_range_line(line, schema.range_y);
-            } else if (line.find("\"position.z\"") != std::string::npos) {
-                parse_range_line(line, schema.range_z);
-            } else if (line.find("\"intensity\"") != std::string::npos) {
-                parse_range_line(line, schema.range_intensity);
+        try {
+            schema.version = doc.at("version").get<uint32_t>();
+            schema.fabric_name = doc.at("fabric_name").get<std::string>();
+            schema.entity_count = doc.at("entity_count").get<size_t>();
+
+            for (const auto& id : doc.at("ids")) {
+                schema.ids.push_back(id.get<uint32_t>());
             }
+
+            auto parse_range = [&](const char* name, Range& r) {
+                const auto& ranges = doc.at("ranges");
+                if (!ranges.contains(name)) {
+                    return;
+                }
+                r.min = ranges.at(name).at("min").get<float>();
+                r.max = ranges.at(name).at("max").get<float>();
+            };
+            parse_range("position.x", schema.range_x);
+            parse_range("position.y", schema.range_y);
+            parse_range("position.z", schema.range_z);
+            parse_range("intensity", schema.range_intensity);
+        } catch (const nlohmann::json::exception&) {
+            return std::nullopt;
         }
 
         if (schema.version != 1 || schema.ids.empty()) {
