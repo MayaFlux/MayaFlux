@@ -1,5 +1,11 @@
 #include "StateEncoder.hpp"
 
+#include <cstddef>
+
+#include <cstddef>
+
+#include <cstddef>
+
 #include "MayaFlux/IO/ImageWriter.hpp"
 #include "MayaFlux/IO/JSONSerializer.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
@@ -52,6 +58,37 @@ namespace {
             return "agent";
         }
         return "unknown";
+    }
+
+    nlohmann::json encode_wiring(const Fabric& fabric, uint32_t id)
+    {
+        const Wiring* w = fabric.wiring_for(id);
+        if (!w) {
+            return { { "kind", "unsupported" } };
+        }
+        if (!w->move_steps().empty()) {
+            nlohmann::json steps = nlohmann::json::array();
+            for (const auto& step : w->move_steps()) {
+                steps.push_back({ { "x", step.position.x }, { "y", step.position.y },
+                    { "z", step.position.z }, { "delay", step.delay_seconds } });
+            }
+            nlohmann::json wj = { { "kind", "move_to" }, { "steps", std::move(steps) } };
+            if (w->times_count() > 1) {
+                wj["times"] = w->times_count();
+            }
+            return wj;
+        }
+        if (w->interval().has_value()) {
+            nlohmann::json wj = { { "kind", "every" }, { "interval", *w->interval() } };
+            if (w->duration().has_value()) {
+                wj["duration"] = *w->duration();
+            }
+            if (w->times_count() > 1) {
+                wj["times"] = w->times_count();
+            }
+            return wj;
+        }
+        return { { "kind", "commit_driven" } };
     }
 
     struct EntityRecord {
@@ -199,7 +236,7 @@ bool StateEncoder::encode(const Fabric& fabric, const std::string& base_path)
     // -------------------------------------------------------------------------
     // Build RGBA32F pixel buffer: width=N, height=3.
     // -------------------------------------------------------------------------
-    const uint32_t width = static_cast<uint32_t>(records.size());
+    const auto width = static_cast<uint32_t>(records.size());
 
     IO::ImageData image;
     image.width = width;
@@ -212,13 +249,13 @@ bool StateEncoder::encode(const Fabric& fabric, const std::string& base_path)
     for (size_t i = 0; i < records.size(); ++i) {
         const auto& rec = records[i];
 
-        const size_t row0 = (0 * width + i) * k_channels;
+        const size_t row0 = (static_cast<size_t>(0 * width) + i) * k_channels;
         pixels[row0 + 0] = normalize(rec.position.x, ranges.pos_x);
         pixels[row0 + 1] = normalize(rec.position.y, ranges.pos_y);
         pixels[row0 + 2] = normalize(rec.position.z, ranges.pos_z);
         pixels[row0 + 3] = normalize(rec.intensity, ranges.intensity);
 
-        const size_t row1 = (1 * width + i) * k_channels;
+        const size_t row1 = (static_cast<size_t>(1 * width) + i) * k_channels;
         if (rec.color) {
             pixels[row1 + 0] = normalize(rec.color->r, ranges.color_r);
             pixels[row1 + 1] = normalize(rec.color->g, ranges.color_g);
@@ -228,7 +265,7 @@ bool StateEncoder::encode(const Fabric& fabric, const std::string& base_path)
             pixels[row1 + 3] = normalize(*rec.size, ranges.size);
         }
 
-        const size_t row2 = (2 * width + i) * k_channels;
+        const size_t row2 = (static_cast<size_t>(2 * width) + i) * k_channels;
         pixels[row2 + 0] = normalize(rec.radius, ranges.radius);
         pixels[row2 + 1] = normalize(rec.query_radius, ranges.query_radius);
     }
@@ -295,11 +332,12 @@ bool StateEncoder::encode(const Fabric& fabric, const std::string& base_path)
             ent["size"] = rec.size ? nlohmann::json(*rec.size) : nlohmann::json(nullptr);
             break;
         }
+        ent["wiring"] = encode_wiring(fabric, rec.id);
         entities_arr.push_back(std::move(ent));
     }
 
     nlohmann::json schema_doc {
-        { "version", 2 },
+        { "version", 3 },
         { "fabric_name", fabric.name() },
         { "entities", std::move(entities_arr) },
         { "ranges", nlohmann::json {

@@ -289,6 +289,7 @@ void Wiring::finalise()
             }
         },
             m_factory);
+        m_fabric.m_registrations[m_entity_id].wiring.emplace(std::move(*this));
         return;
     }
 
@@ -301,6 +302,7 @@ void Wiring::finalise()
         ev_manager.add_event(
             std::make_shared<Vruta::Event>((*m_event_factory)(scheduler)),
             name);
+        m_fabric.m_registrations[m_entity_id].wiring.emplace(std::move(*this));
         return;
     }
 
@@ -317,6 +319,7 @@ void Wiring::finalise()
                 detach();
             });
         }
+        m_fabric.m_registrations[m_entity_id].wiring.emplace(std::move(*this));
         return;
     }
 
@@ -344,6 +347,7 @@ void Wiring::finalise()
             chain.times(m_times);
         }
         chain.start();
+        m_fabric.m_registrations[m_entity_id].wiring.emplace(std::move(*this));
         return;
     }
 
@@ -391,6 +395,7 @@ void Wiring::finalise()
             }
         },
             m_trigger);
+        m_fabric.m_registrations[m_entity_id].wiring.emplace(std::move(*this));
         return;
     }
 

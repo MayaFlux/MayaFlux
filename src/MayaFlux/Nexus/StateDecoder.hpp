@@ -26,6 +26,16 @@ public:
     StateDecoder& operator=(StateDecoder&&) = default;
 
     /**
+     * @brief Result of a reconstruct() call.
+     */
+    struct ReconstructionResult {
+        int constructed { 0 };
+        int patched { 0 };
+        int skipped { 0 };
+        std::vector<std::string> warnings;
+    };
+
+    /**
      * @brief Decode and apply to @p fabric.
      * @param fabric    Target fabric. Must already contain entities with
      *                  ids matching the schema.
@@ -35,6 +45,23 @@ public:
      *         return true; failures are logged.
      */
     [[nodiscard]] bool decode(Fabric& fabric, const std::string& base_path);
+
+    /**
+     * @brief Patch existing entities and construct missing ones from schema.
+     *
+     * Entities whose id exists in the fabric are patched in place. Missing
+     * entities are constructed, their callables resolved via the fabric's
+     * function registry (no-op fallback with warning if absent), and wired.
+     * Supported wiring kinds for v2: every, move_to, commit_driven.
+     * Unsupported kinds (on, use, bind) fall back to commit_driven + warning.
+     * Hard failure (bad schema, unreadable EXR, dimension mismatch) sets
+     * last_error() and returns a zeroed result.
+     *
+     * @param fabric    Target fabric. May be empty, partial, or full.
+     * @param base_path Path stem without extension.
+     * @return Counts and per-entity warnings.
+     */
+    [[nodiscard]] ReconstructionResult reconstruct(Fabric& fabric, const std::string& base_path);
 
     /**
      * @brief Last error message, empty if no error.
