@@ -55,6 +55,7 @@
         assimp     = @{}
         freetype   = @{}
         utf8proc   = @{}
+        "nlohmann-json" = @{}
     }
 
     SpecialPackages    = @{

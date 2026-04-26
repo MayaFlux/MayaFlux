@@ -15,6 +15,7 @@
     "asio",
     "stb",
     "utf8proc",
-    "freetype"
+    "freetype",
+    "nlohmann-json"
   ]
 }

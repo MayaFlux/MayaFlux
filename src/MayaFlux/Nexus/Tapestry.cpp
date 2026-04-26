@@ -32,6 +32,7 @@ std::shared_ptr<Fabric> Tapestry::create_fabric(std::string name, float cell_siz
     }
 
     auto fabric = std::make_shared<Fabric>(*m_scheduler, *m_event_manager, cell_size);
+    fabric->set_name(name);
     m_fabrics.push_back(fabric);
     m_named_fabrics.emplace(std::move(name), fabric);
     return fabric;

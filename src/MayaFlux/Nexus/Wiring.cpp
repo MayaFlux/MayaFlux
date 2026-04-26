@@ -247,6 +247,34 @@ void Wiring::finalise()
     reg.commit_driven = !has_any_path;
 
     // ------------------------------------------------------------------
+    // Register named callables before any early return.
+    // ------------------------------------------------------------------
+    std::visit([&](const auto& ptr) {
+        using T = std::decay_t<decltype(*ptr)>;
+        if constexpr (std::is_same_v<T, Emitter>) {
+            if (!ptr->fn_name().empty()) {
+                m_fabric.m_influence_fns.try_emplace(
+                    ptr->fn_name(), std::make_shared<Emitter::InfluenceFn>(ptr->fn()));
+            }
+        } else if constexpr (std::is_same_v<T, Sensor>) {
+            if (!ptr->fn_name().empty()) {
+                m_fabric.m_perception_fns.try_emplace(
+                    ptr->fn_name(), std::make_shared<Sensor::PerceptionFn>(ptr->fn()));
+            }
+        } else if constexpr (std::is_same_v<T, Agent>) {
+            if (!ptr->influence_fn_name().empty()) {
+                m_fabric.m_influence_fns.try_emplace(
+                    ptr->influence_fn_name(), std::make_shared<Emitter::InfluenceFn>(ptr->influence_fn()));
+            }
+            if (!ptr->perception_fn_name().empty()) {
+                m_fabric.m_perception_fns.try_emplace(
+                    ptr->perception_fn_name(), std::make_shared<Sensor::PerceptionFn>(ptr->perception_fn()));
+            }
+        }
+    },
+        reg.member);
+
+    // ------------------------------------------------------------------
     // Routine factory path
     // ------------------------------------------------------------------
     if (!std::holds_alternative<std::monostate>(m_factory)) {
@@ -261,6 +289,7 @@ void Wiring::finalise()
             }
         },
             m_factory);
+        m_fabric.m_registrations[m_entity_id].wiring.emplace(std::move(*this));
         return;
     }
 
@@ -273,6 +302,7 @@ void Wiring::finalise()
         ev_manager.add_event(
             std::make_shared<Vruta::Event>((*m_event_factory)(scheduler)),
             name);
+        m_fabric.m_registrations[m_entity_id].wiring.emplace(std::move(*this));
         return;
     }
 
@@ -289,6 +319,7 @@ void Wiring::finalise()
                 detach();
             });
         }
+        m_fabric.m_registrations[m_entity_id].wiring.emplace(std::move(*this));
         return;
     }
 
@@ -316,6 +347,7 @@ void Wiring::finalise()
             chain.times(m_times);
         }
         chain.start();
+        m_fabric.m_registrations[m_entity_id].wiring.emplace(std::move(*this));
         return;
     }
 
@@ -363,6 +395,7 @@ void Wiring::finalise()
             }
         },
             m_trigger);
+        m_fabric.m_registrations[m_entity_id].wiring.emplace(std::move(*this));
         return;
     }
 

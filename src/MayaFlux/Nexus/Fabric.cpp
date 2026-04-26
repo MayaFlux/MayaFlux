@@ -289,4 +289,16 @@ void Fabric::fire(const Registration& reg) const
         reg.member);
 }
 
+std::shared_ptr<Emitter::InfluenceFn> Fabric::resolve_influence_fn(std::string_view name) const
+{
+    auto it = m_influence_fns.find(std::string(name));
+    return it != m_influence_fns.end() ? it->second : nullptr;
+}
+
+std::shared_ptr<Sensor::PerceptionFn> Fabric::resolve_perception_fn(std::string_view name) const
+{
+    auto it = m_perception_fns.find(std::string(name));
+    return it != m_perception_fns.end() ? it->second : nullptr;
+}
+
 } // namespace MayaFlux::Nexus
