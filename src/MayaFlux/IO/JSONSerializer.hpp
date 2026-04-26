@@ -2,6 +2,8 @@
 
 #include "Reflection.hpp"
 
+#include "FileReader.hpp"
+
 #include <nlohmann/json.hpp>
 
 #include "fstream"
@@ -106,9 +108,10 @@ public:
     [[nodiscard]] std::optional<T> read(const std::string& path)
     {
         m_last_error.clear();
-        std::ifstream file(path);
+        const auto resolved = FileReader::resolve_path(path);
+        std::ifstream file(resolved);
         if (!file.is_open()) {
-            m_last_error = "Failed to open for reading: " + path;
+            m_last_error = "Failed to open for reading: " + resolved;
             return std::nullopt;
         }
         try {
@@ -117,7 +120,7 @@ public:
             from_json(j, out);
             return out;
         } catch (const std::exception& e) {
-            m_last_error = std::string("read error in ") + path + ": " + e.what();
+            m_last_error = std::string("read error in ") + resolved + ": " + e.what();
             return std::nullopt;
         }
     }
