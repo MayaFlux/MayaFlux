@@ -20,7 +20,7 @@ endforeach()
 
 include(compiler_config)
 
-project(MayaFlux VERSION 0.3.0)
+project(MayaFlux VERSION 0.3.1)
 
 include(defines)
 include(rpath)
