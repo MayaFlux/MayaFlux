@@ -141,7 +141,7 @@ void MeshNetworkBuffer::setup_rendering(const RenderConfig& config)
         for (uint32_t i = 0; i < static_cast<uint32_t>(order.size()); ++i) {
             const auto& slot = slots[order[i]];
             if (slot.diffuse_texture)
-                m_render_processor->bind_texture(2 + i, slot.diffuse_texture);
+                m_render_processor->bind_texture(3 + i, slot.diffuse_texture);
         }
     } else if (m_diffuse_texture && !m_render_config.default_texture_binding.empty()) {
         m_render_processor->bind_texture(m_render_config.default_texture_binding, m_diffuse_texture);
