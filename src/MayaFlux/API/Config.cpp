@@ -7,9 +7,9 @@
 #include "MayaFlux/Journal/FileSink.hpp"
 
 namespace MayaFlux {
-bool is_engine_initialized()
+bool is_engine_configured()
 {
-    return is_initialized();
+    return is_configured();
 }
 }
 
@@ -17,7 +17,7 @@ namespace MayaFlux::Config {
 
 Core::GlobalStreamInfo& get_global_stream_info()
 {
-    if (is_initialized()) {
+    if (is_engine_configured()) {
         MF_WARN(Journal::Component::API, Journal::Context::Configuration, "Accessing stream info while engine is running may lead to inconsistent state.");
     }
     return get_context().get_stream_info();
@@ -25,7 +25,7 @@ Core::GlobalStreamInfo& get_global_stream_info()
 
 Core::GlobalGraphicsConfig& get_global_graphics_config()
 {
-    if (is_initialized()) {
+    if (is_engine_configured()) {
         MF_WARN(Journal::Component::API, Journal::Context::Configuration, "Accessing graphics config while engine is running may lead to inconsistent state.");
     }
     return get_context().get_graphics_config();
@@ -33,7 +33,7 @@ Core::GlobalGraphicsConfig& get_global_graphics_config()
 
 Core::GlobalInputConfig& get_global_input_config()
 {
-    if (is_initialized()) {
+    if (is_engine_configured()) {
         MF_WARN(Journal::Component::API, Journal::Context::Configuration, "Accessing input config while engine is running may lead to inconsistent state.");
     }
     return get_context().get_input_config();
@@ -41,7 +41,7 @@ Core::GlobalInputConfig& get_global_input_config()
 
 Core::GlobalNetworkConfig& get_global_network_config()
 {
-    if (is_initialized()) {
+    if (is_engine_configured()) {
         MF_WARN(Journal::Component::API, Journal::Context::Configuration, "Accessing network config while engine is running may lead to inconsistent state.");
     }
     return get_context().get_network_config();
@@ -54,7 +54,7 @@ Nodes::NodeConfig& get_node_config()
 
 void set_node_config(const Nodes::NodeConfig& config)
 {
-    if (!is_initialized()) {
+    if (!is_engine_configured()) {
         MF_WARN(Journal::Component::API, Journal::Context::Configuration, "Engine is not running. Setting node config on context directly.");
     }
     get_context().set_node_config(config);
@@ -62,7 +62,7 @@ void set_node_config(const Nodes::NodeConfig& config)
 
 uint32_t get_sample_rate()
 {
-    if (!is_initialized()) {
+    if (!is_engine_configured()) {
         MF_WARN(Journal::Component::API, Journal::Context::Configuration, "Engine is not running. Returning default sample rate");
         return 48000;
     }
@@ -71,7 +71,7 @@ uint32_t get_sample_rate()
 
 uint32_t get_buffer_size()
 {
-    if (!is_initialized()) {
+    if (!is_engine_configured()) {
         MF_WARN(Journal::Component::API, Journal::Context::Configuration, "Engine is not running. Returning default buffer size");
         return 512;
     }
@@ -80,7 +80,7 @@ uint32_t get_buffer_size()
 
 uint32_t get_num_out_channels()
 {
-    if (!is_initialized()) {
+    if (!is_engine_configured()) {
         MF_WARN(Journal::Component::API, Journal::Context::Configuration, "Engine is not running. Returning default number of output channels");
         return 2;
     }

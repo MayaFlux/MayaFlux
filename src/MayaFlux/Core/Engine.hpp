@@ -203,6 +203,16 @@ public:
      */
     bool is_running() const;
 
+    /**
+     * @brief Checks if the engine has been initialized and configured
+     * @return true if the engine is initialized and configured, false otherwise
+     *
+     * This indicates whether Init() has been successfully called and the system
+     * is ready for processing. Note that is_running() may still return false if
+     * the system is paused or not started yet.
+     */
+    bool is_configured() const { return m_is_initialized; }
+
     //-------------------------------------------------------------------------
     // Configuration Access
     //-------------------------------------------------------------------------

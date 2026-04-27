@@ -57,6 +57,14 @@ bool is_initialized()
     return internal::initialized;
 }
 
+bool is_configured()
+{
+    if (!is_initialized()) {
+        return false;
+    }
+    return get_context().is_configured();
+}
+
 Core::Engine& get_context()
 {
     return internal::get_or_create_engine();
