@@ -14,10 +14,10 @@ namespace Core {
 }
 
 /**
- * @brief Checks if the default audio engine is initialized
- * @return True if the engine is initialized, false otherwise
+ * @brief Checks if the default engine has currently accepted all configurations and initialized all managers
+ * @return True if the engine is ready for processing, false otherwise
  */
-MAYAFLUX_API bool is_engine_initialized();
+MAYAFLUX_API bool is_engine_configured();
 
 /**
 @brief Globlal configuration for MayaFlux

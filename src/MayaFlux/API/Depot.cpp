@@ -78,7 +78,7 @@ bool is_audio(const fs::path& filepath)
 
 std::shared_ptr<IO::IOManager> get_io_manager()
 {
-    if (is_engine_initialized()) {
+    if (is_engine_configured()) {
         return get_context().get_io_manager();
     }
 

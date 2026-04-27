@@ -39,6 +39,12 @@ namespace Core {
 bool is_initialized();
 
 /**
+ * @brief Checks if the default engine has currently accepted all configurations and initialized all managers
+ * @return true if the engine is fully configured and ready for processing, false otherwise
+ */
+bool is_configured();
+
+/**
  * @brief Gets the default engine instance
  * @return Reference to the default Engine
  *

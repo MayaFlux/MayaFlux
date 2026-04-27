@@ -506,7 +506,7 @@ TEST_F(RtAudioUtilityTest, GlobalAPIValidation)
     MayaFlux::End();
 
     MayaFlux::Init(44100, 256, 1, 0);
-    EXPECT_TRUE(MayaFlux::is_engine_initialized());
+    EXPECT_TRUE(MayaFlux::is_engine_configured());
     EXPECT_EQ(Config::get_sample_rate(), 44100);
     EXPECT_EQ(Config::get_buffer_size(), 256);
     EXPECT_EQ(Config::get_num_out_channels(), 1);
