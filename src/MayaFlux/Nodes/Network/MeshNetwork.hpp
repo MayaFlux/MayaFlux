@@ -148,6 +148,13 @@ public:
      */
     [[nodiscard]] const std::vector<uint32_t>& sorted_indices() const { return m_sorted_indices; }
 
+    /**
+     * @brief Ensure the slot processing order is up to date. Called internally
+     *        before processing, but can be called manually after making changes
+     *        to the slot DAG.
+     */
+    void ensure_sorted();
+
 private:
     std::vector<MeshSlot> m_slots;
 

@@ -174,6 +174,12 @@ void MeshNetwork::set_operator(std::shared_ptr<NetworkOperator> op)
     m_operator = std::move(op);
 }
 
+void MeshNetwork::ensure_sorted()
+{
+    if (m_sort_dirty)
+        rebuild_sort();
+}
+
 // =============================================================================
 // Private helpers
 // =============================================================================
