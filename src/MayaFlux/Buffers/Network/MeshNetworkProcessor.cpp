@@ -36,6 +36,8 @@ void MeshNetworkProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
         return;
     }
 
+    m_network->ensure_sorted();
+
     ensure_initialized(vk_buf);
 
     allocate_gpu_buffers(vk_buf);
@@ -146,7 +148,7 @@ void MeshNetworkProcessor::upload_combined(
 
         m_model_aggregate.push_back(slot.world_transform);
 
-        const uint32_t sorted_slot_pos = static_cast<uint32_t>(m_model_aggregate.size() - 1);
+        const auto sorted_slot_pos = static_cast<uint32_t>(m_model_aggregate.size() - 1);
         m_slot_index_aggregate.insert(
             m_slot_index_aggregate.end(), verts.size(), sorted_slot_pos);
 
