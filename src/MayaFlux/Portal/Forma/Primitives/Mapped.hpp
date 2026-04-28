@@ -119,7 +119,7 @@ struct Mapped {
             return;
 
         geometry_fn(state->value, m_bytes, element);
-        element.buffer->write_bytes(m_bytes);
+        element.buffer->submit(m_bytes);
         last_version = state->version;
     }
 

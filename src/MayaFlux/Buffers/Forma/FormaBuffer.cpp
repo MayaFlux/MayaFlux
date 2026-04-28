@@ -99,7 +99,7 @@ void FormaBuffer::setup_rendering(const RenderConfig& config)
     set_default_render_config(resolved_config);
 }
 
-void FormaBuffer::write_bytes(const std::vector<uint8_t>& bytes)
+void FormaBuffer::submit(const std::vector<uint8_t>& bytes)
 {
     if (!m_processor) {
         MF_RT_WARN(Journal::Component::Buffers, Journal::Context::BufferProcessing,
@@ -107,6 +107,16 @@ void FormaBuffer::write_bytes(const std::vector<uint8_t>& bytes)
         return;
     }
     m_processor->set_bytes(bytes);
+}
+
+void FormaBuffer::set_texture(std::shared_ptr<Core::VKImage> image, std::string binding)
+{
+    if (!m_processor) {
+        MF_RT_WARN(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "FormaBuffer::set_texture called before setup_processors");
+        return;
+    }
+    m_processor->set_texture(std::move(image), std::move(binding));
 }
 
 } // namespace MayaFlux::Portal::Forma

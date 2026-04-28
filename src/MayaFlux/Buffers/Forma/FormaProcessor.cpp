@@ -1,5 +1,6 @@
 #include "FormaProcessor.hpp"
 
+#include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
 #include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Nodes/Graphics/VertexSpec.hpp"
@@ -29,13 +30,13 @@ FormaProcessor::FormaProcessor(Portal::Graphics::PrimitiveTopology topology)
 
 void FormaProcessor::set_bytes(std::vector<uint8_t> bytes)
 {
-    m_pending = std::move(bytes);
-    m_dirty.test_and_set(std::memory_order_release);
+    m_pending_geometry = std::move(bytes);
+    m_geometry_dirty.test_and_set(std::memory_order_release);
 }
 
 bool FormaProcessor::has_pending() const noexcept
 {
-    return m_dirty.test(std::memory_order_acquire);
+    return m_geometry_dirty.test(std::memory_order_acquire);
 }
 
 void FormaProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
@@ -70,17 +71,38 @@ void FormaProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
 void FormaProcessor::on_detach(const std::shared_ptr<Buffer>& /*buffer*/)
 {
     m_staging.reset();
-    m_pending.clear();
+    m_pending_geometry.clear();
     m_active.clear();
+}
+
+void FormaProcessor::set_texture(std::shared_ptr<Core::VKImage> image, std::string binding)
+{
+    m_pending_texture = PendingTexture { .image = std::move(image), .binding = std::move(binding) };
+    m_texture_dirty.test_and_set(std::memory_order_release);
 }
 
 void FormaProcessor::processing_function(const std::shared_ptr<Buffer>& buffer)
 {
-    if (!m_dirty.test(std::memory_order_acquire))
+    if (m_texture_dirty.test(std::memory_order_acquire)) {
+        m_texture_dirty.clear(std::memory_order_release);
+
+        auto vk = std::dynamic_pointer_cast<VKBuffer>(buffer);
+        if (vk) {
+            if (auto rp = vk->get_render_processor()) {
+                if (m_pending_texture) {
+                    rp->bind_texture(m_pending_texture->binding,
+                        m_pending_texture->image);
+                }
+            }
+        }
+        m_pending_texture.reset();
+    }
+
+    if (!m_geometry_dirty.test(std::memory_order_acquire))
         return;
 
-    m_dirty.clear(std::memory_order_release);
-    std::swap(m_active, m_pending);
+    m_geometry_dirty.clear(std::memory_order_release);
+    std::swap(m_active, m_pending_geometry);
 
     if (m_active.empty())
         return;

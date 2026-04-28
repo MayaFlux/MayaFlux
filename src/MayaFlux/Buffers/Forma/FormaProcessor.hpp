@@ -39,18 +39,38 @@ public:
 
     [[nodiscard]] bool has_pending() const noexcept;
 
+    /**
+     * @brief Supply a texture to bind on the next graphics tick.
+     *
+     * Stores the image and binding name behind an atomic dirty flag.
+     * On the next processing_function call the image is bound to the
+     * RenderProcessor via bind_texture(). Calling again replaces the
+     * pending binding before it has been consumed.
+     *
+     * @param image   GPU image. nullptr clears the binding.
+     * @param binding Descriptor name matching the fragment shader.
+     */
+    void set_texture(std::shared_ptr<Core::VKImage> image, std::string binding);
+
 protected:
     void on_attach(const std::shared_ptr<Buffer>& buffer) override;
     void on_detach(const std::shared_ptr<Buffer>& buffer) override;
     void processing_function(const std::shared_ptr<Buffer>& buffer) override;
 
 private:
+    struct PendingTexture {
+        std::shared_ptr<Core::VKImage> image;
+        std::string binding;
+    };
+
     Portal::Graphics::PrimitiveTopology m_topology;
     uint32_t m_stride { 0 };
 
-    std::vector<uint8_t> m_pending;
+    std::vector<uint8_t> m_pending_geometry;
     std::vector<uint8_t> m_active;
-    std::atomic_flag m_dirty;
+    std::atomic_flag m_geometry_dirty;
+    std::optional<PendingTexture> m_pending_texture;
+    std::atomic_flag m_texture_dirty;
 
     std::shared_ptr<VKBuffer> m_staging;
 

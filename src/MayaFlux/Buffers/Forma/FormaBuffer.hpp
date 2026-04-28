@@ -78,7 +78,20 @@ public:
      * @param bytes Raw interleaved vertex bytes. Must not exceed the
      *              capacity set at construction.
      */
-    void write_bytes(const std::vector<uint8_t>& bytes);
+    void submit(const std::vector<uint8_t>& bytes);
+
+    /**
+     * @brief Supply a texture to be bound on the next graphics tick.
+     *
+     * The image is owned externally — a TextBuffer's VKImage from
+     * InkPress, a loaded asset, a render target, anything. FormaProcessor
+     * forwards it to the RenderProcessor on the next processing_function
+     * call. Calling again replaces the previous binding.
+     *
+     * @param image   GPU image to bind. nullptr clears the binding.
+     * @param binding Descriptor name in the shader (e.g. "texSampler").
+     */
+    void set_texture(std::shared_ptr<Core::VKImage> image, std::string binding);
 
     [[nodiscard]] std::shared_ptr<Buffers::RenderProcessor> get_render_processor() const override
     {
