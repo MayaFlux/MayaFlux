@@ -265,6 +265,30 @@ public:
         };
     }
 
+    /**
+     * @brief Register a fully constructed Mapped<T> and own its sync loop.
+     *
+     * Delegates record and reader/writer setup to the existing
+     * register_element overload, then spawns a per-frame GraphicsRoutine
+     * that calls mapped.sync(). The routine is stored in outbound_tasks
+     * and cancelled by unbind().
+     *
+     * @p mapped must outlive the Bridge registration. The sync routine
+     * captures @p mapped by reference -- the caller is responsible for
+     * ensuring the Mapped<T> is not destroyed while the Bridge holds it.
+     *
+     * @tparam T      MappedState value type.
+     * @param mapped  Fully constructed Mapped<T>, typically from create_element.
+     * @param project Optional T -> float projection for outbound readers.
+     *                Identity cast used if empty.
+     */
+    template <typename T>
+    void register_element(Mapped<T>& mapped, std::function<float(T)> project = {})
+    {
+        register_element(mapped.state, mapped.element.id, mapped.element.buffer, std::move(project));
+        spawn_sync(mapped.element.id, [&mapped] { mapped.sync(); });
+    }
+
     // =========================================================================
     // Binding lifecycle
     // =========================================================================
@@ -302,6 +326,19 @@ private:
     void cancel_inbound(ElementRecord& rec);
     void cancel_outbound(ElementRecord& rec);
     void spawn_inbound(uint32_t id, std::function<float()> source);
+
+    /**
+     * @brief Spawn a per-frame GraphicsRoutine that calls @p sync_fn each tick.
+     *
+     * Stores the task name in the outbound_tasks of the record for @p id so
+     * that unbind() cancels it correctly. The coroutine body is type-free --
+     * all type-specific work is captured inside @p sync_fn by the caller.
+     *
+     * @param id       Element id whose outbound_tasks receives the task name.
+     * @param sync_fn  Callable invoked once per frame. Typically a lambda
+     *                 capturing Mapped<T> by reference and calling sync().
+     */
+    void spawn_sync(uint32_t id, std::function<void()> sync_fn);
 };
 
 } // namespace MayaFlux::Portal::Forma

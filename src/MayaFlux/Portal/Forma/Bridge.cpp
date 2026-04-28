@@ -284,4 +284,24 @@ void Bridge::cancel_outbound(ElementRecord& rec)
     rec.outbound_tasks.clear();
 }
 
+void Bridge::spawn_sync(uint32_t id, std::function<void()> sync_fn)
+{
+    auto name = make_task_name(id, "sync");
+    m_records[id].outbound_tasks.push_back(name);
+
+    auto routine = [](Vruta::TaskScheduler&,
+                       std::function<void()> fn) -> Vruta::GraphicsRoutine {
+        auto& p = co_await Kriya::GetGraphicsPromise {};
+        while (!p.should_terminate) {
+            fn();
+            co_await Kriya::FrameDelay { .frames_to_wait = 1 };
+        }
+    };
+
+    m_scheduler.add_task(
+        std::make_shared<Vruta::GraphicsRoutine>(
+            routine(m_scheduler, std::move(sync_fn))),
+        name, false);
+}
+
 } // namespace MayaFlux::Portal::Forma
