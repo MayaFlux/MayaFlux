@@ -132,6 +132,12 @@ public:
         uint32_t offset,
         size_t size = sizeof(float))
     {
+        if (!state) {
+            MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                "FormaBindingsProcessor::bind_push_constant: null state for '{}'", name);
+            return;
+        }
+
         auto& b = m_bindings[name];
         b.kind = TargetKind::PUSH_CONSTANT;
         b.reader = [s = std::move(state), p = std::move(project)]() {
@@ -178,6 +184,8 @@ public:
             return;
         }
 
+        auto gpu_buf = make_descriptor_buffer(role);
+
         auto& b = m_bindings[name];
         b.kind = TargetKind::DESCRIPTOR;
         b.reader = [s = std::move(state), p = std::move(project)]() {
@@ -189,9 +197,16 @@ public:
             .set_index = set,
             .binding_index = binding_index,
             .role = role,
-            .gpu_buffer = make_descriptor_buffer(role),
+            .gpu_buffer = gpu_buf,
             .buffer_size = sizeof(float),
         };
+
+        bind_buffer(descriptor_name, gpu_buf);
+        m_needs_descriptor_rebuild = true;
+
+        MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "FormaBindingsProcessor::bind_descriptor: '{}' -> descriptor '{}' set={} binding={}",
+            name, descriptor_name, set, binding_index);
     }
 
     // =========================================================================

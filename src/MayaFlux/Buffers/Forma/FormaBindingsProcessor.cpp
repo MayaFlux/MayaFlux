@@ -53,14 +53,20 @@ void FormaBindingsProcessor::bind_descriptor(
     b.kind = TargetKind::DESCRIPTOR;
     b.reader = std::move(reader);
     b.pc.reset();
+
+    auto gpu_buf = make_descriptor_buffer(role);
+
     b.desc = DescriptorTarget {
         .descriptor_name = descriptor_name,
         .set_index = set,
         .binding_index = binding_index,
         .role = role,
-        .gpu_buffer = make_descriptor_buffer(role),
+        .gpu_buffer = gpu_buf,
         .buffer_size = sizeof(float),
     };
+
+    bind_buffer(descriptor_name, gpu_buf);
+    m_needs_descriptor_rebuild = true;
 }
 
 // =============================================================================
@@ -94,8 +100,12 @@ bool FormaBindingsProcessor::unbind(const std::string& name)
 void FormaBindingsProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
 {
     for (const auto& [name, b] : m_bindings) {
-        if (!b.reader)
+        if (!b.reader) {
+            MF_RT_WARN(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                "FormaBindingsProcessor: binding '{}' has no reader", name);
             continue;
+        }
+
         const float value = b.reader();
         switch (b.kind) {
         case TargetKind::PUSH_CONSTANT:
@@ -125,12 +135,15 @@ void FormaBindingsProcessor::flush_push_constant(
     if (staging.size() < end)
         staging.resize(end);
 
-    if (pc.size == sizeof(float))
+    if (pc.size == sizeof(float)) {
         std::memcpy(staging.data() + pc.offset, &value, sizeof(float));
-    else if (pc.size == sizeof(double)) {
+    } else if (pc.size == sizeof(double)) {
         auto promoted = static_cast<double>(value);
         std::memcpy(staging.data() + pc.offset, &promoted, sizeof(double));
     }
+
+    MF_RT_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+        "FormaBindingsProcessor: PC write offset={} value={}", pc.offset, value);
 }
 
 void FormaBindingsProcessor::flush_descriptor(
@@ -138,42 +151,28 @@ void FormaBindingsProcessor::flush_descriptor(
     const DescriptorTarget& desc,
     const std::shared_ptr<VKBuffer>& attached)
 {
-    if (!desc.gpu_buffer) {
-        return;
-    }
-
     upload_to_gpu(&value, sizeof(float), desc.gpu_buffer, nullptr);
 
     auto& bindings_list = attached->get_pipeline_context().descriptor_buffer_bindings;
 
-    bool found = false;
     for (auto& entry : bindings_list) {
         if (entry.set == desc.set_index && entry.binding == desc.binding_index) {
             entry.buffer_info.buffer = desc.gpu_buffer->get_buffer();
             entry.buffer_info.offset = 0;
             entry.buffer_info.range = sizeof(float);
-            found = true;
-            break;
+            return;
         }
     }
 
-    if (!found) {
-        bindings_list.push_back({
-            .set = desc.set_index,
-            .binding = desc.binding_index,
-            .type = (desc.role == Portal::Graphics::DescriptorRole::UNIFORM)
-                ? vk::DescriptorType::eUniformBuffer
-                : vk::DescriptorType::eStorageBuffer,
-            .buffer_info = vk::DescriptorBufferInfo {
-                desc.gpu_buffer->get_buffer(),
-                0,
-                sizeof(float) },
-        });
-    }
-
-    MF_RT_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-        "FormaBindingsProcessor: descriptor write '{}' set={} binding={} value={}",
-        desc.descriptor_name, desc.set_index, desc.binding_index, value);
+    bindings_list.push_back({
+        .set = desc.set_index,
+        .binding = desc.binding_index,
+        .type = (desc.role == Portal::Graphics::DescriptorRole::UNIFORM)
+            ? vk::DescriptorType::eUniformBuffer
+            : vk::DescriptorType::eStorageBuffer,
+        .buffer_info = vk::DescriptorBufferInfo {
+            desc.gpu_buffer->get_buffer(), 0, sizeof(float) },
+    });
 }
 
 std::shared_ptr<VKBuffer> FormaBindingsProcessor::make_descriptor_buffer(
