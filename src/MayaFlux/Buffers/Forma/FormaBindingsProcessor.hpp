@@ -65,8 +65,54 @@ public:
     FormaBindingsProcessor& operator=(FormaBindingsProcessor&&) = delete;
 
     // =========================================================================
-    // Push constant bindings
+    // Push constant bindings — raw reader overload
     // =========================================================================
+
+    /**
+     * @brief Bind a type-erased reader to a push constant slot.
+     *
+     * Used by Bridge, which holds readers as std::function<float()> after
+     * type-erasing MappedState<T> at register_element time.
+     *
+     * @param name     Logical binding name.
+     * @param reader   Callable returning the current float value each tick.
+     * @param target   ShaderProcessor whose push_constant_data receives the value.
+     * @param offset   Byte offset in the push constant struct.
+     * @param size     Byte width. Defaults to sizeof(float).
+     */
+    void bind_push_constant(
+        const std::string& name,
+        std::function<float()> reader,
+        std::shared_ptr<ShaderProcessor> target,
+        uint32_t offset,
+        size_t size = sizeof(float));
+
+    // =========================================================================
+    // Descriptor bindings — raw reader overload
+    // =========================================================================
+
+    /**
+     * @brief Bind a type-erased reader to a descriptor binding.
+     *
+     * Used by Bridge for the same reason as the push constant raw overload.
+     *
+     * @param name            Logical binding name.
+     * @param reader          Callable returning the current float value each tick.
+     * @param descriptor_name Descriptor name in the shader config.
+     * @param binding_index   Vulkan binding index within the descriptor set.
+     * @param set             Descriptor set index.
+     * @param role            UNIFORM for UBO, STORAGE for SSBO.
+     */
+    void bind_descriptor(
+        const std::string& name,
+        std::function<float()> reader,
+        const std::string& descriptor_name,
+        uint32_t binding_index,
+        uint32_t set,
+        Portal::Graphics::DescriptorRole role = Portal::Graphics::DescriptorRole::UNIFORM);
+
+    // =========================================================================
+    // Push constant bindings — MappedState<T> overload
 
     /**
      * @brief Bind a MappedState<T> to a push constant slot on an external

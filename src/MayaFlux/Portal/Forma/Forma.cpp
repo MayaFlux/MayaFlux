@@ -1,7 +1,6 @@
 #include "Forma.hpp"
 
 #include "MayaFlux/Buffers/BufferManager.hpp"
-#include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Transitive/Memory/Persist.hpp"
 #include "MayaFlux/Vruta/EventManager.hpp"
 

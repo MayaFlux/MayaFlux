@@ -19,6 +19,62 @@ FormaBindingsProcessor::FormaBindingsProcessor(ShaderConfig config)
 }
 
 // =============================================================================
+// Raw reader overloads
+// =============================================================================
+
+void FormaBindingsProcessor::bind_push_constant(
+    const std::string& name,
+    std::function<float()> reader,
+    std::shared_ptr<ShaderProcessor> target,
+    uint32_t offset,
+    size_t size)
+{
+    if (!reader || !target) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "FormaBindingsProcessor::bind_push_constant: null reader or target for '{}'", name);
+        return;
+    }
+
+    auto& b = m_bindings[name];
+    b.kind = TargetKind::PUSH_CONSTANT;
+    b.reader = std::move(reader);
+    b.pc = PushConstantTarget {
+        .processor = std::move(target),
+        .offset = offset,
+        .size = size,
+    };
+    b.desc.reset();
+}
+
+void FormaBindingsProcessor::bind_descriptor(
+    const std::string& name,
+    std::function<float()> reader,
+    const std::string& descriptor_name,
+    uint32_t binding_index,
+    uint32_t set,
+    Portal::Graphics::DescriptorRole role)
+{
+    if (!reader) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "FormaBindingsProcessor::bind_descriptor: null reader for '{}'", name);
+        return;
+    }
+
+    auto& b = m_bindings[name];
+    b.kind = TargetKind::DESCRIPTOR;
+    b.reader = std::move(reader);
+    b.pc.reset();
+    b.desc = DescriptorTarget {
+        .descriptor_name = descriptor_name,
+        .set_index = set,
+        .binding_index = binding_index,
+        .role = role,
+        .gpu_buffer = make_descriptor_buffer(role),
+        .buffer_size = sizeof(float),
+    };
+}
+
+// =============================================================================
 // Introspection
 // =============================================================================
 

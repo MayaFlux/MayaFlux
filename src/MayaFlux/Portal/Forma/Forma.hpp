@@ -129,7 +129,7 @@ template <typename T>
 template <typename T>
 Mapped<T> create_element(
     Layer& layer,
-    std::shared_ptr<Core::Window> window,
+    const std::shared_ptr<Core::Window>& window,
     Buffers::BufferManager& buffer_manager,
     GeometryFn<T> geom,
     T initial,

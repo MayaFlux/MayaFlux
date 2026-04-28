@@ -37,6 +37,7 @@ template <typename T>
 struct MappedState {
     T value {};
     Version version { 0 };
+    uint32_t id { 0 };
 
     void write(T v)
     {

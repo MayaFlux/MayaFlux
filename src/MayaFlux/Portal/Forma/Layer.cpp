@@ -1,7 +1,5 @@
 #include "Layer.hpp"
 
-#include <ranges>
-
 namespace MayaFlux::Portal::Forma {
 
 // =============================================================================
