@@ -144,14 +144,24 @@ public:
         size_t size = sizeof(float));
 
     /**
-     * @brief Route element value to a descriptor binding.
+     * @brief Route element value to a descriptor binding on @p target_buffer.
+     *
+     * Creates a FormaBindingsProcessor if one does not yet exist for this element
+     * and attaches it to @p target_buffer. If a processor already exists from a
+     * prior write() call, @p target_buffer must be the same buffer — a second
+     * attachment is not made.
+     *
      * @param id              Element id.
+     * @param target_buffer   Buffer whose pipeline context receives the descriptor update.
+     * @param shader_path     Shader path used to construct FormaBindingsProcessor if needed.
      * @param descriptor_name Descriptor name in the shader config.
      * @param binding_index   Vulkan binding index.
      * @param set             Descriptor set index.
      * @param role            UNIFORM or STORAGE.
      */
     void write(uint32_t id,
+        const std::shared_ptr<Buffers::VKBuffer>& target_buffer,
+        const std::string& shader_path,
         const std::string& descriptor_name,
         uint32_t binding_index,
         uint32_t set,
@@ -194,11 +204,15 @@ public:
 
     template <typename T>
     void write(std::shared_ptr<MappedState<T>> state,
+        std::shared_ptr<Buffers::VKBuffer> target_buffer,
+        const std::string& shader_path,
         const std::string& descriptor_name,
-        uint32_t binding_index, uint32_t set,
+        uint32_t binding_index,
+        uint32_t set,
         Portal::Graphics::DescriptorRole role = Portal::Graphics::DescriptorRole::UNIFORM)
     {
-        write(state->id, descriptor_name, binding_index, set, role);
+        write(state->id, std::move(target_buffer), shader_path,
+            descriptor_name, binding_index, set, role);
     }
 
     template <typename T>

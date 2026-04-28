@@ -119,6 +119,8 @@ void Bridge::write(
 
 void Bridge::write(
     uint32_t id,
+    const std::shared_ptr<Buffers::VKBuffer>& target_buffer,
+    const std::string& shader_path,
     const std::string& descriptor_name,
     uint32_t binding_index,
     uint32_t set,
@@ -133,10 +135,9 @@ void Bridge::write(
 
     auto& rec = it->second;
     if (!rec.bindings) {
-        MF_ERROR(Journal::Component::Portal, Journal::Context::Init,
-            "Bridge::write(descriptor): attach a ShaderProcessor binding first "
-            "so the FormaBindingsProcessor has a shader path");
-        return;
+        rec.bindings = std::make_shared<Buffers::FormaBindingsProcessor>(shader_path);
+        m_buffer_manager.add_processor(rec.bindings, target_buffer,
+            Buffers::ProcessingToken::GRAPHICS_BACKEND);
     }
 
     rec.bindings->bind_descriptor(
