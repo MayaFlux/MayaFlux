@@ -8,6 +8,7 @@ class Window;
 }
 
 namespace MayaFlux::Buffers {
+class FormaProcessor;
 class RenderProcessor;
 
 /**
@@ -89,6 +90,7 @@ public:
 private:
     Portal::Graphics::PrimitiveTopology m_topology;
     std::shared_ptr<Buffers::RenderProcessor> m_render_processor;
+    std::shared_ptr<Buffers::FormaProcessor> m_processor;
 };
 
 } // namespace MayaFlux::Buffers

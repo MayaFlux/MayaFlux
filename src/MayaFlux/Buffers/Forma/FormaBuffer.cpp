@@ -1,9 +1,12 @@
 #include "FormaBuffer.hpp"
 
 #include "MayaFlux/Buffers/BufferProcessingChain.hpp"
+#include "MayaFlux/Buffers/Forma/FormaProcessor.hpp"
 #include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
-#include "MayaFlux/Buffers/Staging/BufferUploadProcessor.hpp"
+#include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
+
 #include "MayaFlux/Core/Backends/Windowing/Window.hpp"
+
 #include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux::Buffers {
@@ -19,8 +22,9 @@ FormaBuffer::FormaBuffer(
 
 void FormaBuffer::setup_processors(ProcessingToken token)
 {
-    auto upload = std::make_shared<Buffers::BufferUploadProcessor>();
-    set_default_processor(upload);
+    auto proc = std::make_shared<Buffers::FormaProcessor>(m_topology);
+    set_default_processor(proc);
+    m_processor = proc;
 
     auto chain = std::make_shared<Buffers::BufferProcessingChain>();
     chain->set_preferred_token(token);
@@ -42,7 +46,6 @@ void FormaBuffer::setup_rendering(const RenderConfig& config)
 
     case Portal::Graphics::PrimitiveTopology::LINE_LIST:
     case Portal::Graphics::PrimitiveTopology::LINE_STRIP:
-
         if (config.fragment_shader.empty())
             resolved_config.fragment_shader = "line.frag.spv";
 
@@ -89,6 +92,7 @@ void FormaBuffer::setup_rendering(const RenderConfig& config)
     m_render_processor->set_primitive_topology(resolved_config.topology);
     m_render_processor->set_polygon_mode(config.polygon_mode);
     m_render_processor->set_cull_mode(config.cull_mode);
+    m_render_processor->enable_alpha_blending();
 
     get_processing_chain()->add_final_processor(m_render_processor, shared_from_this());
 
@@ -97,25 +101,12 @@ void FormaBuffer::setup_rendering(const RenderConfig& config)
 
 void FormaBuffer::write_bytes(const std::vector<uint8_t>& bytes)
 {
-    if (bytes.empty())
-        return;
-
-    if (bytes.size() > get_size()) {
-        MF_RT_WARN(Journal::Component::Portal, Journal::Context::BufferProcessing,
-            "FormaBuffer::write_bytes: {} bytes exceeds capacity {}, skipping",
-            bytes.size(), get_size());
+    if (!m_processor) {
+        MF_RT_WARN(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "FormaBuffer::write_bytes called before setup_processors");
         return;
     }
-
-    auto& res = get_buffer_resources();
-    if (!res.mapped_ptr) {
-        MF_RT_WARN(Journal::Component::Portal, Journal::Context::BufferProcessing,
-            "FormaBuffer::write_bytes: buffer not host-visible or not yet registered");
-        return;
-    }
-
-    std::memcpy(res.mapped_ptr, bytes.data(), bytes.size());
-    mark_dirty_range(0, bytes.size());
+    m_processor->set_bytes(bytes);
 }
 
 } // namespace MayaFlux::Portal::Forma

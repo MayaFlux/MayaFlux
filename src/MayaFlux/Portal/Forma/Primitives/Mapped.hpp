@@ -119,7 +119,7 @@ struct Mapped {
             return;
 
         geometry_fn(state->value, m_bytes, element);
-        element.buffer->set_data({ m_bytes });
+        element.buffer->write_bytes(m_bytes);
         last_version = state->version;
     }
 
@@ -146,12 +146,12 @@ template <typename T>
     Element el;
     el.buffer = std::move(buffer);
 
-    return Mapped<T> {
-        .state = std::move(st),
-        .geometry_fn = std::move(geometry),
-        .element = std::move(el),
-        .last_version = static_cast<Version>(-1)
-    };
+    Mapped<T> m;
+    m.state = std::move(st);
+    m.geometry_fn = std::move(geometry);
+    m.element = std::move(el);
+    m.last_version = static_cast<Version>(-1);
+    return m;
 }
 
 } // namespace MayaFlux::Portal::Forma
