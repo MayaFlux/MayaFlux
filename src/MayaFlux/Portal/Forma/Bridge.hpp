@@ -283,10 +283,10 @@ public:
      *                Identity cast used if empty.
      */
     template <typename T>
-    void register_element(Mapped<T>& mapped, std::function<float(T)> project = {})
+    void register_element(Mapped<T> mapped, std::function<float(T)> project = {})
     {
         register_element(mapped.state, mapped.element.id, mapped.element.buffer, std::move(project));
-        spawn_sync(mapped.element.id, [&mapped] { mapped.sync(); });
+        spawn_sync(mapped.element.id, [m = std::move(mapped)]() mutable { m.sync(); });
     }
 
     // =========================================================================

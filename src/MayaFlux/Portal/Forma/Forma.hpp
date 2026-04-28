@@ -162,7 +162,7 @@ template <typename T>
 {
     auto buf = create_buffer(std::move(window), capacity, topology);
     auto mapped = make_mapped<T>(initial, std::move(geom), buf);
-    layer.add(mapped.element);
+    mapped.element.id = layer.add(mapped.element);
     get_bridge().register_element(mapped);
     return mapped;
 }
