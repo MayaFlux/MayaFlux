@@ -36,6 +36,8 @@ void FormaBuffer::setup_rendering(const RenderConfig& config)
     RenderConfig resolved_config = config;
     resolved_config.topology = m_topology;
 
+    const bool textured = !config.default_texture_binding.empty();
+
     switch (resolved_config.topology) {
     case Portal::Graphics::PrimitiveTopology::POINT_LIST:
         if (config.vertex_shader.empty())
@@ -67,8 +69,11 @@ void FormaBuffer::setup_rendering(const RenderConfig& config)
     case Portal::Graphics::PrimitiveTopology::TRIANGLE_STRIP:
         if (config.vertex_shader.empty())
             resolved_config.vertex_shader = "triangle.vert.spv";
-        if (config.fragment_shader.empty())
-            resolved_config.fragment_shader = "triangle.frag.spv";
+        if (config.fragment_shader.empty()) {
+            resolved_config.fragment_shader = textured
+                ? "forma_textured.frag.spv"
+                : "triangle.frag.spv";
+        }
         break;
 
     default:
@@ -76,19 +81,28 @@ void FormaBuffer::setup_rendering(const RenderConfig& config)
             resolved_config.vertex_shader = "point.vert.spv";
         if (config.fragment_shader.empty())
             resolved_config.fragment_shader = "point.frag.spv";
+        break;
+    }
+
+    ShaderConfig sc { resolved_config.vertex_shader };
+    if (textured) {
+        sc.bindings[resolved_config.default_texture_binding] = ShaderBinding(
+            0, 1, vk::DescriptorType::eCombinedImageSampler);
     }
 
     if (!m_render_processor) {
-        m_render_processor = std::make_shared<RenderProcessor>(ShaderConfig { resolved_config.vertex_shader });
+        m_render_processor = std::make_shared<RenderProcessor>(sc);
     } else {
         m_render_processor->set_shader(resolved_config.vertex_shader);
     }
 
     m_render_processor->set_fragment_shader(resolved_config.fragment_shader);
-    if (!resolved_config.geometry_shader.empty()) {
+    if (!resolved_config.geometry_shader.empty())
         m_render_processor->set_geometry_shader(resolved_config.geometry_shader);
-    }
-    m_render_processor->set_target_window(config.target_window, std::dynamic_pointer_cast<VKBuffer>(shared_from_this()));
+
+    m_render_processor->set_target_window(
+        config.target_window,
+        std::dynamic_pointer_cast<VKBuffer>(shared_from_this()));
     m_render_processor->set_primitive_topology(resolved_config.topology);
     m_render_processor->set_polygon_mode(config.polygon_mode);
     m_render_processor->set_cull_mode(config.cull_mode);
