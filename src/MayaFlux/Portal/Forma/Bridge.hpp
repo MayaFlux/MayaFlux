@@ -132,12 +132,14 @@ public:
     /**
      * @brief Route element value to a push constant slot on a ShaderProcessor.
      * @param id     Element id.
-     * @param target ShaderProcessor whose push_constant_data receives the value.
+     * @param target VKBuffer whose push_constant staging receives the value.
      * @param offset Byte offset in the push constant struct.
      * @param size   Byte width. Defaults to sizeof(float).
      */
-    void write(uint32_t id,
-        std::shared_ptr<Buffers::ShaderProcessor> target,
+    void write(
+        uint32_t id,
+        const std::shared_ptr<Buffers::VKBuffer>& target_buffer,
+        const std::string& shader_path,
         uint32_t offset,
         size_t size = sizeof(float));
 
@@ -182,10 +184,12 @@ public:
 
     template <typename T>
     void write(std::shared_ptr<MappedState<T>> state,
-        std::shared_ptr<Buffers::ShaderProcessor> target,
-        uint32_t offset, size_t size = sizeof(float))
+        std::shared_ptr<Buffers::VKBuffer> target_buffer,
+        const std::string& shader_path,
+        uint32_t offset,
+        size_t size = sizeof(float))
     {
-        write(state->id, std::move(target), offset, size);
+        write(state->id, std::move(target_buffer), shader_path, offset, size);
     }
 
     template <typename T>

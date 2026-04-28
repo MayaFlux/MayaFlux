@@ -95,30 +95,25 @@ void Bridge::spawn_inbound(uint32_t id, std::function<float()> source)
 
 void Bridge::write(
     uint32_t id,
-    std::shared_ptr<Buffers::ShaderProcessor> target,
+    const std::shared_ptr<Buffers::VKBuffer>& target_buffer,
+    const std::string& shader_path,
     uint32_t offset,
     size_t size)
 {
     auto it = m_records.find(id);
-    if (it == m_records.end()) {
-        MF_ERROR(Journal::Component::Portal, Journal::Context::Init,
-            "Bridge::write: unknown element id {}", id);
+    if (it == m_records.end())
         return;
-    }
 
     auto& rec = it->second;
     if (!rec.bindings) {
-        rec.bindings = std::make_shared<Buffers::FormaBindingsProcessor>(
-            target->get_shader_path());
-        m_buffer_manager.add_processor(
-            rec.bindings, rec.buffer,
+        rec.bindings = std::make_shared<Buffers::FormaBindingsProcessor>(shader_path);
+        m_buffer_manager.add_processor(rec.bindings, target_buffer,
             Buffers::ProcessingToken::GRAPHICS_BACKEND);
     }
 
     rec.bindings->bind_push_constant(
         std::to_string(id) + "_pc_" + std::to_string(offset),
         rec.reader,
-        std::move(target),
         offset, size);
 }
 

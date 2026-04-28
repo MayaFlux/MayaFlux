@@ -76,14 +76,12 @@ public:
      *
      * @param name     Logical binding name.
      * @param reader   Callable returning the current float value each tick.
-     * @param target   ShaderProcessor whose push_constant_data receives the value.
      * @param offset   Byte offset in the push constant struct.
      * @param size     Byte width. Defaults to sizeof(float).
      */
     void bind_push_constant(
         const std::string& name,
         std::function<float()> reader,
-        std::shared_ptr<ShaderProcessor> target,
         uint32_t offset,
         size_t size = sizeof(float));
 
@@ -121,7 +119,6 @@ public:
      * @param name      Logical binding name for introspection and unbind.
      * @param state     MappedState whose value is read each graphics tick.
      * @param project   Projection from T to float. Called every tick.
-     * @param target    ShaderProcessor whose push_constant_data receives
      *                  the value at @p offset. Any subclass is valid.
      * @param offset    Byte offset in the target's push constant struct.
      * @param size      Byte width of the written value. Defaults to sizeof(float).
@@ -132,26 +129,15 @@ public:
         const std::string& name,
         std::shared_ptr<Portal::Forma::MappedState<T>> state,
         std::function<float(T)> project,
-        std::shared_ptr<ShaderProcessor> target,
         uint32_t offset,
         size_t size = sizeof(float))
     {
-        if (!state || !target) {
-            MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-                "FormaBindingsProcessor::bind_push_constant: null state or target for '{}'", name);
-            return;
-        }
-
         auto& b = m_bindings[name];
         b.kind = TargetKind::PUSH_CONSTANT;
         b.reader = [s = std::move(state), p = std::move(project)]() {
             return p(s->value);
         };
-        b.pc = PushConstantTarget {
-            .processor = std::move(target),
-            .offset = offset,
-            .size = size,
-        };
+        b.pc = PushConstantTarget { .offset = offset, .size = size };
         b.desc.reset();
     }
 
@@ -236,7 +222,6 @@ private:
     };
 
     struct PushConstantTarget {
-        std::shared_ptr<ShaderProcessor> processor;
         uint32_t offset;
         size_t size;
     };
@@ -259,7 +244,8 @@ private:
 
     std::unordered_map<std::string, Binding> m_bindings;
 
-    void flush_push_constant(float value, const PushConstantTarget& pc);
+    void flush_push_constant(float value, const PushConstantTarget& pc, const std::shared_ptr<VKBuffer>& buffer);
+
     void flush_descriptor(float value, const DescriptorTarget& desc,
         const std::shared_ptr<VKBuffer>& attached);
 

@@ -25,24 +25,13 @@ FormaBindingsProcessor::FormaBindingsProcessor(ShaderConfig config)
 void FormaBindingsProcessor::bind_push_constant(
     const std::string& name,
     std::function<float()> reader,
-    std::shared_ptr<ShaderProcessor> target,
     uint32_t offset,
     size_t size)
 {
-    if (!reader || !target) {
-        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-            "FormaBindingsProcessor::bind_push_constant: null reader or target for '{}'", name);
-        return;
-    }
-
     auto& b = m_bindings[name];
     b.kind = TargetKind::PUSH_CONSTANT;
     b.reader = std::move(reader);
-    b.pc = PushConstantTarget {
-        .processor = std::move(target),
-        .offset = offset,
-        .size = size,
-    };
+    b.pc = PushConstantTarget { .offset = offset, .size = size };
     b.desc.reset();
 }
 
@@ -105,24 +94,17 @@ bool FormaBindingsProcessor::unbind(const std::string& name)
 void FormaBindingsProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
 {
     for (const auto& [name, b] : m_bindings) {
-        if (!b.reader) {
-            MF_RT_WARN(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-                "FormaBindingsProcessor: binding '{}' has no reader", name);
+        if (!b.reader)
             continue;
-        }
-
         const float value = b.reader();
-
         switch (b.kind) {
         case TargetKind::PUSH_CONSTANT:
-            if (b.pc) {
-                flush_push_constant(value, *b.pc);
-            }
+            if (b.pc)
+                flush_push_constant(value, *b.pc, buffer);
             break;
         case TargetKind::DESCRIPTOR:
-            if (b.desc) {
+            if (b.desc)
                 flush_descriptor(value, *b.desc, buffer);
-            }
             break;
         }
     }
@@ -132,28 +114,23 @@ void FormaBindingsProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buf
 // Private
 // =============================================================================
 
-void FormaBindingsProcessor::flush_push_constant(float value, const PushConstantTarget& pc)
+void FormaBindingsProcessor::flush_push_constant(
+    float value,
+    const PushConstantTarget& pc,
+    const std::shared_ptr<VKBuffer>& buffer)
 {
-    if (!pc.processor) {
-        return;
-    }
-
-    auto& staging = pc.processor->get_push_constant_data();
+    auto& staging = buffer->get_pipeline_context().push_constant_staging;
     const size_t end = static_cast<size_t>(pc.offset) + pc.size;
 
-    if (staging.size() < end) {
+    if (staging.size() < end)
         staging.resize(end);
-    }
 
-    if (pc.size == sizeof(float)) {
+    if (pc.size == sizeof(float))
         std::memcpy(staging.data() + pc.offset, &value, sizeof(float));
-    } else if (pc.size == sizeof(double)) {
+    else if (pc.size == sizeof(double)) {
         auto promoted = static_cast<double>(value);
         std::memcpy(staging.data() + pc.offset, &promoted, sizeof(double));
     }
-
-    MF_RT_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-        "FormaBindingsProcessor: PC write offset={} value={}", pc.offset, value);
 }
 
 void FormaBindingsProcessor::flush_descriptor(
