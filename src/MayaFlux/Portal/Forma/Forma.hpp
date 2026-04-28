@@ -81,6 +81,13 @@ MAYAFLUX_API void shutdown();
 /** @brief Whether initialize() has been called successfully. */
 MAYAFLUX_API bool is_initialized();
 
+/**
+ * @brief Return the application-level Bridge instance.
+ *
+ * Valid only after initialize(). Lifetime is tied to the Forma module.
+ */
+[[nodiscard]] MAYAFLUX_API Bridge& get_bridge();
+
 // =============================================================================
 // Layer
 // =============================================================================
@@ -124,19 +131,6 @@ MAYAFLUX_API bool is_initialized();
         Graphics::PrimitiveTopology topology);
 
 // =============================================================================
-// Bridge
-// =============================================================================
-
-/**
- * @brief Construct a Bridge using the stored TaskScheduler and BufferManager.
- *
- * One Bridge instance typically serves the full application.
- *
- * @return Fully constructed Bridge.
- */
-[[nodiscard]] MAYAFLUX_API Bridge create_bridge();
-
-// =============================================================================
 // Element
 // =============================================================================
 
@@ -169,6 +163,7 @@ template <typename T>
     auto buf = create_buffer(std::move(window), capacity, topology);
     auto mapped = make_mapped<T>(initial, std::move(geom), buf);
     layer.add(mapped.element);
+    get_bridge().register_element(mapped.state, mapped.element.id, buf);
     return mapped;
 }
 

@@ -14,6 +14,7 @@ namespace {
     std::shared_ptr<Buffers::BufferManager> g_buffer_manager;
     std::shared_ptr<Vruta::TaskScheduler> g_scheduler;
     std::shared_ptr<Vruta::EventManager> g_event_manager;
+    std::unique_ptr<Bridge> g_bridge;
 }
 
 // =============================================================================
@@ -34,6 +35,7 @@ bool initialize(
     g_buffer_manager = std::move(buffer_manager);
     g_scheduler = std::move(scheduler);
     g_event_manager = std::move(event_manager);
+    g_bridge = std::make_unique<Bridge>(*g_scheduler, *g_buffer_manager);
     g_initialized = true;
 
     MF_INFO(Journal::Component::Portal, Journal::Context::API,
@@ -47,6 +49,7 @@ void shutdown()
         return;
     }
 
+    g_bridge.reset();
     g_buffer_manager = nullptr;
     g_scheduler = nullptr;
     g_event_manager = nullptr;
@@ -100,9 +103,9 @@ std::shared_ptr<Buffers::FormaBuffer> create_buffer(
 // Bridge
 // =============================================================================
 
-Bridge create_bridge()
+Bridge& get_bridge()
 {
-    return { *g_scheduler, *g_buffer_manager };
+    return *g_bridge;
 }
 
 } // namespace MayaFlux::Portal::Forma
