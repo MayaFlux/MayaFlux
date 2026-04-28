@@ -262,27 +262,6 @@ void Bridge::unbind(uint32_t id)
 // Private
 // =============================================================================
 
-uint32_t Bridge::get_id(const void* state_ptr) const
-{
-    if (!state_ptr) {
-        error<std::invalid_argument>(
-            Journal::Component::Portal, Journal::Context::Init,
-            std::source_location::current(),
-            "Bridge: null MappedState pointer");
-    }
-
-    const auto* id_ptr = static_cast<const uint32_t*>(state_ptr);
-
-    if (*id_ptr == 0) {
-        error<std::out_of_range>(
-            Journal::Component::Portal, Journal::Context::Init,
-            std::source_location::current(),
-            "Bridge: MappedState not registered — call register_element()");
-    }
-
-    return *id_ptr;
-}
-
 std::string Bridge::make_task_name(uint32_t id, const char* suffix) const
 {
     return "forma_bridge_" + std::to_string(id) + "_" + suffix

@@ -46,7 +46,7 @@ namespace MayaFlux::Portal::Forma {
  *   - write(id, Constant)                — node graph value carrier
  *
  * All overloads also accept shared_ptr<MappedState<T>> in place of the
- * element id. These resolve to the id via get_id() and forward — no
+ * element id. These resolve to the state->id.
  * duplicated logic.
  *
  * Usage:
@@ -116,13 +116,13 @@ public:
         std::shared_ptr<Nodes::Node> node,
         std::function<float(double)> project = {})
     {
-        bind(get_id(state.get()), std::move(node), std::move(project));
+        bind(state->id, std::move(node), std::move(project));
     }
 
     template <typename T>
     void bind(std::shared_ptr<MappedState<T>> state, std::function<float()> source)
     {
-        bind(get_id(state.get()), std::move(source));
+        bind(state->id, std::move(source));
     }
 
     // =========================================================================
@@ -185,7 +185,7 @@ public:
         std::shared_ptr<Buffers::ShaderProcessor> target,
         uint32_t offset, size_t size = sizeof(float))
     {
-        write(get_id(state.get()), std::move(target), offset, size);
+        write(state->id, std::move(target), offset, size);
     }
 
     template <typename T>
@@ -194,28 +194,28 @@ public:
         uint32_t binding_index, uint32_t set,
         Portal::Graphics::DescriptorRole role = Portal::Graphics::DescriptorRole::UNIFORM)
     {
-        write(get_id(state.get()), descriptor_name, binding_index, set, role);
+        write(state->id, descriptor_name, binding_index, set, role);
     }
 
     template <typename T>
     void write(std::shared_ptr<MappedState<T>> state,
         std::shared_ptr<Buffers::AudioWriteProcessor> target)
     {
-        write(get_id(state.get()), std::move(target));
+        write(state->id, std::move(target));
     }
 
     template <typename T>
     void write(std::shared_ptr<MappedState<T>> state,
         std::shared_ptr<Buffers::GeometryWriteProcessor> target)
     {
-        write(get_id(state.get()), std::move(target));
+        write(state->id, std::move(target));
     }
 
     template <typename T>
     void write(std::shared_ptr<MappedState<T>> state,
         std::shared_ptr<Nodes::Constant> node)
     {
-        write(get_id(state.get()), std::move(node));
+        write(state->id, std::move(node));
     }
 
     // =========================================================================
@@ -278,7 +278,7 @@ public:
     template <typename T>
     void unbind(std::shared_ptr<MappedState<T>> state)
     {
-        unbind(get_id(state.get()));
+        unbind(state->id);
     }
 
 private:
@@ -297,8 +297,6 @@ private:
     mutable uint32_t m_next_id { 0 };
 
     std::unordered_map<uint32_t, ElementRecord> m_records;
-
-    [[nodiscard]] uint32_t get_id(const void* state_ptr) const;
 
     std::string make_task_name(uint32_t id, const char* suffix) const;
     void cancel_inbound(ElementRecord& rec);
