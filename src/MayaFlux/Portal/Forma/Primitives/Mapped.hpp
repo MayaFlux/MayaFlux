@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Buffers/Forma/FormaBuffer.hpp"
 #include "MayaFlux/Portal/Forma/Element.hpp"
 
 namespace MayaFlux::Buffers {
@@ -137,7 +138,7 @@ template <typename T>
 [[nodiscard]] Mapped<T> make_mapped(
     T initial,
     GeometryFn<T> geometry,
-    std::shared_ptr<Buffers::VKBuffer> buffer)
+    std::shared_ptr<Buffers::FormaBuffer> buffer)
 {
     auto st = std::make_shared<MappedState<T>>();
     st->write(initial);

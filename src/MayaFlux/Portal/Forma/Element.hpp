@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MayaFlux/Buffers/VKBuffer.hpp"
+#include "MayaFlux/Buffers/Forma/FormaBuffer.hpp"
 #include "MayaFlux/Kinesis/Spatial/Bounds.hpp"
 
 namespace MayaFlux::Portal::Forma {
@@ -45,8 +45,9 @@ struct Element {
     ///        When absent, @c bounds_hint is used as the sole test.
     std::function<bool(glm::vec2)> contains;
 
-    /// @brief GPU buffer whose rendered output occupies this region.
-    std::shared_ptr<Buffers::VKBuffer> buffer;
+    /// @brief Buffer whose rendered output occupies this region.
+    ///        nullptr for non-rendering elements (pure hit-test regions).
+    std::shared_ptr<Buffers::FormaBuffer> buffer;
 
     /// @brief When false, hit testing skips this element.
     bool interactive { true };
