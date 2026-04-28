@@ -28,6 +28,7 @@ bool Layer::remove(uint32_t id)
 void Layer::clear()
 {
     m_elements.clear();
+    m_relations.clear();
 }
 
 // =============================================================================
@@ -65,6 +66,13 @@ bool Layer::set_visible(uint32_t id, bool visible)
 {
     if (auto* el = get(id)) {
         el->visible = visible;
+        if (auto it = m_relations.find(id); it != m_relations.end()) {
+            for (uint32_t rel_id : it->second) {
+                if (auto* rel = get(rel_id))
+                    rel->visible = visible;
+            }
+        }
+
         return true;
     }
     return false;
@@ -72,6 +80,14 @@ bool Layer::set_visible(uint32_t id, bool visible)
 
 bool Layer::bring_to_front(uint32_t id)
 {
+    if (auto rit = m_relations.find(id); rit != m_relations.end()) {
+        for (uint32_t rel_id : rit->second) {
+            auto it = std::ranges::find_if(m_elements,
+                [rel_id](const Element& e) { return e.id == rel_id; });
+            if (it != m_elements.end())
+                std::rotate(it, it + 1, m_elements.end());
+        }
+    }
     auto it = std::ranges::find_if(m_elements,
         [id](const Element& e) { return e.id == id; });
     if (it == m_elements.end())
@@ -82,6 +98,11 @@ bool Layer::bring_to_front(uint32_t id)
 
 bool Layer::send_to_back(uint32_t id)
 {
+    if (auto rit = m_relations.find(id); rit != m_relations.end()) {
+        for (uint32_t rel_id : rit->second)
+            send_to_back(rel_id);
+    }
+
     auto it = std::ranges::find_if(m_elements,
         [id](const Element& e) { return e.id == id; });
     if (it == m_elements.end())
@@ -123,6 +144,42 @@ std::vector<uint32_t> Layer::hit_test_all(
     double px, double py, uint32_t win_w, uint32_t win_h) const
 {
     return hit_test_all(to_ndc(px, py, win_w, win_h));
+}
+
+// =========================================================================
+// Relations
+// =========================================================================
+
+bool Layer::relate(uint32_t primary_id, uint32_t related_id)
+{
+    if (!get(primary_id) || !get(related_id) || primary_id == related_id)
+        return false;
+
+    auto& rel = m_relations[primary_id];
+    if (std::ranges::find(rel, related_id) == rel.end())
+        rel.push_back(related_id);
+    return true;
+}
+
+bool Layer::unrelate(uint32_t primary_id, uint32_t related_id)
+{
+    auto it = m_relations.find(primary_id);
+    if (it == m_relations.end())
+        return false;
+    auto& rel = it->second;
+    auto rit = std::ranges::find(rel, related_id);
+    if (rit == rel.end())
+        return false;
+    rel.erase(rit);
+    if (rel.empty())
+        m_relations.erase(it);
+    return true;
+}
+
+std::vector<uint32_t> Layer::related_ids(uint32_t primary_id) const
+{
+    auto it = m_relations.find(primary_id);
+    return it != m_relations.end() ? it->second : std::vector<uint32_t> {};
 }
 
 // =============================================================================

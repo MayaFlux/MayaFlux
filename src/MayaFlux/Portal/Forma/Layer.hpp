@@ -121,6 +121,31 @@ public:
         uint32_t win_w, uint32_t win_h) const;
 
     // =========================================================================
+    // Relations
+    // =========================================================================
+
+    /**
+     * @brief Record that @p related_id belongs with @p primary_id.
+     *
+     * Both ids must already exist in the layer. The related element has
+     * no special spatial or hit-test role — the relation is purely for
+     * cascaded lifecycle operations (remove, set_visible, bring_to_front,
+     * send_to_back). Returns false if either id is not found.
+     */
+    bool relate(uint32_t primary_id, uint32_t related_id);
+
+    /**
+     * @brief Remove a specific relation between two elements.
+     *        Does not remove either element from the layer.
+     */
+    bool unrelate(uint32_t primary_id, uint32_t related_id);
+
+    /**
+     * @brief Return the ids related to @p primary_id, or empty if none.
+     */
+    [[nodiscard]] std::vector<uint32_t> related_ids(uint32_t primary_id) const;
+
+    // =========================================================================
     // Introspection
     // =========================================================================
 
@@ -134,6 +159,8 @@ public:
 private:
     std::vector<Element> m_elements;
     uint32_t m_next_id { 1 };
+
+    std::unordered_map<uint32_t, std::vector<uint32_t>> m_relations;
 
     [[nodiscard]] static glm::vec2 to_ndc(
         double px, double py,
