@@ -104,11 +104,11 @@ jobs:
             rtmidi
             utf8proc
             freetype
-            nlohmann-json
 
-      - name: Install ASIO (header-only, always ensure)
+      - name: Install ASIO and JSON (header-only, always ensure)
         run: |
           brew install asio
+          brew install nlohmann-json
           echo "✅ ASIO installed (bypassing the timestamp bug in the main cache)"
 
       - name: Setup Homebrew Environment
