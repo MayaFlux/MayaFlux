@@ -10,6 +10,8 @@
 
 namespace MayaFlux::Core {
 
+class PipewireDevice;
+
 /**
  * @class PipewireBackend
  * @brief PipeWire native implementation of the audio backend interface
@@ -49,6 +51,7 @@ private:
     pw_main_loop* m_loop = nullptr;
     pw_context* m_context = nullptr;
     pw_core* m_core = nullptr;
+    PipewireDevice* m_device_manager = nullptr;
 #endif
 };
 
@@ -75,6 +78,8 @@ public:
     [[nodiscard]] std::vector<DeviceInfo> get_input_devices() const override;
     [[nodiscard]] unsigned int get_default_output_device() const override;
     [[nodiscard]] unsigned int get_default_input_device() const override;
+    [[nodiscard]] uint32_t find_output_node_id(std::string_view name) const;
+    [[nodiscard]] uint32_t find_input_node_id(std::string_view name) const;
 
 public:
     struct NodeEntry {
@@ -121,6 +126,8 @@ public:
         uint32_t input_node_id,
         GlobalStreamInfo& stream_info,
         void* user_data);
+
+    [[nodiscard]] pw_time get_stream_time() const;
 #endif
 
     ~PipewireStream() override;

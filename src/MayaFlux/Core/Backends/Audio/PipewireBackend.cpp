@@ -51,7 +51,9 @@ PipewireBackend::~PipewireBackend()
 
 std::unique_ptr<AudioDevice> PipewireBackend::create_device_manager()
 {
-    return std::make_unique<PipewireDevice>(m_loop, m_context, m_core);
+    auto dev = std::make_unique<PipewireDevice>(m_loop, m_context, m_core);
+    m_device_manager = dev.get();
+    return dev;
 }
 
 std::unique_ptr<AudioStream> PipewireBackend::create_stream(
@@ -60,9 +62,19 @@ std::unique_ptr<AudioStream> PipewireBackend::create_stream(
     GlobalStreamInfo& stream_info,
     void* user_data)
 {
+    auto out_id = static_cast<uint32_t>(output_node_id);
+    auto in_id = static_cast<uint32_t>(input_node_id);
+
+    if (m_device_manager) {
+        auto* pw_dev = static_cast<PipewireDevice*>(m_device_manager);
+        if (!stream_info.output.device_name.empty())
+            out_id = pw_dev->find_output_node_id(stream_info.output.device_name);
+        if (stream_info.input.enabled && !stream_info.input.device_name.empty())
+            in_id = pw_dev->find_input_node_id(stream_info.input.device_name);
+    }
+
     return std::make_unique<PipewireStream>(
-        static_cast<uint32_t>(output_node_id),
-        static_cast<uint32_t>(input_node_id),
+        out_id, in_id,
         stream_info,
         user_data);
 }
@@ -255,6 +267,26 @@ unsigned int PipewireDevice::get_default_input_device() const
     return static_cast<unsigned int>(m_default_input_id);
 }
 
+uint32_t PipewireDevice::find_output_node_id(std::string_view name) const
+{
+    for (const auto& e : m_nodes) {
+        if (e.is_output && e.info.name == name)
+            return e.id;
+    }
+
+    return m_default_output_id;
+}
+
+uint32_t PipewireDevice::find_input_node_id(std::string_view name) const
+{
+    for (const auto& e : m_nodes) {
+        if (!e.is_output && e.info.name == name)
+            return e.id;
+    }
+
+    return m_default_input_id;
+}
+
 // ---------------------------------------------------------------------------
 // PipewireStream
 // ---------------------------------------------------------------------------
@@ -277,6 +309,14 @@ PipewireStream::~PipewireStream()
         stop();
     if (is_open())
         close();
+}
+
+pw_time PipewireStream::get_stream_time() const
+{
+    pw_time t {};
+    if (m_output_stream)
+        pw_stream_get_time_n(m_output_stream, &t, sizeof(t));
+    return t;
 }
 
 void PipewireStream::set_process_callback(std::function<int(void*, void*, unsigned int)> cb)
