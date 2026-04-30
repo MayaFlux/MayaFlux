@@ -104,6 +104,7 @@ else()
         set(_MAYAFLUX_THREADING_BACKEND "oneDPL")
 
         pkg_check_modules(HIDAPI REQUIRED IMPORTED_TARGET hidapi)
+        pkg_check_modules(RtAudio REQUIRED IMPORTED_TARGET rtaudio)
     else()
         message(STATUS "=== Linux-specific Dependencies ===")
         pkg_check_modules(Vulkan REQUIRED IMPORTED_TARGET vulkan)
@@ -113,6 +114,12 @@ else()
         pkg_search_module(HIDAPI REQUIRED IMPORTED_TARGET
                 hidapi-hidraw hidapi-libusb hidapi)
          pkg_check_modules(Fontconfig REQUIRED IMPORTED_TARGET fontconfig)
+
+        if("@MAYAFLUX_AUDIO_BACKEND@" STREQUAL "PIPEWIRE_BACKEND")
+            pkg_check_modules(PIPEWIRE REQUIRED IMPORTED_TARGET libpipewire-0.3)
+        else()
+            pkg_check_modules(RtAudio REQUIRED IMPORTED_TARGET rtaudio)
+        endif()
     endif()
 
     find_library(SPIRV_CROSS_CORE_LIB NAMES spirv-cross-core REQUIRED)
@@ -140,7 +147,6 @@ else()
     find_package(glm REQUIRED)
     find_package(Freetype REQUIRED)
 
-    pkg_check_modules(RtAudio REQUIRED IMPORTED_TARGET rtaudio)
     pkg_check_modules(Eigen REQUIRED IMPORTED_TARGET eigen3)
     pkg_check_modules(Glfw REQUIRED IMPORTED_TARGET glfw3>=3.4)
     pkg_check_modules(magic_enum REQUIRED IMPORTED_TARGET magic_enum)
@@ -223,7 +229,7 @@ if(NOT TARGET MayaFlux::MayaFluxLib)
 
     # Core definitions
     target_compile_definitions(MayaFlux::MayaFluxLib INTERFACE
-        RTAUDIO_BACKEND 
+        @MAYAFLUX_AUDIO_BACKEND@
         GLFW_BACKEND
         ASIO_STANDALONE
     )
@@ -267,7 +273,6 @@ if(NOT TARGET MayaFlux::MayaFluxLib)
         )
     else()
         target_link_libraries(MayaFlux::MayaFluxLib INTERFACE
-            PkgConfig::RtAudio
             PkgConfig::Eigen
             PkgConfig::Glfw
             PkgConfig::LIBAVCODEC
@@ -291,11 +296,17 @@ if(NOT TARGET MayaFlux::MayaFluxLib)
 
         # Unix Vulkan
         if(APPLE)
-            target_link_libraries(MayaFlux::MayaFluxLib INTERFACE Vulkan::Vulkan)
+            target_link_libraries(MayaFlux::MayaFluxLib INTERFACE Vulkan::Vulkan PkgConfig::RtAudio)
         else()
             target_link_libraries(MayaFlux::MayaFluxLib INTERFACE 
             PkgConfig::Vulkan
             )
+            if("@MAYAFLUX_AUDIO_BACKEND@" STREQUAL "PIPEWIRE_BACKEND")
+                target_link_libraries(MayaFlux::MayaFluxLib INTERFACE PkgConfig::PIPEWIRE)
+            else()
+                target_link_libraries(MayaFlux::MayaFluxLib INTERFACE PkgConfig::RtAudio)
+            endif()
+
         endif()
     endif()
 

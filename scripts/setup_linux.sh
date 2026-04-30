@@ -57,6 +57,7 @@ install_arch() {
         "libutf8proc"
         "fontconfig"
         "nlohmann-json"
+        "libpipewire"
     )
     echo -e "${YELLOW}Installing: ${PACKAGES[*]}${NC}"
     sudo pacman -Syu --noconfirm "${PACKAGES[@]}"

@@ -74,7 +74,9 @@ if(APPLE)
 endif()
 
 if(UNIX AND NOT APPLE)
-    target_include_directories(MayaFluxLib PRIVATE ${PIPEWIRE_INCLUDE_DIRS})
+    if(MAYAFLUX_AUDIO_BACKEND STREQUAL "PIPEWIRE_BACKEND")
+        target_include_directories(MayaFluxLib PRIVATE ${PIPEWIRE_INCLUDE_DIRS})
+    endif()
 endif()
 
 #==============================================================
@@ -134,6 +136,7 @@ else()
         target_link_libraries(MayaFluxLib PRIVATE oneDPL)
         target_link_libraries(MayaFluxLib PUBLIC fmt::fmt)
         target_link_libraries(MayaFluxLib PUBLIC Vulkan::Vulkan)
+        target_link_libraries(MayaFluxLib PUBLIC PkgConfig::RtAudio)
         target_link_libraries(MayaFluxLib PRIVATE "-framework CoreFoundation")
 
         message(STATUS "MayaFlux Journal: Using fmt library on macOS")
@@ -143,14 +146,18 @@ else()
         PkgConfig::Fontconfig
         )
 
-        target_link_libraries(MayaFluxLib PRIVATE ${PIPEWIRE_LIBRARIES})
-        message(STATUS "PipeWire backend enabled (${PIPEWIRE_VERSION})")
+        if(MAYAFLUX_AUDIO_BACKEND STREQUAL "PIPEWIRE_BACKEND")
+            target_link_libraries(MayaFluxLib PRIVATE ${PIPEWIRE_LIBRARIES})
+            message(STATUS "PipeWire backend enabled (${PIPEWIRE_VERSION})")
+        else()
+            target_link_libraries(MayaFluxLib PUBLIC PkgConfig::RtAudio)
+            message(STATUS "RtAudio backend enabled")
+        endif()
     endif()
 
     target_link_libraries(MayaFluxLib PUBLIC
         TBB::tbb
         glm::glm
-        PkgConfig::RtAudio
         PkgConfig::Eigen
         PkgConfig::Glfw
         PkgConfig::HIDAPI
