@@ -148,6 +148,8 @@ private:
         enum pw_stream_state new_state,
         const char* error);
 
+    static void on_io_changed(void* userdata, uint32_t id, void* area, uint32_t size);
+
     void build_output_format_params(uint8_t* buf, uint32_t buf_size,
         const struct spa_pod** params, uint32_t& n_params);
 
@@ -165,11 +167,14 @@ private:
     uint32_t m_output_node_id;
     uint32_t m_input_node_id;
 
+    spa_io_rate_match* m_rate_match = nullptr;
+
     std::vector<double> m_input_staging;
     std::atomic<bool> m_input_ready { false };
 
     /** @brief Negotiated quantum; updated from param_changed before first process call */
     std::atomic<uint32_t> m_negotiated_frames { 0 };
+
 #endif
 
     GlobalStreamInfo& m_stream_info;

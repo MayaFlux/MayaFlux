@@ -8,9 +8,6 @@
 #include <spa/pod/builder.h>
 #include <spa/utils/result.h>
 
-#include <algorithm>
-#include <cstddef>
-
 namespace MayaFlux::Core {
 
 namespace {
@@ -295,6 +292,13 @@ void PipewireStream::on_input_process(void* userdata)
     if (!pb)
         return;
 
+    spa_meta_header* h = static_cast<spa_meta_header*>(
+        spa_buffer_find_meta_data(pb->buffer, SPA_META_Header, sizeof(*h)));
+
+    if (h && (h->flags & SPA_META_HEADER_FLAG_CORRUPTED)) {
+        MF_RT_WARN(C, X, "xrun detected on input buffer");
+    }
+
     spa_buffer* sb = pb->buffer;
     const uint32_t ch = self->m_stream_info.input.channels;
     const uint32_t frames = self->m_negotiated_frames.load(std::memory_order_relaxed);
@@ -354,7 +358,23 @@ void PipewireStream::on_output_process(void* userdata)
     spa_buffer* sb = pb->buffer;
     void* data = sb->datas[0].data;
     const uint32_t ch = self->m_stream_info.output.channels;
-    uint32_t frames = self->m_negotiated_frames.load(std::memory_order_relaxed);
+
+    uint32_t frames = self->m_rate_match
+        ? self->m_rate_match->size
+        : self->m_negotiated_frames.load(std::memory_order_relaxed);
+
+    spa_meta_header* h = static_cast<spa_meta_header*>(
+        spa_buffer_find_meta_data(pb->buffer, SPA_META_Header, sizeof(*h)));
+
+    const bool xrun = h && (h->flags & SPA_META_HEADER_FLAG_CORRUPTED);
+    if (xrun) {
+        MF_RT_WARN(C, X, "output xrun");
+        if (self->m_stream_info.handle_xruns) {
+            std::memset(data, 0, frames * ch * sizeof(double));
+            pw_stream_queue_buffer(self->m_output_stream, pb);
+            return;
+        }
+    }
 
     if (frames == 0)
         frames = sb->datas[0].chunk->size / (ch * sizeof(double));
@@ -440,6 +460,14 @@ void PipewireStream::on_state_changed(
     }
 }
 
+void PipewireStream::on_io_changed(void* userdata, uint32_t id, void* area, uint32_t)
+{
+    auto* self = static_cast<PipewireStream*>(userdata);
+    if (id == SPA_IO_RateMatch && area) {
+        self->m_rate_match = static_cast<spa_io_rate_match*>(area);
+    }
+}
+
 void PipewireStream::open()
 {
     if (m_is_open.load())
@@ -472,6 +500,7 @@ void PipewireStream::open()
     m_output_stream_events = pw_stream_events {
         .version = PW_VERSION_STREAM_EVENTS,
         .state_changed = on_state_changed,
+        .io_changed = on_io_changed,
         .param_changed = on_param_changed,
         .process = on_output_process,
     };

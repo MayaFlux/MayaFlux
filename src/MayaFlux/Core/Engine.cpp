@@ -148,7 +148,7 @@ void Engine::Init(const GlobalStreamInfo& streamInfo, const GlobalGraphicsConfig
 
     m_is_initialized = true;
 
-    MF_PRINT(Journal::Component::Core, Journal::Context::Init, "Audio backend: RtAudio, Sample rate: {}", m_stream_info.sample_rate);
+    MF_PRINT(Journal::Component::Core, Journal::Context::Init, "Audio backend: {}, Sample rate: {}", Reflect::enum_to_string(m_stream_info.backend), m_stream_info.sample_rate);
 }
 
 void Engine::Start()
