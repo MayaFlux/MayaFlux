@@ -255,6 +255,10 @@ public:
      */
     void stop() override;
 
+    void pause() override;
+
+    void resume() override;
+
     /**
      * @brief Terminates the audio stream and releases all resources
      *

@@ -135,6 +135,8 @@ public:
     void open() override;
     void start() override;
     void stop() override;
+    void pause() override;
+    void resume() override;
     void close() override;
 
     [[nodiscard]] bool is_running() const override;
@@ -191,6 +193,7 @@ private:
 
     std::atomic<bool> m_is_open { false };
     std::atomic<bool> m_is_running { false };
+    std::atomic<bool> m_is_paused { false };
 };
 
 } // namespace MayaFlux::Core

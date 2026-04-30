@@ -331,6 +331,16 @@ void RtAudioStream::stop()
     }
 }
 
+void RtAudioStream::pause()
+{
+    stop();
+}
+
+void RtAudioStream::resume()
+{
+    start();
+}
+
 void RtAudioStream::close()
 {
     if (!m_isOpen || !m_context) {
