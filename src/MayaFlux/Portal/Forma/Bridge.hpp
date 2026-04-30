@@ -291,9 +291,7 @@ public:
      * that calls mapped.sync(). The routine is stored in outbound_tasks
      * and cancelled by unbind().
      *
-     * @p mapped must outlive the Bridge registration. The sync routine
-     * captures @p mapped by reference -- the caller is responsible for
-     * ensuring the Mapped<T> is not destroyed while the Bridge holds it.
+     * @p mapped must outlive the Bridge registration.
      *
      * @tparam T      MappedState value type.
      * @param mapped  Fully constructed Mapped<T>, typically from create_element.
