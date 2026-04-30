@@ -74,6 +74,7 @@
 #include "Buffers/Container/SoundContainerBuffer.hpp"
 #include "Buffers/Container/SoundStreamWriter.hpp"
 #include "Buffers/Container/VideoContainerBuffer.hpp"
+#include "Buffers/Forma/FormaBuffer.hpp"
 #include "Buffers/Geometry/GeometryBuffer.hpp"
 #include "Buffers/Geometry/GeometryWriteProcessor.hpp"
 #include "Buffers/Geometry/MeshBuffer.hpp"
@@ -97,6 +98,7 @@
 #include "Buffers/Textures/NodeTextureBuffer.hpp"
 #include "Buffers/Textures/TextureBuffer.hpp"
 #include "Buffers/Textures/TextureWriteProcessor.hpp"
+#include "MayaFlux/Buffers/Forma/FormaBindingsProcessor.hpp"
 
 #include "Kriya/Awaiters/DelayAwaiters.hpp"
 #include "Kriya/Awaiters/EventAwaiter.hpp"
@@ -139,6 +141,9 @@
 
 #include "Portal/Text/InkPress.hpp"
 #include "Portal/Text/Text.hpp"
+
+#include "Portal/Forma/Forma.hpp"
+#include "Portal/Forma/Primitives/Geometry.hpp"
 
 #include "IO/IOManager.hpp"
 #include "IO/ImageReader.hpp"

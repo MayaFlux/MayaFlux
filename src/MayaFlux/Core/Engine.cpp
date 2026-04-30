@@ -9,6 +9,8 @@
 #include "MayaFlux/Vruta/EventManager.hpp"
 #include "MayaFlux/Vruta/Scheduler.hpp"
 
+#include "MayaFlux/Portal/Forma/Forma.hpp"
+
 #include "MayaFlux/Journal/Archivist.hpp"
 
 #ifdef MAYAFLUX_PLATFORM_MACOS
@@ -155,6 +157,7 @@ void Engine::Start()
         Init();
     }
     m_subsystem_manager->start_all_subsystems();
+    Portal::Forma::initialize(m_buffer_manager, m_scheduler, m_event_manager);
 }
 
 void Engine::Pause()
@@ -316,6 +319,8 @@ void Engine::End()
 {
     if (!m_is_initialized)
         return;
+
+    Portal::Forma::shutdown();
 
     if (m_node_graph_manager) {
         m_node_graph_manager->terminate_active_processing();
