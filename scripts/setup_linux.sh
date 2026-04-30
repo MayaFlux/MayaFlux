@@ -110,6 +110,7 @@ install_fedora() {
         "utf8proc-devel"
         "fontconfig-devel"
         "json-devel"
+        "pipewire-devel"
         "git"
     )
 

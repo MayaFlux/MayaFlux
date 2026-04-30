@@ -51,6 +51,7 @@ BuildRequires:  freetype-devel
 BuildRequires:  utf8proc-devel
 BuildRequires:  fontconfig-devel
 BuildRequires:  json-devel
+BuildRequires:  pipewire-devel
 BuildRequires:  git
 
 # Runtime = BuildRequires (all needed for live coding/JIT)
@@ -89,6 +90,7 @@ Requires:       asio-standalone
 Requires:       freetype-devel
 Requires:       utf8proc-devel
 Requires:       fontconfig-devel
+Requires:       pipewire-devel
 Requires:       json-devel
 
 Provides:       mayaflux = %{version}-%{release}
@@ -143,6 +145,13 @@ export MAYAFLUX_ROOT="%{_prefix}"
 export CMAKE_PREFIX_PATH="%{_prefix}:${CMAKE_PREFIX_PATH}"
 EOF
 
+mkdir -p %{buildroot}%{_sysconfdir}/security/limits.d
+cat > %{buildroot}%{_sysconfdir}/security/limits.d/50-mayaflux.conf << 'EOF'
+@mayaflux    -    rtprio     95
+@mayaflux    -    memlock    unlimited
+@mayaflux    -    nice       -19
+EOF
+
 %check
 %{buildroot}%{_bindir}/lila_server --version 2>&1 | grep -q "MayaFlux\|version" || :
 
@@ -160,9 +169,19 @@ EOF
 %{_libdir}/pkgconfig/*.pc
 %{_libdir}/cmake/MayaFlux/
 %config(noreplace) %{_sysconfdir}/profile.d/mayaflux.sh
+%config(noreplace) %{_sysconfdir}/security/limits.d/50-mayaflux.conf
+
+%pre
+getent group mayaflux > /dev/null 2>&1 || groupadd --system mayaflux
 
 %post -p /sbin/ldconfig
+
+%preun
+
 %postun -p /sbin/ldconfig
+if [ "$1" -eq 0 ]; then
+    groupdel mayaflux 2>/dev/null || true
+fi
 
 %changelog
 * Wed Apr 22 2026 MayaFlux Collective <mayafluxcollective@proton.me> - 0.4.0-0.dev

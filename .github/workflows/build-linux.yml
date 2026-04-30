@@ -92,6 +92,7 @@ jobs:
             json-devel \
             ninja-build \
             wayland-devel \
+            pipewire-devel \
             ccache
 
       - name: Setup ccache
