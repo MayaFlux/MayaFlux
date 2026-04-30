@@ -162,6 +162,7 @@ install_ubuntu() {
         "libfreetype-dev"
         "libutf8proc-dev"
         "libfontconfig1-dev"
+        "libpipewire-0.3-dev"
         "nlohmann-json3-dev"
     )
 
