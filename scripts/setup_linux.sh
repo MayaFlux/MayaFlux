@@ -57,6 +57,7 @@ install_arch() {
         "libutf8proc"
         "fontconfig"
         "nlohmann-json"
+        "libpipewire"
     )
     echo -e "${YELLOW}Installing: ${PACKAGES[*]}${NC}"
     sudo pacman -Syu --noconfirm "${PACKAGES[@]}"
@@ -110,6 +111,7 @@ install_fedora() {
         "utf8proc-devel"
         "fontconfig-devel"
         "json-devel"
+        "pipewire-devel"
         "git"
     )
 
@@ -162,6 +164,7 @@ install_ubuntu() {
         "libfreetype-dev"
         "libutf8proc-dev"
         "libfontconfig1-dev"
+        "libpipewire-0.3-dev"
         "nlohmann-json3-dev"
     )
 

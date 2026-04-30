@@ -185,6 +185,22 @@ public:
     virtual void stop() = 0;
 
     /**
+     * @brief Temporarily suspends audio processing without releasing resources
+     *
+     * Pauses the flow of audio data while keeping the stream's configuration
+     * intact, allowing for quick resumption without the overhead of reopening.
+     */
+    virtual void pause() = 0;
+
+    /**
+     * @brief Resumes audio processing after a pause
+     *
+     * Restarts the flow of audio data after a pause, maintaining the existing
+     * stream configuration and resource allocations.
+     */
+    virtual void resume() = 0;
+
+    /**
      * @brief Terminates the audio stream and releases all resources
      *
      * Completely shuts down the audio stream, releasing all allocated

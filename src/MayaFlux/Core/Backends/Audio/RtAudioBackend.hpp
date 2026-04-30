@@ -3,7 +3,6 @@
 
 #ifdef RTAUDIO_BACKEND
 #include "RtAudio.h"
-#endif
 
 namespace MayaFlux::Core {
 
@@ -256,6 +255,10 @@ public:
      */
     void stop() override;
 
+    void pause() override;
+
+    void resume() override;
+
     /**
      * @brief Terminates the audio stream and releases all resources
      *
@@ -346,3 +349,5 @@ private:
 };
 
 } // namespace MayaFlux::Core
+
+#endif
