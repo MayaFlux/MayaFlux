@@ -121,7 +121,7 @@ void FormaProcessor::processing_function(const std::shared_ptr<Buffer>& buffer)
 
     upload_to_gpu(
         m_active.data(),
-        std::min(required, vk->get_size_bytes()),
+        std::min<size_t>(required, vk->get_size_bytes()),
         vk,
         m_staging);
 
