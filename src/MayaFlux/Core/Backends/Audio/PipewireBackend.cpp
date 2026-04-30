@@ -519,7 +519,30 @@ void PipewireStream::open()
 
     pw_loop* loop = pw_thread_loop_get_loop(m_thread_loop);
 
-    const bool force_quantum = (m_stream_info.priority == GlobalStreamInfo::StreamPriority::REALTIME);
+    auto read_opt = [&](const char* key) -> std::optional<std::string> {
+        auto it = m_stream_info.backend_options.find(key);
+        if (it == m_stream_info.backend_options.end())
+            return std::nullopt;
+        try {
+            return std::any_cast<std::string>(it->second);
+        } catch (const std::bad_any_cast&) {
+            return std::nullopt;
+        }
+    };
+
+    auto read_bool = [&](const char* key) -> std::optional<bool> {
+        auto it = m_stream_info.backend_options.find(key);
+        if (it == m_stream_info.backend_options.end())
+            return std::nullopt;
+        try {
+            return std::any_cast<bool>(it->second);
+        } catch (const std::bad_any_cast&) {
+            return std::nullopt;
+        }
+    };
+
+    const bool force_quantum = (m_stream_info.priority == GlobalStreamInfo::StreamPriority::REALTIME) && !read_bool("pipewire.disable_force_quantum").value_or(false);
+
     const std::string latency_str = std::to_string(m_stream_info.buffer_size) + "/" + std::to_string(m_stream_info.sample_rate);
 
     pw_properties* props = pw_properties_new(
@@ -563,6 +586,15 @@ void PipewireStream::open()
     build_output_format_params(buf, sizeof(buf), params, n_params);
 
     const uint32_t flags = PW_STREAM_FLAG_AUTOCONNECT | PW_STREAM_FLAG_MAP_BUFFERS | PW_STREAM_FLAG_RT_PROCESS;
+
+    if (auto v = read_opt("pipewire.node.name"))
+        pw_properties_set(props, PW_KEY_NODE_NAME, v->c_str());
+
+    if (auto v = read_opt("pipewire.role"))
+        pw_properties_set(props, PW_KEY_MEDIA_ROLE, v->c_str());
+
+    if (auto v = read_opt("pipewire.target_object"))
+        pw_properties_set(props, PW_KEY_TARGET_OBJECT, v->c_str());
 
     int ret = pw_stream_connect(
         m_output_stream,
