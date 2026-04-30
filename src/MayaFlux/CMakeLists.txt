@@ -73,6 +73,10 @@ if(APPLE)
     target_include_directories(MayaFluxLib PUBLIC ${oneDPL_INCLUDE_DIRS})
 endif()
 
+if(UNIX AND NOT APPLE)
+    target_include_directories(MayaFluxLib PRIVATE ${PIPEWIRE_INCLUDE_DIRS})
+endif()
+
 #==============================================================
 #                   Target Links
 #==============================================================
@@ -138,6 +142,9 @@ else()
         PkgConfig::Vulkan
         PkgConfig::Fontconfig
         )
+
+        target_link_libraries(MayaFluxLib PRIVATE ${PIPEWIRE_LIBRARIES})
+        message(STATUS "PipeWire backend enabled (${PIPEWIRE_VERSION})")
     endif()
 
     target_link_libraries(MayaFluxLib PUBLIC

@@ -43,6 +43,13 @@ else()
         pkg_search_module(HIDAPI REQUIRED IMPORTED_TARGET
             hidapi-hidraw hidapi-libusb hidapi)
         pkg_check_modules(Fontconfig REQUIRED IMPORTED_TARGET fontconfig)
+        pkg_check_modules(PIPEWIRE REQUIRED IMPORTED_TARGET libpipewire-0.3)
+
+        if(PIPEWIRE_FOUND)
+            add_compile_definitions(PIPEWIRE_BACKEND)
+        else()
+            add_compile_definitions(RTAUDIO_BACKEND)
+        endif()
     endif()
 
     find_package(TBB REQUIRED)

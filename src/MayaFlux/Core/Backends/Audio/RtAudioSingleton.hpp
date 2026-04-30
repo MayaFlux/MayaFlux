@@ -2,7 +2,6 @@
 
 #ifdef RTAUDIO_BACKEND
 #include "RtAudio.h"
-#endif
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
@@ -173,3 +172,4 @@ public:
 };
 
 }
+#endif

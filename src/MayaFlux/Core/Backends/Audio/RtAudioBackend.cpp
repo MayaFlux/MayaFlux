@@ -1,5 +1,8 @@
 #include "RtAudioBackend.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
+
+#ifdef RTAUDIO_BACKEND
+
 #include "RtAudioSingleton.hpp"
 
 namespace {
@@ -414,3 +417,5 @@ std::unique_ptr<IAudioBackend> AudioBackendFactory::create_backend(
 }
 
 } // namespace MayaFlux::Core
+
+#endif

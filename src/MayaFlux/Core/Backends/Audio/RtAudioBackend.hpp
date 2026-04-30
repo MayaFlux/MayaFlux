@@ -3,7 +3,6 @@
 
 #ifdef RTAUDIO_BACKEND
 #include "RtAudio.h"
-#endif
 
 namespace MayaFlux::Core {
 
@@ -346,3 +345,5 @@ private:
 };
 
 } // namespace MayaFlux::Core
+
+#endif

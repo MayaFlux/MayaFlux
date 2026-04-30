@@ -10,6 +10,9 @@
 #include "MayaFlux/Nodes/Generators/Sine.hpp"
 
 #include "MayaFlux/Nodes/NodeGraphManager.hpp"
+
+#ifdef RTAUDIO_BACKEND
+
 #include "RtAudio.h"
 
 // Define INTEGRATION_TEST to enable tests that interact with real audio devices
@@ -545,3 +548,5 @@ TEST_F(RtAudioUtilityTest, BackendFactoryValidation)
 }
 
 } // namespace MayaFlux::Test
+
+#endif
