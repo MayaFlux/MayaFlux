@@ -403,29 +403,6 @@ int RtAudioStream::rtAudioCallback(
     return 0;
 }
 
-std::unique_ptr<IAudioBackend> AudioBackendFactory::create_backend(
-    Core::AudioBackendType type,
-    std::optional<Core::GlobalStreamInfo::AudioApi> api_preference)
-{
-    switch (type) {
-    case Core::AudioBackendType::RTAUDIO:
-        if (api_preference) {
-            auto pref_api = to_rtaudio_api(*api_preference);
-            if (pref_api != RtAudio::UNSPECIFIED) {
-                MF_INFO(Journal::Component::Core, Journal::Context::AudioBackend,
-                    "Setting RtAudio preferred API to {}",
-                    RtAudio::getApiDisplayName(pref_api));
-
-                RtAudioSingleton::set_preferred_api(
-                    to_rtaudio_api(*api_preference));
-            }
-        }
-        return std::make_unique<RtAudioBackend>();
-    default:
-        throw std::runtime_error("Unsupported audio backend type");
-    }
-}
-
 } // namespace MayaFlux::Core
 
 #endif
