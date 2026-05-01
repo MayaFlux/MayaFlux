@@ -21,39 +21,38 @@ void GLFWSingleton::configure(const GlfwPreInitConfig& config)
         return;
     }
 
-    if (config.platform != GlfwPreInitConfig::Platform::Default) {
-        int glfw_platform = GLFW_ANY_PLATFORM;
-        switch (config.platform) {
-        case GlfwPreInitConfig::Platform::Wayland:
-            glfw_platform = GLFW_PLATFORM_WAYLAND;
-            break;
-        case GlfwPreInitConfig::Platform::X11:
+    int glfw_platform = GLFW_ANY_PLATFORM;
+    switch (config.platform) {
+    case GlfwPreInitConfig::Platform::Wayland:
+        glfw_platform = GLFW_PLATFORM_WAYLAND;
+        break;
+    case GlfwPreInitConfig::Platform::X11:
+        glfw_platform = GLFW_PLATFORM_X11;
+        break;
+    case GlfwPreInitConfig::Platform::Default:
+        if (config.force_x11_on_wayland && std::getenv("WAYLAND_DISPLAY") != nullptr)
             glfw_platform = GLFW_PLATFORM_X11;
-            break;
-        default:
-            break;
-        }
-        glfwInitHint(GLFW_PLATFORM, glfw_platform);
+        break;
     }
+
+    if (glfw_platform != GLFW_ANY_PLATFORM)
+        glfwInitHint(GLFW_PLATFORM, glfw_platform);
 
     glfwInitHint(GLFW_WAYLAND_LIBDECOR, config.disable_libdecor ? GLFW_FALSE : GLFW_TRUE);
     glfwInitHint(GLFW_COCOA_CHDIR_RESOURCES, config.cocoa_chdir_resources ? GLFW_TRUE : GLFW_FALSE);
     glfwInitHint(GLFW_COCOA_MENUBAR, config.cocoa_menubar ? GLFW_TRUE : GLFW_FALSE);
 
     s_configured = true;
+    s_preinit_config = config;
 
     MF_INFO(Journal::Component::Core, Journal::Context::WindowingSubsystem,
         "GLFW pre-initialization configured: platform={}, libdecor={}, cocoa_chdir_resources={}, cocoa_menubar={}",
-        (config.platform == GlfwPreInitConfig::Platform::Default
-                ? "default"
-                : config.platform == GlfwPreInitConfig::Platform::Wayland
-                ? "wayland"
-                : "x11"),
+        glfw_platform == GLFW_PLATFORM_WAYLAND   ? "wayland"
+            : glfw_platform == GLFW_PLATFORM_X11 ? "x11"
+                                                 : "default",
         config.disable_libdecor ? "disabled" : "enabled",
         config.cocoa_chdir_resources ? "enabled" : "disabled",
         config.cocoa_menubar ? "enabled" : "disabled");
-
-    s_preinit_config = config;
 }
 
 bool GLFWSingleton::initialize()

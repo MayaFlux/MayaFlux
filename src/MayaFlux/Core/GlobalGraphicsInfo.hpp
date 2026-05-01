@@ -199,6 +199,11 @@ struct GlfwPreInitConfig {
 
     /** @brief Request OpenGL debug context (if using OpenGL backend) */
     bool headless {};
+
+    /** @brief Force X11/XCB surface creation when a Wayland session is detected.
+     *  Required for Vulkan capture and profiling layers that do not implement
+     *  VK_KHR_wayland_surface.  XWayland must be present. */
+    bool force_x11_on_wayland = false;
 };
 
 /**
