@@ -172,7 +172,7 @@ endif()
 
 if(NOT TARGET miniz)
     find_library(MINIZ_LIB NAMES miniz
-        PATHS "${_MAYAFLUX_LIBDIR}"
+        PATHS "${PACKAGE_PREFIX_DIR}/${_MAYAFLUX_LIBDIR}"
         NO_DEFAULT_PATH
     )
     add_library(miniz STATIC IMPORTED)
