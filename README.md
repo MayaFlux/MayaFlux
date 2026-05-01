@@ -7,6 +7,8 @@
 
 > **A C++20/23 framework for real-time computation across sound, geometry, image, and network: unified at the substrate level, not bridged at the API level.**
 
+![Logo](docs/assets/mayaflux_logo_reference.svg)
+
 Sound, geometry, image, and control data are not separate domains in MayaFlux. They are the same numerical substrate with a scheduling annotation deciding where each buffer cycle goes. A field driving mesh vertex deformation is the same field shaping granular reconstruction of audio. A network message routes into the node graph, triggers a coroutine, and reshapes geometry and audio simultaneously. Zero-copy views mean audio is not converted to texture: it is texture, accessed through a different lens over the same memory.
 
 The coordination problem this creates is real: audio runs in hardware callbacks, graphics on frame-rate cycles, input arrives asynchronously, user code needs flexible timing. MayaFlux handles this through lock-free dispatch, C++20 coroutines, and compile-time data abstraction (no mutexes) in the real-time path, no domain-specific rewrites at execution context boundaries, no central scheduler overhead.
