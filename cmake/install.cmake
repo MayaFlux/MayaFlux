@@ -1,7 +1,7 @@
 install(TARGETS MayaFluxLib
     RUNTIME DESTINATION bin
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/src/MayaFlux/
@@ -24,7 +24,7 @@ if(UNIX)
     install(FILES
         ${CMAKE_CURRENT_BINARY_DIR}/MayaFlux.pc
         ${CMAKE_CURRENT_BINARY_DIR}/Lila.pc
-        DESTINATION lib/pkgconfig)
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
 endif()
 
 configure_file(
@@ -36,7 +36,7 @@ configure_file(
 if(UNIX)
     install(FILES
         ${CMAKE_CURRENT_BINARY_DIR}/MayaFluxHost.pc
-        DESTINATION lib/pkgconfig)
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
 endif()
 
 install(DIRECTORY ${SHADER_OUTPUT_DIR}
@@ -46,8 +46,8 @@ install(DIRECTORY ${SHADER_OUTPUT_DIR}
 
 install(TARGETS Lila
     RUNTIME DESTINATION bin
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 
 install(FILES
@@ -71,8 +71,8 @@ install(TARGETS lila_server RUNTIME DESTINATION bin)
 
 install(TARGETS MayaFluxHost
     RUNTIME DESTINATION bin
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 
 install(FILES
@@ -86,7 +86,7 @@ install(DIRECTORY ${CMAKE_SOURCE_DIR}/third_party/tinyexr/
 )
 
 install(TARGETS miniz
-    ARCHIVE DESTINATION lib
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 
 # ============================================================================
@@ -101,7 +101,7 @@ include(CMakePackageConfigHelpers)
 configure_package_config_file(
     ${CMAKE_SOURCE_DIR}/cmake/MayaFluxConfig.cmake.in
     ${CMAKE_CURRENT_BINARY_DIR}/MayaFluxConfig.cmake
-    INSTALL_DESTINATION lib/cmake/MayaFlux
+    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/MayaFlux
     PATH_VARS CMAKE_INSTALL_PREFIX
 )
 
@@ -114,7 +114,7 @@ write_basic_package_version_file(
 install(FILES
     ${CMAKE_CURRENT_BINARY_DIR}/MayaFluxConfig.cmake
     ${CMAKE_CURRENT_BINARY_DIR}/MayaFluxConfigVersion.cmake
-    DESTINATION lib/cmake/MayaFlux
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/MayaFlux
 )
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
