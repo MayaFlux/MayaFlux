@@ -1,3 +1,5 @@
+include(GNUInstallDirs)
+
 if(WIN32)
     message(STATUS "=== Windows Dependency Detection ===")
 

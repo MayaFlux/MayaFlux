@@ -125,13 +125,6 @@ and live coding features. This is intentional.
 %install
 %cmake_install
 
-if [ "%{_libdir}" != "/usr/lib" ]; then
-    mkdir -p %{buildroot}%{_libdir}
-    mv %{buildroot}/usr/lib/*.so* %{buildroot}%{_libdir}/ 2>/dev/null || true
-    mv %{buildroot}/usr/lib/pkgconfig %{buildroot}%{_libdir}/ 2>/dev/null || true
-    mv %{buildroot}/usr/lib/cmake %{buildroot}%{_libdir}/ 2>/dev/null || true
-fi
-
 mkdir -p %{buildroot}%{_sysconfdir}/profile.d
 cat > %{buildroot}%{_sysconfdir}/profile.d/mayaflux.sh << 'EOF'
 export MAYAFLUX_ROOT="%{_prefix}"
