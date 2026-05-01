@@ -20,6 +20,10 @@
 #include "MayaFlux/Transitive/Parallel/Dispatch.hpp"
 #endif
 
+#ifdef MAYAFLUX_PLATFORM_LINUX
+#include <csignal>
+#endif
+
 namespace MayaFlux::Core {
 
 //-------------------------------------------------------------------------
@@ -202,8 +206,35 @@ void Engine::await_shutdown()
 #elif defined(MAYAFLUX_PLATFORM_WINDOWS)
     run_windows_event_loop();
 #else
-    // Simple blocking wait on other platforms
-    std::cin.get();
+    static std::atomic<bool> s_signal_received { false };
+    s_signal_received.store(false, std::memory_order_relaxed);
+
+    struct sigaction sa {};
+    sa.sa_handler = [](int) { s_signal_received.store(true, std::memory_order_release); };
+    sigaction(SIGINT, &sa, nullptr);
+    sigaction(SIGTERM, &sa, nullptr);
+
+    bool has_tty = isatty(STDIN_FILENO);
+    if (has_tty) {
+        while (!s_signal_received.load(std::memory_order_acquire)) {
+            fd_set fds;
+            FD_ZERO(&fds);
+            FD_SET(STDIN_FILENO, &fds);
+            timeval tv { .tv_sec = 0, .tv_usec = 100000 };
+            if (select(1, &fds, nullptr, nullptr, &tv) > 0) {
+                char c {};
+                if (read(STDIN_FILENO, &c, 1) > 0 && c == '\n')
+                    break;
+            }
+        }
+    } else {
+        sigset_t mask;
+        sigfillset(&mask);
+        sigdelset(&mask, SIGINT);
+        sigdelset(&mask, SIGTERM);
+        sigsuspend(&mask);
+    }
+
 #endif
 
     m_should_shutdown.store(true, std::memory_order_release);
