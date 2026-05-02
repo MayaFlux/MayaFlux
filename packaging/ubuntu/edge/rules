@@ -10,6 +10,7 @@ override_dh_auto_configure:
 	dh_auto_configure \
 	  --buildsystem=cmake+ninja -- \
 	  -DCMAKE_CXX_STANDARD=23 \
+	  -DCMAKE_INSTALL_LIBDIR=lib \
 	  -DMAYAFLUX_SHIP_DEV=ON
 
 override_dh_auto_build-arch:

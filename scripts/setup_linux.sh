@@ -88,6 +88,7 @@ install_fedora() {
         "glfw-devel"
         "glm-devel"
         "eigen3-devel"
+        "glslc"
         "spirv-headers-devel"
         "spirv-cross-devel"
         "spirv-tools"
