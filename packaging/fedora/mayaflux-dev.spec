@@ -170,9 +170,10 @@ getent group mayaflux > /dev/null 2>&1 || groupadd --system mayaflux
 
 %preun
 
-%postun -p /sbin/ldconfig
-if [ "$1" -eq 0 ]; then
-    groupdel mayaflux 2>/dev/null || true
+%postun
+/sbin/ldconfig
+if [ $1 -eq 0 ]; then
+    groupdel mayaflux 2>/dev/null || :
 fi
 
 %changelog
