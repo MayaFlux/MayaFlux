@@ -1,16 +1,16 @@
 #pragma once
 
-#include "Domain.hpp"
+#include "Creator.hpp"
 #include "MayaFlux/Kriya/Timers.hpp"
 
 namespace MayaFlux {
 
 /**
- * @class TimeSpec
- * @brief Represents a timed activation operation for processing nodes, buffers, or networks.
+ * @struct TimeSpec
+ * @brief Duration operand for the entity >> Time(s) | DomainSpec syntax.
  *
  * The TimeSpec struct encapsulates the concept of activating a processing entity
- * for a specific duration and (optionally) on specific channels. It's designed to be used
+ * for a specific duration. It's designed to be used
  * with the stream operator (>>) and TemporalWrapper to create a fluent, expressive syntax
  * for computational flow programming.
  *
@@ -19,10 +19,14 @@ namespace MayaFlux {
  * intuitive, declarative way of expressing temporal operations compared to traditional
  * function calls.
  *
- * Example usage:
- * ```cpp
- * // Activate a processing node for 2 seconds
- * process_node >> Time(2.0);
+ * Carries only the activation duration. Channel binding is expressed at the
+ * domain site via DomainSpec::operator[]:
+ * @code
+ * node    >> Time(2.0) | Audio[0];
+ * node    >> Time(2.0) | Audio[{0, 1}];
+ * buffer  >> Time(2.0) | Audio[0];
+ * network >> Time(2.0) | Graphics;
+ * @endcode
  * ```
  *
  * The TimeSpec is part of a broader pattern of using operator overloading
@@ -30,54 +34,23 @@ namespace MayaFlux {
  */
 struct MAYAFLUX_API TimeSpec {
     double seconds;
-    std::optional<std::vector<uint32_t>> channels;
 
     /**
      * @brief Constructs a TimeSpec with the specified duration.
-     * @param s Duration of the operation in seconds.
+     * @param s Duration of the activation in seconds.
      */
-    TimeSpec(double s)
+    explicit TimeSpec(double s)
         : seconds(s)
-    {
-    }
-    /**
-     * @brief Constructs a TimeSpec with the specified duration and channels.
-     * @param s Duration of the operation in seconds.
-     * @param ch List of channels to activate.
-     */
-    TimeSpec(double s, std::vector<uint32_t> ch)
-        : seconds(s)
-        , channels(ch)
-    {
-    }
-    /**
-     * @brief Constructs a TimeSpec with the specified duration and a single channel.
-     * @param s Duration of the operation in seconds.
-     * @param ch Channel to activate.
-     */
-    TimeSpec(double s, uint32_t ch)
-        : seconds(s)
-        , channels(std::vector<uint32_t> { ch })
     {
     }
 };
 
 /**
  * @class TemporalWrapper
- * @brief Wraps an entity with a TimeSpec for temporal activation.
+ * @brief Intermediate produced by operator>> binding an entity to a TimeSpec.
  *
- * The TemporalWrapper class enables a fluent, expressive syntax for
- * activating processing entities (nodes, buffers, networks) for a specific duration,
- * using the stream operator (>>).
- *
- * Example usage:
- * ```cpp
- * // Activate a processing node for 2 seconds
- * process_node >> Time(2.0);
- * ```
- *
- * This is part of a broader pattern of using operator overloading to create
- * a domain-specific language for computational flow programming within C++.
+ * Consumed by operator|(TemporalWrapper, CreationContext) which resolves the
+ * domain and channel binding expressed by the right-hand DomainSpec.
  */
 template <typename T>
 class TemporalWrapper {
@@ -105,60 +78,24 @@ private:
 };
 
 /**
- * @brief Creates a TimeSpec with the specified duration and a single channel.
+ * @brief Constructs a TimeSpec for the given duration.
  *
- * This overload allows specifying a single channel to activate.
- *
- * Example usage:
- * ```cpp
- * // Activate a processing node for 2 seconds on channel 1
- * process_node >> Time(2.0, 1);
- * // Activate a processing node for 2 seconds on default 0 channel
- * process_node >> Time(2.0);
- * ```
+ * @code
+ * node >> Time(2.0) | Audio[0];
+ * @endcode
  *
  * @param seconds Duration in seconds.
- * @param channel Channel to activate.
- * @return A TimeSpec object representing the specified duration and channel.
+ * @return TimeSpec for use with operator>>.
  */
-MAYAFLUX_API TimeSpec Time(double seconds, uint32_t channel = 0);
+MAYAFLUX_API TimeSpec Time(double seconds);
 
 /**
- * @brief Creates a TimeSpec with the specified duration and a list of channels.
+ * @brief Wraps an entity and a TimeSpec into a TemporalWrapper.
  *
- * This overload allows specifying multiple channels to activate.
- *
- * Example usage:
- * ```cpp
- * // Activate a processing node for 2 seconds on channels 0 and 1
- * process_node >> Time(2.0, {0, 1});
- * ```
- *
- * @param seconds Duration in seconds.
- * @param channels List of channels to activate.
- * @return A TimeSpec object representing the specified duration and channels.
- */
-MAYAFLUX_API TimeSpec Time(double seconds, std::vector<uint32_t> channels);
-
-/**
- * @brief Creates a TemporalWrapper for an entity and a TimeSpec.
- *
- * This operator overload implements the entity >> Time(seconds) syntax, which
- * wraps the entity with a TimeSpec for subsequent temporal activation.
- *
- * Example usage:
- * ```cpp
- * // Activate a processing node for 2 seconds
- * process_node >> Time(2.0);
- * ```
- *
- * This is part of a broader pattern of using operator overloading to create
- * a domain-specific language for computational flow programming within C++.
- *
- * @tparam T The type of the entity to wrap.
+ * @tparam T Entity type (Node, Buffer, or NodeNetwork).
  * @param entity The entity to activate.
- * @param spec The TimeSpec specifying the duration and channels.
- * @return A TemporalWrapper<T> representing the timed activation.
+ * @param spec   The duration specification.
+ * @return TemporalWrapper<T> ready for operator|.
  */
 template <typename T>
 TemporalWrapper<T> operator>>(std::shared_ptr<T> entity, const TimeSpec& spec)
@@ -167,48 +104,50 @@ TemporalWrapper<T> operator>>(std::shared_ptr<T> entity, const TimeSpec& spec)
 }
 
 /**
- * @brief Activates a node in a specific domain for the duration specified by the TemporalWrapper.
+ * @brief Activates a node in the domain and channel(s) expressed by ctx.
  *
- * This operator overload implements the syntax:
- * ```cpp
- * process_node >> Time(2.0) | domain;
- * ```
- * It activates the wrapped node in the given domain for the specified duration and channels.
+ * @code
+ * node >> Time(2.0) | Audio[0];
+ * node >> Time(2.0) | Audio[{0, 1}];
+ * @endcode
  *
- * @param wrapper The TemporalWrapper containing the node and timing information.
- * @param domain The domain in which to activate the node.
- * @return A shared pointer to the activated node.
+ * @param wrapper TemporalWrapper carrying the node and duration.
+ * @param ctx     CreationContext produced by DomainSpec or DomainSpec::operator[].
+ * @return Shared pointer to the activated node.
  */
-MAYAFLUX_API std::shared_ptr<Nodes::Node> operator|(const TemporalWrapper<Nodes::Node>& wrapper, Domain domain);
+MAYAFLUX_API std::shared_ptr<Nodes::Node> operator|(
+    const TemporalWrapper<Nodes::Node>& wrapper,
+    const CreationContext& ctx);
 
 /**
- * @brief Activates a buffer in a specific domain for the duration specified by the TemporalWrapper.
+ * @brief Activates a buffer in the domain and channel expressed by ctx.
  *
- * This operator overload implements the syntax:
- * ```cpp
- * buffer >> Time(2.0, 1) | domain;
- * ```
- * It activates the wrapped buffer in the given domain for the specified duration and channel(s).
+ * @code
+ * buffer >> Time(2.0) | Audio[0];
+ * @endcode
  *
- * @param wrapper The TemporalWrapper containing the buffer and timing information.
- * @param domain The domain in which to activate the buffer.
- * @return A shared pointer to the activated buffer.
+ * @param wrapper TemporalWrapper carrying the buffer and duration.
+ * @param ctx     CreationContext produced by DomainSpec or DomainSpec::operator[].
+ * @return Shared pointer to the activated buffer.
  */
-MAYAFLUX_API std::shared_ptr<Buffers::Buffer> operator|(const TemporalWrapper<Buffers::Buffer>& wrapper, Domain domain);
+MAYAFLUX_API std::shared_ptr<Buffers::Buffer> operator|(
+    const TemporalWrapper<Buffers::Buffer>& wrapper,
+    const CreationContext& ctx);
 
 /**
- * @brief Activates a node network in a specific domain for the duration specified by the TemporalWrapper.
+ * @brief Activates a node network in the domain and channel(s) expressed by ctx.
  *
- * This operator overload implements the syntax:
- * ```cpp
- * network >> Time(2.0, {0, 1}) | domain;
- * ```
- * It activates the wrapped node network in the given domain for the specified duration and channels.
+ * @code
+ * network >> Time(2.0) | Audio[{0, 1}];
+ * network >> Time(2.0) | Graphics;
+ * @endcode
  *
- * @param wrapper The TemporalWrapper containing the node network and timing information.
- * @param domain The domain in which to activate the network.
- * @return A shared pointer to the activated node network.
+ * @param wrapper TemporalWrapper carrying the network and duration.
+ * @param ctx     CreationContext produced by DomainSpec or DomainSpec::operator[].
+ * @return Shared pointer to the activated network.
  */
-MAYAFLUX_API std::shared_ptr<Nodes::Network::NodeNetwork> operator|(const TemporalWrapper<Nodes::Network::NodeNetwork>& wrapper, Domain domain);
+MAYAFLUX_API std::shared_ptr<Nodes::Network::NodeNetwork> operator|(
+    const TemporalWrapper<Nodes::Network::NodeNetwork>& wrapper,
+    const CreationContext& ctx);
 
-}
+} // namespace MayaFlux
