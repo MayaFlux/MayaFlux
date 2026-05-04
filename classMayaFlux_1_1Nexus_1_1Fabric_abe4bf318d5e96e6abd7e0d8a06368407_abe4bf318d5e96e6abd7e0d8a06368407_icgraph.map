@@ -1,0 +1,12 @@
+<map id="MayaFlux::Nexus::Fabric::name" name="MayaFlux::Nexus::Fabric::name">
+<area shape="rect" id="Node000001" title="Assigned name, empty if the Fabric was constructed outside a Tapestry." alt="" coords="561,69,743,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nexus_1_1StateEncoder_ad8fc616eab6adf9f0af8ec03db3f3b3e.html#ad8fc616eab6adf9f0af8ec03db3f3b3e" title="Encode the given Fabric to {base_path}.exr and {base_path}.json." alt="" coords="284,5,513,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="558,68,478,48,479,43,560,63"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nexus_1_1Fabric_a50280b4fa1257633fce6063188f4e458.html#a50280b4fa1257633fce6063188f4e458" title="Look up a registered influence function by name." alt="" coords="308,69,489,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="547,92,489,92,489,87,547,87"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nexus_1_1Fabric_aab6a346ae31eaaaee670c0a84df94a42.html#aab6a346ae31eaaaee670c0a84df94a42" title="Look up a registered perception function by name." alt="" coords="308,133,489,173"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="560,115,479,136,478,131,558,110"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nexus_1_1StateDecoder_a4bbc19256f60fe110344ba93422ab45c.html#a4bbc19256f60fe110344ba93422ab45c" title="Patch existing entities and construct missing ones from schema." alt="" coords="5,101,236,141"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="295,104,236,111,236,105,294,99"/>
+<area shape="poly" id="edge5_Node000005_Node000004" title=" " alt="" coords="294,144,236,137,236,132,295,139"/>
+</map>

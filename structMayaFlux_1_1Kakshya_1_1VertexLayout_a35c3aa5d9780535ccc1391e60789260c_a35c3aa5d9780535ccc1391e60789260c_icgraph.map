@@ -1,0 +1,21 @@
+<map id="MayaFlux::Kakshya::VertexLayout::for_lines" name="MayaFlux::Kakshya::VertexLayout::for_lines">
+<area shape="rect" id="Node000001" title="Factory: layout for LineVertex (position, color, thickness, uv, normal, tangent)" alt="" coords="579,237,751,277"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kakshya_a0742000d0b686e1c29359f59703ecccf.html#a0742000d0b686e1c29359f59703ecccf" title="Convert DataVariant to line&#45;vertex&#45;compatible bytes." alt="" coords="301,13,469,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="648,226,629,188,603,145,570,102,529,67,500,52,468,43,470,37,502,47,532,62,574,99,608,142,634,185,653,223"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Network_1_1FieldOperator_a72f536e0dec68e5cb9d20eea3a5a5ef6.html#a72f536e0dec68e5cb9d20eea3a5a5ef6" title="Get vertex layout describing vertex structure." alt="" coords="263,77,507,117"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="638,227,591,177,562,152,529,131,502,119,504,114,532,126,565,148,595,173,642,224"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1FormaProcessor_af52e83f359c4f12c30576e8fe3c42587.html#af52e83f359c4f12c30576e8fe3c42587" title="Called when this processor is attached to a buffer." alt="" coords="285,141,484,181"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="614,233,530,195,483,182,485,177,532,190,616,228"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1PathGeneratorNode_a2311404755197ec5b4aad0fb2e2639a4.html#a2311404755197ec5b4aad0fb2e2639a4" title="Create path generator with custom interpolation function." alt="" coords="239,205,531,245"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="565,248,531,244,531,239,566,243"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1PathGeneratorNode_a3d7dbfa965115dd6284a5e96cb20e180.html#a3d7dbfa965115dd6284a5e96cb20e180" title="Create path generator with interpolation mode." alt="" coords="239,269,531,309"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="566,271,531,275,531,269,565,265"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1TopologyGeneratorNode_ae848f76ace7050e302c2d0401490c0aa.html#ae848f76ace7050e302c2d0401490c0aa" title="Create with custom connection function." alt="" coords="285,333,485,388"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="616,285,532,323,486,338,484,333,530,318,613,280"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1TopologyGeneratorNode_a9cfcecca907cd156259693c33e2ac2dd.html#a9cfcecca907cd156259693c33e2ac2dd" title="Create topology generator." alt="" coords="285,412,485,467"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="644,290,597,347,566,377,532,402,486,422,484,418,529,397,563,372,593,343,640,286"/>
+<area shape="rect" id="Node000010" href="$namespaceMayaFlux_1_1Nodes_a354c2c1b51cd4110581d80110649f007.html#a354c2c1b51cd4110581d80110649f007" title="Deduce a VertexLayout from a vertex struct type." alt="" coords="292,491,477,531"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="655,291,638,335,612,386,577,437,556,460,532,480,506,495,478,504,477,499,504,490,529,476,552,456,573,434,608,383,633,332,650,289"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1GeometryWriteProcessor_a72fae44a0e5b4988dc7718cfef1c43ef.html#a72fae44a0e5b4988dc7718cfef1c43ef" title="The core processing function that must be implemented by derived classes." alt="" coords="5,5,191,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="287,35,191,35,191,30,287,30"/>
+</map>

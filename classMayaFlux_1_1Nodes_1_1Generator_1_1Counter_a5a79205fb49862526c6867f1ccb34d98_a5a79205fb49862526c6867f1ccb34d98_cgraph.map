@@ -1,0 +1,19 @@
+<map id="MayaFlux::Nodes::Generator::Counter::process_batch" name="MayaFlux::Nodes::Generator::Counter::process_batch">
+<area shape="rect" id="Node000001" title="Processes multiple samples at once." alt="" coords="5,133,213,173"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Counter_ada8aba131b5c5179a875e823d9e50d35.html#ada8aba131b5c5179a875e823d9e50d35" title="Processes a single data sample." alt="" coords="261,133,469,173"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="213,151,248,151,248,156,213,156"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Nodes_a2b661b58f860423fa6cf1d12c5accbd8.html#a2b661b58f860423fa6cf1d12c5accbd8" title="Atomically adds a flag to a node state." alt="" coords="527,5,715,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="392,131,448,93,516,55,533,48,535,53,519,60,451,97,395,135"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Nodes_aa4e4a2ece2a22b6774a5978e557ea25e.html#aa4e4a2ece2a22b6774a5978e557ea25e" title="Atomically decrements the modulator count by a specified amount." alt="" coords="527,69,715,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="445,131,527,110,529,115,447,136"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Nodes_a7d0374eb13e0238f520338b13823a627.html#a7d0374eb13e0238f520338b13823a627" title="Atomically increments the modulator count by a specified amount." alt="" coords="527,133,715,173"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="469,151,514,151,514,156,469,156"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Counter_a9a3072551dea8ab7e0d986379b9467ea.html#a9a3072551dea8ab7e0d986379b9467ea" title="Notifies all registered callbacks with the current context." alt="" coords="517,197,725,237"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="447,171,529,191,527,197,445,176"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_1_1Nodes_a7c82f258078606084a01f72dfba3bb92.html#a7c82f258078606084a01f72dfba3bb92" title="Attempts to reset the processed state of a node." alt="" coords="534,261,709,301"/>
+<area shape="poly" id="edge8_Node000002_Node000009" title=" " alt="" coords="395,172,451,209,519,247,535,254,533,259,516,252,448,214,392,176"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Counter_ad33ab730a656b67cf35577e20c60fdf5.html#ad33ab730a656b67cf35577e20c60fdf5" title="Retrieves the last created context object." alt="" coords="773,165,981,205"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="725,202,759,197,760,203,726,207"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Counter_a6a90bfc01e6603dd0472655d1d86b55c.html#a6a90bfc01e6603dd0472655d1d86b55c" title="Updates the context object for callbacks." alt="" coords="773,229,981,269"/>
+<area shape="poly" id="edge7_Node000006_Node000008" title=" " alt="" coords="726,228,760,232,759,237,725,233"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::relative_neighborhood_graph" name="MayaFlux::Kinesis::relative_neighborhood_graph">
+<area shape="rect" id="Node000001" title="Compute relative neighborhood graph." alt="" coords="5,5,217,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_aa7c4bdadf6a59ad467edbcc8b9b61c9d.html#aa7c4bdadf6a59ad467edbcc8b9b61c9d" title="Normalized distance from an anchor point using the specified metric." alt="" coords="265,5,415,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="218,23,251,23,251,28,218,28"/>
+</map>

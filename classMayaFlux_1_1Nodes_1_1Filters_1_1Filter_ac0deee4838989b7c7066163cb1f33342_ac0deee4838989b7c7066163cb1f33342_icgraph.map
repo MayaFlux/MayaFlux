@@ -1,0 +1,11 @@
+<map id="MayaFlux::Nodes::Filters::Filter::update_inputs" name="MayaFlux::Nodes::Filters::Filter::update_inputs">
+<area shape="rect" id="Node000001" title="Updates the input history buffer with a new sample." alt="" coords="479,49,661,89"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Filters_1_1Filter_a2209b1c029003086edcb2cbe67330a38.html#a2209b1c029003086edcb2cbe67330a38" title="Builds input history from external context or internal accumulation." alt="" coords="236,49,431,89"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="465,72,431,72,431,67,465,67"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Filters_1_1FIR_a071284d0c86de8a9edb5d7c575c3eba4.html#a071284d0c86de8a9edb5d7c575c3eba4" title="Processes a single sample through the FIR filter." alt="" coords="5,5,188,45"/>
+<area shape="poly" id="edge4_Node000001_Node000003" title=" " alt="" coords="480,49,430,40,304,29,188,27,188,21,304,24,431,35,481,44"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Filters_1_1IIR_a6859dce1d8f4deb25b345da083da8f0d.html#a6859dce1d8f4deb25b345da083da8f0d" title="Processes a single sample through the IIR filter." alt="" coords="5,81,188,121"/>
+<area shape="poly" id="edge5_Node000001_Node000004" title=" " alt="" coords="483,95,431,104,304,111,188,110,188,104,304,106,430,99,482,90"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="222,51,188,45,189,40,223,46"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="223,87,189,92,188,86,222,82"/>
+</map>

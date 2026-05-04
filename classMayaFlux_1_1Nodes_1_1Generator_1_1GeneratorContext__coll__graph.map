@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Generator::GeneratorContext" name="MayaFlux::Nodes::Generator::GeneratorContext">
+<area shape="rect" id="Node000001" title="Specialized context for generator node callbacks." alt="" coords="15,199,215,319"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1NodeContext.html" title="Base context class for node callbacks." alt="" coords="5,5,225,151"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="118,164,118,199,113,199,113,164"/>
+</map>

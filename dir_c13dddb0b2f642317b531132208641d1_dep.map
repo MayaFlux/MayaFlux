@@ -1,0 +1,22 @@
+<map id="Granular" name="Granular">
+<area shape="rect" id="node1" href="dir_c13dddb0b2f642317b531132208641d1.html" title="Granular" alt="" coords="277,52,356,77"/>
+<area shape="rect" id="node2" href="dir_803684b81091026666df1805667fc619.html" title="Analyzers" alt="" coords="5,125,92,151"/>
+<area shape="poly" id="edge1" href="dir_000020_000000.html" alt="" coords="278,79,106,124,104,119,276,74"/>
+<area shape="rect" id="edge1-headlabel" href="dir_000020_000000.html" title="2" alt="" coords="107,121,116,136"/>
+<area shape="rect" id="node3" href="dir_81db096d2aaea48a71391bb1e7bbefd6.html" title="Extractors" alt="" coords="117,125,205,151"/>
+<area shape="poly" id="edge2" href="dir_000020_000013.html" alt="" coords="293,80,200,122,198,117,291,75"/>
+<area shape="rect" id="edge2-headlabel" href="dir_000020_000013.html" title="1" alt="" coords="202,118,211,133"/>
+<area shape="rect" id="node4" href="dir_98903ca72f3f031f88d95d1d2149bfa4.html" title="Kakshya" alt="" coords="229,125,308,151"/>
+<area shape="poly" id="edge3" href="dir_000020_000031.html" alt="" coords="311,79,286,116,282,113,307,76"/>
+<area shape="rect" id="edge3-headlabel" href="dir_000020_000031.html" title="3" alt="" coords="289,108,298,122"/>
+<area shape="rect" id="node5" href="dir_9ac7cf9947ac29e0816dea7a976a04ec.html" title="Sorters" alt="" coords="332,125,400,151"/>
+<area shape="poly" id="edge4" href="dir_000020_000063.html" alt="" coords="327,76,352,113,348,116,323,79"/>
+<area shape="rect" id="edge4-headlabel" href="dir_000020_000063.html" title="2" alt="" coords="350,98,359,113"/>
+<area shape="rect" id="node6" href="dir_ab78b5ea7d224bd3b6129089c2cbe6d1.html" title="Journal" alt="" coords="425,125,491,151"/>
+<area shape="poly" id="edge5" href="dir_000020_000030.html" alt="" coords="341,75,424,117,422,121,338,80"/>
+<area shape="rect" id="edge5-headlabel" href="dir_000020_000030.html" title="1" alt="" coords="418,102,427,117"/>
+<area shape="rect" id="node7" href="dir_b13737862817de80cbf4a030cd1a2ce9.html" title="Executors" alt="" coords="515,125,601,151"/>
+<area shape="poly" id="edge6" href="dir_000020_000012.html" alt="" coords="356,75,506,119,505,124,355,80"/>
+<area shape="rect" id="edge6-headlabel" href="dir_000020_000012.html" title="1" alt="" coords="499,105,509,119"/>
+<area shape="rect" id="clust1" href="dir_59224ee19ea8965bf15e8bfbcae6837d.html" title="Workflows" alt="" coords="266,16,367,88"/>
+</map>

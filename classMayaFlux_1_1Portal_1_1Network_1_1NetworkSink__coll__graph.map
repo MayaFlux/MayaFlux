@@ -1,0 +1,5 @@
+<map id="MayaFlux::Portal::Network::NetworkSink" name="MayaFlux::Portal::Network::NetworkSink">
+<area shape="rect" id="Node000001" title="Owned handle for sending data through a network stream." alt="" coords="5,283,192,563"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Registry_1_1Service_1_1NetworkService.html" title="Backend network transport service interface." alt="" coords="8,5,189,220"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="101,220,101,266,96,266,96,220"/>
+</map>

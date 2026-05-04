@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::CompositeOpNode&lt; N &gt;" name="MayaFlux::Nodes::CompositeOpNode&lt; N &gt;">
+<area shape="rect" id="Node000001" title="Combines the outputs of N nodes using a composite operation." alt="" coords="117,803,323,1343"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Node.html" title="Base interface for all computational processing nodes." alt="" coords="5,5,203,755"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="172,768,177,802,172,803,166,769"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="227,333,447,427"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="330,441,268,803,263,802,325,440"/>
+</map>

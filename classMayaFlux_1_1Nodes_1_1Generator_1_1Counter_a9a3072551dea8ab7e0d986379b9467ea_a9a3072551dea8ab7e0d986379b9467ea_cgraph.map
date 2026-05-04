@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::Generator::Counter::notify_tick" name="MayaFlux::Nodes::Generator::Counter::notify_tick">
+<area shape="rect" id="Node000001" title="Notifies all registered callbacks with the current context." alt="" coords="5,37,213,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Counter_ad33ab730a656b67cf35577e20c60fdf5.html#ad33ab730a656b67cf35577e20c60fdf5" title="Retrieves the last created context object." alt="" coords="261,5,469,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="213,42,247,37,248,43,214,47"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Counter_a6a90bfc01e6603dd0472655d1d86b55c.html#a6a90bfc01e6603dd0472655d1d86b55c" title="Updates the context object for callbacks." alt="" coords="261,69,469,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="214,68,248,72,247,77,213,73"/>
+</map>

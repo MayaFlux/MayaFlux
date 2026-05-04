@@ -1,0 +1,11 @@
+<map id="MayaFlux::Nexus::Fabric" name="MayaFlux::Nexus::Fabric">
+<area shape="rect" id="Node000001" title="Orchestrates spatial indexing and scheduling for Nexus objects." alt="" coords="153,1205,326,1611"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler.html" title="Token&#45;based multimodal task scheduling system for unified coroutine processing." alt="" coords="5,508,228,1143"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="186,1142,196,1189,191,1190,181,1144"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Vruta_1_1SampleClock.html" title="Sample&#45;accurate timing system for audio processing domain." alt="" coords="9,220,224,445"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="119,446,119,492,114,492,114,446"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Vruta_1_1IClock.html" title="Abstract base interface for all clock types in the multimodal scheduling system." alt="" coords="32,5,201,171"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="119,184,119,220,114,220,114,184"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Vruta_1_1EventManager.html" title=" " alt="" coords="252,603,475,1048"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="320,1049,291,1182,290,1190,284,1189,286,1181,314,1048"/>
+</map>

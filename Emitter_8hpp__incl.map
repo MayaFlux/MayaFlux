@@ -1,0 +1,20 @@
+<map id="Emitter.hpp" name="Emitter.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="130,5,227,31"/>
+<area shape="rect" id="Node000002" href="$InfluenceContext_8hpp.html" title=" " alt="" coords="5,174,165,199"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="167,33,146,54,126,80,107,122,94,161,89,160,102,120,122,77,142,50,163,29"/>
+<area shape="rect" id="Node000004" href="$Sinks_8hpp.html" title=" " alt="" coords="136,86,221,111"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="181,31,181,72,176,72,176,31"/>
+<area shape="rect" id="Node000008" href="$VertexSpec_8hpp.html" title=" " alt="" coords="245,79,437,119"/>
+<area shape="poly" id="edge9_Node000001_Node000008" title=" " alt="" coords="203,28,291,70,289,75,201,33"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="30,262,141,287"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="88,200,88,248,83,248,83,200"/>
+<area shape="poly" id="edge4_Node000004_Node000002" title=" " alt="" coords="168,113,110,166,106,162,164,110"/>
+<area shape="rect" id="Node000005" href="$NDData_8hpp.html" title=" " alt="" coords="202,255,403,295"/>
+<area shape="poly" id="edge5_Node000004_Node000005" title=" " alt="" coords="185,110,201,154,230,205,268,244,264,248,226,208,197,156,180,112"/>
+<area shape="rect" id="Node000007" href="$VertexLayout_8hpp.html" title=" " alt="" coords="241,167,442,207"/>
+<area shape="poly" id="edge7_Node000004_Node000007" title=" " alt="" coords="202,109,295,158,292,162,199,114"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="251,343,355,368"/>
+<area shape="poly" id="edge6_Node000005_Node000006" title=" " alt="" coords="305,295,305,329,300,329,300,295"/>
+<area shape="poly" id="edge8_Node000007_Node000005" title=" " alt="" coords="335,208,319,243,314,241,330,206"/>
+<area shape="poly" id="edge10_Node000008_Node000007" title=" " alt="" coords="344,119,344,153,339,153,339,119"/>
+</map>

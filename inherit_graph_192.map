@@ -1,0 +1,11 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="Node000000" href="$classMayaFlux_1_1IO_1_1FileReader.html" title="Abstract interface for reading various file formats into containers." alt="" coords="5,80,191,105"/>
+<area shape="rect" id="Node000001" href="$classMayaFlux_1_1IO_1_1ImageReader.html" title="File reader for image formats (PNG, JPG, BMP, TGA, etc.)" alt="" coords="250,5,453,31"/>
+<area shape="poly" id="edge58_Node000000_Node000001" title=" " alt="" coords="142,72,238,39,283,28,284,33,239,45,144,78"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1ModelReader.html" title="Assimp&#45;backed loader for 3D model files." alt="" coords="250,55,453,80"/>
+<area shape="poly" id="edge59_Node000000_Node000002" title=" " alt="" coords="204,79,250,75,250,80,205,85"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1SoundFileReader.html" title="FFmpeg&#45;based audio file reader for MayaFlux." alt="" coords="239,104,464,129"/>
+<area shape="poly" id="edge60_Node000000_Node000003" title=" " alt="" coords="205,100,239,103,238,109,204,105"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1VideoFileReader.html" title="Streaming FFmpeg&#45;based video file reader with background decode." alt="" coords="240,153,463,179"/>
+<area shape="poly" id="edge61_Node000000_Node000004" title=" " alt="" coords="146,107,239,138,289,151,288,156,238,143,145,112"/>
+</map>

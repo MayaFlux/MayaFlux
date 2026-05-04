@@ -1,0 +1,15 @@
+<map id="MayaFlux::Nodes::GpuSync::ComputeOutNode" name="MayaFlux::Nodes::GpuSync::ComputeOutNode">
+<area shape="rect" id="Node000001" title="Node that reads back data from GPU buffer to CPU." alt="" coords="128,1289,320,1609"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GpuSync.html" title=" " alt="" coords="21,1027,213,1227"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="157,1239,173,1288,168,1290,152,1241"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Node.html" title="Base interface for all computational processing nodes." alt="" coords="5,248,203,977"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="116,991,117,1026,112,1026,111,991"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Nodes_1_1RoutingState.html" title="Represents the state of routing transitions for a node." alt="" coords="11,5,197,185"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="107,186,107,231,101,231,101,186"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1ComputeOutContext.html" title="Context for ComputeOutNode &#45; provides readback buffer access." alt="" coords="241,1087,433,1167"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="326,1168,288,1275,283,1273,321,1166"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1NodeContext.html" title="Base context class for node callbacks." alt="" coords="227,540,447,685"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="340,699,340,1087,335,1087,335,699"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1GpuVectorData.html" title="GPU&#45;uploadable 1D array data interface." alt="" coords="471,540,705,685"/>
+<area shape="poly" id="edge6_Node000005_Node000007" title=" " alt="" coords="569,699,526,834,496,908,461,979,420,1038,377,1088,373,1085,416,1035,456,976,492,906,521,832,564,698"/>
+</map>

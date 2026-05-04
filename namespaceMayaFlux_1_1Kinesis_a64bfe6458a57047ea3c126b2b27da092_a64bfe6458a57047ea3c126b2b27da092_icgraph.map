@@ -1,0 +1,28 @@
+<map id="MayaFlux::Kinesis::threshold" name="MayaFlux::Kinesis::threshold">
+<area shape="rect" id="Node000001" title="Zero output below threshold, pass through above." alt="" coords="771,137,920,177"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_aa4da80d21b907296f4a31fb1f7dffc10.html#aa4da80d21b907296f4a31fb1f7dffc10" title="Sample indices of onsets detected via spectral flux." alt="" coords="536,49,723,89"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="789,133,722,103,690,91,692,86,724,98,791,128"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a8b36f2451790fc10687fdc24d16aaeaa.html#a8b36f2451790fc10687fdc24d16aaeaa" title="Sample indices of local peak maxima in the full span." alt="" coords="538,137,721,177"/>
+<area shape="poly" id="edge8_Node000001_Node000008" title=" " alt="" coords="757,159,721,159,721,154,757,154"/>
+<area shape="rect" id="Node000010" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a3d8ba0d1f4f438f103ec563b69f9fa00.html#a3d8ba0d1f4f438f103ec563b69f9fa00" title="Sample indices of zero crossings in the full span." alt="" coords="543,225,716,280"/>
+<area shape="poly" id="edge12_Node000001_Node000010" title=" " alt="" coords="788,185,693,228,690,223,786,180"/>
+<area shape="poly" id="edge7_Node000002_Node000002" title=" " alt="" coords="666,37,653,30,629,27,609,29,596,34,592,40,594,48,589,49,586,39,593,30,607,24,629,22,655,25,668,32"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_a11837edee4362ad1cf81299f7a839903.html#a11837edee4362ad1cf81299f7a839903" title=" " alt="" coords="301,5,487,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="522,48,453,33,454,28,523,43"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_ae129bb49ae834db118119ab840148604.html#ae129bb49ae834db118119ab840148604" title="Detect onset times in single&#45;channel signal." alt="" coords="301,55,487,80"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="522,71,487,71,487,65,522,65"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Yantra_a58a028aaf5f6d7c7f1cfc02ee3f42fa1.html#a58a028aaf5f6d7c7f1cfc02ee3f42fa1" title=" " alt="" coords="300,105,488,145"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="532,95,479,107,478,102,531,89"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_a86b4ca968ea6805ca6e3dc7321a84a42.html#a86b4ca968ea6805ca6e3dc7321a84a42" title="Detect onset times per channel for multi&#45;channel signal." alt="" coords="36,47,221,87"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="288,70,222,70,222,65,288,65"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Yantra_1_1FeatureExtractor_a6625311b756518d90e3d5ef2e4125e10.html#a6625311b756518d90e3d5ef2e4125e10" title="Core extraction implementation &#45; delegates to ExtractionHelper." alt="" coords="5,169,252,209"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="298,151,213,171,211,166,297,145"/>
+<area shape="poly" id="edge11_Node000008_Node000008" title=" " alt="" coords="666,125,653,118,629,115,609,117,596,122,592,128,594,136,589,137,586,127,593,118,607,112,629,110,655,113,668,120"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_1_1Yantra_aacaccfb0af0418280f1f8b468bafc96d.html#aacaccfb0af0418280f1f8b468bafc96d" title=" " alt="" coords="300,169,488,209"/>
+<area shape="poly" id="edge9_Node000008_Node000009" title=" " alt="" coords="524,174,488,179,488,173,524,168"/>
+<area shape="poly" id="edge10_Node000009_Node000007" title=" " alt="" coords="286,191,252,191,252,186,286,186"/>
+<area shape="poly" id="edge15_Node000010_Node000010" title=" " alt="" coords="665,214,652,207,629,204,610,206,598,211,592,217,592,225,587,225,587,215,595,206,609,201,629,199,654,202,668,210"/>
+<area shape="rect" id="Node000011" href="$namespaceMayaFlux_1_1Yantra_aa258cea8bd6a52e8800fb9104548220d.html#aa258cea8bd6a52e8800fb9104548220d" title=" " alt="" coords="300,233,488,273"/>
+<area shape="poly" id="edge13_Node000010_Node000011" title=" " alt="" coords="528,255,488,255,488,250,528,250"/>
+<area shape="poly" id="edge14_Node000011_Node000007" title=" " alt="" coords="297,232,211,211,213,206,298,227"/>
+</map>

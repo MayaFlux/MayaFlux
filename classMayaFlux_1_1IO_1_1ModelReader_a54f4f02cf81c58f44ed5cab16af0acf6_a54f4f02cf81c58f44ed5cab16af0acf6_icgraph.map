@@ -1,0 +1,18 @@
+<map id="MayaFlux::IO::ModelReader::set_error" name="MayaFlux::IO::ModelReader::set_error">
+<area shape="rect" id="Node000001" title=" " alt="" coords="757,68,960,108"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1ModelReader_aa3ce0f7631753b15955e175c1855e7fc.html#aa3ce0f7631753b15955e175c1855e7fc" title="Construct a MeshNetwork from all meshes in the currently loaded scene." alt="" coords="256,5,459,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="807,64,760,44,709,29,645,20,579,16,459,18,459,13,579,10,645,15,710,24,762,39,809,59"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1ModelReader_a5a5995d155657e1b4f55d047efa2e442.html#a5a5995d155657e1b4f55d047efa2e442" title="Load all meshes after open() has already been called." alt="" coords="256,93,459,133"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="744,96,459,111,459,106,743,91"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1IO_1_1ModelReader_a4caf9e31c81e7ac5b07078c38300a6ca.html#a4caf9e31c81e7ac5b07078c38300a6ca" title=" " alt="" coords="507,39,709,79"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="743,77,709,73,710,68,744,72"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1IO_1_1ModelReader_aef5ccec4e2fe310509f07e4467f57dd2.html#aef5ccec4e2fe310509f07e4467f57dd2" title="Open a file for reading." alt="" coords="507,153,709,193"/>
+<area shape="poly" id="edge8_Node000001_Node000007" title=" " alt="" coords="787,115,668,156,667,151,785,110"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1ModelReader_a82f82a404791ba9ad9838a1fc2774f32.html#a82f82a404791ba9ad9838a1fc2774f32" title="Construct one MeshBuffer per mesh in the currently loaded scene." alt="" coords="5,89,208,129"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="242,114,208,114,208,108,243,109"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1IO_1_1ModelReader_ad139ba0a544c0712059cc8913bb59bc5.html#ad139ba0a544c0712059cc8913bb59bc5" title="Load all meshes from a file in one call." alt="" coords="5,153,208,193"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="260,139,191,156,190,151,259,134"/>
+<area shape="poly" id="edge6_Node000006_Node000002" title=" " alt="" coords="493,46,458,41,459,36,493,41"/>
+<area shape="poly" id="edge7_Node000006_Node000003" title=" " alt="" coords="503,84,450,96,449,91,502,79"/>
+<area shape="poly" id="edge9_Node000007_Node000005" title=" " alt="" coords="493,176,208,176,208,171,493,171"/>
+</map>

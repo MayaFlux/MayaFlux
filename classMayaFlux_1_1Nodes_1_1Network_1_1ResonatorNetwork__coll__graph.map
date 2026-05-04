@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::Network::ResonatorNetwork" name="MayaFlux::Nodes::Network::ResonatorNetwork">
+<area shape="rect" id="Node000001" title="Network of IIR biquad bandpass filters driven by external excitation." alt="" coords="5,1017,237,1517"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1NodeNetwork.html" title="Abstract base class for structured collections of nodes with defined relationships." alt="" coords="23,248,220,968"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="124,982,124,1017,119,1017,119,982"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Nodes_1_1RoutingState.html" title="Represents the state of routing transitions for a node." alt="" coords="29,5,214,185"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="124,186,124,231,119,231,119,186"/>
+</map>

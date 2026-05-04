@@ -1,0 +1,11 @@
+<map id="MayaFlux::Portal::Text::ink_quads" name="MayaFlux::Portal::Text::ink_quads">
+<area shape="rect" id="Node000001" title="Rasterize a mutated quad span into an existing TextBuffer." alt="" coords="5,69,172,109"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Text_a17ac9505e8d9ad50aab019db4abf56f3.html#a17ac9505e8d9ad50aab019db4abf56f3" title="Write glyph quads into a caller&#45;provided RGBA8 pixel buffer." alt="" coords="220,69,387,109"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="173,87,206,87,206,92,173,92"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Text_1_1GlyphAtlas_af19455784bf36672a17bfc98d23a9516.html#af19455784bf36672a17bfc98d23a9516" title="Atlas texture dimension (width == height == atlas_size)." alt="" coords="455,5,629,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="378,67,453,46,455,51,379,72"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1TextureContainer_a7e2d3ad1dacc0f2676238095b7526f71.html#a7e2d3ad1dacc0f2676238095b7526f71" title="Read&#45;only byte&#45;level view over the pixel buffer." alt="" coords="435,69,649,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="387,87,421,87,421,92,387,92"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Text_1_1GlyphAtlas_aff661f5d52169b1201cbbcc51d20d797.html#aff661f5d52169b1201cbbcc51d20d797" title="The atlas texture as a TextureContainer (R8, atlas_size x atlas_size)." alt="" coords="459,133,625,173"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="379,107,455,127,453,132,378,112"/>
+</map>

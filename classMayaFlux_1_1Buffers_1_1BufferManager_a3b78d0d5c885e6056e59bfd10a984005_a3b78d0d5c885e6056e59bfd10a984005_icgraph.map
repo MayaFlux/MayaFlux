@@ -1,0 +1,13 @@
+<map id="MayaFlux::Buffers::BufferManager::add_processor" name="MayaFlux::Buffers::BufferManager::add_processor">
+<area shape="rect" id="Node000001" title="Adds a processor to a buffer." alt="" coords="693,37,913,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Bridge_a3b23964abb2929adcbacc83568ca27b8.html#a3b23964abb2929adcbacc83568ca27b8" title="Route element value to a descriptor binding on target_buffer." alt="" coords="464,5,645,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="679,44,645,40,646,34,680,39"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Bridge_a4622e1410739e0b8f52d8dbaa1b43236.html#a4622e1410739e0b8f52d8dbaa1b43236" title="Route element value to a push constant slot on a ShaderProcessor." alt="" coords="464,69,645,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="680,76,646,80,645,75,679,71"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Bridge_aa516a463d14336a20319caa9b3b8b3d1.html#aa516a463d14336a20319caa9b3b8b3d1" title=" " alt="" coords="235,69,416,109"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="450,92,416,92,416,87,450,87"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Bridge_a0b311b1aa395034f6d660d0f152f4d70.html#a0b311b1aa395034f6d660d0f152f4d70" title="Drive element value from an arbitrary per&#45;frame callable." alt="" coords="5,37,187,77"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="221,77,187,73,187,67,222,72"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Bridge_a962f9a886b75c40d6a018dbd2271bae6.html#a962f9a886b75c40d6a018dbd2271bae6" title="Drive element value from a Node&#39;s output each frame." alt="" coords="5,101,187,141"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="222,106,187,111,187,106,221,101"/>
+</map>

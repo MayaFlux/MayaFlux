@@ -1,0 +1,12 @@
+<map id="MayaFlux::Kakshya::ContainerDataStructure::get_total_elements" name="MayaFlux::Kakshya::ContainerDataStructure::get_total_elements">
+<area shape="rect" id="Node000001" title=" " alt="" coords="552,41,727,96"/>
+<area shape="poly" id="edge1_Node000001_Node000001" title=" " alt="" coords="681,30,666,23,639,20,617,22,603,27,596,33,596,41,591,41,591,31,600,22,616,17,639,15,667,18,683,26"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kakshya_1_1ContainerDataStructure_aa09ef04e0462f01f0bdc287700a874b5.html#aa09ef04e0462f01f0bdc287700a874b5" title="Calculate size of a specific variant in the organization." alt="" coords="304,5,479,60"/>
+<area shape="poly" id="edge2_Node000001_Node000002" title=" " alt="" coords="538,57,479,48,479,43,539,51"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1GpuDispatchCore_ac2c2749002d9ed840fbb847f719d1d58.html#ac2c2749002d9ed840fbb847f719d1d58" title="Marshal channel data into GPU input buffers." alt="" coords="279,85,504,125"/>
+<area shape="poly" id="edge3_Node000001_Node000003" title=" " alt="" coords="539,86,504,91,504,86,538,81"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1GpuDispatchCore_a899fb89ec912ff8a784fa8d4efadbe39.html#a899fb89ec912ff8a784fa8d4efadbe39" title="Full single&#45;pass dispatch." alt="" coords="5,53,231,93"/>
+<area shape="poly" id="edge4_Node000003_Node000004" title=" " alt="" coords="265,93,230,88,231,83,265,87"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1GpuDispatchCore_ab2351a76c5db238842099c55a1d08386.html#ab2351a76c5db238842099c55a1d08386" title="Multi&#45;pass (chained) dispatch." alt="" coords="5,117,231,157"/>
+<area shape="poly" id="edge5_Node000003_Node000005" title=" " alt="" coords="265,122,231,126,230,121,265,117"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Portal::Network::stop" name="MayaFlux::Portal::Network::stop">
+<area shape="rect" id="Node000001" title="Stop active Portal::Network operations." alt="" coords="312,5,507,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1NetworkSubsystem_aa9d246674c1e9ee84dd98e6d074b0010.html#aa9d246674c1e9ee84dd98e6d074b0010" title="Stop the subsystem&#39;s processing/event loops." alt="" coords="5,5,264,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="298,28,264,28,264,23,298,23"/>
+</map>

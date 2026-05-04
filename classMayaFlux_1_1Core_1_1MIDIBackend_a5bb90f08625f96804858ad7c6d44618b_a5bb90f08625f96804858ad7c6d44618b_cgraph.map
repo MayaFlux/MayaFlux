@@ -1,0 +1,11 @@
+<map id="MayaFlux::Core::MIDIBackend::start" name="MayaFlux::Core::MIDIBackend::start">
+<area shape="rect" id="Node000001" title="Start listening for input events." alt="" coords="5,37,223,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1MIDIBackend_a8a950e7628ff28b052fab7fb25d10f14.html#a8a950e7628ff28b052fab7fb25d10f14" title="Get list of currently open device IDs." alt="" coords="271,5,488,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="223,42,257,37,258,43,223,47"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1MIDIBackend_af5321d0a8077dd224ef1b73b7d342bb0.html#af5321d0a8077dd224ef1b73b7d342bb0" title="Open a device for input." alt="" coords="271,69,488,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="223,68,258,72,257,77,223,73"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1MIDIBackend_a8a6d9228ae8398f286b89c1b15b525c3.html#a8a6d9228ae8398f286b89c1b15b525c3" title=" " alt="" coords="536,69,753,109"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="488,87,523,87,523,92,488,92"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Core_1_1InputValue_a300d836c2ed09dc3d5feb5798a345331.html#a300d836c2ed09dc3d5feb5798a345331" title=" " alt="" coords="801,69,1003,109"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="754,87,787,87,787,92,754,92"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="MayaFlux::internal::live_arena_expose" name="MayaFlux::internal::live_arena_expose">
+<area shape="rect" id="Node000001" title="Registers an externally owned shared_ptr under key." alt="" coords="225,23,377,63"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_a134fdf828e5fdf7b5b829b7238b81a34.html#a134fdf828e5fdf7b5b829b7238b81a34" title="Exposes an existing shared_ptr&#45;managed object to the live arena under key." alt="" coords="5,5,177,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="211,35,177,31,178,26,212,30"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_ade26929a1c20b6917d14f66308095ccc.html#ade26929a1c20b6917d14f66308095ccc" title="Exposes an existing raw pointer to the live arena under key." alt="" coords="5,55,177,80"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="212,56,178,60,177,55,211,51"/>
+</map>

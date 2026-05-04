@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::minimum_spanning_tree" name="MayaFlux::Kinesis::minimum_spanning_tree">
+<area shape="rect" id="Node000001" title="Compute minimum spanning tree (Prim&#39;s algorithm)" alt="" coords="5,5,189,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_aa7c4bdadf6a59ad467edbcc8b9b61c9d.html#aa7c4bdadf6a59ad467edbcc8b9b61c9d" title="Normalized distance from an anchor point using the specified metric." alt="" coords="237,5,387,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="190,23,223,23,223,28,190,28"/>
+</map>

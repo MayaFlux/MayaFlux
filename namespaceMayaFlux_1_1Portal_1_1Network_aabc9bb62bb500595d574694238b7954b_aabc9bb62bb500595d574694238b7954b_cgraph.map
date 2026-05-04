@@ -1,0 +1,17 @@
+<map id="MayaFlux::Portal::Network::serialize_osc" name="MayaFlux::Portal::Network::serialize_osc">
+<area shape="rect" id="Node000001" title="Serialize an OSC message to wire bytes for sending via NetworkService." alt="" coords="5,65,200,105"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1OscParser_a7d6a1542c7d28669598cb7e3e11f7fdf.html#a7d6a1542c7d28669598cb7e3e11f7fdf" title="Serialize an OSC message to wire format." alt="" coords="248,65,444,105"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="200,83,235,83,235,88,200,88"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Transitive_1_1Protocol_a1598959b97b8dd4a66a8449ec76ec0da.html#a1598959b97b8dd4a66a8449ec76ec0da" title="Append a length&#45;prefixed blob padded to 4&#45;byte boundary." alt="" coords="497,33,655,73"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="444,69,483,64,483,69,445,74"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Transitive_1_1Protocol_a0d397ef699399b3a2e8948fcd587801d.html#a0d397ef699399b3a2e8948fcd587801d" title="Append a big&#45;endian int32." alt="" coords="712,5,876,45"/>
+<area shape="poly" id="edge6_Node000002_Node000005" title=" " alt="" coords="380,63,432,38,491,19,544,11,598,8,698,11,698,16,598,13,545,16,493,24,434,43,383,68"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Transitive_1_1Protocol_aeb2210db1b3ad9c3b713b316339bb084.html#aeb2210db1b3ad9c3b713b316339bb084" title="Append a big&#45;endian IEEE 754 float." alt="" coords="496,97,656,137"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="445,96,483,102,482,107,444,102"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Transitive_1_1Protocol_a70ceb7087dc1fe384a74222c1dd322e5.html#a70ceb7087dc1fe384a74222c1dd322e5" title="Append a null&#45;terminated string padded to 4&#45;byte boundary." alt="" coords="492,161,660,201"/>
+<area shape="poly" id="edge7_Node000002_Node000007" title=" " alt="" coords="392,103,493,147,510,154,508,159,491,152,390,108"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Transitive_1_1Protocol_ac36e4dc715dfd9e1c9d304a36e922a49.html#ac36e4dc715dfd9e1c9d304a36e922a49" title="Round len up to the next 4&#45;byte boundary." alt="" coords="708,129,880,169"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="632,71,661,83,742,121,740,126,659,88,630,76"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="655,41,698,35,699,40,656,46"/>
+<area shape="poly" id="edge8_Node000007_Node000004" title=" " alt="" coords="660,166,694,161,695,167,661,172"/>
+</map>

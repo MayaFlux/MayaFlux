@@ -1,0 +1,26 @@
+<map id="MayaFlux::Buffers::upload_resizing" name="MayaFlux::Buffers::upload_resizing">
+<area shape="rect" id="Node000001" title="Upload size bytes to target, growing both buffers first if needed." alt="" coords="515,222,663,262"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1GeometryBindingsProcessor_a7443affe2aa79c163a21f8d03c110a91.html#a7443affe2aa79c163a21f8d03c110a91" title="BufferProcessor interface &#45; uploads all bound geometries." alt="" coords="5,39,212,93"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="563,213,521,166,495,144,466,126,420,110,356,97,212,78,212,73,357,92,422,105,468,121,498,140,525,163,567,209"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1GeometryWriteProcessor_a72fae44a0e5b4988dc7718cfef1c43ef.html#a72fae44a0e5b4988dc7718cfef1c43ef" title="The core processing function that must be implemented by derived classes." alt="" coords="271,136,456,191"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="517,220,441,193,443,188,519,215"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1NetworkGeometryProcessor_ac6c764a77a3082815a103b602eddaf77.html#ac6c764a77a3082815a103b602eddaf77" title="BufferProcessor interface &#45; aggregates and uploads network geometry." alt="" coords="261,215,466,269"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="501,245,466,245,466,239,501,239"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1GeometryBindingsProcessor_a2a0c7674773776106e7f424905b1e0c5.html#a2a0c7674773776106e7f424905b1e0c5" title="Upload index data for one binding, creating or growing the GPU index buffer as needed." alt="" coords="260,5,467,60"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="568,212,526,147,497,112,465,81,436,62,438,58,468,77,501,109,530,144,573,209"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1MeshProcessor_ac2f866ce605c48a0b5b0813e5461b12f.html#ac2f866ce605c48a0b5b0813e5461b12f" title=" " alt="" coords="277,372,449,427"/>
+<area shape="poly" id="edge6_Node000001_Node000006" title=" " alt="" coords="564,275,522,319,468,362,445,374,443,369,465,357,518,315,560,271"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Buffers_1_1MeshNetworkProcessor_aa1bf38653a8fe229485bbab7efc4cf3d.html#aa1bf38653a8fe229485bbab7efc4cf3d" title=" " alt="" coords="276,451,451,505"/>
+<area shape="poly" id="edge9_Node000001_Node000009" title=" " alt="" coords="577,276,561,314,537,358,506,403,468,441,452,453,449,448,465,437,502,399,532,355,556,312,573,274"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Buffers_1_1MeshProcessor_a4af80b36d0791662b7734cfad80aa7d0.html#a4af80b36d0791662b7734cfad80aa7d0" title=" " alt="" coords="277,293,449,348"/>
+<area shape="poly" id="edge11_Node000001_Node000011" title=" " alt="" coords="519,269,443,296,441,291,517,264"/>
+<area shape="poly" id="edge5_Node000005_Node000002" title=" " alt="" coords="247,51,213,55,212,50,246,45"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1MeshProcessor_acde49ee870ff2968ff8a3b7febf41085.html#acde49ee870ff2968ff8a3b7febf41085" title="Called when this processor is attached to a buffer." alt="" coords="13,303,205,343"/>
+<area shape="poly" id="edge7_Node000006_Node000007" title=" " alt="" coords="263,372,176,346,177,341,265,367"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Buffers_1_1MeshProcessor_a23c0e3aa8b247d77d7349612c4150cee.html#a23c0e3aa8b247d77d7349612c4150cee" title="The core processing function that must be implemented by derived classes." alt="" coords="9,371,208,425"/>
+<area shape="poly" id="edge8_Node000006_Node000008" title=" " alt="" coords="263,401,208,401,208,396,263,396"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Buffers_1_1MeshNetworkProcessor_a408e60f5cd8e0a53ab0eb8428faed166.html#a408e60f5cd8e0a53ab0eb8428faed166" title="The core processing function that must be implemented by derived classes." alt="" coords="21,451,196,505"/>
+<area shape="poly" id="edge10_Node000009_Node000010" title=" " alt="" coords="262,481,196,481,196,475,262,475"/>
+<area shape="poly" id="edge12_Node000011_Node000007" title=" " alt="" coords="263,324,205,325,205,320,263,319"/>
+<area shape="poly" id="edge13_Node000011_Node000008" title=" " alt="" coords="265,353,200,373,199,368,263,348"/>
+</map>

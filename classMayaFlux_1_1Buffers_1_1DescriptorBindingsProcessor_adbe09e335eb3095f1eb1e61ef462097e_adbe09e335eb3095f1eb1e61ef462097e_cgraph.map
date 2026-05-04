@@ -1,0 +1,15 @@
+<map id="MayaFlux::Buffers::DescriptorBindingsProcessor::bind_audio_buffer" name="MayaFlux::Buffers::DescriptorBindingsProcessor::bind_audio_buffer">
+<area shape="rect" id="Node000001" title="Bind an AudioBuffer as a descriptor source." alt="" coords="5,45,213,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_ae72d99984f65f41164441d313ae0af88.html#ae72d99984f65f41164441d313ae0af88" title="Bind a VKBuffer to a named shader descriptor." alt="" coords="261,9,428,64"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="213,54,247,49,248,54,214,59"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1DescriptorBindingsProcessor_ac2b344e8acfe7ba78780ebfa262d8f8a.html#ac2b344e8acfe7ba78780ebfa262d8f8a" title="Create GPU buffer for a descriptor binding." alt="" coords="476,84,684,139"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="214,78,463,99,462,104,213,84"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VKBufferProcessor_ad871cad95dbb2a178d1752aa8573eabc.html#ad871cad95dbb2a178d1752aa8573eabc" title=" " alt="" coords="483,5,677,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="428,33,469,32,469,37,428,38"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_a0c7a59c0847791ed0915dcd64e8df783.html#a0c7a59c0847791ed0915dcd64e8df783" title="Query for a backend service." alt="" coords="749,8,916,63"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="678,31,736,32,736,37,678,36"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aa28c6f5592e5893508bafb62aefcc496.html#aa28c6f5592e5893508bafb62aefcc496" title="Get the global registry instance." alt="" coords="732,89,933,129"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="672,58,754,82,752,87,671,63"/>
+<area shape="poly" id="edge6_Node000006_Node000004" title=" " alt="" coords="671,81,735,62,737,67,672,86"/>
+<area shape="poly" id="edge7_Node000006_Node000005" title=" " alt="" coords="684,108,718,107,718,113,684,113"/>
+</map>

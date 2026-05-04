@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::Filters::FilterContext" name="MayaFlux::Nodes::Filters::FilterContext">
+<area shape="rect" id="Node000001" title="Specialized context for filter node callbacks." alt="" coords="28,199,203,339"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Filters_1_1FilterContextGpu.html" title="GPU&#45;augmented filter context for callbacks." alt="" coords="28,387,203,467"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="118,352,118,386,113,386,113,352"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1NodeContext.html" title="Base context class for node callbacks." alt="" coords="5,5,225,151"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="118,165,118,198,113,198,113,165"/>
+</map>

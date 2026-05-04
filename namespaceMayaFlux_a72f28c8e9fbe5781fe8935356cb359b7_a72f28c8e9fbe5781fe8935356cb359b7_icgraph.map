@@ -1,0 +1,5 @@
+<map id="MayaFlux::bind_viewport_preset" name="MayaFlux::bind_viewport_preset">
+<area shape="rect" id="Node000001" title="Bind a navigation preset to a window and render processor." alt="" coords="240,5,427,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_a3dc95653b5e16198d6c5f3ca0c24d646.html#a3dc95653b5e16198d6c5f3ca0c24d646" title="Bind a navigation preset to all RenderProcessors currently registered against a window." alt="" coords="5,5,192,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="227,28,192,28,192,23,227,23"/>
+</map>

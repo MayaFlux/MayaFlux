@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::GpuSync::GeometryWriterNode::set_indices" name="MayaFlux::Nodes::GpuSync::GeometryWriterNode::set_indices">
+<area shape="rect" id="Node000001" title="Set index buffer for indexed drawing." alt="" coords="304,5,504,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1MeshWriterNode_ae25f2a644f82c96f8f1a862d401e472f.html#ae25f2a644f82c96f8f1a862d401e472f" title="Compute GPU data for this frame." alt="" coords="5,13,256,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="290,35,256,35,256,30,290,30"/>
+</map>

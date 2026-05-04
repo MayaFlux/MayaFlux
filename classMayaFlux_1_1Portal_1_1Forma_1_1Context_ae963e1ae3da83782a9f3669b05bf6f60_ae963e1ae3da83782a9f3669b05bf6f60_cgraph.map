@@ -1,0 +1,7 @@
+<map id="MayaFlux::Portal::Forma::Context::~Context" name="MayaFlux::Portal::Forma::Context::~Context">
+<area shape="rect" id="Node000001" title="Cancel all registered event coroutines." alt="" coords="5,5,187,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Context_a5364e3193951a1b73506ef767c5af998.html#a5364e3193951a1b73506ef767c5af998" title=" " alt="" coords="235,5,429,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="187,23,221,23,221,28,187,28"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Vruta_1_1EventManager_af5dec990ab647fdd7a99ca272211b08e.html#af5dec990ab647fdd7a99ca272211b08e" title="Cancels and removes a event from the manager." alt="" coords="477,5,708,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="429,23,464,23,464,28,429,28"/>
+</map>

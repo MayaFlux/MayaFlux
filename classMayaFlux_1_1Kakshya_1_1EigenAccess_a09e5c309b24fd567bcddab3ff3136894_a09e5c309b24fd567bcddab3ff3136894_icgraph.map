@@ -1,0 +1,13 @@
+<map id="MayaFlux::Kakshya::EigenAccess::to_vector" name="MayaFlux::Kakshya::EigenAccess::to_vector">
+<area shape="rect" id="Node000001" title="Convert DataVariant to Eigen column vector." alt="" coords="491,109,663,149"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Nexus_a3729e9fd6e3d5e63214377290ec8bdaf.html#a3729e9fd6e3d5e63214377290ec8bdaf" title="For each sink that has a producer fn, call it and push the result." alt="" coords="244,37,443,77"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="497,108,408,80,410,75,499,103"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1AudioWriteProcessor_a22e0585120f93ab2e7705de1081d2042.html#a22e0585120f93ab2e7705de1081d2042" title="Supply data from any DataVariant — converted to double via EigenAccess." alt="" coords="265,102,422,157"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="476,132,422,132,422,127,476,127"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Kakshya_a6e689a97fa5c40e151a3d5f30b8ed33b.html#a6e689a97fa5c40e151a3d5f30b8ed33b" title="Convenience function for vector conversion." alt="" coords="264,181,423,221"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="499,156,410,184,408,179,497,151"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nexus_1_1Emitter_ace3ccd027c99be69c82f09d89fbf1717.html#ace3ccd027c99be69c82f09d89fbf1717" title="Invoke the influence function with the supplied context." alt="" coords="5,5,196,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="230,45,196,41,197,35,231,40"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nexus_1_1Agent_a1f4deb0420cbe81d71c9d5b0edf9d2cf.html#a1f4deb0420cbe81d71c9d5b0edf9d2cf" title="Invoke the influence function with the supplied context." alt="" coords="10,69,191,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="231,75,192,80,191,75,230,70"/>
+</map>

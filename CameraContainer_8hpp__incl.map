@@ -1,0 +1,24 @@
+<map id="CameraContainer.hpp" name="CameraContainer.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="415,5,577,31"/>
+<area shape="rect" id="Node000002" href="$VideoStreamContainer_8hpp.html" title=" " alt="" coords="398,79,594,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="499,31,499,65,493,65,493,31"/>
+<area shape="rect" id="Node000003" href="$RegionGroup_8hpp.html" title=" " alt="" coords="5,152,200,192"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="439,107,211,152,210,147,438,101"/>
+<area shape="rect" id="Node000007" href="$StreamContainer_8hpp.html" title=" " alt="" coords="225,159,511,185"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="479,106,400,154,397,150,476,102"/>
+<area shape="rect" id="Node000010" href="$RingBuffer_8hpp.html" title=" " alt="" coords="536,152,715,192"/>
+<area shape="poly" id="edge10_Node000002_Node000010" title=" " alt="" coords="516,102,584,143,581,147,514,106"/>
+<area shape="rect" id="Node000011" title=" " alt="" coords="739,159,882,185"/>
+<area shape="poly" id="edge11_Node000002_Node000011" title=" " alt="" coords="542,101,752,153,751,159,541,107"/>
+<area shape="rect" id="Node000004" href="$Region_8hpp.html" title=" " alt="" coords="123,313,218,339"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="114,191,162,299,157,302,109,194"/>
+<area shape="rect" id="Node000005" href="$NDData_8hpp.html" title=" " alt="" coords="157,387,358,427"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="185,337,228,375,224,379,182,341"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="205,475,309,500"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="260,427,260,461,255,461,255,427"/>
+<area shape="rect" id="Node000008" href="$SignalSourceContainer_8hpp.html" title=" " alt="" coords="263,240,459,265"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="370,185,366,226,361,226,364,185"/>
+<area shape="rect" id="Node000009" href="$NDimensionalContainer_8hpp.html" title=" " alt="" coords="254,313,458,339"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="363,266,361,300,355,300,358,265"/>
+<area shape="poly" id="edge9_Node000009_Node000005" title=" " alt="" coords="343,341,293,380,290,376,340,337"/>
+</map>

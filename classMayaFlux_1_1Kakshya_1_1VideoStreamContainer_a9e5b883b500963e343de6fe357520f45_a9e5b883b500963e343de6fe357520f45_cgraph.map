@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kakshya::VideoStreamContainer::get_frame_pixels" name="MayaFlux::Kakshya::VideoStreamContainer::get_frame_pixels">
+<area shape="rect" id="Node000001" title="Get raw pixel data for a single frame as uint8_t span." alt="" coords="5,77,175,132"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_acd69a7c5e27cc6fd492c480c481ee9ea.html#acd69a7c5e27cc6fd492c480c481ee9ea" title="Get the total byte size of one frame (width * height * channels)." alt="" coords="240,5,409,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="174,76,226,60,228,65,176,81"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_ae700cb6f780df3a568fdc9013168089c.html#ae700cb6f780df3a568fdc9013168089c" title="Acquire a lock for thread&#45;safe access." alt="" coords="223,85,427,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="175,102,209,102,209,107,175,107"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_ac5764b3010fc7824fd6b5da810d65f50.html#ac5764b3010fc7824fd6b5da810d65f50" title=" " alt="" coords="240,149,409,204"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="176,128,228,144,226,149,174,133"/>
+</map>

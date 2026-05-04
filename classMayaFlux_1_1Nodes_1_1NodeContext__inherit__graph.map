@@ -1,0 +1,43 @@
+<map id="MayaFlux::Nodes::NodeContext" name="MayaFlux::Nodes::NodeContext">
+<area shape="rect" id="Node000001" title="Base context class for node callbacks." alt="" coords="1309,5,1529,151"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1BinaryOpContext.html" title="Specialized context for binary operation callbacks." alt="" coords="5,349,200,449"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1295,88,1016,103,678,128,518,143,378,161,273,180,237,190,213,201,179,232,152,270,132,311,118,349,113,347,127,309,147,267,175,228,211,196,235,185,272,175,378,156,517,138,678,123,1016,98,1295,82"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1CompositeOpContext.html" title="Context for N&#45;ary composite operation callbacks." alt="" coords="224,359,429,439"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="1295,84,1084,91,833,110,711,125,601,145,509,170,472,185,443,201,405,235,376,277,354,320,340,360,335,358,350,318,371,274,401,231,440,196,470,180,507,165,600,140,711,120,833,105,1083,86,1295,78"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Nodes_1_1Constant_1_1ConstantContext.html" title="Minimal concrete context for Constant — no extra fields beyond the base." alt="" coords="454,359,647,439"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="1295,88,1130,101,944,123,855,138,774,155,708,176,660,201,624,235,597,277,576,321,563,359,558,358,571,319,592,275,620,232,657,196,706,172,773,150,854,132,943,117,1129,96,1294,83"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1Filters_1_1FilterContext.html" title="Specialized context for filter node callbacks." alt="" coords="671,329,846,469"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="1295,96,1176,113,1049,136,936,165,892,182,860,201,832,228,810,261,792,295,779,329,774,327,787,293,805,258,828,225,857,197,890,178,934,160,1047,131,1175,107,1294,90"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1GeneratorContext.html" title="Specialized context for generator node callbacks." alt="" coords="871,339,1071,459"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="1296,103,1242,119,1187,140,1133,167,1084,201,1054,232,1029,267,993,340,988,337,1025,265,1050,228,1081,197,1130,162,1185,135,1241,114,1295,98"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1LogicContext.html" title=" " alt="" coords="1095,199,1295,599"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="1339,163,1309,200,1297,217,1293,214,1305,197,1335,159"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1PolynomialContext.html" title=" " alt="" coords="1319,269,1519,529"/>
+<area shape="poly" id="edge12_Node000001_Node000013" title=" " alt="" coords="1421,164,1421,268,1416,268,1416,164"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1RandomContext.html" title="Specialized context for stochastic generator callbacks." alt="" coords="1543,319,1743,479"/>
+<area shape="poly" id="edge14_Node000001_Node000015" title=" " alt="" coords="1502,159,1533,197,1572,257,1606,317,1601,320,1568,260,1529,200,1498,163"/>
+<area shape="rect" id="Node000017" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1ComputeOutContext.html" title="Context for ComputeOutNode &#45; provides readback buffer access." alt="" coords="1767,359,1959,439"/>
+<area shape="poly" id="edge16_Node000001_Node000017" title=" " alt="" coords="1543,98,1597,113,1653,134,1707,162,1756,197,1791,234,1818,277,1839,320,1854,358,1849,360,1834,322,1814,279,1787,237,1753,201,1704,166,1650,139,1595,118,1541,103"/>
+<area shape="rect" id="Node000018" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GeometryContext.html" title="Context for GeometryWriterNode &#45; provides vertex buffer access." alt="" coords="1983,349,2175,449"/>
+<area shape="poly" id="edge17_Node000001_Node000018" title=" " alt="" coords="1543,91,1660,109,1785,132,1896,161,1940,178,1972,197,2006,230,2033,269,2053,310,2068,348,2063,350,2048,312,2028,272,2002,233,1969,201,1938,183,1895,166,1784,137,1659,114,1542,97"/>
+<area shape="rect" id="Node000019" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1TextureContext.html" title="Context for TextureNode &#45; provides pixel buffer access." alt="" coords="2199,349,2391,449"/>
+<area shape="poly" id="edge18_Node000001_Node000019" title=" " alt="" coords="1543,83,1709,95,1898,117,1989,132,2071,150,2139,171,2188,196,2223,229,2250,268,2270,309,2284,347,2279,349,2265,312,2245,271,2219,232,2185,201,2137,176,2069,155,1988,137,1897,122,1709,100,1542,88"/>
+<area shape="rect" id="Node000020" href="$classMayaFlux_1_1Nodes_1_1Input_1_1InputContext.html" title="Context for InputNode callbacks &#45; provides input event access." alt="" coords="2415,339,2583,459"/>
+<area shape="poly" id="edge19_Node000001_Node000020" title=" " alt="" coords="1543,77,1756,84,2009,102,2133,117,2245,137,2337,163,2374,179,2404,197,2435,226,2459,262,2477,301,2489,337,2484,339,2472,303,2455,265,2431,230,2401,201,2372,184,2336,168,2243,142,2132,122,2009,107,1756,89,1542,83"/>
+<area shape="rect" id="Node000021" href="$structMayaFlux_1_1Nodes_1_1StreamReaderNode_1_1StreamReaderContext.html" title=" " alt="" coords="2607,359,2835,439"/>
+<area shape="poly" id="edge20_Node000001_Node000021" title=" " alt="" coords="1543,76,1795,80,1946,86,2103,96,2256,111,2395,132,2511,160,2558,177,2596,196,2637,231,2669,273,2694,318,2711,357,2706,359,2689,320,2665,276,2633,234,2593,201,2556,182,2510,165,2394,137,2255,116,2103,101,1946,91,1794,85,1543,81"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1BinaryOpContextGpu.html" title="GPU&#45;compatible context for binary operation callbacks." alt="" coords="5,647,200,727"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="105,462,105,647,100,647,100,462"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1CompositeOpContextGpu.html" title="GPU&#45;compatible context for composite operation callbacks." alt="" coords="224,647,429,727"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="329,453,329,646,324,646,324,453"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Nodes_1_1Filters_1_1FilterContextGpu.html" title="GPU&#45;augmented filter context for callbacks." alt="" coords="671,647,846,727"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="761,482,761,647,756,647,756,482"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1GeneratorContextGpu.html" title=" " alt="" coords="871,647,1071,727"/>
+<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="973,472,973,646,968,646,968,472"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1LogicContextGpu.html" title="GPU&#45;accelerated context for logic node callbacks." alt="" coords="1095,647,1295,727"/>
+<area shape="poly" id="edge11_Node000011_Node000012" title=" " alt="" coords="1197,612,1197,647,1192,647,1192,612"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1PolynomialContextGpu.html" title=" " alt="" coords="1319,647,1519,727"/>
+<area shape="poly" id="edge13_Node000013_Node000014" title=" " alt="" coords="1421,542,1421,646,1416,646,1416,542"/>
+<area shape="rect" id="Node000016" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1RandomContextGpu.html" title=" " alt="" coords="1543,647,1743,727"/>
+<area shape="poly" id="edge15_Node000015_Node000016" title=" " alt="" coords="1645,492,1645,647,1640,647,1640,492"/>
+</map>

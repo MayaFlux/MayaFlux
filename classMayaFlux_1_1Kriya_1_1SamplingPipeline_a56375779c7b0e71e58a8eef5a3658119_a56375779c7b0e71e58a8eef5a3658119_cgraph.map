@@ -1,0 +1,11 @@
+<map id="MayaFlux::Kriya::SamplingPipeline::build" name="MayaFlux::Kriya::SamplingPipeline::build">
+<area shape="rect" id="Node000001" title="Finalize configuration and start processing." alt="" coords="5,13,203,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferManager_a79b77923f74899398e1836f1144911a9.html#a79b77923f74899398e1836f1144911a9" title=" " alt="" coords="251,5,420,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="203,30,237,30,237,35,203,35"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_aeeb5db3214dcd90b0778eea361e62276.html#aeeb5db3214dcd90b0778eea361e62276" title="Mix multiple data streams with equal weighting." alt="" coords="468,20,587,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="420,30,454,30,454,35,420,35"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_aec6eff0979aee0842a5ba73791661498.html#aec6eff0979aee0842a5ba73791661498" title="Apply gain to single&#45;channel data (in&#45;place)" alt="" coords="635,20,800,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="587,30,621,30,621,35,587,35"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a39951ce0e888e4fd53ac687cdf41f2a6.html#a39951ce0e888e4fd53ac687cdf41f2a6" title="Linear map y = a*x + b applied in&#45;place." alt="" coords="848,13,997,53"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="801,30,834,30,834,35,801,35"/>
+</map>

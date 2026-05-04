@@ -1,0 +1,9 @@
+<map id="MayaFlux::Portal::Graphics::TextureLoom::create_2d" name="MayaFlux::Portal::Graphics::TextureLoom::create_2d">
+<area shape="rect" id="Node000001" title="Create a 2D texture." alt="" coords="260,77,457,117"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a028cc0af273b37e3dadbdc908c67a7ed.html#a028cc0af273b37e3dadbdc908c67a7ed" title="Create a 2D texture from a DataVariant in one shot." alt="" coords="10,5,207,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="275,76,178,48,180,43,276,71"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1WindowContainer_a54e6f5327b1e6000a2c148781a8f6717.html#a54e6f5327b1e6000a2c148781a8f6717" title="Crop a region from the last readback and upload it as a VKImage." alt="" coords="15,70,202,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="246,100,202,100,202,95,246,95"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1WindowContainer_a31ff69a65227eb7c14504ae2c8ae5fe9.html#a31ff69a65227eb7c14504ae2c8ae5fe9" title="Upload the full surface readback to a new VKImage." alt="" coords="5,149,212,189"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="276,124,180,152,178,147,275,119"/>
+</map>

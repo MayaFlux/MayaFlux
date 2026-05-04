@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kakshya::StreamSlice::start_frame" name="MayaFlux::Kakshya::StreamSlice::start_frame">
+<area shape="rect" id="Node000001" title=" " alt="" coords="283,69,467,109"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kakshya_1_1StreamSlice_a793abc8317d039e33107830847eb14fc.html#a793abc8317d039e33107830847eb14fc" title="Construct a slice spanning a frame sub&#45;region across all channels." alt="" coords="5,5,235,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="280,68,199,48,201,43,282,63"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kakshya_1_1StreamSlice_a50a401098128db62668f45ed10e7fe5a.html#a50a401098128db62668f45ed10e7fe5a" title="Construct a slice spanning a frame and channel sub&#45;region." alt="" coords="27,69,213,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="269,92,213,92,213,87,269,87"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1StreamSliceProcessor_ae239eaa6391fc18b82d4e96e6873dde2.html#ae239eaa6391fc18b82d4e96e6873dde2" title="Assign a StreamSlice to a slot." alt="" coords="21,133,219,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="282,115,201,136,199,131,280,110"/>
+</map>

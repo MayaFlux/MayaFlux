@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nexus::Emitter::fn" name="MayaFlux::Nexus::Emitter::fn">
+<area shape="rect" id="Node000001" title="The influence function itself." alt="" coords="244,45,456,70"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nexus_1_1Emitter_aa79ab1cb084d0a65ca9b2934585d9115.html#aa79ab1cb084d0a65ca9b2934585d9115" title="Register a render output targeting window with a producer function." alt="" coords="5,5,196,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="237,46,196,40,196,35,238,40"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nexus_1_1Emitter_ab975f39766c8f508604023e5d1a3c8f6.html#ab975f39766c8f508604023e5d1a3c8f6" title="Register an audio output on channel with a producer function." alt="" coords="5,69,196,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="238,74,196,80,196,74,237,69"/>
+</map>

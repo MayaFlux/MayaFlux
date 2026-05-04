@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::MIDIBackend::get_version" name="MayaFlux::Core::MIDIBackend::get_version">
+<area shape="rect" id="Node000001" title="Get backend version string." alt="" coords="271,5,488,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1MIDIBackend_a9af3e1ab56f287f5763f9b2a6c16bfde.html#a9af3e1ab56f287f5763f9b2a6c16bfde" title="Initialize the input backend." alt="" coords="5,5,223,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="257,28,223,28,223,23,257,23"/>
+</map>

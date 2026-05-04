@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::as_point_vertex_access" name="MayaFlux::Kakshya::as_point_vertex_access">
+<area shape="rect" id="Node000001" title="Convert DataVariant to point&#45;vertex&#45;compatible bytes." alt="" coords="5,5,183,45"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kakshya_1_1VertexLayout_ad0ac6ab6a88dd81d2ac8acda3c5c15bd.html#ad0ac6ab6a88dd81d2ac8acda3c5c15bd" title="Factory: layout for PointVertex (position, color, size, uv, normal, tangent)" alt="" coords="231,5,412,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="183,23,217,23,217,28,183,28"/>
+</map>

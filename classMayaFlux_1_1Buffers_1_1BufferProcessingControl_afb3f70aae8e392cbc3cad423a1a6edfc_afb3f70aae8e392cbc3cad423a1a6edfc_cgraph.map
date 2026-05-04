@@ -1,0 +1,19 @@
+<map id="MayaFlux::Buffers::BufferProcessingControl::remove_processor_from_token" name="MayaFlux::Buffers::BufferProcessingControl::remove_processor_from_token">
+<area shape="rect" id="Node000001" title="Removes a processor from a token (dispatches based on token)" alt="" coords="5,106,236,161"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingControl_acbf9cc1d3bd7ab2912e8242be8b50d60.html#acbf9cc1d3bd7ab2912e8242be8b50d60" title="Removes a processor from a specific audio token and channel." alt="" coords="293,99,487,168"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="236,131,280,131,280,136,236,136"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingControl_a11a3b06d6af714080b5db8c7a2b9a07c.html#a11a3b06d6af714080b5db8c7a2b9a07c" title="Removes a processor from all channels in an audio token." alt="" coords="293,5,487,75"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="199,103,279,75,281,80,201,108"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingControl_ab6e07ff0efb439ba3c92daf9824bce02.html#ab6e07ff0efb439ba3c92daf9824bce02" title="Removes a processor from the graphics processing chain." alt="" coords="284,193,496,247"/>
+<area shape="poly" id="edge7_Node000001_Node000006" title=" " alt="" coords="207,158,292,186,291,191,206,163"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1TokenUnitManager_a4d8b6658b8ba5a37086de5f4ddc07f88.html#a4d8b6658b8ba5a37086de5f4ddc07f88" title="Gets an existing audio unit without creating if missing (mutable)" alt="" coords="547,15,719,70"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="482,96,545,72,547,77,484,101"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1TokenUnitManager_a4531a511fff4b519167f92818c4e6ed6.html#a4531a511fff4b519167f92818c4e6ed6" title="Checks if an audio unit exists for the given token." alt="" coords="545,99,720,154"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="487,128,532,127,532,132,487,133"/>
+<area shape="poly" id="edge5_Node000005_Node000003" title=" " alt="" coords="487,38,533,39,533,44,487,44"/>
+<area shape="poly" id="edge6_Node000005_Node000004" title=" " alt="" coords="488,72,543,92,541,97,486,77"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1TokenUnitManager_a0e7b0fe7658405d81011637c27121499.html#a0e7b0fe7658405d81011637c27121499" title="Gets an existing graphics unit without creating if missing (mutable)" alt="" coords="544,189,721,243"/>
+<area shape="poly" id="edge8_Node000006_Node000007" title=" " alt="" coords="496,216,530,215,530,220,496,221"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Buffers_1_1TokenUnitManager_adfa3bbc2ff0dea134e10dce005d61dee.html#adfa3bbc2ff0dea134e10dce005d61dee" title="Checks if a graphics unit exists for the given token." alt="" coords="545,267,720,322"/>
+<area shape="poly" id="edge9_Node000006_Node000008" title=" " alt="" coords="480,245,533,261,531,266,479,250"/>
+</map>

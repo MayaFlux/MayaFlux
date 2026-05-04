@@ -1,0 +1,7 @@
+<map id="MayaFlux::reversed" name="MayaFlux::reversed">
+<area shape="rect" id="Node000001" title="Reverse time order of single&#45;channel data (non&#45;destructive)" alt="" coords="463,13,613,38"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a1ee7311abf376531fbc49bee9c7febb9.html#a1ee7311abf376531fbc49bee9c7febb9" title="Cross&#45;correlation via FFT." alt="" coords="232,5,415,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="449,28,415,28,415,23,449,23"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_ae20bf8e05bc172b3e994128a936523ae.html#ae20bf8e05bc172b3e994128a936523ae" title="Matched filter (normalised cross&#45;correlation)" alt="" coords="5,5,184,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="218,28,184,28,184,23,218,23"/>
+</map>

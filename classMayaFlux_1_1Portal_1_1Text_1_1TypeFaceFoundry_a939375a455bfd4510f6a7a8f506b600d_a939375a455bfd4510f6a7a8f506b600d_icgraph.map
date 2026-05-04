@@ -1,0 +1,19 @@
+<map id="MayaFlux::Portal::Text::TypeFaceFoundry::instance" name="MayaFlux::Portal::Text::TypeFaceFoundry::instance">
+<area shape="rect" id="Node000001" title=" " alt="" coords="457,133,660,173"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Text_aca3810233bd3fb87c18e8e50300d0b3e.html#aca3810233bd3fb87c18e8e50300d0b3e" title="Return the default GlyphAtlas, or nullptr if set_default_font() has not been called successfully." alt="" coords="243,5,409,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="518,128,466,93,408,60,382,48,384,43,411,55,469,89,521,123"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Portal_1_1Text_ab942e659934e6d68aa5f94300b7ed912.html#ab942e659934e6d68aa5f94300b7ed912" title="Initialize Portal::Text." alt="" coords="243,69,409,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="471,132,399,112,400,107,473,127"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Portal_1_1Text_1_1FontFace_adb4e7b1d960d7a97a587e57e32546f1a.html#adb4e7b1d960d7a97a587e57e32546f1a" title="Load a font file from disk." alt="" coords="243,133,409,173"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="444,156,410,156,410,151,444,151"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Portal_1_1Text_ab39dafbc2d81b4365a12c8026b6ccabd.html#ab39dafbc2d81b4365a12c8026b6ccabd" title="Load a font file and create the default GlyphAtlas at a given size." alt="" coords="243,197,409,237"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="473,180,400,200,399,195,471,174"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Portal_1_1Text_a7614567fe42437ca2d87a88e48bd7893.html#a7614567fe42437ca2d87a88e48bd7893" title="Shutdown Portal::Text." alt="" coords="243,261,409,301"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="521,183,469,218,411,252,384,264,382,259,408,247,466,213,518,179"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Text_aa58f542a4328e23327442498ad154f55.html#aa58f542a4328e23327442498ad154f55" title="Lay out a UTF&#45;8 string into screen&#45;space glyph quads using the default atlas." alt="" coords="17,5,183,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="229,28,184,28,184,23,229,23"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Core_1_1GraphicsSubsystem_a1278000eee96b8f7c3cefbe13f7f91a9.html#a1278000eee96b8f7c3cefbe13f7f91a9" title="Initialize with graphics configuration." alt="" coords="5,69,195,109"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="229,92,195,92,195,87,229,87"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Core_1_1GraphicsSubsystem_add3c53f617b297ce6b56ee3109fb931e.html#add3c53f617b297ce6b56ee3109fb931e" title="Shutdown and cleanup subsystem resources." alt="" coords="5,261,195,301"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="229,284,195,284,195,279,229,279"/>
+</map>

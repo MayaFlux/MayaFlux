@@ -1,0 +1,11 @@
+<map id="MayaFlux::Nexus::push_vertices" name="MayaFlux::Nexus::push_vertices">
+<area shape="rect" id="Node000001" title="Push pre&#45;resolved vertex bytes to every render sink." alt="" coords="244,101,419,141"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nexus_1_1Agent_aae178f1757d2c06e3037602bdb2c7e2f.html#aae178f1757d2c06e3037602bdb2c7e2f" title="Push pre&#45;resolved vertex bytes to all registered render sinks." alt="" coords="10,5,191,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="278,98,195,60,164,48,166,43,197,55,280,93"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nexus_1_1Emitter_a09c10c282e22ca48bbb180e7c65884e0.html#a09c10c282e22ca48bbb180e7c65884e0" title="Push pre&#45;resolved vertex bytes to all registered render sinks." alt="" coords="5,69,196,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="230,110,196,105,197,100,231,105"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nexus_1_1Agent_adb2e76b3be96c98291d3bd877fa1697e.html#adb2e76b3be96c98291d3bd877fa1697e" title="Push typed vertex data to all registered render sinks." alt="" coords="10,133,191,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="231,138,192,143,191,138,230,133"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nexus_1_1Emitter_ac1aff71ea426c0f0ac41ce769ff20857.html#ac1aff71ea426c0f0ac41ce769ff20857" title="Push typed vertex data to all registered render sinks." alt="" coords="5,197,196,237"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="280,150,197,188,166,200,164,195,195,183,278,145"/>
+</map>

@@ -1,0 +1,19 @@
+<map id="MayaFlux::Kriya::SamplingPipeline::build_for" name="MayaFlux::Kriya::SamplingPipeline::build_for">
+<area shape="rect" id="Node000001" title="Finalize configuration and start processing for a bounded duration." alt="" coords="5,101,203,141"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferManager_a3bde00b55d1c51844c87ea9586d77ddd.html#a3bde00b55d1c51844c87ea9586d77ddd" title="Gets the buffer size for a token." alt="" coords="255,5,481,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="146,99,250,55,274,47,276,52,252,60,148,104"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1BufferManager_a77279dfca7cc5c72b43630c044014151.html#a77279dfca7cc5c72b43630c044014151" title="Gets the sample rate for a token (audio&#45;specific)" alt="" coords="251,69,485,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="203,107,237,103,237,108,203,112"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Vruta_ac26186528d64b469a4c6b56cc8212852.html#ac26186528d64b469a4c6b56cc8212852" title="Convert seconds to number of processing blocks." alt="" coords="273,133,463,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="203,131,259,138,259,143,203,136"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1BufferManager_a79b77923f74899398e1836f1144911a9.html#a79b77923f74899398e1836f1144911a9" title=" " alt="" coords="283,198,453,253"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="150,139,252,183,273,191,271,196,250,188,148,144"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Vruta_a7177bcc99955f63b0ee314154a6d4de4.html#a7177bcc99955f63b0ee314154a6d4de4" title="Convert seconds to samples at a given sample rate." alt="" coords="533,133,724,173"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="464,151,520,151,520,156,464,156"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_aeeb5db3214dcd90b0778eea361e62276.html#aeeb5db3214dcd90b0778eea361e62276" title="Mix multiple data streams with equal weighting." alt="" coords="569,213,688,238"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="453,223,555,223,555,228,453,228"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_aec6eff0979aee0842a5ba73791661498.html#aec6eff0979aee0842a5ba73791661498" title="Apply gain to single&#45;channel data (in&#45;place)" alt="" coords="772,213,937,238"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="688,223,758,223,758,228,688,228"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a39951ce0e888e4fd53ac687cdf41f2a6.html#a39951ce0e888e4fd53ac687cdf41f2a6" title="Linear map y = a*x + b applied in&#45;place." alt="" coords="985,205,1135,245"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="938,223,972,223,972,228,938,228"/>
+</map>

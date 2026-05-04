@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nexus::dispatch_audio_sinks" name="MayaFlux::Nexus::dispatch_audio_sinks">
+<area shape="rect" id="Node000001" title="For each sink that has a producer fn, call it and push the result." alt="" coords="244,37,443,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nexus_1_1Emitter_ace3ccd027c99be69c82f09d89fbf1717.html#ace3ccd027c99be69c82f09d89fbf1717" title="Invoke the influence function with the supplied context." alt="" coords="5,5,196,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="230,45,196,41,197,35,231,40"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nexus_1_1Agent_a1f4deb0420cbe81d71c9d5b0edf9d2cf.html#a1f4deb0420cbe81d71c9d5b0edf9d2cf" title="Invoke the influence function with the supplied context." alt="" coords="10,69,191,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="231,75,192,80,191,75,230,70"/>
+</map>

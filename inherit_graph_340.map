@@ -1,0 +1,15 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="Node000000" href="$classMayaFlux_1_1Nodes_1_1Network_1_1NodeNetwork.html" title="Abstract base class for structured collections of nodes with defined relationships." alt="" coords="5,165,204,205"/>
+<area shape="rect" id="Node000001" href="$classMayaFlux_1_1Nodes_1_1Network_1_1MeshNetwork.html" title="NodeNetwork subclass whose nodes are named, hierarchically transformable mesh slots." alt="" coords="252,5,451,45"/>
+<area shape="poly" id="edge117_Node000000_Node000001" title=" " alt="" coords="131,153,184,103,216,78,251,55,276,43,279,48,253,60,219,82,187,107,135,157"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ModalNetwork.html" title="Network of resonant modes for modal synthesis." alt="" coords="252,69,451,109"/>
+<area shape="poly" id="edge118_Node000000_Node000002" title=" " alt="" coords="160,157,251,119,284,107,286,112,253,124,162,162"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ParticleNetwork.html" title="Motion&#45;focused point network with swappable operators." alt="" coords="252,133,451,173"/>
+<area shape="poly" id="edge119_Node000000_Node000003" title=" " alt="" coords="217,168,251,164,252,169,218,173"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Network_1_1PointCloudNetwork.html" title="Spatial relational network operating on unordered point sets." alt="" coords="252,197,451,237"/>
+<area shape="poly" id="edge120_Node000000_Node000004" title=" " alt="" coords="218,197,252,202,251,207,217,203"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ResonatorNetwork.html" title="Network of IIR biquad bandpass filters driven by external excitation." alt="" coords="252,261,451,301"/>
+<area shape="poly" id="edge121_Node000000_Node000005" title=" " alt="" coords="162,209,253,247,286,259,284,264,251,252,160,214"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1Network_1_1WaveguideNetwork.html" title="Digital waveguide synthesis via uni&#45; and bidirectional delay&#45;line architectures." alt="" coords="252,325,451,365"/>
+<area shape="poly" id="edge122_Node000000_Node000006" title=" " alt="" coords="135,213,187,263,219,289,253,311,279,323,276,328,251,316,216,293,184,267,131,217"/>
+</map>

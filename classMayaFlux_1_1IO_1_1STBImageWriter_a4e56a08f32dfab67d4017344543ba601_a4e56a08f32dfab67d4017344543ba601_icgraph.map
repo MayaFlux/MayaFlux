@@ -1,0 +1,5 @@
+<map id="MayaFlux::IO::STBImageWriter::register_with_registry" name="MayaFlux::IO::STBImageWriter::register_with_registry">
+<area shape="rect" id="Node000001" title="Register this writer with the ImageWriterRegistry." alt="" coords="240,5,463,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1IOManager_ae2e6d392990ec5945fa6bb7ce710f06d.html#ae2e6d392990ec5945fa6bb7ce710f06d" title="Construct IOManager and register the IOService into BackendRegistry." alt="" coords="5,5,192,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="226,28,192,28,192,23,226,23"/>
+</map>

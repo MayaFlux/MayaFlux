@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::to_mesh_vertices" name="MayaFlux::Kinesis::to_mesh_vertices">
+<area shape="rect" id="Node000001" title="Batch&#45;project SampleResult vector to MeshVertex." alt="" coords="5,5,155,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_a4cf5cad7c0d16cf7ea1d848d6b206a3f.html#a4cf5cad7c0d16cf7ea1d848d6b206a3f" title="Project SampleResult to MeshVertex." alt="" coords="203,5,352,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="155,23,189,23,189,28,155,28"/>
+</map>

@@ -1,0 +1,6 @@
+<map id="MayaFlux::Kinesis::Discrete::zero_crossing_positions" name="MayaFlux::Kinesis::Discrete::zero_crossing_positions">
+<area shape="rect" id="Node000001" title="Sample indices of zero crossings in the full span." alt="" coords="5,29,179,84"/>
+<area shape="poly" id="edge2_Node000001_Node000001" title=" " alt="" coords="51,29,51,19,59,10,72,5,92,3,116,6,129,14,126,18,114,11,92,8,74,10,62,15,56,21,56,29"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_a64bfe6458a57047ea3c126b2b27da092.html#a64bfe6458a57047ea3c126b2b27da092" title="Zero output below threshold, pass through above." alt="" coords="227,37,376,77"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="179,54,213,54,213,59,179,59"/>
+</map>

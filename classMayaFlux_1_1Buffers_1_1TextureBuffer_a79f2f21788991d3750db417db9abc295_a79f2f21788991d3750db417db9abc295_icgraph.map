@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::TextureBuffer::get_render_processor" name="MayaFlux::Buffers::TextureBuffer::get_render_processor">
+<area shape="rect" id="Node000001" title="Get a RenderProcessor suitable for rendering this buffer." alt="" coords="255,5,441,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1TextBuffer_a20bb5344ba60f4af317a00cde144f63a.html#a20bb5344ba60f4af317a00cde144f63a" title="Delegates to TextureBuffer::setup_rendering, then enables streaming mode on the TextureProcessor and ..." alt="" coords="5,13,207,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="241,35,207,35,207,30,241,30"/>
+</map>

@@ -1,0 +1,9 @@
+<map id="MayaFlux::Portal::Graphics::TextureLoom::download_data_async" name="MayaFlux::Portal::Graphics::TextureLoom::download_data_async">
+<area shape="rect" id="Node000001" title="Download pixel data from a texture without blocking the graphics queue." alt="" coords="5,77,203,132"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_a0c7a59c0847791ed0915dcd64e8df783.html#a0c7a59c0847791ed0915dcd64e8df783" title="Query for a backend service." alt="" coords="269,5,436,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="198,75,256,58,257,63,200,80"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aa28c6f5592e5893508bafb62aefcc496.html#aa28c6f5592e5893508bafb62aefcc496" title="Get the global registry instance." alt="" coords="252,85,453,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="203,102,239,102,239,107,203,107"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_af23625d18fe68e281f157b63a0466073.html#af23625d18fe68e281f157b63a0466073" title="Check if manager is initialized." alt="" coords="251,149,455,189"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="204,127,262,143,261,148,202,133"/>
+</map>

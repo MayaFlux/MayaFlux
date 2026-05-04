@@ -1,0 +1,6 @@
+<map id="MayaFlux::Kinesis::Discrete::peak_positions" name="MayaFlux::Kinesis::Discrete::peak_positions">
+<area shape="rect" id="Node000001" title="Sample indices of local peak maxima in the full span." alt="" coords="5,29,188,69"/>
+<area shape="poly" id="edge1_Node000001_Node000001" title=" " alt="" coords="57,30,54,20,61,10,75,5,97,3,122,6,135,13,133,18,120,11,97,8,76,10,64,15,59,21,62,28"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_a64bfe6458a57047ea3c126b2b27da092.html#a64bfe6458a57047ea3c126b2b27da092" title="Zero output below threshold, pass through above." alt="" coords="236,29,385,69"/>
+<area shape="poly" id="edge2_Node000001_Node000002" title=" " alt="" coords="188,47,222,47,222,52,188,52"/>
+</map>

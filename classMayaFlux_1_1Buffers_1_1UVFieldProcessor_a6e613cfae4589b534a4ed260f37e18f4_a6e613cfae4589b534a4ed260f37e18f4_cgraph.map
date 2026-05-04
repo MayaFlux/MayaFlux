@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::UVFieldProcessor::on_before_execute" name="MayaFlux::Buffers::UVFieldProcessor::on_before_execute">
+<area shape="rect" id="Node000001" title="Called before each process callback." alt="" coords="5,5,164,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a957293274f9de20606b567a18ebc353c.html#a957293274f9de20606b567a18ebc353c" title="Update push constant data (type&#45;safe)" alt="" coords="212,5,371,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="164,30,198,30,198,35,164,35"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a85037a36fe7bced17fc296d213abcdff.html#a85037a36fe7bced17fc296d213abcdff" title="Set push constant size from type." alt="" coords="419,5,577,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="371,30,405,30,405,35,371,35"/>
+</map>

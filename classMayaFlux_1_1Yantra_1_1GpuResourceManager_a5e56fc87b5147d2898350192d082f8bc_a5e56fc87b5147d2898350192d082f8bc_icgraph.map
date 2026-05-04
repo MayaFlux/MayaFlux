@@ -1,0 +1,13 @@
+<map id="MayaFlux::Yantra::GpuResourceManager::download" name="MayaFlux::Yantra::GpuResourceManager::download">
+<area shape="rect" id="Node000001" title=" " alt="" coords="552,37,780,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1GpuDispatchCore_a0f399fd490fe9a1c63d18937304350be.html#a0f399fd490fe9a1c63d18937304350be" title="Read back all OUTPUT bindings that have explicit size overrides into the aux map of a GpuChannelResul..." alt="" coords="279,5,504,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="538,45,504,41,505,36,539,40"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1GpuDispatchCore_ae5e1220e72a191e7b1200563b38e2c64.html#ae5e1220e72a191e7b1200563b38e2c64" title="Read back the primary output buffer into a float vector." alt="" coords="279,69,504,109"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="539,75,505,79,504,74,538,70"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1GpuDispatchCore_a899fb89ec912ff8a784fa8d4efadbe39.html#a899fb89ec912ff8a784fa8d4efadbe39" title="Full single&#45;pass dispatch." alt="" coords="5,5,231,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="265,28,231,28,231,23,265,23"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1GpuDispatchCore_ab2351a76c5db238842099c55a1d08386.html#ab2351a76c5db238842099c55a1d08386" title="Multi&#45;pass (chained) dispatch." alt="" coords="5,69,231,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="293,51,205,72,203,67,291,46"/>
+<area shape="poly" id="edge5_Node000005_Node000003" title=" " alt="" coords="291,69,203,48,205,43,293,64"/>
+<area shape="poly" id="edge6_Node000005_Node000004" title=" " alt="" coords="265,92,231,92,231,87,265,87"/>
+</map>

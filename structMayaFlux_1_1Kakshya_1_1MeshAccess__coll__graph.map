@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::MeshAccess" name="MayaFlux::Kakshya::MeshAccess">
+<area shape="rect" id="Node000001" title="Non&#45;owning read view over a pair of DataVariant streams representing interleaved vertex bytes and a f..." alt="" coords="17,288,167,548"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kakshya_1_1VertexLayout.html" title="Complete description of vertex data layout in a buffer." alt="" coords="5,5,179,225"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="95,225,95,272,89,272,89,225"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="MayaFlux::store" name="MayaFlux::store">
+<area shape="rect" id="Node000001" title="Transfer ownership of an existing object to the persistent store for process lifetime." alt="" coords="256,45,383,70"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Forma_acc0e19957fa04def8004abe53daa52dc.html#acc0e19957fa04def8004abe53daa52dc" title="Construct a Layer and a Context wired to window." alt="" coords="16,5,197,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="242,48,197,42,198,36,242,43"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_a212c4fbba9084873bad4ff943ca8f25e.html#a212c4fbba9084873bad4ff943ca8f25e" title="Construct a T in place, retain it for process lifetime, and return a shared handle." alt="" coords="5,69,208,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="243,71,209,77,208,71,242,66"/>
+</map>

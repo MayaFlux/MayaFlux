@@ -1,0 +1,10 @@
+<map id="MayaFlux::Buffers::BufferProcessingControl" name="MayaFlux::Buffers::BufferProcessingControl">
+<area shape="rect" id="Node000001" title="Processor attachment, removal, and processing chain management." alt="" coords="25,864,219,1173"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1TokenUnitManager.html" title="Token&#45;scoped unit storage and lifecycle management." alt="" coords="5,5,209,444"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="110,444,115,801,117,848,111,848,110,801,105,444"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1BufferAccessControl.html" title="Token&#45;aware buffer and unit access patterns." alt="" coords="245,507,436,801"/>
+<area shape="poly" id="edge3_Node000003_Node000002" title=" " alt="" coords="197,443,218,481,238,515,234,518,213,484,192,445"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="255,803,226,851,221,848,250,800"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Registry_1_1Service_1_1BufferService.html" title="Backend buffer management service interface." alt="" coords="239,75,442,375"/>
+<area shape="poly" id="edge4_Node000003_Node000004" title=" " alt="" coords="343,375,343,490,338,490,338,375"/>
+</map>

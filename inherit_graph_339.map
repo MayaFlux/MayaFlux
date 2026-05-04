@@ -1,0 +1,19 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="Node000000" href="$classMayaFlux_1_1Nodes_1_1Network_1_1NetworkOperator.html" title="Domain&#45;agnostic interpretive lens for network processing." alt="" coords="5,197,204,237"/>
+<area shape="rect" id="Node000001" href="$classMayaFlux_1_1Nodes_1_1Network_1_1GraphicsOperator.html" title="Operator that produces GPU&#45;renderable geometry." alt="" coords="252,133,451,173"/>
+<area shape="poly" id="edge109_Node000000_Node000001" title=" " alt="" coords="195,191,273,171,274,176,196,196"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1Network_1_1MeshOperator.html" title="Abstract base for operators that process MeshNetwork slots." alt="" coords="252,261,451,301"/>
+<area shape="poly" id="edge114_Node000000_Node000006" title=" " alt="" coords="196,238,274,259,273,264,195,243"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1FieldOperator.html" title="Pure field&#45;driven vertex manipulation via Tendency evaluation." alt="" coords="499,5,697,45"/>
+<area shape="poly" id="edge110_Node000001_Node000002" title=" " alt="" coords="388,123,439,88,497,55,526,43,528,48,500,60,442,93,391,127"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1PathOperator.html" title=" " alt="" coords="499,69,697,109"/>
+<area shape="poly" id="edge111_Node000001_Node000003" title=" " alt="" coords="442,127,520,107,521,112,443,132"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Network_1_1PhysicsOperator.html" title="N&#45;body physics simulation with point rendering." alt="" coords="499,133,697,173"/>
+<area shape="poly" id="edge112_Node000001_Node000004" title=" " alt="" coords="465,151,498,151,498,156,465,156"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1Network_1_1TopologyOperator.html" title=" " alt="" coords="499,197,697,237"/>
+<area shape="poly" id="edge113_Node000001_Node000005" title=" " alt="" coords="443,174,521,195,520,200,442,179"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1Network_1_1MeshFieldOperator.html" title="Chain operator that applies Tendency field deformation to the vertex data of individual MeshNetwork s..." alt="" coords="499,261,697,301"/>
+<area shape="poly" id="edge115_Node000006_Node000007" title=" " alt="" coords="465,279,498,279,498,284,465,284"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Nodes_1_1Network_1_1MeshTransformOperator.html" title="Primary operator that drives slot local transforms via Tendency fields and propagates world transform..." alt="" coords="499,325,697,365"/>
+<area shape="poly" id="edge116_Node000006_Node000008" title=" " alt="" coords="443,302,521,323,520,328,442,307"/>
+</map>

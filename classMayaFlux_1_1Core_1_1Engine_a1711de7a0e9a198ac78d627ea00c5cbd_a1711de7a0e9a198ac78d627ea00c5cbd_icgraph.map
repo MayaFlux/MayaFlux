@@ -1,0 +1,57 @@
+<map id="MayaFlux::Core::Engine::get_node_graph_manager" name="MayaFlux::Core::Engine::get_node_graph_manager">
+<area shape="rect" id="Node000001" title="Gets the node graph manager." alt="" coords="745,685,944,725"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_adbd735038cb59c42bd089be2299188df.html#adbd735038cb59c42bd089be2299188df" title="Gets the root node for a specific channel." alt="" coords="527,295,685,335"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="836,672,823,604,797,518,779,472,756,428,728,386,696,349,680,338,683,333,699,345,732,383,760,425,784,470,802,516,828,603,841,670"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_a5c92c4d97ecd276a33797057eb8c5906.html#a5c92c4d97ecd276a33797057eb8c5906" title="Gets the node graph manager from the default engine." alt="" coords="529,359,683,399"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="818,675,620,401,624,398,823,672"/>
+<area shape="rect" id="Node000020" href="$namespaceMayaFlux_a2805d296cd214232e80dd7bfda82c282.html#a2805d296cd214232e80dd7bfda82c282" title=" " alt="" coords="515,692,697,717"/>
+<area shape="poly" id="edge19_Node000001_Node000020" title=" " alt="" coords="732,707,698,707,698,702,732,702"/>
+<area shape="rect" id="Node000024" href="$namespaceMayaFlux_a7439636286675f6d800b1f399d562887.html#a7439636286675f6d800b1f399d562887" title="Registers a node network with the default engine&#39;s node graph manager." alt="" coords="534,766,678,806"/>
+<area shape="poly" id="edge23_Node000001_Node000024" title=" " alt="" coords="773,732,666,769,665,763,771,727"/>
+<area shape="rect" id="Node000028" href="$namespaceMayaFlux_aab984c41b1f4cda065aae5692edce35f.html#aab984c41b1f4cda065aae5692edce35f" title="Unregisters a node network from the default engine&#39;s node graph manager." alt="" coords="526,830,686,870"/>
+<area shape="poly" id="edge27_Node000001_Node000028" title=" " alt="" coords="814,736,762,779,699,820,673,832,671,827,696,816,759,774,810,732"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_a0ea14a00cf96cb1b2a6744c2ecc9ab35.html#a0ea14a00cf96cb1b2a6744c2ecc9ab35" title="Combines two nodes in parallel (multiplication)" alt="" coords="289,5,445,31"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="516,353,513,349,489,309,481,269,483,231,490,192,497,155,498,118,489,81,479,62,465,44,444,29,447,25,468,40,484,59,494,79,504,117,502,155,495,193,488,231,486,269,494,307,517,346,520,349"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_a787a00069395602764e5c5ed27868141.html#a787a00069395602764e5c5ed27868141" title="Combines two nodes in parallel (addition)" alt="" coords="287,55,447,80"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="516,353,513,349,492,316,484,282,485,250,490,217,494,186,495,155,486,124,465,93,446,80,449,76,469,89,491,122,500,154,500,186,495,218,490,250,489,282,497,313,517,346,520,349"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_a627f09242a71abda745b8a8f03530d42.html#a627f09242a71abda745b8a8f03530d42" title="Connects two nodes in series (pipeline operator)" alt="" coords="282,104,453,129"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="516,352,513,349,495,322,487,295,487,269,489,243,492,217,491,192,483,167,465,143,450,132,453,127,469,139,488,165,496,191,497,217,495,243,492,269,493,294,500,320,517,346,520,349"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_ad57f926de2f4f9c78bb0645290c5b01e.html#ad57f926de2f4f9c78bb0645290c5b01e" title=" " alt="" coords="291,153,444,179"/>
+<area shape="poly" id="edge6_Node000003_Node000007" title=" " alt="" coords="517,353,513,349,498,329,491,308,489,268,487,229,480,210,465,192,443,178,445,173,468,188,484,208,492,228,494,268,496,307,503,326,517,346,520,349"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_a0ab1d1c7328a14b61bc1271994c85ac0.html#a0ab1d1c7328a14b61bc1271994c85ac0" title=" " alt="" coords="291,203,444,228"/>
+<area shape="poly" id="edge7_Node000003_Node000008" title=" " alt="" coords="518,354,513,349,501,335,494,321,489,293,483,266,477,254,465,241,443,229,446,224,468,237,481,251,488,264,494,292,499,319,505,332,517,345,522,350"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_a9fa2d02581e6282559d541d70802c112.html#a9fa2d02581e6282559d541d70802c112" title=" " alt="" coords="291,252,444,277"/>
+<area shape="poly" id="edge8_Node000003_Node000009" title=" " alt="" coords="522,355,513,349,498,335,489,320,480,305,465,292,439,280,441,275,468,288,484,302,493,317,502,331,516,345,525,351"/>
+<area shape="rect" id="Node000010" href="$namespaceMayaFlux_aa901a4b0b9f930abe9966d0dd5e779f1.html#aa901a4b0b9f930abe9966d0dd5e779f1" title="Adds a node to the root node of a specific channel." alt="" coords="295,302,439,342"/>
+<area shape="poly" id="edge9_Node000003_Node000010" title=" " alt="" coords="514,360,439,342,440,337,515,355"/>
+<area shape="rect" id="Node000013" href="$namespaceMayaFlux_a3007544776c384d1c0e640f3a0d645e3.html#a3007544776c384d1c0e640f3a0d645e3" title="@breif Moves the network from its current channel(s) to the specified channel(s) with an optional fad..." alt="" coords="273,367,461,392"/>
+<area shape="poly" id="edge12_Node000003_Node000013" title=" " alt="" coords="514,382,461,382,461,377,514,377"/>
+<area shape="rect" id="Node000014" href="$namespaceMayaFlux_a4e8f42765ab02706169fdaf6cb221879.html#a4e8f42765ab02706169fdaf6cb221879" title="@breif Moves the node from its current channel(s) to the specified channel(s) with an optional fade t..." alt="" coords="273,416,461,441"/>
+<area shape="poly" id="edge13_Node000003_Node000014" title=" " alt="" coords="515,401,430,419,429,413,514,396"/>
+<area shape="rect" id="Node000015" href="$namespaceMayaFlux_a5e7ec95e02b8766a3aee0d66f51ac239.html#a5e7ec95e02b8766a3aee0d66f51ac239" title="@breif Moves the node from its current channel(s) to the specified channel(s) with an optional fade t..." alt="" coords="284,465,451,491"/>
+<area shape="poly" id="edge14_Node000003_Node000015" title=" " alt="" coords="562,408,517,433,468,455,428,468,427,463,466,450,515,428,559,404"/>
+<area shape="rect" id="Node000016" href="$namespaceMayaFlux_a728d33694be6b418fe6db1224da9f414.html#a728d33694be6b418fe6db1224da9f414" title="@breif Moves the node from its current channel(s) to the specified channel(s) with an optional fade t..." alt="" coords="284,515,451,540"/>
+<area shape="poly" id="edge15_Node000003_Node000016" title=" " alt="" coords="580,411,531,459,501,484,468,504,437,517,435,512,465,500,498,479,528,455,577,408"/>
+<area shape="rect" id="Node000017" href="$namespaceMayaFlux_aad56cf1420bfb5ad395d77cfed879312.html#aad56cf1420bfb5ad395d77cfed879312" title="Removes a node from the root node of a specific channel." alt="" coords="287,565,447,605"/>
+<area shape="poly" id="edge16_Node000003_Node000017" title=" " alt="" coords="589,413,540,483,507,521,468,554,444,567,442,562,465,549,503,517,536,480,585,410"/>
+<area shape="rect" id="Node000019" href="$namespaceMayaFlux_a333e458f39650286ee7fec6808b18fef.html#a333e458f39650286ee7fec6808b18fef" title="Removes a node from the root node of specified channels." alt="" coords="268,629,467,655"/>
+<area shape="poly" id="edge18_Node000003_Node000019" title=" " alt="" coords="597,414,579,460,553,516,516,571,493,597,468,619,445,632,443,627,465,614,490,593,512,568,548,513,575,458,592,412"/>
+<area shape="rect" id="Node000011" href="$namespaceMayaFlux_aaed41e3f8ff8e36b6e2df90aa68a1e24.html#aaed41e3f8ff8e36b6e2df90aa68a1e24" title=" " alt="" coords="25,281,200,307"/>
+<area shape="poly" id="edge10_Node000010_Node000011" title=" " alt="" coords="281,315,200,306,201,301,282,310"/>
+<area shape="rect" id="Node000012" href="$namespaceMayaFlux_abe3b2ac7f14796fddaade4da6f50641f.html#abe3b2ac7f14796fddaade4da6f50641f" title="Adds a node to the root node of specified channels." alt="" coords="41,331,185,371"/>
+<area shape="poly" id="edge11_Node000010_Node000012" title=" " alt="" coords="282,334,185,346,184,340,281,329"/>
+<area shape="rect" id="Node000018" href="$namespaceMayaFlux_aa4c12145e393f66fe17cb79555f4a402.html#aa4c12145e393f66fe17cb79555f4a402" title="Removes a node from the root node from list of channels." alt="" coords="33,565,193,605"/>
+<area shape="poly" id="edge17_Node000017_Node000018" title=" " alt="" coords="274,587,193,587,193,582,274,582"/>
+<area shape="rect" id="Node000021" href="$namespaceMayaFlux_af9c06a4f9b00fd7e57c33c43eb5a701b.html#af9c06a4f9b00fd7e57c33c43eb5a701b" title=" " alt="" coords="291,679,444,704"/>
+<area shape="poly" id="edge20_Node000020_Node000021" title=" " alt="" coords="501,701,444,698,444,693,501,696"/>
+<area shape="rect" id="Node000023" href="$namespaceMayaFlux_a06647b1dcbbdb0b2ca916102a97a68ad.html#a06647b1dcbbdb0b2ca916102a97a68ad" title=" " alt="" coords="276,728,459,753"/>
+<area shape="poly" id="edge22_Node000020_Node000023" title=" " alt="" coords="508,722,452,731,452,725,508,717"/>
+<area shape="rect" id="Node000022" href="$classMayaFlux_1_1MeshGroupHandle_ae8fdbcb1940710ced5023950481dc308.html#ae8fdbcb1940710ced5023950481dc308" title=" " alt="" coords="5,671,220,711"/>
+<area shape="poly" id="edge21_Node000021_Node000022" title=" " alt="" coords="277,694,220,694,220,689,277,689"/>
+<area shape="rect" id="Node000025" href="$namespaceMayaFlux_a6d8da20235060cfaa489fbdf81d1d579.html#a6d8da20235060cfaa489fbdf81d1d579" title="Creates a new node network." alt="" coords="280,778,455,818"/>
+<area shape="poly" id="edge24_Node000024_Node000025" title=" " alt="" coords="520,793,455,796,455,791,520,788"/>
+<area shape="rect" id="Node000026" href="$namespaceMayaFlux_af024baacfc552f91ec9932942460bcb4.html#af024baacfc552f91ec9932942460bcb4" title=" " alt="" coords="295,842,439,882"/>
+<area shape="poly" id="edge25_Node000024_Node000026" title=" " alt="" coords="530,813,432,844,430,839,528,808"/>
+<area shape="rect" id="Node000027" href="$namespaceMayaFlux_a67f8f7fbd0a11f5dd16c68fa3c4c0744.html#a67f8f7fbd0a11f5dd16c68fa3c4c0744" title=" " alt="" coords="36,849,189,875"/>
+<area shape="poly" id="edge26_Node000026_Node000027" title=" " alt="" coords="282,865,190,865,190,859,282,859"/>
+</map>

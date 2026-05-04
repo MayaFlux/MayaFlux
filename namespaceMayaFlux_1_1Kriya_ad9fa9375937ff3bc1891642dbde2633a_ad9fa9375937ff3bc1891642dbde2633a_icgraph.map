@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kriya::metro" name="MayaFlux::Kriya::metro">
+<area shape="rect" id="Node000001" title="Creates a periodic event generator that executes a callback at regular intervals." alt="" coords="439,42,613,67"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_a95d5dddcf0ccf005163f77b570c8e7a5.html#a95d5dddcf0ccf005163f77b570c8e7a5" title="Creates a simple task that calls a function at a specified interval." alt="" coords="207,13,389,38"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="424,44,389,40,389,34,425,39"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nexus_1_1Wiring_af32900423bc2e18633ca0f7dd74f051a.html#af32900423bc2e18633ca0f7dd74f051a" title="Apply the configured wiring." alt="" coords="205,63,391,103"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="425,70,391,74,390,69,424,64"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_a0b2f122006fb411804adab9baa87647d.html#a0b2f122006fb411804adab9baa87647d" title="Creates a metronome task and addes it to the default scheduler list for evaluation." alt="" coords="5,5,157,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="194,28,158,28,158,23,194,23"/>
+</map>

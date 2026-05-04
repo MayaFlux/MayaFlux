@@ -1,0 +1,13 @@
+<map id="MayaFlux::Nodes::Network::GraphicsOperator" name="MayaFlux::Nodes::Network::GraphicsOperator">
+<area shape="rect" id="Node000001" title="Operator that produces GPU&#45;renderable geometry." alt="" coords="338,233,538,508"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1FieldOperator.html" title="Pure field&#45;driven vertex manipulation via Tendency evaluation." alt="" coords="5,556,196,1296"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="328,442,265,494,236,525,211,558,198,577,194,575,206,554,232,521,261,490,325,438"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Network_1_1PathOperator.html" title=" " alt="" coords="221,721,421,1131"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="409,522,367,722,361,720,404,521"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1Network_1_1PhysicsOperator.html" title="N&#45;body physics simulation with point rendering." alt="" coords="444,561,669,1291"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="473,521,481,560,476,562,467,522"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1Network_1_1TopologyOperator.html" title=" " alt="" coords="693,739,893,1113"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="551,432,622,486,655,519,684,554,710,597,732,643,764,738,759,739,727,645,706,600,680,558,651,522,619,490,548,436"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1NetworkOperator.html" title="Domain&#45;agnostic interpretive lens for network processing." alt="" coords="343,5,533,185"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="441,199,441,233,435,233,435,199"/>
+</map>

@@ -1,0 +1,26 @@
+<map id="NetworkEvents.cpp" name="NetworkEvents.cpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="379,5,527,31"/>
+<area shape="rect" id="Node000002" href="$NetworkEvents_8hpp.html" title=" " alt="" coords="40,152,189,177"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="380,33,302,51,261,64,223,81,176,111,138,144,134,140,172,107,220,76,259,59,300,46,378,28"/>
+<area shape="rect" id="Node000004" href="$GetPromise_8hpp.html" title=" " alt="" coords="473,79,660,104"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="473,28,538,69,535,74,470,33"/>
+<area shape="rect" id="Node000008" href="$NetworkAwaiter_8hpp.html" title=" " alt="" coords="234,79,449,104"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="437,33,373,73,370,69,434,28"/>
+<area shape="rect" id="Node000011" href="$Event_8hpp.html" title=" " alt="" coords="684,79,879,104"/>
+<area shape="poly" id="edge12_Node000001_Node000011" title=" " alt="" coords="507,28,716,73,715,78,505,33"/>
+<area shape="rect" id="Node000003" href="$GlobalNetworkConfig_8hpp.html" title=" " alt="" coords="5,225,227,265"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="118,177,118,212,113,212,112,178"/>
+<area shape="rect" id="Node000005" href="$Promise_8hpp.html" title=" " alt="" coords="553,152,764,177"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="583,102,635,141,631,146,580,106"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="465,233,548,258"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="637,180,542,229,540,224,635,175"/>
+<area shape="rect" id="Node000007" href="$ProcessingTokens_8hpp.html" title=" " alt="" coords="572,225,767,265"/>
+<area shape="poly" id="edge6_Node000005_Node000007" title=" " alt="" coords="663,177,668,211,662,212,658,178"/>
+<area shape="poly" id="edge11_Node000008_Node000006" title=" " alt="" coords="398,102,443,120,465,133,483,150,494,166,501,184,508,218,503,219,496,185,489,169,479,154,462,137,441,124,396,107"/>
+<area shape="rect" id="Node000009" href="$NetworkSource_8hpp.html" title=" " alt="" coords="213,152,469,177"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="344,104,344,138,339,138,339,104"/>
+<area shape="poly" id="edge9_Node000009_Node000003" title=" " alt="" coords="309,180,184,223,182,218,308,175"/>
+<area shape="rect" id="Node000010" href="$RingBuffer_8hpp.html" title=" " alt="" coords="252,225,431,265"/>
+<area shape="poly" id="edge10_Node000009_Node000010" title=" " alt="" coords="344,178,344,212,339,212,339,178"/>
+<area shape="poly" id="edge13_Node000011_Node000005" title=" " alt="" coords="763,106,692,147,689,143,760,102"/>
+</map>

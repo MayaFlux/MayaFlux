@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::BufferProcessingChain::cleanup_rejected_processors" name="MayaFlux::Buffers::BufferProcessingChain::cleanup_rejected_processors">
+<area shape="rect" id="Node000001" title="Validates the processing token against the chain&#39;s preferred token." alt="" coords="437,45,656,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingChain_a23d4172a12da9ea88c8487ff720c824d.html#a23d4172a12da9ea88c8487ff720c824d" title="Applies the transformation pipeline to a buffer with intelligent execution." alt="" coords="221,5,389,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="424,55,389,49,390,44,424,50"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingChain_a59d5a166df6cf4d18c4250548a8f4b81.html#a59d5a166df6cf4d18c4250548a8f4b81" title="Internal processing method for non&#45;owning buffer contexts." alt="" coords="221,84,389,139"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="424,95,390,101,389,95,424,90"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingChain_a1b98bf6c28cf994a1cefad945b80817c.html#a1b98bf6c28cf994a1cefad945b80817c" title="Applies preprocessors, processing chain, post processors and final processors sequentially to a buffe..." alt="" coords="5,5,173,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="207,35,174,35,174,30,207,30"/>
+</map>

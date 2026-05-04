@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::as_mesh_vertex_access" name="MayaFlux::Kakshya::as_mesh_vertex_access">
+<area shape="rect" id="Node000001" title="Convert DataVariant to mesh&#45;vertex&#45;compatible bytes." alt="" coords="239,13,419,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1GeometryWriteProcessor_a72fae44a0e5b4988dc7718cfef1c43ef.html#a72fae44a0e5b4988dc7718cfef1c43ef" title="The core processing function that must be implemented by derived classes." alt="" coords="5,5,191,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="225,35,191,35,191,30,225,30"/>
+</map>

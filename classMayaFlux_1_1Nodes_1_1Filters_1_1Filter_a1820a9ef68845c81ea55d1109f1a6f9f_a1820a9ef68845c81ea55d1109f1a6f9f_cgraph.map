@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Filters::Filter::process_batch" name="MayaFlux::Nodes::Filters::Filter::process_batch">
+<area shape="rect" id="Node000001" title="Calculates the phase response at a specific frequency." alt="" coords="5,5,188,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Filters_1_1Filter_af5dde2005f8e110868c18e4a37bededf.html#af5dde2005f8e110868c18e4a37bededf" title="Processes a single sample through the filter." alt="" coords="236,5,419,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="188,23,222,23,222,28,188,28"/>
+</map>

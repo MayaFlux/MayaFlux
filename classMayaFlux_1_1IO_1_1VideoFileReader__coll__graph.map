@@ -1,0 +1,5 @@
+<map id="MayaFlux::IO::VideoFileReader" name="MayaFlux::IO::VideoFileReader">
+<area shape="rect" id="Node000001" title="Streaming FFmpeg&#45;based video file reader with background decode." alt="" coords="5,373,220,1019"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1FileReader.html" title="Abstract interface for reading various file formats into containers." alt="" coords="24,5,201,325"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="115,339,115,373,110,373,110,339"/>
+</map>

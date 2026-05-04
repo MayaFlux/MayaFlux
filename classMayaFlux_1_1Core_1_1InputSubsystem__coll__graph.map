@@ -1,0 +1,30 @@
+<map id="MayaFlux::Core::InputSubsystem" name="MayaFlux::Core::InputSubsystem">
+<area shape="rect" id="Node000001" title="Input processing subsystem for external devices." alt="" coords="962,885,1191,1345"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1ISubsystem.html" title="Base interface for all subsystems in the MayaFlux processing architecture." alt="" coords="430,503,630,823"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="641,819,642,821,720,889,804,951,887,1006,963,1051,960,1055,884,1010,801,956,717,893,639,825,637,823"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Core_1_1GlobalInputConfig.html" title="Configuration for the InputSubsystem." alt="" coords="653,583,852,743"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="812,741,954,940,950,943,807,744"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Core_1_1HIDBackendInfo.html" title="HID backend configuration." alt="" coords="5,130,233,315"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="154,314,171,348,192,382,218,412,247,438,313,451,444,469,575,487,643,500,679,531,708,567,704,571,676,534,641,505,574,492,443,474,313,456,245,442,214,416,188,385,166,351,149,317"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Core_1_1MIDIBackendInfo.html" title="MIDI backend configuration." alt="" coords="258,130,493,315"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="417,314,456,379,480,410,506,438,524,452,541,460,573,469,607,479,644,501,675,532,702,567,698,570,671,535,640,505,605,483,572,475,539,465,521,456,503,442,476,414,451,382,412,317"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Core_1_1OSCConfigInfo.html" title="OSC backend configuration." alt="" coords="517,130,735,315"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="655,315,728,566,723,568,650,316"/>
+<area shape="rect" id="Node000007" href="$structMayaFlux_1_1Core_1_1SerialBackendInfo.html" title="Serial backend configuration." alt="" coords="759,160,1000,285"/>
+<area shape="poly" id="edge6_Node000003_Node000007" title=" " alt="" coords="864,286,783,568,777,566,859,285"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Core_1_1SubsystemProcessingHandle.html" title="Unified interface combining buffer and node processing for subsystems." alt="" coords="1529,603,1755,723"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="1570,725,1206,1014,1203,1010,1566,721"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Core_1_1BufferProcessingHandle.html" title="Thread&#45;safe interface for buffer operations within a processing domain." alt="" coords="1024,5,1257,440"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="1260,427,1271,438,1327,488,1390,532,1454,571,1515,603,1512,608,1451,576,1387,537,1324,492,1267,442,1256,430"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Core_1_1NodeProcessingHandle.html" title="Interface for node graph operations within a processing domain." alt="" coords="1281,103,1509,343"/>
+<area shape="poly" id="edge9_Node000008_Node000010" title=" " alt="" coords="1465,342,1603,587,1598,589,1460,344"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Core_1_1TaskSchedulerHandle.html" title=" " alt="" coords="1533,133,1751,313"/>
+<area shape="poly" id="edge10_Node000008_Node000011" title=" " alt="" coords="1645,313,1645,586,1639,586,1639,313"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Core_1_1WindowManagerHandle.html" title=" " alt="" coords="1775,163,2008,283"/>
+<area shape="poly" id="edge11_Node000008_Node000012" title=" " alt="" coords="1860,284,1686,590,1681,587,1855,282"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Core_1_1InputManagerHandle.html" title=" " alt="" coords="2032,133,2247,313"/>
+<area shape="poly" id="edge12_Node000008_Node000013" title=" " alt="" coords="2106,314,2070,380,2048,412,2023,442,1964,494,1900,539,1834,578,1771,610,1769,606,1831,574,1897,535,1961,490,2019,438,2044,409,2066,377,2101,312"/>
+<area shape="rect" id="Node000014" href="$structMayaFlux_1_1Core_1_1SubsystemTokens.html" title="Processing token configuration for subsystem operation." alt="" coords="2271,163,2467,283"/>
+<area shape="poly" id="edge14_Node000001_Node000014" title=" " alt="" coords="2367,283,2359,329,2346,380,2327,432,2299,480,2244,548,2183,611,2117,670,2048,725,1975,775,1899,821,1745,902,1592,968,1447,1020,1317,1060,1208,1089,1207,1084,1315,1055,1445,1015,1590,963,1743,897,1897,816,1972,770,2045,720,2114,666,2179,608,2240,545,2294,477,2322,430,2341,379,2354,328,2361,282"/>
+<area shape="poly" id="edge13_Node000008_Node000014" title=" " alt="" coords="2355,284,2340,323,2320,365,2294,406,2261,442,2205,485,2145,523,2081,554,2015,581,1886,621,1772,646,1771,641,1885,616,2013,576,2078,550,2142,518,2202,481,2258,438,2289,403,2315,363,2335,321,2350,282"/>
+</map>

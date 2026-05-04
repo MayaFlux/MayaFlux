@@ -1,0 +1,11 @@
+<map id="MayaFlux::Portal::Forma::Geometry::radial" name="MayaFlux::Portal::Forma::Geometry::radial">
+<area shape="rect" id="Node000001" title="Geometry function for a radial indicator in NDC space." alt="" coords="5,69,187,109"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_ab506517b5b68f3ddb07c8688a6396748.html#ab506517b5b68f3ddb07c8688a6396748" title="Containment test for a circle." alt="" coords="270,5,419,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="174,67,256,45,258,50,175,72"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kinesis_1_1AABB2D_a137d0e3eea9f9ad0ecc19d7381c24e69.html#a137d0e3eea9f9ad0ecc19d7381c24e69" title=" " alt="" coords="270,69,419,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="187,87,256,87,256,92,187,92"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_1_1detail_ac1641d06468b4f5b6ee16f51fe3a4817.html#ac1641d06468b4f5b6ee16f51fe3a4817" title=" " alt="" coords="235,133,455,173"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="175,107,254,127,253,133,174,112"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Kinesis_1_1AABB2D_aa55f9ac774f2e68e5206926f60fc6a8a.html#aa55f9ac774f2e68e5206926f60fc6a8a" title=" " alt="" coords="503,69,652,109"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="419,87,489,87,489,92,419,92"/>
+</map>

@@ -1,0 +1,8 @@
+<map id="MayaFlux::Kinesis::Discrete::peak_positions" name="MayaFlux::Kinesis::Discrete::peak_positions">
+<area shape="rect" id="Node000001" title="Sample indices of local peak maxima in the full span." alt="" coords="536,29,719,69"/>
+<area shape="poly" id="edge3_Node000001_Node000001" title=" " alt="" coords="667,18,653,11,627,8,605,10,592,15,587,21,589,28,584,30,581,20,588,10,604,5,627,3,654,6,669,13"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Yantra_aacaccfb0af0418280f1f8b468bafc96d.html#aacaccfb0af0418280f1f8b468bafc96d" title=" " alt="" coords="300,29,488,69"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="522,52,488,52,488,47,522,47"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1FeatureExtractor_a6625311b756518d90e3d5ef2e4125e10.html#a6625311b756518d90e3d5ef2e4125e10" title="Core extraction implementation &#45; delegates to ExtractionHelper." alt="" coords="5,29,252,69"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="286,52,252,52,252,47,286,47"/>
+</map>

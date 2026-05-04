@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kriya::BufferPipeline::create" name="MayaFlux::Kriya::BufferPipeline::create">
+<area shape="rect" id="Node000001" title=" " alt="" coords="251,37,477,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_aa1955a73119c9e977f59ab989e74597e.html#aa1955a73119c9e977f59ab989e74597e" title="Creates a new buffer pipeline instance." alt="" coords="14,5,194,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="237,44,194,39,195,34,238,39"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kriya_1_1SamplingPipeline_af21f1bc6546de22e5eb3ba15838e6015.html#af21f1bc6546de22e5eb3ba15838e6015" title="Begin construction with a loaded stream and output channel." alt="" coords="5,69,203,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="237,76,203,80,203,75,237,70"/>
+</map>

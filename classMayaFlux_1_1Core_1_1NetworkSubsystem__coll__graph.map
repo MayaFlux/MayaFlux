@@ -1,0 +1,28 @@
+<map id="MayaFlux::Core::NetworkSubsystem" name="MayaFlux::Core::NetworkSubsystem">
+<area shape="rect" id="Node000001" title="General&#45;purpose network transport subsystem." alt="" coords="820,885,1071,1565"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1ISubsystem.html" title="Base interface for all subsystems in the MayaFlux processing architecture." alt="" coords="291,503,491,823"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="502,818,505,821,582,904,665,983,821,1121,818,1125,661,987,579,907,501,824,498,821"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Core_1_1GlobalNetworkConfig.html" title="Configuration for the NetworkSubsystem." alt="" coords="515,593,736,733"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="667,731,814,988,809,991,662,734"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Core_1_1UDPBackendInfo.html" title="Configuration for the UDP transport backend." alt="" coords="5,120,237,325"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="163,324,200,386,224,414,251,438,284,458,315,467,345,471,375,471,436,473,469,482,504,500,546,536,580,577,575,580,542,539,501,505,467,487,435,479,374,476,345,476,314,473,282,462,248,442,220,418,196,389,158,327"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Core_1_1TCPBackendInfo.html" title="Configuration for the TCP transport backend." alt="" coords="262,140,490,305"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="425,304,580,577,576,580,420,307"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Core_1_1SharedMemoryBackendInfo.html" title="Configuration for local inter&#45;process shared memory transport." alt="" coords="514,163,737,283"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="628,283,628,576,623,576,623,283"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Core_1_1SubsystemProcessingHandle.html" title="Unified interface combining buffer and node processing for subsystems." alt="" coords="1265,603,1492,723"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="1335,725,1083,1051,1079,1047,1331,721"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Core_1_1BufferProcessingHandle.html" title="Thread&#45;safe interface for buffer operations within a processing domain." alt="" coords="761,5,994,440"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="996,427,1007,438,1064,488,1127,532,1190,571,1251,603,1249,608,1188,576,1124,537,1061,492,1003,442,993,430"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Core_1_1NodeProcessingHandle.html" title="Interface for node graph operations within a processing domain." alt="" coords="1018,103,1246,343"/>
+<area shape="poly" id="edge8_Node000007_Node000009" title=" " alt="" coords="1201,342,1340,587,1335,589,1197,344"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Core_1_1TaskSchedulerHandle.html" title=" " alt="" coords="1270,133,1487,313"/>
+<area shape="poly" id="edge9_Node000007_Node000010" title=" " alt="" coords="1381,313,1381,586,1376,586,1376,313"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Core_1_1WindowManagerHandle.html" title=" " alt="" coords="1511,163,1745,283"/>
+<area shape="poly" id="edge10_Node000007_Node000011" title=" " alt="" coords="1597,284,1423,590,1418,587,1592,282"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Core_1_1InputManagerHandle.html" title=" " alt="" coords="1769,133,1983,313"/>
+<area shape="poly" id="edge11_Node000007_Node000012" title=" " alt="" coords="1843,314,1807,380,1784,412,1759,442,1701,494,1637,539,1571,578,1508,610,1506,606,1568,574,1634,535,1698,490,1755,438,1780,409,1802,377,1838,312"/>
+<area shape="rect" id="Node000013" href="$structMayaFlux_1_1Core_1_1SubsystemTokens.html" title="Processing token configuration for subsystem operation." alt="" coords="2007,163,2203,283"/>
+<area shape="poly" id="edge13_Node000001_Node000013" title=" " alt="" coords="2103,283,2095,329,2082,380,2063,432,2036,480,1986,544,1932,606,1875,664,1814,720,1687,824,1555,917,1423,998,1298,1067,1184,1124,1087,1169,1085,1164,1182,1119,1296,1062,1421,993,1552,912,1684,820,1811,716,1871,660,1929,602,1982,541,2031,477,2058,430,2077,379,2090,328,2098,283"/>
+<area shape="poly" id="edge12_Node000007_Node000013" title=" " alt="" coords="2091,284,2077,323,2056,365,2030,406,1998,442,1942,485,1881,523,1817,554,1752,581,1623,621,1509,646,1508,641,1621,616,1750,576,1815,550,1879,518,1939,481,1994,438,2026,403,2052,363,2072,321,2086,282"/>
+</map>

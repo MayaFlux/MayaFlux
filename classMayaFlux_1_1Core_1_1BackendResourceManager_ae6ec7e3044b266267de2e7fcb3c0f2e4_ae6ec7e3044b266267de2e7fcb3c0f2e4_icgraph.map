@@ -1,0 +1,17 @@
+<map id="MayaFlux::Core::BackendResourceManager::upload_image_data" name="MayaFlux::Core::BackendResourceManager::upload_image_data">
+<area shape="rect" id="Node000001" title="Upload data to an image (creates staging buffer internally)" alt="" coords="789,141,1036,181"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a3a42e83f8a57c6ea8cf2e15cbaaf3892.html#a3a42e83f8a57c6ea8cf2e15cbaaf3892" title="Upload pixel data to an existing texture." alt="" coords="539,141,741,181"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="776,164,741,164,741,159,776,159"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_aaf5e48e2bb8325c1db70971a89cabec7.html#aaf5e48e2bb8325c1db70971a89cabec7" title="Create a 2D texture." alt="" coords="277,77,474,117"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="543,141,458,120,459,115,544,135"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a7ac47f4e64fd980c46a937ca4c69a1d0.html#a7ac47f4e64fd980c46a937ca4c69a1d0" title="Create a 3D texture (volumetric)" alt="" coords="277,141,474,181"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="525,164,474,164,474,159,525,159"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_ad61a4d872b3af82eb1af351bc6118126.html#ad61a4d872b3af82eb1af351bc6118126" title="Create a cubemap texture." alt="" coords="260,205,491,245"/>
+<area shape="poly" id="edge7_Node000002_Node000008" title=" " alt="" coords="544,187,459,208,458,203,543,182"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a028cc0af273b37e3dadbdc908c67a7ed.html#a028cc0af273b37e3dadbdc908c67a7ed" title="Create a 2D texture from a DataVariant in one shot." alt="" coords="10,5,207,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="287,76,183,48,184,43,288,71"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1WindowContainer_a54e6f5327b1e6000a2c148781a8f6717.html#a54e6f5327b1e6000a2c148781a8f6717" title="Crop a region from the last readback and upload it as a VKImage." alt="" coords="15,70,202,125"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="263,100,202,100,202,95,263,95"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1WindowContainer_a31ff69a65227eb7c14504ae2c8ae5fe9.html#a31ff69a65227eb7c14504ae2c8ae5fe9" title="Upload the full surface readback to a new VKImage." alt="" coords="5,149,212,189"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="288,124,184,152,183,147,287,118"/>
+</map>

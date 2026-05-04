@@ -1,0 +1,9 @@
+<map id="MayaFlux::Yantra::GpuResourceManager::bind_image_storage" name="MayaFlux::Yantra::GpuResourceManager::bind_image_storage">
+<area shape="rect" id="Node000001" title="Bind a storage image descriptor at the given slot index." alt="" coords="552,37,780,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1GpuDispatchCore_ac2c2749002d9ed840fbb847f719d1d58.html#ac2c2749002d9ed840fbb847f719d1d58" title="Marshal channel data into GPU input buffers." alt="" coords="279,37,504,77"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="538,60,504,60,504,55,538,55"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1GpuDispatchCore_a899fb89ec912ff8a784fa8d4efadbe39.html#a899fb89ec912ff8a784fa8d4efadbe39" title="Full single&#45;pass dispatch." alt="" coords="5,5,231,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="265,45,230,41,231,36,265,40"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1GpuDispatchCore_ab2351a76c5db238842099c55a1d08386.html#ab2351a76c5db238842099c55a1d08386" title="Multi&#45;pass (chained) dispatch." alt="" coords="5,69,231,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="265,75,231,79,230,74,265,69"/>
+</map>

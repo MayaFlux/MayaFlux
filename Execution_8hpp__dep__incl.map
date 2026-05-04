@@ -1,0 +1,31 @@
+<map id="Execution.hpp" name="Execution.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="315,5,429,31"/>
+<area shape="rect" id="Node000002" href="$Analysis_8cpp.html" title=" " alt="" coords="5,79,109,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="309,36,109,81,108,76,308,31"/>
+<area shape="rect" id="Node000003" href="$ComputeMatrix_8hpp.html" title=" " alt="" coords="134,79,285,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="334,39,237,81,235,76,332,34"/>
+<area shape="rect" id="Node000007" href="$Convolution_8cpp.html" title=" " alt="" coords="309,79,435,104"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="375,44,375,79,369,79,369,44"/>
+<area shape="rect" id="Node000008" href="$Sort_8hpp.html" title="Discrete sequence sorting primitives for MayaFlux::Kinesis." alt="" coords="459,79,535,104"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="405,35,478,76,476,81,403,40"/>
+<area shape="rect" id="Node000014" href="$Transform_8cpp.html" title=" " alt="" coords="560,79,675,104"/>
+<area shape="poly" id="edge15_Node000001_Node000014" title=" " alt="" coords="425,32,578,76,577,81,424,37"/>
+<area shape="rect" id="Node000004" href="$ComputePipeline_8hpp.html" title=" " alt="" coords="147,225,309,251"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="215,118,229,225,224,225,210,118"/>
+<area shape="rect" id="Node000005" href="$GranularWorkflow_8hpp.html" title=" " alt="" coords="243,372,408,397"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="246,261,320,370,315,373,241,264"/>
+<area shape="rect" id="Node000006" href="$GranularWorkflow_8cpp.html" title=" " alt="" coords="325,445,489,471"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="350,404,395,443,392,447,347,408"/>
+<area shape="rect" id="Node000009" href="$Sort_8cpp.html" title=" " alt="" coords="329,152,404,177"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="465,113,389,154,387,149,463,108"/>
+<area shape="rect" id="Node000010" href="$SortingHelper_8hpp.html" title=" " alt="" coords="428,152,567,177"/>
+<area shape="poly" id="edge9_Node000008_Node000010" title=" " alt="" coords="500,118,500,152,495,152,495,118"/>
+<area shape="rect" id="Node000011" href="$UniversalSorter_8hpp.html" title="Modern, digital&#45;first universal sorting framework for Maya Flux." alt="" coords="414,225,565,251"/>
+<area shape="poly" id="edge10_Node000010_Node000011" title=" " alt="" coords="497,191,493,226,488,225,492,191"/>
+<area shape="rect" id="Node000012" href="$GpuSorter_8hpp.html" title=" " alt="" coords="432,372,547,397"/>
+<area shape="poly" id="edge11_Node000011_Node000012" title=" " alt="" coords="492,265,492,372,487,372,487,265"/>
+<area shape="rect" id="Node000013" href="$StandardSorter_8hpp.html" title="Example concrete implementation of UniversalSorter." alt="" coords="303,299,449,324"/>
+<area shape="poly" id="edge13_Node000011_Node000013" title=" " alt="" coords="461,260,396,301,393,296,458,256"/>
+<area shape="poly" id="edge12_Node000012_Node000006" title=" " alt="" coords="467,408,422,447,418,443,464,404"/>
+<area shape="poly" id="edge14_Node000013_Node000005" title=" " alt="" coords="362,337,336,373,331,370,357,334"/>
+</map>

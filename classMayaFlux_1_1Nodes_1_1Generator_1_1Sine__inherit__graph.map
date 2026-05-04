@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::Generator::Sine" name="MayaFlux::Nodes::Generator::Sine">
+<area shape="rect" id="Node000001" title="Sinusoidal oscillator generator node." alt="" coords="5,1191,211,1671"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Generator.html" title="Base class for all signal and pattern generators in Maya Flux." alt="" coords="8,803,208,1143"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="111,1156,111,1190,105,1190,105,1156"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Node.html" title="Base interface for all computational processing nodes." alt="" coords="9,5,207,755"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="111,769,111,802,105,802,105,769"/>
+</map>

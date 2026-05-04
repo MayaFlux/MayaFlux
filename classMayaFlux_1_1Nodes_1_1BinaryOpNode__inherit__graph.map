@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::BinaryOpNode" name="MayaFlux::Nodes::BinaryOpNode">
+<area shape="rect" id="Node000001" title="Combines the outputs of two nodes using a binary operation." alt="" coords="103,803,332,1328"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Node.html" title="Base interface for all computational processing nodes." alt="" coords="5,5,203,755"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="171,768,177,802,171,803,166,769"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="227,340,434,420"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="325,434,263,803,258,802,319,433"/>
+</map>

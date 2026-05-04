@@ -1,0 +1,42 @@
+<map id="MayaFlux::Kakshya::ContainerDataStructure::get_channel_count" name="MayaFlux::Kakshya::ContainerDataStructure::get_channel_count">
+<area shape="rect" id="Node000001" title="Extract channel count from dimensions." alt="" coords="1005,332,1180,387"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kakshya_a9e04e41aff04a962aa0025fc87719652.html#a9e04e41aff04a962aa0025fc87719652" title="Advance current positions by specified frames per channel, with optional looping." alt="" coords="772,27,931,67"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1080,319,1065,265,1040,201,1004,137,981,107,956,81,929,65,932,61,959,77,985,104,1008,134,1045,199,1070,264,1085,318"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kakshya_a6b9b1e820df114a20a5384233008e015.html#a6b9b1e820df114a20a5384233008e015" title="Advance current positions by a number of frames, with optional looping." alt="" coords="772,91,931,131"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="1074,320,1056,279,1030,232,996,185,956,145,929,131,932,126,959,141,1000,182,1034,229,1060,276,1079,318"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Kakshya_1_1WindowContainer_a22dbea811d210776715f0306477b398d.html#a22dbea811d210776715f0306477b398d" title="Get a single frame of data efficiently." alt="" coords="745,155,957,195"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="1064,322,1018,264,989,235,956,210,933,198,936,193,959,205,992,231,1022,260,1068,319"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Kakshya_1_1WindowContainer_ac8e6dc8ac66afdf94e391fc8011de40b.html#ac8e6dc8ac66afdf94e391fc8011de40b" title="Get multiple frames efficiently." alt="" coords="768,220,935,275"/>
+<area shape="poly" id="edge11_Node000001_Node000012" title=" " alt="" coords="1032,328,956,288,930,277,932,272,958,284,1035,323"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Kakshya_1_1WindowContainer_ac8065ef8ab487f991cf4b76dc5c8e33d.html#ac8065ef8ab487f991cf4b76dc5c8e33d" title="Get a single value at the specified coordinates." alt="" coords="768,299,935,353"/>
+<area shape="poly" id="edge12_Node000001_Node000013" title=" " alt="" coords="991,348,934,340,935,335,992,343"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1Kakshya_1_1ContiguousAccessProcessor_a659411b73a8e35064a42df40e5743663.html#a659411b73a8e35064a42df40e5743663" title="Attach the processor to a signal source container." alt="" coords="495,429,697,484"/>
+<area shape="poly" id="edge13_Node000001_Node000014" title=" " alt="" coords="992,376,874,396,746,421,698,432,697,427,745,415,873,391,991,371"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1Kakshya_1_1CursorAccessProcessor_afcb2970c5731e7ed92e0faf1efd931b6.html#afcb2970c5731e7ed92e0faf1efd931b6" title="Called when this processor is attached to a container." alt="" coords="765,587,937,641"/>
+<area shape="poly" id="edge14_Node000001_Node000015" title=" " alt="" coords="1078,401,1059,442,1033,489,1000,536,959,577,939,591,936,586,956,573,996,533,1029,486,1055,439,1074,399"/>
+<area shape="rect" id="Node000016" href="$classMayaFlux_1_1Kakshya_1_1CursorAccessProcessor_a13d09e4d738e714908dd081cad01d1b5.html#a13d09e4d738e714908dd081cad01d1b5" title="Extract one block of frames into container processed_data[0]." alt="" coords="765,665,937,720"/>
+<area shape="poly" id="edge15_Node000001_Node000016" title=" " alt="" coords="1086,401,1071,457,1046,526,1009,595,986,627,959,656,939,670,936,666,956,652,982,624,1005,592,1041,523,1066,456,1081,400"/>
+<area shape="rect" id="Node000017" href="$classMayaFlux_1_1Kakshya_1_1ContiguousAccessProcessor_aca05ee63009dd88d08bdb79c0fa821c0.html#aca05ee63009dd88d08bdb79c0fa821c0" title="Store dimension and layout metadata from the container." alt="" coords="750,429,953,484"/>
+<area shape="poly" id="edge16_Node000001_Node000017" title=" " alt="" coords="1013,394,921,432,919,427,1011,389"/>
+<area shape="rect" id="Node000019" href="$classMayaFlux_1_1Kakshya_1_1ContiguousAccessProcessor_a39d753c064f0ccb0764dcb59c65f920e.html#a39d753c064f0ccb0764dcb59c65f920e" title="Validate the container&#39;s structure and output configuration." alt="" coords="750,508,953,563"/>
+<area shape="poly" id="edge19_Node000001_Node000019" title=" " alt="" coords="1064,400,1018,450,989,476,959,499,938,510,936,506,956,494,986,472,1014,447,1060,396"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_a57c8173321d14283714748456d5460c7.html#a57c8173321d14283714748456d5460c7" title="Advance the read position by a specified amount." alt="" coords="506,5,686,60"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="771,90,745,82,683,63,685,58,746,77,772,85"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1RegionProcessorBase_a20574208db40f323df3cf6ac9178ca79.html#a20574208db40f323df3cf6ac9178ca79" title="Organize container data into structured regions." alt="" coords="501,84,691,139"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="758,114,692,114,692,109,758,109"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Kakshya_1_1ContiguousAccessProcessor_ad02564095af42029d0276cc1df6370ee.html#ad02564095af42029d0276cc1df6370ee" title="Process the current region or block of data." alt="" coords="495,163,697,217"/>
+<area shape="poly" id="edge9_Node000003_Node000010" title=" " alt="" coords="772,138,746,146,685,165,683,160,745,141,771,133"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_aa439bfd4e77f899c063e07263effaaa3.html#aa439bfd4e77f899c063e07263effaaa3" title="Read data sequentially from the current position." alt="" coords="275,5,447,60"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="492,35,447,35,447,30,492,30"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Kakshya_1_1RegionProcessorBase_adfd4b78cb83865cd035277c9d82a1533.html#adfd4b78cb83865cd035277c9d82a1533" title="Attach this processor to a signal source container." alt="" coords="279,84,442,139"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="487,114,442,114,442,109,487,109"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Kakshya_1_1SpatialRegionProcessor_ace6bedee64ee435811d8097fdc6c5513.html#ace6bedee64ee435811d8097fdc6c5513" title="Attach to a spatial container." alt="" coords="29,44,203,99"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="265,99,203,88,204,83,266,93"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Kakshya_1_1RegionOrganizationProcessor_a7675770cf73a3a0b797b8ac9f05e1598.html#a7675770cf73a3a0b797b8ac9f05e1598" title="Construct a region organization processor for a given container." alt="" coords="5,123,227,177"/>
+<area shape="poly" id="edge8_Node000007_Node000009" title=" " alt="" coords="266,129,227,135,226,130,265,124"/>
+<area shape="poly" id="edge17_Node000017_Node000014" title=" " alt="" coords="736,459,697,459,697,454,736,454"/>
+<area shape="rect" id="Node000018" href="$classMayaFlux_1_1Kakshya_1_1ContiguousAccessProcessor_a004edfbf41a31559663ef2c48c84a205.html#a004edfbf41a31559663ef2c48c84a205" title="Set the output buffer size (shape) for each processing call." alt="" coords="495,508,697,563"/>
+<area shape="poly" id="edge18_Node000017_Node000018" title=" " alt="" coords="750,491,686,510,685,505,748,486"/>
+<area shape="poly" id="edge20_Node000019_Node000014" title=" " alt="" coords="748,506,685,487,686,482,750,501"/>
+<area shape="poly" id="edge21_Node000019_Node000018" title=" " alt="" coords="736,538,697,538,697,533,736,533"/>
+</map>

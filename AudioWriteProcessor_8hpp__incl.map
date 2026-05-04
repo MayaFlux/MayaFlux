@@ -1,0 +1,16 @@
+<map id="AudioWriteProcessor.hpp" name="AudioWriteProcessor.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="285,5,469,31"/>
+<area shape="rect" id="Node000002" href="$BufferProcessor_8hpp.html" title=" " alt="" coords="157,79,427,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="365,33,318,72,315,68,362,29"/>
+<area shape="rect" id="Node000006" href="$NDData_8hpp.html" title=" " alt="" coords="344,313,445,339"/>
+<area shape="poly" id="edge7_Node000001_Node000006" title=" " alt="" coords="397,29,421,49,441,77,447,83,455,83,466,83,476,89,480,105,476,136,464,188,440,266,430,287,417,305,413,301,426,284,435,264,459,186,471,135,474,105,471,92,465,88,455,88,445,88,437,80,417,53,394,33"/>
+<area shape="rect" id="Node000003" href="$BufferUtils_8hpp.html" title=" " alt="" coords="233,152,351,177"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="295,104,295,138,289,138,289,104"/>
+<area shape="rect" id="Node000004" href="$ProcessingTokens_8hpp.html" title=" " alt="" coords="5,225,200,265"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="265,180,162,223,160,218,263,175"/>
+<area shape="rect" id="Node000005" href="$VertexLayout_8hpp.html" title=" " alt="" coords="225,225,426,265"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="299,176,314,212,310,214,294,179"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="344,264,377,301,373,304,340,267"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="343,387,447,412"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="397,339,397,373,392,373,392,339"/>
+</map>

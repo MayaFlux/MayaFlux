@@ -1,0 +1,40 @@
+<map id="MayaFlux::Kinesis::scale" name="MayaFlux::Kinesis::scale">
+<area shape="rect" id="Node000001" title="Uniform scaling of a scalar&#45;output tendency." alt="" coords="781,357,931,397"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a31bce9ae13027fe885899a1bb80e8937.html#a31bce9ae13027fe885899a1bb80e8937" title="Apply a Blackman taper in&#45;place without materialising coefficients." alt="" coords="543,5,733,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="849,344,838,283,818,207,802,167,783,128,760,92,732,59,716,48,719,43,735,55,764,88,788,125,807,165,823,205,844,282,854,343"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a6c52691ecedecbc5dc9e427fd353bc0a.html#a6c52691ecedecbc5dc9e427fd353bc0a" title="Apply a Hamming taper in&#45;place without materialising coefficients." alt="" coords="543,69,733,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="845,345,831,296,809,236,776,176,755,148,732,123,715,112,718,107,735,119,759,144,780,173,814,234,836,294,850,343"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a60c441e70983b22f2485cf88208f9b95.html#a60c441e70983b22f2485cf88208f9b95" title="Apply a Hann taper in&#45;place without materialising coefficients." alt="" coords="559,133,717,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="840,345,823,308,799,266,768,224,732,187,713,176,716,171,735,183,773,220,803,263,827,306,844,343"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kinesis_ab7beb5598677019f26f785cc176a8980.html#ab7beb5598677019f26f785cc176a8980" title="Apply non&#45;uniform scaling to vertex set." alt="" coords="563,197,713,237"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="830,348,788,299,761,273,732,252,710,240,712,235,735,247,765,269,792,295,835,345"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Kinesis_afcb6da06df03756deb2e588a576e8049.html#afcb6da06df03756deb2e588a576e8049" title="Apply uniform scaling to vertex set." alt="" coords="559,261,717,301"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="807,353,732,316,702,304,704,299,734,311,809,348"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Kinesis_a2e93cc6c0579820bb8fad3902b334e9f.html#a2e93cc6c0579820bb8fad3902b334e9f" title="axial_blend projection: blend of three axis&#45;aligned planar projections" alt="" coords="563,325,713,365"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="767,367,712,359,713,354,768,362"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a1ffdfcc613d530510ca4ce2e34a7e4c8.html#a1ffdfcc613d530510ca4ce2e34a7e4c8" title="Blackman taper coefficients." alt="" coords="563,389,713,429"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="768,393,713,401,712,396,767,388"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_1_1Kinesis_ae9b95fa691983002faf746edebf5c5a2.html#ae9b95fa691983002faf746edebf5c5a2" title="cartesian projection along a chosen axis" alt="" coords="563,453,713,493"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="809,407,734,444,704,456,702,451,732,439,807,402"/>
+<area shape="rect" id="Node000010" href="$namespaceMayaFlux_1_1Kinesis_a10ccd5b722e87b181b35b4c071ba7959.html#a10ccd5b722e87b181b35b4c071ba7959" title="Create uniform scaling matrix." alt="" coords="551,518,725,573"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="833,410,790,459,735,507,714,520,711,516,732,503,787,455,829,407"/>
+<area shape="rect" id="Node000011" href="$namespaceMayaFlux_1_1Kinesis_a9393731b377b158f0021b6a3c5b57d66.html#a9393731b377b158f0021b6a3c5b57d66" title="Generate a textured quad centred on the origin." alt="" coords="563,621,713,661"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="844,411,802,495,771,543,735,586,710,607,683,624,680,619,707,603,731,582,767,539,797,493,839,409"/>
+<area shape="rect" id="Node000018" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a4b5c1a2c476106ea1fe6bcab841aab04.html#a4b5c1a2c476106ea1fe6bcab841aab04" title="Hamming taper coefficients." alt="" coords="563,685,713,725"/>
+<area shape="poly" id="edge18_Node000001_Node000018" title=" " alt="" coords="853,411,841,468,819,538,785,611,762,645,735,675,714,690,711,685,732,671,758,642,780,609,815,537,836,466,848,410"/>
+<area shape="rect" id="Node000019" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_aa9593612a4e44ae2b6b60cfe0f024804.html#aa9593612a4e44ae2b6b60cfe0f024804" title="Hann (raised cosine) taper coefficients." alt="" coords="563,749,713,789"/>
+<area shape="poly" id="edge19_Node000001_Node000019" title=" " alt="" coords="856,412,847,479,828,567,813,613,792,659,767,701,735,739,715,754,712,750,732,735,762,698,788,656,808,611,823,566,842,479,850,411"/>
+<area shape="poly" id="edge16_Node000011_Node000011" title=" " alt="" coords="675,610,662,603,638,600,617,602,605,607,600,613,603,620,597,622,595,612,602,602,616,597,638,595,663,598,677,605"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Buffers_1_1TextureBuffer_ad4dfd30af6ecb53741917052bf839ccb.html#ad4dfd30af6ecb53741917052bf839ccb" title=" " alt="" coords="303,535,477,590"/>
+<area shape="poly" id="edge11_Node000011_Node000012" title=" " alt="" coords="561,620,476,593,478,588,562,615"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1Buffers_1_1NodeTextureBuffer_ac0b2d907cfdd660dec29065570f5f479.html#ac0b2d907cfdd660dec29065570f5f479" title=" " alt="" coords="285,614,495,669"/>
+<area shape="poly" id="edge14_Node000011_Node000015" title=" " alt="" coords="550,644,495,644,495,639,550,639"/>
+<area shape="rect" id="Node000017" href="$classMayaFlux_1_1Buffers_1_1TextureBuffer_a5dc9347b20d4c4bd635ffe6a3467b6f2.html#a5dc9347b20d4c4bd635ffe6a3467b6f2" title=" " alt="" coords="303,693,477,747"/>
+<area shape="poly" id="edge17_Node000011_Node000017" title=" " alt="" coords="562,668,478,695,476,690,561,663"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Buffers_1_1TextureBuffer_ac591a11585eecc22824a7411e4f02dab.html#ac591a11585eecc22824a7411e4f02dab" title="Create texture buffer with dimensions." alt="" coords="19,483,223,523"/>
+<area shape="poly" id="edge12_Node000012_Node000013" title=" " alt="" coords="289,543,211,525,212,520,290,538"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1Buffers_1_1TextureBuffer_a3653b902b83109d353d43bc4c8389e2a.html#a3653b902b83109d353d43bc4c8389e2a" title="Reset to default fullscreen quad Uses position and scale to generate quad geometry." alt="" coords="5,547,237,587"/>
+<area shape="poly" id="edge13_Node000012_Node000014" title=" " alt="" coords="289,567,238,568,238,562,289,562"/>
+<area shape="rect" id="Node000016" href="$classMayaFlux_1_1Buffers_1_1NodeTextureBuffer_ac67634c77e2bdb1c6e7c6f5bceb492c1.html#ac67634c77e2bdb1c6e7c6f5bceb492c1" title="Initialize the buffer, create GPU texture, and setup processors." alt="" coords="28,614,215,669"/>
+<area shape="poly" id="edge15_Node000015_Node000016" title=" " alt="" coords="271,644,215,644,215,639,271,639"/>
+</map>

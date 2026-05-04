@@ -1,0 +1,9 @@
+<map id="MayaFlux::on_scroll" name="MayaFlux::on_scroll">
+<area shape="rect" id="Node000001" title="Schedule a mouse scroll handler." alt="" coords="475,45,627,70"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_a72f28c8e9fbe5781fe8935356cb359b7.html#a72f28c8e9fbe5781fe8935356cb359b7" title="Bind a navigation preset to a window and render processor." alt="" coords="240,5,427,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="460,47,426,42,427,36,461,41"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Context_a2c316ead9a2a49e06c9f9d2026a08dec.html#a2c316ead9a2a49e06c9f9d2026a08dec" title=" " alt="" coords="243,69,424,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="461,73,424,79,424,73,460,68"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_a3dc95653b5e16198d6c5f3ca0c24d646.html#a3dc95653b5e16198d6c5f3ca0c24d646" title="Bind a navigation preset to all RenderProcessors currently registered against a window." alt="" coords="5,5,192,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="227,28,192,28,192,23,227,23"/>
+</map>

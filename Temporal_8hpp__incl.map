@@ -1,0 +1,32 @@
+<map id="Temporal.hpp" name="Temporal.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="559,5,669,31"/>
+<area shape="rect" id="Node000002" href="$Creator_8hpp.html" title=" " alt="" coords="457,79,555,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="598,33,537,73,534,69,595,28"/>
+<area shape="rect" id="Node000014" href="$Timers_8hpp.html" title=" " alt="" coords="621,79,823,104"/>
+<area shape="poly" id="edge13_Node000001_Node000014" title=" " alt="" coords="633,28,694,69,691,73,630,33"/>
+<area shape="rect" id="Node000003" href="$Domain_8hpp.html" title=" " alt="" coords="455,159,557,185"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="509,104,509,145,503,145,503,104"/>
+<area shape="rect" id="Node000005" href="$Registry_8hpp.html" title=" " alt="" coords="581,159,684,185"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="526,102,604,150,601,154,523,106"/>
+<area shape="rect" id="Node000006" href="$LiveArena_8hpp.html" title=" " alt="" coords="5,152,183,192"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="458,105,197,154,196,149,457,99"/>
+<area shape="rect" id="Node000007" href="$Archivist_8hpp.html" title=" " alt="" coords="207,159,431,185"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="480,106,360,157,358,152,478,102"/>
+<area shape="rect" id="Node000004" href="$ProcessingTokens_8hpp.html" title=" " alt="" coords="515,240,710,280"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="522,183,580,229,577,234,519,187"/>
+<area shape="rect" id="Node000008" href="$Format_8hpp.html" title=" " alt="" coords="203,247,299,273"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="312,187,272,238,267,234,308,183"/>
+<area shape="rect" id="Node000009" href="$JournalEntry_8hpp.html" title=" " alt="" coords="324,247,451,273"/>
+<area shape="poly" id="edge8_Node000007_Node000009" title=" " alt="" coords="331,183,371,234,367,238,326,187"/>
+<area shape="rect" id="Node000010" href="$EnumReflect_8hpp.html" title=" " alt="" coords="84,328,269,368"/>
+<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="360,275,237,325,235,320,358,270"/>
+<area shape="rect" id="Node000011" title=" " alt="" coords="294,335,361,361"/>
+<area shape="poly" id="edge10_Node000009_Node000011" title=" " alt="" coords="381,274,346,325,341,322,377,271"/>
+<area shape="rect" id="Node000012" title=" " alt="" coords="385,335,509,361"/>
+<area shape="poly" id="edge11_Node000009_Node000012" title=" " alt="" coords="398,271,433,322,429,325,393,274"/>
+<area shape="rect" id="Node000013" title=" " alt="" coords="533,335,631,361"/>
+<area shape="poly" id="edge12_Node000009_Node000013" title=" " alt="" coords="415,270,544,327,542,332,413,275"/>
+<area shape="poly" id="edge14_Node000014_Node000004" title=" " alt="" coords="724,104,718,145,710,170,699,193,680,216,658,234,655,230,677,212,694,191,706,168,713,144,719,104"/>
+<area shape="rect" id="Node000015" href="$Tasks_8hpp.html" title=" " alt="" coords="760,159,847,185"/>
+<area shape="poly" id="edge15_Node000014_Node000015" title=" " alt="" coords="736,102,783,148,780,152,732,106"/>
+</map>

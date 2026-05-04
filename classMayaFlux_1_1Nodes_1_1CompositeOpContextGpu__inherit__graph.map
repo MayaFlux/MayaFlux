@@ -1,0 +1,9 @@
+<map id="MayaFlux::Nodes::CompositeOpContextGpu" name="MayaFlux::Nodes::CompositeOpContextGpu">
+<area shape="rect" id="Node000001" title="GPU&#45;compatible context for composite operation callbacks." alt="" coords="134,392,339,472"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1CompositeOpContext.html" title="Context for N&#45;ary composite operation callbacks." alt="" coords="13,231,218,311"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="156,321,209,390,204,393,151,324"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1NodeContext.html" title="Base context class for node callbacks." alt="" coords="5,5,225,151"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="118,164,118,231,113,231,113,164"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1GpuVectorData.html" title="GPU&#45;uploadable 1D array data interface." alt="" coords="243,199,476,344"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="298,357,269,393,265,390,293,353"/>
+</map>

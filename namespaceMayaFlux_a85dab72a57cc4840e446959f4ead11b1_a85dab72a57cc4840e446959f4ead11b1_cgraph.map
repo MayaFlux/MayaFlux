@@ -1,0 +1,14 @@
+<map id="MayaFlux::make_live" name="MayaFlux::make_live">
+<area shape="rect" id="Node000001" title="Constructs a T in&#45;place inside the live arena and registers it under key." alt="" coords="5,106,167,131"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1internal_ac198c636ae0efb46000323e05c20824c.html#ac198c636ae0efb46000323e05c20824c" title="Allocates size bytes from the arena with alignment." alt="" coords="215,99,359,139"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="167,116,201,116,201,121,167,121"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1internal_a28ae68947c804c0f92685bea8614def4.html#a28ae68947c804c0f92685bea8614def4" title="Aligns value up to the next multiple of align." alt="" coords="407,5,551,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="324,96,405,55,419,49,421,54,408,60,327,101"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1internal_ac11d625c73518d5edeea37d66f4f1add.html#ac11d625c73518d5edeea37d66f4f1add" title="Locates an existing directory entry by key." alt="" coords="407,69,551,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="358,105,393,100,394,105,359,110"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1internal_a7b0204ba7b00dc8bba221e2cf70d7ff4.html#a7b0204ba7b00dc8bba221e2cf70d7ff4" title="Returns a pointer to the header block at the start of arena storage." alt="" coords="600,99,751,139"/>
+<area shape="poly" id="edge5_Node000002_Node000005" title=" " alt="" coords="359,118,407,119,552,119,586,118,586,123,552,124,407,124,359,123"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1internal_a85302f1b81a282b37c86380ff47bbba7.html#a85302f1b81a282b37c86380ff47bbba7" title="Returns a pointer to the object region (immediately after the header)." alt="" coords="407,185,552,239"/>
+<area shape="poly" id="edge6_Node000002_Node000006" title=" " alt="" coords="330,136,411,176,409,181,328,141"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="552,97,587,103,586,108,551,103"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::StreamReaderNode::notify_tick" name="MayaFlux::Nodes::StreamReaderNode::notify_tick">
+<area shape="rect" id="Node000001" title="Notifies all registered callbacks with the current context." alt="" coords="5,5,241,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1StreamReaderNode_a63213ce20874e262a8b81421aceefbd6.html#a63213ce20874e262a8b81421aceefbd6" title="Updates the context object with the current node state." alt="" coords="289,5,525,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="242,23,275,23,275,28,242,28"/>
+</map>

@@ -1,0 +1,8 @@
+<map id="MayaFlux::Buffers::TextureBuffer::generate_quad_with_transform" name="MayaFlux::Buffers::TextureBuffer::generate_quad_with_transform">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,22,180,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_a9393731b377b158f0021b6a3c5b57d66.html#a9393731b377b158f0021b6a3c5b57d66" title="Generate a textured quad centred on the origin." alt="" coords="228,29,377,69"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="180,47,214,47,214,52,180,52"/>
+<area shape="poly" id="edge2_Node000002_Node000002" title=" " alt="" coords="265,30,263,20,269,11,282,5,303,3,326,6,339,13,336,18,324,11,303,8,284,10,273,15,268,21,271,28"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_ace716df2f40f1b0e620049c240637942.html#ace716df2f40f1b0e620049c240637942" title="Uniform scaling of a scalar&#45;output tendency." alt="" coords="425,29,575,69"/>
+<area shape="poly" id="edge3_Node000002_Node000003" title=" " alt="" coords="378,47,411,47,411,52,378,52"/>
+</map>

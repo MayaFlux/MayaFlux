@@ -1,0 +1,9 @@
+<map id="MayaFlux::Portal::Forma::Geometry::detail::write_verts" name="MayaFlux::Portal::Forma::Geometry::detail::write_verts">
+<area shape="rect" id="Node000001" title=" " alt="" coords="261,69,481,109"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_ad2da42748dbf2905ff9f48a53ce77f81.html#ad2da42748dbf2905ff9f48a53ce77f81" title="Geometry function for a horizontal fader in NDC space." alt="" coords="5,5,213,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="275,69,191,48,192,43,276,63"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_a510ab4db6c910c9ad3f2f48ce1ca5c04.html#a510ab4db6c910c9ad3f2f48ce1ca5c04" title="Geometry function for a 2D position picker in NDC space." alt="" coords="9,69,209,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="247,92,210,92,210,87,247,87"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_a09e97fbd8198143e0175d395e5d40f7d.html#a09e97fbd8198143e0175d395e5d40f7d" title="Geometry function for a radial indicator in NDC space." alt="" coords="19,133,200,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="276,115,192,136,191,131,275,110"/>
+</map>

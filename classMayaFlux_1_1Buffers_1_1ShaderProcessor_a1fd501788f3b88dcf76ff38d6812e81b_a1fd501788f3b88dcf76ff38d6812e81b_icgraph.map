@@ -1,0 +1,18 @@
+<map id="MayaFlux::Buffers::ShaderProcessor::resolve_ds_index" name="MayaFlux::Buffers::ShaderProcessor::resolve_ds_index">
+<area shape="rect" id="Node000001" title="Resolve logical descriptor set index to actual index." alt="" coords="500,117,687,172"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_a065b63736ca93e3162c1395c8daaac25.html#a065b63736ca93e3162c1395c8daaac25" title="Bind a texture to a descriptor binding point." alt="" coords="273,5,440,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="529,113,451,74,426,62,428,58,453,69,531,108"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_acd3ee18a43b25af2aa06f17efacd6c5f.html#acd3ee18a43b25af2aa06f17efacd6c5f" title=" " alt="" coords="261,84,452,139"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="486,132,452,127,453,122,487,127"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_a890135d823fb945281a666474fa18c6b.html#a890135d823fb945281a666474fa18c6b" title=" " alt="" coords="12,145,207,200"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="486,153,207,170,207,164,486,148"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a4adab2a16b3c9e0df7b5ad8db5a4a1f0.html#a4adab2a16b3c9e0df7b5ad8db5a4a1f0" title=" " alt="" coords="265,217,448,272"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="516,180,423,220,421,215,514,175"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_a424e1702be96080819416ca2f086d304.html#a424e1702be96080819416ca2f086d304" title="Bind a texture to a named descriptor." alt="" coords="26,5,193,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="260,35,193,35,193,30,260,30"/>
+<area shape="poly" id="edge7_Node000006_Node000005" title=" " alt="" coords="252,217,203,203,205,198,253,212"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1ComputeProcessor_a4112addd2594e7172317b2a7fb28cacf.html#a4112addd2594e7172317b2a7fb28cacf" title=" " alt="" coords="5,224,213,279"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="252,250,213,251,213,246,252,245"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a89618010c366c34c7e4c7968750175ae.html#a89618010c366c34c7e4c7968750175ae" title="The core processing function that must be implemented by derived classes." alt="" coords="5,303,213,357"/>
+<area shape="poly" id="edge8_Node000006_Node000008" title=" " alt="" coords="265,279,190,305,188,300,263,274"/>
+</map>

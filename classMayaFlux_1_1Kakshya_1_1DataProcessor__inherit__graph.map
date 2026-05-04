@@ -1,0 +1,19 @@
+<map id="MayaFlux::Kakshya::DataProcessor" name="MayaFlux::Kakshya::DataProcessor">
+<area shape="rect" id="Node000001" title="Interface for processing data within SignalSourceContainer objects." alt="" coords="499,5,649,165"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1ContiguousAccessProcessor.html" title=" " alt="" coords="5,273,236,753"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="486,104,428,120,365,142,304,174,250,215,225,243,204,275,199,271,221,240,247,211,302,169,363,138,426,115,485,99"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1CursorAccessProcessor.html" title="Independent cursor reader for DynamicSoundStream, writing exclusively to a dynamic slot allocated at ..." alt="" coords="261,243,450,783"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="492,175,464,215,448,244,443,242,460,212,488,172"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1FrameAccessProcessor.html" title=" " alt="" coords="475,213,673,813"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="577,179,577,213,571,213,571,179"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1RegionProcessorBase.html" title="Base class for N&#45;dimensional region processors." alt="" coords="698,276,925,751"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="660,174,687,212,722,274,717,277,682,215,656,177"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Kakshya_1_1WindowAccessProcessor.html" title="Default DataProcessor for WindowContainer." alt="" coords="949,363,1159,663"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="664,94,730,108,803,131,875,164,908,186,939,211,967,245,991,282,1010,322,1026,362,1021,364,1006,324,987,285,963,248,935,215,905,190,873,169,801,136,729,113,663,99"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1RegionOrganizationProcessor.html" title="Data&#45;driven processor for organizing and processing non&#45;linear audio regions." alt="" coords="577,861,806,1296"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="761,765,740,862,735,860,756,764"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Kakshya_1_1SpatialRegionProcessor.html" title="Parallel spatial extraction processor for image&#45;modality containers." alt="" coords="830,971,1033,1186"/>
+<area shape="poly" id="edge7_Node000005_Node000008" title=" " alt="" coords="867,763,911,971,906,972,862,764"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Kakshya_1_1DynamicRegionProcessor.html" title="Extends RegionOrganizationProcessor with dynamic, runtime reorganization capabilities." alt="" coords="589,1344,794,1593"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="694,1310,694,1344,689,1344,689,1310"/>
+</map>

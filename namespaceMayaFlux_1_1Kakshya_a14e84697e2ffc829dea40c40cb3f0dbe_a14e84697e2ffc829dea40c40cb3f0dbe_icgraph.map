@@ -1,0 +1,17 @@
+<map id="MayaFlux::Kakshya::as_mesh_access" name="MayaFlux::Kakshya::as_mesh_access">
+<area shape="rect" id="Node000001" title="Construct a MeshAccess from two DataVariant instances." alt="" coords="964,37,1123,77"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kakshya_1_1MeshData_a89f8145a6ba40c4a7d7404cbb57cc965.html#a89f8145a6ba40c4a7d7404cbb57cc965" title="Produce a non&#45;owning MeshAccess view over this data." alt="" coords="757,5,916,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="950,46,916,40,916,35,951,40"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1MeshInsertion_a527a0701939e51357fd34340c97c2b85.html#a527a0701939e51357fd34340c97c2b85" title="Produce a MeshAccess over the current variant contents." alt="" coords="757,69,916,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="951,74,916,80,916,74,950,69"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1ModelReader_a4caf9e31c81e7ac5b07078c38300a6ca.html#a4caf9e31c81e7ac5b07078c38300a6ca" title=" " alt="" coords="507,69,709,109"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="743,92,709,92,709,87,743,87"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1IO_1_1ModelReader_aa3ce0f7631753b15955e175c1855e7fc.html#aa3ce0f7631753b15955e175c1855e7fc" title="Construct a MeshNetwork from all meshes in the currently loaded scene." alt="" coords="256,37,459,77"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="493,77,458,73,459,68,493,72"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1IO_1_1ModelReader_a5a5995d155657e1b4f55d047efa2e442.html#a5a5995d155657e1b4f55d047efa2e442" title="Load all meshes after open() has already been called." alt="" coords="256,101,459,141"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="493,107,459,111,458,106,493,101"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1IO_1_1ModelReader_a82f82a404791ba9ad9838a1fc2774f32.html#a82f82a404791ba9ad9838a1fc2774f32" title="Construct one MeshBuffer per mesh in the currently loaded scene." alt="" coords="5,69,208,109"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="242,109,208,105,208,100,243,104"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1IO_1_1ModelReader_ad139ba0a544c0712059cc8913bb59bc5.html#ad139ba0a544c0712059cc8913bb59bc5" title="Load all meshes from a file in one call." alt="" coords="5,133,208,173"/>
+<area shape="poly" id="edge7_Node000006_Node000008" title=" " alt="" coords="243,139,208,143,208,138,242,133"/>
+</map>

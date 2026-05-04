@@ -1,0 +1,29 @@
+<map id="SpatialIndex.cpp" name="SpatialIndex.cpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="377,5,508,31"/>
+<area shape="rect" id="Node000002" href="$SpatialIndex_8hpp.html" title=" " alt="" coords="176,79,307,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="411,33,288,77,286,71,409,28"/>
+<area shape="rect" id="Node000007" href="$Archivist_8hpp.html" title=" " alt="" coords="331,79,555,104"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="445,31,445,65,440,65,440,31"/>
+<area shape="rect" id="Node000014" title=" " alt="" coords="578,79,641,104"/>
+<area shape="poly" id="edge13_Node000001_Node000014" title=" " alt="" coords="470,28,571,71,569,76,468,33"/>
+<area shape="rect" id="Node000003" href="$TendencyFactories_8hpp.html" title=" " alt="" coords="5,152,208,192"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="223,106,152,147,150,143,220,102"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="233,159,325,185"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="249,103,270,146,265,148,244,105"/>
+<area shape="rect" id="Node000004" href="$Tendency_8hpp.html" title=" " alt="" coords="52,247,161,273"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="109,192,109,233,104,233,104,192"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="55,328,159,353"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="109,273,109,314,104,314,104,273"/>
+<area shape="rect" id="Node000008" href="$Format_8hpp.html" title=" " alt="" coords="357,159,453,185"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="440,105,419,148,414,146,435,103"/>
+<area shape="rect" id="Node000009" href="$JournalEntry_8hpp.html" title=" " alt="" coords="478,159,605,185"/>
+<area shape="poly" id="edge8_Node000007_Node000009" title=" " alt="" coords="459,102,518,149,514,153,456,106"/>
+<area shape="rect" id="Node000010" href="$EnumReflect_8hpp.html" title=" " alt="" coords="242,240,427,280"/>
+<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="514,187,394,237,392,232,512,182"/>
+<area shape="rect" id="Node000011" title=" " alt="" coords="452,247,519,273"/>
+<area shape="poly" id="edge10_Node000009_Node000011" title=" " alt="" coords="536,186,503,237,498,234,532,183"/>
+<area shape="rect" id="Node000012" title=" " alt="" coords="543,247,667,273"/>
+<area shape="poly" id="edge11_Node000009_Node000012" title=" " alt="" coords="552,183,590,234,586,237,548,186"/>
+<area shape="rect" id="Node000013" title=" " alt="" coords="691,247,789,273"/>
+<area shape="poly" id="edge12_Node000009_Node000013" title=" " alt="" coords="569,182,702,239,699,244,567,187"/>
+</map>

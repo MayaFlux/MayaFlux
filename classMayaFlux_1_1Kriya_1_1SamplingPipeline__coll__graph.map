@@ -1,0 +1,15 @@
+<map id="MayaFlux::Kriya::SamplingPipeline" name="MayaFlux::Kriya::SamplingPipeline">
+<area shape="rect" id="Node000001" title="Pipeline&#45;coordinated polyphonic playback of a bounded audio stream." alt="" coords="231,1485,420,1905"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferManager.html" title="Token&#45;based multimodal buffer management system for unified data stream processing." alt="" coords="5,873,189,1337"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="173,1337,204,1422,227,1477,222,1479,199,1424,168,1339"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler.html" title="Token&#45;based multimodal task scheduling system for unified coroutine processing." alt="" coords="214,788,437,1423"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="328,1423,328,1469,323,1469,323,1423"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Vruta_1_1SampleClock.html" title="Sample&#45;accurate timing system for audio processing domain." alt="" coords="215,360,430,585"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="326,586,327,772,321,772,320,586"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Vruta_1_1IClock.html" title="Abstract base interface for all clock types in the multimodal scheduling system." alt="" coords="238,5,407,171"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="325,184,325,360,320,360,320,184"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kriya_1_1CaptureBuilder.html" title="Fluent builder interface for constructing BufferCapture configurations." alt="" coords="462,925,663,1285"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="503,1287,450,1424,429,1475,424,1473,446,1422,498,1285"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Kriya_1_1BufferCapture.html" title="Flexible data capture interface for buffer&#45;based processing pipelines." alt="" coords="455,220,673,725"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="566,726,566,909,560,909,561,726"/>
+</map>

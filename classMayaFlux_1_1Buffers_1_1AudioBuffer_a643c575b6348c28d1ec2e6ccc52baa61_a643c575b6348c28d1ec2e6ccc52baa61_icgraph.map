@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::AudioBuffer::get_data" name="MayaFlux::Buffers::AudioBuffer::get_data">
+<area shape="rect" id="Node000001" title="Gets mutable access to the buffer&#39;s underlying audio data." alt="" coords="453,41,616,81"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1InputAudioBuffer_a1b345049dc7eaef1c6ba562c8d2db575.html#a1b345049dc7eaef1c6ba562c8d2db575" title="Writes buffer data to a specific listener buffer." alt="" coords="213,5,405,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="439,49,405,43,406,38,440,44"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1AudioWriteProcessor_a0904677ec868719767453427e0cc2513.html#a0904677ec868719767453427e0cc2513" title=" " alt="" coords="231,70,388,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="440,79,389,87,388,82,439,74"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1AudioWriteProcessor_a30a7d5480b5e147d66e3f0d98d42ead7.html#a30a7d5480b5e147d66e3f0d98d42ead7" title="The core processing function that must be implemented by derived classes." alt="" coords="5,70,165,125"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="217,100,166,100,166,95,217,95"/>
+</map>

@@ -1,0 +1,13 @@
+<map id="MayaFlux::Config::get_buffer_size" name="MayaFlux::Config::get_buffer_size">
+<area shape="rect" id="Node000001" title="Gets the buffer size from the default engine." alt="" coords="567,63,731,103"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_a36c554a7012df7e010ff0b6cea17420f.html#a36c554a7012df7e010ff0b6cea17420f" title="Construct a built SamplingPipeline from an audio file." alt="" coords="324,13,519,38"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="555,62,472,41,473,35,556,57"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_a56313717fe4a452b14cd3e82681a916e.html#a56313717fe4a452b14cd3e82681a916e" title="Construct a built SamplingPipeline from an existing DynamicSoundStream." alt="" coords="324,63,519,103"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="553,85,519,85,519,80,553,80"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_ad01d9cdd4e1687f97a0edca6641e6daa.html#ad01d9cdd4e1687f97a0edca6641e6daa" title="Constructs and initializes per&#45;channel SoundContainerBuffers without registering them." alt="" coords="328,127,515,167"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="564,109,494,129,492,124,563,104"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1BackendResourceManager_a1fe5c96d56ec273270cbd6d95450fd6c.html#a1fe5c96d56ec273270cbd6d95450fd6c" title=" " alt="" coords="5,5,276,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="310,28,276,28,276,23,310,23"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_a5dca32bb8cd22edc175764aeea406b3a.html#a5dca32bb8cd22edc175764aeea406b3a" title="Construct one built SamplingPipeline per channel from an audio file." alt="" coords="39,70,242,95"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="310,85,242,85,242,80,310,80"/>
+</map>

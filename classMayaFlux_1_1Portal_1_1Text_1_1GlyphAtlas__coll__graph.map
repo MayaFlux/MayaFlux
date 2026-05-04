@@ -1,0 +1,5 @@
+<map id="MayaFlux::Portal::Text::GlyphAtlas" name="MayaFlux::Portal::Text::GlyphAtlas">
+<area shape="rect" id="Node000001" title="Rasterizes and packs glyphs from a FontFace into a TextureContainer." alt="" coords="5,368,164,888"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Text_1_1FontFace.html" title="Owns a single FT_Face loaded from a file path." alt="" coords="5,5,164,305"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="87,305,87,351,82,351,82,305"/>
+</map>

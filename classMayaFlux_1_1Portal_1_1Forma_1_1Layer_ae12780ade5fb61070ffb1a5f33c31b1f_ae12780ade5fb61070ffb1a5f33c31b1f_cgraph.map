@@ -1,0 +1,9 @@
+<map id="MayaFlux::Portal::Forma::Layer::hit_test_all" name="MayaFlux::Portal::Forma::Layer::hit_test_all">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,37,187,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Layer_aaed1294fcb3f39abf57d2d66442c5d15.html#aaed1294fcb3f39abf57d2d66442c5d15" title="Return all interactive, visible elements containing ndc, ordered back&#45;to&#45;front." alt="" coords="235,5,416,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="187,42,221,37,221,43,187,47"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Layer_ab2fe4bb05af179515d57b777d39ca6ed.html#ab2fe4bb05af179515d57b777d39ca6ed" title=" " alt="" coords="235,69,416,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="187,67,221,72,221,77,187,73"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Layer_af213a1393cce3aa5edc28695b2fc5d04.html#af213a1393cce3aa5edc28695b2fc5d04" title=" " alt="" coords="464,5,645,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="416,23,450,23,450,28,416,28"/>
+</map>

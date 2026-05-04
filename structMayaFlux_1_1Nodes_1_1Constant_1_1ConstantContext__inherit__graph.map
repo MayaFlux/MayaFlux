@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Constant::ConstantContext" name="MayaFlux::Nodes::Constant::ConstantContext">
+<area shape="rect" id="Node000001" title="Minimal concrete context for Constant — no extra fields beyond the base." alt="" coords="19,199,212,279"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1NodeContext.html" title="Base context class for node callbacks." alt="" coords="5,5,225,151"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="118,164,118,198,113,198,113,164"/>
+</map>

@@ -1,0 +1,10 @@
+<map id="MayaFlux::detect_onsets" name="MayaFlux::detect_onsets">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,45,191,70"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_aa4da80d21b907296f4a31fb1f7dffc10.html#aa4da80d21b907296f4a31fb1f7dffc10" title="Sample indices of onsets detected via spectral flux." alt="" coords="239,37,425,77"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="191,55,225,55,225,60,191,60"/>
+<area shape="poly" id="edge3_Node000002_Node000002" title=" " alt="" coords="289,38,287,28,293,18,309,13,332,11,359,14,373,21,371,26,357,19,332,16,310,18,297,23,292,29,294,36"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_ad2883aeb684971b088f71e1d858803bd.html#ad2883aeb684971b088f71e1d858803bd" title="Compute the number of analysis windows for a given data size." alt="" coords="473,5,651,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="425,42,459,37,460,42,426,47"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_a64bfe6458a57047ea3c126b2b27da092.html#a64bfe6458a57047ea3c126b2b27da092" title="Zero output below threshold, pass through above." alt="" coords="487,69,637,109"/>
+<area shape="poly" id="edge4_Node000002_Node000004" title=" " alt="" coords="426,68,474,74,473,80,425,73"/>
+</map>

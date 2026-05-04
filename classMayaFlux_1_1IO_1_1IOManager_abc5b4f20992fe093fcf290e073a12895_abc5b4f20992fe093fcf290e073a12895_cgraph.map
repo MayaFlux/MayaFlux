@@ -1,0 +1,19 @@
+<map id="MayaFlux::IO::IOManager::save_image" name="MayaFlux::IO::IOManager::save_image">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,101,192,141"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1IOManager_a20c6d4610f26db8604c8d2252a02c3a2.html#a20c6d4610f26db8604c8d2252a02c3a2" title="Save image data to disk asynchronously." alt="" coords="240,101,427,141"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="192,119,226,119,226,124,192,124"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1ImageWriterRegistry_a2460e4fa98bf558cbbd92facd212b0a5.html#a2460e4fa98bf558cbbd92facd212b0a5" title=" " alt="" coords="475,37,672,77"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="408,99,484,78,485,83,410,104"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1IO_ae74e134903752924b1f4a6bda9732de8.html#ae74e134903752924b1f4a6bda9732de8" title="Download pixel data from a GPU&#45;resident VKImage into host ImageData." alt="" coords="484,101,663,141"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="427,119,470,119,470,124,427,124"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1IO_1_1ImageWriterRegistry_a25caa467f66d3d18650bdffcc77b8125.html#a25caa467f66d3d18650bdffcc77b8125" title=" " alt="" coords="475,165,672,205"/>
+<area shape="poly" id="edge8_Node000002_Node000009" title=" " alt="" coords="410,139,485,159,484,164,408,144"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1IO_1_1ImageData_ae98f576c9d2c433e1a321922f76795da.html#ae98f576c9d2c433e1a321922f76795da" title="Raw data pointer, dispatched on variant." alt="" coords="753,5,941,45"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="643,99,671,87,694,71,719,55,740,47,741,52,721,60,697,75,673,92,645,104"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_aa0f056b6e351a1ef300e21cb51077dbe.html#aa0f056b6e351a1ef300e21cb51077dbe" title="Convert Vulkan format to Portal ImageFormat." alt="" coords="720,69,975,109"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="662,108,706,103,707,108,663,114"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a1d702ea8bef8765e8895776bd67b0cc8.html#a1d702ea8bef8765e8895776bd67b0cc8" title="Get the number of color channels for a given format." alt="" coords="725,133,969,173"/>
+<area shape="poly" id="edge6_Node000004_Node000007" title=" " alt="" coords="663,129,712,135,712,140,662,134"/>
+<area shape="rect" id="Node000008" href="$structMayaFlux_1_1IO_1_1ImageData_a12afd81ebcc2660cfe912a96c5542dfc.html#a12afd81ebcc2660cfe912a96c5542dfc" title="Check that the active variant matches the declared format." alt="" coords="753,197,941,237"/>
+<area shape="poly" id="edge7_Node000004_Node000008" title=" " alt="" coords="645,139,673,151,697,167,721,183,741,191,740,196,719,188,694,172,671,156,643,144"/>
+</map>

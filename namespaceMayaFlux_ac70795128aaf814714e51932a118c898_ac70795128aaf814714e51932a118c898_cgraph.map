@@ -1,0 +1,5 @@
+<map id="MayaFlux::normalize_coords_aspect" name="MayaFlux::normalize_coords_aspect">
+<area shape="rect" id="Node000001" title="Normalize coordinates preserving aspect ratio (useful for circular/square shapes)" alt="" coords="5,5,164,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_ae6aa9fc08ef9c588ada0fc17666ef395.html#ae6aa9fc08ef9c588ada0fc17666ef395" title="Convert window pixel coordinates to NDC, corrected for aspect ratio." alt="" coords="212,5,361,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="164,23,198,23,198,28,164,28"/>
+</map>

@@ -1,0 +1,29 @@
+<map id="MayaFlux::Nodes::Generator::Polynomial" name="MayaFlux::Nodes::Generator::Polynomial">
+<area shape="rect" id="Node000001" title="Generator that produces values based on polynomial functions." alt="" coords="638,1737,858,2317"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Generator.html" title="Base class for all signal and pattern generators in Maya Flux." alt="" coords="215,1345,415,1645"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="426,1628,640,1889,636,1893,422,1631"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Node.html" title="Base interface for all computational processing nodes." alt="" coords="5,523,203,1252"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="210,1219,235,1290,255,1343,250,1345,229,1292,205,1221"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Nodes_1_1RoutingState.html" title="Represents the state of routing transitions for a node." alt="" coords="11,240,197,420"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="107,420,107,506,101,506,101,420"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1GeneratorContext.html" title="Specialized context for generator node callbacks." alt="" coords="231,270,431,390"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="306,391,283,454,265,523,248,633,237,726,232,809,232,886,243,1047,265,1252,277,1328,272,1329,260,1252,238,1047,226,886,227,809,232,726,243,632,260,522,278,452,301,389"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1GeneratorContextGpu.html" title=" " alt="" coords="360,847,560,927"/>
+<area shape="poly" id="edge7_Node000007_Node000005" title=" " alt="" coords="350,403,454,846,448,848,345,404"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1NodeContext.html" title="Base context class for node callbacks." alt="" coords="461,5,681,151"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="484,162,445,202,382,272,378,268,441,198,481,158"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1PolynomialContext.html" title=" " alt="" coords="713,200,913,460"/>
+<area shape="poly" id="edge12_Node000011_Node000006" title=" " alt="" coords="662,158,702,198,715,212,711,216,698,202,658,162"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="453,928,357,1329,352,1328,448,927"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Nodes_1_1GpuVectorData.html" title="GPU&#45;uploadable 1D array data interface." alt="" coords="455,257,689,403"/>
+<area shape="poly" id="edge8_Node000007_Node000008" title=" " alt="" coords="558,417,470,848,465,846,552,415"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1PolynomialContextGpu.html" title=" " alt="" coords="584,847,784,927"/>
+<area shape="poly" id="edge15_Node000012_Node000008" title=" " alt="" coords="592,415,679,846,674,848,586,417"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Memory_1_1HistoryBuffer.html" title=" " alt="" coords="859,1315,1053,1675"/>
+<area shape="poly" id="edge9_Node000001_Node000009" title=" " alt="" coords="888,1676,867,1731,862,1729,883,1674"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Memory_1_1HistoryBuffer.html" title="History buffer for difference equations and recursive relations." alt="" coords="859,707,1053,1067"/>
+<area shape="poly" id="edge10_Node000009_Node000010" title=" " alt="" coords="959,1081,959,1314,953,1314,953,1081"/>
+<area shape="poly" id="edge11_Node000001_Node000011" title=" " alt="" coords="821,460,827,689,830,991,824,1331,817,1505,805,1675,801,1721,796,1720,800,1674,811,1505,819,1331,825,991,822,689,816,460"/>
+<area shape="poly" id="edge14_Node000012_Node000011" title=" " alt="" coords="783,474,696,847,691,846,778,473"/>
+<area shape="poly" id="edge13_Node000001_Node000012" title=" " alt="" coords="685,928,680,1237,684,1453,696,1674,700,1720,695,1721,691,1675,678,1454,675,1237,680,928"/>
+</map>

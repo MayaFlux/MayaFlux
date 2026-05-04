@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kakshya::VideoStreamContainer::update_processing_state" name="MayaFlux::Kakshya::VideoStreamContainer::update_processing_state">
+<area shape="rect" id="Node000001" title="Update the processing state of the container." alt="" coords="5,5,197,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_ab34266e533acd546a7042209fa6ce6d0.html#ab34266e533acd546a7042209fa6ce6d0" title=" " alt="" coords="245,5,415,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="198,30,232,30,232,35,198,35"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_ae700cb6f780df3a568fdc9013168089c.html#ae700cb6f780df3a568fdc9013168089c" title="Acquire a lock for thread&#45;safe access." alt="" coords="463,13,667,53"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="415,30,449,30,449,35,415,35"/>
+</map>

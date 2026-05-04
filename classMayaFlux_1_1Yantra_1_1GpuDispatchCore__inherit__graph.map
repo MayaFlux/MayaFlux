@@ -1,0 +1,15 @@
+<map id="MayaFlux::Yantra::GpuDispatchCore" name="MayaFlux::Yantra::GpuDispatchCore">
+<area shape="rect" id="Node000001" title="Non&#45;template base that owns all type&#45;independent GPU dispatch logic." alt="" coords="263,5,509,835"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1GpuExecutionContext.html" title=" " alt="" coords="5,1313,228,1583"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="260,705,220,809,182,920,149,1034,123,1148,114,1231,112,1313,106,1313,108,1231,118,1148,144,1033,177,918,215,807,255,703"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1GpuExecutionContext.html" title=" " alt="" coords="530,1306,770,1590"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="517,707,556,810,593,921,625,1034,650,1148,659,1227,661,1306,656,1306,654,1227,645,1148,620,1035,588,922,551,812,512,709"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1GpuExecutionContext.html" title="Type&#45;parameterised shell over GpuDispatchCore." alt="" coords="266,884,506,1124"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="389,848,389,884,383,884,383,848"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1TextureExecutionContext.html" title="GpuExecutionContext specialisation for image&#45;only compute shaders." alt="" coords="549,1715,751,1949"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="653,1604,653,1715,647,1715,647,1604"/>
+<area shape="poly" id="edge6_Node000005_Node000002" title=" " alt="" coords="255,1061,200,1100,175,1123,155,1149,135,1187,122,1229,114,1271,111,1313,105,1313,109,1271,117,1227,130,1185,150,1147,171,1119,196,1095,252,1057"/>
+<area shape="poly" id="edge7_Node000005_Node000003" title=" " alt="" coords="408,1137,420,1178,433,1205,449,1216,466,1218,485,1219,505,1228,543,1264,576,1304,572,1307,539,1267,502,1233,483,1224,465,1223,447,1221,429,1208,415,1180,403,1138"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Yantra_1_1ShaderExecutionContext.html" title="Concrete GpuExecutionContext for a single fixed shader with fixed bindings." alt="" coords="281,1231,491,1665"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="389,1138,389,1231,383,1231,383,1138"/>
+</map>

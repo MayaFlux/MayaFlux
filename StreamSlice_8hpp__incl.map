@@ -1,0 +1,23 @@
+<map id="StreamSlice.hpp" name="StreamSlice.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="12,5,140,31"/>
+<area shape="rect" id="Node000002" href="$Region_8hpp.html" title=" " alt="" coords="45,328,240,368"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="66,32,49,53,36,80,18,136,9,182,13,227,35,279,54,302,79,319,75,323,50,305,31,281,8,228,4,182,13,134,31,78,45,50,62,29"/>
+<area shape="rect" id="Node000005" href="$DynamicSoundStream_8hpp.html" title=" " alt="" coords="44,79,243,119"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="88,29,120,66,116,70,84,33"/>
+<area shape="rect" id="Node000003" href="$NDData_8hpp.html" title=" " alt="" coords="151,489,352,529"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="158,367,233,477,229,480,153,370"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="200,577,304,603"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="254,530,254,563,249,563,249,530"/>
+<area shape="rect" id="Node000006" href="$SoundStreamContainer_8hpp.html" title=" " alt="" coords="44,167,243,192"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="146,119,146,153,141,153,141,119"/>
+<area shape="rect" id="Node000007" href="$RegionGroup_8hpp.html" title=" " alt="" coords="45,240,240,280"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="146,192,146,226,140,226,141,192"/>
+<area shape="rect" id="Node000008" href="$StreamContainer_8hpp.html" title=" " alt="" coords="264,247,551,273"/>
+<area shape="poly" id="edge8_Node000006_Node000008" title=" " alt="" coords="183,189,357,241,356,246,181,195"/>
+<area shape="poly" id="edge7_Node000007_Node000002" title=" " alt="" coords="145,280,145,314,140,314,140,280"/>
+<area shape="rect" id="Node000009" href="$SignalSourceContainer_8hpp.html" title=" " alt="" coords="287,335,483,361"/>
+<area shape="poly" id="edge9_Node000008_Node000009" title=" " alt="" coords="407,274,394,322,389,321,402,272"/>
+<area shape="rect" id="Node000010" href="$NDimensionalContainer_8hpp.html" title=" " alt="" coords="240,416,444,441"/>
+<area shape="poly" id="edge10_Node000009_Node000010" title=" " alt="" coords="381,362,358,405,353,403,376,360"/>
+<area shape="poly" id="edge11_Node000010_Node000003" title=" " alt="" coords="331,444,286,482,282,478,327,439"/>
+</map>

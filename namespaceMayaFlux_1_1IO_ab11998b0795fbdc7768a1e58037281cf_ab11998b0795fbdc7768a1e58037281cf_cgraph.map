@@ -1,0 +1,13 @@
+<map id="MayaFlux::IO::download_texture_buffer" name="MayaFlux::IO::download_texture_buffer">
+<area shape="rect" id="Node000001" title="Download a TextureBuffer&#39;s GPU texture into host ImageData." alt="" coords="5,101,184,141"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1IO_ae74e134903752924b1f4a6bda9732de8.html#ae74e134903752924b1f4a6bda9732de8" title="Download pixel data from a GPU&#45;resident VKImage into host ImageData." alt="" coords="232,101,411,141"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="185,119,218,119,218,124,185,124"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1IO_1_1ImageData_ae98f576c9d2c433e1a321922f76795da.html#ae98f576c9d2c433e1a321922f76795da" title="Raw data pointer, dispatched on variant." alt="" coords="492,5,680,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="359,99,406,76,458,55,483,47,484,52,460,60,408,81,362,104"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_aa0f056b6e351a1ef300e21cb51077dbe.html#aa0f056b6e351a1ef300e21cb51077dbe" title="Convert Vulkan format to Portal ImageFormat." alt="" coords="459,69,713,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="411,108,445,104,445,109,411,113"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a1d702ea8bef8765e8895776bd67b0cc8.html#a1d702ea8bef8765e8895776bd67b0cc8" title="Get the number of color channels for a given format." alt="" coords="464,133,708,173"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="411,129,451,134,450,140,411,135"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1IO_1_1ImageData_a12afd81ebcc2660cfe912a96c5542dfc.html#a12afd81ebcc2660cfe912a96c5542dfc" title="Check that the active variant matches the declared format." alt="" coords="492,197,680,237"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="362,139,408,162,460,183,484,191,483,196,458,188,406,166,359,144"/>
+</map>

@@ -1,0 +1,23 @@
+<map id="MayaFlux::Core::BackendResourceManager::transition_image_layout" name="MayaFlux::Core::BackendResourceManager::transition_image_layout">
+<area shape="rect" id="Node000001" title="Transition image layout using a pipeline barrier." alt="" coords="575,269,821,309"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_aaf5e48e2bb8325c1db70971a89cabec7.html#aaf5e48e2bb8325c1db70971a89cabec7" title="Create a 2D texture." alt="" coords="295,77,492,117"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="671,260,609,195,569,160,525,132,491,117,493,112,528,127,572,156,613,191,675,257"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a7ac47f4e64fd980c46a937ca4c69a1d0.html#a7ac47f4e64fd980c46a937ca4c69a1d0" title="Create a 3D texture (volumetric)" alt="" coords="295,141,492,181"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="654,264,594,229,526,196,490,184,492,179,528,191,597,224,656,259"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_ad61a4d872b3af82eb1af351bc6118126.html#ad61a4d872b3af82eb1af351bc6118126" title="Create a cubemap texture." alt="" coords="278,205,509,245"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="588,269,489,248,490,243,589,264"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a0f9e8a0197b21aa472cfc6fb1cd90af5.html#a0f9e8a0197b21aa472cfc6fb1cd90af5" title="Create a depth buffer." alt="" coords="267,269,519,309"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="561,292,520,292,520,287,561,287"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a09c352fd5b274012bc56cdaa0f805c2a.html#a09c352fd5b274012bc56cdaa0f805c2a" title="Create a render target (color attachment)" alt="" coords="264,333,523,373"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="589,315,490,336,489,331,588,310"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a3a33955c823eb31401a2b5c469071ac2.html#a3a33955c823eb31401a2b5c469071ac2" title="Create a storage image (compute shader read/write)" alt="" coords="260,397,527,437"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="656,319,597,355,528,388,492,400,490,395,526,383,594,350,654,315"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a56919eee6fe4cd4f57f29a94e944dc0f.html#a56919eee6fe4cd4f57f29a94e944dc0f" title="Transition a VKImage to a new Vulkan layout via an immediate submission." alt="" coords="277,461,509,501"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="675,322,613,388,572,423,528,452,501,464,499,459,525,447,569,418,609,384,671,318"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a028cc0af273b37e3dadbdc908c67a7ed.html#a028cc0af273b37e3dadbdc908c67a7ed" title="Create a 2D texture from a DataVariant in one shot." alt="" coords="10,5,207,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="300,77,188,48,189,43,301,71"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1WindowContainer_a54e6f5327b1e6000a2c148781a8f6717.html#a54e6f5327b1e6000a2c148781a8f6717" title="Crop a region from the last readback and upload it as a VKImage." alt="" coords="15,70,202,125"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="281,100,202,100,202,95,281,95"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1WindowContainer_a31ff69a65227eb7c14504ae2c8ae5fe9.html#a31ff69a65227eb7c14504ae2c8ae5fe9" title="Upload the full surface readback to a new VKImage." alt="" coords="5,149,212,189"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="296,123,261,132,185,152,183,147,259,127,294,118"/>
+</map>

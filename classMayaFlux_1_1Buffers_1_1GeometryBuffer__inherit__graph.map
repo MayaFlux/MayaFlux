@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::GeometryBuffer" name="MayaFlux::Buffers::GeometryBuffer">
+<area shape="rect" id="Node000001" title="Specialized buffer for generative geometry from GeometryWriterNode." alt="" coords="18,1128,210,1468"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VKBuffer.html" title="Vulkan&#45;backed buffer wrapper used in processing chains." alt="" coords="5,461,223,1080"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="117,1094,117,1127,111,1127,111,1094"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1Buffer.html" title="Backend&#45;agnostic interface for sequential data storage and transformation." alt="" coords="5,133,223,413"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="117,427,117,461,111,461,111,427"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="38,5,190,85"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="117,99,117,133,111,133,111,99"/>
+</map>

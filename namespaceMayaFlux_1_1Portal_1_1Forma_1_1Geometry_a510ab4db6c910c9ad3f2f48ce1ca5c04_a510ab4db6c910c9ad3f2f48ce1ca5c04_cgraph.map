@@ -1,0 +1,13 @@
+<map id="MayaFlux::Portal::Forma::Geometry::position_picker" name="MayaFlux::Portal::Forma::Geometry::position_picker">
+<area shape="rect" id="Node000001" title="Geometry function for a 2D position picker in NDC space." alt="" coords="5,133,205,173"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kinesis_1_1AABB2D_a6244e0bb95e47c9914259ac9f60bbe01.html#a6244e0bb95e47c9914259ac9f60bbe01" title=" " alt="" coords="289,5,438,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="131,131,185,93,252,55,275,46,277,51,254,60,188,97,134,135"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kinesis_1_1AABB2D_a32bac0d1a4f876c992486eed5dc9fd6f.html#a32bac0d1a4f876c992486eed5dc9fd6f" title=" " alt="" coords="289,69,438,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="186,131,274,109,276,114,187,136"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_a41838c872de7478363ca82e83df687e8.html#a41838c872de7478363ca82e83df687e8" title="Containment test for a convex or concave polygon." alt="" coords="289,133,438,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="205,151,275,151,275,156,205,156"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Kinesis_1_1AABB2D_ab8e372add789f6bd44fa66a92618456a.html#ab8e372add789f6bd44fa66a92618456a" title=" " alt="" coords="289,197,438,237"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="187,171,276,193,274,198,186,176"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_1_1detail_ac1641d06468b4f5b6ee16f51fe3a4817.html#ac1641d06468b4f5b6ee16f51fe3a4817" title=" " alt="" coords="253,261,473,301"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="134,171,188,209,255,247,272,254,270,259,252,252,185,214,131,176"/>
+</map>

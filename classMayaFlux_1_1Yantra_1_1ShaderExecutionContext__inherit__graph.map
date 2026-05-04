@@ -1,0 +1,7 @@
+<map id="MayaFlux::Yantra::ShaderExecutionContext&lt; InputType, OutputType &gt;" name="MayaFlux::Yantra::ShaderExecutionContext&lt; InputType, OutputType &gt;">
+<area shape="rect" id="Node000001" title="Concrete GpuExecutionContext for a single fixed shader with fixed bindings." alt="" coords="23,1171,234,1605"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1GpuExecutionContext.html" title="Type&#45;parameterised shell over GpuDispatchCore." alt="" coords="9,883,249,1123"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="131,1136,131,1170,126,1170,126,1136"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1GpuDispatchCore.html" title="Non&#45;template base that owns all type&#45;independent GPU dispatch logic." alt="" coords="5,5,252,835"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="131,848,131,883,126,883,126,848"/>
+</map>

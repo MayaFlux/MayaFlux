@@ -1,0 +1,9 @@
+<map id="MayaFlux::Nodes::BinaryOpContextGpu" name="MayaFlux::Nodes::BinaryOpContextGpu">
+<area shape="rect" id="Node000001" title="GPU&#45;compatible context for binary operation callbacks." alt="" coords="137,392,331,472"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1BinaryOpContext.html" title="Specialized context for binary operation callbacks." alt="" coords="18,221,213,321"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="162,331,207,390,203,394,158,334"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1NodeContext.html" title="Base context class for node callbacks." alt="" coords="5,5,225,151"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="118,164,118,221,113,221,113,164"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1GpuVectorData.html" title="GPU&#45;uploadable 1D array data interface." alt="" coords="237,199,471,344"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="294,357,266,393,261,390,289,353"/>
+</map>

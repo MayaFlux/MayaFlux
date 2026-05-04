@@ -1,0 +1,11 @@
+<map id="MayaFlux::Buffers::BufferManager::process_all_tokens" name="MayaFlux::Buffers::BufferManager::process_all_tokens">
+<area shape="rect" id="Node000001" title="Processes all active tokens with their configured processing units." alt="" coords="5,45,181,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferManager_adbbbce7459a3e3fcf6242f09a15b1b02.html#adbbbce7459a3e3fcf6242f09a15b1b02" title="Processes all buffers for a specific token." alt="" coords="229,53,448,93"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="182,70,216,70,216,75,182,75"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1BufferManager_a2ee00b4bbc19109306e37b3690c85c1b.html#a2ee00b4bbc19109306e37b3690c85c1b" title=" " alt="" coords="498,5,674,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="448,52,484,46,485,52,448,58"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1BufferManager_a47e22dafa5a41b1a8b7d085aeeedb265.html#a47e22dafa5a41b1a8b7d085aeeedb265" title=" " alt="" coords="496,84,676,139"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="448,87,483,93,482,98,448,92"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1BufferManager_aa74e0f5c5414403eb611a5c9b653374e.html#aa74e0f5c5414403eb611a5c9b653374e" title="Processes a specific channel within a token domain." alt="" coords="724,5,900,60"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="674,30,710,30,710,35,674,35"/>
+</map>

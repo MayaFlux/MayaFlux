@@ -1,0 +1,60 @@
+<map id="MayaFlux::bind_viewport_preset" name="MayaFlux::bind_viewport_preset">
+<area shape="rect" id="Node000001" title="Bind a navigation preset to a window and render processor." alt="" coords="5,304,192,344"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_a75ca9f645a27e296a55590401fced6d2.html#a75ca9f645a27e296a55590401fced6d2" title="Apply a mouse delta to yaw and pitch." alt="" coords="268,5,417,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="102,303,117,253,144,187,184,116,209,84,238,55,254,45,257,49,242,59,213,87,188,119,149,189,122,255,107,305"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_a86cf2e7ec87344ce139bd311bbb6ebd7.html#a86cf2e7ec87344ce139bd311bbb6ebd7" title="Dolly eye along the current forward vector." alt="" coords="268,69,417,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="106,302,125,263,154,214,192,163,238,119,254,110,257,114,242,123,196,167,158,217,130,266,111,305"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_a9bb8c3238aeb50f3ecd4e89f624f8ace.html#a9bb8c3238aeb50f3ecd4e89f624f8ace" title="Compute a ViewTransform from the current NavigationState." alt="" coords="249,133,437,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="113,302,165,243,200,211,239,183,250,177,253,181,241,188,203,215,169,247,117,305"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kinesis_a3d924712a7bfec8d0c5500da36a65c7f.html#a3d924712a7bfec8d0c5500da36a65c7f" title="Construct a NavigationState from a NavigationConfig." alt="" coords="255,197,430,237"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="132,301,182,274,239,247,258,239,260,244,241,252,184,279,135,306"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_af9fb24f66b99c0cda04201284a219677.html#af9fb24f66b99c0cda04201284a219677" title="Schedule a key press handler." alt="" coords="243,311,442,337"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="192,321,230,321,230,327,192,327"/>
+<area shape="rect" id="Node000017" href="$namespaceMayaFlux_aa0213ccfa76fafbb55a88f9982da7cee.html#aa0213ccfa76fafbb55a88f9982da7cee" title="Schedule a key release handler." alt="" coords="241,262,444,287"/>
+<area shape="poly" id="edge16_Node000001_Node000017" title=" " alt="" coords="192,303,265,288,266,293,193,308"/>
+<area shape="rect" id="Node000019" href="$namespaceMayaFlux_a04a9ebaa3b5d4ee64cd760f2efedf5c7.html#a04a9ebaa3b5d4ee64cd760f2efedf5c7" title="Schedule a mouse movement handler." alt="" coords="240,361,445,386"/>
+<area shape="poly" id="edge19_Node000001_Node000019" title=" " alt="" coords="193,340,266,355,265,360,192,345"/>
+<area shape="rect" id="Node000021" href="$namespaceMayaFlux_a6613e51ffdbc148b6667699e873a87a6.html#a6613e51ffdbc148b6667699e873a87a6" title="Schedule a mouse button press handler." alt="" coords="262,411,423,451"/>
+<area shape="poly" id="edge22_Node000001_Node000021" title=" " alt="" coords="136,342,185,368,241,395,263,404,261,408,239,400,182,373,133,346"/>
+<area shape="rect" id="Node000023" href="$namespaceMayaFlux_ad19b4b6af5aacd5aa72c828b3ffa85a0.html#ad19b4b6af5aacd5aa72c828b3ffa85a0" title="Schedule a mouse button release handler." alt="" coords="262,475,423,515"/>
+<area shape="poly" id="edge25_Node000001_Node000023" title=" " alt="" coords="117,343,169,401,203,433,241,460,253,467,250,471,239,465,200,437,165,405,113,346"/>
+<area shape="rect" id="Node000025" href="$namespaceMayaFlux_a07d5520bf6595375c13cc1b166a911a5.html#a07d5520bf6595375c13cc1b166a911a5" title="Schedule a mouse scroll handler." alt="" coords="267,539,419,565"/>
+<area shape="poly" id="edge28_Node000001_Node000025" title=" " alt="" coords="111,343,129,382,157,432,195,482,217,505,242,524,255,532,253,537,238,529,213,509,191,486,153,435,124,385,106,345"/>
+<area shape="rect" id="Node000027" href="$namespaceMayaFlux_1_1Kinesis_addf6428a69944628518b62ce1306373d.html#addf6428a69944628518b62ce1306373d" title="Snap to a named ortho view." alt="" coords="268,589,417,629"/>
+<area shape="poly" id="edge31_Node000001_Node000027" title=" " alt="" coords="108,343,124,391,151,453,190,518,214,548,242,574,257,584,254,589,238,578,210,551,186,521,147,455,119,393,103,345"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_a0dfe4501e157cd6e14b62baab5fa9b84.html#a0dfe4501e157cd6e14b62baab5fa9b84" title="Gets the event manager from the default engine." alt="" coords="504,381,663,421"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="407,334,446,345,494,367,513,374,511,379,492,372,444,351,405,339"/>
+<area shape="rect" id="Node000016" href="$namespaceMayaFlux_1_1Kriya_a26ea8275b201cc7cf821b0fbde8d852d.html#a26ea8275b201cc7cf821b0fbde8d852d" title="Creates an Event coroutine that triggers on specific key press." alt="" coords="504,253,663,293"/>
+<area shape="poly" id="edge15_Node000006_Node000016" title=" " alt="" coords="404,309,490,290,491,295,405,314"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_ac4ab74951370ff0dd899203f3b94c775.html#ac4ab74951370ff0dd899203f3b94c775" title="Gets the default engine instance." alt="" coords="724,361,895,386"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="662,389,710,383,711,388,663,394"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1Core_1_1Engine_ab7563eb97d9ca4dc3f7df55db3ebed03.html#ab7563eb97d9ca4dc3f7df55db3ebed03" title="Gets the event manager." alt="" coords="721,411,897,451"/>
+<area shape="poly" id="edge14_Node000007_Node000015" title=" " alt="" coords="663,409,708,415,707,420,662,414"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_1_1internal_ac0f0b4b1cae6af4441db0ea022e15583.html#ac0f0b4b1cae6af4441db0ea022e15583" title=" " alt="" coords="945,353,1116,393"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="895,371,931,371,931,376,895,376"/>
+<area shape="rect" id="Node000010" href="$namespaceMayaFlux_1_1internal_a3cc5413e05c2f9c9f04372841aa0a5b1.html#a3cc5413e05c2f9c9f04372841aa0a5b1" title=" " alt="" coords="1164,353,1308,393"/>
+<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="1116,371,1150,371,1150,376,1116,376"/>
+<area shape="rect" id="Node000011" href="$namespaceMayaFlux_1_1internal_ac4d6952d58cdfd56964a883d40aa655d.html#ac4d6952d58cdfd56964a883d40aa655d" title=" " alt="" coords="1356,321,1549,361"/>
+<area shape="poly" id="edge10_Node000010_Node000011" title=" " alt="" coords="1308,360,1342,355,1343,360,1309,365"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Journal_1_1Archivist_a82e2d12db8781df4afc43ef4c1fba2be.html#a82e2d12db8781df4afc43ef4c1fba2be" title="Shutdown the logging system." alt="" coords="1377,385,1528,425"/>
+<area shape="poly" id="edge12_Node000010_Node000013" title=" " alt="" coords="1309,381,1364,390,1363,395,1308,387"/>
+<area shape="rect" id="Node000012" href="$namespaceMayaFlux_1_1internal_ac26a7a92aa4af34c366aad03b68ea71e.html#ac26a7a92aa4af34c366aad03b68ea71e" title=" " alt="" coords="1599,321,1743,361"/>
+<area shape="poly" id="edge11_Node000011_Node000012" title=" " alt="" coords="1550,339,1585,339,1585,344,1550,344"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1Journal_1_1Archivist_a8b7829e34d79ec5bbbf02e3d4afbdab9.html#a8b7829e34d79ec5bbbf02e3d4afbdab9" title="Get the singleton instance of the Archivist." alt="" coords="1597,385,1744,425"/>
+<area shape="poly" id="edge13_Node000013_Node000014" title=" " alt="" coords="1528,403,1583,403,1583,408,1528,408"/>
+<area shape="poly" id="edge17_Node000017_Node000007" title=" " alt="" coords="425,285,447,297,464,314,472,332,480,350,495,367,502,372,499,377,492,371,475,353,467,334,460,317,444,301,423,290"/>
+<area shape="rect" id="Node000018" href="$namespaceMayaFlux_1_1Kriya_a01aa3f167bd1f04105be7ff4d6c63862.html#a01aa3f167bd1f04105be7ff4d6c63862" title="Creates an Event coroutine that triggers on specific key release." alt="" coords="504,189,663,229"/>
+<area shape="poly" id="edge18_Node000017_Node000018" title=" " alt="" coords="396,259,445,247,501,231,503,236,446,252,397,264"/>
+<area shape="poly" id="edge20_Node000019_Node000007" title=" " alt="" coords="446,383,491,388,490,393,445,388"/>
+<area shape="rect" id="Node000020" href="$namespaceMayaFlux_1_1Kriya_a3865277b1ccf9ef433f9797fc4bb70cb.html#a3865277b1ccf9ef433f9797fc4bb70cb" title="Creates an Event coroutine that triggers on mouse movement." alt="" coords="493,317,673,357"/>
+<area shape="poly" id="edge21_Node000019_Node000020" title=" " alt="" coords="428,358,479,350,480,355,428,363"/>
+<area shape="poly" id="edge23_Node000021_Node000007" title=" " alt="" coords="424,418,490,410,491,415,424,423"/>
+<area shape="rect" id="Node000022" href="$namespaceMayaFlux_1_1Kriya_a61d0d58f158de776ac8a832d194e31bd.html#a61d0d58f158de776ac8a832d194e31bd" title="Creates an Event coroutine that triggers on specific mouse button press." alt="" coords="493,445,673,485"/>
+<area shape="poly" id="edge24_Node000021_Node000022" title=" " alt="" coords="424,440,480,448,479,453,424,445"/>
+<area shape="poly" id="edge26_Node000023_Node000007" title=" " alt="" coords="414,472,444,460,468,446,492,431,508,424,510,429,495,436,471,450,447,465,416,477"/>
+<area shape="rect" id="Node000024" href="$namespaceMayaFlux_1_1Kriya_a55759930e6bca7daaa6ab7c21107a325.html#a55759930e6bca7daaa6ab7c21107a325" title="Creates an Event coroutine that triggers on specific mouse button release." alt="" coords="493,509,673,549"/>
+<area shape="poly" id="edge27_Node000023_Node000024" title=" " alt="" coords="424,504,480,512,479,517,424,509"/>
+<area shape="poly" id="edge29_Node000025_Node000007" title=" " alt="" coords="418,539,444,525,461,503,467,480,474,456,491,431,497,427,501,431,495,435,479,458,472,481,466,505,447,529,420,543"/>
+<area shape="rect" id="Node000026" href="$namespaceMayaFlux_1_1Kriya_a454b114a833332a3d166874f702a0908.html#a454b114a833332a3d166874f702a0908" title="Creates an Event coroutine that triggers on mouse scroll." alt="" coords="493,573,673,613"/>
+<area shape="poly" id="edge30_Node000025_Node000026" title=" " alt="" coords="418,562,480,573,479,578,417,567"/>
+</map>

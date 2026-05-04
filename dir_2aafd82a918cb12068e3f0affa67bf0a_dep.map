@@ -1,0 +1,31 @@
+<map id="Nexus" name="Nexus">
+<area shape="rect" id="node1" href="dir_037f3af2a9411e4bf64b79d81d1060f6.html" title="Core" alt="" coords="27,125,79,151"/>
+<area shape="rect" id="node2" href="dir_30c551cdb1b5e5e8d34a68131522bc06.html" title="IO" alt="" coords="103,125,142,151"/>
+<area shape="rect" id="node3" href="dir_3ed6e73a097ab1d640b1fa27e30113a2.html" title="Vruta" alt="" coords="166,125,223,151"/>
+<area shape="rect" id="node4" href="dir_64c2d47494cb42df00b60c7e5b15f956.html" title="Buffers" alt="" coords="247,125,315,151"/>
+<area shape="rect" id="node5" href="dir_7362a85c6e8ffcf327f9cd0b108e12a6.html" title="Nodes" alt="" coords="339,125,402,151"/>
+<area shape="rect" id="node6" href="dir_98903ca72f3f031f88d95d1d2149bfa4.html" title="Kakshya" alt="" coords="426,125,505,151"/>
+<area shape="rect" id="node7" href="dir_a8ec6d67cf3caa06b6fdb4f1cb0d9531.html" title="Kinesis" alt="" coords="529,125,599,151"/>
+<area shape="rect" id="node8" href="dir_ab78b5ea7d224bd3b6129089c2cbe6d1.html" title="Journal" alt="" coords="623,125,689,151"/>
+<area shape="rect" id="node9" href="dir_c2d643f9a71c5e2e9f02c3129ad5e959.html" title="Kriya" alt="" coords="713,125,769,151"/>
+<area shape="rect" id="node10" href="dir_2aafd82a918cb12068e3f0affa67bf0a.html" title="Nexus" alt="" coords="339,52,402,77"/>
+<area shape="poly" id="edge1" href="dir_000044_000008.html" alt="" coords="340,75,234,96,93,128,92,123,233,90,339,69"/>
+<area shape="rect" id="edge1-headlabel" href="dir_000044_000008.html" title="1" alt="" coords="94,125,104,140"/>
+<area shape="poly" id="edge2" href="dir_000044_000029.html" alt="" coords="340,77,156,128,155,123,338,71"/>
+<area shape="rect" id="edge2-headlabel" href="dir_000044_000029.html" title="5" alt="" coords="157,125,167,139"/>
+<area shape="poly" id="edge3" href="dir_000044_000075.html" alt="" coords="343,80,237,122,235,118,341,75"/>
+<area shape="rect" id="edge3-headlabel" href="dir_000044_000075.html" title="8" alt="" coords="239,119,248,134"/>
+<area shape="poly" id="edge4" href="dir_000044_000005.html" alt="" coords="358,79,308,119,305,114,355,75"/>
+<area shape="rect" id="edge4-headlabel" href="dir_000044_000005.html" title="8" alt="" coords="311,113,320,128"/>
+<area shape="poly" id="edge5" href="dir_000044_000046.html" alt="" coords="373,78,373,112,368,112,368,78"/>
+<area shape="rect" id="edge5-headlabel" href="dir_000044_000046.html" title="2" alt="" coords="374,100,384,114"/>
+<area shape="poly" id="edge6" href="dir_000044_000031.html" alt="" coords="387,75,440,115,437,119,384,79"/>
+<area shape="rect" id="edge6-headlabel" href="dir_000044_000031.html" title="3" alt="" coords="436,100,445,115"/>
+<area shape="poly" id="edge7" href="dir_000044_000032.html" alt="" coords="403,75,521,118,519,123,401,80"/>
+<area shape="rect" id="edge7-headlabel" href="dir_000044_000032.html" title="2" alt="" coords="514,104,523,118"/>
+<area shape="poly" id="edge8" href="dir_000044_000030.html" alt="" coords="403,71,610,122,609,128,401,76"/>
+<area shape="rect" id="edge8-headlabel" href="dir_000044_000030.html" title="7" alt="" coords="602,108,611,123"/>
+<area shape="poly" id="edge9" href="dir_000044_000033.html" alt="" coords="403,68,529,89,700,123,699,128,528,94,402,73"/>
+<area shape="rect" id="edge9-headlabel" href="dir_000044_000033.html" title="8" alt="" coords="693,109,702,123"/>
+<area shape="rect" id="clust1" href="dir_88f0f3329b8af1a7fcf314b32e6813e8.html" title="MayaFlux" alt="" coords="16,16,780,161"/>
+</map>

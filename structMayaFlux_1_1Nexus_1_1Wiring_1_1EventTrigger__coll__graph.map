@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nexus::Wiring::EventTrigger" name="MayaFlux::Nexus::Wiring::EventTrigger">
+<area shape="rect" id="Node000001" title=" " alt="" coords="135,573,313,653"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Vruta_1_1EventSource.html" title="Awaitable event stream for window events." alt="" coords="5,5,216,511"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="194,510,209,557,204,558,189,512"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Vruta_1_1EventFilter.html" title="Filter criteria for window events." alt="" coords="239,185,438,331"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="331,331,308,437,291,495,269,550,264,560,259,558,264,548,286,493,303,435,326,330"/>
+</map>

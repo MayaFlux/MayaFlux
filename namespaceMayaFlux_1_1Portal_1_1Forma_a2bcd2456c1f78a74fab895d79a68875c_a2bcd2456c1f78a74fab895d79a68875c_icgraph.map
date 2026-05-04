@@ -1,0 +1,7 @@
+<map id="MayaFlux::Portal::Forma::shutdown" name="MayaFlux::Portal::Forma::shutdown">
+<area shape="rect" id="Node000001" title="Release stored references." alt="" coords="485,5,667,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1Engine_aeafd948b381d94be47920247d2f75115.html#aeafd948b381d94be47920247d2f75115" title="Stops all processing and performs clean shutdown." alt="" coords="229,13,437,38"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="472,28,437,28,437,23,472,23"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1Engine_ad7c883ef8c66b627bc8549ab5460f5ef.html#ad7c883ef8c66b627bc8549ab5460f5ef" title="Destroys the Engine instance and cleans up resources." alt="" coords="5,5,181,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="216,28,182,28,182,23,216,23"/>
+</map>

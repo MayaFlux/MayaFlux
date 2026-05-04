@@ -1,0 +1,7 @@
+<map id="MayaFlux::IO::FileReader::resolve_path" name="MayaFlux::IO::FileReader::resolve_path">
+<area shape="rect" id="Node000001" title="Resolve a filepath against the project source root if not found as&#45;is." alt="" coords="5,5,191,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_ac8ded33a4e354a3259e25ea984c19053.html#ac8ded33a4e354a3259e25ea984c19053" title="Normalize single&#45;channel data (non&#45;destructive)" alt="" coords="239,13,405,38"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="191,23,225,23,225,28,191,28"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_aa7fcdee057518b1d482864a610ee0b5a.html#aa7fcdee057518b1d482864a610ee0b5a" title="Normalize to [target_min, target_max] in&#45;place Single&#45;pass min/max reduction followed by a single tra..." alt="" coords="453,5,603,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="405,23,439,23,439,28,405,28"/>
+</map>

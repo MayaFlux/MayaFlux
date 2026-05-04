@@ -1,0 +1,9 @@
+<map id="MayaFlux::Nexus::Fabric::remove" name="MayaFlux::Nexus::Fabric::remove">
+<area shape="rect" id="Node000001" title="Remove a registered object by id, cancelling any associated tasks." alt="" coords="5,37,187,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Vruta_1_1EventManager_af5dec990ab647fdd7a99ca272211b08e.html#af5dec990ab647fdd7a99ca272211b08e" title="Cancels and removes a event from the manager." alt="" coords="235,5,465,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="187,43,221,39,221,44,187,49"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_aefd214af5e476f686dc86cc7d7220c96.html#aefd214af5e476f686dc86cc7d7220c96" title="Cancels and removes a task from the scheduler." alt="" coords="235,69,465,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="187,66,221,70,221,76,187,71"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_afb823dfb8ca7ec5182cfaa8e3ee93649.html#afb823dfb8ca7ec5182cfaa8e3ee93649" title="Find task entry by routine pointer." alt="" coords="513,69,744,109"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="466,87,500,87,500,92,466,92"/>
+</map>

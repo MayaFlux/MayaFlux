@@ -1,0 +1,29 @@
+<map id="MayaFlux::Core::BackendWindowHandler" name="MayaFlux::Core::BackendWindowHandler">
+<area shape="rect" id="Node000001" title=" " alt="" coords="218,1745,449,2169"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1VKContext.html" title="High&#45;level wrapper for Vulkan instance and device." alt="" coords="315,938,507,1203"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="459,1203,488,1315,509,1447,513,1516,512,1586,505,1655,489,1722,476,1758,459,1793,455,1791,471,1756,484,1721,500,1654,507,1585,508,1516,503,1447,483,1316,454,1204"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Core_1_1BackendResourceManager.html" title="Manages Vulkan resources (buffers, images, samplers) for the graphics backend." alt="" coords="210,1348,457,1683"/>
+<area shape="poly" id="edge13_Node000013_Node000002" title=" " alt="" coords="391,1204,368,1332,363,1332,385,1203"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1VKInstance.html" title="Manages Vulkan instance creation and validation layers." alt="" coords="82,391,284,751"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="267,750,346,922,341,924,262,752"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1VKDevice.html" title="Manages Vulkan physical device selection and logical device creation." alt="" coords="308,348,514,793"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="414,793,414,922,408,922,408,793"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Core_1_1QueueFamilyIndices.html" title="Stores indices of queue families we need." alt="" coords="221,75,430,215"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="342,215,366,332,360,333,337,216"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Core_1_1GlobalGraphicsConfig.html" title=" " alt="" coords="768,511,990,631"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="825,633,520,957,516,953,821,629"/>
+<area shape="rect" id="Node000007" href="$structMayaFlux_1_1Core_1_1GlfwPreInitConfig.html" title="Configuration hints for GLFW initialization." alt="" coords="455,55,650,235"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="613,234,676,322,749,414,818,496,814,500,744,417,671,326,608,237"/>
+<area shape="rect" id="Node000008" href="$structMayaFlux_1_1Core_1_1GraphicsSurfaceInfo.html" title="System&#45;wide configuration for visual stream processing." alt="" coords="674,25,871,265"/>
+<area shape="poly" id="edge7_Node000006_Node000008" title=" " alt="" coords="805,265,863,494,857,495,800,266"/>
+<area shape="rect" id="Node000009" href="$structMayaFlux_1_1Core_1_1GraphicsBackendInfo.html" title="Configuration for graphics API backend (Vulkan/OpenGL/etc.)" alt="" coords="895,5,1079,285"/>
+<area shape="poly" id="edge8_Node000006_Node000009" title=" " alt="" coords="954,286,901,495,895,494,949,285"/>
+<area shape="rect" id="Node000010" href="$structMayaFlux_1_1Core_1_1GraphicsResourceLimits.html" title="Resource limits and budgets for graphics subsystem." alt="" coords="1103,55,1298,235"/>
+<area shape="poly" id="edge9_Node000006_Node000010" title=" " alt="" coords="1135,237,936,499,932,496,1130,234"/>
+<area shape="rect" id="Node000011" href="$structMayaFlux_1_1Core_1_1TextConfig.html" title="Default font configuration for Portal::Text." alt="" coords="1322,83,1514,208"/>
+<area shape="poly" id="edge10_Node000006_Node000011" title=" " alt="" coords="1378,210,1347,250,1311,287,1237,350,1157,409,1077,461,1004,505,1001,500,1074,456,1153,404,1233,346,1308,283,1343,246,1374,207"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Core_1_1VKCommandManager.html" title="Manages Vulkan command pools and command buffers." alt="" coords="19,856,256,1285"/>
+<area shape="poly" id="edge11_Node000001_Node000012" title=" " alt="" coords="48,1286,23,1381,9,1483,9,1534,13,1584,23,1634,40,1682,72,1738,113,1789,159,1834,207,1873,204,1878,155,1838,109,1793,67,1741,35,1684,18,1635,8,1585,3,1534,4,1482,18,1380,43,1285"/>
+<area shape="poly" id="edge14_Node000013_Node000012" title=" " alt="" coords="190,1285,205,1323,210,1332,205,1334,200,1325,185,1287"/>
+<area shape="poly" id="edge12_Node000001_Node000013" title=" " alt="" coords="336,1683,336,1729,331,1729,331,1683"/>
+</map>

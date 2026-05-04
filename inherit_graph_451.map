@@ -1,0 +1,13 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="Node000000" href="$classMayaFlux_1_1Yantra_1_1GpuDispatchCore.html" title="Non&#45;template base that owns all type&#45;independent GPU dispatch logic." alt="" coords="5,129,260,154"/>
+<area shape="rect" id="Node000001" href="$classMayaFlux_1_1Yantra_1_1GpuExecutionContext.html" title=" " alt="" coords="317,5,547,75"/>
+<area shape="poly" id="edge164_Node000000_Node000001" title=" " alt="" coords="183,122,328,72,330,77,185,127"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1GpuExecutionContext.html" title=" " alt="" coords="308,99,556,183"/>
+<area shape="poly" id="edge165_Node000000_Node000002" title=" " alt="" coords="274,139,308,139,308,144,274,144"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1GpuExecutionContext.html" title="Type&#45;parameterised shell over GpuDispatchCore." alt="" coords="308,208,556,248"/>
+<area shape="poly" id="edge167_Node000000_Node000004" title=" " alt="" coords="186,156,309,193,352,205,351,210,307,199,185,161"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1TextureExecutionContext.html" title="GpuExecutionContext specialisation for image&#45;only compute shaders." alt="" coords="618,121,809,161"/>
+<area shape="poly" id="edge166_Node000002_Node000003" title=" " alt="" coords="570,139,618,139,618,144,570,144"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1ShaderExecutionContext.html" title="Concrete GpuExecutionContext for a single fixed shader with fixed bindings." alt="" coords="604,201,823,255"/>
+<area shape="poly" id="edge168_Node000004_Node000005" title=" " alt="" coords="570,225,604,225,604,231,570,231"/>
+</map>

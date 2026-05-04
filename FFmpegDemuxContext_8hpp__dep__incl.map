@@ -1,0 +1,45 @@
+<map id="FFmpegDemuxContext.hpp" name="FFmpegDemuxContext.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="425,5,627,31"/>
+<area shape="rect" id="Node000002" href="$AudioStreamContext_8hpp.html" title=" " alt="" coords="212,79,397,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="478,37,341,81,340,76,477,32"/>
+<area shape="rect" id="Node000004" href="$SoundFileReader_8hpp.html" title=" " alt="" coords="5,152,164,177"/>
+<area shape="poly" id="edge19_Node000001_Node000004" title=" " alt="" coords="412,30,307,48,253,62,200,81,170,97,141,117,98,154,94,150,138,113,167,93,198,76,251,57,306,42,411,25"/>
+<area shape="rect" id="Node000006" href="$VideoFileReader_8hpp.html" title=" " alt="" coords="383,225,538,251"/>
+<area shape="poly" id="edge20_Node000001_Node000006" title=" " alt="" coords="511,43,490,80,477,120,470,162,464,225,458,225,464,161,472,119,485,78,506,40"/>
+<area shape="rect" id="Node000015" href="$CameraReader_8hpp.html" title=" " alt="" coords="757,152,903,177"/>
+<area shape="poly" id="edge15_Node000001_Node000015" title=" " alt="" coords="641,18,723,23,807,33,877,50,904,62,923,77,929,89,929,101,914,122,888,140,860,154,858,149,885,136,910,118,924,99,924,90,919,80,901,67,876,55,806,38,723,28,640,23"/>
+<area shape="rect" id="Node000017" href="$FFmpegDemuxContext_8cpp.html" title=" " alt="" coords="709,79,909,104"/>
+<area shape="poly" id="edge18_Node000001_Node000017" title=" " alt="" coords="585,31,764,76,762,81,584,37"/>
+<area shape="rect" id="Node000018" href="$VideoStreamContext_8hpp.html" title=" " alt="" coords="499,79,684,104"/>
+<area shape="poly" id="edge21_Node000001_Node000018" title=" " alt="" coords="548,39,583,77,579,80,544,43"/>
+<area shape="rect" id="Node000003" href="$AudioStreamContext_8cpp.html" title=" " alt="" coords="189,152,373,177"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="299,118,287,153,282,151,294,116"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="257,111,121,154,119,149,255,106"/>
+<area shape="poly" id="edge14_Node000002_Node000006" title=" " alt="" coords="335,110,386,150,425,189,454,223,449,227,421,193,383,154,332,114"/>
+<area shape="rect" id="Node000005" href="$SoundFileReader_8cpp.html" title=" " alt="" coords="6,225,163,251"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="87,191,87,225,82,225,82,191"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="159,177,400,223,399,228,158,182"/>
+<area shape="rect" id="Node000007" href="$IOManager_8hpp.html" title=" " alt="" coords="610,299,730,324"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="508,253,637,296,635,301,507,258"/>
+<area shape="rect" id="Node000014" href="$VideoFileReader_8cpp.html" title=" " alt="" coords="383,299,538,324"/>
+<area shape="poly" id="edge13_Node000006_Node000014" title=" " alt="" coords="463,264,463,299,458,299,458,264"/>
+<area shape="rect" id="Node000008" href="$BufferOperation_8cpp.html" title=" " alt="" coords="273,372,425,397"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="606,330,401,374,400,369,605,324"/>
+<area shape="rect" id="Node000009" href="$Creator_8cpp.html" title=" " alt="" coords="449,372,545,397"/>
+<area shape="poly" id="edge8_Node000007_Node000009" title=" " alt="" coords="631,332,526,374,524,369,629,327"/>
+<area shape="rect" id="Node000010" href="$Depot_8cpp.html" title=" " alt="" coords="569,372,657,397"/>
+<area shape="poly" id="edge9_Node000007_Node000010" title=" " alt="" coords="654,336,624,374,620,370,650,333"/>
+<area shape="rect" id="Node000011" href="$Engine_8cpp.html" title=" " alt="" coords="681,372,774,397"/>
+<area shape="poly" id="edge10_Node000007_Node000011" title=" " alt="" coords="690,333,720,370,716,374,686,336"/>
+<area shape="rect" id="Node000012" href="$IOManager_8cpp.html" title=" " alt="" coords="799,372,917,397"/>
+<area shape="poly" id="edge11_Node000007_Node000012" title=" " alt="" coords="714,326,828,369,826,374,712,331"/>
+<area shape="rect" id="Node000013" href="$Rigs_8cpp.html" title=" " alt="" coords="941,372,1018,397"/>
+<area shape="poly" id="edge12_Node000007_Node000013" title=" " alt="" coords="734,324,931,369,941,372,940,377,929,375,732,330"/>
+<area shape="poly" id="edge17_Node000015_Node000007" title=" " alt="" coords="802,187,748,227,710,266,681,300,677,297,706,262,744,223,799,183"/>
+<area shape="rect" id="Node000016" href="$CameraReader_8cpp.html" title=" " alt="" coords="757,225,903,251"/>
+<area shape="poly" id="edge16_Node000015_Node000016" title=" " alt="" coords="833,191,833,225,827,225,827,191"/>
+<area shape="poly" id="edge23_Node000018_Node000006" title=" " alt="" coords="574,116,539,154,473,227,469,223,535,150,570,112"/>
+<area shape="poly" id="edge22_Node000018_Node000015" title=" " alt="" coords="644,105,792,149,791,154,642,110"/>
+<area shape="rect" id="Node000019" href="$VideoStreamContext_8cpp.html" title=" " alt="" coords="549,152,733,177"/>
+<area shape="poly" id="edge24_Node000018_Node000019" title=" " alt="" coords="609,114,635,150,630,153,605,117"/>
+</map>

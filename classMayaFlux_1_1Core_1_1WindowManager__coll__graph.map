@@ -1,0 +1,15 @@
+<map id="MayaFlux::Core::WindowManager" name="MayaFlux::Core::WindowManager">
+<area shape="rect" id="Node000001" title="Manages window lifecycle and GLFW event polling." alt="" coords="421,531,654,956"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Core_1_1GlobalGraphicsConfig.html" title=" " alt="" coords="426,348,649,468"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="540,468,540,514,535,514,535,468"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Core_1_1GlfwPreInitConfig.html" title="Configuration hints for GLFW initialization." alt="" coords="5,55,200,235"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="166,234,214,283,259,316,309,342,360,363,411,379,409,384,359,368,307,347,256,320,210,287,162,238"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Core_1_1GraphicsSurfaceInfo.html" title="System&#45;wide configuration for visual stream processing." alt="" coords="224,25,421,265"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="393,264,438,322,450,335,446,338,434,326,389,267"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Core_1_1GraphicsBackendInfo.html" title="Configuration for graphics API backend (Vulkan/OpenGL/etc.)" alt="" coords="445,5,629,285"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="540,285,540,332,535,332,535,285"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Core_1_1GraphicsResourceLimits.html" title="Resource limits and budgets for graphics subsystem." alt="" coords="653,55,848,235"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="708,237,680,282,646,326,634,339,630,335,642,322,675,279,704,234"/>
+<area shape="rect" id="Node000007" href="$structMayaFlux_1_1Core_1_1TextConfig.html" title="Default font configuration for Portal::Text." alt="" coords="872,83,1064,208"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="932,210,900,250,862,287,816,319,766,344,714,365,665,381,663,376,713,360,763,339,813,314,858,283,896,247,928,206"/>
+</map>

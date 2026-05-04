@@ -1,0 +1,27 @@
+<map id="MayaFlux::Kakshya::NDDataContainer" name="MayaFlux::Kakshya::NDDataContainer">
+<area shape="rect" id="Node000001" title="Abstract interface for N&#45;dimensional data containers." alt="" coords="553,5,734,300"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1SignalSourceContainer.html" title="Data&#45;driven interface for managing arbitrary processable signal sources." alt="" coords="538,348,749,628"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="646,314,646,348,641,348,641,314"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1StreamContainer.html" title="Data&#45;driven interface for temporal stream containers with navigable read position." alt="" coords="325,793,514,1073"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="548,641,528,677,475,794,470,792,524,675,544,638"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Kakshya_1_1TextureContainer.html" title="SignalSourceContainer wrapping GPU texture data as addressable pixel bytes." alt="" coords="538,676,749,1191"/>
+<area shape="poly" id="edge12_Node000002_Node000011" title=" " alt="" coords="646,642,646,676,641,676,641,642"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Kakshya_1_1WindowContainer.html" title="SignalSourceContainer wrapping a live GLFW/Vulkan window surface." alt="" coords="773,676,983,1191"/>
+<area shape="poly" id="edge13_Node000002_Node000012" title=" " alt="" coords="743,639,763,675,775,697,770,700,758,677,738,641"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1FileContainer.html" title="Marker interface for containers backed by file storage (in&#45;memory only)." alt="" coords="339,1481,500,1661"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="422,1087,422,1481,417,1481,417,1087"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer.html" title="Concrete base implementation for streaming audio containers." alt="" coords="105,1239,315,1903"/>
+<area shape="poly" id="edge6_Node000003_Node000007" title=" " alt="" coords="372,1087,318,1251,313,1249,367,1086"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer.html" title="Concrete base implementation for streaming video containers." alt="" coords="525,1283,735,1858"/>
+<area shape="poly" id="edge9_Node000003_Node000009" title=" " alt="" coords="472,1086,537,1282,532,1284,467,1087"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1SoundFileContainer.html" title="File&#45;backed audio container with complete streaming functionality." alt="" coords="226,2101,407,2281"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="405,1675,334,2101,329,2100,400,1674"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1VideoFileContainer.html" title="File&#45;backed video container — semantic marker over VideoStreamContainer." alt="" coords="431,2121,613,2261"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="439,1674,513,2120,508,2121,434,1675"/>
+<area shape="poly" id="edge8_Node000007_Node000005" title=" " alt="" coords="272,1916,304,2100,299,2101,267,1917"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Kakshya_1_1DynamicSoundStream.html" title="Dynamic capacity streaming audio container with automatic resizing and circular buffering." alt="" coords="5,1951,201,2431"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="153,1917,147,1951,142,1950,148,1916"/>
+<area shape="poly" id="edge11_Node000009_Node000006" title=" " alt="" coords="580,1872,537,2121,531,2120,575,1871"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Kakshya_1_1CameraContainer.html" title="Single&#45;slot live video container for camera device streams." alt="" coords="637,2081,839,2301"/>
+<area shape="poly" id="edge10_Node000009_Node000010" title=" " alt="" coords="685,1871,722,2080,716,2081,680,1872"/>
+</map>

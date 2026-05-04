@@ -1,0 +1,7 @@
+<map id="MayaFlux::Yantra::Granular::make_granular_input" name="MayaFlux::Yantra::Granular::make_granular_input">
+<area shape="rect" id="Node000001" title="Construct the initial GranularDatum from a container." alt="" coords="252,37,451,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Yantra_1_1Granular_aafab8515e0b5635b93aa83cfbec61fdf.html#aafab8515e0b5635b93aa83cfbec61fdf" title="Run segment &#45;&gt; attribute &#45;&gt; sort and return the attributed RegionGroup." alt="" coords="5,5,204,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="238,45,204,41,205,36,239,40"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Yantra_1_1Granular_aec22f480d0c35db4b30b5022ee7b63bf.html#aec22f480d0c35db4b30b5022ee7b63bf" title="Run segment &#45;&gt; attribute &#45;&gt; sort using a span&#45;level attribution lambda." alt="" coords="5,69,204,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="239,75,205,79,204,74,238,69"/>
+</map>

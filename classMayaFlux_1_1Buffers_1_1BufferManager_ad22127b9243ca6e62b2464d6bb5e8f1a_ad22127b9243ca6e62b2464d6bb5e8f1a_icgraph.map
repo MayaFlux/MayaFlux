@@ -1,0 +1,28 @@
+<map id="MayaFlux::Buffers::BufferManager::remove_buffer" name="MayaFlux::Buffers::BufferManager::remove_buffer">
+<area shape="rect" id="Node000001" title="Removes a buffer from a token." alt="" coords="755,247,931,302"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kriya_1_1TemporalActivation_a65d420344629b85e2d038b9641496b03.html#a65d420344629b85e2d038b9641496b03" title="Cleans up the current operation, disconnecting the entity and resetting state." alt="" coords="507,107,707,162"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="782,242,652,164,655,160,785,238"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Nexus_a9bae495b5406a8a5b0157bd22ec5fd57.html#a9bae495b5406a8a5b0157bd22ec5fd57" title="Unregister and destroy the audio sink on channel." alt="" coords="510,255,703,295"/>
+<area shape="poly" id="edge9_Node000001_Node000007" title=" " alt="" coords="741,277,704,277,704,272,741,272"/>
+<area shape="rect" id="Node000010" href="$namespaceMayaFlux_1_1Nexus_a10507f13abaa4949b9dfd1821d492aa6.html#a10507f13abaa4949b9dfd1821d492aa6" title="Unregister and destroy the render sink targeting window." alt="" coords="510,351,703,391"/>
+<area shape="poly" id="edge12_Node000001_Node000010" title=" " alt="" coords="763,310,658,353,656,348,761,305"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kriya_1_1TemporalActivation_ab4f3737fb0465e8727586b7104b95fc2.html#ab4f3737fb0465e8727586b7104b95fc2" title="Activates a buffer for a specified duration." alt="" coords="12,5,208,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="559,101,512,71,458,48,395,33,329,24,266,21,208,21,208,16,266,16,330,19,396,27,460,43,514,67,562,97"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kriya_1_1TemporalActivation_a5472441ec2fd9cc067e55eb8f48f1a6d.html#a5472441ec2fd9cc067e55eb8f48f1a6d" title="Activates a node network for a specified duration." alt="" coords="5,73,215,113"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="493,130,262,112,214,107,215,102,263,107,493,125"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kriya_1_1TemporalActivation_ab218a3ead3d97c0a677ad3b3f0fad462.html#ab218a3ead3d97c0a677ad3b3f0fad462" title="Activates a node for a specified duration." alt="" coords="12,147,208,187"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="493,153,459,156,328,164,208,168,208,163,328,159,458,151,493,147"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kriya_1_1TemporalActivation_aa48d4567cb873962947e3e270191b7d3.html#aa48d4567cb873962947e3e270191b7d3" title="Cancels any currently active node." alt="" coords="263,57,459,97"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="492,111,447,100,448,95,494,106"/>
+<area shape="poly" id="edge6_Node000006_Node000003" title=" " alt="" coords="250,57,206,48,207,43,251,52"/>
+<area shape="poly" id="edge7_Node000006_Node000004" title=" " alt="" coords="249,87,215,89,215,84,249,82"/>
+<area shape="poly" id="edge8_Node000006_Node000005" title=" " alt="" coords="292,105,168,149,166,144,290,99"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Nexus_1_1Agent_a213a1ba21b358621511fe6b6197f6a17.html#a213a1ba21b358621511fe6b6197f6a17" title="Unregister the audio sink on channel." alt="" coords="270,223,451,263"/>
+<area shape="poly" id="edge10_Node000007_Node000008" title=" " alt="" coords="496,263,451,257,452,252,497,258"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Nexus_1_1Emitter_afe36c3e14fb66ee75720696e344b952f.html#afe36c3e14fb66ee75720696e344b952f" title="Unregister the audio sink on channel." alt="" coords="265,287,456,327"/>
+<area shape="poly" id="edge11_Node000007_Node000009" title=" " alt="" coords="497,292,456,297,456,292,496,286"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Nexus_1_1Agent_ac3bde89755102bf23e753265207b1c01.html#ac3bde89755102bf23e753265207b1c01" title="Unregister the render sink targeting window." alt="" coords="270,351,451,391"/>
+<area shape="poly" id="edge13_Node000010_Node000011" title=" " alt="" coords="496,373,452,373,452,368,496,368"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Nexus_1_1Emitter_ac66797bd88ffa37ba8aa1610bb41e6cc.html#ac66797bd88ffa37ba8aa1610bb41e6cc" title="Unregister the render sink targeting window." alt="" coords="265,415,456,455"/>
+<area shape="poly" id="edge14_Node000010_Node000012" title=" " alt="" coords="517,397,439,417,437,412,515,392"/>
+</map>

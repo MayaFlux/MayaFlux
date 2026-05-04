@@ -1,0 +1,9 @@
+<map id="MayaFlux::Nexus::Fabric::get_sensor" name="MayaFlux::Nexus::Fabric::get_sensor">
+<area shape="rect" id="Node000001" title="Get the Sensor registered under id." alt="" coords="284,69,465,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nexus_1_1StateDecoder_aaaa98335e2669252675c7eef36693d08.html#aaaa98335e2669252675c7eef36693d08" title="Decode and apply to fabric." alt="" coords="5,5,236,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="281,68,200,48,201,43,282,63"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nexus_1_1StateEncoder_ad8fc616eab6adf9f0af8ec03db3f3b3e.html#ad8fc616eab6adf9f0af8ec03db3f3b3e" title="Encode the given Fabric to {base_path}.exr and {base_path}.json." alt="" coords="6,69,235,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="270,92,235,92,235,87,270,87"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nexus_1_1StateDecoder_a4bbc19256f60fe110344ba93422ab45c.html#a4bbc19256f60fe110344ba93422ab45c" title="Patch existing entities and construct missing ones from schema." alt="" coords="5,133,236,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="282,115,201,136,200,131,281,110"/>
+</map>

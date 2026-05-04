@@ -1,0 +1,5 @@
+<map id="MayaFlux::Yantra::UniversalTransformer::create_safe_output" name="MayaFlux::Yantra::UniversalTransformer::create_safe_output">
+<area shape="rect" id="Node000001" title="Creates a safe fallback output when input validation fails." alt="" coords="5,5,239,45"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Yantra_1_1Datum_a9ad1f90d17c3c7eccac742b64652c325.html#a9ad1f90d17c3c7eccac742b64652c325" title="Check if a container reference is associated." alt="" coords="287,5,473,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="239,23,273,23,273,28,239,28"/>
+</map>

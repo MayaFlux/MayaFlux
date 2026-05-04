@@ -1,0 +1,7 @@
+<map id="MayaFlux::IO::JSONSerializer::last_error" name="MayaFlux::IO::JSONSerializer::last_error">
+<area shape="rect" id="Node000001" title="Last error message, empty if no error." alt="" coords="284,37,493,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nexus_1_1StateDecoder_aaaa98335e2669252675c7eef36693d08.html#aaaa98335e2669252675c7eef36693d08" title="Decode and apply to fabric." alt="" coords="5,5,236,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="270,46,236,42,236,36,271,41"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nexus_1_1StateDecoder_a4bbc19256f60fe110344ba93422ab45c.html#a4bbc19256f60fe110344ba93422ab45c" title="Patch existing entities and construct missing ones from schema." alt="" coords="5,69,236,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="271,74,236,78,236,73,270,69"/>
+</map>
