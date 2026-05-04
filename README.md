@@ -63,8 +63,9 @@ The ideas, their ontology, and how they compose drive the work. Not mastering th
 
 The two examples below are the same sound engine. The second changes roughly 20 lines. What those 20 lines unlock is not a variation on the first, it's a different compositional universe.
 
+[![Watch the video](https://img.shields.io/badge/YouTube-Video-red?style=for-the-badge&logo=youtube)](https://youtu.be/OecKzGCxpRM)
 <a href="https://youtu.be/OecKzGCxpRM" target="_blank">
- <img src="https://img.youtube.com/vi/OecKzGCxpRM/maxresdefault.jpg?v=1" alt="Example #1" width="600" />
+ <img src="https://img.youtube.com/vi/OecKzGCxpRM/maxresdefault.jpg" width="600" />
 </a>
 
 <details>
@@ -357,6 +358,7 @@ The three examples below share the same audio engine: a four-voice rhythm sectio
 
 Each step adds a layer. Each layer opens a different creative universe. By Example 3, audio envelope nodes feed directly into GPU push constants through `NodeBindingsProcessor`, the same `Polynomial` node that shapes a kick's decay curve is simultaneously warping a fragment shader's radial distortion. No bridging code, no callback extraction, no domain translation. The node outputs a number; the GPU consumes it.
 
+[![Watch the video](https://img.shields.io/badge/YouTube-Video-red?style=for-the-badge&logo=youtube)](https://youtu.be/SHWebquQbZs)
 <a href="https://youtu.be/SHWebquQbZs" target="_blank">
  <img src="https://img.youtube.com/vi/SHWebquQbZs/maxresdefault.jpg?v=1" alt="Rhythm as Topology" width="600" />
 </a>
