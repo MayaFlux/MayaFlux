@@ -1349,7 +1349,7 @@ Rolling builds tagged as `x.x.x-dev` (e.g., `0.1.2-dev`, `0.2.0-dev`). These tag
 
 | Channel         | Tag Example | Stability | Use Case                           |
 | --------------- | ----------- | --------- | ---------------------------------- |
-| **Stable**      | `v0.3.2`    | Tested    | Production, learning, projects     |
+| **Stable**      | `v0.3.3`    | Tested    | Production, learning, projects     |
 | **Development** | `0.4.0-dev` | Unstable  | Testing new features, contributing |
 
 Weave defaults to stable releases. Development builds require manual download from the releases page.
@@ -1458,7 +1458,7 @@ Auto-generated docs (enabled once CI pipelines are set up):
 | Yantra Grammar System    | In Progress | Core framework stable, additional grammars planned for 0.4  |
 
 
-**Current version**: 0.3.2
+**Current version**: 0.3.3
 **Trajectory**: Stable core. 0.4 focuses on Nexus agent system expansion, computer vision pipeline, and Kinesis as a first-class analysis namespace.
 
 ---
