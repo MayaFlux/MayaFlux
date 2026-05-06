@@ -75,6 +75,7 @@
 #include "Buffers/Container/SoundStreamWriter.hpp"
 #include "Buffers/Container/VideoContainerBuffer.hpp"
 #include "Buffers/Forma/FormaBuffer.hpp"
+#include "Buffers/Geometry/CompositeGeometryBuffer.hpp"
 #include "Buffers/Geometry/GeometryBuffer.hpp"
 #include "Buffers/Geometry/GeometryWriteProcessor.hpp"
 #include "Buffers/Geometry/MeshBuffer.hpp"

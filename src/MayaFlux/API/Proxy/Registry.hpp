@@ -62,6 +62,7 @@ namespace Buffers {
     class NodeTextureBuffer;
     class TextureBuffer;
     class GeometryBuffer;
+    class CompositeGeometryBuffer;
     class MeshBuffer;
     class MeshNetworkBuffer;
     class NetworkGeometryBuffer;
@@ -116,17 +117,18 @@ namespace IO {
     W(PointCloudNetwork, MayaFlux::Nodes::Network::PointCloudNetwork) \
     W(MeshNetwork, MayaFlux::Nodes::Network::MeshNetwork)
 
-#define ALL_BUFFER_REGISTRATION                                        \
-    B(AudioBuffer, MayaFlux::Buffers::AudioBuffer)                     \
-    B(NodeBuffer, MayaFlux::Buffers::NodeBuffer)                       \
-    B(FeedbackBuffer, MayaFlux::Buffers::FeedbackBuffer)               \
-    B(SoundContainerBuffer, MayaFlux::Buffers::SoundContainerBuffer)   \
-    B(VKBuffer, MayaFlux::Buffers::VKBuffer)                           \
-    B(NodeTextureBuffer, MayaFlux::Buffers::NodeTextureBuffer)         \
-    B(TextureBuffer, MayaFlux::Buffers::TextureBuffer)                 \
-    B(GeometryBuffer, MayaFlux::Buffers::GeometryBuffer)               \
-    B(MeshBuffer, MayaFlux::Buffers::MeshBuffer)                       \
-    B(MeshNetworkBuffer, MayaFlux::Buffers::MeshNetworkBuffer)         \
-    B(NetworkGeometryBuffer, MayaFlux::Buffers::NetworkGeometryBuffer) \
-    B(NetworkTextureBuffer, MayaFlux::Buffers::NetworkTextureBuffer)   \
+#define ALL_BUFFER_REGISTRATION                                            \
+    B(AudioBuffer, MayaFlux::Buffers::AudioBuffer)                         \
+    B(NodeBuffer, MayaFlux::Buffers::NodeBuffer)                           \
+    B(FeedbackBuffer, MayaFlux::Buffers::FeedbackBuffer)                   \
+    B(SoundContainerBuffer, MayaFlux::Buffers::SoundContainerBuffer)       \
+    B(VKBuffer, MayaFlux::Buffers::VKBuffer)                               \
+    B(NodeTextureBuffer, MayaFlux::Buffers::NodeTextureBuffer)             \
+    B(TextureBuffer, MayaFlux::Buffers::TextureBuffer)                     \
+    B(GeometryBuffer, MayaFlux::Buffers::GeometryBuffer)                   \
+    B(CompositeGeometryBuffer, MayaFlux::Buffers::CompositeGeometryBuffer) \
+    B(MeshBuffer, MayaFlux::Buffers::MeshBuffer)                           \
+    B(MeshNetworkBuffer, MayaFlux::Buffers::MeshNetworkBuffer)             \
+    B(NetworkGeometryBuffer, MayaFlux::Buffers::NetworkGeometryBuffer)     \
+    B(NetworkTextureBuffer, MayaFlux::Buffers::NetworkTextureBuffer)       \
     B(NetworkAudioBuffer, MayaFlux::Buffers::NetworkAudioBuffer)
