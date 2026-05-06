@@ -74,7 +74,14 @@ void PathOperator::add_path(
     path->set_path_thickness(m_default_thickness);
     path->compute_frame();
 
+    uint32_t expected = 0;
+    while (!m_access_token.compare_exchange_weak(expected, 1,
+        std::memory_order_acquire, std::memory_order_relaxed))
+        expected = 0;
+
     m_paths.push_back(std::move(path));
+
+    m_access_token.store(0, std::memory_order_release);
 
     MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
         "Added path #{} with {} control vertices, {} generated vertices",
@@ -88,13 +95,16 @@ void PathOperator::add_path(
 
 void PathOperator::process(float /*dt*/)
 {
-    if (m_paths.empty()) {
-        return;
-    }
+    uint32_t expected = 0;
+    while (!m_access_token.compare_exchange_weak(expected, 1,
+        std::memory_order_acquire, std::memory_order_relaxed))
+        expected = 0;
 
     for (auto& path : m_paths) {
         path->compute_frame();
     }
+
+    m_access_token.store(0, std::memory_order_release);
 }
 
 //-----------------------------------------------------------------------------
