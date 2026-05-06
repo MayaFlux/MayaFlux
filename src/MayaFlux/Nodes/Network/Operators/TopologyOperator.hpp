@@ -84,6 +84,14 @@ public:
     void set_global_line_color(const glm::vec3& color);
 
     /**
+     * @brief Set number of samples per segment for interpolation for all topologies.
+     * @param samples Number of samples to generate per connection segment
+     *
+     * Higher values produce smoother curves but increase vertex count.
+     */
+    void set_samples_per_segment(size_t samples);
+
+    /**
      * @brief Get number of topologies currently stored
      * @return Topology count
      */
