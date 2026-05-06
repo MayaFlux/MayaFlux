@@ -347,9 +347,11 @@ void PointCloudNetwork::set_samples_per_segment(size_t samples)
 {
     if (auto* path_op = dynamic_cast<PathOperator*>(m_operator.get())) {
         path_op->set_samples_per_segment(static_cast<Eigen::Index>(samples));
+    } else if (auto* topo_op = dynamic_cast<TopologyOperator*>(m_operator.get())) {
+        topo_op->set_samples_per_segment(samples);
     } else {
         MF_WARN(Journal::Component::Nodes, Journal::Context::NodeProcessing,
-            "set_samples_per_segment requires PathOperator");
+            "set_samples_per_segment requires PathOperator or TopologyOperator");
     }
 }
 

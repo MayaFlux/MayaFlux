@@ -241,6 +241,13 @@ void TopologyOperator::set_global_line_color(const glm::vec3& color)
     }
 }
 
+void TopologyOperator::set_samples_per_segment(size_t samples)
+{
+    for (auto& topology : m_topologies) {
+        topology->set_samples_per_segment(samples);
+    }
+}
+
 void* TopologyOperator::get_data_at(size_t global_index)
 {
     size_t offset = 0;
