@@ -10,6 +10,8 @@ public:
         Kinesis::InterpolationMode mode = Kinesis::InterpolationMode::CATMULL_ROM,
         Eigen::Index samples_per_segment = 32);
 
+    ~PathOperator() override { m_shutdown.store(true, std::memory_order_release); }
+
     /**
      * @brief Initialize a single path with given control points and properties.
      */
@@ -114,6 +116,7 @@ private:
     float m_default_thickness { 2.0F };
 
     mutable std::atomic<uint32_t> m_access_token { 0 };
+    std::atomic<bool> m_shutdown { false };
 };
 
 } // namespace MayaFlux::Nodes::Network
