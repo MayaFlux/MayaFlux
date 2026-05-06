@@ -31,7 +31,7 @@ void PathOperator::initialize(const std::vector<LineVertex>& vertices)
     }
 
     m_paths.clear();
-    add_path(vertices, m_default_mode);
+    add_path(vertices, m_default_mode, m_default_samples_per_segment);
 
     MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
         "PathOperator initialized with {} control vertices", vertices.size());
@@ -46,7 +46,7 @@ void PathOperator::initialize_paths(
     Kinesis::InterpolationMode mode)
 {
     for (const auto& path : paths) {
-        add_path(path, mode);
+        add_path(path, mode, m_default_samples_per_segment);
     }
 
     MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
@@ -56,7 +56,7 @@ void PathOperator::initialize_paths(
 
 void PathOperator::add_path(
     const std::vector<LineVertex>& control_vertices,
-    Kinesis::InterpolationMode mode)
+    Kinesis::InterpolationMode mode, uint32_t default_samples_per_segment, size_t max_control_points, double tension)
 {
     if (control_vertices.empty()) {
         MF_WARN(Journal::Component::Nodes, Journal::Context::NodeProcessing,
@@ -66,8 +66,9 @@ void PathOperator::add_path(
 
     auto path = std::make_shared<GpuSync::PathGeneratorNode>(
         mode,
-        m_default_samples_per_segment,
-        1024);
+        default_samples_per_segment,
+        max_control_points,
+        tension);
 
     path->set_control_points(control_vertices);
     path->set_path_thickness(m_default_thickness);
