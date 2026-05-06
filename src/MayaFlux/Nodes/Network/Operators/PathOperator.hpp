@@ -28,10 +28,13 @@ public:
      * @brief Add a new path with given control points and properties.
      * @param control_points Vector of control points for the path.
      * @param mode Interpolation mode for the path.
+     * @param default_samples_per_segment Number of samples to generate per segment (between control points).
+     * @param max_control_points Maximum number of control points to store in history for this path
+     * @param tension Tension parameter for applicable interpolation modes (e.g. Catmull-Rom)
      */
     void add_path(
         const std::vector<LineVertex>& control_vertices,
-        Kinesis::InterpolationMode mode);
+        Kinesis::InterpolationMode mode, uint32_t default_samples_per_segment = 32, size_t max_control_points = 64, double tension = 0.5);
 
     void process(float dt) override;
 
