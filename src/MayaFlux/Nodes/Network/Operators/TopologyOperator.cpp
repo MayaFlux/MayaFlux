@@ -66,6 +66,11 @@ void TopologyOperator::add_topology(
     topology->set_points(vertices);
     topology->compute_frame();
 
+    uint32_t expected = 0;
+    while (!m_access_token.compare_exchange_weak(expected, 1,
+        std::memory_order_acquire, std::memory_order_relaxed))
+        expected = 0;
+
     m_topologies.push_back(std::move(topology));
 
     MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
@@ -80,13 +85,16 @@ void TopologyOperator::add_topology(
 
 void TopologyOperator::process(float /*dt*/)
 {
-    if (m_topologies.empty()) {
-        return;
-    }
+    uint32_t expected = 0;
+    while (!m_access_token.compare_exchange_weak(expected, 1,
+        std::memory_order_acquire, std::memory_order_relaxed))
+        expected = 0;
 
     for (auto& topology : m_topologies) {
         topology->compute_frame();
     }
+
+    m_access_token.store(0, std::memory_order_release);
 }
 
 //-----------------------------------------------------------------------------

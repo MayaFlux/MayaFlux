@@ -315,6 +315,8 @@ private:
 
     void apply_per_particle_mass(
         const std::shared_ptr<NodeNetwork>& source);
+
+    mutable std::atomic<uint32_t> m_access_token { 0 };
 };
 
 } // namespace MayaFlux::Nodes::Network

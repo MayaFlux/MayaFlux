@@ -109,6 +109,8 @@ private:
 
     Kinesis::ProximityMode m_default_mode;
     float m_default_thickness { 2.0F };
+
+    mutable std::atomic<uint32_t> m_access_token { 0 };
 };
 
 } // namespace MayaFlux::Nodes::Network
