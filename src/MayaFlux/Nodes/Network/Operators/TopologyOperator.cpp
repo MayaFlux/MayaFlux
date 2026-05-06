@@ -138,7 +138,9 @@ Kakshya::VertexLayout TopologyOperator::get_vertex_layout() const
         return {};
     }
 
-    return *layout_opt;
+    auto layout = *layout_opt;
+    layout.vertex_count = static_cast<uint32_t>(get_vertex_count());
+    return layout;
 }
 
 size_t TopologyOperator::get_vertex_count() const
