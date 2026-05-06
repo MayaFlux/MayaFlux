@@ -53,6 +53,19 @@ public:
     [[nodiscard]] size_t get_point_count() const override;
 
     /**
+     * @brief Access a specific topology node directly.
+     * @param i Collection index.
+     * @return Shared pointer to the TopologyGeneratorNode, or nullptr if out of range.
+     */
+    [[nodiscard]] std::shared_ptr<GpuSync::TopologyGeneratorNode> get_topology(size_t i) const
+    {
+        if (i >= m_topologies.size()) {
+            return nullptr;
+        }
+        return m_topologies[i];
+    }
+
+    /**
      * @brief Set the connection radius for topology generation.
      * @param radius Connection radius.
      */
