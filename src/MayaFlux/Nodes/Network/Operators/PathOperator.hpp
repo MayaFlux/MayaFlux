@@ -54,6 +54,19 @@ public:
     [[nodiscard]] size_t get_point_count() const override;
 
     /**
+     * @brief Access a specific path node directly.
+     * @param i Collection index.
+     * @return Shared pointer to the PathGeneratorNode, or nullptr if out of range.
+     */
+    [[nodiscard]] std::shared_ptr<GpuSync::PathGeneratorNode> get_path(size_t i) const
+    {
+        if (i >= m_paths.size()) {
+            return nullptr;
+        }
+        return m_paths[i];
+    }
+
+    /**
      * @brief Set the number of samples per segment for all paths.
      * @param samples Number of samples to generate per segment between control points.
      */
