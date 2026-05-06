@@ -286,10 +286,12 @@ void Wiring::finalise()
             } else if constexpr (std::is_same_v<T, MouseTrigger>) {
                 auto name = make_name("nexus_event");
                 reg.event_name = name;
+                Fabric& fab = m_fabric;
+                uint32_t eid = m_entity_id;
                 ev_manager.add_event(
                     std::make_shared<Vruta::Event>(
                         Kriya::mouse_pressed(trig.window, trig.button,
-                            [this, id](double, double) { m_fabric.fire(id); })),
+                            [&fab, eid](double, double) { fab.fire(eid); })),
                     name);
 
             } else if constexpr (std::is_same_v<T, NetworkTrigger>) {
