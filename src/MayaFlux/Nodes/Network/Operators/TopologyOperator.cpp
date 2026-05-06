@@ -68,8 +68,11 @@ void TopologyOperator::add_topology(
 
     uint32_t expected = 0;
     while (!m_access_token.compare_exchange_weak(expected, 1,
-        std::memory_order_acquire, std::memory_order_relaxed))
+        std::memory_order_acquire, std::memory_order_relaxed)) {
+        if (m_shutdown.load(std::memory_order_relaxed))
+            return;
         expected = 0;
+    }
 
     m_topologies.push_back(std::move(topology));
 
@@ -87,8 +90,11 @@ void TopologyOperator::process(float /*dt*/)
 {
     uint32_t expected = 0;
     while (!m_access_token.compare_exchange_weak(expected, 1,
-        std::memory_order_acquire, std::memory_order_relaxed))
+        std::memory_order_acquire, std::memory_order_relaxed)) {
+        if (m_shutdown.load(std::memory_order_relaxed))
+            return;
         expected = 0;
+    }
 
     for (auto& topology : m_topologies) {
         topology->compute_frame();

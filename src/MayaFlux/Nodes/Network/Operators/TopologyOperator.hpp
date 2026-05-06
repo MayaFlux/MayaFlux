@@ -9,6 +9,8 @@ public:
     explicit TopologyOperator(
         Kinesis::ProximityMode mode = Kinesis::ProximityMode::K_NEAREST);
 
+    ~TopologyOperator() override { m_shutdown.store(true, std::memory_order_release); }
+
     /**
      * @brief Initialize a single topology with single set of vertices
      */
@@ -111,6 +113,7 @@ private:
     float m_default_thickness { 2.0F };
 
     mutable std::atomic<uint32_t> m_access_token { 0 };
+    std::atomic<bool> m_shutdown { false };
 };
 
 } // namespace MayaFlux::Nodes::Network

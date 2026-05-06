@@ -78,8 +78,11 @@ void PhysicsOperator::add_collection(
 
     uint32_t expected = 0;
     while (!m_access_token.compare_exchange_weak(expected, 1,
-        std::memory_order_acquire, std::memory_order_relaxed))
+        std::memory_order_acquire, std::memory_order_relaxed)) {
+        if (m_shutdown.load(std::memory_order_relaxed))
+            return;
         expected = 0;
+    }
 
     m_collections.push_back(std::move(group));
 
@@ -105,8 +108,11 @@ void PhysicsOperator::process(float dt)
 
     uint32_t expected = 0;
     while (!m_access_token.compare_exchange_weak(expected, 1,
-        std::memory_order_acquire, std::memory_order_relaxed))
+        std::memory_order_acquire, std::memory_order_relaxed)) {
+        if (m_shutdown.load(std::memory_order_relaxed))
+            return;
         expected = 0;
+    }
 
     for (auto& group : m_collections) {
         group.collection->compute_frame();
