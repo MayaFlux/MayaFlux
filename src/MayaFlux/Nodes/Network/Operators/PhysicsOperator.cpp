@@ -76,6 +76,14 @@ void PhysicsOperator::add_collection(
     group.collection->set_points(vertices);
     group.collection->compute_frame();
 
+    uint32_t expected = 0;
+    while (!m_access_token.compare_exchange_weak(expected, 1,
+        std::memory_order_acquire, std::memory_order_relaxed)) {
+        if (m_shutdown.load(std::memory_order_relaxed))
+            return;
+        expected = 0;
+    }
+
     m_collections.push_back(std::move(group));
 
     MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
@@ -98,9 +106,19 @@ void PhysicsOperator::process(float dt)
     handle_boundary_conditions();
     sync_to_point_collection();
 
+    uint32_t expected = 0;
+    while (!m_access_token.compare_exchange_weak(expected, 1,
+        std::memory_order_acquire, std::memory_order_relaxed)) {
+        if (m_shutdown.load(std::memory_order_relaxed))
+            return;
+        expected = 0;
+    }
+
     for (auto& group : m_collections) {
         group.collection->compute_frame();
     }
+
+    m_access_token.store(0, std::memory_order_release);
 }
 
 //-----------------------------------------------------------------------------
@@ -267,7 +285,9 @@ Kakshya::VertexLayout PhysicsOperator::get_vertex_layout() const
         return {};
     }
 
-    return *layout_opt;
+    auto layout = *layout_opt;
+    layout.vertex_count = static_cast<uint32_t>(get_vertex_count());
+    return layout;
 }
 
 size_t PhysicsOperator::get_vertex_count() const

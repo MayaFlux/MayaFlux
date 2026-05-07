@@ -70,6 +70,8 @@ public:
 
     PhysicsOperator();
 
+    ~PhysicsOperator() override { m_shutdown.store(true, std::memory_order_release); }
+
     /**
      * @brief Initialize with a single physics collection
      * @param vertices PointVertex array with position, color, size
@@ -315,6 +317,9 @@ private:
 
     void apply_per_particle_mass(
         const std::shared_ptr<NodeNetwork>& source);
+
+    mutable std::atomic<uint32_t> m_access_token { 0 };
+    std::atomic<bool> m_shutdown { false };
 };
 
 } // namespace MayaFlux::Nodes::Network

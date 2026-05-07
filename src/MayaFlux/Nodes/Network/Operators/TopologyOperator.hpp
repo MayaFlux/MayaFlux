@@ -9,6 +9,8 @@ public:
     explicit TopologyOperator(
         Kinesis::ProximityMode mode = Kinesis::ProximityMode::K_NEAREST);
 
+    ~TopologyOperator() override { m_shutdown.store(true, std::memory_order_release); }
+
     /**
      * @brief Initialize a single topology with single set of vertices
      */
@@ -53,6 +55,19 @@ public:
     [[nodiscard]] size_t get_point_count() const override;
 
     /**
+     * @brief Access a specific topology node directly.
+     * @param i Collection index.
+     * @return Shared pointer to the TopologyGeneratorNode, or nullptr if out of range.
+     */
+    [[nodiscard]] std::shared_ptr<GpuSync::TopologyGeneratorNode> get_topology(size_t i) const
+    {
+        if (i >= m_topologies.size()) {
+            return nullptr;
+        }
+        return m_topologies[i];
+    }
+
+    /**
      * @brief Set the connection radius for topology generation.
      * @param radius Connection radius.
      */
@@ -69,6 +84,14 @@ public:
      * @param color RGB color.
      */
     void set_global_line_color(const glm::vec3& color);
+
+    /**
+     * @brief Set number of samples per segment for interpolation for all topologies.
+     * @param samples Number of samples to generate per connection segment
+     *
+     * Higher values produce smoother curves but increase vertex count.
+     */
+    void set_samples_per_segment(size_t samples);
 
     /**
      * @brief Get number of topologies currently stored
@@ -88,6 +111,9 @@ private:
 
     Kinesis::ProximityMode m_default_mode;
     float m_default_thickness { 2.0F };
+
+    mutable std::atomic<uint32_t> m_access_token { 0 };
+    std::atomic<bool> m_shutdown { false };
 };
 
 } // namespace MayaFlux::Nodes::Network

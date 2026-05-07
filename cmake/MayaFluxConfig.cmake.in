@@ -2,6 +2,10 @@
 
 set(_MAYAFLUX_LIBDIR "@CMAKE_INSTALL_LIBDIR@")
 
+if(NOT IS_ABSOLUTE "${_MAYAFLUX_LIBDIR}")
+    set(_MAYAFLUX_LIBDIR "${PACKAGE_PREFIX_DIR}/${_MAYAFLUX_LIBDIR}")
+endif()
+
 # MayaFlux CMake Config
 # Provides: MayaFlux::MayaFluxLib, MayaFlux::Lila targets
 
@@ -172,7 +176,7 @@ endif()
 
 if(NOT TARGET miniz)
     find_library(MINIZ_LIB NAMES miniz
-        PATHS "${PACKAGE_PREFIX_DIR}/${_MAYAFLUX_LIBDIR}"
+        PATHS "${_MAYAFLUX_LIBDIR}"
         NO_DEFAULT_PATH
     )
     add_library(miniz STATIC IMPORTED)

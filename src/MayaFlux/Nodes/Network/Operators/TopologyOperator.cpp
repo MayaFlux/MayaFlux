@@ -66,6 +66,14 @@ void TopologyOperator::add_topology(
     topology->set_points(vertices);
     topology->compute_frame();
 
+    uint32_t expected = 0;
+    while (!m_access_token.compare_exchange_weak(expected, 1,
+        std::memory_order_acquire, std::memory_order_relaxed)) {
+        if (m_shutdown.load(std::memory_order_relaxed))
+            return;
+        expected = 0;
+    }
+
     m_topologies.push_back(std::move(topology));
 
     MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
@@ -80,13 +88,19 @@ void TopologyOperator::add_topology(
 
 void TopologyOperator::process(float /*dt*/)
 {
-    if (m_topologies.empty()) {
-        return;
+    uint32_t expected = 0;
+    while (!m_access_token.compare_exchange_weak(expected, 1,
+        std::memory_order_acquire, std::memory_order_relaxed)) {
+        if (m_shutdown.load(std::memory_order_relaxed))
+            return;
+        expected = 0;
     }
 
     for (auto& topology : m_topologies) {
         topology->compute_frame();
     }
+
+    m_access_token.store(0, std::memory_order_release);
 }
 
 //-----------------------------------------------------------------------------
@@ -138,7 +152,9 @@ Kakshya::VertexLayout TopologyOperator::get_vertex_layout() const
         return {};
     }
 
-    return *layout_opt;
+    auto layout = *layout_opt;
+    layout.vertex_count = static_cast<uint32_t>(get_vertex_count());
+    return layout;
 }
 
 size_t TopologyOperator::get_vertex_count() const
@@ -238,6 +254,13 @@ void TopologyOperator::set_global_line_color(const glm::vec3& color)
 {
     for (auto& topology : m_topologies) {
         topology->set_line_color(color);
+    }
+}
+
+void TopologyOperator::set_samples_per_segment(size_t samples)
+{
+    for (auto& topology : m_topologies) {
+        topology->set_samples_per_segment(samples);
     }
 }
 

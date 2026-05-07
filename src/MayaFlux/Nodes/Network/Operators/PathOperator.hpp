@@ -10,6 +10,8 @@ public:
         Kinesis::InterpolationMode mode = Kinesis::InterpolationMode::CATMULL_ROM,
         Eigen::Index samples_per_segment = 32);
 
+    ~PathOperator() override { m_shutdown.store(true, std::memory_order_release); }
+
     /**
      * @brief Initialize a single path with given control points and properties.
      */
@@ -28,10 +30,13 @@ public:
      * @brief Add a new path with given control points and properties.
      * @param control_points Vector of control points for the path.
      * @param mode Interpolation mode for the path.
+     * @param default_samples_per_segment Number of samples to generate per segment (between control points).
+     * @param max_control_points Maximum number of control points to store in history for this path
+     * @param tension Tension parameter for applicable interpolation modes (e.g. Catmull-Rom)
      */
     void add_path(
         const std::vector<LineVertex>& control_vertices,
-        Kinesis::InterpolationMode mode);
+        Kinesis::InterpolationMode mode, uint32_t default_samples_per_segment = 32, size_t max_control_points = 64, double tension = 0.5);
 
     void process(float dt) override;
 
@@ -52,6 +57,19 @@ public:
     [[nodiscard]] std::optional<double> query_state(std::string_view query) const override;
     [[nodiscard]] std::string_view get_type_name() const override { return "Path"; }
     [[nodiscard]] size_t get_point_count() const override;
+
+    /**
+     * @brief Access a specific path node directly.
+     * @param i Collection index.
+     * @return Shared pointer to the PathGeneratorNode, or nullptr if out of range.
+     */
+    [[nodiscard]] std::shared_ptr<GpuSync::PathGeneratorNode> get_path(size_t i) const
+    {
+        if (i >= m_paths.size()) {
+            return nullptr;
+        }
+        return m_paths[i];
+    }
 
     /**
      * @brief Set the number of samples per segment for all paths.
@@ -96,6 +114,9 @@ private:
     Kinesis::InterpolationMode m_default_mode;
     Eigen::Index m_default_samples_per_segment;
     float m_default_thickness { 2.0F };
+
+    mutable std::atomic<uint32_t> m_access_token { 0 };
+    std::atomic<bool> m_shutdown { false };
 };
 
 } // namespace MayaFlux::Nodes::Network
