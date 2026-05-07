@@ -86,6 +86,8 @@ void PhysicsOperator::add_collection(
 
     m_collections.push_back(std::move(group));
 
+    m_access_token.store(0, std::memory_order_release);
+
     MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
         "Added collection #{} with {} points (mass_mult={:.2f})",
         m_collections.size(), vertices.size(), mass_multiplier);

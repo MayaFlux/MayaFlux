@@ -76,6 +76,8 @@ void TopologyOperator::add_topology(
 
     m_topologies.push_back(std::move(topology));
 
+    m_access_token.store(0, std::memory_order_release);
+
     MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
         "Added topology #{} with {} points, {} connections",
         m_topologies.size(), vertices.size(),

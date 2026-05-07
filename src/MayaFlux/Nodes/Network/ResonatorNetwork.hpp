@@ -386,8 +386,6 @@ private:
 
     std::shared_ptr<NodeNetwork> m_network_exciter; ///< Optional NodeNetwork exciter for ONE_TO_ONE mapping (may be nullptr)
 
-    std::vector<double> m_last_audio_buffer; ///< Mixed output from last process_batch()
-
     std::vector<std::vector<double>> m_node_buffers; ///< Per-resonator sample buffers populated each process_batch()
 
     struct ParameterMapping {

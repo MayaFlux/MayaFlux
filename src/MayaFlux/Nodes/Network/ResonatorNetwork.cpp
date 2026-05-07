@@ -118,6 +118,7 @@ void ResonatorNetwork::preset_to_vectors(FormantPreset preset,
 ResonatorNetwork::ResonatorNetwork(size_t num_resonators,
     FormantPreset preset)
 {
+    set_output_mode(OutputMode::AUDIO_SINK);
     std::vector<double> freqs, qs;
     preset_to_vectors(preset, num_resonators, freqs, qs);
     build_resonators(freqs, qs);
@@ -126,6 +127,7 @@ ResonatorNetwork::ResonatorNetwork(size_t num_resonators,
 ResonatorNetwork::ResonatorNetwork(const std::vector<double>& frequencies,
     const std::vector<double>& q_values)
 {
+    set_output_mode(OutputMode::AUDIO_SINK);
     if (frequencies.size() != q_values.size()) {
         error<std::invalid_argument>(Journal::Component::Nodes, Journal::Context::NodeProcessing, std::source_location::current(),
             "ResonatorNetwork: frequencies and q_values vectors must have equal length");
