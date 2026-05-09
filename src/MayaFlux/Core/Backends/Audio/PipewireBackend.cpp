@@ -545,13 +545,21 @@ void PipewireStream::open()
 
     const std::string latency_str = std::to_string(m_stream_info.buffer_size) + "/" + std::to_string(m_stream_info.sample_rate);
 
+    const std::string node_name = read_opt("pipewire.node.name").value_or("mayaflux-output");
+    const std::string node_desc = read_opt("pipewire.node.description").value_or("MayaFlux Audio");
+    const std::string media_role = read_opt("pipewire.role").value_or("Production");
+    const std::string pid_str = std::to_string(getpid());
+
     pw_properties* props = pw_properties_new(
         PW_KEY_MEDIA_TYPE, "Audio",
         PW_KEY_MEDIA_CATEGORY, "Playback",
-        PW_KEY_MEDIA_ROLE, "Production",
+        PW_KEY_MEDIA_ROLE, media_role.c_str(),
         PW_KEY_MEDIA_CLASS, "Stream/Output/Audio",
         PW_KEY_APP_NAME, "MayaFlux",
-        PW_KEY_NODE_NAME, "mayaflux-output",
+        PW_KEY_APP_PROCESS_ID, pid_str.c_str(),
+        PW_KEY_APP_PROCESS_BINARY, "mayaflux",
+        PW_KEY_NODE_NAME, node_name.c_str(),
+        PW_KEY_NODE_DESCRIPTION, node_desc.c_str(),
         PW_KEY_NODE_LATENCY, latency_str.c_str(),
         nullptr);
 
