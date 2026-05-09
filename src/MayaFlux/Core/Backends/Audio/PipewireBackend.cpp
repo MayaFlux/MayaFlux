@@ -712,12 +712,6 @@ void PipewireStream::stop()
     if (!m_is_running.load())
         return;
 
-    pw_thread_loop_lock(m_thread_loop);
-    pw_stream_set_active(m_output_stream, false);
-    if (m_input_stream)
-        pw_stream_set_active(m_input_stream, false);
-    pw_thread_loop_unlock(m_thread_loop);
-
     pw_thread_loop_stop(m_thread_loop);
     m_is_running.store(false, std::memory_order_release);
 }
@@ -727,12 +721,7 @@ void PipewireStream::pause()
     if (!m_is_running.load() || m_is_paused.load())
         return;
 
-    pw_thread_loop_lock(m_thread_loop);
-    pw_stream_set_active(m_output_stream, false);
-    if (m_input_stream)
-        pw_stream_set_active(m_input_stream, false);
-    pw_thread_loop_unlock(m_thread_loop);
-
+    pw_thread_loop_stop(m_thread_loop);
     m_is_paused.store(true, std::memory_order_release);
     m_is_running.store(false, std::memory_order_release);
 }
@@ -741,6 +730,12 @@ void PipewireStream::resume()
 {
     if (!m_is_paused.load())
         return;
+
+    int ret = pw_thread_loop_start(m_thread_loop);
+    if (ret < 0) {
+        error(C, X, std::source_location::current(),
+            "pw_thread_loop_start failed on resume: {}", spa_strerror(ret));
+    }
 
     pw_thread_loop_lock(m_thread_loop);
     pw_stream_set_active(m_output_stream, true);
@@ -757,8 +752,11 @@ void PipewireStream::close()
     if (!m_is_open.load())
         return;
 
-    if (m_is_running.load())
-        stop();
+    if (m_is_running.load() || m_is_paused.load())
+        pw_thread_loop_stop(m_thread_loop);
+
+    m_is_running.store(false, std::memory_order_release);
+    m_is_paused.store(false, std::memory_order_release);
 
     if (m_input_stream) {
         pw_stream_destroy(m_input_stream);
