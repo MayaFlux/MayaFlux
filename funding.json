@@ -1,0 +1,114 @@
+{
+  "$schema": "https://fundingjson.org/schema/v1.1.0.json",
+  "version": "v1.1.0",
+  "entity": {
+    "type": "individual",
+    "role": "maintainer",
+    "name": "Ranjith Hegde",
+    "email": "mayafluxcollective@proton.me",
+    "phone": "",
+    "description": "Independent multimedia researcher and developer. Masters from Institute of Sonology (Royal Conservatoire, Den Haag) on excellence scholarship. 15+ years interdisciplinary performance practice spanning composition, live coding, systems design, and VR audio. Faculty at Srishti Manipal Institute designing curriculum across SuperCollider, GLSL, Godot, Blender, PureData. Led audio-visual systems on Quest 2/3, PSVR2, PCVR (Metro: Awakening VR, shipped). Building MayaFlux to enable digital-native paradigms for multimedia artists, researchers, and educators globally.",
+    "webpageUrl": {
+      "url": "https://mayaflux.org",
+      "wellKnown": ""
+    }
+  },
+  "projects": [
+    {
+      "guid": "mayaflux",
+      "name": "MayaFlux",
+      "description": "C++20/23 framework for real-time computation across sound, geometry, image, and network as a unified numerical substrate. Audio, visual, and control data share the same processing infrastructure with scheduling annotations determining domain at runtime. Lock-free dispatch, coroutine composition, live coding via embedded Lila JIT (LLVM ORC), and grammar-driven offline compute. Independent Vulkan pipeline with dynamic rendering, multi-window support, and compute shaders. Designed for researchers, artists, educators investigating digital-native paradigms in multimedia. Currently stable at 0.3.0. GPLv3 licensed.",
+      "webpageUrl": {
+        "url": "https://mayaflux.org",
+        "wellKnown": ""
+      },
+      "repositoryUrl": {
+        "url": "https://github.com/MayaFlux/MayaFlux",
+        "wellKnown": ""
+      },
+      "licenses": ["spdx:GPL-3.0-only"],
+      "tags": ["multimedia", "dsp", "audio", "graphics", "real-time", "live-coding", "c++", "vulkan", "coroutines", "jit", "creative-coding"]
+    }
+  ],
+  "funding": {
+    "channels": [
+      {
+        "guid": "github-sponsors",
+        "type": "payment-provider",
+        "address": "https://github.com/sponsors/ranjithshegde",
+        "description": "One-time or recurring sponsorship via GitHub Sponsors."
+      }
+    ],
+    "plans": [
+      {
+        "guid": "contributor-onboarding",
+        "status": "active",
+        "name": "Contributor Onboarding & Mentorship",
+        "description": "Fund dedicated onboarding infrastructure for first-time contributors: detailed starter tasks, code review mentorship, API documentation expansion, and community coordination. Target: enable 1-2 sustained contributors per quarter from underrepresented regions (India, Southeast Asia, Africa).",
+        "amount": 5000,
+        "currency": "USD",
+        "frequency": "one-time",
+        "channels": ["github-sponsors", "paypal"]
+      },
+      {
+        "guid": "workshop-visibility",
+        "status": "active",
+        "name": "Workshop & Performance Travel",
+        "description": "Support for hosting regional workshops and live performances (India, South Asia, East Asia) to build visibility, train artists/researchers, and attract contributors. Format: 2-5 day intensives combining live-coding demos, Vulkan graphics exploration, and spatial audio performance. Target 2-3 per year in major tech/art hubs.",
+        "amount": 8000,
+        "currency": "USD",
+        "frequency": "one-time",
+        "channels": ["github-sponsors", "paypal"]
+      },
+      {
+        "guid": "documentation-tutorials",
+        "status": "active",
+        "name": "Documentation & Tutorial Production",
+        "description": "Expand tutorial series ('Sculpting Data', 'Time as Material', temporal control), create beginner onboarding across disciplines (composers, visual artists, game developers), produce recorded demos, and build educational case studies. Includes HTML production, video editing, and community translation coordination.",
+        "amount": 6000,
+        "currency": "USD",
+        "frequency": "one-time",
+        "channels": ["github-sponsors", "paypal"]
+      },
+      {
+        "guid": "conference-participation",
+        "status": "active",
+        "name": "Conference Talks & Performances",
+        "description": "Travel and registration for ICMC, NIME, LAC, CppCon, ADC25, and emerging music tech conferences. Position MayaFlux at intersection of research, practice, and tooling. Includes live-coding performances demonstrating unified audio-visual paradigm. Goal: 2-3 talks/year with live component.",
+        "amount": 7000,
+        "currency": "USD",
+        "frequency": "one-time",
+        "channels": ["github-sponsors", "paypal"]
+      },
+      {
+        "guid": "institutional-partnerships",
+        "status": "active",
+        "name": "Educational Curriculum & Partnerships",
+        "description": "Formalize curriculum modules with music/art/tech institutions (Srishti Manipal, Sonology, IIT/NIT labs). Paid workshops for students, research residencies, and cross-institutional case studies. Fund institutional coordinator role to manage partner onboarding and feedback loops.",
+        "amount": 4000,
+        "currency": "USD",
+        "frequency": "one-time",
+        "channels": ["github-sponsors", "paypal"]
+      },
+      {
+        "guid": "open-ended",
+        "status": "active",
+        "name": "General Support (Any Amount)",
+        "description": "Help sustain MayaFlux development, cover infrastructure costs, and fund highest-impact work as prioritized by community feedback. No strings attached. Direct impact on 0.4 release cycle (agent system expansion, computer vision pipeline, Kinesis analysis namespace).",
+        "amount": 0,
+        "currency": "USD",
+        "frequency": "one-time",
+        "channels": ["github-sponsors", "liberapay", "paypal"]
+      }
+    ],
+    "history": [
+      {
+        "year": 2026,
+        "income": 0,
+        "expenses": 0,
+        "currency": "USD",
+        "description": "First public funding request."
+      }
+    ]
+  }
+}
