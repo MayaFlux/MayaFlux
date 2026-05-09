@@ -13,6 +13,8 @@
 
 #include "MayaFlux/Core/GlobalInputConfig.hpp"
 
+#include <future>
+
 namespace MayaFlux::Core {
 
 SubsystemManager::SubsystemManager(
@@ -195,11 +197,18 @@ std::unordered_map<SubsystemType, std::pair<bool, bool>> SubsystemManager::query
 
 void SubsystemManager::stop()
 {
-    for (auto& [token, subsystem] : m_subsystems) {
+    std::vector<std::future<void>> futures;
+    futures.reserve(m_subsystems.size());
+
+    for (auto& [type, subsystem] : m_subsystems) {
         if (subsystem && subsystem->is_running()) {
-            subsystem->stop();
+            futures.push_back(std::async(std::launch::async,
+                [&subsystem = subsystem]() { subsystem->stop(); }));
         }
     }
+
+    for (auto& f : futures)
+        f.wait();
 }
 
 void SubsystemManager::stop_audio_subsystem()

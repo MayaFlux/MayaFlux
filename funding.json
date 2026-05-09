@@ -27,7 +27,7 @@
         "wellKnown": ""
       },
       "licenses": ["spdx:GPL-3.0-only"],
-      "tags": ["multimedia", "dsp", "audio", "graphics", "real-time", "live-coding", "c++", "vulkan", "coroutines", "jit", "creative-coding"]
+      "tags": ["multimedia", "dsp", "audio", "graphics", "live-coding", "vulkan", "coroutines", "jit", "real-time", "creative-coding"]
     }
   ],
   "funding": {
@@ -48,7 +48,7 @@
         "amount": 5000,
         "currency": "USD",
         "frequency": "one-time",
-        "channels": ["github-sponsors", "paypal"]
+        "channels": ["github-sponsors"]
       },
       {
         "guid": "workshop-visibility",
@@ -58,7 +58,7 @@
         "amount": 8000,
         "currency": "USD",
         "frequency": "one-time",
-        "channels": ["github-sponsors", "paypal"]
+        "channels": ["github-sponsors"]
       },
       {
         "guid": "documentation-tutorials",
@@ -68,7 +68,7 @@
         "amount": 6000,
         "currency": "USD",
         "frequency": "one-time",
-        "channels": ["github-sponsors", "paypal"]
+        "channels": ["github-sponsors"]
       },
       {
         "guid": "conference-participation",
@@ -78,7 +78,7 @@
         "amount": 7000,
         "currency": "USD",
         "frequency": "one-time",
-        "channels": ["github-sponsors", "paypal"]
+        "channels": ["github-sponsors"]
       },
       {
         "guid": "institutional-partnerships",
@@ -88,7 +88,7 @@
         "amount": 4000,
         "currency": "USD",
         "frequency": "one-time",
-        "channels": ["github-sponsors", "paypal"]
+        "channels": ["github-sponsors"]
       },
       {
         "guid": "open-ended",
@@ -98,7 +98,7 @@
         "amount": 0,
         "currency": "USD",
         "frequency": "one-time",
-        "channels": ["github-sponsors", "liberapay", "paypal"]
+        "channels": ["github-sponsors"]
       }
     ],
     "history": [
