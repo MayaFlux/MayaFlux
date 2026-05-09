@@ -396,6 +396,14 @@ private:
     void cleanup_completed_tasks();
 
     /**
+     * @brief Drain pending task operations (additions/removals) before processing
+     *
+     * This method ensures that any tasks that were added or removed while processing
+     * are properly handled before the next processing cycle.
+     */
+    void drain_pending_tasks();
+
+    /**
      * @brief Initialize a routine's state for a specific domain
      * @param routine Routine to initialize
      * @param token Processing domain
@@ -454,6 +462,17 @@ private:
 
     uint64_t m_registered_sample_rate { 48000 };
     uint32_t m_registered_frame_rate { 60 };
+
+    static constexpr size_t MAX_PENDING_TASKS = 256;
+
+    struct PendingTaskOp {
+        std::atomic<bool> active { false };
+        TaskEntry entry { nullptr, "" };
+        bool is_addition { true };
+    };
+
+    std::atomic<uint32_t> m_pending_count { 0 };
+    PendingTaskOp m_pending_ops[MAX_PENDING_TASKS];
 };
 
 }

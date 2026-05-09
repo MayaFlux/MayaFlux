@@ -26,49 +26,66 @@ void TaskScheduler::add_task(const std::shared_ptr<Routine>& routine, const std:
     std::string task_name = name.empty() ? auto_generate_name(routine) : name;
     ProcessingToken token = routine->get_processing_token();
 
-    {
-        auto existing_it = find_task_by_name(task_name);
-        if (existing_it != m_tasks.end()) {
-            if (existing_it->routine && existing_it->routine->is_active()) {
-                existing_it->routine->set_should_terminate(true);
-            }
-            m_tasks.erase(existing_it);
-        }
+    ensure_domain(token);
 
-        m_tasks.emplace_back(routine, task_name);
-    }
-
-    if (initialize) {
-        ensure_domain(token);
+    if (initialize)
         initialize_routine_state(routine, token);
-    } else {
-        ensure_domain(token);
+
+    for (auto& op : m_pending_ops) {
+        bool expected = false;
+        if (op.active.compare_exchange_strong(expected, true,
+                std::memory_order_acquire, std::memory_order_relaxed)) {
+            op.entry = { routine, task_name };
+            op.is_addition = true;
+            m_pending_count.fetch_add(1, std::memory_order_relaxed);
+            return;
+        }
     }
+
+    MF_ERROR(Journal::Component::Vruta, Journal::Context::CoroutineScheduling,
+        "Pending task queue full, could not add task '{}'", task_name);
 }
 
 bool TaskScheduler::cancel_task(const std::string& name)
 {
-    auto it = find_task_by_name(name);
-    if (it != m_tasks.end()) {
-        if (it->routine && it->routine->is_active()) {
-            it->routine->set_should_terminate(true);
+    for (auto& op : m_pending_ops) {
+        bool expected = false;
+        if (op.active.compare_exchange_strong(expected, true,
+                std::memory_order_acquire, std::memory_order_relaxed)) {
+            op.entry = { nullptr, name };
+            op.is_addition = false;
+            m_pending_count.fetch_add(1, std::memory_order_relaxed);
+            return true;
         }
-        m_tasks.erase(it);
-        return true;
     }
+
+    MF_ERROR(Journal::Component::Vruta, Journal::Context::CoroutineScheduling,
+        "Pending task queue full, could not cancel task '{}'", name);
+
     return false;
 }
 
 bool TaskScheduler::cancel_task(const std::shared_ptr<Routine>& routine)
 {
+    if (!routine)
+        return false;
+
     auto it = find_task_by_routine(routine);
-    if (it != m_tasks.end()) {
-        if (routine && routine->is_active()) {
-            routine->set_should_terminate(true);
+    const std::string name = (it != m_tasks.end()) ? it->name : "";
+
+    for (auto& op : m_pending_ops) {
+        bool expected = false;
+        if (op.active.compare_exchange_strong(expected, true,
+                std::memory_order_acquire, std::memory_order_relaxed)) {
+            op.entry = { routine, name };
+            op.is_addition = false;
+            m_pending_count.fetch_add(1, std::memory_order_relaxed);
+            return true;
         }
-        m_tasks.erase(it);
-        return true;
     }
+
+    MF_ERROR(Journal::Component::Vruta, Journal::Context::CoroutineScheduling,
+        "Pending task queue full, could not cancel task '{}'", name);
     return false;
 }
 
@@ -102,6 +119,8 @@ std::vector<std::shared_ptr<Routine>> TaskScheduler::get_tasks_for_token(Process
 
 void TaskScheduler::process_token(ProcessingToken token, uint64_t processing_units)
 {
+    drain_pending_tasks();
+
     auto processor_it = m_token_processors.find(token);
     if (processor_it != m_token_processors.end()) {
         auto tasks = get_tasks_for_token(token);
@@ -286,12 +305,9 @@ void TaskScheduler::process_default(ProcessingToken token, uint64_t processing_u
 
 void TaskScheduler::cleanup_completed_tasks()
 {
-    m_tasks.erase(
-        std::remove_if(m_tasks.begin(), m_tasks.end(),
-            [](const TaskEntry& entry) {
-                return !entry.routine || !entry.routine->is_active();
-            }),
-        m_tasks.end());
+    std::erase_if(m_tasks, [](const TaskEntry& entry) {
+        return !entry.routine || !entry.routine->is_active();
+    });
 }
 
 bool TaskScheduler::initialize_routine_state(const std::shared_ptr<Routine>& routine, ProcessingToken token)
@@ -336,6 +352,8 @@ void TaskScheduler::resume_all_tasks()
 
 void TaskScheduler::terminate_all_tasks()
 {
+    drain_pending_tasks();
+
     for (auto& entry : m_tasks) {
         if (entry.routine && entry.routine->is_active()) {
             entry.routine->set_should_terminate(true);
@@ -388,6 +406,8 @@ void TaskScheduler::terminate_all_tasks()
 
 void TaskScheduler::process_buffer_cycle_tasks()
 {
+    drain_pending_tasks();
+
     m_current_buffer_cycle++;
     auto tasks = get_tasks_for_token(ProcessingToken::SAMPLE_ACCURATE);
 
@@ -401,6 +421,38 @@ void TaskScheduler::process_buffer_cycle_tasks()
                 task->try_resume_with_context(m_current_buffer_cycle, DelayContext::BUFFER_BASED);
             }
         }
+    }
+}
+
+void TaskScheduler::drain_pending_tasks()
+{
+    if (m_pending_count.load(std::memory_order_relaxed) == 0)
+        return;
+
+    for (auto& op : m_pending_ops) {
+        if (!op.active.load(std::memory_order_acquire))
+            continue;
+
+        if (op.is_addition) {
+            auto existing_it = find_task_by_name(op.entry.name);
+            if (existing_it != m_tasks.end()) {
+                if (existing_it->routine && existing_it->routine->is_active())
+                    existing_it->routine->set_should_terminate(true);
+                m_tasks.erase(existing_it);
+            }
+            m_tasks.push_back(std::move(op.entry));
+        } else {
+            auto it = find_task_by_name(op.entry.name);
+            if (it != m_tasks.end()) {
+                if (it->routine && it->routine->is_active())
+                    it->routine->set_should_terminate(true);
+                m_tasks.erase(it);
+            }
+        }
+
+        op.entry = { nullptr, "" };
+        op.active.store(false, std::memory_order_release);
+        m_pending_count.fetch_sub(1, std::memory_order_relaxed);
     }
 }
 
