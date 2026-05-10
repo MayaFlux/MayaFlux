@@ -1,5 +1,7 @@
 #pragma once
 
+#include <utility>
+
 #include "MayaFlux/Nodes/Generators/Generator.hpp"
 
 namespace MayaFlux::Nodes::Generator {
@@ -450,46 +452,46 @@ public:
      * @brief Registers a callback for every generated sample
      * @param callback Function to call when a new sample is generated
      */
-    void on_tick(const NodeHook& callback) override;
+    void on_tick(const TypedHook<LogicContext>& callback);
 
     /**
      * @brief Registers a conditional callback for generated samples
      * @param callback Function to call when condition is met
      * @param condition Predicate that determines when callback is triggered
      */
-    void on_tick_if(const NodeCondition& condition, const NodeHook& callback) override;
+    void on_tick_if(const NodeCondition& condition, const TypedHook<LogicContext>& callback);
 
     /**
      * @brief Registers a callback that executes continuously while output is true
      * @param callback Function to call on each tick when output is true (1.0)
      */
-    void while_true(const NodeHook& callback);
+    void while_true(const TypedHook<LogicContext>& callback);
 
     /**
      * @brief Registers a callback that executes continuously while output is false
      * @param callback Function to call on each tick when output is false (0.0)
      */
-    void while_false(const NodeHook& callback);
+    void while_false(const TypedHook<LogicContext>& callback);
 
     /**
      * @brief Registers a callback for when output changes to a specific state
      * @param target_state The state to detect (true for 1.0, false for 0.0)
      * @param callback Function to call when state changes to target_state
      */
-    void on_change_to(bool target_state, const NodeHook& callback);
+    void on_change_to(bool target_state, const TypedHook<LogicContext>& callback);
 
     /**
      * @brief Registers a callback for any state change (true↔false)
      * @param callback Function to call when output changes state
      */
-    void on_change(const NodeHook& callback);
+    void on_change(const TypedHook<LogicContext>& callback);
 
     /**
      * @brief Removes a previously registered callback
      * @param callback The callback function to remove
      * @return True if the callback was found and removed, false otherwise
      */
-    bool remove_hook(const NodeHook& callback) override;
+    bool remove_hook(const TypedHook<LogicContext>& callback);
 
     /**
      * @brief Removes a previously registered conditional callback
@@ -515,11 +517,28 @@ public:
 
     struct LogicCallback {
         NodeHook callback;
+        TypedHook<LogicContext> typed_callback;
         LogicEventType event_type;
-        std::optional<NodeCondition> condition; // Only used for CONDITIONAL type
+        std::optional<NodeCondition> condition;
 
-        LogicCallback(const NodeHook& cb, LogicEventType type, std::optional<NodeCondition> cond = std::nullopt)
-            : callback(cb)
+        LogicCallback(const LogicCallback&) = default;
+        LogicCallback& operator=(const LogicCallback&) = default;
+        LogicCallback(LogicCallback&&) = default;
+        LogicCallback& operator=(LogicCallback&&) = default;
+
+        LogicCallback(NodeHook cb, LogicEventType type, std::optional<NodeCondition> cond = std::nullopt)
+            : callback(std::move(cb))
+            , event_type(type)
+            , condition(std::move(cond))
+        {
+        }
+
+        LogicCallback(const TypedHook<LogicContext>& cb, LogicEventType type, std::optional<NodeCondition> cond = std::nullopt)
+            : callback([cb](NodeContext& ctx) {
+                // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+                cb(static_cast<LogicContext&>(ctx));
+            })
+            , typed_callback(cb)
             , event_type(type)
             , condition(std::move(cond))
         {
@@ -599,7 +618,7 @@ private:
      * @param type The type of event to trigger the callback
      * @param condition Optional condition for conditional callbacks
      */
-    void add_callback(const NodeHook& callback, LogicEventType type, const std::optional<NodeCondition>& condition = std::nullopt)
+    void add_callback(const TypedHook<LogicContext>& callback, LogicEventType type, const std::optional<NodeCondition>& condition = std::nullopt)
     {
         m_all_callbacks.emplace_back(callback, type, condition);
     }
