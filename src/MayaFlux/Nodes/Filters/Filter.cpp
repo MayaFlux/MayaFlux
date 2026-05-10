@@ -298,4 +298,12 @@ void Filter::on_tick_if(const NodeCondition& condition, const TypedHook<FilterCo
         condition);
 }
 
+std::vector<std::pair<ModulatorRole, std::shared_ptr<Node>>>
+Filter::get_modulators() const
+{
+    if (m_input_node)
+        return { { ModulatorRole::SignalMod, m_input_node } };
+    return {};
+}
+
 }

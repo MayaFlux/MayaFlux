@@ -233,6 +233,17 @@ bool BinaryOpNode::is_initialized() const
     return !is_lhs_registered && !is_rhs_registered;
 }
 
+std::vector<std::pair<ModulatorRole, std::shared_ptr<Node>>>
+BinaryOpNode::get_modulators() const
+{
+    std::vector<std::pair<ModulatorRole, std::shared_ptr<Node>>> result;
+    if (m_lhs)
+        result.emplace_back(ModulatorRole::Lhs, m_lhs);
+    if (m_rhs)
+        result.emplace_back(ModulatorRole::Rhs, m_rhs);
+    return result;
+}
+
 namespace detail {
 
     void composite_initialize(

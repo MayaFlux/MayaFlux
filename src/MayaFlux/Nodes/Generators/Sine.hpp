@@ -175,6 +175,12 @@ public:
     void save_state() override;
     void restore_state() override;
 
+    /**
+     * @brief Retrieves the current modulators connected to this node
+     * @return Vector of pairs containing the modulator role and the corresponding node
+     */
+    [[nodiscard]] std::vector<std::pair<ModulatorRole, std::shared_ptr<Node>>> get_modulators() const override;
+
 private:
     /**
      * @brief Phase increment per sample

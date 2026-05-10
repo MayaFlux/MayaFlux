@@ -15,6 +15,29 @@
 namespace MayaFlux::Nodes {
 
 /**
+ * @enum ModulatorRole
+ * @brief Describes the role a modulator node plays relative to its owner.
+ */
+enum class ModulatorRole : uint8_t {
+    SignalMod,
+    FrequencyMod,
+    AmplitudeMod,
+    Lhs,
+    Rhs,
+    ChainLink,
+};
+
+/**
+ * @struct ModulatorTree
+ * @brief Recursive tree node describing a modulator and all of its own modulators.
+ */
+struct ModulatorTree {
+    ModulatorRole role {};
+    std::shared_ptr<Node> node;
+    std::vector<ModulatorTree> modulators;
+};
+
+/**
  * @class NodeContext
  * @brief Base context class for node callbacks
  *
@@ -650,6 +673,36 @@ public:
     [[nodiscard]] bool has_capability(NodeCapability cap) const
     {
         return (m_node_capability & cap) != 0U;
+    }
+
+    /**
+     * @brief Returns direct modulator nodes and their roles.
+     *
+     * Each entry pairs the role the modulator plays in this node's processing
+     * with the modulator node itself. Default returns empty. Concrete nodes
+     * override to expose their held modulator references.
+     */
+    [[nodiscard]] virtual std::vector<std::pair<ModulatorRole, std::shared_ptr<Node>>>
+    get_modulators() const { return {}; }
+
+    /**
+     * @brief Returns the full modulator tree rooted at this node.
+     *
+     * Calls get_modulators() on this node, then recursively on each returned
+     * node, building the complete tree. The caller receives the entire
+     * hierarchy in one call.
+     */
+    [[nodiscard]] std::vector<ModulatorTree> get_modulator_tree() const
+    {
+        std::vector<ModulatorTree> result;
+        for (auto& [role, node] : get_modulators()) {
+            ModulatorTree entry;
+            entry.role = role;
+            entry.node = node;
+            entry.modulators = node->get_modulator_tree();
+            result.push_back(std::move(entry));
+        }
+        return result;
     }
 
 private:

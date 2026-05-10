@@ -237,4 +237,12 @@ void Polynomial::restore_state()
     m_state_saved = false;
 }
 
+std::vector<std::pair<ModulatorRole, std::shared_ptr<Node>>>
+Polynomial::get_modulators() const
+{
+    if (m_input_node)
+        return { { ModulatorRole::SignalMod, m_input_node } };
+    return {};
+}
+
 } // namespace MayaFlux::Nodes::Generator

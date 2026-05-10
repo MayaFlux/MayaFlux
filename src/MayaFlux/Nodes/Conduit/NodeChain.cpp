@@ -209,4 +209,14 @@ NodeContext& ChainNode::get_last_context()
     return m_nodes.back()->get_last_context();
 }
 
+std::vector<std::pair<ModulatorRole, std::shared_ptr<Node>>>
+ChainNode::get_modulators() const
+{
+    std::vector<std::pair<ModulatorRole, std::shared_ptr<Node>>> result;
+    result.reserve(m_nodes.size());
+    for (const auto& n : m_nodes)
+        result.emplace_back(ModulatorRole::ChainLink, n);
+    return result;
+}
+
 }
