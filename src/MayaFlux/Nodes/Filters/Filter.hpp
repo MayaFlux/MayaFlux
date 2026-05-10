@@ -497,6 +497,19 @@ public:
         }
     }
 
+    /**
+     * @brief Registers a callback to be called on each tick with the filter context
+     * @param callback Typed hook that receives a FilterContext object
+     */
+    void on_tick(const TypedHook<FilterContext>& callback);
+
+    /**
+     * @brief Registers a conditional callback to be called on each tick if the condition is met
+     * @param condition NodeCondition that determines whether the callback should be called
+     * @param callback Typed hook that receives a FilterContext object
+     */
+    void on_tick_if(const NodeCondition& condition, const TypedHook<FilterContext>& callback);
+
 protected:
     /**
      * @brief Modifies a specific coefficient in a coefficient buffer

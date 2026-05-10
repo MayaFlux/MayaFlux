@@ -361,16 +361,6 @@ protected:
      */
     void update_context(double value) override;
 
-    /**
-     * @brief Notifies all registered callbacks about a new sample
-     * @param value The newly generated sample
-     *
-     * This method is called internally whenever a new sample is generated,
-     * creating the appropriate context and invoking all registered callbacks
-     * that should receive notification about this sample.
-     */
-    void notify_tick(double value) override;
-
 private:
     /**
      * @brief Converts coefficient vector to a polynomial function

@@ -180,7 +180,7 @@ public:
      * receives a GeneratorContext containing the generated value and
      * generator parameters like frequency, amplitude, and phase.
      */
-    void on_impulse(const NodeHook& callback);
+    void on_impulse(const TypedHook<GeneratorContext>& callback);
 
     /**
      * @brief Removes a previously registered callback
@@ -190,7 +190,7 @@ public:
      * Unregisters a callback previously added with on_tick(), stopping
      * it from receiving further notifications about generated samples.
      */
-    bool remove_hook(const NodeHook& callback) override;
+    bool remove_hook(const TypedHook<GeneratorContext>& callback);
 
     /**
      * @brief Removes all registered callbacks
@@ -257,7 +257,7 @@ private:
     /**
      * @brief Collection of impulse-specific callback functions
      */
-    std::vector<NodeHook> m_impulse_callbacks;
+    std::vector<TypedHook<GeneratorContext>> m_impulse_callbacks;
 
     bool m_impulse_occurred;
 

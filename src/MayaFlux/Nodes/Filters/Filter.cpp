@@ -281,4 +281,21 @@ NodeContext& Filter::get_last_context()
     return m_context;
 }
 
+void Filter::on_tick(const TypedHook<FilterContext>& callback)
+{
+    m_callbacks.emplace_back([callback](NodeContext& ctx) {
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+        callback(static_cast<FilterContext&>(ctx));
+    });
+}
+
+void Filter::on_tick_if(const NodeCondition& condition, const TypedHook<FilterContext>& callback)
+{
+    m_conditional_callbacks.emplace_back([callback](NodeContext& ctx) {
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+        callback(static_cast<FilterContext&>(ctx));
+    },
+        condition);
+}
+
 }

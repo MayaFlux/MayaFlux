@@ -207,21 +207,6 @@ void Polynomial::update_context(double value)
     }
 }
 
-void Polynomial::notify_tick(double value)
-{
-    update_context(value);
-    auto& ctx = get_last_context();
-
-    for (auto& callback : m_callbacks) {
-        callback(ctx);
-    }
-    for (auto& [callback, condition] : m_conditional_callbacks) {
-        if (condition(ctx)) {
-            callback(ctx);
-        }
-    }
-}
-
 NodeContext& Polynomial::get_last_context()
 {
     if (m_gpu_compatible) {
