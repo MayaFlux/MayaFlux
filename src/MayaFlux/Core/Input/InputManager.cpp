@@ -294,6 +294,12 @@ size_t InputManager::get_registered_node_count() const
 #endif
 }
 
+std::vector<std::shared_ptr<Nodes::Input::InputNode>> InputManager::get_nodes() const
+{
+    std::lock_guard lock(m_registry_mutex);
+    return m_tracked_nodes;
+}
+
 size_t InputManager::get_queue_depth() const
 {
     return m_queue.snapshot().size();

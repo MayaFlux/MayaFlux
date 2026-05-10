@@ -115,6 +115,12 @@ public:
      */
     [[nodiscard]] size_t get_registered_node_count() const;
 
+    /**
+     * @brief Returns a snapshot of all currently tracked input nodes.
+     * @return Vector of active InputNode instances.
+     */
+    [[nodiscard]] std::vector<std::shared_ptr<Nodes::Input::InputNode>> get_nodes() const;
+
     // ─────────────────────────────────────────────────────────────────────
     // Statistics
     // ─────────────────────────────────────────────────────────────────────
