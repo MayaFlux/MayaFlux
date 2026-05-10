@@ -226,6 +226,27 @@ const std::vector<std::shared_ptr<BufferProcessor>>& BufferProcessingChain::get_
     return empty_vector;
 }
 
+std::shared_ptr<BufferProcessor>
+BufferProcessingChain::get_preprocessor(const std::shared_ptr<Buffer>& buffer) const
+{
+    auto it = m_preprocessors.find(buffer);
+    return it != m_preprocessors.end() ? it->second : nullptr;
+}
+
+std::shared_ptr<BufferProcessor>
+BufferProcessingChain::get_postprocessor(const std::shared_ptr<Buffer>& buffer) const
+{
+    auto it = m_postprocessors.find(buffer);
+    return it != m_postprocessors.end() ? it->second : nullptr;
+}
+
+std::shared_ptr<BufferProcessor>
+BufferProcessingChain::get_final_processor(const std::shared_ptr<Buffer>& buffer) const
+{
+    auto it = m_final_processors.find(buffer);
+    return it != m_final_processors.end() ? it->second : nullptr;
+}
+
 void BufferProcessingChain::preprocess(const std::shared_ptr<Buffer>& buffer)
 {
     auto pre_it = m_preprocessors.find(buffer);
@@ -300,13 +321,10 @@ void BufferProcessingChain::cleanup_rejected_processors(const std::shared_ptr<Bu
 {
     auto& processors = m_buffer_processors[buffer];
 
-    processors.erase(
-        std::remove_if(processors.begin(), processors.end(),
-            [this](const std::shared_ptr<BufferProcessor>& processor) {
-                auto processor_token = processor->get_processing_token();
-                return !are_tokens_compatible(m_token_filter_mask, processor_token);
-            }),
-        processors.end());
+    std::erase_if(processors, [this](const std::shared_ptr<BufferProcessor>& processor) {
+        auto processor_token = processor->get_processing_token();
+        return !are_tokens_compatible(m_token_filter_mask, processor_token);
+    });
 
     m_pending_removal[buffer].clear();
 }
