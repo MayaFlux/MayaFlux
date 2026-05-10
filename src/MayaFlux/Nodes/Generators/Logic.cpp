@@ -667,4 +667,12 @@ void Logic::restore_state()
     m_state_saved = false;
 }
 
+std::vector<std::pair<ModulatorRole, std::shared_ptr<Node>>>
+Logic::get_modulators() const
+{
+    if (m_input_node)
+        return { { ModulatorRole::SignalMod, m_input_node } };
+    return {};
+}
+
 }

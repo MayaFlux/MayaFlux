@@ -111,6 +111,12 @@ public:
     void save_state() override;
     void restore_state() override;
 
+    /**
+     * @brief Retrieves the current modulators connected to this node
+     * @return Vector of pairs containing the modulator role and the corresponding node
+     */
+    [[nodiscard]] std::vector<std::pair<ModulatorRole, std::shared_ptr<Node>>> get_modulators() const override;
+
 protected:
     void notify_tick(double value) override;
     void update_context(double value) override;

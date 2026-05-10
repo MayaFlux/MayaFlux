@@ -780,4 +780,38 @@ void IOManager::wait_for_pending_saves()
     }
 }
 
+std::vector<uint64_t> IOManager::get_video_reader_ids() const
+{
+    std::shared_lock lock(m_readers_mutex);
+    std::vector<uint64_t> ids;
+    ids.reserve(m_video_readers.size());
+    for (const auto& [id, _] : m_video_readers)
+        ids.push_back(id);
+    return ids;
+}
+
+std::shared_ptr<VideoFileReader> IOManager::get_video_reader(uint64_t id) const
+{
+    std::shared_lock lock(m_readers_mutex);
+    auto it = m_video_readers.find(id);
+    return it != m_video_readers.end() ? it->second : nullptr;
+}
+
+std::vector<uint64_t> IOManager::get_camera_reader_ids() const
+{
+    std::shared_lock lock(m_camera_mutex);
+    std::vector<uint64_t> ids;
+    ids.reserve(m_camera_readers.size());
+    for (const auto& [id, _] : m_camera_readers)
+        ids.push_back(id);
+    return ids;
+}
+
+std::shared_ptr<CameraReader> IOManager::get_camera_reader(uint64_t id) const
+{
+    std::shared_lock lock(m_camera_mutex);
+    auto it = m_camera_readers.find(id);
+    return it != m_camera_readers.end() ? it->second : nullptr;
+}
+
 } // namespace MayaFlux::IO

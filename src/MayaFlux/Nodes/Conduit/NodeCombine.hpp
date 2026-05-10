@@ -200,6 +200,12 @@ public:
     void save_state() override;
     void restore_state() override;
 
+    /**
+     * @brief Retrieves the current modulators connected to this node
+     * @return Vector of pairs containing the modulator role and the corresponding node
+     */
+    [[nodiscard]] std::vector<std::pair<ModulatorRole, std::shared_ptr<Node>>> get_modulators() const override;
+
 protected:
     /**
      * @brief Notifies all registered callbacks about a new output value
@@ -500,6 +506,20 @@ public:
                 return false;
         }
         return m_is_initialized;
+    }
+
+    /**
+     * @brief Retrieves the current modulators connected to this node
+     * @return Vector of pairs containing the modulator role and the corresponding node
+     */
+    [[nodiscard]] std::vector<std::pair<ModulatorRole, std::shared_ptr<Node>>>
+    get_modulators() const override
+    {
+        std::vector<std::pair<ModulatorRole, std::shared_ptr<Node>>> result;
+        result.reserve(m_inputs.size());
+        for (const auto& n : m_inputs)
+            result.emplace_back(ModulatorRole::SignalMod, n);
+        return result;
     }
 
 protected:

@@ -510,6 +510,12 @@ public:
      */
     void on_tick_if(const NodeCondition& condition, const TypedHook<FilterContext>& callback);
 
+    /**
+     * @brief Retrieves the current modulators connected to this node
+     * @return Vector of pairs containing the modulator role and the corresponding node
+     */
+    [[nodiscard]] std::vector<std::pair<ModulatorRole, std::shared_ptr<Node>>> get_modulators() const override;
+
 protected:
     /**
      * @brief Modifies a specific coefficient in a coefficient buffer

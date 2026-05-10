@@ -115,6 +115,12 @@ public:
      */
     [[nodiscard]] size_t get_registered_node_count() const;
 
+    /**
+     * @brief Returns a snapshot of all currently tracked input nodes.
+     * @return Vector of active InputNode instances.
+     */
+    [[nodiscard]] std::vector<std::shared_ptr<Nodes::Input::InputNode>> get_nodes() const;
+
     // ─────────────────────────────────────────────────────────────────────
     // Statistics
     // ─────────────────────────────────────────────────────────────────────
@@ -171,7 +177,7 @@ private:
 
     std::vector<std::shared_ptr<Nodes::Input::InputNode>> m_tracked_nodes; ///< To keep nodes alive
 
-    std::mutex m_registry_mutex;
+    mutable std::mutex m_registry_mutex;
 
 #ifdef MAYAFLUX_PLATFORM_MACOS
     // Apple's broken LLVM doesn't support std::atomic<std::shared_ptr<T>>

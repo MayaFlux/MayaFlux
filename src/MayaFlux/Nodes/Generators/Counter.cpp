@@ -178,4 +178,12 @@ void Counter::restore_state()
     m_state_saved = false;
 }
 
+std::vector<std::pair<ModulatorRole, std::shared_ptr<Node>>>
+Counter::get_modulators() const
+{
+    if (m_reset_trigger)
+        return { { ModulatorRole::SignalMod, m_reset_trigger } };
+    return {};
+}
+
 } // namespace MayaFlux::Nodes::Generatorx::Nodes::Generator

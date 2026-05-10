@@ -228,4 +228,15 @@ void Impulse::restore_state()
     m_state_saved = false;
 }
 
+std::vector<std::pair<ModulatorRole, std::shared_ptr<Node>>>
+Impulse::get_modulators() const
+{
+    std::vector<std::pair<ModulatorRole, std::shared_ptr<Node>>> result;
+    if (m_frequency_modulator)
+        result.emplace_back(ModulatorRole::FrequencyMod, m_frequency_modulator);
+    if (m_amplitude_modulator)
+        result.emplace_back(ModulatorRole::AmplitudeMod, m_amplitude_modulator);
+    return result;
+}
+
 } // namespace MayaFlux::Nodes::Generator

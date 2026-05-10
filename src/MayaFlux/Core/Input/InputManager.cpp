@@ -248,9 +248,7 @@ void InputManager::unregister_node(const std::shared_ptr<Nodes::Input::InputNode
 
         m_registrations.store(new_list);
 #endif
-        m_tracked_nodes.erase(
-            std::remove(m_tracked_nodes.begin(), m_tracked_nodes.end(), node),
-            m_tracked_nodes.end());
+        std::erase_if(m_tracked_nodes, [&node](const auto& n) { return n == node; });
     }
 
     MF_DEBUG(Journal::Component::Core, Journal::Context::InputManagement,
@@ -292,6 +290,12 @@ size_t InputManager::get_registered_node_count() const
 #else
     return m_registrations.load()->size();
 #endif
+}
+
+std::vector<std::shared_ptr<Nodes::Input::InputNode>> InputManager::get_nodes() const
+{
+    std::lock_guard lock(m_registry_mutex);
+    return m_tracked_nodes;
 }
 
 size_t InputManager::get_queue_depth() const

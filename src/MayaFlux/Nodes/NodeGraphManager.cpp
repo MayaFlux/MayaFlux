@@ -8,6 +8,10 @@
 
 namespace MayaFlux::Nodes {
 
+namespace {
+    const std::vector<std::shared_ptr<Node>> empty {};
+}
+
 NodeGraphManager::NodeGraphManager(uint32_t sample_rate, uint32_t block_size, uint32_t frame_rate)
     : m_registered_sample_rate(sample_rate)
     , m_registered_block_size(block_size)
@@ -40,6 +44,31 @@ void NodeGraphManager::remove_from_root(const std::shared_ptr<Node>& node,
 
     auto& root = get_root_node(token, channel);
     root.unregister_node(node);
+}
+
+const std::vector<std::shared_ptr<Node>>&
+NodeGraphManager::get_nodes(ProcessingToken token, uint32_t channel) const
+{
+
+    auto token_it = m_token_roots.find(token);
+    if (token_it == m_token_roots.end()) {
+        MF_ERROR(Journal::Component::Nodes,
+            Journal::Context::NodeProcessing,
+            "Attempted to get nodes for non-existent token {}. Returning empty vector.",
+            Reflect::enum_to_string(token));
+        return empty;
+    }
+    auto channel_it = token_it->second.find(channel);
+
+    if (channel_it == token_it->second.end()) {
+        MF_ERROR(Journal::Component::Nodes,
+            Journal::Context::NodeProcessing,
+            "Attempted to get nodes for token {} channel {} which does not exist. Returning empty vector.",
+            Reflect::enum_to_string(token), channel);
+        return empty;
+    }
+
+    return channel_it->second->nodes();
 }
 
 void NodeGraphManager::register_token_processor(ProcessingToken token,
@@ -472,19 +501,26 @@ void NodeGraphManager::remove_network(const std::shared_ptr<Network::NodeNetwork
 }
 
 std::vector<std::shared_ptr<Network::NodeNetwork>>
-NodeGraphManager::get_networks(ProcessingToken token, unsigned int channel) const
+NodeGraphManager::get_networks(ProcessingToken token, uint32_t channel) const
 {
-    auto token_it = m_audio_networks.find(token);
-    if (token_it != m_audio_networks.end()) {
-        std::vector<std::shared_ptr<Network::NodeNetwork>> networks_on_channel;
-        for (const auto& network : token_it->second) {
-            if (network && network->is_registered_on_channel(channel)) {
-                networks_on_channel.push_back(network);
-            }
+    if (token == ProcessingToken::AUDIO_RATE) {
+        auto it = m_audio_networks.find(token);
+        if (it == m_audio_networks.end())
+            return {};
+
+        std::vector<std::shared_ptr<Network::NodeNetwork>> result;
+
+        for (const auto& n : it->second) {
+            if (n && n->is_registered_on_channel(channel))
+                result.push_back(n);
         }
-        return networks_on_channel;
+        return result;
     }
-    return {};
+
+    auto it = m_token_networks.find(token);
+    if (it == m_token_networks.end())
+        return {};
+    return it->second;
 }
 
 std::vector<std::shared_ptr<Network::NodeNetwork>>

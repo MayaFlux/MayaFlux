@@ -167,6 +167,27 @@ public:
     const std::vector<std::shared_ptr<BufferProcessor>>& get_processors(const std::shared_ptr<Buffer>& buffer) const;
 
     /**
+     * @brief Returns the preprocessor for a buffer, or nullptr if none is set.
+     * @param buffer Buffer to query
+     */
+    [[nodiscard]] std::shared_ptr<BufferProcessor>
+    get_preprocessor(const std::shared_ptr<Buffer>& buffer) const;
+
+    /**
+     * @brief Returns the postprocessor for a buffer, or nullptr if none is set.
+     * @param buffer Buffer to query
+     */
+    [[nodiscard]] std::shared_ptr<BufferProcessor>
+    get_postprocessor(const std::shared_ptr<Buffer>& buffer) const;
+
+    /**
+     * @brief Returns the final processor for a buffer, or nullptr if none is set.
+     * @param buffer Buffer to query
+     */
+    [[nodiscard]] std::shared_ptr<BufferProcessor>
+    get_final_processor(const std::shared_ptr<Buffer>& buffer) const;
+
+    /**
      * @brief Gets the entire transformation pipeline structure
      * @return Map of buffers to their processor sequences
      *

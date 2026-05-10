@@ -149,6 +149,12 @@ public:
      */
     void terminate_all_nodes();
 
+    /**
+     * @brief Gets the list of nodes registered with this root node
+     * @return Vector of shared pointers to registered nodes
+     */
+    [[nodiscard]] const std::vector<std::shared_ptr<Node>>& nodes() const { return m_Nodes; }
+
 private:
     /**
      * @brief Collection of nodes registered with this root node
