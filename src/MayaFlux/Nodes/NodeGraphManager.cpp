@@ -339,12 +339,7 @@ void NodeGraphManager::ensure_token_exists(ProcessingToken token, uint32_t num_c
 
 void NodeGraphManager::register_global(const std::shared_ptr<Node>& node)
 {
-    if (!is_node_registered(node)) {
-        std::stringstream ss;
-        ss << "node_" << node.get();
-        std::string generated_id = ss.str();
-        m_Node_registry[generated_id] = node;
-    }
+    m_node_registry.insert(node);
 }
 
 void NodeGraphManager::set_channel_mask(const std::shared_ptr<Node>& node, uint32_t channel_id)
@@ -355,12 +350,7 @@ void NodeGraphManager::set_channel_mask(const std::shared_ptr<Node>& node, uint3
 
 void NodeGraphManager::unregister_global(const std::shared_ptr<Node>& node)
 {
-    for (const auto& pair : m_Node_registry) {
-        if (pair.second == node) {
-            m_Node_registry.erase(pair.first);
-            break;
-        }
-    }
+    m_node_registry.erase(node);
 }
 
 void NodeGraphManager::unset_channel_mask(const std::shared_ptr<Node>& node, uint32_t channel_id)
@@ -404,69 +394,9 @@ size_t NodeGraphManager::get_node_count(ProcessingToken token) const
     return count;
 }
 
-void NodeGraphManager::print_summary() const
-{
-    MF_PRINT(Journal::Component::Nodes,
-        Journal::Context::NodeProcessing,
-        "=== NodeGraphManager Summary ===");
-
-    for (auto token : get_active_tokens()) {
-        auto channels = get_all_channels(token);
-        size_t total_nodes = get_node_count(token);
-
-        MF_PRINT(Journal::Component::Nodes,
-            Journal::Context::NodeProcessing,
-            "Token {}: {} nodes across {} channels",
-            static_cast<int>(token), total_nodes, channels.size());
-
-        for (auto channel : channels) {
-            auto& root = const_cast<NodeGraphManager*>(this)->get_root_node(token, channel);
-            auto networks = get_networks(token, channel);
-
-            MF_PRINT(Journal::Component::Nodes,
-                Journal::Context::NodeProcessing,
-                "  Channel {}: {} nodes, {} networks",
-                channel, root.get_node_size(), networks.size());
-
-            for (const auto& network : networks) {
-                if (network) {
-                    MF_PRINT(Journal::Component::Nodes,
-                        Journal::Context::NodeProcessing,
-                        "    Network: {} internal nodes, mode={}, enabled={}",
-                        network->get_node_count(),
-                        static_cast<int>(network->get_output_mode()),
-                        network->is_enabled());
-                }
-            }
-        }
-    }
-}
-
-std::shared_ptr<Node> NodeGraphManager::get_node(const std::string& id)
-{
-    auto it = m_Node_registry.find(id);
-
-    if (it != m_Node_registry.end()) {
-        return it->second;
-    }
-    return nullptr;
-}
-
 bool NodeGraphManager::is_node_registered(const std::shared_ptr<Node>& node)
 {
-    return std::ranges::any_of(m_Node_registry,
-        [&node](const auto& pair) { return pair.second == node; });
-}
-
-void NodeGraphManager::connect(const std::string& source_id, const std::string& target_id)
-{
-    auto source = get_node(source_id);
-    auto target = get_node(target_id);
-
-    if (source && target) {
-        auto chain = std::make_shared<ChainNode>(source, target, *this);
-        chain->initialize();
-    }
+    return m_node_registry.contains(node);
 }
 
 //-----------------------------------------------------------------------------
@@ -604,11 +534,7 @@ void NodeGraphManager::clear_networks(ProcessingToken token)
 
 void NodeGraphManager::register_network_global(const std::shared_ptr<Network::NodeNetwork>& network)
 {
-    if (!is_network_registered(network)) {
-        std::stringstream ss;
-        ss << "network_" << network.get();
-        std::string generated_id = ss.str();
-        m_network_registry[generated_id] = network;
+    if (m_network_registry.insert(network).second) {
         network->set_sample_rate(m_registered_sample_rate);
         network->set_block_size(m_registered_block_size);
     }
@@ -616,18 +542,12 @@ void NodeGraphManager::register_network_global(const std::shared_ptr<Network::No
 
 void NodeGraphManager::unregister_network_global(const std::shared_ptr<Network::NodeNetwork>& network)
 {
-    for (const auto& pair : m_network_registry) {
-        if (pair.second == network) {
-            m_network_registry.erase(pair.first);
-            break;
-        }
-    }
+    m_network_registry.erase(network);
 }
 
 bool NodeGraphManager::is_network_registered(const std::shared_ptr<Network::NodeNetwork>& network)
 {
-    return std::ranges::any_of(m_network_registry,
-        [&network](const auto& pair) { return pair.second == network; });
+    return m_network_registry.contains(network);
 }
 
 void NodeGraphManager::terminate_active_processing()
@@ -668,13 +588,13 @@ NodeGraphManager::~NodeGraphManager()
     m_audio_networks.clear();
     m_token_networks.clear();
 
-    m_Node_registry.clear();
+    m_node_registry.clear();
     m_network_registry.clear();
 }
 
 void NodeGraphManager::update_routing_states_for_cycle(ProcessingToken token)
 {
-    for (const auto& [id, node] : m_Node_registry) {
+    for (const auto& node : m_node_registry) {
         if (!node->needs_channel_routing())
             continue;
         update_routing_state(node->get_routing_state());
@@ -758,7 +678,7 @@ void NodeGraphManager::route_network_to_channels(
     }
 
     uint32_t fade_blocks = (fade_cycles + m_registered_block_size - 1) / m_registered_block_size;
-    fade_blocks = std::max(1u, fade_blocks);
+    fade_blocks = std::max(1U, fade_blocks);
 
     RoutingState state;
     state.from_channels = current_channels;
@@ -777,7 +697,7 @@ void NodeGraphManager::cleanup_completed_routing(ProcessingToken token)
 {
     std::vector<std::pair<std::shared_ptr<Node>, uint32_t>> nodes_to_remove;
 
-    for (const auto& [id, node] : m_Node_registry) {
+    for (const auto& node : m_node_registry) {
         if (!node->needs_channel_routing())
             continue;
 

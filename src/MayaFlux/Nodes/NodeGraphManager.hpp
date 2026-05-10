@@ -24,8 +24,8 @@ namespace Network {
  * - Multi-modal (token-based) processing: Supports multiple independent processing domains
  *   (e.g., AUDIO_RATE, VISUAL_RATE, CUSTOM_RATE), each with its own set of channels and root nodes.
  * - Per-channel root nodes: Each processing domain can have multiple channels, each with its own RootNode.
- * - Node registry: Nodes are registered by string identifier for easy lookup and connection.
- * - Flexible connection: Nodes can be connected by reference or by identifier, supporting both direct and named graph construction.
+ * - Node registry: Tracks all registered nodes for lifecycle management and deduplication.
+ * - Flexible connection: Nodes are connected by shared_ptr reference via the >> and + operators.
  * - Subsystem token processors: Allows registration of custom processing functions for each token, enabling efficient backend-specific processing.
  *
  * This class provides methods to:
@@ -90,24 +90,6 @@ public:
     void remove_from_root(const std::shared_ptr<Node>& node, ProcessingToken token, unsigned int channel = 0);
 
     /**
-     * @brief Adds a node to a channel's root node by its identifier
-     * @param node_id Identifier of the node to add
-     @ param token Processing domain to add the node to (default is AUDIO_RATE)
-     * @param channel Channel index to add the node to (AUDIO_RATE domain)
-     *
-     * Looks up the node by its identifier and adds it to the specified
-     * channel's root node in the specified processing domain (default is AUDIO_RATE).
-     * Throws an exception if the node identifier is not found.
-     */
-    inline void add_to_root(const std::string& node_id, ProcessingToken token = ProcessingToken::AUDIO_RATE, unsigned int channel = 0)
-    {
-        auto node = get_node(node_id);
-        if (node) {
-            add_to_root(node, token, channel);
-        }
-    }
-
-    /**
      * @brief Register subsystem processor for a specific token
      * @param token Processing domain to handle (e.g., AUDIO_RATE, VISUAL_RATE)
      * @param processor Function that receives a span of root nodes for that token
@@ -130,60 +112,6 @@ public:
      * For multi-modal access, use get_token_roots().
      */
     const std::unordered_map<unsigned int, std::shared_ptr<RootNode>>& get_all_channel_root_nodes(ProcessingToken token = ProcessingToken::AUDIO_RATE) const;
-
-    /**
-     * @brief Creates and registers a new node of the specified type
-     * @tparam NodeType The type of node to create (must derive from Node)
-     * @tparam Args Parameter types for the node's constructor
-     * @param id String identifier for the node
-     * @param args Constructor arguments for the node
-     * @return Shared pointer to the created node
-     *
-     * This template method creates a node of any type that derives from Node,
-     * passing the provided arguments to its constructor. The created node is
-     * automatically registered with the given string identifier for later lookup.
-     *
-     * Example:
-     * ```cpp
-     * auto sine = manager.create_node<Generators::Sine>("my_sine", 440.0, 0.5);
-     * auto filter = manager.create_node<Filters::LowPass>("my_filter", sine, 1000.0);
-     * ```
-     */
-    template <typename NodeType, typename... Args>
-    inline std::shared_ptr<NodeType> create_node(const std::string& id, Args&&... args)
-    {
-        auto node = std::make_shared<NodeType>(std::forward<Args>(args)...);
-        m_Node_registry[id] = node;
-        return node;
-    }
-
-    /**
-     * @brief Looks up a node by its string identifier
-     * @param id The string identifier of the node
-     * @return Shared pointer to the node, or nullptr if not found
-     *
-     * Retrieves a previously registered node using its string identifier.
-     * This allows for connecting nodes by name rather than requiring direct
-     * references to node objects.
-     */
-    std::shared_ptr<Node> get_node(const std::string& id);
-
-    /**
-     * @brief Connects two nodes by their string identifiers
-     * @param source_id Identifier of the source node
-     * @param target_id Identifier of the target node
-     *
-     * Looks up both nodes by their identifiers and establishes a connection
-     * where the output of the source node becomes an input to the target node.
-     *
-     * Equivalent to:
-     * ```cpp
-     * connect(get_node(source_id), get_node(target_id));
-     * ```
-     *
-     * Throws an exception if either node identifier is not found.
-     */
-    void connect(const std::string& source_id, const std::string& target_id);
 
     /**
      * @brief Checks if a node is registered with this manager
@@ -328,15 +256,6 @@ public:
      * @return Total number of nodes across all channels for this token
      */
     size_t get_node_count(ProcessingToken token) const;
-
-    /**
-     * @brief Prints a summary of all tokens, channels, and node counts
-     *
-     * Outputs a human-readable summary of the current node graph structure,
-     * including the number of tokens, channels, and nodes per domain.
-     * Useful for debugging and introspection.
-     */
-    void print_summary() const;
 
     //-------------------------------------------------------------------------
     // NodeNetwork Management
@@ -483,21 +402,9 @@ public:
 
 private:
     /**
-     * @brief Map of channel indices to their root nodes (AUDIO_RATE domain)
-     *
-     * Each audio channel has its own root node that collects all nodes
-     * that should output to that channel. For multi-modal support,
-     * see m_token_roots.
-     */
-    std::unordered_map<unsigned int, std::shared_ptr<RootNode>> m_channel_root_nodes;
-
-    /**
      * @brief Registry of all nodes by their string identifiers
-     *
-     * This registry allows nodes to be looked up by their string identifiers
-     * for operations like connecting nodes by name.
      */
-    std::unordered_map<std::string, std::shared_ptr<Node>> m_Node_registry;
+    std::unordered_set<std::shared_ptr<Node>> m_node_registry;
 
     /**
      * @brief Multi-modal map of processing tokens to their channel root nodes
@@ -540,10 +447,8 @@ private:
 
     /**
      * @brief Global network registry (like m_Node_registry)
-     *
-     * Maps generated IDs to networks for lifecycle management
      */
-    std::unordered_map<std::string, std::shared_ptr<Network::NodeNetwork>> m_network_registry;
+    std::unordered_set<std::shared_ptr<Network::NodeNetwork>> m_network_registry;
 
     /**
      * @brief Audio-sink networks

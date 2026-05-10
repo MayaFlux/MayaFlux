@@ -35,20 +35,6 @@ TEST_F(NodeTest, RootNodeOperations)
     EXPECT_EQ(root.get_node_size(), 0);
 }
 
-TEST_F(NodeTest, NodeRegistry)
-{
-    const std::string node_id = "test_sine";
-    auto sine = node_manager->create_node<Nodes::Generator::Sine>(node_id, 440.0f, 0.5f);
-
-    EXPECT_NE(sine, nullptr);
-
-    auto retrieved = node_manager->get_node(node_id);
-    EXPECT_EQ(retrieved, sine);
-
-    auto nonexistent = node_manager->get_node("nonexistent");
-    EXPECT_EQ(nonexistent, nullptr);
-}
-
 TEST_F(NodeTest, MultiChannelRootNodes)
 {
     auto& root0 = node_manager->get_root_node(token, 0);
@@ -94,51 +80,6 @@ TEST_F(NodeTest, SingleNodeMultipleChannels)
     EXPECT_TRUE(sine->is_used_by_channel(0));
     EXPECT_FALSE(sine->is_used_by_channel(1));
     EXPECT_TRUE(sine->is_used_by_channel(2));
-}
-
-TEST_F(NodeTest, AddNodeToRoot)
-{
-    const std::string node_id = "test_sine";
-    auto sine = node_manager->create_node<Nodes::Generator::Sine>(node_id, 440.0f, 0.5f);
-
-    node_manager->add_to_root(node_id);
-    EXPECT_EQ(node_manager->get_root_node(token, 0).get_node_size(), 1);
-
-    const std::string node_id2 = "test_sine2";
-    auto sine2 = node_manager->create_node<Nodes::Generator::Sine>(node_id2, 880.0f, 0.5f);
-
-    node_manager->add_to_root(node_id2, Nodes::ProcessingToken::AUDIO_RATE, 1);
-    EXPECT_EQ(node_manager->get_root_node(token, 1).get_node_size(), 1);
-
-    auto sine3 = std::make_shared<Nodes::Generator::Sine>(660.0f, 0.5f);
-    node_manager->add_to_root(sine3, token, 2);
-    EXPECT_EQ(node_manager->get_root_node(token, 2).get_node_size(), 1);
-}
-
-TEST_F(NodeTest, NodeConnections)
-{
-    const std::string sine_id = "sine";
-    const std::string filter_id = "filter";
-
-    auto sine = node_manager->create_node<Nodes::Generator::Sine>(sine_id, 440.0f, 0.5f);
-    auto filter = node_manager->create_node<Nodes::Filters::FIR>(filter_id, sine, "5_0");
-
-    node_manager->connect(sine_id, filter_id);
-
-    auto sine2 = std::make_shared<Nodes::Generator::Sine>(880.0f, 0.3f);
-    auto filter2 = std::make_shared<Nodes::Filters::FIR>(sine2, std::vector<double> { 0.2, 0.2, 0.2, 0.2, 0.2 });
-
-    auto chain_node = sine2 >> filter2;
-    EXPECT_NE(chain_node, nullptr);
-
-    auto sine3 = std::make_shared<Nodes::Generator::Sine>(220.0f, 0.4f);
-    auto sine4 = std::make_shared<Nodes::Generator::Sine>(330.0f, 0.4f);
-
-    auto add_node = sine3 + sine4;
-    EXPECT_NE(add_node, nullptr);
-
-    auto mul_node = sine3 * sine4;
-    EXPECT_NE(mul_node, nullptr);
 }
 
 TEST_F(NodeTest, ComplexMultiChannelChain)
