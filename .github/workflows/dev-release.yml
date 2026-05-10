@@ -2,9 +2,12 @@ name: Dev Release
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
+  schedule:
+    # 00:00 IST
+    - cron: '30 18 * * *'
+    # push:
+    #   branches:
+    #     - main
 
 permissions:
   contents: write
@@ -13,6 +16,25 @@ env:
   BUILD_TYPE: RelWithDebInfo
 
 jobs:
+  should_run:
+    runs-on: ubuntu-latest
+    outputs:
+      has_changes: ${{ steps.check.outputs.has_changes }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for commits in last 24 hours
+        id: check
+        run: |
+          CHANGES=$(git log --oneline --since="24 hours ago" origin/main)
+          if [ -n "$CHANGES" ]; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          fi
+
   determine_version:
     runs-on: ubuntu-latest
     outputs:
@@ -29,7 +51,9 @@ jobs:
           echo "CLEAN_VERSION=$CLEAN_VERSION" >> $GITHUB_OUTPUT
 
   build_macos:
-    needs: determine_version
+    needs: [determine_version, should_run]
+    if: ${{ needs.should_run.outputs.has_changes == 'true' || github.event_name ==
+      'workflow_dispatch' }}
     uses: ./.github/workflows/build-macos.yml
     with:
       version: ${{ needs.determine_version.outputs.VERSION }}
@@ -39,7 +63,9 @@ jobs:
       create_distribution: true
 
   build_linux:
-    needs: determine_version
+    needs: [determine_version, should_run]
+    if: ${{ needs.should_run.outputs.has_changes == 'true' || github.event_name ==
+      'workflow_dispatch' }}
     uses: ./.github/workflows/build-linux.yml
     with:
       version: ${{ needs.determine_version.outputs.VERSION }}
@@ -53,7 +79,9 @@ jobs:
       os_display_name: Linux
 
   build_windows:
-    needs: determine_version
+    needs: [determine_version, should_run]
+    if: ${{ needs.should_run.outputs.has_changes == 'true' || github.event_name ==
+      'workflow_dispatch' }}
     uses: ./.github/workflows/build-windows.yml
     with:
       version: ${{ needs.determine_version.outputs.VERSION }}
@@ -66,7 +94,9 @@ jobs:
       os_display_name: Windows
 
   create_dev_release:
-    needs: [determine_version, build_macos, build_linux, build_windows]
+    needs: [determine_version, build_macos, build_linux, build_windows, should_run]
+    if: ${{ needs.should_run.outputs.has_changes == 'true' || github.event_name ==
+      'workflow_dispatch' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
