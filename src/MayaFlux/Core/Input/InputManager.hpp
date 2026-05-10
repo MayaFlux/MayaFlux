@@ -177,7 +177,7 @@ private:
 
     std::vector<std::shared_ptr<Nodes::Input::InputNode>> m_tracked_nodes; ///< To keep nodes alive
 
-    std::mutex m_registry_mutex;
+    mutable std::mutex m_registry_mutex;
 
 #ifdef MAYAFLUX_PLATFORM_MACOS
     // Apple's broken LLVM doesn't support std::atomic<std::shared_ptr<T>>

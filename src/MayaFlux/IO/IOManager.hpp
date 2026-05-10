@@ -444,6 +444,45 @@ public:
      */
     void wait_for_pending_saves();
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // Image — save
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * @brief Returns all active video reader IDs.
+     */
+    [[nodiscard]] std::vector<uint64_t> get_video_reader_ids() const;
+
+    /**
+     * @brief Returns the video reader assigned to the given ID, or nullptr.
+     */
+    [[nodiscard]] std::shared_ptr<VideoFileReader> get_video_reader(uint64_t id) const;
+
+    /**
+     * @brief Returns all active camera reader IDs.
+     */
+    [[nodiscard]] std::vector<uint64_t> get_camera_reader_ids() const;
+
+    /**
+     * @brief Returns the camera reader assigned to the given ID, or nullptr.
+     */
+    [[nodiscard]] std::shared_ptr<CameraReader> get_camera_reader(uint64_t id) const;
+
+    /**
+     * @brief Returns all retained audio readers.
+     */
+    [[nodiscard]] std::vector<std::shared_ptr<SoundFileReader>> get_audio_readers() const { return m_audio_readers; };
+
+    /**
+     * @brief Returns all retained image readers.
+     */
+    [[nodiscard]] std::vector<std::shared_ptr<ImageReader>> get_image_readers() const { return m_image_readers; };
+
+    /**
+     * @brief Returns all retained model readers.
+     */
+    [[nodiscard]] std::vector<std::shared_ptr<ModelReader>> get_model_readers() const { return m_model_readers; };
+
 private:
     uint64_t m_sample_rate;
 
