@@ -290,6 +290,13 @@ public:
     std::vector<std::string> get_task_names() const;
 
     /**
+     * @brief Get task names for a specific processing domain.
+     * @param token Processing domain to filter by.
+     * @return Vector of task names active in that domain.
+     */
+    std::vector<std::string> get_task_names(ProcessingToken token) const;
+
+    /**
      * @brief Pause all active tasks
      */
     void pause_all_tasks();

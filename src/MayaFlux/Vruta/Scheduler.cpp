@@ -117,6 +117,26 @@ std::vector<std::shared_ptr<Routine>> TaskScheduler::get_tasks_for_token(Process
     return result;
 }
 
+std::vector<std::string> TaskScheduler::get_task_names() const
+{
+    std::vector<std::string> names;
+    for (const auto& entry : m_tasks) {
+        if (entry.routine)
+            names.push_back(entry.name);
+    }
+    return names;
+}
+
+std::vector<std::string> TaskScheduler::get_task_names(ProcessingToken token) const
+{
+    std::vector<std::string> names;
+    for (const auto& entry : m_tasks) {
+        if (entry.routine && entry.routine->get_processing_token() == token)
+            names.push_back(entry.name);
+    }
+    return names;
+}
+
 void TaskScheduler::process_token(ProcessingToken token, uint64_t processing_units)
 {
     drain_pending_tasks();

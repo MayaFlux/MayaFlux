@@ -30,7 +30,7 @@ public:
     /**
      * @brief Get all managed events
      */
-    std::vector<std::shared_ptr<Event>> get_all_events() const;
+    std::vector<std::shared_ptr<Event>> get_all_events() const { return m_events; }
 
     /**
      * @brief Cancels and removes a event from the manager
