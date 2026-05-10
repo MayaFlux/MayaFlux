@@ -39,7 +39,7 @@ class MAYAFLUX_API InputContext : public NodeContext {
 public:
     InputContext(double value, double raw_value,
         Core::InputType source, uint32_t device_id)
-        : NodeContext(value, typeid(InputContext).name())
+        : NodeContext(value)
         , raw_value(raw_value)
         , source_type(source)
         , device_id(device_id)

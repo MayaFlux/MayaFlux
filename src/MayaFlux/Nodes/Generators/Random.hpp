@@ -39,7 +39,7 @@ public:
      */
     RandomContext(double value, Kinesis::Stochastic::Algorithm type, double amplitude,
         double range_start, double range_end, double normal_spread)
-        : NodeContext(value, typeid(RandomContext).name())
+        : NodeContext(value)
         , distribution_type(type)
         , amplitude(amplitude)
         , range_start(range_start)
@@ -94,7 +94,6 @@ public:
         : RandomContext(value, type, amplitude, range_start, range_end, normal_spread)
         , GpuVectorData(gpu_data)
     {
-        type_id = typeid(RandomContextGpu).name();
     }
 };
 

@@ -1,7 +1,5 @@
 #pragma once
 
-#include <utility>
-
 #include "MayaFlux/Nodes/Generators/Generator.hpp"
 
 namespace MayaFlux::Nodes::Generator {
@@ -80,7 +78,7 @@ public:
         bool edge_detected = false,
         EdgeType edge_type = EdgeType::BOTH,
         const std::vector<double>& inputs = {})
-        : NodeContext(value, typeid(LogicContext).name())
+        : NodeContext(value)
         , m_mode(mode)
         , m_operator(operator_type)
         , m_history(history)
@@ -139,7 +137,6 @@ public:
         : LogicContext(value, mode, operator_type, history, threshold, edge_detected, edge_type, inputs)
         , GpuVectorData(gpu_data)
     {
-        type_id = typeid(LogicContextGpu).name();
     }
 
     friend class Logic;

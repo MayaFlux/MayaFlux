@@ -35,7 +35,7 @@ public:
      * and all parameters that define its oscillation behavior.
      */
     GeneratorContext(double value, float frequency, double amplitude, double phase)
-        : NodeContext(value, typeid(GeneratorContext).name())
+        : NodeContext(value)
         , frequency(frequency)
         , amplitude(amplitude)
         , phase(phase)
@@ -73,7 +73,6 @@ public:
         : GeneratorContext(value, frequency, amplitude, phase)
         , GpuVectorData(gpu_data)
     {
-        type_id = typeid(GeneratorContextGpu).name();
     }
 };
 

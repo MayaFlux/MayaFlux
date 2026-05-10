@@ -17,7 +17,7 @@ public:
         std::span<const uint8_t> vertex_data,
         size_t vertex_stride,
         uint32_t vertex_count)
-        : NodeContext(value, typeid(GeometryContext).name())
+        : NodeContext(value)
         , GpuStructuredData(vertex_data, vertex_stride, vertex_count)
         , vertex_count(vertex_count)
         , vertex_stride(vertex_stride)

@@ -64,7 +64,7 @@ protected:
 private:
     struct StreamReaderContext final : NodeContext {
         StreamReaderContext()
-            : NodeContext(0.0, typeid(StreamReaderNode).name())
+            : NodeContext(0.0)
         {
         }
     };

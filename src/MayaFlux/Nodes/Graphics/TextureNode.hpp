@@ -11,7 +11,7 @@ namespace MayaFlux::Nodes::GpuSync {
 class MAYAFLUX_API TextureContext : public NodeContext, public GpuVectorData {
 public:
     TextureContext(double value, uint32_t width, uint32_t height, std::span<const float> pixel_data)
-        : NodeContext(value, typeid(TextureContext).name())
+        : NodeContext(value)
         , GpuVectorData(pixel_data)
         , width(width)
         , height(height)

@@ -33,7 +33,7 @@ public:
         std::span<double> input_buffer,
         std::span<double> output_buffer,
         const std::vector<double>& coefficients)
-        : NodeContext(value, typeid(PolynomialContext).name())
+        : NodeContext(value)
         , m_mode(mode)
         , m_buffer_size(buffer_size)
         , m_input_buffer(input_buffer)
@@ -97,7 +97,6 @@ public:
         : PolynomialContext(value, mode, buffer_size, input_buffer, output_buffer, coefficients)
         , GpuVectorData(gpu_data)
     {
-        type_id = typeid(PolynomialContextGpu).name();
     }
 
     friend class Polynomial;

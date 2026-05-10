@@ -45,7 +45,7 @@ public:
         const std::vector<double>& output_history,
         const std::vector<double>& coefs_a,
         const std::vector<double>& coefs_b)
-        : NodeContext(value, typeid(FilterContext).name())
+        : NodeContext(value)
         , input_history(input_history)
         , output_history(output_history)
         , coefs_a(coefs_a)

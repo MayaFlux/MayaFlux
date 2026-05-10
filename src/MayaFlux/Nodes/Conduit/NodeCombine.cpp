@@ -7,7 +7,7 @@
 namespace MayaFlux::Nodes {
 
 BinaryOpContext::BinaryOpContext(double value, double lhs_value, double rhs_value)
-    : NodeContext(value, typeid(BinaryOpContext).name())
+    : NodeContext(value)
     , lhs_value(lhs_value)
     , rhs_value(rhs_value)
 {
@@ -17,11 +17,10 @@ BinaryOpContextGpu::BinaryOpContextGpu(double value, double lhs_value, double rh
     : BinaryOpContext(value, lhs_value, rhs_value)
     , GpuVectorData(gpu_data)
 {
-    type_id = typeid(BinaryOpContextGpu).name();
 }
 
 CompositeOpContext::CompositeOpContext(double value, std::vector<double> input_values)
-    : NodeContext(value, typeid(CompositeOpContext).name())
+    : NodeContext(value)
     , input_values(std::move(input_values))
 {
 }
@@ -30,7 +29,6 @@ CompositeOpContextGpu::CompositeOpContextGpu(double value, std::vector<double> i
     : CompositeOpContext(value, std::move(input_values))
     , GpuVectorData(gpu_data)
 {
-    type_id = typeid(CompositeOpContextGpu).name();
 }
 
 BinaryOpNode::BinaryOpNode(const std::shared_ptr<Node>& lhs, const std::shared_ptr<Node>& rhs, CombineFunc func)
