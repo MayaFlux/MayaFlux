@@ -134,42 +134,59 @@ double InputNode::apply_smoothing(double target, double current) const
     }
 }
 
-void InputNode::on_value_change(const NodeHook& callback, double epsilon)
+void InputNode::on_tick(const TypedHook<InputContext>& callback)
+{
+    m_callbacks.emplace_back([callback](NodeContext& ctx) {
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+        callback(static_cast<InputContext&>(ctx));
+    });
+}
+
+void InputNode::on_tick_if(const NodeCondition& condition, const TypedHook<InputContext>& callback)
+{
+    m_conditional_callbacks.emplace_back([callback](NodeContext& ctx) {
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+        callback(static_cast<InputContext&>(ctx));
+    },
+        condition);
+}
+
+void InputNode::on_value_change(const TypedHook<InputContext>& callback, double epsilon)
 {
     add_input_callback(callback, InputEventType::VALUE_CHANGE, epsilon);
 }
 
-void InputNode::on_threshold_rising(double threshold, const NodeHook& callback)
+void InputNode::on_threshold_rising(double threshold, const TypedHook<InputContext>& callback)
 {
     add_input_callback(callback, InputEventType::THRESHOLD_RISING, threshold);
 }
 
-void InputNode::on_threshold_falling(double threshold, const NodeHook& callback)
+void InputNode::on_threshold_falling(double threshold, const TypedHook<InputContext>& callback)
 {
     add_input_callback(callback, InputEventType::THRESHOLD_FALLING, threshold);
 }
 
-void InputNode::on_range_enter(double min, double max, const NodeHook& callback)
+void InputNode::on_range_enter(double min, double max, const TypedHook<InputContext>& callback)
 {
     add_input_callback(callback, InputEventType::RANGE_ENTER, {}, { { min, max } });
 }
 
-void InputNode::on_range_exit(double min, double max, const NodeHook& callback)
+void InputNode::on_range_exit(double min, double max, const TypedHook<InputContext>& callback)
 {
     add_input_callback(callback, InputEventType::RANGE_EXIT, {}, { { min, max } });
 }
 
-void InputNode::on_button_press(const NodeHook& callback)
+void InputNode::on_button_press(const TypedHook<InputContext>& callback)
 {
     add_input_callback(callback, InputEventType::BUTTON_PRESS);
 }
 
-void InputNode::on_button_release(const NodeHook& callback)
+void InputNode::on_button_release(const TypedHook<InputContext>& callback)
 {
     add_input_callback(callback, InputEventType::BUTTON_RELEASE);
 }
 
-void InputNode::while_in_range(double min, double max, const NodeHook& callback)
+void InputNode::while_in_range(double min, double max, const TypedHook<InputContext>& callback)
 {
     on_tick_if(
         [min, max](const NodeContext& ctx) {
@@ -179,23 +196,20 @@ void InputNode::while_in_range(double min, double max, const NodeHook& callback)
 }
 
 void InputNode::add_input_callback(
-    const NodeHook& callback,
+    const TypedHook<InputContext>& callback,
     InputEventType event_type,
     std::optional<double> threshold,
     std::optional<std::pair<double, double>> range,
     std::optional<NodeCondition> condition)
 {
-    m_input_callbacks.push_back({ .callback = callback,
-        .event_type = event_type,
-        .condition = std::move(condition),
-        .threshold = threshold,
-        .range = range });
+    m_input_callbacks.emplace_back(callback, event_type, std::move(condition), threshold, range);
 }
 
 void InputNode::notify_tick(double value)
 {
     update_context(value);
-    auto& ctx = get_last_context();
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+    auto& ctx = static_cast<InputContext&>(get_last_context());
 
     for (auto& callback : m_callbacks) {
         callback(ctx);
