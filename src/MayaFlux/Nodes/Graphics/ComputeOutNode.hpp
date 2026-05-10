@@ -15,7 +15,7 @@ namespace MayaFlux::Nodes::GpuSync {
 class MAYAFLUX_API ComputeOutContext : public NodeContext, public GpuVectorData {
 public:
     ComputeOutContext(double value, std::span<const float> readback_data, size_t element_count)
-        : NodeContext(value, typeid(ComputeOutContext).name())
+        : NodeContext(value)
         , GpuVectorData(readback_data)
         , element_count(element_count)
     {

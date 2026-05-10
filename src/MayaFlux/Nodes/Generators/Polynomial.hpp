@@ -33,7 +33,7 @@ public:
         std::span<double> input_buffer,
         std::span<double> output_buffer,
         const std::vector<double>& coefficients)
-        : NodeContext(value, typeid(PolynomialContext).name())
+        : NodeContext(value)
         , m_mode(mode)
         , m_buffer_size(buffer_size)
         , m_input_buffer(input_buffer)
@@ -97,7 +97,6 @@ public:
         : PolynomialContext(value, mode, buffer_size, input_buffer, output_buffer, coefficients)
         , GpuVectorData(gpu_data)
     {
-        type_id = typeid(PolynomialContextGpu).name();
     }
 
     friend class Polynomial;
@@ -290,20 +289,6 @@ public:
     [[nodiscard]] std::span<double> get_output_buffer() { return m_history.linearized_view(); }
 
     /**
-     * @brief Prints a visual representation of the polynomial function
-     *
-     * Outputs a text-based graph of the polynomial function over a range of inputs.
-     */
-    inline void printGraph() override { }
-
-    /**
-     * @brief Prints the current state and parameters
-     *
-     * Outputs the current mode, buffer contents, and other relevant information.
-     */
-    inline void printCurrent() override { }
-
-    /**
      * @brief Sets the scaling factor for the output values
      */
     inline void set_amplitude(double amplitude) override { m_scale_factor = amplitude; }
@@ -374,16 +359,6 @@ protected:
      * @param value The current sample value
      */
     void update_context(double value) override;
-
-    /**
-     * @brief Notifies all registered callbacks about a new sample
-     * @param value The newly generated sample
-     *
-     * This method is called internally whenever a new sample is generated,
-     * creating the appropriate context and invoking all registered callbacks
-     * that should receive notification about this sample.
-     */
-    void notify_tick(double value) override;
 
 private:
     /**

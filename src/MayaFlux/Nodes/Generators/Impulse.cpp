@@ -164,22 +164,22 @@ void Impulse::reset(float frequency, float amplitude, float offset)
     m_last_output = 0.0;
 }
 
-void Impulse::on_impulse(const NodeHook& callback)
+void Impulse::on_impulse(const TypedHook<GeneratorContext>& callback)
 {
     safe_add_callback(m_impulse_callbacks, callback);
 }
 
-bool Impulse::remove_hook(const NodeHook& callback)
+bool Impulse::remove_hook(const TypedHook<GeneratorContext>& callback)
 {
-    bool removed_from_tick = safe_remove_callback(m_callbacks, callback);
-    bool removed_from_impulse = safe_remove_callback(m_impulse_callbacks, callback);
-    return removed_from_tick || removed_from_impulse;
+    return safe_remove_callback(m_impulse_callbacks, callback);
 }
 
 void Impulse::notify_tick(double value)
 {
     update_context(value);
-    auto& ctx = get_last_context();
+
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+    auto& ctx = static_cast<GeneratorContext&>(get_last_context());
 
     for (auto& callback : m_callbacks) {
         callback(ctx);

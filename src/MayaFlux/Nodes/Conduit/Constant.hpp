@@ -124,7 +124,7 @@ private:
      */
     struct ConstantContext final : NodeContext {
         ConstantContext()
-            : NodeContext(0.0, typeid(Constant).name())
+            : NodeContext(0.0)
         {
         }
     };

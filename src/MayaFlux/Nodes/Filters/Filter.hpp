@@ -45,7 +45,7 @@ public:
         const std::vector<double>& output_history,
         const std::vector<double>& coefs_a,
         const std::vector<double>& coefs_b)
-        : NodeContext(value, typeid(FilterContext).name())
+        : NodeContext(value)
         , input_history(input_history)
         , output_history(output_history)
         , coefs_a(coefs_a)
@@ -496,6 +496,19 @@ public:
             m_node_capability &= ~NodeCapability::VECTOR;
         }
     }
+
+    /**
+     * @brief Registers a callback to be called on each tick with the filter context
+     * @param callback Typed hook that receives a FilterContext object
+     */
+    void on_tick(const TypedHook<FilterContext>& callback);
+
+    /**
+     * @brief Registers a conditional callback to be called on each tick if the condition is met
+     * @param condition NodeCondition that determines whether the callback should be called
+     * @param callback Typed hook that receives a FilterContext object
+     */
+    void on_tick_if(const NodeCondition& condition, const TypedHook<FilterContext>& callback);
 
 protected:
     /**

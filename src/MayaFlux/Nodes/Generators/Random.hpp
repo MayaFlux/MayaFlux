@@ -39,7 +39,7 @@ public:
      */
     RandomContext(double value, Kinesis::Stochastic::Algorithm type, double amplitude,
         double range_start, double range_end, double normal_spread)
-        : NodeContext(value, typeid(RandomContext).name())
+        : NodeContext(value)
         , distribution_type(type)
         , amplitude(amplitude)
         , range_start(range_start)
@@ -94,7 +94,6 @@ public:
         : RandomContext(value, type, amplitude, range_start, range_end, normal_spread)
         , GpuVectorData(gpu_data)
     {
-        type_id = typeid(RandomContextGpu).name();
     }
 };
 
@@ -181,8 +180,6 @@ public:
      */
     void set_range(double start, double end);
 
-    void printGraph() override { }
-    void printCurrent() override { }
     void save_state() override { }
     void restore_state() override { }
 
@@ -197,16 +194,6 @@ protected:
      * the context reflects the current state of the node for use in callbacks.
      */
     void update_context(double value) override;
-
-    /**
-     * @brief Notifies all registered callbacks about a new value
-     * @param value The newly generated value
-     *
-     * This method is called internally whenever a new value is generated,
-     * creating the appropriate context and invoking all registered callbacks
-     * that should receive notification about this value.
-     */
-    void notify_tick(double value) override;
 
     NodeContext& get_last_context() override;
 

@@ -23,18 +23,6 @@ enum class InputEventType : uint8_t {
     CONDITIONAL ///< User-provided condition
 };
 
-/**
- * @struct InputCallback
- * @brief Callback registration with event type and optional parameters
- */
-struct InputCallback {
-    NodeHook callback;
-    InputEventType event_type;
-    std::optional<NodeCondition> condition; // For CONDITIONAL
-    std::optional<double> threshold; // For THRESHOLD_*
-    std::optional<std::pair<double, double>> range; // For RANGE_*
-};
-
 // ─────────────────────────────────────────────────────────────────────────────
 // InputContext - Specialized context for input node callbacks
 // ─────────────────────────────────────────────────────────────────────────────
@@ -51,7 +39,7 @@ class MAYAFLUX_API InputContext : public NodeContext {
 public:
     InputContext(double value, double raw_value,
         Core::InputType source, uint32_t device_id)
-        : NodeContext(value, typeid(InputContext).name())
+        : NodeContext(value)
         , raw_value(raw_value)
         , source_type(source)
         , device_id(device_id)
@@ -82,6 +70,18 @@ struct InputConfig {
     double slew_rate { 1.0 }; ///< Max change per sample (SLEW mode)
     double default_value { 0.0 }; ///< Initial output value
     size_t history_size { 8 }; ///< Input history buffer size
+};
+
+/**
+ * @struct InputCallback
+ * @brief Callback registration with event type and optional parameters
+ */
+struct InputCallback {
+    TypedHook<InputContext> callback;
+    InputEventType event_type;
+    std::optional<NodeCondition> condition;
+    std::optional<double> threshold;
+    std::optional<std::pair<double, double>> range;
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -202,11 +202,30 @@ public:
 
     /**
      * @brief Register callback for any input received
+     * @param callback Function to call on every tick
+     *
+     * The callback receives an InputContext with the current value and input details.
+     * Fires on every process_input() call, after smoothing is applied.
+     */
+    void on_tick(const TypedHook<InputContext>& callback);
+
+    /**
+     * @brief Register conditional callback for input received
+     * @param condition Predicate that determines when callback is triggered
+     * @param callback Function to call when condition is met
+     *
+     * The callback receives an InputContext with the current value and input details.
+     * Fires on every process_input() call where the condition returns true.
+     */
+    void on_tick_if(const NodeCondition& condition, const TypedHook<InputContext>& callback);
+
+    /**
+     * @brief Register callback for any input received
      * @param callback Function to call on every input
      *
      * Alias for on_tick() - fires on every process_input() call
      */
-    void on_input(const NodeHook& callback)
+    void on_input(const TypedHook<InputContext>& callback)
     {
         on_tick(callback);
     }
@@ -216,21 +235,21 @@ public:
      * @param callback Function to call when value differs from previous
      * @param epsilon Minimum change to trigger (default: 0.0001)
      */
-    void on_value_change(const NodeHook& callback, double epsilon = 0.0001);
+    void on_value_change(const TypedHook<InputContext>& callback, double epsilon = 0.0001);
 
     /**
      * @brief Register callback for threshold crossing (rising edge)
      * @param threshold Value threshold
      * @param callback Function to call when value crosses threshold upward
      */
-    void on_threshold_rising(double threshold, const NodeHook& callback);
+    void on_threshold_rising(double threshold, const TypedHook<InputContext>& callback);
 
     /**
      * @brief Register callback for threshold crossing (falling edge)
      * @param threshold Value threshold
      * @param callback Function to call when value crosses threshold downward
      */
-    void on_threshold_falling(double threshold, const NodeHook& callback);
+    void on_threshold_falling(double threshold, const TypedHook<InputContext>& callback);
 
     /**
      * @brief Register callback for entering a value range
@@ -238,7 +257,7 @@ public:
      * @param max Range maximum
      * @param callback Function to call when value enters range
      */
-    void on_range_enter(double min, double max, const NodeHook& callback);
+    void on_range_enter(double min, double max, const TypedHook<InputContext>& callback);
 
     /**
      * @brief Register callback for exiting a value range
@@ -246,7 +265,7 @@ public:
      * @param max Range maximum
      * @param callback Function to call when value exits range
      */
-    void on_range_exit(double min, double max, const NodeHook& callback);
+    void on_range_exit(double min, double max, const TypedHook<InputContext>& callback);
 
     /**
      * @brief Register callback for button press (0.0 → 1.0 transition)
@@ -254,7 +273,7 @@ public:
      *
      * Specialized for button inputs - fires once on press
      */
-    void on_button_press(const NodeHook& callback);
+    void on_button_press(const TypedHook<InputContext>& callback);
 
     /**
      * @brief Register callback for button release (1.0 → 0.0 transition)
@@ -262,7 +281,7 @@ public:
      *
      * Specialized for button inputs - fires once on release
      */
-    void on_button_release(const NodeHook& callback);
+    void on_button_release(const TypedHook<InputContext>& callback);
 
     /**
      * @brief Register callback while value is in range
@@ -270,7 +289,7 @@ public:
      * @param max Range maximum
      * @param callback Function to call continuously while in range
      */
-    void while_in_range(double min, double max, const NodeHook& callback);
+    void while_in_range(double min, double max, const TypedHook<InputContext>& callback);
 
 protected:
     /**
@@ -315,7 +334,7 @@ private:
     [[nodiscard]] double apply_smoothing(double target, double current) const;
 
     void add_input_callback(
-        const NodeHook& callback,
+        const TypedHook<InputContext>& callback,
         InputEventType event_type,
         std::optional<double> threshold = {},
         std::optional<std::pair<double, double>> range = {},

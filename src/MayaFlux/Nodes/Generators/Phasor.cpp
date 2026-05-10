@@ -163,14 +163,14 @@ void Phasor::reset(float frequency, float amplitude, float offset, double phase)
     m_last_output = 0.0;
 }
 
-void Phasor::on_phase_wrap(const NodeHook& callback)
+void Phasor::on_phase_wrap(const TypedHook<GeneratorContext>& callback)
 {
     safe_add_callback(m_phase_wrap_callbacks, callback);
 }
 
-void Phasor::on_threshold(const NodeHook& callback, double threshold, bool /*rising*/)
+void Phasor::on_threshold(const TypedHook<GeneratorContext>& callback, double threshold, bool /*rising*/)
 {
-    std::pair<NodeHook, double> entry = std::make_pair(callback, threshold);
+    std::pair<TypedHook<GeneratorContext>, double> entry = std::make_pair(callback, threshold);
     for (auto& pair : m_threshold_callbacks) {
         if (pair.first.target_type() == callback.target_type() && pair.second == threshold) {
             return;
@@ -179,7 +179,7 @@ void Phasor::on_threshold(const NodeHook& callback, double threshold, bool /*ris
     m_threshold_callbacks.push_back(entry);
 }
 
-bool Phasor::remove_threshold_callback(const NodeHook& callback)
+bool Phasor::remove_threshold_callback(const TypedHook<GeneratorContext>& callback)
 {
     for (auto it = m_threshold_callbacks.begin(); it != m_threshold_callbacks.end(); ++it) {
         if (it->first.target_type() == callback.target_type()) {
@@ -190,19 +190,18 @@ bool Phasor::remove_threshold_callback(const NodeHook& callback)
     return false;
 }
 
-bool Phasor::remove_hook(const NodeHook& callback)
+bool Phasor::remove_hook(const TypedHook<GeneratorContext>& callback)
 {
-    bool removed_from_tick = safe_remove_callback(m_callbacks, callback);
-    bool removed_from_phase_wrap = safe_remove_callback(m_phase_wrap_callbacks, callback);
-    bool removed_from_threshold = remove_threshold_callback(callback);
-    return removed_from_tick || removed_from_phase_wrap || removed_from_threshold;
+    return remove_threshold_callback(callback);
 }
 
 void Phasor::notify_tick(double value)
 {
     update_context(value);
 
-    auto& ctx = get_last_context();
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+    auto& ctx = static_cast<GeneratorContext&>(get_last_context());
+
     for (auto& callback : m_callbacks) {
         callback(ctx);
     }

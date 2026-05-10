@@ -35,7 +35,7 @@ public:
      * and all parameters that define its oscillation behavior.
      */
     GeneratorContext(double value, float frequency, double amplitude, double phase)
-        : NodeContext(value, typeid(GeneratorContext).name())
+        : NodeContext(value)
         , frequency(frequency)
         , amplitude(amplitude)
         , phase(phase)
@@ -73,7 +73,6 @@ public:
         : GeneratorContext(value, frequency, amplitude, phase)
         , GpuVectorData(gpu_data)
     {
-        type_id = typeid(GeneratorContextGpu).name();
     }
 };
 
@@ -150,24 +149,6 @@ public:
     [[nodiscard]] virtual bool should_mock_process() const;
 
     /**
-     * @brief Prints a visual representation of the generated pattern
-     *
-     * This method should output a visual representation of the
-     * generator's output over time, useful for analysis and
-     * understanding the pattern characteristics.
-     */
-    virtual void printGraph() = 0;
-
-    /**
-     * @brief Prints the current state and parameters of the generator
-     *
-     * This method should output the current configuration and state
-     * of the generator, including parameters like frequency, amplitude,
-     * phase, or any other generator-specific settings.
-     */
-    virtual void printCurrent() = 0;
-
-    /**
      * @brief Updates the context object for callbacks
      * @param value The current generated sample
      *
@@ -192,6 +173,20 @@ public:
      */
     NodeContext& get_last_context() override;
 
+    /**
+     * @brief Registers a typed callback receiving GeneratorContext directly
+     * @param callback Receives frequency, amplitude, and phase without casting
+     */
+    void on_tick(const TypedHook<GeneratorContext>& callback);
+
+    /**
+     * @brief Registers a conditional typed callback receiving GeneratorContext directly
+     * @param condition Predicate that determines when callback should be triggered
+     * @param callback Receives frequency, amplitude, and phase without casting when condition is met
+
+     */
+    void on_tick_if(const NodeCondition& condition, const TypedHook<GeneratorContext>& callback);
+
 protected:
     /**
      * @brief Base amplitude of the generator
@@ -210,6 +205,8 @@ protected:
 
     GeneratorContext m_context { 0., m_frequency, m_amplitude, m_phase };
     GeneratorContextGpu m_context_gpu { 0., m_frequency, m_amplitude, m_phase, get_gpu_data_buffer() };
+
+    void notify_tick(double value) override;
 };
 
 /**

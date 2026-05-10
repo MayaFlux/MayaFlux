@@ -105,22 +105,6 @@ public:
     std::vector<double> process_batch(unsigned int num_samples) override;
 
     /**
-     * @brief Prints a visual representation of the impulse train
-     *
-     * Outputs a text-based graph of the impulse pattern over time,
-     * useful for debugging and visualization.
-     */
-    inline void printGraph() override { }
-
-    /**
-     * @brief Prints the current parameters of the impulse generator
-     *
-     * Outputs the current frequency, amplitude, offset, and modulation
-     * settings of the generator.
-     */
-    inline void printCurrent() override { }
-
-    /**
      * @brief Sets the generator's frequency
      * @param frequency New frequency in Hz
      *
@@ -196,7 +180,7 @@ public:
      * receives a GeneratorContext containing the generated value and
      * generator parameters like frequency, amplitude, and phase.
      */
-    void on_impulse(const NodeHook& callback);
+    void on_impulse(const TypedHook<GeneratorContext>& callback);
 
     /**
      * @brief Removes a previously registered callback
@@ -206,7 +190,7 @@ public:
      * Unregisters a callback previously added with on_tick(), stopping
      * it from receiving further notifications about generated samples.
      */
-    bool remove_hook(const NodeHook& callback) override;
+    bool remove_hook(const TypedHook<GeneratorContext>& callback);
 
     /**
      * @brief Removes all registered callbacks
@@ -273,7 +257,7 @@ private:
     /**
      * @brief Collection of impulse-specific callback functions
      */
-    std::vector<NodeHook> m_impulse_callbacks;
+    std::vector<TypedHook<GeneratorContext>> m_impulse_callbacks;
 
     bool m_impulse_occurred;
 

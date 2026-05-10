@@ -40,14 +40,6 @@ public:
     double value;
 
     /**
-     * @brief Type identifier for runtime type checking
-     *
-     * String identifier that represents the concrete type of the context.
-     * Used for safe type casting with the as<T>() method.
-     */
-    std::string type_id;
-
-    /**
      * @brief Safely cast to a derived context type
      * @tparam T The derived context type to cast to
      * @return Pointer to the derived context or nullptr if types don't match
@@ -67,19 +59,13 @@ public:
     template <typename T>
     T* as()
     {
-        if (typeid(T).name() == type_id) {
-            return static_cast<T*>(this);
-        }
-        return nullptr;
+        return dynamic_cast<T*>(this);
     }
 
     template <typename T>
     const T* as() const
     {
-        if (typeid(T).name() == type_id) {
-            return static_cast<const T*>(this);
-        }
-        return nullptr;
+        return dynamic_cast<const T*>(this);
     }
 
 protected:
@@ -91,9 +77,8 @@ protected:
      * This constructor is protected to ensure that only derived classes
      * can create context objects, with proper type identification.
      */
-    NodeContext(double value, std::string type)
+    NodeContext(double value)
         : value(value)
-        , type_id(std::move(type))
     {
     }
 };
