@@ -67,4 +67,35 @@ void operator*(const std::shared_ptr<Node>& node, double value)
     }
 }
 
+void Generator::notify_tick(double value)
+{
+    update_context(value);
+    auto& ctx = get_last_context();
+    for (auto& cb : m_callbacks) {
+        cb(ctx);
+    }
+    for (auto& [cb, cond] : m_conditional_callbacks) {
+        if (cond(ctx)) {
+            cb(ctx);
+        }
+    }
+}
+
+void Generator::on_tick(const TypedHook<GeneratorContext>& callback)
+{
+    m_callbacks.emplace_back([callback](NodeContext& ctx) {
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+        callback(static_cast<GeneratorContext&>(ctx));
+    });
+}
+
+void Generator::on_tick_if(const NodeCondition& condition, const TypedHook<GeneratorContext>& callback)
+{
+    m_conditional_callbacks.emplace_back([callback](NodeContext& ctx) {
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+        callback(static_cast<GeneratorContext&>(ctx));
+    },
+        condition);
+}
+
 } // namespace MayaFlux::Nodes::Generator

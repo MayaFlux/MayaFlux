@@ -114,7 +114,6 @@ public:
 protected:
     void notify_tick(double value) override;
     void update_context(double value) override;
-    NodeContext& get_last_context() override;
 
 private:
     uint32_t m_count { 0 };
@@ -133,8 +132,6 @@ private:
     std::vector<TypedHook<GeneratorContext>> m_increment_callbacks;
     std::vector<TypedHook<GeneratorContext>> m_wrap_callbacks;
     std::vector<std::pair<uint32_t, TypedHook<GeneratorContext>>> m_count_callbacks;
-
-    GeneratorContext m_context { 0.0, 0.F, 1.0, 0.0 };
 };
 
 } // namespace MayaFlux::Nodes::Generator

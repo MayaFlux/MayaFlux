@@ -153,21 +153,6 @@ void Sine::reset(float frequency, double amplitude, float offset)
     update_phase_increment(frequency);
 }
 
-void Sine::notify_tick(double value)
-{
-    update_context(value);
-    auto& ctx = get_last_context();
-
-    for (auto& callback : m_callbacks) {
-        callback(ctx);
-    }
-    for (auto& [callback, condition] : m_conditional_callbacks) {
-        if (condition(ctx)) {
-            callback(ctx);
-        }
-    }
-}
-
 void Sine::save_state()
 {
     m_saved_phase = m_phase;

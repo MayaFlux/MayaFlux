@@ -8,6 +8,7 @@ Counter::Counter(uint32_t modulo, int32_t step)
 {
     m_amplitude = 1.0;
     m_frequency = 0.F;
+    m_context = GeneratorContext(0.0, m_frequency, m_amplitude, 0.F);
 }
 
 Counter::Counter(const std::shared_ptr<Node>& reset_trigger, uint32_t modulo, int32_t step)
@@ -17,6 +18,7 @@ Counter::Counter(const std::shared_ptr<Node>& reset_trigger, uint32_t modulo, in
 {
     m_amplitude = 1.0;
     m_frequency = 0.F;
+    m_context = GeneratorContext(0.0, m_frequency, m_amplitude, 0.F);
 }
 
 void Counter::set_modulo(uint32_t modulo) { m_modulo = modulo; }
@@ -148,11 +150,6 @@ void Counter::notify_tick(double value)
 void Counter::update_context(double value)
 {
     m_context = GeneratorContext(value, 0.F, m_amplitude, static_cast<double>(m_count));
-}
-
-NodeContext& Counter::get_last_context()
-{
-    return m_context;
 }
 
 void Counter::save_state()

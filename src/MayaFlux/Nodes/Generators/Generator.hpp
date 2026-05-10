@@ -174,6 +174,20 @@ public:
      */
     NodeContext& get_last_context() override;
 
+    /**
+     * @brief Registers a typed callback receiving GeneratorContext directly
+     * @param callback Receives frequency, amplitude, and phase without casting
+     */
+    void on_tick(const TypedHook<GeneratorContext>& callback);
+
+    /**
+     * @brief Registers a conditional typed callback receiving GeneratorContext directly
+     * @param condition Predicate that determines when callback should be triggered
+     * @param callback Receives frequency, amplitude, and phase without casting when condition is met
+
+     */
+    void on_tick_if(const NodeCondition& condition, const TypedHook<GeneratorContext>& callback);
+
 protected:
     /**
      * @brief Base amplitude of the generator
@@ -192,6 +206,8 @@ protected:
 
     GeneratorContext m_context { 0., m_frequency, m_amplitude, m_phase };
     GeneratorContextGpu m_context_gpu { 0., m_frequency, m_amplitude, m_phase, get_gpu_data_buffer() };
+
+    void notify_tick(double value) override;
 };
 
 /**
