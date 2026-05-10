@@ -205,25 +205,6 @@ namespace {
         }
     }
 
-    // =============================================================================
-    // EventSource coroutine
-    // =============================================================================
-
-    Vruta::Event event_source_loop(
-        Vruta::EventSource& source,
-        Fabric& fabric,
-        uint32_t id)
-    {
-        auto& promise = co_await Kriya::GetEventPromise {};
-        while (true) {
-            if (promise.should_terminate) {
-                break;
-            }
-            co_await source.next_event();
-            fabric.fire(id);
-        }
-    }
-
 }
 
 // =============================================================================
@@ -376,7 +357,10 @@ void Wiring::finalise()
                 ev_manager.add_event(
                     std::make_shared<Vruta::Event>(
                         Kriya::mouse_pressed(trig.window, trig.button,
-                            [&fab, eid](double, double) { fab.fire(eid); })),
+                            [&fab, eid](double px, double py) {
+                                fab.m_registrations[eid].pending_cursor = glm::vec2(px, py);
+                                fab.fire(eid);
+                            })),
                     name);
 
             } else if constexpr (std::is_same_v<T, NetworkTrigger>) {
@@ -390,9 +374,10 @@ void Wiring::finalise()
             } else if constexpr (std::is_same_v<T, EventTrigger>) {
                 auto name = make_name("nexus_event");
                 reg.event_name = name;
+                Fabric& fab = m_fabric;
                 ev_manager.add_event(
                     std::make_shared<Vruta::Event>(
-                        event_source_loop(*trig.source, m_fabric, id)),
+                        event_source_loop(*trig.source, trig.filter, fab, id)),
                     name);
             }
         },
@@ -459,6 +444,27 @@ void Wiring::cancel()
 
     if (m_bind_detach.has_value()) {
         (*m_bind_detach)();
+    }
+}
+
+// =============================================================================
+// Internal
+// =============================================================================
+
+Vruta::Event Wiring::event_source_loop(
+    Vruta::EventSource& source,
+    Vruta::EventFilter filter,
+    Fabric& fabric,
+    uint32_t id)
+{
+    auto& promise = co_await Kriya::GetEventPromise {};
+    while (true) {
+        if (promise.should_terminate)
+            break;
+        auto event = co_await Kriya::EventAwaiter(source, filter);
+        if (auto* pos = std::get_if<Core::WindowEvent::MousePosData>(&event.data))
+            fabric.m_registrations[id].pending_cursor = glm::vec2(pos->x, pos->y);
+        fabric.fire(id);
     }
 }
 

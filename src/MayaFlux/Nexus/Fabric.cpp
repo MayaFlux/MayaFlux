@@ -191,6 +191,7 @@ void Fabric::fire(uint32_t id)
         return;
     }
     fire(it->second);
+    it->second.pending_cursor.reset();
 }
 
 // =============================================================================
@@ -247,6 +248,7 @@ void Fabric::fire(const Registration& reg) const
             ctx.color = ptr->m_color;
             ctx.size = ptr->m_size;
             ctx.render_proc = ptr->m_influence_target;
+            ctx.cursor_pos = reg.pending_cursor;
             ptr->invoke(ctx);
 
         } else if constexpr (std::is_same_v<T, Sensor>) {
@@ -273,6 +275,7 @@ void Fabric::fire(const Registration& reg) const
                 ictx.color = ptr->m_color;
                 ictx.size = ptr->m_size;
                 ictx.render_proc = ptr->m_influence_target;
+                ictx.cursor_pos = reg.pending_cursor;
                 ptr->invoke_influence(ictx);
             } else {
                 ptr->invoke_perception(PerceptionContext {});

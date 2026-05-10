@@ -213,6 +213,7 @@ private:
         bool commit_driven { false };
         std::optional<uint32_t> spatial_id;
         std::optional<Wiring> wiring;
+        std::optional<glm::vec2> pending_cursor;
     };
 
     uint32_t assign_id(Member& m);

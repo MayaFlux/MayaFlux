@@ -245,6 +245,8 @@ private:
     std::string m_bind_attach_name;
     std::string m_bind_detach_name;
 
+    Vruta::Event event_source_loop(Vruta::EventSource& source, Vruta::EventFilter filter, Fabric& fabric, uint32_t id);
+
 public:
     // =====================================================================
     // Move semantics
