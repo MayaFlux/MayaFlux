@@ -181,8 +181,6 @@ public:
      */
     void set_range(double start, double end);
 
-    void printGraph() override { }
-    void printCurrent() override { }
     void save_state() override { }
     void restore_state() override { }
 

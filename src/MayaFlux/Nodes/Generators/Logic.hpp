@@ -447,16 +447,6 @@ public:
     EdgeType get_edge_type() const { return m_edge_type; }
 
     /**
-     * @brief Prints a visual representation of the logic function
-     */
-    inline void printGraph() override { }
-
-    /**
-     * @brief Prints the current state and parameters
-     */
-    inline void printCurrent() override { }
-
-    /**
      * @brief Registers a callback for every generated sample
      * @param callback Function to call when a new sample is generated
      */

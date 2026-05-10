@@ -200,12 +200,4 @@ void Sine::restore_state()
     m_state_saved = false;
 }
 
-void Sine::printGraph()
-{
-}
-
-void Sine::printCurrent()
-{
-}
-
 }

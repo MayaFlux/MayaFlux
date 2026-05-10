@@ -150,24 +150,6 @@ public:
     [[nodiscard]] virtual bool should_mock_process() const;
 
     /**
-     * @brief Prints a visual representation of the generated pattern
-     *
-     * This method should output a visual representation of the
-     * generator's output over time, useful for analysis and
-     * understanding the pattern characteristics.
-     */
-    virtual void printGraph() = 0;
-
-    /**
-     * @brief Prints the current state and parameters of the generator
-     *
-     * This method should output the current configuration and state
-     * of the generator, including parameters like frequency, amplitude,
-     * phase, or any other generator-specific settings.
-     */
-    virtual void printCurrent() = 0;
-
-    /**
      * @brief Updates the context object for callbacks
      * @param value The current generated sample
      *

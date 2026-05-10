@@ -105,22 +105,6 @@ public:
     std::vector<double> process_batch(unsigned int num_samples) override;
 
     /**
-     * @brief Prints a visual representation of the sine wave
-     *
-     * Outputs a text-based graph of the sine wave's shape over time,
-     * useful for debugging and visualization.
-     */
-    void printGraph() override;
-
-    /**
-     * @brief Prints the current parameters of the sine oscillator
-     *
-     * Outputs the current frequency, amplitude, offset, and modulation
-     * settings of the oscillator.
-     */
-    void printCurrent() override;
-
-    /**
      * @brief Sets the oscillator's frequency
      * @param frequency New frequency in Hz
      *

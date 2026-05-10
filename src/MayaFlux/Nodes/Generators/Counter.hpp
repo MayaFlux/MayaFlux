@@ -46,9 +46,6 @@ public:
 
     std::vector<double> process_batch(unsigned int num_samples) override;
 
-    inline void printGraph() override { }
-    inline void printCurrent() override { }
-
     /**
      * @brief Sets the wrap boundary
      * @param modulo New modulo value (0 = unbounded)

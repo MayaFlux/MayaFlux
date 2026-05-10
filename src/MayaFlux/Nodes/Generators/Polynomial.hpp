@@ -290,20 +290,6 @@ public:
     [[nodiscard]] std::span<double> get_output_buffer() { return m_history.linearized_view(); }
 
     /**
-     * @brief Prints a visual representation of the polynomial function
-     *
-     * Outputs a text-based graph of the polynomial function over a range of inputs.
-     */
-    inline void printGraph() override { }
-
-    /**
-     * @brief Prints the current state and parameters
-     *
-     * Outputs the current mode, buffer contents, and other relevant information.
-     */
-    inline void printCurrent() override { }
-
-    /**
      * @brief Sets the scaling factor for the output values
      */
     inline void set_amplitude(double amplitude) override { m_scale_factor = amplitude; }

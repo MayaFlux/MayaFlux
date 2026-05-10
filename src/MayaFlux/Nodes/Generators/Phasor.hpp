@@ -104,22 +104,6 @@ public:
     std::vector<double> process_batch(unsigned int num_samples) override;
 
     /**
-     * @brief Prints a visual representation of the phasor waveform
-     *
-     * Outputs a text-based graph of the phasor pattern over time,
-     * useful for debugging and visualization.
-     */
-    inline void printGraph() override { }
-
-    /**
-     * @brief Prints the current parameters of the phasor generator
-     *
-     * Outputs the current frequency, amplitude, offset, and modulation
-     * settings of the generator.
-     */
-    inline void printCurrent() override { }
-
-    /**
      * @brief Sets the generator's frequency
      * @param frequency New frequency in Hz
      *
