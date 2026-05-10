@@ -90,6 +90,15 @@ public:
     void remove_from_root(const std::shared_ptr<Node>& node, ProcessingToken token, unsigned int channel = 0);
 
     /**
+     * @brief Get all nodes from their respective root nodes for a specific token and/or channel
+     * @param token Processing domain (AUDIO_RATE, VISUAL_RATE, etc.)
+     * @param channel Channel within that domain
+     * @return Vector of shared pointers to the nodes for that token and channel root
+     */
+    [[nodiscard]] const std::vector<std::shared_ptr<Node>>&
+    get_nodes(ProcessingToken token, uint32_t channel = 0) const;
+
+    /**
      * @brief Register subsystem processor for a specific token
      * @param token Processing domain to handle (e.g., AUDIO_RATE, VISUAL_RATE)
      * @param processor Function that receives a span of root nodes for that token
@@ -285,13 +294,6 @@ public:
      * @return Vector of networks registered to this token
      */
     [[nodiscard]] std::vector<std::shared_ptr<Network::NodeNetwork>> get_networks(ProcessingToken token, uint32_t channel = 0) const;
-
-    /**
-     * @brief Get all networks for a specific token across all channels
-     * @param token Processing domain
-     * @return Vector of networks registered to this token
-     */
-    [[nodiscard]] std::vector<std::shared_ptr<Network::NodeNetwork>> get_all_networks(ProcessingToken token) const;
 
     /**
      * @brief Get count of networks for a token
@@ -546,6 +548,13 @@ private:
      * @brief Check if network is registered globally
      */
     bool is_network_registered(const std::shared_ptr<Network::NodeNetwork>& network);
+
+    /**
+     * @brief Get all networks for a specific token across all channels
+     * @param token Processing domain
+     * @return Vector of networks registered to this token
+     */
+    [[nodiscard]] std::vector<std::shared_ptr<Network::NodeNetwork>> get_all_networks(ProcessingToken token) const;
 
     /**
      * @brief Resets the processing state of audio networks for a token and channel
