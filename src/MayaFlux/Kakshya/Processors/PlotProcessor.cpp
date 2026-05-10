@@ -98,6 +98,17 @@ void PlotProcessor::set_raw(uint32_t series_index, std::vector<double> data)
     b.raw_dirty.test_and_set(std::memory_order_release);
 }
 
+void PlotProcessor::set_series_semantics(uint32_t series_index,
+    DataDimension::Role role,
+    DataModality modality)
+{
+    auto it = m_bindings.find(series_index);
+    if (it == m_bindings.end())
+        return;
+    it->second.role = role;
+    it->second.modality = modality;
+}
+
 void PlotProcessor::unbind(uint32_t series_index)
 {
     auto it = m_bindings.find(series_index);

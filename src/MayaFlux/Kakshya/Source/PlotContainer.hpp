@@ -54,11 +54,23 @@ public:
 
     /**
      * @brief Add a named series with a given capacity, zero-initialised.
-     * @param name   Series name. Used as the DataDimension name and for lookup.
-     * @param count  Number of samples. Sets the DataDimension size.
+     *
+     * @param name     Series name. Used as the DataDimension name and for lookup.
+     * @param count    Number of samples. Sets the DataDimension size.
+     * @param role     Semantic role of this series. Used by DomainMapping to
+     *                 locate series by axis intent rather than by index.
+     *                 e.g. SPATIAL_X, SPATIAL_Y, SPATIAL_Z, TIME, FREQUENCY,
+     *                 COLOR, CHANNEL, CUSTOM.
+     * @param modality Data modality of this series. Describes the nature of the
+     *                 scalar sequence: AUDIO_1D for time-domain waveforms,
+     *                 SPECTRAL_2D for frequency bins, SCALAR_F32 for generic
+     *                 scalar data, TENSOR_ND when no closer modality applies.
      * @return Index of the newly added series.
      */
-    uint32_t add_series(std::string name, uint64_t count);
+    uint32_t add_series(std::string name,
+        uint64_t count,
+        DataDimension::Role role = DataDimension::Role::CUSTOM,
+        DataModality modality = DataModality::TENSOR_ND);
 
     // =========================================================================
     // Source binding — delegates to PlotProcessor, creating it if absent.
@@ -172,6 +184,11 @@ public:
      */
     [[nodiscard]] uint64_t series_size(uint32_t index) const;
 
+    /**
+     * @brief Return the role of a series.
+     */
+    [[nodiscard]] DataDimension::Role series_role(uint32_t index) const;
+
     // =========================================================================
     // NDDataContainer
     // =========================================================================
@@ -279,8 +296,6 @@ public:
     [[nodiscard]] bool all_dimensions_consumed() const override { return true; }
 
 private:
-    void rebuild_dimensions();
-
     /**
      * @brief Return the PlotProcessor, creating and attaching it if absent.
      *
@@ -289,10 +304,8 @@ private:
      */
     PlotProcessor& ensure_processor();
 
-    std::vector<std::string> m_names;
     std::vector<DataVariant> m_data;
     std::vector<DataVariant> m_processed_data;
-    std::vector<DataDimension> m_dimensions;
 
     ContainerDataStructure m_structure;
     std::shared_ptr<DataProcessor> m_processor;

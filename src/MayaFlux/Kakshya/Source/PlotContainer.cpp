@@ -36,24 +36,25 @@ PlotProcessor& PlotContainer::ensure_processor()
 // Series management
 // =========================================================================
 
-uint32_t PlotContainer::add_series(std::string name, uint64_t count)
+uint32_t PlotContainer::add_series(std::string name, uint64_t count,
+    DataDimension::Role role, DataModality modality)
 {
-
-    m_names.push_back(std::move(name));
     m_data.emplace_back(std::vector<double>(count, 0.0));
     m_processed_data.emplace_back(std::vector<double>(count, 0.0));
+    m_structure.dimensions.emplace_back(std::move(name), count, 1, role);
+    m_structure.modality = DataModality::TENSOR_ND;
 
-    rebuild_dimensions();
+    const auto idx = static_cast<uint32_t>(m_structure.dimensions.size() - 1);
+    MF_INFO(C, X, "PlotContainer: added series '{}' at index {} ({} samples, role={}, modality={})",
+        m_structure.dimensions[idx].name, idx, count,
+        static_cast<int>(role),
+        modality_to_string(modality));
 
-    const auto idx = static_cast<uint32_t>(m_names.size() - 1);
-    MF_INFO(C, X, "PlotContainer: added series '{}' at index {} with {} samples",
-        m_names[idx], idx, count);
     return idx;
 }
 
 void PlotContainer::write_series(uint32_t index, std::span<const double> samples)
 {
-
     if (index >= m_data.size()) {
         MF_ERROR(C, X, "PlotContainer::write_series: index {} out of range", index);
         return;
@@ -71,7 +72,6 @@ void PlotContainer::write_series(uint32_t index, std::span<const double> samples
 
 void PlotContainer::write_sample(uint32_t index, uint64_t sample_index, double value)
 {
-
     if (index >= m_data.size()) {
         MF_ERROR(C, X, "PlotContainer::write_sample: series index {} out of range", index);
         return;
@@ -88,7 +88,6 @@ void PlotContainer::write_sample(uint32_t index, uint64_t sample_index, double v
 
 void PlotContainer::resize_series(uint32_t index, uint64_t count)
 {
-
     if (index >= m_data.size()) {
         MF_ERROR(C, X, "PlotContainer::resize_series: index {} out of range", index);
         return;
@@ -104,18 +103,20 @@ void PlotContainer::resize_series(uint32_t index, uint64_t count)
     if (pv)
         pv->resize(count, 0.0);
 
-    rebuild_dimensions();
+    m_structure.dimensions[index].size = count;
 }
 
 uint32_t PlotContainer::series_count() const
 {
-    return static_cast<uint32_t>(m_names.size());
+    return static_cast<uint32_t>(m_structure.dimensions.size());
 }
 
 const std::string& PlotContainer::series_name(uint32_t index) const
 {
     static const std::string empty;
-    return index < m_names.size() ? m_names[index] : empty;
+    return index < m_structure.dimensions.size()
+        ? m_structure.dimensions[index].name
+        : empty;
 }
 
 uint64_t PlotContainer::series_size(uint32_t index) const
@@ -126,25 +127,78 @@ uint64_t PlotContainer::series_size(uint32_t index) const
     return vec ? static_cast<uint64_t>(vec->size()) : 0;
 }
 
+DataDimension::Role PlotContainer::series_role(uint32_t index) const
+{
+    return index < m_structure.dimensions.size()
+        ? m_structure.dimensions[index].role
+        : DataDimension::Role::CUSTOM;
+}
+
+// =========================================================================
+// Source binding
+// =========================================================================
+
+void PlotContainer::bind_node(uint32_t series_index, std::shared_ptr<Nodes::Node> node)
+{
+    auto& p = ensure_processor();
+    p.bind_node(series_index, std::move(node));
+    p.set_series_semantics(series_index, m_structure.dimensions[series_index].role,
+        m_structure.modality);
+    mark_ready_for_processing(true);
+}
+
+void PlotContainer::bind_audio_buffer(uint32_t series_index,
+    std::shared_ptr<Buffers::AudioBuffer> buffer)
+{
+    auto& p = ensure_processor();
+    p.bind_audio_buffer(series_index, std::move(buffer));
+    p.set_series_semantics(series_index, m_structure.dimensions[series_index].role,
+        m_structure.modality);
+    mark_ready_for_processing(true);
+}
+
+void PlotContainer::bind_network(uint32_t series_index,
+    std::shared_ptr<Nodes::Network::NodeNetwork> network)
+{
+    auto& p = ensure_processor();
+    p.bind_network(series_index, std::move(network));
+    p.set_series_semantics(series_index, m_structure.dimensions[series_index].role,
+        m_structure.modality);
+    mark_ready_for_processing(true);
+}
+
+void PlotContainer::bind_callable(uint32_t series_index,
+    std::function<void(std::vector<double>&)> fn)
+{
+    auto& p = ensure_processor();
+    p.bind_callable(series_index, std::move(fn));
+    p.set_series_semantics(series_index, m_structure.dimensions[series_index].role,
+        m_structure.modality);
+    mark_ready_for_processing(true);
+}
+
+void PlotContainer::set_raw(uint32_t series_index, std::vector<double> data)
+{
+    auto& p = ensure_processor();
+    p.set_raw(series_index, std::move(data));
+    p.set_series_semantics(series_index, m_structure.dimensions[series_index].role,
+        m_structure.modality);
+    mark_ready_for_processing(true);
+}
+
+void PlotContainer::unbind(uint32_t series_index)
+{
+    if (m_processor)
+        std::static_pointer_cast<PlotProcessor>(m_processor)->unbind(series_index);
+}
+
 // =========================================================================
 // NDDataContainer
 // =========================================================================
 
-void PlotContainer::rebuild_dimensions()
-{
-    m_dimensions.clear();
-    m_dimensions.reserve(m_names.size());
-    for (size_t i = 0; i < m_names.size(); ++i) {
-        const auto* vec = std::get_if<std::vector<double>>(&m_data[i]);
-        uint64_t sz = vec ? static_cast<uint64_t>(vec->size()) : 0;
-        m_dimensions.emplace_back(m_names[i], sz, 1, DataDimension::Role::CUSTOM);
-    }
-    m_structure.dimensions = m_dimensions;
-}
-
 std::vector<DataDimension> PlotContainer::get_dimensions() const
 {
-    return m_dimensions;
+    return m_structure.dimensions;
 }
 
 uint64_t PlotContainer::get_total_elements() const
@@ -165,7 +219,6 @@ uint64_t PlotContainer::get_num_frames() const
 
 std::vector<DataVariant> PlotContainer::get_region_data(const Region& region) const
 {
-
     if (region.start_coordinates.empty() || region.end_coordinates.empty())
         return {};
 
@@ -294,10 +347,8 @@ std::vector<uint64_t> PlotContainer::linear_index_to_coordinates(uint64_t linear
 
 void PlotContainer::clear()
 {
-    m_names.clear();
     m_data.clear();
     m_processed_data.clear();
-    m_dimensions.clear();
     m_structure.dimensions.clear();
     update_processing_state(ProcessingState::IDLE);
 }
@@ -322,15 +373,19 @@ DataAccess PlotContainer::channel_data(size_t index)
         static std::vector<DataDimension> empty_dims;
         return { empty, empty_dims, DataModality::TENSOR_ND };
     }
-    return { m_data[index], { m_dimensions[index] }, DataModality::TENSOR_ND };
+    return { m_data[index], { m_structure.dimensions[index] }, DataModality::TENSOR_ND };
 }
 
 std::vector<DataAccess> PlotContainer::all_channel_data()
 {
     std::vector<DataAccess> result;
     result.reserve(m_data.size());
-    for (size_t i = 0; i < m_data.size(); ++i)
-        result.emplace_back(m_data[i], std::vector<DataDimension> { m_dimensions[i] }, DataModality::TENSOR_ND);
+    for (size_t i = 0; i < m_data.size(); ++i) {
+        result.emplace_back(m_data[i],
+            std::vector<DataDimension> { m_structure.dimensions[i] },
+            DataModality::TENSOR_ND);
+    }
+
     return result;
 }
 

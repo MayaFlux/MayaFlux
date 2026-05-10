@@ -2,6 +2,8 @@
 
 #include "MayaFlux/Kakshya/DataProcessor.hpp"
 
+#include "MayaFlux/Kakshya/NDData/NDData.hpp"
+
 namespace MayaFlux::Nodes {
 class Node;
 namespace Network {
@@ -49,6 +51,8 @@ public:
 
     struct SeriesBinding {
         SourceType source_type { SourceType::RAW };
+        DataDimension::Role role { DataDimension::Role::CUSTOM };
+        DataModality modality { DataModality::TENSOR_ND };
 
         std::shared_ptr<Nodes::Node> node;
         std::shared_ptr<Buffers::AudioBuffer> audio_buffer;
@@ -133,6 +137,22 @@ public:
      * @param series_index Series index to unbind.
      */
     void unbind(uint32_t series_index);
+
+    /**
+     * @brief Set the role and modality for a series binding.
+     *
+     * Called by PlotContainer after every bind_* to propagate the semantic
+     * metadata declared on add_series() down into the binding. process() uses
+     * these values to tag each processed_data variant's dimension correctly,
+     * so DomainMapping can query by Role rather than by index.
+     *
+     * @param series_index  Series index.
+     * @param role          DataDimension::Role declared on add_series().
+     * @param modality      DataModality declared on add_series().
+     */
+    void set_series_semantics(uint32_t series_index,
+        DataDimension::Role role,
+        DataModality modality);
 
     [[nodiscard]] bool has_binding(uint32_t series_index) const;
 
