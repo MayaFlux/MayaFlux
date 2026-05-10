@@ -5,6 +5,9 @@ on:
     - cron: "0 2 * * *"
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   check_changes:
     runs-on: ubuntu-latest
@@ -27,7 +30,8 @@ jobs:
 
   rebuild:
     needs: check_changes
-    if: ${{ needs.check_changes.outputs.has_changes == 'true' || github.event_name == 'workflow_dispatch' }}
+    if: ${{ needs.check_changes.outputs.has_changes == 'true' || github.event_name
+      == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     steps:
       - name: Install copr-cli
