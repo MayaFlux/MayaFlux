@@ -260,17 +260,27 @@ public:
         std::shared_ptr<Buffers::FormaBuffer> buffer,
         std::function<float(T)> project = {})
     {
-        std::function<float()> reader = project
-            ? std::function<float()>([s = state, p = std::move(project)] {
-                  return p(s->value);
-              })
-            : std::function<float()>([s = state] {
-                  return static_cast<float>(s->value);
-              });
+        std::function<float()> reader;
+        if (project) {
+            reader = [s = state, p = std::move(project)] {
+                return p(s->value);
+            };
+        } else if constexpr (std::is_convertible_v<T, float>) {
+            reader = [s = state] {
+                return static_cast<float>(s->value);
+            };
+        } else {
+            reader = [] { return 0.F; };
+        }
 
-        std::function<void(float)> writer = [s = state](float v) {
-            s->write(static_cast<T>(v));
-        };
+        std::function<void(float)> writer;
+        if constexpr (std::is_convertible_v<float, T>) {
+            writer = [s = state](float v) {
+                s->write(static_cast<T>(v));
+            };
+        } else {
+            writer = [](float) { };
+        }
 
         state->id = id;
         m_records[id] = ElementRecord {

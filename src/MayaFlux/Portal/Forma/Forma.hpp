@@ -149,6 +149,7 @@ MAYAFLUX_API bool is_initialized();
  * @param initial    Starting value written into MappedState.
  * @param capacity   Initial FormaBuffer capacity in bytes.
  * @param topology   Primitive topology for the FormaBuffer.
+ * @param project    Optional T -> float projection for outbound readers.
  * @return Fully constructed Mapped<T> with element registered in @p layer.
  */
 template <typename T>
@@ -158,12 +159,13 @@ template <typename T>
     GeometryFn<T> geom,
     T initial,
     size_t capacity = 4096,
-    Graphics::PrimitiveTopology topology = Graphics::PrimitiveTopology::TRIANGLE_STRIP)
+    Graphics::PrimitiveTopology topology = Graphics::PrimitiveTopology::TRIANGLE_STRIP,
+    std::function<float(T)> project = {})
 {
     auto buf = create_buffer(std::move(window), capacity, topology);
     auto mapped = make_mapped<T>(initial, std::move(geom), buf);
     mapped.element.id = layer.add(mapped.element);
-    get_bridge().register_element(mapped);
+    get_bridge().register_element(mapped, std::move(project));
     return mapped;
 }
 
