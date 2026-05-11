@@ -32,14 +32,15 @@ on:
 
 env:
   BUILD_TYPE: RelWithDebInfo
-  VCVARS_PATH: 'C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat'
+  VCVARS_PATH: 'C:\Program Files\Microsoft Visual
+    Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat'
   VCPKG_ROOT: ${{ github.workspace }}/vcpkg
   LLVM_ROOT: "C:/LLVM_CI"
 
 jobs:
   build:
-    runs-on: windows-2022
-    name: "Windows 2022 (MSVC 2022, x64)"
+    runs-on: windows-latest
+    name: "Windows Latest (MSVC 22, x64)"
 
     steps:
       # ============================================
@@ -119,36 +120,6 @@ jobs:
 
           Write-Host "✓ Build optimizations applied" -ForegroundColor Green
 
-      - name: Create DIA SDK symlink for LLVM compatibility
-        shell: pwsh
-        run: |
-          Write-Host "Creating DIA SDK symlink for LLVM..." -ForegroundColor Yellow
-
-          $targetPath = "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\DIA SDK"
-          $linkPath = "C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\DIA SDK"
-
-          # Create parent directories if they don't exist
-          $linkParent = Split-Path $linkPath -Parent
-          if (-not (Test-Path $linkParent)) {
-            New-Item -ItemType Directory -Path $linkParent -Force | Out-Null
-          }
-
-          # Create directory junction (symlink)
-          if (-not (Test-Path $linkPath)) {
-            New-Item -ItemType Junction -Path $linkPath -Target $targetPath -Force
-            Write-Host "✓ Created symlink: $linkPath -> $targetPath" -ForegroundColor Green
-          } else {
-            Write-Host "✓ Symlink already exists" -ForegroundColor Green
-          }
-
-          # Verify
-          if (Test-Path "$linkPath\lib\amd64\diaguids.lib") {
-            Write-Host "✓ DIA SDK accessible via symlink" -ForegroundColor Green
-          } else {
-            Write-Host "✗ DIA SDK verification failed" -ForegroundColor Red
-            exit 1
-          }
-
       # ============================================
       # PHASE 2: Dependency Management (Parallelizable)
       # ============================================
@@ -166,8 +137,8 @@ jobs:
         id: llvm-cache
         with:
           path: ${{ env.LLVM_ROOT }}
-          key: llvm-21.1.8-windows-x64
-          restore-keys: llvm-21.1.8-windows-x64
+          key: llvm-22.1.5-windows-x64
+          restore-keys: llvm-22.1.5-windows-x64
 
       - name: Cache FFmpeg
         uses: actions/cache@v4
@@ -199,15 +170,15 @@ jobs:
 
           Write-Host "✓ vcpkg setup complete" -ForegroundColor Green
 
-      - name: Install LLVM 21 (Lila JIT)
+      - name: Install LLVM 22 (Lila JIT)
         if: steps.llvm-cache.outputs.cache-hit != 'true'
         shell: pwsh
         run: |
-          Write-Host "=== Installing LLVM 21 (Lila JIT Requirement) ===" -ForegroundColor Magenta
+          Write-Host "=== Installing LLVM 22 (Lila JIT Requirement) ===" -ForegroundColor Magenta
 
           $tempDir = Join-Path $env:TEMP "llvm_ci_download"
-          $downloadFile = Join-Path $tempDir "llvm-21.1.8.tar.xz"
-          $llvmUrl = "https://github.com/llvm/llvm-project/releases/download/llvmorg-21.1.8/clang+llvm-21.1.8-x86_64-pc-windows-msvc.tar.xz"
+          $downloadFile = Join-Path $tempDir "llvm-22.1.5.tar.xz"
+          $llvmUrl = "https://github.com/llvm/llvm-project/releases/download/llvmorg-22.1.5/clang+llvm-22.1.5-x86_64-pc-windows-msvc.tar.xz"
 
           New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
           New-Item -ItemType Directory -Path ${{ env.LLVM_ROOT }} -Force | Out-Null
@@ -225,7 +196,7 @@ jobs:
           Copy-Item -Path "$($extracted.FullName)\*" -Destination ${{ env.LLVM_ROOT }} -Recurse -Force
           # Verify
           if (Test-Path "${{ env.LLVM_ROOT }}\lib\LLVMCore.lib") {
-            Write-Host "✓ LLVM 21 installed" -ForegroundColor Green
+            Write-Host "✓ LLVM 22 installed" -ForegroundColor Green
           } else {
             Write-Host "✗ LLVM installation verification failed" -ForegroundColor Red
             exit 1
@@ -337,6 +308,33 @@ jobs:
           cmake --install build --prefix dist_staging --config ${{ env.BUILD_TYPE }}
           Write-Host "✓ Installation completed to dist_staging/" -ForegroundColor Green
 
+      - name: Merge vcpkg tree into distribution
+        if: ${{ inputs.create_distribution != false }}
+        shell: pwsh
+        run: |
+          if (-not $env:VCPKG_INSTALLED_DIR) {
+            Write-Host "✗ VCPKG_INSTALLED_DIR not set" -ForegroundColor Red
+            exit 1
+          }
+
+          $src = "$env:VCPKG_INSTALLED_DIR\x64-windows"
+          if (-not (Test-Path $src)) {
+            Write-Host "✗ vcpkg installed tree not found at: $src" -ForegroundColor Red
+            exit 1
+          }
+
+          foreach ($subdir in @("bin", "include", "lib", "share", "debug\bin", "debug\lib")) {
+            $srcSub = Join-Path $src $subdir
+            $dstSub = Join-Path "dist_staging" $subdir
+            if (Test-Path $srcSub) {
+              New-Item -ItemType Directory -Path $dstSub -Force | Out-Null
+              Copy-Item -Path "$srcSub\*" -Destination $dstSub -Recurse -Force
+            }
+          }
+
+          $dllCount = @(Get-ChildItem "dist_staging\bin" -Filter *.dll).Count
+          Write-Host "✓ vcpkg tree merged into dist_staging ($dllCount DLLs in bin\)" -ForegroundColor Green
+
       - name: Verify version file
         shell: bash
         run: |
@@ -346,36 +344,6 @@ jobs:
           else
             echo "WARNING: .version file not generated!"
           fi
-
-      - name: Bundle runtime DLLs
-        if: ${{ inputs.create_distribution != false }}
-        shell: pwsh
-        run: |
-          Write-Host "=== Bundling Runtime DLLs ===" -ForegroundColor Magenta
-
-          $binDir = "dist_staging\bin"
-          New-Item -ItemType Directory -Path $binDir -Force | Out-Null
-
-          # vcpkg DLLs
-          if ($env:VCPKG_INSTALLED_DIR) {
-            $vcpkgBin = "$env:VCPKG_INSTALLED_DIR\x64-windows\bin"
-            if (Test-Path $vcpkgBin) {
-              Copy-Item -Path "$vcpkgBin\*.dll" -Destination $binDir -Force
-            }
-          }
-
-          # LLVM DLLs
-          if ($env:LLVM_CI_PATH) {
-            Copy-Item -Path "$env:LLVM_CI_PATH\bin\*.dll" -Destination $binDir -Force
-          }
-
-          # Vulkan DLLs
-          if ($env:VULKAN_SDK) {
-            Copy-Item -Path "$env:VULKAN_SDK\Bin\*.dll" -Destination $binDir -Force
-          }
-
-          $dllCount = @(Get-ChildItem $binDir -Filter *.dll).Count
-          Write-Host "✓ DLLs bundled: $dllCount files" -ForegroundColor Green
 
       - name: Copy distribution assets
         if: ${{ inputs.create_distribution != false }}
@@ -418,49 +386,30 @@ jobs:
         run: |
           Write-Host "`n=== MayaFlux Windows Distribution Structure ===" -ForegroundColor Cyan
 
-          Write-Host "`nMayaFluxLib (Core Library):" -ForegroundColor Yellow
+          Write-Host "`nMayaFluxLib:" -ForegroundColor Yellow
           $headerCount = @(Get-ChildItem -Path "dist_staging\include\MayaFlux" -Recurse -Filter "*.hpp" -ErrorAction SilentlyContinue).Count
           Write-Host "  Headers: $headerCount files"
-          if (Test-Path "dist_staging\lib\MayaFluxLib.lib") {
-            Write-Host "  ✓ MayaFluxLib.lib (import library)"
-          }
-          if (Test-Path "dist_staging\bin\MayaFluxLib.dll") {
-            Write-Host "  ✓ MayaFluxLib.dll (runtime)"
-          }
+          if (Test-Path "dist_staging\lib\MayaFluxLib.lib") { Write-Host "  ✓ MayaFluxLib.lib" }
+          if (Test-Path "dist_staging\bin\MayaFluxLib.dll") { Write-Host "  ✓ MayaFluxLib.dll" }
 
-          Write-Host "`nLila (JIT Interface):" -ForegroundColor Yellow
-          $lilaHeaders = @(Get-ChildItem -Path "dist_staging\include\Lila" -Recurse -Filter "*.hpp" -ErrorAction SilentlyContinue).Count
-          Write-Host "  Headers: $lilaHeaders files"
-          if (Test-Path "dist_staging\lib\Lila.lib") {
-            Write-Host "  ✓ Lila.lib (import library)"
-          }
-          if (Test-Path "dist_staging\bin\Lila.dll") {
-            Write-Host "  ✓ Lila.dll (runtime)"
-          }
+          Write-Host "`nLila:" -ForegroundColor Yellow
+          if (Test-Path "dist_staging\lib\Lila.lib")    { Write-Host "  ✓ Lila.lib" }
+          if (Test-Path "dist_staging\bin\Lila.dll")    { Write-Host "  ✓ Lila.dll" }
+          if (Test-Path "dist_staging\bin\lila_server.exe") { Write-Host "  ✓ lila_server.exe" }
 
-          Write-Host "`nlila_server (User Application):" -ForegroundColor Yellow
-          if (Test-Path "dist_staging\bin\lila_server.exe") {
-            $fileInfo = Get-Item "dist_staging\bin\lila_server.exe"
-            $sizeMB = [math]::Round($fileInfo.Length / 1MB, 2)
-            Write-Host "  ✓ lila_server.exe (${sizeMB} MB)"
-          }
+          Write-Host "`nvcpkg dependencies (merged):" -ForegroundColor Yellow
+          $vcpkgDlls = @(Get-ChildItem "dist_staging\bin" -Filter "*.dll" -ErrorAction SilentlyContinue).Count
+          $vcpkgLibs = @(Get-ChildItem "dist_staging\lib" -Filter "*.lib" -ErrorAction SilentlyContinue).Count
+          $vcpkgConfigs = @(Get-ChildItem "dist_staging\share" -Filter "*Config.cmake" -Recurse -ErrorAction SilentlyContinue).Count
+          Write-Host "  DLLs in bin\:       $vcpkgDlls"
+          Write-Host "  .lib in lib\:       $vcpkgLibs"
+          Write-Host "  CMake configs:      $vcpkgConfigs"
 
-          Write-Host "`nRuntime DLLs (Bundled):" -ForegroundColor Yellow
-          $dlls = @(Get-ChildItem -Path "dist_staging\bin" -Filter "*.dll" -ErrorAction SilentlyContinue)
-          Write-Host "  Count: $($dlls.Count) DLLs"
-          if ($dlls.Count -gt 0) {
-            Write-Host "  Key DLLs:" -ForegroundColor Gray
-            $dlls | Where-Object { $_.Name -match "(LLVM|clang|ffmpeg|glfw|rtaudio|vulkan|hidapi|rtmidi)" } | ForEach-Object {
-              Write-Host "    - $($_.Name)"
-            }
-          }
-
-          Write-Host "`nShader/Runtime Resources:" -ForegroundColor Yellow
-          $shareDir = Test-Path "dist_staging\share"
-          if ($shareDir) {
-            $files = @(Get-ChildItem -Path "dist_staging\share" -Recurse -File -ErrorAction SilentlyContinue)
-            Write-Host "  Runtime files: $($files.Count) files"
-          }
+          Write-Host "`nShaders and runtime:" -ForegroundColor Yellow
+          $spvCount = @(Get-ChildItem "dist_staging\share\MayaFlux\shaders" -Filter "*.spv" -ErrorAction SilentlyContinue).Count
+          Write-Host "  SPIR-V shaders: $spvCount"
+          if (Test-Path "dist_staging\share\MayaFlux\runtime\pch.h") { Write-Host "  ✓ pch.h" }
+          if (Test-Path "dist_staging\share\MayaFlux\.version")       { Write-Host "  ✓ .version" }
 
       - name: Upload MayaFlux distribution
         if: ${{ inputs.create_distribution != false }}
@@ -491,7 +440,7 @@ jobs:
 
           Write-Host "`nDependencies:" -ForegroundColor Yellow
           Write-Host "  [Tier 1 - Dedicated Routes]" -ForegroundColor Cyan
-          Write-Host "  ✓ LLVM 21.1.8 (Lila JIT - manual download + cache)" -ForegroundColor Green
+          Write-Host "  ✓ LLVM 22.1.5 (Lila JIT - manual download + cache)" -ForegroundColor Green
           Write-Host "  ✓ Vulkan SDK (GitHub Action - auto-detected)" -ForegroundColor Green
           Write-Host "  [Tier 2 - vcpkg Package Manager]" -ForegroundColor Cyan
           Write-Host "  ✓ RtAudio 6.0.1 (WASAPI via vcpkg.json)" -ForegroundColor Green

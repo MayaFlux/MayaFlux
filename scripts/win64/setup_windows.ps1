@@ -106,7 +106,21 @@ if (Test-Path $vswhere) {
         if (Test-Path "$diaPath\lib\amd64\diaguids.lib") {
             [Environment]::SetEnvironmentVariable("DIA_SDK_PATH", $diaPath, "Machine")
             Write-Host "[DIA SDK] Found: $diaPath" -ForegroundColor Green
+            $diaLib = Join-Path $diaPath "lib\amd64"
+            [Environment]::SetEnvironmentVariable("LIB", "$diaLib;$([Environment]::GetEnvironmentVariable('LIB', 'Machine'))", "Machine")
+            Write-Host "[DIA SDK] Added to LIB: $diaLib" -ForegroundColor Green
             $diaFound = $true
+
+            $enterpriseDia = "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\DIA SDK"
+            if (-not (Test-Path $enterpriseDia)) {
+                $enterpriseParent = Split-Path $enterpriseDia -Parent
+                if (-not (Test-Path $enterpriseParent)) {
+                    New-Item -ItemType Directory -Path $enterpriseParent -Force | Out-Null
+                }
+                New-Item -ItemType Junction -Path $enterpriseDia -Target $diaPath -Force | Out-Null
+                Write-Host "[DIA SDK] Created Enterprise symlink -> $diaPath" -ForegroundColor Green
+            }
+
             break
         }
     }
@@ -117,7 +131,7 @@ if (Test-Path $vswhere) {
 }
 
 # LLVM/Clang
-$llvmVersion = "21.1.8"
+$llvmVersion = "22.1.5"
 $llvmRoot = "C:\Program Files\LLVM_Libs\$llvmVersion"
 
 if (Test-Path $llvmRoot) {

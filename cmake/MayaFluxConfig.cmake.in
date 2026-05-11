@@ -35,7 +35,11 @@ set(MAYAFLUX_USE_SHADERC @MAYAFLUX_USE_SHADERC@)
 if(WIN32)
     message(STATUS "=== Windows Dependency Resolution ===")
 
-    list(APPEND CMAKE_PREFIX_PATH "@VCPKG_INSTALLED_DIR@/x64-windows")
+    if(EXISTS "${PACKAGE_PREFIX_DIR}/share/vcpkg-cmake")
+        list(APPEND CMAKE_PREFIX_PATH "${PACKAGE_PREFIX_DIR}")
+    else()
+        list(APPEND CMAKE_PREFIX_PATH "@VCPKG_INSTALLED_DIR@/x64-windows")
+    endif()
 
     find_package(Vulkan REQUIRED)
     find_package(magic_enum REQUIRED)
@@ -48,8 +52,6 @@ if(WIN32)
     find_package(rtmidi CONFIG REQUIRED)
     find_package(asio CONFIG REQUIRED)
     find_package(assimp CONFIG REQUIRED)
-    find_package(LLVM CONFIG REQUIRED HINTS "$ENV{LLVM_DIR}")
-    find_package(Clang CONFIG REQUIRED HINTS "$ENV{Clang_DIR}")
     find_package(freetype CONFIG REQUIRED)
     find_package(utf8proc CONFIG REQUIRED)
 
@@ -378,28 +380,6 @@ if(NOT TARGET MayaFlux::Lila)
 
         target_link_libraries(MayaFlux::Lila INTERFACE
             MayaFlux::MayaFluxLib
-            LLVMSupport
-            LLVMCore
-            LLVMOrcJIT
-            LLVMIRReader
-            LLVMExecutionEngine
-            LLVMRuntimeDyld
-            LLVMTarget
-            LLVMX86CodeGen
-            LLVMMC
-            LLVMBitReader
-            LLVMAsmParser
-            LLVMTransformUtils
-            clangAST
-            clangBasic
-            clangCodeGen
-            clangDriver
-            clangFrontend
-            clangLex
-            clangParse
-            clangSema
-            clangSerialization
-            clangInterpreter
             asio::asio
             ws2_32
             legacy_stdio_definitions

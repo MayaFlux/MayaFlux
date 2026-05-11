@@ -31,10 +31,10 @@
 
     BinaryPackages = @{
         LLVM = @{
-            Version      = "21.1.8"
-            InstallRoot  = "C:\Program Files\LLVM_Libs\21.1.8"
-            Url          = "https://github.com/llvm/llvm-project/releases/download/llvmorg-21.1.8/clang+llvm-21.1.8-x86_64-pc-windows-msvc.tar.xz"
-            Verify       = "C:\Program Files\LLVM_Libs\21.1.8\lib\LLVMCore.lib"
+            Version      = "22.1.5"
+            InstallRoot  = "C:\Program Files\LLVM_Libs\22.1.5"
+            Url          = "https://github.com/llvm/llvm-project/releases/download/llvmorg-22.1.5/clang+llvm-22.1.5-x86_64-pc-windows-msvc.tar.xz"
+            Verify       = "C:\Program Files\LLVM_Libs\22.1.5\lib\LLVMCore.lib"
         }
     }
 

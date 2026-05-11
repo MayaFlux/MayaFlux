@@ -161,6 +161,7 @@ bool ClangInterpreter::initialize(bool skip_host_library_load)
     m_impl->compile_flags.emplace_back("-fno-function-sections");
     m_impl->compile_flags.emplace_back("-fno-data-sections");
     m_impl->compile_flags.emplace_back("-fno-unique-section-names");
+    m_impl->compile_flags.emplace_back("-D_CRT_SECURE_NO_WARNINGS");
 #endif
 
     std::vector<const char*> args;
@@ -208,11 +209,8 @@ bool ClangInterpreter::initialize(bool skip_host_library_load)
         LILA_DEBUG(Emitter::INTERPRETER, "Loaded " + lib_to_load);
     }
 
-    const char* header_include = skip_host_library_load
-        ? "#include \"pch.h\"\n"
-          "#include \"MayaFlux/MayaFlux.hpp\"\n"
-        : "#include \"pch.h\"\n"
-          "#include \"Lila/LiveAid.hpp\"\n";
+    const char* header_include = "#include \"pch.h\"\n"
+                                 "#include \"MayaFlux/MayaFlux.hpp\"\n";
 
     auto result = m_impl->interpreter->ParseAndExecute(header_include);
 
