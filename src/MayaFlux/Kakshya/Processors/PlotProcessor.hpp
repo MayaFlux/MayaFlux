@@ -60,7 +60,7 @@ public:
         std::function<void(std::vector<double>&)> callable;
 
         std::vector<double> pending_raw;
-        std::atomic_flag raw_dirty { ATOMIC_FLAG_INIT };
+        std::atomic_flag raw_dirty = ATOMIC_FLAG_INIT;
     };
 
     PlotProcessor() = default;

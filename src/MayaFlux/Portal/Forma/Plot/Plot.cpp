@@ -2,6 +2,7 @@
 
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/VKImage.hpp"
 #include "MayaFlux/Nodes/Graphics/VertexSpec.hpp"
+#include "MayaFlux/Kakshya/Region/RegionGroup.hpp"
 
 namespace MayaFlux::Portal::Forma::Plot {
 
