@@ -342,8 +342,6 @@ bool GraphicsRoutine::try_resume_with_context(uint64_t current_value, DelayConte
 
 bool GraphicsRoutine::try_resume(uint64_t current_context)
 {
-    // Default to FRAME_BASED context for backwards compatibility
-    // Note: You'll need to add FRAME_BASED to the DelayContext enum
     return try_resume_with_context(current_context, DelayContext::FRAME_BASED);
 }
 
