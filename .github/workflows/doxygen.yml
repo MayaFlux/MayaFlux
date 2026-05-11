@@ -1,10 +1,12 @@
 name: Generate Doxygen Documentation
 
 on:
-  push:
-    branches:
-      - main
+  schedule:
+    - cron: '30 18 * * *'
   workflow_dispatch:
+    # push:
+    #   branches:
+    #     - main
 
 permissions:
   contents: write
