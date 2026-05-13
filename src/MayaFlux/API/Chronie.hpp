@@ -18,6 +18,7 @@ namespace Vruta {
     class TaskScheduler;
     class EventManager;
     class SoundRoutine;
+    class GraphicsRoutine;
     class NetworkSource;
 }
 
@@ -125,8 +126,6 @@ MAYAFLUX_API void schedule_pattern(std::function<std::any(uint64_t)> pattern_fun
  * @brief Gets a pointer to a task's current value
  * @param name Name of the task
  * @return Pointer to the float value, or nullptr if not found
- *
- * Convenience wrapper for Engine::get_line_value() on the default engine.
  */
 MAYAFLUX_API float* get_line_value(const std::string& name);
 
@@ -135,17 +134,21 @@ MAYAFLUX_API float* get_line_value(const std::string& name);
  * @param name Unique name for the task
  * @param task The sound routine to schedule
  * @param initialize Whether to initialize the task immediately
- *
- * Convenience wrapper for Engine::schedule_task() on the default engine.
  */
 MAYAFLUX_API void schedule_task(const std::string& name, Vruta::SoundRoutine&& task, bool initialize = false);
+
+/**
+ * @brief Schedules a new sound routine task
+ * @param name Unique name for the task
+ * @param task The sound routine to schedule
+ * @param initialize Whether to initialize the task immediately
+ */
+MAYAFLUX_API void schedule_task(const std::string& name, Vruta::GraphicsRoutine&& task, bool initialize = false);
 
 /**
  * @brief Cancels a scheduled task
  * @param name Name of the task to cancel
  * @return true if task was found and canceled, false otherwise
- *
- * Convenience wrapper for Engine::cancel_task() on the default engine.
  */
 MAYAFLUX_API bool cancel_task(const std::string& name);
 
@@ -153,8 +156,6 @@ MAYAFLUX_API bool cancel_task(const std::string& name);
  * @brief Restarts a scheduled task
  * @param name Name of the task to restart
  * @return true if task was found and restarted, false otherwise
- *
- * Convenience wrapper for Engine::restart_task() on the default engine.
  */
 MAYAFLUX_API bool restart_task(const std::string& name);
 
@@ -164,8 +165,6 @@ MAYAFLUX_API bool restart_task(const std::string& name);
  * @param name Name of the task to update
  * @param args New parameter values
  * @return true if task was found and updated, false otherwise
- *
- * Convenience wrapper for Engine::update_task_params() on the default engine.
  */
 template <typename... Args>
 MAYAFLUX_API bool update_task_params(const std::string& name, Args... args);

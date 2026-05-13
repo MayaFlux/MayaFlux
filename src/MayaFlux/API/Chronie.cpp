@@ -107,6 +107,12 @@ void schedule_task(const std::string& name, Vruta::SoundRoutine&& task, bool ini
     get_scheduler()->add_task(std::move(task_ptr), name, initialize);
 }
 
+void schedule_task(const std::string& name, Vruta::GraphicsRoutine&& task, bool initialize)
+{
+    auto task_ptr = std::make_shared<Vruta::GraphicsRoutine>(std::move(task));
+    get_scheduler()->add_task(std::move(task_ptr), name, initialize);
+}
+
 bool cancel_task(const std::string& name)
 {
     return get_scheduler()->cancel_task(name);
