@@ -130,6 +130,23 @@ MAYAFLUX_API void ink_quads(
     const PressParams& params = {});
 
 /**
+ * @brief Composite a UTF-8 string directly into a new GPU texture.
+ *
+ * No TextBuffer, no quad geometry, no registration required.
+ * The returned VKImage is RGBA8, shader-read layout, ready for binding
+ * into a FormaBuffer or any other descriptor slot.
+ *
+ * @param text          UTF-8 string to composite.
+ * @param render_bounds Texture dimensions and wrap boundary in pixels.
+ * @param params        atlas, color, budget_h. render_bounds field ignored.
+ * @return              GPU-resident VKImage, or nullptr on failure.
+ */
+[[nodiscard]] MAYAFLUX_API std::shared_ptr<Core::VKImage> press(
+    std::string_view text,
+    glm::uvec2 render_bounds,
+    const PressParams& params = {});
+
+/**
  * @brief Re-composite a UTF-8 string into an existing TextBuffer.
  *
  * Always clears the buffer before compositing. Render bounds and atlas are
@@ -148,6 +165,22 @@ MAYAFLUX_API bool repress(
     std::string_view text,
     glm::vec4 color = { 1.F, 1.F, 1.F, 1.F },
     RedrawPolicy policy = RedrawPolicy::Clip);
+
+/**
+ * @brief Re-composite a UTF-8 string into an existing GPU texture.
+ *
+ * Uploads in-place when content fits within the existing image dimensions.
+ * Reallocates and updates @p target when content height exceeds image height.
+ *
+ * @param target  VKImage to update. May be replaced on reallocation.
+ * @param text    UTF-8 string to composite.
+ * @param params  render_bounds, atlas, color.
+ * @return        True on success.
+ */
+MAYAFLUX_API bool repress(
+    std::shared_ptr<Core::VKImage>& target,
+    std::string_view text,
+    const PressParams& params = {});
 
 /**
  * @brief Append a UTF-8 string into an existing TextBuffer at the current cursor.
