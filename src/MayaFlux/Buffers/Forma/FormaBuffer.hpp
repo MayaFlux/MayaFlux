@@ -93,6 +93,18 @@ public:
      */
     void set_texture(std::shared_ptr<Core::VKImage> image, std::string binding);
 
+    /**
+     * @brief Bind a texture to a slot in the multi-texture array at runtime.
+     *
+     * Valid only when setup_rendering was called with additional_textures.
+     * @p array_index is 0-based into the array declared at setup time:
+     *   index 0 = weight 1, index 1 = weight 2, etc.
+     *
+     * @param array_index Zero-based index into the textures[] array.
+     * @param image       GPU image. Must be GPU-resident.
+     */
+    void bind_texture(uint32_t array_index, const std::shared_ptr<Core::VKImage>& image);
+
     [[nodiscard]] std::shared_ptr<Buffers::RenderProcessor> get_render_processor() const override
     {
         return m_render_processor;
