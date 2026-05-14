@@ -1,9 +1,12 @@
 #include "Forma.hpp"
 
 #include "MayaFlux/Buffers/BufferManager.hpp"
+#include "MayaFlux/Nodes/NodeGraphManager.hpp"
 #include "MayaFlux/Transitive/Memory/Persist.hpp"
 #include "MayaFlux/Vruta/EventManager.hpp"
 #include "MayaFlux/Vruta/Scheduler.hpp"
+
+#include "Inspect/Inspector.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
@@ -11,10 +14,12 @@ namespace MayaFlux::Portal::Forma {
 
 namespace {
     bool g_initialized {};
+    std::shared_ptr<Nodes::NodeGraphManager> g_node_graph_manager;
     std::shared_ptr<Buffers::BufferManager> g_buffer_manager;
     std::shared_ptr<Vruta::TaskScheduler> g_scheduler;
     std::shared_ptr<Vruta::EventManager> g_event_manager;
     std::unique_ptr<Bridge> g_bridge;
+    std::unique_ptr<Inspector> g_inspect;
 }
 
 // =============================================================================
@@ -22,6 +27,7 @@ namespace {
 // =============================================================================
 
 bool initialize(
+    std::shared_ptr<Nodes::NodeGraphManager> node_graph_manager,
     std::shared_ptr<Buffers::BufferManager> buffer_manager,
     std::shared_ptr<Vruta::TaskScheduler> scheduler,
     std::shared_ptr<Vruta::EventManager> event_manager)
@@ -32,15 +38,27 @@ bool initialize(
         return true;
     }
 
+    g_node_graph_manager = std::move(node_graph_manager);
     g_buffer_manager = std::move(buffer_manager);
     g_scheduler = std::move(scheduler);
     g_event_manager = std::move(event_manager);
     g_bridge = std::make_unique<Bridge>(*g_scheduler, *g_buffer_manager);
+    g_inspect = std::make_unique<Inspector>(*g_buffer_manager, *g_node_graph_manager);
     g_initialized = true;
 
     MF_INFO(Journal::Component::Portal, Journal::Context::API,
         "Portal::Forma initialized");
     return true;
+}
+
+Inspector& get_inspector()
+{
+    if (!g_initialized) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::API,
+            "Portal::Forma not initialized - cannot get inspector");
+        throw std::runtime_error("Portal::Forma not initialized");
+    }
+    return *g_inspect;
 }
 
 void shutdown()
@@ -50,6 +68,8 @@ void shutdown()
     }
 
     g_bridge.reset();
+    g_inspect.reset();
+    g_node_graph_manager = nullptr;
     g_buffer_manager = nullptr;
     g_scheduler = nullptr;
     g_event_manager = nullptr;

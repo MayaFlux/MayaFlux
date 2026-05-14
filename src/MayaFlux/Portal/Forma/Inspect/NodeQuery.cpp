@@ -1,7 +1,5 @@
 #include "NodeQuery.hpp"
 
-#include <cstddef>
-
 #include "MayaFlux/Core/Backends/Windowing/Window.hpp"
 #include "MayaFlux/Kakshya/NDData/VertexLayout.hpp"
 #include "MayaFlux/Portal/Forma/Forma.hpp"
