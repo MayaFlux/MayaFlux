@@ -119,7 +119,7 @@ namespace {
         std::vector<uint8_t> pixels(budget_bytes, 0);
 
         const uint32_t copy_h = std::min(result.h,
-            static_cast<uint32_t>(result.pixels.size() / (buf_w * 4)));
+            static_cast<uint32_t>(result.pixels.size() / (static_cast<size_t>(buf_w) * 4)));
         for (uint32_t row = 0; row < copy_h; ++row) {
             std::memcpy(
                 pixels.data() + static_cast<size_t>(row) * buf_w * 4,
@@ -382,7 +382,8 @@ bool repress(
 bool repress(
     std::shared_ptr<Core::VKImage>& target,
     std::string_view text,
-    const PressParams& params)
+    const PressParams& params,
+    const std::shared_ptr<Buffers::VKBuffer>& staging)
 {
     if (!target) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::API,
@@ -407,31 +408,13 @@ bool repress(
 
     auto& loom = Portal::Graphics::get_texture_manager();
 
-    if (result->h > target->get_height() || buf_w != target->get_width()) {
-        const uint32_t new_h = std::max(result->h, buf_h);
-        const size_t new_bytes = static_cast<size_t>(buf_w) * new_h * 4;
-        std::vector<uint8_t> pixels(new_bytes, 0);
+    const uint32_t new_h = std::max(result->h, buf_h);
+    const bool needs_realloc = result->h > buf_h || buf_w != target->get_width();
 
-        const uint32_t copy_h = std::min(result->h, new_h);
-        for (uint32_t row = 0; row < copy_h; ++row) {
-            std::memcpy(
-                pixels.data() + static_cast<size_t>(row) * buf_w * 4,
-                result->pixels.data() + static_cast<size_t>(row) * buf_w * 4,
-                static_cast<size_t>(buf_w) * 4);
-        }
-
-        target = loom.create_2d(buf_w, new_h, Portal::Graphics::ImageFormat::RGBA8,
-            pixels.data(), 1);
-
-        MF_DEBUG(Journal::Component::Portal, Journal::Context::API,
-            "repress(VKImage): reallocated {}x{}", buf_w, new_h);
-        return target != nullptr;
-    }
-
-    const size_t buf_bytes = static_cast<size_t>(buf_w) * target->get_height() * 4;
+    const size_t buf_bytes = static_cast<size_t>(buf_w) * new_h * 4;
     std::vector<uint8_t> pixels(buf_bytes, 0);
 
-    const uint32_t copy_h = std::min(result->h, target->get_height());
+    const uint32_t copy_h = std::min(result->h, new_h);
     for (uint32_t row = 0; row < copy_h; ++row) {
         std::memcpy(
             pixels.data() + static_cast<size_t>(row) * buf_w * 4,
@@ -439,10 +422,29 @@ bool repress(
             static_cast<size_t>(buf_w) * 4);
     }
 
-    loom.upload_data(target, pixels.data(), buf_bytes);
+    if (needs_realloc) {
+        target = loom.create_2d(buf_w, new_h, Portal::Graphics::ImageFormat::RGBA8,
+            nullptr, 1);
+        if (!target)
+            return false;
+        if (staging)
+            loom.upload_data(target, pixels.data(), buf_bytes, staging);
+        else
+            loom.upload_data(target, pixels.data(), buf_bytes);
+        MF_DEBUG(Journal::Component::Portal, Journal::Context::API,
+            "repress(VKImage): reallocated {}x{}", buf_w, new_h);
+        return true;
+    }
+
+    if (staging) {
+        loom.upload_data(target, pixels.data(), buf_bytes, staging);
+    } else {
+        loom.upload_data(target, pixels.data(), buf_bytes);
+    }
 
     MF_DEBUG(Journal::Component::Portal, Journal::Context::API,
-        "repress(VKImage): updated {}x{} in-place", buf_w, target->get_height());
+        "repress(VKImage): updated {}x{} in-place", buf_w, buf_h);
+
     return true;
 }
 

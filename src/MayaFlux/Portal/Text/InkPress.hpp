@@ -175,12 +175,14 @@ MAYAFLUX_API bool repress(
  * @param target  VKImage to update. May be replaced on reallocation.
  * @param text    UTF-8 string to composite.
  * @param params  render_bounds, atlas, color.
+ * @param staging  Optional staging buffer for GPU upload.
  * @return        True on success.
  */
 MAYAFLUX_API bool repress(
     std::shared_ptr<Core::VKImage>& target,
     std::string_view text,
-    const PressParams& params = {});
+    const PressParams& params = {},
+    const std::shared_ptr<Buffers::VKBuffer>& staging = nullptr);
 
 /**
  * @brief Append a UTF-8 string into an existing TextBuffer at the current cursor.

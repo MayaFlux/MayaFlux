@@ -36,6 +36,11 @@ struct Link {
         if (establish)
             establish();
     }
+
+    Link(Link&&) noexcept = default;
+    Link& operator=(Link&&) noexcept = default;
+    Link(const Link&) = delete;
+    Link& operator=(const Link&) = delete;
 };
 
 } // namespace MayaFlux::Portal::Forma

@@ -18,15 +18,16 @@ namespace MayaFlux::Portal::Forma {
 struct Collapsible {
     uint32_t header_id {};
     std::shared_ptr<MappedState<bool>> open;
+    std::shared_ptr<Buffers::FormaBuffer> buf;
     LayoutCursor cursor_out;
 };
 
 /**
  * @brief Geometry function for a collapsible header strip.
  *
- * Writes four vertices at Kakshya::VertexLayout::for_meshes() stride (60 bytes).
- * position at offset 0 (vec3, 12 bytes), color at offset 12 (vec3, 12 bytes),
- * remaining 36 bytes zeroed. Closes over @p cursor_in for reflow.
+ * Writes 12 vertices (TRIANGLE_LIST) at for_meshes() stride.
+ * weight=0 for background quad (vertex color), weight=1 for text quad.
+ * Text quad UVs span [0,1]. Color quad color changes with open state.
  */
 [[nodiscard]] inline GeometryFn<bool> collapsible_header_geom(
     std::shared_ptr<MappedState<float>> cursor_in,
@@ -45,19 +46,45 @@ struct Collapsible {
         const auto layout = Kakshya::VertexLayout::for_meshes();
         const size_t stride = layout.stride_bytes;
 
-        const std::array<glm::vec3, 4> positions = {
-            glm::vec3 { x_min, bot, 0.F },
-            glm::vec3 { x_max, bot, 0.F },
-            glm::vec3 { x_min, top, 0.F },
-            glm::vec3 { x_max, top, 0.F },
+        const glm::vec3 bl { x_min, bot, 0.F };
+        const glm::vec3 br { x_max, bot, 0.F };
+        const glm::vec3 tl { x_min, top, 0.F };
+        const glm::vec3 tr { x_max, top, 0.F };
+
+        constexpr glm::vec3 white { 1.F, 1.F, 1.F };
+        constexpr float w0 = 0.F;
+        constexpr float w1 = 1.F;
+        const glm::vec2 uv_bl { 0.F, 1.F };
+        const glm::vec2 uv_br { 1.F, 1.F };
+        const glm::vec2 uv_tl { 0.F, 0.F };
+        const glm::vec2 uv_tr { 1.F, 0.F };
+
+        out.assign(12 * stride, 0);
+
+        auto write = [&](size_t idx, const glm::vec3& pos, const glm::vec3& c,
+                         float w, const glm::vec2& uv) {
+            auto* v = out.data() + idx * stride;
+            std::memcpy(v, &pos, 12);
+            std::memcpy(v + 12, &c, 12);
+            std::memcpy(v + 24, &w, 4);
+            std::memcpy(v + 28, &uv, 8);
         };
 
-        out.assign(4 * stride, 0);
-        for (size_t i = 0; i < 4; ++i) {
-            auto* v = out.data() + i * stride;
-            std::memcpy(v, &positions[i], 12);
-            std::memcpy(v + 12, &col, 12);
-        }
+        // Background (weight=0)
+        write(0, bl, col, w0, {});
+        write(1, br, col, w0, {});
+        write(2, tl, col, w0, {});
+        write(3, br, col, w0, {});
+        write(4, tr, col, w0, {});
+        write(5, tl, col, w0, {});
+
+        // Text quad (weight=1)
+        write(6, bl, white, w1, uv_bl);
+        write(7, br, white, w1, uv_br);
+        write(8, tl, white, w1, uv_tl);
+        write(9, br, white, w1, uv_br);
+        write(10, tr, white, w1, uv_tr);
+        write(11, tl, white, w1, uv_tl);
 
         el.bounds_hint = Kinesis::AABB2D {
             .min = { x_min, bot },
@@ -67,16 +94,16 @@ struct Collapsible {
 }
 
 /**
- * @brief Construct a Collapsible and register its header element in @p layer.
+ * @brief Construct a Collapsible from a caller-owned, caller-registered FormaBuffer.
  *
- * Advances @p cursor by @p row_h. cursor_out sits immediately below the header.
+ * Does not construct, register, or call setup_rendering on the buffer.
+ * The caller owns all of those steps. setup_rendering should be called
+ * after make_collapsible returns, once any textures are known.
  *
- * Caller responsibilities:
- *   - layer.relate(result.header_id, content_id) for each content element
- *   - context.on_press to write result.open and call layer.set_visible
+ * Advances @p cursor by @p row_h.
  *
+ * @param buf            Registered FormaBuffer. setup_rendering not yet called.
  * @param layer          Layer to register the header element on.
- * @param window         Target window.
  * @param bridge         Bridge owning the sync loop.
  * @param cursor         Layout cursor. Advanced by row_h internally.
  * @param x_min          Left edge in NDC.
@@ -87,8 +114,8 @@ struct Collapsible {
  * @param color_open     Header color when open.
  */
 [[nodiscard]] inline Collapsible make_collapsible(
+    std::shared_ptr<Buffers::FormaBuffer> buf,
     Layer& layer,
-    const std::shared_ptr<Core::Window>& window,
     Bridge& bridge,
     LayoutCursor& cursor,
     float x_min,
@@ -103,11 +130,6 @@ struct Collapsible {
 
     auto open_state = std::make_shared<MappedState<bool>>();
     open_state->write(initially_open);
-
-    const size_t buf_capacity = 4 * Kakshya::VertexLayout::for_meshes().stride_bytes;
-
-    auto buf = create_buffer(window, buf_capacity,
-        Graphics::PrimitiveTopology::TRIANGLE_STRIP);
 
     Mapped<bool> mapped;
     mapped.state = open_state;
@@ -126,6 +148,7 @@ struct Collapsible {
     return Collapsible {
         .header_id = hid,
         .open = open_state,
+        .buf = std::move(buf),
         .cursor_out = LayoutCursor(cursor.y()),
     };
 }
