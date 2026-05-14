@@ -121,6 +121,7 @@ MAYAFLUX_API bool is_initialized();
  * @param window    Target window.
  * @param capacity  Buffer capacity in bytes.
  * @param topology  Primitive topology.
+ * @param texture_binding Optional descriptor name for a single texture binding
  * @return Registered, render-ready FormaBuffer.
  */
 [[nodiscard]] MAYAFLUX_API
@@ -128,7 +129,30 @@ MAYAFLUX_API bool is_initialized();
     create_buffer(
         std::shared_ptr<Core::Window> window,
         size_t capacity,
-        Graphics::PrimitiveTopology topology);
+        Graphics::PrimitiveTopology topology,
+        const std::string& texture_binding = {});
+
+/**
+ * @brief Construct and register a FormaBuffer with additional texture bindings.
+ *
+ * BufferManager is taken from the stored initialize() state.
+ *
+ * @param window            Target window.
+ * @param capacity          Buffer capacity in bytes.
+ * @param topology          Primitive topology.
+ * @param additional_textures  Vector of { descriptor name, image } pairs for
+ *                             additional texture bindings. These are in
+ *                             addition to any default_texture_binding set
+ *                             in the RenderConfig passed to setup_rendering().
+ * @return Registered, render-ready FormaBuffer.
+ */
+[[nodiscard]] MAYAFLUX_API
+    std::shared_ptr<Buffers::FormaBuffer>
+    create_buffer(
+        std::shared_ptr<Core::Window> window,
+        size_t capacity,
+        Graphics::PrimitiveTopology topology,
+        std::vector<std::pair<std::string, std::shared_ptr<Core::VKImage>>> additional_textures);
 
 // =============================================================================
 // Element

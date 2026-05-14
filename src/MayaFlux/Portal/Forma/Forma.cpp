@@ -88,14 +88,34 @@ create_layer(
 std::shared_ptr<Buffers::FormaBuffer> create_buffer(
     std::shared_ptr<Core::Window> window,
     size_t capacity,
-    Graphics::PrimitiveTopology topology)
+    Graphics::PrimitiveTopology topology,
+    const std::string& texture_binding)
 {
     auto buf = std::make_shared<Buffers::FormaBuffer>(capacity, topology);
 
     g_buffer_manager->add_buffer(buf, Buffers::ProcessingToken::GRAPHICS_BACKEND);
 
-    buf->setup_rendering({ .target_window = std::move(window) });
+    if (!texture_binding.empty()) {
+        buf->setup_rendering({ .target_window = std::move(window), .default_texture_binding = texture_binding });
+    } else {
+        buf->setup_rendering({ .target_window = std::move(window) });
+    }
 
+    return buf;
+}
+
+std::shared_ptr<Buffers::FormaBuffer> create_buffer(
+    std::shared_ptr<Core::Window> window,
+    size_t capacity,
+    Graphics::PrimitiveTopology topology,
+    std::vector<std::pair<std::string, std::shared_ptr<Core::VKImage>>> additional_textures)
+{
+    auto buf = std::make_shared<Buffers::FormaBuffer>(capacity, topology);
+    g_buffer_manager->add_buffer(buf, Buffers::ProcessingToken::GRAPHICS_BACKEND);
+    buf->setup_rendering({
+        .target_window = std::move(window),
+        .additional_textures = std::move(additional_textures),
+    });
     return buf;
 }
 
