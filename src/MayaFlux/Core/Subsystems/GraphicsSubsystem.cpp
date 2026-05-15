@@ -174,13 +174,13 @@ void GraphicsSubsystem::start()
         return;
     }
 
-    m_running.store(true);
     m_paused.store(false, std::memory_order_release);
 
     m_frame_clock->reset();
 
     m_graphics_thread = std::thread([this]() {
         m_graphics_thread_id = std::this_thread::get_id();
+        m_running.store(true);
 
         MF_INFO(Journal::Component::Core, Journal::Context::GraphicsSubsystem,
             "Graphics thread started (ID: {}, Target FPS: {})",
@@ -380,6 +380,12 @@ void GraphicsSubsystem::graphics_thread_loop()
             }
         }
     }
+}
+
+void GraphicsSubsystem::wait_until_running()
+{
+    while (!m_running.load(std::memory_order_acquire))
+        std::this_thread::yield();
 }
 
 void GraphicsSubsystem::shutdown()

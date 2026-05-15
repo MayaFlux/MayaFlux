@@ -125,6 +125,7 @@ public:
 
     bool is_ready() const override { return m_is_ready; }
     bool is_running() const override { return m_running.load(std::memory_order_acquire) && !m_paused.load(std::memory_order_acquire); }
+    void wait_until_running() override;
     void shutdown() override;
     SubsystemType get_type() const override { return SubsystemType::GRAPHICS; }
     SubsystemProcessingHandle* get_processing_context_handle() override { return m_handle; }

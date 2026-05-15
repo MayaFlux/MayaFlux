@@ -147,6 +147,11 @@ void SubsystemManager::start_all_subsystems()
             subsystem->start();
         }
     }
+
+    for (auto& [token, subsystem] : m_subsystems) {
+        if (subsystem->is_ready())
+            subsystem->wait_until_running();
+    }
 }
 
 void SubsystemManager::pause_all_subsystems()

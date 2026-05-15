@@ -78,6 +78,7 @@ public:
     void resume() override;
     void stop() override;
     void shutdown() override;
+    void wait_until_running() override;
 
     [[nodiscard]] SubsystemTokens get_tokens() const override { return m_tokens; }
     [[nodiscard]] bool is_ready() const override { return m_ready.load(); }
