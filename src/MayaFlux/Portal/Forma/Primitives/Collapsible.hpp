@@ -1,6 +1,11 @@
 #pragma once
 
+namespace MayaFlux::Core {
+class VKImage;
+}
+
 #include "LayoutCursor.hpp"
+
 #include "MayaFlux/Kakshya/NDData/VertexLayout.hpp"
 #include "MayaFlux/Portal/Forma/Bridge.hpp"
 #include "MayaFlux/Portal/Forma/Context.hpp"
@@ -12,57 +17,78 @@ namespace MayaFlux::Portal::Forma {
 /**
  * @brief Result of make_collapsible().
  *
- * A named primitive: a header quad whose open/closed MappedState drives
- * both geometry color and Layer visibility of all related elements.
+ * Owns all Forma constructs produced for one collapsible header. The header
+ * element is registered in the layer; any body elements the caller adds via
+ * layer.relate(header_id, body_id) will be shown and hidden automatically
+ * when the open state changes. cursor_out is positioned at the bottom of
+ * the header strip, ready for the first body element.
  */
 struct Collapsible {
+    /// @brief Element id of the header strip. Pass to layer.relate() and ctx.on_press().
     uint32_t header_id {};
+
+    /// @brief Open/closed state. Write to toggle; the sync loop picks up changes.
     std::shared_ptr<MappedState<bool>> open;
+
+    /// @brief The FormaBuffer backing the header geometry.
     std::shared_ptr<Buffers::FormaBuffer> buf;
+
+    /// @brief Cursor positioned at the bottom edge of the header, ready for body elements.
     LayoutCursor cursor_out;
 };
 
 /**
  * @brief Geometry function for a collapsible header strip.
  *
- * Writes 12 vertices (TRIANGLE_LIST) at for_meshes() stride.
- * weight=0 for background quad (vertex color), weight=1 for text quad.
- * Text quad UVs span [0,1]. Color quad color changes with open state.
+ * When @p label is null: emits 6 vertices (background quad only, weight=0).
+ * When @p label is non-null: emits 12 vertices — background quad (weight=0)
+ * followed by a full-cover overlay quad (weight=1, white, UVs [0,1]) that
+ * samples the label image via the multi-texture shader.
+ *
+ * Vertex layout matches VertexLayout::for_meshes() (stride 60):
+ *   offset  0  position  vec3
+ *   offset 12  color     vec3
+ *   offset 24  weight    float
+ *   offset 28  uv        vec2
+ *
+ * @param cursor_in    Shared cursor state. top = cursor_in->value + row_h,
+ *                     bot = cursor_in->value (post-advance convention).
+ * @param x_min        Left edge in NDC.
+ * @param x_max        Right edge in NDC.
+ * @param row_h        Strip height in NDC units.
+ * @param color_closed Background color when closed.
+ * @param color_open   Background color when open.
+ * @param label        Optional GPU image for the label overlay. nullptr = no overlay.
  */
 [[nodiscard]] inline GeometryFn<bool> collapsible_header_geom(
-    std::shared_ptr<MappedState<float>> cursor_in,
+    const std::shared_ptr<MappedState<float>>& cursor_in,
     float x_min,
     float x_max,
     float row_h,
     glm::vec3 color_closed = glm::vec3(0.25F),
-    glm::vec3 color_open = glm::vec3(0.35F))
+    glm::vec3 color_open = glm::vec3(0.35F),
+    const std::shared_ptr<Core::VKImage>& label = nullptr)
 {
-    return [cursor_in, x_min, x_max, row_h, color_closed, color_open](
+    const bool has_label = label != nullptr;
+
+    return [cursor_in, x_min, x_max, row_h, color_closed, color_open, has_label](
                bool open, std::vector<uint8_t>& out, Element& el) {
-        const float top = cursor_in->value;
-        const float bot = top - row_h;
+        const float top = cursor_in->value + row_h;
+        const float bot = cursor_in->value;
         const glm::vec3 col = open ? color_open : color_closed;
 
-        const auto layout = Kakshya::VertexLayout::for_meshes();
-        const size_t stride = layout.stride_bytes;
+        const size_t stride = Kakshya::VertexLayout::for_meshes().stride_bytes;
+        const size_t vertex_count = has_label ? 12 : 6;
+
+        out.assign(vertex_count * stride, 0);
 
         const glm::vec3 bl { x_min, bot, 0.F };
         const glm::vec3 br { x_max, bot, 0.F };
         const glm::vec3 tl { x_min, top, 0.F };
         const glm::vec3 tr { x_max, top, 0.F };
-
         constexpr glm::vec3 white { 1.F, 1.F, 1.F };
-        constexpr float w0 = 0.F;
-        constexpr float w1 = 1.F;
-        const glm::vec2 uv_bl { 0.F, 1.F };
-        const glm::vec2 uv_br { 1.F, 1.F };
-        const glm::vec2 uv_tl { 0.F, 0.F };
-        const glm::vec2 uv_tr { 1.F, 0.F };
 
-        out.assign(12 * stride, 0);
-
-        auto write = [&](size_t idx, const glm::vec3& pos, const glm::vec3& c,
-                         float w, const glm::vec2& uv) {
+        auto write = [&](size_t idx, glm::vec3 pos, glm::vec3 c, float w, glm::vec2 uv) {
             auto* v = out.data() + idx * stride;
             std::memcpy(v, &pos, 12);
             std::memcpy(v + 12, &c, 12);
@@ -70,21 +96,21 @@ struct Collapsible {
             std::memcpy(v + 28, &uv, 8);
         };
 
-        // Background (weight=0)
-        write(0, bl, col, w0, {});
-        write(1, br, col, w0, {});
-        write(2, tl, col, w0, {});
-        write(3, br, col, w0, {});
-        write(4, tr, col, w0, {});
-        write(5, tl, col, w0, {});
+        write(0, bl, col, 0.F, {});
+        write(1, br, col, 0.F, {});
+        write(2, tl, col, 0.F, {});
+        write(3, br, col, 0.F, {});
+        write(4, tr, col, 0.F, {});
+        write(5, tl, col, 0.F, {});
 
-        // Text quad (weight=1)
-        write(6, bl, white, w1, uv_bl);
-        write(7, br, white, w1, uv_br);
-        write(8, tl, white, w1, uv_tl);
-        write(9, br, white, w1, uv_br);
-        write(10, tr, white, w1, uv_tr);
-        write(11, tl, white, w1, uv_tl);
+        if (has_label) {
+            write(6, bl, white, 1.F, { 0.F, 1.F });
+            write(7, br, white, 1.F, { 1.F, 1.F });
+            write(8, tl, white, 1.F, { 0.F, 0.F });
+            write(9, br, white, 1.F, { 1.F, 1.F });
+            write(10, tr, white, 1.F, { 1.F, 0.F });
+            write(11, tl, white, 1.F, { 0.F, 0.F });
+        }
 
         el.bounds_hint = Kinesis::AABB2D {
             .min = { x_min, bot },
@@ -94,28 +120,34 @@ struct Collapsible {
 }
 
 /**
- * @brief Construct a Collapsible from a caller-owned, caller-registered FormaBuffer.
+ * @brief Construct a collapsible header strip.
  *
- * Does not construct, register, or call setup_rendering on the buffer.
- * The caller owns all of those steps. setup_rendering should be called
- * after make_collapsible returns, once any textures are known.
+ * Creates and registers a FormaBuffer, constructs a Mapped<bool> whose
+ * geometry function produces the header quad, registers it with the Bridge
+ * sync loop, and wires the on_press toggle via @p ctx. Caller adds body
+ * elements to @p layer and calls layer.relate(col.header_id, body_id) for
+ * each one; set_visible cascades to all related ids on toggle.
  *
- * Advances @p cursor by @p row_h.
- *
- * @param buf            Registered FormaBuffer. setup_rendering not yet called.
- * @param layer          Layer to register the header element on.
- * @param bridge         Bridge owning the sync loop.
- * @param cursor         Layout cursor. Advanced by row_h internally.
- * @param x_min          Left edge in NDC.
- * @param x_max          Right edge in NDC.
- * @param row_h          Header strip height in NDC units.
+ * @param window        Target window for rendering.
+ * @param layer         Layer to register the header element on.
+ * @param ctx           Context to wire the left-click toggle handler.
+ * @param bridge        Bridge owning the sync loop.
+ * @param cursor        Layout cursor. Advanced by @p row_h on return.
+ * @param x_min         Left edge in NDC.
+ * @param x_max         Right edge in NDC.
+ * @param row_h         Header strip height in NDC units.
  * @param initially_open Starting toggle state.
- * @param color_closed   Header color when closed.
- * @param color_open     Header color when open.
+ * @param color_closed  Background color when closed.
+ * @param color_open    Background color when open.
+ * @param label         Optional GPU image overlaid on the header as a label.
+ *                      When provided, the header uses the multi-texture shader;
+ *                      when null, a plain color-only shader is used.
+ * @return Fully constructed Collapsible. cursor_out is below the header strip.
  */
 [[nodiscard]] inline Collapsible make_collapsible(
-    std::shared_ptr<Buffers::FormaBuffer> buf,
+    const std::shared_ptr<Core::Window>& window,
     Layer& layer,
+    Context& ctx,
     Bridge& bridge,
     LayoutCursor& cursor,
     float x_min,
@@ -123,8 +155,20 @@ struct Collapsible {
     float row_h,
     bool initially_open = true,
     glm::vec3 color_closed = glm::vec3(0.25F),
-    glm::vec3 color_open = glm::vec3(0.35F))
+    glm::vec3 color_open = glm::vec3(0.35F),
+    std::shared_ptr<Core::VKImage> label = nullptr)
 {
+    const size_t vertex_count = label ? 12 : 6;
+    const size_t cap = vertex_count * Kakshya::VertexLayout::for_meshes().stride_bytes;
+
+    auto buf = label
+        ? create_buffer(window, cap,
+              Graphics::PrimitiveTopology::TRIANGLE_LIST,
+              std::vector<std::pair<std::string, std::shared_ptr<Core::VKImage>>> {
+                  { "text", label } })
+        : create_buffer(window, cap,
+              Graphics::PrimitiveTopology::TRIANGLE_LIST);
+
     auto cursor_state = cursor.state();
     cursor.advance(row_h);
 
@@ -134,7 +178,7 @@ struct Collapsible {
     Mapped<bool> mapped;
     mapped.state = open_state;
     mapped.geometry_fn = collapsible_header_geom(
-        cursor_state, x_min, x_max, row_h, color_closed, color_open);
+        cursor_state, x_min, x_max, row_h, color_closed, color_open, label);
     mapped.element.buffer = buf;
     mapped.element.bounds_hint = Kinesis::AABB2D {
         .min = { x_min, cursor.y() },
@@ -142,13 +186,22 @@ struct Collapsible {
     };
 
     const uint32_t hid = layer.add(mapped.element);
+    mapped.element.id = hid;
     open_state->id = hid;
     bridge.register_element(std::move(mapped));
+
+    ctx.on_press(hid, IO::MouseButtons::Left,
+        [open = open_state, &layer, hid](uint32_t, glm::vec2) {
+            const bool next = !open->value;
+            open->write(next);
+            for (auto rel_id : layer.related_ids(hid))
+                layer.set_visible(rel_id, next);
+        });
 
     return Collapsible {
         .header_id = hid,
         .open = open_state,
-        .buf = std::move(buf),
+        .buf = buf,
         .cursor_out = LayoutCursor(cursor.y()),
     };
 }
