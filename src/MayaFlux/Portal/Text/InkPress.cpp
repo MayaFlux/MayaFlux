@@ -427,10 +427,12 @@ bool repress(
             nullptr, 1);
         if (!target)
             return false;
-        if (staging)
-            loom.upload_data(target, pixels.data(), buf_bytes, staging);
-        else
+        if (staging) {
+            loom.upload_data(target, pixels.data(), buf_bytes, staging, true);
+        } else {
             loom.upload_data(target, pixels.data(), buf_bytes);
+        }
+
         MF_DEBUG(Journal::Component::Portal, Journal::Context::API,
             "repress(VKImage): reallocated {}x{}", buf_w, new_h);
         return true;
