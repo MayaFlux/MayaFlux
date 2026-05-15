@@ -50,6 +50,10 @@ public:
      */
     uint32_t get_audio_input_channel_count() const;
 
+    /**
+     * @brief Gets the buffer size for audio input buffers
+     * @return Buffer size in samples, or 0 if not set up
+     */
     [[nodiscard]] std::shared_ptr<InputAudioBuffer> get_input_buffer(uint32_t channel) const;
 
     // =========================================================================

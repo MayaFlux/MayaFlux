@@ -297,6 +297,12 @@ public:
     std::vector<std::string> get_task_names(ProcessingToken token) const;
 
     /**
+     * @brief Get all tasks for inspection/debugging
+     * @return Vector of all TaskEntry objects
+     */
+    [[nodiscard]] const std::vector<TaskEntry>& get_all_tasks();
+
+    /**
      * @brief Pause all active tasks
      */
     void pause_all_tasks();
