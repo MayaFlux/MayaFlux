@@ -16,6 +16,7 @@ class BufferAccessControl;
 class BufferProcessingControl;
 class BufferInputControl;
 class BufferSupplyMixing;
+class InputAudioBuffer;
 
 /**
  * @class BufferManager
@@ -432,6 +433,10 @@ public:
     void register_input_listener(const std::shared_ptr<AudioBuffer>& buffer, uint32_t channel);
 
     void unregister_input_listener(const std::shared_ptr<AudioBuffer>& buffer, uint32_t channel);
+
+    [[nodiscard]] uint32_t get_num_input_channels() const;
+
+    [[nodiscard]] std::shared_ptr<Buffers::InputAudioBuffer> get_input_buffer(uint32_t channel) const;
 
     // =========================================================================
     // Buffer Supply/Mixing (Audio-Specific)

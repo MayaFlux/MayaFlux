@@ -50,6 +50,8 @@ public:
      */
     uint32_t get_audio_input_channel_count() const;
 
+    [[nodiscard]] std::shared_ptr<InputAudioBuffer> get_input_buffer(uint32_t channel) const;
+
     // =========================================================================
     // Input Data Processing
     // =========================================================================
