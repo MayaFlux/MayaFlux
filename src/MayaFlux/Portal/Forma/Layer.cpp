@@ -62,22 +62,17 @@ bool Layer::set_interactive(uint32_t id, bool interactive)
 
 bool Layer::set_visible(uint32_t id, bool visible)
 {
-    auto apply = [&](Element* el) {
-        el->visible = visible;
-        if (el->buffer)
-            el->buffer->mark_for_processing(visible);
-    };
-
     auto* root = get(id);
     if (!root)
         return false;
-    apply(root);
+
+    root->visible = visible;
+    if (root->buffer)
+        root->buffer->mark_for_processing(visible);
 
     if (auto it = m_relations.find(id); it != m_relations.end()) {
-        for (uint32_t rel_id : it->second) {
-            if (auto* rel = get(rel_id))
-                apply(rel);
-        }
+        for (uint32_t rel_id : it->second)
+            set_visible(rel_id, visible);
     }
     return true;
 }
