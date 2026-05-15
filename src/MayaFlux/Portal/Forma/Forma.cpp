@@ -43,7 +43,7 @@ bool initialize(
     g_scheduler = std::move(scheduler);
     g_event_manager = std::move(event_manager);
     g_bridge = std::make_unique<Bridge>(*g_scheduler, *g_buffer_manager);
-    g_inspect = std::make_unique<Inspector>(*g_buffer_manager, *g_node_graph_manager);
+    g_inspect = std::make_unique<Inspector>(*g_node_graph_manager, *g_buffer_manager, *g_scheduler);
     g_initialized = true;
 
     MF_INFO(Journal::Component::Portal, Journal::Context::API,

@@ -22,9 +22,10 @@ namespace MayaFlux::Portal::Forma {
  */
 class MAYAFLUX_API Inspector {
 public:
-    Inspector(Buffers::BufferManager& bm, Nodes::NodeGraphManager& ngm)
-        : m_bm(bm)
-        , m_ngm(ngm)
+    Inspector(Nodes::NodeGraphManager& ngm, Buffers::BufferManager& bm, Vruta::TaskScheduler& sched)
+        : m_ngm(ngm)
+        , m_bm(bm)
+        , m_sched(sched)
     {
     }
 
@@ -142,9 +143,35 @@ public:
         LayoutCursor& cursor,
         float x_min = -0.95F, float x_max = 0.95F, float row_h = 0.05F);
 
+    /**
+     * @brief Inspect the full TaskScheduler state.
+     *
+     * Header shows total task count. Each task is a collapsible whose header
+     * is the routine's dynamic type name, with name, token, active, and delay
+     * context as sub-fields.
+     */
+    [[nodiscard]] InspectResult scheduler(
+        Layer& layer, Context& context,
+        const std::shared_ptr<Core::Window>& window,
+        LayoutCursor& cursor,
+        float x_min = -0.95F, float x_max = 0.95F, float row_h = 0.05F);
+
+    /**
+     * @brief Inspect tasks for a specific processing token.
+     *
+     * Same per-task layout as scheduler() but filtered to one token.
+     */
+    [[nodiscard]] InspectResult tasks(
+        Vruta::ProcessingToken token,
+        Layer& layer, Context& context,
+        const std::shared_ptr<Core::Window>& window,
+        LayoutCursor& cursor,
+        float x_min = -0.95F, float x_max = 0.95F, float row_h = 0.05F);
+
 private:
     Buffers::BufferManager& m_bm;
     Nodes::NodeGraphManager& m_ngm;
+    Vruta::TaskScheduler& m_sched;
 };
 
 } // namespace MayaFlux::Portal::Forma
