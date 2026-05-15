@@ -35,6 +35,23 @@ struct Collapsible {
 
     /// @brief Cursor positioned at the bottom edge of the header, ready for body elements.
     LayoutCursor cursor_out;
+
+    /**
+     * @brief Relate a body element to this collapsible and sync its visibility
+     *        to the current open state.
+     *
+     * Replaces a manual layer.relate(header_id, body_id) call. Ensures the
+     * body's render state matches @ref open at attach time, so callers do not
+     * need to track the initial toggle state.
+     *
+     * @param layer   Layer the body element lives on.
+     * @param body_id Element id returned from layer.add(...).
+     */
+    void attach(Layer& layer, uint32_t body_id) const
+    {
+        layer.relate(header_id, body_id);
+        layer.set_visible(body_id, open->value);
+    }
 };
 
 /**
