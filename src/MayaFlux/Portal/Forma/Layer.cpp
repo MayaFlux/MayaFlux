@@ -62,18 +62,19 @@ bool Layer::set_interactive(uint32_t id, bool interactive)
 
 bool Layer::set_visible(uint32_t id, bool visible)
 {
-    if (auto* el = get(id)) {
-        el->visible = visible;
-        if (auto it = m_relations.find(id); it != m_relations.end()) {
-            for (uint32_t rel_id : it->second) {
-                if (auto* rel = get(rel_id))
-                    rel->visible = visible;
-            }
-        }
+    auto* root = get(id);
+    if (!root)
+        return false;
 
-        return true;
+    root->visible = visible;
+    if (root->buffer)
+        root->buffer->mark_for_processing(visible);
+
+    if (auto it = m_relations.find(id); it != m_relations.end()) {
+        for (uint32_t rel_id : it->second)
+            set_visible(rel_id, visible);
     }
-    return false;
+    return true;
 }
 
 bool Layer::bring_to_front(uint32_t id)
@@ -150,12 +151,19 @@ std::vector<uint32_t> Layer::hit_test_all(
 
 bool Layer::relate(uint32_t primary_id, uint32_t related_id)
 {
-    if (!get(primary_id) || !get(related_id) || primary_id == related_id)
+    auto* p = get(primary_id);
+    auto* r = get(related_id);
+    if (!p || !r || primary_id == related_id)
         return false;
 
     auto& rel = m_relations[primary_id];
     if (std::ranges::find(rel, related_id) == rel.end())
         rel.push_back(related_id);
+
+    r->visible = p->visible;
+    if (r->buffer)
+        r->buffer->mark_for_processing(p->visible);
+
     return true;
 }
 

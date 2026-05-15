@@ -137,6 +137,12 @@ std::vector<std::string> TaskScheduler::get_task_names(ProcessingToken token) co
     return names;
 }
 
+const std::vector<TaskEntry>& TaskScheduler::get_all_tasks()
+{
+    drain_pending_tasks();
+    return m_tasks;
+}
+
 void TaskScheduler::process_token(ProcessingToken token, uint64_t processing_units)
 {
     drain_pending_tasks();

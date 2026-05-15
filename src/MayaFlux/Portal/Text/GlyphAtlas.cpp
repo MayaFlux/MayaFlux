@@ -11,6 +11,8 @@ GlyphAtlas::GlyphAtlas(FontFace& face, uint32_t pixel_size, uint32_t atlas_size)
 {
     m_texture = std::make_unique<Kakshya::TextureContainer>(
         atlas_size, atlas_size, Portal::Graphics::ImageFormat::R8);
+
+    FT_Set_Pixel_Sizes(m_face.get_face(), 0, m_pixel_size);
 }
 
 const GlyphMetrics* GlyphAtlas::get_or_rasterize(FT_UInt glyph_index)
@@ -53,6 +55,15 @@ const GlyphMetrics* GlyphAtlas::get_or_rasterize(FT_ULong codepoint)
     }
     const int32_t h = (face->size->metrics.ascender - face->size->metrics.descender) >> 6;
     return h > 0 ? static_cast<uint32_t>(h) : m_pixel_size;
+}
+
+[[nodiscard]] uint32_t GlyphAtlas::ascender() const
+{
+    FT_Face face = m_face.get_face();
+    if (!face || face->size == nullptr)
+        return m_pixel_size;
+    const int32_t a = face->size->metrics.ascender >> 6;
+    return a > 0 ? static_cast<uint32_t>(a) : m_pixel_size;
 }
 
 bool GlyphAtlas::rasterize(FT_UInt glyph_index)

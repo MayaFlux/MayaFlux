@@ -382,7 +382,8 @@ void TextureLoom::upload_data(
     const std::shared_ptr<Core::VKImage>& image,
     const void* data,
     size_t size,
-    const std::shared_ptr<Buffers::VKBuffer>& staging)
+    const std::shared_ptr<Buffers::VKBuffer>& staging,
+    bool deferred)
 {
     if (!is_initialized() || !image || !data || !staging) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
@@ -390,7 +391,7 @@ void TextureLoom::upload_data(
         return;
     }
 
-    m_resource_manager->upload_image_data_with_staging(image, data, size, staging);
+    m_resource_manager->upload_image_data(image, data, size, staging, deferred);
 }
 
 void TextureLoom::download_data(

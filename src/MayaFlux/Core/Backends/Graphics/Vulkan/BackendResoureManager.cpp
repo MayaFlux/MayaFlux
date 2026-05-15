@@ -703,11 +703,11 @@ void BackendResourceManager::upload_image_data(
         size, image->get_width(), image->get_height());
 }
 
-void BackendResourceManager::upload_image_data_with_staging(
+void BackendResourceManager::upload_image_data(
     std::shared_ptr<VKImage> image,
     const void* data,
     size_t size,
-    const std::shared_ptr<Buffers::VKBuffer>& staging)
+    const std::shared_ptr<Buffers::VKBuffer>& staging, bool deferred)
 {
     if (!image || !data || !staging) {
         MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
@@ -734,7 +734,7 @@ void BackendResourceManager::upload_image_data_with_staging(
             "upload_image_data_with_staging: flush failed: {}", vk::to_string(result));
     }
 
-    execute_immediate_commands([&](vk::CommandBuffer cmd) {
+    auto record_command = [&](vk::CommandBuffer cmd) {
         vk::ImageMemoryBarrier barrier {};
         barrier.oldLayout = image->get_current_layout();
         barrier.newLayout = vk::ImageLayout::eTransferDstOptimal;
@@ -779,7 +779,13 @@ void BackendResourceManager::upload_image_data_with_staging(
             vk::PipelineStageFlagBits::eTransfer,
             vk::PipelineStageFlagBits::eFragmentShader,
             {}, 0, nullptr, 0, nullptr, 1, &barrier);
-    });
+    };
+
+    if (deferred) {
+        record_deferred_commands(record_command);
+    } else {
+        execute_immediate_commands(record_command);
+    }
 
     image->set_current_layout(vk::ImageLayout::eShaderReadOnlyOptimal);
 
@@ -985,9 +991,36 @@ void BackendResourceManager::execute_immediate_commands(const std::function<void
 
 void BackendResourceManager::record_deferred_commands(const std::function<void(vk::CommandBuffer)>& recorder)
 {
-    // TODO: batch commands for later submission
-    // For now, just execute immediately
-    execute_immediate_commands(recorder);
+    m_command_manager.record_deferred_commands(recorder);
+}
+
+vk::Semaphore BackendResourceManager::flush_deferred_commands()
+{
+    if (!m_command_manager.has_deferred_commands())
+        return nullptr;
+
+    vk::CommandBuffer cmd = m_command_manager.get_deferred_cmd();
+    cmd.end();
+
+    if (!m_deferred_semaphore) {
+        vk::SemaphoreCreateInfo sem_info {};
+        m_deferred_semaphore = m_context.get_device().createSemaphore(sem_info);
+    }
+
+    vk::SubmitInfo submit {};
+    submit.commandBufferCount = 1;
+    submit.pCommandBuffers = &cmd;
+    submit.signalSemaphoreCount = 1;
+    submit.pSignalSemaphores = &m_deferred_semaphore;
+
+    if (m_context.get_graphics_queue().submit(1, &submit, nullptr) != vk::Result::eSuccess) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Failed to submit deferred command buffer");
+    }
+
+    m_command_manager.reset_deferred();
+
+    return m_deferred_semaphore;
 }
 
 void BackendResourceManager::cleanup()
@@ -998,6 +1031,11 @@ void BackendResourceManager::cleanup()
         }
     }
     m_sampler_cache.clear();
+
+    if (m_deferred_semaphore) {
+        m_context.get_device().destroySemaphore(m_deferred_semaphore);
+        m_deferred_semaphore = nullptr;
+    }
 
     for (auto& buffer : m_managed_buffers) {
         if (buffer && buffer->is_initialized()) {

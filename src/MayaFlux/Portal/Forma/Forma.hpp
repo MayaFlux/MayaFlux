@@ -8,6 +8,10 @@
 #include "MayaFlux/Buffers/Forma/FormaBuffer.hpp"
 #include "MayaFlux/Portal/Graphics/GraphicsUtils.hpp"
 
+namespace MayaFlux::Nodes {
+class NodeGraphManager;
+}
+
 namespace MayaFlux::Core {
 class Window;
 }
@@ -22,6 +26,8 @@ class BufferManager;
 }
 
 namespace MayaFlux::Portal::Forma {
+
+class Inspector;
 
 /**
  * @file Forma.hpp
@@ -61,12 +67,14 @@ namespace MayaFlux::Portal::Forma {
  * Must be called before any create_* call. Safe to call multiple times;
  * subsequent calls are no-ops and log a warning.
  *
+ * @param node_graph_manager Engine NodeGraphManager. Must outlive all Forma objects.
  * @param buffer_manager  Engine BufferManager. Must outlive all Forma objects.
  * @param scheduler       Engine TaskScheduler. Must outlive all Bridge instances.
  * @param event_manager   Engine EventManager. Must outlive all Context instances.
  * @return True on success, false if any argument is null.
  */
 MAYAFLUX_API bool initialize(
+    std::shared_ptr<Nodes::NodeGraphManager> node_graph_manager,
     std::shared_ptr<Buffers::BufferManager> buffer_manager,
     std::shared_ptr<Vruta::TaskScheduler> scheduler,
     std::shared_ptr<Vruta::EventManager> event_manager);
@@ -87,6 +95,20 @@ MAYAFLUX_API bool is_initialized();
  * Valid only after initialize(). Lifetime is tied to the Forma module.
  */
 [[nodiscard]] MAYAFLUX_API Bridge& get_bridge();
+
+/**
+ * @brief Access the Forma introspection subsystem.
+ *
+ * Returns the Inspector instance initialized alongside Bridge during
+ * Portal::Forma::initialize(). The Inspector holds no state beyond
+ * references to BufferManager and NodeGraphManager; it is a stable
+ * entry point into the Inspect:: query functions.
+ *
+ * @pre Portal::Forma::initialize() must have been called.
+ * @return Reference to the singleton Inspector. Lifetime is the Forma module lifetime.
+ * @throws std::runtime_error if called before initialize().
+ */
+[[nodiscard]] MAYAFLUX_API Inspector& inspector();
 
 // =============================================================================
 // Layer
@@ -121,6 +143,7 @@ MAYAFLUX_API bool is_initialized();
  * @param window    Target window.
  * @param capacity  Buffer capacity in bytes.
  * @param topology  Primitive topology.
+ * @param texture_binding Optional descriptor name for a single texture binding
  * @return Registered, render-ready FormaBuffer.
  */
 [[nodiscard]] MAYAFLUX_API
@@ -128,7 +151,30 @@ MAYAFLUX_API bool is_initialized();
     create_buffer(
         std::shared_ptr<Core::Window> window,
         size_t capacity,
-        Graphics::PrimitiveTopology topology);
+        Graphics::PrimitiveTopology topology,
+        const std::string& texture_binding = {});
+
+/**
+ * @brief Construct and register a FormaBuffer with additional texture bindings.
+ *
+ * BufferManager is taken from the stored initialize() state.
+ *
+ * @param window            Target window.
+ * @param capacity          Buffer capacity in bytes.
+ * @param topology          Primitive topology.
+ * @param additional_textures  Vector of { descriptor name, image } pairs for
+ *                             additional texture bindings. These are in
+ *                             addition to any default_texture_binding set
+ *                             in the RenderConfig passed to setup_rendering().
+ * @return Registered, render-ready FormaBuffer.
+ */
+[[nodiscard]] MAYAFLUX_API
+    std::shared_ptr<Buffers::FormaBuffer>
+    create_buffer(
+        std::shared_ptr<Core::Window> window,
+        size_t capacity,
+        Graphics::PrimitiveTopology topology,
+        std::vector<std::pair<std::string, std::shared_ptr<Core::VKImage>>> additional_textures);
 
 // =============================================================================
 // Element

@@ -419,6 +419,16 @@ void BufferManager::unregister_input_listener(const std::shared_ptr<AudioBuffer>
     m_input_control->unregister_audio_input_listener(buffer, channel);
 }
 
+uint32_t BufferManager::get_num_input_channels() const
+{
+    return m_input_control->get_audio_input_channel_count();
+}
+
+std::shared_ptr<Buffers::InputAudioBuffer> BufferManager::get_input_buffer(uint32_t channel) const
+{
+    return m_input_control->get_input_buffer(channel);
+}
+
 // ============================================================================
 // Buffer Supply/Mixing (Audio-Specific)
 // ============================================================================

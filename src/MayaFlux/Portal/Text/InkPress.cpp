@@ -3,9 +3,12 @@
 #include "TypeFaceFoundry.hpp"
 #include "TypeSetter.hpp"
 
-#include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Kakshya/Source/TextureContainer.hpp"
 #include "MayaFlux/Portal/Graphics/GraphicsUtils.hpp"
+
+#include "MayaFlux/Core/Backends/Graphics/Vulkan/VKImage.hpp"
+
+#include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux::Portal::Text {
 
@@ -116,7 +119,7 @@ namespace {
         std::vector<uint8_t> pixels(budget_bytes, 0);
 
         const uint32_t copy_h = std::min(result.h,
-            static_cast<uint32_t>(result.pixels.size() / (buf_w * 4)));
+            static_cast<uint32_t>(result.pixels.size() / (static_cast<size_t>(buf_w) * 4)));
         for (uint32_t row = 0; row < copy_h; ++row) {
             std::memcpy(
                 pixels.data() + static_cast<size_t>(row) * buf_w * 4,
@@ -257,6 +260,55 @@ std::shared_ptr<Buffers::TextBuffer> press(
     return make_buffer(*result, buf_w, budget_h, params.render_bounds, text);
 }
 
+std::shared_ptr<Core::VKImage> press(
+    std::string_view text,
+    glm::uvec2 render_bounds,
+    const PressParams& params)
+{
+    GlyphAtlas* atlas = resolve_atlas(params.atlas);
+    if (!atlas)
+        return nullptr;
+
+    const uint32_t buf_w = render_bounds.x;
+
+    const uint32_t composite_h = std::max(render_bounds.y,
+        static_cast<uint32_t>(atlas->line_height()));
+
+    const auto result = composite(text, *atlas, params.color, buf_w, composite_h,
+        static_cast<float>(atlas->ascender()));
+
+    if (!result) {
+        MF_WARN(Journal::Component::Portal, Journal::Context::API,
+            "press(AsTexture): no glyphs produced for '{}'", std::string(text));
+        return nullptr;
+    }
+
+    const uint32_t budget_h = composite_h;
+
+    const size_t budget_bytes = static_cast<size_t>(buf_w) * budget_h * 4;
+    std::vector<uint8_t> pixels(budget_bytes, 0);
+
+    const auto copy_h = static_cast<uint32_t>(
+        result->pixels.size() / (static_cast<size_t>(buf_w) * 4));
+
+    for (uint32_t row = 0; row < copy_h; ++row) {
+        std::memcpy(
+            pixels.data() + static_cast<size_t>(row) * buf_w * 4,
+            result->pixels.data() + static_cast<size_t>(row) * buf_w * 4,
+            static_cast<size_t>(buf_w) * 4);
+    }
+
+    auto& loom = Portal::Graphics::get_texture_manager();
+    auto image = loom.create_2d(buf_w, budget_h, Portal::Graphics::ImageFormat::RGBA8,
+        pixels.data(), 1);
+
+    MF_DEBUG(Journal::Component::Portal, Journal::Context::API,
+        "press(AsTexture): {}x{} content in {}x{} texture",
+        buf_w, result->h, buf_w, budget_h);
+
+    return image;
+}
+
 // =========================================================================
 // repress
 // =========================================================================
@@ -327,6 +379,80 @@ bool repress(
     MF_DEBUG(Journal::Component::Portal, Journal::Context::API,
         "repress(Clip): '{}' -> {}x{} into {}x{} budget",
         std::string(text), buf_w, result->h, buf_w, buf_h);
+
+    return true;
+}
+
+bool repress(
+    std::shared_ptr<Core::VKImage>& target,
+    std::string_view text,
+    const PressParams& params,
+    const std::shared_ptr<Buffers::VKBuffer>& staging)
+{
+    if (!target) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::API,
+            "repress(VKImage): target is null");
+        return false;
+    }
+
+    GlyphAtlas* atlas = resolve_atlas(params.atlas);
+    if (!atlas)
+        return false;
+
+    const uint32_t buf_w = target->get_width();
+    const uint32_t buf_h = target->get_height();
+
+    const uint32_t composite_h = std::max(buf_h,
+        static_cast<uint32_t>(atlas->line_height()));
+
+    const auto result = composite(text, *atlas, params.color, buf_w, composite_h,
+        static_cast<float>(atlas->ascender()));
+    if (!result) {
+        MF_WARN(Journal::Component::Portal, Journal::Context::API,
+            "repress(VKImage): no glyphs produced for '{}'", std::string(text));
+        return false;
+    }
+
+    auto& loom = Portal::Graphics::get_texture_manager();
+
+    const uint32_t new_h = composite_h;
+    const bool needs_realloc = composite_h != buf_h || buf_w != target->get_width();
+
+    const size_t buf_bytes = static_cast<size_t>(buf_w) * new_h * 4;
+    std::vector<uint8_t> pixels(buf_bytes, 0);
+
+    const uint32_t copy_h = std::min(result->h, new_h);
+    for (uint32_t row = 0; row < copy_h; ++row) {
+        std::memcpy(
+            pixels.data() + static_cast<size_t>(row) * buf_w * 4,
+            result->pixels.data() + static_cast<size_t>(row) * buf_w * 4,
+            static_cast<size_t>(buf_w) * 4);
+    }
+
+    if (needs_realloc) {
+        target = loom.create_2d(buf_w, new_h, Portal::Graphics::ImageFormat::RGBA8,
+            nullptr, 1);
+        if (!target)
+            return false;
+        if (staging) {
+            loom.upload_data(target, pixels.data(), buf_bytes, staging, true);
+        } else {
+            loom.upload_data(target, pixels.data(), buf_bytes);
+        }
+
+        MF_DEBUG(Journal::Component::Portal, Journal::Context::API,
+            "repress(VKImage): reallocated {}x{}", buf_w, new_h);
+        return true;
+    }
+
+    if (staging) {
+        loom.upload_data(target, pixels.data(), buf_bytes, staging);
+    } else {
+        loom.upload_data(target, pixels.data(), buf_bytes);
+    }
+
+    MF_DEBUG(Journal::Component::Portal, Journal::Context::API,
+        "repress(VKImage): updated {}x{} in-place", buf_w, buf_h);
 
     return true;
 }

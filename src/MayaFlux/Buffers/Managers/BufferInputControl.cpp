@@ -27,6 +27,11 @@ uint32_t BufferInputControl::get_audio_input_channel_count() const
     return static_cast<uint32_t>(m_audio_input_buffers.size());
 }
 
+std::shared_ptr<InputAudioBuffer> BufferInputControl::get_input_buffer(uint32_t channel) const
+{
+    return m_audio_input_buffers[channel];
+}
+
 // ============================================================================
 // Input Data Processing
 // ============================================================================

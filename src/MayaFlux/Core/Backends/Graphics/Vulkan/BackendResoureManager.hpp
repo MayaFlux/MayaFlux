@@ -118,12 +118,13 @@ public:
      * @param data    Source pixel data pointer.
      * @param size    Byte count.
      * @param staging Pre-allocated host-visible staging buffer.
+     * @param deferred If true, command recording will be deferred and must be flushed
      */
-    void upload_image_data_with_staging(
+    void upload_image_data(
         std::shared_ptr<VKImage> image,
         const void* data,
         size_t size,
-        const std::shared_ptr<Buffers::VKBuffer>& staging);
+        const std::shared_ptr<Buffers::VKBuffer>& staging, bool deferred = false);
 
     /**
      * @brief Download data from an image into a caller-supplied buffer.
@@ -198,6 +199,12 @@ public:
      */
     void record_deferred_commands(const std::function<void(vk::CommandBuffer)>& recorder);
 
+    /**
+     * @brief Flush deferred commands and return a semaphore that signals when they are complete
+     * @return Semaphore that will be signaled when deferred commands are finished
+     */
+    vk::Semaphore flush_deferred_commands();
+
     // ========================================================================
     // Cleanup
     // ========================================================================
@@ -210,6 +217,8 @@ private:
 
     std::vector<std::shared_ptr<Buffers::VKBuffer>> m_managed_buffers;
     std::unordered_map<size_t, vk::Sampler> m_sampler_cache;
+
+    vk::Semaphore m_deferred_semaphore {};
 
     size_t compute_sampler_hash(vk::Filter filter, vk::SamplerAddressMode address_mode, float max_anisotropy) const;
 };

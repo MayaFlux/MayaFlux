@@ -73,12 +73,39 @@ public:
      */
     [[nodiscard]] vk::CommandBuffer begin_single_time_commands_compute();
 
+    /**
+     * @brief End and submit single-time command for compute operations
+     * @param command_buffer Command buffer to submit
+     * @param queue Queue to submit to
+     */
+    [[nodiscard]] bool has_deferred_commands() const { return m_deferred_pending; }
+
+    /**
+     * @brief Record deferred commands for later submission
+     * @param recorder Command recording function that takes a command buffer
+     */
+    void record_deferred_commands(const std::function<void(vk::CommandBuffer)>& recorder);
+
+    /**
+     * @brief Get the deferred command buffer (if any)
+     * @return Deferred command buffer, or null if none pending
+     */
+    [[nodiscard]] vk::CommandBuffer get_deferred_cmd() const { return m_deferred_cmd; }
+
+    /**
+     * @brief Reset deferred command buffer and clear pending state
+     */
+    void reset_deferred();
+
 private:
     vk::Device m_device;
     vk::CommandPool m_command_pool;
     vk::CommandPool m_compute_command_pool;
-    uint32_t m_graphics_queue_family = 0;
-    uint32_t m_compute_queue_family = 0;
+    uint32_t m_graphics_queue_family {};
+    uint32_t m_compute_queue_family {};
+
+    vk::CommandBuffer m_deferred_cmd {};
+    bool m_deferred_pending {};
 
     std::vector<vk::CommandBuffer> m_allocated_buffers;
     std::vector<vk::CommandBuffer> m_compute_allocated_buffers;
