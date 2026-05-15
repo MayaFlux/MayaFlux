@@ -198,6 +198,12 @@ public:
      */
     void record_deferred_commands(const std::function<void(vk::CommandBuffer)>& recorder);
 
+    /**
+     * @brief Flush deferred commands and return a semaphore that signals when they are complete
+     * @return Semaphore that will be signaled when deferred commands are finished
+     */
+    vk::Semaphore flush_deferred_commands();
+
     // ========================================================================
     // Cleanup
     // ========================================================================
@@ -210,6 +216,8 @@ private:
 
     std::vector<std::shared_ptr<Buffers::VKBuffer>> m_managed_buffers;
     std::unordered_map<size_t, vk::Sampler> m_sampler_cache;
+
+    vk::Semaphore m_deferred_semaphore {};
 
     size_t compute_sampler_hash(vk::Filter filter, vk::SamplerAddressMode address_mode, float max_anisotropy) const;
 };

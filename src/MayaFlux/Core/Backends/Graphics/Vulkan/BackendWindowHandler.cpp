@@ -661,11 +661,24 @@ void BackendWindowHandler::submit_and_present(
     auto& image_available = ctx->image_available[frame_index];
     auto& render_finished = ctx->render_finished[frame_index];
 
+    vk::Semaphore deferred_sem = m_resource_manager
+        ? m_resource_manager->flush_deferred_commands()
+        : nullptr;
+
+    std::vector<vk::Semaphore> wait_sems { image_available };
+    std::vector<vk::PipelineStageFlags> wait_stages {
+        vk::PipelineStageFlagBits::eColorAttachmentOutput
+    };
+
+    if (deferred_sem) {
+        wait_sems.push_back(deferred_sem);
+        wait_stages.emplace_back(vk::PipelineStageFlagBits::eFragmentShader);
+    }
+
     vk::SubmitInfo submit_info {};
-    vk::PipelineStageFlags wait_stages[] = { vk::PipelineStageFlagBits::eColorAttachmentOutput };
-    submit_info.waitSemaphoreCount = 1;
-    submit_info.pWaitSemaphores = &image_available;
-    submit_info.pWaitDstStageMask = wait_stages;
+    submit_info.waitSemaphoreCount = static_cast<uint32_t>(wait_sems.size());
+    submit_info.pWaitSemaphores = wait_sems.data();
+    submit_info.pWaitDstStageMask = wait_stages.data();
     submit_info.commandBufferCount = 1;
     submit_info.pCommandBuffers = &command_buffer;
     submit_info.signalSemaphoreCount = 1;

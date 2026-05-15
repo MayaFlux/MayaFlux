@@ -157,6 +157,21 @@ void VKCommandManager::end_single_time_commands(vk::CommandBuffer command_buffer
     free_command_buffer(command_buffer);
 }
 
+void VKCommandManager::record_deferred_commands(
+    const std::function<void(vk::CommandBuffer)>& recorder)
+{
+    if (!m_deferred_cmd)
+        m_deferred_cmd = begin_single_time_commands();
+    recorder(m_deferred_cmd);
+    m_deferred_pending = true;
+}
+
+void VKCommandManager::reset_deferred()
+{
+    m_deferred_cmd = nullptr;
+    m_deferred_pending = false;
+}
+
 void VKCommandManager::reset_pool()
 {
     m_device.resetCommandPool(m_command_pool, vk::CommandPoolResetFlags {});
