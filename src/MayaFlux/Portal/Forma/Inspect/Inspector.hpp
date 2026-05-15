@@ -4,7 +4,6 @@
 #include "MayaFlux/Buffers/BufferManager.hpp"
 #include "MayaFlux/Nodes/NodeGraphManager.hpp"
 #include "MayaFlux/Portal/Forma/Primitives/LayoutCursor.hpp"
-#include "NodeQuery.hpp"
 
 namespace MayaFlux::Core {
 class Window;
@@ -29,18 +28,20 @@ public:
     {
     }
 
+    /**
+     * @brief Inspect a single Node and its full modulator tree.
+     *
+     * Builds a ValueGroup whose header is the node's short type name and
+     * whose body rows expose the node's runtime values (output, role for
+     * modulators, etc.). Modulator children are recursively expanded as
+     * nested InspectResults related to this node's header.
+     */
     [[nodiscard]] InspectResult node(
         const std::shared_ptr<Nodes::Node>& n,
         Layer& layer, Context& context,
         const std::shared_ptr<Core::Window>& window,
         LayoutCursor& cursor,
-        float x_min = -0.95F, float x_max = 0.95F, float row_h = 0.05F)
-    {
-        return Inspect::node(m_bm, n, layer, context, window, cursor, x_min, x_max, row_h);
-    }
-
-    Buffers::BufferManager& bm() { return m_bm; }
-    Nodes::NodeGraphManager& ngm() { return m_ngm; }
+        float x_min = -0.95F, float x_max = 0.95F, float row_h = 0.05F, int depth = 0);
 
 private:
     Buffers::BufferManager& m_bm;

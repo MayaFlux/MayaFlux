@@ -51,7 +51,7 @@ bool initialize(
     return true;
 }
 
-Inspector& get_inspector()
+Inspector& inspector()
 {
     if (!g_initialized) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::API,

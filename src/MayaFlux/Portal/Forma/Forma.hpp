@@ -108,7 +108,7 @@ MAYAFLUX_API bool is_initialized();
  * @return Reference to the singleton Inspector. Lifetime is the Forma module lifetime.
  * @throws std::runtime_error if called before initialize().
  */
-[[nodiscard]] MAYAFLUX_API Inspector& get_inspector();
+[[nodiscard]] MAYAFLUX_API Inspector& inspector();
 
 // =============================================================================
 // Layer
