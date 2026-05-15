@@ -73,6 +73,75 @@ public:
         LayoutCursor& cursor,
         float x_min = -0.95F, float x_max = 0.95F, float row_h = 0.05F);
 
+    /**
+     * @brief Inspect a single Buffer: default processor and full processing chain.
+     *
+     * Header is the buffer's dynamic type name. Body rows expose the default
+     * processor type, then preprocessor, each indexed chain processor,
+     * postprocessor, and final processor. Absent slots show "-".
+     */
+    [[nodiscard]] InspectResult buffer(
+        const std::shared_ptr<Buffers::Buffer>& buf,
+        Layer& layer, Context& context,
+        const std::shared_ptr<Core::Window>& window,
+        LayoutCursor& cursor,
+        float x_min = -0.95F, float x_max = 0.95F, float row_h = 0.05F, int depth = 0);
+
+    /**
+     * @brief Inspect the root audio buffer for a specific token and channel.
+     *
+     * Header shows channel index and token. Rows show sample count and child
+     * count. The root buffer itself is expanded via buffer(), then each child
+     * buffer is expanded via buffer() in order.
+     */
+    [[nodiscard]] InspectResult root_audio_buffer(
+        Buffers::ProcessingToken token, uint32_t channel,
+        Layer& layer, Context& context,
+        const std::shared_ptr<Core::Window>& window,
+        LayoutCursor& cursor,
+        float x_min = -0.95F, float x_max = 0.95F, float row_h = 0.05F, int depth = 0);
+
+    /**
+     * @brief Inspect all root audio buffers for a token across every channel.
+     *
+     * Header shows token and total channel count. Each channel is expanded
+     * as a nested root_audio_buffer() result, related for visibility cascade.
+     */
+    [[nodiscard]] InspectResult root_audio_buffer(
+        Buffers::ProcessingToken token,
+        Layer& layer, Context& context,
+        const std::shared_ptr<Core::Window>& window,
+        LayoutCursor& cursor,
+        float x_min = -0.95F, float x_max = 0.95F, float row_h = 0.05F, int depth = 0);
+
+    /**
+     * @brief Inspect the root graphics buffer for a token.
+     *
+     * Header shows token. Row shows VKBuffer child count. The root buffer
+     * itself is expanded via buffer(), then each VKBuffer child via buffer().
+     */
+    [[nodiscard]] InspectResult root_graphics_buffer(
+        Buffers::ProcessingToken token,
+        Layer& layer, Context& context,
+        const std::shared_ptr<Core::Window>& window,
+        LayoutCursor& cursor,
+        float x_min = -0.95F, float x_max = 0.95F, float row_h = 0.05F, int depth = 0);
+
+    /**
+     * @brief Inspect the full BufferManager state across all active tokens.
+     *
+     * Emits one top-level collapsible per active Buffers::ProcessingToken. Audio
+     * tokens (AUDIO_BACKEND, AUDIO_PARALLEL) expand per-channel rows showing
+     * sample count, child buffer count, and processing chain state. Graphics
+     * tokens (GRAPHICS_BACKEND) expand a single root entry showing VKBuffer
+     * child count. All children are related via layer.relate() for cascade.
+     */
+    [[nodiscard]] InspectResult buffer_manager(
+        Layer& layer, Context& context,
+        const std::shared_ptr<Core::Window>& window,
+        LayoutCursor& cursor,
+        float x_min = -0.95F, float x_max = 0.95F, float row_h = 0.05F);
+
 private:
     Buffers::BufferManager& m_bm;
     Nodes::NodeGraphManager& m_ngm;
