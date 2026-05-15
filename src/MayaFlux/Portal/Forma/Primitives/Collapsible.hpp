@@ -78,7 +78,7 @@ struct Collapsible {
  * @param label        Optional GPU image for the label overlay. nullptr = no overlay.
  */
 [[nodiscard]] inline GeometryFn<bool> collapsible_header_geom(
-    const std::shared_ptr<MappedState<float>>& cursor_in,
+    float y_top,
     float x_min,
     float x_max,
     float row_h,
@@ -88,10 +88,10 @@ struct Collapsible {
 {
     const bool has_label = label != nullptr;
 
-    return [cursor_in, x_min, x_max, row_h, color_closed, color_open, has_label](
+    return [y_top, x_min, x_max, row_h, color_closed, color_open, has_label](
                bool open, std::vector<uint8_t>& out, Element& el) {
-        const float top = cursor_in->value + row_h;
-        const float bot = cursor_in->value;
+        const float top = y_top;
+        const float bot = y_top - row_h;
         const glm::vec3 col = open ? color_open : color_closed;
 
         const size_t stride = Kakshya::VertexLayout::for_meshes().stride_bytes;
@@ -186,7 +186,7 @@ struct Collapsible {
         : create_buffer(window, cap,
               Graphics::PrimitiveTopology::TRIANGLE_LIST);
 
-    auto cursor_state = cursor.state();
+    const float y_top = cursor.y();
     cursor.advance(row_h);
 
     auto open_state = std::make_shared<MappedState<bool>>();
@@ -195,7 +195,8 @@ struct Collapsible {
     Mapped<bool> mapped;
     mapped.state = open_state;
     mapped.geometry_fn = collapsible_header_geom(
-        cursor_state, x_min, x_max, row_h, color_closed, color_open, label);
+        y_top, x_min, x_max, row_h, color_closed, color_open, label);
+
     mapped.element.buffer = buf;
     mapped.element.bounds_hint = Kinesis::AABB2D {
         .min = { x_min, cursor.y() },
