@@ -271,22 +271,26 @@ std::shared_ptr<Core::VKImage> press(
 
     const uint32_t buf_w = render_bounds.x;
 
-    const auto result = composite(text, *atlas, params.color, buf_w, render_bounds.y,
-        static_cast<float>(atlas->line_height()));
+    const uint32_t composite_h = std::max(render_bounds.y,
+        static_cast<uint32_t>(atlas->line_height()));
+
+    const auto result = composite(text, *atlas, params.color, buf_w, composite_h,
+        static_cast<float>(atlas->ascender()));
+
     if (!result) {
         MF_WARN(Journal::Component::Portal, Journal::Context::API,
             "press(AsTexture): no glyphs produced for '{}'", std::string(text));
         return nullptr;
     }
 
-    const uint32_t budget_h = params.budget_h > 0
-        ? std::max(params.budget_h, result->h)
-        : std::min(result->h * k_grow_height_multiplier, render_bounds.y);
+    const uint32_t budget_h = composite_h;
 
     const size_t budget_bytes = static_cast<size_t>(buf_w) * budget_h * 4;
     std::vector<uint8_t> pixels(budget_bytes, 0);
 
-    const uint32_t copy_h = std::min(result->h, budget_h);
+    const auto copy_h = static_cast<uint32_t>(
+        result->pixels.size() / (static_cast<size_t>(buf_w) * 4));
+
     for (uint32_t row = 0; row < copy_h; ++row) {
         std::memcpy(
             pixels.data() + static_cast<size_t>(row) * buf_w * 4,
@@ -398,8 +402,11 @@ bool repress(
     const uint32_t buf_w = target->get_width();
     const uint32_t buf_h = target->get_height();
 
-    const auto result = composite(text, *atlas, params.color, buf_w, buf_h,
-        static_cast<float>(atlas->line_height()));
+    const uint32_t composite_h = std::max(buf_h,
+        static_cast<uint32_t>(atlas->line_height()));
+
+    const auto result = composite(text, *atlas, params.color, buf_w, composite_h,
+        static_cast<float>(atlas->ascender()));
     if (!result) {
         MF_WARN(Journal::Component::Portal, Journal::Context::API,
             "repress(VKImage): no glyphs produced for '{}'", std::string(text));
@@ -408,8 +415,8 @@ bool repress(
 
     auto& loom = Portal::Graphics::get_texture_manager();
 
-    const uint32_t new_h = std::max(result->h, buf_h);
-    const bool needs_realloc = result->h > buf_h || buf_w != target->get_width();
+    const uint32_t new_h = composite_h;
+    const bool needs_realloc = composite_h != buf_h || buf_w != target->get_width();
 
     const size_t buf_bytes = static_cast<size_t>(buf_w) * new_h * 4;
     std::vector<uint8_t> pixels(buf_bytes, 0);

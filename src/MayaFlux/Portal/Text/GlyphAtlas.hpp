@@ -134,6 +134,9 @@ public:
      */
     [[nodiscard]] uint32_t line_height() const;
 
+    /// @brief Ascender in pixels for this atlas's pixel_size.
+    [[nodiscard]] uint32_t ascender() const;
+
 private:
     bool rasterize(FT_UInt glyph_index);
 

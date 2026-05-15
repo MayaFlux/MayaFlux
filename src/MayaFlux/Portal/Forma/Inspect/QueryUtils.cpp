@@ -7,6 +7,7 @@
 
 #include "MayaFlux/Portal/Forma/Forma.hpp"
 #include "MayaFlux/Portal/Text/InkPress.hpp"
+#include "MayaFlux/Portal/Text/Text.hpp"
 
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/VKImage.hpp"
 #include "MayaFlux/Core/Backends/Windowing/Window.hpp"
@@ -62,7 +63,10 @@ std::pair<uint32_t, uint32_t> row_pixel_dims(
         (x_max - x_min) * 0.5F * static_cast<float>(ws.current_width));
     const auto h = static_cast<uint32_t>(
         row_h * 0.5F * static_cast<float>(ws.current_height));
-    return { std::max(w, 1U), std::max(h, 1U) };
+
+    const uint32_t min_h = Portal::Text::get_default_atlas().line_height();
+
+    return { std::max(w, 1U), std::max(h, min_h) };
 }
 
 ValueRow make_value_row(
