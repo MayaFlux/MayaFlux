@@ -703,11 +703,11 @@ void BackendResourceManager::upload_image_data(
         size, image->get_width(), image->get_height());
 }
 
-void BackendResourceManager::upload_image_data_with_staging(
+void BackendResourceManager::upload_image_data(
     std::shared_ptr<VKImage> image,
     const void* data,
     size_t size,
-    const std::shared_ptr<Buffers::VKBuffer>& staging)
+    const std::shared_ptr<Buffers::VKBuffer>& staging, bool deferred)
 {
     if (!image || !data || !staging) {
         MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
@@ -734,7 +734,7 @@ void BackendResourceManager::upload_image_data_with_staging(
             "upload_image_data_with_staging: flush failed: {}", vk::to_string(result));
     }
 
-    execute_immediate_commands([&](vk::CommandBuffer cmd) {
+    auto record_command = [&](vk::CommandBuffer cmd) {
         vk::ImageMemoryBarrier barrier {};
         barrier.oldLayout = image->get_current_layout();
         barrier.newLayout = vk::ImageLayout::eTransferDstOptimal;
@@ -779,7 +779,13 @@ void BackendResourceManager::upload_image_data_with_staging(
             vk::PipelineStageFlagBits::eTransfer,
             vk::PipelineStageFlagBits::eFragmentShader,
             {}, 0, nullptr, 0, nullptr, 1, &barrier);
-    });
+    };
+
+    if (deferred) {
+        record_deferred_commands(record_command);
+    } else {
+        execute_immediate_commands(record_command);
+    }
 
     image->set_current_layout(vk::ImageLayout::eShaderReadOnlyOptimal);
 

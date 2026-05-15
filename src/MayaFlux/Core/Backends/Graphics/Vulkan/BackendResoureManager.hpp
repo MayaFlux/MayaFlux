@@ -118,12 +118,13 @@ public:
      * @param data    Source pixel data pointer.
      * @param size    Byte count.
      * @param staging Pre-allocated host-visible staging buffer.
+     * @param deferred If true, command recording will be deferred and must be flushed
      */
-    void upload_image_data_with_staging(
+    void upload_image_data(
         std::shared_ptr<VKImage> image,
         const void* data,
         size_t size,
-        const std::shared_ptr<Buffers::VKBuffer>& staging);
+        const std::shared_ptr<Buffers::VKBuffer>& staging, bool deferred = false);
 
     /**
      * @brief Download data from an image into a caller-supplied buffer.

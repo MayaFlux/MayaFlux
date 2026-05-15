@@ -229,12 +229,13 @@ public:
      * @param data    Pixel data pointer (at least @p size bytes).
      * @param size    Byte count — must match the image footprint.
      * @param staging Host-visible staging VKBuffer from create_streaming_staging().
+     * @param deferred. If true, record_deferred_commands will be used by the backend.
      */
     void upload_data(
         const std::shared_ptr<Core::VKImage>& image,
         const void* data,
         size_t size,
-        const std::shared_ptr<Buffers::VKBuffer>& staging);
+        const std::shared_ptr<Buffers::VKBuffer>& staging, bool deferred = false);
 
     /**
      * @brief Download pixel data from a texture
