@@ -1,7 +1,7 @@
 #pragma once
 
 #include "MayaFlux/Core/Backends/Windowing/Window.hpp"
-#include "MayaFlux/Vruta/EventSource.hpp"
+#include "MayaFlux/Vruta/WindowEventSource.hpp"
 
 #include <GLFW/glfw3.h>
 
@@ -76,8 +76,8 @@ public:
 
     void set_color(const std::array<float, 4>& color) override;
 
-    Vruta::EventSource& get_event_source() override { return m_event_source; }
-    [[nodiscard]] const Vruta::EventSource& get_event_source() const override { return m_event_source; }
+    Vruta::WindowEventSource& get_event_source() override { return m_event_source; }
+    [[nodiscard]] const Vruta::WindowEventSource& get_event_source() const override { return m_event_source; }
 
     /**
      * @brief Check if window is registered with graphics subsystem
@@ -143,7 +143,7 @@ private:
 
     std::atomic<bool> m_graphics_registered { false };
 
-    Vruta::EventSource m_event_source;
+    Vruta::WindowEventSource m_event_source;
 
     std::vector<std::weak_ptr<Buffers::VKBuffer>> m_rendering_buffers;
     std::vector<uint64_t> m_frame_commands;

@@ -3,7 +3,7 @@
 #include "MayaFlux/Core/Backends/Windowing/Window.hpp"
 #include "MayaFlux/Kriya/InputEvents.hpp"
 #include "MayaFlux/Vruta/EventManager.hpp"
-#include "MayaFlux/Vruta/EventSource.hpp"
+#include "MayaFlux/Vruta/WindowEventSource.hpp"
 
 namespace MayaFlux::Portal::Forma {
 
@@ -63,7 +63,7 @@ void Context::unbind(uint32_t id)
     m_callbacks.erase(id);
 }
 
-const Vruta::EventSource& Context::event_source() const
+const Vruta::WindowEventSource& Context::event_source() const
 {
     return m_window->get_event_source();
 }

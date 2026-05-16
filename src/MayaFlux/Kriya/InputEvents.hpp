@@ -10,7 +10,7 @@ namespace Core {
 namespace Vruta {
     class TaskScheduler;
     class Event;
-    class EventSource;
+    class WindowEventSource;
 }
 namespace Kriya {
 

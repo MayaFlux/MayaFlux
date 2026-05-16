@@ -3,8 +3,8 @@
 #include "Agent.hpp"
 
 #include "MayaFlux/IO/Keys.hpp"
-#include "MayaFlux/Vruta/EventSource.hpp"
 #include "MayaFlux/Vruta/NetworkSource.hpp"
+#include "MayaFlux/Vruta/WindowEventSource.hpp"
 
 namespace MayaFlux::Core {
 class Window;
@@ -85,7 +85,7 @@ public:
      * @param source Event stream.
      * @param filter Optional filter criteria.
      */
-    Wiring& on(Vruta::EventSource& source, Vruta::EventFilter filter = {});
+    Wiring& on(Vruta::WindowEventSource& source, Vruta::WindowEventFilter filter = {});
 
     /**
      * @brief Choreograph a position move as an EventChain step.
@@ -219,6 +219,11 @@ private:
         Vruta::EventFilter filter;
     };
 
+    struct WindowEventTrigger {
+        Vruta::WindowEventSource* source {};
+        Vruta::WindowEventFilter filter;
+    };
+
     using Trigger = std::variant<std::monostate, KeyTrigger, MouseTrigger, NetworkTrigger, EventTrigger>;
     using Factory = std::variant<std::monostate, SoundFactory, GraphicsFactory, ComplexFactory>;
     using EFactory = std::optional<EventFactory>;
@@ -245,7 +250,7 @@ private:
     std::string m_bind_attach_name;
     std::string m_bind_detach_name;
 
-    Vruta::Event event_source_loop(Vruta::EventSource& source, Vruta::EventFilter filter, Fabric& fabric, uint32_t id);
+    Vruta::Event window_event_source_loop(Vruta::WindowEventSource& source, Vruta::WindowEventFilter filter, Fabric& fabric, uint32_t id);
 
 public:
     // =====================================================================
