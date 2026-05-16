@@ -1,5 +1,8 @@
 #include "AudioSubsystem.hpp"
 
+#include "MayaFlux/Registry/BackendRegistry.hpp"
+#include "MayaFlux/Registry/Service/AudioBackendService.hpp"
+
 #include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux::Core {
@@ -26,6 +29,14 @@ void AudioSubsystem::initialize(SubsystemProcessingHandle& handle)
         m_stream_info,
         this);
 
+    register_backend_service();
+    m_notify_running.store(true, std::memory_order_release);
+
+#ifdef MAYAFLUX_PLATFORM_MACOS
+    m_observers_ptr.store(new ObserverMap(), std::memory_order_release);
+#endif
+
+    m_notify_thread = std::thread(&AudioSubsystem::notify_loop, this);
     m_is_ready = true;
 }
 
@@ -143,6 +154,11 @@ int AudioSubsystem::process_output(double* output_buffer, unsigned int num_frame
         m_handle->nodes.cleanup_completed_routing();
         m_handle->buffers.cleanup_completed_routing();
 
+        m_snapshot_size.store(static_cast<uint32_t>(total_samples), std::memory_order_release);
+        m_snapshot_ptr.store(output_buffer, std::memory_order_release);
+        m_snapshot_generation.fetch_add(1, std::memory_order_release);
+        m_snapshot_generation.notify_all();
+
         m_callback_active.fetch_sub(1, std::memory_order_release);
         return has_underrun ? 1 : 0;
 
@@ -201,6 +217,149 @@ int AudioSubsystem::process_audio(double* input_buffer, double* output_buffer, u
     return 0;
 }
 
+void AudioSubsystem::register_backend_service()
+{
+    auto svc = std::make_shared<Registry::Service::AudioBackendService>();
+
+    svc->get_output_snapshot = [this]() -> std::span<const double> {
+        const double* ptr = m_snapshot_ptr.load(std::memory_order_acquire);
+        uint32_t sz = m_snapshot_size.load(std::memory_order_acquire);
+        if (!ptr || sz == 0)
+            return {};
+        return { ptr, sz };
+    };
+
+    svc->register_output_observer = [this](
+                                        std::function<void(const double*, uint32_t)> cb) -> uint32_t {
+        uint32_t id = m_next_observer_id.fetch_add(1, std::memory_order_relaxed);
+#ifdef MAYAFLUX_PLATFORM_MACOS
+        const ObserverMap* current = m_observers_ptr.load(std::memory_order_acquire);
+        const ObserverMap* next;
+        do {
+            auto* copy = new ObserverMap(*current);
+            (*copy)[id] = cb;
+            next = copy;
+        } while (!m_observers_ptr.compare_exchange_weak(
+            current, next,
+            std::memory_order_release, std::memory_order_acquire));
+        retire_observers(current);
+#else
+        auto current = m_observers.load(std::memory_order_acquire);
+        std::shared_ptr<ObserverMap> next;
+        do {
+            next = std::make_shared<ObserverMap>(*current);
+            (*next)[id] = cb;
+        } while (!m_observers.compare_exchange_weak(
+            current, next,
+            std::memory_order_release, std::memory_order_acquire));
+#endif
+        return id;
+    };
+
+    svc->unregister_output_observer = [this](uint32_t id) {
+#ifdef MAYAFLUX_PLATFORM_MACOS
+        const ObserverMap* current = m_observers_ptr.load(std::memory_order_acquire);
+        const ObserverMap* next;
+        do {
+            auto* copy = new ObserverMap(*current);
+            copy->erase(id);
+            next = copy;
+        } while (!m_observers_ptr.compare_exchange_weak(
+            current, next,
+            std::memory_order_release, std::memory_order_acquire));
+        retire_observers(current);
+#else
+        auto current = m_observers.load(std::memory_order_acquire);
+        std::shared_ptr<ObserverMap> next;
+        do {
+            next = std::make_shared<ObserverMap>(*current);
+            next->erase(id);
+        } while (!m_observers.compare_exchange_weak(
+            current, next,
+            std::memory_order_release, std::memory_order_acquire));
+#endif
+    };
+
+    m_audio_backend_service = svc;
+    Registry::BackendRegistry::instance()
+        .register_service<Registry::Service::AudioBackendService>(
+            [svc]() -> void* { return svc.get(); });
+}
+
+void AudioSubsystem::notify_loop()
+{
+    uint64_t last_gen = 0;
+
+    while (m_notify_running.load(std::memory_order_acquire)) {
+        m_snapshot_generation.wait(last_gen, std::memory_order_relaxed);
+
+        if (!m_notify_running.load(std::memory_order_acquire))
+            break;
+
+        last_gen = m_snapshot_generation.load(std::memory_order_acquire);
+
+        const double* ptr = m_snapshot_ptr.load(std::memory_order_acquire);
+        uint32_t sz = m_snapshot_size.load(std::memory_order_acquire);
+
+        if (!ptr || sz == 0)
+            continue;
+
+#ifdef MAYAFLUX_PLATFORM_MACOS
+        auto [obs, slot] = acquire_observers();
+        if (obs) {
+            for (auto& [id, cb] : *obs)
+                cb(ptr, sz);
+        }
+        release_observers(slot);
+#else
+        auto obs = m_observers.load(std::memory_order_acquire);
+        for (auto& [id, cb] : *obs)
+            cb(ptr, sz);
+#endif
+    }
+}
+
+#ifdef MAYAFLUX_PLATFORM_MACOS
+std::pair<const AudioSubsystem::ObserverMap*, size_t>
+AudioSubsystem::acquire_observers() const
+{
+    size_t slot = m_obs_hazard_counter.fetch_add(1, std::memory_order_relaxed)
+        % MAX_OBSERVER_READERS;
+    const ObserverMap* current;
+    do {
+        current = m_observers_ptr.load(std::memory_order_acquire);
+        m_obs_hazard_ptrs[slot].store(current, std::memory_order_release);
+    } while (current != m_observers_ptr.load(std::memory_order_acquire));
+    return { current, slot };
+}
+
+void AudioSubsystem::release_observers(size_t slot) const
+{
+    m_obs_hazard_ptrs[slot].store(nullptr, std::memory_order_release);
+}
+
+void AudioSubsystem::retire_observers(const ObserverMap* old)
+{
+    m_obs_retired.push_back(old);
+    auto it = m_obs_retired.begin();
+    while (it != m_obs_retired.end()) {
+        bool referenced = false;
+        for (size_t i = 0; i < MAX_OBSERVER_READERS; ++i) {
+            if (m_obs_hazard_ptrs[i].load(std::memory_order_acquire) == *it) {
+                referenced = true;
+                break;
+            }
+        }
+        if (!referenced) {
+            delete *it;
+            it = m_obs_retired.erase(it);
+        } else {
+            ++it;
+        }
+    }
+}
+#endif
+
 void AudioSubsystem::start()
 {
     if (!m_is_ready || !m_audio_stream) {
@@ -232,9 +391,16 @@ void AudioSubsystem::stop()
     }
 
     if (m_callback_active.load() > 0) {
-        MF_INFO(Journal::Component::Core, Journal::Context::AudioSubsystem, "Stopped while {} callback(s) active",
-            m_callback_active.load());
+        MF_INFO(Journal::Component::Core, Journal::Context::AudioSubsystem,
+            "Stopped while {} callback(s) active", m_callback_active.load());
     }
+
+    m_notify_running.store(false, std::memory_order_release);
+    m_snapshot_generation.fetch_add(1, std::memory_order_release);
+    m_snapshot_generation.notify_all();
+
+    if (m_notify_thread.joinable())
+        m_notify_thread.join();
 
     MF_INFO(Journal::Component::Core, Journal::Context::AudioSubsystem,
         "AudioSubsystem stopped");
@@ -265,6 +431,7 @@ void AudioSubsystem::wait_until_running()
 void AudioSubsystem::shutdown()
 {
     stop();
+
     if (m_audio_stream) {
         m_audio_stream->close();
     }
@@ -272,6 +439,16 @@ void AudioSubsystem::shutdown()
     m_audio_device.reset();
     m_audiobackend->cleanup();
     m_audiobackend.reset();
+
+    Registry::BackendRegistry::instance()
+        .unregister_service<Registry::Service::AudioBackendService>();
+
+    m_audio_backend_service.reset();
+
+#ifdef MAYAFLUX_PLATFORM_MACOS
+    delete m_observers_ptr.exchange(nullptr, std::memory_order_acq_rel);
+#endif
+
     m_is_ready = false;
 }
 

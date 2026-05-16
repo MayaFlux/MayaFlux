@@ -4,6 +4,10 @@
 
 #include "MayaFlux/Core/Backends/Audio/AudioBackend.hpp"
 
+namespace MayaFlux::Registry::Service {
+struct AudioBackendService;
+}
+
 namespace MayaFlux::Core {
 
 /**
@@ -115,11 +119,17 @@ public:
     SubsystemProcessingHandle* get_processing_context_handle() override { return m_handle; }
 
 private:
+    using ObserverMap = std::unordered_map<uint32_t, std::function<void(const double*, uint32_t)>>;
+    void register_backend_service();
+    void notify_loop();
+
     GlobalStreamInfo m_stream_info; ///< Audio stream configuration
 
     std::unique_ptr<IAudioBackend> m_audiobackend; ///< Audio backend implementation
     std::unique_ptr<AudioDevice> m_audio_device; ///< Audio device manager
     std::unique_ptr<AudioStream> m_audio_stream; ///< Audio stream manager
+
+    std::shared_ptr<Registry::Service::AudioBackendService> m_audio_backend_service;
 
     SubsystemTokens m_subsystem_tokens; ///< Processing token configuration
     SubsystemProcessingHandle* m_handle; ///< Reference to processing handle
@@ -129,6 +139,33 @@ private:
 
     std::atomic<bool> m_is_running { false }; ///< Subsystem running state
     std::atomic<int> m_callback_active { 0 }; ///< Active callback counter
+
+    std::atomic<uint32_t> m_next_observer_id { 1 };
+    std::atomic<bool> m_notify_running { false };
+
+    alignas(64) std::atomic<const double*> m_snapshot_ptr { nullptr };
+    std::atomic<uint64_t> m_snapshot_generation { 0 };
+    std::atomic<uint32_t> m_snapshot_size { 0 };
+
+    std::thread m_notify_thread;
+
+#ifdef MAYAFLUX_PLATFORM_MACOS
+    // Apple Clang lacks std::atomic<std::shared_ptr<T>> - raw pointer + hazard
+    std::atomic<const ObserverMap*> m_observers_ptr { nullptr };
+
+    static constexpr size_t MAX_OBSERVER_READERS = 8;
+    mutable std::array<std::atomic<const ObserverMap*>, MAX_OBSERVER_READERS> m_obs_hazard_ptrs {};
+    mutable std::atomic<size_t> m_obs_hazard_counter { 0 };
+
+    std::pair<const ObserverMap*, size_t> acquire_observers() const;
+    void release_observers(size_t slot) const;
+    void retire_observers(const ObserverMap* old);
+    std::vector<const ObserverMap*> m_obs_retired;
+#else
+    std::atomic<std::shared_ptr<ObserverMap>> m_observers {
+        std::make_shared<ObserverMap>()
+    };
+#endif
 
     static const SubsystemType m_type = SubsystemType::AUDIO;
 };
