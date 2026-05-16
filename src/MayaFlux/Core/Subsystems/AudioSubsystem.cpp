@@ -256,6 +256,12 @@ void AudioSubsystem::resume()
     }
 }
 
+void AudioSubsystem::wait_until_running()
+{
+    while (!m_is_running.load(std::memory_order_acquire))
+        std::this_thread::yield();
+}
+
 void AudioSubsystem::shutdown()
 {
     stop();

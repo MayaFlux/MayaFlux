@@ -8,8 +8,6 @@
 #include "MayaFlux/Core/Backends/Windowing/Window.hpp"
 #include "MayaFlux/Portal/Graphics/RenderFlow.hpp"
 
-#include "MayaFlux/Journal/Archivist.hpp"
-
 namespace MayaFlux::Buffers {
 
 GraphicsBatchProcessor::GraphicsBatchProcessor(std::shared_ptr<Buffer> root_buffer)

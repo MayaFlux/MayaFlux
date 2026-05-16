@@ -1,6 +1,8 @@
 #include "DynamicSoundStream.hpp"
 #include "MayaFlux/Kakshya/Utils/DataUtils.hpp"
 
+#include "MayaFlux/Journal/Archivist.hpp"
+
 namespace MayaFlux::Kakshya {
 
 DynamicSoundStream::DynamicSoundStream(uint32_t sample_rate, uint32_t num_channels)
@@ -21,20 +23,21 @@ uint64_t DynamicSoundStream::validate(std::vector<std::span<const double>>& data
 
     } else {
         if (data.size() < get_num_channels()) {
-            std::cerr << "Insufficient channel data for planar organization" << '\n';
+            MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing, "Insufficient channel data for planar organization: expected {}, got {}", get_num_channels(), data.size());
+
             return 0;
         }
         num_frames = data[0].size();
 
         if (!std::ranges::all_of(data | std::views::drop(1) | std::views::take(get_num_channels() - 1),
                 [num_frames](const auto& span) { return span.size() == num_frames; })) {
-            std::cerr << "Mismatched frame counts across channels" << '\n';
+            MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing, "Mismatched frame counts across channels in planar organization. Expected {} frames, but found a channel with a different frame count.", num_frames);
             return 0;
         }
     }
 
     if (num_frames == 0) {
-        std::cerr << "Attempting to write to container with insufficient data for complete frame. Returning" << '\n';
+        MF_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing, "Attempting to write with insufficient data for complete frame. Data frames: {}, Channels: {}. Returning without writing.", num_frames, get_num_channels());
         return 0;
     }
 
@@ -68,7 +71,7 @@ uint64_t DynamicSoundStream::validate_single_channel(std::span<const double> dat
     }
 
     if (channel >= get_num_channels()) {
-        std::cerr << "Channel index " << channel << " exceeds available channels (" << get_num_channels() << ")" << '\n';
+        MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing, "Channel index {} exceeds available channels ({})", channel, get_num_channels());
         return 0;
     }
 
@@ -235,7 +238,7 @@ std::span<const double> DynamicSoundStream::get_channel_frames(uint32_t channel,
     }
 
     if (m_structure.organization == OrganizationStrategy::INTERLEAVED) {
-        std::cerr << "Direct span access not supported for interleaved data. Use get_frames() or Kakshya::extract_channel_data() instead." << '\n';
+        MF_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing, "Direct span access not supported for interleaved data. Use get_frames() or Kakshya::extract_channel_data() instead.");
         return {};
     }
 

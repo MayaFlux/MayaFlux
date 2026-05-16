@@ -1,6 +1,6 @@
 #pragma once
 
-#if defined(MAYAFLUX_COMPILER_CLANG) || defined(MAYAFLUX_COMPILER_GCC)
+#if (defined(MAYAFLUX_COMPILER_CLANG) || defined(MAYAFLUX_COMPILER_GCC)) && !defined(MAYAFLUX_PLATFORM_WINDOWS)
 #include <cxxabi.h>
 #endif
 
@@ -75,7 +75,7 @@ template <typename T>
 [[nodiscard]] inline std::string dynamic_type_name(const T& obj) noexcept
 {
     const char* mangled = typeid(obj).name();
-#if defined(MAYAFLUX_COMPILER_CLANG) || defined(MAYAFLUX_COMPILER_GCC)
+#if (defined(MAYAFLUX_COMPILER_CLANG) || defined(MAYAFLUX_COMPILER_GCC)) && !defined(MAYAFLUX_PLATFORM_WINDOWS)
     int status {};
     char* buf = abi::__cxa_demangle(mangled, nullptr, nullptr, &status);
     std::string result = (status == 0 && buf) ? buf : mangled;

@@ -15,6 +15,15 @@
 
 #include <future>
 
+
+#ifdef MAYAFLUX_PLATFORM_WINDOWS
+#ifdef ERROR
+#undef ERROR
+#endif // ERROR
+
+#endif // MAYAFLUX_PLATFORM_WINDOWS
+
+
 namespace MayaFlux::Core {
 
 SubsystemManager::SubsystemManager(
@@ -146,6 +155,11 @@ void SubsystemManager::start_all_subsystems()
         if (subsystem->is_ready()) {
             subsystem->start();
         }
+    }
+
+    for (auto& [token, subsystem] : m_subsystems) {
+        if (subsystem->is_ready())
+            subsystem->wait_until_running();
     }
 }
 

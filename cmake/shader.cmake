@@ -10,6 +10,8 @@ if(WIN32)
         PATHS "$ENV{VULKAN_SDK}/Lib" REQUIRED NO_DEFAULT_PATH)
     find_library(SPIRV_CROSS_CPP_LIB NAMES spirv-cross-cpp 
         PATHS "$ENV{VULKAN_SDK}/Lib" REQUIRED NO_DEFAULT_PATH)
+    find_library(SPIRV_CROSS_GLSL_LIB NAMES spirv-cross-glsl
+        PATHS "$ENV{VULKAN_SDK}/Lib" REQUIRED NO_DEFAULT_PATH)
     find_path(SPIRV_CROSS_INCLUDE_DIR spirv_cross/spirv_cross.hpp 
         PATHS "$ENV{VULKAN_SDK}/Include" REQUIRED NO_DEFAULT_PATH)
     
@@ -22,6 +24,15 @@ if(WIN32)
         INTERFACE_INCLUDE_DIRECTORIES ${SPIRV_CROSS_INCLUDE_DIR}
     )
     
+    add_library(spirv-cross-glsl STATIC IMPORTED)
+    set_target_properties(spirv-cross-glsl PROPERTIES
+        IMPORTED_LOCATION_DEBUG ${SPIRV_CROSS_GLSL_LIB}
+        IMPORTED_LOCATION_RELEASE ${SPIRV_CROSS_GLSL_LIB}
+        IMPORTED_LOCATION_RELWITHDEBINFO ${SPIRV_CROSS_GLSL_LIB}
+        IMPORTED_LOCATION_MINSIZEREL ${SPIRV_CROSS_GLSL_LIB}
+        INTERFACE_INCLUDE_DIRECTORIES ${SPIRV_CROSS_INCLUDE_DIR}
+    )
+
     add_library(spirv-cross-cpp STATIC IMPORTED)
     set_target_properties(spirv-cross-cpp PROPERTIES
         IMPORTED_LOCATION_DEBUG ${SPIRV_CROSS_CPP_LIB}
@@ -29,10 +40,12 @@ if(WIN32)
         IMPORTED_LOCATION_RELWITHDEBINFO ${SPIRV_CROSS_CPP_LIB}
         IMPORTED_LOCATION_MINSIZEREL ${SPIRV_CROSS_CPP_LIB}
         INTERFACE_INCLUDE_DIRECTORIES ${SPIRV_CROSS_INCLUDE_DIR}
+        INTERFACE_LINK_LIBRARIES spirv-cross-glsl
     )
     
     set(SPIRV_CROSS_LIBRARIES
         spirv-cross-core
+        spirv-cross-glsl
         spirv-cross-cpp
     )
     
@@ -90,12 +103,12 @@ if(MAYAFLUX_USE_SHADERC)
         else()
             find_library(SHADERC_COMBINED_LIB
                 NAMES shaderc_combined
-                PATHS ${Vulkan_LIBRARY_DIR}
+                PATHS "$ENV{VULKAN_SDK}/Lib"
                 NO_DEFAULT_PATH
             )
             find_path(SHADERC_INCLUDE_DIR
                 NAMES shaderc/shaderc.h
-                PATHS ${Vulkan_INCLUDE_DIR}
+                PATHS "$ENV{VULKAN_SDK}/Include"
                 NO_DEFAULT_PATH
             )
             if(SHADERC_COMBINED_LIB AND SHADERC_INCLUDE_DIR)

@@ -51,6 +51,9 @@ public:
     /** @brief Check if audio subsystem is currently running */
     inline bool is_running() const override { return m_is_running.load(); }
 
+    /* @brief Wait until the audio subsystem's processing loop is confirmed live */
+    void wait_until_running() override;
+
     /** @brief Get access to the underlying audio backend */
     inline IAudioBackend* get_audio_backend() { return m_audiobackend.get(); }
 

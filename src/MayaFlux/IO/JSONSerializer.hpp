@@ -4,6 +4,8 @@
 
 #include "FileReader.hpp"
 
+#include "MayaFlux/Journal/Archivist.hpp"
+
 #include <nlohmann/json.hpp>
 
 #include "fstream"
@@ -204,8 +206,13 @@ private:
     {
         if constexpr (Reflectable<T>) {
             if (!j.is_object()) {
-                throw nlohmann::json::type_error::create(
+                auto e = nlohmann::json::type_error::create(
                     302, "expected object for Reflectable type", &j);
+                error<std::runtime_error>(
+                    Journal::Component::IO,
+                    Journal::Context::Runtime,
+                    std::source_location::current(),
+                    "JSON type error: {}", e.what());
             }
             std::apply(
                 [&](const auto&... props) {
@@ -224,7 +231,12 @@ private:
         } else if constexpr (is_vector_v<T>) {
             using V = typename is_vector<T>::element;
             if (!j.is_array()) {
-                throw nlohmann::json::type_error::create(302, "expected array", &j);
+                auto e = nlohmann::json::type_error::create(302, "expected array", &j);
+                error<std::runtime_error>(
+                    Journal::Component::IO,
+                    Journal::Context::Runtime,
+                    std::source_location::current(),
+                    "JSON type error: {}", e.what());
             }
             out.clear();
             out.reserve(j.size());
@@ -236,7 +248,12 @@ private:
         } else if constexpr (is_string_map_v<T>) {
             using V = typename is_string_map<T>::element;
             if (!j.is_object()) {
-                throw nlohmann::json::type_error::create(302, "expected object for map", &j);
+                auto e = nlohmann::json::type_error::create(302, "expected object for map", &j);
+                error<std::runtime_error>(
+                    Journal::Component::IO,
+                    Journal::Context::Runtime,
+                    std::source_location::current(),
+                    "JSON type error: {}", e.what());
             }
             out.clear();
             for (const auto& [k, v] : j.items()) {
@@ -302,12 +319,23 @@ private:
     static void decode_glm(const nlohmann::json& j, T& out)
     {
         if (!j.is_array()) {
-            throw nlohmann::json::type_error::create(302, "expected array for glm type", &j);
+            auto e = nlohmann::json::type_error::create(302, "expected array for glm type", &j);
+            error<std::runtime_error>(
+                Journal::Component::IO,
+                Journal::Context::Runtime,
+                std::source_location::current(),
+                "JSON type error: {}", e.what());
         }
         constexpr auto n = glm_component_count<T>();
         if (j.size() != n) {
-            throw nlohmann::json::other_error::create(
+            auto e = nlohmann::json::other_error::create(
                 501, "glm component count mismatch", &j);
+            error<std::runtime_error>(
+                Journal::Component::IO,
+                Journal::Context::Runtime,
+                std::source_location::current(),
+                "JSON error: expected {} components for type {}, got {}: {}",
+                n, typeid(T).name(), j.size(), e.what());
         }
         using Comp = glm_component_type<T>;
         Comp* ptr = &out[0];

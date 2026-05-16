@@ -189,6 +189,12 @@ void InputSubsystem::shutdown()
         "Input Subsystem shutdown complete");
 }
 
+void InputSubsystem::wait_until_running()
+{
+    while (!m_running.load(std::memory_order_acquire))
+        std::this_thread::yield();
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Backend Management
 // ─────────────────────────────────────────────────────────────────────────────

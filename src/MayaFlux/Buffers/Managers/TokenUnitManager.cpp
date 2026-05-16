@@ -99,7 +99,12 @@ RootAudioUnit& TokenUnitManager::get_audio_unit_mutable(ProcessingToken token)
 {
     auto it = m_audio_units.find(token);
     if (it == m_audio_units.end()) {
-        throw std::out_of_range("Audio unit not found for token");
+        error<std::out_of_range>(
+            Journal::Component::Core,
+            Journal::Context::BufferManagement,
+            std::source_location::current(),
+            "Audio unit not found for token {}",
+            static_cast<int>(token));
     }
     return it->second;
 }
@@ -154,7 +159,12 @@ const RootGraphicsUnit& TokenUnitManager::get_graphics_unit(ProcessingToken toke
 {
     auto it = m_graphics_units.find(token);
     if (it == m_graphics_units.end()) {
-        throw std::out_of_range("Graphics unit not found for token");
+        error<std::out_of_range>(
+            Journal::Component::Core,
+            Journal::Context::BufferManagement,
+            std::source_location::current(),
+            "Graphics unit not found for token {}",
+            static_cast<int>(token));
     }
     return it->second;
 }
@@ -163,7 +173,12 @@ RootGraphicsUnit& TokenUnitManager::get_graphics_unit_mutable(ProcessingToken to
 {
     auto it = m_graphics_units.find(token);
     if (it == m_graphics_units.end()) {
-        throw std::out_of_range("Graphics unit not found for token");
+        error<std::out_of_range>(
+            Journal::Component::Core,
+            Journal::Context::BufferManagement,
+            std::source_location::current(),
+            "Graphics unit not found for token {}",
+            static_cast<int>(token));
     }
     return it->second;
 }

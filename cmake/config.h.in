@@ -36,15 +36,11 @@
 #define MAYAFLUX_UNLIKELY(x) __builtin_expect(!!(x), 0)
 #endif
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER) && !defined(__clang__)
 #define MAYAFLUX_COMPILER_MSVC
-#endif
-
-#ifdef __clang__
+#elif defined(__clang__)
 #define MAYAFLUX_COMPILER_CLANG
-#endif
-
-#ifdef __GNUC__
+#elif defined(__GNUC__)
 #define MAYAFLUX_COMPILER_GCC
 #endif
 

@@ -4,6 +4,8 @@
 
 #include "MayaFlux/Kriya/Awaiters/DelayAwaiters.hpp"
 
+#include "MayaFlux/Journal/Archivist.hpp"
+
 namespace MayaFlux::Kriya {
 
 CycleCoordinator::CycleCoordinator(Vruta::TaskScheduler& scheduler)
@@ -29,7 +31,7 @@ Vruta::SoundRoutine CycleCoordinator::sync_pipelines(
             for (auto& pipeline_ref : pipelines) {
                 auto& pipeline = pipeline_ref.get();
                 if (pipeline.has_pending_data()) {
-                    std::cout << "Sync point: Pipeline has stale data at cycle " << cycle << '\n';
+                    MF_WARN(Journal::Component::Kriya, Journal::Context::CoroutineScheduling, "Sync point: Pipeline has stale data at cycle {}", cycle);
                 }
             }
         }

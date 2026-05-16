@@ -38,7 +38,7 @@ DataType transform_regions(DataType& input,
     TransformFunc transform_func)
 {
     if (!container) {
-        throw std::invalid_argument("Container is required for region-based transformations");
+        error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ContainerProcessing, std::source_location::current(), "Container is required for region-based transformations");
     }
 
     auto [target_data, structure_info] = OperationHelper::extract_structured_double(input);
@@ -94,7 +94,7 @@ DataType transform_regions(DataType& input,
     std::vector<std::vector<double>>& working_buffer)
 {
     if (!container) {
-        throw std::invalid_argument("Container is required for region-based transformations");
+        error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ContainerProcessing, std::source_location::current(), "Container is required for region-based transformations");
     }
 
     auto [target_data, structure_info] = OperationHelper::setup_operation_buffer(input, working_buffer);
@@ -241,7 +241,7 @@ DataType transform_outliers(DataType& input,
     auto stats = stat_analyzer->analyze_statistics(input);
 
     if (stats.channel_statistics.empty()) {
-        throw std::runtime_error("No channel statistics available for outlier detection");
+        error<std::runtime_error>(Journal::Component::Yantra, Journal::Context::Runtime, std::source_location::current(), "No channel statistics available for outlier detection");
     }
     const auto& first_channel_stats = stats.channel_statistics[0];
     double threshold_low = first_channel_stats.mean_stat - std_dev_threshold * first_channel_stats.stat_std_dev;
@@ -286,7 +286,7 @@ DataType transform_outliers(DataType& input,
     auto stats = stat_analyzer->analyze_statistics(input);
 
     if (stats.channel_statistics.empty()) {
-        throw std::runtime_error("No channel statistics available for outlier detection");
+        error<std::runtime_error>(Journal::Component::Yantra, Journal::Context::Runtime, std::source_location::current(), "No channel statistics available for outlier detection");
     }
     const auto& first_channel_stats = stats.channel_statistics[0];
     double threshold_low = first_channel_stats.mean_stat - std_dev_threshold * first_channel_stats.stat_std_dev;
@@ -474,11 +474,11 @@ DataType transform_matrix_multichannel(DataType& input,
     auto [target_data, structure_info] = OperationHelper::extract_structured_double(input);
 
     if (transformation_matrix.rows() != num_channels || transformation_matrix.cols() != num_channels) {
-        throw std::invalid_argument("Transformation matrix dimensions must match number of channels");
+        error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::Runtime, std::source_location::current(), "Transformation matrix dimensions must match number of channels");
     }
 
     if (target_data.size() != num_channels) {
-        throw std::invalid_argument("Data channel count must match specified number of channels");
+        error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::Runtime, std::source_location::current(), "Data channel count must match specified number of channels");
     }
 
     size_t min_frames = std::ranges::min(target_data | std::views::transform([](const auto& span) { return span.size(); }));
@@ -526,11 +526,11 @@ DataType transform_matrix_multichannel(DataType& input,
     auto [target_data, structure_info] = OperationHelper::setup_operation_buffer(input, working_buffer);
 
     if (transformation_matrix.rows() != num_channels || transformation_matrix.cols() != num_channels) {
-        throw std::invalid_argument("Transformation matrix dimensions must match number of channels");
+        error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::Runtime, std::source_location::current(), "Transformation matrix dimensions must match number of channels");
     }
 
     if (target_data.size() != num_channels) {
-        throw std::invalid_argument("Data channel count must match specified number of channels");
+        error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::Runtime, std::source_location::current(), "Data channel count must match specified number of channels");
     }
 
     size_t min_frames = std::ranges::min(target_data | std::views::transform([](const auto& span) { return span.size(); }));
@@ -570,7 +570,7 @@ DataType transform_channel_operation(DataType& input,
     auto [target_data, structure_info] = OperationHelper::extract_structured_double(input);
 
     if (target_data.size() != num_channels) {
-        throw std::invalid_argument("Data channel count must match specified number of channels");
+        error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::Runtime, std::source_location::current(), "Data channel count must match specified number of channels");
     }
 
     auto reconstructed_data = target_data
@@ -600,7 +600,7 @@ DataType transform_channel_operation(DataType& input,
     auto [target_data, structure_info] = OperationHelper::setup_operation_buffer(input, working_buffer);
 
     if (target_data.size() != num_channels) {
-        throw std::invalid_argument("Data channel count must match specified number of channels");
+        error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::Runtime, std::source_location::current(), "Data channel count must match specified number of channels");
     }
 
     return OperationHelper::reconstruct_from_double<DataType>(working_buffer, structure_info);

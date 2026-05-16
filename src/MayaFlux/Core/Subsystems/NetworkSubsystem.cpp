@@ -211,6 +211,12 @@ void NetworkSubsystem::shutdown()
         "Network Subsystem shutdown complete");
 }
 
+void NetworkSubsystem::wait_until_running()
+{
+    while (!m_running.load(std::memory_order_acquire))
+        std::this_thread::yield();
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Backend management
 // ─────────────────────────────────────────────────────────────────────────────

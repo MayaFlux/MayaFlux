@@ -196,7 +196,10 @@ const std::vector<std::shared_ptr<AudioBuffer>>& BufferAccessControl::get_audio_
 {
     const auto& unit = m_unit_manager.get_audio_unit(token);
     if (channel >= unit.channel_count) {
-        throw std::out_of_range("Audio channel out of range");
+        error<std::out_of_range>(Journal::Component::Core, Journal::Context::BufferManagement,
+            std::source_location::current(),
+            "Audio channel {} out of range for token {}",
+            channel, static_cast<int>(token));
     }
     return unit.get_buffer(channel)->get_child_buffers();
 }

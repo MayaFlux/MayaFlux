@@ -66,7 +66,8 @@ std::unique_ptr<IAudioBackend> AudioBackendFactory::create_backend(
 #endif
 
     default:
-        throw std::runtime_error("Unsupported audio backend type");
+        error<std::runtime_error>(Journal::Component::Core, Journal::Context::AudioBackend, std::source_location::current(),
+            "Unsupported audio backend type: {}", static_cast<int>(type));
     }
 }
 

@@ -93,6 +93,16 @@ public:
     /** @brief Check if subsystem is currently processing */
     [[nodiscard]] virtual bool is_running() const = 0;
 
+    /**
+     * @brief Block until the subsystem's processing loop is confirmed live.
+     *
+     * Called by SubsystemManager::start_all_subsystems() after all start()
+     * calls have returned. Subsystems that spawn a thread and set m_running
+     * from inside it override this to spin-wait on that atomic. The default
+     * no-op is correct for synchronous subsystems (AudioSubsystem).
+     */
+    virtual void wait_until_running() { }
+
     /** @brief Shutdown and cleanup subsystem resources */
     virtual void shutdown() = 0;
 

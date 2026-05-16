@@ -313,7 +313,7 @@ std::shared_ptr<Kakshya::DynamicSoundStream> SoundFileReader::load_bounded(
         return nullptr;
     }
 
-    const uint64_t effective_rate = m_target_sample_rate > 0
+    const uint32_t effective_rate = m_target_sample_rate > 0
         ? m_target_sample_rate
         : audio->sample_rate;
 

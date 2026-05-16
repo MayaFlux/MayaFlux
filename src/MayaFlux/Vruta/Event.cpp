@@ -1,5 +1,7 @@
 #include "Event.hpp"
 
+#include "MayaFlux/Journal/Archivist.hpp"
+
 namespace MayaFlux::Vruta {
 
 Event event_promise::get_return_object()
@@ -11,7 +13,8 @@ Event::Event(std::coroutine_handle<promise_type> h)
     : m_handle(h)
 {
     if (!m_handle || !m_handle.address()) {
-        throw std::invalid_argument("Invalid coroutine handle");
+        error<std::invalid_argument>(Journal::Component::Vruta, Journal::Context::EventDispatch, std::source_location::current(),
+            "Event: Invalid coroutine handle");
     }
 }
 

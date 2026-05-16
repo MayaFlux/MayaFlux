@@ -1,6 +1,6 @@
 #include "Filter.hpp"
 
-#include <algorithm>
+#include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux::Nodes::Filters {
 
@@ -8,7 +8,8 @@ std::pair<int, int> shift_parser(const std::string& str)
 {
     size_t underscore = str.find('_');
     if (underscore == std::string::npos) {
-        throw std::invalid_argument("Invalid format. Supply numberical format of nInputs_nOutpits like 25_2");
+        error<std::invalid_argument>(Journal::Component::Nodes, Journal::Context::Configuration, std::source_location::current(),
+            "Invalid format for shift configuration. Expected format: nInputs_nOutputs (e.g., 25_2). Received: '{}'", str);
     }
 
     int inputs = std::stoi(str.substr(0, underscore));
@@ -37,10 +38,12 @@ Filter::Filter(const std::shared_ptr<Node>& input, const std::vector<double>& a_
     m_shift_config = shift_parser(std::to_string(b_coef.size() - 1) + "_" + std::to_string(a_coef.size() - 1));
 
     if (m_coef_a.empty() || m_coef_b.empty()) {
-        throw std::invalid_argument("IIR coefficients cannot be empty");
+        error<std::invalid_argument>(Journal::Component::Nodes, Journal::Context::Configuration, std::source_location::current(),
+            "IIR coefficients cannot be empty. Received a_coef size: {}, b_coef size: {}", m_coef_a.size(), m_coef_b.size());
     }
     if (m_coef_a[0] == 0.0F) {
-        throw std::invalid_argument("First denominator coefficient (a[0]) cannot be zero");
+        error<std::invalid_argument>(Journal::Component::Nodes, Journal::Context::Configuration, std::source_location::current(),
+            "First denominator coefficient (a[0]) cannot be zero. Received a[0]: {}", m_coef_a[0]);
     }
 
     initialize_shift_buffers();
@@ -104,10 +107,12 @@ void Filter::update_outputs(double current_sample)
 void Filter::setACoefficients(const std::vector<double>& new_coefs)
 {
     if (new_coefs.empty()) {
-        throw std::invalid_argument("Denominator coefficients cannot be empty");
+        error<std::invalid_argument>(Journal::Component::Nodes, Journal::Context::Configuration, std::source_location::current(),
+            "Denominator coefficients cannot be empty. Received size: {}", new_coefs.size());
     }
     if (new_coefs[0] == 0.0F) {
-        throw std::invalid_argument("First denominator coefficient (a[0]) cannot be zero");
+        error<std::invalid_argument>(Journal::Component::Nodes, Journal::Context::Configuration, std::source_location::current(),
+            "First denominator coefficient (a[0]) cannot be zero. Received a[0]: {}", new_coefs[0]);
     }
 
     m_coef_a = new_coefs;
@@ -121,7 +126,8 @@ void Filter::setACoefficients(const std::vector<double>& new_coefs)
 void Filter::setBCoefficients(const std::vector<double>& new_coefs)
 {
     if (new_coefs.empty()) {
-        throw std::invalid_argument("Numerator coefficients cannot be empty");
+        error<std::invalid_argument>(Journal::Component::Nodes, Journal::Context::Configuration, std::source_location::current(),
+            "Numerator coefficients cannot be empty. Received size: {}", new_coefs.size());
     }
 
     m_coef_b = new_coefs;
@@ -144,7 +150,7 @@ void Filter::update_coef_from_input(int length, coefficients type)
         std::vector<double> samples = m_input_node->process_batch(length);
         set_coefs(samples, type);
     } else {
-        std::cerr << "No input node set for Filter. Use Filter::setInputNode() to set an input node.\n Alternatively, use Filter::updateCoefficientsFromNode() to specify a different source node.\n";
+        MF_WARN(Journal::Component::Nodes, Journal::Context::NodeProcessing, "No input node set for Filter. Use Filter::setInputNode() to set an input node. Alternatively, use Filter::updateCoefficientsFromNode() to specify a different source node.");
     }
 }
 
