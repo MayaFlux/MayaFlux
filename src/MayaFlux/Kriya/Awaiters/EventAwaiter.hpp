@@ -4,7 +4,6 @@
 #include "MayaFlux/Vruta/WindowEventSource.hpp"
 
 #include <coroutine>
-#include <utility>
 
 namespace MayaFlux::Kriya {
 
