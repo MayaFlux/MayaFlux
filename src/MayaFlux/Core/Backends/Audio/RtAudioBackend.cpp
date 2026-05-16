@@ -83,11 +83,13 @@ RtAudioDevice::RtAudioDevice(RtAudio* context)
     , m_defaultInputDevice(0)
 {
     if (!context) {
-        throw std::invalid_argument("RtAudioDevice: context must not be null");
+        error<std::invalid_argument>(Journal::Component::Core, Journal::Context::AudioBackend, std::source_location::current(),
+            "RtAudioDevice: context must not be null");
     }
 
     if (m_context->getDeviceCount() == 0) {
-        throw std::runtime_error("No audio devices found");
+        error<std::runtime_error>(Journal::Component::Core, Journal::Context::AudioBackend, std::source_location::current(),
+            "No audio devices found");
     }
 
     m_defaultOutputDevice = m_context->getDefaultOutputDevice();
@@ -106,8 +108,8 @@ RtAudioDevice::RtAudioDevice(RtAudio* context)
                 m_input_devices.push_back(convert_device_info(
                     info, id, m_defaultOutputDevice, m_defaultInputDevice));
             }
-        } catch (RtAudioErrorType& e) {
-            std::cerr << "Error probing device: " << id << ": " << e << "\n";
+        } catch (const RtAudioErrorType&) {
+            MF_WARN(Journal::Component::Core, Journal::Context::AudioBackend, "Error probing device {}: {}", id, m_context->getErrorText());
         }
     }
 }
@@ -147,7 +149,8 @@ RtAudioStream::RtAudioStream(
     , m_stream_info(streamInfo)
 {
     if (!context) {
-        throw std::invalid_argument("RtAudioStream: context must not be null");
+        error<std::invalid_argument>(Journal::Component::Core, Journal::Context::AudioBackend, std::source_location::current(),
+            "RtAudioStream: context must not be null");
     }
 
     m_out_parameters.deviceId = output_device_id;
@@ -292,7 +295,11 @@ void RtAudioStream::open()
 void RtAudioStream::start()
 {
     if (!is_open()) {
-        throw std::runtime_error("Cannot start stream: stream not open");
+        error<std::runtime_error>(
+            Journal::Component::Core,
+            Journal::Context::AudioBackend,
+            std::source_location::current(),
+            "Cannot start stream: stream not open");
     }
 
     if (is_running()) {

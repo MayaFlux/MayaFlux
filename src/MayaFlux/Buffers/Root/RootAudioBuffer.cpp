@@ -71,11 +71,13 @@ void ChannelProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
 {
     auto root_audio_buffer = std::dynamic_pointer_cast<RootAudioBuffer>(buffer);
     if (!root_audio_buffer) {
-        throw std::runtime_error("ChannelProcessor can only be attached to RootAudioBuffer");
+        error<std::runtime_error>(Journal::Component::Buffers, Journal::Context::BufferProcessing, std::source_location::current(),
+            "ChannelProcessor can only be attached to RootAudioBuffer");
     }
 
     if (!are_tokens_compatible(ProcessingToken::AUDIO_BACKEND, m_processing_token)) {
-        throw std::runtime_error("ChannelProcessor token incompatible with RootAudioBuffer requirements");
+        error<std::runtime_error>(Journal::Component::Buffers, Journal::Context::BufferProcessing, std::source_location::current(),
+            "ChannelProcessor token incompatible with RootAudioBuffer requirements");
     }
 }
 
@@ -148,11 +150,13 @@ void FinalLimiterProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
 {
     auto audio_buffer = std::dynamic_pointer_cast<AudioBuffer>(buffer);
     if (!audio_buffer) {
-        throw std::runtime_error("FinalLimiterProcessor can only be attached to AudioBuffer-derived types");
+        error<std::runtime_error>(Journal::Component::Buffers, Journal::Context::BufferProcessing, std::source_location::current(),
+            "FinalLimiterProcessor can only be attached to AudioBuffer-derived types");
     }
 
     if (!are_tokens_compatible(ProcessingToken::AUDIO_BACKEND, m_processing_token)) {
-        throw std::runtime_error("FinalLimiterProcessor token incompatible with audio processing requirements");
+        error<std::runtime_error>(Journal::Component::Buffers, Journal::Context::BufferProcessing, std::source_location::current(),
+            "FinalLimiterProcessor token incompatible with audio processing requirements");
     }
 }
 

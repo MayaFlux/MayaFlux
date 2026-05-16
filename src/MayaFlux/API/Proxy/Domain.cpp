@@ -3,6 +3,8 @@
 #include "MayaFlux/Buffers/BufferUtils.hpp"
 #include "MayaFlux/Core/ProcessingArchitecture.hpp"
 
+#include "MayaFlux/Journal/Archivist.hpp"
+
 namespace MayaFlux {
 
 Core::SubsystemTokens decompose_domain(Domain domain)
@@ -19,11 +21,13 @@ Domain create_custom_domain(Nodes::ProcessingToken node_token,
     Vruta::ProcessingToken task_token)
 {
     if (node_token == Nodes::ProcessingToken::AUDIO_RATE && (buffer_token & Buffers::ProcessingToken::FRAME_RATE)) {
-        throw std::invalid_argument("AUDIO_RATE nodes incompatible with FRAME_RATE buffers");
+        error<std::invalid_argument>(Journal::Component::API, Journal::Context::Configuration, std::source_location::current(),
+            "AUDIO_RATE nodes incompatible with FRAME_RATE buffers");
     }
 
     if (node_token == Nodes::ProcessingToken::VISUAL_RATE && (buffer_token & Buffers::ProcessingToken::SAMPLE_RATE)) {
-        throw std::invalid_argument("VISUAL_RATE nodes incompatible with SAMPLE_RATE buffers");
+        error<std::invalid_argument>(Journal::Component::API, Journal::Context::Configuration, std::source_location::current(),
+            "VISUAL_RATE nodes incompatible with SAMPLE_RATE buffers");
     }
 
     return compose_domain(node_token, buffer_token, task_token);

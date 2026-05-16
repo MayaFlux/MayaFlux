@@ -72,7 +72,8 @@ void InputAccessProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
 {
     auto input_buffer = std::dynamic_pointer_cast<InputAudioBuffer>(buffer);
     if (!input_buffer) {
-        throw std::runtime_error("InputAccessProcessor can only be attached to InputAudioBuffer");
+        error<std::runtime_error>(Journal::Component::Buffers, Journal::Context::BufferProcessing, std::source_location::current(),
+            "InputAccessProcessor can only be attached to InputAudioBuffer");
     }
 }
 

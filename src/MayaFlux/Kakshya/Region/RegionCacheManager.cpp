@@ -1,5 +1,7 @@
 #include "RegionCacheManager.hpp"
 
+#include "MayaFlux/Journal/Archivist.hpp"
+
 namespace MayaFlux::Kakshya {
 
 std::size_t RegionHash::operator()(const Region& region) const
@@ -63,10 +65,10 @@ std::optional<RegionCache> RegionCacheManager::get_cached_region(const Region& r
         }
         return std::nullopt;
     } catch (const std::exception& e) {
-        std::cerr << "Exception in get_cached_region: " << e.what() << '\n';
+        MF_ERROR(Journal::Component::Kakshya, Journal::Context::Runtime, "Exception in get_cached_region: {}", e.what());
         return std::nullopt;
     } catch (...) {
-        std::cerr << "Unknown exception in get_cached_region" << '\n';
+        MF_ERROR(Journal::Component::Kakshya, Journal::Context::Runtime, "Unknown exception in get_cached_region");
         return std::nullopt;
     }
 }
@@ -80,16 +82,16 @@ std::optional<RegionCache> RegionCacheManager::get_cached_segment(const RegionSe
         std::unique_lock<std::recursive_mutex> lock(m_mutex, std::try_to_lock);
 
         if (!lock.owns_lock()) {
-            std::cerr << "Warning: Could not acquire mutex lock in get_cached_segment, potential deadlock avoided" << '\n';
+            MF_WARN(Journal::Component::Kakshya, Journal::Context::Runtime, "Could not acquire mutex lock in get_cached_segment, potential deadlock avoided");
             return std::nullopt;
         }
 
         return get_cached_region_internal(segment.source_region);
     } catch (const std::exception& e) {
-        std::cerr << "Exception in get_cached_segment: " << e.what() << '\n';
+        MF_ERROR(Journal::Component::Kakshya, Journal::Context::Runtime, "Exception in get_cached_segment: {}", e.what());
         return std::nullopt;
     } catch (...) {
-        std::cerr << "Unknown exception in get_cached_segment" << '\n';
+        MF_ERROR(Journal::Component::Kakshya, Journal::Context::Runtime, "Unknown exception in get_cached_segment");
         return std::nullopt;
     }
 }

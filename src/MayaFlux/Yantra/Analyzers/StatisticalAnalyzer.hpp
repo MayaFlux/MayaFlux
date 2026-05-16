@@ -1,7 +1,6 @@
 #pragma once
 
 #include "MayaFlux/Transitive/Reflect/EnumReflect.hpp"
-#include "MayaFlux/Yantra/OperationSpec/OperationHelper.hpp"
 
 #include "UniversalAnalyzer.hpp"
 
@@ -419,7 +418,7 @@ protected:
             } else if (name == "percentile") {
                 auto percentile = safe_any_cast_or_throw<double>(value);
                 if (percentile < 0.0 || percentile > 100.0) {
-                    throw std::invalid_argument("Percentile must be between 0.0 and 100.0, got: " + std::to_string(percentile));
+                    error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ComputeMatrix, std::source_location::current(), "Percentile must be between 0.0 and 100.0, got: {}", percentile);
                 }
                 m_percentile_value = percentile;
             } else if (name == "sample_variance") {

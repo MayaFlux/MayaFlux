@@ -1,5 +1,7 @@
 #include "Stochastic.hpp"
 
+#include "MayaFlux/Journal/Archivist.hpp"
+
 namespace MayaFlux::Kinesis::Stochastic {
 
 Stochastic::Stochastic(Algorithm algo)
@@ -76,7 +78,8 @@ double Stochastic::operator()(double min, double max)
 double Stochastic::at(double x, double y, double z)
 {
     if (m_algorithm != Algorithm::PERLIN) {
-        throw std::runtime_error("Multi-dimensional access only supported for PERLIN algorithm");
+        MF_WARN(Journal::Component::Kinesis, Journal::Context::Runtime, "Multi-dimensional access only supported for PERLIN algorithm. Falling back to memoryless generation.");
+        return (*this)(0.0, 1.0);
     }
     return generate_perlin_impl(x, y, z);
 }
@@ -176,7 +179,8 @@ double Stochastic::generate_colored_noise_impl(double min, double max)
 void Stochastic::validate_range(double min, double max) const
 {
     if (min > max) {
-        throw std::invalid_argument("Stochastic: min must be <= max");
+        error<std::invalid_argument>(Journal::Component::Kinesis, Journal::Context::Runtime, std::source_location::current(),
+            "Stochastic: min must be <= max. Received min: {}, max: {}", min, max);
     }
 }
 

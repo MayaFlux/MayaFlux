@@ -8,7 +8,8 @@ namespace MayaFlux::Kakshya {
 void RegionProcessorBase::on_attach(const std::shared_ptr<SignalSourceContainer>& container)
 {
     if (!container) {
-        throw std::invalid_argument("Container cannot be null");
+        error<std::invalid_argument>(Journal::Component::Kakshya, Journal::Context::ContainerProcessing, std::source_location::current(),
+            "Container cannot be null");
     }
 
     m_container_weak = container;

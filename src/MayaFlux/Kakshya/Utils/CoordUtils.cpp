@@ -1,6 +1,8 @@
 #include "CoordUtils.hpp"
 #include "MayaFlux/Kakshya/Region/Region.hpp"
 
+#include "MayaFlux/Journal/Archivist.hpp"
+
 namespace MayaFlux::Kakshya {
 
 uint64_t coordinates_to_linear(const std::vector<uint64_t>& coords, const std::vector<DataDimension>& dimensions)
@@ -112,6 +114,8 @@ std::vector<uint64_t> transform_coordinates(const std::vector<uint64_t>& coords,
                 transformed[1] = static_cast<uint64_t>(x * sin_a + y * cos_a);
             } catch (const std::bad_any_cast&) {
                 // TODO: DO better than ignore invalid
+                MF_ERROR(Journal::Component::Kakshya, Journal::Context::Runtime,
+                    "Invalid rotation angle parameter. Expected double, got {}", angle_it->second.type().name());
             }
         }
     }
@@ -161,8 +165,8 @@ std::vector<uint64_t> advance_position(
     uint64_t total_frames = structure.get_samples_count_per_channel();
 
     if (current_positions.size() != num_channels) {
-        throw std::invalid_argument(
-            "Position vector size " + std::to_string(current_positions.size()) + " must match channel count " + std::to_string(num_channels));
+        error<std::invalid_argument>(Journal::Component::Kakshya, Journal::Context::Runtime, std::source_location::current(),
+            "Position vector size {} must match channel count {}", current_positions.size(), num_channels);
     }
 
     std::vector<uint64_t> new_positions;
@@ -210,7 +214,9 @@ std::vector<uint64_t> advance_position(
     uint64_t total_frames = structure.get_samples_count_per_channel();
 
     if (current_positions.size() != num_channels || frames_per_channel.size() != num_channels) {
-        throw std::invalid_argument("All vectors must match channel count");
+        error<std::invalid_argument>(Journal::Component::Kakshya, Journal::Context::Runtime, std::source_location::current(),
+            "Position and frames vectors must match channel count {}. Got positions size {}, frames size {}",
+            num_channels, current_positions.size(), frames_per_channel.size());
     }
 
     std::vector<uint64_t> new_positions;
@@ -275,7 +281,8 @@ uint64_t calculate_frame_size_for_dimension(const std::vector<DataDimension>& di
 std::unordered_map<std::string, std::any> create_coordinate_mapping(const std::shared_ptr<SignalSourceContainer>& container)
 {
     if (!container) {
-        throw std::invalid_argument("Container is null");
+        error<std::invalid_argument>(Journal::Component::Kakshya, Journal::Context::Runtime, std::source_location::current(),
+            "Container is null");
     }
 
     std::unordered_map<std::string, std::any> mapping_info;

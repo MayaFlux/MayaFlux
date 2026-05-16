@@ -484,7 +484,6 @@ std::span<T> extract_from_variant(const DataVariant& variant,
             auto temp_span = std::span<ValueType>(temp_source.data(), temp_source.size());
             return convert_data(temp_span, storage, strategy);
         } else {
-            // throw std::runtime_error("Cannot convert from " + std::string(typeid(ValueType).name()) + " to " + std::string(typeid(T).name()));
             error<std::invalid_argument>(
                 Journal::Component::Kakshya,
                 Journal::Context::Runtime,

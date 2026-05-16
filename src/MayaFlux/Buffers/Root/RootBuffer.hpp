@@ -2,6 +2,8 @@
 
 #include "MayaFlux/Buffers/BufferUtils.hpp"
 
+#include "MayaFlux/Journal/Archivist.hpp"
+
 namespace MayaFlux::Buffers {
 
 template <typename BufferType>
@@ -225,7 +227,7 @@ protected:
     {
         std::string rejection_reason;
         if (!is_buffer_acceptable(buffer, &rejection_reason)) {
-            throw std::runtime_error("Cannot add child buffer: " + rejection_reason);
+            error<std::runtime_error>(Journal::Component::Buffers, Journal::Context::BufferManagement, std::source_location::current(), "Cannot add child buffer: {}", rejection_reason);
         }
 
         m_child_buffers.push_back(buffer);

@@ -191,7 +191,8 @@ const IClock& TaskScheduler::get_clock(ProcessingToken token) const
         return *audio_clock_it->second;
     }
 
-    throw std::runtime_error("No clocks available in scheduler");
+    error<std::runtime_error>(Journal::Component::Vruta, Journal::Context::CoroutineScheduling, std::source_location::current(),
+        "No clock found for token {}, and no sample-accurate clock available as fallback", static_cast<int>(token));
 }
 
 uint64_t TaskScheduler::seconds_to_units(double seconds, ProcessingToken token) const

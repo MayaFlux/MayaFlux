@@ -1,5 +1,7 @@
 #pragma once
 
+#include "MayaFlux/Journal/Archivist.hpp"
+
 #include <typeindex>
 
 namespace MayaFlux::Yantra {
@@ -194,7 +196,7 @@ struct MAYAFLUX_API ExecutionContext {
         auto it = execution_metadata.find(key);
 
         if (it == execution_metadata.end())
-            throw std::runtime_error("ExecutionContext missing key: " + key);
+            error<std::runtime_error>(Journal::Component::Yantra, Journal::Context::Runtime, std::source_location::current(), "ExecutionContext missing key: {}", key);
 
         return safe_any_cast_or_throw<T>(it->second);
     }

@@ -132,7 +132,7 @@ public:
         const std::shared_ptr<Kakshya::SignalSourceContainer>& container)
     {
         if (!container) {
-            throw std::invalid_argument("Null container provided for region extraction");
+            error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ContainerProcessing, std::source_location::current(), "Null container provided for region extraction");
         }
 
         if constexpr (std::is_same_v<T, Kakshya::Region>) {
@@ -141,14 +141,14 @@ public:
 
         } else if constexpr (std::is_same_v<T, Kakshya::RegionGroup>) {
             if (compute_data.regions.empty()) {
-                throw std::runtime_error("Empty RegionGroup cannot be extracted");
+                error<std::runtime_error>(Journal::Component::Yantra, Journal::Context::ContainerProcessing, std::source_location::current(), "Empty RegionGroup cannot be extracted");
             }
             auto data = container->get_region_group_data(compute_data);
             return Kakshya::convert_variants<double>(data);
 
         } else if constexpr (std::is_same_v<T, std::vector<Kakshya::RegionSegment>>) {
             if (compute_data.empty()) {
-                throw std::runtime_error("RegionSegment contains no extractable data");
+                error<std::runtime_error>(Journal::Component::Yantra, Journal::Context::ContainerProcessing, std::source_location::current(), "Empty RegionSegment vector cannot be extracted");
             }
             auto data = container->get_segments_data(compute_data);
             return Kakshya::convert_variants<double>(data);
@@ -222,7 +222,7 @@ public:
 
             if constexpr (RequiresContainer<std::decay_t<decltype(compute_data.data)>>) {
                 if (!compute_data.has_container()) {
-                    throw std::runtime_error("Container is required for region-like data extraction but not provided");
+                    error<std::runtime_error>(Journal::Component::Yantra, Journal::Context::ContainerProcessing, std::source_location::current(), "Container is required for region-like data extraction but not provided");
                 }
                 std::vector<std::span<double>> double_data = extract_numeric_data(compute_data.data, compute_data.container.value());
                 return std::make_tuple(double_data, info);
@@ -269,7 +269,8 @@ public:
             auto data = Kakshya::interleave_channels<double>(double_data);
             return reconstruct_data_variant_from_double(data, structure_info);
         } else {
-            throw std::runtime_error("Reconstruction not implemented for target type");
+            error<std::runtime_error>(Journal::Component::Yantra, Journal::Context::Runtime, std::source_location::current(), "Reconstruction not implemented for target type {}", structure_info.original_type.name());
+            return T {};
         }
     }
 
@@ -428,7 +429,7 @@ private:
 
         for (const auto& col : columns) {
             if (col.size() != rows) {
-                throw std::invalid_argument("All columns must have same size");
+                error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::Runtime, std::source_location::current(), "All columns must have same size");
             }
         }
 
@@ -456,7 +457,7 @@ private:
 
         for (const auto& span : spans) {
             if (span.size() != rows) {
-                throw std::invalid_argument("All spans must have same size");
+                error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::Runtime, std::source_location::current(), "All spans must have same size");
             }
         }
 

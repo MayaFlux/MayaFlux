@@ -54,9 +54,8 @@ bool initialize(
 Inspector& inspector()
 {
     if (!g_initialized) {
-        MF_ERROR(Journal::Component::Portal, Journal::Context::API,
+        error<std::runtime_error>(Journal::Component::Portal, Journal::Context::API, std::source_location::current(),
             "Portal::Forma not initialized - cannot get inspector");
-        throw std::runtime_error("Portal::Forma not initialized");
     }
     return *g_inspect;
 }

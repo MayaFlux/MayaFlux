@@ -2,6 +2,8 @@
 
 #include "MayaFlux/Kakshya/NDData/EigenInsertion.hpp"
 
+#include "MayaFlux/Journal/Archivist.hpp"
+
 namespace MayaFlux::Yantra {
 
 namespace detail {
@@ -88,10 +90,12 @@ Eigen::MatrixXd OperationHelper::recreate_eigen_matrix(
         int expected_cols = static_cast<int>(structure_info.dimensions[1].size);
 
         if (columns.size() != expected_cols) {
-            throw std::invalid_argument("Column count doesn't match dimension info");
+            error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::Runtime, std::source_location::current(),
+                "Column count doesn't match dimension info. Expected {}, got {}", expected_cols, columns.size());
         }
         if (!columns.empty() && columns[0].size() != expected_rows) {
-            throw std::invalid_argument("Row count doesn't match dimension info");
+            error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::Runtime, std::source_location::current(),
+                "Row count doesn't match dimension info. Expected {}, got {}", expected_rows, columns[0].size());
         }
 
         return create_eigen_matrix(columns);
@@ -113,10 +117,12 @@ Eigen::MatrixXd OperationHelper::recreate_eigen_matrix(
         int expected_cols = static_cast<int>(structure_info.dimensions[1].size);
 
         if (spans.size() != expected_cols) {
-            throw std::invalid_argument("Span count doesn't match dimension info");
+            error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::Runtime, std::source_location::current(),
+                "Column count doesn't match dimension info. Expected {}, got {}", expected_cols, spans.size());
         }
         if (!spans.empty() && spans[0].size() != expected_rows) {
-            throw std::invalid_argument("Span size doesn't match dimension info");
+            error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::Runtime, std::source_location::current(),
+                "Row count doesn't match dimension info. Expected {}, got {}", expected_rows, spans[0].size());
         }
     }
 

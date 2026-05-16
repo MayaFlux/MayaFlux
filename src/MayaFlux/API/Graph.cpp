@@ -46,8 +46,7 @@ void register_audio_node(const std::shared_ptr<Nodes::Node>& node, uint32_t chan
         return;
     }
     if (channel >= manager->get_channel_count(Nodes::ProcessingToken::AUDIO_RATE)) {
-        std::out_of_range err("Channel index out of range for audio node registration");
-        std::cerr << err.what() << '\n';
+        MF_ERROR(Journal::Component::API, Journal::Context::NodeProcessing, "Channel index {} out of range for audio node registration", channel);
     }
     manager->add_to_root(node, Nodes::ProcessingToken::AUDIO_RATE, channel);
 }
