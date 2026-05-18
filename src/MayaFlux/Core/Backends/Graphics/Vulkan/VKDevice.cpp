@@ -128,7 +128,7 @@ bool VKDevice::pick_physical_device(vk::Instance instance, vk::SurfaceKHR /*temp
             m_supports_mesh_shaders = supports_mesh_shader;
 
             vk::PhysicalDeviceProperties props = device.getProperties();
-            MF_PRINT(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            MF_LOG(Journal::Component::Core, Journal::Context::GraphicsBackend,
                 "Selected GPU: {}", props.deviceName.data());
             return true;
         }
@@ -230,11 +230,11 @@ void VKDevice::query_supported_extensions()
 {
     std::vector<vk::ExtensionProperties> availableExtensions = m_physical_device.enumerateDeviceExtensionProperties();
 
-    MF_PRINT(Journal::Component::Core, Journal::Context::GraphicsBackend, "Available physical device extensions:");
+    MF_LOG(Journal::Component::Core, Journal::Context::GraphicsBackend, "Available physical device extensions:");
     for (const auto& extension : availableExtensions) {
         std::cout << "\t- " << extension.extensionName << " (Version: " << extension.specVersion << ")\n";
     }
-    MF_PRINT(Journal::Component::Core, Journal::Context::GraphicsBackend, "End of list.");
+    MF_LOG(Journal::Component::Core, Journal::Context::GraphicsBackend, "End of list.");
 }
 
 bool VKDevice::create_logical_device(vk::Instance /*instance*/, const GraphicsBackendInfo& backend_info)

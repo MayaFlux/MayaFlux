@@ -107,7 +107,7 @@ bool VKInstance::initialize(bool enable_validation,
             "Failed to create Vulkan instance: {}", e.what());
     }
 
-    MF_PRINT(Journal::Component::Core, Journal::Context::GraphicsBackend, "Vulkan instance created.");
+    MF_LOG(Journal::Component::Core, Journal::Context::GraphicsBackend, "Vulkan instance created.");
 
     if (m_validation_enabled && !setup_debug_messenger()) {
         MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend, "Failed to set up debug messenger!");

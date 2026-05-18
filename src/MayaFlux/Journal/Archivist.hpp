@@ -194,22 +194,22 @@ void scribe_rt(Severity severity, Component component, Context context,
  * @param context    The execution context of the log message.
  * @param message    The log message content.
  */
-inline void print(Component component, Context context,
+inline void log(Component component, Context context,
     std::string_view message)
 {
     Archivist::instance().scribe_simple(component, context, message);
 }
 
 /**
- * @brief printf-style overload of print().
+ * @brief printf-style overload of log().
  *
- * @copydoc print(Component,Context,std::string_view)
+ * @copydoc log(Component,Context,std::string_view)
  *
  * @param msg_or_fmt  The format string.
  * @param args        The format arguments.
  */
 template <typename... Args>
-void print(Component component, Context context,
+void log(Component component, Context context,
     const char* msg_or_fmt, Args&&... args)
 {
     if constexpr (sizeof...(Args) == 0) {
@@ -415,6 +415,6 @@ template <typename... Args>
         std::source_location::current(), __VA_ARGS__)
 
 // ============================================================================
-// CONVENIENCE MACROS for SIMPLE PRINTING (no source-location)
+// CONVENIENCE MACROS for SIMPLE LOGGING (no source-location)
 // ============================================================================
-#define MF_PRINT(comp, ctx, ...) MayaFlux::Journal::print(comp, ctx, __VA_ARGS__)
+#define MF_LOG(comp, ctx, ...) MayaFlux::Journal::log(comp, ctx, __VA_ARGS__)

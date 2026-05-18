@@ -108,7 +108,7 @@ void Engine::Init(const GlobalStreamInfo& streamInfo)
 
 void Engine::Init(const GlobalStreamInfo& streamInfo, const GlobalGraphicsConfig& graphics_config, const GlobalInputConfig& input_config, const GlobalNetworkConfig& network_config)
 {
-    MF_PRINT(Journal::Component::Core, Journal::Context::Init, "Engine initializing");
+    MF_LOG(Journal::Component::Core, Journal::Context::Init, "Engine initializing");
     m_stream_info = streamInfo;
     m_graphics_config = graphics_config;
     m_input_config = input_config;
@@ -152,7 +152,7 @@ void Engine::Init(const GlobalStreamInfo& streamInfo, const GlobalGraphicsConfig
 
     m_is_initialized = true;
 
-    MF_PRINT(Journal::Component::Core, Journal::Context::Init, "Audio backend: {}, Sample rate: {}", Reflect::enum_to_string(m_stream_info.backend), m_stream_info.sample_rate);
+    MF_LOG(Journal::Component::Core, Journal::Context::Init, "Audio backend: {}, Sample rate: {}", Reflect::enum_to_string(m_stream_info.backend), m_stream_info.sample_rate);
 }
 
 void Engine::Start()
@@ -242,7 +242,7 @@ void Engine::await_shutdown()
 
     m_should_shutdown.store(true, std::memory_order_release);
 
-    MF_PRINT(Journal::Component::Core, Journal::Context::Runtime,
+    MF_LOG(Journal::Component::Core, Journal::Context::Runtime,
         "Shutdown requested, awaiting all subsystem termination ......");
 }
 
@@ -312,7 +312,7 @@ void Engine::run_windows_event_loop()
         request_shutdown();
     });
 
-    MF_PRINT(Journal::Component::Core, Journal::Context::Runtime,
+    MF_LOG(Journal::Component::Core, Journal::Context::Runtime,
         "Main thread event loop running");
 
     while (!is_shutdown_requested()) {
