@@ -1,4 +1,7 @@
 #include "RtMidiBackend.hpp"
+
+#ifdef RTAUDIO_BACKEND
+
 #include "MayaFlux/Journal/Archivist.hpp"
 
 #include <rtmidi/RtMidi.h>
@@ -407,3 +410,5 @@ InputValue RtMidiBackend::parse_midi_message(uint32_t device_id, const std::vect
 }
 
 } // namespace MayaFlux::Core
+
+#endif

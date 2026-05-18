@@ -138,6 +138,7 @@ else()
         target_link_libraries(MayaFluxLib PUBLIC fmt::fmt)
         target_link_libraries(MayaFluxLib PUBLIC Vulkan::Vulkan)
         target_link_libraries(MayaFluxLib PUBLIC PkgConfig::RtAudio)
+        target_link_libraries(MayaFluxLib PUBLIC PkgConfig::RtMidi)
         target_link_libraries(MayaFluxLib PRIVATE "-framework CoreFoundation")
 
         message(STATUS "MayaFlux Journal: Using fmt library on macOS")
@@ -152,6 +153,7 @@ else()
             message(STATUS "PipeWire backend enabled (${PIPEWIRE_VERSION})")
         else()
             target_link_libraries(MayaFluxLib PUBLIC PkgConfig::RtAudio)
+            target_link_libraries(MayaFluxLib PUBLIC PkgConfig::RtMidi)
             message(STATUS "RtAudio backend enabled")
         endif()
     endif()
@@ -162,7 +164,6 @@ else()
         PkgConfig::Eigen
         PkgConfig::Glfw
         PkgConfig::HIDAPI
-        PkgConfig::RtMidi
         PkgConfig::Asio
         PkgConfig::Assimp
         PkgConfig::LIBAVCODEC

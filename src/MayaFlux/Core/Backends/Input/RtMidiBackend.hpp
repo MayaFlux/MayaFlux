@@ -1,5 +1,7 @@
 #pragma once
 
+#ifdef RTAUDIO_BACKEND
+
 #include "InputBackend.hpp"
 
 class RtMidiIn;
@@ -107,3 +109,5 @@ private:
 };
 
 } // namespace MayaFlux::Core
+
+#endif
