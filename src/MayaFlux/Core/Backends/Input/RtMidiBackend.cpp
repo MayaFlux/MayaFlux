@@ -1,32 +1,32 @@
-#include "MIDIBackend.hpp"
+#include "RtMidiBackend.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 
 #include <rtmidi/RtMidi.h>
 
 namespace MayaFlux::Core {
 
-MIDIBackend::MIDIBackend()
-    : MIDIBackend(Config {})
+RtMidiBackend::RtMidiBackend()
+    : RtMidiBackend(Config {})
 {
 }
 
-MIDIBackend::MIDIBackend(Config config)
+RtMidiBackend::RtMidiBackend(Config config)
     : m_config(std::move(config))
 {
 }
 
-MIDIBackend::~MIDIBackend()
+RtMidiBackend::~RtMidiBackend()
 {
     if (m_initialized.load()) {
         shutdown();
     }
 }
 
-bool MIDIBackend::initialize()
+bool RtMidiBackend::initialize()
 {
     if (m_initialized.load()) {
         MF_WARN(Journal::Component::Core, Journal::Context::InputBackend,
-            "MIDIBackend already initialized");
+            "RtMidiBackend already initialized");
         return true;
     }
 
@@ -39,7 +39,7 @@ bool MIDIBackend::initialize()
         create_virtual_port_if_enabled();
 
         MF_INFO(Journal::Component::Core, Journal::Context::InputBackend,
-            "MIDIBackend initialized with {} port(s)", m_enumerated_devices.size());
+            "RtMidiBackend initialized with {} port(s)", m_enumerated_devices.size());
 
         return true;
 
@@ -50,17 +50,17 @@ bool MIDIBackend::initialize()
     }
 }
 
-void MIDIBackend::start()
+void RtMidiBackend::start()
 {
     if (!m_initialized.load()) {
         MF_ERROR(Journal::Component::Core, Journal::Context::InputBackend,
-            "Cannot start MIDIBackend: not initialized");
+            "Cannot start RtMidiBackend: not initialized");
         return;
     }
 
     if (m_running.load()) {
         MF_WARN(Journal::Component::Core, Journal::Context::InputBackend,
-            "MIDIBackend already running");
+            "RtMidiBackend already running");
         return;
     }
 
@@ -81,10 +81,10 @@ void MIDIBackend::start()
     m_running.store(true);
 
     MF_INFO(Journal::Component::Core, Journal::Context::InputBackend,
-        "MIDIBackend started with {} open port(s)", get_open_devices().size());
+        "RtMidiBackend started with {} open port(s)", get_open_devices().size());
 }
 
-void MIDIBackend::stop()
+void RtMidiBackend::stop()
 {
     if (!m_running.load()) {
         return;
@@ -108,10 +108,10 @@ void MIDIBackend::stop()
     m_running.store(false);
 
     MF_INFO(Journal::Component::Core, Journal::Context::InputBackend,
-        "MIDIBackend stopped");
+        "RtMidiBackend stopped");
 }
 
-void MIDIBackend::shutdown()
+void RtMidiBackend::shutdown()
 {
     if (!m_initialized.load()) {
         return;
@@ -128,10 +128,10 @@ void MIDIBackend::shutdown()
     m_initialized.store(false);
 
     MF_INFO(Journal::Component::Core, Journal::Context::InputBackend,
-        "MIDIBackend shutdown complete");
+        "RtMidiBackend shutdown complete");
 }
 
-std::vector<InputDeviceInfo> MIDIBackend::get_devices() const
+std::vector<InputDeviceInfo> RtMidiBackend::get_devices() const
 {
     std::lock_guard lock(m_devices_mutex);
 
@@ -145,7 +145,7 @@ std::vector<InputDeviceInfo> MIDIBackend::get_devices() const
     return result;
 }
 
-size_t MIDIBackend::refresh_devices()
+size_t RtMidiBackend::refresh_devices()
 {
     if (!m_initialized.load()) {
         return 0;
@@ -206,7 +206,7 @@ size_t MIDIBackend::refresh_devices()
     }
 }
 
-bool MIDIBackend::open_device(uint32_t device_id)
+bool RtMidiBackend::open_device(uint32_t device_id)
 {
     std::lock_guard lock(m_devices_mutex);
 
@@ -231,7 +231,7 @@ bool MIDIBackend::open_device(uint32_t device_id)
         state->midi_in = std::make_unique<RtMidiIn>();
 
         state->midi_in->openPort(state->info.rtmidi_port_number, state->info.name);
-        state->midi_in->setCallback(&MIDIBackend::rtmidi_callback, state.get());
+        state->midi_in->setCallback(&RtMidiBackend::rtmidi_callback, state.get());
         state->midi_in->ignoreTypes(false, false, false);
         state->active.store(true);
 
@@ -249,7 +249,7 @@ bool MIDIBackend::open_device(uint32_t device_id)
     }
 }
 
-void MIDIBackend::close_device(uint32_t device_id)
+void RtMidiBackend::close_device(uint32_t device_id)
 {
     std::lock_guard lock(m_devices_mutex);
 
@@ -274,13 +274,13 @@ void MIDIBackend::close_device(uint32_t device_id)
     m_open_devices.erase(it);
 }
 
-bool MIDIBackend::is_device_open(uint32_t device_id) const
+bool RtMidiBackend::is_device_open(uint32_t device_id) const
 {
     std::lock_guard lock(m_devices_mutex);
     return m_open_devices.find(device_id) != m_open_devices.end();
 }
 
-std::vector<uint32_t> MIDIBackend::get_open_devices() const
+std::vector<uint32_t> RtMidiBackend::get_open_devices() const
 {
     std::lock_guard lock(m_devices_mutex);
 
@@ -294,19 +294,19 @@ std::vector<uint32_t> MIDIBackend::get_open_devices() const
     return result;
 }
 
-void MIDIBackend::set_input_callback(InputCallback callback)
+void RtMidiBackend::set_input_callback(InputCallback callback)
 {
     std::lock_guard lock(m_callback_mutex);
     m_input_callback = std::move(callback);
 }
 
-void MIDIBackend::set_device_callback(DeviceCallback callback)
+void RtMidiBackend::set_device_callback(DeviceCallback callback)
 {
     std::lock_guard lock(m_callback_mutex);
     m_device_callback = std::move(callback);
 }
 
-std::string MIDIBackend::get_version() const
+std::string RtMidiBackend::get_version() const
 {
     return std::string(RtMidi::getVersion());
 }
@@ -315,7 +315,7 @@ std::string MIDIBackend::get_version() const
 // Private Implementation
 // ===================================================================================
 
-bool MIDIBackend::port_matches_filter(const std::string& port_name) const
+bool RtMidiBackend::port_matches_filter(const std::string& port_name) const
 {
     if (m_config.input_port_filters.empty()) {
         return true;
@@ -327,7 +327,7 @@ bool MIDIBackend::port_matches_filter(const std::string& port_name) const
         });
 }
 
-uint32_t MIDIBackend::find_or_assign_device_id(unsigned int rtmidi_port)
+uint32_t RtMidiBackend::find_or_assign_device_id(unsigned int rtmidi_port)
 {
     for (const auto& [id, info] : m_enumerated_devices) {
         if (info.rtmidi_port_number == rtmidi_port) {
@@ -337,7 +337,7 @@ uint32_t MIDIBackend::find_or_assign_device_id(unsigned int rtmidi_port)
     return m_next_device_id++;
 }
 
-void MIDIBackend::create_virtual_port_if_enabled()
+void RtMidiBackend::create_virtual_port_if_enabled()
 {
     if (!m_config.enable_virtual_port) {
         return;
@@ -367,7 +367,7 @@ void MIDIBackend::create_virtual_port_if_enabled()
     }
 }
 
-void MIDIBackend::rtmidi_callback(double /*timestamp*/, std::vector<unsigned char>* message, void* user_data)
+void RtMidiBackend::rtmidi_callback(double /*timestamp*/, std::vector<unsigned char>* message, void* user_data)
 {
     auto* state = static_cast<MIDIPortState*>(user_data);
     if (!state || !message || message->empty()) {
@@ -385,7 +385,7 @@ void MIDIBackend::rtmidi_callback(double /*timestamp*/, std::vector<unsigned cha
     }
 }
 
-void MIDIBackend::notify_device_change(const InputDeviceInfo& info, bool connected)
+void RtMidiBackend::notify_device_change(const InputDeviceInfo& info, bool connected)
 {
     std::lock_guard lock(m_callback_mutex);
     if (m_device_callback) {
@@ -393,7 +393,7 @@ void MIDIBackend::notify_device_change(const InputDeviceInfo& info, bool connect
     }
 }
 
-InputValue MIDIBackend::parse_midi_message(uint32_t device_id, const std::vector<unsigned char>& message) const
+InputValue RtMidiBackend::parse_midi_message(uint32_t device_id, const std::vector<unsigned char>& message) const
 {
     if (message.empty()) {
         return InputValue::make_bytes({}, device_id, InputType::MIDI);
