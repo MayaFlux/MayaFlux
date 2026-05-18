@@ -94,6 +94,13 @@ public:
      */
     void set_component_filter(Component comp, bool enabled);
 
+    /**
+     * @brief Enable or disable logging for a specific context.
+     * @param ctx The context to enable or disable.
+     * @param enabled True to enable logging for the context, false to disable.
+     */
+    void set_context_filter(Context ctx, bool enabled);
+
     Archivist(const Archivist&) = delete;
     Archivist& operator=(const Archivist&) = delete;
     Archivist(Archivist&&) = delete;
@@ -194,22 +201,22 @@ void scribe_rt(Severity severity, Component component, Context context,
  * @param context    The execution context of the log message.
  * @param message    The log message content.
  */
-inline void print(Component component, Context context,
+inline void log(Component component, Context context,
     std::string_view message)
 {
     Archivist::instance().scribe_simple(component, context, message);
 }
 
 /**
- * @brief printf-style overload of print().
+ * @brief printf-style overload of log().
  *
- * @copydoc print(Component,Context,std::string_view)
+ * @copydoc log(Component,Context,std::string_view)
  *
  * @param msg_or_fmt  The format string.
  * @param args        The format arguments.
  */
 template <typename... Args>
-void print(Component component, Context context,
+void log(Component component, Context context,
     const char* msg_or_fmt, Args&&... args)
 {
     if constexpr (sizeof...(Args) == 0) {
@@ -219,6 +226,48 @@ void print(Component component, Context context,
         auto msg = format_runtime(msg_or_fmt, std::forward<Args>(args)...);
         Archivist::instance().scribe_simple(component, context, msg);
     }
+}
+
+/**
+ * @brief Print formatted output directly to stdout with MayaFlux prefix.
+ *
+ * Intended for immediate, unfiltered output without journal infrastructure.
+ * No component/context tagging, no severity filtering, no source location.
+ * Output includes [MayaFlux] prefix to identify framework origin.
+ *
+ * @param message The message or format string.
+ */
+inline void format_print(std::string_view message)
+{
+    std::cout << "[MayaFlux] " << message << '\n';
+}
+
+/**
+ * @brief Printf-style overload of format_print().
+ *
+ * @copydoc format_print(std::string_view)
+ *
+ * @param msg_or_fmt  The format string.
+ * @param args        The format arguments.
+ */
+template <typename... Args>
+inline void format_print(format_string<std::remove_cvref_t<Args>...> fmt_str, Args&&... args)
+{
+    std::cout << "[MayaFlux] " << format(fmt_str, std::forward<Args>(args)...) << '\n';
+}
+
+/**
+ * @brief Printf-style overload for runtime format strings.
+ *
+ * @copydoc format_print(std::string_view)
+ *
+ * @param fmt_str  The runtime format string.
+ * @param args     The format arguments.
+ */
+template <typename... Args>
+inline void format_print(const char* fmt_str, Args&&... args)
+{
+    std::cout << "[MayaFlux] " << format_runtime(fmt_str, std::forward<Args>(args)...) << '\n';
 }
 
 /**
@@ -415,6 +464,11 @@ template <typename... Args>
         std::source_location::current(), __VA_ARGS__)
 
 // ============================================================================
-// CONVENIENCE MACROS for SIMPLE PRINTING (no source-location)
+// CONVENIENCE MACROS for SIMPLE LOGGING (no source-location)
 // ============================================================================
-#define MF_PRINT(comp, ctx, ...) MayaFlux::Journal::print(comp, ctx, __VA_ARGS__)
+#define MF_LOG(comp, ctx, ...) MayaFlux::Journal::log(comp, ctx, __VA_ARGS__)
+
+// ============================================================================
+// CONVENIENCE MACROS for QUICK OUTPUT (no journal system)
+// ============================================================================
+#define MF_PRINT(...) MayaFlux::Journal::format_print(__VA_ARGS__)

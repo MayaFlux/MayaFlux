@@ -85,6 +85,20 @@ namespace Config {
     MAYAFLUX_API void set_journal_severity(Journal::Severity severity);
 
     /**
+     * @brief Enables or disables logging for specific journal components
+     * @param component Vector of Journal::Component values to enable/disable
+     * @param enabled True to enable logging for the specified components, false to disable
+     */
+    MAYAFLUX_API void set_journal_component_filter(const std::vector<Journal::Component>& component, bool enabled);
+
+    /**
+     * @brief Enables or disables logging for specific journal contexts
+     * @param context Vector of Journal::Context values to enable/disable
+     * @param enabled True to enable logging for the specified contexts, false to disable
+     */
+    MAYAFLUX_API void set_journal_context_filter(const std::vector<Journal::Context>& context, bool enabled);
+
+    /**
      * @brief Stores journal entries to a file by adding a FileSink to the Archivist
      * @param file_name Path to the log file
      */

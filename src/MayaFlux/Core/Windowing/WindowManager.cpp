@@ -11,7 +11,7 @@ namespace MayaFlux::Core {
 WindowManager::WindowManager(const GlobalGraphicsConfig& config)
     : m_config(config)
 {
-    MF_PRINT(Journal::Component::Core, Journal::Context::WindowingSubsystem,
+    MF_LOG(Journal::Component::Core, Journal::Context::WindowingSubsystem,
         "WindowManager initialized");
 }
 
