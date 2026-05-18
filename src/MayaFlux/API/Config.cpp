@@ -92,6 +92,20 @@ void set_journal_severity(Journal::Severity severity)
     Journal::Archivist::instance().set_min_severity(severity);
 }
 
+void set_journal_component_filter(const std::vector<Journal::Component>& component, bool enabled)
+{
+    for (const auto& comp : component) {
+        Journal::Archivist::instance().set_component_filter(comp, enabled);
+    }
+}
+
+void set_journal_context_filter(const std::vector<Journal::Context>& context, bool enabled)
+{
+    for (const auto& ctx : context) {
+        Journal::Archivist::instance().set_context_filter(ctx, enabled);
+    }
+}
+
 void store_journal_entries(const std::string& file_name)
 {
     Journal::Archivist::instance().add_sink(std::make_unique<Journal::FileSink>(file_name));

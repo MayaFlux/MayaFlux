@@ -75,17 +75,7 @@ public:
 
     void scribe(const JournalEntry& entry)
     {
-        if (entry.severity < m_min_severity.load(std::memory_order_relaxed)) {
-            return;
-        }
-
-        auto comp_idx = static_cast<size_t>(entry.component);
-        if (comp_idx >= m_component_filters.size()) {
-            return;
-        }
-
-        // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
-        if (!m_component_filters[comp_idx]) {
+        if (!should_log(entry.severity, entry.component, entry.context)) {
             return;
         }
 
