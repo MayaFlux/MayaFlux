@@ -94,6 +94,13 @@ public:
      */
     void set_component_filter(Component comp, bool enabled);
 
+    /**
+     * @brief Enable or disable logging for a specific context.
+     * @param ctx The context to enable or disable.
+     * @param enabled True to enable logging for the context, false to disable.
+     */
+    void set_context_filter(Context ctx, bool enabled);
+
     Archivist(const Archivist&) = delete;
     Archivist& operator=(const Archivist&) = delete;
     Archivist(Archivist&&) = delete;

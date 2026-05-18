@@ -20,6 +20,7 @@ public:
         , m_shutdown_in_progress(false)
     {
         m_component_filters.fill(true);
+        m_context_filters.fill(true);
     }
 
     ~Impl()
@@ -99,7 +100,7 @@ public:
 
     void scribe_rt(Severity severity, Component component, Context context, std::string_view message, std::source_location location)
     {
-        if (!should_log(severity, component)) {
+        if (!should_log(severity, component, context)) {
             return;
         }
 
@@ -140,20 +141,35 @@ public:
         m_component_filters[comp_idx] = enabled;
     }
 
+    void set_context_filter(Context ctx, bool enabled)
+    {
+        auto ctx_idx = static_cast<size_t>(ctx);
+        if (ctx_idx >= m_context_filters.size()) {
+            return;
+        }
+
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
+        m_context_filters[ctx_idx] = enabled;
+    }
+
 private:
-    [[nodiscard]] bool should_log(Severity severity, Component component) const
+    [[nodiscard]] bool should_log(Severity severity, Component component, Context context) const
     {
         if (severity != Severity::NONE && severity < m_min_severity.load(std::memory_order_relaxed)) {
             return false;
         }
 
         auto comp_idx = static_cast<size_t>(component);
-        if (comp_idx >= m_component_filters.size()) {
+        if (comp_idx >= m_component_filters.size() || !m_component_filters[comp_idx]) {
             return false;
         }
 
-        // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
-        return m_component_filters[comp_idx];
+        auto ctx_idx = static_cast<size_t>(context);
+        if (ctx_idx >= m_context_filters.size() || !m_context_filters[ctx_idx]) {
+            return false;
+        }
+
+        return true;
     }
 
     static void write_to_console(const JournalEntry& entry)
@@ -339,6 +355,7 @@ private:
     std::mutex m_mutex;
     std::atomic<Severity> m_min_severity;
     std::array<bool, magic_enum::enum_count<Component>()> m_component_filters {};
+    std::array<bool, magic_enum::enum_count<Context>()> m_context_filters {};
     bool m_initialized {};
 
     Memory::LockFreeQueue<RealtimeEntry, RING_BUFFER_SIZE> m_ring_buffer;
@@ -406,6 +423,11 @@ void Archivist::set_min_severity(Severity min_sev)
 void Archivist::set_component_filter(Component comp, bool enabled)
 {
     m_impl->set_component_filter(comp, enabled);
+}
+
+void Archivist::set_context_filter(Context ctx, bool enabled)
+{
+    m_impl->set_context_filter(ctx, enabled);
 }
 
 } // namespace MayaFlux::Journal
