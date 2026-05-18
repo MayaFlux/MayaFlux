@@ -3,6 +3,8 @@
 #include "MayaFlux/Core/GlobalNetworkConfig.hpp"
 #include "MayaFlux/Transitive/Memory/RingBuffer.hpp"
 
+#include "MayaFlux/Vruta/EventSource.hpp"
+
 namespace MayaFlux::Kriya {
 class NetworkAwaiter;
 }
@@ -38,7 +40,7 @@ namespace MayaFlux::Vruta {
  * };
  * @endcode
  */
-class MAYAFLUX_API NetworkSource {
+class MAYAFLUX_API NetworkSource : public EventSource {
 public:
     /**
      * @brief Open a network endpoint and begin receiving
@@ -79,7 +81,7 @@ public:
     /**
      * @brief Check if messages are pending
      */
-    [[nodiscard]] bool has_pending() const;
+    [[nodiscard]] bool has_pending() const override;
 
     /**
      * @brief Get number of pending messages
@@ -89,7 +91,7 @@ public:
     /**
      * @brief Clear all pending messages
      */
-    void clear();
+    void clear() override;
 
 private:
     static constexpr size_t QUEUE_CAPACITY = 256;

@@ -15,7 +15,7 @@ Vruta::Event key_pressed(
     auto& promise = co_await GetEventPromise {};
     auto& source = window->get_event_source();
 
-    Vruta::EventFilter filter;
+    Vruta::WindowEventFilter filter;
     filter.event_type = Core::WindowEventType::KEY_PRESSED;
     filter.key_code = key;
 
@@ -24,7 +24,7 @@ Vruta::Event key_pressed(
             break;
         }
 
-        co_await EventAwaiter(source, filter);
+        co_await WindowEventAwaiter(source, filter);
         callback();
     }
 }
@@ -37,7 +37,7 @@ Vruta::Event key_released(
     auto& promise = co_await GetEventPromise {};
     auto& source = window->get_event_source();
 
-    Vruta::EventFilter filter;
+    Vruta::WindowEventFilter filter;
     filter.event_type = Core::WindowEventType::KEY_RELEASED;
     filter.key_code = key;
 
@@ -46,7 +46,7 @@ Vruta::Event key_released(
             break;
         }
 
-        co_await EventAwaiter(source, filter);
+        co_await WindowEventAwaiter(source, filter);
         callback();
     }
 }
@@ -58,7 +58,7 @@ Vruta::Event any_key(
     auto& promise = co_await GetEventPromise {};
     auto& source = window->get_event_source();
 
-    Vruta::EventFilter filter;
+    Vruta::WindowEventFilter filter;
     filter.event_type = Core::WindowEventType::KEY_PRESSED;
 
     while (true) {
@@ -66,7 +66,7 @@ Vruta::Event any_key(
             break;
         }
 
-        auto event = co_await EventAwaiter(source, filter);
+        auto event = co_await WindowEventAwaiter(source, filter);
 
         if (auto* key_data = std::get_if<Core::WindowEvent::KeyData>(&event.data)) {
             callback(static_cast<IO::Keys>(key_data->key));
@@ -82,7 +82,7 @@ Vruta::Event mouse_pressed(
     auto& promise = co_await GetEventPromise {};
     auto& source = window->get_event_source();
 
-    Vruta::EventFilter filter;
+    Vruta::WindowEventFilter filter;
     filter.event_type = Core::WindowEventType::MOUSE_BUTTON_PRESSED;
     filter.button = button;
 
@@ -91,7 +91,7 @@ Vruta::Event mouse_pressed(
             break;
         }
 
-        co_await EventAwaiter(source, filter);
+        co_await WindowEventAwaiter(source, filter);
 
         auto [x, y] = source.get_mouse_position();
         callback(x, y);
@@ -106,7 +106,7 @@ Vruta::Event mouse_released(
     auto& promise = co_await GetEventPromise {};
     auto& source = window->get_event_source();
 
-    Vruta::EventFilter filter;
+    Vruta::WindowEventFilter filter;
     filter.event_type = Core::WindowEventType::MOUSE_BUTTON_RELEASED;
     filter.button = button;
 
@@ -115,7 +115,7 @@ Vruta::Event mouse_released(
             break;
         }
 
-        co_await EventAwaiter(source, filter);
+        co_await WindowEventAwaiter(source, filter);
 
         auto [x, y] = source.get_mouse_position();
         callback(x, y);
@@ -129,7 +129,7 @@ Vruta::Event mouse_moved(
     auto& promise = co_await GetEventPromise {};
     auto& source = window->get_event_source();
 
-    Vruta::EventFilter filter;
+    Vruta::WindowEventFilter filter;
     filter.event_type = Core::WindowEventType::MOUSE_MOTION;
 
     while (true) {
@@ -137,7 +137,7 @@ Vruta::Event mouse_moved(
             break;
         }
 
-        auto event = co_await EventAwaiter(source, filter);
+        auto event = co_await WindowEventAwaiter(source, filter);
 
         if (auto* pos_data = std::get_if<Core::WindowEvent::MousePosData>(&event.data)) {
             callback(pos_data->x, pos_data->y);
@@ -152,7 +152,7 @@ Vruta::Event mouse_scrolled(
     auto& promise = co_await GetEventPromise {};
     auto& source = window->get_event_source();
 
-    Vruta::EventFilter filter;
+    Vruta::WindowEventFilter filter;
     filter.event_type = Core::WindowEventType::MOUSE_SCROLLED;
 
     while (true) {
@@ -160,7 +160,7 @@ Vruta::Event mouse_scrolled(
             break;
         }
 
-        auto event = co_await EventAwaiter(source, filter);
+        auto event = co_await WindowEventAwaiter(source, filter);
 
         if (auto* scroll_data = std::get_if<Core::WindowEvent::ScrollData>(&event.data)) {
             callback(scroll_data->x_offset, scroll_data->y_offset);

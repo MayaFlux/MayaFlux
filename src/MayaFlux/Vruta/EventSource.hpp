@@ -1,62 +1,34 @@
 #pragma once
 
-#include "MayaFlux/Core/GlobalGraphicsInfo.hpp"
-
-#include "MayaFlux/IO/Keys.hpp"
-
-#include <queue>
-
 namespace MayaFlux::Kriya {
 class EventAwaiter;
 }
 
 namespace MayaFlux::Vruta {
 
-/**
- * @struct EventFilter
- * @brief Filter criteria for window events
- *
- * Used to filter events in the pending queue. Multiple criteria can be
- * combined to create specific filters (e.g., a specific key press).
- */
-struct MAYAFLUX_API EventFilter {
-    std::optional<Core::WindowEventType> event_type;
-    std::optional<IO::Keys> key_code; // For KEY_PRESSED/RELEASED filtering
-    std::optional<IO::MouseButtons> button; // For MOUSE_BUTTON_* filtering
-
-    EventFilter() = default;
-
-    /**
-     * @brief Constructs filter for specific event type
-     * @param type The window event type to filter
-     */
-    EventFilter(Core::WindowEventType type)
-        : event_type(type)
-    {
-    }
-
-    /**
-     * @brief Constructs filter for specific key event
-     * @param key The key to filter for
-     */
-    EventFilter(IO::Keys key)
-        : key_code(key)
-    {
-    }
-};
+// =============================================================================
+// EventSource - base
+// =============================================================================
 
 /**
  * @class EventSource
- * @brief Awaitable event stream for window events
+ * @brief Abstract base for all awaitable signal sources.
  *
- * Unlike clocks (SampleClock, FrameClock) which tick periodically,
- * EventSource is signaled when discrete window events occur.
- * Coroutines can suspend until events arrive.
+ * Manages the waiter list and dispatches to registered awaiters via the
+ * type-erased EventAwaiter interface. Has no knowledge of payload type,
+ * filter semantics, or threading model.
+ *
+ * Derived classes call dispatch() with a type-erased pointer to the current
+ * signal value. Each registered awaiter receives the pointer and decides
+ * independently whether to resume.
+ *
+ * @see WindowEventSource
+ * @see SignalSource
  */
 class MAYAFLUX_API EventSource {
 public:
     EventSource() = default;
-    ~EventSource() = default;
+    virtual ~EventSource() = default;
 
     EventSource(const EventSource&) = delete;
     EventSource& operator=(const EventSource&) = delete;
@@ -64,82 +36,48 @@ public:
     EventSource& operator=(EventSource&&) noexcept = default;
 
     /**
-     * @brief Signals that an event occurred
-     * @param event The event data
+     * @brief Returns true if any signals are buffered and not yet consumed.
+     */
+    [[nodiscard]] virtual bool has_pending() const = 0;
+
+    /**
+     * @brief Discards all buffered signals.
+     */
+    virtual void clear() = 0;
+
+protected:
+    /**
+     * @brief Iterates the waiter list, passing the type-erased signal to each.
      *
-     * Called by GLFW callbacks. Queues event and resumes waiting coroutines.
-     */
-    void signal(Core::WindowEvent event);
-
-    /**
-     * @brief Creates awaiter for next event (any type)
-     */
-    Kriya::EventAwaiter next_event();
-
-    /**
-     * @brief Creates awaiter for specific event type
-     */
-    Kriya::EventAwaiter await_event(Core::WindowEventType type);
-
-    /**
-     * @brief Checks if events are pending
-     */
-    [[nodiscard]] bool has_pending() const { return !m_pending_events.empty(); }
-
-    /**
-     * @brief Gets number of pending events
-     */
-    [[nodiscard]] size_t pending_count() const { return m_pending_events.size(); }
-
-    /**
-     * @brief Clears all pending events
-     */
-    void clear() { m_pending_events = {}; }
-
-    /**
-     * @brief Query if a specific key is currently pressed
-     * @param key The key to check
-     * @return True if key is currently pressed
-     */
-    [[nodiscard]] bool is_key_pressed(IO::Keys key) const;
-
-    /**
-     * @brief Query if a specific mouse button is currently pressed
-     * @param button Mouse button to check
-     * @return True if button is currently pressed
-     */
-    [[nodiscard]] bool is_mouse_pressed(int button) const;
-
-    /**
-     * @brief Get current mouse position
-     * @return Pair of (x, y) coordinates
-     */
-    [[nodiscard]] std::pair<double, double> get_mouse_position() const;
-
-private:
-    std::queue<Core::WindowEvent> m_pending_events;
-    std::vector<Kriya::EventAwaiter*> m_waiters;
-
-    std::unordered_map<int16_t, bool> m_key_states;
-    std::unordered_map<int, bool> m_button_states;
-    double m_mouse_x {};
-    double m_mouse_y {};
-
-    /**
-     * @brief Pop event matching filter from queue
-     * @param filter Filter criteria
-     * @return Event if found, nullopt otherwise
+     * Called by derived classes after committing a new signal value.
+     * Awaiters that match resume and unregister themselves.
      *
-     * Searches the queue for an event matching all filter criteria.
-     * Removes and returns the first matching event, preserving order
-     * of non-matching events.
+     * @param event Type-erased pointer to the current signal value.
      */
-    std::optional<Core::WindowEvent> pop_event(const EventFilter& filter);
+    void dispatch(const void* event);
 
     void register_waiter(Kriya::EventAwaiter* awaiter);
     void unregister_waiter(Kriya::EventAwaiter* awaiter);
 
+private:
+    std::vector<Kriya::EventAwaiter*> m_waiters;
+
     friend class Kriya::EventAwaiter;
 };
 
-}
+/**
+ * @class EventFilter
+ * @brief Base for event filters used by EventSources to match signals to awaiters.
+ *
+ * Concrete filter types (e.g. WindowEventFilter) derive from this and add
+ * specific criteria. EventSources use the base pointer to check if a filter is
+ * present and to pass it to awaiters, which then downcast as needed.
+ *
+ * @see WindowEventFilter
+ */
+class MAYAFLUX_API EventFilter {
+public:
+    virtual ~EventFilter() = default;
+};
+
+} // namespace MayaFlux::Vruta

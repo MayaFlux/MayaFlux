@@ -2,7 +2,7 @@
 
 #include "MayaFlux/Vruta/NetworkSource.hpp"
 
-#include <coroutine>
+#include "MayaFlux/Kriya/Awaiters/EventAwaiter.hpp"
 
 namespace MayaFlux::Kriya {
 
@@ -35,14 +35,14 @@ namespace MayaFlux::Kriya {
  * };
  * @endcode
  */
-class MAYAFLUX_API NetworkAwaiter {
+class MAYAFLUX_API NetworkAwaiter : public EventAwaiter {
 public:
     explicit NetworkAwaiter(Vruta::NetworkSource& source)
         : m_source(source)
     {
     }
 
-    ~NetworkAwaiter();
+    ~NetworkAwaiter() override;
 
     NetworkAwaiter(const NetworkAwaiter&) = delete;
     NetworkAwaiter& operator=(const NetworkAwaiter&) = delete;
@@ -76,11 +76,20 @@ public:
      */
     void deliver(const Core::NetworkMessage& message);
 
+    /**
+     * @brief NetworkAwaiter is driven by deliver(), not dispatch().
+     * Satisfies the EventAwaiter interface; never called by NetworkSource.
+     */
+    void try_resume(const void*) override { }
+
+    /**
+     * @brief NetworkAwaiter has no filter semantics. Always returns true.
+     */
+    [[nodiscard]] bool filter_matches(const void*) const override { return true; }
+
 private:
     Vruta::NetworkSource& m_source;
     Core::NetworkMessage m_result;
-    std::coroutine_handle<> m_handle;
-    bool m_is_suspended {};
 
     /**
      * @brief Intrusive list link for lock-free waiter broadcast.

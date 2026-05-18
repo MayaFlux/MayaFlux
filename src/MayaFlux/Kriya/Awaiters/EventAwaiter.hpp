@@ -1,90 +1,130 @@
 #pragma once
 
 #include "MayaFlux/Core/GlobalGraphicsInfo.hpp"
-#include "MayaFlux/Vruta/EventSource.hpp"
+#include "MayaFlux/Vruta/WindowEventSource.hpp"
 
-#include "coroutine"
+#include <coroutine>
 
 namespace MayaFlux::Kriya {
 
+// =============================================================================
+// EventAwaiter - base
+// =============================================================================
+
 /**
  * @class EventAwaiter
- * @brief Awaiter for suspending on window events with optional filtering
+ * @brief Abstract base for all event-driven awaiters.
  *
- * Allows coroutines to suspend until specific window events arrive.
- * Events are filtered by type and/or input key/button, with support for
- * both awaiting any event or specific event types.
+ * Provides the interface EventSource uses to manage its waiter list
+ * without knowing the payload type or filter semantics of concrete awaiters.
  *
- * @note EventAwaiter takes EventFilter by value, so temporary filters
- * created in next_event() and await_event() are safe.
- *
- * Usage Examples:
- * @code
- * // Wait for any event
- * auto event = co_await event_source.next_event();
- *
- * // Wait for specific event type
- * auto event = co_await event_source.await_event(WindowEventType::KEY_PRESSED);
- *
- * // Wait for specific key press (via EventFilter)
- * Vruta::EventFilter filter(IO::Keys::Escape);
- * auto event = co_await EventAwaiter(source, filter);
- *
- * // Manual filter construction for complex queries
- * Vruta::EventFilter filter;
- * filter.event_type = WindowEventType::KEY_PRESSED;
- * filter.key_code = IO::Keys::Space;
- * auto event = co_await EventAwaiter(source, filter);
- * @endcode
- *
- * @see EventSource for creating awaiters
- * @see EventFilter for filter construction
- * @see IO::Keys for key enumeration
+ * @see WindowEventAwaiter
+ * @see SignalAwaiter
  */
 class MAYAFLUX_API EventAwaiter {
 public:
-    EventAwaiter(Vruta::EventSource& source, Vruta::EventFilter filter = {})
-        : m_source(source)
-        , m_filter(filter)
-    {
-    }
+    virtual ~EventAwaiter() = default;
 
-    ~EventAwaiter();
-
+    EventAwaiter() = default;
     EventAwaiter(const EventAwaiter&) = delete;
     EventAwaiter& operator=(const EventAwaiter&) = delete;
     EventAwaiter(EventAwaiter&&) noexcept = default;
-    EventAwaiter& operator=(EventAwaiter&&) noexcept = delete;
+    EventAwaiter& operator=(EventAwaiter&&) noexcept = default;
 
     /**
-     * @brief Check if event already available
+     * @brief Called by the source to attempt resumption of the suspended coroutine.
+     *
+     * @param event Type-erased pointer to the candidate signal value.
+     */
+    virtual void try_resume(const void* event) = 0;
+
+    /**
+     * @brief Returns true if the candidate signal passes this awaiter's filter.
+     *
+     * @param event Type-erased pointer to the candidate signal value.
+     */
+    [[nodiscard]] virtual bool filter_matches(const void* event) const = 0;
+
+protected:
+    std::coroutine_handle<> m_handle;
+    bool m_is_suspended {};
+};
+
+// =============================================================================
+// WindowEventAwaiter
+// =============================================================================
+
+/**
+ * @class WindowEventAwaiter
+ * @brief Awaiter for suspending on GLFW window input events with optional filtering.
+ *
+ * Payload type is Core::WindowEvent. Filter criteria are WindowEventType,
+ * IO::Keys, and IO::MouseButtons via EventFilter. Works with any coroutine
+ * type: SoundRoutine, GraphicsRoutine, Event, ComplexRoutine.
+ *
+ * Multiple awaiters may register against the same WindowEventSource simultaneously.
+ * The source must outlive any suspended awaiter.
+ *
+ * @code
+ * auto ev = co_await source.next_event();
+ * auto ev = co_await source.await_event(WindowEventType::KEY_PRESSED);
+ *
+ * Vruta::EventFilter f(IO::Keys::Escape);
+ * auto ev = co_await WindowEventAwaiter(source, f);
+ * @endcode
+ *
+ * @see WindowEventSource
+ * @see EventFilter
+ */
+class MAYAFLUX_API WindowEventAwaiter : public EventAwaiter {
+public:
+    explicit WindowEventAwaiter(Vruta::WindowEventSource& source, Vruta::WindowEventFilter filter = {})
+        : m_source(source)
+        , m_filter(std::move(filter))
+    {
+    }
+
+    ~WindowEventAwaiter() override;
+
+    WindowEventAwaiter(const WindowEventAwaiter&) = delete;
+    WindowEventAwaiter& operator=(const WindowEventAwaiter&) = delete;
+    WindowEventAwaiter(WindowEventAwaiter&&) noexcept = default;
+    WindowEventAwaiter& operator=(WindowEventAwaiter&&) noexcept = delete;
+
+    /**
+     * @brief Returns true if a matching event is already queued; stores it if so.
      */
     bool await_ready();
 
     /**
-     * @brief Suspend coroutine, register for event notification
+     * @brief Registers with the source and suspends the coroutine.
+     * @param handle Type-erased coroutine handle.
      */
     void await_suspend(std::coroutine_handle<> handle);
 
     /**
-     * @brief Resume with event data
+     * @brief Returns the event that caused resumption.
      */
     Core::WindowEvent await_resume();
 
     /**
-     * @brief Called by EventSource when event arrives
+     * @brief Casts event to Core::WindowEvent, checks filter, resumes if matched.
+     * @param event Type-erased pointer to Core::WindowEvent.
      */
-    void try_resume();
+    void try_resume(const void* event) override;
+
+    /**
+     * @brief Casts event to Core::WindowEvent and checks against stored filter.
+     * @param event Type-erased pointer to Core::WindowEvent.
+     */
+    [[nodiscard]] bool filter_matches(const void* event) const override;
 
 private:
-    Vruta::EventSource& m_source;
-    Vruta::EventFilter m_filter;
+    Vruta::WindowEventSource& m_source;
+    Vruta::WindowEventFilter m_filter;
     Core::WindowEvent m_result;
-    std::coroutine_handle<> m_handle;
-    bool m_is_suspended = false;
 
-    [[nodiscard]] bool filter_matches(const Core::WindowEvent& event) const;
-
-    friend class Vruta::EventSource;
+    friend class Vruta::WindowEventSource;
 };
-}
+
+} // namespace MayaFlux::Kriya

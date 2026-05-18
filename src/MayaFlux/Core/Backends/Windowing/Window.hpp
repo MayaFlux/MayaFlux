@@ -3,7 +3,7 @@
 #include "MayaFlux/Core/GlobalGraphicsInfo.hpp"
 
 namespace MayaFlux::Vruta {
-class EventSource;
+class WindowEventSource;
 }
 
 namespace MayaFlux::Buffers {
@@ -112,8 +112,8 @@ public:
     /**
      * @brief Gets the event source for awaiting events
      */
-    [[nodiscard]] virtual Vruta::EventSource& get_event_source() = 0;
-    [[nodiscard]] virtual const Vruta::EventSource& get_event_source() const = 0;
+    [[nodiscard]] virtual Vruta::WindowEventSource& get_event_source() = 0;
+    [[nodiscard]] virtual const Vruta::WindowEventSource& get_event_source() const = 0;
 
     /**
      * @brief Check if window is registered with graphics subsystem

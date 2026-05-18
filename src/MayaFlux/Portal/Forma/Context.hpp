@@ -10,7 +10,7 @@ class Window;
 
 namespace MayaFlux::Vruta {
 class EventManager;
-class EventSource;
+class WindowEventSource;
 }
 
 namespace MayaFlux::Portal::Forma {
@@ -113,7 +113,7 @@ public:
 
     [[nodiscard]] std::optional<uint32_t> hovered() const { return m_hovered; }
 
-    [[nodiscard]] const Vruta::EventSource& event_source() const;
+    [[nodiscard]] const Vruta::WindowEventSource& event_source() const;
 
 private:
     struct ElementCallbacks {
