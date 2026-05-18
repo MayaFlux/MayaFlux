@@ -222,6 +222,48 @@ void log(Component component, Context context,
 }
 
 /**
+ * @brief Print formatted output directly to stdout with MayaFlux prefix.
+ *
+ * Intended for immediate, unfiltered output without journal infrastructure.
+ * No component/context tagging, no severity filtering, no source location.
+ * Output includes [MayaFlux] prefix to identify framework origin.
+ *
+ * @param message The message or format string.
+ */
+inline void format_print(std::string_view message)
+{
+    std::cout << "[MayaFlux] " << message << '\n';
+}
+
+/**
+ * @brief Printf-style overload of format_print().
+ *
+ * @copydoc format_print(std::string_view)
+ *
+ * @param msg_or_fmt  The format string.
+ * @param args        The format arguments.
+ */
+template <typename... Args>
+inline void format_print(format_string<std::remove_cvref_t<Args>...> fmt_str, Args&&... args)
+{
+    std::cout << "[MayaFlux] " << format(fmt_str, std::forward<Args>(args)...) << '\n';
+}
+
+/**
+ * @brief Printf-style overload for runtime format strings.
+ *
+ * @copydoc format_print(std::string_view)
+ *
+ * @param fmt_str  The runtime format string.
+ * @param args     The format arguments.
+ */
+template <typename... Args>
+inline void format_print(const char* fmt_str, Args&&... args)
+{
+    std::cout << "[MayaFlux] " << format_runtime(fmt_str, std::forward<Args>(args)...) << '\n';
+}
+
+/**
  * @brief Log a fatal message and abort the program.
  *
  * @param component  The component generating the log message.
@@ -418,3 +460,8 @@ template <typename... Args>
 // CONVENIENCE MACROS for SIMPLE LOGGING (no source-location)
 // ============================================================================
 #define MF_LOG(comp, ctx, ...) MayaFlux::Journal::log(comp, ctx, __VA_ARGS__)
+
+// ============================================================================
+// CONVENIENCE MACROS for QUICK OUTPUT (no journal system)
+// ============================================================================
+#define MF_PRINT(...) MayaFlux::Journal::format_print(__VA_ARGS__)
