@@ -76,6 +76,7 @@ endif()
 if(UNIX AND NOT APPLE)
     if(MAYAFLUX_AUDIO_BACKEND STREQUAL "PIPEWIRE_BACKEND")
         target_include_directories(MayaFluxLib PRIVATE ${PIPEWIRE_INCLUDE_DIRS})
+        target_include_directories(MayaFluxLib PRIVATE asound)
     endif()
 endif()
 

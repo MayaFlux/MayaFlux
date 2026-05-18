@@ -1,8 +1,9 @@
 #pragma once
 
-#ifdef PIPEWIRE_MIDI_BACKEND
+#ifdef PIPEWIRE_BACKEND
+#include "PipewireMidiBackend.hpp"
 namespace MayaFlux::Core {
-using MIDIBackend = PipeWireMIDIBackend;
+using MIDIBackend = PipewireMidiBackend;
 }
 #else
 #include "RtMidiBackend.hpp"
