@@ -51,6 +51,24 @@ Vruta::Event on_signal_matching(
     Predicate predicate,
     Callback callback);
 
+/**
+ * @brief Create a BroadcastSource<bool> ticking once per audio output cycle.
+ *
+ * Registers an observer with AudioBackendService and returns the source.
+ * The returned observer id is stored inside the source's shared state via
+ * a custom deleter on the shared_ptr - unregistration is automatic when
+ * the last owner drops the source.
+ *
+ * @code
+ * auto src = Kriya::audio_output_tick();
+ * get_event_manager()->add_event(std::make_shared<Vruta::Event>(
+ *     Kriya::on_signal(src, [ct](bool) {
+ *         ct->process_default();
+ *     })));
+ * @endcode
+ */
+[[nodiscard]] std::shared_ptr<Vruta::BroadcastSource<bool>> audio_output_tick();
+
 } // namespace MayaFlux::Kriya
 
 #include "BroadcastEvents.inl"
