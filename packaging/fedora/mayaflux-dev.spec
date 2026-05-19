@@ -23,7 +23,6 @@ BuildRequires:  clang-devel >= 21
 BuildRequires:  cmake >= 3.25
 BuildRequires:  ninja-build
 BuildRequires:  pkgconfig
-BuildRequires:  rtaudio-devel
 BuildRequires:  glfw-devel >= 3.4
 BuildRequires:  glm-devel
 BuildRequires:  eigen3-devel
@@ -63,7 +62,6 @@ Requires:       llvm-libs >= 21
 Requires:       clang-devel >= 21
 Requires:       cmake >= 3.25
 Requires:       pkgconfig
-Requires:       rtaudio-devel
 Requires:       glfw-devel >= 3.4
 Requires:       glm-devel
 Requires:       eigen3-devel

@@ -149,13 +149,8 @@ else()
         asound
         )
 
-        if(MAYAFLUX_AUDIO_BACKEND STREQUAL "PIPEWIRE_BACKEND")
-            target_link_libraries(MayaFluxLib PRIVATE ${PIPEWIRE_LIBRARIES})
-            message(STATUS "PipeWire backend enabled (${PIPEWIRE_VERSION})")
-        else()
-            target_link_libraries(MayaFluxLib PUBLIC PkgConfig::RtAudio)
-            message(STATUS "RtAudio backend enabled")
-        endif()
+        target_link_libraries(MayaFluxLib PRIVATE ${PIPEWIRE_LIBRARIES})
+        message(STATUS "PipeWire backend enabled (${PIPEWIRE_VERSION})")
     endif()
 
     target_link_libraries(MayaFluxLib PUBLIC

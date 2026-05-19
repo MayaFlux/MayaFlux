@@ -49,7 +49,6 @@
         stb        = @{}
         hidapi     = @{}
         glfw3      = @{}
-        rtaudio    = @{}
         asio       = @{}
         assimp     = @{}
         freetype   = @{}

@@ -457,7 +457,6 @@ jobs:
           Write-Host "  ✓ LLVM 22.1.5 (Lila JIT - manual download + cache)" -ForegroundColor Green
           Write-Host "  ✓ Vulkan SDK (GitHub Action - auto-detected)" -ForegroundColor Green
           Write-Host "  [Tier 2 - vcpkg Package Manager]" -ForegroundColor Cyan
-          Write-Host "  ✓ RtAudio 6.0.1 (WASAPI via vcpkg.json)" -ForegroundColor Green
           Write-Host "  ✓ HidApi 0.15.0 (via vcpkg.json)" -ForegroundColor Green
           Write-Host "  ✓ GLFW 3.4 (shared lib via vcpkg.json)" -ForegroundColor Green
           Write-Host "  ✓ FFmpeg 6.0+ (shared libs via vcpkg.json)" -ForegroundColor Green

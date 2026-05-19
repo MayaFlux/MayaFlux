@@ -47,7 +47,6 @@ if(WIN32)
     find_package(glfw3 CONFIG REQUIRED)
     find_package(eigen3 CONFIG REQUIRED)
     find_package(glm CONFIG REQUIRED)
-    find_package(RtAudio CONFIG REQUIRED)
     find_package(hidapi CONFIG REQUIRED)
     find_package(asio CONFIG REQUIRED)
     find_package(assimp CONFIG REQUIRED)
@@ -121,13 +120,9 @@ else()
 
         pkg_search_module(HIDAPI REQUIRED IMPORTED_TARGET
                 hidapi-hidraw hidapi-libusb hidapi)
-         pkg_check_modules(Fontconfig REQUIRED IMPORTED_TARGET fontconfig)
+        pkg_check_modules(Fontconfig REQUIRED IMPORTED_TARGET fontconfig)
 
-        if("@MAYAFLUX_AUDIO_BACKEND@" STREQUAL "PIPEWIRE_BACKEND")
-            pkg_check_modules(PIPEWIRE REQUIRED IMPORTED_TARGET libpipewire-0.3)
-        else()
-            pkg_check_modules(RtAudio REQUIRED IMPORTED_TARGET rtaudio)
-        endif()
+        pkg_check_modules(PIPEWIRE REQUIRED IMPORTED_TARGET libpipewire-0.3)
     endif()
 
     find_library(SPIRV_CROSS_CORE_LIB NAMES spirv-cross-core REQUIRED)
@@ -254,7 +249,6 @@ if(NOT TARGET MayaFlux::MayaFluxLib)
     # ========================================================================
     if(WIN32)
         target_link_libraries(MayaFlux::MayaFluxLib INTERFACE
-            RtAudio::rtaudio
             Eigen3::Eigen
             glfw
             glm::glm
@@ -270,6 +264,8 @@ if(NOT TARGET MayaFlux::MayaFluxLib)
             assimp::assimp
             utf8proc::utf8proc
             winmm
+            avrt
+            ole32
             tinyexr
             freetype
             gdi32
@@ -307,14 +303,9 @@ if(NOT TARGET MayaFlux::MayaFluxLib)
         else()
             target_link_libraries(MayaFlux::MayaFluxLib INTERFACE 
             PkgConfig::Vulkan
+            PkgConfig::PIPEWIRE
             asound
             )
-            if("@MAYAFLUX_AUDIO_BACKEND@" STREQUAL "PIPEWIRE_BACKEND")
-                target_link_libraries(MayaFlux::MayaFluxLib INTERFACE PkgConfig::PIPEWIRE)
-            else()
-                target_link_libraries(MayaFlux::MayaFluxLib INTERFACE PkgConfig::RtAudio)
-            endif()
-
         endif()
     endif()
 

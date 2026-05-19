@@ -4,7 +4,6 @@
   "version-string": "0.4.0",
   "description": "MayaFlux CI Dependencies (Windows x64)",
   "dependencies": [
-    "rtaudio",
     "glfw3",
     "eigen3",
     "glm",

@@ -245,7 +245,7 @@ struct audio_promise : public routine_promise<SoundRoutine> {
  *
  * Key Architectural Notes:
  * - Frame timing is managed by FrameClock (self-driven wall-clock based)
- * - Unlike audio_promise (driven by RTAudio callbacks), graphics_promise observes
+ * - Unlike audio_promise (driven by audio backend callbacks), graphics_promise observes
  *   the FrameClock which ticks independently in the graphics thread loop
  * - The promise doesn't care HOW timing advances, only that it receives tick updates
  * - Mirrors audio_promise architecture but for the visual/frame domain

@@ -63,7 +63,6 @@ jobs:
             clang clang-devel \
             cmake \
             pkgconfig \
-            rtaudio-devel \
             glfw-devel \
             glm-devel \
             eigen3-devel \
@@ -199,7 +198,7 @@ jobs:
           echo "  ✓ LLVM 21 (Lila JIT)"
           echo "  ✓ GCC 15 (full C++23)"
           echo "  ✓ GLFW 3.4 (Wayland)"
-          echo "  ✓ RtAudio, FFmpeg"
+          echo "  ✓ FFmpeg"
           echo "  ✓ Vulkan SDK, SPIR-V"
           echo "  ✓ Eigen3, GLM, magic_enum, fmt, TBB, STB"
           echo ""
