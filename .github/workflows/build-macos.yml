@@ -71,6 +71,8 @@ jobs:
         with:
           key: ${{ runner.os }}-build
           max-size: "1G"
+          ccache-options: |
+            sloppiness = pch_defines,time_macros,include_file_mtime,include_file_ctime
 
       - name: Install Homebrew tools (cached)
         uses: tecolicom/actions-use-homebrew-tools@v1
@@ -202,8 +204,6 @@ jobs:
           cmake -B build \
             -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
             -DCMAKE_CXX_STANDARD=23 \
-            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
-            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -DCMAKE_VERBOSE_MAKEFILE=ON \
             -DMAYAFLUX_PORTABLE=ON
 

@@ -4,6 +4,14 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    find_program(CCACHE_PROGRAM ccache)
+    if(CCACHE_PROGRAM)
+        set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
+        message(STATUS "ccache found: ${CCACHE_PROGRAM}")
+    else()
+        message(STATUS "ccache not found, building without cache")
+    endif()
+
     add_compile_options(
         -Wall
         -Wextra

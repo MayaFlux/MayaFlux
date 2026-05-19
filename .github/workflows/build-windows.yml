@@ -272,7 +272,7 @@ jobs:
         run: |
           Write-Host "=== Configuring CMake ===" -ForegroundColor Cyan
 
-          $cores = $[System.Environment]::ProcessorCount
+          $cores = [System.Environment]::ProcessorCount
 
           $cmakeArgs = @(
             "-B", "build",
