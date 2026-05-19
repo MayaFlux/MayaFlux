@@ -52,7 +52,7 @@ set /a lib_count=0
 for %%F in (lib\*.lib) do set /a lib_count+=1
 echo   Libs in lib\: !lib_count!
 
-set REQUIRED_PKGS=glfw3 RtAudio eigen3 glm rtmidi assimp freetype hidapi utf8proc asio
+set REQUIRED_PKGS=glfw3 RtAudio eigen3 glm assimp freetype hidapi utf8proc asio
 for %%P in (%REQUIRED_PKGS%) do (
     if exist "share\%%P" (echo   OK %%P) else (echo   WARNING: share\%%P not found)
 )

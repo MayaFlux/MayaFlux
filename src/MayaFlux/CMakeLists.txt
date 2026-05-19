@@ -76,7 +76,6 @@ endif()
 if(UNIX AND NOT APPLE)
     if(MAYAFLUX_AUDIO_BACKEND STREQUAL "PIPEWIRE_BACKEND")
         target_include_directories(MayaFluxLib PRIVATE ${PIPEWIRE_INCLUDE_DIRS})
-        target_include_directories(MayaFluxLib PRIVATE asound)
     endif()
 endif()
 
@@ -146,6 +145,7 @@ else()
         target_link_libraries(MayaFluxLib PUBLIC
         PkgConfig::Vulkan
         PkgConfig::Fontconfig
+        asound
         )
 
         if(MAYAFLUX_AUDIO_BACKEND STREQUAL "PIPEWIRE_BACKEND")
@@ -153,7 +153,6 @@ else()
             message(STATUS "PipeWire backend enabled (${PIPEWIRE_VERSION})")
         else()
             target_link_libraries(MayaFluxLib PUBLIC PkgConfig::RtAudio)
-            target_link_libraries(MayaFluxLib PUBLIC PkgConfig::RtMidi)
             message(STATUS "RtAudio backend enabled")
         endif()
     endif()

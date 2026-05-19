@@ -1,6 +1,6 @@
 #pragma once
 
-#ifdef PIPEWIRE_BACKEND
+#ifdef MAYAFLUX_PLATFORM_LINUX
 #include "PipewireMidiBackend.hpp"
 namespace MayaFlux::Core {
 using MIDIBackend = PipewireMidiBackend;

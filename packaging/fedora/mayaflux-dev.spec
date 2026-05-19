@@ -45,7 +45,6 @@ BuildRequires:  libshaderc-devel
 BuildRequires:  glslc
 BuildRequires:  wayland-devel
 BuildRequires:  hidapi-devel
-BuildRequires:  rtmidi-devel
 BuildRequires:  asio-standalone
 BuildRequires:  freetype-devel
 BuildRequires:  utf8proc-devel
@@ -85,7 +84,6 @@ Requires:       libshaderc-devel
 Requires:       glslc
 Requires:       wayland-devel
 Requires:       hidapi-devel
-Requires:       rtmidi-devel
 Requires:       asio-standalone
 Requires:       freetype-devel
 Requires:       utf8proc-devel

@@ -10,7 +10,6 @@
     "glm",
     "magic-enum",
     "hidapi",
-    "rtmidi",
     "assimp",
     "asio",
     "stb",

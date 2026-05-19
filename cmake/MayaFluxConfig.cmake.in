@@ -49,7 +49,6 @@ if(WIN32)
     find_package(glm CONFIG REQUIRED)
     find_package(RtAudio CONFIG REQUIRED)
     find_package(hidapi CONFIG REQUIRED)
-    find_package(rtmidi CONFIG REQUIRED)
     find_package(asio CONFIG REQUIRED)
     find_package(assimp CONFIG REQUIRED)
     find_package(freetype CONFIG REQUIRED)
@@ -113,6 +112,7 @@ else()
 
         pkg_check_modules(HIDAPI REQUIRED IMPORTED_TARGET hidapi)
         pkg_check_modules(RtAudio REQUIRED IMPORTED_TARGET rtaudio)
+        pkg_check_modules(RtMidi REQUIRED IMPORTED_TARGET rtmidi)
     else()
         message(STATUS "=== Linux-specific Dependencies ===")
         pkg_check_modules(Vulkan REQUIRED IMPORTED_TARGET vulkan)
@@ -158,7 +158,6 @@ else()
     pkg_check_modules(Eigen REQUIRED IMPORTED_TARGET eigen3)
     pkg_check_modules(Glfw REQUIRED IMPORTED_TARGET glfw3>=3.4)
     pkg_check_modules(magic_enum REQUIRED IMPORTED_TARGET magic_enum)
-    pkg_check_modules(RtMidi QUIET IMPORTED_TARGET rtmidi)
     pkg_check_modules(Asio REQUIRED IMPORTED_TARGET asio)
     pkg_check_modules(Assimp REQUIRED IMPORTED_TARGET assimp)
     pkg_check_modules(UTF8PROC REQUIRED IMPORTED_TARGET libutf8proc)
@@ -238,6 +237,7 @@ if(NOT TARGET MayaFlux::MayaFluxLib)
     # Core definitions
     target_compile_definitions(MayaFlux::MayaFluxLib INTERFACE
         @MAYAFLUX_AUDIO_BACKEND@
+        @MAYAFLUX_MIDI_BACKEND@
         GLFW_BACKEND
         ASIO_STANDALONE
     )
@@ -266,10 +266,10 @@ if(NOT TARGET MayaFlux::MayaFluxLib)
             FFmpeg::swscale
             FFmpeg::avdevice
             hidapi::hidapi
-            RtMidi::rtmidi
             asio::asio
             assimp::assimp
             utf8proc::utf8proc
+            winmm
             tinyexr
             freetype
             gdi32
@@ -291,7 +291,6 @@ if(NOT TARGET MayaFlux::MayaFluxLib)
             PkgConfig::LIBAVDEVICE
             PkgConfig::magic_enum
             PkgConfig::HIDAPI
-            PkgConfig::RtMidi
             PkgConfig::Asio
             PkgConfig::Assimp
             Freetype::Freetype
@@ -304,10 +303,11 @@ if(NOT TARGET MayaFlux::MayaFluxLib)
 
         # Unix Vulkan
         if(APPLE)
-            target_link_libraries(MayaFlux::MayaFluxLib INTERFACE Vulkan::Vulkan PkgConfig::RtAudio)
+            target_link_libraries(MayaFlux::MayaFluxLib INTERFACE Vulkan::Vulkan PkgConfig::RtAudio PkgConfig::RtMidi)
         else()
             target_link_libraries(MayaFlux::MayaFluxLib INTERFACE 
             PkgConfig::Vulkan
+            asound
             )
             if("@MAYAFLUX_AUDIO_BACKEND@" STREQUAL "PIPEWIRE_BACKEND")
                 target_link_libraries(MayaFlux::MayaFluxLib INTERFACE PkgConfig::PIPEWIRE)

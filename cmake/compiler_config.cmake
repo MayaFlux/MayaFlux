@@ -18,5 +18,6 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
 elseif(MSVC)
     add_compile_options(
         /W4
+        /MP
     )
 endif()

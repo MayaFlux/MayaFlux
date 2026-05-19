@@ -84,7 +84,6 @@ jobs:
             glslc \
             libshaderc-devel \
             hidapi-devel \
-            rtmidi-devel \
             asio-standalone \
             utf8proc-devel \
             freetype-devel \
