@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Network::ModalNetwork::generate_spectrum_ratios" name="MayaFlux::Nodes::Network::ModalNetwork::generate_spectrum_ratios">
+<area shape="rect" id="Node000001" title="Generate frequency ratios for predefined spectra." alt="" coords="281,5,480,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ModalNetwork_aec29355c52c7bcb3ecdbbb490ce2ea15.html#aec29355c52c7bcb3ecdbbb490ce2ea15" title="Create modal network with predefined spectrum." alt="" coords="5,13,233,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="268,35,233,35,233,30,268,30"/>
+</map>

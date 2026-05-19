@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::UDPBackend::on_receive" name="MayaFlux::Core::UDPBackend::on_receive">
+<area shape="rect" id="Node000001" title="Completion handler for async_receive_from." alt="" coords="5,5,220,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1UDPBackend_aaa05d06067d5870da51c50701c20abcf.html#aaa05d06067d5870da51c50701c20abcf" title="Post the first async_receive_from for a newly bound socket." alt="" coords="268,5,483,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="220,23,254,23,254,28,220,28"/>
+</map>

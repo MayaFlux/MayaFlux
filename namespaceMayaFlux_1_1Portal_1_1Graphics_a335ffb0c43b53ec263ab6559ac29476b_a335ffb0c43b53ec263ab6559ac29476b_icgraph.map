@@ -1,0 +1,43 @@
+<map id="MayaFlux::Portal::Graphics::get_texture_manager" name="MayaFlux::Portal::Graphics::get_texture_manager">
+<area shape="rect" id="Node000001" title="Get the global texture manager instance." alt="" coords="828,358,1025,398"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_a065b63736ca93e3162c1395c8daaac25.html#a065b63736ca93e3162c1395c8daaac25" title="Bind a texture to a descriptor binding point." alt="" coords="583,5,749,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="915,346,898,289,871,219,831,146,806,112,778,81,748,61,751,56,782,77,810,108,835,143,875,217,903,287,920,344"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1TextureProcessor_a074276cd9ffa82ba762d51bf0240190a.html#a074276cd9ffa82ba762d51bf0240190a" title="Create VKImage for texture storage." alt="" coords="575,136,757,191"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="904,347,853,275,818,237,778,204,756,191,759,187,782,200,822,233,857,272,909,344"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1TextureProcessor_a7d53a8a818b65190bbb4b66f14c3aada.html#a7d53a8a818b65190bbb4b66f14c3aada" title="Re&#45;upload pixels to GPU if they changed." alt="" coords="298,97,485,152"/>
+<area shape="poly" id="edge19_Node000001_Node000007" title=" " alt="" coords="915,346,899,294,872,232,854,201,832,172,807,146,779,126,744,109,707,98,669,91,630,88,553,91,485,102,484,97,553,86,630,83,669,86,708,93,746,104,781,121,811,142,837,169,858,198,877,229,904,292,920,344"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Buffers_1_1NodeTextureProcessor_ab6145a454bd799d7ff46c69ad138b812.html#ab6145a454bd799d7ff46c69ad138b812" title=" " alt="" coords="573,645,759,700"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="918,412,899,461,870,520,831,581,808,610,782,635,761,649,758,644,778,631,804,606,827,578,866,518,894,459,913,410"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1IO_1_1ImageReader_ae660058c52405b4605ecce4c631a4b44.html#ae660058c52405b4605ecce4c631a4b44" title="Load image directly into GPU texture (static utility)" alt="" coords="565,294,767,334"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="831,357,747,337,749,331,832,352"/>
+<area shape="rect" id="Node000012" href="$namespaceMayaFlux_1_1Portal_1_1Text_ad0d60d632777550dc22ddf928206cb76.html#ad0d60d632777550dc22ddf928206cb76" title="Composite a UTF&#45;8 string directly into a new GPU texture." alt="" coords="583,358,749,398"/>
+<area shape="poly" id="edge11_Node000001_Node000012" title=" " alt="" coords="814,381,749,381,749,375,814,375"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Buffers_1_1NodeTextureProcessor_a819461e6cd7cd4f7e13f5d717f3af029.html#a819461e6cd7cd4f7e13f5d717f3af029" title="Process all texture uploads." alt="" coords="583,423,749,477"/>
+<area shape="poly" id="edge12_Node000001_Node000013" title=" " alt="" coords="841,404,750,430,749,424,840,399"/>
+<area shape="rect" id="Node000014" href="$namespaceMayaFlux_1_1Portal_1_1Text_acf9c8473bfc47c7f6778e5643e600dbe.html#acf9c8473bfc47c7f6778e5643e600dbe" title="Re&#45;composite a UTF&#45;8 string into an existing GPU texture." alt="" coords="583,502,749,542"/>
+<area shape="poly" id="edge13_Node000001_Node000014" title=" " alt="" coords="896,409,844,451,781,491,750,504,748,499,779,486,841,447,892,405"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1Buffers_1_1NodeTextureBuffer_ac67634c77e2bdb1c6e7c6f5bceb492c1.html#ac67634c77e2bdb1c6e7c6f5bceb492c1" title="Initialize the buffer, create GPU texture, and setup processors." alt="" coords="573,567,759,621"/>
+<area shape="poly" id="edge14_Node000001_Node000015" title=" " alt="" coords="909,412,857,484,822,523,782,556,760,569,757,564,778,552,818,519,853,480,904,409"/>
+<area shape="rect" id="Node000016" href="$classMayaFlux_1_1Yantra_1_1GpuResourceManager_aa4aaaaa92000171803bc11a1b852143a.html#aa4aaaaa92000171803bc11a1b852143a" title="Transition a VKImage layout via an immediate command submission." alt="" coords="552,725,780,765"/>
+<area shape="poly" id="edge15_Node000001_Node000016" title=" " alt="" coords="923,412,909,476,883,558,865,600,842,642,814,681,782,715,764,727,761,722,778,711,810,677,837,639,860,598,878,556,904,475,918,411"/>
+<area shape="rect" id="Node000020" href="$classMayaFlux_1_1Buffers_1_1TextureProcessor_a956a5e44b0105d4ada9aa83d25997c39.html#a956a5e44b0105d4ada9aa83d25997c39" title="Upload initial pixel data to GPU texture." alt="" coords="573,215,759,269"/>
+<area shape="poly" id="edge20_Node000001_Node000020" title=" " alt="" coords="887,352,837,318,779,284,751,272,753,267,781,280,839,313,890,348"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_a424e1702be96080819416ca2f086d304.html#a424e1702be96080819416ca2f086d304" title="Bind a texture to a named descriptor." alt="" coords="308,5,475,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="569,35,475,35,475,30,569,30"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1TextureProcessor_a7c8aaf1c16e1ed32a4900fb0e1d10d8f.html#a7c8aaf1c16e1ed32a4900fb0e1d10d8f" title="Initialize all GPU resources:" alt="" coords="293,201,490,256"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="562,191,491,208,489,203,560,186"/>
+<area shape="poly" id="edge6_Node000004_Node000007" title=" " alt="" coords="561,151,485,140,485,135,562,146"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1TextureProcessor_ab9346c297fb651892a403b3ff5837aed.html#ab9346c297fb651892a403b3ff5837aed" title="Called when this processor is attached to a buffer." alt="" coords="39,201,197,256"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="279,231,197,231,197,226,279,226"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Buffers_1_1TextureProcessor_a22c664d1f23e08fdf018d3a58f600e26.html#a22c664d1f23e08fdf018d3a58f600e26" title="The core processing function that must be implemented by derived classes." alt="" coords="13,97,223,152"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="284,127,224,127,224,122,284,122"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Buffers_1_1NodeTextureProcessor_ad506d0c86f76806f940a71cd2e816734.html#ad506d0c86f76806f940a71cd2e816734" title="Called when this processor is attached to a buffer." alt="" coords="308,645,475,700"/>
+<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="559,675,475,675,475,670,559,670"/>
+<area shape="rect" id="Node000017" href="$classMayaFlux_1_1Yantra_1_1GpuDispatchCore_ac2c2749002d9ed840fbb847f719d1d58.html#ac2c2749002d9ed840fbb847f719d1d58" title="Marshal channel data into GPU input buffers." alt="" coords="279,725,504,765"/>
+<area shape="poly" id="edge16_Node000016_Node000017" title=" " alt="" coords="538,747,504,747,504,742,538,742"/>
+<area shape="rect" id="Node000018" href="$classMayaFlux_1_1Yantra_1_1GpuDispatchCore_a899fb89ec912ff8a784fa8d4efadbe39.html#a899fb89ec912ff8a784fa8d4efadbe39" title="Full single&#45;pass dispatch." alt="" coords="5,693,231,733"/>
+<area shape="poly" id="edge17_Node000017_Node000018" title=" " alt="" coords="265,733,230,728,231,723,265,727"/>
+<area shape="rect" id="Node000019" href="$classMayaFlux_1_1Yantra_1_1GpuDispatchCore_ab2351a76c5db238842099c55a1d08386.html#ab2351a76c5db238842099c55a1d08386" title="Multi&#45;pass (chained) dispatch." alt="" coords="5,757,231,797"/>
+<area shape="poly" id="edge18_Node000017_Node000019" title=" " alt="" coords="265,762,231,766,230,761,265,757"/>
+<area shape="poly" id="edge21_Node000020_Node000005" title=" " alt="" coords="559,239,490,236,490,231,559,234"/>
+</map>

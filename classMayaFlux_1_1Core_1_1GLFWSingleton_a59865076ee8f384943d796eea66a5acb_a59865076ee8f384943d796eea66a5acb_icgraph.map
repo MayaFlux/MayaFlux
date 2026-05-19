@@ -1,0 +1,9 @@
+<map id="MayaFlux::Core::GLFWSingleton::initialize" name="MayaFlux::Core::GLFWSingleton::initialize">
+<area shape="rect" id="Node000001" title="Initializes the GLFW library if not already initialized." alt="" coords="553,37,784,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1GLFWSingleton_a757b5035fce03317d4aa96a7933f0d36.html#a757b5035fce03317d4aa96a7933f0d36" title="Retrieves the list of required Vulkan instance extensions for GLFW." alt="" coords="253,5,505,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="540,46,505,42,506,37,540,40"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1GlfwWindow_af83353d8a70df4d606830fc3ac0e4dee.html#af83353d8a70df4d606830fc3ac0e4dee" title="Creates a window with the given configuration." alt="" coords="273,69,486,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="540,74,486,80,486,75,539,69"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1VKContext_abc215601510a7e2e54380a535f0718a2.html#abc215601510a7e2e54380a535f0718a2" title="Initialize Vulkan context." alt="" coords="5,5,205,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="240,28,205,28,205,23,240,23"/>
+</map>

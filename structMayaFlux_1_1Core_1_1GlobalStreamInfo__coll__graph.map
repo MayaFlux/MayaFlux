@@ -1,0 +1,7 @@
+<map id="MayaFlux::Core::GlobalStreamInfo" name="MayaFlux::Core::GlobalStreamInfo">
+<area shape="rect" id="Node000001" title="Comprehensive configuration for digital audio stream processing." alt="" coords="111,223,350,508"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Core_1_1GlobalStreamInfo_1_1ChannelConfig.html" title="Configuration for input or output data channels." alt="" coords="5,5,219,145"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="143,144,168,206,163,208,138,147"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Core_1_1GlobalStreamInfo_1_1MidiConfig.html" title="Configuration for MIDI data channels." alt="" coords="243,25,456,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="332,126,298,209,293,206,327,124"/>
+</map>

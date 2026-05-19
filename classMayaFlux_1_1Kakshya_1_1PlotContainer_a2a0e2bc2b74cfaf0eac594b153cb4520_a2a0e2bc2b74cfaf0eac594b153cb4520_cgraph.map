@@ -1,0 +1,13 @@
+<map id="MayaFlux::Kakshya::PlotContainer::bind_callable" name="MayaFlux::Kakshya::PlotContainer::bind_callable">
+<area shape="rect" id="Node000001" title="Bind a series to a callable." alt="" coords="5,45,164,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1PlotContainer_a0d7026e5d49589ff8cbe2080c6033b10.html#a0d7026e5d49589ff8cbe2080c6033b10" title="Return the PlotProcessor, creating and attaching it if absent." alt="" coords="215,5,377,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="164,55,201,48,202,53,165,60"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1PlotContainer_a24a62108828e0700c77eae7bb24b430f.html#a24a62108828e0700c77eae7bb24b430f" title="Mark the container as ready or not ready for processing." alt="" coords="212,84,380,139"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="165,85,199,91,198,96,164,90"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1PlotContainer_ab6f0eae594de9f6c525c0d1afd41d628.html#ab6f0eae594de9f6c525c0d1afd41d628" title="Create and configure a default processor for this container." alt="" coords="430,5,589,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="378,30,416,30,416,35,378,35"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1PlotContainer_abf2b2c76f1772c28f6934d73fcdeb138.html#abf2b2c76f1772c28f6934d73fcdeb138" title="Set the default data processor for this container." alt="" coords="639,5,829,60"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="589,30,625,30,625,35,589,35"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1PlotContainer_acdc3081c6086bc930cdce5403594c6af.html#acdc3081c6086bc930cdce5403594c6af" title="Update the processing state of the container." alt="" coords="428,84,591,139"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="381,109,414,109,414,114,381,114"/>
+</map>

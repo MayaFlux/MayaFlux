@@ -1,0 +1,9 @@
+<map id="MayaFlux::IO::FileReaderRegistry::create_reader" name="MayaFlux::IO::FileReaderRegistry::create_reader">
+<area shape="rect" id="Node000001" title="Create appropriate reader for a file based on extension." alt="" coords="5,5,191,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1FileReader_a24d94d5bc8b4294d61f43ac86f933050.html#a24d94d5bc8b4294d61f43ac86f933050" title="Resolve a filepath against the project source root if not found as&#45;is." alt="" coords="239,5,424,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="191,23,225,23,225,28,191,28"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_ac8ded33a4e354a3259e25ea984c19053.html#ac8ded33a4e354a3259e25ea984c19053" title="Normalize single&#45;channel data (non&#45;destructive)" alt="" coords="472,13,639,38"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="425,23,458,23,458,28,425,28"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_aa7fcdee057518b1d482864a610ee0b5a.html#aa7fcdee057518b1d482864a610ee0b5a" title="Normalize to [target_min, target_max] in&#45;place Single&#45;pass min/max reduction followed by a single tra..." alt="" coords="687,5,836,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="639,23,673,23,673,28,639,28"/>
+</map>

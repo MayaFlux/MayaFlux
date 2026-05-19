@@ -1,0 +1,7 @@
+<map id="MayaFlux::Core::InputValue::as_scalar" name="MayaFlux::Core::InputValue::as_scalar">
+<area shape="rect" id="Node000001" title=" " alt="" coords="491,5,692,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Input_1_1InputNode_aa6aa698e25bb20035ac50308e7674bde.html#aa6aa698e25bb20035ac50308e7674bde" title="Extract a scalar value from an InputValue." alt="" coords="248,5,443,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="477,28,443,28,443,23,477,23"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Input_1_1InputNode_a88c4313675ddc5de1acab2ab1fc91876.html#a88c4313675ddc5de1acab2ab1fc91876" title="Process an input value from a backend." alt="" coords="5,5,200,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="234,28,200,28,200,23,234,23"/>
+</map>

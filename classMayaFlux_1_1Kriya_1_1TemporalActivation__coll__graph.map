@@ -1,0 +1,22 @@
+<map id="MayaFlux::Kriya::TemporalActivation" name="MayaFlux::Kriya::TemporalActivation">
+<area shape="rect" id="Node000001" title="Specialized timer for controlling computational nodes, buffers, and networks." alt="" coords="347,2131,559,2471"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler.html" title="Token&#45;based multimodal task scheduling system for unified coroutine processing." alt="" coords="121,521,344,1216"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="124,1217,103,1314,86,1418,74,1526,69,1636,74,1748,88,1858,115,1965,134,2017,156,2067,190,2120,234,2167,284,2206,334,2239,331,2243,281,2211,231,2170,186,2123,152,2069,129,2019,110,1966,83,1859,68,1748,64,1636,69,1525,80,1417,98,1313,119,1216"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Kriya_1_1Timer.html" title="High&#45;level utility for scheduling one&#45;shot timed callbacks." alt="" coords="260,1581,427,1766"/>
+<area shape="poly" id="edge10_Node000010_Node000002" title=" " alt="" coords="283,1216,331,1564,326,1565,278,1217"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Vruta_1_1SampleClock.html" title="Sample&#45;accurate timing system for audio processing domain." alt="" coords="5,233,220,459"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="141,458,152,505,147,506,136,459"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Vruta_1_1IClock.html" title="Abstract base interface for all clock types in the multimodal scheduling system." alt="" coords="28,5,197,171"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="115,185,115,233,110,233,110,185"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Vruta_1_1TaskScheduler_1_1PendingTaskOp.html" title=" " alt="" coords="244,296,467,396"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="346,397,321,506,316,504,341,396"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Vruta_1_1TaskEntry.html" title=" " alt="" coords="259,45,451,131"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="358,131,358,279,353,279,353,131"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager.html" title="Central manager for the computational processing node graph." alt="" coords="451,1279,673,2068"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="496,2069,488,2115,482,2114,491,2068"/>
+<area shape="rect" id="Node000008" href="$structMayaFlux_1_1Nodes_1_1NodeConfig.html" title="Configuration settings for individual audio nodes." alt="" coords="457,786,667,951"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="565,952,565,1262,559,1262,559,952"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Buffers_1_1BufferManager.html" title="Token&#45;based multimodal buffer management system for unified data stream processing." alt="" coords="697,1441,881,1905"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="759,1906,743,1959,722,2012,697,2062,665,2108,621,2159,573,2205,569,2201,617,2155,661,2105,692,2059,717,2010,738,1957,754,1905"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="361,1766,419,2106,421,2114,415,2115,414,2107,356,1767"/>
+</map>

@@ -1,0 +1,26 @@
+<map id="MayaFlux::IO::ImageWriterRegistry::instance" name="MayaFlux::IO::ImageWriterRegistry::instance">
+<area shape="rect" id="Node000001" title=" " alt="" coords="712,165,909,205"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nexus_1_1StateEncoder_ad8fc616eab6adf9f0af8ec03db3f3b3e.html#ad8fc616eab6adf9f0af8ec03db3f3b3e" title="Encode the given Fabric to {base_path}.exr and {base_path}.json." alt="" coords="435,5,664,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="781,157,729,107,697,81,663,60,637,48,639,43,665,55,700,77,732,103,784,153"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1EXRWriter_ae62981d034721e6360f5862dfa89a904.html#ae62981d034721e6360f5862dfa89a904" title="Register this writer with the ImageWriterRegistry." alt="" coords="458,69,641,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="755,162,663,124,627,112,628,107,665,119,757,157"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1IO_1_1STBImageWriter_a4e56a08f32dfab67d4017344543ba601.html#a4e56a08f32dfab67d4017344543ba601" title="Register this writer with the ImageWriterRegistry." alt="" coords="438,133,661,173"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="698,174,661,170,661,164,699,169"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1IO_a4f12c1b729a3d84c98e799a6af07ab19.html#a4f12c1b729a3d84c98e799a6af07ab19" title="Save a VKImage directly to disk via the ImageWriter registry." alt="" coords="476,197,623,237"/>
+<area shape="poly" id="edge6_Node000001_Node000006" title=" " alt="" coords="699,202,623,211,623,206,698,196"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1IO_1_1IOManager_a20c6d4610f26db8604c8d2252a02c3a2.html#a20c6d4610f26db8604c8d2252a02c3a2" title="Save image data to disk asynchronously." alt="" coords="456,261,643,301"/>
+<area shape="poly" id="edge9_Node000001_Node000009" title=" " alt="" coords="757,214,665,252,628,264,627,259,663,247,755,209"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1IO_1_1IOManager_adffe46d33f302a83a626b69a4573342b.html#adffe46d33f302a83a626b69a4573342b" title="Save an already&#45;downloaded ImageData to disk asynchronously." alt="" coords="456,325,643,365"/>
+<area shape="poly" id="edge12_Node000001_Node000012" title=" " alt="" coords="784,218,732,268,700,294,665,316,639,328,637,323,663,311,697,289,729,264,781,214"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1IOManager_ae2e6d392990ec5945fa6bb7ce710f06d.html#ae2e6d392990ec5945fa6bb7ce710f06d" title="Construct IOManager and register the IOService into BackendRegistry." alt="" coords="200,101,387,141"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="445,105,387,112,387,107,444,100"/>
+<area shape="poly" id="edge5_Node000005_Node000004" title=" " alt="" coords="424,140,386,136,387,130,425,135"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1IO_a03a3f24fff1c3b2fc670ee5539f5ca80.html#a03a3f24fff1c3b2fc670ee5539f5ca80" title="Save a TextureBuffer&#39;s current GPU state to disk." alt="" coords="220,197,367,237"/>
+<area shape="poly" id="edge7_Node000006_Node000007" title=" " alt="" coords="462,220,367,220,367,215,462,215"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1IO_a80678771111a87cd4dadffc367b550d7.html#a80678771111a87cd4dadffc367b550d7" title="Save a TextBuffer&#39;s rendered glyph texture to disk." alt="" coords="5,197,152,237"/>
+<area shape="poly" id="edge8_Node000007_Node000008" title=" " alt="" coords="206,220,152,220,152,215,206,215"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1IO_1_1IOManager_ac91dd7d537b2c0090b05d8bd5b74847e.html#ac91dd7d537b2c0090b05d8bd5b74847e" title=" " alt="" coords="200,261,387,301"/>
+<area shape="poly" id="edge10_Node000009_Node000010" title=" " alt="" coords="442,284,387,284,387,279,442,279"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1IO_1_1IOManager_abc5b4f20992fe093fcf290e073a12895.html#abc5b4f20992fe093fcf290e073a12895" title=" " alt="" coords="200,325,387,365"/>
+<area shape="poly" id="edge11_Node000009_Node000011" title=" " alt="" coords="456,307,374,328,373,323,455,302"/>
+</map>

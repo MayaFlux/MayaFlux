@@ -1,0 +1,21 @@
+<map id="MayaFlux::Buffers::VideoContainerBuffer" name="MayaFlux::Buffers::VideoContainerBuffer">
+<area shape="rect" id="Node000001" title="TextureBuffer implementation backed by a VideoStreamContainer." alt="" coords="529,1817,718,2017"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1TextureBuffer.html" title="A hybrid buffer managing both a textured quad geometry and its pixel data." alt="" coords="526,1139,721,1768"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="626,1782,626,1817,621,1817,621,1782"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VKBuffer.html" title="Vulkan&#45;backed buffer wrapper used in processing chains." alt="" coords="423,477,640,1076"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="577,1089,583,1138,578,1139,571,1090"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1Buffer.html" title="Backend&#45;agnostic interface for sequential data storage and transformation." alt="" coords="5,135,223,415"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="234,415,425,643,420,647,230,419"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="38,5,190,85"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="117,99,117,135,111,135,111,99"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Portal_1_1Graphics_1_1RenderConfig.html" title="Unified rendering configuration for graphics buffers." alt="" coords="247,145,437,405"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="387,404,405,452,419,492,414,494,399,454,382,406"/>
+<area shape="rect" id="Node000007" href="$structMayaFlux_1_1Buffers_1_1VKBufferResources.html" title="Raw Vulkan handles owned by a VKBuffer instance." alt="" coords="461,185,602,365"/>
+<area shape="poly" id="edge6_Node000003_Node000007" title=" " alt="" coords="534,365,534,461,529,461,529,365"/>
+<area shape="rect" id="Node000008" href="$structMayaFlux_1_1Buffers_1_1VKBuffer_1_1PipelineContext.html" title="Context shared with BufferProcessors during pipeline execution." alt="" coords="627,215,828,335"/>
+<area shape="poly" id="edge7_Node000003_Node000008" title=" " alt="" coords="707,336,649,484,644,482,702,334"/>
+<area shape="rect" id="Node000009" href="$structMayaFlux_1_1Buffers_1_1VKBuffer_1_1EngineContext.html" title="Engine&#45;internal per&#45;frame binding state." alt="" coords="852,235,1027,315"/>
+<area shape="poly" id="edge8_Node000003_Node000009" title=" " alt="" coords="924,316,905,352,878,391,844,427,803,456,781,464,761,467,724,464,690,463,673,468,654,480,654,480,651,476,651,475,671,463,689,458,725,458,761,461,780,459,801,451,840,423,874,387,900,349,920,313"/>
+<area shape="rect" id="Node000010" title=" " alt="" coords="665,744,766,809"/>
+<area shape="poly" id="edge9_Node000002_Node000010" title=" " alt="" coords="714,810,671,1123,666,1122,708,809"/>
+</map>

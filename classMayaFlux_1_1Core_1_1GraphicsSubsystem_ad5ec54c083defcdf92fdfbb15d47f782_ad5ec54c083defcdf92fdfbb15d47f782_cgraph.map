@@ -1,0 +1,7 @@
+<map id="MayaFlux::Core::GraphicsSubsystem::register_callbacks" name="MayaFlux::Core::GraphicsSubsystem::register_callbacks">
+<area shape="rect" id="Node000001" title="Register callback hooks for this domain." alt="" coords="5,13,225,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1GraphicsSubsystem_a2061b6d65329d0192b8413a67d61a122.html#a2061b6d65329d0192b8413a67d61a122" title="Register custom frame processor with scheduler." alt="" coords="273,5,472,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="225,30,259,30,259,35,225,35"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1GraphicsSubsystem_a6d5c2853927ddaeb939e61bd95758d7c.html#a6d5c2853927ddaeb939e61bd95758d7c" title="Process all FRAME_ACCURATE coroutines for given frames." alt="" coords="520,5,719,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="472,30,506,30,506,35,472,35"/>
+</map>

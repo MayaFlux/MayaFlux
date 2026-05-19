@@ -1,0 +1,11 @@
+<map id="MayaFlux::Nodes::NodeGraphManager::get_active_tokens" name="MayaFlux::Nodes::NodeGraphManager::get_active_tokens">
+<area shape="rect" id="Node000001" title="Gets all currently active processing tokens (domains)" alt="" coords="545,85,761,125"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Inspector_a16d8fcc2d075cb333333e194fd24703d.html#a16d8fcc2d075cb333333e194fd24703d" title="Inspect the full NodeGraphManager state across all active tokens." alt="" coords="299,5,480,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="565,84,480,60,481,55,567,78"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_a749bef701cfc06a93ce3c4a6c3ef3d07.html#a749bef701cfc06a93ce3c4a6c3ef3d07" title="Process all active tokens sequentially." alt="" coords="281,85,497,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="532,107,497,107,497,102,532,102"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_a0c180caaaa076b2a2609bc1d1f9258ea.html#a0c180caaaa076b2a2609bc1d1f9258ea" title="Terminates all active processing across all tokens and channels." alt="" coords="281,149,497,204"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="567,131,491,152,489,147,566,126"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_ac72e466978d6713dfcbc620c50567363.html#ac72e466978d6713dfcbc620c50567363" title="Destroys the NodeGraphManager." alt="" coords="5,157,233,197"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="268,179,233,179,233,174,268,174"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kakshya::extract_region_data" name="MayaFlux::Kakshya::extract_region_data">
+<area shape="rect" id="Node000001" title="Extract a region of data from a flat data span using a Region and dimension info." alt="" coords="5,37,164,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kakshya_a11d6fefbc337609345969f80012578d0.html#a11d6fefbc337609345969f80012578d0" title="Convert N&#45;dimensional coordinates to a linear index for interleaved data." alt="" coords="212,5,375,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="164,43,198,37,199,42,165,48"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kakshya_1_1Region_a872fb07c970339241d47d9afebae5e41.html#a872fb07c970339241d47d9afebae5e41" title="Get the total volume (number of elements) in the region." alt="" coords="214,69,373,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="165,67,201,72,200,78,164,72"/>
+</map>

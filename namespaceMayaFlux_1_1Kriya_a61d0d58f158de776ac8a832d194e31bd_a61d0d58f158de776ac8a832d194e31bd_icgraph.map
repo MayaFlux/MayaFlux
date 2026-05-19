@@ -1,0 +1,15 @@
+<map id="MayaFlux::Kriya::mouse_pressed" name="MayaFlux::Kriya::mouse_pressed">
+<area shape="rect" id="Node000001" title="Creates an Event coroutine that triggers on specific mouse button press." alt="" coords="725,69,905,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nexus_1_1Wiring_af32900423bc2e18633ca0f7dd74f051a.html#af32900423bc2e18633ca0f7dd74f051a" title="Apply the configured wiring." alt="" coords="483,5,669,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="726,68,651,48,652,43,727,63"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_a6613e51ffdbc148b6667699e873a87a6.html#a6613e51ffdbc148b6667699e873a87a6" title="Schedule a mouse button press handler." alt="" coords="495,69,657,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="711,92,657,92,657,87,711,87"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Context_aa42296d51149bf551f43678912150ef0.html#aa42296d51149bf551f43678912150ef0" title=" " alt="" coords="475,133,677,173"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="727,116,652,136,651,131,726,110"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_a72f28c8e9fbe5781fe8935356cb359b7.html#a72f28c8e9fbe5781fe8935356cb359b7" title="Bind a navigation preset to a window and render processor." alt="" coords="240,69,427,109"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="481,92,427,92,427,87,481,87"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_a3dc95653b5e16198d6c5f3ca0c24d646.html#a3dc95653b5e16198d6c5f3ca0c24d646" title="Bind a navigation preset to all RenderProcessors currently registered against a window." alt="" coords="5,69,192,109"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="227,92,192,92,192,87,227,87"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Context_a7287e64dcc62fe5f54a34e133c3b0332.html#a7287e64dcc62fe5f54a34e133c3b0332" title="Construct and immediately register event coroutines." alt="" coords="243,133,424,173"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="461,156,424,156,424,151,461,151"/>
+</map>

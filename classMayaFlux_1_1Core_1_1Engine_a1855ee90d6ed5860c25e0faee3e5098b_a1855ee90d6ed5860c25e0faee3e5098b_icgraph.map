@@ -1,0 +1,7 @@
+<map id="MayaFlux::Core::Engine::await_shutdown" name="MayaFlux::Core::Engine::await_shutdown">
+<area shape="rect" id="Node000001" title="Blocks until shutdown is requested (main thread event loop)" alt="" coords="287,5,463,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_aeb6ac35d8d260d49b82cf9696396480a.html#aeb6ac35d8d260d49b82cf9696396480a" title="Blocks launcher until user input (optional convenience function)" alt="" coords="108,13,239,38"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="273,28,239,28,239,23,273,23"/>
+<area shape="rect" id="Node000003" href="$main_8cpp_ae66f6b31b5ad750f1fe042a706a4e3d4.html#ae66f6b31b5ad750f1fe042a706a4e3d4" title=" " alt="" coords="5,13,60,38"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="94,28,60,28,60,23,94,23"/>
+</map>

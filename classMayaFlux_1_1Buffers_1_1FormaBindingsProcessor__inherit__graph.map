@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::FormaBindingsProcessor" name="MayaFlux::Buffers::FormaBindingsProcessor">
+<area shape="rect" id="Node000001" title="ShaderProcessor that reads Forma element state and routes it to push constants or descriptor bindings..." alt="" coords="5,1423,215,1883"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor.html" title="Abstract base class for shader&#45;based buffer processing." alt="" coords="11,516,209,1375"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="113,1388,113,1422,107,1422,107,1388"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VKBufferProcessor.html" title=" " alt="" coords="13,313,207,468"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="113,482,113,516,107,516,107,482"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1BufferProcessor.html" title="Central computational transformation interface for continuous buffer processing." alt="" coords="20,5,200,265"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="113,279,113,313,107,313,107,279"/>
+</map>

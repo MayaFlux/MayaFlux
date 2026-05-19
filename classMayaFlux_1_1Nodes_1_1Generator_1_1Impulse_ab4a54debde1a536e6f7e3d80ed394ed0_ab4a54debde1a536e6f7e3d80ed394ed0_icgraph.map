@@ -1,0 +1,19 @@
+<map id="MayaFlux::Nodes::Generator::Impulse::update_phase_increment" name="MayaFlux::Nodes::Generator::Impulse::update_phase_increment">
+<area shape="rect" id="Node000001" title="Updates the phase increment based on a new frequency." alt="" coords="517,158,725,213"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Impulse_a8978112944f7bc234c7ba9986bb243c5.html#a8978112944f7bc234c7ba9986bb243c5" title="Constructor with both frequency and amplitude modulation." alt="" coords="261,5,469,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="583,150,531,103,468,60,442,48,444,43,471,55,534,99,586,146"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Impulse_a21246de238980b6b5ac3d57dd335a8ce.html#a21246de238980b6b5ac3d57dd335a8ce" title="Constructor with frequency modulation." alt="" coords="261,69,469,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="546,155,468,124,434,112,435,107,470,119,548,150"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Impulse_ac9ed9f1533e9d1b4242c8cb17708545f.html#ac9ed9f1533e9d1b4242c8cb17708545f" title="Constructor with amplitude modulation." alt="" coords="261,133,469,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="504,173,469,169,470,164,504,168"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Impulse_a500ccf163a3f170b485bdfd183948878.html#a500ccf163a3f170b485bdfd183948878" title="Basic constructor with fixed parameters." alt="" coords="261,197,469,237"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="504,203,470,207,469,202,504,197"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Impulse_a871f16ab043c372dedbf9f5c69965960.html#a871f16ab043c372dedbf9f5c69965960" title="Processes a single input sample and generates an impulse sample." alt="" coords="261,261,469,301"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="548,221,470,252,435,264,434,259,468,247,546,216"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Impulse_ad790e37afbf5d86458bbf763c8d25d89.html#ad790e37afbf5d86458bbf763c8d25d89" title="Sets the generator&#39;s frequency." alt="" coords="261,325,469,365"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="586,225,534,272,471,316,444,328,442,323,468,311,531,267,583,221"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Impulse_a5aa86d7acca466adab508d227acd428d.html#a5aa86d7acca466adab508d227acd428d" title="Processes multiple samples at once." alt="" coords="5,261,213,301"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="248,284,213,284,213,279,248,279"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Impulse_a9ebb052b29b9cb47520b2bf54414ec2d.html#a9ebb052b29b9cb47520b2bf54414ec2d" title="Resets the generator&#39;s phase and parameters." alt="" coords="5,325,213,365"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="248,348,213,348,213,343,248,343"/>
+</map>

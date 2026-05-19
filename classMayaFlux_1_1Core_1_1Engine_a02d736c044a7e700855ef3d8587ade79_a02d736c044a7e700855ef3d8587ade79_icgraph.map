@@ -1,0 +1,35 @@
+<map id="MayaFlux::Core::Engine::get_stream_info" name="MayaFlux::Core::Engine::get_stream_info">
+<area shape="rect" id="Node000001" title="Gets the current stream configuration." alt="" coords="784,287,960,327"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Config_a5249afad2e4d9b92e843da6b0d089926.html#a5249afad2e4d9b92e843da6b0d089926" title="Gets the buffer size from the default engine." alt="" coords="569,63,733,103"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="853,276,807,197,773,154,734,117,716,105,719,101,738,113,777,150,811,194,858,273"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Config_add02a960f8fdc0d03e7d4c0aa3c2b518.html#add02a960f8fdc0d03e7d4c0aa3c2b518" title="Gets the stream configuration from the default engine." alt="" coords="569,127,733,167"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="843,278,795,229,735,181,712,169,715,164,737,176,799,225,847,274"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_1_1Config_aea5cc2f1c8447b25797ca248da512ff0.html#aea5cc2f1c8447b25797ca248da512ff0" title="Gets the number of output channels from the default engine." alt="" coords="569,191,733,231"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="817,283,735,245,706,233,708,228,737,240,819,278"/>
+<area shape="rect" id="Node000010" href="$namespaceMayaFlux_1_1Config_ad8c6968db02415b5ba48863063076989.html#ad8c6968db02415b5ba48863063076989" title="Gets the sample rate from the default engine." alt="" coords="569,255,733,295"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="770,295,733,289,734,284,771,289"/>
+<area shape="rect" id="Node000011" href="$namespaceMayaFlux_ae9491ecc376aeb1f55b68a86f00c9395.html#ae9491ecc376aeb1f55b68a86f00c9395" title="Converts samples to blocks based on current block size." alt="" coords="567,319,736,359"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="771,324,737,329,736,324,770,319"/>
+<area shape="rect" id="Node000012" href="$namespaceMayaFlux_acfc933dacfd681dbf41488034ea2c338.html#acfc933dacfd681dbf41488034ea2c338" title="Converts a number of audio samples to the equivalent time duration in seconds." alt="" coords="567,383,736,423"/>
+<area shape="poly" id="edge11_Node000001_Node000012" title=" " alt="" coords="819,335,737,373,708,385,706,380,735,368,817,330"/>
+<area shape="rect" id="Node000013" href="$namespaceMayaFlux_a9b0f018819c16aeaf3c79625209b8898.html#a9b0f018819c16aeaf3c79625209b8898" title="Converts a time duration in seconds to the equivalent number of processing blocks." alt="" coords="568,447,735,487"/>
+<area shape="poly" id="edge12_Node000001_Node000013" title=" " alt="" coords="847,339,799,388,737,437,715,449,712,444,735,432,795,384,843,335"/>
+<area shape="rect" id="Node000015" href="$namespaceMayaFlux_a61246cf5ed5930d655fc4ac7005ff98b.html#a61246cf5ed5930d655fc4ac7005ff98b" title="Converts a time duration in seconds to the equivalent number of audio samples." alt="" coords="568,511,735,551"/>
+<area shape="poly" id="edge14_Node000001_Node000015" title=" " alt="" coords="858,340,811,420,777,463,738,501,719,513,716,508,734,497,773,459,807,417,853,338"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_a36c554a7012df7e010ff0b6cea17420f.html#a36c554a7012df7e010ff0b6cea17420f" title="Construct a built SamplingPipeline from an audio file." alt="" coords="324,13,519,38"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="557,62,472,41,474,35,558,57"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_a56313717fe4a452b14cd3e82681a916e.html#a56313717fe4a452b14cd3e82681a916e" title="Construct a built SamplingPipeline from an existing DynamicSoundStream." alt="" coords="324,63,519,103"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="556,85,519,85,519,80,556,80"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_ad01d9cdd4e1687f97a0edca6641e6daa.html#ad01d9cdd4e1687f97a0edca6641e6daa" title="Constructs and initializes per&#45;channel SoundContainerBuffers without registering them." alt="" coords="328,127,515,167"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="566,109,494,129,493,124,565,104"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1BackendResourceManager_a1fe5c96d56ec273270cbd6d95450fd6c.html#a1fe5c96d56ec273270cbd6d95450fd6c" title=" " alt="" coords="5,5,276,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="310,28,276,28,276,23,310,23"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_a5dca32bb8cd22edc175764aeea406b3a.html#a5dca32bb8cd22edc175764aeea406b3a" title="Construct one built SamplingPipeline per channel from an audio file." alt="" coords="39,70,242,95"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="310,85,242,85,242,80,310,80"/>
+<area shape="rect" id="Node000014" href="$namespaceMayaFlux_a91a577cf9a518db7f561907cb51239a6.html#a91a577cf9a518db7f561907cb51239a6" title="Routes a buffer from its current channel to a target channel with fade." alt="" coords="335,454,508,479"/>
+<area shape="poly" id="edge13_Node000013_Node000014" title=" " alt="" coords="555,469,508,469,508,464,555,464"/>
+<area shape="rect" id="Node000016" href="$namespaceMayaFlux_a3007544776c384d1c0e640f3a0d645e3.html#a3007544776c384d1c0e640f3a0d645e3" title="@breif Moves the network from its current channel(s) to the specified channel(s) with an optional fad..." alt="" coords="327,510,515,535"/>
+<area shape="poly" id="edge15_Node000015_Node000016" title=" " alt="" coords="554,530,515,529,516,523,555,525"/>
+<area shape="rect" id="Node000017" href="$namespaceMayaFlux_a5e7ec95e02b8766a3aee0d66f51ac239.html#a5e7ec95e02b8766a3aee0d66f51ac239" title="@breif Moves the node from its current channel(s) to the specified channel(s) with an optional fade t..." alt="" coords="338,559,505,585"/>
+<area shape="poly" id="edge16_Node000015_Node000017" title=" " alt="" coords="555,551,493,562,492,557,554,545"/>
+</map>

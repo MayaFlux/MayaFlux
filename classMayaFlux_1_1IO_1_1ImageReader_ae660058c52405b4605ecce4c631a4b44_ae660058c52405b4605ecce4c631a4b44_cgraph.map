@@ -1,0 +1,10 @@
+<map id="MayaFlux::IO::ImageReader::load_texture" name="MayaFlux::IO::ImageReader::load_texture">
+<area shape="rect" id="Node000001" title="Load image directly into GPU texture (static utility)" alt="" coords="5,49,208,89"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a335ffb0c43b53ec263ab6559ac29476b.html#a335ffb0c43b53ec263ab6559ac29476b" title="Get the global texture manager instance." alt="" coords="259,5,456,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="208,49,245,42,246,48,209,54"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1ImageReader_a35e7202cd51c429e0c56688344cc4746.html#a35e7202cd51c429e0c56688344cc4746" title="Load image from file (static utility)" alt="" coords="256,93,459,133"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="209,84,243,91,242,96,208,90"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a6887ad297693c2392be7960daab06002.html#a6887ad297693c2392be7960daab06002" title=" " alt="" coords="507,5,704,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="456,23,493,23,493,28,456,28"/>
+<area shape="poly" id="edge4_Node000004_Node000004" title=" " alt="" coords="311,94,308,84,316,74,332,69,357,67,386,70,402,77,400,82,385,75,357,72,333,74,319,79,314,85,316,92"/>
+</map>

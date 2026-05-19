@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::Network::ResonatorNetwork::preset_to_vectors" name="MayaFlux::Nodes::Network::ResonatorNetwork::preset_to_vectors">
+<area shape="rect" id="Node000001" title="Translate a FormantPreset into parallel frequency/Q vectors." alt="" coords="333,30,533,85"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ResonatorNetwork_a6b73907bb0bbf24c3a13d7c9bd2eee4f.html#a6b73907bb0bbf24c3a13d7c9bd2eee4f" title="Apply a FormantPreset to the current network." alt="" coords="24,5,267,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="319,47,267,41,267,36,320,42"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ResonatorNetwork_a0b55eab5d6e6c27fb01a2da79b9a197f.html#a0b55eab5d6e6c27fb01a2da79b9a197f" title="Construct a ResonatorNetwork with a formant preset." alt="" coords="5,69,285,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="320,73,286,76,285,71,319,67"/>
+</map>

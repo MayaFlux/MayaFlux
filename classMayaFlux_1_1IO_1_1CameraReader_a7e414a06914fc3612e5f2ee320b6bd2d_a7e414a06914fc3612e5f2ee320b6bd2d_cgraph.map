@@ -1,0 +1,11 @@
+<map id="MayaFlux::IO::CameraReader::~CameraReader" name="MayaFlux::IO::CameraReader::~CameraReader">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,69,219,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1CameraReader_a89d8f77bfa240acadfabc47614ec932b.html#a89d8f77bfa240acadfabc47614ec932b" title="Release codec, demux, and scratch buffer resources." alt="" coords="267,5,480,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="194,67,277,46,279,51,195,72"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aa28c6f5592e5893508bafb62aefcc496.html#aa28c6f5592e5893508bafb62aefcc496" title="Get the global registry instance." alt="" coords="273,69,474,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="219,87,259,87,259,92,219,92"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_af56fb38c9e3a502f619f6205beb49384.html#af56fb38c9e3a502f619f6205beb49384" title="Unregister a service." alt="" coords="267,134,479,189"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="186,107,262,128,260,133,185,112"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1CameraReader_ae5520e3cfd342a1da5ef8ec3f4a2e0f5.html#ae5520e3cfd342a1da5ef8ec3f4a2e0f5" title=" " alt="" coords="528,5,741,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="480,23,514,23,514,28,480,28"/>
+</map>

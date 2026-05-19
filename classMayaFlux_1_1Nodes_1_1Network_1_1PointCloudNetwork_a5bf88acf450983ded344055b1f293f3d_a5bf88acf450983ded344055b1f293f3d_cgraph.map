@@ -1,0 +1,13 @@
+<map id="MayaFlux::Nodes::Network::PointCloudNetwork::set_operator" name="MayaFlux::Nodes::Network::PointCloudNetwork::set_operator">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,30,204,85"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1PointCloudNetwork_a8c51a6028f5de39f80e605e1fa9066bf.html#a8c51a6028f5de39f80e605e1fa9066bf" title=" " alt="" coords="252,30,473,85"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="204,55,239,55,239,60,204,60"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_af2f61c95d7e2c419ed8addcc81555a9c.html#af2f61c95d7e2c419ed8addcc81555a9c" title="Generate a batch of spatially distributed samples." alt="" coords="521,5,671,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="473,39,507,35,508,40,474,45"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kinesis_a70fa7114e3c0e6b4fbcbae8c894732e2.html#a70fa7114e3c0e6b4fbcbae8c894732e2" title="Batch&#45;project SampleResult vector to LineVertex." alt="" coords="521,69,671,109"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="474,70,508,75,507,80,473,75"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_a058961c9ce42cb929ddacfd55ecdd31f.html#a058961c9ce42cb929ddacfd55ecdd31f" title="Generate a single sample at a specific index (for indexed/sequential modes)." alt="" coords="719,5,873,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="671,23,705,23,705,28,671,28"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Kinesis_a98d71251e960c9d79a1a4851a2d80c1f.html#a98d71251e960c9d79a1a4851a2d80c1f" title="Project SampleResult to LineVertex." alt="" coords="721,69,871,109"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="671,87,707,87,707,92,671,92"/>
+</map>

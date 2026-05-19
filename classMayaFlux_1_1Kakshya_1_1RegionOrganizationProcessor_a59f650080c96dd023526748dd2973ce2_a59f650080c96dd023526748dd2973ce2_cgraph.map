@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kakshya::RegionOrganizationProcessor::organize_group" name="MayaFlux::Kakshya::RegionOrganizationProcessor::organize_group">
+<area shape="rect" id="Node000001" title="Organize a group of regions within the container." alt="" coords="5,5,219,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1RegionProcessorBase_a29b649c1806d006bfd1172e19eadf6f1.html#a29b649c1806d006bfd1172e19eadf6f1" title="Cache a region&#39;s data if beneficial and not already cached." alt="" coords="267,5,453,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="219,30,253,30,253,35,219,35"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kakshya_1_1RegionSegment_a4b1f6f95db006ac5486f391f1f23a957.html#a4b1f6f95db006ac5486f391f1f23a957" title="Get the total number of elements in the segment." alt="" coords="501,5,692,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="453,30,487,30,487,35,453,35"/>
+</map>

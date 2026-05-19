@@ -1,0 +1,5 @@
+<map id="MayaFlux::Journal::Archivist::set_context_filter" name="MayaFlux::Journal::Archivist::set_context_filter">
+<area shape="rect" id="Node000001" title="Enable or disable logging for a specific context." alt="" coords="220,5,383,60"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Config_ad6046ab275e8518b891fef05ef205ef5.html#ad6046ab275e8518b891fef05ef205ef5" title="Enables or disables logging for specific journal contexts." alt="" coords="5,13,172,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="206,35,172,35,172,30,206,30"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Portal::Graphics::ComputePress::push_constants" name="MayaFlux::Portal::Graphics::ComputePress::push_constants">
+<area shape="rect" id="Node000001" title="Push constants to active command buffer." alt="" coords="251,5,484,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ComputePress_a313d13f003f0f617d9e27addb3a3e7f3.html#a313d13f003f0f617d9e27addb3a3e7f3" title="All&#45;in&#45;one: bind pipeline + descriptors + push constants." alt="" coords="5,5,203,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="237,28,203,28,203,23,237,23"/>
+</map>

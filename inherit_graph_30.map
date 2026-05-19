@@ -1,0 +1,85 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="Node000000" href="$classMayaFlux_1_1Buffers_1_1BufferProcessor.html" title="Central computational transformation interface for continuous buffer processing." alt="" coords="5,613,153,653"/>
+<area shape="rect" id="Node000001" href="$classMayaFlux_1_1Buffers_1_1AudioWriteProcessor.html" title="Unconditionally writes externally&#45;supplied data into an AudioBuffer each cycle." alt="" coords="222,5,379,45"/>
+<area shape="poly" id="edge2_Node000000_Node000001" title=" " alt="" coords="81,600,93,480,116,317,132,235,151,160,173,98,199,56,220,40,223,44,203,59,178,101,156,162,137,236,121,318,98,480,86,600"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1ChannelProcessor.html" title="Processor that implements hierarchical data aggregation for root buffers." alt="" coords="227,69,375,109"/>
+<area shape="poly" id="edge3_Node000000_Node000002" title=" " alt="" coords="82,599,96,491,120,348,136,276,155,211,176,157,199,119,225,101,228,106,203,123,180,159,160,213,141,278,125,349,101,492,87,600"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1FeedbackProcessor.html" title="Processor implementing delay&#45;line feedback via HistoryBuffer." alt="" coords="227,133,375,173"/>
+<area shape="poly" id="edge4_Node000000_Node000003" title=" " alt="" coords="77,599,80,516,85,463,95,405,111,346,132,287,161,232,199,183,225,166,228,170,203,187,166,235,137,290,116,348,101,407,91,464,85,517,82,599"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1FilterProcessor.html" title="Buffer processor that applies filter nodes to audio data." alt="" coords="227,197,375,237"/>
+<area shape="poly" id="edge5_Node000000_Node000004" title=" " alt="" coords="79,599,85,527,103,433,119,383,139,334,166,288,200,247,225,230,228,235,203,251,170,291,144,337,124,385,109,435,90,528,84,600"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1FinalLimiterProcessor.html" title="Processor that enforces boundary conditions on output data." alt="" coords="219,261,382,301"/>
+<area shape="poly" id="edge6_Node000000_Node000005" title=" " alt="" coords="81,599,91,538,112,461,127,421,147,381,171,344,200,311,218,298,221,303,203,315,175,347,151,384,132,423,117,463,97,539,87,600"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1GraphicsBatchProcessor.html" title="Default processor for coordinating batch GPU buffer processing." alt="" coords="211,325,390,365"/>
+<area shape="poly" id="edge7_Node000000_Node000006" title=" " alt="" coords="85,599,98,550,121,490,154,429,175,400,200,375,217,363,220,368,203,379,179,404,159,431,126,492,104,551,90,601"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1InputAccessProcessor.html" title="Simple processor for dispatching input data to listeners." alt="" coords="219,389,382,429"/>
+<area shape="poly" id="edge8_Node000000_Node000007" title=" " alt="" coords="91,600,107,562,131,519,162,476,200,439,219,427,222,432,203,443,166,480,136,522,112,565,95,602"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Buffers_1_1LogicProcessor.html" title="Digital signal processor that applies boolean logic operations to data streams." alt="" coords="227,453,375,493"/>
+<area shape="poly" id="edge9_Node000000_Node000008" title=" " alt="" coords="101,601,143,551,170,525,200,503,225,490,227,495,203,508,174,529,147,554,105,604"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Buffers_1_1MixProcessor.html" title="Processes multiple audio buffers and mixes their data into a single output buffer." alt="" coords="227,517,375,557"/>
+<area shape="poly" id="edge10_Node000000_Node000009" title=" " alt="" coords="125,604,200,567,231,555,233,560,202,572,128,609"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Buffers_1_1NetworkAudioProcessor.html" title="Processor that bridges NodeNetwork batch output into an AudioBuffer." alt="" coords="212,581,389,621"/>
+<area shape="poly" id="edge11_Node000000_Node000010" title=" " alt="" coords="166,618,211,612,212,617,167,623"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Buffers_1_1NodeFeedProcessor.html" title="Processor that feeds AudioBuffer data into a StreamReaderNode." alt="" coords="225,645,376,685"/>
+<area shape="poly" id="edge12_Node000000_Node000011" title=" " alt="" coords="168,643,225,652,225,657,167,649"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Buffers_1_1NodeSourceProcessor.html" title="Processor that bridges computational nodes and data buffers." alt="" coords="219,709,382,749"/>
+<area shape="poly" id="edge13_Node000000_Node000012" title=" " alt="" coords="128,658,202,695,233,707,231,712,200,700,125,662"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Buffers_1_1PolynomialProcessor.html" title="Buffer processor that applies polynomial transformations to audio data." alt="" coords="221,773,380,813"/>
+<area shape="poly" id="edge14_Node000000_Node000013" title=" " alt="" coords="105,663,147,712,174,737,203,759,225,771,223,776,200,764,170,741,143,716,101,666"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1Buffers_1_1PresentProcessor.html" title="Final processor that executes render operations after all buffer processing." alt="" coords="227,837,375,877"/>
+<area shape="poly" id="edge15_Node000000_Node000014" title=" " alt="" coords="95,665,112,702,136,744,166,787,203,823,228,838,225,842,200,827,162,790,131,747,107,704,91,667"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1Buffers_1_1QuickProcess.html" title=" " alt="" coords="201,901,400,941"/>
+<area shape="poly" id="edge16_Node000000_Node000015" title=" " alt="" coords="90,666,104,715,126,775,159,835,179,863,203,887,220,899,217,903,200,891,175,866,154,838,121,777,98,717,85,668"/>
+<area shape="rect" id="Node000016" href="$classMayaFlux_1_1Buffers_1_1SoundStreamReader.html" title="Adapter for bridging N&#45;dimensional containers and AudioBuffer interface." alt="" coords="223,965,378,1005"/>
+<area shape="poly" id="edge17_Node000000_Node000016" title=" " alt="" coords="87,667,97,727,117,804,132,844,151,883,175,919,203,951,225,966,222,970,200,955,171,923,147,886,127,846,112,806,91,729,81,668"/>
+<area shape="rect" id="Node000017" href="$classMayaFlux_1_1Buffers_1_1SoundStreamWriter.html" title="Channel&#45;aware processor that writes AudioBuffer data to DynamicSoundStream containers." alt="" coords="226,1029,375,1069"/>
+<area shape="poly" id="edge18_Node000000_Node000017" title=" " alt="" coords="84,667,90,739,109,832,124,882,144,930,170,975,203,1015,227,1032,224,1036,200,1019,166,978,139,932,119,883,103,833,85,739,79,667"/>
+<area shape="rect" id="Node000018" href="$classMayaFlux_1_1Buffers_1_1StreamSliceProcessor.html" title="BufferProcessor that drives a pool of independent StreamSlices against DynamicSoundStream instances,..." alt="" coords="219,1093,382,1133"/>
+<area shape="poly" id="edge19_Node000000_Node000018" title=" " alt="" coords="82,667,85,750,91,803,101,860,116,919,137,977,166,1031,203,1079,221,1093,218,1097,199,1083,161,1034,132,979,111,921,95,861,85,804,80,750,77,667"/>
+<area shape="rect" id="Node000019" href="$classMayaFlux_1_1Buffers_1_1VKBufferProcessor.html" title=" " alt="" coords="227,1157,375,1197"/>
+<area shape="poly" id="edge20_Node000000_Node000019" title=" " alt="" coords="87,667,101,775,125,917,141,989,160,1054,180,1107,203,1143,228,1161,225,1165,199,1147,176,1110,155,1056,136,990,120,918,96,775,82,667"/>
+<area shape="rect" id="Node000041" href="$classMayaFlux_1_1Buffers_1_1VideoStreamReader.html" title="Adapter bridging VideoStreamContainer processed data to TextureBuffer pixel storage." alt="" coords="225,1221,377,1261"/>
+<area shape="poly" id="edge42_Node000000_Node000041" title=" " alt="" coords="86,667,98,786,121,948,137,1030,156,1105,178,1166,203,1208,226,1224,223,1229,199,1211,173,1168,151,1106,132,1031,116,949,93,787,81,667"/>
+<area shape="rect" id="Node000020" href="$classMayaFlux_1_1Buffers_1_1AggregateBindingsProcessor.html" title="BufferProcessor that aggregates multiple node outputs into GPU buffers." alt="" coords="454,741,662,781"/>
+<area shape="poly" id="edge21_Node000019_Node000020" title=" " alt="" coords="385,1155,398,1144,414,1121,424,1099,433,1056,430,1013,421,969,412,926,409,882,418,837,429,814,446,792,459,780,463,784,450,795,434,817,423,839,414,882,417,925,426,968,435,1012,438,1056,429,1101,418,1124,402,1147,388,1159"/>
+<area shape="rect" id="Node000021" href="$classMayaFlux_1_1Buffers_1_1BufferDownloadProcessor.html" title="Transfers data from GPU VKBuffer to CPU target buffer." alt="" coords="463,805,653,845"/>
+<area shape="poly" id="edge22_Node000019_Node000021" title=" " alt="" coords="385,1155,398,1144,420,1108,428,1072,427,1037,421,1001,415,965,413,929,422,893,446,856,462,842,465,847,450,859,427,895,419,930,420,965,426,1000,432,1036,434,1073,425,1110,402,1147,389,1159"/>
+<area shape="rect" id="Node000022" href="$classMayaFlux_1_1Buffers_1_1BufferUploadProcessor.html" title="Transfers data from CPU source buffer to GPU VKBuffer." alt="" coords="473,869,643,909"/>
+<area shape="poly" id="edge23_Node000019_Node000022" title=" " alt="" coords="385,1155,398,1144,416,1116,424,1089,424,1061,421,1033,418,1005,418,977,426,948,446,919,471,902,474,906,450,923,431,950,424,978,423,1005,426,1033,430,1061,429,1089,421,1118,402,1147,388,1159"/>
+<area shape="rect" id="Node000023" href="$classMayaFlux_1_1Buffers_1_1CompositeGeometryProcessor.html" title="Aggregates multiple geometry nodes with independent topologies." alt="" coords="448,933,668,973"/>
+<area shape="poly" id="edge24_Node000019_Node000023" title=" " alt="" coords="385,1154,398,1143,412,1124,419,1105,421,1065,423,1024,431,1004,446,983,462,971,465,976,450,987,435,1006,428,1025,426,1065,425,1106,417,1127,402,1147,388,1158"/>
+<area shape="rect" id="Node000024" href="$classMayaFlux_1_1Buffers_1_1FormaProcessor.html" title="Default processor for FormaBuffer." alt="" coords="484,997,632,1037"/>
+<area shape="poly" id="edge25_Node000019_Node000024" title=" " alt="" coords="385,1152,398,1143,415,1120,421,1096,428,1072,446,1047,482,1028,485,1032,450,1051,433,1074,426,1098,420,1123,402,1147,389,1157"/>
+<area shape="rect" id="Node000025" href="$classMayaFlux_1_1Buffers_1_1GeometryBindingsProcessor.html" title="BufferProcessor that uploads geometry node data to GPU vertex buffers." alt="" coords="455,1061,661,1101"/>
+<area shape="poly" id="edge26_Node000019_Node000025" title=" " alt="" coords="383,1150,399,1143,422,1127,447,1111,477,1099,479,1104,449,1116,425,1131,401,1148,385,1155"/>
+<area shape="rect" id="Node000026" href="$classMayaFlux_1_1Buffers_1_1GeometryWriteProcessor.html" title="Accepts externally&#45;supplied DataVariant and uploads it as vertex data to a VKBuffer each cycle." alt="" coords="465,1125,651,1165"/>
+<area shape="poly" id="edge27_Node000019_Node000026" title=" " alt="" coords="388,1164,465,1154,465,1159,389,1169"/>
+<area shape="rect" id="Node000027" href="$classMayaFlux_1_1Buffers_1_1MeshNetworkProcessor.html" title="Uploads concatenated vertex and index data from all MeshNetwork slots." alt="" coords="471,1189,645,1229"/>
+<area shape="poly" id="edge28_Node000019_Node000027" title=" " alt="" coords="389,1186,471,1196,470,1201,388,1191"/>
+<area shape="rect" id="Node000028" href="$classMayaFlux_1_1Buffers_1_1MeshProcessor.html" title="Default processor for MeshBuffer: handles CPU&#45;to&#45;GPU upload of vertex and index data with selective d..." alt="" coords="484,1253,632,1293"/>
+<area shape="poly" id="edge29_Node000019_Node000028" title=" " alt="" coords="385,1200,401,1207,425,1223,449,1239,485,1253,483,1258,447,1244,422,1228,399,1212,383,1205"/>
+<area shape="rect" id="Node000029" href="$classMayaFlux_1_1Buffers_1_1NetworkGeometryProcessor.html" title="BufferProcessor that aggregates geometry from NodeNetwork nodes." alt="" coords="455,1317,661,1357"/>
+<area shape="poly" id="edge30_Node000019_Node000029" title=" " alt="" coords="389,1198,402,1207,420,1232,426,1257,433,1281,450,1303,467,1315,464,1319,446,1307,428,1283,421,1258,415,1234,398,1211,385,1202"/>
+<area shape="rect" id="Node000030" href="$classMayaFlux_1_1Buffers_1_1NodeTextureProcessor.html" title="Uploads TextureNode pixel data to GPU textures via TextureLoom." alt="" coords="475,1381,641,1421"/>
+<area shape="poly" id="edge31_Node000019_Node000030" title=" " alt="" coords="388,1196,402,1207,417,1228,425,1249,426,1289,428,1329,435,1348,450,1367,476,1385,473,1389,446,1371,431,1351,423,1330,421,1290,419,1250,412,1231,398,1211,385,1201"/>
+<area shape="rect" id="Node000031" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor.html" title="Abstract base class for shader&#45;based buffer processing." alt="" coords="484,1445,632,1485"/>
+<area shape="poly" id="edge32_Node000019_Node000031" title=" " alt="" coords="388,1196,402,1208,421,1237,429,1265,430,1294,426,1322,423,1350,424,1377,431,1404,450,1432,466,1444,485,1453,483,1458,463,1449,446,1435,426,1407,418,1378,418,1349,421,1321,424,1294,424,1266,416,1239,398,1211,385,1200"/>
+<area shape="rect" id="Node000038" href="$classMayaFlux_1_1Buffers_1_1TextureProcessor.html" title="Internal processor: handles CPU→GPU transfers for TextureBuffer." alt="" coords="484,1509,632,1549"/>
+<area shape="poly" id="edge39_Node000019_Node000038" title=" " alt="" coords="389,1196,402,1208,425,1245,434,1282,432,1318,426,1354,420,1390,419,1425,427,1460,450,1496,466,1509,485,1518,482,1522,463,1513,446,1499,422,1462,413,1425,415,1389,421,1353,427,1318,428,1282,420,1247,398,1211,385,1200"/>
+<area shape="rect" id="Node000040" href="$classMayaFlux_1_1Buffers_1_1TransferProcessor.html" title=" " alt="" coords="484,1573,632,1613"/>
+<area shape="poly" id="edge41_Node000019_Node000040" title=" " alt="" coords="388,1195,402,1208,418,1231,429,1254,438,1298,435,1343,426,1386,417,1430,414,1473,423,1516,434,1538,450,1560,466,1573,485,1582,483,1587,463,1577,446,1563,429,1540,418,1518,409,1473,412,1429,421,1385,430,1342,433,1299,424,1255,414,1233,398,1211,385,1199"/>
+<area shape="rect" id="Node000032" href="$classMayaFlux_1_1Buffers_1_1ComputeProcessor.html" title="Specialized ShaderProcessor for Compute Pipelines." alt="" coords="746,1285,894,1325"/>
+<area shape="poly" id="edge33_Node000031_Node000032" title=" " alt="" coords="643,1445,666,1431,677,1420,683,1409,690,1385,696,1360,703,1348,714,1335,744,1318,747,1322,718,1339,707,1351,701,1362,695,1386,688,1411,681,1423,670,1435,646,1450"/>
+<area shape="rect" id="Node000034" href="$classMayaFlux_1_1Buffers_1_1DescriptorBindingsProcessor.html" title="ShaderProcessor that uploads node outputs to descriptor sets." alt="" coords="716,1349,924,1389"/>
+<area shape="poly" id="edge35_Node000031_Node000034" title=" " alt="" coords="644,1440,667,1431,691,1415,715,1399,744,1387,746,1392,717,1404,694,1420,669,1436,646,1445"/>
+<area shape="rect" id="Node000035" href="$classMayaFlux_1_1Buffers_1_1FormaBindingsProcessor.html" title="ShaderProcessor that reads Forma element state and routes it to push constants or descriptor bindings..." alt="" coords="729,1413,911,1453"/>
+<area shape="poly" id="edge36_Node000031_Node000035" title=" " alt="" coords="646,1452,728,1442,729,1447,646,1457"/>
+<area shape="rect" id="Node000036" href="$classMayaFlux_1_1Buffers_1_1NodeBindingsProcessor.html" title="ShaderProcessor with automatic node&#45;to&#45;push&#45;constant binding." alt="" coords="733,1477,907,1517"/>
+<area shape="poly" id="edge37_Node000031_Node000036" title=" " alt="" coords="646,1473,733,1484,732,1489,645,1479"/>
+<area shape="rect" id="Node000037" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor.html" title=" " alt="" coords="746,1541,894,1581"/>
+<area shape="poly" id="edge38_Node000031_Node000037" title=" " alt="" coords="646,1486,669,1495,694,1511,717,1527,747,1539,745,1544,715,1532,691,1515,667,1500,644,1491"/>
+<area shape="rect" id="Node000033" href="$classMayaFlux_1_1Buffers_1_1UVFieldProcessor.html" title="Compute pass that writes UV and optionally samples colour into a vertex SSBO." alt="" coords="972,1285,1120,1325"/>
+<area shape="poly" id="edge34_Node000032_Node000033" title=" " alt="" coords="908,1303,972,1303,972,1308,908,1308"/>
+<area shape="rect" id="Node000039" href="$classMayaFlux_1_1Buffers_1_1TextureWriteProcessor.html" title="TextureProcessor subclass accepting externally&#45;supplied pixel data via DataVariant each frame." alt="" coords="736,1605,904,1645"/>
+<area shape="poly" id="edge40_Node000038_Node000039" title=" " alt="" coords="646,1550,669,1559,694,1575,717,1591,746,1603,744,1608,715,1596,691,1579,667,1564,644,1555"/>
+</map>

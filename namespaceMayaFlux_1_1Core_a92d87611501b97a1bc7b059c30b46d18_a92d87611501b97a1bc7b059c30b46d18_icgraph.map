@@ -1,0 +1,9 @@
+<map id="MayaFlux::Core::to_vk_color_space" name="MayaFlux::Core::to_vk_color_space">
+<area shape="rect" id="Node000001" title=" " alt="" coords="809,5,955,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1VKSwapchain_aaf073740edeebd7898331b08ba2c57cd.html#aaf073740edeebd7898331b08ba2c57cd" title="Choose best surface format from available formats based on config." alt="" coords="541,5,761,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="796,28,762,28,762,23,796,23"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1VKSwapchain_ae4e56dd203c0a1860f59d00e0d50604f.html#ae4e56dd203c0a1860f59d00e0d50604f" title="Create swapchain for the given surface using VKContext." alt="" coords="273,5,493,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="528,28,494,28,494,23,528,23"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1VKSwapchain_a77fe883ab4d94277b8d68aac94c9d76c.html#a77fe883ab4d94277b8d68aac94c9d76c" title="Recreate swapchain (for window resize)" alt="" coords="5,5,225,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="260,28,226,28,226,23,260,23"/>
+</map>

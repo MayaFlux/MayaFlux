@@ -1,0 +1,42 @@
+<map id="MayaFlux::Buffers::VKBufferProcessor::ensure_initialized" name="MayaFlux::Buffers::VKBufferProcessor::ensure_initialized">
+<area shape="rect" id="Node000001" title=" " alt="" coords="719,463,913,518"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1MeshProcessor_a3f00ea3e54eccfbf4cdc63253cddd8be.html#a3f00ea3e54eccfbf4cdc63253cddd8be" title=" " alt="" coords="477,62,657,117"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="797,452,745,336,709,267,668,202,633,157,596,119,600,115,637,153,673,198,714,265,750,334,802,450"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1MeshProcessor_acde49ee870ff2968ff8a3b7febf41085.html#acde49ee870ff2968ff8a3b7febf41085" title="Called when this processor is attached to a buffer." alt="" coords="216,5,408,45"/>
+<area shape="poly" id="edge17_Node000001_Node000003" title=" " alt="" coords="773,456,631,318,544,227,462,131,448,110,440,92,431,76,414,59,395,48,397,43,418,55,435,72,445,90,453,107,466,128,548,223,634,314,777,452"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_ae72d99984f65f41164441d313ae0af88.html#ae72d99984f65f41164441d313ae0af88" title="Bind a VKBuffer to a named shader descriptor." alt="" coords="484,385,651,439"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="715,462,650,441,652,436,717,456"/>
+<area shape="rect" id="Node000016" href="$classMayaFlux_1_1Buffers_1_1GeometryBindingsProcessor_a8ecccfe11d90627785779c7c8718b182.html#a8ecccfe11d90627785779c7c8718b182" title="Bind a geometry node to a GPU vertex buffer." alt="" coords="464,463,671,518"/>
+<area shape="poly" id="edge15_Node000001_Node000016" title=" " alt="" coords="705,493,671,493,671,488,705,488"/>
+<area shape="rect" id="Node000017" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_a890135d823fb945281a666474fa18c6b.html#a890135d823fb945281a666474fa18c6b" title=" " alt="" coords="470,542,665,597"/>
+<area shape="poly" id="edge16_Node000001_Node000017" title=" " alt="" coords="717,525,655,544,654,539,715,520"/>
+<area shape="rect" id="Node000018" href="$classMayaFlux_1_1Buffers_1_1MeshNetworkProcessor_af6babecf587db751ec53f379311d898f.html#af6babecf587db751ec53f379311d898f" title="Called when this processor is attached to a buffer." alt="" coords="480,621,655,675"/>
+<area shape="poly" id="edge18_Node000001_Node000018" title=" " alt="" coords="779,530,730,572,672,612,650,623,648,618,669,607,727,567,775,526"/>
+<area shape="rect" id="Node000019" href="$classMayaFlux_1_1Buffers_1_1GeometryBindingsProcessor_a2a0c7674773776106e7f424905b1e0c5.html#a2a0c7674773776106e7f424905b1e0c5" title="Upload index data for one binding, creating or growing the GPU index buffer as needed." alt="" coords="464,778,671,833"/>
+<area shape="poly" id="edge19_Node000001_Node000019" title=" " alt="" coords="790,531,673,690,596,780,592,776,669,686,786,528"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="464,66,392,48,393,43,465,61"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a6aed67dc05a7476b9cf42a60126c1e3e.html#a6aed67dc05a7476b9cf42a60126c1e3e" title="Auto&#45;bind buffer based on attachment order." alt="" coords="229,70,395,125"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="540,374,462,239,449,209,442,184,433,162,414,139,394,125,397,121,418,135,438,160,447,183,454,207,466,236,544,372"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1DescriptorBindingsProcessor_adbe09e335eb3095f1eb1e61ef462097e.html#adbe09e335eb3095f1eb1e61ef462097e" title="Bind an AudioBuffer as a descriptor source." alt="" coords="208,149,416,203"/>
+<area shape="poly" id="edge6_Node000004_Node000007" title=" " alt="" coords="542,374,490,295,455,254,414,218,395,206,398,201,418,214,458,250,494,292,547,371"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Buffers_1_1FormaBindingsProcessor_a3a6c5e705809ffe941758d473020b93b.html#a3a6c5e705809ffe941758d473020b93b" title="Bind a type&#45;erased reader to a descriptor binding." alt="" coords="221,227,403,282"/>
+<area shape="poly" id="edge7_Node000004_Node000008" title=" " alt="" coords="525,378,474,336,415,297,390,285,392,280,417,292,477,332,528,374"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Buffers_1_1DescriptorBindingsProcessor_ada945e44fe86fd70f566c0e67f522a69.html#ada945e44fe86fd70f566c0e67f522a69" title="Bind a host&#45;visible VKBuffer as a descriptor source." alt="" coords="208,306,416,361"/>
+<area shape="poly" id="edge8_Node000004_Node000009" title=" " alt="" coords="470,385,401,363,402,358,472,380"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Buffers_1_1DescriptorBindingsProcessor_a14842e07dc8dea81e2ac70ad79c36f9c.html#a14842e07dc8dea81e2ac70ad79c36f9c" title="Bind matrix node (MatrixContext) to descriptor." alt="" coords="208,385,416,439"/>
+<area shape="poly" id="edge9_Node000004_Node000010" title=" " alt="" coords="471,415,416,415,416,409,471,409"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Buffers_1_1DescriptorBindingsProcessor_a9815e9f320b740a1f500475e9d82617d.html#a9815e9f320b740a1f500475e9d82617d" title="Bind a NodeNetwork to a descriptor." alt="" coords="208,463,416,518"/>
+<area shape="poly" id="edge10_Node000004_Node000011" title=" " alt="" coords="472,444,402,466,401,461,470,439"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Buffers_1_1DescriptorBindingsProcessor_a2922886c14b563f2943ef7f02e0c03c9.html#a2922886c14b563f2943ef7f02e0c03c9" title="Bind scalar node output to descriptor." alt="" coords="208,542,416,597"/>
+<area shape="poly" id="edge11_Node000004_Node000012" title=" " alt="" coords="474,448,466,454,450,473,443,492,435,512,418,533,401,544,398,540,414,529,430,510,438,490,445,470,462,450,471,444"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Buffers_1_1DescriptorBindingsProcessor_aeef49d386b6736ae6c9a8a646f7538df.html#aeef49d386b6736ae6c9a8a646f7538df" title="Bind structured node (arrays of POD structs) to descriptor." alt="" coords="208,621,416,675"/>
+<area shape="poly" id="edge12_Node000004_Node000013" title=" " alt="" coords="474,446,466,454,452,473,445,492,443,531,440,570,433,591,418,611,405,623,401,619,414,608,428,588,435,569,437,531,440,491,447,471,462,450,471,442"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1Buffers_1_1DescriptorBindingsProcessor_a97ea9f758c4db5908588742904d7d348.html#a97ea9f758c4db5908588742904d7d348" title="Bind vector node (VectorContext) to descriptor." alt="" coords="208,699,416,754"/>
+<area shape="poly" id="edge13_Node000004_Node000014" title=" " alt="" coords="474,445,466,454,447,483,440,512,440,541,443,570,446,599,446,629,438,659,418,690,406,701,402,697,414,686,433,657,440,628,441,599,438,570,434,541,435,512,443,481,462,450,471,442"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1Buffers_1_1UVFieldProcessor_a9bab05f1b10190f452a4493cdca7e0d4.html#a9bab05f1b10190f452a4493cdca7e0d4" title="Called when this processor is attached to a buffer." alt="" coords="233,778,391,833"/>
+<area shape="poly" id="edge14_Node000004_Node000015" title=" " alt="" coords="474,445,466,454,443,494,434,533,436,571,443,609,450,648,451,687,442,727,418,768,393,788,390,784,414,765,438,725,446,686,444,648,438,610,431,571,429,532,438,492,462,450,471,441"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_ae44d0289391012ba44cf53378967cbcf.html#ae44d0289391012ba44cf53378967cbcf" title="Called when this processor is attached to a buffer." alt="" coords="5,70,160,125"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="214,100,160,100,160,95,214,95"/>
+<area shape="rect" id="Node000020" href="$classMayaFlux_1_1Buffers_1_1GeometryBindingsProcessor_a7443affe2aa79c163a21f8d03c110a91.html#a7443affe2aa79c163a21f8d03c110a91" title="BufferProcessor interface &#45; uploads all bound geometries." alt="" coords="209,857,415,911"/>
+<area shape="poly" id="edge20_Node000019_Node000020" title=" " alt="" coords="466,839,402,859,401,854,464,834"/>
+</map>

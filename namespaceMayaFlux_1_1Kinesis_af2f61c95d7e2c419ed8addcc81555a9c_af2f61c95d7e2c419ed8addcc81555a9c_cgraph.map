@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::generate_samples" name="MayaFlux::Kinesis::generate_samples">
+<area shape="rect" id="Node000001" title="Generate a batch of spatially distributed samples." alt="" coords="5,5,155,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_a058961c9ce42cb929ddacfd55ecdd31f.html#a058961c9ce42cb929ddacfd55ecdd31f" title="Generate a single sample at a specific index (for indexed/sequential modes)." alt="" coords="203,5,357,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="155,23,189,23,189,28,155,28"/>
+</map>

@@ -1,0 +1,9 @@
+<map id="MayaFlux::Core::VKCommandManager::record_deferred_commands" name="MayaFlux::Core::VKCommandManager::record_deferred_commands">
+<area shape="rect" id="Node000001" title="Record deferred commands for later submission." alt="" coords="617,30,833,85"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1BackendResourceManager_ae611d961802ca76657d758d0a834b5aa.html#ae611d961802ca76657d758d0a834b5aa" title="Record deferred command recording for buffer operations." alt="" coords="300,37,569,77"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="604,60,570,60,570,55,604,55"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1BackendResourceManager_ae3f1ac9a86e74efe0b8afa6a4f57168f.html#ae3f1ac9a86e74efe0b8afa6a4f57168f" title=" " alt="" coords="5,5,252,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="286,44,252,41,252,36,287,39"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1BackendResourceManager_a6be487a58202182335fcd5817998449c.html#a6be487a58202182335fcd5817998449c" title="Upload image data using a caller&#45;supplied persistent staging buffer." alt="" coords="5,69,252,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="287,75,252,79,252,74,286,70"/>
+</map>

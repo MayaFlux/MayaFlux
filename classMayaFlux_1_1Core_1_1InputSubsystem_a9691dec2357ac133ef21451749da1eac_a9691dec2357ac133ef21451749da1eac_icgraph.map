@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::InputSubsystem::find_hid_device" name="MayaFlux::Core::InputSubsystem::find_hid_device">
+<area shape="rect" id="Node000001" title="Find HID device by vendor/product ID." alt="" coords="199,5,436,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_a54a5a5560e601e4af07f6b935654e881.html#a54a5a5560e601e4af07f6b935654e881" title="Find a HID device by vendor and product ID." alt="" coords="5,5,151,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="185,28,151,28,151,23,185,23"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Vruta::seconds_to_blocks" name="MayaFlux::Vruta::seconds_to_blocks">
+<area shape="rect" id="Node000001" title="Convert seconds to number of processing blocks." alt="" coords="5,5,196,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Vruta_a7177bcc99955f63b0ee314154a6d4de4.html#a7177bcc99955f63b0ee314154a6d4de4" title="Convert seconds to samples at a given sample rate." alt="" coords="244,5,435,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="196,23,230,23,230,28,196,28"/>
+</map>

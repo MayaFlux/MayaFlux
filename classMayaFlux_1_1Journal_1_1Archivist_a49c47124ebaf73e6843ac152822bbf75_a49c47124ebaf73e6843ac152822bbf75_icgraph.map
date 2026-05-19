@@ -1,0 +1,5 @@
+<map id="MayaFlux::Journal::Archivist::set_component_filter" name="MayaFlux::Journal::Archivist::set_component_filter">
+<area shape="rect" id="Node000001" title="Enable or disable logging for a specific component." alt="" coords="244,5,431,60"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Config_a377f79870593ed00a95cb627cff19cb9.html#a377f79870593ed00a95cb627cff19cb9" title="Enables or disables logging for specific journal components." alt="" coords="5,13,196,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="230,35,196,35,196,30,230,30"/>
+</map>

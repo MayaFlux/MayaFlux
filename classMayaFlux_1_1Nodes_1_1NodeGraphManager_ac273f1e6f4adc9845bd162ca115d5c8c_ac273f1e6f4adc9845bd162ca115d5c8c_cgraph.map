@@ -1,0 +1,17 @@
+<map id="MayaFlux::Nodes::NodeGraphManager::cleanup_completed_routing" name="MayaFlux::Nodes::NodeGraphManager::cleanup_completed_routing">
+<area shape="rect" id="Node000001" title="Cleans up completed routing transitions for a given token." alt="" coords="5,62,221,117"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_ac378e0a9f0055dc0d27df0013e57e70d.html#ac378e0a9f0055dc0d27df0013e57e70d" title="Get all networks for a specific token across all channels." alt="" coords="291,5,507,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="221,63,296,46,297,51,222,68"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_ac75b54bb1112aada3dc0463f2a22654a.html#ac75b54bb1112aada3dc0463f2a22654a" title="Remove node from a specific processing token and channel." alt="" coords="291,69,507,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="221,87,277,87,277,92,221,92"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_adc75a7be1c84a5d43f4c4b71da4de404.html#adc75a7be1c84a5d43f4c4b71da4de404" title="Unregister network globally." alt="" coords="269,133,529,173"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="222,111,297,128,296,133,221,116"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_ab7485f6b5bd28a3d64ffaa5034d3ed9a.html#ab7485f6b5bd28a3d64ffaa5034d3ed9a" title="Gets or creates the root node for a specific token and channel." alt="" coords="581,37,797,77"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="507,75,567,68,568,73,508,80"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_a5b7627b25ad4de317b0c6ca93d1001c9.html#a5b7627b25ad4de317b0c6ca93d1001c9" title="Unsets the specified channel mask from a node&#39;s global registration." alt="" coords="577,101,801,141"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="508,99,564,105,563,110,507,104"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_a9c43d6dbcd53013e4d61fa43f038384a.html#a9c43d6dbcd53013e4d61fa43f038384a" title="Ensures a root node exists for the given token and channel." alt="" coords="849,37,1065,77"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="797,55,835,55,835,60,797,60"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_a4cd923129ef6f6c0b41c9900f81f3e7d.html#a4cd923129ef6f6c0b41c9900f81f3e7d" title="Unregisters a node globally." alt="" coords="849,101,1065,141"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="802,119,836,119,836,124,802,124"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nexus::remove_audio_sink" name="MayaFlux::Nexus::remove_audio_sink">
+<area shape="rect" id="Node000001" title="Unregister and destroy the audio sink on channel." alt="" coords="244,37,437,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nexus_1_1Agent_a213a1ba21b358621511fe6b6197f6a17.html#a213a1ba21b358621511fe6b6197f6a17" title="Unregister the audio sink on channel." alt="" coords="10,5,191,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="230,45,191,40,192,35,231,40"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nexus_1_1Emitter_afe36c3e14fb66ee75720696e344b952f.html#afe36c3e14fb66ee75720696e344b952f" title="Unregister the audio sink on channel." alt="" coords="5,69,196,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="231,75,197,79,196,74,230,69"/>
+</map>

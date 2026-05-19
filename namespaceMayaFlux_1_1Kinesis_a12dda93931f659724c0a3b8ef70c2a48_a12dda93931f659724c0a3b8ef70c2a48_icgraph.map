@@ -1,0 +1,21 @@
+<map id="MayaFlux::Kinesis::to_point_vertex" name="MayaFlux::Kinesis::to_point_vertex">
+<area shape="rect" id="Node000001" title="Project SampleResult to PointVertex." alt="" coords="1287,49,1436,89"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ParticleNetwork_aaaf15e91da06b78d8c4a74e5253928c4.html#aaaf15e91da06b78d8c4a74e5253928c4" title=" " alt="" coords="1040,5,1239,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1273,57,1239,51,1239,46,1273,52"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_a41291dcda65e28fbe2c57efd799f540a.html#a41291dcda65e28fbe2c57efd799f540a" title="Batch&#45;project SampleResult vector to PointVertex." alt="" coords="1065,85,1214,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="1273,86,1215,95,1214,90,1273,80"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ParticleNetwork_a80f78cbb739c1653962002aa896e6cc8.html#a80f78cbb739c1653962002aa896e6cc8" title=" " alt="" coords="793,77,992,132"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="1051,107,992,107,992,102,1051,102"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ParticleNetwork_a81e5263c6517931983abac0c0adc8970.html#a81e5263c6517931983abac0c0adc8970" title="Called once before first process_batch()" alt="" coords="547,17,745,57"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="779,76,719,59,720,54,780,71"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ParticleNetwork_ac50a6227e62bf163fe2cf5d199709a3b.html#ac50a6227e62bf163fe2cf5d199709a3b" title="Reset network to initial state." alt="" coords="547,85,745,125"/>
+<area shape="poly" id="edge7_Node000004_Node000008" title=" " alt="" coords="779,107,746,107,746,102,779,102"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ParticleNetwork_a3194e1c3764102f30ffece92df9fa8e6.html#a3194e1c3764102f30ffece92df9fa8e6" title="Set active operator (runtime switching)" alt="" coords="547,149,745,204"/>
+<area shape="poly" id="edge9_Node000004_Node000010" title=" " alt="" coords="786,139,741,152,739,147,785,133"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ParticleNetwork_a56930da405bb0bf40987b645a0da4a7f.html#a56930da405bb0bf40987b645a0da4a7f" title=" " alt="" coords="294,8,493,63"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="533,39,493,39,493,33,533,33"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ParticleNetwork_a3f43ec4fb1893a9042bcd6891cbb3648.html#a3f43ec4fb1893a9042bcd6891cbb3648" title="Process the network for the given number of samples." alt="" coords="5,15,240,55"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="280,38,240,38,240,33,280,33"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ParticleNetwork_a596180c5f4df659207e0207c0224b8fd.html#a596180c5f4df659207e0207c0224b8fd" title="Reinitialize particle network with new parameters." alt="" coords="288,87,499,127"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="533,109,499,109,499,104,533,103"/>
+</map>

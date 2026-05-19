@@ -1,0 +1,20 @@
+<map id="MayaFlux::Portal::Forma::Plot::scatter" name="MayaFlux::Portal::Forma::Plot::scatter">
+<area shape="rect" id="Node000001" title="POINT_LIST scatter plot for paired (X, Y[, Z]) series." alt="" coords="5,120,187,160"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Plot_a3fd16bbfffe19245180f361bda8aec4a.html#a3fd16bbfffe19245180f361bda8aec4a" title="Apply auto&#45;scaling to an AxisRange from a set of series." alt="" coords="235,5,417,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="130,118,233,62,261,49,264,53,236,66,133,122"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Portal_1_1Forma_1_1Plot_1_1AxisRange_a02839a2c4244b207696931de56887659.html#a02839a2c4244b207696931de56887659" title="Map a value into [0, 1] within this range." alt="" coords="487,111,692,151"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="169,117,234,105,296,101,358,101,473,110,473,116,357,107,296,106,235,111,170,123"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Plot_ac201b2b1bc05e0adc959956fd5c69225.html#ac201b2b1bc05e0adc959956fd5c69225" title="Resolve a per&#45;series color from a palette." alt="" coords="235,120,417,160"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="187,137,222,137,222,143,187,143"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Plot_afb33b03ca174743117c311e3eb7ac42c.html#afb33b03ca174743117c311e3eb7ac42c" title="Collect all series from processed_data whose DataDimension role matches role." alt="" coords="235,248,417,288"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="123,158,174,196,236,234,250,240,248,245,233,238,171,200,120,162"/>
+<area shape="rect" id="Node000009" href="$structMayaFlux_1_1Portal_1_1Forma_1_1Plot_1_1AxisRange_acd26ae45dbbf0c536c01d97e7dcff4b9.html#acd26ae45dbbf0c536c01d97e7dcff4b9" title="Map a value into [&#45;1, 1] NDC within this range." alt="" coords="235,184,417,224"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="169,158,241,178,240,183,168,163"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Plot_a33d7c625b8a94ba599dd685f3c07e331.html#a33d7c625b8a94ba599dd685f3c07e331" title="Compute [min, max] over a scalar series." alt="" coords="499,5,680,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="417,23,485,23,485,28,417,28"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Kakshya_1_1PlotContainer_ab2e4dbfbcaab16a566a43bba12275c62.html#ab2e4dbfbcaab16a566a43bba12275c62" title="Get a mutable reference to the processed data buffer." alt="" coords="465,216,713,256"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="416,254,451,250,452,255,417,260"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Kakshya_1_1PlotContainer_ae1bf34b6d7007608e6dbf04dd2b579fd.html#ae1bf34b6d7007608e6dbf04dd2b579fd" title="Get the data structure defining this container&#39;s layout." alt="" coords="487,280,691,320"/>
+<area shape="poly" id="edge7_Node000006_Node000008" title=" " alt="" coords="417,276,474,283,473,289,416,282"/>
+<area shape="poly" id="edge9_Node000009_Node000004" title=" " alt="" coords="398,181,503,152,504,157,399,187"/>
+</map>

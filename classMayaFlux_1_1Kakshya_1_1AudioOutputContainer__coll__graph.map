@@ -1,0 +1,25 @@
+<map id="MayaFlux::Kakshya::AudioOutputContainer" name="MayaFlux::Kakshya::AudioOutputContainer">
+<area shape="rect" id="Node000001" title="DynamicSoundStream subclass wrapping the live engine audio output." alt="" coords="432,2804,635,3044"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1DynamicSoundStream.html" title="Dynamic capacity streaming audio container with automatic resizing and circular buffering." alt="" coords="315,2261,511,2741"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="488,2754,502,2803,497,2804,483,2755"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer.html" title="Concrete base implementation for streaming audio containers." alt="" coords="308,1520,519,2184"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="416,2198,416,2261,411,2261,411,2198"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1StreamContainer.html" title="Data&#45;driven interface for temporal stream containers with navigable read position." alt="" coords="124,928,313,1208"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="259,1221,333,1519,328,1520,254,1222"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1SignalSourceContainer.html" title="Data&#45;driven interface for managing arbitrary processable signal sources." alt="" coords="113,349,324,629"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="221,643,221,928,216,928,216,643"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1NDDataContainer.html" title="Abstract interface for N&#45;dimensional data containers." alt="" coords="5,5,187,300"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="157,312,170,348,165,350,152,314"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="211,113,471,193"/>
+<area shape="poly" id="edge6_Node000005_Node000007" title=" " alt="" coords="325,207,272,350,267,348,320,205"/>
+<area shape="rect" id="Node000008" href="$structMayaFlux_1_1Kakshya_1_1Region.html" title="Represents a point or span in N&#45;dimensional space." alt="" coords="338,848,489,1288"/>
+<area shape="poly" id="edge7_Node000003_Node000008" title=" " alt="" coords="416,1288,416,1504,411,1504,411,1288"/>
+<area shape="rect" id="Node000009" href="$structMayaFlux_1_1Kakshya_1_1ContainerDataStructure.html" title="Container structure for consistent dimension ordering." alt="" coords="513,679,705,1457"/>
+<area shape="poly" id="edge8_Node000003_Node000009" title=" " alt="" coords="543,1458,533,1497,526,1525,521,1524,528,1495,538,1457"/>
+<area shape="rect" id="Node000010" href="$structMayaFlux_1_1Core_1_1GlobalStreamInfo.html" title="Comprehensive configuration for digital audio stream processing." alt="" coords="535,2359,774,2644"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="616,2645,575,2788,570,2787,611,2644"/>
+<area shape="rect" id="Node000011" href="$structMayaFlux_1_1Core_1_1GlobalStreamInfo_1_1ChannelConfig.html" title="Configuration for input or output data channels." alt="" coords="545,1782,759,1922"/>
+<area shape="poly" id="edge10_Node000010_Node000011" title=" " alt="" coords="655,1923,657,2342,651,2342,650,1923"/>
+<area shape="rect" id="Node000012" href="$structMayaFlux_1_1Core_1_1GlobalStreamInfo_1_1MidiConfig.html" title="Configuration for MIDI data channels." alt="" coords="783,1802,996,1902"/>
+<area shape="poly" id="edge11_Node000010_Node000012" title=" " alt="" coords="874,1903,773,2185,715,2344,710,2342,768,2183,869,1901"/>
+</map>

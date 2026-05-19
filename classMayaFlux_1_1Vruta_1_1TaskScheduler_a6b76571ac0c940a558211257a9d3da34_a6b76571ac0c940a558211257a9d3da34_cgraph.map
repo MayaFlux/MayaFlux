@@ -1,0 +1,14 @@
+<map id="MayaFlux::Vruta::TaskScheduler::process_token" name="MayaFlux::Vruta::TaskScheduler::process_token">
+<area shape="rect" id="Node000001" title="Process all tasks for a specific processing domain." alt="" coords="5,99,236,139"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a322450eff89aa47c626d316b1b1f78f8.html#a322450eff89aa47c626d316b1b1f78f8" title="Clean up completed tasks in a domain." alt="" coords="284,5,515,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="171,96,283,55,309,47,311,52,285,60,173,101"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_aa493113c59d1aed358efb9450c606947.html#aa493113c59d1aed358efb9450c606947" title="Drain pending task operations (additions/removals) before processing." alt="" coords="284,69,515,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="236,104,270,100,271,106,237,109"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_aa1e9585cf32c6b11e54b763c48c1398e.html#aa1e9585cf32c6b11e54b763c48c1398e" title="Get all tasks for a specific processing domain." alt="" coords="563,159,793,199"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="237,128,549,162,549,167,236,134"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_ab2435d77fd2b8b2ac0dc06770f94c023.html#ab2435d77fd2b8b2ac0dc06770f94c023" title="Process tasks in a specific domain with default algorithm." alt="" coords="284,184,515,224"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="187,136,321,177,320,183,186,141"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a6cab5fd4999392badaec656a94ab3d16.html#a6cab5fd4999392badaec656a94ab3d16" title="Find task entry by name." alt="" coords="563,69,793,109"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="515,87,549,87,549,92,515,92"/>
+<area shape="poly" id="edge6_Node000006_Node000005" title=" " alt="" coords="515,191,549,188,549,193,515,196"/>
+</map>

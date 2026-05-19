@@ -1,0 +1,19 @@
+<map id="MayaFlux::Kinesis::Discrete::reverse" name="MayaFlux::Kinesis::Discrete::reverse">
+<area shape="rect" id="Node000001" title="Reverse temporal order in&#45;place." alt="" coords="719,122,868,162"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_a5acbd546b99ca78523cf8654e67a25f6.html#a5acbd546b99ca78523cf8654e67a25f6" title=" " alt="" coords="495,5,638,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="762,114,720,77,669,44,638,32,639,27,672,40,724,73,765,110"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_a240f8b6c3507b658e060fecec54690fb.html#a240f8b6c3507b658e060fecec54690fb" title="Reverse time order of single&#45;channel data (in&#45;place)" alt="" coords="495,55,638,80"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="736,119,670,94,629,83,631,77,672,89,738,114"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_a6a4affb8c2f069e08567f496563af5a0.html#a6a4affb8c2f069e08567f496563af5a0" title="Reverse time order of multi&#45;channel data (in&#45;place)" alt="" coords="463,104,671,129"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="705,135,670,131,671,126,705,130"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_adc593f981d2b746d157ee9686a96f38c.html#adc593f981d2b746d157ee9686a96f38c" title=" " alt="" coords="491,153,642,179"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="705,154,643,161,642,155,705,149"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_a7b39444c54b065c1a57bbbd2b9338b43.html#a7b39444c54b065c1a57bbbd2b9338b43" title="Reverse time order of single&#45;channel data (non&#45;destructive)" alt="" coords="491,203,642,228"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="734,170,671,193,626,205,625,200,670,187,732,165"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_a19a1d605a77dab6ea22a44bc1f74c853.html#a19a1d605a77dab6ea22a44bc1f74c853" title="Reverse time order of multi&#45;channel data (non&#45;destructive)" alt="" coords="491,253,642,293"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="764,173,722,209,672,242,642,255,640,250,669,237,719,204,760,169"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a1ee7311abf376531fbc49bee9c7febb9.html#a1ee7311abf376531fbc49bee9c7febb9" title="Cross&#45;correlation via FFT." alt="" coords="232,195,415,235"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="477,218,415,218,415,213,477,213"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_ae20bf8e05bc172b3e994128a936523ae.html#ae20bf8e05bc172b3e994128a936523ae" title="Matched filter (normalised cross&#45;correlation)" alt="" coords="5,195,184,235"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="218,218,184,218,184,213,218,213"/>
+</map>

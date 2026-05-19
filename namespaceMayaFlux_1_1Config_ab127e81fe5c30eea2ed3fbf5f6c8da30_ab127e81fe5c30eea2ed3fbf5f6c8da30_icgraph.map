@@ -1,0 +1,5 @@
+<map id="MayaFlux::Config::set_journal_severity" name="MayaFlux::Config::set_journal_severity">
+<area shape="rect" id="Node000001" title="Sets the minimum severity level for journal entries to be logged." alt="" coords="229,5,392,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Config_aaf8d14451b8ad0864f0c0d7ea315a2c9.html#aaf8d14451b8ad0864f0c0d7ea315a2c9" title="Stores journal entries to a file by adding a FileSink to the Archivist." alt="" coords="5,5,181,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="215,28,181,28,181,23,215,23"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="MayaFlux::Portal::Text::GlyphAtlas::get_or_rasterize" name="MayaFlux::Portal::Text::GlyphAtlas::get_or_rasterize">
+<area shape="rect" id="Node000001" title="Return metrics for a glyph, rasterizing it into the atlas if needed." alt="" coords="5,5,220,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Text_1_1GlyphAtlas_acf50eee0b2cefa0a2a03d4de8720e36f.html#acf50eee0b2cefa0a2a03d4de8720e36f" title=" " alt="" coords="268,5,435,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="220,23,254,23,254,28,220,28"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Text_1_1FontFace_accda82c104b9bee41559e89f118f5e5f.html#accda82c104b9bee41559e89f118f5e5f" title="Raw FT_Face handle for use by GlyphAtlas." alt="" coords="483,5,649,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="435,23,469,23,469,28,435,28"/>
+</map>

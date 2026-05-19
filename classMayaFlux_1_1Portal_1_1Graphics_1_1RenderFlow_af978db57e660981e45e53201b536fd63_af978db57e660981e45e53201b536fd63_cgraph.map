@@ -1,0 +1,7 @@
+<map id="MayaFlux::Portal::Graphics::RenderFlow::bind_descriptor_sets" name="MayaFlux::Portal::Graphics::RenderFlow::bind_descriptor_sets">
+<area shape="rect" id="Node000001" title="Bind descriptor sets." alt="" coords="5,37,253,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ab2be21f08a8e73058950c603e8a77020.html#ab2be21f08a8e73058950c603e8a77020" title="Get Vulkan command buffer handle from CommandBufferID." alt="" coords="301,5,573,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="253,42,287,38,288,44,254,47"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_a02ee5b654b338c921a582effccfc085f.html#a02ee5b654b338c921a582effccfc085f" title="Get Vulkan descriptor set handle from DescriptorSetID." alt="" coords="310,69,565,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="254,68,297,72,296,77,253,73"/>
+</map>

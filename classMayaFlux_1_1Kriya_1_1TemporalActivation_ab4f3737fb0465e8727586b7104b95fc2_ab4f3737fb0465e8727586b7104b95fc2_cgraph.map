@@ -1,0 +1,60 @@
+<map id="MayaFlux::Kriya::TemporalActivation::activate_buffer" name="MayaFlux::Kriya::TemporalActivation::activate_buffer">
+<area shape="rect" id="Node000001" title="Activates a buffer for a specified duration." alt="" coords="5,193,201,233"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferManager_af51cd72c5f1d259a03a3e82371e55bab.html#af51cd72c5f1d259a03a3e82371e55bab" title="Adds a buffer to a token and channel." alt="" coords="250,106,445,146"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="160,190,276,148,278,153,162,195"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kriya_1_1TemporalActivation_aa48d4567cb873962947e3e270191b7d3.html#aa48d4567cb873962947e3e270191b7d3" title="Cancels any currently active node." alt="" coords="249,221,445,261"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="202,221,236,225,236,231,201,227"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Kriya_1_1TemporalActivation_a65d420344629b85e2d038b9641496b03.html#a65d420344629b85e2d038b9641496b03" title="Cleans up the current operation, disconnecting the entity and resetting state." alt="" coords="509,141,709,196"/>
+<area shape="poly" id="edge16_Node000001_Node000007" title=" " alt="" coords="201,202,495,176,495,181,202,207"/>
+<area shape="rect" id="Node000017" href="$classMayaFlux_1_1Kriya_1_1Timer_acf410f70434e3f2a2e3ae063f2aab581.html#acf410f70434e3f2a2e3ae063f2aab581" title="Schedules a callback to execute after a delay." alt="" coords="260,349,435,389"/>
+<area shape="poly" id="edge17_Node000001_Node000017" title=" " alt="" coords="137,231,305,339,302,343,134,235"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kriya_1_1Timer_af3c122d5e399123a2d7a58e23269e8ad.html#af3c122d5e399123a2d7a58e23269e8ad" title="Cancels any scheduled callback." alt="" coords="521,285,696,325"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="430,258,514,279,513,284,429,263"/>
+<area shape="poly" id="edge6_Node000003_Node000007" title=" " alt="" coords="420,218,496,197,497,202,421,223"/>
+<area shape="rect" id="Node000016" href="$classMayaFlux_1_1Kriya_1_1Timer_a5432fa70b1f9585873e264bf76393760.html#a5432fa70b1f9585873e264bf76393760" title="Checks if a callback is currently scheduled." alt="" coords="521,221,696,261"/>
+<area shape="poly" id="edge15_Node000003_Node000016" title=" " alt="" coords="445,238,507,238,507,243,445,243"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_aefd214af5e476f686dc86cc7d7220c96.html#aefd214af5e476f686dc86cc7d7220c96" title="Cancels and removes a task from the scheduler." alt="" coords="772,281,1003,321"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="696,301,758,300,758,305,696,306"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_afb823dfb8ca7ec5182cfaa8e3ee93649.html#afb823dfb8ca7ec5182cfaa8e3ee93649" title="Find task entry by routine pointer." alt="" coords="1065,281,1296,321"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="1003,298,1052,298,1052,303,1003,303"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_ab7485f6b5bd28a3d64ffaa5034d3ed9a.html#ab7485f6b5bd28a3d64ffaa5034d3ed9a" title="Gets or creates the root node for a specific token and channel." alt="" coords="779,214,995,254"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="709,189,789,208,788,213,708,195"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Buffers_1_1BufferManager_ad22127b9243ca6e62b2464d6bb5e8f1a.html#ad22127b9243ca6e62b2464d6bb5e8f1a" title="Removes a buffer from a token." alt="" coords="799,5,975,60"/>
+<area shape="poly" id="edge9_Node000007_Node000010" title=" " alt="" coords="650,139,706,104,771,70,788,63,790,68,773,75,709,109,653,143"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_a08ad52a5c6a952fcaaea8bffce9f5795.html#a08ad52a5c6a952fcaaea8bffce9f5795" title="Remove a network from a processing token." alt="" coords="779,85,995,125"/>
+<area shape="poly" id="edge10_Node000007_Node000011" title=" " alt="" coords="708,143,786,125,787,130,709,148"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Nodes_1_1RootNode_a3223d79efd0c1efec1bbbc0ac0e70902.html#a3223d79efd0c1efec1bbbc0ac0e70902" title="Removes a node from this root node." alt="" coords="784,149,991,189"/>
+<area shape="poly" id="edge12_Node000007_Node000013" title=" " alt="" coords="709,166,770,166,770,171,709,171"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_a9c43d6dbcd53013e4d61fa43f038384a.html#a9c43d6dbcd53013e4d61fa43f038384a" title="Ensures a root node exists for the given token and channel." alt="" coords="1073,215,1289,255"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="996,232,1059,232,1059,237,996,237"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_adc75a7be1c84a5d43f4c4b71da4de404.html#adc75a7be1c84a5d43f4c4b71da4de404" title="Unregister network globally." alt="" coords="1051,23,1311,63"/>
+<area shape="poly" id="edge11_Node000011_Node000012" title=" " alt="" coords="983,82,1070,64,1072,69,984,87"/>
+<area shape="rect" id="Node000014" href="$namespaceMayaFlux_1_1Nodes_a2b661b58f860423fa6cf1d12c5accbd8.html#a2b661b58f860423fa6cf1d12c5accbd8" title="Atomically adds a flag to a node state." alt="" coords="1087,151,1275,191"/>
+<area shape="poly" id="edge13_Node000013_Node000014" title=" " alt="" coords="991,167,1073,168,1073,173,991,172"/>
+<area shape="rect" id="Node000015" href="$namespaceMayaFlux_1_1Nodes_a8abc7b8f33819075e738d5ed027bd9ec.html#a8abc7b8f33819075e738d5ed027bd9ec" title="Atomically sets a node state flag to a specific value." alt="" coords="1087,87,1275,127"/>
+<area shape="poly" id="edge14_Node000013_Node000015" title=" " alt="" coords="983,146,1073,127,1074,132,984,151"/>
+<area shape="poly" id="edge25_Node000017_Node000004" title=" " alt="" coords="429,346,513,325,514,331,430,351"/>
+<area shape="rect" id="Node000018" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a01f29b8e9975b80306f4bc0b534a09d8.html#a01f29b8e9975b80306f4bc0b534a09d8" title="Add a routine to the scheduler based on its processing token." alt="" coords="493,459,724,499"/>
+<area shape="poly" id="edge18_Node000017_Node000018" title=" " alt="" coords="397,386,549,451,547,456,394,391"/>
+<area shape="rect" id="Node000025" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_aad864fee29060836b9ae616386cf396a.html#aad864fee29060836b9ae616386cf396a" title="Get current processing units for a domain." alt="" coords="493,587,724,627"/>
+<area shape="poly" id="edge26_Node000017_Node000025" title=" " alt="" coords="370,387,495,509,574,577,570,581,492,513,366,391"/>
+<area shape="rect" id="Node000027" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a99bd0b1b8f51d07e40aeaf1588342323.html#a99bd0b1b8f51d07e40aeaf1588342323" title="Converts a time in seconds to a number of samples." alt="" coords="493,349,724,389"/>
+<area shape="poly" id="edge28_Node000017_Node000027" title=" " alt="" coords="435,366,480,366,480,371,435,371"/>
+<area shape="rect" id="Node000019" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a56a711df9c3a3f4e569e036ea6980559.html#a56a711df9c3a3f4e569e036ea6980559" title="Generate automatic name for a routine based on its type." alt="" coords="772,587,1003,627"/>
+<area shape="poly" id="edge19_Node000018_Node000019" title=" " alt="" coords="640,497,700,535,773,573,792,580,790,585,771,578,697,540,637,502"/>
+<area shape="rect" id="Node000021" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a81c68c47d8ac2ce8f736f8d35f4fe20c.html#a81c68c47d8ac2ce8f736f8d35f4fe20c" title="Initialize a processing domain if it doesn&#39;t exist." alt="" coords="772,523,1003,563"/>
+<area shape="poly" id="edge21_Node000018_Node000021" title=" " alt="" coords="697,497,787,518,786,523,696,502"/>
+<area shape="rect" id="Node000023" href="$main_8cpp_a25a40b6614565f755233080a384c35f1.html#a25a40b6614565f755233080a384c35f1" title=" " alt="" coords="848,409,927,435"/>
+<area shape="poly" id="edge23_Node000018_Node000023" title=" " alt="" coords="706,457,834,430,835,435,707,462"/>
+<area shape="rect" id="Node000024" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a09eae60c02e878e614b69c8ead276f14.html#a09eae60c02e878e614b69c8ead276f14" title="Initialize a routine&#39;s state for a specific domain." alt="" coords="772,459,1003,499"/>
+<area shape="poly" id="edge24_Node000018_Node000024" title=" " alt="" coords="724,477,758,477,758,482,724,482"/>
+<area shape="rect" id="Node000020" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a8c97edc92dee77f6fc9b6030a14637e7.html#a8c97edc92dee77f6fc9b6030a14637e7" title="Generates a unique task ID for new tasks." alt="" coords="1065,587,1296,627"/>
+<area shape="poly" id="edge20_Node000019_Node000020" title=" " alt="" coords="1003,605,1052,605,1052,610,1003,610"/>
+<area shape="rect" id="Node000022" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a219ff6ebd74ddb638ccf403556a0168c.html#a219ff6ebd74ddb638ccf403556a0168c" title="Get the default rate for a processing token." alt="" coords="1065,434,1296,474"/>
+<area shape="poly" id="edge22_Node000021_Node000022" title=" " alt="" coords="961,521,1002,509,1106,476,1107,481,1003,514,963,526"/>
+<area shape="rect" id="Node000026" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_ae74f769a53c83a47360211ac21c2cbe2.html#ae74f769a53c83a47360211ac21c2cbe2" title="Gets the primary clock (audio domain for legacy compatibility)" alt="" coords="772,651,1003,691"/>
+<area shape="poly" id="edge27_Node000025_Node000026" title=" " alt="" coords="697,625,787,646,786,651,696,630"/>
+<area shape="rect" id="Node000028" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_ac441836158c7cf40639d9fec1d942f0a.html#ac441836158c7cf40639d9fec1d942f0a" title="Get processing rate for a domain." alt="" coords="772,345,1003,385"/>
+<area shape="poly" id="edge29_Node000027_Node000028" title=" " alt="" coords="724,364,758,364,759,369,724,370"/>
+<area shape="poly" id="edge30_Node000028_Node000022" title=" " alt="" coords="959,382,1003,395,1105,427,1103,432,1002,401,957,387"/>
+</map>

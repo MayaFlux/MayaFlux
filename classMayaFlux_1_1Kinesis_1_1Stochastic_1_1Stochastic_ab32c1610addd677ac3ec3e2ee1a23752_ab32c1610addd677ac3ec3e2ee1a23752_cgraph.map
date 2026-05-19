@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kinesis::Stochastic::Stochastic::set_algorithm" name="MayaFlux::Kinesis::Stochastic::Stochastic::set_algorithm">
+<area shape="rect" id="Node000001" title="Changes active algorithm." alt="" coords="5,5,169,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kinesis_1_1Stochastic_1_1Stochastic_a842a1e7286485ab870a4cadca914d94e.html#a842a1e7286485ab870a4cadca914d94e" title="Resets internal state for stateful algorithms." alt="" coords="217,5,381,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="170,30,204,30,204,35,170,35"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kinesis_1_1Stochastic_1_1GeneratorState_afd7c657635f930c9e3da5446de6c05a5.html#afd7c657635f930c9e3da5446de6c05a5" title=" " alt="" coords="429,5,625,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="381,30,416,30,416,35,381,35"/>
+</map>

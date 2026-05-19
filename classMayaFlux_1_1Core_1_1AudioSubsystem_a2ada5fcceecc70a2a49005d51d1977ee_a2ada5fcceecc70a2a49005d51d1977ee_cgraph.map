@@ -1,0 +1,7 @@
+<map id="MayaFlux::Core::AudioSubsystem::register_backend_service" name="MayaFlux::Core::AudioSubsystem::register_backend_service">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,41,247,81"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aa28c6f5592e5893508bafb62aefcc496.html#aa28c6f5592e5893508bafb62aefcc496" title="Get the global registry instance." alt="" coords="295,5,496,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="247,43,281,38,282,43,247,48"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_a22c6ffe496c721c1bdfe28c9a86c1c4f.html#a22c6ffe496c721c1bdfe28c9a86c1c4f" title="Register a backend service capability." alt="" coords="297,70,493,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="247,75,284,80,283,85,247,80"/>
+</map>

@@ -1,0 +1,3 @@
+<map id="MayaFlux::Kriya::BufferDelay" name="MayaFlux::Kriya::BufferDelay">
+<area shape="rect" id="Node000001" title="Awaiter for suspending until a buffer cycle boundary." alt="" coords="5,5,211,131"/>
+</map>

@@ -1,0 +1,11 @@
+<map id="MayaFlux::Buffers::VKBuffer::infer_dimensions_from_data" name="MayaFlux::Buffers::VKBuffer::infer_dimensions_from_data">
+<area shape="rect" id="Node000001" title="Infer Kakshya::DataDimension entries from a given byte count." alt="" coords="225,94,424,149"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_a1c3e0f6c292516efd5f5364ba7a14fa8.html#a1c3e0f6c292516efd5f5364ba7a14fa8" title="Resize buffer and recreate GPU resources if needed." alt="" coords="17,5,165,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="249,91,176,60,146,48,148,43,178,55,251,86"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_ae22f33ecea5953e1b819bbd36db3114c.html#ae22f33ecea5953e1b819bbd36db3114c" title="Write data into the buffer." alt="" coords="17,69,165,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="211,108,165,102,166,97,212,103"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_ad7bbc21763ca5139702f4395a6f5566d.html#ad7bbc21763ca5139702f4395a6f5566d" title="Update the semantic modality and re&#45;infer dimensions." alt="" coords="5,133,177,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="212,139,178,144,177,139,211,134"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_a3234235789322685d0e417782d76e699.html#a3234235789322685d0e417782d76e699" title="Construct an unregistered VKBuffer." alt="" coords="17,197,165,237"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="251,157,178,188,148,200,146,195,176,183,249,152"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::Node::request_reset_from_channel" name="MayaFlux::Nodes::Node::request_reset_from_channel">
+<area shape="rect" id="Node000001" title="Requests a reset of the processed state from a specific channel." alt="" coords="5,5,183,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Node_a9e6c5b1744c554c1d12a1bcf0490b2c4.html#a9e6c5b1744c554c1d12a1bcf0490b2c4" title="Resets the processed state of the node directly." alt="" coords="231,5,408,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="183,30,217,30,217,35,183,35"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Nodes_a88c692052149167c04433fa84013bf15.html#a88c692052149167c04433fa84013bf15" title="Atomically removes a flag from a node state." alt="" coords="456,13,644,53"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="408,30,442,30,442,35,408,35"/>
+</map>

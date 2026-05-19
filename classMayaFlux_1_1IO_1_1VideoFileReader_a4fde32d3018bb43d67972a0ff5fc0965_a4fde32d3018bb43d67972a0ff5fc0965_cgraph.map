@@ -1,0 +1,25 @@
+<map id="MayaFlux::IO::VideoFileReader::open" name="MayaFlux::IO::VideoFileReader::open">
+<area shape="rect" id="Node000001" title="Open a file for reading." alt="" coords="5,133,228,173"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1VideoFileReader_a2d4d8192d025efd4360dcabdc811634f.html#a2d4d8192d025efd4360dcabdc811634f" title=" " alt="" coords="276,5,499,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="144,131,203,93,275,55,293,47,295,52,277,60,206,98,147,135"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1VideoFileReader_a4f9968ab70dd32dc5d278a66e5995f57.html#a4f9968ab70dd32dc5d278a66e5995f57" title=" " alt="" coords="276,69,499,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="201,131,288,110,290,115,203,136"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1VideoFileReader_aa7942958f72f9cc0f0549ffd9fdadd40.html#aa7942958f72f9cc0f0549ffd9fdadd40" title="Close the currently open file." alt="" coords="276,133,499,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="228,151,262,151,262,156,228,156"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1IO_1_1FileReader_a24d94d5bc8b4294d61f43ac86f933050.html#a24d94d5bc8b4294d61f43ac86f933050" title="Resolve a filepath against the project source root if not found as&#45;is." alt="" coords="295,197,480,237"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="203,171,290,192,288,197,201,176"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1IO_1_1VideoFileReader_a09abc9942e369bd26c7fd3bf43ee87e6.html#a09abc9942e369bd26c7fd3bf43ee87e6" title=" " alt="" coords="276,261,499,301"/>
+<area shape="poly" id="edge11_Node000001_Node000012" title=" " alt="" coords="147,171,206,209,277,247,295,254,293,259,275,252,203,214,144,176"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1IO_1_1VideoFileReader_aa07732da3871c5eff0e90e13180407fa.html#aa07732da3871c5eff0e90e13180407fa" title=" " alt="" coords="547,5,769,45"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="476,131,497,119,512,104,520,88,529,71,545,55,554,49,557,54,548,59,533,75,525,91,517,107,500,123,479,135"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aa28c6f5592e5893508bafb62aefcc496.html#aa28c6f5592e5893508bafb62aefcc496" title="Get the global registry instance." alt="" coords="557,69,759,109"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="472,131,559,110,560,115,473,136"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1IO_1_1VideoFileReader_aacb36f0a6a4373bef947e1d618cc6074.html#aacb36f0a6a4373bef947e1d618cc6074" title=" " alt="" coords="547,133,769,173"/>
+<area shape="poly" id="edge6_Node000004_Node000007" title=" " alt="" coords="499,151,533,151,533,156,499,156"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_af56fb38c9e3a502f619f6205beb49384.html#af56fb38c9e3a502f619f6205beb49384" title="Unregister a service." alt="" coords="552,198,764,253"/>
+<area shape="poly" id="edge7_Node000004_Node000008" title=" " alt="" coords="464,171,543,192,541,197,463,176"/>
+<area shape="rect" id="Node000010" href="$namespaceMayaFlux_ac8ded33a4e354a3259e25ea984c19053.html#ac8ded33a4e354a3259e25ea984c19053" title="Normalize single&#45;channel data (non&#45;destructive)" alt="" coords="575,277,741,302"/>
+<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="460,235,499,247,547,263,581,271,579,276,546,268,498,252,458,240"/>
+<area shape="rect" id="Node000011" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_aa7fcdee057518b1d482864a610ee0b5a.html#aa7fcdee057518b1d482864a610ee0b5a" title="Normalize to [target_min, target_max] in&#45;place Single&#45;pass min/max reduction followed by a single tra..." alt="" coords="817,269,967,309"/>
+<area shape="poly" id="edge10_Node000010_Node000011" title=" " alt="" coords="742,287,803,287,803,292,742,292"/>
+</map>

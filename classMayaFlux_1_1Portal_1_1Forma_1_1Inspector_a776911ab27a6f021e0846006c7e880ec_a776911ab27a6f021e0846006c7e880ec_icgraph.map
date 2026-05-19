@@ -1,0 +1,13 @@
+<map id="MayaFlux::Portal::Forma::Inspector::buffer" name="MayaFlux::Portal::Forma::Inspector::buffer">
+<area shape="rect" id="Node000001" title="Inspect a single Buffer: default processor and full processing chain." alt="" coords="489,34,671,74"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Inspector_a1687b4aba0bea855ff4ee24ad423585f.html#a1687b4aba0bea855ff4ee24ad423585f" title="Inspect the full BufferManager state across all active tokens." alt="" coords="5,34,207,74"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="510,32,441,17,348,8,255,17,210,25,168,37,166,31,209,20,254,11,348,3,442,11,511,27"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Inspector_ac29186c5382903dd8c58ab5f978903a2.html#ac29186c5382903dd8c58ab5f978903a2" title="Inspect the root audio buffer for a specific token and channel." alt="" coords="257,105,439,160"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="508,81,430,108,428,103,507,76"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Inspector_a50dcdf0e3b61b3da5437096aa55f0c48.html#a50dcdf0e3b61b3da5437096aa55f0c48" title="Inspect the root graphics buffer for a token." alt="" coords="255,27,441,81"/>
+<area shape="poly" id="edge5_Node000001_Node000005" title=" " alt="" coords="475,57,442,57,442,51,475,51"/>
+<area shape="poly" id="edge3_Node000003_Node000002" title=" " alt="" coords="250,103,168,77,169,72,251,98"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Inspector_ad62c8b2ae1a0ecd6490afc47807868f5.html#ad62c8b2ae1a0ecd6490afc47807868f5" title="Inspect all root audio buffers for a token across every channel." alt="" coords="15,105,197,160"/>
+<area shape="poly" id="edge4_Node000003_Node000004" title=" " alt="" coords="244,135,197,135,197,130,244,130"/>
+<area shape="poly" id="edge6_Node000005_Node000002" title=" " alt="" coords="241,57,207,57,207,51,241,51"/>
+</map>

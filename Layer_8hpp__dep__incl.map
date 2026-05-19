@@ -1,0 +1,38 @@
+<map id="Layer.hpp" name="Layer.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="277,5,363,31"/>
+<area shape="rect" id="Node000002" href="$Collapsible_8hpp.html" title=" " alt="" coords="160,225,283,251"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="294,41,275,59,260,80,243,119,232,161,224,225,219,225,227,160,238,118,255,77,271,56,290,38"/>
+<area shape="rect" id="Node000003" href="$QueryUtils_8hpp.html" title=" " alt="" coords="190,299,309,324"/>
+<area shape="poly" id="edge21_Node000001_Node000003" title=" " alt="" coords="291,40,267,59,243,81,210,117,185,147,167,180,151,226,147,238,150,249,162,265,178,278,213,296,210,301,175,282,159,269,146,252,142,238,145,225,162,178,181,144,206,113,239,77,263,55,288,36"/>
+<area shape="rect" id="Node000011" href="$Context_8hpp.html" title=" " alt="" coords="269,79,371,104"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="323,44,323,79,317,79,317,44"/>
+<area shape="rect" id="Node000013" href="$Forma_8hpp.html" title="Factory free functions for the Forma surface system." alt="" coords="483,152,573,177"/>
+<area shape="poly" id="edge19_Node000001_Node000013" title=" " alt="" coords="347,37,436,102,511,150,508,154,433,106,344,41"/>
+<area shape="rect" id="Node000015" href="$Layer_8cpp.html" title=" " alt="" coords="446,79,530,104"/>
+<area shape="poly" id="edge20_Node000001_Node000015" title=" " alt="" coords="361,34,462,76,459,81,358,38"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="233,263,247,298,242,300,229,265"/>
+<area shape="rect" id="Node000004" href="$InspectResult_8hpp.html" title=" " alt="" coords="180,372,319,397"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="252,338,252,372,247,372,247,338"/>
+<area shape="rect" id="Node000010" href="$QueryUtils_8cpp.html" title=" " alt="" coords="357,372,475,397"/>
+<area shape="poly" id="edge9_Node000003_Node000010" title=" " alt="" coords="290,327,390,369,388,374,288,332"/>
+<area shape="rect" id="Node000005" href="$Inspector_8hpp.html" title=" " alt="" coords="195,445,304,471"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="252,411,252,445,247,445,247,411"/>
+<area shape="rect" id="Node000006" href="$BufferQuery_8cpp.html" title=" " alt="" coords="5,519,131,544"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="209,478,99,521,97,516,207,473"/>
+<area shape="rect" id="Node000007" href="$Forma_8cpp.html" title=" " alt="" coords="475,519,565,544"/>
+<area shape="poly" id="edge6_Node000005_Node000007" title=" " alt="" coords="307,472,477,516,475,521,305,477"/>
+<area shape="rect" id="Node000008" href="$NodeQuery_8cpp.html" title=" " alt="" coords="155,519,275,544"/>
+<area shape="poly" id="edge7_Node000005_Node000008" title=" " alt="" coords="240,484,223,520,218,517,235,482"/>
+<area shape="rect" id="Node000009" href="$SchedulerQuery_8cpp.html" title=" " alt="" coords="299,519,450,544"/>
+<area shape="poly" id="edge8_Node000005_Node000009" title=" " alt="" coords="283,475,355,516,353,521,280,480"/>
+<area shape="poly" id="edge11_Node000011_Node000002" title=" " alt="" coords="307,117,231,227,227,224,302,114"/>
+<area shape="poly" id="edge18_Node000011_Node000003" title=" " alt="" coords="322,118,316,180,309,217,297,252,281,279,263,300,259,297,277,276,292,250,304,215,311,179,317,118"/>
+<area shape="rect" id="Node000012" href="$Context_8cpp.html" title=" " alt="" coords="358,152,458,177"/>
+<area shape="poly" id="edge12_Node000011_Node000012" title=" " alt="" coords="346,110,395,150,392,154,343,115"/>
+<area shape="poly" id="edge13_Node000011_Node000013" title=" " alt="" coords="367,106,495,149,493,154,366,111"/>
+<area shape="poly" id="edge14_Node000013_Node000002" title=" " alt="" coords="469,182,271,228,270,223,468,177"/>
+<area shape="poly" id="edge16_Node000013_Node000007" title=" " alt="" coords="528,191,523,310,523,386,523,518,517,518,517,386,517,310,523,191"/>
+<area shape="poly" id="edge17_Node000013_Node000010" title=" " alt="" coords="518,191,424,373,420,370,513,188"/>
+<area shape="rect" id="Node000014" href="$Engine_8cpp.html" title=" " alt="" coords="557,225,651,251"/>
+<area shape="poly" id="edge15_Node000013_Node000014" title=" " alt="" coords="552,185,593,223,590,227,548,189"/>
+</map>

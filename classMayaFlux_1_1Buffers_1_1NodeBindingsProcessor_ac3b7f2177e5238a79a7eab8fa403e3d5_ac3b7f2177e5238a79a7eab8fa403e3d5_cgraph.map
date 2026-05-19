@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::NodeBindingsProcessor::update_push_constants_from_nodes" name="MayaFlux::Buffers::NodeBindingsProcessor::update_push_constants_from_nodes">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,27,188,96"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Buffers_a982f4ec490b359e813ad8eb63bcfab37.html#a982f4ec490b359e813ad8eb63bcfab37" title="Extract a single sample from a node with proper snapshot management." alt="" coords="236,5,405,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="188,44,222,38,223,44,188,49"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a08f86ff68a93950b07208ee936badf8e.html#a08f86ff68a93950b07208ee936badf8e" title="Get current push constant data." alt="" coords="241,70,400,125"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="188,73,228,80,227,85,188,79"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Buffers_ae642092d63445f1884326aba3d9b5189.html#ae642092d63445f1884326aba3d9b5189" title="Wait for an active snapshot context to complete using exponential backoff." alt="" coords="453,5,675,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="405,23,440,23,440,28,405,28"/>
+</map>

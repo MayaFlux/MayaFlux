@@ -1,0 +1,11 @@
+<map id="MayaFlux::get_buffer_token" name="MayaFlux::get_buffer_token">
+<area shape="rect" id="Node000001" title="Extracts buffer processing token from domain." alt="" coords="469,27,629,67"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_ad57f926de2f4f9c78bb0645290c5b01e.html#ad57f926de2f4f9c78bb0645290c5b01e" title=" " alt="" coords="268,5,421,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="456,37,421,32,422,26,456,31"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_a7053b2753707ee4f8671524b071d0957.html#a7053b2753707ee4f8671524b071d0957" title=" " alt="" coords="273,55,417,95"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="456,63,417,68,417,63,455,57"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1MeshGroupHandle_a5bcd3e3d81114072dedc34bb262cfbdc.html#a5bcd3e3d81114072dedc34bb262cfbdc" title=" " alt="" coords="5,26,220,66"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="259,67,220,62,221,57,260,62"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_a447a8bab9f7e6bed3a294721a556cbe8.html#a447a8bab9f7e6bed3a294721a556cbe8" title=" " alt="" coords="36,91,189,116"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="259,88,190,97,189,91,258,83"/>
+</map>

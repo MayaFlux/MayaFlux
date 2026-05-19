@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::VKBuffer::set_needs_depth_attachment" name="MayaFlux::Buffers::VKBuffer::set_needs_depth_attachment">
+<area shape="rect" id="Node000001" title="Mark this buffer as requiring depth testing when rendered." alt="" coords="303,5,456,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1MeshNetworkBuffer_a6db6ab3ff001105ca916393d90854ca6.html#a6db6ab3ff001105ca916393d90854ca6" title="Construct from an existing MeshNetwork." alt="" coords="5,5,255,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="289,35,255,35,255,30,289,30"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nexus::Agent::set_vertices" name="MayaFlux::Nexus::Agent::set_vertices">
+<area shape="rect" id="Node000001" title="Push pre&#45;resolved vertex bytes to all registered render sinks." alt="" coords="5,5,187,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Nexus_a9c8d8997b4bd8503939c3c32530d5cd4.html#a9c8d8997b4bd8503939c3c32530d5cd4" title="Push pre&#45;resolved vertex bytes to every render sink." alt="" coords="235,5,409,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="187,23,221,23,221,28,187,28"/>
+</map>

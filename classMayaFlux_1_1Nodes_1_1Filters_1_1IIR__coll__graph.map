@@ -1,0 +1,18 @@
+<map id="MayaFlux::Nodes::Filters::IIR" name="MayaFlux::Nodes::Filters::IIR">
+<area shape="rect" id="Node000001" title="Infinite Impulse Response filter implementation." alt="" coords="254,1919,454,2084"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Filters_1_1Filter.html" title="Base class for computational signal transformers implementing difference equations." alt="" coords="255,1215,453,1869"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="357,1883,357,1919,351,1919,351,1883"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Node.html" title="Base interface for all computational processing nodes." alt="" coords="34,423,231,1152"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="238,1136,260,1213,255,1215,233,1138"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Nodes_1_1RoutingState.html" title="Represents the state of routing transitions for a node." alt="" coords="5,180,191,360"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="107,360,110,406,104,406,101,361"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1Filters_1_1FilterContext.html" title="Specialized context for filter node callbacks." alt="" coords="472,200,647,340"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="561,340,557,494,544,706,519,948,501,1071,478,1191,461,1260,455,1259,473,1190,496,1070,514,947,539,706,551,494,556,340"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1Filters_1_1FilterContextGpu.html" title="GPU&#45;augmented filter context for callbacks." alt="" coords="267,747,441,827"/>
+<area shape="poly" id="edge7_Node000007_Node000005" title=" " alt="" coords="529,354,372,748,367,746,524,352"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1NodeContext.html" title="Base context class for node callbacks." alt="" coords="449,5,669,131"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="562,144,562,200,557,200,557,144"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="357,828,357,1199,351,1199,351,828"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Nodes_1_1GpuVectorData.html" title="GPU&#45;uploadable 1D array data interface." alt="" coords="215,197,448,343"/>
+<area shape="poly" id="edge8_Node000007_Node000008" title=" " alt="" coords="338,356,355,747,350,747,332,356"/>
+</map>

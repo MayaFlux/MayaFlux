@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::NodeTextureBuffer::setup_rendering" name="MayaFlux::Buffers::NodeTextureBuffer::setup_rendering">
+<area shape="rect" id="Node000001" title="Setup rendering with RenderProcessor." alt="" coords="5,41,192,96"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1NodeTextureBuffer_a07c4e6ac1b7511bc4a83641ed69bf9df.html#a07c4e6ac1b7511bc4a83641ed69bf9df" title="Get the GPU&#45;resident texture (VKImage)" alt="" coords="267,5,439,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="192,53,254,44,254,49,192,58"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_a6cf409969c192851ab2cf7f0315d2a49.html#a6cf409969c192851ab2cf7f0315d2a49" title="Access the buffer&#39;s processing chain." alt="" coords="240,85,467,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="192,79,227,84,226,89,192,84"/>
+</map>

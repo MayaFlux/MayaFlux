@@ -1,0 +1,7 @@
+<map id="MayaFlux::Journal::format" name="MayaFlux::Journal::format">
+<area shape="rect" id="Node000001" title=" " alt="" coords="200,37,347,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Journal_ac2a03ec9052c232e5baa1c5f849096bf.html#ac2a03ec9052c232e5baa1c5f849096bf" title="fmt&#45;style overload of fatal()." alt="" coords="5,5,152,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="186,46,152,40,153,35,187,40"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Journal_a357b30a6b07388d7b6d221934425ac18.html#a357b30a6b07388d7b6d221934425ac18" title="Printf&#45;style overload of format_print()." alt="" coords="5,69,152,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="187,74,153,80,152,75,186,69"/>
+</map>

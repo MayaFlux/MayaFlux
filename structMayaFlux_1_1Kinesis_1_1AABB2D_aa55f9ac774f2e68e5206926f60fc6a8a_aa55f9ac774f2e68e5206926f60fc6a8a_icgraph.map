@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kinesis::AABB2D::center" name="MayaFlux::Kinesis::AABB2D::center">
+<area shape="rect" id="Node000001" title=" " alt="" coords="432,5,581,45"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kinesis_1_1AABB2D_a137d0e3eea9f9ad0ecc19d7381c24e69.html#a137d0e3eea9f9ad0ecc19d7381c24e69" title=" " alt="" coords="235,5,384,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="418,28,384,28,384,23,418,23"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_a09e97fbd8198143e0175d395e5d40f7d.html#a09e97fbd8198143e0175d395e5d40f7d" title="Geometry function for a radial indicator in NDC space." alt="" coords="5,5,187,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="221,28,187,28,187,23,221,23"/>
+</map>

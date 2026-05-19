@@ -1,0 +1,12 @@
+<map id="MayaFlux::detect_onsets_per_channel" name="MayaFlux::detect_onsets_per_channel">
+<area shape="rect" id="Node000001" title="Detect onset times per channel for multi&#45;channel signal." alt="" coords="5,37,191,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_ae129bb49ae834db118119ab840148604.html#ae129bb49ae834db118119ab840148604" title="Detect onset times in single&#45;channel signal." alt="" coords="239,45,424,70"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="191,55,225,55,225,60,191,60"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_aa4da80d21b907296f4a31fb1f7dffc10.html#aa4da80d21b907296f4a31fb1f7dffc10" title="Sample indices of onsets detected via spectral flux." alt="" coords="472,37,659,77"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="424,55,458,55,458,60,424,60"/>
+<area shape="poly" id="edge4_Node000003_Node000003" title=" " alt="" coords="522,38,520,28,527,18,542,13,565,11,592,14,607,21,604,26,591,19,565,16,543,18,530,23,525,29,528,36"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_ad2883aeb684971b088f71e1d858803bd.html#ad2883aeb684971b088f71e1d858803bd" title="Compute the number of analysis windows for a given data size." alt="" coords="707,5,884,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="659,42,692,37,693,42,660,47"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kinesis_a64bfe6458a57047ea3c126b2b27da092.html#a64bfe6458a57047ea3c126b2b27da092" title="Zero output below threshold, pass through above." alt="" coords="721,69,870,109"/>
+<area shape="poly" id="edge5_Node000003_Node000005" title=" " alt="" coords="660,68,707,74,707,80,659,73"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::StreamReaderNode::StreamReaderContext" name="MayaFlux::Nodes::StreamReaderNode::StreamReaderContext">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,179,233,259"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1NodeContext.html" title="Base context class for node callbacks." alt="" coords="9,5,229,131"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="122,144,122,179,117,179,117,144"/>
+</map>

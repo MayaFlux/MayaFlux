@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kakshya::StreamContainer" name="MayaFlux::Kakshya::StreamContainer">
+<area shape="rect" id="Node000001" title="Data&#45;driven interface for temporal stream containers with navigable read position." alt="" coords="124,676,313,956"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1SignalSourceContainer.html" title="Data&#45;driven interface for managing arbitrary processable signal sources." alt="" coords="113,348,324,628"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="221,642,221,676,216,676,216,642"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1NDDataContainer.html" title="Abstract interface for N&#45;dimensional data containers." alt="" coords="5,5,187,300"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="157,312,170,347,165,349,152,314"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="211,113,471,193"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="325,207,272,349,267,347,320,205"/>
+</map>

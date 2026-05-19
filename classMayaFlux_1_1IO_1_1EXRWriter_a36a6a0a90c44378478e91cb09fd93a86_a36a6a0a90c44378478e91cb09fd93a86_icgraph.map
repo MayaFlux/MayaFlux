@@ -1,0 +1,5 @@
+<map id="MayaFlux::IO::EXRWriter::resolve_channel_names" name="MayaFlux::IO::EXRWriter::resolve_channel_names">
+<area shape="rect" id="Node000001" title="Resolve channel name list based on options and channel count." alt="" coords="236,5,423,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1EXRWriter_abb15175d3720dc452a5ba299923c2a35.html#abb15175d3720dc452a5ba299923c2a35" title="Write image data to disk." alt="" coords="5,5,188,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="222,28,188,28,188,23,222,23"/>
+</map>

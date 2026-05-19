@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Network::WaveguideNetwork::strike" name="MayaFlux::Nodes::Network::WaveguideNetwork::strike">
+<area shape="rect" id="Node000001" title="Strike the string/tube with an impulse." alt="" coords="5,13,207,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1WaveguideNetwork_a6f966704e135bda7440431f4f0c2e788.html#a6f966704e135bda7440431f4f0c2e788" title=" " alt="" coords="255,5,476,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="207,30,241,30,241,35,207,35"/>
+</map>

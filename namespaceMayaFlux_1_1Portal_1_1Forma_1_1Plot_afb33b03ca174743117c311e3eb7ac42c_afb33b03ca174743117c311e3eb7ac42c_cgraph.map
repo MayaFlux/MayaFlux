@@ -1,0 +1,7 @@
+<map id="MayaFlux::Portal::Forma::Plot::series_by_role" name="MayaFlux::Portal::Forma::Plot::series_by_role">
+<area shape="rect" id="Node000001" title="Collect all series from processed_data whose DataDimension role matches role." alt="" coords="5,37,187,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1PlotContainer_ab2e4dbfbcaab16a566a43bba12275c62.html#ab2e4dbfbcaab16a566a43bba12275c62" title="Get a mutable reference to the processed data buffer." alt="" coords="235,5,483,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="186,44,221,39,222,45,187,49"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1PlotContainer_ae1bf34b6d7007608e6dbf04dd2b579fd.html#ae1bf34b6d7007608e6dbf04dd2b579fd" title="Get the data structure defining this container&#39;s layout." alt="" coords="257,69,461,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="187,66,243,73,243,78,186,71"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Network::WaveguideNetwork::initialize" name="MayaFlux::Nodes::Network::WaveguideNetwork::initialize">
+<area shape="rect" id="Node000001" title="Called once before first process_batch()" alt="" coords="5,13,227,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1WaveguideNetwork_ab8ef8061cb1ccafcc44f54a67bad0c04.html#ab8ef8061cb1ccafcc44f54a67bad0c04" title=" " alt="" coords="275,5,497,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="227,30,261,30,261,35,227,35"/>
+</map>

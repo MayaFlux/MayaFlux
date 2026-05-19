@@ -1,0 +1,9 @@
+<map id="MayaFlux::Nodes::Generator::Counter" name="MayaFlux::Nodes::Generator::Counter">
+<area shape="rect" id="Node000001" title="Integer step accumulator with modulo wrap and optional trigger reset." alt="" coords="108,1211,308,1765"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Generator.html" title="Base class for all signal and pattern generators in Maya Flux." alt="" coords="5,803,205,1163"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="147,1176,154,1210,149,1211,142,1177"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Node.html" title="Base interface for all computational processing nodes." alt="" coords="7,5,204,755"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="108,769,108,802,103,802,103,769"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="230,943,394,1023"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="304,1037,268,1211,262,1210,299,1036"/>
+</map>

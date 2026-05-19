@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::BufferManager::get_num_channels" name="MayaFlux::Buffers::BufferManager::get_num_channels">
+<area shape="rect" id="Node000001" title="Gets the number of channels for a token (audio&#45;specific)" alt="" coords="235,5,417,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Inspector_ad62c8b2ae1a0ecd6490afc47807868f5.html#ad62c8b2ae1a0ecd6490afc47807868f5" title="Inspect all root audio buffers for a token across every channel." alt="" coords="5,5,187,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="221,35,187,35,187,30,221,30"/>
+</map>

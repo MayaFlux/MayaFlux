@@ -1,0 +1,23 @@
+<map id="MayaFlux::Kakshya::Region::set_attribute" name="MayaFlux::Kakshya::Region::set_attribute">
+<area shape="rect" id="Node000001" title="Set an attribute value by key." alt="" coords="1076,113,1235,153"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1Granular_1_1SegmentOp_a0757e5f3164b8094bb48e68bc626a39c.html#a0757e5f3164b8094bb48e68bc626a39c" title=" " alt="" coords="757,5,1028,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1114,108,1073,83,1027,60,992,48,994,43,1029,55,1075,78,1117,103"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kakshya_1_1RegionGroup_adf42d46a861a465e8d191192d947c1a9.html#adf42d46a861a465e8d191192d947c1a9" title="Get the bounding region that contains all regions in the group." alt="" coords="791,70,994,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="1062,123,994,114,995,109,1063,118"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1IO_1_1FileRegion_a3e60dc74e7f6385377e4b66bd154192f.html#a3e60dc74e7f6385377e4b66bd154192f" title="Convert this FileRegion to a Region for use in processing." alt="" coords="801,149,985,189"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="1063,149,985,159,984,154,1062,143"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Kakshya_1_1MeshSubrange_a071a7c376e87b2bff0b57ac03fb9c2c5.html#a071a7c376e87b2bff0b57ac03fb9c2c5" title="Convert this subrange to a Region for use in RegionGroup." alt="" coords="799,213,986,253"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="1112,163,1072,184,1029,204,987,217,985,212,1027,199,1070,180,1109,158"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1IO_1_1ModelReader_a4caf9e31c81e7ac5b07078c38300a6ca.html#a4caf9e31c81e7ac5b07078c38300a6ca" title=" " alt="" coords="507,177,709,217"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="785,222,709,213,710,207,786,217"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Kakshya_1_1MeshInsertion_a264df1d91cfb1f929fb4d7134d2d7602.html#a264df1d91cfb1f929fb4d7134d2d7602" title="Append one submesh batch, accumulating into the shared buffers." alt="" coords="529,242,687,297"/>
+<area shape="poly" id="edge10_Node000005_Node000011" title=" " alt="" coords="786,249,688,262,687,257,785,244"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1IO_1_1ModelReader_aa3ce0f7631753b15955e175c1855e7fc.html#aa3ce0f7631753b15955e175c1855e7fc" title="Construct a MeshNetwork from all meshes in the currently loaded scene." alt="" coords="256,145,459,185"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="493,185,458,181,459,176,493,180"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1IO_1_1ModelReader_a5a5995d155657e1b4f55d047efa2e442.html#a5a5995d155657e1b4f55d047efa2e442" title="Load all meshes after open() has already been called." alt="" coords="256,209,459,249"/>
+<area shape="poly" id="edge7_Node000006_Node000008" title=" " alt="" coords="493,215,459,219,458,214,493,209"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1IO_1_1ModelReader_a82f82a404791ba9ad9838a1fc2774f32.html#a82f82a404791ba9ad9838a1fc2774f32" title="Construct one MeshBuffer per mesh in the currently loaded scene." alt="" coords="5,177,208,217"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="242,217,208,213,208,208,243,212"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1IO_1_1ModelReader_ad139ba0a544c0712059cc8913bb59bc5.html#ad139ba0a544c0712059cc8913bb59bc5" title="Load all meshes from a file in one call." alt="" coords="5,241,208,281"/>
+<area shape="poly" id="edge9_Node000008_Node000010" title=" " alt="" coords="243,247,208,251,208,246,242,241"/>
+</map>

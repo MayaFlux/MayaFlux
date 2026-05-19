@@ -1,0 +1,16 @@
+<map id="EventAwaiter.hpp" name="EventAwaiter.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="249,5,385,31"/>
+<area shape="rect" id="Node000002" href="$GlobalGraphicsInfo_8hpp.html" title=" " alt="" coords="5,167,228,207"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="284,33,240,53,197,81,162,118,136,156,132,153,158,114,194,77,238,48,282,28"/>
+<area shape="rect" id="Node000003" href="$WindowEventSource_8hpp.html" title=" " alt="" coords="207,79,426,119"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="319,31,319,65,314,65,314,31"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="450,86,533,111"/>
+<area shape="poly" id="edge7_Node000001_Node000007" title=" " alt="" coords="343,28,454,78,452,83,341,33"/>
+<area shape="poly" id="edge4_Node000003_Node000002" title=" " alt="" coords="274,121,174,164,172,159,272,116"/>
+<area shape="rect" id="Node000004" href="$EventSource_8hpp.html" title=" " alt="" coords="251,174,382,199"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="319,119,319,160,314,160,314,119"/>
+<area shape="rect" id="Node000005" href="$Keys_8hpp.html" title=" " alt="" coords="407,174,573,199"/>
+<area shape="poly" id="edge5_Node000003_Node000005" title=" " alt="" coords="356,116,456,166,454,170,354,121"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="597,174,660,199"/>
+<area shape="poly" id="edge6_Node000003_Node000006" title=" " alt="" coords="409,116,496,137,587,164,593,166,591,171,585,169,495,142,408,121"/>
+</map>

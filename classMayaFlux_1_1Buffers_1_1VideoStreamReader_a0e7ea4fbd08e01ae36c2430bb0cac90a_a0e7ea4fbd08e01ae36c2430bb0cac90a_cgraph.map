@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::VideoStreamReader::on_attach" name="MayaFlux::Buffers::VideoStreamReader::on_attach">
+<area shape="rect" id="Node000001" title="Attach the reader to a TextureBuffer." alt="" coords="5,5,181,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VideoStreamReader_a36eee8e181ec8802cd88f6382ce5a0b5.html#a36eee8e181ec8802cd88f6382ce5a0b5" title="Extract frame pixel data from processed_data into the TextureBuffer." alt="" coords="229,5,436,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="181,30,216,30,216,35,181,35"/>
+</map>

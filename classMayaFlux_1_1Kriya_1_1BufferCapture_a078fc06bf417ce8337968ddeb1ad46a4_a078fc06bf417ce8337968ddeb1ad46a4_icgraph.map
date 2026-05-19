@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kriya::BufferCapture::for_cycles" name="MayaFlux::Kriya::BufferCapture::for_cycles">
+<area shape="rect" id="Node000001" title="Set the number of times to execute this capture operation." alt="" coords="537,37,764,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kriya_1_1BufferOperation_a1fb1db58d85ffaad5b8b107a113b1e8c.html#a1fb1db58d85ffaad5b8b107a113b1e8c" title=" " alt="" coords="251,5,489,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="523,46,489,42,490,36,524,40"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kriya_1_1CaptureBuilder_a51c6c3566d127c1c3a40d791b90f6404.html#a51c6c3566d127c1c3a40d791b90f6404" title="Set number of cycles to capture (enables ACCUMULATE mode)." alt="" coords="277,69,463,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="524,74,464,81,463,76,524,69"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kriya_1_1SamplingPipeline_af21f1bc6546de22e5eb3ba15838e6015.html#af21f1bc6546de22e5eb3ba15838e6015" title="Begin construction with a loaded stream and output channel." alt="" coords="5,69,203,109"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="263,92,203,92,203,87,263,87"/>
+</map>

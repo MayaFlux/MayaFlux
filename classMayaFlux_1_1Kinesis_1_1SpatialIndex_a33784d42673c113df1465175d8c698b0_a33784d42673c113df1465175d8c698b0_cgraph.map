@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::SpatialIndex::publish" name="MayaFlux::Kinesis::SpatialIndex::publish">
+<area shape="rect" id="Node000001" title="Atomically publish the current write&#45;side state as a new read snapshot." alt="" coords="5,5,164,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1detail_a2e1ebb96cdafe5ef2cd096e829171008.html#a2e1ebb96cdafe5ef2cd096e829171008" title=" " alt="" coords="212,5,383,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="164,23,198,23,198,28,164,28"/>
+</map>

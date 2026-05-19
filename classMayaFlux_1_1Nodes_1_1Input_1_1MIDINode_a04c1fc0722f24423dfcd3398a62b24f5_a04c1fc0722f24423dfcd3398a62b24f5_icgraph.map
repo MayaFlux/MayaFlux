@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Input::MIDINode::fire_midi_callbacks" name="MayaFlux::Nodes::Input::MIDINode::fire_midi_callbacks">
+<area shape="rect" id="Node000001" title=" " alt="" coords="229,5,405,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Input_1_1MIDINode_a9f48d654a8efa73c0dd55993eaf3a3de.html#a9f48d654a8efa73c0dd55993eaf3a3de" title="Notify callbacks (minimal for InputNode)" alt="" coords="5,13,181,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="215,35,182,35,182,30,215,30"/>
+</map>

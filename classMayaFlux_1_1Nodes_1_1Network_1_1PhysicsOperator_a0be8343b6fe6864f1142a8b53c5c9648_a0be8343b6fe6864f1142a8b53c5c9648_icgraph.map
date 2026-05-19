@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Network::PhysicsOperator::get_vertex_count" name="MayaFlux::Nodes::Network::PhysicsOperator::get_vertex_count">
+<area shape="rect" id="Node000001" title="Get number of vertices (may differ from point count for topology/path)" alt="" coords="252,5,451,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1PhysicsOperator_a4a5452d43c9d461a2c348b78a1ad6be9.html#a4a5452d43c9d461a2c348b78a1ad6be9" title="Get vertex layout describing vertex structure." alt="" coords="5,5,204,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="238,35,204,35,204,30,238,30"/>
+</map>

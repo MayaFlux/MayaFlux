@@ -1,0 +1,9 @@
+<map id="MayaFlux::Core::VKComputePipeline::dispatch" name="MayaFlux::Core::VKComputePipeline::dispatch">
+<area shape="rect" id="Node000001" title="Dispatch compute workgroups." alt="" coords="261,69,469,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1VKComputePipeline_a128d5d1a609cb59d2c8b6c01535b1652.html#a128d5d1a609cb59d2c8b6c01535b1652" title="Dispatch compute workgroups with automatic calculation." alt="" coords="5,5,213,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="271,69,189,48,190,43,272,63"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1VKComputePipeline_a7d30e47a017aed80f6a3f103364ba562.html#a7d30e47a017aed80f6a3f103364ba562" title="Dispatch compute workgroups in 2D with automatic calculation." alt="" coords="5,69,213,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="248,92,213,92,213,87,248,87"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1VKComputePipeline_abad15296d49631156f0c5f8c6d6ca35b.html#abad15296d49631156f0c5f8c6d6ca35b" title="Dispatch compute workgroups in 3D with automatic calculation." alt="" coords="5,133,213,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="272,115,190,136,189,131,271,110"/>
+</map>

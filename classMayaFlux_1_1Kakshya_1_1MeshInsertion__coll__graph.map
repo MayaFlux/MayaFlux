@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::MeshInsertion" name="MayaFlux::Kakshya::MeshInsertion">
+<area shape="rect" id="Node000001" title="Write counterpart to MeshAccess." alt="" coords="5,288,193,608"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kakshya_1_1VertexLayout.html" title="Complete description of vertex data layout in a buffer." alt="" coords="13,5,186,225"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="102,226,102,271,97,271,97,226"/>
+</map>

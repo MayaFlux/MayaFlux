@@ -1,0 +1,34 @@
+<map id="MayaFlux::Kinesis::Discrete::double_comparator" name="MayaFlux::Kinesis::Discrete::double_comparator">
+<area shape="rect" id="Node000001" title="Direction&#45;based comparator for doubles." alt="" coords="932,231,1143,271"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a344dfa7f9b1b7721dacc8c0c3ea31d24.html#a344dfa7f9b1b7721dacc8c0c3ea31d24" title="Sort a single span in&#45;place." alt="" coords="735,195,884,235"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="918,235,884,229,885,224,919,229"/>
+<area shape="rect" id="Node000013" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a0a6f9abfe9540679f4876539b92c76d6.html#a0a6f9abfe9540679f4876539b92c76d6" title="Indices that would sort a span in the given direction." alt="" coords="735,259,884,314"/>
+<area shape="poly" id="edge12_Node000001_Node000013" title=" " alt="" coords="919,272,885,278,884,272,918,267"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a228de4d084e51b84b80a61e2153d96e7.html#a228de4d084e51b84b80a61e2153d96e7" title="Sort all channels in&#45;place." alt="" coords="510,103,685,143"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="749,192,643,145,646,140,751,187"/>
+<area shape="rect" id="Node000011" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a3cc702d97363dcf9e86313eaa3308af7.html#a3cc702d97363dcf9e86313eaa3308af7" title="Sort a span into a caller&#45;owned output buffer." alt="" coords="508,195,687,235"/>
+<area shape="poly" id="edge10_Node000002_Node000011" title=" " alt="" coords="721,217,687,217,687,212,721,212"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Yantra_a36d84e2b85966327017d25ebdca20625.html#a36d84e2b85966327017d25ebdca20625" title="Universal sort function &#45; returns sorted copy." alt="" coords="269,21,444,61"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="528,100,459,76,423,64,424,59,461,71,530,95"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Yantra_aefd8d29775269d3755674992909e379f.html#aefd8d29775269d3755674992909e379f" title="Universal sort function &#45; returns sorted copy." alt="" coords="269,85,444,125"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="496,118,444,114,445,109,496,113"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_1_1Yantra_ab5e04174c73268eb0ce8a18f9d746e53.html#ab5e04174c73268eb0ce8a18f9d746e53" title="Universal sort function &#45; handles extraction/conversion internally." alt="" coords="269,149,445,189"/>
+<area shape="poly" id="edge8_Node000003_Node000009" title=" " alt="" coords="497,145,445,155,444,150,496,140"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Yantra_a3deb7abab695c99ec7389cc32ef73abc.html#a3deb7abab695c99ec7389cc32ef73abc" title="Convenience function with default algorithm." alt="" coords="22,5,189,45"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="277,84,253,76,204,60,168,48,170,43,206,55,254,71,278,79"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Yantra_1_1StandardSorter_a4354ccfd82da15a220f84dc53a5676e0.html#a4354ccfd82da15a220f84dc53a5676e0" title="Sort data with copy semantics." alt="" coords="5,69,205,109"/>
+<area shape="poly" id="edge6_Node000005_Node000007" title=" " alt="" coords="255,102,205,98,206,93,256,96"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Yantra_1_1StandardSorter_a1ec28359434d38d74bfd4a6e9cd0fe49.html#a1ec28359434d38d74bfd4a6e9cd0fe49" title="Partial sorting implementation." alt="" coords="5,133,205,173"/>
+<area shape="poly" id="edge7_Node000005_Node000008" title=" " alt="" coords="256,127,206,137,205,132,255,122"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Yantra_1_1StandardSorter_ae15eaee8a080129c10acf51df0510867.html#ae15eaee8a080129c10acf51df0510867" title="Sort data in&#45;place." alt="" coords="5,197,205,237"/>
+<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="255,191,206,201,205,196,254,186"/>
+<area shape="rect" id="Node000012" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_af5660221e4f4e3f59c8a6b16985a75ba.html#af5660221e4f4e3f59c8a6b16985a75ba" title="Sort all channels into caller&#45;owned output buffers." alt="" coords="253,213,460,253"/>
+<area shape="poly" id="edge11_Node000011_Node000012" title=" " alt="" coords="494,225,460,228,460,223,494,220"/>
+<area shape="rect" id="Node000014" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a8d34885fd6feb115e7e50107ebb15746.html#a8d34885fd6feb115e7e50107ebb15746" title="Per&#45;channel sort indices." alt="" coords="510,259,685,314"/>
+<area shape="poly" id="edge13_Node000013_Node000014" title=" " alt="" coords="721,289,685,289,685,284,721,284"/>
+<area shape="rect" id="Node000015" href="$namespaceMayaFlux_1_1Yantra_a50bfcff81fce3d8535a738866b9e32ba.html#a50bfcff81fce3d8535a738866b9e32ba" title="Generate sort indices for any ComputeData type." alt="" coords="257,293,457,333"/>
+<area shape="poly" id="edge16_Node000013_Node000015" title=" " alt="" coords="725,321,687,329,628,336,568,337,457,330,457,325,568,332,628,330,686,324,724,315"/>
+<area shape="poly" id="edge14_Node000014_Node000015" title=" " alt="" coords="497,300,457,305,457,300,496,295"/>
+<area shape="rect" id="Node000016" href="$classMayaFlux_1_1Yantra_1_1StandardSorter_a1187d263424d60d6834853aa7230e081.html#a1187d263424d60d6834853aa7230e081" title="Generate sort indices only." alt="" coords="5,293,205,333"/>
+<area shape="poly" id="edge15_Node000015_Node000016" title=" " alt="" coords="243,316,206,316,206,311,243,311"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kriya::NetworkAwaiter" name="MayaFlux::Kriya::NetworkAwaiter">
+<area shape="rect" id="Node000001" title="Awaiter for suspending a coroutine until a network message arrives." alt="" coords="21,279,204,619"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kriya_1_1EventAwaiter.html" title="Abstract base for all event&#45;driven awaiters." alt="" coords="5,5,220,231"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="115,244,115,279,110,279,110,244"/>
+</map>

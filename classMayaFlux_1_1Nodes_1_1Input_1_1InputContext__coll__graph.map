@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Input::InputContext" name="MayaFlux::Nodes::Input::InputContext">
+<area shape="rect" id="Node000001" title="Context for InputNode callbacks &#45; provides input event access." alt="" coords="31,179,199,299"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1NodeContext.html" title="Base context class for node callbacks." alt="" coords="5,5,225,131"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="118,145,118,179,113,179,113,145"/>
+</map>

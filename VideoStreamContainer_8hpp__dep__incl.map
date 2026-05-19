@@ -1,0 +1,22 @@
+<map id="VideoStreamContainer.hpp" name="VideoStreamContainer.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="463,5,659,31"/>
+<area shape="rect" id="Node000002" href="$CameraContainer_8hpp.html" title=" " alt="" coords="172,79,335,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="499,36,304,81,303,76,498,31"/>
+<area shape="rect" id="Node000006" href="$FrameAccessProcessor_8cpp.html" title=" " alt="" coords="359,79,556,104"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="535,41,476,81,473,76,532,36"/>
+<area shape="rect" id="Node000007" href="$VideoFileContainer_8hpp.html" title=" " alt="" coords="581,79,753,104"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="591,36,651,76,648,81,588,41"/>
+<area shape="rect" id="Node000010" href="$VideoStreamContainer_8cpp.html" title=" " alt="" coords="777,79,972,104"/>
+<area shape="poly" id="edge10_Node000001_Node000010" title=" " alt="" coords="625,31,825,76,823,81,624,36"/>
+<area shape="rect" id="Node000003" href="$CameraContainer_8cpp.html" title=" " alt="" coords="5,152,168,177"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="215,112,115,154,113,149,213,107"/>
+<area shape="rect" id="Node000004" href="$CameraReader_8cpp.html" title=" " alt="" coords="193,152,338,177"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="260,117,266,151,261,152,255,118"/>
+<area shape="rect" id="Node000005" href="$IOManager_8cpp.html" title=" " alt="" coords="406,152,525,177"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="301,106,432,149,430,154,299,111"/>
+<area shape="poly" id="edge7_Node000007_Node000005" title=" " alt="" coords="622,111,499,154,497,149,620,106"/>
+<area shape="rect" id="Node000008" href="$VideoFileContainer_8cpp.html" title=" " alt="" coords="571,152,741,177"/>
+<area shape="poly" id="edge8_Node000007_Node000008" title=" " alt="" coords="666,118,660,152,655,151,660,117"/>
+<area shape="rect" id="Node000009" href="$VideoFileReader_8cpp.html" title=" " alt="" coords="765,152,920,177"/>
+<area shape="poly" id="edge9_Node000007_Node000009" title=" " alt="" coords="709,107,815,149,813,154,707,112"/>
+</map>

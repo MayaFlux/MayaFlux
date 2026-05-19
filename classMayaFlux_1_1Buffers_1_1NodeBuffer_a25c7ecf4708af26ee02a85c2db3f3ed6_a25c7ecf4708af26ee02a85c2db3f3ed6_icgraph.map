@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::NodeBuffer::create_default_processor" name="MayaFlux::Buffers::NodeBuffer::create_default_processor">
+<area shape="rect" id="Node000001" title="Creates the default processor for this buffer type." alt="" coords="269,5,467,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1NodeBuffer_a376318bfa01227fab29dd517ba160ed8.html#a376318bfa01227fab29dd517ba160ed8" title="Sets up audio processors for the specified processing token." alt="" coords="5,13,221,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="256,35,221,35,221,30,256,30"/>
+</map>

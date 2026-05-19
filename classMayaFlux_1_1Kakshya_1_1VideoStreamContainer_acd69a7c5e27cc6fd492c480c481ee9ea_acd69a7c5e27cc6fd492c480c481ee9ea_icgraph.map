@@ -1,0 +1,24 @@
+<map id="MayaFlux::Kakshya::VideoStreamContainer::get_frame_byte_size" name="MayaFlux::Kakshya::VideoStreamContainer::get_frame_byte_size">
+<area shape="rect" id="Node000001" title="Get the total byte size of one frame (width * height * channels)." alt="" coords="1395,149,1564,203"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1CameraContainer_a9e3ec9cdb305962ff63fec2551149e6b.html#a9e3ec9cdb305962ff63fec2551149e6b" title="Construct a CameraContainer with specified resolution." alt="" coords="1088,5,1347,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1444,141,1399,99,1345,61,1315,48,1317,43,1348,56,1403,95,1447,137"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1VideoFileReader_a06dbdf6b0f46662e6787d74f094e96dd.html#a06dbdf6b0f46662e6787d74f094e96dd" title="Decode up to batch_size frames starting at m_decode_head." alt="" coords="817,149,1040,189"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="1389,210,1347,219,1275,228,1217,231,1160,228,1088,219,1033,207,983,192,984,187,1034,202,1088,213,1161,223,1217,226,1274,223,1346,213,1388,204"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_a9e5b883b500963e343de6fe357520f45.html#a9e5b883b500963e343de6fe357520f45" title="Get raw pixel data for a single frame as uint8_t span." alt="" coords="1133,149,1302,203"/>
+<area shape="poly" id="edge9_Node000001_Node000008" title=" " alt="" coords="1381,179,1302,179,1302,173,1381,173"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_a26041c92754b0feb5214c3b34c1f0765.html#a26041c92754b0feb5214c3b34c1f0765" title="Mutable pointer into m_data[0] for the decode thread to write into." alt="" coords="1133,70,1302,125"/>
+<area shape="poly" id="edge10_Node000001_Node000009" title=" " alt="" coords="1381,149,1302,125,1303,120,1382,144"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_aa5c16c61c3e6cc0ed20dc12f06b0f32a.html#aa5c16c61c3e6cc0ed20dc12f06b0f32a" title="Allocate m_data[0] as a ring of ring_capacity frames." alt="" coords="1133,279,1302,334"/>
+<area shape="poly" id="edge12_Node000001_Node000010" title=" " alt="" coords="1430,214,1348,262,1303,282,1301,277,1345,258,1427,209"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1VideoFileReader_a954440a576c3a9d5ff91202c4c62fb2c.html#a954440a576c3a9d5ff91202c4c62fb2c" title=" " alt="" coords="547,149,769,189"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="804,172,770,172,770,167,804,167"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1IO_1_1VideoFileReader_a78b6b19d6d9126250ded73ea4b7b6629.html#a78b6b19d6d9126250ded73ea4b7b6629" title="Load file data into an existing container." alt="" coords="5,105,228,145"/>
+<area shape="poly" id="edge7_Node000003_Node000006" title=" " alt="" coords="829,149,769,140,623,128,477,123,228,124,228,119,477,118,623,123,770,135,830,144"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1IO_1_1VideoFileReader_a67253a8d5bd744aa898d4f44b6814c95.html#a67253a8d5bd744aa898d4f44b6814c95" title="Seek to a specific position in the file." alt="" coords="5,181,228,221"/>
+<area shape="poly" id="edge8_Node000003_Node000007" title=" " alt="" coords="831,195,770,204,623,214,477,217,228,211,228,205,477,211,623,209,769,199,831,189"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1IO_1_1VideoFileReader_a12ac2bea1489c574b3eedb216bb1d18c.html#a12ac2bea1489c574b3eedb216bb1d18c" title=" " alt="" coords="276,149,499,189"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="533,172,499,172,499,167,533,167"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="262,152,228,146,229,141,263,146"/>
+<area shape="poly" id="edge6_Node000005_Node000007" title=" " alt="" coords="263,187,228,191,228,186,262,181"/>
+<area shape="poly" id="edge11_Node000009_Node000003" title=" " alt="" coords="1120,124,1010,152,1009,147,1119,119"/>
+</map>

@@ -1,0 +1,14 @@
+<map id="MayaFlux::Kinesis::Discrete::apply_convolution" name="MayaFlux::Kinesis::Discrete::apply_convolution">
+<area shape="rect" id="Node000001" title="Core FFT convolution engine." alt="" coords="463,125,665,165"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_ac727a7f1a3f0c072ad302a5c2bce47da.html#ac727a7f1a3f0c072ad302a5c2bce47da" title="Auto&#45;correlation via FFT." alt="" coords="234,29,413,69"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="505,122,414,84,382,72,384,67,416,79,507,117"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_ad198e18ab143cb64de400539711c5020.html#ad198e18ab143cb64de400539711c5020" title="Linear FFT convolution." alt="" coords="249,93,398,133"/>
+<area shape="poly" id="edge3_Node000001_Node000003" title=" " alt="" coords="449,133,398,126,398,121,450,127"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a1ee7311abf376531fbc49bee9c7febb9.html#a1ee7311abf376531fbc49bee9c7febb9" title="Cross&#45;correlation via FFT." alt="" coords="232,157,415,197"/>
+<area shape="poly" id="edge4_Node000001_Node000004" title=" " alt="" coords="449,163,415,168,415,163,449,158"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a28cd7efe30c0272352870ba2b7562d55.html#a28cd7efe30c0272352870ba2b7562d55" title="Frequency&#45;domain deconvolution with Tikhonov regularisation." alt="" coords="244,221,403,261"/>
+<area shape="poly" id="edge6_Node000001_Node000006" title=" " alt="" coords="507,173,416,212,384,224,382,219,414,207,505,169"/>
+<area shape="poly" id="edge2_Node000002_Node000002" title=" " alt="" coords="362,18,348,11,323,8,302,10,288,15,284,21,286,28,281,30,278,20,285,10,300,5,323,3,350,6,364,13"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_ae20bf8e05bc172b3e994128a936523ae.html#ae20bf8e05bc172b3e994128a936523ae" title="Matched filter (normalised cross&#45;correlation)" alt="" coords="5,157,184,197"/>
+<area shape="poly" id="edge5_Node000004_Node000005" title=" " alt="" coords="218,180,184,180,184,175,218,175"/>
+</map>

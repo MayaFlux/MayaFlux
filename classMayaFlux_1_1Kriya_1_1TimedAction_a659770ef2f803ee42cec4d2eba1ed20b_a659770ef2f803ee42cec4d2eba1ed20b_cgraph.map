@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kriya::TimedAction::cancel" name="MayaFlux::Kriya::TimedAction::cancel">
+<area shape="rect" id="Node000001" title="Cancels any active action." alt="" coords="5,5,224,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kriya_1_1Timer_af3c122d5e399123a2d7a58e23269e8ad.html#af3c122d5e399123a2d7a58e23269e8ad" title="Cancels any scheduled callback." alt="" coords="272,5,447,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="224,23,258,23,258,28,224,28"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_aefd214af5e476f686dc86cc7d7220c96.html#aefd214af5e476f686dc86cc7d7220c96" title="Cancels and removes a task from the scheduler." alt="" coords="495,5,725,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="447,23,481,23,481,28,447,28"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_afb823dfb8ca7ec5182cfaa8e3ee93649.html#afb823dfb8ca7ec5182cfaa8e3ee93649" title="Find task entry by routine pointer." alt="" coords="773,5,1004,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="726,23,760,23,760,28,726,28"/>
+</map>

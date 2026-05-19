@@ -1,0 +1,37 @@
+<map id="MayaFlux::Core::BackendResourceManager::upload_image_data" name="MayaFlux::Core::BackendResourceManager::upload_image_data">
+<area shape="rect" id="Node000001" title="Upload data to an image (creates staging buffer internally)" alt="" coords="5,67,252,107"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1BackendResourceManager_a0db85a56fc0aa2720febc7f3e8c3dbf9.html#a0db85a56fc0aa2720febc7f3e8c3dbf9" title="Cleanup a buffer and release associated resources." alt="" coords="300,35,547,75"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="252,71,286,67,287,72,252,76"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1VKContext_a41228db586851246809c40f704b64292.html#a41228db586851246809c40f704b64292" title="Get logical device." alt="" coords="618,5,818,45"/>
+<area shape="poly" id="edge11_Node000001_Node000003" title=" " alt="" coords="170,64,230,39,299,20,378,10,458,6,604,11,604,16,458,11,379,15,301,25,232,44,172,69"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Core_1_1BackendResourceManager_a5dcf25547288ef33225a71929a05c358.html#a5dcf25547288ef33225a71929a05c358" title="Execute immediate command recording for buffer operations." alt="" coords="300,237,547,291"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="165,105,367,227,364,232,162,109"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Core_1_1BackendResourceManager_ad1bfc97eb921df611d3503d11e6e2347.html#ad1bfc97eb921df611d3503d11e6e2347" title="Initialize a buffer for use with the graphics backend." alt="" coords="300,99,547,139"/>
+<area shape="poly" id="edge12_Node000001_Node000012" title=" " alt="" coords="252,97,287,101,286,106,252,103"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="547,40,604,34,604,39,547,45"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1VKDevice_ac91623c4b7b52f1f5f7460ef91021583.html#ac91623c4b7b52f1f5f7460ef91021583" title="Get logical device handle." alt="" coords="920,5,1115,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="818,23,906,23,906,28,818,28"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Core_1_1VKCommandManager_a8e859b77baae66a4cad3578d2a863f76.html#a8e859b77baae66a4cad3578d2a863f76" title="Begin single&#45;time command (for transfers, etc.)" alt="" coords="610,198,826,253"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="546,245,596,239,597,244,547,250"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Core_1_1VKCommandManager_a37f459a66acc77d0b833ab5a993f8253.html#a37f459a66acc77d0b833ab5a993f8253" title="End and submit single&#45;time command." alt="" coords="610,277,826,331"/>
+<area shape="poly" id="edge7_Node000005_Node000008" title=" " alt="" coords="547,278,597,285,596,290,546,283"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Core_1_1VKContext_a87b4589aa8858027f09e7370552b4d50.html#a87b4589aa8858027f09e7370552b4d50" title="Get graphics queue." alt="" coords="618,356,818,396"/>
+<area shape="poly" id="edge9_Node000005_Node000010" title=" " alt="" coords="478,289,534,316,596,342,620,350,618,355,594,346,532,321,475,294"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Core_1_1VKCommandManager_ab25f2104b7f013fca0c7876ade0632b5.html#ab25f2104b7f013fca0c7876ade0632b5" title="Allocate a command buffer with specified level." alt="" coords="889,205,1145,245"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="826,223,876,223,876,228,826,228"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Core_1_1VKCommandManager_a59f7b69e5c3f53d77c1c5e8f2e206d89.html#a59f7b69e5c3f53d77c1c5e8f2e206d89" title="Free a command buffer back to the pool." alt="" coords="902,284,1133,324"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="826,301,888,301,888,307,826,307"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Core_1_1VKDevice_af1941d43ae76316ef044a61450e7aa1c.html#af1941d43ae76316ef044a61450e7aa1c" title="Get graphics queue." alt="" coords="920,356,1115,396"/>
+<area shape="poly" id="edge10_Node000010_Node000011" title=" " alt="" coords="818,373,906,373,906,379,818,379"/>
+<area shape="poly" id="edge16_Node000012_Node000003" title=" " alt="" coords="513,96,546,84,569,70,593,55,614,47,615,52,596,60,572,74,548,89,515,101"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Core_1_1BackendResourceManager_ab4e39f5b542838628a267c0cfe94dba4.html#ab4e39f5b542838628a267c0cfe94dba4" title="Find a suitable memory type for Vulkan buffer allocation." alt="" coords="595,69,841,109"/>
+<area shape="poly" id="edge13_Node000012_Node000013" title=" " alt="" coords="547,104,581,100,581,106,547,109"/>
+<area shape="rect" id="Node000016" href="$namespaceMayaFlux_1_1Kakshya_aedc3538e77f59c4a4d91df28e181d066.html#aedc3538e77f59c4a4d91df28e181d066" title="Convert DataModality enum to string representation." alt="" coords="639,133,797,173"/>
+<area shape="poly" id="edge17_Node000012_Node000016" title=" " alt="" coords="547,131,625,140,624,145,546,136"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1Core_1_1VKContext_abb26eca0db297f0a9545aee095450aa1.html#abb26eca0db297f0a9545aee095450aa1" title="Get physical device." alt="" coords="917,69,1117,109"/>
+<area shape="poly" id="edge14_Node000013_Node000014" title=" " alt="" coords="842,87,903,87,903,92,842,92"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1Core_1_1VKDevice_a094d1ed720c72ced04293743f4b2a63e.html#a094d1ed720c72ced04293743f4b2a63e" title="Get physical device handle." alt="" coords="1193,69,1388,109"/>
+<area shape="poly" id="edge15_Node000014_Node000015" title=" " alt="" coords="1118,87,1180,87,1180,92,1118,92"/>
+<area shape="rect" id="Node000017" href="$namespaceMayaFlux_1_1Reflect_aad91118cbd25bd9e35a3ced9aa4e6dbd.html#aad91118cbd25bd9e35a3ced9aa4e6dbd" title="Universal enum to string converter using magic_enum (original case)" alt="" coords="944,133,1091,173"/>
+<area shape="poly" id="edge18_Node000016_Node000017" title=" " alt="" coords="798,151,930,151,930,156,798,156"/>
+</map>

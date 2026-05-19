@@ -1,0 +1,13 @@
+<map id="MayaFlux::Buffers::NodeSourceProcessor::processing_function" name="MayaFlux::Buffers::NodeSourceProcessor::processing_function">
+<area shape="rect" id="Node000001" title="Captures node computation output into a buffer." alt="" coords="5,27,168,82"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Buffers_aaa0a91ed33cd8bedc7d3b7b3c0b8c28e.html#aaa0a91ed33cd8bedc7d3b7b3c0b8c28e" title="Apply node output to an existing buffer with mixing." alt="" coords="216,35,439,75"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="169,52,202,52,202,57,169,57"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_aeeb5db3214dcd90b0778eea361e62276.html#aeeb5db3214dcd90b0778eea361e62276" title="Mix multiple data streams with equal weighting." alt="" coords="538,13,657,38"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="439,40,524,31,525,36,439,45"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Buffers_ae642092d63445f1884326aba3d9b5189.html#ae642092d63445f1884326aba3d9b5189" title="Wait for an active snapshot context to complete using exponential backoff." alt="" coords="487,63,708,103"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="439,64,473,67,473,72,439,69"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_aec6eff0979aee0842a5ba73791661498.html#aec6eff0979aee0842a5ba73791661498" title="Apply gain to single&#45;channel data (in&#45;place)" alt="" coords="756,13,921,38"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="657,23,742,23,742,28,657,28"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a39951ce0e888e4fd53ac687cdf41f2a6.html#a39951ce0e888e4fd53ac687cdf41f2a6" title="Linear map y = a*x + b applied in&#45;place." alt="" coords="969,5,1119,45"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="922,23,956,23,956,28,922,28"/>
+</map>

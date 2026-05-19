@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::GpuSync::ComputeOutNode" name="MayaFlux::Nodes::GpuSync::ComputeOutNode">
+<area shape="rect" id="Node000001" title="Node that reads back data from GPU buffer to CPU." alt="" coords="8,1051,200,1391"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GpuSync.html" title=" " alt="" coords="8,803,200,1003"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="107,1016,107,1050,101,1050,101,1016"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Node.html" title="Base interface for all computational processing nodes." alt="" coords="5,5,203,755"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="107,768,107,802,101,802,101,768"/>
+</map>

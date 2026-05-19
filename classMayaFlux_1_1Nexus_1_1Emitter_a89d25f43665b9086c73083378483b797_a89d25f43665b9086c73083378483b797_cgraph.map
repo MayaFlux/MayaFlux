@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nexus::Emitter::render" name="MayaFlux::Nexus::Emitter::render">
+<area shape="rect" id="Node000001" title="Register a render output targeting window." alt="" coords="5,5,196,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Nexus_a3b46922802eb5b5bae9ae0d7c830af7e.html#a3b46922802eb5b5bae9ae0d7c830af7e" title="Create and register a render sink targeting window." alt="" coords="244,5,411,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="196,23,230,23,230,28,196,28"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1BufferManager_af51cd72c5f1d259a03a3e82371e55bab.html#af51cd72c5f1d259a03a3e82371e55bab" title="Adds a buffer to a token and channel." alt="" coords="459,5,653,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="411,23,445,23,445,28,411,28"/>
+</map>

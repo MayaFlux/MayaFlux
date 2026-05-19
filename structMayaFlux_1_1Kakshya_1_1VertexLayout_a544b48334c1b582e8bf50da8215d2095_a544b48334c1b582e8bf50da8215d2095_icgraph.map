@@ -1,0 +1,17 @@
+<map id="MayaFlux::Kakshya::VertexLayout::modality_size_bytes" name="MayaFlux::Kakshya::VertexLayout::modality_size_bytes">
+<area shape="rect" id="Node000001" title="Get size in bytes for a given modality Mirrors VKBuffer::get_format() logic." alt="" coords="968,98,1143,153"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kakshya_1_1VertexLayout_a69d6a400c22a219150d8b28007441d5d.html#a69d6a400c22a219150d8b28007441d5d" title="Helper: compute stride from attributes if not explicitly set." alt="" coords="747,98,920,153"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="955,128,920,128,920,123,955,123"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_a16b3cbfb638d1ce2063d8b9436faf7ec.html#a16b3cbfb638d1ce2063d8b9436faf7ec" title="Set vertex layout for this buffer." alt="" coords="543,98,699,153"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="733,128,699,128,699,123,733,123"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1TextureBuffer_ad4dfd30af6ecb53741917052bf839ccb.html#ad4dfd30af6ecb53741917052bf839ccb" title=" " alt="" coords="303,58,477,113"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="528,112,477,103,478,98,529,107"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1NodeTextureBuffer_ac0b2d907cfdd660dec29065570f5f479.html#ac0b2d907cfdd660dec29065570f5f479" title=" " alt="" coords="285,137,495,191"/>
+<area shape="poly" id="edge6_Node000003_Node000007" title=" " alt="" coords="529,143,495,149,494,144,528,138"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1TextureBuffer_ac591a11585eecc22824a7411e4f02dab.html#ac591a11585eecc22824a7411e4f02dab" title="Create texture buffer with dimensions." alt="" coords="19,5,223,45"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="289,65,211,48,212,43,290,60"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1TextureBuffer_a3653b902b83109d353d43bc4c8389e2a.html#a3653b902b83109d353d43bc4c8389e2a" title="Reset to default fullscreen quad Uses position and scale to generate quad geometry." alt="" coords="5,69,237,109"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="289,90,238,90,238,85,289,84"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Buffers_1_1NodeTextureBuffer_ac67634c77e2bdb1c6e7c6f5bceb492c1.html#ac67634c77e2bdb1c6e7c6f5bceb492c1" title="Initialize the buffer, create GPU texture, and setup processors." alt="" coords="28,137,215,191"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="271,167,215,167,215,161,271,161"/>
+</map>

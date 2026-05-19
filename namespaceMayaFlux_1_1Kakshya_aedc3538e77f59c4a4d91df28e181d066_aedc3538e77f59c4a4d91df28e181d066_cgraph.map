@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::modality_to_string" name="MayaFlux::Kakshya::modality_to_string">
+<area shape="rect" id="Node000001" title="Convert DataModality enum to string representation." alt="" coords="5,5,164,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Reflect_aad91118cbd25bd9e35a3ced9aa4e6dbd.html#aad91118cbd25bd9e35a3ced9aa4e6dbd" title="Universal enum to string converter using magic_enum (original case)" alt="" coords="212,5,359,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="164,23,198,23,198,28,164,28"/>
+</map>

@@ -1,0 +1,11 @@
+<map id="MayaFlux::Kriya::SamplingPipeline::rebuild_for" name="MayaFlux::Kriya::SamplingPipeline::rebuild_for">
+<area shape="rect" id="Node000001" title="Stop and restart pipeline execution for a bounded duration." alt="" coords="5,69,203,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferManager_a3bde00b55d1c51844c87ea9586d77ddd.html#a3bde00b55d1c51844c87ea9586d77ddd" title="Gets the buffer size for a token." alt="" coords="255,5,481,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="187,67,271,46,273,51,188,72"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1BufferManager_a77279dfca7cc5c72b43630c044014151.html#a77279dfca7cc5c72b43630c044014151" title="Gets the sample rate for a token (audio&#45;specific)" alt="" coords="251,69,485,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="203,87,237,87,237,92,203,92"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Vruta_ac26186528d64b469a4c6b56cc8212852.html#ac26186528d64b469a4c6b56cc8212852" title="Convert seconds to number of processing blocks." alt="" coords="273,133,463,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="188,107,273,128,271,133,187,112"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Vruta_a7177bcc99955f63b0ee314154a6d4de4.html#a7177bcc99955f63b0ee314154a6d4de4" title="Convert seconds to samples at a given sample rate." alt="" coords="533,133,724,173"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="464,151,520,151,520,156,464,156"/>
+</map>

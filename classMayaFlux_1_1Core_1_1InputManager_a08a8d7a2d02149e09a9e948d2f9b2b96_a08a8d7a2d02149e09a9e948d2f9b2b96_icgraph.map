@@ -1,0 +1,15 @@
+<map id="MayaFlux::Core::InputManager::register_node" name="MayaFlux::Core::InputManager::register_node">
+<area shape="rect" id="Node000001" title="Register a node to receive input." alt="" coords="595,69,817,109"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_a020579332529de276f3dac3895d084f0.html#a020579332529de276f3dac3895d084f0" title="Register an input node with specified binding." alt="" coords="403,69,547,109"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="581,92,547,92,547,87,581,87"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Creator_a3f13054bc7cb54e7fe398d590a394354.html#a3f13054bc7cb54e7fe398d590a394354" title="Create and register HID input node." alt="" coords="204,5,355,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="399,67,340,48,342,43,401,62"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Creator_ac8f6b05c2d93b495ff3e853809a63848.html#ac8f6b05c2d93b495ff3e853809a63848" title="Create and register MIDI input node." alt="" coords="204,69,355,109"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="389,92,355,92,355,87,389,87"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Creator_a8d951e8e341c68c8bb93dda2e208965c.html#a8d951e8e341c68c8bb93dda2e208965c" title="Create and register OSC input node." alt="" coords="204,133,355,173"/>
+<area shape="poly" id="edge6_Node000002_Node000006" title=" " alt="" coords="401,116,342,136,340,131,399,111"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Creator_a0239b7b00b9af2304fc807745e38e182.html#a0239b7b00b9af2304fc807745e38e182" title="Create and register generic input node." alt="" coords="5,69,156,109"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="204,52,144,72,142,67,203,47"/>
+<area shape="poly" id="edge5_Node000005_Node000004" title=" " alt="" coords="191,92,156,92,156,87,191,87"/>
+<area shape="poly" id="edge7_Node000006_Node000004" title=" " alt="" coords="203,132,142,112,144,107,204,127"/>
+</map>

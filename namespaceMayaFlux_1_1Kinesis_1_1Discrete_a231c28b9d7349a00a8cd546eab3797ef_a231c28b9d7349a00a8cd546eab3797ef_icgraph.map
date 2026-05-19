@@ -1,0 +1,8 @@
+<map id="MayaFlux::Kinesis::Discrete::spectral_energy" name="MayaFlux::Kinesis::Discrete::spectral_energy">
+<area shape="rect" id="Node000001" title="Spectral energy per window using Hann&#45;windowed FFT." alt="" coords="536,29,724,69"/>
+<area shape="poly" id="edge3_Node000001_Node000001" title=" " alt="" coords="670,18,656,11,630,8,607,10,594,15,589,21,591,28,586,30,584,20,591,10,606,5,630,3,657,6,672,13"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Yantra_addfb108021a96dcae681d71feff6874a.html#addfb108021a96dcae681d71feff6874a" title=" " alt="" coords="300,29,488,69"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="522,52,488,52,488,47,522,47"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1FeatureExtractor_a6625311b756518d90e3d5ef2e4125e10.html#a6625311b756518d90e3d5ef2e4125e10" title="Core extraction implementation &#45; delegates to ExtractionHelper." alt="" coords="5,29,252,69"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="286,52,252,52,252,47,286,47"/>
+</map>

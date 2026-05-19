@@ -1,0 +1,21 @@
+<map id="MayaFlux::Kakshya::VideoStreamContainer" name="MayaFlux::Kakshya::VideoStreamContainer">
+<area shape="rect" id="Node000001" title="Concrete base implementation for streaming video containers." alt="" coords="524,1743,735,2317"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1StreamContainer.html" title="Data&#45;driven interface for temporal stream containers with navigable read position." alt="" coords="124,1151,313,1431"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="247,1443,279,1562,301,1622,328,1679,371,1749,421,1816,474,1877,526,1930,522,1934,470,1880,417,1819,366,1752,323,1681,296,1624,274,1563,241,1445"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1SignalSourceContainer.html" title="Data&#45;driven interface for managing arbitrary processable signal sources." alt="" coords="113,447,324,727"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="221,741,221,1151,216,1151,216,741"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1NDDataContainer.html" title="Abstract interface for N&#45;dimensional data containers." alt="" coords="5,5,187,300"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="144,312,182,446,177,447,139,314"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="211,113,471,193"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="329,207,261,447,256,445,324,205"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Kakshya_1_1ContainerDataStructure.html" title="Container structure for consistent dimension ordering." alt="" coords="337,901,529,1680"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="523,1679,533,1718,536,1727,530,1728,528,1719,518,1681"/>
+<area shape="rect" id="Node000007" href="$structMayaFlux_1_1Kakshya_1_1Region.html" title="Represents a point or span in N&#45;dimensional space." alt="" coords="554,1071,705,1511"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="632,1511,632,1726,627,1726,627,1511"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Memory_1_1RingBuffer.html" title=" " alt="" coords="729,1061,1001,1521"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="808,1522,749,1719,743,1739,738,1738,744,1718,803,1520"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Memory_1_1RingBuffer.html" title="Policy&#45;driven unified circular buffer implementation." alt="" coords="732,349,999,824"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="868,838,868,1060,863,1060,863,838"/>
+<area shape="rect" id="Node000010" href="$structMayaFlux_1_1Registry_1_1Service_1_1IOService.html" title="Backend IO streaming service interface." alt="" coords="1026,1241,1166,1341"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="1098,1341,1092,1411,1079,1499,1055,1592,1037,1638,1016,1681,989,1723,959,1763,891,1836,819,1901,750,1954,747,1949,816,1896,887,1833,955,1759,985,1720,1011,1679,1032,1636,1050,1591,1074,1498,1087,1410,1092,1341"/>
+</map>

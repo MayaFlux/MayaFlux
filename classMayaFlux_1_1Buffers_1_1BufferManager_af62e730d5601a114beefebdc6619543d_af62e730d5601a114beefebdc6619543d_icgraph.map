@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::BufferManager::get_active_tokens" name="MayaFlux::Buffers::BufferManager::get_active_tokens">
+<area shape="rect" id="Node000001" title="Gets all currently active processing tokens." alt="" coords="255,5,449,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Inspector_a1687b4aba0bea855ff4ee24ad423585f.html#a1687b4aba0bea855ff4ee24ad423585f" title="Inspect the full BufferManager state across all active tokens." alt="" coords="5,13,207,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="241,35,207,35,207,30,241,30"/>
+</map>

@@ -1,0 +1,12 @@
+<map id="MayaFlux::Portal::Text::lay_out" name="MayaFlux::Portal::Text::lay_out">
+<area shape="rect" id="Node000001" title="Lay out a UTF&#45;8 string into a sequence of screen&#45;space quads." alt="" coords="5,39,172,79"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Text_1_1GlyphAtlas_acd3a40ac86a5630200940400072dccfa.html#acd3a40ac86a5630200940400072dccfa" title="Return metrics for a glyph, rasterizing it into the atlas if needed." alt="" coords="220,8,435,48"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="172,45,206,41,207,46,173,51"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Text_1_1GlyphAtlas_abcf654455e02ba66cb60f60dc3aa6880.html#abcf654455e02ba66cb60f60dc3aa6880" title="Line advance in pixels for this atlas&#39;s pixel_size." alt="" coords="483,69,664,109"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="172,61,469,80,469,85,172,67"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Text_1_1GlyphAtlas_acf50eee0b2cefa0a2a03d4de8720e36f.html#acf50eee0b2cefa0a2a03d4de8720e36f" title=" " alt="" coords="490,5,657,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="435,24,476,24,476,29,435,30"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Text_1_1FontFace_accda82c104b9bee41559e89f118f5e5f.html#accda82c104b9bee41559e89f118f5e5f" title="Raw FT_Face handle for use by GlyphAtlas." alt="" coords="712,37,879,77"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="657,35,699,41,698,46,657,40"/>
+<area shape="poly" id="edge5_Node000005_Node000004" title=" " alt="" coords="664,74,698,69,699,74,665,79"/>
+</map>

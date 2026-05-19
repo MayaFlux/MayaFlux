@@ -1,0 +1,19 @@
+<map id="MayaFlux::Nodes::GpuSync::TopologyGeneratorNode::regenerate_topology" name="MayaFlux::Nodes::GpuSync::TopologyGeneratorNode::regenerate_topology">
+<area shape="rect" id="Node000001" title="Manually trigger connection regeneration." alt="" coords="280,268,480,323"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1TopologyGeneratorNode_a2240b9a4d8c97458156fb4713fadc71c.html#a2240b9a4d8c97458156fb4713fadc71c" title="Add point to topology." alt="" coords="19,5,219,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="360,257,339,214,310,166,274,117,230,75,211,62,214,58,234,71,278,113,314,163,343,212,365,254"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1TopologyGeneratorNode_af9c8d85b43ba64f4a5aac89723de7cea.html#af9c8d85b43ba64f4a5aac89723de7cea" title="Clear all points and connections." alt="" coords="5,85,232,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="350,258,299,196,267,165,231,139,207,127,209,122,233,134,270,161,303,193,354,255"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1TopologyGeneratorNode_a42ef2cb6feba9dab5bd65edac8c424b2.html#a42ef2cb6feba9dab5bd65edac8c424b2" title="Remove point by index." alt="" coords="19,149,219,204"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="320,263,231,218,203,207,205,202,233,213,322,259"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1TopologyGeneratorNode_a9e05033bd389477db9279fe5cc04bdab.html#a9e05033bd389477db9279fe5cc04bdab" title="Set connection mode." alt="" coords="19,228,219,283"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="266,281,218,273,219,268,267,275"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1TopologyGeneratorNode_ae595708c4672bbdc0ea8f90a02387dde.html#ae595708c4672bbdc0ea8f90a02387dde" title="Set radius for RADIUS_THRESHOLD mode." alt="" coords="19,307,219,361"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="267,315,219,322,218,317,266,309"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1TopologyGeneratorNode_a572a123b3a5157e8f4937bbc7c24dfd4.html#a572a123b3a5157e8f4937bbc7c24dfd4" title="Set K parameter for K_NEAREST mode." alt="" coords="19,385,219,440"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="320,332,233,375,202,388,200,383,231,370,317,327"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1TopologyGeneratorNode_a7bc9e8f89d33de2d00fa42a4f435fd4b.html#a7bc9e8f89d33de2d00fa42a4f435fd4b" title="Set all points at once." alt="" coords="19,464,219,519"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="353,335,302,395,269,426,233,454,211,466,208,462,231,449,266,422,298,392,349,332"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1TopologyGeneratorNode_aca1bea40a1f21f09bd452e9add38ea9b.html#aca1bea40a1f21f09bd452e9add38ea9b" title="Update point data." alt="" coords="19,543,219,597"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="366,337,345,382,316,434,279,486,234,532,215,545,212,540,230,528,275,483,312,431,340,379,361,335"/>
+</map>

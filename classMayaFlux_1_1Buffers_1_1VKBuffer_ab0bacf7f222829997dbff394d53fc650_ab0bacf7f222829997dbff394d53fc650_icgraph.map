@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::VKBuffer::mark_dirty_range" name="MayaFlux::Buffers::VKBuffer::mark_dirty_range">
+<area shape="rect" id="Node000001" title="Get device memory handle." alt="" coords="201,37,404,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_a1c3e0f6c292516efd5f5364ba7a14fa8.html#a1c3e0f6c292516efd5f5364ba7a14fa8" title="Resize buffer and recreate GPU resources if needed." alt="" coords="5,5,153,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="187,44,154,39,154,33,188,38"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_ae22f33ecea5953e1b819bbd36db3114c.html#ae22f33ecea5953e1b819bbd36db3114c" title="Write data into the buffer." alt="" coords="5,69,153,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="188,76,154,81,154,76,187,71"/>
+</map>

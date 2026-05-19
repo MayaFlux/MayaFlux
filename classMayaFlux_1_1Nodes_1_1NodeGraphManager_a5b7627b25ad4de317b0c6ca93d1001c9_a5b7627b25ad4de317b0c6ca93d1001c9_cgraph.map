@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::NodeGraphManager::unset_channel_mask" name="MayaFlux::Nodes::NodeGraphManager::unset_channel_mask">
+<area shape="rect" id="Node000001" title="Unsets the specified channel mask from a node&#39;s global registration." alt="" coords="5,5,229,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_a4cd923129ef6f6c0b41c9900f81f3e7d.html#a4cd923129ef6f6c0b41c9900f81f3e7d" title="Unregisters a node globally." alt="" coords="277,5,493,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="230,23,264,23,264,28,230,28"/>
+</map>

@@ -1,0 +1,19 @@
+<map id="MayaFlux::IO::VideoFileReader::decode_thread_func" name="MayaFlux::IO::VideoFileReader::decode_thread_func">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,131,228,171"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1VideoFileReader_a06dbdf6b0f46662e6787d74f094e96dd.html#a06dbdf6b0f46662e6787d74f094e96dd" title="Decode up to batch_size frames starting at m_decode_head." alt="" coords="276,131,499,171"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="228,149,262,149,262,154,228,154"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_aee686a4ac3fd58dac2c142f6388c31e2.html#aee686a4ac3fd58dac2c142f6388c31e2" title="Publish a decoded frame." alt="" coords="557,5,727,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="425,129,546,69,559,63,561,68,548,74,428,133"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_acd69a7c5e27cc6fd492c480c481ee9ea.html#acd69a7c5e27cc6fd492c480c481ee9ea" title="Get the total byte size of one frame (width * height * channels)." alt="" coords="785,195,955,249"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="420,169,477,201,512,216,547,227,604,237,663,240,772,234,772,240,663,245,604,242,546,233,510,221,475,206,417,174"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_ad3bf57ef175a27594bc76e90767acf59.html#ad3bf57ef175a27594bc76e90767acf59" title=" " alt="" coords="547,163,737,217"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="499,166,534,171,533,176,498,171"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_a26041c92754b0feb5214c3b34c1f0765.html#a26041c92754b0feb5214c3b34c1f0765" title="Mutable pointer into m_data[0] for the decode thread to write into." alt="" coords="557,84,727,139"/>
+<area shape="poly" id="edge7_Node000002_Node000008" title=" " alt="" coords="498,131,543,124,544,129,499,136"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_aa25d1fa23ecc67bed538b4e281f95c7c.html#aa25d1fa23ecc67bed538b4e281f95c7c" title="Advance the container&#39;s view of how many frames have been decoded." alt="" coords="785,5,955,60"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="727,30,772,30,772,35,727,35"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_ac5764b3010fc7824fd6b5da810d65f50.html#ac5764b3010fc7824fd6b5da810d65f50" title=" " alt="" coords="785,84,955,139"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="723,58,778,77,776,82,721,63"/>
+<area shape="poly" id="edge9_Node000008_Node000005" title=" " alt="" coords="727,109,772,109,772,114,727,114"/>
+<area shape="poly" id="edge8_Node000008_Node000006" title=" " alt="" coords="714,136,739,148,811,185,808,190,736,152,711,141"/>
+</map>

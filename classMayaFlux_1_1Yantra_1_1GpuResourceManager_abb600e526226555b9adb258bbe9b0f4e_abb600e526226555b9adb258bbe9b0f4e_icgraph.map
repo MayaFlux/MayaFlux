@@ -1,0 +1,7 @@
+<map id="MayaFlux::Yantra::GpuResourceManager::is_ready" name="MayaFlux::Yantra::GpuResourceManager::is_ready">
+<area shape="rect" id="Node000001" title=" " alt="" coords="279,37,507,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1GpuDispatchCore_a8f1830a9946ac5ab0568192027de1d1b.html#a8f1830a9946ac5ab0568192027de1d1b" title="Ensure GPU resources are initialised." alt="" coords="5,5,231,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="265,45,231,41,231,36,265,40"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1GpuDispatchCore_a29130611263d7189221ba657fa192a9d.html#a29130611263d7189221ba657fa192a9d" title="Query GPU readiness without attempting initialisation." alt="" coords="5,69,231,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="265,75,231,79,231,74,265,70"/>
+</map>

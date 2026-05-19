@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::GLFWSingleton::initialize" name="MayaFlux::Core::GLFWSingleton::initialize">
+<area shape="rect" id="Node000001" title="Initializes the GLFW library if not already initialized." alt="" coords="5,5,236,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1GLFWSingleton_ac4935bfb2f344c7d088d038690bd7375.html#ac4935bfb2f344c7d088d038690bd7375" title="Configures GLFW with pre&#45;initialization hints." alt="" coords="284,5,515,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="236,23,270,23,270,28,236,28"/>
+</map>

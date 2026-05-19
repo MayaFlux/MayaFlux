@@ -1,0 +1,12 @@
+<map id="MayaFlux::Portal::Forma::Plot::AxisRange::normalise" name="MayaFlux::Portal::Forma::Plot::AxisRange::normalise">
+<area shape="rect" id="Node000001" title="Map a value into [0, 1] within this range." alt="" coords="465,39,671,79"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Plot_ac6505e902b7913bf982309eedefc11fe.html#ac6505e902b7913bf982309eedefc11fe" title="POINT_LIST scatter plot for paired (X, Y[, Z]) series." alt="" coords="5,5,187,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="451,53,187,34,187,29,452,48"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Portal_1_1Forma_1_1Plot_1_1AxisRange_acd26ae45dbbf0c536c01d97e7dcff4b9.html#acd26ae45dbbf0c536c01d97e7dcff4b9" title="Map a value into [&#45;1, 1] NDC within this range." alt="" coords="235,67,417,107"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="452,75,418,79,417,73,451,69"/>
+<area shape="poly" id="edge4_Node000003_Node000002" title=" " alt="" coords="236,66,171,48,172,43,238,60"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Plot_aa1efbfd0436874b3e8cdf74f6ece009d.html#aa1efbfd0436874b3e8cdf74f6ece009d" title="TRIANGLE_LIST bar chart for FREQUENCY or SPATIAL_Y series." alt="" coords="5,69,187,109"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="221,91,187,91,187,86,220,85"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Plot_a9401713590140623b0677a3216cfe9ee.html#a9401713590140623b0677a3216cfe9ee" title="LINE_STRIP waveform for TIME or SPATIAL_Y series." alt="" coords="5,133,187,173"/>
+<area shape="poly" id="edge5_Node000003_Node000005" title=" " alt="" coords="244,113,167,136,165,131,243,108"/>
+</map>

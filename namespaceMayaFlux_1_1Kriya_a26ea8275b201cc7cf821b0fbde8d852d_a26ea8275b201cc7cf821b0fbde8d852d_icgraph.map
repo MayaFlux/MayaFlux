@@ -1,0 +1,11 @@
+<map id="MayaFlux::Kriya::key_pressed" name="MayaFlux::Kriya::key_pressed">
+<area shape="rect" id="Node000001" title="Creates an Event coroutine that triggers on specific key press." alt="" coords="721,35,880,75"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nexus_1_1Wiring_af32900423bc2e18633ca0f7dd74f051a.html#af32900423bc2e18633ca0f7dd74f051a" title="Apply the configured wiring." alt="" coords="481,5,667,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="707,45,666,40,667,35,708,40"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_af9fb24f66b99c0cda04201284a219677.html#af9fb24f66b99c0cda04201284a219677" title="Schedule a key press handler." alt="" coords="475,70,673,95"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="708,69,674,73,673,68,707,63"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_a72f28c8e9fbe5781fe8935356cb359b7.html#a72f28c8e9fbe5781fe8935356cb359b7" title="Bind a navigation preset to a window and render processor." alt="" coords="240,63,427,103"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="461,85,427,85,427,80,461,80"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_a3dc95653b5e16198d6c5f3ca0c24d646.html#a3dc95653b5e16198d6c5f3ca0c24d646" title="Bind a navigation preset to all RenderProcessors currently registered against a window." alt="" coords="5,63,192,103"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="227,85,192,85,192,80,227,80"/>
+</map>

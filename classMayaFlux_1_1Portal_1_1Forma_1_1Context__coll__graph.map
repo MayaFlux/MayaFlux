@@ -1,0 +1,5 @@
+<map id="MayaFlux::Portal::Forma::Context" name="MayaFlux::Portal::Forma::Context">
+<area shape="rect" id="Node000001" title="Event wiring between a Layer and a window surface." alt="" coords="30,513,203,1093"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Vruta_1_1EventManager.html" title=" " alt="" coords="5,5,228,451"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="119,451,119,497,114,497,114,451"/>
+</map>

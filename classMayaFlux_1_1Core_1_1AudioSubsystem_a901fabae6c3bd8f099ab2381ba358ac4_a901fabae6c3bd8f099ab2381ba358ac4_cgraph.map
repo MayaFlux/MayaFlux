@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::AudioSubsystem::process_input" name="MayaFlux::Core::AudioSubsystem::process_input">
+<area shape="rect" id="Node000001" title="Processes input data from audio interface." alt="" coords="5,5,247,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1BufferProcessingHandle_adfefad512d9b46de7d1ae113ff0b03a7.html#adfefad512d9b46de7d1ae113ff0b03a7" title="@brienf Process Input from backend into buffer manager" alt="" coords="295,5,536,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="247,23,281,23,281,28,247,28"/>
+</map>

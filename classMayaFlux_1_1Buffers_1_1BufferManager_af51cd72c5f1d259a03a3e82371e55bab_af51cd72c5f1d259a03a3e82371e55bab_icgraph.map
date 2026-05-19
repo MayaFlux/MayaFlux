@@ -1,0 +1,25 @@
+<map id="MayaFlux::Buffers::BufferManager::add_buffer" name="MayaFlux::Buffers::BufferManager::add_buffer">
+<area shape="rect" id="Node000001" title="Adds a buffer to a token and channel." alt="" coords="488,133,683,173"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kriya_1_1TemporalActivation_ab4f3737fb0465e8727586b7104b95fc2.html#ab4f3737fb0465e8727586b7104b95fc2" title="Activates a buffer for a specified duration." alt="" coords="244,69,440,109"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="495,132,418,112,419,107,496,127"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Nexus_a1676f29ed2210635b97304693e2f10fe.html#a1676f29ed2210635b97304693e2f10fe" title="Create and register an audio sink on channel." alt="" coords="259,133,425,173"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="474,156,425,156,425,151,474,151"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Nexus_a3b46922802eb5b5bae9ae0d7c830af7e.html#a3b46922802eb5b5bae9ae0d7c830af7e" title="Create and register a render sink targeting window." alt="" coords="259,325,425,365"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="550,184,370,327,367,323,547,180"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nexus_1_1Agent_a81c922a060f670a5044138b0ccb5cfef.html#a81c922a060f670a5044138b0ccb5cfef" title="Register an audio output on channel." alt="" coords="10,5,191,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="251,129,242,123,226,107,218,91,209,75,194,59,174,48,177,43,198,55,214,72,222,88,231,104,246,119,254,125"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nexus_1_1Emitter_a58f27e785d9b7d003d48bd7143557ee5.html#a58f27e785d9b7d003d48bd7143557ee5" title="Register an audio output on channel." alt="" coords="5,69,196,109"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="252,132,176,112,177,107,254,127"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nexus_1_1Agent_ae2038b482c01a3c1c8405d13ca25753f.html#ae2038b482c01a3c1c8405d13ca25753f" title="Register an audio output on channel with a producer function." alt="" coords="10,133,191,173"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="245,156,192,156,192,151,245,151"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nexus_1_1Emitter_ab975f39766c8f508604023e5d1a3c8f6.html#ab975f39766c8f508604023e5d1a3c8f6" title="Register an audio output on channel with a producer function." alt="" coords="5,197,196,237"/>
+<area shape="poly" id="edge6_Node000003_Node000007" title=" " alt="" coords="254,179,177,200,176,195,252,174"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Nexus_1_1Agent_a5e774c6dcc913e4abf5cd1c62b984ff1.html#a5e774c6dcc913e4abf5cd1c62b984ff1" title="Register a render output targeting window." alt="" coords="10,261,191,301"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="252,324,176,304,177,299,254,319"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Nexus_1_1Emitter_a89d25f43665b9086c73083378483b797.html#a89d25f43665b9086c73083378483b797" title="Register a render output targeting window." alt="" coords="5,325,196,365"/>
+<area shape="poly" id="edge9_Node000008_Node000010" title=" " alt="" coords="245,348,196,348,196,343,245,343"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Nexus_1_1Agent_aa8d5941eada9cc6923e55ccb53672a35.html#aa8d5941eada9cc6923e55ccb53672a35" title="Register a render output targeting window with a producer function." alt="" coords="10,389,191,429"/>
+<area shape="poly" id="edge10_Node000008_Node000011" title=" " alt="" coords="254,371,177,392,176,387,252,366"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Nexus_1_1Emitter_aa79ab1cb084d0a65ca9b2934585d9115.html#aa79ab1cb084d0a65ca9b2934585d9115" title="Register a render output targeting window with a producer function." alt="" coords="5,453,196,493"/>
+<area shape="poly" id="edge11_Node000008_Node000012" title=" " alt="" coords="305,376,255,410,197,444,169,456,167,451,195,439,252,406,302,372"/>
+</map>

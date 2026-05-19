@@ -1,0 +1,17 @@
+<map id="MayaFlux::Kakshya::SoundStreamContainer::process_default" name="MayaFlux::Kakshya::SoundStreamContainer::process_default">
+<area shape="rect" id="Node000001" title="Process the container&#39;s data using the default processor." alt="" coords="5,117,177,172"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_a973fe20d21c782007890dc6c4f462eb1.html#a973fe20d21c782007890dc6c4f462eb1" title="Check if the container is ready for processing." alt="" coords="228,77,415,132"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="178,127,214,121,215,126,178,132"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_a5e0c8b987a5e6354c1e4d9c717b92b76.html#a5e0c8b987a5e6354c1e4d9c717b92b76" title="Update the processing state of the container." alt="" coords="225,156,417,211"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="178,157,212,162,211,168,178,162"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_a8f53f8f73b73535adff5cbb3d1874030.html#a8f53f8f73b73535adff5cbb3d1874030" title="Get the current processing state of the container." alt="" coords="465,5,637,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="408,75,451,61,453,66,410,80"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_a6c5d1aaf4fca9b2aac185a1caab9e31c.html#a6c5d1aaf4fca9b2aac185a1caab9e31c" title="Check if the container currently holds any data." alt="" coords="465,84,637,139"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="415,105,452,106,452,111,415,110"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_ac59ca8d9a3ed7bd4dbc766943227b44a.html#ac59ca8d9a3ed7bd4dbc766943227b44a" title="Acquire a lock for thread&#45;safe access." alt="" coords="685,157,892,197"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="638,132,703,150,701,156,637,137"/>
+<area shape="poly" id="edge6_Node000006_Node000005" title=" " alt="" coords="418,179,671,176,671,181,418,185"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_a6b017a7f21c67f1c3faa5a30dbdc0750.html#a6b017a7f21c67f1c3faa5a30dbdc0750" title=" " alt="" coords="465,215,637,269"/>
+<area shape="poly" id="edge7_Node000006_Node000007" title=" " alt="" coords="418,205,453,214,451,219,417,210"/>
+<area shape="poly" id="edge8_Node000007_Node000005" title=" " alt="" coords="637,216,701,198,703,203,638,221"/>
+</map>

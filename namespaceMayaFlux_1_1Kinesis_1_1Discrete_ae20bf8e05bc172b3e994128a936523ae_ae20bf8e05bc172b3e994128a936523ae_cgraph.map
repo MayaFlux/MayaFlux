@@ -1,0 +1,15 @@
+<map id="MayaFlux::Kinesis::Discrete::matched_filter" name="MayaFlux::Kinesis::Discrete::matched_filter">
+<area shape="rect" id="Node000001" title="Matched filter (normalised cross&#45;correlation)" alt="" coords="5,101,184,141"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a1ee7311abf376531fbc49bee9c7febb9.html#a1ee7311abf376531fbc49bee9c7febb9" title="Cross&#45;correlation via FFT." alt="" coords="232,101,415,141"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="184,119,219,119,219,124,184,124"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a6a6e81ae410d0fde11b29a2ff3bff6bb.html#a6a6e81ae410d0fde11b29a2ff3bff6bb" title="Core FFT convolution engine." alt="" coords="463,5,665,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="363,99,462,55,482,47,484,52,464,60,366,104"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_aa7fcdee057518b1d482864a610ee0b5a.html#aa7fcdee057518b1d482864a610ee0b5a" title="Normalize to [target_min, target_max] in&#45;place Single&#45;pass min/max reduction followed by a single tra..." alt="" coords="489,69,639,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="415,107,475,98,476,104,415,112"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a2652077af544b7bf08874b9b178653b4.html#a2652077af544b7bf08874b9b178653b4" title="Peak amplitude per window." alt="" coords="489,133,639,173"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="415,131,476,139,475,144,415,136"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_a7b39444c54b065c1a57bbbd2b9338b43.html#a7b39444c54b065c1a57bbbd2b9338b43" title="Reverse time order of single&#45;channel data (non&#45;destructive)" alt="" coords="489,198,639,223"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="364,139,411,162,464,183,492,192,491,197,462,188,409,166,362,144"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a9a39a85122307184773088f1f3603a96.html#a9a39a85122307184773088f1f3603a96" title="Reverse temporal order in&#45;place." alt="" coords="713,191,863,231"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="640,208,700,208,700,213,640,213"/>
+</map>

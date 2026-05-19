@@ -1,0 +1,13 @@
+<map id="MayaFlux::Kinesis::to_line_vertices" name="MayaFlux::Kinesis::to_line_vertices">
+<area shape="rect" id="Node000001" title="Batch&#45;project SampleResult vector to LineVertex." alt="" coords="821,69,971,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1PointCloudNetwork_a8c51a6028f5de39f80e605e1fa9066bf.html#a8c51a6028f5de39f80e605e1fa9066bf" title=" " alt="" coords="552,62,773,117"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="808,92,773,92,773,87,808,87"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1PointCloudNetwork_aee69fa7a48f2beb3a97e7a22edf17b50.html#aee69fa7a48f2beb3a97e7a22edf17b50" title="Called once before first process_batch()" alt="" coords="285,5,504,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="538,62,479,48,480,43,539,57"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Network_1_1PointCloudNetwork_acc330c7695cd9d2d3e46e4acc38c0ee0.html#acc330c7695cd9d2d3e46e4acc38c0ee0" title="Reset network to initial state." alt="" coords="295,69,494,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="538,92,494,92,494,87,538,87"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1Network_1_1PointCloudNetwork_a5bf88acf450983ded344055b1f293f3d.html#a5bf88acf450983ded344055b1f293f3d" title=" " alt="" coords="295,134,494,189"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="548,123,495,137,493,132,546,118"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1Network_1_1PointCloudNetwork_ab597f3e0c2c0d407f166615d0b556451.html#ab597f3e0c2c0d407f166615d0b556451" title="Reinitialize point cloud with new parameters." alt="" coords="5,69,237,109"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="282,92,237,92,237,87,282,87"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Generator::Polynomial::set_initial_conditions" name="MayaFlux::Nodes::Generator::Polynomial::set_initial_conditions">
+<area shape="rect" id="Node000001" title="Sets initial conditions for recursive mode." alt="" coords="5,5,213,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Memory_1_1HistoryBuffer_ae45508b1b401115f9ca1272f95a98dd7.html#ae45508b1b401115f9ca1272f95a98dd7" title="Set initial conditions." alt="" coords="261,13,468,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="213,30,248,30,248,35,213,35"/>
+</map>

@@ -1,0 +1,16 @@
+<map id="MayaFlux::Kakshya::VideoFileContainer" name="MayaFlux::Kakshya::VideoFileContainer">
+<area shape="rect" id="Node000001" title="File&#45;backed video container — semantic marker over VideoStreamContainer." alt="" coords="128,1627,309,1767"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1FileContainer.html" title="Marker interface for containers backed by file storage (in&#45;memory only)." alt="" coords="33,1201,194,1381"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="143,1394,203,1625,198,1627,137,1395"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1StreamContainer.html" title="Data&#45;driven interface for temporal stream containers with navigable read position." alt="" coords="124,676,313,956"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="187,970,136,1202,131,1201,182,969"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer.html" title="Concrete base implementation for streaming video containers." alt="" coords="219,1004,429,1579"/>
+<area shape="poly" id="edge7_Node000007_Node000003" title=" " alt="" coords="255,969,263,1003,258,1005,250,970"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1SignalSourceContainer.html" title="Data&#45;driven interface for managing arbitrary processable signal sources." alt="" coords="113,348,324,628"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="221,642,221,676,216,676,216,642"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1NDDataContainer.html" title="Abstract interface for N&#45;dimensional data containers." alt="" coords="5,5,187,300"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="157,312,170,347,165,349,152,314"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="211,113,471,193"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="325,207,272,349,267,347,320,205"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="248,1593,239,1627,234,1625,243,1591"/>
+</map>

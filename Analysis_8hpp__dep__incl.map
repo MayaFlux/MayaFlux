@@ -1,0 +1,23 @@
+<map id="Analysis.hpp" name="Analysis.hpp">
+<area shape="rect" id="Node000001" title="Discrete sequence analysis primitives for MayaFlux::Kinesis." alt="" coords="351,5,457,31"/>
+<area shape="rect" id="Node000002" href="$Analysis_8cpp.html" title=" " alt="" coords="5,79,109,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="338,35,110,82,109,77,337,30"/>
+<area shape="rect" id="Node000003" href="$EnergyAnalyzer_8hpp.html" title="Span&#45;based energy analysis for digital signals in Maya Flux." alt="" coords="329,79,479,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="407,44,407,79,401,79,401,44"/>
+<area shape="rect" id="Node000007" href="$Yantra_8cpp.html" title=" " alt="" coords="473,152,562,177"/>
+<area shape="poly" id="edge12_Node000001_Node000007" title=" " alt="" coords="444,35,471,53,494,77,505,96,512,116,519,151,514,152,507,118,500,98,490,80,467,57,441,40"/>
+<area shape="rect" id="Node000008" href="$ExtractionHelper_8cpp.html" title=" " alt="" coords="555,79,712,104"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="455,32,597,76,595,81,453,37"/>
+<area shape="rect" id="Node000009" href="$StatisticalAnalyzer_8hpp.html" title=" " alt="" coords="133,79,304,104"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="363,38,250,81,248,76,361,33"/>
+<area shape="rect" id="Node000004" href="$GranularWorkflow_8hpp.html" title=" " alt="" coords="283,152,448,177"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="393,118,374,153,369,151,389,115"/>
+<area shape="rect" id="Node000006" href="$MatrixHelper_8hpp.html" title="Region&#45;aware and matrix transformation functions leveraging existing ecosystem." alt="" coords="123,152,258,177"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="358,111,226,154,224,149,356,106"/>
+<area shape="poly" id="edge6_Node000003_Node000007" title=" " alt="" coords="436,109,500,150,497,154,433,114"/>
+<area shape="rect" id="Node000005" href="$GranularWorkflow_8cpp.html" title=" " alt="" coords="283,225,447,251"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="368,191,368,225,363,225,363,191"/>
+<area shape="poly" id="edge9_Node000009_Node000004" title=" " alt="" coords="255,107,342,149,340,154,253,112"/>
+<area shape="poly" id="edge10_Node000009_Node000006" title=" " alt="" coords="211,118,198,153,193,151,207,116"/>
+<area shape="poly" id="edge11_Node000009_Node000007" title=" " alt="" coords="280,105,473,150,472,155,279,110"/>
+</map>

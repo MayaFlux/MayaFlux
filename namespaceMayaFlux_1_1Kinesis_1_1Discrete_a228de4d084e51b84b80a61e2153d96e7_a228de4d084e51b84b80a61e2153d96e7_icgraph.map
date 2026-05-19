@@ -1,0 +1,17 @@
+<map id="MayaFlux::Kinesis::Discrete::sort_channels" name="MayaFlux::Kinesis::Discrete::sort_channels">
+<area shape="rect" id="Node000001" title="Sort all channels in&#45;place." alt="" coords="477,85,652,125"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Yantra_a36d84e2b85966327017d25ebdca20625.html#a36d84e2b85966327017d25ebdca20625" title="Universal sort function &#45; returns sorted copy." alt="" coords="254,21,429,61"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="480,84,411,64,412,59,482,79"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Yantra_aefd8d29775269d3755674992909e379f.html#aefd8d29775269d3755674992909e379f" title="Universal sort function &#45; returns sorted copy." alt="" coords="254,85,429,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="463,108,429,108,429,103,463,103"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Yantra_ab5e04174c73268eb0ce8a18f9d746e53.html#ab5e04174c73268eb0ce8a18f9d746e53" title="Universal sort function &#45; handles extraction/conversion internally." alt="" coords="253,165,429,205"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="496,133,399,168,397,163,494,128"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Yantra_a3deb7abab695c99ec7389cc32ef73abc.html#a3deb7abab695c99ec7389cc32ef73abc" title="Convenience function with default algorithm." alt="" coords="22,5,189,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="271,83,204,60,169,48,170,43,206,55,272,78"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1StandardSorter_a4354ccfd82da15a220f84dc53a5676e0.html#a4354ccfd82da15a220f84dc53a5676e0" title="Sort data with copy semantics." alt="" coords="5,69,205,109"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="240,101,205,99,206,93,241,96"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Yantra_1_1StandardSorter_a1ec28359434d38d74bfd4a6e9cd0fe49.html#a1ec28359434d38d74bfd4a6e9cd0fe49" title="Partial sorting implementation." alt="" coords="5,133,205,173"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="241,128,204,136,203,131,240,123"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Yantra_1_1StandardSorter_ae15eaee8a080129c10acf51df0510867.html#ae15eaee8a080129c10acf51df0510867" title="Sort data in&#45;place." alt="" coords="5,197,205,237"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="240,202,206,206,205,201,239,196"/>
+</map>

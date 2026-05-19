@@ -1,0 +1,9 @@
+<map id="MayaFlux::Portal::Forma::InspectResult" name="MayaFlux::Portal::Forma::InspectResult">
+<area shape="rect" id="Node000001" title="Result of an introspect call." alt="" coords="5,573,179,773"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Portal_1_1Forma_1_1ValueGroup.html" title="Header collapsible with N value rows related to it." alt="" coords="5,431,179,511"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="95,511,95,557,89,557,89,511"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Portal_1_1Forma_1_1Collapsible.html" title="Result of make_collapsible()." alt="" coords="5,248,179,368"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="95,368,95,414,89,414,89,368"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Forma_1_1LayoutCursor.html" title="Reactive Y&#45;position accumulator for vertical primitive stacking." alt="" coords="5,5,179,185"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="95,186,95,232,89,232,89,186"/>
+</map>

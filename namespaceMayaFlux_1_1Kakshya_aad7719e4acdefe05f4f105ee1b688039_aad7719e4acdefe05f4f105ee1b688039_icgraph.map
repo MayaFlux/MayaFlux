@@ -1,0 +1,15 @@
+<map id="MayaFlux::Kakshya::is_structured_modality" name="MayaFlux::Kakshya::is_structured_modality">
+<area shape="rect" id="Node000001" title="Check if a modality represents structured data (vectors, matrices)." alt="" coords="825,109,996,149"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1GpuDispatchCore_aec7dde4d2ab8c83d5e3633e516fe8f27.html#aec7dde4d2ab8c83d5e3633e516fe8f27" title="Flatten planar double channels into m_staging_floats." alt="" coords="552,30,777,85"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="828,108,758,87,759,82,829,103"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1DataInsertion_a34b7026f84b7c339e5c1efde99d30356.html#a34b7026f84b7c339e5c1efde99d30356" title="Reserve space without initialization." alt="" coords="559,109,771,149"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="812,132,771,132,771,127,812,127"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Kakshya_1_1DataInsertion_a93be4fdaba14e343a2ae8bec952bcc09.html#a93be4fdaba14e343a2ae8bec952bcc09" title="Validate scalar insertion matches modality expectations." alt="" coords="579,174,750,229"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="829,156,751,179,750,174,828,151"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1GpuDispatchCore_ac2c2749002d9ed840fbb847f719d1d58.html#ac2c2749002d9ed840fbb847f719d1d58" title="Marshal channel data into GPU input buffers." alt="" coords="279,37,504,77"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="538,60,504,60,504,55,538,55"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1GpuDispatchCore_a899fb89ec912ff8a784fa8d4efadbe39.html#a899fb89ec912ff8a784fa8d4efadbe39" title="Full single&#45;pass dispatch." alt="" coords="5,5,231,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="265,45,230,41,231,36,265,40"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1GpuDispatchCore_ab2351a76c5db238842099c55a1d08386.html#ab2351a76c5db238842099c55a1d08386" title="Multi&#45;pass (chained) dispatch." alt="" coords="5,69,231,109"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="265,75,231,79,230,74,265,69"/>
+</map>

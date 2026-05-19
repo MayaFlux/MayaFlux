@@ -1,0 +1,13 @@
+<map id="MayaFlux::Kriya::mouse_released" name="MayaFlux::Kriya::mouse_released">
+<area shape="rect" id="Node000001" title="Creates an Event coroutine that triggers on specific mouse button release." alt="" coords="725,37,905,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_ad19b4b6af5aacd5aa72c828b3ffa85a0.html#ad19b4b6af5aacd5aa72c828b3ffa85a0" title="Schedule a mouse button release handler." alt="" coords="495,5,657,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="712,46,657,39,657,33,712,41"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Context_aa42296d51149bf551f43678912150ef0.html#aa42296d51149bf551f43678912150ef0" title=" " alt="" coords="475,69,677,109"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="712,74,678,78,677,73,712,68"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_a72f28c8e9fbe5781fe8935356cb359b7.html#a72f28c8e9fbe5781fe8935356cb359b7" title="Bind a navigation preset to a window and render processor." alt="" coords="240,5,427,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="481,28,427,28,427,23,481,23"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_a3dc95653b5e16198d6c5f3ca0c24d646.html#a3dc95653b5e16198d6c5f3ca0c24d646" title="Bind a navigation preset to all RenderProcessors currently registered against a window." alt="" coords="5,5,192,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="227,28,192,28,192,23,227,23"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Context_a7287e64dcc62fe5f54a34e133c3b0332.html#a7287e64dcc62fe5f54a34e133c3b0332" title="Construct and immediately register event coroutines." alt="" coords="243,69,424,109"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="461,92,424,92,424,87,461,87"/>
+</map>

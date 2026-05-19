@@ -1,0 +1,7 @@
+<map id="MayaFlux::apply_window" name="MayaFlux::apply_window">
+<area shape="rect" id="Node000001" title="Apply window function to single&#45;channel data (in&#45;place)" alt="" coords="240,35,427,60"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_a6b5aed304676ea30ffe84686c4f2bfeb.html#a6b5aed304676ea30ffe84686c4f2bfeb" title=" " alt="" coords="5,5,192,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="226,37,192,32,193,27,227,31"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_a8372c8c48e13a9fe628b7bc573e72870.html#a8372c8c48e13a9fe628b7bc573e72870" title="Apply window function to multi&#45;channel data (in&#45;place)" alt="" coords="5,55,192,95"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="227,63,193,67,192,62,226,57"/>
+</map>

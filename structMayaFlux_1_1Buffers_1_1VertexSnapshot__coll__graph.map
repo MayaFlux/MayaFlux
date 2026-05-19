@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::VertexSnapshot" name="MayaFlux::Buffers::VertexSnapshot">
+<area shape="rect" id="Node000001" title="Owned copy of pre&#45;resolved vertex bytes and their layout." alt="" coords="22,288,162,368"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kakshya_1_1VertexLayout.html" title="Complete description of vertex data layout in a buffer." alt="" coords="5,5,179,225"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="95,225,95,272,89,272,89,225"/>
+</map>

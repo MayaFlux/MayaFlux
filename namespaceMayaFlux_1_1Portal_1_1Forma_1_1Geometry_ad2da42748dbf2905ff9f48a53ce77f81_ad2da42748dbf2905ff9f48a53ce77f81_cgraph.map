@@ -1,0 +1,9 @@
+<map id="MayaFlux::Portal::Forma::Geometry::horizontal_fader" name="MayaFlux::Portal::Forma::Geometry::horizontal_fader">
+<area shape="rect" id="Node000001" title="Geometry function for a horizontal fader in NDC space." alt="" coords="5,69,213,109"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kinesis_1_1AABB2D_a32bac0d1a4f876c992486eed5dc9fd6f.html#a32bac0d1a4f876c992486eed5dc9fd6f" title=" " alt="" coords="297,5,446,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="191,67,283,44,284,49,193,72"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kinesis_1_1AABB2D_ab8e372add789f6bd44fa66a92618456a.html#ab8e372add789f6bd44fa66a92618456a" title=" " alt="" coords="297,69,446,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="214,87,283,87,283,92,214,92"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_1_1detail_ac1641d06468b4f5b6ee16f51fe3a4817.html#ac1641d06468b4f5b6ee16f51fe3a4817" title=" " alt="" coords="261,133,481,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="193,107,276,127,275,133,191,112"/>
+</map>

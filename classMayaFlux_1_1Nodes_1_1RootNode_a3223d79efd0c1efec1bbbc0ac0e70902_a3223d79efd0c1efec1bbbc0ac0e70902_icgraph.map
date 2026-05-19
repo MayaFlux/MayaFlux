@@ -1,0 +1,18 @@
+<map id="MayaFlux::Nodes::RootNode::unregister_node" name="MayaFlux::Nodes::RootNode::unregister_node">
+<area shape="rect" id="Node000001" title="Removes a node from this root node." alt="" coords="761,123,968,163"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kriya_1_1TemporalActivation_a65d420344629b85e2d038b9641496b03.html#a65d420344629b85e2d038b9641496b03" title="Cleans up the current operation, disconnecting the entity and resetting state." alt="" coords="510,79,710,134"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="747,129,710,123,711,118,748,124"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1RootNode_af942c3c30039d700972aa5fb309ad822.html#af942c3c30039d700972aa5fb309ad822" title="Terminates all nodes registered with this root node." alt="" coords="507,159,713,199"/>
+<area shape="poly" id="edge9_Node000001_Node000007" title=" " alt="" coords="748,162,714,167,713,161,747,157"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kriya_1_1TemporalActivation_ab4f3737fb0465e8727586b7104b95fc2.html#ab4f3737fb0465e8727586b7104b95fc2" title="Activates a buffer for a specified duration." alt="" coords="12,5,208,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="541,76,500,60,458,48,394,36,329,29,208,25,208,20,329,24,395,31,459,43,502,55,543,71"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kriya_1_1TemporalActivation_a5472441ec2fd9cc067e55eb8f48f1a6d.html#a5472441ec2fd9cc067e55eb8f48f1a6d" title="Activates a node network for a specified duration." alt="" coords="5,73,215,113"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="496,114,383,115,263,112,215,108,215,103,263,107,383,110,496,108"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kriya_1_1TemporalActivation_ab218a3ead3d97c0a677ad3b3f0fad462.html#ab218a3ead3d97c0a677ad3b3f0fad462" title="Activates a node for a specified duration." alt="" coords="12,147,208,187"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="497,123,209,158,208,152,496,118"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kriya_1_1TemporalActivation_aa48d4567cb873962947e3e270191b7d3.html#aa48d4567cb873962947e3e270191b7d3" title="Cancels any currently active node." alt="" coords="263,57,459,97"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="496,96,459,92,459,86,497,91"/>
+<area shape="poly" id="edge6_Node000006_Node000003" title=" " alt="" coords="250,57,206,48,207,43,251,52"/>
+<area shape="poly" id="edge7_Node000006_Node000004" title=" " alt="" coords="249,87,215,89,215,84,249,82"/>
+<area shape="poly" id="edge8_Node000006_Node000005" title=" " alt="" coords="292,105,168,149,166,144,290,99"/>
+</map>

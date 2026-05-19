@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kinesis::ray_cast_all" name="MayaFlux::Kinesis::ray_cast_all">
+<area shape="rect" id="Node000001" title="Find all entities within tolerance of a ray, sorted by distance." alt="" coords="5,37,155,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kinesis_1_1SpatialIndex_a6ace47c22e76423776c6e0580878e833.html#a6ace47c22e76423776c6e0580878e833" title="Return all entity ids and positions from the published snapshot." alt="" coords="211,5,361,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="154,43,197,36,198,42,155,48"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_a84fd0dc36dbb9b67b64eccf139f1b43a.html#a84fd0dc36dbb9b67b64eccf139f1b43a" title="Squared perpendicular distance from a point to an infinite ray." alt="" coords="203,69,369,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="155,66,189,72,189,77,154,72"/>
+</map>

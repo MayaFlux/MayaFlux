@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::Discrete::interpolate_linear" name="MayaFlux::Kinesis::Discrete::interpolate_linear">
+<area shape="rect" id="Node000001" title="Linear interpolation from src into dst (caller sizes dst) Branchless inner loop with precomputed step..." alt="" coords="220,5,375,60"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_aa784d6ca6f96a5b3b5fa09db1ccf16f8.html#aa784d6ca6f96a5b3b5fa09db1ccf16f8" title="Time&#45;stretch via linear interpolation resampling Fast but alias&#45;naive: no anti&#45;aliasing pre&#45;filter is..." alt="" coords="5,13,172,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="206,35,172,35,172,30,206,30"/>
+</map>

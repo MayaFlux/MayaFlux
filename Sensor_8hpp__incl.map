@@ -1,0 +1,15 @@
+<map id="Sensor.hpp" name="Sensor.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="145,5,239,31"/>
+<area shape="rect" id="Node000002" href="$PerceptionContext_8hpp.html" title=" " alt="" coords="107,79,277,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="195,31,195,65,189,65,189,31"/>
+<area shape="rect" id="Node000003" href="$SpatialIndex_8hpp.html" title=" " alt="" coords="99,152,285,192"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="195,104,195,138,189,138,189,104"/>
+<area shape="rect" id="Node000004" href="$TendencyFactories_8hpp.html" title=" " alt="" coords="5,240,208,280"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="175,194,137,232,133,228,171,190"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="233,247,325,273"/>
+<area shape="poly" id="edge6_Node000003_Node000007" title=" " alt="" coords="213,190,259,235,255,239,209,194"/>
+<area shape="rect" id="Node000005" href="$Tendency_8hpp.html" title=" " alt="" coords="52,328,161,353"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="109,280,109,314,104,314,104,280"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="55,401,159,427"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="109,354,109,388,104,388,104,354"/>
+</map>

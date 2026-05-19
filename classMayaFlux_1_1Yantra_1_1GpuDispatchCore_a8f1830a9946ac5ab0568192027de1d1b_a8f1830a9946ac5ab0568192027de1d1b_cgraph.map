@@ -1,0 +1,17 @@
+<map id="MayaFlux::Yantra::GpuDispatchCore::ensure_gpu_ready" name="MayaFlux::Yantra::GpuDispatchCore::ensure_gpu_ready">
+<area shape="rect" id="Node000001" title="Ensure GPU resources are initialised." alt="" coords="5,69,231,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1GpuDispatchCore_af387940eb126638c393e0ad18760bbdf.html#af387940eb126638c393e0ad18760bbdf" title="Declare the storage buffers the shader expects." alt="" coords="280,5,505,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="204,67,293,46,294,51,205,72"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1GpuResourceManager_a6c7b7b2833da29e54b237003ad4bf74d.html#a6c7b7b2833da29e54b237003ad4bf74d" title=" " alt="" coords="279,69,507,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="231,87,265,87,265,92,231,92"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Yantra_1_1GpuResourceManager_abb600e526226555b9adb258bbe9b0f4e.html#abb600e526226555b9adb258bbe9b0f4e" title=" " alt="" coords="279,133,507,173"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="205,107,294,128,293,133,204,112"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_af50ca0aa0cb7511c99eaf758430efdce.html#af50ca0aa0cb7511c99eaf758430efdce" title=" " alt="" coords="555,37,752,77"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="506,73,541,68,541,74,507,78"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a715d57394465ff2924727d7c82d87e7b.html#a715d57394465ff2924727d7c82d87e7b" title="Get the global shader compiler instance." alt="" coords="555,101,752,141"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="507,101,541,105,541,110,506,106"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ComputePress_a89b259adf28ef041294928959e03fa9c.html#a89b259adf28ef041294928959e03fa9c" title=" " alt="" coords="800,37,997,77"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="752,55,786,55,786,60,752,60"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ab22eaae6b8210236918b85f409fc4c49.html#ab22eaae6b8210236918b85f409fc4c49" title=" " alt="" coords="800,101,997,141"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="752,119,786,119,786,124,752,124"/>
+</map>

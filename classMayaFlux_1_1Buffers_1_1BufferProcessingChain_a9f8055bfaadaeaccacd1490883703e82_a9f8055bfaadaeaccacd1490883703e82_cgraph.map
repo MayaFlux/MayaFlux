@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::BufferProcessingChain::remove_processor" name="MayaFlux::Buffers::BufferProcessingChain::remove_processor">
+<area shape="rect" id="Node000001" title="Removes a processor from the pipeline for a specific buffer." alt="" coords="5,45,173,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingChain_ad44f02158491b794de6ed249f039c824.html#ad44f02158491b794de6ed249f039c824" title=" " alt="" coords="221,5,444,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="173,56,208,51,208,56,174,62"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingChain_ac7fd9f1f3cf9d993aac0a4d64b1601b0.html#ac7fd9f1f3cf9d993aac0a4d64b1601b0" title=" " alt="" coords="235,84,430,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="174,83,222,91,221,96,173,89"/>
+</map>

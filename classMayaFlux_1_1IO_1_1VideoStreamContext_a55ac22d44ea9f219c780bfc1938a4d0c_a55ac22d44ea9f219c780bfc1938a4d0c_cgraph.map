@@ -1,0 +1,5 @@
+<map id="MayaFlux::IO::VideoStreamContext::extract_stream_metadata" name="MayaFlux::IO::VideoStreamContext::extract_stream_metadata">
+<area shape="rect" id="Node000001" title="Populate stream&#45;specific fields into an existing FileMetadata." alt="" coords="5,5,205,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1FFmpegDemuxContext_acb3638800c71f90df7d5da4094c34e77.html#acb3638800c71f90df7d5da4094c34e77" title="Access a stream by index." alt="" coords="253,13,469,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="205,30,240,30,240,35,205,35"/>
+</map>

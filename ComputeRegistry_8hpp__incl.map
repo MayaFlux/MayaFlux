@@ -1,0 +1,21 @@
+<map id="ComputeRegistry.hpp" name="ComputeRegistry.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="249,5,411,31"/>
+<area shape="rect" id="Node000002" href="$ExecutionContext_8hpp.html" title=" " alt="" coords="231,79,429,119"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="333,31,333,65,327,65,327,31"/>
+<area shape="rect" id="Node000003" href="$Archivist_8hpp.html" title=" " alt="" coords="129,167,353,192"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="310,121,266,159,262,155,307,117"/>
+<area shape="rect" id="Node000010" title=" " alt="" coords="377,167,464,192"/>
+<area shape="poly" id="edge9_Node000002_Node000010" title=" " alt="" coords="354,117,399,155,395,160,350,121"/>
+<area shape="rect" id="Node000004" href="$Format_8hpp.html" title=" " alt="" coords="125,240,221,265"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="231,194,195,232,191,228,228,190"/>
+<area shape="rect" id="Node000005" href="$JournalEntry_8hpp.html" title=" " alt="" coords="245,240,372,265"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="254,190,290,228,286,232,250,194"/>
+<area shape="rect" id="Node000006" href="$EnumReflect_8hpp.html" title=" " alt="" coords="5,313,191,353"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="279,268,162,311,160,306,277,263"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="215,321,282,346"/>
+<area shape="poly" id="edge6_Node000005_Node000007" title=" " alt="" coords="302,267,268,311,264,308,298,264"/>
+<area shape="rect" id="Node000008" title=" " alt="" coords="307,321,431,346"/>
+<area shape="poly" id="edge7_Node000005_Node000008" title=" " alt="" coords="320,264,353,308,349,311,315,267"/>
+<area shape="rect" id="Node000009" title=" " alt="" coords="455,321,552,346"/>
+<area shape="poly" id="edge8_Node000005_Node000009" title=" " alt="" coords="338,263,463,313,461,318,336,268"/>
+</map>

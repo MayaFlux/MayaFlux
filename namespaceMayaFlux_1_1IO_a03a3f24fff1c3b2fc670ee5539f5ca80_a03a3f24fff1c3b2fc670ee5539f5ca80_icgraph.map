@@ -1,0 +1,5 @@
+<map id="MayaFlux::IO::save_texture_buffer" name="MayaFlux::IO::save_texture_buffer">
+<area shape="rect" id="Node000001" title="Save a TextureBuffer&#39;s current GPU state to disk." alt="" coords="200,5,347,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1IO_a80678771111a87cd4dadffc367b550d7.html#a80678771111a87cd4dadffc367b550d7" title="Save a TextBuffer&#39;s rendered glyph texture to disk." alt="" coords="5,5,152,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="186,28,152,28,152,23,186,23"/>
+</map>

@@ -1,0 +1,13 @@
+<map id="MayaFlux::Kakshya::TextureContainer" name="MayaFlux::Kakshya::TextureContainer">
+<area shape="rect" id="Node000001" title="SignalSourceContainer wrapping GPU texture data as addressable pixel bytes." alt="" coords="293,1191,504,1705"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1SignalSourceContainer.html" title="Data&#45;driven interface for managing arbitrary processable signal sources." alt="" coords="113,599,324,879"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="260,891,336,1190,331,1191,255,893"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1NDDataContainer.html" title="Abstract interface for N&#45;dimensional data containers." alt="" coords="5,5,187,300"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="132,313,192,598,187,599,127,314"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="211,113,471,193"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="333,206,251,599,245,598,328,205"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="348,706,449,771"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="401,772,401,1174,396,1174,396,772"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Kakshya_1_1ContainerDataStructure.html" title="Container structure for consistent dimension ordering." alt="" coords="473,349,665,1128"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="489,1129,480,1167,478,1175,473,1174,475,1166,484,1127"/>
+</map>

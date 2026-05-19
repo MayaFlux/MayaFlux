@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::Discrete::sort_span_into" name="MayaFlux::Kinesis::Discrete::sort_span_into">
+<area shape="rect" id="Node000001" title="Sort a span into a caller&#45;owned output buffer." alt="" coords="260,5,439,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_af5660221e4f4e3f59c8a6b16985a75ba.html#af5660221e4f4e3f59c8a6b16985a75ba" title="Sort all channels into caller&#45;owned output buffers." alt="" coords="5,5,212,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="246,28,212,28,212,23,246,23"/>
+</map>

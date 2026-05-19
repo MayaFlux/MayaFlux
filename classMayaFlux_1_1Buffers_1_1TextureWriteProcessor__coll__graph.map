@@ -1,0 +1,13 @@
+<map id="MayaFlux::Buffers::TextureWriteProcessor" name="MayaFlux::Buffers::TextureWriteProcessor">
+<area shape="rect" id="Node000001" title="TextureProcessor subclass accepting externally&#45;supplied pixel data via DataVariant each frame." alt="" coords="213,1056,409,1256"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1TextureProcessor.html" title="Internal processor: handles CPU→GPU transfers for TextureBuffer." alt="" coords="213,552,410,1007"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="314,1020,314,1056,309,1056,309,1020"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VKBufferProcessor.html" title=" " alt="" coords="215,368,408,503"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="314,517,314,552,309,552,309,517"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1BufferProcessor.html" title="Central computational transformation interface for continuous buffer processing." alt="" coords="5,25,185,285"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="193,295,200,304,252,366,248,370,196,307,189,298"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Registry_1_1Service_1_1BufferService.html" title="Backend buffer management service interface." alt="" coords="210,5,413,305"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="314,305,314,352,309,352,309,305"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Registry_1_1Service_1_1ComputeService.html" title="Backend compute shader and pipeline service interface." alt="" coords="437,65,644,245"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="509,247,482,298,447,346,423,369,419,365,443,342,477,295,504,244"/>
+</map>

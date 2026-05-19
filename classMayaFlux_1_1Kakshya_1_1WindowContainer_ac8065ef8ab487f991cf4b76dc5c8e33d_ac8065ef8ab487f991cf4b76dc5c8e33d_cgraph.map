@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kakshya::WindowContainer::get_value_at" name="MayaFlux::Kakshya::WindowContainer::get_value_at">
+<area shape="rect" id="Node000001" title="Get a single value at the specified coordinates." alt="" coords="5,45,172,100"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kakshya_1_1ContainerDataStructure_a27b9d48a60ea2512b02a8196c6581eec.html#a27b9d48a60ea2512b02a8196c6581eec" title="Extract channel count from dimensions." alt="" coords="220,5,395,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="172,55,206,48,207,54,173,60"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kakshya_1_1ContainerDataStructure_ad25f58eab842676d1cda72fb4dfe9017.html#ad25f58eab842676d1cda72fb4dfe9017" title="Extract width from image/video dimensions." alt="" coords="220,84,395,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="173,85,207,91,206,96,172,90"/>
+</map>

@@ -1,0 +1,15 @@
+<map id="MayaFlux::Vruta::TaskScheduler::add_task" name="MayaFlux::Vruta::TaskScheduler::add_task">
+<area shape="rect" id="Node000001" title="Add a routine to the scheduler based on its processing token." alt="" coords="5,99,236,139"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a56a711df9c3a3f4e569e036ea6980559.html#a56a711df9c3a3f4e569e036ea6980559" title="Generate automatic name for a routine based on its type." alt="" coords="284,5,515,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="171,96,283,55,309,47,311,52,285,60,173,101"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a81c68c47d8ac2ce8f736f8d35f4fe20c.html#a81c68c47d8ac2ce8f736f8d35f4fe20c" title="Initialize a processing domain if it doesn&#39;t exist." alt="" coords="284,69,515,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="236,104,270,100,271,106,237,109"/>
+<area shape="rect" id="Node000006" href="$main_8cpp_a25a40b6614565f755233080a384c35f1.html#a25a40b6614565f755233080a384c35f1" title=" " alt="" coords="360,134,439,159"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="237,128,346,139,346,144,236,133"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a09eae60c02e878e614b69c8ead276f14.html#a09eae60c02e878e614b69c8ead276f14" title="Initialize a routine&#39;s state for a specific domain." alt="" coords="284,184,515,224"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="181,136,285,169,313,178,311,183,283,175,180,141"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a8c97edc92dee77f6fc9b6030a14637e7.html#a8c97edc92dee77f6fc9b6030a14637e7" title="Generates a unique task ID for new tasks." alt="" coords="563,5,793,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="515,23,549,23,549,28,515,28"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a219ff6ebd74ddb638ccf403556a0168c.html#a219ff6ebd74ddb638ccf403556a0168c" title="Get the default rate for a processing token." alt="" coords="563,69,793,109"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="515,87,549,87,549,92,515,92"/>
+</map>

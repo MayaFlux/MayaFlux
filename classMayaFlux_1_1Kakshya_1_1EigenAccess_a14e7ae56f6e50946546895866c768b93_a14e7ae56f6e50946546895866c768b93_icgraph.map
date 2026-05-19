@@ -1,0 +1,11 @@
+<map id="MayaFlux::Kakshya::EigenAccess::is_complex" name="MayaFlux::Kakshya::EigenAccess::is_complex">
+<area shape="rect" id="Node000001" title="Check if data contains complex numbers." alt="" coords="255,117,440,157"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_aa81473d1a88b71d842a809e0264b10bf.html#aa81473d1a88b71d842a809e0264b10bf" title="Process DataVariant through interpolation." alt="" coords="31,5,181,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="303,112,257,85,206,60,175,48,177,43,208,55,259,81,305,108"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1EigenAccess_a338281fbf5e4fe3fd43082f151a46ab0.html#a338281fbf5e4fe3fd43082f151a46ab0" title="Convert complex data to Eigen complex vector." alt="" coords="13,70,199,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="241,122,199,115,200,110,242,117"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1EigenAccess_a9d4f4c8971f32fc343f787100982af3c.html#a9d4f4c8971f32fc343f787100982af3c" title="Convert complex data to magnitude vector." alt="" coords="5,149,207,203"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="242,157,207,162,207,157,241,152"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1EigenAccess_accd81411332a85f2f5532705b09ecf94.html#accd81411332a85f2f5532705b09ecf94" title="Convert complex data to phase vector (angle in radians)" alt="" coords="21,227,191,282"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="302,167,208,217,179,230,177,225,205,212,299,162"/>
+</map>

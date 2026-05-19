@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::GpuSync::GeometryWriterNode::get_vertex_count" name="MayaFlux::Nodes::GpuSync::GeometryWriterNode::get_vertex_count">
+<area shape="rect" id="Node000001" title="Get number of vertices." alt="" coords="253,5,453,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1PointCollectionNode_a89f1ca486920e33188f6cc4367186a2d.html#a89f1ca486920e33188f6cc4367186a2d" title="Compute frame &#45; uploads positions to vertex buffer." alt="" coords="5,5,205,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="240,35,206,35,206,30,240,30"/>
+</map>

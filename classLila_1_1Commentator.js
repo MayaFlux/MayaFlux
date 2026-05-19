@@ -1,0 +1,25 @@
+var classLila_1_1Commentator =
+[
+    [ "Commentator", "classLila_1_1Commentator_ab024b3732ca10b7fb3da0b51efe5f1b1.html#ab024b3732ca10b7fb3da0b51efe5f1b1", null ],
+    [ "Commentator", "classLila_1_1Commentator_ad85ce0faf09771a76598f12d145a03ac.html#ad85ce0faf09771a76598f12d145a03ac", null ],
+    [ "announce", "classLila_1_1Commentator_a410bc2742d0a8d3fd7c9f239c1127560.html#a410bc2742d0a8d3fd7c9f239c1127560", null ],
+    [ "debug", "classLila_1_1Commentator_adcc6cb935a96a5a6c01f4a90bac6b987.html#adcc6cb935a96a5a6c01f4a90bac6b987", null ],
+    [ "emitter_string", "classLila_1_1Commentator_a65584a021c8db1bad52c5eea83a944ce.html#a65584a021c8db1bad52c5eea83a944ce", null ],
+    [ "error", "classLila_1_1Commentator_ab779bc9939bf3e7474aad9d5b87c17d2.html#ab779bc9939bf3e7474aad9d5b87c17d2", null ],
+    [ "extract_filename", "classLila_1_1Commentator_a0f68559c750acc4c82c43c943db22c8e.html#a0f68559c750acc4c82c43c943db22c8e", null ],
+    [ "fatal", "classLila_1_1Commentator_ae7d00bac4de9a25323233a361a5a083f.html#ae7d00bac4de9a25323233a361a5a083f", null ],
+    [ "info", "classLila_1_1Commentator_a496dffe59add00a426b994e300f42305.html#a496dffe59add00a426b994e300f42305", null ],
+    [ "initialize_console_colors", "classLila_1_1Commentator_a5fcfac0f48da83ae8d4522012dcf3c04.html#a5fcfac0f48da83ae8d4522012dcf3c04", null ],
+    [ "instance", "classLila_1_1Commentator_a98e4ce508e7d00e86432682ebee177fb.html#a98e4ce508e7d00e86432682ebee177fb", null ],
+    [ "level_color", "classLila_1_1Commentator_ae4c2a8833d44132342878ebf3ed4958c.html#ae4c2a8833d44132342878ebf3ed4958c", null ],
+    [ "level_string", "classLila_1_1Commentator_a945e038487b16d89d480a88152218c0f.html#a945e038487b16d89d480a88152218c0f", null ],
+    [ "operator=", "classLila_1_1Commentator_a36e9a016e3e1c0c8fb78e96adf83b418.html#a36e9a016e3e1c0c8fb78e96adf83b418", null ],
+    [ "set_level", "classLila_1_1Commentator_a787d127196f0f1838efd89bfa8032632.html#a787d127196f0f1838efd89bfa8032632", null ],
+    [ "set_verbose", "classLila_1_1Commentator_a1858083909466daa8dfa25d9c1cb2fa7.html#a1858083909466daa8dfa25d9c1cb2fa7", null ],
+    [ "trace", "classLila_1_1Commentator_a419a0e761f5118c635492c3c9fca9a73.html#a419a0e761f5118c635492c3c9fca9a73", null ],
+    [ "warn", "classLila_1_1Commentator_aa69af465fda172dee0c508e8b7c9e23b.html#aa69af465fda172dee0c508e8b7c9e23b", null ],
+    [ "m_colors_enabled", "classLila_1_1Commentator_ade4045d4b84bc8964e5a12a2c576d930.html#ade4045d4b84bc8964e5a12a2c576d930", null ],
+    [ "m_min_level", "classLila_1_1Commentator_a121e2e9d084aef78f9deb8695e1c7acd.html#a121e2e9d084aef78f9deb8695e1c7acd", null ],
+    [ "m_mutex", "classLila_1_1Commentator_adf84adf85b7e1b9a16f8a76561999c1a.html#adf84adf85b7e1b9a16f8a76561999c1a", null ],
+    [ "m_verbose", "classLila_1_1Commentator_a2a42706fcaf1da014c1821e4b2fbc791.html#a2a42706fcaf1da014c1821e4b2fbc791", null ]
+];

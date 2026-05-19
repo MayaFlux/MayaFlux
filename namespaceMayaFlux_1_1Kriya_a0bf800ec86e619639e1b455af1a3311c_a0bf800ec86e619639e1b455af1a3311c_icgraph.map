@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kriya::any_key" name="MayaFlux::Kriya::any_key">
+<area shape="rect" id="Node000001" title="Creates an Event coroutine that triggers on any key press." alt="" coords="224,5,415,31"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_af5deaf1728c7948315dc4ce7af5ef77e.html#af5deaf1728c7948315dc4ce7af5ef77e" title="Schedule a handler for any key press." alt="" coords="5,5,176,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="210,21,176,21,176,15,210,15"/>
+</map>

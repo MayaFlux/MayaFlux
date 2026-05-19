@@ -1,0 +1,13 @@
+<map id="MayaFlux::Registry::BackendRegistry::register_service" name="MayaFlux::Registry::BackendRegistry::register_service">
+<area shape="rect" id="Node000001" title="Register a backend service capability." alt="" coords="584,94,780,149"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1IOManager_ae2e6d392990ec5945fa6bb7ce710f06d.html#ae2e6d392990ec5945fa6bb7ce710f06d" title="Construct IOManager and register the IOService into BackendRegistry." alt="" coords="322,5,509,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="610,91,535,60,497,48,499,43,537,55,612,86"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1AudioSubsystem_a2ada5fcceecc70a2a49005d51d1977ee.html#a2ada5fcceecc70a2a49005d51d1977ee" title=" " alt="" coords="295,69,536,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="570,111,536,106,537,101,571,105"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1IO_1_1CameraReader_a25ec3322a9e680a703b83504d18b3b2f.html#a25ec3322a9e680a703b83504d18b3b2f" title="Setup an IOService for this reader with the given reader_id." alt="" coords="309,133,522,173"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="571,137,523,143,522,138,570,132"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1IO_1_1VideoFileReader_ad5d3f1e3445da9ccf1dbe583e8609e28.html#ad5d3f1e3445da9ccf1dbe583e8609e28" title="Internal setup for IOService integration." alt="" coords="304,197,527,237"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="612,157,537,188,499,200,497,195,535,183,610,152"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1AudioSubsystem_a03b7942476858271242fc8372d84f0f2.html#a03b7942476858271242fc8372d84f0f2" title="Initialize audio processing with provided handle." alt="" coords="5,69,247,109"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="281,92,247,92,247,87,281,87"/>
+</map>

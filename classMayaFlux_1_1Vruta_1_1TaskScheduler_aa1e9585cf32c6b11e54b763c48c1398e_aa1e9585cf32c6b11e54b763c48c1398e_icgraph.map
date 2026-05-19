@@ -1,0 +1,12 @@
+<map id="MayaFlux::Vruta::TaskScheduler::get_tasks_for_token" name="MayaFlux::Vruta::TaskScheduler::get_tasks_for_token">
+<area shape="rect" id="Node000001" title="Get all tasks for a specific processing domain." alt="" coords="841,69,1072,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a3d807500ea3763052cc87093f29a8a7e.html#a3d807500ea3763052cc87093f29a8a7e" title=" " alt="" coords="563,5,793,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="855,69,765,48,766,43,856,64"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_ab2435d77fd2b8b2ac0dc06770f94c023.html#ab2435d77fd2b8b2ac0dc06770f94c023" title="Process tasks in a specific domain with default algorithm." alt="" coords="563,69,793,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="828,92,793,92,793,87,828,87"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a6b76571ac0c940a558211257a9d3da34.html#a6b76571ac0c940a558211257a9d3da34" title="Process all tasks for a specific processing domain." alt="" coords="284,99,515,139"/>
+<area shape="poly" id="edge5_Node000001_Node000004" title=" " alt="" coords="857,115,794,124,648,131,515,128,515,123,648,126,793,119,856,109"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="549,106,515,109,515,104,549,100"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_ab4f0590e96fb38d2e245b164007ad1fd.html#ab4f0590e96fb38d2e245b164007ad1fd" title="Process all active domains." alt="" coords="5,99,236,139"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="270,121,236,121,236,116,270,116"/>
+</map>

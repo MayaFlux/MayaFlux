@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kakshya::as_texture_access" name="MayaFlux::Kakshya::as_texture_access">
+<area shape="rect" id="Node000001" title="Extract a TextureAccess from a DataVariant." alt="" coords="509,41,668,81"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a028cc0af273b37e3dadbdc908c67a7ed.html#a028cc0af273b37e3dadbdc908c67a7ed" title="Create a 2D texture from a DataVariant in one shot." alt="" coords="264,5,461,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="495,49,461,44,462,38,496,44"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1TextureProcessor_a7d53a8a818b65190bbb4b66f14c3aada.html#a7d53a8a818b65190bbb4b66f14c3aada" title="Re&#45;upload pixels to GPU if they changed." alt="" coords="269,70,456,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="496,79,457,85,456,80,495,73"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1TextureProcessor_a22c664d1f23e08fdf018d3a58f600e26.html#a22c664d1f23e08fdf018d3a58f600e26" title="The core processing function that must be implemented by derived classes." alt="" coords="5,70,216,125"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="256,100,216,100,216,95,256,95"/>
+</map>

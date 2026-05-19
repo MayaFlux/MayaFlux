@@ -1,0 +1,15 @@
+<map id="MayaFlux::Buffers::VKBuffer::set_default_render_config" name="MayaFlux::Buffers::VKBuffer::set_default_render_config">
+<area shape="rect" id="Node000001" title="Called by derived classes to set their context&#45;specific defaults." alt="" coords="303,192,463,247"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1MeshNetworkBuffer_a6db6ab3ff001105ca916393d90854ca6.html#a6db6ab3ff001105ca916393d90854ca6" title="Construct from an existing MeshNetwork." alt="" coords="5,5,255,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="355,182,312,126,284,98,253,74,234,63,236,58,256,69,288,94,316,122,359,179"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1NodeTextureBuffer_a00e6d4055c95164561929c303ba49f8c.html#a00e6d4055c95164561929c303ba49f8c" title="Create texture staging buffer from generative node." alt="" coords="13,84,247,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="322,187,254,154,221,141,223,136,256,149,324,183"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1FormaBuffer_a6e4b1818e6ff4682a0bc2095de0f5301.html#a6e4b1818e6ff4682a0bc2095de0f5301" title="Attach a RenderProcessor targeting the given window." alt="" coords="23,163,237,203"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="289,209,237,201,238,196,290,203"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1GeometryBuffer_a4bed9c933e8e726e4d8633eda36d0a8e.html#a4bed9c933e8e726e4d8633eda36d0a8e" title="Setup rendering with RenderProcessor." alt="" coords="45,228,215,283"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="289,235,216,246,215,241,289,230"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1NetworkGeometryBuffer_a737c7476f1d59431ce65648a3b8b5206.html#a737c7476f1d59431ce65648a3b8b5206" title="Setup rendering with RenderProcessor." alt="" coords="39,307,221,361"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="329,257,256,296,222,310,220,305,254,292,327,252"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1TextureBuffer_ac591a11585eecc22824a7411e4f02dab.html#ac591a11585eecc22824a7411e4f02dab" title="Create texture buffer with dimensions." alt="" coords="28,386,232,426"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="361,260,317,320,289,350,256,375,230,388,228,384,253,370,285,346,313,316,356,257"/>
+</map>

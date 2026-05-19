@@ -1,0 +1,45 @@
+<map id="InputSubsystem.cpp" name="InputSubsystem.cpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="564,5,719,31"/>
+<area shape="rect" id="Node000002" href="$InputSubsystem_8hpp.html" title=" " alt="" coords="41,86,196,111"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="564,31,400,52,208,81,184,86,183,81,208,76,400,47,564,26"/>
+<area shape="rect" id="Node000009" href="$BackendRegistry_8hpp.html" title=" " alt="" coords="652,79,855,119"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="659,29,717,69,714,73,656,33"/>
+<area shape="rect" id="Node000011" href="$InputService_8hpp.html" title=" " alt="" coords="431,79,627,119"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="626,33,569,73,566,69,623,29"/>
+<area shape="rect" id="Node000012" href="$HIDBackend_8hpp.html" title=" " alt="" coords="220,79,407,119"/>
+<area shape="poly" id="edge12_Node000001_Node000012" title=" " alt="" coords="594,33,406,78,405,73,593,28"/>
+<area shape="rect" id="Node000013" href="$MIDIBackend_8hpp.html" title=" " alt="" coords="879,79,1065,119"/>
+<area shape="poly" id="edge14_Node000001_Node000013" title=" " alt="" coords="690,28,880,73,879,78,689,33"/>
+<area shape="rect" id="Node000015" href="$Archivist_8hpp.html" title=" " alt="" coords="1089,86,1313,111"/>
+<area shape="poly" id="edge16_Node000001_Node000015" title=" " alt="" coords="719,27,1078,76,1114,81,1113,87,1077,81,719,32"/>
+<area shape="rect" id="Node000003" href="$InputBackend_8hpp.html" title=" " alt="" coords="232,167,419,207"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="148,109,268,159,266,164,146,114"/>
+<area shape="rect" id="Node000006" href="$Subsystem_8hpp.html" title=" " alt="" coords="5,167,208,207"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="120,112,114,153,109,153,114,111"/>
+<area shape="rect" id="Node000004" href="$GlobalInputConfig_8hpp.html" title=" " alt="" coords="261,255,459,295"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="335,206,350,241,345,243,331,208"/>
+<area shape="rect" id="Node000005" href="$InputBinding_8hpp.html" title=" " alt="" coords="357,343,515,383"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="379,293,412,330,408,334,375,297"/>
+<area shape="rect" id="Node000007" href="$ProcessingArchitecture_8hpp.html" title="Unified processing architecture for multimodal subsystem coordination." alt="" coords="9,255,204,295"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="109,207,109,241,104,241,104,207"/>
+<area shape="rect" id="Node000008" href="$ProcessingTokens_8hpp.html" title=" " alt="" coords="9,343,204,383"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="109,295,109,329,104,329,104,295"/>
+<area shape="rect" id="Node000010" title=" " alt="" coords="710,174,797,199"/>
+<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="756,119,756,160,751,160,751,119"/>
+<area shape="poly" id="edge11_Node000011_Node000005" title=" " alt="" coords="527,120,507,198,473,296,456,332,451,330,468,294,501,196,522,119"/>
+<area shape="poly" id="edge13_Node000012_Node000003" title=" " alt="" coords="319,119,323,153,318,154,313,119"/>
+<area shape="rect" id="Node000014" href="$RtMidiBackend_8hpp.html" title=" " alt="" coords="899,174,1045,199"/>
+<area shape="poly" id="edge15_Node000013_Node000014" title=" " alt="" coords="975,119,975,160,969,160,969,119"/>
+<area shape="rect" id="Node000016" href="$Format_8hpp.html" title=" " alt="" coords="1255,174,1351,199"/>
+<area shape="poly" id="edge17_Node000015_Node000016" title=" " alt="" coords="1217,109,1280,162,1276,166,1213,114"/>
+<area shape="rect" id="Node000017" href="$JournalEntry_8hpp.html" title=" " alt="" coords="1103,174,1230,199"/>
+<area shape="poly" id="edge18_Node000015_Node000017" title=" " alt="" coords="1199,113,1179,162,1174,160,1194,111"/>
+<area shape="rect" id="Node000018" href="$EnumReflect_8hpp.html" title=" " alt="" coords="998,255,1183,295"/>
+<area shape="poly" id="edge19_Node000017_Node000018" title=" " alt="" coords="1158,201,1119,246,1115,242,1154,198"/>
+<area shape="rect" id="Node000019" title=" " alt="" coords="1208,262,1275,287"/>
+<area shape="poly" id="edge20_Node000017_Node000019" title=" " alt="" coords="1179,198,1224,249,1220,253,1175,201"/>
+<area shape="rect" id="Node000020" title=" " alt="" coords="1299,262,1423,287"/>
+<area shape="poly" id="edge21_Node000017_Node000020" title=" " alt="" coords="1194,197,1324,254,1322,259,1192,202"/>
+<area shape="rect" id="Node000021" title=" " alt="" coords="877,262,974,287"/>
+<area shape="poly" id="edge22_Node000017_Node000021" title=" " alt="" coords="1135,202,971,260,970,255,1133,197"/>
+</map>

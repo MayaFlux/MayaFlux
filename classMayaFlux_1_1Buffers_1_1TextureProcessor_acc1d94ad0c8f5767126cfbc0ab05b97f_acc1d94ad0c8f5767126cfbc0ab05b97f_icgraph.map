@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::TextureProcessor::set_streaming_mode" name="MayaFlux::Buffers::TextureProcessor::set_streaming_mode">
+<area shape="rect" id="Node000001" title="Enable or disable streaming mode for pixel uploads." alt="" coords="229,5,391,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1TextureWriteProcessor_a3620f328fba6009afe32bff53fa7824a.html#a3620f328fba6009afe32bff53fa7824a" title=" " alt="" coords="5,5,181,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="215,35,182,35,182,30,215,30"/>
+</map>

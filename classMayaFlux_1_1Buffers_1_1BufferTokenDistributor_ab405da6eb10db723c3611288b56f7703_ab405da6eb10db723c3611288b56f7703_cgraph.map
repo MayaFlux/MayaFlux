@@ -1,0 +1,14 @@
+<map id="MayaFlux::Buffers::BufferTokenDistributor::decide_vk_buffer" name="MayaFlux::Buffers::BufferTokenDistributor::decide_vk_buffer">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,104,172,159"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferTokenDistributor_a43fef03e0b2432629d213174b1028215.html#a43fef03e0b2432629d213174b1028215" title=" " alt="" coords="220,5,387,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="148,101,230,63,232,68,150,106"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1BufferTokenDistributor_a8905ac4746f23b6abfc7cf6ebfc4dcff.html#a8905ac4746f23b6abfc7cf6ebfc4dcff" title=" " alt="" coords="435,104,601,159"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="172,123,220,121,387,121,421,122,421,127,387,126,220,126,172,128"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1BufferTokenDistributor_affbb06956b358f108ba37af964b651ef.html#affbb06956b358f108ba37af964b651ef" title=" " alt="" coords="220,136,387,191"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="173,141,207,146,206,151,172,146"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1BufferTokenDistributor_a4fa0ca33799590fe51a16eef4650ee14.html#a4fa0ca33799590fe51a16eef4650ee14" title=" " alt="" coords="220,215,387,269"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="139,156,221,201,232,206,229,211,219,206,136,161"/>
+<area shape="poly" id="edge6_Node000005_Node000003" title=" " alt="" coords="363,212,385,201,456,163,458,168,388,206,365,217"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1BufferTokenDistributor_af1dbf5faec4cbc8f4671873f1169dfb3.html#af1dbf5faec4cbc8f4671873f1169dfb3" title=" " alt="" coords="435,215,601,269"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="387,239,421,239,421,245,387,245"/>
+</map>

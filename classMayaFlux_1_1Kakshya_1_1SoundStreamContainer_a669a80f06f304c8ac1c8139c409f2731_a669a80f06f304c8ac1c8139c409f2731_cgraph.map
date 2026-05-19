@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::SoundStreamContainer::set_read_position" name="MayaFlux::Kakshya::SoundStreamContainer::set_read_position">
+<area shape="rect" id="Node000001" title="Set the current read position in the primary temporal dimension per channel." alt="" coords="5,5,177,60"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kakshya_ad71d9cdc381afef072b00776b5ebf7a7.html#ad71d9cdc381afef072b00776b5ebf7a7" title="Wrap a position within loop boundaries if looping is enabled." alt="" coords="225,13,408,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="177,30,212,30,212,35,177,35"/>
+</map>

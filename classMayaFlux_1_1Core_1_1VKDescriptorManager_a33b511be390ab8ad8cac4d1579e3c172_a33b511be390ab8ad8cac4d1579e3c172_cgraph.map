@@ -1,0 +1,7 @@
+<map id="MayaFlux::Core::VKDescriptorManager::allocate_set" name="MayaFlux::Core::VKDescriptorManager::allocate_set">
+<area shape="rect" id="Node000001" title="Allocate a descriptor set from the pool." alt="" coords="5,5,223,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1VKDescriptorManager_a617aab586a0fdda8f8ab15e514d65c21.html#a617aab586a0fdda8f8ab15e514d65c21" title="Grow pool capacity by allocating new pool." alt="" coords="271,5,488,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="223,23,257,23,257,28,223,28"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1VKDescriptorManager_aa2b37a4e8017ca0dcb8033e50d2a66a0.html#aa2b37a4e8017ca0dcb8033e50d2a66a0" title="Create a new descriptor pool." alt="" coords="536,5,753,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="488,23,523,23,523,28,488,28"/>
+</map>

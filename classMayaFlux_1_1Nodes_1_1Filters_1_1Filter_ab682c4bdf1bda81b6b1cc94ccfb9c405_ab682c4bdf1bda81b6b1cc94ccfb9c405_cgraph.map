@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Filters::Filter::setBCoefficients" name="MayaFlux::Nodes::Filters::Filter::setBCoefficients">
+<area shape="rect" id="Node000001" title="Updates the feedforward (numerator) coefficients." alt="" coords="5,13,188,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Filters_1_1Filter_a7d0d8d45b7af55d54c51d3f8ac0d5ad7.html#a7d0d8d45b7af55d54c51d3f8ac0d5ad7" title="Initializes the input and output history buffers." alt="" coords="236,5,419,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="188,30,222,30,222,35,188,35"/>
+</map>

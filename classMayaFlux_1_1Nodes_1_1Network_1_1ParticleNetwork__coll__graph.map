@@ -1,0 +1,13 @@
+<map id="MayaFlux::Nodes::Network::ParticleNetwork" name="MayaFlux::Nodes::Network::ParticleNetwork">
+<area shape="rect" id="Node000001" title="Motion&#45;focused point network with swappable operators." alt="" coords="214,1051,439,1471"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1NodeNetwork.html" title="Abstract base class for structured collections of nodes with defined relationships." alt="" coords="5,268,203,988"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="210,966,217,987,241,1050,236,1051,212,989,205,968"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Nodes_1_1RoutingState.html" title="Represents the state of routing transitions for a node." alt="" coords="11,15,197,195"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="107,195,107,251,101,251,101,195"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kinesis_1_1Stochastic_1_1Stochastic.html" title="Unified generative infrastructure for stochastic and procedural algorithms." alt="" coords="227,293,427,963"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="329,963,329,1034,324,1034,324,963"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Kinesis_1_1Stochastic_1_1GeneratorState.html" title="Encapsulates internal state for stateful generators." alt="" coords="233,5,421,205"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="329,206,329,277,324,277,324,206"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Kinesis_1_1SamplerBounds.html" title="Spatial domain for vertex generation." alt="" coords="451,558,592,698"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="516,699,491,851,471,940,445,1027,442,1036,437,1034,440,1026,466,939,486,850,511,698"/>
+</map>

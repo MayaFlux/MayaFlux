@@ -1,0 +1,15 @@
+<map id="MayaFlux::Kakshya::WindowContainer::to_image" name="MayaFlux::Kakshya::WindowContainer::to_image">
+<area shape="rect" id="Node000001" title="Upload the full surface readback to a new VKImage, reusing a caller&#45;supplied persistent staging buffe..." alt="" coords="5,163,212,203"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kakshya_1_1ContainerDataStructure_a04ba106a40af90463702de9810eb6f6e.html#a04ba106a40af90463702de9810eb6f6e" title="Extract height from image/video dimensions." alt="" coords="271,5,446,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="131,161,188,116,259,69,269,64,272,68,261,74,191,120,135,165"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kakshya_1_1ContainerDataStructure_ad25f58eab842676d1cda72fb4dfe9017.html#ad25f58eab842676d1cda72fb4dfe9017" title="Extract width from image/video dimensions." alt="" coords="271,84,446,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="178,161,257,138,259,143,180,166"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a6887ad297693c2392be7960daab06002.html#a6887ad297693c2392be7960daab06002" title=" " alt="" coords="260,163,457,203"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="212,181,247,181,247,186,212,186"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1WindowContainer_a6a0c062ee3394143e2221548134ce34c.html#a6a0c062ee3394143e2221548134ce34c" title="Acquire a lock for thread&#45;safe access." alt="" coords="273,227,445,267"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="188,201,268,221,266,227,187,206"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Kakshya_ae1dd319d71f7aa09fa3cca52132be64a.html#ae1dd319d71f7aa09fa3cca52132be64a" title="Query the actual vk::Format in use by the window&#39;s live swapchain, translated back to the MayaFlux su..." alt="" coords="276,291,441,331"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="138,201,194,239,261,277,277,284,275,289,259,282,191,244,135,206"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Core_a536f388ac516606e0df343ebf0047db6.html#a536f388ac516606e0df343ebf0047db6" title="Reverse&#45;map a vk::Format to the nearest GraphicsSurfaceInfo::SurfaceFormat." alt="" coords="505,291,668,331"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="441,309,491,309,491,314,441,314"/>
+</map>

@@ -1,0 +1,30 @@
+<map id="MayaFlux::Core::GlfwWindow::GlfwWindow" name="MayaFlux::Core::GlfwWindow::GlfwWindow">
+<area shape="rect" id="Node000001" title="Creates a window with the given configuration." alt="" coords="5,127,219,167"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1GLFWSingleton_ac4935bfb2f344c7d088d038690bd7375.html#ac4935bfb2f344c7d088d038690bd7375" title="Configures GLFW with pre&#45;initialization hints." alt="" coords="545,5,776,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="135,124,192,84,228,64,266,48,333,31,402,21,469,16,532,15,532,21,470,21,402,26,334,36,268,53,230,69,195,88,138,129"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1GlfwWindow_aa085a7db0c65669ecf3d43adf8a2b2d9.html#aa085a7db0c65669ecf3d43adf8a2b2d9" title=" " alt="" coords="275,63,489,103"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="197,124,283,103,284,108,198,129"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1GLFWSingleton_a59865076ee8f384943d796eea66a5acb.html#a59865076ee8f384943d796eea66a5acb" title="Initializes the GLFW library if not already initialized." alt="" coords="267,127,497,167"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="219,144,253,144,253,149,219,149"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Core_1_1GLFWSingleton_a219e7b12432621fa8903fa6bbd030c51.html#a219e7b12432621fa8903fa6bbd030c51" title="Increments the count of active GLFW windows." alt="" coords="267,191,497,231"/>
+<area shape="poly" id="edge5_Node000001_Node000005" title=" " alt="" coords="198,164,284,185,283,190,197,169"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Core_1_1GlfwWindow_a3b8031de3929984bd9a9a94e5110559d.html#a3b8031de3929984bd9a9a94e5110559d" title=" " alt="" coords="275,277,489,317"/>
+<area shape="poly" id="edge6_Node000001_Node000006" title=" " alt="" coords="145,165,268,240,325,269,322,274,265,245,142,169"/>
+<area shape="poly" id="edge4_Node000004_Node000002" title=" " alt="" coords="473,124,496,112,511,99,519,85,528,70,544,55,555,49,557,53,547,59,532,73,524,87,515,102,499,117,476,129"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Core_1_1GlfwWindow_a29aa8a33db2378e0b37dcf270993b465.html#a29aa8a33db2378e0b37dcf270993b465" title=" " alt="" coords="554,69,767,109"/>
+<area shape="poly" id="edge7_Node000006_Node000007" title=" " alt="" coords="445,275,472,260,495,241,507,226,513,211,517,180,523,150,530,134,543,119,549,115,552,119,547,123,535,137,528,152,523,181,518,212,511,228,499,244,475,265,447,280"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Core_1_1GlfwWindow_ae13559810f404a5d05cbf7a019b1f8a7.html#ae13559810f404a5d05cbf7a019b1f8a7" title=" " alt="" coords="554,134,767,189"/>
+<area shape="poly" id="edge8_Node000006_Node000008" title=" " alt="" coords="431,275,496,240,519,219,544,199,557,192,560,197,547,204,523,224,499,245,434,280"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Core_1_1GlfwWindow_a2931b355ce89b0d20afc59a0ba0466bd.html#a2931b355ce89b0d20afc59a0ba0466bd" title=" " alt="" coords="554,213,767,253"/>
+<area shape="poly" id="edge9_Node000006_Node000009" title=" " alt="" coords="469,275,559,254,560,259,471,280"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Core_1_1GlfwWindow_a8f78bbc886f7cb2a03a2db3fcdd3747d.html#a8f78bbc886f7cb2a03a2db3fcdd3747d" title=" " alt="" coords="551,277,770,317"/>
+<area shape="poly" id="edge10_Node000006_Node000010" title=" " alt="" coords="489,295,538,295,538,300,489,300"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Core_1_1GlfwWindow_a191b43d45c0ef829bf48e3e7be4de26c.html#a191b43d45c0ef829bf48e3e7be4de26c" title=" " alt="" coords="554,341,767,381"/>
+<area shape="poly" id="edge11_Node000006_Node000011" title=" " alt="" coords="471,315,560,336,559,341,469,320"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Core_1_1GlfwWindow_ab4cbe3b3970db8d264d141cdd4a993fd.html#ab4cbe3b3970db8d264d141cdd4a993fd" title=" " alt="" coords="553,405,769,445"/>
+<area shape="poly" id="edge12_Node000006_Node000012" title=" " alt="" coords="413,315,473,353,546,391,566,398,564,403,544,396,471,358,411,320"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Core_1_1GlfwWindow_a83175e3bbc8257ddbae1186262594f89.html#a83175e3bbc8257ddbae1186262594f89" title=" " alt="" coords="552,469,769,509"/>
+<area shape="poly" id="edge13_Node000006_Node000013" title=" " alt="" coords="400,316,460,385,501,423,547,455,559,462,557,466,544,460,497,427,456,388,396,320"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1Core_1_1GlfwWindow_a48dfe5e50ec9cfffa055bc328c202843.html#a48dfe5e50ec9cfffa055bc328c202843" title=" " alt="" coords="554,533,767,573"/>
+<area shape="poly" id="edge14_Node000006_Node000014" title=" " alt="" coords="395,316,416,359,449,414,493,471,519,497,547,519,556,525,553,529,544,524,515,501,489,474,445,417,411,362,390,319"/>
+</map>

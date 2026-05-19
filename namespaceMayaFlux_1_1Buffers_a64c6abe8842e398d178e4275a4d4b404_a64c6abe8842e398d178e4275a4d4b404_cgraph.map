@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::create_staging_buffer" name="MayaFlux::Buffers::create_staging_buffer">
+<area shape="rect" id="Node000001" title="Create staging buffer for transfers." alt="" coords="5,49,168,89"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_a0c7a59c0847791ed0915dcd64e8df783.html#a0c7a59c0847791ed0915dcd64e8df783" title="Query for a backend service." alt="" coords="233,5,400,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="168,53,219,45,220,50,169,59"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aa28c6f5592e5893508bafb62aefcc496.html#aa28c6f5592e5893508bafb62aefcc496" title="Get the global registry instance." alt="" coords="216,85,417,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="169,79,203,84,202,89,168,84"/>
+</map>

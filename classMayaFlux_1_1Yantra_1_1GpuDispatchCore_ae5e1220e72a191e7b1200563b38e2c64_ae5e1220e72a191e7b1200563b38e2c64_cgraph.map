@@ -1,0 +1,13 @@
+<map id="MayaFlux::Yantra::GpuDispatchCore::readback_primary" name="MayaFlux::Yantra::GpuDispatchCore::readback_primary">
+<area shape="rect" id="Node000001" title="Read back the primary output buffer into a float vector." alt="" coords="5,69,231,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1GpuResourceManager_a066c2ccf5d9440432cd48159ef52c2e5.html#a066c2ccf5d9440432cd48159ef52c2e5" title=" " alt="" coords="279,5,513,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="205,67,295,46,296,51,206,72"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1GpuResourceManager_a5e56fc87b5147d2898350192d082f8bc.html#a5e56fc87b5147d2898350192d082f8bc" title=" " alt="" coords="282,69,510,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="231,87,268,87,268,92,231,92"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Yantra_1_1GpuDispatchCore_afb7ae6dab399e80516b3c52eb9a03a8b.html#afb7ae6dab399e80516b3c52eb9a03a8b" title=" " alt="" coords="283,133,509,173"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="206,107,296,128,295,133,205,112"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a715d57394465ff2924727d7c82d87e7b.html#a715d57394465ff2924727d7c82d87e7b" title="Get the global shader compiler instance." alt="" coords="561,69,759,109"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="510,87,548,87,548,92,510,92"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ab22eaae6b8210236918b85f409fc4c49.html#ab22eaae6b8210236918b85f409fc4c49" title=" " alt="" coords="807,69,1004,109"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="759,87,793,87,793,92,759,92"/>
+</map>

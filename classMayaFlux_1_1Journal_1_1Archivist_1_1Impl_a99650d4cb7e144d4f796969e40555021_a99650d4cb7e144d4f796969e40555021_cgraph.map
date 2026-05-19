@@ -1,0 +1,11 @@
+<map id="MayaFlux::Journal::Archivist::Impl::scribe" name="MayaFlux::Journal::Archivist::Impl::scribe">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,77,168,117"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Journal_1_1Archivist_1_1Impl_a4d9d7424aee00974abddd465b2235e13.html#a4d9d7424aee00974abddd465b2235e13" title=" " alt="" coords="216,5,411,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="150,75,236,47,237,52,151,80"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Journal_1_1Archivist_1_1Impl_ae2ee8e01b56186cc6e0ff8e0db27a70d.html#ae2ee8e01b56186cc6e0ff8e0db27a70d" title=" " alt="" coords="235,70,392,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="168,95,221,95,221,100,168,100"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Journal_1_1Archivist_1_1Impl_afb69d43a1eb8d19fe155e74b3041a6f4.html#afb69d43a1eb8d19fe155e74b3041a6f4" title=" " alt="" coords="235,149,392,203"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="146,115,222,142,221,147,144,120"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Reflect_aad91118cbd25bd9e35a3ced9aa4e6dbd.html#aad91118cbd25bd9e35a3ced9aa4e6dbd" title="Universal enum to string converter using magic_enum (original case)" alt="" coords="459,77,605,117"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="392,95,445,95,445,100,392,100"/>
+</map>

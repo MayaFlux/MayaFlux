@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::VideoStreamContainer::has_data" name="MayaFlux::Kakshya::VideoStreamContainer::has_data">
+<area shape="rect" id="Node000001" title="Check if the container currently holds any data." alt="" coords="5,5,175,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_ae700cb6f780df3a568fdc9013168089c.html#ae700cb6f780df3a568fdc9013168089c" title="Acquire a lock for thread&#45;safe access." alt="" coords="223,13,427,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="175,30,209,30,209,35,175,35"/>
+</map>

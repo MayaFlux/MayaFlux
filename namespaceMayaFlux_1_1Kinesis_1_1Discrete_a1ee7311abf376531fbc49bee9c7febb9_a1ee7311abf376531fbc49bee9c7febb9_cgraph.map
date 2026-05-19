@@ -1,0 +1,13 @@
+<map id="MayaFlux::Kinesis::Discrete::cross_correlate" name="MayaFlux::Kinesis::Discrete::cross_correlate">
+<area shape="rect" id="Node000001" title="Cross&#45;correlation via FFT." alt="" coords="5,101,188,141"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a6a6e81ae410d0fde11b29a2ff3bff6bb.html#a6a6e81ae410d0fde11b29a2ff3bff6bb" title="Core FFT convolution engine." alt="" coords="236,5,439,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="137,99,235,55,256,47,258,52,237,60,139,104"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_aa7fcdee057518b1d482864a610ee0b5a.html#aa7fcdee057518b1d482864a610ee0b5a" title="Normalize to [target_min, target_max] in&#45;place Single&#45;pass min/max reduction followed by a single tra..." alt="" coords="263,69,412,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="188,107,249,98,249,104,189,112"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a2652077af544b7bf08874b9b178653b4.html#a2652077af544b7bf08874b9b178653b4" title="Peak amplitude per window." alt="" coords="263,133,412,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="189,131,249,139,249,144,188,136"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_a7b39444c54b065c1a57bbbd2b9338b43.html#a7b39444c54b065c1a57bbbd2b9338b43" title="Reverse time order of single&#45;channel data (non&#45;destructive)" alt="" coords="262,198,413,223"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="138,139,185,162,237,183,265,192,264,197,235,188,182,166,135,144"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a9a39a85122307184773088f1f3603a96.html#a9a39a85122307184773088f1f3603a96" title="Reverse temporal order in&#45;place." alt="" coords="487,191,636,231"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="413,208,473,208,473,213,413,213"/>
+</map>

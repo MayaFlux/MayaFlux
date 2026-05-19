@@ -1,0 +1,36 @@
+<map id="MayaFlux::Core::VKContext::initialize" name="MayaFlux::Core::VKContext::initialize">
+<area shape="rect" id="Node000001" title="Initialize Vulkan context." alt="" coords="5,220,205,260"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1VKContext_aa076977c33941d8fc34f2bfe2fd295a7.html#aa076977c33941d8fc34f2bfe2fd295a7" title="Cleanup all Vulkan resources." alt="" coords="279,75,479,115"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="130,218,184,178,252,136,297,117,299,122,255,141,187,182,133,222"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Core_1_1VKInstance_ad5009d0f849278358ae38dcc785627d6.html#ad5009d0f849278358ae38dcc785627d6" title="Get the Vulkan instance handle." alt="" coords="566,133,771,173"/>
+<area shape="poly" id="edge6_Node000001_Node000005" title=" " alt="" coords="158,217,204,202,253,189,330,176,408,166,552,155,552,160,409,171,331,181,254,195,205,207,159,222"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Core_1_1GLFWSingleton_ac4935bfb2f344c7d088d038690bd7375.html#ac4935bfb2f344c7d088d038690bd7375" title="Configures GLFW with pre&#45;initialization hints." alt="" coords="832,220,1063,260"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="206,234,253,233,519,231,784,233,818,234,818,239,784,239,519,236,253,239,206,240"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Core_1_1GLFWSingleton_a757b5035fce03317d4aa96a7933f0d36.html#a757b5035fce03317d4aa96a7933f0d36" title="Retrieves the list of required Vulkan instance extensions for GLFW." alt="" coords="253,248,505,288"/>
+<area shape="poly" id="edge7_Node000001_Node000007" title=" " alt="" coords="206,248,240,251,239,256,205,253"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Core_1_1VKInstance_af5c4bbfc606cb6b5cd1d465d5946918f.html#af5c4bbfc606cb6b5cd1d465d5946918f" title="Initialize Vulkan instance." alt="" coords="277,352,482,392"/>
+<area shape="poly" id="edge10_Node000001_Node000009" title=" " alt="" coords="149,258,325,343,323,348,147,262"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Core_1_1VKDevice_ae95255bb5e4c00b54d5f712a12631b8d.html#ae95255bb5e4c00b54d5f712a12631b8d" title="Initialize device (pick physical device and create logical device)" alt="" coords="282,507,477,547"/>
+<area shape="poly" id="edge15_Node000001_Node000013" title=" " alt="" coords="126,258,255,402,349,495,345,499,251,406,122,262"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1VKDevice_a3587e8580ec6e76e6b1fb4332dffe8da.html#a3587e8580ec6e76e6b1fb4332dffe8da" title="Cleanup device resources." alt="" coords="571,5,766,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="463,72,571,46,572,51,464,77"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1VKInstance_a136aad0427c8e257dcb540047c333cd6.html#a136aad0427c8e257dcb540047c333cd6" title="Cleanup Vulkan instance." alt="" coords="566,69,771,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="480,90,552,89,552,94,480,95"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="479,112,557,128,556,133,478,117"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Core_1_1GLFWSingleton_a59865076ee8f384943d796eea66a5acb.html#a59865076ee8f384943d796eea66a5acb" title="Initializes the GLFW library if not already initialized." alt="" coords="553,248,784,288"/>
+<area shape="poly" id="edge8_Node000007_Node000008" title=" " alt="" coords="506,265,540,265,540,271,506,271"/>
+<area shape="poly" id="edge9_Node000008_Node000006" title=" " alt="" coords="784,254,818,250,819,256,785,259"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Core_1_1VKInstance_ab6d0d8e03bb2101a3e5203df7722def6.html#ab6d0d8e03bb2101a3e5203df7722def6" title="Check if requested validation layers are available." alt="" coords="566,313,771,367"/>
+<area shape="poly" id="edge11_Node000009_Node000010" title=" " alt="" coords="482,358,552,350,553,355,482,363"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Core_1_1VKInstance_afad35012d9953c1b64f68150632cec74.html#afad35012d9953c1b64f68150632cec74" title="Validation layer callback." alt="" coords="845,415,1050,455"/>
+<area shape="poly" id="edge12_Node000009_Node000011" title=" " alt="" coords="483,381,831,419,831,425,482,386"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Core_1_1VKInstance_ac9a554cd2ed26a5a194ae795d0db1792.html#ac9a554cd2ed26a5a194ae795d0db1792" title="Setup debug messenger for validation layer output." alt="" coords="566,443,771,483"/>
+<area shape="poly" id="edge13_Node000009_Node000012" title=" " alt="" coords="445,389,591,436,590,441,443,395"/>
+<area shape="poly" id="edge14_Node000012_Node000011" title=" " alt="" coords="771,450,831,444,831,449,772,455"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1Core_1_1VKDevice_a9209b1b553a580d2c39329529cc63864.html#a9209b1b553a580d2c39329529cc63864" title="Create the logical device and retrieve queue handles." alt="" coords="571,507,766,547"/>
+<area shape="poly" id="edge16_Node000013_Node000014" title=" " alt="" coords="477,524,557,524,557,529,477,529"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1Core_1_1VKDevice_a30ebd817f55cb5573ec46a9ffd6bd4bb.html#a30ebd817f55cb5573ec46a9ffd6bd4bb" title="Pick a suitable physical device (GPU)" alt="" coords="571,571,766,611"/>
+<area shape="poly" id="edge17_Node000013_Node000015" title=" " alt="" coords="471,544,565,565,564,570,470,549"/>
+<area shape="rect" id="Node000016" href="$classMayaFlux_1_1Core_1_1VKDevice_ac31b7e039abe1da74b754973d2a3eb00.html#ac31b7e039abe1da74b754973d2a3eb00" title="Find queue families on the given physical device." alt="" coords="850,571,1045,611"/>
+<area shape="poly" id="edge18_Node000015_Node000016" title=" " alt="" coords="766,588,836,588,836,593,766,593"/>
+</map>

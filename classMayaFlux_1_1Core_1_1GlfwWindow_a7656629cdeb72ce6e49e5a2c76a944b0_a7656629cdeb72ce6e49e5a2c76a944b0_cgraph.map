@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::GlfwWindow::destroy" name="MayaFlux::Core::GlfwWindow::destroy">
+<area shape="rect" id="Node000001" title="Destroy the window and release resources." alt="" coords="5,5,219,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1GLFWSingleton_a2217ef405d878e04e518d7c607a89e31.html#a2217ef405d878e04e518d7c607a89e31" title="Decrements the count of active GLFW windows." alt="" coords="267,5,497,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="219,23,253,23,253,28,219,28"/>
+</map>

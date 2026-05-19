@@ -1,0 +1,66 @@
+<map id="MayaFlux::Kakshya::VertexLayout::for_meshes" name="MayaFlux::Kakshya::VertexLayout::for_meshes">
+<area shape="rect" id="Node000001" title="Factory: layout for MeshVertex (position, color, weight, uv, normal, tangent)" alt="" coords="1533,299,1725,339"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kakshya_a0c448bc32c2b21139d5d04ec84c7b84c.html#a0c448bc32c2b21139d5d04ec84c7b84c" title="Convert DataVariant to mesh&#45;vertex&#45;compatible bytes." alt="" coords="1267,17,1447,57"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1615,287,1597,239,1570,182,1532,124,1509,98,1484,75,1446,55,1449,50,1487,70,1513,94,1536,121,1574,179,1602,237,1620,285"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Portal_1_1Forma_a3ac0e9a6c9cc495e8fed11eb9deb0685.html#a3ac0e9a6c9cc495e8fed11eb9deb0685" title="Geometry function for a collapsible header strip." alt="" coords="1259,149,1455,189"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="1598,291,1547,245,1517,222,1484,203,1454,191,1456,186,1487,198,1520,218,1551,241,1602,287"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Portal_1_1Forma_a1799b353b33ba45e9092d2249e53f48e.html#a1799b353b33ba45e9092d2249e53f48e" title="Construct a collapsible header strip." alt="" coords="989,270,1171,310"/>
+<area shape="poly" id="edge32_Node000001_Node000005" title=" " alt="" coords="1519,316,1171,297,1171,292,1519,311"/>
+<area shape="rect" id="Node000017" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1MeshWriterNode_ae25f2a644f82c96f8f1a862d401e472f.html#ae25f2a644f82c96f8f1a862d401e472f" title="Compute GPU data for this frame." alt="" coords="1232,213,1483,253"/>
+<area shape="poly" id="edge25_Node000001_Node000017" title=" " alt="" coords="1556,297,1485,274,1425,255,1427,250,1486,269,1557,292"/>
+<area shape="rect" id="Node000018" href="$classMayaFlux_1_1IO_1_1ModelReader_a4caf9e31c81e7ac5b07078c38300a6ca.html#a4caf9e31c81e7ac5b07078c38300a6ca" title=" " alt="" coords="1256,85,1459,125"/>
+<area shape="poly" id="edge26_Node000001_Node000018" title=" " alt="" coords="1610,289,1589,253,1560,213,1525,173,1484,139,1458,126,1460,121,1487,134,1529,169,1564,209,1593,251,1614,286"/>
+<area shape="rect" id="Node000023" href="$classMayaFlux_1_1Nodes_1_1Network_1_1FieldOperator_a72f536e0dec68e5cb9d20eea3a5a5ef6.html#a72f536e0dec68e5cb9d20eea3a5a5ef6" title="Get vertex layout describing vertex structure." alt="" coords="1235,327,1479,367"/>
+<area shape="poly" id="edge31_Node000001_Node000023" title=" " alt="" coords="1520,333,1480,337,1479,332,1519,328"/>
+<area shape="rect" id="Node000024" href="$namespaceMayaFlux_1_1Portal_1_1Forma_a1bacd5ba79a4234a5594513c8db56f07.html#a1bacd5ba79a4234a5594513c8db56f07" title="Construct one labeled value row, advance the cursor, and return it." alt="" coords="989,359,1171,399"/>
+<area shape="poly" id="edge33_Node000001_Node000024" title=" " alt="" coords="1581,348,1536,367,1486,382,1403,394,1319,398,1240,396,1171,392,1171,387,1240,391,1319,392,1403,388,1485,377,1534,362,1579,343"/>
+<area shape="rect" id="Node000025" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1MeshWriterNode_a1bd7b484b9414cafed5105c4f0322e64.html#a1bd7b484b9414cafed5105c4f0322e64" title=" " alt="" coords="1229,442,1485,482"/>
+<area shape="poly" id="edge35_Node000001_Node000025" title=" " alt="" coords="1597,350,1547,389,1487,426,1440,444,1438,439,1484,421,1544,385,1593,346"/>
+<area shape="rect" id="Node000026" href="$classMayaFlux_1_1Buffers_1_1FormaProcessor_af52e83f359c4f12c30576e8fe3c42587.html#af52e83f359c4f12c30576e8fe3c42587" title="Called when this processor is attached to a buffer." alt="" coords="1258,506,1457,546"/>
+<area shape="poly" id="edge36_Node000001_Node000026" title=" " alt="" coords="1613,353,1591,387,1563,426,1527,464,1487,496,1458,510,1456,506,1484,492,1524,460,1558,422,1587,384,1608,350"/>
+<area shape="rect" id="Node000027" href="$namespaceMayaFlux_1_1Nodes_a354c2c1b51cd4110581d80110649f007.html#a354c2c1b51cd4110581d80110649f007" title="Deduce a VertexLayout from a vertex struct type." alt="" coords="1265,570,1450,610"/>
+<area shape="poly" id="edge37_Node000001_Node000027" title=" " alt="" coords="1620,353,1602,400,1574,456,1536,512,1513,538,1487,560,1452,578,1449,574,1484,556,1509,534,1531,509,1569,453,1597,398,1615,351"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1GeometryWriteProcessor_a72fae44a0e5b4988dc7718cfef1c43ef.html#a72fae44a0e5b4988dc7718cfef1c43ef" title="The core processing function that must be implemented by derived classes." alt="" coords="987,5,1173,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="1254,38,1173,37,1173,31,1254,33"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="1251,195,1230,203,1165,237,1110,272,1107,268,1162,232,1228,198,1249,190"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Portal_1_1Forma_a11450feb0b25f554a7342ebcc609753d.html#a11450feb0b25f554a7342ebcc609753d" title="Construct a collapsible header followed by N value rows under it." alt="" coords="739,302,920,342"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="976,306,920,313,920,308,975,301"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Inspector_a776911ab27a6f021e0846006c7e880ec.html#a776911ab27a6f021e0846006c7e880ec" title="Inspect a single Buffer: default processor and full processing chain." alt="" coords="494,150,675,190"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="790,295,738,258,679,219,629,193,632,188,681,214,741,253,793,291"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Inspector_a1687b4aba0bea855ff4ee24ad423585f.html#a1687b4aba0bea855ff4ee24ad423585f" title="Inspect the full BufferManager state across all active tokens." alt="" coords="5,129,207,169"/>
+<area shape="poly" id="edge13_Node000006_Node000008" title=" " alt="" coords="805,292,678,100,622,67,571,44,523,30,476,25,428,26,376,33,255,63,220,76,187,94,133,131,130,126,184,89,218,71,254,58,375,28,427,21,476,19,524,25,573,39,625,63,682,96,810,289"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Inspector_ac29186c5382903dd8c58ab5f978903a2.html#ac29186c5382903dd8c58ab5f978903a2" title="Inspect the root audio buffer for a specific token and channel." alt="" coords="257,204,439,259"/>
+<area shape="poly" id="edge20_Node000006_Node000009" title=" " alt="" coords="761,300,679,277,554,254,439,241,439,236,555,249,681,271,762,295"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Inspector_ad62c8b2ae1a0ecd6490afc47807868f5.html#ad62c8b2ae1a0ecd6490afc47807868f5" title="Inspect all root audio buffers for a token across every channel." alt="" coords="15,223,197,277"/>
+<area shape="poly" id="edge19_Node000006_Node000010" title=" " alt="" coords="725,317,508,300,254,274,196,266,197,261,255,269,508,294,725,312"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Inspector_a50dcdf0e3b61b3da5437096aa55f0c48.html#a50dcdf0e3b61b3da5437096aa55f0c48" title="Inspect the root graphics buffer for a token." alt="" coords="255,73,441,128"/>
+<area shape="poly" id="edge21_Node000006_Node000011" title=" " alt="" coords="810,291,789,254,759,212,722,172,679,140,621,116,559,102,498,96,442,96,442,90,498,91,560,97,623,111,681,136,726,168,763,209,793,251,814,288"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Inspector_aedea410c6f4478e0ccea7afee7c44a47.html#aedea410c6f4478e0ccea7afee7c44a47" title="Inspect a single Node and its full modulator tree." alt="" coords="494,394,675,434"/>
+<area shape="poly" id="edge14_Node000006_Node000012" title=" " alt="" coords="769,350,681,384,648,396,646,391,679,380,767,345"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Inspector_a16d8fcc2d075cb333333e194fd24703d.html#a16d8fcc2d075cb333333e194fd24703d" title="Inspect the full NodeGraphManager state across all active tokens." alt="" coords="257,387,439,441"/>
+<area shape="poly" id="edge16_Node000006_Node000013" title=" " alt="" coords="805,355,752,406,718,430,681,448,649,458,617,463,551,464,488,457,431,444,432,439,488,451,551,459,616,458,648,452,679,444,716,426,749,402,801,351"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Inspector_a67cc3f4956a8e7fbe1680e496c4cc4f7.html#a67cc3f4956a8e7fbe1680e496c4cc4f7" title="Inspect a NodeNetwork and its per&#45;network metadata." alt="" coords="489,330,680,370"/>
+<area shape="poly" id="edge17_Node000006_Node000014" title=" " alt="" coords="725,337,681,342,680,336,725,331"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Inspector_a8eebdda5e13cba75d9d6443b2b8a0868.html#a8eebdda5e13cba75d9d6443b2b8a0868" title="Inspect the full TaskScheduler state." alt="" coords="257,530,439,570"/>
+<area shape="poly" id="edge22_Node000006_Node000015" title=" " alt="" coords="807,355,754,414,719,444,681,470,621,498,558,518,496,533,439,543,439,538,495,528,557,513,619,493,679,465,716,440,750,410,803,351"/>
+<area shape="rect" id="Node000016" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Inspector_a69e00e123831eb4ba82dbf3fe9c40c36.html#a69e00e123831eb4ba82dbf3fe9c40c36" title="Inspect tasks for a specific processing token." alt="" coords="494,559,675,599"/>
+<area shape="poly" id="edge23_Node000006_Node000016" title=" " alt="" coords="816,356,795,397,765,447,727,498,682,543,651,561,648,557,678,539,723,494,760,444,790,395,811,353"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="480,168,207,156,207,150,480,163"/>
+<area shape="poly" id="edge8_Node000007_Node000009" title=" " alt="" coords="494,196,439,210,438,205,493,191"/>
+<area shape="poly" id="edge11_Node000007_Node000011" title=" " alt="" coords="502,149,441,131,442,125,503,143"/>
+<area shape="poly" id="edge9_Node000009_Node000008" title=" " alt="" coords="253,202,165,171,166,166,255,197"/>
+<area shape="poly" id="edge10_Node000009_Node000010" title=" " alt="" coords="244,242,197,246,196,240,243,237"/>
+<area shape="poly" id="edge12_Node000011_Node000008" title=" " alt="" coords="242,124,208,131,207,126,241,119"/>
+<area shape="poly" id="edge15_Node000012_Node000013" title=" " alt="" coords="480,417,439,417,439,411,480,411"/>
+<area shape="poly" id="edge18_Node000014_Node000013" title=" " alt="" coords="498,376,440,392,438,387,496,371"/>
+<area shape="poly" id="edge24_Node000016_Node000015" title=" " alt="" coords="480,569,438,564,439,559,481,564"/>
+<area shape="rect" id="Node000019" href="$classMayaFlux_1_1IO_1_1ModelReader_aa3ce0f7631753b15955e175c1855e7fc.html#aa3ce0f7631753b15955e175c1855e7fc" title="Construct a MeshNetwork from all meshes in the currently loaded scene." alt="" coords="979,149,1181,189"/>
+<area shape="poly" id="edge27_Node000018_Node000019" title=" " alt="" coords="1257,130,1168,151,1167,146,1256,125"/>
+<area shape="rect" id="Node000020" href="$classMayaFlux_1_1IO_1_1ModelReader_a5a5995d155657e1b4f55d047efa2e442.html#a5a5995d155657e1b4f55d047efa2e442" title="Load all meshes after open() has already been called." alt="" coords="979,85,1181,125"/>
+<area shape="poly" id="edge28_Node000018_Node000020" title=" " alt="" coords="1242,107,1181,107,1181,102,1242,102"/>
+<area shape="rect" id="Node000021" href="$classMayaFlux_1_1IO_1_1ModelReader_a82f82a404791ba9ad9838a1fc2774f32.html#a82f82a404791ba9ad9838a1fc2774f32" title="Construct one MeshBuffer per mesh in the currently loaded scene." alt="" coords="728,117,931,157"/>
+<area shape="poly" id="edge29_Node000020_Node000021" title=" " alt="" coords="965,122,931,126,930,121,965,117"/>
+<area shape="rect" id="Node000022" href="$classMayaFlux_1_1IO_1_1ModelReader_ad139ba0a544c0712059cc8913bb59bc5.html#ad139ba0a544c0712059cc8913bb59bc5" title="Load all meshes from a file in one call." alt="" coords="728,53,931,93"/>
+<area shape="poly" id="edge30_Node000020_Node000022" title=" " alt="" coords="965,93,930,88,931,83,965,87"/>
+<area shape="poly" id="edge34_Node000024_Node000006" title=" " alt="" coords="978,359,917,345,918,339,979,354"/>
+</map>

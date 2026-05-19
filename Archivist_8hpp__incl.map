@@ -1,0 +1,15 @@
+<map id="Archivist.hpp" name="Archivist.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="187,5,294,31"/>
+<area shape="rect" id="Node000002" href="$Format_8hpp.html" title=" " alt="" coords="125,79,221,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="231,33,195,70,191,67,228,29"/>
+<area shape="rect" id="Node000003" href="$JournalEntry_8hpp.html" title=" " alt="" coords="245,79,372,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="254,29,290,67,286,70,250,33"/>
+<area shape="rect" id="Node000004" href="$EnumReflect_8hpp.html" title=" " alt="" coords="5,152,191,192"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="279,107,162,150,160,145,277,102"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="215,159,282,185"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="302,106,268,150,264,146,298,103"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="307,159,431,185"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="320,103,353,146,349,150,315,106"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="455,159,552,185"/>
+<area shape="poly" id="edge6_Node000003_Node000007" title=" " alt="" coords="338,102,463,152,461,157,336,106"/>
+</map>

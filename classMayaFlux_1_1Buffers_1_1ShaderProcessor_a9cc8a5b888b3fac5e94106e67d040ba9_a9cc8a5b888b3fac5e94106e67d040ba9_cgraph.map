@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::ShaderProcessor::is_in_place_operation" name="MayaFlux::Buffers::ShaderProcessor::is_in_place_operation">
+<area shape="rect" id="Node000001" title="Check if shader modifies a specific buffer in&#45;place." alt="" coords="5,5,157,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_abb476d52ac7931d4c2e81ea6ef990512.html#abb476d52ac7931d4c2e81ea6ef990512" title="Get buffer usage hint for a descriptor." alt="" coords="205,5,364,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="157,30,192,30,192,35,157,35"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nexus::Fabric::all_ids" name="MayaFlux::Nexus::Fabric::all_ids">
+<area shape="rect" id="Node000001" title="List all registered entity ids in insertion order." alt="" coords="284,37,465,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nexus_1_1StateEncoder_ad8fc616eab6adf9f0af8ec03db3f3b3e.html#ad8fc616eab6adf9f0af8ec03db3f3b3e" title="Encode the given Fabric to {base_path}.exr and {base_path}.json." alt="" coords="6,5,235,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="270,47,235,42,236,37,271,42"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nexus_1_1StateDecoder_a4bbc19256f60fe110344ba93422ab45c.html#a4bbc19256f60fe110344ba93422ab45c" title="Patch existing entities and construct missing ones from schema." alt="" coords="5,69,236,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="271,73,237,77,236,72,270,68"/>
+</map>

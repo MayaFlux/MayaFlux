@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nexus::Agent::sink_audio" name="MayaFlux::Nexus::Agent::sink_audio">
+<area shape="rect" id="Node000001" title="Register an audio output on channel." alt="" coords="5,5,187,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Nexus_a1676f29ed2210635b97304693e2f10fe.html#a1676f29ed2210635b97304693e2f10fe" title="Create and register an audio sink on channel." alt="" coords="235,5,401,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="187,23,221,23,221,28,187,28"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1BufferManager_af51cd72c5f1d259a03a3e82371e55bab.html#af51cd72c5f1d259a03a3e82371e55bab" title="Adds a buffer to a token and channel." alt="" coords="449,5,644,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="402,23,436,23,436,28,402,28"/>
+</map>

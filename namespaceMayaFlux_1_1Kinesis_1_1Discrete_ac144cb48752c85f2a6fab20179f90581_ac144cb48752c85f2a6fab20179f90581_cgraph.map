@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::Discrete::pitch_shift" name="MayaFlux::Kinesis::Discrete::pitch_shift">
+<area shape="rect" id="Node000001" title="Pitch&#45;shift by resampling around a phase vocoder stretch." alt="" coords="5,13,156,53"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_aad0308b829d158536571b67902540c21.html#aad0308b829d158536571b67902540c21" title="Time&#45;stretch via phase vocoder analysis&#45;synthesis." alt="" coords="204,5,387,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="156,30,190,30,190,35,156,35"/>
+</map>

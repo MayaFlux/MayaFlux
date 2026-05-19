@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::DataDimension::vertex_normals" name="MayaFlux::Kakshya::DataDimension::vertex_normals">
+<area shape="rect" id="Node000001" title="Create dimension for vertex normals (vec3)" alt="" coords="5,5,179,60"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_a57e1909558a284754db05334249f9d0f.html#a57e1909558a284754db05334249f9d0f" title="Create dimension with component grouping." alt="" coords="227,13,411,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="179,30,213,30,213,35,179,35"/>
+</map>

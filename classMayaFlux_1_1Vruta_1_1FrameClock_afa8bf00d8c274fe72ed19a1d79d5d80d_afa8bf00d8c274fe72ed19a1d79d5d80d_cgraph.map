@@ -1,0 +1,7 @@
+<map id="MayaFlux::Vruta::FrameClock::tick" name="MayaFlux::Vruta::FrameClock::tick">
+<area shape="rect" id="Node000001" title="Advance clock by computing elapsed frames since last tick." alt="" coords="5,37,220,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Vruta_1_1FrameClock_a9cf319193f711638017593d285c61410.html#a9cf319193f711638017593d285c61410" title="Calculate frames elapsed based on wall&#45;clock time." alt="" coords="268,5,483,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="220,42,254,37,255,43,220,47"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Vruta_1_1FrameClock_af70d4296e0405df126928ec6f16229bc.html#af70d4296e0405df126928ec6f16229bc" title="Update measured FPS based on tick interval Called internally during tick()" alt="" coords="268,69,483,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="220,68,255,72,254,77,220,73"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::GeometryBindingsProcessor::upload_index_data" name="MayaFlux::Buffers::GeometryBindingsProcessor::upload_index_data">
+<area shape="rect" id="Node000001" title="Upload index data for one binding, creating or growing the GPU index buffer as needed." alt="" coords="260,5,467,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1GeometryBindingsProcessor_a7443affe2aa79c163a21f8d03c110a91.html#a7443affe2aa79c163a21f8d03c110a91" title="BufferProcessor interface &#45; uploads all bound geometries." alt="" coords="5,5,212,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="247,35,212,35,212,30,247,30"/>
+</map>

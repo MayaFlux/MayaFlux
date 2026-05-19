@@ -1,0 +1,6 @@
+<map id="MayaFlux::Kakshya::DynamicSoundStream::write_frames" name="MayaFlux::Kakshya::DynamicSoundStream::write_frames">
+<area shape="rect" id="Node000001" title="Write audio frame data to the container with automatic capacity management." alt="" coords="228,29,403,84"/>
+<area shape="poly" id="edge1_Node000001_Node000001" title=" " alt="" coords="352,18,339,11,315,8,296,10,283,15,277,21,277,29,272,29,272,19,280,10,294,5,315,3,340,6,355,14"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1DynamicSoundStream_adbb6000f53051d841a016bc8f2cafc38.html#adbb6000f53051d841a016bc8f2cafc38" title=" " alt="" coords="5,29,180,84"/>
+<area shape="poly" id="edge2_Node000001_Node000002" title=" " alt="" coords="214,59,180,59,180,54,214,54"/>
+</map>
