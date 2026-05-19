@@ -38,6 +38,10 @@ RtAudio::Api to_rtaudio_api(MayaFlux::Core::GlobalStreamInfo::AudioApi api)
 #include "PipewireBackend.hpp"
 #endif
 
+#ifdef WASAPI_BACKEND
+#include "WasapiBackend.hpp"
+#endif
+
 namespace MayaFlux::Core {
 
 std::unique_ptr<IAudioBackend> AudioBackendFactory::create_backend(
@@ -63,6 +67,11 @@ std::unique_ptr<IAudioBackend> AudioBackendFactory::create_backend(
 #ifdef PIPEWIRE_BACKEND
     case Core::AudioBackendType::PIPEWIRE:
         return std::make_unique<PipewireBackend>();
+#endif
+
+#ifdef WASAPI_BACKEND
+    case Core::AudioBackendType::WASAPI:
+        return std::make_unique<WasapiBackend>();
 #endif
 
     default:

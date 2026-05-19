@@ -107,7 +107,6 @@ endif()
 
 if(WIN32)
     target_link_libraries(MayaFluxLib PUBLIC
-        RtAudio::rtaudio
         Eigen3::Eigen
         glfw
         glm::glm
@@ -119,12 +118,14 @@ if(WIN32)
         FFmpeg::swscale
         FFmpeg::avdevice
         hidapi::hidapi
-        winmm
         asio::asio
         assimp::assimp
         utf8proc::utf8proc
         nlohmann_json::nlohmann_json
         tinyexr
+        winmm
+        avrt
+        ole32
         freetype
         gdi32
         user32
