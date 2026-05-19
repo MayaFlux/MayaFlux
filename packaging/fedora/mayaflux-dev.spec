@@ -50,6 +50,7 @@ BuildRequires:  utf8proc-devel
 BuildRequires:  fontconfig-devel
 BuildRequires:  json-devel
 BuildRequires:  pipewire-devel
+BuildRequires:  alsa-lib-devel
 BuildRequires:  git
 BuildRequires:  ccache
 
@@ -88,6 +89,7 @@ Requires:       freetype-devel
 Requires:       utf8proc-devel
 Requires:       fontconfig-devel
 Requires:       pipewire-devel
+Requires:       alsa-lib-devel
 Requires:       json-devel
 
 Provides:       mayaflux = %{version}-%{release}

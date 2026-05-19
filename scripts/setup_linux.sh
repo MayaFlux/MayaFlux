@@ -110,6 +110,7 @@ install_fedora() {
         "fontconfig-devel"
         "json-devel"
         "pipewire-devel"
+        "alsa-lib-devel"
         "git"
     )
 
@@ -161,6 +162,7 @@ install_ubuntu() {
         "libutf8proc-dev"
         "libfontconfig1-dev"
         "libpipewire-0.3-dev"
+        "libasound2-dev"
         "nlohmann-json3-dev"
     )
 

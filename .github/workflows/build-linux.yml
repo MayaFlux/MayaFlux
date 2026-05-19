@@ -91,6 +91,7 @@ jobs:
             ninja-build \
             wayland-devel \
             pipewire-devel \
+            alsa-lib-devel \
             ccache
 
       - name: Setup ccache
