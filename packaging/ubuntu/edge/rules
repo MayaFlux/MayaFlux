@@ -7,6 +7,7 @@ export CXX=g++-15
 	dh $@ --parallel
 
 override_dh_auto_configure:
+	export CCACHE_SLOPPINESS=pch_defines,time_macros,include_file_mtime,include_file_ctime && \
 	dh_auto_configure \
 	  --buildsystem=cmake+ninja -- \
 	  -DCMAKE_CXX_STANDARD=23 \

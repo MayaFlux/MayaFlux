@@ -104,6 +104,7 @@ try {
         "-G", $CMakeGenerator,
         "-A", "x64",
         "-DCMAKE_BUILD_TYPE=Release"
+        "-DCMAKE_VS_GLOBALS=UseMultiToolTask=true;EnforceProcessCountAcrossBuilds=true"
     )
 
     if ($env:MAYAFLUX_TOOLCHAIN_FILE) {

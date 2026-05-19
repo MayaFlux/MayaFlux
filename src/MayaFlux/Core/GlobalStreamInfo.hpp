@@ -4,7 +4,8 @@ namespace MayaFlux::Core {
 
 enum AudioBackendType : uint8_t {
     RTAUDIO,
-    PIPEWIRE
+    PIPEWIRE,
+    WASAPI
 };
 
 /**
@@ -56,6 +57,8 @@ struct GlobalStreamInfo {
     /** @brief Selected audio backend implementation */
 #ifdef PIPEWIRE_BACKEND
     AudioBackendType backend = AudioBackendType::PIPEWIRE;
+#elif defined(WASAPI_BACKEND)
+    AudioBackendType backend = AudioBackendType::WASAPI;
 #else
     AudioBackendType backend = AudioBackendType::RTAUDIO;
 #endif

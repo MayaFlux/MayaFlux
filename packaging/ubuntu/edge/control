@@ -31,7 +31,6 @@ Build-Depends:
     libeigen3-dev,
     libmagicenum-dev,
     libstb-dev,
-    librtaudio-dev,
     ffmpeg,
     libassimp-dev,
     libavcodec-dev,
@@ -39,13 +38,14 @@ Build-Depends:
     libswscale-dev,
     libavdevice-dev,
     libhidapi-dev,
-    librtmidi-dev,
     libasio-dev,
     libutf8proc-dev,
     libfreetype-dev,
     libfontconfig1-dev,
     nlohmann-json3-dev,
     libpipewire-0.3-dev,
+    libasound2-dev,
+    ccache,
     git
 Standards-Version: 4.7.0
 Homepage: https://mayaflux.org
@@ -83,18 +83,17 @@ Depends:
     libmagicenum-dev,
     libstb-dev,
     libassimp-dev,
-    librtaudio-dev,
     libavcodec-dev,
     libavformat-dev,
     libswscale-dev,
     libavdevice-dev,
     libhidapi-dev,
-    librtmidi-dev,
     libasio-dev,
     libutf8proc-dev,
     libfontconfig1-dev,
     nlohmann-json3-dev,
     libpipewire-0.3-dev,
+    libasound2-dev,
     libfreetype-dev
 Suggests:
     mayaflux-edge-doc

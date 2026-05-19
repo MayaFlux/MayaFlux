@@ -327,11 +327,14 @@ void InputSubsystem::initialize_midi_backend()
 {
     MIDIBackend::Config midi_config;
     midi_config.input_port_filters = m_config.midi.input_port_filters;
-    midi_config.output_port_filters = m_config.midi.output_port_filters;
     midi_config.auto_open_inputs = m_config.midi.auto_open_inputs;
+    midi_config.virtual_port_name = m_config.midi.virtual_port_name;
+
+#if !defined(MAYAFLUX_PLATFORM_WINDOWS)
+    midi_config.output_port_filters = m_config.midi.output_port_filters;
     midi_config.auto_open_outputs = m_config.midi.auto_open_outputs;
     midi_config.enable_virtual_port = m_config.midi.enable_virtual_port;
-    midi_config.virtual_port_name = m_config.midi.virtual_port_name;
+#endif
 
     auto midi = std::make_unique<MIDIBackend>(midi_config);
 
@@ -346,7 +349,6 @@ void InputSubsystem::initialize_midi_backend()
         }
     }
 }
-
 void InputSubsystem::initialize_serial_backend()
 {
     MF_WARN(Journal::Component::Core, Journal::Context::InputSubsystem,

@@ -107,7 +107,6 @@ endif()
 
 if(WIN32)
     target_link_libraries(MayaFluxLib PUBLIC
-        RtAudio::rtaudio
         Eigen3::Eigen
         glfw
         glm::glm
@@ -119,12 +118,14 @@ if(WIN32)
         FFmpeg::swscale
         FFmpeg::avdevice
         hidapi::hidapi
-        RtMidi::rtmidi
         asio::asio
         assimp::assimp
         utf8proc::utf8proc
         nlohmann_json::nlohmann_json
         tinyexr
+        winmm
+        avrt
+        ole32
         freetype
         gdi32
         user32
@@ -137,6 +138,7 @@ else()
         target_link_libraries(MayaFluxLib PUBLIC fmt::fmt)
         target_link_libraries(MayaFluxLib PUBLIC Vulkan::Vulkan)
         target_link_libraries(MayaFluxLib PUBLIC PkgConfig::RtAudio)
+        target_link_libraries(MayaFluxLib PUBLIC PkgConfig::RtMidi)
         target_link_libraries(MayaFluxLib PRIVATE "-framework CoreFoundation")
 
         message(STATUS "MayaFlux Journal: Using fmt library on macOS")
@@ -144,15 +146,11 @@ else()
         target_link_libraries(MayaFluxLib PUBLIC
         PkgConfig::Vulkan
         PkgConfig::Fontconfig
+        asound
         )
 
-        if(MAYAFLUX_AUDIO_BACKEND STREQUAL "PIPEWIRE_BACKEND")
-            target_link_libraries(MayaFluxLib PRIVATE ${PIPEWIRE_LIBRARIES})
-            message(STATUS "PipeWire backend enabled (${PIPEWIRE_VERSION})")
-        else()
-            target_link_libraries(MayaFluxLib PUBLIC PkgConfig::RtAudio)
-            message(STATUS "RtAudio backend enabled")
-        endif()
+        target_link_libraries(MayaFluxLib PRIVATE ${PIPEWIRE_LIBRARIES})
+        message(STATUS "PipeWire backend enabled (${PIPEWIRE_VERSION})")
     endif()
 
     target_link_libraries(MayaFluxLib PUBLIC
@@ -161,7 +159,6 @@ else()
         PkgConfig::Eigen
         PkgConfig::Glfw
         PkgConfig::HIDAPI
-        PkgConfig::RtMidi
         PkgConfig::Asio
         PkgConfig::Assimp
         PkgConfig::LIBAVCODEC

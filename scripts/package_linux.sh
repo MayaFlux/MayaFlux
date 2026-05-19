@@ -48,6 +48,7 @@ mkdir -p "$BUILD_DIR" "$INSTALL_DIR"
 # ---------------------------------------------
 # Configure & build
 # ---------------------------------------------
+export CCACHE_SLOPPINESS=pch_defines,time_macros,include_file_mtime,include_file_ctime
 cmake -G Ninja -S . -B "$BUILD_DIR" \
     -DMAYAFLUX_SHIP_DEV=ON \
     -DCMAKE_INSTALL_PREFIX="/usr"

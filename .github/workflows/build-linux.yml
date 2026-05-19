@@ -63,7 +63,6 @@ jobs:
             clang clang-devel \
             cmake \
             pkgconfig \
-            rtaudio-devel \
             glfw-devel \
             glm-devel \
             eigen3-devel \
@@ -84,7 +83,6 @@ jobs:
             glslc \
             libshaderc-devel \
             hidapi-devel \
-            rtmidi-devel \
             asio-standalone \
             utf8proc-devel \
             freetype-devel \
@@ -93,6 +91,7 @@ jobs:
             ninja-build \
             wayland-devel \
             pipewire-devel \
+            alsa-lib-devel \
             ccache
 
       - name: Setup ccache
@@ -100,14 +99,14 @@ jobs:
         with:
           key: fedora43-build
           max-size: "1G"
+          ccache-options: |
+            sloppiness = pch_defines,time_macros,include_file_mtime,include_file_ctime
 
       - name: Configure CMake
         run: |
           cmake -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
             -DCMAKE_CXX_STANDARD=23 \
-            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
-            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -DCMAKE_VERBOSE_MAKEFILE=ON
 
       - name: Build
@@ -200,7 +199,7 @@ jobs:
           echo "  ✓ LLVM 21 (Lila JIT)"
           echo "  ✓ GCC 15 (full C++23)"
           echo "  ✓ GLFW 3.4 (Wayland)"
-          echo "  ✓ RtAudio, FFmpeg"
+          echo "  ✓ FFmpeg"
           echo "  ✓ Vulkan SDK, SPIR-V"
           echo "  ✓ Eigen3, GLM, magic_enum, fmt, TBB, STB"
           echo ""

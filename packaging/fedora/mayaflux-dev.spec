@@ -23,7 +23,6 @@ BuildRequires:  clang-devel >= 21
 BuildRequires:  cmake >= 3.25
 BuildRequires:  ninja-build
 BuildRequires:  pkgconfig
-BuildRequires:  rtaudio-devel
 BuildRequires:  glfw-devel >= 3.4
 BuildRequires:  glm-devel
 BuildRequires:  eigen3-devel
@@ -45,14 +44,15 @@ BuildRequires:  libshaderc-devel
 BuildRequires:  glslc
 BuildRequires:  wayland-devel
 BuildRequires:  hidapi-devel
-BuildRequires:  rtmidi-devel
 BuildRequires:  asio-standalone
 BuildRequires:  freetype-devel
 BuildRequires:  utf8proc-devel
 BuildRequires:  fontconfig-devel
 BuildRequires:  json-devel
 BuildRequires:  pipewire-devel
+BuildRequires:  alsa-lib-devel
 BuildRequires:  git
+BuildRequires:  ccache
 
 # Runtime = BuildRequires (all needed for live coding/JIT)
 Requires:       gcc-c++ >= 15
@@ -63,7 +63,6 @@ Requires:       llvm-libs >= 21
 Requires:       clang-devel >= 21
 Requires:       cmake >= 3.25
 Requires:       pkgconfig
-Requires:       rtaudio-devel
 Requires:       glfw-devel >= 3.4
 Requires:       glm-devel
 Requires:       eigen3-devel
@@ -85,12 +84,12 @@ Requires:       libshaderc-devel
 Requires:       glslc
 Requires:       wayland-devel
 Requires:       hidapi-devel
-Requires:       rtmidi-devel
 Requires:       asio-standalone
 Requires:       freetype-devel
 Requires:       utf8proc-devel
 Requires:       fontconfig-devel
 Requires:       pipewire-devel
+Requires:       alsa-lib-devel
 Requires:       json-devel
 
 Provides:       mayaflux = %{version}-%{release}
@@ -120,6 +119,7 @@ and live coding features. This is intentional.
 %autosetup -n MayaFlux-main
 
 %build
+export CCACHE_SLOPPINESS=pch_defines,time_macros,include_file_mtime,include_file_ctime
 %cmake -G Ninja \
     -DCMAKE_CXX_STANDARD=23 \
     -DCMAKE_INSTALL_LIBDIR=%{_libdir} \

@@ -85,7 +85,7 @@ public:
 
     /**
      * @brief Constructs a new Engine instance
-     * @param type The type of audio backend to use (default: RtAudio)
+     * @param type The type of audio backend to use
      *
      * Creates a new Engine instance with the specified audio backend.
      * The backend type determines the underlying audio API used for device management
