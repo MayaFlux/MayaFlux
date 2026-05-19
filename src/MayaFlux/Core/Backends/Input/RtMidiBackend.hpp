@@ -1,6 +1,6 @@
 #pragma once
 
-#ifdef RTAUDIO_BACKEND
+#ifdef RTMIDI_BACKEND
 
 #include "InputBackend.hpp"
 

@@ -1,6 +1,6 @@
 #include "RtMidiBackend.hpp"
 
-#ifdef RTAUDIO_BACKEND
+#ifdef RTMIDI_BACKEND
 
 #include "MayaFlux/Journal/Archivist.hpp"
 

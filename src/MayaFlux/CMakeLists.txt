@@ -120,7 +120,7 @@ if(WIN32)
         FFmpeg::swscale
         FFmpeg::avdevice
         hidapi::hidapi
-        RtMidi::rtmidi
+        winmm
         asio::asio
         assimp::assimp
         utf8proc::utf8proc
