@@ -6,11 +6,11 @@ namespace MayaFlux::Portal::Forma {
 // Element registration
 // =============================================================================
 
-uint32_t Layer::add(Element element)
+Layer::Slot Layer::add(Element element)
 {
     element.id = m_next_id++;
     m_elements.push_back(std::move(element));
-    return m_elements.back().id;
+    return Slot(*this, m_elements.back().id);
 }
 
 bool Layer::remove(uint32_t id)
