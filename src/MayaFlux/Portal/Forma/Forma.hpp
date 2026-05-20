@@ -1,12 +1,9 @@
 #pragma once
 
 #include "Bridge.hpp"
-#include "Context.hpp"
-#include "Layer.hpp"
-#include "Primitives/Mapped.hpp"
+#include "Surface.hpp"
 
 #include "MayaFlux/Buffers/Forma/FormaBuffer.hpp"
-#include "MayaFlux/Portal/Graphics/GraphicsUtils.hpp"
 
 namespace MayaFlux::Nodes {
 class NodeGraphManager;
@@ -181,6 +178,29 @@ MAYAFLUX_API bool is_initialized();
 // =============================================================================
 
 /**
+ * @brief Construct a Surface, creating Layer and Context internally.
+ *
+ * Builds a fresh Layer and a Context wired to @p window using the
+ * EventManager stored by Portal::Forma::initialize. Equivalent to
+ * Portal::Forma::create_layer(window, name) plus owning the window
+ * pointer alongside.
+ *
+ * For the power-tinkerer case (custom Context subclass, shared Layer
+ * across multiple Contexts, etc.), construct Surface directly via its
+ * (Window, Layer, Context) constructor.
+ *
+ * @param window  Target window. Must outlive the Surface.
+ * @param name    Unique name scoping the Context's event coroutines.
+ *                Must be unique across all live Contexts.
+ * @pre Portal::Forma::initialize() must have been called.
+ * @return A new Surface owning the window pointer plus the freshly
+ *         created Layer and Context.
+ */
+[[nodiscard]] MAYAFLUX_API Surface create_surface(
+    std::shared_ptr<Core::Window> window,
+    std::string name);
+
+/**
  * @brief Build a FormaBuffer, register it, construct a Mapped<T>, and add
  *        the element to @p layer.
  *
@@ -212,6 +232,59 @@ template <typename T>
     auto mapped = make_mapped<T>(initial, std::move(geom), buf);
     mapped.element.id = layer.add(mapped.element);
     bridge().register_element(mapped, std::move(project));
+    return mapped;
+}
+
+/**
+ * @brief Build a FormaBuffer, register it, construct a Mapped<T>, add the
+ *        element to @p surface's layer, and register it with the
+ *        application Bridge.
+ *
+ * Surface-accepting overload of create_element. Reads the layer and
+ * window from @p surface; everything else matches the existing
+ * (Layer&, Window) overload.
+ *
+ * After registration, one sync() is run so that bounds_hint and contains
+ * populated by the geometry function are visible on the Element before
+ * the first frame. This removes the manual
+ * @code
+ *   layer->set_bounds(el.element.id, ...);
+ *   layer->set_contains(el.element.id, ...);
+ * @endcode
+ * boilerplate seen at fader-style call sites: those values now arrive
+ * directly from the geometry function on construction. The geometry
+ * function remains the user's; the sync is the same one that runs every
+ * frame.
+ *
+ * @tparam T        MappedState value type.
+ * @param surface   Canvas to register the element on.
+ * @param geom      Geometry function producing vertex bytes from T.
+ * @param initial   Starting value written into MappedState.
+ * @param capacity  Initial FormaBuffer capacity in bytes.
+ * @param topology  Primitive topology for the FormaBuffer.
+ * @param project   Optional T -> float projection for outbound readers.
+ * @return Fully constructed Mapped<T> with element registered.
+ */
+template <typename T>
+[[nodiscard]] Mapped<T> create_element(
+    Surface& surface,
+    GeometryFn<T> geom,
+    T initial,
+    size_t capacity = 4096,
+    Graphics::PrimitiveTopology topology = Graphics::PrimitiveTopology::TRIANGLE_STRIP,
+    std::function<float(T)> project = {})
+{
+    auto mapped = create_element<T>(
+        surface.layer(), surface.window(),
+        std::move(geom), std::move(initial),
+        capacity, topology, std::move(project));
+
+    mapped.sync();
+    if (mapped.element.bounds_hint)
+        surface.layer().set_bounds(mapped.element.id, *mapped.element.bounds_hint);
+    if (mapped.element.contains)
+        surface.layer().set_contains(mapped.element.id, mapped.element.contains);
+
     return mapped;
 }
 

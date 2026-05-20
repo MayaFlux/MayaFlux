@@ -138,6 +138,14 @@ std::shared_ptr<Buffers::FormaBuffer> create_buffer(
     return buf;
 }
 
+Surface create_surface(
+    std::shared_ptr<Core::Window> window,
+    std::string name)
+{
+    auto [layer, ctx] = create_layer(window, std::move(name));
+    return { std::move(window), std::move(layer), std::move(ctx) };
+}
+
 // =============================================================================
 // Bridge
 // =============================================================================
