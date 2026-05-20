@@ -1,8 +1,8 @@
 #include "Plot.hpp"
 
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/VKImage.hpp"
-#include "MayaFlux/Nodes/Graphics/VertexSpec.hpp"
 #include "MayaFlux/Kakshya/Region/RegionGroup.hpp"
+#include "MayaFlux/Nodes/Graphics/VertexSpec.hpp"
 
 namespace MayaFlux::Portal::Forma::Plot {
 
@@ -60,7 +60,9 @@ std::pair<float, float> data_range(std::span<const double> series)
 void apply_auto_scale(AxisRange& range,
     const std::vector<std::span<const double>>& series)
 {
-    if (!range.auto_scale || series.empty())
+    if (!range.auto_scaling || series.empty())
+        return;
+    if (range.scale_predicate && !range.scale_predicate())
         return;
 
     float lo = std::numeric_limits<float>::max();
