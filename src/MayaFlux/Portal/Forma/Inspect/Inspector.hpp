@@ -19,6 +19,7 @@ class BufferManager;
 namespace MayaFlux::Vruta {
 class TaskScheduler;
 struct TaskEntry;
+class Event;
 }
 
 namespace MayaFlux::Portal::Forma {
@@ -34,10 +35,12 @@ namespace MayaFlux::Portal::Forma {
  */
 class MAYAFLUX_API Inspector {
 public:
-    Inspector(Nodes::NodeGraphManager& ngm, Buffers::BufferManager& bm, Vruta::TaskScheduler& sched)
+    Inspector(Nodes::NodeGraphManager& ngm, Buffers::BufferManager& bm,
+        Vruta::TaskScheduler& sched, Vruta::EventManager& event_mgr)
         : m_ngm(ngm)
         , m_bm(bm)
         , m_sched(sched)
+        , m_event_mgr(event_mgr)
     {
     }
 
@@ -208,11 +211,38 @@ public:
         const std::shared_ptr<Core::Window>& window,
         LayoutCursor& cursor,
         float x_min = -0.95F, float x_max = 0.95F, float row_h = 0.05F);
+    /**
+     * @brief Inspect the full EventManager state.
+     *
+     * Header shows total event count. Each event is a collapsible whose
+     * header is the event's registered name, or "(unnamed)" for events
+     * added without a name. Body rows expose active state.
+     */
+    [[nodiscard]] InspectResult event_manager(
+        Layer& layer, Context& context,
+        const std::shared_ptr<Core::Window>& window,
+        LayoutCursor& cursor,
+        float x_min = -0.95F, float x_max = 0.95F, float row_h = 0.05F);
+
+    /**
+     * @brief Inspect a single Event by name and pointer.
+     *
+     * Header is the event's registered name, or "(unnamed)" if empty.
+     * Body rows expose token and active state.
+     */
+    [[nodiscard]] InspectResult event(
+        const std::shared_ptr<Vruta::Event>& ev,
+        std::string_view name,
+        Layer& layer, Context& context,
+        const std::shared_ptr<Core::Window>& window,
+        LayoutCursor& cursor,
+        float x_min = -0.95F, float x_max = 0.95F, float row_h = 0.05F);
 
 private:
     Buffers::BufferManager& m_bm;
     Nodes::NodeGraphManager& m_ngm;
     Vruta::TaskScheduler& m_sched;
+    Vruta::EventManager& m_event_mgr;
 
     [[nodiscard]] RowBuffer make_row_buffer(
         const std::shared_ptr<Core::Window>& window,
