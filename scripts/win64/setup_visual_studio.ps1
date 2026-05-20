@@ -50,7 +50,7 @@ Write-Host "Checking dependencies..." -ForegroundColor Cyan
 $depsOk = $true
 
 # Required manual env setups
-$requiredEnvVars = @("LLVM_DIR", "Clang_DIR" ,"VULKAN_SDK", "FFMPEG_ROOT")
+$requiredEnvVars = @("LLVM_DEV_DIR", "Clang_DEV_DIR" ,"VULKAN_SDK", "FFMPEG_ROOT")
 
 foreach ($envVar in $requiredEnvVars) {
     if (-not (Test-Path "env:$envVar")) {
