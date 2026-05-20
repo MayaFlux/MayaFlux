@@ -30,48 +30,53 @@ namespace {
         }
     }
 
-    InspectResult inspect_modulator_tree(
-        const Nodes::ModulatorTree& tree,
-        Layer& layer, Context& context,
-        const std::shared_ptr<Core::Window>& window,
-        LayoutCursor& cursor,
-        float x_min, float x_max, float row_h, int depth)
-    {
-        const float ind = x_min + static_cast<float>(depth) * k_inspect_indent;
+} // namespace
 
-        const std::string header_label = std::string(role_label(tree.role))
-            + ": " + Reflect::short_dynamic_type_name(*tree.node);
+InspectResult Inspector::inspect_modulator_tree(
+    const Nodes::ModulatorTree& tree,
+    Layer& layer, Context& context,
+    const std::shared_ptr<Core::Window>& window,
+    LayoutCursor& cursor,
+    float x_min, float x_max, float row_h, int depth)
+{
+    const float ind = x_min + static_cast<float>(depth) * k_inspect_indent;
 
-        auto node_ref = tree.node;
-        std::vector<ValueSpec> values {
-            ValueSpec {
-                .label = "out",
-                .reader = [node_ref] { return std::to_string(node_ref->get_last_output()); },
-            },
-        };
+    const std::string header_label = std::string(role_label(tree.role))
+        + ": " + Reflect::short_dynamic_type_name(*tree.node);
 
-        auto group = make_value_group(
-            header_label, values,
-            layer, context, window, cursor,
-            ind, x_max, row_h, false);
+    auto node_ref = tree.node;
+    std::vector<ValueSpec> values {
+        ValueSpec {
+            .label = "out",
+            .reader = [node_ref] { return std::to_string(node_ref->get_last_output()); },
+        },
+    };
 
-        InspectResult result;
-        result.group = std::move(group);
+    const auto dims = row_pixel_dims(window, ind, x_max, row_h);
+    auto hbuf = make_row_buffer(window, header_label, dims);
+    std::vector<RowBuffer> rbufs;
+    rbufs.reserve(values.size());
+    for (const auto& spec : values)
+        rbufs.push_back(make_row_buffer(window, spec.label, dims));
 
-        for (const auto& child : tree.modulators) {
-            auto child_result = inspect_modulator_tree(
-                child, layer, context, window, cursor,
-                x_min, x_max, row_h, depth + 1);
-            layer.relate(
-                result.group.header.header_id,
-                child_result.group.header.header_id);
-            result.children.push_back(std::move(child_result));
-        }
+    auto group = make_value_group(values, std::move(hbuf), rbufs,
+        layer, context, cursor, ind, x_max, row_h, false);
 
-        return result;
+    InspectResult result;
+    result.group = std::move(group);
+
+    for (const auto& child : tree.modulators) {
+        auto child_result = inspect_modulator_tree(
+            child, layer, context, window, cursor,
+            x_min, x_max, row_h, depth + 1);
+        layer.relate(
+            result.group.header.header_id,
+            child_result.group.header.header_id);
+        result.children.push_back(std::move(child_result));
     }
 
-} // namespace
+    return result;
+}
 
 // -----------------------------------------------------------------------------
 // Single node
@@ -95,10 +100,15 @@ InspectResult Inspector::node(
         },
     };
 
-    auto group = make_value_group(
-        header_label, values,
-        layer, context, window, cursor,
-        ind, x_max, row_h, false);
+    const auto dims = row_pixel_dims(window, ind, x_max, row_h);
+    auto hbuf = make_row_buffer(window, header_label, dims);
+    std::vector<RowBuffer> rbufs;
+    rbufs.reserve(values.size());
+    for (const auto& spec : values)
+        rbufs.push_back(make_row_buffer(window, spec.label, dims));
+
+    auto group = make_value_group(values, std::move(hbuf), rbufs,
+        layer, context, cursor, ind, x_max, row_h, false);
 
     InspectResult result;
     result.group = std::move(group);
@@ -159,10 +169,15 @@ InspectResult Inspector::node_network(
         },
     };
 
-    auto group = make_value_group(
-        header_label, values,
-        layer, context, window, cursor,
-        ind, x_max, row_h, false);
+    const auto dims = row_pixel_dims(window, ind, x_max, row_h);
+    auto hbuf = make_row_buffer(window, header_label, dims);
+    std::vector<RowBuffer> rbufs;
+    rbufs.reserve(values.size());
+    for (const auto& spec : values)
+        rbufs.push_back(make_row_buffer(window, spec.label, dims));
+
+    auto group = make_value_group(values, std::move(hbuf), rbufs,
+        layer, context, cursor, ind, x_max, row_h, false);
 
     InspectResult result;
     result.group = std::move(group);
@@ -193,10 +208,15 @@ InspectResult Inspector::node_graph_manager(
         },
     };
 
-    auto root_group = make_value_group(
-        root_label, root_values,
-        layer, context, window, cursor,
-        x_min, x_max, row_h, false);
+    const auto dims = row_pixel_dims(window, x_min, x_max, row_h);
+    auto hbuf = make_row_buffer(window, root_label, dims);
+    std::vector<RowBuffer> rbufs;
+    rbufs.reserve(root_values.size());
+    for (const auto& spec : root_values)
+        rbufs.push_back(make_row_buffer(window, spec.label, dims));
+
+    auto root_group = make_value_group(root_values, std::move(hbuf), rbufs,
+        layer, context, cursor, x_min, x_max, row_h, false);
 
     InspectResult result;
     result.group = std::move(root_group);
@@ -216,10 +236,15 @@ InspectResult Inspector::node_graph_manager(
             },
         };
 
-        auto tok_group = make_value_group(
-            tok_label, tok_values,
-            layer, context, window, cursor,
-            x_min + k_inspect_indent, x_max, row_h, false);
+        const auto tok_dims = row_pixel_dims(window, x_min + k_inspect_indent, x_max, row_h);
+        auto tok_hbuf = make_row_buffer(window, tok_label, tok_dims);
+        std::vector<RowBuffer> tok_rbufs;
+        tok_rbufs.reserve(tok_values.size());
+        for (const auto& spec : tok_values)
+            tok_rbufs.push_back(make_row_buffer(window, spec.label, tok_dims));
+
+        auto tok_group = make_value_group(tok_values, std::move(tok_hbuf), tok_rbufs,
+            layer, context, cursor, x_min + k_inspect_indent, x_max, row_h, false);
 
         InspectResult tok_result;
         tok_result.group = std::move(tok_group);
@@ -237,10 +262,15 @@ InspectResult Inspector::node_graph_manager(
                 },
             };
 
-            auto ch_group = make_value_group(
-                ch_label, ch_values,
-                layer, context, window, cursor,
-                x_min + 2.F * k_inspect_indent, x_max, row_h, false);
+            const auto ch_dims = row_pixel_dims(window, x_min + 2.F * k_inspect_indent, x_max, row_h);
+            auto ch_hbuf = make_row_buffer(window, ch_label, ch_dims);
+            std::vector<RowBuffer> ch_rbufs;
+            ch_rbufs.reserve(ch_values.size());
+            for (const auto& spec : ch_values)
+                ch_rbufs.push_back(make_row_buffer(window, spec.label, ch_dims));
+
+            auto ch_group = make_value_group(ch_values, std::move(ch_hbuf), ch_rbufs,
+                layer, context, cursor, x_min + 2.F * k_inspect_indent, x_max, row_h, false);
 
             InspectResult ch_result;
             ch_result.group = std::move(ch_group);
