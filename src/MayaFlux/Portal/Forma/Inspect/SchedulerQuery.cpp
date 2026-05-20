@@ -2,14 +2,16 @@
 
 #include "MayaFlux/Transitive/Reflect/EnumReflect.hpp"
 #include "MayaFlux/Transitive/Reflect/TypeInfo.hpp"
+
 #include "MayaFlux/Vruta/Scheduler.hpp"
+
+#include "MayaFlux/Portal/Forma/Surface.hpp"
 
 namespace MayaFlux::Portal::Forma {
 
 InspectResult Inspector::inspect_task(
     const Vruta::TaskEntry& entry,
-    Layer& layer, Context& context,
-    const std::shared_ptr<Core::Window>& window,
+    Surface& surface,
     LayoutCursor& cursor,
     float x_min, float x_max, float row_h)
 {
@@ -39,15 +41,15 @@ InspectResult Inspector::inspect_task(
         },
     };
 
-    const auto dims = row_pixel_dims(window, x_min, x_max, row_h);
-    auto hbuf = make_row_buffer(window, Reflect::short_dynamic_type_name(*entry.routine), dims);
+    const auto dims = row_pixel_dims(surface.window(), x_min, x_max, row_h);
+    auto hbuf = make_row_buffer(surface.window(), Reflect::short_dynamic_type_name(*entry.routine), dims);
     std::vector<RowBuffer> rbufs;
     rbufs.reserve(values.size());
     for (const auto& spec : values)
-        rbufs.push_back(make_row_buffer(window, spec.label, dims));
+        rbufs.push_back(make_row_buffer(surface.window(), spec.label, dims));
 
     auto group = make_value_group(values, std::move(hbuf), rbufs,
-        layer, context, cursor, x_min, x_max, row_h, false);
+        surface, cursor, x_min, x_max, row_h, false);
 
     InspectResult result;
     result.group = std::move(group);
@@ -55,8 +57,7 @@ InspectResult Inspector::inspect_task(
 }
 
 InspectResult Inspector::scheduler(
-    Layer& layer, Context& context,
-    const std::shared_ptr<Core::Window>& window,
+    Surface& surface,
     LayoutCursor& cursor,
     float x_min, float x_max, float row_h)
 {
@@ -69,14 +70,14 @@ InspectResult Inspector::scheduler(
         },
     };
 
-    const auto dims = row_pixel_dims(window, x_min, x_max, row_h);
-    auto hbuf = make_row_buffer(window, "TaskScheduler", dims);
+    const auto dims = row_pixel_dims(surface.window(), x_min, x_max, row_h);
+    auto hbuf = make_row_buffer(surface.window(), "TaskScheduler", dims);
     std::vector<RowBuffer> rbufs;
     rbufs.reserve(root_values.size());
     for (const auto& spec : root_values)
-        rbufs.push_back(make_row_buffer(window, spec.label, dims));
+        rbufs.push_back(make_row_buffer(surface.window(), spec.label, dims));
     auto root_group = make_value_group(root_values, std::move(hbuf), rbufs,
-        layer, context, cursor, x_min, x_max, row_h, true);
+        surface, cursor, x_min, x_max, row_h, true);
 
     InspectResult result;
     result.group = std::move(root_group);
@@ -87,10 +88,10 @@ InspectResult Inspector::scheduler(
             continue;
 
         auto task_result = inspect_task(
-            entry, layer, context, window, cursor,
+            entry, surface, cursor,
             x_min, x_max, row_h);
 
-        result.group.header.attach(layer, task_result.group.header.header_id);
+        result.group.header.attach(surface.layer(), task_result.group.header.header_id);
         result.children.push_back(std::move(task_result));
     }
 
@@ -99,18 +100,17 @@ InspectResult Inspector::scheduler(
 
 InspectResult Inspector::tasks(
     Vruta::ProcessingToken token,
-    Layer& layer, Context& context,
-    const std::shared_ptr<Core::Window>& window,
+    Surface& surface,
     LayoutCursor& cursor,
     float x_min, float x_max, float row_h)
 {
     const std::string header_label = "TaskScheduler ["
         + std::string(Reflect::enum_to_string(token)) + "]";
 
-    const auto dims = row_pixel_dims(window, x_min, x_max, row_h);
-    auto hbuf = make_row_buffer(window, header_label, dims);
+    const auto dims = row_pixel_dims(surface.window(), x_min, x_max, row_h);
+    auto hbuf = make_row_buffer(surface.window(), header_label, dims);
     auto root_group = make_value_group({}, std::move(hbuf), {},
-        layer, context, cursor, x_min, x_max, row_h, true);
+        surface, cursor, x_min, x_max, row_h, true);
 
     InspectResult result;
     result.group = std::move(root_group);
@@ -123,10 +123,10 @@ InspectResult Inspector::tasks(
             continue;
 
         auto task_result = inspect_task(
-            entry, layer, context, window, cursor,
+            entry, surface, cursor,
             x_min, x_max, row_h);
 
-        result.group.header.attach(layer, task_result.group.header.header_id);
+        result.group.header.attach(surface.layer(), task_result.group.header.header_id);
         result.children.push_back(std::move(task_result));
     }
 

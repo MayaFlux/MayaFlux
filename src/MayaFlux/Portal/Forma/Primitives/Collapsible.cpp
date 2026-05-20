@@ -1,8 +1,6 @@
 #include "Collapsible.hpp"
 
-#include "MayaFlux/Portal/Forma/Bridge.hpp"
-#include "MayaFlux/Portal/Forma/Context.hpp"
-#include "MayaFlux/Portal/Forma/Layer.hpp"
+#include "MayaFlux/Portal/Forma/Surface.hpp"
 
 #include "MayaFlux/Kakshya/NDData/VertexLayout.hpp"
 
@@ -74,8 +72,7 @@ namespace {
 
 Collapsible& Collapsible::place(
     std::shared_ptr<Buffers::FormaBuffer> in_buf,
-    Layer& layer,
-    Context& ctx,
+    Surface& surface,
     LayoutCursor& cursor,
     float x_min, float x_max, float row_h)
 {
@@ -97,17 +94,17 @@ Collapsible& Collapsible::place(
         .max = { x_max, y_top },
     };
 
-    const uint32_t hid = layer.add(mapped.element);
+    const uint32_t hid = surface.layer().add(mapped.element);
     mapped.element.id = hid;
     open_state->id = hid;
     mapped.sync();
 
-    ctx.on_press(hid, IO::MouseButtons::Left,
-        [m = std::move(mapped), open = open_state, &layer, hid](uint32_t, glm::vec2) mutable {
+    surface.ctx().on_press(hid, IO::MouseButtons::Left,
+        [m = std::move(mapped), open = open_state, surface, hid](uint32_t, glm::vec2) mutable {
             const bool next = !open->value;
             open->write(next);
-            for (auto rel_id : layer.related_ids(hid))
-                layer.set_visible(rel_id, next);
+            for (auto rel_id : surface.layer().related_ids(hid))
+                surface.layer().set_visible(rel_id, next);
             m.sync();
         });
 
@@ -129,8 +126,7 @@ void Collapsible::attach(Layer& layer, uint32_t body_id) const
 
 Collapsible make_collapsible(
     std::shared_ptr<Buffers::FormaBuffer> buf,
-    Layer& layer,
-    Context& ctx,
+    Surface& surface,
     LayoutCursor& cursor,
     float x_min,
     float x_max,
@@ -143,7 +139,7 @@ Collapsible make_collapsible(
         .initially_open(initially_open)
         .closed_color(color_closed)
         .open_color(color_open)
-        .place(std::move(buf), layer, ctx, cursor, x_min, x_max, row_h);
+        .place(std::move(buf), surface, cursor, x_min, x_max, row_h);
 }
 
 } // namespace MayaFlux::Portal::Forma

@@ -15,6 +15,7 @@ namespace MayaFlux::Portal::Forma {
 
 class Layer;
 class Context;
+class Surface;
 
 /**
  * @struct Collapsible
@@ -114,8 +115,7 @@ struct Collapsible {
      * and cursor_out on this struct.
      *
      * @param buf     Pre-created FormaBuffer sized for this header.
-     * @param layer   Layer to register the header element on.
-     * @param ctx     Context to wire the left-click toggle handler.
+     * @param surface Surface to register the header on.
      * @param cursor  Layout cursor. Advanced by row_h on return.
      * @param x_min   Left edge in NDC.
      * @param x_max   Right edge in NDC.
@@ -124,8 +124,7 @@ struct Collapsible {
      */
     MAYAFLUX_API Collapsible& place(
         std::shared_ptr<Buffers::FormaBuffer> buf,
-        Layer& layer,
-        Context& ctx,
+        Surface& surface,
         LayoutCursor& cursor,
         float x_min, float x_max, float row_h);
 
@@ -156,8 +155,7 @@ struct Collapsible {
  */
 [[nodiscard]] MAYAFLUX_API Collapsible make_collapsible(
     std::shared_ptr<Buffers::FormaBuffer> buf,
-    Layer& layer,
-    Context& ctx,
+    Surface& surface,
     LayoutCursor& cursor,
     float x_min,
     float x_max,

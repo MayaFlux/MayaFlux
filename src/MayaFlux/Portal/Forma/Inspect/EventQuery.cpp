@@ -3,13 +3,14 @@
 #include "MayaFlux/Transitive/Reflect/EnumReflect.hpp"
 #include "MayaFlux/Vruta/EventManager.hpp"
 
+#include "MayaFlux/Portal/Forma/Surface.hpp"
+
 namespace MayaFlux::Portal::Forma {
 
 InspectResult Inspector::event(
     const std::shared_ptr<Vruta::Event>& ev,
     std::string_view name,
-    Layer& layer, Context& context,
-    const std::shared_ptr<Core::Window>& window,
+    Surface& surface,
     LayoutCursor& cursor,
     float x_min, float x_max, float row_h)
 {
@@ -28,15 +29,15 @@ InspectResult Inspector::event(
         },
     };
 
-    const auto dims = row_pixel_dims(window, x_min, x_max, row_h);
-    auto hbuf = make_row_buffer(window, header_label, dims);
+    const auto dims = row_pixel_dims(surface.window(), x_min, x_max, row_h);
+    auto hbuf = make_row_buffer(surface.window(), header_label, dims);
     std::vector<RowBuffer> rbufs;
     rbufs.reserve(values.size());
     for (const auto& spec : values)
-        rbufs.push_back(make_row_buffer(window, spec.label, dims));
+        rbufs.push_back(make_row_buffer(surface.window(), spec.label, dims));
 
     auto group = make_value_group(values, std::move(hbuf), rbufs,
-        layer, context, cursor, x_min, x_max, row_h, false);
+        surface, cursor, x_min, x_max, row_h, false);
 
     InspectResult result;
     result.group = std::move(group);
@@ -44,8 +45,7 @@ InspectResult Inspector::event(
 }
 
 InspectResult Inspector::event_manager(
-    Layer& layer, Context& context,
-    const std::shared_ptr<Core::Window>& window,
+    Surface& surface,
     LayoutCursor& cursor,
     float x_min, float x_max, float row_h)
 {
@@ -58,15 +58,15 @@ InspectResult Inspector::event_manager(
         },
     };
 
-    const auto dims = row_pixel_dims(window, x_min, x_max, row_h);
-    auto hbuf = make_row_buffer(window, "EventManager", dims);
+    const auto dims = row_pixel_dims(surface.window(), x_min, x_max, row_h);
+    auto hbuf = make_row_buffer(surface.window(), "EventManager", dims);
     std::vector<RowBuffer> rbufs;
     rbufs.reserve(root_values.size());
     for (const auto& spec : root_values)
-        rbufs.push_back(make_row_buffer(window, spec.label, dims));
+        rbufs.push_back(make_row_buffer(surface.window(), spec.label, dims));
 
     auto root_group = make_value_group(root_values, std::move(hbuf), rbufs,
-        layer, context, cursor, x_min, x_max, row_h, true);
+        surface, cursor, x_min, x_max, row_h, true);
 
     InspectResult result;
     result.group = std::move(root_group);
@@ -92,20 +92,20 @@ InspectResult Inspector::event_manager(
             },
         };
 
-        const auto ev_dims = row_pixel_dims(window, x_min, x_max, row_h);
-        auto ev_hbuf = make_row_buffer(window, header_label, ev_dims);
+        const auto ev_dims = row_pixel_dims(surface.window(), x_min, x_max, row_h);
+        auto ev_hbuf = make_row_buffer(surface.window(), header_label, ev_dims);
         std::vector<RowBuffer> ev_rbufs;
         ev_rbufs.reserve(values.size());
         for (const auto& spec : values)
-            ev_rbufs.push_back(make_row_buffer(window, spec.label, ev_dims));
+            ev_rbufs.push_back(make_row_buffer(surface.window(), spec.label, ev_dims));
 
         auto ev_group = make_value_group(values, std::move(ev_hbuf), ev_rbufs,
-            layer, context, cursor, x_min, x_max, row_h, false);
+            surface, cursor, x_min, x_max, row_h, false);
 
         InspectResult ev_result;
         ev_result.group = std::move(ev_group);
 
-        result.group.header.attach(layer, ev_result.group.header.header_id);
+        result.group.header.attach(surface.layer(), ev_result.group.header.header_id);
         result.children.push_back(std::move(ev_result));
     }
 
