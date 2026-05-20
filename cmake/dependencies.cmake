@@ -16,8 +16,8 @@ if(WIN32)
     find_package(utf8proc CONFIG REQUIRED)
     find_package(nlohmann_json CONFIG REQUIRED)
 
-    find_package(LLVM CONFIG REQUIRED HINTS "$ENV{LLVM_DIR}")
-    find_package(Clang CONFIG REQUIRED HINTS "$ENV{Clang_DIR}")
+    find_package(LLVM CONFIG REQUIRED HINTS "$ENV{LLVM_DEV_DIR}")
+    find_package(Clang CONFIG REQUIRED HINTS "$ENV{Clang_DEV_DIR}")
 
     foreach(component avcodec avformat avutil swresample swscale avdevice)
         string(TOUPPER ${component} comp_upper)

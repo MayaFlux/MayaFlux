@@ -1,0 +1,144 @@
+{
+  "version": 6,
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      }
+    },
+    {
+      "name": "base-dev",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+      }
+    },
+    {
+      "name": "base-rel",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "unix-dev",
+      "inherits": "base",
+      "displayName": "Unix : Development",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "MAYAFLUX_DEV": "ON",
+        "MAYAFLUX_BUILD_PROJECT": "ON",
+        "MAYAFLUX_BUILD_TESTS": "ON",
+        "MAYAFLUX_PORTABLE": "ON",
+        "EXAMPLE_SHADER_DIR" :  "${sourceDir}/src/examples/shaders"
+      }
+    },
+    {
+      "name": "linux-ship-dev",
+      "inherits": "base-dev",
+      "displayName": "Linux : Shipping with Debug Info",
+      "cacheVariables": {
+        "CMAKE_INSTALL_PREFIX": "/usr"
+      }
+    },
+    {
+      "name": "linux-ship-rel",
+      "inherits": "base-rel",
+      "displayName": "Linux : Shipping Release",
+      "cacheVariables": {
+        "CMAKE_INSTALL_PREFIX": "/usr"
+      }
+    },
+    {
+      "name": "launchpad-dev",
+      "inherits": "base-dev",
+      "displayName": "MayaFlux Edge: Launchpad/PPA",
+      "cacheVariables": {
+	    "CMAKE_INSTALL_LIBDIR": "lib"
+      }
+    },
+    {
+      "name": "launchpad-rel",
+      "inherits": "base-rel",
+      "displayName": "MayaFlux Release: Launchpad/PPA",
+      "cacheVariables": {
+	    "CMAKE_INSTALL_LIBDIR": "lib"
+      }
+    },
+    {
+      "name": "macos-ship-dev",
+      "inherits": "base-dev",
+      "displayName": "macOS - Shipping Development",
+      "cacheVariables": {
+        "CMAKE_VERBOSE_MAKEFILE": "ON",
+        "MAYAFLUX_PORTABLE": "ON"
+      }
+    },
+    {
+      "name": "macos-ship-rel",
+      "inherits": "base-rel",
+      "displayName": "macOS - Shipping Release",
+      "cacheVariables": {
+        "CMAKE_VERBOSE_MAKEFILE": "ON",
+        "MAYAFLUX_PORTABLE": "ON"
+      }
+    },
+    {
+      "name": "windows-vs2022-dev",
+      "inherits": "base",
+      "displayName": "Windows (VS 2022) - Development",
+      "generator": "Visual Studio 17 2022",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "MAYAFLUX_BUILD_TESTS": "ON",
+        "CMAKE_INSTALL_PREFIX": "C:/MayaFlux"
+      }
+    },
+    {
+      "name": "windows-vs2019-dev",
+      "inherits": "base",
+      "displayName": "Windows (VS 2019) - Development",
+      "generator": "Visual Studio 16 2019",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "MAYAFLUX_BUILD_TESTS": "ON",
+        "CMAKE_INSTALL_PREFIX": "C:/MayaFlux"
+      }
+    },
+    {
+      "name": "windows-ship-rel",
+      "inherits": "base",
+      "displayName": "Windows - Shipping Release",
+      "generator": "Visual Studio 17 2022",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "MAYAFLUX_BUILD_TESTS": "OFF",
+        "MAYAFLUX_PORTABLE": "OFF",
+        "CMAKE_INSTALL_PREFIX": "C:/MayaFlux"
+      }
+    }
+  ],
+  "buildPresets": [
+    { "name": "unix-dev",       "configurePreset": "unix-dev", "jobs": 0 },
+    { "name": "linux-ship-dev",  "configurePreset": "linux-ship-dev", "jobs": 0 },
+    { "name": "linux-ship-rel",  "configurePreset": "linux-ship-rel", "jobs": 0 },
+    { "name": "macos-ship-dev",  "configurePreset": "macos-ship-dev", "jobs": 0 },
+    { "name": "launchpad-dev",  "configurePreset": "launchpad-dev", "jobs": 0 },
+    { "name": "launchpad-rel",  "configurePreset": "launchpad-rel", "jobs": 0 },
+    { "name": "macos-ship-rel",  "configurePreset": "macos-ship-rel", "jobs": 0 },
+    { "name": "win19-dev",     "configurePreset": "windows-vs2019-dev", "jobs": 0 },
+    { "name": "win22-dev",     "configurePreset": "windows-vs2022-dev", "jobs": 0 },
+    { "name": "windows-ship-rel","configurePreset": "windows-ship-rel", "jobs": 0 }
+  ],
+  "testPresets": [
+    {
+      "name": "unix-dev",
+      "configurePreset": "unix-dev",
+      "output": { "outputOnFailure": true }
+    }
+  ]
+}

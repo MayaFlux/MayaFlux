@@ -260,7 +260,8 @@ jobs:
           echo "CMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}\scripts\buildsystems\vcpkg.cmake" >> $env:GITHUB_ENV
 
           # LLVM environment
-          echo "LLVM_CI_PATH=${{ env.LLVM_ROOT }}" >> $env:GITHUB_ENV
+          echo "LLVM_DEV_DIR=${{ env.LLVM_ROOT }}/lib/cmake/llvm" >> $env:GITHUB_ENV
+          echo "Clang_DEV_DIR=${{ env.LLVM_ROOT }}/lib/cmake/clang" >> $env:GITHUB_ENV
 
           # FFmpeg environment
           echo "FFMPEG_ROOT=C:\Program Files\FFmpeg" >> $env:GITHUB_ENV
@@ -287,12 +288,6 @@ jobs:
             "-DCMAKE_CXX_FLAGS_RELEASE=/O2 /DNDEBUG /Z7",
             "-DCMAKE_EXE_LINKER_FLAGS=/DEBUG:FASTLINK /CGTHREADS:$cores"
           )
-
-          # LLVM configuration
-          if ($env:LLVM_CI_PATH) {
-            $cmakeArgs += @("-DLLVM_DIR=$env:LLVM_CI_PATH\lib\cmake\llvm")
-            $cmakeArgs += @("-DClang_DIR=$env:LLVM_CI_PATH\lib\cmake\clang")
-          }
 
           Write-Host "CMake arguments:" -ForegroundColor Yellow
           $cmakeArgs | ForEach-Object { Write-Host "  $_" -ForegroundColor Gray }

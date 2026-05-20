@@ -120,13 +120,9 @@ and live coding features. This is intentional.
 
 %build
 export CCACHE_SLOPPINESS=pch_defines,time_macros,include_file_mtime,include_file_ctime
-%cmake -G Ninja \
-    -DCMAKE_CXX_STANDARD=23 \
-    -DCMAKE_INSTALL_LIBDIR=%{_libdir} \
-    -DMAYAFLUX_PORTABLE=OFF \
-    -DMAYAFLUX_SHIP_DEV=ON
+%cmake --preset linux-ship-dev
 
-%cmake_build --parallel
+%cmake_build
 
 %install
 %cmake_install

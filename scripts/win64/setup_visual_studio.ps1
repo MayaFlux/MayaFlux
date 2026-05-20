@@ -35,10 +35,10 @@ if (-not $VS_PATH) {
 
 # Detect VS version
 $VS_VERSION = (& $VSWHERE -latest -property catalog.productLineVersion)
-$CMakeGenerator = switch ($VS_VERSION) {
-    "2022" { "Visual Studio 17 2022" }
-    "2019" { "Visual Studio 16 2019" }
-    default { "Visual Studio 17 2022" }
+$PresetName = switch ($VS_VERSION) {
+    "2022" { "win22-dev" }
+    "2019" { "win19-dev" }
+    default { "win22-dev" }
 }
 
 Write-Host "Visual Studio: $VS_PATH" -ForegroundColor Green
@@ -50,7 +50,7 @@ Write-Host "Checking dependencies..." -ForegroundColor Cyan
 $depsOk = $true
 
 # Required manual env setups
-$requiredEnvVars = @("LLVM_DIR", "Clang_DIR" ,"VULKAN_SDK", "FFMPEG_ROOT")
+$requiredEnvVars = @("LLVM_DEV_DIR", "Clang_DEV_DIR" ,"VULKAN_SDK", "FFMPEG_ROOT")
 
 foreach ($envVar in $requiredEnvVars) {
     if (-not (Test-Path "env:$envVar")) {
@@ -94,16 +94,13 @@ if (-not (Test-Path $BUILD_DIR)) {
 }
 
 Write-Host "Generating Visual Studio solution..." -ForegroundColor Yellow
+Write-Host "Generating via Preset: $PresetName" -ForegroundColor Yellow
 
 try {
     Push-Location $PROJECT_ROOT
 
     $cmakeArgs = @(
-        "-B", "build",
-        "-S", ".",
-        "-G", $CMakeGenerator,
-        "-A", "x64",
-        "-DCMAKE_BUILD_TYPE=Release"
+        "--preset", $PresetName,
         "-DCMAKE_VS_GLOBALS=UseMultiToolTask=true;EnforceProcessCountAcrossBuilds=true"
     )
 
