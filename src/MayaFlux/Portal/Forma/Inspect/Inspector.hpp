@@ -57,6 +57,35 @@ public:
         float x_min = -0.95F, float x_max = 0.95F, float row_h = 0.05F, int depth = 0);
 
     /**
+     * @brief Inspect a single RootNode for a specific token and channel.
+     *
+     * Header is "root [ch N]" for AUDIO_RATE or "root" for all other tokens.
+     * Body row exposes live node count from RootNode::get_node_size(). Each
+     * registered node is expanded via node() as a child. Networks for the
+     * token/channel are appended after the node children.
+     */
+    [[nodiscard]] InspectResult root_node(
+        Nodes::ProcessingToken token, uint32_t channel,
+        Layer& layer, Context& context,
+        const std::shared_ptr<Core::Window>& window,
+        LayoutCursor& cursor,
+        float x_min = -0.95F, float x_max = 0.95F, float row_h = 0.05F, int depth = 0);
+
+    /**
+     * @brief Inspect all RootNodes for a token.
+     *
+     * For AUDIO_RATE: header shows token and channel count, each channel
+     * expanded as a nested root_node(token, channel) result.
+     * For all other tokens: delegates directly to root_node(token, 0).
+     */
+    [[nodiscard]] InspectResult root_node(
+        Nodes::ProcessingToken token,
+        Layer& layer, Context& context,
+        const std::shared_ptr<Core::Window>& window,
+        LayoutCursor& cursor,
+        float x_min = -0.95F, float x_max = 0.95F, float row_h = 0.05F, int depth = 0);
+
+    /**
      * @brief Inspect a NodeNetwork and its per-network metadata.
      *
      * Builds a collapsible ValueGroup whose header is the network's topology
