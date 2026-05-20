@@ -127,6 +127,81 @@ InspectResult Inspector::node(
 }
 
 // -----------------------------------------------------------------------------
+// RootNode: single channel
+// -----------------------------------------------------------------------------
+
+InspectResult Inspector::root_node(
+    Nodes::ProcessingToken token, uint32_t channel,
+    Layer& layer, Context& context,
+    const std::shared_ptr<Core::Window>& window,
+    LayoutCursor& cursor,
+    float x_min, float x_max, float row_h, int depth)
+{
+    auto& root = m_ngm.get_root_node(token, channel);
+
+    const float ind = x_min + static_cast<float>(depth) * k_inspect_indent;
+    const std::string header_label = token == Nodes::ProcessingToken::AUDIO_RATE
+        ? "root [ch " + std::to_string(channel) + "]"
+        : "root";
+
+    std::vector<ValueSpec> values {
+        ValueSpec {
+            .label = "nodes",
+            .reader = [&root] { return std::to_string(root.get_node_size()); },
+        },
+    };
+
+    const auto dims = row_pixel_dims(window, ind, x_max, row_h);
+    auto hbuf = make_row_buffer(window, header_label, dims);
+    std::vector<RowBuffer> rbufs;
+    rbufs.reserve(values.size());
+    for (const auto& spec : values)
+        rbufs.push_back(make_row_buffer(window, spec.label, dims));
+
+    auto group = make_value_group(values, std::move(hbuf), rbufs,
+        layer, context, cursor, ind, x_max, row_h, false);
+
+    InspectResult result;
+    result.group = std::move(group);
+
+    for (const auto& n : root.nodes()) {
+        if (!n)
+            continue;
+        auto node_result = node(
+            n, layer, context, window, cursor,
+            x_min, x_max, row_h, depth + 1);
+        layer.relate(result.group.header.header_id, node_result.group.header.header_id);
+        result.children.push_back(std::move(node_result));
+    }
+
+    return result;
+}
+
+// -----------------------------------------------------------------------------
+// RootNode: all channels (or single root for non-audio tokens)
+// -----------------------------------------------------------------------------
+
+InspectResult Inspector::root_node(
+    Nodes::ProcessingToken token,
+    Layer& layer, Context& context,
+    const std::shared_ptr<Core::Window>& window,
+    LayoutCursor& cursor,
+    float x_min, float x_max, float row_h, int depth)
+{
+    if (token != Nodes::ProcessingToken::AUDIO_RATE)
+        return root_node(token, 0, layer, context, window, cursor, x_min, x_max, row_h, depth);
+
+    auto channels = m_ngm.get_all_channels(token);
+    std::ranges::sort(channels);
+
+    InspectResult result;
+    for (const auto ch : channels) {
+        result.children.push_back(
+            root_node(token, ch, layer, context, window, cursor, x_min, x_max, row_h, depth));
+    }
+    return result;
+}
+// -----------------------------------------------------------------------------
 // Single network
 // -----------------------------------------------------------------------------
 
@@ -223,7 +298,10 @@ InspectResult Inspector::node_graph_manager(
 
     for (const auto tok : tokens) {
         const std::string tok_label = std::string(Reflect::enum_to_string(tok));
-        const auto channels = m_ngm.get_all_channels(tok);
+        const bool multichannel = tok == Nodes::ProcessingToken::AUDIO_RATE;
+        auto channels = m_ngm.get_all_channels(tok);
+        if (multichannel)
+            std::ranges::sort(channels);
 
         std::vector<ValueSpec> tok_values {
             ValueSpec {
@@ -248,56 +326,77 @@ InspectResult Inspector::node_graph_manager(
 
         InspectResult tok_result;
         tok_result.group = std::move(tok_group);
-
         layer.relate(result.group.header.header_id, tok_result.group.header.header_id);
 
-        for (const auto ch : channels) {
-            const std::string ch_label = "ch " + std::to_string(ch);
-            const auto& nodes = m_ngm.get_nodes(tok, ch);
-
-            std::vector<ValueSpec> ch_values {
-                ValueSpec {
-                    .label = "nodes",
-                    .reader = [n = nodes.size()] { return std::to_string(n); },
-                },
-            };
-
-            const auto ch_dims = row_pixel_dims(window, x_min + 2.F * k_inspect_indent, x_max, row_h);
-            auto ch_hbuf = make_row_buffer(window, ch_label, ch_dims);
-            std::vector<RowBuffer> ch_rbufs;
-            ch_rbufs.reserve(ch_values.size());
-            for (const auto& spec : ch_values)
-                ch_rbufs.push_back(make_row_buffer(window, spec.label, ch_dims));
-
-            auto ch_group = make_value_group(ch_values, std::move(ch_hbuf), ch_rbufs,
+        // ----- Networks section -----
+        {
+            const auto net_dims = row_pixel_dims(window, x_min + 2.F * k_inspect_indent, x_max, row_h);
+            auto net_hbuf = make_row_buffer(window, "Networks", net_dims);
+            auto net_group = make_value_group({}, std::move(net_hbuf), {},
                 layer, context, cursor, x_min + 2.F * k_inspect_indent, x_max, row_h, false);
 
-            InspectResult ch_result;
-            ch_result.group = std::move(ch_group);
+            InspectResult net_section;
+            net_section.group = std::move(net_group);
+            layer.relate(tok_result.group.header.header_id, net_section.group.header.header_id);
 
-            layer.relate(tok_result.group.header.header_id, ch_result.group.header.header_id);
+            if (multichannel) {
+                for (const auto ch : channels) {
+                    const auto ch_dims = row_pixel_dims(window, x_min + 3.F * k_inspect_indent, x_max, row_h);
+                    auto ch_hbuf = make_row_buffer(window, "ch " + std::to_string(ch), ch_dims);
+                    auto ch_group = make_value_group({}, std::move(ch_hbuf), {},
+                        layer, context, cursor, x_min + 3.F * k_inspect_indent, x_max, row_h, false);
 
-            for (const auto& n : nodes) {
-                if (!n)
-                    continue;
-                auto node_result = node(
-                    n, layer, context, window, cursor,
-                    x_min, x_max, row_h, 3);
-                layer.relate(ch_result.group.header.header_id, node_result.group.header.header_id);
-                ch_result.children.push_back(std::move(node_result));
+                    InspectResult ch_result;
+                    ch_result.group = std::move(ch_group);
+                    layer.relate(net_section.group.header.header_id, ch_result.group.header.header_id);
+
+                    for (const auto& net : m_ngm.get_networks(tok, ch)) {
+                        if (!net)
+                            continue;
+                        auto nr = node_network(net, layer, context, window, cursor, x_min, x_max, row_h, 4);
+                        layer.relate(ch_result.group.header.header_id, nr.group.header.header_id);
+                        ch_result.children.push_back(std::move(nr));
+                    }
+
+                    net_section.children.push_back(std::move(ch_result));
+                }
+            } else {
+                for (const auto& net : m_ngm.get_networks(tok, 0)) {
+                    if (!net)
+                        continue;
+                    auto nr = node_network(net, layer, context, window, cursor, x_min, x_max, row_h, 3);
+                    layer.relate(net_section.group.header.header_id, nr.group.header.header_id);
+                    net_section.children.push_back(std::move(nr));
+                }
             }
 
-            for (const auto& net : m_ngm.get_networks(tok, ch)) {
-                if (!net)
-                    continue;
-                auto net_result = node_network(
-                    net, layer, context, window, cursor,
-                    x_min, x_max, row_h, 2);
-                layer.relate(tok_result.group.header.header_id, net_result.group.header.header_id);
-                tok_result.children.push_back(std::move(net_result));
+            tok_result.children.push_back(std::move(net_section));
+        }
+
+        // ----- Nodes section -----
+        {
+            const auto nodes_dims = row_pixel_dims(window, x_min + 2.F * k_inspect_indent, x_max, row_h);
+            auto nodes_hbuf = make_row_buffer(window, "Nodes", nodes_dims);
+            auto nodes_group = make_value_group({}, std::move(nodes_hbuf), {},
+                layer, context, cursor, x_min + 2.F * k_inspect_indent, x_max, row_h, false);
+
+            InspectResult nodes_section;
+            nodes_section.group = std::move(nodes_group);
+            layer.relate(tok_result.group.header.header_id, nodes_section.group.header.header_id);
+
+            if (multichannel) {
+                for (const auto ch : channels) {
+                    auto rn = root_node(tok, ch, layer, context, window, cursor, x_min, x_max, row_h, 3);
+                    layer.relate(nodes_section.group.header.header_id, rn.group.header.header_id);
+                    nodes_section.children.push_back(std::move(rn));
+                }
+            } else {
+                auto rn = root_node(tok, 0, layer, context, window, cursor, x_min, x_max, row_h, 3);
+                layer.relate(nodes_section.group.header.header_id, rn.group.header.header_id);
+                nodes_section.children.push_back(std::move(rn));
             }
 
-            tok_result.children.push_back(std::move(ch_result));
+            tok_result.children.push_back(std::move(nodes_section));
         }
 
         result.children.push_back(std::move(tok_result));
