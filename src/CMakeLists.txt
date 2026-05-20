@@ -24,7 +24,7 @@ else()
     )
 endif()
 
-if(MAYAFLUX_SHIP_DEV OR MAYAFLUX_SHIP_REL)
+if(NOT MAYAFLUX_BUILD_PROJECT)
     return()
 endif()
 

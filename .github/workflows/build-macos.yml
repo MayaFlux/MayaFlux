@@ -196,20 +196,23 @@ jobs:
           export CMAKE_PREFIX_PATH="${STB_ROOT}:${CMAKE_PREFIX_PATH}"
           export PKG_CONFIG_PATH="${PKG_CONFIG_PATH}"
 
+          if [ "${{ env.BUILD_TYPE }}" = "Release" ]; then
+            PRESET="macos-ship-rel"
+          else
+            PRESET="macos-ship-dev"
+          fi
+
           echo "=== Final CMake environment ==="
           echo "CMAKE version: $(cmake --version | head -1)"
           echo "CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH"
           echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH"
+          echo "Using Preset: $PRESET"
 
-          cmake -B build \
-            -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
-            -DCMAKE_CXX_STANDARD=23 \
-            -DCMAKE_VERBOSE_MAKEFILE=ON \
-            -DMAYAFLUX_PORTABLE=ON
+          cmake --preset "$PRESET"
 
       - name: Build
         shell: bash
-        run: cmake --build build --config ${{ env.BUILD_TYPE }} --parallel $(sysctl -n hw.ncpu)
+        run: cmake --build --preset "$PRESET"
 
       # - name: Test (conditional)
       #   if: ${{ inputs.run_tests != false }}

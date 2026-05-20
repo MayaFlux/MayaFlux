@@ -8,14 +8,10 @@ export CXX=g++-15
 
 override_dh_auto_configure:
 	export CCACHE_SLOPPINESS=pch_defines,time_macros,include_file_mtime,include_file_ctime && \
-	dh_auto_configure \
-	  --buildsystem=cmake+ninja -- \
-	  -DCMAKE_CXX_STANDARD=23 \
-	  -DCMAKE_INSTALL_LIBDIR=lib \
-	  -DMAYAFLUX_SHIP_DEV=ON
+	cmake --preset launchpad-dev
 
 override_dh_auto_build-arch:
-	dh_auto_build
+	cmake --build --preset launchpad-dev
 
 override_dh_auto_build-indep:
 	doxygen doxyconf

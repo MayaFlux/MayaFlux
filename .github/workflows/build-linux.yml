@@ -104,13 +104,17 @@ jobs:
 
       - name: Configure CMake
         run: |
-          cmake -B build -G Ninja \
-            -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
-            -DCMAKE_CXX_STANDARD=23 \
-            -DCMAKE_VERBOSE_MAKEFILE=ON
+          if [ "${{ env.BUILD_TYPE }}" = "Release" ]; then
+            PRESET="linux-ship-rel"
+          else
+            PRESET="linux-ship-dev"
+          fi
+
+          cmake --preset "$PRESET"
 
       - name: Build
-        run: cmake --build build --config ${{ env.BUILD_TYPE }} --parallel $(nproc)
+        shell: bash
+        run: cmake --build --preset "$PRESET"
 
       - name: Install to staging directory
         if: ${{ inputs.create_distribution != false }}
