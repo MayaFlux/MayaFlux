@@ -208,11 +208,12 @@ jobs:
           echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH"
           echo "Using Preset: $PRESET"
 
+          echo "PRESET=$PRESET" >> $GITHUB_ENV
           cmake --preset "$PRESET"
 
       - name: Build
         shell: bash
-        run: cmake --build --preset "$PRESET"
+        run: cmake --build --preset "${{ env.PRESET }}"
 
       # - name: Test (conditional)
       #   if: ${{ inputs.run_tests != false }}

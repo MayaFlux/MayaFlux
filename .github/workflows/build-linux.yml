@@ -110,11 +110,12 @@ jobs:
             PRESET="linux-ship-dev"
           fi
 
+          echo "PRESET=$PRESET" >> $GITHUB_ENV
           cmake --preset "$PRESET"
 
       - name: Build
         shell: bash
-        run: cmake --build --preset "$PRESET"
+        run: cmake --build --preset "${{ env.PRESET }}"
 
       - name: Install to staging directory
         if: ${{ inputs.create_distribution != false }}
