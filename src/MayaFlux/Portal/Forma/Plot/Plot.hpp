@@ -4,40 +4,9 @@
 #include "MayaFlux/Kinesis/Spatial/Bounds.hpp"
 #include "MayaFlux/Portal/Forma/Primitives/Mapped.hpp"
 
+#include "AxisRange.hpp"
+
 namespace MayaFlux::Portal::Forma::Plot {
-
-// =============================================================================
-// AxisRange
-// =============================================================================
-
-/**
- * @struct AxisRange
- * @brief Scalar domain extent for one plot axis.
- *
- * Maps raw double values in [min, max] to the normalised render space
- * expected by the geometry function. When auto_scale is true, min and max
- * are recomputed from the series data on every process() call and the
- * stored values are ignored until then.
- */
-struct AxisRange {
-    float min { -1.F };
-    float max { 1.F };
-    bool auto_scale { false };
-
-    /** @brief Map a value into [0, 1] within this range. */
-    [[nodiscard]] float normalise(float v) const noexcept
-    {
-        if (max == min)
-            return 0.F;
-        return (v - min) / (max - min);
-    }
-
-    /** @brief Map a value into [-1, 1] NDC within this range. */
-    [[nodiscard]] float to_ndc(float v) const noexcept
-    {
-        return normalise(v) * 2.F - 1.F;
-    }
-};
 
 // =============================================================================
 // series_by_role
