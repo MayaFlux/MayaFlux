@@ -1,5 +1,7 @@
 #pragma once
 
+#include "MayaFlux/Kinesis/Spatial/Bounds.hpp"
+
 namespace MayaFlux {
 
 namespace Core {
@@ -97,6 +99,59 @@ MAYAFLUX_API glm::vec2 window_coords(const glm::vec3& ndc_pos,
  * @return Window coordinates in pixels
  */
 MAYAFLUX_API glm::vec2 window_coords(const glm::vec3& ndc_pos,
+    const std::shared_ptr<Core::Window>& window);
+
+/**
+ * @brief Convert an NDC-space size (extent) to integer pixel dimensions.
+ *
+ * NDC spans 2.0 across each axis, so an NDC size of (1.8, 0.1) on a 1280x720
+ * window resolves to (1152, 36) pixels. Both components are clamped to at
+ * least 1 pixel.
+ *
+ * Use this for sizing text images, capture targets, and offscreen images to
+ * match an on-screen NDC region.
+ *
+ * @param ndc_size NDC extent (each component in [0, 2]).
+ * @param window_width Window width in pixels.
+ * @param window_height Window height in pixels.
+ * @return Integer pixel dimensions, each at least 1.
+ */
+MAYAFLUX_API glm::uvec2 normalized_size_to_pixels(
+    const glm::vec2& ndc_size,
+    uint32_t window_width, uint32_t window_height);
+
+/**
+ * @brief Convert an NDC-space size to integer pixel dimensions using window state.
+ * @param ndc_size NDC extent.
+ * @param window   Window to extract dimensions from.
+ * @return Integer pixel dimensions, each at least 1.
+ */
+MAYAFLUX_API glm::uvec2 normalized_size_to_pixels(
+    const glm::vec2& ndc_size,
+    const std::shared_ptr<Core::Window>& window);
+
+/**
+ * @brief Convert an NDC AABB's extent to integer pixel dimensions.
+ *
+ * Equivalent to ndc_size_to_pixels(region.max - region.min, ...).
+ *
+ * @param region NDC axis-aligned bounding box.
+ * @param window_width Window width in pixels.
+ * @param window_height Window height in pixels.
+ * @return Integer pixel dimensions of the region's extent.
+ */
+MAYAFLUX_API glm::uvec2 normalized_size_to_pixels(
+    const Kinesis::AABB2D& region,
+    uint32_t window_width, uint32_t window_height);
+
+/**
+ * @brief Convert an NDC AABB's extent to integer pixel dimensions using window state.
+ * @param region NDC axis-aligned bounding box.
+ * @param window Window to extract dimensions from.
+ * @return Integer pixel dimensions of the region's extent.
+ */
+MAYAFLUX_API glm::uvec2 normalized_size_to_pixels(
+    const Kinesis::AABB2D& region,
     const std::shared_ptr<Core::Window>& window);
 
 /**

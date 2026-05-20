@@ -3,7 +3,6 @@
 #include "Core.hpp"
 #include "MayaFlux/Core/Engine.hpp"
 #include "MayaFlux/Core/Windowing/WindowManager.hpp"
-#include "MayaFlux/Kinesis/ViewTransform.hpp"
 
 namespace MayaFlux {
 
@@ -93,6 +92,32 @@ bool is_in_bounds(double window_x, double window_y,
 {
     const auto& s = window->get_state();
     return Kinesis::in_bounds(window_x, window_y, s.current_width, s.current_height);
+}
+
+glm::uvec2 normalized_size_to_pixels(const glm::vec2& ndc_size,
+    uint32_t window_width, uint32_t window_height)
+{
+    return Kinesis::ndc_size_to_pixels(ndc_size, window_width, window_height);
+}
+
+glm::uvec2 normalized_size_to_pixels(const glm::vec2& ndc_size,
+    const std::shared_ptr<Core::Window>& window)
+{
+    const auto& s = window->get_state();
+    return Kinesis::ndc_size_to_pixels(ndc_size, s.current_width, s.current_height);
+}
+
+glm::uvec2 normalized_size_to_pixels(const Kinesis::AABB2D& region,
+    uint32_t window_width, uint32_t window_height)
+{
+    return Kinesis::ndc_size_to_pixels(region, window_width, window_height);
+}
+
+glm::uvec2 normalized_size_to_pixels(const Kinesis::AABB2D& region,
+    const std::shared_ptr<Core::Window>& window)
+{
+    const auto& s = window->get_state();
+    return Kinesis::ndc_size_to_pixels(region, s.current_width, s.current_height);
 }
 
 } // namespace MayaFlux
