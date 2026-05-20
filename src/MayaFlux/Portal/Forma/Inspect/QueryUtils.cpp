@@ -155,11 +155,18 @@ ValueGroup make_value_group(
             .budget_h = th,
         });
 
-    auto header = make_collapsible(
-        window, layer, context, bridge(), cursor,
-        x_min, x_max, row_h, initially_open,
-        glm::vec3(0.25F), glm::vec3(0.35F),
-        header_text);
+    const size_t cap = 12 * Kakshya::VertexLayout::for_meshes().stride_bytes;
+    auto hbuf = create_buffer(window, cap,
+        Graphics::PrimitiveTopology::TRIANGLE_LIST,
+        std::vector<std::pair<std::string, std::shared_ptr<Core::VKImage>>> {
+            { "text", header_text } });
+
+    auto header = Collapsible {}
+                      .initially_open(initially_open)
+                      .closed_color(glm::vec3(0.25F))
+                      .open_color(glm::vec3(0.35F))
+                      .label(header_text)
+                      .place(std::move(hbuf), layer, context, cursor, x_min, x_max, row_h);
 
     std::vector<ValueRow> rows;
     rows.reserve(values.size());

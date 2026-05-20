@@ -9,6 +9,10 @@ namespace MayaFlux::Core {
 class Window;
 }
 
+namespace MayaFlux::Vruta {
+class TaskScheduler;
+}
+
 namespace MayaFlux::Portal::Forma {
 
 /**
