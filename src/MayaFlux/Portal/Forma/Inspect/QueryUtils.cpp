@@ -156,7 +156,7 @@ ValueGroup make_value_group(
         });
 
     auto header = make_collapsible(
-        window, layer, context, get_bridge(), cursor,
+        window, layer, context, bridge(), cursor,
         x_min, x_max, row_h, initially_open,
         glm::vec3(0.25F), glm::vec3(0.35F),
         header_text);
