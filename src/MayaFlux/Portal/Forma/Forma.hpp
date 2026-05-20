@@ -94,7 +94,7 @@ MAYAFLUX_API bool is_initialized();
  *
  * Valid only after initialize(). Lifetime is tied to the Forma module.
  */
-[[nodiscard]] MAYAFLUX_API Bridge& get_bridge();
+[[nodiscard]] MAYAFLUX_API Bridge& bridge();
 
 /**
  * @brief Access the Forma introspection subsystem.
@@ -211,7 +211,7 @@ template <typename T>
     auto buf = create_buffer(std::move(window), capacity, topology);
     auto mapped = make_mapped<T>(initial, std::move(geom), buf);
     mapped.element.id = layer.add(mapped.element);
-    get_bridge().register_element(mapped, std::move(project));
+    bridge().register_element(mapped, std::move(project));
     return mapped;
 }
 

@@ -142,7 +142,7 @@ std::shared_ptr<Buffers::FormaBuffer> create_buffer(
 // Bridge
 // =============================================================================
 
-Bridge& get_bridge()
+Bridge& bridge()
 {
     return *g_bridge;
 }
