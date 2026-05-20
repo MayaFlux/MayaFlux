@@ -6,6 +6,9 @@
 #include "MayaFlux/Kakshya/NDData/VertexLayout.hpp"
 
 #include "MayaFlux/Portal/Text/InkPress.hpp"
+#include "MayaFlux/Portal/Text/TypeFaceFoundry.hpp"
+
+#include "MayaFlux/Core/Backends/Windowing/Window.hpp"
 
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/VKImage.hpp"
 
@@ -50,6 +53,25 @@ namespace {
     }
 
 } // namespace
+
+glm::uvec2 row_pixel_dims(
+    const std::shared_ptr<Core::Window>& window,
+    float x_min, float x_max, float row_h)
+{
+    const auto& ws = window->get_state();
+    const auto w = static_cast<uint32_t>(
+        (x_max - x_min) * 0.5F * static_cast<float>(ws.current_width));
+    const auto h = static_cast<uint32_t>(
+        row_h * 0.5F * static_cast<float>(ws.current_height));
+    auto atlas = Text::TypeFaceFoundry::instance().get_default_glyph_atlas();
+    if (!atlas) {
+        error<std::runtime_error>(Journal::Component::Portal, Journal::Context::Runtime,
+            std::source_location::current(),
+            "Failed to get default glyph atlas for row pixel dimension calculation");
+    }
+    const uint32_t min_h = atlas->pixel_size();
+    return { std::max(w, 1U), std::max(h, min_h) };
+}
 
 ValueRow make_value_row(
     const ValueSpec& spec,
