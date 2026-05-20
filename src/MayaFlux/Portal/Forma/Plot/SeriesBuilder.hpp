@@ -20,6 +20,21 @@ class BarsBuilder;
 // =============================================================================
 
 /**
+ * @struct SeriesSpec
+ * @brief Result of a SeriesBuilder terminal. Bundles a geometry function
+ *        with the topology and capacity arithmetic implied by the encoding.
+ *
+ * Passed to Plot::place() so callers never supply topology or buffer
+ * capacity manually. The raw GeometryFn<shared_ptr<PlotContainer>> is
+ * still accessible via .fn for callers that need it directly.
+ */
+struct SeriesSpec {
+    Forma::GeometryFn<std::shared_ptr<Kakshya::PlotContainer>> fn;
+    Graphics::PrimitiveTopology topology;
+    std::function<size_t(uint64_t sample_count)> capacity_for;
+};
+
+/**
  * @class SeriesBuilder
  * @brief Convenience constructor for GeometryFn<shared_ptr<PlotContainer>>.
  *
@@ -266,7 +281,7 @@ public:
         return *this;
     }
 
-    [[nodiscard]] GeometryFn<std::shared_ptr<Kakshya::PlotContainer>> done() const;
+    [[nodiscard]] SeriesSpec done() const;
 
 private:
     SeriesBuilder m_state;
@@ -297,7 +312,7 @@ public:
         return *this;
     }
 
-    [[nodiscard]] GeometryFn<std::shared_ptr<Kakshya::PlotContainer>> done() const;
+    [[nodiscard]] SeriesSpec done() const;
 
 private:
     SeriesBuilder m_state;
@@ -322,7 +337,7 @@ public:
     {
     }
 
-    [[nodiscard]] GeometryFn<std::shared_ptr<Kakshya::PlotContainer>> done() const;
+    [[nodiscard]] SeriesSpec done() const;
 
 private:
     SeriesBuilder m_state;

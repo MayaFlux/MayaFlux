@@ -119,7 +119,7 @@ namespace {
 // WaveformBuilder::done
 // =============================================================================
 
-GeometryFn<std::shared_ptr<Kakshya::PlotContainer>> WaveformBuilder::done() const
+SeriesSpec WaveformBuilder::done() const
 {
     auto x_mappings = m_state.x_mappings();
     auto y_mappings = m_state.y_mappings();
@@ -127,93 +127,96 @@ GeometryFn<std::shared_ptr<Kakshya::PlotContainer>> WaveformBuilder::done() cons
     const auto global_palette = m_state.palette();
     const float thickness = m_thickness;
 
-    return [x_mappings, y_mappings, z_mappings, global_palette, thickness](
-               const std::shared_ptr<Kakshya::PlotContainer>& container,
-               std::vector<uint8_t>& out,
-               Element&) mutable {
-        if (!container)
-            return;
+    return {
+        .fn = [x_mappings, y_mappings, z_mappings, global_palette, thickness](
+                  const std::shared_ptr<Kakshya::PlotContainer>& container,
+                  std::vector<uint8_t>& out,
+                  Element&) mutable {
+            if (!container)
+                return;
 
-        container->process_default();
+            container->process_default();
 
-        struct SeriesEntry {
-            std::span<const double> data;
-            size_t mapping_index;
-            size_t index_within_mapping;
-        };
+            struct SeriesEntry {
+                std::span<const double> data;
+                size_t mapping_index;
+                size_t index_within_mapping;
+            };
 
-        std::vector<SeriesEntry> y_entries;
-        for (size_t mi = 0; mi < y_mappings.size(); ++mi) {
-            auto series = series_for_mapping(*container, y_mappings[mi]);
-            for (size_t si = 0; si < series.size(); ++si)
-                y_entries.push_back({ .data = series[si], .mapping_index = mi, .index_within_mapping = si });
-        }
-        if (y_entries.empty())
-            return;
+            std::vector<SeriesEntry> y_entries;
+            for (size_t mi = 0; mi < y_mappings.size(); ++mi) {
+                auto series = series_for_mapping(*container, y_mappings[mi]);
+                for (size_t si = 0; si < series.size(); ++si)
+                    y_entries.push_back({ .data = series[si], .mapping_index = mi, .index_within_mapping = si });
+            }
+            if (y_entries.empty())
+                return;
 
-        AxisRange x_range = merge_axis(x_mappings);
-        AxisRange z_range = z_mappings.empty() ? AxisRange {} : merge_axis(z_mappings);
+            AxisRange x_range = merge_axis(x_mappings);
+            AxisRange z_range = z_mappings.empty() ? AxisRange {} : merge_axis(z_mappings);
 
-        std::vector<std::span<const double>> all_x, all_z;
-        for (auto& m : x_mappings) {
-            auto s = series_for_mapping(*container, m);
-            all_x.insert(all_x.end(), s.begin(), s.end());
-        }
-        for (auto& m : z_mappings) {
-            auto s = series_for_mapping(*container, m);
-            all_z.insert(all_z.end(), s.begin(), s.end());
-        }
-
-        apply_auto_scale(x_range, all_x.empty() ? std::vector<std::span<const double>> { y_entries[0].data } : all_x);
-        apply_auto_scale(z_range, all_z);
-
-        out.clear();
-
-        for (size_t ei = 0; ei < y_entries.size(); ++ei) {
-            const auto& entry = y_entries[ei];
-            const auto& ys = entry.data;
-            const size_t n = ys.size();
-            if (n == 0)
-                continue;
-
-            const glm::vec3 color = resolve_color(
-                y_mappings[entry.mapping_index], global_palette, entry.index_within_mapping);
-
-            auto y_range = y_mappings[entry.mapping_index].range;
-            apply_auto_scale(y_range, { ys });
-
-            const bool has_x = ei < all_x.size() && all_x[ei].size() == n;
-            const bool has_z = ei < all_z.size() && all_z[ei].size() == n;
-
-            const std::vector<float> xs = has_x
-                ? [&] {
-                      std::vector<float> v;
-                      v.reserve(n);
-                      for (double val : all_x[ei])
-                          v.push_back(x_range.to_ndc(static_cast<float>(val)));
-                      return v;
-                  }()
-                : uniform_x(n, x_range);
-
-            for (size_t i = 0; i < n; ++i) {
-                write_vertex(out,
-                    { xs[i],
-                        y_range.to_ndc(static_cast<float>(ys[i])),
-                        has_z ? z_range.to_ndc(static_cast<float>(all_z[ei][i])) : 0.F },
-                    color,
-                    thickness);
+            std::vector<std::span<const double>> all_x, all_z;
+            for (auto& m : x_mappings) {
+                auto s = series_for_mapping(*container, m);
+                all_x.insert(all_x.end(), s.begin(), s.end());
+            }
+            for (auto& m : z_mappings) {
+                auto s = series_for_mapping(*container, m);
+                all_z.insert(all_z.end(), s.begin(), s.end());
             }
 
-            if (ei + 1 < y_entries.size()) {
-                const glm::vec3 sep_pos {
-                    xs[n - 1],
-                    y_range.to_ndc(static_cast<float>(ys[n - 1])),
-                    has_z ? z_range.to_ndc(static_cast<float>(all_z[ei][n - 1])) : 0.F,
-                };
-                write_vertex(out, sep_pos, color, 0.F);
-                write_vertex(out, sep_pos, color, 0.F);
-            }
-        }
+            apply_auto_scale(x_range, all_x.empty() ? std::vector<std::span<const double>> { y_entries[0].data } : all_x);
+            apply_auto_scale(z_range, all_z);
+
+            out.clear();
+
+            for (size_t ei = 0; ei < y_entries.size(); ++ei) {
+                const auto& entry = y_entries[ei];
+                const auto& ys = entry.data;
+                const size_t n = ys.size();
+                if (n == 0)
+                    continue;
+
+                const glm::vec3 color = resolve_color(
+                    y_mappings[entry.mapping_index], global_palette, entry.index_within_mapping);
+
+                auto y_range = y_mappings[entry.mapping_index].range;
+                apply_auto_scale(y_range, { ys });
+
+                const bool has_x = ei < all_x.size() && all_x[ei].size() == n;
+                const bool has_z = ei < all_z.size() && all_z[ei].size() == n;
+
+                const std::vector<float> xs = has_x
+                    ? [&] {
+                          std::vector<float> v;
+                          v.reserve(n);
+                          for (double val : all_x[ei])
+                              v.push_back(x_range.to_ndc(static_cast<float>(val)));
+                          return v;
+                      }()
+                    : uniform_x(n, x_range);
+
+                for (size_t i = 0; i < n; ++i) {
+                    write_vertex(out,
+                        { xs[i],
+                            y_range.to_ndc(static_cast<float>(ys[i])),
+                            has_z ? z_range.to_ndc(static_cast<float>(all_z[ei][i])) : 0.F },
+                        color,
+                        thickness);
+                }
+
+                if (ei + 1 < y_entries.size()) {
+                    const glm::vec3 sep_pos {
+                        xs[n - 1],
+                        y_range.to_ndc(static_cast<float>(ys[n - 1])),
+                        has_z ? z_range.to_ndc(static_cast<float>(all_z[ei][n - 1])) : 0.F,
+                    };
+                    write_vertex(out, sep_pos, color, 0.F);
+                    write_vertex(out, sep_pos, color, 0.F);
+                }
+            } },
+        .topology = Graphics::PrimitiveTopology::LINE_STRIP,
+        .capacity_for = [](uint64_t n) { return (n + 2) * k_stride; },
     };
 }
 
@@ -221,7 +224,7 @@ GeometryFn<std::shared_ptr<Kakshya::PlotContainer>> WaveformBuilder::done() cons
 // ScatterBuilder::done
 // =============================================================================
 
-GeometryFn<std::shared_ptr<Kakshya::PlotContainer>> ScatterBuilder::done() const
+SeriesSpec ScatterBuilder::done() const
 {
     auto x_mappings = m_state.x_mappings();
     auto y_mappings = m_state.y_mappings();
@@ -229,10 +232,11 @@ GeometryFn<std::shared_ptr<Kakshya::PlotContainer>> ScatterBuilder::done() const
     const auto global_palette = m_state.palette();
     const float point_size = m_point_size;
 
-    return [x_mappings, y_mappings, z_mappings, global_palette, point_size](
-               const std::shared_ptr<Kakshya::PlotContainer>& container,
-               std::vector<uint8_t>& out,
-               Element&) mutable {
+    return {
+        .fn = [x_mappings, y_mappings, z_mappings, global_palette, point_size](
+                  const std::shared_ptr<Kakshya::PlotContainer>& container,
+                  std::vector<uint8_t>& out,
+                  Element&) mutable {
         if (!container)
             return;
 
@@ -287,7 +291,9 @@ GeometryFn<std::shared_ptr<Kakshya::PlotContainer>> ScatterBuilder::done() const
                         point_size);
                 }
             }
-        }
+        } },
+        .topology = Graphics::PrimitiveTopology::POINT_LIST,
+        .capacity_for = [](uint64_t n) { return n * k_stride; },
     };
 }
 
@@ -295,56 +301,59 @@ GeometryFn<std::shared_ptr<Kakshya::PlotContainer>> ScatterBuilder::done() const
 // BarsBuilder::done
 // =============================================================================
 
-GeometryFn<std::shared_ptr<Kakshya::PlotContainer>> BarsBuilder::done() const
+SeriesSpec BarsBuilder::done() const
 {
     auto x_mappings = m_state.x_mappings();
     auto y_mappings = m_state.y_mappings();
     const auto global_palette = m_state.palette();
 
-    return [x_mappings, y_mappings, global_palette](
-               const std::shared_ptr<Kakshya::PlotContainer>& container,
-               std::vector<uint8_t>& out,
-               Element&) mutable {
-        if (!container)
-            return;
+    return {
+        .fn = [x_mappings, y_mappings, global_palette](
+                  const std::shared_ptr<Kakshya::PlotContainer>& container,
+                  std::vector<uint8_t>& out,
+                  Element&) mutable {
+            if (!container)
+                return;
 
-        container->process_default();
+            container->process_default();
 
-        AxisRange x_range = x_mappings.empty() ? AxisRange {} : merge_axis(x_mappings);
-        out.clear();
+            AxisRange x_range = x_mappings.empty() ? AxisRange {} : merge_axis(x_mappings);
+            out.clear();
 
-        for (auto& y_mapping : y_mappings) {
-            auto y_series = series_for_mapping(*container, y_mapping);
-            if (y_series.empty())
-                continue;
-
-            auto y_range = y_mapping.range;
-            apply_auto_scale(y_range, y_series);
-
-            for (size_t si = 0; si < y_series.size(); ++si) {
-                const auto& series = y_series[si];
-                const size_t n = series.size();
-                if (n == 0)
+            for (auto& y_mapping : y_mappings) {
+                auto y_series = series_for_mapping(*container, y_mapping);
+                if (y_series.empty())
                     continue;
 
-                const glm::vec3 color = resolve_color(y_mapping, global_palette, si);
-                const float bar_w = (x_range.max - x_range.min) / static_cast<float>(n);
-                const float y_base = y_range.to_ndc(0.F);
+                auto y_range = y_mapping.range;
+                apply_auto_scale(y_range, y_series);
 
-                for (size_t i = 0; i < n; ++i) {
-                    const float x_left = x_range.to_ndc(x_range.min + static_cast<float>(i) * bar_w);
-                    const float x_right = x_range.to_ndc(x_range.min + static_cast<float>(i + 1) * bar_w);
-                    const float y_top = y_range.to_ndc(static_cast<float>(series[i]));
+                for (size_t si = 0; si < y_series.size(); ++si) {
+                    const auto& series = y_series[si];
+                    const size_t n = series.size();
+                    if (n == 0)
+                        continue;
 
-                    write_vertex(out, { x_left, y_base, 0.F }, color, 0.F);
-                    write_vertex(out, { x_right, y_base, 0.F }, color, 0.F);
-                    write_vertex(out, { x_left, y_top, 0.F }, color, 0.F);
-                    write_vertex(out, { x_right, y_base, 0.F }, color, 0.F);
-                    write_vertex(out, { x_right, y_top, 0.F }, color, 0.F);
-                    write_vertex(out, { x_left, y_top, 0.F }, color, 0.F);
+                    const glm::vec3 color = resolve_color(y_mapping, global_palette, si);
+                    const float bar_w = (x_range.max - x_range.min) / static_cast<float>(n);
+                    const float y_base = y_range.to_ndc(0.F);
+
+                    for (size_t i = 0; i < n; ++i) {
+                        const float x_left = x_range.to_ndc(x_range.min + static_cast<float>(i) * bar_w);
+                        const float x_right = x_range.to_ndc(x_range.min + static_cast<float>(i + 1) * bar_w);
+                        const float y_top = y_range.to_ndc(static_cast<float>(series[i]));
+
+                        write_vertex(out, { x_left, y_base, 0.F }, color, 0.F);
+                        write_vertex(out, { x_right, y_base, 0.F }, color, 0.F);
+                        write_vertex(out, { x_left, y_top, 0.F }, color, 0.F);
+                        write_vertex(out, { x_right, y_base, 0.F }, color, 0.F);
+                        write_vertex(out, { x_right, y_top, 0.F }, color, 0.F);
+                        write_vertex(out, { x_left, y_top, 0.F }, color, 0.F);
+                    }
                 }
-            }
-        }
+            } },
+        .topology = Graphics::PrimitiveTopology::TRIANGLE_LIST,
+        .capacity_for = [](uint64_t n) { return n * 6 * k_stride; },
     };
 }
 
