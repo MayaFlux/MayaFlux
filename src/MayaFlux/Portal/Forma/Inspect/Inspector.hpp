@@ -1,16 +1,24 @@
 #pragma once
 
 #include "InspectResult.hpp"
-#include "MayaFlux/Buffers/BufferManager.hpp"
-#include "MayaFlux/Nodes/NodeGraphManager.hpp"
 #include "MayaFlux/Portal/Forma/Primitives/LayoutCursor.hpp"
 
 namespace MayaFlux::Core {
 class Window;
 }
 
+namespace MayaFlux::Nodes {
+struct ModulatorTree;
+class NodeGraphManager;
+}
+
+namespace MayaFlux::Buffers {
+class BufferManager;
+}
+
 namespace MayaFlux::Vruta {
 class TaskScheduler;
+struct TaskEntry;
 }
 
 namespace MayaFlux::Portal::Forma {
@@ -176,6 +184,29 @@ private:
     Buffers::BufferManager& m_bm;
     Nodes::NodeGraphManager& m_ngm;
     Vruta::TaskScheduler& m_sched;
+
+    [[nodiscard]] RowBuffer make_row_buffer(
+        const std::shared_ptr<Core::Window>& window,
+        std::string_view text,
+        glm::uvec2 pixel_dims) const;
+
+    [[nodiscard]] glm::uvec2 row_pixel_dims(
+        const std::shared_ptr<Core::Window>& window,
+        float x_min, float x_max, float row_h) const;
+
+    InspectResult inspect_modulator_tree(
+        const Nodes::ModulatorTree& tree,
+        Layer& layer, Context& context,
+        const std::shared_ptr<Core::Window>& window,
+        LayoutCursor& cursor,
+        float x_min, float x_max, float row_h, int depth);
+
+    [[nodiscard]] InspectResult inspect_task(
+        const Vruta::TaskEntry& entry,
+        Layer& layer, Context& context,
+        const std::shared_ptr<Core::Window>& window,
+        LayoutCursor& cursor,
+        float x_min, float x_max, float row_h);
 };
 
 } // namespace MayaFlux::Portal::Forma

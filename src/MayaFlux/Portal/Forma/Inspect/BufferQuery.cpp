@@ -1,5 +1,6 @@
 #include "Inspector.hpp"
 
+#include "MayaFlux/Buffers/BufferManager.hpp"
 #include "MayaFlux/Buffers/BufferProcessingChain.hpp"
 #include "MayaFlux/Buffers/Input/InputAudioBuffer.hpp"
 #include "MayaFlux/Buffers/Root/RootAudioBuffer.hpp"
@@ -72,10 +73,15 @@ InspectResult Inspector::buffer(
         });
     }
 
-    auto group = make_value_group(
-        header_label, values,
-        layer, context, window, cursor,
-        ind, x_max, row_h, false);
+    const auto dims = row_pixel_dims(window, ind, x_max, row_h);
+    auto hbuf = make_row_buffer(window, header_label, dims);
+    std::vector<RowBuffer> rbufs;
+    rbufs.reserve(values.size());
+
+    for (const auto& spec : values)
+        rbufs.push_back(make_row_buffer(window, spec.label, dims));
+    auto group = make_value_group(values, std::move(hbuf), rbufs,
+        layer, context, cursor, ind, x_max, row_h, false);
 
     InspectResult result;
     result.group = std::move(group);
@@ -110,10 +116,14 @@ InspectResult Inspector::root_audio_buffer(
         },
     };
 
-    auto group = make_value_group(
-        header_label, values,
-        layer, context, window, cursor,
-        ind, x_max, row_h, false);
+    const auto dims = row_pixel_dims(window, ind, x_max, row_h);
+    auto hbuf = make_row_buffer(window, header_label, dims);
+    std::vector<RowBuffer> rbufs;
+    rbufs.reserve(values.size());
+    for (const auto& spec : values)
+        rbufs.push_back(make_row_buffer(window, spec.label, dims));
+    auto group = make_value_group(values, std::move(hbuf), rbufs,
+        layer, context, cursor, ind, x_max, row_h, false);
 
     InspectResult result;
     result.group = std::move(group);
@@ -160,10 +170,14 @@ InspectResult Inspector::root_audio_buffer(
         },
     };
 
-    auto group = make_value_group(
-        header_label, values,
-        layer, context, window, cursor,
-        ind, x_max, row_h, false);
+    const auto dims = row_pixel_dims(window, ind, x_max, row_h);
+    auto hbuf = make_row_buffer(window, header_label, dims);
+    std::vector<RowBuffer> rbufs;
+    rbufs.reserve(values.size());
+    for (const auto& spec : values)
+        rbufs.push_back(make_row_buffer(window, spec.label, dims));
+    auto group = make_value_group(values, std::move(hbuf), rbufs,
+        layer, context, cursor, ind, x_max, row_h, false);
 
     InspectResult result;
     result.group = std::move(group);
@@ -205,10 +219,14 @@ InspectResult Inspector::root_graphics_buffer(
         },
     };
 
-    auto group = make_value_group(
-        header_label, values,
-        layer, context, window, cursor,
-        ind, x_max, row_h, false);
+    const auto dims = row_pixel_dims(window, ind, x_max, row_h);
+    auto hbuf = make_row_buffer(window, header_label, dims);
+    std::vector<RowBuffer> rbufs;
+    rbufs.reserve(values.size());
+    for (const auto& spec : values)
+        rbufs.push_back(make_row_buffer(window, spec.label, dims));
+    auto group = make_value_group(values, std::move(hbuf), rbufs,
+        layer, context, cursor, ind, x_max, row_h, false);
 
     InspectResult result;
     result.group = std::move(group);
@@ -242,9 +260,7 @@ InspectResult Inspector::buffer_manager(
 {
     const auto tokens = m_bm.get_active_tokens();
     const uint32_t in_count = m_bm.get_num_input_channels();
-
     const std::string header_label = "BufferManager";
-
     auto& bm = m_bm;
     std::vector<ValueSpec> values {
         ValueSpec {
@@ -257,10 +273,15 @@ InspectResult Inspector::buffer_manager(
         },
     };
 
-    auto group = make_value_group(
-        header_label, values,
-        layer, context, window, cursor,
-        x_min, x_max, row_h, false);
+    const auto dims = row_pixel_dims(window, x_min, x_max, row_h);
+    auto hbuf = make_row_buffer(window, header_label, dims);
+    std::vector<RowBuffer> rbufs;
+    rbufs.reserve(values.size());
+    for (const auto& spec : values)
+        rbufs.push_back(make_row_buffer(window, spec.label, dims));
+
+    auto group = make_value_group(values, std::move(hbuf), rbufs,
+        layer, context, cursor, x_min, x_max, row_h, false);
 
     InspectResult result;
     result.group = std::move(group);
@@ -268,21 +289,19 @@ InspectResult Inspector::buffer_manager(
     for (const auto tok : tokens) {
         const bool is_audio = tok == Buffers::ProcessingToken::AUDIO_BACKEND
             || tok == Buffers::ProcessingToken::AUDIO_PARALLEL;
-
         InspectResult tok_result = is_audio
             ? root_audio_buffer(tok, layer, context, window, cursor, x_min, x_max, row_h, 1)
             : root_graphics_buffer(tok, layer, context, window, cursor, x_min, x_max, row_h, 1);
-
         layer.relate(result.group.header.header_id, tok_result.group.header.header_id);
         result.children.push_back(std::move(tok_result));
     }
 
     if (in_count > 0) {
         const std::string in_label = "inputs [" + std::to_string(in_count) + "]";
-        auto in_group = make_value_group(
-            in_label, {},
-            layer, context, window, cursor,
-            x_min + k_inspect_indent, x_max, row_h, false);
+        const auto in_dims = row_pixel_dims(window, x_min + k_inspect_indent, x_max, row_h);
+        auto in_hbuf = make_row_buffer(window, in_label, in_dims);
+        auto in_group = make_value_group({}, std::move(in_hbuf), {},
+            layer, context, cursor, x_min + k_inspect_indent, x_max, row_h, false);
 
         InspectResult in_result;
         in_result.group = std::move(in_group);

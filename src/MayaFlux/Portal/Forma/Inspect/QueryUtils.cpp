@@ -5,12 +5,9 @@
 
 #include "MayaFlux/Kakshya/NDData/VertexLayout.hpp"
 
-#include "MayaFlux/Portal/Forma/Forma.hpp"
 #include "MayaFlux/Portal/Text/InkPress.hpp"
-#include "MayaFlux/Portal/Text/Text.hpp"
 
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/VKImage.hpp"
-#include "MayaFlux/Core/Backends/Windowing/Window.hpp"
 
 namespace MayaFlux::Portal::Forma {
 
@@ -54,58 +51,32 @@ namespace {
 
 } // namespace
 
-std::pair<uint32_t, uint32_t> row_pixel_dims(
-    const std::shared_ptr<Core::Window>& window,
-    float x_min, float x_max, float row_h)
-{
-    const auto& ws = window->get_state();
-    const auto w = static_cast<uint32_t>(
-        (x_max - x_min) * 0.5F * static_cast<float>(ws.current_width));
-    const auto h = static_cast<uint32_t>(
-        row_h * 0.5F * static_cast<float>(ws.current_height));
-
-    const uint32_t min_h = Portal::Text::get_default_atlas().line_height();
-
-    return { std::max(w, 1U), std::max(h, min_h) };
-}
-
 ValueRow make_value_row(
     const ValueSpec& spec,
+    RowBuffer row_buf,
     Layer& layer,
-    const std::shared_ptr<Core::Window>& window,
     LayoutCursor& cursor,
     float x_min, float x_max, float row_h,
     glm::vec3 bg)
 {
-    const auto [tw, th] = row_pixel_dims(window, x_min, x_max, row_h);
-
-    const std::string initial = spec.label + ": "
-        + (spec.reader ? spec.reader() : std::string {});
-
-    Portal::Text::PressParams params {
-        .color = { 1.F, 1.F, 1.F, 1.F },
-        .budget_h = th,
-    };
-
-    auto text_image = Portal::Text::press(initial, { tw, th }, params);
-    auto staging = Buffers::create_image_staging_buffer(text_image->get_size_bytes());
-
-    const uint32_t stride = Kakshya::VertexLayout::for_meshes().stride_bytes;
-    auto buf = Portal::Forma::create_buffer(
-        window, static_cast<size_t>(12) * stride,
-        Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST,
-        { { "text", text_image } });
-
     const float top = cursor.y();
     const float bot = top - row_h;
     cursor.advance(row_h);
 
+    const uint32_t stride = Kakshya::VertexLayout::for_meshes().stride_bytes;
     std::vector<uint8_t> bytes(static_cast<size_t>(12) * stride, 0);
     write_row_quad(bytes, x_min, x_max, bot, top, bg);
-    buf->submit(bytes);
+    row_buf.buf->submit(bytes);
+
+    auto staging = Buffers::create_image_staging_buffer(
+        row_buf.text_image->get_size_bytes());
+
+    Portal::Text::PressParams params {
+        .color = { 1.F, 1.F, 1.F, 1.F },
+    };
 
     Element el;
-    el.buffer = buf;
+    el.buffer = row_buf.buf;
     el.bounds_hint = Kinesis::AABB2D { .min = { x_min, bot }, .max = { x_max, top } };
     el.interactive = false;
     el.name = spec.label;
@@ -115,8 +86,8 @@ ValueRow make_value_row(
         [] { },
         [reader = spec.reader,
             label = spec.label,
-            text_image,
-            buf,
+            text_image = row_buf.text_image,
+            buf = row_buf.buf,
             staging,
             params]() mutable {
             if (!buf || !reader)
@@ -129,50 +100,33 @@ ValueRow make_value_row(
 
     return ValueRow {
         .element_id = id,
-        .buf = buf,
-        .text = text_image,
+        .buf = std::move(row_buf.buf),
+        .text = std::move(row_buf.text_image),
         .link = std::move(link),
     };
 }
 
 ValueGroup make_value_group(
-    std::string_view header_label,
     std::span<const ValueSpec> values,
+    RowBuffer header_buf,
+    std::span<const RowBuffer> row_bufs,
     Layer& layer,
     Context& context,
-    const std::shared_ptr<Core::Window>& window,
     LayoutCursor& cursor,
     float x_min, float x_max, float row_h,
     bool initially_open)
 {
-    const auto [tw, th] = row_pixel_dims(window, x_min, x_max, row_h);
-
-    auto header_text = Portal::Text::press(
-        header_label,
-        { tw, th },
-        Portal::Text::PressParams {
-            .color = { 1.F, 1.F, 1.F, 1.F },
-            .budget_h = th,
-        });
-
-    const size_t cap = 12 * Kakshya::VertexLayout::for_meshes().stride_bytes;
-    auto hbuf = create_buffer(window, cap,
-        Graphics::PrimitiveTopology::TRIANGLE_LIST,
-        std::vector<std::pair<std::string, std::shared_ptr<Core::VKImage>>> {
-            { "text", header_text } });
-
     auto header = Collapsible {}
                       .initially_open(initially_open)
                       .closed_color(glm::vec3(0.25F))
                       .open_color(glm::vec3(0.35F))
-                      .label(header_text)
-                      .place(std::move(hbuf), layer, context, cursor, x_min, x_max, row_h);
+                      .label(header_buf.text_image)
+                      .place(std::move(header_buf.buf), layer, context, cursor, x_min, x_max, row_h);
 
     std::vector<ValueRow> rows;
     rows.reserve(values.size());
-    for (const auto& spec : values) {
-        auto row = make_value_row(spec, layer, window, cursor,
-            x_min, x_max, row_h);
+    for (size_t i = 0; i < values.size(); ++i) {
+        auto row = make_value_row(values[i], row_bufs[i], layer, cursor, x_min, x_max, row_h);
         header.attach(layer, row.element_id);
         rows.push_back(std::move(row));
     }

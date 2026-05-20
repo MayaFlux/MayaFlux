@@ -17,6 +17,14 @@ class FormaBuffer;
 
 namespace MayaFlux::Portal::Forma {
 
+/**
+ * @brief A pre-created buffer and its bound text image, passed to make_value_row.
+ */
+struct RowBuffer {
+    std::shared_ptr<Buffers::FormaBuffer> buf;
+    std::shared_ptr<Core::VKImage> text_image;
+};
+
 constexpr float k_inspect_indent = 0.03F;
 
 /**
@@ -55,25 +63,26 @@ struct ValueGroup {
 };
 
 /**
- * @brief Convert an NDC row rect into integer pixel dimensions.
- *
- * Clamps each dimension to at least 1 pixel to avoid degenerate textures.
- */
-[[nodiscard]] std::pair<uint32_t, uint32_t> row_pixel_dims(
-    const std::shared_ptr<Core::Window>& window,
-    float x_min, float x_max, float row_h);
-
-/**
  * @brief Construct one labeled value row, advance the cursor, and return it.
  *
- * The returned row's link reads @p spec.reader each tick, repress's
+ * The returned row's link reads @p spec.reader each tick, represses
  * "label: value" into the text image, and binds the image to the row's
- * FormaBuffer.
+ * FormaBuffer. The buffer and text image are pre-created by the caller
+ * and travel together as @p row_buf.
+ *
+ * @param spec     Label and reader for the row.
+ * @param row_buf  Pre-created buffer and bound text image.
+ * @param layer    Layer to register the element on.
+ * @param cursor   Layout cursor. Advanced by @p row_h on return.
+ * @param x_min    Left edge in NDC.
+ * @param x_max    Right edge in NDC.
+ * @param row_h    Row height in NDC units.
+ * @param bg       Background color for the row quad.
  */
 [[nodiscard]] ValueRow make_value_row(
     const ValueSpec& spec,
+    RowBuffer row_buf,
     Layer& layer,
-    const std::shared_ptr<Core::Window>& window,
     LayoutCursor& cursor,
     float x_min, float x_max, float row_h,
     glm::vec3 bg = glm::vec3(0.15F));
@@ -81,23 +90,27 @@ struct ValueGroup {
 /**
  * @brief Construct a collapsible header followed by N value rows under it.
  *
- * The header label may include its own dynamic data if the caller wants
- * it visible while collapsed; once expanded, all rows in @p values
- * become visible via the relation cascade.
+ * The header and all row buffers are pre-created by the caller. Once
+ * expanded, all rows in @p values become visible via the relation cascade.
+ * Visibility tracks the header's open state.
  *
- * Each value row is a separate Element relate'd to the header. Visibility
- * tracks the header's open state.
- *
- * @param header_label   Static text composited into the header's label image.
  * @param values         Specs for each body row. Order is preserved top-to-bottom.
+ * @param header_buf     Pre-created buffer and text image for the header strip.
+ * @param row_bufs       Pre-created buffers and text images, one per entry in @p values.
+ * @param layer          Layer to register all elements on.
+ * @param context        Context to wire the header toggle handler.
+ * @param cursor         Layout cursor. Advanced across header and all rows on return.
+ * @param x_min          Left edge in NDC.
+ * @param x_max          Right edge in NDC.
+ * @param row_h          Row height in NDC units.
  * @param initially_open Default false so deep trees stay collapsed at construction.
  */
 [[nodiscard]] ValueGroup make_value_group(
-    std::string_view header_label,
     std::span<const ValueSpec> values,
+    RowBuffer header_buf,
+    std::span<const RowBuffer> row_bufs,
     Layer& layer,
     Context& context,
-    const std::shared_ptr<Core::Window>& window,
     LayoutCursor& cursor,
     float x_min, float x_max, float row_h,
     bool initially_open = false);
