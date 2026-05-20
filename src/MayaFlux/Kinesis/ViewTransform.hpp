@@ -181,4 +181,30 @@ static_assert(sizeof(ViewTransform) == 128,
         && window_y < static_cast<double>(height);
 }
 
+/**
+ * @brief Convert an NDC-space size (extent) to integer pixel dimensions.
+ *
+ * NDC spans 2.0 across each axis. An NDC size of (1.8, 0.1) on a 1280x720
+ * window resolves to (1152, 36) pixels. Both components are clamped to at
+ * least 1 pixel so degenerate textures and zero-extent images are avoided.
+ *
+ * Size counterpart to to_window(), which converts an NDC position. Use
+ * to_window for positions, ndc_size_to_pixels for extents (text image
+ * budgets, capture target dimensions, offscreen image sizes matched to
+ * an on-screen NDC region).
+ *
+ * @param ndc_size NDC extent (each component in [0, 2]).
+ * @param width    Window width in pixels.
+ * @param height   Window height in pixels.
+ * @return Integer pixel dimensions, each at least 1.
+ */
+[[nodiscard]] inline glm::uvec2 ndc_size_to_pixels(
+    const glm::vec2& ndc_size,
+    uint32_t width, uint32_t height)
+{
+    const auto px = static_cast<uint32_t>(ndc_size.x * 0.5F * static_cast<float>(width));
+    const auto py = static_cast<uint32_t>(ndc_size.y * 0.5F * static_cast<float>(height));
+    return { std::max(px, 1U), std::max(py, 1U) };
+}
+
 } // namespace MayaFlux::Kinesis
