@@ -63,6 +63,21 @@ struct ValueGroup {
 };
 
 /**
+ * @brief Convert an NDC row rect into integer pixel dimensions.
+ *
+ * Clamps width to at least 1 pixel and height to at least the default
+ * atlas pixel size to avoid degenerate textures.
+ *
+ * @param window  Target window for pixel dimension calculation.
+ * @param x_min   Left edge in NDC.
+ * @param x_max   Right edge in NDC.
+ * @param row_h   Row height in NDC units.
+ */
+[[nodiscard]] MAYAFLUX_API glm::uvec2 row_pixel_dims(
+    const std::shared_ptr<Core::Window>& window,
+    float x_min, float x_max, float row_h);
+
+/**
  * @brief Construct one labeled value row, advance the cursor, and return it.
  *
  * The returned row's link reads @p spec.reader each tick, represses

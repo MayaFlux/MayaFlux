@@ -190,10 +190,6 @@ private:
         std::string_view text,
         glm::uvec2 pixel_dims) const;
 
-    [[nodiscard]] glm::uvec2 row_pixel_dims(
-        const std::shared_ptr<Core::Window>& window,
-        float x_min, float x_max, float row_h) const;
-
     InspectResult inspect_modulator_tree(
         const Nodes::ModulatorTree& tree,
         Layer& layer, Context& context,
