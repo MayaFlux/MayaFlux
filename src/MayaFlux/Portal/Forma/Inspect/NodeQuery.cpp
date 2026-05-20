@@ -3,6 +3,7 @@
 #include "MayaFlux/Nodes/Network/NodeNetwork.hpp"
 #include "MayaFlux/Nodes/Node.hpp"
 #include "MayaFlux/Nodes/NodeGraphManager.hpp"
+#include "MayaFlux/Portal/Forma/Surface.hpp"
 #include "MayaFlux/Transitive/Reflect/EnumReflect.hpp"
 #include "MayaFlux/Transitive/Reflect/TypeInfo.hpp"
 
@@ -34,8 +35,7 @@ namespace {
 
 InspectResult Inspector::inspect_modulator_tree(
     const Nodes::ModulatorTree& tree,
-    Layer& layer, Context& context,
-    const std::shared_ptr<Core::Window>& window,
+    Surface& surface,
     LayoutCursor& cursor,
     float x_min, float x_max, float row_h, int depth)
 {
@@ -52,24 +52,24 @@ InspectResult Inspector::inspect_modulator_tree(
         },
     };
 
-    const auto dims = row_pixel_dims(window, ind, x_max, row_h);
-    auto hbuf = make_row_buffer(window, header_label, dims);
+    const auto dims = row_pixel_dims(surface.window(), ind, x_max, row_h);
+    auto hbuf = make_row_buffer(surface.window(), header_label, dims);
     std::vector<RowBuffer> rbufs;
     rbufs.reserve(values.size());
     for (const auto& spec : values)
-        rbufs.push_back(make_row_buffer(window, spec.label, dims));
+        rbufs.push_back(make_row_buffer(surface.window(), spec.label, dims));
 
     auto group = make_value_group(values, std::move(hbuf), rbufs,
-        layer, context, cursor, ind, x_max, row_h, false);
+        surface, cursor, ind, x_max, row_h, false);
 
     InspectResult result;
     result.group = std::move(group);
 
     for (const auto& child : tree.modulators) {
         auto child_result = inspect_modulator_tree(
-            child, layer, context, window, cursor,
+            child, surface, cursor,
             x_min, x_max, row_h, depth + 1);
-        layer.relate(
+        surface.layer().relate(
             result.group.header.header_id,
             child_result.group.header.header_id);
         result.children.push_back(std::move(child_result));
@@ -84,8 +84,7 @@ InspectResult Inspector::inspect_modulator_tree(
 
 InspectResult Inspector::node(
     const std::shared_ptr<Nodes::Node>& n,
-    Layer& layer, Context& context,
-    const std::shared_ptr<Core::Window>& window,
+    Surface& surface,
     LayoutCursor& cursor,
     float x_min, float x_max, float row_h, int depth)
 {
@@ -100,24 +99,24 @@ InspectResult Inspector::node(
         },
     };
 
-    const auto dims = row_pixel_dims(window, ind, x_max, row_h);
-    auto hbuf = make_row_buffer(window, header_label, dims);
+    const auto dims = row_pixel_dims(surface.window(), ind, x_max, row_h);
+    auto hbuf = make_row_buffer(surface.window(), header_label, dims);
     std::vector<RowBuffer> rbufs;
     rbufs.reserve(values.size());
     for (const auto& spec : values)
-        rbufs.push_back(make_row_buffer(window, spec.label, dims));
+        rbufs.push_back(make_row_buffer(surface.window(), spec.label, dims));
 
     auto group = make_value_group(values, std::move(hbuf), rbufs,
-        layer, context, cursor, ind, x_max, row_h, false);
+        surface, cursor, ind, x_max, row_h, false);
 
     InspectResult result;
     result.group = std::move(group);
 
     for (const auto& tree : n->get_modulator_tree()) {
         auto child = inspect_modulator_tree(
-            tree, layer, context, window, cursor,
+            tree, surface, cursor,
             x_min, x_max, row_h, depth + 1);
-        layer.relate(
+        surface.layer().relate(
             result.group.header.header_id,
             child.group.header.header_id);
         result.children.push_back(std::move(child));
@@ -132,8 +131,7 @@ InspectResult Inspector::node(
 
 InspectResult Inspector::root_node(
     Nodes::ProcessingToken token, uint32_t channel,
-    Layer& layer, Context& context,
-    const std::shared_ptr<Core::Window>& window,
+    Surface& surface,
     LayoutCursor& cursor,
     float x_min, float x_max, float row_h, int depth)
 {
@@ -151,15 +149,15 @@ InspectResult Inspector::root_node(
         },
     };
 
-    const auto dims = row_pixel_dims(window, ind, x_max, row_h);
-    auto hbuf = make_row_buffer(window, header_label, dims);
+    const auto dims = row_pixel_dims(surface.window(), ind, x_max, row_h);
+    auto hbuf = make_row_buffer(surface.window(), header_label, dims);
     std::vector<RowBuffer> rbufs;
     rbufs.reserve(values.size());
     for (const auto& spec : values)
-        rbufs.push_back(make_row_buffer(window, spec.label, dims));
+        rbufs.push_back(make_row_buffer(surface.window(), spec.label, dims));
 
     auto group = make_value_group(values, std::move(hbuf), rbufs,
-        layer, context, cursor, ind, x_max, row_h, false);
+        surface, cursor, ind, x_max, row_h, false);
 
     InspectResult result;
     result.group = std::move(group);
@@ -168,9 +166,9 @@ InspectResult Inspector::root_node(
         if (!n)
             continue;
         auto node_result = node(
-            n, layer, context, window, cursor,
+            n, surface, cursor,
             x_min, x_max, row_h, depth + 1);
-        layer.relate(result.group.header.header_id, node_result.group.header.header_id);
+        surface.layer().relate(result.group.header.header_id, node_result.group.header.header_id);
         result.children.push_back(std::move(node_result));
     }
 
@@ -183,13 +181,12 @@ InspectResult Inspector::root_node(
 
 InspectResult Inspector::root_node(
     Nodes::ProcessingToken token,
-    Layer& layer, Context& context,
-    const std::shared_ptr<Core::Window>& window,
+    Surface& surface,
     LayoutCursor& cursor,
     float x_min, float x_max, float row_h, int depth)
 {
     if (token != Nodes::ProcessingToken::AUDIO_RATE)
-        return root_node(token, 0, layer, context, window, cursor, x_min, x_max, row_h, depth);
+        return root_node(token, 0, surface, cursor, x_min, x_max, row_h, depth);
 
     auto channels = m_ngm.get_all_channels(token);
     std::ranges::sort(channels);
@@ -197,7 +194,7 @@ InspectResult Inspector::root_node(
     InspectResult result;
     for (const auto ch : channels) {
         result.children.push_back(
-            root_node(token, ch, layer, context, window, cursor, x_min, x_max, row_h, depth));
+            root_node(token, ch, surface, cursor, x_min, x_max, row_h, depth));
     }
     return result;
 }
@@ -207,8 +204,7 @@ InspectResult Inspector::root_node(
 
 InspectResult Inspector::node_network(
     const std::shared_ptr<Nodes::Network::NodeNetwork>& net,
-    Layer& layer, Context& context,
-    const std::shared_ptr<Core::Window>& window,
+    Surface& surface,
     LayoutCursor& cursor,
     float x_min, float x_max, float row_h, int depth)
 {
@@ -244,15 +240,15 @@ InspectResult Inspector::node_network(
         },
     };
 
-    const auto dims = row_pixel_dims(window, ind, x_max, row_h);
-    auto hbuf = make_row_buffer(window, header_label, dims);
+    const auto dims = row_pixel_dims(surface.window(), ind, x_max, row_h);
+    auto hbuf = make_row_buffer(surface.window(), header_label, dims);
     std::vector<RowBuffer> rbufs;
     rbufs.reserve(values.size());
     for (const auto& spec : values)
-        rbufs.push_back(make_row_buffer(window, spec.label, dims));
+        rbufs.push_back(make_row_buffer(surface.window(), spec.label, dims));
 
     auto group = make_value_group(values, std::move(hbuf), rbufs,
-        layer, context, cursor, ind, x_max, row_h, false);
+        surface, cursor, ind, x_max, row_h, false);
 
     InspectResult result;
     result.group = std::move(group);
@@ -264,8 +260,7 @@ InspectResult Inspector::node_network(
 // -----------------------------------------------------------------------------
 
 InspectResult Inspector::node_graph_manager(
-    Layer& layer, Context& context,
-    const std::shared_ptr<Core::Window>& window,
+    Surface& surface,
     LayoutCursor& cursor,
     float x_min, float x_max, float row_h)
 {
@@ -283,15 +278,15 @@ InspectResult Inspector::node_graph_manager(
         },
     };
 
-    const auto dims = row_pixel_dims(window, x_min, x_max, row_h);
-    auto hbuf = make_row_buffer(window, root_label, dims);
+    const auto dims = row_pixel_dims(surface.window(), x_min, x_max, row_h);
+    auto hbuf = make_row_buffer(surface.window(), root_label, dims);
     std::vector<RowBuffer> rbufs;
     rbufs.reserve(root_values.size());
     for (const auto& spec : root_values)
-        rbufs.push_back(make_row_buffer(window, spec.label, dims));
+        rbufs.push_back(make_row_buffer(surface.window(), spec.label, dims));
 
     auto root_group = make_value_group(root_values, std::move(hbuf), rbufs,
-        layer, context, cursor, x_min, x_max, row_h, false);
+        surface, cursor, x_min, x_max, row_h, false);
 
     InspectResult result;
     result.group = std::move(root_group);
@@ -314,47 +309,47 @@ InspectResult Inspector::node_graph_manager(
             },
         };
 
-        const auto tok_dims = row_pixel_dims(window, x_min + k_inspect_indent, x_max, row_h);
-        auto tok_hbuf = make_row_buffer(window, tok_label, tok_dims);
+        const auto tok_dims = row_pixel_dims(surface.window(), x_min + k_inspect_indent, x_max, row_h);
+        auto tok_hbuf = make_row_buffer(surface.window(), tok_label, tok_dims);
         std::vector<RowBuffer> tok_rbufs;
         tok_rbufs.reserve(tok_values.size());
         for (const auto& spec : tok_values)
-            tok_rbufs.push_back(make_row_buffer(window, spec.label, tok_dims));
+            tok_rbufs.push_back(make_row_buffer(surface.window(), spec.label, tok_dims));
 
         auto tok_group = make_value_group(tok_values, std::move(tok_hbuf), tok_rbufs,
-            layer, context, cursor, x_min + k_inspect_indent, x_max, row_h, false);
+            surface, cursor, x_min + k_inspect_indent, x_max, row_h, false);
 
         InspectResult tok_result;
         tok_result.group = std::move(tok_group);
-        layer.relate(result.group.header.header_id, tok_result.group.header.header_id);
+        surface.layer().relate(result.group.header.header_id, tok_result.group.header.header_id);
 
         // ----- Networks section -----
         {
-            const auto net_dims = row_pixel_dims(window, x_min + 2.F * k_inspect_indent, x_max, row_h);
-            auto net_hbuf = make_row_buffer(window, "Networks", net_dims);
+            const auto net_dims = row_pixel_dims(surface.window(), x_min + 2.F * k_inspect_indent, x_max, row_h);
+            auto net_hbuf = make_row_buffer(surface.window(), "Networks", net_dims);
             auto net_group = make_value_group({}, std::move(net_hbuf), {},
-                layer, context, cursor, x_min + 2.F * k_inspect_indent, x_max, row_h, false);
+                surface, cursor, x_min + 2.F * k_inspect_indent, x_max, row_h, false);
 
             InspectResult net_section;
             net_section.group = std::move(net_group);
-            layer.relate(tok_result.group.header.header_id, net_section.group.header.header_id);
+            surface.layer().relate(tok_result.group.header.header_id, net_section.group.header.header_id);
 
             if (multichannel) {
                 for (const auto ch : channels) {
-                    const auto ch_dims = row_pixel_dims(window, x_min + 3.F * k_inspect_indent, x_max, row_h);
-                    auto ch_hbuf = make_row_buffer(window, "ch " + std::to_string(ch), ch_dims);
+                    const auto ch_dims = row_pixel_dims(surface.window(), x_min + 3.F * k_inspect_indent, x_max, row_h);
+                    auto ch_hbuf = make_row_buffer(surface.window(), "ch " + std::to_string(ch), ch_dims);
                     auto ch_group = make_value_group({}, std::move(ch_hbuf), {},
-                        layer, context, cursor, x_min + 3.F * k_inspect_indent, x_max, row_h, false);
+                        surface, cursor, x_min + 3.F * k_inspect_indent, x_max, row_h, false);
 
                     InspectResult ch_result;
                     ch_result.group = std::move(ch_group);
-                    layer.relate(net_section.group.header.header_id, ch_result.group.header.header_id);
+                    surface.layer().relate(net_section.group.header.header_id, ch_result.group.header.header_id);
 
                     for (const auto& net : m_ngm.get_networks(tok, ch)) {
                         if (!net)
                             continue;
-                        auto nr = node_network(net, layer, context, window, cursor, x_min, x_max, row_h, 4);
-                        layer.relate(ch_result.group.header.header_id, nr.group.header.header_id);
+                        auto nr = node_network(net, surface, cursor, x_min, x_max, row_h, 4);
+                        surface.layer().relate(ch_result.group.header.header_id, nr.group.header.header_id);
                         ch_result.children.push_back(std::move(nr));
                     }
 
@@ -364,8 +359,8 @@ InspectResult Inspector::node_graph_manager(
                 for (const auto& net : m_ngm.get_networks(tok, 0)) {
                     if (!net)
                         continue;
-                    auto nr = node_network(net, layer, context, window, cursor, x_min, x_max, row_h, 3);
-                    layer.relate(net_section.group.header.header_id, nr.group.header.header_id);
+                    auto nr = node_network(net, surface, cursor, x_min, x_max, row_h, 3);
+                    surface.layer().relate(net_section.group.header.header_id, nr.group.header.header_id);
                     net_section.children.push_back(std::move(nr));
                 }
             }
@@ -375,24 +370,24 @@ InspectResult Inspector::node_graph_manager(
 
         // ----- Nodes section -----
         {
-            const auto nodes_dims = row_pixel_dims(window, x_min + 2.F * k_inspect_indent, x_max, row_h);
-            auto nodes_hbuf = make_row_buffer(window, "Nodes", nodes_dims);
+            const auto nodes_dims = row_pixel_dims(surface.window(), x_min + 2.F * k_inspect_indent, x_max, row_h);
+            auto nodes_hbuf = make_row_buffer(surface.window(), "Nodes", nodes_dims);
             auto nodes_group = make_value_group({}, std::move(nodes_hbuf), {},
-                layer, context, cursor, x_min + 2.F * k_inspect_indent, x_max, row_h, false);
+                surface, cursor, x_min + 2.F * k_inspect_indent, x_max, row_h, false);
 
             InspectResult nodes_section;
             nodes_section.group = std::move(nodes_group);
-            layer.relate(tok_result.group.header.header_id, nodes_section.group.header.header_id);
+            surface.layer().relate(tok_result.group.header.header_id, nodes_section.group.header.header_id);
 
             if (multichannel) {
                 for (const auto ch : channels) {
-                    auto rn = root_node(tok, ch, layer, context, window, cursor, x_min, x_max, row_h, 3);
-                    layer.relate(nodes_section.group.header.header_id, rn.group.header.header_id);
+                    auto rn = root_node(tok, ch, surface, cursor, x_min, x_max, row_h, 3);
+                    surface.layer().relate(nodes_section.group.header.header_id, rn.group.header.header_id);
                     nodes_section.children.push_back(std::move(rn));
                 }
             } else {
-                auto rn = root_node(tok, 0, layer, context, window, cursor, x_min, x_max, row_h, 3);
-                layer.relate(nodes_section.group.header.header_id, rn.group.header.header_id);
+                auto rn = root_node(tok, 0, surface, cursor, x_min, x_max, row_h, 3);
+                surface.layer().relate(nodes_section.group.header.header_id, rn.group.header.header_id);
                 nodes_section.children.push_back(std::move(rn));
             }
 

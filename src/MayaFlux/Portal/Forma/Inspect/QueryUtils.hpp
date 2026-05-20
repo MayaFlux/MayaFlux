@@ -1,7 +1,5 @@
 #pragma once
 
-#include "MayaFlux/Portal/Forma/Context.hpp"
-#include "MayaFlux/Portal/Forma/Layer.hpp"
 #include "MayaFlux/Portal/Forma/Link.hpp"
 #include "MayaFlux/Portal/Forma/Primitives/Collapsible.hpp"
 #include "MayaFlux/Portal/Forma/Primitives/LayoutCursor.hpp"
@@ -87,7 +85,7 @@ struct ValueGroup {
  *
  * @param spec     Label and reader for the row.
  * @param row_buf  Pre-created buffer and bound text image.
- * @param layer    Layer to register the element on.
+ * @param surface   Surface to register the row on.
  * @param cursor   Layout cursor. Advanced by @p row_h on return.
  * @param x_min    Left edge in NDC.
  * @param x_max    Right edge in NDC.
@@ -97,7 +95,7 @@ struct ValueGroup {
 [[nodiscard]] ValueRow make_value_row(
     const ValueSpec& spec,
     RowBuffer row_buf,
-    Layer& layer,
+    Surface& surface,
     LayoutCursor& cursor,
     float x_min, float x_max, float row_h,
     glm::vec3 bg = glm::vec3(0.15F));
@@ -112,8 +110,7 @@ struct ValueGroup {
  * @param values         Specs for each body row. Order is preserved top-to-bottom.
  * @param header_buf     Pre-created buffer and text image for the header strip.
  * @param row_bufs       Pre-created buffers and text images, one per entry in @p values.
- * @param layer          Layer to register all elements on.
- * @param context        Context to wire the header toggle handler.
+ * @param surface        Surface to register the header and rows on.
  * @param cursor         Layout cursor. Advanced across header and all rows on return.
  * @param x_min          Left edge in NDC.
  * @param x_max          Right edge in NDC.
@@ -124,8 +121,7 @@ struct ValueGroup {
     std::span<const ValueSpec> values,
     RowBuffer header_buf,
     std::span<const RowBuffer> row_bufs,
-    Layer& layer,
-    Context& context,
+    Surface& surface,
     LayoutCursor& cursor,
     float x_min, float x_max, float row_h,
     bool initially_open = false);

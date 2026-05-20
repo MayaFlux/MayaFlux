@@ -9,6 +9,8 @@
 #include "MayaFlux/Transitive/Reflect/EnumReflect.hpp"
 #include "MayaFlux/Transitive/Reflect/TypeInfo.hpp"
 
+#include "MayaFlux/Portal/Forma/Surface.hpp"
+
 namespace MayaFlux::Portal::Forma {
 
 // -----------------------------------------------------------------------------
@@ -17,8 +19,7 @@ namespace MayaFlux::Portal::Forma {
 
 InspectResult Inspector::buffer(
     const std::shared_ptr<Buffers::Buffer>& buf,
-    Layer& layer, Context& context,
-    const std::shared_ptr<Core::Window>& window,
+    Surface& surface,
     LayoutCursor& cursor,
     float x_min, float x_max, float row_h, int depth)
 {
@@ -73,15 +74,15 @@ InspectResult Inspector::buffer(
         });
     }
 
-    const auto dims = row_pixel_dims(window, ind, x_max, row_h);
-    auto hbuf = make_row_buffer(window, header_label, dims);
+    const auto dims = row_pixel_dims(surface.window(), ind, x_max, row_h);
+    auto hbuf = make_row_buffer(surface.window(), header_label, dims);
     std::vector<RowBuffer> rbufs;
     rbufs.reserve(values.size());
 
     for (const auto& spec : values)
-        rbufs.push_back(make_row_buffer(window, spec.label, dims));
+        rbufs.push_back(make_row_buffer(surface.window(), spec.label, dims));
     auto group = make_value_group(values, std::move(hbuf), rbufs,
-        layer, context, cursor, ind, x_max, row_h, false);
+        surface, cursor, ind, x_max, row_h, false);
 
     InspectResult result;
     result.group = std::move(group);
@@ -94,8 +95,7 @@ InspectResult Inspector::buffer(
 
 InspectResult Inspector::root_audio_buffer(
     Buffers::ProcessingToken token, uint32_t channel,
-    Layer& layer, Context& context,
-    const std::shared_ptr<Core::Window>& window,
+    Surface& surface,
     LayoutCursor& cursor,
     float x_min, float x_max, float row_h, int depth)
 {
@@ -116,29 +116,29 @@ InspectResult Inspector::root_audio_buffer(
         },
     };
 
-    const auto dims = row_pixel_dims(window, ind, x_max, row_h);
-    auto hbuf = make_row_buffer(window, header_label, dims);
+    const auto dims = row_pixel_dims(surface.window(), ind, x_max, row_h);
+    auto hbuf = make_row_buffer(surface.window(), header_label, dims);
     std::vector<RowBuffer> rbufs;
     rbufs.reserve(values.size());
     for (const auto& spec : values)
-        rbufs.push_back(make_row_buffer(window, spec.label, dims));
+        rbufs.push_back(make_row_buffer(surface.window(), spec.label, dims));
     auto group = make_value_group(values, std::move(hbuf), rbufs,
-        layer, context, cursor, ind, x_max, row_h, false);
+        surface, cursor, ind, x_max, row_h, false);
 
     InspectResult result;
     result.group = std::move(group);
 
     auto root_result = buffer(
-        root, layer, context, window, cursor,
+        root, surface, cursor,
         x_min, x_max, row_h, depth + 1);
-    layer.relate(result.group.header.header_id, root_result.group.header.header_id);
+    surface.layer().relate(result.group.header.header_id, root_result.group.header.header_id);
     result.children.push_back(std::move(root_result));
 
     for (const auto& child : children) {
         auto child_result = buffer(
-            child, layer, context, window, cursor,
+            child, surface, cursor,
             x_min, x_max, row_h, depth + 2);
-        layer.relate(result.group.header.header_id, child_result.group.header.header_id);
+        surface.layer().relate(result.group.header.header_id, child_result.group.header.header_id);
         result.children.push_back(std::move(child_result));
     }
 
@@ -151,8 +151,7 @@ InspectResult Inspector::root_audio_buffer(
 
 InspectResult Inspector::root_audio_buffer(
     Buffers::ProcessingToken token,
-    Layer& layer, Context& context,
-    const std::shared_ptr<Core::Window>& window,
+    Surface& surface,
     LayoutCursor& cursor,
     float x_min, float x_max, float row_h, int depth)
 {
@@ -170,14 +169,14 @@ InspectResult Inspector::root_audio_buffer(
         },
     };
 
-    const auto dims = row_pixel_dims(window, ind, x_max, row_h);
-    auto hbuf = make_row_buffer(window, header_label, dims);
+    const auto dims = row_pixel_dims(surface.window(), ind, x_max, row_h);
+    auto hbuf = make_row_buffer(surface.window(), header_label, dims);
     std::vector<RowBuffer> rbufs;
     rbufs.reserve(values.size());
     for (const auto& spec : values)
-        rbufs.push_back(make_row_buffer(window, spec.label, dims));
+        rbufs.push_back(make_row_buffer(surface.window(), spec.label, dims));
     auto group = make_value_group(values, std::move(hbuf), rbufs,
-        layer, context, cursor, ind, x_max, row_h, false);
+        surface, cursor, ind, x_max, row_h, false);
 
     InspectResult result;
     result.group = std::move(group);
@@ -185,9 +184,9 @@ InspectResult Inspector::root_audio_buffer(
     for (uint32_t ch = 0; ch < ch_count; ++ch) {
         auto ch_result = root_audio_buffer(
             token, ch,
-            layer, context, window, cursor,
+            surface, cursor,
             x_min, x_max, row_h, depth + 1);
-        layer.relate(result.group.header.header_id, ch_result.group.header.header_id);
+        surface.layer().relate(result.group.header.header_id, ch_result.group.header.header_id);
         result.children.push_back(std::move(ch_result));
     }
 
@@ -200,8 +199,7 @@ InspectResult Inspector::root_audio_buffer(
 
 InspectResult Inspector::root_graphics_buffer(
     Buffers::ProcessingToken token,
-    Layer& layer, Context& context,
-    const std::shared_ptr<Core::Window>& window,
+    Surface& surface,
     LayoutCursor& cursor,
     float x_min, float x_max, float row_h, int depth)
 {
@@ -219,29 +217,29 @@ InspectResult Inspector::root_graphics_buffer(
         },
     };
 
-    const auto dims = row_pixel_dims(window, ind, x_max, row_h);
-    auto hbuf = make_row_buffer(window, header_label, dims);
+    const auto dims = row_pixel_dims(surface.window(), ind, x_max, row_h);
+    auto hbuf = make_row_buffer(surface.window(), header_label, dims);
     std::vector<RowBuffer> rbufs;
     rbufs.reserve(values.size());
     for (const auto& spec : values)
-        rbufs.push_back(make_row_buffer(window, spec.label, dims));
+        rbufs.push_back(make_row_buffer(surface.window(), spec.label, dims));
     auto group = make_value_group(values, std::move(hbuf), rbufs,
-        layer, context, cursor, ind, x_max, row_h, false);
+        surface, cursor, ind, x_max, row_h, false);
 
     InspectResult result;
     result.group = std::move(group);
 
     auto root_result = buffer(
-        root, layer, context, window, cursor,
+        root, surface, cursor,
         x_min, x_max, row_h, depth + 1);
-    layer.relate(result.group.header.header_id, root_result.group.header.header_id);
+    surface.layer().relate(result.group.header.header_id, root_result.group.header.header_id);
     result.children.push_back(std::move(root_result));
 
     for (const auto& child : children) {
         auto child_result = buffer(
-            child, layer, context, window, cursor,
+            child, surface, cursor,
             x_min, x_max, row_h, depth + 2);
-        layer.relate(result.group.header.header_id, child_result.group.header.header_id);
+        surface.layer().relate(result.group.header.header_id, child_result.group.header.header_id);
         result.children.push_back(std::move(child_result));
     }
 
@@ -253,8 +251,7 @@ InspectResult Inspector::root_graphics_buffer(
 // -----------------------------------------------------------------------------
 
 InspectResult Inspector::buffer_manager(
-    Layer& layer, Context& context,
-    const std::shared_ptr<Core::Window>& window,
+    Surface& surface,
     LayoutCursor& cursor,
     float x_min, float x_max, float row_h)
 {
@@ -273,15 +270,15 @@ InspectResult Inspector::buffer_manager(
         },
     };
 
-    const auto dims = row_pixel_dims(window, x_min, x_max, row_h);
-    auto hbuf = make_row_buffer(window, header_label, dims);
+    const auto dims = row_pixel_dims(surface.window(), x_min, x_max, row_h);
+    auto hbuf = make_row_buffer(surface.window(), header_label, dims);
     std::vector<RowBuffer> rbufs;
     rbufs.reserve(values.size());
     for (const auto& spec : values)
-        rbufs.push_back(make_row_buffer(window, spec.label, dims));
+        rbufs.push_back(make_row_buffer(surface.window(), spec.label, dims));
 
     auto group = make_value_group(values, std::move(hbuf), rbufs,
-        layer, context, cursor, x_min, x_max, row_h, false);
+        surface, cursor, x_min, x_max, row_h, false);
 
     InspectResult result;
     result.group = std::move(group);
@@ -290,29 +287,29 @@ InspectResult Inspector::buffer_manager(
         const bool is_audio = tok == Buffers::ProcessingToken::AUDIO_BACKEND
             || tok == Buffers::ProcessingToken::AUDIO_PARALLEL;
         InspectResult tok_result = is_audio
-            ? root_audio_buffer(tok, layer, context, window, cursor, x_min, x_max, row_h, 1)
-            : root_graphics_buffer(tok, layer, context, window, cursor, x_min, x_max, row_h, 1);
-        layer.relate(result.group.header.header_id, tok_result.group.header.header_id);
+            ? root_audio_buffer(tok, surface, cursor, x_min, x_max, row_h, 1)
+            : root_graphics_buffer(tok, surface, cursor, x_min, x_max, row_h, 1);
+        surface.layer().relate(result.group.header.header_id, tok_result.group.header.header_id);
         result.children.push_back(std::move(tok_result));
     }
 
     if (in_count > 0) {
         const std::string in_label = "inputs [" + std::to_string(in_count) + "]";
-        const auto in_dims = row_pixel_dims(window, x_min + k_inspect_indent, x_max, row_h);
-        auto in_hbuf = make_row_buffer(window, in_label, in_dims);
+        const auto in_dims = row_pixel_dims(surface.window(), x_min + k_inspect_indent, x_max, row_h);
+        auto in_hbuf = make_row_buffer(surface.window(), in_label, in_dims);
         auto in_group = make_value_group({}, std::move(in_hbuf), {},
-            layer, context, cursor, x_min + k_inspect_indent, x_max, row_h, false);
+            surface, cursor, x_min + k_inspect_indent, x_max, row_h, false);
 
         InspectResult in_result;
         in_result.group = std::move(in_group);
-        layer.relate(result.group.header.header_id, in_result.group.header.header_id);
+        surface.layer().relate(result.group.header.header_id, in_result.group.header.header_id);
 
         for (uint32_t ch = 0; ch < in_count; ++ch) {
             auto buf = m_bm.get_input_buffer(ch);
             auto buf_result = buffer(
-                std::dynamic_pointer_cast<Buffers::Buffer>(buf), layer, context, window, cursor,
+                std::dynamic_pointer_cast<Buffers::Buffer>(buf), surface, cursor,
                 x_min, x_max, row_h, 2);
-            layer.relate(in_result.group.header.header_id, buf_result.group.header.header_id);
+            surface.layer().relate(in_result.group.header.header_id, buf_result.group.header.header_id);
             in_result.children.push_back(std::move(buf_result));
         }
 

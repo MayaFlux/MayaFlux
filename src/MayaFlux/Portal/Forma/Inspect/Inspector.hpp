@@ -20,9 +20,12 @@ namespace MayaFlux::Vruta {
 class TaskScheduler;
 struct TaskEntry;
 class Event;
+class EventManager;
 }
 
 namespace MayaFlux::Portal::Forma {
+
+class Surface;
 
 /**
  * @brief Forma subsystem for live introspection.
@@ -54,8 +57,7 @@ public:
      */
     [[nodiscard]] InspectResult node(
         const std::shared_ptr<Nodes::Node>& n,
-        Layer& layer, Context& context,
-        const std::shared_ptr<Core::Window>& window,
+        Surface& surface,
         LayoutCursor& cursor,
         float x_min = -0.95F, float x_max = 0.95F, float row_h = 0.05F, int depth = 0);
 
@@ -69,8 +71,7 @@ public:
      */
     [[nodiscard]] InspectResult root_node(
         Nodes::ProcessingToken token, uint32_t channel,
-        Layer& layer, Context& context,
-        const std::shared_ptr<Core::Window>& window,
+        Surface& surface,
         LayoutCursor& cursor,
         float x_min = -0.95F, float x_max = 0.95F, float row_h = 0.05F, int depth = 0);
 
@@ -83,8 +84,7 @@ public:
      */
     [[nodiscard]] InspectResult root_node(
         Nodes::ProcessingToken token,
-        Layer& layer, Context& context,
-        const std::shared_ptr<Core::Window>& window,
+        Surface& surface,
         LayoutCursor& cursor,
         float x_min = -0.95F, float x_max = 0.95F, float row_h = 0.05F, int depth = 0);
 
@@ -98,8 +98,7 @@ public:
      */
     [[nodiscard]] InspectResult node_network(
         const std::shared_ptr<Nodes::Network::NodeNetwork>& net,
-        Layer& layer, Context& context,
-        const std::shared_ptr<Core::Window>& window,
+        Surface& surface,
         LayoutCursor& cursor,
         float x_min = -0.95F, float x_max = 0.95F, float row_h = 0.05F, int depth = 0);
 
@@ -113,8 +112,7 @@ public:
      * node count, enabled state, and registered channels.
      */
     [[nodiscard]] InspectResult node_graph_manager(
-        Layer& layer, Context& context,
-        const std::shared_ptr<Core::Window>& window,
+        Surface& surface,
         LayoutCursor& cursor,
         float x_min = -0.95F, float x_max = 0.95F, float row_h = 0.05F);
 
@@ -127,8 +125,7 @@ public:
      */
     [[nodiscard]] InspectResult buffer(
         const std::shared_ptr<Buffers::Buffer>& buf,
-        Layer& layer, Context& context,
-        const std::shared_ptr<Core::Window>& window,
+        Surface& surface,
         LayoutCursor& cursor,
         float x_min = -0.95F, float x_max = 0.95F, float row_h = 0.05F, int depth = 0);
 
@@ -141,8 +138,7 @@ public:
      */
     [[nodiscard]] InspectResult root_audio_buffer(
         Buffers::ProcessingToken token, uint32_t channel,
-        Layer& layer, Context& context,
-        const std::shared_ptr<Core::Window>& window,
+        Surface& surface,
         LayoutCursor& cursor,
         float x_min = -0.95F, float x_max = 0.95F, float row_h = 0.05F, int depth = 0);
 
@@ -154,8 +150,7 @@ public:
      */
     [[nodiscard]] InspectResult root_audio_buffer(
         Buffers::ProcessingToken token,
-        Layer& layer, Context& context,
-        const std::shared_ptr<Core::Window>& window,
+        Surface& surface,
         LayoutCursor& cursor,
         float x_min = -0.95F, float x_max = 0.95F, float row_h = 0.05F, int depth = 0);
 
@@ -167,8 +162,7 @@ public:
      */
     [[nodiscard]] InspectResult root_graphics_buffer(
         Buffers::ProcessingToken token,
-        Layer& layer, Context& context,
-        const std::shared_ptr<Core::Window>& window,
+        Surface& surface,
         LayoutCursor& cursor,
         float x_min = -0.95F, float x_max = 0.95F, float row_h = 0.05F, int depth = 0);
 
@@ -182,8 +176,7 @@ public:
      * child count. All children are related via layer.relate() for cascade.
      */
     [[nodiscard]] InspectResult buffer_manager(
-        Layer& layer, Context& context,
-        const std::shared_ptr<Core::Window>& window,
+        Surface& surface,
         LayoutCursor& cursor,
         float x_min = -0.95F, float x_max = 0.95F, float row_h = 0.05F);
 
@@ -195,8 +188,7 @@ public:
      * context as sub-fields.
      */
     [[nodiscard]] InspectResult scheduler(
-        Layer& layer, Context& context,
-        const std::shared_ptr<Core::Window>& window,
+        Surface& surface,
         LayoutCursor& cursor,
         float x_min = -0.95F, float x_max = 0.95F, float row_h = 0.05F);
 
@@ -207,8 +199,7 @@ public:
      */
     [[nodiscard]] InspectResult tasks(
         Vruta::ProcessingToken token,
-        Layer& layer, Context& context,
-        const std::shared_ptr<Core::Window>& window,
+        Surface& surface,
         LayoutCursor& cursor,
         float x_min = -0.95F, float x_max = 0.95F, float row_h = 0.05F);
     /**
@@ -219,8 +210,7 @@ public:
      * added without a name. Body rows expose active state.
      */
     [[nodiscard]] InspectResult event_manager(
-        Layer& layer, Context& context,
-        const std::shared_ptr<Core::Window>& window,
+        Surface& surface,
         LayoutCursor& cursor,
         float x_min = -0.95F, float x_max = 0.95F, float row_h = 0.05F);
 
@@ -233,8 +223,7 @@ public:
     [[nodiscard]] InspectResult event(
         const std::shared_ptr<Vruta::Event>& ev,
         std::string_view name,
-        Layer& layer, Context& context,
-        const std::shared_ptr<Core::Window>& window,
+        Surface& surface,
         LayoutCursor& cursor,
         float x_min = -0.95F, float x_max = 0.95F, float row_h = 0.05F);
 
@@ -251,15 +240,13 @@ private:
 
     InspectResult inspect_modulator_tree(
         const Nodes::ModulatorTree& tree,
-        Layer& layer, Context& context,
-        const std::shared_ptr<Core::Window>& window,
+        Surface& surface,
         LayoutCursor& cursor,
         float x_min, float x_max, float row_h, int depth);
 
     [[nodiscard]] InspectResult inspect_task(
         const Vruta::TaskEntry& entry,
-        Layer& layer, Context& context,
-        const std::shared_ptr<Core::Window>& window,
+        Surface& surface,
         LayoutCursor& cursor,
         float x_min, float x_max, float row_h);
 };

@@ -5,6 +5,7 @@
 
 #include "MayaFlux/Kakshya/NDData/VertexLayout.hpp"
 
+#include "MayaFlux/Portal/Forma/Surface.hpp"
 #include "MayaFlux/Portal/Text/InkPress.hpp"
 #include "MayaFlux/Portal/Text/TypeFaceFoundry.hpp"
 
@@ -76,7 +77,7 @@ glm::uvec2 row_pixel_dims(
 ValueRow make_value_row(
     const ValueSpec& spec,
     RowBuffer row_buf,
-    Layer& layer,
+    Surface& surface,
     LayoutCursor& cursor,
     float x_min, float x_max, float row_h,
     glm::vec3 bg)
@@ -102,7 +103,7 @@ ValueRow make_value_row(
     el.bounds_hint = Kinesis::AABB2D { .min = { x_min, bot }, .max = { x_max, top } };
     el.interactive = false;
     el.name = spec.label;
-    const uint32_t id = layer.add(std::move(el));
+    const uint32_t id = surface.layer().add(el);
 
     Link link(
         [] { },
@@ -132,8 +133,7 @@ ValueGroup make_value_group(
     std::span<const ValueSpec> values,
     RowBuffer header_buf,
     std::span<const RowBuffer> row_bufs,
-    Layer& layer,
-    Context& context,
+    Surface& surface,
     LayoutCursor& cursor,
     float x_min, float x_max, float row_h,
     bool initially_open)
@@ -143,13 +143,13 @@ ValueGroup make_value_group(
                       .closed_color(glm::vec3(0.25F))
                       .open_color(glm::vec3(0.35F))
                       .label(header_buf.text_image)
-                      .place(std::move(header_buf.buf), layer, context, cursor, x_min, x_max, row_h);
+                      .place(std::move(header_buf.buf), surface, cursor, x_min, x_max, row_h);
 
     std::vector<ValueRow> rows;
     rows.reserve(values.size());
     for (size_t i = 0; i < values.size(); ++i) {
-        auto row = make_value_row(values[i], row_bufs[i], layer, cursor, x_min, x_max, row_h);
-        header.attach(layer, row.element_id);
+        auto row = make_value_row(values[i], row_bufs[i], surface, cursor, x_min, x_max, row_h);
+        header.attach(surface.layer(), row.element_id);
         rows.push_back(std::move(row));
     }
 
