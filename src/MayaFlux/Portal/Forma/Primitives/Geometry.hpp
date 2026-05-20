@@ -25,16 +25,30 @@ namespace MayaFlux::Portal::Forma::Geometry {
  * privileged and carry no special status in the framework.
  */
 
-namespace detail {
+/**
+ * @brief Write a vertex array into a GeometryFn output buffer.
+ * @param out   Output buffer. Resized to fit @p verts exactly.
+ * @param verts Vertices to copy.
+ */
+template <typename V>
+void write_verts(std::vector<uint8_t>& out, const std::vector<V>& verts)
+{
+    out.resize(verts.size() * sizeof(V));
+    std::memcpy(out.data(), verts.data(), out.size());
+}
 
-    template <typename V>
-    void write_verts(std::vector<uint8_t>& out, const std::vector<V>& verts)
-    {
-        out.resize(verts.size() * sizeof(V));
-        std::memcpy(out.data(), verts.data(), out.size());
-    }
-
-} // namespace detail
+/**
+ * @brief Write a contiguous range of trivially-copyable vertices into a GeometryFn output buffer.
+ */
+template <typename V>
+    requires std::ranges::contiguous_range<V>
+    && std::is_trivially_copyable_v<std::ranges::range_value_t<V>>
+void write_verts(std::vector<uint8_t>& out, const V& verts)
+{
+    const size_t n = std::ranges::size(verts) * sizeof(std::ranges::range_value_t<V>);
+    out.resize(n);
+    std::memcpy(out.data(), std::ranges::data(verts), n);
+}
 
 // =============================================================================
 // Horizontal fader
@@ -72,19 +86,17 @@ namespace detail {
         std::vector<V> verts;
         verts.reserve(8);
 
-        // track — two triangles as TRIANGLE_STRIP
         verts.push_back({ .position = { bounds.min.x, yt, 0 }, .color = track_color });
         verts.push_back({ .position = { bounds.min.x, yb, 0 }, .color = track_color });
         verts.push_back({ .position = { bounds.max.x, yt, 0 }, .color = track_color });
         verts.push_back({ .position = { bounds.max.x, yb, 0 }, .color = track_color });
 
-        // handle — two triangles as TRIANGLE_STRIP
         verts.push_back({ .position = { x, bounds.min.y, 0 }, .color = handle_color });
         verts.push_back({ .position = { x, bounds.max.y, 0 }, .color = handle_color });
         verts.push_back({ .position = { x + handle_w, bounds.min.y, 0 }, .color = handle_color });
         verts.push_back({ .position = { x + handle_w, bounds.max.y, 0 }, .color = handle_color });
 
-        detail::write_verts(out, verts);
+        write_verts(out, verts);
 
         el.bounds_hint = Kinesis::AABB2D {
             .min = glm::vec2(x, bounds.min.y),
@@ -128,7 +140,7 @@ namespace detail {
             { .position = { tip.x, tip.y, 0 }, .color = color },
         };
 
-        detail::write_verts(out, verts);
+        write_verts(out, verts);
 
         el.bounds_hint = Kinesis::AABB2D::from_ndc(center, glm::vec2(radius));
         el.contains = Kinesis::circular_bounds(center, radius);
@@ -163,7 +175,7 @@ namespace detail {
             { .position = { x, y, 0 }, .color = color, .size = size },
         };
 
-        detail::write_verts(out, verts);
+        write_verts(out, verts);
 
         el.bounds_hint = bounds;
         el.contains = Kinesis::polygon_bounds(std::span<const glm::vec2> {

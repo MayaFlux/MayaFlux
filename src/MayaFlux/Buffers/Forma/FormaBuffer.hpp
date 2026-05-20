@@ -112,6 +112,44 @@ public:
 
     [[nodiscard]] Portal::Graphics::PrimitiveTopology topology() const { return m_topology; }
 
+    /**
+     * @brief Submit a contiguous sequence of vertices.
+     *
+     * Accepts any contiguous range of trivially-copyable vertex structs:
+     * std::array, std::vector, std::span, or a raw pointer + count pair.
+     * Reinterprets the data as bytes and forwards to the primary submit().
+     *
+     * @tparam V  Vertex type. Must be trivially copyable.
+     * @param vertices  Contiguous range of V.
+     */
+    template <typename V>
+        requires std::ranges::contiguous_range<V>
+        && std::is_trivially_copyable_v<std::ranges::range_value_t<V>>
+    void submit(const V& vertices)
+    {
+        const auto* src = reinterpret_cast<const uint8_t*>(std::ranges::data(vertices));
+        const size_t n = std::ranges::size(vertices) * sizeof(std::ranges::range_value_t<V>);
+        submit(std::vector<uint8_t>(src, src + n));
+    }
+
+    /**
+     * @brief Submit a single vertex struct.
+     *
+     * Convenience for point-list buffers and single-primitive cases where
+     * constructing a container for one vertex is unnecessary.
+     *
+     * @tparam V  Vertex type. Must be trivially copyable.
+     * @param vertex  The vertex to write.
+     */
+    template <typename V>
+        requires std::is_trivially_copyable_v<V>
+        && (!std::ranges::range<V>)
+    void submit(const V& vertex)
+    {
+        const auto* src = reinterpret_cast<const uint8_t*>(&vertex);
+        submit(std::vector<uint8_t>(src, src + sizeof(V)));
+    }
+
 private:
     Portal::Graphics::PrimitiveTopology m_topology;
     std::shared_ptr<Buffers::RenderProcessor> m_render_processor;
