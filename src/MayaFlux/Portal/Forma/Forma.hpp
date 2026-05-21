@@ -19,6 +19,7 @@ struct WindowCreateInfo;
 namespace MayaFlux::Vruta {
 class TaskScheduler;
 class EventManager;
+class Event;
 }
 
 namespace MayaFlux::Buffers {
@@ -316,5 +317,61 @@ template <typename T>
         uint32_t height,
         std::shared_ptr<Kakshya::PlotContainer> container,
         Plot::SeriesSpec spec);
+
+// =============================================================================
+// Introspection
+// =============================================================================
+
+/**
+ * @brief Open or show the NodeGraphManager inspection window.
+ *
+ * First call creates a dedicated window, builds the InspectResult, and
+ * schedules tap_all() via Bridge. Subsequent calls show() the existing window.
+ */
+MAYAFLUX_API void inspect_node_graph();
+
+/**
+ * @brief Open or show the BufferManager inspection window.
+ *
+ * First call creates a dedicated window, builds the InspectResult, and
+ * schedules tap_all() via Bridge. Subsequent calls show() the existing window.
+ */
+MAYAFLUX_API void inspect_buffers();
+
+/**
+ * @brief Open or show the TaskScheduler inspection window.
+ *
+ * First call creates a dedicated window, builds the InspectResult, and
+ * schedules tap_all() via Bridge. Subsequent calls show() the existing window.
+ */
+MAYAFLUX_API void inspect_scheduler();
+
+/**
+ * @brief Open or show the EventManager inspection window.
+ *
+ * First call creates a dedicated window, builds the InspectResult, and
+ * schedules tap_all() via Bridge. Subsequent calls show() the existing window.
+ */
+MAYAFLUX_API void inspect_events();
+
+/**
+ * @brief Open a dedicated window inspecting a single Node and its modulator tree.
+ */
+MAYAFLUX_API void inspect(const std::shared_ptr<Nodes::Node>& node);
+
+/**
+ * @brief Open a dedicated window inspecting a single Buffer and its processing chain.
+ */
+MAYAFLUX_API void inspect(const std::shared_ptr<Buffers::Buffer>& buf);
+
+/**
+ * @brief Open a dedicated window inspecting a NodeNetwork.
+ */
+MAYAFLUX_API void inspect(const std::shared_ptr<Nodes::Network::NodeNetwork>& net);
+
+/**
+ * @brief Open a dedicated window inspecting a single Event.
+ */
+MAYAFLUX_API void inspect(const std::shared_ptr<Vruta::Event>& ev, std::string_view name = {});
 
 } // namespace MayaFlux::Portal::Forma

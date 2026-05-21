@@ -7,6 +7,8 @@
 #include "MayaFlux/Vruta/EventManager.hpp"
 #include "MayaFlux/Vruta/Scheduler.hpp"
 
+#include "MayaFlux/Nodes/Network/NodeNetwork.hpp"
+
 #include "Inspect/Inspector.hpp"
 
 #include "MayaFlux/Kakshya/Source/PlotContainer.hpp"
@@ -24,6 +26,14 @@ namespace {
     std::shared_ptr<Core::WindowManager> g_window_manager;
     std::unique_ptr<Bridge> g_bridge;
     std::unique_ptr<Inspector> g_inspect;
+
+    std::shared_ptr<Core::Window> g_inspect_nodes_window;
+    std::shared_ptr<Core::Window> g_inspect_buffers_window;
+    std::shared_ptr<Core::Window> g_inspect_scheduler_window;
+    std::shared_ptr<Core::Window> g_inspect_events_window;
+
+    constexpr uint32_t k_inspect_w = 480;
+    constexpr uint32_t k_inspect_h = 900;
 }
 
 // =============================================================================
@@ -80,6 +90,11 @@ void shutdown()
     g_event_manager = nullptr;
     g_window_manager = nullptr;
     g_initialized = false;
+
+    g_inspect_nodes_window.reset();
+    g_inspect_buffers_window.reset();
+    g_inspect_scheduler_window.reset();
+    g_inspect_events_window.reset();
 
     MF_INFO(Journal::Component::Portal, Journal::Context::API,
         "Portal::Forma shutdown");
@@ -202,6 +217,113 @@ plot(
 Bridge& bridge()
 {
     return *g_bridge;
+}
+
+void inspect_node_graph()
+{
+    if (g_inspect_nodes_window) {
+        g_inspect_nodes_window->show();
+        return;
+    }
+    g_inspect_nodes_window = g_window_manager->create_window(
+        Core::WindowCreateInfo { .title = "NodeGraphManager", .width = k_inspect_w, .height = k_inspect_h });
+    g_inspect_nodes_window->show();
+    auto surface = create_surface(g_inspect_nodes_window, "NodeGraphManager");
+    LayoutCursor cursor;
+    auto& result = g_inspect->node_graph_manager(surface, cursor);
+    g_bridge->spawn_sync(result.group.header.header_id, [&result] { result.tap_all(); });
+}
+
+void inspect_buffers()
+{
+    if (g_inspect_buffers_window) {
+        g_inspect_buffers_window->show();
+        return;
+    }
+    g_inspect_buffers_window = g_window_manager->create_window(
+        Core::WindowCreateInfo { .title = "BufferManager", .width = k_inspect_w, .height = k_inspect_h });
+    g_inspect_buffers_window->show();
+    auto surface = create_surface(g_inspect_buffers_window, "BufferManager");
+    LayoutCursor cursor;
+    auto& result = g_inspect->buffer_manager(surface, cursor);
+    g_bridge->spawn_sync(result.group.header.header_id, [&result] { result.tap_all(); });
+}
+
+void inspect_scheduler()
+{
+    if (g_inspect_scheduler_window) {
+        g_inspect_scheduler_window->show();
+        return;
+    }
+    g_inspect_scheduler_window = g_window_manager->create_window(
+        Core::WindowCreateInfo { .title = "TaskScheduler", .width = k_inspect_w, .height = k_inspect_h });
+    g_inspect_scheduler_window->show();
+    auto surface = create_surface(g_inspect_scheduler_window, "TaskScheduler");
+    LayoutCursor cursor;
+    auto& result = g_inspect->scheduler(surface, cursor);
+    g_bridge->spawn_sync(result.group.header.header_id, [&result] { result.tap_all(); });
+}
+
+void inspect_events()
+{
+    if (g_inspect_events_window) {
+        g_inspect_events_window->show();
+        return;
+    }
+    g_inspect_events_window = g_window_manager->create_window(
+        Core::WindowCreateInfo { .title = "EventManager", .width = k_inspect_w, .height = k_inspect_h });
+    g_inspect_events_window->show();
+    auto surface = create_surface(g_inspect_events_window, "EventManager");
+    LayoutCursor cursor;
+    auto& result = g_inspect->event_manager(surface, cursor);
+    g_bridge->spawn_sync(result.group.header.header_id, [&result] { result.tap_all(); });
+}
+
+void inspect(const std::shared_ptr<Nodes::Node>& node)
+{
+    const std::string title = Reflect::short_dynamic_type_name(node);
+    auto window = g_window_manager->create_window(
+        Core::WindowCreateInfo { .title = title, .width = k_inspect_w, .height = k_inspect_h });
+    window->show();
+    auto surface = create_surface(window, title);
+    LayoutCursor cursor;
+    auto result = std::make_shared<InspectResult>(g_inspect->node(node, surface, cursor));
+    g_bridge->spawn_sync(result->group.header.header_id, [result] { result->tap_all(); });
+}
+
+void inspect(const std::shared_ptr<Buffers::Buffer>& buf)
+{
+    const std::string title = Reflect::short_dynamic_type_name(buf);
+    auto window = g_window_manager->create_window(
+        Core::WindowCreateInfo { .title = title, .width = k_inspect_w, .height = k_inspect_h });
+    window->show();
+    auto surface = create_surface(window, title);
+    LayoutCursor cursor;
+    auto result = std::make_shared<InspectResult>(g_inspect->buffer(buf, surface, cursor));
+    g_bridge->spawn_sync(result->group.header.header_id, [result] { result->tap_all(); });
+}
+
+void inspect(const std::shared_ptr<Nodes::Network::NodeNetwork>& net)
+{
+    auto window = g_window_manager->create_window(
+        Core::WindowCreateInfo { .title = "NodeNetwork", .width = k_inspect_w, .height = k_inspect_h });
+    window->show();
+    auto surface = create_surface(window, "NodeNetwork");
+    LayoutCursor cursor;
+    auto result = std::make_shared<InspectResult>(g_inspect->node_network(net, surface, cursor));
+    g_bridge->spawn_sync(result->group.header.header_id, [result] { result->tap_all(); });
+}
+
+void inspect(const std::shared_ptr<Vruta::Event>& ev, std::string_view name)
+{
+    const std::string title = name.empty() ? "Event" : "Event: " + std::string(name);
+    auto window = g_window_manager->create_window(
+        Core::WindowCreateInfo { .title = title, .width = k_inspect_w, .height = k_inspect_h });
+    window->show();
+    auto surface = create_surface(window, title);
+    LayoutCursor cursor;
+    auto result = std::make_shared<InspectResult>(g_inspect->event(ev, name, surface, cursor));
+    g_bridge->spawn_sync(result->group.header.header_id, [result] { result->tap_all(); });
 }
 
 } // namespace MayaFlux::Portal::Forma
