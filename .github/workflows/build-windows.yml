@@ -148,8 +148,8 @@ jobs:
         id: llvm-cache
         with:
           path: ${{ env.LLVM_ROOT }}
-          key: llvm-22.1.5-windows-x64
-          restore-keys: llvm-22.1.5-windows-x64
+          key: llvm-22.1.6-windows-x64
+          restore-keys: llvm-22.1.6-windows-x64
 
       - name: Cache FFmpeg
         uses: actions/cache@v4
@@ -188,8 +188,8 @@ jobs:
           Write-Host "=== Installing LLVM 22 (Lila JIT Requirement) ===" -ForegroundColor Magenta
 
           $tempDir = Join-Path $env:TEMP "llvm_ci_download"
-          $downloadFile = Join-Path $tempDir "llvm-22.1.5.tar.xz"
-          $llvmUrl = "https://github.com/llvm/llvm-project/releases/download/llvmorg-22.1.5/clang+llvm-22.1.5-x86_64-pc-windows-msvc.tar.xz"
+          $downloadFile = Join-Path $tempDir "llvm-22.1.6.tar.xz"
+          $llvmUrl = "https://github.com/llvm/llvm-project/releases/download/llvmorg-22.1.6/clang+llvm-22.1.6-x86_64-pc-windows-msvc.tar.xz"
 
           New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
           New-Item -ItemType Directory -Path ${{ env.LLVM_ROOT }} -Force | Out-Null
@@ -449,7 +449,7 @@ jobs:
 
           Write-Host "`nDependencies:" -ForegroundColor Yellow
           Write-Host "  [Tier 1 - Dedicated Routes]" -ForegroundColor Cyan
-          Write-Host "  ✓ LLVM 22.1.5 (Lila JIT - manual download + cache)" -ForegroundColor Green
+          Write-Host "  ✓ LLVM 22.1.6 (Lila JIT - manual download + cache)" -ForegroundColor Green
           Write-Host "  ✓ Vulkan SDK (GitHub Action - auto-detected)" -ForegroundColor Green
           Write-Host "  [Tier 2 - vcpkg Package Manager]" -ForegroundColor Cyan
           Write-Host "  ✓ HidApi 0.15.0 (via vcpkg.json)" -ForegroundColor Green

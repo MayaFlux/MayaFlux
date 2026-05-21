@@ -94,8 +94,9 @@
       "generator": "Visual Studio 17 2022",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
-        "MAYAFLUX_BUILD_TESTS": "ON",
-        "CMAKE_INSTALL_PREFIX": "C:/MayaFlux"
+        "CMAKE_INSTALL_PREFIX": "C:/MayaFlux",
+        "MAYAFLUX_BUILD_PROJECT": "ON",
+        "EXAMPLE_SHADER_DIR" :  "${sourceDir}/src/examples/shaders"
       }
     },
     {
@@ -105,8 +106,9 @@
       "generator": "Visual Studio 16 2019",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
-        "MAYAFLUX_BUILD_TESTS": "ON",
-        "CMAKE_INSTALL_PREFIX": "C:/MayaFlux"
+        "CMAKE_INSTALL_PREFIX": "C:/MayaFlux",
+        "MAYAFLUX_BUILD_PROJECT": "ON",
+        "EXAMPLE_SHADER_DIR" :  "${sourceDir}/src/examples/shaders"
       }
     },
     {
@@ -116,8 +118,6 @@
       "generator": "Visual Studio 17 2022",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
-        "MAYAFLUX_BUILD_TESTS": "OFF",
-        "MAYAFLUX_PORTABLE": "OFF",
         "CMAKE_INSTALL_PREFIX": "C:/MayaFlux"
       }
     }

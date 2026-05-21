@@ -642,7 +642,7 @@ TEST_F(PolynomialProcessorTest, BufferContextModeFeedforward)
 {
     auto moving_avg = [](std::span<double> buffer) -> double {
         double sum = 0.0;
-        for (size_t i = 0; i < std::min(buffer.size(), 3UL); ++i) {
+        for (size_t i = 0; i < std::min<size_t>(buffer.size(), 3UL); ++i) {
             sum += buffer[i];
         }
         return sum / std::min<double>((double)buffer.size(), 3.0);
