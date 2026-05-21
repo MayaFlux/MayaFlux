@@ -56,11 +56,15 @@ InspectResult Inspector::inspect_task(
     return result;
 }
 
-InspectResult Inspector::scheduler(
+InspectResult& Inspector::scheduler(
     Surface& surface,
     LayoutCursor& cursor,
     float x_min, float x_max, float row_h)
 {
+    if (s_scheduler_result) {
+        return *s_scheduler_result;
+    }
+
     const std::vector<ValueSpec> root_values {
         ValueSpec {
             .label = "tasks",
@@ -79,7 +83,7 @@ InspectResult Inspector::scheduler(
     auto root_group = make_value_group(root_values, std::move(hbuf), rbufs,
         surface, cursor, x_min, x_max, row_h, true);
 
-    InspectResult result;
+    InspectResult& result = s_scheduler_result.emplace();
     result.group = std::move(root_group);
 
     const auto tasks = m_sched.get_all_tasks();

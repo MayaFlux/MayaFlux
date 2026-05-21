@@ -44,7 +44,7 @@ InspectResult Inspector::event(
     return result;
 }
 
-InspectResult Inspector::event_manager(
+InspectResult& Inspector::event_manager(
     Surface& surface,
     LayoutCursor& cursor,
     float x_min, float x_max, float row_h)
@@ -68,7 +68,7 @@ InspectResult Inspector::event_manager(
     auto root_group = make_value_group(root_values, std::move(hbuf), rbufs,
         surface, cursor, x_min, x_max, row_h, true);
 
-    InspectResult result;
+    InspectResult& result = s_event_result.emplace();
     result.group = std::move(root_group);
 
     const auto names = m_event_mgr.get_event_names();

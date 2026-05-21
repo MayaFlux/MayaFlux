@@ -250,11 +250,15 @@ InspectResult Inspector::root_graphics_buffer(
 // BufferManager aggregate
 // -----------------------------------------------------------------------------
 
-InspectResult Inspector::buffer_manager(
+InspectResult& Inspector::buffer_manager(
     Surface& surface,
     LayoutCursor& cursor,
     float x_min, float x_max, float row_h)
 {
+    if (s_buffer_result) {
+        return *s_buffer_result;
+    }
+
     const auto tokens = m_bm.get_active_tokens();
     const uint32_t in_count = m_bm.get_num_input_channels();
     const std::string header_label = "BufferManager";
@@ -280,7 +284,7 @@ InspectResult Inspector::buffer_manager(
     auto group = make_value_group(values, std::move(hbuf), rbufs,
         surface, cursor, x_min, x_max, row_h, false);
 
-    InspectResult result;
+    InspectResult& result = s_buffer_result.emplace();
     result.group = std::move(group);
 
     for (const auto tok : tokens) {

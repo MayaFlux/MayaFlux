@@ -110,8 +110,14 @@ public:
      * for every node registered to that channel. Networks for the token are
      * appended after the channel children, showing topology, output mode,
      * node count, enabled state, and registered channels.
+     *
+     * Persistent: the first call builds the result against @p surface and
+     * @p cursor and stores it statically. Subsequent calls return the same
+     * result regardless of the supplied surface and cursor; the original
+     * window remains the render target. To display on a different surface,
+     * the process must be restarted.
      */
-    [[nodiscard]] InspectResult node_graph_manager(
+    [[nodiscard]] InspectResult& node_graph_manager(
         Surface& surface,
         LayoutCursor& cursor,
         float x_min = -0.95F, float x_max = 0.95F, float row_h = 0.05F);
@@ -174,8 +180,14 @@ public:
      * sample count, child buffer count, and processing chain state. Graphics
      * tokens (GRAPHICS_BACKEND) expand a single root entry showing VKBuffer
      * child count. All children are related via layer.relate() for cascade.
+     *
+     * Persistent: the first call builds the result against @p surface and
+     * @p cursor and stores it statically. Subsequent calls return the same
+     * result regardless of the supplied surface and cursor; the original
+     * window remains the render target. To display on a different surface,
+     * the process must be restarted.
      */
-    [[nodiscard]] InspectResult buffer_manager(
+    [[nodiscard]] InspectResult& buffer_manager(
         Surface& surface,
         LayoutCursor& cursor,
         float x_min = -0.95F, float x_max = 0.95F, float row_h = 0.05F);
@@ -186,8 +198,14 @@ public:
      * Header shows total task count. Each task is a collapsible whose header
      * is the routine's dynamic type name, with name, token, active, and delay
      * context as sub-fields.
+     *
+     * Persistent: the first call builds the result against @p surface and
+     * @p cursor and stores it statically. Subsequent calls return the same
+     * result regardless of the supplied surface and cursor; the original
+     * window remains the render target. To display on a different surface,
+     * the process must be restarted.
      */
-    [[nodiscard]] InspectResult scheduler(
+    [[nodiscard]] InspectResult& scheduler(
         Surface& surface,
         LayoutCursor& cursor,
         float x_min = -0.95F, float x_max = 0.95F, float row_h = 0.05F);
@@ -208,8 +226,14 @@ public:
      * Header shows total event count. Each event is a collapsible whose
      * header is the event's registered name, or "(unnamed)" for events
      * added without a name. Body rows expose active state.
+     *
+     * Persistent: the first call builds the result against @p surface and
+     * @p cursor and stores it statically. Subsequent calls return the same
+     * result regardless of the supplied surface and cursor; the original
+     * window remains the render target. To display on a different surface,
+     * the process must be restarted.
      */
-    [[nodiscard]] InspectResult event_manager(
+    [[nodiscard]] InspectResult& event_manager(
         Surface& surface,
         LayoutCursor& cursor,
         float x_min = -0.95F, float x_max = 0.95F, float row_h = 0.05F);
@@ -249,6 +273,11 @@ private:
         Surface& surface,
         LayoutCursor& cursor,
         float x_min, float x_max, float row_h);
+
+    static std::optional<InspectResult> s_node_graph_result;
+    static std::optional<InspectResult> s_buffer_result;
+    static std::optional<InspectResult> s_scheduler_result;
+    static std::optional<InspectResult> s_event_result;
 };
 
 } // namespace MayaFlux::Portal::Forma
