@@ -9,6 +9,8 @@
 
 #include "Inspect/Inspector.hpp"
 
+#include "MayaFlux/Kakshya/Source/PlotContainer.hpp"
+
 #include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux::Portal::Forma {
@@ -149,6 +151,48 @@ Surface create_surface(
 {
     auto [layer, ctx] = create_layer(window, std::move(name));
     return { std::move(window), std::move(layer), std::move(ctx) };
+}
+
+// =============================================================================
+// Plot
+// =============================================================================
+
+std::pair<Mapped<std::shared_ptr<Kakshya::PlotContainer>>, Surface>
+plot(
+    std::string title,
+    uint32_t width,
+    uint32_t height,
+    std::shared_ptr<Kakshya::PlotContainer> container,
+    Plot::SeriesSpec spec)
+{
+    const uint64_t N = container->series_count() > 0
+        ? container->series_size(0)
+        : 0;
+
+    auto window = g_window_manager->create_window(
+        Core::WindowCreateInfo { .title = std::move(title), .width = width, .height = height });
+    window->show();
+
+    auto surface = create_surface(window, window->get_create_info().title);
+
+    if (spec.background_fn) {
+        auto bg = create_element<float>(
+            surface,
+            *spec.background_fn,
+            0.F,
+            static_cast<size_t>(4) * Kakshya::VertexLayout::for_meshes().stride_bytes,
+            Graphics::PrimitiveTopology::TRIANGLE_STRIP);
+        auto bg_id = bg.element.id;
+        auto buf = create_buffer(window, spec.capacity_for(N), spec.topology);
+        auto mapped = Plot::place(surface, std::move(buf), std::move(spec), std::move(container));
+        surface.layer().relate(mapped.element.id, bg_id);
+        surface.layer().send_to_back(bg_id);
+        return { std::move(mapped), std::move(surface) };
+    }
+
+    auto buf = create_buffer(window, spec.capacity_for(N), spec.topology);
+
+    return { Plot::place(surface, std::move(buf), std::move(spec), std::move(container)), std::move(surface) };
 }
 
 // =============================================================================

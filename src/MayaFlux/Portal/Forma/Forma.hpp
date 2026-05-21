@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Bridge.hpp"
+#include "Plot/Plot.hpp"
 #include "Surface.hpp"
 
 #include "MayaFlux/Buffers/Forma/FormaBuffer.hpp"
@@ -291,5 +292,29 @@ template <typename T>
 
     return mapped;
 }
+
+/**
+ * @brief Create a live plot in a new window.
+ *
+ * Creates the window, shows it, constructs the Surface, builds the
+ * FormaBuffer from the spec capacity and topology, and calls Plot::place.
+ * Returns the Mapped<shared_ptr<PlotContainer>> from Plot::place, plus the
+ * Surface owning the window and layer.
+ *
+ * @param title      Window title.
+ * @param width      Window width in pixels.
+ * @param height     Window height in pixels.
+ * @param container  Ready PlotContainer from Plot::source().build().
+ * @param spec       SeriesSpec from Plot::series()...done().
+ * @return Pair of { Mapped<shared_ptr<PlotContainer>>, Surface } for the created plot.
+ */
+[[nodiscard]] MAYAFLUX_API
+    std::pair<Mapped<std::shared_ptr<Kakshya::PlotContainer>>, Surface>
+    plot(
+        std::string title,
+        uint32_t width,
+        uint32_t height,
+        std::shared_ptr<Kakshya::PlotContainer> container,
+        Plot::SeriesSpec spec);
 
 } // namespace MayaFlux::Portal::Forma
