@@ -1,6 +1,7 @@
 #include "Forma.hpp"
 
 #include "MayaFlux/Buffers/BufferManager.hpp"
+#include "MayaFlux/Core/Windowing/WindowManager.hpp"
 #include "MayaFlux/Nodes/NodeGraphManager.hpp"
 #include "MayaFlux/Transitive/Memory/Persist.hpp"
 #include "MayaFlux/Vruta/EventManager.hpp"
@@ -18,6 +19,7 @@ namespace {
     std::shared_ptr<Buffers::BufferManager> g_buffer_manager;
     std::shared_ptr<Vruta::TaskScheduler> g_scheduler;
     std::shared_ptr<Vruta::EventManager> g_event_manager;
+    std::shared_ptr<Core::WindowManager> g_window_manager;
     std::unique_ptr<Bridge> g_bridge;
     std::unique_ptr<Inspector> g_inspect;
 }
@@ -30,7 +32,8 @@ bool initialize(
     std::shared_ptr<Nodes::NodeGraphManager> node_graph_manager,
     std::shared_ptr<Buffers::BufferManager> buffer_manager,
     std::shared_ptr<Vruta::TaskScheduler> scheduler,
-    std::shared_ptr<Vruta::EventManager> event_manager)
+    std::shared_ptr<Vruta::EventManager> event_manager,
+    std::shared_ptr<Core::WindowManager> window_manager)
 {
     if (g_initialized) {
         MF_WARN(Journal::Component::Portal, Journal::Context::API,
@@ -42,6 +45,7 @@ bool initialize(
     g_buffer_manager = std::move(buffer_manager);
     g_scheduler = std::move(scheduler);
     g_event_manager = std::move(event_manager);
+    g_window_manager = std::move(window_manager);
     g_bridge = std::make_unique<Bridge>(*g_scheduler, *g_buffer_manager);
     g_inspect = std::make_unique<Inspector>(*g_node_graph_manager, *g_buffer_manager, *g_scheduler, *g_event_manager);
     g_initialized = true;
@@ -72,6 +76,7 @@ void shutdown()
     g_buffer_manager = nullptr;
     g_scheduler = nullptr;
     g_event_manager = nullptr;
+    g_window_manager = nullptr;
     g_initialized = false;
 
     MF_INFO(Journal::Component::Portal, Journal::Context::API,

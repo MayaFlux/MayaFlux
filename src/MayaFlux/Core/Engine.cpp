@@ -161,7 +161,7 @@ void Engine::Start()
         Init();
     }
     m_subsystem_manager->start_all_subsystems();
-    Portal::Forma::initialize(m_node_graph_manager, m_buffer_manager, m_scheduler, m_event_manager);
+    Portal::Forma::initialize(m_node_graph_manager, m_buffer_manager, m_scheduler, m_event_manager, m_window_manager);
 }
 
 void Engine::Pause()

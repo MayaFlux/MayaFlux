@@ -11,6 +11,8 @@ class NodeGraphManager;
 
 namespace MayaFlux::Core {
 class Window;
+class WindowManager;
+struct WindowCreateInfo;
 }
 
 namespace MayaFlux::Vruta {
@@ -68,13 +70,15 @@ class Inspector;
  * @param buffer_manager  Engine BufferManager. Must outlive all Forma objects.
  * @param scheduler       Engine TaskScheduler. Must outlive all Bridge instances.
  * @param event_manager   Engine EventManager. Must outlive all Context instances.
+ * @param window_manager  Engine WindowManager. Must outlive all Surface instances.
  * @return True on success, false if any argument is null.
  */
 MAYAFLUX_API bool initialize(
     std::shared_ptr<Nodes::NodeGraphManager> node_graph_manager,
     std::shared_ptr<Buffers::BufferManager> buffer_manager,
     std::shared_ptr<Vruta::TaskScheduler> scheduler,
-    std::shared_ptr<Vruta::EventManager> event_manager);
+    std::shared_ptr<Vruta::EventManager> event_manager,
+    std::shared_ptr<Core::WindowManager> window_manager);
 
 /**
  * @brief Release stored references. Does not destroy any Forma objects.
