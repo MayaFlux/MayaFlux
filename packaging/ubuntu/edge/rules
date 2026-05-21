@@ -23,7 +23,7 @@ override_dh_shlibdeps:
 	dh_shlibdeps -l$(CURDIR)/debian/mayaflux-edge/usr/lib -- -xmayaflux-edge
 
 override_dh_auto_install:
-	dh_auto_install
+	cmake --install build --prefix debian/mayaflux-edge/usr
 	install -d debian/mayaflux-edge/etc/profile.d
 	printf '#!/bin/sh\nexport MAYAFLUX_ROOT="/usr"\nexport CMAKE_PREFIX_PATH="/usr:$${CMAKE_PREFIX_PATH}"\nexport PATH="/usr/lib/llvm-21/bin:$${PATH}"\n' > debian/mayaflux-edge/etc/profile.d/mayaflux.sh
 	chmod 755 debian/mayaflux-edge/etc/profile.d/mayaflux.sh
@@ -35,6 +35,8 @@ override_dh_auto_install:
 	if [ -d docs/html ]; then \
 	  cp -r docs/html/* debian/mayaflux-edge-doc/usr/share/doc/mayaflux-edge/html/; \
 	fi
+
+override_dh_install:
 
 override_dh_auto_clean:
 	dh_auto_clean
