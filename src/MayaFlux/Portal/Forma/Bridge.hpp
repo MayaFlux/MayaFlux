@@ -331,6 +331,140 @@ public:
         unbind(state->id);
     }
 
+    // =========================================================================
+    // Binding handle
+    // =========================================================================
+
+    /**
+     * @class Binding
+     * @brief Non-owning handle for all bind/write/unbind operations on one element.
+     *
+     * Obtained via Bridge::at(id) or Bridge::at(state). Closes over the
+     * Bridge reference and the element id so the caller never repeats either.
+     * Every method forwards directly to the corresponding Bridge overload:
+     * there is no deferred execution, no new mechanism.
+     *
+     * Binding holds a reference to its Bridge and must not outlive it.
+     *
+     * @code
+     * bridge.at(el.element.id)
+     *     .bind(envelope_node)
+     *     .write(compute_buf, shader_path, offsetof(PC, cutoff))
+     *     .write(audio_proc);
+     * @endcode
+     */
+    class Binding {
+    public:
+        Binding(Bridge& bridge, uint32_t id) noexcept
+            : m_bridge(bridge)
+            , m_id(id)
+        {
+        }
+
+        [[nodiscard]] uint32_t id() const noexcept { return m_id; }
+
+        Binding& bind(std::shared_ptr<Nodes::Node> node,
+            std::function<float(double)> project = {})
+        {
+            m_bridge.bind(m_id, std::move(node), std::move(project));
+            return *this;
+        }
+
+        Binding& bind(std::function<float()> source)
+        {
+            m_bridge.bind(m_id, std::move(source));
+            return *this;
+        }
+
+        Binding& write(
+            const std::shared_ptr<Buffers::VKBuffer>& target,
+            const std::string& shader_path,
+            uint32_t offset,
+            size_t size = sizeof(float))
+        {
+            m_bridge.write(m_id, target, shader_path, offset, size);
+            return *this;
+        }
+
+        Binding& write(
+            const std::shared_ptr<Buffers::VKBuffer>& target,
+            const std::string& shader_path,
+            const std::string& descriptor_name,
+            uint32_t binding_index,
+            uint32_t set,
+            Portal::Graphics::DescriptorRole role = Portal::Graphics::DescriptorRole::UNIFORM)
+        {
+            m_bridge.write(m_id, target, shader_path,
+                descriptor_name, binding_index, set, role);
+            return *this;
+        }
+
+        Binding& write(std::shared_ptr<Buffers::AudioWriteProcessor> target)
+        {
+            m_bridge.write(m_id, std::move(target));
+            return *this;
+        }
+
+        Binding& write(std::shared_ptr<Buffers::GeometryWriteProcessor> target)
+        {
+            m_bridge.write(m_id, std::move(target));
+            return *this;
+        }
+
+        Binding& write(std::shared_ptr<Nodes::Constant> node)
+        {
+            m_bridge.write(m_id, std::move(node));
+            return *this;
+        }
+
+        void unbind()
+        {
+            m_bridge.unbind(m_id);
+        }
+
+    private:
+        Bridge& m_bridge;
+        uint32_t m_id;
+    };
+
+    // =========================================================================
+    // at() — entry point for the Binding handle
+    // =========================================================================
+
+    /**
+     * @brief Return a Binding handle for the element registered under @p id.
+     *
+     * The handle is lightweight and non-owning. Prefer this over repeated
+     * bind(id, ...) / write(id, ...) calls when wiring one element to
+     * multiple sources or destinations.
+     */
+    [[nodiscard]] Binding at(uint32_t id)
+    {
+        return Binding { *this, id };
+    }
+
+    /**
+     * @brief Return a Binding handle resolved from a MappedState.
+     */
+    template <typename T>
+    [[nodiscard]] Binding at(const std::shared_ptr<MappedState<T>>& state)
+    {
+        return Binding(*this, state->id);
+    }
+
+    /**
+     * @brief Spawn a per-frame GraphicsRoutine that calls @p sync_fn each tick.
+     *
+     * Stores the task name in the outbound_tasks of the record for @p id so
+     * that unbind() cancels it correctly. The coroutine body is type-free --
+     * all type-specific work is captured inside @p sync_fn by the caller.
+     *
+     * @param id       Element id whose outbound_tasks receives the task name.
+     * @param sync_fn  Callable invoked once per frame. Typically a lambda
+     *                 capturing Mapped<T> by reference and calling sync().
+     */
+    void spawn_sync(uint32_t id, std::function<void()> sync_fn);
+
 private:
     struct ElementRecord {
         std::shared_ptr<Buffers::FormaBuffer> buffer;
@@ -352,19 +486,6 @@ private:
     void cancel_inbound(ElementRecord& rec);
     void cancel_outbound(ElementRecord& rec);
     void spawn_inbound(uint32_t id, std::function<float()> source);
-
-    /**
-     * @brief Spawn a per-frame GraphicsRoutine that calls @p sync_fn each tick.
-     *
-     * Stores the task name in the outbound_tasks of the record for @p id so
-     * that unbind() cancels it correctly. The coroutine body is type-free --
-     * all type-specific work is captured inside @p sync_fn by the caller.
-     *
-     * @param id       Element id whose outbound_tasks receives the task name.
-     * @param sync_fn  Callable invoked once per frame. Typically a lambda
-     *                 capturing Mapped<T> by reference and calling sync().
-     */
-    void spawn_sync(uint32_t id, std::function<void()> sync_fn);
 };
 
 } // namespace MayaFlux::Portal::Forma

@@ -3,8 +3,6 @@
 #include "MayaFlux/Core/GlobalGraphicsInfo.hpp"
 #include "MayaFlux/Kakshya/DataProcessor.hpp"
 
-#include "MayaFlux/Kakshya/Region/RegionGroup.hpp"
-
 namespace MayaFlux::Kakshya {
 
 /**

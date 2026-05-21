@@ -13,10 +13,19 @@ namespace MayaFlux::Portal::Forma {
  * automatically when the cursor advances, via the normal version-bump path.
  *
  * NDC Y runs +1 (top) to -1 (bottom). advance() subtracts height.
+ *
+ * Default construction places the cursor at the top of the screen (y=1).
+ * This matches the most common starting position and allows LayoutCursor
+ * to be a plain member of structs that use aggregate or value initialization.
  */
 class LayoutCursor {
 public:
-    explicit LayoutCursor(float y_start = 1.F)
+    LayoutCursor()
+        : LayoutCursor(1.F)
+    {
+    }
+
+    explicit LayoutCursor(float y_start)
     {
         m_state = std::make_shared<MappedState<float>>();
         m_state->write(y_start);

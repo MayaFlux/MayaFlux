@@ -3,6 +3,8 @@
 #include <glm/geometric.hpp>
 #include <glm/vec2.hpp>
 
+#include "MayaFlux/Kinesis/ViewTransform.hpp"
+
 namespace MayaFlux::Kinesis {
 
 // =============================================================================
@@ -230,6 +232,23 @@ subtract_bounds(
     return [a = std::move(a), b = std::move(b)](glm::vec2 p) {
         return a(p) && !b(p);
     };
+}
+
+/**
+ * @brief Convert an NDC AABB's extent to integer pixel dimensions.
+ *
+ * Equivalent to ndc_size_to_pixels(region.max - region.min, width, height).
+ *
+ * @param region NDC axis-aligned bounding box.
+ * @param width  Window width in pixels.
+ * @param height Window height in pixels.
+ * @return Integer pixel dimensions of the region's extent.
+ */
+[[nodiscard]] inline glm::uvec2 ndc_size_to_pixels(
+    const AABB2D& region,
+    uint32_t width, uint32_t height)
+{
+    return ndc_size_to_pixels(region.max - region.min, width, height);
 }
 
 } // namespace MayaFlux::Kinesis

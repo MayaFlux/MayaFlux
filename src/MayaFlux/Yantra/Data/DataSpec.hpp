@@ -2,7 +2,6 @@
 
 #include "Eigen/Core"
 
-#include "MayaFlux/Kakshya/Region/RegionGroup.hpp"
 #include "MayaFlux/Kakshya/Region/RegionSegment.hpp"
 #include "MayaFlux/Kakshya/SignalSourceContainer.hpp"
 

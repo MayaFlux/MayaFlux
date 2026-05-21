@@ -113,6 +113,15 @@ std::shared_ptr<Event> EventManager::find_event_by_name(const std::string& name)
     return nullptr;
 }
 
+std::vector<std::string> EventManager::get_event_names() const
+{
+    std::vector<std::string> names;
+    names.reserve(m_named_events.size());
+    for (const auto& [name, _] : m_named_events)
+        names.push_back(name);
+    return names;
+}
+
 void EventManager::cleanup_completed_events()
 {
     std::erase_if(m_events, [](const auto& e) {

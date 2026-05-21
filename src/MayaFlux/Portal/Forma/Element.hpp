@@ -22,10 +22,22 @@ namespace MayaFlux::Portal::Forma {
  *   @c contains (and optionally @c bounds_hint as the circumscribed rect
  *   for performance).
  *
- * The buffer field accepts any VKBuffer subclass: a plain geometry buffer,
- * a TextureBuffer, a TextBuffer, or a custom buffer. Portal::Forma::Layer
- * owns elements and drives their lifecycle; callers work with element ids
- * returned by Layer::add.
+ * @c buffer is optional. An Element with no buffer is a pure spatial
+ * registration: it participates in hit testing and relation cascades but
+ * contributes no rendered output. A voice node with a spatial position,
+ * a named region driving a compute shader, an invisible trigger zone; all
+ * are valid Elements with no buffer.
+ *
+ * Fluent setters return @c Element& for chained construction:
+ * @code
+ * auto el = Element{}
+ *     .with_name("kick_voice")
+ *     .with_bounds(region)
+ *     .non_interactive();
+ * @endcode
+ *
+ * Layer::add() assigns the stable id. All setters that affect spatial or
+ * visibility state can also be applied post-registration via Layer::Slot.
  *
  * @note Elements do not participate in the graphics subsystem scheduler
  *       directly. The caller registers the underlying buffer with the
@@ -58,6 +70,145 @@ struct Element {
     /// @brief Optional human-readable label for Lila introspection and
     ///        debug logging. Not used by Layer or Context internally.
     std::string name;
+
+    // =========================================================================
+    // Spatial
+    // =========================================================================
+
+    /**
+     * @brief Set the fast-reject AABB. For rectangular regions this is
+     *        sufficient on its own — leave @c with_contains unset.
+     */
+    Element& with_bounds(Kinesis::AABB2D b)
+    {
+        bounds_hint = b;
+        return *this;
+    }
+
+    /**
+     * @brief Set an explicit containment predicate.
+     *
+     * Use for any non-rectangular region: circles, polygons, strokes,
+     * Voronoi cells, audio waveform envelopes. Pair with @c with_bounds
+     * for a circumscribed AABB fast-reject when the predicate is expensive.
+     *
+     * Kinesis::circular_bounds, polygon_bounds, stroke_bounds, union_bounds,
+     * subtract_bounds, and intersect_bounds are all valid arguments.
+     */
+    Element& with_contains(std::function<bool(glm::vec2)> fn)
+    {
+        contains = std::move(fn);
+        return *this;
+    }
+
+    /**
+     * @brief Convenience: rectangular region specified as two NDC corners.
+     *        Equivalent to with_bounds(AABB2D{min, max}).
+     */
+    Element& with_rect(glm::vec2 ndc_min, glm::vec2 ndc_max)
+    {
+        bounds_hint = Kinesis::AABB2D { .min = ndc_min, .max = ndc_max };
+        return *this;
+    }
+
+    /**
+     * @brief Set a circular containment predicate.
+     *
+     * @c bounds_hint is independent — set it separately if a cheap pre-filter
+     * is useful. For a plain circle it is often the circumscribed rect via
+     * AABB2D::from_ndc(center, glm::vec2(radius)), but that decision belongs
+     * to the caller.
+     */
+    Element& with_circle(glm::vec2 center, float radius)
+    {
+        contains = Kinesis::circular_bounds(center, radius);
+        return *this;
+    }
+
+    /**
+     * @brief Set a polygon containment predicate.
+     *
+     * Uses the winding number algorithm, covering both convex and non-convex
+     * shapes. Vertices are in NDC, ordered CW or CCW.
+     *
+     * @c bounds_hint is independent — set it separately if a cheap pre-filter
+     * is useful for this region.
+     */
+    Element& with_polygon(std::span<const glm::vec2> verts)
+    {
+        contains = Kinesis::polygon_bounds(verts);
+        return *this;
+    }
+
+    /**
+     * @brief Set a stroke-based containment predicate.
+     *
+     * A point is inside if its perpendicular distance to any segment of
+     * @p pts is within @p half_thickness NDC units. Covers paths, wires,
+     * cable routes, waveform traces, and any open or closed curve.
+     *
+     * @c bounds_hint is independent — set it separately if a cheap pre-filter
+     * is useful for this region.
+     */
+    Element& with_stroke(std::span<const glm::vec2> pts, float half_thickness)
+    {
+        contains = Kinesis::stroke_bounds(pts, half_thickness);
+        return *this;
+    }
+
+    // =========================================================================
+    // Buffer
+    // =========================================================================
+
+    /**
+     * @brief Attach a FormaBuffer as the rendered output for this region.
+     *        nullptr is valid for pure hit-test or pure-spatial elements.
+     */
+    Element& with_buffer(std::shared_ptr<Buffers::FormaBuffer> buf)
+    {
+        buffer = std::move(buf);
+        return *this;
+    }
+
+    // =========================================================================
+    // Flags
+    // =========================================================================
+
+    /**
+     * @brief Exclude from hit testing. Use for passive outputs — particle
+     *        emitters, waveform displays, camera regions — that have spatial
+     *        identity but accept no pointer events.
+     */
+    Element& non_interactive()
+    {
+        interactive = false;
+        return *this;
+    }
+
+    /**
+     * @brief Start hidden. Layer::set_visible or a relation cascade will
+     *        reveal it. Use for elements that are conditionally visible or
+     *        controlled by a parent collapsible.
+     */
+    Element& hidden()
+    {
+        visible = false;
+        return *this;
+    }
+
+    // =========================================================================
+    // Identity
+    // =========================================================================
+
+    /**
+     * @brief Set the human-readable name used in Lila introspection and
+     *        debug output. Has no effect on Layer or Context behaviour.
+     */
+    Element& with_name(std::string n)
+    {
+        name = std::move(n);
+        return *this;
+    }
 };
 
 } // namespace MayaFlux::Portal::Forma

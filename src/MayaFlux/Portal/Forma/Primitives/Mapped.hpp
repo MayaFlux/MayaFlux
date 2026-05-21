@@ -102,6 +102,11 @@ struct Mapped {
     ///        guarantees one geometry generation on the first sync() call.
     Version last_version { static_cast<Version>(-1) };
 
+    /// @brief When true, sync() regenerates geometry every call regardless of
+    ///        whether state->version has advanced. Set by subsystems where the
+    ///        value pointer is stable but the data it references changes each frame.
+    bool force_redraw_on_sync { false };
+
     /**
      * @brief Call once per graphics tick.
      *
@@ -116,7 +121,7 @@ struct Mapped {
     {
         if (!state || !geometry_fn || !element.buffer)
             return;
-        if (state->version == last_version)
+        if (state->version == last_version && !force_redraw_on_sync)
             return;
 
         geometry_fn(state->value, m_bytes, element);

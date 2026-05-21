@@ -1,12 +1,10 @@
 #pragma once
 
 #include "Bridge.hpp"
-#include "Context.hpp"
-#include "Layer.hpp"
-#include "Primitives/Mapped.hpp"
+#include "Plot/Plot.hpp"
+#include "Surface.hpp"
 
 #include "MayaFlux/Buffers/Forma/FormaBuffer.hpp"
-#include "MayaFlux/Portal/Graphics/GraphicsUtils.hpp"
 
 namespace MayaFlux::Nodes {
 class NodeGraphManager;
@@ -14,11 +12,14 @@ class NodeGraphManager;
 
 namespace MayaFlux::Core {
 class Window;
+class WindowManager;
+struct WindowCreateInfo;
 }
 
 namespace MayaFlux::Vruta {
 class TaskScheduler;
 class EventManager;
+class Event;
 }
 
 namespace MayaFlux::Buffers {
@@ -71,13 +72,15 @@ class Inspector;
  * @param buffer_manager  Engine BufferManager. Must outlive all Forma objects.
  * @param scheduler       Engine TaskScheduler. Must outlive all Bridge instances.
  * @param event_manager   Engine EventManager. Must outlive all Context instances.
+ * @param window_manager  Engine WindowManager. Must outlive all Surface instances.
  * @return True on success, false if any argument is null.
  */
 MAYAFLUX_API bool initialize(
     std::shared_ptr<Nodes::NodeGraphManager> node_graph_manager,
     std::shared_ptr<Buffers::BufferManager> buffer_manager,
     std::shared_ptr<Vruta::TaskScheduler> scheduler,
-    std::shared_ptr<Vruta::EventManager> event_manager);
+    std::shared_ptr<Vruta::EventManager> event_manager,
+    std::shared_ptr<Core::WindowManager> window_manager);
 
 /**
  * @brief Release stored references. Does not destroy any Forma objects.
@@ -94,7 +97,7 @@ MAYAFLUX_API bool is_initialized();
  *
  * Valid only after initialize(). Lifetime is tied to the Forma module.
  */
-[[nodiscard]] MAYAFLUX_API Bridge& get_bridge();
+[[nodiscard]] MAYAFLUX_API Bridge& bridge();
 
 /**
  * @brief Access the Forma introspection subsystem.
@@ -181,6 +184,29 @@ MAYAFLUX_API bool is_initialized();
 // =============================================================================
 
 /**
+ * @brief Construct a Surface, creating Layer and Context internally.
+ *
+ * Builds a fresh Layer and a Context wired to @p window using the
+ * EventManager stored by Portal::Forma::initialize. Equivalent to
+ * Portal::Forma::create_layer(window, name) plus owning the window
+ * pointer alongside.
+ *
+ * For the power-tinkerer case (custom Context subclass, shared Layer
+ * across multiple Contexts, etc.), construct Surface directly via its
+ * (Window, Layer, Context) constructor.
+ *
+ * @param window  Target window. Must outlive the Surface.
+ * @param name    Unique name scoping the Context's event coroutines.
+ *                Must be unique across all live Contexts.
+ * @pre Portal::Forma::initialize() must have been called.
+ * @return A new Surface owning the window pointer plus the freshly
+ *         created Layer and Context.
+ */
+[[nodiscard]] MAYAFLUX_API Surface create_surface(
+    std::shared_ptr<Core::Window> window,
+    std::string name);
+
+/**
  * @brief Build a FormaBuffer, register it, construct a Mapped<T>, and add
  *        the element to @p layer.
  *
@@ -211,8 +237,141 @@ template <typename T>
     auto buf = create_buffer(std::move(window), capacity, topology);
     auto mapped = make_mapped<T>(initial, std::move(geom), buf);
     mapped.element.id = layer.add(mapped.element);
-    get_bridge().register_element(mapped, std::move(project));
+    bridge().register_element(mapped, std::move(project));
     return mapped;
 }
+
+/**
+ * @brief Build a FormaBuffer, register it, construct a Mapped<T>, add the
+ *        element to @p surface's layer, and register it with the
+ *        application Bridge.
+ *
+ * Surface-accepting overload of create_element. Reads the layer and
+ * window from @p surface; everything else matches the existing
+ * (Layer&, Window) overload.
+ *
+ * After registration, one sync() is run so that bounds_hint and contains
+ * populated by the geometry function are visible on the Element before
+ * the first frame. This removes the manual
+ * @code
+ *   layer->set_bounds(el.element.id, ...);
+ *   layer->set_contains(el.element.id, ...);
+ * @endcode
+ * boilerplate seen at fader-style call sites: those values now arrive
+ * directly from the geometry function on construction. The geometry
+ * function remains the user's; the sync is the same one that runs every
+ * frame.
+ *
+ * @tparam T        MappedState value type.
+ * @param surface   Canvas to register the element on.
+ * @param geom      Geometry function producing vertex bytes from T.
+ * @param initial   Starting value written into MappedState.
+ * @param capacity  Initial FormaBuffer capacity in bytes.
+ * @param topology  Primitive topology for the FormaBuffer.
+ * @param project   Optional T -> float projection for outbound readers.
+ * @return Fully constructed Mapped<T> with element registered.
+ */
+template <typename T>
+[[nodiscard]] Mapped<T> create_element(
+    Surface& surface,
+    GeometryFn<T> geom,
+    T initial,
+    size_t capacity = 4096,
+    Graphics::PrimitiveTopology topology = Graphics::PrimitiveTopology::TRIANGLE_STRIP,
+    std::function<float(T)> project = {})
+{
+    auto mapped = create_element<T>(
+        surface.layer(), surface.window(),
+        std::move(geom), std::move(initial),
+        capacity, topology, std::move(project));
+
+    mapped.sync();
+    if (mapped.element.bounds_hint)
+        surface.layer().set_bounds(mapped.element.id, *mapped.element.bounds_hint);
+    if (mapped.element.contains)
+        surface.layer().set_contains(mapped.element.id, mapped.element.contains);
+
+    return mapped;
+}
+
+/**
+ * @brief Create a live plot in a new window.
+ *
+ * Creates the window, shows it, constructs the Surface, builds the
+ * FormaBuffer from the spec capacity and topology, and calls Plot::place.
+ * Returns the Mapped<shared_ptr<PlotContainer>> from Plot::place, plus the
+ * Surface owning the window and layer.
+ *
+ * @param title      Window title.
+ * @param width      Window width in pixels.
+ * @param height     Window height in pixels.
+ * @param container  Ready PlotContainer from Plot::source().build().
+ * @param spec       SeriesSpec from Plot::series()...done().
+ * @return Pair of { Mapped<shared_ptr<PlotContainer>>, Surface } for the created plot.
+ */
+[[nodiscard]] MAYAFLUX_API
+    std::pair<Mapped<std::shared_ptr<Kakshya::PlotContainer>>, Surface>
+    plot(
+        std::string title,
+        uint32_t width,
+        uint32_t height,
+        std::shared_ptr<Kakshya::PlotContainer> container,
+        Plot::SeriesSpec spec);
+
+// =============================================================================
+// Introspection
+// =============================================================================
+
+/**
+ * @brief Open or show the NodeGraphManager inspection window.
+ *
+ * First call creates a dedicated window, builds the InspectResult, and
+ * schedules tap_all() via Bridge. Subsequent calls show() the existing window.
+ */
+MAYAFLUX_API void inspect_node_graph();
+
+/**
+ * @brief Open or show the BufferManager inspection window.
+ *
+ * First call creates a dedicated window, builds the InspectResult, and
+ * schedules tap_all() via Bridge. Subsequent calls show() the existing window.
+ */
+MAYAFLUX_API void inspect_buffers();
+
+/**
+ * @brief Open or show the TaskScheduler inspection window.
+ *
+ * First call creates a dedicated window, builds the InspectResult, and
+ * schedules tap_all() via Bridge. Subsequent calls show() the existing window.
+ */
+MAYAFLUX_API void inspect_scheduler();
+
+/**
+ * @brief Open or show the EventManager inspection window.
+ *
+ * First call creates a dedicated window, builds the InspectResult, and
+ * schedules tap_all() via Bridge. Subsequent calls show() the existing window.
+ */
+MAYAFLUX_API void inspect_events();
+
+/**
+ * @brief Open a dedicated window inspecting a single Node and its modulator tree.
+ */
+MAYAFLUX_API void inspect(const std::shared_ptr<Nodes::Node>& node);
+
+/**
+ * @brief Open a dedicated window inspecting a single Buffer and its processing chain.
+ */
+MAYAFLUX_API void inspect(const std::shared_ptr<Buffers::Buffer>& buf);
+
+/**
+ * @brief Open a dedicated window inspecting a NodeNetwork.
+ */
+MAYAFLUX_API void inspect(const std::shared_ptr<Nodes::Network::NodeNetwork>& net);
+
+/**
+ * @brief Open a dedicated window inspecting a single Event.
+ */
+MAYAFLUX_API void inspect(const std::shared_ptr<Vruta::Event>& ev, std::string_view name = {});
 
 } // namespace MayaFlux::Portal::Forma

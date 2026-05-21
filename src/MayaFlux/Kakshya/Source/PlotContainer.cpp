@@ -2,7 +2,6 @@
 
 #include "MayaFlux/Kakshya/NDData/DataAccess.hpp"
 #include "MayaFlux/Kakshya/Processors/PlotProcessor.hpp"
-#include "MayaFlux/Kakshya/Region/RegionGroup.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
@@ -138,7 +137,7 @@ DataDimension::Role PlotContainer::series_role(uint32_t index) const
 // Source binding
 // =========================================================================
 
-void PlotContainer::bind_node(uint32_t series_index, std::shared_ptr<Nodes::Node> node)
+void PlotContainer::bind(uint32_t series_index, std::shared_ptr<Nodes::Node> node)
 {
     auto& p = ensure_processor();
     p.bind_node(series_index, std::move(node));
@@ -147,7 +146,7 @@ void PlotContainer::bind_node(uint32_t series_index, std::shared_ptr<Nodes::Node
     mark_ready_for_processing(true);
 }
 
-void PlotContainer::bind_audio_buffer(uint32_t series_index,
+void PlotContainer::bind(uint32_t series_index,
     std::shared_ptr<Buffers::AudioBuffer> buffer)
 {
     auto& p = ensure_processor();
@@ -157,7 +156,7 @@ void PlotContainer::bind_audio_buffer(uint32_t series_index,
     mark_ready_for_processing(true);
 }
 
-void PlotContainer::bind_network(uint32_t series_index,
+void PlotContainer::bind(uint32_t series_index,
     std::shared_ptr<Nodes::Network::NodeNetwork> network)
 {
     auto& p = ensure_processor();
@@ -167,7 +166,7 @@ void PlotContainer::bind_network(uint32_t series_index,
     mark_ready_for_processing(true);
 }
 
-void PlotContainer::bind_callable(uint32_t series_index,
+void PlotContainer::bind(uint32_t series_index,
     std::function<void(std::vector<double>&)> fn)
 {
     auto& p = ensure_processor();
