@@ -33,4 +33,25 @@ RowBuffer Inspector::make_row_buffer(
     return { .buf = std::move(buf), .text_image = std::move(text_image) };
 }
 
+void Inspector::destroy(InspectResult& result)
+{
+    if (s_node_graph_result && &result == &*s_node_graph_result) {
+        s_node_graph_result.reset();
+        return;
+    }
+    if (s_buffer_result && &result == &*s_buffer_result) {
+        s_buffer_result.reset();
+        return;
+    }
+    if (s_scheduler_result && &result == &*s_scheduler_result) {
+        s_scheduler_result.reset();
+        return;
+    }
+    if (s_event_result && &result == &*s_event_result) {
+        s_event_result.reset();
+        return;
+    }
+    result = InspectResult {};
+}
+
 } // namespace MayaFlux::Portal::Forma

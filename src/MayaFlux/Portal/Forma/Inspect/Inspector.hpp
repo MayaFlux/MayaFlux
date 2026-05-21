@@ -251,6 +251,16 @@ public:
         LayoutCursor& cursor,
         float x_min = -0.95F, float x_max = 0.95F, float row_h = 0.05F);
 
+    /**
+     * @brief Destroy an InspectResult and release its resources.
+     *
+     * If @p result is one of the four persistent manager results, the
+     * corresponding static optional is nulled; the next manager call will
+     * rebuild from scratch. If @p result is a per-element result owned by
+     * the caller, it is reset to a default-constructed state.
+     */
+    void destroy(InspectResult& result);
+
 private:
     Buffers::BufferManager& m_bm;
     Nodes::NodeGraphManager& m_ngm;
