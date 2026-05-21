@@ -156,6 +156,7 @@ Mapped<std::shared_ptr<Kakshya::PlotContainer>> place(
 
     mapped.element.id = surface.layer().add(mapped.element);
     mapped.state->id = mapped.element.id;
+    mapped.force_redraw_on_sync = true;
     mapped.sync();
     return mapped;
 }
