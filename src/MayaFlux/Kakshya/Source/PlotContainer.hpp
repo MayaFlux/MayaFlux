@@ -90,7 +90,7 @@ public:
      * @param series_index  Index returned by add_series().
      * @param node          Node to read from.
      */
-    void bind_node(uint32_t series_index, std::shared_ptr<Nodes::Node> node);
+    void bind(uint32_t series_index, std::shared_ptr<Nodes::Node> node);
 
     /**
      * @brief Bind a series to an AudioBuffer.
@@ -102,7 +102,7 @@ public:
      * @param series_index  Index returned by add_series().
      * @param buffer        AudioBuffer to read from.
      */
-    void bind_audio_buffer(uint32_t series_index,
+    void bind(uint32_t series_index,
         std::shared_ptr<Buffers::AudioBuffer> buffer);
 
     /**
@@ -114,7 +114,7 @@ public:
      * @param series_index  Index returned by add_series().
      * @param network       NodeNetwork to read from.
      */
-    void bind_network(uint32_t series_index,
+    void bind(uint32_t series_index,
         std::shared_ptr<Nodes::Network::NodeNetwork> network);
 
     /**
@@ -127,7 +127,7 @@ public:
      * @param series_index  Index returned by add_series().
      * @param fn            Callable invoked with the series vector each process().
      */
-    void bind_callable(uint32_t series_index,
+    void bind(uint32_t series_index,
         std::function<void(std::vector<double>&)> fn);
 
     /**

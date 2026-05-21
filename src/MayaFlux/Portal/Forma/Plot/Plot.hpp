@@ -5,6 +5,7 @@
 #include "MayaFlux/Portal/Forma/Primitives/Mapped.hpp"
 
 #include "AxisRange.hpp"
+
 namespace MayaFlux::Portal::Forma {
 class Surface;
 }
@@ -96,22 +97,27 @@ void apply_auto_scale(AxisRange& range,
  *
  * Constructs a Mapped<shared_ptr<PlotContainer>> from the geometry function
  * carried by @p spec, registers the element on @p surface's layer, and runs
- * one initial sync so the first frame has valid geometry.
+ * one initial sync so the first frame has valid geometry. Sets
+ * force_redraw_on_sync so geometry regenerates on every sync() call
+ * the container pointer is stable across frames but its data changes each frame.
  *
  * Buffer construction and scheduling are the caller's responsibility.
  * Use Portal::Forma::create_buffer(surface.window(), spec.capacity_for(N),
- * spec.topology) to build the buffer, and schedule_metro to drive
- * process_default() + state->write() at the desired rate.
+ * spec.topology) to build the buffer, and schedule_metro to drive sync()
+ * at the desired rate.
  *
  * @param surface    Surface to register the element on.
  * @param buf        Pre-built, registered FormaBuffer sized for this encoding.
  *                   Use spec.capacity_for(N) and spec.topology to construct it.
  * @param spec       Result of a SeriesBuilder terminal. Carries the geometry
  *                   function, topology, and capacity arithmetic for this encoding.
+ *                   Raw GeometryFn callers are responsible for calling
+ *                   container->process_default() inside their function;
+ *                   SeriesBuilder terminals call it internally.
  * @param container  PlotContainer with series bound and marked ready for
  *                   processing. Becomes the initial MappedState value.
  * @return Fully constructed Mapped with element registered on the surface layer.
- *         Hold the returned Mapped or its state to drive updates.
+ *         Call sync() each frame to drive geometry updates.
  */
 [[nodiscard]] MAYAFLUX_API
     Mapped<std::shared_ptr<Kakshya::PlotContainer>>
