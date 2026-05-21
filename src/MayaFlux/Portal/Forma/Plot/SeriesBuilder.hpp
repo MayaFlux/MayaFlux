@@ -16,12 +16,12 @@ class ScatterBuilder;
 class BarsBuilder;
 
 // =============================================================================
-// SeriesBuilder
+// Series
 // =============================================================================
 
 /**
  * @struct SeriesSpec
- * @brief Result of a SeriesBuilder terminal. Bundles a geometry function
+ * @brief Result of a Series terminal. Bundles a geometry function
  *        with the topology and capacity arithmetic implied by the encoding.
  *
  * Passed to Plot::place() so callers never supply topology or buffer
@@ -35,7 +35,7 @@ struct SeriesSpec {
 };
 
 /**
- * @class SeriesBuilder
+ * @class Series
  * @brief Convenience constructor for GeometryFn<shared_ptr<PlotContainer>>.
  *
  * Accumulates axis role mappings and palette, then produces a geometry
@@ -70,7 +70,7 @@ struct SeriesSpec {
  * When the builder cannot express what you need, write the raw lambda.
  * It receives the same PlotContainer.
  */
-class SeriesBuilder {
+class Series {
 public:
     using Role = Kakshya::DataDimension::Role;
 
@@ -79,7 +79,7 @@ public:
      * @brief One or more roles mapped to a shared AxisRange and optional palette.
      *
      * palette cycles across series within this mapping. When empty, the
-     * global SeriesBuilder palette is used as fallback.
+     * global Series palette is used as fallback.
      */
     struct AxisMapping {
         std::vector<Role> roles;
@@ -94,7 +94,7 @@ public:
     /**
      * @brief Map a single role to the X axis.
      */
-    SeriesBuilder& x(Role role, AxisRange range = {})
+    Series& x(Role role, AxisRange range = {})
     {
         m_x.push_back({ .roles = { role }, .range = std::move(range), .palette = {} });
         return *this;
@@ -103,7 +103,7 @@ public:
     /**
      * @brief Map a single role to the X axis with per-mapping colors.
      */
-    SeriesBuilder& x(Role role, AxisRange range, std::initializer_list<glm::vec3> palette)
+    Series& x(Role role, AxisRange range, std::initializer_list<glm::vec3> palette)
     {
         m_x.push_back({ .roles = { role }, .range = std::move(range), .palette = palette });
         return *this;
@@ -112,7 +112,7 @@ public:
     /**
      * @brief Map multiple roles to the X axis with a shared range.
      */
-    SeriesBuilder& x(std::vector<Role> roles, AxisRange range = {})
+    Series& x(std::vector<Role> roles, AxisRange range = {})
     {
         m_x.push_back({ .roles = std::move(roles), .range = std::move(range), .palette = {} });
         return *this;
@@ -121,7 +121,7 @@ public:
     /**
      * @brief Map multiple roles to the X axis with a shared range and per-mapping colors.
      */
-    SeriesBuilder& x(std::vector<Role> roles, AxisRange range, std::initializer_list<glm::vec3> palette)
+    Series& x(std::vector<Role> roles, AxisRange range, std::initializer_list<glm::vec3> palette)
     {
         m_x.push_back({ .roles = std::move(roles), .range = std::move(range), .palette = palette });
         return *this;
@@ -130,7 +130,7 @@ public:
     /**
      * @brief Map a single role to the Y axis.
      */
-    SeriesBuilder& y(Role role, AxisRange range = {})
+    Series& y(Role role, AxisRange range = {})
     {
         m_y.push_back({ .roles = { role }, .range = std::move(range), .palette = {} });
         return *this;
@@ -139,7 +139,7 @@ public:
     /**
      * @brief Map a single role to the Y axis with per-mapping colors.
      */
-    SeriesBuilder& y(Role role, AxisRange range, std::initializer_list<glm::vec3> palette)
+    Series& y(Role role, AxisRange range, std::initializer_list<glm::vec3> palette)
     {
         m_y.push_back({ .roles = { role }, .range = std::move(range), .palette = palette });
         return *this;
@@ -148,7 +148,7 @@ public:
     /**
      * @brief Map multiple roles to the Y axis with a shared range.
      */
-    SeriesBuilder& y(std::vector<Role> roles, AxisRange range = {})
+    Series& y(std::vector<Role> roles, AxisRange range = {})
     {
         m_y.push_back({ .roles = std::move(roles), .range = std::move(range), .palette = {} });
         return *this;
@@ -157,7 +157,7 @@ public:
     /**
      * @brief Map multiple roles to the Y axis with a shared range and per-mapping colors.
      */
-    SeriesBuilder& y(std::vector<Role> roles, AxisRange range, std::initializer_list<glm::vec3> palette)
+    Series& y(std::vector<Role> roles, AxisRange range, std::initializer_list<glm::vec3> palette)
     {
         m_y.push_back({ .roles = std::move(roles), .range = std::move(range), .palette = palette });
         return *this;
@@ -166,7 +166,7 @@ public:
     /**
      * @brief Map a single role to the Z axis.
      */
-    SeriesBuilder& z(Role role, AxisRange range = {})
+    Series& z(Role role, AxisRange range = {})
     {
         m_z.push_back({ .roles = { role }, .range = std::move(range), .palette = {} });
         return *this;
@@ -175,7 +175,7 @@ public:
     /**
      * @brief Map a single role to the Z axis with per-mapping colors.
      */
-    SeriesBuilder& z(Role role, AxisRange range, std::initializer_list<glm::vec3> palette)
+    Series& z(Role role, AxisRange range, std::initializer_list<glm::vec3> palette)
     {
         m_z.push_back({ .roles = { role }, .range = std::move(range), .palette = palette });
         return *this;
@@ -184,7 +184,7 @@ public:
     /**
      * @brief Map multiple roles to the Z axis with a shared range.
      */
-    SeriesBuilder& z(std::vector<Role> roles, AxisRange range = {})
+    Series& z(std::vector<Role> roles, AxisRange range = {})
     {
         m_z.push_back({ .roles = std::move(roles), .range = std::move(range), .palette = {} });
         return *this;
@@ -193,7 +193,7 @@ public:
     /**
      * @brief Map multiple roles to the Z axis with a shared range and per-mapping colors.
      */
-    SeriesBuilder& z(std::vector<Role> roles, AxisRange range, std::initializer_list<glm::vec3> palette)
+    Series& z(std::vector<Role> roles, AxisRange range, std::initializer_list<glm::vec3> palette)
     {
         m_z.push_back({ .roles = std::move(roles), .range = std::move(range), .palette = palette });
         return *this;
@@ -209,13 +209,13 @@ public:
      * Used as fallback when a series belongs to a mapping with no per-mapping
      * palette. Cycled across all such series by index. Multiple calls append.
      */
-    SeriesBuilder& color(std::initializer_list<glm::vec3> colors)
+    Series& color(std::initializer_list<glm::vec3> colors)
     {
         m_palette.insert(m_palette.end(), colors.begin(), colors.end());
         return *this;
     }
 
-    SeriesBuilder& color(glm::vec3 c)
+    Series& color(glm::vec3 c)
     {
         m_palette.push_back(c);
         return *this;
@@ -263,13 +263,13 @@ private:
  * palette as fallback, white if both are empty.
  *
  * Roles not consumed by this encoding remain in the container and are
- * available to any other GeometryFn produced from the same SeriesBuilder.
+ * available to any other GeometryFn produced from the same Series.
  *
  * .done() produces a GeometryFn<shared_ptr<PlotContainer>>.
  */
 class WaveformBuilder {
 public:
-    WaveformBuilder(SeriesBuilder state)
+    WaveformBuilder(Series state)
         : m_state(std::move(state))
     {
     }
@@ -284,7 +284,7 @@ public:
     [[nodiscard]] SeriesSpec done() const;
 
 private:
-    SeriesBuilder m_state;
+    Series m_state;
     float m_thickness { 1.5F };
 };
 
@@ -300,7 +300,7 @@ private:
  */
 class ScatterBuilder {
 public:
-    ScatterBuilder(SeriesBuilder state)
+    ScatterBuilder(Series state)
         : m_state(std::move(state))
     {
     }
@@ -315,7 +315,7 @@ public:
     [[nodiscard]] SeriesSpec done() const;
 
 private:
-    SeriesBuilder m_state;
+    Series m_state;
     float m_point_size { 4.F };
 };
 
@@ -332,7 +332,7 @@ private:
  */
 class BarsBuilder {
 public:
-    BarsBuilder(SeriesBuilder state)
+    BarsBuilder(Series state)
         : m_state(std::move(state))
     {
     }
@@ -340,44 +340,11 @@ public:
     [[nodiscard]] SeriesSpec done() const;
 
 private:
-    SeriesBuilder m_state;
+    Series m_state;
 };
 
-inline WaveformBuilder SeriesBuilder::as_waveform() const { return { *this }; }
-inline ScatterBuilder SeriesBuilder::as_scatter() const { return { *this }; }
-inline BarsBuilder SeriesBuilder::as_bars() const { return { *this }; }
-
-// =============================================================================
-// Entry point
-// =============================================================================
-
-/**
- * @brief Begin a SeriesBuilder chain.
- *
- * Convenience constructor for GeometryFn<shared_ptr<PlotContainer>>.
- * Illustrative, not idiomatic. The raw GeometryFn lambda is always the
- * primary path and is preferred when the builder cannot express what you need.
- *
- * @code
- * // 7 SPATIAL_Y series -> 7 waveforms, blue palette
- * auto geom = Plot::series()
- *     .y(Role::SPATIAL_Y, AxisRange{}.auto_scale(), { 0.2F, 0.8F, 1.0F })
- *     .as_waveform()
- *     .thickness(1.5F)
- *     .done();
- *
- * // Lissajous scatter, X and Y each with their own range
- * auto geom = Plot::series()
- *     .x(Role::SPATIAL_X, AxisRange{}.range(-1.F, 1.F))
- *     .y(Role::SPATIAL_Y, AxisRange{}.range(-1.F, 1.F), { 0.9F, 0.3F, 0.8F })
- *     .as_scatter()
- *     .point_size(3.F)
- *     .done();
- * @endcode
- */
-[[nodiscard]] inline SeriesBuilder series()
-{
-    return SeriesBuilder {};
-}
+inline WaveformBuilder Series::as_waveform() const { return { *this }; }
+inline ScatterBuilder Series::as_scatter() const { return { *this }; }
+inline BarsBuilder Series::as_bars() const { return { *this }; }
 
 } // namespace MayaFlux::Portal::Forma::Plot

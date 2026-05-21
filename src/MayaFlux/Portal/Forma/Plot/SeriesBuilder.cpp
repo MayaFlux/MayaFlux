@@ -1,6 +1,9 @@
 #include "SeriesBuilder.hpp"
 
-#include "Plot.hpp"
+#include "PlotSpec.hpp"
+
+#include "MayaFlux/Kakshya/Region/RegionGroup.hpp"
+#include "MayaFlux/Kakshya/Source/PlotContainer.hpp"
 
 namespace MayaFlux::Portal::Forma::Plot {
 
@@ -17,7 +20,7 @@ namespace {
      */
     std::vector<std::span<const double>> series_for_mapping(
         const Kakshya::PlotContainer& container,
-        const SeriesBuilder::AxisMapping& mapping)
+        const Series::AxisMapping& mapping)
     {
         std::vector<std::span<const double>> result;
         for (const auto& role : mapping.roles) {
@@ -30,7 +33,7 @@ namespace {
     /**
      * @brief Flatten all AxisMappings into a single merged AxisRange.
      */
-    AxisRange merge_axis(std::vector<SeriesBuilder::AxisMapping>& mappings)
+    AxisRange merge_axis(std::vector<Series::AxisMapping>& mappings)
     {
         if (mappings.empty())
             return {};
@@ -54,7 +57,7 @@ namespace {
      * @brief Resolve color for a series index within a mapping.
      */
     glm::vec3 resolve_color(
-        const SeriesBuilder::AxisMapping& mapping,
+        const Series::AxisMapping& mapping,
         const std::vector<glm::vec3>& global_palette,
         size_t series_index)
     {

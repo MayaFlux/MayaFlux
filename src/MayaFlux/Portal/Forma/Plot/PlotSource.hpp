@@ -20,7 +20,7 @@ class PlotContainer;
 namespace MayaFlux::Portal::Forma::Plot {
 
 /**
- * @class PlotSource
+ * @class Source
  * @brief Chainable builder for PlotContainer construction.
  *
  * Eliminates manual container creation, index threading, and
@@ -29,15 +29,15 @@ namespace MayaFlux::Portal::Forma::Plot {
  * indefinitely. Call .build() as the terminal to obtain the container.
  *
  * @code
- * auto container = PlotSource()
+ * auto container = Source()
  *     .as("fm_sine", 512, Role::SPATIAL_Y, DataModality::AUDIO_1D).with(sine)
  *     .as("mod",     512, Role::SPATIAL_Y, DataModality::AUDIO_1D).with(mod)
  *     .build();
  * @endcode
  */
-class MAYAFLUX_API PlotSource {
+class MAYAFLUX_API Source {
 public:
-    PlotSource();
+    Source();
 
     /**
      * @brief Add a named series and record its index for the next with() call.
@@ -46,23 +46,23 @@ public:
      * @param role     Semantic role.
      * @param modality Data modality.
      */
-    PlotSource& as(
+    Source& as(
         std::string name,
         uint64_t count,
         Kakshya::DataDimension::Role role,
         Kakshya::DataModality modality);
 
     /** @brief Bind a Node to the last series added by as(). */
-    PlotSource& from(std::shared_ptr<Nodes::Node> node);
+    Source& from(std::shared_ptr<Nodes::Node> node);
 
     /** @brief Bind an AudioBuffer to the last series added by as(). */
-    PlotSource& from(std::shared_ptr<Buffers::AudioBuffer> buf);
+    Source& from(std::shared_ptr<Buffers::AudioBuffer> buf);
 
     /** @brief Bind a NodeNetwork to the last series added by as(). */
-    PlotSource& from(std::shared_ptr<Nodes::Network::NodeNetwork> net);
+    Source& from(std::shared_ptr<Nodes::Network::NodeNetwork> net);
 
     /** @brief Bind a callable to the last series added by as(). */
-    PlotSource& from(std::function<void(std::vector<double>&)> fn);
+    Source& from(std::function<void(std::vector<double>&)> fn);
 
     /**
      * @brief Finalise and return the constructed container.

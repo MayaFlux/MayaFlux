@@ -9,12 +9,12 @@
 
 namespace MayaFlux::Portal::Forma::Plot {
 
-PlotSource::PlotSource()
+Source::Source()
     : m_container(std::make_shared<Kakshya::PlotContainer>())
 {
 }
 
-PlotSource& PlotSource::as(
+Source& Source::as(
     std::string name,
     uint64_t count,
     Kakshya::DataDimension::Role role,
@@ -24,31 +24,31 @@ PlotSource& PlotSource::as(
     return *this;
 }
 
-PlotSource& PlotSource::from(std::shared_ptr<Nodes::Node> node)
+Source& Source::from(std::shared_ptr<Nodes::Node> node)
 {
     m_container->bind(m_last_index, std::move(node));
     return *this;
 }
 
-PlotSource& PlotSource::from(std::shared_ptr<Buffers::AudioBuffer> buf)
+Source& Source::from(std::shared_ptr<Buffers::AudioBuffer> buf)
 {
     m_container->bind(m_last_index, std::move(buf));
     return *this;
 }
 
-PlotSource& PlotSource::from(std::shared_ptr<Nodes::Network::NodeNetwork> net)
+Source& Source::from(std::shared_ptr<Nodes::Network::NodeNetwork> net)
 {
     m_container->bind(m_last_index, std::move(net));
     return *this;
 }
 
-PlotSource& PlotSource::from(std::function<void(std::vector<double>&)> fn)
+Source& Source::from(std::function<void(std::vector<double>&)> fn)
 {
     m_container->bind(m_last_index, std::move(fn));
     return *this;
 }
 
-std::shared_ptr<Kakshya::PlotContainer> PlotSource::build()
+std::shared_ptr<Kakshya::PlotContainer> Source::build()
 {
     return std::move(m_container);
 }

@@ -1,96 +1,14 @@
 #pragma once
 
-#include "MayaFlux/Kakshya/Source/PlotContainer.hpp"
-#include "MayaFlux/Kinesis/Spatial/Bounds.hpp"
-#include "MayaFlux/Portal/Forma/Primitives/Mapped.hpp"
-
-#include "AxisRange.hpp"
+#include "PlotSource.hpp"
+#include "PlotSpec.hpp"
+#include "SeriesBuilder.hpp"
 
 namespace MayaFlux::Portal::Forma {
 class Surface;
 }
 
 namespace MayaFlux::Portal::Forma::Plot {
-
-struct SeriesSpec;
-
-// =============================================================================
-// series_by_role
-// =============================================================================
-
-/**
- * @brief Collect all series from processed_data whose DataDimension role
- *        matches @p role.
- *
- * Returns spans pointing directly into the DataVariant storage — no copy.
- * Returns an empty vector if no series carry the role or if any matching
- * variant does not hold vector<double>.
- *
- * @param container  PlotContainer after process_default() has been called.
- * @param role       DataDimension::Role to match.
- */
-[[nodiscard]] std::vector<std::span<const double>> series_by_role(
-    const Kakshya::PlotContainer& container,
-    Kakshya::DataDimension::Role role);
-
-/**
- * @brief Compute [min, max] over a scalar series.
- *
- * Returns {0, 1} for an empty span.
- */
-[[nodiscard]] std::pair<float, float> data_range(std::span<const double> series);
-
-/**
- * @brief Apply auto-scaling to an AxisRange from a set of series.
- *
- * Computes the union [min, max] over all provided series and updates
- * @p range in place. No-op if series is empty or range.auto_scale is false.
- */
-void apply_auto_scale(AxisRange& range,
-    const std::vector<std::span<const double>>& series);
-
-// =============================================================================
-// Palette
-// =============================================================================
-
-/**
- * @brief Resolve a per-series color from a palette.
- *
- * Wraps @p palette cyclically: palette[index % palette.size()].
- * Returns white if @p palette is empty.
- *
- * @param palette  Per-series base colors. Size 1 = uniform color.
- * @param index    Series index.
- */
-[[nodiscard]] glm::vec3 palette_color(const std::vector<glm::vec3>& palette,
-    size_t index) noexcept;
-
-// =============================================================================
-// Geometry function factories
-// =============================================================================
-
-/**
- * @brief TRIANGLE_STRIP background quad for a plot area.
- *
- * Produces a solid-color or textured full-screen quad covering @p bounds.
- * Intended to be added to the same Layer as a plot element via Layer::relate,
- * rendered before it.
- *
- * When @p texture is non-null the quad uses the textured vertex path and
- * the caller must pass a matching FormaBuffer with a texture binding. When
- * null the quad is filled with @p color.
- *
- * T is float (a dummy tick value — the background is static unless the
- * caller drives it). Write any float to state->write() to refresh.
- *
- * @param bounds   Plot area in NDC.
- * @param color    Fill color when no texture is provided.
- * @param texture  Optional GPU image. nullptr = solid color.
- */
-[[nodiscard]] GeometryFn<float> background(
-    Kinesis::AABB2D bounds,
-    glm::vec3 color = glm::vec3(1.F),
-    const std::shared_ptr<Core::VKImage>& texture = nullptr);
 
 /**
  * @brief Place a plot element onto a Surface using a pre-built FormaBuffer.
@@ -126,5 +44,53 @@ void apply_auto_scale(AxisRange& range,
         std::shared_ptr<Buffers::FormaBuffer> buf,
         SeriesSpec spec,
         std::shared_ptr<Kakshya::PlotContainer> container);
+
+/**
+ * @brief Begin a Series chain.
+ *
+ * Convenience constructor for GeometryFn<shared_ptr<PlotContainer>>.
+ * Illustrative, not idiomatic. The raw GeometryFn lambda is always the
+ * primary path and is preferred when the builder cannot express what you need.
+ *
+ * @code
+ * // 7 SPATIAL_Y series -> 7 waveforms, blue palette
+ * auto geom = Plot::series()
+ *     .y(Role::SPATIAL_Y, AxisRange{}.auto_scale(), { 0.2F, 0.8F, 1.0F })
+ *     .as_waveform()
+ *     .thickness(1.5F)
+ *     .done();
+ *
+ * // Lissajous scatter, X and Y each with their own range
+ * auto geom = Plot::series()
+ *     .x(Role::SPATIAL_X, AxisRange{}.range(-1.F, 1.F))
+ *     .y(Role::SPATIAL_Y, AxisRange{}.range(-1.F, 1.F), { 0.9F, 0.3F, 0.8F })
+ *     .as_scatter()
+ *     .point_size(3.F)
+ *     .done();
+ * @endcode
+ */
+[[nodiscard]] inline Series series()
+{
+    return Series {};
+}
+
+/**
+ * @brief Begin a Source chain.
+ *
+ * Constructs a PlotContainer incrementally via .as().from() pairs.
+ * The raw PlotContainer API remains available after .build() for cases
+ * the builder cannot express.
+ *
+ * @code
+ * auto container = Plot::source()
+ *     .as("fm_sine", 512, Role::SPATIAL_Y, DataModality::AUDIO_1D).from(sine)
+ *     .as("mod",     512, Role::SPATIAL_Y, DataModality::AUDIO_1D).from(mod)
+ *     .build();
+ * @endcode
+ */
+[[nodiscard]] inline Source source()
+{
+    return Source {};
+}
 
 } // namespace MayaFlux::Portal::Forma::Plot
