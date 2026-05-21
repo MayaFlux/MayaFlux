@@ -4,7 +4,6 @@
 #include "MayaFlux/Buffers/BufferUtils.hpp"
 
 #include "MayaFlux/Kakshya/Source/PlotContainer.hpp"
-#include "MayaFlux/Kakshya/Region/RegionGroup.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Nodes/Network/NodeNetwork.hpp"

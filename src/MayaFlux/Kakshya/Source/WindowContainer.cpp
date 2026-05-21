@@ -4,7 +4,6 @@
 #include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Kakshya/NDData/DataAccess.hpp"
 #include "MayaFlux/Kakshya/Processors/WindowAccessProcessor.hpp"
-#include "MayaFlux/Kakshya/Region/RegionGroup.hpp"
 #include "MayaFlux/Kakshya/Utils/CoordUtils.hpp"
 #include "MayaFlux/Kakshya/Utils/RegionUtils.hpp"
 #include "MayaFlux/Kakshya/Utils/SurfaceUtils.hpp"

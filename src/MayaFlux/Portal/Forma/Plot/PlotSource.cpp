@@ -1,6 +1,5 @@
 #include "PlotSource.hpp"
 
-#include "MayaFlux/Kakshya/Region/RegionGroup.hpp"
 #include "MayaFlux/Kakshya/Source/PlotContainer.hpp"
 
 #include "MayaFlux/Buffers/AudioBuffer.hpp"

@@ -1,7 +1,6 @@
 #include "MayaFlux/Kakshya/NDData/DataAccess.hpp"
 #include "test_config.h"
 
-#include "MayaFlux/Kakshya/Region/RegionGroup.hpp"
 #include "MayaFlux/Kakshya/SignalSourceContainer.hpp"
 
 using namespace MayaFlux::Kakshya;

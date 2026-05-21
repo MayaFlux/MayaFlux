@@ -1,6 +1,7 @@
 #pragma once
 
 #include "NDimensionalContainer.hpp"
+#include "Region/RegionGroup.hpp"
 
 namespace MayaFlux::Kakshya {
 

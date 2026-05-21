@@ -2,7 +2,6 @@
 
 #include "PlotSpec.hpp"
 
-#include "MayaFlux/Kakshya/Region/RegionGroup.hpp"
 #include "MayaFlux/Kakshya/Source/PlotContainer.hpp"
 
 namespace MayaFlux::Portal::Forma::Plot {

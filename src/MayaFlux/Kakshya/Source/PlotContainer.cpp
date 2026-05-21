@@ -2,7 +2,6 @@
 
 #include "MayaFlux/Kakshya/NDData/DataAccess.hpp"
 #include "MayaFlux/Kakshya/Processors/PlotProcessor.hpp"
-#include "MayaFlux/Kakshya/Region/RegionGroup.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
