@@ -32,6 +32,7 @@ struct SeriesSpec {
     Forma::GeometryFn<std::shared_ptr<Kakshya::PlotContainer>> fn;
     Graphics::PrimitiveTopology topology;
     std::function<size_t(uint64_t sample_count)> capacity_for;
+    std::optional<GeometryFn<float>> background_fn;
 };
 
 /**
@@ -221,6 +222,23 @@ public:
         return *this;
     }
 
+    /**
+     * @brief Set a solid-color background quad for this plot area.
+     *
+     * When set, Forma::plot() creates a background element behind the
+     * plot geometry. Has no effect when using Plot::place() directly.
+     *
+     * @param bounds NDC bounds of the background quad.
+     * @param color  Fill color. Defaults to a dark near-black.
+     */
+    Series& background(Kinesis::AABB2D bounds, glm::vec3 color = glm::vec3(0.08F))
+    {
+        m_background_bounds = bounds;
+        m_background_color = color;
+        m_has_background = true;
+        return *this;
+    }
+
     // =========================================================================
     // Encoding terminals
     // =========================================================================
@@ -237,12 +255,18 @@ public:
     [[nodiscard]] const std::vector<AxisMapping>& y_mappings() const { return m_y; }
     [[nodiscard]] const std::vector<AxisMapping>& z_mappings() const { return m_z; }
     [[nodiscard]] const std::vector<glm::vec3>& palette() const { return m_palette; }
+    [[nodiscard]] bool has_background() const { return m_has_background; }
+    [[nodiscard]] Kinesis::AABB2D background_bounds() const { return m_background_bounds; }
+    [[nodiscard]] glm::vec3 background_color() const { return m_background_color; }
 
 private:
     std::vector<AxisMapping> m_x;
     std::vector<AxisMapping> m_y;
     std::vector<AxisMapping> m_z;
     std::vector<glm::vec3> m_palette;
+    glm::vec3 m_background_color {};
+    bool m_has_background {};
+    Kinesis::AABB2D m_background_bounds {};
 };
 
 // =============================================================================

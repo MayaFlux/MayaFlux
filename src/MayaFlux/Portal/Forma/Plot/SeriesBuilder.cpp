@@ -220,6 +220,9 @@ SeriesSpec WaveformBuilder::done() const
             } },
         .topology = Graphics::PrimitiveTopology::LINE_STRIP,
         .capacity_for = [](uint64_t n) { return (n + 2) * k_stride; },
+        .background_fn = m_state.has_background()
+            ? std::optional<GeometryFn<float>> { background(m_state.background_bounds(), m_state.background_color()) }
+            : std::nullopt,
     };
 }
 
@@ -297,6 +300,9 @@ SeriesSpec ScatterBuilder::done() const
         } },
         .topology = Graphics::PrimitiveTopology::POINT_LIST,
         .capacity_for = [](uint64_t n) { return n * k_stride; },
+        .background_fn = m_state.has_background()
+            ? std::optional<GeometryFn<float>> { background(m_state.background_bounds(), m_state.background_color()) }
+            : std::nullopt,
     };
 }
 
@@ -357,6 +363,9 @@ SeriesSpec BarsBuilder::done() const
             } },
         .topology = Graphics::PrimitiveTopology::TRIANGLE_LIST,
         .capacity_for = [](uint64_t n) { return n * 6 * k_stride; },
+        .background_fn = m_state.has_background()
+            ? std::optional<GeometryFn<float>> { background(m_state.background_bounds(), m_state.background_color()) }
+            : std::nullopt,
     };
 }
 
