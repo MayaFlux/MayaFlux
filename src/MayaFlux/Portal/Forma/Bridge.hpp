@@ -452,6 +452,19 @@ public:
         return Binding(*this, state->id);
     }
 
+    /**
+     * @brief Spawn a per-frame GraphicsRoutine that calls @p sync_fn each tick.
+     *
+     * Stores the task name in the outbound_tasks of the record for @p id so
+     * that unbind() cancels it correctly. The coroutine body is type-free --
+     * all type-specific work is captured inside @p sync_fn by the caller.
+     *
+     * @param id       Element id whose outbound_tasks receives the task name.
+     * @param sync_fn  Callable invoked once per frame. Typically a lambda
+     *                 capturing Mapped<T> by reference and calling sync().
+     */
+    void spawn_sync(uint32_t id, std::function<void()> sync_fn);
+
 private:
     struct ElementRecord {
         std::shared_ptr<Buffers::FormaBuffer> buffer;
@@ -473,19 +486,6 @@ private:
     void cancel_inbound(ElementRecord& rec);
     void cancel_outbound(ElementRecord& rec);
     void spawn_inbound(uint32_t id, std::function<float()> source);
-
-    /**
-     * @brief Spawn a per-frame GraphicsRoutine that calls @p sync_fn each tick.
-     *
-     * Stores the task name in the outbound_tasks of the record for @p id so
-     * that unbind() cancels it correctly. The coroutine body is type-free --
-     * all type-specific work is captured inside @p sync_fn by the caller.
-     *
-     * @param id       Element id whose outbound_tasks receives the task name.
-     * @param sync_fn  Callable invoked once per frame. Typically a lambda
-     *                 capturing Mapped<T> by reference and calling sync().
-     */
-    void spawn_sync(uint32_t id, std::function<void()> sync_fn);
 };
 
 } // namespace MayaFlux::Portal::Forma
