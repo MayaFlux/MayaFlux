@@ -533,11 +533,25 @@ void BufferPipeline::process_operation(BufferOperation& op, uint64_t cycle)
                 auto transformed = op.m_transformer(input_data, cycle);
                 m_operation_data[&op] = transformed;
 
-                for (auto& m_operation : std::ranges::reverse_view(m_operations)) {
-                    if (&m_operation == &op)
-                        continue;
-                    if (m_operation.get_type() == BufferOperation::OpType::CAPTURE && m_operation.m_capture.get_buffer()) {
-                        write_to_buffer(m_operation.m_capture.get_buffer(), transformed);
+                const bool has_downstream_route = std::ranges::any_of(
+                    m_operations,
+                    [](const BufferOperation& o) {
+                        return o.get_type() == BufferOperation::OpType::ROUTE;
+                    });
+
+                if (!has_downstream_route) {
+                    for (auto& candidate : std::ranges::reverse_view(m_operations)) {
+                        if (&candidate == &op)
+                            continue;
+                        if (candidate.get_type() != BufferOperation::OpType::CAPTURE
+                            || !candidate.m_capture.get_buffer()) {
+                            continue;
+                        }
+                        const auto buf = candidate.m_capture.get_buffer();
+                        if (std::holds_alternative<std::vector<double>>(transformed)
+                            && std::get<std::vector<double>>(transformed).size() == buf->get_data().size()) {
+                            write_to_buffer(buf, transformed);
+                        }
                         break;
                     }
                 }
