@@ -76,7 +76,10 @@ else()
 endif()
 
 add_library(miniz STATIC ${CMAKE_SOURCE_DIR}/third_party/tinyexr/miniz.c)
-set_target_properties(miniz PROPERTIES LINKER_LANGUAGE C)
+set_target_properties(miniz PROPERTIES
+    LINKER_LANGUAGE C
+    POSITION_INDEPENDENT_CODE ON
+)
 target_include_directories(miniz PUBLIC
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/third_party/tinyexr>
     $<INSTALL_INTERFACE:include/MayaFlux/thirdparty/tinyexr>
