@@ -2,8 +2,8 @@
 
 #include "Mapped.hpp"
 
+#include "MayaFlux/Kakshya/NDData/VertexFormats.hpp"
 #include "MayaFlux/Kinesis/Spatial/Bounds.hpp"
-#include "MayaFlux/Nodes/Graphics/VertexSpec.hpp"
 
 namespace MayaFlux::Portal::Forma::Geometry {
 
@@ -82,7 +82,7 @@ void write_verts(std::vector<uint8_t>& out, const V& verts)
         float yt = bounds.min.y + bounds.height() * 0.35F;
         float yb = bounds.min.y + bounds.height() * 0.65F;
 
-        using V = Nodes::LineVertex;
+        using V = Kakshya::LineVertex;
         std::vector<V> verts;
         verts.reserve(8);
 
@@ -134,7 +134,7 @@ void write_verts(std::vector<uint8_t>& out, const V& verts)
         float angle = angle_start + v * (angle_end - angle_start);
         glm::vec2 tip = center + radius * glm::vec2(std::cos(angle), std::sin(angle));
 
-        using V = Nodes::LineVertex;
+        using V = Kakshya::LineVertex;
         std::vector<V> verts = {
             { .position = { center.x, center.y, 0 }, .color = color },
             { .position = { tip.x, tip.y, 0 }, .color = color },
@@ -170,7 +170,7 @@ void write_verts(std::vector<uint8_t>& out, const V& verts)
         float x = bounds.min.x + v.x * bounds.width();
         float y = bounds.min.y + v.y * bounds.height();
 
-        using V = Nodes::PointVertex;
+        using V = Kakshya::PointVertex;
         std::vector<V> verts = {
             { .position = { x, y, 0 }, .color = color, .size = size },
         };

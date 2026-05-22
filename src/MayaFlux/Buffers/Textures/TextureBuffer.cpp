@@ -210,7 +210,7 @@ void TextureBuffer::set_rotation(float angle_radians)
 // Custom Geometry
 // =========================================================================
 
-void TextureBuffer::set_custom_vertices(const std::vector<Nodes::TextureQuadVertex>& vertices)
+void TextureBuffer::set_custom_vertices(const std::vector<Kakshya::TextureQuadVertex>& vertices)
 {
     if (vertices.size() != 4) {
         MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
@@ -218,7 +218,7 @@ void TextureBuffer::set_custom_vertices(const std::vector<Nodes::TextureQuadVert
         return;
     }
 
-    m_vertex_bytes.resize(vertices.size() * sizeof(Nodes::TextureQuadVertex));
+    m_vertex_bytes.resize(vertices.size() * sizeof(Kakshya::TextureQuadVertex));
     std::memcpy(m_vertex_bytes.data(), vertices.data(), m_vertex_bytes.size());
     m_uses_custom_vertices = true;
     m_geometry_dirty = true;
@@ -245,13 +245,13 @@ void TextureBuffer::use_default_quad()
 
 size_t TextureBuffer::calculate_quad_vertex_size()
 {
-    return 4 * sizeof(Nodes::TextureQuadVertex);
+    return 4 * sizeof(Kakshya::TextureQuadVertex);
 }
 
 void TextureBuffer::generate_default_quad()
 {
     auto geo = Kinesis::generate_quad(m_position, m_scale);
-    m_vertex_bytes.resize(geo.vertices.size() * sizeof(Nodes::TextureQuadVertex));
+    m_vertex_bytes.resize(geo.vertices.size() * sizeof(Kakshya::TextureQuadVertex));
     std::memcpy(m_vertex_bytes.data(), geo.vertices.data(), m_vertex_bytes.size());
     set_vertex_layout(geo.layout);
 
@@ -268,7 +268,7 @@ void TextureBuffer::generate_quad_with_transform()
     }
 
     auto geo = Kinesis::generate_quad(m_position, m_scale, m_rotation);
-    m_vertex_bytes.resize(geo.vertices.size() * sizeof(Nodes::TextureQuadVertex));
+    m_vertex_bytes.resize(geo.vertices.size() * sizeof(Kakshya::TextureQuadVertex));
     std::memcpy(m_vertex_bytes.data(), geo.vertices.data(), m_vertex_bytes.size());
 
     MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,

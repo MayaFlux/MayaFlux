@@ -5,7 +5,7 @@
 namespace MayaFlux::Kinesis {
 
 namespace {
-    constexpr std::array<Nodes::TextureQuadVertex, 4> k_unit_quad = { {
+    constexpr std::array<Kakshya::TextureQuadVertex, 4> k_unit_quad = { {
         { .position = { -1.0F, -1.0F, 0.0F }, .texcoord = { 0.0F, 1.0F } },
         { .position = { 1.0F, -1.0F, 0.0F }, .texcoord = { 1.0F, 1.0F } },
         { .position = { -1.0F, 1.0F, 0.0F }, .texcoord = { 0.0F, 0.0F } },
@@ -242,8 +242,8 @@ void apply_scale(
 // Differential Geometry
 //==============================================================================
 
-std::vector<Nodes::LineVertex> compute_path_normals(
-    const std::vector<Nodes::LineVertex>& path_vertices,
+std::vector<Kakshya::LineVertex> compute_path_normals(
+    const std::vector<Kakshya::LineVertex>& path_vertices,
     float normal_length,
     size_t stride)
 {
@@ -251,7 +251,7 @@ std::vector<Nodes::LineVertex> compute_path_normals(
         return {};
     }
 
-    std::vector<Nodes::LineVertex> normals;
+    std::vector<Kakshya::LineVertex> normals;
     normals.reserve((path_vertices.size() - 1) / stride * 2);
 
     for (size_t i = 0; i < path_vertices.size() - 1; i += stride) {
@@ -289,8 +289,8 @@ std::vector<Nodes::LineVertex> compute_path_normals(
     return normals;
 }
 
-std::vector<Nodes::LineVertex> compute_path_tangents(
-    const std::vector<Nodes::LineVertex>& path_vertices,
+std::vector<Kakshya::LineVertex> compute_path_tangents(
+    const std::vector<Kakshya::LineVertex>& path_vertices,
     float tangent_length,
     size_t stride)
 {
@@ -298,7 +298,7 @@ std::vector<Nodes::LineVertex> compute_path_tangents(
         return {};
     }
 
-    std::vector<Nodes::LineVertex> tangents;
+    std::vector<Kakshya::LineVertex> tangents;
     tangents.reserve((path_vertices.size() - 1) / stride * 2);
 
     for (size_t i = 0; i < path_vertices.size() - 1; i += stride) {
@@ -329,8 +329,8 @@ std::vector<Nodes::LineVertex> compute_path_tangents(
     return tangents;
 }
 
-std::vector<Nodes::LineVertex> compute_path_curvature(
-    const std::vector<Nodes::LineVertex>& path_vertices,
+std::vector<Kakshya::LineVertex> compute_path_curvature(
+    const std::vector<Kakshya::LineVertex>& path_vertices,
     float curvature_scale,
     size_t stride)
 {
@@ -338,7 +338,7 @@ std::vector<Nodes::LineVertex> compute_path_curvature(
         return {};
     }
 
-    std::vector<Nodes::LineVertex> curvatures;
+    std::vector<Kakshya::LineVertex> curvatures;
     curvatures.reserve((path_vertices.size() - 2) / stride * 2);
 
     for (size_t i = 1; i < path_vertices.size() - 1; i += stride) {
@@ -388,8 +388,8 @@ std::vector<glm::vec3> sample_parametric_curve(
     return vertices;
 }
 
-std::vector<Nodes::LineVertex> reparameterize_by_arc_length(
-    const std::vector<Nodes::LineVertex>& path_vertices,
+std::vector<Kakshya::LineVertex> reparameterize_by_arc_length(
+    const std::vector<Kakshya::LineVertex>& path_vertices,
     size_t num_samples)
 {
     if (path_vertices.size() < 2 || num_samples < 2) {
@@ -413,7 +413,7 @@ std::vector<Nodes::LineVertex> reparameterize_by_arc_length(
         return path_vertices;
     }
 
-    std::vector<Nodes::LineVertex> resampled;
+    std::vector<Kakshya::LineVertex> resampled;
     resampled.reserve(num_samples);
 
     for (size_t i = 0; i < num_samples; ++i) {
@@ -565,7 +565,7 @@ std::vector<glm::vec3> compute_convex_hull_2d(
 // Color Utilities
 //==============================================================================
 
-std::vector<Nodes::LineVertex> apply_color_gradient(
+std::vector<Kakshya::LineVertex> apply_color_gradient(
     const std::vector<glm::vec3>& positions,
     const std::vector<glm::vec3>& colors,
     const std::vector<float>& color_positions,
@@ -575,7 +575,7 @@ std::vector<Nodes::LineVertex> apply_color_gradient(
         return {};
     }
 
-    std::vector<Nodes::LineVertex> vertices;
+    std::vector<Kakshya::LineVertex> vertices;
     vertices.reserve(positions.size());
 
     if (colors.size() == 1) {
@@ -624,12 +624,12 @@ std::vector<Nodes::LineVertex> apply_color_gradient(
     return vertices;
 }
 
-std::vector<Nodes::LineVertex> apply_uniform_color(
+std::vector<Kakshya::LineVertex> apply_uniform_color(
     const std::vector<glm::vec3>& positions,
     const glm::vec3& color,
     float default_thickness)
 {
-    std::vector<Nodes::LineVertex> vertices;
+    std::vector<Kakshya::LineVertex> vertices;
     vertices.reserve(positions.size());
 
     for (const auto& pos : positions) {
@@ -641,7 +641,7 @@ std::vector<Nodes::LineVertex> apply_uniform_color(
     return vertices;
 }
 
-std::vector<Nodes::LineVertex> apply_vertex_colors(
+std::vector<Kakshya::LineVertex> apply_vertex_colors(
     const std::vector<glm::vec3>& positions,
     const std::vector<glm::vec3>& colors,
     float default_thickness)
@@ -650,7 +650,7 @@ std::vector<Nodes::LineVertex> apply_vertex_colors(
         return {};
     }
 
-    std::vector<Nodes::LineVertex> vertices;
+    std::vector<Kakshya::LineVertex> vertices;
     vertices.reserve(positions.size());
 
     for (size_t i = 0; i < positions.size(); ++i) {

@@ -2,7 +2,7 @@
 
 #include "Stochastic.hpp"
 
-#include "MayaFlux/Nodes/Graphics/VertexSpec.hpp"
+#include "MayaFlux/Kakshya/NDData/VertexFormats.hpp"
 
 namespace MayaFlux::Kinesis {
 
@@ -110,7 +110,7 @@ struct SampleResult {
  * @param size_range Min/max point size; scalar linearly interpolates within it
  * @return PointVertex with all fields populated from sample
  */
-[[nodiscard]] inline Nodes::PointVertex to_point_vertex(
+[[nodiscard]] inline Kakshya::PointVertex to_point_vertex(
     const SampleResult& s,
     glm::vec2 size_range = { 8.0F, 12.0F }) noexcept
 {
@@ -130,7 +130,7 @@ struct SampleResult {
  * @param thickness_range Min/max line thickness; scalar linearly interpolates within it
  * @return LineVertex with all fields populated from sample
  */
-[[nodiscard]] inline Nodes::LineVertex to_line_vertex(
+[[nodiscard]] inline Kakshya::LineVertex to_line_vertex(
     const SampleResult& s,
     glm::vec2 thickness_range = { 1.0F, 2.0F }) noexcept
 {
@@ -152,7 +152,7 @@ struct SampleResult {
  * MeshVertex doesn't have a size/thickness field, so scalar is passed through
  * as weight for potential use in shader-based deformation or other effects.
  */
-[[nodiscard]] inline Nodes::MeshVertex to_mesh_vertex(
+[[nodiscard]] inline Kakshya::MeshVertex to_mesh_vertex(
     const SampleResult& s,
     glm::vec2 weight_range = { 0.0F, 1.0F }) noexcept
 {
@@ -172,7 +172,7 @@ struct SampleResult {
  * @param size_range Size range passed to to_point_vertex
  * @return PointVertex vector of equal length
  */
-[[nodiscard]] std::vector<Nodes::PointVertex> to_point_vertices(
+[[nodiscard]] std::vector<Kakshya::PointVertex> to_point_vertices(
     std::span<const SampleResult> samples,
     glm::vec2 size_range = { 8.0F, 12.0F });
 
@@ -182,7 +182,7 @@ struct SampleResult {
  * @param thickness_range Thickness range passed to to_line_vertex
  * @return LineVertex vector of equal length
  */
-[[nodiscard]] std::vector<Nodes::LineVertex> to_line_vertices(
+[[nodiscard]] std::vector<Kakshya::LineVertex> to_line_vertices(
     std::span<const SampleResult> samples,
     glm::vec2 thickness_range = { 1.0F, 2.0F });
 
@@ -192,7 +192,7 @@ struct SampleResult {
  * @param weight_range Weight range passed to to_mesh_vertex (for potential shader use)
  * @return MeshVertex vector of equal length
  */
-[[nodiscard]] std::vector<Nodes::MeshVertex> to_mesh_vertices(
+[[nodiscard]] std::vector<Kakshya::MeshVertex> to_mesh_vertices(
     std::span<const SampleResult> samples,
     glm::vec2 weight_range = { 0.0F, 1.0F });
 

@@ -393,11 +393,11 @@ SampleResult generate_sample_at(
     }
 }
 
-std::vector<Nodes::PointVertex> to_point_vertices(
+std::vector<Kakshya::PointVertex> to_point_vertices(
     std::span<const SampleResult> samples,
     glm::vec2 size_range)
 {
-    std::vector<Nodes::PointVertex> out;
+    std::vector<Kakshya::PointVertex> out;
     out.reserve(samples.size());
     for (const auto& s : samples) {
         out.push_back(to_point_vertex(s, size_range));
@@ -405,11 +405,11 @@ std::vector<Nodes::PointVertex> to_point_vertices(
     return out;
 }
 
-std::vector<Nodes::LineVertex> to_line_vertices(
+std::vector<Kakshya::LineVertex> to_line_vertices(
     std::span<const SampleResult> samples,
     glm::vec2 thickness_range)
 {
-    std::vector<Nodes::LineVertex> out;
+    std::vector<Kakshya::LineVertex> out;
     out.reserve(samples.size());
     for (const auto& s : samples) {
         out.push_back(to_line_vertex(s, thickness_range));
@@ -417,11 +417,11 @@ std::vector<Nodes::LineVertex> to_line_vertices(
     return out;
 }
 
-std::vector<Nodes::MeshVertex> to_mesh_vertices(
+std::vector<Kakshya::MeshVertex> to_mesh_vertices(
     std::span<const SampleResult> samples,
     glm::vec2 weight_range)
 {
-    std::vector<Nodes::MeshVertex> out;
+    std::vector<Kakshya::MeshVertex> out;
     out.reserve(samples.size());
     for (const auto& s : samples) {
         out.push_back(to_mesh_vertex(s, weight_range));

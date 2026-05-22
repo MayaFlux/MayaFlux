@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MayaFlux/Nodes/Graphics/VertexSpec.hpp"
+#include "MayaFlux/Kakshya/NDData/VertexFormats.hpp"
 
 namespace MayaFlux::Kinesis {
 
@@ -132,8 +132,8 @@ void apply_scale(
  * Normal at vertex i: perpendicular to tangent (v[i+1] - v[i])
  * Returned as pairs: [midpoint - normal/2, midpoint + normal/2]
  */
-std::vector<Nodes::LineVertex> compute_path_normals(
-    const std::vector<Nodes::LineVertex>& path_vertices,
+std::vector<Kakshya::LineVertex> compute_path_normals(
+    const std::vector<Kakshya::LineVertex>& path_vertices,
     float normal_length,
     size_t stride = 1);
 
@@ -147,8 +147,8 @@ std::vector<Nodes::LineVertex> compute_path_normals(
  * Tangent at vertex i: direction (v[i+1] - v[i])
  * Returned as pairs: [vertex - tangent/2, vertex + tangent/2]
  */
-std::vector<Nodes::LineVertex> compute_path_tangents(
-    const std::vector<Nodes::LineVertex>& path_vertices,
+std::vector<Kakshya::LineVertex> compute_path_tangents(
+    const std::vector<Kakshya::LineVertex>& path_vertices,
     float tangent_length,
     size_t stride = 1);
 
@@ -161,8 +161,8 @@ std::vector<Nodes::LineVertex> compute_path_tangents(
  *
  * Curvature at i approximated by: (v[i+1] - 2*v[i] + v[i-1])
  */
-std::vector<Nodes::LineVertex> compute_path_curvature(
-    const std::vector<Nodes::LineVertex>& path_vertices,
+std::vector<Kakshya::LineVertex> compute_path_curvature(
+    const std::vector<Kakshya::LineVertex>& path_vertices,
     float curvature_scale,
     size_t stride = 1);
 
@@ -185,8 +185,8 @@ std::vector<glm::vec3> sample_parametric_curve(
  * Uses piecewise linear arc length estimation.
  * Output vertices have constant spacing along curve.
  */
-std::vector<Nodes::LineVertex> reparameterize_by_arc_length(
-    const std::vector<Nodes::LineVertex>& path_vertices,
+std::vector<Kakshya::LineVertex> reparameterize_by_arc_length(
+    const std::vector<Kakshya::LineVertex>& path_vertices,
     size_t num_samples);
 
 /**
@@ -227,7 +227,7 @@ std::vector<glm::vec3> compute_convex_hull_2d(
  *
  * If color_positions.empty(), distributes colors uniformly.
  */
-std::vector<Nodes::LineVertex> apply_color_gradient(
+std::vector<Kakshya::LineVertex> apply_color_gradient(
     const std::vector<glm::vec3>& positions,
     const std::vector<glm::vec3>& colors,
     const std::vector<float>& color_positions = {},
@@ -236,7 +236,7 @@ std::vector<Nodes::LineVertex> apply_color_gradient(
 /**
  * @brief Apply uniform color to position vertices
  */
-std::vector<Nodes::LineVertex> apply_uniform_color(
+std::vector<Kakshya::LineVertex> apply_uniform_color(
     const std::vector<glm::vec3>& positions,
     const glm::vec3& color,
     float default_thickness = 1.0F);
@@ -244,7 +244,7 @@ std::vector<Nodes::LineVertex> apply_uniform_color(
 /**
  * @brief Convert positions to LineVertex with per-vertex colors
  */
-std::vector<Nodes::LineVertex> apply_vertex_colors(
+std::vector<Kakshya::LineVertex> apply_vertex_colors(
     const std::vector<glm::vec3>& positions,
     const std::vector<glm::vec3>& colors,
     float default_thickness = 1.0F);
@@ -257,7 +257,7 @@ std::vector<Nodes::LineVertex> apply_vertex_colors(
  * buffer and forward layout to set_vertex_layout().
  */
 struct QuadGeometry {
-    std::array<Nodes::TextureQuadVertex, 4> vertices;
+    std::array<Kakshya::TextureQuadVertex, 4> vertices;
     Kakshya::VertexLayout layout;
 };
 

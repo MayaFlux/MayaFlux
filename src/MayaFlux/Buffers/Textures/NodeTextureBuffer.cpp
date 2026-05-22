@@ -173,7 +173,7 @@ size_t NodeTextureBuffer::calculate_buffer_size(
 void NodeTextureBuffer::generate_fullscreen_quad()
 {
     auto geo = Kinesis::generate_quad();
-    m_vertex_bytes.resize(geo.vertices.size() * sizeof(Nodes::TextureQuadVertex));
+    m_vertex_bytes.resize(geo.vertices.size() * sizeof(Kakshya::TextureQuadVertex));
     std::memcpy(m_vertex_bytes.data(), geo.vertices.data(), m_vertex_bytes.size());
     set_vertex_layout(geo.layout);
 
@@ -183,7 +183,7 @@ void NodeTextureBuffer::generate_fullscreen_quad()
 
 size_t NodeTextureBuffer::calculate_quad_vertex_size()
 {
-    return 4 * sizeof(Nodes::TextureQuadVertex);
+    return 4 * sizeof(Kakshya::TextureQuadVertex);
 }
 
 } // namespace MayaFlux::Buffers

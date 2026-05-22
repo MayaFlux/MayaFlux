@@ -3,7 +3,7 @@
 #include "InfluenceContext.hpp"
 #include "PerceptionContext.hpp"
 
-#include "MayaFlux/Nodes/Graphics/VertexSpec.hpp"
+#include "MayaFlux/Kakshya/NDData/VertexFormats.hpp"
 
 #include "Sinks.hpp"
 
@@ -190,13 +190,13 @@ public:
 
     /**
      * @brief Push typed vertex data to all registered render sinks.
-     * @tparam T One of Nodes::PointVertex, Nodes::LineVertex, Nodes::MeshVertex.
+     * @tparam T One of Kakshya::PointVertex, Kakshya::LineVertex, Kakshya::MeshVertex.
      * @param vertices Span of vertex structs.
      */
     template <typename T>
     void set_vertices(std::span<const T> vertices)
     {
-        auto layout = Nodes::vertex_layout_for<T>();
+        auto layout = Kakshya::vertex_layout_for<T>();
         layout.vertex_count = static_cast<uint32_t>(vertices.size());
         push_vertices(m_render_sinks, vertices.data(),
             vertices.size_bytes(), layout);

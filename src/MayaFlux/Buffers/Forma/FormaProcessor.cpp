@@ -3,7 +3,7 @@
 #include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
 #include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
-#include "MayaFlux/Nodes/Graphics/VertexSpec.hpp"
+#include "MayaFlux/Kakshya/NDData/VertexLayout.hpp"
 
 namespace MayaFlux::Buffers {
 
@@ -14,16 +14,16 @@ FormaProcessor::FormaProcessor(Portal::Graphics::PrimitiveTopology topology)
 
     switch (topology) {
     case Portal::Graphics::PrimitiveTopology::POINT_LIST:
-        m_stride = sizeof(Nodes::PointVertex);
+        m_stride = Kakshya::VertexLayout::for_points().stride_bytes;
         break;
     case Portal::Graphics::PrimitiveTopology::LINE_LIST:
     case Portal::Graphics::PrimitiveTopology::LINE_STRIP:
-        m_stride = sizeof(Nodes::LineVertex);
+        m_stride = Kakshya::VertexLayout::for_lines().stride_bytes;
         break;
     case Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST:
     case Portal::Graphics::PrimitiveTopology::TRIANGLE_STRIP:
     default:
-        m_stride = sizeof(Nodes::MeshVertex);
+        m_stride = Kakshya::VertexLayout::for_meshes().stride_bytes;
         break;
     }
 }

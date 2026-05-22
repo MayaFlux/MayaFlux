@@ -1,7 +1,7 @@
 #pragma once
 
 #include "MayaFlux/Buffers/VKBuffer.hpp"
-#include "MayaFlux/Nodes/Graphics/VertexSpec.hpp"
+#include "MayaFlux/Kakshya/NDData/VertexFormats.hpp"
 #include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
 
 namespace MayaFlux::Buffers {
@@ -166,7 +166,7 @@ public:
     // Advanced: Custom Geometry
     // =========================================================================
 
-    void set_custom_vertices(const std::vector<Nodes::TextureQuadVertex>& vertices);
+    void set_custom_vertices(const std::vector<Kakshya::TextureQuadVertex>& vertices);
 
     /**
      * @brief Reset to default fullscreen quad
