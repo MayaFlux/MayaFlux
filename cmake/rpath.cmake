@@ -15,6 +15,7 @@ else()
 
         set(CMAKE_SKIP_BUILD_RPATH OFF)
         set(CMAKE_BUILD_WITH_INSTALL_RPATH OFF)
+        set(CMAKE_BUILD_RPATH_USE_ORIGIN ON)
 
         set(CMAKE_BUILD_RPATH
             "${CMAKE_BINARY_DIR}/src/MayaFlux"

@@ -24,6 +24,16 @@ else()
     )
 endif()
 
+if(WIN32 AND MAYAFLUX_DEV)
+    add_custom_command(TARGET lila_server POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_FILE:MayaFluxLib>
+            $<TARGET_FILE:Lila>
+            $<TARGET_FILE:MayaFluxHost>
+            $<TARGET_FILE_DIR:lila_server>
+    )
+endif()
+
 if(NOT MAYAFLUX_BUILD_PROJECT)
     return()
 endif()

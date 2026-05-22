@@ -88,27 +88,27 @@
       }
     },
     {
-      "name": "windows-vs2022-dev",
-      "inherits": "base",
-      "displayName": "Windows (VS 2022) - Development",
-      "generator": "Visual Studio 17 2022",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug",
+    "name": "windows-vs2022-dev",
+    "inherits": "unix-dev",
+    "displayName": "Windows (VS 2022) - Development",
+    "generator": "Visual Studio 17 2022",
+    "cacheVariables": {
         "CMAKE_INSTALL_PREFIX": "C:/MayaFlux",
-        "MAYAFLUX_BUILD_PROJECT": "ON",
-        "EXAMPLE_SHADER_DIR" :  "${sourceDir}/src/examples/shaders"
+        "CMAKE_PREFIX_PATH": "",
+        "MAYAFLUX_PORTABLE" : "OFF",
+        "MAYAFLUX_BUILD_TESTS": "OFF"
       }
     },
     {
-      "name": "windows-vs2019-dev",
-      "inherits": "base",
-      "displayName": "Windows (VS 2019) - Development",
-      "generator": "Visual Studio 16 2019",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug",
+    "name": "windows-vs2019-dev",
+    "inherits": "unix-dev",
+    "displayName": "Windows (VS 2019) - Development",
+    "generator": "Visual Studio 16 2019",
+    "cacheVariables": {
         "CMAKE_INSTALL_PREFIX": "C:/MayaFlux",
-        "MAYAFLUX_BUILD_PROJECT": "ON",
-        "EXAMPLE_SHADER_DIR" :  "${sourceDir}/src/examples/shaders"
+        "CMAKE_PREFIX_PATH": "",
+        "MAYAFLUX_PORTABLE" : "OFF",
+        "MAYAFLUX_BUILD_TESTS": "OFF"
       }
     },
     {
