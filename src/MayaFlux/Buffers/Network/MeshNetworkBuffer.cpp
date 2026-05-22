@@ -199,7 +199,7 @@ size_t MeshNetworkBuffer::estimate_vertex_bytes(
     size_t total = 0;
     for (const auto& slot : network->slots()) {
         if (slot.node)
-            total += slot.node->get_mesh_vertex_count() * sizeof(Nodes::MeshVertex);
+            total += slot.node->get_mesh_vertex_count() * sizeof(Kakshya::MeshVertex);
     }
 
     if (total == 0)

@@ -10,9 +10,9 @@ namespace MayaFlux::Buffers {
  * @brief Specifies how vertex data should be interpreted for upload
  */
 enum class GeometryWriteMode : uint8_t {
-    POINT, ///< Interpret vertex data as Nodes::PointVertex
-    LINE, ///< Interpret vertex data as Nodes::LineVertex
-    MESH ///< Interpret vertex data as Nodes::MeshVertex
+    POINT, ///< Interpret vertex data as Kakshya::PointVertex
+    LINE, ///< Interpret vertex data as Kakshya::LineVertex
+    MESH ///< Interpret vertex data as Kakshya::MeshVertex
 };
 
 /**

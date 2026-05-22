@@ -173,7 +173,7 @@ size_t NetworkGeometryBuffer::calculate_buffer_size(
     }
 
     if (base_size == 0) {
-        size_t vertex_size = sizeof(Nodes::PointVertex);
+        size_t vertex_size = sizeof(Kakshya::PointVertex);
         base_size = node_count * vertex_size;
 
         MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferManagement,

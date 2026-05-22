@@ -189,11 +189,11 @@ ModelReader::create_mesh_network(const TextureResolver& resolver) const
         if (!vb || !ib)
             continue;
 
-        const size_t vertex_count = vb->size() / sizeof(Nodes::MeshVertex);
+        const size_t vertex_count = vb->size() / sizeof(Kakshya::MeshVertex);
         auto node = std::make_shared<Nodes::GpuSync::MeshWriterNode>(vertex_count);
         node->set_mesh(
-            std::span<const Nodes::MeshVertex>(
-                reinterpret_cast<const Nodes::MeshVertex*>(vb->data()),
+            std::span<const Kakshya::MeshVertex>(
+                reinterpret_cast<const Kakshya::MeshVertex*>(vb->data()),
                 vertex_count),
             std::span<const uint32_t>(ib->data(), ib->size()));
 
@@ -379,7 +379,7 @@ Kakshya::MeshData ModelReader::extract_single_mesh(
 {
     const auto* mesh = static_cast<const aiMesh*>(ai_mesh_ptr);
 
-    using V = Nodes::MeshVertex;
+    using V = Kakshya::MeshVertex;
 
     std::vector<V> verts;
     verts.reserve(mesh->mNumVertices);

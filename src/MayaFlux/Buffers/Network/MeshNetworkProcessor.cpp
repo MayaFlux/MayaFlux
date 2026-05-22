@@ -139,7 +139,7 @@ void MeshNetworkProcessor::upload_combined(
         const auto& verts = slot.node->get_mesh_vertices();
         const auto& indices = slot.node->get_mesh_indices();
 
-        const size_t v_bytes = verts.size() * sizeof(Nodes::MeshVertex);
+        const size_t v_bytes = verts.size() * sizeof(Kakshya::MeshVertex);
         const auto* v_src = reinterpret_cast<const uint8_t*>(verts.data());
         m_vertex_aggregate.insert(m_vertex_aggregate.end(), v_src, v_src + v_bytes);
 
@@ -235,7 +235,7 @@ size_t MeshNetworkProcessor::total_vertex_bytes() const
     size_t total = 0;
     for (const auto& slot : m_network->slots()) {
         if (slot.node)
-            total += slot.node->get_mesh_vertex_count() * sizeof(Nodes::MeshVertex);
+            total += slot.node->get_mesh_vertex_count() * sizeof(Kakshya::MeshVertex);
     }
     return total;
 }
