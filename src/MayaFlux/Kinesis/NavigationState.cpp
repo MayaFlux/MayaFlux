@@ -22,36 +22,8 @@ NavigationState make_navigation_state(const NavigationConfig& config)
 
 ViewTransform compute_view_transform(NavigationState& st, float aspect)
 {
-    const auto now = std::chrono::steady_clock::now();
-    const float dt = std::chrono::duration<float>(now - st.last_tick).count();
-    st.last_tick = now;
-
-    const glm::vec3 forward {
-        std::cos(st.pitch) * std::sin(st.yaw),
-        std::sin(st.pitch),
-        std::cos(st.pitch) * std::cos(st.yaw)
-    };
-    const glm::vec3 right = glm::normalize(glm::cross(forward, glm::vec3(0.0F, 1.0F, 0.0F)));
-
-    const float step = st.move_speed * dt;
-
-    if (st.forward_held)
-        st.eye += forward * step;
-    if (st.back_held)
-        st.eye -= forward * step;
-    if (st.left_held)
-        st.eye -= right * step;
-    if (st.right_held)
-        st.eye += right * step;
-    if (st.down_held)
-        st.eye -= glm::vec3(0.0F, 1.0F, 0.0F) * step;
-    if (st.up_held)
-        st.eye += glm::vec3(0.0F, 1.0F, 0.0F) * step;
-
-    return {
-        .view = glm::lookAt(st.eye, st.eye + forward, glm::vec3(0.0F, 1.0F, 0.0F)),
-        .projection = glm::perspective(st.fov_radians, aspect, st.near_plane, st.far_plane)
-    };
+    advance_navigation(st);
+    return build_view_transform(st, aspect);
 }
 
 void apply_mouse_delta(NavigationState& st, float dx, float dy)
@@ -101,6 +73,49 @@ void snap_ortho(NavigationState& st, int view)
     default:
         break;
     }
+}
+
+void advance_navigation(NavigationState& st)
+{
+    const auto now = std::chrono::steady_clock::now();
+    const float dt = std::chrono::duration<float>(now - st.last_tick).count();
+    st.last_tick = now;
+
+    const glm::vec3 forward {
+        std::cos(st.pitch) * std::sin(st.yaw),
+        std::sin(st.pitch),
+        std::cos(st.pitch) * std::cos(st.yaw)
+    };
+    const glm::vec3 right = glm::normalize(glm::cross(forward, glm::vec3(0.0F, 1.0F, 0.0F)));
+
+    const float step = st.move_speed * dt;
+
+    if (st.forward_held)
+        st.eye += forward * step;
+    if (st.back_held)
+        st.eye -= forward * step;
+    if (st.left_held)
+        st.eye -= right * step;
+    if (st.right_held)
+        st.eye += right * step;
+    if (st.down_held)
+        st.eye -= glm::vec3(0.0F, 1.0F, 0.0F) * step;
+    if (st.up_held)
+        st.eye += glm::vec3(0.0F, 1.0F, 0.0F) * step;
+}
+
+ViewTransform build_view_transform(const NavigationState& st, float aspect)
+{
+    const glm::vec3 forward {
+        std::cos(st.pitch) * std::sin(st.yaw),
+        std::sin(st.pitch),
+        std::cos(st.pitch) * std::cos(st.yaw)
+    };
+
+    return {
+        .view = glm::lookAt(st.eye, st.eye + forward, glm::vec3(0.0F, 1.0F, 0.0F)),
+        .projection = glm::perspective(st.fov_radians, aspect, st.near_plane, st.far_plane)
+    };
 }
 
 } // namespace MayaFlux::Kinesis

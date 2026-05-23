@@ -114,4 +114,29 @@ void apply_scroll(NavigationState& state, float ticks);
  */
 void snap_ortho(NavigationState& state, int view);
 
+/**
+ * @brief Advance eye position by held movement flags against elapsed time.
+ *
+ * Computes dt from state.last_tick, moves the eye along the current forward
+ * and right vectors by the flags that are set, and updates last_tick.
+ * Does not produce a ViewTransform. Use build_view_transform() after this
+ * when the matrices are needed separately from the eye update.
+ *
+ * @param state Navigation state (eye and last_tick mutated by this call)
+ */
+void advance_navigation(NavigationState& state);
+
+/**
+ * @brief Build a ViewTransform from the current NavigationState without mutating it.
+ *
+ * Pure read of eye, yaw, pitch, fov_radians, near_plane, far_plane. Does not
+ * advance the eye or update last_tick. Call advance_navigation() first when
+ * the eye needs to move.
+ *
+ * @param state  Navigation state (read-only)
+ * @param aspect Framebuffer width / height
+ * @return ViewTransform ready for push constant upload
+ */
+[[nodiscard]] ViewTransform build_view_transform(const NavigationState& state, float aspect);
+
 } // namespace MayaFlux::Kinesis
