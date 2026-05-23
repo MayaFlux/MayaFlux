@@ -141,6 +141,15 @@ public:
     virtual void unregister_rendering_buffer(std::shared_ptr<Buffers::VKBuffer> buffer) = 0;
 
     /**
+     * @brief Drain platform-native event queue into WindowEventSource.
+     *
+     * Called once per frame by WindowManager::process() for backends that
+     * own their own event thread (e.g. Win32Window). The default no-op is
+     * correct for GLFW, which uses the global glfwPollEvents() instead.
+     */
+    virtual void poll() { }
+
+    /**
      * @brief Track a secondary command buffer for this frame
      * @param cmd_id Command buffer ID that contains draw commands for this window
      *
