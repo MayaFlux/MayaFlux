@@ -95,6 +95,41 @@ catch {
 
 Write-Host "`n=== Configuring Environment Variables ===" -ForegroundColor Magenta
 
+# DIA SDK (required for LLVM on Windows)
+$vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+if (Test-Path $vswhere) {
+    $vsInstalls = & $vswhere -all -format json | ConvertFrom-Json
+    $diaFound = $false
+
+    foreach ($vs in $vsInstalls) {
+        $diaPath = Join-Path $vs.installationPath "DIA SDK"
+        if (Test-Path "$diaPath\lib\amd64\diaguids.lib") {
+            [Environment]::SetEnvironmentVariable("DIA_SDK_PATH", $diaPath, "Machine")
+            Write-Host "[DIA SDK] Found: $diaPath" -ForegroundColor Green
+            $diaLib = Join-Path $diaPath "lib\amd64"
+            [Environment]::SetEnvironmentVariable("LIB", "$diaLib;$([Environment]::GetEnvironmentVariable('LIB', 'Machine'))", "Machine")
+            Write-Host "[DIA SDK] Added to LIB: $diaLib" -ForegroundColor Green
+            $diaFound = $true
+
+            $enterpriseDia = "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\DIA SDK"
+            if (-not (Test-Path $enterpriseDia)) {
+                $enterpriseParent = Split-Path $enterpriseDia -Parent
+                if (-not (Test-Path $enterpriseParent)) {
+                    New-Item -ItemType Directory -Path $enterpriseParent -Force | Out-Null
+                }
+                New-Item -ItemType Junction -Path $enterpriseDia -Target $diaPath -Force | Out-Null
+                Write-Host "[DIA SDK] Created Enterprise symlink -> $diaPath" -ForegroundColor Green
+            }
+
+            break
+        }
+    }
+
+    if (-not $diaFound) {
+        Write-Warning "DIA SDK not found - LLVM may have linking issues"
+    }
+}
+
 # LLVM/Clang
 $llvmVersion = "22.1.6"
 $llvmRoot = "C:\Program Files\LLVM_Libs\$llvmVersion"

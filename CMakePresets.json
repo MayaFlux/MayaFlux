@@ -100,10 +100,10 @@
       }
     },
     {
-    "name": "windows-vs2019-dev",
+    "name": "windows-vs2026-dev",
     "inherits": "unix-dev",
-    "displayName": "Windows (VS 2019) - Development",
-    "generator": "Visual Studio 16 2019",
+    "displayName": "Windows (VS 2026) - Development",
+    "generator": "Visual Studio 18 2026",
     "cacheVariables": {
         "CMAKE_INSTALL_PREFIX": "C:/MayaFlux",
         "CMAKE_PREFIX_PATH": "",
@@ -115,7 +115,7 @@
       "name": "windows-ship-rel",
       "inherits": "base",
       "displayName": "Windows - Shipping Release",
-      "generator": "Visual Studio 17 2022",
+      "generator": "Visual Studio 18 2026",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
         "CMAKE_INSTALL_PREFIX": "C:/MayaFlux"
@@ -130,7 +130,7 @@
     { "name": "launchpad-dev",  "configurePreset": "launchpad-dev", "jobs": 0 },
     { "name": "launchpad-rel",  "configurePreset": "launchpad-rel", "jobs": 0 },
     { "name": "macos-ship-rel",  "configurePreset": "macos-ship-rel", "jobs": 0 },
-    { "name": "win19-dev",     "configurePreset": "windows-vs2019-dev", "jobs": 0 },
+    { "name": "win26-dev",     "configurePreset": "windows-vs2026-dev", "jobs": 0 },
     { "name": "win22-dev",     "configurePreset": "windows-vs2022-dev", "jobs": 0 },
     { "name": "windows-ship-rel","configurePreset": "windows-ship-rel", "jobs": 0 }
   ],

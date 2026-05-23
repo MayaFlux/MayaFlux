@@ -33,14 +33,14 @@ on:
 env:
   BUILD_TYPE: RelWithDebInfo
   VCVARS_PATH: 'C:\Program Files\Microsoft Visual
-    Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat'
+    Studio\18\Enterprise\VC\Auxiliary\Build\vcvarsall.bat'
   VCPKG_ROOT: ${{ github.workspace }}/vcpkg
   LLVM_ROOT: "C:/LLVM_CI"
 
 jobs:
   build:
-    runs-on: windows-latest
-    name: "Windows Latest (MSVC 22, x64)"
+    runs-on: windows-2025-vs2026
+    name: "Windows 2025 (MSVC 26, x64)"
 
     steps:
       # ============================================
@@ -51,17 +51,6 @@ jobs:
 
       - name: Use version
         run: echo "Version is ${{ inputs.version }}"
-
-      - name: Install CMake 4
-        shell: pwsh
-        run: |
-          $url = "https://github.com/Kitware/CMake/releases/download/v4.0.2/cmake-4.0.2-windows-x86_64.msi"
-          $msi = "$env:TEMP\cmake-4.0.2.msi"
-          Invoke-WebRequest -Uri $url -OutFile $msi -UseBasicParsing
-          Start-Process msiexec.exe -Wait -ArgumentList "/i $msi /quiet ADD_CMAKE_TO_PATH=System"
-          $env:PATH = "C:\Program Files\CMake\bin;$env:PATH"
-          echo "C:\Program Files\CMake\bin" >> $env:GITHUB_PATH
-          cmake --version
 
       - name: Verify system prerequisites
         shell: pwsh
@@ -89,7 +78,7 @@ jobs:
             @{Name="CMake"; Test={ Test-Command "cmake" }},
             @{Name="Git"; Test={ Test-Command "git" }},
             @{Name="7-Zip"; Test={ Get-Command "7z" -ErrorAction SilentlyContinue }},
-            @{Name="MSVC 2022"; Test={ Test-Path "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC" }}
+            @{Name="MSVC 2026"; Test={ Test-Path "C:\Program Files\Microsoft Visual Studio\18\Enterprise\VC" }}
           )
 
           foreach ($check in $results) {
@@ -108,8 +97,8 @@ jobs:
       - name: Setup MSVC environment
         shell: cmd
         run: |
-          echo "Setting up Visual Studio 2022 environment..."
-          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
+          echo "Setting up Visual Studio 2026 environment..."
+          call "C:\Program Files\Microsoft Visual Studio\18\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
           echo "MSVC environment ready"
 
       - name: Optimize build environment for performance
@@ -130,6 +119,36 @@ jobs:
           Add-MpPreference -ExclusionProcess "7z.exe" -ErrorAction SilentlyContinue
 
           Write-Host "✓ Build optimizations applied" -ForegroundColor Green
+
+      - name: Create DIA SDK symlink for LLVM compatibility
+        shell: pwsh
+        run: |
+          Write-Host "Creating DIA SDK symlink for LLVM..." -ForegroundColor Yellow
+
+          $targetPath = "C:\Program Files\Microsoft Visual Studio\18\Enterprise\DIA SDK"
+          $linkPath = "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\DIA SDK"
+
+          # Create parent directories if they don't exist
+          $linkParent = Split-Path $linkPath -Parent
+          if (-not (Test-Path $linkParent)) {
+            New-Item -ItemType Directory -Path $linkParent -Force | Out-Null
+          }
+
+          # Create directory junction (symlink)
+          if (-not (Test-Path $linkPath)) {
+            New-Item -ItemType Junction -Path $linkPath -Target $targetPath -Force
+            Write-Host "✓ Created symlink: $linkPath -> $targetPath" -ForegroundColor Green
+          } else {
+            Write-Host "✓ Symlink already exists" -ForegroundColor Green
+          }
+
+          # Verify
+          if (Test-Path "$linkPath\lib\amd64\diaguids.lib") {
+            Write-Host "✓ DIA SDK accessible via symlink" -ForegroundColor Green
+          } else {
+            Write-Host "✗ DIA SDK verification failed" -ForegroundColor Red
+            exit 1
+          }
 
       # ============================================
       # PHASE 2: Dependency Management (Parallelizable)
@@ -277,7 +296,7 @@ jobs:
 
           $cmakeArgs = @(
             "-B", "build",
-            "-G", "Visual Studio 17 2022",
+            "-G", "Visual Studio 18 2026",
             "-A", "x64",
             "-DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}",
             "-DCMAKE_CONFIGURATION_TYPES=${{ env.BUILD_TYPE }}",
@@ -443,7 +462,7 @@ jobs:
 
           Write-Host "`nKey Configuration:" -ForegroundColor Yellow
           Write-Host "  Platform: ${{ inputs.os_display_name }}"
-          Write-Host "  Compiler: MSVC 2022 (cl.exe)"
+          Write-Host "  Compiler: MSVC 2026 (cl.exe)"
           Write-Host "  C++ Standard: C++23"
           Write-Host "  Build Type: ${{ env.BUILD_TYPE }}"
 

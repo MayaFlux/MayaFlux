@@ -793,7 +793,8 @@ $vsBasePaths = @(
     'C:\Program Files (x86)\Microsoft Visual Studio'
 )
 
-$vsYears = @('2022', '2019', '2017')
+ # VS 2026 uses '18' in path, others use year names
+$vsYears = @('18', '2022', '2019')
 $vsEditions = @('BuildTools', 'Community', 'Professional', 'Enterprise')
 
 $foundCompiler = $false
@@ -824,12 +825,12 @@ if (-not $foundCompiler) {
     Write-Host "MayaFlux requires a C++ compiler to build dependencies." -ForegroundColor Yellow
     Write-Host ""
     Write-Host "Please install ONE of the following:" -ForegroundColor Yellow
-    Write-Host "  1. Visual Studio 2022 (Community/Professional/Enterprise)" -ForegroundColor Cyan
+    Write-Host "  1. Visual Studio 2026 (Community/Professional/Enterprise)" -ForegroundColor Cyan
     Write-Host "     https://visualstudio.microsoft.com/downloads/" -ForegroundColor Cyan
     Write-Host "     - Select 'Desktop development with C++' workload" -ForegroundColor Gray
     Write-Host ""
-    Write-Host "  2. Visual Studio Build Tools 2022 (lightweight)" -ForegroundColor Cyan
-    Write-Host "     https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2022" -ForegroundColor Cyan
+    Write-Host "  2. Visual Studio Build Tools 2026 (lightweight)" -ForegroundColor Cyan
+    Write-Host "     https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2026" -ForegroundColor Cyan
     Write-Host "     - Select 'C++ build tools' workload" -ForegroundColor Gray
     Write-Host ""
     Write-Host "After installation, restart this installer." -ForegroundColor Yellow

@@ -36,9 +36,10 @@ if (-not $VS_PATH) {
 # Detect VS version
 $VS_VERSION = (& $VSWHERE -latest -property catalog.productLineVersion)
 $PresetName = switch ($VS_VERSION) {
+    "2026" { "windows-vs2026-dev" }
     "2022" { "windows-vs2022-dev" }
     "2019" { "windows-vs2019-dev" }
-    default { "windows-vs2022-dev" }
+    default { "windows-vs2026-dev" }
 }
 
 Write-Host "Visual Studio: $VS_PATH" -ForegroundColor Green
