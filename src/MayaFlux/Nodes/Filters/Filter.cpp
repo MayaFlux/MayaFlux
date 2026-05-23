@@ -4,30 +4,6 @@
 
 namespace MayaFlux::Nodes::Filters {
 
-std::pair<int, int> shift_parser(const std::string& str)
-{
-    size_t underscore = str.find('_');
-    if (underscore == std::string::npos) {
-        error<std::invalid_argument>(Journal::Component::Nodes, Journal::Context::Configuration, std::source_location::current(),
-            "Invalid format for shift configuration. Expected format: nInputs_nOutputs (e.g., 25_2). Received: '{}'", str);
-    }
-
-    int inputs = std::stoi(str.substr(0, underscore));
-    int outputs = std::stoi(str.substr(underscore + 1));
-    return std::make_pair(inputs, outputs);
-}
-
-Filter::Filter(const std::shared_ptr<Node>& input, const std::string& zindex_shifts)
-    : m_input_node(input)
-    , m_context(0.0, m_input_history, m_output_history, m_coef_a, m_coef_b)
-    , m_context_gpu(0.0, m_input_history, m_output_history, m_coef_a, m_coef_b, get_gpu_data_buffer())
-{
-    m_shift_config = shift_parser(zindex_shifts);
-    initialize_shift_buffers();
-    m_coef_b.resize(m_input_history.size(), 1);
-    m_coef_a.resize(m_output_history.size(), 1);
-}
-
 Filter::Filter(const std::shared_ptr<Node>& input, const std::vector<double>& a_coef, const std::vector<double>& b_coef)
     : m_input_node(input)
     , m_coef_a(a_coef)
@@ -35,8 +11,6 @@ Filter::Filter(const std::shared_ptr<Node>& input, const std::vector<double>& a_
     , m_context(0.0, m_input_history, m_output_history, m_coef_a, m_coef_b)
     , m_context_gpu(0.0, m_input_history, m_output_history, m_coef_a, m_coef_b, get_gpu_data_buffer())
 {
-    m_shift_config = shift_parser(std::to_string(b_coef.size() - 1) + "_" + std::to_string(a_coef.size() - 1));
-
     if (m_coef_a.empty() || m_coef_b.empty()) {
         error<std::invalid_argument>(Journal::Component::Nodes, Journal::Context::Configuration, std::source_location::current(),
             "IIR coefficients cannot be empty. Received a_coef size: {}, b_coef size: {}", m_coef_a.size(), m_coef_b.size());
@@ -45,19 +19,13 @@ Filter::Filter(const std::shared_ptr<Node>& input, const std::vector<double>& a_
         error<std::invalid_argument>(Journal::Component::Nodes, Journal::Context::Configuration, std::source_location::current(),
             "First denominator coefficient (a[0]) cannot be zero. Received a[0]: {}", m_coef_a[0]);
     }
-
-    initialize_shift_buffers();
+    m_input_history.assign(m_coef_b.size(), 0.0);
+    m_output_history.assign(m_coef_a.size(), 0.0);
 }
 
 Filter::Filter(const std::vector<double>& a_coef, const std::vector<double>& b_coef)
     : Filter(nullptr, a_coef, b_coef)
 {
-}
-
-void Filter::initialize_shift_buffers()
-{
-    m_input_history.resize(m_shift_config.first + 1, 0.0F);
-    m_output_history.resize(m_shift_config.second + 1, 0.0F);
 }
 
 void Filter::set_coefs(const std::vector<double>& new_coefs, coefficients type)
@@ -116,11 +84,7 @@ void Filter::setACoefficients(const std::vector<double>& new_coefs)
     }
 
     m_coef_a = new_coefs;
-
-    if (static_cast<int>(m_coef_a.size()) - 1 != m_shift_config.second) {
-        m_shift_config.second = static_cast<int>(m_coef_a.size()) - 1;
-        initialize_shift_buffers();
-    }
+    m_output_history.assign(m_coef_a.size(), 0.0);
 }
 
 void Filter::setBCoefficients(const std::vector<double>& new_coefs)
@@ -131,11 +95,7 @@ void Filter::setBCoefficients(const std::vector<double>& new_coefs)
     }
 
     m_coef_b = new_coefs;
-
-    if (static_cast<int>(m_coef_b.size()) - 1 != m_shift_config.first) {
-        m_shift_config.first = static_cast<int>(m_coef_b.size()) - 1;
-        initialize_shift_buffers();
-    }
+    m_input_history.assign(m_coef_b.size(), 0.0);
 }
 
 void Filter::update_coefs_from_node(int length, const std::shared_ptr<Node>& source, coefficients type)

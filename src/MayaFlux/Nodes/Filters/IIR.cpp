@@ -2,11 +2,6 @@
 
 namespace MayaFlux::Nodes::Filters {
 
-IIR::IIR(const std::shared_ptr<Node>& input, const std::string& zindex_shifts)
-    : Filter(input, zindex_shifts)
-{
-}
-
 IIR::IIR(const std::shared_ptr<Node>& input, const std::vector<double>& a_coef, const std::vector<double>& b_coef)
     : Filter(input, a_coef, b_coef)
 {

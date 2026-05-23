@@ -109,16 +109,6 @@ public:
 };
 
 /**
- * @brief Parses a string representation of filter order into input/output shift configuration
- * @param str String in format "N_M" where N is input order and M is output order
- * @return Pair of integers representing input and output shift values
- *
- * This utility function converts a simple string representation of filter order
- * into the corresponding shift configuration for the filter's internal buffers.
- */
-std::pair<int, int> shift_parser(const std::string& str);
-
-/**
  * @class Filter
  * @brief Base class for computational signal transformers implementing difference equations
  *
@@ -148,17 +138,6 @@ std::pair<int, int> shift_parser(const std::string& str);
  */
 class MAYAFLUX_API Filter : public Node {
 public:
-    /**
-     * @brief Constructor using string-based filter configuration
-     * @param input Source node providing input samples
-     * @param zindex_shifts String in format "N_M" specifying filter order
-     *
-     * Creates a filter with the specified input node and order configuration.
-     * The zindex_shifts parameter provides a simple way to define filter order
-     * using a string like "2_2" for a biquad filter.
-     */
-    Filter(const std::shared_ptr<Node>& input, const std::string& zindex_shifts);
-
     /**
      * @brief Constructor using explicit coefficient vectors
      * @param input Source node providing input samples
@@ -196,31 +175,7 @@ public:
      */
     [[nodiscard]] inline int get_current_latency() const
     {
-        return std::max(m_shift_config.first, m_shift_config.second);
-    }
-
-    /**
-     * @brief Gets the current shift configuration
-     * @return Pair of integers representing input and output shift values
-     *
-     * Returns the current configuration for input and output buffer sizes.
-     */
-    [[nodiscard]] inline std::pair<int, int> get_current_shift() const
-    {
-        return m_shift_config;
-    }
-
-    /**
-     * @brief Updates the filter's shift configuration
-     * @param zindex_shifts String in format "N_M" specifying new filter order
-     *
-     * Reconfigures the filter with a new order specification, resizing
-     * internal buffers as needed.
-     */
-    inline void set_shift(std::string& zindex_shifts)
-    {
-        m_shift_config = shift_parser(zindex_shifts);
-        initialize_shift_buffers();
+        return static_cast<int>(std::max(m_coef_b.size(), m_coef_a.size())) - 1;
     }
 
     /**
@@ -529,15 +484,6 @@ protected:
     void add_coef_internal(uint64_t index, double value, std::vector<double>& buffer);
 
     /**
-     * @brief Initializes the input and output history buffers
-     *
-     * Resizes the history buffers based on the current shift configuration
-     * and initializes them to zero. Called during construction and when
-     * the filter configuration changes.
-     */
-    virtual void initialize_shift_buffers();
-
-    /**
      * @brief Updates the input history buffer with a new sample
      * @param current_sample The new input sample
      *
@@ -612,14 +558,6 @@ protected:
      * to be chained together or connected to generators.
      */
     std::shared_ptr<Node> m_input_node;
-
-    /**
-     * @brief Configuration for input and output buffer sizes
-     *
-     * Defines how many past input and output samples are stored,
-     * based on the filter's order.
-     */
-    std::pair<int, int> m_shift_config;
 
     /**
      * @brief Buffer storing previous input samples

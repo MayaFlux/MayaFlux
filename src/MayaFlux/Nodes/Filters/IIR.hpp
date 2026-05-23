@@ -36,18 +36,6 @@ namespace MayaFlux::Nodes::Filters {
 class MAYAFLUX_API IIR : public Filter {
 public:
     /**
-     * @brief Creates an IIR filter with specified order
-     * @param input Source node providing input samples
-     * @param zindex_shifts String in format "N_M" specifying filter order
-     *
-     * Creates an IIR filter with the specified input node and order configuration.
-     * The zindex_shifts parameter defines both feedforward and feedback paths
-     * (e.g., "2_2" for a biquad filter). All coefficients are initialized to zero
-     * except a[0] which is set to 1.0.
-     */
-    IIR(const std::shared_ptr<Node>& input, const std::string& zindex_shifts);
-
-    /**
      * @brief Creates an IIR filter with specified coefficients
      * @param input Source node providing input samples
      * @param a_coef Feedback (denominator) coefficients

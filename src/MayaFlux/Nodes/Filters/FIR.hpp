@@ -34,18 +34,6 @@ namespace MayaFlux::Nodes::Filters {
 class MAYAFLUX_API FIR : public Filter {
 public:
     /**
-     * @brief Creates an FIR filter with specified order
-     * @param input Source node providing input samples
-     * @param zindex_shifts String in format "N_0" specifying filter order
-     *
-     * Creates an FIR filter with the specified input node and order.
-     * For FIR filters, the second number in zindex_shifts should be 0
-     * since there is no feedback path (e.g., "64_0" for a 64-tap FIR).
-     * All coefficients are initialized to zero.
-     */
-    FIR(const std::shared_ptr<Node>& input, const std::string& zindex_shifts);
-
-    /**
      * @brief Creates an FIR filter with specified coefficients
      * @param input Source node providing input samples
      * @param coeffs Vector of filter coefficients

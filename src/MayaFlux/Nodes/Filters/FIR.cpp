@@ -7,11 +7,6 @@ FIR::FIR(const std::shared_ptr<Node>& input, const std::vector<double>& coeffs)
 {
 }
 
-FIR::FIR(const std::shared_ptr<Node>& input, const std::string& zindex_shifts)
-    : Filter(input, zindex_shifts)
-{
-}
-
 FIR::FIR(const std::vector<double>& coeffs)
     : FIR(nullptr, coeffs)
 {
