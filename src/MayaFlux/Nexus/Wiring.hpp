@@ -68,6 +68,15 @@ public:
     Wiring& on(std::shared_ptr<Core::Window> window, IO::Keys key);
 
     /**
+     * @brief Fire the entity on key press and invoke a release callback on key release.
+     * @param window      Source window.
+     * @param key         Key to listen for.
+     * @param on_release  Called when the key is released. Cancelled with the wiring.
+     */
+    Wiring& on(std::shared_ptr<Core::Window> window, IO::Keys key,
+        std::function<void()> on_release);
+
+    /**
      * @brief Fire the entity on a mouse button event from a window.
      * @param window Source window.
      * @param button Mouse button to listen for.
@@ -203,6 +212,7 @@ private:
     struct KeyTrigger {
         std::shared_ptr<Core::Window> window;
         IO::Keys key;
+        std::optional<std::function<void()>> on_release;
     };
 
     struct MouseTrigger {
