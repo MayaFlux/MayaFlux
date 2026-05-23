@@ -48,7 +48,8 @@ void Locus::invoke_perception(const PerceptionContext& ctx)
 {
     Agent::invoke_perception(ctx);
 
-    m_view = Kinesis::compute_view_transform(m_nav, m_aspect);
+    Kinesis::advance_navigation(m_nav);
+    m_view = Kinesis::build_view_transform(m_nav, m_aspect);
     Agent::set_position(m_nav.eye);
 }
 
