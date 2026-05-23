@@ -150,7 +150,7 @@
 #include "IO/IOManager.hpp"
 #include "IO/ImageReader.hpp"
 
-#include "Nexus/Fabric.hpp"
+#include "Nexus/Tapestry.hpp"
 
 using namespace MayaFlux::Kakshya;
 using namespace MayaFlux::Kriya;

@@ -2,7 +2,6 @@
 
 #include "InfluenceContext.hpp"
 
-#include "MayaFlux/Kakshya/NDData/NDData.hpp"
 #include "MayaFlux/Kakshya/NDData/VertexLayout.hpp"
 
 namespace MayaFlux::Core {

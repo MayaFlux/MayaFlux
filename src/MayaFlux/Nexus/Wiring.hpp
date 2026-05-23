@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Agent.hpp"
+#include "Principals/Agent.hpp"
 
 #include "MayaFlux/IO/Keys.hpp"
 #include "MayaFlux/Vruta/NetworkSource.hpp"

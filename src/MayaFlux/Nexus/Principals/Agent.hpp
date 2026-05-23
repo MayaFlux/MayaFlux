@@ -1,9 +1,11 @@
 #pragma once
 
-#include "InfluenceContext.hpp"
-#include "Sinks.hpp"
+#include "MayaFlux/Nexus/Pheme/InfluenceContext.hpp"
+#include "MayaFlux/Nexus/Pheme/PerceptionContext.hpp"
 
 #include "MayaFlux/Kakshya/NDData/VertexFormats.hpp"
+
+#include "MayaFlux/Nexus/Pheme/Sinks.hpp"
 
 namespace MayaFlux::Buffers {
 class VKBuffer;
@@ -12,49 +14,76 @@ class VKBuffer;
 namespace MayaFlux::Nexus {
 
 /**
- * @class Emitter
- * @brief Object that acts on existing MayaFlux objects when committed.
+ * @class Agent
+ * @brief Object that both perceives nearby entities and acts on MayaFlux objects.
  *
- * Constructed with only an influence function. Position is optional: call
- * @c set_position before registering with @c Fabric if spatial indexing is
- * required. Entities without a position are committed normally but are not
- * inserted into the spatial index.
+ * Constructed with only a query radius, a perception function, and an influence
+ * function. Position is optional: call @c set_position before registering with
+ * @c Fabric if spatial behaviour is required. Without a position the spatial
+ * index is not consulted and @c spatial_results will be empty on each commit.
  *
- * The id is assigned by @c Fabric::wire and is stable for the object's
- * lifetime. It is zero until the object has been registered.
+ * On each commit the perception function is invoked first, then the influence
+ * function. Both receive contexts populated from the same spatial snapshot.
+ *
+ * The id is assigned by @c Fabric::wire and is stable for the object's lifetime.
  */
-class Emitter {
+class Agent {
 public:
     using InfluenceFn = std::function<void(const InfluenceContext&)>;
+    using PerceptionFn = std::function<void(const PerceptionContext&)>;
 
     /**
-     * @brief Construct with an influence function.
-     * @param fn Called on every commit with the current context.
+     * @brief Construct with query radius, perception function, and influence function.
+     * @param query_radius Radius passed to the spatial index on each commit.
+     *                     Ignored if no position has been set.
+     * @param perception   Called first on every commit.
+     * @param influence    Called second on every commit.
      */
-    explicit Emitter(InfluenceFn fn)
-        : m_fn(std::move(fn))
+    explicit Agent(float query_radius, PerceptionFn perception, InfluenceFn influence)
+        : m_query_radius(query_radius)
+        , m_perception_fn(std::move(perception))
+        , m_influence_fn(std::move(influence))
     {
     }
 
     /**
-     * @brief Construct with a named influence function.
-     * @param fn_name Identifier used for state encoding.
-     * @param fn      Called on every commit with the current context.
+     * @brief Construct with named perception and influence functions.
+     * @param query_radius        Radius passed to the spatial index on each commit.
+     * @param perception_fn_name  Identifier for the perception function.
+     * @param perception          Called first on every commit.
+     * @param influence_fn_name   Identifier for the influence function.
+     * @param influence           Called second on every commit.
      */
-    Emitter(std::string fn_name, InfluenceFn fn)
-        : m_fn_name(std::move(fn_name))
-        , m_fn(std::move(fn))
+    Agent(float query_radius,
+        std::string perception_fn_name, PerceptionFn perception,
+        std::string influence_fn_name, InfluenceFn influence)
+        : m_query_radius(query_radius)
+        , m_perception_fn_name(std::move(perception_fn_name))
+        , m_perception_fn(std::move(perception))
+        , m_influence_fn_name(std::move(influence_fn_name))
+        , m_influence_fn(std::move(influence))
     {
     }
+
+    virtual ~Agent() = default;
+
+    /** @brief Identifier assigned to the perception function, empty if anonymous. */
+    [[nodiscard]] const std::string& perception_fn_name() const { return m_perception_fn_name; }
 
     /** @brief Identifier assigned to the influence function, empty if anonymous. */
-    [[nodiscard]] const std::string& fn_name() const { return m_fn_name; }
+    [[nodiscard]] const std::string& influence_fn_name() const { return m_influence_fn_name; }
+
+    /** @brief Set or replace the perception function's identifier. */
+    void set_perception_fn_name(std::string name) { m_perception_fn_name = std::move(name); }
 
     /** @brief Set or replace the influence function's identifier. */
-    void set_fn_name(std::string name) { m_fn_name = std::move(name); }
+    void set_influence_fn_name(std::string name) { m_influence_fn_name = std::move(name); }
+
+    /** @brief The perception function itself. */
+    [[nodiscard]] const PerceptionFn& perception_fn() const { return m_perception_fn; }
 
     /** @brief The influence function itself. */
-    [[nodiscard]] const InfluenceFn& fn() const { return m_fn; }
+    [[nodiscard]] const InfluenceFn& influence_fn() const { return m_influence_fn; }
 
     /**
      * @brief Return the current position, if set.
@@ -62,15 +91,26 @@ public:
     [[nodiscard]] const std::optional<glm::vec3>& position() const { return m_position; }
 
     /**
-     * @brief Set the position, enabling spatial indexing for this object.
+     * @brief Set the position, enabling spatial indexing and queries for this object.
      * @param p World-space coordinates.
      */
     void set_position(const glm::vec3& p) { m_position = p; }
 
     /**
-     * @brief Clear the position, removing this object from spatial queries.
+     * @brief Clear the position, removing this object from spatial operations.
      */
     void clear_position() { m_position.reset(); }
+
+    /**
+     * @brief Return the query radius.
+     */
+    [[nodiscard]] float query_radius() const { return m_query_radius; }
+
+    /**
+     * @brief Set the query radius.
+     * @param r New radius in world-space units.
+     */
+    void set_query_radius(float r) { m_query_radius = r; }
 
     /**
      * @brief Return the stable object id assigned by Fabric.
@@ -224,13 +264,24 @@ public:
     }
 
     /**
+     * @brief Invoke the perception function with the supplied context.
+     * @param ctx Populated context for this commit.
+     */
+    virtual void invoke_perception(const PerceptionContext& ctx)
+    {
+        if (m_perception_fn) {
+            m_perception_fn(ctx);
+        }
+    }
+
+    /**
      * @brief Invoke the influence function with the supplied context.
      * @param ctx Populated context for this commit.
      */
-    void invoke(const InfluenceContext& ctx) const
+    virtual void invoke_influence(const InfluenceContext& ctx) const
     {
-        if (m_fn) {
-            m_fn(ctx);
+        if (m_influence_fn) {
+            m_influence_fn(ctx);
         }
         dispatch_audio_sinks(m_audio_sinks, ctx);
         dispatch_render_sinks(m_render_sinks, ctx);
@@ -248,9 +299,12 @@ private:
     std::shared_ptr<Buffers::RenderProcessor> m_influence_target;
     std::shared_ptr<Buffers::VKBuffer> m_influence_ubo;
 
-    InfluenceFn m_fn;
+    float m_query_radius;
+    std::string m_perception_fn_name;
+    PerceptionFn m_perception_fn;
+    std::string m_influence_fn_name;
+    InfluenceFn m_influence_fn;
     uint32_t m_id {};
-    std::string m_fn_name;
 
     mutable std::vector<AudioSink> m_audio_sinks;
     mutable std::vector<RenderSink> m_render_sinks;

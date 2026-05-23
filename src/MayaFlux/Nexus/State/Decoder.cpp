@@ -1,4 +1,4 @@
-#include "StateDecoder.hpp"
+#include "Decoder.hpp"
 
 #include "MayaFlux/IO/ImageReader.hpp"
 #include "MayaFlux/IO/JSONSerializer.hpp"

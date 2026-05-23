@@ -1,8 +1,8 @@
 #pragma once
 
-#include "Agent.hpp"
-#include "Emitter.hpp"
-#include "Sensor.hpp"
+#include "Principals/Agent.hpp"
+#include "Principals/Emitter.hpp"
+#include "Principals/Sensor.hpp"
 #include "Wiring.hpp"
 
 #include "MayaFlux/Kriya/Chain.hpp"

@@ -1,6 +1,6 @@
-#include "StateEncoder.hpp"
+#include "Encoder.hpp"
 
-#include "Sinks.hpp"
+#include "MayaFlux/Nexus/Pheme/Sinks.hpp"
 
 #include "MayaFlux/IO/ImageWriter.hpp"
 #include "MayaFlux/IO/JSONSerializer.hpp"
@@ -285,7 +285,7 @@ bool StateEncoder::encode(const Fabric& fabric, const std::string& base_path)
             });
             fill_wiring_pixels(fabric, id, rec.trigger_kind, rec.time_kind);
             rec.sink_type = (e->audio_sinks().empty() ? 0U : 1U)
-                          | (e->render_sinks().empty() ? 0U : 2U);
+                | (e->render_sinks().empty() ? 0U : 2U);
             if (!e->audio_sinks().empty())
                 rec.first_audio_channel = e->audio_sinks().front().channel;
             break;
@@ -338,7 +338,7 @@ bool StateEncoder::encode(const Fabric& fabric, const std::string& base_path)
             });
             fill_wiring_pixels(fabric, id, rec.trigger_kind, rec.time_kind);
             rec.sink_type = (a->audio_sinks().empty() ? 0U : 1U)
-                          | (a->render_sinks().empty() ? 0U : 2U);
+                | (a->render_sinks().empty() ? 0U : 2U);
             if (!a->audio_sinks().empty())
                 rec.first_audio_channel = a->audio_sinks().front().channel;
             break;

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Fabric.hpp"
+#include "MayaFlux/Nexus/Fabric.hpp"
 
 namespace MayaFlux::Nexus {
 
