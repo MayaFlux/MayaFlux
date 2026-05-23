@@ -252,8 +252,8 @@ struct MAYAFLUX_API GlobalGraphicsConfig {
      */
     enum class WindowingBackend : uint8_t {
         GLFW, ///< GLFW3 (default, cross-platform)
-        SDL, ///< SDL2 (alternative, if implemented)
-        NATIVE, ///< Platform-native (Win32/X11/Cocoa, if implemented)
+        WINDOWS, ///< Native Win32
+        WAYLAND, ///< Native Wayland
         NONE ///< No windowing (offscreen rendering only)
     };
 

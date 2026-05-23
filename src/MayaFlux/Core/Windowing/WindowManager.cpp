@@ -162,14 +162,14 @@ std::shared_ptr<Window> WindowManager::create_window_internal(
         return std::make_unique<GlfwWindow>(create_info, m_config.surface_info,
             m_config.requested_api, m_config.glfw_preinit_config);
 
-    case GlobalGraphicsConfig::WindowingBackend::SDL:
+    case GlobalGraphicsConfig::WindowingBackend::WINDOWS:
         MF_ERROR(Journal::Component::Core, Journal::Context::WindowingSubsystem,
-            "SDL backend not implemented");
+            "WIN32 backend selected on non-Windows platform");
         return nullptr;
 
-    case GlobalGraphicsConfig::WindowingBackend::NATIVE:
+    case GlobalGraphicsConfig::WindowingBackend::WAYLAND:
         MF_ERROR(Journal::Component::Core, Journal::Context::WindowingSubsystem,
-            "Native backend not implemented");
+            "Wayland native backend not yet implemented");
         return nullptr;
 
     default:
