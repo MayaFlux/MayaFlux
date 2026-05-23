@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Expanse.hpp"
 #include "Principals/Agent.hpp"
 #include "Principals/Emitter.hpp"
 #include "Principals/Sensor.hpp"
@@ -100,6 +101,24 @@ public:
      * @param id Stable id assigned at registration.
      */
     void remove(uint32_t id);
+
+    /**
+     * @brief Register an Expanse for per-commit crossing detection.
+     *
+     * On each commit, after the snapshot publishes, the Expanse's predicate is
+     * evaluated against every indexed position and membership is diffed against
+     * the previous commit. Entry and exit actions fire for the difference.
+     *
+     * @param expanse Expanse to register. Its id is assigned here.
+     * @return Stable id assigned to the Expanse.
+     */
+    uint32_t add_expanse(std::shared_ptr<Expanse> expanse);
+
+    /**
+     * @brief Remove a registered Expanse. Does not fire exit actions.
+     * @param id Id assigned at registration.
+     */
+    void remove_expanse(uint32_t id);
 
     // =========================================================================
     // Commit
@@ -224,6 +243,7 @@ private:
 
     std::unique_ptr<Kinesis::SpatialIndex3D> m_index;
     std::unordered_map<uint32_t, Registration> m_registrations;
+    std::unordered_map<uint32_t, std::shared_ptr<Expanse>> m_expanses;
     uint32_t m_next_id { 1 };
 
     std::unordered_map<std::string, std::shared_ptr<Emitter::InfluenceFn>> m_influence_fns;

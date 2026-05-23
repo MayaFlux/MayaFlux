@@ -97,6 +97,19 @@ void Fabric::remove(uint32_t id)
     m_registrations.erase(it);
 }
 
+uint32_t Fabric::add_expanse(std::shared_ptr<Expanse> expanse)
+{
+    const uint32_t id = m_next_id++;
+    expanse->m_id = id;
+    m_expanses.try_emplace(id, std::move(expanse));
+    return id;
+}
+
+void Fabric::remove_expanse(uint32_t id)
+{
+    m_expanses.erase(id);
+}
+
 std::vector<uint32_t> Fabric::all_ids() const
 {
     std::vector<uint32_t> ids;
@@ -174,6 +187,33 @@ void Fabric::commit()
     }
 
     m_index->publish();
+
+    if (!m_expanses.empty()) {
+        const auto snapshot = m_index->all();
+        for (auto& [xid, expanse] : m_expanses) {
+            std::unordered_set<uint32_t> inside;
+            for (const auto& [eid, pos] : snapshot) {
+                if (expanse->m_contains && expanse->m_contains(pos)) {
+                    inside.insert(eid);
+                }
+            }
+            if (expanse->m_on_enter) {
+                for (uint32_t eid : inside) {
+                    if (!expanse->m_occupants.contains(eid)) {
+                        expanse->m_on_enter(eid);
+                    }
+                }
+            }
+            if (expanse->m_on_exit) {
+                for (uint32_t eid : expanse->m_occupants) {
+                    if (!inside.contains(eid)) {
+                        expanse->m_on_exit(eid);
+                    }
+                }
+            }
+            expanse->m_occupants = std::move(inside);
+        }
+    }
 
     for (auto& [id, reg] : m_registrations) {
         if (reg.commit_driven) {
