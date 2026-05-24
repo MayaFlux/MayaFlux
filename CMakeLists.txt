@@ -31,6 +31,10 @@ include(rpath)
 include(dependencies)
 include(shader)
 
+if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux" AND WAYLAND_BACKEND)
+    include(wayland_protocols_gen)
+endif()
+
 configure_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/cmake/config.h.in"
     "${CMAKE_CURRENT_SOURCE_DIR}/cmake/config.h"
