@@ -252,8 +252,8 @@ struct MAYAFLUX_API GlobalGraphicsConfig {
      */
     enum class WindowingBackend : uint8_t {
         GLFW, ///< GLFW3 (default, cross-platform)
-        SDL, ///< SDL2 (alternative, if implemented)
-        NATIVE, ///< Platform-native (Win32/X11/Cocoa, if implemented)
+        WINDOWS, ///< Native Win32
+        WAYLAND, ///< Native Wayland
         NONE ///< No windowing (offscreen rendering only)
     };
 
@@ -271,8 +271,16 @@ struct MAYAFLUX_API GlobalGraphicsConfig {
     /** @brief Target frame rate for visual processing (Hz) */
     uint32_t target_frame_rate = 60;
 
+#if defined(MAYAFLUX_PLATFORM_WINDOWS)
+#ifndef WIN32_BACKEND
+#error "Windows builds require WIN32_BACKEND"
+#endif // WIN32_BACKEND
+    /** @brief Selected windowing backend */
+    WindowingBackend windowing_backend = WindowingBackend::WINDOWS;
+#else
     /** @brief Selected windowing backend */
     WindowingBackend windowing_backend = WindowingBackend::GLFW;
+#endif //  defined(MAYAFLUX_PLATFORM_WINDOWS) && defined (WIN32_BACKEND)
 
     /** @brief Selected graphics API for rendering */
     GraphicsApi requested_api = GraphicsApi::VULKAN;

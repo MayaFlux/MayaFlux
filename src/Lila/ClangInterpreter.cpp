@@ -256,32 +256,6 @@ ClangInterpreter::EvalResult ClangInterpreter::eval(const std::string& code)
         }
     });
 
-#elif defined(MAYAFLUX_PLATFORM_WINDOWS)
-    auto completed = std::make_shared<std::atomic<bool>>(false);
-
-    auto* task = static_cast<std::function<void()>*>(
-        HeapAlloc(GetProcessHeap(), 0, sizeof(std::function<void()>)));
-    new (task) std::function<void()>([&, completed]() {
-        auto eval_result = m_impl->interpreter->ParseAndExecute(code);
-
-        if (!eval_result) {
-            result.success = true;
-            LILA_DEBUG(Emitter::INTERPRETER, "Code evaluation succeeded");
-        } else {
-            result.success = false;
-            result.error = "Execution failed: " + llvm::toString(std::move(eval_result));
-            LILA_ERROR(Emitter::INTERPRETER, result.error);
-        }
-
-        completed->store(true, std::memory_order_release);
-    });
-
-    PostThreadMessage(MayaFlux::Parallel::g_MainThreadId, MAYAFLUX_WM_DISPATCH, 0, (LPARAM)task);
-
-    while (!completed->load(std::memory_order_acquire)) {
-        std::this_thread::sleep_for(std::chrono::microseconds(100));
-    }
-
 #else
     auto eval_result = m_impl->interpreter->ParseAndExecute(code);
 

@@ -472,7 +472,6 @@ jobs:
           Write-Host "  ✓ Vulkan SDK (GitHub Action - auto-detected)" -ForegroundColor Green
           Write-Host "  [Tier 2 - vcpkg Package Manager]" -ForegroundColor Cyan
           Write-Host "  ✓ HidApi 0.15.0 (via vcpkg.json)" -ForegroundColor Green
-          Write-Host "  ✓ GLFW 3.4 (shared lib via vcpkg.json)" -ForegroundColor Green
           Write-Host "  ✓ FFmpeg 6.0+ (shared libs via vcpkg.json)" -ForegroundColor Green
           Write-Host "  ✓ Eigen3, GLM, magic_enum (via vcpkg.json)" -ForegroundColor Green
           Write-Host "  [Tier 3 - Header-Only Direct]" -ForegroundColor Cyan

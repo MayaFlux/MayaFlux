@@ -1,6 +1,8 @@
 #include "GlfwSingleton.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 
+#ifdef GLFW_BACKEND
+
 #include "GLFW/glfw3.h"
 
 namespace MayaFlux::Core {
@@ -166,8 +168,6 @@ std::string GLFWSingleton::get_platform()
 #else
     return "x11";
 #endif
-#elif MAYAFLUX_PLATFORM_WINDOWS
-    return "win32";
 #elif MAYAFLUX_PLATFORM_MACOS
     return "cocoa";
 #else
@@ -215,3 +215,5 @@ std::vector<const char*> GLFWSingleton::get_required_instance_extensions()
 }
 
 }
+
+#endif // GLFW_BACKEND

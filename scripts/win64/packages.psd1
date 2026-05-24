@@ -48,7 +48,6 @@
         "magic-enum" = @{}
         stb        = @{}
         hidapi     = @{}
-        glfw3      = @{}
         asio       = @{}
         assimp     = @{}
         freetype   = @{}

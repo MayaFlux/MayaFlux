@@ -8,7 +8,6 @@ if(WIN32)
 
     find_package(eigen3 CONFIG REQUIRED)
     find_package(glm CONFIG REQUIRED)
-    find_package(glfw3 CONFIG REQUIRED)
     find_package(hidapi CONFIG REQUIRED)
     find_package(asio CONFIG REQUIRED)
     find_package(assimp CONFIG REQUIRED)

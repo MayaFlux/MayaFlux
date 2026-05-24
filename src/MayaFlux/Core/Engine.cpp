@@ -92,12 +92,6 @@ Engine& Engine::operator=(Engine&& other) noexcept
 
 void Engine::Init()
 {
-#ifdef MAYAFLUX_PLATFORM_WINDOWS
-    if (Parallel::g_MainThreadId == 0) {
-        Parallel::g_MainThreadId = GetCurrentThreadId();
-    }
-#endif // MAYAFLUX_PLATFORM_WINDOWS
-
     Init(m_stream_info, m_graphics_config, m_input_config, m_network_config);
 }
 
@@ -207,7 +201,38 @@ void Engine::await_shutdown()
 #ifdef MAYAFLUX_PLATFORM_MACOS
     run_macos_event_loop();
 #elif defined(MAYAFLUX_PLATFORM_WINDOWS)
-    run_windows_event_loop();
+    static std::atomic<bool> s_signal_received { false };
+    s_signal_received.store(false, std::memory_order_relaxed);
+
+    SetConsoleCtrlHandler([](DWORD type) -> BOOL {
+        if (type == CTRL_C_EVENT || type == CTRL_BREAK_EVENT || type == CTRL_CLOSE_EVENT) {
+            s_signal_received.store(true, std::memory_order_release);
+            return TRUE;
+        }
+        return FALSE;
+    },
+        TRUE);
+
+    HANDLE h_stdin = GetStdHandle(STD_INPUT_HANDLE);
+    bool has_console = h_stdin != INVALID_HANDLE_VALUE && GetFileType(h_stdin) == FILE_TYPE_CHAR;
+
+    if (has_console) {
+        while (!s_signal_received.load(std::memory_order_acquire)
+            && !m_should_shutdown.load(std::memory_order_acquire)) {
+            if (WaitForSingleObject(h_stdin, 100) == WAIT_OBJECT_0) {
+                INPUT_RECORD rec {};
+                DWORD read {};
+                if (ReadConsoleInputW(h_stdin, &rec, 1, &read) && read > 0
+                    && rec.EventType == KEY_EVENT
+                    && rec.Event.KeyEvent.bKeyDown
+                    && rec.Event.KeyEvent.wVirtualKeyCode == VK_RETURN) {
+                    break;
+                }
+            }
+        }
+    } else {
+        m_should_shutdown.wait(false);
+    }
 #else
     static std::atomic<bool> s_signal_received { false };
     s_signal_received.store(false, std::memory_order_relaxed);
@@ -252,8 +277,6 @@ void Engine::request_shutdown()
 
 #ifdef MAYAFLUX_PLATFORM_MACOS
     CFRunLoopStop(CFRunLoopGetMain());
-#elif defined(MAYAFLUX_PLATFORM_WINDOWS)
-    PostThreadMessage(Parallel::g_MainThreadId, WM_QUIT, 0, 0);
 #endif
 }
 
@@ -295,51 +318,6 @@ void Engine::run_macos_event_loop()
 
     dispatch_source_cancel(stdinSource);
     dispatch_release(stdinSource);
-
-    MF_INFO(Journal::Component::Core, Journal::Context::Runtime,
-        "Main thread event loop exiting");
-}
-#endif
-
-#ifdef MAYAFLUX_PLATFORM_WINDOWS
-void Engine::run_windows_event_loop()
-{
-    MSG msg;
-    PeekMessage(&msg, NULL, WM_USER, WM_USER, PM_NOREMOVE);
-
-    auto stdinSource = std::thread([this]() {
-        std::cin.get();
-        request_shutdown();
-    });
-
-    MF_LOG(Journal::Component::Core, Journal::Context::Runtime,
-        "Main thread event loop running");
-
-    while (!is_shutdown_requested()) {
-        while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
-            if (msg.message == WM_QUIT) {
-                request_shutdown();
-                break;
-            }
-
-            if (msg.message == MAYAFLUX_WM_DISPATCH) {
-                auto* task = reinterpret_cast<std::function<void()>*>(msg.lParam);
-                if (task) {
-                    (*task)();
-                    delete task;
-                }
-            } else {
-                TranslateMessage(&msg);
-                DispatchMessage(&msg);
-            }
-        }
-
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    }
-
-    if (stdinSource.joinable()) {
-        stdinSource.detach();
-    }
 
     MF_INFO(Journal::Component::Core, Journal::Context::Runtime,
         "Main thread event loop exiting");

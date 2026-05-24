@@ -160,6 +160,20 @@ namespace Core {
 #else
     constexpr const char* SHADER_INSTALL_DIR = "@CMAKE_INSTALL_PREFIX@/share/MayaFlux/shaders";
 #endif
+
+constexpr std::string_view get_platform_name()
+{
+#if defined(MAYAFLUX_PLATFORM_LINUX)
+    return "Linux";
+#elif defined(MAYAFLUX_PLATFORM_WINDOWS)
+    return "Windows";
+#elif defined(MAYAFLUX_PLATFORM_MACOS)
+    return "macOS";
+#else 
+    return "Unknown";
+#endif // defined(MAYAFLUX_PLATFORM_*)
+}
+
 } // namespace Core
 
 } // namespace MayaFlux

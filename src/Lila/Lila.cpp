@@ -148,13 +148,6 @@ bool Lila::is_server_running() const
     return m_server && m_server->is_running();
 }
 
-#ifdef MAYAFLUX_PLATFORM_WINDOWS
-void Lila::set_main_thread_id(uint32_t thread_id)
-{
-    MayaFlux::Parallel::g_MainThreadId = static_cast<DWORD>(thread_id);
-}
-#endif
-
 void* Lila::get_symbol_address(const std::string& name)
 {
     return m_interpreter ? m_interpreter->get_symbol_address(name) : nullptr;
@@ -238,44 +231,6 @@ void Lila::await_shutdown(const std::atomic<bool>* external_flag)
         CFRunLoopRunInMode(kCFRunLoopDefaultMode, server_loop_rate, false);
     }
 
-#elif defined(MAYAFLUX_PLATFORM_WINDOWS)
-    if (MayaFlux::Parallel::g_MainThreadId == 0) {
-        MayaFlux::Parallel::g_MainThreadId = GetCurrentThreadId();
-    }
-
-    MSG msg;
-    PeekMessage(&msg, NULL, WM_USER, WM_USER, PM_NOREMOVE);
-
-    while (!m_shutdown_requested.load(std::memory_order_acquire)
-        && (!external_flag || external_flag->load(std::memory_order_acquire))) {
-        if (!is_server_running()) {
-            LILA_ERROR(Emitter::SYSTEM, "Server stopped unexpectedly");
-            break;
-        }
-
-        while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
-            if (msg.message == WM_QUIT) {
-                m_shutdown_requested.store(true, std::memory_order_release);
-                break;
-            }
-
-            if (msg.message == MAYAFLUX_WM_DISPATCH) {
-                auto* task = reinterpret_cast<std::function<void()>*>(msg.lParam);
-                if (task) {
-                    (*task)();
-                    task->~function();
-                    HeapFree(GetProcessHeap(), 0, task);
-                }
-            } else {
-                TranslateMessage(&msg);
-                DispatchMessage(&msg);
-            }
-        }
-
-        std::this_thread::sleep_for(
-            std::chrono::milliseconds(static_cast<int>(server_loop_rate * 1000.0F)));
-    }
-
 #else
     while (!m_shutdown_requested.load(std::memory_order_acquire) && (!external_flag || external_flag->load(std::memory_order_acquire))) {
         if (!is_server_running()) {
@@ -295,8 +250,6 @@ void Lila::request_shutdown()
 
 #ifdef MAYAFLUX_PLATFORM_MACOS
     CFRunLoopStop(CFRunLoopGetMain());
-#elif defined(MAYAFLUX_PLATFORM_WINDOWS)
-    PostThreadMessage(MayaFlux::Parallel::g_MainThreadId, WM_QUIT, 0, 0);
 #endif
 }
 

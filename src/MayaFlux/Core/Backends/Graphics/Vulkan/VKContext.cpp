@@ -3,9 +3,16 @@
 
 #include "MayaFlux/Core/Backends/Windowing/Glfw/GlfwSingleton.hpp"
 #include "MayaFlux/Core/Backends/Windowing/Glfw/GlfwWindow.hpp"
+#include "MayaFlux/Core/Backends/Windowing/Win32/Win32Window.hpp"
 
+#ifdef GLFW_BACKEND
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
+#endif // GLFW_BACKEND
+
+#if defined(WIN32_BACKEND)
+#include <vulkan/vulkan_win32.h>
+#endif
 
 #include "MayaFlux/Transitive/Parallel/Dispatch.hpp"
 
@@ -22,20 +29,20 @@ bool VKContext::initialize(const GlobalGraphicsConfig& graphics_config, bool ena
         return false;
     }
 
-    std::vector<const char*> extensions;
+    std::vector<const char*> extensions = required_extensions;
+
+#if defined(GLFW_BACKEND)
     if (graphics_config.windowing_backend == GlobalGraphicsConfig::WindowingBackend::GLFW) {
-
         GLFWSingleton::configure(graphics_config.glfw_preinit_config);
-        extensions = GLFWSingleton::get_required_instance_extensions();
-
-        for (const char* ext : required_extensions) {
-            if (std::ranges::find(extensions, ext) == extensions.end()) {
+        for (const char* ext : GLFWSingleton::get_required_instance_extensions()) {
+            if (!std::ranges::contains(extensions, ext))
                 extensions.push_back(ext);
-            }
         }
-    } else {
-        extensions = required_extensions;
     }
+#elif defined(WIN32_BACKEND)
+    extensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
+    extensions.push_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
+#endif
 
     if (!m_instance.initialize(enable_validation, extensions)) {
         MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
@@ -63,6 +70,7 @@ vk::SurfaceKHR VKContext::create_surface(std::shared_ptr<Window> window)
         return nullptr;
     }
 
+#if defined(GLFW_BACKEND)
     auto* glfw_window = dynamic_cast<GlfwWindow*>(window.get());
     if (!glfw_window) {
         MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
@@ -77,7 +85,7 @@ vk::SurfaceKHR VKContext::create_surface(std::shared_ptr<Window> window)
         return nullptr;
     }
 
-    VkSurfaceKHR c_surface;
+    VkSurfaceKHR c_surface {};
     VkResult result = Parallel::dispatch_main_sync([&]() {
         return glfwCreateWindowSurface(
             static_cast<VkInstance>(m_instance.get_instance()),
@@ -88,7 +96,8 @@ vk::SurfaceKHR VKContext::create_surface(std::shared_ptr<Window> window)
 
     if (result != VK_SUCCESS) {
         MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
-            "Failed to create window surface");
+            "Failed to create GLFW window surface for window '{}'",
+            window->get_create_info().title);
         return nullptr;
     }
 
@@ -99,6 +108,43 @@ vk::SurfaceKHR VKContext::create_surface(std::shared_ptr<Window> window)
         "Surface created for window '{}'", window->get_create_info().title);
 
     return surface;
+
+#elif defined(WIN32_BACKEND)
+    if (m_graphics_config.windowing_backend == GlobalGraphicsConfig::WindowingBackend::WINDOWS) {
+        auto hwnd = static_cast<HWND>(window->get_native_handle());
+        if (!hwnd) {
+            MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+                "Cannot create surface: null HWND");
+            return nullptr;
+        }
+
+        VkWin32SurfaceCreateInfoKHR info {};
+        info.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+        info.hinstance = GetModuleHandleW(nullptr);
+        info.hwnd = hwnd;
+
+        VkSurfaceKHR c_surface {};
+        if (vkCreateWin32SurfaceKHR(
+                static_cast<VkInstance>(m_instance.get_instance()),
+                &info, nullptr, &c_surface)
+            != VK_SUCCESS) {
+            MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+                "Failed to create Win32 Vulkan surface for window '{}'",
+                window->get_create_info().title);
+            return nullptr;
+        }
+
+        vk::SurfaceKHR surface(c_surface);
+        m_surfaces.push_back(surface);
+        MF_INFO(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Win32 surface created for window '{}'", window->get_create_info().title);
+        return surface;
+    }
+#endif
+
+    MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+        "No windowing backend available for surface creation");
+    return nullptr;
 }
 
 void VKContext::destroy_surface(vk::SurfaceKHR surface)

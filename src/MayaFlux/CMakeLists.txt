@@ -108,7 +108,6 @@ endif()
 if(WIN32)
     target_link_libraries(MayaFluxLib PUBLIC
         Eigen3::Eigen
-        glfw
         glm::glm
         Vulkan::Vulkan
         FFmpeg::avcodec
