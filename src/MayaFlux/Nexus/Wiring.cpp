@@ -367,8 +367,11 @@ void Wiring::finalise()
                 auto& fab = m_fabric;
                 ev_manager.add_event(
                     std::make_shared<Vruta::Event>(
-                        Kriya::key_pressed(trig.window, trig.key,
-                            [&fab, id]() { fab.fire(id); })),
+                        trig.on_release
+                            ? Kriya::key_held(trig.window, trig.key,
+                                  [&fab, id]() { fab.fire(id); })
+                            : Kriya::key_pressed(trig.window, trig.key,
+                                  [&fab, id]() { fab.fire(id); })),
                     name);
 
                 if (trig.on_release) {
