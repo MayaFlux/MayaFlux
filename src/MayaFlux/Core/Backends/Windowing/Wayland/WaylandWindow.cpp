@@ -67,6 +67,10 @@ WaylandWindow::WaylandWindow(const WindowCreateInfo& create_info,
 WaylandWindow::~WaylandWindow()
 {
     destroy();
+    if (m_display) {
+        wl_display_disconnect(m_display);
+        m_display = nullptr;
+    }
 }
 
 // ============================================================================
@@ -147,10 +151,6 @@ void WaylandWindow::destroy()
         wl_registry_destroy(m_registry);
         m_registry = nullptr;
     }
-    if (m_display) {
-        wl_display_disconnect(m_display);
-        m_display = nullptr;
-    }
 }
 
 bool WaylandWindow::should_close() const
@@ -160,9 +160,6 @@ bool WaylandWindow::should_close() const
 
 void WaylandWindow::poll()
 {
-    // if (wl_display_prepare_read(m_display) == 0) {
-    //     wl_display_read_events(m_display);
-    // }
     wl_display_dispatch_pending(m_display);
     wl_display_flush(m_display);
 
