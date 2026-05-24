@@ -25,6 +25,11 @@ else()
 endif()
 add_compile_definitions(GLFW_BACKEND)
 
+set(MAYAFLUX_WINDOWING_BACKEND "GLFW_BACKEND" CACHE INTERNAL "")
+if(WIN32 AND GLFW_BACKEND)
+    add_compile_definitions(WIN32_MESSAGE_PUMP)
+endif()
+
 if(APPLE)
     message(STATUS
             "Using system Clang on macOS (minimum macOS 14 required for C++23)")

@@ -103,7 +103,7 @@ public:
      */
     [[nodiscard]] bool is_server_running() const;
 
-#ifdef MAYAFLUX_PLATFORM_WINDOWS
+#if defined(MAYAFLUX_PLATFORM_WINDOWS) && defined(WIN32_MESSAGE_PUMP)
     void set_main_thread_id(uint32_t thread_id);
 #endif
 

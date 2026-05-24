@@ -96,7 +96,7 @@ bool dispatch_main_async_with_timeout(std::chrono::milliseconds timeout_ms, Func
     return true;
 }
 
-#elif defined(MAYAFLUX_PLATFORM_WINDOWS)
+#elif defined(MAYAFLUX_PLATFORM_WINDOWS) && defined(WIN32_MESSAGE_PUMP)
 
 inline DWORD g_MainThreadId = 0; /// < Main thread ID, must be set at startup
 

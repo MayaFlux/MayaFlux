@@ -256,7 +256,7 @@ ClangInterpreter::EvalResult ClangInterpreter::eval(const std::string& code)
         }
     });
 
-#elif defined(MAYAFLUX_PLATFORM_WINDOWS)
+#elif defined(MAYAFLUX_PLATFORM_WINDOWS) && defined(WIN32_MESSAGE_PUMP)
     auto completed = std::make_shared<std::atomic<bool>>(false);
 
     auto* task = static_cast<std::function<void()>*>(

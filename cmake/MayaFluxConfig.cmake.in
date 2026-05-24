@@ -233,9 +233,13 @@ if(NOT TARGET MayaFlux::MayaFluxLib)
     target_compile_definitions(MayaFlux::MayaFluxLib INTERFACE
         @MAYAFLUX_AUDIO_BACKEND@
         @MAYAFLUX_MIDI_BACKEND@
-        GLFW_BACKEND
+        @MAYAFLUX_WINDOWING_BACKEND@
         ASIO_STANDALONE
     )
+
+    if(WIN32 AND "@GLFW_BACKEND@")
+        target_compile_definitions(MayaFlux::MayaFluxLib INTERFACE WIN32_MESSAGE_PUMP)
+    endif()
 
     # Debug definition
     if("@CMAKE_BUILD_TYPE@" STREQUAL "Debug")

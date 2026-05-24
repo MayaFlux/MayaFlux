@@ -148,7 +148,7 @@ bool Lila::is_server_running() const
     return m_server && m_server->is_running();
 }
 
-#ifdef MAYAFLUX_PLATFORM_WINDOWS
+#if defined(MAYAFLUX_PLATFORM_WINDOWS) && defined(WIN32_MESSAGE_PUMP)
 void Lila::set_main_thread_id(uint32_t thread_id)
 {
     MayaFlux::Parallel::g_MainThreadId = static_cast<DWORD>(thread_id);
@@ -238,7 +238,7 @@ void Lila::await_shutdown(const std::atomic<bool>* external_flag)
         CFRunLoopRunInMode(kCFRunLoopDefaultMode, server_loop_rate, false);
     }
 
-#elif defined(MAYAFLUX_PLATFORM_WINDOWS)
+#elif defined(MAYAFLUX_PLATFORM_WINDOWS) && defined(WIN32_MESSAGE_PUMP)
     if (MayaFlux::Parallel::g_MainThreadId == 0) {
         MayaFlux::Parallel::g_MainThreadId = GetCurrentThreadId();
     }
@@ -295,7 +295,7 @@ void Lila::request_shutdown()
 
 #ifdef MAYAFLUX_PLATFORM_MACOS
     CFRunLoopStop(CFRunLoopGetMain());
-#elif defined(MAYAFLUX_PLATFORM_WINDOWS)
+#elif defined(MAYAFLUX_PLATFORM_WINDOWS) && defined(WIN32_MESSAGE_PUMP)
     PostThreadMessage(MayaFlux::Parallel::g_MainThreadId, WM_QUIT, 0, 0);
 #endif
 }
