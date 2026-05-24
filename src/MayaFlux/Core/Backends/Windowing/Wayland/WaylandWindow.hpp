@@ -108,6 +108,11 @@ private:
     double m_pointer_x {};
     double m_pointer_y {};
 
+    int32_t m_repeat_rate { 60 };
+    int32_t m_repeat_delay { 90 };
+    int m_repeat_fd { -1 };
+    std::unordered_map<int16_t, WindowEvent::KeyData> m_held_keys;
+
     // -------------------------------------------------------------------------
     // Window state
     // -------------------------------------------------------------------------

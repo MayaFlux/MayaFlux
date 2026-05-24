@@ -7,6 +7,7 @@
 
 #include <linux/input-event-codes.h>
 #include <sys/mman.h>
+#include <sys/timerfd.h>
 #include <unistd.h>
 
 namespace MayaFlux::Core {
@@ -93,6 +94,11 @@ void WaylandWindow::hide()
 
 void WaylandWindow::destroy()
 {
+    if (m_repeat_fd >= 0) {
+        close(m_repeat_fd);
+        m_repeat_fd = -1;
+    }
+
     if (m_keyboard) {
         wl_keyboard_destroy(m_keyboard);
         m_keyboard = nullptr;
@@ -162,6 +168,19 @@ void WaylandWindow::poll()
 {
     wl_display_dispatch_pending(m_display);
     wl_display_flush(m_display);
+
+    if (m_repeat_fd >= 0 && !m_held_keys.empty()) {
+        uint64_t expirations = 0;
+        if (read(m_repeat_fd, &expirations, sizeof(expirations)) == sizeof(expirations)
+            && expirations > 0) {
+            for (const auto& [k, kd] : m_held_keys) {
+                WindowEvent rev;
+                rev.type = WindowEventType::KEY_REPEAT;
+                rev.data = kd;
+                emit(rev);
+            }
+        }
+    }
 
     if (m_pending_configure.exchange(false)) {
         xdg_surface_set_window_geometry(m_xdg_surface, 0, 0,
@@ -470,16 +489,47 @@ void WaylandWindow::on_keyboard_key(void* data, wl_keyboard*,
         mf_key = from_xkb_keysym(sym);
     }
 
-    WindowEvent ev;
-    ev.type = (state == WL_KEYBOARD_KEY_STATE_PRESSED)
-        ? WindowEventType::KEY_PRESSED
-        : WindowEventType::KEY_RELEASED;
-    ev.data = WindowEvent::KeyData {
+    const WindowEvent::KeyData kd {
         .key = static_cast<int16_t>(mf_key),
         .scancode = static_cast<int32_t>(key),
         .mods = 0
     };
-    self->emit(ev);
+
+    WindowEvent ev;
+    ev.data = kd;
+
+    if (state == WL_KEYBOARD_KEY_STATE_PRESSED) {
+        ev.type = WindowEventType::KEY_PRESSED;
+        self->emit(ev);
+
+        self->m_held_keys[kd.key] = kd;
+
+        if (self->m_repeat_fd < 0)
+            self->m_repeat_fd = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK | TFD_CLOEXEC);
+
+        const long delay_ns = 90'000'000L;
+        const long repeat_ns = self->m_repeat_rate > 0
+            ? 1'000'000'000L / self->m_repeat_rate
+            : 16'666'667L;
+
+        itimerspec ts {};
+        ts.it_value.tv_sec = 0;
+        ts.it_value.tv_nsec = delay_ns;
+        ts.it_interval.tv_sec = 0;
+        ts.it_interval.tv_nsec = repeat_ns;
+        timerfd_settime(self->m_repeat_fd, 0, &ts, nullptr);
+
+    } else {
+        self->m_held_keys.erase(kd.key);
+
+        if (self->m_held_keys.empty() && self->m_repeat_fd >= 0) {
+            itimerspec ts {};
+            timerfd_settime(self->m_repeat_fd, 0, &ts, nullptr);
+        }
+
+        ev.type = WindowEventType::KEY_RELEASED;
+        self->emit(ev);
+    }
 }
 
 void WaylandWindow::on_keyboard_modifiers(void* data, wl_keyboard*,
@@ -492,7 +542,15 @@ void WaylandWindow::on_keyboard_modifiers(void* data, wl_keyboard*,
     }
 }
 
-void WaylandWindow::on_keyboard_repeat_info(void*, wl_keyboard*, int32_t, int32_t) { }
+void WaylandWindow::on_keyboard_repeat_info(void* data, wl_keyboard*,
+    int32_t rate, int32_t delay)
+{
+    auto* self = static_cast<WaylandWindow*>(data);
+    (void)rate;
+    (void)delay;
+    self->m_repeat_rate = 60;
+    self->m_repeat_delay = 90;
+}
 
 // ============================================================================
 // wl_pointer
