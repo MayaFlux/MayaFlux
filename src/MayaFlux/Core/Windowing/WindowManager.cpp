@@ -2,6 +2,7 @@
 
 #include "MayaFlux/Core/Backends/Windowing/Glfw/GlfwSingleton.hpp"
 #include "MayaFlux/Core/Backends/Windowing/Glfw/GlfwWindow.hpp"
+#include "MayaFlux/Core/Backends/Windowing/Win32/Win32Window.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 
 #include "MayaFlux/Transitive/Parallel/Dispatch.hpp"
@@ -171,9 +172,14 @@ std::shared_ptr<Window> WindowManager::create_window_internal(
 #endif
 
     case GlobalGraphicsConfig::WindowingBackend::WINDOWS:
+#if defined(MAYAFLUX_PLATFORM_WINDOWS)
+        return std::make_shared<Win32Window>(create_info, m_config.surface_info,
+            m_config.requested_api);
+#else
         MF_ERROR(Journal::Component::Core, Journal::Context::WindowingSubsystem,
-            "WIN32 backend selected on non-Windows platform");
+            "Native Win32 backend not implemented on this platform");
         return nullptr;
+#endif
 
     case GlobalGraphicsConfig::WindowingBackend::WAYLAND:
         MF_ERROR(Journal::Component::Core, Journal::Context::WindowingSubsystem,
@@ -196,10 +202,14 @@ void WindowManager::remove_from_lookup(const std::shared_ptr<Window>& window)
 
 bool WindowManager::process()
 {
+
 #if defined(GLFW_BACKEND)
     Parallel::dispatch_main_sync([]() {
         glfwPollEvents();
     });
+#elif defined(MAYAFLUX_PLATFORM_WINDOWS) && defined(WIN32_BACKEND)
+    for (auto& w : m_processing_windows)
+        w->poll();
 #endif
 
     {
