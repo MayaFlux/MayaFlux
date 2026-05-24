@@ -1,9 +1,6 @@
 #pragma once
 
-#include <glm/geometric.hpp>
-#include <glm/vec2.hpp>
-
-#include "MayaFlux/Kinesis/ViewTransform.hpp"
+#include "MayaFlux/Kinesis/Spatial/HitTest.hpp"
 
 namespace MayaFlux::Kinesis {
 
@@ -89,6 +86,42 @@ struct AABB2D {
     {
         glm::vec2 half = ndc_scale * 0.5F;
         return { .min = ndc_position - half, .max = ndc_position + half };
+    }
+};
+
+// =============================================================================
+// BoundingSphere
+// =============================================================================
+
+/**
+ * @struct BoundingSphere
+ * @brief Spherical fast-reject hint in world space.
+ *
+ * Used as the cheap pre-filter for 3D spatial predicates, analogous to
+ * AABB2D in the 2D path. A sphere is a better pre-filter than an axis-aligned
+ * box in 3D: rotation-invariant, one dot product to test a point, one
+ * discriminant to test a ray.
+ */
+struct BoundingSphere {
+    glm::vec3 center;
+    float radius;
+
+    [[nodiscard]] bool contains(const glm::vec3& p) const noexcept
+    {
+        glm::vec3 d = p - center;
+        return glm::dot(d, d) <= radius * radius;
+    }
+
+    /**
+     * @brief Returns true if the ray passes through or originates inside the sphere.
+     * @param ray World-space ray with normalized direction.
+     */
+    [[nodiscard]] bool overlaps_ray(const Ray& ray) const noexcept
+    {
+        glm::vec3 oc = ray.origin - center;
+        float b = glm::dot(oc, ray.direction);
+        float c = glm::dot(oc, oc) - radius * radius;
+        return b * b - c >= 0.0F;
     }
 };
 
@@ -191,6 +224,101 @@ stroke_bounds(std::span<const glm::vec2> points, float half_thickness)
 }
 
 // =============================================================================
+// 3D containment callables
+// All functions return std::function<bool(glm::vec3)> suitable for
+// direct use as spatial predicates in Nexus and NavigationState constraints.
+// Pair with BoundingSphere for a cheap pre-filter where the predicate is
+// expensive.
+// =============================================================================
+
+/**
+ * @brief Containment test for a sphere.
+ * @param center World-space center.
+ * @param radius Radius in world units.
+ */
+[[nodiscard]] inline std::function<bool(glm::vec3)>
+circular_bounds(glm::vec3 center, float radius) noexcept
+{
+    float r2 = radius * radius;
+    return [center, r2](const glm::vec3& p) {
+        glm::vec3 d = p - center;
+        return glm::dot(d, d) <= r2;
+    };
+}
+
+/**
+ * @brief Containment test for a convex volume defined by inward-facing half-planes.
+ *
+ * A point is inside if it satisfies all half-planes: dot(normal, p) >= offset
+ * for every plane. Normals must point inward. Suitable for authored rooms,
+ * corridors, and any convex spatial zone. Non-convex volumes are composed
+ * via union_region3 / subtract_region3.
+ *
+ * @param planes Pairs of (inward normal, signed offset). Copied into closure.
+ */
+[[nodiscard]] inline std::function<bool(glm::vec3)>
+convex_region(std::span<const std::pair<glm::vec3, float>> planes)
+{
+    std::vector<std::pair<glm::vec3, float>> ps(planes.begin(), planes.end());
+    return [ps = std::move(ps)](const glm::vec3& p) {
+        return std::ranges::all_of(
+            ps,
+            [&p](const auto& plane) {
+                const auto& [n, d] = plane;
+                return glm::dot(n, p) >= d;
+            });
+    };
+}
+
+/**
+ * @brief Containment test for a vertically extruded 2D polygon.
+ *
+ * The footprint is tested with the winding number algorithm in the XZ plane.
+ * The Y axis is the vertical: the point must satisfy y_min <= p.y <= y_max.
+ * Covers authored rooms, columns, corridors where the cross-section is
+ * constant along Y.
+ *
+ * @param footprint Polygon vertices in XZ. Copied into closure.
+ * @param y_min     Lower Y bound (inclusive).
+ * @param y_max     Upper Y bound (inclusive).
+ */
+[[nodiscard]] inline std::function<bool(glm::vec3)>
+extruded_polygon_region(
+    std::span<const glm::vec2> footprint,
+    float y_min,
+    float y_max)
+{
+    std::vector<glm::vec2> verts(footprint.begin(), footprint.end());
+    return [verts = std::move(verts), y_min, y_max](const glm::vec3& p) {
+        if (p.y < y_min || p.y > y_max)
+            return false;
+        glm::vec2 q { p.x, p.z };
+        int winding = 0;
+        const size_t n = verts.size();
+        for (size_t i = 0; i < n; ++i) {
+            glm::vec2 a = verts[i];
+            glm::vec2 b = verts[(i + 1) % n];
+            if (a.y <= q.y) {
+                if (b.y > q.y) {
+                    float cross = (b.x - a.x) * (q.y - a.y)
+                        - (b.y - a.y) * (q.x - a.x);
+                    if (cross > 0.0F)
+                        ++winding;
+                }
+            } else {
+                if (b.y <= q.y) {
+                    float cross = (b.x - a.x) * (q.y - a.y)
+                        - (b.y - a.y) * (q.x - a.x);
+                    if (cross < 0.0F)
+                        --winding;
+                }
+            }
+        }
+        return winding != 0;
+    };
+}
+
+// =============================================================================
 // Combinators
 // =============================================================================
 
@@ -249,6 +377,49 @@ subtract_bounds(
     uint32_t width, uint32_t height)
 {
     return ndc_size_to_pixels(region.max - region.min, width, height);
+}
+
+// =============================================================================
+// 3D combinators
+// =============================================================================
+
+/**
+ * @brief Union of two 3D containment tests.
+ */
+[[nodiscard]] inline std::function<bool(glm::vec3)>
+union_bounds(
+    std::function<bool(glm::vec3)> a,
+    std::function<bool(glm::vec3)> b)
+{
+    return [a = std::move(a), b = std::move(b)](const glm::vec3& p) {
+        return a(p) || b(p);
+    };
+}
+
+/**
+ * @brief Intersection of two 3D containment tests.
+ */
+[[nodiscard]] inline std::function<bool(glm::vec3)>
+intersect_bounds(
+    std::function<bool(glm::vec3)> a,
+    std::function<bool(glm::vec3)> b)
+{
+    return [a = std::move(a), b = std::move(b)](const glm::vec3& p) {
+        return a(p) && b(p);
+    };
+}
+
+/**
+ * @brief Difference of two 3D containment tests. Inside @p a but not @p b.
+ */
+[[nodiscard]] inline std::function<bool(glm::vec3)>
+subtract_bounds(
+    std::function<bool(glm::vec3)> a,
+    std::function<bool(glm::vec3)> b)
+{
+    return [a = std::move(a), b = std::move(b)](const glm::vec3& p) {
+        return a(p) && !b(p);
+    };
 }
 
 } // namespace MayaFlux::Kinesis

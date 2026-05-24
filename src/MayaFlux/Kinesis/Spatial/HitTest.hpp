@@ -174,4 +174,39 @@ struct HitResult {
     return results;
 }
 
+/**
+ * @brief Recover the world-space position at a known depth for a given pixel.
+ *
+ * Unprojects a window pixel and a Vulkan NDC depth value [0, 1] back into
+ * world space by inverting the full view-projection transform. This is the
+ * inverse of what the vertex shader does: given the depth the GPU wrote into
+ * the depth attachment at (window_x, window_y), return the world position
+ * that produced it.
+ *
+ * The depth value must be in Vulkan's [0, 1] range (not OpenGL's [-1, 1]).
+ * Pass 0.0 to recover the near-plane position, 1.0 for the far plane.
+ * A value sampled from the depth attachment is valid directly.
+ *
+ * @param window_x  X in window space [0, width] (top-left origin).
+ * @param window_y  Y in window space [0, height] (top-left origin).
+ * @param width     Window width in pixels.
+ * @param height    Window height in pixels.
+ * @param ndc_depth Depth in [0, 1] (Vulkan convention).
+ * @param vt        Active ViewTransform (view + projection matrices).
+ * @return World-space position corresponding to the pixel at that depth.
+ */
+[[nodiscard]] inline glm::vec3 ray_at_depth(
+    double window_x, double window_y,
+    uint32_t width, uint32_t height,
+    float ndc_depth,
+    const ViewTransform& vt)
+{
+    float ndc_x = (static_cast<float>(window_x) / static_cast<float>(width)) * 2.0F - 1.0F;
+    float ndc_y = 1.0F - (static_cast<float>(window_y) / static_cast<float>(height)) * 2.0F;
+
+    glm::mat4 inv_vp = glm::inverse(vt.projection * vt.view);
+    glm::vec4 h = inv_vp * glm::vec4(ndc_x, ndc_y, ndc_depth, 1.0F);
+    return glm::vec3(h) / h.w;
+}
+
 } // namespace MayaFlux::Kinesis
