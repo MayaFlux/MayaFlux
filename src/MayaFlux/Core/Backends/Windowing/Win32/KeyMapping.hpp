@@ -2,6 +2,8 @@
 
 #include "MayaFlux/IO/Keys.hpp"
 
+#ifdef MAYAFLUX_PLATFORM_WINDOWS
+
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
@@ -44,3 +46,5 @@ MAYAFLUX_API int to_win32_key(IO::Keys key) noexcept;
 MAYAFLUX_API bool is_valid_win32_key(WPARAM vk) noexcept;
 
 } // namespace MayaFlux::Core
+
+#endif // MAYAFLUX_PLATFORM_WINDOWS

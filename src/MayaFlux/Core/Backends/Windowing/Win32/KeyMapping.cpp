@@ -1,5 +1,7 @@
 #include "KeyMapping.hpp"
 
+#ifdef MAYAFLUX_PLATFORM_WINDOWS
+
 namespace MayaFlux::Core {
 
 // ============================================================================
@@ -404,3 +406,5 @@ bool is_valid_win32_key(WPARAM vk) noexcept
 }
 
 } // namespace MayaFlux::Core
+
+#endif // MAYAFLUX_PLATFORM_WINDOWS
