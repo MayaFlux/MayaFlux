@@ -3,6 +3,8 @@
 #include "GlfwSingleton.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 
+#ifdef GLFW_BACKEND
+
 #ifdef MAYAFLUX_PLATFORM_WINDOWS
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3native.h>
@@ -503,3 +505,5 @@ std::vector<std::shared_ptr<Buffers::VKBuffer>> GlfwWindow::get_rendering_buffer
 }
 
 }
+
+#endif // GLFW_BACKEND

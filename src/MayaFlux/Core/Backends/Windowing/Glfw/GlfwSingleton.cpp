@@ -1,6 +1,8 @@
 #include "GlfwSingleton.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 
+#ifdef GLFW_BACKEND
+
 #include "GLFW/glfw3.h"
 
 namespace MayaFlux::Core {
@@ -215,3 +217,5 @@ std::vector<const char*> GLFWSingleton::get_required_instance_extensions()
 }
 
 }
+
+#endif // GLFW_BACKEND

@@ -20,7 +20,9 @@ WindowManager::~WindowManager()
     m_windows.clear();
     m_window_lookup.clear();
 
+#ifdef GLFW_BACKEND
     GLFWSingleton::terminate();
+#endif // GLFW_BACKEND
 
     MF_INFO(Journal::Component::Core, Journal::Context::WindowingSubsystem,
         "WindowManager destroyed");
@@ -35,7 +37,7 @@ std::shared_ptr<Window> WindowManager::create_window(const WindowCreateInfo& cre
     }
 
     MF_INFO(Journal::Component::Core, Journal::Context::WindowingSubsystem,
-        "Creating window '{}' ({}x{}), for platform {}", create_info.title, create_info.width, create_info.height, GLFWSingleton::get_platform());
+        "Creating window '{}' ({}x{}), for platform {}", create_info.title, create_info.width, create_info.height, get_platform_name());
 
     auto window = create_window_internal(create_info);
     if (!window) {
@@ -159,8 +161,14 @@ std::shared_ptr<Window> WindowManager::create_window_internal(
 {
     switch (m_config.windowing_backend) {
     case GlobalGraphicsConfig::WindowingBackend::GLFW:
+#if defined(GLFW_BACKEND)
         return std::make_unique<GlfwWindow>(create_info, m_config.surface_info,
             m_config.requested_api, m_config.glfw_preinit_config);
+#else
+        MF_ERROR(Journal::Component::Core, Journal::Context::WindowingSubsystem,
+            "GLFW backend not compiled in");
+        return nullptr;
+#endif
 
     case GlobalGraphicsConfig::WindowingBackend::WINDOWS:
         MF_ERROR(Journal::Component::Core, Journal::Context::WindowingSubsystem,
@@ -188,9 +196,11 @@ void WindowManager::remove_from_lookup(const std::shared_ptr<Window>& window)
 
 bool WindowManager::process()
 {
+#if defined(GLFW_BACKEND)
     Parallel::dispatch_main_sync([]() {
         glfwPollEvents();
     });
+#endif
 
     {
         std::lock_guard<std::mutex> lock(m_hooks_mutex);

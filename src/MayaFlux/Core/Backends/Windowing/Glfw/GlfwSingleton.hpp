@@ -2,6 +2,8 @@
 
 #include "MayaFlux/Core/GlobalGraphicsInfo.hpp"
 
+#ifdef GLFW_BACKEND
+
 namespace MayaFlux::Core {
 
 struct GlfwPreInitConfig;
@@ -161,3 +163,5 @@ private:
 };
 
 }
+
+#endif // GLFW_BACKEND

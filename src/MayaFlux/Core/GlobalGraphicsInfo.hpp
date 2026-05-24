@@ -271,8 +271,13 @@ struct MAYAFLUX_API GlobalGraphicsConfig {
     /** @brief Target frame rate for visual processing (Hz) */
     uint32_t target_frame_rate = 60;
 
+#if defined(MAYAFLUX_PLATFORM_WINDOWS) && defined(WIN32_BACKEND)
+    /** @brief Selected windowing backend */
+    WindowingBackend windowing_backend = WindowingBackend::WINDOWS;
+#else
     /** @brief Selected windowing backend */
     WindowingBackend windowing_backend = WindowingBackend::GLFW;
+#endif //  defined(MAYAFLUX_PLATFORM_WINDOWS) && defined (WIN32_BACKEND)
 
     /** @brief Selected graphics API for rendering */
     GraphicsApi requested_api = GraphicsApi::VULKAN;

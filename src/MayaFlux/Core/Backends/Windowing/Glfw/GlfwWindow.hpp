@@ -3,6 +3,8 @@
 #include "MayaFlux/Core/Backends/Windowing/Window.hpp"
 #include "MayaFlux/Vruta/WindowEventSource.hpp"
 
+#ifdef GLFW_BACKEND
+
 #include <GLFW/glfw3.h>
 
 namespace MayaFlux::Core {
@@ -162,3 +164,5 @@ private:
     static void glfw_scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 };
 }
+
+#endif // GLFW_BACKEND
