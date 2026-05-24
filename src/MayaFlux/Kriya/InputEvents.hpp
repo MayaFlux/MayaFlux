@@ -55,6 +55,22 @@ namespace Kriya {
         std::function<void()> callback);
 
     /**
+     * @brief Creates an Event coroutine that triggers on key press and repeats while held.
+     *
+     * Fires the callback on initial press and on each repeat tick until the key
+     * is released. Suspends between ticks; does not spin.
+     *
+     * @param window   Window to listen to.
+     * @param key      Key to wait for.
+     * @param callback Called on press and each repeat tick.
+     * @return Event coroutine that can be added to EventManager.
+     */
+    MAYAFLUX_API Vruta::Event key_held(
+        std::shared_ptr<Core::Window> window,
+        IO::Keys key,
+        std::function<void()> callback);
+
+    /**
      * @brief Creates an Event coroutine that triggers on any key press
      * @param window Window to listen to
      * @param callback Function to call with key code when any key is pressed

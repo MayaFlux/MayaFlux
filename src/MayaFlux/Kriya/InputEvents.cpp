@@ -51,6 +51,31 @@ Vruta::Event key_released(
     }
 }
 
+Vruta::Event key_held(
+    std::shared_ptr<Core::Window> window,
+    IO::Keys key,
+    std::function<void()> callback)
+{
+    auto& promise = co_await GetEventPromise {};
+    auto& source = window->get_event_source();
+
+    Vruta::WindowEventFilter filter;
+    filter.key_code = key;
+
+    while (true) {
+        if (promise.should_terminate)
+            break;
+
+        auto ev = co_await WindowEventAwaiter(source, filter);
+
+        if (ev.type == Core::WindowEventType::KEY_RELEASED) {
+            continue;
+        }
+
+        callback();
+    }
+}
+
 Vruta::Event any_key(
     std::shared_ptr<Core::Window> window,
     std::function<void(IO::Keys)> callback)
