@@ -90,18 +90,22 @@ void advance_navigation(NavigationState& st)
 
     const float step = st.move_speed * dt;
 
+    glm::vec3 candidate = st.eye;
+
     if (st.forward_held)
-        st.eye += forward * step;
+        candidate += forward * step;
     if (st.back_held)
-        st.eye -= forward * step;
+        candidate -= forward * step;
     if (st.left_held)
-        st.eye -= right * step;
+        candidate -= right * step;
     if (st.right_held)
-        st.eye += right * step;
+        candidate += right * step;
     if (st.down_held)
-        st.eye -= glm::vec3(0.0F, 1.0F, 0.0F) * step;
+        candidate -= glm::vec3(0.0F, 1.0F, 0.0F) * step;
     if (st.up_held)
-        st.eye += glm::vec3(0.0F, 1.0F, 0.0F) * step;
+        candidate += glm::vec3(0.0F, 1.0F, 0.0F) * step;
+
+    st.eye = st.eye_constraint ? st.eye_constraint(candidate) : candidate;
 }
 
 ViewTransform build_view_transform(const NavigationState& st, float aspect)

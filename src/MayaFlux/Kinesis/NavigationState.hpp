@@ -56,6 +56,12 @@ struct NavigationState {
     float far_plane { 1000.0F };
 
     std::chrono::steady_clock::time_point last_tick { std::chrono::steady_clock::now() };
+
+    /** @brief Optional constraint applied to the proposed eye position after
+     *        each advance. Receives the candidate position and returns the
+     *        actual position to commit. Identity (no constraint) if empty.
+     **/
+    std::function<glm::vec3(glm::vec3)> eye_constraint;
 };
 
 /**
