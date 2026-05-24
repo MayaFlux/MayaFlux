@@ -114,6 +114,8 @@ else()
     else()
         message(STATUS "=== Linux-specific Dependencies ===")
         pkg_check_modules(Vulkan REQUIRED IMPORTED_TARGET vulkan)
+        pkg_check_modules(WAYLAND_CLIENT REQUIRED IMPORTED_TARGET wayland-client)
+        pkg_check_modules(XKBCOMMON REQUIRED IMPORTED_TARGET xkbcommon)
         find_package(TBB REQUIRED)
         set(_MAYAFLUX_THREADING_BACKEND "TBB")
 
@@ -301,6 +303,8 @@ if(NOT TARGET MayaFlux::MayaFluxLib)
         else()
             target_link_libraries(MayaFlux::MayaFluxLib INTERFACE 
             PkgConfig::Vulkan
+            PkgConfig::WAYLAND_CLIENT
+            PkgConfig::XKBCOMMON
             PkgConfig::PIPEWIRE
             asound
             )

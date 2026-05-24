@@ -8,6 +8,13 @@ install(DIRECTORY ${CMAKE_SOURCE_DIR}/src/MayaFlux/
         DESTINATION include/MayaFlux
         FILES_MATCHING PATTERN "*.hpp" PATTERN "*.h" PATTERN "*.inl")
 
+if(UNIX AND NOT APPLE)
+    install(DIRECTORY "${CMAKE_BINARY_DIR}/src/MayaFlux/wayland_generated/"
+        DESTINATION include/MayaFlux/Core/Backends/Windowing/Wayland
+        FILES_MATCHING PATTERN "*.h"
+    )
+endif()
+
 configure_file(
     ${CMAKE_SOURCE_DIR}/cmake/MayaFlux.pc.in
     ${CMAKE_CURRENT_BINARY_DIR}/MayaFlux.pc

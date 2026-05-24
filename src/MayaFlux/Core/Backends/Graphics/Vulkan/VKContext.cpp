@@ -3,6 +3,7 @@
 
 #include "MayaFlux/Core/Backends/Windowing/Glfw/GlfwSingleton.hpp"
 #include "MayaFlux/Core/Backends/Windowing/Glfw/GlfwWindow.hpp"
+#include "MayaFlux/Core/Backends/Windowing/Wayland/WaylandWindow.hpp"
 #include "MayaFlux/Core/Backends/Windowing/Win32/Win32Window.hpp"
 
 #ifdef GLFW_BACKEND
@@ -12,6 +13,10 @@
 
 #if defined(WIN32_BACKEND)
 #include <vulkan/vulkan_win32.h>
+#endif
+
+#if defined(WAYLAND_BACKEND)
+#include <vulkan/vulkan_wayland.h>
 #endif
 
 #include "MayaFlux/Transitive/Parallel/Dispatch.hpp"
@@ -42,6 +47,9 @@ bool VKContext::initialize(const GlobalGraphicsConfig& graphics_config, bool ena
 #elif defined(WIN32_BACKEND)
     extensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
     extensions.push_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
+#elif defined(WAYLAND_BACKEND)
+    extensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
+    extensions.push_back(VK_KHR_WAYLAND_SURFACE_EXTENSION_NAME);
 #endif
 
     if (!m_instance.initialize(enable_validation, extensions)) {
@@ -138,6 +146,38 @@ vk::SurfaceKHR VKContext::create_surface(std::shared_ptr<Window> window)
         m_surfaces.push_back(surface);
         MF_INFO(Journal::Component::Core, Journal::Context::GraphicsBackend,
             "Win32 surface created for window '{}'", window->get_create_info().title);
+        return surface;
+    }
+#elif defined(WAYLAND_BACKEND)
+    {
+        auto* wl_display = static_cast<struct wl_display*>(window->get_native_display());
+        auto* wl_surface = static_cast<struct wl_surface*>(window->get_native_handle());
+        if (!wl_display || !wl_surface) {
+            MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+                "Cannot create surface: null Wayland display or surface handle");
+            return nullptr;
+        }
+
+        VkWaylandSurfaceCreateInfoKHR info {};
+        info.sType = VK_STRUCTURE_TYPE_WAYLAND_SURFACE_CREATE_INFO_KHR;
+        info.display = wl_display;
+        info.surface = wl_surface;
+
+        VkSurfaceKHR c_surface {};
+        if (vkCreateWaylandSurfaceKHR(
+                static_cast<VkInstance>(m_instance.get_instance()),
+                &info, nullptr, &c_surface)
+            != VK_SUCCESS) {
+            MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+                "Failed to create Wayland Vulkan surface for window '{}'",
+                window->get_create_info().title);
+            return nullptr;
+        }
+
+        vk::SurfaceKHR surface(c_surface);
+        m_surfaces.push_back(surface);
+        MF_INFO(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Wayland surface created for window '{}'", window->get_create_info().title);
         return surface;
     }
 #endif

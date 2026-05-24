@@ -2,7 +2,9 @@
 
 #include "MayaFlux/Core/Backends/Windowing/Glfw/GlfwSingleton.hpp"
 #include "MayaFlux/Core/Backends/Windowing/Glfw/GlfwWindow.hpp"
+#include "MayaFlux/Core/Backends/Windowing/Wayland/WaylandWindow.hpp"
 #include "MayaFlux/Core/Backends/Windowing/Win32/Win32Window.hpp"
+
 #include "MayaFlux/Journal/Archivist.hpp"
 
 #include "MayaFlux/Transitive/Parallel/Dispatch.hpp"
@@ -182,9 +184,14 @@ std::shared_ptr<Window> WindowManager::create_window_internal(
 #endif
 
     case GlobalGraphicsConfig::WindowingBackend::WAYLAND:
+#if defined(MAYAFLUX_PLATFORM_LINUX)
+        return std::make_shared<WaylandWindow>(create_info, m_config.surface_info,
+            m_config.requested_api);
+#else
         MF_ERROR(Journal::Component::Core, Journal::Context::WindowingSubsystem,
-            "Wayland native backend not yet implemented");
+            "Wayland native backend not compiled in");
         return nullptr;
+#endif
 
     default:
         MF_ERROR(Journal::Component::Core, Journal::Context::WindowingSubsystem,
@@ -207,7 +214,7 @@ bool WindowManager::process()
     Parallel::dispatch_main_sync([]() {
         glfwPollEvents();
     });
-#elif defined(MAYAFLUX_PLATFORM_WINDOWS)
+#else
     for (auto& w : m_processing_windows)
         w->poll();
 #endif

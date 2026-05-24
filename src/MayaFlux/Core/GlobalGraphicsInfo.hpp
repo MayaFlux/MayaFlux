@@ -277,6 +277,9 @@ struct MAYAFLUX_API GlobalGraphicsConfig {
 #endif // WIN32_BACKEND
     /** @brief Selected windowing backend */
     WindowingBackend windowing_backend = WindowingBackend::WINDOWS;
+#elif defined(WAYLAND_BACKEND)
+    /** @brief Selected windowing backend */
+    WindowingBackend windowing_backend = WindowingBackend::WAYLAND;
 #else
     /** @brief Selected windowing backend */
     WindowingBackend windowing_backend = WindowingBackend::GLFW;
