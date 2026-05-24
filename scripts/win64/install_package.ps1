@@ -504,7 +504,7 @@ function Install-BinaryPackage($name, $config) {
         $extractedDirs  = $extractedItems | Where-Object { $_.PSIsContainer }
 
         if ($extractedDirs.Count -eq 1 -and $extractedItems.Count -eq 1) {
-            # Single wrapper directory case (GLFW, FFmpeg, LLVM, etc.)
+            # Single wrapper directory case (FFmpeg, LLVM, etc.)
             $wrapperDir = $extractedDirs[0].FullName
             Write-Host "  Stripping single wrapper directory: $($extractedDirs[0].Name)" -ForegroundColor Cyan
             Get-ChildItem $wrapperDir -Force | Move-Item -Destination $config.InstallRoot -Force

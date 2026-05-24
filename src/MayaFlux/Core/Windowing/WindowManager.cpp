@@ -207,7 +207,7 @@ bool WindowManager::process()
     Parallel::dispatch_main_sync([]() {
         glfwPollEvents();
     });
-#elif defined(MAYAFLUX_PLATFORM_WINDOWS) && defined(WIN32_BACKEND)
+#elif defined(MAYAFLUX_PLATFORM_WINDOWS)
     for (auto& w : m_processing_windows)
         w->poll();
 #endif

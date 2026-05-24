@@ -168,8 +168,6 @@ std::string GLFWSingleton::get_platform()
 #else
     return "x11";
 #endif
-#elif MAYAFLUX_PLATFORM_WINDOWS
-    return "win32";
 #elif MAYAFLUX_PLATFORM_MACOS
     return "cocoa";
 #else

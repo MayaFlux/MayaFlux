@@ -44,7 +44,6 @@ if(WIN32)
     find_package(Vulkan REQUIRED)
     find_package(magic_enum REQUIRED)
 
-    find_package(glfw3 CONFIG REQUIRED)
     find_package(eigen3 CONFIG REQUIRED)
     find_package(glm CONFIG REQUIRED)
     find_package(hidapi CONFIG REQUIRED)
@@ -254,7 +253,6 @@ if(NOT TARGET MayaFlux::MayaFluxLib)
     if(WIN32)
         target_link_libraries(MayaFlux::MayaFluxLib INTERFACE
             Eigen3::Eigen
-            glfw
             glm::glm
             Vulkan::Vulkan
             FFmpeg::avcodec

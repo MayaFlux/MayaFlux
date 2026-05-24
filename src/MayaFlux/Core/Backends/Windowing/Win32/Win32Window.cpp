@@ -239,7 +239,7 @@ LRESULT CALLBACK Win32Window::wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp
 
 void Win32Window::push_event(WindowEvent ev)
 {
-    m_event_queue.push(ev);
+    (void)m_event_queue.push(ev);
 }
 
 // ============================================================================

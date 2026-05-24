@@ -131,11 +131,6 @@ if(WIN32)
         shell32
         opengl32
     )
-
-    if(GLFW_BACKEND)
-        target_link_libraries(MayaFluxLib PUBLIC glfw)
-    endif()
-
 else()
     if(APPLE)
         target_link_libraries(MayaFluxLib PRIVATE oneDPL)

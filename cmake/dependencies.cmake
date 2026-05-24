@@ -15,10 +15,6 @@ if(WIN32)
     find_package(utf8proc CONFIG REQUIRED)
     find_package(nlohmann_json CONFIG REQUIRED)
 
-    if(GLFW_BACKEND)
-        find_package(glfw3 CONFIG REQUIRED)
-    endif()
-
     find_package(LLVM CONFIG REQUIRED HINTS "$ENV{LLVM_DEV_DIR}")
     find_package(Clang CONFIG REQUIRED HINTS "$ENV{Clang_DEV_DIR}")
 

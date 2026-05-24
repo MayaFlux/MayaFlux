@@ -5,10 +5,7 @@
 
 #ifdef GLFW_BACKEND
 
-#ifdef MAYAFLUX_PLATFORM_WINDOWS
-#define GLFW_EXPOSE_NATIVE_WIN32
-#include <GLFW/glfw3native.h>
-#elif MAYAFLUX_PLATFORM_LINUX
+#ifdef MAYAFLUX_PLATFORM_LINUX
 #include <GLFW/glfw3native.h>
 #elif MAYAFLUX_PLATFORM_MACOS
 #define GLFW_EXPOSE_NATIVE_COCOA
@@ -192,9 +189,7 @@ void* GlfwWindow::get_native_handle() const
     if (!m_window)
         return nullptr;
 
-#ifdef MAYAFLUX_PLATFORM_WINDOWS
-    return glfwGetWin32Window(m_window);
-#elif MAYAFLUX_PLATFORM_LINUX
+#ifdef MAYAFLUX_PLATFORM_LINUX
 #if defined(GLFW_EXPOSE_NATIVE_WAYLAND)
     if (glfwGetPlatform() == GLFW_PLATFORM_WAYLAND) {
         return glfwGetWaylandWindow(m_window);
