@@ -30,10 +30,6 @@ else()
     add_compile_definitions(MAYAFLUX_PLATFORM_UNKNOWN)
 endif()
 
-if(WIN32 AND GLFW_BACKEND)
-    add_compile_definitions(WIN32_MESSAGE_PUMP)
-endif()
-
 if(APPLE)
     message(STATUS
             "Using system Clang on macOS (minimum macOS 14 required for C++23)")

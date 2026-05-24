@@ -38,10 +38,6 @@ bool start_lila(uint16_t port)
     g_instance = std::move(instance);
     g_port = port;
 
-#if defined(MAYAFLUX_PLATFORM_WINDOWS) && defined(WIN32_MESSAGE_PUMP)
-    g_instance->set_main_thread_id(static_cast<uint32_t>(GetCurrentThreadId()));
-#endif
-
     LILA_INFO(Lila::Emitter::SYSTEM,
         "start_lila: running on port " + std::to_string(port));
     return true;

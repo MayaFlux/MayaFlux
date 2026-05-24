@@ -409,10 +409,6 @@ private:
 #ifdef MAYAFLUX_PLATFORM_MACOS
     void run_macos_event_loop();
 #endif
-
-#if defined(MAYAFLUX_PLATFORM_WINDOWS) && defined(WIN32_MESSAGE_PUMP)
-    void run_windows_event_loop();
-#endif
 };
 
 } // namespace MayaFlux::Core

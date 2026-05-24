@@ -103,10 +103,6 @@ public:
      */
     [[nodiscard]] bool is_server_running() const;
 
-#if defined(MAYAFLUX_PLATFORM_WINDOWS) && defined(WIN32_MESSAGE_PUMP)
-    void set_main_thread_id(uint32_t thread_id);
-#endif
-
     /**
      * @brief Gets the address of a symbol defined in the interpreter
      * @param name Symbol name
