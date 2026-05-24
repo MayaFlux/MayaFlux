@@ -41,22 +41,20 @@ if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
     add_compile_definitions(USE_TBB_BACKEND)
     target_compile_definitions(MayaFluxLib PRIVATE GLFW_EXPOSE_NATIVE_WAYLAND)
 
-    if(WAYLAND_BACKEND)
-        mf_add_wayland_protocol(MayaFluxLib
-            PROTOCOL "${WAYLAND_PROTOCOLS_DIR}/stable/xdg-shell/xdg-shell.xml"
-            BASENAME "xdg-shell"
-        )
+    mf_add_wayland_protocol(MayaFluxLib
+        PROTOCOL "${WAYLAND_PROTOCOLS_DIR}/stable/xdg-shell/xdg-shell.xml"
+        BASENAME "xdg-shell"
+    )
 
-        mf_add_wayland_protocol(MayaFluxLib
-            PROTOCOL "${WAYLAND_PROTOCOLS_DIR}/unstable/xdg-decoration/xdg-decoration-unstable-v1.xml"
-            BASENAME "xdg-decoration-unstable-v1"
-        )
+    mf_add_wayland_protocol(MayaFluxLib
+        PROTOCOL "${WAYLAND_PROTOCOLS_DIR}/unstable/xdg-decoration/xdg-decoration-unstable-v1.xml"
+        BASENAME "xdg-decoration-unstable-v1"
+    )
 
-        mf_add_wayland_protocol(MayaFluxLib
-            PROTOCOL "${WAYLAND_PROTOCOLS_DIR}/stable/presentation-time/presentation-time.xml"
-            BASENAME "presentation-time"
-        )
-    endif()
+    mf_add_wayland_protocol(MayaFluxLib
+        PROTOCOL "${WAYLAND_PROTOCOLS_DIR}/stable/presentation-time/presentation-time.xml"
+        BASENAME "presentation-time"
+    )
 endif()
 
 set_target_properties(MayaFluxLib PROPERTIES
@@ -94,10 +92,12 @@ if(UNIX AND NOT APPLE)
     if(MAYAFLUX_AUDIO_BACKEND STREQUAL "PIPEWIRE_BACKEND")
         target_include_directories(MayaFluxLib PRIVATE ${PIPEWIRE_INCLUDE_DIRS})
     endif()
-    if(WAYLAND_BACKEND)
-        target_include_directories(MayaFluxLib PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
-    endif()
+    target_include_directories(MayaFluxLib PRIVATE
+                               "${CMAKE_CURRENT_BINARY_DIR}/wayland_generated")
 endif()
+
+# target_include_directories(MayaFluxLib PRIVATE ${WAYLAND_CLIENT_INCLUDE_DIRS})
+# target_include_directories(MayaFluxLib PRIVATE ${XKBCOMMON_INCLUDE_DIRS})
 
 #==============================================================
 #                   Target Links
@@ -164,18 +164,16 @@ else()
     else()
         target_link_libraries(MayaFluxLib PUBLIC
         PkgConfig::Vulkan
+        PkgConfig::WAYLAND_CLIENT
+        PkgConfig::XKBCOMMON
         PkgConfig::Fontconfig
         asound
         )
 
-        if(WAYLAND_BACKEND)
-            target_link_libraries(MayaFluxLib PRIVATE PkgConfig::WAYLAND_CLIENT)
-            target_link_libraries(MayaFluxLib PRIVATE PkgConfig::XKBCOMMON)
-            message(STATUS "Wayland backend enabled")
-        endif()
-
         target_link_libraries(MayaFluxLib PRIVATE ${PIPEWIRE_LIBRARIES})
         message(STATUS "PipeWire backend enabled (${PIPEWIRE_VERSION})")
+
+        # target_link_libraries(MayaFluxLib PRIVATE PkgConfig::WAYLAND_PROTOCOLS)
     endif()
 
     target_link_libraries(MayaFluxLib PUBLIC

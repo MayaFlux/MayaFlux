@@ -31,7 +31,7 @@ include(rpath)
 include(dependencies)
 include(shader)
 
-if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux" AND WAYLAND_BACKEND)
+if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
     include(wayland_protocols_gen)
 endif()
 

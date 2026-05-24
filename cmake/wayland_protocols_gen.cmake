@@ -12,6 +12,7 @@
 # SKIP_AUTOMOC is set on both files to prevent moc from touching them.
 
 function(mf_add_wayland_protocol target)
+    file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/wayland_generated")
     cmake_parse_arguments(ARGS "" "PROTOCOL;BASENAME" "" ${ARGN})
 
     if(NOT ARGS_PROTOCOL)
@@ -27,8 +28,8 @@ function(mf_add_wayland_protocol target)
     endif()
 
     get_filename_component(_xml "${ARGS_PROTOCOL}" ABSOLUTE)
-    set(_hdr "${CMAKE_CURRENT_BINARY_DIR}/wayland-${ARGS_BASENAME}-client-protocol.h")
-    set(_src "${CMAKE_CURRENT_BINARY_DIR}/wayland-${ARGS_BASENAME}-protocol.c")
+    set(_hdr "${CMAKE_CURRENT_BINARY_DIR}/wayland_generated/wayland-${ARGS_BASENAME}-client-protocol.h")
+    set(_src "${CMAKE_CURRENT_BINARY_DIR}/wayland_generated/wayland-${ARGS_BASENAME}-protocol.c")
 
     set_source_files_properties("${_hdr}" "${_src}" PROPERTIES
         GENERATED    TRUE
@@ -58,8 +59,9 @@ function(mf_add_wayland_protocol target)
     set_target_properties("${_lib_name}" PROPERTIES
         POSITION_INDEPENDENT_CODE ON
     )
+
     target_include_directories("${_lib_name}" PRIVATE
-        "${CMAKE_CURRENT_BINARY_DIR}"
+        "${CMAKE_CURRENT_BINARY_DIR}/wayland_generated"
     )
 
     target_link_libraries("${target}" PRIVATE "${_lib_name}")

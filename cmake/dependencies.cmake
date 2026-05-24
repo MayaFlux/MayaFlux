@@ -48,16 +48,14 @@ else()
         add_compile_definitions(PIPEWIRE_BACKEND)
         pkg_check_modules(PIPEWIRE REQUIRED IMPORTED_TARGET libpipewire-0.3)
 
-        if(WAYLAND_BACKEND)
-            pkg_check_modules(WAYLAND_CLIENT REQUIRED IMPORTED_TARGET
-                            wayland-client)
+        pkg_check_modules(WAYLAND_CLIENT REQUIRED IMPORTED_TARGET
+                        wayland-client)
 
-            pkg_check_modules(WAYLAND_PROTOCOLS REQUIRED wayland-protocols)
-            pkg_check_modules(XKBCOMMON REQUIRED IMPORTED_TARGET xkbcommon)
+        pkg_check_modules(WAYLAND_PROTOCOLS REQUIRED wayland-protocols)
+        pkg_check_modules(XKBCOMMON REQUIRED IMPORTED_TARGET xkbcommon)
 
-            find_program(WaylandScanner_EXECUTABLE NAMES wayland-scanner REQUIRED)
-            pkg_get_variable(WAYLAND_PROTOCOLS_DIR wayland-protocols pkgdatadir)
-        endif()
+        find_program(WaylandScanner_EXECUTABLE NAMES wayland-scanner REQUIRED)
+        pkg_get_variable(WAYLAND_PROTOCOLS_DIR wayland-protocols pkgdatadir)
     endif()
 
     find_package(TBB REQUIRED)
