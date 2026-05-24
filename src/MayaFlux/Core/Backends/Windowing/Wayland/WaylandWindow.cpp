@@ -160,6 +160,9 @@ bool WaylandWindow::should_close() const
 
 void WaylandWindow::poll()
 {
+    // if (wl_display_prepare_read(m_display) == 0) {
+    //     wl_display_read_events(m_display);
+    // }
     wl_display_dispatch_pending(m_display);
     wl_display_flush(m_display);
 
@@ -463,10 +466,12 @@ void WaylandWindow::on_keyboard_key(void* data, wl_keyboard*,
     if (!self->m_xkb_state)
         return;
 
-    // evdev keycode to xkb keycode: add 8
-    xkb_keycode_t xkb_key = key + 8;
-    xkb_keysym_t sym = xkb_state_key_get_one_sym(self->m_xkb_state, xkb_key);
-    IO::Keys mf_key = from_xkb_keysym(sym);
+    IO::Keys mf_key = from_evdev_scancode(key);
+    if (mf_key == IO::Keys::Unknown) {
+        xkb_keycode_t xkb_key = key + 8;
+        xkb_keysym_t sym = xkb_state_key_get_one_sym(self->m_xkb_state, xkb_key);
+        mf_key = from_xkb_keysym(sym);
+    }
 
     WindowEvent ev;
     ev.type = (state == WL_KEYBOARD_KEY_STATE_PRESSED)
@@ -571,12 +576,12 @@ void WaylandWindow::on_pointer_axis(void* data, wl_pointer*,
     uint32_t, uint32_t axis, wl_fixed_t value)
 {
     auto* self = static_cast<WaylandWindow*>(data);
-    const double v = wl_fixed_to_double(value);
+    const double v = wl_fixed_to_double(value) / 10.0;
     WindowEvent ev;
     ev.type = WindowEventType::MOUSE_SCROLLED;
     ev.data = WindowEvent::ScrollData {
         .x_offset = (axis == WL_POINTER_AXIS_HORIZONTAL_SCROLL) ? v : 0.0,
-        .y_offset = (axis == WL_POINTER_AXIS_VERTICAL_SCROLL) ? v : 0.0
+        .y_offset = (axis == WL_POINTER_AXIS_VERTICAL_SCROLL) ? -v : 0.0
     };
     self->emit(ev);
 }

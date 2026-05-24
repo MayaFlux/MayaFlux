@@ -10,8 +10,11 @@ namespace MayaFlux::Core {
 
 IO::Keys from_xkb_keysym(xkb_keysym_t sym) noexcept
 {
-    if (sym >= 0x0020 && sym <= 0x007e)
+    if (sym >= 0x0020 && sym <= 0x007e) {
+        if (sym >= 'a' && sym <= 'z')
+            sym -= 32;
         return static_cast<IO::Keys>(static_cast<int16_t>(sym));
+    }
 
     switch (sym) {
     case XKB_KEY_Escape:
@@ -340,6 +343,48 @@ bool is_valid_xkb_keysym(xkb_keysym_t sym) noexcept
     if (sym == XKB_KEY_NoSymbol)
         return false;
     return from_xkb_keysym(sym) != IO::Keys::Unknown;
+}
+
+IO::Keys from_evdev_scancode(uint32_t scancode) noexcept
+{
+    switch (scancode) {
+    case 71:
+        return IO::Keys::KP7;
+    case 72:
+        return IO::Keys::KP8;
+    case 73:
+        return IO::Keys::KP9;
+    case 75:
+        return IO::Keys::KP4;
+    case 76:
+        return IO::Keys::KP5;
+    case 77:
+        return IO::Keys::KP6;
+    case 79:
+        return IO::Keys::KP1;
+    case 80:
+        return IO::Keys::KP2;
+    case 81:
+        return IO::Keys::KP3;
+    case 82:
+        return IO::Keys::KP0;
+    case 83:
+        return IO::Keys::KPDecimal;
+    case 98:
+        return IO::Keys::KPDivide;
+    case 55:
+        return IO::Keys::KPMultiply;
+    case 74:
+        return IO::Keys::KPSubtract;
+    case 78:
+        return IO::Keys::KPAdd;
+    case 96:
+        return IO::Keys::KPEnter;
+    case 117:
+        return IO::Keys::KPEqual;
+    default:
+        return IO::Keys::Unknown;
+    }
 }
 
 } // namespace MayaFlux::Core

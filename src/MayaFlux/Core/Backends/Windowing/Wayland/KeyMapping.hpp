@@ -42,6 +42,19 @@ MAYAFLUX_API xkb_keysym_t to_xkb_keysym(IO::Keys key) noexcept;
  */
 MAYAFLUX_API bool is_valid_xkb_keysym(xkb_keysym_t sym) noexcept;
 
+/**
+ * @brief Convert a raw evdev scancode to IO::Keys for keys where keysym
+ *        is modifier-state-dependent and physical identity must be preserved.
+ *
+ * Currently handles numpad keys whose keysyms invert with Num Lock state.
+ * Returns Keys::Unknown for all other scancodes; caller falls back to
+ * from_xkb_keysym().
+ *
+ * @param scancode Raw evdev key code from wl_keyboard::key event.
+ * @return Corresponding IO::Keys value, or Keys::Unknown if not handled.
+ */
+MAYAFLUX_API IO::Keys from_evdev_scancode(uint32_t scancode) noexcept;
+
 } // namespace MayaFlux::Core
 
 #endif // MAYAFLUX_PLATFORM_LINUX
