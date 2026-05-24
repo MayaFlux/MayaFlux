@@ -90,6 +90,8 @@ jobs:
             json-devel \
             ninja-build \
             wayland-devel \
+            wayland-protocols-devel \
+            libxkbcommon-devel \
             pipewire-devel \
             alsa-lib-devel \
             ccache

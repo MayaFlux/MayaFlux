@@ -43,6 +43,8 @@ BuildRequires:  gtest-devel
 BuildRequires:  libshaderc-devel
 BuildRequires:  glslc
 BuildRequires:  wayland-devel
+BuildRequires:  wayland-protocols-devel
+BuildRequires:  libxkbcommon-devel
 BuildRequires:  hidapi-devel
 BuildRequires:  asio-standalone
 BuildRequires:  freetype-devel
@@ -83,6 +85,8 @@ Requires:       gtest-devel
 Requires:       libshaderc-devel
 Requires:       glslc
 Requires:       wayland-devel
+Requires:       wayland-protocols-devel
+Requires:       libxkbcommon-devel
 Requires:       hidapi-devel
 Requires:       asio-standalone
 Requires:       freetype-devel
