@@ -39,9 +39,31 @@ Wiring& Wiring::on(std::shared_ptr<Core::Window> window, IO::Keys key)
     return *this;
 }
 
+Wiring& Wiring::on(std::shared_ptr<Core::Window> window, IO::Keys key,
+    std::function<void()> on_release)
+{
+    m_trigger = KeyTrigger {
+        .window = std::move(window),
+        .key = key,
+        .on_release = std::move(on_release)
+    };
+    return *this;
+}
+
 Wiring& Wiring::on(std::shared_ptr<Core::Window> window, IO::MouseButtons button)
 {
     m_trigger = MouseTrigger { .window = std::move(window), .button = button };
+    return *this;
+}
+
+Wiring& Wiring::on(std::shared_ptr<Core::Window> window, IO::MouseButtons button,
+    std::function<void(double, double)> on_release)
+{
+    m_trigger = MouseTrigger {
+        .window = std::move(window),
+        .button = button,
+        .on_release = std::move(on_release)
+    };
     return *this;
 }
 
@@ -349,6 +371,15 @@ void Wiring::finalise()
                             [&fab, id]() { fab.fire(id); })),
                     name);
 
+                if (trig.on_release) {
+                    auto release_name = make_name("nexus_event_release");
+                    reg.chain_name = release_name;
+                    ev_manager.add_event(
+                        std::make_shared<Vruta::Event>(
+                            Kriya::key_released(trig.window, trig.key, *trig.on_release)),
+                        release_name);
+                }
+
             } else if constexpr (std::is_same_v<T, MouseTrigger>) {
                 auto name = make_name("nexus_event");
                 reg.event_name = name;
@@ -362,6 +393,14 @@ void Wiring::finalise()
                                 fab.fire(eid);
                             })),
                     name);
+                if (trig.on_release) {
+                    auto release_name = make_name("nexus_event_release");
+                    reg.chain_name = release_name;
+                    ev_manager.add_event(
+                        std::make_shared<Vruta::Event>(
+                            Kriya::mouse_released(trig.window, trig.button, *trig.on_release)),
+                        release_name);
+                }
 
             } else if constexpr (std::is_same_v<T, NetworkTrigger>) {
                 auto name = make_name("nexus_task");

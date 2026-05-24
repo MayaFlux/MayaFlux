@@ -56,6 +56,12 @@ struct NavigationState {
     float far_plane { 1000.0F };
 
     std::chrono::steady_clock::time_point last_tick { std::chrono::steady_clock::now() };
+
+    /** @brief Optional constraint applied to the proposed eye position after
+     *        each advance. Receives the candidate position and returns the
+     *        actual position to commit. Identity (no constraint) if empty.
+     **/
+    std::function<glm::vec3(glm::vec3)> eye_constraint;
 };
 
 /**
@@ -113,5 +119,30 @@ void apply_scroll(NavigationState& state, float ticks);
  * @param view  0 = front (+Z), 1 = right (+X), 2 = top (+Y), 3 = flip opposite
  */
 void snap_ortho(NavigationState& state, int view);
+
+/**
+ * @brief Advance eye position by held movement flags against elapsed time.
+ *
+ * Computes dt from state.last_tick, moves the eye along the current forward
+ * and right vectors by the flags that are set, and updates last_tick.
+ * Does not produce a ViewTransform. Use build_view_transform() after this
+ * when the matrices are needed separately from the eye update.
+ *
+ * @param state Navigation state (eye and last_tick mutated by this call)
+ */
+void advance_navigation(NavigationState& state);
+
+/**
+ * @brief Build a ViewTransform from the current NavigationState without mutating it.
+ *
+ * Pure read of eye, yaw, pitch, fov_radians, near_plane, far_plane. Does not
+ * advance the eye or update last_tick. Call advance_navigation() first when
+ * the eye needs to move.
+ *
+ * @param state  Navigation state (read-only)
+ * @param aspect Framebuffer width / height
+ * @return ViewTransform ready for push constant upload
+ */
+[[nodiscard]] ViewTransform build_view_transform(const NavigationState& state, float aspect);
 
 } // namespace MayaFlux::Kinesis

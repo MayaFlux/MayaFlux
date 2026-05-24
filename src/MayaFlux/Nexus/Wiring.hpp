@@ -68,11 +68,29 @@ public:
     Wiring& on(std::shared_ptr<Core::Window> window, IO::Keys key);
 
     /**
+     * @brief Fire the entity on key press and invoke a release callback on key release.
+     * @param window      Source window.
+     * @param key         Key to listen for.
+     * @param on_release  Called when the key is released. Cancelled with the wiring.
+     */
+    Wiring& on(std::shared_ptr<Core::Window> window, IO::Keys key,
+        std::function<void()> on_release);
+
+    /**
      * @brief Fire the entity on a mouse button event from a window.
      * @param window Source window.
      * @param button Mouse button to listen for.
      */
     Wiring& on(std::shared_ptr<Core::Window> window, IO::MouseButtons button);
+
+    /**
+     * @brief Fire the entity on mouse button press and invoke a release callback on release.
+     * @param window      Source window.
+     * @param button      Mouse button to listen for.
+     * @param on_release  Called with cursor position when the button is released. Cancelled with the wiring.
+     */
+    Wiring& on(std::shared_ptr<Core::Window> window, IO::MouseButtons button,
+        std::function<void(double, double)> on_release);
 
     /**
      * @brief Fire the entity on each incoming message from a network source.
@@ -203,11 +221,13 @@ private:
     struct KeyTrigger {
         std::shared_ptr<Core::Window> window;
         IO::Keys key;
+        std::optional<std::function<void()>> on_release;
     };
 
     struct MouseTrigger {
         std::shared_ptr<Core::Window> window;
         IO::MouseButtons button;
+        std::optional<std::function<void(double, double)>> on_release;
     };
 
     struct NetworkTrigger {
