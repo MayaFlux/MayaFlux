@@ -145,7 +145,9 @@ LRESULT CALLBACK Win32Window::wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp
     case WM_KEYDOWN:
     case WM_SYSKEYDOWN: {
         WindowEvent ev;
-        ev.type = WindowEventType::KEY_PRESSED;
+        ev.type = (lp & (1 << 30))
+            ? WindowEventType::KEY_REPEAT
+            : WindowEventType::KEY_PRESSED;
         ev.timestamp = 0.0;
         ev.data = WindowEvent::KeyData {
             .key = static_cast<int16_t>(from_win32_key(wp)),
