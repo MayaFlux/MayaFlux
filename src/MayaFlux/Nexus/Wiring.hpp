@@ -43,6 +43,8 @@ public:
     using GraphicsFactory = std::function<Vruta::GraphicsRoutine(Vruta::TaskScheduler&)>;
     using ComplexFactory = std::function<Vruta::ComplexRoutine(Vruta::TaskScheduler&)>;
     using EventFactory = std::function<Vruta::Event(Vruta::TaskScheduler&)>;
+    using NullFunc = std::nullptr_t;
+    static constexpr NullFunc no_release = nullptr;
 
     // =====================================================================
     // Scheduling modifiers
@@ -68,13 +70,14 @@ public:
     Wiring& on(std::shared_ptr<Core::Window> window, IO::Keys key);
 
     /**
-     * @brief Fire the entity on key press and invoke a release callback on key release.
+     * @brief Fire the entity repeatedly while a key is held, invoking a release callback on release.
      * @param window      Source window.
      * @param key         Key to listen for.
-     * @param on_release  Called when the key is released. Cancelled with the wiring.
+     * @param held        If true, fires on repeat ticks while held.
+     * @param on_release  Called when the key is released.
      */
-    Wiring& on(std::shared_ptr<Core::Window> window, IO::Keys key,
-        std::function<void()> on_release);
+    Wiring& on(std::shared_ptr<Core::Window> window, IO::Keys key, bool held,
+        std::function<void()> on_release = nullptr);
 
     /**
      * @brief Fire the entity on a mouse button event from a window.
@@ -222,6 +225,7 @@ private:
         std::shared_ptr<Core::Window> window;
         IO::Keys key;
         std::optional<std::function<void()>> on_release;
+        bool held {};
     };
 
     struct MouseTrigger {
@@ -244,7 +248,7 @@ private:
         Vruta::WindowEventFilter filter;
     };
 
-    using Trigger = std::variant<std::monostate, KeyTrigger, MouseTrigger, NetworkTrigger, EventTrigger>;
+    using Trigger = std::variant<std::monostate, KeyTrigger, MouseTrigger, NetworkTrigger, EventTrigger, WindowEventTrigger>;
     using Factory = std::variant<std::monostate, SoundFactory, GraphicsFactory, ComplexFactory>;
     using EFactory = std::optional<EventFactory>;
 

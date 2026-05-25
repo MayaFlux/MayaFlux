@@ -39,13 +39,14 @@ Wiring& Wiring::on(std::shared_ptr<Core::Window> window, IO::Keys key)
     return *this;
 }
 
-Wiring& Wiring::on(std::shared_ptr<Core::Window> window, IO::Keys key,
+Wiring& Wiring::on(std::shared_ptr<Core::Window> window, IO::Keys key, bool held,
     std::function<void()> on_release)
 {
     m_trigger = KeyTrigger {
         .window = std::move(window),
         .key = key,
-        .on_release = std::move(on_release)
+        .on_release = on_release ? std::optional<std::function<void()>>(std::move(on_release)) : std::nullopt,
+        .held = held
     };
     return *this;
 }
@@ -75,7 +76,7 @@ Wiring& Wiring::on(Vruta::NetworkSource& source)
 
 Wiring& Wiring::on(Vruta::WindowEventSource& source, Vruta::WindowEventFilter filter)
 {
-    m_trigger = EventTrigger { .source = &source, .filter = filter };
+    m_trigger = WindowEventTrigger { .source = &source, .filter = std::move(filter) };
     return *this;
 }
 
@@ -367,7 +368,7 @@ void Wiring::finalise()
                 auto& fab = m_fabric;
                 ev_manager.add_event(
                     std::make_shared<Vruta::Event>(
-                        trig.on_release
+                        trig.held
                             ? Kriya::key_held(trig.window, trig.key,
                                   [&fab, id]() { fab.fire(id); })
                             : Kriya::key_pressed(trig.window, trig.key,
