@@ -396,6 +396,39 @@ int to_win32_key(IO::Keys key) noexcept
     }
 }
 
+IO::Keys from_win32_scancode(uint32_t scancode) noexcept
+{
+    if (scancode & 0x100)
+        return IO::Keys::Unknown;
+
+    switch (scancode & 0xFF) {
+    case 0x47:
+        return IO::Keys::KP7;
+    case 0x48:
+        return IO::Keys::KP8;
+    case 0x49:
+        return IO::Keys::KP9;
+    case 0x4B:
+        return IO::Keys::KP4;
+    case 0x4C:
+        return IO::Keys::KP5;
+    case 0x4D:
+        return IO::Keys::KP6;
+    case 0x4F:
+        return IO::Keys::KP1;
+    case 0x50:
+        return IO::Keys::KP2;
+    case 0x51:
+        return IO::Keys::KP3;
+    case 0x52:
+        return IO::Keys::KP0;
+    case 0x53:
+        return IO::Keys::KPDecimal;
+    default:
+        return IO::Keys::Unknown;
+    }
+}
+
 // ============================================================================
 // is_valid_win32_key
 // ============================================================================

@@ -146,9 +146,14 @@ LRESULT CALLBACK Win32Window::wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp
         if (lp & (1 << 30))
             return 0;
 
+        const uint32_t scancode = static_cast<uint32_t>(HIWORD(lp) & 0x1FF);
+        IO::Keys key = from_win32_scancode(scancode);
+        if (key == IO::Keys::Unknown)
+            key = from_win32_key(wp);
+
         const WindowEvent::KeyData kd {
-            .key = static_cast<int16_t>(from_win32_key(wp)),
-            .scancode = static_cast<int>(HIWORD(lp) & 0x1FF),
+            .key = static_cast<int16_t>(key),
+            .scancode = static_cast<int32_t>(scancode),
             .mods = 0
         };
 
@@ -164,9 +169,14 @@ LRESULT CALLBACK Win32Window::wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp
 
     case WM_KEYUP:
     case WM_SYSKEYUP: {
+        const uint32_t scancode = static_cast<uint32_t>(HIWORD(lp) & 0x1FF);
+        IO::Keys key = from_win32_scancode(scancode);
+        if (key == IO::Keys::Unknown)
+            key = from_win32_key(wp);
+
         const WindowEvent::KeyData kd {
-            .key = static_cast<int16_t>(from_win32_key(wp)),
-            .scancode = static_cast<int>(HIWORD(lp) & 0x1FF),
+            .key = static_cast<int16_t>(key),
+            .scancode = static_cast<int32_t>(scancode),
             .mods = 0
         };
 

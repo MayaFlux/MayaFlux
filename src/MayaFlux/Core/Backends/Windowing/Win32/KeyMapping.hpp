@@ -38,6 +38,18 @@ MAYAFLUX_API IO::Keys from_win32_key(WPARAM vk) noexcept;
 MAYAFLUX_API int to_win32_key(IO::Keys key) noexcept;
 
 /**
+ * @brief Convert a Win32 scancode to IO::Keys for numpad keys whose VK codes
+ *        invert with NumLock state.
+ *
+ * Only handles scancodes 0x47–0x53 without the extended-key bit. Returns
+ * Keys::Unknown for all other inputs; caller falls back to from_win32_key().
+ *
+ * @param scancode Raw scancode from HIWORD(lParam) & 0x1FF (bit 8 = extended).
+ * @return Corresponding IO::Keys value, or Keys::Unknown if not handled.
+ */
+MAYAFLUX_API IO::Keys from_win32_scancode(uint32_t scancode) noexcept;
+
+/**
  * @brief Check whether a Win32 virtual key code maps to a known IO::Keys value.
  *
  * @param vk Win32 virtual key code.
