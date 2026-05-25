@@ -119,6 +119,40 @@ public:
         return m_render_processor;
     }
 
+    /**
+     * @brief Add a RenderProcessor for a specific operator chain index
+     * @param config Rendering configuration
+     *
+     * This allows rendering different subsets of the network geometry with different pipelines.
+     * Each chain index corresponds to a specific node/operator in the network.
+     */
+    void add_chain_operator_rendering(const RenderConfig& config);
+
+    /**
+     * @brief Get RenderProcessor for a specific operator chain index
+     * @param index Operator chain index
+     * @return Optional containing RenderProcessor if exists
+     *
+     * Each chain index corresponds to a specific node/operator in the network.
+     */
+    [[nodiscard]] std::shared_ptr<RenderProcessor> get_chain_render_processor(size_t index) const;
+
+    /**
+     * @brief Update vertex range for a specific operator chain index
+     * @param index Operator chain index
+     * @param vertex_offset Starting vertex offset for this chain
+     * @param vertex_count Number of vertices for this chain
+     * @param layout Optional vertex layout for this chain (if different from primary)
+     *
+     * This allows the processor to push per-chain vertex ranges to the RenderProcessor,
+     * enabling it to issue draw calls for specific subsets of the geometry.
+     */
+    void update_chain_render_range(
+        size_t index,
+        uint32_t vertex_offset,
+        uint32_t vertex_count,
+        const std::optional<Kakshya::VertexLayout>& layout);
+
 protected:
     std::shared_ptr<Nodes::Network::NodeNetwork> m_network;
     std::shared_ptr<NetworkGeometryProcessor> m_processor;
@@ -127,6 +161,13 @@ protected:
     std::shared_ptr<RenderProcessor> m_render_processor;
 
 private:
+    struct ChainRenderEntry {
+        std::shared_ptr<RenderProcessor> render_processor;
+        uint32_t vertex_offset {};
+        uint32_t vertex_count {};
+    };
+    std::vector<ChainRenderEntry> m_chain_render_processors;
+
     /**
      * @brief Calculate initial buffer size based on network node count
      */

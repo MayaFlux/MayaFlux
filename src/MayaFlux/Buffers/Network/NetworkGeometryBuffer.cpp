@@ -8,6 +8,55 @@
 
 namespace MayaFlux::Buffers {
 
+namespace {
+    Portal::Graphics::RenderConfig resolve_config(const Portal::Graphics::RenderConfig& config)
+    {
+        VKBuffer::RenderConfig resolved_config = config;
+
+        switch (config.topology) {
+        case Portal::Graphics::PrimitiveTopology::POINT_LIST:
+            if (config.vertex_shader.empty())
+                resolved_config.vertex_shader = "point.vert.spv";
+            if (config.fragment_shader.empty())
+                resolved_config.fragment_shader = "point.frag.spv";
+            break;
+        case Portal::Graphics::PrimitiveTopology::LINE_LIST:
+        case Portal::Graphics::PrimitiveTopology::LINE_STRIP:
+
+            if (config.fragment_shader.empty())
+                resolved_config.fragment_shader = "line.frag.spv";
+
+#ifndef MAYAFLUX_PLATFORM_MACOS
+            if (config.vertex_shader.empty())
+                resolved_config.vertex_shader = "line.vert.spv";
+            if (config.geometry_shader.empty())
+                resolved_config.geometry_shader = "line.geom.spv";
+#else
+            if (config.vertex_shader.empty())
+                resolved_config.vertex_shader = "line_fallback.vert.spv";
+
+            resolved_config.topology = Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST;
+#endif // !MAYAFLUX_PLATFORM_MACOS
+            break;
+        case Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST:
+        case Portal::Graphics::PrimitiveTopology::TRIANGLE_STRIP:
+            if (config.vertex_shader.empty())
+                resolved_config.vertex_shader = "triangle.vert.spv";
+            if (config.fragment_shader.empty())
+                resolved_config.fragment_shader = "triangle.frag.spv";
+            break;
+        default:
+            if (config.vertex_shader.empty())
+                resolved_config.vertex_shader = "point.vert.spv";
+            if (config.fragment_shader.empty())
+                resolved_config.fragment_shader = "point.frag.spv";
+        }
+
+        return resolved_config;
+    }
+
+}
+
 NetworkGeometryBuffer::NetworkGeometryBuffer(
     std::shared_ptr<Nodes::Network::NodeNetwork> network,
     const std::string& binding_name,
@@ -61,46 +110,7 @@ void NetworkGeometryBuffer::setup_processors(ProcessingToken token)
 
 void NetworkGeometryBuffer::setup_rendering(const RenderConfig& config)
 {
-    RenderConfig resolved_config = config;
-
-    switch (config.topology) {
-    case Portal::Graphics::PrimitiveTopology::POINT_LIST:
-        if (config.vertex_shader.empty())
-            resolved_config.vertex_shader = "point.vert.spv";
-        if (config.fragment_shader.empty())
-            resolved_config.fragment_shader = "point.frag.spv";
-        break;
-    case Portal::Graphics::PrimitiveTopology::LINE_LIST:
-    case Portal::Graphics::PrimitiveTopology::LINE_STRIP:
-
-        if (config.fragment_shader.empty())
-            resolved_config.fragment_shader = "line.frag.spv";
-
-#ifndef MAYAFLUX_PLATFORM_MACOS
-        if (config.vertex_shader.empty())
-            resolved_config.vertex_shader = "line.vert.spv";
-        if (config.geometry_shader.empty())
-            resolved_config.geometry_shader = "line.geom.spv";
-#else
-        if (config.vertex_shader.empty())
-            resolved_config.vertex_shader = "line_fallback.vert.spv";
-
-        resolved_config.topology = Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST;
-#endif // !MAYAFLUX_PLATFORM_MACOS
-        break;
-    case Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST:
-    case Portal::Graphics::PrimitiveTopology::TRIANGLE_STRIP:
-        if (config.vertex_shader.empty())
-            resolved_config.vertex_shader = "triangle.vert.spv";
-        if (config.fragment_shader.empty())
-            resolved_config.fragment_shader = "triangle.frag.spv";
-        break;
-    default:
-        if (config.vertex_shader.empty())
-            resolved_config.vertex_shader = "point.vert.spv";
-        if (config.fragment_shader.empty())
-            resolved_config.fragment_shader = "point.frag.spv";
-    }
+    auto resolved_config = resolve_config(config);
 
     if (!m_render_processor) {
         m_render_processor = std::make_shared<RenderProcessor>(
@@ -118,7 +128,7 @@ void NetworkGeometryBuffer::setup_rendering(const RenderConfig& config)
     m_render_processor->set_polygon_mode(config.polygon_mode);
     m_render_processor->set_cull_mode(config.cull_mode);
 
-    get_processing_chain()->add_final_processor(m_render_processor, shared_from_this());
+    get_processing_chain()->add_processor(m_render_processor, shared_from_this());
 
     set_default_render_config(resolved_config);
 }
@@ -191,6 +201,68 @@ size_t NetworkGeometryBuffer::calculate_buffer_size(
     }
 
     return allocated_size;
+}
+
+void NetworkGeometryBuffer::add_chain_operator_rendering(const RenderConfig& config)
+{
+    const auto resolved_config = resolve_config(config);
+    auto self = std::dynamic_pointer_cast<VKBuffer>(shared_from_this());
+
+    auto render = std::make_shared<RenderProcessor>(
+        ShaderConfig { resolved_config.vertex_shader });
+
+    render->set_fragment_shader(resolved_config.fragment_shader);
+    if (!resolved_config.geometry_shader.empty()) {
+        render->set_geometry_shader(resolved_config.geometry_shader);
+    }
+    render->set_target_window(config.target_window, std::dynamic_pointer_cast<VKBuffer>(shared_from_this()));
+    render->set_primitive_topology(resolved_config.topology);
+    render->set_polygon_mode(config.polygon_mode);
+    render->set_cull_mode(config.cull_mode);
+
+    get_processing_chain()->add_processor(render, shared_from_this());
+    render->set_buffer_vertex_layout(self, Kakshya::VertexLayout::for_lines());
+    render->set_vertex_range(0, 0);
+
+    m_chain_render_processors.push_back({ .render_processor = render });
+
+    MF_DEBUG(Journal::Component::Buffers, Journal::Context::Init,
+        "Added chain render processor #{} to NetworkGeometryBuffer",
+        m_chain_render_processors.size());
+}
+
+std::shared_ptr<RenderProcessor> NetworkGeometryBuffer::get_chain_render_processor(size_t index) const
+{
+    if (index >= m_chain_render_processors.size())
+        return nullptr;
+    return m_chain_render_processors[index].render_processor;
+}
+
+void NetworkGeometryBuffer::update_chain_render_range(
+    size_t index,
+    uint32_t vertex_offset,
+    uint32_t vertex_count,
+    const std::optional<Kakshya::VertexLayout>& layout)
+{
+    if (index == 0) {
+        if (m_render_processor)
+            m_render_processor->set_vertex_range(vertex_offset, vertex_count);
+        return;
+    }
+
+    const size_t ci = index - 1;
+    if (ci >= m_chain_render_processors.size())
+        return;
+
+    auto& entry = m_chain_render_processors[ci];
+    entry.vertex_offset = vertex_offset;
+    entry.vertex_count = vertex_count;
+    entry.render_processor->set_vertex_range(vertex_offset, vertex_count);
+
+    if (layout) {
+        auto self = std::dynamic_pointer_cast<VKBuffer>(shared_from_this());
+        entry.render_processor->set_buffer_vertex_layout(self, *layout);
+    }
 }
 
 } // namespace MayaFlux::Buffers
