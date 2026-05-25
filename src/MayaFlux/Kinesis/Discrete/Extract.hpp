@@ -25,7 +25,7 @@ namespace MayaFlux::Kinesis::Discrete {
  * @param data_size Number of input samples (0 = accept unconditionally)
  * @return true if parameters permit at least one processing pass
  */
-[[nodiscard]] bool validate_window_parameters(
+[[nodiscard]] MAYAFLUX_API bool validate_window_parameters(
     uint32_t window_size,
     uint32_t hop_size,
     size_t data_size) noexcept;
@@ -39,7 +39,7 @@ namespace MayaFlux::Kinesis::Discrete {
  * @param intervals Unsorted [start, end) pairs
  * @return Sorted, non-overlapping merged intervals
  */
-[[nodiscard]] std::vector<std::pair<size_t, size_t>> merge_intervals(
+[[nodiscard]] MAYAFLUX_API std::vector<std::pair<size_t, size_t>> merge_intervals(
     const std::vector<std::pair<size_t, size_t>>& intervals);
 
 /**
@@ -48,7 +48,7 @@ namespace MayaFlux::Kinesis::Discrete {
  * @param intervals Sorted, non-overlapping [start, end) pairs
  * @return Concatenated data from all intervals
  */
-[[nodiscard]] std::vector<double> slice_intervals(
+[[nodiscard]] MAYAFLUX_API std::vector<double> slice_intervals(
     std::span<const double> data,
     const std::vector<std::pair<size_t, size_t>>& intervals);
 
@@ -59,7 +59,7 @@ namespace MayaFlux::Kinesis::Discrete {
  * @param data_size Total span length for clamping
  * @return One [start, end) pair per position
  */
-[[nodiscard]] std::vector<std::pair<size_t, size_t>> regions_around_positions(
+[[nodiscard]] MAYAFLUX_API std::vector<std::pair<size_t, size_t>> regions_around_positions(
     const std::vector<size_t>& positions,
     size_t half_region,
     size_t data_size);
@@ -71,7 +71,7 @@ namespace MayaFlux::Kinesis::Discrete {
  * @param data_size Total span length for clamping
  * @return One [start, end) pair per window start
  */
-[[nodiscard]] std::vector<std::pair<size_t, size_t>> intervals_from_window_starts(
+[[nodiscard]] MAYAFLUX_API std::vector<std::pair<size_t, size_t>> intervals_from_window_starts(
     const std::vector<size_t>& window_starts,
     uint32_t window_size,
     size_t data_size);
@@ -87,7 +87,7 @@ namespace MayaFlux::Kinesis::Discrete {
  * @param overlap Overlap ratio in [0, 1)
  * @return Concatenated window data; empty if window_size == 0 or overlap >= 1
  */
-[[nodiscard]] std::vector<double> overlapping_windows(
+[[nodiscard]] MAYAFLUX_API std::vector<double> overlapping_windows(
     std::span<const double> data,
     uint32_t window_size,
     double overlap);
@@ -99,7 +99,7 @@ namespace MayaFlux::Kinesis::Discrete {
  * @param window_size Samples per window
  * @return Concatenated window data
  */
-[[nodiscard]] std::vector<double> windowed_by_indices(
+[[nodiscard]] MAYAFLUX_API std::vector<double> windowed_by_indices(
     std::span<const double> data,
     const std::vector<size_t>& window_starts,
     uint32_t window_size);

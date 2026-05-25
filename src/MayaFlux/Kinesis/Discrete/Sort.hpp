@@ -172,7 +172,7 @@ void execute(Iterator begin, Iterator end, Comparator comp, SortingAlgorithm alg
  * @param direction Sort direction
  * @param algorithm Algorithm to use
  */
-void sort_span(
+MAYAFLUX_API void sort_span(
     std::span<double> data,
     SortingDirection direction,
     SortingAlgorithm algorithm = SortingAlgorithm::STANDARD);
@@ -185,7 +185,7 @@ void sort_span(
  * @param algorithm Algorithm to use
  * @return Span view into output_storage
  */
-[[nodiscard]] std::span<double> sort_span_into(
+[[nodiscard]] MAYAFLUX_API std::span<double> sort_span_into(
     std::span<const double> data,
     std::vector<double>& output_storage,
     SortingDirection direction,
@@ -197,7 +197,7 @@ void sort_span(
  * @param direction Sort direction
  * @param algorithm Algorithm to use
  */
-void sort_channels(
+MAYAFLUX_API void sort_channels(
     std::vector<std::span<double>>& channels,
     SortingDirection direction,
     SortingAlgorithm algorithm = SortingAlgorithm::STANDARD);
@@ -210,7 +210,7 @@ void sort_channels(
  * @param algorithm Algorithm to use
  * @return Spans into each output_storage entry
  */
-[[nodiscard]] std::vector<std::span<double>> sort_channels_into(
+[[nodiscard]] MAYAFLUX_API std::vector<std::span<double>> sort_channels_into(
     const std::vector<std::span<const double>>& channels,
     std::vector<std::vector<double>>& output_storage,
     SortingDirection direction,
@@ -226,7 +226,7 @@ void sort_channels(
  * @param direction Sort direction
  * @return Sorted indices into data
  */
-[[nodiscard]] std::vector<size_t> span_sort_indices(
+[[nodiscard]] MAYAFLUX_API std::vector<size_t> span_sort_indices(
     std::span<double> data,
     SortingDirection direction);
 
@@ -236,7 +236,7 @@ void sort_channels(
  * @param direction Sort direction
  * @return One index vector per channel
  */
-[[nodiscard]] std::vector<std::vector<size_t>> channels_sort_indices(
+[[nodiscard]] MAYAFLUX_API std::vector<std::vector<size_t>> channels_sort_indices(
     const std::vector<std::span<double>>& channels,
     SortingDirection direction);
 

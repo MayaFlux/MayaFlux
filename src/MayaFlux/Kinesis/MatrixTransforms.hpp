@@ -13,7 +13,7 @@ namespace MayaFlux::Kinesis {
  *                   higher dimensions return identity)
  * @return Rotation matrix as Eigen::MatrixXd
  */
-[[nodiscard]] Eigen::MatrixXd create_rotation_matrix(
+[[nodiscard]] MAYAFLUX_API Eigen::MatrixXd create_rotation_matrix(
     double angle,
     uint32_t axis = 2,
     uint32_t dimensions = 2);
@@ -23,7 +23,7 @@ namespace MayaFlux::Kinesis {
  * @param scale_factors Scale value per dimension. Empty input returns 1x1 identity.
  * @return Diagonal scaling matrix (NxN where N = scale_factors.size())
  */
-[[nodiscard]] Eigen::MatrixXd create_scaling_matrix(
+[[nodiscard]] MAYAFLUX_API Eigen::MatrixXd create_scaling_matrix(
     const std::vector<double>& scale_factors);
 
 /**
@@ -32,7 +32,7 @@ namespace MayaFlux::Kinesis {
  * @param dimensions Number of dimensions
  * @return Diagonal scaling matrix (NxN)
  */
-[[nodiscard]] Eigen::MatrixXd create_uniform_scaling_matrix(
+[[nodiscard]] MAYAFLUX_API Eigen::MatrixXd create_uniform_scaling_matrix(
     double scale,
     uint32_t dimensions);
 
@@ -41,7 +41,7 @@ namespace MayaFlux::Kinesis {
  * @param offsets Per-axis translation values
  * @return Column vector of offsets
  */
-[[nodiscard]] Eigen::VectorXd create_translation_vector(
+[[nodiscard]] MAYAFLUX_API Eigen::VectorXd create_translation_vector(
     const std::vector<double>& offsets);
 
 /**

@@ -42,7 +42,7 @@ using SpectrumProcessor = std::function<void(std::vector<std::complex<double>>&,
  * @param processor    Per-frame spectrum callback
  * @return             Processed output, same length as src
  */
-[[nodiscard]] std::vector<double> apply_spectral(
+[[nodiscard]] MAYAFLUX_API std::vector<double> apply_spectral(
     std::span<const double> src,
     uint32_t window_size,
     uint32_t hop_size,
@@ -62,7 +62,7 @@ using SpectrumProcessor = std::function<void(std::vector<std::complex<double>>&,
  * @param hop_size     Analysis hop
  * @return             Filtered output
  */
-[[nodiscard]] std::vector<double> spectral_filter(
+[[nodiscard]] MAYAFLUX_API std::vector<double> spectral_filter(
     std::span<const double> src,
     double lo_hz,
     double hi_hz,
@@ -77,7 +77,7 @@ using SpectrumProcessor = std::function<void(std::vector<std::complex<double>>&,
  * @param hop_size     Analysis hop
  * @return             Phase-inverted output
  */
-[[nodiscard]] std::vector<double> spectral_invert(
+[[nodiscard]] MAYAFLUX_API std::vector<double> spectral_invert(
     std::span<const double> src,
     uint32_t window_size = 1024,
     uint32_t hop_size = 256);
@@ -96,7 +96,7 @@ using SpectrumProcessor = std::function<void(std::vector<std::complex<double>>&,
  * @param hop_size           Analysis hop
  * @return                   Enhanced output
  */
-[[nodiscard]] std::vector<double> harmonic_enhance(
+[[nodiscard]] MAYAFLUX_API std::vector<double> harmonic_enhance(
     std::span<const double> src,
     double enhancement_factor,
     uint32_t window_size = 1024,
@@ -110,7 +110,7 @@ using SpectrumProcessor = std::function<void(std::vector<std::complex<double>>&,
  * @param hop_size      Analysis hop
  * @return              Gated output
  */
-[[nodiscard]] std::vector<double> spectral_gate(
+[[nodiscard]] MAYAFLUX_API std::vector<double> spectral_gate(
     std::span<const double> src,
     double threshold_db,
     uint32_t window_size = 1024,
@@ -137,7 +137,7 @@ using SpectrumProcessor = std::function<void(std::vector<std::complex<double>>&,
  * @param analysis_hop  Analysis hop Ha; synthesis hop Hs = Ha * stretch_factor
  * @return              Time-stretched output
  */
-[[nodiscard]] std::vector<double> phase_vocoder_stretch(
+[[nodiscard]] MAYAFLUX_API std::vector<double> phase_vocoder_stretch(
     std::span<const double> src,
     double stretch_factor,
     uint32_t window_size = 2048,
@@ -156,7 +156,7 @@ using SpectrumProcessor = std::function<void(std::vector<std::complex<double>>&,
  * @param analysis_hop Analysis hop
  * @return             Pitch-shifted output, same length as src
  */
-[[nodiscard]] std::vector<double> pitch_shift(
+[[nodiscard]] MAYAFLUX_API std::vector<double> pitch_shift(
     std::span<const double> src,
     double semitones,
     uint32_t window_size = 2048,

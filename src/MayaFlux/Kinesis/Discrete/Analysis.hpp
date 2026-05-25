@@ -55,7 +55,7 @@ namespace MayaFlux::Kinesis::Discrete {
  * @param window_size Samples per window
  * @return Per-window RMS values
  */
-[[nodiscard]] std::vector<double> rms(
+[[nodiscard]] MAYAFLUX_API std::vector<double> rms(
     std::span<const double> data,
     size_t n_windows,
     uint32_t hop_size,
@@ -69,7 +69,7 @@ namespace MayaFlux::Kinesis::Discrete {
  * @param window_size Samples per window
  * @return Per-window peak absolute values
  */
-[[nodiscard]] std::vector<double> peak(
+[[nodiscard]] MAYAFLUX_API std::vector<double> peak(
     std::span<const double> data,
     size_t n_windows,
     uint32_t hop_size,
@@ -83,7 +83,7 @@ namespace MayaFlux::Kinesis::Discrete {
  * @param window_size Samples per window
  * @return Per-window power values
  */
-[[nodiscard]] std::vector<double> power(
+[[nodiscard]] MAYAFLUX_API std::vector<double> power(
     std::span<const double> data,
     size_t n_windows,
     uint32_t hop_size,
@@ -100,7 +100,7 @@ namespace MayaFlux::Kinesis::Discrete {
  * @param window_size Samples per window
  * @return Per-window dynamic range values in dB
  */
-[[nodiscard]] std::vector<double> dynamic_range(
+[[nodiscard]] MAYAFLUX_API std::vector<double> dynamic_range(
     std::span<const double> data,
     size_t n_windows,
     uint32_t hop_size,
@@ -117,7 +117,7 @@ namespace MayaFlux::Kinesis::Discrete {
  * @param window_size Samples per window
  * @return Per-window ZCR values
  */
-[[nodiscard]] std::vector<double> zero_crossing_rate(
+[[nodiscard]] MAYAFLUX_API std::vector<double> zero_crossing_rate(
     std::span<const double> data,
     size_t n_windows,
     uint32_t hop_size,
@@ -134,7 +134,7 @@ namespace MayaFlux::Kinesis::Discrete {
  * @param window_size Samples per window (determines FFT size)
  * @return Per-window summed spectral energy, normalised by window_size
  */
-[[nodiscard]] std::vector<double> spectral_energy(
+[[nodiscard]] MAYAFLUX_API std::vector<double> spectral_energy(
     std::span<const double> data,
     size_t n_windows,
     uint32_t hop_size,
@@ -155,7 +155,7 @@ namespace MayaFlux::Kinesis::Discrete {
  * @param low_bin_fraction Fraction of positive-frequency bins to include (default: 0.125)
  * @return Per-window low-frequency energy values
  */
-[[nodiscard]] std::vector<double> low_frequency_energy(
+[[nodiscard]] MAYAFLUX_API std::vector<double> low_frequency_energy(
     std::span<const double> data,
     size_t n_windows,
     uint32_t hop_size,
@@ -169,7 +169,7 @@ namespace MayaFlux::Kinesis::Discrete {
 /**
  * @brief Arithmetic mean per window
  */
-[[nodiscard]] std::vector<double> mean(
+[[nodiscard]] MAYAFLUX_API std::vector<double> mean(
     std::span<const double> data,
     size_t n_windows,
     uint32_t hop_size,
@@ -179,7 +179,7 @@ namespace MayaFlux::Kinesis::Discrete {
  * @brief Variance per window
  * @param sample_variance If true, divides by (N-1); otherwise by N
  */
-[[nodiscard]] std::vector<double> variance(
+[[nodiscard]] MAYAFLUX_API std::vector<double> variance(
     std::span<const double> data,
     size_t n_windows,
     uint32_t hop_size,
@@ -190,7 +190,7 @@ namespace MayaFlux::Kinesis::Discrete {
  * @brief Standard deviation per window
  * @param sample_variance If true, uses sample variance (N-1)
  */
-[[nodiscard]] std::vector<double> std_dev(
+[[nodiscard]] MAYAFLUX_API std::vector<double> std_dev(
     std::span<const double> data,
     size_t n_windows,
     uint32_t hop_size,
@@ -202,7 +202,7 @@ namespace MayaFlux::Kinesis::Discrete {
  *
  * Returns 0 when variance is below epsilon rather than branching on zero.
  */
-[[nodiscard]] std::vector<double> skewness(
+[[nodiscard]] MAYAFLUX_API std::vector<double> skewness(
     std::span<const double> data,
     size_t n_windows,
     uint32_t hop_size,
@@ -213,7 +213,7 @@ namespace MayaFlux::Kinesis::Discrete {
  *
  * Normal distribution yields 0. Returns 0 when variance is below epsilon.
  */
-[[nodiscard]] std::vector<double> kurtosis(
+[[nodiscard]] MAYAFLUX_API std::vector<double> kurtosis(
     std::span<const double> data,
     size_t n_windows,
     uint32_t hop_size,
@@ -222,7 +222,7 @@ namespace MayaFlux::Kinesis::Discrete {
 /**
  * @brief Median per window via nth_element partial sort
  */
-[[nodiscard]] std::vector<double> median(
+[[nodiscard]] MAYAFLUX_API std::vector<double> median(
     std::span<const double> data,
     size_t n_windows,
     uint32_t hop_size,
@@ -232,7 +232,7 @@ namespace MayaFlux::Kinesis::Discrete {
  * @brief Arbitrary percentile per window via linear interpolation
  * @param percentile Value in [0, 100]
  */
-[[nodiscard]] std::vector<double> percentile(
+[[nodiscard]] MAYAFLUX_API std::vector<double> percentile(
     std::span<const double> data,
     size_t n_windows,
     uint32_t hop_size,
@@ -243,7 +243,7 @@ namespace MayaFlux::Kinesis::Discrete {
  * @brief Shannon entropy per window using Sturges-rule histogram
  * @param num_bins Histogram bin count; 0 = auto via Sturges rule
  */
-[[nodiscard]] std::vector<double> entropy(
+[[nodiscard]] MAYAFLUX_API std::vector<double> entropy(
     std::span<const double> data,
     size_t n_windows,
     uint32_t hop_size,
@@ -253,7 +253,7 @@ namespace MayaFlux::Kinesis::Discrete {
 /**
  * @brief Minimum value per window
  */
-[[nodiscard]] std::vector<double> min(
+[[nodiscard]] MAYAFLUX_API std::vector<double> min(
     std::span<const double> data,
     size_t n_windows,
     uint32_t hop_size,
@@ -262,7 +262,7 @@ namespace MayaFlux::Kinesis::Discrete {
 /**
  * @brief Maximum value per window
  */
-[[nodiscard]] std::vector<double> max(
+[[nodiscard]] MAYAFLUX_API std::vector<double> max(
     std::span<const double> data,
     size_t n_windows,
     uint32_t hop_size,
@@ -271,7 +271,7 @@ namespace MayaFlux::Kinesis::Discrete {
 /**
  * @brief Value range (max - min) per window
  */
-[[nodiscard]] std::vector<double> range(
+[[nodiscard]] MAYAFLUX_API std::vector<double> range(
     std::span<const double> data,
     size_t n_windows,
     uint32_t hop_size,
@@ -280,7 +280,7 @@ namespace MayaFlux::Kinesis::Discrete {
 /**
  * @brief Sum per window
  */
-[[nodiscard]] std::vector<double> sum(
+[[nodiscard]] MAYAFLUX_API std::vector<double> sum(
     std::span<const double> data,
     size_t n_windows,
     uint32_t hop_size,
@@ -292,7 +292,7 @@ namespace MayaFlux::Kinesis::Discrete {
  * Returns the actual number of samples in each window, which may differ
  * from window_size at the final window if data does not divide evenly.
  */
-[[nodiscard]] std::vector<double> count(
+[[nodiscard]] MAYAFLUX_API std::vector<double> count(
     std::span<const double> data,
     size_t n_windows,
     uint32_t hop_size,
@@ -301,7 +301,7 @@ namespace MayaFlux::Kinesis::Discrete {
 /**
  * @brief Median absolute deviation per window
  */
-[[nodiscard]] std::vector<double> mad(
+[[nodiscard]] MAYAFLUX_API std::vector<double> mad(
     std::span<const double> data,
     size_t n_windows,
     uint32_t hop_size,
@@ -314,7 +314,7 @@ namespace MayaFlux::Kinesis::Discrete {
  *
  * @param sample_variance If true, uses sample variance (N-1)
  */
-[[nodiscard]] std::vector<double> coefficient_of_variation(
+[[nodiscard]] MAYAFLUX_API std::vector<double> coefficient_of_variation(
     std::span<const double> data,
     size_t n_windows,
     uint32_t hop_size,
@@ -327,7 +327,7 @@ namespace MayaFlux::Kinesis::Discrete {
  * Buckets values at tolerance 1e-10 and returns the mean of the most
  * frequent bucket.
  */
-[[nodiscard]] std::vector<double> mode(
+[[nodiscard]] MAYAFLUX_API std::vector<double> mode(
     std::span<const double> data,
     size_t n_windows,
     uint32_t hop_size,
@@ -341,7 +341,7 @@ namespace MayaFlux::Kinesis::Discrete {
  *
  * @param sample_variance If true, uses sample variance (N-1)
  */
-[[nodiscard]] std::vector<double> mean_zscore(
+[[nodiscard]] MAYAFLUX_API std::vector<double> mean_zscore(
     std::span<const double> data,
     size_t n_windows,
     uint32_t hop_size,
@@ -361,7 +361,7 @@ namespace MayaFlux::Kinesis::Discrete {
  * @param threshold Crossing threshold (default: 0.0)
  * @return Sorted sample indices where sign changes occur
  */
-[[nodiscard]] std::vector<size_t> zero_crossing_positions(
+[[nodiscard]] MAYAFLUX_API std::vector<size_t> zero_crossing_positions(
     std::span<const double> data,
     double threshold = 0.0);
 
@@ -379,7 +379,7 @@ namespace MayaFlux::Kinesis::Discrete {
  * @param min_distance Minimum sample gap between accepted peaks
  * @return Sorted sample indices of detected peaks
  */
-[[nodiscard]] std::vector<size_t> peak_positions(
+[[nodiscard]] MAYAFLUX_API std::vector<size_t> peak_positions(
     std::span<const double> data,
     double threshold = 0.0,
     size_t min_distance = 1);
@@ -400,7 +400,7 @@ namespace MayaFlux::Kinesis::Discrete {
  * @param threshold Normalised flux threshold in [0, 1] (default: 0.1)
  * @return Sorted sample indices of detected onsets
  */
-[[nodiscard]] std::vector<size_t> onset_positions(
+[[nodiscard]] MAYAFLUX_API std::vector<size_t> onset_positions(
     std::span<const double> data,
     uint32_t window_size,
     uint32_t hop_size,

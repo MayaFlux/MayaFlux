@@ -34,7 +34,7 @@ struct ProximityConfig {
  *
  * Complexity: O(n)
  */
-EdgeList sequential_chain(const Eigen::MatrixXd& points);
+MAYAFLUX_API EdgeList sequential_chain(const Eigen::MatrixXd& points);
 
 /**
  * @brief Compute K-nearest neighbors graph
@@ -48,7 +48,7 @@ EdgeList sequential_chain(const Eigen::MatrixXd& points);
  *
  * Complexity: O(n² log k) with partial sort
  */
-EdgeList k_nearest_neighbors(
+MAYAFLUX_API EdgeList k_nearest_neighbors(
     const Eigen::MatrixXd& points,
     size_t k);
 
@@ -63,7 +63,7 @@ EdgeList k_nearest_neighbors(
  *
  * Complexity: O(n²) brute force
  */
-EdgeList radius_threshold_graph(
+MAYAFLUX_API EdgeList radius_threshold_graph(
     const Eigen::MatrixXd& points,
     double radius);
 
@@ -77,7 +77,7 @@ EdgeList radius_threshold_graph(
  *
  * Complexity: O(n² log n) with priority queue
  */
-EdgeList minimum_spanning_tree(const Eigen::MatrixXd& points);
+MAYAFLUX_API EdgeList minimum_spanning_tree(const Eigen::MatrixXd& points);
 
 /**
  * @brief Compute Gabriel graph
@@ -95,7 +95,7 @@ EdgeList minimum_spanning_tree(const Eigen::MatrixXd& points);
  *
  * Complexity: O(n³) with naive geometric tests
  */
-EdgeList gabriel_graph(const Eigen::MatrixXd& points);
+MAYAFLUX_API EdgeList gabriel_graph(const Eigen::MatrixXd& points);
 
 /**
  * @brief Compute nearest neighbor graph
@@ -108,7 +108,7 @@ EdgeList gabriel_graph(const Eigen::MatrixXd& points);
  *
  * Complexity: O(n²) brute force
  */
-EdgeList nearest_neighbor_graph(const Eigen::MatrixXd& points);
+MAYAFLUX_API EdgeList nearest_neighbor_graph(const Eigen::MatrixXd& points);
 
 /**
  * @brief Compute relative neighborhood graph
@@ -125,7 +125,7 @@ EdgeList nearest_neighbor_graph(const Eigen::MatrixXd& points);
  *
  * Complexity: O(n³) with geometric tests
  */
-EdgeList relative_neighborhood_graph(const Eigen::MatrixXd& points);
+MAYAFLUX_API EdgeList relative_neighborhood_graph(const Eigen::MatrixXd& points);
 
 /**
  * @brief Custom proximity graph via user function
@@ -135,7 +135,7 @@ EdgeList relative_neighborhood_graph(const Eigen::MatrixXd& points);
  *
  * Allows arbitrary proximity rules defined by user.
  */
-EdgeList custom_proximity_graph(
+MAYAFLUX_API EdgeList custom_proximity_graph(
     const Eigen::MatrixXd& points,
     const std::function<EdgeList(const Eigen::MatrixXd&)>& connection_function);
 
@@ -145,7 +145,7 @@ EdgeList custom_proximity_graph(
  * @param config Configuration specifying mode and parameters
  * @return Edge list
  */
-EdgeList generate_proximity_graph(
+MAYAFLUX_API EdgeList generate_proximity_graph(
     const Eigen::MatrixXd& points,
     const ProximityConfig& config);
 

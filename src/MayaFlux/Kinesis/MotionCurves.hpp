@@ -27,7 +27,7 @@ enum class InterpolationMode : uint8_t {
  * @param tension Tension parameter (default 0.5)
  * @return Interpolated point as Nx1 vector
  */
-Eigen::VectorXd catmull_rom_spline(
+MAYAFLUX_API Eigen::VectorXd catmull_rom_spline(
     const Eigen::MatrixXd& control_points,
     double t,
     double tension = 0.5);
@@ -38,7 +38,7 @@ Eigen::VectorXd catmull_rom_spline(
  * @param t Parameter in [0,1]
  * @return Interpolated point as Nx1 vector
  */
-Eigen::VectorXd cubic_bezier(
+MAYAFLUX_API Eigen::VectorXd cubic_bezier(
     const Eigen::MatrixXd& control_points,
     double t);
 
@@ -48,7 +48,7 @@ Eigen::VectorXd cubic_bezier(
  * @param t Parameter in [0,1]
  * @return Interpolated point as Nx1 vector
  */
-Eigen::VectorXd quadratic_bezier(
+MAYAFLUX_API Eigen::VectorXd quadratic_bezier(
     const Eigen::MatrixXd& control_points,
     double t);
 
@@ -59,7 +59,7 @@ Eigen::VectorXd quadratic_bezier(
  * @param t Parameter in [0,1]
  * @return Interpolated point as Nx1 vector
  */
-Eigen::VectorXd cubic_hermite(
+MAYAFLUX_API Eigen::VectorXd cubic_hermite(
     const Eigen::MatrixXd& endpoints,
     const Eigen::MatrixXd& tangents,
     double t);
@@ -70,7 +70,7 @@ Eigen::VectorXd cubic_hermite(
  * @param t Parameter in [0,1]
  * @return Interpolated point as Nx1 vector
  */
-Eigen::VectorXd bspline_cubic(
+MAYAFLUX_API Eigen::VectorXd bspline_cubic(
     const Eigen::MatrixXd& control_points,
     double t);
 
@@ -82,7 +82,7 @@ Eigen::VectorXd bspline_cubic(
  * @param tension Tension parameter (for applicable modes)
  * @return Interpolated point as Nx1 vector
  */
-Eigen::VectorXd interpolate(
+MAYAFLUX_API Eigen::VectorXd interpolate(
     const Eigen::MatrixXd& control_points,
     double t,
     InterpolationMode mode,
@@ -96,7 +96,7 @@ Eigen::VectorXd interpolate(
  * @param tension Tension parameter
  * @return Matrix where columns are interpolated points
  */
-Eigen::MatrixXd generate_interpolated_points(
+MAYAFLUX_API Eigen::MatrixXd generate_interpolated_points(
     const Eigen::MatrixXd& control_points,
     Eigen::Index num_samples,
     InterpolationMode mode,
@@ -107,14 +107,14 @@ Eigen::MatrixXd generate_interpolated_points(
  * @param points Columns are sequential points along curve
  * @return Estimated arc length
  */
-double compute_arc_length(const Eigen::MatrixXd& points);
+MAYAFLUX_API double compute_arc_length(const Eigen::MatrixXd& points);
 
 /**
  * @brief Compute arc length parameterization table
  * @param points Columns are sequential points along curve
  * @return Vector of cumulative arc lengths
  */
-Eigen::VectorXd compute_arc_length_table(const Eigen::MatrixXd& points);
+MAYAFLUX_API Eigen::VectorXd compute_arc_length_table(const Eigen::MatrixXd& points);
 
 /**
  * @brief Reparameterize curve by arc length
@@ -122,7 +122,7 @@ Eigen::VectorXd compute_arc_length_table(const Eigen::MatrixXd& points);
  * @param num_samples Number of output samples
  * @return Arc-length parameterized points
  */
-Eigen::MatrixXd reparameterize_by_arc_length(
+MAYAFLUX_API Eigen::MatrixXd reparameterize_by_arc_length(
     const Eigen::MatrixXd& points,
     Eigen::Index num_samples);
 
@@ -134,7 +134,7 @@ Eigen::MatrixXd reparameterize_by_arc_length(
  * @param tension Tension parameter
  * @return Interpolated data
  */
-Kakshya::DataVariant interpolate_nddata(
+MAYAFLUX_API Kakshya::DataVariant interpolate_nddata(
     const Kakshya::DataVariant& control_points,
     Eigen::Index num_samples,
     InterpolationMode mode,

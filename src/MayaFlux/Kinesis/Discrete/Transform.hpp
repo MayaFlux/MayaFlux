@@ -32,7 +32,7 @@ namespace MayaFlux::Kinesis::Discrete {
  * @param a Scale factor
  * @param b Offset
  */
-void linear(std::span<double> data, double a, double b) noexcept;
+MAYAFLUX_API void linear(std::span<double> data, double a, double b) noexcept;
 
 /**
  * @brief Power map y = x^exponent applied in-place
@@ -40,7 +40,7 @@ void linear(std::span<double> data, double a, double b) noexcept;
  * @param data Target span
  * @param exponent Exponent
  */
-void power(std::span<double> data, double exponent) noexcept;
+MAYAFLUX_API void power(std::span<double> data, double exponent) noexcept;
 
 /**
  * @brief Exponential map y = a * base^(b*x) applied in-place
@@ -50,7 +50,7 @@ void power(std::span<double> data, double exponent) noexcept;
  * @param b Rate
  * @param base Base (default: e)
  */
-void exponential(std::span<double> data, double a, double b,
+MAYAFLUX_API void exponential(std::span<double> data, double a, double b,
     double base = std::numbers::e) noexcept;
 
 /**
@@ -63,7 +63,7 @@ void exponential(std::span<double> data, double a, double b,
  * @param c Input offset
  * @param base Logarithm base (default: e)
  */
-void logarithmic(std::span<double> data, double a, double b, double c,
+MAYAFLUX_API void logarithmic(std::span<double> data, double a, double b, double c,
     double base = std::numbers::e) noexcept;
 
 /**
@@ -94,7 +94,7 @@ void apply_trig(std::span<double> data,
  * @param lo Lower bound
  * @param hi Upper bound
  */
-void clamp(std::span<double> data, double lo, double hi) noexcept;
+MAYAFLUX_API void clamp(std::span<double> data, double lo, double hi) noexcept;
 
 /**
  * @brief Quantize to n-bit resolution in-place
@@ -104,7 +104,7 @@ void clamp(std::span<double> data, double lo, double hi) noexcept;
  * @param data Target span
  * @param bits Bit depth (1–53)
  */
-void quantize(std::span<double> data, uint8_t bits) noexcept;
+MAYAFLUX_API void quantize(std::span<double> data, uint8_t bits) noexcept;
 
 /**
  * @brief Normalize to [target_min, target_max] in-place
@@ -114,7 +114,7 @@ void quantize(std::span<double> data, uint8_t bits) noexcept;
  * @param target_min Output minimum
  * @param target_max Output maximum
  */
-void normalize(std::span<double> data,
+MAYAFLUX_API void normalize(std::span<double> data,
     double target_min = -1.0,
     double target_max = 1.0) noexcept;
 
@@ -126,7 +126,7 @@ void normalize(std::span<double> data,
  * @brief Reverse temporal order in-place
  * @param data Target span
  */
-void reverse(std::span<double> data) noexcept;
+MAYAFLUX_API void reverse(std::span<double> data) noexcept;
 
 /**
  * @brief Apply equal-power (cosine) fade-in then fade-out envelope in-place
@@ -136,7 +136,7 @@ void reverse(std::span<double> data) noexcept;
  * @param fade_in_ratio Fraction of data length used for fade-in  [0, 1]
  * @param fade_out_ratio Fraction of data length used for fade-out [0, 1]
  */
-void fade(std::span<double> data,
+MAYAFLUX_API void fade(std::span<double> data,
     double fade_in_ratio,
     double fade_out_ratio) noexcept;
 
@@ -147,7 +147,7 @@ void fade(std::span<double> data,
  * @param end_ratio Normalised end position   [0, 1], must be > start_ratio
  * @return Slice data; empty if parameters are degenerate
  */
-[[nodiscard]] std::vector<double> slice(
+[[nodiscard]] MAYAFLUX_API std::vector<double> slice(
     std::span<const double> data,
     double start_ratio,
     double end_ratio);
@@ -159,7 +159,7 @@ void fade(std::span<double> data,
  * @param fill_value Value used for the prepended region
  * @return Delayed output of size data.size() + delay_samples
  */
-[[nodiscard]] std::vector<double> delay(
+[[nodiscard]] MAYAFLUX_API std::vector<double> delay(
     std::span<const double> data,
     uint32_t delay_samples,
     double fill_value = 0.0);
@@ -176,7 +176,7 @@ void fade(std::span<double> data,
  * @param src Source span (read-only)
  * @param dst Destination span (written in-place)
  */
-void interpolate_linear(std::span<const double> src,
+MAYAFLUX_API void interpolate_linear(std::span<const double> src,
     std::span<double> dst) noexcept;
 
 /**
@@ -185,7 +185,7 @@ void interpolate_linear(std::span<const double> src,
  * @param src Source span (read-only, at least 2 samples)
  * @param dst Destination span (written in-place)
  */
-void interpolate_cubic(std::span<const double> src,
+MAYAFLUX_API void interpolate_cubic(std::span<const double> src,
     std::span<double> dst) noexcept;
 
 /**
@@ -198,7 +198,7 @@ void interpolate_cubic(std::span<const double> src,
  * @param stretch_factor >1 = longer/slower, <1 = shorter/faster; 1 returns copy
  * @return Resampled vector
  */
-[[nodiscard]] std::vector<double> time_stretch(
+[[nodiscard]] MAYAFLUX_API std::vector<double> time_stretch(
     std::span<const double> data,
     double stretch_factor);
 

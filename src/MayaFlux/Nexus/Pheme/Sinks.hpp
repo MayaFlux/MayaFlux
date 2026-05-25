@@ -83,7 +83,7 @@ struct RenderSink {
  *                Leave empty when data is supplied via push_audio_data().
  * @param fn_name  Optional identifier for state encoding, empty if anonymous.
  */
-void add_audio_sink(
+MAYAFLUX_API void add_audio_sink(
     std::vector<AudioSink>& sinks,
     Buffers::BufferManager& mgr,
     uint32_t channel,
@@ -96,7 +96,7 @@ void add_audio_sink(
  * @param mgr     BufferManager the AudioBuffer was registered with.
  * @param channel Channel index passed to add_audio_sink().
  */
-void remove_audio_sink(
+MAYAFLUX_API void remove_audio_sink(
     std::vector<AudioSink>& sinks,
     Buffers::BufferManager& mgr,
     uint32_t channel);
@@ -106,7 +106,7 @@ void remove_audio_sink(
  * @param sinks   Sink vector owned by the calling Emitter or Agent.
  * @param samples Sample data forwarded to AudioWriteProcessor::set_data().
  */
-void push_audio_data(
+MAYAFLUX_API void push_audio_data(
     std::vector<AudioSink>& sinks,
     std::span<const double> samples);
 
@@ -116,7 +116,7 @@ void push_audio_data(
  * @param sinks Sink vector owned by the calling Emitter or Agent.
  * @param ctx   Current InfluenceContext passed to each fn.
  */
-void dispatch_audio_sinks(
+MAYAFLUX_API void dispatch_audio_sinks(
     std::vector<AudioSink>& sinks,
     const InfluenceContext& ctx);
 
@@ -139,7 +139,7 @@ void dispatch_audio_sinks(
  * @param fn_name  Optional identifier for state encoding, empty if anonymous.
  * @param initial_position Optional initial position to write if no producer fn is set.
  */
-void add_render_sink(
+MAYAFLUX_API void add_render_sink(
     std::vector<RenderSink>& sinks,
     Buffers::BufferManager& mgr,
     const Portal::Graphics::RenderConfig& config,
@@ -153,7 +153,7 @@ void add_render_sink(
  * @param mgr    BufferManager the VKBuffer was registered with.
  * @param window Window passed to add_render_sink().
  */
-void remove_render_sink(
+MAYAFLUX_API void remove_render_sink(
     std::vector<RenderSink>& sinks,
     Buffers::BufferManager& mgr,
     const std::shared_ptr<Core::Window>& window);
@@ -165,7 +165,7 @@ void remove_render_sink(
  * @param byte_count Total size in bytes.
  * @param layout     VertexLayout describing stride and attributes.
  */
-void push_vertices(
+MAYAFLUX_API void push_vertices(
     std::vector<RenderSink>& sinks,
     const void* data, size_t byte_count,
     const Kakshya::VertexLayout& layout);
@@ -176,7 +176,7 @@ void push_vertices(
  * @param sinks Sink vector owned by the calling Emitter or Agent.
  * @param ctx   Current InfluenceContext passed to each fn.
  */
-void dispatch_render_sinks(
+MAYAFLUX_API void dispatch_render_sinks(
     std::vector<RenderSink>& sinks,
     const InfluenceContext& ctx);
 

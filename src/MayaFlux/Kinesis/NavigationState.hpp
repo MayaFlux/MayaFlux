@@ -74,7 +74,7 @@ struct NavigationState {
  * @param config Source configuration
  * @return Initialised NavigationState
  */
-[[nodiscard]] NavigationState make_navigation_state(const NavigationConfig& config);
+[[nodiscard]] MAYAFLUX_API NavigationState make_navigation_state(const NavigationConfig& config);
 
 /**
  * @brief Compute a ViewTransform from the current NavigationState.
@@ -87,7 +87,7 @@ struct NavigationState {
  * @param aspect Framebuffer width / height
  * @return ViewTransform ready for push constant upload
  */
-[[nodiscard]] ViewTransform compute_view_transform(NavigationState& state, float aspect);
+[[nodiscard]] MAYAFLUX_API ViewTransform compute_view_transform(NavigationState& state, float aspect);
 
 /**
  * @brief Apply a mouse delta to yaw and pitch.
@@ -98,7 +98,7 @@ struct NavigationState {
  * @param dx    Horizontal pixel delta (positive = right)
  * @param dy    Vertical pixel delta (positive = down)
  */
-void apply_mouse_delta(NavigationState& state, float dx, float dy);
+MAYAFLUX_API void apply_mouse_delta(NavigationState& state, float dx, float dy);
 
 /**
  * @brief Dolly eye along the current forward vector.
@@ -106,7 +106,7 @@ void apply_mouse_delta(NavigationState& state, float dx, float dy);
  * @param state Navigation state (eye mutated)
  * @param ticks Signed scroll ticks (positive = forward)
  */
-void apply_scroll(NavigationState& state, float ticks);
+MAYAFLUX_API void apply_scroll(NavigationState& state, float ticks);
 
 /**
  * @brief Snap to a named ortho view.
@@ -118,7 +118,7 @@ void apply_scroll(NavigationState& state, float ticks);
  * @param state Navigation state (eye, yaw, pitch mutated)
  * @param view  0 = front (+Z), 1 = right (+X), 2 = top (+Y), 3 = flip opposite
  */
-void snap_ortho(NavigationState& state, int view);
+MAYAFLUX_API void snap_ortho(NavigationState& state, int view);
 
 /**
  * @brief Advance eye position by held movement flags against elapsed time.
@@ -130,7 +130,7 @@ void snap_ortho(NavigationState& state, int view);
  *
  * @param state Navigation state (eye and last_tick mutated by this call)
  */
-void advance_navigation(NavigationState& state);
+MAYAFLUX_API void advance_navigation(NavigationState& state);
 
 /**
  * @brief Build a ViewTransform from the current NavigationState without mutating it.

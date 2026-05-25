@@ -22,7 +22,7 @@ using ConvolutionProcessor = std::function<void(
  *        when false returns the same number of samples as @p src
  * @return Processed output
  */
-[[nodiscard]] std::vector<double> apply_convolution(
+[[nodiscard]] MAYAFLUX_API std::vector<double> apply_convolution(
     std::span<const double> src,
     std::span<const double> kernel,
     const ConvolutionProcessor& processor,
@@ -34,7 +34,7 @@ using ConvolutionProcessor = std::function<void(
  * @param ir Impulse response
  * @return Convolved output, same length as @p src
  */
-[[nodiscard]] std::vector<double> convolve(
+[[nodiscard]] MAYAFLUX_API std::vector<double> convolve(
     std::span<const double> src,
     std::span<const double> ir);
 
@@ -45,7 +45,7 @@ using ConvolutionProcessor = std::function<void(
  * @param normalize Normalise result to peak absolute value
  * @return Cross-correlation, same length as @p src
  */
-[[nodiscard]] std::vector<double> cross_correlate(
+[[nodiscard]] MAYAFLUX_API std::vector<double> cross_correlate(
     std::span<const double> src,
     std::span<const double> tmpl,
     bool normalize = true);
@@ -56,7 +56,7 @@ using ConvolutionProcessor = std::function<void(
  * @param reference Reference signal
  * @return Matched filter output, same length as @p src
  */
-[[nodiscard]] std::vector<double> matched_filter(
+[[nodiscard]] MAYAFLUX_API std::vector<double> matched_filter(
     std::span<const double> src,
     std::span<const double> reference);
 
@@ -67,7 +67,7 @@ using ConvolutionProcessor = std::function<void(
  * @param regularization Regularisation factor for numerical stability
  * @return Deconvolved output, same length as @p src
  */
-[[nodiscard]] std::vector<double> deconvolve(
+[[nodiscard]] MAYAFLUX_API std::vector<double> deconvolve(
     std::span<const double> src,
     std::span<const double> ir,
     double regularization = 1e-6);
@@ -78,7 +78,7 @@ using ConvolutionProcessor = std::function<void(
  * @param normalize Normalise result to zero-lag peak
  * @return Auto-correlation, same length as @p src
  */
-[[nodiscard]] std::vector<double> auto_correlate(
+[[nodiscard]] MAYAFLUX_API std::vector<double> auto_correlate(
     std::span<const double> src,
     bool normalize = true);
 
