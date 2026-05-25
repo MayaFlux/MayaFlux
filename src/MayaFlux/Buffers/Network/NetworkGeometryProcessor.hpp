@@ -112,6 +112,7 @@ public:
 
 private:
     std::unordered_map<std::string, NetworkBinding> m_bindings;
+    std::vector<uint8_t> m_staging_aggregate;
 };
 
 } // namespace MayaFlux::Buffers

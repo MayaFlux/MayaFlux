@@ -1,7 +1,10 @@
 #include "NetworkGeometryProcessor.hpp"
 
+#include "NetworkGeometryBuffer.hpp"
+
 #include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
 #include "MayaFlux/Nodes/Network/NodeNetwork.hpp"
+#include "MayaFlux/Nodes/Network/Operators/GraphicsOperator.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
@@ -100,14 +103,13 @@ NetworkGeometryProcessor::get_binding(const std::string& name) const
 
 void NetworkGeometryProcessor::processing_function(const std::shared_ptr<Buffer>& buffer)
 {
-    if (m_bindings.empty()) {
+    if (m_bindings.empty())
         return;
-    }
 
     auto vk_buffer = std::dynamic_pointer_cast<VKBuffer>(buffer);
     if (!vk_buffer) {
         MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-            "NetworkGeometryProcessor requires VKBuffer, got different buffer type");
+            "NetworkGeometryProcessor requires VKBuffer");
         return;
     }
 
@@ -118,38 +120,102 @@ void NetworkGeometryProcessor::processing_function(const std::shared_ptr<Buffer>
             continue;
         }
 
-        auto gpu_data = extract_network_gpu_data(binding.network, name);
-        if (gpu_data.vertex_data.empty()) {
-            if (binding.gpu_vertex_buffer->is_host_visible())
-                binding.gpu_vertex_buffer->clear();
-            continue;
-        }
+        const auto* chain = binding.network->get_operator_chain().get();
+        const bool has_chain = chain && !chain->empty();
 
-        if (gpu_data.vertex_data.empty() || gpu_data.vertex_count == 0) {
-            if (binding.gpu_vertex_buffer->is_host_visible()) {
-                binding.gpu_vertex_buffer->clear();
+        if (!has_chain) {
+            auto gpu_data = extract_network_gpu_data(binding.network, name);
+            if (gpu_data.vertex_data.empty() || gpu_data.vertex_count == 0) {
+                if (vk_buffer->is_host_visible())
+                    vk_buffer->clear();
+                continue;
             }
+
+            size_t total = gpu_data.vertex_data.size();
+            if (total > vk_buffer->get_size_bytes()) {
+                vk_buffer->resize(static_cast<size_t>(static_cast<float>(total) * 1.5F), false);
+            }
+
+            upload_to_gpu(gpu_data.vertex_data.data(), total, vk_buffer, nullptr);
+
+            if (gpu_data.layout)
+                vk_buffer->set_vertex_layout(*gpu_data.layout);
+
             MF_RT_TRACE(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-                "Network '{}' has no vertices, cleared buffer", name);
+                "Uploaded {} vertices from network '{}' ({} bytes)",
+                gpu_data.vertex_count, name, total);
             continue;
         }
 
-        size_t required_size = gpu_data.vertex_data.size();
-        size_t available_size = binding.gpu_vertex_buffer->get_size_bytes();
+        struct SliceData {
+            std::span<const uint8_t> bytes;
+            size_t vertex_count {};
+            std::optional<Kakshya::VertexLayout> layout;
+        };
 
-        upload_resizing(
-            gpu_data.vertex_data.data(),
-            gpu_data.vertex_data.size(),
-            binding.gpu_vertex_buffer,
-            binding.staging_buffer);
+        std::vector<SliceData> slices;
+        slices.reserve(1 + chain->size());
 
-        auto layout = gpu_data.layout;
+        auto primary = extract_network_gpu_data(binding.network, name);
+        slices.push_back({ .bytes = primary.vertex_data, .vertex_count = primary.vertex_count, .layout = primary.layout });
 
-        binding.gpu_vertex_buffer->set_vertex_layout(layout.value());
+        for (const auto& op : chain->operators()) {
+            auto* gfx = dynamic_cast<Nodes::Network::GraphicsOperator*>(op.get());
+            if (!gfx) {
+                slices.push_back({ .bytes = {}, .vertex_count = 0, .layout = std::nullopt });
+                continue;
+            }
+            slices.push_back({ .bytes = gfx->get_vertex_data(), .vertex_count = gfx->get_vertex_count(), .layout = gfx->get_vertex_layout() });
+        }
+
+        size_t total_bytes = 0;
+        for (const auto& s : slices)
+            total_bytes += s.bytes.size();
+
+        if (total_bytes == 0) {
+            if (vk_buffer->is_host_visible())
+                vk_buffer->clear();
+            continue;
+        }
+
+        if (total_bytes > vk_buffer->get_size_bytes()) {
+            vk_buffer->resize(static_cast<size_t>(static_cast<float>(total_bytes) * 1.5F), false);
+        }
+
+        m_staging_aggregate.resize(total_bytes);
+        size_t byte_offset = 0;
+        for (const auto& s : slices) {
+            if (!s.bytes.empty())
+                std::memcpy(m_staging_aggregate.data() + byte_offset, s.bytes.data(), s.bytes.size());
+            byte_offset += s.bytes.size();
+        }
+
+        upload_to_gpu(m_staging_aggregate.data(), total_bytes, vk_buffer, nullptr);
+
+        if (slices.back().layout)
+            vk_buffer->set_vertex_layout(*slices.back().layout);
+
+        auto ngb = std::dynamic_pointer_cast<NetworkGeometryBuffer>(buffer);
+        if (ngb) {
+            byte_offset = 0;
+            for (size_t i = 0; i < slices.size(); ++i) {
+                const auto& s = slices[i];
+                const uint32_t stride = s.layout ? s.layout->stride_bytes
+                                                 : (slices[0].layout ? slices[0].layout->stride_bytes : 0);
+                const uint32_t vert_offset = stride > 0
+                    ? static_cast<uint32_t>(byte_offset / stride)
+                    : 0;
+
+                ngb->update_chain_render_range(i, vert_offset,
+                    static_cast<uint32_t>(s.vertex_count), s.layout);
+
+                byte_offset += s.bytes.size();
+            }
+        }
 
         MF_RT_TRACE(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-            "Uploaded {} vertices from network '{}' ({} bytes)",
-            gpu_data.vertex_count, name, gpu_data.vertex_data.size());
+            "Uploaded {} bytes ({} slices) from network '{}'",
+            total_bytes, slices.size(), name);
     }
 }
 
