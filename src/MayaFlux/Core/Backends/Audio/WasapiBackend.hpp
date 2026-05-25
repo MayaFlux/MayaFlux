@@ -183,6 +183,15 @@ private:
     std::vector<double> m_input_staging;
     std::atomic<bool> m_input_ready { false };
 
+    std::vector<double> m_render_ring;
+    uint32_t m_ring_write_pos { 0 };
+    uint32_t m_ring_read_pos { 0 };
+    uint32_t m_ring_frames { 0 };
+    std::vector<double> m_capture_ring;
+    uint32_t m_cap_ring_write_pos { 0 };
+    uint32_t m_cap_ring_read_pos { 0 };
+    uint32_t m_cap_ring_frames { 0 };
+
     GlobalStreamInfo& m_stream_info;
     void* m_user_data = nullptr;
 

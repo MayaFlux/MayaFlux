@@ -364,23 +364,24 @@ void WasapiStream::open()
         WAVEFORMATEX* fmt = nullptr;
         if (!negotiate_format(m_render_client,
                 m_stream_info.output.channels,
-                m_stream_info.sample_rate, &fmt)) {
+                m_stream_info.sample_rate, &fmt))
+
             error(C, X, std::source_location::current(),
                 "WasapiStream: render format negotiation failed");
-        }
 
         m_negotiated_output_rate = fmt->nSamplesPerSec;
         m_negotiated_output_channels = fmt->nChannels;
+
         if (m_negotiated_output_rate != m_stream_info.sample_rate) {
-            MF_WARN(C, X,
-                "WASAPI render: negotiated {} Hz (requested {})",
+            MF_WARN(C, X, "WASAPI render: negotiated {} Hz (requested {})",
                 m_negotiated_output_rate, m_stream_info.sample_rate);
             m_stream_info.sample_rate = m_negotiated_output_rate;
         }
+
         if (m_negotiated_output_channels != m_stream_info.output.channels) {
-            MF_WARN(C, X,
-                "WASAPI render: negotiated {} channels (requested {})",
+            MF_WARN(C, X, "WASAPI render: negotiated {} channels (requested {})",
                 m_negotiated_output_channels, m_stream_info.output.channels);
+            m_stream_info.output.channels = m_negotiated_output_channels;
         }
 
         const REFERENCE_TIME period = static_cast<REFERENCE_TIME>(
@@ -403,13 +404,9 @@ void WasapiStream::open()
         check_hr(m_render_client->GetBufferSize(&m_render_buffer_frames),
             "WasapiStream: GetBufferSize (render) failed");
 
-        if (m_render_buffer_frames != m_stream_info.buffer_size) {
-            MF_INFO(C, X,
-                "WASAPI shared mode buffer: {} frames (requested {}); "
-                "render loop processes available frames per wake, not buffer_size.",
+        if (m_render_buffer_frames != m_stream_info.buffer_size)
+            MF_INFO(C, X, "WASAPI shared mode buffer: {} frames (requested {})",
                 m_render_buffer_frames, m_stream_info.buffer_size);
-            m_stream_info.buffer_size = m_render_buffer_frames;
-        }
 
         check_hr(m_render_client->GetService(
                      __uuidof(IAudioRenderClient),
@@ -418,9 +415,15 @@ void WasapiStream::open()
 
         CoTaskMemFree(fmt);
 
-        m_render_staging.resize(
-            static_cast<size_t>(m_render_buffer_frames) * m_stream_info.output.channels);
-        m_output_staging.resize(m_render_staging.size());
+        m_ring_frames = std::max(m_stream_info.buffer_size, m_render_buffer_frames) * 4;
+        m_ring_write_pos = 0;
+        m_ring_read_pos = 0;
+        m_render_ring.assign(
+            static_cast<size_t>(m_ring_frames) * m_stream_info.output.channels, 0.0);
+
+        m_output_staging.resize(
+            static_cast<size_t>(m_stream_info.buffer_size) * m_stream_info.output.channels);
+        m_render_staging.resize(m_output_staging.size());
     }
 
     if (m_input_device) {
@@ -458,6 +461,12 @@ void WasapiStream::open()
                 m_capture_client->GetBufferSize(&cap_frames);
                 m_capture_buffer_frames = cap_frames;
 
+                m_cap_ring_frames = std::max(m_stream_info.buffer_size, m_capture_buffer_frames) * 4;
+                m_cap_ring_write_pos = 0;
+                m_cap_ring_read_pos = 0;
+                m_capture_ring.assign(
+                    static_cast<size_t>(m_cap_ring_frames) * m_stream_info.input.channels, 0.0);
+
                 m_capture_client->GetService(
                     __uuidof(IAudioCaptureClient),
                     reinterpret_cast<void**>(&m_capture_src));
@@ -471,9 +480,9 @@ void WasapiStream::open()
     }
 
     m_is_open.store(true, std::memory_order_release);
-    MF_INFO(C, X, "WasapiStream opened ({} Hz, {} out-ch, buffer {} frames)",
+    MF_INFO(C, X, "WasapiStream opened ({} Hz, {} out-ch, engine buffer {} frames, hw buffer {} frames)",
         m_stream_info.sample_rate, m_stream_info.output.channels,
-        m_render_buffer_frames);
+        m_stream_info.buffer_size, m_render_buffer_frames);
 }
 
 void WasapiStream::start()
@@ -607,6 +616,11 @@ void WasapiStream::close()
         m_stop_event = nullptr;
     }
 
+    m_cap_ring_write_pos = 0;
+    m_cap_ring_read_pos = 0;
+    m_ring_write_pos = 0;
+    m_ring_read_pos = 0;
+
     m_is_open.store(false, std::memory_order_release);
 }
 
@@ -639,13 +653,16 @@ void WasapiStream::render_loop()
     const uint32_t out_ch = m_negotiated_output_channels;
     const uint32_t in_ch_wire = m_negotiated_input_channels;
     const uint32_t in_ch_engine = m_stream_info.input.channels;
-    const uint32_t frames = m_render_buffer_frames;
+    const uint32_t hw_frames = m_render_buffer_frames;
+    const uint32_t eng_frames = m_stream_info.buffer_size;
+    const uint32_t ring_frames = m_ring_frames;
+    const uint32_t ring_ch = m_stream_info.output.channels;
+    const uint32_t cap_ring_frames = m_cap_ring_frames;
 
     HANDLE wait_handles[2] = { m_render_event, m_stop_event };
 
     while (true) {
         DWORD wait = WaitForMultipleObjects(2, wait_handles, FALSE, 2000);
-
         if (wait == WAIT_OBJECT_0 + 1 || wait == WAIT_FAILED || wait == WAIT_TIMEOUT)
             break;
 
@@ -656,64 +673,92 @@ void WasapiStream::render_loop()
 
             if (SUCCEEDED(m_capture_src->GetBuffer(&data, &cap_frames, &flags, nullptr, nullptr))) {
                 if (data && !(flags & AUDCLNT_BUFFERFLAGS_SILENT)) {
-                    const size_t wire_samples = static_cast<size_t>(cap_frames) * in_ch_wire;
-                    const size_t engine_samples = static_cast<size_t>(cap_frames) * in_ch_engine;
-
-                    if (engine_samples > m_input_staging.size())
-                        m_input_staging.resize(engine_samples);
-
                     const auto* src = reinterpret_cast<const float*>(data);
-
-                    if (in_ch_wire == in_ch_engine) {
-                        for (size_t i = 0; i < wire_samples; ++i)
-                            m_input_staging[i] = static_cast<double>(src[i]);
-                    } else {
-                        const uint32_t copy_ch = std::min(in_ch_wire, in_ch_engine);
-                        for (uint32_t f = 0; f < cap_frames; ++f) {
-                            for (uint32_t c = 0; c < copy_ch; ++c)
-                                m_input_staging[f * in_ch_engine + c] = static_cast<double>(src[f * in_ch_wire + c]);
-                            for (uint32_t c = copy_ch; c < in_ch_engine; ++c)
-                                m_input_staging[f * in_ch_engine + c] = 0.0;
-                        }
+                    const uint32_t copy_ch = std::min(in_ch_wire, in_ch_engine);
+                    for (uint32_t f = 0; f < cap_frames; ++f) {
+                        const uint32_t dst = m_cap_ring_write_pos * in_ch_engine;
+                        for (uint32_t c = 0; c < copy_ch; ++c)
+                            m_capture_ring[dst + c] = static_cast<double>(src[f * in_ch_wire + c]);
+                        for (uint32_t c = copy_ch; c < in_ch_engine; ++c)
+                            m_capture_ring[dst + c] = 0.0;
+                        m_cap_ring_write_pos = (m_cap_ring_write_pos + 1) % cap_ring_frames;
                     }
-                    m_input_ready.store(true, std::memory_order_release);
                 }
                 m_capture_src->ReleaseBuffer(cap_frames);
             }
         }
 
-        double* in_ptr = nullptr;
-        if (m_input_ready.load(std::memory_order_acquire)) {
-            in_ptr = m_input_staging.data();
-            m_input_ready.store(false, std::memory_order_release);
+        auto cap_ring_used = [&]() -> uint32_t {
+            return (m_cap_ring_write_pos >= m_cap_ring_read_pos)
+                ? m_cap_ring_write_pos - m_cap_ring_read_pos
+                : cap_ring_frames - m_cap_ring_read_pos + m_cap_ring_write_pos;
+        };
+
+        auto ring_used = [&]() -> uint32_t {
+            return (m_ring_write_pos >= m_ring_read_pos)
+                ? m_ring_write_pos - m_ring_read_pos
+                : ring_frames - m_ring_read_pos + m_ring_write_pos;
+        };
+
+        while (ring_used() < hw_frames && m_process_callback) {
+            const size_t n = static_cast<size_t>(eng_frames) * ring_ch;
+            if (n > m_output_staging.size())
+                m_output_staging.resize(n);
+
+            std::fill(m_output_staging.begin(), m_output_staging.begin() + n, 0.0);
+
+            double* in_ptr = nullptr;
+            if (cap_ring_used() >= eng_frames) {
+                const size_t in_n = static_cast<size_t>(eng_frames) * in_ch_engine;
+                if (in_n > m_input_staging.size())
+                    m_input_staging.resize(in_n);
+
+                for (uint32_t f = 0; f < eng_frames; ++f) {
+                    const uint32_t src = m_cap_ring_read_pos * in_ch_engine;
+                    const uint32_t dst = f * in_ch_engine;
+                    for (uint32_t c = 0; c < in_ch_engine; ++c)
+                        m_input_staging[dst + c] = m_capture_ring[src + c];
+                    m_cap_ring_read_pos = (m_cap_ring_read_pos + 1) % cap_ring_frames;
+                }
+                in_ptr = m_input_staging.data();
+            }
+
+            m_process_callback(m_output_staging.data(), in_ptr, eng_frames);
+
+            for (uint32_t i = 0; i < eng_frames; ++i) {
+                const uint32_t dst = m_ring_write_pos * ring_ch;
+                const uint32_t src = i * ring_ch;
+                for (uint32_t c = 0; c < ring_ch; ++c)
+                    m_render_ring[dst + c] = m_output_staging[src + c];
+                m_ring_write_pos = (m_ring_write_pos + 1) % ring_frames;
+            }
         }
 
         UINT32 padding = 0;
         if (FAILED(m_render_client->GetCurrentPadding(&padding)))
             continue;
 
-        const UINT32 available = frames - padding;
+        const UINT32 available = hw_frames - padding;
         if (available == 0)
             continue;
 
-        BYTE* buf = nullptr;
-        if (FAILED(m_render_sink->GetBuffer(available, &buf)) || !buf)
+        const UINT32 to_write = std::min(available, ring_used());
+        if (to_write == 0)
             continue;
 
-        const size_t n = static_cast<size_t>(available) * out_ch;
-        if (n > m_output_staging.size())
-            m_output_staging.resize(n);
-
-        if (m_process_callback) {
-            std::fill(m_output_staging.begin(), m_output_staging.begin() + n, 0.0);
-            m_process_callback(m_output_staging.data(), in_ptr, available);
-        }
+        BYTE* buf = nullptr;
+        if (FAILED(m_render_sink->GetBuffer(to_write, &buf)) || !buf)
+            continue;
 
         auto* dst = reinterpret_cast<float*>(buf);
-        for (size_t i = 0; i < n; ++i)
-            dst[i] = static_cast<float>(m_output_staging[i]);
+        for (uint32_t i = 0; i < to_write; ++i) {
+            const uint32_t src = m_ring_read_pos * ring_ch;
+            for (uint32_t c = 0; c < out_ch && c < ring_ch; ++c)
+                dst[i * out_ch + c] = static_cast<float>(m_render_ring[src + c]);
+            m_ring_read_pos = (m_ring_read_pos + 1) % ring_frames;
+        }
 
-        m_render_sink->ReleaseBuffer(available, 0);
+        m_render_sink->ReleaseBuffer(to_write, 0);
     }
 }
 
