@@ -463,16 +463,17 @@ std::vector<uint64_t> ImageReader::get_dimension_sizes() const
 
 std::optional<ImageData> ImageReader::load(const std::filesystem::path& path, int desired_channels)
 {
-    if (!std::filesystem::exists(path)) {
+    auto resolved = std::filesystem::path(resolve_path(path.string()));
+    if (!std::filesystem::exists(resolved)) {
         MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
-            "Image file not found: {}", path.string());
+            "Image file not found: {}", resolved.string());
         return std::nullopt;
     }
 
-    std::ifstream file(path, std::ios::binary | std::ios::ate);
+    std::ifstream file(resolved, std::ios::binary | std::ios::ate);
     if (!file.is_open()) {
         MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
-            "Failed to open image file: {}", path.string());
+            "Failed to open image file: {}", resolved.string());
         return std::nullopt;
     }
 
@@ -482,12 +483,12 @@ std::optional<ImageData> ImageReader::load(const std::filesystem::path& path, in
     std::vector<unsigned char> file_buffer(file_size);
     if (!file.read(reinterpret_cast<char*>(file_buffer.data()), file_size)) {
         MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
-            "Failed to read image file: {}", path.string());
+            "Failed to read image file: {}", resolved.string());
         return std::nullopt;
     }
     file.close();
 
-    if (extension_of(path) == "exr") {
+    if (extension_of(resolved) == "exr") {
         (void)desired_channels;
         return load_exr_from_memory(file_buffer.data(),
             static_cast<size_t>(file_size));
@@ -520,7 +521,7 @@ std::optional<ImageData> ImageReader::load(const std::filesystem::path& path, in
 
     MF_INFO(Journal::Component::IO, Journal::Context::FileIO,
         "Loaded image: {} ({}x{}, {} channels{})",
-        path.filename().string(), width, height, result_channels,
+        resolved.filename().string(), width, height, result_channels,
         (channels == 3 && result_channels == 4) ? " [RGB→RGBA]" : "");
 
     ImageData result;
@@ -635,7 +636,7 @@ std::optional<ImageData> ImageReader::load_from_memory(const void* data, size_t 
 
 std::shared_ptr<Core::VKImage> ImageReader::load_texture(const std::string& path)
 {
-    auto image_data = load(path, 4);
+    auto image_data = load(resolve_path(path), 4);
     if (!image_data) {
         return nullptr;
     }

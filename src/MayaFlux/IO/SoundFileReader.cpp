@@ -69,7 +69,7 @@ SoundFileReader::~SoundFileReader()
 bool SoundFileReader::can_read(const std::string& filepath) const
 {
     FFmpegDemuxContext probe;
-    if (!probe.open(filepath))
+    if (!probe.open(resolve_path(filepath)))
         return false;
 
     const AVCodec* codec = nullptr;
