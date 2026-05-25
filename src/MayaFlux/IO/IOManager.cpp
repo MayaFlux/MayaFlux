@@ -7,6 +7,7 @@
 
 #include "MayaFlux/Kakshya/Processors/ContiguousAccessProcessor.hpp"
 #include "MayaFlux/Kakshya/Processors/FrameAccessProcessor.hpp"
+#include "MayaFlux/Kakshya/Source/AudioOutputContainer.hpp"
 #include "MayaFlux/Kakshya/Source/CameraContainer.hpp"
 #include "MayaFlux/Kakshya/Source/SoundFileContainer.hpp"
 #include "MayaFlux/Kakshya/Source/VideoFileContainer.hpp"
@@ -19,6 +20,7 @@
 #include "MayaFlux/Buffers/Textures/TextBuffer.hpp"
 
 #include "MayaFlux/Registry/BackendRegistry.hpp"
+#include "MayaFlux/Registry/Service/AudioBackendService.hpp"
 #include "MayaFlux/Registry/Service/IOService.hpp"
 
 #include "EXRWriter.hpp"
@@ -74,6 +76,25 @@ IOManager::IOManager(Core::GlobalStreamInfo& stream_info, uint32_t frame_rate, c
 
 IOManager::~IOManager()
 {
+    {
+        std::vector<uint32_t> ids;
+        {
+            std::lock_guard lock(m_captures_mutex);
+            ids.reserve(m_captures.size());
+            for (const auto& [id, _] : m_captures)
+                ids.push_back(id);
+        }
+        for (auto id : ids)
+            stop_capture(id);
+    }
+
+    for (auto& w : m_writers) {
+        if (w->is_open()) {
+            auto fut = w->close();
+            fut.wait();
+        }
+    }
+
     Registry::BackendRegistry::instance()
         .unregister_service<Registry::Service::IOService>();
 
@@ -301,6 +322,141 @@ std::shared_ptr<Kakshya::DynamicSoundStream> IOManager::load_audio_bounded(
     m_audio_readers.push_back(std::move(reader));
 
     return stream;
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+
+std::shared_ptr<SoundFileWriter>
+IOManager::create_writer(const std::string& filepath,
+    uint32_t channels,
+    uint32_t sample_rate,
+    AVCodecID codec_id)
+{
+    auto writer = std::make_shared<SoundFileWriter>();
+    if (!writer->open(filepath, channels, sample_rate, codec_id)) {
+        MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+            "create_writer: open failed for '{}': {}", filepath, writer->last_error());
+        return nullptr;
+    }
+
+    {
+        std::lock_guard lock(m_save_tasks_mutex);
+        m_writers.push_back(writer);
+    }
+    return writer;
+}
+
+void IOManager::write(const std::shared_ptr<Kakshya::SoundStreamContainer>& container,
+    const std::string& filepath,
+    AVCodecID codec_id)
+{
+    if (!container) {
+        MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+            "write: null container");
+        return;
+    }
+
+    auto writer = std::make_shared<SoundFileWriter>();
+    if (!writer->open(filepath,
+            container->get_num_channels(),
+            container->get_sample_rate(),
+            codec_id)) {
+        MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+            "write: open failed for '{}': {}", filepath, writer->last_error());
+        return;
+    }
+
+    writer->write(container->get_data());
+    auto fut = writer->close();
+
+    std::lock_guard lock(m_save_tasks_mutex);
+    m_save_tasks.push_back(std::move(fut));
+    std::erase_if(m_save_tasks, [](std::future<bool>& f) {
+        return f.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
+    });
+}
+
+uint32_t IOManager::capture_output(const std::string& filepath, AVCodecID codec_id)
+{
+
+    if (!m_audio_backend_service) {
+        m_audio_backend_service = Registry::BackendRegistry::instance()
+                                      .get_service<Registry::Service::AudioBackendService>();
+    }
+
+    if (!m_audio_backend_service) {
+        error<std::runtime_error>(Journal::Component::IO, Journal::Context::FileIO, std::source_location::current(),
+            "capture_output: AudioBackendService unavailable");
+    }
+
+    auto ct = std::make_shared<Kakshya::AudioOutputContainer>(m_stream_info);
+    ct->create_default_processor();
+
+    auto writer = std::make_shared<SoundFileWriter>();
+    if (!writer->open(filepath,
+            m_stream_info.output.channels,
+            m_stream_info.sample_rate,
+            codec_id)) {
+        MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+            "capture_output: writer open failed for '{}': {}", filepath, writer->last_error());
+        return 0;
+    }
+
+    uint32_t obs_id = m_audio_backend_service->register_output_observer(
+        [ct, writer](const double*, uint32_t) {
+            ct->process_default();
+            const auto& vt = ct->get_processed_data();
+            if (!vt.empty())
+                writer->write(vt);
+        });
+
+    {
+        std::lock_guard lock(m_save_tasks_mutex);
+        m_writers.push_back(writer);
+    }
+
+    std::lock_guard lock(m_captures_mutex);
+    m_captures.emplace(obs_id, CaptureState { .container = ct, .writer = writer, .observer_id = obs_id });
+    return obs_id;
+}
+
+void IOManager::stop_capture(uint32_t capture_id)
+{
+    CaptureState state;
+    {
+        std::lock_guard lock(m_captures_mutex);
+        auto it = m_captures.find(capture_id);
+        if (it == m_captures.end()) {
+            MF_WARN(Journal::Component::IO, Journal::Context::FileIO,
+                "stop_capture: unknown capture_id={}", capture_id);
+            return;
+        }
+        state = std::move(it->second);
+        m_captures.erase(it);
+    }
+
+    auto* svc = Registry::BackendRegistry::instance()
+                    .get_service<Registry::Service::AudioBackendService>();
+    if (svc)
+        svc->unregister_output_observer(state.observer_id);
+
+    auto fut = state.writer->close();
+
+    std::lock_guard lock(m_save_tasks_mutex);
+    m_save_tasks.push_back(std::move(fut));
+    std::erase_if(m_save_tasks, [](std::future<bool>& f) {
+        return f.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
+    });
+}
+
+std::vector<uint32_t> IOManager::get_capture_ids() const
+{
+    std::lock_guard lock(m_captures_mutex);
+    std::vector<uint32_t> ids;
+    ids.reserve(m_captures.size());
+    for (const auto& [id, _] : m_captures)
+        ids.push_back(id);
+    return ids;
 }
 
 std::shared_ptr<Kakshya::CameraContainer>
