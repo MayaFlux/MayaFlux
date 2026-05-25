@@ -1,5 +1,7 @@
 #include "EXRWriter.hpp"
 
+#include "FileWriter.hpp"
+
 #include "MayaFlux/Journal/Archivist.hpp"
 
 #include <tinyexr.h>
@@ -23,7 +25,8 @@ namespace {
 
     bool flush_to_disk(const std::string& filepath, const unsigned char* bytes, size_t size)
     {
-        std::ofstream out(filepath, std::ios::binary | std::ios::trunc);
+        const auto resolved = resolve_write_path(filepath);
+        std::ofstream out(resolved, std::ios::binary | std::ios::trunc);
         if (!out.is_open()) {
             return false;
         }

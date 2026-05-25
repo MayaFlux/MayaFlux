@@ -1,6 +1,8 @@
 #include "FFmpegMuxContext.hpp"
 #include "FFmpegDemuxContext.hpp"
 
+#include "FileWriter.hpp"
+
 extern "C" {
 #include <libavformat/avformat.h>
 #include <libavutil/error.h>
@@ -29,24 +31,26 @@ bool FFmpegMuxContext::open(const std::string& filepath,
 
     const char* fmt = explicit_format.empty() ? nullptr : explicit_format.c_str();
 
+    const auto resolved = resolve_write_path(filepath);
+
     int ret = avformat_alloc_output_context2(
-        &format_context, nullptr, fmt, filepath.c_str());
+        &format_context, nullptr, fmt, resolved.c_str());
 
     if (ret < 0 || !format_context) {
         char errbuf[AV_ERROR_MAX_STRING_SIZE];
         av_strerror(ret, errbuf, sizeof(errbuf));
         m_last_error = "avformat_alloc_output_context2 failed for \""
-            + filepath + "\": " + errbuf;
+            + resolved + "\": " + errbuf;
         return false;
     }
 
     if (!(format_context->oformat->flags & AVFMT_NOFILE)) {
-        ret = avio_open(&format_context->pb, filepath.c_str(), AVIO_FLAG_WRITE);
+        ret = avio_open(&format_context->pb, resolved.c_str(), AVIO_FLAG_WRITE);
         if (ret < 0) {
             char errbuf[AV_ERROR_MAX_STRING_SIZE];
             av_strerror(ret, errbuf, sizeof(errbuf));
             m_last_error = "avio_open failed for \""
-                + filepath + "\": " + errbuf;
+                + resolved + "\": " + errbuf;
             avformat_free_context(format_context);
             format_context = nullptr;
             return false;

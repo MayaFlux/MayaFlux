@@ -1,5 +1,7 @@
 #include "STBImageWriter.hpp"
 
+#include "FileWriter.hpp"
+
 #include "MayaFlux/Journal/Archivist.hpp"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -45,7 +47,8 @@ namespace {
      */
     bool flush_to_disk(const std::string& filepath, const std::vector<uint8_t>& buffer)
     {
-        std::ofstream out(filepath, std::ios::binary | std::ios::trunc);
+        const auto resolved = resolve_write_path(filepath);
+        std::ofstream out(resolved, std::ios::binary | std::ios::trunc);
         if (!out.is_open()) {
             return false;
         }
