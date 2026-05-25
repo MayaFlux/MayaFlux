@@ -86,7 +86,7 @@ public:
      */
     [[nodiscard]] bool is_valid() const
     {
-        return codec_context && swr_context && fifo && stream_index >= 0;
+        return codec_context && swr_context && fifo && m_stream_index >= 0;
     }
 
     // =========================================================================
@@ -135,14 +135,14 @@ public:
     // Owned handles
     // =========================================================================
 
-    AVCodecContext* codec_context = nullptr; ///< Owned; freed in destructor.
-    SwrContext* swr_context = nullptr; ///< Owned; freed in destructor.
-    AVAudioFifo* fifo = nullptr; ///< Owned; freed in destructor.
-    AVStream* stream = nullptr; ///< Owned by mux; pointer cached here.
+    AVCodecContext* codec_context {}; ///< Owned; freed in destructor.
+    SwrContext* swr_context {}; ///< Owned; freed in destructor.
+    AVAudioFifo* fifo {}; ///< Owned; freed in destructor.
+    AVStream* stream {}; ///< Owned by mux; pointer cached here.
 
-    int stream_index = -1;
-    uint32_t sample_rate = 0;
-    uint32_t channels = 0;
+    int m_stream_index { -1 };
+    uint32_t m_sample_rate {};
+    uint32_t m_channels {};
 
 private:
     int64_t m_pts = 0;

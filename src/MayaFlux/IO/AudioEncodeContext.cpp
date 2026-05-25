@@ -38,9 +38,9 @@ void AudioEncodeContext::close()
         codec_context = nullptr;
     }
     stream = nullptr;
-    stream_index = -1;
-    sample_rate = 0;
-    channels = 0;
+    m_stream_index = -1;
+    m_sample_rate = 0;
+    m_channels = 0;
     m_pts = 0;
     m_last_error.clear();
 }
@@ -154,9 +154,9 @@ bool AudioEncodeContext::open(FFmpegMuxContext& mux,
     }
 
     stream->time_base = codec_context->time_base;
-    stream_index = stream->index;
-    sample_rate = enc_rate;
-    channels = channels;
+    m_stream_index = stream->index;
+    m_sample_rate = enc_rate;
+    m_channels = channels;
 
     if (!setup_resampler() || !setup_fifo()) {
         close();
@@ -173,12 +173,12 @@ bool AudioEncodeContext::open(FFmpegMuxContext& mux,
 bool AudioEncodeContext::setup_resampler()
 {
     AVChannelLayout layout {};
-    av_channel_layout_default(&layout, static_cast<int>(channels));
+    av_channel_layout_default(&layout, static_cast<int>(m_channels));
 
     int ret = swr_alloc_set_opts2(
         &swr_context,
         &layout, codec_context->sample_fmt, codec_context->sample_rate,
-        &layout, AV_SAMPLE_FMT_DBL, static_cast<int>(sample_rate),
+        &layout, AV_SAMPLE_FMT_DBL, static_cast<int>(m_sample_rate),
         0, nullptr);
 
     av_channel_layout_uninit(&layout);
@@ -210,7 +210,7 @@ bool AudioEncodeContext::setup_fifo()
 
     fifo = av_audio_fifo_alloc(
         codec_context->sample_fmt,
-        static_cast<int>(channels),
+        static_cast<int>(m_channels),
         frame_size * 2);
 
     if (!fifo) {
@@ -236,7 +236,7 @@ bool AudioEncodeContext::encode_frames(std::span<const double> interleaved,
     int linesize = 0;
     int alloc = av_samples_alloc_array_and_samples(
         &conv, &linesize,
-        static_cast<int>(channels),
+        static_cast<int>(m_channels),
         static_cast<int>(num_frames),
         codec_context->sample_fmt, 0);
 
@@ -352,12 +352,12 @@ bool AudioEncodeContext::send_fifo_frame(FFmpegMuxContext& mux, bool pad_to_fram
         int pad_samples = frame_size - read;
         int bytes_per_sample = av_get_bytes_per_sample(codec_context->sample_fmt);
         bool is_planar = av_sample_fmt_is_planar(codec_context->sample_fmt);
-        int planes = is_planar ? static_cast<int>(channels) : 1;
-        int samples_per_plane = is_planar ? pad_samples : pad_samples * static_cast<int>(channels);
+        int planes = is_planar ? static_cast<int>(m_channels) : 1;
+        int samples_per_plane = is_planar ? pad_samples : pad_samples * static_cast<int>(m_channels);
 
         for (int p = 0; p < planes; ++p) {
             std::memset(
-                frame->data[p] + static_cast<ptrdiff_t>(read) * bytes_per_sample * (is_planar ? 1 : static_cast<int>(channels)),
+                frame->data[p] + static_cast<ptrdiff_t>(read) * bytes_per_sample * (is_planar ? 1 : static_cast<int>(m_channels)),
                 0,
                 static_cast<size_t>(samples_per_plane) * static_cast<size_t>(bytes_per_sample));
         }
@@ -403,7 +403,7 @@ bool AudioEncodeContext::drain_packets(FFmpegMuxContext& mux)
             break;
         }
 
-        pkt->stream_index = stream_index;
+        pkt->stream_index = m_stream_index;
         av_packet_rescale_ts(pkt,
             codec_context->time_base,
             stream->time_base);
