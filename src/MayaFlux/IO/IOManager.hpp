@@ -8,6 +8,7 @@
 
 namespace MayaFlux::Core {
 class VKImage;
+struct GlobalStreamInfo;
 }
 
 namespace MayaFlux::Nodes::Network {
@@ -96,7 +97,7 @@ public:
      * Must be constructed before any VideoFileReader::load_into_container() call
      * that should participate in managed dispatch.
      */
-    IOManager(uint64_t sample_rate, uint32_t buffer_size, uint32_t frame_rate, const std::shared_ptr<Buffers::BufferManager>& buffer_manager);
+    IOManager(Core::GlobalStreamInfo& stream_info, uint32_t frame_rate, const std::shared_ptr<Buffers::BufferManager>& buffer_manager);
 
     /**
      * @brief Unregisters IOService, releases all owned readers, clears stored buffers.
@@ -484,10 +485,7 @@ public:
     [[nodiscard]] std::vector<std::shared_ptr<ModelReader>> get_model_readers() const { return m_model_readers; };
 
 private:
-    uint64_t m_sample_rate;
-
-    uint32_t m_buffer_size;
-
+    Core::GlobalStreamInfo& m_stream_info;
     uint32_t m_frame_rate;
 
     /**

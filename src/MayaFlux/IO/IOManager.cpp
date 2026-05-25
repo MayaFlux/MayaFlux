@@ -47,9 +47,8 @@ namespace {
 
 }
 
-IOManager::IOManager(uint64_t sample_rate, uint32_t buffer_size, uint32_t frame_rate, const std::shared_ptr<Buffers::BufferManager>& buffer_manager)
-    : m_sample_rate(sample_rate)
-    , m_buffer_size(buffer_size)
+IOManager::IOManager(Core::GlobalStreamInfo& stream_info, uint32_t frame_rate, const std::shared_ptr<Buffers::BufferManager>& buffer_manager)
+    : m_stream_info(stream_info)
     , m_frame_rate(frame_rate)
     , m_buffer_manager(buffer_manager)
 {
@@ -121,7 +120,7 @@ IOManager::load_video(const std::string& filepath, LoadConfig config)
     reader->set_target_dimensions(config.target_width, config.target_height);
 
     if ((config.video_options & VideoReadOptions::EXTRACT_AUDIO) == VideoReadOptions::EXTRACT_AUDIO) {
-        reader->set_target_sample_rate(m_sample_rate);
+        reader->set_target_sample_rate(m_stream_info.sample_rate);
     }
 
     if (!reader->open(filepath, config.file_options)) {
@@ -248,7 +247,7 @@ std::shared_ptr<Kakshya::SoundFileContainer> IOManager::load_audio(const std::st
         return nullptr;
     }
 
-    reader->set_target_sample_rate(m_sample_rate);
+    reader->set_target_sample_rate(m_stream_info.sample_rate);
     reader->set_audio_options(config.audio_options);
 
     if (!reader->open(filepath, config.file_options)) {
@@ -288,7 +287,7 @@ std::shared_ptr<Kakshya::DynamicSoundStream> IOManager::load_audio_bounded(
         return nullptr;
     }
 
-    reader->set_target_sample_rate(m_sample_rate);
+    reader->set_target_sample_rate(m_stream_info.sample_rate);
 
     auto stream = reader->load_bounded(filepath, max_frames, truncate);
     if (!stream) {
@@ -480,7 +479,7 @@ void IOManager::configure_audio_processor(
     container->set_memory_layout(Kakshya::MemoryLayout::ROW_MAJOR);
 
     const std::vector<uint64_t> output_shape = {
-        m_buffer_size,
+        m_stream_info.buffer_size,
         container->get_num_channels()
     };
 
