@@ -23,6 +23,28 @@ inline FileWriteOptions operator&(FileWriteOptions a, FileWriteOptions b)
 }
 
 /**
+ * @brief Anchor a relative output path to Config::SOURCE_DIR.
+ *
+ * Absolute paths are returned unchanged. Relative paths are prefixed
+ * with Config::SOURCE_DIR so output files land in the project source
+ * tree rather than the binary CWD (which varies by platform and IDE).
+ *
+ * @param filepath Path as supplied by the caller.
+ * @return Resolved path string.
+ */
+[[nodiscard]] inline std::string resolve_write_path(const std::string& filepath)
+{
+    namespace fs = std::filesystem;
+    auto normalized = std::string(filepath);
+    std::ranges::replace(normalized, '\\', '/');
+
+    if (fs::path(normalized).is_absolute())
+        return normalized;
+
+    return (fs::path(Config::SOURCE_DIR) / normalized).string();
+}
+
+/**
  * @class FileWriter
  * @brief Abstract base class for file writing operations
  *

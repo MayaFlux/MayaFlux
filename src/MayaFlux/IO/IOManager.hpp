@@ -2,12 +2,14 @@
 
 #include "CameraReader.hpp"
 #include "ImageWriter.hpp"
+#include "SoundFileWriter.hpp"
 #include "VideoFileReader.hpp"
 
 #include <future>
 
 namespace MayaFlux::Core {
 class VKImage;
+struct GlobalStreamInfo;
 }
 
 namespace MayaFlux::Nodes::Network {
@@ -19,6 +21,7 @@ class SignalSourceContainer;
 class VideoFileContainer;
 class SoundFileContainer;
 class CameraContainer;
+class AudioOutputContainer;
 }
 
 namespace MayaFlux::Buffers {
@@ -32,6 +35,7 @@ class BufferManager;
 
 namespace MayaFlux::Registry::Service {
 class IOService;
+class AudioBackendService;
 }
 
 namespace MayaFlux::IO {
@@ -96,7 +100,7 @@ public:
      * Must be constructed before any VideoFileReader::load_into_container() call
      * that should participate in managed dispatch.
      */
-    IOManager(uint64_t sample_rate, uint32_t buffer_size, uint32_t frame_rate, const std::shared_ptr<Buffers::BufferManager>& buffer_manager);
+    IOManager(Core::GlobalStreamInfo& stream_info, uint32_t frame_rate, const std::shared_ptr<Buffers::BufferManager>& buffer_manager);
 
     /**
      * @brief Unregisters IOService, releases all owned readers, clears stored buffers.
@@ -211,6 +215,71 @@ public:
         const std::string& filepath,
         uint64_t max_frames = 0,
         bool truncate = false);
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Audio — write
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * @brief Construct an open SoundFileWriter the caller drives manually.
+     *
+     * Allocates, opens, and returns a writer ready to accept write() calls.
+     * IOManager does not track this writer; the caller is responsible for
+     * calling close() when done.
+     *
+     * @param filepath    Output file path. Extension determines container format.
+     * @param channels    Number of channels in all submitted data.
+     * @param sample_rate PCM sample rate in Hz.
+     * @param codec_id    Encoder override; AV_CODEC_ID_NONE = container default.
+     * @return Open SoundFileWriter, or nullptr if open() failed.
+     */
+    [[nodiscard]] std::shared_ptr<SoundFileWriter>
+    create_writer(const std::string& filepath,
+        uint32_t channels,
+        uint32_t sample_rate = 48000,
+        AVCodecID codec_id = AV_CODEC_ID_NONE);
+
+    /**
+     * @brief Write a SoundStreamContainer to file in one shot.
+     *
+     * Opens a writer, posts the container's full data, closes, and stores
+     * the encode future in m_save_tasks. Non-blocking; returns immediately.
+     * Container metadata (sample_rate, channels) drives the encoder parameters.
+     *
+     * @param container Source container; any SoundStreamContainer child.
+     * @param filepath  Output file path.
+     * @param codec_id  Encoder override; AV_CODEC_ID_NONE = container default.
+     */
+    void write(const std::shared_ptr<Kakshya::SoundStreamContainer>& container,
+        const std::string& filepath,
+        AVCodecID codec_id = AV_CODEC_ID_NONE);
+
+    /**
+     * @brief Begin continuous capture of live audio output to a file.
+     *
+     * Registers an observer with AudioBackendService. Each output cycle the
+     * observer drives an AudioOutputContainer and posts its processed_data
+     * to a SoundFileWriter. Returns an opaque capture id for use with
+     * stop_capture().
+     *
+     * Returns 0 and logs an error if AudioBackendService is unavailable.
+     *
+     * @param filepath    Output file path.
+     * @param codec_id    Encoder override; AV_CODEC_ID_NONE = container default.
+     * @return Capture handle; pass to stop_capture() to finalise.
+     */
+    [[nodiscard]] uint32_t capture_output(const std::string& filepath,
+        AVCodecID codec_id = AV_CODEC_ID_NONE);
+
+    /**
+     * @brief Stop a running capture and finalise the file.
+     *
+     * Unregisters the AudioBackendService observer, calls writer->close(),
+     * and stores the encode future in m_save_tasks. Non-blocking.
+     *
+     * @param capture_id Handle returned by capture_output().
+     */
+    void stop_capture(uint32_t capture_id);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Audio — hook
@@ -483,11 +552,18 @@ public:
      */
     [[nodiscard]] std::vector<std::shared_ptr<ModelReader>> get_model_readers() const { return m_model_readers; };
 
+    /**
+     * @brief Returns all active capture IDs.
+     */
+    [[nodiscard]] std::vector<uint32_t> get_capture_ids() const;
+
+    /**
+     * @brief Returns all registered SoundFileWriters created via create_writer() or write().
+     */
+    [[nodiscard]] std::vector<std::shared_ptr<SoundFileWriter>> get_sound_writers() const { return m_writers; };
+
 private:
-    uint64_t m_sample_rate;
-
-    uint32_t m_buffer_size;
-
+    Core::GlobalStreamInfo& m_stream_info;
     uint32_t m_frame_rate;
 
     /**
@@ -508,6 +584,17 @@ private:
     void configure_audio_processor(
         const std::shared_ptr<Kakshya::SoundFileContainer>& container);
 
+    // ── Audio capture ──────────────────────────────────────────────────────
+
+    struct CaptureState {
+        std::shared_ptr<Kakshya::AudioOutputContainer> container;
+        std::shared_ptr<SoundFileWriter> writer;
+        uint32_t observer_id {};
+    };
+
+    mutable std::mutex m_captures_mutex;
+    std::unordered_map<uint32_t, CaptureState> m_captures;
+
     // ── readers ──────────────────────────────────────────────────────
 
     std::atomic<uint64_t> m_next_reader_id { 1 };
@@ -521,6 +608,8 @@ private:
     std::vector<std::shared_ptr<ImageReader>> m_image_readers;
 
     std::vector<std::shared_ptr<ModelReader>> m_model_readers;
+
+    std::vector<std::shared_ptr<SoundFileWriter>> m_writers;
 
     // ── Stored buffers ─────────────────────────────────────────────────────
 
@@ -553,6 +642,7 @@ private:
     // ── IOService ──────────────────────────────────────────────────────────
 
     std::shared_ptr<Registry::Service::IOService> m_io_service;
+    Registry::Service::AudioBackendService* m_audio_backend_service {};
 };
 
 } // namespace MayaFlux::IO

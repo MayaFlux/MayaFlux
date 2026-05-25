@@ -123,7 +123,7 @@ void Engine::Init(const GlobalStreamInfo& streamInfo, const GlobalGraphicsConfig
     m_node_graph_manager->set_node_config(m_node_config);
 
     m_io_manager = std::make_shared<IO::IOManager>(
-        m_stream_info.sample_rate, m_stream_info.buffer_size, m_graphics_config.target_frame_rate, m_buffer_manager);
+        m_stream_info, m_graphics_config.target_frame_rate, m_buffer_manager);
 
     if (m_graphics_config.windowing_backend != GlobalGraphicsConfig::WindowingBackend::NONE) {
         m_window_manager = std::make_shared<WindowManager>(m_graphics_config);
