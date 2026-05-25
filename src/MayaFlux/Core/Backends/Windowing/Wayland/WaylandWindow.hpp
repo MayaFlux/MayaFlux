@@ -30,8 +30,7 @@ namespace MayaFlux::Core {
 class MAYAFLUX_API WaylandWindow : public Window {
 public:
     WaylandWindow(const WindowCreateInfo& create_info,
-        const GraphicsSurfaceInfo& surface_info,
-        GlobalGraphicsConfig::GraphicsApi api);
+        const GlobalGraphicsConfig& graphics_config);
 
     ~WaylandWindow() override;
 
@@ -108,14 +107,14 @@ private:
     double m_pointer_x {};
     double m_pointer_y {};
 
-    int32_t m_repeat_rate { 60 };
-    int32_t m_repeat_delay { 90 };
     int m_repeat_fd { -1 };
     std::unordered_map<int16_t, WindowEvent::KeyData> m_held_keys;
 
     // -------------------------------------------------------------------------
     // Window state
     // -------------------------------------------------------------------------
+
+    KeyRepeatConfig m_key_repeat_config;
     WindowCreateInfo m_create_info;
     WindowState m_state;
     InputConfig m_input_config;

@@ -35,15 +35,14 @@ static void register_window_class(HINSTANCE hinstance)
 // ============================================================================
 
 Win32Window::Win32Window(const WindowCreateInfo& create_info,
-    const GraphicsSurfaceInfo& /*surface_info*/,
-    GlobalGraphicsConfig::GraphicsApi /*api*/)
+    const GlobalGraphicsConfig& graphics_config)
     : m_create_info(create_info)
+    , m_key_repeat_config(graphics_config.key_repeat_config)
 {
     m_hinstance = GetModuleHandleW(nullptr);
 
     m_ui_thread = std::thread([this]() { ui_thread_main(); });
 
-    // Block until HWND is valid so callers always receive a live window.
     m_hwnd_ready.wait(false);
 }
 
@@ -263,7 +262,7 @@ void Win32Window::poll()
         const bool was_empty = m_held_keys.empty();
         m_held_keys = m_held_keys_ui;
         if (was_empty && !m_held_keys.empty())
-            m_repeat_next_tick = GetTickCount64() + 90;
+            m_repeat_next_tick = GetTickCount64() + m_key_repeat_config.initial_delay_ms;
     }
 
     while (auto ev = m_event_queue.pop()) {
@@ -274,7 +273,7 @@ void Win32Window::poll()
 
     const ULONGLONG now = GetTickCount64();
     if (!m_held_keys.empty() && now >= m_repeat_next_tick) {
-        m_repeat_next_tick = now + 16;
+        m_repeat_next_tick = now + m_key_repeat_config.interval_ms;
         for (const auto& [k, kd] : m_held_keys) {
             WindowEvent rev;
             rev.type = WindowEventType::KEY_REPEAT;

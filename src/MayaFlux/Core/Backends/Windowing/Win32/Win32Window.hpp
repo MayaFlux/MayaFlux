@@ -15,11 +15,6 @@
 #endif
 #include <windows.h>
 
-#include <atomic>
-#include <mutex>
-#include <thread>
-#include <vector>
-
 namespace MayaFlux::Core {
 
 /**
@@ -35,8 +30,7 @@ namespace MayaFlux::Core {
 class MAYAFLUX_API Win32Window : public Window {
 public:
     Win32Window(const WindowCreateInfo& create_info,
-        const GraphicsSurfaceInfo& surface_info,
-        GlobalGraphicsConfig::GraphicsApi api);
+        const GlobalGraphicsConfig& graphics_config);
 
     ~Win32Window() override;
 
@@ -95,6 +89,7 @@ private:
 
     Memory::LockFreeQueue<WindowEvent, EVENT_QUEUE_CAPACITY> m_event_queue;
 
+    KeyRepeatConfig m_key_repeat_config;
     WindowCreateInfo m_create_info;
     WindowState m_state;
     InputConfig m_input_config;

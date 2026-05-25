@@ -17,10 +17,10 @@ namespace MayaFlux::Core {
 // ============================================================================
 
 WaylandWindow::WaylandWindow(const WindowCreateInfo& create_info,
-    const GraphicsSurfaceInfo&,
-    GlobalGraphicsConfig::GraphicsApi)
+    const GlobalGraphicsConfig& graphics_config)
     : m_display(wl_display_connect(nullptr))
     , m_create_info(create_info)
+    , m_key_repeat_config(graphics_config.key_repeat_config)
 {
 
     if (!m_display) {
@@ -507,9 +507,9 @@ void WaylandWindow::on_keyboard_key(void* data, wl_keyboard*,
         if (self->m_repeat_fd < 0)
             self->m_repeat_fd = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK | TFD_CLOEXEC);
 
-        const long delay_ns = 90'000'000L;
-        const long repeat_ns = self->m_repeat_rate > 0
-            ? 1'000'000'000L / self->m_repeat_rate
+        const long delay_ns = static_cast<long>(self->m_key_repeat_config.initial_delay_ms) * 1'000'000L;
+        const long repeat_ns = self->m_key_repeat_config.interval_ms > 0
+            ? static_cast<long>(self->m_key_repeat_config.interval_ms) * 1'000'000L
             : 16'666'667L;
 
         itimerspec ts {};
@@ -546,10 +546,13 @@ void WaylandWindow::on_keyboard_repeat_info(void* data, wl_keyboard*,
     int32_t rate, int32_t delay)
 {
     auto* self = static_cast<WaylandWindow*>(data);
-    (void)rate;
-    (void)delay;
-    self->m_repeat_rate = 60;
-    self->m_repeat_delay = 90;
+    if (!self->m_key_repeat_config.allow_compositor_override)
+        return;
+
+    if (rate > 0)
+        self->m_key_repeat_config.interval_ms = 1000u / static_cast<uint32_t>(rate);
+    if (delay > 0)
+        self->m_key_repeat_config.initial_delay_ms = static_cast<uint32_t>(delay);
 }
 
 // ============================================================================

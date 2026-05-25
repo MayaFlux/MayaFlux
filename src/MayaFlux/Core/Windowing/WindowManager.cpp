@@ -175,8 +175,7 @@ std::shared_ptr<Window> WindowManager::create_window_internal(
 
     case GlobalGraphicsConfig::WindowingBackend::WINDOWS:
 #if defined(MAYAFLUX_PLATFORM_WINDOWS)
-        return std::make_shared<Win32Window>(create_info, m_config.surface_info,
-            m_config.requested_api);
+        return std::make_shared<Win32Window>(create_info, m_config);
 #else
         MF_ERROR(Journal::Component::Core, Journal::Context::WindowingSubsystem,
             "Native Win32 backend not implemented on this platform");
@@ -185,8 +184,7 @@ std::shared_ptr<Window> WindowManager::create_window_internal(
 
     case GlobalGraphicsConfig::WindowingBackend::WAYLAND:
 #if defined(MAYAFLUX_PLATFORM_LINUX)
-        return std::make_shared<WaylandWindow>(create_info, m_config.surface_info,
-            m_config.requested_api);
+        return std::make_shared<WaylandWindow>(create_info, m_config);
 #else
         MF_ERROR(Journal::Component::Core, Journal::Context::WindowingSubsystem,
             "Wayland native backend not compiled in");

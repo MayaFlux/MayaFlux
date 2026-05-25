@@ -207,6 +207,24 @@ struct GlfwPreInitConfig {
 };
 
 /**
+ * @struct KeyRepeatConfig
+ * @brief Key repeat timing for native window backends.
+ *
+ * Wayland and Win32 backends implement client-side repeat using these values.
+ * GLFW backend ignores this; OS repeat settings apply there.
+ */
+struct KeyRepeatConfig {
+    /** @brief Delay before repeat starts in milliseconds. */
+    uint32_t initial_delay_ms { 90 };
+
+    /** @brief Interval between repeat events in milliseconds. */
+    uint32_t interval_ms { 16 };
+
+    /** @brief If true, compositor-reported repeat_info overrides these values. */
+    bool allow_compositor_override { false };
+};
+
+/**
  * @struct TextConfig
  * @brief Default font configuration for Portal::Text.
  *
@@ -236,6 +254,9 @@ struct TextConfig {
 struct MAYAFLUX_API GlobalGraphicsConfig {
     /** @brief Pre-initialization configuration for GLFW */
     GlfwPreInitConfig glfw_preinit_config;
+
+    /** @brief Key repeat timing for native Wayland and Win32 backends. */
+    KeyRepeatConfig key_repeat_config;
 
     /** @brief System-wide configuration for visual stream processing */
     GraphicsSurfaceInfo surface_info;
