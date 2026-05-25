@@ -15,7 +15,6 @@
 #endif
 #include <windows.h>
 
-
 #include <atomic>
 #include <mutex>
 #include <thread>
@@ -103,6 +102,10 @@ private:
 
     std::atomic<bool> m_graphics_registered { false };
     Vruta::WindowEventSource m_event_source;
+    std::atomic<bool> m_keys_dirty { false };
+    std::unordered_map<int16_t, WindowEvent::KeyData> m_held_keys_ui;
+    std::unordered_map<int16_t, WindowEvent::KeyData> m_held_keys;
+    ULONGLONG m_repeat_next_tick { 0 };
 
     std::vector<std::weak_ptr<Buffers::VKBuffer>> m_rendering_buffers;
     std::vector<uint64_t> m_frame_commands;

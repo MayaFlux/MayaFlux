@@ -144,30 +144,39 @@ LRESULT CALLBACK Win32Window::wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp
 
     case WM_KEYDOWN:
     case WM_SYSKEYDOWN: {
-        WindowEvent ev;
-        ev.type = (lp & (1 << 30))
-            ? WindowEventType::KEY_REPEAT
-            : WindowEventType::KEY_PRESSED;
-        ev.timestamp = 0.0;
-        ev.data = WindowEvent::KeyData {
+        if (lp & (1 << 30))
+            return 0;
+
+        const WindowEvent::KeyData kd {
             .key = static_cast<int16_t>(from_win32_key(wp)),
             .scancode = static_cast<int>(HIWORD(lp) & 0x1FF),
             .mods = 0
         };
+
+        self->m_held_keys_ui[kd.key] = kd;
+        self->m_keys_dirty.store(true, std::memory_order_release);
+        WindowEvent ev;
+        ev.type = WindowEventType::KEY_PRESSED;
+        ev.timestamp = 0.0;
+        ev.data = kd;
         self->push_event(ev);
         return 0;
     }
 
     case WM_KEYUP:
     case WM_SYSKEYUP: {
-        WindowEvent ev;
-        ev.type = WindowEventType::KEY_RELEASED;
-        ev.timestamp = 0.0;
-        ev.data = WindowEvent::KeyData {
+        const WindowEvent::KeyData kd {
             .key = static_cast<int16_t>(from_win32_key(wp)),
             .scancode = static_cast<int>(HIWORD(lp) & 0x1FF),
             .mods = 0
         };
+
+        self->m_held_keys_ui.erase(kd.key);
+        self->m_keys_dirty.store(true, std::memory_order_release);
+        WindowEvent ev;
+        ev.type = WindowEventType::KEY_RELEASED;
+        ev.timestamp = 0.0;
+        ev.data = kd;
         self->push_event(ev);
         return 0;
     }
@@ -250,10 +259,31 @@ void Win32Window::push_event(WindowEvent ev)
 
 void Win32Window::poll()
 {
+    if (m_keys_dirty.exchange(false, std::memory_order_acq_rel)) {
+        const bool was_empty = m_held_keys.empty();
+        m_held_keys = m_held_keys_ui;
+        if (was_empty && !m_held_keys.empty())
+            m_repeat_next_tick = GetTickCount64() + 90;
+    }
+
     while (auto ev = m_event_queue.pop()) {
         m_event_source.signal(*ev);
         if (m_event_callback)
             m_event_callback(*ev);
+    }
+
+    const ULONGLONG now = GetTickCount64();
+    if (!m_held_keys.empty() && now >= m_repeat_next_tick) {
+        m_repeat_next_tick = now + 16;
+        for (const auto& [k, kd] : m_held_keys) {
+            WindowEvent rev;
+            rev.type = WindowEventType::KEY_REPEAT;
+            rev.timestamp = 0.0;
+            rev.data = kd;
+            m_event_source.signal(rev);
+            if (m_event_callback)
+                m_event_callback(rev);
+        }
     }
 }
 
