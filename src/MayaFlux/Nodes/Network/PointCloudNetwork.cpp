@@ -147,6 +147,12 @@ void PointCloudNetwork::process_batch(unsigned int num_samples)
         m_operator->process(0.0F);
     }
 
+    if (m_operator_chain && !m_operator_chain->empty()) {
+        for (unsigned int frame = 0; frame < num_samples; ++frame) {
+            m_operator_chain->process(0.0F);
+        }
+    }
+
     MF_RT_TRACE(Journal::Component::Nodes, Journal::Context::NodeProcessing,
         "PointCloudNetwork processed {} frames with {} operator",
         num_samples, m_operator->get_type_name());
@@ -159,15 +165,9 @@ void PointCloudNetwork::set_topology(Topology topology)
 
 size_t PointCloudNetwork::get_node_count() const
 {
-    if (!m_operator) {
-        return m_cached_vertices.size();
-    }
-
-    if (auto* graphics_op = dynamic_cast<const GraphicsOperator*>(m_operator.get())) {
-        return graphics_op->get_point_count();
-    }
-
-    return m_cached_vertices.size();
+    if (auto* gfx = dynamic_cast<const GraphicsOperator*>(m_operator.get()))
+        return gfx->get_point_count();
+    return 0;
 }
 
 std::optional<double> PointCloudNetwork::get_node_output(size_t index) const
@@ -216,31 +216,31 @@ void PointCloudNetwork::set_vertices(const std::vector<LineVertex>& vertices)
     m_cached_vertices = vertices;
     m_num_points = vertices.size();
 
-    if (m_operator) {
-        if (auto* graphics_op = dynamic_cast<TopologyOperator*>(m_operator.get())) {
-            graphics_op->initialize(m_cached_vertices);
-        } else if (auto* graphics_op = dynamic_cast<PathOperator*>(m_operator.get())) {
-            graphics_op->initialize(m_cached_vertices);
-        }
+    if (auto* topo = dynamic_cast<TopologyOperator*>(m_operator.get())) {
+        topo->initialize(vertices);
+    } else if (auto* path = dynamic_cast<PathOperator*>(m_operator.get())) {
+        path->initialize(vertices);
+    } else if (auto* field = dynamic_cast<FieldOperator*>(m_operator.get())) {
+        field->initialize(vertices);
     } else {
         MF_ERROR(Journal::Component::Nodes, Journal::Context::NodeProcessing,
-            "No operator to set vertices on; vertices cached but not applied");
+            "set_vertices: no operator to apply to; seed cached only");
     }
 
     MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
-        "Updated PointCloudNetwork vertices: {} points", vertices.size());
+        "PointCloudNetwork reseeded: {} points", vertices.size());
 }
 
 void PointCloudNetwork::apply_color_gradient(const glm::vec3& start_color, const glm::vec3& end_color)
 {
-    const size_t count = m_cached_vertices.size();
-
+    auto verts = get_vertices();
+    const size_t count = verts.size();
     for (size_t i = 0; i < count; ++i) {
         const float t = count > 1 ? static_cast<float>(i) / static_cast<float>(count - 1) : 0.0F;
-        m_cached_vertices[i].color = glm::mix(start_color, end_color, t);
+        verts[i].color = glm::mix(start_color, end_color, t);
     }
 
-    set_vertices(m_cached_vertices);
+    set_vertices(verts);
 
     MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
         "Applied linear color gradient to {} points", count);
@@ -251,21 +251,19 @@ void PointCloudNetwork::apply_radial_gradient(
     const glm::vec3& edge_color,
     const glm::vec3& center)
 {
-    const size_t count = m_cached_vertices.size();
+    auto verts = get_vertices();
+    const size_t count = verts.size();
 
-    float max_distance = 0.0F;
-    for (const auto& v : m_cached_vertices) {
-        const float dist = glm::length(v.position - center);
-        max_distance = std::max(max_distance, dist);
-    }
+    float max_dist = 0.0F;
+    for (const auto& v : verts)
+        max_dist = std::max(max_dist, glm::length(v.position - center));
 
     for (size_t i = 0; i < count; ++i) {
-        const float dist = glm::length(m_cached_vertices[i].position - center);
-        const float t = max_distance > 0.0F ? dist / max_distance : 0.0F;
-        m_cached_vertices[i].color = glm::mix(center_color, edge_color, t);
+        const float t = max_dist > 0.0F ? glm::length(verts[i].position - center) / max_dist : 0.0F;
+        verts[i].color = glm::mix(center_color, edge_color, t);
     }
 
-    set_vertices(m_cached_vertices);
+    set_vertices(verts);
 
     MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
         "Applied radial color gradient to {} points", count);
@@ -273,36 +271,22 @@ void PointCloudNetwork::apply_radial_gradient(
 
 std::vector<LineVertex> PointCloudNetwork::get_vertices() const
 {
-    if (m_operator) {
-        if (auto* topo_op = dynamic_cast<const TopologyOperator*>(m_operator.get())) {
-            return topo_op->extract_vertices();
-        }
+    if (auto* topo = dynamic_cast<const TopologyOperator*>(m_operator.get()))
+        return topo->extract_vertices();
 
-        if (auto* path_op = dynamic_cast<const PathOperator*>(m_operator.get())) {
-            return path_op->extract_vertices();
-        }
-    }
+    if (auto* path = dynamic_cast<const PathOperator*>(m_operator.get()))
+        return path->extract_vertices();
 
-    return m_cached_vertices;
+    if (auto* field = dynamic_cast<const FieldOperator*>(m_operator.get()))
+        return field->extract_line_vertices();
+
+    return {};
 }
 
-void PointCloudNetwork::update_vertex(size_t index, const LineVertex& vertex)
+void PointCloudNetwork::update_vertex([[maybe_unused]] size_t index, [[maybe_unused]] const LineVertex& vertex)
 {
-    if (index >= m_cached_vertices.size()) {
-        MF_WARN(Journal::Component::Nodes, Journal::Context::NodeProcessing,
-            "Vertex index {} out of range (count: {})", index, m_cached_vertices.size());
-        return;
-    }
-
-    m_cached_vertices[index] = vertex;
-
-    if (m_operator) {
-        if (auto* topo_op = dynamic_cast<TopologyOperator*>(m_operator.get())) {
-            topo_op->initialize(m_cached_vertices);
-        } else if (auto* path_op = dynamic_cast<PathOperator*>(m_operator.get())) {
-            path_op->initialize(m_cached_vertices);
-        }
-    }
+    MF_WARN(Journal::Component::Nodes, Journal::Context::NodeProcessing,
+        "update_vertex is not supported; use get_vertices/set_vertices");
 }
 
 void PointCloudNetwork::set_connection_radius(float radius)
