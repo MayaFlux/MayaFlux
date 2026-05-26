@@ -251,6 +251,13 @@ public:
     void clear_force_fields();
 
     /**
+     * @brief Fixed dt substituted when set_force_internal_dt(true).
+     * @param dt Timestep in seconds. Default 0.016F.
+     */
+    void set_internal_dt(float dt) { m_internal_dt = dt; }
+    [[nodiscard]] float get_internal_dt() const { return m_internal_dt; }
+
+    /**
      * @brief Get number of active external force fields
      */
     [[nodiscard]] size_t force_field_count() const { return m_force_fields.size(); }
@@ -273,6 +280,17 @@ public:
     void apply_one_to_one(
         std::string_view param,
         const std::shared_ptr<NodeNetwork>& source) override;
+
+    /**
+     * @brief Seed physics state from upstream operator's vertex data
+     *
+     * Extracts positions, colors, sizes from upstream and initializes
+     * physics state (velocity = 0, mass = 1) for each particle. Supports
+     * PointVertex input; other vertex types are ignored with a warning.
+     *
+     * @param upstream Upstream operator to seed from
+     */
+    void seed_from_upstream(const GraphicsOperator* upstream) override;
 
     const char* get_vertex_type_name() const override { return "PointVertex"; }
 
@@ -300,6 +318,7 @@ private:
     glm::vec3 m_attraction_point { 0.0F };
     bool m_has_attraction_point { false };
     float m_attraction_strength { 1.0F };
+    float m_internal_dt { 0.016F };
 
     static std::optional<PhysicsParameter> string_to_parameter(std::string_view param);
 

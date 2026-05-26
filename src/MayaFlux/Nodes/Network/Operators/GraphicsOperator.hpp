@@ -100,6 +100,17 @@ public:
      */
     virtual void seed_from_upstream(const GraphicsOperator* upstream) { }
 
+    /**
+     * @brief Override the dt passed by the caller with a fixed internal value.
+     *
+     * Useful when the owning network passes 0.0F or a sample-count dt that is
+     * meaningless for time-based integration (e.g. PhysicsOperator in a
+     * PointCloudNetwork chain). When true, process() ignores the incoming dt
+     * and substitutes m_internal_dt instead.
+     */
+    void set_force_internal_dt(bool value) { m_force_internal_dt = value; }
+    [[nodiscard]] bool uses_force_internal_dt() const { return m_force_internal_dt; }
+
 protected:
     /**
      * @brief Get mutable access to point at global index
@@ -111,6 +122,7 @@ protected:
 
     bool m_participates_in_rendering { true };
     bool m_consumes_upstream {};
+    bool m_force_internal_dt {};
 };
 
 } // namespace MayaFlux::Nodes::Network::Operators

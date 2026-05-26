@@ -93,6 +93,28 @@ void PhysicsOperator::add_collection(
         m_collections.size(), vertices.size(), mass_multiplier);
 }
 
+void PhysicsOperator::seed_from_upstream(const GraphicsOperator* upstream)
+{
+    if (get_vertex_count() > 0 || !upstream)
+        return;
+
+    const auto data = upstream->get_vertex_data();
+    if (data.empty())
+        return;
+
+    const size_t count = data.size() / sizeof(PointVertex);
+    if (count == 0)
+        return;
+
+    std::vector<PointVertex> vertices(count);
+    std::memcpy(vertices.data(), data.data(), data.size());
+    initialize(vertices);
+
+    MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
+        "PhysicsOperator seeded {} vertices from upstream '{}'",
+        count, upstream->get_type_name());
+}
+
 //-----------------------------------------------------------------------------
 // Processing
 //-----------------------------------------------------------------------------
@@ -103,8 +125,9 @@ void PhysicsOperator::process(float dt)
         return;
     }
 
+    const float effective_dt = m_force_internal_dt ? m_internal_dt : dt;
     apply_forces();
-    integrate(dt);
+    integrate(effective_dt);
     handle_boundary_conditions();
     sync_to_point_collection();
 
