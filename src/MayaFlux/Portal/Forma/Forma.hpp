@@ -259,8 +259,8 @@ template <typename V>
  * @param window     Target window for rendering.
  * @param geom       Geometry function producing vertex bytes from T.
  * @param initial    Starting value written into MappedState.
- * @param capacity   Initial FormaBuffer capacity in bytes.
  * @param topology   Primitive topology for the FormaBuffer.
+ * @param capacity   Initial FormaBuffer capacity in bytes.
  * @param project    Optional T -> float projection for outbound readers.
  * @return Fully constructed Mapped<T> with element registered in @p layer.
  */
@@ -270,8 +270,8 @@ template <typename T>
     std::shared_ptr<Core::Window> window,
     GeometryFn<T> geom,
     T initial,
-    size_t capacity = 4096,
     Graphics::PrimitiveTopology topology = Graphics::PrimitiveTopology::TRIANGLE_STRIP,
+    size_t capacity = 4096,
     std::function<float(T)> project = {})
 {
     auto buf = create_buffer(std::move(window), capacity, topology);
@@ -306,8 +306,8 @@ template <typename T>
  * @param surface   Canvas to register the element on.
  * @param geom      Geometry function producing vertex bytes from T.
  * @param initial   Starting value written into MappedState.
- * @param capacity  Initial FormaBuffer capacity in bytes.
  * @param topology  Primitive topology for the FormaBuffer.
+ * @param capacity  Initial FormaBuffer capacity in bytes.
  * @param project   Optional T -> float projection for outbound readers.
  * @return Fully constructed Mapped<T> with element registered.
  */
@@ -316,14 +316,14 @@ template <typename T>
     Surface& surface,
     GeometryFn<T> geom,
     T initial,
-    size_t capacity = 4096,
     Graphics::PrimitiveTopology topology = Graphics::PrimitiveTopology::TRIANGLE_STRIP,
+    size_t capacity = 4096,
     std::function<float(T)> project = {})
 {
     auto mapped = create_element<T>(
         surface.layer(), surface.window(),
         std::move(geom), std::move(initial),
-        capacity, topology, std::move(project));
+        topology, capacity, std::move(project));
 
     mapped.sync();
     if (mapped.element.bounds_hint)

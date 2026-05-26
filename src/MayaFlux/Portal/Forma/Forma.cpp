@@ -195,8 +195,8 @@ plot(
             surface,
             *spec.background_fn,
             0.F,
-            static_cast<size_t>(4) * Kakshya::VertexLayout::for_meshes().stride_bytes,
-            Graphics::PrimitiveTopology::TRIANGLE_STRIP);
+            Graphics::PrimitiveTopology::TRIANGLE_STRIP,
+            static_cast<size_t>(4) * Kakshya::VertexLayout::for_meshes().stride_bytes);
         auto bg_id = bg.element.id;
         auto buf = create_buffer(window, spec.capacity_for(N), spec.topology);
         auto mapped = Plot::place(surface, std::move(buf), std::move(spec), std::move(container));
