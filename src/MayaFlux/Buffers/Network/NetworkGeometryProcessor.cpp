@@ -165,6 +165,10 @@ void NetworkGeometryProcessor::processing_function(const std::shared_ptr<Buffer>
                 slices.push_back({ .bytes = {}, .vertex_count = 0, .layout = std::nullopt });
                 continue;
             }
+
+            if (!gfx->participates_in_rendering())
+                continue;
+
             slices.push_back({ .bytes = gfx->get_vertex_data(), .vertex_count = gfx->get_vertex_count(), .layout = gfx->get_vertex_layout() });
         }
 

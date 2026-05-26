@@ -52,6 +52,49 @@ void FieldOperator::initialize(const std::vector<MeshVertex>& vertices)
         "FieldOperator initialized with {} MeshVertex", vertices.size());
 }
 
+void FieldOperator::seed_from_upstream(const GraphicsOperator* upstream)
+{
+    if (m_count > 0 || !upstream)
+        return;
+
+    const auto data = upstream->get_vertex_data();
+    const auto layout = upstream->get_vertex_layout();
+    std::string type_name = upstream->get_vertex_type_name();
+
+    if (type_name == "PointVertex") {
+        m_vertex_type = VertexType::POINT;
+    } else if (type_name == "LineVertex") {
+        m_vertex_type = VertexType::LINE;
+    } else if (type_name == "MeshVertex") {
+        m_vertex_type = VertexType::MESH;
+    } else {
+        MF_WARN(Journal::Component::Nodes, Journal::Context::NodeProcessing,
+            "FieldOperator::seed_from_upstream: unrecognized vertex type '{}', defaulting to LineVertex",
+            type_name);
+        m_vertex_type = VertexType::LINE;
+    }
+
+    if (data.empty() || layout.stride_bytes == 0)
+        return;
+
+    if (layout.stride_bytes != k_stride) {
+        MF_WARN(Journal::Component::Nodes, Journal::Context::NodeProcessing,
+            "FieldOperator::seed_from_upstream: upstream stride {} != k_stride {}, skipping",
+            layout.stride_bytes, k_stride);
+        return;
+    }
+
+    const size_t count = data.size() / k_stride;
+    if (count == 0)
+        return;
+
+    store_reference(data.data(), count);
+
+    MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
+        "FieldOperator seeded {} vertices from upstream '{}'",
+        count, upstream->get_type_name());
+}
+
 // =========================================================================
 // Processing
 // =========================================================================

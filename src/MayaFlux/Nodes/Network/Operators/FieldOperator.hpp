@@ -169,6 +169,15 @@ public:
         std::string_view param,
         const std::shared_ptr<NodeNetwork>& source) override;
 
+    /**
+     * @brief Seed vertex data from the upstream operator's current output.
+     *
+     * Called by OperatorChain when consumes_upstream() is true. No-op if
+     * already initialised (m_count > 0) or if upstream is null. Derives
+     * vertex type from the upstream layout stride matching k_stride.
+     */
+    void seed_from_upstream(const GraphicsOperator* upstream) override;
+
 protected:
     void* get_data_at(size_t global_index) override;
 

@@ -67,6 +67,39 @@ public:
      */
     [[nodiscard]] virtual const char* get_vertex_type_name() const = 0;
 
+    /**
+     * @brief Whether this operator contributes a vertex slice to rendering.
+     *
+     * Default true. Set false for transform-only chain operators (e.g. a
+     * FieldOperator deforming upstream vertices) that must not add an
+     * independent render slice.
+     */
+    [[nodiscard]] bool participates_in_rendering() const { return m_participates_in_rendering; }
+    void set_participates_in_rendering(bool value) { m_participates_in_rendering = value; }
+
+    /**
+     * @brief Whether this operator requests upstream vertex state before process().
+     *
+     * Default false. Set true for operators that derive their initial vertex
+     * data from the preceding operator in the chain rather than from an
+     * explicit initialize() call.
+     */
+    [[nodiscard]] bool consumes_upstream() const { return m_consumes_upstream; }
+    void set_consumes_upstream(bool value) { m_consumes_upstream = value; }
+
+    /**
+     * @brief Receive upstream vertex state before process() is called.
+     *
+     * Called by OperatorChain::process() only when consumes_upstream() is true.
+     * Implementations seed their internal vertex buffer from the upstream
+     * operator's current output. Default no-op.
+     *
+     * @param upstream Last GraphicsOperator that ran before this one in the
+     *                 chain, or the primary operator if this is the first chain
+     *                 entry. Null if no upstream GraphicsOperator exists.
+     */
+    virtual void seed_from_upstream(const GraphicsOperator* upstream) { }
+
 protected:
     /**
      * @brief Get mutable access to point at global index
@@ -75,6 +108,9 @@ protected:
      * Subclasses must implement to provide per-point access
      */
     virtual void* get_data_at(size_t global_index) = 0;
+
+    bool m_participates_in_rendering { true };
+    bool m_consumes_upstream {};
 };
 
 } // namespace MayaFlux::Nodes::Network::Operators

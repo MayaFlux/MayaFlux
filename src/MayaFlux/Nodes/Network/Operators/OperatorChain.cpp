@@ -1,5 +1,7 @@
 #include "OperatorChain.hpp"
 
+#include "MayaFlux/Nodes/Network/Operators/GraphicsOperator.hpp"
+
 #include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux::Nodes::Network {
@@ -26,10 +28,19 @@ void OperatorChain::clear()
     m_operators.clear();
 }
 
-void OperatorChain::process(float dt)
+void OperatorChain::process(float dt, const NetworkOperator* upstream)
 {
-    for (const auto& op : m_operators)
+    const NetworkOperator* last = upstream;
+    for (const auto& op : m_operators) {
+        if (auto* gfx = dynamic_cast<GraphicsOperator*>(op.get())) {
+            if (gfx->consumes_upstream()) {
+                gfx->seed_from_upstream(
+                    dynamic_cast<const GraphicsOperator*>(last));
+            }
+        }
         op->process(dt);
+        last = op.get();
+    }
 }
 
 std::shared_ptr<NetworkOperator> OperatorChain::get(size_t index) const

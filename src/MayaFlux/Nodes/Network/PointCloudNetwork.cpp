@@ -151,7 +151,7 @@ void PointCloudNetwork::process_batch(unsigned int num_samples)
 
     if (m_operator_chain && !m_operator_chain->empty()) {
         for (unsigned int frame = 0; frame < num_samples; ++frame) {
-            m_operator_chain->process(0.0F);
+            m_operator_chain->process(0.0F, m_operator.get());
         }
     }
 

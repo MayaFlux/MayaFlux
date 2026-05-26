@@ -81,9 +81,14 @@ public:
 
     /**
      * @brief Call process(dt) on each operator in insertion order.
-     * @param dt Time delta or sample count passed through to each operator.
+     *
+     * @param dt       Time delta or sample count passed to each operator.
+     * @param upstream Primary operator output to offer as upstream context.
+     *                 Passed to each chain operator that declares
+     *                 consumes_upstream() == true before its process() call.
+     *                 Null is valid (no upstream available).
      */
-    void process(float dt);
+    void process(float dt, const NetworkOperator* upstream = nullptr);
 
     // -------------------------------------------------------------------------
     // Query
