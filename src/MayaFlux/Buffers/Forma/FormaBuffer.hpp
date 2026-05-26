@@ -46,6 +46,14 @@ public:
         size_t capacity_bytes,
         Portal::Graphics::PrimitiveTopology topology);
 
+    /**
+     * @brief Construct a FormaBuffer.
+     * @param topology        Primitive topology. Determines default shaders
+     *                        selected in setup_rendering().
+     */
+    FormaBuffer(
+        Portal::Graphics::PrimitiveTopology topology);
+
     ~FormaBuffer() override = default;
 
     FormaBuffer(const FormaBuffer&) = delete;

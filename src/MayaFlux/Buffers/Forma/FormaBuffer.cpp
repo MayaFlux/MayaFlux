@@ -11,12 +11,22 @@
 
 namespace MayaFlux::Buffers {
 
+namespace {
+    constexpr size_t k_capacity_bytes = 4 * 1024 * 1024; // 4 MiB default capacity, can be overridden by constructor
+}
+
 FormaBuffer::FormaBuffer(
     size_t capacity_bytes,
     Portal::Graphics::PrimitiveTopology topology)
     : VKBuffer(capacity_bytes, Buffers::VKBuffer::Usage::VERTEX,
           Kakshya::DataModality::VERTEX_POSITIONS_3D)
     , m_topology(topology)
+{
+}
+
+FormaBuffer::FormaBuffer(
+    Portal::Graphics::PrimitiveTopology topology)
+    : FormaBuffer(k_capacity_bytes, topology)
 {
 }
 
