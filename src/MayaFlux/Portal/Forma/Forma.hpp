@@ -4,8 +4,6 @@
 #include "Plot/Plot.hpp"
 #include "Surface.hpp"
 
-#include "MayaFlux/Buffers/Forma/FormaBuffer.hpp"
-
 namespace MayaFlux::Nodes {
 class NodeGraphManager;
 }
@@ -178,6 +176,48 @@ MAYAFLUX_API bool is_initialized();
         size_t capacity,
         Graphics::PrimitiveTopology topology,
         std::vector<std::pair<std::string, std::shared_ptr<Core::VKImage>>> additional_textures);
+
+/**
+ * @brief Construct, register, and immediately submit a FormaBuffer from vertices.
+ *
+ * Deduces capacity and topology from the vertex type. PointVertex yields
+ * POINT_LIST, LineVertex yields LINE_LIST, MeshVertex yields TRIANGLE_STRIP.
+ * Topology may be overridden explicitly for cases like LINE_STRIP or
+ * TRIANGLE_LIST from MeshVertex data.
+ *
+ * @tparam V    Vertex type: PointVertex, LineVertex, or MeshVertex.
+ * @param window    Target window.
+ * @param vertices  Vertices to submit immediately after construction.
+ * @param topology  Primitive topology. Defaults to the canonical topology for V.
+ * @return Registered, render-ready FormaBuffer with initial geometry submitted.
+ */
+template <typename V>
+    requires std::ranges::contiguous_range<V>
+    && std::is_trivially_copyable_v<std::ranges::range_value_t<V>>
+[[nodiscard]] std::shared_ptr<Buffers::FormaBuffer> create_buffer(
+    std::shared_ptr<Core::Window> window,
+    const V& vertices,
+    Graphics::PrimitiveTopology topology = Graphics::PrimitiveTopology::TRIANGLE_STRIP)
+{
+    using Vertex = std::ranges::range_value_t<V>;
+    const size_t cap = std::ranges::size(vertices) * sizeof(Vertex);
+    auto buf = create_buffer(std::move(window), cap, topology);
+    buf->submit(vertices);
+    return buf;
+}
+
+template <typename V>
+    requires std::is_trivially_copyable_v<V>
+    && (!std::ranges::range<V>)
+[[nodiscard]] std::shared_ptr<Buffers::FormaBuffer> create_buffer(
+    std::shared_ptr<Core::Window> window,
+    const V& vertex,
+    Graphics::PrimitiveTopology topology = Graphics::PrimitiveTopology::TRIANGLE_STRIP)
+{
+    auto buf = create_buffer(std::move(window), sizeof(V), topology);
+    buf->submit(vertex);
+    return buf;
+}
 
 // =============================================================================
 // Element
