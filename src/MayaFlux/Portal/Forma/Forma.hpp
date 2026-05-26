@@ -47,6 +47,8 @@ namespace internal {
         const std::string& texture_binding = {},
         std::vector<std::pair<std::string, std::shared_ptr<Core::VKImage>>> additional_textures = {});
 
+    constexpr size_t k_capacity_bytes = 4096;
+
 } // namespace internal
 
 /**
@@ -288,7 +290,7 @@ template <typename T>
     GeometryFn<T> geom,
     T initial,
     Graphics::PrimitiveTopology topology = Graphics::PrimitiveTopology::TRIANGLE_STRIP,
-    size_t capacity = 4096,
+    size_t capacity = internal::k_capacity_bytes,
     std::function<float(T)> project = {})
 {
     auto buf = create_buffer(std::move(window), capacity, topology);
@@ -324,7 +326,6 @@ template <typename T>
  * @param geom      Geometry function producing vertex bytes from T.
  * @param initial   Starting value written into MappedState.
  * @param topology  Primitive topology for the FormaBuffer.
- * @param capacity  Initial FormaBuffer capacity in bytes.
  * @param project   Optional T -> float projection for outbound readers.
  * @return Fully constructed Mapped<T> with element registered.
  */
@@ -334,13 +335,12 @@ template <typename T>
     GeometryFn<T> geom,
     T initial,
     Graphics::PrimitiveTopology topology = Graphics::PrimitiveTopology::TRIANGLE_STRIP,
-    size_t capacity = 4096,
     std::function<float(T)> project = {})
 {
     auto mapped = create_element<T>(
         surface.layer(), surface.window(),
         std::move(geom), std::move(initial),
-        topology, capacity, std::move(project));
+        topology, internal::k_capacity_bytes, std::move(project));
 
     mapped.sync();
     if (mapped.element.bounds_hint)

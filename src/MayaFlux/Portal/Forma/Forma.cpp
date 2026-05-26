@@ -161,7 +161,7 @@ std::shared_ptr<Buffers::FormaBuffer> create_buffer(
     Graphics::PrimitiveTopology topology,
     const std::string& texture_binding)
 {
-    return internal::create_buffer_impl(std::move(window), 4096, topology, texture_binding);
+    return internal::create_buffer_impl(std::move(window), internal::k_capacity_bytes, topology, texture_binding);
 }
 
 std::shared_ptr<Buffers::FormaBuffer> create_buffer(
@@ -169,7 +169,7 @@ std::shared_ptr<Buffers::FormaBuffer> create_buffer(
     Graphics::PrimitiveTopology topology,
     std::vector<std::pair<std::string, std::shared_ptr<Core::VKImage>>> additional_textures)
 {
-    return internal::create_buffer_impl(std::move(window), 4096, topology, {}, std::move(additional_textures));
+    return internal::create_buffer_impl(std::move(window), internal::k_capacity_bytes, topology, {}, std::move(additional_textures));
 }
 
 Surface create_surface(
@@ -204,11 +204,12 @@ plot(
 
     if (spec.background_fn) {
         auto bg = create_element<float>(
-            surface,
+            surface.layer(), window,
             *spec.background_fn,
             0.F,
             Graphics::PrimitiveTopology::TRIANGLE_STRIP,
             static_cast<size_t>(4) * Kakshya::VertexLayout::for_meshes().stride_bytes);
+
         auto bg_id = bg.element.id;
         auto buf = internal::create_buffer_impl(window, spec.capacity_for(N), spec.topology);
         auto mapped = Plot::place(surface, std::move(buf), std::move(spec), std::move(container));
