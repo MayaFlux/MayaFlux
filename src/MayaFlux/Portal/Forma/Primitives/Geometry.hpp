@@ -50,6 +50,15 @@ void write_verts(std::vector<uint8_t>& out, const V& verts)
     std::memcpy(out.data(), std::ranges::data(verts), n);
 }
 
+template <typename V>
+    requires std::is_trivially_copyable_v<V>
+    && (!std::ranges::range<V>)
+void write_verts(std::vector<uint8_t>& out, const V& v)
+{
+    out.resize(sizeof(v));
+    std::memcpy(out.data(), &v, sizeof(v));
+}
+
 // =============================================================================
 // Horizontal fader
 //
@@ -144,6 +153,41 @@ void write_verts(std::vector<uint8_t>& out, const V& verts)
 
         el.bounds_hint = Kinesis::AABB2D::from_ndc(center, glm::vec2(radius));
         el.contains = Kinesis::circular_bounds(center, radius);
+    };
+}
+
+// =============================================================================
+// Point
+//
+// Value is glm::vec2 in NDC space. Produces a single POINT_LIST vertex.
+// Hit region is a circle centered on the point.
+// Use as a cursor follower, node handle, or any positioned point primitive.
+// =============================================================================
+
+/**
+ * @brief Geometry function for a positioned point in NDC space.
+ *
+ * Value type is glm::vec2 (NDC position). Renders a single PointVertex
+ * and sets a circular hit region centered on the position. Suitable as
+ * a cursor follower, node handle, or any draggable point primitive.
+ *
+ * @param color      Point color.
+ * @param size       Point size in pixels.
+ * @param hit_radius Hit region radius in NDC units.
+ */
+[[nodiscard]] inline GeometryFn<glm::vec2> point(
+    glm::vec3 color = glm::vec3(1.0F),
+    float size = 10.0F,
+    float hit_radius = 0.04F)
+{
+    return [color, size, hit_radius](glm::vec2 pos, std::vector<uint8_t>& out, Element& el) {
+        write_verts(out, Kakshya::PointVertex {
+                             .position = { pos.x, pos.y, 0.0F },
+                             .color = color,
+                             .size = size,
+                         });
+        el.bounds_hint = Kinesis::AABB2D::from_ndc(pos, glm::vec2(hit_radius));
+        el.contains = Kinesis::circular_bounds(pos, hit_radius);
     };
 }
 
