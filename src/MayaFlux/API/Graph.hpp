@@ -25,8 +25,8 @@ namespace Buffers {
 }
 
 namespace internal {
-    std::shared_ptr<Buffers::BufferProcessor> attach_quick_process_audio(Buffers::AudioProcessingFunction processor, const std::shared_ptr<Buffers::AudioBuffer>& buffer);
-    std::shared_ptr<Buffers::BufferProcessor> attach_quick_process_graphics(Buffers::GraphicsProcessingFunction processor, const std::shared_ptr<Buffers::VKBuffer>& buffer);
+    MAYAFLUX_API std::shared_ptr<Buffers::BufferProcessor> attach_quick_process_audio(Buffers::AudioProcessingFunction processor, const std::shared_ptr<Buffers::AudioBuffer>& buffer);
+    MAYAFLUX_API std::shared_ptr<Buffers::BufferProcessor> attach_quick_process_graphics(Buffers::GraphicsProcessingFunction processor, const std::shared_ptr<Buffers::VKBuffer>& buffer);
 }
 
 //-------------------------------------------------------------------------
