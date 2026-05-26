@@ -34,7 +34,37 @@ namespace {
 
     constexpr uint32_t k_inspect_w = 480;
     constexpr uint32_t k_inspect_h = 900;
-}
+
+} // namespace
+
+namespace internal {
+
+    std::shared_ptr<Buffers::FormaBuffer> create_buffer_impl(
+        std::shared_ptr<Core::Window> window,
+        size_t capacity,
+        Graphics::PrimitiveTopology topology,
+        const std::string& texture_binding,
+        std::vector<std::pair<std::string, std::shared_ptr<Core::VKImage>>> additional_textures)
+    {
+        auto buf = std::make_shared<Buffers::FormaBuffer>(capacity, topology);
+        g_buffer_manager->add_buffer(buf, Buffers::ProcessingToken::GRAPHICS_BACKEND);
+
+        if (!additional_textures.empty()) {
+            buf->setup_rendering({
+                .target_window = std::move(window),
+                .additional_textures = std::move(additional_textures),
+            });
+        } else if (!texture_binding.empty()) {
+            buf->setup_rendering({
+                .target_window = std::move(window),
+                .default_texture_binding = texture_binding,
+            });
+        } else {
+            buf->setup_rendering({ .target_window = std::move(window) });
+        }
+        return buf;
+    }
+} // namespace internal
 
 // =============================================================================
 // Lifecycle
@@ -128,36 +158,18 @@ create_layer(
 
 std::shared_ptr<Buffers::FormaBuffer> create_buffer(
     std::shared_ptr<Core::Window> window,
-    size_t capacity,
     Graphics::PrimitiveTopology topology,
     const std::string& texture_binding)
 {
-    auto buf = std::make_shared<Buffers::FormaBuffer>(capacity, topology);
-
-    g_buffer_manager->add_buffer(buf, Buffers::ProcessingToken::GRAPHICS_BACKEND);
-
-    if (!texture_binding.empty()) {
-        buf->setup_rendering({ .target_window = std::move(window), .default_texture_binding = texture_binding });
-    } else {
-        buf->setup_rendering({ .target_window = std::move(window) });
-    }
-
-    return buf;
+    return internal::create_buffer_impl(std::move(window), 4096, topology, texture_binding);
 }
 
 std::shared_ptr<Buffers::FormaBuffer> create_buffer(
     std::shared_ptr<Core::Window> window,
-    size_t capacity,
     Graphics::PrimitiveTopology topology,
     std::vector<std::pair<std::string, std::shared_ptr<Core::VKImage>>> additional_textures)
 {
-    auto buf = std::make_shared<Buffers::FormaBuffer>(capacity, topology);
-    g_buffer_manager->add_buffer(buf, Buffers::ProcessingToken::GRAPHICS_BACKEND);
-    buf->setup_rendering({
-        .target_window = std::move(window),
-        .additional_textures = std::move(additional_textures),
-    });
-    return buf;
+    return internal::create_buffer_impl(std::move(window), 4096, topology, {}, std::move(additional_textures));
 }
 
 Surface create_surface(
@@ -198,14 +210,14 @@ plot(
             Graphics::PrimitiveTopology::TRIANGLE_STRIP,
             static_cast<size_t>(4) * Kakshya::VertexLayout::for_meshes().stride_bytes);
         auto bg_id = bg.element.id;
-        auto buf = create_buffer(window, spec.capacity_for(N), spec.topology);
+        auto buf = internal::create_buffer_impl(window, spec.capacity_for(N), spec.topology);
         auto mapped = Plot::place(surface, std::move(buf), std::move(spec), std::move(container));
         surface.layer().relate(mapped.element.id, bg_id);
         surface.layer().send_to_back(bg_id);
         return { std::move(mapped), std::move(surface) };
     }
 
-    auto buf = create_buffer(window, spec.capacity_for(N), spec.topology);
+    auto buf = internal::create_buffer_impl(window, spec.capacity_for(N), spec.topology);
 
     return { Plot::place(surface, std::move(buf), std::move(spec), std::move(container)), std::move(surface) };
 }

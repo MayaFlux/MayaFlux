@@ -28,6 +28,27 @@ namespace MayaFlux::Portal::Forma {
 
 class Inspector;
 
+// =============================================================================
+// Internal
+// =============================================================================
+
+namespace internal {
+
+    /**
+     * @brief Core buffer construction — capacity-explicit path for internal use.
+     *
+     * Called by public create_buffer overloads and by internal .cpp callers
+     * (plot, Collapsible) that know their capacity upfront.
+     */
+    [[nodiscard]] MAYAFLUX_API std::shared_ptr<Buffers::FormaBuffer> create_buffer_impl(
+        std::shared_ptr<Core::Window> window,
+        size_t capacity,
+        Graphics::PrimitiveTopology topology,
+        const std::string& texture_binding = {},
+        std::vector<std::pair<std::string, std::shared_ptr<Core::VKImage>>> additional_textures = {});
+
+} // namespace internal
+
 /**
  * @file Forma.hpp
  * @brief Factory free functions for the Forma surface system.
@@ -142,7 +163,6 @@ MAYAFLUX_API bool is_initialized();
  * BufferManager is taken from the stored initialize() state.
  *
  * @param window    Target window.
- * @param capacity  Buffer capacity in bytes.
  * @param topology  Primitive topology.
  * @param texture_binding Optional descriptor name for a single texture binding
  * @return Registered, render-ready FormaBuffer.
@@ -151,7 +171,6 @@ MAYAFLUX_API bool is_initialized();
     std::shared_ptr<Buffers::FormaBuffer>
     create_buffer(
         std::shared_ptr<Core::Window> window,
-        size_t capacity,
         Graphics::PrimitiveTopology topology,
         const std::string& texture_binding = {});
 
@@ -161,7 +180,6 @@ MAYAFLUX_API bool is_initialized();
  * BufferManager is taken from the stored initialize() state.
  *
  * @param window            Target window.
- * @param capacity          Buffer capacity in bytes.
  * @param topology          Primitive topology.
  * @param additional_textures  Vector of { descriptor name, image } pairs for
  *                             additional texture bindings. These are in
@@ -173,7 +191,6 @@ MAYAFLUX_API bool is_initialized();
     std::shared_ptr<Buffers::FormaBuffer>
     create_buffer(
         std::shared_ptr<Core::Window> window,
-        size_t capacity,
         Graphics::PrimitiveTopology topology,
         std::vector<std::pair<std::string, std::shared_ptr<Core::VKImage>>> additional_textures);
 
@@ -201,7 +218,7 @@ template <typename V>
 {
     using Vertex = std::ranges::range_value_t<V>;
     const size_t cap = std::ranges::size(vertices) * sizeof(Vertex);
-    auto buf = create_buffer(std::move(window), cap, topology);
+    auto buf = internal::create_buffer_impl(std::move(window), cap, topology);
     buf->submit(vertices);
     return buf;
 }
@@ -214,7 +231,7 @@ template <typename V>
     const V& vertex,
     Graphics::PrimitiveTopology topology = Graphics::PrimitiveTopology::TRIANGLE_STRIP)
 {
-    auto buf = create_buffer(std::move(window), sizeof(V), topology);
+    auto buf = internal::create_buffer_impl(std::move(window), sizeof(V), topology);
     buf->submit(vertex);
     return buf;
 }
