@@ -136,6 +136,8 @@ VertexLayout vertex_layout_for()
         return VertexLayout::for_lines();
     } else if constexpr (std::is_same_v<T, MeshVertex>) {
         return VertexLayout::for_meshes();
+    } else if constexpr (std::is_same_v<T, Vertex>) {
+        return VertexLayout::for_raw();
     } else {
         static_assert(!std::is_same_v<T, T>,
             "vertex_layout_for: unrecognised vertex type");
