@@ -130,22 +130,70 @@ surface.ctx().on_scroll (id, [](uint32_t id, glm::vec2 delta) { });
 `ndc` is the cursor position in NDC space at the time of the event.
 Callbacks run on the graphics thread.
 
-Hover tint pattern:
+Hover tint pattern using `Kinesis::filled_rect`:
 
 ```cpp
-auto color = std::make_shared<glm::vec3>(0.3F, 0.3F, 0.3F);
-auto redraw = [buf, color, box] {
-    buf->submit(std::array<Kakshya::MeshVertex, 4> { {
-        { .position = { box.min.x, box.min.y, 0 }, .color = *color },
-        { .position = { box.min.x, box.max.y, 0 }, .color = *color },
-        { .position = { box.max.x, box.min.y, 0 }, .color = *color },
-        { .position = { box.max.x, box.max.y, 0 }, .color = *color },
-    } });
-};
-redraw();
+constexpr glm::vec3 k_rest  { 0.3F, 0.3F, 0.3F };
+constexpr glm::vec3 k_hover { 0.5F, 0.5F, 0.5F };
 
-surface.ctx().on_enter(id, [color, redraw](uint32_t) { *color = { 0.5F, 0.5F, 0.5F }; redraw(); });
-surface.ctx().on_leave(id, [color, redraw](uint32_t) { *color = { 0.3F, 0.3F, 0.3F }; redraw(); });
+auto buf = Portal::Forma::create_buffer(window, Kinesis::filled_rect(box, k_rest),
+    Portal::Graphics::PrimitiveTopology::TRIANGLE_STRIP);
+
+surface.ctx().on_enter(id, [buf, box](uint32_t) { buf->submit(Kinesis::filled_rect(box, k_hover)); });
+surface.ctx().on_leave(id, [buf, box](uint32_t) { buf->submit(Kinesis::filled_rect(box, k_rest)); });
+```
+
+---
+
+## Texture and text on an Element
+
+`with_texture` and `with_text` bind a GPU image directly to an element's
+buffer. The buffer must be created with an `additional_textures` slot at
+index 0 so that `forma_multi.frag` is selected.
+
+```cpp
+constexpr Kinesis::AABB2D box { glm::vec2(-0.3F, -0.1F), glm::vec2(0.3F, 0.1F) };
+
+// Text label
+auto text_buf = Portal::Forma::create_buffer(
+    window,
+    Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST,
+    std::vector{ std::pair{ std::string("text"), std::shared_ptr<Core::VKImage>{} } });
+
+surface.layer().add(
+    Portal::Forma::Element {}
+        .non_interactive()
+        .with_buffer(text_buf)
+        .with_text("Click me",
+            Portal::Text::PressParams { .color = { 1.F, 1.F, 1.F, 1.F }, .render_bounds = { 256, 48 } },
+            box));
+
+// Loaded or render-target image
+auto image_buf = Portal::Forma::create_buffer(
+    window,
+    Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST,
+    std::vector{ std::pair{ std::string("img"), std::shared_ptr<Core::VKImage>{} } });
+
+surface.layer().add(
+    Portal::Forma::Element {}
+        .non_interactive()
+        .with_buffer(image_buf)
+        .with_texture(some_vkimage, box));
+```
+
+To update text after construction, call `set_text` on the `Element` stored
+from `layer().add()`, or retain the element before adding it:
+
+```cpp
+auto el = Portal::Forma::Element {}
+    .non_interactive()
+    .with_buffer(text_buf)
+    .with_text("idle", Portal::Text::PressParams { .render_bounds = { 256, 48 } }, box);
+
+surface.layer().add(el);
+
+// later, from any graphics-thread callback:
+el.set_text("active", Portal::Text::PressParams { .render_bounds = { 256, 48 } });
 ```
 
 ---
@@ -177,8 +225,7 @@ The geometry function receives the current value, a byte buffer to write into,
 and a mutable `Element&`. Writing `elem.bounds_hint` or `elem.contains` inside
 the geometry function updates the spatial description as the shape changes.
 The `Surface`-accepting overload of `create_element` runs one `sync()` on
-construction so bounds and containment are live before the first frame, without
-any manual `set_bounds`/`set_contains` calls.
+construction so bounds and containment are live before the first frame.
 
 `el.state` is the `shared_ptr<MappedState<T>>`. Write a new value from any
 thread via `el.state->write(v)`. The geometry function reruns on the next
@@ -276,7 +323,7 @@ Portal::Forma::bridge().at(el.state)
     .write(compute_buf, "effect.frag.spv", offsetof(PC, cutoff));
 ```
 
-### Draggable fader writing to a node — full example
+### Draggable fader writing to a node : full example
 
 ```cpp
 constexpr Kinesis::AABB2D track { glm::vec2(-0.8F, -0.08F), glm::vec2(0.8F, 0.08F) };
@@ -305,53 +352,6 @@ Portal::Forma::bridge().at(el.state).write(constant);
 
 ---
 
-## TextBuffer as a Forma background
-
-A `TextBuffer` can be used as a texture inside a `FormaBuffer`. Register the
-text buffer separately, then assign its texture to the `FormaBuffer` before
-submitting UVs.
-
-```cpp
-auto text_buf = Portal::Text::press("hello forma",
-    Portal::Text::PressParams {
-        .color        = { 1.F, 1.F, 1.F, 1.F },
-        .render_bounds = { 512, 128 },
-        .budget_h      = 128 });
-
-register_graphics_buffer(text_buf, Buffers::ProcessingToken::GRAPHICS_BACKEND);
-
-constexpr Kinesis::AABB2D region {
-    glm::vec2(-0.4F, -0.15F), glm::vec2(0.4F, 0.15F)
-};
-
-auto bg_buf = Portal::Forma::create_buffer(
-    window,
-    Portal::Graphics::PrimitiveTopology::TRIANGLE_STRIP,
-    "texSampler");
-bg_buf->set_texture(text_buf->get_texture(), "texSampler");
-
-bg_buf->submit(std::array<Kakshya::MeshVertex, 4> { {
-    { .position = { region.min.x, region.min.y, 0.F }, .color = { 1.F, 1.F, 1.F }, .uv = { 0.F, 1.F } },
-    { .position = { region.min.x, region.max.y, 0.F }, .color = { 1.F, 1.F, 1.F }, .uv = { 0.F, 0.F } },
-    { .position = { region.max.x, region.min.y, 0.F }, .color = { 1.F, 1.F, 1.F }, .uv = { 1.F, 1.F } },
-    { .position = { region.max.x, region.max.y, 0.F }, .color = { 1.F, 1.F, 1.F }, .uv = { 1.F, 0.F } },
-} });
-
-const uint32_t bg_id = surface.layer().add(
-    Portal::Forma::Element {}
-        .with_name("background")
-        .non_interactive()
-        .with_buffer(bg_buf))
-    .to_back()
-    .id();
-```
-
-Note the UV Y-flip: Vulkan texture coordinates have `(0,0)` at top-left and
-`(1,1)` at bottom-right, while the quad vertices are in NDC (+Y up). The UVs
-`{ 0,1 }` at bottom-left and `{ 0,0 }` at top-left correct for this.
-
----
-
 ## Quick examples
 
 ### Mouse follower
@@ -368,14 +368,9 @@ surface.ctx().on_move(el.element.id, [state = el.state](uint32_t, glm::vec2 ndc)
 });
 ```
 
-`on_move` fires globally when the cursor moves anywhere on the surface.
-The geometry function receives the new NDC position and re-emits a
-`PointVertex` there. `sync()` is driven automatically by the Bridge.
-
 ### Radial indicator
 
 ```cpp
-// Sweeps from 3π/4 (bottom-left) to π/4 (bottom-right), full rotation
 auto el = Portal::Forma::create_element<float>(
     surface,
     Portal::Forma::Geometry::radial(
@@ -385,10 +380,6 @@ auto el = Portal::Forma::create_element<float>(
     0.5F,
     Portal::Graphics::PrimitiveTopology::LINE_LIST);
 ```
-
-`value` in `[0, 1]` sweeps the indicator line between `angle_start` and
-`angle_end`. The hit region is a circle of the given radius. Drive the
-value from a node via Bridge or write it directly via `el.state->write(v)`.
 
 ### Horizontal fader
 
@@ -401,9 +392,6 @@ auto el = Portal::Forma::create_element<float>(
     0.5F,
     Portal::Graphics::PrimitiveTopology::TRIANGLE_STRIP);
 ```
-
-The handle hit region tracks the handle position automatically via the
-geometry function. Wire drag interaction as shown in the Bridge section above.
 
 ### 2D position picker
 
@@ -427,8 +415,42 @@ surface.ctx().on_move   (el.element.id, [state = el.state, &pressed, area](uint3
 });
 ```
 
-Value is `glm::vec2` in `[0,1]×[0,1]`, mapped to a pixel position inside
-`area`. Route both axes to nodes or push constants via Bridge as needed.
+### Labeled interactive button
+
+```cpp
+constexpr Kinesis::AABB2D box { glm::vec2(-0.3F, -0.1F), glm::vec2(0.3F, 0.1F) };
+constexpr glm::vec3 k_rest  { 0.2F, 0.2F, 0.2F };
+constexpr glm::vec3 k_hover { 0.4F, 0.4F, 0.4F };
+constexpr glm::vec3 k_press { 0.8F, 0.3F, 0.2F };
+
+auto bg_buf = Portal::Forma::create_buffer(window,
+    Kinesis::filled_rect(box, k_rest),
+    Portal::Graphics::PrimitiveTopology::TRIANGLE_STRIP);
+
+const uint32_t bg_id = surface.layer().add(
+    Portal::Forma::Element {}
+        .with_rect(box.min, box.max)
+        .with_buffer(bg_buf)).id();
+
+auto text_buf = Portal::Forma::create_buffer(
+    window,
+    Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST,
+    std::vector{ std::pair{ std::string("text"), std::shared_ptr<Core::VKImage>{} } });
+
+surface.layer().add(
+    Portal::Forma::Element {}
+        .non_interactive()
+        .with_buffer(text_buf)
+        .with_text("Click me",
+            Portal::Text::PressParams { .color = { 1.F, 1.F, 1.F, 1.F }, .render_bounds = { 256, 48 } },
+            box))
+    .relate_to(bg_id);
+
+surface.ctx().on_press  (bg_id, IO::MouseButtons::Left, [bg_buf, box](uint32_t, glm::vec2) { bg_buf->submit(Kinesis::filled_rect(box, k_press)); });
+surface.ctx().on_release(bg_id, IO::MouseButtons::Left, [bg_buf, box](uint32_t, glm::vec2) { bg_buf->submit(Kinesis::filled_rect(box, k_rest)); });
+surface.ctx().on_enter  (bg_id, [bg_buf, box](uint32_t) { bg_buf->submit(Kinesis::filled_rect(box, k_hover)); });
+surface.ctx().on_leave  (bg_id, [bg_buf, box](uint32_t) { bg_buf->submit(Kinesis::filled_rect(box, k_rest)); });
+```
 
 ---
 
