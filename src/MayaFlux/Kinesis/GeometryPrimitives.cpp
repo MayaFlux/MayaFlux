@@ -684,4 +684,65 @@ QuadGeometry generate_quad(glm::vec2 position, glm::vec2 scale, float rotation)
     return out;
 }
 
+std::array<Kakshya::Vertex, 4> filled_rect(Kinesis::AABB2D region, glm::vec3 color)
+{
+    return { {
+        { .position = { region.min.x, region.min.y, 0.F }, .color = color },
+        { .position = { region.min.x, region.max.y, 0.F }, .color = color },
+        { .position = { region.max.x, region.min.y, 0.F }, .color = color },
+        { .position = { region.max.x, region.max.y, 0.F }, .color = color },
+    } };
+}
+
+std::array<Kakshya::TextureQuadVertex, 4> textured_rect(Kinesis::AABB2D region)
+{
+    return { {
+        { .position = { region.min.x, region.min.y, 0.F }, .texcoord = { 0.F, 1.F } },
+        { .position = { region.min.x, region.max.y, 0.F }, .texcoord = { 0.F, 0.F } },
+        { .position = { region.max.x, region.min.y, 0.F }, .texcoord = { 1.F, 1.F } },
+        { .position = { region.max.x, region.max.y, 0.F }, .texcoord = { 1.F, 0.F } },
+    } };
+}
+
+std::vector<Kakshya::Vertex> cuboid_wireframe(
+    const glm::vec3& center, const glm::vec3& half, const glm::vec3& color)
+{
+    const glm::vec3 v[8] = {
+        center + glm::vec3(-half.x, -half.y, -half.z),
+        center + glm::vec3(half.x, -half.y, -half.z),
+        center + glm::vec3(half.x, half.y, -half.z),
+        center + glm::vec3(-half.x, half.y, -half.z),
+        center + glm::vec3(-half.x, -half.y, half.z),
+        center + glm::vec3(half.x, -half.y, half.z),
+        center + glm::vec3(half.x, half.y, half.z),
+        center + glm::vec3(-half.x, half.y, half.z),
+    };
+    return {
+        { .position = v[0], .color = color },
+        { .position = v[1], .color = color },
+        { .position = v[1], .color = color },
+        { .position = v[2], .color = color },
+        { .position = v[2], .color = color },
+        { .position = v[3], .color = color },
+        { .position = v[3], .color = color },
+        { .position = v[0], .color = color },
+        { .position = v[4], .color = color },
+        { .position = v[5], .color = color },
+        { .position = v[5], .color = color },
+        { .position = v[6], .color = color },
+        { .position = v[6], .color = color },
+        { .position = v[7], .color = color },
+        { .position = v[7], .color = color },
+        { .position = v[4], .color = color },
+        { .position = v[0], .color = color },
+        { .position = v[4], .color = color },
+        { .position = v[1], .color = color },
+        { .position = v[5], .color = color },
+        { .position = v[2], .color = color },
+        { .position = v[6], .color = color },
+        { .position = v[3], .color = color },
+        { .position = v[7], .color = color },
+    };
+}
+
 } // namespace MayaFlux::Kinesis
