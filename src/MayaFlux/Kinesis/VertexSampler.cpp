@@ -8,7 +8,7 @@ namespace MayaFlux::Kinesis {
 
 namespace {
 
-    SampleResult sample_random_volume(const SamplerBounds& b, Stochastic::Stochastic& rng)
+    Vertex sample_random_volume(const SamplerBounds& b, Stochastic::Stochastic& rng)
     {
         glm::vec3 pos {
             rng(b.min.x, b.max.x),
@@ -19,7 +19,7 @@ namespace {
         return { .position = pos, .color = (pos - b.min) / ext, .scalar = 0.5F };
     }
 
-    SampleResult sample_random_surface(const SamplerBounds& b, Stochastic::Stochastic& rng)
+    Vertex sample_random_surface(const SamplerBounds& b, Stochastic::Stochastic& rng)
     {
         static constexpr glm::vec3 k_face_colors[6] {
             { 0.8F, 0.3F, 0.3F }, { 1.0F, 0.4F, 0.4F },
@@ -54,7 +54,7 @@ namespace {
         return { .position = pos, .color = k_face_colors[face], .scalar = 1.0F };
     }
 
-    SampleResult sample_grid(const SamplerBounds& b, size_t idx, size_t total)
+    Vertex sample_grid(const SamplerBounds& b, size_t idx, size_t total)
     {
         const size_t gs = static_cast<size_t>(std::cbrt(static_cast<double>(total))) + 1;
         const glm::vec3 spacing = b.extent() / static_cast<float>(gs);
@@ -73,7 +73,7 @@ namespace {
         return { .position = pos, .color = color, .scalar = 0.5F };
     }
 
-    SampleResult sample_sphere_volume(const SamplerBounds& b, Stochastic::Stochastic& rng)
+    Vertex sample_sphere_volume(const SamplerBounds& b, Stochastic::Stochastic& rng)
     {
         const float mr = b.max_radius();
         const float radius = mr * std::cbrt(static_cast<float>(rng(0.0F, 1.0F)));
@@ -90,7 +90,7 @@ namespace {
         };
     }
 
-    SampleResult sample_sphere_surface(const SamplerBounds& b, Stochastic::Stochastic& rng)
+    Vertex sample_sphere_surface(const SamplerBounds& b, Stochastic::Stochastic& rng)
     {
         const float radius = b.max_radius();
         const auto theta = static_cast<float>(rng(0.0F, glm::two_pi<double>()));
@@ -106,7 +106,7 @@ namespace {
         };
     }
 
-    SampleResult sample_uniform_grid(const SamplerBounds& b, size_t idx, size_t total)
+    Vertex sample_uniform_grid(const SamplerBounds& b, size_t idx, size_t total)
     {
         const auto ppa = static_cast<size_t>(std::cbrt(static_cast<double>(total)));
         const glm::vec3 step = b.extent() / static_cast<float>(ppa - 1 > 0 ? ppa - 1 : 1);
@@ -126,7 +126,7 @@ namespace {
         return { .position = pos, .color = color, .scalar = t };
     }
 
-    SampleResult sample_random_sphere(const SamplerBounds& b, Stochastic::Stochastic& rng)
+    Vertex sample_random_sphere(const SamplerBounds& b, Stochastic::Stochastic& rng)
     {
         const auto theta = static_cast<float>(rng(0.0F, glm::two_pi<double>()));
         const float phi = std::acos(static_cast<float>(rng(-1.0F, 1.0F)));
@@ -141,7 +141,7 @@ namespace {
         };
     }
 
-    SampleResult sample_random_cube(const SamplerBounds& b, Stochastic::Stochastic& rng)
+    Vertex sample_random_cube(const SamplerBounds& b, Stochastic::Stochastic& rng)
     {
         const glm::vec3 pos {
             rng(b.min.x, b.max.x),
@@ -151,13 +151,13 @@ namespace {
         return { .position = pos, .color = (pos - b.min) / b.extent(), .scalar = 0.5F };
     }
 
-    std::vector<SampleResult> sample_perlin_field(
+    std::vector<Vertex> sample_perlin_field(
         const SamplerBounds& b,
         size_t count,
         Stochastic::Stochastic& rng)
     {
         auto perlin = Stochastic::perlin(4, 0.5);
-        std::vector<SampleResult> out;
+        std::vector<Vertex> out;
         out.reserve(count);
 
         while (out.size() < count) {
@@ -174,7 +174,7 @@ namespace {
         return out;
     }
 
-    std::vector<SampleResult> sample_brownian_path(
+    std::vector<Vertex> sample_brownian_path(
         const SamplerBounds& b,
         size_t count,
         Stochastic::Stochastic& rng)
@@ -182,7 +182,7 @@ namespace {
         auto alg_backup = rng.get_algorithm();
         rng.set_algorithm(Stochastic::Algorithm::BROWNIAN);
 
-        std::vector<SampleResult> out;
+        std::vector<Vertex> out;
         out.reserve(count);
 
         glm::vec3 pos = b.center();
@@ -198,14 +198,14 @@ namespace {
         return out;
     }
 
-    std::vector<SampleResult> sample_stratified_cube(
+    std::vector<Vertex> sample_stratified_cube(
         const SamplerBounds& b,
         size_t count,
         Stochastic::Stochastic& rng)
     {
         const auto ppa = static_cast<size_t>(std::cbrt(count));
         const glm::vec3 step = b.extent() / static_cast<float>(ppa);
-        std::vector<SampleResult> out;
+        std::vector<Vertex> out;
         out.reserve(ppa * ppa * ppa);
 
         for (size_t x = 0; x < ppa; ++x) {
@@ -221,7 +221,7 @@ namespace {
         return out;
     }
 
-    std::vector<SampleResult> sample_spline_path(
+    std::vector<Vertex> sample_spline_path(
         const SamplerBounds& b,
         size_t count,
         Stochastic::Stochastic& rng)
@@ -236,7 +236,7 @@ namespace {
 
         Eigen::MatrixXd path = generate_interpolated_points(ctrl, static_cast<Eigen::Index>(count), InterpolationMode::CATMULL_ROM);
 
-        std::vector<SampleResult> out;
+        std::vector<Vertex> out;
         out.reserve(path.cols());
         for (Eigen::Index i = 0; i < path.cols(); ++i) {
             const glm::vec3 pos(path(0, i), path(1, i), path(2, i));
@@ -246,12 +246,12 @@ namespace {
         return out;
     }
 
-    std::vector<SampleResult> sample_fibonacci_sphere(const SamplerBounds& b, size_t count)
+    std::vector<Vertex> sample_fibonacci_sphere(const SamplerBounds& b, size_t count)
     {
         const float phi = glm::pi<float>() * (3.0F - std::sqrt(5.0F));
         const float mr = b.max_radius();
         const glm::vec3 ext = b.extent();
-        std::vector<SampleResult> out;
+        std::vector<Vertex> out;
         out.reserve(count);
 
         for (size_t i = 0; i < count; ++i) {
@@ -265,11 +265,11 @@ namespace {
         return out;
     }
 
-    std::vector<SampleResult> sample_fibonacci_spiral(const SamplerBounds& b, size_t count)
+    std::vector<Vertex> sample_fibonacci_spiral(const SamplerBounds& b, size_t count)
     {
         const float golden_angle = glm::pi<float>() * (3.0F - std::sqrt(5.0F));
         const float mr = b.max_radius();
-        std::vector<SampleResult> out;
+        std::vector<Vertex> out;
         out.reserve(count);
 
         for (size_t i = 0; i < count; ++i) {
@@ -284,11 +284,11 @@ namespace {
         return out;
     }
 
-    std::vector<SampleResult> sample_lissajous(const SamplerBounds& b, size_t count)
+    std::vector<Vertex> sample_lissajous(const SamplerBounds& b, size_t count)
     {
         static constexpr float a = 3.0F, bv = 2.0F, c = 5.0F;
         const float mr = b.max_radius();
-        std::vector<SampleResult> out;
+        std::vector<Vertex> out;
         out.reserve(count);
 
         for (size_t i = 0; i < count; ++i) {
@@ -302,12 +302,12 @@ namespace {
         return out;
     }
 
-    std::vector<SampleResult> sample_torus(const SamplerBounds& b, size_t count)
+    std::vector<Vertex> sample_torus(const SamplerBounds& b, size_t count)
     {
         const float mr = b.max_radius();
         const float main_r = mr * 0.7F;
         const float tube_r = mr * 0.3F;
-        std::vector<SampleResult> out;
+        std::vector<Vertex> out;
         out.reserve(count);
 
         for (size_t i = 0; i < count; ++i) {
@@ -325,7 +325,7 @@ namespace {
 
 //-----------------------------------------------------------------------------
 
-std::vector<SampleResult> generate_samples(
+std::vector<Vertex> generate_samples(
     SpatialDistribution dist,
     size_t count,
     const SamplerBounds& bounds,
@@ -354,7 +354,7 @@ std::vector<SampleResult> generate_samples(
         return sample_lissajous(bounds, count);
 
     default: {
-        std::vector<SampleResult> out;
+        std::vector<Vertex> out;
         out.reserve(count);
         for (size_t i = 0; i < count; ++i) {
             out.push_back(generate_sample_at(dist, i, count, bounds, rng));
@@ -364,7 +364,7 @@ std::vector<SampleResult> generate_samples(
     }
 }
 
-SampleResult generate_sample_at(
+Vertex generate_sample_at(
     SpatialDistribution dist,
     size_t index,
     size_t total,
@@ -391,42 +391,6 @@ SampleResult generate_sample_at(
     default:
         return { .position = glm::vec3(0.0F), .color = glm::vec3(0.5F), .scalar = 0.5F };
     }
-}
-
-std::vector<Kakshya::PointVertex> to_point_vertices(
-    std::span<const SampleResult> samples,
-    glm::vec2 size_range)
-{
-    std::vector<Kakshya::PointVertex> out;
-    out.reserve(samples.size());
-    for (const auto& s : samples) {
-        out.push_back(to_point_vertex(s, size_range));
-    }
-    return out;
-}
-
-std::vector<Kakshya::LineVertex> to_line_vertices(
-    std::span<const SampleResult> samples,
-    glm::vec2 thickness_range)
-{
-    std::vector<Kakshya::LineVertex> out;
-    out.reserve(samples.size());
-    for (const auto& s : samples) {
-        out.push_back(to_line_vertex(s, thickness_range));
-    }
-    return out;
-}
-
-std::vector<Kakshya::MeshVertex> to_mesh_vertices(
-    std::span<const SampleResult> samples,
-    glm::vec2 weight_range)
-{
-    std::vector<Kakshya::MeshVertex> out;
-    out.reserve(samples.size());
-    for (const auto& s : samples) {
-        out.push_back(to_mesh_vertex(s, weight_range));
-    }
-    return out;
 }
 
 } // namespace MayaFlux::Kinesis

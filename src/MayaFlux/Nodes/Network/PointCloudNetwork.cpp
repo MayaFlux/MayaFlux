@@ -371,7 +371,7 @@ void PointCloudNetwork::update_mapped_parameters()
 std::vector<LineVertex> PointCloudNetwork::generate_initial_positions()
 {
     auto samples = Kinesis::generate_samples(m_init_mode, m_num_points, m_bounds, m_random_gen);
-    return Kinesis::to_line_vertices(samples, { 1.0F, 2.0F });
+    return Kakshya::to_line_vertices(samples, { 1.0F, 2.0F });
 }
 
 } // namespace MayaFlux::Nodes::Network
