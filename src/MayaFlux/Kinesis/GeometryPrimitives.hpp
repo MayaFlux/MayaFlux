@@ -227,27 +227,27 @@ MAYAFLUX_API std::vector<glm::vec3> compute_convex_hull_2d(
  *
  * If color_positions.empty(), distributes colors uniformly.
  */
-MAYAFLUX_API std::vector<Kakshya::LineVertex> apply_color_gradient(
+[[nodiscard]] MAYAFLUX_API std::vector<Kakshya::Vertex> apply_color_gradient(
     const std::vector<glm::vec3>& positions,
     const std::vector<glm::vec3>& colors,
     const std::vector<float>& color_positions = {},
-    float default_thickness = 1.0F);
+    float scalar = 1.0F);
 
 /**
  * @brief Apply uniform color to position vertices
  */
-MAYAFLUX_API std::vector<Kakshya::LineVertex> apply_uniform_color(
+[[nodiscard]] MAYAFLUX_API std::vector<Kakshya::Vertex> apply_uniform_color(
     const std::vector<glm::vec3>& positions,
     const glm::vec3& color,
-    float default_thickness = 1.0F);
+    float scalar = 1.0F);
 
 /**
  * @brief Convert positions to LineVertex with per-vertex colors
  */
-MAYAFLUX_API std::vector<Kakshya::LineVertex> apply_vertex_colors(
+[[nodiscard]] MAYAFLUX_API std::vector<Kakshya::Vertex> apply_vertex_colors(
     const std::vector<glm::vec3>& positions,
     const std::vector<glm::vec3>& colors,
-    float default_thickness = 1.0F);
+    float scalar = 1.0F);
 
 /**
  * @struct QuadGeometry
