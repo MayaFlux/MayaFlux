@@ -3,7 +3,6 @@
 #include "Buffer.hpp"
 
 #include "MayaFlux/Buffers/BufferProcessor.hpp"
-#include "MayaFlux/Core/ProcessingTokens.hpp"
 
 #include "MayaFlux/Portal/Graphics/ShaderUtils.hpp"
 

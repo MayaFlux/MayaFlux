@@ -2,7 +2,6 @@
 
 #include "MayaFlux/Portal/Forma/Link.hpp"
 #include "MayaFlux/Portal/Forma/Primitives/Collapsible.hpp"
-#include "MayaFlux/Portal/Forma/Primitives/LayoutCursor.hpp"
 
 namespace MayaFlux::Core {
 class Window;

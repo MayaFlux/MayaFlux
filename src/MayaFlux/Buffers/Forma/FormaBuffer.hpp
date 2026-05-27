@@ -1,7 +1,6 @@
 #pragma once
 
 #include "MayaFlux/Buffers/VKBuffer.hpp"
-#include "MayaFlux/Portal/Graphics/GraphicsUtils.hpp"
 
 namespace MayaFlux::Core {
 class Window;

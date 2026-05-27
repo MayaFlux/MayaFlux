@@ -1,6 +1,5 @@
 #pragma once
 
-#include "MayaFlux/Buffers/Forma/FormaBuffer.hpp"
 #include "MayaFlux/Portal/Forma/Element.hpp"
 
 namespace MayaFlux::Buffers {
