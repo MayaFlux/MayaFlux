@@ -1,6 +1,5 @@
 #include "QueryUtils.hpp"
 
-#include "MayaFlux/Buffers/Forma/FormaBuffer.hpp"
 #include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
 
 #include "MayaFlux/Kakshya/NDData/VertexLayout.hpp"
@@ -115,6 +114,7 @@ ValueRow make_value_row(
             params]() mutable {
             if (!buf || !reader)
                 return;
+
             Portal::Text::repress(text_image,
                 label + ": " + reader(),
                 params, staging);

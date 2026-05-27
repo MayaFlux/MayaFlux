@@ -39,6 +39,16 @@ void FormaBuffer::setup_processors(ProcessingToken token)
     auto chain = std::make_shared<Buffers::BufferProcessingChain>();
     chain->set_preferred_token(token);
     set_processing_chain(chain);
+
+    if (!m_pending_geometry.empty()) {
+        m_processor->set_bytes(std::move(m_pending_geometry));
+        m_pending_geometry.clear();
+    }
+
+    for (auto& [img, binding] : m_pending_textures)
+        m_processor->set_texture(std::move(img), std::move(binding));
+
+    m_pending_textures.clear();
 }
 
 void FormaBuffer::setup_rendering(const RenderConfig& config)
@@ -139,7 +149,10 @@ void FormaBuffer::setup_rendering(const RenderConfig& config)
         for (const auto& [name, img] : config.additional_textures) {
             if (single_tex && name == config.default_texture_binding)
                 continue;
-            m_render_processor->bind_texture(slot, img);
+
+            if (img)
+                m_render_processor->bind_texture(slot, img);
+
             ++slot;
         }
     }
@@ -151,8 +164,9 @@ void FormaBuffer::setup_rendering(const RenderConfig& config)
 void FormaBuffer::submit(const std::vector<uint8_t>& bytes)
 {
     if (!m_processor) {
-        MF_RT_WARN(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-            "FormaBuffer::submit called before setup_processors");
+        m_pending_geometry = bytes;
+        MF_RT_TRACE(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "FormaBuffer::submit called before setup_processors, storing {} bytes for later submission", bytes.size());
         return;
     }
     m_processor->set_bytes(bytes);
@@ -161,8 +175,9 @@ void FormaBuffer::submit(const std::vector<uint8_t>& bytes)
 void FormaBuffer::set_texture(std::shared_ptr<Core::VKImage> image, std::string binding)
 {
     if (!m_processor) {
-        MF_RT_WARN(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-            "FormaBuffer::set_texture called before setup_processors");
+        m_pending_textures.emplace_back(std::move(image), std::move(binding));
+        MF_RT_TRACE(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "FormaBuffer::set_texture called before setup_processors, storing texture for later submission");
         return;
     }
     m_processor->set_texture(std::move(image), std::move(binding));

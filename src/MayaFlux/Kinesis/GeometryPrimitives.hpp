@@ -2,6 +2,8 @@
 
 #include "MayaFlux/Kakshya/NDData/VertexFormats.hpp"
 
+#include "MayaFlux/Kinesis/Spatial/Bounds.hpp"
+
 namespace MayaFlux::Kinesis {
 
 /**
@@ -227,27 +229,27 @@ MAYAFLUX_API std::vector<glm::vec3> compute_convex_hull_2d(
  *
  * If color_positions.empty(), distributes colors uniformly.
  */
-MAYAFLUX_API std::vector<Kakshya::LineVertex> apply_color_gradient(
+[[nodiscard]] MAYAFLUX_API std::vector<Kakshya::Vertex> apply_color_gradient(
     const std::vector<glm::vec3>& positions,
     const std::vector<glm::vec3>& colors,
     const std::vector<float>& color_positions = {},
-    float default_thickness = 1.0F);
+    float scalar = 1.0F);
 
 /**
  * @brief Apply uniform color to position vertices
  */
-MAYAFLUX_API std::vector<Kakshya::LineVertex> apply_uniform_color(
+[[nodiscard]] MAYAFLUX_API std::vector<Kakshya::Vertex> apply_uniform_color(
     const std::vector<glm::vec3>& positions,
     const glm::vec3& color,
-    float default_thickness = 1.0F);
+    float scalar = 1.0F);
 
 /**
  * @brief Convert positions to LineVertex with per-vertex colors
  */
-MAYAFLUX_API std::vector<Kakshya::LineVertex> apply_vertex_colors(
+[[nodiscard]] MAYAFLUX_API std::vector<Kakshya::Vertex> apply_vertex_colors(
     const std::vector<glm::vec3>& positions,
     const std::vector<glm::vec3>& colors,
-    float default_thickness = 1.0F);
+    float scalar = 1.0F);
 
 /**
  * @struct QuadGeometry
@@ -275,5 +277,44 @@ struct QuadGeometry {
     glm::vec2 position = glm::vec2(0.0F),
     glm::vec2 scale = glm::vec2(1.0F),
     float rotation = 0.0F);
+
+// ------------------------------------------------------------
+// 2D filled / textured quads
+// ------------------------------------------------------------
+
+/**
+ * @brief Generate a filled TRIANGLE_STRIP quad from an AABB2D.
+ * @param region NDC axis-aligned bounds.
+ * @param color  Uniform fill color.
+ */
+[[nodiscard]] MAYAFLUX_API std::array<Kakshya::Vertex, 4> filled_rect(
+    Kinesis::AABB2D region,
+    glm::vec3 color = glm::vec3(1.F));
+
+/**
+ * @brief Generate a UV-mapped TRIANGLE_STRIP quad from an AABB2D.
+ *
+ * UV origin is bottom-left (0,1) matching Vulkan image layout.
+ * Replaces handwritten textured quad construction in Forma callers.
+ *
+ * @param region NDC axis-aligned bounds.
+ */
+[[nodiscard]] MAYAFLUX_API std::array<Kakshya::TextureQuadVertex, 4> textured_rect(
+    Kinesis::AABB2D region);
+
+// ------------------------------------------------------------
+// 3D wireframe shapes
+// ------------------------------------------------------------
+
+/**
+ * @brief Generate a cuboid wireframe as LINE_LIST pairs.
+ * @param center Centre of the cuboid.
+ * @param half   Half-extents along each axis.
+ * @param color  Uniform edge color.
+ */
+[[nodiscard]] MAYAFLUX_API std::vector<Kakshya::Vertex> cuboid_wireframe(
+    const glm::vec3& center,
+    const glm::vec3& half,
+    const glm::vec3& color = glm::vec3(1.F));
 
 } // namespace MayaFlux::Kinesis

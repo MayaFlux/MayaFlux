@@ -2,8 +2,7 @@
 
 #include "Mapped.hpp"
 
-#include "MayaFlux/Kakshya/NDData/VertexFormats.hpp"
-#include "MayaFlux/Kinesis/Spatial/Bounds.hpp"
+#include "MayaFlux/Kinesis/GeometryPrimitives.hpp"
 
 namespace MayaFlux::Portal::Forma::Geometry {
 
@@ -91,26 +90,16 @@ void write_verts(std::vector<uint8_t>& out, const V& v)
         float yt = bounds.min.y + bounds.height() * 0.35F;
         float yb = bounds.min.y + bounds.height() * 0.65F;
 
-        using V = Kakshya::LineVertex;
-        std::vector<V> verts;
-        verts.reserve(8);
+        Kinesis::AABB2D track { .min = glm::vec2(bounds.min.x, yt), .max = glm::vec2(bounds.max.x, yb) };
+        Kinesis::AABB2D handle { .min = glm::vec2(x, bounds.min.y), .max = glm::vec2(x + handle_w, bounds.max.y) };
 
-        verts.push_back({ .position = { bounds.min.x, yt, 0 }, .color = track_color });
-        verts.push_back({ .position = { bounds.min.x, yb, 0 }, .color = track_color });
-        verts.push_back({ .position = { bounds.max.x, yt, 0 }, .color = track_color });
-        verts.push_back({ .position = { bounds.max.x, yb, 0 }, .color = track_color });
-
-        verts.push_back({ .position = { x, bounds.min.y, 0 }, .color = handle_color });
-        verts.push_back({ .position = { x, bounds.max.y, 0 }, .color = handle_color });
-        verts.push_back({ .position = { x + handle_w, bounds.min.y, 0 }, .color = handle_color });
-        verts.push_back({ .position = { x + handle_w, bounds.max.y, 0 }, .color = handle_color });
+        auto verts = Kakshya::to_mesh_vertices(Kinesis::filled_rect(track, track_color));
+        auto herts = Kakshya::to_mesh_vertices(Kinesis::filled_rect(handle, handle_color));
+        verts.insert(verts.end(), herts.begin(), herts.end());
 
         write_verts(out, verts);
 
-        el.bounds_hint = Kinesis::AABB2D {
-            .min = glm::vec2(x, bounds.min.y),
-            .max = glm::vec2(x + handle_w, bounds.max.y)
-        };
+        el.bounds_hint = handle;
         el.contains = {};
     };
 }

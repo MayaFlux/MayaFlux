@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Mapped.hpp"
-#include "MayaFlux/Kinesis/Spatial/Bounds.hpp"
 
 namespace MayaFlux::Portal::Forma {
 

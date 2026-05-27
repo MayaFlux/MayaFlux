@@ -291,12 +291,12 @@ void ParticleNetwork::ensure_initialized()
 std::vector<PointVertex> ParticleNetwork::generate_initial_vertices()
 {
     auto samples = Kinesis::generate_samples(m_init_mode, m_num_points, m_bounds, m_random_gen);
-    return Kinesis::to_point_vertices(samples, { 8.0F, 12.0F });
+    return Kakshya::to_point_vertices(samples, { 8.0F, 12.0F });
 }
 
 PointVertex ParticleNetwork::generate_single_vertex(Kinesis::SpatialDistribution mode, size_t index, size_t total)
 {
-    return Kinesis::to_point_vertex(
+    return Kakshya::to_point_vertex(
         Kinesis::generate_sample_at(mode, index, total, m_bounds, m_random_gen),
         { 8.0F, 12.0F });
 }

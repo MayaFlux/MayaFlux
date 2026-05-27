@@ -497,7 +497,7 @@ std::vector<glm::vec3> compute_convex_hull_2d(
         glm::vec3 offset = vertices[i];
         float x = glm::dot(offset, u);
         float y = glm::dot(offset, v);
-        points.push_back({ glm::vec2(x, y), i });
+        points.push_back({ .pos = glm::vec2(x, y), .index = i });
     }
 
     auto pivot_it = std::ranges::min_element(points,
@@ -565,24 +565,24 @@ std::vector<glm::vec3> compute_convex_hull_2d(
 // Color Utilities
 //==============================================================================
 
-std::vector<Kakshya::LineVertex> apply_color_gradient(
+std::vector<Kakshya::Vertex> apply_color_gradient(
     const std::vector<glm::vec3>& positions,
     const std::vector<glm::vec3>& colors,
     const std::vector<float>& color_positions,
-    float default_thickness)
+    float scalar)
 {
     if (positions.empty() || colors.empty()) {
         return {};
     }
 
-    std::vector<Kakshya::LineVertex> vertices;
+    std::vector<Kakshya::Vertex> vertices;
     vertices.reserve(positions.size());
 
     if (colors.size() == 1) {
         for (const auto& pos : positions) {
             vertices.push_back({ .position = pos,
                 .color = colors[0],
-                .thickness = default_thickness });
+                .scalar = scalar });
         }
         return vertices;
     }
@@ -618,45 +618,45 @@ std::vector<Kakshya::LineVertex> apply_color_gradient(
 
         vertices.push_back({ .position = positions[i],
             .color = color,
-            .thickness = default_thickness });
+            .scalar = scalar });
     }
 
     return vertices;
 }
 
-std::vector<Kakshya::LineVertex> apply_uniform_color(
+std::vector<Kakshya::Vertex> apply_uniform_color(
     const std::vector<glm::vec3>& positions,
     const glm::vec3& color,
-    float default_thickness)
+    float scalar)
 {
-    std::vector<Kakshya::LineVertex> vertices;
+    std::vector<Kakshya::Vertex> vertices;
     vertices.reserve(positions.size());
 
     for (const auto& pos : positions) {
         vertices.push_back({ .position = pos,
             .color = color,
-            .thickness = default_thickness });
+            .scalar = scalar });
     }
 
     return vertices;
 }
 
-std::vector<Kakshya::LineVertex> apply_vertex_colors(
+std::vector<Kakshya::Vertex> apply_vertex_colors(
     const std::vector<glm::vec3>& positions,
     const std::vector<glm::vec3>& colors,
-    float default_thickness)
+    float scalar)
 {
     if (positions.size() != colors.size()) {
         return {};
     }
 
-    std::vector<Kakshya::LineVertex> vertices;
+    std::vector<Kakshya::Vertex> vertices;
     vertices.reserve(positions.size());
 
     for (size_t i = 0; i < positions.size(); ++i) {
         vertices.push_back({ .position = positions[i],
             .color = colors[i],
-            .thickness = default_thickness });
+            .scalar = scalar });
     }
 
     return vertices;
@@ -682,6 +682,67 @@ QuadGeometry generate_quad(glm::vec2 position, glm::vec2 scale, float rotation)
     }
 
     return out;
+}
+
+std::array<Kakshya::Vertex, 4> filled_rect(Kinesis::AABB2D region, glm::vec3 color)
+{
+    return { {
+        { .position = { region.min.x, region.min.y, 0.F }, .color = color },
+        { .position = { region.min.x, region.max.y, 0.F }, .color = color },
+        { .position = { region.max.x, region.min.y, 0.F }, .color = color },
+        { .position = { region.max.x, region.max.y, 0.F }, .color = color },
+    } };
+}
+
+std::array<Kakshya::TextureQuadVertex, 4> textured_rect(Kinesis::AABB2D region)
+{
+    return { {
+        { .position = { region.min.x, region.min.y, 0.F }, .texcoord = { 0.F, 1.F } },
+        { .position = { region.min.x, region.max.y, 0.F }, .texcoord = { 0.F, 0.F } },
+        { .position = { region.max.x, region.min.y, 0.F }, .texcoord = { 1.F, 1.F } },
+        { .position = { region.max.x, region.max.y, 0.F }, .texcoord = { 1.F, 0.F } },
+    } };
+}
+
+std::vector<Kakshya::Vertex> cuboid_wireframe(
+    const glm::vec3& center, const glm::vec3& half, const glm::vec3& color)
+{
+    const glm::vec3 v[8] = {
+        center + glm::vec3(-half.x, -half.y, -half.z),
+        center + glm::vec3(half.x, -half.y, -half.z),
+        center + glm::vec3(half.x, half.y, -half.z),
+        center + glm::vec3(-half.x, half.y, -half.z),
+        center + glm::vec3(-half.x, -half.y, half.z),
+        center + glm::vec3(half.x, -half.y, half.z),
+        center + glm::vec3(half.x, half.y, half.z),
+        center + glm::vec3(-half.x, half.y, half.z),
+    };
+    return {
+        { .position = v[0], .color = color },
+        { .position = v[1], .color = color },
+        { .position = v[1], .color = color },
+        { .position = v[2], .color = color },
+        { .position = v[2], .color = color },
+        { .position = v[3], .color = color },
+        { .position = v[3], .color = color },
+        { .position = v[0], .color = color },
+        { .position = v[4], .color = color },
+        { .position = v[5], .color = color },
+        { .position = v[5], .color = color },
+        { .position = v[6], .color = color },
+        { .position = v[6], .color = color },
+        { .position = v[7], .color = color },
+        { .position = v[7], .color = color },
+        { .position = v[4], .color = color },
+        { .position = v[0], .color = color },
+        { .position = v[4], .color = color },
+        { .position = v[1], .color = color },
+        { .position = v[5], .color = color },
+        { .position = v[2], .color = color },
+        { .position = v[6], .color = color },
+        { .position = v[3], .color = color },
+        { .position = v[7], .color = color },
+    };
 }
 
 } // namespace MayaFlux::Kinesis
