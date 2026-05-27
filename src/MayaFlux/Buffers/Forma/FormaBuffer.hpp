@@ -162,6 +162,12 @@ private:
     Portal::Graphics::PrimitiveTopology m_topology;
     std::shared_ptr<Buffers::RenderProcessor> m_render_processor;
     std::shared_ptr<Buffers::FormaProcessor> m_processor;
+
+    /// @brief Geometry bytes from submit() before setup_processors(). Drained in setup_processors().
+    std::vector<uint8_t> m_pending_geometry;
+
+    /// @brief Textures from set_texture() before setup_processors(). Drained in setup_processors().
+    std::vector<std::pair<std::shared_ptr<Core::VKImage>, std::string>> m_pending_textures;
 };
 
 } // namespace MayaFlux::Buffers
