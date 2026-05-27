@@ -3,6 +3,16 @@
 #include "MayaFlux/Buffers/Forma/FormaBuffer.hpp"
 #include "MayaFlux/Kinesis/Spatial/Bounds.hpp"
 
+namespace MayaFlux::Core {
+class VKImage;
+}
+namespace MayaFlux::Buffers {
+class TextureBuffer;
+}
+namespace MayaFlux::Portal::Text {
+struct PressParams;
+}
+
 namespace MayaFlux::Portal::Forma {
 
 /**
@@ -60,6 +70,9 @@ struct Element {
     /// @brief Buffer whose rendered output occupies this region.
     ///        nullptr for non-rendering elements (pure hit-test regions).
     std::shared_ptr<Buffers::FormaBuffer> buffer;
+
+    /// @brief Optional GPU texture to bind to the attached buffer. Used for
+    std::shared_ptr<Core::VKImage> texture;
 
     /// @brief When false, hit testing skips this element.
     bool interactive { true };
@@ -169,6 +182,64 @@ struct Element {
         buffer = std::move(buf);
         return *this;
     }
+
+    // =========================================================================
+    // Buffer
+    // =========================================================================
+
+    /**
+     * @brief Submit a UV quad covering @p region and bind @p image as
+     *        "texSampler" on the attached FormaBuffer.
+     *
+     * @p buffer must already be set and created with an additional_textures slot at index 0.
+     * Any source is valid: a loaded PNG, a render target, a TextureBuffer
+     * or TextBuffer via get_texture().
+     *
+     * @param image  GPU-resident VKImage in shader-read layout.
+     * @param region NDC quad extent. Defaults to fullscreen.
+     */
+    Element& with_texture(
+        const std::shared_ptr<Core::VKImage>& image,
+        Kinesis::AABB2D region = { .min = glm::vec2(-1.F), .max = glm::vec2(1.F) });
+
+    /**
+     * @brief Convenience overload extracting the GPU texture from a
+     *        TextureBuffer (or TextBuffer, which inherits it).
+     *
+     * Equivalent to with_texture(buf->get_texture(), region).
+     */
+    Element& with_texture(
+        const std::shared_ptr<Buffers::TextureBuffer>& buf,
+        Kinesis::AABB2D region = { .min = glm::vec2(-1.F), .max = glm::vec2(1.F) });
+
+    /**
+     * @brief Press @p text into a new GPU texture and bind it to the
+     *        attached FormaBuffer. The VKImage is retained internally
+     *        for subsequent set_text() calls.
+     *
+     * @p buffer must already be set and created with an additional_textures slot at index 0.
+     *
+     * @param text   UTF-8 string to composite.
+     * @param params PressParams (color, render_bounds, atlas, budget_h). Defaults apply when omitted.
+     * @param region NDC quad extent. Defaults to fullscreen.
+     */
+    Element& with_text(
+        std::string_view text,
+        std::optional<Portal::Text::PressParams> params,
+        Kinesis::AABB2D region = { .min = glm::vec2(-1.F), .max = glm::vec2(1.F) });
+
+    /**
+     * @brief Re-composite @p text into the retained GPU texture.
+     *
+     * No-op when texture is null (element was not constructed via with_text()).
+     * Calls Portal::Text::repress(VKImage&, ...) which updates the image
+     * in-place.
+     * Rebinds the texture after repress in case repress reallocated the VKImage.
+     *
+     * @param text   New UTF-8 string.
+     * @param params PressParams. Defaults apply when omitted.
+     */
+    void set_text(std::string_view text, std::optional<Portal::Text::PressParams> params);
 
     // =========================================================================
     // Flags
