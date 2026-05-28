@@ -6,24 +6,47 @@ namespace MayaFlux::Kakshya {
 
 /**
  * @struct Vertex
- * @brief Type-neutral vertex carrying position, color, orientation, and a scalar.
+ * @brief Type-neutral vertex carrying the universal 60-byte attribute layout.
  *
  * The common substrate for geometry construction and spatial sampling before
- * a concrete vertex type is chosen. All fields are independent of topology
- * and primitive type. Callers project into PointVertex, LineVertex, or
- * MeshVertex via to_point_vertex(), to_line_vertex(), to_mesh_vertex().
+ * a concrete vertex type is chosen. Shares the exact byte layout of
+ * PointVertex, LineVertex, and MeshVertex so a Vertex byte buffer is a drop-in
+ * for any of them: position, color, scalar, uv, normal, tangent at identical
+ * offsets. Callers project into the concrete type via to_point_vertex(),
+ * to_line_vertex(), to_mesh_vertex() when the field semantics (size vs
+ * thickness vs weight) matter, but the raw bytes are already pipeline-ready.
  *
- * normal and tangent default to the canonical Z-up / X-right frame.
- * Generation functions with a meaningful surface orientation (sphere surface,
- * torus, extruded path) should override them.
+ * scalar maps to size (PointVertex), thickness (LineVertex), or weight
+ * (MeshVertex) at offset 24. uv defaults to zero and is overridden by UV
+ * generation (UVFieldProcessor, FieldOperator UV fields). normal and tangent
+ * default to the canonical Z-up / X-right frame.
+ *
+ * Layout (60 bytes):
+ *   offset  0  position  vec3   (12)
+ *   offset 12  color     vec3   (12)
+ *   offset 24  scalar    float   (4)
+ *   offset 28  uv        vec2    (8)
+ *   offset 36  normal    vec3   (12)
+ *   offset 48  tangent   vec3   (12)
  */
 struct Vertex {
     glm::vec3 position;
     glm::vec3 color { 1.0F };
-    float scalar { 1.0F }; ///< Normalised scalar; maps to size (PointVertex) or thickness (LineVertex)
+    float scalar { 1.0F }; ///< Normalised scalar; maps to size / thickness / weight at offset 24
+    glm::vec2 uv { 0.0F }; ///< Texture coordinates; zero unless set by UV generation
     glm::vec3 normal { 0.0F, 0.0F, 1.0F };
     glm::vec3 tangent { 1.0F, 0.0F, 0.0F };
 };
+
+static_assert(sizeof(Vertex) == 60,
+    "Vertex layout changed — must match VertexLayout::for_raw() stride and the other 60-byte vertex types");
+
+static_assert(offsetof(Vertex, position) == 0, "position must be at offset 0");
+static_assert(offsetof(Vertex, color) == 12, "color must be at offset 12");
+static_assert(offsetof(Vertex, scalar) == 24, "scalar must be at offset 24");
+static_assert(offsetof(Vertex, uv) == 28, "uv must be at offset 28");
+static_assert(offsetof(Vertex, normal) == 36, "normal must be at offset 36");
+static_assert(offsetof(Vertex, tangent) == 48, "tangent must be at offset 48");
 
 /**
  * @struct PointVertex
