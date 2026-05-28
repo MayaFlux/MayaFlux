@@ -126,6 +126,74 @@ struct BoundingSphere {
 };
 
 // =============================================================================
+// AABB3D
+// =============================================================================
+
+/**
+ * @struct AABB3D
+ * @brief Axis-aligned bounding box in 3D world space.
+ *
+ * Counterpart to AABB2D for three-dimensional geometry. Used by
+ * Kinesis::aabb() to describe the extent of any PositionCarrying span,
+ * and as a fast-reject pre-filter in 3D spatial predicates.
+ *
+ * No coordinate convention is enforced; the box is whatever the caller's
+ * position data implies (world space, object space, NDC-extended, etc.).
+ */
+struct AABB3D {
+    glm::vec3 min;
+    glm::vec3 max;
+
+    [[nodiscard]] bool contains(const glm::vec3& p) const noexcept
+    {
+        return p.x >= min.x && p.x <= max.x
+            && p.y >= min.y && p.y <= max.y
+            && p.z >= min.z && p.z <= max.z;
+    }
+
+    [[nodiscard]] bool overlaps(const AABB3D& other) const noexcept
+    {
+        return min.x <= other.max.x && max.x >= other.min.x
+            && min.y <= other.max.y && max.y >= other.min.y
+            && min.z <= other.max.z && max.z >= other.min.z;
+    }
+
+    [[nodiscard]] glm::vec3 center() const noexcept { return (min + max) * 0.5F; }
+    [[nodiscard]] glm::vec3 extent() const noexcept { return max - min; }
+    [[nodiscard]] glm::vec3 half_extent() const noexcept { return (max - min) * 0.5F; }
+
+    [[nodiscard]] AABB3D translated(const glm::vec3& offset) const noexcept
+    {
+        return { .min = min + offset, .max = max + offset };
+    }
+
+    [[nodiscard]] AABB3D expanded(float margin) const noexcept
+    {
+        return { .min = min - glm::vec3(margin), .max = max + glm::vec3(margin) };
+    }
+
+    /**
+     * @brief Construct from a center point and half-extents.
+     * @param c    Box centre.
+     * @param half Half-size along each axis.
+     */
+    [[nodiscard]] static AABB3D from_center(const glm::vec3& c, const glm::vec3& half) noexcept
+    {
+        return { .min = c - half, .max = c + half };
+    }
+
+    /**
+     * @brief Construct the tightest AABB enclosing a BoundingSphere.
+     * @param s Source sphere.
+     */
+    [[nodiscard]] static AABB3D from_sphere(const BoundingSphere& s) noexcept
+    {
+        return { .min = s.center - glm::vec3(s.radius),
+            .max = s.center + glm::vec3(s.radius) };
+    }
+};
+
+// =============================================================================
 // Containment callables
 // All functions return std::function<bool(glm::vec2)> suitable for
 // direct assignment to Portal::Forma::Element::contains.
