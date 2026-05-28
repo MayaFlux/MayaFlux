@@ -730,7 +730,9 @@ CommandBufferID ShaderFoundry::begin_commands(CommandBufferType type)
     return id;
 }
 
-CommandBufferID ShaderFoundry::begin_secondary_commands(vk::Format color_format)
+CommandBufferID ShaderFoundry::begin_secondary_commands(
+    vk::Format color_format,
+    vk::Format depth_format)
 {
     auto& cmd_manager = m_backend->get_command_manager();
 
@@ -741,6 +743,7 @@ CommandBufferID ShaderFoundry::begin_secondary_commands(vk::Format color_format)
     vk::CommandBufferInheritanceRenderingInfo inheritance_rendering;
     inheritance_rendering.colorAttachmentCount = 1;
     inheritance_rendering.pColorAttachmentFormats = &color_format;
+    inheritance_rendering.depthAttachmentFormat = depth_format;
     inheritance_rendering.rasterizationSamples = vk::SampleCountFlagBits::e1;
 
     vk::CommandBufferInheritanceInfo inheritance_info;
@@ -757,9 +760,6 @@ CommandBufferID ShaderFoundry::begin_secondary_commands(vk::Format color_format)
     state.type = CommandBufferType::GRAPHICS;
     state.level = CommandBufferLevel::SECONDARY;
     state.is_active = true;
-
-    MF_RT_TRACE(Journal::Component::Portal, Journal::Context::Rendering,
-        "Began secondary command buffer (ID: {}) for dynamic rendering", id);
 
     return id;
 }

@@ -120,8 +120,26 @@ public:
         m_needs_pipeline_rebuild = true;
     }
 
-    /** @brief Enable standard alpha blending (src_alpha, one_minus_src_alpha) */
+    /** @brief Enable standard alpha blending (src_alpha, one_minus_src_alpha). Does not touch depth state. */
     void enable_alpha_blending();
+
+    /** @brief Disable blending on the color attachment, restoring opaque writes. Does not touch depth state. */
+    void disable_alpha_blending();
+
+    /**
+     * @brief Toggle standard alpha blending.
+     * @param enabled true enables src_alpha/one_minus_src_alpha blending, false restores opaque.
+     *
+     * Blending and depth are independent. Toggling blend never changes depth
+     * test or depth write; use enable_depth_test / disable_depth_test for that.
+     */
+    void set_alpha_blending(bool enabled);
+
+    /** @brief Query whether the color attachment currently has blending enabled. */
+    [[nodiscard]] bool is_alpha_blending_enabled() const
+    {
+        return m_blend_attachment.has_value() && m_blend_attachment->blend_enable;
+    }
 
     /**
      * @brief Enable depth testing for this processor's pipeline
@@ -131,6 +149,14 @@ public:
      * Pipeline will be created with D32_SFLOAT depth format.
      */
     void enable_depth_test(Portal::Graphics::CompareOp compare_op = Portal::Graphics::CompareOp::LESS);
+
+    /**
+     * @brief Disable depth testing and depth writes for this processor's pipeline.
+     *
+     * Leaves the buffer's depth attachment requirement intact so the pass still
+     * has a depth buffer available; only the per-pipeline test and write are off.
+     */
+    void disable_depth_test();
 
     /**
      * @brief Set static view transform (evaluated once)

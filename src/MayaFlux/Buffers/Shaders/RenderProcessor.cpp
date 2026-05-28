@@ -77,9 +77,27 @@ void RenderProcessor::set_target_window(const std::shared_ptr<Core::Window>& win
 
 void RenderProcessor::enable_alpha_blending()
 {
-    Portal::Graphics::BlendAttachmentConfig blend = Portal::Graphics::BlendAttachmentConfig::alpha_blend();
-    set_blend_attachment(blend);
+    set_blend_attachment(Portal::Graphics::BlendAttachmentConfig::alpha_blend());
+}
 
+void RenderProcessor::disable_alpha_blending()
+{
+    Portal::Graphics::BlendAttachmentConfig opaque;
+    opaque.blend_enable = false;
+    set_blend_attachment(opaque);
+}
+
+void RenderProcessor::set_alpha_blending(bool enabled)
+{
+    if (enabled) {
+        enable_alpha_blending();
+    } else {
+        disable_alpha_blending();
+    }
+}
+
+void RenderProcessor::disable_depth_test()
+{
     m_depth_stencil.depth_test_enable = false;
     m_depth_stencil.depth_write_enable = false;
     m_needs_pipeline_rebuild = true;
@@ -488,7 +506,11 @@ void RenderProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
     vk::Format color_format = static_cast<vk::Format>(
         m_display_service->get_swapchain_format(m_target_window));
 
-    auto cmd_id = foundry.begin_secondary_commands(color_format);
+    vk::Format depth_format = m_depth_enabled
+        ? vk::Format::eD32Sfloat
+        : vk::Format::eUndefined;
+
+    auto cmd_id = foundry.begin_secondary_commands(color_format, depth_format);
     auto cmd = foundry.get_command_buffer(cmd_id);
 
     uint32_t width = 0, height = 0;

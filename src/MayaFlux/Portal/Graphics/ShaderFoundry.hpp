@@ -399,7 +399,9 @@ public:
      * With dynamic rendering, secondary buffers don't need render pass objects.
      * They only need to know the attachment formats they'll render to.
      */
-    CommandBufferID begin_secondary_commands(vk::Format color_format);
+    CommandBufferID begin_secondary_commands(
+        vk::Format color_format,
+        vk::Format depth_format = vk::Format::eUndefined);
 
     /**
      * @brief Get Vulkan command buffer handle from CommandBufferID

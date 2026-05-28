@@ -170,6 +170,10 @@ void add_render_sink(
     renderer->set_primitive_topology(config.topology);
     renderer->set_polygon_mode(config.polygon_mode);
     renderer->set_cull_mode(config.cull_mode);
+
+    renderer->enable_depth_test();
+    buf->set_needs_depth_attachment(true);
+
     renderer->set_target_window(config.target_window, buf);
     buf->get_processing_chain()->add_final_processor(renderer, buf);
 
