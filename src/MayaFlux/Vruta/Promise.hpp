@@ -359,6 +359,9 @@ struct cross_promise : public routine_promise<CrossRoutine> {
 
     uint64_t sample_delay_amount { 0 };
     uint64_t frame_delay_amount { 0 };
+
+    std::atomic<bool> sample_satisfied { false };
+    std::atomic<bool> frame_satisfied { false };
 };
 
 /**

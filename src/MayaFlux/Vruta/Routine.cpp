@@ -407,14 +407,23 @@ CrossRoutine::CrossRoutine(std::coroutine_handle<promise_type> h)
 CrossRoutine::CrossRoutine(const CrossRoutine& other)
     : m_handle(other.m_handle)
 {
+    if (other.m_handle) {
+        m_handle = other.m_handle;
+    }
 }
 
 CrossRoutine& CrossRoutine::operator=(const CrossRoutine& other)
 {
     if (this != &other) {
-        if (m_handle)
+        if (m_handle) {
             m_handle.destroy();
-        m_handle = other.m_handle;
+        }
+
+        if (other.m_handle) {
+            m_handle = other.m_handle;
+        } else {
+            m_handle = nullptr;
+        }
     }
     return *this;
 }
@@ -461,6 +470,7 @@ bool CrossRoutine::initialize_state(uint64_t current_context)
     if (!m_handle || !m_handle.address() || m_handle.done()) {
         return false;
     }
+
     m_handle.promise().next_sample.store(current_context, std::memory_order_release);
     m_handle.promise().next_frame.store(current_context, std::memory_order_release);
     m_handle.resume();
@@ -469,6 +479,11 @@ bool CrossRoutine::initialize_state(uint64_t current_context)
 
 uint64_t CrossRoutine::next_execution() const
 {
+    MF_PRINT("CrossRoutine next_execution called. is_active: {}, next_sample: {}, next_frame: {}",
+        is_active(),
+        is_active() ? m_handle.promise().next_sample.load(std::memory_order_acquire) : UINT64_MAX,
+        is_active() ? m_handle.promise().next_frame.load(std::memory_order_acquire) : UINT64_MAX);
+
     return is_active()
         ? m_handle.promise().next_sample.load(std::memory_order_acquire)
         : UINT64_MAX;
@@ -503,16 +518,25 @@ bool CrossRoutine::try_resume_with_context(uint64_t current_value, DelayContext 
         return false;
     }
 
-    bool eligible = false;
     if (context == DelayContext::SAMPLE_BASED) {
-        eligible = promise_ref.sample_delay_amount > 0
-            && current_value >= promise_ref.next_sample.load(std::memory_order_acquire);
+        if (promise_ref.sample_delay_amount > 0
+            && current_value >= promise_ref.next_sample.load(std::memory_order_acquire)) {
+            promise_ref.sample_satisfied.store(true, std::memory_order_release);
+        }
     } else if (context == DelayContext::FRAME_BASED) {
-        eligible = promise_ref.frame_delay_amount > 0
-            && current_value >= promise_ref.next_frame.load(std::memory_order_acquire);
+        if (promise_ref.frame_delay_amount > 0
+            && current_value >= promise_ref.next_frame.load(std::memory_order_acquire)) {
+            promise_ref.frame_satisfied.store(true, std::memory_order_release);
+        }
     }
 
-    if (!eligible) {
+    bool sample_required = promise_ref.sample_delay_amount > 0;
+    bool frame_required = promise_ref.frame_delay_amount > 0;
+
+    if (sample_required && !promise_ref.sample_satisfied.load(std::memory_order_acquire)) {
+        return false;
+    }
+    if (frame_required && !promise_ref.frame_satisfied.load(std::memory_order_acquire)) {
         return false;
     }
 
@@ -522,6 +546,9 @@ bool CrossRoutine::try_resume_with_context(uint64_t current_value, DelayContext 
             std::memory_order_acq_rel, std::memory_order_acquire)) {
         return false;
     }
+
+    promise_ref.sample_satisfied.store(false, std::memory_order_release);
+    promise_ref.frame_satisfied.store(false, std::memory_order_release);
 
     m_handle.resume();
     return true;
@@ -545,12 +572,14 @@ bool CrossRoutine::restart()
 {
     if (!m_handle)
         return false;
+
     set_state<bool>("restart", true);
     m_handle.promise().auto_resume = true;
     if (is_active()) {
         m_handle.resume();
         return true;
     }
+
     return false;
 }
 
