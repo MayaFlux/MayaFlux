@@ -53,11 +53,18 @@ void GeometryBuffer::setup_processors(ProcessingToken token)
         set_processing_chain(chain);
     }
     chain->set_preferred_token(token);
+
+    for (auto& [img, binding] : m_pending_textures)
+        m_bindings_processor->set_texture(std::move(img), std::move(binding));
+    m_pending_textures.clear();
 }
 
 void GeometryBuffer::setup_rendering(const RenderConfig& config)
 {
     RenderConfig resolved_config = config;
+
+    const bool textured = m_diffuse_texture != nullptr
+        || !resolved_config.default_texture_binding.empty();
 
     if (resolved_config.topology == Portal::Graphics::PrimitiveTopology::POINT_LIST
         && m_geometry_node->get_primitive_topology()
@@ -97,8 +104,11 @@ void GeometryBuffer::setup_rendering(const RenderConfig& config)
     case Portal::Graphics::PrimitiveTopology::TRIANGLE_STRIP:
         if (config.vertex_shader.empty())
             resolved_config.vertex_shader = "triangle.vert.spv";
-        if (config.fragment_shader.empty())
-            resolved_config.fragment_shader = "triangle.frag.spv";
+        if (config.fragment_shader.empty()) {
+            resolved_config.fragment_shader = textured
+                ? "mesh_textured.frag.spv"
+                : "triangle.frag.spv";
+        }
         break;
 
     default:
@@ -108,8 +118,26 @@ void GeometryBuffer::setup_rendering(const RenderConfig& config)
             resolved_config.fragment_shader = "point.frag.spv";
     }
 
+    const bool frag_samples_texture = resolved_config.fragment_shader.find("textured") != std::string::npos;
+
+    if (textured && !frag_samples_texture) {
+        MF_WARN(Journal::Component::Buffers, Journal::Context::Init,
+            "GeometryBuffer::setup_rendering: texture supplied but fragment shader '{}' "
+            "does not sample a texture — texture will be ignored",
+            resolved_config.fragment_shader);
+    }
+
+    const bool apply_texture = textured && frag_samples_texture;
+
     if (!m_render_processor) {
-        m_render_processor = std::make_shared<RenderProcessor>(ShaderConfig { resolved_config.vertex_shader });
+        ShaderConfig sc { resolved_config.vertex_shader };
+        if (apply_texture) {
+            const std::string slot = resolved_config.default_texture_binding.empty()
+                ? m_diffuse_binding
+                : resolved_config.default_texture_binding;
+            sc.bindings[slot] = ShaderBinding(0, 1, vk::DescriptorType::eCombinedImageSampler);
+        }
+        m_render_processor = std::make_shared<RenderProcessor>(sc);
     } else {
         m_render_processor->set_shader(resolved_config.vertex_shader);
     }
@@ -125,7 +153,22 @@ void GeometryBuffer::setup_rendering(const RenderConfig& config)
 
     get_processing_chain()->add_final_processor(m_render_processor, shared_from_this());
 
+    if (apply_texture && m_diffuse_texture)
+        set_texture(m_diffuse_texture, m_diffuse_binding);
+
     set_default_render_config(resolved_config);
+}
+
+void GeometryBuffer::set_texture(std::shared_ptr<Core::VKImage> image, std::string binding)
+{
+    m_diffuse_texture = image;
+    m_diffuse_binding = binding;
+
+    if (!m_bindings_processor) {
+        m_pending_textures.emplace_back(std::move(image), std::move(binding));
+        return;
+    }
+    m_bindings_processor->set_texture(std::move(image), std::move(binding));
 }
 
 size_t GeometryBuffer::calculate_buffer_size(

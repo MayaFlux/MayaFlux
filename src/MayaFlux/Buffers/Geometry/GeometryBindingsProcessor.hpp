@@ -107,6 +107,20 @@ public:
     [[nodiscard]] std::optional<GeometryBinding> get_binding(const std::string& name) const;
 
     /**
+     * @brief Supply a texture to bind on the next graphics tick.
+     *
+     * Mirrors FormaProcessor::set_texture. Stores the image and binding name
+     * behind an atomic dirty flag; processing_function binds it to the buffer's
+     * RenderProcessor on the next cycle. The descriptor slot must already exist
+     * in the pipeline (declared by GeometryBuffer::setup_rendering). Calling
+     * again replaces the pending binding before it is consumed.
+     *
+     * @param image   GPU image. nullptr clears the binding.
+     * @param binding Descriptor name matching the fragment shader.
+     */
+    void set_texture(std::shared_ptr<Core::VKImage> image, std::string binding);
+
+    /**
      * @brief BufferProcessor interface - uploads all bound geometries
      * @param buffer The buffer this processor is attached to
      *
@@ -125,6 +139,14 @@ private:
      * @param binding Binding to operate on.
      */
     void upload_index_data(const std::string& name, GeometryBinding& binding);
+
+    struct PendingTexture {
+        std::shared_ptr<Core::VKImage> image;
+        std::string binding;
+    };
+
+    std::optional<PendingTexture> m_pending_texture;
+    std::atomic_flag m_texture_dirty;
 };
 
 } // namespace MayaFlux::Buffers

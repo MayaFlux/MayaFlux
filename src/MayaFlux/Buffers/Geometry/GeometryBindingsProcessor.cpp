@@ -1,9 +1,13 @@
 #include "GeometryBindingsProcessor.hpp"
 
 #include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
-#include "MayaFlux/Journal/Archivist.hpp"
+
+#include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
+
 #include "MayaFlux/Nodes/Graphics/GeometryWriterNode.hpp"
 #include "MayaFlux/Registry/Service/BufferService.hpp"
+
+#include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux::Buffers {
 
@@ -129,8 +133,30 @@ GeometryBindingsProcessor::get_binding(const std::string& name) const
     return std::nullopt;
 }
 
+void GeometryBindingsProcessor::set_texture(
+    std::shared_ptr<Core::VKImage> image, std::string binding)
+{
+    m_pending_texture = PendingTexture {
+        .image = std::move(image),
+        .binding = std::move(binding),
+    };
+    m_texture_dirty.test_and_set(std::memory_order_release);
+}
+
 void GeometryBindingsProcessor::processing_function(const std::shared_ptr<Buffer>& buffer)
 {
+    if (m_texture_dirty.test(std::memory_order_acquire)) {
+        m_texture_dirty.clear(std::memory_order_release);
+        if (auto vk = std::dynamic_pointer_cast<VKBuffer>(buffer)) {
+            if (auto rp = vk->get_render_processor()) {
+                if (m_pending_texture) {
+                    rp->bind_texture(m_pending_texture->binding, m_pending_texture->image);
+                }
+            }
+        }
+        m_pending_texture.reset();
+    }
+
     if (m_bindings.empty()) {
         return;
     }

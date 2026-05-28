@@ -107,6 +107,23 @@ public:
     }
 
     /**
+     * @brief Supply a diffuse texture, bound on the next graphics tick.
+     *
+     * Follows the FormaBuffer model: if the bindings processor is not yet
+     * created (setup_processors not called), the texture is queued and applied
+     * in setup_processors. Otherwise it is forwarded to the processor, which
+     * binds it on the next cycle. The descriptor slot is declared in
+     * setup_rendering; call set_texture before setup_rendering, or pass a
+     * default_texture_binding in the RenderConfig, so the slot exists.
+     *
+     * @param image   GPU image. nullptr clears the binding.
+     * @param binding Descriptor name (default: "diffuseTex").
+     */
+    void set_texture(std::shared_ptr<Core::VKImage> image, std::string binding = "diffuseTex");
+
+    [[nodiscard]] bool has_texture() const noexcept { return m_diffuse_texture != nullptr; }
+
+    /**
      * @brief Setup rendering with RenderProcessor
      * @param config Rendering configuration
      */
@@ -121,6 +138,10 @@ private:
     std::shared_ptr<Nodes::GpuSync::GeometryWriterNode> m_geometry_node;
     std::shared_ptr<GeometryBindingsProcessor> m_bindings_processor;
     std::string m_binding_name;
+
+    std::shared_ptr<Core::VKImage> m_diffuse_texture;
+    std::string m_diffuse_binding { "diffuseTex" };
+    std::vector<std::pair<std::shared_ptr<Core::VKImage>, std::string>> m_pending_textures;
 
     std::shared_ptr<RenderProcessor> m_render_processor;
 
