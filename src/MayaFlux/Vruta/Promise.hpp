@@ -8,7 +8,7 @@ namespace MayaFlux::Vruta {
 
 class SoundRoutine;
 class GraphicsRoutine;
-class ComplexRoutine;
+class CrossRoutine;
 class Event;
 class NetworkSource;
 
@@ -329,20 +329,97 @@ struct graphics_promise : public routine_promise<GraphicsRoutine> {
     uint64_t delay_amount = 0;
 };
 
-// TODO: Graphics features are not yet implemented, needs GL/Vulkan integration first
-/** * @struct complex_promise
- * @brief Coroutine promise type for complex processing tasks with multi-rate scheduling
+/**
+ * @struct cross_promise
+ * @brief Coroutine promise for routines resumed by more than one clock.
+ *
+ * A cross routine reports ProcessingToken::MULTI_RATE and lives in the single
+ * MULTI_RATE task list, which both the sample-clock pump (audio thread) and the
+ * frame-clock pump (graphics thread) scan. When suspended on a single-clock
+ * awaiter only the matching thread resumes it. When suspended on MultiRateDelay
+ * the context is MULTIPLE: both threads contribute, and the gate uses a
+ * compare-exchange on active_delay_context so exactly one thread fires the
+ * resume after all required clocks are satisfied.
+ *
+ * active_delay_context, next_sample, next_frame, sample_satisfied, and
+ * frame_satisfied are read by both pumps concurrently with the await_suspend
+ * write, so they are atomic. The two delay-amount fields are written only in
+ * await_suspend and read only after the gate has claimed exclusivity, so they
+ * stay non-atomic.
  */
-struct complex_promise : public routine_promise<ComplexRoutine> {
-    ComplexRoutine get_return_object();
+struct cross_promise : public routine_promise<CrossRoutine> {
+    CrossRoutine get_return_object();
 
+    /**
+     * @brief Processing token identifying this coroutine as multi-rate.
+     */
     ProcessingToken processing_token { ProcessingToken::MULTI_RATE };
 
+    /**
+     * @brief Whether this routine should synchronize with a clock on initialization.
+     */
     bool sync_to_clock = true;
 
-    uint64_t next_sample = 0;
+    /**
+     * @brief Sample position at which the sample-clock pump should next resume this routine.
+     *
+     * Written by MultiRateDelay::await_suspend via fetch_add and by
+     * initialize_state via store. Read concurrently by both pumps.
+     */
+    std::atomic<uint64_t> next_sample { 0 };
 
-    uint64_t next_frame = 0;
+    /**
+     * @brief Frame position at which the frame-clock pump should next resume this routine.
+     *
+     * Written by MultiRateDelay::await_suspend via fetch_add and by
+     * initialize_state via store. Read concurrently by both pumps.
+     */
+    std::atomic<uint64_t> next_frame { 0 };
+
+    /**
+     * @brief Active delay context controlling which pump(s) may resume this routine.
+     *
+     * Valid states for cross routines:
+     * - NONE: no suspension active, routine is running or uninitialized.
+     * - AWAIT: suspended in GetCrossPromise awaiter during initialization.
+     * - MULTIPLE: suspended on MultiRateDelay; one or both clocks are armed.
+     *
+     * The gate in try_resume_with_context CAS-es MULTIPLE -> NONE to claim
+     * the resume exclusively once all required clocks are satisfied.
+     */
+    std::atomic<DelayContext> active_delay_context { DelayContext::NONE };
+
+    /**
+     * @brief Number of samples requested by the current MultiRateDelay suspension.
+     *
+     * Zero means the sample clock is not required for this suspension.
+     * Written only in await_suspend; read only after the gate CAS succeeds.
+     */
+    uint64_t sample_delay_amount { 0 };
+
+    /**
+     * @brief Number of frames requested by the current MultiRateDelay suspension.
+     *
+     * Zero means the frame clock is not required for this suspension.
+     * Written only in await_suspend; read only after the gate CAS succeeds.
+     */
+    uint64_t frame_delay_amount { 0 };
+
+    /**
+     * @brief Set by the sample-clock pump when next_sample has been reached.
+     *
+     * Cleared before resume() fires so the flag is clean for the next
+     * suspension before any concurrent await_suspend can re-arm it.
+     */
+    std::atomic<bool> sample_satisfied { false };
+
+    /**
+     * @brief Set by the frame-clock pump when next_frame has been reached.
+     *
+     * Cleared before resume() fires so the flag is clean for the next
+     * suspension before any concurrent await_suspend can re-arm it.
+     */
+    std::atomic<bool> frame_satisfied { false };
 };
 
 /**

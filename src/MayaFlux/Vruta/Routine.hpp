@@ -655,52 +655,105 @@ private:
 };
 
 /**
- * @class ComplexRoutine
- * @brief Multi-domain coroutine that can handle multiple processing rates
+ * @class CrossRoutine
+ * @brief Coroutine resumed by more than one clock.
  *
- * ComplexRoutine is designed for coroutines that need to operate across
- * multiple processing domains (audio + visual, for example). It automatically
- * selects the fastest processing rate and manages cross-domain synchronization.
+ * Sibling to SoundRoutine and GraphicsRoutine. Where those bind to a single
+ * clock on a single thread, CrossRoutine lives in the MULTI_RATE task list,
+ * which both the sample-clock pump (audio thread) and the frame-clock pump
+ * (graphics thread) scan. It suspends on MultiRateDelay, which arms both
+ * clocks; the first clock to reach its target resumes the coroutine. A
+ * zero count on one clock disarms that clock for the suspension.
+ *
+ * Both pumps may reach the gate concurrently. The gate claims the resume with
+ * a compare-exchange on the promise's active_delay_context so exactly one
+ * thread resumes the handle; the other observes the changed context and backs
+ * off. The coroutine body re-establishes the context on its next co_await.
  */
-class ComplexRoutine : public Routine {
+class MAYAFLUX_API CrossRoutine : public Routine {
 public:
-    [[nodiscard]] ProcessingToken get_processing_token() const override
+    using promise_type = MayaFlux::Vruta::cross_promise;
+
+    [[nodiscard]] ProcessingToken get_processing_token() const override;
+
+    CrossRoutine(std::coroutine_handle<promise_type> h);
+
+    CrossRoutine(const CrossRoutine& other);
+    CrossRoutine& operator=(const CrossRoutine& other);
+    CrossRoutine(CrossRoutine&& other) noexcept;
+    CrossRoutine& operator=(CrossRoutine&& other) noexcept;
+    ~CrossRoutine() override;
+
+    [[nodiscard]] bool is_active() const override;
+    bool initialize_state(uint64_t current_context = 0U) override;
+    bool try_resume(uint64_t current_context) override;
+    bool try_resume_with_context(uint64_t current_value, DelayContext context) override;
+    bool force_resume() override;
+    bool restart() override;
+
+    [[nodiscard]] uint64_t next_execution() const override;
+    [[nodiscard]] bool requires_clock_sync() const override;
+
+    [[nodiscard]] DelayContext get_delay_context() const override
     {
-        return ProcessingToken::MULTI_RATE;
+        return m_handle.promise().active_delay_context.load(std::memory_order_acquire);
     }
 
-    [[nodiscard]] bool requires_clock_sync() const override
+    void set_delay_context(DelayContext context) override
     {
-        return true; // Complex routines need clock sync for coordination
+        m_handle.promise().active_delay_context.store(context, std::memory_order_release);
     }
 
-    // Promise state access implementations (TODO: implement when complex promise is ready)
-    [[nodiscard]] bool get_auto_resume() const override { return true; }
-    bool force_resume() override { return false; }
-    void set_auto_resume(bool /*auto_resume*/) override { /* TODO */ }
-    [[nodiscard]] bool get_should_terminate() const override { return false; }
-    void set_should_terminate(bool /*should_terminate*/) override { /* TODO */ }
-    [[nodiscard]] bool get_sync_to_clock() const override { return true; }
+    [[nodiscard]] bool get_auto_resume() const override
+    {
+        return m_handle.promise().auto_resume;
+    }
 
-    // Multi-domain timing implementations (supports both audio and graphics)
-    [[nodiscard]] uint64_t get_next_sample() const override { return 0; }
-    void set_next_sample(uint64_t /*next_sample*/) override { /* TODO */ }
-    [[nodiscard]] uint64_t get_next_frame() const override { return 0; }
-    void set_next_frame(uint64_t /*next_frame*/) override { /* TODO */ }
+    void set_auto_resume(bool auto_resume) override
+    {
+        m_handle.promise().auto_resume = auto_resume;
+    }
 
-    // TODO: Implement when multi-domain scheduling is ready
-    [[nodiscard]] bool is_active() const override { return false; }
-    bool initialize_state(uint64_t /*current_context*/ = 0U) override { return false; }
-    bool try_resume(uint64_t /*current_context*/) override { return false; }
-    bool restart() override { return false; }
-    [[nodiscard]] uint64_t next_execution() const override { return 0; }
+    [[nodiscard]] bool get_should_terminate() const override
+    {
+        return m_handle.promise().should_terminate;
+    }
+
+    void set_should_terminate(bool should_terminate) override
+    {
+        m_handle.promise().should_terminate = should_terminate;
+    }
+
+    [[nodiscard]] bool get_sync_to_clock() const override
+    {
+        return m_handle.promise().sync_to_clock;
+    }
+
+    [[nodiscard]] uint64_t get_next_sample() const override
+    {
+        return m_handle.promise().next_sample.load(std::memory_order_acquire);
+    }
+
+    void set_next_sample(uint64_t next_sample) override
+    {
+        m_handle.promise().next_sample.store(next_sample, std::memory_order_release);
+    }
+
+    [[nodiscard]] uint64_t get_next_frame() const override
+    {
+        return m_handle.promise().next_frame.load(std::memory_order_acquire);
+    }
+
+    void set_next_frame(uint64_t next_frame) override
+    {
+        m_handle.promise().next_frame.store(next_frame, std::memory_order_release);
+    }
 
 protected:
-    void set_state_impl(const std::string& /*key*/, std::any /*value*/) override { }
-    void* get_state_impl_raw(const std::string& /*key*/) override { return nullptr; }
+    void set_state_impl(const std::string& key, std::any value) override;
+    void* get_state_impl_raw(const std::string& key) override;
 
 private:
-    ProcessingToken m_primary_token = ProcessingToken::SAMPLE_ACCURATE;
-    std::vector<ProcessingToken> m_secondary_tokens;
+    std::coroutine_handle<promise_type> m_handle;
 };
 }

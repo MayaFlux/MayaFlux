@@ -16,7 +16,7 @@ class EventManager;
 class Routine;
 class SoundRoutine;
 class GraphicsRoutine;
-class ComplexRoutine;
+class CrossRoutine;
 class Event;
 }
 
@@ -41,7 +41,7 @@ public:
     using PositionFn = std::function<glm::vec3()>;
     using SoundFactory = std::function<Vruta::SoundRoutine(Vruta::TaskScheduler&)>;
     using GraphicsFactory = std::function<Vruta::GraphicsRoutine(Vruta::TaskScheduler&)>;
-    using ComplexFactory = std::function<Vruta::ComplexRoutine(Vruta::TaskScheduler&)>;
+    using CrossFactory = std::function<Vruta::CrossRoutine(Vruta::TaskScheduler&)>;
     using EventFactory = std::function<Vruta::Event(Vruta::TaskScheduler&)>;
     using NullFunc = std::nullptr_t;
     static constexpr NullFunc no_release = nullptr;
@@ -143,13 +143,13 @@ public:
      */
     Wiring& use(SoundFactory factory);
     Wiring& use(GraphicsFactory factory);
-    Wiring& use(ComplexFactory factory);
+    Wiring& use(CrossFactory factory);
     Wiring& use(EventFactory factory);
 
     /** @brief Register a named factory. */
     Wiring& use(std::string fn_name, SoundFactory factory);
     Wiring& use(std::string fn_name, GraphicsFactory factory);
-    Wiring& use(std::string fn_name, ComplexFactory factory);
+    Wiring& use(std::string fn_name, CrossFactory factory);
     Wiring& use(std::string fn_name, EventFactory factory);
 
     // =====================================================================
@@ -249,7 +249,7 @@ private:
     };
 
     using Trigger = std::variant<std::monostate, KeyTrigger, MouseTrigger, NetworkTrigger, EventTrigger, WindowEventTrigger>;
-    using Factory = std::variant<std::monostate, SoundFactory, GraphicsFactory, ComplexFactory>;
+    using Factory = std::variant<std::monostate, SoundFactory, GraphicsFactory, CrossFactory>;
     using EFactory = std::optional<EventFactory>;
 
     std::string make_name(const char* prefix) const;

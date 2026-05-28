@@ -13,6 +13,11 @@ GraphicsRoutine graphics_promise::get_return_object()
     return { std::coroutine_handle<graphics_promise>::from_promise(*this) };
 }
 
+CrossRoutine cross_promise::get_return_object()
+{
+    return { std::coroutine_handle<cross_promise>::from_promise(*this) };
+}
+
 SoundRoutine::SoundRoutine(std::coroutine_handle<promise_type> h)
     : m_handle(h)
 {
@@ -381,6 +386,215 @@ void* GraphicsRoutine::get_state_impl_raw(const std::string& key)
         return nullptr;
     }
 
+    auto& state_map = m_handle.promise().state;
+    auto it = state_map.find(key);
+    if (it != state_map.end()) {
+        return &it->second;
+    }
+    return nullptr;
+}
+
+CrossRoutine::CrossRoutine(std::coroutine_handle<promise_type> h)
+    : m_handle(h)
+{
+    if (!m_handle || !m_handle.address()) {
+        error<std::invalid_argument>(Journal::Component::Vruta, Journal::Context::CoroutineScheduling,
+            std::source_location::current(),
+            "CrossRoutine constructed with invalid coroutine handle");
+    }
+}
+
+CrossRoutine::CrossRoutine(const CrossRoutine& other)
+    : m_handle(other.m_handle)
+{
+    if (other.m_handle) {
+        m_handle = other.m_handle;
+    }
+}
+
+CrossRoutine& CrossRoutine::operator=(const CrossRoutine& other)
+{
+    if (this != &other) {
+        if (m_handle) {
+            m_handle.destroy();
+        }
+
+        if (other.m_handle) {
+            m_handle = other.m_handle;
+        } else {
+            m_handle = nullptr;
+        }
+    }
+    return *this;
+}
+
+CrossRoutine::CrossRoutine(CrossRoutine&& other) noexcept
+    : m_handle(std::exchange(other.m_handle, {}))
+{
+}
+
+CrossRoutine& CrossRoutine::operator=(CrossRoutine&& other) noexcept
+{
+    if (this != &other) {
+        if (m_handle && m_handle.address())
+            m_handle.destroy();
+        m_handle = std::exchange(other.m_handle, {});
+    }
+    return *this;
+}
+
+CrossRoutine::~CrossRoutine()
+{
+    if (m_handle && m_handle.address())
+        m_handle.destroy();
+}
+
+ProcessingToken CrossRoutine::get_processing_token() const
+{
+    if (!m_handle) {
+        return ProcessingToken::ON_DEMAND;
+    }
+    return m_handle.promise().processing_token;
+}
+
+bool CrossRoutine::is_active() const
+{
+    if (!m_handle) {
+        return false;
+    }
+    return m_handle.address() != nullptr && !m_handle.done();
+}
+
+bool CrossRoutine::initialize_state(uint64_t current_context)
+{
+    if (!m_handle || !m_handle.address() || m_handle.done()) {
+        return false;
+    }
+
+    m_handle.promise().next_sample.store(current_context, std::memory_order_release);
+    m_handle.promise().next_frame.store(current_context, std::memory_order_release);
+    m_handle.resume();
+    return true;
+}
+
+uint64_t CrossRoutine::next_execution() const
+{
+    MF_PRINT("CrossRoutine next_execution called. is_active: {}, next_sample: {}, next_frame: {}",
+        is_active(),
+        is_active() ? m_handle.promise().next_sample.load(std::memory_order_acquire) : UINT64_MAX,
+        is_active() ? m_handle.promise().next_frame.load(std::memory_order_acquire) : UINT64_MAX);
+
+    return is_active()
+        ? m_handle.promise().next_sample.load(std::memory_order_acquire)
+        : UINT64_MAX;
+}
+
+bool CrossRoutine::requires_clock_sync() const
+{
+    if (!m_handle) {
+        return false;
+    }
+    return m_handle.promise().sync_to_clock;
+}
+
+bool CrossRoutine::try_resume_with_context(uint64_t current_value, DelayContext context)
+{
+    if (!is_active())
+        return false;
+
+    auto& promise_ref = m_handle.promise();
+
+    if (promise_ref.should_terminate || !promise_ref.auto_resume) {
+        return false;
+    }
+
+    const DelayContext active = promise_ref.active_delay_context.load(std::memory_order_acquire);
+
+    if (context != DelayContext::NONE && active == DelayContext::AWAIT) {
+        return initialize_state(current_value);
+    }
+
+    if (active != DelayContext::MULTIPLE) {
+        return false;
+    }
+
+    if (context == DelayContext::SAMPLE_BASED) {
+        if (promise_ref.sample_delay_amount > 0
+            && current_value >= promise_ref.next_sample.load(std::memory_order_acquire)) {
+            promise_ref.sample_satisfied.store(true, std::memory_order_release);
+        }
+    } else if (context == DelayContext::FRAME_BASED) {
+        if (promise_ref.frame_delay_amount > 0
+            && current_value >= promise_ref.next_frame.load(std::memory_order_acquire)) {
+            promise_ref.frame_satisfied.store(true, std::memory_order_release);
+        }
+    }
+
+    bool sample_required = promise_ref.sample_delay_amount > 0;
+    bool frame_required = promise_ref.frame_delay_amount > 0;
+
+    if (sample_required && !promise_ref.sample_satisfied.load(std::memory_order_acquire)) {
+        return false;
+    }
+    if (frame_required && !promise_ref.frame_satisfied.load(std::memory_order_acquire)) {
+        return false;
+    }
+
+    DelayContext expected = DelayContext::MULTIPLE;
+    if (!promise_ref.active_delay_context.compare_exchange_strong(
+            expected, DelayContext::NONE,
+            std::memory_order_acq_rel, std::memory_order_acquire)) {
+        return false;
+    }
+
+    promise_ref.sample_satisfied.store(false, std::memory_order_release);
+    promise_ref.frame_satisfied.store(false, std::memory_order_release);
+
+    m_handle.resume();
+    return true;
+}
+
+bool CrossRoutine::try_resume(uint64_t current_context)
+{
+    return try_resume_with_context(current_context, DelayContext::SAMPLE_BASED);
+}
+
+bool CrossRoutine::force_resume()
+{
+    if (!m_handle || m_handle.done()) {
+        return false;
+    }
+    m_handle.resume();
+    return true;
+}
+
+bool CrossRoutine::restart()
+{
+    if (!m_handle)
+        return false;
+
+    set_state<bool>("restart", true);
+    m_handle.promise().auto_resume = true;
+    if (is_active()) {
+        m_handle.resume();
+        return true;
+    }
+
+    return false;
+}
+
+void CrossRoutine::set_state_impl(const std::string& key, std::any value)
+{
+    if (m_handle) {
+        m_handle.promise().state[key] = std::move(value);
+    }
+}
+
+void* CrossRoutine::get_state_impl_raw(const std::string& key)
+{
+    if (!m_handle) {
+        return nullptr;
+    }
     auto& state_map = m_handle.promise().state;
     auto it = state_map.find(key);
     if (it != state_map.end()) {

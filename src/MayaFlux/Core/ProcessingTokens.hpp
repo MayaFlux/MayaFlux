@@ -33,7 +33,8 @@ enum class DelayContext : uint8_t {
     BUFFER_BASED, ///< Buffer-cycle delay (audio hardware boundary)
     FRAME_BASED, ///< Frame-rate delay (Graphics domain)
     EVENT_BASED, ///< Event-driven delay (user events, etc.)
-    AWAIT ///< Awaiter-induced delay (temporary suspension)
+    AWAIT, ///< Awaiter-induced delay (temporary suspension)
+    MULTIPLE ///< Armed on both sample and frame clocks; first to arrive resumes (CrossRoutine)
 };
 }
 

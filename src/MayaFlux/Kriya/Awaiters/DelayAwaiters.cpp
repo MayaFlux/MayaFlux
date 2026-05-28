@@ -4,12 +4,9 @@ namespace MayaFlux::Kriya {
 
 void SampleDelay::await_suspend(std::coroutine_handle<promise_handle> h) noexcept
 {
-    if constexpr (std::is_same_v<promise_handle, Vruta::audio_promise>
-        || std::is_same_v<promise_handle, Vruta::complex_promise>) {
-        if constexpr (requires { h.promise().next_sample; }) {
-            h.promise().next_sample += samples_to_wait;
-            h.promise().active_delay_context = Vruta::DelayContext::SAMPLE_BASED;
-        }
+    if constexpr (std::is_same_v<promise_handle, Vruta::audio_promise>) {
+        h.promise().next_sample += samples_to_wait;
+        h.promise().active_delay_context = Vruta::DelayContext::SAMPLE_BASED;
     } else {
         if constexpr (requires { h.promise().domain_mismatch_error("", ""); }) {
             h.promise().domain_mismatch_error("SampleDelay",
@@ -20,8 +17,7 @@ void SampleDelay::await_suspend(std::coroutine_handle<promise_handle> h) noexcep
 
 void FrameDelay::await_suspend(std::coroutine_handle<Vruta::graphics_promise> h) noexcept
 {
-    if constexpr (std::is_same_v<promise_handle, Vruta::graphics_promise>
-        || std::is_same_v<promise_handle, Vruta::complex_promise>) {
+    if constexpr (std::is_same_v<promise_handle, Vruta::graphics_promise>) {
         if constexpr (requires { h.promise().next_frame; }) {
             h.promise().next_frame += frames_to_wait;
             h.promise().active_delay_context = Vruta::DelayContext::FRAME_BASED;
@@ -34,14 +30,15 @@ void FrameDelay::await_suspend(std::coroutine_handle<Vruta::graphics_promise> h)
     }
 }
 
-void MultiRateDelay::await_suspend(std::coroutine_handle<Vruta::complex_promise> h) noexcept
+void MultiRateDelay::await_suspend(std::coroutine_handle<Vruta::cross_promise> h) noexcept
 {
-    if constexpr (requires { h.promise().next_sample; }) {
-        h.promise().next_sample += samples_to_wait;
-    }
-    if constexpr (requires { h.promise().next_frame; }) {
-        h.promise().next_frame += frames_to_wait;
-    }
+    auto& promise = h.promise();
+    promise.next_sample.fetch_add(samples_to_wait, std::memory_order_relaxed);
+    promise.next_frame.fetch_add(frames_to_wait, std::memory_order_relaxed);
+    promise.sample_delay_amount = samples_to_wait;
+    promise.frame_delay_amount = frames_to_wait;
+    promise.active_delay_context.store(
+        Vruta::DelayContext::MULTIPLE, std::memory_order_release);
 }
 
 }

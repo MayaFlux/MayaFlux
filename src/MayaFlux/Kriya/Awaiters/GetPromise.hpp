@@ -74,17 +74,36 @@ using GetAudioPromise = GetPromiseBase<Vruta::audio_promise>;
 using GetGraphicsPromise = GetPromiseBase<Vruta::graphics_promise>;
 
 /**
- * @brief Multi-domain promise accessor
+ * @brief Promise accessor specialization for cross_promise.
  *
- * Usage in ComplexRoutine:
- * ```cpp
- * auto routine = []() -> ComplexRoutine {
- *     auto& promise = co_await GetComplexPromise{};
- *     // promise is complex_promise&
- * };
- * ```
+ * Identical to the primary template except the AWAIT context is published with
+ * release ordering, since cross_promise::active_delay_context is atomic and
+ * read concurrently by the sample-clock and frame-clock pumps.
  */
-using GetComplexPromise = GetPromiseBase<Vruta::complex_promise>;
+template <>
+struct MAYAFLUX_API GetPromiseBase<Vruta::cross_promise> {
+    using promise_handle = Vruta::cross_promise;
+
+    promise_handle* promise_ptr = nullptr;
+
+    GetPromiseBase() = default;
+
+    [[nodiscard]] inline bool await_ready() const noexcept { return false; }
+
+    void await_suspend(std::coroutine_handle<promise_handle> h) noexcept
+    {
+        promise_ptr = &h.promise();
+        h.promise().active_delay_context.store(
+            Vruta::DelayContext::AWAIT, std::memory_order_release);
+    }
+
+    [[nodiscard]] promise_handle& await_resume() const noexcept
+    {
+        return *promise_ptr;
+    }
+};
+
+using GetCrossPromise = GetPromiseBase<Vruta::cross_promise>;
 
 /**
  * @struct GetEventPromise
