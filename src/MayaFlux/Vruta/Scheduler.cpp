@@ -155,6 +155,12 @@ void TaskScheduler::process_token(ProcessingToken token, uint64_t processing_uni
         process_default(token, processing_units);
     }
 
+    if (token == ProcessingToken::SAMPLE_ACCURATE) {
+        pump_cross(DelayContext::SAMPLE_BASED, ProcessingToken::SAMPLE_ACCURATE, processing_units);
+    } else if (token == ProcessingToken::FRAME_ACCURATE) {
+        pump_cross(DelayContext::FRAME_BASED, ProcessingToken::FRAME_ACCURATE, processing_units);
+    }
+
     static uint64_t cleanup_counter = 0;
     if (++cleanup_counter % (static_cast<uint64_t>(m_cleanup_threshold * 2)) == 0) {
         cleanup_completed_tasks();
@@ -486,6 +492,34 @@ void TaskScheduler::drain_pending_tasks()
         op.entry = { nullptr, "" };
         op.active.store(false, std::memory_order_release);
         m_pending_count.fetch_sub(1, std::memory_order_relaxed);
+    }
+}
+
+void TaskScheduler::pump_cross(DelayContext context, ProcessingToken clock_token, uint64_t processing_units)
+{
+    auto cross_tasks = get_tasks_for_token(ProcessingToken::MULTI_RATE);
+    if (cross_tasks.empty()) {
+        return;
+    }
+
+    auto clock_it = m_token_clocks.find(clock_token);
+    if (clock_it == m_token_clocks.end()) {
+        return;
+    }
+
+    if (processing_units == 0) {
+        processing_units = 1;
+    }
+
+    uint64_t base = clock_it->second->current_position();
+
+    for (uint64_t i = 0; i < processing_units; ++i) {
+        uint64_t pos = base + i;
+        for (auto& routine : cross_tasks) {
+            if (routine && routine->is_active()) {
+                routine->try_resume_with_context(pos, context);
+            }
+        }
     }
 }
 

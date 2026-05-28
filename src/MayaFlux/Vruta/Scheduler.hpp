@@ -437,6 +437,21 @@ private:
     bool initialize_routine_state(const std::shared_ptr<Routine>& routine, ProcessingToken token);
 
     /**
+     * @brief Pump the MULTI_RATE list from one clock's context.
+     *
+     * Called as a fall-through from process_token when the driving token is
+     * SAMPLE_ACCURATE or FRAME_ACCURATE. Reads the driving clock's position and
+     * offers each cross routine a resume under the given context. The
+     * CrossRoutine gate decides eligibility and claims the resume atomically, so
+     * both threads may call this concurrently on the same list.
+     *
+     * @param context     SAMPLE_BASED from the audio thread, FRAME_BASED from graphics.
+     * @param clock_token The token whose clock position drives this pump.
+     * @param processing_units Units to advance, matching the driving token's call.
+     */
+    void pump_cross(DelayContext context, ProcessingToken clock_token, uint64_t processing_units);
+
+    /**
      * @brief Clock instances for each processing domain
      *
      * Each domain maintains its own clock for precise timing.
