@@ -662,7 +662,7 @@ private:
  * multiple processing domains (audio + visual, for example). It automatically
  * selects the fastest processing rate and manages cross-domain synchronization.
  */
-class ComplexRoutine : public Routine {
+class CrossRoutine : public Routine {
 public:
     [[nodiscard]] ProcessingToken get_processing_token() const override
     {

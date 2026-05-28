@@ -8,7 +8,7 @@ namespace MayaFlux::Vruta {
 
 class SoundRoutine;
 class GraphicsRoutine;
-class ComplexRoutine;
+class CrossRoutine;
 class Event;
 class NetworkSource;
 
@@ -329,20 +329,36 @@ struct graphics_promise : public routine_promise<GraphicsRoutine> {
     uint64_t delay_amount = 0;
 };
 
-// TODO: Graphics features are not yet implemented, needs GL/Vulkan integration first
-/** * @struct complex_promise
- * @brief Coroutine promise type for complex processing tasks with multi-rate scheduling
+/**
+ * @struct cross_promise
+ * @brief Coroutine promise for routines resumed by more than one clock.
+ *
+ * A cross routine reports ProcessingToken::MULTI_RATE and lives in the single
+ * MULTI_RATE task list, which both the sample-clock pump (audio thread) and the
+ * frame-clock pump (graphics thread) scan. When suspended on a single-clock
+ * awaiter (SampleDelay/FrameDelay) only the matching thread resumes it. When
+ * suspended on MultiRateDelay the context is MULTIPLE: both threads may match,
+ * and the gate uses a compare-exchange on active_delay_context so exactly one
+ * thread claims the resume.
+ *
+ * active_delay_context, next_sample, and next_frame are read by both pumps
+ * concurrently with the await_suspend write, so they are atomic. The two
+ * delay-amount fields are written only in await_suspend and read only after the
+ * gate has claimed exclusivity, so they stay non-atomic.
  */
-struct complex_promise : public routine_promise<ComplexRoutine> {
-    ComplexRoutine get_return_object();
+struct cross_promise : public routine_promise<CrossRoutine> {
+    CrossRoutine get_return_object();
 
     ProcessingToken processing_token { ProcessingToken::MULTI_RATE };
 
     bool sync_to_clock = true;
 
-    uint64_t next_sample = 0;
+    std::atomic<uint64_t> next_sample { 0 };
+    std::atomic<uint64_t> next_frame { 0 };
+    std::atomic<DelayContext> active_delay_context { DelayContext::NONE };
 
-    uint64_t next_frame = 0;
+    uint64_t sample_delay_amount { 0 };
+    uint64_t frame_delay_amount { 0 };
 };
 
 /**

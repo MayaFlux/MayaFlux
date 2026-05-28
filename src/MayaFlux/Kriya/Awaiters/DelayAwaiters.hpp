@@ -166,7 +166,7 @@ struct MAYAFLUX_API MultiRateDelay {
 
     constexpr void await_resume() const noexcept { }
 
-    void await_suspend(std::coroutine_handle<Vruta::complex_promise> h) noexcept;
+    void await_suspend(std::coroutine_handle<Vruta::cross_promise> h) noexcept;
 };
 
 } // namespace MayaFlux::Kriya

@@ -110,7 +110,7 @@ Wiring& Wiring::use(GraphicsFactory factory)
     return *this;
 }
 
-Wiring& Wiring::use(ComplexFactory factory)
+Wiring& Wiring::use(CrossFactory factory)
 {
     m_factory = std::move(factory);
     return *this;
@@ -143,7 +143,7 @@ Wiring& Wiring::use(std::string fn_name, GraphicsFactory factory)
     return *this;
 }
 
-Wiring& Wiring::use(std::string fn_name, ComplexFactory factory)
+Wiring& Wiring::use(std::string fn_name, CrossFactory factory)
 {
     m_factory_name = std::move(fn_name);
     m_factory = std::move(factory);
