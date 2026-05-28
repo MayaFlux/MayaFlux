@@ -317,4 +317,32 @@ struct QuadGeometry {
     const glm::vec3& half,
     const glm::vec3& color = glm::vec3(1.F));
 
+/**
+ * @struct BoxGeometry
+ * @brief Solid box vertex data with its triangle indices.
+ *
+ * Returned by generate_box(). Callers forward vertices and indices to
+ * MeshWriterNode::set_mesh() for an indexed TRIANGLE_LIST draw.
+ */
+struct BoxGeometry {
+    std::vector<Kakshya::MeshVertex> vertices;
+    std::vector<uint32_t> indices;
+};
+
+/**
+ * @brief Generate a solid box as indexed MeshVertex triangles.
+ * @param center       Centre of the box.
+ * @param half_extents Half-size along each axis. Non-uniform values yield a cuboid.
+ * @param subdivisions Reserved for future per-face tessellation. Currently ignored.
+ * @return BoxGeometry ready for an indexed TRIANGLE_LIST draw.
+ *
+ * Six faces, four vertices each, two triangles per face. Per-face normals point
+ * along the face axis. UV origin is bottom-left to match Vulkan image layout and
+ * the generate_quad convention.
+ */
+[[nodiscard]] MAYAFLUX_API BoxGeometry generate_box(
+    const glm::vec3& center,
+    const glm::vec3& half_extents,
+    uint32_t subdivisions = 1);
+
 } // namespace MayaFlux::Kinesis

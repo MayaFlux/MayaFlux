@@ -745,4 +745,46 @@ std::vector<Kakshya::Vertex> cuboid_wireframe(
     };
 }
 
+BoxGeometry generate_box(
+    const glm::vec3& center,
+    const glm::vec3& half_extents,
+    uint32_t /*subdivisions*/)
+{
+    BoxGeometry out;
+
+    const std::array<glm::vec3, 6> n = { {
+        { 0, 0, 1 },
+        { 0, 0, -1 },
+        { 1, 0, 0 },
+        { -1, 0, 0 },
+        { 0, 1, 0 },
+        { 0, -1, 0 },
+    } };
+
+    auto face = [&](glm::vec3 a, glm::vec3 b, glm::vec3 c, glm::vec3 d, glm::vec3 nrm) {
+        const auto base = static_cast<uint32_t>(out.vertices.size());
+        auto place = [&](glm::vec3 corner, glm::vec2 uv) {
+            out.vertices.push_back({
+                .position = center + corner * half_extents,
+                .uv = uv,
+                .normal = nrm,
+            });
+        };
+        place(a, { 0, 1 });
+        place(b, { 1, 1 });
+        place(c, { 1, 0 });
+        place(d, { 0, 0 });
+        out.indices.insert(out.indices.end(), { base, base + 1, base + 2, base, base + 2, base + 3 });
+    };
+
+    face({ -1, -1, 1 }, { 1, -1, 1 }, { 1, 1, 1 }, { -1, 1, 1 }, n[0]);
+    face({ 1, -1, -1 }, { -1, -1, -1 }, { -1, 1, -1 }, { 1, 1, -1 }, n[1]);
+    face({ 1, -1, 1 }, { 1, -1, -1 }, { 1, 1, -1 }, { 1, 1, 1 }, n[2]);
+    face({ -1, -1, -1 }, { -1, -1, 1 }, { -1, 1, 1 }, { -1, 1, -1 }, n[3]);
+    face({ -1, 1, 1 }, { 1, 1, 1 }, { 1, 1, -1 }, { -1, 1, -1 }, n[4]);
+    face({ -1, -1, -1 }, { 1, -1, -1 }, { 1, -1, 1 }, { -1, -1, 1 }, n[5]);
+
+    return out;
+}
+
 } // namespace MayaFlux::Kinesis
