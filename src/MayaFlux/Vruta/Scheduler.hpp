@@ -143,6 +143,19 @@ public:
     void register_token_processor(ProcessingToken token, token_processing_func_t processor);
 
     /**
+     * @brief Register an externally-owned clock as the authoritative source for a token domain.
+     *
+     * Replaces any clock ensure_domain created for this token. The caller retains
+     * shared ownership; the scheduler reads position and rate from it but does not
+     * tick it. Intended for subsystems that self-drive their own clock (e.g.
+     * GraphicsSubsystem and its FrameClock).
+     *
+     * @param token  Processing domain whose clock is being replaced.
+     * @param clock  Externally-owned clock instance.
+     */
+    void register_clock(ProcessingToken token, std::shared_ptr<IClock> clock);
+
+    /**
      * @brief Convert seconds to processing units for a specific domain
      * @param seconds Time in seconds
      * @param token Processing domain (default: audio)
@@ -429,7 +442,7 @@ private:
      * Each domain maintains its own clock for precise timing.
      * Audio uses SampleClock, graphics will use FrameClock, etc.
      */
-    std::unordered_map<ProcessingToken, std::unique_ptr<IClock>> m_token_clocks;
+    std::unordered_map<ProcessingToken, std::shared_ptr<IClock>> m_token_clocks;
 
     /**
      * @brief Custom processors for specific domains

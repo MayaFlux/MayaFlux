@@ -15,6 +15,7 @@ class VKBuffer;
 namespace MayaFlux::Vruta {
 class TaskScheduler;
 class Routine;
+class IClock;
 
 using token_processing_func_t = std::function<void(const std::vector<std::shared_ptr<Routine>>&, uint64_t)>;
 }
@@ -188,6 +189,9 @@ public:
 
     /** @brief Register custom processing function for token domain */
     void register_token_processor(Vruta::token_processing_func_t processor);
+
+    /** @brief Register an externally-owned clock for a token domain. */
+    void register_clock(Vruta::ProcessingToken token, std::shared_ptr<Vruta::IClock> clock);
 
     /** @brief Process all tasks in token domain */
     void process(uint64_t processing_units);

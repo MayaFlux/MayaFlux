@@ -179,6 +179,12 @@ void TaskScheduler::register_token_processor(ProcessingToken token, token_proces
     m_token_processors[token] = std::move(processor);
 }
 
+void TaskScheduler::register_clock(ProcessingToken token, std::shared_ptr<IClock> clock)
+{
+    ensure_domain(token);
+    m_token_clocks[token] = std::move(clock);
+}
+
 const IClock& TaskScheduler::get_clock(ProcessingToken token) const
 {
     auto clock_it = m_token_clocks.find(token);
@@ -284,12 +290,12 @@ void TaskScheduler::ensure_domain(ProcessingToken token, unsigned int rate)
 
         switch (token) {
         case ProcessingToken::FRAME_ACCURATE:
-            m_token_clocks[token] = std::make_unique<FrameClock>(domain_rate);
+            m_token_clocks[token] = std::make_shared<FrameClock>(domain_rate);
             break;
         case ProcessingToken::SAMPLE_ACCURATE:
         case ProcessingToken::ON_DEMAND:
         default:
-            m_token_clocks[token] = std::make_unique<SampleClock>(domain_rate);
+            m_token_clocks[token] = std::make_shared<SampleClock>(domain_rate);
             break;
         }
     }

@@ -150,6 +150,11 @@ void TaskSchedulerHandle::register_token_processor(Vruta::token_processing_func_
     m_scheduler->register_token_processor(m_token, std::move(processor));
 }
 
+void TaskSchedulerHandle::register_clock(Vruta::ProcessingToken token, std::shared_ptr<Vruta::IClock> clock)
+{
+    m_scheduler->register_clock(token, std::move(clock));
+}
+
 void TaskSchedulerHandle::process(uint64_t processing_units)
 {
     m_scheduler->process_token(m_token, processing_units);

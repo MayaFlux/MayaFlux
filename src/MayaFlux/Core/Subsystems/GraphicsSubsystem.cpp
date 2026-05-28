@@ -62,6 +62,8 @@ void GraphicsSubsystem::initialize(SubsystemProcessingHandle& handle)
         m_frame_clock->set_target_fps(m_graphics_config.target_frame_rate);
     }
 
+    handle.tasks.register_clock(Vruta::ProcessingToken::FRAME_ACCURATE, m_frame_clock);
+
     initialize_graphics_portal();
 
     Portal::Text::initialize(m_graphics_config.text_config);
