@@ -1,4 +1,5 @@
 #include "GeometryPrimitives.hpp"
+#include "MayaFlux/Kakshya/NDData/MeshInsertion.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -745,46 +746,402 @@ std::vector<Kakshya::Vertex> cuboid_wireframe(
     };
 }
 
-BoxGeometry generate_box(
+Kakshya::MeshData generate_box(
     const glm::vec3& center,
     const glm::vec3& half_extents,
-    uint32_t /*subdivisions*/)
+    uint32_t subdivisions)
 {
-    BoxGeometry out;
+    const uint32_t n = std::max(subdivisions, 1U);
 
-    const std::array<glm::vec3, 6> n = { {
-        { 0, 0, 1 },
-        { 0, 0, -1 },
-        { 1, 0, 0 },
-        { -1, 0, 0 },
-        { 0, 1, 0 },
-        { 0, -1, 0 },
-    } };
+    std::vector<Kakshya::MeshVertex> verts;
+    std::vector<uint32_t> indices;
+    verts.reserve(uint32_t(6 * (n + 1) * (n + 1)));
+    indices.reserve(uint32_t(6 * n * n * 6));
 
-    auto face = [&](glm::vec3 a, glm::vec3 b, glm::vec3 c, glm::vec3 d, glm::vec3 nrm) {
-        const auto base = static_cast<uint32_t>(out.vertices.size());
-        auto place = [&](glm::vec3 corner, glm::vec2 uv) {
-            out.vertices.push_back({
-                .position = center + corner * half_extents,
-                .uv = uv,
-                .normal = nrm,
-            });
-        };
-        place(a, { 0, 1 });
-        place(b, { 1, 1 });
-        place(c, { 1, 0 });
-        place(d, { 0, 0 });
-        out.indices.insert(out.indices.end(), { base, base + 1, base + 2, base, base + 2, base + 3 });
+    struct FaceDef {
+        glm::vec3 origin;
+        glm::vec3 u_axis;
+        glm::vec3 v_axis;
+        glm::vec3 normal;
     };
 
-    face({ -1, -1, 1 }, { 1, -1, 1 }, { 1, 1, 1 }, { -1, 1, 1 }, n[0]);
-    face({ 1, -1, -1 }, { -1, -1, -1 }, { -1, 1, -1 }, { 1, 1, -1 }, n[1]);
-    face({ 1, -1, 1 }, { 1, -1, -1 }, { 1, 1, -1 }, { 1, 1, 1 }, n[2]);
-    face({ -1, -1, -1 }, { -1, -1, 1 }, { -1, 1, 1 }, { -1, 1, -1 }, n[3]);
-    face({ -1, 1, 1 }, { 1, 1, 1 }, { 1, 1, -1 }, { -1, 1, -1 }, n[4]);
-    face({ -1, -1, -1 }, { 1, -1, -1 }, { 1, -1, 1 }, { -1, -1, 1 }, n[5]);
+    const std::array<FaceDef, 6> faces = { {
+        { .origin = { -1, -1, 1 }, .u_axis = { 2, 0, 0 }, .v_axis = { 0, 2, 0 }, .normal = { 0, 0, 1 } },
+        { .origin = { 1, -1, -1 }, .u_axis = { -2, 0, 0 }, .v_axis = { 0, 2, 0 }, .normal = { 0, 0, -1 } },
+        { .origin = { 1, -1, 1 }, .u_axis = { 0, 0, -2 }, .v_axis = { 0, 2, 0 }, .normal = { 1, 0, 0 } },
+        { .origin = { -1, -1, -1 }, .u_axis = { 0, 0, 2 }, .v_axis = { 0, 2, 0 }, .normal = { -1, 0, 0 } },
+        { .origin = { -1, 1, 1 }, .u_axis = { 2, 0, 0 }, .v_axis = { 0, 0, -2 }, .normal = { 0, 1, 0 } },
+        { .origin = { -1, -1, -1 }, .u_axis = { 2, 0, 0 }, .v_axis = { 0, 0, 2 }, .normal = { 0, -1, 0 } },
+    } };
 
-    return out;
+    for (const auto& f : faces) {
+        const auto base = static_cast<uint32_t>(verts.size());
+
+        for (uint32_t row = 0; row <= n; ++row) {
+            const float fv = static_cast<float>(row) / static_cast<float>(n);
+            for (uint32_t col = 0; col <= n; ++col) {
+                const float fu = static_cast<float>(col) / static_cast<float>(n);
+                const glm::vec3 p = f.origin + f.u_axis * fu + f.v_axis * fv;
+                verts.push_back({
+                    .position = center + p * half_extents,
+                    .uv = { fu, 1.0F - fv },
+                    .normal = f.normal,
+                });
+            }
+        }
+
+        const uint32_t stride = n + 1;
+        for (uint32_t row = 0; row < n; ++row) {
+            for (uint32_t col = 0; col < n; ++col) {
+                const uint32_t a = base + row * stride + col;
+                const uint32_t b = a + 1;
+                const uint32_t c = a + stride;
+                const uint32_t d = c + 1;
+                indices.insert(indices.end(), { a, b, d, a, d, c });
+            }
+        }
+    }
+
+    auto data = Kakshya::MeshData::empty();
+    Kakshya::MeshInsertion ins(data.vertex_variant, data.index_variant);
+    ins.insert_flat(
+        std::span<const uint8_t>(reinterpret_cast<const uint8_t*>(verts.data()),
+            verts.size() * sizeof(Kakshya::MeshVertex)),
+        std::span<const uint32_t>(indices),
+        Kakshya::VertexLayout::for_meshes(sizeof(Kakshya::MeshVertex)));
+    data.layout = Kakshya::VertexLayout::for_meshes(sizeof(Kakshya::MeshVertex));
+    return data;
+}
+
+Kakshya::MeshData generate_grid(
+    const glm::vec3& center,
+    float extent_x,
+    float extent_z,
+    uint32_t cols,
+    uint32_t rows,
+    const glm::vec3& normal)
+{
+    cols = std::max(cols, 1U);
+    rows = std::max(rows, 1U);
+
+    const glm::vec3 n = glm::normalize(normal);
+    glm::vec3 u;
+    if (std::abs(n.y) < 0.9F) {
+        u = glm::normalize(glm::cross(n, glm::vec3(0.0F, 1.0F, 0.0F)));
+    } else {
+        u = glm::normalize(glm::cross(n, glm::vec3(1.0F, 0.0F, 0.0F)));
+    }
+    const glm::vec3 v = glm::normalize(glm::cross(u, n));
+
+    const float half_x = extent_x * 0.5F;
+    const float half_z = extent_z * 0.5F;
+
+    std::vector<Kakshya::MeshVertex> verts;
+    std::vector<uint32_t> indices;
+    verts.reserve(uint32_t(2 * (cols + 1) * (rows + 1)));
+    indices.reserve(uint32_t(2 * cols * rows * 6));
+
+    for (uint32_t row = 0; row <= rows; ++row) {
+        const float fv = static_cast<float>(row) / static_cast<float>(rows);
+        for (uint32_t col = 0; col <= cols; ++col) {
+            const float fu = static_cast<float>(col) / static_cast<float>(cols);
+            const glm::vec3 p = center
+                + u * glm::mix(-half_x, half_x, fu)
+                + v * glm::mix(-half_z, half_z, fv);
+            verts.push_back({
+                .position = p,
+                .uv = { fu, 1.0F - fv },
+                .normal = n,
+            });
+        }
+    }
+
+    const uint32_t stride = cols + 1;
+    const auto vert_count = static_cast<uint32_t>(verts.size());
+
+    for (uint32_t row = 0; row < rows; ++row) {
+        for (uint32_t col = 0; col < cols; ++col) {
+            const uint32_t a = row * stride + col;
+            const uint32_t b = a + 1;
+            const uint32_t c = a + stride;
+            const uint32_t d = c + 1;
+            indices.insert(indices.end(), { a, b, c, b, d, c });
+        }
+    }
+
+    for (uint32_t row = 0; row <= rows; ++row) {
+        const float fv = static_cast<float>(row) / static_cast<float>(rows);
+        for (uint32_t col = 0; col <= cols; ++col) {
+            const float fu = static_cast<float>(col) / static_cast<float>(cols);
+            const glm::vec3 p = center
+                + u * glm::mix(-half_x, half_x, fu)
+                + v * glm::mix(-half_z, half_z, fv);
+            verts.push_back({
+                .position = p,
+                .uv = { fu, 1.0F - fv },
+                .normal = -n,
+            });
+        }
+    }
+
+    for (uint32_t row = 0; row < rows; ++row) {
+        for (uint32_t col = 0; col < cols; ++col) {
+            const uint32_t a = vert_count + row * stride + col;
+            const uint32_t b = a + 1;
+            const uint32_t c = a + stride;
+            const uint32_t d = c + 1;
+            indices.insert(indices.end(), { a, c, b, b, c, d });
+        }
+    }
+
+    auto data = Kakshya::MeshData::empty();
+    Kakshya::MeshInsertion ins(data.vertex_variant, data.index_variant);
+    ins.insert_flat(
+        std::span<const uint8_t>(reinterpret_cast<const uint8_t*>(verts.data()),
+            verts.size() * sizeof(Kakshya::MeshVertex)),
+        std::span<const uint32_t>(indices),
+        Kakshya::VertexLayout::for_meshes(sizeof(Kakshya::MeshVertex)));
+    data.layout = Kakshya::VertexLayout::for_meshes(sizeof(Kakshya::MeshVertex));
+    data.layout.vertex_count = static_cast<uint32_t>(verts.size());
+    return data;
+}
+
+Kakshya::MeshData generate_parametric_surface(
+    const std::function<glm::vec3(float, float)>& fn,
+    uint32_t u_segs,
+    uint32_t v_segs)
+{
+    u_segs = std::max(u_segs, 1U);
+    v_segs = std::max(v_segs, 1U);
+
+    std::vector<Kakshya::MeshVertex> verts;
+    std::vector<uint32_t> indices;
+    verts.reserve(uint32_t((u_segs + 1) * (v_segs + 1)));
+    indices.reserve(uint32_t(u_segs * v_segs * 6));
+
+    constexpr float eps = 1e-4F;
+
+    for (uint32_t row = 0; row <= v_segs; ++row) {
+        const float fv = static_cast<float>(row) / static_cast<float>(v_segs);
+        for (uint32_t col = 0; col <= u_segs; ++col) {
+            const float fu = static_cast<float>(col) / static_cast<float>(u_segs);
+
+            const glm::vec3 p = fn(fu, fv);
+            const glm::vec3 pu = fn(fu + eps, fv) - fn(fu - eps, fv);
+            const glm::vec3 pv = fn(fu, fv + eps) - fn(fu, fv - eps);
+            const glm::vec3 n = glm::normalize(glm::cross(pu, pv));
+
+            verts.push_back({
+                .position = p,
+                .uv = { fu, 1.0F - fv },
+                .normal = n,
+            });
+        }
+    }
+
+    const uint32_t stride = u_segs + 1;
+    for (uint32_t row = 0; row < v_segs; ++row) {
+        for (uint32_t col = 0; col < u_segs; ++col) {
+            const uint32_t a = row * stride + col;
+            const uint32_t b = a + 1;
+            const uint32_t c = a + stride;
+            const uint32_t d = c + 1;
+            indices.insert(indices.end(), { a, b, c, b, d, c });
+        }
+    }
+
+    auto data = Kakshya::MeshData::empty();
+    Kakshya::MeshInsertion ins(data.vertex_variant, data.index_variant);
+    ins.insert_flat(
+        std::span<const uint8_t>(reinterpret_cast<const uint8_t*>(verts.data()),
+            verts.size() * sizeof(Kakshya::MeshVertex)),
+        std::span<const uint32_t>(indices),
+        Kakshya::VertexLayout::for_meshes(sizeof(Kakshya::MeshVertex)));
+    data.layout = Kakshya::VertexLayout::for_meshes(sizeof(Kakshya::MeshVertex));
+    data.layout.vertex_count = static_cast<uint32_t>(verts.size());
+
+    return data;
+}
+
+Kakshya::MeshData generate_tube(
+    std::span<const glm::vec3> path,
+    const std::function<float(float)>& radius_fn,
+    uint32_t radial_segments,
+    bool capped)
+{
+    const uint32_t seg = std::max(radial_segments, 3U);
+    const auto n_pts = static_cast<uint32_t>(std::max<size_t>(path.size(), 2));
+
+    std::vector<Kakshya::MeshVertex> verts;
+    std::vector<uint32_t> indices;
+    verts.reserve(uint32_t(n_pts * (seg + 1) + (capped ? 2 * (seg + 1) : 0)));
+    indices.reserve(uint32_t((n_pts - 1) * seg * 6 + (capped ? 2 * seg * 3 : 0)));
+
+    glm::vec3 tangent = glm::normalize(path[1] - path[0]);
+    glm::vec3 u_axis;
+    if (std::abs(tangent.y) < 0.9F) {
+        u_axis = glm::normalize(glm::cross(tangent, glm::vec3(0.0F, 1.0F, 0.0F)));
+    } else {
+        u_axis = glm::normalize(glm::cross(tangent, glm::vec3(1.0F, 0.0F, 0.0F)));
+    }
+
+    glm::vec3 v_axis = glm::normalize(glm::cross(tangent, u_axis));
+
+    const float total_len = [&]() {
+        float l = 0.0F;
+        for (uint32_t i = 1; i < n_pts; ++i)
+            l += glm::distance(path[i], path[i - 1]);
+        return l;
+    }();
+
+    float arc = 0.0F;
+
+    for (uint32_t pi = 0; pi < n_pts; ++pi) {
+        if (pi > 0) {
+            const glm::vec3 new_tan = (pi + 1 < n_pts)
+                ? glm::normalize(path[pi + 1] - path[pi - 1])
+                : glm::normalize(path[pi] - path[pi - 1]);
+            const glm::vec3 axis = glm::cross(tangent, new_tan);
+            const float axis_len = glm::length(axis);
+            if (axis_len > 1e-6F) {
+                const float angle = std::asin(glm::clamp(axis_len, 0.0F, 1.0F));
+                const glm::mat4 rot = glm::rotate(glm::mat4(1.0F), angle,
+                    glm::normalize(axis));
+                u_axis = glm::vec3(rot * glm::vec4(u_axis, 0.0F));
+                v_axis = glm::vec3(rot * glm::vec4(v_axis, 0.0F));
+                tangent = new_tan;
+            }
+            arc += glm::distance(path[pi], path[pi - 1]);
+        }
+
+        const float t = (total_len > 1e-6F) ? (arc / total_len) : 0.0F;
+        const float r = radius_fn(t);
+        const float angle_step = glm::two_pi<float>() / static_cast<float>(seg);
+
+        for (uint32_t s = 0; s <= seg; ++s) {
+            const float a = static_cast<float>(s) * angle_step;
+            const float ca = std::cos(a);
+            const float sa = std::sin(a);
+            const glm::vec3 radial = ca * u_axis + sa * v_axis;
+            verts.push_back({
+                .position = path[pi] + radial * r,
+                .uv = { static_cast<float>(s) / static_cast<float>(seg), t },
+                .normal = radial,
+            });
+        }
+    }
+
+    const uint32_t ring = seg + 1;
+    for (uint32_t pi = 0; pi < n_pts - 1; ++pi) {
+        for (uint32_t s = 0; s < seg; ++s) {
+            const uint32_t a = pi * ring + s;
+            const uint32_t b = a + 1;
+            const uint32_t c = a + ring;
+            const uint32_t d = c + 1;
+            indices.insert(indices.end(), { a, b, c, b, d, c });
+        }
+    }
+
+    if (capped) {
+        for (int end = 0; end < 2; ++end) {
+            const uint32_t ring_base = (end == 0) ? 0 : (n_pts - 1) * ring;
+            const float t_cap = (end == 0) ? 0.0F : 1.0F;
+            const glm::vec3 cap_nrm = (end == 0) ? -tangent : tangent;
+            const glm::vec3 cap_pos = path[(end == 0) ? 0 : n_pts - 1];
+
+            const auto centre_idx = static_cast<uint32_t>(verts.size());
+            verts.push_back({
+                .position = cap_pos,
+                .uv = { 0.5F, t_cap },
+                .normal = cap_nrm,
+            });
+
+            for (uint32_t s = 0; s < seg; ++s) {
+                const uint32_t a = ring_base + s;
+                const uint32_t b = ring_base + s + 1;
+                if (end == 0) {
+                    indices.insert(indices.end(), { centre_idx, b, a });
+                } else {
+                    indices.insert(indices.end(), { centre_idx, a, b });
+                }
+            }
+        }
+    }
+
+    auto data = Kakshya::MeshData::empty();
+    Kakshya::MeshInsertion ins(data.vertex_variant, data.index_variant);
+    ins.insert_flat(
+        std::span<const uint8_t>(reinterpret_cast<const uint8_t*>(verts.data()),
+            verts.size() * sizeof(Kakshya::MeshVertex)),
+        std::span<const uint32_t>(indices),
+        Kakshya::VertexLayout::for_meshes(sizeof(Kakshya::MeshVertex)));
+    data.layout = Kakshya::VertexLayout::for_meshes(sizeof(Kakshya::MeshVertex));
+    data.layout.vertex_count = static_cast<uint32_t>(verts.size());
+    return data;
+}
+
+Kakshya::MeshData generate_revolution(
+    const std::function<glm::vec2(float)>& profile_fn,
+    uint32_t profile_segs,
+    uint32_t radial_segs,
+    float sweep_radians)
+{
+    profile_segs = std::max(profile_segs, 2U);
+    radial_segs = std::max(radial_segs, 3U);
+
+    std::vector<Kakshya::MeshVertex> verts;
+    std::vector<uint32_t> indices;
+    verts.reserve(size_t((profile_segs + 1)) * (radial_segs + 1));
+    indices.reserve(uint32_t(profile_segs * radial_segs * 6));
+
+    for (uint32_t pi = 0; pi <= profile_segs; ++pi) {
+        const float t = static_cast<float>(pi) / static_cast<float>(profile_segs);
+        const glm::vec2 p = profile_fn(t); // p.x = radius from Y axis, p.y = height
+
+        for (uint32_t ri = 0; ri <= radial_segs; ++ri) {
+            const float u = static_cast<float>(ri) / static_cast<float>(radial_segs);
+            const float angle = u * sweep_radians;
+            const float ca = std::cos(angle);
+            const float sa = std::sin(angle);
+
+            const glm::vec3 pos { p.x * ca, p.y, p.x * sa };
+
+            constexpr float eps = 1e-4F;
+            const glm::vec2 dp = profile_fn(glm::clamp(t + eps, 0.0F, 1.0F))
+                - profile_fn(glm::clamp(t - eps, 0.0F, 1.0F));
+            const glm::vec3 profile_tan { dp.x * ca, dp.y, dp.x * sa };
+            const glm::vec3 radial { ca, 0.0F, sa };
+            const glm::vec3 nrm = glm::normalize(glm::cross(profile_tan, radial));
+
+            verts.push_back({
+                .position = pos,
+                .uv = { u, 1.0F - t },
+                .normal = nrm,
+            });
+        }
+    }
+
+    const uint32_t stride = radial_segs + 1;
+    for (uint32_t pi = 0; pi < profile_segs; ++pi) {
+        for (uint32_t ri = 0; ri < radial_segs; ++ri) {
+            const uint32_t a = pi * stride + ri;
+            const uint32_t b = a + 1;
+            const uint32_t c = a + stride;
+            const uint32_t d = c + 1;
+            indices.insert(indices.end(), { a, b, c, b, d, c });
+        }
+    }
+
+    auto data = Kakshya::MeshData::empty();
+    Kakshya::MeshInsertion ins(data.vertex_variant, data.index_variant);
+    ins.insert_flat(
+        std::span<const uint8_t>(reinterpret_cast<const uint8_t*>(verts.data()),
+            verts.size() * sizeof(Kakshya::MeshVertex)),
+        std::span<const uint32_t>(indices),
+        Kakshya::VertexLayout::for_meshes(sizeof(Kakshya::MeshVertex)));
+    data.layout = Kakshya::VertexLayout::for_meshes(sizeof(Kakshya::MeshVertex));
+    data.layout.vertex_count = static_cast<uint32_t>(verts.size());
+    return data;
 }
 
 } // namespace MayaFlux::Kinesis

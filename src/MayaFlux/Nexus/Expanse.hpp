@@ -1,7 +1,5 @@
 #pragma once
 
-#include "MayaFlux/Kinesis/Spatial/SpatialIndex.hpp"
-
 namespace MayaFlux::Nexus {
 
 /**
@@ -75,11 +73,39 @@ public:
     /** @brief Set or replace the predicate identifier. */
     void set_fn_name(std::string name) { m_fn_name = std::move(name); }
 
-    /** @brief Entity ids currently within the Expanse, as of the last commit. */
-    [[nodiscard]] const std::unordered_set<uint32_t>& occupants() const { return m_occupants; }
-
     /** @brief Stable id assigned by Fabric on registration. */
     [[nodiscard]] uint32_t id() const { return m_id; }
+
+    /** @brief Entity ids inside this Expanse for @p fabric_id, or nullptr if that fabric has no occupants. */
+    [[nodiscard]] const std::unordered_set<uint32_t>* occupants(uint32_t fabric_id) const
+    {
+        auto it = m_occupants_by_fabric.find(fabric_id);
+        return it != m_occupants_by_fabric.end() ? &it->second : nullptr;
+    }
+
+    /** @brief All fabric ids that currently have at least one occupant inside this Expanse. */
+    [[nodiscard]] std::vector<uint32_t> occupied_fabrics() const
+    {
+        std::vector<uint32_t> result;
+        result.reserve(m_occupants_by_fabric.size());
+        for (const auto& [fid, _] : m_occupants_by_fabric)
+            result.push_back(fid);
+        return result;
+    }
+
+    /**
+     * @brief Evaluate a spatial snapshot from one Fabric against this Expanse.
+     *
+     * Runs the containment predicate against each position in @p snapshot,
+     * diffs the result against the previous occupant set for @p fabric_id,
+     * fires @c on_enter / @c on_exit for the difference, and updates the
+     * stored set. Each Fabric maintains independent occupant state.
+     *
+     * @param fabric_id  Stable id of the calling Fabric.
+     * @param snapshot   All indexed positions from that Fabric's spatial index.
+     */
+    void evaluate(uint32_t fabric_id,
+        std::span<const std::pair<uint32_t, glm::vec3>> snapshot);
 
 private:
     std::string m_fn_name;
@@ -88,7 +114,7 @@ private:
     CrossingFn m_on_exit;
 
     uint32_t m_id { 0 };
-    std::unordered_set<uint32_t> m_occupants;
+    std::unordered_map<uint32_t, std::unordered_set<uint32_t>> m_occupants_by_fabric;
 
     friend class Fabric;
 };

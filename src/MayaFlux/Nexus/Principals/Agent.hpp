@@ -235,32 +235,37 @@ public:
     [[nodiscard]] const std::optional<float>& size() const { return m_size; }
 
     /**
-     * @brief Set the render processor to target for GPU-side influence delivery.
+     * @brief Add a render processor to receive GPU-side influence data.
      *
-     * Creates a UBO matching the InfluenceUBO layout, registers a binding
-     * named "u_influence" at set=1 binding=0 on the target processor,
-     * and binds the UBO. On each subsequent invoke(), the context fields
-     * are packed into the UBO automatically.
+     * Allocates the shared influence UBO on the first call. Subsequent calls
+     * bind the same UBO to the new processor: all targets receive identical
+     * context data each commit. Adding the same processor twice is a no-op.
      *
-     * @param proc Target render processor. Must outlive this Emitter or
-     *             be cleared via clear_influence_target() first.
+     * @param proc Render processor to target. Ignored if null.
      */
-    void set_influence_target(std::shared_ptr<Buffers::RenderProcessor> proc);
+    void add_influence_target(std::shared_ptr<Buffers::RenderProcessor> proc);
 
     /**
-     * @brief Disconnect from the current influence target.
+     * @brief Remove a single influence target and unbind its UBO.
      *
-     * Unbinds the "u_influence" descriptor from the target processor
-     * and releases the UBO.
+     * If this was the last target the UBO is freed.
+     *
+     * @param proc Processor previously passed to add_influence_target().
      */
-    void clear_influence_target();
+    void remove_influence_target(const std::shared_ptr<Buffers::RenderProcessor>& proc);
 
     /**
-     * @brief Return the current influence target, if set.
+     * @brief Unbind and remove all influence targets and free the UBO.
      */
-    [[nodiscard]] std::weak_ptr<Buffers::RenderProcessor> influence_target() const
+    void clear_influence_targets();
+
+    /**
+     * @brief All render processors currently receiving influence data.
+     */
+    [[nodiscard]] const std::vector<std::shared_ptr<Buffers::RenderProcessor>>&
+    influence_targets() const
     {
-        return m_influence_target;
+        return m_influence_targets;
     }
 
     /**
@@ -296,7 +301,7 @@ private:
     float m_intensity { 1.0F };
     float m_radius { 1.0F };
 
-    std::shared_ptr<Buffers::RenderProcessor> m_influence_target;
+    std::vector<std::shared_ptr<Buffers::RenderProcessor>> m_influence_targets;
     std::shared_ptr<Buffers::VKBuffer> m_influence_ubo;
 
     float m_query_radius;

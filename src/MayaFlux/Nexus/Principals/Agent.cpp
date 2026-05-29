@@ -6,36 +6,53 @@
 
 namespace MayaFlux::Nexus {
 
-void Agent::set_influence_target(std::shared_ptr<Buffers::RenderProcessor> proc)
+void Agent::add_influence_target(std::shared_ptr<Buffers::RenderProcessor> proc)
 {
     if (!proc) {
         MF_ERROR(Journal::Component::Nexus, Journal::Context::Init,
-            "Cannot set null influence target");
+            "Cannot add null influence target");
         return;
     }
 
-    if (m_influence_ubo) {
-        clear_influence_target();
+    if (std::ranges::find(m_influence_targets, proc) != m_influence_targets.end()) {
+        return;
     }
 
-    m_influence_ubo = std::make_shared<Buffers::VKBuffer>(
-        sizeof(InfluenceUBO),
-        Buffers::VKBuffer::Usage::UNIFORM,
-        Kakshya::DataModality::UNKNOWN);
+    if (!m_influence_ubo) {
+        m_influence_ubo = std::make_shared<Buffers::VKBuffer>(
+            sizeof(InfluenceUBO),
+            Buffers::VKBuffer::Usage::UNIFORM,
+            Kakshya::DataModality::UNKNOWN);
+    }
 
     proc->add_binding("u_influence",
         Buffers::ShaderBinding { 1, 0, vk::DescriptorType::eUniformBuffer });
 
     proc->bind_buffer("u_influence", m_influence_ubo);
 
-    m_influence_target = std::move(proc);
+    m_influence_targets.push_back(std::move(proc));
 }
 
-void Agent::clear_influence_target()
+void Agent::remove_influence_target(const std::shared_ptr<Buffers::RenderProcessor>& proc)
 {
-    m_influence_target->unbind_buffer("u_influence");
+    auto it = std::ranges::find(m_influence_targets, proc);
+    if (it == m_influence_targets.end())
+        return;
+
+    (*it)->unbind_buffer("u_influence");
+    m_influence_targets.erase(it);
+
+    if (m_influence_targets.empty())
+        m_influence_ubo.reset();
+}
+
+void Agent::clear_influence_targets()
+{
+    for (const auto& proc : m_influence_targets)
+        proc->unbind_buffer("u_influence");
+
+    m_influence_targets.clear();
     m_influence_ubo.reset();
-    m_influence_target.reset();
 }
 
 void Agent::upload_influence_ubo(const InfluenceContext& ctx) const

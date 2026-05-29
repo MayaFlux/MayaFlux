@@ -1,6 +1,7 @@
 #pragma once
 
 #include "GeometryWriterNode.hpp"
+#include "MayaFlux/Kakshya/NDData/MeshData.hpp"
 #include "VertexSpec.hpp"
 
 namespace MayaFlux::Nodes::GpuSync {
@@ -19,6 +20,13 @@ namespace MayaFlux::Nodes::GpuSync {
 class MAYAFLUX_API MeshWriterNode : public GeometryWriterNode {
 public:
     explicit MeshWriterNode(size_t initial_vertex_capacity = 1024);
+
+    /**
+     * @brief Replace all vertex and index data from a MeshData owner.
+     * @param data Source mesh; vertex_variant must hold vector<uint8_t>,
+     *             index_variant must hold vector<uint32_t>.
+     */
+    void set_mesh(const Kakshya::MeshData& data);
 
     /**
      * @brief Replace all vertex and index data atomically.

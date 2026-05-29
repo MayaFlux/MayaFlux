@@ -71,6 +71,16 @@ public:
      */
     void set_name(std::string name) { m_name = std::move(name); }
 
+    /**
+     * @brief Stable id for this Fabric, assigned by Tapestry at construction.
+     */
+    [[nodiscard]] uint32_t id() const { return m_fabric_id; }
+
+    /**
+     * @brief Set or replace the Fabric's id. Typically called by Tapestry.
+     */
+    void set_id(uint32_t id) { m_fabric_id = id; }
+
     // =========================================================================
     // Registration
     // =========================================================================
@@ -244,7 +254,10 @@ private:
     std::unique_ptr<Kinesis::SpatialIndex3D> m_index;
     std::unordered_map<uint32_t, Registration> m_registrations;
     std::unordered_map<uint32_t, std::shared_ptr<Expanse>> m_expanses;
+
+    uint32_t m_fabric_id { 0 };
     uint32_t m_next_id { 1 };
+    uint32_t m_next_expanse_id { 1 };
 
     std::unordered_map<std::string, std::shared_ptr<Emitter::InfluenceFn>> m_influence_fns;
     std::unordered_map<std::string, std::shared_ptr<Sensor::PerceptionFn>> m_perception_fns;

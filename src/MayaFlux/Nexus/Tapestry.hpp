@@ -77,6 +77,33 @@ public:
     [[nodiscard]] const std::vector<std::shared_ptr<Fabric>>& all_fabrics() const;
 
     // =========================================================================
+    // Expanse
+    // =========================================================================
+
+    /**
+     * @brief Create and register a named Expanse.
+     * @return Shared pointer to the new Expanse, for passing to Fabric::add_expanse.
+     */
+    [[nodiscard]] std::shared_ptr<Expanse> create_expanse(
+        std::string name,
+        Expanse::ContainsFn contains,
+        Expanse::CrossingFn on_enter,
+        Expanse::CrossingFn on_exit);
+
+    /**
+     * @brief Look up a named Expanse.
+     * @return The Expanse, or nullptr if name is not registered.
+     */
+    [[nodiscard]] std::shared_ptr<Expanse> get_expanse(std::string_view name) const;
+
+    /**
+     * @brief Remove Tapestry's owning reference to a named Expanse.
+     *
+     * Fabrics holding the shared_ptr keep it alive and functional.
+     */
+    void remove_expanse(std::string_view name);
+
+    // =========================================================================
     // Commit
     // =========================================================================
 
@@ -91,6 +118,9 @@ private:
 
     std::vector<std::shared_ptr<Fabric>> m_fabrics;
     std::unordered_map<std::string, std::weak_ptr<Fabric>> m_named_fabrics;
+    std::unordered_map<std::string, std::shared_ptr<Expanse>> m_expanses;
+
+    uint32_t m_next_id { 1 };
 };
 
 } // namespace MayaFlux::Nexus
