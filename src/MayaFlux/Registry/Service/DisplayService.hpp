@@ -159,6 +159,22 @@ struct MAYAFLUX_API DisplayService {
      * @return vk::Format cast to uint32_t, or eUndefined if no depth image
      */
     std::function<uint32_t(const std::shared_ptr<void>&)> get_depth_format;
+
+    /**
+     * @brief Returns the last completed full-surface pixel readback for a window.
+     *
+     * Published by the per-window readback thread once a capture copy
+     * completes. Lock-free: the readback thread stores the buffer with
+     * release, callers load with acquire via an atomic shared_ptr, so the
+     * pointer is safe to read from any thread. Returns nullptr if no frame
+     * has completed yet or capture is unavailable on this surface.
+     *
+     * Raw bytes in swapchain pixel format. Width and height match the
+     * current swapchain extent from get_swapchain_extent().
+     */
+    std::function<std::shared_ptr<std::vector<uint8_t>>(
+        const std::shared_ptr<void>& window_handle)>
+        get_last_frame;
 };
 
 } // namespace MayaFlux::Registry::Services

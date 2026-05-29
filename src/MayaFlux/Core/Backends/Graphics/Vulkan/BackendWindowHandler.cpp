@@ -319,6 +319,14 @@ void BackendWindowHandler::setup_backend_service(const std::shared_ptr<Registry:
         }
         return static_cast<uint32_t>(ctx->depth_image->get_format());
     };
+
+    display_service->get_last_frame = [this](const std::shared_ptr<void>& window_ptr)
+        -> std::shared_ptr<std::vector<uint8_t>> {
+        auto* ctx = find_window_context(std::static_pointer_cast<Window>(window_ptr));
+        if (!ctx || !ctx->capture)
+            return nullptr;
+        return ctx->capture->last_frame.load(std::memory_order_acquire);
+    };
 }
 
 WindowRenderContext* BackendWindowHandler::find_window_context(const std::shared_ptr<Window>& window)
