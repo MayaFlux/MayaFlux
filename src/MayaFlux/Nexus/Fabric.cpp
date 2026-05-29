@@ -190,29 +190,8 @@ void Fabric::commit()
 
     if (!m_expanses.empty()) {
         const auto snapshot = m_index->all();
-        for (auto& [xid, expanse] : m_expanses) {
-            std::unordered_set<uint32_t> inside;
-            for (const auto& [eid, pos] : snapshot) {
-                if (expanse->m_contains && expanse->m_contains(pos)) {
-                    inside.insert(eid);
-                }
-            }
-            if (expanse->m_on_enter) {
-                for (uint32_t eid : inside) {
-                    if (!expanse->m_occupants.contains(eid)) {
-                        expanse->m_on_enter(eid);
-                    }
-                }
-            }
-            if (expanse->m_on_exit) {
-                for (uint32_t eid : expanse->m_occupants) {
-                    if (!inside.contains(eid)) {
-                        expanse->m_on_exit(eid);
-                    }
-                }
-            }
-            expanse->m_occupants = std::move(inside);
-        }
+        for (auto& [xid, expanse] : m_expanses)
+            expanse->evaluate(m_fabric_id, snapshot);
     }
 
     for (auto& [id, reg] : m_registrations) {

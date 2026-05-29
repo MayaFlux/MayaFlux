@@ -19,6 +19,7 @@ Tapestry::~Tapestry() = default;
 std::shared_ptr<Fabric> Tapestry::create_fabric(float cell_size)
 {
     auto fabric = std::make_shared<Fabric>(*m_scheduler, *m_event_manager, cell_size);
+    fabric->set_id(m_next_id++);
     m_fabrics.push_back(fabric);
     return fabric;
 }
@@ -32,6 +33,7 @@ std::shared_ptr<Fabric> Tapestry::create_fabric(std::string name, float cell_siz
     }
 
     auto fabric = std::make_shared<Fabric>(*m_scheduler, *m_event_manager, cell_size);
+    fabric->set_id(m_next_id++);
     fabric->set_name(name);
     m_fabrics.push_back(fabric);
     m_named_fabrics.emplace(std::move(name), fabric);
@@ -77,6 +79,29 @@ std::shared_ptr<Fabric> Tapestry::get_fabric(std::string_view name) const
 const std::vector<std::shared_ptr<Fabric>>& Tapestry::all_fabrics() const
 {
     return m_fabrics;
+}
+
+std::shared_ptr<Expanse> Tapestry::create_expanse(
+    std::string name,
+    Expanse::ContainsFn contains,
+    Expanse::CrossingFn on_enter,
+    Expanse::CrossingFn on_exit)
+{
+    auto expanse = std::make_shared<Expanse>(
+        std::move(contains), std::move(on_enter), std::move(on_exit));
+    m_expanses.emplace(std::move(name), expanse);
+    return expanse;
+}
+
+std::shared_ptr<Expanse> Tapestry::get_expanse(std::string_view name) const
+{
+    auto it = m_expanses.find(std::string(name));
+    return it != m_expanses.end() ? it->second : nullptr;
+}
+
+void Tapestry::remove_expanse(std::string_view name)
+{
+    m_expanses.erase(std::string(name));
 }
 
 void Tapestry::commit_all()
