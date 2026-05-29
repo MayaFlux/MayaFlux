@@ -46,14 +46,16 @@ void schedule_metro(double interval_seconds, std::function<void()> callback, std
     get_scheduler()->add_task(std::move(metronome), name, false);
 }
 
-void schedule_sequence(std::vector<std::pair<double, std::function<void()>>> seq, std::string name)
+void schedule_sequence(std::vector<std::pair<double, std::function<void()>>> seq, std::string name, Vruta::ProcessingToken token)
 {
     auto scheduler = get_scheduler();
     if (name.empty()) {
         name = "seq_" + std::to_string(scheduler->get_next_task_id());
     }
-    auto tseq = std::make_shared<Vruta::SoundRoutine>(Kriya::sequence(*get_scheduler(), std::move(seq)));
-    get_scheduler()->add_task(std::move(tseq), name, false);
+
+    auto tseq = Kriya::sequence(std::move(seq), token);
+
+    get_scheduler()->add_task(tseq, name, false);
 }
 
 Vruta::SoundRoutine create_line(float start_value, float end_value, float duration_seconds, uint32_t step_duration, bool retain)

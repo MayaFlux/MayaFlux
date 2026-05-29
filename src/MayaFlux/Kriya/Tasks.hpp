@@ -52,7 +52,8 @@ namespace Kriya {
      * @brief Creates a temporal sequence that executes callbacks at specified time offsets
      * @param scheduler The task scheduler that will manage this sequence
      * @param sequence Vector of (time_offset, callback) pairs to execute in order
-     * @return A SoundRoutine that implements the sequence behavior
+     * @param token Processing token to determine which scheduler rate to use (default: SAMPLE_ACCURATE)
+     * @return A Routine shared_ptr of type determined by the processing token of the scheduler (SoundRoutine, GraphicsRoutine, etc.)
      *
      * The sequence task enables the creation of precisely timed event chains with
      * specific temporal relationships. Each event consists of a time offset (in seconds)
@@ -66,18 +67,18 @@ namespace Kriya {
      * Example usage:
      * ```cpp
      * // Create a temporal sequence of events
-     * auto event_sequence = Kriya::sequence(*scheduler, {
+     * auto event_sequence = Kriya::sequence({
      *     {0.0, []() { trigger_event_a(); }},  // Immediate
      *     {0.5, []() { trigger_event_b(); }},  // 0.5 seconds later
      *     {1.0, []() { trigger_event_c(); }},  // 1.0 seconds later
      *     {1.5, []() { trigger_event_d(); }}   // 1.5 seconds later
      * });
-     * scheduler->add_task(std::make_shared<SoundRoutine>(std::move(event_sequence)));
+     * scheduler->add_task(event_sequence);
      * ```
      *
      * The sequence task completes after executing all events in the defined timeline.
      */
-    MAYAFLUX_API Vruta::SoundRoutine sequence(Vruta::TaskScheduler& scheduler, std::vector<std::pair<double, std::function<void()>>> sequence);
+    MAYAFLUX_API std::shared_ptr<Vruta::Routine> sequence(std::vector<std::pair<double, std::function<void()>>> sequence, Vruta::ProcessingToken token = Vruta::ProcessingToken::SAMPLE_ACCURATE);
 
     /**
      * @brief Creates a continuous interpolation generator between two values over time
@@ -120,7 +121,6 @@ namespace Kriya {
 
     /**
      * @brief Creates a generative algorithm that produces values based on a pattern function
-     * @param scheduler The task scheduler that will manage this generator
      * @param pattern_func Function that generates values based on a step index
      * @param callback Function to execute with each generated value
      * @param interval_seconds Time between pattern steps in seconds
@@ -140,7 +140,7 @@ namespace Kriya {
      * ```cpp
      * // Create a generative algorithm based on a mathematical sequence
      * std::vector<int> fibonacci = {0, 1, 1, 2, 3, 5, 8, 13, 21};
-     * auto generator = Kriya::pattern(*scheduler,
+     * auto generator = Kriya::pattern(
      *     // Pattern function - apply algorithmic rules
      *     [&fibonacci](uint64_t step) -> std::any {
      *         return fibonacci[step % fibonacci.size()];

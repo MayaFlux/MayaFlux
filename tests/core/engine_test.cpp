@@ -345,7 +345,7 @@ TEST_F(EngineTest, DataDrivenProcessingCapabilities)
         { 0.010, []() { /* Digital event 3 */ } }
     };
 
-    auto sequence_routine = std::make_shared<Vruta::SoundRoutine>(Kriya::sequence(*scheduler, sequence));
+    auto sequence_routine = Kriya::sequence(sequence);
     EXPECT_NO_THROW(scheduler->add_task(std::move(sequence_routine), "", false));
 
     EXPECT_NE(scheduler, nullptr);

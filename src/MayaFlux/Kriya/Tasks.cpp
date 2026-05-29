@@ -23,13 +23,24 @@ Vruta::SoundRoutine metro(Vruta::TaskScheduler& scheduler, double interval_secon
     }
 }
 
-Vruta::SoundRoutine sequence(Vruta::TaskScheduler& scheduler, std::vector<std::pair<double, std::function<void()>>> sequence)
+std::shared_ptr<Vruta::Routine> sequence(std::vector<std::pair<double, std::function<void()>>> sequence, Vruta::ProcessingToken token)
 {
-    for (const auto& [time, callback] : sequence) {
-        uint64_t delay_samples = scheduler.seconds_to_samples(time);
-        co_await SampleDelay(delay_samples);
-        callback();
+    if (token == Vruta::ProcessingToken::FRAME_ACCURATE) {
+        auto coro = [](std::vector<std::pair<double, std::function<void()>>> seq) -> Vruta::GraphicsRoutine {
+            for (const auto& [time, cb] : seq) {
+                co_await FrameDelay { .frames_to_wait = Vruta::seconds_to_frames(time) };
+                cb();
+            }
+        };
+        return std::make_shared<Vruta::GraphicsRoutine>(coro(std::move(sequence)));
     }
+    auto coro = [](std::vector<std::pair<double, std::function<void()>>> seq) -> Vruta::SoundRoutine {
+        for (const auto& [time, cb] : seq) {
+            co_await SampleDelay { Vruta::seconds_to_samples(time) };
+            cb();
+        }
+    };
+    return std::make_shared<Vruta::SoundRoutine>(coro(std::move(sequence)));
 }
 
 Vruta::SoundRoutine line(Vruta::TaskScheduler& scheduler, float start_value, float end_value, float duration_seconds, uint32_t step_duration, bool restartable)

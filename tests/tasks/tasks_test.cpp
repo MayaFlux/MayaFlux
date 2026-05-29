@@ -290,10 +290,10 @@ TEST_F(TasksTest, SequenceTask)
 {
     std::vector<int> execution_order;
 
-    auto sequence_routine = std::make_shared<Vruta::SoundRoutine>(Kriya::sequence(*scheduler,
+    auto sequence_routine = Kriya::sequence(
         { { 0.0, [&]() { execution_order.push_back(1); } },
             { 0.01, [&]() { execution_order.push_back(2); } },
-            { 0.01, [&]() { execution_order.push_back(3); } } }));
+            { 0.01, [&]() { execution_order.push_back(3); } } });
 
     scheduler->add_task(sequence_routine);
 
