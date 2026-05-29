@@ -1,8 +1,10 @@
 #pragma once
 
+#include "MayaFlux/Core/ProcessingTokens.hpp"
+
 namespace MayaFlux::Vruta {
 class TaskScheduler;
-class SoundRoutine;
+class Routine;
 }
 
 namespace MayaFlux::Kriya {
@@ -44,12 +46,13 @@ public:
      * @brief Constructs an EventChain with an explicit scheduler
      * @param scheduler The TaskScheduler to use for timing
      * @param name Optional name for the event chain (useful for debugging)
+     * @param token Processing token to determine which scheduler rate to use
      *
      * Creates a new EventChain that will use the provided scheduler for timing
      * operations. This allows for more control over which scheduler is used,
      * which is useful in contexts where multiple processing engines might exist.
      */
-    EventChain(Vruta::TaskScheduler& scheduler, std::string name = "");
+    EventChain(Vruta::TaskScheduler& scheduler, std::string name = "", Vruta::ProcessingToken token = Vruta::ProcessingToken::SAMPLE_ACCURATE);
 
     /**
      * @brief Adds an event to the chain with a specified delay
@@ -185,12 +188,21 @@ private:
     Vruta::TaskScheduler& m_Scheduler;
 
     /**
+     * @brief Processing token to determine which scheduler rate to use
+     *
+     * This token indicates which processing engine's timing should be used
+     * for the events in this chain. It allows the EventChain to be flexible
+     * and work with different types of processing timelines.
+     */
+    Vruta::ProcessingToken m_token;
+
+    /**
      * @brief The underlying computational routine that implements the chain
      *
      * This coroutine handles the actual timing and execution of events
      * in the chain. It's created when start() is called.
      */
-    std::shared_ptr<Vruta::SoundRoutine> m_routine;
+    std::shared_ptr<Vruta::Routine> m_routine;
 
     /**
      * @brief Optional callback to execute when the chain completes

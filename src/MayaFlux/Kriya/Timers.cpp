@@ -9,9 +9,10 @@
 
 namespace MayaFlux::Kriya {
 
-Timer::Timer(Vruta::TaskScheduler& scheduler)
+Timer::Timer(Vruta::TaskScheduler& scheduler, Vruta::ProcessingToken token)
     : m_Scheduler(scheduler)
     , m_active(false)
+    , m_token(token)
 {
 }
 
@@ -21,22 +22,35 @@ void Timer::schedule(double delay_seconds, std::function<void()> callback)
     m_callback = std::move(callback);
     m_active = true;
 
-    auto routine_func = [](Vruta::TaskScheduler& scheduler, uint64_t delay_samples, Timer* timer_ptr) -> Vruta::SoundRoutine {
-        auto& promise = co_await Kriya::GetAudioPromise {};
-        co_await SampleDelay { delay_samples };
+    if (m_token == Vruta::ProcessingToken::FRAME_ACCURATE) {
+        auto routine_func = [](Vruta::TaskScheduler& scheduler, uint64_t delay_frames, Timer* timer_ptr) -> Vruta::GraphicsRoutine {
+            auto& promise = co_await Kriya::GetGraphicsPromise {};
 
-        if (timer_ptr && timer_ptr->is_active()) {
-            timer_ptr->m_callback();
-            timer_ptr->m_active = false;
-        }
-    };
+            co_await FrameDelay { .frames_to_wait = delay_frames };
 
-    m_routine = std::make_shared<Vruta::SoundRoutine>(
-        routine_func(m_Scheduler, m_Scheduler.seconds_to_samples(delay_seconds), this));
+            if (timer_ptr && timer_ptr->is_active()) {
+                timer_ptr->m_callback();
+                timer_ptr->m_active = false;
+            }
+        };
+        m_routine = std::make_shared<Vruta::GraphicsRoutine>(
+            routine_func(m_Scheduler, m_Scheduler.seconds_to_units(delay_seconds, Vruta::ProcessingToken::FRAME_ACCURATE), this));
+    } else {
+        auto routine_func = [](Vruta::TaskScheduler& scheduler, uint64_t delay_samples, Timer* timer_ptr) -> Vruta::SoundRoutine {
+            auto& promise = co_await Kriya::GetAudioPromise {};
 
-    Vruta::ProcessingToken token = m_routine->get_processing_token();
-    uint64_t current_time = m_Scheduler.current_units(token);
+            co_await SampleDelay { delay_samples };
 
+            if (timer_ptr && timer_ptr->is_active()) {
+                timer_ptr->m_callback();
+                timer_ptr->m_active = false;
+            }
+        };
+        m_routine = std::make_shared<Vruta::SoundRoutine>(
+            routine_func(m_Scheduler, m_Scheduler.seconds_to_samples(delay_seconds), this));
+    }
+
+    uint64_t current_time = m_Scheduler.current_units(m_token);
     m_Scheduler.add_task(m_routine, "", false);
 
     m_routine->initialize_state(current_time);
@@ -51,9 +65,10 @@ void Timer::cancel()
     }
 }
 
-TimedAction::TimedAction(Vruta::TaskScheduler& scheduler)
+TimedAction::TimedAction(Vruta::TaskScheduler& scheduler, Vruta::ProcessingToken token)
     : m_Scheduler(scheduler)
-    , m_timer(scheduler)
+    , m_timer(scheduler, token)
+    , m_token(token)
 {
 }
 
@@ -76,11 +91,12 @@ bool TimedAction::is_pending() const
 
 TemporalActivation::TemporalActivation(Vruta::TaskScheduler& scheduler,
     Nodes::NodeGraphManager& node_graph_manager,
-    Buffers::BufferManager& buffer_manager)
+    Buffers::BufferManager& buffer_manager, Vruta::ProcessingToken token)
     : m_scheduler(scheduler)
     , m_node_graph_manager(node_graph_manager)
     , m_buffer_manager(buffer_manager)
-    , m_timer(scheduler)
+    , m_timer(scheduler, token)
+    , m_execution_token(token)
 {
 }
 

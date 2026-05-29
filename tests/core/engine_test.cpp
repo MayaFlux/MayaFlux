@@ -273,9 +273,9 @@ TEST_F(EngineTest, SchedulerIntegrationWithCoroutines)
     EXPECT_NO_THROW(engine->Start());
 
     int execution_count = 0;
-    auto metro_routine = std::make_shared<Vruta::SoundRoutine>(Kriya::metro(*engine->get_scheduler(), 0.005, [&execution_count]() {
+    auto metro_routine = Kriya::metro(0.005, [&execution_count]() {
         execution_count++;
-    }));
+    });
 
     auto scheduler = engine->get_scheduler();
     ASSERT_NE(scheduler, nullptr);
@@ -345,7 +345,7 @@ TEST_F(EngineTest, DataDrivenProcessingCapabilities)
         { 0.010, []() { /* Digital event 3 */ } }
     };
 
-    auto sequence_routine = std::make_shared<Vruta::SoundRoutine>(Kriya::sequence(*scheduler, sequence));
+    auto sequence_routine = Kriya::sequence(sequence);
     EXPECT_NO_THROW(scheduler->add_task(std::move(sequence_routine), "", false));
 
     EXPECT_NE(scheduler, nullptr);

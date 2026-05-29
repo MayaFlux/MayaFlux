@@ -142,7 +142,7 @@ struct MAYAFLUX_API FrameDelay {
      */
     using promise_handle = Vruta::graphics_promise;
 
-    uint32_t frames_to_wait;
+    uint64_t frames_to_wait;
 
     [[nodiscard]] constexpr bool await_ready() const noexcept
     {
@@ -157,7 +157,7 @@ struct MAYAFLUX_API FrameDelay {
 struct MAYAFLUX_API MultiRateDelay {
 
     uint64_t samples_to_wait;
-    uint32_t frames_to_wait;
+    uint64_t frames_to_wait;
 
     [[nodiscard]] constexpr bool await_ready() const noexcept
     {

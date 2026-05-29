@@ -21,15 +21,17 @@ namespace MayaFlux::Nexus {
 // Scheduling modifiers
 // =============================================================================
 
-Wiring& Wiring::every(double interval_seconds)
+Wiring& Wiring::every(double interval_seconds, Vruta::ProcessingToken token)
 {
     m_interval = interval_seconds;
+    m_metro_token = token;
     return *this;
 }
 
-Wiring& Wiring::for_duration(double seconds)
+Wiring& Wiring::for_duration(double seconds, Vruta::ProcessingToken token)
 {
     m_duration = seconds;
+    m_duration_token = token;
     return *this;
 }
 
@@ -317,7 +319,7 @@ void Wiring::finalise()
         (*m_bind_attach)();
 
         if (m_duration.has_value() && m_bind_detach.has_value()) {
-            auto timer = std::make_shared<Kriya::Timer>(scheduler);
+            auto timer = std::make_shared<Kriya::Timer>(scheduler, m_duration_token);
             auto detach = *m_bind_detach;
             timer->schedule(*m_duration, [timer, detach]() {
                 detach();
@@ -439,18 +441,15 @@ void Wiring::finalise()
         auto& fab = m_fabric;
 
         scheduler.add_task(
-            std::make_shared<Vruta::SoundRoutine>(
-                Kriya::metro(scheduler, *m_interval, [&fab, id, pos_fn]() mutable {
-                    if (pos_fn.has_value()) {
-                        glm::vec3 p = (*pos_fn)();
-                        std::visit([&p](const auto& ptr) {
-                            ptr->set_position(p);
-                        },
-                            fab.m_registrations[id].member);
-                    }
-                    fab.fire(id);
-                })),
-            name, false);
+            Kriya::metro(*m_interval, [&fab, id, pos_fn]() mutable {
+                if (pos_fn.has_value()) {
+                    glm::vec3 p = (*pos_fn)();
+                    std::visit([&p](const auto& ptr) {
+                        ptr->set_position(p);
+                    },
+                        fab.m_registrations[id].member);
+                }
+                fab.fire(id); }, m_metro_token), name, false);
 
         if (m_duration.has_value()) {
             auto cancel_name = make_name("nexus_metro_cancel");

@@ -189,12 +189,11 @@ TEST_F(SchedulerTest, MetroTask)
     constexpr double interval = 0.01;
     uint64_t expected_samples = scheduler->seconds_to_samples(interval);
 
-    auto metro_task = Kriya::metro(*scheduler, interval, [&metro_count]() {
+    auto metro_task = Kriya::metro(interval, [&metro_count]() {
         metro_count++;
     });
 
-    auto task_ptr = std::make_shared<Vruta::SoundRoutine>(std::move(metro_task));
-    scheduler->add_task(task_ptr);
+    scheduler->add_task(metro_task);
 
     scheduler->process_token(token, expected_samples);
     EXPECT_EQ(metro_count, 1);
@@ -202,7 +201,7 @@ TEST_F(SchedulerTest, MetroTask)
     scheduler->process_token(token, expected_samples);
     EXPECT_EQ(metro_count, 2);
 
-    EXPECT_TRUE(scheduler->cancel_task(task_ptr));
+    EXPECT_TRUE(scheduler->cancel_task(metro_task));
 }
 
 TEST_F(SchedulerTest, LineTask)
@@ -212,7 +211,7 @@ TEST_F(SchedulerTest, LineTask)
     float duration = 0.1f;
     uint32_t step_duration = 10;
 
-    auto line_task = Kriya::line(*scheduler, start_value, end_value, duration, step_duration, false);
+    auto line_task = Kriya::line(start_value, end_value, duration, step_duration, false);
     auto task_ptr = std::make_shared<Vruta::SoundRoutine>(std::move(line_task));
     ASSERT_NE(task_ptr, nullptr);
 
@@ -253,7 +252,7 @@ TEST_F(SchedulerTest, LineTaskRestart)
     uint32_t step_duration = 10;
     bool restartable = true;
 
-    auto line_task = Kriya::line(*scheduler, start_value, end_value, duration, step_duration, restartable);
+    auto line_task = Kriya::line(start_value, end_value, duration, step_duration, restartable);
     auto task_ptr = std::make_shared<Vruta::SoundRoutine>(std::move(line_task));
     scheduler->add_task(task_ptr, "", true);
 
@@ -287,7 +286,7 @@ TEST_F(SchedulerTest, TaskStateManagement)
 {
     const std::string task_name = "state_test";
 
-    auto line_task = Kriya::line(*scheduler, 0.0f, 10.0f, 0.1f, 5, false);
+    auto line_task = Kriya::line(0.0f, 10.0f, 0.1f, 5, false);
     auto task_ptr = std::make_shared<Vruta::SoundRoutine>(std::move(line_task));
     scheduler->add_task(task_ptr, task_name, true);
 

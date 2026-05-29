@@ -3,34 +3,57 @@
 #include "MayaFlux/Nodes/Generators/Logic.hpp"
 #include "MayaFlux/Vruta/Scheduler.hpp"
 
+#include "MayaFlux/Vruta/ChronUtils.hpp"
+
 #include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux::Kriya {
 
-Vruta::SoundRoutine metro(Vruta::TaskScheduler& scheduler, double interval_seconds, std::function<void()> callback)
+std::shared_ptr<Vruta::Routine> metro(double interval_seconds, std::function<void()> callback, Vruta::ProcessingToken token)
 {
-    uint64_t interval_samples = scheduler.seconds_to_samples(interval_seconds);
-    auto& promise = co_await Kriya::GetAudioPromise {};
-
-    while (true) {
-        if (promise.should_terminate) {
-            break;
+    if (token == Vruta::ProcessingToken::FRAME_ACCURATE) {
+        auto coro = [](double interval, std::function<void()> cb) -> Vruta::GraphicsRoutine {
+            uint64_t units = Vruta::seconds_to_frames(interval);
+            auto& p = co_await GetGraphicsPromise {};
+            while (!p.should_terminate) {
+                cb();
+                co_await FrameDelay { .frames_to_wait = units };
+            }
+        };
+        return std::make_shared<Vruta::GraphicsRoutine>(coro(interval_seconds, std::move(callback)));
+    }
+    auto coro = [](double interval, std::function<void()> cb) -> Vruta::SoundRoutine {
+        uint64_t units = Vruta::seconds_to_samples(interval);
+        auto& p = co_await GetAudioPromise {};
+        while (!p.should_terminate) {
+            cb();
+            co_await SampleDelay { units };
         }
-        callback();
-        co_await SampleDelay(interval_samples);
-    }
+    };
+    return std::make_shared<Vruta::SoundRoutine>(coro(interval_seconds, std::move(callback)));
 }
 
-Vruta::SoundRoutine sequence(Vruta::TaskScheduler& scheduler, std::vector<std::pair<double, std::function<void()>>> sequence)
+std::shared_ptr<Vruta::Routine> sequence(std::vector<std::pair<double, std::function<void()>>> sequence, Vruta::ProcessingToken token)
 {
-    for (const auto& [time, callback] : sequence) {
-        uint64_t delay_samples = scheduler.seconds_to_samples(time);
-        co_await SampleDelay(delay_samples);
-        callback();
+    if (token == Vruta::ProcessingToken::FRAME_ACCURATE) {
+        auto coro = [](std::vector<std::pair<double, std::function<void()>>> seq) -> Vruta::GraphicsRoutine {
+            for (const auto& [time, cb] : seq) {
+                co_await FrameDelay { .frames_to_wait = Vruta::seconds_to_frames(time) };
+                cb();
+            }
+        };
+        return std::make_shared<Vruta::GraphicsRoutine>(coro(std::move(sequence)));
     }
+    auto coro = [](std::vector<std::pair<double, std::function<void()>>> seq) -> Vruta::SoundRoutine {
+        for (const auto& [time, cb] : seq) {
+            co_await SampleDelay { Vruta::seconds_to_samples(time) };
+            cb();
+        }
+    };
+    return std::make_shared<Vruta::SoundRoutine>(coro(std::move(sequence)));
 }
 
-Vruta::SoundRoutine line(Vruta::TaskScheduler& scheduler, float start_value, float end_value, float duration_seconds, uint32_t step_duration, bool restartable)
+Vruta::SoundRoutine line(float start_value, float end_value, float duration_seconds, uint32_t step_duration, bool restartable)
 {
     auto& promise_ref = co_await GetAudioPromise {};
 
@@ -38,7 +61,7 @@ Vruta::SoundRoutine line(Vruta::TaskScheduler& scheduler, float start_value, flo
     promise_ref.set_state("end_value", end_value);
     promise_ref.set_state("restart", false);
 
-    const unsigned int sample_rate = scheduler.get_rate();
+    const unsigned int sample_rate = Vruta::s_registered_sample_rate;
     if (step_duration < 1) {
         step_duration = 1;
     }
@@ -90,20 +113,32 @@ Vruta::SoundRoutine line(Vruta::TaskScheduler& scheduler, float start_value, flo
     }
 }
 
-Vruta::SoundRoutine pattern(Vruta::TaskScheduler& scheduler, std::function<std::any(uint64_t)> pattern_func, std::function<void(std::any)> callback, double interval_seconds)
+std::shared_ptr<Vruta::Routine> pattern(std::function<std::any(uint64_t)> pattern_func, std::function<void(std::any)> callback, double interval_seconds, Vruta::ProcessingToken token)
 {
-    uint64_t interval_samples = scheduler.seconds_to_samples(interval_seconds);
-    uint64_t step = 0;
-
-    while (true) {
-        std::any value = pattern_func(step++);
-        callback(value);
-        co_await SampleDelay(interval_samples);
+    if (token == Vruta::ProcessingToken::FRAME_ACCURATE) {
+        auto coro = [](std::function<std::any(uint64_t)> fn, std::function<void(std::any)> cb, double interval) -> Vruta::GraphicsRoutine {
+            uint64_t units = Vruta::seconds_to_frames(interval);
+            uint64_t step = 0;
+            while (true) {
+                cb(fn(step++));
+                co_await FrameDelay { .frames_to_wait = units };
+            }
+        };
+        return std::make_shared<Vruta::GraphicsRoutine>(coro(std::move(pattern_func), std::move(callback), interval_seconds));
     }
+
+    auto coro = [](std::function<std::any(uint64_t)> fn, std::function<void(std::any)> cb, double interval) -> Vruta::SoundRoutine {
+        uint64_t units = Vruta::seconds_to_samples(interval);
+        uint64_t step = 0;
+        while (true) {
+            cb(fn(step++));
+            co_await SampleDelay { units };
+        }
+    };
+    return std::make_shared<Vruta::SoundRoutine>(coro(std::move(pattern_func), std::move(callback), interval_seconds));
 }
 
 Vruta::SoundRoutine Gate(
-    Vruta::TaskScheduler& scheduler,
     std::function<void()> callback,
     std::shared_ptr<Nodes::Generator::Logic> logic_node,
     bool open)
@@ -136,7 +171,6 @@ Vruta::SoundRoutine Gate(
 }
 
 Vruta::SoundRoutine Trigger(
-    Vruta::TaskScheduler& scheduler,
     bool target_state,
     std::function<void()> callback,
     std::shared_ptr<Nodes::Generator::Logic> logic_node)
@@ -164,7 +198,6 @@ Vruta::SoundRoutine Trigger(
 }
 
 Vruta::SoundRoutine Toggle(
-    Vruta::TaskScheduler& scheduler,
     std::function<void()> callback,
     std::shared_ptr<Nodes::Generator::Logic> logic_node)
 {

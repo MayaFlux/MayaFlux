@@ -35,55 +35,51 @@ bool update_task_params(const std::string& name, Args... args)
     return get_scheduler()->update_task_params(name, args...);
 }
 
-Vruta::SoundRoutine create_metro(double interval_seconds, std::function<void()> callback)
-{
-    return Kriya::metro(*get_scheduler(), interval_seconds, std::move(callback));
-}
-
-void schedule_metro(double interval_seconds, std::function<void()> callback, std::string name)
+void schedule_metro(double interval_seconds, std::function<void()> callback, std::string name, Vruta::ProcessingToken token)
 {
     auto scheduler = get_scheduler();
     if (name.empty()) {
         name = "metro_" + std::to_string(scheduler->get_next_task_id());
     }
-    auto metronome = std::make_shared<Vruta::SoundRoutine>(create_metro(interval_seconds, std::move(callback)));
+    auto metronome = Kriya::metro(interval_seconds, std::move(callback), token);
 
-    get_scheduler()->add_task(std::move(metronome), name, false);
+    get_scheduler()->add_task(metronome, name, false);
 }
 
-Vruta::SoundRoutine create_sequence(std::vector<std::pair<double, std::function<void()>>> seq)
-{
-    return Kriya::sequence(*get_scheduler(), std::move(seq));
-}
-
-void schedule_sequence(std::vector<std::pair<double, std::function<void()>>> seq, std::string name)
+void schedule_sequence(std::vector<std::pair<double, std::function<void()>>> seq, std::string name, Vruta::ProcessingToken token)
 {
     auto scheduler = get_scheduler();
     if (name.empty()) {
         name = "seq_" + std::to_string(scheduler->get_next_task_id());
     }
-    auto tseq = std::make_shared<Vruta::SoundRoutine>(create_sequence(std::move(seq)));
-    get_scheduler()->add_task(std::move(tseq), name, false);
+
+    auto tseq = Kriya::sequence(std::move(seq), token);
+
+    get_scheduler()->add_task(tseq, name, false);
 }
 
-Vruta::SoundRoutine create_line(float start_value, float end_value, float duration_seconds, uint32_t step_duration, bool retain)
+std::shared_ptr<Vruta::SoundRoutine> schedule_line(float start_value, float end_value, float duration_seconds, uint32_t step_duration, bool retain, std::string name)
 {
-    return Kriya::line(*get_scheduler(), start_value, end_value, duration_seconds, step_duration, retain);
+    auto scheduler = get_scheduler();
+    if (name.empty()) {
+        name = "seq_" + std::to_string(scheduler->get_next_task_id());
+    }
+
+    auto line = std::make_shared<Vruta::SoundRoutine>(Kriya::line(start_value, end_value, duration_seconds, step_duration, retain));
+
+    get_scheduler()->add_task(line, name, true);
+    return line;
 }
 
-Vruta::SoundRoutine create_pattern(std::function<std::any(uint64_t)> pattern_func, std::function<void(std::any)> callback, double interval_seconds)
-{
-    return Kriya::pattern(*get_scheduler(), std::move(pattern_func), std::move(callback), interval_seconds);
-}
-
-void schedule_pattern(std::function<std::any(uint64_t)> pattern_func, std::function<void(std::any)> callback, double interval_seconds, std::string name)
+void schedule_pattern(std::function<std::any(uint64_t)> pattern_func, std::function<void(std::any)> callback, double interval_seconds, std::string name, Vruta::ProcessingToken token)
 {
     auto scheduler = get_scheduler();
     if (name.empty()) {
         name = "pattern_" + std::to_string(scheduler->get_next_task_id());
     }
-    auto pattern = std::make_shared<Vruta::SoundRoutine>(create_pattern(std::move(pattern_func), std::move(callback), interval_seconds));
-    get_scheduler()->add_task(std::move(pattern), name, false);
+
+    auto pattern = Kriya::pattern(std::move(pattern_func), std::move(callback), interval_seconds, token);
+    get_scheduler()->add_task(pattern, name, false);
 }
 
 float* get_line_value(const std::string& name)

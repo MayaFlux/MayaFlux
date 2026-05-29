@@ -6,6 +6,8 @@
 #include "MayaFlux/Vruta/NetworkSource.hpp"
 #include "MayaFlux/Vruta/WindowEventSource.hpp"
 
+#include "MayaFlux/Core/ProcessingTokens.hpp"
+
 namespace MayaFlux::Core {
 class Window;
 }
@@ -53,14 +55,16 @@ public:
     /**
      * @brief Fire the entity on a recurring interval.
      * @param interval_seconds Period between invocations.
+     * @param token Scheduler rate to use (default: SAMPLE_ACCURATE).
      */
-    Wiring& every(double interval_seconds);
+    Wiring& every(double interval_seconds, Vruta::ProcessingToken token = Vruta::ProcessingToken::SAMPLE_ACCURATE);
 
     /**
      * @brief Limit a recurring registration to a fixed duration then cancel.
      * @param seconds Total active time. Pairs with @c every().
+     * @param token If set, uses the specified scheduler's clock for timing; otherwise defaults to SAMPLE_ACCURATE.
      */
-    Wiring& for_duration(double seconds);
+    Wiring& for_duration(double seconds, Vruta::ProcessingToken token = Vruta::ProcessingToken::SAMPLE_ACCURATE);
 
     /**
      * @brief Fire the entity on a key event from a window.
@@ -263,6 +267,8 @@ private:
     std::string m_position_fn_name;
     std::vector<MoveStep> m_move_steps;
     size_t m_times { 1 };
+    Vruta::ProcessingToken m_metro_token { Vruta::ProcessingToken::SAMPLE_ACCURATE };
+    Vruta::ProcessingToken m_duration_token { Vruta::ProcessingToken::SAMPLE_ACCURATE };
 
     Trigger m_trigger;
     Factory m_factory;

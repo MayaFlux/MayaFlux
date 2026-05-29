@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Core/ProcessingTokens.hpp"
 #include "MayaFlux/IO/Keys.hpp"
 
 namespace MayaFlux {
@@ -45,34 +46,16 @@ MAYAFLUX_API std::shared_ptr<Vruta::TaskScheduler> get_scheduler();
 MAYAFLUX_API std::shared_ptr<Vruta::EventManager> get_event_manager();
 
 /**
- * @brief Creates a simple task that calls a function at a specified interval
- * @param interval_seconds Time between calls in seconds
- * @param callback Function to call on each tick
- * This is conceptually similar to Metronomes in PureData and MaxMSP
- */
-MAYAFLUX_API Vruta::SoundRoutine create_metro(double interval_seconds, std::function<void()> callback);
-
-/**
  * @brief Creates a metronome task and addes it to the default scheduler list for evaluation
  * @param interval_seconds Time between calls in seconds
  * @param callback Function to call on each tick
  * @param name Name of the metronome task (optional but recommended).
      If not provided, a default name will be generated.
+ * @param token Processing token to determine which scheduler rate to use (default: SAMPLE_ACCURATE)
  *
  * Uses the task scheduler from the default engine.
  */
-MAYAFLUX_API void schedule_metro(double interval_seconds, std::function<void()> callback, std::string name = "");
-
-/**
- * @brief Creates a sequence task that calls functions at specified times
- * @param sequence Vector of (time, function) pairs
- * @param name Name of the metronome task (optional but recommended).
-     If not provided, a default name will be generated.
- * @return SoundRoutine object representing the scheduled task
- *
- * Uses the task scheduler from the default engine.
- */
-MAYAFLUX_API Vruta::SoundRoutine create_sequence(std::vector<std::pair<double, std::function<void()>>> sequence);
+MAYAFLUX_API void schedule_metro(double interval_seconds, std::function<void()> callback, std::string name = "", Vruta::ProcessingToken token = Vruta::ProcessingToken::SAMPLE_ACCURATE);
 
 /**
  * @brief Creates a sequence task that calls functions at specified times
@@ -80,34 +63,26 @@ MAYAFLUX_API Vruta::SoundRoutine create_sequence(std::vector<std::pair<double, s
  * @param sequence Vector of (time, function) pairs
  * @param name Name of the metronome task (optional but recommended).
      If not provided, a default name will be generated.
+ * @param token Processing token to determine which scheduler rate to use (default: SAMPLE_ACCURATE)
  *
  * Uses the task scheduler from the default engine.
  */
-MAYAFLUX_API void schedule_sequence(std::vector<std::pair<double, std::function<void()>>> sequence, std::string name = "");
+MAYAFLUX_API void schedule_sequence(std::vector<std::pair<double, std::function<void()>>> sequence, std::string name = "", Vruta::ProcessingToken token = Vruta::ProcessingToken::SAMPLE_ACCURATE);
 
 /**
- * @brief Creates a line generator that interpolates between values over time
+ * @brief Creates a line generator that interpolates between values over time and schedules it for evaluation
  * @param start_value Starting value
  * @param end_value Ending value
  * @param duration_seconds Total duration in seconds
  * @param step_duration Time between steps in seconds
  * @param retain Whether the coroutine should stay alive for potential restarts (default: true)
- * @return SoundRoutine object representing the line generator
+ * @param name Name of the line task (optional but recommended).
+     If not provided, a default name will be generated.
+ * @return shared_ptr to SoundRoutine object representing the line generator
  *
  * Uses the task scheduler from the default engine.
  */
-MAYAFLUX_API Vruta::SoundRoutine create_line(float start_value, float end_value, float duration_seconds, uint32_t step_duration = 5, bool retain = true);
-
-/**
- * @brief Schedules a pattern generator that produces values based on a pattern function
- * @param pattern_func Function that generates pattern values based on step index
- * @param callback Function to call with each pattern value
- * @param interval_seconds Time between pattern steps
- * @return SoundRoutine object representing the scheduled task
- *
- * Uses the task scheduler from the default engine.
- */
-MAYAFLUX_API Vruta::SoundRoutine create_pattern(std::function<std::any(uint64_t)> pattern_func, std::function<void(std::any)> callback, double interval_seconds);
+MAYAFLUX_API std::shared_ptr<Vruta::SoundRoutine> schedule_line(float start_value, float end_value, float duration_seconds, uint32_t step_duration = 5, bool retain = true, std::string name = "");
 
 /**
  * @brief Schedules a pattern generator that produces values based on a pattern function
@@ -117,10 +92,11 @@ MAYAFLUX_API Vruta::SoundRoutine create_pattern(std::function<std::any(uint64_t)
  * @param interval_seconds Time between pattern steps
  * @param name Name of the metronome task (optional but recommended).
      If not provided, a default name will be generated.
+ * @param token Processing token to determine which scheduler rate to use (default: SAMPLE_ACCURATE)
  *
  * Uses the task scheduler from the default engine.
  */
-MAYAFLUX_API void schedule_pattern(std::function<std::any(uint64_t)> pattern_func, std::function<void(std::any)> callback, double interval_seconds, std::string name = "");
+MAYAFLUX_API void schedule_pattern(std::function<std::any(uint64_t)> pattern_func, std::function<void(std::any)> callback, double interval_seconds, std::string name = "", Vruta::ProcessingToken token = Vruta::ProcessingToken::SAMPLE_ACCURATE);
 
 /**
  * @brief Gets a pointer to a task's current value
