@@ -21,15 +21,17 @@ namespace MayaFlux::Nexus {
 // Scheduling modifiers
 // =============================================================================
 
-Wiring& Wiring::every(double interval_seconds)
+Wiring& Wiring::every(double interval_seconds, Vruta::ProcessingToken token)
 {
     m_interval = interval_seconds;
+    m_metro_token = token;
     return *this;
 }
 
-Wiring& Wiring::for_duration(double seconds)
+Wiring& Wiring::for_duration(double seconds, Vruta::ProcessingToken token)
 {
     m_duration = seconds;
+    m_duration_token = token;
     return *this;
 }
 
@@ -317,7 +319,7 @@ void Wiring::finalise()
         (*m_bind_attach)();
 
         if (m_duration.has_value() && m_bind_detach.has_value()) {
-            auto timer = std::make_shared<Kriya::Timer>(scheduler);
+            auto timer = std::make_shared<Kriya::Timer>(scheduler, m_duration_token);
             auto detach = *m_bind_detach;
             timer->schedule(*m_duration, [timer, detach]() {
                 detach();
@@ -447,9 +449,7 @@ void Wiring::finalise()
                     },
                         fab.m_registrations[id].member);
                 }
-                fab.fire(id);
-            }),
-            name, false);
+                fab.fire(id); }, m_metro_token), name, false);
 
         if (m_duration.has_value()) {
             auto cancel_name = make_name("nexus_metro_cancel");
