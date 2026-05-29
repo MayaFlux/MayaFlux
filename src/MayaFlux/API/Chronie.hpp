@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Core/ProcessingTokens.hpp"
 #include "MayaFlux/IO/Keys.hpp"
 
 namespace MayaFlux {
@@ -87,10 +88,11 @@ MAYAFLUX_API Vruta::SoundRoutine create_line(float start_value, float end_value,
  * @param interval_seconds Time between pattern steps
  * @param name Name of the metronome task (optional but recommended).
      If not provided, a default name will be generated.
+ * @param token Processing token to determine which scheduler rate to use (default: SAMPLE_ACCURATE)
  *
  * Uses the task scheduler from the default engine.
  */
-MAYAFLUX_API void schedule_pattern(std::function<std::any(uint64_t)> pattern_func, std::function<void(std::any)> callback, double interval_seconds, std::string name = "");
+MAYAFLUX_API void schedule_pattern(std::function<std::any(uint64_t)> pattern_func, std::function<void(std::any)> callback, double interval_seconds, std::string name = "", Vruta::ProcessingToken token = Vruta::ProcessingToken::SAMPLE_ACCURATE);
 
 /**
  * @brief Gets a pointer to a task's current value

@@ -266,9 +266,9 @@ TEST_F(TasksTest, PatternTask)
         return static_cast<int>(index * 10);
     };
 
-    auto callback = std::make_shared<Vruta::SoundRoutine>(Kriya::pattern(*scheduler, pattern_func, [&](std::any value) {
+    auto callback = Kriya::pattern(pattern_func, [&](std::any value) {
         pattern_count++;
-        received_values.push_back(std::any_cast<int>(value)); }, 0.01));
+        received_values.push_back(std::any_cast<int>(value)); }, 0.01);
 
     scheduler->add_task(callback);
 

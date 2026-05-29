@@ -1,5 +1,7 @@
 #pragma once
 
+#include "MayaFlux/Core/ProcessingTokens.hpp"
+
 namespace MayaFlux {
 namespace Vruta {
     class TaskScheduler;
@@ -122,7 +124,7 @@ namespace Kriya {
      * @param pattern_func Function that generates values based on a step index
      * @param callback Function to execute with each generated value
      * @param interval_seconds Time between pattern steps in seconds
-     * @return A SoundRoutine that implements the generative behavior
+     * @return A Routine shared_ptr of type determined by the processing token of the scheduler (SoundRoutine, GraphicsRoutine, etc.)
      *
      * The pattern task provides a powerful framework for algorithmic generation
      * of values according to any computational pattern or rule system. At regular
@@ -151,13 +153,13 @@ namespace Kriya {
      *     },
      *     0.125 // Generate 8 values per second
      * );
-     * scheduler->add_task(std::make_shared<SoundRoutine>(std::move(generator)));
+     * scheduler->add_task(generator);
      * ```
      *
      * The pattern task continues indefinitely until explicitly cancelled, creating
      * an ongoing generative process within the computational system.
      */
-    MAYAFLUX_API Vruta::SoundRoutine pattern(Vruta::TaskScheduler& scheduler, std::function<std::any(uint64_t)> pattern_func, std::function<void(std::any)> callback, double interval_seconds);
+    MAYAFLUX_API std::shared_ptr<Vruta::Routine> pattern(std::function<std::any(uint64_t)> pattern_func, std::function<void(std::any)> callback, double interval_seconds, Vruta::ProcessingToken token = Vruta::ProcessingToken::SAMPLE_ACCURATE);
 
     /**
      * @brief Coroutine that executes callback continuously while logic node outputs true
