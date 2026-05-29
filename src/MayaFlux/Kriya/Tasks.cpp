@@ -9,18 +9,28 @@
 
 namespace MayaFlux::Kriya {
 
-Vruta::SoundRoutine metro(Vruta::TaskScheduler& scheduler, double interval_seconds, std::function<void()> callback)
+std::shared_ptr<Vruta::Routine> metro(double interval_seconds, std::function<void()> callback, Vruta::ProcessingToken token)
 {
-    uint64_t interval_samples = scheduler.seconds_to_samples(interval_seconds);
-    auto& promise = co_await Kriya::GetAudioPromise {};
-
-    while (true) {
-        if (promise.should_terminate) {
-            break;
-        }
-        callback();
-        co_await SampleDelay(interval_samples);
+    if (token == Vruta::ProcessingToken::FRAME_ACCURATE) {
+        auto coro = [](double interval, std::function<void()> cb) -> Vruta::GraphicsRoutine {
+            uint64_t units = Vruta::seconds_to_frames(interval);
+            auto& p = co_await GetGraphicsPromise {};
+            while (!p.should_terminate) {
+                cb();
+                co_await FrameDelay { .frames_to_wait = units };
+            }
+        };
+        return std::make_shared<Vruta::GraphicsRoutine>(coro(interval_seconds, std::move(callback)));
     }
+    auto coro = [](double interval, std::function<void()> cb) -> Vruta::SoundRoutine {
+        uint64_t units = Vruta::seconds_to_samples(interval);
+        auto& p = co_await GetAudioPromise {};
+        while (!p.should_terminate) {
+            cb();
+            co_await SampleDelay { units };
+        }
+    };
+    return std::make_shared<Vruta::SoundRoutine>(coro(interval_seconds, std::move(callback)));
 }
 
 std::shared_ptr<Vruta::Routine> sequence(std::vector<std::pair<double, std::function<void()>>> sequence, Vruta::ProcessingToken token)

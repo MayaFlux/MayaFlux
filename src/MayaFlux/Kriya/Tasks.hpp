@@ -18,10 +18,10 @@ namespace Kriya {
 
     /**
      * @brief Creates a periodic event generator that executes a callback at regular intervals
-     * @param scheduler The task scheduler that will manage this event generator
      * @param interval_seconds Time between callback executions in seconds
      * @param callback Function to execute on each interval
-     * @return A SoundRoutine that implements the periodic behavior
+     * @param token Processing token to determine which scheduler rate to use (default: SAMPLE_ACCURATE)
+     * @return A Routine shared_ptr of type determined by the processing token of the scheduler (SoundRoutine, GraphicsRoutine, etc.)
      *
      * The metro task provides a fundamental temporal mechanism for creating
      * time-based structures in computational systems. It executes the provided
@@ -37,16 +37,16 @@ namespace Kriya {
      * Example usage:
      * ```cpp
      * // Create a periodic event generator (2Hz)
-     * auto periodic_task = Kriya::metro(*scheduler, 0.5, []() {
+     * auto periodic_task = Kriya::metro(0.5, []() {
      *     trigger_event(); // Could affect audio, visuals, data, etc.
      * });
-     * scheduler->add_task(std::make_shared<SoundRoutine>(std::move(periodic_task)));
+     * scheduler->add_task(periodic_task);
      * ```
      *
      * The metro task continues indefinitely until explicitly cancelled, creating
      * a persistent temporal structure within the computational system.
      */
-    MAYAFLUX_API Vruta::SoundRoutine metro(Vruta::TaskScheduler& scheduler, double interval_seconds, std::function<void()> callback);
+    MAYAFLUX_API std::shared_ptr<Vruta::Routine> metro(double interval_seconds, std::function<void()> callback, Vruta::ProcessingToken token = Vruta::ProcessingToken::SAMPLE_ACCURATE);
 
     /**
      * @brief Creates a temporal sequence that executes callbacks at specified time offsets

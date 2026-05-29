@@ -51,10 +51,11 @@ MAYAFLUX_API std::shared_ptr<Vruta::EventManager> get_event_manager();
  * @param callback Function to call on each tick
  * @param name Name of the metronome task (optional but recommended).
      If not provided, a default name will be generated.
+ * @param token Processing token to determine which scheduler rate to use (default: SAMPLE_ACCURATE)
  *
  * Uses the task scheduler from the default engine.
  */
-MAYAFLUX_API void schedule_metro(double interval_seconds, std::function<void()> callback, std::string name = "");
+MAYAFLUX_API void schedule_metro(double interval_seconds, std::function<void()> callback, std::string name = "", Vruta::ProcessingToken token = Vruta::ProcessingToken::SAMPLE_ACCURATE);
 
 /**
  * @brief Creates a sequence task that calls functions at specified times

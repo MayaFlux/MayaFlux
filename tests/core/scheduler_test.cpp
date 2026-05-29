@@ -189,12 +189,11 @@ TEST_F(SchedulerTest, MetroTask)
     constexpr double interval = 0.01;
     uint64_t expected_samples = scheduler->seconds_to_samples(interval);
 
-    auto metro_task = Kriya::metro(*scheduler, interval, [&metro_count]() {
+    auto metro_task = Kriya::metro(interval, [&metro_count]() {
         metro_count++;
     });
 
-    auto task_ptr = std::make_shared<Vruta::SoundRoutine>(std::move(metro_task));
-    scheduler->add_task(task_ptr);
+    scheduler->add_task(metro_task);
 
     scheduler->process_token(token, expected_samples);
     EXPECT_EQ(metro_count, 1);
@@ -202,7 +201,7 @@ TEST_F(SchedulerTest, MetroTask)
     scheduler->process_token(token, expected_samples);
     EXPECT_EQ(metro_count, 2);
 
-    EXPECT_TRUE(scheduler->cancel_task(task_ptr));
+    EXPECT_TRUE(scheduler->cancel_task(metro_task));
 }
 
 TEST_F(SchedulerTest, LineTask)

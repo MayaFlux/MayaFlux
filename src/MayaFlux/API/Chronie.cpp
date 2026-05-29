@@ -35,15 +35,15 @@ bool update_task_params(const std::string& name, Args... args)
     return get_scheduler()->update_task_params(name, args...);
 }
 
-void schedule_metro(double interval_seconds, std::function<void()> callback, std::string name)
+void schedule_metro(double interval_seconds, std::function<void()> callback, std::string name, Vruta::ProcessingToken token)
 {
     auto scheduler = get_scheduler();
     if (name.empty()) {
         name = "metro_" + std::to_string(scheduler->get_next_task_id());
     }
-    auto metronome = std::make_shared<Vruta::SoundRoutine>(Kriya::metro(*get_scheduler(), interval_seconds, std::move(callback)));
+    auto metronome = Kriya::metro(interval_seconds, std::move(callback), token);
 
-    get_scheduler()->add_task(std::move(metronome), name, false);
+    get_scheduler()->add_task(metronome, name, false);
 }
 
 void schedule_sequence(std::vector<std::pair<double, std::function<void()>>> seq, std::string name, Vruta::ProcessingToken token)

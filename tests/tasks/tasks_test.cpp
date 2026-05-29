@@ -189,10 +189,10 @@ TEST_F(TasksTest, CoroutineTasks)
     int metro_count = 0;
     double interval = 0.01;
 
-    auto metro_routine = std::make_shared<Vruta::SoundRoutine>(Kriya::metro(*scheduler, interval, [&]() {
+    auto metro_routine = Kriya::metro(interval, [&]() {
         metro_called = true;
         metro_count++;
-    }));
+    });
 
     scheduler->add_task(metro_routine);
 
@@ -760,7 +760,7 @@ TEST_F(TasksTest, LogicTasksIntegration)
 TEST_F(TasksTest, ProcessingTokens)
 {
 
-    auto routine = std::make_shared<Vruta::SoundRoutine>(Kriya::metro(*scheduler, 0.01, []() { }));
+    auto routine = Kriya::metro(0.01, []() { });
 
     EXPECT_EQ(routine->get_processing_token(), Vruta::ProcessingToken::SAMPLE_ACCURATE);
 
@@ -784,7 +784,7 @@ TEST_F(TasksTest, NodeGraphManagerIntegration)
 TEST_F(TasksTest, TaskSchedulerTokenDomains)
 {
 
-    auto sample_routine = std::make_shared<Vruta::SoundRoutine>(Kriya::metro(*scheduler, 0.01, []() { }));
+    auto sample_routine = Kriya::metro(0.01, []() { });
 
     scheduler->add_task(sample_routine, "sample_test");
 

@@ -439,17 +439,16 @@ void Wiring::finalise()
         auto& fab = m_fabric;
 
         scheduler.add_task(
-            std::make_shared<Vruta::SoundRoutine>(
-                Kriya::metro(scheduler, *m_interval, [&fab, id, pos_fn]() mutable {
-                    if (pos_fn.has_value()) {
-                        glm::vec3 p = (*pos_fn)();
-                        std::visit([&p](const auto& ptr) {
-                            ptr->set_position(p);
-                        },
-                            fab.m_registrations[id].member);
-                    }
-                    fab.fire(id);
-                })),
+            Kriya::metro(*m_interval, [&fab, id, pos_fn]() mutable {
+                if (pos_fn.has_value()) {
+                    glm::vec3 p = (*pos_fn)();
+                    std::visit([&p](const auto& ptr) {
+                        ptr->set_position(p);
+                    },
+                        fab.m_registrations[id].member);
+                }
+                fab.fire(id);
+            }),
             name, false);
 
         if (m_duration.has_value()) {

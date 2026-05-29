@@ -273,9 +273,9 @@ TEST_F(EngineTest, SchedulerIntegrationWithCoroutines)
     EXPECT_NO_THROW(engine->Start());
 
     int execution_count = 0;
-    auto metro_routine = std::make_shared<Vruta::SoundRoutine>(Kriya::metro(*engine->get_scheduler(), 0.005, [&execution_count]() {
+    auto metro_routine = Kriya::metro(0.005, [&execution_count]() {
         execution_count++;
-    }));
+    });
 
     auto scheduler = engine->get_scheduler();
     ASSERT_NE(scheduler, nullptr);
