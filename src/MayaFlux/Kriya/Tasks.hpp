@@ -82,7 +82,6 @@ namespace Kriya {
 
     /**
      * @brief Creates a continuous interpolation generator between two values over time
-     * @param scheduler The task scheduler that will manage this generator
      * @param start_value Initial value of the interpolation
      * @param end_value Final value of the interpolation
      * @param duration_seconds Total duration of the interpolation in seconds
@@ -117,7 +116,7 @@ namespace Kriya {
      * If restartable is true, the interpolation task will remain active after reaching the
      * end value and can be restarted by calling restart() on the SoundRoutine.
      */
-    MAYAFLUX_API Vruta::SoundRoutine line(Vruta::TaskScheduler& scheduler, float start_value, float end_value, float duration_seconds, uint32_t step_duration = 5, bool restartable = false);
+    MAYAFLUX_API Vruta::SoundRoutine line(float start_value, float end_value, float duration_seconds, uint32_t step_duration = 5, bool restartable = false);
 
     /**
      * @brief Creates a generative algorithm that produces values based on a pattern function
@@ -163,39 +162,34 @@ namespace Kriya {
 
     /**
      * @brief Coroutine that executes callback continuously while logic node outputs true
-     * @param scheduler Task scheduler instance
      * @param callback Function to execute while condition is true
      * @param logic_node Logic node to monitor (creates default threshold node if null)
      * @param open Whether to subscribe to gate open (true) or close (false)
      * @return SoundRoutine coroutine handle
      */
     MAYAFLUX_API Vruta::SoundRoutine Gate(
-        Vruta::TaskScheduler& scheduler, std::function<void()> callback,
+        std::function<void()> callback,
         std::shared_ptr<Nodes::Generator::Logic> logic_node, bool open = true);
 
     /**
      * @brief Coroutine that executes callback when logic node changes to specific state
-     * @param scheduler Task scheduler instance
      * @param logic_node Logic node to monitor (creates default threshold node if null)
      * @param target_state State to trigger on (true/false)
      * @param callback Function to execute on state change
      * @return SoundRoutine coroutine handle
      */
     MAYAFLUX_API Vruta::SoundRoutine Trigger(
-        Vruta::TaskScheduler& scheduler,
         bool target_state,
         std::function<void()> callback,
         std::shared_ptr<Nodes::Generator::Logic> logic_node);
 
     /**
      * @brief Coroutine that executes callback on any logic node state change
-     * @param scheduler Task scheduler instance
      * @param logic_node Logic node to monitor (creates default threshold node if null)
      * @param callback Function to execute on any state flip
      * @return SoundRoutine coroutine handle
      */
     MAYAFLUX_API Vruta::SoundRoutine Toggle(
-        Vruta::TaskScheduler& scheduler,
         std::function<void()> callback,
         std::shared_ptr<Nodes::Generator::Logic> logic_node);
 }

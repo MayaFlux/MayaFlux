@@ -53,7 +53,7 @@ std::shared_ptr<Vruta::Routine> sequence(std::vector<std::pair<double, std::func
     return std::make_shared<Vruta::SoundRoutine>(coro(std::move(sequence)));
 }
 
-Vruta::SoundRoutine line(Vruta::TaskScheduler& scheduler, float start_value, float end_value, float duration_seconds, uint32_t step_duration, bool restartable)
+Vruta::SoundRoutine line(float start_value, float end_value, float duration_seconds, uint32_t step_duration, bool restartable)
 {
     auto& promise_ref = co_await GetAudioPromise {};
 
@@ -61,7 +61,7 @@ Vruta::SoundRoutine line(Vruta::TaskScheduler& scheduler, float start_value, flo
     promise_ref.set_state("end_value", end_value);
     promise_ref.set_state("restart", false);
 
-    const unsigned int sample_rate = scheduler.get_rate();
+    const unsigned int sample_rate = Vruta::s_registered_sample_rate;
     if (step_duration < 1) {
         step_duration = 1;
     }
@@ -139,7 +139,6 @@ std::shared_ptr<Vruta::Routine> pattern(std::function<std::any(uint64_t)> patter
 }
 
 Vruta::SoundRoutine Gate(
-    Vruta::TaskScheduler& scheduler,
     std::function<void()> callback,
     std::shared_ptr<Nodes::Generator::Logic> logic_node,
     bool open)
@@ -172,7 +171,6 @@ Vruta::SoundRoutine Gate(
 }
 
 Vruta::SoundRoutine Trigger(
-    Vruta::TaskScheduler& scheduler,
     bool target_state,
     std::function<void()> callback,
     std::shared_ptr<Nodes::Generator::Logic> logic_node)
@@ -200,7 +198,6 @@ Vruta::SoundRoutine Trigger(
 }
 
 Vruta::SoundRoutine Toggle(
-    Vruta::TaskScheduler& scheduler,
     std::function<void()> callback,
     std::shared_ptr<Nodes::Generator::Logic> logic_node)
 {

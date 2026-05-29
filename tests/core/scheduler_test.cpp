@@ -211,7 +211,7 @@ TEST_F(SchedulerTest, LineTask)
     float duration = 0.1f;
     uint32_t step_duration = 10;
 
-    auto line_task = Kriya::line(*scheduler, start_value, end_value, duration, step_duration, false);
+    auto line_task = Kriya::line(start_value, end_value, duration, step_duration, false);
     auto task_ptr = std::make_shared<Vruta::SoundRoutine>(std::move(line_task));
     ASSERT_NE(task_ptr, nullptr);
 
@@ -252,7 +252,7 @@ TEST_F(SchedulerTest, LineTaskRestart)
     uint32_t step_duration = 10;
     bool restartable = true;
 
-    auto line_task = Kriya::line(*scheduler, start_value, end_value, duration, step_duration, restartable);
+    auto line_task = Kriya::line(start_value, end_value, duration, step_duration, restartable);
     auto task_ptr = std::make_shared<Vruta::SoundRoutine>(std::move(line_task));
     scheduler->add_task(task_ptr, "", true);
 
@@ -286,7 +286,7 @@ TEST_F(SchedulerTest, TaskStateManagement)
 {
     const std::string task_name = "state_test";
 
-    auto line_task = Kriya::line(*scheduler, 0.0f, 10.0f, 0.1f, 5, false);
+    auto line_task = Kriya::line(0.0f, 10.0f, 0.1f, 5, false);
     auto task_ptr = std::make_shared<Vruta::SoundRoutine>(std::move(line_task));
     scheduler->add_task(task_ptr, task_name, true);
 

@@ -222,7 +222,7 @@ TEST_F(TasksTest, LineTask)
     float end_value = 1.0F;
     float duration = 0.05F;
 
-    auto line_routine = std::make_shared<Vruta::SoundRoutine>(Kriya::line(*scheduler, start_value, end_value, duration, 5, false));
+    auto line_routine = std::make_shared<Vruta::SoundRoutine>(Kriya::line(start_value, end_value, duration, 5, false));
     scheduler->add_task(line_routine, "", true);
 
     auto current_value = line_routine->get_state<float>("current_value");
@@ -239,7 +239,7 @@ TEST_F(TasksTest, LineTask)
 
     EXPECT_FLOAT_EQ(*current_value, end_value);
 
-    auto restartable_line = std::make_shared<Vruta::SoundRoutine>(Kriya::line(*scheduler, 0.0F, 10.F, 0.05F, 5, true));
+    auto restartable_line = std::make_shared<Vruta::SoundRoutine>(Kriya::line(0.0F, 10.F, 0.05F, 5, true));
     scheduler->add_task(restartable_line, "", true);
 
     scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, scheduler->seconds_to_samples(0.05));
@@ -324,7 +324,7 @@ TEST_F(TasksTest, GateTask)
     });
 
     auto gate_routine = std::make_shared<Vruta::SoundRoutine>(
-        Kriya::Gate(*scheduler, [&]() {
+        Kriya::Gate([&]() {
             gate_called = true;
             gate_count++; }, custom_logic, true));
 
@@ -353,7 +353,7 @@ TEST_F(TasksTest, GateTaskWithDefaultLogic)
     bool gate_called = false;
 
     auto gate_routine = std::make_shared<Vruta::SoundRoutine>(
-        Kriya::Gate(*scheduler, [&]() { gate_called = true; }, nullptr, true));
+        Kriya::Gate([&]() { gate_called = true; }, nullptr, true));
 
     scheduler->add_task(gate_routine);
 
@@ -376,7 +376,7 @@ TEST_F(TasksTest, TriggerTask)
     });
 
     auto rising_routine = std::make_shared<Vruta::SoundRoutine>(
-        Kriya::Trigger(*scheduler, true, [&]() {
+        Kriya::Trigger(true, [&]() {
             rising_triggered = true;
             rising_count++; }, toggle_logic));
 
@@ -386,7 +386,7 @@ TEST_F(TasksTest, TriggerTask)
     });
 
     auto falling_routine = std::make_shared<Vruta::SoundRoutine>(
-        Kriya::Trigger(*scheduler, false, [&]() {
+        Kriya::Trigger(false, [&]() {
             falling_triggered = true;
             falling_count++; }, toggle_logic2));
 
@@ -427,7 +427,7 @@ TEST_F(TasksTest, ToggleTask)
     });
 
     auto toggle_routine = std::make_shared<Vruta::SoundRoutine>(
-        Kriya::Toggle(*scheduler, [&]() {
+        Kriya::Toggle([&]() {
             toggle_called = true;
             toggle_count++; }, flip_logic));
 
@@ -461,7 +461,7 @@ TEST_F(TasksTest, LogicTasksWithEdgeDetection)
     edge_logic->set_edge_detection(Nodes::Generator::EdgeType::BOTH, 0.0);
 
     auto edge_routine = std::make_shared<Vruta::SoundRoutine>(
-        Kriya::Toggle(*scheduler, [&]() { edge_detected = true; }, edge_logic));
+        Kriya::Toggle([&]() { edge_detected = true; }, edge_logic));
 
     scheduler->add_task(edge_routine);
 
@@ -478,7 +478,7 @@ TEST_F(TasksTest, LogicTasksWithHysteresis)
     hysteresis_logic->set_hysteresis(0.2, 0.8);
 
     auto hysteresis_routine = std::make_shared<Vruta::SoundRoutine>(
-        Kriya::Trigger(*scheduler, true, [&]() { state_changed = true; }, hysteresis_logic));
+        Kriya::Trigger(true, [&]() { state_changed = true; }, hysteresis_logic));
 
     scheduler->add_task(hysteresis_routine);
 
@@ -505,13 +505,13 @@ TEST_F(TasksTest, MultipleLogicTasks)
     });
 
     auto gate1 = std::make_shared<Vruta::SoundRoutine>(
-        Kriya::Gate(*scheduler, [&]() { gate1_active = true; }, always_true));
+        Kriya::Gate([&]() { gate1_active = true; }, always_true));
 
     auto gate2 = std::make_shared<Vruta::SoundRoutine>(
-        Kriya::Gate(*scheduler, [&]() { gate2_active = true; }, toggle_logic));
+        Kriya::Gate([&]() { gate2_active = true; }, toggle_logic));
 
     auto change_task = std::make_shared<Vruta::SoundRoutine>(
-        Kriya::Toggle(*scheduler, [&]() { any_change = true; }, change_detector));
+        Kriya::Toggle([&]() { any_change = true; }, change_detector));
 
     scheduler->add_task(gate1);
     scheduler->add_task(gate2);
@@ -744,7 +744,7 @@ TEST_F(TasksTest, LogicTasksIntegration)
         });
 
     auto gate_routine = std::make_shared<Vruta::SoundRoutine>(
-        Kriya::Gate(*MayaFlux::get_scheduler(), [&]() { integration_triggered = true; }, time_logic));
+        Kriya::Gate([&]() { integration_triggered = true; }, time_logic));
 
     MayaFlux::get_scheduler()->add_task(gate_routine, "integration_gate");
 
@@ -798,7 +798,7 @@ TEST_F(TasksTest, TaskSchedulerTokenDomains)
 TEST_F(TasksTest, CoroutineStatePersistence)
 {
     auto line_routine = std::make_shared<Vruta::SoundRoutine>(
-        Kriya::line(*scheduler, 0.0F, 10.0F, 0.1F, 5, true));
+        Kriya::line(0.0F, 10.0F, 0.1F, 5, true));
 
     scheduler->add_task(line_routine, "persistent_line", true);
 

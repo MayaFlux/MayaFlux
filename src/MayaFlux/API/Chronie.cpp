@@ -58,9 +58,17 @@ void schedule_sequence(std::vector<std::pair<double, std::function<void()>>> seq
     get_scheduler()->add_task(tseq, name, false);
 }
 
-Vruta::SoundRoutine create_line(float start_value, float end_value, float duration_seconds, uint32_t step_duration, bool retain)
+std::shared_ptr<Vruta::SoundRoutine> schedule_line(float start_value, float end_value, float duration_seconds, uint32_t step_duration, bool retain, std::string name)
 {
-    return Kriya::line(*get_scheduler(), start_value, end_value, duration_seconds, step_duration, retain);
+    auto scheduler = get_scheduler();
+    if (name.empty()) {
+        name = "seq_" + std::to_string(scheduler->get_next_task_id());
+    }
+
+    auto line = std::make_shared<Vruta::SoundRoutine>(Kriya::line(start_value, end_value, duration_seconds, step_duration, retain));
+
+    get_scheduler()->add_task(line, name, true);
+    return line;
 }
 
 void schedule_pattern(std::function<std::any(uint64_t)> pattern_func, std::function<void(std::any)> callback, double interval_seconds, std::string name, Vruta::ProcessingToken token)
