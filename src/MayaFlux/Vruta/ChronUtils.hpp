@@ -1,13 +1,17 @@
 #pragma once
 
 namespace MayaFlux::Vruta {
+
+inline uint32_t s_registered_sample_rate { 48000 };
+inline uint32_t s_registered_frame_rate { 60 };
+
 /**
  * @brief Convert frames to seconds at a given frame rate
  * @param frames Number of frames
  * @param frame_rate Frame rate in Hz
  * @return Time duration in seconds
  */
-inline uint64_t frames_to_seconds(uint64_t frames, uint32_t frame_rate)
+inline uint64_t frames_to_seconds(uint64_t frames, uint32_t frame_rate = s_registered_frame_rate)
 {
     return frames / frame_rate;
 }
@@ -17,7 +21,7 @@ inline uint64_t frames_to_seconds(uint64_t frames, uint32_t frame_rate)
  * @param frame_rate Frame rate in Hz
  * @return Duration in milliseconds
  */
-inline std::chrono::milliseconds frame_duration_ms(uint32_t frame_rate)
+inline std::chrono::milliseconds frame_duration_ms(uint32_t frame_rate = s_registered_frame_rate)
 {
     return std::chrono::milliseconds(1000 / frame_rate);
 }
@@ -27,7 +31,7 @@ inline std::chrono::milliseconds frame_duration_ms(uint32_t frame_rate)
  * @param frame_rate Frame rate in Hz
  * @return Duration in microseconds
  */
-inline std::chrono::microseconds frame_duration_us(uint32_t frame_rate)
+inline std::chrono::microseconds frame_duration_us(uint32_t frame_rate = s_registered_frame_rate)
 {
     return std::chrono::microseconds(1000000 / frame_rate);
 }
@@ -38,7 +42,7 @@ inline std::chrono::microseconds frame_duration_us(uint32_t frame_rate)
  * @param frame_rate Frame rate in Hz
  * @return Duration in milliseconds
  */
-inline std::chrono::milliseconds frames_duration_ms(uint64_t num_frames, uint32_t frame_rate)
+inline std::chrono::milliseconds frames_duration_ms(uint64_t num_frames, uint32_t frame_rate = s_registered_frame_rate)
 {
     return std::chrono::milliseconds((num_frames * 1000) / frame_rate);
 }
@@ -49,7 +53,7 @@ inline std::chrono::milliseconds frames_duration_ms(uint64_t num_frames, uint32_
  * @param frame_rate Frame rate in Hz
  * @return Duration in microseconds
  */
-inline std::chrono::microseconds frames_duration_us(uint64_t num_frames, uint32_t frame_rate)
+inline std::chrono::microseconds frames_duration_us(uint64_t num_frames, uint32_t frame_rate = s_registered_frame_rate)
 {
     return std::chrono::microseconds((num_frames * 1000000) / frame_rate);
 }
@@ -59,7 +63,7 @@ inline std::chrono::microseconds frames_duration_us(uint64_t num_frames, uint32_
  * @param sample_rate Sample rate in Hz
  * @return Time duration in seconds
  */
-inline uint64_t samples_to_seconds(uint64_t samples, uint32_t sample_rate)
+inline uint64_t samples_to_seconds(uint64_t samples, uint32_t sample_rate = s_registered_sample_rate)
 {
     return samples / sample_rate;
 }
@@ -71,7 +75,7 @@ inline uint64_t samples_to_seconds(uint64_t samples, uint32_t sample_rate)
  * @param frame_rate Frame rate in Hz
  * @return Number of samples
  */
-inline uint64_t frames_to_samples(uint64_t frames, uint32_t sample_rate, uint32_t frame_rate)
+inline uint64_t frames_to_samples(uint64_t frames, uint32_t sample_rate = s_registered_sample_rate, uint32_t frame_rate = s_registered_frame_rate)
 {
     return (frames * sample_rate) / frame_rate;
 }
@@ -83,7 +87,7 @@ inline uint64_t frames_to_samples(uint64_t frames, uint32_t sample_rate, uint32_
  * @param frame_rate Frame rate in Hz
  * @return Number of frames
  */
-inline uint64_t samples_to_frames(uint64_t samples, uint32_t sample_rate, uint32_t frame_rate)
+inline uint64_t samples_to_frames(uint64_t samples, uint32_t sample_rate = s_registered_sample_rate, uint32_t frame_rate = s_registered_frame_rate)
 {
     return (samples * frame_rate) / sample_rate;
 }
@@ -94,7 +98,7 @@ inline uint64_t samples_to_frames(uint64_t samples, uint32_t sample_rate, uint32
  * @param sample_rate Sample rate in Hz
  * @return Number of samples
  */
-inline uint64_t seconds_to_samples(double seconds, uint32_t sample_rate)
+inline uint64_t seconds_to_samples(double seconds, uint32_t sample_rate = s_registered_sample_rate)
 {
     return static_cast<uint64_t>(seconds * sample_rate);
 }
@@ -105,7 +109,7 @@ inline uint64_t seconds_to_samples(double seconds, uint32_t sample_rate)
  * @param frame_rate Frame rate in Hz
  * @return Number of frames
  */
-inline uint64_t seconds_to_frames(double seconds, uint32_t frame_rate)
+inline uint64_t seconds_to_frames(double seconds, uint32_t frame_rate = s_registered_frame_rate)
 {
     return static_cast<uint64_t>(seconds * frame_rate);
 }

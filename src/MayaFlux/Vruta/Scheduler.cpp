@@ -1,5 +1,7 @@
 #include "Scheduler.hpp"
 
+#include "ChronUtils.hpp"
+
 #include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux::Vruta {
@@ -10,6 +12,8 @@ TaskScheduler::TaskScheduler(uint32_t default_sample_rate, uint32_t default_fram
     , m_registered_sample_rate(default_sample_rate)
     , m_registered_frame_rate(default_frame_rate)
 {
+    s_registered_sample_rate = default_sample_rate;
+    s_registered_frame_rate = default_frame_rate;
     ensure_domain(ProcessingToken::SAMPLE_ACCURATE, default_sample_rate);
     ensure_domain(ProcessingToken::FRAME_ACCURATE, default_frame_rate);
     ensure_domain(ProcessingToken::MULTI_RATE, default_sample_rate);
