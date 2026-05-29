@@ -35,25 +35,15 @@ bool update_task_params(const std::string& name, Args... args)
     return get_scheduler()->update_task_params(name, args...);
 }
 
-Vruta::SoundRoutine create_metro(double interval_seconds, std::function<void()> callback)
-{
-    return Kriya::metro(*get_scheduler(), interval_seconds, std::move(callback));
-}
-
 void schedule_metro(double interval_seconds, std::function<void()> callback, std::string name)
 {
     auto scheduler = get_scheduler();
     if (name.empty()) {
         name = "metro_" + std::to_string(scheduler->get_next_task_id());
     }
-    auto metronome = std::make_shared<Vruta::SoundRoutine>(create_metro(interval_seconds, std::move(callback)));
+    auto metronome = std::make_shared<Vruta::SoundRoutine>(Kriya::metro(*get_scheduler(), interval_seconds, std::move(callback)));
 
     get_scheduler()->add_task(std::move(metronome), name, false);
-}
-
-Vruta::SoundRoutine create_sequence(std::vector<std::pair<double, std::function<void()>>> seq)
-{
-    return Kriya::sequence(*get_scheduler(), std::move(seq));
 }
 
 void schedule_sequence(std::vector<std::pair<double, std::function<void()>>> seq, std::string name)
@@ -62,7 +52,7 @@ void schedule_sequence(std::vector<std::pair<double, std::function<void()>>> seq
     if (name.empty()) {
         name = "seq_" + std::to_string(scheduler->get_next_task_id());
     }
-    auto tseq = std::make_shared<Vruta::SoundRoutine>(create_sequence(std::move(seq)));
+    auto tseq = std::make_shared<Vruta::SoundRoutine>(Kriya::sequence(*get_scheduler(), std::move(seq)));
     get_scheduler()->add_task(std::move(tseq), name, false);
 }
 
@@ -71,18 +61,13 @@ Vruta::SoundRoutine create_line(float start_value, float end_value, float durati
     return Kriya::line(*get_scheduler(), start_value, end_value, duration_seconds, step_duration, retain);
 }
 
-Vruta::SoundRoutine create_pattern(std::function<std::any(uint64_t)> pattern_func, std::function<void(std::any)> callback, double interval_seconds)
-{
-    return Kriya::pattern(*get_scheduler(), std::move(pattern_func), std::move(callback), interval_seconds);
-}
-
 void schedule_pattern(std::function<std::any(uint64_t)> pattern_func, std::function<void(std::any)> callback, double interval_seconds, std::string name)
 {
     auto scheduler = get_scheduler();
     if (name.empty()) {
         name = "pattern_" + std::to_string(scheduler->get_next_task_id());
     }
-    auto pattern = std::make_shared<Vruta::SoundRoutine>(create_pattern(std::move(pattern_func), std::move(callback), interval_seconds));
+    auto pattern = std::make_shared<Vruta::SoundRoutine>(Kriya::pattern(*get_scheduler(), std::move(pattern_func), std::move(callback), interval_seconds));
     get_scheduler()->add_task(std::move(pattern), name, false);
 }
 
