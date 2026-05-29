@@ -314,7 +314,6 @@ void Fabric::fire(const Registration& reg) const
                 ictx.radius = ptr->m_radius;
                 ictx.color = ptr->m_color;
                 ictx.size = ptr->m_size;
-                ictx.render_proc = ptr->m_influence_target;
                 ictx.cursor_pos = reg.pending_cursor;
                 ptr->invoke_influence(ictx);
             } else {
@@ -324,7 +323,6 @@ void Fabric::fire(const Registration& reg) const
                 ictx.radius = ptr->m_radius;
                 ictx.color = ptr->m_color;
                 ictx.size = ptr->m_size;
-                ictx.render_proc = ptr->m_influence_target;
                 ptr->invoke_influence(ictx);
             }
         }
