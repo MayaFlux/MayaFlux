@@ -335,4 +335,46 @@ struct QuadGeometry {
     const glm::vec3& half_extents,
     uint32_t subdivisions = 1);
 
+/**
+ * @brief Generate a subdivided flat grid in the XZ plane.
+ *
+ * Vertices lie at Y = 0. U maps to X, V maps to Z. UV covers [0,1] across
+ * the full extent. Normals point along +Y throughout.
+ *
+ * @param center    World-space centre of the grid.
+ * @param extent_x  Total width along X.
+ * @param extent_z  Total depth along Z.
+ * @param cols      Number of columns (cells along X). Clamped to minimum 1.
+ * @param rows      Number of rows (cells along Z). Clamped to minimum 1.
+ * @return MeshData ready for TRIANGLE_LIST draw.
+ */
+[[nodiscard]] MAYAFLUX_API Kakshya::MeshData generate_grid(
+    const glm::vec3& center,
+    float extent_x,
+    float extent_z,
+    uint32_t cols,
+    uint32_t rows,
+    const glm::vec3& normal = glm::vec3(0.0F, 1.0F, 0.0F));
+
+/**
+ * @brief Generate a mesh from an arbitrary parametric surface function.
+ *
+ * @p fn maps (u, v) in [0,1]^2 to a world-space position. Normals are
+ * computed via finite differences on @p fn so they follow the surface
+ * exactly regardless of shape. UV is mapped directly from (u, v).
+ *
+ * Any surface expressible as a function of two parameters is valid:
+ * torus, Möbius band, Klein bottle approximation, spherical harmonic
+ * deformation, audio-driven terrain, or any procedural form.
+ *
+ * @param fn        Surface function: (u, v) -> glm::vec3.
+ * @param u_segs    Subdivisions along U. Clamped to minimum 1.
+ * @param v_segs    Subdivisions along V. Clamped to minimum 1.
+ * @return MeshData ready for TRIANGLE_LIST draw.
+ */
+[[nodiscard]] MAYAFLUX_API Kakshya::MeshData generate_parametric_surface(
+    std::function<glm::vec3(float u, float v)> fn,
+    uint32_t u_segs,
+    uint32_t v_segs);
+
 } // namespace MayaFlux::Kinesis

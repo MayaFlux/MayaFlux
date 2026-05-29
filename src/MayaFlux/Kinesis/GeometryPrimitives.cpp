@@ -813,4 +813,154 @@ Kakshya::MeshData generate_box(
     return data;
 }
 
+Kakshya::MeshData generate_grid(
+    const glm::vec3& center,
+    float extent_x,
+    float extent_z,
+    uint32_t cols,
+    uint32_t rows,
+    const glm::vec3& normal)
+{
+    cols = std::max(cols, 1U);
+    rows = std::max(rows, 1U);
+
+    const glm::vec3 n = glm::normalize(normal);
+    glm::vec3 u;
+    if (std::abs(n.y) < 0.9F) {
+        u = glm::normalize(glm::cross(n, glm::vec3(0.0F, 1.0F, 0.0F)));
+    } else {
+        u = glm::normalize(glm::cross(n, glm::vec3(1.0F, 0.0F, 0.0F)));
+    }
+    const glm::vec3 v = glm::normalize(glm::cross(u, n));
+
+    const float half_x = extent_x * 0.5F;
+    const float half_z = extent_z * 0.5F;
+
+    std::vector<Kakshya::MeshVertex> verts;
+    std::vector<uint32_t> indices;
+    verts.reserve(uint32_t(2 * (cols + 1) * (rows + 1)));
+    indices.reserve(uint32_t(2 * cols * rows * 6));
+
+    for (uint32_t row = 0; row <= rows; ++row) {
+        const float fv = static_cast<float>(row) / static_cast<float>(rows);
+        for (uint32_t col = 0; col <= cols; ++col) {
+            const float fu = static_cast<float>(col) / static_cast<float>(cols);
+            const glm::vec3 p = center
+                + u * glm::mix(-half_x, half_x, fu)
+                + v * glm::mix(-half_z, half_z, fv);
+            verts.push_back({
+                .position = p,
+                .uv = { fu, 1.0F - fv },
+                .normal = n,
+            });
+        }
+    }
+
+    const uint32_t stride = cols + 1;
+    const auto vert_count = static_cast<uint32_t>(verts.size());
+
+    for (uint32_t row = 0; row < rows; ++row) {
+        for (uint32_t col = 0; col < cols; ++col) {
+            const uint32_t a = row * stride + col;
+            const uint32_t b = a + 1;
+            const uint32_t c = a + stride;
+            const uint32_t d = c + 1;
+            indices.insert(indices.end(), { a, b, c, b, d, c });
+        }
+    }
+
+    for (uint32_t row = 0; row <= rows; ++row) {
+        const float fv = static_cast<float>(row) / static_cast<float>(rows);
+        for (uint32_t col = 0; col <= cols; ++col) {
+            const float fu = static_cast<float>(col) / static_cast<float>(cols);
+            const glm::vec3 p = center
+                + u * glm::mix(-half_x, half_x, fu)
+                + v * glm::mix(-half_z, half_z, fv);
+            verts.push_back({
+                .position = p,
+                .uv = { fu, 1.0F - fv },
+                .normal = -n,
+            });
+        }
+    }
+
+    for (uint32_t row = 0; row < rows; ++row) {
+        for (uint32_t col = 0; col < cols; ++col) {
+            const uint32_t a = vert_count + row * stride + col;
+            const uint32_t b = a + 1;
+            const uint32_t c = a + stride;
+            const uint32_t d = c + 1;
+            indices.insert(indices.end(), { a, c, b, b, c, d });
+        }
+    }
+
+    auto data = Kakshya::MeshData::empty();
+    Kakshya::MeshInsertion ins(data.vertex_variant, data.index_variant);
+    ins.insert_flat(
+        std::span<const uint8_t>(reinterpret_cast<const uint8_t*>(verts.data()),
+            verts.size() * sizeof(Kakshya::MeshVertex)),
+        std::span<const uint32_t>(indices),
+        Kakshya::VertexLayout::for_meshes(sizeof(Kakshya::MeshVertex)));
+    data.layout = Kakshya::VertexLayout::for_meshes(sizeof(Kakshya::MeshVertex));
+    data.layout.vertex_count = static_cast<uint32_t>(verts.size());
+    return data;
+}
+
+Kakshya::MeshData generate_parametric_surface(
+    std::function<glm::vec3(float, float)> fn,
+    uint32_t u_segs,
+    uint32_t v_segs)
+{
+    u_segs = std::max(u_segs, 1U);
+    v_segs = std::max(v_segs, 1U);
+
+    std::vector<Kakshya::MeshVertex> verts;
+    std::vector<uint32_t> indices;
+    verts.reserve(uint32_t((u_segs + 1) * (v_segs + 1)));
+    indices.reserve(uint32_t(u_segs * v_segs * 6));
+
+    constexpr float eps = 1e-4F;
+
+    for (uint32_t row = 0; row <= v_segs; ++row) {
+        const float fv = static_cast<float>(row) / static_cast<float>(v_segs);
+        for (uint32_t col = 0; col <= u_segs; ++col) {
+            const float fu = static_cast<float>(col) / static_cast<float>(u_segs);
+
+            const glm::vec3 p = fn(fu, fv);
+            const glm::vec3 pu = fn(fu + eps, fv) - fn(fu - eps, fv);
+            const glm::vec3 pv = fn(fu, fv + eps) - fn(fu, fv - eps);
+            const glm::vec3 n = glm::normalize(glm::cross(pu, pv));
+
+            verts.push_back({
+                .position = p,
+                .uv = { fu, 1.0F - fv },
+                .normal = n,
+            });
+        }
+    }
+
+    const uint32_t stride = u_segs + 1;
+    for (uint32_t row = 0; row < v_segs; ++row) {
+        for (uint32_t col = 0; col < u_segs; ++col) {
+            const uint32_t a = row * stride + col;
+            const uint32_t b = a + 1;
+            const uint32_t c = a + stride;
+            const uint32_t d = c + 1;
+            indices.insert(indices.end(), { a, b, c, b, d, c });
+        }
+    }
+
+    auto data = Kakshya::MeshData::empty();
+    Kakshya::MeshInsertion ins(data.vertex_variant, data.index_variant);
+    ins.insert_flat(
+        std::span<const uint8_t>(reinterpret_cast<const uint8_t*>(verts.data()),
+            verts.size() * sizeof(Kakshya::MeshVertex)),
+        std::span<const uint32_t>(indices),
+        Kakshya::VertexLayout::for_meshes(sizeof(Kakshya::MeshVertex)));
+    data.layout = Kakshya::VertexLayout::for_meshes(sizeof(Kakshya::MeshVertex));
+    data.layout.vertex_count = static_cast<uint32_t>(verts.size());
+
+    return data;
+}
+
 } // namespace MayaFlux::Kinesis
