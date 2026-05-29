@@ -4,6 +4,8 @@ namespace MayaFlux {
 namespace Vruta {
     class TaskScheduler;
     class SoundRoutine;
+    class GraphicsRoutine;
+    class Routine;
 }
 
 namespace Nodes::Generator {

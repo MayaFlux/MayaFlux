@@ -49,12 +49,13 @@ public:
     /**
      * @brief Constructs a Timer with the specified scheduler
      * @param scheduler The TaskScheduler that will manage this timer
+     * @param token The processing token that determines the timing context for this timer (default is SAMPLE_ACCURATE)
      *
      * Creates a new Timer that will use the provided scheduler for
      * timing operations. The scheduler provides the sample clock and
      * task management infrastructure needed for precise timing.
      */
-    Timer(Vruta::TaskScheduler& scheduler);
+    Timer(Vruta::TaskScheduler& scheduler, Vruta::ProcessingToken token = Vruta::ProcessingToken::SAMPLE_ACCURATE);
     ~Timer() = default;
 
     /**
@@ -104,7 +105,7 @@ private:
      * It's created when schedule() is called and destroyed when the
      * callback executes or cancel() is called.
      */
-    std::shared_ptr<Vruta::SoundRoutine> m_routine;
+    std::shared_ptr<Vruta::Routine> m_routine;
 
     /**
      * @brief Flag indicating whether a callback is currently scheduled
@@ -121,6 +122,11 @@ private:
      * when the timer fires. It's cleared when cancel() is called.
      */
     std::function<void()> m_callback;
+
+    /**
+     * @brief The processing token that determines the timing context and thread evaluator for this timer
+     */
+    Vruta::ProcessingToken m_token;
 };
 
 /**
@@ -153,12 +159,13 @@ public:
     /**
      * @brief Constructs a TimedAction with the specified scheduler
      * @param scheduler The TaskScheduler that will manage this action
+     * @param token The processing token that determines the timing context for this action (default is SAMPLE_ACCURATE)
      *
      * Creates a new TimedAction that will use the provided scheduler for
      * timing operations. The scheduler provides the sample clock and
      * task management infrastructure needed for precise timing.
      */
-    TimedAction(Vruta::TaskScheduler& scheduler);
+    TimedAction(Vruta::TaskScheduler& scheduler, Vruta::ProcessingToken token = Vruta::ProcessingToken::SAMPLE_ACCURATE);
     ~TimedAction() = default;
 
     /**
@@ -209,6 +216,11 @@ private:
      * specified duration has elapsed.
      */
     Timer m_timer;
+
+    /**
+     * @brief The processing token that determines the timing context and thread evaluator for this action
+     */
+    Vruta::ProcessingToken m_token;
 };
 
 /**
@@ -236,6 +248,7 @@ public:
      * @param scheduler The TaskScheduler that will manage this timer
      * @param graph_manager The NodeGraphManager that will manage the processing nodes
      * @param buffer_manager The BufferManager that will manage any buffers needed for processing
+     * @param token The processing token that determines the timing context for this activation (default is SAMPLE_ACCURATE)
      *
      * Creates a new NodeTimer that will use the provided scheduler and
      * graph manager for timing and node management operations.
@@ -243,7 +256,8 @@ public:
     TemporalActivation(
         Vruta::TaskScheduler& scheduler,
         Nodes::NodeGraphManager& graph_manager,
-        Buffers::BufferManager& buffer_manager);
+        Buffers::BufferManager& buffer_manager,
+        Vruta::ProcessingToken token = Vruta::ProcessingToken::SAMPLE_ACCURATE);
 
     ~TemporalActivation() = default;
 
@@ -404,6 +418,15 @@ private:
      * buffer finishes playing or is cancelled.
      */
     Buffers::ProcessingToken m_buffer_token;
+
+    /**
+     * @brief The processing token associated with the currently active node, network or buffer
+     *
+     * This token is used to identify the processing context for the active node, network or buffer.
+     * It is set when play_for() or play_with_processing() is called and reset when the
+     * node, network or buffer finishes playing or is cancelled.
+     */
+    Vruta::ProcessingToken m_execution_token;
 
     /**
      * @brief The output channels the current node is connected to
