@@ -15,6 +15,32 @@ class VKCommandManager;
 class Window;
 class BackendResourceManager;
 
+struct CaptureSlot {
+    vk::Image image {};
+    vk::DeviceMemory mem {};
+    vk::Extent2D extent {};
+    vk::CommandBuffer cmd {};
+    vk::Fence fence {};
+    std::atomic<bool> pending { false };
+};
+
+struct CaptureState {
+    std::atomic<std::shared_ptr<std::vector<uint8_t>>> last_frame;
+    std::vector<std::unique_ptr<CaptureSlot>> slots;
+    size_t slot_index {};
+    vk::Format format {};
+    uint32_t bpp {};
+    std::thread readback_thread;
+    std::atomic<bool> readback_running { false };
+
+    ~CaptureState()
+    {
+        readback_running.store(false, std::memory_order_release);
+        if (readback_thread.joinable())
+            readback_thread.join();
+    }
+};
+
 struct WindowRenderContext {
     std::shared_ptr<Window> window;
     vk::SurfaceKHR surface;
@@ -30,6 +56,8 @@ struct WindowRenderContext {
     bool needs_recreation {};
     size_t current_frame {};
     uint32_t current_image_index {};
+
+    std::unique_ptr<CaptureState> capture;
 
     WindowRenderContext() = default;
     ~WindowRenderContext() = default;
@@ -130,6 +158,27 @@ private:
      * to input events.
      */
     void render_empty_window(WindowRenderContext& ctx);
+
+    /**
+     * @brief Capture the current frame from a window's swapchain
+     * @param ctx Window render context to capture from
+     *
+     * This initiates an asynchronous readback of the current swapchain image into
+     * CPU-accessible memory. The result is stored in the capture state for retrieval
+     * via the display service.
+     */
+    void capture_frame(WindowRenderContext& ctx);
+
+    /**
+     * @brief Thread function to perform asynchronous readback of captured frames
+     * @param state Capture state containing pending readbacks
+     * @param dev Vulkan device to use for readback operations
+     *
+     * This thread continuously checks for pending capture slots and performs the necessary
+     * Vulkan commands to read back the image data into CPU memory. The last captured frame
+     * is stored atomically for retrieval by the display service.
+     */
+    void start_readback_thread(CaptureState& state, vk::Device dev);
 
     BackendResourceManager* m_resource_manager {};
 };
