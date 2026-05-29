@@ -373,8 +373,58 @@ struct QuadGeometry {
  * @return MeshData ready for TRIANGLE_LIST draw.
  */
 [[nodiscard]] MAYAFLUX_API Kakshya::MeshData generate_parametric_surface(
-    std::function<glm::vec3(float u, float v)> fn,
+    const std::function<glm::vec3(float u, float v)>& fn,
     uint32_t u_segs,
     uint32_t v_segs);
+
+/**
+ * @brief Extrude a circle along an arbitrary 3D path.
+ *
+ * Each path point becomes a ring of @p radial_segments vertices. The ring
+ * frame is propagated along the path using parallel transport, which
+ * eliminates the twisting that naive normal-aligned cross-sections produce.
+ *
+ * @p radius_fn maps the normalised path parameter t in [0,1] to a radius.
+ * A constant lambda gives a uniform tube. Any callable works: audio node
+ * output, envelope, position-dependent modulation.
+ *
+ * Caps are flat and optional. An open tube (no caps) is suitable for chains
+ * and paths; a capped tube is suitable for solid cylindrical forms.
+ *
+ * @param path            Ordered world-space positions defining the spine.
+ *                        Minimum 2 points. Clamped to minimum 2.
+ * @param radius_fn       Callable: float(float t) returning radius at t.
+ * @param radial_segments Number of vertices per ring. Clamped to minimum 3.
+ * @param capped          If true, flat polygon caps are added at both ends.
+ * @return MeshData ready for TRIANGLE_LIST draw.
+ */
+[[nodiscard]] MAYAFLUX_API Kakshya::MeshData generate_tube(
+    std::span<const glm::vec3> path,
+    const std::function<float(float t)>& radius_fn,
+    uint32_t radial_segments = 8,
+    bool capped = false);
+
+/**
+ * @brief Revolve a 2D profile curve around the Y axis.
+ *
+ * @p profile_fn maps t in [0,1] to a point in the XY plane. X is the radial
+ * distance from the Y axis; Y is the height. Negative X values are valid and
+ * produce interior geometry. The profile is revolved through @p sweep_radians,
+ * defaulting to a full revolution.
+ *
+ * UV: u maps to the revolution angle in [0,1]; v maps to the profile
+ * parameter t.
+ *
+ * @param profile_fn      Callable: glm::vec2(float t) in the XY plane.
+ * @param profile_segs    Samples along the profile. Clamped to minimum 2.
+ * @param radial_segs     Subdivisions around the axis. Clamped to minimum 3.
+ * @param sweep_radians   Arc of revolution. Default: full circle.
+ * @return MeshData ready for TRIANGLE_LIST draw.
+ */
+[[nodiscard]] MAYAFLUX_API Kakshya::MeshData generate_revolution(
+    const std::function<glm::vec2(float t)>& profile_fn,
+    uint32_t profile_segs,
+    uint32_t radial_segs,
+    float sweep_radians = glm::two_pi<float>());
 
 } // namespace MayaFlux::Kinesis
