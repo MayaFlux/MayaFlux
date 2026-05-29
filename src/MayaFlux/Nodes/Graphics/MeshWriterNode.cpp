@@ -18,6 +18,23 @@ MeshWriterNode::MeshWriterNode(size_t initial_vertex_capacity)
         "Created MeshWriterNode with capacity for {} vertices", initial_vertex_capacity);
 }
 
+void MeshWriterNode::set_mesh(const Kakshya::MeshData& data)
+{
+    const auto* vb = std::get_if<std::vector<uint8_t>>(&data.vertex_variant);
+    const auto* ib = std::get_if<std::vector<uint32_t>>(&data.index_variant);
+
+    if (!vb || !ib || vb->empty() || ib->empty() || data.layout.stride_bytes == 0) {
+        MF_ERROR(Journal::Component::Nodes, Journal::Context::NodeProcessing,
+            "MeshWriterNode::set_mesh: invalid MeshData");
+        return;
+    }
+
+    const auto n = vb->size() / data.layout.stride_bytes;
+    set_mesh(
+        std::span { reinterpret_cast<const MeshVertex*>(vb->data()), n },
+        std::span { ib->data(), ib->size() });
+}
+
 void MeshWriterNode::set_mesh(
     std::span<const MeshVertex> vertices,
     std::span<const uint32_t> indices)
