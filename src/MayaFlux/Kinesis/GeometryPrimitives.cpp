@@ -1,4 +1,5 @@
 #include "GeometryPrimitives.hpp"
+#include "MayaFlux/Kakshya/NDData/MeshInsertion.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -745,46 +746,71 @@ std::vector<Kakshya::Vertex> cuboid_wireframe(
     };
 }
 
-BoxGeometry generate_box(
+Kakshya::MeshData generate_box(
     const glm::vec3& center,
     const glm::vec3& half_extents,
-    uint32_t /*subdivisions*/)
+    uint32_t subdivisions)
 {
-    BoxGeometry out;
+    const uint32_t n = std::max(subdivisions, 1U);
 
-    const std::array<glm::vec3, 6> n = { {
-        { 0, 0, 1 },
-        { 0, 0, -1 },
-        { 1, 0, 0 },
-        { -1, 0, 0 },
-        { 0, 1, 0 },
-        { 0, -1, 0 },
-    } };
+    std::vector<Kakshya::MeshVertex> verts;
+    std::vector<uint32_t> indices;
+    verts.reserve(uint32_t(6 * (n + 1) * (n + 1)));
+    indices.reserve(uint32_t(6 * n * n * 6));
 
-    auto face = [&](glm::vec3 a, glm::vec3 b, glm::vec3 c, glm::vec3 d, glm::vec3 nrm) {
-        const auto base = static_cast<uint32_t>(out.vertices.size());
-        auto place = [&](glm::vec3 corner, glm::vec2 uv) {
-            out.vertices.push_back({
-                .position = center + corner * half_extents,
-                .uv = uv,
-                .normal = nrm,
-            });
-        };
-        place(a, { 0, 1 });
-        place(b, { 1, 1 });
-        place(c, { 1, 0 });
-        place(d, { 0, 0 });
-        out.indices.insert(out.indices.end(), { base, base + 1, base + 2, base, base + 2, base + 3 });
+    struct FaceDef {
+        glm::vec3 origin;
+        glm::vec3 u_axis;
+        glm::vec3 v_axis;
+        glm::vec3 normal;
     };
 
-    face({ -1, -1, 1 }, { 1, -1, 1 }, { 1, 1, 1 }, { -1, 1, 1 }, n[0]);
-    face({ 1, -1, -1 }, { -1, -1, -1 }, { -1, 1, -1 }, { 1, 1, -1 }, n[1]);
-    face({ 1, -1, 1 }, { 1, -1, -1 }, { 1, 1, -1 }, { 1, 1, 1 }, n[2]);
-    face({ -1, -1, -1 }, { -1, -1, 1 }, { -1, 1, 1 }, { -1, 1, -1 }, n[3]);
-    face({ -1, 1, 1 }, { 1, 1, 1 }, { 1, 1, -1 }, { -1, 1, -1 }, n[4]);
-    face({ -1, -1, -1 }, { 1, -1, -1 }, { 1, -1, 1 }, { -1, -1, 1 }, n[5]);
+    const std::array<FaceDef, 6> faces = { {
+        { .origin = { -1, -1, 1 }, .u_axis = { 2, 0, 0 }, .v_axis = { 0, 2, 0 }, .normal = { 0, 0, 1 } },
+        { .origin = { 1, -1, -1 }, .u_axis = { -2, 0, 0 }, .v_axis = { 0, 2, 0 }, .normal = { 0, 0, -1 } },
+        { .origin = { 1, -1, 1 }, .u_axis = { 0, 0, -2 }, .v_axis = { 0, 2, 0 }, .normal = { 1, 0, 0 } },
+        { .origin = { -1, -1, -1 }, .u_axis = { 0, 0, 2 }, .v_axis = { 0, 2, 0 }, .normal = { -1, 0, 0 } },
+        { .origin = { -1, 1, 1 }, .u_axis = { 2, 0, 0 }, .v_axis = { 0, 0, -2 }, .normal = { 0, 1, 0 } },
+        { .origin = { -1, -1, -1 }, .u_axis = { 2, 0, 0 }, .v_axis = { 0, 0, 2 }, .normal = { 0, -1, 0 } },
+    } };
 
-    return out;
+    for (const auto& f : faces) {
+        const auto base = static_cast<uint32_t>(verts.size());
+
+        for (uint32_t row = 0; row <= n; ++row) {
+            const float fv = static_cast<float>(row) / static_cast<float>(n);
+            for (uint32_t col = 0; col <= n; ++col) {
+                const float fu = static_cast<float>(col) / static_cast<float>(n);
+                const glm::vec3 p = f.origin + f.u_axis * fu + f.v_axis * fv;
+                verts.push_back({
+                    .position = center + p * half_extents,
+                    .uv = { fu, 1.0F - fv },
+                    .normal = f.normal,
+                });
+            }
+        }
+
+        const uint32_t stride = n + 1;
+        for (uint32_t row = 0; row < n; ++row) {
+            for (uint32_t col = 0; col < n; ++col) {
+                const uint32_t a = base + row * stride + col;
+                const uint32_t b = a + 1;
+                const uint32_t c = a + stride;
+                const uint32_t d = c + 1;
+                indices.insert(indices.end(), { a, b, d, a, d, c });
+            }
+        }
+    }
+
+    auto data = Kakshya::MeshData::empty();
+    Kakshya::MeshInsertion ins(data.vertex_variant, data.index_variant);
+    ins.insert_flat(
+        std::span<const uint8_t>(reinterpret_cast<const uint8_t*>(verts.data()),
+            verts.size() * sizeof(Kakshya::MeshVertex)),
+        std::span<const uint32_t>(indices),
+        Kakshya::VertexLayout::for_meshes(sizeof(Kakshya::MeshVertex)));
+    data.layout = Kakshya::VertexLayout::for_meshes(sizeof(Kakshya::MeshVertex));
+    return data;
 }
 
 } // namespace MayaFlux::Kinesis
