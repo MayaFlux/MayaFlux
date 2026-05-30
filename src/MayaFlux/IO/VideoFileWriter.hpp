@@ -91,6 +91,8 @@ public:
         return m_observer_id.load(std::memory_order_acquire) != 0;
     }
 
+    [[nodiscard]] std::shared_ptr<Core::Window> capture_window() const { return m_capture_window; }
+
     // =========================================================================
     // Write
     // =========================================================================

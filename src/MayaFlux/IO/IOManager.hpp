@@ -4,6 +4,7 @@
 #include "ImageWriter.hpp"
 #include "SoundFileWriter.hpp"
 #include "VideoFileReader.hpp"
+#include "VideoFileWriter.hpp"
 
 #include <future>
 
@@ -400,6 +401,64 @@ public:
     void release_video_reader(uint64_t reader_id);
 
     // ─────────────────────────────────────────────────────────────────────────
+    // Video — write
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * @brief Construct an open VideoFileWriter the caller drives manually.
+     *
+     * Allocates and opens the writer. IOManager does not track this writer;
+     * the caller is responsible for calling close() or stop_recording() when
+     * done.
+     *
+     * @param filepath         Output file path. Extension determines container.
+     * @param width            Frame width in pixels.
+     * @param height           Frame height in pixels.
+     * @param frame_rate       Average frame rate in frames per second.
+     * @param src_pixel_format AVPixelFormat of submitted pixel data.
+     * @param codec_id         Encoder override; AV_CODEC_ID_NONE = container default.
+     * @return Open VideoFileWriter, or nullptr if open() failed.
+     */
+    [[nodiscard]] std::shared_ptr<VideoFileWriter>
+    create_writer(const std::string& filepath,
+        uint32_t width,
+        uint32_t height,
+        double frame_rate,
+        AVPixelFormat src_pixel_format,
+        AVCodecID codec_id = AV_CODEC_ID_NONE);
+
+    /**
+     * @brief Begin continuous capture of a window's rendered frames to a file.
+     *
+     * Delegates to VideoFileWriter::record(). The encoder is opened lazily on
+     * the first delivered frame so pixel format and dimensions come from the
+     * live swapchain. Returns an opaque capture id for use with stop_capture().
+     *
+     * Returns 0 if the window is null or record() fails.
+     *
+     * @param window     Window whose swapchain frames will be captured.
+     * @param filepath   Output file path. Extension determines container format.
+     * @param frame_rate Nominal frame rate written into the container header.
+     * @param codec_id   Encoder override; AV_CODEC_ID_NONE = container default.
+     * @return Capture handle; pass to stop_capture() to finalise.
+     */
+    [[nodiscard]] uint32_t capture_window(
+        const std::shared_ptr<Core::Window>& window,
+        const std::string& filepath,
+        double frame_rate,
+        AVCodecID codec_id = AV_CODEC_ID_NONE);
+
+    /**
+     * @brief Stop the active window capture and finalise the file.
+     *
+     * Convenience overload that resolves the capture id by window pointer.
+     * No-op with a warning if no capture is active for this window.
+     *
+     * @param window Window previously passed to capture_window().
+     */
+    void stop_capture(const std::shared_ptr<Core::Window>& window);
+
+    // ─────────────────────────────────────────────────────────────────────────
     // Image — load
     // ─────────────────────────────────────────────────────────────────────────
 
@@ -553,9 +612,9 @@ public:
     [[nodiscard]] std::vector<std::shared_ptr<ModelReader>> get_model_readers() const { return m_model_readers; };
 
     /**
-     * @brief Returns all active capture IDs.
+     * @brief Returns all active audio capture IDs.
      */
-    [[nodiscard]] std::vector<uint32_t> get_capture_ids() const;
+    [[nodiscard]] std::vector<uint32_t> get_audio_capture_ids() const;
 
     /**
      * @brief Returns all registered SoundFileWriters created via create_writer() or write().
@@ -586,14 +645,27 @@ private:
 
     // ── Audio capture ──────────────────────────────────────────────────────
 
-    struct CaptureState {
+    struct AudioCaptureState {
         std::shared_ptr<Kakshya::AudioOutputContainer> container;
         std::shared_ptr<SoundFileWriter> writer;
         uint32_t observer_id {};
     };
 
-    mutable std::mutex m_captures_mutex;
-    std::unordered_map<uint32_t, CaptureState> m_captures;
+    mutable std::mutex m_audio_captures_mutex;
+    std::unordered_map<uint32_t, AudioCaptureState> m_audio_captures;
+
+    // ── Audio capture ──────────────────────────────────────────────────────
+
+    struct VideoCaptureState {
+        std::shared_ptr<VideoFileWriter> writer;
+        uint32_t capture_id {};
+    };
+
+    mutable std::mutex m_video_captures_mutex;
+    std::unordered_map<uint32_t, VideoCaptureState> m_video_captures;
+    std::atomic<uint32_t> m_next_video_capture_id { 1 };
+
+    std::vector<std::shared_ptr<VideoFileWriter>> m_video_writers;
 
     // ── readers ──────────────────────────────────────────────────────
 

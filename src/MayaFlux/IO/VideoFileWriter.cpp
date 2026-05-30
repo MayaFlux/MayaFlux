@@ -148,7 +148,13 @@ bool VideoFileWriter::record(const std::shared_ptr<Core::Window>& window,
                 }
             }
 
-            write(buf->data(), buf->size());
+            if (!m_open.load(std::memory_order_acquire))
+                return;
+
+            post(RawFrame {
+                .pixels = std::vector<uint8_t>(buf->begin(), buf->end()),
+                .width = w,
+                .height = h });
         });
 
     if (obs_id == 0) {
