@@ -170,6 +170,16 @@ private:
     void render_empty_window(WindowRenderContext& ctx);
 
     /**
+     * @brief Ensure capture state is initialized for a window context
+     * @param ctx Window render context to initialize capture state for
+     *
+     * If the context does not already have capture state and the associated window has
+     * capture enabled, this initializes the capture state including allocating command buffers
+     * and synchronization objects for readback.
+     */
+    void ensure_capture_state(WindowRenderContext& ctx);
+
+    /**
      * @brief Capture the current frame from a window's swapchain
      * @param ctx Window render context to capture from
      *

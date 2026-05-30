@@ -343,10 +343,7 @@ void BackendWindowHandler::setup_backend_service(const std::shared_ptr<Registry:
             return 0;
         }
         if (!ctx->capture) {
-            MF_WARN(Journal::Component::Core, Journal::Context::GraphicsBackend,
-                "register_frame_observer: capture not active for '{}'; call set_capture_enabled(true) before registering an observer",
-                ctx->window->get_create_info().title);
-            return 0;
+            ensure_capture_state(*ctx);
         }
 
         auto& state = *ctx->capture;
@@ -732,6 +729,32 @@ void BackendWindowHandler::render_empty_window(WindowRenderContext& ctx)
     }
 }
 
+void BackendWindowHandler::ensure_capture_state(WindowRenderContext& ctx)
+{
+    if (ctx.capture || !ctx.swapchain || !ctx.window->is_capture_enabled())
+        return;
+
+    auto dev = m_context.get_device();
+    const vk::Format fmt = ctx.swapchain->get_image_format();
+    const uint32_t bpp = Core::vk_format_bytes_per_pixel(fmt);
+
+    ctx.capture = std::make_unique<CaptureState>();
+    ctx.capture->format = fmt;
+    ctx.capture->bpp = bpp;
+
+    const uint32_t count = ctx.swapchain->get_image_count();
+    ctx.capture->slots.reserve(count);
+    for (uint32_t i = 0; i < count; ++i) {
+        auto slot = std::make_unique<CaptureSlot>();
+        slot->cmd = m_command_manager.allocate_command_buffer(
+            vk::CommandBufferLevel::ePrimary);
+        slot->fence = dev.createFence({});
+        ctx.capture->slots.push_back(std::move(slot));
+    }
+
+    start_readback_thread(*ctx.capture, dev);
+}
+
 void BackendWindowHandler::capture_frame(WindowRenderContext& ctx)
 {
     if (!ctx.swapchain || ctx.window->get_rendering_buffers().empty()
@@ -745,21 +768,7 @@ void BackendWindowHandler::capture_frame(WindowRenderContext& ctx)
     const vk::Image src = ctx.swapchain->get_images()[ctx.current_image_index];
 
     if (!ctx.capture) {
-        ctx.capture = std::make_unique<CaptureState>();
-        ctx.capture->format = fmt;
-        ctx.capture->bpp = bpp;
-
-        const uint32_t count = ctx.swapchain->get_image_count();
-        ctx.capture->slots.reserve(count);
-        for (uint32_t i = 0; i < count; ++i) {
-            auto slot = std::make_unique<CaptureSlot>();
-            slot->cmd = m_command_manager.allocate_command_buffer(
-                vk::CommandBufferLevel::ePrimary);
-            slot->fence = dev.createFence({});
-            ctx.capture->slots.push_back(std::move(slot));
-        }
-
-        start_readback_thread(*ctx.capture, dev);
+        ensure_capture_state(ctx);
     }
 
     auto& slot = *ctx.capture->slots[ctx.capture->slot_index];
