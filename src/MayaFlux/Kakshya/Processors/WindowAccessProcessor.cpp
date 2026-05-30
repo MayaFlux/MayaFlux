@@ -121,6 +121,14 @@ void WindowAccessProcessor::process(
         return;
     }
 
+    const auto* src = std::get_if<std::vector<uint8_t>>(&processed[0]);
+    if (src) {
+        if (uint8_t* dst = wc->mutable_frame_ptr(wc->get_write_head())) {
+            std::memcpy(dst, src->data(), src->size());
+            wc->advance_write_head();
+        }
+    }
+
     const auto vk_fmt = Core::to_vk_format(m_surface_format);
     m_last_readback_bytes = static_cast<size_t>(m_width) * m_height
         * Core::vk_format_bytes_per_pixel(vk_fmt);
