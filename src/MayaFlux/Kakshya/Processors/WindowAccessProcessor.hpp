@@ -70,9 +70,10 @@ public:
 private:
     std::atomic<bool> m_is_processing { false };
 
-    uint32_t m_width { 0 };
-    uint32_t m_height { 0 };
-    size_t m_last_readback_bytes { 0 };
+    uint32_t m_width {};
+    uint32_t m_height {};
+    size_t m_last_readback_bytes {};
+    bool m_previous_window_capture_supported {};
 
     Core::GraphicsSurfaceInfo::SurfaceFormat m_surface_format {
         Core::GraphicsSurfaceInfo::SurfaceFormat::B8G8R8A8_SRGB

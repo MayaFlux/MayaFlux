@@ -672,7 +672,8 @@ void BackendWindowHandler::render_empty_window(WindowRenderContext& ctx)
 
 void BackendWindowHandler::capture_frame(WindowRenderContext& ctx)
 {
-    if (!ctx.swapchain || ctx.window->get_rendering_buffers().empty())
+    if (!ctx.swapchain || ctx.window->get_rendering_buffers().empty()
+        || !ctx.window->is_capture_enabled())
         return;
 
     auto dev = m_context.get_device();

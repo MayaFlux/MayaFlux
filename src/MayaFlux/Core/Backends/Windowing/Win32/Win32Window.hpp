@@ -77,6 +77,9 @@ public:
     void clear_frame_commands() override;
     [[nodiscard]] std::vector<std::shared_ptr<Buffers::VKBuffer>> get_rendering_buffers() const override;
 
+    [[nodiscard]] bool is_capture_enabled() const override { return m_capture_enabled.load(std::memory_order_acquire); }
+    void set_capture_enabled(bool enabled) override { m_capture_enabled.store(enabled, std::memory_order_release); }
+
 private:
     HWND m_hwnd { nullptr };
     HINSTANCE m_hinstance { nullptr };
@@ -84,6 +87,7 @@ private:
     std::thread m_ui_thread;
     std::atomic<bool> m_hwnd_ready { false };
     std::atomic<bool> m_should_close { false };
+    std::atomic<bool> m_capture_enabled { false };
 
     static constexpr size_t EVENT_QUEUE_CAPACITY = 256;
 
