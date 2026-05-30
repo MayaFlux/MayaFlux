@@ -122,6 +122,8 @@ public:
      */
     bool encode_frame(const uint8_t* src_data,
         size_t src_size,
+        uint32_t src_width,
+        uint32_t src_height,
         FFmpegMuxContext& mux);
 
     /**
@@ -158,7 +160,10 @@ private:
     int m_stream_index { -1 };
     uint32_t m_width {};
     uint32_t m_height {};
-    int m_src_src_bpp { 4 }; ///< Bytes per pixel of the source format.
+    int m_src_src_bpp { 4 };
+    AVPixelFormat m_src_pixel_fmt { AV_PIX_FMT_BGRA };
+    int m_cached_src_width { -1 };
+    int m_cached_src_height { -1 };
 
     std::string m_last_error;
 

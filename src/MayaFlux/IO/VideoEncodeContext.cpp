@@ -125,6 +125,8 @@ bool VideoEncodeContext::open(FFmpegMuxContext& mux,
     m_width = width;
     m_height = height;
     m_src_src_bpp = bpp_for_format(src_pixel_format);
+    m_src_pixel_fmt = src_pixel_format;
+    m_src_pixel_fmt = src_pixel_format;
 
     if (codec_id == AV_CODEC_ID_NONE)
         codec_id = infer_video_codec(mux.format_context);
@@ -252,13 +254,20 @@ bool VideoEncodeContext::open(FFmpegMuxContext& mux,
 
 bool VideoEncodeContext::encode_frame(const uint8_t* src_data,
     size_t src_size,
+    uint32_t src_width,
+    uint32_t src_height,
     FFmpegMuxContext& mux)
 {
     if (!is_valid())
         return false;
 
-    const size_t expected = static_cast<size_t>(codec_context->width)
-        * static_cast<size_t>(codec_context->height)
+    if (src_width == 0 || src_height == 0) {
+        m_last_error = "encode_frame: zero source dimensions";
+        return false;
+    }
+
+    const size_t expected = static_cast<size_t>(src_width)
+        * static_cast<size_t>(src_height)
         * static_cast<size_t>(m_src_src_bpp);
 
     if (src_size < expected) {
@@ -271,11 +280,33 @@ bool VideoEncodeContext::encode_frame(const uint8_t* src_data,
         return false;
     }
 
-    ///< Source linesize: packed, no padding
-    const int src_stride = codec_context->width * m_src_src_bpp;
+    if (static_cast<int>(src_width) != m_cached_src_width
+        || static_cast<int>(src_height) != m_cached_src_height) {
+
+        sws_freeContext(sws_context);
+        sws_context = sws_getContext(
+            static_cast<int>(src_width),
+            static_cast<int>(src_height),
+            m_src_pixel_fmt,
+            codec_context->width,
+            codec_context->height,
+            codec_context->pix_fmt,
+            SWS_BILINEAR,
+            nullptr, nullptr, nullptr);
+
+        if (!sws_context) {
+            m_last_error = "sws_getContext failed on dimension change";
+            return false;
+        }
+
+        m_cached_src_width = static_cast<int>(src_width);
+        m_cached_src_height = static_cast<int>(src_height);
+    }
+
+    const int src_stride = static_cast<int>(src_width) * m_src_src_bpp;
     sws_scale(sws_context,
         &src_data, &src_stride,
-        0, codec_context->height,
+        0, static_cast<int>(src_height),
         m_scratch_frame->data, m_scratch_frame->linesize);
 
     m_scratch_frame->pts = m_pts++;
