@@ -458,6 +458,16 @@ public:
      */
     void stop_capture(const std::shared_ptr<Core::Window>& window);
 
+    /**
+     * @brief Returns all active video capture IDs (capture_window()).
+     */
+    [[nodiscard]] std::vector<uint32_t> get_video_capture_ids() const;
+
+    /**
+     * @brief Returns all VideoFileWriters created via create_writer().
+     */
+    [[nodiscard]] std::vector<std::shared_ptr<VideoFileWriter>> get_video_writers() const;
+
     // ─────────────────────────────────────────────────────────────────────────
     // Image — load
     // ─────────────────────────────────────────────────────────────────────────

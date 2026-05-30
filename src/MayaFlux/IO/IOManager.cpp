@@ -536,6 +536,22 @@ void IOManager::stop_capture(const std::shared_ptr<Core::Window>& window)
     stop_capture(found_id);
 }
 
+std::vector<uint32_t> IOManager::get_video_capture_ids() const
+{
+    std::lock_guard lock(m_video_captures_mutex);
+    std::vector<uint32_t> ids;
+    ids.reserve(m_video_captures.size());
+    for (const auto& [id, _] : m_video_captures)
+        ids.push_back(id);
+    return ids;
+}
+
+std::vector<std::shared_ptr<VideoFileWriter>> IOManager::get_video_writers() const
+{
+    std::lock_guard lock(m_video_captures_mutex);
+    return m_video_writers;
+}
+
 std::shared_ptr<Kakshya::CameraContainer>
 IOManager::open_camera(const CameraConfig& config)
 {
