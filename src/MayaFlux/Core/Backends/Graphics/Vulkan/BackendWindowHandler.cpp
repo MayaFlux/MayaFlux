@@ -16,10 +16,10 @@ void WindowRenderContext::cleanup(VKContext& context)
 {
     vk::Device device = context.get_device();
 
-    device.waitIdle();
-
     if (capture) {
         capture->readback_running.store(false, std::memory_order_release);
+        device.waitIdle();
+
         if (capture->readback_thread.joinable())
             capture->readback_thread.join();
 
@@ -35,6 +35,8 @@ void WindowRenderContext::cleanup(VKContext& context)
         }
         capture.reset();
     }
+
+    device.waitIdle();
 
     for (auto& img : image_available) {
         if (img) {
@@ -365,8 +367,17 @@ void BackendWindowHandler::setup_backend_service(const std::shared_ptr<Registry:
     display_service->unregister_frame_observer = [this](
                                                      const std::shared_ptr<void>& window_ptr, uint32_t id) {
         auto* ctx = find_window_context(std::static_pointer_cast<Window>(window_ptr));
-        if (!ctx || !ctx->capture)
+        if (!ctx) {
+            MF_WARN(Journal::Component::Core, Journal::Context::GraphicsBackend,
+                "unregister_frame_observer: window not registered with graphics backend");
             return;
+        }
+        if (!ctx->capture) {
+            MF_WARN(Journal::Component::Core, Journal::Context::GraphicsBackend,
+                "unregister_frame_observer: capture not active for '{}'",
+                ctx->window->get_create_info().title);
+            return;
+        }
 
         auto& state = *ctx->capture;
         auto current = state.observers.load(std::memory_order_acquire);
@@ -902,9 +913,6 @@ void BackendWindowHandler::start_readback_thread(CaptureState& state, vk::Device
                     cb(buf, slot.extent.width, slot.extent.height,
                         static_cast<uint32_t>(state.format));
                 }
-
-                slot.pending.store(false, std::memory_order_release);
-                any = true;
 
                 slot.pending.store(false, std::memory_order_release);
                 any = true;

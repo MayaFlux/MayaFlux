@@ -331,6 +331,10 @@ void Engine::End()
 
     Portal::Forma::shutdown();
 
+    if (m_event_manager) {
+        m_event_manager->terminate_all_events();
+    }
+
     if (m_node_graph_manager) {
         m_node_graph_manager->terminate_active_processing();
     }
