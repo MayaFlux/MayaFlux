@@ -1,6 +1,7 @@
 #include "IOManager.hpp"
 
 #include "MayaFlux/Buffers/BufferManager.hpp"
+#include "MayaFlux/Core/Backends/Windowing/Window.hpp"
 #include "MayaFlux/Kakshya/Source/DynamicSoundStream.hpp"
 
 #include "MayaFlux/Nodes/Network/MeshNetwork.hpp"
@@ -79,9 +80,9 @@ IOManager::~IOManager()
     {
         std::vector<uint32_t> ids;
         {
-            std::lock_guard lock(m_captures_mutex);
-            ids.reserve(m_captures.size());
-            for (const auto& [id, _] : m_captures)
+            std::lock_guard lock(m_audio_captures_mutex);
+            ids.reserve(m_audio_captures.size());
+            for (const auto& [id, _] : m_audio_captures)
                 ids.push_back(id);
         }
         for (auto id : ids)
@@ -415,24 +416,24 @@ uint32_t IOManager::capture_output(const std::string& filepath, AVCodecID codec_
         m_writers.push_back(writer);
     }
 
-    std::lock_guard lock(m_captures_mutex);
-    m_captures.emplace(obs_id, CaptureState { .container = ct, .writer = writer, .observer_id = obs_id });
+    std::lock_guard lock(m_audio_captures_mutex);
+    m_audio_captures.emplace(obs_id, AudioCaptureState { .container = ct, .writer = writer, .observer_id = obs_id });
     return obs_id;
 }
 
 void IOManager::stop_capture(uint32_t capture_id)
 {
-    CaptureState state;
+    AudioCaptureState state;
     {
-        std::lock_guard lock(m_captures_mutex);
-        auto it = m_captures.find(capture_id);
-        if (it == m_captures.end()) {
+        std::lock_guard lock(m_audio_captures_mutex);
+        auto it = m_audio_captures.find(capture_id);
+        if (it == m_audio_captures.end()) {
             MF_WARN(Journal::Component::IO, Journal::Context::FileIO,
                 "stop_capture: unknown capture_id={}", capture_id);
             return;
         }
         state = std::move(it->second);
-        m_captures.erase(it);
+        m_audio_captures.erase(it);
     }
 
     auto* svc = Registry::BackendRegistry::instance()
@@ -449,14 +450,106 @@ void IOManager::stop_capture(uint32_t capture_id)
     });
 }
 
-std::vector<uint32_t> IOManager::get_capture_ids() const
+std::vector<uint32_t> IOManager::get_audio_capture_ids() const
 {
-    std::lock_guard lock(m_captures_mutex);
+    std::lock_guard lock(m_audio_captures_mutex);
     std::vector<uint32_t> ids;
-    ids.reserve(m_captures.size());
-    for (const auto& [id, _] : m_captures)
+    ids.reserve(m_audio_captures.size());
+    for (const auto& [id, _] : m_audio_captures)
         ids.push_back(id);
     return ids;
+}
+
+std::shared_ptr<VideoFileWriter>
+IOManager::create_writer(const std::string& filepath,
+    uint32_t width,
+    uint32_t height,
+    double frame_rate,
+    AVPixelFormat src_pixel_format,
+    AVCodecID codec_id)
+{
+    auto writer = std::make_shared<VideoFileWriter>();
+    if (!writer->open(filepath, width, height, frame_rate, src_pixel_format, codec_id)) {
+        MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+            "create_writer: open failed for '{}': {}", filepath, writer->last_error());
+        return nullptr;
+    }
+    return writer;
+}
+
+uint32_t IOManager::capture_window(
+    const std::shared_ptr<Core::Window>& window,
+    const std::string& filepath,
+    double frame_rate,
+    AVCodecID codec_id)
+{
+    if (!window) {
+        MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+            "capture_window: null window");
+        return 0;
+    }
+
+    auto writer = std::make_shared<VideoFileWriter>();
+    if (!writer->record(window, filepath, frame_rate, codec_id)) {
+        MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+            "capture_window: record failed for '{}': {}", filepath, writer->last_error());
+        return 0;
+    }
+
+    const uint32_t id = m_next_video_capture_id.fetch_add(1, std::memory_order_relaxed);
+
+    {
+        std::lock_guard lock(m_video_captures_mutex);
+        m_video_captures.emplace(id, VideoCaptureState { .writer = writer, .capture_id = id });
+        m_video_writers.push_back(writer);
+    }
+
+    return id;
+}
+
+void IOManager::stop_capture(const std::shared_ptr<Core::Window>& window)
+{
+    if (!window) {
+        MF_WARN(Journal::Component::IO, Journal::Context::FileIO,
+            "stop_capture(window): null window");
+        return;
+    }
+
+    uint32_t found_id = 0;
+    {
+        std::lock_guard lock(m_video_captures_mutex);
+        for (const auto& [id, state] : m_video_captures) {
+            if (state.writer->capture_window() == window) {
+                found_id = id;
+                break;
+            }
+        }
+    }
+
+    if (found_id == 0) {
+        MF_WARN(Journal::Component::IO, Journal::Context::FileIO,
+            "stop_capture(window): no active capture for window '{}'",
+            window->get_create_info().title);
+        return;
+    }
+
+    stop_capture(found_id);
+}
+
+std::vector<uint32_t> IOManager::get_video_capture_ids() const
+{
+    std::lock_guard lock(m_video_captures_mutex);
+    std::vector<uint32_t> ids;
+    ids.reserve(m_video_captures.size());
+    for (const auto& [id, _] : m_video_captures)
+        ids.push_back(id);
+    return ids;
+}
+
+std::vector<std::shared_ptr<VideoFileWriter>> IOManager::get_video_writers() const
+{
+    std::lock_guard lock(m_video_captures_mutex);
+    return m_video_writers;
 }
 
 std::shared_ptr<Kakshya::CameraContainer>
