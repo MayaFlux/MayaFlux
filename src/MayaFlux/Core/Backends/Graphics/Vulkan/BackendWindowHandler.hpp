@@ -25,7 +25,18 @@ struct CaptureSlot {
 };
 
 struct CaptureState {
+#ifdef MAYAFLUX_PLATFORM_MACOS
+    std::atomic<const std::vector<uint8_t>*> last_frame { nullptr };
+
+    static constexpr size_t LAST_FRAME_MAX_READERS = 32;
+    mutable std::array<std::atomic<const std::vector<uint8_t>*>, LAST_FRAME_MAX_READERS> last_frame_hazard_ptrs {};
+    mutable std::array<std::atomic<bool>, LAST_FRAME_MAX_READERS> last_frame_slot_active { false };
+
+    void retire_last_frame(const std::vector<uint8_t>* ptr);
+#else
     std::atomic<std::shared_ptr<std::vector<uint8_t>>> last_frame;
+#endif
+
     std::vector<std::unique_ptr<CaptureSlot>> slots;
     size_t slot_index {};
     vk::Format format {};
@@ -39,15 +50,36 @@ struct CaptureState {
     using ObserverMap = std::unordered_map<uint32_t, FrameObserver>;
 
     std::atomic<uint32_t> next_observer_id { 1 };
+
+#ifdef MAYAFLUX_PLATFORM_MACOS
+    std::atomic<const ObserverMap*> observers { nullptr };
+
+    static constexpr size_t OBSERVERS_MAX_READERS = 32;
+    mutable std::array<std::atomic<const ObserverMap*>, OBSERVERS_MAX_READERS> observers_hazard_ptrs {};
+    mutable std::array<std::atomic<bool>, OBSERVERS_MAX_READERS> observers_slot_active { false };
+
+    void retire_observers(const ObserverMap* ptr);
+#else
     std::atomic<std::shared_ptr<ObserverMap>> observers {
         std::make_shared<ObserverMap>()
     };
+#endif
 
     ~CaptureState()
     {
         readback_running.store(false, std::memory_order_release);
         if (readback_thread.joinable())
             readback_thread.join();
+
+#ifdef MAYAFLUX_PLATFORM_MACOS
+        auto* old_frame = last_frame.exchange(nullptr);
+        if (old_frame)
+            retire_last_frame(old_frame);
+
+        auto* old_obs = observers.exchange(nullptr);
+        if (old_obs)
+            retire_observers(old_obs);
+#endif
     }
 };
 
