@@ -327,6 +327,57 @@ void BackendWindowHandler::setup_backend_service(const std::shared_ptr<Registry:
             return nullptr;
         return ctx->capture->last_frame.load(std::memory_order_acquire);
     };
+
+    display_service->register_frame_observer = [this](
+                                                   const std::shared_ptr<void>& window_ptr,
+                                                   const std::function<void(
+                                                       const std::shared_ptr<std::vector<uint8_t>>&,
+                                                       uint32_t, uint32_t, uint32_t)>&
+                                                       cb) -> uint32_t {
+        auto* ctx = find_window_context(std::static_pointer_cast<Window>(window_ptr));
+        if (!ctx) {
+            MF_WARN(Journal::Component::Core, Journal::Context::GraphicsBackend,
+                "register_frame_observer: window not registered with graphics backend");
+            return 0;
+        }
+        if (!ctx->capture) {
+            MF_WARN(Journal::Component::Core, Journal::Context::GraphicsBackend,
+                "register_frame_observer: capture not active for '{}'; call set_capture_enabled(true) before registering an observer",
+                ctx->window->get_create_info().title);
+            return 0;
+        }
+
+        auto& state = *ctx->capture;
+        uint32_t id = state.next_observer_id.fetch_add(1, std::memory_order_relaxed);
+
+        auto current = state.observers.load(std::memory_order_acquire);
+        std::shared_ptr<CaptureState::ObserverMap> next;
+        do {
+            next = std::make_shared<CaptureState::ObserverMap>(*current);
+            (*next)[id] = cb;
+        } while (!state.observers.compare_exchange_weak(
+            current, next,
+            std::memory_order_release, std::memory_order_acquire));
+
+        return id;
+    };
+
+    display_service->unregister_frame_observer = [this](
+                                                     const std::shared_ptr<void>& window_ptr, uint32_t id) {
+        auto* ctx = find_window_context(std::static_pointer_cast<Window>(window_ptr));
+        if (!ctx || !ctx->capture)
+            return;
+
+        auto& state = *ctx->capture;
+        auto current = state.observers.load(std::memory_order_acquire);
+        std::shared_ptr<CaptureState::ObserverMap> next;
+        do {
+            next = std::make_shared<CaptureState::ObserverMap>(*current);
+            next->erase(id);
+        } while (!state.observers.compare_exchange_weak(
+            current, next,
+            std::memory_order_release, std::memory_order_acquire));
+    };
 }
 
 WindowRenderContext* BackendWindowHandler::find_window_context(const std::shared_ptr<Window>& window)
@@ -845,6 +896,16 @@ void BackendWindowHandler::start_readback_thread(CaptureState& state, vk::Device
                 dev.unmapMemory(slot.mem);
 
                 state.last_frame.store(std::move(buf), std::memory_order_release);
+
+                auto obs = state.observers.load(std::memory_order_acquire);
+                for (auto& [id, cb] : *obs) {
+                    cb(buf, slot.extent.width, slot.extent.height,
+                        static_cast<uint32_t>(state.format));
+                }
+
+                slot.pending.store(false, std::memory_order_release);
+                any = true;
+
                 slot.pending.store(false, std::memory_order_release);
                 any = true;
             }

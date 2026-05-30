@@ -33,6 +33,16 @@ struct CaptureState {
     std::thread readback_thread;
     std::atomic<bool> readback_running { false };
 
+    using FrameObserver = std::function<void(
+        const std::shared_ptr<std::vector<uint8_t>>&,
+        uint32_t, uint32_t, uint32_t)>;
+    using ObserverMap = std::unordered_map<uint32_t, FrameObserver>;
+
+    std::atomic<uint32_t> next_observer_id { 1 };
+    std::atomic<std::shared_ptr<ObserverMap>> observers {
+        std::make_shared<ObserverMap>()
+    };
+
     ~CaptureState()
     {
         readback_running.store(false, std::memory_order_release);
