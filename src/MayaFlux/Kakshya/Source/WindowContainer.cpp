@@ -46,8 +46,10 @@ namespace {
 
 } // namespace
 
-WindowContainer::WindowContainer(std::shared_ptr<Core::Window> window)
+WindowContainer::WindowContainer(std::shared_ptr<Core::Window> window,
+    uint32_t frame_capacity)
     : m_window(std::move(window))
+    , m_frame_capacity(frame_capacity)
 {
     if (!m_window) {
         error<std::invalid_argument>(
@@ -60,9 +62,9 @@ WindowContainer::WindowContainer(std::shared_ptr<Core::Window> window)
     setup_dimensions();
 
     MF_INFO(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-        "WindowContainer created for window '{}' ({}x{})",
+        "WindowContainer created for window '{}' ({}x{} frames={})",
         m_window->get_create_info().title,
-        m_structure.get_width(), m_structure.get_height());
+        m_structure.get_width(), m_structure.get_height(), m_frame_capacity);
 }
 
 Portal::Graphics::ImageFormat WindowContainer::get_image_format() const
@@ -80,16 +82,40 @@ void WindowContainer::setup_dimensions()
     const uint32_t w = m_window->get_create_info().width;
     const uint32_t h = m_window->get_create_info().height;
     const uint32_t c = fmt.color_channels;
+    const size_t sz = static_cast<size_t>(w) * h * c;
 
     m_structure = ContainerDataStructure::image_interleaved();
+
     m_structure.dimensions = DataDimension::create_dimensions(
-        DataModality::IMAGE_COLOR,
-        { static_cast<uint64_t>(h), static_cast<uint64_t>(w), static_cast<uint64_t>(c) },
+        DataModality::VIDEO_COLOR,
+        { static_cast<uint64_t>(m_frame_capacity),
+            static_cast<uint64_t>(h),
+            static_cast<uint64_t>(w),
+            static_cast<uint64_t>(c) },
         MemoryLayout::ROW_MAJOR);
 
-    const size_t sz = static_cast<size_t>(w) * h * c;
+    m_data.resize(m_frame_capacity);
+    for (auto& slot : m_data)
+        slot = std::vector<uint8_t>(sz, 0U);
+
     m_processed_data.resize(1);
     m_processed_data[0] = std::vector<uint8_t>(sz, 0U);
+}
+
+uint8_t* WindowContainer::mutable_frame_ptr(uint32_t frame_index)
+{
+    if (frame_index >= m_data.size())
+        return nullptr;
+
+    auto* v = std::get_if<std::vector<uint8_t>>(&m_data[frame_index]);
+    return (v && !v->empty()) ? v->data() : nullptr;
+}
+
+void WindowContainer::advance_write_head()
+{
+    m_write_head.store((m_write_head.load(std::memory_order_relaxed) + 1U) % m_frame_capacity,
+        std::memory_order_release);
+    m_frames_written.fetch_add(1U, std::memory_order_release);
 }
 
 // =========================================================================
@@ -154,7 +180,7 @@ std::shared_ptr<Core::VKImage> WindowContainer::to_image() const
 
     if (m_processed_data.empty()) {
         MF_RT_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-            "WindowContainer::to_image — no readback data available for '{}'",
+            "WindowContainer::to_image : no readback data available for '{}'",
             m_window->get_create_info().title);
         return nullptr;
     }
@@ -162,7 +188,7 @@ std::shared_ptr<Core::VKImage> WindowContainer::to_image() const
     const auto* pixels = std::get_if<std::vector<uint8_t>>(&m_processed_data[0]);
     if (!pixels || pixels->empty()) {
         MF_RT_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-            "WindowContainer::to_image — processed_data[0] is not uint8_t or is empty for '{}'",
+            "WindowContainer::to_image : processed_data[0] is not uint8_t or is empty for '{}'",
             m_window->get_create_info().title);
         return nullptr;
     }
@@ -177,7 +203,7 @@ std::shared_ptr<Core::VKImage> WindowContainer::to_image() const
 
     if (!img) {
         MF_RT_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-            "WindowContainer::to_image — TextureLoom::create_2d failed for '{}'",
+            "WindowContainer::to_image : TextureLoom::create_2d failed for '{}'",
             m_window->get_create_info().title);
     }
 
@@ -191,7 +217,7 @@ std::shared_ptr<Core::VKImage> WindowContainer::to_image(
 
     if (m_processed_data.empty()) {
         MF_RT_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-            "WindowContainer::to_image(staging) — no readback data for '{}'",
+            "WindowContainer::to_image(staging) : no readback data for '{}'",
             m_window->get_create_info().title);
         return nullptr;
     }
@@ -199,7 +225,7 @@ std::shared_ptr<Core::VKImage> WindowContainer::to_image(
     const auto* pixels = std::get_if<std::vector<uint8_t>>(&m_processed_data[0]);
     if (!pixels || pixels->empty()) {
         MF_RT_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-            "WindowContainer::to_image(staging) — processed_data[0] is not uint8_t or is empty for '{}'",
+            "WindowContainer::to_image(staging) : processed_data[0] is not uint8_t or is empty for '{}'",
             m_window->get_create_info().title);
         return nullptr;
     }
@@ -214,8 +240,98 @@ std::shared_ptr<Core::VKImage> WindowContainer::to_image(
     auto img = loom.create_2d(w, h, img_fmt, nullptr);
     if (!img) {
         MF_RT_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-            "WindowContainer::to_image(staging) — VKImage allocation failed for '{}'",
+            "WindowContainer::to_image(staging) : VKImage allocation failed for '{}'",
             m_window->get_create_info().title);
+        return nullptr;
+    }
+
+    loom.upload_data(img, pixels->data(), pixels->size(), staging);
+    return img;
+}
+
+std::shared_ptr<Core::VKImage> WindowContainer::image_at(uint32_t frame_index) const
+{
+    std::shared_lock lock(m_data_mutex);
+
+    if (frame_index >= m_data.size()) {
+        MF_RT_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+            "WindowContainer::to_image({}) : out of range (capacity={})",
+            frame_index, m_frame_capacity);
+        return nullptr;
+    }
+
+    {
+        const uint64_t written = m_frames_written.load(std::memory_order_acquire);
+        const uint32_t head = m_write_head.load(std::memory_order_acquire);
+        const bool ring_full = written >= m_frame_capacity;
+        const bool slot_valid = ring_full || frame_index < head;
+        if (!slot_valid) {
+            MF_RT_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+                "WindowContainer::image_at({}) : frame index is ahead of write head ({}), data may be stale or uninitialized",
+                frame_index, head);
+            return nullptr;
+        }
+    }
+
+    const auto* pixels = std::get_if<std::vector<uint8_t>>(&m_data[frame_index]);
+    if (!pixels || pixels->empty()) {
+        MF_RT_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+            "WindowContainer::image_at({}) : slot is empty", frame_index);
+        return nullptr;
+    }
+
+    const auto img_fmt = surface_format_to_image_format(query_surface_format(m_window));
+    auto img = Portal::Graphics::TextureLoom::instance().create_2d(
+        m_structure.get_width(), m_structure.get_height(), img_fmt, pixels->data());
+
+    if (!img) {
+        MF_RT_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+            "WindowContainer::image_at({}) : TextureLoom::create_2d failed", frame_index);
+    }
+
+    return img;
+}
+
+std::shared_ptr<Core::VKImage> WindowContainer::image_at(
+    const std::shared_ptr<Buffers::VKBuffer>& staging, uint32_t frame_index) const
+{
+    std::shared_lock lock(m_data_mutex);
+
+    if (frame_index >= m_data.size()) {
+        MF_RT_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+            "WindowContainer::image_at(staging, {}) : out of range (capacity={})",
+            frame_index, m_frame_capacity);
+        return nullptr;
+    }
+
+    {
+        const uint64_t written = m_frames_written.load(std::memory_order_acquire);
+        const uint32_t head = m_write_head.load(std::memory_order_acquire);
+        const bool ring_full = written >= m_frame_capacity;
+        const bool slot_valid = ring_full || frame_index < head;
+        if (!slot_valid) {
+            MF_RT_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+                "WindowContainer::image_at(staging, {}) : frame index is ahead of write head ({}), data may be stale or uninitialized",
+                frame_index, head);
+            return nullptr;
+        }
+    }
+
+    const auto* pixels = std::get_if<std::vector<uint8_t>>(&m_data[frame_index]);
+    if (!pixels || pixels->empty()) {
+        MF_RT_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+            "WindowContainer::image_at(staging, {}) — slot is empty", frame_index);
+        return nullptr;
+    }
+
+    const auto img_fmt = surface_format_to_image_format(query_surface_format(m_window));
+    auto& loom = Portal::Graphics::TextureLoom::instance();
+
+    auto img = loom.create_2d(
+        m_structure.get_width(), m_structure.get_height(), img_fmt, nullptr);
+    if (!img) {
+        MF_RT_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+            "WindowContainer::image_at(staging, {}) : VKImage allocation failed", frame_index);
         return nullptr;
     }
 

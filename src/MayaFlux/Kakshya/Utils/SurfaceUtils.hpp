@@ -30,24 +30,28 @@ MAYAFLUX_API Core::GraphicsSurfaceInfo::SurfaceFormat query_surface_format(
  * @brief Read a pixel rectangle from the last completed swapchain frame into
  *        a DataVariant whose element type matches the live swapchain format.
  *
- * Format → DataVariant mapping:
+ * Format -> DataVariant mapping:
  *   B8G8R8A8_SRGB / R8G8B8A8_SRGB / B8G8R8A8_UNORM / R8G8B8A8_UNORM
- *     → std::vector<uint8_t>  (4 bytes/pixel)
+ *     -> std::vector<uint8_t>  (4 bytes/pixel)
  *   R16G16B16A16_SFLOAT
- *     → std::vector<uint16_t> (8 bytes/pixel, raw half-float bits)
+ *     -> std::vector<uint16_t> (8 bytes/pixel, raw half-float bits)
  *   A2B10G10R10_UNORM
- *     → std::vector<uint32_t> (4 bytes/pixel, packed word)
+ *     -> std::vector<uint32_t> (4 bytes/pixel, packed word)
  *   R32G32B32A32_SFLOAT
- *     → std::vector<float>    (16 bytes/pixel)
+ *     -> std::vector<float>    (16 bytes/pixel)
  *
- * "Last completed frame" semantics: the swapchain image whose in-flight
- * fence has already signaled. Safe to call without stalling the render
- * pipeline.
+ * The rectangle is cropped host-side from the full surface published by the
+ * per-window readback thread. The data is one frame late relative to the
+ * current render, not synchronously captured at call time. No GPU work and
+ * no staging buffer: the function reads the cached frame, validates the
+ * region against the swapchain extent, and copies the rows out. Safe to call
+ * without stalling the render pipeline. Returns failure if no frame has been
+ * captured yet or the region exceeds the surface bounds.
  *
  * Dimensions on the returned DataAccess (IMAGE_COLOR convention):
- *   [0] SPATIAL_Y  — pixel_height
- *   [1] SPATIAL_X  — pixel_width
- *   [2] CHANNEL    — channel_count derived from format traits
+ *   [0] SPATIAL_Y  - pixel_height
+ *   [1] SPATIAL_X  - pixel_width
+ *   [2] CHANNEL    - channel_count derived from format traits
  *
  * @param window       Window whose surface is being read.
  * @param x_offset     Left edge of the pixel rectangle (inclusive).

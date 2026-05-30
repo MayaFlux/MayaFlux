@@ -75,6 +75,9 @@ public:
     void clear_frame_commands() override;
     [[nodiscard]] std::vector<std::shared_ptr<Buffers::VKBuffer>> get_rendering_buffers() const override;
 
+    [[nodiscard]] bool is_capture_enabled() const override { return m_capture_enabled.load(std::memory_order_acquire); }
+    void set_capture_enabled(bool enabled) override { m_capture_enabled.store(enabled, std::memory_order_release); }
+
 private:
     // -------------------------------------------------------------------------
     // Wayland globals
@@ -124,6 +127,7 @@ private:
     std::atomic<bool> m_should_close { false };
     std::atomic<bool> m_graphics_registered { false };
     std::atomic<bool> m_pending_configure { false };
+    std::atomic<bool> m_capture_enabled { false };
     uint32_t m_pending_width {};
     uint32_t m_pending_height {};
 

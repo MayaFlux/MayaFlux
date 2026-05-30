@@ -159,6 +159,54 @@ struct MAYAFLUX_API DisplayService {
      * @return vk::Format cast to uint32_t, or eUndefined if no depth image
      */
     std::function<uint32_t(const std::shared_ptr<void>&)> get_depth_format;
+
+    /**
+     * @brief Returns the last completed full-surface pixel readback for a window.
+     *
+     * Published by the per-window readback thread once a capture copy
+     * completes. Lock-free: the readback thread stores the buffer with
+     * release, callers load with acquire via an atomic shared_ptr, so the
+     * pointer is safe to read from any thread. Returns nullptr if no frame
+     * has completed yet or capture is unavailable on this surface.
+     *
+     * Raw bytes in swapchain pixel format. Width and height match the
+     * current swapchain extent from get_swapchain_extent().
+     */
+    std::function<std::shared_ptr<std::vector<uint8_t>>(
+        const std::shared_ptr<void>& window_handle)>
+        get_last_frame;
+
+    /**
+     * @brief Register a per-frame observer for a window's captured frames.
+     *
+     * The observer fires on the window's readback thread once per captured
+     * frame, receiving the published frame buffer, its width and height, and
+     * the swapchain format as uint32_t. Fires only for capture-enabled
+     * windows. The observer must not block; post to a queue for further work.
+     *
+     * Requires the window's capture state to exist, which it does once the
+     * window has completed its first captured frame. Returns 0 if capture is
+     * not enabled or no frame has been captured yet; retry after a frame.
+     *
+     * @return Opaque non-zero id for unregister_frame_observer, or 0 on failure.
+     */
+    std::function<uint32_t(
+        const std::shared_ptr<void>& window_handle,
+        std::function<void(
+            const std::shared_ptr<std::vector<uint8_t>>&,
+            uint32_t, uint32_t, uint32_t)>)>
+        register_frame_observer;
+
+    /**
+     * @brief Unregister a previously registered per-frame observer.
+     *
+     * Safe from any thread, including from within the observer callback.
+     *
+     * @param window_handle Window the observer was registered on.
+     * @param id Id returned by register_frame_observer.
+     */
+    std::function<void(const std::shared_ptr<void>&, uint32_t)>
+        unregister_frame_observer;
 };
 
 } // namespace MayaFlux::Registry::Services

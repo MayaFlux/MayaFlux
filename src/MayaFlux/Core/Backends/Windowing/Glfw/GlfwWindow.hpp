@@ -136,6 +136,9 @@ public:
      */
     [[nodiscard]] std::vector<std::shared_ptr<Buffers::VKBuffer>> get_rendering_buffers() const override;
 
+    [[nodiscard]] bool is_capture_enabled() const override { return m_capture_enabled.load(std::memory_order_acquire); }
+    void set_capture_enabled(bool enabled) override { m_capture_enabled.store(enabled, std::memory_order_release); }
+
 private:
     GLFWwindow* m_window = nullptr;
     WindowCreateInfo m_create_info;
@@ -144,6 +147,7 @@ private:
     WindowEventCallback m_event_callback;
 
     std::atomic<bool> m_graphics_registered { false };
+    std::atomic<bool> m_capture_enabled { false };
 
     Vruta::WindowEventSource m_event_source;
 

@@ -3,6 +3,10 @@
 #include "Awaiters/BroadcastAwaiter.hpp"
 #include "MayaFlux/Vruta/BroadcastSource.hpp"
 
+namespace MayaFlux::Core {
+class Window;
+}
+
 namespace MayaFlux::Vruta {
 class Event;
 }
@@ -68,6 +72,38 @@ Vruta::Event on_signal_matching(
  * @endcode
  */
 [[nodiscard]] std::shared_ptr<Vruta::BroadcastSource<bool>> audio_output_tick();
+
+struct WindowFrame {
+    std::shared_ptr<std::vector<uint8_t>> data;
+    uint32_t width {};
+    uint32_t height {};
+    uint32_t format {};
+};
+
+/**
+ * @brief Create a BroadcastSource<bool> ticking once per captured window frame.
+ *
+ * Registers a frame observer with DisplayService for the given window.
+ * The window must have capture enabled and the capture state must have been
+ * initialized (either via WindowAccessProcessor or set_capture_enabled before
+ * the first rendered frame).
+ *
+ * Returns nullptr if the DisplayService is unavailable, the window is null,
+ * or capture state is not yet active for the window.
+ *
+ * The observer callback is non-blocking. Signal delivery is safe across
+ * thread boundaries; the BroadcastSource handles the coroutine resume path.
+ *
+ * @code
+ * auto src = Kriya::window_frame_tick(window);
+ * get_event_manager()->add_event(std::make_shared<Vruta::Event>(
+ *     Kriya::on_signal(src, [](const Kriya::WindowFrame& frame) {
+ *         // frame.data, frame.width, frame.height, frame.format
+ *     })));
+ * @endcode
+ */
+[[nodiscard]] std::shared_ptr<Vruta::BroadcastSource<WindowFrame>> window_frame_tick(
+    const std::shared_ptr<Core::Window>& window);
 
 } // namespace MayaFlux::Kriya
 

@@ -53,9 +53,12 @@ class MAYAFLUX_API WindowContainer : public SignalSourceContainer {
 public:
     /**
      * @brief Construct from an existing managed window.
-     * @param window Live window whose surface will be addressed as NDData.
+     * @param window         Live window whose surface will be addressed as NDData.
+     * @param frame_capacity Number of rendered images to retain in m_data.
+     *                       Defaults to 1 (current behaviour).
      */
-    explicit WindowContainer(std::shared_ptr<Core::Window> window);
+    explicit WindowContainer(std::shared_ptr<Core::Window> window,
+        uint32_t frame_capacity = 60);
 
     ~WindowContainer() override = default;
 
@@ -77,6 +80,24 @@ public:
      * TextureBuffer to receive the output of to_image().
      */
     [[nodiscard]] Portal::Graphics::ImageFormat get_image_format() const;
+
+    /**
+     * @brief Mutable pointer into m_data[frame_index] for the processor to write into.
+     * @param frame_index Slot index in [0, frame_capacity).
+     * @return Pointer to the pixel buffer, or nullptr if out of range or unallocated.
+     */
+    [[nodiscard]] uint8_t* mutable_frame_ptr(uint32_t frame_index);
+
+    [[nodiscard]] uint32_t get_frame_capacity() const { return m_frame_capacity; }
+
+    /**
+     * @brief Current write head index in m_data, advanced by the default processor after each readback.
+     *        Exposed for testing and potential future use by custom processors.
+     */
+    [[nodiscard]] uint32_t get_write_head() const { return m_write_head.load(); }
+
+    /** @brief Advance the write head index, wrapping around frame_capacity. */
+    void advance_write_head();
 
     // =========================================================================
     // NDDimensionalContainer
@@ -122,6 +143,21 @@ public:
      */
     [[nodiscard]] std::shared_ptr<Core::VKImage> to_image(
         const std::shared_ptr<Buffers::VKBuffer>& staging) const;
+
+    /**
+     * @brief Upload m_data[frame_index] to a new VKImage.
+     * @param frame_index Index into m_data in [0, frame_capacity).
+     */
+    [[nodiscard]] std::shared_ptr<Core::VKImage> image_at(uint32_t frame_index) const;
+
+    /**
+     * @brief Upload m_data[frame_index] reusing a caller-supplied staging buffer.
+     * @param staging     Host-visible VKBuffer sized to at least w * h * bpp.
+     * @param frame_index Index into m_data in [0, frame_capacity).
+     */
+    [[nodiscard]] std::shared_ptr<Core::VKImage> image_at(
+        const std::shared_ptr<Buffers::VKBuffer>& staging,
+        uint32_t frame_index) const;
 
     /**
      * @brief Crop a region from the last readback and upload it as a VKImage.
@@ -259,6 +295,9 @@ private:
     std::atomic<uint32_t> m_registered_readers { 0 };
     std::atomic<uint32_t> m_consumed_readers { 0 };
     std::atomic<uint32_t> m_next_reader_id { 0 };
+    std::atomic<uint32_t> m_write_head { 0 };
+    uint32_t m_frame_capacity { 1 };
+    std::atomic<uint64_t> m_frames_written { 0 };
 
     void setup_dimensions();
 };

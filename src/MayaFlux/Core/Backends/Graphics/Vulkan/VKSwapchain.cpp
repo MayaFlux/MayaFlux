@@ -84,6 +84,13 @@ bool VKSwapchain::create(VKContext& context,
     create_info.imageArrayLayers = 1;
     create_info.imageUsage = vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferDst;
 
+    if (support.capabilities.supportedUsageFlags & vk::ImageUsageFlagBits::eTransferSrc) {
+        create_info.imageUsage |= vk::ImageUsageFlagBits::eTransferSrc;
+    } else {
+        MF_WARN(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Surface does not support eTransferSrc; frame capture will be unavailable");
+    }
+
     const auto& queue_families = m_context->get_queue_families();
 
     std::vector<uint32_t> queue_family_indices;

@@ -15,6 +15,74 @@ class VKCommandManager;
 class Window;
 class BackendResourceManager;
 
+struct CaptureSlot {
+    vk::Image image {};
+    vk::DeviceMemory mem {};
+    vk::Extent2D extent {};
+    vk::CommandBuffer cmd {};
+    vk::Fence fence {};
+    std::atomic<bool> pending { false };
+};
+
+struct CaptureState {
+#ifdef MAYAFLUX_PLATFORM_MACOS
+    std::atomic<const std::vector<uint8_t>*> last_frame { nullptr };
+
+    static constexpr size_t LAST_FRAME_MAX_READERS = 32;
+    mutable std::array<std::atomic<const std::vector<uint8_t>*>, LAST_FRAME_MAX_READERS> last_frame_hazard_ptrs {};
+    mutable std::array<std::atomic<bool>, LAST_FRAME_MAX_READERS> last_frame_slot_active { false };
+
+    void retire_last_frame(const std::vector<uint8_t>* ptr);
+#else
+    std::atomic<std::shared_ptr<std::vector<uint8_t>>> last_frame;
+#endif
+
+    std::vector<std::unique_ptr<CaptureSlot>> slots;
+    size_t slot_index {};
+    vk::Format format {};
+    uint32_t bpp {};
+    std::thread readback_thread;
+    std::atomic<bool> readback_running { false };
+
+    using FrameObserver = std::function<void(
+        const std::shared_ptr<std::vector<uint8_t>>&,
+        uint32_t, uint32_t, uint32_t)>;
+    using ObserverMap = std::unordered_map<uint32_t, FrameObserver>;
+
+    std::atomic<uint32_t> next_observer_id { 1 };
+
+#ifdef MAYAFLUX_PLATFORM_MACOS
+    std::atomic<const ObserverMap*> observers { nullptr };
+
+    static constexpr size_t OBSERVERS_MAX_READERS = 32;
+    mutable std::array<std::atomic<const ObserverMap*>, OBSERVERS_MAX_READERS> observers_hazard_ptrs {};
+    mutable std::array<std::atomic<bool>, OBSERVERS_MAX_READERS> observers_slot_active { false };
+
+    void retire_observers(const ObserverMap* ptr);
+#else
+    std::atomic<std::shared_ptr<ObserverMap>> observers {
+        std::make_shared<ObserverMap>()
+    };
+#endif
+
+    ~CaptureState()
+    {
+        readback_running.store(false, std::memory_order_release);
+        if (readback_thread.joinable())
+            readback_thread.join();
+
+#ifdef MAYAFLUX_PLATFORM_MACOS
+        auto* old_frame = last_frame.exchange(nullptr);
+        if (old_frame)
+            retire_last_frame(old_frame);
+
+        auto* old_obs = observers.exchange(nullptr);
+        if (old_obs)
+            retire_observers(old_obs);
+#endif
+    }
+};
+
 struct WindowRenderContext {
     std::shared_ptr<Window> window;
     vk::SurfaceKHR surface;
@@ -30,6 +98,8 @@ struct WindowRenderContext {
     bool needs_recreation {};
     size_t current_frame {};
     uint32_t current_image_index {};
+
+    std::unique_ptr<CaptureState> capture;
 
     WindowRenderContext() = default;
     ~WindowRenderContext() = default;
@@ -130,6 +200,37 @@ private:
      * to input events.
      */
     void render_empty_window(WindowRenderContext& ctx);
+
+    /**
+     * @brief Ensure capture state is initialized for a window context
+     * @param ctx Window render context to initialize capture state for
+     *
+     * If the context does not already have capture state and the associated window has
+     * capture enabled, this initializes the capture state including allocating command buffers
+     * and synchronization objects for readback.
+     */
+    void ensure_capture_state(WindowRenderContext& ctx);
+
+    /**
+     * @brief Capture the current frame from a window's swapchain
+     * @param ctx Window render context to capture from
+     *
+     * This initiates an asynchronous readback of the current swapchain image into
+     * CPU-accessible memory. The result is stored in the capture state for retrieval
+     * via the display service.
+     */
+    void capture_frame(WindowRenderContext& ctx);
+
+    /**
+     * @brief Thread function to perform asynchronous readback of captured frames
+     * @param state Capture state containing pending readbacks
+     * @param dev Vulkan device to use for readback operations
+     *
+     * This thread continuously checks for pending capture slots and performs the necessary
+     * Vulkan commands to read back the image data into CPU memory. The last captured frame
+     * is stored atomically for retrieval by the display service.
+     */
+    void start_readback_thread(CaptureState& state, vk::Device dev);
 
     BackendResourceManager* m_resource_manager {};
 };

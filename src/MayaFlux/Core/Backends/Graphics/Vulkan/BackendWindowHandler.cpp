@@ -1,8 +1,9 @@
 #include "BackendWindowHandler.hpp"
 
-#include "MayaFlux/Core/Backends/Graphics/Vulkan/BackendResoureManager.hpp"
-#include "MayaFlux/Core/Backends/Graphics/Vulkan/VKImage.hpp"
+#include "BackendResoureManager.hpp"
 #include "VKCommandManager.hpp"
+#include "VKEnumUtils.hpp"
+#include "VKImage.hpp"
 #include "VKSwapchain.hpp"
 
 #include "MayaFlux/Core/Backends/Windowing/Window.hpp"
@@ -11,9 +12,69 @@
 
 namespace MayaFlux::Core {
 
+// ---------------------------------------------------------------------------
+// CaptureState retirement implementations (macOS only)
+// ---------------------------------------------------------------------------
+#ifdef MAYAFLUX_PLATFORM_MACOS
+
+void CaptureState::retire_last_frame(const std::vector<uint8_t>* ptr)
+{
+    for (;;) {
+        bool in_use = false;
+        for (size_t i = 0; i < LAST_FRAME_MAX_READERS; ++i) {
+            if (last_frame_hazard_ptrs[i].load(std::memory_order_acquire) == ptr) {
+                in_use = true;
+                break;
+            }
+        }
+        if (!in_use)
+            break;
+        std::this_thread::yield();
+    }
+    delete ptr;
+}
+
+void CaptureState::retire_observers(const ObserverMap* ptr)
+{
+    for (;;) {
+        bool in_use = false;
+        for (size_t i = 0; i < OBSERVERS_MAX_READERS; ++i) {
+            if (observers_hazard_ptrs[i].load(std::memory_order_acquire) == ptr) {
+                in_use = true;
+                break;
+            }
+        }
+        if (!in_use)
+            break;
+        std::this_thread::yield();
+    }
+    delete ptr;
+}
+#endif
+
 void WindowRenderContext::cleanup(VKContext& context)
 {
     vk::Device device = context.get_device();
+
+    if (capture) {
+        capture->readback_running.store(false, std::memory_order_release);
+        device.waitIdle();
+
+        if (capture->readback_thread.joinable())
+            capture->readback_thread.join();
+
+        for (auto& slot : capture->slots) {
+            if (slot->fence) {
+                (void)device.waitForFences(1, &slot->fence, VK_TRUE, UINT64_MAX);
+                device.destroyFence(slot->fence);
+            }
+            if (slot->image)
+                device.destroyImage(slot->image);
+            if (slot->mem)
+                device.freeMemory(slot->mem);
+        }
+        capture.reset();
+    }
 
     device.waitIdle();
 
@@ -299,6 +360,187 @@ void BackendWindowHandler::setup_backend_service(const std::shared_ptr<Registry:
             return static_cast<uint32_t>(vk::Format::eUndefined);
         }
         return static_cast<uint32_t>(ctx->depth_image->get_format());
+    };
+
+    // ======================================================================
+    // get_last_frame – hazard‑pointer protected read + copy
+    // ======================================================================
+    display_service->get_last_frame = [this](const std::shared_ptr<void>& window_ptr)
+        -> std::shared_ptr<std::vector<uint8_t>> {
+        auto* ctx = find_window_context(std::static_pointer_cast<Window>(window_ptr));
+        if (!ctx || !ctx->capture)
+            return nullptr;
+
+#ifdef MAYAFLUX_PLATFORM_MACOS
+        auto& state = *ctx->capture;
+
+        size_t slot = CaptureState::LAST_FRAME_MAX_READERS;
+        for (size_t i = 0; i < CaptureState::LAST_FRAME_MAX_READERS; ++i) {
+            bool expected = false;
+            if (state.last_frame_slot_active[i].compare_exchange_strong(expected, true, std::memory_order_acquire)) {
+                slot = i;
+                break;
+            }
+        }
+        if (slot == CaptureState::LAST_FRAME_MAX_READERS)
+            return nullptr;
+
+        const std::vector<uint8_t>* raw;
+        do {
+            raw = state.last_frame.load(std::memory_order_acquire);
+            state.last_frame_hazard_ptrs[slot].store(raw, std::memory_order_release);
+        } while (raw != state.last_frame.load(std::memory_order_acquire));
+
+        if (!raw) {
+            state.last_frame_hazard_ptrs[slot].store(nullptr, std::memory_order_release);
+            state.last_frame_slot_active[slot].store(false, std::memory_order_release);
+            return nullptr;
+        }
+
+        return std::shared_ptr<std::vector<uint8_t>>(
+            const_cast<std::vector<uint8_t>*>(raw),
+            [&state, slot](std::vector<uint8_t>*) {
+                state.last_frame_hazard_ptrs[slot].store(nullptr, std::memory_order_release);
+                state.last_frame_slot_active[slot].store(false, std::memory_order_release);
+            });
+#else
+        return ctx->capture->last_frame.load(std::memory_order_acquire);
+#endif
+    };
+
+    // ======================================================================
+    // register_frame_observer – hazard‑pointer update of observer map
+    // ======================================================================
+    display_service->register_frame_observer = [this](
+                                                   const std::shared_ptr<void>& window_ptr,
+                                                   const std::function<void(
+                                                       const std::shared_ptr<std::vector<uint8_t>>&,
+                                                       uint32_t, uint32_t, uint32_t)>&
+                                                       cb) -> uint32_t {
+        auto* ctx = find_window_context(std::static_pointer_cast<Window>(window_ptr));
+        if (!ctx) {
+            MF_WARN(Journal::Component::Core, Journal::Context::GraphicsBackend,
+                "register_frame_observer: window not registered with graphics backend");
+            return 0;
+        }
+        if (!ctx->capture) {
+            ensure_capture_state(*ctx);
+        }
+
+        auto& state = *ctx->capture;
+        uint32_t id = state.next_observer_id.fetch_add(1, std::memory_order_relaxed);
+
+#ifdef MAYAFLUX_PLATFORM_MACOS
+        size_t obs_slot = CaptureState::OBSERVERS_MAX_READERS;
+        for (size_t i = 0; i < CaptureState::OBSERVERS_MAX_READERS; ++i) {
+            bool expected = false;
+            if (state.observers_slot_active[i].compare_exchange_strong(expected, true, std::memory_order_acquire)) {
+                obs_slot = i;
+                break;
+            }
+        }
+        if (obs_slot == CaptureState::OBSERVERS_MAX_READERS)
+            return 0;
+
+        const CaptureState::ObserverMap* current;
+        CaptureState::ObserverMap* new_map = nullptr;
+
+        do {
+            if (new_map)
+                delete new_map;
+
+            do {
+                current = state.observers.load(std::memory_order_acquire);
+                state.observers_hazard_ptrs[obs_slot].store(current, std::memory_order_release);
+            } while (current != state.observers.load(std::memory_order_acquire));
+
+            new_map = new CaptureState::ObserverMap(current ? *current : CaptureState::ObserverMap {});
+            (*new_map)[id] = cb;
+
+        } while (!state.observers.compare_exchange_weak(current, new_map, std::memory_order_acq_rel, std::memory_order_acquire));
+
+        state.observers_hazard_ptrs[obs_slot].store(nullptr, std::memory_order_release);
+        state.observers_slot_active[obs_slot].store(false, std::memory_order_release);
+
+        if (current)
+            state.retire_observers(current);
+#else
+        auto current = state.observers.load(std::memory_order_acquire);
+        std::shared_ptr<CaptureState::ObserverMap> next;
+        do {
+            next = std::make_shared<CaptureState::ObserverMap>(*current);
+            (*next)[id] = cb;
+        } while (!state.observers.compare_exchange_weak(
+            current, next,
+            std::memory_order_release, std::memory_order_acquire));
+#endif
+        return id;
+    };
+
+    // ======================================================================
+    // unregister_frame_observer – hazard‑pointer update
+    // ======================================================================
+    display_service->unregister_frame_observer = [this](
+                                                     const std::shared_ptr<void>& window_ptr, uint32_t id) {
+        auto* ctx = find_window_context(std::static_pointer_cast<Window>(window_ptr));
+        if (!ctx) {
+            MF_WARN(Journal::Component::Core, Journal::Context::GraphicsBackend,
+                "unregister_frame_observer: window not registered with graphics backend");
+            return;
+        }
+        if (!ctx->capture) {
+            MF_WARN(Journal::Component::Core, Journal::Context::GraphicsBackend,
+                "unregister_frame_observer: capture not active for '{}'",
+                ctx->window->get_create_info().title);
+            return;
+        }
+
+        auto& state = *ctx->capture;
+
+#ifdef MAYAFLUX_PLATFORM_MACOS
+        size_t obs_slot = CaptureState::OBSERVERS_MAX_READERS;
+        for (size_t i = 0; i < CaptureState::OBSERVERS_MAX_READERS; ++i) {
+            bool expected = false;
+            if (state.observers_slot_active[i].compare_exchange_strong(expected, true, std::memory_order_acquire)) {
+                obs_slot = i;
+                break;
+            }
+        }
+        if (obs_slot == CaptureState::OBSERVERS_MAX_READERS)
+            return;
+
+        const CaptureState::ObserverMap* current;
+        CaptureState::ObserverMap* new_map = nullptr;
+
+        do {
+            if (new_map)
+                delete new_map;
+
+            do {
+                current = state.observers.load(std::memory_order_acquire);
+                state.observers_hazard_ptrs[obs_slot].store(current, std::memory_order_release);
+            } while (current != state.observers.load(std::memory_order_acquire));
+
+            new_map = new CaptureState::ObserverMap(current ? *current : CaptureState::ObserverMap {});
+            new_map->erase(id);
+
+        } while (!state.observers.compare_exchange_weak(current, new_map, std::memory_order_acq_rel, std::memory_order_acquire));
+
+        state.observers_hazard_ptrs[obs_slot].store(nullptr, std::memory_order_release);
+        state.observers_slot_active[obs_slot].store(false, std::memory_order_release);
+
+        if (current)
+            state.retire_observers(current);
+#else
+        auto current = state.observers.load(std::memory_order_acquire);
+        std::shared_ptr<CaptureState::ObserverMap> next;
+        do {
+            next = std::make_shared<CaptureState::ObserverMap>(*current);
+            next->erase(id);
+        } while (!state.observers.compare_exchange_weak(
+            current, next,
+            std::memory_order_release, std::memory_order_acquire));
+#endif
     };
 }
 
@@ -643,6 +885,254 @@ void BackendWindowHandler::render_empty_window(WindowRenderContext& ctx)
     }
 }
 
+void BackendWindowHandler::ensure_capture_state(WindowRenderContext& ctx)
+{
+    if (ctx.capture || !ctx.swapchain || !ctx.window->is_capture_enabled())
+        return;
+
+    auto dev = m_context.get_device();
+    const vk::Format fmt = ctx.swapchain->get_image_format();
+    const uint32_t bpp = Core::vk_format_bytes_per_pixel(fmt);
+
+    ctx.capture = std::make_unique<CaptureState>();
+    ctx.capture->format = fmt;
+    ctx.capture->bpp = bpp;
+
+    const uint32_t count = ctx.swapchain->get_image_count();
+    ctx.capture->slots.reserve(count);
+    for (uint32_t i = 0; i < count; ++i) {
+        auto slot = std::make_unique<CaptureSlot>();
+        slot->cmd = m_command_manager.allocate_command_buffer(
+            vk::CommandBufferLevel::ePrimary);
+        slot->fence = dev.createFence({});
+        ctx.capture->slots.push_back(std::move(slot));
+    }
+
+    start_readback_thread(*ctx.capture, dev);
+}
+
+void BackendWindowHandler::capture_frame(WindowRenderContext& ctx)
+{
+    if (!ctx.swapchain || ctx.window->get_rendering_buffers().empty()
+        || !ctx.window->is_capture_enabled())
+        return;
+
+    auto dev = m_context.get_device();
+    const auto ext = ctx.swapchain->get_extent();
+    const vk::Format fmt = ctx.swapchain->get_image_format();
+    const uint32_t bpp = Core::vk_format_bytes_per_pixel(fmt);
+    const vk::Image src = ctx.swapchain->get_images()[ctx.current_image_index];
+
+    if (!ctx.capture) {
+        ensure_capture_state(ctx);
+    }
+
+    auto& slot = *ctx.capture->slots[ctx.capture->slot_index];
+
+    if (slot.pending.load(std::memory_order_acquire))
+        return;
+
+    if (slot.image && slot.extent != ext) {
+        dev.destroyImage(slot.image);
+        dev.freeMemory(slot.mem);
+        slot.image = vk::Image {};
+        slot.mem = vk::DeviceMemory {};
+    }
+
+    if (!slot.image) {
+        vk::ImageCreateInfo ici {};
+        ici.imageType = vk::ImageType::e2D;
+        ici.format = fmt;
+        ici.extent = vk::Extent3D { ext.width, ext.height, 1 };
+        ici.arrayLayers = 1;
+        ici.mipLevels = 1;
+        ici.samples = vk::SampleCountFlagBits::e1;
+        ici.tiling = vk::ImageTiling::eLinear;
+        ici.usage = vk::ImageUsageFlagBits::eTransferDst;
+
+        slot.image = dev.createImage(ici);
+
+        auto req = dev.getImageMemoryRequirements(slot.image);
+        vk::MemoryAllocateInfo mai {};
+        mai.allocationSize = req.size;
+        mai.memoryTypeIndex = m_resource_manager->find_memory_type(
+            req.memoryTypeBits,
+            vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
+
+        slot.mem = dev.allocateMemory(mai);
+        dev.bindImageMemory(slot.image, slot.mem, 0);
+        slot.extent = ext;
+    }
+
+    slot.cmd.reset({});
+    vk::CommandBufferBeginInfo bi {};
+    bi.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit;
+    slot.cmd.begin(bi);
+
+    vk::ImageMemoryBarrier b {};
+    b.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    b.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    b.subresourceRange = { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 };
+
+    b.image = slot.image;
+    b.oldLayout = vk::ImageLayout::eUndefined;
+    b.newLayout = vk::ImageLayout::eTransferDstOptimal;
+    b.srcAccessMask = {};
+    b.dstAccessMask = vk::AccessFlagBits::eTransferWrite;
+    slot.cmd.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer,
+        vk::PipelineStageFlagBits::eTransfer, {}, {}, {}, b);
+
+    b.image = src;
+    b.oldLayout = vk::ImageLayout::ePresentSrcKHR;
+    b.newLayout = vk::ImageLayout::eTransferSrcOptimal;
+    b.srcAccessMask = vk::AccessFlagBits::eMemoryRead;
+    b.dstAccessMask = vk::AccessFlagBits::eTransferRead;
+    slot.cmd.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer,
+        vk::PipelineStageFlagBits::eTransfer, {}, {}, {}, b);
+
+    vk::ImageCopy copy {};
+    copy.srcSubresource = { vk::ImageAspectFlagBits::eColor, 0, 0, 1 };
+    copy.dstSubresource = { vk::ImageAspectFlagBits::eColor, 0, 0, 1 };
+    copy.extent = vk::Extent3D { ext.width, ext.height, 1 };
+    slot.cmd.copyImage(src, vk::ImageLayout::eTransferSrcOptimal,
+        slot.image, vk::ImageLayout::eTransferDstOptimal, 1, &copy);
+
+    b.image = slot.image;
+    b.oldLayout = vk::ImageLayout::eTransferDstOptimal;
+    b.newLayout = vk::ImageLayout::eGeneral;
+    b.srcAccessMask = vk::AccessFlagBits::eTransferWrite;
+    b.dstAccessMask = vk::AccessFlagBits::eMemoryRead;
+    slot.cmd.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer,
+        vk::PipelineStageFlagBits::eTransfer, {}, {}, {}, b);
+
+    b.image = src;
+    b.oldLayout = vk::ImageLayout::eTransferSrcOptimal;
+    b.newLayout = vk::ImageLayout::ePresentSrcKHR;
+    b.srcAccessMask = vk::AccessFlagBits::eTransferRead;
+    b.dstAccessMask = vk::AccessFlagBits::eMemoryRead;
+    slot.cmd.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer,
+        vk::PipelineStageFlagBits::eTransfer, {}, {}, {}, b);
+
+    slot.cmd.end();
+
+    (void)dev.resetFences(1, &slot.fence);
+
+    vk::SubmitInfo si {};
+    si.commandBufferCount = 1;
+    si.pCommandBuffers = &slot.cmd;
+
+    slot.pending.store(true, std::memory_order_release);
+
+    if (auto result = m_context.get_graphics_queue().submit(1, &si, slot.fence); result != vk::Result::eSuccess) {
+        MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
+            "Failed to submit capture command buffer for window '{}': {}",
+            ctx.window->get_create_info().title, vk::to_string(result));
+        slot.pending.store(false, std::memory_order_release);
+        return;
+    }
+
+    ctx.capture->slot_index = (ctx.capture->slot_index + 1) % ctx.capture->slots.size();
+}
+
+void BackendWindowHandler::start_readback_thread(CaptureState& state, vk::Device dev)
+{
+    state.readback_running.store(true, std::memory_order_release);
+
+    state.readback_thread = std::thread([&state, dev]() {
+        while (state.readback_running.load(std::memory_order_acquire)) {
+            bool any = false;
+
+            for (auto& slot_ptr : state.slots) {
+                auto& slot = *slot_ptr;
+
+                if (!slot.pending.load(std::memory_order_acquire))
+                    continue;
+
+                if (dev.getFenceStatus(slot.fence) != vk::Result::eSuccess)
+                    continue;
+
+                const size_t nb = static_cast<size_t>(slot.extent.width)
+                    * slot.extent.height * state.bpp;
+
+                vk::SubresourceLayout layout = dev.getImageSubresourceLayout(
+                    slot.image, { vk::ImageAspectFlagBits::eColor, 0, 0 });
+
+                const auto* mapped = static_cast<const uint8_t*>(
+                    dev.mapMemory(slot.mem, 0, VK_WHOLE_SIZE));
+                mapped += layout.offset;
+
+                auto buf = std::make_shared<std::vector<uint8_t>>(nb);
+                const uint32_t row_bytes = slot.extent.width * state.bpp;
+                for (uint32_t y = 0; y < slot.extent.height; ++y) {
+                    std::memcpy(buf->data() + static_cast<size_t>(y * row_bytes),
+                        mapped + y * layout.rowPitch,
+                        row_bytes);
+                }
+
+                dev.unmapMemory(slot.mem);
+
+                // ---------------------------------------------------------------
+                // Store new frame into last_frame (same pattern as InputManager)
+                // ---------------------------------------------------------------
+#ifdef MAYAFLUX_PLATFORM_MACOS
+                auto* raw_frame = new std::vector<uint8_t>(std::move(*buf));
+                auto* old = state.last_frame.exchange(raw_frame, std::memory_order_acq_rel);
+                if (old)
+                    state.retire_last_frame(old);
+#else
+                state.last_frame.store(buf, std::memory_order_release);
+#endif
+
+// ---------------------------------------------------------------
+// Read observers and invoke callbacks
+// ---------------------------------------------------------------
+#ifdef MAYAFLUX_PLATFORM_MACOS
+                size_t obs_slot = CaptureState::OBSERVERS_MAX_READERS;
+                for (size_t i = 0; i < CaptureState::OBSERVERS_MAX_READERS; ++i) {
+                    bool expected = false;
+                    if (state.observers_slot_active[i].compare_exchange_strong(expected, true, std::memory_order_acquire)) {
+                        obs_slot = i;
+                        break;
+                    }
+                }
+
+                if (obs_slot != CaptureState::OBSERVERS_MAX_READERS) {
+                    const CaptureState::ObserverMap* obs_current;
+                    do {
+                        obs_current = state.observers.load(std::memory_order_acquire);
+                        state.observers_hazard_ptrs[obs_slot].store(obs_current, std::memory_order_release);
+                    } while (obs_current != state.observers.load(std::memory_order_acquire));
+
+                    if (obs_current) {
+                        for (const auto& [id, cb] : *obs_current) {
+                            cb(buf, slot.extent.width, slot.extent.height,
+                                static_cast<uint32_t>(state.format));
+                        }
+                    }
+
+                    state.observers_hazard_ptrs[obs_slot].store(nullptr, std::memory_order_release);
+                    state.observers_slot_active[obs_slot].store(false, std::memory_order_release);
+                }
+#else
+                auto obs = state.observers.load(std::memory_order_acquire);
+                if (obs) {
+                    for (const auto& [id, cb] : *obs) {
+                        cb(buf, slot.extent.width, slot.extent.height,
+                            static_cast<uint32_t>(state.format));
+                    }
+                }
+#endif
+
+                slot.pending.store(false, std::memory_order_release);
+                any = true;
+            }
+
+            if (!any)
+                std::this_thread::sleep_for(std::chrono::microseconds(200));
+        }
+    });
+}
+
 void BackendWindowHandler::submit_and_present(
     const std::shared_ptr<Window>& window,
     const vk::CommandBuffer& command_buffer)
@@ -699,6 +1189,9 @@ void BackendWindowHandler::submit_and_present(
         ctx->needs_recreation = true;
     }
 
+    if (present_success)
+        capture_frame(*ctx);
+
     ctx->current_frame = (frame_index + 1) % ctx->in_flight.size();
 
     MF_RT_TRACE(Journal::Component::Core, Journal::Context::GraphicsCallback,
@@ -743,4 +1236,4 @@ void BackendWindowHandler::cleanup()
     m_window_contexts.clear();
 }
 
-}
+} // namespace MayaFlux::Core

@@ -26,6 +26,15 @@ void WindowAccessProcessor::on_attach(
     m_width = static_cast<uint32_t>(s.get_width());
     m_height = static_cast<uint32_t>(s.get_height());
 
+    m_previous_window_capture_supported = wc->get_window()->is_capture_enabled();
+
+    if (!m_previous_window_capture_supported) {
+        wc->get_window()->set_capture_enabled(true);
+        MF_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+            "WindowAccessProcessor: capture was not enabled for '{}'; enabling now",
+            wc->get_window()->get_create_info().title);
+    }
+
     m_surface_format = query_surface_format(wc->get_window());
 
     const uint32_t bpp = Core::vk_format_bytes_per_pixel(
@@ -41,13 +50,23 @@ void WindowAccessProcessor::on_attach(
 }
 
 void WindowAccessProcessor::on_detach(
-    const std::shared_ptr<SignalSourceContainer>& /*container*/)
+    const std::shared_ptr<SignalSourceContainer>& container)
 {
     m_width = 0;
     m_height = 0;
 
     m_last_readback_bytes = 0;
     m_surface_format = Core::GraphicsSurfaceInfo::SurfaceFormat::B8G8R8A8_SRGB;
+
+    if (!m_previous_window_capture_supported) {
+        auto wc = std::dynamic_pointer_cast<WindowContainer>(container);
+        if (wc) {
+            wc->get_window()->set_capture_enabled(false);
+            MF_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+                "WindowAccessProcessor detached: capture disabled for '{}', restoring previous state",
+                wc->get_window()->get_create_info().title);
+        }
+    }
 }
 
 void WindowAccessProcessor::process(
@@ -100,6 +119,14 @@ void WindowAccessProcessor::process(
         m_is_processing.store(false);
         container->update_processing_state(ProcessingState::ERROR);
         return;
+    }
+
+    const auto* src = std::get_if<std::vector<uint8_t>>(&processed[0]);
+    if (src) {
+        if (uint8_t* dst = wc->mutable_frame_ptr(wc->get_write_head())) {
+            std::memcpy(dst, src->data(), src->size());
+            wc->advance_write_head();
+        }
     }
 
     const auto vk_fmt = Core::to_vk_format(m_surface_format);

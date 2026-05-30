@@ -174,6 +174,21 @@ public:
     virtual void clear_frame_commands() = 0;
 
     /**
+     * @brief Whether per-frame surface capture is enabled for this window.
+     *
+     * Defaults to false. When false, the graphics backend skips the capture
+     * copy and readback entirely, so trivial windows incur no capture cost.
+     * Enable only on windows whose frames are consumed via
+     * DisplayService::get_last_frame or Kakshya readback.
+     */
+    [[nodiscard]] virtual bool is_capture_enabled() const = 0;
+
+    /**
+     * @brief Enable or disable per-frame surface capture for this window.
+     */
+    virtual void set_capture_enabled(bool enabled) = 0;
+
+    /**
      * @brief Get all VKBuffers currently rendering to this window
      * @return Vector of buffers (weak_ptr to avoid ownership issues)
      */

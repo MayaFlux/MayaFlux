@@ -1,6 +1,5 @@
 #include "SurfaceUtils.hpp"
 
-#include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
 #include "MayaFlux/Kakshya/NDData/DataAccess.hpp"
 
 #include "MayaFlux/Registry/BackendRegistry.hpp"
@@ -132,8 +131,7 @@ DataAccess readback_region(
     static DataAccess s_fail { s_empty_var, s_empty_dims, DataModality::UNKNOWN };
 
     auto* display = get_display_service();
-    auto* buf_svc = get_buffer_service();
-    if (!display || !buf_svc)
+    if (!display)
         return s_fail;
 
     const auto window_handle = std::static_pointer_cast<void>(window);
@@ -144,47 +142,51 @@ DataAccess readback_region(
     const auto traits = Core::get_surface_format_traits(mf_fmt);
     const uint32_t bpp = Core::vk_format_bytes_per_pixel(vk_fmt);
 
-    const size_t byte_count = static_cast<size_t>(pixel_width) * pixel_height * bpp;
-
-    auto staging = Buffers::create_staging_buffer(byte_count);
-    if (!staging) {
-        MF_RT_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-            "SurfaceUtils::readback_region: staging allocation failed ({} bytes) for '{}'",
-            byte_count, window->get_create_info().title);
+    uint32_t full_w = 0, full_h = 0;
+    display->get_swapchain_extent(window_handle, full_w, full_h);
+    if (full_w == 0 || full_h == 0)
         return s_fail;
-    }
 
-    const auto& res = staging->get_buffer_resources();
-
-    buf_svc->invalidate_range(res.memory, 0, byte_count);
-    void* mapped = buf_svc->map_buffer(res.memory, 0, byte_count);
-    if (!mapped) {
-        buf_svc->destroy_buffer(std::static_pointer_cast<void>(staging));
+    auto frame = display->get_last_frame(window_handle);
+    if (!frame || frame->empty()) {
         MF_RT_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-            "SurfaceUtils::readback_region: staging map failed for '{}'",
+            "SurfaceUtils::readback_region: no captured frame for '{}'",
             window->get_create_info().title);
         return s_fail;
     }
 
-    const bool ok = display->readback_swapchain_region(
-        window_handle,
-        mapped,
-        x_offset, y_offset,
-        pixel_width, pixel_height,
-        byte_count);
-
-    if (!ok) {
-        buf_svc->unmap_buffer(res.memory);
-        buf_svc->destroy_buffer(std::static_pointer_cast<void>(staging));
+    if (x_offset + pixel_width > full_w || y_offset + pixel_height > full_h) {
         MF_RT_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-            "SurfaceUtils::readback_region: GPU copy failed for '{}'",
+            "SurfaceUtils::readback_region: region {}x{} at ({},{}) exceeds surface {}x{} for '{}'",
+            pixel_width, pixel_height, x_offset, y_offset, full_w, full_h,
             window->get_create_info().title);
         return s_fail;
     }
 
-    fill_variant_from_raw(mapped, byte_count, traits, out_variant);
-    buf_svc->unmap_buffer(res.memory);
-    buf_svc->destroy_buffer(std::static_pointer_cast<void>(staging));
+    const size_t full_row = static_cast<size_t>(full_w) * bpp;
+    const size_t region_row = static_cast<size_t>(pixel_width) * bpp;
+    const size_t byte_count = region_row * pixel_height;
+
+    const size_t expected = full_row * full_h;
+    if (frame->size() < expected) {
+        MF_RT_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+            "SurfaceUtils::readback_region: frame {} bytes, expected {} for '{}'",
+            frame->size(), expected, window->get_create_info().title);
+        return s_fail;
+    }
+
+    std::vector<uint8_t> region(byte_count);
+    const uint8_t* base = frame->data()
+        + static_cast<size_t>(y_offset) * full_row
+        + static_cast<size_t>(x_offset) * bpp;
+
+    for (uint32_t row = 0; row < pixel_height; ++row) {
+        std::memcpy(region.data() + row * region_row,
+            base + row * full_row,
+            region_row);
+    }
+
+    fill_variant_from_raw(region.data(), byte_count, traits, out_variant);
 
     auto dims = make_pixel_dimensions(pixel_width, pixel_height, traits.channel_count);
     return { out_variant, dims, DataModality::IMAGE_COLOR };
