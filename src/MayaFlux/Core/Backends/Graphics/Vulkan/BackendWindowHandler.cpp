@@ -1080,7 +1080,7 @@ void BackendWindowHandler::start_readback_thread(CaptureState& state, vk::Device
                 if (old)
                     state.retire_last_frame(old);
 #else
-                state.last_frame.store(std::move(buf), std::memory_order_release);
+                state.last_frame.store(buf, std::memory_order_release);
 #endif
 
 // ---------------------------------------------------------------
