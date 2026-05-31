@@ -1,7 +1,6 @@
 #pragma once
 
 #include "MayaFlux/Buffers/VKBuffer.hpp"
-#include "MayaFlux/Nodes/Graphics/PointNode.hpp"
 
 namespace MayaFlux::Nodes::Network {
 class NodeNetwork;
@@ -16,7 +15,7 @@ namespace MayaFlux::Buffers {
  *
  * Extracts geometry from all nodes within a network and uploads to GPU as
  * a single vertex buffer. Handles network-specific patterns like ParticleNetwork
- * (many PointNodes) and PointCloudNetwork.
+ * and PointCloudNetwork.
  *
  * Key Differences from GeometryBindingsProcessor:
  * - Operates on NodeNetwork (not single GeometryWriterNode)
@@ -38,7 +37,7 @@ namespace MayaFlux::Buffers {
  * processor->bind_network("particles", particles, vertex_buffer);
  *
  * vertex_buffer->set_default_processor(processor);
- * vertex_buffer->process_default();  // Aggregates all 1000 PointNodes → GPU
+ * vertex_buffer->process_default();  // Aggregates all 1000 Poiints -> GPU
  * ```
  */
 class MAYAFLUX_API NetworkGeometryProcessor : public VKBufferProcessor {

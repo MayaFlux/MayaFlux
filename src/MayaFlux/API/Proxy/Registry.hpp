@@ -22,7 +22,6 @@ namespace Nodes {
         class TextureNode;
         class GeometryWriterNode;
         class MeshWriterNode;
-        class PointNode;
         class PointCollectionNode;
         class ProceduralTextureNode;
         class PathGeneratorNode;
@@ -102,7 +101,6 @@ namespace IO {
     N(TextureNode, MayaFlux::Nodes::GpuSync::TextureNode)                     \
     N(GeometryWriterNode, MayaFlux::Nodes::GpuSync::GeometryWriterNode)       \
     N(MeshWriterNode, MayaFlux::Nodes::GpuSync::MeshWriterNode)               \
-    N(PointNode, MayaFlux::Nodes::GpuSync::PointNode)                         \
     N(PathGeneratorNode, MayaFlux::Nodes::GpuSync::PathGeneratorNode)         \
     N(PointCollectionNode, MayaFlux::Nodes::GpuSync::PointCollectionNode)     \
     N(TopologyGeneratorNode, MayaFlux::Nodes::GpuSync::TopologyGeneratorNode) \

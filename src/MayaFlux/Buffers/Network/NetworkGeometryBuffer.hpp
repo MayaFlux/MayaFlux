@@ -13,7 +13,7 @@ class RenderProcessor;
  * @brief Specialized buffer for geometry from NodeNetwork instances
  *
  * Aggregates geometry from all nodes within a network into a single GPU buffer.
- * Designed for networks like ParticleNetwork (1000+ PointNodes), PointCloudNetwork,
+ * Designed for networks like ParticleNetwork (1000+ points in PointCollectionNode), PointCloudNetwork,
  * and other multi-node generative systems.
  *
  * Philosophy:
@@ -33,7 +33,7 @@ class RenderProcessor;
  * particles->set_topology(Topology::SPATIAL);
  * particles->set_output_mode(OutputMode::GRAPHICS_BIND);
  *
- * // Create buffer that aggregates all 1000 PointNodes
+ * // Create buffer that aggregates all 1000 Points in PointCollectionNode inside the ParticleNetwork
  * auto buffer = std::make_shared<NetworkGeometryBuffer>(particles);
  * buffer->setup_processors(ProcessingToken::VISUAL_RATE);
  *

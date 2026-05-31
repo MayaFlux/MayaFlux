@@ -1,6 +1,6 @@
 #pragma once
 
-#include "PointNode.hpp"
+#include "MayaFlux/Nodes/Graphics/GeometryWriterNode.hpp"
 
 namespace MayaFlux::Nodes::GpuSync {
 

@@ -1184,7 +1184,7 @@ void rhythm_path_textured()
 - Multiple simultaneous windows, each an independent rendering target
 - Secondary command buffers for draw commands; `PresentProcessor` orchestrates primary command buffers per window per frame
 - `BackendResourceManager` for centralised format traits and swapchain readback
-- Geometry nodes: `PointNode`, `PointCollectionNode`, `PathGeneratorNode`, `TopologyGeneratorNode`, `GeometryWriterNode`, `ProceduralTextureNode`, `TextureNode`, `ComputeOutNode`
+- Geometry nodes: `PointCollectionNode`, `PathGeneratorNode`, `TopologyGeneratorNode`, `GeometryWriterNode`, `ProceduralTextureNode`, `TextureNode`, `ComputeOutNode`
 - Graphics operator pipeline: `PhysicsOperator`, `PathOperator`, `TopologyOperator`
 - `VertexSampler` for spatial generation; `MeshVertex` universal 60-byte layout with position, normal, tangent, UV, color
 - Influence UBO binding; influence properties (intensity, radius, color, size) and target on `Emitter` and `Agent`; lit shader variants

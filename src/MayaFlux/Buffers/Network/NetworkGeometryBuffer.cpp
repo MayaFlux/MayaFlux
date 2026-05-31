@@ -1,5 +1,7 @@
 #include "NetworkGeometryBuffer.hpp"
 
+#include "MayaFlux/Kakshya/NDData/VertexFormats.hpp"
+
 #include "MayaFlux/Buffers/BufferProcessingChain.hpp"
 #include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
 #include "MayaFlux/Nodes/Network/Operators/GraphicsOperator.hpp"

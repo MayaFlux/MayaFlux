@@ -52,7 +52,6 @@
 #include "Nodes/Graphics/MeshWriterNode.hpp"
 #include "Nodes/Graphics/PathGeneratorNode.hpp"
 #include "Nodes/Graphics/PointCollectionNode.hpp"
-#include "Nodes/Graphics/PointNode.hpp"
 #include "Nodes/Graphics/ProceduralTextureNode.hpp"
 #include "Nodes/Graphics/TextureNode.hpp"
 #include "Nodes/Graphics/TopologyGeneratorNode.hpp"
