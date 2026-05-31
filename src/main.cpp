@@ -38,23 +38,38 @@ int main(int argc, char* argv[])
             "Version: {}.{}.{}", MAYAFLUX_VERSION_MAJOR, MAYAFLUX_VERSION_MINOR, MAYAFLUX_VERSION_PATCH);
         MF_LOG(MayaFlux::Journal::Component::USER, MayaFlux::Journal::Context::Init, "");
 
+        bool config_override = false;
+#ifdef MAYAFLUX_CONFIG_OVERRIDE
+        config_override = true;
+#endif
+
         std::string config_path;
-        for (int i = 1; i < argc - 1; ++i) {
-            if (std::string_view(argv[i]) == "--config") {
-                config_path = argv[i + 1];
-                break;
+        for (int i = 1; i < argc; ++i) {
+            if (std::string_view(argv[i]) == "--config" && i + 1 < argc) {
+                config_path = argv[++i];
+            } else if (std::string_view(argv[i]) == "--config-override") {
+                config_override = true;
             }
         }
+
         if (config_path.empty()) {
             namespace fs = std::filesystem;
             auto candidate = fs::path(Config::SOURCE_DIR) / "mayaflux.json";
             if (fs::exists(candidate))
                 config_path = candidate.string();
         }
-        if (!config_path.empty())
-            MayaFlux::Config::load_config_from_file(config_path);
 
-        initialize();
+        if (config_override) {
+            MF_LOG(MayaFlux::Journal::Component::USER, MayaFlux::Journal::Context::Init,
+                "Config override active: file loads after settings()");
+            initialize();
+            if (!config_path.empty())
+                MayaFlux::Config::load_config_from_file(config_path);
+        } else {
+            if (!config_path.empty())
+                MayaFlux::Config::load_config_from_file(config_path);
+            initialize();
+        }
 
         MayaFlux::Init();
 
