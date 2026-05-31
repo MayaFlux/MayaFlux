@@ -46,6 +46,7 @@ Build-Depends:
     nlohmann-json3-dev,
     libpipewire-0.3-dev,
     libasound2-dev,
+    libdbus-1-dev,
     ccache,
     git
 Standards-Version: 4.7.0

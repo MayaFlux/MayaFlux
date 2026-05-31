@@ -56,6 +56,8 @@ else()
 
         find_program(WaylandScanner_EXECUTABLE NAMES wayland-scanner REQUIRED)
         pkg_get_variable(WAYLAND_PROTOCOLS_DIR wayland-protocols pkgdatadir)
+
+        pkg_check_modules(DBUS REQUIRED dbus-1)
     endif()
 
     find_package(TBB REQUIRED)

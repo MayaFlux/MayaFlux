@@ -94,10 +94,9 @@ if(UNIX AND NOT APPLE)
     endif()
     target_include_directories(MayaFluxLib PRIVATE
                                "${CMAKE_CURRENT_BINARY_DIR}/wayland_generated")
-endif()
 
-# target_include_directories(MayaFluxLib PRIVATE ${WAYLAND_CLIENT_INCLUDE_DIRS})
-# target_include_directories(MayaFluxLib PRIVATE ${XKBCOMMON_INCLUDE_DIRS})
+    target_include_directories(MayaFluxLib PRIVATE ${DBUS_INCLUDE_DIRS})
+endif()
 
 #==============================================================
 #                   Target Links
@@ -170,10 +169,8 @@ else()
         asound
         )
 
-        target_link_libraries(MayaFluxLib PRIVATE ${PIPEWIRE_LIBRARIES})
+        target_link_libraries(MayaFluxLib PRIVATE ${PIPEWIRE_LIBRARIES} ${DBUS_LIBRARIES} )
         message(STATUS "PipeWire backend enabled (${PIPEWIRE_VERSION})")
-
-        # target_link_libraries(MayaFluxLib PRIVATE PkgConfig::WAYLAND_PROTOCOLS)
     endif()
 
     target_link_libraries(MayaFluxLib PUBLIC
