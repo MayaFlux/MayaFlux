@@ -35,6 +35,24 @@ void TaskScheduler::add_task(const std::shared_ptr<Routine>& routine, const std:
     if (initialize)
         initialize_routine_state(routine, token);
 
+    if (token == ProcessingToken::CONDITIONAL) {
+        routine->set_auto_resume(true);
+        for (auto& op : m_conditional_pending_ops) {
+            bool expected = false;
+            if (op.active.compare_exchange_strong(expected, true,
+                    std::memory_order_relaxed, std::memory_order_relaxed)) {
+                op.is_addition = true;
+                op.entry = { routine, task_name };
+                m_conditional_pending_count.fetch_add(1, std::memory_order_release);
+                start_conditional_thread();
+                return;
+            }
+        }
+        MF_ERROR(Journal::Component::Vruta, Journal::Context::CoroutineScheduling,
+            "Conditional pending queue full, could not add task '{}'", task_name);
+        return;
+    }
+
     for (auto& op : m_pending_ops) {
         bool expected = false;
         if (op.active.compare_exchange_strong(expected, true,
@@ -52,6 +70,17 @@ void TaskScheduler::add_task(const std::shared_ptr<Routine>& routine, const std:
 
 bool TaskScheduler::cancel_task(const std::string& name)
 {
+    for (auto& op : m_conditional_pending_ops) {
+        bool expected = false;
+        if (op.active.compare_exchange_strong(expected, true,
+                std::memory_order_acquire, std::memory_order_relaxed)) {
+            op.entry = { nullptr, name };
+            op.is_addition = false;
+            m_conditional_pending_count.fetch_add(1, std::memory_order_relaxed);
+            return true;
+        }
+    }
+
     for (auto& op : m_pending_ops) {
         bool expected = false;
         if (op.active.compare_exchange_strong(expected, true,
@@ -74,6 +103,13 @@ bool TaskScheduler::cancel_task(const std::shared_ptr<Routine>& routine)
     if (!routine)
         return false;
 
+    if (routine && routine->get_processing_token() == ProcessingToken::CONDITIONAL) {
+        auto it = std::ranges::find_if(m_conditional_tasks,
+            [&routine](const TaskEntry& e) { return e.routine == routine; });
+        const std::string name = (it != m_conditional_tasks.end()) ? it->name : "";
+        return cancel_task(name);
+    }
+
     auto it = find_task_by_routine(routine);
     const std::string name = (it != m_tasks.end()) ? it->name : "";
 
@@ -95,6 +131,14 @@ bool TaskScheduler::cancel_task(const std::shared_ptr<Routine>& routine)
 
 bool TaskScheduler::restart_task(const std::string& name)
 {
+    auto cit = std::ranges::find_if(m_conditional_tasks,
+        [&name](const TaskEntry& e) { return e.name == name; });
+    if (cit != m_conditional_tasks.end()) {
+        if (cit->routine && cit->routine->is_active())
+            cit->routine->restart();
+        return true;
+    }
+
     auto it = find_task_by_name(name);
     if (it != m_tasks.end()) {
         if (it->routine && it->routine->is_active()) {
@@ -106,12 +150,26 @@ bool TaskScheduler::restart_task(const std::string& name)
 
 std::shared_ptr<Routine> TaskScheduler::get_task(const std::string& name) const
 {
+    auto cit = std::ranges::find_if(m_conditional_tasks,
+        [&name](const TaskEntry& e) { return e.name == name; });
+    if (cit != m_conditional_tasks.end())
+        return cit->routine;
+
     auto it = find_task_by_name(name);
     return (it != m_tasks.end()) ? it->routine : nullptr;
 }
 
 std::vector<std::shared_ptr<Routine>> TaskScheduler::get_tasks_for_token(ProcessingToken token) const
 {
+    if (token == ProcessingToken::CONDITIONAL) {
+        std::vector<std::shared_ptr<Routine>> result;
+        for (const auto& e : m_conditional_tasks) {
+            if (e.routine)
+                result.push_back(e.routine);
+        }
+        return result;
+    }
+
     std::vector<std::shared_ptr<Routine>> result;
     for (const auto& entry : m_tasks) {
         if (entry.routine && entry.routine->get_processing_token() == token) {
@@ -133,6 +191,15 @@ std::vector<std::string> TaskScheduler::get_task_names() const
 
 std::vector<std::string> TaskScheduler::get_task_names(ProcessingToken token) const
 {
+    if (token == ProcessingToken::CONDITIONAL) {
+        std::vector<std::string> names;
+        for (const auto& e : m_conditional_tasks) {
+            if (e.routine)
+                names.push_back(e.name);
+        }
+        return names;
+    }
+
     std::vector<std::string> names;
     for (const auto& entry : m_tasks) {
         if (entry.routine && entry.routine->get_processing_token() == token)
@@ -287,6 +354,8 @@ unsigned int TaskScheduler::get_default_rate(ProcessingToken token) const
         return 1;
     case ProcessingToken::CUSTOM:
         return 1000;
+    case ProcessingToken::CONDITIONAL:
+        return 0;
     default:
         return m_registered_sample_rate;
     }
@@ -294,6 +363,9 @@ unsigned int TaskScheduler::get_default_rate(ProcessingToken token) const
 
 void TaskScheduler::ensure_domain(ProcessingToken token, unsigned int rate)
 {
+    if (token == ProcessingToken::CONDITIONAL)
+        return;
+
     auto clock_it = m_token_clocks.find(token);
     if (clock_it == m_token_clocks.end()) {
         unsigned int domain_rate = (rate > 0) ? rate : get_default_rate(token);
@@ -368,8 +440,35 @@ bool TaskScheduler::initialize_routine_state(const std::shared_ptr<Routine>& rou
     return routine->initialize_state(current_context);
 }
 
+void TaskScheduler::start_conditional_thread()
+{
+    if (m_conditional_thread.joinable())
+        return;
+
+#if MAYAFLUX_USE_JTHREAD
+    m_conditional_thread = std::jthread([this](const std::stop_token& st) {
+        while (!st.stop_requested())
+            pump_conditional();
+    });
+#else
+    m_conditional_stop.store(false, std::memory_order_release);
+    m_conditional_thread = std::thread([this]() {
+        while (!m_conditional_stop.load(std::memory_order_acquire))
+            pump_conditional();
+    });
+#endif
+}
+
 void TaskScheduler::pause_all_tasks()
 {
+    for (auto& entry : m_conditional_tasks) {
+        if (entry.routine && entry.routine->is_active()) {
+            bool current_auto_resume = entry.routine->get_auto_resume();
+            entry.routine->set_state<bool>("was_auto_resume", current_auto_resume);
+            entry.routine->set_auto_resume(false);
+        }
+    }
+
     for (auto& entry : m_tasks) {
         if (entry.routine && entry.routine->is_active()) {
             bool current_auto_resume = entry.routine->get_auto_resume();
@@ -381,6 +480,17 @@ void TaskScheduler::pause_all_tasks()
 
 void TaskScheduler::resume_all_tasks()
 {
+    for (auto& entry : m_conditional_tasks) {
+        if (entry.routine && entry.routine->is_active()) {
+            auto was_auto_resume = entry.routine->get_state<bool>("was_auto_resume");
+            if (was_auto_resume) {
+                entry.routine->set_auto_resume(*was_auto_resume);
+            } else {
+                entry.routine->set_auto_resume(true);
+            }
+        }
+    }
+
     for (auto& entry : m_tasks) {
         if (entry.routine && entry.routine->is_active()) {
             auto was_auto_resume = entry.routine->get_state<bool>("was_auto_resume");
@@ -444,6 +554,17 @@ void TaskScheduler::terminate_all_tasks()
             "All coroutines terminated successfully");
     }
 
+    drain_conditional_pending();
+    for (auto& entry : m_conditional_tasks) {
+        if (entry.routine && entry.routine->is_active())
+            entry.routine->set_should_terminate(true);
+    }
+    for (auto& entry : m_conditional_tasks) {
+        if (entry.routine && entry.routine->is_active())
+            entry.routine->force_resume();
+    }
+    m_conditional_tasks.clear();
+
     m_tasks.clear();
 }
 
@@ -499,6 +620,40 @@ void TaskScheduler::drain_pending_tasks()
     }
 }
 
+void TaskScheduler::drain_conditional_pending()
+{
+    if (m_conditional_pending_count.load(std::memory_order_acquire) == 0)
+        return;
+
+    for (auto& op : m_conditional_pending_ops) {
+        if (!op.active.load(std::memory_order_acquire))
+            continue;
+
+        if (op.is_addition) {
+            auto it = std::ranges::find_if(m_conditional_tasks,
+                [&](const TaskEntry& e) { return e.name == op.entry.name; });
+            if (it != m_conditional_tasks.end()) {
+                if (it->routine && it->routine->is_active())
+                    it->routine->set_should_terminate(true);
+                m_conditional_tasks.erase(it);
+            }
+            m_conditional_tasks.push_back(std::move(op.entry));
+        } else {
+            auto it = std::ranges::find_if(m_conditional_tasks,
+                [&](const TaskEntry& e) { return e.name == op.entry.name; });
+            if (it != m_conditional_tasks.end()) {
+                if (it->routine && it->routine->is_active())
+                    it->routine->set_should_terminate(true);
+                m_conditional_tasks.erase(it);
+            }
+        }
+
+        op.entry = { nullptr, "" };
+        op.active.store(false, std::memory_order_release);
+        m_conditional_pending_count.fetch_sub(1, std::memory_order_relaxed);
+    }
+}
+
 void TaskScheduler::pump_cross(DelayContext context, ProcessingToken clock_token, uint64_t processing_units)
 {
     auto cross_tasks = get_tasks_for_token(ProcessingToken::MULTI_RATE);
@@ -524,6 +679,25 @@ void TaskScheduler::pump_cross(DelayContext context, ProcessingToken clock_token
                 routine->try_resume_with_context(pos, context);
             }
         }
+    }
+}
+
+void TaskScheduler::pump_conditional()
+{
+    drain_conditional_pending();
+
+    if (m_conditional_tasks.empty()) {
+        std::this_thread::yield();
+        return;
+    }
+
+    std::erase_if(m_conditional_tasks, [](const TaskEntry& e) {
+        return !e.routine || !e.routine->is_active();
+    });
+
+    for (auto& entry : m_conditional_tasks) {
+        if (entry.routine && entry.routine->is_active())
+            entry.routine->try_resume(0);
     }
 }
 

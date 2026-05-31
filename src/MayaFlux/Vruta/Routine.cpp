@@ -18,6 +18,11 @@ CrossRoutine cross_promise::get_return_object()
     return { std::coroutine_handle<cross_promise>::from_promise(*this) };
 }
 
+FreeRoutine conditional_promise::get_return_object()
+{
+    return FreeRoutine { std::coroutine_handle<conditional_promise>::from_promise(*this) };
+}
+
 SoundRoutine::SoundRoutine(std::coroutine_handle<promise_type> h)
     : m_handle(h)
 {
@@ -601,6 +606,120 @@ void* CrossRoutine::get_state_impl_raw(const std::string& key)
         return &it->second;
     }
     return nullptr;
+}
+
+FreeRoutine::FreeRoutine(std::coroutine_handle<promise_type> h)
+    : m_handle(h)
+{
+    if (!m_handle || !m_handle.address()) {
+        error<std::invalid_argument>(
+            Journal::Component::Vruta, Journal::Context::CoroutineScheduling,
+            std::source_location::current(),
+            "FreeRoutine: invalid coroutine handle");
+    }
+}
+
+FreeRoutine::FreeRoutine(FreeRoutine&& other) noexcept
+    : m_handle(std::exchange(other.m_handle, {}))
+{
+}
+
+FreeRoutine& FreeRoutine::operator=(FreeRoutine&& other) noexcept
+{
+    if (this != &other) {
+        if (m_handle && m_handle.address())
+            m_handle.destroy();
+        m_handle = std::exchange(other.m_handle, {});
+    }
+    return *this;
+}
+
+FreeRoutine::~FreeRoutine()
+{
+    if (m_handle && m_handle.address())
+        m_handle.destroy();
+}
+
+ProcessingToken FreeRoutine::get_processing_token() const
+{
+    return ProcessingToken::CONDITIONAL;
+}
+
+bool FreeRoutine::is_active() const
+{
+    return m_handle && m_handle.address() && !m_handle.done();
+}
+
+bool FreeRoutine::initialize_state(uint64_t /*current_context*/)
+{
+    if (!m_handle || m_handle.done())
+        return false;
+
+    m_handle.promise().auto_resume = true;
+    return true;
+}
+
+bool FreeRoutine::try_resume(uint64_t /*current_context*/)
+{
+    return try_resume_with_context(0, DelayContext::NONE);
+}
+
+bool FreeRoutine::try_resume_with_context(uint64_t /*current_value*/, DelayContext /*context*/)
+{
+    if (!is_active())
+        return false;
+
+    auto& p = m_handle.promise();
+
+    if (p.should_terminate || !p.auto_resume)
+        return false;
+
+    if (!p.armed.load(std::memory_order_acquire))
+        return false;
+
+    if (!p.condition || !p.condition())
+        return false;
+
+    p.armed.store(false, std::memory_order_release);
+    p.condition = nullptr;
+    m_handle.resume();
+    return true;
+}
+
+bool FreeRoutine::force_resume()
+{
+    if (!m_handle || m_handle.done())
+        return false;
+    m_handle.resume();
+    return true;
+}
+
+bool FreeRoutine::restart()
+{
+    if (!m_handle)
+        return false;
+    set_state<bool>("restart", true);
+    m_handle.promise().auto_resume = true;
+    if (is_active()) {
+        m_handle.resume();
+        return true;
+    }
+    return false;
+}
+
+void FreeRoutine::set_state_impl(const std::string& key, std::any value)
+{
+    if (m_handle)
+        m_handle.promise().state[key] = std::move(value);
+}
+
+void* FreeRoutine::get_state_impl_raw(const std::string& key)
+{
+    if (!m_handle)
+        return nullptr;
+    auto& s = m_handle.promise().state;
+    auto it = s.find(key);
+    return it != s.end() ? &it->second : nullptr;
 }
 
 }

@@ -756,4 +756,89 @@ protected:
 private:
     std::coroutine_handle<promise_type> m_handle;
 };
+
+/**
+ * @class FreeRoutine
+ * @brief Coroutine resumed when a caller-supplied condition becomes true.
+ *
+ * FreeRoutine has no clock domain. It suspends on ConditionAwaiter, which
+ * stores a std::function<bool()> in the promise. The scheduler's dedicated
+ * CONDITIONAL thread evaluates that condition on every pass; the coroutine
+ * resumes on that thread the moment the condition returns true.
+ *
+ * Intended for compute loops that must run independently of both the audio
+ * sample clock and the graphics frame clock - cellular automata, physics
+ * integration, ML inference, any free-running iterative process.
+ *
+ * Usage:
+ * @code
+ * auto my_routine = [&state]() -> Vruta::FreeRoutine {
+ *     while (true) {
+ *         co_await ConditionAwaiter{ [&]{ return state.ready.load(); } };
+ *         state.evolve();
+ *     }
+ * };
+ * scheduler->add_task(std::make_shared<FreeRoutine>(my_routine()), "ca_evolve");
+ * @endcode
+ */
+class MAYAFLUX_API FreeRoutine : public Routine {
+public:
+    using promise_type = MayaFlux::Vruta::conditional_promise;
+
+    [[nodiscard]] ProcessingToken get_processing_token() const override;
+
+    explicit FreeRoutine(std::coroutine_handle<promise_type> h);
+
+    FreeRoutine(const FreeRoutine& other) = delete;
+    FreeRoutine& operator=(const FreeRoutine& other) = delete;
+    FreeRoutine(FreeRoutine&& other) noexcept;
+    FreeRoutine& operator=(FreeRoutine&& other) noexcept;
+    ~FreeRoutine() override;
+
+    [[nodiscard]] bool is_active() const override;
+    bool initialize_state(uint64_t current_context = 0U) override;
+    bool try_resume(uint64_t current_context) override;
+    bool try_resume_with_context(uint64_t current_value, DelayContext context) override;
+    bool force_resume() override;
+    bool restart() override;
+
+    [[nodiscard]] uint64_t next_execution() const override { return 0; }
+    [[nodiscard]] bool requires_clock_sync() const override { return false; }
+
+    [[nodiscard]] bool get_auto_resume() const override
+    {
+        return m_handle ? m_handle.promise().auto_resume : false;
+    }
+
+    void set_auto_resume(bool v) override
+    {
+        if (m_handle)
+            m_handle.promise().auto_resume = v;
+    }
+
+    [[nodiscard]] bool get_should_terminate() const override
+    {
+        return m_handle ? m_handle.promise().should_terminate : true;
+    }
+
+    void set_should_terminate(bool v) override
+    {
+        if (m_handle)
+            m_handle.promise().should_terminate = v;
+    }
+
+    [[nodiscard]] bool get_sync_to_clock() const override { return false; }
+
+    [[nodiscard]] uint64_t get_next_sample() const override { return 0; }
+    void set_next_sample(uint64_t) override { }
+    [[nodiscard]] uint64_t get_next_frame() const override { return 0; }
+    void set_next_frame(uint64_t) override { }
+
+protected:
+    void set_state_impl(const std::string& key, std::any value) override;
+    void* get_state_impl_raw(const std::string& key) override;
+
+private:
+    std::coroutine_handle<promise_type> m_handle;
+};
 }

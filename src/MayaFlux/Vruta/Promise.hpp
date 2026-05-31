@@ -9,6 +9,7 @@ namespace MayaFlux::Vruta {
 class SoundRoutine;
 class GraphicsRoutine;
 class CrossRoutine;
+class FreeRoutine;
 class Event;
 class NetworkSource;
 
@@ -420,6 +421,46 @@ struct cross_promise : public routine_promise<CrossRoutine> {
      * suspension before any concurrent await_suspend can re-arm it.
      */
     std::atomic<bool> frame_satisfied { false };
+};
+
+/**
+ * @struct conditional_promise
+ * @brief Coroutine promise for routines suspended on an arbitrary boolean condition.
+ *
+ * FreeRoutine coroutines carry no clock. The scheduler's dedicated CONDITIONAL
+ * thread evaluates the stored condition on every iteration; when it returns true
+ * the handle is resumed. DelayContext stays NONE throughout because no delay is
+ * being modelled - the coroutine is simply waiting for a predicate to become
+ * satisfied.
+ *
+ * The condition is written by ConditionAwaiter::await_suspend and read by the
+ * scheduler thread. Both accesses are on different threads, so the condition
+ * field is protected by the same atomic flag pattern used in BroadcastSource:
+ * the awaiter stores condition + handle atomically before setting armed, and
+ * the scheduler thread reads only after observing armed == true.
+ */
+struct conditional_promise : public routine_promise<FreeRoutine> {
+    FreeRoutine get_return_object();
+
+    ProcessingToken processing_token { ProcessingToken::CONDITIONAL };
+
+    /**
+     * @brief Condition evaluated by the scheduler thread on each iteration.
+     *
+     * Written once per suspension by ConditionAwaiter::await_suspend.
+     * Read repeatedly by the scheduler thread until it returns true.
+     * Null when the coroutine is not suspended on a condition.
+     */
+    std::function<bool()> condition;
+
+    /**
+     * @brief True while the coroutine is suspended on a ConditionAwaiter.
+     *
+     * Set to true in await_suspend, cleared to false before handle.resume().
+     * The scheduler thread reads this to distinguish an active suspension
+     * from a running or completed coroutine.
+     */
+    std::atomic<bool> armed { false };
 };
 
 /**

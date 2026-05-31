@@ -16,6 +16,17 @@ enum class ProcessingToken {
     EVENT_DRIVEN,
     MULTI_RATE, ///< Coroutine can handle multiple sample rates. Picks the frame-accurate processing token by default
     ON_DEMAND, ///< Coroutine is executed on demand, not scheduled
+    /**
+     * @brief Condition-driven execution - resume when a caller-supplied predicate returns true.
+     *
+     * FreeRoutine coroutines carry this token. The scheduler owns a dedicated
+     * thread for this domain that loops continuously, calling try_resume() on
+     * each CONDITIONAL task. try_resume() evaluates the condition stored in the
+     * promise by the most recent ConditionAwaiter; if it returns true the
+     * coroutine is resumed on the scheduler thread. No clock is created for
+     * this domain.
+     */
+    CONDITIONAL,
     CUSTOM
 };
 
@@ -28,7 +39,7 @@ enum class ProcessingToken {
  * temporal domains within the same processing token.
  */
 enum class DelayContext : uint8_t {
-    NONE, ///< No active delay, resume immediately
+    NONE, ///< No active delay, try resume immediately
     SAMPLE_BASED, ///< Sample-accurate delay (audio domain)
     BUFFER_BASED, ///< Buffer-cycle delay (audio hardware boundary)
     FRAME_BASED, ///< Frame-rate delay (Graphics domain)
