@@ -53,6 +53,7 @@ BuildRequires:  fontconfig-devel
 BuildRequires:  json-devel
 BuildRequires:  pipewire-devel
 BuildRequires:  alsa-lib-devel
+BuildRequires:  dbus-devel
 BuildRequires:  git
 BuildRequires:  ccache
 

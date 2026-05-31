@@ -147,6 +147,8 @@
 #include "Portal/Forma/Forma.hpp"
 #include "Portal/Forma/Primitives/Geometry.hpp"
 
+#include "Portal/System/System.hpp"
+
 #include "IO/IOManager.hpp"
 #include "IO/ImageReader.hpp"
 

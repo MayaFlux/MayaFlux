@@ -10,6 +10,7 @@
 #include "MayaFlux/Vruta/Scheduler.hpp"
 
 #include "MayaFlux/Portal/Forma/Forma.hpp"
+#include "MayaFlux/Portal/System/System.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
@@ -156,6 +157,7 @@ void Engine::Start()
     }
     m_subsystem_manager->start_all_subsystems();
     Portal::Forma::initialize(m_node_graph_manager, m_buffer_manager, m_scheduler, m_event_manager, m_window_manager);
+    Portal::System::initialize();
 }
 
 void Engine::Pause()

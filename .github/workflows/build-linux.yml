@@ -94,6 +94,7 @@ jobs:
             libxkbcommon-devel \
             pipewire-devel \
             alsa-lib-devel \
+            dbus-devel \
             ccache
 
       - name: Setup ccache

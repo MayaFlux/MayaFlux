@@ -70,6 +70,14 @@ target_compile_definitions(MayaFluxLib PUBLIC
 #                   Target Includes
 #==============================================================
 
+if(APPLE)
+    set_source_files_properties(
+        ${CMAKE_CURRENT_SOURCE_DIR}/Core/Backends/System/NSBackend.mm
+        PROPERTIES SKIP_PRECOMPILE_HEADERS ON
+        COMPILE_OPTIONS "-include;${CMAKE_SOURCE_DIR}/cmake/pch.h"
+    )
+endif()
+
 target_include_directories(MayaFluxLib PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/..  # Points to src/ for #include "MayaFlux/..."
 )
@@ -94,10 +102,9 @@ if(UNIX AND NOT APPLE)
     endif()
     target_include_directories(MayaFluxLib PRIVATE
                                "${CMAKE_CURRENT_BINARY_DIR}/wayland_generated")
-endif()
 
-# target_include_directories(MayaFluxLib PRIVATE ${WAYLAND_CLIENT_INCLUDE_DIRS})
-# target_include_directories(MayaFluxLib PRIVATE ${XKBCOMMON_INCLUDE_DIRS})
+    target_include_directories(MayaFluxLib PRIVATE ${DBUS_INCLUDE_DIRS})
+endif()
 
 #==============================================================
 #                   Target Links
@@ -159,6 +166,7 @@ else()
         target_link_libraries(MayaFluxLib PUBLIC PkgConfig::RtAudio)
         target_link_libraries(MayaFluxLib PUBLIC PkgConfig::RtMidi)
         target_link_libraries(MayaFluxLib PRIVATE "-framework CoreFoundation")
+        target_link_libraries(MayaFluxLib PRIVATE "-framework AppKit" "-framework UniformTypeIdentifiers")
 
         message(STATUS "MayaFlux Journal: Using fmt library on macOS")
     else()
@@ -170,10 +178,8 @@ else()
         asound
         )
 
-        target_link_libraries(MayaFluxLib PRIVATE ${PIPEWIRE_LIBRARIES})
+        target_link_libraries(MayaFluxLib PRIVATE ${PIPEWIRE_LIBRARIES} ${DBUS_LIBRARIES} )
         message(STATUS "PipeWire backend enabled (${PIPEWIRE_VERSION})")
-
-        # target_link_libraries(MayaFluxLib PRIVATE PkgConfig::WAYLAND_PROTOCOLS)
     endif()
 
     target_link_libraries(MayaFluxLib PUBLIC

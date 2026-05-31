@@ -49,6 +49,7 @@ install_arch() {
         "wayland"
         "wayland-protocols"
         "libxkbcommon"
+        "dbus"
         "ffmpeg"
         "assimp"
         "stb"
@@ -116,6 +117,7 @@ install_fedora() {
         "json-devel"
         "pipewire-devel"
         "alsa-lib-devel"
+        "dbus-devel"
         "git"
     )
 
@@ -170,6 +172,7 @@ install_ubuntu() {
         "libfontconfig1-dev"
         "libpipewire-0.3-dev"
         "libasound2-dev"
+        "libdbus-1-dev"
         "nlohmann-json3-dev"
     )
 
