@@ -12,11 +12,30 @@
 namespace MayaFlux {
 
 namespace {
+    struct JournalConfig {
+        std::string severity; // "TRACE" "DEBUG" "INFO" "WARN" "ERROR" "FATAL"
+        bool sink_to_console { false };
+        std::string log_file; // empty = no file sink
+        std::vector<std::string> disable_components; // names from Journal::Component enum
+        std::vector<std::string> disable_contexts; // names from Journal::Context enum
+
+        static constexpr auto describe()
+        {
+            return std::make_tuple(
+                IO::member("severity", &JournalConfig::severity),
+                IO::member("sink_to_console", &JournalConfig::sink_to_console),
+                IO::member("log_file", &JournalConfig::log_file),
+                IO::member("disable_components", &JournalConfig::disable_components),
+                IO::member("disable_contexts", &JournalConfig::disable_contexts));
+        }
+    };
+
     struct EngineConfig {
         Core::GlobalStreamInfo stream;
         Core::GlobalGraphicsConfig graphics;
         Core::GlobalInputConfig input;
         Core::GlobalNetworkConfig network;
+        JournalConfig journal;
 
         static constexpr auto describe()
         {
@@ -24,7 +43,8 @@ namespace {
                 IO::member("stream", &EngineConfig::stream),
                 IO::member("graphics", &EngineConfig::graphics),
                 IO::member("input", &EngineConfig::input),
-                IO::member("network", &EngineConfig::network));
+                IO::member("network", &EngineConfig::network),
+                IO::member("journal", &EngineConfig::journal));
         }
     };
 }
@@ -152,6 +172,42 @@ bool load_config_from_file(const std::string& path)
     get_global_graphics_config() = result->graphics;
     get_global_input_config() = result->input;
     get_global_network_config() = result->network;
+
+    const auto& j = result->journal;
+
+    if (!j.severity.empty()) {
+        auto sev = Reflect::string_to_enum_case_insensitive<Journal::Severity>(j.severity);
+        if (sev) {
+            Config::set_journal_severity(*sev);
+        } else {
+            MF_WARN(Journal::Component::API, Journal::Context::Configuration,
+                "Unknown journal severity: {}", j.severity);
+        }
+    }
+    if (j.sink_to_console)
+        Config::sink_journal_to_console();
+    if (!j.log_file.empty())
+        Config::store_journal_entries(j.log_file);
+    for (const auto& name : j.disable_components) {
+        auto comp = Reflect::string_to_enum_case_insensitive<Journal::Component>(name);
+        if (comp) {
+            Config::set_journal_component_filter({ *comp }, false);
+        } else {
+            MF_WARN(Journal::Component::API, Journal::Context::Configuration,
+                "Unknown journal component: {}", name);
+        }
+    }
+
+    for (const auto& name : j.disable_contexts) {
+        auto ctx = Reflect::string_to_enum_case_insensitive<Journal::Context>(name);
+        if (ctx) {
+            Config::set_journal_context_filter({ *ctx }, false);
+        } else {
+            MF_WARN(Journal::Component::API, Journal::Context::Configuration,
+                "Unknown journal context: {}", name);
+        }
+    }
+
     return true;
 }
 
