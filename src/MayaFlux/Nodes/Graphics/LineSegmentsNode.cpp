@@ -7,8 +7,12 @@
 namespace MayaFlux::Nodes::GpuSync {
 
 LineSegmentsNode::LineSegmentsNode(size_t initial_capacity)
-    : PathGeneratorNode(Kinesis::InterpolationMode::CATMULL_ROM, 1, 0, 0.5)
+    : PathGeneratorNode(Kinesis::InterpolationMode::CATMULL_ROM, 0, 0, 0.5)
 {
+    auto layout = Kakshya::VertexLayout::for_lines(sizeof(LineVertex));
+    layout.vertex_count = initial_capacity;
+    set_vertex_layout(layout);
+
     m_segments.reserve(initial_capacity);
 
     MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
