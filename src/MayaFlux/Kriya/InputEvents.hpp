@@ -147,6 +147,26 @@ namespace Kriya {
         std::function<void(double, double)> callback);
 
     /**
+     * @brief Creates an Event coroutine that triggers on mouse drag with specific button
+     * @param window Window to listen to
+     * @param button Mouse button that must be held for drag
+     * @param callback Function to call on mouse drag with current position
+     * @return Event coroutine that can be added to EventManager
+     *
+     * Example:
+     * @code
+     * auto task = mouse_dragged(window, IO::MouseButtons::Left,
+     *     [](double x, double y) {
+     *         // Handle mouse drag with left button at (x, y)
+     *     });
+     * @endcode
+     */
+    MAYAFLUX_API Vruta::Event mouse_dragged(
+        std::shared_ptr<Core::Window> window,
+        IO::MouseButtons button,
+        std::function<void(double, double)> callback);
+
+    /**
      * @brief Creates an Event coroutine that triggers on mouse scroll
      * @param window Window to listen to
      * @param callback Function to call on scroll with ScrollData

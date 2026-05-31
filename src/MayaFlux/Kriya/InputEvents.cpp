@@ -170,6 +170,31 @@ Vruta::Event mouse_moved(
     }
 }
 
+Vruta::Event mouse_dragged(
+    std::shared_ptr<Core::Window> window,
+    IO::MouseButtons button,
+    std::function<void(double, double)> callback)
+{
+    auto& promise = co_await GetEventPromise {};
+    auto& source = window->get_event_source();
+
+    Vruta::WindowEventFilter filter;
+    filter.event_type = Core::WindowEventType::MOUSE_MOTION;
+
+    while (true) {
+        if (promise.should_terminate)
+            break;
+
+        auto event = co_await WindowEventAwaiter(source, filter);
+
+        if (!source.is_mouse_pressed(static_cast<int>(button)))
+            continue;
+
+        if (auto* pos = std::get_if<Core::WindowEvent::MousePosData>(&event.data))
+            callback(pos->x, pos->y);
+    }
+}
+
 Vruta::Event mouse_scrolled(
     std::shared_ptr<Core::Window> window,
     std::function<void(double, double)> callback)

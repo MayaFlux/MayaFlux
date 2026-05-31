@@ -270,6 +270,26 @@ MAYAFLUX_API void on_mouse_move(
     std::string name = "");
 
 /**
+ * @brief Schedule a mouse drag handler
+ * @param window Window to listen to
+ * @param button Mouse button that must be held for dragging
+ * @param callback Function to call on mouse drag (x, y)
+ * @param name Optional name for the event handler
+ *
+ * Example:
+ * @code
+ * MayaFlux::on_mouse_drag(window, MayaFlux::IO::MouseButtons::Left, [](double x, double y) {
+ *     // Handle mouse drag with left button at (x, y)
+ * }, "mouse_left_drag_handler");
+ * @endcode
+ */
+MAYAFLUX_API void on_mouse_drag(
+    const std::shared_ptr<Core::Window>& window,
+    IO::MouseButtons button,
+    std::function<void(double, double)> callback,
+    std::string name = "");
+
+/**
  * @brief Schedule a mouse scroll handler
  * @param window Window to listen to
  * @param callback Function to call on scroll (xoffset, yoffset)

@@ -224,6 +224,23 @@ void on_mouse_move(
     event_manager->add_event(event, name);
 }
 
+void on_mouse_drag(
+    const std::shared_ptr<Core::Window>& window,
+    IO::MouseButtons button,
+    std::function<void(double, double)> callback,
+    std::string name)
+{
+    auto event_manager = get_event_manager();
+    if (name.empty()) {
+        name = "mouse_drag_" + std::to_string(event_manager->get_next_event_id());
+    }
+
+    auto event = std::make_shared<Vruta::Event>(
+        Kriya::mouse_dragged(window, button, std::move(callback)));
+
+    event_manager->add_event(event, name);
+}
+
 void on_scroll(
     const std::shared_ptr<Core::Window>& window,
     std::function<void(double, double)> callback,
