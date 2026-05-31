@@ -48,6 +48,7 @@
 #include "Nodes/Generators/Sine.hpp"
 #include "Nodes/Graphics/ComputeOutNode.hpp"
 #include "Nodes/Graphics/GeometryWriterNode.hpp"
+#include "Nodes/Graphics/LineSegmentsNode.hpp"
 #include "Nodes/Graphics/MeshWriterNode.hpp"
 #include "Nodes/Graphics/PathGeneratorNode.hpp"
 #include "Nodes/Graphics/PointCollectionNode.hpp"

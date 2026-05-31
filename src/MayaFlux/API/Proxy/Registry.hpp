@@ -27,6 +27,7 @@ namespace Nodes {
         class ProceduralTextureNode;
         class PathGeneratorNode;
         class TopologyGeneratorNode;
+        class LineSegmentsNode;
     }
     namespace Network {
         class NodeNetwork;
@@ -105,6 +106,7 @@ namespace IO {
     N(PathGeneratorNode, MayaFlux::Nodes::GpuSync::PathGeneratorNode)         \
     N(PointCollectionNode, MayaFlux::Nodes::GpuSync::PointCollectionNode)     \
     N(TopologyGeneratorNode, MayaFlux::Nodes::GpuSync::TopologyGeneratorNode) \
+    N(LineSegmentsNode, MayaFlux::Nodes::GpuSync::LineSegmentsNode)           \
     N(ProceduralTextureNode, MayaFlux::Nodes::GpuSync::ProceduralTextureNode) \
     N(StreamReaderNode, MayaFlux::Nodes::StreamReaderNode)                    \
     N(Constant, MayaFlux::Nodes::Constant)
