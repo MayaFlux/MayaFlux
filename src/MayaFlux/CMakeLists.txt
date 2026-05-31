@@ -70,6 +70,14 @@ target_compile_definitions(MayaFluxLib PUBLIC
 #                   Target Includes
 #==============================================================
 
+if(APPLE)
+    set_source_files_properties(
+        ${CMAKE_CURRENT_SOURCE_DIR}/Core/Backends/System/NSBackend.mm
+        PROPERTIES SKIP_PRECOMPILE_HEADERS ON
+        COMPILE_OPTIONS "-include;${CMAKE_SOURCE_DIR}/cmake/pch.h"
+    )
+endif()
+
 target_include_directories(MayaFluxLib PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/..  # Points to src/ for #include "MayaFlux/..."
 )
@@ -158,6 +166,7 @@ else()
         target_link_libraries(MayaFluxLib PUBLIC PkgConfig::RtAudio)
         target_link_libraries(MayaFluxLib PUBLIC PkgConfig::RtMidi)
         target_link_libraries(MayaFluxLib PRIVATE "-framework CoreFoundation")
+        target_link_libraries(MayaFluxLib PRIVATE "-framework AppKit" "-framework UniformTypeIdentifiers")
 
         message(STATUS "MayaFlux Journal: Using fmt library on macOS")
     else()
