@@ -1,5 +1,7 @@
 #pragma once
 
+#include "MayaFlux/IO/Reflection.hpp"
+
 namespace MayaFlux::Core {
 
 enum AudioBackendType : uint8_t {
@@ -91,6 +93,15 @@ struct GlobalStreamInfo {
 
         /** @brief Human-readable identifier for the associated device */
         std::string device_name;
+
+        static constexpr auto describe()
+        {
+            return std::make_tuple(
+                IO::member("enabled", &ChannelConfig::enabled),
+                IO::member("channels", &ChannelConfig::channels),
+                IO::member("device_id", &ChannelConfig::device_id),
+                IO::member("device_name", &ChannelConfig::device_name));
+        }
     };
 
     /** @brief Configuration for output signal channels */
@@ -149,27 +160,6 @@ struct GlobalStreamInfo {
     /** @brief Dithering algorithm for format conversions */
     DitherMethod dither = DitherMethod::NONE;
 
-    /**
-     * @struct MidiConfig
-     * @brief Configuration for MIDI data channels
-     *
-     * Defines the parameters for digital musical instrument control
-     * data transmission and reception.
-     */
-    struct MidiConfig {
-        /** @brief Whether this MIDI channel is active */
-        bool enabled = false;
-
-        /** @brief System identifier for the associated MIDI device (-1 for default) */
-        int device_id = -1;
-    };
-
-    /** @brief Configuration for MIDI input data */
-    MidiConfig midi_input;
-
-    /** @brief Configuration for MIDI output data */
-    MidiConfig midi_output;
-
     /** @brief Whether to measure and report actual stream latency */
     bool measure_latency = false;
 
@@ -193,6 +183,21 @@ struct GlobalStreamInfo {
      * @return Number of output channels configured in the stream
      */
     uint32_t get_num_channels() const { return output.channels; }
-};
 
+    static constexpr auto describe()
+    {
+        return std::make_tuple(
+            IO::member("sample_rate", &GlobalStreamInfo::sample_rate),
+            IO::member("buffer_size", &GlobalStreamInfo::buffer_size),
+            IO::member("format", &GlobalStreamInfo::format),
+            IO::member("non_interleaved", &GlobalStreamInfo::non_interleaved),
+            IO::member("output", &GlobalStreamInfo::output),
+            IO::member("input", &GlobalStreamInfo::input),
+            IO::member("priority", &GlobalStreamInfo::priority),
+            IO::member("auto_convert_format", &GlobalStreamInfo::auto_convert_format),
+            IO::member("handle_xruns", &GlobalStreamInfo::handle_xruns),
+            IO::member("use_callback", &GlobalStreamInfo::use_callback),
+            IO::member("stream_latency_ms", &GlobalStreamInfo::stream_latency_ms));
+    }
+};
 }

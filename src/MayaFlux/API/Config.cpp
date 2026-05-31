@@ -2,11 +2,33 @@
 #include "Core.hpp"
 
 #include "MayaFlux/Core/Engine.hpp"
+
 #include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Journal/ConsoleSink.hpp"
 #include "MayaFlux/Journal/FileSink.hpp"
 
+#include "MayaFlux/IO/JSONSerializer.hpp"
+
 namespace MayaFlux {
+
+namespace {
+    struct EngineConfig {
+        Core::GlobalStreamInfo stream;
+        Core::GlobalGraphicsConfig graphics;
+        Core::GlobalInputConfig input;
+        Core::GlobalNetworkConfig network;
+
+        static constexpr auto describe()
+        {
+            return std::make_tuple(
+                IO::member("stream", &EngineConfig::stream),
+                IO::member("graphics", &EngineConfig::graphics),
+                IO::member("input", &EngineConfig::input),
+                IO::member("network", &EngineConfig::network));
+        }
+    };
+}
+
 bool is_engine_configured()
 {
     return is_configured();
@@ -115,6 +137,22 @@ void store_journal_entries(const std::string& file_name)
 void sink_journal_to_console()
 {
     Journal::Archivist::instance().add_sink(std::make_unique<Journal::ConsoleSink>());
+}
+
+bool load_config_from_file(const std::string& path)
+{
+    IO::JSONSerializer ser;
+    auto result = ser.read<EngineConfig>(path);
+    if (!result) {
+        MF_ERROR(Journal::Component::API, Journal::Context::Configuration,
+            "Failed to load config from {}: {}", path, ser.last_error());
+        return false;
+    }
+    get_global_stream_info() = result->stream;
+    get_global_graphics_config() = result->graphics;
+    get_global_input_config() = result->input;
+    get_global_network_config() = result->network;
+    return true;
 }
 
 }

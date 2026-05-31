@@ -2,6 +2,8 @@
 
 #include "MayaFlux/Core/Input/InputBinding.hpp"
 
+#include "MayaFlux/IO/Reflection.hpp"
+
 namespace MayaFlux::Core {
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -97,6 +99,15 @@ struct MAYAFLUX_API HIDDeviceFilter {
             .usage = std::nullopt
         };
     }
+
+    static constexpr auto describe()
+    {
+        return std::make_tuple(
+            IO::opt_member("vendor_id", &HIDDeviceFilter::vendor_id),
+            IO::opt_member("product_id", &HIDDeviceFilter::product_id),
+            IO::opt_member("usage_page", &HIDDeviceFilter::usage_page),
+            IO::opt_member("usage", &HIDDeviceFilter::usage));
+    }
 };
 
 /**
@@ -110,6 +121,18 @@ struct MAYAFLUX_API HIDBackendInfo {
     int poll_timeout_ms { 10 }; ///< Polling timeout in milliseconds
     bool auto_reconnect { true }; ///< Auto-reconnect disconnected devices
     uint32_t reconnect_interval_ms { 1000 }; ///< Reconnection attempt interval
+
+    static constexpr auto describe()
+    {
+        return std::make_tuple(
+            IO::member("enabled", &HIDBackendInfo::enabled),
+            IO::member("filters", &HIDBackendInfo::filters),
+            IO::member("auto_open", &HIDBackendInfo::auto_open),
+            IO::member("read_buffer_size", &HIDBackendInfo::read_buffer_size),
+            IO::member("poll_timeout_ms", &HIDBackendInfo::poll_timeout_ms),
+            IO::member("auto_reconnect", &HIDBackendInfo::auto_reconnect),
+            IO::member("reconnect_interval_ms", &HIDBackendInfo::reconnect_interval_ms));
+    }
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -127,6 +150,19 @@ struct MAYAFLUX_API MIDIBackendInfo {
     std::vector<std::string> output_port_filters; ///< Filter output ports by name substring
     bool enable_virtual_port { false }; ///< Create a virtual MIDI port
     std::string virtual_port_name { "MayaFlux" }; ///< Name for virtual port
+
+    static constexpr auto describe()
+    {
+        return std::make_tuple(
+            IO::member("enabled", &MIDIBackendInfo::enabled),
+            IO::member("auto_open_inputs", &MIDIBackendInfo::auto_open_inputs),
+            IO::member("auto_open_outputs", &MIDIBackendInfo::auto_open_outputs),
+            IO::member("input_port_filters", &MIDIBackendInfo::input_port_filters),
+            IO::member("output_port_filters", &MIDIBackendInfo::output_port_filters),
+            IO::member("enable_virtual_port", &MIDIBackendInfo::enable_virtual_port),
+            IO::member("virtual_port_name", &MIDIBackendInfo::virtual_port_name),
+            IO::member("enabled", &MIDIBackendInfo::enabled));
+    }
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -144,6 +180,18 @@ struct MAYAFLUX_API OSCConfigInfo {
     bool enable_multicast { false }; ///< Enable multicast reception
     std::string multicast_group; ///< Multicast group address
     size_t receive_buffer_size { 65536 }; ///< UDP receive buffer size
+
+    static constexpr auto describe()
+    {
+        return std::make_tuple(
+            IO::member("enabled", &OSCConfigInfo::enabled),
+            IO::member("receive_port", &OSCConfigInfo::receive_port),
+            IO::member("send_port", &OSCConfigInfo::send_port),
+            IO::member("send_address", &OSCConfigInfo::send_address),
+            IO::member("enable_multicast", &OSCConfigInfo::enable_multicast),
+            IO::member("multicast_group", &OSCConfigInfo::multicast_group),
+            IO::member("receive_buffer_size", &OSCConfigInfo::receive_buffer_size));
+    }
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -160,6 +208,16 @@ struct MAYAFLUX_API SerialPortConfig {
     uint8_t stop_bits { 1 }; ///< Stop bits (1 or 2)
     char parity { 'N' }; ///< Parity: 'N'one, 'E'ven, 'O'dd
     bool flow_control { false }; ///< Hardware flow control
+
+    static constexpr auto describe()
+    {
+        return std::make_tuple(
+            IO::member("port_name", &SerialPortConfig::port_name),
+            IO::member("baud_rate", &SerialPortConfig::baud_rate),
+            IO::member("data_bits", &SerialPortConfig::data_bits),
+            IO::member("stop_bits", &SerialPortConfig::stop_bits),
+            IO::member("flow_control", &SerialPortConfig::flow_control));
+    }
 };
 
 /**
@@ -170,6 +228,15 @@ struct MAYAFLUX_API SerialBackendInfo {
     std::vector<SerialPortConfig> ports; ///< Ports to open
     bool auto_detect_arduino { false }; ///< Auto-detect Arduino devices
     uint32_t default_baud_rate { 115200 }; ///< Default baud for auto-detected devices
+
+    static constexpr auto describe()
+    {
+        return std::make_tuple(
+            IO::member("enabled", &SerialBackendInfo::enabled),
+            IO::member("ports", &SerialBackendInfo::ports),
+            IO::member("auto_detect_arduino", &SerialBackendInfo::auto_detect_arduino),
+            IO::member("default_baud_rate", &SerialBackendInfo::default_baud_rate));
+    }
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -259,6 +326,15 @@ struct MAYAFLUX_API GlobalInputConfig {
     [[nodiscard]] bool any_enabled() const
     {
         return hid.enabled || midi.enabled || osc.enabled || serial.enabled;
+    }
+
+    static constexpr auto describe()
+    {
+        return std::make_tuple(
+            IO::member("hid", &GlobalInputConfig::hid),
+            IO::member("midi", &GlobalInputConfig::midi),
+            IO::member("osc", &GlobalInputConfig::osc),
+            IO::member("serial", &GlobalInputConfig::serial));
     }
 };
 

@@ -30,13 +30,29 @@ void run()
 #endif
 }
 
-int main()
+int main(int argc, char* argv[])
 {
     try {
         MF_LOG(MayaFlux::Journal::Component::USER, MayaFlux::Journal::Context::Init, "=== MayaFlux Creative Coding Framework ===");
         MF_LOG(MayaFlux::Journal::Component::USER, MayaFlux::Journal::Context::Init,
             "Version: {}.{}.{}", MAYAFLUX_VERSION_MAJOR, MAYAFLUX_VERSION_MINOR, MAYAFLUX_VERSION_PATCH);
         MF_LOG(MayaFlux::Journal::Component::USER, MayaFlux::Journal::Context::Init, "");
+
+        std::string config_path;
+        for (int i = 1; i < argc - 1; ++i) {
+            if (std::string_view(argv[i]) == "--config") {
+                config_path = argv[i + 1];
+                break;
+            }
+        }
+        if (config_path.empty()) {
+            namespace fs = std::filesystem;
+            auto candidate = fs::path(Config::SOURCE_DIR) / "mayaflux.json";
+            if (fs::exists(candidate))
+                config_path = candidate.string();
+        }
+        if (!config_path.empty())
+            MayaFlux::Config::load_config_from_file(config_path);
 
         initialize();
 
