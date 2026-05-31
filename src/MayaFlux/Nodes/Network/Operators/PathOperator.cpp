@@ -92,6 +92,33 @@ void PathOperator::add_path(
         m_paths.back()->get_generated_vertex_count());
 }
 
+void PathOperator::add_node(std::shared_ptr<GpuSync::PathGeneratorNode> node)
+{
+    if (!node) {
+        MF_ERROR(Journal::Component::Nodes, Journal::Context::NodeProcessing,
+            "PathOperator::add_node: null node ignored");
+        return;
+    }
+
+    node->compute_frame();
+
+    uint32_t expected = 0;
+    while (!m_access_token.compare_exchange_weak(expected, 1,
+        std::memory_order_acquire, std::memory_order_relaxed)) {
+        if (m_shutdown.load(std::memory_order_relaxed))
+            return;
+        expected = 0;
+    }
+
+    m_paths.push_back(std::move(node));
+
+    m_access_token.store(0, std::memory_order_release);
+
+    MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
+        "PathOperator: added node #{} ({} vertices)",
+        m_paths.size(), m_paths.back()->get_vertex_count());
+}
+
 //-----------------------------------------------------------------------------
 // Processing
 //-----------------------------------------------------------------------------

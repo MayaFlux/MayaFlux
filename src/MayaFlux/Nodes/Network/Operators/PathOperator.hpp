@@ -38,6 +38,21 @@ public:
         const std::vector<LineVertex>& control_vertices,
         Kinesis::InterpolationMode mode, uint32_t default_samples_per_segment = 32, size_t max_control_points = 64, double tension = 0.5);
 
+    /**
+     * @brief Add an externally constructed PathGeneratorNode subtype to the operator.
+     *
+     * Accepts any PathGeneratorNode subclass (e.g. LineSegmentNode) that was
+     * constructed and configured by the caller. The node is appended to m_paths
+     * and will participate in process(), get_vertex_data(), and extract_vertices()
+     * identically to nodes created by add_path().
+     *
+     * compute_frame() is called once before insertion so the node's vertex buffer
+     * is populated on the first frame.
+     *
+     * @param node Non-null shared_ptr to a PathGeneratorNode or subclass.
+     */
+    void add_node(std::shared_ptr<GpuSync::PathGeneratorNode> node);
+
     void process(float dt) override;
 
     [[nodiscard]] std::span<const uint8_t> get_vertex_data() const override;
