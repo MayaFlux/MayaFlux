@@ -430,11 +430,28 @@ private:
     void drain_pending_tasks();
 
     /**
+     * @brief Drain pending conditional task operations before processing
+     *
+     * Similar to drain_pending_tasks, but specifically for conditional tasks that may
+     * have been added or removed while the conditional processing thread is running.
+     */
+    void drain_conditional_pending();
+
+    /**
      * @brief Initialize a routine's state for a specific domain
      * @param routine Routine to initialize
      * @param token Processing domain
      */
     bool initialize_routine_state(const std::shared_ptr<Routine>& routine, ProcessingToken token);
+
+    /**
+     * @brief Start the conditional task processing thread if not already running
+     *
+     * This method ensures that the thread responsible for processing conditional tasks
+     * is started when the first conditional task is added. It checks if the thread is
+     * already running to avoid starting multiple threads.
+     */
+    void start_conditional_thread();
 
     /**
      * @brief Pump the MULTI_RATE list from one clock's context.
@@ -450,6 +467,15 @@ private:
      * @param processing_units Units to advance, matching the driving token's call.
      */
     void pump_cross(DelayContext context, ProcessingToken clock_token, uint64_t processing_units);
+
+    /**
+     * @brief Pump the conditional task list in a separate thread
+     *
+     * This method runs in a dedicated thread and continuously checks for conditional tasks
+     * that are ready to execute. It processes these tasks based on their conditions and
+     * ensures they are executed as soon as their conditions are met.
+     */
+    void pump_conditional();
 
     /**
      * @brief Clock instances for each processing domain
@@ -481,6 +507,8 @@ private:
     mutable std::atomic<uint64_t> m_next_task_id { 1 };
 
     std::vector<TaskEntry> m_tasks;
+
+    std::vector<TaskEntry> m_conditional_tasks;
 
     /**
      * @brief The master sample clock for the processing engine
@@ -514,6 +542,18 @@ private:
 
     std::atomic<uint32_t> m_pending_count { 0 };
     PendingTaskOp m_pending_ops[MAX_PENDING_TASKS];
+
+    static constexpr size_t MAX_PENDING_CONDITIONAL = 64;
+
+    std::atomic<uint32_t> m_conditional_pending_count { 0 };
+    PendingTaskOp m_conditional_pending_ops[MAX_PENDING_CONDITIONAL];
+
+#if MAYAFLUX_USE_JTHREAD
+    std::jthread m_conditional_thread;
+#else
+    std::thread m_conditional_thread;
+    std::atomic<bool> m_conditional_stop { false };
+#endif
 };
 
 }
