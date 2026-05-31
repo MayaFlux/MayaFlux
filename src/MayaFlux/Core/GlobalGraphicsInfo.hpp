@@ -1,5 +1,7 @@
 #pragma once
 
+#include "MayaFlux/IO/Reflection.hpp"
+
 namespace MayaFlux::Core {
 
 //==============================================================================
@@ -66,6 +68,23 @@ struct MAYAFLUX_API GraphicsBackendInfo {
     /** @brief Backend-specific extensions to request */
     std::vector<std::string> required_extensions;
     std::vector<std::string> optional_extensions;
+
+    static constexpr auto describe()
+    {
+        return std::make_tuple(
+            IO::member("enable_validation", &GraphicsBackendInfo::enable_validation),
+            IO::member("enable_debug_markers", &GraphicsBackendInfo::enable_debug_markers),
+            // IO::member("required_features", &GraphicsBackendInfo::required_features),
+            IO::member("memory_strategy", &GraphicsBackendInfo::memory_strategy),
+            IO::member("command_pooling", &GraphicsBackendInfo::command_pooling),
+            IO::member("max_frames_in_flight", &GraphicsBackendInfo::max_frames_in_flight),
+            IO::member("enable_compute_queue", &GraphicsBackendInfo::enable_compute_queue),
+            IO::member("enable_transfer_queue", &GraphicsBackendInfo::enable_transfer_queue),
+            IO::member("shader_compilation", &GraphicsBackendInfo::shader_compilation),
+            IO::member("shader_cache_dir", &GraphicsBackendInfo::shader_cache_dir),
+            IO::member("required_extensions", &GraphicsBackendInfo::required_extensions),
+            IO::member("optional_extensions", &GraphicsBackendInfo::optional_extensions));
+    }
 };
 
 /**
@@ -92,6 +111,17 @@ struct MAYAFLUX_API GraphicsResourceLimits {
 
     /** @brief Maximum number of pipeline state objects */
     uint32_t max_pipelines = 256;
+
+    static constexpr auto describe()
+    {
+        return std::make_tuple(
+            IO::member("max_windows", &GraphicsResourceLimits::max_windows),
+            IO::member("max_staging_buffer_mb", &GraphicsResourceLimits::max_staging_buffer_mb),
+            IO::member("max_compute_buffer_mb", &GraphicsResourceLimits::max_compute_buffer_mb),
+            IO::member("max_texture_cache_mb", &GraphicsResourceLimits::max_texture_cache_mb),
+            IO::member("max_descriptor_sets", &GraphicsResourceLimits::max_descriptor_sets),
+            IO::member("max_pipelines", &GraphicsResourceLimits::max_pipelines));
+    }
 };
 
 //==============================================================================
@@ -170,6 +200,19 @@ struct MAYAFLUX_API GraphicsSurfaceInfo {
 
     /** @brief Backend-specific configuration parameters */
     std::unordered_map<std::string, std::any> backend_options;
+
+    static constexpr auto describe()
+    {
+        return std::make_tuple(
+            IO::member("format", &GraphicsSurfaceInfo::format),
+            IO::member("color_space", &GraphicsSurfaceInfo::color_space),
+            IO::member("present_mode", &GraphicsSurfaceInfo::present_mode),
+            IO::member("image_count", &GraphicsSurfaceInfo::image_count),
+            IO::member("enable_regions", &GraphicsSurfaceInfo::enable_regions),
+            IO::member("max_regions_per_window", &GraphicsSurfaceInfo::max_regions_per_window),
+            IO::member("enable_hdr", &GraphicsSurfaceInfo::enable_hdr),
+            IO::member("measure_frame_time", &GraphicsSurfaceInfo::measure_frame_time));
+    }
 };
 
 /**
@@ -204,6 +247,17 @@ struct GlfwPreInitConfig {
      *  Required for Vulkan capture and profiling layers that do not implement
      *  VK_KHR_wayland_surface.  XWayland must be present. */
     bool force_x11_on_wayland = false;
+
+    static constexpr auto describe()
+    {
+        return std::make_tuple(
+            IO::member("platform", &GlfwPreInitConfig::platform),
+            IO::member("disable_libdecor", &GlfwPreInitConfig::disable_libdecor),
+            IO::member("cocoa_chdir_resources", &GlfwPreInitConfig::cocoa_chdir_resources),
+            IO::member("cocoa_menubar", &GlfwPreInitConfig::cocoa_menubar),
+            IO::member("headless", &GlfwPreInitConfig::headless),
+            IO::member("force_x11_on_wayland", &GlfwPreInitConfig::force_x11_on_wayland));
+    }
 };
 
 /**
@@ -222,6 +276,14 @@ struct KeyRepeatConfig {
 
     /** @brief If true, compositor-reported repeat_info overrides these values. */
     bool allow_compositor_override { false };
+
+    static constexpr auto describe()
+    {
+        return std::make_tuple(
+            IO::member("initial_delay_ms", &KeyRepeatConfig::initial_delay_ms),
+            IO::member("interval_ms", &KeyRepeatConfig::interval_ms),
+            IO::member("allow_compositor_override", &KeyRepeatConfig::allow_compositor_override));
+    }
 };
 
 /**
@@ -249,6 +311,15 @@ struct TextConfig {
 
     /** @brief Atlas texture dimension (power of two). */
     uint32_t atlas_size { 512 };
+
+    static constexpr auto describe()
+    {
+        return std::make_tuple(
+            IO::member("family", &TextConfig::family),
+            IO::member("style", &TextConfig::style),
+            IO::member("pixel_size", &TextConfig::pixel_size),
+            IO::member("atlas_size", &TextConfig::atlas_size));
+    }
 };
 
 struct MAYAFLUX_API GlobalGraphicsConfig {
@@ -321,6 +392,20 @@ struct MAYAFLUX_API GlobalGraphicsConfig {
         "sans-serif", "", 24, 512
 #endif
     };
+
+    static constexpr auto describe()
+    {
+        return std::make_tuple(
+            IO::member("glfw_preinit_config", &GlobalGraphicsConfig::glfw_preinit_config),
+            IO::member("key_repeat_config", &GlobalGraphicsConfig::key_repeat_config),
+            IO::member("surface_info", &GlobalGraphicsConfig::surface_info),
+            IO::member("backend_info", &GlobalGraphicsConfig::backend_info),
+            IO::member("resource_limits", &GlobalGraphicsConfig::resource_limits),
+            IO::member("target_frame_rate", &GlobalGraphicsConfig::target_frame_rate),
+            IO::member("windowing_backend", &GlobalGraphicsConfig::windowing_backend),
+            IO::member("requested_api", &GlobalGraphicsConfig::requested_api),
+            IO::member("text_config", &GlobalGraphicsConfig::text_config));
+    }
 };
 
 //==============================================================================

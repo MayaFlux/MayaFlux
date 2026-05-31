@@ -2,6 +2,12 @@
 
 #include "MayaFlux/Kakshya/NDData/NDData.hpp"
 
+#ifdef MAYAFLUX_PLATFORM_WINDOWS
+#ifdef CALLBACK
+#undef CALLBACK
+#endif // CALLBACK
+#endif // MAYAFLUX_PLATFORM_WINDOWS
+
 namespace MayaFlux::Kakshya {
 
 /**

@@ -12,7 +12,7 @@ public:
         : writer_(std::make_unique<IO::TextFileWriter>())
     {
         writer_->set_max_file_size(max_file_size_mb * 1024 * 1024);
-        writer_->open(filepath,
+        writer_->open(IO::resolve_write_path(filepath),
             IO::FileWriteOptions::CREATE | IO::FileWriteOptions::APPEND);
     }
 

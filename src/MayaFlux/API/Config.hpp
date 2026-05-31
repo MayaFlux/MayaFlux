@@ -109,6 +109,16 @@ namespace Config {
      * NOTE: This records thread safe entries and cannot unsink once called.
      */
     MAYAFLUX_API void sink_journal_to_console();
+
+    /**
+     * @brief Load engine configuration from a JSON file, applying any present fields
+     *        to the pre-Init config structs.
+     * @param path Path to a mayaflux.json file.
+     * @return True if the file was read and at least partially applied. False if the
+     *         file could not be opened or parsed; last_error() will be set.
+     * @note Must be called before Init(). Fields absent from the file retain defaults.
+     */
+    MAYAFLUX_API bool load_config_from_file(const std::string& path);
 }
 
 }
