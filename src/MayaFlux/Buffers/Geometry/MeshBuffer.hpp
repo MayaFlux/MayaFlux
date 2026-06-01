@@ -4,6 +4,10 @@
 #include "MayaFlux/Kakshya/NDData/MeshAccess.hpp"
 #include "MayaFlux/Kakshya/NDData/MeshData.hpp"
 
+namespace MayaFlux::Nodes::GpuSync {
+class MeshWriterNode;
+}
+
 namespace MayaFlux::Core {
 class VKImage;
 }
@@ -54,6 +58,15 @@ public:
      * @param data Loaded or generated mesh. Must be valid (is_valid() == true).
      */
     explicit MeshBuffer(Kakshya::MeshData data);
+
+    /**
+     * @brief Construct from a MeshWriterNode.
+     *
+     * The node is polled each graphics cycle. compute_frame() is called
+     * on the node, and if its data changed, set_mesh_data() is called
+     * internally before MeshProcessor uploads.
+     */
+    MeshBuffer(std::shared_ptr<Nodes::GpuSync::MeshWriterNode> node);
 
     ~MeshBuffer() override = default;
 
@@ -107,6 +120,11 @@ public:
     [[nodiscard]] const std::optional<Kakshya::RegionGroup>& get_submeshes() const noexcept
     {
         return m_mesh_data.submeshes;
+    }
+
+    [[nodiscard]] std::shared_ptr<Nodes::GpuSync::MeshWriterNode> get_node() const
+    {
+        return m_node;
     }
 
     // -------------------------------------------------------------------------
@@ -198,6 +216,7 @@ private:
     friend class MeshProcessor;
 
     Kakshya::MeshData m_mesh_data;
+    std::shared_ptr<Nodes::GpuSync::MeshWriterNode> m_node;
     std::shared_ptr<Core::VKImage> m_diffuse_texture;
     std::string m_diffuse_binding { "diffuseTex" };
 
