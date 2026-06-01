@@ -36,7 +36,6 @@ public:
         void* user_data) override;
 
     [[nodiscard]] std::string get_version_string() const override;
-    [[nodiscard]] int get_api_type() const override;
 
     void cleanup() override;
 

@@ -163,10 +163,15 @@ else()
         target_link_libraries(MayaFluxLib PRIVATE oneDPL)
         target_link_libraries(MayaFluxLib PUBLIC fmt::fmt)
         target_link_libraries(MayaFluxLib PUBLIC Vulkan::Vulkan)
-        target_link_libraries(MayaFluxLib PUBLIC PkgConfig::RtAudio)
         target_link_libraries(MayaFluxLib PRIVATE "-framework CoreFoundation")
         target_link_libraries(MayaFluxLib PRIVATE "-framework AppKit" "-framework UniformTypeIdentifiers")
         target_link_libraries(MayaFluxLib PRIVATE "-framework CoreMIDI")
+        target_link_libraries(
+            MayaFluxLib PRIVATE 
+            "-framework CoreAudio"
+            "-framework AudioUnit"
+            "-framework AudioToolbox"
+            )
 
         message(STATUS "MayaFlux Journal: Using fmt library on macOS")
     else()

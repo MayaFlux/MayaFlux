@@ -84,8 +84,6 @@ std::string PipewireBackend::get_version_string() const
     return pw_get_library_version();
 }
 
-int PipewireBackend::get_api_type() const { return 0; }
-
 void PipewireBackend::cleanup()
 {
     if (m_core) {

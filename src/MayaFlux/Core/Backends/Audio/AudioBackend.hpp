@@ -87,12 +87,6 @@ public:
     [[nodiscard]] virtual std::string get_version_string() const = 0;
 
     /**
-     * @brief Retrieves the backend API type identifier
-     * @return Integer code representing the backend type
-     */
-    [[nodiscard]] virtual int get_api_type() const = 0;
-
-    /**
      * @brief Releases all resources held by the backend.
      *
      * Performs necessary cleanup operations before backend destruction,
@@ -252,7 +246,6 @@ public:
      * selection and initialization.
      */
     static std::unique_ptr<IAudioBackend> create_backend(
-        Core::AudioBackendType type,
-        std::optional<GlobalStreamInfo::AudioApi> api_preference = std::nullopt);
+        Core::AudioBackendType type);
 };
 }

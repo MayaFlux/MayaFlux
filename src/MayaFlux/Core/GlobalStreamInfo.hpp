@@ -5,9 +5,9 @@
 namespace MayaFlux::Core {
 
 enum AudioBackendType : uint8_t {
-    RTAUDIO,
     PIPEWIRE,
-    WASAPI
+    WASAPI,
+    COREAUDIO
 };
 
 /**
@@ -40,33 +40,16 @@ struct GlobalStreamInfo {
         INT32 ///< 32-bit integer representation (-2147483648 to 2147483647)
     };
 
-    /**
-     * @enum AudioApi
-     * @brief Enumeration of supported audio APIs for wrapper backends like RtAudio
-     */
-    enum class AudioApi : uint8_t {
-        DEFAULT,
-        ALSA,
-        PULSE,
-        JACK,
-        CORE,
-        WASAPI,
-        ASIO,
-        DS,
-        OSS
-    };
-
     /** @brief Selected audio backend implementation */
 #ifdef PIPEWIRE_BACKEND
     AudioBackendType backend = AudioBackendType::PIPEWIRE;
 #elif defined(WASAPI_BACKEND)
     AudioBackendType backend = AudioBackendType::WASAPI;
+#elif defined(COREAUDIO_BACKEND)
+    AudioBackendType backend = AudioBackendType::COREAUDIO;
 #else
-    AudioBackendType backend = AudioBackendType::RTAUDIO;
+#error "Unknown or unsupport audio backend"
 #endif
-
-    /** @brief Selected audio API for stream processing */
-    AudioApi requested_api = AudioApi::DEFAULT;
 
     /** @brief Sample data format for stream processing */
     AudioFormat format = AudioFormat::FLOAT64;
