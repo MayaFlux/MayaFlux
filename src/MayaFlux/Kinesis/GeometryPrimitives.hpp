@@ -427,4 +427,34 @@ struct QuadGeometry {
     uint32_t radial_segs,
     float sweep_radians = glm::two_pi<float>());
 
+/**
+ * @brief Extract an isosurface from a scalar field using marching cubes.
+ *
+ * Evaluates @p field at every corner of a regular grid spanning
+ * [@p bounds_min, @p bounds_max] with @p res_x * @p res_y * @p res_z cells.
+ * Triangles are generated wherever the field crosses @p iso_level.
+ * Vertex normals are estimated via central finite differences on the field.
+ *
+ * Any Kinesis::SpatialField is valid: distance(), combine(), chain(),
+ * or any user-supplied glm::vec3 -> float lambda wrapped in a SpatialField.
+ *
+ * @param field      SpatialField: glm::vec3 -> float.
+ * @param bounds_min World-space minimum corner of the evaluation volume.
+ * @param bounds_max World-space maximum corner of the evaluation volume.
+ * @param res_x      Cell count along X. Clamped to minimum 1.
+ * @param res_y      Cell count along Y. Clamped to minimum 1.
+ * @param res_z      Cell count along Z. Clamped to minimum 1.
+ * @param iso_level  Isosurface threshold value. Default 0.0.
+ * @return MeshData ready for TRIANGLE_LIST draw, or empty MeshData if the
+ *         field produces no crossings at iso_level.
+ */
+[[nodiscard]] MAYAFLUX_API Kakshya::MeshData generate_sdf_mesh(
+    const Kinesis::SpatialField& field,
+    const glm::vec3& bounds_min,
+    const glm::vec3& bounds_max,
+    uint32_t res_x,
+    uint32_t res_y,
+    uint32_t res_z,
+    float iso_level = 0.0F);
+
 } // namespace MayaFlux::Kinesis
