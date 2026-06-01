@@ -1,29 +1,35 @@
 #pragma once
 
-#ifdef RTMIDI_BACKEND
+#ifdef MAYAFLUX_PLATFORM_MACOS
 
 #include "InputBackend.hpp"
 
-class RtMidiIn;
+#include <CoreMIDI/CoreMIDI.h>
 
 namespace MayaFlux::Core {
 
 /**
- * @class RtMidiBackend
- * @brief RtMidi-based MIDI input backend
+ * @class CoreMidiBackend
+ * @brief CoreMIDI-native MIDI backend for macOS
  *
- * Provides MIDI input functionality using RtMidi library. Supports:
+ * Wraps Apple's CoreMIDI framework directly with no third-party
+ * dependencies.
+ *
+ * Intended feature parity:
  * - Multiple simultaneous MIDI input ports
  * - Port filtering by name
  * - Virtual MIDI port creation
- * - Automatic port detection
+ * - Device hotplug detection
+ * - SysEx support
+ * - MIDI output support
  *
  * Threading model:
- * - RtMidi callbacks fire on RtMidi's internal threads
- * - Callbacks push to InputManager's queue (thread-safe)
- * - No separate polling thread needed (RtMidi is callback-driven)
+ * - CoreMIDI invokes MIDIReadProc on CoreMIDI-managed threads
+ * - Callbacks push InputValue to InputManager's queue (thread-safe)
+ * - No polling thread required
+ * - Device notifications arrive through MIDINotifyProc
  */
-class MAYAFLUX_API RtMidiBackend : public IInputBackend {
+class MAYAFLUX_API CoreMidiBackend : public IInputBackend {
 public:
     struct Config {
         std::vector<std::string> input_port_filters;
@@ -31,17 +37,18 @@ public:
         bool auto_open_inputs { true };
         bool auto_open_outputs { false };
         bool enable_virtual_port { false };
+        bool enable_sysex { true };
         std::string virtual_port_name { "MayaFlux" };
     };
 
-    RtMidiBackend();
-    explicit RtMidiBackend(Config config);
-    ~RtMidiBackend() override;
+    CoreMidiBackend();
+    explicit CoreMidiBackend(Config config);
+    ~CoreMidiBackend() override;
 
-    RtMidiBackend(const RtMidiBackend&) = delete;
-    RtMidiBackend& operator=(const RtMidiBackend&) = delete;
-    RtMidiBackend(RtMidiBackend&&) = delete;
-    RtMidiBackend& operator=(RtMidiBackend&&) = delete;
+    CoreMidiBackend(const CoreMidiBackend&) = delete;
+    CoreMidiBackend& operator=(const CoreMidiBackend&) = delete;
+    CoreMidiBackend(CoreMidiBackend&&) = delete;
+    CoreMidiBackend& operator=(CoreMidiBackend&&) = delete;
 
     // ===================================================================================
     // IInputBackend Implementation
@@ -60,6 +67,7 @@ public:
 
     bool open_device(uint32_t device_id) override;
     void close_device(uint32_t device_id) override;
+
     [[nodiscard]] bool is_device_open(uint32_t device_id) const override;
     [[nodiscard]] std::vector<uint32_t> get_open_devices() const override;
 
@@ -67,26 +75,33 @@ public:
     void set_device_callback(DeviceCallback callback) override;
 
     [[nodiscard]] InputType get_type() const override { return InputType::MIDI; }
-    [[nodiscard]] std::string get_name() const override { return "MIDI (RtMidi)"; }
+    [[nodiscard]] std::string get_name() const override { return "MIDI (CoreMIDI)"; }
     [[nodiscard]] std::string get_version() const override;
 
 private:
     struct MIDIPortInfo : InputDeviceInfo {
-        unsigned int rtmidi_port_number;
+        MIDIUniqueID unique_id { 0 };
+        MIDIEndpointRef endpoint { 0 };
     };
 
     struct MIDIPortState {
-        std::unique_ptr<RtMidiIn> midi_in;
         MIDIPortInfo info;
-        uint32_t device_id;
+        uint32_t device_id { 0 };
+
+        MIDIPortRef input_port { 0 };
+
         std::atomic<bool> active { false };
 
         std::function<void(const InputValue&)> input_callback;
     };
 
     Config m_config;
+
     std::atomic<bool> m_initialized { false };
     std::atomic<bool> m_running { false };
+
+    MIDIClientRef m_client { 0 };
+    MIDIEndpointRef m_virtual_destination { 0 };
 
     mutable std::mutex m_devices_mutex;
     std::unordered_map<uint32_t, MIDIPortInfo> m_enumerated_devices;
@@ -98,16 +113,28 @@ private:
     mutable std::mutex m_callback_mutex;
 
     bool port_matches_filter(const std::string& port_name) const;
-    uint32_t find_or_assign_device_id(unsigned int rtmidi_port);
+    uint32_t find_or_assign_device_id(MIDIUniqueID unique_id);
+
     void create_virtual_port_if_enabled();
-
-    static void rtmidi_callback(double timestamp, std::vector<unsigned char>* message, void* user_data);
-
     void notify_device_change(const InputDeviceInfo& info, bool connected);
 
-    InputValue parse_midi_message(uint32_t device_id, const std::vector<unsigned char>& message) const;
+    static void virtual_destination_callback(
+        const MIDIPacketList* packet_list,
+        void* read_proc_ref_con,
+        void* src_conn_ref_con);
+
+    static void midi_read_callback(
+        const MIDIPacketList* packet_list,
+        void* read_proc_ref_con,
+        void* src_conn_ref_con);
+
+    static void midi_notify_callback(
+        const MIDINotification* notification,
+        void* ref_con);
+
+    void destroy_open_port(MIDIPortState& state);
 };
 
 } // namespace MayaFlux::Core
 
-#endif
+#endif // MAYAFLUX_PLATFORM_MACOS

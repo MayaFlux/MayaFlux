@@ -38,7 +38,6 @@ else()
         find_package(Vulkan REQUIRED)
         pkg_check_modules(HIDAPI REQUIRED IMPORTED_TARGET hidapi)
         pkg_check_modules(RtAudio REQUIRED IMPORTED_TARGET rtaudio)
-        pkg_check_modules(RtMidi REQUIRED IMPORTED_TARGET rtmidi)
     else()
         pkg_check_modules(Vulkan REQUIRED IMPORTED_TARGET vulkan)
         pkg_search_module(HIDAPI REQUIRED IMPORTED_TARGET

@@ -103,7 +103,6 @@ jobs:
             glslang
             molten-vk
             hidapi
-            rtmidi
             utf8proc
             freetype
 

@@ -110,7 +110,6 @@ else()
 
         pkg_check_modules(HIDAPI REQUIRED IMPORTED_TARGET hidapi)
         pkg_check_modules(RtAudio REQUIRED IMPORTED_TARGET rtaudio)
-        pkg_check_modules(RtMidi REQUIRED IMPORTED_TARGET rtmidi)
     else()
         message(STATUS "=== Linux-specific Dependencies ===")
         pkg_check_modules(Vulkan REQUIRED IMPORTED_TARGET vulkan)
@@ -299,7 +298,7 @@ if(NOT TARGET MayaFlux::MayaFluxLib)
 
         # Unix Vulkan
         if(APPLE)
-            target_link_libraries(MayaFlux::MayaFluxLib INTERFACE Vulkan::Vulkan PkgConfig::RtAudio PkgConfig::RtMidi)
+            target_link_libraries(MayaFlux::MayaFluxLib INTERFACE Vulkan::Vulkan PkgConfig::RtAudio)
         else()
             target_link_libraries(MayaFlux::MayaFluxLib INTERFACE 
             PkgConfig::Vulkan
