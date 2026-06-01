@@ -84,6 +84,13 @@ public:
     const GlyphMetrics* get_or_rasterize(FT_UInt glyph_index);
 
     /**
+     * @brief Access the backing FontFace.  Callers may query FT_Face properties
+     * or call FT_Get_Char_Index directly for HarfBuzz integration.
+     */
+    [[nodiscard]] FontFace& get_face() { return m_face; }
+    [[nodiscard]] const FontFace& get_face() const { return m_face; }
+
+    /**
      * @brief Convenience: look up by Unicode codepoint.
      *
      * Calls FT_Get_Char_Index internally.  Prefer the glyph_index overload
