@@ -21,7 +21,7 @@ class IGraphicsBackend;
  * **Key Architectural Differences from AudioSubsystem:**
  *
  * AudioSubsystem:
- *   RTAudio callback → process() → scheduler.tick(samples)
+ *   Audio callback → process() → scheduler.tick(samples)
  *   Clock is externally driven by audio hardware
  *
  * GraphicsSubsystem:

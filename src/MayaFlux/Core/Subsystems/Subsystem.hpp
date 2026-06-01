@@ -35,7 +35,7 @@ public:
      * establish the event loops that drive processing.
      *
      * Examples:
-     * - Audio: RtAudio callback registration for real-time audio processing
+     * - Audio: Audio callback registration for real-time audio processing
      * - Visual: Vulkan present callback / OpenFrameworks draw loop integration
      * - Windowing: GLFW event loops for UI and input handling
      * - Custom: Application-specific timing or event-driven processing

@@ -121,11 +121,6 @@ std::string WasapiBackend::get_version_string() const
     return "WASAPI (Windows native shared mode)";
 }
 
-int WasapiBackend::get_api_type() const
-{
-    return static_cast<int>(GlobalStreamInfo::AudioApi::WASAPI);
-}
-
 void WasapiBackend::cleanup()
 {
     if (m_enumerator) {

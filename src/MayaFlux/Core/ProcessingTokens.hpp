@@ -157,7 +157,7 @@ enum ProcessingToken : uint32_t {
      * @brief Standard audio processing backend configuration
      *
      * Combines SAMPLE_RATE | CPU_PROCESS | SEQUENTIAL for traditional audio processing.
-     * This processes audio on the chosen backend (default RtAudio) using CPU threads
+     * This processes audio on the chosen backend using CPU threads
      * in sequential order within the audio callback loop. This is the most common
      * configuration for real-time audio processing applications.
      */

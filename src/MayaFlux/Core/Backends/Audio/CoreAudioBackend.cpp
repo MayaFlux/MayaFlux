@@ -59,11 +59,6 @@ std::string CoreAudioBackend::get_version_string() const
     return "CoreAudio";
 }
 
-int CoreAudioBackend::get_api_type() const
-{
-    return static_cast<int>(GlobalStreamInfo::AudioApi::CORE);
-}
-
 void CoreAudioBackend::cleanup()
 {
 }

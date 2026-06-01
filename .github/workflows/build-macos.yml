@@ -78,7 +78,6 @@ jobs:
         uses: tecolicom/actions-use-homebrew-tools@v1
         with:
           tools: >
-            rtaudio
             ffmpeg
             assimp
             shaderc
