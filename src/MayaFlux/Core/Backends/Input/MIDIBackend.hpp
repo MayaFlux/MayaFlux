@@ -11,8 +11,8 @@ namespace MayaFlux::Core {
 using MIDIBackend = WinMmMidiBackend;
 }
 #else
-#include "RtMidiBackend.hpp"
+#include "CoreMidiBackend.hpp"
 namespace MayaFlux::Core {
-using MIDIBackend = RtMidiBackend;
+using MIDIBackend = CoreMidiBackend;
 }
 #endif
