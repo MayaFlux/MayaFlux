@@ -54,7 +54,6 @@ install_arch() {
         "assimp"
         "stb"
         "hidapi"
-        "rtmidi"
         "asio"
         "freetype2"
         "libutf8proc"
