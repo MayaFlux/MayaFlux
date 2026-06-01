@@ -131,6 +131,8 @@ private:
     static void midi_notify_callback(
         const MIDINotification* notification,
         void* ref_con);
+
+    void destroy_open_port(MIDIPortState& state);
 };
 
 } // namespace MayaFlux::Core

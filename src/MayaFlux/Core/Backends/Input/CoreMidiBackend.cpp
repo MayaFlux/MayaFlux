@@ -235,16 +235,23 @@ size_t CoreMidiBackend::refresh_devices()
                 newly_added.push_back(info);
         }
 
-        for (auto it = m_enumerated_devices.begin(); it != m_enumerated_devices.end();) {
+        for (auto it = m_enumerated_devices.begin();
+            it != m_enumerated_devices.end();) {
+
             if (!seen.contains(it->second.unique_id)) {
+
                 removed_devices.push_back(it->second);
-                uint32_t removed_id = it->first;
-                ++it;
 
-                close_device(removed_id);
+                auto open_it = m_open_devices.find(it->first);
 
-                it = m_enumerated_devices.erase(
-                    m_enumerated_devices.find(removed_id));
+                if (open_it != m_open_devices.end()) {
+                    auto state = std::move(open_it->second);
+
+                    destroy_open_port(*state);
+
+                    m_open_devices.erase(open_it);
+                }
+
                 it = m_enumerated_devices.erase(it);
             } else {
                 ++it;
@@ -262,13 +269,8 @@ size_t CoreMidiBackend::refresh_devices()
         notify_device_change(info, false);
     }
 
-    size_t device_count {};
-    {
-        std::lock_guard lock(m_devices_mutex);
-        device_count = m_enumerated_devices.size();
-    }
-
-    return device_count;
+    std::lock_guard lock(m_devices_mutex);
+    return m_enumerated_devices.size();
 }
 
 bool CoreMidiBackend::open_device(uint32_t device_id)
@@ -347,23 +349,27 @@ void CoreMidiBackend::close_device(uint32_t device_id)
         m_open_devices.erase(it);
     }
 
-    state->active.store(false);
-
-    if (state->input_port) {
-
-        MIDIPortDisconnectSource(
-            state->input_port,
-            state->info.endpoint);
-
-        MIDIPortDispose(state->input_port);
-
-        state->input_port = 0;
-    }
+    destroy_open_port(*state);
 
     MF_INFO(C, X,
         "Closed MIDI port {}: '{}'",
         device_id,
         state->info.name);
+}
+
+void CoreMidiBackend::destroy_open_port(MIDIPortState& state)
+{
+    state.active.store(false);
+
+    if (state.input_port) {
+        MIDIPortDisconnectSource(
+            state.input_port,
+            state.info.endpoint);
+
+        MIDIPortDispose(state.input_port);
+
+        state.input_port = 0;
+    }
 }
 
 bool CoreMidiBackend::is_device_open(uint32_t device_id) const
