@@ -51,6 +51,12 @@ public:
     [[nodiscard]] unsigned int get_default_output_device() const override;
     [[nodiscard]] unsigned int get_default_input_device() const override;
 
+    [[nodiscard]] AudioDeviceID resolve_output_device(
+        unsigned int index) const;
+
+    [[nodiscard]] AudioDeviceID resolve_input_device(
+        unsigned int index) const;
+
 private:
     struct DeviceEntry {
         AudioDeviceID id {};
@@ -112,7 +118,7 @@ private:
     /**
      * @brief CoreAudio realtime callback.
      */
-    static OSStatus render_callback(
+    static OSStatus output_callback(
         void* ref_con,
         AudioUnitRenderActionFlags* action_flags,
         const AudioTimeStamp* time_stamp,
@@ -120,11 +126,23 @@ private:
         UInt32 num_frames,
         AudioBufferList* io_data);
 
-    bool configure_audio_unit();
-    bool configure_devices();
-    bool configure_stream_format();
+    static OSStatus input_callback(
+        void* ref_con,
+        AudioUnitRenderActionFlags* action_flags,
+        const AudioTimeStamp* time_stamp,
+        UInt32 bus_number,
+        UInt32 num_frames,
+        AudioBufferList* io_data);
 
-    AudioUnit m_audio_unit = nullptr;
+    bool configure_output_unit();
+    bool configure_input_unit();
+    bool configure_output_device();
+    bool configure_input_device();
+    bool configure_output_format();
+    bool configure_input_format();
+
+    AudioUnit m_output_unit = nullptr;
+    AudioUnit m_input_unit = nullptr;
 
     AudioDeviceID m_output_device_id = kAudioObjectUnknown;
     AudioDeviceID m_input_device_id = kAudioObjectUnknown;
@@ -133,9 +151,6 @@ private:
     void* m_user_data = nullptr;
 
     std::function<int(void*, void*, unsigned int)> m_process_callback;
-
-    std::vector<double> m_input_staging;
-    std::vector<double> m_output_staging;
 
     AudioBufferList* m_input_buffer_list = nullptr;
 
