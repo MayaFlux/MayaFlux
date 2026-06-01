@@ -54,6 +54,7 @@
 #include "Nodes/Graphics/PathGeneratorNode.hpp"
 #include "Nodes/Graphics/PointCollectionNode.hpp"
 #include "Nodes/Graphics/ProceduralTextureNode.hpp"
+#include "Nodes/Graphics/SDFNode.hpp"
 #include "Nodes/Graphics/TextureNode.hpp"
 #include "Nodes/Graphics/TopologyGeneratorNode.hpp"
 #include "Nodes/Network/NodeNetwork.hpp"

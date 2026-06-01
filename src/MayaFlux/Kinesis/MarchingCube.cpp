@@ -599,6 +599,12 @@ Kakshya::MeshData generate_sdf_mesh(
         return len > 1e-7F ? g / len : glm::vec3(0.F, 1.F, 0.F);
     };
 
+    auto uv_from_pos = [&](const glm::vec3& p) -> glm::vec2 {
+        return glm::vec2(
+            (p.x - bounds_min.x) / extent.x,
+            (p.y - bounds_min.y) / extent.y);
+    };
+
     std::vector<Kakshya::MeshVertex> verts;
     std::vector<uint32_t> indices;
     verts.reserve(static_cast<size_t>(res_x * res_y * res_z) * 3);
@@ -672,9 +678,9 @@ Kakshya::MeshData generate_sdf_mesh(
                     const glm::vec3& p2 = ep[tri[i + 2]];
 
                     const auto base = static_cast<uint32_t>(verts.size());
-                    verts.push_back({ .position = p0, .normal = normal_at(p0) });
-                    verts.push_back({ .position = p1, .normal = normal_at(p1) });
-                    verts.push_back({ .position = p2, .normal = normal_at(p2) });
+                    verts.push_back({ .position = p0, .uv = uv_from_pos(p0), .normal = normal_at(p0) });
+                    verts.push_back({ .position = p1, .uv = uv_from_pos(p1), .normal = normal_at(p1) });
+                    verts.push_back({ .position = p2, .uv = uv_from_pos(p2), .normal = normal_at(p2) });
                     indices.insert(indices.end(), { base, base + 1, base + 2 });
                 }
             }
