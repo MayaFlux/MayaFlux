@@ -110,9 +110,9 @@ unsigned int CoreAudioDevice::get_default_input_device() const
 std::string CoreAudioDevice::get_device_name(AudioDeviceID device_id)
 {
     AudioObjectPropertyAddress address {
-        kAudioObjectPropertyName,
-        kAudioObjectPropertyScopeGlobal,
-        kAudioObjectPropertyElementMain
+        .mSelector = kAudioObjectPropertyName,
+        .mScope = kAudioObjectPropertyScopeGlobal,
+        .mElement = kAudioObjectPropertyElementMain
     };
 
     CFStringRef name_ref = nullptr;
@@ -124,7 +124,7 @@ std::string CoreAudioDevice::get_device_name(AudioDeviceID device_id)
         0,
         nullptr,
         &size,
-        &name_ref);
+        static_cast<void*>(&name_ref));
 
     if (status != noErr || !name_ref)
         return "Unknown Device";
@@ -147,9 +147,9 @@ uint32_t CoreAudioDevice::get_channel_count(
     AudioObjectPropertyScope scope)
 {
     AudioObjectPropertyAddress address {
-        kAudioDevicePropertyStreamConfiguration,
-        scope,
-        kAudioObjectPropertyElementMain
+        .mSelector = kAudioDevicePropertyStreamConfiguration,
+        .mScope = scope,
+        .mElement = kAudioObjectPropertyElementMain
     };
 
     UInt32 size = 0;
@@ -191,9 +191,9 @@ double CoreAudioDevice::get_nominal_sample_rate(
     AudioDeviceID device_id)
 {
     AudioObjectPropertyAddress address {
-        kAudioDevicePropertyNominalSampleRate,
-        kAudioObjectPropertyScopeGlobal,
-        kAudioObjectPropertyElementMain
+        .mSelector = kAudioDevicePropertyNominalSampleRate,
+        .mScope = kAudioObjectPropertyScopeGlobal,
+        .mElement = kAudioObjectPropertyElementMain
     };
 
     Float64 rate = 48000.0;
@@ -216,9 +216,9 @@ double CoreAudioDevice::get_nominal_sample_rate(
 void CoreAudioDevice::enumerate_devices()
 {
     AudioObjectPropertyAddress devices_address {
-        kAudioHardwarePropertyDevices,
-        kAudioObjectPropertyScopeGlobal,
-        kAudioObjectPropertyElementMain
+        .mSelector = kAudioHardwarePropertyDevices,
+        .mScope = kAudioObjectPropertyScopeGlobal,
+        .mElement = kAudioObjectPropertyElementMain
     };
 
     UInt32 size = 0;
@@ -259,9 +259,9 @@ void CoreAudioDevice::enumerate_devices()
 
     {
         AudioObjectPropertyAddress address {
-            kAudioHardwarePropertyDefaultOutputDevice,
-            kAudioObjectPropertyScopeGlobal,
-            kAudioObjectPropertyElementMain
+            .mSelector = kAudioHardwarePropertyDefaultOutputDevice,
+            .mScope = kAudioObjectPropertyScopeGlobal,
+            .mElement = kAudioObjectPropertyElementMain
         };
 
         UInt32 property_size = sizeof(AudioDeviceID);
@@ -277,9 +277,9 @@ void CoreAudioDevice::enumerate_devices()
 
     {
         AudioObjectPropertyAddress address {
-            kAudioHardwarePropertyDefaultInputDevice,
-            kAudioObjectPropertyScopeGlobal,
-            kAudioObjectPropertyElementMain
+            .mSelector = kAudioHardwarePropertyDefaultInputDevice,
+            .mScope = kAudioObjectPropertyScopeGlobal,
+            .mElement = kAudioObjectPropertyElementMain
         };
 
         UInt32 property_size = sizeof(AudioDeviceID);
@@ -380,28 +380,31 @@ void CoreAudioStream::open()
     if (m_is_open.load())
         return;
 
-    if (!configure_audio_unit())
+    if (!configure_audio_unit()) {
         error<std::runtime_error>(
             C,
             X,
             std::source_location::current(),
             "Failed to configure CoreAudio unit");
+    }
 
-    if (!configure_devices())
+    if (!configure_devices()) {
         error<std::runtime_error>(
             C,
             X,
             std::source_location::current(),
             "Failed to configure CoreAudio device");
+    }
 
-    if (!configure_stream_format())
+    if (!configure_stream_format()) {
         error<std::runtime_error>(
             C,
             X,
             std::source_location::current(),
             "Failed to configure CoreAudio format");
+    }
 
-    UInt32 max_frames = static_cast<UInt32>(m_stream_info.buffer_size);
+    auto max_frames = static_cast<UInt32>(m_stream_info.buffer_size);
 
     AudioUnitSetProperty(
         m_audio_unit,
@@ -413,13 +416,14 @@ void CoreAudioStream::open()
 
     auto status = AudioUnitInitialize(m_audio_unit);
 
-    if (status != noErr)
+    if (status != noErr) {
         error<std::runtime_error>(
             C,
             X,
             std::source_location::current(),
             "AudioUnitInitialize failed ({})",
             static_cast<int>(status));
+    }
 
     AudioStreamBasicDescription actual {};
     UInt32 actual_size = sizeof(actual);
@@ -467,11 +471,12 @@ void CoreAudioStream::open()
 
 void CoreAudioStream::start()
 {
-    if (!m_is_open.load())
+    if (!m_is_open.load()) {
         error<std::runtime_error>(
             C, X,
             std::source_location::current(),
             "Cannot start stream before open()");
+    }
 
     if (m_is_running.load())
         return;
@@ -521,6 +526,12 @@ void CoreAudioStream::close()
 
     if (m_is_running.load())
         stop();
+
+    if (m_input_buffer_list) {
+        std::free(m_input_buffer_list->mBuffers[0].mData);
+        std::free(m_input_buffer_list);
+        m_input_buffer_list = nullptr;
+    }
 
     AudioUnitUninitialize(m_audio_unit);
 
@@ -586,15 +597,29 @@ bool CoreAudioStream::configure_audio_unit()
         return false;
     }
 
-    UInt32 enable_input = 0;
+    m_input_enabled.store(
+        m_stream_info.input.enabled
+            && m_stream_info.input.channels > 0,
+        std::memory_order_release);
 
-    AudioUnitSetProperty(
+    UInt32 enable_input = m_input_enabled.load(std::memory_order_acquire)
+        ? 1U
+        : 0U;
+
+    status = AudioUnitSetProperty(
         m_audio_unit,
         kAudioOutputUnitProperty_EnableIO,
         kAudioUnitScope_Input,
         1,
         &enable_input,
         sizeof(enable_input));
+
+    if (status != noErr) {
+        MF_ERROR(C, X,
+            "Failed to configure input bus ({})",
+            static_cast<int>(status));
+        return false;
+    }
 
     AURenderCallbackStruct callback {};
     callback.inputProc = &CoreAudioStream::render_callback;
@@ -621,9 +646,9 @@ bool CoreAudioStream::configure_audio_unit()
 bool CoreAudioStream::configure_devices()
 {
     AudioObjectPropertyAddress default_addr {
-        kAudioHardwarePropertyDefaultOutputDevice,
-        kAudioObjectPropertyScopeGlobal,
-        kAudioObjectPropertyElementMain
+        .mSelector = kAudioHardwarePropertyDefaultOutputDevice,
+        .mScope = kAudioObjectPropertyScopeGlobal,
+        .mElement = kAudioObjectPropertyElementMain
     };
 
     AudioDeviceID default_device = kAudioObjectUnknown;
@@ -678,9 +703,9 @@ bool CoreAudioStream::configure_devices()
     }
 
     AudioObjectPropertyAddress format_addr {
-        kAudioDevicePropertyStreamFormat,
-        kAudioDevicePropertyScopeOutput,
-        kAudioObjectPropertyElementMain
+        .mSelector = kAudioDevicePropertyStreamFormat,
+        .mScope = kAudioDevicePropertyScopeOutput,
+        .mElement = kAudioObjectPropertyElementMain
     };
 
     AudioStreamBasicDescription format {};
@@ -712,12 +737,12 @@ bool CoreAudioStream::configure_devices()
     }
 
     AudioObjectPropertyAddress buffer_addr {
-        kAudioDevicePropertyBufferFrameSize,
-        kAudioObjectPropertyScopeGlobal,
-        kAudioObjectPropertyElementMain
+        .mSelector = kAudioDevicePropertyBufferFrameSize,
+        .mScope = kAudioObjectPropertyScopeGlobal,
+        .mElement = kAudioObjectPropertyElementMain
     };
 
-    UInt32 requested_buffer_size = static_cast<UInt32>(m_stream_info.buffer_size);
+    auto requested_buffer_size = static_cast<UInt32>(m_stream_info.buffer_size);
 
     status = AudioObjectSetPropertyData(
         m_output_device_id,
@@ -796,6 +821,57 @@ bool CoreAudioStream::configure_stream_format()
         return false;
     }
 
+    if (m_input_enabled.load(std::memory_order_acquire)) {
+
+        AudioStreamBasicDescription input_format {};
+
+        input_format.mSampleRate = m_stream_info.sample_rate;
+        input_format.mFormatID = kAudioFormatLinearPCM;
+        input_format.mFormatFlags = kAudioFormatFlagIsFloat
+            | kAudioFormatFlagIsPacked;
+
+        input_format.mBitsPerChannel = 64;
+        input_format.mChannelsPerFrame = m_stream_info.input.channels;
+
+        input_format.mFramesPerPacket = 1;
+
+        input_format.mBytesPerFrame = sizeof(double)
+            * input_format.mChannelsPerFrame;
+
+        input_format.mBytesPerPacket = input_format.mBytesPerFrame;
+
+        status = AudioUnitSetProperty(
+            m_audio_unit,
+            kAudioUnitProperty_StreamFormat,
+            kAudioUnitScope_Output,
+            1,
+            &input_format,
+            sizeof(input_format));
+
+        if (status != noErr) {
+            MF_ERROR(C, X,
+                "Failed to set input format ({})",
+                static_cast<int>(status));
+            return false;
+        }
+
+        const auto bytes = static_cast<UInt32>(
+            sizeof(double)
+            * m_stream_info.input.channels
+            * m_stream_info.buffer_size);
+
+        m_input_buffer_list = static_cast<AudioBufferList*>(
+            std::calloc(
+                1,
+                sizeof(AudioBufferList)
+                    + sizeof(AudioBuffer)));
+
+        m_input_buffer_list->mNumberBuffers = 1;
+        m_input_buffer_list->mBuffers[0].mNumberChannels = m_stream_info.input.channels;
+        m_input_buffer_list->mBuffers[0].mDataByteSize = bytes;
+        m_input_buffer_list->mBuffers[0].mData = std::calloc(1, bytes);
+    }
+
     MF_LOG(C, X,
         "format: {} channels {} Hz {} bits",
         format.mChannelsPerFrame,
@@ -807,8 +883,8 @@ bool CoreAudioStream::configure_stream_format()
 
 OSStatus CoreAudioStream::render_callback(
     void* ref_con,
-    AudioUnitRenderActionFlags*,
-    const AudioTimeStamp*,
+    AudioUnitRenderActionFlags* action_flags,
+    const AudioTimeStamp* time_stamp,
     UInt32,
     UInt32 num_frames,
     AudioBufferList* io_data)
@@ -830,11 +906,30 @@ OSStatus CoreAudioStream::render_callback(
         return noErr;
     }
 
-    double* output = static_cast<double*>(io_data->mBuffers[0].mData);
+    auto output = static_cast<double*>(io_data->mBuffers[0].mData);
+
+    void* input = nullptr;
+
+    if (stream->m_input_enabled.load(std::memory_order_acquire)) {
+
+        auto status = AudioUnitRender(
+            stream->m_audio_unit,
+            action_flags,
+            time_stamp,
+            1,
+            num_frames,
+            stream->m_input_buffer_list);
+
+        if (status == noErr) {
+            input = stream->m_input_buffer_list
+                        ->mBuffers[0]
+                        .mData;
+        }
+    }
 
     stream->m_process_callback(
         output,
-        nullptr,
+        input,
         num_frames);
 
     return noErr;

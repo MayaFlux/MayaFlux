@@ -124,7 +124,6 @@ private:
     bool configure_devices();
     bool configure_stream_format();
 
-private:
     AudioUnit m_audio_unit = nullptr;
 
     AudioDeviceID m_output_device_id = kAudioObjectUnknown;
@@ -137,6 +136,10 @@ private:
 
     std::vector<double> m_input_staging;
     std::vector<double> m_output_staging;
+
+    AudioBufferList* m_input_buffer_list = nullptr;
+
+    std::atomic<bool> m_input_enabled { false };
 
     std::atomic<bool> m_is_open { false };
     std::atomic<bool> m_is_running { false };
