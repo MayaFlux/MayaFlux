@@ -167,6 +167,12 @@ else()
         target_link_libraries(MayaFluxLib PRIVATE "-framework CoreFoundation")
         target_link_libraries(MayaFluxLib PRIVATE "-framework AppKit" "-framework UniformTypeIdentifiers")
         target_link_libraries(MayaFluxLib PRIVATE "-framework CoreMIDI")
+        target_link_libraries(
+            MayaFluxLib PRIVATE 
+            "-framework CoreAudio"
+            "-framework AudioUnit"
+            "-framework AudioToolbox"
+            )
 
         message(STATUS "MayaFlux Journal: Using fmt library on macOS")
     else()

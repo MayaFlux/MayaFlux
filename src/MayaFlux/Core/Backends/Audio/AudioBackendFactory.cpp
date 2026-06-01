@@ -42,6 +42,10 @@ RtAudio::Api to_rtaudio_api(MayaFlux::Core::GlobalStreamInfo::AudioApi api)
 #include "WasapiBackend.hpp"
 #endif
 
+#ifdef COREAUDIO_BACKEND
+#include "CoreAudioBackend.hpp"
+#endif
+
 namespace MayaFlux::Core {
 
 std::unique_ptr<IAudioBackend> AudioBackendFactory::create_backend(
@@ -72,6 +76,11 @@ std::unique_ptr<IAudioBackend> AudioBackendFactory::create_backend(
 #ifdef WASAPI_BACKEND
     case Core::AudioBackendType::WASAPI:
         return std::make_unique<WasapiBackend>();
+#endif
+
+#ifdef COREAUDIO_BACKEND
+    case Core::AudioBackendType::COREAUDIO:
+        return std::make_unique<CoreAudioBackend>();
 #endif
 
     default:
