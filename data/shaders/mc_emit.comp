@@ -1,0 +1,211 @@
+#version 450
+
+layout(local_size_x = 64) in;
+
+layout(set = 0, binding = 0) readonly buffer SdfGrid {
+    float sdf[];
+};
+layout(set = 0, binding = 1) readonly buffer EdgeTable {
+    uint edge_table[];
+};
+layout(set = 0, binding = 2) readonly buffer TriTable {
+    int tri_table[];
+};
+layout(set = 0, binding = 3) readonly buffer PrefixSums {
+    uint prefix[];
+};
+layout(set = 0, binding = 4) writeonly buffer VertexOut {
+    float vertices[];
+};
+layout(set = 0, binding = 5) writeonly buffer IndexOut {
+    uint indices[];
+};
+
+layout(push_constant) uniform PC {
+    vec3 bounds_min;
+    float iso_level;
+    vec3 step;
+    uint res_x;
+    uint res_y;
+    uint res_z;
+    uint _pad;
+} pc;
+
+// ---- helpers ----------------------------------------------------------------
+
+vec3 interp_edge(vec3 p0, vec3 p1, float v0, float v1)
+{
+    float d = v1 - v0;
+    if (abs(d) < 1e-7)
+        return (p0 + p1) * 0.5;
+    return p0 + ((pc.iso_level - v0) / d) * (p1 - p0);
+}
+
+float sample_grid(vec3 world_p)
+{
+    // Trilinear sample of the SDF grid.
+    vec3 local = (world_p - pc.bounds_min) / pc.step;
+    uint nx = pc.res_x + 1;
+    uint ny = pc.res_y + 1;
+
+    float fx = clamp(local.x, 0.0, float(pc.res_x));
+    float fy = clamp(local.y, 0.0, float(pc.res_y));
+    float fz = clamp(local.z, 0.0, float(pc.res_z));
+
+    uint ix0 = uint(fx);
+    uint ix1 = min(ix0 + 1, pc.res_x);
+    uint iy0 = uint(fy);
+    uint iy1 = min(iy0 + 1, pc.res_y);
+    uint iz0 = uint(fz);
+    uint iz1 = min(iz0 + 1, pc.res_z);
+
+    float tx = fract(fx), ty = fract(fy), tz = fract(fz);
+
+    #define S(xi, yi, zi) sdf[(xi) + nx * ((yi) + ny * (zi))]
+
+    return mix(
+        mix(mix(S(ix0, iy0, iz0), S(ix1, iy0, iz0), tx),
+            mix(S(ix0, iy1, iz0), S(ix1, iy1, iz0), tx), ty),
+        mix(mix(S(ix0, iy0, iz1), S(ix1, iy0, iz1), tx),
+            mix(S(ix0, iy1, iz1), S(ix1, iy1, iz1), tx), ty),
+        tz);
+
+    #undef S
+}
+
+vec3 compute_normal(vec3 p)
+{
+    const float e = 1e-3;
+    vec3 g;
+    g.x = sample_grid(p + vec3(e, 0, 0)) - sample_grid(p - vec3(e, 0, 0));
+    g.y = sample_grid(p + vec3(0, e, 0)) - sample_grid(p - vec3(0, e, 0));
+    g.z = sample_grid(p + vec3(0, 0, e)) - sample_grid(p - vec3(0, 0, e));
+    float len = length(g);
+    return len > 1e-7 ? g / len : vec3(0, 1, 0);
+}
+
+void write_vertex(uint slot, vec3 pos, vec2 uv, vec3 normal)
+{
+    uint base = slot * 15u;
+    // position
+    vertices[base + 0] = pos.x;
+    vertices[base + 1] = pos.y;
+    vertices[base + 2] = pos.z;
+    // color (white)
+    vertices[base + 3] = 1.0;
+    vertices[base + 4] = 1.0;
+    vertices[base + 5] = 1.0;
+    // weight
+    vertices[base + 6] = 0.0;
+    // uv
+    vertices[base + 7] = uv.x;
+    vertices[base + 8] = uv.y;
+    // normal
+    vertices[base + 9] = normal.x;
+    vertices[base + 10] = normal.y;
+    vertices[base + 11] = normal.z;
+    // tangent (canonical X)
+    vertices[base + 12] = 1.0;
+    vertices[base + 13] = 0.0;
+    vertices[base + 14] = 0.0;
+}
+
+// ---- main -------------------------------------------------------------------
+
+void main()
+{
+    const uint gid = gl_GlobalInvocationID.x;
+    const uint n_voxels = pc.res_x * pc.res_y * pc.res_z;
+
+    if (gid >= n_voxels)
+        return;
+
+    const uint ix = gid % pc.res_x;
+    const uint iy = (gid / pc.res_x) % pc.res_y;
+    const uint iz = gid / (pc.res_x * pc.res_y);
+
+    const uint nx = pc.res_x + 1;
+    const uint ny = pc.res_y + 1;
+
+    float v[8];
+    v[0] = sdf[ix + nx * (iy + ny * iz)];
+    v[1] = sdf[(ix + 1) + nx * (iy + ny * iz)];
+    v[2] = sdf[(ix + 1) + nx * ((iy + 1) + ny * iz)];
+    v[3] = sdf[ix + nx * ((iy + 1) + ny * iz)];
+    v[4] = sdf[ix + nx * (iy + ny * (iz + 1))];
+    v[5] = sdf[(ix + 1) + nx * (iy + ny * (iz + 1))];
+    v[6] = sdf[(ix + 1) + nx * ((iy + 1) + ny * (iz + 1))];
+    v[7] = sdf[ix + nx * ((iy + 1) + ny * (iz + 1))];
+
+    uint cube_idx = 0;
+    for (int k = 0; k < 8; ++k)
+        cube_idx |= uint(v[k] < pc.iso_level) << k;
+
+    uint edges = edge_table[cube_idx];
+    if (edges == 0u)
+        return;
+
+    float x0 = pc.bounds_min.x + float(ix) * pc.step.x;
+    float y0 = pc.bounds_min.y + float(iy) * pc.step.y;
+    float z0 = pc.bounds_min.z + float(iz) * pc.step.z;
+    float x1 = x0 + pc.step.x;
+    float y1 = y0 + pc.step.y;
+    float z1 = z0 + pc.step.z;
+
+    vec3 c[8] = {
+            vec3(x0, y0, z0),
+            vec3(x1, y0, z0),
+            vec3(x1, y1, z0),
+            vec3(x0, y1, z0),
+            vec3(x0, y0, z1),
+            vec3(x1, y0, z1),
+            vec3(x1, y1, z1),
+            vec3(x0, y1, z1)
+        };
+
+    vec3 ep[12];
+    if ((edges & 0x001u) != 0u) ep[0] = interp_edge(c[0], c[1], v[0], v[1]);
+    if ((edges & 0x002u) != 0u) ep[1] = interp_edge(c[1], c[2], v[1], v[2]);
+    if ((edges & 0x004u) != 0u) ep[2] = interp_edge(c[2], c[3], v[2], v[3]);
+    if ((edges & 0x008u) != 0u) ep[3] = interp_edge(c[3], c[0], v[3], v[0]);
+    if ((edges & 0x010u) != 0u) ep[4] = interp_edge(c[4], c[5], v[4], v[5]);
+    if ((edges & 0x020u) != 0u) ep[5] = interp_edge(c[5], c[6], v[5], v[6]);
+    if ((edges & 0x040u) != 0u) ep[6] = interp_edge(c[6], c[7], v[6], v[7]);
+    if ((edges & 0x080u) != 0u) ep[7] = interp_edge(c[7], c[4], v[7], v[4]);
+    if ((edges & 0x100u) != 0u) ep[8] = interp_edge(c[0], c[4], v[0], v[4]);
+    if ((edges & 0x200u) != 0u) ep[9] = interp_edge(c[1], c[5], v[1], v[5]);
+    if ((edges & 0x400u) != 0u) ep[10] = interp_edge(c[2], c[6], v[2], v[6]);
+    if ((edges & 0x800u) != 0u) ep[11] = interp_edge(c[3], c[7], v[3], v[7]);
+
+    const vec3 extent = vec3(
+            float(pc.res_x) * pc.step.x,
+            float(pc.res_y) * pc.step.y,
+            float(pc.res_z) * pc.step.z);
+
+    // Write triangles at the pre-computed prefix offset for this voxel.
+    uint write_base = prefix[gid] * 3u; // prefix[gid] is triangle offset, *3 for vertices
+
+    for (int t = 0; t < 5; ++t) {
+        int idx0 = tri_table[int(cube_idx) * 16 + t * 3 + 0];
+        if (idx0 == -1)
+            break;
+        int idx1 = tri_table[int(cube_idx) * 16 + t * 3 + 1];
+        int idx2 = tri_table[int(cube_idx) * 16 + t * 3 + 2];
+
+        vec3 p0 = ep[idx0];
+        vec3 p1 = ep[idx1];
+        vec3 p2 = ep[idx2];
+
+        vec2 uv0 = vec2((p0.x - pc.bounds_min.x) / extent.x, (p0.y - pc.bounds_min.y) / extent.y);
+        vec2 uv1 = vec2((p1.x - pc.bounds_min.x) / extent.x, (p1.y - pc.bounds_min.y) / extent.y);
+        vec2 uv2 = vec2((p2.x - pc.bounds_min.x) / extent.x, (p2.y - pc.bounds_min.y) / extent.y);
+
+        write_vertex(write_base + uint(t) * 3u + 0u, p0, uv0, compute_normal(p0));
+        write_vertex(write_base + uint(t) * 3u + 1u, p1, uv1, compute_normal(p1));
+        write_vertex(write_base + uint(t) * 3u + 2u, p2, uv2, compute_normal(p2));
+
+        indices[write_base + uint(t) * 3u + 0u] = write_base + uint(t) * 3u + 0u;
+        indices[write_base + uint(t) * 3u + 1u] = write_base + uint(t) * 3u + 1u;
+        indices[write_base + uint(t) * 3u + 2u] = write_base + uint(t) * 3u + 2u;
+    }
+}
