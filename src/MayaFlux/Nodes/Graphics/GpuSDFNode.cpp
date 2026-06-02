@@ -4,6 +4,8 @@
 
 #include "MayaFlux/Kinesis/KMarchingTable.hpp"
 
+#include "MayaFlux/Transitive/Parallel/Execution.hpp"
+
 namespace MayaFlux::Nodes::GpuSync {
 
 // ============================================================================
@@ -136,17 +138,20 @@ void GpuSDFNode::rebuild()
     const uint32_t nz = m_res_z + 1;
 
     std::vector<float> grid(corner_count());
-    for (uint32_t iz = 0; iz < nz; ++iz) {
-        const float z = m_bounds_min.z + static_cast<float>(iz) * step.z;
-        for (uint32_t iy = 0; iy < ny; ++iy) {
-            const float y = m_bounds_min.y + static_cast<float>(iy) * step.y;
-            const size_t base = (static_cast<size_t>(iz) * ny + iy) * nx;
-            for (uint32_t ix = 0; ix < nx; ++ix) {
-                const float x = m_bounds_min.x + static_cast<float>(ix) * step.x;
-                grid[base + ix] = m_field(glm::vec3(x, y, z));
-            }
-        }
-    }
+    const size_t total = static_cast<size_t>(nx) * ny * nz;
+
+    MayaFlux::Parallel::for_each(std::execution::par_unseq,
+        std::views::iota(0UZ, total).begin(),
+        std::views::iota(0UZ, total).end(),
+        [&](size_t idx) {
+            const uint32_t gix = idx % nx;
+            const uint32_t giy = (idx / nx) % ny;
+            const uint32_t giz = idx / (static_cast<size_t>(nx) * ny);
+            grid[idx] = m_field(glm::vec3(
+                m_bounds_min.x + static_cast<float>(gix) * step.x,
+                m_bounds_min.y + static_cast<float>(giy) * step.y,
+                m_bounds_min.z + static_cast<float>(giz) * step.z));
+        });
 
     const McPC pc {
         .bounds_min = m_bounds_min,
@@ -163,7 +168,7 @@ void GpuSDFNode::rebuild()
     m_emit_exec->set_push_constants(pc);
 
     Yantra::Datum<std::vector<Kakshya::DataVariant>> input;
-    input.data.push_back(std::vector<float> { 0.0F });
+    input.data.emplace_back(std::vector<float> { 0.0F });
     const auto emit_result = m_emit_op->apply_operation(input);
 
     const auto counter = SEC::read_output<uint32_t>(emit_result, 4);
@@ -182,7 +187,7 @@ void GpuSDFNode::rebuild()
 
     const auto* vptr = reinterpret_cast<const Kakshya::MeshVertex*>(vertex_bytes_raw.data());
     std::vector<uint32_t> indices(n_verts);
-    std::ranges::iota(indices, 0U);
+    std::iota(indices.begin(), indices.end(), 0U);
     set_mesh(std::span { vptr, n_verts }, indices);
 
     MeshWriterNode::compute_frame();

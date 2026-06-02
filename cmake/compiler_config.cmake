@@ -19,11 +19,6 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
         message (STATUS "AVX and AVX2 support enabled for x86_64 architecture")
     endif()
 
-    if(APPLE)
-        set(CMAKE_OSX_DEPLOYMENT_TARGET "15.6" CACHE STRING
-            "Minimum macOS version" FORCE)
-    endif()
-
 elseif(MSVC)
     add_compile_options(
         /W4

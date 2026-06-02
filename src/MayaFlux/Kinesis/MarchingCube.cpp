@@ -27,8 +27,8 @@ namespace MayaFlux::Kinesis {
     // vcltq_f32 -> 0xFFFFFFFF per lane where v[i] < iso, 0x00000000 otherwise.
     // Shift each lane right by (31 - bit_position) to land the set bit at the
     // correct position in the final scalar, then sum across lanes.
-    const uint32x4_t lo_mask = vreinterpretq_u32_u32(vcltq_f32(lo, thresh));
-    const uint32x4_t hi_mask = vreinterpretq_u32_u32(vcltq_f32(hi, thresh));
+    const uint32x4_t lo_mask = vcltq_f32(lo, thresh);
+    const uint32x4_t hi_mask = vcltq_f32(hi, thresh);
 
     // Isolate bit 0 of each lane (the sign bit after the comparison saturates).
     // vshrq_n_u32 by 31 collapses each 0xFFFFFFFF to 1 and 0x00000000 to 0.
