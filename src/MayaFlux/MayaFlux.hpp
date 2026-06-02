@@ -47,6 +47,7 @@
 #include "Nodes/Generators/Random.hpp"
 #include "Nodes/Generators/Sine.hpp"
 #include "Nodes/Graphics/ComputeOutNode.hpp"
+#include "Nodes/Graphics/GeometryReadbackNode.hpp"
 #include "Nodes/Graphics/GeometryWriterNode.hpp"
 #include "Nodes/Graphics/GlyphGeometryNode.hpp"
 #include "Nodes/Graphics/LineSegmentsNode.hpp"
