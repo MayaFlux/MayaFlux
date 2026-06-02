@@ -561,126 +561,126 @@ Kakshya::MeshData generate_sdf_mesh(
     const uint32_t nx = res_x + 1;
     const uint32_t ny = res_y + 1;
     const uint32_t nz = res_z + 1;
+    const size_t num_voxels = static_cast<size_t>(nx) * ny * nz;
 
-    std::vector<float> vals(static_cast<size_t>(nx) * ny * nz);
+    std::vector<float> vals(num_voxels);
     for (uint32_t iz = 0; iz < nz; ++iz) {
+        float z = bounds_min.z + static_cast<float>(iz) * step.z;
         for (uint32_t iy = 0; iy < ny; ++iy) {
+            float y = bounds_min.y + static_cast<float>(iy) * step.y;
+            size_t base_idx = (static_cast<size_t>(iz) * ny + iy) * nx;
             for (uint32_t ix = 0; ix < nx; ++ix) {
-                const glm::vec3 p = bounds_min + glm::vec3(static_cast<float>(ix) * step.x, static_cast<float>(iy) * step.y, static_cast<float>(iz) * step.z);
-                vals[iz * ny * nx + iy * nx + ix] = field(p);
+                float x = bounds_min.x + static_cast<float>(ix) * step.x;
+                vals[base_idx + ix] = field(glm::vec3(x, y, z));
             }
         }
     }
 
-    auto val_at = [&](uint32_t ix, uint32_t iy, uint32_t iz) -> float {
-        return vals[iz * ny * nx + iy * nx + ix];
-    };
-    auto pos_at = [&](uint32_t ix, uint32_t iy, uint32_t iz) -> glm::vec3 {
-        return bounds_min + glm::vec3(static_cast<float>(ix) * step.x, static_cast<float>(iy) * step.y, static_cast<float>(iz) * step.z);
-    };
+    const size_t sx = 1;
+    const size_t sy = nx;
+    const size_t sz = static_cast<size_t>(ny) * nx;
 
-    auto interp = [&](const glm::vec3& pa, float va,
-                      const glm::vec3& pb, float vb) -> glm::vec3 {
-        const float d = vb - va;
-        if (std::abs(d) < 1e-7F)
-            return (pa + pb) * 0.5F;
-        const float t = (iso_level - va) / d;
-        return pa + t * (pb - pa);
-    };
+    std::vector<Kakshya::MeshVertex> verts;
+    std::vector<uint32_t> indices;
+
+    verts.reserve(static_cast<size_t>(res_x * res_y * res_z) * 3);
+    indices.reserve(static_cast<size_t>(res_x * res_y * res_z) * 3);
 
     constexpr float k_eps = 1e-3F;
-    auto normal_at = [&](const glm::vec3& p) -> glm::vec3 {
+    auto compute_normal = [&](const glm::vec3& p) -> glm::vec3 {
         const glm::vec3 g {
             field(glm::vec3(p.x + k_eps, p.y, p.z)) - field(glm::vec3(p.x - k_eps, p.y, p.z)),
             field(glm::vec3(p.x, p.y + k_eps, p.z)) - field(glm::vec3(p.x, p.y - k_eps, p.z)),
             field(glm::vec3(p.x, p.y, p.z + k_eps)) - field(glm::vec3(p.x, p.y, p.z - k_eps)),
         };
-        const float len = glm::length(g);
+        float len = glm::length(g);
         return len > 1e-7F ? g / len : glm::vec3(0.F, 1.F, 0.F);
     };
 
-    auto uv_from_pos = [&](const glm::vec3& p) -> glm::vec2 {
-        return glm::vec2(
-            (p.x - bounds_min.x) / extent.x,
-            (p.y - bounds_min.y) / extent.y);
-    };
-
-    std::vector<Kakshya::MeshVertex> verts;
-    std::vector<uint32_t> indices;
-    verts.reserve(static_cast<size_t>(res_x * res_y * res_z) * 3);
-    indices.reserve(static_cast<size_t>(res_x * res_y * res_z) * 3);
-
     for (uint32_t iz = 0; iz < res_z; ++iz) {
+        float z0 = bounds_min.z + static_cast<float>(iz) * step.z;
+        float z1 = z0 + step.z;
+
         for (uint32_t iy = 0; iy < res_y; ++iy) {
-            for (uint32_t ix = 0; ix < res_x; ++ix) {
+            float y0 = bounds_min.y + static_cast<float>(iy) * step.y;
+            float y1 = y0 + step.y;
 
-                const glm::vec3 c[8] = {
-                    pos_at(ix, iy, iz),
-                    pos_at(ix + 1, iy, iz),
-                    pos_at(ix + 1, iy + 1, iz),
-                    pos_at(ix, iy + 1, iz),
-                    pos_at(ix, iy, iz + 1),
-                    pos_at(ix + 1, iy, iz + 1),
-                    pos_at(ix + 1, iy + 1, iz + 1),
-                    pos_at(ix, iy + 1, iz + 1),
-                };
+            size_t voxel_ptr = (static_cast<size_t>(iz) * ny + iy) * nx;
+
+            for (uint32_t ix = 0; ix < res_x; ++ix, ++voxel_ptr) {
                 const float v[8] = {
-                    val_at(ix, iy, iz),
-                    val_at(ix + 1, iy, iz),
-                    val_at(ix + 1, iy + 1, iz),
-                    val_at(ix, iy + 1, iz),
-                    val_at(ix, iy, iz + 1),
-                    val_at(ix + 1, iy, iz + 1),
-                    val_at(ix + 1, iy + 1, iz + 1),
-                    val_at(ix, iy + 1, iz + 1),
+                    vals[voxel_ptr], vals[voxel_ptr + sx], vals[voxel_ptr + sy + sx], vals[voxel_ptr + sy],
+                    vals[voxel_ptr + sz], vals[voxel_ptr + sz + sx], vals[voxel_ptr + sz + sy + sx], vals[voxel_ptr + sz + sy]
                 };
 
-                uint8_t cube_idx = 0;
-                for (int i = 0; i < 8; ++i) {
-                    if (v[i] < iso_level)
-                        cube_idx |= static_cast<uint8_t>(1 << i);
-                }
+                uint32_t cube_idx = 0;
+                cube_idx |= (v[0] < iso_level) << 0;
+                cube_idx |= (v[1] < iso_level) << 1;
+                cube_idx |= (v[2] < iso_level) << 2;
+                cube_idx |= (v[3] < iso_level) << 3;
+                cube_idx |= (v[4] < iso_level) << 4;
+                cube_idx |= (v[5] < iso_level) << 5;
+                cube_idx |= (v[6] < iso_level) << 6;
+                cube_idx |= (v[7] < iso_level) << 7;
 
                 const uint16_t edges = k_edge_table[cube_idx];
                 if (edges == 0)
                     continue;
 
-                glm::vec3 ep[12] {};
+                float x0 = bounds_min.x + static_cast<float>(ix) * step.x;
+                float x1 = x0 + step.x;
+
+                const glm::vec3 c[8] = {
+                    { x0, y0, z0 }, { x1, y0, z0 }, { x1, y1, z0 }, { x0, y1, z0 },
+                    { x0, y0, z1 }, { x1, y0, z1 }, { x1, y1, z1 }, { x0, y1, z1 }
+                };
+
+                glm::vec3 ep[12];
+
+                auto interp_edge = [&](int i1, int i2) -> glm::vec3 {
+                    float va = v[i1], vb = v[i2];
+                    float d = vb - va;
+                    if (std::abs(d) < 1e-7F)
+                        return (c[i1] + c[i2]) * 0.5F;
+                    return c[i1] + ((iso_level - va) / d) * (c[i2] - c[i1]);
+                };
+
                 if (edges & 0x001)
-                    ep[0] = interp(c[0], v[0], c[1], v[1]);
+                    ep[0] = interp_edge(0, 1);
                 if (edges & 0x002)
-                    ep[1] = interp(c[1], v[1], c[2], v[2]);
+                    ep[1] = interp_edge(1, 2);
                 if (edges & 0x004)
-                    ep[2] = interp(c[2], v[2], c[3], v[3]);
+                    ep[2] = interp_edge(2, 3);
                 if (edges & 0x008)
-                    ep[3] = interp(c[3], v[3], c[0], v[0]);
+                    ep[3] = interp_edge(3, 0);
                 if (edges & 0x010)
-                    ep[4] = interp(c[4], v[4], c[5], v[5]);
+                    ep[4] = interp_edge(4, 5);
                 if (edges & 0x020)
-                    ep[5] = interp(c[5], v[5], c[6], v[6]);
+                    ep[5] = interp_edge(5, 6);
                 if (edges & 0x040)
-                    ep[6] = interp(c[6], v[6], c[7], v[7]);
+                    ep[6] = interp_edge(6, 7);
                 if (edges & 0x080)
-                    ep[7] = interp(c[7], v[7], c[4], v[4]);
+                    ep[7] = interp_edge(7, 4);
                 if (edges & 0x100)
-                    ep[8] = interp(c[0], v[0], c[4], v[4]);
+                    ep[8] = interp_edge(0, 4);
                 if (edges & 0x200)
-                    ep[9] = interp(c[1], v[1], c[5], v[5]);
+                    ep[9] = interp_edge(1, 5);
                 if (edges & 0x400)
-                    ep[10] = interp(c[2], v[2], c[6], v[6]);
+                    ep[10] = interp_edge(2, 6);
                 if (edges & 0x800)
-                    ep[11] = interp(c[3], v[3], c[7], v[7]);
+                    ep[11] = interp_edge(3, 7);
 
                 const auto& tri = k_tri_table[cube_idx];
-                for (int i = 0; tri[i] != -1; i += 3) {
-                    const glm::vec3& p0 = ep[tri[i]];
-                    const glm::vec3& p1 = ep[tri[i + 1]];
-                    const glm::vec3& p2 = ep[tri[i + 2]];
 
+                for (int i = 0; tri[i] != -1; i += 3) {
                     const auto base = static_cast<uint32_t>(verts.size());
-                    verts.push_back({ .position = p0, .uv = uv_from_pos(p0), .normal = normal_at(p0) });
-                    verts.push_back({ .position = p1, .uv = uv_from_pos(p1), .normal = normal_at(p1) });
-                    verts.push_back({ .position = p2, .uv = uv_from_pos(p2), .normal = normal_at(p2) });
+
+                    for (int j = 0; j < 3; ++j) {
+                        const glm::vec3& p = ep[tri[i + j]];
+                        glm::vec2 uv((p.x - bounds_min.x) / extent.x, (p.y - bounds_min.y) / extent.y);
+
+                        verts.push_back({ .position = p, .uv = uv, .normal = compute_normal(p) });
+                    }
                     indices.insert(indices.end(), { base, base + 1, base + 2 });
                 }
             }
@@ -693,10 +693,10 @@ Kakshya::MeshData generate_sdf_mesh(
     auto data = Kakshya::MeshData::empty();
     Kakshya::MeshInsertion ins(data.vertex_variant, data.index_variant);
     ins.insert_flat(
-        std::span<const uint8_t>(reinterpret_cast<const uint8_t*>(verts.data()),
-            verts.size() * sizeof(Kakshya::MeshVertex)),
+        std::span<const uint8_t>(reinterpret_cast<const uint8_t*>(verts.data()), verts.size() * sizeof(Kakshya::MeshVertex)),
         std::span<const uint32_t>(indices),
         Kakshya::VertexLayout::for_meshes(sizeof(Kakshya::MeshVertex)));
+
     data.layout = Kakshya::VertexLayout::for_meshes(sizeof(Kakshya::MeshVertex));
     data.layout.vertex_count = static_cast<uint32_t>(verts.size());
     return data;
