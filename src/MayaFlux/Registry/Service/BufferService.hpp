@@ -48,6 +48,19 @@ struct MAYAFLUX_API BufferService {
     std::function<void(void*)> unmap_buffer;
 
     /**
+     * @brief Copy a contiguous byte range from one device buffer to another.
+     * @param src    Source buffer handle (opaque to caller).
+     * @param dst    Destination buffer handle (opaque to caller).
+     * @param size   Byte count to copy.
+     * @param src_offset Byte offset into source.
+     * @param dst_offset Byte offset into destination.
+     *
+     * Recorded into a single-use command buffer and submitted synchronously.
+     * Caller must ensure both buffers are device-accessible.
+     */
+    std::function<void(void*, void*, size_t, size_t, size_t)> copy_buffer;
+
+    /**
      * @brief Flush mapped memory range (make host writes visible to device)
      * @param memory Memory handle
      * @param offset Offset in bytes
@@ -144,6 +157,17 @@ struct MAYAFLUX_API BufferService {
      * calling this. No-op if handle is null.
      */
     std::function<void(const std::shared_ptr<void>&)> release_fenced;
+
+    /**
+     * @brief Copy a byte range between two device buffers without blocking the graphics queue.
+     * @param src        Source buffer handle (opaque VkBuffer).
+     * @param dst        Destination buffer handle (opaque VkBuffer).
+     * @param size       Byte count to copy.
+     * @param src_offset Byte offset into source.
+     * @param dst_offset Byte offset into destination.
+     * @return           Opaque fence handle. Pass to wait_fenced(), then release_fenced().
+     */
+    std::function<std::shared_ptr<void>(void*, void*, size_t, size_t, size_t)> copy_buffer_fenced;
 };
 
 } // namespace MayaFlux::Registry::Services

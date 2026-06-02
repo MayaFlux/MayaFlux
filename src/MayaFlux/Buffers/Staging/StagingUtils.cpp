@@ -109,19 +109,10 @@ void upload_device_local(const std::shared_ptr<VKBuffer>& target, const std::sha
             size);
     }
 
-    buffer_service->execute_immediate([&](void* ptr) {
-        vk::BufferCopy copy_region;
-        copy_region.srcOffset = 0;
-        copy_region.dstOffset = 0;
-        copy_region.size = bytes;
-
-        vk::CommandBuffer cmd(static_cast<VkCommandBuffer>(ptr));
-
-        cmd.copyBuffer(
-            staging_buffer->get_buffer(),
-            target->get_buffer(),
-            1, &copy_region);
-    });
+    buffer_service->copy_buffer(
+        static_cast<void*>(staging_buffer->get_buffer()),
+        static_cast<void*>(target->get_buffer()),
+        bytes, 0, 0);
 }
 
 void download_host_visible(const std::shared_ptr<VKBuffer>& source, const std::shared_ptr<VKBuffer>& target)
@@ -176,19 +167,10 @@ void download_device_local(const std::shared_ptr<VKBuffer>& source, const std::s
             "download_device_local requires a valid buffer service");
     }
 
-    vk::BufferCopy copy_region;
-    copy_region.srcOffset = 0;
-    copy_region.dstOffset = 0;
-    copy_region.size = source->get_size_bytes();
-
-    buffer_service->execute_immediate([&](void* ptr) {
-        vk::CommandBuffer cmd(static_cast<VkCommandBuffer>(ptr));
-
-        cmd.copyBuffer(
-            source->get_buffer(),
-            staging_buffer->get_buffer(),
-            1, &copy_region);
-    });
+    buffer_service->copy_buffer(
+        static_cast<void*>(source->get_buffer()),
+        static_cast<void*>(staging_buffer->get_buffer()),
+        source->get_size_bytes(), 0, 0);
 
     staging_buffer->mark_invalid_range(0, source->get_size_bytes());
 
@@ -432,11 +414,10 @@ void download_from_gpu_async(
     if (!staging || staging->get_size_bytes() < size)
         staging = create_staging_buffer(size);
 
-    auto handle = buffer_service->execute_fenced([&](void* cmd_ptr) {
-        vk::CommandBuffer cmd(static_cast<VkCommandBuffer>(cmd_ptr));
-        vk::BufferCopy region { 0, 0, static_cast<vk::DeviceSize>(size) };
-        cmd.copyBuffer(source->get_buffer(), staging->get_buffer(), 1, &region);
-    });
+    auto handle = buffer_service->copy_buffer_fenced(
+        static_cast<void*>(source->get_buffer()),
+        static_cast<void*>(staging->get_buffer()),
+        size, 0, 0);
 
     if (!handle) {
         error<std::runtime_error>(
