@@ -129,27 +129,15 @@ void GeometryBuffer::setup_rendering(const RenderConfig& config)
 
     const bool apply_texture = textured && frag_samples_texture;
 
-    if (!m_render_processor) {
-        ShaderConfig sc { resolved_config.vertex_shader };
-        if (apply_texture) {
-            const std::string slot = resolved_config.default_texture_binding.empty()
-                ? m_diffuse_binding
-                : resolved_config.default_texture_binding;
-            sc.bindings[slot] = ShaderBinding(0, 1, vk::DescriptorType::eCombinedImageSampler);
-        }
-        m_render_processor = std::make_shared<RenderProcessor>(sc);
-    } else {
-        m_render_processor->set_shader(resolved_config.vertex_shader);
+    ShaderConfig sc { resolved_config.vertex_shader };
+    if (apply_texture) {
+        const std::string slot = resolved_config.default_texture_binding.empty()
+            ? m_diffuse_binding
+            : resolved_config.default_texture_binding;
+        sc.bindings[slot] = ShaderBinding(0, 1, vk::DescriptorType::eCombinedImageSampler);
     }
 
-    m_render_processor->set_fragment_shader(resolved_config.fragment_shader);
-    if (!resolved_config.geometry_shader.empty()) {
-        m_render_processor->set_geometry_shader(resolved_config.geometry_shader);
-    }
-    m_render_processor->set_target_window(config.target_window, std::dynamic_pointer_cast<VKBuffer>(shared_from_this()));
-    m_render_processor->set_primitive_topology(resolved_config.topology);
-    m_render_processor->set_polygon_mode(config.polygon_mode);
-    m_render_processor->set_cull_mode(config.cull_mode);
+    apply_render_config(resolved_config, sc);
 
     get_processing_chain()->add_final_processor(m_render_processor, shared_from_this());
 

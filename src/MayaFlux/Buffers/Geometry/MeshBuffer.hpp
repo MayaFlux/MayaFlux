@@ -190,11 +190,6 @@ public:
         return m_mesh_processor;
     }
 
-    [[nodiscard]] std::shared_ptr<RenderProcessor> get_render_processor() const override
-    {
-        return m_render_processor;
-    }
-
     /**
      * @brief Bind a diffuse texture to the render processor, if present.
      *
@@ -224,7 +219,6 @@ private:
     std::atomic<bool> m_indices_dirty { true };
 
     std::shared_ptr<MeshProcessor> m_mesh_processor;
-    std::shared_ptr<RenderProcessor> m_render_processor;
 };
 
 } // namespace MayaFlux::Buffers

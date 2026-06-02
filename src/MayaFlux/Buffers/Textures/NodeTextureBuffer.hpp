@@ -127,14 +127,6 @@ public:
         }
     }
 
-    /**
-     * @brief Get the render processor (if rendering is setup)
-     */
-    std::shared_ptr<RenderProcessor> get_render_processor() const override
-    {
-        return m_render_processor;
-    }
-
     void generate_fullscreen_quad();
 
     size_t calculate_quad_vertex_size();
@@ -144,7 +136,6 @@ private:
     std::shared_ptr<Core::VKImage> m_gpu_texture;
     std::shared_ptr<NodeTextureProcessor> m_texture_processor;
     std::string m_binding_name;
-    std::shared_ptr<RenderProcessor> m_render_processor;
 
     std::vector<uint8_t> m_vertex_bytes;
 

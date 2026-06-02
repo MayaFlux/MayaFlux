@@ -129,11 +129,6 @@ public:
      */
     void setup_rendering(const RenderConfig& config);
 
-    std::shared_ptr<RenderProcessor> get_render_processor() const override
-    {
-        return m_render_processor;
-    }
-
 private:
     std::shared_ptr<Nodes::GpuSync::GeometryWriterNode> m_geometry_node;
     std::shared_ptr<GeometryBindingsProcessor> m_bindings_processor;
@@ -142,8 +137,6 @@ private:
     std::shared_ptr<Core::VKImage> m_diffuse_texture;
     std::string m_diffuse_binding { "diffuseTex" };
     std::vector<std::pair<std::shared_ptr<Core::VKImage>, std::string>> m_pending_textures;
-
-    std::shared_ptr<RenderProcessor> m_render_processor;
 
     /**
      * @brief Calculate initial buffer size with optional over-allocation

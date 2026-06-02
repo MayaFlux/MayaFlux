@@ -112,11 +112,6 @@ public:
      */
     void bind_texture(uint32_t array_index, const std::shared_ptr<Core::VKImage>& image);
 
-    [[nodiscard]] std::shared_ptr<Buffers::RenderProcessor> get_render_processor() const override
-    {
-        return m_render_processor;
-    }
-
     [[nodiscard]] Portal::Graphics::PrimitiveTopology topology() const { return m_topology; }
 
     /**
@@ -159,7 +154,6 @@ public:
 
 private:
     Portal::Graphics::PrimitiveTopology m_topology;
-    std::shared_ptr<Buffers::RenderProcessor> m_render_processor;
     std::shared_ptr<Buffers::FormaProcessor> m_processor;
 
     /// @brief Geometry bytes from submit() before setup_processors(). Drained in setup_processors().

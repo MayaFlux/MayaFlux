@@ -118,22 +118,7 @@ void FormaBuffer::setup_rendering(const RenderConfig& config)
             0, 1, vk::DescriptorType::eCombinedImageSampler);
     }
 
-    if (!m_render_processor) {
-        m_render_processor = std::make_shared<RenderProcessor>(sc);
-    } else {
-        m_render_processor->set_shader(resolved.vertex_shader);
-    }
-
-    m_render_processor->set_fragment_shader(resolved.fragment_shader);
-    if (!resolved.geometry_shader.empty())
-        m_render_processor->set_geometry_shader(resolved.geometry_shader);
-
-    m_render_processor->set_target_window(
-        config.target_window,
-        std::dynamic_pointer_cast<VKBuffer>(shared_from_this()));
-    m_render_processor->set_primitive_topology(resolved.topology);
-    m_render_processor->set_polygon_mode(config.polygon_mode);
-    m_render_processor->set_cull_mode(config.cull_mode);
+    apply_render_config(resolved, sc);
     m_render_processor->enable_alpha_blending();
 
     if (multi_tex) {

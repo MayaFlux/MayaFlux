@@ -112,15 +112,9 @@ public:
         return m_processor;
     }
 
-    [[nodiscard]] std::shared_ptr<RenderProcessor> get_render_processor() const override
-    {
-        return m_render_processor;
-    }
-
 private:
     std::shared_ptr<Nodes::Network::MeshNetwork> m_network;
     std::shared_ptr<MeshNetworkProcessor> m_processor;
-    std::shared_ptr<RenderProcessor> m_render_processor;
 
     std::shared_ptr<Core::VKImage> m_diffuse_texture;
     std::string m_diffuse_binding { "diffuseTex" };

@@ -126,14 +126,7 @@ void MeshNetworkBuffer::setup_rendering(const RenderConfig& config)
     for (const auto& [name, _] : m_render_config.additional_textures)
         sc.bindings[name] = ShaderBinding(1, binding_idx++, vk::DescriptorType::eCombinedImageSampler);
 
-    m_render_processor = std::make_shared<RenderProcessor>(sc);
-    m_render_processor->set_fragment_shader(m_render_config.fragment_shader);
-    m_render_processor->set_target_window(
-        m_render_config.target_window,
-        std::dynamic_pointer_cast<VKBuffer>(shared_from_this()));
-    m_render_processor->set_primitive_topology(m_render_config.topology);
-    m_render_processor->set_polygon_mode(m_render_config.polygon_mode);
-    m_render_processor->set_cull_mode(m_render_config.cull_mode);
+    apply_render_config(m_render_config, sc);
 
     if (has_slot_textures) {
         const auto& slots = m_network->slots();

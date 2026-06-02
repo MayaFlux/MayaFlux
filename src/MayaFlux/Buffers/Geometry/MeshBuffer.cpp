@@ -144,28 +144,20 @@ void MeshBuffer::setup_rendering(const RenderConfig& config)
             : "triangle.frag.spv";
     }
 
-    if (!m_render_processor) {
-        ShaderConfig sc { m_render_config.vertex_shader };
+    ShaderConfig sc { m_render_config.vertex_shader };
 
-        if (textured && !m_render_config.default_texture_binding.empty()) {
-            sc.bindings[m_render_config.default_texture_binding] = ShaderBinding(
-                0, 1, vk::DescriptorType::eCombinedImageSampler);
-        }
-
-        uint32_t binding_index = 1;
-        for (const auto& [name, _] : m_render_config.additional_textures) {
-            sc.bindings[name] = ShaderBinding(
-                1, binding_index++, vk::DescriptorType::eCombinedImageSampler);
-        }
-
-        m_render_processor = std::make_shared<RenderProcessor>(sc);
+    if (textured && !m_render_config.default_texture_binding.empty()) {
+        sc.bindings[m_render_config.default_texture_binding] = ShaderBinding(
+            0, 1, vk::DescriptorType::eCombinedImageSampler);
     }
 
-    m_render_processor->set_fragment_shader(m_render_config.fragment_shader);
-    m_render_processor->set_target_window(
-        m_render_config.target_window,
-        std::dynamic_pointer_cast<VKBuffer>(shared_from_this()));
-    m_render_processor->set_primitive_topology(m_render_config.topology);
+    uint32_t binding_index = 1;
+    for (const auto& [name, _] : m_render_config.additional_textures) {
+        sc.bindings[name] = ShaderBinding(
+            1, binding_index++, vk::DescriptorType::eCombinedImageSampler);
+    }
+
+    apply_render_config(m_render_config, sc);
 
     if (m_diffuse_texture && !m_render_config.default_texture_binding.empty()) {
         m_render_processor->bind_texture(
