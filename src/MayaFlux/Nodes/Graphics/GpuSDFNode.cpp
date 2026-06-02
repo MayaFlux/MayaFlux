@@ -117,6 +117,7 @@ void GpuSDFNode::build_operations(
         .output(n_vertices * sizeof(float))
         .output(sizeof(uint32_t), Yantra::GpuBufferBinding::ElementType::UINT32);
 
+    m_emit_exec->set_skip_readback(3, true);
     m_emit_exec->set_output_size(4, sizeof(uint32_t));
 
     m_emit_op = std::make_shared<McTransformer>(m_emit_exec);
@@ -181,14 +182,13 @@ void GpuSDFNode::rebuild()
     }
 
     const uint32_t n_verts = counter[0];
-    const auto& vertex_bytes_raw = std::any_cast<const std::vector<uint8_t>&>(
-        emit_result.metadata.at("gpu_output_3"));
-    const size_t needed_bytes = static_cast<size_t>(n_verts) * sizeof(Kakshya::MeshVertex);
+    const size_t vertex_bytes = static_cast<size_t>(n_verts) * sizeof(Kakshya::MeshVertex);
+    std::vector<Kakshya::MeshVertex> verts(n_verts);
+    m_emit_exec->download_binding(3, verts.data(), vertex_bytes);
 
-    const auto* vptr = reinterpret_cast<const Kakshya::MeshVertex*>(vertex_bytes_raw.data());
     std::vector<uint32_t> indices(n_verts);
     std::iota(indices.begin(), indices.end(), 0U);
-    set_mesh(std::span { vptr, n_verts }, indices);
+    set_mesh(std::span { verts.data(), n_verts }, indices);
 
     MeshWriterNode::compute_frame();
     m_dirty = false;
