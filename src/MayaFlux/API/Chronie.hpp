@@ -20,6 +20,7 @@ namespace Vruta {
     class EventManager;
     class SoundRoutine;
     class GraphicsRoutine;
+    class FreeRoutine;
     class NetworkSource;
 }
 
@@ -120,6 +121,14 @@ MAYAFLUX_API void schedule_task(const std::string& name, Vruta::SoundRoutine&& t
  * @param initialize Whether to initialize the task immediately
  */
 MAYAFLUX_API void schedule_task(const std::string& name, Vruta::GraphicsRoutine&& task, bool initialize = false);
+
+/**
+ * @brief Schedules a new free routine conditional task
+ * @param name Unique name for the task
+ * @param task The sound routine to schedule
+ * @param initialize Whether to initialize the task immediately
+ */
+MAYAFLUX_API void schedule_task(const std::string& name, Vruta::FreeRoutine&& task, bool initialize = false);
 
 /**
  * @brief Cancels a scheduled task

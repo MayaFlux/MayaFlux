@@ -109,6 +109,12 @@ void schedule_task(const std::string& name, Vruta::GraphicsRoutine&& task, bool 
     get_scheduler()->add_task(std::move(task_ptr), name, initialize);
 }
 
+void schedule_task(const std::string& name, Vruta::FreeRoutine&& task, bool initialize)
+{
+    auto task_ptr = std::make_shared<Vruta::FreeRoutine>(std::move(task));
+    get_scheduler()->add_task(std::move(task_ptr), name, initialize);
+}
+
 bool cancel_task(const std::string& name)
 {
     return get_scheduler()->cancel_task(name);
