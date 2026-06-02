@@ -124,8 +124,15 @@ bool GpuResourceManager::initialise(const GpuShaderConfig& config,
         return false;
     }
 
-    m_pipeline_id = compute_press.create_pipeline_auto(
-        m_shader_id, config.push_constant_size);
+    std::map<uint32_t, std::vector<Portal::Graphics::DescriptorBindingInfo>> by_set;
+    for (const auto& b : bindings) {
+        by_set[b.set].push_back({ .set = b.set, .binding = b.binding, .type = vk::DescriptorType::eStorageBuffer });
+    }
+    std::vector<std::vector<Portal::Graphics::DescriptorBindingInfo>> descriptor_sets;
+    for (auto& [idx, vec] : by_set)
+        descriptor_sets.push_back(std::move(vec));
+
+    m_pipeline_id = compute_press.create_pipeline(m_shader_id, descriptor_sets, config.push_constant_size);
 
     if (m_pipeline_id == Portal::Graphics::INVALID_COMPUTE_PIPELINE) {
         MF_ERROR(Journal::Component::Yantra, Journal::Context::BufferProcessing,
