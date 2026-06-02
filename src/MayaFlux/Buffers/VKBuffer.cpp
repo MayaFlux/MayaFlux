@@ -3,6 +3,8 @@
 #include "BufferProcessingChain.hpp"
 #include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
 
+#include "Shaders/RenderProcessor.hpp"
+
 #include "MayaFlux/Registry/BackendRegistry.hpp"
 #include "MayaFlux/Registry/Service/BufferService.hpp"
 #include "MayaFlux/Registry/Service/ComputeService.hpp"
@@ -338,6 +340,33 @@ void VKBuffer::infer_dimensions_from_data(size_t byte_count)
         m_dimensions.emplace_back("data", byte_count, 1, DataDimension::Role::CUSTOM);
         break;
     }
+}
+
+void VKBuffer::apply_render_config(const RenderConfig& config, const ShaderConfig& shader_config)
+{
+    apply_render_config(m_render_processor, config, shader_config);
+}
+
+void VKBuffer::apply_render_config(
+    std::shared_ptr<RenderProcessor>& render_processor,
+    const RenderConfig& config,
+    const ShaderConfig& shader_config)
+{
+    if (!render_processor)
+        render_processor = std::make_shared<RenderProcessor>(shader_config);
+
+    render_processor->set_fragment_shader(config.fragment_shader);
+
+    render_processor->set_target_window(
+        config.target_window,
+        std::dynamic_pointer_cast<VKBuffer>(shared_from_this()));
+
+    render_processor->set_primitive_topology(config.topology);
+    render_processor->set_polygon_mode(config.polygon_mode);
+    render_processor->set_cull_mode(config.cull_mode);
+
+    if (!config.geometry_shader.empty())
+        render_processor->set_geometry_shader(config.geometry_shader);
 }
 
 void VKBuffer::mark_dirty_range(size_t offset, size_t size)

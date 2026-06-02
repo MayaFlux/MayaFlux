@@ -18,6 +18,7 @@ class Window;
 namespace MayaFlux::Buffers {
 
 class RenderProcessor;
+struct ShaderConfig;
 
 /**
  * @struct VKBufferResources
@@ -573,7 +574,7 @@ public:
      * By default returns nullptr. Derived classes that support rendering should
      * override this to return an appropriate RenderProcessor instance.
      */
-    virtual std::shared_ptr<RenderProcessor> get_render_processor() const { return nullptr; }
+    virtual std::shared_ptr<RenderProcessor> get_render_processor() const { return m_render_processor; }
 
 protected:
     /**
@@ -593,8 +594,24 @@ protected:
         m_render_config_dirty = false;
     }
 
+    /**
+     * @brief Configure the internal m_render_processor from a RenderConfig.
+     */
+    void apply_render_config(const RenderConfig& config, const ShaderConfig& shader_config);
+
+    /**
+     * @brief Configure a RenderProcessor, creating one if null.
+     * @param render_processor Existing processor to configure, or nullptr to create one.
+     * @param config RenderConfig with settings to apply
+     */
+    void apply_render_config(
+        std::shared_ptr<RenderProcessor>& render_processor,
+        const RenderConfig& config,
+        const ShaderConfig& shader_config);
+
     bool m_render_config_dirty {};
     RenderConfig m_render_config;
+    std::shared_ptr<RenderProcessor> m_render_processor;
 
 private:
     VKBufferResources m_resources;

@@ -115,6 +115,7 @@ void CompositeGeometryBuffer::add_geometry(
         config.fragment_shader = "point.frag.spv";
     }
 
+    config.topology = topology;
     add_geometry(name, node, topology, config);
 }
 
@@ -151,24 +152,12 @@ void CompositeGeometryBuffer::add_geometry(
     m_processor->add_geometry(name, node, topology);
     auto self = std::dynamic_pointer_cast<CompositeGeometryBuffer>(shared_from_this());
 
-    auto render = std::make_shared<RenderProcessor>(
-        ShaderConfig { config.vertex_shader });
-
-    render->set_fragment_shader(config.fragment_shader);
-
-    if (!config.geometry_shader.empty()) {
-        render->set_geometry_shader(config.geometry_shader);
-    }
+    std::shared_ptr<RenderProcessor> render;
+    apply_render_config(render, config, ShaderConfig { config.vertex_shader });
 
     if (auto layout = node->get_vertex_layout()) {
         render->set_buffer_vertex_layout(self, *layout);
     }
-
-    render->set_target_window(config.target_window, self);
-    render->set_primitive_topology(topology);
-    render->set_polygon_mode(config.polygon_mode);
-    render->set_cull_mode(config.cull_mode);
-
     render->set_vertex_range(0, 0);
 
     auto chain = get_processing_chain();
