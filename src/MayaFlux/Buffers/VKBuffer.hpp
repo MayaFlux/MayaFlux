@@ -276,12 +276,6 @@ public:
     /* Get logical buffer size as VkDeviceSize */
     vk::DeviceSize get_size_bytes() const { return m_size_bytes; }
 
-    /**
-     * @brief Convert modality to a recommended VkFormat
-     * @return VkFormat corresponding to the buffer's modality, or VK_FORMAT_UNDEFINED.
-     */
-    vk::Format get_format() const;
-
     /** Check whether Vulkan handles are present (buffer registered) */
     bool is_initialized() const { return m_resources.buffer != VK_NULL_HANDLE; }
 

@@ -451,16 +451,18 @@ void upload_audio_to_gpu(
     const std::shared_ptr<VKBuffer>& gpu_buffer,
     const std::shared_ptr<VKBuffer>& staging)
 {
-    if (gpu_buffer->get_format() != vk::Format::eR64Sfloat && gpu_buffer->get_format() != vk::Format::eUndefined) {
-        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-            "GPU buffer format is {} but audio requires R64Sfloat for double precision. "
-            "Create VKBuffer with DataModality::AUDIO_1D or AUDIO_MULTICHANNEL.",
-            vk::to_string(gpu_buffer->get_format()));
+    const auto modality = gpu_buffer->get_modality();
+    if (modality != Kakshya::DataModality::AUDIO_1D
+        && modality != Kakshya::DataModality::AUDIO_MULTICHANNEL
+        && modality != Kakshya::DataModality::UNKNOWN) {
+
         error<std::runtime_error>(
             Journal::Component::Buffers,
             Journal::Context::BufferProcessing,
             std::source_location::current(),
-            "GPU buffer format mismatch for audio upload");
+            "GPU buffer modality is {} but audio requires AUDIO_1D or AUDIO_MULTICHANNEL. "
+            "Create VKBuffer with DataModality::AUDIO_1D or AUDIO_MULTICHANNEL.",
+            Kakshya::modality_to_string(modality));
     }
 
     auto& audio_data = audio_buffer->get_data();

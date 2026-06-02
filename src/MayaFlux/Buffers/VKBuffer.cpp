@@ -207,40 +207,6 @@ void VKBuffer::resize(size_t new_size, bool preserve_data)
         "VKBuffer resize complete: {} bytes", m_size_bytes);
 }
 
-vk::Format VKBuffer::get_format() const
-{
-    using namespace Kakshya;
-
-    switch (m_modality) {
-    case DataModality::VERTEX_POSITIONS_3D:
-    case DataModality::VERTEX_NORMALS_3D:
-    case DataModality::VERTEX_TANGENTS_3D:
-    case DataModality::VERTEX_COLORS_RGB:
-        return vk::Format::eR32G32B32Sfloat;
-
-    case DataModality::TEXTURE_COORDS_2D:
-        return vk::Format::eR32G32Sfloat;
-
-    case DataModality::VERTEX_COLORS_RGBA:
-        return vk::Format::eR32G32B32A32Sfloat;
-
-    case DataModality::AUDIO_1D:
-    case DataModality::AUDIO_MULTICHANNEL:
-        return vk::Format::eR64Sfloat;
-
-    case DataModality::IMAGE_2D:
-    case DataModality::IMAGE_COLOR:
-    case DataModality::TEXTURE_2D:
-        return vk::Format::eR8G8B8A8Unorm;
-
-    case DataModality::SPECTRAL_2D:
-        return vk::Format::eR32G32Sfloat;
-
-    default:
-        return vk::Format::eUndefined;
-    }
-}
-
 void VKBuffer::set_modality(Kakshya::DataModality modality)
 {
     m_modality = modality;

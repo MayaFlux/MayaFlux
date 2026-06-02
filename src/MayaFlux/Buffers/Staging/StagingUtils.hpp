@@ -267,10 +267,12 @@ void upload_from_view(
     size_t data_bytes = view.size() * sizeof(T);
 
     if constexpr (std::is_same_v<T, double>) {
-        if (target->get_format() != vk::Format::eR64Sfloat) {
+        const auto modality = target->get_modality();
+        if (modality != Kakshya::DataModality::AUDIO_1D
+            && modality != Kakshya::DataModality::AUDIO_MULTICHANNEL) {
             MF_WARN(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-                "Uploading double precision to buffer with format {}. Consider using R64Sfloat for audio.",
-                vk::to_string(target->get_format()));
+                "Uploading double precision to buffer with modality {}. Consider using AUDIO_1D or AUDIO_MULTICHANNEL.",
+                Kakshya::modality_to_string(modality));
         }
     }
 
