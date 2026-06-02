@@ -14,6 +14,7 @@ namespace MayaFlux::Yantra {
 struct VulkanBufferSlot {
     vk::Buffer buffer;
     vk::DeviceMemory memory;
+    void* mapped_ptr { nullptr };
     size_t allocated_bytes {};
 };
 
@@ -51,6 +52,10 @@ namespace {
 
     void free_slot(vk::Device device, VulkanBufferSlot& slot)
     {
+        if (slot.mapped_ptr) {
+            device.unmapMemory(slot.memory);
+            slot.mapped_ptr = nullptr;
+        }
         if (slot.buffer) {
             device.destroyBuffer(slot.buffer);
             slot.buffer = vk::Buffer {};
@@ -83,6 +88,7 @@ namespace {
 
         slot.memory = device.allocateMemory(ai);
         device.bindBufferMemory(slot.buffer, slot.memory, 0);
+        slot.mapped_ptr = device.mapMemory(slot.memory, 0, VK_WHOLE_SIZE);
         slot.allocated_bytes = byte_size;
     }
 
@@ -216,27 +222,20 @@ void GpuResourceManager::ensure_buffer(size_t index, size_t required_bytes)
 
 void GpuResourceManager::upload(size_t index, const float* data, size_t byte_size)
 {
-    auto& foundry = Portal::Graphics::get_shader_foundry();
     auto& vk_slot = m_impl->buffers[index];
-    map_copy_unmap(foundry.get_device(), vk_slot.memory, data, byte_size);
+    std::memcpy(vk_slot.mapped_ptr, data, byte_size);
 }
 
 void GpuResourceManager::upload_raw(size_t index, const uint8_t* data, size_t byte_size)
 {
-    auto& foundry = Portal::Graphics::get_shader_foundry();
     auto& vk_slot = m_impl->buffers[index];
-    map_copy_unmap(foundry.get_device(), vk_slot.memory, data, byte_size);
+    std::memcpy(vk_slot.mapped_ptr, data, byte_size);
 }
 
 void GpuResourceManager::download(size_t index, float* dest, size_t byte_size)
 {
-    auto& foundry = Portal::Graphics::get_shader_foundry();
-    auto device = foundry.get_device();
     auto& vk_slot = m_impl->buffers[index];
-
-    void* mapped = device.mapMemory(vk_slot.memory, 0, VK_WHOLE_SIZE);
-    std::memcpy(dest, mapped, byte_size);
-    device.unmapMemory(vk_slot.memory);
+    std::memcpy(dest, vk_slot.mapped_ptr, byte_size);
 }
 
 void GpuResourceManager::bind_descriptor(size_t index, const GpuBufferBinding& spec)
