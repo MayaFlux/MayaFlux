@@ -340,6 +340,11 @@ void GpuDispatchCore::readback_aux(GpuChannelResult& result)
     }
 }
 
+void GpuDispatchCore::download_binding(size_t index, void* dest, size_t byte_size)
+{
+    m_resources.download(index, reinterpret_cast<float*>(dest), byte_size);
+}
+
 //==============================================================================
 // Internal helpers
 //==============================================================================

@@ -11,14 +11,11 @@ layout(set = 0, binding = 1) readonly buffer EdgeTable {
 layout(set = 0, binding = 2) readonly buffer TriTable {
     int tri_table[];
 };
-layout(set = 0, binding = 3) readonly buffer PrefixSums {
-    uint prefix[];
-};
-layout(set = 0, binding = 4) writeonly buffer VertexOut {
+layout(set = 0, binding = 3) writeonly buffer VertexOut {
     float vertices[];
 };
-layout(set = 0, binding = 5) writeonly buffer IndexOut {
-    uint indices[];
+layout(set = 0, binding = 4) buffer AtomicCounter {
+    uint vertex_count;
 };
 
 layout(push_constant) uniform PC {
@@ -31,19 +28,8 @@ layout(push_constant) uniform PC {
     uint _pad;
 } pc;
 
-// ---- helpers ----------------------------------------------------------------
-
-vec3 interp_edge(vec3 p0, vec3 p1, float v0, float v1)
-{
-    float d = v1 - v0;
-    if (abs(d) < 1e-7)
-        return (p0 + p1) * 0.5;
-    return p0 + ((pc.iso_level - v0) / d) * (p1 - p0);
-}
-
 float sample_grid(vec3 world_p)
 {
-    // Trilinear sample of the SDF grid.
     vec3 local = (world_p - pc.bounds_min) / pc.step;
     uint nx = pc.res_x + 1;
     uint ny = pc.res_y + 1;
@@ -61,69 +47,61 @@ float sample_grid(vec3 world_p)
 
     float tx = fract(fx), ty = fract(fy), tz = fract(fz);
 
-    #define S(xi, yi, zi) sdf[(xi) + nx * ((yi) + ny * (zi))]
-
+    #define S(xi,yi,zi) sdf[(xi) + nx*((yi) + ny*(zi))]
     return mix(
-        mix(mix(S(ix0, iy0, iz0), S(ix1, iy0, iz0), tx),
-            mix(S(ix0, iy1, iz0), S(ix1, iy1, iz0), tx), ty),
-        mix(mix(S(ix0, iy0, iz1), S(ix1, iy0, iz1), tx),
-            mix(S(ix0, iy1, iz1), S(ix1, iy1, iz1), tx), ty),
+        mix(mix(S(ix0, iy0, iz0), S(ix1, iy0, iz0), tx), mix(S(ix0, iy1, iz0), S(ix1, iy1, iz0), tx), ty),
+        mix(mix(S(ix0, iy0, iz1), S(ix1, iy0, iz1), tx), mix(S(ix0, iy1, iz1), S(ix1, iy1, iz1), tx), ty),
         tz);
-
     #undef S
 }
 
 vec3 compute_normal(vec3 p)
 {
     const float e = 1e-3;
-    vec3 g;
-    g.x = sample_grid(p + vec3(e, 0, 0)) - sample_grid(p - vec3(e, 0, 0));
-    g.y = sample_grid(p + vec3(0, e, 0)) - sample_grid(p - vec3(0, e, 0));
-    g.z = sample_grid(p + vec3(0, 0, e)) - sample_grid(p - vec3(0, 0, e));
+    vec3 g = vec3(
+            sample_grid(p + vec3(e, 0, 0)) - sample_grid(p - vec3(e, 0, 0)),
+            sample_grid(p + vec3(0, e, 0)) - sample_grid(p - vec3(0, e, 0)),
+            sample_grid(p + vec3(0, 0, e)) - sample_grid(p - vec3(0, 0, e)));
     float len = length(g);
     return len > 1e-7 ? g / len : vec3(0, 1, 0);
+}
+
+vec3 interp_edge(vec3 p0, vec3 p1, float v0, float v1)
+{
+    float d = v1 - v0;
+    return abs(d) < 1e-7 ? (p0 + p1) * 0.5 : p0 + ((pc.iso_level - v0) / d) * (p1 - p0);
 }
 
 void write_vertex(uint slot, vec3 pos, vec2 uv, vec3 normal)
 {
     uint base = slot * 15u;
-    // position
     vertices[base + 0] = pos.x;
     vertices[base + 1] = pos.y;
     vertices[base + 2] = pos.z;
-    // color (white)
     vertices[base + 3] = 1.0;
     vertices[base + 4] = 1.0;
     vertices[base + 5] = 1.0;
-    // weight
     vertices[base + 6] = 0.0;
-    // uv
     vertices[base + 7] = uv.x;
     vertices[base + 8] = uv.y;
-    // normal
     vertices[base + 9] = normal.x;
     vertices[base + 10] = normal.y;
     vertices[base + 11] = normal.z;
-    // tangent (canonical X)
     vertices[base + 12] = 1.0;
     vertices[base + 13] = 0.0;
     vertices[base + 14] = 0.0;
 }
 
-// ---- main -------------------------------------------------------------------
-
 void main()
 {
     const uint gid = gl_GlobalInvocationID.x;
     const uint n_voxels = pc.res_x * pc.res_y * pc.res_z;
-
     if (gid >= n_voxels)
         return;
 
     const uint ix = gid % pc.res_x;
     const uint iy = (gid / pc.res_x) % pc.res_y;
     const uint iz = gid / (pc.res_x * pc.res_y);
-
     const uint nx = pc.res_x + 1;
     const uint ny = pc.res_y + 1;
 
@@ -146,10 +124,10 @@ void main()
         return;
 
     float x0 = pc.bounds_min.x + float(ix) * pc.step.x;
-    float y0 = pc.bounds_min.y + float(iy) * pc.step.y;
-    float z0 = pc.bounds_min.z + float(iz) * pc.step.z;
     float x1 = x0 + pc.step.x;
+    float y0 = pc.bounds_min.y + float(iy) * pc.step.y;
     float y1 = y0 + pc.step.y;
+    float z0 = pc.bounds_min.z + float(iz) * pc.step.z;
     float z1 = z0 + pc.step.z;
 
     vec3 c[8] = {
@@ -182,9 +160,6 @@ void main()
             float(pc.res_y) * pc.step.y,
             float(pc.res_z) * pc.step.z);
 
-    // Write triangles at the pre-computed prefix offset for this voxel.
-    uint write_base = prefix[gid] * 3u; // prefix[gid] is triangle offset, *3 for vertices
-
     for (int t = 0; t < 5; ++t) {
         int idx0 = tri_table[int(cube_idx) * 16 + t * 3 + 0];
         if (idx0 == -1)
@@ -192,20 +167,18 @@ void main()
         int idx1 = tri_table[int(cube_idx) * 16 + t * 3 + 1];
         int idx2 = tri_table[int(cube_idx) * 16 + t * 3 + 2];
 
-        vec3 p0 = ep[idx0];
-        vec3 p1 = ep[idx1];
-        vec3 p2 = ep[idx2];
+        vec3 p0 = ep[idx0], p1 = ep[idx1], p2 = ep[idx2];
 
-        vec2 uv0 = vec2((p0.x - pc.bounds_min.x) / extent.x, (p0.y - pc.bounds_min.y) / extent.y);
-        vec2 uv1 = vec2((p1.x - pc.bounds_min.x) / extent.x, (p1.y - pc.bounds_min.y) / extent.y);
-        vec2 uv2 = vec2((p2.x - pc.bounds_min.x) / extent.x, (p2.y - pc.bounds_min.y) / extent.y);
+        uint base = atomicAdd(vertex_count, 3u);
 
-        write_vertex(write_base + uint(t) * 3u + 0u, p0, uv0, compute_normal(p0));
-        write_vertex(write_base + uint(t) * 3u + 1u, p1, uv1, compute_normal(p1));
-        write_vertex(write_base + uint(t) * 3u + 2u, p2, uv2, compute_normal(p2));
-
-        indices[write_base + uint(t) * 3u + 0u] = write_base + uint(t) * 3u + 0u;
-        indices[write_base + uint(t) * 3u + 1u] = write_base + uint(t) * 3u + 1u;
-        indices[write_base + uint(t) * 3u + 2u] = write_base + uint(t) * 3u + 2u;
+        write_vertex(base + 0u, p0,
+            vec2((p0.x - pc.bounds_min.x) / extent.x, (p0.y - pc.bounds_min.y) / extent.y),
+            compute_normal(p0));
+        write_vertex(base + 1u, p1,
+            vec2((p1.x - pc.bounds_min.x) / extent.x, (p1.y - pc.bounds_min.y) / extent.y),
+            compute_normal(p1));
+        write_vertex(base + 2u, p2,
+            vec2((p2.x - pc.bounds_min.x) / extent.x, (p2.y - pc.bounds_min.y) / extent.y),
+            compute_normal(p2));
     }
 }

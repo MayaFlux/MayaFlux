@@ -52,9 +52,7 @@ void GpuSDFNode::set_resolution(uint32_t res_x, uint32_t res_y, uint32_t res_z)
     m_res_x = std::max(res_x, 1U);
     m_res_y = std::max(res_y, 1U);
     m_res_z = std::max(res_z, 1U);
-    m_count_exec = nullptr;
     m_emit_exec = nullptr;
-    m_count_op = nullptr;
     m_emit_op = nullptr;
     m_dirty = true;
 }
@@ -73,7 +71,8 @@ void GpuSDFNode::compute_frame()
 {
     if (!m_dirty)
         return;
-    if (!m_count_op) {
+
+    if (!m_emit_op) {
         std::vector<uint32_t> edge_flat(256);
         for (size_t i = 0; i < 256; ++i)
             edge_flat[i] = static_cast<uint32_t>(Kinesis::k_edge_table[i]);
@@ -98,25 +97,10 @@ void GpuSDFNode::build_operations(
     const std::vector<int32_t>& tri_flat)
 {
     const size_t n_corners = corner_count();
-    const size_t n_voxels = voxel_count();
     const size_t n_vertices = worst_case_vertices();
 
     const std::vector<float> grid_placeholder(n_corners, 0.0F);
-    const std::vector<uint32_t> prefix_placeholder(n_voxels, 0U);
-
-    m_count_exec = std::make_shared<McExecutor>(
-        Yantra::GpuShaderConfig {
-            .shader_path = "mc_count.comp",
-            .workgroup_size = { 64, 1, 1 },
-            .push_constant_size = sizeof(McPC) });
-
-    m_count_exec
-        ->input(grid_placeholder)
-        .input(edge_flat, Yantra::GpuBufferBinding::ElementType::UINT32)
-        .input(tri_flat, Yantra::GpuBufferBinding::ElementType::INT32)
-        .output(n_voxels * sizeof(uint32_t), Yantra::GpuBufferBinding::ElementType::UINT32);
-
-    m_count_op = std::make_shared<McTransformer>(m_count_exec);
+    const std::vector<uint32_t> counter_placeholder(1, 0U);
 
     m_emit_exec = std::make_shared<McExecutor>(
         Yantra::GpuShaderConfig {
@@ -128,9 +112,10 @@ void GpuSDFNode::build_operations(
         ->input(grid_placeholder)
         .input(edge_flat, Yantra::GpuBufferBinding::ElementType::UINT32)
         .input(tri_flat, Yantra::GpuBufferBinding::ElementType::INT32)
-        .input(prefix_placeholder, Yantra::GpuBufferBinding::ElementType::UINT32)
         .output(n_vertices * sizeof(float))
-        .output(n_vertices * sizeof(uint32_t), Yantra::GpuBufferBinding::ElementType::UINT32);
+        .output(sizeof(uint32_t), Yantra::GpuBufferBinding::ElementType::UINT32);
+
+    m_emit_exec->set_output_size(4, sizeof(uint32_t));
 
     m_emit_op = std::make_shared<McTransformer>(m_emit_exec);
 }
@@ -172,53 +157,39 @@ void GpuSDFNode::rebuild()
         .res_z = m_res_z,
     };
 
-    m_count_exec->set_binding_data(0, grid);
-    m_count_exec->set_push_constants(pc);
+    const std::vector<uint32_t> zero { 0U };
+    m_emit_exec->set_binding_data(0, grid);
+    m_emit_exec->set_binding_data(4, zero);
+    m_emit_exec->set_push_constants(pc);
 
-    Yantra::Datum<std::vector<Kakshya::DataVariant>> dummy;
-    const auto count_result = m_count_op->apply_operation(dummy);
-    const auto voxel_counts = SEC::read_output<uint32_t>(count_result, 3);
-    const uint32_t total_tris = std::reduce(voxel_counts.begin(), voxel_counts.end(), 0U);
+    Yantra::Datum<std::vector<Kakshya::DataVariant>> input;
+    input.data.push_back(std::vector<float> { 0.0F });
+    const auto emit_result = m_emit_op->apply_operation(input);
 
-    if (total_tris == 0) {
+    const auto counter = SEC::read_output<uint32_t>(emit_result, 4);
+    if (counter.empty() || counter[0] == 0) {
         MF_WARN(Journal::Component::Nodes, Journal::Context::NodeProcessing,
-            "GpuSDFNode: no triangles at iso_level={}", m_iso_level);
+            "GpuSDFNode: no vertices at iso_level={}", m_iso_level);
         clear_mesh();
         m_dirty = false;
         return;
     }
 
-    std::vector<uint32_t> prefix(voxel_counts.size());
-    std::exclusive_scan(voxel_counts.begin(), voxel_counts.end(), prefix.begin(), 0U);
+    const uint32_t n_verts = counter[0];
+    const auto& vertex_bytes_raw = std::any_cast<const std::vector<uint8_t>&>(
+        emit_result.metadata.at("gpu_output_3"));
+    const size_t needed_bytes = static_cast<size_t>(n_verts) * sizeof(Kakshya::MeshVertex);
 
-    m_emit_exec->set_binding_data(0, grid);
-    m_emit_exec->set_binding_data(3, prefix);
-    m_emit_exec->set_push_constants(pc);
-
-    const auto emit_result = m_emit_op->apply_operation(dummy);
-    const auto vertex_floats = SEC::read_output<float>(emit_result, 4);
-    const auto index_data = SEC::read_output<uint32_t>(emit_result, 5);
-
-    const uint32_t n_verts = total_tris * 3U;
-    const size_t expected_floats = static_cast<size_t>(n_verts) * (sizeof(Kakshya::MeshVertex) / sizeof(float));
-
-    if (vertex_floats.size() < expected_floats) {
-        MF_ERROR(Journal::Component::Nodes, Journal::Context::NodeProcessing,
-            "GpuSDFNode: vertex readback too small ({} floats, expected {})",
-            vertex_floats.size(), expected_floats);
-        m_dirty = false;
-        return;
-    }
-
-    set_mesh(
-        std::span { reinterpret_cast<const Kakshya::MeshVertex*>(vertex_floats.data()), n_verts },
-        std::span { index_data.data(), n_verts });
+    const auto* vptr = reinterpret_cast<const Kakshya::MeshVertex*>(vertex_bytes_raw.data());
+    std::vector<uint32_t> indices(n_verts);
+    std::ranges::iota(indices, 0U);
+    set_mesh(std::span { vptr, n_verts }, indices);
 
     MeshWriterNode::compute_frame();
     m_dirty = false;
 
     MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
-        "GpuSDFNode: {} triangles extracted", total_tris);
+        "GpuSDFNode: {} vertices extracted", n_verts);
 }
 
 } // namespace MayaFlux::Nodes::GpuSync

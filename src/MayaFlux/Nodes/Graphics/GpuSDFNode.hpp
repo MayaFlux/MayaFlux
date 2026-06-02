@@ -106,9 +106,7 @@ private:
     using McExecutor = Yantra::ShaderExecutionContext<>;
     using McTransformer = Yantra::GpuTransformer<>;
 
-    std::shared_ptr<McExecutor> m_count_exec;
     std::shared_ptr<McExecutor> m_emit_exec;
-    std::shared_ptr<McTransformer> m_count_op;
     std::shared_ptr<McTransformer> m_emit_op;
 
     void build_operations(const std::vector<uint32_t>& edge_flat, const std::vector<int32_t>& tri_flat);
