@@ -405,6 +405,66 @@ void download_from_gpu(
     std::memcpy(data, ptr, std::min(size, bytes));
 }
 
+void download_from_gpu_async(
+    const std::shared_ptr<VKBuffer>& source,
+    void* data,
+    size_t size,
+    std::shared_ptr<VKBuffer>& staging)
+{
+    if (!source || !data || size == 0)
+        return;
+
+    auto buffer_service = Registry::BackendRegistry::instance()
+                              .get_service<Registry::Service::BufferService>();
+
+    if (!buffer_service
+        || !buffer_service->execute_fenced
+        || !buffer_service->wait_fenced
+        || !buffer_service->release_fenced
+        || !buffer_service->invalidate_range) {
+        error<std::runtime_error>(
+            Journal::Component::Buffers,
+            Journal::Context::BufferProcessing,
+            std::source_location::current(),
+            "download_from_gpu_async: BufferService unavailable");
+    }
+
+    if (!staging || staging->get_size_bytes() < size)
+        staging = create_staging_buffer(size);
+
+    auto handle = buffer_service->execute_fenced([&](void* cmd_ptr) {
+        vk::CommandBuffer cmd(static_cast<VkCommandBuffer>(cmd_ptr));
+        vk::BufferCopy region { 0, 0, static_cast<vk::DeviceSize>(size) };
+        cmd.copyBuffer(source->get_buffer(), staging->get_buffer(), 1, &region);
+    });
+
+    if (!handle) {
+        error<std::runtime_error>(
+            Journal::Component::Buffers,
+            Journal::Context::BufferProcessing,
+            std::source_location::current(),
+            "download_from_gpu_async: execute_fenced returned null");
+    }
+
+    buffer_service->wait_fenced(handle);
+
+    auto& resources = staging->get_buffer_resources();
+    buffer_service->invalidate_range(resources.memory, 0, size);
+
+    void* ptr = staging->get_mapped_ptr();
+    if (!ptr) {
+        buffer_service->release_fenced(handle);
+        error<std::runtime_error>(
+            Journal::Component::Buffers,
+            Journal::Context::BufferProcessing,
+            std::source_location::current(),
+            "download_from_gpu_async: staging buffer has no mapped pointer");
+    }
+
+    std::memcpy(data, ptr, size);
+    buffer_service->release_fenced(handle);
+}
+
 void upload_audio_to_gpu(
     const std::shared_ptr<AudioBuffer>& audio_buffer,
     const std::shared_ptr<VKBuffer>& gpu_buffer,

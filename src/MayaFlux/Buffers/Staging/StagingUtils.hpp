@@ -181,6 +181,30 @@ void download_from_gpu(
 }
 
 /**
+ * @brief Download from a device-local GPU buffer without stalling the graphics queue.
+ *
+ * Records a buffer copy into a fenced command buffer, waits on the fence from
+ * the calling thread, then memcpys from the mapped staging buffer into @p data.
+ * Unlike download_from_gpu, this does not call queue.waitIdle, making it safe
+ * to call from any thread that is not the graphics thread itself.
+ *
+ * @p staging is allocated and cached by the caller to avoid per-call Vulkan
+ * object churn. Pass the same staging buffer each frame; it is resized if
+ * @p size exceeds its current capacity.
+ *
+ * @param source   Device-local source buffer.
+ * @param data     Destination host pointer, at least @p size bytes.
+ * @param size     Byte count to copy.
+ * @param staging  Persistent host-visible staging buffer. Created via
+ *                 create_staging_buffer(). Resized in-place if too small.
+ */
+MAYAFLUX_API void download_from_gpu_async(
+    const std::shared_ptr<VKBuffer>& source,
+    void* data,
+    size_t size,
+    std::shared_ptr<VKBuffer>& staging);
+
+/**
  * @brief Create staging buffer for transfers
  * @param size Size in bytes
  * @return Host-visible staging buffer ready for transfers
