@@ -22,10 +22,9 @@ foreach(file ${CRITICAL_CMAKE_FILES})
     endif()
 endforeach()
 
-include(compiler_config)
-
 project(MayaFlux VERSION 0.4.0)
 
+include(compiler_config)
 include(defines)
 include(rpath)
 include(dependencies)

@@ -12,12 +12,13 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
         message(STATUS "ccache not found, building without cache")
     endif()
 
-    add_compile_options(
-        -Wall
-        -Wextra
-        -Wpedantic
-        -pipe
-    )
+    add_compile_options(-pipe)
+
+    if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64")
+        add_compile_options(-mavx -mavx2)
+        message (STATUS "AVX and AVX2 support enabled for x86_64 architecture")
+    endif()
+
     if(APPLE)
         set(CMAKE_OSX_DEPLOYMENT_TARGET "15.6" CACHE STRING
             "Minimum macOS version" FORCE)
