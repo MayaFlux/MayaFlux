@@ -79,6 +79,7 @@
 #include "Buffers/Container/VideoContainerBuffer.hpp"
 #include "Buffers/Forma/FormaBuffer.hpp"
 #include "Buffers/Geometry/CompositeGeometryBuffer.hpp"
+#include "Buffers/Geometry/ComputeMeshBuffer.hpp"
 #include "Buffers/Geometry/GeometryBuffer.hpp"
 #include "Buffers/Geometry/GeometryWriteProcessor.hpp"
 #include "Buffers/Geometry/MeshBuffer.hpp"
@@ -103,6 +104,7 @@
 #include "Buffers/Textures/TextureBuffer.hpp"
 #include "Buffers/Textures/TextureWriteProcessor.hpp"
 #include "MayaFlux/Buffers/Forma/FormaBindingsProcessor.hpp"
+#include "MayaFlux/Buffers/Shaders/SDFFieldProcessor.hpp"
 
 #include "Kriya/Awaiters/DelayAwaiters.hpp"
 #include "Kriya/Awaiters/EventAwaiter.hpp"

@@ -67,6 +67,7 @@ namespace Buffers {
     class CompositeGeometryBuffer;
     class MeshBuffer;
     class MeshNetworkBuffer;
+    class ComputeMeshBuffer;
     class NetworkGeometryBuffer;
     class NetworkTextureBuffer;
     class NetworkAudioBuffer;
@@ -133,6 +134,7 @@ namespace IO {
     B(CompositeGeometryBuffer, MayaFlux::Buffers::CompositeGeometryBuffer) \
     B(MeshBuffer, MayaFlux::Buffers::MeshBuffer)                           \
     B(MeshNetworkBuffer, MayaFlux::Buffers::MeshNetworkBuffer)             \
+    B(ComputeMeshBuffer, MayaFlux::Buffers::ComputeMeshBuffer)             \
     B(NetworkGeometryBuffer, MayaFlux::Buffers::NetworkGeometryBuffer)     \
     B(NetworkTextureBuffer, MayaFlux::Buffers::NetworkTextureBuffer)       \
     B(NetworkAudioBuffer, MayaFlux::Buffers::NetworkAudioBuffer)
