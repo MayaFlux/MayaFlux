@@ -243,6 +243,8 @@ vk::BufferUsageFlags VKBuffer::get_usage_flags() const
         flags |= vk::BufferUsageFlagBits::eStorageBuffer
             | vk::BufferUsageFlagBits::eShaderDeviceAddress;
         break;
+    case Usage::HOST_STORAGE:
+        flags |= vk::BufferUsageFlagBits::eStorageBuffer;
     }
 
     return flags;

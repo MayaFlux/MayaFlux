@@ -69,14 +69,15 @@ public:
     using RenderConfig = Portal::Graphics::RenderConfig;
 
     enum class Usage : uint8_t {
-        STAGING, ///< Host-visible staging buffer (CPU-writable)
+        STAGING, ///< Host-visible staging buffer (CPU-writable, eTransferSrc|Dst)
         DEVICE, ///< Device-local GPU-only buffer
-        COMPUTE, ///< Storage buffer for compute shaders
+        COMPUTE, ///< Storage buffer for compute shaders (device-local)
         VERTEX, ///< Vertex buffer
         INDEX, ///< Index buffer
         UNIFORM, ///< Uniform buffer (host-visible)
         UNIFORM_BDA, ///< Uniform buffer with device address query support
         STORAGE_BDA, ///< Storage buffer with device address query support
+        HOST_STORAGE, ///< Host-visible storage buffer (eStorageBuffer + eHostVisible|eHostCoherent)
     };
 
     /**
@@ -370,7 +371,8 @@ public:
         return m_usage == Usage::STAGING
             || m_usage == Usage::UNIFORM
             || m_usage == Usage::UNIFORM_BDA
-            || m_usage == Usage::STORAGE_BDA;
+            || m_usage == Usage::STORAGE_BDA
+            || m_usage == Usage::HOST_STORAGE;
     }
 
     /**
