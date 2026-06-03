@@ -2,6 +2,7 @@
 #extension GL_GOOGLE_include_directive : enable
 
 #include "include/sdf_primitives.glsl"
+#include "include/noise.glsl"
 
 layout(local_size_x = 64) in;
 
@@ -39,10 +40,20 @@ void main()
                 float(giy) * pc.step.y,
                 float(giz) * pc.step.z);
 
-    float d = sdf_smooth_union(
-            sdf_sphere(p, vec3(0.0), 1.2),
-            sdf_gyroid(p, 3.5, pc.time) - 0.08,
-            0.05);
+    // Gyroid
+    //float d = sdf_smooth_union(
+    //        sdf_sphere(p, vec3(0.0), 1.2),
+    //        sdf_gyroid(p, 3.5, pc.time) - 0.08,
+    //        0.05);
+
+    // Noise
+    //float d = sdf_smooth_union(
+    //        sdf_sphere(p, vec3(0.0), 1.0),
+    //        abs(noise(p * 2.0 + pc.time * 0.3)) - 0.3,
+    //        0.1);
+
+    float base = sdf_sphere(p, vec3(0.0), 1.0);
+    float d = base + turbulence(p * 2.0 + pc.time * 0.3) * 0.3;
 
     grid[idx] = d;
 }

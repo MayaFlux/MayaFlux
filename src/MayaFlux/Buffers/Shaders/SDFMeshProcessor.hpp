@@ -138,7 +138,6 @@ private:
 
     void rebuild_owned_buffers();
     void evaluate_grid();
-
     void rebuild_lookup_buffers();
 
     [[nodiscard]] uint32_t corner_count() const noexcept
