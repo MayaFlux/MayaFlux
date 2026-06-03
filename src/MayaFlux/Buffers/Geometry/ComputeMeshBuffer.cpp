@@ -46,7 +46,8 @@ ComputeMeshBuffer::ComputeMeshBuffer(
     uint32_t res_x,
     uint32_t res_y,
     uint32_t res_z,
-    float iso_level)
+    float iso_level,
+    std::string field_shader)
     : VKBuffer(
           worst_case_bytes(res_x, res_y, res_z),
           Usage::VERTEX,
@@ -58,6 +59,7 @@ ComputeMeshBuffer::ComputeMeshBuffer(
     , m_bounds_max(bounds_max)
     , m_iso_level(iso_level)
     , m_gpu_field(true)
+    , m_field_shader(std::move(field_shader))
 {
     MF_INFO(Journal::Component::Buffers, Journal::Context::Init,
         "ComputeMeshBuffer (GPU field): {}x{}x{} grid, {:.1f} MB worst-case",
@@ -93,7 +95,8 @@ void ComputeMeshBuffer::setup_processors(ProcessingToken token)
         m_field_processor = std::make_shared<SDFFieldProcessor>(
             m_prep_processor->grid_buf(),
             m_bounds_min, m_bounds_max,
-            m_res_x, m_res_y, m_res_z);
+            m_res_x, m_res_y, m_res_z,
+            m_field_shader);
         m_field_processor->set_processing_token(token);
         chain->add_preprocessor(m_field_processor, self);
 

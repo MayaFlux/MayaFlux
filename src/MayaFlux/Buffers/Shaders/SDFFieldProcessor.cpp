@@ -10,8 +10,9 @@ SDFFieldProcessor::SDFFieldProcessor(
     const glm::vec3& bounds_max,
     uint32_t res_x,
     uint32_t res_y,
-    uint32_t res_z)
-    : ComputeProcessor("sdf_field.comp", 64)
+    uint32_t res_z,
+    std::string shader)
+    : ComputeProcessor(shader, 64)
     , m_grid_buf(std::move(grid_buf))
     , m_res_x(std::max(res_x, 1U))
     , m_res_y(std::max(res_y, 1U))

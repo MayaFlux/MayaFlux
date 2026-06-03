@@ -38,6 +38,7 @@ bool ShaderFoundry::initialize(
     m_config = config;
 
     m_config.include_directories.emplace_back(Core::SHADER_SOURCE_DIR);
+    m_config.include_directories.emplace_back(std::string(Core::SHADER_SOURCE_DIR) + "/include");
     m_config.include_directories.emplace_back(Core::SHADER_BUILD_OUTPUT_DIR);
 
     m_global_descriptor_manager = std::make_shared<Core::VKDescriptorManager>();

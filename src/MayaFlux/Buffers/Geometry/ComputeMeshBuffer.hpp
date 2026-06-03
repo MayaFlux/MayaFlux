@@ -72,6 +72,7 @@ public:
      * @param res_y       Cell count along Y (minimum 1).
      * @param res_z       Cell count along Z (minimum 1).
      * @param iso_level   Isosurface threshold (default 0.0).
+     * @param field_shader Optional compute shader for field evaluation (default "sdf_field.comp").
      */
     ComputeMeshBuffer(
         const glm::vec3& bounds_min,
@@ -79,7 +80,8 @@ public:
         uint32_t res_x,
         uint32_t res_y,
         uint32_t res_z,
-        float iso_level = 0.0F);
+        float iso_level = 0.0F,
+        std::string field_shader = "sdf_field_gyroid.comp");
 
     /** @brief Access the field processor to drive time or bounds from a metro. */
     [[nodiscard]] std::shared_ptr<SDFFieldProcessor> get_field_processor() const
@@ -151,6 +153,8 @@ private:
     bool m_gpu_field {};
     std::shared_ptr<SDFPrepProcessor> m_prep_processor;
     std::shared_ptr<SDFFieldProcessor> m_field_processor;
+
+    std::string m_field_shader;
 
     // Field parameters held until m_sdf_processor is constructed.
     Kinesis::SpatialField m_field;

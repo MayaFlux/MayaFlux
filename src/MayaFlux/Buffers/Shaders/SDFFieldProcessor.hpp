@@ -47,7 +47,8 @@ public:
         const glm::vec3& bounds_max,
         uint32_t res_x,
         uint32_t res_y,
-        uint32_t res_z);
+        uint32_t res_z,
+        std::string shader = "sdf_field_gyroid.comp");
 
     ~SDFFieldProcessor() override = default;
 
