@@ -1,0 +1,48 @@
+#version 450
+#extension GL_GOOGLE_include_directive : enable
+
+#include "include/sdf_primitives.glsl"
+
+layout(local_size_x = 64) in;
+
+layout(set = 0, binding = 0) buffer GridBuffer {
+    float grid[];
+};
+
+layout(push_constant) uniform PC {
+    vec3 bounds_min;
+    float time;
+    vec3 step;
+    uint res_x;
+    uint res_y;
+    uint res_z;
+    uint _pad[2];
+} pc;
+
+void main()
+{
+    uint idx = gl_GlobalInvocationID.x;
+
+    uint nx = pc.res_x + 1u;
+    uint ny = pc.res_y + 1u;
+
+    uint total = nx * ny * (pc.res_z + 1u);
+    if (idx >= total)
+        return;
+
+    uint gix = idx % nx;
+    uint giy = (idx / nx) % ny;
+    uint giz = idx / (nx * ny);
+
+    vec3 p = pc.bounds_min + vec3(
+                float(gix) * pc.step.x,
+                float(giy) * pc.step.y,
+                float(giz) * pc.step.z);
+
+    float d = sdf_smooth_union(
+            sdf_sphere(p, vec3(0.0), 1.2),
+            sdf_gyroid(p, 3.5, pc.time) - 0.08,
+            0.05);
+
+    grid[idx] = d;
+}
