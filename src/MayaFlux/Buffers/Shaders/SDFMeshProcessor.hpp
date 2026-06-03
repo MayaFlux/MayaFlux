@@ -49,6 +49,32 @@ public:
         uint32_t res_z,
         float iso_level);
 
+    /**
+     * @brief Construct in GPU-field mode with externally owned buffers.
+     *
+     * @p grid_buf and @p counter_buf are owned by SdfPrepProcessor and
+     * pre-zeroed before this processor runs.  evaluate_grid() is never
+     * called in this mode.
+     *
+     * @param grid_buf    Corner grid buffer written by SdfFieldProcessor.
+     * @param counter_buf Atomic vertex counter buffer, zeroed by SdfPrepProcessor.
+     * @param bounds_min  World-space minimum corner.
+     * @param bounds_max  World-space maximum corner.
+     * @param res_x       Cell count along X.
+     * @param res_y       Cell count along Y.
+     * @param res_z       Cell count along Z.
+     * @param iso_level   Isosurface threshold.
+     */
+    SDFMeshProcessor(
+        std::shared_ptr<VKBuffer> grid_buf,
+        std::shared_ptr<VKBuffer> counter_buf,
+        const glm::vec3& bounds_min,
+        const glm::vec3& bounds_max,
+        uint32_t res_x,
+        uint32_t res_y,
+        uint32_t res_z,
+        float iso_level);
+
     ~SDFMeshProcessor() override = default;
 
     /** @brief Replace the scalar field and mark dirty. */
@@ -92,6 +118,7 @@ private:
     uint32_t m_res_z;
     float m_iso_level;
     bool m_dirty { true };
+    bool m_owns_buffers { true }; ///< false in GPU-field mode; buffers owned by SdfPrepProcessor.
 
     std::shared_ptr<VKBuffer> m_grid_buf;
     std::shared_ptr<VKBuffer> m_edge_buf;
@@ -111,6 +138,8 @@ private:
 
     void rebuild_owned_buffers();
     void evaluate_grid();
+
+    void rebuild_lookup_buffers();
 
     [[nodiscard]] uint32_t corner_count() const noexcept
     {

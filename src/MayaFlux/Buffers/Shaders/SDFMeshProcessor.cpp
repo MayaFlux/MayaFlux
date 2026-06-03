@@ -45,6 +45,39 @@ SDFMeshProcessor::SDFMeshProcessor(
     set_dispatch_mode(ShaderDispatchConfig::DispatchMode::MANUAL);
 }
 
+SDFMeshProcessor::SDFMeshProcessor(
+    std::shared_ptr<VKBuffer> grid_buf,
+    std::shared_ptr<VKBuffer> counter_buf,
+    const glm::vec3& bounds_min,
+    const glm::vec3& bounds_max,
+    uint32_t res_x,
+    uint32_t res_y,
+    uint32_t res_z,
+    float iso_level)
+    : ComputeProcessor("mc_emit.comp.spv", 64)
+    , m_bounds_min(bounds_min)
+    , m_bounds_max(bounds_max)
+    , m_res_x(std::max(res_x, 1U))
+    , m_res_y(std::max(res_y, 1U))
+    , m_res_z(std::max(res_z, 1U))
+    , m_iso_level(iso_level)
+    , m_grid_buf(std::move(grid_buf))
+    , m_counter_buf(std::move(counter_buf))
+    , m_owns_buffers(false)
+{
+    m_config.push_constant_size = sizeof(McPC);
+
+    m_config.bindings["sdf_grid"] = ShaderBinding(0, 0, vk::DescriptorType::eStorageBuffer);
+    m_config.bindings["edge_table"] = ShaderBinding(0, 1, vk::DescriptorType::eStorageBuffer);
+    m_config.bindings["tri_table"] = ShaderBinding(0, 2, vk::DescriptorType::eStorageBuffer);
+    m_config.bindings["vertices"] = ShaderBinding(0, 3, vk::DescriptorType::eStorageBuffer);
+    m_config.bindings["counter"] = ShaderBinding(0, 4, vk::DescriptorType::eStorageBuffer);
+
+    set_dispatch_mode(ShaderDispatchConfig::DispatchMode::MANUAL);
+
+    rebuild_lookup_buffers();
+}
+
 // ============================================================================
 // Setters
 // ============================================================================
@@ -93,7 +126,8 @@ void SDFMeshProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
         return;
     }
 
-    rebuild_owned_buffers();
+    if (m_owns_buffers)
+        rebuild_owned_buffers();
 
     bind_buffer("sdf_grid", m_grid_buf);
     bind_buffer("edge_table", m_edge_buf);
@@ -127,7 +161,8 @@ bool SDFMeshProcessor::on_before_execute(
     if (!m_dirty)
         return false;
 
-    evaluate_grid();
+    if (m_owns_buffers)
+        evaluate_grid();
 
     std::memset(m_counter_buf->get_mapped_ptr(), 0, sizeof(uint32_t));
 
@@ -234,6 +269,24 @@ void SDFMeshProcessor::evaluate_grid()
                 m_bounds_min.y + static_cast<float>(giy) * step.y,
                 m_bounds_min.z + static_cast<float>(giz) * step.z));
         });
+}
+
+void SDFMeshProcessor::rebuild_lookup_buffers()
+{
+    auto svc = Registry::BackendRegistry::instance()
+                   .get_service<Registry::Service::BufferService>();
+
+    m_edge_buf = std::make_shared<VKBuffer>(
+        256 * sizeof(uint32_t),
+        VKBuffer::Usage::HOST_STORAGE,
+        Kakshya::DataModality::UNKNOWN);
+    svc->initialize_buffer(m_edge_buf);
+
+    m_tri_buf = std::make_shared<VKBuffer>(
+        static_cast<long>(256) * 16 * sizeof(int32_t),
+        VKBuffer::Usage::HOST_STORAGE,
+        Kakshya::DataModality::UNKNOWN);
+    svc->initialize_buffer(m_tri_buf);
 }
 
 } // namespace MayaFlux::Buffers

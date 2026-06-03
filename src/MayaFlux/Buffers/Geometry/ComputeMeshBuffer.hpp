@@ -1,11 +1,15 @@
 #pragma once
 
-#include "MayaFlux/Buffers/Shaders/SDFMeshProcessor.hpp"
+#include "MayaFlux/Buffers/VKBuffer.hpp"
 #include "MayaFlux/Kakshya/NDData/VertexFormats.hpp"
+#include "MayaFlux/Kinesis/Tendency/Tendency.hpp"
 
 namespace MayaFlux::Buffers {
 
 class RenderProcessor;
+class SDFPrepProcessor;
+class SDFFieldProcessor;
+class SDFMeshProcessor;
 
 /**
  * @class ComputeMeshBuffer
@@ -48,6 +52,40 @@ public:
         uint32_t res_y,
         uint32_t res_z,
         float iso_level = 0.0F);
+
+    /**
+     * @brief Construct in GPU-field mode.
+     *
+     * No SpatialField is evaluated on CPU. sdf_field.comp evaluates the field
+     * entirely on the GPU each dirty frame. Animate by calling
+     * get_field_processor()->set_time(t) from a metro callback.
+     *
+     * Chain order:
+     *   default  — SdfPrepProcessor  (allocates + zeroes grid/counter)
+     *   pre      — SdfFieldProcessor (dispatches sdf_field.comp → grid)
+     *   flat[0]  — SDFMeshProcessor  (mc_emit → vertices)
+     *   final    — RenderProcessor
+     *
+     * @param bounds_min  World-space minimum corner.
+     * @param bounds_max  World-space maximum corner.
+     * @param res_x       Cell count along X (minimum 1).
+     * @param res_y       Cell count along Y (minimum 1).
+     * @param res_z       Cell count along Z (minimum 1).
+     * @param iso_level   Isosurface threshold (default 0.0).
+     */
+    ComputeMeshBuffer(
+        const glm::vec3& bounds_min,
+        const glm::vec3& bounds_max,
+        uint32_t res_x,
+        uint32_t res_y,
+        uint32_t res_z,
+        float iso_level = 0.0F);
+
+    /** @brief Access the field processor to drive time or bounds from a metro. */
+    [[nodiscard]] std::shared_ptr<SDFFieldProcessor> get_field_processor() const
+    {
+        return m_field_processor;
+    }
 
     ~ComputeMeshBuffer() override = default;
 
@@ -109,6 +147,10 @@ private:
 
     std::shared_ptr<Core::VKImage> m_diffuse_texture;
     std::string m_diffuse_binding { "diffuseTex" };
+
+    bool m_gpu_field {};
+    std::shared_ptr<SDFPrepProcessor> m_prep_processor;
+    std::shared_ptr<SDFFieldProcessor> m_field_processor;
 
     // Field parameters held until m_sdf_processor is constructed.
     Kinesis::SpatialField m_field;

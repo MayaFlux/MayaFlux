@@ -1,5 +1,9 @@
 #include "ComputeMeshBuffer.hpp"
 
+#include "MayaFlux/Buffers/Shaders/SDFFieldProcessor.hpp"
+#include "MayaFlux/Buffers/Shaders/SDFMeshProcessor.hpp"
+#include "MayaFlux/Buffers/Shaders/SDFPrepProcessor.hpp"
+
 #include "MayaFlux/Buffers/BufferProcessingChain.hpp"
 #include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
@@ -36,6 +40,31 @@ ComputeMeshBuffer::ComputeMeshBuffer(
         static_cast<float>(get_size_bytes()) / (1024.F * 1024.F));
 }
 
+ComputeMeshBuffer::ComputeMeshBuffer(
+    const glm::vec3& bounds_min,
+    const glm::vec3& bounds_max,
+    uint32_t res_x,
+    uint32_t res_y,
+    uint32_t res_z,
+    float iso_level)
+    : VKBuffer(
+          worst_case_bytes(res_x, res_y, res_z),
+          Usage::VERTEX,
+          Kakshya::DataModality::VERTEX_POSITIONS_3D)
+    , m_res_x(std::max(res_x, 1U))
+    , m_res_y(std::max(res_y, 1U))
+    , m_res_z(std::max(res_z, 1U))
+    , m_bounds_min(bounds_min)
+    , m_bounds_max(bounds_max)
+    , m_iso_level(iso_level)
+    , m_gpu_field(true)
+{
+    MF_INFO(Journal::Component::Buffers, Journal::Context::Init,
+        "ComputeMeshBuffer (GPU field): {}x{}x{} grid, {:.1f} MB worst-case",
+        m_res_x, m_res_y, m_res_z,
+        static_cast<float>(get_size_bytes()) / (1024.F * 1024.F));
+}
+
 // ============================================================================
 // Processor setup
 // ============================================================================
@@ -45,21 +74,9 @@ void ComputeMeshBuffer::setup_processors(ProcessingToken token)
     auto self = std::dynamic_pointer_cast<ComputeMeshBuffer>(shared_from_this());
 
     auto layout = Kakshya::VertexLayout::for_meshes(sizeof(Kakshya::MeshVertex));
-    layout.vertex_count = static_cast<uint32_t>(worst_case_bytes(m_res_x, m_res_y, m_res_z)
-        / sizeof(Kakshya::MeshVertex));
+    layout.vertex_count = static_cast<uint32_t>(
+        worst_case_bytes(m_res_x, m_res_y, m_res_z) / sizeof(Kakshya::MeshVertex));
     set_vertex_layout(layout);
-
-    m_sdf_processor = std::make_shared<SDFMeshProcessor>(
-        std::move(m_field),
-        m_bounds_min,
-        m_bounds_max,
-        m_res_x,
-        m_res_y,
-        m_res_z,
-        m_iso_level);
-
-    m_sdf_processor->set_processing_token(token);
-    set_default_processor(m_sdf_processor);
 
     auto chain = get_processing_chain();
     if (!chain) {
@@ -67,6 +84,39 @@ void ComputeMeshBuffer::setup_processors(ProcessingToken token)
         set_processing_chain(chain);
     }
     chain->set_preferred_token(token);
+
+    if (m_gpu_field) {
+        m_prep_processor = std::make_shared<SDFPrepProcessor>(m_res_x, m_res_y, m_res_z);
+        m_prep_processor->set_processing_token(token);
+        set_default_processor(m_prep_processor);
+
+        m_field_processor = std::make_shared<SDFFieldProcessor>(
+            m_prep_processor->grid_buf(),
+            m_bounds_min, m_bounds_max,
+            m_res_x, m_res_y, m_res_z);
+        m_field_processor->set_processing_token(token);
+        chain->add_preprocessor(m_field_processor, self);
+
+        m_sdf_processor = std::make_shared<SDFMeshProcessor>(
+            m_prep_processor->grid_buf(),
+            m_prep_processor->counter_buf(),
+            m_bounds_min, m_bounds_max,
+            m_res_x, m_res_y, m_res_z,
+            m_iso_level);
+
+        m_sdf_processor->set_processing_token(token);
+
+        chain->add_processor(m_sdf_processor, self);
+
+    } else {
+        m_sdf_processor = std::make_shared<SDFMeshProcessor>(
+            std::move(m_field),
+            m_bounds_min, m_bounds_max,
+            m_res_x, m_res_y, m_res_z,
+            m_iso_level);
+        m_sdf_processor->set_processing_token(token);
+        set_default_processor(m_sdf_processor);
+    }
 }
 
 void ComputeMeshBuffer::setup_rendering(const RenderConfig& config)
