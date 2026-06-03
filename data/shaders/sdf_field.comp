@@ -3,6 +3,7 @@
 
 #include "include/sdf_primitives.glsl"
 #include "include/noise.glsl"
+#include "include/domain_warp.glsl"
 
 layout(local_size_x = 64) in;
 
@@ -52,8 +53,13 @@ void main()
     //        abs(noise(p * 2.0 + pc.time * 0.3)) - 0.3,
     //        0.1);
 
-    float base = sdf_sphere(p, vec3(0.0), 1.0);
-    float d = base + turbulence(p * 2.0 + pc.time * 0.3) * 0.3;
+    // turbulence
+    //float base = sdf_sphere(p, vec3(0.0), 1.0);
+    //float d = base + turbulence(p * 2.0 + pc.time * 0.3) * 0.3;
+
+    // Domain warp
+    vec3 wp = domain_warp(p, 1.5, 0.4, pc.time);
+    float d = sdf_sphere(wp, vec3(0.0), 1.0);
 
     grid[idx] = d;
 }
