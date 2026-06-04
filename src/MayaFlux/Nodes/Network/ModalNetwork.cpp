@@ -243,20 +243,15 @@ double ModalNetwork::generate_exciter_sample()
         sample = 1.0;
         break;
 
-    case ExciterType::NOISE_BURST: {
+    case ExciterType::NOISE_BURST:
         sample = m_random_generator(-1.0, 1.0);
-        if (m_exciter_node)
-            sample *= m_exciter_node_buffer[idx];
         break;
-    }
 
     case ExciterType::FILTERED_NOISE: {
         double noise = m_random_generator(-1.0, 1.0);
         sample = m_exciter_filter
             ? m_exciter_filter->process_sample(noise)
             : noise;
-        if (m_exciter_node)
-            sample *= m_exciter_node_buffer[idx];
         break;
     }
 
@@ -399,6 +394,22 @@ void ModalNetwork::process_batch(unsigned int num_samples)
                     for (auto& mode : m_modes) {
                         const double target = mode.initial_amplitude * strength;
                         mode.amplitude = std::max(mode.amplitude, target);
+                    }
+                }
+            }
+        } else if (m_exciter_type == ExciterType::NOISE_BURST
+            || m_exciter_type == ExciterType::FILTERED_NOISE) {
+            if (m_exciter_active) {
+                const auto peaks = Kinesis::Discrete::peak_positions(m_exciter_node_buffer, 0.1);
+                if (!peaks.empty()) {
+                    const auto max_peak = *std::ranges::max_element(peaks,
+                        [this](size_t a, size_t b) {
+                            return std::abs(m_exciter_node_buffer[a]) < std::abs(m_exciter_node_buffer[b]);
+                        });
+                    const double strength = std::abs<double>(m_exciter_node_buffer[max_peak]) * m_exciter_strength;
+                    for (auto& mode : m_modes) {
+                        const double target = mode.initial_amplitude * strength;
+                        mode.amplitude = std::max<double>(mode.amplitude, target);
                     }
                 }
             }
