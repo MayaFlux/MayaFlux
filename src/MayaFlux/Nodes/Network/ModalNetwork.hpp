@@ -369,11 +369,14 @@ private:
 
     ExciterType m_exciter_type { ExciterType::IMPULSE };
     double m_exciter_duration { 0.01 };
+    double m_exciter_strength { 1.0 };
     std::vector<double> m_exciter_sample;
+    std::vector<double> m_exciter_node_buffer;
     std::shared_ptr<Filters::Filter> m_exciter_filter;
     std::shared_ptr<Node> m_exciter_node;
 
     size_t m_exciter_sample_position { 0 };
+    size_t m_exciter_node_buffer_pos { 0 };
     bool m_exciter_active { false };
     size_t m_exciter_samples_remaining { 0 };
 
@@ -419,6 +422,11 @@ private:
      * @brief Apply modal coupling energy transfer
      */
     void compute_mode_coupling();
+
+    /**
+     * @brief Pre-extract num_samples from m_exciter_node into m_exciter_node_buffer
+     */
+    void extract_exciter_node_samples(size_t num_samples);
 
     //-------------------------------------------------------------------------
     // Initialization Helpers

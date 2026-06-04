@@ -1,5 +1,6 @@
 #include "ModalNetwork.hpp"
 
+#include "MayaFlux/Buffers/BufferUtils.hpp"
 #include "MayaFlux/Nodes/Filters/Filter.hpp"
 #include "MayaFlux/Nodes/Generators/Sine.hpp"
 
@@ -137,9 +138,10 @@ void ModalNetwork::set_exciter_sample(const std::vector<double>& sample)
     m_exciter_sample = sample;
 }
 
-void ModalNetwork::initialize_exciter(double /*strength*/)
+void ModalNetwork::initialize_exciter(double strength)
 {
     m_exciter_active = true;
+    m_exciter_strength = strength;
     m_exciter_sample_position = 0;
 
     switch (m_exciter_type) {
@@ -163,6 +165,55 @@ void ModalNetwork::initialize_exciter(double /*strength*/)
     }
 }
 
+void ModalNetwork::extract_exciter_node_samples(size_t num_samples)
+{
+    m_exciter_node_buffer.assign(num_samples, 0.0);
+
+    if (!m_exciter_node)
+        return;
+
+    static std::atomic<uint64_t> s_ctx { 1 };
+    uint64_t my_ctx = s_ctx.fetch_add(1, std::memory_order_relaxed);
+
+    const auto state = m_exciter_node->m_state.load(std::memory_order_acquire);
+
+    if (state == NodeState::INACTIVE && !m_exciter_node->is_buffer_processed()) {
+        for (size_t i = 0; i < num_samples; ++i)
+            m_exciter_node_buffer[i] = m_exciter_node->process_sample(0.0);
+        m_exciter_node->mark_buffer_processed();
+        return;
+    }
+
+    m_exciter_node_buffer_pos = 0;
+
+    bool claimed = m_exciter_node->try_claim_snapshot_context(my_ctx);
+
+    if (claimed) {
+        try {
+            m_exciter_node->save_state();
+            for (size_t i = 0; i < num_samples; ++i)
+                m_exciter_node_buffer[i] = m_exciter_node->process_sample(0.0);
+            m_exciter_node->restore_state();
+            if (m_exciter_node->is_buffer_processed())
+                m_exciter_node->request_buffer_reset();
+            m_exciter_node->release_snapshot_context(my_ctx);
+        } catch (...) {
+            m_exciter_node->release_snapshot_context(my_ctx);
+            m_exciter_node_buffer.assign(num_samples, 0.0);
+        }
+    } else {
+        uint64_t active = m_exciter_node->get_active_snapshot_context();
+        if (!Buffers::wait_for_snapshot_completion(m_exciter_node, active))
+            return;
+        m_exciter_node->save_state();
+        for (size_t i = 0; i < num_samples; ++i)
+            m_exciter_node_buffer[i] = m_exciter_node->process_sample(0.0);
+        m_exciter_node->restore_state();
+        if (m_exciter_node->is_buffer_processed())
+            m_exciter_node->request_buffer_reset();
+    }
+}
+
 double ModalNetwork::generate_exciter_sample()
 {
     if (!m_exciter_active || m_exciter_samples_remaining == 0) {
@@ -170,6 +221,9 @@ double ModalNetwork::generate_exciter_sample()
         return 0.0;
     }
 
+    const size_t idx = m_exciter_node_buffer_pos < m_exciter_node_buffer.size()
+        ? m_exciter_node_buffer_pos++
+        : 0;
     --m_exciter_samples_remaining;
     double sample = 0.0;
 
@@ -178,30 +232,31 @@ double ModalNetwork::generate_exciter_sample()
         sample = 1.0;
         break;
 
-    case ExciterType::NOISE_BURST:
+    case ExciterType::NOISE_BURST: {
         sample = m_random_generator(-1.0, 1.0);
+        if (m_exciter_node)
+            sample *= m_exciter_node_buffer[idx];
         break;
+    }
 
     case ExciterType::FILTERED_NOISE: {
         double noise = m_random_generator(-1.0, 1.0);
-        if (m_exciter_filter) {
-            sample = m_exciter_filter->process_sample(noise);
-        } else {
-            sample = noise;
-        }
+        sample = m_exciter_filter
+            ? m_exciter_filter->process_sample(noise)
+            : noise;
+        if (m_exciter_node)
+            sample *= m_exciter_node_buffer[idx];
         break;
     }
 
     case ExciterType::SAMPLE:
-        if (m_exciter_sample_position < m_exciter_sample.size()) {
+        if (m_exciter_sample_position < m_exciter_sample.size())
             sample = m_exciter_sample[m_exciter_sample_position++];
-        }
         break;
 
     case ExciterType::CONTINUOUS:
-        if (m_exciter_node) {
-            sample = m_exciter_node->process_sample(0.0);
-        }
+        if (m_exciter_node)
+            sample = m_exciter_node_buffer[idx];
         break;
     }
 
@@ -315,6 +370,9 @@ void ModalNetwork::process_batch(unsigned int num_samples)
     for (auto& nb : m_node_buffers)
         nb.reserve(num_samples);
 
+    if (m_exciter_node)
+        extract_exciter_node_samples(num_samples);
+
     for (size_t i = 0; i < num_samples; ++i) {
         double exciter_signal = generate_exciter_sample();
 
@@ -323,6 +381,11 @@ void ModalNetwork::process_batch(unsigned int num_samples)
 
         for (size_t m = 0; m < m_modes.size(); ++m) {
             auto& mode = m_modes[m];
+
+            if (exciter_signal != 0.0) {
+                mode.amplitude += exciter_signal * mode.initial_amplitude
+                    * m_exciter_strength;
+            }
 
             if (mode.amplitude > 0.0001) {
                 mode.amplitude *= mode.decay_coefficient;
