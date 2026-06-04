@@ -129,6 +129,12 @@ public:
     [[nodiscard]] virtual double get_amplitude() const;
 
     /**
+     * @brief Gets the current frequency
+     * @return Current frequency in Hz
+     */
+    [[nodiscard]] virtual float get_frequency() const { return m_frequency; }
+
+    /**
      * @brief Allows RootNode to process the Generator without using the processed sample
      * @param bMock_process True to mock process, false to process normally
      *
