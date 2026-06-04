@@ -191,6 +191,11 @@ public:
     void damp(double damping_factor = 0.1);
 
     /**
+     * @brief Release continuous excitation and allow modes to decay naturally
+     */
+    void release();
+
+    /**
      * @brief Set base frequency (fundamental)
      * @param frequency Frequency in Hz
      *
@@ -244,7 +249,7 @@ public:
      * @brief Set exciter type
      * @param type Excitation signal type
      */
-    void set_exciter_type(ExciterType type) { m_exciter_type = type; }
+    void set_exciter_type(ExciterType type);
 
     /**
      * @brief Set noise burst duration
@@ -375,10 +380,10 @@ private:
     std::shared_ptr<Filters::Filter> m_exciter_filter;
     std::shared_ptr<Node> m_exciter_node;
 
-    size_t m_exciter_sample_position { 0 };
-    size_t m_exciter_node_buffer_pos { 0 };
-    bool m_exciter_active { false };
-    size_t m_exciter_samples_remaining { 0 };
+    size_t m_exciter_sample_position {};
+    size_t m_exciter_node_buffer_pos {};
+    bool m_exciter_active {};
+    size_t m_exciter_samples_remaining {};
 
     //-------------------------------------------------------------------------
     // Spatial Excitation State
@@ -397,7 +402,7 @@ private:
     };
 
     std::vector<ModeCoupling> m_couplings;
-    bool m_coupling_enabled { false };
+    bool m_coupling_enabled {};
 
     //-------------------------------------------------------------------------
     // Exciter Implementation Helpers

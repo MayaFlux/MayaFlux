@@ -1,6 +1,7 @@
 #include "ModalNetwork.hpp"
 
 #include "MayaFlux/Buffers/BufferUtils.hpp"
+#include "MayaFlux/Kinesis/Discrete/Analysis.hpp"
 #include "MayaFlux/Nodes/Filters/Filter.hpp"
 #include "MayaFlux/Nodes/Generators/Sine.hpp"
 
@@ -68,7 +69,8 @@ std::vector<double> ModalNetwork::generate_spectrum_ratios(Spectrum spectrum,
         {
             constexpr double B = 0.0001;
             for (size_t n = 1; n <= count; ++n) {
-                double ratio = n * std::sqrt(1.0 + B * n * n);
+                auto dn = static_cast<double>(n);
+                double ratio = dn * std::sqrt(1.0 + B * dn * dn);
                 ratios.push_back(ratio);
             }
         }
@@ -131,6 +133,15 @@ void ModalNetwork::reset()
 void ModalNetwork::set_exciter_duration(double seconds)
 {
     m_exciter_duration = std::max(0.001, seconds);
+}
+
+void ModalNetwork::set_exciter_type(ExciterType type)
+{
+    m_exciter_type = type;
+    m_exciter_active = false;
+    m_exciter_samples_remaining = 0;
+    for (auto& mode : m_modes)
+        mode.amplitude = 0.0;
 }
 
 void ModalNetwork::set_exciter_sample(const std::vector<double>& sample)
@@ -263,6 +274,12 @@ double ModalNetwork::generate_exciter_sample()
     return sample;
 }
 
+void ModalNetwork::release()
+{
+    m_exciter_active = false;
+    m_exciter_samples_remaining = 0;
+}
+
 //-----------------------------------------------------------------------------
 // Spatial Excitation
 //-----------------------------------------------------------------------------
@@ -370,22 +387,41 @@ void ModalNetwork::process_batch(unsigned int num_samples)
     for (auto& nb : m_node_buffers)
         nb.reserve(num_samples);
 
-    if (m_exciter_node)
+    if (m_exciter_node) {
         extract_exciter_node_samples(num_samples);
+        if (m_exciter_type == ExciterType::CONTINUOUS) {
+            const auto peaks = Kinesis::Discrete::peak_positions(m_exciter_node_buffer, 0.1);
+            if (!peaks.empty()) {
+                const double peak_scale = 1.0 / static_cast<double>(peaks.size());
+                for (size_t peak_idx : peaks) {
+                    const double strength = std::abs(m_exciter_node_buffer[peak_idx])
+                        * m_exciter_strength * peak_scale;
+                    for (auto& mode : m_modes) {
+                        const double target = mode.initial_amplitude * strength;
+                        mode.amplitude = std::max(mode.amplitude, target);
+                    }
+                }
+            }
+        }
+    }
 
     for (size_t i = 0; i < num_samples; ++i) {
         double exciter_signal = generate_exciter_sample();
+
+        if (exciter_signal != 0.0) {
+            if (m_exciter_type != ExciterType::CONTINUOUS) {
+                for (auto& mode : m_modes) {
+                    mode.amplitude += exciter_signal * mode.initial_amplitude
+                        * m_exciter_strength;
+                }
+            }
+        }
 
         if (m_coupling_enabled && !m_couplings.empty())
             compute_mode_coupling();
 
         for (size_t m = 0; m < m_modes.size(); ++m) {
             auto& mode = m_modes[m];
-
-            if (exciter_signal != 0.0) {
-                mode.amplitude += exciter_signal * mode.initial_amplitude
-                    * m_exciter_strength;
-            }
 
             if (mode.amplitude > 0.0001) {
                 mode.amplitude *= mode.decay_coefficient;
