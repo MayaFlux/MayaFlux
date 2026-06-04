@@ -117,23 +117,17 @@ void NodeTextureBuffer::setup_rendering(const RenderConfig& user_config)
         }
     }
 
-    if (!m_render_processor) {
-        ShaderConfig shader_config { m_render_config.vertex_shader };
-        shader_config.bindings[m_render_config.default_texture_binding] = ShaderBinding(
-            0, 1, vk::DescriptorType::eCombinedImageSampler);
+    ShaderConfig shader_config { m_render_config.vertex_shader };
+    shader_config.bindings[m_render_config.default_texture_binding] = ShaderBinding(
+        0, 1, vk::DescriptorType::eCombinedImageSampler);
 
-        uint32_t binding_index = 1;
-        for (const auto& [name, _] : m_render_config.additional_textures) {
-            shader_config.bindings[name] = ShaderBinding(
-                1, binding_index++, vk::DescriptorType::eCombinedImageSampler);
-        }
-
-        m_render_processor = std::make_shared<RenderProcessor>(shader_config);
+    uint32_t binding_index = 1;
+    for (const auto& [name, _] : m_render_config.additional_textures) {
+        shader_config.bindings[name] = ShaderBinding(
+            1, binding_index++, vk::DescriptorType::eCombinedImageSampler);
     }
 
-    m_render_processor->set_fragment_shader(m_render_config.fragment_shader);
-    m_render_processor->set_target_window(m_render_config.target_window, std::dynamic_pointer_cast<VKBuffer>(shared_from_this()));
-    m_render_processor->set_primitive_topology(m_render_config.topology);
+    apply_render_config(m_render_config, shader_config);
 
     m_render_processor->bind_texture(m_render_config.default_texture_binding, get_gpu_texture());
 

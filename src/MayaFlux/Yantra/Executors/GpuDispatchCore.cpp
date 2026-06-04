@@ -323,10 +323,14 @@ std::vector<float> GpuDispatchCore::readback_primary(size_t float_count)
 void GpuDispatchCore::readback_aux(GpuChannelResult& result)
 {
     for (size_t i = 0; i < m_bindings.size(); ++i) {
+        if (m_bindings[i].skip_auto_readback)
+            continue;
+
         const auto dir = m_bindings[i].direction;
         const auto et = m_bindings[i].element_type;
         const bool is_image = et == GpuBufferBinding::ElementType::IMAGE_STORAGE
             || et == GpuBufferBinding::ElementType::IMAGE_SAMPLED;
+
         if ((dir == GpuBufferBinding::Direction::OUTPUT
                 || dir == GpuBufferBinding::Direction::INPUT_OUTPUT)
             && !is_image
@@ -338,6 +342,11 @@ void GpuDispatchCore::readback_aux(GpuChannelResult& result)
             result.aux[i] = std::move(raw);
         }
     }
+}
+
+void GpuDispatchCore::download_binding(size_t index, void* dest, size_t byte_size)
+{
+    m_resources.download(index, reinterpret_cast<float*>(dest), byte_size);
 }
 
 //==============================================================================

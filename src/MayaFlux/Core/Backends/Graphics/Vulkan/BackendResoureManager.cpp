@@ -81,6 +81,15 @@ void BackendResourceManager::setup_backend_service(const std::shared_ptr<Registr
         m_context.get_device().unmapMemory(mem);
     };
 
+    buffer_service->copy_buffer = [this](void* src, void* dst, size_t size, size_t src_off, size_t dst_off) {
+        vk::Buffer s(static_cast<VkBuffer>(src));
+        vk::Buffer d(static_cast<VkBuffer>(dst));
+        execute_immediate_commands([&](vk::CommandBuffer cmd) {
+            vk::BufferCopy region { src_off, dst_off, size };
+            cmd.copyBuffer(s, d, 1, &region);
+        });
+    };
+
     buffer_service->execute_fenced = [this](const std::function<void(void*)>& recorder)
         -> std::shared_ptr<void> {
         vk::CommandBuffer cmd = m_command_manager.begin_single_time_commands();
@@ -141,6 +150,17 @@ void BackendResourceManager::setup_backend_service(const std::shared_ptr<Registr
             m_command_manager.free_command_buffer(sub->cmd);
             sub->cmd = nullptr;
         }
+    };
+
+    buffer_service->copy_buffer_fenced = [this, buffer_service](void* src, void* dst, size_t size, size_t src_off, size_t dst_off)
+        -> std::shared_ptr<void> {
+        vk::Buffer s(static_cast<VkBuffer>(src));
+        vk::Buffer d(static_cast<VkBuffer>(dst));
+        return buffer_service->execute_fenced([&](void* cmd_ptr) {
+            vk::CommandBuffer cmd(static_cast<VkCommandBuffer>(cmd_ptr));
+            vk::BufferCopy region { src_off, dst_off, static_cast<vk::DeviceSize>(size) };
+            cmd.copyBuffer(s, d, 1, &region);
+        });
     };
 }
 

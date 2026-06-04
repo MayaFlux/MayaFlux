@@ -3,8 +3,6 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
-#include <string>
-
 namespace MayaFlux::Portal::Text {
 
 /**

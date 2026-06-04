@@ -315,6 +315,25 @@ public:
         return out;
     }
 
+    /**
+     * @brief Set or clear skip_auto_readback for a binding by index.
+     *
+     * When skip_auto_readback is true, the output buffer for this binding will
+     * not be read back to the CPU after dispatch. Use this to avoid unnecessary
+     * GPU-CPU synchronization when the output is consumed by another GPU stage
+     * rather than the CPU.
+     *
+     * @param binding Binding index to modify.
+     * @param skip    Whether to skip automatic readback for this binding.
+     */
+    void set_skip_readback(uint32_t binding, bool skip)
+    {
+        for (auto& b : m_bindings) {
+            if (b.binding == binding)
+                b.skip_auto_readback = skip;
+        }
+    }
+
 protected:
     /**
      * @brief Returns the binding list declared via constructor or fluent API.

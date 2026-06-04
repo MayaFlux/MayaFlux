@@ -1,5 +1,9 @@
 #include "MeshBuffer.hpp"
+
 #include "MeshProcessor.hpp"
+
+#include "MayaFlux/Kakshya/NDData/MeshInsertion.hpp"
+#include "MayaFlux/Nodes/Graphics/MeshWriterNode.hpp"
 
 #include "MayaFlux/Buffers/BufferProcessingChain.hpp"
 #include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
@@ -42,6 +46,37 @@ MeshBuffer::MeshBuffer(Kakshya::MeshData data)
         get_index_count(),
         m_mesh_data.face_count(),
         m_mesh_data.layout.stride_bytes);
+}
+
+MeshBuffer::MeshBuffer(std::shared_ptr<Nodes::GpuSync::MeshWriterNode> node)
+    : VKBuffer(
+          node ? node->get_mesh_vertex_count() * sizeof(Kakshya::MeshVertex) : 0,
+          Usage::VERTEX,
+          Kakshya::DataModality::VERTEX_POSITIONS_3D)
+    , m_node(std::move(node))
+{
+    if (m_node) {
+        auto data = Kakshya::MeshData::empty();
+        const auto verts = m_node->get_mesh_vertices();
+        const auto indices = m_node->get_mesh_indices();
+
+        Kakshya::MeshInsertion ins(data.vertex_variant, data.index_variant);
+        ins.insert_flat(
+            std::span<const uint8_t>(
+                reinterpret_cast<const uint8_t*>(verts.data()),
+                verts.size() * sizeof(Kakshya::MeshVertex)),
+            std::span<const uint32_t>(indices),
+            Kakshya::VertexLayout::for_meshes(sizeof(Kakshya::MeshVertex)));
+        data.layout = Kakshya::VertexLayout::for_meshes(sizeof(Kakshya::MeshVertex));
+        data.layout.vertex_count = static_cast<uint32_t>(verts.size());
+        m_mesh_data = std::move(data);
+    }
+
+    RenderConfig defaults;
+    defaults.vertex_shader = "triangle.vert.spv";
+    defaults.topology = Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST;
+    set_default_render_config(defaults);
+    set_needs_depth_attachment(true);
 }
 
 // =============================================================================
@@ -109,28 +144,20 @@ void MeshBuffer::setup_rendering(const RenderConfig& config)
             : "triangle.frag.spv";
     }
 
-    if (!m_render_processor) {
-        ShaderConfig sc { m_render_config.vertex_shader };
+    ShaderConfig sc { m_render_config.vertex_shader };
 
-        if (textured && !m_render_config.default_texture_binding.empty()) {
-            sc.bindings[m_render_config.default_texture_binding] = ShaderBinding(
-                0, 1, vk::DescriptorType::eCombinedImageSampler);
-        }
-
-        uint32_t binding_index = 1;
-        for (const auto& [name, _] : m_render_config.additional_textures) {
-            sc.bindings[name] = ShaderBinding(
-                1, binding_index++, vk::DescriptorType::eCombinedImageSampler);
-        }
-
-        m_render_processor = std::make_shared<RenderProcessor>(sc);
+    if (textured && !m_render_config.default_texture_binding.empty()) {
+        sc.bindings[m_render_config.default_texture_binding] = ShaderBinding(
+            0, 1, vk::DescriptorType::eCombinedImageSampler);
     }
 
-    m_render_processor->set_fragment_shader(m_render_config.fragment_shader);
-    m_render_processor->set_target_window(
-        m_render_config.target_window,
-        std::dynamic_pointer_cast<VKBuffer>(shared_from_this()));
-    m_render_processor->set_primitive_topology(m_render_config.topology);
+    uint32_t binding_index = 1;
+    for (const auto& [name, _] : m_render_config.additional_textures) {
+        sc.bindings[name] = ShaderBinding(
+            1, binding_index++, vk::DescriptorType::eCombinedImageSampler);
+    }
+
+    apply_render_config(m_render_config, sc);
 
     if (m_diffuse_texture && !m_render_config.default_texture_binding.empty()) {
         m_render_processor->bind_texture(

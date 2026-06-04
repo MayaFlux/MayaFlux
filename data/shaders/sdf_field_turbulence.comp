@@ -1,0 +1,15 @@
+#version 450
+
+#extension GL_GOOGLE_include_directive : enable
+#include "include/sdf_field_common.glsl"
+
+void main()
+{
+    vec3 p;
+    if (!sdf_get_corner(gl_GlobalInvocationID.x, p))
+        return;
+
+    grid[gl_GlobalInvocationID.x] =
+        sdf_sphere(p, vec3(0.0), 1.0)
+            + turbulence(p * 2.0 + pc.time * 0.3) * 0.3;
+}

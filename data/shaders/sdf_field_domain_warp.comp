@@ -1,0 +1,13 @@
+#version 450
+#extension GL_GOOGLE_include_directive : enable
+#include "include/sdf_field_common.glsl"
+
+void main()
+{
+    vec3 p;
+    if (!sdf_get_corner(gl_GlobalInvocationID.x, p))
+        return;
+
+    grid[gl_GlobalInvocationID.x] =
+        sdf_sphere(domain_warp(p, 1.5, 0.4, pc.time), vec3(0.0), 1.0);
+}

@@ -109,19 +109,10 @@ void upload_device_local(const std::shared_ptr<VKBuffer>& target, const std::sha
             size);
     }
 
-    buffer_service->execute_immediate([&](void* ptr) {
-        vk::BufferCopy copy_region;
-        copy_region.srcOffset = 0;
-        copy_region.dstOffset = 0;
-        copy_region.size = bytes;
-
-        vk::CommandBuffer cmd(static_cast<VkCommandBuffer>(ptr));
-
-        cmd.copyBuffer(
-            staging_buffer->get_buffer(),
-            target->get_buffer(),
-            1, &copy_region);
-    });
+    buffer_service->copy_buffer(
+        static_cast<void*>(staging_buffer->get_buffer()),
+        static_cast<void*>(target->get_buffer()),
+        bytes, 0, 0);
 }
 
 void download_host_visible(const std::shared_ptr<VKBuffer>& source, const std::shared_ptr<VKBuffer>& target)
@@ -176,19 +167,10 @@ void download_device_local(const std::shared_ptr<VKBuffer>& source, const std::s
             "download_device_local requires a valid buffer service");
     }
 
-    vk::BufferCopy copy_region;
-    copy_region.srcOffset = 0;
-    copy_region.dstOffset = 0;
-    copy_region.size = source->get_size_bytes();
-
-    buffer_service->execute_immediate([&](void* ptr) {
-        vk::CommandBuffer cmd(static_cast<VkCommandBuffer>(ptr));
-
-        cmd.copyBuffer(
-            source->get_buffer(),
-            staging_buffer->get_buffer(),
-            1, &copy_region);
-    });
+    buffer_service->copy_buffer(
+        static_cast<void*>(source->get_buffer()),
+        static_cast<void*>(staging_buffer->get_buffer()),
+        source->get_size_bytes(), 0, 0);
 
     staging_buffer->mark_invalid_range(0, source->get_size_bytes());
 
@@ -405,21 +387,82 @@ void download_from_gpu(
     std::memcpy(data, ptr, std::min(size, bytes));
 }
 
+void download_from_gpu_async(
+    const std::shared_ptr<VKBuffer>& source,
+    void* data,
+    size_t size,
+    std::shared_ptr<VKBuffer>& staging)
+{
+    if (!source || !data || size == 0)
+        return;
+
+    auto buffer_service = Registry::BackendRegistry::instance()
+                              .get_service<Registry::Service::BufferService>();
+
+    if (!buffer_service
+        || !buffer_service->execute_fenced
+        || !buffer_service->wait_fenced
+        || !buffer_service->release_fenced
+        || !buffer_service->invalidate_range) {
+        error<std::runtime_error>(
+            Journal::Component::Buffers,
+            Journal::Context::BufferProcessing,
+            std::source_location::current(),
+            "download_from_gpu_async: BufferService unavailable");
+    }
+
+    if (!staging || staging->get_size_bytes() < size)
+        staging = create_staging_buffer(size);
+
+    auto handle = buffer_service->copy_buffer_fenced(
+        static_cast<void*>(source->get_buffer()),
+        static_cast<void*>(staging->get_buffer()),
+        size, 0, 0);
+
+    if (!handle) {
+        error<std::runtime_error>(
+            Journal::Component::Buffers,
+            Journal::Context::BufferProcessing,
+            std::source_location::current(),
+            "download_from_gpu_async: execute_fenced returned null");
+    }
+
+    buffer_service->wait_fenced(handle);
+
+    auto& resources = staging->get_buffer_resources();
+    buffer_service->invalidate_range(resources.memory, 0, size);
+
+    void* ptr = staging->get_mapped_ptr();
+    if (!ptr) {
+        buffer_service->release_fenced(handle);
+        error<std::runtime_error>(
+            Journal::Component::Buffers,
+            Journal::Context::BufferProcessing,
+            std::source_location::current(),
+            "download_from_gpu_async: staging buffer has no mapped pointer");
+    }
+
+    std::memcpy(data, ptr, size);
+    buffer_service->release_fenced(handle);
+}
+
 void upload_audio_to_gpu(
     const std::shared_ptr<AudioBuffer>& audio_buffer,
     const std::shared_ptr<VKBuffer>& gpu_buffer,
     const std::shared_ptr<VKBuffer>& staging)
 {
-    if (gpu_buffer->get_format() != vk::Format::eR64Sfloat && gpu_buffer->get_format() != vk::Format::eUndefined) {
-        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-            "GPU buffer format is {} but audio requires R64Sfloat for double precision. "
-            "Create VKBuffer with DataModality::AUDIO_1D or AUDIO_MULTICHANNEL.",
-            vk::to_string(gpu_buffer->get_format()));
+    const auto modality = gpu_buffer->get_modality();
+    if (modality != Kakshya::DataModality::AUDIO_1D
+        && modality != Kakshya::DataModality::AUDIO_MULTICHANNEL
+        && modality != Kakshya::DataModality::UNKNOWN) {
+
         error<std::runtime_error>(
             Journal::Component::Buffers,
             Journal::Context::BufferProcessing,
             std::source_location::current(),
-            "GPU buffer format mismatch for audio upload");
+            "GPU buffer modality is {} but audio requires AUDIO_1D or AUDIO_MULTICHANNEL. "
+            "Create VKBuffer with DataModality::AUDIO_1D or AUDIO_MULTICHANNEL.",
+            Kakshya::modality_to_string(modality));
     }
 
     auto& audio_data = audio_buffer->get_data();

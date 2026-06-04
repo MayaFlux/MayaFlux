@@ -187,11 +187,6 @@ public:
      */
     virtual void setup_rendering(const RenderConfig& config);
 
-    std::shared_ptr<RenderProcessor> get_render_processor() const override
-    {
-        return m_render_processor;
-    }
-
 protected:
     /**
      * @brief Allow inherited classes to set the TextureProcessor directly
@@ -204,8 +199,6 @@ protected:
 
 private:
     friend class TextureProcessor;
-
-    std::shared_ptr<RenderProcessor> m_render_processor;
 
     // Texture metadata
     uint32_t m_width;

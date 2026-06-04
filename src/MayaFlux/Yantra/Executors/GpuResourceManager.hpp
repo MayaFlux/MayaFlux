@@ -21,6 +21,7 @@ struct GpuShaderConfig {
 struct GpuBufferBinding {
     uint32_t set { 0 };
     uint32_t binding { 0 };
+    bool skip_auto_readback { false };
 
     enum class Direction : uint8_t {
         INPUT,

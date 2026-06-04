@@ -14,6 +14,7 @@ namespace MayaFlux::Yantra {
 struct VulkanBufferSlot {
     vk::Buffer buffer;
     vk::DeviceMemory memory;
+    void* mapped_ptr { nullptr };
     size_t allocated_bytes {};
 };
 
@@ -51,6 +52,10 @@ namespace {
 
     void free_slot(vk::Device device, VulkanBufferSlot& slot)
     {
+        if (slot.mapped_ptr) {
+            device.unmapMemory(slot.memory);
+            slot.mapped_ptr = nullptr;
+        }
         if (slot.buffer) {
             device.destroyBuffer(slot.buffer);
             slot.buffer = vk::Buffer {};
@@ -83,15 +88,20 @@ namespace {
 
         slot.memory = device.allocateMemory(ai);
         device.bindBufferMemory(slot.buffer, slot.memory, 0);
+        slot.mapped_ptr = device.mapMemory(slot.memory, 0, VK_WHOLE_SIZE);
         slot.allocated_bytes = byte_size;
     }
 
-    void map_copy_unmap(vk::Device device, vk::DeviceMemory memory,
-        const void* src, size_t byte_size)
+    [[nodiscard]] vk::DescriptorType element_type_to_vk(GpuBufferBinding::ElementType et)
     {
-        void* mapped = device.mapMemory(memory, 0, byte_size);
-        std::memcpy(mapped, src, byte_size);
-        device.unmapMemory(memory);
+        switch (et) {
+        case GpuBufferBinding::ElementType::IMAGE_STORAGE:
+            return vk::DescriptorType::eStorageImage;
+        case GpuBufferBinding::ElementType::IMAGE_SAMPLED:
+            return vk::DescriptorType::eCombinedImageSampler;
+        default:
+            return vk::DescriptorType::eStorageBuffer;
+        }
     }
 
 } // anonymous namespace
@@ -110,9 +120,8 @@ GpuResourceManager::~GpuResourceManager()
 bool GpuResourceManager::initialise(const GpuShaderConfig& config,
     const std::vector<GpuBufferBinding>& bindings)
 {
-    if (m_ready) {
+    if (m_ready)
         return true;
-    }
 
     auto& foundry = Portal::Graphics::get_shader_foundry();
     auto& compute_press = Portal::Graphics::get_compute_press();
@@ -124,8 +133,40 @@ bool GpuResourceManager::initialise(const GpuShaderConfig& config,
         return false;
     }
 
-    m_pipeline_id = compute_press.create_pipeline_auto(
-        m_shader_id, config.push_constant_size);
+    std::map<uint32_t, std::vector<Portal::Graphics::DescriptorBindingInfo>> by_set;
+    for (const auto& b : bindings) {
+        const auto et = b.element_type;
+        const bool is_image = et == GpuBufferBinding::ElementType::IMAGE_STORAGE
+            || et == GpuBufferBinding::ElementType::IMAGE_SAMPLED;
+        if (is_image) {
+            by_set[b.set].push_back({
+                .set = b.set,
+                .binding = b.binding,
+                .type = element_type_to_vk(et),
+            });
+        }
+    }
+
+    for (const auto& b : bindings) {
+        const auto et = b.element_type;
+        const bool is_image = et == GpuBufferBinding::ElementType::IMAGE_STORAGE
+            || et == GpuBufferBinding::ElementType::IMAGE_SAMPLED;
+        if (!is_image) {
+            by_set[b.set].push_back({
+                .set = b.set,
+                .binding = b.binding,
+                .type = vk::DescriptorType::eStorageBuffer,
+            });
+        }
+    }
+
+    std::vector<std::vector<Portal::Graphics::DescriptorBindingInfo>> descriptor_sets;
+    descriptor_sets.reserve(by_set.size());
+    for (auto& [set_idx, set_bindings] : by_set)
+        descriptor_sets.push_back(std::move(set_bindings));
+
+    m_pipeline_id = compute_press.create_pipeline(
+        m_shader_id, descriptor_sets, config.push_constant_size);
 
     if (m_pipeline_id == Portal::Graphics::INVALID_COMPUTE_PIPELINE) {
         MF_ERROR(Journal::Component::Yantra, Journal::Context::BufferProcessing,
@@ -209,27 +250,20 @@ void GpuResourceManager::ensure_buffer(size_t index, size_t required_bytes)
 
 void GpuResourceManager::upload(size_t index, const float* data, size_t byte_size)
 {
-    auto& foundry = Portal::Graphics::get_shader_foundry();
     auto& vk_slot = m_impl->buffers[index];
-    map_copy_unmap(foundry.get_device(), vk_slot.memory, data, byte_size);
+    std::memcpy(vk_slot.mapped_ptr, data, byte_size);
 }
 
 void GpuResourceManager::upload_raw(size_t index, const uint8_t* data, size_t byte_size)
 {
-    auto& foundry = Portal::Graphics::get_shader_foundry();
     auto& vk_slot = m_impl->buffers[index];
-    map_copy_unmap(foundry.get_device(), vk_slot.memory, data, byte_size);
+    std::memcpy(vk_slot.mapped_ptr, data, byte_size);
 }
 
 void GpuResourceManager::download(size_t index, float* dest, size_t byte_size)
 {
-    auto& foundry = Portal::Graphics::get_shader_foundry();
-    auto device = foundry.get_device();
     auto& vk_slot = m_impl->buffers[index];
-
-    void* mapped = device.mapMemory(vk_slot.memory, 0, VK_WHOLE_SIZE);
-    std::memcpy(dest, mapped, byte_size);
-    device.unmapMemory(vk_slot.memory);
+    std::memcpy(dest, vk_slot.mapped_ptr, byte_size);
 }
 
 void GpuResourceManager::bind_descriptor(size_t index, const GpuBufferBinding& spec)

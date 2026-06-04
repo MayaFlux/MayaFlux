@@ -3,6 +3,8 @@
 #include "BufferProcessingChain.hpp"
 #include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
 
+#include "Shaders/RenderProcessor.hpp"
+
 #include "MayaFlux/Registry/BackendRegistry.hpp"
 #include "MayaFlux/Registry/Service/BufferService.hpp"
 #include "MayaFlux/Registry/Service/ComputeService.hpp"
@@ -207,40 +209,6 @@ void VKBuffer::resize(size_t new_size, bool preserve_data)
         "VKBuffer resize complete: {} bytes", m_size_bytes);
 }
 
-vk::Format VKBuffer::get_format() const
-{
-    using namespace Kakshya;
-
-    switch (m_modality) {
-    case DataModality::VERTEX_POSITIONS_3D:
-    case DataModality::VERTEX_NORMALS_3D:
-    case DataModality::VERTEX_TANGENTS_3D:
-    case DataModality::VERTEX_COLORS_RGB:
-        return vk::Format::eR32G32B32Sfloat;
-
-    case DataModality::TEXTURE_COORDS_2D:
-        return vk::Format::eR32G32Sfloat;
-
-    case DataModality::VERTEX_COLORS_RGBA:
-        return vk::Format::eR32G32B32A32Sfloat;
-
-    case DataModality::AUDIO_1D:
-    case DataModality::AUDIO_MULTICHANNEL:
-        return vk::Format::eR64Sfloat;
-
-    case DataModality::IMAGE_2D:
-    case DataModality::IMAGE_COLOR:
-    case DataModality::TEXTURE_2D:
-        return vk::Format::eR8G8B8A8Unorm;
-
-    case DataModality::SPECTRAL_2D:
-        return vk::Format::eR32G32Sfloat;
-
-    default:
-        return vk::Format::eUndefined;
-    }
-}
-
 void VKBuffer::set_modality(Kakshya::DataModality modality)
 {
     m_modality = modality;
@@ -275,6 +243,8 @@ vk::BufferUsageFlags VKBuffer::get_usage_flags() const
         flags |= vk::BufferUsageFlagBits::eStorageBuffer
             | vk::BufferUsageFlagBits::eShaderDeviceAddress;
         break;
+    case Usage::HOST_STORAGE:
+        flags |= vk::BufferUsageFlagBits::eStorageBuffer;
     }
 
     return flags;
@@ -372,6 +342,33 @@ void VKBuffer::infer_dimensions_from_data(size_t byte_count)
         m_dimensions.emplace_back("data", byte_count, 1, DataDimension::Role::CUSTOM);
         break;
     }
+}
+
+void VKBuffer::apply_render_config(const RenderConfig& config, const ShaderConfig& shader_config)
+{
+    apply_render_config(m_render_processor, config, shader_config);
+}
+
+void VKBuffer::apply_render_config(
+    std::shared_ptr<RenderProcessor>& render_processor,
+    const RenderConfig& config,
+    const ShaderConfig& shader_config)
+{
+    if (!render_processor)
+        render_processor = std::make_shared<RenderProcessor>(shader_config);
+
+    render_processor->set_fragment_shader(config.fragment_shader);
+
+    render_processor->set_target_window(
+        config.target_window,
+        std::dynamic_pointer_cast<VKBuffer>(shared_from_this()));
+
+    render_processor->set_primitive_topology(config.topology);
+    render_processor->set_polygon_mode(config.polygon_mode);
+    render_processor->set_cull_mode(config.cull_mode);
+
+    if (!config.geometry_shader.empty())
+        render_processor->set_geometry_shader(config.geometry_shader);
 }
 
 void VKBuffer::mark_dirty_range(size_t offset, size_t size)

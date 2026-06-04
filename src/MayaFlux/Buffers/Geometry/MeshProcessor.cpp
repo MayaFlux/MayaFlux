@@ -1,6 +1,8 @@
 #include "MeshProcessor.hpp"
 #include "MeshBuffer.hpp"
 
+#include "MayaFlux/Nodes/Graphics/MeshWriterNode.hpp"
+
 #include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Registry/BackendRegistry.hpp"
@@ -84,6 +86,20 @@ void MeshProcessor::processing_function(const std::shared_ptr<Buffer>& /*buffer*
 {
     if (!m_mesh_buffer) {
         return;
+    }
+
+    if (auto node = m_mesh_buffer->get_node()) {
+        if (!node->get_mesh_vertices().empty()) {
+            const auto& verts = node->get_mesh_vertices();
+            const auto& indices = node->get_mesh_indices();
+            m_mesh_buffer->m_mesh_data.vertex_variant = std::vector<uint8_t>(
+                reinterpret_cast<const uint8_t*>(verts.data()),
+                reinterpret_cast<const uint8_t*>(verts.data() + verts.size()));
+            m_mesh_buffer->m_mesh_data.index_variant = indices;
+            m_mesh_buffer->m_mesh_data.layout.vertex_count = static_cast<uint32_t>(verts.size());
+            m_mesh_buffer->m_vertices_dirty.store(true, std::memory_order_release);
+            m_mesh_buffer->m_indices_dirty.store(true, std::memory_order_release);
+        }
     }
 
     if (m_mesh_buffer->vertices_dirty()) {

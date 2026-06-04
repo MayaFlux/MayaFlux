@@ -114,11 +114,6 @@ public:
      */
     void setup_rendering(const RenderConfig& config);
 
-    std::shared_ptr<RenderProcessor> get_render_processor() const override
-    {
-        return m_render_processor;
-    }
-
     /**
      * @brief Add a RenderProcessor for a specific operator chain index
      * @param config Rendering configuration
@@ -157,8 +152,6 @@ protected:
     std::shared_ptr<Nodes::Network::NodeNetwork> m_network;
     std::shared_ptr<NetworkGeometryProcessor> m_processor;
     std::string m_binding_name;
-
-    std::shared_ptr<RenderProcessor> m_render_processor;
 
 private:
     struct ChainRenderEntry {

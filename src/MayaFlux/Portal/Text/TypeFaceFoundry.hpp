@@ -72,6 +72,12 @@ public:
      */
     [[nodiscard]] GlyphAtlas* get_default_glyph_atlas() const { return m_default_atlas.get(); }
 
+    /**
+     * @brief Return the default FontFace, or nullptr if set_default_font() has
+     *        not been called successfully.
+     */
+    [[nodiscard]] FontFace* get_default_face() const { return m_default_face.get(); }
+
 private:
     TypeFaceFoundry();
     ~TypeFaceFoundry();

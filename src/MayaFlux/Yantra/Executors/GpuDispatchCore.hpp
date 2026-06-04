@@ -116,6 +116,15 @@ public:
      */
     [[nodiscard]] std::shared_ptr<Core::VKImage> get_output_image(size_t binding_index) const;
 
+    /**
+     * @brief Read back a specific binding into a caller-provided destination.
+     *
+     * @param index     Binding index to read back.
+     * @param dest      Pointer to caller-allocated memory for the data.
+     * @param byte_size Size in bytes to read back (must not exceed allocated size).
+     */
+    void download_binding(size_t index, void* dest, size_t byte_size);
+
 protected:
     /**
      * @brief Declare the storage buffers the shader expects.

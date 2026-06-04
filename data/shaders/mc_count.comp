@@ -1,0 +1,68 @@
+#version 450
+
+layout(local_size_x = 64) in;
+
+// binding 0: SDF corner samples, Z-major (ix + nx*iy + nx*ny*iz)
+layout(set = 0, binding = 0) readonly buffer SdfGrid {
+    float sdf[];
+};
+layout(set = 0, binding = 1) readonly buffer EdgeTable {
+    uint edge_table[];
+};
+layout(set = 0, binding = 2) readonly buffer TriTable {
+    int tri_table[];
+};
+layout(set = 0, binding = 3) buffer VoxelCounts {
+    uint voxel_counts[];
+};
+
+layout(push_constant) uniform PC {
+    vec3 bounds_min;
+    float iso_level;
+    vec3 step;
+    uint res_x;
+    uint res_y;
+    uint res_z;
+    uint _pad;
+} pc;
+
+void main()
+{
+    const uint gid = gl_GlobalInvocationID.x;
+    const uint n_voxels = pc.res_x * pc.res_y * pc.res_z;
+
+    if (gid >= n_voxels)
+        return;
+
+    const uint ix = gid % pc.res_x;
+    const uint iy = (gid / pc.res_x) % pc.res_y;
+    const uint iz = gid / (pc.res_x * pc.res_y);
+
+    const uint nx = pc.res_x + 1;
+    const uint ny = pc.res_y + 1;
+
+    // Fetch eight corner samples in the same order as the CPU path.
+    float v[8];
+    v[0] = sdf[ix + nx * (iy + ny * iz)];
+    v[1] = sdf[(ix + 1) + nx * (iy + ny * iz)];
+    v[2] = sdf[(ix + 1) + nx * ((iy + 1) + ny * iz)];
+    v[3] = sdf[ix + nx * ((iy + 1) + ny * iz)];
+    v[4] = sdf[ix + nx * (iy + ny * (iz + 1))];
+    v[5] = sdf[(ix + 1) + nx * (iy + ny * (iz + 1))];
+    v[6] = sdf[(ix + 1) + nx * ((iy + 1) + ny * (iz + 1))];
+    v[7] = sdf[ix + nx * ((iy + 1) + ny * (iz + 1))];
+
+    uint cube_idx = 0;
+    for (int k = 0; k < 8; ++k)
+        cube_idx |= uint(v[k] < pc.iso_level) << k;
+
+    // Count triangles for this voxel from the tri table.
+    uint n_tris = 0;
+    for (int k = 0; k < 15; k += 3) {
+        if (tri_table[int(cube_idx) * 16 + k] == -1)
+            break;
+        ++n_tris;
+    }
+
+    voxel_counts[gid] = n_tris;
+}

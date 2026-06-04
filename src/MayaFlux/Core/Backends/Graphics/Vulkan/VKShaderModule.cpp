@@ -78,6 +78,66 @@ namespace {
 
         return vk::DescriptorType::eUniformBuffer;
     }
+
+    class FileIncluder : public shaderc::CompileOptions::IncluderInterface {
+    public:
+        explicit FileIncluder(const std::vector<std::string>& dirs)
+            : m_dirs(dirs)
+        {
+        }
+
+        shaderc_include_result* GetInclude(
+            const char* requested_source,
+            shaderc_include_type /*type*/,
+            const char* /*requesting_source*/,
+            size_t /*include_depth*/) override
+        {
+            namespace fs = std::filesystem;
+            auto* result = new shaderc_include_result {};
+
+            for (const auto& dir : m_dirs) {
+                fs::path full = fs::path(dir) / requested_source;
+                if (fs::exists(full)) {
+                    auto* container = new std::string(full.string());
+                    auto* content = new std::string(read_file(full.string()));
+                    result->source_name = container->c_str();
+                    result->source_name_length = container->size();
+                    result->content = content->c_str();
+                    result->content_length = content->size();
+                    result->user_data = new std::pair<std::string*, std::string*>(container, content);
+                    return result;
+                }
+            }
+
+            static const std::string err = "include not found";
+            result->source_name = "";
+            result->source_name_length = 0;
+            result->content = err.c_str();
+            result->content_length = err.size();
+            result->user_data = nullptr;
+            return result;
+        }
+
+        void ReleaseInclude(shaderc_include_result* result) override
+        {
+            if (result->user_data) {
+                auto* p = static_cast<std::pair<std::string*, std::string*>*>(result->user_data);
+                delete p->first;
+                delete p->second;
+                delete p;
+            }
+            delete result;
+        }
+
+    private:
+        const std::vector<std::string>& m_dirs;
+
+        static std::string read_file(const std::string& path)
+        {
+            std::ifstream f(path);
+            return { std::istreambuf_iterator<char>(f), std::istreambuf_iterator<char>() };
+        }
+    };
 }
 
 // ============================================================================
@@ -608,10 +668,7 @@ std::vector<uint32_t> VKShaderModule::compile_glsl_to_spirv(
     shaderc::CompileOptions options;
 
     options.SetOptimizationLevel(shaderc_optimization_level_performance);
-
-    for (const auto& dir : include_directories) {
-        // options.AddIncludeDirectory(dir);
-    }
+    options.SetIncluder(std::make_unique<FileIncluder>(include_directories));
 
     for (const auto& [name, value] : defines) {
         options.AddMacroDefinition(name, value);

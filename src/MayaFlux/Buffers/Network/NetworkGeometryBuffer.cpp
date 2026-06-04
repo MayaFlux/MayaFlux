@@ -114,21 +114,7 @@ void NetworkGeometryBuffer::setup_rendering(const RenderConfig& config)
 {
     auto resolved_config = resolve_config(config);
 
-    if (!m_render_processor) {
-        m_render_processor = std::make_shared<RenderProcessor>(
-            ShaderConfig { resolved_config.vertex_shader });
-    } else {
-        m_render_processor->set_shader(resolved_config.vertex_shader);
-    }
-
-    m_render_processor->set_fragment_shader(resolved_config.fragment_shader);
-    if (!resolved_config.geometry_shader.empty()) {
-        m_render_processor->set_geometry_shader(resolved_config.geometry_shader);
-    }
-    m_render_processor->set_target_window(config.target_window, std::dynamic_pointer_cast<VKBuffer>(shared_from_this()));
-    m_render_processor->set_primitive_topology(resolved_config.topology);
-    m_render_processor->set_polygon_mode(config.polygon_mode);
-    m_render_processor->set_cull_mode(config.cull_mode);
+    apply_render_config(resolved_config, ShaderConfig { resolved_config.vertex_shader });
 
     get_processing_chain()->add_processor(m_render_processor, shared_from_this());
 
@@ -210,17 +196,8 @@ void NetworkGeometryBuffer::add_chain_operator_rendering(const RenderConfig& con
     const auto resolved_config = resolve_config(config);
     auto self = std::dynamic_pointer_cast<VKBuffer>(shared_from_this());
 
-    auto render = std::make_shared<RenderProcessor>(
-        ShaderConfig { resolved_config.vertex_shader });
-
-    render->set_fragment_shader(resolved_config.fragment_shader);
-    if (!resolved_config.geometry_shader.empty()) {
-        render->set_geometry_shader(resolved_config.geometry_shader);
-    }
-    render->set_target_window(config.target_window, std::dynamic_pointer_cast<VKBuffer>(shared_from_this()));
-    render->set_primitive_topology(resolved_config.topology);
-    render->set_polygon_mode(config.polygon_mode);
-    render->set_cull_mode(config.cull_mode);
+    std::shared_ptr<RenderProcessor> render;
+    apply_render_config(render, resolved_config, ShaderConfig { resolved_config.vertex_shader });
 
     get_processing_chain()->add_processor(render, shared_from_this());
     render->set_buffer_vertex_layout(self, Kakshya::VertexLayout::for_lines());

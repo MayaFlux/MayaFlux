@@ -18,6 +18,7 @@ class Window;
 namespace MayaFlux::Buffers {
 
 class RenderProcessor;
+struct ShaderConfig;
 
 /**
  * @struct VKBufferResources
@@ -68,14 +69,15 @@ public:
     using RenderConfig = Portal::Graphics::RenderConfig;
 
     enum class Usage : uint8_t {
-        STAGING, ///< Host-visible staging buffer (CPU-writable)
+        STAGING, ///< Host-visible staging buffer (CPU-writable, eTransferSrc|Dst)
         DEVICE, ///< Device-local GPU-only buffer
-        COMPUTE, ///< Storage buffer for compute shaders
+        COMPUTE, ///< Storage buffer for compute shaders (device-local)
         VERTEX, ///< Vertex buffer
         INDEX, ///< Index buffer
         UNIFORM, ///< Uniform buffer (host-visible)
         UNIFORM_BDA, ///< Uniform buffer with device address query support
         STORAGE_BDA, ///< Storage buffer with device address query support
+        HOST_STORAGE, ///< Host-visible storage buffer (eStorageBuffer + eHostVisible|eHostCoherent)
     };
 
     /**
@@ -276,12 +278,6 @@ public:
     /* Get logical buffer size as VkDeviceSize */
     vk::DeviceSize get_size_bytes() const { return m_size_bytes; }
 
-    /**
-     * @brief Convert modality to a recommended VkFormat
-     * @return VkFormat corresponding to the buffer's modality, or VK_FORMAT_UNDEFINED.
-     */
-    vk::Format get_format() const;
-
     /** Check whether Vulkan handles are present (buffer registered) */
     bool is_initialized() const { return m_resources.buffer != VK_NULL_HANDLE; }
 
@@ -375,7 +371,8 @@ public:
         return m_usage == Usage::STAGING
             || m_usage == Usage::UNIFORM
             || m_usage == Usage::UNIFORM_BDA
-            || m_usage == Usage::STORAGE_BDA;
+            || m_usage == Usage::STORAGE_BDA
+            || m_usage == Usage::HOST_STORAGE;
     }
 
     /**
@@ -579,7 +576,7 @@ public:
      * By default returns nullptr. Derived classes that support rendering should
      * override this to return an appropriate RenderProcessor instance.
      */
-    virtual std::shared_ptr<RenderProcessor> get_render_processor() const { return nullptr; }
+    virtual std::shared_ptr<RenderProcessor> get_render_processor() const { return m_render_processor; }
 
 protected:
     /**
@@ -599,8 +596,24 @@ protected:
         m_render_config_dirty = false;
     }
 
+    /**
+     * @brief Configure the internal m_render_processor from a RenderConfig.
+     */
+    void apply_render_config(const RenderConfig& config, const ShaderConfig& shader_config);
+
+    /**
+     * @brief Configure a RenderProcessor, creating one if null.
+     * @param render_processor Existing processor to configure, or nullptr to create one.
+     * @param config RenderConfig with settings to apply
+     */
+    void apply_render_config(
+        std::shared_ptr<RenderProcessor>& render_processor,
+        const RenderConfig& config,
+        const ShaderConfig& shader_config);
+
     bool m_render_config_dirty {};
     RenderConfig m_render_config;
+    std::shared_ptr<RenderProcessor> m_render_processor;
 
 private:
     VKBufferResources m_resources;
