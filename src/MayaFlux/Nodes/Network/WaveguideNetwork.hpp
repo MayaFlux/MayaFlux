@@ -240,7 +240,9 @@ public:
     /**
      * @brief Set exciter type
      */
-    void set_exciter_type(ExciterType type) { m_exciter_type = type; }
+    void set_exciter_type(ExciterType type);
+
+    void release();
 
     /**
      * @brief Get current exciter type
@@ -391,6 +393,10 @@ private:
     size_t m_exciter_sample_position {};
     bool m_exciter_active {};
     size_t m_exciter_samples_remaining {};
+
+    double m_exciter_strength { 1.0 };
+    std::vector<double> m_exciter_node_buffer;
+    size_t m_exciter_node_buffer_pos {};
 
     //-------------------------------------------------------------------------
     // Output

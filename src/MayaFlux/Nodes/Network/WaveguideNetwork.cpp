@@ -140,6 +140,11 @@ void WaveguideNetwork::process_batch(unsigned int num_samples)
 
     auto& seg = m_segments[0];
 
+    if (m_exciter_node && m_exciter_type == ExciterType::CONTINUOUS) {
+        extract_node_samples(m_exciter_node, m_exciter_node_buffer,
+            m_exciter_node_buffer_pos, num_samples);
+    }
+
     if (seg.mode == WaveguideSegment::PropagationMode::UNIDIRECTIONAL) {
         process_unidirectional(seg, num_samples, scratch);
     } else {
@@ -158,17 +163,23 @@ void WaveguideNetwork::process_batch(unsigned int num_samples)
 void WaveguideNetwork::process_unidirectional(WaveguideSegment& seg,
     unsigned int num_samples, std::vector<double>& out)
 {
+    const double continuous_gain = (m_exciter_type == ExciterType::CONTINUOUS && m_exciter_node)
+        ? 1.0 / seg.loss_factor
+        : 1.0;
+
     for (unsigned int i = 0; i < num_samples; ++i) {
         const double exciter = generate_exciter_sample();
 
         const double delayed = read_with_interpolation(
             seg.p_plus, m_delay_length_integer, m_delay_length_fraction);
 
-        const double filtered = seg.loop_filter ? seg.loop_filter->process_sample(delayed)
-                                                : delayed;
+        const double filtered = (m_exciter_type != ExciterType::CONTINUOUS && seg.loop_filter)
+            ? seg.loop_filter->process_sample(delayed)
+            : delayed;
 
         seg.p_plus.push(
-            exciter + filtered * seg.loss_factor * seg.reflection_closed);
+            exciter + filtered * seg.loss_factor * seg.reflection_closed * continuous_gain);
+
         out[i] = observe_sample(seg);
     }
 }
@@ -176,6 +187,10 @@ void WaveguideNetwork::process_unidirectional(WaveguideSegment& seg,
 void WaveguideNetwork::process_bidirectional(WaveguideSegment& seg,
     unsigned int num_samples, std::vector<double>& out)
 {
+    const double continuous_gain = (m_exciter_type == ExciterType::CONTINUOUS && m_exciter_node)
+        ? 1.0 / seg.loss_factor
+        : 1.0;
+
     for (unsigned int i = 0; i < num_samples; ++i) {
         const double exciter = generate_exciter_sample();
 
@@ -190,13 +205,16 @@ void WaveguideNetwork::process_bidirectional(WaveguideSegment& seg,
         auto* filt_closed = seg.loop_filter_closed ? seg.loop_filter_closed.get()
                                                    : seg.loop_filter.get();
 
-        const double filtered_plus = filt_open ? filt_open->process_sample(plus_end)
-                                               : plus_end;
-        const double filtered_minus = filt_closed ? filt_closed->process_sample(minus_end)
-                                                  : minus_end;
+        const double filtered_plus = (m_exciter_type != ExciterType::CONTINUOUS && filt_open)
+            ? filt_open->process_sample(plus_end)
+            : plus_end;
+        const double filtered_minus = (m_exciter_type != ExciterType::CONTINUOUS && filt_closed)
+            ? filt_closed->process_sample(minus_end)
+            : minus_end;
 
-        seg.p_minus.push(filtered_plus * seg.loss_factor * seg.reflection_open);
-        seg.p_plus.push(exciter + filtered_minus * seg.loss_factor * seg.reflection_closed);
+        seg.p_minus.push(filtered_plus * seg.loss_factor * seg.reflection_open * continuous_gain);
+        seg.p_plus.push(exciter + filtered_minus * seg.loss_factor * seg.reflection_closed * continuous_gain);
+
         out[i] = observe_sample(seg);
     }
 }
@@ -209,13 +227,15 @@ void WaveguideNetwork::pluck(double position, double strength)
 {
     position = std::clamp(position, 0.01, 0.99);
 
-    if (m_segments.empty()) {
+    if (m_segments.empty())
         return;
-    }
 
     auto& seg = m_segments[0];
     const size_t len = m_delay_length_integer;
     const auto pluck_sample = static_cast<size_t>(position * static_cast<double>(len));
+    const double effective_strength = (m_exciter_type == ExciterType::CONTINUOUS)
+        ? std::max(strength, 1.0)
+        : strength;
 
     seg.p_plus = Memory::HistoryBuffer<double>(seg.p_plus.capacity());
     seg.p_minus = Memory::HistoryBuffer<double>(seg.p_minus.capacity());
@@ -223,36 +243,41 @@ void WaveguideNetwork::pluck(double position, double strength)
     for (size_t s = 0; s < len; ++s) {
         double value = 0.0;
         if (s <= pluck_sample) {
-            value = strength * static_cast<double>(s)
+            value = effective_strength * static_cast<double>(s)
                 / static_cast<double>(pluck_sample);
         } else {
-            value = strength * static_cast<double>(len - s)
+            value = effective_strength * static_cast<double>(len - s)
                 / static_cast<double>(len - pluck_sample);
         }
         seg.p_plus.push(value);
     }
 
-    m_exciter_active = false;
-    m_exciter_samples_remaining = 0;
+    if (m_exciter_type != ExciterType::CONTINUOUS) {
+        m_exciter_active = false;
+        m_exciter_samples_remaining = 0;
+    }
 }
 
 void WaveguideNetwork::strike(double position, double strength)
 {
     position = std::clamp(position, 0.01, 0.99);
 
-    m_exciter_type = ExciterType::NOISE_BURST;
-    m_exciter_duration = 0.002;
-
-    initialize_exciter();
-
-    if (m_segments.empty()) {
-        return;
+    if (m_exciter_type != ExciterType::CONTINUOUS) {
+        m_exciter_type = ExciterType::NOISE_BURST;
+        m_exciter_duration = 0.002;
+        initialize_exciter();
     }
+
+    if (m_segments.empty())
+        return;
 
     auto& seg = m_segments[0];
     const size_t len = m_delay_length_integer;
     const auto strike_center = static_cast<size_t>(position * static_cast<double>(len));
     const size_t burst_width = std::max<size_t>(len / 10, 4);
+    const double effective_strength = (m_exciter_type == ExciterType::CONTINUOUS)
+        ? std::max(strength, 1.0)
+        : strength;
 
     seg.p_plus = Memory::HistoryBuffer<double>(seg.p_plus.capacity());
     seg.p_minus = Memory::HistoryBuffer<double>(seg.p_minus.capacity());
@@ -262,9 +287,26 @@ void WaveguideNetwork::strike(double position, double strength)
             - static_cast<double>(strike_center));
         const double window = std::exp(-(dist * dist)
             / (2.0 * static_cast<double>(burst_width * burst_width)));
-        seg.p_plus.push(strength * m_random_generator(-1.0, 1.0) * window);
+        seg.p_plus.push(effective_strength * m_random_generator(-1.0, 1.0) * window);
     }
 
+    if (m_exciter_type != ExciterType::CONTINUOUS) {
+        m_exciter_active = false;
+        m_exciter_samples_remaining = 0;
+    }
+}
+
+void WaveguideNetwork::set_exciter_type(ExciterType type)
+{
+    m_exciter_type = type;
+    m_exciter_active = (type == ExciterType::CONTINUOUS && m_exciter_node != nullptr);
+    m_exciter_samples_remaining = (type == ExciterType::CONTINUOUS)
+        ? std::numeric_limits<size_t>::max()
+        : 0;
+}
+
+void WaveguideNetwork::release()
+{
     m_exciter_active = false;
     m_exciter_samples_remaining = 0;
 }
@@ -337,9 +379,6 @@ double WaveguideNetwork::generate_exciter_sample()
         break;
 
     case ExciterType::CONTINUOUS:
-        if (m_exciter_node) {
-            sample = m_exciter_node->process_sample(0.0);
-        }
         break;
     }
 
