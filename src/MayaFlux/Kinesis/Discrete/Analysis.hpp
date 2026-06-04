@@ -366,6 +366,29 @@ namespace MayaFlux::Kinesis::Discrete {
     double threshold = 0.0);
 
 /**
+ * @brief Estimate the dominant cycle frequency of a sampled signal
+ *
+ * Detects zero-crossing positions in @p data and derives frequency from
+ * the mean inter-crossing interval. Each consecutive pair of crossings
+ * represents one half-period; the mean of all half-periods gives a robust
+ * estimate robust to occasional spurious crossings.
+ *
+ * Returns @p fallback when fewer than two crossings are found (signal is
+ * silent, DC, or the buffer is shorter than one half-cycle).
+ *
+ * @param data        Input span (any sampled sequence)
+ * @param sample_rate Samples per second
+ * @param fallback    Value returned when estimation is not possible
+ * @param threshold   Zero-crossing detection threshold (default: 0.0)
+ * @return Estimated frequency in Hz, or @p fallback
+ */
+[[nodiscard]] MAYAFLUX_API double estimate_frequency(
+    std::span<const double> data,
+    double sample_rate,
+    double fallback = 0.0,
+    double threshold = 0.0);
+
+/**
  * @brief Sample indices of local peak maxima in the full span
  *
  * A peak at index i satisfies: |data[i]| > threshold,

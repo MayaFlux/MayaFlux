@@ -643,6 +643,29 @@ std::vector<size_t> zero_crossing_positions(std::span<const double> data, double
     return pos;
 }
 
+double estimate_frequency(
+    std::span<const double> data,
+    double sample_rate,
+    double fallback,
+    double threshold)
+{
+    if (data.size() < 2)
+        return fallback;
+
+    const auto crossings = zero_crossing_positions(data, threshold);
+
+    if (crossings.size() < 2)
+        return fallback;
+
+    const double mean_half_period = static_cast<double>(crossings.back() - crossings.front())
+        / static_cast<double>(crossings.size() - 1);
+
+    if (mean_half_period < 1.0)
+        return fallback;
+
+    return sample_rate / (2.0 * mean_half_period);
+}
+
 std::vector<size_t> peak_positions(std::span<const double> data, double threshold, size_t min_distance)
 {
     if (data.size() < 3)
