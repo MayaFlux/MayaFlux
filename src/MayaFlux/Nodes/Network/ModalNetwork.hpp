@@ -428,11 +428,6 @@ private:
      */
     void compute_mode_coupling();
 
-    /**
-     * @brief Pre-extract num_samples from m_exciter_node into m_exciter_node_buffer
-     */
-    void extract_exciter_node_samples(size_t num_samples);
-
     //-------------------------------------------------------------------------
     // Initialization Helpers
     //-------------------------------------------------------------------------

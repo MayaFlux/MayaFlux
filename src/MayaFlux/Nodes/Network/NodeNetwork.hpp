@@ -488,6 +488,18 @@ protected:
      */
     void apply_output_scale();
 
+    /**
+     * @brief Extract num_samples from node into buffer using snapshot guard
+     * @param node       Source node to extract from
+     * @param buffer     Output buffer, resized to num_samples and filled
+     * @param buffer_pos Position counter, reset to 0 before extraction
+     */
+    static void extract_node_samples(
+        const std::shared_ptr<Nodes::Node>& node,
+        std::vector<double>& buffer,
+        size_t& buffer_pos,
+        size_t num_samples);
+
     struct ParameterMapping {
         std::string param_name;
         MappingMode mode;

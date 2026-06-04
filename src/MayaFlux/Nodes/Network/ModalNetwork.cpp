@@ -1,6 +1,5 @@
 #include "ModalNetwork.hpp"
 
-#include "MayaFlux/Buffers/BufferUtils.hpp"
 #include "MayaFlux/Kinesis/Discrete/Analysis.hpp"
 #include "MayaFlux/Nodes/Filters/Filter.hpp"
 #include "MayaFlux/Nodes/Generators/Sine.hpp"
@@ -176,55 +175,6 @@ void ModalNetwork::initialize_exciter(double strength)
     }
 }
 
-void ModalNetwork::extract_exciter_node_samples(size_t num_samples)
-{
-    m_exciter_node_buffer.assign(num_samples, 0.0);
-
-    if (!m_exciter_node)
-        return;
-
-    static std::atomic<uint64_t> s_ctx { 1 };
-    uint64_t my_ctx = s_ctx.fetch_add(1, std::memory_order_relaxed);
-
-    const auto state = m_exciter_node->m_state.load(std::memory_order_acquire);
-
-    if (state == NodeState::INACTIVE && !m_exciter_node->is_buffer_processed()) {
-        for (size_t i = 0; i < num_samples; ++i)
-            m_exciter_node_buffer[i] = m_exciter_node->process_sample(0.0);
-        m_exciter_node->mark_buffer_processed();
-        return;
-    }
-
-    m_exciter_node_buffer_pos = 0;
-
-    bool claimed = m_exciter_node->try_claim_snapshot_context(my_ctx);
-
-    if (claimed) {
-        try {
-            m_exciter_node->save_state();
-            for (size_t i = 0; i < num_samples; ++i)
-                m_exciter_node_buffer[i] = m_exciter_node->process_sample(0.0);
-            m_exciter_node->restore_state();
-            if (m_exciter_node->is_buffer_processed())
-                m_exciter_node->request_buffer_reset();
-            m_exciter_node->release_snapshot_context(my_ctx);
-        } catch (...) {
-            m_exciter_node->release_snapshot_context(my_ctx);
-            m_exciter_node_buffer.assign(num_samples, 0.0);
-        }
-    } else {
-        uint64_t active = m_exciter_node->get_active_snapshot_context();
-        if (!Buffers::wait_for_snapshot_completion(m_exciter_node, active))
-            return;
-        m_exciter_node->save_state();
-        for (size_t i = 0; i < num_samples; ++i)
-            m_exciter_node_buffer[i] = m_exciter_node->process_sample(0.0);
-        m_exciter_node->restore_state();
-        if (m_exciter_node->is_buffer_processed())
-            m_exciter_node->request_buffer_reset();
-    }
-}
-
 double ModalNetwork::generate_exciter_sample()
 {
     if (!m_exciter_active || m_exciter_samples_remaining == 0) {
@@ -383,7 +333,9 @@ void ModalNetwork::process_batch(unsigned int num_samples)
         nb.reserve(num_samples);
 
     if (m_exciter_node) {
-        extract_exciter_node_samples(num_samples);
+        extract_node_samples(m_exciter_node, m_exciter_node_buffer,
+            m_exciter_node_buffer_pos, num_samples);
+
         if (m_exciter_type == ExciterType::CONTINUOUS) {
             const auto peaks = Kinesis::Discrete::peak_positions(m_exciter_node_buffer, 0.1);
             if (!peaks.empty()) {

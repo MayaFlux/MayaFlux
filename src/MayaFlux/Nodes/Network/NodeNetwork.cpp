@@ -1,5 +1,6 @@
 #include "NodeNetwork.hpp"
 
+#include "MayaFlux/Buffers/BufferUtils.hpp"
 #include "MayaFlux/Transitive/Reflect/EnumReflect.hpp"
 
 namespace MayaFlux::Nodes::Network {
@@ -35,6 +36,58 @@ void NodeNetwork::apply_output_scale()
 
     for (auto& s : m_last_audio_buffer)
         s *= m_output_scale;
+}
+
+void NodeNetwork::extract_node_samples(
+    const std::shared_ptr<Nodes::Node>& node,
+    std::vector<double>& buffer,
+    size_t& buffer_pos,
+    size_t num_samples)
+{
+    buffer.assign(num_samples, 0.0);
+    buffer_pos = 0;
+
+    if (!node)
+        return;
+
+    static std::atomic<uint64_t> s_ctx { 1 };
+    uint64_t my_ctx = s_ctx.fetch_add(1, std::memory_order_relaxed);
+
+    const auto state = node->m_state.load(std::memory_order_acquire);
+
+    if (state == NodeState::INACTIVE && !node->is_buffer_processed()) {
+        for (size_t i = 0; i < num_samples; ++i)
+            buffer[i] = node->process_sample(0.0);
+        node->mark_buffer_processed();
+        return;
+    }
+
+    bool claimed = node->try_claim_snapshot_context(my_ctx);
+
+    if (claimed) {
+        try {
+            node->save_state();
+            for (size_t i = 0; i < num_samples; ++i)
+                buffer[i] = node->process_sample(0.0);
+            node->restore_state();
+            if (node->is_buffer_processed())
+                node->request_buffer_reset();
+            node->release_snapshot_context(my_ctx);
+        } catch (...) {
+            node->release_snapshot_context(my_ctx);
+            buffer.assign(num_samples, 0.0);
+        }
+    } else {
+        uint64_t active = node->get_active_snapshot_context();
+        if (!Buffers::wait_for_snapshot_completion(node, active))
+            return;
+        node->save_state();
+        for (size_t i = 0; i < num_samples; ++i)
+            buffer[i] = node->process_sample(0.0);
+        node->restore_state();
+        if (node->is_buffer_processed())
+            node->request_buffer_reset();
+    }
 }
 
 [[nodiscard]] std::unordered_map<std::string, std::string>
