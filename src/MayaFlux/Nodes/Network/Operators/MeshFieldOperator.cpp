@@ -114,6 +114,64 @@ void MeshFieldOperator::set_mode(uint32_t slot_index, FieldMode mode)
         it->second->set_mode(mode);
 }
 
+void MeshFieldOperator::set_gpu_executor(
+    std::shared_ptr<Yantra::ShaderExecutionContext<>> executor, bool continuous)
+{
+    if (!executor) {
+        m_compute_node.reset();
+        m_executor.reset();
+        m_gpu_slot_vertex_counts.clear();
+        return;
+    }
+
+    m_gpu_slot_vertex_counts.clear();
+    if (m_slots) {
+        m_gpu_slot_vertex_counts.reserve(m_slots->size());
+        for (const auto& slot : *m_slots) {
+            m_gpu_slot_vertex_counts.push_back(
+                slot.node ? slot.node->get_mesh_vertex_count() : 0);
+        }
+    }
+
+    m_executor = std::move(executor);
+    m_compute_node = std::make_shared<Nodes::GpuSync::GpuComputeNode>(m_executor, continuous);
+
+    m_compute_node->on_complete([this](Nodes::GpuSync::GpuComputeContext& ctx) {
+        if (!m_slots)
+            return;
+
+        const auto& primary = ctx.gpu_result.primary;
+        constexpr size_t floats_per_vertex = sizeof(MeshVertex) / sizeof(float);
+
+        size_t offset = 0;
+        for (size_t i = 0; i < m_slots->size(); ++i) {
+            if (i >= m_gpu_slot_vertex_counts.size())
+                break;
+
+            const size_t vc = m_gpu_slot_vertex_counts[i];
+            const size_t float_count = vc * floats_per_vertex;
+
+            if (offset + float_count > primary.size())
+                break;
+
+            auto& slot = (*m_slots)[i];
+            if (!slot.node) {
+                offset += float_count;
+                continue;
+            }
+
+            std::vector<MeshVertex> verts(vc);
+            std::memcpy(verts.data(), primary.data() + offset,
+                float_count * sizeof(float));
+            slot.node->set_mesh_vertices(std::move(verts));
+
+            offset += float_count;
+        }
+    });
+
+    m_compute_node->set_dirty();
+}
+
 // =============================================================================
 // MeshOperator interface
 // =============================================================================
@@ -140,6 +198,16 @@ void MeshFieldOperator::process_slot(MeshSlot& slot, float dt)
         slot.node->set_mesh_vertices(field_op->extract_mesh_vertices());
         field_op->mark_vertex_data_clean();
     }
+}
+
+void MeshFieldOperator::process(float dt)
+{
+    if (m_compute_node) {
+        m_compute_node->compute_frame();
+        return;
+    }
+
+    MeshOperator::process(dt);
 }
 
 } // namespace MayaFlux::Nodes::Network

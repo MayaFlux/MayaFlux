@@ -3,6 +3,8 @@
 #include "FieldOperator.hpp"
 #include "MeshOperator.hpp"
 
+#include "MayaFlux/Nodes/Graphics/GpuComputeNode.hpp"
+
 namespace MayaFlux::Nodes::Network {
 
 /**
@@ -115,6 +117,63 @@ public:
         return "MeshField";
     }
 
+    // -------------------------------------------------------------------------
+    // GPU execution
+    // -------------------------------------------------------------------------
+
+    /**
+     * @brief Attach a GPU executor and switch to async dispatch mode.
+     *
+     * Constructs a GpuComputeNode from the executor. On process() calls,
+     * compute_frame() is driven on the node instead of the per-slot CPU
+     * FieldOperator loop.
+     *
+     * The on_complete callback expects gpu_result.primary to contain vertex
+     * data for each slot packed sequentially: slot 0 vertices, then slot 1
+     * vertices, etc. Vertex count per slot must match the node's current
+     * get_mesh_vertex_count() at the time the callback fires. The callback
+     * writes back via slot.node->set_mesh_vertices().
+     *
+     * Slot vertex counts are snapshotted at set_gpu_executor() time from the
+     * current m_slots state. Call set_gpu_executor() after slots are fully
+     * populated. If slot geometry changes after attachment, call
+     * set_gpu_executor() again to rebuild the snapshot.
+     *
+     * CPU FieldOperator bindings are preserved but ignored while a GPU
+     * executor is attached. Passing nullptr clears the GPU path.
+     *
+     * @param executor Pre-configured ShaderExecutionContext. nullptr clears.
+     * @param continuous If true the node re-arms after every completed dispatch.
+     */
+    void set_gpu_executor(
+        std::shared_ptr<Yantra::ShaderExecutionContext<>> executor,
+        bool continuous = true);
+
+    /**
+     * @brief Update push constants on the attached GPU executor.
+     *
+     * Arms the next dispatch. No-op if no GPU executor is attached.
+     *
+     * @tparam T Trivially copyable struct matching the shader push constant layout.
+     * @param data Push constant data.
+     */
+    template <typename T>
+    void push_constants(const T& data)
+    {
+        if (m_executor)
+            m_executor->push(data);
+        if (m_compute_node)
+            m_compute_node->set_dirty();
+    }
+
+    /**
+     * @brief Returns true if a GPU executor is currently attached.
+     */
+    [[nodiscard]] bool has_gpu_executor() const { return m_compute_node != nullptr; }
+
+    // Override process() to drive compute_frame() on the GPU path.
+    void process(float dt) override;
+
 private:
     std::unordered_map<uint32_t, std::shared_ptr<FieldOperator>> m_field_ops;
 
@@ -127,6 +186,17 @@ private:
      */
     [[nodiscard]] std::shared_ptr<FieldOperator>
     get_or_create(MeshSlot& slot, uint32_t slot_index);
+
+    std::shared_ptr<Yantra::ShaderExecutionContext<>> m_executor;
+    std::shared_ptr<Nodes::GpuSync::GpuComputeNode> m_compute_node;
+
+    /**
+     * @brief Vertex count per slot index, snapshotted at set_gpu_executor() time.
+     *
+     * Used by the on_complete callback to slice gpu_result.primary into
+     * per-slot spans without re-querying slot nodes.
+     */
+    std::vector<size_t> m_gpu_slot_vertex_counts;
 };
 
 } // namespace MayaFlux::Nodes::Network

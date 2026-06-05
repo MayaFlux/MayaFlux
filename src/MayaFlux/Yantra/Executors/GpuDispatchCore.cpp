@@ -298,6 +298,33 @@ GpuChannelResult GpuDispatchCore::dispatch_core_chained(
     return result;
 }
 
+Portal::Graphics::FenceID GpuDispatchCore::dispatch_core_async(
+    const std::vector<std::vector<double>>& channels,
+    const DataStructureInfo& structure_info)
+{
+    on_before_gpu_dispatch(channels, structure_info);
+    prepare_gpu_inputs(channels, structure_info);
+
+    for (size_t i = 0; i < m_bindings.size(); ++i) {
+        const auto et = m_bindings[i].element_type;
+        if (et != GpuBufferBinding::ElementType::IMAGE_STORAGE
+            && et != GpuBufferBinding::ElementType::IMAGE_SAMPLED)
+            m_resources.bind_descriptor(i, m_bindings[i]);
+    }
+
+    const size_t effective = m_staging_floats.empty()
+        ? largest_binding_data_element_count()
+        : m_staging_floats.size();
+    const auto groups = calculate_dispatch_size(effective, structure_info);
+
+    m_last_effective_element_count = effective;
+
+    return m_resources.dispatch_async(
+        groups, m_bindings,
+        m_push_constants.empty() ? nullptr : m_push_constants.data(),
+        m_push_constants.size());
+}
+
 //==============================================================================
 // Readback helpers
 //==============================================================================

@@ -224,6 +224,35 @@ protected:
         const ExecutionContext& ctx);
 
     /**
+     * @brief Non-blocking variant of dispatch_core.
+     *
+     * Performs the full setup (on_before_gpu_dispatch, prepare_gpu_inputs,
+     * bind_descriptor) then calls GpuResourceManager::dispatch_async.
+     * Returns immediately with a FenceID. The caller must poll
+     * ShaderFoundry::is_fence_signaled on the returned ID, and once
+     * signaled call readback_primary / readback_aux to collect results.
+     *
+     * @param channels       Extracted double channels from the input Datum.
+     * @param structure_info Dimension/modality metadata from OperationHelper.
+     * @return FenceID to poll. INVALID_FENCE if dispatch fails.
+     */
+    [[nodiscard]] Portal::Graphics::FenceID dispatch_core_async(
+        const std::vector<std::vector<double>>& channels,
+        const DataStructureInfo& structure_info);
+
+    /**
+     * @brief Effective element count used by the last dispatch_core or
+     *        dispatch_core_async call.
+     *
+     * Cached after each dispatch so callers can pass the correct count to
+     * readback_primary without re-deriving it.
+     */
+    [[nodiscard]] size_t last_effective_element_count() const
+    {
+        return m_last_effective_element_count;
+    }
+
+    /**
      * @brief Read back the primary output buffer into a float vector.
      *
      * Selects the first OUTPUT or INPUT_OUTPUT binding.  Caps readback to
@@ -272,6 +301,8 @@ protected:
 
 private:
     GpuShaderConfig m_gpu_config;
+
+    size_t m_last_effective_element_count {};
 };
 
 } // namespace MayaFlux::Yantra

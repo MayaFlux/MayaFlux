@@ -18,7 +18,6 @@ namespace Nodes {
         class FIR;
     }
     namespace GpuSync {
-        class ComputeOutNode;
         class TextureNode;
         class GeometryWriterNode;
         class GlyphGeometryNode;
@@ -38,6 +37,7 @@ namespace Nodes {
         class ParticleNetwork;
         class PointCloudNetwork;
         class MeshNetwork;
+        class InstanceNetwork;
     }
     namespace Input {
         class InputNode;
@@ -69,6 +69,7 @@ namespace Buffers {
     class MeshNetworkBuffer;
     class ComputeMeshBuffer;
     class NetworkGeometryBuffer;
+    class InstanceNetworkBuffer;
     class NetworkTextureBuffer;
     class NetworkAudioBuffer;
 }
@@ -100,7 +101,6 @@ namespace IO {
     N(Counter, MayaFlux::Nodes::Generator::Counter)                           \
     N(IIR, MayaFlux::Nodes::Filters::IIR)                                     \
     N(FIR, MayaFlux::Nodes::Filters::FIR)                                     \
-    N(ComputeOutNode, MayaFlux::Nodes::GpuSync::ComputeOutNode)               \
     N(TextureNode, MayaFlux::Nodes::GpuSync::TextureNode)                     \
     N(GeometryWriterNode, MayaFlux::Nodes::GpuSync::GeometryWriterNode)       \
     N(GlyphGeometryNode, MayaFlux::Nodes::GpuSync::GlyphGeometryNode)         \
@@ -120,6 +120,7 @@ namespace IO {
     W(ResonatorNetwork, MayaFlux::Nodes::Network::ResonatorNetwork)   \
     W(ParticleNetwork, MayaFlux::Nodes::Network::ParticleNetwork)     \
     W(PointCloudNetwork, MayaFlux::Nodes::Network::PointCloudNetwork) \
+    W(InstanceNetwork, MayaFlux::Nodes::Network::InstanceNetwork)     \
     W(MeshNetwork, MayaFlux::Nodes::Network::MeshNetwork)
 
 #define ALL_BUFFER_REGISTRATION                                            \
@@ -137,4 +138,5 @@ namespace IO {
     B(ComputeMeshBuffer, MayaFlux::Buffers::ComputeMeshBuffer)             \
     B(NetworkGeometryBuffer, MayaFlux::Buffers::NetworkGeometryBuffer)     \
     B(NetworkTextureBuffer, MayaFlux::Buffers::NetworkTextureBuffer)       \
+    B(InstanceNetworkBuffer, MayaFlux::Buffers::InstanceNetworkBuffer)     \
     B(NetworkAudioBuffer, MayaFlux::Buffers::NetworkAudioBuffer)
