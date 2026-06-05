@@ -14,6 +14,12 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
 
     add_compile_options(-pipe)
 
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        add_compile_options(-fdiagnostics-color=always)
+    elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        add_compile_options(-fcolor-diagnostics)
+    endif()
+
     if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64")
         add_compile_options(-mavx -mavx2)
         message (STATUS "AVX and AVX2 support enabled for x86_64 architecture")

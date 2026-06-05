@@ -660,7 +660,7 @@ void BackendWindowHandler::recreate_swapchain_for_context(WindowRenderContext& c
 
     if (recreate_swapchain_internal(context)) {
         context.needs_recreation = false;
-        MF_RT_WARN(Journal::Component::Core, Journal::Context::GraphicsCallback,
+        MF_RT_TRACE(Journal::Component::Core, Journal::Context::GraphicsCallback,
             "Recreated swapchain for window '{}' ({}x{})",
             context.window->get_create_info().title,
             context.window->get_state().current_width,
