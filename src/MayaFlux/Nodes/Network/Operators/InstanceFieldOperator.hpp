@@ -4,6 +4,8 @@
 
 #include "MayaFlux/Kinesis/Tendency/TendencyFactories.hpp"
 
+#include "MayaFlux/Nodes/Graphics/GpuComputeNode.hpp"
+
 namespace MayaFlux::Nodes::Network {
 
 /**
@@ -66,9 +68,58 @@ public:
 
     [[nodiscard]] std::string_view get_type_name() const override { return "InstanceField"; }
 
+    /**
+     * @brief Attach a GPU executor and switch to async dispatch mode.
+     *
+     * Constructs a GpuComputeNode from the executor. On each process() call
+     * the node's compute_frame() is driven instead of the CPU field loop.
+     * The on_complete callback reads gpu_result.primary as tightly-packed
+     * mat4 rows (16 floats per slot, in slot-index order) and writes into
+     * m_slots directly.
+     *
+     * CPU field bindings are preserved but ignored while a GPU executor is
+     * attached. Passing nullptr clears the GPU path and restores CPU evaluation.
+     *
+     * @param executor Pre-configured ShaderExecutionContext. Output binding must
+     *                 be sized for slot_count * 16 * sizeof(float). nullptr clears.
+     * @param continuous If true the node re-arms after every completed dispatch.
+     */
+    void set_gpu_executor(
+        std::shared_ptr<Yantra::ShaderExecutionContext<>> executor,
+        bool continuous = true);
+
+    /**
+     * @brief Update push constants on the attached GPU executor.
+     *
+     * Arms the next dispatch by calling set_dirty() after the push. No-op if
+     * no GPU executor is attached.
+     *
+     * @tparam T Trivially copyable struct matching the shader push constant layout.
+     * @param data Push constant data.
+     */
+    template <typename T>
+    void push_constants(const T& data)
+    {
+        if (m_executor)
+            m_executor->push(data);
+        if (m_compute_node)
+            m_compute_node->set_dirty();
+    }
+
+    /**
+     * @brief Returns true if a GPU executor is currently attached.
+     */
+    [[nodiscard]] bool has_gpu_executor() const { return m_compute_node != nullptr; }
+
+    // Override process() to drive compute_frame() on the GPU path.
+    void process(float dt) override;
+
 private:
     std::unordered_map<uint32_t, TransformField> m_transform_fields;
     std::unordered_map<uint32_t, PositionField> m_position_fields;
+
+    std::shared_ptr<Yantra::ShaderExecutionContext<>> m_executor;
+    std::shared_ptr<Nodes::GpuSync::GpuComputeNode> m_compute_node;
 };
 
 } // namespace MayaFlux::Nodes::Network
