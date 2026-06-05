@@ -91,6 +91,20 @@ public:
     Wiring& on(std::shared_ptr<Core::Window> window, IO::MouseButtons button);
 
     /**
+     * @brief Fire the entity on mouse-motion events while @p button is held.
+     *
+     * Mirrors the key held overload. Cursor position is available via
+     * InfluenceContext on each qualifying event.
+     *
+     * @param window Source window.
+     * @param button Button that must be pressed for the entity to fire.
+     * @param held   Pass @c true to select the motion-while-held path.
+     * @param on_release Called when the button is released.
+     */
+    Wiring& on(std::shared_ptr<Core::Window> window, IO::MouseButtons button, bool held,
+        std::function<void(double, double)> on_release = nullptr);
+
+    /**
      * @brief Fire the entity on mouse button press and invoke a release callback on release.
      * @param window      Source window.
      * @param button      Mouse button to listen for.
@@ -236,6 +250,7 @@ private:
         std::shared_ptr<Core::Window> window;
         IO::MouseButtons button;
         std::optional<std::function<void(double, double)>> on_release;
+        bool held {};
     };
 
     struct NetworkTrigger {
