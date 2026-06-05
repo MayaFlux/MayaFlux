@@ -61,6 +61,7 @@
 #include "Nodes/Network/NodeNetwork.hpp"
 #include "Nodes/NodeGraphManager.hpp"
 
+#include "Nodes/Network/InstanceNetwork.hpp"
 #include "Nodes/Network/MeshNetwork.hpp"
 #include "Nodes/Network/ModalNetwork.hpp"
 #include "Nodes/Network/ParticleNetwork.hpp"
@@ -83,6 +84,7 @@
 #include "Buffers/Geometry/GeometryBuffer.hpp"
 #include "Buffers/Geometry/GeometryWriteProcessor.hpp"
 #include "Buffers/Geometry/MeshBuffer.hpp"
+#include "Buffers/Network/InstanceNetworkBuffer.hpp"
 #include "Buffers/Network/MeshNetworkBuffer.hpp"
 #include "Buffers/Network/NetworkAudioBuffer.hpp"
 #include "Buffers/Network/NetworkGeometryBuffer.hpp"

@@ -38,6 +38,7 @@ namespace Nodes {
         class ParticleNetwork;
         class PointCloudNetwork;
         class MeshNetwork;
+        class InstanceNetwork;
     }
     namespace Input {
         class InputNode;
@@ -69,6 +70,7 @@ namespace Buffers {
     class MeshNetworkBuffer;
     class ComputeMeshBuffer;
     class NetworkGeometryBuffer;
+    class InstanceNetworkBuffer;
     class NetworkTextureBuffer;
     class NetworkAudioBuffer;
 }
@@ -120,6 +122,7 @@ namespace IO {
     W(ResonatorNetwork, MayaFlux::Nodes::Network::ResonatorNetwork)   \
     W(ParticleNetwork, MayaFlux::Nodes::Network::ParticleNetwork)     \
     W(PointCloudNetwork, MayaFlux::Nodes::Network::PointCloudNetwork) \
+    W(InstanceNetwork, MayaFlux::Nodes::Network::InstanceNetwork)     \
     W(MeshNetwork, MayaFlux::Nodes::Network::MeshNetwork)
 
 #define ALL_BUFFER_REGISTRATION                                            \
@@ -137,4 +140,5 @@ namespace IO {
     B(ComputeMeshBuffer, MayaFlux::Buffers::ComputeMeshBuffer)             \
     B(NetworkGeometryBuffer, MayaFlux::Buffers::NetworkGeometryBuffer)     \
     B(NetworkTextureBuffer, MayaFlux::Buffers::NetworkTextureBuffer)       \
+    B(InstanceNetworkBuffer, MayaFlux::Buffers::InstanceNetworkBuffer)     \
     B(NetworkAudioBuffer, MayaFlux::Buffers::NetworkAudioBuffer)
