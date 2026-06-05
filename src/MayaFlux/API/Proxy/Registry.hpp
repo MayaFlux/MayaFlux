@@ -18,7 +18,6 @@ namespace Nodes {
         class FIR;
     }
     namespace GpuSync {
-        class ComputeOutNode;
         class TextureNode;
         class GeometryWriterNode;
         class GlyphGeometryNode;
@@ -102,7 +101,6 @@ namespace IO {
     N(Counter, MayaFlux::Nodes::Generator::Counter)                           \
     N(IIR, MayaFlux::Nodes::Filters::IIR)                                     \
     N(FIR, MayaFlux::Nodes::Filters::FIR)                                     \
-    N(ComputeOutNode, MayaFlux::Nodes::GpuSync::ComputeOutNode)               \
     N(TextureNode, MayaFlux::Nodes::GpuSync::TextureNode)                     \
     N(GeometryWriterNode, MayaFlux::Nodes::GpuSync::GeometryWriterNode)       \
     N(GlyphGeometryNode, MayaFlux::Nodes::GpuSync::GlyphGeometryNode)         \

@@ -46,7 +46,6 @@
 #include "Nodes/Generators/Phasor.hpp"
 #include "Nodes/Generators/Random.hpp"
 #include "Nodes/Generators/Sine.hpp"
-#include "Nodes/Graphics/ComputeOutNode.hpp"
 #include "Nodes/Graphics/GeometryReadbackNode.hpp"
 #include "Nodes/Graphics/GeometryWriterNode.hpp"
 #include "Nodes/Graphics/GlyphGeometryNode.hpp"
