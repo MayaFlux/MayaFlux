@@ -182,6 +182,13 @@ public:
     /** @brief Get current dynamic view transform source, if set */
     const std::function<Kinesis::ViewTransform()>& get_view_transform_source() const { return m_view_transform_source; }
 
+    /**
+     * @brief Set number of instances for the next draw call.
+     * @param count Instance count. 1 is the default (non-instanced draw).
+     */
+    void set_instance_count(uint32_t count) { m_instance_count = count; }
+    [[nodiscard]] uint32_t get_instance_count() const { return m_instance_count; }
+
 protected:
     void initialize_pipeline(const std::shared_ptr<VKBuffer>& buffer) override;
     void execute_shader(const std::shared_ptr<VKBuffer>& buffer) override;
@@ -229,6 +236,7 @@ private:
     bool m_view_transform_active {};
     uint32_t m_first_vertex { 0 };
     uint32_t m_vertex_count { 0 };
+    uint32_t m_instance_count { 1 };
 
     std::optional<Kinesis::ViewTransform> m_view_transform;
     std::function<Kinesis::ViewTransform()> m_view_transform_source;

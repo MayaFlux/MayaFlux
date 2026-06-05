@@ -646,9 +646,9 @@ void RenderProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
         const auto index_count = static_cast<uint32_t>(
             buffer->get_index_buffer_size() / sizeof(uint32_t));
         flow.bind_index_buffer(cmd_id, buffer);
-        flow.draw_indexed(cmd_id, index_count, 1, 0, 0, 0);
+        flow.draw_indexed(cmd_id, index_count, m_instance_count, 0, 0, 0);
     } else {
-        flow.draw(cmd_id, draw_count, 1, m_first_vertex, 0);
+        flow.draw(cmd_id, draw_count, m_instance_count, m_first_vertex, 0);
     }
 
     foundry.end_commands(cmd_id);
