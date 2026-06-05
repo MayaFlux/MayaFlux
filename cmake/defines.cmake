@@ -82,9 +82,6 @@ option(MAYAFLUX_DEV
        "Build MayaFlux for development with debug symobls, rpath and tests" OFF)
 option(MAYAFLUX_BUILD_PROJECT "Build project_launcher binary" OFF)
 
-option(MAYAFLUX_CONFIG_OVERRIDE
-       "JSON config file takes precedence over settings()" OFF)
-
 if(MAYAFLUX_CONFIG_OVERRIDE)
     add_compile_definitions(MAYAFLUX_CONFIG_OVERRIDE)
 endif()

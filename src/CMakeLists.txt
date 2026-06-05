@@ -38,6 +38,9 @@ if(NOT MAYAFLUX_BUILD_PROJECT)
     return()
 endif()
 
+option(MAYAFLUX_CONFIG_OVERRIDE
+       "JSON config file takes precedence over settings()" OFF)
+
 file(GLOB_RECURSE EXAMPLES
     "${CMAKE_CURRENT_SOURCE_DIR}/examples/*.hpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/examples/*.cpp"
