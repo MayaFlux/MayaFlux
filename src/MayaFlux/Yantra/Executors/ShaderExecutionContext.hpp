@@ -334,6 +334,43 @@ public:
         }
     }
 
+    /**
+     * @brief Dispatch asynchronously and return a fence for polling.
+     *
+     * Equivalent to calling extract_inputs then dispatch_core_async.
+     * The fence becomes signaled when the GPU work completes. Call
+     * collect_result() once signaled to obtain the GpuChannelResult.
+     *
+     * @param input Input Datum. Channels are extracted before submission.
+     * @return FenceID to poll with ShaderFoundry::is_fence_signaled.
+     *         Returns INVALID_FENCE if GPU initialisation fails.
+     */
+    [[nodiscard]] Portal::Graphics::FenceID dispatch_async(const input_type& input)
+    {
+        if (!this->ensure_gpu_ready())
+            return Portal::Graphics::INVALID_FENCE;
+
+        auto [channels, structure_info] = this->extract_inputs(input);
+        return this->dispatch_core_async(channels, structure_info);
+    }
+
+    /**
+     * @brief Collect the result of the last async dispatch.
+     *
+     * Must be called only after ShaderFoundry::is_fence_signaled returns
+     * true for the FenceID returned by dispatch_async. Calls readback_primary
+     * and readback_aux using the element count cached by dispatch_core_async.
+     *
+     * @return GpuChannelResult with primary float data and aux buffers.
+     */
+    [[nodiscard]] GpuChannelResult collect_result()
+    {
+        GpuChannelResult result;
+        result.primary = this->readback_primary(this->last_effective_element_count());
+        this->readback_aux(result);
+        return result;
+    }
+
 protected:
     /**
      * @brief Returns the binding list declared via constructor or fluent API.

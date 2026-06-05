@@ -124,6 +124,27 @@ public:
         size_t push_constant_size,
         const std::unordered_map<std::string, std::any>& execution_metadata = {});
 
+    /**
+     * @brief Submit a compute dispatch without blocking.
+     *
+     * Records the same command sequence as dispatch() but submits via
+     * ShaderFoundry::submit_async instead of submit_and_wait. Returns a
+     * FenceID immediately. Readback must be deferred until
+     * ShaderFoundry::is_fence_signaled returns true for the returned ID.
+     *
+     * @param groups             Workgroup counts {x, y, z}.
+     * @param bindings           Binding declarations; output barriers inserted.
+     * @param push_constant_data Pointer to push constant bytes, or nullptr.
+     * @param push_constant_size Byte count of push constant data.
+     * @return FenceID to poll with ShaderFoundry::is_fence_signaled.
+     *         Returns INVALID_FENCE if not ready or submission fails.
+     */
+    [[nodiscard]] Portal::Graphics::FenceID dispatch_async(
+        const std::array<uint32_t, 3>& groups,
+        const std::vector<GpuBufferBinding>& bindings,
+        const uint8_t* push_constant_data,
+        size_t push_constant_size);
+
     void cleanup();
 
     [[nodiscard]] bool is_ready() const { return m_ready; }

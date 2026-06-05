@@ -445,4 +445,42 @@ void GpuResourceManager::dispatch_batched(
     }
 }
 
+Portal::Graphics::FenceID GpuResourceManager::dispatch_async(
+    const std::array<uint32_t, 3>& groups,
+    const std::vector<GpuBufferBinding>& bindings,
+    const uint8_t* push_constant_data,
+    size_t push_constant_size)
+{
+    auto& foundry = Portal::Graphics::get_shader_foundry();
+    auto& compute_press = Portal::Graphics::get_compute_press();
+
+    auto cmd_id = foundry.begin_commands(
+        Portal::Graphics::ShaderFoundry::CommandBufferType::COMPUTE);
+
+    compute_press.bind_all(
+        cmd_id, m_pipeline_id, m_descriptor_set_ids,
+        push_constant_data, push_constant_size);
+
+    compute_press.dispatch(cmd_id, groups[0], groups[1], groups[2]);
+
+    for (size_t i = 0; i < bindings.size(); ++i) {
+        const auto et = bindings[i].element_type;
+        const bool is_image = et == GpuBufferBinding::ElementType::IMAGE_STORAGE
+            || et == GpuBufferBinding::ElementType::IMAGE_SAMPLED;
+        const bool is_output = bindings[i].direction == GpuBufferBinding::Direction::OUTPUT
+            || bindings[i].direction == GpuBufferBinding::Direction::INPUT_OUTPUT;
+        if (is_output && !is_image) {
+            foundry.buffer_barrier(
+                cmd_id,
+                m_impl->buffers[i].buffer,
+                vk::AccessFlagBits::eShaderWrite,
+                vk::AccessFlagBits::eHostRead,
+                vk::PipelineStageFlagBits::eComputeShader,
+                vk::PipelineStageFlagBits::eHost);
+        }
+    }
+
+    return foundry.submit_async(cmd_id);
+}
+
 } // namespace MayaFlux::Yantra
