@@ -315,7 +315,7 @@ bool StateEncoder::encode(const Fabric& fabric, const std::string& base_path)
     // Build and write schema.
     // -------------------------------------------------------------------------
     State::FabricSchema schema;
-    schema.version = 4;
+    schema.version = State::k_schema_version;
     schema.fabric_name = fabric.name();
     schema.ranges = rs;
     schema.entities.reserve(records.size());

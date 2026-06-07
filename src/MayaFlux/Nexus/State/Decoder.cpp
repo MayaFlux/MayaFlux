@@ -144,7 +144,7 @@ bool StateDecoder::decode(Fabric& fabric, const std::string& base_path)
     }
     const auto& schema = *schema_opt;
 
-    if (schema.version < 2 || schema.version > 4) {
+    if (schema.version < 2 || schema.version > State::k_schema_version) {
         m_last_error = "Unsupported schema version: " + std::to_string(schema.version);
         MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
         return false;
@@ -156,7 +156,7 @@ bool StateDecoder::decode(Fabric& fabric, const std::string& base_path)
         return false;
     }
 
-    const uint32_t expected_rows = schema.version >= 4 ? 5 : State::k_exr_rows;
+    const uint32_t expected_rows = schema.version >= 4 ? State::k_exr_rows : 3;
     auto pv_opt = load_exr(exr_path, static_cast<uint32_t>(schema.entities.size()), expected_rows, m_last_error);
     if (!pv_opt) {
         MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
@@ -343,7 +343,7 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct(Fabric& fabric, con
     }
     const auto& schema = *schema_opt;
 
-    if (schema.version < 2 || schema.version > 4) {
+    if (schema.version < 2 || schema.version > State::k_schema_version) {
         m_last_error = "Unsupported schema version: " + std::to_string(schema.version);
         MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
         return result;
@@ -355,7 +355,7 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct(Fabric& fabric, con
         return result;
     }
 
-    const uint32_t expected_rows = schema.version >= 4 ? 5 : State::k_exr_rows;
+    const uint32_t expected_rows = schema.version >= 4 ? State::k_exr_rows : 3;
     auto pv_opt = load_exr(exr_path, static_cast<uint32_t>(schema.entities.size()), expected_rows, m_last_error);
     if (!pv_opt) {
         MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
@@ -593,6 +593,41 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct(Fabric& fabric, con
             }
             ++result.constructed;
         }
+    }
+
+    for (const auto& xrec : schema.expanses) {
+        if (xrec.fn_name.empty()) {
+            result.warnings.push_back("Expanse " + std::to_string(xrec.id)
+                + ": no fn_name, skipping");
+            continue;
+        }
+        auto contains_fn = fabric.resolve_expanse_fn(xrec.fn_name);
+        if (!contains_fn || !*contains_fn) {
+            result.warnings.push_back("Expanse " + std::to_string(xrec.id)
+                + ": fn '" + xrec.fn_name + "' not in registry, skipping");
+            continue;
+        }
+        auto on_enter_fn = xrec.on_enter_fn_name.empty()
+            ? Expanse::CrossingFn {}
+            : [ptr = fabric.resolve_crossing_fn(xrec.on_enter_fn_name)](uint32_t id) {
+                  if (ptr && *ptr)
+                      (*ptr)(id);
+              };
+        auto on_exit_fn = xrec.on_exit_fn_name.empty()
+            ? Expanse::CrossingFn {}
+            : [ptr = fabric.resolve_crossing_fn(xrec.on_exit_fn_name)](uint32_t id) {
+                  if (ptr && *ptr)
+                      (*ptr)(id);
+              };
+        auto expanse = std::make_shared<Expanse>(
+            xrec.fn_name,
+            xrec.on_enter_fn_name,
+            xrec.on_exit_fn_name,
+            *contains_fn,
+            std::move(on_enter_fn),
+            std::move(on_exit_fn));
+        fabric.add_expanse(std::move(expanse));
+        ++result.constructed;
     }
 
     MF_INFO(Journal::Component::Nexus, Journal::Context::FileIO,
