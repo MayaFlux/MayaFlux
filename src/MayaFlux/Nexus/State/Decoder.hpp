@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MayaFlux/Nexus/Tapestry.hpp"
+#include "Schema.hpp"
 
 namespace MayaFlux::Nexus {
 
@@ -33,6 +34,7 @@ public:
         int patched { 0 };
         int skipped { 0 };
         std::vector<std::string> warnings;
+        nlohmann::json user_state;
     };
 
     /**

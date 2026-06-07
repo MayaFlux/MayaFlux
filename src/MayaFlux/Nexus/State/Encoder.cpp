@@ -1,7 +1,5 @@
 #include "Encoder.hpp"
 
-#include "Schema.hpp"
-
 #include "MayaFlux/Nexus/Pheme/Sinks.hpp"
 
 #include "MayaFlux/Nexus/Principals/Locus.hpp"
@@ -400,7 +398,7 @@ bool StateEncoder::encode(const Fabric& fabric, const std::string& base_path)
     return true;
 }
 
-bool StateEncoder::encode(const Tapestry& tapestry, const std::string& base_dir)
+bool StateEncoder::encode(const Tapestry& tapestry, const std::string& base_dir, nlohmann::json user_state)
 {
     m_last_error.clear();
 
@@ -443,6 +441,8 @@ bool StateEncoder::encode(const Tapestry& tapestry, const std::string& base_dir)
         }
         schema.expanses.push_back(std::move(xrec));
     }
+
+    schema.user_state = std::move(user_state);
 
     IO::JSONSerializer ser;
     const std::string tapestry_path = base_dir + "/tapestry.json";

@@ -3,6 +3,8 @@
 #include "MayaFlux/Nexus/Fabric.hpp"
 #include "MayaFlux/Transitive/Reflect/EnumReflect.hpp"
 
+#include <nlohmann/json.hpp>
+
 namespace MayaFlux::Nexus::State {
 
 /**
@@ -326,13 +328,15 @@ struct TapestrySchema {
     uint32_t version { k_schema_version };
     std::vector<FabricRef> fabrics;
     std::vector<TapestryExpanseRecord> expanses;
+    nlohmann::json user_state;
 
     static constexpr auto describe()
     {
         return std::make_tuple(
             IO::member("version", &TapestrySchema::version),
             IO::member("fabrics", &TapestrySchema::fabrics),
-            IO::member("expanses", &TapestrySchema::expanses));
+            IO::member("expanses", &TapestrySchema::expanses),
+            IO::member("user_state", &TapestrySchema::user_state));
     }
 };
 

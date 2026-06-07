@@ -2,6 +2,8 @@
 
 #include "MayaFlux/Nexus/Tapestry.hpp"
 
+#include "Schema.hpp"
+
 namespace MayaFlux::Nexus {
 
 /**
@@ -50,7 +52,7 @@ public:
      * @param base_dir  Directory path. Must exist.
      * @return True on success.
      */
-    [[nodiscard]] bool encode(const Tapestry& tapestry, const std::string& base_dir);
+    [[nodiscard]] bool encode(const Tapestry& tapestry, const std::string& base_dir, nlohmann::json user_state = {});
 
     /**
      * @brief Last error message, empty if no error.

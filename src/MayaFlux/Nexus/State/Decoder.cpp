@@ -1,7 +1,5 @@
 #include "Decoder.hpp"
 
-#include "Schema.hpp"
-
 #include "MayaFlux/Nexus/Principals/Locus.hpp"
 
 #include "MayaFlux/IO/ImageReader.hpp"
@@ -712,6 +710,8 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct(
         }
         ++total.constructed;
     }
+
+    total.user_state = schema.user_state;
 
     MF_INFO(Journal::Component::Nexus, Journal::Context::FileIO,
         "StateDecoder::reconstruct(Tapestry): constructed={} patched={} skipped={} warnings={}",
