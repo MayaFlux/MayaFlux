@@ -202,10 +202,13 @@ struct EntityRecord {
     std::optional<float> size;
     std::string influence_fn_name;
     std::string perception_fn_name;
+    std::string radiate_fn_name;
     WiringRecord wiring;
     std::vector<AudioSinkRecord> audio_sinks;
     std::vector<RenderSinkRecord> render_sinks;
     std::optional<LocusNavRecord> locus_nav;
+    std::string falloff_curve_name;
+    std::optional<float> falloff_radius;
 
     static constexpr auto describe()
     {
@@ -221,10 +224,13 @@ struct EntityRecord {
             IO::opt_member("size", &EntityRecord::size),
             IO::member("influence_fn_name", &EntityRecord::influence_fn_name),
             IO::member("perception_fn_name", &EntityRecord::perception_fn_name),
+            IO::member("radiate_fn_name", &EntityRecord::radiate_fn_name),
             IO::member("wiring", &EntityRecord::wiring),
             IO::member("audio_sinks", &EntityRecord::audio_sinks),
             IO::member("render_sinks", &EntityRecord::render_sinks),
-            IO::opt_member("locus_nav", &EntityRecord::locus_nav));
+            IO::member("falloff_curve", &EntityRecord::falloff_curve_name),
+            IO::opt_member("locus_nav", &EntityRecord::locus_nav),
+            IO::opt_member("falloff_radius", &EntityRecord::falloff_radius));
     }
 };
 

@@ -358,8 +358,14 @@ bool StateEncoder::encode(const Fabric& fabric, const std::string& base_path)
                     .far_plane = nav.far_plane,
                     .speed = nav.move_speed,
                 };
-            } else if (std::dynamic_pointer_cast<Presence>(a)) {
+            } else if (auto presence = std::dynamic_pointer_cast<Presence>(a)) {
                 ent.subkind = "presence";
+                ent.radiate_fn_name = presence->radiate_fn_name();
+                ent.falloff_radius = presence->falloff_radius() != presence->query_radius()
+                    ? std::optional<float>(presence->falloff_radius())
+                    : std::nullopt;
+                if (auto fc = presence->falloff_curve())
+                    ent.falloff_curve_name = Reflect::enum_to_lowercase_string(*fc);
             }
         }
 

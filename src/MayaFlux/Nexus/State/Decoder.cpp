@@ -272,6 +272,15 @@ bool StateDecoder::decode(Fabric& fabric, const std::string& base_path)
                         entry.id);
                 }
             }
+
+            if (auto presence = std::dynamic_pointer_cast<Presence>(a)) {
+                if (!entry.falloff_curve_name.empty()) {
+                    if (auto fc = Reflect::string_to_enum_case_insensitive<Presence::FalloffCurve>(entry.falloff_curve_name))
+                        presence->set_falloff_curve(*fc);
+                }
+                if (entry.falloff_radius)
+                    presence->set_falloff_radius(*entry.falloff_radius);
+            }
             break;
         }
         }
@@ -563,6 +572,29 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct(Fabric& fabric, con
                         entry.influence_fn_name, std::move(ifn));
                     result.warnings.push_back("Locus " + std::to_string(entry.id)
                         + ": view_targets must be reconnected by caller");
+
+                } else if (entry.subkind == "presence") {
+                    auto rfn_ptr = fabric.resolve_radiate_fn(entry.radiate_fn_name);
+                    Presence::RadiateFn rfn;
+                    if (!rfn_ptr || !*rfn_ptr) {
+                        result.warnings.push_back("Presence: unknown radiate_fn '"
+                            + entry.radiate_fn_name + "', using no-op");
+                        rfn = [](uint32_t, float) { };
+                    } else {
+                        rfn = *rfn_ptr;
+                    }
+                    auto presence = std::make_shared<Presence>(query_radius,
+                        entry.perception_fn_name, std::move(pfn),
+                        entry.influence_fn_name, std::move(ifn),
+                        entry.radiate_fn_name, std::move(rfn));
+                    if (!entry.falloff_curve_name.empty()) {
+                        if (auto fc = Reflect::string_to_enum_case_insensitive<Presence::FalloffCurve>(entry.falloff_curve_name))
+                            presence->set_falloff_curve(*fc);
+                    }
+                    if (entry.falloff_radius)
+                        presence->set_falloff_radius(*entry.falloff_radius);
+                    agent = std::move(presence);
+
                 } else {
                     if (entry.subkind == "locus") {
                         result.warnings.push_back("Locus " + std::to_string(entry.id)
