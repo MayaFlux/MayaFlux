@@ -93,7 +93,14 @@ jobs:
       os_display_name: Windows
 
   create_dev_release:
-    needs: [determine_version, build_macos, build_linux, build_windows, should_run]
+    needs:
+      [
+        determine_version,
+        build_macos,
+        build_linux_arch,
+        build_windows,
+        should_run,
+      ]
     if: ${{ needs.should_run.outputs.has_changes == 'true' || github.event_name ==
       'workflow_dispatch' }}
     runs-on: ubuntu-latest
