@@ -61,6 +61,30 @@ public:
     {
     }
 
+    /**
+     * @brief Construct with named containment predicate and named crossing actions.
+     * @param fn_name          Identifier for the containment predicate.
+     * @param on_enter_fn_name Identifier for the on_enter callable.
+     * @param on_exit_fn_name  Identifier for the on_exit callable.
+     * @param contains         Returns true when a world position lies within the Expanse.
+     * @param on_enter         Fired with the entity id when it enters. May be empty.
+     * @param on_exit          Fired with the entity id when it leaves. May be empty.
+     */
+    Expanse(std::string fn_name,
+        std::string on_enter_fn_name,
+        std::string on_exit_fn_name,
+        ContainsFn contains,
+        CrossingFn on_enter,
+        CrossingFn on_exit)
+        : m_fn_name(std::move(fn_name))
+        , m_on_enter_fn_name(std::move(on_enter_fn_name))
+        , m_on_exit_fn_name(std::move(on_exit_fn_name))
+        , m_contains(std::move(contains))
+        , m_on_enter(std::move(on_enter))
+        , m_on_exit(std::move(on_exit))
+    {
+    }
+
     /** @brief Test whether a world position lies within the Expanse. */
     [[nodiscard]] bool contains(const glm::vec3& p) const
     {
@@ -72,6 +96,18 @@ public:
 
     /** @brief Set or replace the predicate identifier. */
     void set_fn_name(std::string name) { m_fn_name = std::move(name); }
+
+    /** @brief Identifier assigned to the on_enter callable, empty if anonymous. */
+    [[nodiscard]] const std::string& on_enter_fn_name() const { return m_on_enter_fn_name; }
+
+    /** @brief Set or replace the on_enter callable identifier. */
+    void set_on_enter_fn_name(std::string name) { m_on_enter_fn_name = std::move(name); }
+
+    /** @brief Identifier assigned to the on_exit callable, empty if anonymous. */
+    [[nodiscard]] const std::string& on_exit_fn_name() const { return m_on_exit_fn_name; }
+
+    /** @brief Set or replace the on_exit callable identifier. */
+    void set_on_exit_fn_name(std::string name) { m_on_exit_fn_name = std::move(name); }
 
     /** @brief Stable id assigned by Fabric on registration. */
     [[nodiscard]] uint32_t id() const { return m_id; }
@@ -109,6 +145,8 @@ public:
 
 private:
     std::string m_fn_name;
+    std::string m_on_enter_fn_name;
+    std::string m_on_exit_fn_name;
     ContainsFn m_contains;
     CrossingFn m_on_enter;
     CrossingFn m_on_exit;
