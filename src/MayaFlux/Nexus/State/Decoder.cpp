@@ -1,5 +1,7 @@
 #include "Decoder.hpp"
 
+#include "Schema.hpp"
+
 #include "MayaFlux/IO/ImageReader.hpp"
 #include "MayaFlux/IO/JSONSerializer.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
@@ -8,171 +10,41 @@ namespace MayaFlux::Nexus {
 
 namespace {
 
-    constexpr uint32_t k_exr_rows = 3;
-    constexpr uint32_t k_channels = 4;
-
-    // -------------------------------------------------------------------------
-    // Schema structs  (mirrored from StateEncoder.cpp until centralized)
-    // -------------------------------------------------------------------------
-
-    struct Range {
-        float min { 0.0F };
-        float max { 1.0F };
-
-        static constexpr auto describe()
-        {
-            return std::make_tuple(
-                IO::member("min", &Range::min),
-                IO::member("max", &Range::max));
-        }
-    };
-
-    struct RangeSet {
-        Range pos_x, pos_y, pos_z;
-        Range intensity;
-        Range color_r, color_g, color_b;
-        Range size;
-        Range radius;
-        Range query_radius;
-
-        static constexpr auto describe()
-        {
-            return std::make_tuple(
-                IO::member("position.x", &RangeSet::pos_x),
-                IO::member("position.y", &RangeSet::pos_y),
-                IO::member("position.z", &RangeSet::pos_z),
-                IO::member("intensity", &RangeSet::intensity),
-                IO::member("color.r", &RangeSet::color_r),
-                IO::member("color.g", &RangeSet::color_g),
-                IO::member("color.b", &RangeSet::color_b),
-                IO::member("size", &RangeSet::size),
-                IO::member("radius", &RangeSet::radius),
-                IO::member("query_radius", &RangeSet::query_radius));
-        }
-    };
-
-    struct WiringStep {
-        glm::vec3 position {};
-        double delay_seconds { 0.0 };
-
-        static constexpr auto describe()
-        {
-            return std::make_tuple(
-                IO::member("position", &WiringStep::position),
-                IO::member("delay", &WiringStep::delay_seconds));
-        }
-    };
-
-    struct WiringRecord {
-        std::string kind { "commit_driven" };
-        std::optional<double> interval;
-        std::optional<double> duration;
-        std::optional<size_t> times;
-        std::optional<std::vector<WiringStep>> steps;
-
-        static constexpr auto describe()
-        {
-            return std::make_tuple(
-                IO::member("kind", &WiringRecord::kind),
-                IO::opt_member("interval", &WiringRecord::interval),
-                IO::opt_member("duration", &WiringRecord::duration),
-                IO::opt_member("times", &WiringRecord::times),
-                IO::opt_member("steps", &WiringRecord::steps));
-        }
-    };
-
-    struct EntityRecord {
-        uint32_t id {};
-        std::string kind;
-        glm::vec3 position {};
-        float intensity { 0.0F };
-        float radius { 0.0F };
-        float query_radius { 0.0F };
-        std::optional<glm::vec3> color;
-        std::optional<float> size;
-        std::string influence_fn_name;
-        std::string perception_fn_name;
-        WiringRecord wiring;
-
-        static constexpr auto describe()
-        {
-            return std::make_tuple(
-                IO::member("id", &EntityRecord::id),
-                IO::member("kind", &EntityRecord::kind),
-                IO::member("position", &EntityRecord::position),
-                IO::member("intensity", &EntityRecord::intensity),
-                IO::member("radius", &EntityRecord::radius),
-                IO::member("query_radius", &EntityRecord::query_radius),
-                IO::opt_member("color", &EntityRecord::color),
-                IO::opt_member("size", &EntityRecord::size),
-                IO::member("influence_fn_name", &EntityRecord::influence_fn_name),
-                IO::member("perception_fn_name", &EntityRecord::perception_fn_name),
-                IO::member("wiring", &EntityRecord::wiring));
-        }
-    };
-
-    struct FabricSchema {
-        uint32_t version { 0 };
-        std::string fabric_name;
-        std::vector<EntityRecord> entities;
-        RangeSet ranges;
-
-        static constexpr auto describe()
-        {
-            return std::make_tuple(
-                IO::member("version", &FabricSchema::version),
-                IO::member("fabric_name", &FabricSchema::fabric_name),
-                IO::member("entities", &FabricSchema::entities),
-                IO::member("ranges", &FabricSchema::ranges));
-        }
-    };
-
     // -------------------------------------------------------------------------
     // Helpers
     // -------------------------------------------------------------------------
 
-    float denormalize(float norm, const Range& r)
+    float denormalize(float norm, const State::Range& r)
     {
         return r.min + norm * (r.max - r.min);
     }
 
-    Fabric::Kind parse_kind(const std::string& s)
+    void apply_wiring(Wiring wiring, const State::WiringRecord& rec, std::vector<std::string>& warnings)
     {
-        if (s == "sensor") {
-            return Fabric::Kind::Sensor;
-        }
-        if (s == "agent") {
-            return Fabric::Kind::Agent;
-        }
-        return Fabric::Kind::Emitter;
-    }
-
-    bool kind_known(const std::string& s)
-    {
-        return s == "emitter" || s == "sensor" || s == "agent";
-    }
-
-    void apply_wiring(Wiring wiring, const WiringRecord& rec, std::vector<std::string>& warnings)
-    {
-        if (rec.kind == "every") {
+        switch (rec.kind) {
+        case State::WiringKind::Every:
             wiring.every(*rec.interval);
-            if (rec.duration) {
+            if (rec.duration)
                 wiring.for_duration(*rec.duration);
-            }
-            if (rec.times && *rec.times > 1) {
+            if (rec.times && *rec.times > 1)
                 wiring.times(*rec.times);
-            }
-        } else if (rec.kind == "move_to") {
+            break;
+
+        case State::WiringKind::MoveTo:
             if (rec.steps) {
-                for (const auto& s : *rec.steps) {
+                for (const auto& s : *rec.steps)
                     wiring.move_to(s.position, s.delay_seconds);
-                }
             }
-            if (rec.times && *rec.times > 1) {
+            if (rec.times && *rec.times > 1)
                 wiring.times(*rec.times);
-            }
-        } else if (rec.kind != "commit_driven") {
-            warnings.emplace_back("Unsupported wiring kind '" + rec.kind + "'; falling back to commit_driven");
+            break;
+
+        case State::WiringKind::Unsupported:
+            warnings.emplace_back("Unsupported wiring kind in schema; falling back to commit_driven");
+            [[fallthrough]];
+
+        case State::WiringKind::CommitDriven:
+            break;
         }
         wiring.finalise();
     }
@@ -204,9 +76,9 @@ namespace {
             error_out = "EXR has no float pixel data: " + exr_path;
             return std::nullopt;
         }
-        if (image_opt->channels != k_channels) {
+        if (image_opt->channels != State::k_channels) {
             error_out = "EXR channel count mismatch: expected "
-                + std::to_string(k_channels) + " got " + std::to_string(image_opt->channels);
+                + std::to_string(State::k_channels) + " got " + std::to_string(image_opt->channels);
             return std::nullopt;
         }
         if (image_opt->height != expected_rows) {
@@ -221,7 +93,7 @@ namespace {
         }
 
         const uint32_t w = image_opt->width;
-        return PixelView { std::move(*image_opt), nullptr, w };
+        return PixelView { .image = std::move(*image_opt), .pixels = nullptr, .width = w };
     }
 
 } // namespace
@@ -240,7 +112,7 @@ bool StateDecoder::decode(Fabric& fabric, const std::string& base_path)
     const std::string exr_path = base_path + ".exr";
 
     IO::JSONSerializer ser;
-    auto schema_opt = ser.read<FabricSchema>(json_path);
+    auto schema_opt = ser.read<State::FabricSchema>(json_path);
     if (!schema_opt) {
         m_last_error = "Failed to load schema: " + ser.last_error();
         MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
@@ -260,7 +132,7 @@ bool StateDecoder::decode(Fabric& fabric, const std::string& base_path)
         return false;
     }
 
-    const uint32_t expected_rows = schema.version >= 4 ? 5 : k_exr_rows;
+    const uint32_t expected_rows = schema.version >= 4 ? 5 : State::k_exr_rows;
     auto pv_opt = load_exr(exr_path, static_cast<uint32_t>(schema.entities.size()), expected_rows, m_last_error);
     if (!pv_opt) {
         MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
@@ -274,16 +146,16 @@ bool StateDecoder::decode(Fabric& fabric, const std::string& base_path)
     for (size_t i = 0; i < schema.entities.size(); ++i) {
         const auto& entry = schema.entities[i];
 
-        if (!kind_known(entry.kind)) {
+        if (!State::kind_known(entry.kind)) {
             MF_WARN(Journal::Component::Nexus, Journal::Context::Runtime,
                 "StateDecoder: unknown kind '{}' for id {}, skipping", entry.kind, entry.id);
             ++m_missing_count;
             continue;
         }
 
-        const size_t row0 = (static_cast<size_t>(0) * width + i) * k_channels;
-        const size_t row1 = (static_cast<size_t>(1) * width + i) * k_channels;
-        const size_t row2 = (static_cast<size_t>(2) * width + i) * k_channels;
+        const size_t row0 = (static_cast<size_t>(0) * width + i) * State::k_channels;
+        const size_t row1 = (static_cast<size_t>(1) * width + i) * State::k_channels;
+        const size_t row2 = (static_cast<size_t>(2) * width + i) * State::k_channels;
 
         const glm::vec3 position {
             denormalize((*pixels)[row0 + 0], r.pos_x),
@@ -291,7 +163,7 @@ bool StateDecoder::decode(Fabric& fabric, const std::string& base_path)
             denormalize((*pixels)[row0 + 2], r.pos_z),
         };
 
-        switch (parse_kind(entry.kind)) {
+        switch (State::parse_kind(entry.kind)) {
         case Fabric::Kind::Emitter: {
             auto e = fabric.get_emitter(entry.id);
             if (!e) {
@@ -396,7 +268,7 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct(Fabric& fabric, con
     const std::string exr_path = base_path + ".exr";
 
     IO::JSONSerializer ser;
-    auto schema_opt = ser.read<FabricSchema>(json_path);
+    auto schema_opt = ser.read<State::FabricSchema>(json_path);
     if (!schema_opt) {
         m_last_error = "Failed to load schema: " + ser.last_error();
         MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
@@ -416,7 +288,7 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct(Fabric& fabric, con
         return result;
     }
 
-    const uint32_t expected_rows = schema.version >= 4 ? 5 : k_exr_rows;
+    const uint32_t expected_rows = schema.version >= 4 ? 5 : State::k_exr_rows;
     auto pv_opt = load_exr(exr_path, static_cast<uint32_t>(schema.entities.size()), expected_rows, m_last_error);
     if (!pv_opt) {
         MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
@@ -433,16 +305,16 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct(Fabric& fabric, con
     for (size_t i = 0; i < schema.entities.size(); ++i) {
         const auto& entry = schema.entities[i];
 
-        if (!kind_known(entry.kind)) {
+        if (!State::kind_known(entry.kind)) {
             result.warnings.push_back("Unknown kind '" + entry.kind
                 + "' for id " + std::to_string(entry.id) + ", skipping");
             ++result.skipped;
             continue;
         }
 
-        const size_t row0 = (static_cast<size_t>(0) * width + i) * k_channels;
-        const size_t row1 = (static_cast<size_t>(1) * width + i) * k_channels;
-        const size_t row2 = (static_cast<size_t>(2) * width + i) * k_channels;
+        const size_t row0 = (static_cast<size_t>(0) * width + i) * State::k_channels;
+        const size_t row1 = (static_cast<size_t>(1) * width + i) * State::k_channels;
+        const size_t row2 = (static_cast<size_t>(2) * width + i) * State::k_channels;
 
         const glm::vec3 position {
             denormalize((*pixels)[row0 + 0], r.pos_x),
@@ -468,7 +340,7 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct(Fabric& fabric, con
             // -----------------------------------------------------------------
             // Patch existing entity.
             // -----------------------------------------------------------------
-            switch (parse_kind(entry.kind)) {
+            switch (State::parse_kind(entry.kind)) {
             case Fabric::Kind::Emitter: {
                 auto e = fabric.get_emitter(entry.id);
                 if (!e) {
@@ -539,7 +411,7 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct(Fabric& fabric, con
             // -----------------------------------------------------------------
             // Construct missing entity.
             // -----------------------------------------------------------------
-            switch (parse_kind(entry.kind)) {
+            switch (State::parse_kind(entry.kind)) {
             case Fabric::Kind::Emitter: {
                 auto fn_ptr = fabric.resolve_influence_fn(entry.influence_fn_name);
                 Emitter::InfluenceFn fn;
