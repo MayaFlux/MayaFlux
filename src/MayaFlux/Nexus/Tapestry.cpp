@@ -88,7 +88,10 @@ std::shared_ptr<Expanse> Tapestry::create_expanse(
     Expanse::CrossingFn on_exit)
 {
     auto expanse = std::make_shared<Expanse>(
-        std::move(contains), std::move(on_enter), std::move(on_exit));
+        name,
+        std::move(contains),
+        std::move(on_enter),
+        std::move(on_exit));
     m_expanses.emplace(std::move(name), expanse);
     return expanse;
 }

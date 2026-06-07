@@ -637,4 +637,84 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct(Fabric& fabric, con
     return result;
 }
 
+StateDecoder::ReconstructionResult StateDecoder::reconstruct(
+    Tapestry& tapestry, const std::string& base_dir)
+{
+    ReconstructionResult total;
+
+    const std::string tapestry_path = base_dir + "/tapestry.json";
+    IO::JSONSerializer ser;
+    auto schema_opt = ser.read<State::TapestrySchema>(tapestry_path);
+    if (!schema_opt) {
+        m_last_error = "Failed to load tapestry schema: " + ser.last_error();
+        MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
+        return total;
+    }
+    const auto& schema = *schema_opt;
+
+    for (const auto& ref : schema.fabrics) {
+        auto fabric = tapestry.get_fabric(ref.name);
+        if (!fabric) {
+            fabric = tapestry.create_fabric(ref.name);
+        }
+        auto result = reconstruct(*fabric, ref.base_path);
+        total.constructed += result.constructed;
+        total.patched += result.patched;
+        total.skipped += result.skipped;
+        for (auto& w : result.warnings)
+            total.warnings.push_back(ref.name + ": " + std::move(w));
+    }
+
+    for (const auto& xrec : schema.expanses) {
+        if (xrec.fn_name.empty()) {
+            total.warnings.push_back("TapestryExpanse '" + xrec.name + "': no fn_name, skipping");
+            continue;
+        }
+        Expanse::ContainsFn contains_fn;
+        Expanse::CrossingFn on_enter_fn;
+        Expanse::CrossingFn on_exit_fn;
+
+        for (const auto& fname : xrec.fabric_names) {
+            auto fabric = tapestry.get_fabric(fname);
+            if (!fabric)
+                continue;
+            if (!contains_fn) {
+                if (auto ptr = fabric->resolve_expanse_fn(xrec.fn_name); ptr && *ptr)
+                    contains_fn = *ptr;
+            }
+            if (!on_enter_fn && !xrec.on_enter_fn_name.empty()) {
+                if (auto ptr = fabric->resolve_crossing_fn(xrec.on_enter_fn_name); ptr && *ptr)
+                    on_enter_fn = *ptr;
+            }
+            if (!on_exit_fn && !xrec.on_exit_fn_name.empty()) {
+                if (auto ptr = fabric->resolve_crossing_fn(xrec.on_exit_fn_name); ptr && *ptr)
+                    on_exit_fn = *ptr;
+            }
+        }
+
+        if (!contains_fn) {
+            total.warnings.push_back("TapestryExpanse '" + xrec.name
+                + "': fn '" + xrec.fn_name + "' not resolved, skipping");
+            continue;
+        }
+
+        auto expanse = tapestry.create_expanse(
+            xrec.name,
+            std::move(contains_fn),
+            std::move(on_enter_fn),
+            std::move(on_exit_fn));
+
+        for (const auto& fname : xrec.fabric_names) {
+            if (auto fabric = tapestry.get_fabric(fname))
+                fabric->add_expanse(expanse);
+        }
+        ++total.constructed;
+    }
+
+    MF_INFO(Journal::Component::Nexus, Journal::Context::FileIO,
+        "StateDecoder::reconstruct(Tapestry): constructed={} patched={} skipped={} warnings={}",
+        total.constructed, total.patched, total.skipped, total.warnings.size());
+    return total;
+}
+
 } // namespace MayaFlux::Nexus

@@ -400,4 +400,61 @@ bool StateEncoder::encode(const Fabric& fabric, const std::string& base_path)
     return true;
 }
 
+bool StateEncoder::encode(const Tapestry& tapestry, const std::string& base_dir)
+{
+    m_last_error.clear();
+
+    State::TapestrySchema schema;
+
+    for (const auto& fabric : tapestry.all_fabrics()) {
+        const std::string fabric_id = fabric->name().empty()
+            ? std::to_string(fabric->id())
+            : fabric->name();
+
+        const std::string base_path = base_dir + "/" + fabric_id;
+
+        if (!encode(*fabric, base_path)) {
+            return false;
+        }
+
+        schema.fabrics.push_back(State::FabricRef {
+            .name = fabric_id,
+            .base_path = base_path,
+        });
+    }
+
+    for (const auto& [xname, xptr] : tapestry.all_expanses()) {
+        State::TapestryExpanseRecord xrec {
+            .name = xname,
+            .fn_name = xptr->fn_name(),
+            .on_enter_fn_name = xptr->on_enter_fn_name(),
+            .on_exit_fn_name = xptr->on_exit_fn_name(),
+        };
+        for (const auto& fabric : tapestry.all_fabrics()) {
+            for (uint32_t xid : fabric->all_expanse_ids()) {
+                if (fabric->get_expanse(xid) == xptr) {
+                    const std::string fname = fabric->name().empty()
+                        ? std::to_string(fabric->id())
+                        : fabric->name();
+                    xrec.fabric_names.push_back(fname);
+                    break;
+                }
+            }
+        }
+        schema.expanses.push_back(std::move(xrec));
+    }
+
+    IO::JSONSerializer ser;
+    const std::string tapestry_path = base_dir + "/tapestry.json";
+    if (!ser.write(tapestry_path, schema)) {
+        m_last_error = "Failed to write tapestry schema: " + ser.last_error();
+        MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
+        return false;
+    }
+
+    MF_INFO(Journal::Component::Nexus, Journal::Context::FileIO,
+        "StateEncoder: wrote {} fabrics to {}", schema.fabrics.size(), tapestry_path);
+    return true;
+}
+
 } // namespace MayaFlux::Nexus
