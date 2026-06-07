@@ -1,0 +1,225 @@
+name: "Build Linux Arch Distribution"
+on:
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
+      clean_version:
+        required: true
+        type: string
+      is_dev:
+        required: true
+        type: string
+      run_tests:
+        required: false
+        type: boolean
+        default: false
+      create_distribution:
+        required: false
+        type: boolean
+        default: true
+      artifact_name:
+        required: true
+        type: string
+      distribution_name:
+        required: true
+        type: string
+      os_display_name:
+        required: true
+        type: string
+env:
+  BUILD_TYPE: RelWithDebInfo
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux:latest
+      options: --privileged
+    name: "Arch Linux (Clang, LLVM 21)"
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Use version
+        run: echo "Version is ${{ inputs.version }}"
+
+      - name: Initialize pacman keyring
+        run: |
+          pacman-key --init
+          pacman-key --populate archlinux
+
+      - name: Update system
+        run: pacman -Syu --noconfirm
+
+      - name: Create builder user
+        run: |
+          useradd -m builder
+          echo "builder ALL=(ALL) NOPASSWD: /usr/bin/pacman" >> /etc/sudoers
+
+      - name: Install build dependencies
+        run: |
+          pacman -S --noconfirm \
+            base-devel \
+            llvm \
+            llvm-libs \
+            clang \
+            cmake \
+            pkg-config \
+            glfw \
+            glm \
+            eigen \
+            spirv-headers \
+            spirv-tools \
+            spirv-cross \
+            vulkan-headers \
+            vulkan-icd-loader \
+            vulkan-tools \
+            vulkan-utility-libraries \
+            vulkan-validation-layers \
+            wayland \
+            wayland-protocols \
+            libxkbcommon \
+            dbus \
+            ffmpeg \
+            assimp \
+            stb \
+            hidapi \
+            asio \
+            freetype2 \
+            libutf8proc \
+            fontconfig \
+            nlohmann-json \
+            libpipewire \
+            ninja \
+            shaderc \
+            ccache \
+            git
+
+      - name: Install AUR packages
+        run: |
+          su - builder -c "
+            git clone https://aur.archlinux.org/magic_enum.git ~/magic_enum
+            cd ~/magic_enum
+            makepkg -si --noconfirm
+          "
+
+      - name: Setup ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: arch-build
+          max-size: "1G"
+          ccache-options: |
+            sloppiness = pch_defines,time_macros,include_file_mtime,include_file_ctime
+
+      - name: Configure CMake
+        run: |
+          if [ "${{ env.BUILD_TYPE }}" = "Release" ]; then
+            PRESET="linux-ship-rel"
+          else
+            PRESET="linux-ship-dev"
+          fi
+          echo "PRESET=$PRESET" >> $GITHUB_ENV
+          cmake --preset "$PRESET"
+
+      - name: Build
+        shell: bash
+        run: cmake --build --preset "${{ env.PRESET }}"
+
+      - name: Install to staging directory
+        if: ${{ inputs.create_distribution != false }}
+        run: |
+          mkdir -p dist_staging
+          cmake --install build --prefix dist_staging
+
+      - name: Verify version file
+        if: ${{ inputs.create_distribution != false }}
+        run: |
+          echo "=== Version Metadata ==="
+          if [ -f "dist_staging/share/MayaFlux/.version" ]; then
+            cat dist_staging/share/MayaFlux/.version
+          else
+            echo "WARNING: .version file not generated!"
+          fi
+
+      - name: Verify installation structure
+        if: ${{ inputs.create_distribution != false }}
+        run: |
+          echo "=== MayaFlux Distribution Structure ==="
+          echo "MayaFluxLib (Core Library):"
+          find dist_staging/include/MayaFlux -name "*.hpp" | head -5 || echo "No MayaFlux headers found"
+          find dist_staging/lib -name "*MayaFlux*" | head -5 || echo "No MayaFlux libraries found"
+          echo ""
+          echo "Lila (JIT Interface):"
+          find dist_staging/include/Lila -name "*.hpp" | head -5 || echo "No Lila headers found"
+          find dist_staging/lib -name "*Lila*" | head -5 || echo "No Lila libraries found"
+          echo ""
+          echo "lila_server (User Executable):"
+          find dist_staging/bin -name "*lila_server*" | head -5 || echo "No lila_server found"
+          echo ""
+          echo "Runtime (JIT Context):"
+          find dist_staging/share/MayaFlux/runtime -type f | head -5 || echo "No runtime files found"
+
+      - name: Copy distribution files
+        if: ${{ inputs.create_distribution != false }}
+        run: |
+          cp .github/workflows/distribution/linux/verify_components.sh dist_staging/ || true
+          chmod +x dist_staging/verify_components.sh 2>/dev/null || true
+
+      - name: Create distribution packages with checksums
+        if: ${{ inputs.create_distribution != false }}
+        run: |
+          VERSION="${{ inputs.version }}"
+          OS_NAME="${{ inputs.distribution_name }}"
+          PACKAGE_NAME="MayaFlux-${VERSION}-${OS_NAME}"
+          tar -czf "${PACKAGE_NAME}.tar.gz" -C dist_staging .
+          sha256sum "${PACKAGE_NAME}.tar.gz" > "${PACKAGE_NAME}.tar.gz.sha256"
+          md5sum "${PACKAGE_NAME}.tar.gz" > "${PACKAGE_NAME}.tar.gz.md5"
+          echo ""
+          echo "SHA256 Checksums:"
+          cat "${PACKAGE_NAME}.tar.gz.sha256"
+          echo "PACKAGE_NAME=${PACKAGE_NAME}" >> $GITHUB_ENV
+
+      - name: Upload MayaFlux distribution
+        if: ${{ inputs.create_distribution != false }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.artifact_name }}
+          path: |
+            ${{ env.PACKAGE_NAME }}.tar.gz
+            ${{ env.PACKAGE_NAME }}.tar.gz.sha256
+            ${{ env.PACKAGE_NAME }}.tar.gz.md5
+          retention-days: 30
+
+      - name: Display build summary
+        if: ${{ inputs.create_distribution != false }}
+        run: |
+          echo "=== MayaFlux Arch Linux Build Complete ==="
+          echo "Package: ${{ env.PACKAGE_NAME }}"
+          echo "  Platform: ${{ inputs.os_display_name }}"
+          echo "  Base: Arch Linux (rolling)"
+          echo "  Compiler: Clang $(clang --version | head -1)"
+          echo "  LLVM: $(llvm-config --version)"
+          echo "  C++ Standard: C++23"
+          echo ""
+          echo "Dependencies:"
+          echo "  LLVM 21 (Lila JIT)"
+          echo "  GLFW (Wayland)"
+          echo "  FFmpeg"
+          echo "  Vulkan SDK, SPIR-V"
+          echo "  Eigen3, GLM, STB"
+          echo "  PipeWire"
+          echo ""
+          echo "Distribution Packages:"
+          echo "  ${{ env.PACKAGE_NAME }}.tar.gz (with SHA256/MD5)"
+
+      - name: Upload build artifacts (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs-arch
+          path: |
+            build/CMakeFiles/CMakeOutput.log
+            build/CMakeFiles/CMakeError.log
+            build/Testing/Temporary/LastTest.log
+            build/compile_commands.json
