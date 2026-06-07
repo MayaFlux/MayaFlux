@@ -92,6 +92,11 @@ install(DIRECTORY ${CMAKE_SOURCE_DIR}/third_party/tinyexr/
     FILES_MATCHING PATTERN "*.h" PATTERN "*.hh"
 )
 
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/third_party/magic_enum/
+    DESTINATION include/MayaFlux/thirdparty/magic_enum
+    FILES_MATCHING PATTERN "*.hpp"
+)
+
 install(TARGETS miniz
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )

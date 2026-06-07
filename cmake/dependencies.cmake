@@ -4,7 +4,6 @@ if(WIN32)
     message(STATUS "=== Windows Dependency Detection ===")
 
     find_package(Vulkan REQUIRED)
-    find_package(magic_enum REQUIRED)
 
     find_package(eigen3 CONFIG REQUIRED)
     find_package(glm CONFIG REQUIRED)
@@ -65,7 +64,6 @@ else()
     find_package(Freetype REQUIRED)
 
     pkg_check_modules(Eigen REQUIRED IMPORTED_TARGET eigen3)
-    pkg_check_modules(magic_enum REQUIRED IMPORTED_TARGET magic_enum)
     pkg_check_modules(Glfw REQUIRED IMPORTED_TARGET glfw3>=3.4)
     pkg_check_modules(Asio REQUIRED IMPORTED_TARGET asio)
     pkg_check_modules(Assimp REQUIRED IMPORTED_TARGET assimp)
@@ -99,3 +97,9 @@ target_include_directories(tinyexr INTERFACE
     $<INSTALL_INTERFACE:include/MayaFlux/thirdparty/tinyexr>
 )
 target_link_libraries(tinyexr INTERFACE miniz)
+
+add_library(magic_enum INTERFACE)
+target_include_directories(magic_enum INTERFACE
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/third_party/magic_enum>
+    $<INSTALL_INTERFACE:include/MayaFlux/thirdparty/magic_enum>
+)

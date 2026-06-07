@@ -45,7 +45,6 @@
     VcpkgPackages = @{
         glm        = @{}
         eigen3     = @{}
-        "magic-enum" = @{}
         stb        = @{}
         hidapi     = @{}
         asio       = @{}

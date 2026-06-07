@@ -167,7 +167,7 @@ else()
         target_link_libraries(MayaFluxLib PRIVATE "-framework AppKit" "-framework UniformTypeIdentifiers")
         target_link_libraries(MayaFluxLib PRIVATE "-framework CoreMIDI")
         target_link_libraries(
-            MayaFluxLib PRIVATE 
+            MayaFluxLib PRIVATE
             "-framework CoreAudio"
             "-framework AudioUnit"
             "-framework AudioToolbox"

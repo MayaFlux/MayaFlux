@@ -6,7 +6,6 @@
   "dependencies": [
     "eigen3",
     "glm",
-    "magic-enum",
     "hidapi",
     "assimp",
     "asio",

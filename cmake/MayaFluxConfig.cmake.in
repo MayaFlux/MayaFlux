@@ -42,7 +42,6 @@ if(WIN32)
     endif()
 
     find_package(Vulkan REQUIRED)
-    find_package(magic_enum REQUIRED)
 
     find_package(eigen3 CONFIG REQUIRED)
     find_package(glm CONFIG REQUIRED)
@@ -151,7 +150,6 @@ else()
 
     pkg_check_modules(Eigen REQUIRED IMPORTED_TARGET eigen3)
     pkg_check_modules(Glfw REQUIRED IMPORTED_TARGET glfw3>=3.4)
-    pkg_check_modules(magic_enum REQUIRED IMPORTED_TARGET magic_enum)
     pkg_check_modules(Asio REQUIRED IMPORTED_TARGET asio)
     pkg_check_modules(Assimp REQUIRED IMPORTED_TARGET assimp)
     pkg_check_modules(UTF8PROC REQUIRED IMPORTED_TARGET libutf8proc)
@@ -186,6 +184,13 @@ if(NOT TARGET tinyexr)
     set_target_properties(tinyexr PROPERTIES
         INTERFACE_INCLUDE_DIRECTORIES "${PACKAGE_PREFIX_DIR}/include/MayaFlux/thirdparty/tinyexr"
         INTERFACE_LINK_LIBRARIES "miniz"
+    )
+endif()
+
+if(NOT TARGET magic_enum)
+    add_library(magic_enum INTERFACE IMPORTED)
+    set_target_properties(magic_enum PROPERTIES
+        INTERFACE_INCLUDE_DIRECTORIES "${PACKAGE_PREFIX_DIR}/include/MayaFlux/thirdparty/magic_enum"
     )
 endif()
 
@@ -265,6 +270,7 @@ if(NOT TARGET MayaFlux::MayaFluxLib)
             avrt
             ole32
             tinyexr
+            magic_enum
             freetype
             gdi32
             user32
@@ -283,13 +289,13 @@ if(NOT TARGET MayaFlux::MayaFluxLib)
             PkgConfig::LIBSWRESAMPLE
             PkgConfig::LIBSWSCALE
             PkgConfig::LIBAVDEVICE
-            PkgConfig::magic_enum
             PkgConfig::HIDAPI
             PkgConfig::Asio
             PkgConfig::Assimp
             Freetype::Freetype
             PkgConfig::UTF8PROC
             tinyexr
+            magic_enum
             glm::glm
             spirv-cross-core
             spirv-cross-cpp

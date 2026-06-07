@@ -61,10 +61,6 @@ for pkg in ffmpeg googletest eigen onedpl fmt glfw glm googletest; do
     fi
 done
 
-if ! brew list --formula 2>/dev/null | grep -q "^magic_enum$"; then
-    echo "⚠️  magic_enum not found (will use FetchContent)"
-fi
-
 if [ ${#MISSING_DEPS[@]} -gt 0 ]; then
     echo "❌ Error: Missing dependencies:"
     for dep in "${MISSING_DEPS[@]}"; do

@@ -37,7 +37,6 @@ BuildRequires:  vulkan-validation-layers
 BuildRequires:  ffmpeg-free-devel
 BuildRequires:  assimp-devel
 BuildRequires:  stb-devel
-BuildRequires:  magic_enum-devel
 BuildRequires:  tbb-devel
 BuildRequires:  gtest-devel
 BuildRequires:  libshaderc-devel
@@ -80,7 +79,6 @@ Requires:       vulkan-validation-layers
 Requires:       ffmpeg-free-devel
 Requires:       assimp-devel
 Requires:       stb-devel
-Requires:       magic_enum-devel
 Requires:       tbb-devel
 Requires:       gtest-devel
 Requires:       libshaderc-devel

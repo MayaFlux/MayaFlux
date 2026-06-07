@@ -77,7 +77,6 @@ jobs:
             ffmpeg-free-devel \
             assimp-devel \
             stb-devel \
-            magic_enum-devel \
             tbb-devel \
             gtest \
             glslc \
@@ -209,7 +208,7 @@ jobs:
           echo "  ✓ GLFW 3.4 (Wayland)"
           echo "  ✓ FFmpeg"
           echo "  ✓ Vulkan SDK, SPIR-V"
-          echo "  ✓ Eigen3, GLM, magic_enum, fmt, TBB, STB"
+          echo "  ✓ Eigen3, GLM, fmt, TBB, STB"
           echo ""
           echo "Distribution Packages:"
           echo "  ✓ ${{ env.PACKAGE_NAME }}.tar.gz (with SHA256/MD5)"

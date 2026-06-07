@@ -86,7 +86,6 @@ jobs:
             cmake
             eigen
             onedpl
-            magic_enum
             fmt
             glfw
             glm
@@ -119,7 +118,7 @@ jobs:
           brew reinstall cmake
 
           # Re-establish all the paths when cache is hit
-          for tool in rtaudio ffmpeg shaderc googletest pkg-config eigen onedpl magic_enum fmt glfw glm llvm; do
+          for tool in ffmpeg shaderc googletest pkg-config eigen onedpl fmt glfw glm llvm; do
             if TOOL_PREFIX=$(brew --prefix $tool 2>/dev/null); then
               if [ -d "$TOOL_PREFIX/lib/pkgconfig" ]; then
                 export PKG_CONFIG_PATH="$TOOL_PREFIX/lib/pkgconfig:$PKG_CONFIG_PATH"
@@ -130,12 +129,6 @@ jobs:
               # Special handling for eigen which uses eigen3 name
               if [ "$tool" = "eigen" ] && [ -d "$TOOL_PREFIX/share/eigen3/cmake" ]; then
                 export CMAKE_PREFIX_PATH="$TOOL_PREFIX/share/eigen3/cmake:$CMAKE_PREFIX_PATH"
-              fi
-              # magic_enum also uses non standard pkg-config path
-              if [ "$tool" = "magic_enum" ] && [ -d "$TOOL_PREFIX/include" ]; then
-                export CPATH="$TOOL_PREFIX/include:$CPATH"
-                export PKG_CONFIG_PATH="$TOOL_PREFIX/share/pkgconfig:$PKG_CONFIG_PATH"
-                export CMAKE_PREFIX_PATH="$TOOL_PREFIX/share/cmake:$CMAKE_PREFIX_PATH"
               fi
             fi
           done
@@ -170,10 +163,8 @@ jobs:
           echo "CMAKE_ROOT: $CMAKE_ROOT"
           echo "CMAKE version: $(cmake --version | head -1)"
           echo "=== Verifying pkg-config can find packages ==="
-          pkg-config --exists rtaudio && echo "✅ rtaudio found" || echo "❌ rtaudio not found"
           pkg-config --exists glfw3 && echo "✅ glfw3 found" || echo "❌ glfw3 not found"
           pkg-config --exists eigen3 && echo "✅ eigen3 found" || echo "❌ eigen3 not found"
-          pkg-config --exists magic_enum && echo "✅ magic_enum found" || echo "❌ magic_enum not found"
           pkg-config --exists glm && echo "✅ glm found" || echo "❌ glm not found"
           pkg-config --exists asio && echo "✅ asio found" || echo "❌ asio not found"
 
@@ -305,7 +296,7 @@ jobs:
           echo "  [Tier 1 - Homebrew Packages]"
           echo "  ✓ LLVM (Lila JIT - Homebrew)"
           echo "  [Tier 2 - Homebrew Libraries]"
-          echo "  ✓ RtAudio, GLFW, FFmpeg"
+          echo "  ✓ GLFW, FFmpeg"
           echo "  ✓ Eigen3, GLM, magic_enum, fmt"
           echo "  ✓ Vulkan SDK"
           echo "  [Tier 3 - Header-Only Direct]"

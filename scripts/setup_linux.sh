@@ -63,11 +63,6 @@ install_arch() {
     )
     echo -e "${YELLOW}Installing: ${PACKAGES[*]}${NC}"
     sudo pacman -Syu --noconfirm "${PACKAGES[@]}"
-
-    # magic_enum and eigen are header-only, available via AUR or manual
-    echo -e "${YELLOW}Note: magic_enum is header-only library.${NC}"
-    echo -e "${YELLOW}Install via: yay -S magic_enum${NC}"
-    echo -e "${YELLOW}Or via: paru -S magic_enum${NC}"
 }
 
 install_fedora() {
@@ -101,7 +96,6 @@ install_fedora() {
         "ffmpeg-free-devel"
         "assimp-devel"
         "stb-devel"
-        "magic_enum-devel"
         "tbb-devel"
         "gtest-devel"
         "libshaderc-devel"
@@ -156,7 +150,6 @@ install_ubuntu() {
         "libshaderc-dev"
         "libglm-dev"
         "libeigen3-dev"
-        "libmagicenum-dev"
         "libstb-dev"
         "ffmpeg"
         "libassimp"-dev
@@ -197,8 +190,8 @@ install_opensuse() {
     echo -e "${YELLOW}Installing: ${PACKAGES[*]}${NC}"
     sudo zypper install -y "${PACKAGES[@]}"
 
-    echo -e "${YELLOW}Installing magic_enum and eigen (header-only)...${NC}"
-    sudo zypper install -y magic_enum-devel eigen3-devel
+    echo -e "${YELLOW}Installing eigen (header-only)...${NC}"
+    sudo zypper install -y eigen3-devel
 }
 
 main() {

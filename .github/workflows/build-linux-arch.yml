@@ -96,14 +96,6 @@ jobs:
             ccache \
             git
 
-      - name: Install AUR packages
-        run: |
-          su - builder -c "
-            git clone https://aur.archlinux.org/magic_enum.git ~/magic_enum
-            cd ~/magic_enum
-            makepkg -si --noconfirm
-          "
-
       - name: Setup ccache
         uses: hendrikmuhs/ccache-action@v1.2
         with:
