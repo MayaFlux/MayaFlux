@@ -4,6 +4,9 @@
 
 #include "MayaFlux/Nexus/Pheme/Sinks.hpp"
 
+#include "MayaFlux/Nexus/Principals/Locus.hpp"
+#include "MayaFlux/Nexus/Principals/Presence.hpp"
+
 #include "MayaFlux/IO/ImageWriter.hpp"
 #include "MayaFlux/IO/JSONSerializer.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
@@ -341,11 +344,45 @@ bool StateEncoder::encode(const Fabric& fabric, const std::string& base_path)
             auto a = fabric.get_agent(rec.id);
             for (const auto& s : a->audio_sinks())
                 ent.audio_sinks.push_back({ .channel = s.channel, .fn_name = s.fn_name });
+
             for (const auto& s : a->render_sinks())
                 ent.render_sinks.push_back({ .fn_name = s.fn_name });
+
+            if (auto locus = std::dynamic_pointer_cast<Locus>(a)) {
+                ent.subkind = "locus";
+                const auto& nav = locus->nav();
+                ent.locus_nav = State::LocusNavRecord {
+                    .eye = nav.eye,
+                    .target = nav.eye + glm::vec3 { std::cos(nav.pitch) * std::sin(nav.yaw), std::sin(nav.pitch), std::cos(nav.pitch) * std::cos(nav.yaw) },
+                    .up = { 0.0F, 1.0F, 0.0F },
+                    .fov = nav.fov_radians,
+                    .near_plane = nav.near_plane,
+                    .far_plane = nav.far_plane,
+                    .speed = nav.move_speed,
+                };
+            } else if (std::dynamic_pointer_cast<Presence>(a)) {
+                ent.subkind = "presence";
+            }
         }
 
         schema.entities.push_back(std::move(ent));
+    }
+
+    for (uint32_t xid : fabric.all_expanse_ids()) {
+        const auto x = fabric.get_expanse(xid);
+        if (!x)
+            continue;
+        if (x->fn_name().empty()) {
+            MF_WARN(Journal::Component::Nexus, Journal::Context::FileIO,
+                "StateEncoder: Expanse {} has no fn_name, skipping", xid);
+            continue;
+        }
+        schema.expanses.push_back(State::ExpanseRecord {
+            .id = xid,
+            .fn_name = x->fn_name(),
+            .on_enter_fn_name = x->on_enter_fn_name(),
+            .on_exit_fn_name = x->on_exit_fn_name(),
+        });
     }
 
     IO::JSONSerializer ser;
