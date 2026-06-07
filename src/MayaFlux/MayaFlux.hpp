@@ -1,11 +1,5 @@
 #pragma once
 
-#ifdef MAYAFLUX_PROJECT
-#ifndef MAYAFLUX_DEVELOPMENT
-#include "pch.h"
-#endif // MAYAFLUX_DEVELOPMENT
-#endif // MAYAFLUX_PROJECT
-
 #include "MayaFlux/API/Config.hpp"
 
 #include "MayaFlux/API/Core.hpp"
