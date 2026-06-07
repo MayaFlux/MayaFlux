@@ -62,21 +62,20 @@ jobs:
       run_tests: false
       create_distribution: true
 
-  build_linux:
+  build_linux_arch:
     needs: [determine_version, should_run]
     if: ${{ needs.should_run.outputs.has_changes == 'true' || github.event_name ==
       'workflow_dispatch' }}
-    uses: ./.github/workflows/build-linux.yml
+    uses: ./.github/workflows/build-linux-arch.yml
     with:
       version: ${{ needs.determine_version.outputs.VERSION }}
       clean_version: ${{ needs.determine_version.outputs.CLEAN_VERSION }}
       is_dev: "1"
       run_tests: false
       create_distribution: true
-      artifact_name: MayaFlux-${{ needs.determine_version.outputs.VERSION
-        }}-linux-fedora43-x64
-      distribution_name: linux-fedora43-x64
-      os_display_name: Linux
+      artifact_name: MayaFlux-${{ needs.determine_version.outputs.VERSION }}-linux-arch
+      distribution_name: linux-arch
+      os_display_name: Arch Linux
 
   build_windows:
     needs: [determine_version, should_run]
