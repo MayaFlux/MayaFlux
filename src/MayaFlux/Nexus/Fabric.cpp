@@ -348,4 +348,10 @@ std::shared_ptr<Expanse> Fabric::get_expanse(uint32_t id) const
     return it != m_expanses.end() ? it->second : nullptr;
 }
 
+std::shared_ptr<Presence::RadiateFn> Fabric::resolve_radiate_fn(std::string_view name) const
+{
+    auto it = m_radiate_fns.find(std::string(name));
+    return it != m_radiate_fns.end() ? it->second : nullptr;
+}
+
 } // namespace MayaFlux::Nexus

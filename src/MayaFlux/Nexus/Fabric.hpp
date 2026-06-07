@@ -1,8 +1,8 @@
 #pragma once
 
 #include "Expanse.hpp"
-#include "Principals/Agent.hpp"
 #include "Principals/Emitter.hpp"
+#include "Principals/Presence.hpp"
 #include "Principals/Sensor.hpp"
 #include "Wiring.hpp"
 
@@ -231,6 +231,12 @@ public:
     [[nodiscard]] std::shared_ptr<Expanse::ContainsFn> resolve_expanse_fn(std::string_view name) const;
 
     /**
+     * @brief Look up a registered radiation function by name.
+     * @return Shared pointer to the stored function, or nullptr if not found.
+     */
+    [[nodiscard]] std::shared_ptr<Presence::RadiateFn> resolve_radiate_fn(std::string_view name) const;
+
+    /**
      * @brief Look up a registered Expanse crossing function by name.
      *
      * Used for both on_enter and on_exit callables; both share the same
@@ -294,6 +300,7 @@ private:
     std::unordered_map<std::string, std::shared_ptr<Sensor::PerceptionFn>> m_perception_fns;
     std::unordered_map<std::string, std::shared_ptr<Expanse::ContainsFn>> m_expanse_fns;
     std::unordered_map<std::string, std::shared_ptr<Expanse::CrossingFn>> m_crossing_fns;
+    std::unordered_map<std::string, std::shared_ptr<Presence::RadiateFn>> m_radiate_fns;
 };
 
 } // namespace MayaFlux::Nexus
