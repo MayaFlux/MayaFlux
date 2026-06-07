@@ -224,6 +224,37 @@ public:
      */
     [[nodiscard]] std::shared_ptr<Sensor::PerceptionFn> resolve_perception_fn(std::string_view name) const;
 
+    /**
+     * @brief Look up a registered Expanse containment function by name.
+     * @return Shared pointer to the stored function, or nullptr if not found.
+     */
+    [[nodiscard]] std::shared_ptr<Expanse::ContainsFn> resolve_expanse_fn(std::string_view name) const;
+
+    /**
+     * @brief Look up a registered Expanse crossing function by name.
+     *
+     * Used for both on_enter and on_exit callables; both share the same
+     * registry since CrossingFn has a uniform signature.
+     *
+     * @return Shared pointer to the stored function, or nullptr if not found.
+     */
+    [[nodiscard]] std::shared_ptr<Expanse::CrossingFn> resolve_crossing_fn(std::string_view name) const;
+
+    // =========================================================================
+    // Expanse introspection
+    // =========================================================================
+
+    /**
+     * @brief Stable ids of all registered Expanses in insertion order.
+     */
+    [[nodiscard]] std::vector<uint32_t> all_expanse_ids() const;
+
+    /**
+     * @brief Look up a registered Expanse by id.
+     * @return The Expanse, or nullptr if id is not registered.
+     */
+    [[nodiscard]] std::shared_ptr<Expanse> get_expanse(uint32_t id) const;
+
 private:
     friend class Wiring;
 
@@ -261,6 +292,8 @@ private:
 
     std::unordered_map<std::string, std::shared_ptr<Emitter::InfluenceFn>> m_influence_fns;
     std::unordered_map<std::string, std::shared_ptr<Sensor::PerceptionFn>> m_perception_fns;
+    std::unordered_map<std::string, std::shared_ptr<Expanse::ContainsFn>> m_expanse_fns;
+    std::unordered_map<std::string, std::shared_ptr<Expanse::CrossingFn>> m_crossing_fns;
 };
 
 } // namespace MayaFlux::Nexus

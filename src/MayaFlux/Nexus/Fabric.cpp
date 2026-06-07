@@ -321,4 +321,31 @@ std::shared_ptr<Sensor::PerceptionFn> Fabric::resolve_perception_fn(std::string_
     return it != m_perception_fns.end() ? it->second : nullptr;
 }
 
+std::shared_ptr<Expanse::ContainsFn> Fabric::resolve_expanse_fn(std::string_view name) const
+{
+    auto it = m_expanse_fns.find(std::string(name));
+    return it != m_expanse_fns.end() ? it->second : nullptr;
+}
+
+std::shared_ptr<Expanse::CrossingFn> Fabric::resolve_crossing_fn(std::string_view name) const
+{
+    auto it = m_crossing_fns.find(std::string(name));
+    return it != m_crossing_fns.end() ? it->second : nullptr;
+}
+
+std::vector<uint32_t> Fabric::all_expanse_ids() const
+{
+    std::vector<uint32_t> ids;
+    ids.reserve(m_expanses.size());
+    for (const auto& [id, _] : m_expanses)
+        ids.push_back(id);
+    return ids;
+}
+
+std::shared_ptr<Expanse> Fabric::get_expanse(uint32_t id) const
+{
+    auto it = m_expanses.find(id);
+    return it != m_expanses.end() ? it->second : nullptr;
+}
+
 } // namespace MayaFlux::Nexus
