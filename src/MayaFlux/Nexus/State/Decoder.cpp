@@ -2,6 +2,8 @@
 
 #include "Schema.hpp"
 
+#include "MayaFlux/Nexus/Principals/Locus.hpp"
+
 #include "MayaFlux/IO/ImageReader.hpp"
 #include "MayaFlux/IO/JSONSerializer.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
@@ -94,6 +96,28 @@ namespace {
 
         const uint32_t w = image_opt->width;
         return PixelView { .image = std::move(*image_opt), .pixels = nullptr, .width = w };
+    }
+
+    // =========================================================================
+    // Helper used by both decode() and reconstruct() to apply locus_nav to a
+    // live Locus. Returns true if the cast succeeded.
+    // =========================================================================
+
+    bool apply_locus_nav(const std::shared_ptr<Agent>& a, const State::LocusNavRecord& nav)
+    {
+        auto locus = std::dynamic_pointer_cast<Locus>(a);
+        if (!locus)
+            return false;
+        locus->nav().eye = nav.eye;
+        locus->nav().fov_radians = nav.fov;
+        locus->nav().near_plane = nav.near_plane;
+        locus->nav().far_plane = nav.far_plane;
+        locus->nav().move_speed = nav.speed;
+        // Derive yaw/pitch from the stored target direction.
+        const glm::vec3 dir = glm::normalize(nav.target - nav.eye);
+        locus->nav().yaw = std::atan2(dir.x, dir.z);
+        locus->nav().pitch = std::asin(glm::clamp(dir.y, -1.0F, 1.0F));
+        return true;
     }
 
 } // namespace
@@ -241,11 +265,54 @@ bool StateDecoder::decode(Fabric& fabric, const std::string& base_path)
             }
             a->set_radius(denormalize((*pixels)[row2 + 0], r.radius));
             a->set_query_radius(denormalize((*pixels)[row2 + 1], r.query_radius));
+
+            if (entry.locus_nav) {
+                if (!apply_locus_nav(a, *entry.locus_nav)) {
+                    MF_WARN(Journal::Component::Nexus, Journal::Context::Runtime,
+                        "StateDecoder: Agent {} has locus_nav in schema but is not a Locus at runtime",
+                        entry.id);
+                }
+            }
             break;
         }
         }
 
         ++m_patched_count;
+    }
+
+    for (const auto& xrec : schema.expanses) {
+        if (xrec.fn_name.empty()) {
+            MF_WARN(Journal::Component::Nexus, Journal::Context::FileIO,
+                "StateDecoder: Expanse {} has no fn_name, skipping", xrec.id);
+            continue;
+        }
+        auto contains_fn = fabric.resolve_expanse_fn(xrec.fn_name);
+        if (!contains_fn || !*contains_fn) {
+            MF_WARN(Journal::Component::Nexus, Journal::Context::FileIO,
+                "StateDecoder: Expanse {} fn '{}' not in registry, skipping",
+                xrec.id, xrec.fn_name);
+            continue;
+        }
+        auto on_enter_fn = xrec.on_enter_fn_name.empty()
+            ? Expanse::CrossingFn {}
+            : [ptr = fabric.resolve_crossing_fn(xrec.on_enter_fn_name)](uint32_t id) {
+                  if (ptr && *ptr)
+                      (*ptr)(id);
+              };
+        auto on_exit_fn = xrec.on_exit_fn_name.empty()
+            ? Expanse::CrossingFn {}
+            : [ptr = fabric.resolve_crossing_fn(xrec.on_exit_fn_name)](uint32_t id) {
+                  if (ptr && *ptr)
+                      (*ptr)(id);
+              };
+        auto expanse = std::make_shared<Expanse>(
+            xrec.fn_name,
+            xrec.on_enter_fn_name,
+            xrec.on_exit_fn_name,
+            *contains_fn,
+            std::move(on_enter_fn),
+            std::move(on_exit_fn));
+        fabric.add_expanse(std::move(expanse));
     }
 
     MF_INFO(Journal::Component::Nexus, Journal::Context::FileIO,
@@ -480,9 +547,31 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct(Fabric& fabric, con
                 } else {
                     ifn = *ifn_ptr;
                 }
-                auto agent = std::make_shared<Agent>(query_radius,
-                    entry.perception_fn_name, std::move(pfn),
-                    entry.influence_fn_name, std::move(ifn));
+                std::shared_ptr<Agent> agent;
+                if (entry.subkind == "locus" && entry.locus_nav) {
+                    const auto& nav = *entry.locus_nav;
+                    Kinesis::NavigationConfig cfg {
+                        .initial_eye = nav.eye,
+                        .initial_target = nav.target,
+                        .fov_radians = nav.fov,
+                        .near_plane = nav.near_plane,
+                        .far_plane = nav.far_plane,
+                        .move_speed = nav.speed,
+                    };
+                    agent = std::make_shared<Locus>(cfg, query_radius,
+                        entry.perception_fn_name, std::move(pfn),
+                        entry.influence_fn_name, std::move(ifn));
+                    result.warnings.push_back("Locus " + std::to_string(entry.id)
+                        + ": view_targets must be reconnected by caller");
+                } else {
+                    if (entry.subkind == "locus") {
+                        result.warnings.push_back("Locus " + std::to_string(entry.id)
+                            + ": no locus_nav in schema, reconstructed as plain Agent");
+                    }
+                    agent = std::make_shared<Agent>(query_radius,
+                        entry.perception_fn_name, std::move(pfn),
+                        entry.influence_fn_name, std::move(ifn));
+                }
                 agent->set_position(position);
                 agent->set_intensity(intensity);
                 agent->set_radius(radius);
