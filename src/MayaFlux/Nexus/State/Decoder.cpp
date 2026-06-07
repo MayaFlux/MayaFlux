@@ -144,8 +144,9 @@ bool StateDecoder::decode(Fabric& fabric, const std::string& base_path)
     }
     const auto& schema = *schema_opt;
 
-    if (schema.version < 2 || schema.version > State::k_schema_version) {
-        m_last_error = "Unsupported schema version: " + std::to_string(schema.version);
+    if (schema.version != State::k_schema_version) {
+        m_last_error = "Unsupported schema version: " + std::to_string(schema.version)
+            + " (expected " + std::to_string(State::k_schema_version) + ")";
         MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
         return false;
     }
@@ -156,7 +157,7 @@ bool StateDecoder::decode(Fabric& fabric, const std::string& base_path)
         return false;
     }
 
-    const uint32_t expected_rows = schema.version >= 4 ? State::k_exr_rows : 3;
+    const uint32_t expected_rows = State::k_exr_rows;
     auto pv_opt = load_exr(exr_path, static_cast<uint32_t>(schema.entities.size()), expected_rows, m_last_error);
     if (!pv_opt) {
         MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
@@ -343,8 +344,9 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct(Fabric& fabric, con
     }
     const auto& schema = *schema_opt;
 
-    if (schema.version < 2 || schema.version > State::k_schema_version) {
-        m_last_error = "Unsupported schema version: " + std::to_string(schema.version);
+    if (schema.version != State::k_schema_version) {
+        m_last_error = "Unsupported schema version: " + std::to_string(schema.version)
+            + " (expected " + std::to_string(State::k_schema_version) + ")";
         MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
         return result;
     }
@@ -355,7 +357,7 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct(Fabric& fabric, con
         return result;
     }
 
-    const uint32_t expected_rows = schema.version >= 4 ? State::k_exr_rows : 3;
+    const uint32_t expected_rows = State::k_exr_rows;
     auto pv_opt = load_exr(exr_path, static_cast<uint32_t>(schema.entities.size()), expected_rows, m_last_error);
     if (!pv_opt) {
         MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
