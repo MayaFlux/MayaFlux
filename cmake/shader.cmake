@@ -162,7 +162,10 @@ if(SHADER_FILES)
     endforeach()
 
     if(SHADER_OUTPUTS)
-        add_custom_target(compile_shaders ALL DEPENDS ${SHADER_OUTPUTS})
+        add_custom_target(compile_shaders ALL
+            DEPENDS ${SHADER_OUTPUTS}
+            SOURCES ${SHADER_FILES}
+        )
         message(STATUS "Found ${CMAKE_MATCH_COUNT} shaders to compile")
     else()
         message(STATUS "No shaders found in ${SHADERS_DIR}")
