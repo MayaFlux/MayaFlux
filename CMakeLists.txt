@@ -49,6 +49,15 @@ if(UNIX)
     ${CMAKE_SOURCE_DIR}/compile_commands.json)
 endif()
 
+if(WIN32)
+    add_custom_target(reconfigure
+        COMMAND powershell -ExecutionPolicy Bypass -File ${CMAKE_SOURCE_DIR}/scripts/win64/setup_visual_studio.ps1
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Regenerating Visual Studio solution"
+        VERBATIM
+    )
+endif()
+
 if(MAYAFLUX_BUILD_TESTS)
     message(STATUS "Building tests (MAYAFLUX_BUILD_TESTS=ON)")
     enable_testing()

@@ -117,6 +117,13 @@ finally {
     Pop-Location
 }
 
+$LaunchBat = Join-Path $PROJECT_ROOT "launch.bat"
+@"
+@echo off
+start "" "$VS_PATH\Common7\IDE\devenv.exe" "%~dp0build\MayaFlux.slnx"
+"@ | Set-Content $LaunchBat
+Write-Host "launch.bat generated at project root" -ForegroundColor Green
+
 Write-Host ""
 Write-Host "=== Solution Generated ===" -ForegroundColor Green
 Write-Host ""
