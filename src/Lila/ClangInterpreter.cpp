@@ -140,6 +140,16 @@ bool ClangInterpreter::initialize(bool skip_host_library_load)
     }
 #endif
 
+    const std::string magic_enum_include = std::string(MayaFlux::Config::MAGIC_ENUM_INCLUDE);
+    if (!magic_enum_include.empty()) {
+        m_impl->compile_flags.push_back("-I" + magic_enum_include);
+        LILA_DEBUG(Emitter::INTERPRETER,
+            std::string("Added magic_enum include path: ") + magic_enum_include);
+    } else {
+        LILA_WARN(Emitter::INTERPRETER,
+            "Could not find magic_enum include path - some features may not work");
+    }
+
 #ifdef MAYAFLUX_PLATFORM_MACOS
     // CRITICAL: JIT uses Homebrew LLVM but needs macOS SDK for system headers
     // Homebrew LLVM's libc++ requires pthread.h, sched.h, time.h, etc. from SDK
