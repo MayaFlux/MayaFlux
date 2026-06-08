@@ -100,14 +100,7 @@ Write-Host "Generating via Preset: $PresetName" -ForegroundColor Yellow
 try {
     Push-Location $PROJECT_ROOT
 
-    $cmakeArgs = @(
-        "--preset", $PresetName,
-        "-DCMAKE_VS_GLOBALS=UseMultiToolTask=true;EnforceProcessCountAcrossBuilds=true"
-    )
-
-    if ($env:MAYAFLUX_TOOLCHAIN_FILE) {
-        $cmakeArgs += "-DCMAKE_TOOLCHAIN_FILE=$($env:MAYAFLUX_TOOLCHAIN_FILE)"
-    }
+    $cmakeArgs = @( "--preset", $PresetName)
 
     Write-Host "CMake command:" -ForegroundColor Cyan
     Write-Host "cmake $($cmakeArgs -join ' ')" -ForegroundColor Gray
@@ -123,6 +116,13 @@ try {
 finally {
     Pop-Location
 }
+
+$LaunchBat = Join-Path $PROJECT_ROOT "launch.bat"
+@"
+@echo off
+start "" "$VS_PATH\Common7\IDE\devenv.exe" "%~dp0build\MayaFlux.slnx"
+"@ | Set-Content $LaunchBat
+Write-Host "launch.bat generated at project root" -ForegroundColor Green
 
 Write-Host ""
 Write-Host "=== Solution Generated ===" -ForegroundColor Green

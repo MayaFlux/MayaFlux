@@ -29,6 +29,7 @@ include(defines)
 include(rpath)
 include(dependencies)
 include(shader)
+include(ide_commands)
 
 if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
     include(wayland_protocols_gen)
@@ -41,13 +42,6 @@ configure_file(
 )
 
 add_subdirectory(src)
-
-if(UNIX)
-    execute_process(
-    COMMAND ${CMAKE_COMMAND} -E create_symlink
-    ${CMAKE_BINARY_DIR}/compile_commands.json
-    ${CMAKE_SOURCE_DIR}/compile_commands.json)
-endif()
 
 if(MAYAFLUX_BUILD_TESTS)
     message(STATUS "Building tests (MAYAFLUX_BUILD_TESTS=ON)")

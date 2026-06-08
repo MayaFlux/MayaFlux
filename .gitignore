@@ -50,6 +50,7 @@ x86/
 *.pdb
 *.idb
 *.ilk
+launch.bat
 
 # Xcode
 *.xcworkspace/

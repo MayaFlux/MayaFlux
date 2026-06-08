@@ -112,10 +112,10 @@ public:
     void add_include_path(const std::string& path);
 
     /**
-     * @brief Adds a library path (not yet implemented)
-     * @param path Directory to add to the library search path
+     * @brief Load a shared library into the JIT symbol table.
+     * @param path Full path to the shared library.
      */
-    void add_library_path(const std::string& path);
+    void load_library(const std::string& path);
 
     /**
      * @brief Adds a compile flag for code evaluation

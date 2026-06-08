@@ -6,6 +6,11 @@
  * over TCP for MayaFlux. It parses command-line options for port, verbosity, and log level,
  * sets up signal handling for graceful shutdown, and manages the main server loop.
  *
+ * @note This binary is a reference implementation of the Lila server.
+ *       Community module types are not available as they require the host
+ *       process to have them linked in. For community module support, embed
+ *       Lila via MayaFluxHost::start_lila() in your project binary instead.
+ *
  * Usage:
  *   lila_server [OPTIONS]
  *
