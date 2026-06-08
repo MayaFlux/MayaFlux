@@ -129,6 +129,12 @@ public:
     void add_compile_flag(const std::string& flag);
 
     /**
+     * @brief Load a shared library into the JIT symbol table.
+     * @param path Full path to the shared library.
+     */
+    void load_library(const std::string& path);
+
+    /**
      * @brief Registers a callback for successful code evaluation
      * @param callback Function to call on success
      */

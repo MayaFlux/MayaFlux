@@ -336,10 +336,19 @@ void ClangInterpreter::add_include_path(const std::string& path)
     }
 }
 
-void ClangInterpreter::add_library_path(const std::string& path)
+void ClangInterpreter::load_library(const std::string& path)
 {
-    LILA_DEBUG(Emitter::INTERPRETER,
-        std::string("Library path noted (not yet implemented): ") + path);
+    if (!m_impl->interpreter) {
+        LILA_WARN(Emitter::INTERPRETER,
+            std::string("Cannot load library: interpreter not initialized: ") + path);
+        return;
+    }
+    if (auto err = m_impl->interpreter->LoadDynamicLibrary(path.c_str())) {
+        m_last_error = "Failed to load " + path + ": " + llvm::toString(std::move(err));
+        LILA_ERROR(Emitter::INTERPRETER, m_last_error);
+        return;
+    }
+    LILA_DEBUG(Emitter::INTERPRETER, std::string("Loaded library: ") + path);
 }
 
 void ClangInterpreter::add_compile_flag(const std::string& flag)
