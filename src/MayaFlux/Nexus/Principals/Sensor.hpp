@@ -16,7 +16,7 @@ namespace MayaFlux::Nexus {
  * The id is assigned by @c Fabric::wire and is stable for the object's
  * lifetime.
  */
-class Sensor {
+class MAYAFLUX_API Sensor {
 public:
     using PerceptionFn = std::function<void(const PerceptionContext&)>;
 

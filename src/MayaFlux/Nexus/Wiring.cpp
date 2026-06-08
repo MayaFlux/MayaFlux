@@ -59,6 +59,18 @@ Wiring& Wiring::on(std::shared_ptr<Core::Window> window, IO::MouseButtons button
     return *this;
 }
 
+Wiring& Wiring::on(std::shared_ptr<Core::Window> window, IO::MouseButtons button, bool held, std::function<void(double, double)> on_release)
+{
+    m_trigger = MouseTrigger {
+        .window = std::move(window),
+        .button = button,
+        .on_release = on_release ? std::optional<std::function<void(double, double)>>(std::move(on_release)) : std::nullopt,
+        .held = held
+    };
+
+    return *this;
+}
+
 Wiring& Wiring::on(std::shared_ptr<Core::Window> window, IO::MouseButtons button,
     std::function<void(double, double)> on_release)
 {
@@ -393,11 +405,17 @@ void Wiring::finalise()
                 uint32_t eid = m_entity_id;
                 ev_manager.add_event(
                     std::make_shared<Vruta::Event>(
-                        Kriya::mouse_pressed(trig.window, trig.button,
-                            [&fab, eid](double px, double py) {
-                                fab.m_registrations[eid].pending_cursor = glm::vec2(px, py);
-                                fab.fire(eid);
-                            })),
+                        trig.held
+                            ? Kriya::mouse_dragged(trig.window, trig.button,
+                                  [&fab, eid](double px, double py) {
+                                      fab.m_registrations[eid].pending_cursor = glm::vec2(px, py);
+                                      fab.fire(eid);
+                                  })
+                            : Kriya::mouse_pressed(trig.window, trig.button,
+                                  [&fab, eid](double px, double py) {
+                                      fab.m_registrations[eid].pending_cursor = glm::vec2(px, py);
+                                      fab.fire(eid);
+                                  })),
                     name);
                 if (trig.on_release) {
                     auto release_name = make_name("nexus_event_release");

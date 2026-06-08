@@ -1,5 +1,7 @@
 #include "Presence.hpp"
 
+#include <glm/gtc/constants.hpp>
+
 namespace MayaFlux::Nexus {
 
 namespace {
@@ -24,13 +26,33 @@ Presence::Presence(float query_radius,
 Presence::Presence(float query_radius,
     std::string perception_fn_name, PerceptionFn perception,
     std::string influence_fn_name, InfluenceFn influence,
-    RadiateFn radiate)
+    std::string radiate_fn_name, RadiateFn radiate)
     : Agent(query_radius,
           std::move(perception_fn_name), std::move(perception),
           std::move(influence_fn_name), std::move(influence))
     , m_falloff(linear_falloff)
+    , m_radiate_fn_name(std::move(radiate_fn_name))
     , m_radiate(std::move(radiate))
 {
+}
+
+void Presence::set_falloff_curve(FalloffCurve curve)
+{
+    m_falloff_curve = curve;
+    switch (curve) {
+    case FalloffCurve::Linear:
+        m_falloff = [](float t) { return 1.0F - std::clamp(t, 0.0F, 1.0F); };
+        break;
+    case FalloffCurve::Cosine:
+        m_falloff = [](float t) { return 0.5F * (1.0F + std::cos(std::clamp(t, 0.0F, 1.0F) * glm::pi<float>())); };
+        break;
+    case FalloffCurve::Exponential:
+        m_falloff = [](float t) { return std::exp(-4.0F * std::clamp(t, 0.0F, 1.0F)); };
+        break;
+    case FalloffCurve::InverseSquare:
+        m_falloff = [](float t) { const float c = std::clamp(t, 0.0F, 1.0F); return 1.0F / (1.0F + 16.0F * c * c); };
+        break;
+    }
 }
 
 void Presence::invoke_perception(const PerceptionContext& ctx)

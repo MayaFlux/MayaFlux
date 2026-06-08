@@ -1,6 +1,7 @@
 #pragma once
 
-#include "MayaFlux/Nexus/Fabric.hpp"
+#include "MayaFlux/Nexus/Tapestry.hpp"
+#include "Schema.hpp"
 
 namespace MayaFlux::Nexus {
 
@@ -33,6 +34,7 @@ public:
         int patched { 0 };
         int skipped { 0 };
         std::vector<std::string> warnings;
+        nlohmann::json user_state;
     };
 
     /**
@@ -62,6 +64,19 @@ public:
      * @return Counts and per-entity warnings.
      */
     [[nodiscard]] ReconstructionResult reconstruct(Fabric& fabric, const std::string& base_path);
+
+    /**
+     * @brief Reconstruct all Fabrics in @p tapestry from @p base_dir.
+     *
+     * Reads tapestry.json, creates or finds Fabrics by name, calls
+     * reconstruct(fabric, base_path) for each, then restores Tapestry-level
+     * named Expanses and registers them on the listed Fabrics.
+     *
+     * @param tapestry  Target Tapestry. May be empty or partially populated.
+     * @param base_dir  Directory path matching the one passed to encode().
+     * @return ReconstructionResult aggregated across all Fabrics.
+     */
+    [[nodiscard]] ReconstructionResult reconstruct(Tapestry& tapestry, const std::string& base_dir);
 
     /**
      * @brief Last error message, empty if no error.

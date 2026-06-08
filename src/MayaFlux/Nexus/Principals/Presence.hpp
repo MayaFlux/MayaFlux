@@ -40,6 +40,12 @@ namespace MayaFlux::Nexus {
  */
 class MAYAFLUX_API Presence : public Agent {
 public:
+    /** @brief Built-in falloff curves that survive state encode/decode. */
+    enum class FalloffCurve : uint8_t { Linear,
+        Cosine,
+        Exponential,
+        InverseSquare };
+
     /**
      * @brief Falloff curve mapping normalized distance to weight.
      *
@@ -72,18 +78,19 @@ public:
         RadiateFn radiate);
 
     /**
-     * @brief Construct with named perception and influence functions and a radiation function.
+     * @brief Construct with all named callables.
      * @param query_radius        Radius passed to the spatial index on each commit.
      * @param perception_fn_name  Identifier for the perception function.
-     * @param perception          User perception callable, fired before the neighborhood is captured.
+     * @param perception          User perception callable.
      * @param influence_fn_name   Identifier for the influence function.
-     * @param influence           User influence callable, fired before radiation.
+     * @param influence           User influence callable.
+     * @param radiate_fn_name     Identifier for the radiation function.
      * @param radiate             Invoked per neighbor inside the falloff radius.
      */
     Presence(float query_radius,
         std::string perception_fn_name, PerceptionFn perception,
         std::string influence_fn_name, InfluenceFn influence,
-        RadiateFn radiate);
+        std::string radiate_fn_name, RadiateFn radiate);
 
     // =========================================================================
     // Falloff
@@ -119,6 +126,12 @@ public:
      */
     void set_radiate(RadiateFn fn) { m_radiate = std::move(fn); }
 
+    /** @brief Identifier for the radiate callable, empty if anonymous. */
+    [[nodiscard]] const std::string& radiate_fn_name() const { return m_radiate_fn_name; }
+
+    /** @brief Set or replace the radiate callable identifier. */
+    void set_radiate_fn_name(std::string name) { m_radiate_fn_name = std::move(name); }
+
     /**
      * @brief Neighbors captured on the most recent perception, with weights.
      *
@@ -129,6 +142,12 @@ public:
     {
         return m_neighbors;
     }
+
+    /** @brief Set the falloff curve to a named built-in. */
+    void set_falloff_curve(FalloffCurve curve);
+
+    /** @brief Current named curve, or nullopt if a custom lambda was set via set_falloff(). */
+    [[nodiscard]] std::optional<FalloffCurve> falloff_curve() const { return m_falloff_curve; }
 
     // =========================================================================
     // Perception and influence — Presence behaviour layered on the Agent path
@@ -142,6 +161,9 @@ private:
     float m_falloff_radius { 0.0F };
     FalloffFn m_falloff;
     RadiateFn m_radiate;
+
+    std::string m_radiate_fn_name;
+    std::optional<FalloffCurve> m_falloff_curve { FalloffCurve::Linear };
     mutable std::vector<std::pair<uint32_t, float>> m_neighbors;
 };
 

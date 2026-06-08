@@ -1,5 +1,7 @@
 #include "Decoder.hpp"
 
+#include "MayaFlux/Nexus/Principals/Locus.hpp"
+
 #include "MayaFlux/IO/ImageReader.hpp"
 #include "MayaFlux/IO/JSONSerializer.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
@@ -8,171 +10,41 @@ namespace MayaFlux::Nexus {
 
 namespace {
 
-    constexpr uint32_t k_exr_rows = 3;
-    constexpr uint32_t k_channels = 4;
-
-    // -------------------------------------------------------------------------
-    // Schema structs  (mirrored from StateEncoder.cpp until centralized)
-    // -------------------------------------------------------------------------
-
-    struct Range {
-        float min { 0.0F };
-        float max { 1.0F };
-
-        static constexpr auto describe()
-        {
-            return std::make_tuple(
-                IO::member("min", &Range::min),
-                IO::member("max", &Range::max));
-        }
-    };
-
-    struct RangeSet {
-        Range pos_x, pos_y, pos_z;
-        Range intensity;
-        Range color_r, color_g, color_b;
-        Range size;
-        Range radius;
-        Range query_radius;
-
-        static constexpr auto describe()
-        {
-            return std::make_tuple(
-                IO::member("position.x", &RangeSet::pos_x),
-                IO::member("position.y", &RangeSet::pos_y),
-                IO::member("position.z", &RangeSet::pos_z),
-                IO::member("intensity", &RangeSet::intensity),
-                IO::member("color.r", &RangeSet::color_r),
-                IO::member("color.g", &RangeSet::color_g),
-                IO::member("color.b", &RangeSet::color_b),
-                IO::member("size", &RangeSet::size),
-                IO::member("radius", &RangeSet::radius),
-                IO::member("query_radius", &RangeSet::query_radius));
-        }
-    };
-
-    struct WiringStep {
-        glm::vec3 position {};
-        double delay_seconds { 0.0 };
-
-        static constexpr auto describe()
-        {
-            return std::make_tuple(
-                IO::member("position", &WiringStep::position),
-                IO::member("delay", &WiringStep::delay_seconds));
-        }
-    };
-
-    struct WiringRecord {
-        std::string kind { "commit_driven" };
-        std::optional<double> interval;
-        std::optional<double> duration;
-        std::optional<size_t> times;
-        std::optional<std::vector<WiringStep>> steps;
-
-        static constexpr auto describe()
-        {
-            return std::make_tuple(
-                IO::member("kind", &WiringRecord::kind),
-                IO::opt_member("interval", &WiringRecord::interval),
-                IO::opt_member("duration", &WiringRecord::duration),
-                IO::opt_member("times", &WiringRecord::times),
-                IO::opt_member("steps", &WiringRecord::steps));
-        }
-    };
-
-    struct EntityRecord {
-        uint32_t id {};
-        std::string kind;
-        glm::vec3 position {};
-        float intensity { 0.0F };
-        float radius { 0.0F };
-        float query_radius { 0.0F };
-        std::optional<glm::vec3> color;
-        std::optional<float> size;
-        std::string influence_fn_name;
-        std::string perception_fn_name;
-        WiringRecord wiring;
-
-        static constexpr auto describe()
-        {
-            return std::make_tuple(
-                IO::member("id", &EntityRecord::id),
-                IO::member("kind", &EntityRecord::kind),
-                IO::member("position", &EntityRecord::position),
-                IO::member("intensity", &EntityRecord::intensity),
-                IO::member("radius", &EntityRecord::radius),
-                IO::member("query_radius", &EntityRecord::query_radius),
-                IO::opt_member("color", &EntityRecord::color),
-                IO::opt_member("size", &EntityRecord::size),
-                IO::member("influence_fn_name", &EntityRecord::influence_fn_name),
-                IO::member("perception_fn_name", &EntityRecord::perception_fn_name),
-                IO::member("wiring", &EntityRecord::wiring));
-        }
-    };
-
-    struct FabricSchema {
-        uint32_t version { 0 };
-        std::string fabric_name;
-        std::vector<EntityRecord> entities;
-        RangeSet ranges;
-
-        static constexpr auto describe()
-        {
-            return std::make_tuple(
-                IO::member("version", &FabricSchema::version),
-                IO::member("fabric_name", &FabricSchema::fabric_name),
-                IO::member("entities", &FabricSchema::entities),
-                IO::member("ranges", &FabricSchema::ranges));
-        }
-    };
-
     // -------------------------------------------------------------------------
     // Helpers
     // -------------------------------------------------------------------------
 
-    float denormalize(float norm, const Range& r)
+    float denormalize(float norm, const State::Range& r)
     {
         return r.min + norm * (r.max - r.min);
     }
 
-    Fabric::Kind parse_kind(const std::string& s)
+    void apply_wiring(Wiring wiring, const State::WiringRecord& rec, std::vector<std::string>& warnings)
     {
-        if (s == "sensor") {
-            return Fabric::Kind::Sensor;
-        }
-        if (s == "agent") {
-            return Fabric::Kind::Agent;
-        }
-        return Fabric::Kind::Emitter;
-    }
-
-    bool kind_known(const std::string& s)
-    {
-        return s == "emitter" || s == "sensor" || s == "agent";
-    }
-
-    void apply_wiring(Wiring wiring, const WiringRecord& rec, std::vector<std::string>& warnings)
-    {
-        if (rec.kind == "every") {
+        switch (rec.kind) {
+        case State::WiringKind::Every:
             wiring.every(*rec.interval);
-            if (rec.duration) {
+            if (rec.duration)
                 wiring.for_duration(*rec.duration);
-            }
-            if (rec.times && *rec.times > 1) {
+            if (rec.times && *rec.times > 1)
                 wiring.times(*rec.times);
-            }
-        } else if (rec.kind == "move_to") {
+            break;
+
+        case State::WiringKind::MoveTo:
             if (rec.steps) {
-                for (const auto& s : *rec.steps) {
+                for (const auto& s : *rec.steps)
                     wiring.move_to(s.position, s.delay_seconds);
-                }
             }
-            if (rec.times && *rec.times > 1) {
+            if (rec.times && *rec.times > 1)
                 wiring.times(*rec.times);
-            }
-        } else if (rec.kind != "commit_driven") {
-            warnings.emplace_back("Unsupported wiring kind '" + rec.kind + "'; falling back to commit_driven");
+            break;
+
+        case State::WiringKind::Unsupported:
+            warnings.emplace_back("Unsupported wiring kind in schema; falling back to commit_driven");
+            [[fallthrough]];
+
+        case State::WiringKind::CommitDriven:
+            break;
         }
         wiring.finalise();
     }
@@ -204,9 +76,9 @@ namespace {
             error_out = "EXR has no float pixel data: " + exr_path;
             return std::nullopt;
         }
-        if (image_opt->channels != k_channels) {
+        if (image_opt->channels != State::k_channels) {
             error_out = "EXR channel count mismatch: expected "
-                + std::to_string(k_channels) + " got " + std::to_string(image_opt->channels);
+                + std::to_string(State::k_channels) + " got " + std::to_string(image_opt->channels);
             return std::nullopt;
         }
         if (image_opt->height != expected_rows) {
@@ -221,7 +93,29 @@ namespace {
         }
 
         const uint32_t w = image_opt->width;
-        return PixelView { std::move(*image_opt), nullptr, w };
+        return PixelView { .image = std::move(*image_opt), .pixels = nullptr, .width = w };
+    }
+
+    // =========================================================================
+    // Helper used by both decode() and reconstruct() to apply locus_nav to a
+    // live Locus. Returns true if the cast succeeded.
+    // =========================================================================
+
+    bool apply_locus_nav(const std::shared_ptr<Agent>& a, const State::LocusNavRecord& nav)
+    {
+        auto locus = std::dynamic_pointer_cast<Locus>(a);
+        if (!locus)
+            return false;
+        locus->nav().eye = nav.eye;
+        locus->nav().fov_radians = nav.fov;
+        locus->nav().near_plane = nav.near_plane;
+        locus->nav().far_plane = nav.far_plane;
+        locus->nav().move_speed = nav.speed;
+        // Derive yaw/pitch from the stored target direction.
+        const glm::vec3 dir = glm::normalize(nav.target - nav.eye);
+        locus->nav().yaw = std::atan2(dir.x, dir.z);
+        locus->nav().pitch = std::asin(glm::clamp(dir.y, -1.0F, 1.0F));
+        return true;
     }
 
 } // namespace
@@ -240,7 +134,7 @@ bool StateDecoder::decode(Fabric& fabric, const std::string& base_path)
     const std::string exr_path = base_path + ".exr";
 
     IO::JSONSerializer ser;
-    auto schema_opt = ser.read<FabricSchema>(json_path);
+    auto schema_opt = ser.read<State::FabricSchema>(json_path);
     if (!schema_opt) {
         m_last_error = "Failed to load schema: " + ser.last_error();
         MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
@@ -248,8 +142,9 @@ bool StateDecoder::decode(Fabric& fabric, const std::string& base_path)
     }
     const auto& schema = *schema_opt;
 
-    if (schema.version < 2 || schema.version > 4) {
-        m_last_error = "Unsupported schema version: " + std::to_string(schema.version);
+    if (schema.version != State::k_schema_version) {
+        m_last_error = "Unsupported schema version: " + std::to_string(schema.version)
+            + " (expected " + std::to_string(State::k_schema_version) + ")";
         MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
         return false;
     }
@@ -260,7 +155,7 @@ bool StateDecoder::decode(Fabric& fabric, const std::string& base_path)
         return false;
     }
 
-    const uint32_t expected_rows = schema.version >= 4 ? 5 : k_exr_rows;
+    const uint32_t expected_rows = State::k_exr_rows;
     auto pv_opt = load_exr(exr_path, static_cast<uint32_t>(schema.entities.size()), expected_rows, m_last_error);
     if (!pv_opt) {
         MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
@@ -274,16 +169,16 @@ bool StateDecoder::decode(Fabric& fabric, const std::string& base_path)
     for (size_t i = 0; i < schema.entities.size(); ++i) {
         const auto& entry = schema.entities[i];
 
-        if (!kind_known(entry.kind)) {
+        if (!State::kind_known(entry.kind)) {
             MF_WARN(Journal::Component::Nexus, Journal::Context::Runtime,
                 "StateDecoder: unknown kind '{}' for id {}, skipping", entry.kind, entry.id);
             ++m_missing_count;
             continue;
         }
 
-        const size_t row0 = (static_cast<size_t>(0) * width + i) * k_channels;
-        const size_t row1 = (static_cast<size_t>(1) * width + i) * k_channels;
-        const size_t row2 = (static_cast<size_t>(2) * width + i) * k_channels;
+        const size_t row0 = (static_cast<size_t>(0) * width + i) * State::k_channels;
+        const size_t row1 = (static_cast<size_t>(1) * width + i) * State::k_channels;
+        const size_t row2 = (static_cast<size_t>(2) * width + i) * State::k_channels;
 
         const glm::vec3 position {
             denormalize((*pixels)[row0 + 0], r.pos_x),
@@ -291,7 +186,7 @@ bool StateDecoder::decode(Fabric& fabric, const std::string& base_path)
             denormalize((*pixels)[row0 + 2], r.pos_z),
         };
 
-        switch (parse_kind(entry.kind)) {
+        switch (State::parse_kind(entry.kind)) {
         case Fabric::Kind::Emitter: {
             auto e = fabric.get_emitter(entry.id);
             if (!e) {
@@ -369,11 +264,63 @@ bool StateDecoder::decode(Fabric& fabric, const std::string& base_path)
             }
             a->set_radius(denormalize((*pixels)[row2 + 0], r.radius));
             a->set_query_radius(denormalize((*pixels)[row2 + 1], r.query_radius));
+
+            if (entry.locus_nav) {
+                if (!apply_locus_nav(a, *entry.locus_nav)) {
+                    MF_WARN(Journal::Component::Nexus, Journal::Context::Runtime,
+                        "StateDecoder: Agent {} has locus_nav in schema but is not a Locus at runtime",
+                        entry.id);
+                }
+            }
+
+            if (auto presence = std::dynamic_pointer_cast<Presence>(a)) {
+                if (!entry.falloff_curve_name.empty()) {
+                    if (auto fc = Reflect::string_to_enum_case_insensitive<Presence::FalloffCurve>(entry.falloff_curve_name))
+                        presence->set_falloff_curve(*fc);
+                }
+                if (entry.falloff_radius)
+                    presence->set_falloff_radius(*entry.falloff_radius);
+            }
             break;
         }
         }
 
         ++m_patched_count;
+    }
+
+    for (const auto& xrec : schema.expanses) {
+        if (xrec.fn_name.empty()) {
+            MF_WARN(Journal::Component::Nexus, Journal::Context::FileIO,
+                "StateDecoder: Expanse {} has no fn_name, skipping", xrec.id);
+            continue;
+        }
+        auto contains_fn = fabric.resolve_expanse_fn(xrec.fn_name);
+        if (!contains_fn || !*contains_fn) {
+            MF_WARN(Journal::Component::Nexus, Journal::Context::FileIO,
+                "StateDecoder: Expanse {} fn '{}' not in registry, skipping",
+                xrec.id, xrec.fn_name);
+            continue;
+        }
+        auto on_enter_fn = xrec.on_enter_fn_name.empty()
+            ? Expanse::CrossingFn {}
+            : [ptr = fabric.resolve_crossing_fn(xrec.on_enter_fn_name)](uint32_t id) {
+                  if (ptr && *ptr)
+                      (*ptr)(id);
+              };
+        auto on_exit_fn = xrec.on_exit_fn_name.empty()
+            ? Expanse::CrossingFn {}
+            : [ptr = fabric.resolve_crossing_fn(xrec.on_exit_fn_name)](uint32_t id) {
+                  if (ptr && *ptr)
+                      (*ptr)(id);
+              };
+        auto expanse = std::make_shared<Expanse>(
+            xrec.fn_name,
+            xrec.on_enter_fn_name,
+            xrec.on_exit_fn_name,
+            *contains_fn,
+            std::move(on_enter_fn),
+            std::move(on_exit_fn));
+        fabric.add_expanse(std::move(expanse));
     }
 
     MF_INFO(Journal::Component::Nexus, Journal::Context::FileIO,
@@ -396,7 +343,7 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct(Fabric& fabric, con
     const std::string exr_path = base_path + ".exr";
 
     IO::JSONSerializer ser;
-    auto schema_opt = ser.read<FabricSchema>(json_path);
+    auto schema_opt = ser.read<State::FabricSchema>(json_path);
     if (!schema_opt) {
         m_last_error = "Failed to load schema: " + ser.last_error();
         MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
@@ -404,8 +351,9 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct(Fabric& fabric, con
     }
     const auto& schema = *schema_opt;
 
-    if (schema.version < 2 || schema.version > 4) {
-        m_last_error = "Unsupported schema version: " + std::to_string(schema.version);
+    if (schema.version != State::k_schema_version) {
+        m_last_error = "Unsupported schema version: " + std::to_string(schema.version)
+            + " (expected " + std::to_string(State::k_schema_version) + ")";
         MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
         return result;
     }
@@ -416,7 +364,7 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct(Fabric& fabric, con
         return result;
     }
 
-    const uint32_t expected_rows = schema.version >= 4 ? 5 : k_exr_rows;
+    const uint32_t expected_rows = State::k_exr_rows;
     auto pv_opt = load_exr(exr_path, static_cast<uint32_t>(schema.entities.size()), expected_rows, m_last_error);
     if (!pv_opt) {
         MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
@@ -433,16 +381,16 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct(Fabric& fabric, con
     for (size_t i = 0; i < schema.entities.size(); ++i) {
         const auto& entry = schema.entities[i];
 
-        if (!kind_known(entry.kind)) {
+        if (!State::kind_known(entry.kind)) {
             result.warnings.push_back("Unknown kind '" + entry.kind
                 + "' for id " + std::to_string(entry.id) + ", skipping");
             ++result.skipped;
             continue;
         }
 
-        const size_t row0 = (static_cast<size_t>(0) * width + i) * k_channels;
-        const size_t row1 = (static_cast<size_t>(1) * width + i) * k_channels;
-        const size_t row2 = (static_cast<size_t>(2) * width + i) * k_channels;
+        const size_t row0 = (static_cast<size_t>(0) * width + i) * State::k_channels;
+        const size_t row1 = (static_cast<size_t>(1) * width + i) * State::k_channels;
+        const size_t row2 = (static_cast<size_t>(2) * width + i) * State::k_channels;
 
         const glm::vec3 position {
             denormalize((*pixels)[row0 + 0], r.pos_x),
@@ -468,7 +416,7 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct(Fabric& fabric, con
             // -----------------------------------------------------------------
             // Patch existing entity.
             // -----------------------------------------------------------------
-            switch (parse_kind(entry.kind)) {
+            switch (State::parse_kind(entry.kind)) {
             case Fabric::Kind::Emitter: {
                 auto e = fabric.get_emitter(entry.id);
                 if (!e) {
@@ -539,7 +487,7 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct(Fabric& fabric, con
             // -----------------------------------------------------------------
             // Construct missing entity.
             // -----------------------------------------------------------------
-            switch (parse_kind(entry.kind)) {
+            switch (State::parse_kind(entry.kind)) {
             case Fabric::Kind::Emitter: {
                 auto fn_ptr = fabric.resolve_influence_fn(entry.influence_fn_name);
                 Emitter::InfluenceFn fn;
@@ -608,9 +556,54 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct(Fabric& fabric, con
                 } else {
                     ifn = *ifn_ptr;
                 }
-                auto agent = std::make_shared<Agent>(query_radius,
-                    entry.perception_fn_name, std::move(pfn),
-                    entry.influence_fn_name, std::move(ifn));
+                std::shared_ptr<Agent> agent;
+                if (entry.subkind == "locus" && entry.locus_nav) {
+                    const auto& nav = *entry.locus_nav;
+                    Kinesis::NavigationConfig cfg {
+                        .initial_eye = nav.eye,
+                        .initial_target = nav.target,
+                        .fov_radians = nav.fov,
+                        .near_plane = nav.near_plane,
+                        .far_plane = nav.far_plane,
+                        .move_speed = nav.speed,
+                    };
+                    agent = std::make_shared<Locus>(cfg, query_radius,
+                        entry.perception_fn_name, std::move(pfn),
+                        entry.influence_fn_name, std::move(ifn));
+                    result.warnings.push_back("Locus " + std::to_string(entry.id)
+                        + ": view_targets must be reconnected by caller");
+
+                } else if (entry.subkind == "presence") {
+                    auto rfn_ptr = fabric.resolve_radiate_fn(entry.radiate_fn_name);
+                    Presence::RadiateFn rfn;
+                    if (!rfn_ptr || !*rfn_ptr) {
+                        result.warnings.push_back("Presence: unknown radiate_fn '"
+                            + entry.radiate_fn_name + "', using no-op");
+                        rfn = [](uint32_t, float) { };
+                    } else {
+                        rfn = *rfn_ptr;
+                    }
+                    auto presence = std::make_shared<Presence>(query_radius,
+                        entry.perception_fn_name, std::move(pfn),
+                        entry.influence_fn_name, std::move(ifn),
+                        entry.radiate_fn_name, std::move(rfn));
+                    if (!entry.falloff_curve_name.empty()) {
+                        if (auto fc = Reflect::string_to_enum_case_insensitive<Presence::FalloffCurve>(entry.falloff_curve_name))
+                            presence->set_falloff_curve(*fc);
+                    }
+                    if (entry.falloff_radius)
+                        presence->set_falloff_radius(*entry.falloff_radius);
+                    agent = std::move(presence);
+
+                } else {
+                    if (entry.subkind == "locus") {
+                        result.warnings.push_back("Locus " + std::to_string(entry.id)
+                            + ": no locus_nav in schema, reconstructed as plain Agent");
+                    }
+                    agent = std::make_shared<Agent>(query_radius,
+                        entry.perception_fn_name, std::move(pfn),
+                        entry.influence_fn_name, std::move(ifn));
+                }
                 agent->set_position(position);
                 agent->set_intensity(intensity);
                 agent->set_radius(radius);
@@ -634,11 +627,128 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct(Fabric& fabric, con
         }
     }
 
+    for (const auto& xrec : schema.expanses) {
+        if (xrec.fn_name.empty()) {
+            result.warnings.push_back("Expanse " + std::to_string(xrec.id)
+                + ": no fn_name, skipping");
+            continue;
+        }
+        auto contains_fn = fabric.resolve_expanse_fn(xrec.fn_name);
+        if (!contains_fn || !*contains_fn) {
+            result.warnings.push_back("Expanse " + std::to_string(xrec.id)
+                + ": fn '" + xrec.fn_name + "' not in registry, skipping");
+            continue;
+        }
+        auto on_enter_fn = xrec.on_enter_fn_name.empty()
+            ? Expanse::CrossingFn {}
+            : [ptr = fabric.resolve_crossing_fn(xrec.on_enter_fn_name)](uint32_t id) {
+                  if (ptr && *ptr)
+                      (*ptr)(id);
+              };
+        auto on_exit_fn = xrec.on_exit_fn_name.empty()
+            ? Expanse::CrossingFn {}
+            : [ptr = fabric.resolve_crossing_fn(xrec.on_exit_fn_name)](uint32_t id) {
+                  if (ptr && *ptr)
+                      (*ptr)(id);
+              };
+        auto expanse = std::make_shared<Expanse>(
+            xrec.fn_name,
+            xrec.on_enter_fn_name,
+            xrec.on_exit_fn_name,
+            *contains_fn,
+            std::move(on_enter_fn),
+            std::move(on_exit_fn));
+        fabric.add_expanse(std::move(expanse));
+        ++result.constructed;
+    }
+
     MF_INFO(Journal::Component::Nexus, Journal::Context::FileIO,
         "StateDecoder::reconstruct: constructed={} patched={} skipped={} warnings={}",
         result.constructed, result.patched, result.skipped, result.warnings.size());
 
     return result;
+}
+
+StateDecoder::ReconstructionResult StateDecoder::reconstruct(
+    Tapestry& tapestry, const std::string& base_dir)
+{
+    ReconstructionResult total;
+
+    const std::string tapestry_path = base_dir + "/tapestry.json";
+    IO::JSONSerializer ser;
+    auto schema_opt = ser.read<State::TapestrySchema>(tapestry_path);
+    if (!schema_opt) {
+        m_last_error = "Failed to load tapestry schema: " + ser.last_error();
+        MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
+        return total;
+    }
+    const auto& schema = *schema_opt;
+
+    for (const auto& ref : schema.fabrics) {
+        auto fabric = tapestry.get_fabric(ref.name);
+        if (!fabric) {
+            fabric = tapestry.create_fabric(ref.name);
+        }
+        auto result = reconstruct(*fabric, ref.base_path);
+        total.constructed += result.constructed;
+        total.patched += result.patched;
+        total.skipped += result.skipped;
+        for (auto& w : result.warnings)
+            total.warnings.push_back(ref.name + ": " + std::move(w));
+    }
+
+    for (const auto& xrec : schema.expanses) {
+        if (xrec.fn_name.empty()) {
+            total.warnings.push_back("TapestryExpanse '" + xrec.name + "': no fn_name, skipping");
+            continue;
+        }
+        Expanse::ContainsFn contains_fn;
+        Expanse::CrossingFn on_enter_fn;
+        Expanse::CrossingFn on_exit_fn;
+
+        for (const auto& fname : xrec.fabric_names) {
+            auto fabric = tapestry.get_fabric(fname);
+            if (!fabric)
+                continue;
+            if (!contains_fn) {
+                if (auto ptr = fabric->resolve_expanse_fn(xrec.fn_name); ptr && *ptr)
+                    contains_fn = *ptr;
+            }
+            if (!on_enter_fn && !xrec.on_enter_fn_name.empty()) {
+                if (auto ptr = fabric->resolve_crossing_fn(xrec.on_enter_fn_name); ptr && *ptr)
+                    on_enter_fn = *ptr;
+            }
+            if (!on_exit_fn && !xrec.on_exit_fn_name.empty()) {
+                if (auto ptr = fabric->resolve_crossing_fn(xrec.on_exit_fn_name); ptr && *ptr)
+                    on_exit_fn = *ptr;
+            }
+        }
+
+        if (!contains_fn) {
+            total.warnings.push_back("TapestryExpanse '" + xrec.name
+                + "': fn '" + xrec.fn_name + "' not resolved, skipping");
+            continue;
+        }
+
+        auto expanse = tapestry.create_expanse(
+            xrec.name,
+            std::move(contains_fn),
+            std::move(on_enter_fn),
+            std::move(on_exit_fn));
+
+        for (const auto& fname : xrec.fabric_names) {
+            if (auto fabric = tapestry.get_fabric(fname))
+                fabric->add_expanse(expanse);
+        }
+        ++total.constructed;
+    }
+
+    total.user_state = schema.user_state;
+
+    MF_INFO(Journal::Component::Nexus, Journal::Context::FileIO,
+        "StateDecoder::reconstruct(Tapestry): constructed={} patched={} skipped={} warnings={}",
+        total.constructed, total.patched, total.skipped, total.warnings.size());
+    return total;
 }
 
 } // namespace MayaFlux::Nexus

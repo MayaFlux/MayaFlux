@@ -171,6 +171,8 @@ private:
             return encode_glm(val);
         } else if constexpr (std::is_enum_v<T>) {
             return static_cast<std::underlying_type_t<T>>(val);
+        } else if constexpr (std::is_same_v<T, nlohmann::json>) {
+            return val;
         } else {
             return val;
         }
@@ -265,6 +267,8 @@ private:
             decode_glm(j, out);
         } else if constexpr (std::is_enum_v<T>) {
             out = static_cast<T>(j.get<std::underlying_type_t<T>>());
+        } else if constexpr (std::is_same_v<T, nlohmann::json>) {
+            out = j;
         } else {
             out = j.get<T>();
         }

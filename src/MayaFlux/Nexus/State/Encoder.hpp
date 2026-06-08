@@ -1,6 +1,8 @@
 #pragma once
 
-#include "MayaFlux/Nexus/Fabric.hpp"
+#include "MayaFlux/Nexus/Tapestry.hpp"
+
+#include "Schema.hpp"
 
 namespace MayaFlux::Nexus {
 
@@ -39,6 +41,18 @@ public:
      * @return True on success. On failure call last_error().
      */
     [[nodiscard]] bool encode(const Fabric& fabric, const std::string& base_path);
+
+    /**
+     * @brief Encode all Fabrics in @p tapestry to @p base_dir.
+     *
+     * Writes one EXR+JSON pair per Fabric under base_dir/{fabric_name_or_id},
+     * then writes base_dir/tapestry.json as the envelope.
+     *
+     * @param tapestry  Source Tapestry.
+     * @param base_dir  Directory path. Must exist.
+     * @return True on success.
+     */
+    [[nodiscard]] bool encode(const Tapestry& tapestry, const std::string& base_dir, nlohmann::json user_state = {});
 
     /**
      * @brief Last error message, empty if no error.

@@ -68,20 +68,7 @@ constexpr std::string_view enum_to_string(EnumType value) noexcept
 template <typename EnumType>
 std::optional<EnumType> string_to_enum_case_insensitive(std::string_view str) noexcept
 {
-    // Try direct match first (most efficient)
-    auto direct_result = magic_enum::enum_cast<EnumType>(str);
-    if (direct_result.has_value()) {
-        return direct_result;
-    }
-
-    // Convert input to uppercase for comparison with enum names
-    std::string upper_str = to_uppercase(str);
-    auto upper_result = magic_enum::enum_cast<EnumType>(upper_str);
-    if (upper_result.has_value()) {
-        return upper_result;
-    }
-
-    return std::nullopt;
+    return magic_enum::enum_cast<EnumType>(str, magic_enum::case_insensitive);
 }
 
 /**

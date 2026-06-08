@@ -27,7 +27,7 @@ namespace MayaFlux::Nexus {
  *
  * The id is assigned by @c Fabric::wire and is stable for the object's lifetime.
  */
-class Agent {
+class MAYAFLUX_API Agent {
 public:
     using InfluenceFn = std::function<void(const InfluenceContext&)>;
     using PerceptionFn = std::function<void(const PerceptionContext&)>;

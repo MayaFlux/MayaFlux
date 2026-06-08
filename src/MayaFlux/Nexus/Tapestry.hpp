@@ -76,6 +76,15 @@ public:
      */
     [[nodiscard]] const std::vector<std::shared_ptr<Fabric>>& all_fabrics() const;
 
+    /**
+     * @brief Read-only view of all Expanses owned by this Tapestry.
+     */
+    [[nodiscard]] const std::unordered_map<std::string, std::shared_ptr<Expanse>>&
+    all_expanses() const
+    {
+        return m_expanses;
+    }
+
     // =========================================================================
     // Expanse
     // =========================================================================
