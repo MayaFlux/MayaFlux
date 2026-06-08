@@ -23,7 +23,7 @@ namespace MayaFlux::Nexus {
  * The id is assigned by @c Fabric::wire and is stable for the object's
  * lifetime. It is zero until the object has been registered.
  */
-class Emitter {
+class MAYAFLUX_API Emitter {
 public:
     using InfluenceFn = std::function<void(const InfluenceContext&)>;
 
