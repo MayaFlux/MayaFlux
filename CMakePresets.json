@@ -12,6 +12,7 @@
     },
     {
       "name": "base-dev",
+      "hidden": true,
       "inherits": "base",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "RelWithDebInfo"
@@ -19,28 +20,57 @@
     },
     {
       "name": "base-rel",
+      "hidden": true,
       "inherits": "base",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
       }
     },
     {
+      "name": "windows-base",
+      "hidden": true,
+      "toolchainFile": "$env{MAYAFLUX_TOOLCHAIN_FILE}",
+      "binaryDir": "${sourceDir}/build",
+      "architecture": {
+        "value": "x64",
+        "strategy": "external"
+      },
+      "toolset": {
+        "value": "host=x64",
+        "strategy": "external"
+      },
+      "cacheVariables": {
+        "CMAKE_VS_GLOBALS": "UseMultiToolTask=true;EnforceProcessCountAcrossBuilds=true",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      }
+    },
+    {
       "name": "unix-dev",
       "inherits": "base",
       "displayName": "Unix : Development",
+      "condition": {
+        "type": "notEquals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      },
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
         "MAYAFLUX_DEV": "ON",
         "MAYAFLUX_BUILD_PROJECT": "ON",
         "MAYAFLUX_BUILD_TESTS": "ON",
         "MAYAFLUX_PORTABLE": "ON",
-        "EXAMPLE_SHADER_DIR" :  "${sourceDir}/src/examples/shaders"
+        "EXAMPLE_SHADER_DIR": "${sourceDir}/src/examples/shaders"
       }
     },
     {
       "name": "linux-ship-dev",
       "inherits": "base-dev",
       "displayName": "Linux : Shipping with Debug Info",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      },
       "cacheVariables": {
         "CMAKE_INSTALL_PREFIX": "/usr"
       }
@@ -49,6 +79,11 @@
       "name": "linux-ship-rel",
       "inherits": "base-rel",
       "displayName": "Linux : Shipping Release",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      },
       "cacheVariables": {
         "CMAKE_INSTALL_PREFIX": "/usr"
       }
@@ -57,22 +92,37 @@
       "name": "launchpad-dev",
       "inherits": "base-dev",
       "displayName": "MayaFlux Edge: Launchpad/PPA",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      },
       "cacheVariables": {
-	    "CMAKE_INSTALL_LIBDIR": "lib"
+        "CMAKE_INSTALL_LIBDIR": "lib"
       }
     },
     {
       "name": "launchpad-rel",
       "inherits": "base-rel",
       "displayName": "MayaFlux Release: Launchpad/PPA",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      },
       "cacheVariables": {
-	    "CMAKE_INSTALL_LIBDIR": "lib"
+        "CMAKE_INSTALL_LIBDIR": "lib"
       }
     },
     {
       "name": "macos-ship-dev",
       "inherits": "base-dev",
       "displayName": "macOS - Shipping Development",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Darwin"
+      },
       "cacheVariables": {
         "CMAKE_VERBOSE_MAKEFILE": "ON",
         "MAYAFLUX_PORTABLE": "ON"
@@ -82,57 +132,80 @@
       "name": "macos-ship-rel",
       "inherits": "base-rel",
       "displayName": "macOS - Shipping Release",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Darwin"
+      },
       "cacheVariables": {
         "CMAKE_VERBOSE_MAKEFILE": "ON",
         "MAYAFLUX_PORTABLE": "ON"
       }
     },
     {
-    "name": "windows-vs2022-dev",
-    "inherits": "unix-dev",
-    "displayName": "Windows (VS 2022) - Development",
-    "generator": "Visual Studio 17 2022",
-    "cacheVariables": {
+      "name": "windows-vs2026-dev",
+      "inherits": "windows-base",
+      "displayName": "Windows (VS 2026) - Development",
+      "generator": "Visual Studio 18 2026",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      },
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
         "CMAKE_INSTALL_PREFIX": "C:/MayaFlux",
         "CMAKE_PREFIX_PATH": "",
-        "MAYAFLUX_PORTABLE" : "OFF",
-        "MAYAFLUX_BUILD_TESTS": "OFF"
+        "MAYAFLUX_DEV": "ON",
+        "MAYAFLUX_BUILD_PROJECT": "ON",
+        "EXAMPLE_SHADER_DIR": "${sourceDir}/src/examples/shaders"
       }
     },
     {
-    "name": "windows-vs2026-dev",
-    "inherits": "unix-dev",
-    "displayName": "Windows (VS 2026) - Development",
-    "generator": "Visual Studio 18 2026",
-    "cacheVariables": {
+      "name": "windows-vs2022-dev",
+      "inherits": "windows-base",
+      "displayName": "Windows (VS 2022) - Development",
+      "generator": "Visual Studio 17 2022",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      },
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
         "CMAKE_INSTALL_PREFIX": "C:/MayaFlux",
         "CMAKE_PREFIX_PATH": "",
-        "MAYAFLUX_PORTABLE" : "OFF",
-        "MAYAFLUX_BUILD_TESTS": "OFF"
+        "MAYAFLUX_DEV": "ON",
+        "MAYAFLUX_BUILD_PROJECT": "ON",
+        "EXAMPLE_SHADER_DIR": "${sourceDir}/src/examples/shaders"
       }
     },
     {
       "name": "windows-ship-rel",
-      "inherits": "base",
+      "inherits": [ "base-rel", "windows-base" ],
       "displayName": "Windows - Shipping Release",
       "generator": "Visual Studio 18 2026",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      },
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release",
         "CMAKE_INSTALL_PREFIX": "C:/MayaFlux"
       }
     }
   ],
   "buildPresets": [
-    { "name": "unix-dev",       "configurePreset": "unix-dev", "jobs": 0 },
-    { "name": "linux-ship-dev",  "configurePreset": "linux-ship-dev", "jobs": 0 },
-    { "name": "linux-ship-rel",  "configurePreset": "linux-ship-rel", "jobs": 0 },
-    { "name": "macos-ship-dev",  "configurePreset": "macos-ship-dev", "jobs": 0 },
-    { "name": "launchpad-dev",  "configurePreset": "launchpad-dev", "jobs": 0 },
-    { "name": "launchpad-rel",  "configurePreset": "launchpad-rel", "jobs": 0 },
-    { "name": "macos-ship-rel",  "configurePreset": "macos-ship-rel", "jobs": 0 },
-    { "name": "win26-dev",     "configurePreset": "windows-vs2026-dev", "jobs": 0 },
-    { "name": "win22-dev",     "configurePreset": "windows-vs2022-dev", "jobs": 0 },
-    { "name": "windows-ship-rel","configurePreset": "windows-ship-rel", "jobs": 0 }
+    { "name": "unix-dev",         "configurePreset": "unix-dev", "jobs": 0 },
+    { "name": "linux-ship-dev",    "configurePreset": "linux-ship-dev", "jobs": 0 },
+    { "name": "linux-ship-rel",    "configurePreset": "linux-ship-rel", "jobs": 0 },
+    { "name": "macos-ship-dev",    "configurePreset": "macos-ship-dev", "jobs": 0 },
+    { "name": "launchpad-dev",    "configurePreset": "launchpad-dev", "jobs": 0 },
+    { "name": "launchpad-rel",    "configurePreset": "launchpad-rel", "jobs": 0 },
+    { "name": "macos-ship-rel",    "configurePreset": "macos-ship-rel", "jobs": 0 },
+    { "name": "win26-dev",       "configurePreset": "windows-vs2026-dev" },
+    { "name": "win22-dev",       "configurePreset": "windows-vs2022-dev" },
+    { "name": "windows-ship-rel", "configurePreset": "windows-ship-rel"}
   ],
   "testPresets": [
     {
