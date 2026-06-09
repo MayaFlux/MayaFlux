@@ -83,6 +83,39 @@ public:
     void set_data(std::vector<Kakshya::DataVariant> variants);
 
     /**
+     * @brief Supply pre-packed interleaved vertex bytes for the next cycle.
+     *
+     * data must point to N contiguous 60-byte Vertex records.
+     * byte_count must be a multiple of 60. Routed through the
+     * VERTICES_3D path: no channel assembly, no conversion.
+     *
+     * Thread-safe. The bytes are copied into the pending slot and the
+     * dirty flag is set. Upload is deferred to processing_function()
+     * on the graphics thread.
+     *
+     * @param data       Pointer to interleaved vertex data.
+     * @param byte_count Total size in bytes; must be a multiple of 60.
+     */
+    void set_vertices(const void* data, size_t byte_count);
+
+    /**
+     * @brief Supply typed vertex data for the next cycle.
+     *
+     * Reinterprets the span as raw bytes and delegates to set_vertices(void*, size_t).
+     * T must be exactly 60 bytes: one of Kakshya::Vertex, PointVertex, LineVertex,
+     * MeshVertex, or any user struct with the canonical layout.
+     *
+     * @tparam T 60-byte vertex type.
+     * @param vertices Source span.
+     */
+    template <typename T>
+    void set_vertices(std::span<const T> vertices)
+    {
+        static_assert(sizeof(T) == 60, "set_vertices: T must be a 60-byte vertex type");
+        set_vertices(vertices.data(), vertices.size_bytes());
+    }
+
+    /**
      * @brief Returns true if a snapshot has been set and not yet consumed.
      */
     [[nodiscard]] bool has_pending() const noexcept;

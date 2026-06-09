@@ -35,6 +35,13 @@ void DataWriteProcessor::set_data(std::vector<Kakshya::DataVariant> variants)
     m_data_dirty.test_and_set(std::memory_order_release);
 }
 
+void DataWriteProcessor::set_vertices(const void* data, size_t byte_count)
+{
+    const auto* src = static_cast<const uint8_t*>(data);
+    m_data_pending = { Kakshya::DataVariant { std::vector<uint8_t>(src, src + byte_count) } };
+    m_data_dirty.test_and_set(std::memory_order_release);
+}
+
 void DataWriteProcessor::set_texture(std::shared_ptr<Core::VKImage> image, std::string binding)
 {
     m_pending_texture = PendingTexture { .image = std::move(image), .binding = std::move(binding) };
