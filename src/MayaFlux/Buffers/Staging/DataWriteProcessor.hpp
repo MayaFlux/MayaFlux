@@ -163,9 +163,9 @@ private:
 
     std::shared_ptr<VKBuffer> m_staging;
 
-    void upload_primary(const std::shared_ptr<VKBuffer>& vk, Kakshya::DataVariant& slot);
+    void upload_primary(const std::shared_ptr<VKBuffer>& vk, std::vector<Kakshya::DataVariant>& slots);
     void upload_secondary(const std::shared_ptr<VKBuffer>& vk, Kakshya::DataVariant& slot);
-    void upload_vertex(const std::shared_ptr<VKBuffer>& vk, Kakshya::DataVariant& slot);
+    void upload_vertex(const std::shared_ptr<VKBuffer>& vk, std::vector<Kakshya::DataVariant>& slots);
     void upload_texture(const std::shared_ptr<VKBuffer>& vk, Kakshya::DataVariant& slot);
     void upload_raw(const std::shared_ptr<VKBuffer>& vk, Kakshya::DataVariant& slot);
 

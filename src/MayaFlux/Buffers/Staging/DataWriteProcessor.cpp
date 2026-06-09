@@ -86,18 +86,22 @@ void DataWriteProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
     }
 
     if (is_vertex_modality(m_modality)) {
-        switch (m_topology) {
-        case Portal::Graphics::PrimitiveTopology::LINE_LIST:
-        case Portal::Graphics::PrimitiveTopology::LINE_STRIP:
-            vk->set_vertex_layout(Kakshya::VertexLayout::for_lines());
-            break;
-        case Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST:
-        case Portal::Graphics::PrimitiveTopology::TRIANGLE_STRIP:
-            vk->set_vertex_layout(Kakshya::VertexLayout::for_meshes());
-            break;
-        default:
-            vk->set_vertex_layout(Kakshya::VertexLayout::for_points());
-            break;
+        if (m_modality == Kakshya::DataModality::VERTICES_3D) {
+            vk->set_vertex_layout(Kakshya::VertexLayout::for_raw());
+        } else {
+            switch (m_topology) {
+            case Portal::Graphics::PrimitiveTopology::LINE_LIST:
+            case Portal::Graphics::PrimitiveTopology::LINE_STRIP:
+                vk->set_vertex_layout(Kakshya::VertexLayout::for_lines());
+                break;
+            case Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST:
+            case Portal::Graphics::PrimitiveTopology::TRIANGLE_STRIP:
+                vk->set_vertex_layout(Kakshya::VertexLayout::for_meshes());
+                break;
+            default:
+                vk->set_vertex_layout(Kakshya::VertexLayout::for_points());
+                break;
+            }
         }
     }
 
@@ -146,21 +150,21 @@ void DataWriteProcessor::processing_function(const std::shared_ptr<Buffer>& buff
         return;
     }
 
-    upload_primary(vk, m_active[0]);
+    upload_primary(vk, m_active);
 
     for (size_t i = 1; i < m_active.size(); ++i) {
         upload_secondary(vk, m_active[i]);
     }
 }
 
-void DataWriteProcessor::upload_primary(const std::shared_ptr<VKBuffer>& vk, Kakshya::DataVariant& slot)
+void DataWriteProcessor::upload_primary(const std::shared_ptr<VKBuffer>& vk, std::vector<Kakshya::DataVariant>& slots)
 {
     if (is_vertex_modality(m_modality)) {
-        upload_vertex(vk, slot);
+        upload_vertex(vk, slots);
     } else if (is_texture_modality(m_modality)) {
-        upload_texture(vk, slot);
+        upload_texture(vk, slots[0]);
     } else {
-        upload_raw(vk, slot);
+        upload_raw(vk, slots[0]);
     }
 }
 
@@ -171,21 +175,21 @@ void DataWriteProcessor::upload_secondary(const std::shared_ptr<VKBuffer>& vk, K
     upload_to_gpu(bytes.data(), bytes.size_bytes(), vk, m_staging);
 }
 
-void DataWriteProcessor::upload_vertex(const std::shared_ptr<VKBuffer>& vk, Kakshya::DataVariant& slot)
+void DataWriteProcessor::upload_vertex(const std::shared_ptr<VKBuffer>& vk, std::vector<Kakshya::DataVariant>& slots)
 {
     std::optional<Kakshya::VertexAccess> access;
 
     switch (m_topology) {
     case Portal::Graphics::PrimitiveTopology::LINE_LIST:
     case Portal::Graphics::PrimitiveTopology::LINE_STRIP:
-        access = Kakshya::as_line_vertex_access(slot);
+        access = Kakshya::as_line_vertex_access(slots);
         break;
     case Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST:
     case Portal::Graphics::PrimitiveTopology::TRIANGLE_STRIP:
-        access = Kakshya::as_mesh_vertex_access(slot);
+        access = Kakshya::as_mesh_vertex_access(slots);
         break;
     default:
-        access = Kakshya::as_point_vertex_access(slot);
+        access = Kakshya::as_point_vertex_access(slots);
         break;
     }
 
@@ -268,6 +272,7 @@ void DataWriteProcessor::ensure_capacity(const std::shared_ptr<VKBuffer>& vk, si
 bool DataWriteProcessor::is_vertex_modality(Kakshya::DataModality m) noexcept
 {
     switch (m) {
+    case Kakshya::DataModality::VERTICES_3D:
     case Kakshya::DataModality::VERTEX_POSITIONS_3D:
     case Kakshya::DataModality::VERTEX_NORMALS_3D:
     case Kakshya::DataModality::VERTEX_TANGENTS_3D:

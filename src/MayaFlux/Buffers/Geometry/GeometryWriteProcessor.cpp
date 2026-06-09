@@ -12,7 +12,7 @@ GeometryWriteProcessor::GeometryWriteProcessor()
 
 void GeometryWriteProcessor::set_data(Kakshya::DataVariant variant)
 {
-    m_pending_data = std::move(variant);
+    m_pending_data = std::vector<Kakshya::DataVariant> { std::move(variant) };
     m_data_dirty.test_and_set(std::memory_order_release);
 }
 

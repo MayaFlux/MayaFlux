@@ -6,363 +6,213 @@ namespace MayaFlux::Kakshya {
 
 namespace {
 
-    void floats_to_waveform(std::span<const float> src, std::byte* dst)
+    // Canonical field layout: vec3 pos(12) | vec3 color(12) | float scalar(4) | vec2 uv(8) | vec3 normal(12) | vec3 tangent(12)
+    // Channel slot -> (offset, size)
+    constexpr std::array<std::pair<size_t, size_t>, 6> k_channel_layout { {
+        { 0, 12 }, // vec3  position
+        { 12, 12 }, // vec3  color
+        { 24, 4 }, // float scalar
+        { 28, 8 }, // vec2  uv
+        { 36, 12 }, // vec3  normal
+        { 48, 12 }, // vec3  tangent
+    } };
+
+    /**
+     * Returns (data pointer, element count, element size in bytes) for a channel variant.
+     * Element size is the sizeof of the stored type, not the canonical field size.
+     */
+    struct ChannelView {
+        const uint8_t* ptr;
+        size_t count;
+        size_t element_bytes;
+    };
+
+    ChannelView channel_view(const DataVariant& v)
     {
-        const size_t count = src.size();
-        auto* out = reinterpret_cast<glm::vec3*>(dst);
-        const float inv = (count > 1) ? (2.0F / static_cast<float>(count - 1)) : 0.0F;
+        return std::visit([](const auto& vec) -> ChannelView {
+            using V = typename std::decay_t<decltype(vec)>::value_type;
+            if (vec.empty())
+                return { .ptr = nullptr, .count = 0, .element_bytes = sizeof(V) };
+            return {
+                reinterpret_cast<const uint8_t*>(vec.data()),
+                vec.size(),
+                sizeof(V)
+            };
+        },
+            v);
+    }
+
+    void assemble_vertices(
+        std::span<const DataVariant> channels,
+        size_t count,
+        const VertexAccessConfig& cfg,
+        float slot24_default,
+        std::byte* dst)
+    {
+        const void* defaults[6] = {
+            nullptr,
+            &cfg.default_color,
+            &slot24_default,
+            &cfg.default_uv,
+            &cfg.default_normal,
+            &cfg.default_tangent,
+        };
 
         for (size_t i = 0; i < count; ++i) {
-            out[i] = glm::vec3(static_cast<float>(i) * inv - 1.0F, src[i], 0.0F);
-        }
-    }
-
-    VertexLayout position_only_layout(uint32_t count)
-    {
-        VertexLayout layout;
-        layout.vertex_count = count;
-        layout.stride_bytes = sizeof(glm::vec3);
-        layout.attributes.push_back({ .component_modality = DataModality::VERTEX_POSITIONS_3D,
-            .offset_in_vertex = 0,
-            .name = "position" });
-        return layout;
-    }
-
-    VertexLayout position_2d_layout(uint32_t count)
-    {
-        VertexLayout layout;
-        layout.vertex_count = count;
-        layout.stride_bytes = sizeof(glm::vec2);
-        layout.attributes.push_back({ .component_modality = DataModality::TEXTURE_COORDS_2D,
-            .offset_in_vertex = 0,
-            .name = "position2d" });
-        return layout;
-    }
-
-    VertexLayout position_w_layout(uint32_t count)
-    {
-        VertexLayout layout;
-        layout.vertex_count = count;
-        layout.stride_bytes = sizeof(glm::vec4);
-        layout.attributes.push_back({ .component_modality = DataModality::VERTEX_COLORS_RGBA,
-            .offset_in_vertex = 0,
-            .name = "position_w" });
-        return layout;
-    }
-
-    VertexLayout waveform_layout(uint32_t count)
-    {
-        VertexLayout layout;
-        layout.vertex_count = count;
-        layout.stride_bytes = sizeof(glm::vec3);
-        layout.attributes.push_back({ .component_modality = DataModality::VERTEX_POSITIONS_3D,
-            .offset_in_vertex = 0,
-            .name = "position" });
-        return layout;
-    }
-
-    // =========================================================================
-    // Shared interleaved write helpers
-    // =========================================================================
-
-    /**
-     * Write N point vertices into dst.
-     * positions must have exactly count elements.
-     * dst must be pre-sized to count * 60 bytes.
-     */
-    void write_point_vertices(
-        std::span<const glm::vec3> positions,
-        const VertexAccessConfig& cfg,
-        std::byte* dst)
-    {
-        for (size_t i = 0; i < positions.size(); ++i) {
             std::byte* v = dst + i * 60;
-            std::memcpy(v, &positions[i], 12);
-            std::memcpy(v + 12, &cfg.default_color, 12);
-            std::memcpy(v + 24, &cfg.default_size, 4);
-            std::memcpy(v + 28, &cfg.default_uv, 8);
-            std::memcpy(v + 36, &cfg.default_normal, 12);
-            std::memcpy(v + 48, &cfg.default_tangent, 12);
+            for (size_t s = 0; s < 6; ++s) {
+                auto [dst_off, dst_sz] = k_channel_layout[s];
+                if (s < channels.size()) {
+                    auto cv = channel_view(channels[s]);
+                    // copy min(src element size, dst field size) bytes, zero-pad remainder
+                    const size_t copy_sz = std::min(cv.element_bytes, dst_sz);
+                    std::memcpy(v + dst_off, cv.ptr + i * cv.element_bytes, copy_sz);
+                    if (copy_sz < dst_sz) {
+                        std::memset(v + dst_off + copy_sz, 0, dst_sz - copy_sz);
+                    }
+                } else {
+                    std::memcpy(v + dst_off, defaults[s], dst_sz);
+                }
+            }
         }
-    }
-
-    /**
-     * Write N line vertices into dst.
-     * positions must have exactly count elements.
-     * dst must be pre-sized to count * 60 bytes.
-     */
-    void write_line_vertices(
-        std::span<const glm::vec3> positions,
-        const VertexAccessConfig& cfg,
-        std::byte* dst)
-    {
-        for (size_t i = 0; i < positions.size(); ++i) {
-            std::byte* v = dst + i * 60;
-            std::memcpy(v, &positions[i], 12);
-            std::memcpy(v + 12, &cfg.default_color, 12);
-            std::memcpy(v + 24, &cfg.default_thickness, 4);
-            std::memcpy(v + 28, &cfg.default_uv, 8);
-            std::memcpy(v + 36, &cfg.default_normal, 12);
-            std::memcpy(v + 48, &cfg.default_tangent, 12);
-        }
-    }
-
-    /**
-     * Write N mesh vertices into dst.
-     * positions must have exactly count elements.
-     * dst must be pre-sized to count * 60 bytes.
-     */
-    void write_mesh_vertices(
-        std::span<const glm::vec3> positions,
-        const VertexAccessConfig& cfg,
-        std::byte* dst)
-    {
-        for (size_t i = 0; i < positions.size(); ++i) {
-            std::byte* v = dst + i * 60;
-            std::memcpy(v, &positions[i], 12);
-            std::memcpy(v + 12, &cfg.default_color, 12);
-            std::memcpy(v + 24, &cfg.default_weight, 4);
-            std::memcpy(v + 28, &cfg.default_uv, 8);
-            std::memcpy(v + 36, &cfg.default_normal, 12);
-            std::memcpy(v + 48, &cfg.default_tangent, 12);
-        }
-    }
-
-    // =========================================================================
-    // Shared position extraction — reuses existing waveform + DataConverter paths
-    // =========================================================================
-
-    /**
-     * Extract positions from any DataVariant into a vector<vec3>.
-     * GLM types are mapped directly; scalar/integer/complex go through
-     * the same waveform path as as_vertex_access().
-     * Returns empty on rejected types (complex<double>, mat4).
-     */
-    std::vector<glm::vec3> extract_positions(const DataVariant& variant)
-    {
-        return std::visit([variant](const auto& vec) -> std::vector<glm::vec3> {
-            using V = typename std::decay_t<decltype(vec)>::value_type;
-            const size_t count = vec.size();
-
-            if (count == 0) {
-                return {};
-            }
-
-            if constexpr (std::is_same_v<V, glm::vec3>) {
-                return std::vector<glm::vec3>(vec.begin(), vec.end());
-            }
-
-            if constexpr (std::is_same_v<V, glm::vec2>) {
-                std::vector<glm::vec3> out(count);
-                for (size_t i = 0; i < count; ++i) {
-                    out[i] = glm::vec3(vec[i].x, vec[i].y, 0.0F);
-                }
-                return out;
-            }
-
-            if constexpr (std::is_same_v<V, glm::vec4>) {
-                std::vector<glm::vec3> out(count);
-                for (size_t i = 0; i < count; ++i) {
-                    out[i] = glm::vec3(vec[i].x, vec[i].y, vec[i].z);
-                }
-                return out;
-            }
-
-            if constexpr (DecimalData<V> || IntegerData<V>) {
-                std::vector<float> floats;
-                extract_from_variant<float>(variant, floats);
-
-                const float inv = count > 1
-                    ? 2.0F / static_cast<float>(count - 1)
-                    : 0.0F;
-
-                std::vector<glm::vec3> out(count);
-                for (size_t i = 0; i < count; ++i) {
-                    out[i] = glm::vec3(static_cast<float>(i) * inv - 1.0F,
-                        floats[i], 0.0F);
-                }
-                return out;
-            }
-
-            if constexpr (std::is_same_v<V, std::complex<float>>) {
-                std::vector<float> magnitudes;
-                extract_from_variant<float>(variant, magnitudes,
-                    ComplexConversionStrategy::MAGNITUDE);
-
-                constexpr float inv_pi = std::numbers::inv_pi_v<float>;
-                const float inv = count > 1
-                    ? 2.0F / static_cast<float>(count - 1)
-                    : 0.0F;
-
-                std::vector<glm::vec3> out(count);
-                for (size_t i = 0; i < count; ++i) {
-                    out[i] = glm::vec3(static_cast<float>(i) * inv - 1.0F,
-                        magnitudes[i],
-                        std::arg(vec[i]) * inv_pi);
-                }
-                return out;
-            }
-
-            // complex<double> and mat4 rejected
-            return {};
-        },
-            variant);
     }
 
 } // namespace
 
-std::optional<VertexAccess> as_vertex_access(const DataVariant& variant)
+std::optional<VertexAccess> as_vertex_access(
+    std::span<const DataVariant> channels,
+    const VertexAccessConfig& config)
 {
-    return std::visit([&variant](const auto& vec) -> std::optional<VertexAccess> {
-        using V = typename std::decay_t<decltype(vec)>::value_type;
-        const size_t count = vec.size();
-
-        if (count == 0) {
-            MF_WARN(Journal::Component::Kakshya, Journal::Context::Runtime,
-                "as_vertex_access: empty variant");
-            return std::nullopt;
-        }
-
-        if constexpr (std::is_same_v<V, glm::vec3>) {
-            return VertexAccess { vec.data(), count * sizeof(glm::vec3),
-                position_only_layout(static_cast<uint32_t>(count)) };
-        }
-
-        if constexpr (std::is_same_v<V, glm::vec2>) {
-            return VertexAccess { vec.data(), count * sizeof(glm::vec2),
-                position_2d_layout(static_cast<uint32_t>(count)) };
-        }
-
-        if constexpr (std::is_same_v<V, glm::vec4>) {
-            return VertexAccess { vec.data(), count * sizeof(glm::vec4),
-                position_w_layout(static_cast<uint32_t>(count)) };
-        }
-
-        if constexpr (DecimalData<V> || IntegerData<V>) {
-            if constexpr (std::is_same_v<V, double>) {
-                MF_TRACE(Journal::Component::Kakshya, Journal::Context::Runtime,
-                    "as_vertex_access: double narrowed to float for vertex waveform");
-            }
-
-            std::vector<float> floats;
-            extract_from_variant<float>(variant, floats);
-
-            VertexAccess va;
-            va.conversion_buffer.resize(count * sizeof(glm::vec3));
-            floats_to_waveform(floats, va.conversion_buffer.data());
-            va.data_ptr = va.conversion_buffer.data();
-            va.byte_count = va.conversion_buffer.size();
-            va.layout = waveform_layout(static_cast<uint32_t>(count));
-            return va;
-        }
-
-        if constexpr (std::is_same_v<V, std::complex<float>>) {
-            std::vector<float> magnitudes;
-            extract_from_variant<float>(variant, magnitudes,
-                ComplexConversionStrategy::MAGNITUDE);
-
-            constexpr float inv_pi = std::numbers::inv_pi_v<float>;
-            const float inv = (count > 1) ? (2.0F / static_cast<float>(count - 1)) : 0.0F;
-
-            VertexAccess va;
-            va.conversion_buffer.resize(count * sizeof(glm::vec3));
-            auto* out = reinterpret_cast<glm::vec3*>(va.conversion_buffer.data());
-
-            for (size_t i = 0; i < count; ++i) {
-                out[i] = glm::vec3(
-                    static_cast<float>(i) * inv - 1.0F,
-                    magnitudes[i],
-                    std::arg(vec[i]) * inv_pi);
-            }
-
-            va.data_ptr = va.conversion_buffer.data();
-            va.byte_count = va.conversion_buffer.size();
-            va.layout = waveform_layout(static_cast<uint32_t>(count));
-            return va;
-        }
-
-        if constexpr (std::is_same_v<V, std::complex<double>>) {
-            MF_ERROR(Journal::Component::Kakshya, Journal::Context::Runtime,
-                "as_vertex_access: complex<double> rejected: convert to "
-                "complex<float> or extract components manually");
-            return std::nullopt;
-        }
-
-        if constexpr (std::is_same_v<V, glm::mat4>) {
-            MF_ERROR(Journal::Component::Kakshya, Journal::Context::Runtime,
-                "as_vertex_access: glm::mat4 rejected: unpack to vec4 columns first");
-            return std::nullopt;
-        }
-
-        return std::nullopt;
-    },
-        variant);
+    return as_point_vertex_access(channels, config);
 }
 
 std::optional<VertexAccess> as_point_vertex_access(
-    const DataVariant& variant,
+    std::span<const DataVariant> channels,
     const VertexAccessConfig& config)
 {
-    auto positions = extract_positions(variant);
-    if (positions.empty()) {
+    if (channels.empty()) {
         MF_ERROR(Journal::Component::Kakshya, Journal::Context::Runtime,
-            "as_point_vertex_access: unsupported or empty variant");
+            "as_point_vertex_access: no channels supplied");
         return std::nullopt;
     }
 
-    const auto count = static_cast<uint32_t>(positions.size());
+    // Zero-copy path: single uint8_t channel of N*60 bytes is already interleaved.
+    if (channels.size() == 1) {
+        if (const auto* b = std::get_if<std::vector<uint8_t>>(&channels[0])) {
+            if (b->size() % 60 != 0) {
+                MF_ERROR(Journal::Component::Kakshya, Journal::Context::Runtime,
+                    "as_point_vertex_access: uint8_t byte count {} not a multiple of 60",
+                    b->size());
+                return std::nullopt;
+            }
+            const auto count = static_cast<uint32_t>(b->size() / 60);
+            auto layout = VertexLayout::for_points();
+            layout.vertex_count = count;
+            return VertexAccess { .data_ptr = b->data(), .byte_count = b->size(), .layout = layout };
+        }
+    }
+
+    const size_t count = channel_view(channels[0]).count;
+    if (count == 0) {
+        MF_ERROR(Journal::Component::Kakshya, Journal::Context::Runtime,
+            "as_point_vertex_access: position channel (slot 0) is empty or unsupported");
+        return std::nullopt;
+    }
+
     VertexAccess va;
-    va.conversion_buffer.resize((size_t)count * 60);
-    write_point_vertices(positions, config, va.conversion_buffer.data());
+    va.conversion_buffer.resize(count * 60);
+    assemble_vertices(channels, count, config, config.default_size,
+        va.conversion_buffer.data());
     va.data_ptr = va.conversion_buffer.data();
     va.byte_count = va.conversion_buffer.size();
     va.layout = VertexLayout::for_points();
-    va.layout.vertex_count = count;
-
+    va.layout.vertex_count = static_cast<uint32_t>(count);
     return va;
 }
 
 std::optional<VertexAccess> as_line_vertex_access(
-    const DataVariant& variant,
+    std::span<const DataVariant> channels,
     const VertexAccessConfig& config)
 {
-    auto positions = extract_positions(variant);
-    if (positions.empty()) {
+    if (channels.empty()) {
         MF_ERROR(Journal::Component::Kakshya, Journal::Context::Runtime,
-            "as_line_vertex_access: unsupported or empty variant");
+            "as_line_vertex_access: no channels supplied");
         return std::nullopt;
     }
 
-    const auto count = static_cast<uint32_t>(positions.size());
+    if (channels.size() == 1) {
+        if (const auto* b = std::get_if<std::vector<uint8_t>>(&channels[0])) {
+            if (b->size() % 60 != 0) {
+                MF_ERROR(Journal::Component::Kakshya, Journal::Context::Runtime,
+                    "as_line_vertex_access: uint8_t byte count {} not a multiple of 60",
+                    b->size());
+                return std::nullopt;
+            }
+            const auto count = static_cast<uint32_t>(b->size() / 60);
+            auto layout = VertexLayout::for_lines();
+            layout.vertex_count = count;
+            return VertexAccess { .data_ptr = b->data(), .byte_count = b->size(), .layout = layout };
+        }
+    }
+
+    const size_t count = channel_view(channels[0]).count;
+    if (count == 0) {
+        MF_ERROR(Journal::Component::Kakshya, Journal::Context::Runtime,
+            "as_line_vertex_access: position channel (slot 0) is empty or unsupported");
+        return std::nullopt;
+    }
+
     VertexAccess va;
-    va.conversion_buffer.resize((size_t)count * 60);
-    write_line_vertices(positions, config, va.conversion_buffer.data());
+    va.conversion_buffer.resize(count * 60);
+    assemble_vertices(channels, count, config, config.default_thickness,
+        va.conversion_buffer.data());
     va.data_ptr = va.conversion_buffer.data();
     va.byte_count = va.conversion_buffer.size();
     va.layout = VertexLayout::for_lines();
-    va.layout.vertex_count = count;
+    va.layout.vertex_count = static_cast<uint32_t>(count);
     return va;
 }
 
 std::optional<VertexAccess> as_mesh_vertex_access(
-    const DataVariant& variant,
+    std::span<const DataVariant> channels,
     const VertexAccessConfig& config)
 {
-    auto positions = extract_positions(variant);
-    if (positions.empty()) {
+    if (channels.empty()) {
         MF_ERROR(Journal::Component::Kakshya, Journal::Context::Runtime,
-            "as_mesh_vertex_access: unsupported or empty variant");
+            "as_mesh_vertex_access: no channels supplied");
         return std::nullopt;
     }
 
-    const auto count = static_cast<uint32_t>(positions.size());
+    if (channels.size() == 1) {
+        if (const auto* b = std::get_if<std::vector<uint8_t>>(&channels[0])) {
+            if (b->size() % 60 != 0) {
+                MF_ERROR(Journal::Component::Kakshya, Journal::Context::Runtime,
+                    "as_mesh_vertex_access: uint8_t byte count {} not a multiple of 60",
+                    b->size());
+                return std::nullopt;
+            }
+            const auto count = static_cast<uint32_t>(b->size() / 60);
+            auto layout = VertexLayout::for_meshes();
+            layout.vertex_count = count;
+            return VertexAccess { .data_ptr = b->data(), .byte_count = b->size(), .layout = layout };
+        }
+    }
+
+    const size_t count = channel_view(channels[0]).count;
+    if (count == 0) {
+        MF_ERROR(Journal::Component::Kakshya, Journal::Context::Runtime,
+            "as_mesh_vertex_access: position channel (slot 0) is empty or unsupported");
+        return std::nullopt;
+    }
+
     VertexAccess va;
-    va.conversion_buffer.resize((size_t)count * 60);
-    write_mesh_vertices(positions, config, va.conversion_buffer.data());
+    va.conversion_buffer.resize(count * 60);
+    assemble_vertices(channels, count, config, config.default_weight,
+        va.conversion_buffer.data());
     va.data_ptr = va.conversion_buffer.data();
     va.byte_count = va.conversion_buffer.size();
     va.layout = VertexLayout::for_meshes();
-    va.layout.vertex_count = count;
+    va.layout.vertex_count = static_cast<uint32_t>(count);
     return va;
 }
 

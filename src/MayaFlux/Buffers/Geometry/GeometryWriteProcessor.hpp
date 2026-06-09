@@ -83,8 +83,8 @@ protected:
     void processing_function(const std::shared_ptr<Buffer>& buffer) override;
 
 private:
-    std::optional<Kakshya::DataVariant> m_pending_data;
-    std::optional<Kakshya::DataVariant> m_active_data;
+    std::optional<std::vector<Kakshya::DataVariant>> m_pending_data;
+    std::optional<std::vector<Kakshya::DataVariant>> m_active_data;
     std::optional<VertexSnapshot> m_pending_vertices;
     std::optional<VertexSnapshot> m_active_vertices;
 

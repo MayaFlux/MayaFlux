@@ -122,7 +122,7 @@ public:
     VKBuffer(
         size_t size_bytes,
         Usage usage,
-        Kakshya::DataModality modality);
+        Kakshya::DataModality modality = Kakshya::DataModality::VERTICES_3D);
 
     VKBuffer() = default;
 

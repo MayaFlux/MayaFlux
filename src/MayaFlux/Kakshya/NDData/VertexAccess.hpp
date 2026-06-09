@@ -83,7 +83,8 @@ struct MAYAFLUX_API VertexAccess {
  * @return Populated VertexAccess, or std::nullopt on incompatible type.
  */
 [[nodiscard]] MAYAFLUX_API std::optional<VertexAccess>
-as_vertex_access(const DataVariant& variant);
+as_vertex_access(std::span<const DataVariant> channels,
+    const VertexAccessConfig& config = {});
 
 /**
  * @brief Convert DataVariant to point-vertex-compatible bytes.
@@ -103,7 +104,7 @@ as_vertex_access(const DataVariant& variant);
  * @return Populated VertexAccess, or std::nullopt on incompatible type.
  */
 [[nodiscard]] MAYAFLUX_API std::optional<VertexAccess>
-as_point_vertex_access(const DataVariant& variant,
+as_point_vertex_access(std::span<const DataVariant> channels,
     const VertexAccessConfig& config = {});
 
 /**
@@ -120,7 +121,7 @@ as_point_vertex_access(const DataVariant& variant,
  * @return Populated VertexAccess, or std::nullopt on incompatible type.
  */
 [[nodiscard]] MAYAFLUX_API std::optional<VertexAccess>
-as_line_vertex_access(const DataVariant& variant,
+as_line_vertex_access(std::span<const DataVariant> channels,
     const VertexAccessConfig& config = {});
 
 /**
@@ -137,7 +138,7 @@ as_line_vertex_access(const DataVariant& variant,
  * @return Populated VertexAccess, or std::nullopt on incompatible type.
  */
 [[nodiscard]] MAYAFLUX_API std::optional<VertexAccess>
-as_mesh_vertex_access(const DataVariant& variant,
+as_mesh_vertex_access(std::span<const DataVariant> channels,
     const VertexAccessConfig& config = {});
 
 } // namespace MayaFlux::Kakshya

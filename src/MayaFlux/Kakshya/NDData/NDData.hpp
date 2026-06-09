@@ -89,6 +89,7 @@ enum class DataModality : uint8_t {
     TENSOR_ND, ///< N-dimensional tensor
     SPECTRAL_2D, ///< 2D spectral data (time + frequency)
     VOLUMETRIC_3D, ///< 3D volumetric data
+    VERTICES_3D, ///< 3D vertex data (positions, normals, etc.)
     VERTEX_POSITIONS_3D, // glm::vec3 - vertex positions
     VERTEX_NORMALS_3D, // glm::vec3 - vertex normals
     VERTEX_TANGENTS_3D, // glm::vec3 - tangent vectors
