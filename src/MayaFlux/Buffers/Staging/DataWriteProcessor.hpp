@@ -14,12 +14,12 @@ class TextureBuffer;
  * Accepts one or more DataVariant values per cycle. Slot 0 is the primary
  * upload path and is routed by the attached buffer's DataModality:
  *
- *   - Vertex modalities (VERTEX_POSITIONS_3D, VERTEX_NORMALS_3D,
- *     VERTEX_TANGENTS_3D, VERTEX_COLORS_RGB, VERTEX_COLORS_RGBA,
- *     TEXTURE_COORDS_2D): routed through Kakshya::as_vertex_access().
- *     VertexLayout derived from the result is written back to the buffer
- *     via set_vertex_layout() so RenderProcessor has correct stride and
- *     attribute information.
+ *   - VERTICES_3D and single-attribute vertex modalities (VERTEX_POSITIONS_3D,
+ *     VERTEX_NORMALS_3D, VERTEX_TANGENTS_3D, VERTEX_COLORS_RGB,
+ *     VERTEX_COLORS_RGBA, TEXTURE_COORDS_2D): all slots are passed as an
+ *     ordered channel span to as_*_vertex_access(). Full 60-byte vertices
+ *     are always assembled; partial channel sets are completed from
+ *     VertexAccessConfig defaults.
  *
  *   - Texture modalities (IMAGE_2D, IMAGE_COLOR, TEXTURE_2D):
  *     routed through Kakshya::as_texture_access(). GpuDataFormat from the
@@ -103,6 +103,20 @@ public:
     void set_texture(std::shared_ptr<Core::VKImage> image, std::string binding);
 
     /**
+     * @brief Supply pixel data for the co-resident texture on the next cycle.
+     *
+     * Independent of the vertex data path. Requires setup_pixel_target() to
+     * have been called. On the next processing_function() call the variant
+     * is routed through as_texture_access() and uploaded to the GPU texture
+     * bound at the configured binding.
+     *
+     * Thread-safe. The variant is swapped atomically behind m_pixel_dirty.
+     *
+     * @param variant Pixel data compatible with the format passed to setup_pixel_target().
+     */
+    void set_pixel_data(Kakshya::DataVariant variant);
+
+    /**
      * @brief Configure the pixel upload path for texture modalities.
      *
      * Must be called before the first set_data() when the attached buffer
@@ -145,6 +159,11 @@ private:
     std::atomic_flag m_texture_dirty;
 
     std::weak_ptr<TextureBuffer> m_texture_buffer;
+
+    Kakshya::DataVariant m_pixel_pending;
+    Kakshya::DataVariant m_pixel_active;
+    std::atomic_flag m_pixel_dirty;
+    bool m_tex_binding_confirmed {};
 
     uint32_t m_tex_width {};
     uint32_t m_tex_height {};

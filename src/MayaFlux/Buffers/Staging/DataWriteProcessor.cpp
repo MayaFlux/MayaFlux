@@ -41,6 +41,12 @@ void DataWriteProcessor::set_texture(std::shared_ptr<Core::VKImage> image, std::
     m_texture_dirty.test_and_set(std::memory_order_release);
 }
 
+void DataWriteProcessor::set_pixel_data(Kakshya::DataVariant variant)
+{
+    m_pixel_pending = std::move(variant);
+    m_pixel_dirty.test_and_set(std::memory_order_release);
+}
+
 void DataWriteProcessor::setup_pixel_target(
     uint32_t width,
     uint32_t height,
@@ -117,6 +123,11 @@ void DataWriteProcessor::on_detach(const std::shared_ptr<Buffer>& /*buffer*/)
     m_pending_texture.reset();
     m_data_pending.clear();
     m_active.clear();
+
+    m_pixel_pending = {};
+    m_pixel_active = {};
+    m_tex_binding_confirmed = {};
+
     m_modality = Kakshya::DataModality::UNKNOWN;
 }
 
@@ -139,6 +150,21 @@ void DataWriteProcessor::processing_function(const std::shared_ptr<Buffer>& buff
         }
     }
 
+    if (m_pixel_dirty.test(std::memory_order_acquire)) {
+        m_pixel_dirty.clear(std::memory_order_release);
+        std::swap(m_pixel_active, m_pixel_pending);
+        upload_texture(vk, m_pixel_active);
+    }
+
+    if (m_gpu_texture) {
+        if (auto rp = vk->get_render_processor()) {
+            if (!m_tex_binding_confirmed) {
+                rp->bind_texture(m_tex_binding, m_gpu_texture);
+                m_tex_binding_confirmed = true;
+            }
+        }
+    }
+
     if (!m_data_dirty.test(std::memory_order_acquire)) {
         return;
     }
@@ -153,7 +179,11 @@ void DataWriteProcessor::processing_function(const std::shared_ptr<Buffer>& buff
     upload_primary(vk, m_active);
 
     for (size_t i = 1; i < m_active.size(); ++i) {
-        upload_secondary(vk, m_active[i]);
+        if (i == 1 && (m_tex_width > 0 || m_texture_buffer.lock()) && is_vertex_modality(m_modality)) {
+            upload_texture(vk, m_active[i]);
+        } else {
+            upload_secondary(vk, m_active[i]);
+        }
     }
 }
 

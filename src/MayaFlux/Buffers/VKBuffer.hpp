@@ -578,6 +578,8 @@ public:
      */
     virtual std::shared_ptr<RenderProcessor> get_render_processor() const { return m_render_processor; }
 
+    inline void set_render_processor(std::shared_ptr<RenderProcessor> rp) { m_render_processor = std::move(rp); }
+
 protected:
     /**
      * @brief Called by derived classes to set their context-specific defaults
