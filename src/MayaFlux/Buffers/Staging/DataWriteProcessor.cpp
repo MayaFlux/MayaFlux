@@ -1,9 +1,9 @@
 #include "DataWriteProcessor.hpp"
 
+#include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
 #include "StagingUtils.hpp"
 
 #include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
-#include "MayaFlux/Buffers/Textures/TextureBuffer.hpp"
 
 #include "MayaFlux/Kakshya/NDData/DataAccess.hpp"
 #include "MayaFlux/Kakshya/NDData/TextureAccess.hpp"
@@ -94,10 +94,6 @@ void DataWriteProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
         m_staging = create_staging_buffer(vk->get_size_bytes());
     }
 
-    if (auto tex = std::dynamic_pointer_cast<TextureBuffer>(buffer)) {
-        m_texture_buffer = tex;
-    }
-
     if (is_vertex_modality(m_modality)) {
         if (m_modality == Kakshya::DataModality::VERTICES_3D) {
             vk->set_vertex_layout(Kakshya::VertexLayout::for_raw());
@@ -186,7 +182,7 @@ void DataWriteProcessor::processing_function(const std::shared_ptr<Buffer>& buff
     upload_primary(vk, m_active);
 
     for (size_t i = 1; i < m_active.size(); ++i) {
-        if (i == 1 && (m_tex_width > 0 || m_texture_buffer.lock()) && is_vertex_modality(m_modality)) {
+        if (i == 1 && m_tex_width > 0 && is_vertex_modality(m_modality)) {
             upload_texture(vk, m_active[i]);
         } else {
             upload_secondary(vk, m_active[i]);
@@ -253,11 +249,6 @@ void DataWriteProcessor::upload_texture(const std::shared_ptr<VKBuffer>& vk, Kak
     }
 
     m_last_texture_format = access->format;
-
-    if (auto tex = m_texture_buffer.lock()) {
-        tex->set_pixel_data(access->data_ptr, access->byte_count);
-        return;
-    }
 
     if (m_tex_width == 0 || m_tex_height == 0) {
         MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,

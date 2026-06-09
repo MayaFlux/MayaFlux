@@ -5,8 +5,6 @@
 
 namespace MayaFlux::Buffers {
 
-class TextureBuffer;
-
 /**
  * @class DataWriteProcessor
  * @brief Modality-aware multi-slot write processor for plain VKBuffer.
@@ -154,7 +152,7 @@ public:
      *
      * Must be called before the first set_data() when the attached buffer
      * has a texture modality and is not a TextureBuffer. For TextureBuffer
-     * targets this call is unnecessary: set_data() delegates directly to
+     * targets, call this directly
      * TextureBuffer::set_pixel_data().
      *
      * @param width  Texture width in texels.
@@ -190,8 +188,6 @@ private:
 
     std::optional<PendingTexture> m_pending_texture;
     std::atomic_flag m_texture_dirty;
-
-    std::weak_ptr<TextureBuffer> m_texture_buffer;
 
     Kakshya::DataVariant m_pixel_pending;
     Kakshya::DataVariant m_pixel_active;
