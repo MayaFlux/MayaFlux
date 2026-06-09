@@ -42,7 +42,7 @@ namespace MayaFlux::Portal::Forma {
  *   - write(id, ShaderProcessor, offset) — push constant staging
  *   - write(id, descriptor_name, ...)    — descriptor binding
  *   - write(id, AudioWriteProcessor)     — audio buffer
- *   - write(id, GeometryWriteProcessor)  — vertex buffer
+ *   - write(id, DataWriteProcessor)      — vertex buffer
  *   - write(id, Constant)                — node graph value carrier
  *
  * All overloads also accept shared_ptr<MappedState<T>> in place of the
@@ -175,9 +175,9 @@ public:
     void write(uint32_t id, std::shared_ptr<Buffers::AudioWriteProcessor> target);
 
     /**
-     * @brief Route element value to a GeometryWriteProcessor each frame.
+     * @brief Route element value to a DataWriteProcessor each frame.
      * @param id     Element id.
-     * @param target GeometryWriteProcessor to call set_data() on.
+     * @param target DataWriteProcessor to call set_data() on.
      */
     void write(uint32_t id, std::shared_ptr<Buffers::DataWriteProcessor> target);
 

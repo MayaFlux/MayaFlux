@@ -16,7 +16,7 @@ namespace MayaFlux::Buffers {
  * in the buffer's VertexLayout after every upload so RenderProcessor
  * draws the correct number of vertices.
  *
- * Mirrors GeometryWriteProcessor in structure. The topology is fixed
+ * Mirrors DataWriteProcessor in structure. The topology is fixed
  * at construction to derive the correct per-vertex stride for the
  * vertex_count calculation.
  */
