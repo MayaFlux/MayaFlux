@@ -2,8 +2,8 @@
 
 #include "MayaFlux/Buffers/BufferManager.hpp"
 #include "MayaFlux/Buffers/Forma/FormaBindingsProcessor.hpp"
-#include "MayaFlux/Buffers/Geometry/GeometryWriteProcessor.hpp"
 #include "MayaFlux/Buffers/Staging/AudioWriteProcessor.hpp"
+#include "MayaFlux/Buffers/Staging/DataWriteProcessor.hpp"
 
 #include "MayaFlux/Kriya/Awaiters/DelayAwaiters.hpp"
 #include "MayaFlux/Kriya/Awaiters/GetPromise.hpp"
@@ -178,7 +178,7 @@ void Bridge::write(uint32_t id, std::shared_ptr<Buffers::AudioWriteProcessor> ta
         name, false);
 }
 
-void Bridge::write(uint32_t id, std::shared_ptr<Buffers::GeometryWriteProcessor> target)
+void Bridge::write(uint32_t id, std::shared_ptr<Buffers::DataWriteProcessor> target)
 {
     auto it = m_records.find(id);
     if (it == m_records.end()) {
@@ -194,11 +194,11 @@ void Bridge::write(uint32_t id, std::shared_ptr<Buffers::GeometryWriteProcessor>
 
     auto routine = [](Vruta::TaskScheduler&,
                        std::function<float()> r,
-                       std::shared_ptr<Buffers::GeometryWriteProcessor> proc)
+                       std::shared_ptr<Buffers::DataWriteProcessor> proc)
         -> Vruta::GraphicsRoutine {
         auto& p = co_await Kriya::GetGraphicsPromise {};
         while (!p.should_terminate) {
-            proc->set_data(Kakshya::DataVariant { std::vector<float> { r() } });
+            proc->set_data(std::vector<Kakshya::DataVariant> { Kakshya::DataVariant { std::vector<float> { r() } } });
             co_await Kriya::FrameDelay { .frames_to_wait = 1 };
         }
     };

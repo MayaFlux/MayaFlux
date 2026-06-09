@@ -14,7 +14,7 @@ namespace MayaFlux::Buffers {
 class BufferManager;
 class ShaderProcessor;
 class AudioWriteProcessor;
-class GeometryWriteProcessor;
+class DataWriteProcessor;
 class FormaBindingsProcessor;
 }
 
@@ -179,7 +179,7 @@ public:
      * @param id     Element id.
      * @param target GeometryWriteProcessor to call set_data() on.
      */
-    void write(uint32_t id, std::shared_ptr<Buffers::GeometryWriteProcessor> target);
+    void write(uint32_t id, std::shared_ptr<Buffers::DataWriteProcessor> target);
 
     /**
      * @brief Route element value into a Constant node via set_constant().
@@ -224,7 +224,7 @@ public:
 
     template <typename T>
     void write(std::shared_ptr<MappedState<T>> state,
-        std::shared_ptr<Buffers::GeometryWriteProcessor> target)
+        std::shared_ptr<Buffers::DataWriteProcessor> target)
     {
         write(state->id, std::move(target));
     }
@@ -405,7 +405,7 @@ public:
             return *this;
         }
 
-        Binding& write(std::shared_ptr<Buffers::GeometryWriteProcessor> target)
+        Binding& write(std::shared_ptr<Buffers::DataWriteProcessor> target)
         {
             m_bridge.write(m_id, std::move(target));
             return *this;
