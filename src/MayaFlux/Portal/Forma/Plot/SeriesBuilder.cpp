@@ -1,7 +1,5 @@
 #include "SeriesBuilder.hpp"
 
-#include "PlotSpec.hpp"
-
 #include "MayaFlux/Kakshya/Source/PlotContainer.hpp"
 
 namespace MayaFlux::Portal::Forma::Plot {
@@ -50,6 +48,12 @@ namespace {
                 merged.scale_predicate = r.scale_predicate;
         }
         return merged;
+    }
+
+    AxisRange merge_axis_const(const std::vector<Series::AxisMapping>& mappings)
+    {
+        auto copy = mappings;
+        return merge_axis(copy);
     }
 
     /**
@@ -116,6 +120,53 @@ namespace {
     }
 
 } // namespace
+
+// =============================================================================
+// Series adornment resolution
+// =============================================================================
+
+std::vector<TickLabelsSpec> Series::resolved_tick_labels() const
+{
+    std::vector<TickLabelsSpec> resolved;
+    if (!m_plot_bounds)
+        return resolved;
+
+    resolved.reserve(m_ticks.size());
+
+    for (const auto& req : m_ticks) {
+        AxisRange range {};
+        if (req.range) {
+            range = *req.range;
+        } else {
+            switch (req.axis) {
+            case TickAxis::X:
+                range = merge_axis_const(m_x);
+                break;
+            case TickAxis::Y:
+                range = merge_axis_const(m_y);
+                break;
+            case TickAxis::Explicit:
+            default:
+                range = {};
+                break;
+            }
+        }
+
+        resolved.push_back(TickLabelsSpec {
+            .plot_bounds = *m_plot_bounds,
+            .range = std::move(range),
+            .count = req.count,
+            .edge = req.edge,
+            .color = req.color,
+            .decimal_places = req.decimal_places,
+            .label_h = req.label_h,
+            .label_w = req.label_w,
+            .name_prefix = req.name_prefix,
+        });
+    }
+
+    return resolved;
+}
 
 // =============================================================================
 // WaveformBuilder::done
@@ -222,6 +273,10 @@ SeriesSpec WaveformBuilder::done() const
         .background_fn = m_state.has_background()
             ? std::optional<GeometryFn<float>> { background(m_state.background_bounds(), m_state.background_color()) }
             : std::nullopt,
+        .plot_bounds = m_state.plot_bounds(),
+        .labels = m_state.labels(),
+        .tick_labels = m_state.resolved_tick_labels(),
+        .legend = m_state.legend_spec(),
     };
 }
 
@@ -302,6 +357,10 @@ SeriesSpec ScatterBuilder::done() const
         .background_fn = m_state.has_background()
             ? std::optional<GeometryFn<float>> { background(m_state.background_bounds(), m_state.background_color()) }
             : std::nullopt,
+        .plot_bounds = m_state.plot_bounds(),
+        .labels = m_state.labels(),
+        .tick_labels = m_state.resolved_tick_labels(),
+        .legend = m_state.legend_spec(),
     };
 }
 
@@ -365,6 +424,10 @@ SeriesSpec BarsBuilder::done() const
         .background_fn = m_state.has_background()
             ? std::optional<GeometryFn<float>> { background(m_state.background_bounds(), m_state.background_color()) }
             : std::nullopt,
+        .plot_bounds = m_state.plot_bounds(),
+        .labels = m_state.labels(),
+        .tick_labels = m_state.resolved_tick_labels(),
+        .legend = m_state.legend_spec(),
     };
 }
 
@@ -458,6 +521,10 @@ SeriesSpec FilledWaveformBuilder::done() const
             ? std::optional<GeometryFn<float>> { background(
                   m_state.background_bounds(), m_state.background_color()) }
             : std::nullopt,
+        .plot_bounds = m_state.plot_bounds(),
+        .labels = m_state.labels(),
+        .tick_labels = m_state.resolved_tick_labels(),
+        .legend = m_state.legend_spec(),
     };
 }
 

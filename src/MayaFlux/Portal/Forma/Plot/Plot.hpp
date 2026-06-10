@@ -46,6 +46,43 @@ namespace MayaFlux::Portal::Forma::Plot {
         std::shared_ptr<Kakshya::PlotContainer> container);
 
 /**
+ * @brief Place a text label element onto @p surface using a pre-built buffer.
+ *
+ * @p buf must have been created with an additional_textures slot named "text"
+ * (or equivalent). Buffer construction is the caller's responsibility;
+ * Portal::Forma::plot() handles this automatically.
+ *
+ * @param surface    Target surface.
+ * @param buf        FormaBuffer with a texture slot. One buffer per label.
+ * @param spec       Label geometry and style.
+ * @param relate_to  If non-zero, the produced element is related to this id.
+ * @return           Element id of the produced label element.
+ */
+[[nodiscard]] MAYAFLUX_API uint32_t place_label(
+    Surface& surface,
+    std::shared_ptr<Buffers::FormaBuffer> buf,
+    const LabelSpec& spec,
+    uint32_t relate_to = 0);
+
+/**
+ * @brief Place a filled rectangle element onto @p surface using a pre-built buffer.
+ *
+ * @p buf must be a plain TRIANGLE_STRIP FormaBuffer with no texture slot.
+ * Buffer construction is the caller's responsibility.
+ *
+ * @param surface    Target surface.
+ * @param buf        FormaBuffer sized for 4 vertices.
+ * @param spec       Rectangle geometry and color.
+ * @param relate_to  If non-zero, the produced element is related to this id.
+ * @return           Element id of the produced rect element.
+ */
+[[nodiscard]] MAYAFLUX_API uint32_t place_rect(
+    Surface& surface,
+    std::shared_ptr<Buffers::FormaBuffer> buf,
+    const RectSpec& spec,
+    uint32_t relate_to = 0);
+
+/**
  * @brief Begin a Series chain.
  *
  * Convenience constructor for GeometryFn<shared_ptr<PlotContainer>>.

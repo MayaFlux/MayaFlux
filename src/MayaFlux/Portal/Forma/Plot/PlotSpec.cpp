@@ -215,4 +215,172 @@ GeometryFn<float> plot_cursor(
     };
 }
 
+// =============================================================================
+// Label / tick / legend spec helpers
+// =============================================================================
+
+LabelSpec plot_label(
+    std::string text,
+    Kinesis::AABB2D bounds,
+    glm::vec4 color,
+    std::string name)
+{
+    return LabelSpec {
+        .text = std::move(text),
+        .bounds = bounds,
+        .color = color,
+        .name = std::move(name),
+        .interactive = false,
+    };
+}
+
+std::vector<LabelSpec> plot_tick_labels(const TickLabelsSpec& spec)
+{
+    const uint32_t count = std::max(spec.count, 2U);
+    const bool horizontal = spec.edge == TickEdge::Bottom || spec.edge == TickEdge::Top;
+
+    std::vector<LabelSpec> labels;
+    labels.reserve(count);
+
+    for (uint32_t i = 0; i < count; ++i) {
+        const float t = static_cast<float>(i) / static_cast<float>(count - 1);
+        const float value = spec.range.min + t * (spec.range.max - spec.range.min);
+        const std::string text = std::format("{:.{}f}", value,
+            static_cast<int>(spec.decimal_places));
+
+        Kinesis::AABB2D label_bounds {};
+        if (horizontal) {
+            const float cx = spec.plot_bounds.min.x + t * spec.plot_bounds.width();
+            const float half_w = spec.plot_bounds.width() / static_cast<float>(count) * 0.5F;
+
+            if (spec.edge == TickEdge::Bottom) {
+                label_bounds = Kinesis::AABB2D {
+                    .min = { cx - half_w, spec.plot_bounds.min.y - spec.label_h },
+                    .max = { cx + half_w, spec.plot_bounds.min.y },
+                };
+            } else {
+                label_bounds = Kinesis::AABB2D {
+                    .min = { cx - half_w, spec.plot_bounds.max.y },
+                    .max = { cx + half_w, spec.plot_bounds.max.y + spec.label_h },
+                };
+            }
+        } else {
+            const float cy = spec.plot_bounds.min.y + t * spec.plot_bounds.height();
+            const float half_h = spec.plot_bounds.height() / static_cast<float>(count) * 0.5F;
+
+            if (spec.edge == TickEdge::Left) {
+                label_bounds = Kinesis::AABB2D {
+                    .min = { spec.plot_bounds.min.x - spec.label_w, cy - half_h },
+                    .max = { spec.plot_bounds.min.x, cy + half_h },
+                };
+            } else {
+                label_bounds = Kinesis::AABB2D {
+                    .min = { spec.plot_bounds.max.x, cy - half_h },
+                    .max = { spec.plot_bounds.max.x + spec.label_w, cy + half_h },
+                };
+            }
+        }
+
+        labels.push_back(LabelSpec {
+            .text = text,
+            .bounds = label_bounds,
+            .color = spec.color,
+            .name = spec.name_prefix + "_" + std::to_string(i),
+            .interactive = false,
+        });
+    }
+
+    return labels;
+}
+
+std::vector<LabelSpec> plot_tick_labels(
+    Kinesis::AABB2D bounds,
+    const AxisRange& range,
+    uint32_t count,
+    TickEdge edge,
+    glm::vec4 color,
+    uint8_t decimal_places,
+    float label_h,
+    float label_w)
+{
+    return plot_tick_labels(TickLabelsSpec {
+        .plot_bounds = bounds,
+        .range = range,
+        .count = count,
+        .edge = edge,
+        .color = color,
+        .decimal_places = decimal_places,
+        .label_h = label_h,
+        .label_w = label_w,
+    });
+}
+
+LegendSpec plot_legend(
+    glm::vec2 origin,
+    std::span<const std::string> labels,
+    std::span<const glm::vec3> colors,
+    float row_h,
+    float swatch_w,
+    glm::vec4 text_color)
+{
+    const size_t n = std::min(labels.size(), colors.size());
+
+    LegendSpec spec {
+        .origin = origin,
+        .row_h = row_h,
+        .swatch_w = swatch_w,
+        .text_color = text_color,
+    };
+    spec.entries.reserve(n);
+
+    for (size_t i = 0; i < n; ++i) {
+        spec.entries.push_back(LegendEntry {
+            .label = labels[i],
+            .color = colors[i],
+        });
+    }
+
+    return spec;
+}
+
+LegendLayout layout_legend(const LegendSpec& spec)
+{
+    LegendLayout layout;
+    layout.swatches.reserve(spec.entries.size());
+    layout.labels.reserve(spec.entries.size());
+
+    for (size_t i = 0; i < spec.entries.size(); ++i) {
+        const float y_top = spec.origin.y
+            - static_cast<float>(i) * (spec.row_h + spec.gap);
+        const float y_bot = y_top - spec.row_h;
+
+        const Kinesis::AABB2D swatch_bounds {
+            .min = { spec.origin.x, y_bot },
+            .max = { spec.origin.x + spec.swatch_w, y_top },
+        };
+
+        const Kinesis::AABB2D text_bounds {
+            .min = { spec.origin.x + spec.swatch_w + spec.gap, y_bot },
+            .max = { spec.origin.x + spec.swatch_w + spec.gap + spec.text_w, y_top },
+        };
+
+        layout.swatches.push_back(RectSpec {
+            .bounds = swatch_bounds,
+            .color = spec.entries[i].color,
+            .name = spec.name_prefix + "_swatch_" + std::to_string(i),
+            .interactive = spec.interactive,
+        });
+
+        layout.labels.push_back(LabelSpec {
+            .text = spec.entries[i].label,
+            .bounds = text_bounds,
+            .color = spec.text_color,
+            .name = spec.name_prefix + "_label_" + std::to_string(i),
+            .interactive = spec.interactive,
+        });
+    }
+
+    return layout;
+}
+
 } // namespace MayaFlux::Portal::Forma::Plot

@@ -15,7 +15,120 @@ class PlotContainer;
 
 namespace MayaFlux::Portal::Forma::Plot {
 
-struct SeriesSpec;
+/**
+ * @brief Edge along which tick labels are placed.
+ */
+enum class TickEdge : uint8_t {
+    Bottom, ///< Labels below bounds, values mapped from range.min (left) to range.max (right).
+    Top, ///< Labels above bounds.
+    Left, ///< Labels left of bounds, values mapped from range.min (bottom) to range.max (top).
+    Right, ///< Labels right of bounds.
+};
+
+/**
+ * @brief Construction-free text label description.
+ *
+ * This is only a layout/style spec. It does not own a FormaBuffer, VKImage,
+ * Element, Surface, or Window. Forma is responsible for turning this into
+ * a textured Element via Element::with_text().
+ */
+struct LabelSpec {
+    std::string text;
+    Kinesis::AABB2D bounds {};
+    glm::vec4 color { 0.85F, 0.85F, 0.85F, 1.F };
+
+    /**
+     * @brief Optional logical name for the eventual Element.
+     */
+    std::string name;
+
+    /**
+     * @brief Whether the eventual Element should participate in hit testing.
+     * Plot labels default to passive/non-interactive.
+     */
+    bool interactive { false };
+
+    /**
+     * @brief Optional text pixel/render size override.
+     *
+     * When zero, Forma should derive render_bounds from bounds + window size.
+     */
+    glm::uvec2 render_bounds {};
+};
+
+/**
+ * @brief Lightweight filled rectangle description.
+ *
+ * Used for plot adornments such as legend swatches. Construction-free:
+ * Forma turns this into a buffer/Element later.
+ */
+struct RectSpec {
+    Kinesis::AABB2D bounds {};
+    glm::vec3 color { 1.F };
+    std::string name;
+    bool interactive { false };
+};
+
+/**
+ * @brief Config for generating numeric tick labels on one plot edge.
+ */
+struct TickLabelsSpec {
+    Kinesis::AABB2D plot_bounds {};
+    AxisRange range {};
+    uint32_t count { 2 };
+    TickEdge edge { TickEdge::Bottom };
+    glm::vec4 color { 0.65F, 0.65F, 0.65F, 1.F };
+    uint8_t decimal_places { 2 };
+
+    /**
+     * @brief NDC height of each label strip for Bottom/Top ticks.
+     */
+    float label_h { 0.055F };
+
+    /**
+     * @brief NDC width of each label strip for Left/Right ticks.
+     */
+    float label_w { 0.12F };
+
+    std::string name_prefix { "tick" };
+};
+
+/**
+ * @brief One legend row.
+ */
+struct LegendEntry {
+    std::string label;
+    glm::vec3 color { 1.F };
+};
+
+/**
+ * @brief Construction-free vertical legend configuration.
+ */
+struct LegendSpec {
+    glm::vec2 origin { 0.F };
+    std::vector<LegendEntry> entries;
+
+    float row_h { 0.07F };
+    float swatch_w { 0.04F };
+    float gap { 0.012F };
+    float text_w { 0.35F };
+
+    glm::vec4 text_color { 0.85F, 0.85F, 0.85F, 1.F };
+
+    std::string name_prefix { "legend" };
+    bool interactive { false };
+};
+
+/**
+ * @brief Expanded construction-free legend layout.
+ *
+ * Forma should build one rectangle Element per swatch and one text Element
+ * per label, then relate all produced elements to the plot root/data id.
+ */
+struct LegendLayout {
+    std::vector<RectSpec> swatches;
+    std::vector<LabelSpec> labels;
+};
 
 // =============================================================================
 // series_by_role
@@ -168,5 +281,57 @@ void apply_auto_scale(AxisRange& range,
     bool vertical = true,
     glm::vec3 color = glm::vec3(0.75F),
     float thickness = 1.F);
+
+// =============================================================================
+// Label / tick / legend spec helpers
+// =============================================================================
+
+/**
+ * @brief Create a single construction-free label spec.
+ */
+[[nodiscard]] MAYAFLUX_API LabelSpec plot_label(
+    std::string text,
+    Kinesis::AABB2D bounds,
+    glm::vec4 color = { 0.85F, 0.85F, 0.85F, 1.F },
+    std::string name = {});
+
+/**
+ * @brief Generate construction-free tick label specs.
+ *
+ * Values are evenly interpolated across spec.range. Label bounds are placed
+ * adjacent to spec.plot_bounds according to spec.edge.
+ */
+[[nodiscard]] MAYAFLUX_API std::vector<LabelSpec> plot_tick_labels(
+    const TickLabelsSpec& spec);
+
+/**
+ * @brief Convenience overload for generating tick label specs directly.
+ */
+[[nodiscard]] MAYAFLUX_API std::vector<LabelSpec> plot_tick_labels(
+    Kinesis::AABB2D bounds,
+    const AxisRange& range,
+    uint32_t count,
+    TickEdge edge = TickEdge::Bottom,
+    glm::vec4 color = { 0.65F, 0.65F, 0.65F, 1.F },
+    uint8_t decimal_places = 2,
+    float label_h = 0.055F,
+    float label_w = 0.12F);
+
+/**
+ * @brief Create a construction-free legend spec from labels and colors.
+ */
+[[nodiscard]] MAYAFLUX_API LegendSpec plot_legend(
+    glm::vec2 origin,
+    std::span<const std::string> labels,
+    std::span<const glm::vec3> colors,
+    float row_h = 0.07F,
+    float swatch_w = 0.04F,
+    glm::vec4 text_color = { 0.85F, 0.85F, 0.85F, 1.F });
+
+/**
+ * @brief Expand a legend spec into swatch rectangle specs and text label specs.
+ */
+[[nodiscard]] MAYAFLUX_API LegendLayout layout_legend(
+    const LegendSpec& spec);
 
 } // namespace MayaFlux::Portal::Forma::Plot
