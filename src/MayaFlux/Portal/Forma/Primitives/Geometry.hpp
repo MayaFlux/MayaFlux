@@ -220,4 +220,138 @@ void write_verts(std::vector<uint8_t>& out, const V& v)
     };
 }
 
+// =============================================================================
+// Stroke slider
+//
+// Value in [0, 1] positions a handle point along a user-supplied polyline.
+// Renders two layers: the full path as a LINE_LIST in track_color, a
+// highlighted prefix segment from path start to the handle position in
+// fill_color, and a PointVertex handle on a caller-supplied secondary buffer.
+//
+// The secondary buffer must be a POINT_LIST FormaBuffer registered with the
+// same BufferManager and window before this function is called. The caller
+// adds it as a separate Element and relates it to the path element via
+// Layer::relate_to so removal and visibility cascade.
+//
+// Hit region: stroke_bounds over the full path at half_thickness.
+// bounds_hint: tight AABB enclosing all path points.
+//
+// Topology for the path buffer: LINE_LIST.
+// Topology for the handle buffer: POINT_LIST.
+// =============================================================================
+
+/**
+ * @brief Geometry function for a value scrubber along an arbitrary polyline.
+ *
+ * Value in [0, 1] maps to arc-length position along @p path. The full path
+ * is rendered as a LINE_LIST in @p track_color; the prefix from the path
+ * start to the handle position is rendered in @p fill_color. The handle
+ * itself is a PointVertex submitted to @p handle_buf each sync.
+ *
+ * @param path           Ordered polyline vertices in NDC. Copied into closure.
+ * @param handle_buf     POINT_LIST FormaBuffer for the handle point.
+ *                       Must be registered and have setup_rendering called.
+ * @param half_thickness Hit region half-thickness in NDC units.
+ * @param track_color    Color of the full path.
+ * @param fill_color     Color of the prefix segment up to the handle.
+ * @param handle_color   Color of the handle point.
+ * @param handle_size    Handle point size in pixels.
+ */
+[[nodiscard]] inline GeometryFn<float> stroke_slider(
+    std::span<const glm::vec2> path,
+    std::shared_ptr<Buffers::FormaBuffer> handle_buf,
+    float half_thickness = 0.02F,
+    glm::vec3 track_color = glm::vec3(0.3F),
+    glm::vec3 fill_color = glm::vec3(0.2F, 0.6F, 1.0F),
+    glm::vec3 handle_color = glm::vec3(0.95F),
+    float handle_size = 10.0F)
+{
+    std::vector<glm::vec2> pts(path.begin(), path.end());
+
+    std::vector<float> seg_lengths;
+    seg_lengths.reserve(pts.size() > 0 ? pts.size() - 1 : 0);
+    float total_len = 0.0F;
+    for (size_t i = 0; i + 1 < pts.size(); ++i) {
+        float l = glm::length(pts[i + 1] - pts[i]);
+        seg_lengths.push_back(l);
+        total_len += l;
+    }
+
+    Kinesis::AABB2D aabb { .min = pts.empty() ? glm::vec2(0.F) : pts[0],
+        .max = pts.empty() ? glm::vec2(0.F) : pts[0] };
+    for (const auto& p : pts) {
+        aabb.min = glm::min(aabb.min, p);
+        aabb.max = glm::max(aabb.max, p);
+    }
+    aabb = aabb.expanded(half_thickness);
+
+    return [pts = std::move(pts),
+               seg_lengths = std::move(seg_lengths),
+               total_len,
+               aabb,
+               handle_buf = std::move(handle_buf),
+               half_thickness,
+               track_color,
+               fill_color,
+               handle_color,
+               handle_size](float v, std::vector<uint8_t>& out, Element& el) {
+        if (pts.size() < 2) {
+            out.clear();
+            return;
+        }
+
+        const float target = std::clamp(v, 0.0F, 1.0F) * total_len;
+
+        glm::vec2 handle_pos = pts.front();
+        float accumulated = 0.0F;
+        size_t split_seg = 0;
+        float split_t = 0.0F;
+        for (size_t i = 0; i < seg_lengths.size(); ++i) {
+            if (accumulated + seg_lengths[i] >= target || i + 1 == seg_lengths.size()) {
+                split_t = seg_lengths[i] > 0.0F
+                    ? (target - accumulated) / seg_lengths[i]
+                    : 0.0F;
+                split_t = std::clamp(split_t, 0.0F, 1.0F);
+                handle_pos = glm::mix(pts[i], pts[i + 1], split_t);
+                split_seg = i;
+                break;
+            }
+            accumulated += seg_lengths[i];
+        }
+
+        std::vector<Kakshya::LineVertex> verts;
+        verts.reserve(pts.size() * 4);
+
+        for (size_t i = 0; i + 1 < pts.size(); ++i) {
+            verts.push_back({ .position = { pts[i].x, pts[i].y, 0.0F }, .color = track_color });
+            verts.push_back({ .position = { pts[i + 1].x, pts[i + 1].y, 0.0F }, .color = track_color });
+        }
+
+        for (size_t i = 0; i < split_seg; ++i) {
+            verts.push_back({ .position = { pts[i].x, pts[i].y, 0.0F }, .color = fill_color });
+            verts.push_back({ .position = { pts[i + 1].x, pts[i + 1].y, 0.0F }, .color = fill_color });
+        }
+        if (split_t > 0.0F) {
+            verts.push_back({ .position = { pts[split_seg].x, pts[split_seg].y, 0.0F }, .color = fill_color });
+            verts.push_back({ .position = { handle_pos.x, handle_pos.y, 0.0F }, .color = fill_color });
+        }
+
+        write_verts(out, verts);
+
+        el.bounds_hint = aabb;
+        el.contains = Kinesis::stroke_bounds(pts, half_thickness);
+
+        if (handle_buf) {
+            Kakshya::PointVertex hv {
+                .position = { handle_pos.x, handle_pos.y, 0.0F },
+                .color = handle_color,
+                .size = handle_size,
+            };
+            std::vector<uint8_t> hbytes(sizeof(hv));
+            std::memcpy(hbytes.data(), &hv, sizeof(hv));
+            handle_buf->submit(hbytes);
+        }
+    };
+}
+
 } // namespace MayaFlux::Portal::Forma::Geometry
