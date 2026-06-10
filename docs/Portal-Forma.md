@@ -80,6 +80,142 @@ buffer that you fill via `buf->submit(...)` yourself.
 
 ---
 
+## Kinesis::Geometry2D - static vertex data
+
+`Kinesis::Geometry2D.hpp` produces raw vertex arrays. Pass the result directly
+to `create_buffer`, `buf->submit()`, or `write_verts` inside a geometry
+function. All coordinates are NDC (z = 0).
+
+### Filled shapes - `Kakshya::Vertex`, TRIANGLE_LIST
+
+| Function | Description |
+|---|---|
+| `filled_rect(region, color)` | 4-vertex TRIANGLE_STRIP rect. Also in `GeometryPrimitives.hpp`. |
+| `filled_rect_gradient(region, bl, br, tl, tr)` | Same shape, per-corner colors. |
+| `filled_rounded_rect(region, corner_r, segments, color)` | Rounded rect decomposed into body rects + corner fans. |
+| `filled_circle(center, radius, segments, color)` | Triangle fan. |
+| `filled_ring(center, inner_r, outer_r, segments, color)` | Annulus as quad strip. |
+| `filled_polygon(center, radius, sides, rotation, color)` | Regular n-gon fan. |
+| `filled_arc(center, radius, start, end, segments, color)` | Pie-slice sector fan. |
+
+```cpp
+// Rounded panel background
+auto buf = Portal::Forma::create_buffer(
+    window,
+    Kinesis::filled_rounded_rect(box, 0.02F, 6, { 0.15F, 0.15F, 0.17F }),
+    Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST);
+
+// Ring indicator (e.g. dial surround)
+auto buf = Portal::Forma::create_buffer(
+    window,
+    Kinesis::filled_ring({ 0.F, 0.F }, 0.25F, 0.3F, 48, { 0.2F, 0.2F, 0.25F }),
+    Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST);
+```
+
+### Outlines - `Kakshya::LineVertex`, LINE_LIST
+
+| Function | Description |
+|---|---|
+| `rect_outline(region, color, thickness)` | 4 edges, 8 vertices. |
+| `circle_outline(center, radius, segments, color, thickness)` | Closed loop. |
+| `arc_outline(center, radius, start, end, segments, color, thickness)` | Open arc. |
+| `polygon_outline(center, radius, sides, rotation, color, thickness)` | Closed n-gon. |
+| `polyline(pts, color, thickness)` | Open path from a span of `glm::vec2`. |
+| `polyline_colored(pts, colors, thickness)` | Same, per-vertex colors. |
+
+```cpp
+// Border around a panel
+auto buf = Portal::Forma::create_buffer(
+    window,
+    Kinesis::rect_outline(box, { 0.4F, 0.4F, 0.5F }, 1.F),
+    Portal::Graphics::PrimitiveTopology::LINE_LIST);
+
+// Cable route between two points
+const std::array<glm::vec2, 4> pts { { { -0.5F, -0.3F }, { -0.2F, 0.1F }, { 0.2F, -0.1F }, { 0.5F, 0.3F } } };
+auto buf = Portal::Forma::create_buffer(
+    window,
+    Kinesis::polyline(pts, { 0.6F, 0.9F, 0.3F }, 1.5F),
+    Portal::Graphics::PrimitiveTopology::LINE_LIST);
+```
+
+### Path sampling
+
+`arc_path(center, rx, ry, start, end, segments)` returns `vector<glm::vec2>`,
+useful as input to `polyline` or `stroke_slider`:
+
+```cpp
+// Semicircular arc path for a stroke_slider
+auto path = Kinesis::arc_path({ 0.F, 0.F }, 0.4F, 0.4F,
+    glm::radians(200.F), glm::radians(-20.F), 64);
+
+auto handle_buf = Portal::Forma::create_buffer(
+    window, Portal::Graphics::PrimitiveTopology::POINT_LIST);
+
+auto el = Portal::Forma::create_element<float>(
+    surface,
+    Portal::Forma::Geometry::stroke_slider(path, handle_buf),
+    0.5F,
+    Portal::Graphics::PrimitiveTopology::LINE_LIST);
+```
+
+---
+
+## Geometry functions for Mapped\<T\>
+
+`Portal::Forma::Geometry` (in `Primitives/Geometry.hpp`) provides ready-made
+geometry functions for `create_element<T>`. Each produces a closure over its
+configuration parameters; pass the result directly as the `geom` argument.
+
+### Controls
+
+| Function | T | Topology | Notes |
+|---|---|---|---|
+| `horizontal_fader(bounds, handle_w)` | `float [0,1]` | TRIANGLE_STRIP | Track + handle quads. Hit region follows handle. |
+| `vertical_fader(bounds, handle_h)` | `float [0,1]` | TRIANGLE_STRIP | Same, vertical orientation. |
+| `stroke_slider(path, handle_buf, ...)` | `float [0,1]` | LINE_LIST | Arc-length scrubber along any polyline. Requires a separate POINT_LIST handle buffer. |
+| `toggle(region, color_off, color_on)` | `bool` | TRIANGLE_STRIP | Color switches on write. Wire `on_press` to flip state. |
+
+### Readouts
+
+| Function | T | Topology | Notes |
+|---|---|---|---|
+| `level_meter(bounds, horizontal, fill, track)` | `float [0,1]` | TRIANGLE_STRIP | Fills proportional bar. No hit region. |
+| `radial(center, radius, start, end, color)` | `float [0,1]` | LINE_LIST | Sweeping indicator line. |
+
+### Positional
+
+| Function | T | Topology | Notes |
+|---|---|---|---|
+| `point(color, size, hit_radius)` | `glm::vec2` (NDC) | POINT_LIST | Single point. Hit region is a circle. |
+| `crosshair(arm_len, color, thickness, hit_radius)` | `glm::vec2` (NDC) | LINE_LIST | Two crossing segments. |
+| `position_picker(bounds, color, size)` | `glm::vec2 [0,1]²` | POINT_LIST | Maps unit square to NDC bounds. |
+
+```cpp
+// Boolean toggle with on_press wiring
+auto el = Portal::Forma::create_element<bool>(
+    surface,
+    Portal::Forma::Geometry::toggle(box, { 0.2F, 0.2F, 0.2F }, { 0.2F, 0.7F, 0.4F }),
+    false,
+    Portal::Graphics::PrimitiveTopology::TRIANGLE_STRIP);
+
+surface.ctx().on_press(el.element.id, IO::MouseButtons::Left,
+    [state = el.state](uint32_t, glm::vec2) {
+        state->write(!state->value);
+    });
+
+// Audio level meter driven from a node
+auto el = Portal::Forma::create_element<float>(
+    surface,
+    Portal::Forma::Geometry::level_meter(
+        Kinesis::AABB2D { { -0.8F, -0.05F }, { 0.8F, 0.05F } },
+        true, { 0.2F, 0.8F, 0.3F }, { 0.1F, 0.1F, 0.12F }),
+    0.F,
+    Portal::Graphics::PrimitiveTopology::TRIANGLE_STRIP);
+
+Portal::Forma::bridge().at(el.state).bind(rms_node,
+    [](double x) { return static_cast<float>(std::clamp(x, 0.0, 1.0)); });
+```
+
 ## Element spatial description
 
 Every `Element` has two independent spatial fields:

@@ -247,6 +247,117 @@ auto buf = Portal::Forma::create_buffer(surface.window(), spec.capacity_for(N), 
 auto el  = Plot::place(surface, std::move(buf), std::move(spec), std::move(container));
 ```
 
+## Adornments
+
+Adornments are text labels, axis tick labels, and legends associated with a
+plot. They are described on the `Series` chain and materialized automatically
+when the plot is placed via `Portal::Forma::plot()`.
+
+### Bounds
+
+`.bounds()` declares the NDC region occupied by the data area. All adornment
+placement is relative to this. Required whenever ticks or legends are used.
+
+```cpp
+constexpr Kinesis::AABB2D plot_bounds { glm::vec2(-0.75F, -0.75F), glm::vec2(0.7F, 0.8F) };
+
+Plot::series()
+    .y(...)
+    .bounds(plot_bounds)
+    ...
+```
+
+### Tick labels
+
+`.x_ticks()` and `.y_ticks()` request evenly-spaced numeric labels along a
+plot edge. The range is derived from the axis mapping by default, or supplied
+explicitly.
+
+```cpp
+// Y ticks on the left, 5 labels, 2 decimal places, range from mapping
+.y_ticks(5, Plot::TickEdge::Left, 2)
+
+// X ticks on the bottom, explicit range, integer labels
+.x_ticks(Plot::AxisRange{}.range(0.F, 512.F), 5, Plot::TickEdge::Bottom, 0)
+```
+
+`.ticks()` places labels on any edge with an explicit range when neither X nor
+Y axis inference is appropriate:
+
+```cpp
+.ticks(Plot::TickEdge::Right, Plot::AxisRange{}.range(0.F, 1.F), 4)
+```
+
+### Legend
+
+`.legend()` adds a vertical legend. Pass an origin in NDC and a list of
+entries, each carrying a label string and a color matching the corresponding
+series palette entry.
+
+```cpp
+.legend(
+    glm::vec2(0.72F, 0.8F),
+    { Plot::LegendEntry { "sine_a", glm::vec3(0.2F, 0.6F, 1.0F) },
+      Plot::LegendEntry { "sine_b", glm::vec3(0.9F, 0.4F, 0.1F) } })
+```
+
+### Free text labels
+
+`.label()` places an arbitrary text string at a given NDC region:
+
+```cpp
+.label("Amplitude vs Sample",
+    Kinesis::AABB2D { .min = { -0.15F, 0.83F }, .max = { 0.5F, 0.95F } })
+```
+
+Color defaults to `{ 0.85, 0.85, 0.85, 1.0 }`. An optional fourth argument
+overrides it.
+
+### Complete example
+
+```cpp
+constexpr Kinesis::AABB2D bounds { glm::vec2(-0.75F, -0.75F), glm::vec2(0.7F, 0.8F) };
+constexpr uint64_t N = 512;
+
+auto [el, surface] = Portal::Forma::plot("Annotated Waveform", 1280, 720,
+    Plot::source()
+        .as("sine_a", N, Role::SPATIAL_Y, DataModality::AUDIO_1D)
+        .from([](std::vector<double>& s) {
+            for (size_t i = 0; i < s.size(); ++i)
+                s[i] = std::sin(static_cast<double>(i) / s.size() * 2.0 * M_PI);
+        })
+        .as("sine_b", N, Role::SPATIAL_Y, DataModality::AUDIO_1D)
+        .from([](std::vector<double>& s) {
+            for (size_t i = 0; i < s.size(); ++i)
+                s[i] = 0.5 * std::sin(static_cast<double>(i) / s.size() * 4.0 * M_PI);
+        })
+        .build(),
+    Plot::series()
+        .y(Role::SPATIAL_Y,
+            Plot::AxisRange{}.range(-1.F, 1.F),
+            { glm::vec3(0.2F, 0.6F, 1.0F), glm::vec3(0.9F, 0.4F, 0.1F) })
+        .background(bounds)
+        .bounds(bounds)
+        .y_ticks(5, Plot::TickEdge::Left, 2)
+        .x_ticks(Plot::AxisRange{}.range(0.F, static_cast<float>(N)), 5, Plot::TickEdge::Bottom, 0)
+        .legend(
+            glm::vec2(0.72F, 0.8F),
+            { Plot::LegendEntry { "sine_a", glm::vec3(0.2F, 0.6F, 1.0F) },
+              Plot::LegendEntry { "sine_b", glm::vec3(0.9F, 0.4F, 0.1F) } })
+        .label("Amplitude vs Sample",
+            Kinesis::AABB2D { .min = { -0.15F, 0.83F }, .max = { 0.5F, 0.95F } })
+        .as_filled_waveform()
+        .baseline(0.F)
+        .done());
+
+schedule_metro(1.0 / 60.0, [el = std::move(el)]() mutable { el.sync(); });
+```
+
+Adornments are only materialized automatically when using `Portal::Forma::plot()`.
+On the manual path (`Plot::place()` directly), adornment buffers must be
+constructed and placed explicitly via `Plot::place_label()` and
+`Plot::place_rect()`.
+
 ---
 
 ## Quick examples
