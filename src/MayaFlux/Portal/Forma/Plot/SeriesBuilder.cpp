@@ -368,4 +368,97 @@ SeriesSpec BarsBuilder::done() const
     };
 }
 
+SeriesSpec FilledWaveformBuilder::done() const
+{
+    auto x_mappings = m_state.x_mappings();
+    auto y_mappings = m_state.y_mappings();
+    const auto global_palette = m_state.palette();
+    const float baseline_data = m_baseline;
+
+    return {
+        .fn = [x_mappings, y_mappings, global_palette, baseline_data](
+                  const std::shared_ptr<Kakshya::PlotContainer>& container,
+                  std::vector<uint8_t>& out,
+                  Element&) mutable {
+            if (!container)
+                return;
+
+            container->process_default();
+
+            struct SeriesEntry {
+                std::span<const double> data;
+                size_t mapping_index;
+                size_t index_within_mapping;
+            };
+            std::vector<SeriesEntry> y_entries;
+            for (size_t mi = 0; mi < y_mappings.size(); ++mi) {
+                auto sv = series_for_mapping(*container, y_mappings[mi]);
+                for (size_t si = 0; si < sv.size(); ++si)
+                    y_entries.push_back({ .data = sv[si], .mapping_index = mi, .index_within_mapping = si });
+            }
+            if (y_entries.empty())
+                return;
+
+            AxisRange x_range = merge_axis(x_mappings);
+            AxisRange y_range = merge_axis(y_mappings);
+
+            std::vector<std::span<const double>> all_y;
+            all_y.reserve(y_entries.size());
+            for (const auto& e : y_entries)
+                all_y.push_back(e.data);
+            apply_auto_scale(y_range, all_y);
+
+            std::vector<std::span<const double>> all_x;
+            if (!x_mappings.empty()) {
+                all_x = series_for_mapping(*container, x_mappings[0]);
+                apply_auto_scale(x_range, all_x);
+            } else {
+                x_range = AxisRange {}.range(-1.F, 1.F);
+            }
+
+            const float baseline_ndc = y_range.to_ndc(baseline_data);
+
+            out.clear();
+
+            for (size_t ei = 0; ei < y_entries.size(); ++ei) {
+                const auto& entry = y_entries[ei];
+                const size_t n    = entry.data.size();
+                if (n == 0)
+                    continue;
+
+                const glm::vec3 color = resolve_color(
+                    y_mappings[entry.mapping_index], global_palette, entry.index_within_mapping);
+
+                const size_t x_idx = std::min(ei, all_x.empty() ? size_t(0) : all_x.size() - 1);
+                const bool has_x   = !all_x.empty() && all_x[x_idx].size() == n;
+
+                const size_t pre_size = out.size();
+
+                for (size_t i = 0; i < n; ++i) {
+                    const float px = has_x
+                        ? x_range.to_ndc(static_cast<float>(all_x[x_idx][i]))
+                        : x_range.to_ndc(x_range.min
+                              + static_cast<float>(i) / static_cast<float>(std::max<size_t>(n - 1, 1))
+                                  * (x_range.max - x_range.min));
+
+                    const float py = y_range.to_ndc(static_cast<float>(entry.data[i]));
+
+                    write_vertex(out, { px, py,          0.F }, color, 1.F);
+                    write_vertex(out, { px, baseline_ndc, 0.F }, color, 0.F);
+                }
+
+                if (ei + 1 < y_entries.size() && out.size() > pre_size) {
+                    const size_t last = out.size() - k_stride;
+                    out.insert(out.end(), out.begin() + static_cast<ptrdiff_t>(last), out.end());
+                }
+            } },
+        .topology = Graphics::PrimitiveTopology::TRIANGLE_STRIP,
+        .capacity_for = [](uint64_t n) { return n * 2 * k_stride + 128; },
+        .background_fn = m_state.has_background()
+            ? std::optional<GeometryFn<float>> { background(
+                  m_state.background_bounds(), m_state.background_color()) }
+            : std::nullopt,
+    };
+}
+
 } // namespace MayaFlux::Portal::Forma::Plot

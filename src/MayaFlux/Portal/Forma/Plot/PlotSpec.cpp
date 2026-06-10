@@ -1,6 +1,7 @@
 #include "PlotSpec.hpp"
 
 #include "MayaFlux/Kakshya/Source/PlotContainer.hpp"
+#include "MayaFlux/Portal/Forma/Primitives/Geometry.hpp"
 
 namespace MayaFlux::Portal::Forma::Plot {
 
@@ -136,6 +137,81 @@ GeometryFn<float> background(
         }
 
         el.bounds_hint = bounds;
+    };
+}
+
+std::vector<Kakshya::LineVertex> plot_grid(
+    Kinesis::AABB2D bounds,
+    uint32_t x_divisions,
+    uint32_t y_divisions,
+    glm::vec3 color,
+    float thickness)
+{
+    std::vector<Kakshya::LineVertex> out;
+    out.reserve((static_cast<size_t>(x_divisions + y_divisions)) * 2);
+
+    auto lv = [&](glm::vec2 p) {
+        return Kakshya::LineVertex {
+            .position = { p.x, p.y, 0.F },
+            .color = color,
+            .thickness = thickness,
+        };
+    };
+
+    for (uint32_t i = 0; i < x_divisions; ++i) {
+        const float t = (x_divisions > 1)
+            ? static_cast<float>(i) / static_cast<float>(x_divisions - 1)
+            : 0.5F;
+        const float x = bounds.min.x + t * bounds.width();
+        out.push_back(lv({ x, bounds.min.y }));
+        out.push_back(lv({ x, bounds.max.y }));
+    }
+
+    for (uint32_t i = 0; i < y_divisions; ++i) {
+        const float t = (y_divisions > 1)
+            ? static_cast<float>(i) / static_cast<float>(y_divisions - 1)
+            : 0.5F;
+        const float y = bounds.min.y + t * bounds.height();
+        out.push_back(lv({ bounds.min.x, y }));
+        out.push_back(lv({ bounds.max.x, y }));
+    }
+
+    return out;
+}
+
+GeometryFn<float> plot_cursor(
+    Kinesis::AABB2D bounds,
+    bool vertical,
+    glm::vec3 color,
+    float thickness)
+{
+    return [bounds, vertical, color, thickness](
+               float v, std::vector<uint8_t>& out, Element& el) {
+        const float t = std::clamp(v, 0.F, 1.F);
+        using V = Kakshya::LineVertex;
+        std::array<V, 2> verts;
+        if (vertical) {
+            const float x = bounds.min.x + t * bounds.width();
+            verts = { {
+                { .position = { x, bounds.min.y, 0.F }, .color = color, .thickness = thickness },
+                { .position = { x, bounds.max.y, 0.F }, .color = color, .thickness = thickness },
+            } };
+            el.bounds_hint = Kinesis::AABB2D {
+                .min = { x - 0.01F, bounds.min.y },
+                .max = { x + 0.01F, bounds.max.y },
+            };
+        } else {
+            const float y = bounds.min.y + t * bounds.height();
+            verts = { {
+                { .position = { bounds.min.x, y, 0.F }, .color = color, .thickness = thickness },
+                { .position = { bounds.max.x, y, 0.F }, .color = color, .thickness = thickness },
+            } };
+            el.bounds_hint = Kinesis::AABB2D {
+                .min = { bounds.min.x, y - 0.01F },
+                .max = { bounds.max.x, y + 0.01F },
+            };
+        }
+        Geometry::write_verts(out, verts);
     };
 }
 

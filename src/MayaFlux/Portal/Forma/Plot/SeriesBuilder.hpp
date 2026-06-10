@@ -14,6 +14,7 @@ namespace MayaFlux::Portal::Forma::Plot {
 class WaveformBuilder;
 class ScatterBuilder;
 class BarsBuilder;
+class FilledWaveformBuilder;
 
 // =============================================================================
 // Series
@@ -246,6 +247,7 @@ public:
     [[nodiscard]] WaveformBuilder as_waveform() const;
     [[nodiscard]] ScatterBuilder as_scatter() const;
     [[nodiscard]] BarsBuilder as_bars() const;
+    [[nodiscard]] FilledWaveformBuilder as_filled_waveform() const;
 
     // =========================================================================
     // State accessors — used by encoding terminals in .cpp
@@ -367,8 +369,51 @@ private:
     Series m_state;
 };
 
+/**
+ * @class FilledWaveformBuilder
+ * @brief Terminal builder for filled waveform encoding (TRIANGLE_STRIP).
+ *
+ * For each Y-series, produces a TRIANGLE_STRIP quad strip between the signal
+ * value and a baseline Y (default: y_range.to_ndc(0), clamped to bounds).
+ * Each sample pair contributes two vertices: one at the signal, one at
+ * the baseline. The strip is continuous within a series; separate series
+ * are separated by degenerate vertices.
+ *
+ * Shares all Y-axis, X-axis, palette, and auto-scale machinery with
+ * WaveformBuilder. Use when the filled area under the signal carries
+ * meaning: envelope display, energy readout, spectral band fill.
+ *
+ * .done() produces a SeriesSpec with TRIANGLE_STRIP topology.
+ */
+class FilledWaveformBuilder {
+public:
+    FilledWaveformBuilder(Series state)
+        : m_state(std::move(state))
+    {
+    }
+
+    /**
+     * @brief Override the baseline Y value in data coordinates.
+     *
+     * Defaults to 0.0 (maps to y_range.to_ndc(0)). Set to the range minimum
+     * to always fill downward, or to the range maximum to always fill upward.
+     */
+    FilledWaveformBuilder& baseline(float y)
+    {
+        m_baseline = y;
+        return *this;
+    }
+
+    [[nodiscard]] SeriesSpec done() const;
+
+private:
+    Series m_state;
+    float m_baseline { 0.F };
+};
+
 inline WaveformBuilder Series::as_waveform() const { return { *this }; }
 inline ScatterBuilder Series::as_scatter() const { return { *this }; }
 inline BarsBuilder Series::as_bars() const { return { *this }; }
+inline FilledWaveformBuilder Series::as_filled_waveform() const { return { *this }; }
 
 } // namespace MayaFlux::Portal::Forma::Plot
