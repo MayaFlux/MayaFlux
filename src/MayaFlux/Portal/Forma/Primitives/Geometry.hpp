@@ -2,6 +2,7 @@
 
 #include "Mapped.hpp"
 
+#include "MayaFlux/Kinesis/Geometry2D.hpp"
 #include "MayaFlux/Kinesis/GeometryPrimitives.hpp"
 
 namespace MayaFlux::Portal::Forma::Geometry {
@@ -319,18 +320,13 @@ void write_verts(std::vector<uint8_t>& out, const V& v)
             accumulated += seg_lengths[i];
         }
 
-        std::vector<Kakshya::LineVertex> verts;
-        verts.reserve(pts.size() * 4);
+        auto verts = Kinesis::polyline(pts, track_color);
 
-        for (size_t i = 0; i + 1 < pts.size(); ++i) {
-            verts.push_back({ .position = { pts[i].x, pts[i].y, 0.0F }, .color = track_color });
-            verts.push_back({ .position = { pts[i + 1].x, pts[i + 1].y, 0.0F }, .color = track_color });
-        }
+        auto fill = Kinesis::polyline(
+            std::span<const glm::vec2>(pts).subspan(0, split_seg + 1),
+            fill_color);
+        verts.insert(verts.end(), fill.begin(), fill.end());
 
-        for (size_t i = 0; i < split_seg; ++i) {
-            verts.push_back({ .position = { pts[i].x, pts[i].y, 0.0F }, .color = fill_color });
-            verts.push_back({ .position = { pts[i + 1].x, pts[i + 1].y, 0.0F }, .color = fill_color });
-        }
         if (split_t > 0.0F) {
             verts.push_back({ .position = { pts[split_seg].x, pts[split_seg].y, 0.0F }, .color = fill_color });
             verts.push_back({ .position = { handle_pos.x, handle_pos.y, 0.0F }, .color = fill_color });
