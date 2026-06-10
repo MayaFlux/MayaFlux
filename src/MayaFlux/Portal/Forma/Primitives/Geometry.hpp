@@ -106,6 +106,52 @@ void write_verts(std::vector<uint8_t>& out, const V& v)
 }
 
 // =============================================================================
+// Vertical fader
+//
+// Symmetric counterpart to horizontal_fader. Value in [0, 1] moves a handle
+// quad upward along a track quad.
+//
+// Track: thin vertical band through the center of bounds.
+// Handle: small square at y = bounds.min.y + value * (bounds.height() - handle_h).
+//
+// Hit region follows the handle, updated on every sync().
+// Topology: TRIANGLE_STRIP (two quad pairs via to_mesh_vertices).
+// =============================================================================
+
+/**
+ * @brief Geometry function for a vertical fader in NDC space.
+ * @param bounds       Full extent of the fader in NDC.
+ * @param handle_h     Handle height in NDC units.
+ * @param track_color  Track quad color.
+ * @param handle_color Handle quad color.
+ */
+[[nodiscard]] inline GeometryFn<float> vertical_fader(
+    Kinesis::AABB2D bounds,
+    float handle_h,
+    glm::vec3 track_color = glm::vec3(0.3F),
+    glm::vec3 handle_color = glm::vec3(0.9F))
+{
+    return [bounds, handle_h, track_color, handle_color](
+               float v, std::vector<uint8_t>& out, Element& el) {
+        const float y = bounds.min.y + v * (bounds.height() - handle_h);
+        const float xl = bounds.min.x + bounds.width() * 0.35F;
+        const float xr = bounds.min.x + bounds.width() * 0.65F;
+
+        const Kinesis::AABB2D track { .min = { xl, bounds.min.y }, .max = { xr, bounds.max.y } };
+        const Kinesis::AABB2D handle { .min = { bounds.min.x, y }, .max = { bounds.max.x, y + handle_h } };
+
+        auto verts = Kakshya::to_mesh_vertices(Kinesis::filled_rect(track, track_color));
+        auto herts = Kakshya::to_mesh_vertices(Kinesis::filled_rect(handle, handle_color));
+        verts.insert(verts.end(), herts.begin(), herts.end());
+
+        write_verts(out, verts);
+
+        el.bounds_hint = handle;
+        el.contains = {};
+    };
+}
+
+// =============================================================================
 // Radial / arc
 //
 // Value in [0, 1] sweeps an indicator line around a center point.
@@ -347,6 +393,143 @@ void write_verts(std::vector<uint8_t>& out, const V& v)
             std::memcpy(hbytes.data(), &hv, sizeof(hv));
             handle_buf->submit(hbytes);
         }
+    };
+}
+
+// =============================================================================
+// Toggle
+//
+// Value type: bool. Renders a filled rect in one of two colors.
+// The geometry function is purely visual — it carries no interaction.
+// The caller wires on_press to flip state->value:
+//
+//   surface.ctx().on_press(el.element.id, IO::MouseButtons::Left,
+//       [state = el.state](uint32_t, glm::vec2) {
+//           state->write(!state->value);
+//       });
+//
+// Topology: TRIANGLE_STRIP (4 MeshVertex via to_mesh_vertices).
+// =============================================================================
+
+/**
+ * @brief Geometry function for a boolean toggle in NDC space.
+ *
+ * Renders @p region as a filled rect in @p color_off or @p color_on based
+ * on the current bool value. Interaction is the caller's responsibility.
+ *
+ * @param region    NDC bounds of the toggle.
+ * @param color_off Fill color when false.
+ * @param color_on  Fill color when true.
+ */
+[[nodiscard]] inline GeometryFn<bool> toggle(
+    Kinesis::AABB2D region,
+    glm::vec3 color_off = glm::vec3(0.25F),
+    glm::vec3 color_on = glm::vec3(0.2F, 0.7F, 0.4F))
+{
+    return [region, color_off, color_on](
+               bool v, std::vector<uint8_t>& out, Element& el) {
+        write_verts(out, Kakshya::to_mesh_vertices(Kinesis::filled_rect(region, v ? color_on : color_off)));
+        el.bounds_hint = region;
+        el.contains = {};
+    };
+}
+
+// =============================================================================
+// Level meter
+//
+// Value type: float in [0, 1]. Renders a filled bar from the origin edge of
+// bounds proportional to the value, with the remainder as a second color.
+// No handle, no hit region. Suitable for audio level, progress, any scalar readout.
+//
+// Orientation:
+//   horizontal = true  - bar grows left to right
+//   horizontal = false - bar grows bottom to top
+//
+// Topology: TRIANGLE_STRIP (two quad pairs via to_mesh_vertices).
+// =============================================================================
+
+/**
+ * @brief Geometry function for a level meter in NDC space.
+ *
+ * No interaction. Drive from a node via bridge().at(el.state).bind(node).
+ *
+ * @param bounds      Full extent of the meter in NDC.
+ * @param horizontal  True for left-to-right fill, false for bottom-to-top.
+ * @param fill_color  Color of the active (filled) portion.
+ * @param track_color Color of the inactive remainder.
+ */
+[[nodiscard]] inline GeometryFn<float> level_meter(
+    Kinesis::AABB2D bounds,
+    bool horizontal = true,
+    glm::vec3 fill_color = glm::vec3(0.2F, 0.7F, 0.3F),
+    glm::vec3 track_color = glm::vec3(0.15F))
+{
+    return [bounds, horizontal, fill_color, track_color](
+               float v, std::vector<uint8_t>& out, Element& el) {
+        const float t = std::clamp(v, 0.F, 1.F);
+
+        Kinesis::AABB2D fill {}, remainder {};
+        if (horizontal) {
+            const float split = bounds.min.x + t * bounds.width();
+            fill = { .min = bounds.min, .max = { split, bounds.max.y } };
+            remainder = { .min = { split, bounds.min.y }, .max = bounds.max };
+        } else {
+            const float split = bounds.min.y + t * bounds.height();
+            fill = { .min = bounds.min, .max = { bounds.max.x, split } };
+            remainder = { .min = { bounds.min.x, split }, .max = bounds.max };
+        }
+
+        auto verts = Kakshya::to_mesh_vertices(Kinesis::filled_rect(fill, fill_color));
+        auto rest = Kakshya::to_mesh_vertices(Kinesis::filled_rect(remainder, track_color));
+        verts.insert(verts.end(), rest.begin(), rest.end());
+
+        write_verts(out, verts);
+
+        el.bounds_hint = bounds;
+        el.contains = {};
+    };
+}
+
+// =============================================================================
+// Crosshair
+//
+// Value type: glm::vec2 (NDC position). Renders two LINE_LIST segments —
+// horizontal and vertical — crossing at the value position.
+// Hit region: circle centered on the position.
+//
+// Pairs naturally with position_picker sharing the same MappedState<glm::vec2>.
+// Topology: LINE_LIST (4 LineVertex).
+// =============================================================================
+
+/**
+ * @brief Geometry function for a crosshair indicator in NDC space.
+ *
+ * @param arm_len    Half-length of each arm in NDC units.
+ * @param color      Line color.
+ * @param thickness  Line thickness (maps to LineVertex::thickness).
+ * @param hit_radius Hit region radius in NDC units.
+ *
+ * @note Pass @c PrimitiveTopology::LINE_LIST explicitly to create_element —
+ *       the default TRIANGLE_STRIP will misinterpret the 4 vertices.
+ */
+[[nodiscard]] inline GeometryFn<glm::vec2> crosshair(
+    float arm_len = 0.04F,
+    glm::vec3 color = glm::vec3(0.9F),
+    float thickness = 1.F,
+    float hit_radius = 0.05F)
+{
+    return [arm_len, color, thickness, hit_radius](
+               glm::vec2 pos, std::vector<uint8_t>& out, Element& el) {
+        using V = Kakshya::LineVertex;
+        const std::array<V, 4> verts { {
+            { .position = { pos.x - arm_len, pos.y, 0.F }, .color = color, .thickness = thickness },
+            { .position = { pos.x + arm_len, pos.y, 0.F }, .color = color, .thickness = thickness },
+            { .position = { pos.x, pos.y - arm_len, 0.F }, .color = color, .thickness = thickness },
+            { .position = { pos.x, pos.y + arm_len, 0.F }, .color = color, .thickness = thickness },
+        } };
+        write_verts(out, verts);
+        el.bounds_hint = Kinesis::AABB2D::from_ndc(pos, glm::vec2(arm_len));
+        el.contains = Kinesis::circular_bounds(pos, hit_radius);
     };
 }
 
