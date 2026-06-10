@@ -88,6 +88,20 @@ public:
     void on_move(uint32_t id, MoveFn fn);
 
     /**
+     * @brief Called on each mouse-move event while @p btn is held, if the
+     *        cursor is over @p id at the time of the event.
+     *
+     * Backed by Kriya::mouse_dragged, which gates on button state natively.
+     * For controls that must respond to drag after the cursor leaves the
+     * element, use on_press + on_move with a captured flag instead.
+     *
+     * @param id  Element id to bind to.
+     * @param btn Mouse button that must be held.
+     * @param fn  Callback receiving element id and current NDC cursor position.
+     */
+    void on_drag(uint32_t id, IO::MouseButtons btn, MoveFn fn);
+
+    /**
      * @brief Called once when the cursor enters an element's region.
      */
     void on_enter(uint32_t id, EnterFn fn);
@@ -119,6 +133,7 @@ private:
     struct ElementCallbacks {
         std::unordered_map<int, PressFn> press;
         std::unordered_map<int, PressFn> release;
+        std::unordered_map<int, MoveFn> drag;
         MoveFn move;
         EnterFn enter;
         LeaveFn leave;
@@ -142,6 +157,7 @@ private:
     void handle_press(double px, double py, IO::MouseButtons btn);
     void handle_release(double px, double py, IO::MouseButtons btn);
     void handle_scroll(double dx, double dy);
+    void handle_drag(double px, double py, IO::MouseButtons btn);
 };
 
 } // namespace MayaFlux::Portal::Forma

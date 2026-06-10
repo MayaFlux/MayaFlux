@@ -43,6 +43,11 @@ void Context::on_move(uint32_t id, MoveFn fn)
     m_callbacks[id].move = std::move(fn);
 }
 
+void Context::on_drag(uint32_t id, IO::MouseButtons btn, MoveFn fn)
+{
+    m_callbacks[id].drag[static_cast<int>(btn)] = std::move(fn);
+}
+
 void Context::on_enter(uint32_t id, EnterFn fn)
 {
     m_callbacks[id].enter = std::move(fn);
@@ -106,6 +111,18 @@ void Context::register_handlers()
 
     m_event_manager.add_event(
         std::make_shared<Vruta::Event>(
+            Kriya::mouse_dragged(m_window, IO::MouseButtons::Left,
+                [this](double px, double py) { handle_drag(px, py, IO::MouseButtons::Left); })),
+        m_name + "_drag_left");
+
+    m_event_manager.add_event(
+        std::make_shared<Vruta::Event>(
+            Kriya::mouse_dragged(m_window, IO::MouseButtons::Right,
+                [this](double px, double py) { handle_drag(px, py, IO::MouseButtons::Right); })),
+        m_name + "_drag_right");
+
+    m_event_manager.add_event(
+        std::make_shared<Vruta::Event>(
             Kriya::mouse_scrolled(m_window,
                 [this](double dx, double dy) { handle_scroll(dx, dy); })),
         m_name + "_scroll");
@@ -117,7 +134,8 @@ void Context::cancel_handlers()
              "_move",
              "_press_left", "_release_left",
              "_press_right", "_release_right",
-             "_scroll" }) {
+             "_scroll",
+             "_drag_left", "_drag_right" }) {
         m_event_manager.cancel_event(m_name + suffix);
     }
 }
@@ -191,6 +209,20 @@ void Context::handle_release(double px, double py, IO::MouseButtons btn)
     auto btn_it = it->second.release.find(static_cast<int>(btn));
     if (btn_it != it->second.release.end() && btn_it->second)
         btn_it->second(*hit, ndc);
+}
+
+void Context::handle_drag(double px, double py, IO::MouseButtons btn)
+{
+    const glm::vec2 ndc = to_ndc(px, py);
+    const auto hit = m_layer->hit_test(ndc);
+    if (!hit)
+        return;
+    auto it = m_callbacks.find(*hit);
+    if (it == m_callbacks.end())
+        return;
+    auto drag_it = it->second.drag.find(static_cast<int>(btn));
+    if (drag_it != it->second.drag.end() && drag_it->second)
+        drag_it->second(*hit, ndc);
 }
 
 void Context::handle_scroll(double dx, double dy)
