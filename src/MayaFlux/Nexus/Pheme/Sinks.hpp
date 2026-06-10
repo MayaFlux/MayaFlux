@@ -17,8 +17,7 @@ class AudioBuffer;
 class VKBuffer;
 class BufferManager;
 class AudioWriteProcessor;
-class GeometryWriteProcessor;
-class TextureWriteProcessor;
+class DataWriteProcessor;
 class RenderProcessor;
 }
 
@@ -50,7 +49,7 @@ struct AudioSink {
  * @struct RenderSink
  * @brief Holds the plumbing for one graphics output registered from a Nexus object.
  *
- * Created by add_render_sink(). Owns the VKBuffer, GeometryWriteProcessor,
+ * Created by add_render_sink(). Owns the VKBuffer, DataWriteProcessor,
  * and RenderProcessor. The buffer is registered with the supplied BufferManager
  * on construction and unregistered on destruction via remove_render_sink().
  *
@@ -63,7 +62,7 @@ struct AudioSink {
  */
 struct RenderSink {
     std::shared_ptr<Buffers::VKBuffer> buf;
-    std::shared_ptr<Buffers::GeometryWriteProcessor> writer;
+    std::shared_ptr<Buffers::DataWriteProcessor> writer;
     std::shared_ptr<Buffers::RenderProcessor> renderer;
     RenderFn fn;
     std::string fn_name;
@@ -127,7 +126,7 @@ MAYAFLUX_API void dispatch_audio_sinks(
 /**
  * @brief Create and register a render sink targeting @p window.
  *
- * Allocates a VKBuffer (VERTEX, POINT_LIST), attaches a GeometryWriteProcessor
+ * Allocates a VKBuffer (VERTEX, POINT_LIST), attaches a DataWriteProcessor
  * and a RenderProcessor with point.vert.spv / point.frag.spv defaults, and
  * registers the buffer with @p mgr.
  *
@@ -157,18 +156,6 @@ MAYAFLUX_API void remove_render_sink(
     std::vector<RenderSink>& sinks,
     Buffers::BufferManager& mgr,
     const std::shared_ptr<Core::Window>& window);
-
-/**
- * @brief Push pre-resolved vertex bytes to every render sink.
- * @param sinks      Sink vector owned by the calling Emitter or Agent.
- * @param data       Pointer to vertex data.
- * @param byte_count Total size in bytes.
- * @param layout     VertexLayout describing stride and attributes.
- */
-MAYAFLUX_API void push_vertices(
-    std::vector<RenderSink>& sinks,
-    const void* data, size_t byte_count,
-    const Kakshya::VertexLayout& layout);
 
 /**
  * @brief For each sink that has a producer fn, call it and push the result.

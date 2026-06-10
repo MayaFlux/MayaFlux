@@ -19,35 +19,31 @@ struct MAYAFLUX_API VertexAccessConfig {
     glm::vec3 default_normal { 0.0F, 0.0F, 1.0F };
     glm::vec3 default_tangent { 1.0F, 0.0F, 0.0F };
 };
-
 /**
  * @struct VertexAccess
- * @brief Memory-compatible view of a DataVariant for vertex buffer upload.
+ * @brief Memory-compatible view of channel data assembled into full 60-byte vertices.
  *
  * Mirrors TextureAccess: describes what the data IS in memory terms —
- * pointer, byte count, and a VertexLayout that faithfully represents
- * stride and attribute semantics — with no knowledge of Vulkan, Portal,
- * or concrete vertex structs (PointVertex, LineVertex).
+ * pointer, byte count, and a VertexLayout — with no knowledge of Vulkan,
+ * Portal, or concrete vertex structs (PointVertex, LineVertex, MeshVertex).
  *
- * Zero-copy cases (data_ptr points directly into variant storage):
- *   vector<glm::vec3>   position-only vertices, stride = 12
- *   vector<glm::vec2>   2D position vertices,   stride = 8
- *   vector<glm::vec4>   position + W attribute, stride = 16
+ * A vertex is always the canonical 60-byte record:
+ *   position (vec3, 12) | color (vec3, 12) | scalar (float, 4) |
+ *   uv (vec2, 8) | normal (vec3, 12) | tangent (vec3, 12)
  *
- * Conversion cases (conversion_buffer holds promoted data):
- *   vector<float>            Y-displacement waveform: x = normalised index,
- *                            y = value,  z = 0. Output: vec3, stride = 12.
- *   vector<double>           Same as float, narrowed to float in output.
- *   vector<uint8_t>          Values normalised to [-1, 1] as Y displacement.
- *   vector<uint16_t>         Same normalisation.
- *   vector<uint32_t>         Same normalisation.
- *   vector<complex<float>>   magnitude as Y, phase normalised to [0,1] as Z.
- *                            Output: vec3, stride = 12.
+ * Zero-copy path: single vector<uint8_t> channel of N*60 bytes. data_ptr
+ * points directly into variant storage; conversion_buffer is empty.
  *
- * Rejected types (as_vertex_access returns std::nullopt, logs error):
- *   vector<complex<double>>  No standard waveform interpretation; caller must
- *                            convert to float complex or extract components.
- *   vector<glm::mat4>        Ambiguous layout; caller must unpack to vec4 first.
+ * Assembly path: one or more typed channels supplied in canonical field order.
+ * Slot 0 = position (vec3), slot 1 = color (vec3), slot 2 = scalar (float),
+ * slot 3 = uv (vec2), slot 4 = normal (vec3), slot 5 = tangent (vec3).
+ * Missing trailing slots are filled from VertexAccessConfig defaults.
+ * Assembled bytes are held in conversion_buffer; data_ptr points into it.
+ *
+ * Source element size is taken from the supplied variant type. A vec4 color
+ * channel (16 bytes) copies 12 bytes into the color field; the alpha is
+ * discarded. A float scalar channel (4 bytes) maps exactly. Oversized
+ * elements are truncated; undersized elements are zero-padded within the field.
  */
 struct MAYAFLUX_API VertexAccess {
     const void* data_ptr = nullptr;
@@ -83,61 +79,57 @@ struct MAYAFLUX_API VertexAccess {
  * @return Populated VertexAccess, or std::nullopt on incompatible type.
  */
 [[nodiscard]] MAYAFLUX_API std::optional<VertexAccess>
-as_vertex_access(const DataVariant& variant);
-
-/**
- * @brief Convert DataVariant to point-vertex-compatible bytes.
- *
- * Output layout matches VertexLayout::for_points(): stride 28,
- * position (vec3, offset 0), color (vec3, offset 12), size (float, offset 24),
- * uv (vec2, offset 28), normal (vec3, offset 36), tangent (vec3, offset 48).
- * Compatible with point.vert.spv without any user-defined shaders.
- *
- * All accepted DataVariant types produce a position per element:
- * GLM types map position directly; scalar and integer types produce
- * a waveform (x=normalised index, y=value, z=0). Color and size are
- * filled from config defaults throughout.
- *
- * @param variant Source data.
- * @param config  Default attribute values (color, size).
- * @return Populated VertexAccess, or std::nullopt on incompatible type.
- */
-[[nodiscard]] MAYAFLUX_API std::optional<VertexAccess>
-as_point_vertex_access(const DataVariant& variant,
+as_vertex_access(std::span<const DataVariant> channels,
     const VertexAccessConfig& config = {});
 
 /**
- * @brief Convert DataVariant to line-vertex-compatible bytes.
+ * @brief Assemble point-vertex-compatible bytes from one or more data channels.
  *
- * Output layout matches VertexLayout::for_lines(): stride 36,
- * position (vec3, offset 0), color (vec3, offset 12),
- * thickness (float, offset 24), uv (vec2, offset 28),
- * normal (vec3, offset 36), tangent (vec3, offset 48).
- * Compatible with line.vert.spv without any user-defined shaders.
+ * channels[0] must supply position data (vec3 or uint8_t interleaved).
+ * channels[1..5] optionally supply color, scalar, uv, normal, tangent in
+ * canonical field order. Missing trailing channels are filled from config.
+ * A single uint8_t channel of N*60 bytes is passed through zero-copy.
  *
- * @param variant Source data.
- * @param config  Default attribute values (color, thickness, uv).
- * @return Populated VertexAccess, or std::nullopt on incompatible type.
+ * @param channels Source channels in canonical field order.
+ * @param config   Default attribute values for absent channels.
+ * @return Populated VertexAccess, or std::nullopt on empty or incompatible input.
  */
 [[nodiscard]] MAYAFLUX_API std::optional<VertexAccess>
-as_line_vertex_access(const DataVariant& variant,
+as_point_vertex_access(std::span<const DataVariant> channels,
     const VertexAccessConfig& config = {});
 
 /**
- * @brief Convert DataVariant to mesh-vertex-compatible bytes.
+ * @brief Assemble line-vertex-compatible bytes from one or more data channels.
  *
- * Output layout matches VertexLayout::for_meshes(): stride 60,
- * position (vec3, offset 0), color (vec3, offset 12),
- * weight (float, offset 24), uv (vec2, offset 28),
- * normal (vec3, offset 36), tangent (vec3, offset 48).
- * Compatible with mesh.vert.spv without any user-defined shaders.
+ * channels[0] must supply position data (vec3 or uint8_t interleaved).
+ * channels[1..5] optionally supply color, thickness, uv, normal, tangent in
+ * canonical field order. Missing trailing channels are filled from config;
+ * slot 2 defaults to config.default_thickness.
+ * A single uint8_t channel of N*60 bytes is passed through zero-copy.
  *
- * @param variant Source data.
- * @param config  Default attribute values (color, weight, uv).
- * @return Populated VertexAccess, or std::nullopt on incompatible type.
+ * @param channels Source channels in canonical field order.
+ * @param config   Default attribute values for absent channels.
+ * @return Populated VertexAccess, or std::nullopt on empty or incompatible input.
  */
 [[nodiscard]] MAYAFLUX_API std::optional<VertexAccess>
-as_mesh_vertex_access(const DataVariant& variant,
+as_line_vertex_access(std::span<const DataVariant> channels,
+    const VertexAccessConfig& config = {});
+
+/**
+ * @brief Assemble mesh-vertex-compatible bytes from one or more data channels.
+ *
+ * channels[0] must supply position data (vec3 or uint8_t interleaved).
+ * channels[1..5] optionally supply color, weight, uv, normal, tangent in
+ * canonical field order. Missing trailing channels are filled from config;
+ * slot 2 defaults to config.default_weight.
+ * A single uint8_t channel of N*60 bytes is passed through zero-copy.
+ *
+ * @param channels Source channels in canonical field order.
+ * @param config   Default attribute values for absent channels.
+ * @return Populated VertexAccess, or std::nullopt on empty or incompatible input.
+ */
+[[nodiscard]] MAYAFLUX_API std::optional<VertexAccess>
+as_mesh_vertex_access(std::span<const DataVariant> channels,
     const VertexAccessConfig& config = {});
 
 } // namespace MayaFlux::Kakshya

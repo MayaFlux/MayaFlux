@@ -103,6 +103,8 @@ uint32_t VertexLayoutTranslator::get_modality_size_bytes(Kakshya::DataModality m
     using namespace Kakshya;
 
     switch (modality) {
+    case DataModality::VERTICES_3D:
+        return 60;
     case DataModality::VERTEX_POSITIONS_3D:
     case DataModality::VERTEX_NORMALS_3D:
     case DataModality::VERTEX_TANGENTS_3D:

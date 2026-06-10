@@ -3,8 +3,6 @@
 #include "MayaFlux/Nexus/Pheme/InfluenceContext.hpp"
 #include "MayaFlux/Nexus/Pheme/Sinks.hpp"
 
-#include "MayaFlux/Kakshya/NDData/VertexFormats.hpp"
-
 namespace MayaFlux::Buffers {
 class VKBuffer;
 }
@@ -139,29 +137,22 @@ public:
     }
 
     /**
-     * @brief Push pre-resolved vertex bytes to all registered render sinks.
-     * @param data       Pointer to vertex data.
-     * @param byte_count Total size in bytes.
-     * @param layout     VertexLayout describing stride and attributes.
+     * @brief Set pre-packed interleaved vertex bytes to all registered render sinks.
+     *
+     * data must point to N contiguous 60-byte Vertex records.
+     * byte_count must be a multiple of 60.
      */
-    void set_vertices(const void* data, size_t byte_count,
-        const Kakshya::VertexLayout& layout)
-    {
-        push_vertices(m_render_sinks, data, byte_count, layout);
-    }
+    void set_vertices(const void* data, size_t byte_count);
 
     /**
-     * @brief Push typed vertex data to all registered render sinks.
-     * @tparam T One of Kakshya::PointVertex, Kakshya::LineVertex, Kakshya::MeshVertex.
-     * @param vertices Span of vertex structs.
+     * @brief Set typed vertex data to all registered render sinks.
+     * @tparam T One of Kakshya::PointVertex, Kakshya::LineVertex, Kakshya::MeshVertex, Kakshya::Vertex.
      */
     template <typename T>
     void set_vertices(std::span<const T> vertices)
     {
-        auto layout = Kakshya::vertex_layout_for<T>();
-        layout.vertex_count = static_cast<uint32_t>(vertices.size());
-        push_vertices(m_render_sinks, vertices.data(),
-            vertices.size_bytes(), layout);
+        static_assert(sizeof(T) == 60, "set_vertices: T must be a 60-byte vertex type");
+        set_vertices(vertices.data(), vertices.size_bytes());
     }
 
     /** @brief Set the intensity, a general-purpose parameter for influence functions. */

@@ -2,9 +2,9 @@
 
 #include "MayaFlux/Buffers/BufferManager.hpp"
 #include "MayaFlux/Buffers/BufferProcessingChain.hpp"
-#include "MayaFlux/Buffers/Geometry/GeometryWriteProcessor.hpp"
 #include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
 #include "MayaFlux/Buffers/Staging/AudioWriteProcessor.hpp"
+#include "MayaFlux/Buffers/Staging/DataWriteProcessor.hpp"
 #include "MayaFlux/Kakshya/NDData/EigenAccess.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
@@ -105,25 +105,10 @@ void add_render_sink(
     auto buf = std::make_shared<Buffers::VKBuffer>(
         k_initial_bytes,
         Buffers::VKBuffer::Usage::VERTEX,
-        Kakshya::DataModality::VERTEX_POSITIONS_3D);
+        Kakshya::DataModality::VERTICES_3D);
 
-    auto writer = std::make_shared<Buffers::GeometryWriteProcessor>();
-
-    const bool is_line = config.topology == Portal::Graphics::PrimitiveTopology::LINE_LIST
-        || config.topology == Portal::Graphics::PrimitiveTopology::LINE_STRIP;
-    const bool is_mesh = config.topology == Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST
-        || config.topology == Portal::Graphics::PrimitiveTopology::TRIANGLE_STRIP;
-
-    if (is_line) {
-        writer->set_mode(Buffers::GeometryWriteMode::LINE);
-    } else if (is_mesh) {
-        writer->set_mode(Buffers::GeometryWriteMode::MESH);
-    } else {
-        writer->set_mode(Buffers::GeometryWriteMode::POINT);
-    }
-
+    auto writer = std::make_shared<Buffers::DataWriteProcessor>();
     buf->set_default_processor(writer);
-
     mgr.add_buffer(buf, Buffers::ProcessingToken::GRAPHICS_BACKEND);
 
     std::string vert = config.vertex_shader;
@@ -164,6 +149,7 @@ void add_render_sink(
 
     auto renderer = std::make_shared<Buffers::RenderProcessor>(Buffers::ShaderConfig { vert });
     renderer->set_fragment_shader(frag);
+
     if (!geom.empty())
         renderer->set_geometry_shader(geom);
 
@@ -175,6 +161,7 @@ void add_render_sink(
     buf->set_needs_depth_attachment(true);
 
     renderer->set_target_window(config.target_window, buf);
+    buf->set_render_processor(renderer);
     buf->get_processing_chain()->add_final_processor(renderer, buf);
 
     auto& sink = sinks.emplace_back(RenderSink {
@@ -187,8 +174,9 @@ void add_render_sink(
     });
 
     if (!sink.fn && initial_position.has_value()) {
-        sink.writer->set_data(
-            Kakshya::DataVariant { std::vector<glm::vec3> { *initial_position } });
+        sink.writer->set_data(std::vector<Kakshya::DataVariant> {
+            Kakshya::DataVariant { std::vector<glm::vec3> { *initial_position } },
+        });
     }
 
     MF_DEBUG(Journal::Component::Buffers, Journal::Context::Init,
@@ -214,16 +202,6 @@ void remove_render_sink(
 
     MF_DEBUG(Journal::Component::Buffers, Journal::Context::Init,
         "Nexus: render sink removed");
-}
-
-void push_vertices(
-    std::vector<RenderSink>& sinks,
-    const void* data, size_t byte_count,
-    const Kakshya::VertexLayout& layout)
-{
-    for (auto& s : sinks) {
-        s.writer->set_vertices(data, byte_count, layout);
-    }
 }
 
 void dispatch_render_sinks(std::vector<RenderSink>& sinks, const InfluenceContext& ctx)

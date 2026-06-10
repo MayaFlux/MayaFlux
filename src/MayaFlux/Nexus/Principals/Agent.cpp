@@ -1,10 +1,17 @@
 #include "Agent.hpp"
 
 #include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
+#include "MayaFlux/Buffers/Staging/DataWriteProcessor.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux::Nexus {
+
+void Agent::set_vertices(const void* data, size_t byte_count)
+{
+    for (auto& s : m_render_sinks)
+        s.writer->set_vertices(data, byte_count);
+}
 
 void Agent::add_influence_target(std::shared_ptr<Buffers::RenderProcessor> proc)
 {

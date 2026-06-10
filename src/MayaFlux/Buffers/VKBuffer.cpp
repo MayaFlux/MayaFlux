@@ -5,6 +5,8 @@
 
 #include "Shaders/RenderProcessor.hpp"
 
+#include "MayaFlux/Kakshya/NDData/VertexFormats.hpp"
+
 #include "MayaFlux/Registry/BackendRegistry.hpp"
 #include "MayaFlux/Registry/Service/BufferService.hpp"
 #include "MayaFlux/Registry/Service/ComputeService.hpp"
@@ -302,6 +304,16 @@ void VKBuffer::infer_dimensions_from_data(size_t byte_count)
     m_dimensions.clear();
 
     switch (m_modality) {
+    case DataModality::VERTICES_3D: {
+        const uint64_t count = byte_count / sizeof(Kakshya::Vertex);
+        m_dimensions.push_back(DataDimension::vertex_positions(count));
+        m_dimensions.push_back(DataDimension::vertex_colors(count));
+        m_dimensions.push_back(DataDimension::grouped("scalar", count, 1, DataDimension::Role::CUSTOM));
+        m_dimensions.push_back(DataDimension::texture_coords(count));
+        m_dimensions.push_back(DataDimension::vertex_normals(count));
+        m_dimensions.push_back(DataDimension::grouped("tangents", count, 3, DataDimension::Role::CUSTOM));
+        break;
+    }
     case DataModality::VERTEX_POSITIONS_3D: {
         uint64_t count = byte_count / sizeof(glm::vec3);
         m_dimensions.push_back(DataDimension::vertex_positions(count));

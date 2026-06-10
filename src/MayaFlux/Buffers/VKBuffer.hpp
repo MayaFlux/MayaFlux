@@ -122,7 +122,7 @@ public:
     VKBuffer(
         size_t size_bytes,
         Usage usage,
-        Kakshya::DataModality modality);
+        Kakshya::DataModality modality = Kakshya::DataModality::VERTICES_3D);
 
     VKBuffer() = default;
 
@@ -577,6 +577,8 @@ public:
      * override this to return an appropriate RenderProcessor instance.
      */
     virtual std::shared_ptr<RenderProcessor> get_render_processor() const { return m_render_processor; }
+
+    inline void set_render_processor(std::shared_ptr<RenderProcessor> rp) { m_render_processor = std::move(rp); }
 
 protected:
     /**

@@ -17,7 +17,7 @@ TextureBuffer::TextureBuffer(
     : VKBuffer(
           calculate_quad_vertex_size(),
           Usage::VERTEX,
-          Kakshya::DataModality::VERTEX_POSITIONS_3D)
+          Kakshya::DataModality::IMAGE_COLOR)
     , m_width(width)
     , m_height(height)
     , m_format(format)

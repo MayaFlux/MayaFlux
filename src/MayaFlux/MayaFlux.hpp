@@ -75,7 +75,6 @@
 #include "Buffers/Geometry/CompositeGeometryBuffer.hpp"
 #include "Buffers/Geometry/ComputeMeshBuffer.hpp"
 #include "Buffers/Geometry/GeometryBuffer.hpp"
-#include "Buffers/Geometry/GeometryWriteProcessor.hpp"
 #include "Buffers/Geometry/MeshBuffer.hpp"
 #include "Buffers/Network/InstanceNetworkBuffer.hpp"
 #include "Buffers/Network/MeshNetworkBuffer.hpp"
@@ -95,9 +94,9 @@
 #include "Buffers/Staging/AudioWriteProcessor.hpp"
 #include "Buffers/Staging/BufferDownloadProcessor.hpp"
 #include "Buffers/Staging/BufferUploadProcessor.hpp"
+#include "Buffers/Staging/DataWriteProcessor.hpp"
 #include "Buffers/Textures/NodeTextureBuffer.hpp"
 #include "Buffers/Textures/TextureBuffer.hpp"
-#include "Buffers/Textures/TextureWriteProcessor.hpp"
 #include "MayaFlux/Buffers/Forma/FormaBindingsProcessor.hpp"
 #include "MayaFlux/Buffers/Shaders/SDFFieldProcessor.hpp"
 
