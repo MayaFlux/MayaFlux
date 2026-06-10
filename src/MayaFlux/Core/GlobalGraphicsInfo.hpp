@@ -215,6 +215,8 @@ struct MAYAFLUX_API GraphicsSurfaceInfo {
     }
 };
 
+#ifdef MAYAFLUX_PLATFORM_MACOS
+
 /**
  * @struct GlfwPreInitConfig
  * @brief Configuration hints for GLFW initialization
@@ -223,42 +225,21 @@ struct MAYAFLUX_API GraphicsSurfaceInfo {
  * its internal state and platform integration.
  */
 struct GlfwPreInitConfig {
-    /**
-     * @enum Platform
-     * @brief Force a specific windowing platform on Linux
-     */
-    enum class Platform {
-        Default,
-        Wayland,
-        X11
-    } platform
-        = Platform::Default;
-
-    /** this prevents crash on some wayland compositors */
-    bool disable_libdecor {};
-
     bool cocoa_chdir_resources = true;
     bool cocoa_menubar = true;
 
     /** @brief Request OpenGL debug context (if using OpenGL backend) */
     bool headless {};
 
-    /** @brief Force X11/XCB surface creation when a Wayland session is detected.
-     *  Required for Vulkan capture and profiling layers that do not implement
-     *  VK_KHR_wayland_surface.  XWayland must be present. */
-    bool force_x11_on_wayland = false;
-
     static constexpr auto describe()
     {
         return std::make_tuple(
-            IO::member("platform", &GlfwPreInitConfig::platform),
-            IO::member("disable_libdecor", &GlfwPreInitConfig::disable_libdecor),
             IO::member("cocoa_chdir_resources", &GlfwPreInitConfig::cocoa_chdir_resources),
             IO::member("cocoa_menubar", &GlfwPreInitConfig::cocoa_menubar),
-            IO::member("headless", &GlfwPreInitConfig::headless),
-            IO::member("force_x11_on_wayland", &GlfwPreInitConfig::force_x11_on_wayland));
+            IO::member("headless", &GlfwPreInitConfig::headless));
     }
 };
+#endif // MAYAFLUX_PLATFORM_MACOS
 
 /**
  * @struct KeyRepeatConfig
@@ -323,8 +304,10 @@ struct TextConfig {
 };
 
 struct MAYAFLUX_API GlobalGraphicsConfig {
+#ifdef MAYAFLUX_PLATFORM_MACOS
     /** @brief Pre-initialization configuration for GLFW */
     GlfwPreInitConfig glfw_preinit_config;
+#endif // MAYAFLUX_PLATFORM_MACOS
 
     /** @brief Key repeat timing for native Wayland and Win32 backends. */
     KeyRepeatConfig key_repeat_config;
@@ -393,6 +376,7 @@ struct MAYAFLUX_API GlobalGraphicsConfig {
 #endif
     };
 
+#ifdef MAYAFLUX_PLATFORM_MACOS
     static constexpr auto describe()
     {
         return std::make_tuple(
@@ -406,6 +390,21 @@ struct MAYAFLUX_API GlobalGraphicsConfig {
             IO::member("requested_api", &GlobalGraphicsConfig::requested_api),
             IO::member("text_config", &GlobalGraphicsConfig::text_config));
     }
+#else
+    static constexpr auto describe()
+    {
+        return std::make_tuple(
+            IO::member("key_repeat_config", &GlobalGraphicsConfig::key_repeat_config),
+            IO::member("surface_info", &GlobalGraphicsConfig::surface_info),
+            IO::member("backend_info", &GlobalGraphicsConfig::backend_info),
+            IO::member("resource_limits", &GlobalGraphicsConfig::resource_limits),
+            IO::member("target_frame_rate", &GlobalGraphicsConfig::target_frame_rate),
+            IO::member("windowing_backend", &GlobalGraphicsConfig::windowing_backend),
+            IO::member("requested_api", &GlobalGraphicsConfig::requested_api),
+            IO::member("text_config", &GlobalGraphicsConfig::text_config));
+    }
+
+#endif //     #ifdef MAYAFLUX_PLATFORM_MACOS
 };
 
 //==============================================================================

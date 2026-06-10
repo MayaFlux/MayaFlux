@@ -126,11 +126,6 @@ public:
     static std::string get_platform();
 
     /**
-     * @brief Checks if running on Wayland
-     */
-    static bool is_wayland();
-
-    /**
      * @brief Retrieves the list of required Vulkan instance extensions for GLFW
      * @return A vector of extension names required by GLFW for Vulkan surface creation
      *

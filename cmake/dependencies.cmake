@@ -36,6 +36,7 @@ else()
         find_package(fmt REQUIRED)
         find_package(Vulkan REQUIRED)
         pkg_check_modules(HIDAPI REQUIRED IMPORTED_TARGET hidapi)
+        pkg_check_modules(Glfw REQUIRED IMPORTED_TARGET glfw3>=3.4)
     else()
         pkg_check_modules(Vulkan REQUIRED IMPORTED_TARGET vulkan)
         pkg_search_module(HIDAPI REQUIRED IMPORTED_TARGET
@@ -64,7 +65,6 @@ else()
     find_package(Freetype REQUIRED)
 
     pkg_check_modules(Eigen REQUIRED IMPORTED_TARGET eigen3)
-    pkg_check_modules(Glfw REQUIRED IMPORTED_TARGET glfw3>=3.4)
     pkg_check_modules(Asio REQUIRED IMPORTED_TARGET asio)
     pkg_check_modules(Assimp REQUIRED IMPORTED_TARGET assimp)
 

@@ -1,5 +1,7 @@
 #pragma once
 
+#ifdef GLFW_BACKEND
+
 #include "MayaFlux/IO/Keys.hpp"
 
 namespace MayaFlux::Core {
@@ -37,3 +39,5 @@ MAYAFLUX_API int to_glfw_key(IO::Keys key) noexcept;
 MAYAFLUX_API bool is_valid_glfw_key(int glfw_key) noexcept;
 
 } // namespace MayaFlux::Core
+
+#endif // GLFW_BACKEND

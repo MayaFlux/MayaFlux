@@ -63,7 +63,6 @@ jobs:
             clang clang-devel \
             cmake \
             pkgconfig \
-            glfw-devel \
             glm-devel \
             eigen3-devel \
             spirv-headers-devel \
@@ -205,7 +204,6 @@ jobs:
           echo "Dependencies:"
           echo "  ✓ LLVM 21 (Lila JIT)"
           echo "  ✓ GCC 15 (full C++23)"
-          echo "  ✓ GLFW 3.4 (Wayland)"
           echo "  ✓ FFmpeg"
           echo "  ✓ Vulkan SDK, SPIR-V"
           echo "  ✓ Eigen3, GLM, fmt, TBB, STB"

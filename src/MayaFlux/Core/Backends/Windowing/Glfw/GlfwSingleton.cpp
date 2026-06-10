@@ -23,24 +23,6 @@ void GLFWSingleton::configure(const GlfwPreInitConfig& config)
         return;
     }
 
-    int glfw_platform = GLFW_ANY_PLATFORM;
-    switch (config.platform) {
-    case GlfwPreInitConfig::Platform::Wayland:
-        glfw_platform = GLFW_PLATFORM_WAYLAND;
-        break;
-    case GlfwPreInitConfig::Platform::X11:
-        glfw_platform = GLFW_PLATFORM_X11;
-        break;
-    case GlfwPreInitConfig::Platform::Default:
-        if (config.force_x11_on_wayland && std::getenv("WAYLAND_DISPLAY") != nullptr)
-            glfw_platform = GLFW_PLATFORM_X11;
-        break;
-    }
-
-    if (glfw_platform != GLFW_ANY_PLATFORM)
-        glfwInitHint(GLFW_PLATFORM, glfw_platform);
-
-    glfwInitHint(GLFW_WAYLAND_LIBDECOR, config.disable_libdecor ? GLFW_FALSE : GLFW_TRUE);
     glfwInitHint(GLFW_COCOA_CHDIR_RESOURCES, config.cocoa_chdir_resources ? GLFW_TRUE : GLFW_FALSE);
     glfwInitHint(GLFW_COCOA_MENUBAR, config.cocoa_menubar ? GLFW_TRUE : GLFW_FALSE);
 
@@ -48,11 +30,7 @@ void GLFWSingleton::configure(const GlfwPreInitConfig& config)
     s_preinit_config = config;
 
     MF_INFO(Journal::Component::Core, Journal::Context::WindowingSubsystem,
-        "GLFW pre-initialization configured: platform={}, libdecor={}, cocoa_chdir_resources={}, cocoa_menubar={}",
-        glfw_platform == GLFW_PLATFORM_WAYLAND   ? "wayland"
-            : glfw_platform == GLFW_PLATFORM_X11 ? "x11"
-                                                 : "default",
-        config.disable_libdecor ? "disabled" : "enabled",
+        "GLFW pre-initialization configured:  cocoa_chdir_resources={}, cocoa_menubar={}",
         config.cocoa_chdir_resources ? "enabled" : "disabled",
         config.cocoa_menubar ? "enabled" : "disabled");
 }
@@ -143,42 +121,7 @@ std::string GLFWSingleton::get_platform()
     if (!s_initialized)
         return "";
 
-#if GLFW_VERSION_MAJOR >= 3 && GLFW_VERSION_MINOR >= 4
-    int platform = glfwGetPlatform();
-    switch (platform) {
-    case GLFW_PLATFORM_WAYLAND:
-        return "wayland";
-    case GLFW_PLATFORM_X11:
-        return "x11";
-    case GLFW_PLATFORM_WIN32:
-        return "win32";
-    case GLFW_PLATFORM_COCOA:
-        return "cocoa";
-    default:
-        return "unknown";
-    }
-#else
-    const char* platform = glfwGetPlatformName();
-    if (platform)
-        return platform;
-
-#ifdef MAYAFLUX_PLATFORM_LINUX
-#ifdef GLFW_USE_WAYLAND
-    return "wayland";
-#else
-    return "x11";
-#endif
-#elif MAYAFLUX_PLATFORM_MACOS
     return "cocoa";
-#else
-    return "unknown";
-#endif
-#endif
-}
-
-bool GLFWSingleton::is_wayland()
-{
-    return get_platform() == "wayland";
 }
 
 MonitorInfo GLFWSingleton::get_monitor(int32_t id)

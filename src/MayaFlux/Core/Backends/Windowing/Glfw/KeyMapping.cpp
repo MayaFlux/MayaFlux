@@ -1,5 +1,7 @@
 #include "KeyMapping.hpp"
 
+#ifdef GLFW_BACKEND
+
 namespace MayaFlux::Core {
 
 IO::Keys from_glfw_key(int glfw_key) noexcept
@@ -65,3 +67,5 @@ bool is_valid_glfw_key(int glfw_key) noexcept
 }
 
 } // namespace MayaFlux::Core
+
+#endif // GLFW_BACKEND

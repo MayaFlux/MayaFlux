@@ -5,12 +5,8 @@
 
 #ifdef GLFW_BACKEND
 
-#ifdef MAYAFLUX_PLATFORM_LINUX
-#include <GLFW/glfw3native.h>
-#elif MAYAFLUX_PLATFORM_MACOS
 #define GLFW_EXPOSE_NATIVE_COCOA
 #include <GLFW/glfw3native.h>
-#endif
 
 namespace MayaFlux::Core {
 
@@ -189,40 +185,7 @@ void* GlfwWindow::get_native_handle() const
     if (!m_window)
         return nullptr;
 
-#ifdef MAYAFLUX_PLATFORM_LINUX
-#if defined(GLFW_EXPOSE_NATIVE_WAYLAND)
-    if (glfwGetPlatform() == GLFW_PLATFORM_WAYLAND) {
-        return glfwGetWaylandWindow(m_window);
-    }
-#endif
-#if defined(GLFW_EXPOSE_NATIVE_X11)
-    if (glfwGetPlatform() == GLFW_PLATFORM_X11) {
-        return reinterpret_cast<void*>(glfwGetX11Window(m_window));
-    }
-#endif
-    return nullptr;
-#elif MAYAFLUX_PLATFORM_MACOS
     return glfwGetCocoaWindow(m_window);
-#else
-    return m_window;
-#endif
-}
-
-void* GlfwWindow::get_native_display() const
-{
-#ifdef MAYAFLUX_PLATFORM_LINUX
-#if defined(GLFW_EXPOSE_NATIVE_WAYLAND)
-    if (glfwGetPlatform() == GLFW_PLATFORM_WAYLAND) {
-        return glfwGetWaylandDisplay();
-    }
-#endif
-#if defined(GLFW_EXPOSE_NATIVE_X11)
-    if (glfwGetPlatform() == GLFW_PLATFORM_X11) {
-        return glfwGetX11Display();
-    }
-#endif
-#endif
-    return nullptr;
 }
 
 void GlfwWindow::glfw_window_size_callback(GLFWwindow* window, int width, int height)

@@ -39,7 +39,6 @@ endif()
 
 if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
     add_compile_definitions(USE_TBB_BACKEND)
-    target_compile_definitions(MayaFluxLib PRIVATE GLFW_EXPOSE_NATIVE_WAYLAND)
 
     mf_add_wayland_protocol(MayaFluxLib
         PROTOCOL "${WAYLAND_PROTOCOLS_DIR}/stable/xdg-shell/xdg-shell.xml"
@@ -162,7 +161,7 @@ else()
     if(APPLE)
         target_link_libraries(MayaFluxLib PRIVATE oneDPL)
         target_link_libraries(MayaFluxLib PUBLIC fmt::fmt)
-        target_link_libraries(MayaFluxLib PUBLIC Vulkan::Vulkan)
+        target_link_libraries(MayaFluxLib PUBLIC Vulkan::Vulkan PkgConfig::Glfw)
         target_link_libraries(MayaFluxLib PRIVATE "-framework CoreFoundation")
         target_link_libraries(MayaFluxLib PRIVATE "-framework AppKit" "-framework UniformTypeIdentifiers")
         target_link_libraries(MayaFluxLib PRIVATE "-framework CoreMIDI")
@@ -191,7 +190,6 @@ else()
         TBB::tbb
         glm::glm
         PkgConfig::Eigen
-        PkgConfig::Glfw
         PkgConfig::HIDAPI
         PkgConfig::Asio
         PkgConfig::Assimp

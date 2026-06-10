@@ -66,7 +66,7 @@ public:
 
     [[nodiscard]] void* get_native_handle() const override;
 
-    [[nodiscard]] void* get_native_display() const override;
+    [[nodiscard]] void* get_native_display() const override { return nullptr; }
 
     [[nodiscard]] inline GLFWwindow* get_glfw_handle() const { return m_window; }
 
