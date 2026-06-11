@@ -8,26 +8,6 @@
 
 namespace MayaFlux::Portal::Forma::Plot {
 
-namespace {
-
-    glm::uvec2 bounds_to_pixels(
-        const std::shared_ptr<Core::Window>& window,
-        Kinesis::AABB2D bounds)
-    {
-        const auto& ws = window->get_state();
-        const auto w = static_cast<uint32_t>(
-            std::max(bounds.width(), 0.001F)
-            * 0.5F
-            * static_cast<float>(ws.current_width));
-        const auto h = static_cast<uint32_t>(
-            std::max(bounds.height(), 0.001F)
-            * 0.5F
-            * static_cast<float>(ws.current_height));
-        return { std::max(w, 1U), std::max(h, 1U) };
-    }
-
-} // namespace
-
 // =============================================================================
 // place_label
 // =============================================================================
@@ -40,7 +20,10 @@ uint32_t place_label(
 {
     const auto render_bounds = spec.render_bounds.x > 0 && spec.render_bounds.y > 0
         ? spec.render_bounds
-        : bounds_to_pixels(surface.window(), spec.bounds);
+        : Kinesis::ndc_size_to_pixels(
+              { spec.bounds.width(), spec.bounds.height() },
+              surface.window()->get_state().current_width,
+              surface.window()->get_state().current_height);
 
     Element el;
     el.with_buffer(std::move(buf))
