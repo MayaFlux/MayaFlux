@@ -41,6 +41,7 @@ public:
     using EnterFn = std::function<void(uint32_t id)>;
     using LeaveFn = std::function<void(uint32_t id)>;
     using ScrollFn = std::function<void(uint32_t id, glm::vec2 ndc, double dx, double dy)>;
+    using KeyFn = std::function<void(uint32_t id)>;
 
     /**
      * @brief Construct and immediately register event coroutines.
@@ -128,6 +129,60 @@ public:
      */
     void unbind(uint32_t id);
 
+    /**
+     * @brief Called when a key is pressed while the element has focus.
+     *
+     * Focus is transferred on mouse press. The callback fires only once per
+     * key press, even if the key is held.
+     *
+     * @param id  Element id to bind to.
+     * @param key The key to listen for.
+     * @param fn  Callback receiving element id.
+     */
+    void on_press(uint32_t id, IO::Keys key, KeyFn fn);
+
+    /**
+     * @brief Called when a key is released while the element has focus.
+     *
+     * @param id  Element id to bind to.
+     * @param key The key to listen for.
+     * @param fn  Callback receiving element id.
+     */
+    void on_release(uint32_t id, IO::Keys key, KeyFn fn);
+
+    /**
+     * @brief Called repeatedly while a key is held and the element has focus.
+     *
+     * Fires on initial press and continues on each repeat tick until the key
+     * is released. Useful for continuous adjustments (arrow key nudging,
+     * value increments) without requiring the user to repeatedly press.
+     *
+     * @param id  Element id to bind to.
+     * @param key The key to listen for.
+     * @param fn  Callback receiving element id, fired on press and each repeat.
+     */
+    void on_held(uint32_t id, IO::Keys key, KeyFn fn);
+
+    /**
+     * @brief Called once when an element gains keyboard focus (via click).
+     */
+    void on_focus_gained(uint32_t id, EnterFn fn);
+
+    /**
+     * @brief Called once when an element loses keyboard focus.
+     */
+    void on_focus_lost(uint32_t id, LeaveFn fn);
+
+    /**
+     * @brief Clear keyboard focus (no element focused).
+     */
+    void clear_focus();
+
+    /**
+     * @brief Get currently focused element, if any.
+     */
+    [[nodiscard]] std::optional<uint32_t> focused() const { return m_focused; }
+
     // =========================================================================
     // State query
     // =========================================================================
@@ -141,11 +196,25 @@ private:
         std::unordered_map<int, PressFn> press;
         std::unordered_map<int, PressFn> release;
         std::unordered_map<int, MoveFn> drag;
+        std::unordered_map<int, KeyFn> key_press;
+        std::unordered_map<int, KeyFn> key_release;
+        std::unordered_map<int, KeyFn> key_held;
+
         MoveFn move;
         EnterFn enter;
         LeaveFn leave;
         ScrollFn scroll;
+
+        EnterFn focus_gained;
+        LeaveFn focus_lost;
     };
+
+    struct KeyHandlerState {
+        bool has_press = false;
+        bool has_release = false;
+        bool has_held = false;
+    };
+    std::unordered_map<int, KeyHandlerState> m_registered_keys;
 
     std::shared_ptr<Layer> m_layer;
     std::shared_ptr<Core::Window> m_window;
@@ -165,8 +234,12 @@ private:
     void handle_release(double px, double py, IO::MouseButtons btn);
     void handle_scroll(double dx, double dy);
     void handle_drag(double px, double py, IO::MouseButtons btn);
+    void handle_key_press(IO::Keys key);
+    void handle_key_release(IO::Keys key);
+    void handle_key_held(IO::Keys key);
 
     std::optional<uint32_t> m_dragging[3];
+    std::optional<uint32_t> m_focused;
 };
 
 } // namespace MayaFlux::Portal::Forma

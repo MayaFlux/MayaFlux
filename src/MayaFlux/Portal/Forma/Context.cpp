@@ -63,8 +63,83 @@ void Context::on_scroll(uint32_t id, ScrollFn fn)
     m_callbacks[id].scroll = std::move(fn);
 }
 
+void Context::on_press(uint32_t id, IO::Keys key, KeyFn fn)
+{
+    const int key_code = static_cast<int>(key);
+    m_callbacks[id].key_press[key_code] = std::move(fn);
+
+    if (!m_registered_keys[key_code].has_press) {
+        const std::string key_name = std::to_string(key_code);
+        m_event_manager.add_event(
+            std::make_shared<Vruta::Event>(
+                Kriya::key_pressed(m_window, key,
+                    [this, key]() { handle_key_press(key); })),
+            m_name + "_key_press_" + key_name);
+        m_registered_keys[key_code].has_press = true;
+    }
+}
+
+void Context::on_release(uint32_t id, IO::Keys key, KeyFn fn)
+{
+    const int key_code = static_cast<int>(key);
+    m_callbacks[id].key_release[key_code] = std::move(fn);
+
+    if (!m_registered_keys[key_code].has_release) {
+        const std::string key_name = std::to_string(key_code);
+        m_event_manager.add_event(
+            std::make_shared<Vruta::Event>(
+                Kriya::key_released(m_window, key,
+                    [this, key]() { handle_key_release(key); })),
+            m_name + "_key_release_" + key_name);
+        m_registered_keys[key_code].has_release = true;
+    }
+}
+
+void Context::on_held(uint32_t id, IO::Keys key, KeyFn fn)
+{
+    const int key_code = static_cast<int>(key);
+    m_callbacks[id].key_held[key_code] = std::move(fn);
+
+    if (!m_registered_keys[key_code].has_held) {
+        const std::string key_name = std::to_string(key_code);
+        m_event_manager.add_event(
+            std::make_shared<Vruta::Event>(
+                Kriya::key_held(m_window, key,
+                    [this, key]() { handle_key_held(key); })),
+            m_name + "_key_held_" + key_name);
+        m_registered_keys[key_code].has_held = true;
+    }
+}
+
+void Context::on_focus_gained(uint32_t id, EnterFn fn)
+{
+    m_callbacks[id].focus_gained = std::move(fn);
+}
+
+void Context::on_focus_lost(uint32_t id, LeaveFn fn)
+{
+    m_callbacks[id].focus_lost = std::move(fn);
+}
+
+void Context::clear_focus()
+{
+    if (m_focused) {
+        auto it = m_callbacks.find(*m_focused);
+        if (it != m_callbacks.end() && it->second.focus_lost)
+            it->second.focus_lost(*m_focused);
+        m_focused = std::nullopt;
+    }
+}
+
 void Context::unbind(uint32_t id)
 {
+    if (m_focused && *m_focused == id) {
+        auto it = m_callbacks.find(id);
+        if (it != m_callbacks.end() && it->second.focus_lost)
+            it->second.focus_lost(id);
+        m_focused = std::nullopt;
+    }
+
     m_callbacks.erase(id);
 }
 
@@ -138,6 +213,16 @@ void Context::cancel_handlers()
              "_drag_left", "_drag_right" }) {
         m_event_manager.cancel_event(m_name + suffix);
     }
+
+    for (const auto& [key_code, handlers] : m_registered_keys) {
+        const std::string key_name = std::to_string(key_code);
+        if (handlers.has_press)
+            m_event_manager.cancel_event(m_name + "_key_press_" + key_name);
+        if (handlers.has_release)
+            m_event_manager.cancel_event(m_name + "_key_release_" + key_name);
+        if (handlers.has_held)
+            m_event_manager.cancel_event(m_name + "_key_held_" + key_name);
+    }
 }
 
 // =============================================================================
@@ -186,6 +271,22 @@ void Context::handle_press(double px, double py, IO::MouseButtons btn)
 
     const int btn_idx = static_cast<int>(btn);
 
+    if (hit != m_focused) {
+        if (m_focused) {
+            auto it = m_callbacks.find(*m_focused);
+            if (it != m_callbacks.end() && it->second.focus_lost)
+                it->second.focus_lost(*m_focused);
+        }
+
+        m_focused = hit;
+
+        if (hit) {
+            auto it = m_callbacks.find(*hit);
+            if (it != m_callbacks.end() && it->second.focus_gained)
+                it->second.focus_gained(*hit);
+        }
+    }
+
     if (hit && m_callbacks.contains(*hit) && m_callbacks[*hit].drag.contains(btn_idx)) {
         m_dragging[btn_idx] = hit;
     }
@@ -199,6 +300,9 @@ void Context::handle_press(double px, double py, IO::MouseButtons btn)
 
 void Context::handle_release(double px, double py, IO::MouseButtons btn)
 {
+    const int btn_idx = static_cast<int>(btn);
+    m_dragging[btn_idx] = std::nullopt;
+
     const glm::vec2 ndc = to_ndc(px, py);
     const auto hit = m_layer->hit_test(ndc);
     if (!hit)
@@ -242,6 +346,55 @@ void Context::handle_scroll(double dx, double dy)
 
     const auto [px, py] = m_window->get_event_source().get_mouse_position();
     it->second.scroll(*m_hovered, to_ndc(px, py), dx, dy);
+}
+
+// =============================================================================
+// Keyboard event dispatch
+// =============================================================================
+
+void Context::handle_key_press(IO::Keys key)
+{
+    if (!m_focused)
+        return;
+
+    auto it = m_callbacks.find(*m_focused);
+    if (it == m_callbacks.end())
+        return;
+
+    const int key_code = static_cast<int>(key);
+    auto key_it = it->second.key_press.find(key_code);
+    if (key_it != it->second.key_press.end())
+        key_it->second(*m_focused);
+}
+
+void Context::handle_key_release(IO::Keys key)
+{
+    if (!m_focused)
+        return;
+
+    auto it = m_callbacks.find(*m_focused);
+    if (it == m_callbacks.end())
+        return;
+
+    const int key_code = static_cast<int>(key);
+    auto key_it = it->second.key_release.find(key_code);
+    if (key_it != it->second.key_release.end())
+        key_it->second(*m_focused);
+}
+
+void Context::handle_key_held(IO::Keys key)
+{
+    if (!m_focused)
+        return;
+
+    auto it = m_callbacks.find(*m_focused);
+    if (it == m_callbacks.end())
+        return;
+
+    const int key_code = static_cast<int>(key);
+    auto key_it = it->second.key_held.find(key_code);
+    if (key_it != it->second.key_held.end())
+        key_it->second(*m_focused);
 }
 
 } // namespace MayaFlux::Portal::Forma
