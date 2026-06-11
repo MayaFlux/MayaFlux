@@ -273,6 +273,19 @@ public:
             reader = [] { return 0.F; };
         }
 
+        std::function<std::vector<float>()> bulk_reader;
+        if constexpr (std::is_same_v<T, std::vector<float>>) {
+            bulk_reader = [s = state] { return s->value; };
+        } else if constexpr (std::is_same_v<T, std::vector<double>>) {
+            bulk_reader = [s = state] {
+                std::vector<float> out;
+                out.reserve(s->value.size());
+                for (double v : s->value)
+                    out.push_back(static_cast<float>(v));
+                return out;
+            };
+        }
+
         std::function<void(float)> writer;
         if constexpr (std::is_convertible_v<float, T>) {
             writer = [s = state](float v) {
@@ -287,6 +300,7 @@ public:
             .buffer = std::move(buffer),
             .bindings = nullptr,
             .reader = std::move(reader),
+            .bulk_reader = std::move(bulk_reader),
             .writer = std::move(writer),
             .inbound_task = {},
             .outbound_tasks = {},
@@ -470,6 +484,7 @@ private:
         std::shared_ptr<Buffers::FormaBuffer> buffer;
         std::shared_ptr<Buffers::FormaBindingsProcessor> bindings;
         std::function<float()> reader; ///< reads current value from MappedState (outbound)
+        std::function<std::vector<float>()> bulk_reader; ///< populated for vector<float>/vector<double> T
         std::function<void(float)> writer; ///< writes new value into MappedState (inbound)
         std::string inbound_task;
         std::vector<std::string> outbound_tasks;
