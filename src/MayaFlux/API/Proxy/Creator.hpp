@@ -1,11 +1,10 @@
 #pragma once
 
 #include "Domain.hpp"
+#include "MayaFlux/API/Depot.hpp"
 #include "Registry.hpp"
 
 #include "MayaFlux/Transitive/Memory/LiveArena.hpp"
-
-#include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux {
 
@@ -147,6 +146,14 @@ public:
         return container;
     }
 
+    auto read_audio() -> std::shared_ptr<Kakshya::SoundFileContainer>
+    {
+        auto container = choose_audio();
+        if (container)
+            MF_LIVE_EXPOSE_AUTO(container);
+        return container;
+    }
+
     auto read_image(const std::string& filepath) -> std::shared_ptr<Buffers::TextureBuffer>
     {
         auto buffer = load_image_buffer(filepath);
@@ -154,9 +161,22 @@ public:
         return buffer;
     }
 
+    auto read_image() -> std::shared_ptr<Buffers::TextureBuffer>
+    {
+        auto buffer = choose_image();
+        if (buffer)
+            MF_LIVE_EXPOSE_AUTO(buffer);
+        return buffer;
+    }
+
     auto read_mesh(const std::string& filepath) -> MeshGroupHandle
     {
         return MeshGroupHandle(load_mesh_buffers(filepath));
+    }
+
+    auto read_mesh() -> MeshGroupHandle
+    {
+        return MeshGroupHandle(choose_mesh());
     }
 
     auto read_mesh_network(
@@ -166,6 +186,14 @@ public:
     {
         auto network = load_mesh_network(filepath, std::move(resolver));
         MF_LIVE_EXPOSE_AUTO(network);
+        return network;
+    }
+
+    auto read_mesh_network() -> std::shared_ptr<Nodes::Network::MeshNetwork>
+    {
+        auto network = choose_mesh_network();
+        if (network)
+            MF_LIVE_EXPOSE_AUTO(network);
         return network;
     }
 

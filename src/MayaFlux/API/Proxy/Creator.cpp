@@ -15,6 +15,8 @@
 #include "MayaFlux/Nodes/Input/MIDINode.hpp"
 #include "MayaFlux/Nodes/Input/OSCNode.hpp"
 
+#include "MayaFlux/Journal/Archivist.hpp"
+
 namespace MayaFlux {
 
 Creator vega {};

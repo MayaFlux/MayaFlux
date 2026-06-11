@@ -15,11 +15,17 @@
 
 namespace MayaFlux {
 
+namespace Core {
+    class VKImage;
+}
+
 namespace IO {
     class IOManager;
+    using TextureResolver = std::function<std::shared_ptr<Core::VKImage>(const std::string&)>; // add
 }
 
 namespace Kakshya {
+    class SoundStreamContainer;
     class SoundFileContainer;
     class SignalSourceContainer;
 }
@@ -27,6 +33,11 @@ namespace Kakshya {
 namespace Buffers {
     class SoundContainerBuffer;
     class TextureBuffer;
+    class MeshBuffer;
+}
+
+namespace Nodes::Network {
+    class MeshNetwork;
 }
 
 /**
@@ -64,6 +75,69 @@ MAYAFLUX_API bool is_audio(const std::filesystem::path& filepath);
  * @return true if the file is recognized as an image file, false otherwise
  */
 MAYAFLUX_API bool is_image(const std::filesystem::path& filepath);
+
+// ─────────────────────────────────────────────────────────────────────────
+// Dialog-backed load — open
+// ─────────────────────────────────────────────────────────────────────────
+
+/**
+ * @brief Present a native open-file dialog filtered to audio formats and load
+ *        the chosen file via IOManager::load_audio().
+ *
+ * Blocks until the user confirms or cancels. Returns nullptr on cancellation,
+ * backend error, or if Portal::System is not initialized.
+ */
+MAYAFLUX_API std::shared_ptr<Kakshya::SoundFileContainer> choose_audio();
+
+/**
+ * @brief Present a native open-file dialog filtered to image formats and load
+ *        the chosen file via IOManager::load_image().
+ *
+ * Blocks until the user confirms or cancels. Returns nullptr on cancellation,
+ * backend error, or if Portal::System is not initialized.
+ */
+MAYAFLUX_API std::shared_ptr<Buffers::TextureBuffer> choose_image();
+
+/**
+ * @brief Present a native open-file dialog filtered to 3D model formats and load
+ *        the chosen file via IOManager::load_mesh().
+ *
+ * Blocks until the user confirms or cancels. Returns an empty vector on
+ * cancellation, backend error, or if Portal::System is not initialized.
+ */
+MAYAFLUX_API std::vector<std::shared_ptr<Buffers::MeshBuffer>> choose_mesh();
+
+/**
+ * @brief Present a native open-file dialog filtered to 3D model formats and load
+ *        the chosen file as a MeshNetwork via IOManager::load_mesh_network().
+ *
+ * @param resolver Optional texture resolver; null uses the IOManager default.
+ *
+ * Blocks until the user confirms or cancels. Returns nullptr on cancellation,
+ * backend error, or if Portal::System is not initialized.
+ */
+MAYAFLUX_API std::shared_ptr<Nodes::Network::MeshNetwork>
+choose_mesh_network(IO::TextureResolver resolver = nullptr);
+
+// ─────────────────────────────────────────────────────────────────────────
+// Dialog-backed save
+// ─────────────────────────────────────────────────────────────────────────
+
+/**
+ * @brief Present a native save-file dialog and write @p container to the
+ *        chosen path via IOManager::write().
+ *
+ * Blocks until the user confirms or cancels. The encode task is queued
+ * asynchronously; this function returns once the path is chosen and the
+ * task is enqueued. Returns false on cancellation, backend error, or if
+ * Portal::System is not initialized.
+ *
+ * @param container      Source container to encode.
+ * @param suggested_name Filename pre-filled in the dialog name field.
+ */
+MAYAFLUX_API bool save_audio(
+    const std::shared_ptr<Kakshya::SoundStreamContainer>& container,
+    const std::string& suggested_name = "output.wav");
 
 /**
  * @brief Retrieves the global IOManager instance for file loading and buffer management
