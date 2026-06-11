@@ -125,6 +125,13 @@ public:
         bind(state->id, std::move(source));
     }
 
+    template <typename T>
+    void write(std::shared_ptr<MappedState<T>> state,
+        std::function<void(std::span<const float>)> sink)
+    {
+        write(state->id, std::move(sink));
+    }
+
     // =========================================================================
     // Outbound — id overloads (primary implementation)
     // =========================================================================
@@ -187,6 +194,22 @@ public:
      * @param node Constant node updated each frame.
      */
     void write(uint32_t id, std::shared_ptr<Nodes::Constant> node);
+
+    /**
+     * @brief Route element bulk value to a caller-supplied sink each frame.
+     *
+     * When the element's MappedState<T> has a bulk_reader (T is vector<float>
+     * or vector<double>), the full vector is forwarded as a span. For scalar
+     * T the sink receives a single-element span of the scalar value.
+     *
+     * Intended for consumers that operate on coefficient arrays or other
+     * N-element state: FIR/IIR coefficient vectors, Random node bounds,
+     * any function accepting a contiguous float range.
+     *
+     * @param id   Element id.
+     * @param sink Callable invoked each frame with the current value span.
+     */
+    void write(uint32_t id, std::function<void(std::span<const float>)> sink);
 
     // =========================================================================
     // Outbound — MappedState overloads
@@ -273,6 +296,19 @@ public:
             reader = [] { return 0.F; };
         }
 
+        std::function<std::vector<float>()> bulk_reader;
+        if constexpr (std::is_same_v<T, std::vector<float>>) {
+            bulk_reader = [s = state] { return s->value; };
+        } else if constexpr (std::is_same_v<T, std::vector<double>>) {
+            bulk_reader = [s = state] {
+                std::vector<float> out;
+                out.reserve(s->value.size());
+                for (double v : s->value)
+                    out.push_back(static_cast<float>(v));
+                return out;
+            };
+        }
+
         std::function<void(float)> writer;
         if constexpr (std::is_convertible_v<float, T>) {
             writer = [s = state](float v) {
@@ -287,6 +323,7 @@ public:
             .buffer = std::move(buffer),
             .bindings = nullptr,
             .reader = std::move(reader),
+            .bulk_reader = std::move(bulk_reader),
             .writer = std::move(writer),
             .inbound_task = {},
             .outbound_tasks = {},
@@ -417,6 +454,12 @@ public:
             return *this;
         }
 
+        Binding& write(std::function<void(std::span<const float>)> sink)
+        {
+            m_bridge.write(m_id, std::move(sink));
+            return *this;
+        }
+
         void unbind()
         {
             m_bridge.unbind(m_id);
@@ -470,6 +513,7 @@ private:
         std::shared_ptr<Buffers::FormaBuffer> buffer;
         std::shared_ptr<Buffers::FormaBindingsProcessor> bindings;
         std::function<float()> reader; ///< reads current value from MappedState (outbound)
+        std::function<std::vector<float>()> bulk_reader; ///< populated for vector<float>/vector<double> T
         std::function<void(float)> writer; ///< writes new value into MappedState (inbound)
         std::string inbound_task;
         std::vector<std::string> outbound_tasks;

@@ -1,19 +1,13 @@
 #pragma once
 
-#include "AxisRange.hpp"
-
-#include "MayaFlux/Kakshya/NDData/NDData.hpp"
-#include "MayaFlux/Portal/Forma/Primitives/Mapped.hpp"
-
-namespace MayaFlux::Kakshya {
-class PlotContainer;
-}
+#include "PlotSpec.hpp"
 
 namespace MayaFlux::Portal::Forma::Plot {
 
 class WaveformBuilder;
 class ScatterBuilder;
 class BarsBuilder;
+class FilledWaveformBuilder;
 
 // =============================================================================
 // Series
@@ -33,6 +27,30 @@ struct SeriesSpec {
     Graphics::PrimitiveTopology topology;
     std::function<size_t(uint64_t sample_count)> capacity_for;
     std::optional<GeometryFn<float>> background_fn;
+
+    /**
+     * @brief Optional plot/data region in NDC used by plot adornments.
+     *
+     * The current data geometry still maps through its own GeometryFn. This
+     * bounds value is for labels, ticks, legends, and other construction
+     * performed by Plot::place().
+     */
+    std::optional<Kinesis::AABB2D> plot_bounds;
+
+    /**
+     * @brief Explicit text labels to materialize when the plot is placed.
+     */
+    std::vector<LabelSpec> labels;
+
+    /**
+     * @brief Concrete tick label generation specs resolved at done() time.
+     */
+    std::vector<TickLabelsSpec> tick_labels;
+
+    /**
+     * @brief Optional legend to materialize when the plot is placed.
+     */
+    std::optional<LegendSpec> legend;
 };
 
 /**
@@ -86,6 +104,28 @@ public:
         std::vector<Role> roles;
         AxisRange range;
         std::vector<glm::vec3> palette;
+    };
+
+    enum class TickAxis : uint8_t {
+        X,
+        Y,
+        Explicit,
+    };
+
+    /**
+     * @brief Tick request collected fluently and resolved into TickLabelsSpec
+     *        by the terminal builder once axis mappings are known.
+     */
+    struct TickRequest {
+        TickAxis axis { TickAxis::Explicit };
+        std::optional<AxisRange> range;
+        uint32_t count { 2 };
+        TickEdge edge { TickEdge::Bottom };
+        glm::vec4 color { 0.65F, 0.65F, 0.65F, 1.F };
+        uint8_t decimal_places { 2 };
+        float label_h { 0.055F };
+        float label_w { 0.12F };
+        std::string name_prefix { "tick" };
     };
 
     // =========================================================================
@@ -240,12 +280,197 @@ public:
     }
 
     // =========================================================================
+    // Plot adornments
+    // =========================================================================
+
+    /**
+     * @brief Set the logical plot/data bounds used by labels, tick labels,
+     *        legends, and future plot adornments.
+     *
+     * This does not remap the generated data geometry by itself. It defines
+     * the NDC area around which Plot::place() should construct adornments.
+     */
+    Series& bounds(Kinesis::AABB2D bounds)
+    {
+        m_plot_bounds = bounds;
+        return *this;
+    }
+
+    /**
+     * @brief Add a construction-free text label to this plot.
+     */
+    Series& label(
+        std::string text,
+        Kinesis::AABB2D bounds,
+        glm::vec4 color = { 0.85F, 0.85F, 0.85F, 1.F },
+        std::string name = {})
+    {
+        m_labels.push_back(plot_label(std::move(text), bounds, color, std::move(name)));
+        return *this;
+    }
+
+    /**
+     * @brief Add an already-built label spec.
+     */
+    Series& label(LabelSpec spec)
+    {
+        m_labels.push_back(std::move(spec));
+        return *this;
+    }
+
+    /**
+     * @brief Request X-axis tick labels. The effective range is resolved
+     *        from X mappings at done() time unless @p range is supplied.
+     */
+    Series& x_ticks(
+        uint32_t count,
+        TickEdge edge = TickEdge::Bottom,
+        uint8_t decimal_places = 2,
+        glm::vec4 color = { 0.65F, 0.65F, 0.65F, 1.F })
+    {
+        m_ticks.push_back(TickRequest {
+            .axis = TickAxis::X,
+            .range = std::nullopt,
+            .count = count,
+            .edge = edge,
+            .color = color,
+            .decimal_places = decimal_places,
+            .name_prefix = "x_tick",
+        });
+        return *this;
+    }
+
+    /**
+     * @brief Request X-axis tick labels with an explicit display range.
+     */
+    Series& x_ticks(
+        AxisRange range,
+        uint32_t count,
+        TickEdge edge = TickEdge::Bottom,
+        uint8_t decimal_places = 2,
+        glm::vec4 color = { 0.65F, 0.65F, 0.65F, 1.F })
+    {
+        m_ticks.push_back(TickRequest {
+            .axis = TickAxis::X,
+            .range = std::move(range),
+            .count = count,
+            .edge = edge,
+            .color = color,
+            .decimal_places = decimal_places,
+            .name_prefix = "x_tick",
+        });
+        return *this;
+    }
+
+    /**
+     * @brief Request Y-axis tick labels. The effective range is resolved
+     *        from Y mappings at done() time unless @p range is supplied.
+     */
+    Series& y_ticks(
+        uint32_t count,
+        TickEdge edge = TickEdge::Left,
+        uint8_t decimal_places = 2,
+        glm::vec4 color = { 0.65F, 0.65F, 0.65F, 1.F })
+    {
+        m_ticks.push_back(TickRequest {
+            .axis = TickAxis::Y,
+            .range = std::nullopt,
+            .count = count,
+            .edge = edge,
+            .color = color,
+            .decimal_places = decimal_places,
+            .name_prefix = "y_tick",
+        });
+        return *this;
+    }
+
+    /**
+     * @brief Request Y-axis tick labels with an explicit display range.
+     */
+    Series& y_ticks(
+        AxisRange range,
+        uint32_t count,
+        TickEdge edge = TickEdge::Left,
+        uint8_t decimal_places = 2,
+        glm::vec4 color = { 0.65F, 0.65F, 0.65F, 1.F })
+    {
+        m_ticks.push_back(TickRequest {
+            .axis = TickAxis::Y,
+            .range = std::move(range),
+            .count = count,
+            .edge = edge,
+            .color = color,
+            .decimal_places = decimal_places,
+            .name_prefix = "y_tick",
+        });
+        return *this;
+    }
+
+    /**
+     * @brief Request tick labels on an arbitrary edge with an explicit range.
+     */
+    Series& ticks(
+        TickEdge edge,
+        AxisRange range,
+        uint32_t count,
+        uint8_t decimal_places = 2,
+        glm::vec4 color = { 0.65F, 0.65F, 0.65F, 1.F })
+    {
+        m_ticks.push_back(TickRequest {
+            .axis = TickAxis::Explicit,
+            .range = std::move(range),
+            .count = count,
+            .edge = edge,
+            .color = color,
+            .decimal_places = decimal_places,
+            .name_prefix = "tick",
+        });
+        return *this;
+    }
+
+    /**
+     * @brief Request an automatic legend. Entries may be resolved later from
+     *        the PlotContainer by Plot::place().
+     */
+    Series& legend(glm::vec2 origin)
+    {
+        m_legend = LegendSpec {
+            .origin = origin,
+            .entries = {},
+        };
+        return *this;
+    }
+
+    /**
+     * @brief Set a manual legend.
+     */
+    Series& legend(glm::vec2 origin, std::initializer_list<LegendEntry> entries)
+    {
+        LegendSpec spec {
+            .origin = origin,
+            .entries = entries,
+        };
+        m_legend = std::move(spec);
+        return *this;
+    }
+
+    /**
+     * @brief Set a manual legend from a pre-built spec.
+     */
+    Series& legend(LegendSpec spec)
+    {
+        m_legend = std::move(spec);
+        return *this;
+    }
+
+    // =========================================================================
     // Encoding terminals
     // =========================================================================
 
     [[nodiscard]] WaveformBuilder as_waveform() const;
     [[nodiscard]] ScatterBuilder as_scatter() const;
     [[nodiscard]] BarsBuilder as_bars() const;
+    [[nodiscard]] FilledWaveformBuilder as_filled_waveform() const;
 
     // =========================================================================
     // State accessors — used by encoding terminals in .cpp
@@ -259,6 +484,15 @@ public:
     [[nodiscard]] Kinesis::AABB2D background_bounds() const { return m_background_bounds; }
     [[nodiscard]] glm::vec3 background_color() const { return m_background_color; }
 
+    [[nodiscard]] const std::optional<Kinesis::AABB2D>& plot_bounds() const { return m_plot_bounds; }
+    [[nodiscard]] const std::vector<LabelSpec>& labels() const { return m_labels; }
+    [[nodiscard]] const std::optional<LegendSpec>& legend_spec() const { return m_legend; }
+
+    /**
+     * @brief Resolve pending fluent tick requests into concrete tick label specs.
+     */
+    [[nodiscard]] std::vector<TickLabelsSpec> resolved_tick_labels() const;
+
 private:
     std::vector<AxisMapping> m_x;
     std::vector<AxisMapping> m_y;
@@ -267,6 +501,11 @@ private:
     glm::vec3 m_background_color {};
     bool m_has_background {};
     Kinesis::AABB2D m_background_bounds {};
+
+    std::optional<Kinesis::AABB2D> m_plot_bounds;
+    std::vector<LabelSpec> m_labels;
+    std::vector<TickRequest> m_ticks;
+    std::optional<LegendSpec> m_legend;
 };
 
 // =============================================================================
@@ -367,8 +606,51 @@ private:
     Series m_state;
 };
 
+/**
+ * @class FilledWaveformBuilder
+ * @brief Terminal builder for filled waveform encoding (TRIANGLE_STRIP).
+ *
+ * For each Y-series, produces a TRIANGLE_STRIP quad strip between the signal
+ * value and a baseline Y (default: y_range.to_ndc(0), clamped to bounds).
+ * Each sample pair contributes two vertices: one at the signal, one at
+ * the baseline. The strip is continuous within a series; separate series
+ * are separated by degenerate vertices.
+ *
+ * Shares all Y-axis, X-axis, palette, and auto-scale machinery with
+ * WaveformBuilder. Use when the filled area under the signal carries
+ * meaning: envelope display, energy readout, spectral band fill.
+ *
+ * .done() produces a SeriesSpec with TRIANGLE_STRIP topology.
+ */
+class FilledWaveformBuilder {
+public:
+    FilledWaveformBuilder(Series state)
+        : m_state(std::move(state))
+    {
+    }
+
+    /**
+     * @brief Override the baseline Y value in data coordinates.
+     *
+     * Defaults to 0.0 (maps to y_range.to_ndc(0)). Set to the range minimum
+     * to always fill downward, or to the range maximum to always fill upward.
+     */
+    FilledWaveformBuilder& baseline(float y)
+    {
+        m_baseline = y;
+        return *this;
+    }
+
+    [[nodiscard]] SeriesSpec done() const;
+
+private:
+    Series m_state;
+    float m_baseline { 0.F };
+};
+
 inline WaveformBuilder Series::as_waveform() const { return { *this }; }
 inline ScatterBuilder Series::as_scatter() const { return { *this }; }
 inline BarsBuilder Series::as_bars() const { return { *this }; }
+inline FilledWaveformBuilder Series::as_filled_waveform() const { return { *this }; }
 
 } // namespace MayaFlux::Portal::Forma::Plot

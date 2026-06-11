@@ -35,6 +35,65 @@ namespace {
     constexpr uint32_t k_inspect_w = 480;
     constexpr uint32_t k_inspect_h = 900;
 
+    constexpr size_t k_text_label_capacity = static_cast<size_t>(6) * sizeof(Kakshya::MeshVertex);
+    constexpr size_t k_rect_capacity = static_cast<size_t>(4) * sizeof(Kakshya::Vertex);
+
+    void place_plot_adornments(
+        Surface& surface,
+        const Plot::SeriesSpec& spec,
+        uint32_t relate_to)
+    {
+        const auto& win = surface.window();
+
+        for (const auto& label : spec.labels) {
+            auto buf = internal::create_buffer_impl(
+                win,
+                k_text_label_capacity,
+                Graphics::PrimitiveTopology::TRIANGLE_LIST,
+                {},
+                { { "text", nullptr } });
+
+            (void)Plot::place_label(surface, std::move(buf), label, relate_to);
+        }
+
+        for (const auto& ticks : spec.tick_labels) {
+            for (const auto& label : Plot::plot_tick_labels(ticks)) {
+                auto buf = internal::create_buffer_impl(
+                    win,
+                    k_text_label_capacity,
+                    Graphics::PrimitiveTopology::TRIANGLE_LIST,
+                    {},
+                    { { "text", nullptr } });
+
+                (void)Plot::place_label(surface, std::move(buf), label, relate_to);
+            }
+        }
+
+        if (spec.legend) {
+            auto layout = Plot::layout_legend(*spec.legend);
+
+            for (const auto& swatch : layout.swatches) {
+                auto buf = internal::create_buffer_impl(
+                    win,
+                    k_rect_capacity,
+                    Graphics::PrimitiveTopology::TRIANGLE_STRIP);
+
+                (void)Plot::place_rect(surface, std::move(buf), swatch, relate_to);
+            }
+
+            for (const auto& label : layout.labels) {
+                auto buf = internal::create_buffer_impl(
+                    win,
+                    k_text_label_capacity,
+                    Graphics::PrimitiveTopology::TRIANGLE_LIST,
+                    {},
+                    { { "text", nullptr } });
+
+                (void)Plot::place_label(surface, std::move(buf), label, relate_to);
+            }
+        }
+    }
+
 } // namespace
 
 namespace internal {
@@ -210,17 +269,23 @@ plot(
             Graphics::PrimitiveTopology::TRIANGLE_STRIP,
             static_cast<size_t>(4) * Kakshya::VertexLayout::for_meshes().stride_bytes);
 
-        auto bg_id = bg.element.id;
+        const auto bg_id = bg.element.id;
         auto buf = internal::create_buffer_impl(window, spec.capacity_for(N), spec.topology);
-        auto mapped = Plot::place(surface, std::move(buf), std::move(spec), std::move(container));
+        auto mapped = Plot::place(surface, std::move(buf), spec, std::move(container));
         surface.layer().relate(mapped.element.id, bg_id);
         surface.layer().send_to_back(bg_id);
+
+        place_plot_adornments(surface, spec, mapped.element.id);
+
         return { std::move(mapped), std::move(surface) };
     }
 
     auto buf = internal::create_buffer_impl(window, spec.capacity_for(N), spec.topology);
+    auto mapped = Plot::place(surface, std::move(buf), spec, std::move(container));
 
-    return { Plot::place(surface, std::move(buf), std::move(spec), std::move(container)), std::move(surface) };
+    place_plot_adornments(surface, spec, mapped.element.id);
+
+    return { std::move(mapped), std::move(surface) };
 }
 
 // =============================================================================

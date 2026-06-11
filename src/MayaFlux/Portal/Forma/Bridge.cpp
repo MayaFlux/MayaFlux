@@ -159,23 +159,40 @@ void Bridge::write(uint32_t id, std::shared_ptr<Buffers::AudioWriteProcessor> ta
     auto name = make_task_name(id, "audio");
     it->second.outbound_tasks.push_back(name);
 
+    auto bulk = it->second.bulk_reader;
     auto reader = it->second.reader;
 
-    auto routine = [](Vruta::TaskScheduler&,
-                       std::function<float()> r,
-                       std::shared_ptr<Buffers::AudioWriteProcessor> proc)
-        -> Vruta::GraphicsRoutine {
-        auto& p = co_await Kriya::GetGraphicsPromise {};
-        while (!p.should_terminate) {
-            proc->set_data(std::vector<double> { static_cast<double>(r()) });
-            co_await Kriya::FrameDelay { .frames_to_wait = 1 };
-        }
-    };
-
-    m_scheduler.add_task(
-        std::make_shared<Vruta::GraphicsRoutine>(
-            routine(m_scheduler, std::move(reader), std::move(target))),
-        name, false);
+    if (bulk) {
+        auto routine = [](Vruta::TaskScheduler&,
+                           std::function<std::vector<float>()> b,
+                           std::shared_ptr<Buffers::AudioWriteProcessor> proc)
+            -> Vruta::GraphicsRoutine {
+            auto& p = co_await Kriya::GetGraphicsPromise {};
+            while (!p.should_terminate) {
+                proc->set_data(std::span<const float>(b()));
+                co_await Kriya::FrameDelay { .frames_to_wait = 1 };
+            }
+        };
+        m_scheduler.add_task(
+            std::make_shared<Vruta::GraphicsRoutine>(
+                routine(m_scheduler, std::move(bulk), std::move(target))),
+            name, false);
+    } else {
+        auto routine = [](Vruta::TaskScheduler&,
+                           std::function<float()> r,
+                           std::shared_ptr<Buffers::AudioWriteProcessor> proc)
+            -> Vruta::GraphicsRoutine {
+            auto& p = co_await Kriya::GetGraphicsPromise {};
+            while (!p.should_terminate) {
+                proc->set_data(std::vector<double> { static_cast<double>(r()) });
+                co_await Kriya::FrameDelay { .frames_to_wait = 1 };
+            }
+        };
+        m_scheduler.add_task(
+            std::make_shared<Vruta::GraphicsRoutine>(
+                routine(m_scheduler, std::move(reader), std::move(target))),
+            name, false);
+    }
 }
 
 void Bridge::write(uint32_t id, std::shared_ptr<Buffers::DataWriteProcessor> target)
@@ -190,23 +207,40 @@ void Bridge::write(uint32_t id, std::shared_ptr<Buffers::DataWriteProcessor> tar
     auto name = make_task_name(id, "geometry");
     it->second.outbound_tasks.push_back(name);
 
+    auto bulk = it->second.bulk_reader;
     auto reader = it->second.reader;
 
-    auto routine = [](Vruta::TaskScheduler&,
-                       std::function<float()> r,
-                       std::shared_ptr<Buffers::DataWriteProcessor> proc)
-        -> Vruta::GraphicsRoutine {
-        auto& p = co_await Kriya::GetGraphicsPromise {};
-        while (!p.should_terminate) {
-            proc->set_data(std::vector<Kakshya::DataVariant> { Kakshya::DataVariant { std::vector<float> { r() } } });
-            co_await Kriya::FrameDelay { .frames_to_wait = 1 };
-        }
-    };
-
-    m_scheduler.add_task(
-        std::make_shared<Vruta::GraphicsRoutine>(
-            routine(m_scheduler, std::move(reader), std::move(target))),
-        name, false);
+    if (bulk) {
+        auto routine = [](Vruta::TaskScheduler&,
+                           std::function<std::vector<float>()> b,
+                           std::shared_ptr<Buffers::DataWriteProcessor> proc)
+            -> Vruta::GraphicsRoutine {
+            auto& p = co_await Kriya::GetGraphicsPromise {};
+            while (!p.should_terminate) {
+                proc->set_data(Kakshya::DataVariant { b() });
+                co_await Kriya::FrameDelay { .frames_to_wait = 1 };
+            }
+        };
+        m_scheduler.add_task(
+            std::make_shared<Vruta::GraphicsRoutine>(
+                routine(m_scheduler, std::move(bulk), std::move(target))),
+            name, false);
+    } else {
+        auto routine = [](Vruta::TaskScheduler&,
+                           std::function<float()> r,
+                           std::shared_ptr<Buffers::DataWriteProcessor> proc)
+            -> Vruta::GraphicsRoutine {
+            auto& p = co_await Kriya::GetGraphicsPromise {};
+            while (!p.should_terminate) {
+                proc->set_data(std::vector<Kakshya::DataVariant> { Kakshya::DataVariant { std::vector<float> { r() } } });
+                co_await Kriya::FrameDelay { .frames_to_wait = 1 };
+            }
+        };
+        m_scheduler.add_task(
+            std::make_shared<Vruta::GraphicsRoutine>(
+                routine(m_scheduler, std::move(reader), std::move(target))),
+            name, false);
+    }
 }
 
 void Bridge::write(uint32_t id, std::shared_ptr<Nodes::Constant> node)
@@ -238,6 +272,57 @@ void Bridge::write(uint32_t id, std::shared_ptr<Nodes::Constant> node)
         std::make_shared<Vruta::GraphicsRoutine>(
             routine(m_scheduler, std::move(reader), std::move(node))),
         name, false);
+}
+
+void Bridge::write(uint32_t id, std::function<void(std::span<const float>)> sink)
+{
+    auto it = m_records.find(id);
+    if (it == m_records.end()) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::Init,
+            "Bridge::write: unknown element id {}", id);
+        return;
+    }
+
+    auto name = make_task_name(id, "bulk_sink");
+    it->second.outbound_tasks.push_back(name);
+
+    auto bulk = it->second.bulk_reader;
+    auto reader = it->second.reader;
+
+    if (bulk) {
+        auto routine = [](Vruta::TaskScheduler&,
+                           std::function<std::vector<float>()> b,
+                           std::function<void(std::span<const float>)> s)
+            -> Vruta::GraphicsRoutine {
+            auto& p = co_await Kriya::GetGraphicsPromise {};
+            while (!p.should_terminate) {
+                const auto v = b();
+                s(v);
+                co_await Kriya::FrameDelay { .frames_to_wait = 1 };
+            }
+        };
+        m_scheduler.add_task(
+            std::make_shared<Vruta::GraphicsRoutine>(
+                routine(m_scheduler, std::move(bulk), std::move(sink))),
+            name, false);
+    } else {
+        auto routine = [](Vruta::TaskScheduler&,
+                           std::function<float()> r,
+                           std::function<void(std::span<const float>)> s)
+            -> Vruta::GraphicsRoutine {
+            auto& p = co_await Kriya::GetGraphicsPromise {};
+            float val {};
+            while (!p.should_terminate) {
+                val = r();
+                s(std::span<const float> { &val, 1 });
+                co_await Kriya::FrameDelay { .frames_to_wait = 1 };
+            }
+        };
+        m_scheduler.add_task(
+            std::make_shared<Vruta::GraphicsRoutine>(
+                routine(m_scheduler, std::move(reader), std::move(sink))),
+            name, false);
+    }
 }
 
 // =============================================================================

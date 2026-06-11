@@ -15,6 +15,9 @@ class WindowEventSource;
 
 namespace MayaFlux::Portal::Forma {
 
+template <typename T>
+struct MappedState;
+
 /**
  * @class Context
  * @brief Event wiring between a Layer and a window surface.
@@ -41,6 +44,7 @@ public:
     using EnterFn = std::function<void(uint32_t id)>;
     using LeaveFn = std::function<void(uint32_t id)>;
     using ScrollFn = std::function<void(uint32_t id, glm::vec2 ndc, double dx, double dy)>;
+    using KeyFn = std::function<void(uint32_t id)>;
 
     /**
      * @brief Construct and immediately register event coroutines.
@@ -88,6 +92,27 @@ public:
     void on_move(uint32_t id, MoveFn fn);
 
     /**
+     * @brief Called on each mouse-move event while @p btn is held, tracking
+     *        the element where the drag began even when the cursor leaves its bounds.
+     *
+     * Drag tracking begins when the element is first hit (either at initial press
+     * or first drag motion while button is held). Once tracking starts, the callback
+     * continues to fire with the current cursor position until the button is released,
+     * regardless of whether the cursor remains over the element.
+     *
+     * This matches standard UI expectations for sliders, scrollbars, resize handles,
+     * and other controls that must respond continuously during a drag gesture.
+     *
+     * Backed by Kriya::mouse_dragged, which gates on button state natively.
+     *
+     * @param id  Element id to bind to.
+     * @param btn Mouse button that must be held.
+     * @param fn  Callback receiving element id and current NDC cursor position
+     *            (which may be outside the element's bounds during drag).
+     */
+    void on_drag(uint32_t id, IO::MouseButtons btn, MoveFn fn);
+
+    /**
      * @brief Called once when the cursor enters an element's region.
      */
     void on_enter(uint32_t id, EnterFn fn);
@@ -107,6 +132,84 @@ public:
      */
     void unbind(uint32_t id);
 
+    /**
+     * @brief Called when a key is pressed while the element has focus.
+     *
+     * Focus is transferred on mouse press. The callback fires only once per
+     * key press, even if the key is held.
+     *
+     * @param id  Element id to bind to.
+     * @param key The key to listen for.
+     * @param fn  Callback receiving element id.
+     */
+    void on_press(uint32_t id, IO::Keys key, KeyFn fn);
+
+    /**
+     * @brief Called when a key is released while the element has focus.
+     *
+     * @param id  Element id to bind to.
+     * @param key The key to listen for.
+     * @param fn  Callback receiving element id.
+     */
+    void on_release(uint32_t id, IO::Keys key, KeyFn fn);
+
+    /**
+     * @brief Called repeatedly while a key is held and the element has focus.
+     *
+     * Fires on initial press and continues on each repeat tick until the key
+     * is released. Useful for continuous adjustments (arrow key nudging,
+     * value increments) without requiring the user to repeatedly press.
+     *
+     * @param id  Element id to bind to.
+     * @param key The key to listen for.
+     * @param fn  Callback receiving element id, fired on press and each repeat.
+     */
+    void on_held(uint32_t id, IO::Keys key, KeyFn fn);
+
+    /**
+     * @brief Called once when an element gains keyboard focus (via click).
+     */
+    void on_focus_gained(uint32_t id, EnterFn fn);
+
+    /**
+     * @brief Called once when an element loses keyboard focus.
+     */
+    void on_focus_lost(uint32_t id, LeaveFn fn);
+
+    /**
+     * @brief Clear keyboard focus (no element focused).
+     */
+    void clear_focus();
+
+    /**
+     * @brief Get currently focused element, if any.
+     */
+    [[nodiscard]] std::optional<uint32_t> focused() const { return m_focused; }
+
+    /**
+     * @brief Attach key-delta handlers to a Mapped<float> element.
+     *
+     * Binds key handlers that adjust the element's state by a delta on each
+     * press/hold. The element must be focused (via mouse click) for keys to fire.
+     *
+     * @param id          Element id.
+     * @param state       MappedState to adjust.
+     * @param decrease    Key that decreases the value.
+     * @param increase    Key that increases the value.
+     * @param delta       Step size per key event.
+     * @param clamp_min   Minimum clamped value (default 0.0F).
+     * @param clamp_max   Maximum clamped value (default 1.0F).
+     * @return *this for chaining.
+     */
+    Context& key_step(
+        uint32_t id,
+        std::shared_ptr<MappedState<float>> state,
+        IO::Keys decrease,
+        IO::Keys increase,
+        float delta,
+        float clamp_min = 0.0F,
+        float clamp_max = 1.0F);
+
     // =========================================================================
     // State query
     // =========================================================================
@@ -119,11 +222,26 @@ private:
     struct ElementCallbacks {
         std::unordered_map<int, PressFn> press;
         std::unordered_map<int, PressFn> release;
+        std::unordered_map<int, MoveFn> drag;
+        std::unordered_map<int, KeyFn> key_press;
+        std::unordered_map<int, KeyFn> key_release;
+        std::unordered_map<int, KeyFn> key_held;
+
         MoveFn move;
         EnterFn enter;
         LeaveFn leave;
         ScrollFn scroll;
+
+        EnterFn focus_gained;
+        LeaveFn focus_lost;
     };
+
+    struct KeyHandlerState {
+        bool has_press = false;
+        bool has_release = false;
+        bool has_held = false;
+    };
+    std::unordered_map<int, KeyHandlerState> m_registered_keys;
 
     std::shared_ptr<Layer> m_layer;
     std::shared_ptr<Core::Window> m_window;
@@ -142,6 +260,13 @@ private:
     void handle_press(double px, double py, IO::MouseButtons btn);
     void handle_release(double px, double py, IO::MouseButtons btn);
     void handle_scroll(double dx, double dy);
+    void handle_drag(double px, double py, IO::MouseButtons btn);
+    void handle_key_press(IO::Keys key);
+    void handle_key_release(IO::Keys key);
+    void handle_key_held(IO::Keys key);
+
+    std::optional<uint32_t> m_dragging[3];
+    std::optional<uint32_t> m_focused;
 };
 
 } // namespace MayaFlux::Portal::Forma

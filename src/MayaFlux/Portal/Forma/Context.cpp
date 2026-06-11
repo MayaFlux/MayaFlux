@@ -1,5 +1,7 @@
 #include "Context.hpp"
 
+#include "Primitives/Mapped.hpp"
+
 #include "MayaFlux/Core/Backends/Windowing/Window.hpp"
 #include "MayaFlux/Kriya/InputEvents.hpp"
 #include "MayaFlux/Vruta/EventManager.hpp"
@@ -43,6 +45,11 @@ void Context::on_move(uint32_t id, MoveFn fn)
     m_callbacks[id].move = std::move(fn);
 }
 
+void Context::on_drag(uint32_t id, IO::MouseButtons btn, MoveFn fn)
+{
+    m_callbacks[id].drag[static_cast<int>(btn)] = std::move(fn);
+}
+
 void Context::on_enter(uint32_t id, EnterFn fn)
 {
     m_callbacks[id].enter = std::move(fn);
@@ -58,8 +65,83 @@ void Context::on_scroll(uint32_t id, ScrollFn fn)
     m_callbacks[id].scroll = std::move(fn);
 }
 
+void Context::on_press(uint32_t id, IO::Keys key, KeyFn fn)
+{
+    const int key_code = static_cast<int>(key);
+    m_callbacks[id].key_press[key_code] = std::move(fn);
+
+    if (!m_registered_keys[key_code].has_press) {
+        const std::string key_name = std::to_string(key_code);
+        m_event_manager.add_event(
+            std::make_shared<Vruta::Event>(
+                Kriya::key_pressed(m_window, key,
+                    [this, key]() { handle_key_press(key); })),
+            m_name + "_key_press_" + key_name);
+        m_registered_keys[key_code].has_press = true;
+    }
+}
+
+void Context::on_release(uint32_t id, IO::Keys key, KeyFn fn)
+{
+    const int key_code = static_cast<int>(key);
+    m_callbacks[id].key_release[key_code] = std::move(fn);
+
+    if (!m_registered_keys[key_code].has_release) {
+        const std::string key_name = std::to_string(key_code);
+        m_event_manager.add_event(
+            std::make_shared<Vruta::Event>(
+                Kriya::key_released(m_window, key,
+                    [this, key]() { handle_key_release(key); })),
+            m_name + "_key_release_" + key_name);
+        m_registered_keys[key_code].has_release = true;
+    }
+}
+
+void Context::on_held(uint32_t id, IO::Keys key, KeyFn fn)
+{
+    const int key_code = static_cast<int>(key);
+    m_callbacks[id].key_held[key_code] = std::move(fn);
+
+    if (!m_registered_keys[key_code].has_held) {
+        const std::string key_name = std::to_string(key_code);
+        m_event_manager.add_event(
+            std::make_shared<Vruta::Event>(
+                Kriya::key_held(m_window, key,
+                    [this, key]() { handle_key_held(key); })),
+            m_name + "_key_held_" + key_name);
+        m_registered_keys[key_code].has_held = true;
+    }
+}
+
+void Context::on_focus_gained(uint32_t id, EnterFn fn)
+{
+    m_callbacks[id].focus_gained = std::move(fn);
+}
+
+void Context::on_focus_lost(uint32_t id, LeaveFn fn)
+{
+    m_callbacks[id].focus_lost = std::move(fn);
+}
+
+void Context::clear_focus()
+{
+    if (m_focused) {
+        auto it = m_callbacks.find(*m_focused);
+        if (it != m_callbacks.end() && it->second.focus_lost)
+            it->second.focus_lost(*m_focused);
+        m_focused = std::nullopt;
+    }
+}
+
 void Context::unbind(uint32_t id)
 {
+    if (m_focused && *m_focused == id) {
+        auto it = m_callbacks.find(id);
+        if (it != m_callbacks.end() && it->second.focus_lost)
+            it->second.focus_lost(id);
+        m_focused = std::nullopt;
+    }
+
     m_callbacks.erase(id);
 }
 
@@ -67,6 +149,26 @@ const Vruta::WindowEventSource& Context::event_source() const
 {
     return m_window->get_event_source();
 }
+
+Context& Context::key_step(
+    uint32_t id,
+    std::shared_ptr<MappedState<float>> state,
+    IO::Keys decrease,
+    IO::Keys increase,
+    float delta,
+    float clamp_min,
+    float clamp_max)
+{
+    on_held(id, decrease, [state, delta, clamp_min, clamp_max](uint32_t) {
+        state->write(std::clamp(state->value - delta, clamp_min, clamp_max));
+    });
+
+    on_held(id, increase, [state, delta, clamp_min, clamp_max](uint32_t) {
+        state->write(std::clamp(state->value + delta, clamp_min, clamp_max));
+    });
+
+    return *this;
+} 
 
 // =============================================================================
 // Handler registration / cancellation
@@ -106,6 +208,18 @@ void Context::register_handlers()
 
     m_event_manager.add_event(
         std::make_shared<Vruta::Event>(
+            Kriya::mouse_dragged(m_window, IO::MouseButtons::Left,
+                [this](double px, double py) { handle_drag(px, py, IO::MouseButtons::Left); })),
+        m_name + "_drag_left");
+
+    m_event_manager.add_event(
+        std::make_shared<Vruta::Event>(
+            Kriya::mouse_dragged(m_window, IO::MouseButtons::Right,
+                [this](double px, double py) { handle_drag(px, py, IO::MouseButtons::Right); })),
+        m_name + "_drag_right");
+
+    m_event_manager.add_event(
+        std::make_shared<Vruta::Event>(
             Kriya::mouse_scrolled(m_window,
                 [this](double dx, double dy) { handle_scroll(dx, dy); })),
         m_name + "_scroll");
@@ -117,8 +231,19 @@ void Context::cancel_handlers()
              "_move",
              "_press_left", "_release_left",
              "_press_right", "_release_right",
-             "_scroll" }) {
+             "_scroll",
+             "_drag_left", "_drag_right" }) {
         m_event_manager.cancel_event(m_name + suffix);
+    }
+
+    for (const auto& [key_code, handlers] : m_registered_keys) {
+        const std::string key_name = std::to_string(key_code);
+        if (handlers.has_press)
+            m_event_manager.cancel_event(m_name + "_key_press_" + key_name);
+        if (handlers.has_release)
+            m_event_manager.cancel_event(m_name + "_key_release_" + key_name);
+        if (handlers.has_held)
+            m_event_manager.cancel_event(m_name + "_key_held_" + key_name);
     }
 }
 
@@ -165,20 +290,41 @@ void Context::handle_press(double px, double py, IO::MouseButtons btn)
 {
     const glm::vec2 ndc = to_ndc(px, py);
     const auto hit = m_layer->hit_test(ndc);
-    if (!hit)
-        return;
 
-    auto it = m_callbacks.find(*hit);
-    if (it == m_callbacks.end())
-        return;
+    const int btn_idx = static_cast<int>(btn);
 
-    auto btn_it = it->second.press.find(static_cast<int>(btn));
-    if (btn_it != it->second.press.end() && btn_it->second)
-        btn_it->second(*hit, ndc);
+    if (hit != m_focused) {
+        if (m_focused) {
+            auto it = m_callbacks.find(*m_focused);
+            if (it != m_callbacks.end() && it->second.focus_lost)
+                it->second.focus_lost(*m_focused);
+        }
+
+        m_focused = hit;
+
+        if (hit) {
+            auto it = m_callbacks.find(*hit);
+            if (it != m_callbacks.end() && it->second.focus_gained)
+                it->second.focus_gained(*hit);
+        }
+    }
+
+    if (hit && m_callbacks.contains(*hit) && m_callbacks[*hit].drag.contains(btn_idx)) {
+        m_dragging[btn_idx] = hit;
+    }
+
+    if (hit) {
+        auto it = m_callbacks.find(*hit);
+        if (it != m_callbacks.end() && it->second.press.count(btn_idx))
+            it->second.press[btn_idx](*hit, ndc);
+    }
 }
 
 void Context::handle_release(double px, double py, IO::MouseButtons btn)
 {
+    const int btn_idx = static_cast<int>(btn);
+    m_dragging[btn_idx] = std::nullopt;
+
     const glm::vec2 ndc = to_ndc(px, py);
     const auto hit = m_layer->hit_test(ndc);
     if (!hit)
@@ -193,6 +339,24 @@ void Context::handle_release(double px, double py, IO::MouseButtons btn)
         btn_it->second(*hit, ndc);
 }
 
+void Context::handle_drag(double px, double py, IO::MouseButtons btn)
+{
+    const glm::vec2 ndc = to_ndc(px, py);
+    const int btn_idx = static_cast<int>(btn);
+
+    if (!m_dragging[btn_idx]) {
+        const auto hit = m_layer->hit_test(ndc);
+        if (hit)
+            m_dragging[btn_idx] = hit;
+        else
+            return;
+    }
+
+    auto it = m_callbacks.find(*m_dragging[btn_idx]);
+    if (it != m_callbacks.end() && it->second.drag.count(btn_idx))
+        it->second.drag[btn_idx](*m_dragging[btn_idx], ndc);
+}
+
 void Context::handle_scroll(double dx, double dy)
 {
     if (!m_hovered)
@@ -204,6 +368,55 @@ void Context::handle_scroll(double dx, double dy)
 
     const auto [px, py] = m_window->get_event_source().get_mouse_position();
     it->second.scroll(*m_hovered, to_ndc(px, py), dx, dy);
+}
+
+// =============================================================================
+// Keyboard event dispatch
+// =============================================================================
+
+void Context::handle_key_press(IO::Keys key)
+{
+    if (!m_focused)
+        return;
+
+    auto it = m_callbacks.find(*m_focused);
+    if (it == m_callbacks.end())
+        return;
+
+    const int key_code = static_cast<int>(key);
+    auto key_it = it->second.key_press.find(key_code);
+    if (key_it != it->second.key_press.end())
+        key_it->second(*m_focused);
+}
+
+void Context::handle_key_release(IO::Keys key)
+{
+    if (!m_focused)
+        return;
+
+    auto it = m_callbacks.find(*m_focused);
+    if (it == m_callbacks.end())
+        return;
+
+    const int key_code = static_cast<int>(key);
+    auto key_it = it->second.key_release.find(key_code);
+    if (key_it != it->second.key_release.end())
+        key_it->second(*m_focused);
+}
+
+void Context::handle_key_held(IO::Keys key)
+{
+    if (!m_focused)
+        return;
+
+    auto it = m_callbacks.find(*m_focused);
+    if (it == m_callbacks.end())
+        return;
+
+    const int key_code = static_cast<int>(key);
+    auto key_it = it->second.key_held.find(key_code);
+    if (key_it != it->second.key_held.end())
+        key_it->second(*m_focused);
 }
 
 } // namespace MayaFlux::Portal::Forma

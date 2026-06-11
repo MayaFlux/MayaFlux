@@ -210,13 +210,10 @@ Element* Layer::get(uint32_t id)
 // Internal
 // =============================================================================
 
-glm::vec2 Layer::to_ndc(
-    double px, double py, uint32_t win_w, uint32_t win_h) noexcept
+glm::vec2 Layer::to_ndc(double px, double py, uint32_t w, uint32_t h) noexcept
 {
-    return {
-        (static_cast<float>(px) / static_cast<float>(win_w)) * 2.0F - 1.0F,
-        1.0F - (static_cast<float>(py) / static_cast<float>(win_h)) * 2.0F
-    };
+    auto ndc3 = Kinesis::to_ndc(px, py, w, h);
+    return { ndc3.x, ndc3.y };
 }
 
 bool Layer::test_element(const Element& el, glm::vec2 ndc) noexcept

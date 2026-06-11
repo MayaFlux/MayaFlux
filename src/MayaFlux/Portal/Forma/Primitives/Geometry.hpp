@@ -2,7 +2,9 @@
 
 #include "Mapped.hpp"
 
-#include "MayaFlux/Kinesis/GeometryPrimitives.hpp"
+namespace MayaFlux::Portal::Forma {
+class Context;
+}
 
 namespace MayaFlux::Portal::Forma::Geometry {
 
@@ -78,31 +80,37 @@ void write_verts(std::vector<uint8_t>& out, const V& v)
  * @param track_color Track quad color.
  * @param handle_color Handle quad color.
  */
-[[nodiscard]] inline GeometryFn<float> horizontal_fader(
+[[nodiscard]] GeometryFn<float> horizontal_fader(
     Kinesis::AABB2D bounds,
     float handle_w,
     glm::vec3 track_color = glm::vec3(0.3F),
-    glm::vec3 handle_color = glm::vec3(0.9F))
-{
-    return [bounds, handle_w, track_color, handle_color](
-               float v, std::vector<uint8_t>& out, Element& el) {
-        float x = bounds.min.x + v * (bounds.width() - handle_w);
-        float yt = bounds.min.y + bounds.height() * 0.35F;
-        float yb = bounds.min.y + bounds.height() * 0.65F;
+    glm::vec3 handle_color = glm::vec3(0.9F));
 
-        Kinesis::AABB2D track { .min = glm::vec2(bounds.min.x, yt), .max = glm::vec2(bounds.max.x, yb) };
-        Kinesis::AABB2D handle { .min = glm::vec2(x, bounds.min.y), .max = glm::vec2(x + handle_w, bounds.max.y) };
+// =============================================================================
+// Vertical fader
+//
+// Symmetric counterpart to horizontal_fader. Value in [0, 1] moves a handle
+// quad upward along a track quad.
+//
+// Track: thin vertical band through the center of bounds.
+// Handle: small square at y = bounds.min.y + value * (bounds.height() - handle_h).
+//
+// Hit region follows the handle, updated on every sync().
+// Topology: TRIANGLE_STRIP (two quad pairs via to_mesh_vertices).
+// =============================================================================
 
-        auto verts = Kakshya::to_mesh_vertices(Kinesis::filled_rect(track, track_color));
-        auto herts = Kakshya::to_mesh_vertices(Kinesis::filled_rect(handle, handle_color));
-        verts.insert(verts.end(), herts.begin(), herts.end());
-
-        write_verts(out, verts);
-
-        el.bounds_hint = handle;
-        el.contains = {};
-    };
-}
+/**
+ * @brief Geometry function for a vertical fader in NDC space.
+ * @param bounds       Full extent of the fader in NDC.
+ * @param handle_h     Handle height in NDC units.
+ * @param track_color  Track quad color.
+ * @param handle_color Handle quad color.
+ */
+[[nodiscard]] GeometryFn<float> vertical_fader(
+    Kinesis::AABB2D bounds,
+    float handle_h,
+    glm::vec3 track_color = glm::vec3(0.3F),
+    glm::vec3 handle_color = glm::vec3(0.9F));
 
 // =============================================================================
 // Radial / arc
@@ -120,30 +128,12 @@ void write_verts(std::vector<uint8_t>& out, const V& v)
  * @param angle_end   End angle in radians (value = 1).
  * @param color       Line color.
  */
-[[nodiscard]] inline GeometryFn<float> radial(
+[[nodiscard]] GeometryFn<float> radial(
     glm::vec2 center,
     float radius,
     float angle_start,
     float angle_end,
-    glm::vec3 color = glm::vec3(0.9F))
-{
-    return [center, radius, angle_start, angle_end, color](
-               float v, std::vector<uint8_t>& out, Element& el) {
-        float angle = angle_start + v * (angle_end - angle_start);
-        glm::vec2 tip = center + radius * glm::vec2(std::cos(angle), std::sin(angle));
-
-        using V = Kakshya::LineVertex;
-        std::vector<V> verts = {
-            { .position = { center.x, center.y, 0 }, .color = color },
-            { .position = { tip.x, tip.y, 0 }, .color = color },
-        };
-
-        write_verts(out, verts);
-
-        el.bounds_hint = Kinesis::AABB2D::from_ndc(center, glm::vec2(radius));
-        el.contains = Kinesis::circular_bounds(center, radius);
-    };
-}
+    glm::vec3 color = glm::vec3(0.9F));
 
 // =============================================================================
 // Point
@@ -164,21 +154,10 @@ void write_verts(std::vector<uint8_t>& out, const V& v)
  * @param size       Point size in pixels.
  * @param hit_radius Hit region radius in NDC units.
  */
-[[nodiscard]] inline GeometryFn<glm::vec2> point(
+[[nodiscard]] GeometryFn<glm::vec2> point(
     glm::vec3 color = glm::vec3(1.0F),
     float size = 10.0F,
-    float hit_radius = 0.04F)
-{
-    return [color, size, hit_radius](glm::vec2 pos, std::vector<uint8_t>& out, Element& el) {
-        write_verts(out, Kakshya::PointVertex {
-                             .position = { pos.x, pos.y, 0.0F },
-                             .color = color,
-                             .size = size,
-                         });
-        el.bounds_hint = Kinesis::AABB2D::from_ndc(pos, glm::vec2(hit_radius));
-        el.contains = Kinesis::circular_bounds(pos, hit_radius);
-    };
-}
+    float hit_radius = 0.04F);
 
 // =============================================================================
 // 2D position picker
@@ -193,31 +172,203 @@ void write_verts(std::vector<uint8_t>& out, const V& v)
  * @param color  Point color.
  * @param size   Point size in pixels.
  */
-[[nodiscard]] inline GeometryFn<glm::vec2> position_picker(
+[[nodiscard]] GeometryFn<glm::vec2> position_picker(
     Kinesis::AABB2D bounds,
     glm::vec3 color = glm::vec3(0.9F),
-    float size = 8.0F)
-{
-    return [bounds, color, size](
-               glm::vec2 v, std::vector<uint8_t>& out, Element& el) {
-        float x = bounds.min.x + v.x * bounds.width();
-        float y = bounds.min.y + v.y * bounds.height();
+    float size = 8.0F);
 
-        using V = Kakshya::PointVertex;
-        std::vector<V> verts = {
-            { .position = { x, y, 0 }, .color = color, .size = size },
-        };
+// =============================================================================
+// Stroke slider
+//
+// Value in [0, 1] positions a handle point along a user-supplied polyline.
+// Renders two layers: the full path as a LINE_LIST in track_color, a
+// highlighted prefix segment from path start to the handle position in
+// fill_color, and a PointVertex handle on a caller-supplied secondary buffer.
+//
+// The secondary buffer must be a POINT_LIST FormaBuffer registered with the
+// same BufferManager and window before this function is called. The caller
+// adds it as a separate Element and relates it to the path element via
+// Layer::relate_to so removal and visibility cascade.
+//
+// Hit region: stroke_bounds over the full path at half_thickness.
+// bounds_hint: tight AABB enclosing all path points.
+//
+// Topology for the path buffer: LINE_LIST.
+// Topology for the handle buffer: POINT_LIST.
+// =============================================================================
 
-        write_verts(out, verts);
+/**
+ * @brief Geometry function for a value scrubber along an arbitrary polyline.
+ *
+ * Value in [0, 1] maps to arc-length position along @p path. The full path
+ * is rendered as a LINE_LIST in @p track_color; the prefix from the path
+ * start to the handle position is rendered in @p fill_color. The handle
+ * itself is a PointVertex submitted to @p handle_buf each sync.
+ *
+ * @param path           Ordered polyline vertices in NDC. Copied into closure.
+ * @param handle_buf     POINT_LIST FormaBuffer for the handle point.
+ *                       Must be registered and have setup_rendering called.
+ * @param half_thickness Hit region half-thickness in NDC units.
+ * @param track_color    Color of the full path.
+ * @param fill_color     Color of the prefix segment up to the handle.
+ * @param handle_color   Color of the handle point.
+ * @param handle_size    Handle point size in pixels.
+ */
+[[nodiscard]] GeometryFn<float> stroke_slider(
+    std::span<const glm::vec2> path,
+    std::shared_ptr<Buffers::FormaBuffer> handle_buf,
+    float half_thickness = 0.02F,
+    glm::vec3 track_color = glm::vec3(0.3F),
+    glm::vec3 fill_color = glm::vec3(0.2F, 0.6F, 1.0F),
+    glm::vec3 handle_color = glm::vec3(0.95F),
+    float handle_size = 10.0F);
 
-        el.bounds_hint = bounds;
-        el.contains = Kinesis::polygon_bounds(std::span<const glm::vec2> {
-            std::array<glm::vec2, 4> {
-                bounds.min,
-                glm::vec2(bounds.max.x, bounds.min.y),
-                bounds.max,
-                glm::vec2(bounds.min.x, bounds.max.y) } });
-    };
-}
+// =============================================================================
+// Toggle
+//
+// Value type: bool. Renders a filled rect in one of two colors.
+// The geometry function is purely visual — it carries no interaction.
+// The caller wires on_press to flip state->value:
+//
+//   surface.ctx().on_press(el.element.id, IO::MouseButtons::Left,
+//       [state = el.state](uint32_t, glm::vec2) {
+//           state->write(!state->value);
+//       });
+//
+// Topology: TRIANGLE_STRIP (4 MeshVertex via to_mesh_vertices).
+// =============================================================================
+
+/**
+ * @brief Geometry function for a boolean toggle in NDC space.
+ *
+ * Renders @p region as a filled rect in @p color_off or @p color_on based
+ * on the current bool value. Interaction is the caller's responsibility.
+ *
+ * @param region    NDC bounds of the toggle.
+ * @param color_off Fill color when false.
+ * @param color_on  Fill color when true.
+ */
+[[nodiscard]] GeometryFn<bool> toggle(
+    Kinesis::AABB2D region,
+    glm::vec3 color_off = glm::vec3(0.25F),
+    glm::vec3 color_on = glm::vec3(0.2F, 0.7F, 0.4F));
+
+// =============================================================================
+// Level meter
+//
+// Value type: float in [0, 1]. Renders a filled bar from the origin edge of
+// bounds proportional to the value, with the remainder as a second color.
+// No handle, no hit region. Suitable for audio level, progress, any scalar readout.
+//
+// Orientation:
+//   horizontal = true  - bar grows left to right
+//   horizontal = false - bar grows bottom to top
+//
+// Topology: TRIANGLE_STRIP (two quad pairs via to_mesh_vertices).
+// =============================================================================
+
+/**
+ * @brief Geometry function for a level meter in NDC space.
+ *
+ * No interaction. Drive from a node via bridge().at(el.state).bind(node).
+ *
+ * @param bounds      Full extent of the meter in NDC.
+ * @param horizontal  True for left-to-right fill, false for bottom-to-top.
+ * @param fill_color  Color of the active (filled) portion.
+ * @param track_color Color of the inactive remainder.
+ */
+[[nodiscard]] GeometryFn<float> level_meter(
+    Kinesis::AABB2D bounds,
+    bool horizontal = true,
+    glm::vec3 fill_color = glm::vec3(0.2F, 0.7F, 0.3F),
+    glm::vec3 track_color = glm::vec3(0.15F));
+
+// =============================================================================
+// Crosshair
+//
+// Value type: glm::vec2 (NDC position). Renders two LINE_LIST segments —
+// horizontal and vertical — crossing at the value position.
+// Hit region: circle centered on the position.
+//
+// Pairs naturally with position_picker sharing the same MappedState<glm::vec2>.
+// Topology: LINE_LIST (4 LineVertex).
+// =============================================================================
+
+/**
+ * @brief Geometry function for a crosshair indicator in NDC space.
+ *
+ * @param arm_len    Half-length of each arm in NDC units.
+ * @param color      Line color.
+ * @param thickness  Line thickness (maps to LineVertex::thickness).
+ * @param hit_radius Hit region radius in NDC units.
+ *
+ * @note Pass @c PrimitiveTopology::LINE_LIST explicitly to create_element —
+ *       the default TRIANGLE_STRIP will misinterpret the 4 vertices.
+ */
+[[nodiscard]] GeometryFn<glm::vec2> crosshair(
+    float arm_len = 0.04F,
+    glm::vec3 color = glm::vec3(0.9F),
+    float thickness = 1.F,
+    float hit_radius = 0.05F);
+
+// =============================================================================
+// Drawable canvas
+//
+// value is vector<float> of N samples in [0, 1] mapped to the Y axis.
+// X positions are distributed evenly across bounds.
+// Renders as LINE_LIST: N-1 segments connecting adjacent samples.
+//
+// on_drag callback pattern:
+//   ctx->on_drag(el.element.id, IO::MouseButtons::Left,
+//       [&el, bounds](uint32_t, glm::vec2 ndc) {
+//           auto& v = el.state->value;
+//           const float t = (ndc.x - bounds.min.x) / bounds.width();
+//           const size_t i = static_cast<size_t>(
+//               std::clamp(t, 0.F, 1.F) * (v.size() - 1));
+//           const float a = (ndc.y - bounds.min.y) / bounds.height();
+//           v[i] = std::clamp(a, 0.F, 1.F);
+//           ++el.state->version;
+//       });
+//
+// For sparse-sample prevention at high drag speed, interpolate between the
+// previous and current index before calling state->write().
+//
+// Topology: LINE_LIST.
+// =============================================================================
+
+/**
+ * @brief Geometry function for a drawable curve canvas in NDC space.
+ *
+ * Renders the sample vector as a LINE_LIST polyline. Each adjacent sample
+ * pair becomes one segment. The hit region covers the full canvas bounds.
+ *
+ * @param bounds      Canvas extent in NDC.
+ * @param color       Line color.
+ * @param thickness   LineVertex thickness value.
+ */
+[[nodiscard]] GeometryFn<std::vector<float>> drawable_canvas(
+    Kinesis::AABB2D bounds,
+    glm::vec3 color = glm::vec3(0.8F),
+    float thickness = 1.5F);
+
+/**
+ * @brief Wire drag interaction for a drawable canvas element.
+ *
+ * Registers a left-button drag callback on @p ctx that maps NDC cursor
+ * position to a sample index and amplitude, writes into @p state, and
+ * increments the version. Linear interpolation fills the range between the
+ * previously touched index and the current one, preventing sparse samples
+ * under fast drag.
+ *
+ * @param ctx     Context owning the element.
+ * @param id      Element id from the Mapped.
+ * @param state   MappedState<vector<float>> to write into.
+ * @param bounds  Canvas NDC bounds — must match those passed to drawable_canvas().
+ */
+void wire_canvas_drag(
+    Context& ctx,
+    uint32_t id,
+    std::shared_ptr<MappedState<std::vector<float>>> state,
+    Kinesis::AABB2D bounds);
 
 } // namespace MayaFlux::Portal::Forma::Geometry
