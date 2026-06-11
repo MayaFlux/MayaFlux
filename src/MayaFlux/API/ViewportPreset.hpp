@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Kinesis/NavigationMappings.hpp"
 #include "MayaFlux/Kinesis/NavigationState.hpp"
 
 namespace MayaFlux::Buffers {
@@ -77,6 +78,46 @@ MAYAFLUX_API void bind_viewport_preset(
     const std::shared_ptr<Core::Window>& window,
     ViewportPresetMode mode = ViewportPresetMode::Fly,
     const ViewportPresetConfig& config = {},
+    const std::string& name = "default");
+
+/**
+ * @brief Bind the fly navigation controller to a window and render processor.
+ *
+ * Registers event handlers under the prefix "vp_<name>_". Key assignments
+ * default to WASD/QE translation with KP ortho snaps; pass a FlyKeyMap to
+ * override any or all bindings. Ortho snap slots set to std::nullopt are
+ * silently skipped.
+ *
+ * @param window     Window supplying input events
+ * @param processor  RenderProcessor that receives the ViewTransform source
+ * @param config     Camera/motion tuning parameters
+ * @param key_map    Key assignments; defaults to WASD/QE + KP snaps
+ * @param name       Unique prefix for registered events; must be unique per window
+ */
+MAYAFLUX_API void bind_fly_preset(
+    const std::shared_ptr<Core::Window>& window,
+    const std::shared_ptr<Buffers::RenderProcessor>& processor,
+    const ViewportPresetConfig& config = {},
+    const Kinesis::FlyKeyMap& key_map = {},
+    const std::string& name = "default");
+
+/**
+ * @brief Bind the fly navigation controller to all RenderProcessors currently
+ *        registered against a window.
+ *
+ * Calls bind_fly_preset(window, rp, config, key_map, name) for every buffer
+ * registered with the window at call time that returns a non-null RenderProcessor.
+ * Buffers registered after this call are not covered.
+ *
+ * @param window   Window supplying input events
+ * @param config   Camera/motion tuning parameters
+ * @param key_map  Key assignments; defaults to WASD/QE + KP snaps
+ * @param name     Preset name forwarded to bind_fly_preset()
+ */
+MAYAFLUX_API void bind_fly_preset(
+    const std::shared_ptr<Core::Window>& window,
+    const ViewportPresetConfig& config = {},
+    const Kinesis::FlyKeyMap& key_map = {},
     const std::string& name = "default");
 
 /**
