@@ -3,6 +3,7 @@
 #include "MayaFlux/Kinesis/NavigationMappings.hpp"
 #include "MayaFlux/Kinesis/NavigationState.hpp"
 #include "MayaFlux/Kinesis/OrbitState.hpp"
+#include "MayaFlux/Kinesis/PanZoom2DState.hpp"
 
 namespace MayaFlux::Buffers {
 class RenderProcessor;
@@ -29,7 +30,7 @@ enum class ViewportPresetMode : uint8_t {
     Fly, ///< First-person fly: WASD/QE translate, RMB drag yaw/pitch, scroll dolly, KP ortho snaps
     Orbit, ///< Tumble around a focal point (not yet implemented)
     // Trackball, ///< Virtual trackball (not yet implemented)
-    // PanZoom2D, ///< Orthographic 2D pan and zoom (not yet implemented)
+    PanZoom2D, ///< Orthographic 2D pan and zoom (not yet implemented)
 };
 
 /**
@@ -155,6 +156,40 @@ MAYAFLUX_API void bind_orbit_preset(
     const std::shared_ptr<Core::Window>& window,
     const Kinesis::OrbitConfig& config = {},
     const Kinesis::OrbitKeyMap& key_map = {},
+    const std::string& name = "default");
+
+/**
+ * @brief Bind the 2D pan/zoom controller to a window and render processor.
+ *
+ * Drag pans the view; scroll zooms by scaling the orthographic half-height.
+ * View matrix is always identity; only the orthographic projection changes.
+ *
+ * @param window     Window supplying input events
+ * @param processor  RenderProcessor that receives the ViewTransform source
+ * @param config     Pan/zoom tuning parameters
+ * @param key_map    Input assignments; defaults to MMB drag
+ * @param name       Unique prefix for registered events; must be unique per window
+ */
+MAYAFLUX_API void bind_pan_zoom_preset(
+    const std::shared_ptr<Core::Window>& window,
+    const std::shared_ptr<Buffers::RenderProcessor>& processor,
+    const Kinesis::PanZoom2DConfig& config = {},
+    const Kinesis::PanZoom2DKeyMap& key_map = {},
+    const std::string& name = "default");
+
+/**
+ * @brief Bind the 2D pan/zoom controller to all RenderProcessors currently
+ *        registered against a window.
+ *
+ * @param window   Window supplying input events
+ * @param config   Pan/zoom tuning parameters
+ * @param key_map  Input assignments
+ * @param name     Preset name forwarded to the per-processor overload
+ */
+MAYAFLUX_API void bind_pan_zoom_preset(
+    const std::shared_ptr<Core::Window>& window,
+    const Kinesis::PanZoom2DConfig& config = {},
+    const Kinesis::PanZoom2DKeyMap& key_map = {},
     const std::string& name = "default");
 
 /**

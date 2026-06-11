@@ -44,4 +44,15 @@ struct OrbitKeyMap {
     std::optional<IO::Keys> ortho_flip { IO::Keys::KP9 };
 };
 
+/**
+ * @struct PanZoom2DKeyMap
+ * @brief Input assignments for the PanZoom2D navigation preset.
+ *
+ * Only the drag button is configurable. There are no keyboard axes or
+ * ortho snaps in a 2D orthographic controller.
+ */
+struct PanZoom2DKeyMap {
+    IO::MouseButtons drag_button { IO::MouseButtons::Middle }; ///< Button held to pan
+};
+
 } // namespace MayaFlux::Kinesis

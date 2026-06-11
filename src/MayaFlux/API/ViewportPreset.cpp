@@ -266,4 +266,78 @@ void unbind_viewport_preset(
     }
 }
 
+void bind_pan_zoom_preset(
+    const std::shared_ptr<Core::Window>& window,
+    const std::shared_ptr<Buffers::RenderProcessor>& processor,
+    const Kinesis::PanZoom2DConfig& config,
+    const Kinesis::PanZoom2DKeyMap& key_map,
+    const std::string& name)
+{
+    auto& record = s_registry[make_key(window, name)];
+    record.saved_config = window->get_input_config();
+    record.registered_events.clear();
+
+    auto st = std::make_shared<Kinesis::PanZoom2DState>(Kinesis::make_pan_zoom_state(config));
+
+    on_mouse_pressed(window, key_map.drag_button, [st](double /*x*/, double /*y*/) {
+        st->drag_held    = true;
+        st->first_mouse  = true; }, event_name(name, "drag_dn"));
+
+    on_mouse_released(window, key_map.drag_button, [st](double /*x*/, double /*y*/) { st->drag_held = false; }, event_name(name, "drag_up"));
+
+    on_mouse_move(window, [st, window_weak = std::weak_ptr<Core::Window>(window)](double x, double y) {
+        if (!st->drag_held) {
+            st->first_mouse = true;
+            return;
+        }
+        if (st->first_mouse) {
+            st->last_x      = x;
+            st->last_y      = y;
+            st->first_mouse = false;
+            return;
+        }
+        const float dx = static_cast<float>(x - st->last_x);
+        const float dy = static_cast<float>(y - st->last_y);
+        st->last_x = x;
+        st->last_y = y;
+
+        auto win = window_weak.lock();
+        if (!win)
+            return;
+        const auto& ws = win->get_state();
+        if (ws.current_width > 0 && ws.current_height > 0) {
+            Kinesis::apply_pan_zoom_pan(*st, dx, dy,
+                static_cast<float>(ws.current_width),
+                static_cast<float>(ws.current_height));
+        } }, event_name(name, "mouse"));
+
+    on_scroll(window, [st](double /*dx*/, double dy) { Kinesis::apply_pan_zoom_scroll(*st, static_cast<float>(dy)); }, event_name(name, "scroll"));
+
+    processor->set_view_transform_source(
+        [st, window_weak = std::weak_ptr<Core::Window>(window)]() -> Kinesis::ViewTransform {
+            auto win = window_weak.lock();
+            if (!win)
+                return {};
+            const auto& ws = win->get_state();
+            const float aspect = (ws.current_height > 0)
+                ? static_cast<float>(ws.current_width) / static_cast<float>(ws.current_height)
+                : 1.0F;
+            return Kinesis::compute_pan_zoom_view_transform(*st, aspect);
+        });
+}
+
+void bind_pan_zoom_preset(
+    const std::shared_ptr<Core::Window>& window,
+    const Kinesis::PanZoom2DConfig& config,
+    const Kinesis::PanZoom2DKeyMap& key_map,
+    const std::string& name)
+{
+    for (const auto& buf : window->get_rendering_buffers()) {
+        auto rp = buf->get_render_processor();
+        if (!rp)
+            continue;
+        bind_pan_zoom_preset(window, rp, config, key_map, name);
+    }
+}
+
 } // namespace MayaFlux
