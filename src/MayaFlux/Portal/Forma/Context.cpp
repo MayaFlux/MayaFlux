@@ -183,16 +183,18 @@ void Context::handle_press(double px, double py, IO::MouseButtons btn)
 {
     const glm::vec2 ndc = to_ndc(px, py);
     const auto hit = m_layer->hit_test(ndc);
-    if (!hit)
-        return;
 
-    auto it = m_callbacks.find(*hit);
-    if (it == m_callbacks.end())
-        return;
+    const int btn_idx = static_cast<int>(btn);
 
-    auto btn_it = it->second.press.find(static_cast<int>(btn));
-    if (btn_it != it->second.press.end() && btn_it->second)
-        btn_it->second(*hit, ndc);
+    if (hit && m_callbacks.contains(*hit) && m_callbacks[*hit].drag.contains(btn_idx)) {
+        m_dragging[btn_idx] = hit;
+    }
+
+    if (hit) {
+        auto it = m_callbacks.find(*hit);
+        if (it != m_callbacks.end() && it->second.press.count(btn_idx))
+            it->second.press[btn_idx](*hit, ndc);
+    }
 }
 
 void Context::handle_release(double px, double py, IO::MouseButtons btn)
@@ -214,15 +216,19 @@ void Context::handle_release(double px, double py, IO::MouseButtons btn)
 void Context::handle_drag(double px, double py, IO::MouseButtons btn)
 {
     const glm::vec2 ndc = to_ndc(px, py);
-    const auto hit = m_layer->hit_test(ndc);
-    if (!hit)
-        return;
-    auto it = m_callbacks.find(*hit);
-    if (it == m_callbacks.end())
-        return;
-    auto drag_it = it->second.drag.find(static_cast<int>(btn));
-    if (drag_it != it->second.drag.end() && drag_it->second)
-        drag_it->second(*hit, ndc);
+    const int btn_idx = static_cast<int>(btn);
+
+    if (!m_dragging[btn_idx]) {
+        const auto hit = m_layer->hit_test(ndc);
+        if (hit)
+            m_dragging[btn_idx] = hit;
+        else
+            return;
+    }
+
+    auto it = m_callbacks.find(*m_dragging[btn_idx]);
+    if (it != m_callbacks.end() && it->second.drag.count(btn_idx))
+        it->second.drag[btn_idx](*m_dragging[btn_idx], ndc);
 }
 
 void Context::handle_scroll(double dx, double dy)

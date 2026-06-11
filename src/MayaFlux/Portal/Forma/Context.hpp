@@ -88,16 +88,23 @@ public:
     void on_move(uint32_t id, MoveFn fn);
 
     /**
-     * @brief Called on each mouse-move event while @p btn is held, if the
-     *        cursor is over @p id at the time of the event.
+     * @brief Called on each mouse-move event while @p btn is held, tracking
+     *        the element where the drag began even when the cursor leaves its bounds.
+     *
+     * Drag tracking begins when the element is first hit (either at initial press
+     * or first drag motion while button is held). Once tracking starts, the callback
+     * continues to fire with the current cursor position until the button is released,
+     * regardless of whether the cursor remains over the element.
+     *
+     * This matches standard UI expectations for sliders, scrollbars, resize handles,
+     * and other controls that must respond continuously during a drag gesture.
      *
      * Backed by Kriya::mouse_dragged, which gates on button state natively.
-     * For controls that must respond to drag after the cursor leaves the
-     * element, use on_press + on_move with a captured flag instead.
      *
      * @param id  Element id to bind to.
      * @param btn Mouse button that must be held.
-     * @param fn  Callback receiving element id and current NDC cursor position.
+     * @param fn  Callback receiving element id and current NDC cursor position
+     *            (which may be outside the element's bounds during drag).
      */
     void on_drag(uint32_t id, IO::MouseButtons btn, MoveFn fn);
 
@@ -158,6 +165,8 @@ private:
     void handle_release(double px, double py, IO::MouseButtons btn);
     void handle_scroll(double dx, double dy);
     void handle_drag(double px, double py, IO::MouseButtons btn);
+
+    std::optional<uint32_t> m_dragging[3];
 };
 
 } // namespace MayaFlux::Portal::Forma
