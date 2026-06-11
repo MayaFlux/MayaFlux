@@ -36,16 +36,18 @@ void bind_viewport_preset(
     const std::shared_ptr<Core::Window>& window,
     const std::shared_ptr<Buffers::RenderProcessor>& processor,
     ViewportPresetMode mode,
-    const ViewportPresetConfig& config,
     const std::string& name)
 {
     switch (mode) {
     case ViewportPresetMode::Fly:
-        bind_fly_preset(window, processor, config, {}, name);
+        bind_fly_preset(window, processor, {}, {}, name);
         return;
-    // case ViewportPresetMode::Orbit:
-    //     bind_orbit_preset(window, processor, config, {}, name);
-    //     return;
+    case ViewportPresetMode::Orbit:
+        bind_orbit_preset(window, processor, {}, {}, name);
+        return;
+    case ViewportPresetMode::PanZoom2D:
+        bind_pan_zoom_preset(window, processor, {}, {}, name);
+        return;
     default:
         MF_RT_ERROR(Journal::Component::API, Journal::Context::EventDispatch,
             "ViewportPresetMode {} is not yet implemented",
@@ -56,14 +58,13 @@ void bind_viewport_preset(
 void bind_viewport_preset(
     const std::shared_ptr<Core::Window>& window,
     ViewportPresetMode mode,
-    const ViewportPresetConfig& config,
     const std::string& name)
 {
     for (const auto& buf : window->get_rendering_buffers()) {
         auto rp = buf->get_render_processor();
         if (!rp)
             continue;
-        bind_viewport_preset(window, rp, mode, config, name);
+        bind_viewport_preset(window, rp, mode, name);
     }
 }
 
@@ -296,8 +297,8 @@ void bind_pan_zoom_preset(
             st->first_mouse = false;
             return;
         }
-        const float dx = static_cast<float>(x - st->last_x);
-        const float dy = static_cast<float>(y - st->last_y);
+        const auto  dx = static_cast<float>(x - st->last_x);
+        const auto  dy = static_cast<float>(y - st->last_y);
         st->last_x = x;
         st->last_y = y;
 

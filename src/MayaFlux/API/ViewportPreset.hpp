@@ -29,57 +29,51 @@ using ViewportPresetConfig = Kinesis::NavigationConfig;
 enum class ViewportPresetMode : uint8_t {
     Fly, ///< First-person fly: WASD/QE translate, RMB drag yaw/pitch, scroll dolly, KP ortho snaps
     Orbit, ///< Tumble around a focal point (not yet implemented)
-    // Trackball, ///< Virtual trackball (not yet implemented)
     PanZoom2D, ///< Orthographic 2D pan and zoom (not yet implemented)
+    // Trackball, ///< Virtual trackball (not yet implemented)
 };
 
 /**
- * @brief Bind a navigation preset to a window and render processor.
+ * @brief Bind a navigation preset to a window and render processor using default settings.
+ *
+ * Convenience wrapper that constructs a default config for the selected mode
+ * and forwards to the corresponding bind_*_preset function. To tune the
+ * controller, call bind_fly_preset(), bind_orbit_preset(), or
+ * bind_pan_zoom_preset() directly.
  *
  * Registers event handlers under the prefix "vp_<name>_".
- * The specific handlers installed depend on @p mode; see ViewportPresetMode.
  *
- * Currently only Fly mode is implemented, which does the following:
- * Registers event handlers under the prefix "vp_<name>_":
- *   W/S/A/D   forward, backward, strafe left, strafe right
- *   Q/E       move down, move up along world Y
- *   RMB drag  yaw and pitch (inverted)
- *   Scroll    dolly along view direction
- *   KP1       front view
- *   KP3       right view
- *   KP7       top view
- *   KP9       flip to opposite view
+ * Mode defaults:
+ *   Fly       - WASD/QE translate, RMB drag yaw/pitch, scroll dolly, KP ortho snaps
+ *   Orbit     - MMB rotate around focal point, Shift+MMB pan, scroll dolly, KP ortho snaps
+ *   PanZoom2D - MMB drag pan, scroll zoom, orthographic projection
  *
  * @param window     Window supplying input events
  * @param processor  RenderProcessor that receives the ViewTransform source
- * @param mode    Navigation controller to install, defaults to Fly preset
- * @param config     Tuning parameters
+ * @param mode       Navigation controller to install, defaults to Fly
  * @param name       Unique prefix for registered events; must be unique per window
  */
 MAYAFLUX_API void bind_viewport_preset(
     const std::shared_ptr<Core::Window>& window,
     const std::shared_ptr<Buffers::RenderProcessor>& processor,
     ViewportPresetMode mode = ViewportPresetMode::Fly,
-    const ViewportPresetConfig& config = {},
     const std::string& name = "default");
 
 /**
  * @brief Bind a navigation preset to all RenderProcessors currently registered
- *        against a window.
+ *        against a window using default settings.
  *
- * Calls bind_viewport_preset(window, rp, mode, config, name) for every buffer
+ * Calls bind_viewport_preset(window, rp, mode, name) for every buffer
  * registered with the window at call time that returns a non-null RenderProcessor.
  * Buffers registered after this call are not covered.
  *
  * @param window  Window supplying input events
- * @param mode    Navigation controller to install, defaults to Fly preset
- * @param config  Tuning parameters
+ * @param mode    Navigation controller to install, defaults to Fly
  * @param name    Preset name forwarded to bind_viewport_preset()
  */
 MAYAFLUX_API void bind_viewport_preset(
     const std::shared_ptr<Core::Window>& window,
     ViewportPresetMode mode = ViewportPresetMode::Fly,
-    const ViewportPresetConfig& config = {},
     const std::string& name = "default");
 
 /**
