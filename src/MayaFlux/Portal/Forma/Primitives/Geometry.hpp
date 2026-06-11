@@ -2,8 +2,9 @@
 
 #include "Mapped.hpp"
 
-#include "MayaFlux/Kinesis/Geometry2D.hpp"
-#include "MayaFlux/Kinesis/GeometryPrimitives.hpp"
+namespace MayaFlux::Portal::Forma {
+class Context;
+}
 
 namespace MayaFlux::Portal::Forma::Geometry {
 
@@ -79,31 +80,11 @@ void write_verts(std::vector<uint8_t>& out, const V& v)
  * @param track_color Track quad color.
  * @param handle_color Handle quad color.
  */
-[[nodiscard]] inline GeometryFn<float> horizontal_fader(
+[[nodiscard]] GeometryFn<float> horizontal_fader(
     Kinesis::AABB2D bounds,
     float handle_w,
     glm::vec3 track_color = glm::vec3(0.3F),
-    glm::vec3 handle_color = glm::vec3(0.9F))
-{
-    return [bounds, handle_w, track_color, handle_color](
-               float v, std::vector<uint8_t>& out, Element& el) {
-        float x = bounds.min.x + v * (bounds.width() - handle_w);
-        float yt = bounds.min.y + bounds.height() * 0.35F;
-        float yb = bounds.min.y + bounds.height() * 0.65F;
-
-        Kinesis::AABB2D track { .min = glm::vec2(bounds.min.x, yt), .max = glm::vec2(bounds.max.x, yb) };
-        Kinesis::AABB2D handle { .min = glm::vec2(x, bounds.min.y), .max = glm::vec2(x + handle_w, bounds.max.y) };
-
-        auto verts = Kakshya::to_mesh_vertices(Kinesis::filled_rect(track, track_color));
-        auto herts = Kakshya::to_mesh_vertices(Kinesis::filled_rect(handle, handle_color));
-        verts.insert(verts.end(), herts.begin(), herts.end());
-
-        write_verts(out, verts);
-
-        el.bounds_hint = handle;
-        el.contains = {};
-    };
-}
+    glm::vec3 handle_color = glm::vec3(0.9F));
 
 // =============================================================================
 // Vertical fader
@@ -125,31 +106,11 @@ void write_verts(std::vector<uint8_t>& out, const V& v)
  * @param track_color  Track quad color.
  * @param handle_color Handle quad color.
  */
-[[nodiscard]] inline GeometryFn<float> vertical_fader(
+[[nodiscard]] GeometryFn<float> vertical_fader(
     Kinesis::AABB2D bounds,
     float handle_h,
     glm::vec3 track_color = glm::vec3(0.3F),
-    glm::vec3 handle_color = glm::vec3(0.9F))
-{
-    return [bounds, handle_h, track_color, handle_color](
-               float v, std::vector<uint8_t>& out, Element& el) {
-        const float y = bounds.min.y + v * (bounds.height() - handle_h);
-        const float xl = bounds.min.x + bounds.width() * 0.35F;
-        const float xr = bounds.min.x + bounds.width() * 0.65F;
-
-        const Kinesis::AABB2D track { .min = { xl, bounds.min.y }, .max = { xr, bounds.max.y } };
-        const Kinesis::AABB2D handle { .min = { bounds.min.x, y }, .max = { bounds.max.x, y + handle_h } };
-
-        auto verts = Kakshya::to_mesh_vertices(Kinesis::filled_rect(track, track_color));
-        auto herts = Kakshya::to_mesh_vertices(Kinesis::filled_rect(handle, handle_color));
-        verts.insert(verts.end(), herts.begin(), herts.end());
-
-        write_verts(out, verts);
-
-        el.bounds_hint = handle;
-        el.contains = {};
-    };
-}
+    glm::vec3 handle_color = glm::vec3(0.9F));
 
 // =============================================================================
 // Radial / arc
@@ -167,30 +128,12 @@ void write_verts(std::vector<uint8_t>& out, const V& v)
  * @param angle_end   End angle in radians (value = 1).
  * @param color       Line color.
  */
-[[nodiscard]] inline GeometryFn<float> radial(
+[[nodiscard]] GeometryFn<float> radial(
     glm::vec2 center,
     float radius,
     float angle_start,
     float angle_end,
-    glm::vec3 color = glm::vec3(0.9F))
-{
-    return [center, radius, angle_start, angle_end, color](
-               float v, std::vector<uint8_t>& out, Element& el) {
-        float angle = angle_start + v * (angle_end - angle_start);
-        glm::vec2 tip = center + radius * glm::vec2(std::cos(angle), std::sin(angle));
-
-        using V = Kakshya::LineVertex;
-        std::vector<V> verts = {
-            { .position = { center.x, center.y, 0 }, .color = color },
-            { .position = { tip.x, tip.y, 0 }, .color = color },
-        };
-
-        write_verts(out, verts);
-
-        el.bounds_hint = Kinesis::AABB2D::from_ndc(center, glm::vec2(radius));
-        el.contains = Kinesis::circular_bounds(center, radius);
-    };
-}
+    glm::vec3 color = glm::vec3(0.9F));
 
 // =============================================================================
 // Point
@@ -211,21 +154,10 @@ void write_verts(std::vector<uint8_t>& out, const V& v)
  * @param size       Point size in pixels.
  * @param hit_radius Hit region radius in NDC units.
  */
-[[nodiscard]] inline GeometryFn<glm::vec2> point(
+[[nodiscard]] GeometryFn<glm::vec2> point(
     glm::vec3 color = glm::vec3(1.0F),
     float size = 10.0F,
-    float hit_radius = 0.04F)
-{
-    return [color, size, hit_radius](glm::vec2 pos, std::vector<uint8_t>& out, Element& el) {
-        write_verts(out, Kakshya::PointVertex {
-                             .position = { pos.x, pos.y, 0.0F },
-                             .color = color,
-                             .size = size,
-                         });
-        el.bounds_hint = Kinesis::AABB2D::from_ndc(pos, glm::vec2(hit_radius));
-        el.contains = Kinesis::circular_bounds(pos, hit_radius);
-    };
-}
+    float hit_radius = 0.04F);
 
 // =============================================================================
 // 2D position picker
@@ -240,32 +172,10 @@ void write_verts(std::vector<uint8_t>& out, const V& v)
  * @param color  Point color.
  * @param size   Point size in pixels.
  */
-[[nodiscard]] inline GeometryFn<glm::vec2> position_picker(
+[[nodiscard]] GeometryFn<glm::vec2> position_picker(
     Kinesis::AABB2D bounds,
     glm::vec3 color = glm::vec3(0.9F),
-    float size = 8.0F)
-{
-    return [bounds, color, size](
-               glm::vec2 v, std::vector<uint8_t>& out, Element& el) {
-        float x = bounds.min.x + v.x * bounds.width();
-        float y = bounds.min.y + v.y * bounds.height();
-
-        using V = Kakshya::PointVertex;
-        std::vector<V> verts = {
-            { .position = { x, y, 0 }, .color = color, .size = size },
-        };
-
-        write_verts(out, verts);
-
-        el.bounds_hint = bounds;
-        el.contains = Kinesis::polygon_bounds(std::span<const glm::vec2> {
-            std::array<glm::vec2, 4> {
-                bounds.min,
-                glm::vec2(bounds.max.x, bounds.min.y),
-                bounds.max,
-                glm::vec2(bounds.min.x, bounds.max.y) } });
-    };
-}
+    float size = 8.0F);
 
 // =============================================================================
 // Stroke slider
@@ -304,97 +214,14 @@ void write_verts(std::vector<uint8_t>& out, const V& v)
  * @param handle_color   Color of the handle point.
  * @param handle_size    Handle point size in pixels.
  */
-[[nodiscard]] inline GeometryFn<float> stroke_slider(
+[[nodiscard]] GeometryFn<float> stroke_slider(
     std::span<const glm::vec2> path,
     std::shared_ptr<Buffers::FormaBuffer> handle_buf,
     float half_thickness = 0.02F,
     glm::vec3 track_color = glm::vec3(0.3F),
     glm::vec3 fill_color = glm::vec3(0.2F, 0.6F, 1.0F),
     glm::vec3 handle_color = glm::vec3(0.95F),
-    float handle_size = 10.0F)
-{
-    std::vector<glm::vec2> pts(path.begin(), path.end());
-
-    std::vector<float> seg_lengths;
-    seg_lengths.reserve(pts.size() > 0 ? pts.size() - 1 : 0);
-    float total_len = 0.0F;
-    for (size_t i = 0; i + 1 < pts.size(); ++i) {
-        float l = glm::length(pts[i + 1] - pts[i]);
-        seg_lengths.push_back(l);
-        total_len += l;
-    }
-
-    Kinesis::AABB2D aabb { .min = pts.empty() ? glm::vec2(0.F) : pts[0],
-        .max = pts.empty() ? glm::vec2(0.F) : pts[0] };
-    for (const auto& p : pts) {
-        aabb.min = glm::min(aabb.min, p);
-        aabb.max = glm::max(aabb.max, p);
-    }
-    aabb = aabb.expanded(half_thickness);
-
-    return [pts = std::move(pts),
-               seg_lengths = std::move(seg_lengths),
-               total_len,
-               aabb,
-               handle_buf = std::move(handle_buf),
-               half_thickness,
-               track_color,
-               fill_color,
-               handle_color,
-               handle_size](float v, std::vector<uint8_t>& out, Element& el) {
-        if (pts.size() < 2) {
-            out.clear();
-            return;
-        }
-
-        const float target = std::clamp(v, 0.0F, 1.0F) * total_len;
-
-        glm::vec2 handle_pos = pts.front();
-        float accumulated = 0.0F;
-        size_t split_seg = 0;
-        float split_t = 0.0F;
-        for (size_t i = 0; i < seg_lengths.size(); ++i) {
-            if (accumulated + seg_lengths[i] >= target || i + 1 == seg_lengths.size()) {
-                split_t = seg_lengths[i] > 0.0F
-                    ? (target - accumulated) / seg_lengths[i]
-                    : 0.0F;
-                split_t = std::clamp(split_t, 0.0F, 1.0F);
-                handle_pos = glm::mix(pts[i], pts[i + 1], split_t);
-                split_seg = i;
-                break;
-            }
-            accumulated += seg_lengths[i];
-        }
-
-        auto verts = Kinesis::polyline(pts, track_color);
-
-        auto fill = Kinesis::polyline(
-            std::span<const glm::vec2>(pts).subspan(0, split_seg + 1),
-            fill_color);
-        verts.insert(verts.end(), fill.begin(), fill.end());
-
-        if (split_t > 0.0F) {
-            verts.push_back({ .position = { pts[split_seg].x, pts[split_seg].y, 0.0F }, .color = fill_color });
-            verts.push_back({ .position = { handle_pos.x, handle_pos.y, 0.0F }, .color = fill_color });
-        }
-
-        write_verts(out, verts);
-
-        el.bounds_hint = aabb;
-        el.contains = Kinesis::stroke_bounds(pts, half_thickness);
-
-        if (handle_buf) {
-            Kakshya::PointVertex hv {
-                .position = { handle_pos.x, handle_pos.y, 0.0F },
-                .color = handle_color,
-                .size = handle_size,
-            };
-            std::vector<uint8_t> hbytes(sizeof(hv));
-            std::memcpy(hbytes.data(), &hv, sizeof(hv));
-            handle_buf->submit(hbytes);
-        }
-    };
-}
+    float handle_size = 10.0F);
 
 // =============================================================================
 // Toggle
@@ -421,18 +248,10 @@ void write_verts(std::vector<uint8_t>& out, const V& v)
  * @param color_off Fill color when false.
  * @param color_on  Fill color when true.
  */
-[[nodiscard]] inline GeometryFn<bool> toggle(
+[[nodiscard]] GeometryFn<bool> toggle(
     Kinesis::AABB2D region,
     glm::vec3 color_off = glm::vec3(0.25F),
-    glm::vec3 color_on = glm::vec3(0.2F, 0.7F, 0.4F))
-{
-    return [region, color_off, color_on](
-               bool v, std::vector<uint8_t>& out, Element& el) {
-        write_verts(out, Kakshya::to_mesh_vertices(Kinesis::filled_rect(region, v ? color_on : color_off)));
-        el.bounds_hint = region;
-        el.contains = {};
-    };
-}
+    glm::vec3 color_on = glm::vec3(0.2F, 0.7F, 0.4F));
 
 // =============================================================================
 // Level meter
@@ -458,37 +277,11 @@ void write_verts(std::vector<uint8_t>& out, const V& v)
  * @param fill_color  Color of the active (filled) portion.
  * @param track_color Color of the inactive remainder.
  */
-[[nodiscard]] inline GeometryFn<float> level_meter(
+[[nodiscard]] GeometryFn<float> level_meter(
     Kinesis::AABB2D bounds,
     bool horizontal = true,
     glm::vec3 fill_color = glm::vec3(0.2F, 0.7F, 0.3F),
-    glm::vec3 track_color = glm::vec3(0.15F))
-{
-    return [bounds, horizontal, fill_color, track_color](
-               float v, std::vector<uint8_t>& out, Element& el) {
-        const float t = std::clamp(v, 0.F, 1.F);
-
-        Kinesis::AABB2D fill {}, remainder {};
-        if (horizontal) {
-            const float split = bounds.min.x + t * bounds.width();
-            fill = { .min = bounds.min, .max = { split, bounds.max.y } };
-            remainder = { .min = { split, bounds.min.y }, .max = bounds.max };
-        } else {
-            const float split = bounds.min.y + t * bounds.height();
-            fill = { .min = bounds.min, .max = { bounds.max.x, split } };
-            remainder = { .min = { bounds.min.x, split }, .max = bounds.max };
-        }
-
-        auto verts = Kakshya::to_mesh_vertices(Kinesis::filled_rect(fill, fill_color));
-        auto rest = Kakshya::to_mesh_vertices(Kinesis::filled_rect(remainder, track_color));
-        verts.insert(verts.end(), rest.begin(), rest.end());
-
-        write_verts(out, verts);
-
-        el.bounds_hint = bounds;
-        el.contains = {};
-    };
-}
+    glm::vec3 track_color = glm::vec3(0.15F));
 
 // =============================================================================
 // Crosshair
@@ -512,25 +305,70 @@ void write_verts(std::vector<uint8_t>& out, const V& v)
  * @note Pass @c PrimitiveTopology::LINE_LIST explicitly to create_element —
  *       the default TRIANGLE_STRIP will misinterpret the 4 vertices.
  */
-[[nodiscard]] inline GeometryFn<glm::vec2> crosshair(
+[[nodiscard]] GeometryFn<glm::vec2> crosshair(
     float arm_len = 0.04F,
     glm::vec3 color = glm::vec3(0.9F),
     float thickness = 1.F,
-    float hit_radius = 0.05F)
-{
-    return [arm_len, color, thickness, hit_radius](
-               glm::vec2 pos, std::vector<uint8_t>& out, Element& el) {
-        using V = Kakshya::LineVertex;
-        const std::array<V, 4> verts { {
-            { .position = { pos.x - arm_len, pos.y, 0.F }, .color = color, .thickness = thickness },
-            { .position = { pos.x + arm_len, pos.y, 0.F }, .color = color, .thickness = thickness },
-            { .position = { pos.x, pos.y - arm_len, 0.F }, .color = color, .thickness = thickness },
-            { .position = { pos.x, pos.y + arm_len, 0.F }, .color = color, .thickness = thickness },
-        } };
-        write_verts(out, verts);
-        el.bounds_hint = Kinesis::AABB2D::from_ndc(pos, glm::vec2(arm_len));
-        el.contains = Kinesis::circular_bounds(pos, hit_radius);
-    };
-}
+    float hit_radius = 0.05F);
+
+// =============================================================================
+// Drawable canvas
+//
+// value is vector<float> of N samples in [0, 1] mapped to the Y axis.
+// X positions are distributed evenly across bounds.
+// Renders as LINE_LIST: N-1 segments connecting adjacent samples.
+//
+// on_drag callback pattern:
+//   ctx->on_drag(el.element.id, IO::MouseButtons::Left,
+//       [&el, bounds](uint32_t, glm::vec2 ndc) {
+//           auto& v = el.state->value;
+//           const float t = (ndc.x - bounds.min.x) / bounds.width();
+//           const size_t i = static_cast<size_t>(
+//               std::clamp(t, 0.F, 1.F) * (v.size() - 1));
+//           const float a = (ndc.y - bounds.min.y) / bounds.height();
+//           v[i] = std::clamp(a, 0.F, 1.F);
+//           ++el.state->version;
+//       });
+//
+// For sparse-sample prevention at high drag speed, interpolate between the
+// previous and current index before calling state->write().
+//
+// Topology: LINE_LIST.
+// =============================================================================
+
+/**
+ * @brief Geometry function for a drawable curve canvas in NDC space.
+ *
+ * Renders the sample vector as a LINE_LIST polyline. Each adjacent sample
+ * pair becomes one segment. The hit region covers the full canvas bounds.
+ *
+ * @param bounds      Canvas extent in NDC.
+ * @param color       Line color.
+ * @param thickness   LineVertex thickness value.
+ */
+[[nodiscard]] GeometryFn<std::vector<float>> drawable_canvas(
+    Kinesis::AABB2D bounds,
+    glm::vec3 color = glm::vec3(0.8F),
+    float thickness = 1.5F);
+
+/**
+ * @brief Wire drag interaction for a drawable canvas element.
+ *
+ * Registers a left-button drag callback on @p ctx that maps NDC cursor
+ * position to a sample index and amplitude, writes into @p state, and
+ * increments the version. Linear interpolation fills the range between the
+ * previously touched index and the current one, preventing sparse samples
+ * under fast drag.
+ *
+ * @param ctx     Context owning the element.
+ * @param id      Element id from the Mapped.
+ * @param state   MappedState<vector<float>> to write into.
+ * @param bounds  Canvas NDC bounds — must match those passed to drawable_canvas().
+ */
+void wire_canvas_drag(
+    Context& ctx,
+    uint32_t id,
+    std::shared_ptr<MappedState<std::vector<float>>> state,
+    Kinesis::AABB2D bounds);
 
 } // namespace MayaFlux::Portal::Forma::Geometry
