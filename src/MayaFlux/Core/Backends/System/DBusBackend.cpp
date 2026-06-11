@@ -79,6 +79,39 @@ namespace {
     }
 
     /**
+     * @brief Percent-decode a URI component, in-place.
+     *
+     * Only decodes valid %XX sequences; leaves invalid ones as-is.
+     */
+    std::string percent_decode(std::string_view sv)
+    {
+        std::string out;
+        out.reserve(sv.size());
+        for (size_t i = 0; i < sv.size(); ++i) {
+            if (sv[i] == '%' && i + 2 < sv.size()) {
+                auto hex = [](char c) -> int {
+                    if (c >= '0' && c <= '9')
+                        return c - '0';
+                    if (c >= 'A' && c <= 'F')
+                        return c - 'A' + 10;
+                    if (c >= 'a' && c <= 'f')
+                        return c - 'a' + 10;
+                    return -1;
+                };
+                int hi = hex(sv[i + 1]);
+                int lo = hex(sv[i + 2]);
+                if (hi >= 0 && lo >= 0) {
+                    out += static_cast<char>((hi << 4) | lo);
+                    i += 2;
+                    continue;
+                }
+            }
+            out += sv[i];
+        }
+        return out;
+    }
+
+    /**
      * @brief Block on @p conn until the portal Request signal arrives,
      *        then fire @p callback and return.
      *
@@ -142,7 +175,7 @@ namespace {
                                 if (sv.starts_with("file://")) {
                                     sv.remove_prefix(7);
                                 }
-                                chosen_path = std::string(sv);
+                                chosen_path = percent_decode(sv);
                             }
                         }
                         break;
