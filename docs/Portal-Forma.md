@@ -162,9 +162,7 @@ auto el = Portal::Forma::create_element<float>(
 
 ## Geometry functions for Mapped\<T\>
 
-`Portal::Forma::Geometry` (in `Primitives/Geometry.hpp`) provides ready-made
-geometry functions for `create_element<T>`. Each produces a closure over its
-configuration parameters; pass the result directly as the `geom` argument.
+`Portal::Forma::Geometry` provides ready-made geometry functions for `create_element<T>`. Each produces a closure over its configuration parameters; pass the result directly as the `geom` argument.
 
 ### Controls
 
@@ -174,6 +172,7 @@ configuration parameters; pass the result directly as the `geom` argument.
 | `vertical_fader(bounds, handle_h)` | `float [0,1]` | TRIANGLE_STRIP | Same, vertical orientation. |
 | `stroke_slider(path, handle_buf, ...)` | `float [0,1]` | LINE_LIST | Arc-length scrubber along any polyline. Requires a separate POINT_LIST handle buffer. |
 | `toggle(region, color_off, color_on)` | `bool` | TRIANGLE_STRIP | Color switches on write. Wire `on_press` to flip state. |
+| `drawable_canvas(bounds, color, thickness)` | `vector<float>` | LINE_LIST | N samples rendered as a polyline. Use `wire_canvas_drag` to wire interaction. |
 
 ### Readouts
 
@@ -190,31 +189,45 @@ configuration parameters; pass the result directly as the `geom` argument.
 | `crosshair(arm_len, color, thickness, hit_radius)` | `glm::vec2` (NDC) | LINE_LIST | Two crossing segments. |
 | `position_picker(bounds, color, size)` | `glm::vec2 [0,1]²` | POINT_LIST | Maps unit square to NDC bounds. |
 
+### Drawable canvas
+
+`drawable_canvas` renders a `vector<float>` of N samples as a LINE_LIST polyline across the canvas bounds. Sample values are in [0, 1] mapped to the Y axis.
+
+`wire_canvas_drag` registers the drag interaction in one call: it maps NDC cursor position to sample index and amplitude, interpolates between the previous and current index to fill gaps under fast drag, and increments `state->version` to trigger `sync()`.
+
 ```cpp
-// Boolean toggle with on_press wiring
-auto el = Portal::Forma::create_element<bool>(
+constexpr Kinesis::AABB2D bounds { glm::vec2(-0.8F, -0.6F), glm::vec2(0.8F, 0.6F) };
+constexpr uint32_t k_n = 256;
+
+auto el = Portal::Forma::create_element<std::vector<float>>(
     surface,
-    Portal::Forma::Geometry::toggle(box, { 0.2F, 0.2F, 0.2F }, { 0.2F, 0.7F, 0.4F }),
-    false,
-    Portal::Graphics::PrimitiveTopology::TRIANGLE_STRIP);
+    Portal::Forma::Geometry::drawable_canvas(bounds),
+    std::vector<float>(k_n, 0.5F),
+    Portal::Graphics::PrimitiveTopology::LINE_LIST);
 
-surface.ctx().on_press(el.element.id, IO::MouseButtons::Left,
-    [state = el.state](uint32_t, glm::vec2) {
-        state->write(!state->value);
-    });
-
-// Audio level meter driven from a node
-auto el = Portal::Forma::create_element<float>(
-    surface,
-    Portal::Forma::Geometry::level_meter(
-        Kinesis::AABB2D { { -0.8F, -0.05F }, { 0.8F, 0.05F } },
-        true, { 0.2F, 0.8F, 0.3F }, { 0.1F, 0.1F, 0.12F }),
-    0.F,
-    Portal::Graphics::PrimitiveTopology::TRIANGLE_STRIP);
-
-Portal::Forma::bridge().at(el.state).bind(rms_node,
-    [](double x) { return static_cast<float>(std::clamp(x, 0.0, 1.0)); });
+Portal::Forma::Geometry::wire_canvas_drag(surface.ctx(), el.element.id, el.state, bounds);
 ```
+
+The state vector routes to any bulk float consumer via Bridge:
+
+```cpp
+// Wavetable / envelope - direct to AudioWriteProcessor
+auto writer = std::make_shared<Buffers::AudioWriteProcessor>();
+auto audio_buf = std::make_shared<Buffers::AudioBuffer>(0, k_n);
+audio_buf->set_default_processor(writer);
+register_audio_buffer(audio_buf, 0);
+Portal::Forma::bridge().at(el.state).write(writer);
+
+// IIR coefficient array
+auto iir = vega.IIR(rand, a_coefs, b_coefs) | Audio[0];
+Portal::Forma::bridge().at(el.state).write(
+    [iir](std::span<const float> s) {
+        std::vector<double> coefs(s.begin(), s.end());
+        iir->setBCoefficients(coefs);
+    });
+```
+
+---
 
 ## Element spatial description
 
@@ -255,28 +268,67 @@ suitable for direct assignment to `contains`.
 ## Pointer events
 
 ```cpp
-surface.ctx().on_press  (id, IO::MouseButtons::Left, [](uint32_t id, glm::vec2 ndc) { });
-surface.ctx().on_release(id, IO::MouseButtons::Left, [](uint32_t id, glm::vec2 ndc) { });
+surface.ctx().on_press  (id, IO::MouseButtons::Left,  [](uint32_t id, glm::vec2 ndc) { });
+surface.ctx().on_release(id, IO::MouseButtons::Left,  [](uint32_t id, glm::vec2 ndc) { });
+surface.ctx().on_drag   (id, IO::MouseButtons::Left,  [](uint32_t id, glm::vec2 ndc) { });
 surface.ctx().on_enter  (id, [](uint32_t id) { });
 surface.ctx().on_leave  (id, [](uint32_t id) { });
 surface.ctx().on_move   (id, [](uint32_t id, glm::vec2 ndc) { });
-surface.ctx().on_scroll (id, [](uint32_t id, glm::vec2 delta) { });
+surface.ctx().on_scroll (id, [](uint32_t id, glm::vec2 ndc, double dx, double dy) { });
 ```
 
-`ndc` is the cursor position in NDC space at the time of the event.
-Callbacks run on the graphics thread.
+`ndc` is the cursor position in NDC space at the time of the event. Callbacks run on the graphics thread.
 
-Hover tint pattern using `Kinesis::filled_rect`:
+`on_drag` is the preferred callback for continuous gestures (sliders, faders, canvas drawing). It tracks the originating element even when the cursor leaves its bounds, and fires on every motion event while the button is held. It does not require a separate press flag. Use `on_press`/`on_release` only when you need to detect the transition itself.
 
 ```cpp
-constexpr glm::vec3 k_rest  { 0.3F, 0.3F, 0.3F };
-constexpr glm::vec3 k_hover { 0.5F, 0.5F, 0.5F };
+// Fader using on_drag - no pressed flag needed
+surface.ctx().on_drag(el.element.id, IO::MouseButtons::Left,
+    [state = el.state, track](uint32_t, glm::vec2 ndc) {
+        state->write(std::clamp(
+            (ndc.x - track.min.x) / track.width(), 0.F, 1.F));
+    });
+```
 
-auto buf = Portal::Forma::create_buffer(window, Kinesis::filled_rect(box, k_rest),
-    Portal::Graphics::PrimitiveTopology::TRIANGLE_STRIP);
+---
 
-surface.ctx().on_enter(id, [buf, box](uint32_t) { buf->submit(Kinesis::filled_rect(box, k_hover)); });
-surface.ctx().on_leave(id, [buf, box](uint32_t) { buf->submit(Kinesis::filled_rect(box, k_rest)); });
+## Keyboard focus and key events
+
+Keyboard focus transfers to an element on mouse press. Key events route only to the focused element.
+
+```cpp
+// Key pressed once (fires on initial press, not on repeat)
+surface.ctx().on_press(id, IO::Keys::Enter, [](uint32_t id) { });
+
+// Key released
+surface.ctx().on_release(id, IO::Keys::Escape, [](uint32_t id) { });
+
+// Key held - fires on initial press and each OS repeat tick
+// Useful for continuous adjustment (arrow key nudge, value increment)
+surface.ctx().on_held(id, IO::Keys::ArrowUp, [](uint32_t id) { });
+
+// Focus lifecycle
+surface.ctx().on_focus_gained(id, [](uint32_t id) { /* highlight */ });
+surface.ctx().on_focus_lost  (id, [](uint32_t id) { /* unhighlight */ });
+
+// Query and clear focus
+auto focused_id = surface.ctx().focused(); // std::optional<uint32_t>
+surface.ctx().clear_focus();
+```
+
+Focus transfers automatically on mouse press. `unbind(id)` clears focus if that element holds it. Multiple key codes can be registered on the same element; each is a separate `on_press`/`on_held`/`on_release` call.
+
+Arrow-key nudge on a fader:
+
+```cpp
+surface.ctx().on_held(el.element.id, IO::Keys::ArrowRight,
+    [state = el.state](uint32_t) {
+        state->write(std::clamp(state->value + 0.01F, 0.F, 1.F));
+    });
+surface.ctx().on_held(el.element.id, IO::Keys::ArrowLeft,
+    [state = el.state](uint32_t) {
+        state->write(std::clamp(state->value - 0.01F, 0.F, 1.F));
+    });
 ```
 
 ---
@@ -445,7 +497,19 @@ Portal::Forma::bridge().at(el.state)
     .write(std::static_pointer_cast<Buffers::VKBuffer>(quad),
         "forma_ctl.frag", "intensity", 0, 1,
         Portal::Graphics::DescriptorRole::UNIFORM);
+
+// Route to an AudioWriteProcessor (scalar state: single-sample span)
+Portal::Forma::bridge().at(el.state).write(audio_write_processor);
+
+// Route vector<float> state to any bulk float consumer
+Portal::Forma::bridge().at(el.state).write(
+    [](std::span<const float> s) {
+        // s.data(), s.size() - full vector for vector<float> state,
+        // single element for scalar state
+    });
 ```
+
+The `write(span sink)` overload is the general bulk outbound path. For `MappedState<vector<float>>` or `MappedState<vector<double>>` the full vector is forwarded each frame. For scalar state a single-element span is constructed. The conversion from `float` to whatever the consumer needs is the caller's responsibility.
 
 ### Chaining both directions
 
@@ -470,14 +534,8 @@ auto el = Portal::Forma::create_element<float>(
     0.5F,
     Portal::Graphics::PrimitiveTopology::TRIANGLE_STRIP);
 
-auto pressed = make_persistent(false);
-
-surface.ctx().on_press  (el.element.id, IO::MouseButtons::Left, [&pressed](uint32_t, glm::vec2) { pressed = true;  });
-surface.ctx().on_release(el.element.id, IO::MouseButtons::Left, [&pressed](uint32_t, glm::vec2) { pressed = false; });
-surface.ctx().on_move   (el.element.id,
-    [state = el.state, &pressed, track](uint32_t, glm::vec2 ndc) {
-        if (!pressed)
-            return;
+surface.ctx().on_drag(el.element.id, IO::MouseButtons::Left,
+    [state = el.state, track](uint32_t, glm::vec2 ndc) {
         state->write(std::clamp(
             (ndc.x - track.min.x) / track.width(), 0.F, 1.F));
     });
@@ -540,15 +598,12 @@ auto el = Portal::Forma::create_element<glm::vec2>(
     glm::vec2 { 0.5F, 0.5F },
     Portal::Graphics::PrimitiveTopology::POINT_LIST);
 
-auto pressed = make_persistent(false);
-surface.ctx().on_press  (el.element.id, IO::MouseButtons::Left, [&pressed](uint32_t, glm::vec2) { pressed = true;  });
-surface.ctx().on_release(el.element.id, IO::MouseButtons::Left, [&pressed](uint32_t, glm::vec2) { pressed = false; });
-surface.ctx().on_move   (el.element.id, [state = el.state, &pressed, area](uint32_t, glm::vec2 ndc) {
-    if (!pressed) return;
-    state->write(glm::clamp(
-        (ndc - area.min) / glm::vec2(area.width(), area.height()),
-        glm::vec2(0.F), glm::vec2(1.F)));
-});
+surface.ctx().on_drag(el.element.id, IO::MouseButtons::Left,
+    [state = el.state, area](uint32_t, glm::vec2 ndc) {
+        state->write(glm::clamp(
+            (ndc - area.min) / glm::vec2(area.width(), area.height()),
+            glm::vec2(0.F), glm::vec2(1.F)));
+    });
 ```
 
 ### Labeled interactive button

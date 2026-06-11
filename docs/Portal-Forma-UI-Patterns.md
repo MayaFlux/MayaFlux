@@ -189,7 +189,7 @@ ImGui:
 ImGui::SliderFloat("Gain", &gain, 0.0f, 1.0f);
 ```
 
-Forma: `horizontal_fader` geometry function + drag callbacks.
+Forma: `horizontal_fader` geometry function + `on_drag`. No press flag needed.
 
 ```cpp
 constexpr Kinesis::AABB2D track { { -0.8F, -0.05F }, { 0.8F, 0.05F } };
@@ -200,20 +200,29 @@ auto el = Portal::Forma::create_element<float>(
     0.5F,
     Portal::Graphics::PrimitiveTopology::TRIANGLE_STRIP);
 
-auto pressed = make_persistent(false);
-surface.ctx().on_press  (el.element.id, IO::MouseButtons::Left,
-    [&pressed](uint32_t, glm::vec2) { pressed = true; });
-surface.ctx().on_release(el.element.id, IO::MouseButtons::Left,
-    [&pressed](uint32_t, glm::vec2) { pressed = false; });
-surface.ctx().on_move   (el.element.id,
-    [state = el.state, &pressed, track](uint32_t, glm::vec2 ndc) {
-        if (!pressed) return;
-        state->write(std::clamp((ndc.x - track.min.x) / track.width(), 0.F, 1.F));
+surface.ctx().on_drag(el.element.id, IO::MouseButtons::Left,
+    [state = el.state, track](uint32_t, glm::vec2 ndc) {
+        state->write(std::clamp(
+            (ndc.x - track.min.x) / track.width(), 0.F, 1.F));
     });
 
 // Wire to a node:
 auto constant = vega.Constant(0.5) | Audio[0];
 Portal::Forma::bridge().at(el.state).write(constant);
+```
+
+Arrow-key fine adjustment wires directly to the same state once the element
+has keyboard focus (transferred automatically on click):
+
+```cpp
+surface.ctx().on_held(el.element.id, IO::Keys::ArrowRight,
+    [state = el.state](uint32_t) {
+        state->write(std::clamp(state->value + 0.005F, 0.F, 1.F));
+    });
+surface.ctx().on_held(el.element.id, IO::Keys::ArrowLeft,
+    [state = el.state](uint32_t) {
+        state->write(std::clamp(state->value - 0.005F, 0.F, 1.F));
+    });
 ```
 
 For a knob (arc-based), use `stroke_slider` with an `arc_path`:
@@ -231,6 +240,11 @@ auto el = Portal::Forma::create_element<float>(
         0.02F, { 0.2F, 0.2F, 0.25F }, { 0.3F, 0.6F, 1.0F }),
     0.5F,
     Portal::Graphics::PrimitiveTopology::LINE_LIST);
+
+surface.ctx().on_drag(el.element.id, IO::MouseButtons::Left,
+    [state = el.state, path](uint32_t, glm::vec2 ndc) {
+        // project ndc onto path arc-length, write [0,1]
+    });
 ```
 
 ---
@@ -318,6 +332,79 @@ For deeply nested trees (node graph inspection, buffer chains), use
 
 ---
 
+## Drawable canvas / array editor
+
+ImGui has no direct equivalent. The closest approximation - a sequence of
+`SliderFloat` calls - gives N discrete sliders with no drawn curve, no drag
+interpolation, and no direct routing to an audio buffer.
+
+Forma's `drawable_canvas` renders a `vector<float>` of N samples as a
+continuous polyline. `wire_canvas_drag` handles all interaction: NDC to
+sample index, amplitude mapping, gap interpolation under fast drag, and
+version increment to trigger `sync()`. The state vector routes directly to
+any bulk float consumer.
+
+```cpp
+constexpr Kinesis::AABB2D bounds { glm::vec2(-0.8F, -0.6F), glm::vec2(0.8F, 0.6F) };
+constexpr uint32_t k_n = 256;
+
+auto el = Portal::Forma::create_element<std::vector<float>>(
+    surface,
+    Portal::Forma::Geometry::drawable_canvas(bounds),
+    std::vector<float>(k_n, 0.5F),
+    Portal::Graphics::PrimitiveTopology::LINE_LIST);
+
+Portal::Forma::Geometry::wire_canvas_drag(surface.ctx(), el.element.id, el.state, bounds);
+```
+
+Routing to consumers:
+
+```cpp
+// Wavetable or envelope written directly to audio output
+auto writer = std::make_shared<Buffers::AudioWriteProcessor>();
+auto audio_buf = std::make_shared<Buffers::AudioBuffer>(0, k_n);
+audio_buf->set_default_processor(writer);
+register_audio_buffer(audio_buf, 0);
+Portal::Forma::bridge().at(el.state).write(writer);
+
+// IIR feedforward coefficients
+auto iir = vega.IIR(rand, a_coefs, b_coefs) | Audio[0];
+Portal::Forma::bridge().at(el.state).write(
+    [iir](std::span<const float> s) {
+        iir->setBCoefficients({ s.begin(), s.end() });
+    });
+
+// Any N-element float consumer
+Portal::Forma::bridge().at(el.state).write(
+    [](std::span<const float> s) { /* s.data(), s.size() */ });
+```
+
+Two canvases on one surface give independent control over separate arrays -
+for example IIR a-coefs and b-coefs simultaneously:
+
+```cpp
+auto b_el = Portal::Forma::create_element<std::vector<float>>(surface,
+    Portal::Forma::Geometry::drawable_canvas(b_bounds, { 0.3F, 0.8F, 0.4F }),
+    b_init, Portal::Graphics::PrimitiveTopology::LINE_LIST);
+
+auto a_el = Portal::Forma::create_element<std::vector<float>>(surface,
+    Portal::Forma::Geometry::drawable_canvas(a_bounds, { 0.8F, 0.4F, 0.3F }),
+    a_init, Portal::Graphics::PrimitiveTopology::LINE_LIST);
+
+Portal::Forma::Geometry::wire_canvas_drag(surface.ctx(), b_el.element.id, b_el.state, b_bounds);
+Portal::Forma::Geometry::wire_canvas_drag(surface.ctx(), a_el.element.id, a_el.state, a_bounds);
+
+Portal::Forma::bridge().at(b_el.state).write([iir](std::span<const float> s) {
+    iir->setBCoefficients({ s.begin(), s.end() });
+});
+Portal::Forma::bridge().at(a_el.state).write([iir](std::span<const float> s) {
+    if (!s.empty() && s[0] != 0.F)
+        iir->setACoefficients({ s.begin(), s.end() });
+});
+```
+
+---
+
 ## Visibility and z-order
 
 ImGui visibility is implicit (don't call the widget). Forma is explicit.
@@ -375,7 +462,11 @@ all body geometry functions so they reflow on `state()->write(new_y)`.
 | Implicit layout engine | Explicit NDC arithmetic + LayoutCursor |
 | Internal widget state | Your state, written via `MappedState<T>::write` |
 | `if (Button(...))` inline action | `on_press` callback registered once |
+| `SliderFloat` with press+drag implicit | `on_drag` callback - no press flag |
+| No keyboard routing to widgets | Per-element key focus: `on_press(key)`, `on_held(key)`, `on_release(key)` |
 | Style stack | Per-element color/geometry at construction |
 | Docking, tables, scroll built-in | Build from primitives; no built-in containers |
 | Thread: main/render thread only | Callbacks on graphics thread; writes from any thread |
 | Immediate feedback | Geometry updates on next `sync()` after `write()` |
+| No curve/array editor primitive | `drawable_canvas` + `wire_canvas_drag`: drawn curve routes directly to audio or any N-element consumer |
+| No audio graph wiring | `Bridge::write` routes element value to nodes, shaders, audio processors, or arbitrary span sinks |
