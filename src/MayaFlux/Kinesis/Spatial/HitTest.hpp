@@ -2,7 +2,7 @@
 
 #include "SpatialIndex.hpp"
 
-#include "MayaFlux/Kinesis/ViewTransform.hpp"
+#include "MayaFlux/Kinesis/Viewport/ViewTransform.hpp"
 
 namespace MayaFlux::Kinesis {
 

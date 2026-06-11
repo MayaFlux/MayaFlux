@@ -5,7 +5,6 @@
 #include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
 #include "MayaFlux/Core/Backends/Windowing/Window.hpp"
 #include "MayaFlux/Core/GlobalGraphicsInfo.hpp"
-#include "MayaFlux/Kinesis/NavigationState.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
 

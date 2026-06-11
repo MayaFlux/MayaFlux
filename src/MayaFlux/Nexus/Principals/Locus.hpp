@@ -2,7 +2,7 @@
 
 #include "Agent.hpp"
 
-#include "MayaFlux/Kinesis/NavigationState.hpp"
+#include "MayaFlux/Kinesis/Viewport/NavigationState.hpp"
 
 namespace MayaFlux::Buffers {
 class RenderProcessor;

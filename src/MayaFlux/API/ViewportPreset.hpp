@@ -1,9 +1,9 @@
 #pragma once
 
-#include "MayaFlux/Kinesis/NavigationMappings.hpp"
-#include "MayaFlux/Kinesis/NavigationState.hpp"
-#include "MayaFlux/Kinesis/OrbitState.hpp"
-#include "MayaFlux/Kinesis/PanZoom2DState.hpp"
+#include "MayaFlux/Kinesis/Viewport/NavigationMappings.hpp"
+#include "MayaFlux/Kinesis/Viewport/NavigationState.hpp"
+#include "MayaFlux/Kinesis/Viewport/OrbitState.hpp"
+#include "MayaFlux/Kinesis/Viewport/PanZoom2DState.hpp"
 
 namespace MayaFlux::Buffers {
 class RenderProcessor;
