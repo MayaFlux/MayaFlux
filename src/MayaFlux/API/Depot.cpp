@@ -43,6 +43,11 @@ namespace {
         { .name = "All Files", .extensions = { "*" } }
     };
 
+    const std::vector<Portal::System::Dialog::ChooserFilter> k_video_filters {
+        { .name = "Video", .extensions = { "mp4", "mkv", "mov", "webm", "avi" } },
+        { .name = "All Files", .extensions = { "*" } }
+    };
+
     const std::vector<Portal::System::Dialog::ChooserFilter> k_image_filters {
         { .name = "Image", .extensions = { "png", "jpg", "jpeg", "bmp", "tga", "psd", "gif", "hdr", "pic", "pnm", "exr" } },
         { .name = "All Files", .extensions = { "*" } }
@@ -50,6 +55,11 @@ namespace {
 
     const std::vector<Portal::System::Dialog::ChooserFilter> k_mesh_filters {
         { .name = "3D Model", .extensions = { "glb", "gltf", "fbx", "obj", "ply", "stl", "dae" } },
+        { .name = "All Files", .extensions = { "*" } }
+    };
+
+    const std::vector<Portal::System::Dialog::ChooserFilter> k_image_save_filters {
+        { .name = "Image", .extensions = { "png", "jpg", "jpeg", "bmp", "tga", "exr", "hdr" } },
         { .name = "All Files", .extensions = { "*" } }
     };
 
@@ -120,6 +130,17 @@ std::shared_ptr<Kakshya::SoundFileContainer> choose_audio()
         k_audio_open_filters);
 }
 
+std::shared_ptr<Kakshya::VideoFileContainer> choose_video()
+{
+    if (!require_portal("choose_video"))
+        return nullptr;
+
+    return Portal::System::Dialog::open_file<std::shared_ptr<Kakshya::VideoFileContainer>>(
+        [](const fs::path& p) { return get_io_manager()->load_video(p.string()); },
+        [](Core::SystemDialogError) { },
+        k_video_filters);
+}
+
 std::shared_ptr<Buffers::TextureBuffer> choose_image()
 {
     if (!require_portal("choose_image"))
@@ -181,6 +202,53 @@ bool save_audio(
         [](Core::SystemDialogError) { },
         suggested_name,
         k_audio_save_filters);
+}
+
+bool save_image(
+    const std::shared_ptr<Buffers::TextureBuffer>& buffer,
+    const std::string& suggested_name)
+{
+    if (!require_portal("save_image"))
+        return false;
+
+    auto iom = get_io_manager();
+    if (!iom) {
+        MF_ERROR(Journal::Component::API, Journal::Context::Runtime,
+            "save_image: IOManager unavailable");
+        return false;
+    }
+
+    return Portal::System::Dialog::save_file<bool>(
+        [&iom, &buffer](const fs::path& p) {
+            return iom->save_image(buffer, p.string(), IO::ImageWriteOptions {});
+        },
+        [](Core::SystemDialogError) { },
+        suggested_name,
+        k_image_save_filters);
+}
+
+bool save_image(
+    const std::shared_ptr<Buffers::TextureBuffer>& buffer,
+    const std::string& suggested_name,
+    const IO::ImageWriteOptions& options)
+{
+    if (!require_portal("save_image"))
+        return false;
+
+    auto iom = get_io_manager();
+    if (!iom) {
+        MF_ERROR(Journal::Component::API, Journal::Context::Runtime,
+            "save_image: IOManager unavailable");
+        return false;
+    }
+
+    return Portal::System::Dialog::save_file<bool>(
+        [&iom, &buffer, &options](const fs::path& p) {
+            return iom->save_image(buffer, p.string(), options);
+        },
+        [](Core::SystemDialogError) { },
+        suggested_name,
+        k_image_save_filters);
 }
 
 // ---------------------------------------------------------------------------

@@ -21,6 +21,7 @@ namespace Core {
 
 namespace IO {
     class IOManager;
+    struct ImageWriteOptions;
     using TextureResolver = std::function<std::shared_ptr<Core::VKImage>(const std::string&)>; // add
 }
 
@@ -28,6 +29,7 @@ namespace Kakshya {
     class SoundStreamContainer;
     class SoundFileContainer;
     class SignalSourceContainer;
+    class VideoFileContainer;
 }
 
 namespace Buffers {
@@ -90,6 +92,15 @@ MAYAFLUX_API bool is_image(const std::filesystem::path& filepath);
 MAYAFLUX_API std::shared_ptr<Kakshya::SoundFileContainer> choose_audio();
 
 /**
+ * @brief Present a native open-file dialog filtered to video formats and load
+ *        the chosen file via IOManager::load_video().
+ *
+ * Blocks until the user confirms or cancels. Returns nullptr on cancellation,
+ * backend error, or if Portal::System is not initialized.
+ */
+MAYAFLUX_API std::shared_ptr<Kakshya::VideoFileContainer> choose_video();
+
+/**
  * @brief Present a native open-file dialog filtered to image formats and load
  *        the chosen file via IOManager::load_image().
  *
@@ -138,6 +149,38 @@ choose_mesh_network(IO::TextureResolver resolver = nullptr);
 MAYAFLUX_API bool save_audio(
     const std::shared_ptr<Kakshya::SoundStreamContainer>& container,
     const std::string& suggested_name = "output.wav");
+
+/**
+ * @brief Present a native save-file dialog filtered to image formats and save
+ *        @p buffer to the chosen path via IOManager::save_image().
+ *
+ * Blocks until the user confirms or cancels. The encode task is queued
+ * asynchronously. Returns false on cancellation, backend error, or if
+ * Portal::System is not initialized.
+ *
+ * @param buffer         Source TextureBuffer to encode.
+ * @param suggested_name Filename pre-filled in the dialog name field.
+ */
+MAYAFLUX_API bool save_image(
+    const std::shared_ptr<Buffers::TextureBuffer>& buffer,
+    const std::string& suggested_name = "output.png");
+
+/**
+ * @brief Present a native save-file dialog filtered to image formats and save
+ *        @p buffer to the chosen path via IOManager::save_image().
+ *
+ * Blocks until the user confirms or cancels. The encode task is queued
+ * asynchronously. Returns false on cancellation, backend error, or if
+ * Portal::System is not initialized.
+ *
+ * @param buffer         Source TextureBuffer to encode.
+ * @param suggested_name Filename pre-filled in the dialog name field.
+ * @param options        Format-specific writer options forwarded to IOManager.
+ */
+MAYAFLUX_API bool save_image(
+    const std::shared_ptr<Buffers::TextureBuffer>& buffer,
+    const std::string& suggested_name,
+    const IO::ImageWriteOptions& options);
 
 /**
  * @brief Retrieves the global IOManager instance for file loading and buffer management
