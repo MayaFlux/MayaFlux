@@ -26,4 +26,22 @@ struct FlyKeyMap {
     std::optional<IO::Keys> ortho_flip { IO::Keys::KP9 }; ///< Flip to opposite view
 };
 
+/**
+ * @struct OrbitKeyMap
+ * @brief Key assignments for the Orbit navigation preset.
+ *
+ * Orbit has no keyboard translate axes. The only configurable key is the
+ * pan modifier: when held during MMB drag, the focal point pans rather
+ * than the camera rotating. Ortho snap slots follow the same optional
+ * convention as FlyKeyMap.
+ */
+struct OrbitKeyMap {
+    IO::Keys pan_modifier { IO::Keys::LShift }; ///< Held during MMB drag to pan instead of rotate
+
+    std::optional<IO::Keys> ortho_front { IO::Keys::KP1 };
+    std::optional<IO::Keys> ortho_right { IO::Keys::KP3 };
+    std::optional<IO::Keys> ortho_top { IO::Keys::KP7 };
+    std::optional<IO::Keys> ortho_flip { IO::Keys::KP9 };
+};
+
 } // namespace MayaFlux::Kinesis

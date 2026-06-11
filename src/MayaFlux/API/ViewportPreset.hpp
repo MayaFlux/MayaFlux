@@ -2,6 +2,7 @@
 
 #include "MayaFlux/Kinesis/NavigationMappings.hpp"
 #include "MayaFlux/Kinesis/NavigationState.hpp"
+#include "MayaFlux/Kinesis/OrbitState.hpp"
 
 namespace MayaFlux::Buffers {
 class RenderProcessor;
@@ -26,7 +27,7 @@ using ViewportPresetConfig = Kinesis::NavigationConfig;
  */
 enum class ViewportPresetMode : uint8_t {
     Fly, ///< First-person fly: WASD/QE translate, RMB drag yaw/pitch, scroll dolly, KP ortho snaps
-    // Orbit, ///< Tumble around a focal point (not yet implemented)
+    Orbit, ///< Tumble around a focal point (not yet implemented)
     // Trackball, ///< Virtual trackball (not yet implemented)
     // PanZoom2D, ///< Orthographic 2D pan and zoom (not yet implemented)
 };
@@ -118,6 +119,42 @@ MAYAFLUX_API void bind_fly_preset(
     const std::shared_ptr<Core::Window>& window,
     const ViewportPresetConfig& config = {},
     const Kinesis::FlyKeyMap& key_map = {},
+    const std::string& name = "default");
+
+/**
+ * @brief Bind the orbit navigation controller to a window and render processor.
+ *
+ * Registers event handlers under the prefix "vp_<name>_". MMB drag rotates
+ * around the focal point; holding key_map.pan_modifier during MMB drag pans
+ * the focal point instead. Scroll dollies the distance. Ortho snap slots set
+ * to std::nullopt are silently skipped.
+ *
+ * @param window     Window supplying input events
+ * @param processor  RenderProcessor that receives the ViewTransform source
+ * @param config     Orbit tuning parameters
+ * @param key_map    Key assignments; defaults to Shift pan modifier + KP snaps
+ * @param name       Unique prefix for registered events; must be unique per window
+ */
+MAYAFLUX_API void bind_orbit_preset(
+    const std::shared_ptr<Core::Window>& window,
+    const std::shared_ptr<Buffers::RenderProcessor>& processor,
+    const Kinesis::OrbitConfig& config = {},
+    const Kinesis::OrbitKeyMap& key_map = {},
+    const std::string& name = "default");
+
+/**
+ * @brief Bind the orbit navigation controller to all RenderProcessors currently
+ *        registered against a window.
+ *
+ * @param window   Window supplying input events
+ * @param config   Orbit tuning parameters
+ * @param key_map  Key assignments
+ * @param name     Preset name forwarded to the per-processor overload
+ */
+MAYAFLUX_API void bind_orbit_preset(
+    const std::shared_ptr<Core::Window>& window,
+    const Kinesis::OrbitConfig& config = {},
+    const Kinesis::OrbitKeyMap& key_map = {},
     const std::string& name = "default");
 
 /**

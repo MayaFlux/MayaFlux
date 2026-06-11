@@ -43,6 +43,9 @@ void bind_viewport_preset(
     case ViewportPresetMode::Fly:
         bind_fly_preset(window, processor, config, {}, name);
         return;
+    // case ViewportPresetMode::Orbit:
+    //     bind_orbit_preset(window, processor, config, {}, name);
+    //     return;
     default:
         MF_RT_ERROR(Journal::Component::API, Journal::Context::EventDispatch,
             "ViewportPresetMode {} is not yet implemented",
@@ -141,7 +144,6 @@ void bind_fly_preset(
 
 void bind_fly_preset(
     const std::shared_ptr<Core::Window>& window,
-    ViewportPresetMode mode,
     const ViewportPresetConfig& config,
     const Kinesis::FlyKeyMap& key_map,
     const std::string& name)
@@ -155,6 +157,87 @@ void bind_fly_preset(
     }
 }
 
+void bind_orbit_preset(
+    const std::shared_ptr<Core::Window>& window,
+    const std::shared_ptr<Buffers::RenderProcessor>& processor,
+    const Kinesis::OrbitConfig& config,
+    const Kinesis::OrbitKeyMap& key_map,
+    const std::string& name)
+{
+    auto& record = s_registry[make_key(window, name)];
+    record.saved_config = window->get_input_config();
+    record.registered_events.clear();
+
+    auto st = std::make_shared<Kinesis::OrbitState>(Kinesis::make_orbit_state(config));
+
+    on_mouse_pressed(window, IO::MouseButtons::Middle, [st](double /*x*/, double /*y*/) {
+        st->mmb_held    = true;
+        st->first_mouse = true; }, event_name(name, "mmb_dn"));
+
+    on_mouse_released(window, IO::MouseButtons::Middle, [st](double /*x*/, double /*y*/) { st->mmb_held = false; }, event_name(name, "mmb_up"));
+
+    on_key_pressed(window, key_map.pan_modifier, [st] { st->pan_held = true; }, event_name(name, "pan_mod_dn"));
+    on_key_released(window, key_map.pan_modifier, [st] { st->pan_held = false; }, event_name(name, "pan_mod_up"));
+
+    on_mouse_move(window, [st](double x, double y) {
+        if (!st->mmb_held) {
+            st->first_mouse = true;
+            return;
+        }
+        if (st->first_mouse) {
+            st->last_x      = x;
+            st->last_y      = y;
+            st->first_mouse = false;
+            return;
+        }
+        const auto  dx = static_cast<float>(x - st->last_x);
+        const auto  dy = static_cast<float>(y - st->last_y);
+        st->last_x = x;
+        st->last_y = y;
+
+        if (st->pan_held) {
+            Kinesis::apply_orbit_pan(*st, dx, dy);
+        } else {
+            Kinesis::apply_orbit_rotate(*st, dx, dy); 
+} }, event_name(name, "mouse"));
+
+    on_scroll(window, [st](double /*dx*/, double dy) { Kinesis::apply_orbit_scroll(*st, static_cast<float>(dy)); }, event_name(name, "scroll"));
+
+    if (key_map.ortho_front)
+        on_key_pressed(window, *key_map.ortho_front, [st] { Kinesis::snap_orbit_ortho(*st, 0); }, event_name(name, "kp_front"));
+    if (key_map.ortho_right)
+        on_key_pressed(window, *key_map.ortho_right, [st] { Kinesis::snap_orbit_ortho(*st, 1); }, event_name(name, "kp_right"));
+    if (key_map.ortho_top)
+        on_key_pressed(window, *key_map.ortho_top, [st] { Kinesis::snap_orbit_ortho(*st, 2); }, event_name(name, "kp_top"));
+    if (key_map.ortho_flip)
+        on_key_pressed(window, *key_map.ortho_flip, [st] { Kinesis::snap_orbit_ortho(*st, 3); }, event_name(name, "kp_flip"));
+
+    processor->set_view_transform_source(
+        [st, window_weak = std::weak_ptr<Core::Window>(window)]() -> Kinesis::ViewTransform {
+            auto win = window_weak.lock();
+            if (!win)
+                return {};
+            const auto& ws = win->get_state();
+            const float aspect = (ws.current_height > 0)
+                ? static_cast<float>(ws.current_width) / static_cast<float>(ws.current_height)
+                : 1.0F;
+            return Kinesis::compute_orbit_view_transform(*st, aspect);
+        });
+}
+
+void bind_orbit_preset(
+    const std::shared_ptr<Core::Window>& window,
+    const Kinesis::OrbitConfig& config,
+    const Kinesis::OrbitKeyMap& key_map,
+    const std::string& name)
+{
+    for (const auto& buf : window->get_rendering_buffers()) {
+        auto rp = buf->get_render_processor();
+        if (!rp)
+            continue;
+        bind_orbit_preset(window, rp, config, key_map, name);
+    }
+}
 void unbind_viewport_preset(
     const std::shared_ptr<Core::Window>& window,
     const std::string& name)
