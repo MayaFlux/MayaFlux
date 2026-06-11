@@ -1,5 +1,7 @@
 #include "Context.hpp"
 
+#include "Primitives/Mapped.hpp"
+
 #include "MayaFlux/Core/Backends/Windowing/Window.hpp"
 #include "MayaFlux/Kriya/InputEvents.hpp"
 #include "MayaFlux/Vruta/EventManager.hpp"
@@ -147,6 +149,26 @@ const Vruta::WindowEventSource& Context::event_source() const
 {
     return m_window->get_event_source();
 }
+
+Context& Context::key_step(
+    uint32_t id,
+    std::shared_ptr<MappedState<float>> state,
+    IO::Keys decrease,
+    IO::Keys increase,
+    float delta,
+    float clamp_min,
+    float clamp_max)
+{
+    on_held(id, decrease, [state, delta, clamp_min, clamp_max](uint32_t) {
+        state->write(std::clamp(state->value - delta, clamp_min, clamp_max));
+    });
+
+    on_held(id, increase, [state, delta, clamp_min, clamp_max](uint32_t) {
+        state->write(std::clamp(state->value + delta, clamp_min, clamp_max));
+    });
+
+    return *this;
+} 
 
 // =============================================================================
 // Handler registration / cancellation

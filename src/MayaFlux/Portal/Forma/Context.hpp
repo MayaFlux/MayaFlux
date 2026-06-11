@@ -15,6 +15,9 @@ class WindowEventSource;
 
 namespace MayaFlux::Portal::Forma {
 
+template <typename T>
+struct MappedState;
+
 /**
  * @class Context
  * @brief Event wiring between a Layer and a window surface.
@@ -182,6 +185,30 @@ public:
      * @brief Get currently focused element, if any.
      */
     [[nodiscard]] std::optional<uint32_t> focused() const { return m_focused; }
+
+    /**
+     * @brief Attach key-delta handlers to a Mapped<float> element.
+     *
+     * Binds key handlers that adjust the element's state by a delta on each
+     * press/hold. The element must be focused (via mouse click) for keys to fire.
+     *
+     * @param id          Element id.
+     * @param state       MappedState to adjust.
+     * @param decrease    Key that decreases the value.
+     * @param increase    Key that increases the value.
+     * @param delta       Step size per key event.
+     * @param clamp_min   Minimum clamped value (default 0.0F).
+     * @param clamp_max   Maximum clamped value (default 1.0F).
+     * @return *this for chaining.
+     */
+    Context& key_step(
+        uint32_t id,
+        std::shared_ptr<MappedState<float>> state,
+        IO::Keys decrease,
+        IO::Keys increase,
+        float delta,
+        float clamp_min = 0.0F,
+        float clamp_max = 1.0F);
 
     // =========================================================================
     // State query
