@@ -274,6 +274,57 @@ void Bridge::write(uint32_t id, std::shared_ptr<Nodes::Constant> node)
         name, false);
 }
 
+void Bridge::write(uint32_t id, std::function<void(std::span<const float>)> sink)
+{
+    auto it = m_records.find(id);
+    if (it == m_records.end()) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::Init,
+            "Bridge::write: unknown element id {}", id);
+        return;
+    }
+
+    auto name = make_task_name(id, "bulk_sink");
+    it->second.outbound_tasks.push_back(name);
+
+    auto bulk = it->second.bulk_reader;
+    auto reader = it->second.reader;
+
+    if (bulk) {
+        auto routine = [](Vruta::TaskScheduler&,
+                           std::function<std::vector<float>()> b,
+                           std::function<void(std::span<const float>)> s)
+            -> Vruta::GraphicsRoutine {
+            auto& p = co_await Kriya::GetGraphicsPromise {};
+            while (!p.should_terminate) {
+                const auto v = b();
+                s(v);
+                co_await Kriya::FrameDelay { .frames_to_wait = 1 };
+            }
+        };
+        m_scheduler.add_task(
+            std::make_shared<Vruta::GraphicsRoutine>(
+                routine(m_scheduler, std::move(bulk), std::move(sink))),
+            name, false);
+    } else {
+        auto routine = [](Vruta::TaskScheduler&,
+                           std::function<float()> r,
+                           std::function<void(std::span<const float>)> s)
+            -> Vruta::GraphicsRoutine {
+            auto& p = co_await Kriya::GetGraphicsPromise {};
+            float val {};
+            while (!p.should_terminate) {
+                val = r();
+                s(std::span<const float> { &val, 1 });
+                co_await Kriya::FrameDelay { .frames_to_wait = 1 };
+            }
+        };
+        m_scheduler.add_task(
+            std::make_shared<Vruta::GraphicsRoutine>(
+                routine(m_scheduler, std::move(reader), std::move(sink))),
+            name, false);
+    }
+}
+
 // =============================================================================
 // Lifecycle
 // =============================================================================

@@ -125,6 +125,13 @@ public:
         bind(state->id, std::move(source));
     }
 
+    template <typename T>
+    void write(std::shared_ptr<MappedState<T>> state,
+        std::function<void(std::span<const float>)> sink)
+    {
+        write(state->id, std::move(sink));
+    }
+
     // =========================================================================
     // Outbound — id overloads (primary implementation)
     // =========================================================================
@@ -187,6 +194,22 @@ public:
      * @param node Constant node updated each frame.
      */
     void write(uint32_t id, std::shared_ptr<Nodes::Constant> node);
+
+    /**
+     * @brief Route element bulk value to a caller-supplied sink each frame.
+     *
+     * When the element's MappedState<T> has a bulk_reader (T is vector<float>
+     * or vector<double>), the full vector is forwarded as a span. For scalar
+     * T the sink receives a single-element span of the scalar value.
+     *
+     * Intended for consumers that operate on coefficient arrays or other
+     * N-element state: FIR/IIR coefficient vectors, Random node bounds,
+     * any function accepting a contiguous float range.
+     *
+     * @param id   Element id.
+     * @param sink Callable invoked each frame with the current value span.
+     */
+    void write(uint32_t id, std::function<void(std::span<const float>)> sink);
 
     // =========================================================================
     // Outbound — MappedState overloads
@@ -428,6 +451,12 @@ public:
         Binding& write(std::shared_ptr<Nodes::Constant> node)
         {
             m_bridge.write(m_id, std::move(node));
+            return *this;
+        }
+
+        Binding& write(std::function<void(std::span<const float>)> sink)
+        {
+            m_bridge.write(m_id, std::move(sink));
             return *this;
         }
 
