@@ -30,6 +30,7 @@ enum class ViewportPresetMode : uint8_t {
     Fly, ///< First-person fly: WASD/QE translate, RMB drag yaw/pitch, scroll dolly, KP ortho snaps
     Orbit, ///< Tumble around a focal point (not yet implemented)
     PanZoom2D, ///< Orthographic 2D pan and zoom (not yet implemented)
+    Screenspace, ///< Perspective pan in camera's local right/up plane, scroll dolly, no rotation
     // Trackball, ///< Virtual trackball (not yet implemented)
 };
 
@@ -184,6 +185,45 @@ MAYAFLUX_API void bind_pan_zoom_preset(
     const std::shared_ptr<Core::Window>& window,
     const Kinesis::PanZoom2DConfig& config = {},
     const Kinesis::PanZoom2DKeyMap& key_map = {},
+    const std::string& name = "default");
+
+/**
+ * @brief Bind the screenspace navigation controller to a window and render processor.
+ *
+ * Drag translates the eye along the camera's local right and up axes derived
+ * from the current yaw and pitch. Rotation is never modified. Scroll dollies
+ * along the forward vector. Perspective projection is preserved throughout.
+ *
+ * To set the initial viewing direction, supply a NavigationConfig with
+ * initial_eye and initial_target; yaw and pitch are derived from those on
+ * construction exactly as in bind_fly_preset.
+ *
+ * @param window     Window supplying input events
+ * @param processor  RenderProcessor that receives the ViewTransform source
+ * @param config     Camera tuning parameters; move_speed is unused
+ * @param key_map    Input assignments; defaults to RMB drag
+ * @param name       Unique prefix for registered events; must be unique per window
+ */
+MAYAFLUX_API void bind_screenspace_preset(
+    const std::shared_ptr<Core::Window>& window,
+    const std::shared_ptr<Buffers::RenderProcessor>& processor,
+    const Kinesis::NavigationConfig& config = {},
+    const Kinesis::ScreenspaceKeyMap& key_map = {},
+    const std::string& name = "default");
+
+/**
+ * @brief Bind the screenspace navigation controller to all RenderProcessors
+ *        currently registered against a window.
+ *
+ * @param window   Window supplying input events
+ * @param config   Camera tuning parameters
+ * @param key_map  Input assignments
+ * @param name     Preset name forwarded to the per-processor overload
+ */
+MAYAFLUX_API void bind_screenspace_preset(
+    const std::shared_ptr<Core::Window>& window,
+    const Kinesis::NavigationConfig& config = {},
+    const Kinesis::ScreenspaceKeyMap& key_map = {},
     const std::string& name = "default");
 
 /**

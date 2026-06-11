@@ -55,4 +55,15 @@ struct PanZoom2DKeyMap {
     IO::MouseButtons drag_button { IO::MouseButtons::Middle }; ///< Button held to pan
 };
 
+/**
+ * @struct ScreenspaceKeyMap
+ * @brief Input assignments for the Screenspace navigation preset.
+ *
+ * No keyboard axes. Drag pans the eye in the camera's local right/up plane.
+ * Scroll dollies along the current forward vector.
+ */
+struct ScreenspaceKeyMap {
+    IO::MouseButtons drag_button { IO::MouseButtons::Right }; ///< Button held to pan
+};
+
 } // namespace MayaFlux::Kinesis

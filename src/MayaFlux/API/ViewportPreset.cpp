@@ -47,6 +47,8 @@ void bind_viewport_preset(
     case ViewportPresetMode::PanZoom2D:
         bind_pan_zoom_preset(window, processor, {}, {}, name);
         return;
+    case ViewportPresetMode::Screenspace:
+        bind_screenspace_preset(window, processor, {}, {}, name);
     default:
         MF_RT_ERROR(Journal::Component::API, Journal::Context::EventDispatch,
             "ViewportPresetMode {} is not yet implemented",
@@ -238,33 +240,6 @@ void bind_orbit_preset(
         bind_orbit_preset(window, rp, config, key_map, name);
     }
 }
-void unbind_viewport_preset(
-    const std::shared_ptr<Core::Window>& window,
-    const std::string& name)
-{
-    const std::string key = make_key(window, name);
-    auto it = s_registry.find(key);
-    if (it == s_registry.end()) {
-        return;
-    }
-    const Core::InputConfig saved = it->second.saved_config;
-    s_registry.erase(it);
-
-    window->set_input_config(saved);
-
-    static const char* const k_suffixes[] = {
-        "fwd_dn", "fwd_up", "bck_dn", "bck_up",
-        "lft_dn", "lft_up", "rgt_dn", "rgt_up",
-        "dwn_dn", "dwn_up", "up_dn", "up_up",
-        "rmb_dn", "rmb_up",
-        "mouse", "scroll",
-        "kp_front", "kp_right", "kp_top", "kp_flip"
-    };
-
-    for (const auto& ev : it->second.registered_events) {
-        cancel_event_handler(ev);
-    }
-}
 
 void bind_pan_zoom_preset(
     const std::shared_ptr<Core::Window>& window,
@@ -338,6 +313,99 @@ void bind_pan_zoom_preset(
             continue;
         bind_pan_zoom_preset(window, rp, config, key_map, name);
     }
+}
+
+void bind_screenspace_preset(
+    const std::shared_ptr<Core::Window>& window,
+    const std::shared_ptr<Buffers::RenderProcessor>& processor,
+    const Kinesis::NavigationConfig& config,
+    const Kinesis::ScreenspaceKeyMap& key_map,
+    const std::string& name)
+{
+    auto& record = s_registry[make_key(window, name)];
+    record.saved_config = window->get_input_config();
+    record.registered_events.clear();
+
+    auto st = std::make_shared<Kinesis::NavigationState>(
+        Kinesis::make_navigation_state(config));
+
+    on_mouse_pressed(window, key_map.drag_button, [st](double /*x*/, double /*y*/) {
+        st->rmb_held    = true;
+        st->first_mouse = true; }, event_name(name, "drag_dn"));
+
+    on_mouse_released(window, key_map.drag_button, [st](double /*x*/, double /*y*/) { st->rmb_held = false; }, event_name(name, "drag_up"));
+
+    on_mouse_move(window, [st](double x, double y) {
+        if (!st->rmb_held) {
+            st->first_mouse = true;
+            return;
+        }
+        if (st->first_mouse) {
+            st->last_x      = x;
+            st->last_y      = y;
+            st->first_mouse = false;
+            return;
+        }
+        const auto  dx = static_cast<float>(x - st->last_x);
+        const auto  dy = static_cast<float>(y - st->last_y);
+        st->last_x = x;
+        st->last_y = y;
+
+        const glm::vec3 forward {
+            std::cos(st->pitch) * std::sin(st->yaw),
+            std::sin(st->pitch),
+            std::cos(st->pitch) * std::cos(st->yaw)
+        };
+        const glm::vec3 right = glm::normalize(glm::cross(forward, glm::vec3(0.0F, 1.0F, 0.0F)));
+        const glm::vec3 up    = glm::normalize(glm::cross(right, forward));
+
+        st->eye -= right * (dx * st->mouse_sensitivity);
+        st->eye += up    * (dy * st->mouse_sensitivity); }, event_name(name, "mouse"));
+
+    on_scroll(window, [st](double /*dx*/, double dy) { Kinesis::apply_scroll(*st, static_cast<float>(dy)); }, event_name(name, "scroll"));
+
+    processor->set_view_transform_source(
+        [st, window_weak = std::weak_ptr<Core::Window>(window)]() -> Kinesis::ViewTransform {
+            auto win = window_weak.lock();
+            if (!win)
+                return {};
+            const auto& ws = win->get_state();
+            const float aspect = (ws.current_height > 0)
+                ? static_cast<float>(ws.current_width) / static_cast<float>(ws.current_height)
+                : 1.0F;
+            return Kinesis::build_view_transform(*st, aspect);
+        });
+}
+
+void bind_screenspace_preset(
+    const std::shared_ptr<Core::Window>& window,
+    const Kinesis::NavigationConfig& config,
+    const Kinesis::ScreenspaceKeyMap& key_map,
+    const std::string& name)
+{
+    for (const auto& buf : window->get_rendering_buffers()) {
+        auto rp = buf->get_render_processor();
+        if (!rp)
+            continue;
+        bind_screenspace_preset(window, rp, config, key_map, name);
+    }
+}
+
+void unbind_viewport_preset(
+    const std::shared_ptr<Core::Window>& window,
+    const std::string& name)
+{
+    const std::string key = make_key(window, name);
+    auto it = s_registry.find(key);
+    if (it == s_registry.end())
+        return;
+
+    window->set_input_config(it->second.saved_config);
+
+    for (const auto& ev : it->second.registered_events)
+        cancel_event_handler(ev);
+
+    s_registry.erase(it);
 }
 
 } // namespace MayaFlux
