@@ -1,3 +1,5 @@
 [submodule "src/examples"]
-	path = src/examples
-	url = git@github.com:mayaflux/mayaflux-examples.git
+    path = src/examples
+    url = git@github.com:mayaflux/mayaflux-examples.git
+    branch = main
+    update = none
