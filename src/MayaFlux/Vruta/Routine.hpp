@@ -339,25 +339,8 @@ public:
      */
     SoundRoutine(std::coroutine_handle<promise_type> h);
 
-    /**
-     * @brief Copy constructor
-     * @param other SoundRoutine to copy
-     *
-     * Creates a new SoundRoutine that shares ownership of the same
-     * underlying coroutine. This allows multiple schedulers or containers
-     * to reference the same task.
-     */
-    SoundRoutine(const SoundRoutine& other);
-
-    /**
-     * @brief Copy assignment operator
-     * @param other SoundRoutine to copy
-     * @return Reference to this SoundRoutine
-     *
-     * Assigns this SoundRoutine to share ownership of the same
-     * underlying coroutine as the other SoundRoutine.
-     */
-    SoundRoutine& operator=(const SoundRoutine& other);
+    SoundRoutine(const SoundRoutine& other) = delete;
+    SoundRoutine& operator=(const SoundRoutine& other) = delete;
 
     /**
      * @brief Move constructor
@@ -537,22 +520,8 @@ public:
      */
     GraphicsRoutine(std::coroutine_handle<promise_type> h);
 
-    /**
-     * @brief Copy constructor
-     * @param other GraphicsRoutine to copy
-     *
-     * Creates a new GraphicsRoutine that shares ownership of the same
-     * underlying coroutine. This allows multiple schedulers or containers
-     * to reference the same task.
-     */
-    GraphicsRoutine(const GraphicsRoutine& other);
-
-    /**
-     * @brief Copy assignment operator
-     * @param other GraphicsRoutine to copy from
-     * @return Reference to this GraphicsRoutine
-     */
-    GraphicsRoutine& operator=(const GraphicsRoutine& other);
+    GraphicsRoutine(const GraphicsRoutine& other) = delete;
+    GraphicsRoutine& operator=(const GraphicsRoutine& other) = delete;
 
     /**
      * @brief Move constructor

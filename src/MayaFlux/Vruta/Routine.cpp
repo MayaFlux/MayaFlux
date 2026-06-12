@@ -32,30 +32,6 @@ SoundRoutine::SoundRoutine(std::coroutine_handle<promise_type> h)
     }
 }
 
-SoundRoutine::SoundRoutine(const SoundRoutine& other)
-    : m_handle(nullptr)
-{
-    if (other.m_handle) {
-        m_handle = other.m_handle;
-    }
-}
-
-SoundRoutine& SoundRoutine::operator=(const SoundRoutine& other)
-{
-    if (this != &other) {
-        if (m_handle) {
-            m_handle.destroy();
-        }
-
-        if (other.m_handle) {
-            m_handle = other.m_handle;
-        } else {
-            m_handle = nullptr;
-        }
-    }
-    return *this;
-}
-
 SoundRoutine::SoundRoutine(SoundRoutine&& other) noexcept
     : m_handle(std::exchange(other.m_handle, {}))
 {
@@ -232,19 +208,6 @@ GraphicsRoutine::GraphicsRoutine(std::coroutine_handle<promise_type> h)
         error<std::invalid_argument>(Journal::Component::Vruta, Journal::Context::CoroutineScheduling, std::source_location::current(),
             "GraphicsRoutine constructed with invalid coroutine handle");
     }
-}
-
-GraphicsRoutine::GraphicsRoutine(const GraphicsRoutine& other)
-    : m_handle(other.m_handle)
-{
-}
-
-GraphicsRoutine& GraphicsRoutine::operator=(const GraphicsRoutine& other)
-{
-    if (this != &other) {
-        m_handle = other.m_handle;
-    }
-    return *this;
 }
 
 GraphicsRoutine::GraphicsRoutine(GraphicsRoutine&& other) noexcept
