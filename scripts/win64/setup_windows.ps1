@@ -178,10 +178,20 @@ if (Test-Path $vulkanBase) {
 }
 
 # FFmpeg
-$ffmpegRoot = "C:\Program Files\FFmpeg"
-if (Test-Path $ffmpegRoot) {
+$wingetPkgs = Join-Path $env:LOCALAPPDATA "Microsoft\WinGet\Packages"
+$ffmpegRoot = $null
+if (Test-Path $wingetPkgs) {
+    $ffmpegRoot = Get-ChildItem $wingetPkgs -Directory -Filter "Gyan.FFmpeg.Shared*" -ErrorAction SilentlyContinue |
+        ForEach-Object { Get-ChildItem $_.FullName -Directory -Filter "ffmpeg-*-full_build-shared" -ErrorAction SilentlyContinue } |
+        Where-Object { Test-Path (Join-Path $_.FullName "bin\ffmpeg.exe") } |
+        Select-Object -First 1 -ExpandProperty FullName
+}
+if ($ffmpegRoot) {
     [Environment]::SetEnvironmentVariable("FFMPEG_ROOT", $ffmpegRoot, "Machine")
+    Add-EnvPath -Name "PATH" -Value (Join-Path $ffmpegRoot "bin")
     Write-Host "[FFmpeg] Root: $ffmpegRoot" -ForegroundColor Green
+} else {
+    Write-Warning "[FFmpeg] Not found in WinGet package store"
 }
 
 # vcpkg (general include/lib for migrated packages)

@@ -20,7 +20,7 @@
 
     WingetPackages = @{
         FFmpeg = @{
-            WingetId = 'Gyan.FFmpeg'
+            WingetId = 'Gyan.FFmpeg.Shared'
             Verify   = 'ffmpeg'
         }
         VulkanSDK = @{
