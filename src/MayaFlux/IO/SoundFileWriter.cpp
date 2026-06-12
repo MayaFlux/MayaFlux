@@ -55,6 +55,7 @@ bool SoundFileWriter::open(const std::string& filepath,
 
     m_channels = channels;
     m_close_promise = std::promise<bool> {};
+    m_close_future = m_close_promise.get_future().share();
     m_closing.store(false, std::memory_order_release);
 
     m_worker = std::thread(&SoundFileWriter::worker_loop, this,
@@ -78,7 +79,8 @@ std::future<bool> SoundFileWriter::close()
     if (!m_closing.exchange(true)) {
         post(CloseCmd {});
     }
-    return m_close_promise.get_future();
+    return std::async(std::launch::deferred,
+        [f = m_close_future]() { return f.get(); });
 }
 
 // =========================================================================

@@ -154,8 +154,12 @@ int AudioSubsystem::process_output(double* output_buffer, unsigned int num_frame
         m_handle->nodes.cleanup_completed_routing();
         m_handle->buffers.cleanup_completed_routing();
 
+        if (m_snapshot_copy.size() != total_samples)
+            m_snapshot_copy.resize(total_samples);
+
+        std::memcpy(m_snapshot_copy.data(), output_buffer, total_samples * sizeof(double));
         m_snapshot_size.store(static_cast<uint32_t>(total_samples), std::memory_order_release);
-        m_snapshot_ptr.store(output_buffer, std::memory_order_release);
+        m_snapshot_ptr.store(m_snapshot_copy.data(), std::memory_order_release);
         m_snapshot_generation.fetch_add(1, std::memory_order_release);
         m_snapshot_generation.notify_all();
 

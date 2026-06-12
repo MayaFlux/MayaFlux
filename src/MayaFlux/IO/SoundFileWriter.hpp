@@ -173,6 +173,7 @@ private:
     std::atomic<bool> m_open { false };
     std::atomic<bool> m_closing { false };
     std::promise<bool> m_close_promise;
+    std::shared_future<bool> m_close_future;
 
     mutable std::mutex m_error_mutex;
     std::string m_last_error;

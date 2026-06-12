@@ -146,6 +146,7 @@ private:
     alignas(64) std::atomic<const double*> m_snapshot_ptr { nullptr };
     std::atomic<uint64_t> m_snapshot_generation { 0 };
     std::atomic<uint32_t> m_snapshot_size { 0 };
+    std::vector<double> m_snapshot_copy; ///< Owned copy of the last output cycle; decouples notification-thread reads from the callback write buffer.
 
     std::thread m_notify_thread;
 
