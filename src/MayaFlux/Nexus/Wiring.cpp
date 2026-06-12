@@ -241,7 +241,6 @@ namespace {
             fabric.fire(id);
         }
     }
-
 }
 
 // =============================================================================
@@ -302,7 +301,7 @@ void Wiring::finalise()
             using F = std::decay_t<decltype(factory)>;
             if constexpr (!std::is_same_v<F, std::monostate>) {
                 scheduler.add_task(
-                    std::make_shared<std::invoke_result_t<F, Vruta::TaskScheduler&>>(factory(scheduler)),
+                    std::make_shared<std::invoke_result_t<F>>(factory()),
                     name, false);
             }
         },

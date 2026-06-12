@@ -41,9 +41,9 @@ class Fabric;
 class MAYAFLUX_API Wiring {
 public:
     using PositionFn = std::function<glm::vec3()>;
-    using SoundFactory = std::function<Vruta::SoundRoutine(Vruta::TaskScheduler&)>;
-    using GraphicsFactory = std::function<Vruta::GraphicsRoutine(Vruta::TaskScheduler&)>;
-    using CrossFactory = std::function<Vruta::CrossRoutine(Vruta::TaskScheduler&)>;
+    using SoundFactory = std::function<Vruta::SoundRoutine()>;
+    using GraphicsFactory = std::function<Vruta::GraphicsRoutine()>;
+    using CrossFactory = std::function<Vruta::CrossRoutine()>;
     using EventFactory = std::function<Vruta::Event(Vruta::TaskScheduler&)>;
     using NullFunc = std::nullptr_t;
     static constexpr NullFunc no_release = nullptr;
