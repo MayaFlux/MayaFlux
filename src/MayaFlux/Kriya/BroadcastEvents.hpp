@@ -71,7 +71,7 @@ Vruta::Event on_signal_matching(
  *     })));
  * @endcode
  */
-[[nodiscard]] std::shared_ptr<Vruta::BroadcastSource<bool>> audio_output_tick();
+[[nodiscard]] MAYAFLUX_API std::shared_ptr<Vruta::BroadcastSource<bool>> audio_output_tick();
 
 struct WindowFrame {
     std::shared_ptr<std::vector<uint8_t>> data;
@@ -102,7 +102,7 @@ struct WindowFrame {
  *     })));
  * @endcode
  */
-[[nodiscard]] std::shared_ptr<Vruta::BroadcastSource<WindowFrame>> window_frame_tick(
+[[nodiscard]] MAYAFLUX_API std::shared_ptr<Vruta::BroadcastSource<WindowFrame>> window_frame_tick(
     const std::shared_ptr<Core::Window>& window);
 
 } // namespace MayaFlux::Kriya

@@ -80,7 +80,7 @@ void write_verts(std::vector<uint8_t>& out, const V& v)
  * @param track_color Track quad color.
  * @param handle_color Handle quad color.
  */
-[[nodiscard]] GeometryFn<float> horizontal_fader(
+[[nodiscard]] MAYAFLUX_API GeometryFn<float> horizontal_fader(
     Kinesis::AABB2D bounds,
     float handle_w,
     glm::vec3 track_color = glm::vec3(0.3F),
@@ -106,7 +106,7 @@ void write_verts(std::vector<uint8_t>& out, const V& v)
  * @param track_color  Track quad color.
  * @param handle_color Handle quad color.
  */
-[[nodiscard]] GeometryFn<float> vertical_fader(
+[[nodiscard]] MAYAFLUX_API GeometryFn<float> vertical_fader(
     Kinesis::AABB2D bounds,
     float handle_h,
     glm::vec3 track_color = glm::vec3(0.3F),
@@ -128,7 +128,7 @@ void write_verts(std::vector<uint8_t>& out, const V& v)
  * @param angle_end   End angle in radians (value = 1).
  * @param color       Line color.
  */
-[[nodiscard]] GeometryFn<float> radial(
+[[nodiscard]] MAYAFLUX_API GeometryFn<float> radial(
     glm::vec2 center,
     float radius,
     float angle_start,
@@ -154,7 +154,7 @@ void write_verts(std::vector<uint8_t>& out, const V& v)
  * @param size       Point size in pixels.
  * @param hit_radius Hit region radius in NDC units.
  */
-[[nodiscard]] GeometryFn<glm::vec2> point(
+[[nodiscard]] MAYAFLUX_API GeometryFn<glm::vec2> point(
     glm::vec3 color = glm::vec3(1.0F),
     float size = 10.0F,
     float hit_radius = 0.04F);
@@ -172,7 +172,7 @@ void write_verts(std::vector<uint8_t>& out, const V& v)
  * @param color  Point color.
  * @param size   Point size in pixels.
  */
-[[nodiscard]] GeometryFn<glm::vec2> position_picker(
+[[nodiscard]] MAYAFLUX_API GeometryFn<glm::vec2> position_picker(
     Kinesis::AABB2D bounds,
     glm::vec3 color = glm::vec3(0.9F),
     float size = 8.0F);
@@ -214,7 +214,7 @@ void write_verts(std::vector<uint8_t>& out, const V& v)
  * @param handle_color   Color of the handle point.
  * @param handle_size    Handle point size in pixels.
  */
-[[nodiscard]] GeometryFn<float> stroke_slider(
+[[nodiscard]] MAYAFLUX_API GeometryFn<float> stroke_slider(
     std::span<const glm::vec2> path,
     std::shared_ptr<Buffers::FormaBuffer> handle_buf,
     float half_thickness = 0.02F,
@@ -248,7 +248,7 @@ void write_verts(std::vector<uint8_t>& out, const V& v)
  * @param color_off Fill color when false.
  * @param color_on  Fill color when true.
  */
-[[nodiscard]] GeometryFn<bool> toggle(
+[[nodiscard]] MAYAFLUX_API GeometryFn<bool> toggle(
     Kinesis::AABB2D region,
     glm::vec3 color_off = glm::vec3(0.25F),
     glm::vec3 color_on = glm::vec3(0.2F, 0.7F, 0.4F));
@@ -277,7 +277,7 @@ void write_verts(std::vector<uint8_t>& out, const V& v)
  * @param fill_color  Color of the active (filled) portion.
  * @param track_color Color of the inactive remainder.
  */
-[[nodiscard]] GeometryFn<float> level_meter(
+[[nodiscard]] MAYAFLUX_API GeometryFn<float> level_meter(
     Kinesis::AABB2D bounds,
     bool horizontal = true,
     glm::vec3 fill_color = glm::vec3(0.2F, 0.7F, 0.3F),
@@ -305,7 +305,7 @@ void write_verts(std::vector<uint8_t>& out, const V& v)
  * @note Pass @c PrimitiveTopology::LINE_LIST explicitly to create_element —
  *       the default TRIANGLE_STRIP will misinterpret the 4 vertices.
  */
-[[nodiscard]] GeometryFn<glm::vec2> crosshair(
+[[nodiscard]] MAYAFLUX_API GeometryFn<glm::vec2> crosshair(
     float arm_len = 0.04F,
     glm::vec3 color = glm::vec3(0.9F),
     float thickness = 1.F,
@@ -346,7 +346,7 @@ void write_verts(std::vector<uint8_t>& out, const V& v)
  * @param color       Line color.
  * @param thickness   LineVertex thickness value.
  */
-[[nodiscard]] GeometryFn<std::vector<float>> drawable_canvas(
+[[nodiscard]] MAYAFLUX_API GeometryFn<std::vector<float>> drawable_canvas(
     Kinesis::AABB2D bounds,
     glm::vec3 color = glm::vec3(0.8F),
     float thickness = 1.5F);
@@ -365,7 +365,7 @@ void write_verts(std::vector<uint8_t>& out, const V& v)
  * @param state   MappedState<vector<float>> to write into.
  * @param bounds  Canvas NDC bounds — must match those passed to drawable_canvas().
  */
-void wire_canvas_drag(
+MAYAFLUX_API void wire_canvas_drag(
     Context& ctx,
     uint32_t id,
     std::shared_ptr<MappedState<std::vector<float>>> state,

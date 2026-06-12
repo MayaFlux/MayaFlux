@@ -195,7 +195,7 @@ struct MAYAFLUX_API routine_promise {
  * This separation of concerns allows the audio engine to schedule and manage
  * coroutines efficiently while providing a clean API for audio processing code.
  */
-struct audio_promise : public routine_promise<SoundRoutine> {
+struct MAYAFLUX_API audio_promise : public routine_promise<SoundRoutine> {
     /**
      * @brief Creates the SoundRoutine object returned to the caller
      * @return A new SoundRoutine that wraps this promise
@@ -258,7 +258,7 @@ struct audio_promise : public routine_promise<SoundRoutine> {
  * 4. If current_frame >= next_frame, routine->try_resume(current_frame)
  * 5. Routine updates next_frame based on FrameDelay amount
  */
-struct graphics_promise : public routine_promise<GraphicsRoutine> {
+struct MAYAFLUX_API graphics_promise : public routine_promise<GraphicsRoutine> {
     /**
      * @brief Creates the GraphicsRoutine object returned to the caller
      * @return A new GraphicsRoutine that wraps this promise
@@ -348,7 +348,7 @@ struct graphics_promise : public routine_promise<GraphicsRoutine> {
  * await_suspend and read only after the gate has claimed exclusivity, so they
  * stay non-atomic.
  */
-struct cross_promise : public routine_promise<CrossRoutine> {
+struct MAYAFLUX_API cross_promise : public routine_promise<CrossRoutine> {
     CrossRoutine get_return_object();
 
     /**
@@ -439,7 +439,7 @@ struct cross_promise : public routine_promise<CrossRoutine> {
  * the awaiter stores condition + handle atomically before setting armed, and
  * the scheduler thread reads only after observing armed == true.
  */
-struct conditional_promise : public routine_promise<FreeRoutine> {
+struct MAYAFLUX_API conditional_promise : public routine_promise<FreeRoutine> {
     FreeRoutine get_return_object();
 
     ProcessingToken processing_token { ProcessingToken::CONDITIONAL };
@@ -471,7 +471,7 @@ struct conditional_promise : public routine_promise<FreeRoutine> {
  * EventPromise has no clock. Coroutines suspend/resume based on
  * discrete event signals, not periodic ticks.
  */
-struct event_promise : public routine_promise<Event> {
+struct MAYAFLUX_API event_promise : public routine_promise<Event> {
     Event get_return_object();
 
     ProcessingToken processing_token { ProcessingToken::EVENT_DRIVEN };

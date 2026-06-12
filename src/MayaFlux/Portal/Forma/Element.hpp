@@ -55,7 +55,7 @@ namespace MayaFlux::Portal::Forma {
  *       holds only the spatial and identity metadata that Layer and
  *       Context need.
  */
-struct Element {
+struct MAYAFLUX_API Element {
     /// @brief Stable id assigned by Layer::add. Never zero.
     uint32_t id { 0 };
 

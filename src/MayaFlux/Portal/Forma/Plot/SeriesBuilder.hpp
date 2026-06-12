@@ -89,7 +89,7 @@ struct SeriesSpec {
  * When the builder cannot express what you need, write the raw lambda.
  * It receives the same PlotContainer.
  */
-class Series {
+class MAYAFLUX_API Series {
 public:
     using Role = Kakshya::DataDimension::Role;
 
@@ -530,7 +530,7 @@ private:
  *
  * .done() produces a GeometryFn<shared_ptr<PlotContainer>>.
  */
-class WaveformBuilder {
+class MAYAFLUX_API WaveformBuilder {
 public:
     WaveformBuilder(Series state)
         : m_state(std::move(state))
@@ -561,7 +561,7 @@ private:
  *
  * .done() produces a GeometryFn<shared_ptr<PlotContainer>>.
  */
-class ScatterBuilder {
+class MAYAFLUX_API ScatterBuilder {
 public:
     ScatterBuilder(Series state)
         : m_state(std::move(state))
@@ -593,7 +593,7 @@ private:
  *
  * .done() produces a GeometryFn<shared_ptr<PlotContainer>>.
  */
-class BarsBuilder {
+class MAYAFLUX_API BarsBuilder {
 public:
     BarsBuilder(Series state)
         : m_state(std::move(state))
@@ -622,7 +622,7 @@ private:
  *
  * .done() produces a SeriesSpec with TRIANGLE_STRIP topology.
  */
-class FilledWaveformBuilder {
+class MAYAFLUX_API FilledWaveformBuilder {
 public:
     FilledWaveformBuilder(Series state)
         : m_state(std::move(state))

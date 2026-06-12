@@ -145,7 +145,7 @@ struct LegendLayout {
  * @param container  PlotContainer after process_default() has been called.
  * @param role       DataDimension::Role to match.
  */
-[[nodiscard]] std::vector<std::span<const double>> series_by_role(
+[[nodiscard]] MAYAFLUX_API std::vector<std::span<const double>> series_by_role(
     const Kakshya::PlotContainer& container,
     Kakshya::DataDimension::Role role);
 
@@ -162,7 +162,7 @@ struct LegendLayout {
  * Computes the union [min, max] over all provided series and updates
  * @p range in place. No-op if series is empty or range.auto_scale is false.
  */
-void apply_auto_scale(AxisRange& range,
+MAYAFLUX_API void apply_auto_scale(AxisRange& range,
     const std::vector<std::span<const double>>& series);
 
 // =============================================================================
@@ -178,7 +178,7 @@ void apply_auto_scale(AxisRange& range,
  * @param palette  Per-series base colors. Size 1 = uniform color.
  * @param index    Series index.
  */
-[[nodiscard]] glm::vec3 palette_color(const std::vector<glm::vec3>& palette,
+[[nodiscard]] MAYAFLUX_API glm::vec3 palette_color(const std::vector<glm::vec3>& palette,
     size_t index) noexcept;
 
 // =============================================================================
@@ -203,7 +203,7 @@ void apply_auto_scale(AxisRange& range,
  * @param color    Fill color when no texture is provided.
  * @param texture  Optional GPU image. nullptr = solid color.
  */
-[[nodiscard]] GeometryFn<float> background(
+[[nodiscard]] MAYAFLUX_API GeometryFn<float> background(
     Kinesis::AABB2D bounds,
     glm::vec3 color = glm::vec3(1.F),
     const std::shared_ptr<Core::VKImage>& texture = nullptr);
@@ -276,7 +276,7 @@ void apply_auto_scale(AxisRange& range,
  * @param color     Line color.
  * @param thickness LineVertex::thickness value.
  */
-[[nodiscard]] GeometryFn<float> plot_cursor(
+[[nodiscard]] MAYAFLUX_API GeometryFn<float> plot_cursor(
     Kinesis::AABB2D bounds,
     bool vertical = true,
     glm::vec3 color = glm::vec3(0.75F),
