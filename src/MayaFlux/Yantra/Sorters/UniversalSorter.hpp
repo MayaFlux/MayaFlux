@@ -101,7 +101,7 @@ enum class SortingGranularity : uint8_t {
  * approaches that go beyond analog metaphors.
  */
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>, ComputeData OutputType = InputType>
-class MAYAFLUX_API UniversalSorter : public ComputeOperation<InputType, OutputType> {
+class UniversalSorter : public ComputeOperation<InputType, OutputType> {
 public:
     using input_type = Datum<InputType>;
     using output_type = Datum<OutputType>;

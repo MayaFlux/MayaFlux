@@ -125,7 +125,7 @@ struct MAYAFLUX_API StatisticalAnalysis {
  * ```
  */
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>, ComputeData OutputType = Eigen::VectorXd>
-class MAYAFLUX_API StatisticalAnalyzer : public UniversalAnalyzer<InputType, OutputType> {
+class StatisticalAnalyzer : public UniversalAnalyzer<InputType, OutputType> {
 public:
     using input_type = Datum<InputType>;
     using output_type = Datum<OutputType>;

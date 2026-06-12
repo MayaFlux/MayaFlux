@@ -19,7 +19,7 @@ class ComputeMatrix;
  * @tparam OutputType The data type produced by this operation, defaults to InputType
  */
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>, ComputeData OutputType = InputType>
-class MAYAFLUX_API ComputeOperation {
+class ComputeOperation {
 public:
     using input_type = Datum<InputType>;
     using output_type = Datum<OutputType>;

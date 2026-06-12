@@ -35,7 +35,7 @@ enum class MathematicalOperation : uint8_t {
  * - Quantization and bit reduction
  */
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>, ComputeData OutputType = InputType>
-class MAYAFLUX_API MathematicalTransformer final : public UniversalTransformer<InputType, OutputType> {
+class MathematicalTransformer final : public UniversalTransformer<InputType, OutputType> {
 public:
     using input_type = Datum<InputType>;
     using output_type = Datum<OutputType>;

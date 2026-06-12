@@ -77,7 +77,7 @@ enum class AnalysisGranularity : uint8_t {
  * ```
  */
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>, ComputeData OutputType = InputType>
-class MAYAFLUX_API UniversalAnalyzer : public ComputeOperation<InputType, OutputType> {
+class UniversalAnalyzer : public ComputeOperation<InputType, OutputType> {
 public:
     using input_type = Datum<InputType>;
     using output_type = Datum<OutputType>;

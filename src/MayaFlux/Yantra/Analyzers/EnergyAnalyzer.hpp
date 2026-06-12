@@ -106,7 +106,7 @@ struct MAYAFLUX_API EnergyAnalysis {
  * ```
  */
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>, ComputeData OutputType = Eigen::VectorXd>
-class MAYAFLUX_API EnergyAnalyzer : public UniversalAnalyzer<InputType, OutputType> {
+class EnergyAnalyzer : public UniversalAnalyzer<InputType, OutputType> {
 public:
     using input_type = Datum<InputType>;
     using output_type = Datum<OutputType>;

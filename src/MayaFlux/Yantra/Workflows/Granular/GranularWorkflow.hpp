@@ -87,16 +87,16 @@ using AttributeExecutor = std::function<double(std::span<const double>, const Ex
 using GrainTaper = Kakshya::RegionTaper;
 
 /// @brief Grammar rule executor for the reconstruction step.
-extern const ComputationGrammar::Rule::Executor reconstruct_grains;
+extern MAYAFLUX_API const ComputationGrammar::Rule::Executor reconstruct_grains;
 
 /// @brief Grammar rule executor for additive grain reconstruction.
-extern const ComputationGrammar::Rule::Executor reconstruct_grains_additive;
+extern MAYAFLUX_API const ComputationGrammar::Rule::Executor reconstruct_grains_additive;
 
 /// @brief Grammar rule executor — concatenative reconstruct into DynamicSoundStream.
-extern const ComputationGrammar::Rule::Executor reconstruct_grains_stream;
+extern MAYAFLUX_API const ComputationGrammar::Rule::Executor reconstruct_grains_stream;
 
 /// @brief Grammar rule executor — OLA reconstruct into DynamicSoundStream.
-extern const ComputationGrammar::Rule::Executor reconstruct_grains_additive_stream;
+extern MAYAFLUX_API const ComputationGrammar::Rule::Executor reconstruct_grains_additive_stream;
 
 // ============================================================================
 // Concrete operations

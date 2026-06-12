@@ -234,7 +234,7 @@ struct MAYAFLUX_API InputValue {
     /**
      * @brief OSC message structure
      */
-    struct OSCMessage {
+    struct MAYAFLUX_API OSCMessage {
         std::string address; ///< OSC address pattern
         std::vector<OSCArg> arguments; ///< Typed arguments
 

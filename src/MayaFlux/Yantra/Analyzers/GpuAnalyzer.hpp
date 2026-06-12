@@ -15,7 +15,7 @@ namespace MayaFlux::Yantra {
  */
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>,
     ComputeData OutputType = InputType>
-class MAYAFLUX_API GpuAnalyzer : public UniversalAnalyzer<InputType, OutputType> {
+class GpuAnalyzer : public UniversalAnalyzer<InputType, OutputType> {
 public:
     using input_type = Datum<InputType>;
     using output_type = Datum<OutputType>;

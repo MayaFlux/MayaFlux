@@ -28,7 +28,7 @@ namespace MayaFlux::Yantra {
  */
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>,
     ComputeData OutputType = InputType>
-class MAYAFLUX_API GpuTransformer : public UniversalTransformer<InputType, OutputType> {
+class GpuTransformer : public UniversalTransformer<InputType, OutputType> {
 public:
     using input_type = Datum<InputType>;
     using output_type = Datum<OutputType>;

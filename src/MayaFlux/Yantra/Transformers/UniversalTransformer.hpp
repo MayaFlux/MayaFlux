@@ -194,7 +194,7 @@ struct TransformationKey {
  * ```
  */
 template <ComputeData InputType = Kakshya::DataVariant, ComputeData OutputType = InputType>
-class MAYAFLUX_API UniversalTransformer : public ComputeOperation<InputType, OutputType> {
+class UniversalTransformer : public ComputeOperation<InputType, OutputType> {
 public:
     using input_type = Datum<InputType>;
     using output_type = Datum<OutputType>;
