@@ -109,6 +109,15 @@ endif()
 
 if(APPLE)
     target_link_libraries(Lila PRIVATE "-framework CoreFoundation")
+    target_compile_options(Lila PUBLIC
+        -nostdinc++
+        -isystem ${MAYAFLUX_HOMEBREW_LLVM_PREFIX}/include/c++/v1
+    )
+    target_link_options(Lila PUBLIC
+        -L${MAYAFLUX_HOMEBREW_LLVM_PREFIX}/lib
+        -Wl,-rpath,${MAYAFLUX_HOMEBREW_LLVM_PREFIX}/lib
+        -lc++
+    )
 endif()
 
 if(WIN32)

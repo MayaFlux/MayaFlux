@@ -48,24 +48,6 @@ jobs:
       - name: Install build tools on macOS
         run: brew install md5sha1sum
 
-      - name: Check system Clang C++23 support
-        shell: bash
-        run: |
-          echo "=== System Clang Version ==="
-          clang++ --version
-          echo "=== Testing C++23 standard library support ==="
-          cat > test.cpp << 'EOF'
-          #include <ranges>
-          #include <vector>
-          #include <cstddef>
-          int main() {
-              auto x = 42UZ;
-              auto v = std::views::iota(0, 5) | std::ranges::to<std::vector>();
-              return 0;
-          }
-          EOF
-          clang++ -std=c++2b test.cpp -o test && echo "✅ C++23 features work" || (echo "❌ C++23 features failed" && exit 1)
-
       - name: Setup ccache
         uses: hendrikmuhs/ccache-action@v1.2
         with:
@@ -151,6 +133,7 @@ jobs:
           echo "LLVM_PREFIX=$LLVM_PREFIX" >> $GITHUB_ENV
           echo "PATH=$LLVM_PREFIX/bin:$PATH" >> $GITHUB_ENV
           echo "LLVM_DIR=$LLVM_PREFIX/lib/cmake/llvm" >> $GITHUB_ENV
+          echo "LLVM_DEV_DIR=$LLVM_PREFIX" >> $GITHUB_ENV
           echo "Clang_DIR=$LLVM_PREFIX/lib/cmake/clang" >> $GITHUB_ENV
 
           # Vulkan SDK specific
@@ -198,6 +181,11 @@ jobs:
           echo "Using Preset: $PRESET"
 
           echo "PRESET=$PRESET" >> $GITHUB_ENV
+          export CC="$LLVM_PREFIX/bin/clang"
+          export CXX="$LLVM_PREFIX/bin/clang++"
+          export AR="$LLVM_PREFIX/bin/llvm-ar"
+          export RANLIB="$LLVM_PREFIX/bin/llvm-ranlib"
+          export NM="$LLVM_PREFIX/bin/llvm-nm"
           cmake --preset "$PRESET"
 
       - name: Build

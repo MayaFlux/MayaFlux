@@ -172,7 +172,15 @@ else()
             "-framework AudioToolbox"
             )
 
-        message(STATUS "MayaFlux Journal: Using fmt library on macOS")
+        target_compile_options(MayaFluxLib PUBLIC
+            -nostdinc++
+            -isystem ${MAYAFLUX_HOMEBREW_LLVM_PREFIX}/include/c++/v1
+        )
+        target_link_options(MayaFluxLib PUBLIC
+            -L${MAYAFLUX_HOMEBREW_LLVM_PREFIX}/lib
+            -Wl,-rpath,${MAYAFLUX_HOMEBREW_LLVM_PREFIX}/lib
+            -lc++
+        )
     else()
         target_link_libraries(MayaFluxLib PUBLIC
         PkgConfig::Vulkan

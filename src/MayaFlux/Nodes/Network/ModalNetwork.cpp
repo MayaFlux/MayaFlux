@@ -358,7 +358,7 @@ void ModalNetwork::process_batch(unsigned int num_samples)
                         [this](size_t a, size_t b) {
                             return std::abs(m_exciter_node_buffer[a]) < std::abs(m_exciter_node_buffer[b]);
                         });
-                    const double strength = std::abs<double>(m_exciter_node_buffer[max_peak]) * m_exciter_strength;
+                    const double strength = std::abs(m_exciter_node_buffer[max_peak]) * m_exciter_strength;
                     for (auto& mode : m_modes) {
                         const double target = mode.initial_amplitude * strength;
                         mode.amplitude = std::max<double>(mode.amplitude, target);

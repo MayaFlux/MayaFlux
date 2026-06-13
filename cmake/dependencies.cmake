@@ -61,6 +61,17 @@ else()
     find_package(TBB REQUIRED)
     find_package(LLVM CONFIG REQUIRED)
     find_package(Clang CONFIG REQUIRED)
+
+    if(APPLE)
+        execute_process(
+            COMMAND brew --prefix llvm
+            OUTPUT_VARIABLE HOMEBREW_LLVM_PREFIX
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
+        set(MAYAFLUX_HOMEBREW_LLVM_PREFIX "${HOMEBREW_LLVM_PREFIX}" CACHE INTERNAL "")
+    endif()
+
+
     find_package(glm REQUIRED)
     find_package(Freetype REQUIRED)
 

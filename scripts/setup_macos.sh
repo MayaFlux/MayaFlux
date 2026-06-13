@@ -51,6 +51,7 @@ cat <<EOF >"$ENV_FILE"
 # LLVM
 export PATH="$LLVM_PREFIX/bin:\$PATH"
 export LLVM_DIR="$LLVM_PREFIX/lib/cmake/llvm"
+export LLVM_DEV_DIR="$LLVM_PREFIX"
 export Clang_DIR="$LLVM_PREFIX/lib/cmake/clang"
 export CMAKE_PREFIX_PATH="$LLVM_PREFIX/lib/cmake:\$CMAKE_PREFIX_PATH"
 

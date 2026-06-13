@@ -63,6 +63,23 @@
       }
     },
     {
+      "name": "macos-dev",
+      "inherits": "unix-dev",
+      "displayName": "MacOS : Development",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Darwin"
+      },
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "$env{LLVM_DEV_DIR}/bin/clang",
+        "CMAKE_CXX_COMPILER": "$env{LLVM_DEV_DIR}/bin/clang++",
+        "CMAKE_AR": "$env{LLVM_DEV_DIR}/bin/llvm-ar",
+        "CMAKE_RANLIB": "$env{LLVM_DEV_DIR}/bin/llvm-ranlib",
+        "CMAKE_NM": "$env{LLVM_DEV_DIR}/bin/llvm-nm"
+      }
+    },
+    {
       "name": "linux-ship-dev",
       "inherits": "base-dev",
       "displayName": "Linux : Shipping with Debug Info",
@@ -125,7 +142,12 @@
       },
       "cacheVariables": {
         "CMAKE_VERBOSE_MAKEFILE": "ON",
-        "MAYAFLUX_PORTABLE": "ON"
+        "MAYAFLUX_PORTABLE": "ON",
+        "CMAKE_C_COMPILER": "$env{LLVM_DEV_DIR}/bin/clang",
+        "CMAKE_CXX_COMPILER": "$env{LLVM_DEV_DIR}/bin/clang++",
+        "CMAKE_AR": "$env{LLVM_DEV_DIR}/bin/llvm-ar",
+        "CMAKE_RANLIB": "$env{LLVM_DEV_DIR}/bin/llvm-ranlib",
+        "CMAKE_NM": "$env{LLVM_DEV_DIR}/bin/llvm-nm"
       }
     },
     {
@@ -139,7 +161,12 @@
       },
       "cacheVariables": {
         "CMAKE_VERBOSE_MAKEFILE": "ON",
-        "MAYAFLUX_PORTABLE": "ON"
+        "MAYAFLUX_PORTABLE": "ON",
+        "CMAKE_C_COMPILER": "$env{LLVM_DEV_DIR}/bin/clang",
+        "CMAKE_CXX_COMPILER": "$env{LLVM_DEV_DIR}/bin/clang++",
+        "CMAKE_AR": "$env{LLVM_DEV_DIR}/bin/llvm-ar",
+        "CMAKE_RANLIB": "$env{LLVM_DEV_DIR}/bin/llvm-ranlib",
+        "CMAKE_NM": "$env{LLVM_DEV_DIR}/bin/llvm-nm"
       }
     },
     {
@@ -197,6 +224,7 @@
   ],
   "buildPresets": [
     { "name": "unix-dev",         "configurePreset": "unix-dev", "jobs": 0 },
+    { "name": "macos-dev",         "configurePreset": "macos-dev", "jobs": 0 },
     { "name": "linux-ship-dev",    "configurePreset": "linux-ship-dev", "jobs": 0 },
     { "name": "linux-ship-rel",    "configurePreset": "linux-ship-rel", "jobs": 0 },
     { "name": "macos-ship-dev",    "configurePreset": "macos-ship-dev", "jobs": 0 },
