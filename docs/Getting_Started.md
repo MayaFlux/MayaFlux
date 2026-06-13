@@ -1,259 +1,115 @@
-# MayaFlux - Getting Started Guide
+# MayaFlux: Getting Started
 
-**MayaFlux** is a next-generation digital signal processing framework that embraces true digital paradigms.
-Moving beyond analog synthesis metaphors, MayaFlux treats audio, video, and all data streams as unified numerical information
-that can interact, transform, and process together through powerful algorithms, coroutines, and ahead-of-time computation techniques.
+MayaFlux is a C++20/23 framework for real-time computation across sound, geometry, image, and network. All data is the same numerical substrate; the domain annotation decides where a buffer cycle goes, not what the data is.
 
-## Weave: The Easy Way (Recommended for Most Users)
+This guide covers environment setup and the structure of a MayaFlux program. Tutorials that build on this foundation are at [mayaflux.org/tutorials](https://mayaflux.org/tutorials).
 
-**Weave is the recommended way to start with MayaFlux**.
-It handles everything from installation to project creation in one tool, available for **Windows, macOS, and Linux**.
+---
 
-### What Weave Does
+## Weave: Recommended for Most Users
 
-- **Downloads & Installs** MayaFlux automatically
-- **Manages Dependencies** (build tools, audio/video libraries, SDKs)
-- **Creates New Projects** with proper configuration
-- **Platform-Specific Setup** with intelligent fallbacks
+**Weave** is the installer and project tool for MayaFlux. Download it from the [Weave releases page](https://github.com/MayaFlux/Weave/releases).
 
-### Getting Weave
+### Installing MayaFlux
 
-**Download the latest release:** [Weave Releases Page](https://github.com/MayaFlux/Weave/releases)
+Launch Weave and choose **Install MayaFlux**. Weave downloads the framework, installs all required dependencies, and configures your environment. Restart your terminal when it finishes.
 
-### Using Weave
+### Creating a Project
 
-**Windows & Linux:**
+Launch Weave and choose **Create Project**. Enter a name and pick a destination. Weave generates a ready-to-build project:
 
-1. Download Weave and double-click the executable
-2. A GUI opens with two modes:
-   - **Management Mode**: Install MayaFlux and dependencies
-   - **Project Creation Mode**: Create new projects (available after installation)
-3. Follow the intuitive interface - your project is ready in minutes
+```
+MyProject/
+├── CMakeLists.txt
+├── CMakePresets.json
+├── community.cmake
+├── cmake/
+│   ├── mayaflux.cmake
+│   ├── shaders.cmake
+│   └── build_community.cmake
+├── src/
+│   ├── main.cpp
+│   └── user_project.hpp
+├── data/
+│   └── shaders/
+└── .gitignore
+```
+
+`src/user_project.hpp` is where you write your code. `CMakeLists.txt` is yours to edit; the MayaFlux integration lives in `cmake/mayaflux.cmake` and is included automatically.
+
+`CMakePresets.json` ships with every project and defines `debug` and `release` presets. CLion, VS Code with the CMake extension, and Visual Studio all pick up the presets automatically when you open the project folder.
+
+```bash
+cmake --preset release
+cmake --build --preset release
+./build/MyProject
+```
+
+On Windows the binary lands in `build\MyProject.exe`.
+
+### Live Coding (Lila)
+
+Check **Enable Live Coding (Lila)** in the project creation dialog to embed the Lila JIT compiler in your process. Connect [LilaCode](https://github.com/MayaFlux/LilaCode) (VS Code) or [lila.nvim](https://github.com/MayaFlux/lila.nvim) (Neovim) to evaluate C++ against your running application in real time.
+
+### Community Modules
+
+Community modules are C++ source libraries that compile directly into your project with no plugin boundary. In Weave, open your project and choose **Add Community Module**. Weave fetches the [community registry](https://github.com/MayaFlux/community-sources-registry), checks version compatibility, clones the module into `community/<name>/`, and registers it in `community.cmake`. Rebuild after adding modules.
+
+After Weave completes setup, jump to [Program Structure](#program-structure).
+
+---
+
+## Building from Source
+
+### Requirements: All Platforms
+
+- **Compiler:** C++20 (GCC 12+, Clang 16+, MSVC 2022+)
+- **Build system:** CMake 3.28+
+- **Required dependencies:** Vulkan SDK, FFmpeg (avcodec, avformat, avutil, swresample, swscale, avdevice), GLM, Eigen, HIDAPI, Asio, Assimp, FreeType, utf8proc, nlohmann_json, fmt, TBB, STB, LLVM 21+
+
+All dependencies are required. CMake will not generate if any are missing.
+
+### Requirements: Platform-Specific
+
+**Linux:**
+- PipeWire (audio and MIDI)
+- libdbus-1 (XDG Portal file dialogs)
+- wayland-protocols, libwayland-client, xkbcommon (windowing)
+- fontconfig (system font discovery)
 
 **macOS:**
+- macOS 15+ (Sequoia), Apple Silicon or Intel
+- Apple Clang 16+ via Xcode Command Line Tools
+- GLFW (via Homebrew, for windowing)
+- Frameworks linked automatically: CoreAudio, AudioUnit, AudioToolbox, CoreMIDI, AppKit, UniformTypeIdentifiers, CoreFoundation
 
-1. **Installation**: Run the `.pkg` installer (includes both MayaFlux and dependencies)
-2. **Project Creation**: Find `Weave.app` in your Applications folder for creating new projects
-3. **Architecture Support**: Separate builds available for Intel (x86) and Apple Silicon (ARM)
+**Windows:**
+- Visual Studio 2022+ (MSVC) or MinGW-w64
+- LLVM 22+ (for Lila JIT)
 
-> **Why Use Weave?** You get a properly configured MayaFlux environment without dealing with compilers, CMake, or dependency management.
-> Perfect for artists, educators, and rapid prototyping.
+### Build
 
-Jump to [Working with MayaFlux](#your-first-mayaflux-program)
-
----
-
-## Building from Source (For Developers)
-
-**For developers who want the latest features or need to customize MayaFlux's internals.**
-
-### Prerequisites
-
-**All Platforms:**
-
-- **Compiler**: C++20 compatible (GCC 12+, Clang 16+, MSVC 2022+)
-- **Build System**: CMake 3.20+
-
-**Platform-Specific Requirements:**
-
-- **macOS**: Minimum macOS 15 (Sequoia) (intel or m-series) with Apple Clang 16+
-- **Windows**: Visual Studio 2022+ or MinGW-w64
-- **Linux**: Standard development tools and multimedia libraries
-
-### Quick Build
-
-```bash
-# Clone the repository
+```sh
 git clone https://github.com/MayaFlux/MayaFlux.git
 cd MayaFlux
 
-# Run platform setup script
-./scripts/setup_macos.sh       # macOS (brew will ask for sudo )
-./scripts/setup_linux.sh       # Linux (package manager will ask for sudo)
-.\scripts\win64\setup_windows.ps1  # Windows (PowerShell) (run as Administrator to install dependencies)
+# Install all dependencies and configure environment variables
+./scripts/setup_macos.sh                      # macOS
+./scripts/setup_linux.sh                      # Linux
+.\scripts\win64\setup_windows.ps1             # Windows - must be run as Administrator (requires UAC elevation)
 
-# Build
-mkdir build && cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release
-cmake --build . --parallel
+# Build using CMakePresets
+cmake --preset linux-release       # or macos-release / windows-release
+cmake --build --preset linux-release
 ```
 
-#### macOS clarifications
-
-**System Requirements:**
-
-- **Minimum macOS version**: 15 (Sequoia)
-- **Architectures supported**: Apple Silicon (ARM64) and Intel (x86_64)
-- **Compiler**: Apple Clang 16+ (Xcode 16+ Command Line Tools)
-
-Both binary releases and source builds require macOS 15 or later.
-
-```bash
-# Standard CMake build (source build only)
-mkdir build && cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release
-cmake --build . --parallel $(sysctl -n hw.ncpu)
-```
-
-See [Building on Intel Macs](#building-on-intel-macs) for detailed instructions.
-
-### IDE-Specific Setup
-
-**Visual Studio Code (Recommended):**
-
-- Open the project folder - VS Code automatically detects the CMake configuration
-- Uses pre-configured `.vscode/` settings for build tasks, debugging, and IntelliSense
-- **Build**: `Ctrl+Shift+B` (Cmd+Shift+B on macOS)
-- **Run**: `F5`
-
-**Xcode (macOS):**
-
-```bash
-./scripts/setup_xcode.sh
-open build/MayaFlux.xcodeproj
-```
-
-**Visual Studio (Windows):**
-
-```powershell
-.\scripts\win64\setup_visual_studio.ps1
-# Open build/MayaFlux.sln in Visual Studio
-```
-
-**Neovim:**
-
-- Install [overseer.nvim](https://github.com/stevearc/overseer.nvim) for task management
-- Overseer automatically reads `.vscode/` tasks for seamless build/run/debug workflows
-
-> **Note**: All setup scripts handle dependency installation automatically. No manual package management required.
-
-### Project Structure
-
-```text
-
-MayaFlux/
-├── src/
-│   ├── MayaFlux/           # Core library
-│   ├── Lila/               # Live coding interface
-│   └── main.cpp            # Your code entry point
-│   └── user_project.hpp    # Your custom project code
-├── res/                    # Audio files and resources
-├── data/shaders/           # Shader files for graphics processing
-├── scripts/                # Platform setup scripts
-├── build/                  # Generated build files (after setup)
-```
+`setup_windows.ps1` installs all required packages via `packages.psd1` and configures environment variables. It must be run elevated; UAC will prompt if you launch it normally.
 
 ---
 
-## Building on Intel Macs
+## Program Structure
 
-MayaFlux supports Intel (x86_64) Macs running macOS 15 or later.
-
-Source builds and binary distributions are supported on macOS 15+.
-Earlier macOS versions are no longer supported.
-
-### Prerequisites
-
-1. **macOS 15.6+** with Xcode Command Line Tools
-2. **Homebrew** (for dependency management)
-3. Manual dependency installation
-
-### Build Process
-
-```bash
-# 1. Verify LLVM installation (critical for Lila JIT)
-brew list llvm  # Should show installed
-llvm-config --version  # Should print version
-
-# 2. Clone MayaFlux
-git clone https://github.com/MayaFlux/MayaFlux.git
-
-# 3. Install dependencies manually
-./scripts/setup_macos.sh
-
-# 4. Build MayaFlux
-cd MayaFlux
-mkdir build && cd build
-
-cmake .. \
-    -DCMAKE_BUILD_TYPE=Release \
-    -DCMAKE_CXX_COMPILER=$(brew --prefix llvm)/bin/clang++
-
-cmake --build . --parallel $(sysctl -n hw.ncpu)
-```
-
-### Known Considerations
-
-- **Xcode's system Clang**: May not have full C++23 support. Use Homebrew LLVM above.
-- **Vulkan on Intel**: MoltenVK layer used; performance acceptable for development.
-- **LLVM JIT (Lila)**: Ensure Homebrew LLVM is installed, not system Clang.
-
-### Troubleshooting
-
-**"llvm-config not found"**
-
-```bash
-export LLVM_DIR=$(brew --prefix llvm)/lib/cmake/llvm
-# Then retry cmake
-```
-
-**"Clang version too old"**
-
-```bash
-# Use Homebrew's Clang
-cmake .. -DCMAKE_CXX_COMPILER=$(brew --prefix llvm)/bin/clang++
-```
-
----
-
-## Your First MayaFlux Program
-
-Now that your environment is set up, let's create your first MayaFlux application.
-
-### Understanding the Code Structure
-
-MayaFlux projects use a simple but powerful structure:
-
-**`src/user_project.hpp`** - Your creative workspace (never overwritten by updates)
-**`src/main.cpp`** - Engine entry point (don't modify unless you need custom startup)
-
-### The Two Key Functions
-
-**`void settings()` - Configuration (Runs BEFORE engine start)**
-Think of this as your "Preferences" panel - it runs once when the application launches to set up the environment:
-
-```cpp
-void settings() {
-    // Audio settings
-    auto& stream = MayaFlux::Config::get_global_stream_info();
-    stream.sample_rate = 48000;  // Studio quality
-    stream.buffer_size = 128;    // Low latency
-    stream.output.channels = 2;  // Stereo
-
-    // Graphics settings
-    MayaFlux::Config::target_frame_rate = 60;
-
-    // Logging
-    MayaFlux::Journal::set_journal_severity(MayaFlux::Journal::Severity::INFO);
-}
-```
-
-**`void compose()` - Your Creative Canvas (Runs AFTER engine start)**
-This is where your audio, graphics, and algorithms live - it executes continuously while the engine runs:
-
-```cpp
-void compose() {
-    // Load and play an audio file
-    vega.read_audio("res/audio/example.wav") | Audio;
-
-    // Your creative code goes here!
-}
-```
-
-### The Digital Bell: A Cross-Modal Experience
-
-Replace the contents of your `src/user_project.hpp` with this working example
-This example demonstrates the core philosophy of MayaFlux: **unified data transformation across audio, logic, and graphics.**
+A MayaFlux program has two entry points defined in `src/user_project.hpp`:
 
 ```cpp
 #pragma once
@@ -261,270 +117,205 @@ This example demonstrates the core philosophy of MayaFlux: **unified data transf
 #include "MayaFlux/MayaFlux.hpp"
 
 void settings() {
-    // Low-latency audio setup
+    // Runs before the engine starts.
+    // Configure sample rate, buffer size, channels, logging.
     auto& stream = MayaFlux::Config::get_global_stream_info();
     stream.sample_rate = 48000;
+    stream.buffer_size = 256;
+    stream.output.channels = 2;
 }
 
 void compose() {
-
-    // 1. Create the bell
-    auto bell = vega.ModalNetwork(
-                    12,
-                    220.0,
-                    ModalNetwork::Spectrum::INHARMONIC)[0]
-        | Audio;
-
-    // 2. Create audio-driven logic
-    auto source_sine = vega.Sine(0.2, 1.0f); // 0.2 Hz slow oscillator
-
-    static double last_input = 0.0;
-    auto logic = vega.Logic([](double input) {
-        // Arhythmic: true when sine crosses zero AND going positive
-        bool crossed_zero = (last_input < 0.0) && (input >= 0.0);
-        last_input = input;
-        return crossed_zero;
-    });
-
-    source_sine >> logic;
-
-    // 3. When logic fires, excite the bell
-    logic->on_change_to(true, [bell](auto& ctx) {
-        if (ctx.value != 0) {
-            bell->excite(get_uniform_random(0.5f, 0.9f));
-            bell->set_fundamental(get_uniform_random(220.0f, 1000.0f));
-        }
-    });
-
-    // 4. Graphics (same as before)
-    auto window = MayaFlux::create_window({ "Audio-Driven Bell", 1280, 720 });
-    auto points = vega.PointCollectionNode(500) | Graphics;
-    auto geom = vega.GeometryBuffer(points) | Graphics;
-
-    geom->setup_rendering({ .target_window = window });
-    window->show();
-
-    // 5. Visualize: points grow when bell strikes (when logic fires)
-    MayaFlux::schedule_metro(0.016, [points]() {
-        static float angle = 0.0f;
-        static float radius = 0.0f;
-
-        if (last_input != 0) {
-            angle += 0.5f; // Quick burst on strike
-            radius += 0.002f;
-        } else {
-            angle += 0.01f; // Slow growth otherwise
-            radius += 0.0001f;
-        }
-
-        if (radius > 1.0f) {
-            radius = 0.0f;
-            points->clear_points();
-        }
-
-        float x = std::cos(angle) * radius;
-        float y = std::sin(angle) * radius * (16.0f / 9.0f);
-        float brightness = 1.0f - (radius * 0.7f);
-
-        points->add_point(Nodes::PointVertex {
-            .position = glm::vec3(x, y, 0.0f),
-            .color = glm::vec3(brightness, brightness * 0.8f, 1.0f),
-            .size = 8.0f + radius * 4.0f });
-    });
+    // Runs after the engine starts.
+    // All computation, routing, scheduling, and rendering lives here.
 }
 ```
 
-### What This Demonstrates
+`main.cpp` calls `Init()`, `settings()`, `Start()`, `compose()`, `Await()`, and `End()` in order. You do not edit it unless you need custom engine configuration beyond what `settings()` exposes.
 
-**In 50 lines of code, you've created:**
+### MAYASIMPLE
 
-1. **Physical Modeling Synthesis** - A 12-mode modal bell with inharmonic spectrum
-2. **Generative Logic** - Irregular timing using zero-crossing detection
-3. **Cross-Modal Coordination** - Audio events driving visual behavior
-4. **Real-time Graphics** - Dynamic point cloud with audio-reactive growth
-5. **Unified Architecture** - All domains working as one system
+Defining `MAYASIMPLE` before including `MayaFlux.hpp` pulls in the full concrete type set and brings all MayaFlux namespaces into scope. Without it you get the API surface only. User projects built via Weave define it by default.
 
-### Running Your Program
+### The `vega` global
 
-**VS Code:** Press `F5` to build and run  
-**Terminal:** From your project root:
+`vega` is the global `Creator` instance. It is the factory for all computation objects: generators, filters, networks, buffers, containers, mesh loaders, input nodes. Every object created through `vega` is registered with the engine automatically.
 
-```bash
-cd build
-cmake --build . --target run
+```cpp
+auto sine   = vega.Sine(440.0, 0.5) | Audio[0];
+auto modal  = vega.ModalNetwork(12, 220.0) | Audio[{0, 1}];
+auto audio  = vega.read_audio("res/drum.wav") | Audio;
+auto img    = vega.read_image("res/texture.png") | Graphics;
+auto mesh   = vega.read_mesh_network("res/scene.glb");
 ```
 
-You should hear a bell ringing at irregular intervals while watching a spiral pattern grow and burst in response to each strike!
-
-### Understanding the Structure
-
-- **`settings()`** - One-time audio configuration (low latency)
-- **`compose()`** - Your live coding canvas where everything happens
-- **Audio Domain** (`| Audio`) - Bell synthesis and logic
-- **Graphics Domain** (`| Graphics`) - Window, points, and rendering
-- **Cross-Domain** - Logic events trigger both audio and visual changes
-
-### Key Concepts Introduced
-
-- **Nodes** (`vega.ModalNetwork`, `vega.Sine`, `vega.Logic`) - Unit generators
-- **Containers** (`vega.PointCollectionNode`) - Multi-dimensional data
-- **Coroutines** (`MayaFlux::schedule_metro`) - Temporal coordination
-- **Domain Tokens** (`| Audio`, `| Graphics`) - Processing characteristics
-- **Event Handling** (`on_change_to`) - Reactive programming
-
-> **This is MayaFlux**: Where mathematical relationships become creative decisions, time becomes compositional material, and audio/visual/data streams are unified numerical transformations.
-
-This example perfectly captures the MayaFlux philosophy while being immediately runnable and visually/aurally compelling. It shows rather than tells what makes the framework unique.
+The `| Audio` and `| Graphics` operators are domain annotations. They attach a processing token that decides which subsystem drives the object and at what rate. They do not change what the object is.
 
 ---
 
-## MayaFlux Philosophy
+## A First Program
 
-### Core Philosophy: Digital-First Multimedia
+The example below is complete and runnable. It loads a texture, generates a parametric surface, and animates it frame by frame via a coroutine inside a Nexus entity. A movable light agent influences all render processors simultaneously. Keyboard input moves the light.
 
-MayaFlux represents a fundamental shift from analog-inspired tools to true digital paradigms:
+```cpp
+#pragma once
+#define MAYASIMPLE
+#include "MayaFlux/MayaFlux.hpp"
+#include "MayaFlux/Nexus/Tapestry.hpp"
 
-Traditional Approach (Analog Simulation):
+void settings()
+{
+    auto& stream = MayaFlux::Config::get_global_stream_info();
+    stream.sample_rate = 48000;
+    stream.buffer_size = 256;
+    stream.output.channels = 2;
+}
 
-- Audio, video, and data as separate domains
-- Hardware simulation (knobs, cables, oscilloscopes)
-- Callback-based timing from interrupt models
-- File-based workflows with static resources
+void compose()
+{
+    auto window = MayaFlux::create_window({ "surface", 1920, 1080 });
 
-MayaFlux Approach (Digital Native):
+    auto view = []() -> Kinesis::ViewTransform {
+        return Kinesis::look_at_perspective(
+            glm::vec3(0.0F, 2.0F, 5.0F),
+            glm::vec3(0.0F),
+            glm::radians(45.0F), 1920.0F / 1080.0F, 0.1F, 100.0F);
+    };
 
-- Unified data transformation: All streams are numerical data that can interact
-- Coroutine temporal control: Time as creative material, not interrupt callbacks
-- Grammar-defined operations: Declarative computation based on data characteristics
-- Cross-modal coordination: Audio parameters control GPU compute shaders; visual analysis modulates audio filters
+    auto img = vega.read_image("res/texture.png") | Graphics;
 
-### Core Paradigms
+    // Parametric surface: initial geometry
+    auto surf_fn = [](float u, float v, float t) -> glm::vec3 {
+        float a = u * glm::two_pi<float>();
+        float b = v * glm::two_pi<float>();
+        return {
+            std::sin(a + t) * (1.0F + 0.3F * std::cos(3.0F * b)),
+            std::sin(2.0F * a - t) * std::sin(b) * 0.5F,
+            std::cos(a + t) * (1.0F + 0.3F * std::cos(3.0F * b)),
+        };
+    };
 
-MayaFlux is built around five fundamental digital paradigms that replace traditional analog thinking:
+    auto data = Kinesis::generate_parametric_surface(
+        [&](float u, float v) { return surf_fn(u, v, 0.0F); }, 64, 64);
 
-- **Nodes**: Unit-by-unit transformation precision
-- **Containers**: Multi-dimensional data as creative material
-- **Coroutines**: Time as compositional material
-- **Buffers**: Temporal gathering spaces for data accumulation
-- **Compute Matrix**: Declarative semantic pipelines
+    auto surf_node = std::make_shared<MeshWriterNode>(data.vertex_count()) | Graphics;
+    surf_node->set_mesh(data);
 
-> **Note:** This document was written against an earlier version of MayaFlux.
-> The concepts are directionally correct but some APIs and architectural details
-> have changed. An updated version is in progress. For current API reference,
-> see the [auto-generated docs](https://mayaflux.github.io/MayaFlux/).
+    auto surf_buf = vega.GeometryBuffer(surf_node) | Graphics;
+    surf_buf->set_texture(img);
+    surf_buf->setup_rendering({
+        .target_window = window,
+        .vertex_shader   = "triangle_lit.vert.spv",
+        .fragment_shader = "mesh_textured_lit.frag.spv",
+        .topology = Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST,
+    });
+    surf_buf->get_render_processor()->set_view_transform_source(view);
 
-**Deep dive:** Read the [Digital Architecture](Digital_Architecture.md) for comprehensive architectural understanding.
+    // Light agent: influences the surface render processor
+    auto light_pos = make_persistent_shared<glm::vec3>(0.0F, 1.5F, 0.0F);
+    constexpr glm::vec3 half { 0.04F, 0.04F, 0.04F };
+    auto& mgr = *MayaFlux::get_buffer_manager();
 
-Explore the shape of things to come!
+    auto light = std::make_shared<Nexus::Agent>(
+        0.0F,
+        [](const Nexus::PerceptionContext&) {},
+        [](const Nexus::InfluenceContext&) {});
+    light->set_position(*light_pos);
+    light->set_color(glm::vec3(1.0F, 0.9F, 0.7F));
+    light->set_intensity(1.5F);
+    light->set_radius(4.0F);
+    light->render(mgr, { .target_window = window,
+        .topology = Portal::Graphics::PrimitiveTopology::LINE_LIST });
+    light->get_render_processor(window)->set_view_transform_source(view);
+    light->set_vertices<LineVertex>(Kakshya::to_line_vertices(
+        Kinesis::cuboid_wireframe(*light_pos, half, glm::vec3(1.0F, 0.9F, 0.7F))));
+    light->add_influence_target(surf_buf->get_render_processor());
 
----
+    auto fabric = make_persistent_shared<Nexus::Fabric>(
+        *MayaFlux::get_scheduler(), *MayaFlux::get_event_manager());
 
-## Using This Guide & Tutorials
+    fabric->wire(light)
+        .every(1.0 / 60.0, Vruta::ProcessingToken::FRAME_ACCURATE)
+        .finalise();
 
-### For Beginners: Learning Just Enough C++
+    // Surface animation: coroutine updates mesh geometry each frame
+    auto st = make_persistent(0.F);
+    auto surf_driver = std::make_shared<Nexus::Emitter>(
+        [surf_node, surf_fn, &st](const Nexus::InfluenceContext&) {
+            auto d = Kinesis::generate_parametric_surface(
+                [&](float u, float v) { return surf_fn(u, v, st); }, 64, 64);
+            const auto& vb = std::get<std::vector<uint8_t>>(d.vertex_variant);
+            surf_node->set_mesh_vertices(
+                std::span(reinterpret_cast<const MeshVertex*>(vb.data()), d.vertex_count()));
+            st += 0.01F;
+        });
 
-> **If you're new to C++**
->
-> MayaFlux uses modern C++ (C++17/20). You don't need to be an expert—just comfortable reading and editing small functions.
-> The best way to learn is hands-on:
->
-> - **The openFrameworks "ofBook"** has an excellent short section on C++ basics that map well to creative coding workflows.
-> - The free [cppreference.com](https://en.cppreference.com/w/) pages on _"Variables," "Functions,"_ and _"Classes"_ are reliable quick reads.
-> - If you prefer a creative-coding approach, check out _The openFrameworks C++ Chapter_ or _Daniel Shiffman's "The Nature of Code (C++ port)"_ for conceptual grounding.
->
-> You can safely begin MayaFlux tutorials with only this level of knowledge. The tutorials explain real C++ constructs as they appear—no memorization needed.
+    fabric->wire(surf_driver)
+        .every(1.0 / 60.0, Vruta::ProcessingToken::FRAME_ACCURATE)
+        .finalise();
 
-### How to Use the Tutorials
+    // Keyboard: move the light
+    constexpr float step = 0.05F;
+    auto move = [&](glm::vec3 delta) {
+        *light_pos += delta;
+        light->set_position(*light_pos);
+        light->set_vertices<LineVertex>(Kakshya::to_line_vertices(
+            Kinesis::cuboid_wireframe(*light_pos, half, glm::vec3(1.0F, 0.9F, 0.7F))));
+    };
 
-**MayaFlux tutorials are designed for exploration, not passive reading.**
+    auto mk_mover = [&](glm::vec3 d) {
+        return std::make_shared<Nexus::Emitter>(
+            [move, d](const Nexus::InfluenceContext&) { move(d); });
+    };
 
-1.  **Run the visible code.**
-    Copy the non-hidden (top-level) snippets into `compose()` and run them.
+    fabric->wire(mk_mover({ step,  0,     0    })).on(window, IO::Keys::D, true).finalise();
+    fabric->wire(mk_mover({-step,  0,     0    })).on(window, IO::Keys::A, true).finalise();
+    fabric->wire(mk_mover({ 0,     step,  0    })).on(window, IO::Keys::W, true).finalise();
+    fabric->wire(mk_mover({ 0,    -step,  0    })).on(window, IO::Keys::S, true).finalise();
+    fabric->wire(mk_mover({ 0,     0,     step })).on(window, IO::Keys::Q, true).finalise();
+    fabric->wire(mk_mover({ 0,     0,    -step })).on(window, IO::Keys::E, true).finalise();
 
-2.  **Listen or observe what happens.**
-    Every tutorial produces a real, audible or visual result.
+    window->show();
+}
+```
 
-3.  **Open the dropdowns (`<details>`).**
-    These reveal what's happening under the hood. Read them slowly; come back later as your understanding grows.
+What this shows:
 
-4.  **Experiment.**
-    Change numbers, reorder calls, or combine examples. Each tweak teaches you something about the system.
-
-5.  **Iterate.**
-    As you learn, revisit earlier tutorials. MayaFlux rewards depth—you'll understand new layers every time.
-
-The goal is **fluency, not memorization**. You're not "following a recipe"—you're learning how the machinery works so you can build your own.
-
-## Starting Your First Tutorial
-
-Now that your environment is set up, you're ready to begin.
-
-**"Sculpting Data"** is the entry tutorial series. It starts with the simplest operation
-(loading a file) and builds systematically toward complete pipeline architectures.
-
-Each section in Sculpting Data teaches one core idea and builds on the previous:
-
-1. **Section 1: Load** - Understand Containers (how data is organized)
-2. **Section 2: Connect** - Understand Buffers (how data flows)
-3. **Section 2.5: Process** - Understand Processors (how data transforms)
-4. **Section 3: Timing** - Understand timing control (how you schedule)
-5. **Section 4:** (Coming) BufferOperation (how you compose)
-
-**Start here:** Open [Sculpting Data Part I: Foundations of Form](https://mayaflux.org/tutorials/sculpting-data/foundations/) and begin with Section 1.
-
-Each section is designed to be executed immediately:
-
-- Copy the code examples into your `compose()` function. This is always after a heading `Tutorial:`
-- Build and run your project
-- Listen/observe the result
-- Open the dropdowns to understand why it works
-- Experiment by changing values
-
-You'll have working audio within 5 minutes.
-
-### If You've Already Started
-
-If you have already completed the aforementioned tutorial, proceed to the next tutorial at
-[Sculpting Data Part II, Processing Expression](https://mayaflux.org/tutorials/sculpting-data/processing_expression/) which covers buffers, processors, math as expression, logic as creative decisions and more.
-
-For graphics starting points, check out [Graphics Basics](https://mayaflux.org/tutorials/sculpting-data/visual_materiality_i/)
-
-## FAQ (macOS)
-
-### Q: I have an Intel Mac. Can I use MayaFlux?
-
-**A**: Yes — provided you are running **macOS 15 (Sequoia) or later**.
-
-MayaFlux supports both:
-
-- **Apple Silicon (ARM64)**
-- **Intel (x86_64)**
-
-Pre-built binaries and source builds are available for both architectures on macOS 15+.
-
-Earlier macOS versions are no longer supported.
-
----
-
-### Q: Why is macOS 15 the minimum supported version?
-
-**A**: MayaFlux relies on modern Apple toolchains (Apple Clang 16+, Xcode 16+, updated SDKs) and current C++23 support.
-
-macOS 15 provides:
-
-- Stable libc++ behavior for modern C++
-- Up-to-date graphics and Metal/Vulkan compatibility layers
-- Proper support for current Command Line Tools
-- Alignment with Homebrew and dependency ecosystem
-
-Supporting older macOS versions would require older toolchains and introduce maintenance complexity without meaningful benefit.
+- `vega.read_image` and `vega.GeometryBuffer` are factory calls; domain annotation follows at the call site
+- A `GraphicsRoutine` coroutine inside a `Nexus::Emitter` owns its animation loop, suspended one frame at a time via `FrameDelay`
+- A `Nexus::Agent` acting as a light registers influence targets directly on render processors; moving the light position updates all of them simultaneously
+- Keyboard input wires through `Wiring::on(key, held)` - each key is its own entity, each entity's influence function applies the delta
 
 ---
 
-### Q: Performance difference between ARM64 and x86_64?
+## What to Read Next
 
-**A**: No meaningful difference for MayaFlux. Both are fully optimized.
-
-Vulkan performance may vary slightly due to MoltenVK translation layer, but both architectures work well.
+- **[Digital Architecture](Digital_Architecture.md)**: how the substrate works, what each namespace does, how everything composes
+- **[Sculpting Data I](https://mayaflux.org/tutorials/sculpting-data/foundations/)**: first tutorial series; start here if you have not written a MayaFlux program before
+- **[Processing Expression](https://mayaflux.org/tutorials/sculpting-data/processing_expression/)**: buffers, processors, math as expression
+- **[Visual Materiality I](https://mayaflux.org/tutorials/sculpting-data/visual_materiality_i/)**: graphics pipeline from a user perspective
+- **[API docs](https://mayaflux.github.io/MayaFlux/)**: generated reference; build locally with `doxygen doxyconf`
 
 ---
+
+## FAQ
+
+### macOS: do I need Homebrew LLVM?
+
+No. MayaFlux compiles with Apple Clang from Xcode Command Line Tools. Homebrew LLVM is not used for compilation. LLVM is required as a runtime dependency for Lila (the JIT environment) and is installed by the setup script, but it is not your compiler.
+
+### What is the minimum macOS version?
+
+macOS 15 (Sequoia) on both Apple Silicon and Intel. Earlier versions lack the C++20 stdlib coverage MayaFlux requires.
+
+### What happens if a dependency is missing?
+
+CMake configuration fails with an explicit error. There are no optional dependencies; everything in the requirements list is required for the build to complete.
+
+### Can I use MayaFlux without the JIT (Lila)?
+
+Yes. Lila is part of the engine but you do not have to use it. Programs written entirely in `compose()` and compiled normally do not touch the JIT path. LLVM must still be present for the build to succeed.
+
+### Where does my code go?
+
+In `src/user_project.hpp`. It is never overwritten by Weave updates. `main.cpp` is the engine entry point and should not be modified unless you need a custom startup sequence.
