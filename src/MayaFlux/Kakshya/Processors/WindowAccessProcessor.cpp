@@ -92,8 +92,8 @@ void WindowAccessProcessor::process(
     if (cur_w != m_width || cur_h != m_height) {
         m_width = cur_w;
         m_height = cur_h;
-
         m_surface_format = query_surface_format(window);
+        wc->handle_surface_resize();
 
         MF_INFO(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
             "WindowAccessProcessor: '{}' resized to {}x{} format={}",

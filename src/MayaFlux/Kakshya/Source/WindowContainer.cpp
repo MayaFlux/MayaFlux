@@ -492,6 +492,14 @@ bool WindowContainer::is_region_loaded(const Region& /*region*/) const
     return true;
 }
 
+void WindowContainer::handle_surface_resize()
+{
+    std::unique_lock lock(m_data_mutex);
+    m_write_head.store(0, std::memory_order_release);
+    m_frames_written.store(0, std::memory_order_release);
+    setup_dimensions();
+}
+
 // =========================================================================
 // RegionGroup management
 // =========================================================================

@@ -220,6 +220,13 @@ public:
      */
     [[nodiscard]] bool is_region_loaded(const Region& region) const override;
 
+    /**
+     * @brief Reallocate m_data and m_processed_data to match the current window
+     *        dimensions. Called by WindowAccessProcessor when a surface resize is
+     *        detected. Acquires m_data_mutex exclusively.
+     */
+    void handle_surface_resize();
+
     // =========================================================================
     // SignalSourceContainer
     // =========================================================================
