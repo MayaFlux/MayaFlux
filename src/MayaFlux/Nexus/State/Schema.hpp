@@ -86,6 +86,7 @@ enum class WiringKind : uint8_t {
     CommitDriven,
     Every,
     MoveTo,
+    Scroll,
     Unsupported,
 };
 

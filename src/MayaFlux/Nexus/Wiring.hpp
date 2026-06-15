@@ -127,6 +127,19 @@ public:
     Wiring& on(Vruta::WindowEventSource& source, Vruta::WindowEventFilter filter = {});
 
     /**
+     * @brief Fire the entity on each mouse scroll event from a window.
+     *
+     * The scroll delta (dx, dy) is passed directly to the emitter's fn via a
+     * shared glm::vec2 written before invoke(). No new InfluenceContext fields
+     * are added; read the delta through the captured shared_ptr in your fn.
+     *
+     * @param window Source window.
+     * @param fn     Called with (dx, dy) on each scroll event.
+     */
+    Wiring& on_scroll(std::shared_ptr<Core::Window> window,
+        std::function<void(double, double)> fn);
+
+    /**
      * @brief Choreograph a position move as an EventChain step.
      * @param pos           Target position.
      * @param delay_seconds Delay after the previous step (0 = immediate on start).
@@ -253,6 +266,11 @@ private:
         bool held {};
     };
 
+    struct ScrollTrigger {
+        std::shared_ptr<Core::Window> window;
+        std::function<void(double, double)> fn;
+    };
+
     struct NetworkTrigger {
         Vruta::NetworkSource* source;
     };
@@ -267,7 +285,14 @@ private:
         Vruta::WindowEventFilter filter;
     };
 
-    using Trigger = std::variant<std::monostate, KeyTrigger, MouseTrigger, NetworkTrigger, EventTrigger, WindowEventTrigger>;
+    using Trigger = std::variant<
+        std::monostate,
+        KeyTrigger,
+        MouseTrigger,
+        NetworkTrigger,
+        EventTrigger,
+        WindowEventTrigger,
+        ScrollTrigger>;
     using Factory = std::variant<std::monostate, SoundFactory, GraphicsFactory, CrossFactory>;
     using EFactory = std::optional<EventFactory>;
 
@@ -325,6 +350,9 @@ public:
 
     /** @brief Choreography steps from @c move_to calls. */
     [[nodiscard]] const std::vector<MoveStep>& move_steps() const { return m_move_steps; }
+
+    /** @brief True if @c on_scroll was called. */
+    [[nodiscard]] bool is_scroll() const { return std::holds_alternative<ScrollTrigger>(m_trigger); }
 
     /** @brief Active trigger variant set by @c on. */
     [[nodiscard]] const Trigger& trigger() const { return m_trigger; }
