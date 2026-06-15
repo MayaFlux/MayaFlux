@@ -210,6 +210,58 @@ std::shared_ptr<Core::VKImage> TextureLoom::create_cubemap(
     return image;
 }
 
+std::shared_ptr<Core::VKImage> TextureLoom::create_2d_array(
+    uint32_t width, uint32_t height, uint32_t layers,
+    ImageFormat format, const void* data)
+{
+    if (!is_initialized()) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
+            "TextureLoom not initialized");
+        return nullptr;
+    }
+
+    if (layers == 0) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
+            "create_2d_array: layers must be > 0");
+        return nullptr;
+    }
+
+    auto vk_format = to_vulkan_format(format);
+    auto image = std::make_shared<Core::VKImage>(
+        width, height, 1, vk_format,
+        Core::VKImage::Usage::TEXTURE_2D,
+        Core::VKImage::Type::TYPE_2D,
+        1, layers,
+        Kakshya::DataModality::IMAGE_COLOR);
+
+    m_resource_manager->initialize_image(image);
+
+    if (!image->is_initialized()) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
+            "create_2d_array: failed to initialize VKImage ({}x{} layers={})",
+            width, height, layers);
+        return nullptr;
+    }
+
+    if (data) {
+        const size_t total = calculate_image_size(width, height, 1, format) * layers;
+        upload_data(image, data, total);
+    } else {
+        m_resource_manager->transition_image_layout(
+            image->get_image(),
+            vk::ImageLayout::eUndefined,
+            vk::ImageLayout::eShaderReadOnlyOptimal,
+            1, layers, vk::ImageAspectFlagBits::eColor);
+        image->set_current_layout(vk::ImageLayout::eShaderReadOnlyOptimal);
+    }
+
+    m_textures.push_back(image);
+    MF_INFO(Journal::Component::Portal, Journal::Context::ImageProcessing,
+        "Created 2D array texture: {}x{} layers={} format={}",
+        width, height, layers, vk::to_string(vk_format));
+    return image;
+}
+
 std::shared_ptr<Core::VKImage> TextureLoom::create_render_target(
     uint32_t width, uint32_t height, ImageFormat format)
 {
