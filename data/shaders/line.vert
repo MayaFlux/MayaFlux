@@ -12,12 +12,14 @@ layout(location = 3) in vec2 inUV;
 
 layout(location = 0) out vec3 out_color;
 layout(location = 1) out float out_thickness;
-layout(location = 2) out vec3 out_world_pos;
+layout(location = 2) out vec2 out_uv;
+layout(location = 3) out vec3 out_world_pos;
 
 void main()
 {
     gl_Position = transform.projection * transform.view * vec4(inPosition, 1.0);
     out_color = inColor;
     out_thickness = inThickness;
+    out_uv = inUV;
     out_world_pos = inPosition;
 }

@@ -104,7 +104,6 @@ void InstanceNetworkBuffer::setup_rendering(const RenderConfig& config)
         if (m_render_config.geometry_shader.empty())
             m_render_config.geometry_shader = "line.geom.spv";
 #else
-        m_render_config.vertex_shader = "instance_line_fallback.vert.spv";
         m_render_config.topology = Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST;
 #endif
         break;

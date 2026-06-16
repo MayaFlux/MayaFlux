@@ -205,7 +205,6 @@ void compose()
     surf_buf->set_texture(img);
     surf_buf->setup_rendering({
         .target_window = window,
-        .vertex_shader   = "triangle_lit.vert.spv",
         .fragment_shader = "mesh_textured_lit.frag.spv",
         .topology = Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST,
     });

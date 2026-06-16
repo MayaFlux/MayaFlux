@@ -18,7 +18,8 @@ layout(location = 5) in vec3 in_tangent;
 
 layout(location = 0) out vec3 out_color;
 layout(location = 1) out float out_thickness;
-layout(location = 2) out vec3 out_world_pos;
+layout(location = 2) out vec2 out_uv;
+layout(location = 3) out vec3 out_world_pos;
 
 void main()
 {
@@ -27,5 +28,6 @@ void main()
     gl_Position = vt.projection * vt.view * world_pos;
     out_color = in_color;
     out_thickness = in_thickness;
+    out_uv = in_uv;
     out_world_pos = world_pos.xyz;
 }
