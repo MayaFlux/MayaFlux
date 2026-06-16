@@ -122,7 +122,14 @@ void InstanceNetworkBuffer::setup_rendering(const RenderConfig& config)
         0, InstanceSSBOProcessor::k_transform_ssbo_binding,
         vk::DescriptorType::eStorageBuffer);
 
+    uint32_t binding_idx = 0;
+    for (const auto& [name, _] : m_render_config.additional_textures)
+        sc.bindings[name] = ShaderBinding(0, 2 + binding_idx++, vk::DescriptorType::eCombinedImageSampler);
+
     apply_render_config(m_render_config, sc);
+
+    for (const auto& [name, tex] : m_render_config.additional_textures)
+        m_render_processor->bind_texture(name, tex);
 
     get_processing_chain()->add_final_processor(m_render_processor, shared_from_this());
 
