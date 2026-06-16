@@ -5,9 +5,11 @@ layout(triangle_strip, max_vertices = 4) out;
 
 layout(location = 0) in vec3 in_color[];
 layout(location = 1) in float in_thickness[];
+layout(location = 2) in vec3 in_world_pos[];
 
 layout(location = 0) out vec3 out_color;
 layout(location = 1) out vec2 out_uv;
+layout(location = 2) out vec3 out_world_pos;
 
 void main()
 {

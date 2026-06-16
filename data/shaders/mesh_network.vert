@@ -24,6 +24,7 @@ layout(location = 0) out vec3 out_color;
 layout(location = 1) out vec2 out_uv;
 layout(location = 2) out vec3 out_normal;
 layout(location = 3) flat out uint out_slot;
+layout(location = 4) out vec3 out_world_pos;
 
 void main()
 {
@@ -31,9 +32,11 @@ void main()
     mat4 model = models.model[slot];
     mat4 norm_mat = transpose(inverse(model));
 
-    gl_Position = pc.projection * pc.view * model * vec4(in_position, 1.0);
+    vec4 world = model * vec4(in_position, 1.0);
+    gl_Position = pc.projection * pc.view * world;
     out_color = in_color;
     out_uv = in_uv;
     out_normal = normalize(mat3(norm_mat) * in_normal);
     out_slot = slot;
+    out_world_pos = world.xyz;
 }
