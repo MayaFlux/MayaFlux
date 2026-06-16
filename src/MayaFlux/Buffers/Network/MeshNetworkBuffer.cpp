@@ -122,9 +122,9 @@ void MeshNetworkBuffer::setup_rendering(const RenderConfig& config)
             0, 3, vk::DescriptorType::eCombinedImageSampler);
     }
 
-    uint32_t binding_idx = 0;
+    uint32_t binding_idx = 4;
     for (const auto& [name, _] : m_render_config.additional_textures)
-        sc.bindings[name] = ShaderBinding(1, binding_idx++, vk::DescriptorType::eCombinedImageSampler);
+        sc.bindings[name] = ShaderBinding(0, binding_idx++, vk::DescriptorType::eCombinedImageSampler);
 
     apply_render_config(m_render_config, sc);
 

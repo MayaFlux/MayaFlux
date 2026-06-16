@@ -121,10 +121,10 @@ void NodeTextureBuffer::setup_rendering(const RenderConfig& user_config)
     shader_config.bindings[m_render_config.default_texture_binding] = ShaderBinding(
         0, 1, vk::DescriptorType::eCombinedImageSampler);
 
-    uint32_t binding_index = 1;
+    uint32_t binding_index = 2;
     for (const auto& [name, _] : m_render_config.additional_textures) {
         shader_config.bindings[name] = ShaderBinding(
-            1, binding_index++, vk::DescriptorType::eCombinedImageSampler);
+            0, binding_index++, vk::DescriptorType::eCombinedImageSampler);
     }
 
     apply_render_config(m_render_config, shader_config);
