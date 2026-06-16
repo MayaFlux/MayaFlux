@@ -13,7 +13,7 @@ void Agent::set_vertices(const void* data, size_t byte_count)
         s.writer->set_vertices(data, byte_count);
 }
 
-void Agent::add_influence_target(std::shared_ptr<Buffers::RenderProcessor> proc)
+void Agent::add_influence_target(std::shared_ptr<Buffers::RenderProcessor> proc, uint32_t set, uint32_t binding)
 {
     if (!proc) {
         MF_ERROR(Journal::Component::Nexus, Journal::Context::Init,
@@ -33,7 +33,7 @@ void Agent::add_influence_target(std::shared_ptr<Buffers::RenderProcessor> proc)
     }
 
     proc->add_binding("u_influence",
-        Buffers::ShaderBinding { 1, 0, vk::DescriptorType::eUniformBuffer });
+        Buffers::ShaderBinding { set, binding, vk::DescriptorType::eUniformBuffer });
 
     proc->bind_buffer("u_influence", m_influence_ubo);
 

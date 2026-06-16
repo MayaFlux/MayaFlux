@@ -233,8 +233,11 @@ public:
      * context data each commit. Adding the same processor twice is a no-op.
      *
      * @param proc Render processor to target. Ignored if null.
+     * @param set   Descriptor set index for the UBO binding. Default is 1.
+     * @param binding Descriptor binding index for the UBO. Default is 0.
      */
-    void add_influence_target(std::shared_ptr<Buffers::RenderProcessor> proc);
+    void add_influence_target(std::shared_ptr<Buffers::RenderProcessor> proc,
+        uint32_t set = 1, uint32_t binding = 0);
 
     /**
      * @brief Remove a single influence target and unbind its UBO.

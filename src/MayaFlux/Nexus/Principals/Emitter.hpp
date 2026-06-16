@@ -195,8 +195,11 @@ public:
      *
      * @param proc Target render processor. Must outlive this Emitter or
      *             be cleared via clear_influence_target() first.
+     * @param set   Descriptor set index for the UBO binding. Default is 1.
+     * @param binding Descriptor binding index for the UBO. Default is 0.
      */
-    void set_influence_target(std::shared_ptr<Buffers::RenderProcessor> proc);
+    void set_influence_target(std::shared_ptr<Buffers::RenderProcessor> proc,
+        uint32_t set = 1, uint32_t binding = 0);
 
     /**
      * @brief Disconnect from the current influence target.
