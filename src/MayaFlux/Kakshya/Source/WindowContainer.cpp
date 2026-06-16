@@ -293,7 +293,7 @@ std::shared_ptr<Core::VKImage> WindowContainer::image_at(uint32_t frame_index) c
 }
 
 std::shared_ptr<Core::VKImage> WindowContainer::image_at(
-    const std::shared_ptr<Buffers::VKBuffer>& staging, uint32_t frame_index) const
+    uint32_t frame_index, const std::shared_ptr<Buffers::VKBuffer>& staging) const
 {
     std::shared_lock lock(m_data_mutex);
 

@@ -152,12 +152,12 @@ public:
 
     /**
      * @brief Upload m_data[frame_index] reusing a caller-supplied staging buffer.
-     * @param staging     Host-visible VKBuffer sized to at least w * h * bpp.
      * @param frame_index Index into m_data in [0, frame_capacity).
+     * @param staging     Host-visible VKBuffer sized to at least w * h * bpp.
      */
     [[nodiscard]] std::shared_ptr<Core::VKImage> image_at(
-        const std::shared_ptr<Buffers::VKBuffer>& staging,
-        uint32_t frame_index) const;
+        uint32_t frame_index,
+        const std::shared_ptr<Buffers::VKBuffer>& staging) const;
 
     /**
      * @brief Crop a region from the last readback and upload it as a VKImage.
