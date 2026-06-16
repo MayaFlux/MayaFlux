@@ -8,8 +8,14 @@ void main()
     if (!sdf_get_corner(gl_GlobalInvocationID.x, p))
         return;
 
+    float freq = uintBitsToFloat(pc._pad[0]);
+    float warp_s = uintBitsToFloat(pc._pad[1]);
+
+    float f = (freq == 0.0) ? 3.5 : freq;
+
+    vec3 wp = (warp_s > 0.001) ? domain_warp(p, 1.2, warp_s, pc.time) : p;
     grid[gl_GlobalInvocationID.x] = sdf_smooth_union(
-            sdf_sphere(p, vec3(0.0), 1.2),
-            sdf_gyroid(p, 3.5, pc.time) - 0.08,
+            sdf_sphere(wp, vec3(0.0), 1.2),
+            sdf_gyroid(wp, f, pc.time) - 0.08,
             0.05);
 }

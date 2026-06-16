@@ -59,6 +59,10 @@ public:
     void set_time(float t) { m_pc.time = t; }
     [[nodiscard]] float get_time() const { return m_pc.time; }
 
+    /** @brief Set the extra float parameters **/
+    void set_param0(float v) { m_pc._pad[0] = std::bit_cast<uint32_t>(v); }
+    void set_param1(float v) { m_pc._pad[1] = std::bit_cast<uint32_t>(v); }
+
 protected:
     void on_attach(const std::shared_ptr<Buffer>& buffer) override;
     bool on_before_execute(

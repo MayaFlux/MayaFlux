@@ -9,7 +9,13 @@ void main()
     if (!sdf_get_corner(gl_GlobalInvocationID.x, p))
         return;
 
+    float freq = uintBitsToFloat(pc._pad[0]);
+    float warp_s = uintBitsToFloat(pc._pad[1]);
+
+    float f = (freq < 0.01) ? 2.0 : freq;
+    vec3 wp = (warp_s > 0.001) ? domain_warp(p, 1.0, warp_s, pc.time * 0.3) : p;
+
     grid[gl_GlobalInvocationID.x] =
-        sdf_sphere(p, vec3(0.0), 1.0)
-            + turbulence(p * 2.0 + pc.time * 0.3) * 0.3;
+        sdf_sphere(wp, vec3(0.0), 1.0)
+            + turbulence(wp * f + pc.time * 0.3) * 0.3;
 }
