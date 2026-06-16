@@ -293,7 +293,7 @@ std::shared_ptr<Core::VKImage> WindowContainer::image_at(uint32_t frame_index) c
 }
 
 std::shared_ptr<Core::VKImage> WindowContainer::image_at(
-    const std::shared_ptr<Buffers::VKBuffer>& staging, uint32_t frame_index) const
+    uint32_t frame_index, const std::shared_ptr<Buffers::VKBuffer>& staging) const
 {
     std::shared_lock lock(m_data_mutex);
 
@@ -490,6 +490,14 @@ void WindowContainer::unload_region(const Region& /*region*/)
 bool WindowContainer::is_region_loaded(const Region& /*region*/) const
 {
     return true;
+}
+
+void WindowContainer::handle_surface_resize()
+{
+    std::unique_lock lock(m_data_mutex);
+    m_write_head.store(0, std::memory_order_release);
+    m_frames_written.store(0, std::memory_order_release);
+    setup_dimensions();
 }
 
 // =========================================================================

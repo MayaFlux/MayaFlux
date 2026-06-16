@@ -39,6 +39,10 @@ namespace {
                 wiring.times(*rec.times);
             break;
 
+        case State::WiringKind::Scroll:
+            warnings.emplace_back("Scroll wiring cannot be reconstructed without a live window; falling back to commit_driven");
+            [[fallthrough]];
+
         case State::WiringKind::Unsupported:
             warnings.emplace_back("Unsupported wiring kind in schema; falling back to commit_driven");
             [[fallthrough]];

@@ -67,6 +67,9 @@ namespace {
             return rec;
         }
 
+        if (w->is_scroll())
+            return { .kind = State::WiringKind::Scroll };
+
         return { .kind = State::WiringKind::CommitDriven };
     }
 

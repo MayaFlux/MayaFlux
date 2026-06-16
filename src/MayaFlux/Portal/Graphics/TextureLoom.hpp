@@ -145,6 +145,31 @@ public:
         const void* data = nullptr);
 
     /**
+     * @brief Create a 2D texture array.
+     *
+     * All layers share the same width, height, and format. The image view
+     * type is VK_IMAGE_VIEW_TYPE_2D_ARRAY, making it bindable as
+     * sampler2DArray in GLSL.
+     *
+     * @param width   Width in pixels per layer.
+     * @param height  Height in pixels per layer.
+     * @param layers  Number of array layers. Must be > 0.
+     * @param format  Image format (default RGBA8).
+     * @param data    Optional pixel data for all layers concatenated in order
+     *                (layer 0 first). Must be exactly
+     *                width * height * bpp(format) * layers bytes when non-null.
+     *                Pass nullptr to allocate without uploading; the image is
+     *                transitioned to eShaderReadOnlyOptimal.
+     * @return Initialised VKImage with array_layers == layers, or nullptr on failure.
+     */
+    std::shared_ptr<Core::VKImage> create_2d_array(
+        uint32_t width,
+        uint32_t height,
+        uint32_t layers,
+        ImageFormat format = ImageFormat::RGBA8,
+        const void* data = nullptr);
+
+    /**
      * @brief Create a render target (color attachment)
      * @param width Width in pixels
      * @param height Height in pixels

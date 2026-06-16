@@ -151,10 +151,11 @@ void MeshBuffer::setup_rendering(const RenderConfig& config)
             0, 1, vk::DescriptorType::eCombinedImageSampler);
     }
 
-    uint32_t binding_index = 1;
+    const uint32_t additional_start = textured ? 2 : 1;
+    uint32_t binding_index = additional_start;
     for (const auto& [name, _] : m_render_config.additional_textures) {
         sc.bindings[name] = ShaderBinding(
-            1, binding_index++, vk::DescriptorType::eCombinedImageSampler);
+            0, binding_index++, vk::DescriptorType::eCombinedImageSampler);
     }
 
     apply_render_config(m_render_config, sc);

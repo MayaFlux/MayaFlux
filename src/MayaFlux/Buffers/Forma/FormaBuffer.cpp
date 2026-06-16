@@ -70,16 +70,14 @@ void FormaBuffer::setup_rendering(const RenderConfig& config)
 
     case Portal::Graphics::PrimitiveTopology::LINE_LIST:
     case Portal::Graphics::PrimitiveTopology::LINE_STRIP:
+        if (resolved.vertex_shader.empty())
+            resolved.vertex_shader = "line.vert.spv";
         if (resolved.fragment_shader.empty())
             resolved.fragment_shader = "line.frag.spv";
 #ifndef MAYAFLUX_PLATFORM_MACOS
-        if (resolved.vertex_shader.empty())
-            resolved.vertex_shader = "line.vert.spv";
         if (resolved.geometry_shader.empty())
             resolved.geometry_shader = "line.geom.spv";
 #else
-        if (resolved.vertex_shader.empty())
-            resolved.vertex_shader = "line_fallback.vert.spv";
         resolved.topology = Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST;
 #endif
 

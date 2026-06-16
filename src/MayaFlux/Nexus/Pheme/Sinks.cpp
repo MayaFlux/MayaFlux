@@ -111,56 +111,53 @@ void add_render_sink(
     buf->set_default_processor(writer);
     mgr.add_buffer(buf, Buffers::ProcessingToken::GRAPHICS_BACKEND);
 
-    std::string vert = config.vertex_shader;
-    std::string frag = config.fragment_shader;
-    std::string geom = config.geometry_shader;
+    auto rc = config;
 
-    if (vert.empty() || frag.empty()) {
-        switch (config.topology) {
+    if (rc.vertex_shader.empty() || rc.fragment_shader.empty()) {
+        switch (rc.topology) {
         case Portal::Graphics::PrimitiveTopology::LINE_LIST:
         case Portal::Graphics::PrimitiveTopology::LINE_STRIP:
-            if (frag.empty())
-                frag = "line.frag.spv";
+            if (rc.vertex_shader.empty())
+                rc.vertex_shader = "line.vert.spv";
+            if (rc.fragment_shader.empty())
+                rc.fragment_shader = "line.frag.spv";
 #ifndef MAYAFLUX_PLATFORM_MACOS
-            if (vert.empty())
-                vert = "line.vert.spv";
-            if (geom.empty())
-                geom = "line.geom.spv";
+            if (rc.geometry_shader.empty())
+                rc.geometry_shader = "line.geom.spv";
 #else
-            if (vert.empty())
-                vert = "line_fallback.vert.spv";
+            rc.topology = Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST;
 #endif
             break;
         case Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST:
         case Portal::Graphics::PrimitiveTopology::TRIANGLE_STRIP:
-            if (vert.empty())
-                vert = "triangle.vert.spv";
-            if (frag.empty())
-                frag = "triangle.frag.spv";
+            if (rc.vertex_shader.empty())
+                rc.vertex_shader = "triangle.vert.spv";
+            if (rc.fragment_shader.empty())
+                rc.fragment_shader = "triangle.frag.spv";
             break;
         default:
-            if (vert.empty())
-                vert = "point.vert.spv";
-            if (frag.empty())
-                frag = "point.frag.spv";
+            if (rc.vertex_shader.empty())
+                rc.vertex_shader = "point.vert.spv";
+            if (rc.fragment_shader.empty())
+                rc.fragment_shader = "point.frag.spv";
             break;
         }
     }
 
-    auto renderer = std::make_shared<Buffers::RenderProcessor>(Buffers::ShaderConfig { vert });
-    renderer->set_fragment_shader(frag);
+    auto renderer = std::make_shared<Buffers::RenderProcessor>(Buffers::ShaderConfig { rc.vertex_shader });
+    renderer->set_fragment_shader(rc.fragment_shader);
 
-    if (!geom.empty())
-        renderer->set_geometry_shader(geom);
+    if (!rc.geometry_shader.empty())
+        renderer->set_geometry_shader(rc.geometry_shader);
 
-    renderer->set_primitive_topology(config.topology);
-    renderer->set_polygon_mode(config.polygon_mode);
-    renderer->set_cull_mode(config.cull_mode);
+    renderer->set_primitive_topology(rc.topology);
+    renderer->set_polygon_mode(rc.polygon_mode);
+    renderer->set_cull_mode(rc.cull_mode);
 
     renderer->enable_depth_test();
     buf->set_needs_depth_attachment(true);
 
-    renderer->set_target_window(config.target_window, buf);
+    renderer->set_target_window(rc.target_window, buf);
     buf->set_render_processor(renderer);
     buf->get_processing_chain()->add_final_processor(renderer, buf);
 
@@ -170,7 +167,7 @@ void add_render_sink(
         .renderer = std::move(renderer),
         .fn = std::move(fn),
         .fn_name = std::move(fn_name),
-        .window = config.target_window,
+        .window = rc.target_window,
     });
 
     if (!sink.fn && initial_position.has_value()) {

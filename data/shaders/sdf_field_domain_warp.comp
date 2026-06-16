@@ -8,6 +8,12 @@ void main()
     if (!sdf_get_corner(gl_GlobalInvocationID.x, p))
         return;
 
+    float freq = uintBitsToFloat(pc._pad[0]);
+    float warp_s = uintBitsToFloat(pc._pad[1]);
+
+    float f = (freq < 0.01) ? 1.5 : freq;
+    float w = (warp_s < 0.001) ? 0.4 : warp_s;
+
     grid[gl_GlobalInvocationID.x] =
-        sdf_sphere(domain_warp(p, 1.5, 0.4, pc.time), vec3(0.0), 1.0);
+        sdf_sphere(domain_warp(p, f, w, pc.time), vec3(0.0), 1.0);
 }

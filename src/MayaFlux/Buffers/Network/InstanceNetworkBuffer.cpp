@@ -104,7 +104,6 @@ void InstanceNetworkBuffer::setup_rendering(const RenderConfig& config)
         if (m_render_config.geometry_shader.empty())
             m_render_config.geometry_shader = "line.geom.spv";
 #else
-        m_render_config.vertex_shader = "instance_line_fallback.vert.spv";
         m_render_config.topology = Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST;
 #endif
         break;
@@ -122,7 +121,14 @@ void InstanceNetworkBuffer::setup_rendering(const RenderConfig& config)
         0, InstanceSSBOProcessor::k_transform_ssbo_binding,
         vk::DescriptorType::eStorageBuffer);
 
+    uint32_t binding_idx = 0;
+    for (const auto& [name, _] : m_render_config.additional_textures)
+        sc.bindings[name] = ShaderBinding(0, 2 + binding_idx++, vk::DescriptorType::eCombinedImageSampler);
+
     apply_render_config(m_render_config, sc);
+
+    for (const auto& [name, tex] : m_render_config.additional_textures)
+        m_render_processor->bind_texture(name, tex);
 
     get_processing_chain()->add_final_processor(m_render_processor, shared_from_this());
 

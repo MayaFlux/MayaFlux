@@ -94,6 +94,13 @@ Wiring& Wiring::on(Vruta::WindowEventSource& source, Vruta::WindowEventFilter fi
     return *this;
 }
 
+Wiring& Wiring::on_scroll(std::shared_ptr<Core::Window> window,
+    std::function<void(double, double)> fn)
+{
+    m_trigger = ScrollTrigger { .window = std::move(window), .fn = std::move(fn) };
+    return *this;
+}
+
 Wiring& Wiring::move_to(const glm::vec3& pos, double delay_seconds)
 {
     m_move_steps.push_back({ .position = pos, .delay_seconds = delay_seconds });
@@ -239,6 +246,25 @@ namespace {
             }
             co_await source.next_message();
             fabric.fire(id);
+        }
+    }
+
+    Vruta::Event scroll_loop(
+        std::shared_ptr<Core::Window> window,
+        std::function<void(double, double)> fn)
+    {
+        auto& promise = co_await Kriya::GetEventPromise {};
+        auto& source = window->get_event_source();
+
+        Vruta::WindowEventFilter filter;
+        filter.event_type = Core::WindowEventType::MOUSE_SCROLLED;
+
+        while (true) {
+            if (promise.should_terminate)
+                break;
+            auto event = co_await Kriya::WindowEventAwaiter(source, filter);
+            if (auto* sd = std::get_if<Core::WindowEvent::ScrollData>(&event.data))
+                fn(sd->x_offset, sd->y_offset);
         }
     }
 }
@@ -424,6 +450,14 @@ void Wiring::finalise()
                             Kriya::mouse_released(trig.window, trig.button, *trig.on_release)),
                         release_name);
                 }
+
+            } else if constexpr (std::is_same_v<T, ScrollTrigger>) {
+                auto name = make_name("nexus_scroll");
+                reg.event_name = name;
+                ev_manager.add_event(
+                    std::make_shared<Vruta::Event>(
+                        scroll_loop(trig.window, trig.fn)),
+                    name);
 
             } else if constexpr (std::is_same_v<T, NetworkTrigger>) {
                 auto name = make_name("nexus_task");

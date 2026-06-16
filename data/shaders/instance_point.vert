@@ -17,11 +17,14 @@ layout(location = 4) in vec3 in_normal;
 layout(location = 5) in vec3 in_tangent;
 
 layout(location = 0) out vec3 out_color;
+layout(location = 1) out vec3 out_world_pos;
 
 void main()
 {
     mat4 model = transforms[gl_InstanceIndex];
-    gl_Position = vt.projection * vt.view * model * vec4(in_position, 1.0);
+    vec4 world_pos = model * vec4(in_position, 1.0);
+    gl_Position = vt.projection * vt.view * world_pos;
     gl_PointSize = in_size;
     out_color = in_color;
+    out_world_pos = world_pos.xyz;
 }

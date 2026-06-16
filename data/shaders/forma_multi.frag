@@ -2,7 +2,8 @@
 
 layout(location = 0) in vec3 in_color;
 layout(location = 1) in vec2 in_uv;
-layout(location = 2) in float in_weight;
+layout(location = 2) in vec3 in_world_pos;
+layout(location = 3) in float in_weight;
 
 layout(set = 0, binding = 1) uniform sampler2D textures[8];
 
