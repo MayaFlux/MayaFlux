@@ -1,4 +1,4 @@
-#version 450
+#version 460
 #extension GL_EXT_nonuniform_qualifier : enable
 
 layout(location = 0) in vec3 in_color;
