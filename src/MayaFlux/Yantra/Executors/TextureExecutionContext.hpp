@@ -69,16 +69,19 @@ public:
      * @param image_binding Binding index at which the input image is staged.
      *                      Default 1 (binding 0 reserved for output storage image
      *                      in CONTAINER mode; callers using SCALAR mode may set 0).
+     * @param aux_bindings  Additional buffer bindings to declare
      */
     explicit TextureExecutionContext(
         GpuShaderConfig config,
         Portal::Graphics::ImageFormat output_format = Portal::Graphics::ImageFormat::RGBA8,
         OutputMode mode = OutputMode::CONTAINER,
-        size_t image_binding = 1)
+        size_t image_binding = 1,
+        std::vector<GpuBufferBinding> aux_bindings = {})
         : Base(std::move(config))
         , m_output_format(output_format)
         , m_output_mode(mode)
         , m_image_binding(image_binding)
+        , m_aux_bindings(std::move(aux_bindings))
     {
     }
 
@@ -205,9 +208,13 @@ protected:
     // GpuExecutionContext overrides
     // =========================================================================
 
+    /**
+     * @brief Declare the image input and storage output bindings, plus any
+     *        aux SSBO bindings provided at construction.
+     */
     [[nodiscard]] std::vector<GpuBufferBinding> declare_buffer_bindings() const override
     {
-        return {
+        std::vector<GpuBufferBinding> bindings {
             { .set = 0,
                 .binding = 0,
                 .direction = GpuBufferBinding::Direction::OUTPUT,
@@ -217,6 +224,8 @@ protected:
                 .direction = GpuBufferBinding::Direction::INPUT,
                 .element_type = GpuBufferBinding::ElementType::IMAGE_SAMPLED },
         };
+        bindings.insert(bindings.end(), m_aux_bindings.begin(), m_aux_bindings.end());
+        return bindings;
     }
 
     /**
@@ -326,6 +335,7 @@ private:
 
     std::shared_ptr<Kakshya::TextureContainer> m_pending_container;
     std::shared_ptr<Kakshya::TextureContainer> m_output_container;
+    std::vector<GpuBufferBinding> m_aux_bindings;
 
     // =========================================================================
     // Helpers
