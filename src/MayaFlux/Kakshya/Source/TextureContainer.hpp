@@ -7,6 +7,10 @@ namespace MayaFlux::Core {
 class VKImage;
 }
 
+namespace MayaFlux::Buffers {
+class VKBuffer;
+}
+
 namespace MayaFlux::Kakshya {
 
 /**
@@ -91,6 +95,22 @@ public:
     [[nodiscard]] std::shared_ptr<Core::VKImage> to_image(uint32_t layer = 0) const;
 
     /**
+     * @brief Upload one layer to a new VKImage, reusing a caller-supplied staging buffer.
+     *
+     * Allocates the VKImage without pixel data (create_2d with nullptr), then
+     * uploads via the provided staging buffer, bypassing the per-call VkBuffer
+     * allocation inside TextureLoom. Use TextureLoom::create_streaming_staging()
+     * to allocate the staging buffer once before the render loop.
+     *
+     * @param layer   Array layer index (default 0).
+     * @param staging Host-visible staging VKBuffer sized to at least byte_size().
+     * @return Newly created VKImage, or nullptr on failure.
+     */
+    [[nodiscard]] std::shared_ptr<Core::VKImage> to_image(
+        uint32_t layer,
+        const std::shared_ptr<Buffers::VKBuffer>& staging) const;
+
+    /**
      * @brief Upload all layers as a Vulkan 2D array texture.
      *
      * Concatenates pixel data from all layers in order (layer 0 first) and
@@ -105,6 +125,24 @@ public:
      * @return Initialised VKImage with array_layers > 1, or nullptr on failure.
      */
     [[nodiscard]] std::shared_ptr<Core::VKImage> to_image_array() const;
+
+    /**
+     * @brief Upload all layers as a Vulkan 2D array texture, reusing a staging buffer.
+     *
+     * Concatenates pixel data from all layers in order (layer 0 first) and
+     * calls TextureLoom::create_2d_array. The returned VKImage has
+     * array_layers == get_layer_count() and an image view of type
+     * VK_IMAGE_VIEW_TYPE_2D_ARRAY, making it bindable as sampler2DArray
+     * in GLSL.
+     *
+     * All layers must have been populated before calling this. Empty layers
+     * contribute zero bytes and will produce incorrect GPU data.
+     *
+     * @param staging Host-visible staging VKBuffer sized to at least byte_size().
+     * @return Initialised VKImage with array_layers > 1, or nullptr on failure.
+     */
+    [[nodiscard]] std::shared_ptr<Core::VKImage> to_image_array(
+        const std::shared_ptr<Buffers::VKBuffer>& staging) const;
 
     /**
      * @brief Download each array layer of a Vulkan 2D array image into

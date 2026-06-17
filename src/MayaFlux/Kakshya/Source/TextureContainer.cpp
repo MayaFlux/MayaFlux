@@ -294,6 +294,112 @@ std::shared_ptr<Core::VKImage> TextureContainer::to_image(uint32_t layer) const
     return img;
 }
 
+std::shared_ptr<Core::VKImage> TextureContainer::to_image(
+    uint32_t layer, const std::shared_ptr<Buffers::VKBuffer>& staging) const
+{
+    std::shared_lock lock(m_data_mutex);
+
+    if (layer >= m_data.size()) {
+        MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+            "TextureContainer::to_image(staging) layer {} out of range ({})", layer, m_data.size());
+        return nullptr;
+    }
+
+    auto [ptr, bytes] = variant_bytes(m_data[layer]);
+    if (!ptr || bytes == 0) {
+        MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+            "TextureContainer::to_image(staging) called on empty/invalid buffer");
+        return nullptr;
+    }
+
+    auto& loom = TextureLoom::instance();
+
+    auto img = loom.create_2d(m_width, m_height, m_format, nullptr);
+    if (!img) {
+        MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+            "TextureContainer::to_image(staging): VKImage allocation failed");
+        return nullptr;
+    }
+
+    loom.upload_data(img, ptr, bytes, staging);
+    return img;
+}
+
+std::shared_ptr<Core::VKImage> TextureContainer::to_image_array() const
+{
+    std::shared_lock lock(m_data_mutex);
+
+    const auto n = static_cast<uint32_t>(m_data.size());
+    if (n == 0)
+        return nullptr;
+
+    if (n == 1) {
+        auto [ptr, bytes] = variant_bytes(m_data[0]);
+        if (!ptr || bytes == 0)
+            return nullptr;
+        return TextureLoom::instance().create_2d(m_width, m_height, m_format, ptr);
+    }
+
+    const size_t layer_bytes = byte_size();
+    std::vector<uint8_t> combined(layer_bytes * n);
+
+    for (uint32_t i = 0; i < n; ++i) {
+        auto [ptr, bytes] = variant_bytes(m_data[i]);
+        if (!ptr || bytes != layer_bytes) {
+            MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+                "TextureContainer::to_image_array layer {} has unexpected byte count "
+                "({} vs {})",
+                i, bytes, layer_bytes);
+            return nullptr;
+        }
+        std::memcpy(combined.data() + i * layer_bytes, ptr, layer_bytes);
+    }
+
+    return TextureLoom::instance().create_2d_array(
+        m_width, m_height, n, m_format, combined.data());
+}
+
+std::shared_ptr<Core::VKImage> TextureContainer::to_image_array(
+    const std::shared_ptr<Buffers::VKBuffer>& staging) const
+{
+    std::shared_lock lock(m_data_mutex);
+
+    const auto n = static_cast<uint32_t>(m_data.size());
+    if (n == 0)
+        return nullptr;
+
+    if (n == 1) {
+        auto [ptr, bytes] = variant_bytes(m_data[0]);
+        if (!ptr || bytes == 0)
+            return nullptr;
+        auto& loom = TextureLoom::instance();
+        auto img = loom.create_2d(m_width, m_height, m_format, nullptr);
+        if (!img)
+            return nullptr;
+        loom.upload_data(img, ptr, bytes, staging);
+        return img;
+    }
+
+    const size_t layer_bytes = byte_size();
+    std::vector<uint8_t> combined(layer_bytes * n);
+    for (uint32_t i = 0; i < n; ++i) {
+        auto [ptr, bytes] = variant_bytes(m_data[i]);
+        if (!ptr || bytes != layer_bytes) {
+            MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+                "TextureContainer::to_image_array(staging) layer {} size mismatch", i);
+            return nullptr;
+        }
+        std::memcpy(combined.data() + i * layer_bytes, ptr, layer_bytes);
+    }
+
+    auto& loom = TextureLoom::instance();
+    auto img = loom.create_2d_array(m_width, m_height, n, m_format, nullptr);
+    if (!img)
+        return nullptr;
+    loom.upload_data(img, combined.data(), combined.size(), staging);
+    return img;
+}
+
 void TextureContainer::from_image_array(const std::shared_ptr<Core::VKImage>& image)
 {
     if (!image || !image->is_initialized()) {
