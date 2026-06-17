@@ -1,0 +1,129 @@
+#version 460
+
+#extension GL_KHR_shader_subgroup_arithmetic : require
+#extension GL_EXT_shader_atomic_float        : require
+
+layout(local_size_x = 16, local_size_y = 16) in;
+
+/// @brief Source image staged as IMAGE_SAMPLED by TextureExecutionContext.
+layout(set = 0, binding = 1) uniform sampler2D tex;
+
+/// @brief Reduction output SSBO.  Layout by mode:
+///
+///   SPATIAL_AVERAGE (0) — result[0..3] = mean RGBA over the sample region.
+///   REGION_SAMPLE   (1) — result[0..3] = single bilinear sample at (u0, v0).
+///   LUMINANCE       (2) — result[0]    = Rec.709 luminance mean over region.
+///   HISTOGRAM       (3) — result[0..255] = normalised luminance bin counts.
+///                         Host clears buffer to 0.0 before dispatch.
+///                         After dispatch host divides each bin by pixel_count.
+layout(set = 0, binding = 2) buffer ResultBuffer {
+    float result[];
+};
+
+/// @brief mode        — reduction mode (see ResultBuffer above).
+/// @brief region_u0/v0/u1/v1 — sample region in normalised UV [0,1].
+///        SPATIAL_AVERAGE, LUMINANCE, HISTOGRAM: rectangular region to process.
+///        REGION_SAMPLE: (u0, v0) is the sample point; u1/v1 ignored.
+/// @brief pixel_count — total pixels in the region (reg_w * reg_h).
+///        Used to normalise the histogram on the host side.
+layout(push_constant) uniform PC {
+    uint mode;
+    float region_u0;
+    float region_v0;
+    float region_u1;
+    float region_v1;
+    uint pixel_count;
+} pc;
+
+/// @brief One accumulator slot per subgroup.
+///        gl_NumSubgroups is the runtime subgroup count for this workgroup.
+///        Maximum is gl_WorkGroupSize.x * gl_WorkGroupSize.y / gl_MinSubgroupSizeARB
+///        but GLSL requires a compile-time array size.  16x16 / minimum
+///        subgroup size of 4 (spec lower bound) gives 64 slots maximum.
+shared vec4 sg_rgba[64];
+shared float sg_lum[64];
+
+void main()
+{
+    // -------------------------------------------------------------------------
+    // REGION_SAMPLE: thread 0 writes one bilinear sample and all threads exit.
+    // -------------------------------------------------------------------------
+    if (pc.mode == 1u) {
+        if (gl_LocalInvocationIndex == 0u) {
+            vec4 s = texture(tex, vec2(pc.region_u0, pc.region_v0));
+            result[0] = s.r;
+            result[1] = s.g;
+            result[2] = s.b;
+            result[3] = s.a;
+        }
+        return;
+    }
+
+    // -------------------------------------------------------------------------
+    // Compute per-thread sample.
+    // -------------------------------------------------------------------------
+    ivec2 img_size = textureSize(tex, 0);
+    uint reg_w = uint(max(1.0, (pc.region_u1 - pc.region_u0) * float(img_size.x)));
+    uint reg_h = uint(max(1.0, (pc.region_v1 - pc.region_v0) * float(img_size.y)));
+
+    uvec2 gid = gl_WorkGroupID.xy * uvec2(16u, 16u) + gl_LocalInvocationID.xy;
+    bool in_region = gid.x < reg_w && gid.y < reg_h;
+
+    float u = pc.region_u0 + (float(gid.x) + 0.5) / float(img_size.x);
+    float v = pc.region_v0 + (float(gid.y) + 0.5) / float(img_size.y);
+
+    vec4 s = in_region ? texture(tex, vec2(u, v)) : vec4(0.0);
+    float lum = 0.2126 * s.r + 0.7152 * s.g + 0.0722 * s.b;
+
+    // -------------------------------------------------------------------------
+    // SPATIAL_AVERAGE and LUMINANCE: two-level reduction.
+    //   Level 1 — subgroupAdd across 64 lanes (one SIMD wave on NAVI31).
+    //   Level 2 — subgroup lane 0 writes partial sum into shared memory;
+    //             thread 0 sums the 4 subgroup results and writes to SSBO.
+    // -------------------------------------------------------------------------
+    if (pc.mode == 0u || pc.mode == 2u) {
+        uint sg_id = gl_SubgroupID;
+
+        if (pc.mode == 0u) {
+            vec4 sg_sum = subgroupAdd(s);
+            if (gl_SubgroupInvocationID == 0u)
+                sg_rgba[sg_id] = sg_sum;
+        } else {
+            float sg_sum = subgroupAdd(lum);
+            if (gl_SubgroupInvocationID == 0u)
+                sg_lum[sg_id] = sg_sum;
+        }
+
+        barrier();
+
+        if (gl_LocalInvocationIndex == 0u) {
+            if (pc.mode == 0u) {
+                vec4 total = vec4(0.0);
+                for (uint i = 0u; i < gl_NumSubgroups; ++i)
+                    total += sg_rgba[i];
+                float inv = 1.0 / float(pc.pixel_count);
+                atomicAdd(result[0], total.r * inv);
+                atomicAdd(result[1], total.g * inv);
+                atomicAdd(result[2], total.b * inv);
+                atomicAdd(result[3], total.a * inv);
+            } else {
+                float total = 0.0;
+                for (uint i = 0u; i < gl_NumSubgroups; ++i)
+                    total += sg_lum[i];
+                atomicAdd(result[0], total / float(pc.pixel_count));
+            }
+        }
+        return;
+    }
+
+    // -------------------------------------------------------------------------
+    // HISTOGRAM: each active thread increments one bin atomically.
+    //   result[] must be cleared to 0.0 by host before dispatch.
+    //   Host divides by pixel_count after dispatch to normalise.
+    //   GL_EXT_shader_atomic_float provides atomicAdd on float SSBO.
+    // -------------------------------------------------------------------------
+    if (pc.mode == 3u && in_region) {
+        uint bin = uint(clamp(lum, 0.0, 0.9999) * 256.0);
+        atomicAdd(result[bin], 1.0);
+    }
+}
