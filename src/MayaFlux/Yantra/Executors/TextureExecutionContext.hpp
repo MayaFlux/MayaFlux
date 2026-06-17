@@ -134,6 +134,23 @@ public:
         return result;
     }
 
+    /**
+     * @brief Collect the output TextureContainer after a signaled async dispatch.
+     *
+     * Valid only in CONTAINER mode. Mirrors collect_result() for SCALAR mode.
+     * Must be called only after ShaderFoundry::is_fence_signaled returns true
+     * for the FenceID returned by dispatch_async.
+     *
+     * @return DataIO with container field holding the output TextureContainer,
+     *         or empty DataIO on failure.
+     */
+    [[nodiscard]] output_type collect_container_result()
+    {
+        GpuChannelResult raw;
+        readback_aux(raw);
+        return collect_gpu_outputs(raw, {}, {});
+    }
+
     // =========================================================================
     // Manual image staging — for callers that already hold a VKImage
     // =========================================================================
@@ -188,6 +205,20 @@ protected:
     // GpuExecutionContext overrides
     // =========================================================================
 
+    [[nodiscard]] std::vector<GpuBufferBinding> declare_buffer_bindings() const override
+    {
+        return {
+            { .set = 0,
+                .binding = 0,
+                .direction = GpuBufferBinding::Direction::OUTPUT,
+                .element_type = GpuBufferBinding::ElementType::IMAGE_STORAGE },
+            { .set = 0,
+                .binding = static_cast<uint32_t>(m_image_binding),
+                .direction = GpuBufferBinding::Direction::INPUT,
+                .element_type = GpuBufferBinding::ElementType::IMAGE_SAMPLED },
+        };
+    }
+
     /**
      * @brief Stashes the TextureContainer from datum.container for use in
      *        on_before_gpu_dispatch; returns empty channels (image shaders
@@ -209,8 +240,13 @@ protected:
         const DataStructureInfo& /*structure_info*/) override
     {
         if (m_pending_container) {
-            auto img = m_pending_container->to_image(m_pending_layer);
-            auto sampler = Portal::Graphics::SamplerForge::instance().get_default_linear();
+            const auto sampler = Portal::Graphics::SamplerForge::instance().get_default_linear();
+            std::shared_ptr<Core::VKImage> img;
+            if (m_pending_container->get_layer_count() > 1) {
+                img = m_pending_container->to_image_array();
+            } else {
+                img = m_pending_container->to_image(m_pending_layer);
+            }
             stage_image_sampled(m_image_binding, std::move(img), sampler);
 
             if (m_output_mode == OutputMode::CONTAINER) {
@@ -269,11 +305,16 @@ protected:
         const uint32_t w = m_pending_container ? m_pending_container->get_width() : img->get_width();
         const uint32_t h = m_pending_container ? m_pending_container->get_height() : img->get_height();
 
-        auto out_container = std::make_shared<Kakshya::TextureContainer>(w, h, m_output_format);
-        out_container->from_image(img, 0);
+        if (!m_output_container) {
+            m_output_container = std::make_shared<Kakshya::TextureContainer>(
+                w, h, m_output_format);
+        }
+
+        m_output_container->from_image(img, 0);
 
         output_type result;
-        result.container = std::static_pointer_cast<Kakshya::SignalSourceContainer>(out_container);
+        result.container = std::static_pointer_cast<Kakshya::SignalSourceContainer>(
+            m_output_container);
         return result;
     }
 
@@ -283,9 +324,8 @@ private:
     size_t m_image_binding;
     uint32_t m_pending_layer { 0 };
 
-    // Stashed between extract_inputs / on_before_gpu_dispatch.
-    // Null when no container was present on the Datum.
-    const Kakshya::TextureContainer* m_pending_container { nullptr };
+    std::shared_ptr<Kakshya::TextureContainer> m_pending_container;
+    std::shared_ptr<Kakshya::TextureContainer> m_output_container;
 
     // =========================================================================
     // Helpers
@@ -308,11 +348,11 @@ private:
      * Returns nullptr when the container field is absent or holds a different
      * SignalSourceContainer subtype.
      */
-    static const Kakshya::TextureContainer* resolve_texture_container(const input_type& input)
+    static std::shared_ptr<Kakshya::TextureContainer> resolve_texture_container(const input_type& input)
     {
         if (!input.container || !*input.container)
             return nullptr;
-        return dynamic_cast<const Kakshya::TextureContainer*>(input.container->get());
+        return std::dynamic_pointer_cast<Kakshya::TextureContainer>(input.container.value());
     }
 };
 
