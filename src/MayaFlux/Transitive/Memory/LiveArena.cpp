@@ -1,4 +1,4 @@
-#include "MayaFlux/Transitive/Memory/LiveArena.hpp"
+#include "LiveArena.hpp"
 
 namespace MayaFlux {
 

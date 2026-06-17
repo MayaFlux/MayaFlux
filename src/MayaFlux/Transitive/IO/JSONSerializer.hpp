@@ -1,14 +1,12 @@
 #pragma once
 
-#include "Reflection.hpp"
+#include "Serializer.hpp"
 
-#include "FileReader.hpp"
-
-#include "MayaFlux/Journal/Archivist.hpp"
+#include "MayaFlux/Transitive/Reflect/Mirror.hpp"
 
 #include <nlohmann/json.hpp>
 
-#include "fstream"
+#include <fstream>
 
 namespace MayaFlux::IO {
 
@@ -21,7 +19,7 @@ namespace MayaFlux::IO {
  * OptionalProperty descriptors is handled recursively.  Types without a
  * describe() fall through to nlohmann's native converters (arithmetic,
  * std::string, bool) or to the built-in dispatchers for std::vector,
- * std::optional, std::unordered_map / std::map, and glm vec/mat types.
+ * std::optional and std::unordered_map / std::map
  *
  * Callers never touch nlohmann::json directly.  JSONSerializer owns all
  * knowledge of the wire format.
@@ -46,8 +44,7 @@ public:
     /**
      * @brief Serialize @p value to a JSON string.
      * @tparam T Any Reflectable struct, std::vector<Reflectable>, arithmetic
-     *           type, std::string, std::optional<T>, std::unordered_map, or
-     *           glm vec/mat type.
+     *           type, std::string, std::optional<T> or std::unordered_map
      * @param indent Spaces per indentation level (-1 for compact).
      */
     template <typename T>
@@ -110,7 +107,7 @@ public:
     [[nodiscard]] std::optional<T> read(const std::string& path)
     {
         m_last_error.clear();
-        const auto resolved = FileReader::resolve_path(path);
+        const auto resolved = resolve_path(path);
         std::ifstream file(resolved);
         if (!file.is_open()) {
             m_last_error = "Failed to open for reading: " + resolved;
@@ -135,6 +132,24 @@ public:
 private:
     std::string m_last_error;
 
+    [[nodiscard]] static std::string resolve_path(const std::string& filepath)
+    {
+        namespace fs = std::filesystem;
+        auto normalized = std::string(filepath);
+        std::ranges::replace(normalized, '\\', '/');
+        if (fs::path(normalized).is_absolute())
+            return normalized;
+        if (fs::exists(normalized))
+            return normalized;
+        auto from_cwd = fs::current_path() / normalized;
+        if (fs::exists(from_cwd))
+            return from_cwd.string();
+        auto from_root = fs::path(Config::SOURCE_DIR) / normalized;
+        if (fs::exists(from_root))
+            return from_root.string();
+        return normalized;
+    }
+
     // -----------------------------------------------------------------------
     // Encoding engine
     // -----------------------------------------------------------------------
@@ -142,7 +157,7 @@ private:
     template <typename T>
     static nlohmann::json to_json(const T& val)
     {
-        if constexpr (Reflectable<T>) {
+        if constexpr (Reflect::Reflectable<T>) {
             nlohmann::json j = nlohmann::json::object();
             std::apply(
                 [&](const auto&... props) {
@@ -150,31 +165,30 @@ private:
                 },
                 T::describe());
             return j;
-        } else if constexpr (is_optional_v<T>) {
+        } else if constexpr (Reflect::is_optional_v<T>) {
             if (!val.has_value()) {
                 return nullptr;
             }
             return to_json(*val);
-        } else if constexpr (is_vector_v<T>) {
+        } else if constexpr (Reflect::is_vector_v<T>) {
             auto arr = nlohmann::json::array();
             for (const auto& item : val) {
                 arr.push_back(to_json(item));
             }
             return arr;
-        } else if constexpr (is_string_map_v<T>) {
+        } else if constexpr (Reflect::is_string_map_v<T>) {
             nlohmann::json j = nlohmann::json::object();
             for (const auto& [k, v] : val) {
                 j[k] = to_json(v);
             }
             return j;
-        } else if constexpr (GlmSerializable<T>) {
-            return encode_glm(val);
         } else if constexpr (std::is_enum_v<T>) {
             return static_cast<std::underlying_type_t<T>>(val);
         } else if constexpr (std::is_same_v<T, nlohmann::json>) {
             return val;
         } else {
-            return val;
+            /// Extension point — specialize Serializer<T> to handle custom types
+            return Serializer<T>::to_json(val);
         }
     }
 
@@ -182,7 +196,7 @@ private:
     static void encode_property(
         nlohmann::json& j,
         const Class& obj,
-        const Property<Class, T>& prop)
+        const Reflect::Property<Class, T>& prop)
     {
         j[prop.key] = to_json(obj.*prop.member);
     }
@@ -191,7 +205,7 @@ private:
     static void encode_property(
         nlohmann::json& j,
         const Class& obj,
-        const OptionalProperty<Class, T>& prop)
+        const Reflect::OptionalProperty<Class, T>& prop)
     {
         const auto& opt = obj.*prop.member;
         if (opt.has_value()) {
@@ -206,23 +220,17 @@ private:
     template <typename T>
     static void from_json(const nlohmann::json& j, T& out)
     {
-        if constexpr (Reflectable<T>) {
+        if constexpr (Reflect::Reflectable<T>) {
             if (!j.is_object()) {
-                auto e = nlohmann::json::type_error::create(
-                    302, "expected object for Reflectable type", &j);
-                error<std::runtime_error>(
-                    Journal::Component::IO,
-                    Journal::Context::Runtime,
-                    std::source_location::current(),
-                    "JSON type error: {}", e.what());
+                throw nlohmann::json::type_error::create(302, "expected object for Reflectable type", &j);
             }
             std::apply(
                 [&](const auto&... props) {
                     (decode_property(j, out, props), ...);
                 },
                 T::describe());
-        } else if constexpr (is_optional_v<T>) {
-            using Inner = typename is_optional<T>::inner;
+        } else if constexpr (Reflect::is_optional_v<T>) {
+            using Inner = typename Reflect::is_optional<T>::inner;
             if (j.is_null()) {
                 out = std::nullopt;
             } else {
@@ -230,16 +238,10 @@ private:
                 from_json(j, inner);
                 out = std::move(inner);
             }
-        } else if constexpr (is_vector_v<T>) {
-            using V = typename is_vector<T>::element;
-            if (!j.is_array()) {
-                auto e = nlohmann::json::type_error::create(302, "expected array", &j);
-                error<std::runtime_error>(
-                    Journal::Component::IO,
-                    Journal::Context::Runtime,
-                    std::source_location::current(),
-                    "JSON type error: {}", e.what());
-            }
+        } else if constexpr (Reflect::is_vector_v<T>) {
+            using V = typename Reflect::is_vector<T>::element;
+            if (!j.is_array())
+                throw nlohmann::json::type_error::create(302, "expected array", &j);
             out.clear();
             out.reserve(j.size());
             for (const auto& item : j) {
@@ -247,30 +249,25 @@ private:
                 from_json(item, element);
                 out.push_back(std::move(element));
             }
-        } else if constexpr (is_string_map_v<T>) {
-            using V = typename is_string_map<T>::element;
-            if (!j.is_object()) {
-                auto e = nlohmann::json::type_error::create(302, "expected object for map", &j);
-                error<std::runtime_error>(
-                    Journal::Component::IO,
-                    Journal::Context::Runtime,
-                    std::source_location::current(),
-                    "JSON type error: {}", e.what());
-            }
+
+        } else if constexpr (Reflect::is_string_map_v<T>) {
+            using V = typename Reflect::is_string_map<T>::element;
+            if (!j.is_object())
+                throw nlohmann::json::type_error::create(302, "expected object for map", &j);
             out.clear();
             for (const auto& [k, v] : j.items()) {
                 V val {};
                 from_json(v, val);
                 out.emplace(k, std::move(val));
             }
-        } else if constexpr (GlmSerializable<T>) {
-            decode_glm(j, out);
         } else if constexpr (std::is_enum_v<T>) {
             out = static_cast<T>(j.get<std::underlying_type_t<T>>());
+
         } else if constexpr (std::is_same_v<T, nlohmann::json>) {
             out = j;
+
         } else {
-            out = j.get<T>();
+            Serializer<T>::from_json(j, out);
         }
     }
 
@@ -278,7 +275,7 @@ private:
     static void decode_property(
         const nlohmann::json& j,
         Class& obj,
-        const Property<Class, T>& prop)
+        const Reflect::Property<Class, T>& prop)
     {
         if (j.contains(prop.key)) {
             from_json(j.at(prop.key), obj.*prop.member);
@@ -289,7 +286,7 @@ private:
     static void decode_property(
         const nlohmann::json& j,
         Class& obj,
-        const OptionalProperty<Class, T>& prop)
+        const Reflect::OptionalProperty<Class, T>& prop)
     {
         if (!j.contains(prop.key) || j.at(prop.key).is_null()) {
             obj.*prop.member = std::nullopt;
@@ -297,54 +294,6 @@ private:
             T inner {};
             from_json(j.at(prop.key), inner);
             obj.*prop.member = std::move(inner);
-        }
-    }
-
-    // -----------------------------------------------------------------------
-    // GLM encode / decode
-    // -----------------------------------------------------------------------
-
-    template <typename T>
-        requires GlmSerializable<T>
-    static nlohmann::json encode_glm(const T& v)
-    {
-        constexpr auto n = glm_component_count<T>();
-        using Comp = glm_component_type<T>;
-        auto arr = nlohmann::json::array();
-        const Comp* ptr = &v[0];
-        for (size_t i = 0; i < n; ++i) {
-            arr.push_back(ptr[i]);
-        }
-        return arr;
-    }
-
-    template <typename T>
-        requires GlmSerializable<T>
-    static void decode_glm(const nlohmann::json& j, T& out)
-    {
-        if (!j.is_array()) {
-            auto e = nlohmann::json::type_error::create(302, "expected array for glm type", &j);
-            error<std::runtime_error>(
-                Journal::Component::IO,
-                Journal::Context::Runtime,
-                std::source_location::current(),
-                "JSON type error: {}", e.what());
-        }
-        constexpr auto n = glm_component_count<T>();
-        if (j.size() != n) {
-            auto e = nlohmann::json::other_error::create(
-                501, "glm component count mismatch", &j);
-            error<std::runtime_error>(
-                Journal::Component::IO,
-                Journal::Context::Runtime,
-                std::source_location::current(),
-                "JSON error: expected {} components for type {}, got {}: {}",
-                n, typeid(T).name(), j.size(), e.what());
-        }
-        using Comp = glm_component_type<T>;
-        Comp* ptr = &out[0];
-        for (size_t i = 0; i < n; ++i) {
-            ptr[i] = j[i].get<Comp>();
         }
     }
 };

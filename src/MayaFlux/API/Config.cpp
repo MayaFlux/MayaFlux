@@ -7,7 +7,9 @@
 #include "MayaFlux/Journal/ConsoleSink.hpp"
 #include "MayaFlux/Journal/FileSink.hpp"
 
-#include "MayaFlux/IO/JSONSerializer.hpp"
+#include "MayaFlux/Transitive/IO/JSONSerializer.hpp"
+
+#include "MayaFlux/IO/GlmSerializer.hpp"
 
 namespace MayaFlux {
 
@@ -22,11 +24,11 @@ namespace {
         static constexpr auto describe()
         {
             return std::make_tuple(
-                IO::member("severity", &JournalConfig::severity),
-                IO::member("sink_to_console", &JournalConfig::sink_to_console),
-                IO::member("log_file", &JournalConfig::log_file),
-                IO::member("disable_components", &JournalConfig::disable_components),
-                IO::member("disable_contexts", &JournalConfig::disable_contexts));
+                Reflect::member("severity", &JournalConfig::severity),
+                Reflect::member("sink_to_console", &JournalConfig::sink_to_console),
+                Reflect::member("log_file", &JournalConfig::log_file),
+                Reflect::member("disable_components", &JournalConfig::disable_components),
+                Reflect::member("disable_contexts", &JournalConfig::disable_contexts));
         }
     };
 
@@ -40,11 +42,11 @@ namespace {
         static constexpr auto describe()
         {
             return std::make_tuple(
-                IO::member("stream", &EngineConfig::stream),
-                IO::member("graphics", &EngineConfig::graphics),
-                IO::member("input", &EngineConfig::input),
-                IO::member("network", &EngineConfig::network),
-                IO::member("journal", &EngineConfig::journal));
+                Reflect::member("stream", &EngineConfig::stream),
+                Reflect::member("graphics", &EngineConfig::graphics),
+                Reflect::member("input", &EngineConfig::input),
+                Reflect::member("network", &EngineConfig::network),
+                Reflect::member("journal", &EngineConfig::journal));
         }
     };
 }

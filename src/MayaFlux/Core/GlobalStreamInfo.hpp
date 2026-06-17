@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MayaFlux/IO/Reflection.hpp"
+#include "MayaFlux/Transitive/Reflect/Mirror.hpp"
 
 namespace MayaFlux::Core {
 
@@ -80,10 +80,10 @@ struct GlobalStreamInfo {
         static constexpr auto describe()
         {
             return std::make_tuple(
-                IO::member("enabled", &ChannelConfig::enabled),
-                IO::member("channels", &ChannelConfig::channels),
-                IO::member("device_id", &ChannelConfig::device_id),
-                IO::member("device_name", &ChannelConfig::device_name));
+                Reflect::member("enabled", &ChannelConfig::enabled),
+                Reflect::member("channels", &ChannelConfig::channels),
+                Reflect::member("device_id", &ChannelConfig::device_id),
+                Reflect::member("device_name", &ChannelConfig::device_name));
         }
     };
 
@@ -170,17 +170,17 @@ struct GlobalStreamInfo {
     static constexpr auto describe()
     {
         return std::make_tuple(
-            IO::member("sample_rate", &GlobalStreamInfo::sample_rate),
-            IO::member("buffer_size", &GlobalStreamInfo::buffer_size),
-            IO::member("format", &GlobalStreamInfo::format),
-            IO::member("non_interleaved", &GlobalStreamInfo::non_interleaved),
-            IO::member("output", &GlobalStreamInfo::output),
-            IO::member("input", &GlobalStreamInfo::input),
-            IO::member("priority", &GlobalStreamInfo::priority),
-            IO::member("auto_convert_format", &GlobalStreamInfo::auto_convert_format),
-            IO::member("handle_xruns", &GlobalStreamInfo::handle_xruns),
-            IO::member("use_callback", &GlobalStreamInfo::use_callback),
-            IO::member("stream_latency_ms", &GlobalStreamInfo::stream_latency_ms));
+            Reflect::member("sample_rate", &GlobalStreamInfo::sample_rate),
+            Reflect::member("buffer_size", &GlobalStreamInfo::buffer_size),
+            Reflect::member("format", &GlobalStreamInfo::format),
+            Reflect::member("non_interleaved", &GlobalStreamInfo::non_interleaved),
+            Reflect::member("output", &GlobalStreamInfo::output),
+            Reflect::member("input", &GlobalStreamInfo::input),
+            Reflect::member("priority", &GlobalStreamInfo::priority),
+            Reflect::member("auto_convert_format", &GlobalStreamInfo::auto_convert_format),
+            Reflect::member("handle_xruns", &GlobalStreamInfo::handle_xruns),
+            Reflect::member("use_callback", &GlobalStreamInfo::use_callback),
+            Reflect::member("stream_latency_ms", &GlobalStreamInfo::stream_latency_ms));
     }
 };
 }

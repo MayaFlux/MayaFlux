@@ -6,8 +6,11 @@
 #include "MayaFlux/Nexus/Principals/Presence.hpp"
 
 #include "MayaFlux/IO/ImageWriter.hpp"
-#include "MayaFlux/IO/JSONSerializer.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
+
+#include "MayaFlux/Transitive/IO/JSONSerializer.hpp"
+
+#include "MayaFlux/IO/GlmSerializer.hpp"
 
 namespace MayaFlux::Nexus {
 

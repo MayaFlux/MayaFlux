@@ -42,8 +42,8 @@ struct Range {
     static constexpr auto describe()
     {
         return std::make_tuple(
-            IO::member("min", &Range::min),
-            IO::member("max", &Range::max));
+            Reflect::member("min", &Range::min),
+            Reflect::member("max", &Range::max));
     }
 };
 
@@ -58,16 +58,16 @@ struct RangeSet {
     static constexpr auto describe()
     {
         return std::make_tuple(
-            IO::member("position.x", &RangeSet::pos_x),
-            IO::member("position.y", &RangeSet::pos_y),
-            IO::member("position.z", &RangeSet::pos_z),
-            IO::member("intensity", &RangeSet::intensity),
-            IO::member("color.r", &RangeSet::color_r),
-            IO::member("color.g", &RangeSet::color_g),
-            IO::member("color.b", &RangeSet::color_b),
-            IO::member("size", &RangeSet::size),
-            IO::member("radius", &RangeSet::radius),
-            IO::member("query_radius", &RangeSet::query_radius));
+            Reflect::member("position.x", &RangeSet::pos_x),
+            Reflect::member("position.y", &RangeSet::pos_y),
+            Reflect::member("position.z", &RangeSet::pos_z),
+            Reflect::member("intensity", &RangeSet::intensity),
+            Reflect::member("color.r", &RangeSet::color_r),
+            Reflect::member("color.g", &RangeSet::color_g),
+            Reflect::member("color.b", &RangeSet::color_b),
+            Reflect::member("size", &RangeSet::size),
+            Reflect::member("radius", &RangeSet::radius),
+            Reflect::member("query_radius", &RangeSet::query_radius));
     }
 };
 
@@ -97,8 +97,8 @@ struct WiringStep {
     static constexpr auto describe()
     {
         return std::make_tuple(
-            IO::member("position", &WiringStep::position),
-            IO::member("delay", &WiringStep::delay_seconds));
+            Reflect::member("position", &WiringStep::position),
+            Reflect::member("delay", &WiringStep::delay_seconds));
     }
 };
 
@@ -112,11 +112,11 @@ struct WiringRecord {
     static constexpr auto describe()
     {
         return std::make_tuple(
-            IO::member("kind", &WiringRecord::kind),
-            IO::opt_member("interval", &WiringRecord::interval),
-            IO::opt_member("duration", &WiringRecord::duration),
-            IO::opt_member("times", &WiringRecord::times),
-            IO::opt_member("steps", &WiringRecord::steps));
+            Reflect::member("kind", &WiringRecord::kind),
+            Reflect::opt_member("interval", &WiringRecord::interval),
+            Reflect::opt_member("duration", &WiringRecord::duration),
+            Reflect::opt_member("times", &WiringRecord::times),
+            Reflect::opt_member("steps", &WiringRecord::steps));
     }
 };
 
@@ -131,8 +131,8 @@ struct AudioSinkRecord {
     static constexpr auto describe()
     {
         return std::make_tuple(
-            IO::member("channel", &AudioSinkRecord::channel),
-            IO::member("fn_name", &AudioSinkRecord::fn_name));
+            Reflect::member("channel", &AudioSinkRecord::channel),
+            Reflect::member("fn_name", &AudioSinkRecord::fn_name));
     }
 };
 
@@ -142,7 +142,7 @@ struct RenderSinkRecord {
     static constexpr auto describe()
     {
         return std::make_tuple(
-            IO::member("fn_name", &RenderSinkRecord::fn_name));
+            Reflect::member("fn_name", &RenderSinkRecord::fn_name));
     }
 };
 
@@ -170,13 +170,13 @@ struct LocusNavRecord {
     static constexpr auto describe()
     {
         return std::make_tuple(
-            IO::member("eye", &LocusNavRecord::eye),
-            IO::member("target", &LocusNavRecord::target),
-            IO::member("up", &LocusNavRecord::up),
-            IO::member("fov", &LocusNavRecord::fov),
-            IO::member("near", &LocusNavRecord::near_plane),
-            IO::member("far", &LocusNavRecord::far_plane),
-            IO::member("speed", &LocusNavRecord::speed));
+            Reflect::member("eye", &LocusNavRecord::eye),
+            Reflect::member("target", &LocusNavRecord::target),
+            Reflect::member("up", &LocusNavRecord::up),
+            Reflect::member("fov", &LocusNavRecord::fov),
+            Reflect::member("near", &LocusNavRecord::near_plane),
+            Reflect::member("far", &LocusNavRecord::far_plane),
+            Reflect::member("speed", &LocusNavRecord::speed));
     }
 };
 
@@ -214,24 +214,24 @@ struct EntityRecord {
     static constexpr auto describe()
     {
         return std::make_tuple(
-            IO::member("id", &EntityRecord::id),
-            IO::member("kind", &EntityRecord::kind),
-            IO::member("subkind", &EntityRecord::subkind),
-            IO::member("position", &EntityRecord::position),
-            IO::member("intensity", &EntityRecord::intensity),
-            IO::member("radius", &EntityRecord::radius),
-            IO::member("query_radius", &EntityRecord::query_radius),
-            IO::opt_member("color", &EntityRecord::color),
-            IO::opt_member("size", &EntityRecord::size),
-            IO::member("influence_fn_name", &EntityRecord::influence_fn_name),
-            IO::member("perception_fn_name", &EntityRecord::perception_fn_name),
-            IO::member("radiate_fn_name", &EntityRecord::radiate_fn_name),
-            IO::member("wiring", &EntityRecord::wiring),
-            IO::member("audio_sinks", &EntityRecord::audio_sinks),
-            IO::member("render_sinks", &EntityRecord::render_sinks),
-            IO::member("falloff_curve", &EntityRecord::falloff_curve_name),
-            IO::opt_member("locus_nav", &EntityRecord::locus_nav),
-            IO::opt_member("falloff_radius", &EntityRecord::falloff_radius));
+            Reflect::member("id", &EntityRecord::id),
+            Reflect::member("kind", &EntityRecord::kind),
+            Reflect::member("subkind", &EntityRecord::subkind),
+            Reflect::member("position", &EntityRecord::position),
+            Reflect::member("intensity", &EntityRecord::intensity),
+            Reflect::member("radius", &EntityRecord::radius),
+            Reflect::member("query_radius", &EntityRecord::query_radius),
+            Reflect::opt_member("color", &EntityRecord::color),
+            Reflect::opt_member("size", &EntityRecord::size),
+            Reflect::member("influence_fn_name", &EntityRecord::influence_fn_name),
+            Reflect::member("perception_fn_name", &EntityRecord::perception_fn_name),
+            Reflect::member("radiate_fn_name", &EntityRecord::radiate_fn_name),
+            Reflect::member("wiring", &EntityRecord::wiring),
+            Reflect::member("audio_sinks", &EntityRecord::audio_sinks),
+            Reflect::member("render_sinks", &EntityRecord::render_sinks),
+            Reflect::member("falloff_curve", &EntityRecord::falloff_curve_name),
+            Reflect::opt_member("locus_nav", &EntityRecord::locus_nav),
+            Reflect::opt_member("falloff_radius", &EntityRecord::falloff_radius));
     }
 };
 
@@ -256,10 +256,10 @@ struct ExpanseRecord {
     static constexpr auto describe()
     {
         return std::make_tuple(
-            IO::member("id", &ExpanseRecord::id),
-            IO::member("fn_name", &ExpanseRecord::fn_name),
-            IO::member("on_enter_fn_name", &ExpanseRecord::on_enter_fn_name),
-            IO::member("on_exit_fn_name", &ExpanseRecord::on_exit_fn_name));
+            Reflect::member("id", &ExpanseRecord::id),
+            Reflect::member("fn_name", &ExpanseRecord::fn_name),
+            Reflect::member("on_enter_fn_name", &ExpanseRecord::on_enter_fn_name),
+            Reflect::member("on_exit_fn_name", &ExpanseRecord::on_exit_fn_name));
     }
 };
 
@@ -277,11 +277,11 @@ struct FabricSchema {
     static constexpr auto describe()
     {
         return std::make_tuple(
-            IO::member("version", &FabricSchema::version),
-            IO::member("fabric_name", &FabricSchema::fabric_name),
-            IO::member("entities", &FabricSchema::entities),
-            IO::member("expanses", &FabricSchema::expanses),
-            IO::member("ranges", &FabricSchema::ranges));
+            Reflect::member("version", &FabricSchema::version),
+            Reflect::member("fabric_name", &FabricSchema::fabric_name),
+            Reflect::member("entities", &FabricSchema::entities),
+            Reflect::member("expanses", &FabricSchema::expanses),
+            Reflect::member("ranges", &FabricSchema::ranges));
     }
 };
 
@@ -299,8 +299,8 @@ struct FabricRef {
     static constexpr auto describe()
     {
         return std::make_tuple(
-            IO::member("name", &FabricRef::name),
-            IO::member("base_path", &FabricRef::base_path));
+            Reflect::member("name", &FabricRef::name),
+            Reflect::member("base_path", &FabricRef::base_path));
     }
 };
 
@@ -323,11 +323,11 @@ struct TapestryExpanseRecord {
     static constexpr auto describe()
     {
         return std::make_tuple(
-            IO::member("name", &TapestryExpanseRecord::name),
-            IO::member("fn_name", &TapestryExpanseRecord::fn_name),
-            IO::member("on_enter_fn_name", &TapestryExpanseRecord::on_enter_fn_name),
-            IO::member("on_exit_fn_name", &TapestryExpanseRecord::on_exit_fn_name),
-            IO::member("fabric_names", &TapestryExpanseRecord::fabric_names));
+            Reflect::member("name", &TapestryExpanseRecord::name),
+            Reflect::member("fn_name", &TapestryExpanseRecord::fn_name),
+            Reflect::member("on_enter_fn_name", &TapestryExpanseRecord::on_enter_fn_name),
+            Reflect::member("on_exit_fn_name", &TapestryExpanseRecord::on_exit_fn_name),
+            Reflect::member("fabric_names", &TapestryExpanseRecord::fabric_names));
     }
 };
 
@@ -340,10 +340,10 @@ struct TapestrySchema {
     static constexpr auto describe()
     {
         return std::make_tuple(
-            IO::member("version", &TapestrySchema::version),
-            IO::member("fabrics", &TapestrySchema::fabrics),
-            IO::member("expanses", &TapestrySchema::expanses),
-            IO::member("user_state", &TapestrySchema::user_state));
+            Reflect::member("version", &TapestrySchema::version),
+            Reflect::member("fabrics", &TapestrySchema::fabrics),
+            Reflect::member("expanses", &TapestrySchema::expanses),
+            Reflect::member("user_state", &TapestrySchema::user_state));
     }
 };
 

@@ -1,6 +1,6 @@
 #pragma once
 
-namespace MayaFlux::IO {
+namespace MayaFlux::Reflect {
 
 // ---------------------------------------------------------------------------
 // Property descriptors
@@ -91,7 +91,4 @@ struct is_string_map<std::map<std::string, V>> : std::true_type {
 template <typename T>
 inline constexpr bool is_string_map_v = is_string_map<T>::value;
 
-template <typename T>
-concept GlmSerializable = GlmType<T>;
-
-} // namespace MayaFlux::IO
+} // namespace MayaFlux::Reflect

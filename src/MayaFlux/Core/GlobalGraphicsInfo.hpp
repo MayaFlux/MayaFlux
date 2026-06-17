@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MayaFlux/IO/Reflection.hpp"
+#include "MayaFlux/Transitive/Reflect/Mirror.hpp"
 
 namespace MayaFlux::Core {
 
@@ -72,18 +72,18 @@ struct MAYAFLUX_API GraphicsBackendInfo {
     static constexpr auto describe()
     {
         return std::make_tuple(
-            IO::member("enable_validation", &GraphicsBackendInfo::enable_validation),
-            IO::member("enable_debug_markers", &GraphicsBackendInfo::enable_debug_markers),
-            // IO::member("required_features", &GraphicsBackendInfo::required_features),
-            IO::member("memory_strategy", &GraphicsBackendInfo::memory_strategy),
-            IO::member("command_pooling", &GraphicsBackendInfo::command_pooling),
-            IO::member("max_frames_in_flight", &GraphicsBackendInfo::max_frames_in_flight),
-            IO::member("enable_compute_queue", &GraphicsBackendInfo::enable_compute_queue),
-            IO::member("enable_transfer_queue", &GraphicsBackendInfo::enable_transfer_queue),
-            IO::member("shader_compilation", &GraphicsBackendInfo::shader_compilation),
-            IO::member("shader_cache_dir", &GraphicsBackendInfo::shader_cache_dir),
-            IO::member("required_extensions", &GraphicsBackendInfo::required_extensions),
-            IO::member("optional_extensions", &GraphicsBackendInfo::optional_extensions));
+            Reflect::member("enable_validation", &GraphicsBackendInfo::enable_validation),
+            Reflect::member("enable_debug_markers", &GraphicsBackendInfo::enable_debug_markers),
+            // Reflect::member("required_features", &GraphicsBackendInfo::required_features),
+            Reflect::member("memory_strategy", &GraphicsBackendInfo::memory_strategy),
+            Reflect::member("command_pooling", &GraphicsBackendInfo::command_pooling),
+            Reflect::member("max_frames_in_flight", &GraphicsBackendInfo::max_frames_in_flight),
+            Reflect::member("enable_compute_queue", &GraphicsBackendInfo::enable_compute_queue),
+            Reflect::member("enable_transfer_queue", &GraphicsBackendInfo::enable_transfer_queue),
+            Reflect::member("shader_compilation", &GraphicsBackendInfo::shader_compilation),
+            Reflect::member("shader_cache_dir", &GraphicsBackendInfo::shader_cache_dir),
+            Reflect::member("required_extensions", &GraphicsBackendInfo::required_extensions),
+            Reflect::member("optional_extensions", &GraphicsBackendInfo::optional_extensions));
     }
 };
 
@@ -115,12 +115,12 @@ struct MAYAFLUX_API GraphicsResourceLimits {
     static constexpr auto describe()
     {
         return std::make_tuple(
-            IO::member("max_windows", &GraphicsResourceLimits::max_windows),
-            IO::member("max_staging_buffer_mb", &GraphicsResourceLimits::max_staging_buffer_mb),
-            IO::member("max_compute_buffer_mb", &GraphicsResourceLimits::max_compute_buffer_mb),
-            IO::member("max_texture_cache_mb", &GraphicsResourceLimits::max_texture_cache_mb),
-            IO::member("max_descriptor_sets", &GraphicsResourceLimits::max_descriptor_sets),
-            IO::member("max_pipelines", &GraphicsResourceLimits::max_pipelines));
+            Reflect::member("max_windows", &GraphicsResourceLimits::max_windows),
+            Reflect::member("max_staging_buffer_mb", &GraphicsResourceLimits::max_staging_buffer_mb),
+            Reflect::member("max_compute_buffer_mb", &GraphicsResourceLimits::max_compute_buffer_mb),
+            Reflect::member("max_texture_cache_mb", &GraphicsResourceLimits::max_texture_cache_mb),
+            Reflect::member("max_descriptor_sets", &GraphicsResourceLimits::max_descriptor_sets),
+            Reflect::member("max_pipelines", &GraphicsResourceLimits::max_pipelines));
     }
 };
 
@@ -204,14 +204,14 @@ struct MAYAFLUX_API GraphicsSurfaceInfo {
     static constexpr auto describe()
     {
         return std::make_tuple(
-            IO::member("format", &GraphicsSurfaceInfo::format),
-            IO::member("color_space", &GraphicsSurfaceInfo::color_space),
-            IO::member("present_mode", &GraphicsSurfaceInfo::present_mode),
-            IO::member("image_count", &GraphicsSurfaceInfo::image_count),
-            IO::member("enable_regions", &GraphicsSurfaceInfo::enable_regions),
-            IO::member("max_regions_per_window", &GraphicsSurfaceInfo::max_regions_per_window),
-            IO::member("enable_hdr", &GraphicsSurfaceInfo::enable_hdr),
-            IO::member("measure_frame_time", &GraphicsSurfaceInfo::measure_frame_time));
+            Reflect::member("format", &GraphicsSurfaceInfo::format),
+            Reflect::member("color_space", &GraphicsSurfaceInfo::color_space),
+            Reflect::member("present_mode", &GraphicsSurfaceInfo::present_mode),
+            Reflect::member("image_count", &GraphicsSurfaceInfo::image_count),
+            Reflect::member("enable_regions", &GraphicsSurfaceInfo::enable_regions),
+            Reflect::member("max_regions_per_window", &GraphicsSurfaceInfo::max_regions_per_window),
+            Reflect::member("enable_hdr", &GraphicsSurfaceInfo::enable_hdr),
+            Reflect::member("measure_frame_time", &GraphicsSurfaceInfo::measure_frame_time));
     }
 };
 
@@ -234,9 +234,9 @@ struct GlfwPreInitConfig {
     static constexpr auto describe()
     {
         return std::make_tuple(
-            IO::member("cocoa_chdir_resources", &GlfwPreInitConfig::cocoa_chdir_resources),
-            IO::member("cocoa_menubar", &GlfwPreInitConfig::cocoa_menubar),
-            IO::member("headless", &GlfwPreInitConfig::headless));
+            Reflect::member("cocoa_chdir_resources", &GlfwPreInitConfig::cocoa_chdir_resources),
+            Reflect::member("cocoa_menubar", &GlfwPreInitConfig::cocoa_menubar),
+            Reflect::member("headless", &GlfwPreInitConfig::headless));
     }
 };
 #endif // MAYAFLUX_PLATFORM_MACOS
@@ -261,9 +261,9 @@ struct KeyRepeatConfig {
     static constexpr auto describe()
     {
         return std::make_tuple(
-            IO::member("initial_delay_ms", &KeyRepeatConfig::initial_delay_ms),
-            IO::member("interval_ms", &KeyRepeatConfig::interval_ms),
-            IO::member("allow_compositor_override", &KeyRepeatConfig::allow_compositor_override));
+            Reflect::member("initial_delay_ms", &KeyRepeatConfig::initial_delay_ms),
+            Reflect::member("interval_ms", &KeyRepeatConfig::interval_ms),
+            Reflect::member("allow_compositor_override", &KeyRepeatConfig::allow_compositor_override));
     }
 };
 
@@ -296,10 +296,10 @@ struct TextConfig {
     static constexpr auto describe()
     {
         return std::make_tuple(
-            IO::member("family", &TextConfig::family),
-            IO::member("style", &TextConfig::style),
-            IO::member("pixel_size", &TextConfig::pixel_size),
-            IO::member("atlas_size", &TextConfig::atlas_size));
+            Reflect::member("family", &TextConfig::family),
+            Reflect::member("style", &TextConfig::style),
+            Reflect::member("pixel_size", &TextConfig::pixel_size),
+            Reflect::member("atlas_size", &TextConfig::atlas_size));
     }
 };
 
@@ -380,28 +380,28 @@ struct MAYAFLUX_API GlobalGraphicsConfig {
     static constexpr auto describe()
     {
         return std::make_tuple(
-            IO::member("glfw_preinit_config", &GlobalGraphicsConfig::glfw_preinit_config),
-            IO::member("key_repeat_config", &GlobalGraphicsConfig::key_repeat_config),
-            IO::member("surface_info", &GlobalGraphicsConfig::surface_info),
-            IO::member("backend_info", &GlobalGraphicsConfig::backend_info),
-            IO::member("resource_limits", &GlobalGraphicsConfig::resource_limits),
-            IO::member("target_frame_rate", &GlobalGraphicsConfig::target_frame_rate),
-            IO::member("windowing_backend", &GlobalGraphicsConfig::windowing_backend),
-            IO::member("requested_api", &GlobalGraphicsConfig::requested_api),
-            IO::member("text_config", &GlobalGraphicsConfig::text_config));
+            Reflect::member("glfw_preinit_config", &GlobalGraphicsConfig::glfw_preinit_config),
+            Reflect::member("key_repeat_config", &GlobalGraphicsConfig::key_repeat_config),
+            Reflect::member("surface_info", &GlobalGraphicsConfig::surface_info),
+            Reflect::member("backend_info", &GlobalGraphicsConfig::backend_info),
+            Reflect::member("resource_limits", &GlobalGraphicsConfig::resource_limits),
+            Reflect::member("target_frame_rate", &GlobalGraphicsConfig::target_frame_rate),
+            Reflect::member("windowing_backend", &GlobalGraphicsConfig::windowing_backend),
+            Reflect::member("requested_api", &GlobalGraphicsConfig::requested_api),
+            Reflect::member("text_config", &GlobalGraphicsConfig::text_config));
     }
 #else
     static constexpr auto describe()
     {
         return std::make_tuple(
-            IO::member("key_repeat_config", &GlobalGraphicsConfig::key_repeat_config),
-            IO::member("surface_info", &GlobalGraphicsConfig::surface_info),
-            IO::member("backend_info", &GlobalGraphicsConfig::backend_info),
-            IO::member("resource_limits", &GlobalGraphicsConfig::resource_limits),
-            IO::member("target_frame_rate", &GlobalGraphicsConfig::target_frame_rate),
-            IO::member("windowing_backend", &GlobalGraphicsConfig::windowing_backend),
-            IO::member("requested_api", &GlobalGraphicsConfig::requested_api),
-            IO::member("text_config", &GlobalGraphicsConfig::text_config));
+            Reflect::member("key_repeat_config", &GlobalGraphicsConfig::key_repeat_config),
+            Reflect::member("surface_info", &GlobalGraphicsConfig::surface_info),
+            Reflect::member("backend_info", &GlobalGraphicsConfig::backend_info),
+            Reflect::member("resource_limits", &GlobalGraphicsConfig::resource_limits),
+            Reflect::member("target_frame_rate", &GlobalGraphicsConfig::target_frame_rate),
+            Reflect::member("windowing_backend", &GlobalGraphicsConfig::windowing_backend),
+            Reflect::member("requested_api", &GlobalGraphicsConfig::requested_api),
+            Reflect::member("text_config", &GlobalGraphicsConfig::text_config));
     }
 
 #endif //     #ifdef MAYAFLUX_PLATFORM_MACOS

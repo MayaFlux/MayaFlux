@@ -22,7 +22,7 @@ if(WIN32)
         set_target_properties(${_t} PROPERTIES POSITION_INDEPENDENT_CODE ON)
         target_include_directories(${_t} PUBLIC ${CMAKE_CURRENT_LIST_DIR}/../..)
         target_precompile_headers(${_t} PRIVATE ${CMAKE_SOURCE_DIR}/cmake/pch_minimal.h)
-        target_link_libraries(${_t} PUBLIC magic_enum)
+        target_link_libraries(${_t} PUBLIC magic_enum nlohmann_json::nlohmann_json)
     endforeach()
 
     target_compile_options(Transitive_MD PRIVATE /MD)
@@ -45,5 +45,5 @@ else()
 
     target_precompile_headers(Transitive PRIVATE ${CMAKE_SOURCE_DIR}/cmake/pch_minimal.h)
 
-    target_link_libraries(Transitive PUBLIC magic_enum)
+    target_link_libraries(Transitive PUBLIC magic_enum PkgConfig::nlohmann_json)
 endif()

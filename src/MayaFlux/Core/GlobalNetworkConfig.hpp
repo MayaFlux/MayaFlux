@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MayaFlux/IO/Reflection.hpp"
+#include "MayaFlux/Transitive/Reflect/Mirror.hpp"
 
 namespace MayaFlux::Core {
 
@@ -93,14 +93,14 @@ struct MAYAFLUX_API UDPBackendInfo {
     static constexpr auto describe()
     {
         return std::make_tuple(
-            IO::member("enabled", &UDPBackendInfo::enabled),
-            IO::member("default_receive_port", &UDPBackendInfo::default_receive_port),
-            IO::member("default_send_port", &UDPBackendInfo::default_send_port),
-            IO::member("default_send_address", &UDPBackendInfo::default_send_address),
-            IO::member("receive_buffer_size", &UDPBackendInfo::receive_buffer_size),
-            IO::member("enable_broadcast", &UDPBackendInfo::enable_broadcast),
-            IO::member("enable_multicast", &UDPBackendInfo::enable_multicast),
-            IO::member("multicast_group", &UDPBackendInfo::multicast_group));
+            Reflect::member("enabled", &UDPBackendInfo::enabled),
+            Reflect::member("default_receive_port", &UDPBackendInfo::default_receive_port),
+            Reflect::member("default_send_port", &UDPBackendInfo::default_send_port),
+            Reflect::member("default_send_address", &UDPBackendInfo::default_send_address),
+            Reflect::member("receive_buffer_size", &UDPBackendInfo::receive_buffer_size),
+            Reflect::member("enable_broadcast", &UDPBackendInfo::enable_broadcast),
+            Reflect::member("enable_multicast", &UDPBackendInfo::enable_multicast),
+            Reflect::member("multicast_group", &UDPBackendInfo::multicast_group));
     }
 };
 
@@ -123,12 +123,12 @@ struct MAYAFLUX_API TCPBackendInfo {
     static constexpr auto describe()
     {
         return std::make_tuple(
-            IO::member("enabled", &TCPBackendInfo::enabled),
-            IO::member("listen_port", &TCPBackendInfo::listen_port),
-            IO::member("receive_buffer_size", &TCPBackendInfo::receive_buffer_size),
-            IO::member("auto_reconnect", &TCPBackendInfo::auto_reconnect),
-            IO::member("reconnect_interval_ms", &TCPBackendInfo::reconnect_interval_ms),
-            IO::member("connect_timeout_ms", &TCPBackendInfo::connect_timeout_ms));
+            Reflect::member("enabled", &TCPBackendInfo::enabled),
+            Reflect::member("listen_port", &TCPBackendInfo::listen_port),
+            Reflect::member("receive_buffer_size", &TCPBackendInfo::receive_buffer_size),
+            Reflect::member("auto_reconnect", &TCPBackendInfo::auto_reconnect),
+            Reflect::member("reconnect_interval_ms", &TCPBackendInfo::reconnect_interval_ms),
+            Reflect::member("connect_timeout_ms", &TCPBackendInfo::connect_timeout_ms));
     }
 };
 
@@ -148,9 +148,9 @@ struct MAYAFLUX_API SharedMemoryBackendInfo {
     static constexpr auto describe()
     {
         return std::make_tuple(
-            IO::member("enabled", &SharedMemoryBackendInfo::enabled),
-            IO::member("segment_name", &SharedMemoryBackendInfo::segment_name),
-            IO::member("segment_size", &SharedMemoryBackendInfo::segment_size));
+            Reflect::member("enabled", &SharedMemoryBackendInfo::enabled),
+            Reflect::member("segment_name", &SharedMemoryBackendInfo::segment_name),
+            Reflect::member("segment_size", &SharedMemoryBackendInfo::segment_size));
     }
 };
 
@@ -208,9 +208,9 @@ struct MAYAFLUX_API GlobalNetworkConfig {
     static constexpr auto describe()
     {
         return std::make_tuple(
-            IO::member("udp", &GlobalNetworkConfig::udp),
-            IO::member("tcp", &GlobalNetworkConfig::tcp),
-            IO::member("shared_memory", &GlobalNetworkConfig::shared_memory));
+            Reflect::member("udp", &GlobalNetworkConfig::udp),
+            Reflect::member("tcp", &GlobalNetworkConfig::tcp),
+            Reflect::member("shared_memory", &GlobalNetworkConfig::shared_memory));
     }
 };
 

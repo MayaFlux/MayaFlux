@@ -2,7 +2,7 @@
 
 #include "MayaFlux/Core/Input/InputBinding.hpp"
 
-#include "MayaFlux/IO/Reflection.hpp"
+#include "MayaFlux/Transitive/Reflect/Mirror.hpp"
 
 namespace MayaFlux::Core {
 
@@ -103,10 +103,10 @@ struct MAYAFLUX_API HIDDeviceFilter {
     static constexpr auto describe()
     {
         return std::make_tuple(
-            IO::opt_member("vendor_id", &HIDDeviceFilter::vendor_id),
-            IO::opt_member("product_id", &HIDDeviceFilter::product_id),
-            IO::opt_member("usage_page", &HIDDeviceFilter::usage_page),
-            IO::opt_member("usage", &HIDDeviceFilter::usage));
+            Reflect::opt_member("vendor_id", &HIDDeviceFilter::vendor_id),
+            Reflect::opt_member("product_id", &HIDDeviceFilter::product_id),
+            Reflect::opt_member("usage_page", &HIDDeviceFilter::usage_page),
+            Reflect::opt_member("usage", &HIDDeviceFilter::usage));
     }
 };
 
@@ -125,13 +125,13 @@ struct MAYAFLUX_API HIDBackendInfo {
     static constexpr auto describe()
     {
         return std::make_tuple(
-            IO::member("enabled", &HIDBackendInfo::enabled),
-            IO::member("filters", &HIDBackendInfo::filters),
-            IO::member("auto_open", &HIDBackendInfo::auto_open),
-            IO::member("read_buffer_size", &HIDBackendInfo::read_buffer_size),
-            IO::member("poll_timeout_ms", &HIDBackendInfo::poll_timeout_ms),
-            IO::member("auto_reconnect", &HIDBackendInfo::auto_reconnect),
-            IO::member("reconnect_interval_ms", &HIDBackendInfo::reconnect_interval_ms));
+            Reflect::member("enabled", &HIDBackendInfo::enabled),
+            Reflect::member("filters", &HIDBackendInfo::filters),
+            Reflect::member("auto_open", &HIDBackendInfo::auto_open),
+            Reflect::member("read_buffer_size", &HIDBackendInfo::read_buffer_size),
+            Reflect::member("poll_timeout_ms", &HIDBackendInfo::poll_timeout_ms),
+            Reflect::member("auto_reconnect", &HIDBackendInfo::auto_reconnect),
+            Reflect::member("reconnect_interval_ms", &HIDBackendInfo::reconnect_interval_ms));
     }
 };
 
@@ -154,14 +154,13 @@ struct MAYAFLUX_API MIDIBackendInfo {
     static constexpr auto describe()
     {
         return std::make_tuple(
-            IO::member("enabled", &MIDIBackendInfo::enabled),
-            IO::member("auto_open_inputs", &MIDIBackendInfo::auto_open_inputs),
-            IO::member("auto_open_outputs", &MIDIBackendInfo::auto_open_outputs),
-            IO::member("input_port_filters", &MIDIBackendInfo::input_port_filters),
-            IO::member("output_port_filters", &MIDIBackendInfo::output_port_filters),
-            IO::member("enable_virtual_port", &MIDIBackendInfo::enable_virtual_port),
-            IO::member("virtual_port_name", &MIDIBackendInfo::virtual_port_name),
-            IO::member("enabled", &MIDIBackendInfo::enabled));
+            Reflect::member("enabled", &MIDIBackendInfo::enabled),
+            Reflect::member("auto_open_inputs", &MIDIBackendInfo::auto_open_inputs),
+            Reflect::member("auto_open_outputs", &MIDIBackendInfo::auto_open_outputs),
+            Reflect::member("input_port_filters", &MIDIBackendInfo::input_port_filters),
+            Reflect::member("output_port_filters", &MIDIBackendInfo::output_port_filters),
+            Reflect::member("enable_virtual_port", &MIDIBackendInfo::enable_virtual_port),
+            Reflect::member("virtual_port_name", &MIDIBackendInfo::virtual_port_name));
     }
 };
 
@@ -184,13 +183,13 @@ struct MAYAFLUX_API OSCConfigInfo {
     static constexpr auto describe()
     {
         return std::make_tuple(
-            IO::member("enabled", &OSCConfigInfo::enabled),
-            IO::member("receive_port", &OSCConfigInfo::receive_port),
-            IO::member("send_port", &OSCConfigInfo::send_port),
-            IO::member("send_address", &OSCConfigInfo::send_address),
-            IO::member("enable_multicast", &OSCConfigInfo::enable_multicast),
-            IO::member("multicast_group", &OSCConfigInfo::multicast_group),
-            IO::member("receive_buffer_size", &OSCConfigInfo::receive_buffer_size));
+            Reflect::member("enabled", &OSCConfigInfo::enabled),
+            Reflect::member("receive_port", &OSCConfigInfo::receive_port),
+            Reflect::member("send_port", &OSCConfigInfo::send_port),
+            Reflect::member("send_address", &OSCConfigInfo::send_address),
+            Reflect::member("enable_multicast", &OSCConfigInfo::enable_multicast),
+            Reflect::member("multicast_group", &OSCConfigInfo::multicast_group),
+            Reflect::member("receive_buffer_size", &OSCConfigInfo::receive_buffer_size));
     }
 };
 
@@ -212,11 +211,11 @@ struct MAYAFLUX_API SerialPortConfig {
     static constexpr auto describe()
     {
         return std::make_tuple(
-            IO::member("port_name", &SerialPortConfig::port_name),
-            IO::member("baud_rate", &SerialPortConfig::baud_rate),
-            IO::member("data_bits", &SerialPortConfig::data_bits),
-            IO::member("stop_bits", &SerialPortConfig::stop_bits),
-            IO::member("flow_control", &SerialPortConfig::flow_control));
+            Reflect::member("port_name", &SerialPortConfig::port_name),
+            Reflect::member("baud_rate", &SerialPortConfig::baud_rate),
+            Reflect::member("data_bits", &SerialPortConfig::data_bits),
+            Reflect::member("stop_bits", &SerialPortConfig::stop_bits),
+            Reflect::member("flow_control", &SerialPortConfig::flow_control));
     }
 };
 
@@ -232,10 +231,10 @@ struct MAYAFLUX_API SerialBackendInfo {
     static constexpr auto describe()
     {
         return std::make_tuple(
-            IO::member("enabled", &SerialBackendInfo::enabled),
-            IO::member("ports", &SerialBackendInfo::ports),
-            IO::member("auto_detect_arduino", &SerialBackendInfo::auto_detect_arduino),
-            IO::member("default_baud_rate", &SerialBackendInfo::default_baud_rate));
+            Reflect::member("enabled", &SerialBackendInfo::enabled),
+            Reflect::member("ports", &SerialBackendInfo::ports),
+            Reflect::member("auto_detect_arduino", &SerialBackendInfo::auto_detect_arduino),
+            Reflect::member("default_baud_rate", &SerialBackendInfo::default_baud_rate));
     }
 };
 
@@ -331,10 +330,10 @@ struct MAYAFLUX_API GlobalInputConfig {
     static constexpr auto describe()
     {
         return std::make_tuple(
-            IO::member("hid", &GlobalInputConfig::hid),
-            IO::member("midi", &GlobalInputConfig::midi),
-            IO::member("osc", &GlobalInputConfig::osc),
-            IO::member("serial", &GlobalInputConfig::serial));
+            Reflect::member("hid", &GlobalInputConfig::hid),
+            Reflect::member("midi", &GlobalInputConfig::midi),
+            Reflect::member("osc", &GlobalInputConfig::osc),
+            Reflect::member("serial", &GlobalInputConfig::serial));
     }
 };
 
