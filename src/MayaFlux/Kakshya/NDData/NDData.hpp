@@ -83,6 +83,7 @@ enum class DataModality : uint8_t {
     AUDIO_MULTICHANNEL, ///< Multi-channel audio
     IMAGE_2D, ///< 2D image (grayscale or single channel)
     IMAGE_COLOR, ///< 2D RGB/RGBA image
+    IMAGE_COLOR_ARRAY, ///< 4D (idx + 2D + color)
     VIDEO_GRAYSCALE, ///< 3D video (time + 2D grayscale)
     VIDEO_COLOR, ///< 4D video (time + 2D + color)
     TEXTURE_2D, ///< 2D texture data

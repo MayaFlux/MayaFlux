@@ -219,7 +219,7 @@ void TextureContainer::setup_dimensions()
 
     if (n > 1) {
         m_structure.dimensions = DataDimension::create_dimensions(
-            DataModality::IMAGE_COLOR, { n, h, w, c }, MemoryLayout::ROW_MAJOR);
+            DataModality::IMAGE_COLOR_ARRAY, { n, h, w, c }, MemoryLayout::ROW_MAJOR);
     } else {
         m_structure.dimensions = DataDimension::create_dimensions(
             DataModality::IMAGE_COLOR, { h, w, c }, MemoryLayout::ROW_MAJOR);
