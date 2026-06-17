@@ -2,42 +2,67 @@
 
 layout(local_size_x = 256) in;
 
-/// @brief Values to sort by
+/// @brief Attribute values to sort by, one float per grain.
 layout(set = 0, binding = 0) buffer ValueBuffer {
     float values[];
 };
 
-/// @brief Index array, reordered to reflect sorted order
+/// @brief Index array reordered to reflect sorted order.
+///        Initialised to [0, 1, 2, ...] by the host before first dispatch.
 layout(set = 0, binding = 1) buffer IndexBuffer {
     uint indices[];
 };
 
-layout(push_constant) uniform PushConstants {
+/// @brief Push constants for one bitonic step.
+///
+/// The host iterates over all (stage, step) pairs of the bitonic sequence
+/// and dispatches once per pair.  For n elements padded to the next power
+/// of two, the total pass count is stage_count * (stage_count + 1) / 2
+/// where stage_count = ceil(log2(n_padded)).
+///
+/// step  in [0, stage]:  controls the comparison distance (2^(step+1)).
+/// stage in [0, stage_count): controls the sort direction per block.
+/// ascending: 1 = ascending final order, 0 = descending.
+/// element_count: actual grain count (may be less than the padded dispatch size).
+layout(push_constant) uniform PC {
     uint element_count;
-    uint pass_number; // current pass of the odd-even merge sort
-    uint ascending; // 1 = ascending, 0 = descending
+    uint step;
+    uint stage;
+    uint ascending;
 } pc;
 
-/// @brief Single pass of parallel odd-even transposition sort.
-///
-/// Host dispatches this repeatedly with pass_number alternating 0 and 1
-/// for ceil(element_count / 2) iterations. Each invocation compares and
-/// swaps one adjacent pair.
 void main()
 {
-    uint tid = gl_GlobalInvocationID.x;
+    uint idx = gl_GlobalInvocationID.x;
 
-    // Odd-even: on even passes compare (0,1),(2,3),(4,5)...
-    //           on odd passes compare  (1,2),(3,4),(5,6)...
-    uint left = 2 * tid + (pc.pass_number & 1);
-    uint right = left + 1;
+    /// @brief Half-stride for this step: each thread compares elements
+    ///        separated by this distance.
+    uint half_stride = 1u << pc.step;
 
-    if (right >= pc.element_count) return;
+    /// @brief Full block size for direction assignment: 2^(stage+1) elements
+    ///        form one monotone sequence whose direction is fixed by the stage.
+    uint block_size = 1u << (pc.stage + 1u);
+
+    /// @brief Position of this thread's left element within its block.
+    uint pos_in_block = idx & (block_size - 1u);
+
+    /// @brief Left index in the compare-swap pair.
+    uint left = (idx / half_stride) * (half_stride * 2u) + (idx & (half_stride - 1u));
+    uint right = left + half_stride;
+
+    if (right >= pc.element_count)
+        return;
 
     float lv = values[indices[left]];
     float rv = values[indices[right]];
 
-    bool should_swap = (pc.ascending == 1) ? (lv > rv) : (lv < rv);
+    /// @brief Direction for this block: ascending when the block is in the
+    ///        lower half of its stage sequence, XOR'd with the global
+    ///        ascending flag to flip the entire sort order.
+    uint block_dir = (pos_in_block < block_size / 2u) ? 1u : 0u;
+    bool want_ascending = (block_dir ^ pc.ascending) == 1u;
+
+    bool should_swap = want_ascending ? (lv > rv) : (lv < rv);
 
     if (should_swap) {
         uint tmp = indices[left];
