@@ -168,7 +168,7 @@ std::vector<DataDimension> DataDimension::create_dimensions(
                 Journal::Component::Kakshya,
                 Journal::Context::Runtime,
                 std::source_location::current(),
-                "VIDEO_COLOR requires 4D shape [frames, height, width, channels]");
+                "IMAGE_COLOR_ARRAY requires 4D shape [frames, height, width, channels]");
         }
         dims.push_back(DataDimension::time(shape[0], "index"));
         dims.push_back(DataDimension::spatial(shape[1], 'y', strides[1]));

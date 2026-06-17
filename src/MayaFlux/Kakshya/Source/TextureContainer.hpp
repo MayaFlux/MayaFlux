@@ -90,6 +90,34 @@ public:
      */
     [[nodiscard]] std::shared_ptr<Core::VKImage> to_image(uint32_t layer = 0) const;
 
+    /**
+     * @brief Upload all layers as a Vulkan 2D array texture.
+     *
+     * Concatenates pixel data from all layers in order (layer 0 first) and
+     * calls TextureLoom::create_2d_array. The returned VKImage has
+     * array_layers == get_layer_count() and an image view of type
+     * VK_IMAGE_VIEW_TYPE_2D_ARRAY, making it bindable as sampler2DArray
+     * in GLSL.
+     *
+     * All layers must have been populated before calling this. Empty layers
+     * contribute zero bytes and will produce incorrect GPU data.
+     *
+     * @return Initialised VKImage with array_layers > 1, or nullptr on failure.
+     */
+    [[nodiscard]] std::shared_ptr<Core::VKImage> to_image_array() const;
+
+    /**
+     * @brief Download each array layer of a Vulkan 2D array image into
+     *        the corresponding layer slot.
+     *
+     * Expects @p image to have array_layers == get_layer_count(). Downloads
+     * each layer via a separate blocking TextureLoom::download_data call.
+     * Resizes m_data to match if necessary.
+     *
+     * @param image Source VKImage with array_layers >= get_layer_count().
+     */
+    void from_image_array(const std::shared_ptr<Core::VKImage>& image);
+
     //=========================================================================
     // Pixel access
     //=========================================================================
