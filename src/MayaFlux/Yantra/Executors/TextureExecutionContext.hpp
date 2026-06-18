@@ -2,6 +2,7 @@
 
 #include "GpuExecutionContext.hpp"
 
+#include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
 #include "MayaFlux/Portal/Graphics/SamplerForge.hpp"
 #include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
 
@@ -319,7 +320,12 @@ protected:
                 w, h, m_output_format);
         }
 
-        m_output_container->from_image(img, 0);
+        if (!m_download_staging) {
+            m_download_staging = Buffers::create_image_staging_buffer(
+                m_output_container->byte_size());
+        }
+
+        m_output_container->from_image(img, m_download_staging, 0);
 
         output_type result;
         result.container = std::static_pointer_cast<Kakshya::SignalSourceContainer>(
@@ -335,6 +341,7 @@ private:
 
     std::shared_ptr<Kakshya::TextureContainer> m_pending_container;
     std::shared_ptr<Kakshya::TextureContainer> m_output_container;
+    std::shared_ptr<Buffers::VKBuffer> m_download_staging;
     std::vector<GpuBufferBinding> m_aux_bindings;
 
     // =========================================================================
