@@ -89,17 +89,7 @@ void WindowAccessProcessor::process(
     }
 
     const auto [cur_w, cur_h] = query_surface_extent(window);
-    if (cur_w != m_width || cur_h != m_height) {
-        m_width = cur_w;
-        m_height = cur_h;
-        m_surface_format = query_surface_format(window);
-        wc->handle_surface_resize();
-
-        MF_INFO(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-            "WindowAccessProcessor: '{}' resized to {}x{} format={}",
-            window->get_create_info().title, m_width, m_height,
-            static_cast<uint32_t>(m_surface_format));
-    }
+    const bool dims_changed = (cur_w != m_width || cur_h != m_height);
 
     m_is_processing.store(true);
     container->update_processing_state(ProcessingState::PROCESSING);
@@ -107,7 +97,7 @@ void WindowAccessProcessor::process(
     auto& processed = container->get_processed_data();
     processed.resize(1);
 
-    readback_region(window, 0U, 0U, m_width, m_height, processed[0]);
+    readback_region(window, 0U, 0U, cur_w, cur_h, processed[0]);
 
     const bool has_data = std::visit(
         [](const auto& v) { return !v.empty(); }, processed[0]);
@@ -119,6 +109,18 @@ void WindowAccessProcessor::process(
         m_is_processing.store(false);
         container->update_processing_state(ProcessingState::ERROR);
         return;
+    }
+
+    if (dims_changed) {
+        m_width = cur_w;
+        m_height = cur_h;
+        m_surface_format = query_surface_format(window);
+        wc->handle_surface_resize();
+
+        MF_INFO(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+            "WindowAccessProcessor: '{}' resized to {}x{} format={}",
+            window->get_create_info().title, m_width, m_height,
+            static_cast<uint32_t>(m_surface_format));
     }
 
     const auto* src = std::get_if<std::vector<uint8_t>>(&processed[0]);

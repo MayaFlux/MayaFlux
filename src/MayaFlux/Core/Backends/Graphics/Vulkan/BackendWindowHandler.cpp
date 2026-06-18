@@ -324,6 +324,8 @@ void BackendWindowHandler::setup_backend_service(const std::shared_ptr<Registry:
             proxy,
             dst,
             byte_count,
+            nullptr,
+            false,
             vk::ImageLayout::ePresentSrcKHR,
             vk::PipelineStageFlagBits::eBottomOfPipe);
 

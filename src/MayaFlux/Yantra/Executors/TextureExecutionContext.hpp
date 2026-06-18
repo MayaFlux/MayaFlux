@@ -2,6 +2,7 @@
 
 #include "GpuExecutionContext.hpp"
 
+#include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
 #include "MayaFlux/Portal/Graphics/SamplerForge.hpp"
 #include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
 
@@ -59,6 +60,8 @@ public:
     enum class OutputMode : uint8_t {
         CONTAINER, ///< Download storage image at binding 0 into a TextureContainer.
         SCALAR, ///< Return SSBO readback via collect_result(); no image download.
+        IMAGE, ///< Transition output image to shader-read layout; no CPU download.
+               ///< Retrieve via get_output_image(0). Zero readback cost.
     };
 
     /**
@@ -252,13 +255,22 @@ protected:
             const auto sampler = Portal::Graphics::SamplerForge::instance().get_default_linear();
             std::shared_ptr<Core::VKImage> img;
             if (m_pending_container->get_layer_count() > 1) {
-                img = m_pending_container->to_image_array();
+                if (!m_upload_staging) {
+                    m_upload_staging = Buffers::create_image_staging_buffer(
+                        m_pending_container->byte_size() * m_pending_container->get_layer_count());
+                }
+                img = m_pending_container->to_image_array(m_upload_staging);
             } else {
-                img = m_pending_container->to_image(m_pending_layer);
+                if (!m_upload_staging) {
+                    m_upload_staging = Buffers::create_image_staging_buffer(
+                        m_pending_container->byte_size());
+                }
+                img = m_pending_container->to_image(m_pending_layer, m_upload_staging);
             }
             stage_image_sampled(m_image_binding, std::move(img), sampler);
 
-            if (m_output_mode == OutputMode::CONTAINER) {
+            if (m_output_mode == OutputMode::CONTAINER
+                || m_output_mode == OutputMode::IMAGE) {
                 prepare_output_image(m_pending_container->get_width(),
                     m_pending_container->get_height());
             }
@@ -311,6 +323,9 @@ protected:
         Portal::Graphics::TextureLoom::instance().transition_layout(
             img, vk::ImageLayout::eGeneral, vk::ImageLayout::eShaderReadOnlyOptimal);
 
+        if (m_output_mode == OutputMode::IMAGE)
+            return output_type {};
+
         const uint32_t w = m_pending_container ? m_pending_container->get_width() : img->get_width();
         const uint32_t h = m_pending_container ? m_pending_container->get_height() : img->get_height();
 
@@ -319,7 +334,12 @@ protected:
                 w, h, m_output_format);
         }
 
-        m_output_container->from_image(img, 0);
+        if (!m_download_staging) {
+            m_download_staging = Buffers::create_image_staging_buffer(
+                m_output_container->byte_size());
+        }
+
+        m_output_container->from_image(img, m_download_staging, 0);
 
         output_type result;
         result.container = std::static_pointer_cast<Kakshya::SignalSourceContainer>(
@@ -329,12 +349,17 @@ protected:
 
 private:
     Portal::Graphics::ImageFormat m_output_format;
+    std::shared_ptr<Core::VKImage> m_output_image;
     OutputMode m_output_mode;
     size_t m_image_binding;
-    uint32_t m_pending_layer { 0 };
+    uint32_t m_pending_layer {};
+    uint32_t m_output_image_w {};
+    uint32_t m_output_image_h {};
 
     std::shared_ptr<Kakshya::TextureContainer> m_pending_container;
     std::shared_ptr<Kakshya::TextureContainer> m_output_container;
+    std::shared_ptr<Buffers::VKBuffer> m_download_staging;
+    std::shared_ptr<Buffers::VKBuffer> m_upload_staging;
     std::vector<GpuBufferBinding> m_aux_bindings;
 
     // =========================================================================
@@ -347,9 +372,13 @@ private:
      */
     void prepare_output_image(uint32_t width, uint32_t height)
     {
-        auto out = Portal::Graphics::TextureLoom::instance()
-                       .create_storage_image(width, height, m_output_format);
-        stage_image_storage(0, std::move(out));
+        if (!m_output_image || m_output_image_w != width || m_output_image_h != height) {
+            m_output_image = Portal::Graphics::TextureLoom::instance()
+                                 .create_storage_image(width, height, m_output_format);
+            m_output_image_w = width;
+            m_output_image_h = height;
+        }
+        stage_image_storage(0, m_output_image);
     }
 
     /**

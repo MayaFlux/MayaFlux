@@ -78,10 +78,10 @@ Portal::Graphics::ImageFormat WindowContainer::get_image_format() const
 
 void WindowContainer::setup_dimensions()
 {
-    const auto& fmt = m_window->get_create_info().container_format;
-    const uint32_t w = m_window->get_create_info().width;
-    const uint32_t h = m_window->get_create_info().height;
-    const uint32_t c = fmt.color_channels;
+    const auto& state = m_window->get_state();
+    const uint32_t w = state.current_width;
+    const uint32_t h = state.current_height;
+    const uint32_t c = m_window->get_create_info().container_format.color_channels;
     const size_t sz = static_cast<size_t>(w) * h * c;
 
     m_structure = ContainerDataStructure::image_interleaved();

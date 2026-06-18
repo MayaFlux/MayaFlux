@@ -99,10 +99,10 @@ std::optional<ImageData> download_image(
         return std::nullopt;
     }
 
-    TextureLoom::instance().download_data_async(
+    TextureLoom::instance().download_data(
         image,
         const_cast<void*>(result.data()),
-        mip0_bytes);
+        mip0_bytes, nullptr, true);
 
     if (!result.is_consistent()) {
         MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,

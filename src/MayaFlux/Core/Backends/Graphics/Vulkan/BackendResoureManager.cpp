@@ -168,13 +168,13 @@ void BackendResourceManager::initialize_buffer(const std::shared_ptr<Buffers::VK
 {
     if (!buffer) {
         MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
-            "Attempted to initialize null VulkanBuffer");
+            "Attempted to initialize null VKBuffer");
         return;
     }
 
     if (buffer->is_initialized()) {
         MF_WARN(Journal::Component::Core, Journal::Context::GraphicsBackend,
-            "VulkanBuffer already initialized, skipping");
+            "VKBuffer already initialized, skipping");
         return;
     }
 
@@ -250,7 +250,7 @@ void BackendResourceManager::initialize_buffer(const std::shared_ptr<Buffers::VK
     m_managed_buffers.push_back(buffer);
 
     MF_INFO(Journal::Component::Core, Journal::Context::GraphicsBackend,
-        "VulkanBuffer initialized: {} bytes, modality: {}, VkBuffer: {:p}",
+        "VKBuffer initialized: {} bytes, modality: {}, VkBuffer: {:p}",
         buffer->get_size_bytes(),
         Kakshya::modality_to_string(buffer->get_modality()),
         (void*)buffer->get_buffer());
@@ -260,7 +260,7 @@ void BackendResourceManager::cleanup_buffer(const std::shared_ptr<Buffers::VKBuf
 {
     if (!buffer) {
         MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
-            "Attempted to cleanup null VulkanBuffer");
+            "Attempted to cleanup null VKBuffer");
         return;
     }
 
@@ -292,7 +292,7 @@ void BackendResourceManager::cleanup_buffer(const std::shared_ptr<Buffers::VKBuf
     }
 
     MF_INFO(Journal::Component::Core, Journal::Context::GraphicsBackend,
-        "VulkanBuffer cleaned up: {:p}", static_cast<void*>(res.buffer));
+        "VKBuffer cleaned up: {:p}", static_cast<void*>(res.buffer));
 
     m_managed_buffers.erase(it);
 }
@@ -818,23 +818,31 @@ void BackendResourceManager::download_image_data(
     std::shared_ptr<VKImage> image,
     void* data,
     size_t size,
+    const std::shared_ptr<Buffers::VKBuffer>& staging,
+    bool deferred,
     vk::ImageLayout restore_layout,
     vk::PipelineStageFlags restore_stage)
 {
     if (!image || !data) {
         MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
-            "Invalid parameters for download_image_data");
+            "download_image_data: invalid parameters");
         return;
     }
 
-    auto staging = std::make_shared<Buffers::VKBuffer>(
-        size,
-        Buffers::VKBuffer::Usage::STAGING,
-        Kakshya::DataModality::IMAGE_COLOR);
+    std::shared_ptr<Buffers::VKBuffer> local_staging;
+    Buffers::VKBuffer* active_staging {};
+    if (!staging) {
+        local_staging = std::make_shared<Buffers::VKBuffer>(
+            size,
+            Buffers::VKBuffer::Usage::STAGING,
+            Kakshya::DataModality::IMAGE_COLOR);
+        initialize_buffer(local_staging);
+        active_staging = local_staging.get();
+    } else {
+        active_staging = staging.get();
+    }
 
-    initialize_buffer(staging);
-
-    execute_immediate_commands([&](vk::CommandBuffer cmd) {
+    auto record_command = [&](vk::CommandBuffer cmd) {
         vk::ImageMemoryBarrier barrier {};
         barrier.oldLayout = image->get_current_layout();
         barrier.newLayout = vk::ImageLayout::eTransferSrcOptimal;
@@ -872,7 +880,7 @@ void BackendResourceManager::download_image_data(
         cmd.copyImageToBuffer(
             image->get_image(),
             vk::ImageLayout::eTransferSrcOptimal,
-            staging->get_buffer(),
+            active_staging->get_buffer(),
             1, &region);
 
         barrier.oldLayout = vk::ImageLayout::eTransferSrcOptimal;
@@ -884,26 +892,69 @@ void BackendResourceManager::download_image_data(
             vk::PipelineStageFlagBits::eTransfer,
             restore_stage,
             vk::DependencyFlags {}, {}, {}, barrier);
-    });
+    };
 
-    staging->mark_invalid_range(0, size);
-    auto& resources = staging->get_buffer_resources();
-    vk::MappedMemoryRange range { resources.memory, 0, VK_WHOLE_SIZE };
+    if (deferred && staging) {
+        record_deferred_commands(record_command);
+        image->set_current_layout(restore_layout);
+        return;
+    }
 
-    if (auto result = m_context.get_device().invalidateMappedMemoryRanges(1, &range);
+    auto device = m_context.get_device();
+
+    vk::CommandBuffer cmd = m_command_manager.begin_single_time_commands();
+    record_command(cmd);
+    cmd.end();
+
+    vk::FenceCreateInfo fence_info {};
+    vk::Fence fence = device.createFence(fence_info);
+
+    vk::SubmitInfo submit_info {};
+    submit_info.commandBufferCount = 1;
+    submit_info.pCommandBuffers = &cmd;
+
+    if (auto result = m_context.get_graphics_queue().submit(1, &submit_info, fence);
         result != vk::Result::eSuccess) {
         MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
-            "Failed to invalidate mapped memory range: {}", vk::to_string(result));
+            "download_image_data: queue submit failed: {}", vk::to_string(result));
+        device.destroyFence(fence);
+        m_command_manager.free_command_buffer(cmd);
+        if (local_staging)
+            cleanup_buffer(local_staging);
+        return;
     }
 
-    if (void* mapped = staging->get_mapped_ptr()) {
+    image->set_current_layout(restore_layout);
+
+    if (auto result = device.waitForFences(1, &fence, VK_TRUE, UINT64_MAX);
+        result != vk::Result::eSuccess) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "download_image_data: waitForFences failed: {}", vk::to_string(result));
+    }
+
+    vk::MappedMemoryRange range { active_staging->get_buffer_resources().memory, 0, VK_WHOLE_SIZE };
+    if (auto result = device.invalidateMappedMemoryRanges(1, &range);
+        result != vk::Result::eSuccess) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "download_image_data: invalidate failed: {}", vk::to_string(result));
+    }
+
+    void* mapped = active_staging->get_mapped_ptr();
+    if (mapped) {
         std::memcpy(data, mapped, size);
+    } else {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "download_image_data: staging buffer has no mapped pointer");
     }
 
-    cleanup_buffer(staging);
+    device.destroyFence(fence);
+    m_command_manager.free_command_buffer(cmd);
+
+    if (local_staging)
+        cleanup_buffer(local_staging);
 
     MF_DEBUG(Journal::Component::Core, Journal::Context::GraphicsBackend,
-        "Downloaded {} bytes from image {}x{}",
+        "download_image_data: {} bytes from image {}x{}",
         size, image->get_width(), image->get_height());
 }
 
