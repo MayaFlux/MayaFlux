@@ -166,7 +166,7 @@ public:
      * Examples:
      *   load_shader("shaders/kernel.comp");              // File
      *   load_shader("shaders/kernel.spv", COMPUTE);      // SPIR-V
-     *   load_shader("#version 450\nvoid main(){}", COMPUTE); // Source
+     *   load_shader("#version 460\nvoid main(){}", COMPUTE); // Source
      */
     ShaderID load_shader(
         const std::string& content,

@@ -667,6 +667,8 @@ std::vector<uint32_t> VKShaderModule::compile_glsl_to_spirv(
     shaderc::Compiler compiler;
     shaderc::CompileOptions options;
 
+    options.SetTargetEnvironment(shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_3);
+    options.SetTargetSpirv(shaderc_spirv_version_1_6);
     options.SetOptimizationLevel(shaderc_optimization_level_performance);
     options.SetIncluder(std::make_unique<FileIncluder>(include_directories));
 
@@ -872,9 +874,9 @@ std::vector<uint32_t> VKShaderModule::compile_glsl_to_spirv_external(
     }
 
 #if defined(MAYAFLUX_PLATFORM_WINDOWS)
-    std::string cmd = "glslc " + stage_flag + " \"" + glsl_temp.string() + "\" -o \"" + spirv_temp.string() + "\"";
+    std::string cmd = "glslc --target-env=vulkan1.3 " + stage_flag + " \"" + glsl_temp.string() + "\" -o \"" + spirv_temp.string() + "\"";
 #else
-    std::string cmd = "glslc " + stage_flag + " '" + glsl_temp.string() + "' -o '" + spirv_temp.string() + "'";
+    std::string cmd = "glslc --target-env=vulkan1.3 " + stage_flag + " '" + glsl_temp.string() + "' -o '" + spirv_temp.string() + "'";
 #endif
 
     for (const auto& dir : include_directories) {

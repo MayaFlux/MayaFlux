@@ -1,0 +1,44 @@
+#version 460
+
+layout(local_size_x = 16, local_size_y = 16) in;
+
+/// @brief Source texture array. Staged as IMAGE_SAMPLED at binding 1 by
+///        TextureExecutionContext. Must be a VKImage created via
+///        TextureLoom::create_2d_array with at least (layer_b + 1) layers.
+layout(set = 0, binding = 1) uniform sampler2DArray tex;
+
+/// @brief Output storage image. Created by TextureExecutionContext at binding 0
+///        via prepare_output_image(). Receives the blended RGBA result.
+layout(set = 0, binding = 0, rgba8) uniform image2D out_image;
+
+/// @brief layer_a, layer_b: array layer indices to blend between.
+/// @brief t: blend factor in [0, 1]. 0 = fully layer_a, 1 = fully layer_b.
+/// @brief premultiply_alpha: when 1, output RGB is multiplied by blended alpha
+///        before write (useful for compositing over a background).
+layout(push_constant) uniform PC {
+    uint layer_a;
+    uint layer_b;
+    float t;
+    uint premultiply_alpha;
+} pc;
+
+void main()
+{
+    ivec2 coord = ivec2(gl_GlobalInvocationID.xy);
+    ivec2 size = imageSize(out_image);
+
+    if (coord.x >= size.x || coord.y >= size.y)
+        return;
+
+    vec2 uv = (vec2(coord) + 0.5) / vec2(size);
+
+    vec4 a = texture(tex, vec3(uv, float(pc.layer_a)));
+    vec4 b = texture(tex, vec3(uv, float(pc.layer_b)));
+
+    vec4 blended = mix(a, b, pc.t);
+
+    if (pc.premultiply_alpha != 0u)
+        blended.rgb *= blended.a;
+
+    imageStore(out_image, coord, blended);
+}

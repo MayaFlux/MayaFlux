@@ -1,0 +1,163 @@
+#version 460
+
+#extension GL_KHR_shader_subgroup_arithmetic : require
+#extension GL_EXT_shader_atomic_float        : require
+
+layout(local_size_x = 16, local_size_y = 16) in;
+
+/// @brief Source texture array. Each layer is one frame / material / state.
+layout(set = 0, binding = 1) uniform sampler2DArray tex;
+
+/// @brief Reduction output SSBO. Layout depends on mode:
+///
+///   PER_LAYER_LUMINANCE (0) — result[i] = mean Rec.709 luminance of layer i.
+///                             result must hold at least layer_count floats.
+///                             Host clears to 0.0 before dispatch.
+///
+///   TEMPORAL_DELTA      (1) — result[0] = mean absolute difference between
+///                             layer_a and layer_b (motion / change magnitude).
+///                             1 float. Host clears to 0.0 before dispatch.
+///
+///   TEMPORAL_AVERAGE    (2) — result[0..3] = mean RGBA averaged across all
+///                             layers. 4 floats. Host clears before dispatch.
+///
+/// All modes: host divides result by pixel_count after dispatch to normalise.
+layout(set = 0, binding = 2) buffer ResultBuffer {
+    float result[];
+};
+
+/// @brief mode:        reduction mode (see ResultBuffer above).
+/// @brief layer_a:     primary layer index (TEMPORAL_DELTA source A).
+/// @brief layer_b:     secondary layer index (TEMPORAL_DELTA source B).
+/// @brief layer_count: total array layers (PER_LAYER_LUMINANCE output count).
+/// @brief pixel_count: w * h pixels per layer, for host-side normalisation.
+layout(push_constant) uniform PC {
+    uint mode;
+    uint layer_a;
+    uint layer_b;
+    uint layer_count;
+    uint pixel_count;
+} pc;
+
+shared float sg_val[64];
+
+void main()
+{
+    ivec3 img_size = textureSize(tex, 0);
+    uvec2 gid = gl_WorkGroupID.xy * uvec2(16u, 16u) + gl_LocalInvocationID.xy;
+    bool in_img = gid.x < uint(img_size.x) && gid.y < uint(img_size.y);
+
+    vec2 uv = (vec2(gid) + 0.5) / vec2(img_size.xy);
+
+    // -------------------------------------------------------------------------
+    // PER_LAYER_LUMINANCE: one dispatch covers all layers via a loop.
+    // Each workgroup writes its partial luminance sum for each layer into
+    // result[layer] atomically. Host normalises by pixel_count after dispatch.
+    // -------------------------------------------------------------------------
+    if (pc.mode == 0u) {
+        for (uint layer = 0u; layer < pc.layer_count; ++layer) {
+            vec4 s = in_img ? texture(tex, vec3(uv, float(layer))) : vec4(0.0);
+            float lum = 0.2126 * s.r + 0.7152 * s.g + 0.0722 * s.b;
+
+            float sg_sum = subgroupAdd(lum);
+            if (gl_SubgroupInvocationID == 0u)
+                sg_val[gl_SubgroupID] = sg_sum;
+            barrier();
+
+            if (gl_LocalInvocationIndex == 0u) {
+                float total = 0.0;
+                for (uint i = 0u; i < gl_NumSubgroups; ++i)
+                    total += sg_val[i];
+                atomicAdd(result[layer], total);
+            }
+            barrier();
+        }
+        return;
+    }
+
+    // -------------------------------------------------------------------------
+    // TEMPORAL_DELTA: mean absolute difference between layer_a and layer_b.
+    // Useful for frame-to-frame motion magnitude or texture-state divergence.
+    // -------------------------------------------------------------------------
+    if (pc.mode == 1u) {
+        vec4 a = in_img ? texture(tex, vec3(uv, float(pc.layer_a))) : vec4(0.0);
+        vec4 b = in_img ? texture(tex, vec3(uv, float(pc.layer_b))) : vec4(0.0);
+        float delta = in_img ? dot(abs(a - b), vec4(0.25)) : 0.0;
+
+        float sg_sum = subgroupAdd(delta);
+        if (gl_SubgroupInvocationID == 0u)
+            sg_val[gl_SubgroupID] = sg_sum;
+        barrier();
+
+        if (gl_LocalInvocationIndex == 0u) {
+            float total = 0.0;
+            for (uint i = 0u; i < gl_NumSubgroups; ++i)
+                total += sg_val[i];
+            atomicAdd(result[0], total);
+        }
+        return;
+    }
+
+    // -------------------------------------------------------------------------
+    // TEMPORAL_AVERAGE: mean RGBA across all layers at each pixel, then
+    // spatially averaged. Useful for temporal noise reduction or computing
+    // a "rest state" texture from a sequence.
+    // -------------------------------------------------------------------------
+    if (pc.mode == 2u) {
+        vec4 layer_mean = vec4(0.0);
+        if (in_img) {
+            for (uint layer = 0u; layer < pc.layer_count; ++layer)
+                layer_mean += texture(tex, vec3(uv, float(layer)));
+            layer_mean /= float(pc.layer_count);
+        }
+
+        vec4 sg_rgba = subgroupAdd(layer_mean);
+        if (gl_SubgroupInvocationID == 0u) {
+            sg_val[gl_SubgroupID] = sg_rgba.r;
+        }
+        barrier();
+
+        if (gl_LocalInvocationIndex == 0u) {
+            /// @brief Channel accumulation done in four separate passes to
+            ///        avoid a vec4 shared array (float[] is simpler and avoids
+            ///        alignment concerns in shared memory).
+            float tr = 0.0, tg = 0.0, tb = 0.0, ta = 0.0;
+            for (uint i = 0u; i < gl_NumSubgroups; ++i) {
+                tr += sg_val[i];
+            }
+            atomicAdd(result[0], tr);
+        }
+        barrier();
+
+        /// @brief Repeat for G, B, A channels using the same sg_val slot.
+        vec4 sg_rgba2 = subgroupAdd(layer_mean);
+        if (gl_SubgroupInvocationID == 0u)
+            sg_val[gl_SubgroupID] = sg_rgba2.g;
+        barrier();
+        if (gl_LocalInvocationIndex == 0u) {
+            float tg = 0.0;
+            for (uint i = 0u; i < gl_NumSubgroups; ++i) tg += sg_val[i];
+            atomicAdd(result[1], tg);
+        }
+        barrier();
+
+        if (gl_SubgroupInvocationID == 0u)
+            sg_val[gl_SubgroupID] = sg_rgba2.b;
+        barrier();
+        if (gl_LocalInvocationIndex == 0u) {
+            float tb = 0.0;
+            for (uint i = 0u; i < gl_NumSubgroups; ++i) tb += sg_val[i];
+            atomicAdd(result[2], tb);
+        }
+        barrier();
+
+        if (gl_SubgroupInvocationID == 0u)
+            sg_val[gl_SubgroupID] = sg_rgba2.a;
+        barrier();
+        if (gl_LocalInvocationIndex == 0u) {
+            float ta = 0.0;
+            for (uint i = 0u; i < gl_NumSubgroups; ++i) ta += sg_val[i];
+            atomicAdd(result[3], ta);
+        }
+    }
+}

@@ -630,7 +630,8 @@ Datum<Kakshya::RegionGroup> SortOp::sort_implementation(
     if (gpu_thresh > 0 && n >= gpu_thresh) {
         struct SortPC {
             uint32_t element_count;
-            uint32_t pass_number;
+            uint32_t step;
+            uint32_t stage;
             uint32_t ascending;
         };
 
@@ -643,6 +644,23 @@ Datum<Kakshya::RegionGroup> SortOp::sort_implementation(
         std::vector<uint32_t> indices(n);
         std::iota(indices.begin(), indices.end(), 0U);
 
+        /// @brief Pad element count to next power of two for bitonic correctness.
+        ///        Out-of-range threads early-exit in the shader via element_count.
+        uint32_t n_padded = 1U;
+        while (n_padded < n)
+            n_padded <<= 1U;
+
+        /// @brief Total bitonic passes: sum of (stage+1) for stage in [0, stage_count).
+        uint32_t stage_count = 0U;
+        {
+            uint32_t tmp = n_padded;
+            while (tmp > 1U) {
+                ++stage_count;
+                tmp >>= 1U;
+            }
+        }
+        const uint32_t n_passes = stage_count * (stage_count + 1U) / 2U;
+
         auto executor = std::make_shared<ShaderExecutionContext<>>(
             GpuShaderConfig {
                 .shader_path = "sort_by_attribute.comp",
@@ -653,12 +671,24 @@ Datum<Kakshya::RegionGroup> SortOp::sort_implementation(
             .in_out(1, indices, GpuBufferBinding::ElementType::UINT32)
             .set_output_size(1, n * sizeof(uint32_t));
 
-        const uint32_t n_passes = n * 2;
         executor->set_multipass(n_passes,
             [n, ascending](uint32_t pass, void* pc_data) {
+                /// @brief Recover (stage, step) from the flat pass index.
+                ///        Passes enumerate: stage=0 step=0,
+                ///                          stage=1 step=0,1,
+                ///                          stage=2 step=0,1,2, ...
+                uint32_t stage = 0U;
+                uint32_t remaining = pass;
+                while (remaining >= stage + 1U) {
+                    remaining -= stage + 1U;
+                    ++stage;
+                }
+                const uint32_t step = stage - remaining;
+
                 const SortPC pc {
                     .element_count = n,
-                    .pass_number = pass & 1U,
+                    .step = step,
+                    .stage = stage,
                     .ascending = ascending ? 1U : 0U,
                 };
                 std::memcpy(pc_data, &pc, sizeof(SortPC));

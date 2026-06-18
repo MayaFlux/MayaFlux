@@ -1,0 +1,68 @@
+#version 460
+
+layout(local_size_x = 16, local_size_y = 16) in;
+
+/// @brief Source texture array.
+///   Layer source_layer: the image to be warped.
+///   Layer warp_layer:   displacement map. RG channels encode XY offset in
+///                       normalised [-1, 1] UV space (remapped from [0, 1]
+///                       by the shader). B channel is unused.
+///                       Any layer can serve either role; the same array can
+///                       hold both colour and displacement data.
+layout(set = 0, binding = 1) uniform sampler2DArray tex;
+
+/// @brief Warped output image. Created by TextureExecutionContext at binding 0.
+layout(set = 0, binding = 0, rgba8) uniform image2D out_image;
+
+/// @brief source_layer:   array layer index of the image to warp.
+/// @brief warp_layer:     array layer index of the displacement map.
+/// @brief strength:       displacement magnitude in UV units. 0.1 = 10% of
+///                        image width/height displacement at full signal.
+/// @brief time:           phase offset added to the warp UV before sampling
+///                        the displacement map, enabling animation without
+///                        updating the texture array each frame.
+/// @brief warp_uv_scale:  spatial frequency of the displacement map sample.
+///                        Values > 1 tile the warp field; < 1 stretch it.
+/// @brief two_pass:       when 1, the warped UV is fed back into the warp
+///                        map for a second displacement (stronger curl and
+///                        folding, analogous to domain_warp2 in the SDF set).
+layout(push_constant) uniform PC {
+    uint source_layer;
+    uint warp_layer;
+    float strength;
+    float time;
+    float warp_uv_scale;
+    uint two_pass;
+} pc;
+
+/// @brief Sample the displacement map at uv and return a UV offset.
+/// @param uv  Texture coordinate to sample the warp layer at.
+/// @return    Displacement vector in UV space, scaled by pc.strength.
+vec2 sample_warp(vec2 uv)
+{
+    vec2 warp_uv = fract(uv * pc.warp_uv_scale + vec2(pc.time * 0.05));
+    vec2 raw = texture(tex, vec3(warp_uv, float(pc.warp_layer))).rg;
+    return (raw * 2.0 - 1.0) * pc.strength;
+}
+
+void main()
+{
+    ivec2 coord = ivec2(gl_GlobalInvocationID.xy);
+    ivec2 size = imageSize(out_image);
+
+    if (coord.x >= size.x || coord.y >= size.y)
+        return;
+
+    vec2 uv = (vec2(coord) + 0.5) / vec2(size);
+
+    vec2 warped_uv = uv + sample_warp(uv);
+
+    if (pc.two_pass != 0u)
+        warped_uv = warped_uv + sample_warp(warped_uv);
+
+    warped_uv = clamp(warped_uv, 0.0, 1.0);
+
+    vec4 colour = texture(tex, vec3(warped_uv, float(pc.source_layer)));
+
+    imageStore(out_image, coord, colour);
+}

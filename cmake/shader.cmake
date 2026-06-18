@@ -6,15 +6,15 @@ option(MAYAFLUX_USE_SHADERC "Enable GLSL compilation via Shaderc" ON)
 
 if(WIN32)
     find_package(Vulkan REQUIRED)
-    find_library(SPIRV_CROSS_CORE_LIB NAMES spirv-cross-core 
+    find_library(SPIRV_CROSS_CORE_LIB NAMES spirv-cross-core
         PATHS "$ENV{VULKAN_SDK}/Lib" REQUIRED NO_DEFAULT_PATH)
-    find_library(SPIRV_CROSS_CPP_LIB NAMES spirv-cross-cpp 
+    find_library(SPIRV_CROSS_CPP_LIB NAMES spirv-cross-cpp
         PATHS "$ENV{VULKAN_SDK}/Lib" REQUIRED NO_DEFAULT_PATH)
     find_library(SPIRV_CROSS_GLSL_LIB NAMES spirv-cross-glsl
         PATHS "$ENV{VULKAN_SDK}/Lib" REQUIRED NO_DEFAULT_PATH)
-    find_path(SPIRV_CROSS_INCLUDE_DIR spirv_cross/spirv_cross.hpp 
+    find_path(SPIRV_CROSS_INCLUDE_DIR spirv_cross/spirv_cross.hpp
         PATHS "$ENV{VULKAN_SDK}/Include" REQUIRED NO_DEFAULT_PATH)
-    
+
     add_library(spirv-cross-core STATIC IMPORTED)
     set_target_properties(spirv-cross-core PROPERTIES
         IMPORTED_LOCATION_DEBUG ${SPIRV_CROSS_CORE_LIB}
@@ -23,7 +23,7 @@ if(WIN32)
         IMPORTED_LOCATION_MINSIZEREL ${SPIRV_CROSS_CORE_LIB}
         INTERFACE_INCLUDE_DIRECTORIES ${SPIRV_CROSS_INCLUDE_DIR}
     )
-    
+
     add_library(spirv-cross-glsl STATIC IMPORTED)
     set_target_properties(spirv-cross-glsl PROPERTIES
         IMPORTED_LOCATION_DEBUG ${SPIRV_CROSS_GLSL_LIB}
@@ -42,13 +42,13 @@ if(WIN32)
         INTERFACE_INCLUDE_DIRECTORIES ${SPIRV_CROSS_INCLUDE_DIR}
         INTERFACE_LINK_LIBRARIES spirv-cross-glsl
     )
-    
+
     set(SPIRV_CROSS_LIBRARIES
         spirv-cross-core
         spirv-cross-glsl
         spirv-cross-cpp
     )
-    
+
     message(STATUS "SPIRV-Cross: Found in Vulkan SDK (Windows)")
     message(WARNING "SPIRV-Cross: Using Release libraries for all configurations (Vulkan SDK has no Debug builds)")
 
@@ -152,7 +152,7 @@ if(SHADER_FILES)
         if(NOT OUTPUT_FILE IN_LIST SHADER_OUTPUTS)
             add_custom_command(
             OUTPUT ${OUTPUT_FILE}
-            COMMAND glslc ${SHADER_FILE} -o ${OUTPUT_FILE}
+            COMMAND glslc --target-env=vulkan1.3 ${SHADER_FILE} -o ${OUTPUT_FILE}
             DEPENDS ${SHADER_FILE}
             COMMENT "Compiling shader: ${SHADER_NAME}"
             VERBATIM

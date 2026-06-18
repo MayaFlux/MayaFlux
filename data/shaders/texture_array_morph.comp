@@ -1,0 +1,63 @@
+#version 460
+
+layout(local_size_x = 16, local_size_y = 16) in;
+
+/// @brief Source texture array. All layers must share the same dimensions
+///        and format. layer_count layers are read and weighted.
+layout(set = 0, binding = 1) uniform sampler2DArray tex;
+
+/// @brief Per-layer blend weights. result[i] is the weight for layer i.
+///        Weights need not sum to 1.0 — the shader normalises them.
+///        When all weights are equal the result is a uniform temporal average.
+///        Feed this buffer from node graph output: audio energy per band,
+///        probability vector from Kinesis, attention scores, anything.
+layout(set = 0, binding = 2) readonly buffer WeightBuffer {
+    float weights[];
+};
+
+/// @brief Weighted blend output image. Created by TextureExecutionContext
+///        at binding 0 via prepare_output_image().
+layout(set = 0, binding = 0, rgba8) uniform image2D out_image;
+
+/// @brief layer_count:    number of array layers to blend. Must be <=
+///                        weights[] length and <= actual array layer count.
+/// @brief normalise:      when 1, divide the accumulated RGBA by the weight
+///                        sum so the result stays in [0, 1] regardless of
+///                        weight magnitude. When 0, raw weighted sum is
+///                        written (useful when weights already sum to 1.0,
+///                        e.g. softmax output from the node graph).
+/// @brief layer_offset:   first array layer to read. Allows a sliding window
+///                        over a longer array without uploading new weights
+///                        (e.g. advance one layer per frame for a moving
+///                        temporal window over a video sequence).
+layout(push_constant) uniform PC {
+    uint layer_count;
+    uint normalise;
+    uint layer_offset;
+    uint _pad;
+} pc;
+
+void main()
+{
+    ivec2 coord = ivec2(gl_GlobalInvocationID.xy);
+    ivec2 size = imageSize(out_image);
+
+    if (coord.x >= size.x || coord.y >= size.y)
+        return;
+
+    vec2 uv = (vec2(coord) + 0.5) / vec2(size);
+
+    vec4 acc = vec4(0.0);
+    float weight_sum = 0.0;
+
+    for (uint i = 0u; i < pc.layer_count; ++i) {
+        float w = weights[i];
+        acc += texture(tex, vec3(uv, float(pc.layer_offset + i))) * w;
+        weight_sum += w;
+    }
+
+    if (pc.normalise != 0u && weight_sum > 1e-6)
+        acc /= weight_sum;
+
+    imageStore(out_image, coord, clamp(acc, 0.0, 1.0));
+}

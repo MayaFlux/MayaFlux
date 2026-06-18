@@ -1,130 +1,304 @@
 #pragma once
 
-#include "MayaFlux/Yantra/Executors/GpuExecutionContext.hpp"
+#include "GpuExecutionContext.hpp"
 
 #include "MayaFlux/Portal/Graphics/SamplerForge.hpp"
 #include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
 
 #include "MayaFlux/Kakshya/Source/TextureContainer.hpp"
 
+#include "MayaFlux/Core/Backends/Graphics/Vulkan/VKImage.hpp"
+
 namespace MayaFlux::Yantra {
 
 /**
  * @class TextureExecutionContext
- * @brief GpuExecutionContext specialisation for image-only compute shaders.
+ * @brief GpuExecutionContext specialisation for image compute shaders.
  *
- * Operates on Datum<shared_ptr<SignalSourceContainer>> where the runtime
- * type is always TextureContainer.  Bypasses channel extraction entirely:
- * extract_inputs() returns empty channels and the input TextureContainer
- * is uploaded to a VKImage and staged as an IMAGE_STORAGE or IMAGE_SAMPLED
- * binding before dispatch_core runs.
+ * Accepts DataIO (Datum<vector<DataVariant>>) as both input and output,
+ * matching the standard ComputeOperation contract.  Image staging is driven
+ * by the optional container field on the input Datum:
  *
- * collect_gpu_outputs() ignores the float readback and instead wraps the
- * output VKImage (registered at binding index 0) in a new TextureContainer
- * via a blocking GPU->CPU download.
+ *   - When datum.container holds a TextureContainer, extract_inputs() stashes
+ *     it and on_before_gpu_dispatch() uploads it to a VKImage staged at the
+ *     declared image input binding.  This is the preferred path: the container
+ *     carries format, layer count, mip metadata, and sampler config.
  *
- * calculate_dispatch_size() derives workgroup counts from the image
- * dimensions stored at construction, bypassing the structure-info path
- * which is meaningless for empty channels.
+ *   - When datum.container is absent or not a TextureContainer, no image
+ *     staging occurs.  The shader receives whatever bindings the caller
+ *     declared via set_binding_data / stage_passthrough / stage_image_sampled
+ *     directly.  dispatch_async still works; it is a no-op on the image side.
  *
- * Concrete texture ops subclass TextureOp (not this class directly).
- * They call stage_input() and set_push_constants() inside
- * on_before_gpu_dispatch(), then set_texture_backend() on the owning op.
+ * Output options (select one at construction):
+ *
+ *   OutputMode::CONTAINER — the storage image at binding 0 is downloaded into
+ *   a new TextureContainer and placed in the output Datum's container field.
+ *   Primary float readback is empty.  Mirrors the original behaviour for
+ *   texture-transform pipelines (blur, colour grade, format convert).
+ *
+ *   OutputMode::SCALAR — no image download.  collect_result() returns the
+ *   primary float readback and aux SSBOs from GpuChannelResult, exactly as
+ *   ShaderExecutionContext does.  Use for reduction shaders that write a small
+ *   SSBO (spatial average, histogram, region sample) and feed the node graph.
+ *
+ * dispatch_async / collect_result mirror ShaderExecutionContext so
+ * GpuComputeNode can own this class without modification.
+ *
+ * calculate_dispatch_size() uses image dimensions when a TextureContainer is
+ * present, otherwise falls through to the standard element-count path.
  */
 class MAYAFLUX_API TextureExecutionContext
     : public GpuExecutionContext<
-          std::shared_ptr<Kakshya::SignalSourceContainer>,
-          std::shared_ptr<Kakshya::SignalSourceContainer>> {
+          std::vector<Kakshya::DataVariant>,
+          std::vector<Kakshya::DataVariant>> {
 public:
-    using ContainerDatum = Datum<std::shared_ptr<Kakshya::SignalSourceContainer>>;
+    using Base = GpuExecutionContext<
+        std::vector<Kakshya::DataVariant>,
+        std::vector<Kakshya::DataVariant>>;
+
+    enum class OutputMode : uint8_t {
+        CONTAINER, ///< Download storage image at binding 0 into a TextureContainer.
+        SCALAR, ///< Return SSBO readback via collect_result(); no image download.
+    };
 
     /**
      * @param config        Shader path, workgroup size, push constant size.
      * @param output_format Pixel format of the storage image created per dispatch.
+     *                      Ignored when mode is SCALAR.
+     * @param mode          Controls what collect_gpu_outputs / collect_result return.
+     * @param image_binding Binding index at which the input image is staged.
+     *                      Default 1 (binding 0 reserved for output storage image
+     *                      in CONTAINER mode; callers using SCALAR mode may set 0).
+     * @param aux_bindings  Additional buffer bindings to declare
      */
     explicit TextureExecutionContext(
         GpuShaderConfig config,
-        Portal::Graphics::ImageFormat output_format)
-        : GpuExecutionContext(std::move(config))
+        Portal::Graphics::ImageFormat output_format = Portal::Graphics::ImageFormat::RGBA8,
+        OutputMode mode = OutputMode::CONTAINER,
+        size_t image_binding = 1,
+        std::vector<GpuBufferBinding> aux_bindings = {})
+        : Base(std::move(config))
         , m_output_format(output_format)
+        , m_output_mode(mode)
+        , m_image_binding(image_binding)
+        , m_aux_bindings(std::move(aux_bindings))
     {
     }
 
     /**
-     * @brief Stage the input TextureContainer as a VKImage for the given binding.
+     * @brief Set the array layer staged from the input TextureContainer on the
+     *        next dispatch_async call.
      *
-     * Uploads pixel data to a new VKImage via TextureLoom and registers it as
-     * IMAGE_SAMPLED at @p binding_index.  A default linear sampler from
-     * SamplerForge is used.  Call from on_before_gpu_dispatch() in subclasses.
+     * Defaults to 0.  Call before dispatch_async when iterating video frames,
+     * animation layers, or any multi-layer container where the layer index
+     * changes per dispatch.  Has no effect when no TextureContainer is present
+     * on the input Datum.
      *
-     * @param container    Source TextureContainer.  Must be non-null.
-     * @param binding_index Binding slot matching the IMAGE_SAMPLED declaration.
+     * @param layer Array layer index. Must be < TextureContainer::get_layer_count().
      */
-    void stage_input(const Kakshya::TextureContainer& container, size_t binding_index, uint32_t layer = 0)
+    void set_input_layer(uint32_t layer) { m_pending_layer = layer; }
+
+    // =========================================================================
+    // Async dispatch — mirrors ShaderExecutionContext
+    // =========================================================================
+
+    /**
+     * @brief Non-blocking dispatch.
+     *
+     * If datum.container holds a TextureContainer it is uploaded and staged
+     * before submission.  Fence becomes signaled when GPU work completes.
+     * Call collect_result() (SCALAR mode) or retrieve the output Datum via
+     * execute() (CONTAINER mode) once signaled.
+     *
+     * @param input DataIO whose container field drives optional image staging.
+     * @return FenceID to poll with ShaderFoundry::is_fence_signaled.
+     */
+    [[nodiscard]] Portal::Graphics::FenceID dispatch_async(const input_type& input)
+    {
+        if (!ensure_gpu_ready())
+            return Portal::Graphics::INVALID_FENCE;
+
+        auto [channels, structure_info] = extract_inputs(input);
+        return dispatch_core_async(channels, structure_info);
+    }
+
+    /**
+     * @brief Collect SSBO readback after a signaled async dispatch.
+     *
+     * Valid only in SCALAR mode.  Mirrors ShaderExecutionContext::collect_result().
+     *
+     * @return GpuChannelResult with primary float data and aux buffers.
+     */
+    [[nodiscard]] GpuChannelResult collect_result()
+    {
+        GpuChannelResult result;
+        result.primary = readback_primary(last_effective_element_count());
+        readback_aux(result);
+        return result;
+    }
+
+    /**
+     * @brief Collect the output TextureContainer after a signaled async dispatch.
+     *
+     * Valid only in CONTAINER mode. Mirrors collect_result() for SCALAR mode.
+     * Must be called only after ShaderFoundry::is_fence_signaled returns true
+     * for the FenceID returned by dispatch_async.
+     *
+     * @return DataIO with container field holding the output TextureContainer,
+     *         or empty DataIO on failure.
+     */
+    [[nodiscard]] output_type collect_container_result()
+    {
+        GpuChannelResult raw;
+        readback_aux(raw);
+        return collect_gpu_outputs(raw, {}, {});
+    }
+
+    // =========================================================================
+    // Manual image staging — for callers that already hold a VKImage
+    // =========================================================================
+
+    /**
+     * @brief Stage an arbitrary VKImage at the configured image binding.
+     *
+     * Bypasses container resolution.  The image must be in
+     * eShaderReadOnlyOptimal layout.  Use before dispatch_async when the
+     * source is a render-pass output or camera frame rather than a container.
+     *
+     * @param image   Initialized VKImage.
+     * @param sampler Vulkan sampler. Defaults to the TextureLoom linear sampler
+     *                when nullptr.
+     */
+    void stage_image(
+        const std::shared_ptr<Core::VKImage>& image,
+        vk::Sampler sampler = nullptr)
+    {
+        auto s = sampler
+            ? sampler
+            : Portal::Graphics::SamplerForge::instance().get_default_linear();
+        stage_image_sampled(m_image_binding, image, s);
+        m_pending_container = nullptr;
+    }
+
+    /**
+     * @brief Stage a TextureContainer layer at the configured image binding.
+     *
+     * Convenience for callers that hold a container and want explicit control
+     * over layer and sampler rather than relying on Datum.container resolution.
+     *
+     * @param container Source TextureContainer.
+     * @param layer     Array layer index (default 0).
+     * @param sampler   Vulkan sampler. Defaults to linear when nullptr.
+     */
+    void stage_container(
+        const Kakshya::TextureContainer& container,
+        uint32_t layer = 0,
+        vk::Sampler sampler = nullptr)
     {
         auto img = container.to_image(layer);
-        auto sampler = Portal::Graphics::SamplerForge::instance().get_default_linear();
-        stage_image_sampled(binding_index, std::move(img), sampler);
+        auto s = sampler
+            ? sampler
+            : Portal::Graphics::SamplerForge::instance().get_default_linear();
+        stage_image_sampled(m_image_binding, std::move(img), s);
+        m_pending_container = nullptr;
     }
 
 protected:
+    // =========================================================================
+    // GpuExecutionContext overrides
+    // =========================================================================
+
     /**
-     * @brief Returns empty channels -- no numeric extraction for image shaders.
+     * @brief Declare the image input and storage output bindings, plus any
+     *        aux SSBO bindings provided at construction.
+     */
+    [[nodiscard]] std::vector<GpuBufferBinding> declare_buffer_bindings() const override
+    {
+        std::vector<GpuBufferBinding> bindings {
+            { .set = 0,
+                .binding = 0,
+                .direction = GpuBufferBinding::Direction::OUTPUT,
+                .element_type = GpuBufferBinding::ElementType::IMAGE_STORAGE },
+            { .set = 0,
+                .binding = static_cast<uint32_t>(m_image_binding),
+                .direction = GpuBufferBinding::Direction::INPUT,
+                .element_type = GpuBufferBinding::ElementType::IMAGE_SAMPLED },
+        };
+        bindings.insert(bindings.end(), m_aux_bindings.begin(), m_aux_bindings.end());
+        return bindings;
+    }
+
+    /**
+     * @brief Stashes the TextureContainer from datum.container for use in
+     *        on_before_gpu_dispatch; returns empty channels (image shaders
+     *        do not use the numeric channel path).
      */
     std::pair<std::vector<std::vector<double>>, DataStructureInfo>
-    extract_inputs(const ContainerDatum& /*input*/) override
+    extract_inputs(const input_type& input) override
     {
+        m_pending_container = resolve_texture_container(input);
         return { {}, {} };
     }
 
     /**
-     * @brief Derives dispatch groups from stored image dimensions.
-     *
-     * Ignores total_elements and structure_info (both meaningless for image
-     * dispatch).  Uses m_width and m_height set by the most recent
-     * prepare_output_image() call.
+     * @brief Stages the pending TextureContainer as IMAGE_SAMPLED and,
+     *        in CONTAINER mode, allocates the output storage image at binding 0.
+     */
+    void on_before_gpu_dispatch(
+        const std::vector<std::vector<double>>& /*channels*/,
+        const DataStructureInfo& /*structure_info*/) override
+    {
+        if (m_pending_container) {
+            const auto sampler = Portal::Graphics::SamplerForge::instance().get_default_linear();
+            std::shared_ptr<Core::VKImage> img;
+            if (m_pending_container->get_layer_count() > 1) {
+                img = m_pending_container->to_image_array();
+            } else {
+                img = m_pending_container->to_image(m_pending_layer);
+            }
+            stage_image_sampled(m_image_binding, std::move(img), sampler);
+
+            if (m_output_mode == OutputMode::CONTAINER) {
+                prepare_output_image(m_pending_container->get_width(),
+                    m_pending_container->get_height());
+            }
+        }
+    }
+
+    /**
+     * @brief Derives dispatch size from the staged container dimensions when
+     *        available; falls back to element-count dispatch otherwise.
      */
     [[nodiscard]] std::array<uint32_t, 3> calculate_dispatch_size(
-        size_t /*total_elements*/,
-        const DataStructureInfo& /*structure_info*/) const override
+        size_t total_elements,
+        const DataStructureInfo& structure_info) const override
     {
-        const auto& ws = gpu_config().workgroup_size;
-        return {
-            (m_width + ws[0] - 1) / ws[0],
-            (m_height + ws[1] - 1) / ws[1],
-            1U
-        };
+        if (m_pending_container) {
+            const auto& ws = gpu_config().workgroup_size;
+            const uint32_t w = m_pending_container->get_width();
+            const uint32_t h = m_pending_container->get_height();
+            return {
+                (w + ws[0] - 1) / ws[0],
+                (h + ws[1] - 1) / ws[1],
+                1U
+            };
+        }
+        return Base::calculate_dispatch_size(total_elements, structure_info);
     }
 
     /**
-     * @brief Creates the output storage image and stages it at binding 0.
-     *
-     * Must be called by subclasses inside on_before_gpu_dispatch() after
-     * dimensions are known, and before the base dispatch runs.
-     *
-     * @param width  Output image width in pixels.
-     * @param height Output image height in pixels.
+     * @brief In CONTAINER mode: downloads the storage image at binding 0 into
+     *        a new TextureContainer placed in output.container.
+     *        In SCALAR mode: returns an empty DataIO (use collect_result() instead).
      */
-    void prepare_output_image(uint32_t width, uint32_t height)
-    {
-        m_width = width;
-        m_height = height;
-        auto out = Portal::Graphics::TextureLoom::instance()
-                       .create_storage_image(width, height, m_output_format);
-        stage_image_storage(0, std::move(out));
-    }
-
-    /**
-     * @brief Wraps the written output image in a TextureContainer.
-     *
-     * Ignores the float readback in @p raw.  Downloads the storage image at
-     * binding 0 into a new TextureContainer and returns it as a ContainerDatum.
-     */
-    ContainerDatum collect_gpu_outputs(
+    output_type collect_gpu_outputs(
         const GpuChannelResult& /*raw*/,
         const std::vector<std::vector<double>>& /*channels*/,
         const DataStructureInfo& /*structure_info*/) override
     {
+        if (m_output_mode == OutputMode::SCALAR)
+            return output_type {};
+
         auto img = get_output_image(0);
         if (!img) {
             error<std::runtime_error>(
@@ -137,16 +311,59 @@ protected:
         Portal::Graphics::TextureLoom::instance().transition_layout(
             img, vk::ImageLayout::eGeneral, vk::ImageLayout::eShaderReadOnlyOptimal);
 
-        auto container = std::make_shared<Kakshya::TextureContainer>(m_width, m_height, m_output_format);
+        const uint32_t w = m_pending_container ? m_pending_container->get_width() : img->get_width();
+        const uint32_t h = m_pending_container ? m_pending_container->get_height() : img->get_height();
 
-        container->from_image(img, 0);
-        return ContainerDatum { std::static_pointer_cast<Kakshya::SignalSourceContainer>(container) };
+        if (!m_output_container) {
+            m_output_container = std::make_shared<Kakshya::TextureContainer>(
+                w, h, m_output_format);
+        }
+
+        m_output_container->from_image(img, 0);
+
+        output_type result;
+        result.container = std::static_pointer_cast<Kakshya::SignalSourceContainer>(
+            m_output_container);
+        return result;
     }
 
 private:
     Portal::Graphics::ImageFormat m_output_format;
-    uint32_t m_width { 0 };
-    uint32_t m_height { 0 };
+    OutputMode m_output_mode;
+    size_t m_image_binding;
+    uint32_t m_pending_layer { 0 };
+
+    std::shared_ptr<Kakshya::TextureContainer> m_pending_container;
+    std::shared_ptr<Kakshya::TextureContainer> m_output_container;
+    std::vector<GpuBufferBinding> m_aux_bindings;
+
+    // =========================================================================
+    // Helpers
+    // =========================================================================
+
+    /**
+     * @brief Allocates the output storage image and stages it at binding 0.
+     *        Only called in CONTAINER mode from on_before_gpu_dispatch.
+     */
+    void prepare_output_image(uint32_t width, uint32_t height)
+    {
+        auto out = Portal::Graphics::TextureLoom::instance()
+                       .create_storage_image(width, height, m_output_format);
+        stage_image_storage(0, std::move(out));
+    }
+
+    /**
+     * @brief Extracts a TextureContainer pointer from datum.container if present.
+     *
+     * Returns nullptr when the container field is absent or holds a different
+     * SignalSourceContainer subtype.
+     */
+    static std::shared_ptr<Kakshya::TextureContainer> resolve_texture_container(const input_type& input)
+    {
+        if (!input.container || !*input.container)
+            return nullptr;
+        return std::dynamic_pointer_cast<Kakshya::TextureContainer>(input.container.value());
+    }
 };
 
 } // namespace MayaFlux::Yantra

@@ -162,6 +162,20 @@ std::vector<DataDimension> DataDimension::create_dimensions(
         dims.push_back(DataDimension::channel(shape[2], strides[2]));
         break;
 
+    case DataModality::IMAGE_COLOR_ARRAY:
+        if (shape.size() != 4) {
+            error<std::invalid_argument>(
+                Journal::Component::Kakshya,
+                Journal::Context::Runtime,
+                std::source_location::current(),
+                "IMAGE_COLOR_ARRAY requires 4D shape [frames, height, width, channels]");
+        }
+        dims.push_back(DataDimension::time(shape[0], "index"));
+        dims.push_back(DataDimension::spatial(shape[1], 'y', strides[1]));
+        dims.push_back(DataDimension::spatial(shape[2], 'x', strides[2]));
+        dims.push_back(DataDimension::channel(shape[3], strides[3]));
+        break;
+
     case DataModality::SPECTRAL_2D:
         if (shape.size() != 2) {
             error<std::invalid_argument>(
