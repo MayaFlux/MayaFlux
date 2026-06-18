@@ -60,6 +60,8 @@ public:
     enum class OutputMode : uint8_t {
         CONTAINER, ///< Download storage image at binding 0 into a TextureContainer.
         SCALAR, ///< Return SSBO readback via collect_result(); no image download.
+        IMAGE, ///< Transition output image to shader-read layout; no CPU download.
+               ///< Retrieve via get_output_image(0). Zero readback cost.
     };
 
     /**
@@ -259,7 +261,8 @@ protected:
             }
             stage_image_sampled(m_image_binding, std::move(img), sampler);
 
-            if (m_output_mode == OutputMode::CONTAINER) {
+            if (m_output_mode == OutputMode::CONTAINER
+                || m_output_mode == OutputMode::IMAGE) {
                 prepare_output_image(m_pending_container->get_width(),
                     m_pending_container->get_height());
             }
@@ -311,6 +314,9 @@ protected:
 
         Portal::Graphics::TextureLoom::instance().transition_layout(
             img, vk::ImageLayout::eGeneral, vk::ImageLayout::eShaderReadOnlyOptimal);
+
+        if (m_output_mode == OutputMode::IMAGE)
+            return output_type {};
 
         const uint32_t w = m_pending_container ? m_pending_container->get_width() : img->get_width();
         const uint32_t h = m_pending_container ? m_pending_container->get_height() : img->get_height();
