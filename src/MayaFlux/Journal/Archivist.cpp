@@ -10,7 +10,7 @@ namespace MayaFlux::Journal {
 
 namespace {
     const bool colors_enabled = AnsiColors::initialize_console_colors();
-}
+} // namespace
 
 class Archivist::Impl {
 public:
@@ -22,6 +22,7 @@ public:
         , m_worker_running(false)
         , m_initialized(false)
         , m_shutdown_in_progress(false)
+        , m_accepting_entries(true)
     {
         for (auto& f : m_component_filters)
             f.store(true, std::memory_order_relaxed);
@@ -31,6 +32,7 @@ public:
 
     ~Impl()
     {
+        m_accepting_entries.store(false, std::memory_order_release);
         m_worker_running.store(false, std::memory_order_release);
         if (m_worker_thread.joinable())
             m_worker_thread.join();
@@ -65,6 +67,9 @@ public:
 
     void scribe(const JournalEntry& entry)
     {
+        if (!m_accepting_entries.load(std::memory_order_acquire))
+            return;
+
         if (!should_log(entry.severity, entry.component, entry.context))
             return;
 
@@ -83,6 +88,9 @@ public:
     void scribe_rt(Severity severity, Component component, Context context,
         std::string_view message, std::source_location location)
     {
+        if (!m_accepting_entries.load(std::memory_order_acquire))
+            return;
+
         if (!should_log(severity, component, context))
             return;
 
@@ -146,7 +154,6 @@ public:
         if (comp_idx >= m_component_filters.size())
             return;
 
-        // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
         m_component_filters[comp_idx].store(enabled, std::memory_order_release);
     }
 
@@ -156,7 +163,6 @@ public:
         if (ctx_idx >= m_context_filters.size())
             return;
 
-        // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
         m_context_filters[ctx_idx].store(enabled, std::memory_order_release);
     }
 
@@ -168,13 +174,13 @@ private:
 
         auto comp_idx = static_cast<size_t>(component);
         if (comp_idx >= m_component_filters.size()
-            || !m_component_filters[comp_idx].load(std::memory_order_relaxed))
+            || !m_component_filters[comp_idx].load(std::memory_order_acquire))
             return false;
 
         auto ctx_idx = static_cast<size_t>(context);
 
         return ctx_idx < m_context_filters.size()
-            && m_context_filters[ctx_idx].load(std::memory_order_relaxed);
+            && m_context_filters[ctx_idx].load(std::memory_order_acquire);
     }
 
     static void write_to_console(const RealtimeEntry& entry)
@@ -259,6 +265,7 @@ private:
     std::array<std::atomic<bool>, magic_enum::enum_count<Context>()> m_context_filters {};
     std::atomic<bool> m_initialized;
     std::atomic<bool> m_worker_running;
+    std::atomic<bool> m_accepting_entries;
     std::atomic<bool> m_shutdown_in_progress;
     std::atomic<uint64_t> m_dropped_messages { 0 };
 

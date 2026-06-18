@@ -12,25 +12,22 @@ private:
 
 public:
     ConsoleSink()
+        : m_colors_enabled(AnsiColors::initialize_console_colors())
     {
-        m_colors_enabled = AnsiColors::initialize_console_colors();
     }
 
     void write(const JournalEntry& entry) override
     {
-        std::lock_guard lock(m_mutex);
         write_to_stream(std::cout, entry);
     }
 
     void write(const RealtimeEntry& entry) override
     {
-        std::lock_guard lock(m_mutex);
         write_to_stream(std::cout, entry);
     }
 
     void flush() override
     {
-        std::lock_guard lock(m_mutex);
         std::cout.flush();
     }
 
@@ -65,8 +62,6 @@ private:
                 os << AnsiColors::BgRed << AnsiColors::White;
                 break;
             case Severity::NONE:
-                os << AnsiColors::Reset;
-                break;
             default:
                 os << AnsiColors::Reset;
                 break;
@@ -97,10 +92,8 @@ private:
             os << AnsiColors::Reset;
         }
 
-        os << std::endl;
+        os << '\n';
     }
-
-    std::mutex m_mutex;
 
     void feed_severity(std::ostream& os, Severity severity) const
     {
@@ -124,8 +117,6 @@ private:
             os << AnsiColors::BgRed << AnsiColors::White;
             break;
         case Severity::NONE:
-            os << AnsiColors::Reset;
-            break;
         default:
             os << AnsiColors::Reset;
             break;
