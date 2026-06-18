@@ -8,7 +8,9 @@
 
 namespace MayaFlux::Journal {
 
-static bool colors_enabled = AnsiColors::initialize_console_colors();
+namespace {
+    const bool colors_enabled = AnsiColors::initialize_console_colors();
+}
 
 class Archivist::Impl {
 public:
@@ -17,35 +19,27 @@ public:
     Impl()
         : m_min_severity(Severity::WARN)
         , m_worker_running(false)
+        , m_initialized(false)
         , m_shutdown_in_progress(false)
     {
-        m_component_filters.fill(true);
-        m_context_filters.fill(true);
+        for (auto& f : m_component_filters)
+            f.store(true, std::memory_order_relaxed);
+        for (auto& f : m_context_filters)
+            f.store(true, std::memory_order_relaxed);
     }
 
     ~Impl()
     {
         m_worker_running.store(false, std::memory_order_release);
-
-        if (m_worker_thread.joinable()) {
-            auto start = std::chrono::steady_clock::now();
-            while (m_worker_thread.joinable() && std::chrono::steady_clock::now() - start < std::chrono::milliseconds(500)) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(10));
-            }
-
-            if (m_worker_thread.joinable()) {
-                m_worker_thread.detach();
-            }
-        }
+        if (m_worker_thread.joinable())
+            m_worker_thread.join();
     }
 
     void init()
     {
-        std::lock_guard lock(m_mutex);
-        if (m_initialized || m_shutdown_in_progress)
+        if (m_initialized.exchange(true, std::memory_order_acq_rel))
             return;
 
-        m_initialized = true;
         m_worker_running.store(true, std::memory_order_release);
         start_worker();
         std::cout << "[MayaFlux::Journal] Initialized\n";
@@ -53,167 +47,119 @@ public:
 
     void shutdown()
     {
-        std::unique_lock lock(m_mutex);
-        if (!m_initialized || m_shutdown_in_progress)
+        if (!m_initialized.load(std::memory_order_acquire))
+            return;
+        if (m_shutdown_in_progress.exchange(true, std::memory_order_acq_rel))
             return;
 
-        m_shutdown_in_progress = true;
-        m_initialized = false;
         m_worker_running.store(false, std::memory_order_release);
-
-        lock.unlock();
-
-        if (m_worker_thread.joinable()) {
+        if (m_worker_thread.joinable())
             m_worker_thread.join();
-        }
 
-        lock.lock();
         drain_ring_buffer();
-        m_shutdown_in_progress = false;
+        m_initialized.store(false, std::memory_order_release);
+        m_shutdown_in_progress.store(false, std::memory_order_release);
         std::cout << "[MayaFlux::Journal] Shutdown\n";
     }
 
     void scribe(const JournalEntry& entry)
     {
-        if (!should_log(entry.severity, entry.component, entry.context)) {
+        if (!should_log(entry.severity, entry.component, entry.context))
             return;
-        }
 
-        std::lock_guard lock(m_mutex);
-
-        if (m_sinks.empty()) {
-            write_to_console(entry);
-        } else {
-            write_to_sinks(entry);
-        }
+        RealtimeEntry rt(entry.severity, entry.component, entry.context,
+            entry.message, entry.location);
+        if (!m_ring_buffer.push(rt))
+            m_dropped_messages.fetch_add(1, std::memory_order_relaxed);
     }
 
-    void scribe_rt(Severity severity, Component component, Context context, std::string_view message, std::source_location location)
+    void scribe_rt(Severity severity, Component component, Context context,
+        std::string_view message, std::source_location location)
     {
-        if (!should_log(severity, component, context)) {
+        if (!should_log(severity, component, context))
             return;
-        }
 
         RealtimeEntry entry(severity, component, context, message, location);
-        if (!m_ring_buffer.push(entry)) {
+        if (!m_ring_buffer.push(entry))
             m_dropped_messages.fetch_add(1, std::memory_order_relaxed);
+    }
+
+    /**
+     * @brief Drain all pending ring buffer entries to sinks or console.
+     *
+     * Lock-free. Safe to call from any thread. The worker calls this on its
+     * normal cadence; error() and fatal() call it synchronously before
+     * propagating exceptions or aborting to guarantee visibility.
+     */
+    void drain_ring_buffer()
+    {
+        while (auto entry = m_ring_buffer.pop()) {
+            if (m_sinks.empty()) {
+                write_to_console(*entry);
+            } else {
+                write_to_sinks(*entry);
+            }
+        }
+
+        const auto dropped = m_dropped_messages.exchange(0, std::memory_order_acq_rel);
+        if (dropped > 0) {
+            std::cout << "[MayaFlux::Journal] WARNING: Dropped "
+                      << dropped << " log messages (buffer full)\n";
         }
     }
 
     void add_sink(std::unique_ptr<Sink> sink)
     {
-        std::lock_guard lock(m_mutex);
         m_sinks.push_back(std::move(sink));
     }
 
     void clear_sinks()
     {
-        std::lock_guard lock(m_mutex);
         m_sinks.clear();
     }
 
     void set_min_severity(Severity sev)
     {
-        if (sev == Severity::NONE) {
+        if (sev == Severity::NONE)
             return;
-        }
         m_min_severity.store(sev, std::memory_order_relaxed);
     }
 
     void set_component_filter(Component comp, bool enabled)
     {
         auto comp_idx = static_cast<size_t>(comp);
-        if (comp_idx >= m_component_filters.size()) {
+        if (comp_idx >= m_component_filters.size())
             return;
-        }
 
         // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
-        m_component_filters[comp_idx] = enabled;
+        m_component_filters[comp_idx].store(enabled, std::memory_order_relaxed);
     }
 
     void set_context_filter(Context ctx, bool enabled)
     {
         auto ctx_idx = static_cast<size_t>(ctx);
-        if (ctx_idx >= m_context_filters.size()) {
+        if (ctx_idx >= m_context_filters.size())
             return;
-        }
 
         // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
-        m_context_filters[ctx_idx] = enabled;
+        m_context_filters[ctx_idx].store(enabled, std::memory_order_relaxed);
     }
 
 private:
     [[nodiscard]] bool should_log(Severity severity, Component component, Context context) const
     {
-        if (severity != Severity::NONE && severity < m_min_severity.load(std::memory_order_relaxed)) {
+        if (severity != Severity::NONE && severity < m_min_severity.load(std::memory_order_relaxed))
             return false;
-        }
 
         auto comp_idx = static_cast<size_t>(component);
-        if (comp_idx >= m_component_filters.size() || !m_component_filters[comp_idx]) {
+        if (comp_idx >= m_component_filters.size()
+            || !m_component_filters[comp_idx].load(std::memory_order_relaxed))
             return false;
-        }
 
         auto ctx_idx = static_cast<size_t>(context);
-        if (ctx_idx >= m_context_filters.size() || !m_context_filters[ctx_idx]) {
-            return false;
-        }
 
-        return true;
-    }
-
-    static void write_to_console(const JournalEntry& entry)
-    {
-        if (colors_enabled) {
-            switch (entry.severity) {
-            case Severity::TRACE:
-                std::cout << AnsiColors::Cyan;
-                break;
-            case Severity::DEBUG:
-                std::cout << AnsiColors::Blue;
-                break;
-            case Severity::INFO:
-                std::cout << AnsiColors::Green;
-                break;
-            case Severity::WARN:
-                std::cout << AnsiColors::Yellow;
-                break;
-            case Severity::ERROR:
-                std::cout << AnsiColors::BrightRed;
-                break;
-            case Severity::FATAL:
-                std::cout << AnsiColors::BrightRed << AnsiColors::White;
-                break;
-            case Severity::NONE:
-            default:
-                std::cout << AnsiColors::Reset;
-                break;
-            }
-        }
-
-        std::cout << "[" << Reflect::enum_to_string(entry.severity) << "]" << AnsiColors::Reset;
-
-        if (colors_enabled) {
-            std::cout << AnsiColors::Magenta;
-        }
-        std::cout << "[" << Reflect::enum_to_string(entry.component) << "]" << AnsiColors::Reset;
-
-        if (colors_enabled) {
-            std::cout << AnsiColors::Cyan;
-        }
-        std::cout << "[" << Reflect::enum_to_string(entry.context) << "]" << AnsiColors::Reset << " ";
-
-        std::cout << entry.message;
-
-        if (entry.location.file_name() != nullptr && entry.location.line() != 0) {
-            if (colors_enabled) {
-                std::cout << AnsiColors::BrightBlue;
-            }
-            std::cout << " (" << entry.location.file_name()
-                      << ":" << entry.location.line() << ")" << AnsiColors::Reset;
-        }
-
-        std::cout << '\n';
+        return ctx_idx < m_context_filters.size()
+            && m_context_filters[ctx_idx].load(std::memory_order_relaxed);
     }
 
     static void write_to_console(const RealtimeEntry& entry)
@@ -246,114 +192,58 @@ private:
         }
 
         std::cout << "[" << Reflect::enum_to_string(entry.severity) << "]" << AnsiColors::Reset;
-
-        if (colors_enabled) {
+        if (colors_enabled)
             std::cout << AnsiColors::Magenta;
-        }
         std::cout << "[" << Reflect::enum_to_string(entry.component) << "]" << AnsiColors::Reset;
-
-        if (colors_enabled) {
+        if (colors_enabled)
             std::cout << AnsiColors::Cyan;
-        }
         std::cout << "[" << Reflect::enum_to_string(entry.context) << "]" << AnsiColors::Reset << " ";
-
         std::cout << entry.message;
 
-        if (entry.file_name != nullptr) {
-            if (colors_enabled) {
+        if (entry.file_name != nullptr && entry.line != 0) {
+            if (colors_enabled)
                 std::cout << AnsiColors::BrightBlue;
-            }
-            std::cout << " (" << entry.file_name
-                      << ":" << entry.line << ")" << AnsiColors::Reset;
+            std::cout << " (" << entry.file_name << ":" << entry.line << ")" << AnsiColors::Reset;
         }
 
         std::cout << '\n';
     }
 
-    std::vector<std::unique_ptr<Sink>> m_sinks;
-
-    void write_to_sinks(const JournalEntry& entry)
-    {
-        for (auto& sink : m_sinks) {
-            if (sink->is_available()) {
-                sink->write(entry);
-            }
-        }
-    }
-
     void write_to_sinks(const RealtimeEntry& entry)
     {
         for (auto& sink : m_sinks) {
-            if (sink->is_available()) {
+            if (sink->is_available())
                 sink->write(entry);
-            }
         }
     }
 
     void start_worker()
     {
-        m_worker_running.store(true, std::memory_order_release);
-        m_worker_thread = std::thread([this]() { worker_loop(); });
-    }
-
-    void stop_worker()
-    {
-        if (m_worker_thread.joinable()) {
-            m_worker_running.store(false, std::memory_order_release);
-            m_worker_thread.join();
-
-            drain_ring_buffer();
-        }
+        m_worker_thread = std::thread([this] { worker_loop(); });
     }
 
     void worker_loop()
     {
         using namespace std::chrono_literals;
-
         while (m_worker_running.load(std::memory_order_acquire)) {
-            if (m_initialized) {
-                drain_ring_buffer();
-            }
+            drain_ring_buffer();
             std::this_thread::sleep_for(10ms);
         }
-
-        if (m_initialized) {
-            drain_ring_buffer();
-        }
+        drain_ring_buffer();
     }
 
-    void drain_ring_buffer()
-    {
-        while (auto entry = m_ring_buffer.pop()) {
+    std::vector<std::unique_ptr<Sink>> m_sinks;
 
-            std::lock_guard lock(m_mutex);
-            if (m_sinks.empty()) {
-                write_to_console(*entry);
-            } else {
-                write_to_sinks(*entry);
-            }
-        }
-
-        auto dropped = m_dropped_messages.exchange(0, std::memory_order_acquire);
-        if (dropped > 0) {
-            std::lock_guard lock(m_mutex);
-            std::cout << "[MayaFlux::Journal] WARNING: Dropped " << dropped
-                      << " realtime log messages (buffer full)\n";
-        }
-    }
-
-    std::mutex m_mutex;
     std::atomic<Severity> m_min_severity;
-    std::array<bool, magic_enum::enum_count<Component>()> m_component_filters {};
-    std::array<bool, magic_enum::enum_count<Context>()> m_context_filters {};
-    bool m_initialized {};
-
-    Memory::LockFreeQueue<RealtimeEntry, RING_BUFFER_SIZE> m_ring_buffer;
+    std::array<std::atomic<bool>, magic_enum::enum_count<Component>()> m_component_filters {};
+    std::array<std::atomic<bool>, magic_enum::enum_count<Context>()> m_context_filters {};
+    std::atomic<bool> m_initialized;
     std::atomic<bool> m_worker_running;
-    std::thread m_worker_thread;
+    std::atomic<bool> m_shutdown_in_progress;
     std::atomic<uint64_t> m_dropped_messages { 0 };
 
-    std::atomic<bool> m_shutdown_in_progress;
+    Memory::LockFreeQueue<RealtimeEntry, RING_BUFFER_SIZE> m_ring_buffer;
+    std::thread m_worker_thread;
 };
 
 Archivist& Archivist::instance()
@@ -373,6 +263,11 @@ Archivist::~Archivist() = default;
 void Archivist::shutdown()
 {
     instance().m_impl->shutdown();
+}
+
+void Archivist::flush()
+{
+    m_impl->drain_ring_buffer();
 }
 
 void Archivist::scribe(Severity severity, Component component, Context context,

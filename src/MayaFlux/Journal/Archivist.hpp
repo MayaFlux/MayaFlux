@@ -81,6 +81,15 @@ public:
     void clear_sinks();
 
     /**
+     * @brief Synchronously drain all pending ring buffer entries to sinks.
+     *
+     * Blocks until the ring buffer is empty. Called automatically by error(),
+     * error_rethrow(), and fatal() before propagating. Available for any
+     * non-RT caller that needs a guaranteed visibility point.
+     */
+    void flush();
+
+    /**
      * @brief Set the minimum severity level for logging.
      * Messages with a severity lower than this level will be ignored.
      * @param min_sev The minimum severity level to log.
@@ -282,6 +291,7 @@ inline void format_print(const char* fmt_str, Args&&... args)
     std::source_location location, std::string_view message)
 {
     Archivist::instance().scribe(Severity::FATAL, component, context, message, location);
+    Archivist::instance().flush();
     std::abort();
 }
 
@@ -300,6 +310,7 @@ template <typename... Args>
 {
     auto msg = format(fmt_str, std::forward<Args>(args)...);
     Archivist::instance().scribe(Severity::FATAL, component, context, msg, location);
+    Archivist::instance().flush();
     std::abort();
 }
 
@@ -317,7 +328,7 @@ template <typename ExceptionType = std::runtime_error>
     std::string_view message)
 {
     Archivist::instance().scribe(Severity::ERROR, component, context, message, location);
-
+    Archivist::instance().flush();
     throw ExceptionType(std::string(message));
 }
 
@@ -338,10 +349,12 @@ template <typename ExceptionType = std::runtime_error, typename... Args>
     if constexpr (sizeof...(Args) == 0) {
         Archivist::instance().scribe(Severity::ERROR, component, context,
             std::string_view(fmt_str), location);
+        Archivist::instance().flush();
         throw ExceptionType(std::string(fmt_str));
     } else {
         auto msg = format_runtime(fmt_str, std::forward<Args>(args)...);
         Archivist::instance().scribe(Severity::ERROR, component, context, msg, location);
+        Archivist::instance().flush();
         throw ExceptionType(msg);
     }
 }
@@ -362,6 +375,7 @@ template <typename ExceptionType = std::runtime_error, typename... Args>
     if (!ep) {
         Archivist::instance().scribe(Severity::ERROR, component, context,
             "error_rethrow called outside of a catch", location);
+        Archivist::instance().flush();
         std::terminate();
     }
 
@@ -373,6 +387,7 @@ template <typename ExceptionType = std::runtime_error, typename... Args>
             msg = std::string(additional_context) + ": " + msg;
         }
         Archivist::instance().scribe(Severity::ERROR, component, context, msg, location);
+        Archivist::instance().flush();
         std::rethrow_exception(ep);
     } catch (...) {
         std::string msg = "Unknown exception";
@@ -380,6 +395,7 @@ template <typename ExceptionType = std::runtime_error, typename... Args>
             msg = std::string(additional_context) + ": " + msg;
         }
         Archivist::instance().scribe(Severity::ERROR, component, context, msg, location);
+        Archivist::instance().flush();
         std::rethrow_exception(ep);
     }
 }
@@ -397,12 +413,8 @@ template <typename... Args>
 [[noreturn]] inline void error_rethrow(Component component, Context context,
     std::source_location location, const char* fmt_str, Args&&... args)
 {
-    if constexpr (sizeof...(Args) == 0) {
-        error_rethrow(component, context, location,
-            std::string_view(fmt_str));
-    }
-    auto additional_context = format_runtime(fmt_str, std::forward<Args>(args)...);
-    error_rethrow(component, context, location, additional_context);
+    auto msg = format_runtime(fmt_str, std::forward<Args>(args)...);
+    error_rethrow(component, context, location, std::string_view(msg));
 }
 
 } // namespace MayaFlux::Journal
