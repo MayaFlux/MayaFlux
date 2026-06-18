@@ -277,6 +277,33 @@ public:
         size_t size);
 
     /**
+     * @brief Download pixel data from a VKImage, reusing a caller-supplied
+     *        persistent staging buffer.
+     *
+     * Submits under a fence and returns once the fence signals, without
+     * calling queue.waitIdle. Other GPU work proceeds concurrently during
+     * the wait. Safe to call from any thread that is not holding the
+     * graphics queue exclusively.
+     *
+     * The staging buffer must be host-visible and at least @p size bytes.
+     * Allocate once with Buffers::create_image_staging_buffer(size) and
+     * pass the same buffer on every subsequent call to avoid per-call
+     * Vulkan object churn.
+     *
+     * Image layout is restored to eShaderReadOnlyOptimal after the copy.
+     *
+     * @param image   Source VKImage. Must be initialised.
+     * @param data    Destination host pointer, at least @p size bytes.
+     * @param size    Byte count to read.
+     * @param staging Persistent host-visible staging buffer.
+     */
+    void download_data(
+        const std::shared_ptr<Core::VKImage>& image,
+        void* data,
+        size_t size,
+        const std::shared_ptr<Buffers::VKBuffer>& staging);
+
+    /**
      * @brief Download pixel data from a texture without blocking the
      *        graphics queue.
      *
