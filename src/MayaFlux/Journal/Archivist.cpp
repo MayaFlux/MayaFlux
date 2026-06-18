@@ -15,6 +15,7 @@ namespace {
 class Archivist::Impl {
 public:
     static constexpr size_t RING_BUFFER_SIZE = 8192;
+    static constexpr size_t RT_RING_BUFFER_SIZE = 4096;
 
     Impl()
         : m_min_severity(Severity::WARN)
@@ -69,7 +70,13 @@ public:
 
         RealtimeEntry rt(entry.severity, entry.component, entry.context,
             entry.message, entry.location);
-        if (!m_ring_buffer.push(rt))
+
+        while (m_push_lock.test_and_set(std::memory_order_acquire))
+            ;
+        const bool pushed = m_ring_buffer.push(rt);
+        m_push_lock.clear(std::memory_order_release);
+
+        if (!pushed)
             m_dropped_messages.fetch_add(1, std::memory_order_relaxed);
     }
 
@@ -80,7 +87,7 @@ public:
             return;
 
         RealtimeEntry entry(severity, component, context, message, location);
-        if (!m_ring_buffer.push(entry))
+        if (!m_rt_ring_buffer.push(entry))
             m_dropped_messages.fetch_add(1, std::memory_order_relaxed);
     }
 
@@ -93,6 +100,14 @@ public:
      */
     void drain_ring_buffer()
     {
+        while (auto entry = m_rt_ring_buffer.pop()) {
+            if (m_sinks.empty()) {
+                write_to_console(*entry);
+            } else {
+                write_to_sinks(*entry);
+            }
+        }
+
         while (auto entry = m_ring_buffer.pop()) {
             if (m_sinks.empty()) {
                 write_to_console(*entry);
@@ -132,7 +147,7 @@ public:
             return;
 
         // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
-        m_component_filters[comp_idx].store(enabled, std::memory_order_relaxed);
+        m_component_filters[comp_idx].store(enabled, std::memory_order_release);
     }
 
     void set_context_filter(Context ctx, bool enabled)
@@ -142,7 +157,7 @@ public:
             return;
 
         // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
-        m_context_filters[ctx_idx].store(enabled, std::memory_order_relaxed);
+        m_context_filters[ctx_idx].store(enabled, std::memory_order_release);
     }
 
 private:
@@ -212,8 +227,13 @@ private:
     void write_to_sinks(const RealtimeEntry& entry)
     {
         for (auto& sink : m_sinks) {
-            if (sink->is_available())
-                sink->write(entry);
+            if (sink->is_available()) {
+                try {
+                    sink->write(entry);
+                } catch (...) {
+                    std::cout << "[MayaFlux::Journal] WARNING: sink threw during write, skipping\n";
+                }
+            }
         }
     }
 
@@ -242,6 +262,8 @@ private:
     std::atomic<bool> m_shutdown_in_progress;
     std::atomic<uint64_t> m_dropped_messages { 0 };
 
+    alignas(64) std::atomic_flag m_push_lock = ATOMIC_FLAG_INIT;
+    Memory::MPSCQueue<RealtimeEntry, RT_RING_BUFFER_SIZE> m_rt_ring_buffer;
     Memory::LockFreeQueue<RealtimeEntry, RING_BUFFER_SIZE> m_ring_buffer;
     std::thread m_worker_thread;
 };

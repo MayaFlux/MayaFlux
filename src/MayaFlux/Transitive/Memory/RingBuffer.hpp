@@ -231,6 +231,88 @@ struct SingleThreadedPolicy {
 };
 
 /**
+ * @brief Helper to detect if a policy is MPSC
+ *
+ * Default: false. Specialization for MPSCPolicy sets true.
+ */
+template <typename Policy>
+static constexpr bool policy_is_mpsc = false;
+
+/**
+ * @brief Specialization for MPSCPolicy
+ *
+ * Detects if a given policy is MPSC by checking for the presence of
+ * the `is_mpsc` static member. If present, sets true; otherwise false.
+ */
+template <typename Policy>
+    requires requires { Policy::is_mpsc; }
+static constexpr bool policy_is_mpsc<Policy> = Policy::is_mpsc;
+
+/**
+ * @struct MPSCPolicy
+ * @brief Lock-free MPSC (Multi-Producer Single-Consumer) concurrency.
+ *
+ * Producers claim a slot atomically via fetch_add on a shared claim index,
+ * write into that slot, then mark it ready via a per-slot atomic flag.
+ * The single consumer spins on the ready flag of its current read slot
+ * before consuming - the spin is bounded because producers only stall the
+ * consumer for the duration of one slot write, not an unbounded critical
+ * section.
+ *
+ * Push is wait-free per producer in the uncontended case (one fetch_add,
+ * one store, one flag set). Under contention producers do not interfere
+ * with each other's slots - each owns its claimed index exclusively.
+ *
+ * Pop is wait-free when the ready flag is already set. It spins only if
+ * a producer has claimed the slot but not yet finished writing - this
+ * window is a handful of cycles (the slot assignment), not a lock hold.
+ *
+ * **Requirements:**
+ * - Storage MUST be FixedStorage (compile-time capacity, power of 2).
+ * - Single consumer only.
+ * - Multiple concurrent producers are safe.
+ *
+ * **Not suitable for:**
+ * - Multiple concurrent consumers.
+ * - DynamicStorage (ready flag array is fixed at compile time).
+ *
+ * **Approximate metrics:**
+ * - size() and empty() compare claim_index to read_index. A slot claimed
+ *   but not yet written counts as occupied. Both are safe to call but
+ *   may overcount transiently under concurrent push.
+ */
+struct MPSCPolicy {
+    static constexpr bool is_thread_safe = true;
+    static constexpr bool is_mpsc = true;
+    static constexpr bool requires_trivial_copyable = false;
+    static constexpr bool requires_fixed_storage = true;
+
+    template <typename T, typename Storage>
+    struct State {
+        static_assert(!Storage::is_resizable,
+            "MPSCPolicy requires FixedStorage<T, N>. "
+            "For dynamic capacity, use SingleThreadedPolicy with DynamicStorage.");
+
+        static constexpr size_t N = Storage::capacity_value;
+
+        alignas(64) std::atomic<size_t> claim_index { 0 };
+        alignas(64) std::atomic<size_t> read_index { 0 };
+        std::array<std::atomic<bool>, N> ready_flags {};
+
+        State()
+        {
+            for (auto& f : ready_flags)
+                f.store(false, std::memory_order_relaxed);
+        }
+
+        static constexpr size_t increment(size_t index, size_t capacity) noexcept
+        {
+            return (index + 1) & (capacity - 1);
+        }
+    };
+};
+
+/**
  * @struct QueueAccess
  * @brief FIFO queue semantics (oldest data first)
  *
@@ -678,6 +760,7 @@ public:
     using const_reference = const T&;
 
     static constexpr bool is_lock_free = ConcurrencyPolicy::is_thread_safe;
+    static constexpr bool is_mpsc = policy_is_mpsc<ConcurrencyPolicy>;
     static constexpr bool is_resizable = StoragePolicy::is_resizable;
     static constexpr bool is_delay_line = AccessPattern::push_front;
 
@@ -720,9 +803,11 @@ public:
      * }
      * @endcode
      */
-    [[nodiscard]] bool push(const T& value) noexcept(is_lock_free)
+    [[nodiscard]] bool push(const T& value) noexcept
     {
-        if constexpr (is_lock_free) {
+        if constexpr (is_mpsc) {
+            return push_mpsc(value);
+        } else if constexpr (is_lock_free) {
             return push_lockfree(value);
         } else {
             return push_singlethread(value);
@@ -747,9 +832,11 @@ public:
      * }
      * @endcode
      */
-    [[nodiscard]] std::optional<T> pop() noexcept(is_lock_free)
+    [[nodiscard]] std::optional<T> pop() noexcept
     {
-        if constexpr (is_lock_free) {
+        if constexpr (is_mpsc) {
+            return pop_mpsc();
+        } else if constexpr (is_lock_free) {
             return pop_lockfree();
         } else {
             return pop_singlethread();
@@ -900,6 +987,9 @@ public:
      *
      * **Not Real-time Safe**: Allocates std::vector.
      *
+     * For MPSCPolicy, returns an empty vector. Use pop() to drain instead;
+     * a slot-by-slot index walk is not safe while producers are active.
+     *
      * @code{.cpp}
      * // Lock-free queue
      * LockFreeQueue<Event, 1024> queue;
@@ -914,7 +1004,11 @@ public:
     {
         std::vector<T> result;
 
-        if constexpr (is_lock_free) {
+        if constexpr (is_mpsc) {
+            // snapshot() is not defined for MPSC - ready flags make a consistent
+            // index-walk impossible without stopping producers. Use pop() to drain.
+            return result;
+        } else if constexpr (is_lock_free) {
             const size_t cap = m_storage.capacity();
             auto read = m_state.read_index.load(std::memory_order_acquire);
             auto write = m_state.write_index.load(std::memory_order_acquire);
@@ -938,8 +1032,12 @@ public:
      */
     [[nodiscard]] bool empty() const noexcept
     {
-        if constexpr (is_lock_free) {
-            return m_state.read_index.load(std::memory_order_acquire) == m_state.write_index.load(std::memory_order_acquire);
+        if constexpr (is_mpsc) {
+            return m_state.read_index.load(std::memory_order_acquire)
+                == m_state.claim_index.load(std::memory_order_acquire);
+        } else if constexpr (is_lock_free) {
+            return m_state.read_index.load(std::memory_order_acquire)
+                == m_state.write_index.load(std::memory_order_acquire);
         } else {
             return m_state.read_index == m_state.write_index;
         }
@@ -956,7 +1054,11 @@ public:
     {
         const size_t cap = m_storage.capacity();
 
-        if constexpr (is_lock_free) {
+        if constexpr (is_mpsc) {
+            auto claim = m_state.claim_index.load(std::memory_order_acquire);
+            auto read = m_state.read_index.load(std::memory_order_acquire);
+            return (claim - read) & (cap - 1);
+        } else if constexpr (is_lock_free) {
             auto write = m_state.write_index.load(std::memory_order_acquire);
             auto read = m_state.read_index.load(std::memory_order_acquire);
             return (write >= read) ? (write - read) : (cap - read + write);
@@ -1016,7 +1118,12 @@ public:
      */
     void reset() noexcept
     {
-        if constexpr (is_lock_free) {
+        if constexpr (is_mpsc) {
+            m_state.claim_index.store(0, std::memory_order_release);
+            m_state.read_index.store(0, std::memory_order_release);
+            for (auto& f : m_state.ready_flags)
+                f.store(false, std::memory_order_release);
+        } else if constexpr (is_lock_free) {
             m_state.write_index.store(0, std::memory_order_release);
             m_state.read_index.store(0, std::memory_order_release);
         } else {
@@ -1092,6 +1199,37 @@ private:
         return value;
     }
 
+    [[nodiscard]] bool push_mpsc(const T& value) noexcept
+    {
+        const size_t cap = m_storage.capacity();
+
+        size_t slot = m_state.claim_index.fetch_add(1, std::memory_order_relaxed) & (cap - 1);
+
+        if (m_state.ready_flags[slot].load(std::memory_order_acquire))
+            return false;
+
+        m_storage.buffer[slot] = value;
+        m_state.ready_flags[slot].store(true, std::memory_order_release);
+
+        return true;
+    }
+
+    [[nodiscard]] std::optional<T> pop_mpsc() noexcept
+    {
+        const size_t cap = m_storage.capacity();
+        const size_t slot = m_state.read_index.load(std::memory_order_relaxed);
+
+        if (!m_state.ready_flags[slot].load(std::memory_order_acquire))
+            return std::nullopt;
+
+        T value = m_storage.buffer[slot];
+
+        m_state.ready_flags[slot].store(false, std::memory_order_release);
+        m_state.read_index.store(State::increment(slot, cap), std::memory_order_release);
+
+        return value;
+    }
+
     StoragePolicy m_storage;
     State m_state;
     mutable std::vector<T> m_linearized;
@@ -1127,6 +1265,21 @@ template <typename T, size_t Capacity>
 using LockFreeQueue = RingBuffer<T,
     FixedStorage<T, Capacity>,
     LockFreePolicy,
+    QueueAccess>;
+
+/**
+ * @brief Type alias: Lock-free MPSC queue with fixed capacity.
+ * @tparam T        Element type.
+ * @tparam Capacity Buffer size (must be power of 2).
+ *
+ * Multiple concurrent producers, single consumer. Each producer claims a
+ * slot atomically; the consumer reads in claim order. Use for any context
+ * where multiple threads or RT callers write to a single draining worker.
+ */
+template <typename T, size_t Capacity>
+using MPSCQueue = RingBuffer<T,
+    FixedStorage<T, Capacity>,
+    MPSCPolicy,
     QueueAccess>;
 
 /**
