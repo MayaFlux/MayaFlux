@@ -127,26 +127,33 @@ public:
         const std::shared_ptr<Buffers::VKBuffer>& staging, bool deferred = false);
 
     /**
-     * @brief Download data from an image into a caller-supplied buffer.
+     * @brief Download image data to a host pointer.
      *
-     * Transitions the image to eTransferSrcOptimal, copies to a staging buffer,
-     * then restores it to restore_layout using restore_stage.
+     * When @p staging is null, allocates and destroys a per-call staging
+     * buffer internally. When @p staging is supplied, it is used as-is and
+     * not destroyed after — the caller owns its lifetime.
      *
-     * The defaults cover the common case of a device-local texture in shader
-     * read-only layout. Pass ePresentSrcKHR / eBottomOfPipe for swapchain images.
+     * When @p deferred is false (default), submits under a fence and blocks
+     * the calling thread on vkWaitForFences. This is non-blocking relative
+     * to the graphics queue (waitIdle is never called).
+     * When @p deferred is true and staging is supplied, records commands for
+     * deferred submission; the caller is responsible for flushing.
      *
      * @param image          Source image.
-     * @param data           Destination host pointer (must be at least size bytes).
+     * @param data           Destination host pointer, at least @p size bytes.
      * @param size           Byte count to read.
-     * @param restore_layout Layout to transition back to after the copy.
-     *                       Defaults to eShaderReadOnlyOptimal.
-     * @param restore_stage  Pipeline stage that will consume the image after
-     *                       restore. Defaults to eFragmentShader.
+     * @param staging        Persistent host-visible buffer, or nullptr for
+     *                       per-call allocation.
+     * @param deferred       Record for deferred submission (requires staging).
+     * @param restore_layout Layout to restore after the copy.
+     * @param restore_stage  Pipeline stage that consumes the image after restore.
      */
     void download_image_data(
         std::shared_ptr<VKImage> image,
         void* data,
         size_t size,
+        const std::shared_ptr<Buffers::VKBuffer>& staging = nullptr,
+        bool deferred = false,
         vk::ImageLayout restore_layout = vk::ImageLayout::eShaderReadOnlyOptimal,
         vk::PipelineStageFlags restore_stage = vk::PipelineStageFlagBits::eFragmentShader);
 

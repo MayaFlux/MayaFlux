@@ -19,6 +19,7 @@ class VideoStreamContainer;
 }
 
 namespace MayaFlux::Buffers {
+class VKBuffer;
 class TextureBuffer;
 }
 
@@ -145,6 +146,7 @@ private:
     AVPixelFormat m_src_fmt { AV_PIX_FMT_BGRA };
 
     std::shared_ptr<Core::Window> m_capture_window;
+    std::shared_ptr<Buffers::VKBuffer> m_staging_buffer;
     std::atomic<uint32_t> m_observer_id { 0 };
     std::atomic<bool> m_capture_opened { false };
     std::string m_capture_filepath;

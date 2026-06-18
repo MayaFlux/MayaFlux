@@ -263,68 +263,31 @@ public:
         const std::shared_ptr<Buffers::VKBuffer>& staging, bool deferred = false);
 
     /**
-     * @brief Download pixel data from a texture
-     * @param image Source image
-     * @param data Destination buffer
-     * @param size Buffer size in bytes
-     *
-     * Handles staging buffer, layout transitions, and cleanup.
-     * Blocks until download completes.
-     */
-    void download_data(
-        const std::shared_ptr<Core::VKImage>& image,
-        void* data,
-        size_t size);
-
-    /**
      * @brief Download pixel data from a VKImage, reusing a caller-supplied
      *        persistent staging buffer.
      *
-     * Submits under a fence and returns once the fence signals, without
-     * calling queue.waitIdle. Other GPU work proceeds concurrently during
-     * the wait. Safe to call from any thread that is not holding the
-     * graphics queue exclusively.
+     * When @p staging is null, falls through to the per-call blocking path.
+     * When @p staging is supplied, submits under a fence (fenced, not waitIdle)
+     * so other GPU work proceeds concurrently during the wait.
+     * When @p deferred is true, records commands for deferred submission;
+     * the caller is responsible for flushing. Ignored when staging is null.
      *
      * The staging buffer must be host-visible and at least @p size bytes.
-     * Allocate once with Buffers::create_image_staging_buffer(size) and
-     * pass the same buffer on every subsequent call to avoid per-call
-     * Vulkan object churn.
+     * Allocate once with Buffers::create_image_staging_buffer(size).
      *
-     * Image layout is restored to eShaderReadOnlyOptimal after the copy.
-     *
-     * @param image   Source VKImage. Must be initialised.
-     * @param data    Destination host pointer, at least @p size bytes.
-     * @param size    Byte count to read.
-     * @param staging Persistent host-visible staging buffer.
+     * @param image    Source VKImage. Must be initialised.
+     * @param data     Destination host pointer, at least @p size bytes.
+     * @param size     Byte count to read.
+     * @param staging  Persistent staging buffer, or nullptr for per-call path.
+     * @param deferred When true and staging is supplied, records for deferred
+     *                 submission rather than immediate fenced execution.
      */
     void download_data(
         const std::shared_ptr<Core::VKImage>& image,
         void* data,
         size_t size,
-        const std::shared_ptr<Buffers::VKBuffer>& staging);
-
-    /**
-     * @brief Download pixel data from a texture without blocking the
-     *        graphics queue.
-     *
-     * Allocates a per-call staging buffer, command buffer, and fence.
-     * Records a copy-image-to-buffer op, submits with the fence, and
-     * blocks the calling thread on vkWaitForFences until the copy
-     * completes. Unlike download_data, this does not call queue.waitIdle,
-     * so other graphics work proceeds concurrently.
-     *
-     * Intended to be called from a worker thread (e.g. via std::async).
-     * Calling from the graphics thread or any thread that must not block
-     * will stall that thread for the duration of the copy.
-     *
-     * @param image Source image.
-     * @param data  Destination host pointer, at least @p size bytes.
-     * @param size  Byte count to read.
-     */
-    void download_data_async(
-        const std::shared_ptr<Core::VKImage>& image,
-        void* data,
-        size_t size);
+        const std::shared_ptr<Buffers::VKBuffer>& staging,
+        bool deferred = false);
 
     /**
      * @brief Transition a VKImage to a new Vulkan layout via an immediate submission.

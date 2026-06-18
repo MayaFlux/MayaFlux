@@ -256,7 +256,7 @@ void TextureContainer::from_image(const std::shared_ptr<Core::VKImage>& image, u
         return;
     }
 
-    TextureLoom::instance().download_data(image, ptr, sz);
+    TextureLoom::instance().download_data(image, ptr, sz, nullptr);
 
     {
         std::unique_lock lock(m_data_mutex);
@@ -328,7 +328,7 @@ void TextureContainer::from_image_array(const std::shared_ptr<Core::VKImage>& im
     // Download is done as one contiguous block and split into per-layer slots.
     const size_t layer_bytes = byte_size();
     std::vector<uint8_t> combined(layer_bytes * n);
-    TextureLoom::instance().download_data(image, combined.data(), combined.size());
+    TextureLoom::instance().download_data(image, combined.data(), combined.size(), nullptr);
 
     std::unique_lock lock(m_data_mutex);
     for (uint32_t i = 0; i < n; ++i) {

@@ -3,6 +3,7 @@
 #include "FFmpegMuxContext.hpp"
 #include "VideoEncodeContext.hpp"
 
+#include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
 #include "MayaFlux/Buffers/Textures/TextureBuffer.hpp"
 
 #include "MayaFlux/Kakshya/Source/TextureContainer.hpp"
@@ -457,7 +458,12 @@ void VideoFileWriter::worker_loop(const std::string& filepath,
                     return false;
 
                 std::vector<uint8_t> pixels(mip0_bytes);
-                TextureLoom::instance().download_data_async(tex, pixels.data(), mip0_bytes);
+
+                if (!m_staging_buffer) {
+                    m_staging_buffer = Buffers::create_image_staging_buffer(mip0_bytes);
+                }
+
+                TextureLoom::instance().download_data(tex, pixels.data(), mip0_bytes, m_staging_buffer, true);
 
                 if (!enc.encode_frame(pixels.data(), pixels.size(),
                         tex->get_width(), tex->get_height(), mux)) {
