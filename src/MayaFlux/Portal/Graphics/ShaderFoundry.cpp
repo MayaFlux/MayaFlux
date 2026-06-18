@@ -873,6 +873,7 @@ FenceID ShaderFoundry::submit_async(CommandBufferID cmd_id)
     FenceState& fence_state = m_fences[fence_id];
     fence_state.fence = get_device().createFence(fence_info);
     fence_state.signaled = false;
+    fence_state.cmd_id = cmd_id;
 
     vk::SubmitInfo submit_info;
     submit_info.commandBufferCount = 1;
@@ -1002,7 +1003,16 @@ void ShaderFoundry::release_fence(FenceID fence_id)
         it->second.fence = nullptr;
     }
 
+    const CommandBufferID cmd_id = it->second.cmd_id;
     m_fences.erase(it);
+
+    if (cmd_id != INVALID_COMMAND_BUFFER) {
+        auto cmd_it = m_command_buffers.find(cmd_id);
+        if (cmd_it != m_command_buffers.end()) {
+            m_backend->get_command_manager().free_command_buffer(cmd_it->second.cmd);
+            m_command_buffers.erase(cmd_it);
+        }
+    }
 }
 
 bool ShaderFoundry::is_fence_signaled(FenceID fence_id)

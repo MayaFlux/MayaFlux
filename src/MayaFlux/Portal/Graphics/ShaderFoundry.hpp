@@ -79,6 +79,8 @@ private:
     struct FenceState {
         vk::Fence fence;
         bool signaled;
+
+        CommandBufferID cmd_id { INVALID_COMMAND_BUFFER };
     };
 
     struct SemaphoreState {
