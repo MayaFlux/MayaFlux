@@ -988,6 +988,23 @@ void ShaderFoundry::wait_for_fences(const std::vector<FenceID>& fence_ids)
     }
 }
 
+void ShaderFoundry::release_fence(FenceID fence_id)
+{
+    if (fence_id == INVALID_FENCE)
+        return;
+
+    auto it = m_fences.find(fence_id);
+    if (it == m_fences.end())
+        return;
+
+    if (it->second.fence) {
+        get_device().destroyFence(it->second.fence);
+        it->second.fence = nullptr;
+    }
+
+    m_fences.erase(it);
+}
+
 bool ShaderFoundry::is_fence_signaled(FenceID fence_id)
 {
     auto it = m_fences.find(fence_id);
