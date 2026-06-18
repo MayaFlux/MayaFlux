@@ -85,6 +85,54 @@ public:
     void from_image(const std::shared_ptr<Core::VKImage>& image, uint32_t layer = 0);
 
     /**
+     * @brief Download pixel data from a VKImage, reusing a caller-supplied
+     *        persistent staging buffer.
+     *
+     * Identical to from_image() but passes @p staging through to
+     * TextureLoom::download_data, eliminating the per-call Vulkan object
+     * allocation. Use Buffers::create_image_staging_buffer(byte_size())
+     * to allocate the staging buffer once before the render loop.
+     *
+     * @param image   Source GPU texture. Must be initialised and match dimensions.
+     * @param staging Host-visible staging VKBuffer sized to at least byte_size().
+     * @param layer   Array layer index (default 0).
+     */
+    void from_image(
+        const std::shared_ptr<Core::VKImage>& image,
+        const std::shared_ptr<Buffers::VKBuffer>& staging,
+        uint32_t layer = 0);
+
+    /**
+     * @brief Download each array layer of a Vulkan 2D array image into
+     *        the corresponding layer slot.
+     *
+     * Expects @p image to have array_layers == get_layer_count(). Downloads
+     * each layer via a separate blocking TextureLoom::download_data call.
+     * Resizes m_data to match if necessary.
+     *
+     * @param image Source VKImage with array_layers >= get_layer_count().
+     */
+    void from_image_array(const std::shared_ptr<Core::VKImage>& image);
+
+    /**
+     * @brief Download all array layers from a VKImage, reusing a caller-supplied
+     *        persistent staging buffer.
+     *
+     * Identical to from_image_array() but passes @p staging through to
+     * TextureLoom::download_data. The staging buffer must be at least
+     * byte_size() * get_layer_count() bytes.
+     * Use Buffers::create_image_staging_buffer(byte_size() * get_layer_count())
+     * to allocate it once before the render loop.
+     *
+     * @param image   Source VKImage with array_layers >= get_layer_count().
+     * @param staging Host-visible staging VKBuffer sized to at least
+     *                byte_size() * get_layer_count().
+     */
+    void from_image_array(
+        const std::shared_ptr<Core::VKImage>& image,
+        const std::shared_ptr<Buffers::VKBuffer>& staging);
+
+    /**
      * @brief Upload the pixel buffer to a new VKImage via TextureLoom.
      * @param layer Array layer index for array textures (default 0).
      * @return Newly created and uploaded VKImage. Null on failure.
@@ -143,18 +191,6 @@ public:
      */
     [[nodiscard]] std::shared_ptr<Core::VKImage> to_image_array(
         const std::shared_ptr<Buffers::VKBuffer>& staging) const;
-
-    /**
-     * @brief Download each array layer of a Vulkan 2D array image into
-     *        the corresponding layer slot.
-     *
-     * Expects @p image to have array_layers == get_layer_count(). Downloads
-     * each layer via a separate blocking TextureLoom::download_data call.
-     * Resizes m_data to match if necessary.
-     *
-     * @param image Source VKImage with array_layers >= get_layer_count().
-     */
-    void from_image_array(const std::shared_ptr<Core::VKImage>& image);
 
     //=========================================================================
     // Pixel access

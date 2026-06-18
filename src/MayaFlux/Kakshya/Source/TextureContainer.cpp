@@ -269,6 +269,115 @@ void TextureContainer::from_image(const std::shared_ptr<Core::VKImage>& image, u
         "TextureContainer: downloaded {} bytes from VKImage", sz);
 }
 
+void TextureContainer::from_image(
+    const std::shared_ptr<Core::VKImage>& image,
+    const std::shared_ptr<Buffers::VKBuffer>& staging,
+    uint32_t layer)
+{
+    if (!image || !image->is_initialized()) {
+        MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+            "TextureContainer::from_image(staging) called with uninitialised image");
+        return;
+    }
+
+    if (layer >= m_data.size()) {
+        MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+            "TextureContainer::from_image(staging) layer {} out of range ({})",
+            layer, m_data.size());
+        return;
+    }
+
+    const size_t sz = byte_size();
+    const size_t element_count = static_cast<size_t>(m_width) * m_height * m_channels;
+    m_data[layer] = make_empty_storage(m_format, element_count);
+
+    auto [ptr, bytes] = variant_bytes_mut(m_data[layer]);
+    if (!ptr || bytes != sz) {
+        MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+            "TextureContainer::from_image(staging) variant size mismatch ({} vs {})",
+            bytes, sz);
+        return;
+    }
+
+    TextureLoom::instance().download_data(image, ptr, sz, staging);
+
+    {
+        std::unique_lock lock(m_data_mutex);
+        m_processed_data[layer] = m_data[layer];
+    }
+
+    update_processing_state(ProcessingState::READY);
+}
+
+void TextureContainer::from_image_array(const std::shared_ptr<Core::VKImage>& image)
+{
+    if (!image || !image->is_initialized()) {
+        MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+            "TextureContainer::from_image_array called with uninitialised image");
+        return;
+    }
+
+    const auto n = static_cast<uint32_t>(m_data.size());
+    if (image->get_array_layers() < n) {
+        MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+            "TextureContainer::from_image_array image has {} layers, container expects {}",
+            image->get_array_layers(), n);
+        return;
+    }
+
+    // Download is done as one contiguous block and split into per-layer slots.
+    const size_t layer_bytes = byte_size();
+    std::vector<uint8_t> combined(layer_bytes * n);
+    TextureLoom::instance().download_data(image, combined.data(), combined.size());
+
+    std::unique_lock lock(m_data_mutex);
+    for (uint32_t i = 0; i < n; ++i) {
+        const size_t element_count = static_cast<size_t>(m_width) * m_height * m_channels;
+        m_data[i] = make_empty_storage(m_format, element_count);
+        auto [ptr, bytes] = variant_bytes_mut(m_data[i]);
+        if (ptr && bytes == layer_bytes)
+            std::memcpy(ptr, combined.data() + i * layer_bytes, layer_bytes);
+        m_processed_data[i] = m_data[i];
+    }
+
+    update_processing_state(ProcessingState::READY);
+}
+
+void TextureContainer::from_image_array(
+    const std::shared_ptr<Core::VKImage>& image,
+    const std::shared_ptr<Buffers::VKBuffer>& staging)
+{
+    if (!image || !image->is_initialized()) {
+        MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+            "TextureContainer::from_image_array(staging) called with uninitialised image");
+        return;
+    }
+
+    const auto n = static_cast<uint32_t>(m_data.size());
+    if (image->get_array_layers() < n) {
+        MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+            "TextureContainer::from_image_array(staging) image has {} layers, container expects {}",
+            image->get_array_layers(), n);
+        return;
+    }
+
+    const size_t layer_bytes = byte_size();
+    std::vector<uint8_t> combined(layer_bytes * n);
+    TextureLoom::instance().download_data(image, combined.data(), combined.size(), staging);
+
+    std::unique_lock lock(m_data_mutex);
+    for (uint32_t i = 0; i < n; ++i) {
+        const size_t element_count = static_cast<size_t>(m_width) * m_height * m_channels;
+        m_data[i] = make_empty_storage(m_format, element_count);
+        auto [ptr, bytes] = variant_bytes_mut(m_data[i]);
+        if (ptr && bytes == layer_bytes)
+            std::memcpy(ptr, combined.data() + i * layer_bytes, layer_bytes);
+        m_processed_data[i] = m_data[i];
+    }
+
+    update_processing_state(ProcessingState::READY);
+}
+
 std::shared_ptr<Core::VKImage> TextureContainer::to_image(uint32_t layer) const
 {
     std::shared_lock lock(m_data_mutex);
@@ -398,40 +507,6 @@ std::shared_ptr<Core::VKImage> TextureContainer::to_image_array(
         return nullptr;
     loom.upload_data(img, combined.data(), combined.size(), staging);
     return img;
-}
-
-void TextureContainer::from_image_array(const std::shared_ptr<Core::VKImage>& image)
-{
-    if (!image || !image->is_initialized()) {
-        MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-            "TextureContainer::from_image_array called with uninitialised image");
-        return;
-    }
-
-    const auto n = static_cast<uint32_t>(m_data.size());
-    if (image->get_array_layers() < n) {
-        MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-            "TextureContainer::from_image_array image has {} layers, container expects {}",
-            image->get_array_layers(), n);
-        return;
-    }
-
-    // Download is done as one contiguous block and split into per-layer slots.
-    const size_t layer_bytes = byte_size();
-    std::vector<uint8_t> combined(layer_bytes * n);
-    TextureLoom::instance().download_data(image, combined.data(), combined.size());
-
-    std::unique_lock lock(m_data_mutex);
-    for (uint32_t i = 0; i < n; ++i) {
-        const size_t element_count = static_cast<size_t>(m_width) * m_height * m_channels;
-        m_data[i] = make_empty_storage(m_format, element_count);
-        auto [ptr, bytes] = variant_bytes_mut(m_data[i]);
-        if (ptr && bytes == layer_bytes)
-            std::memcpy(ptr, combined.data() + i * layer_bytes, layer_bytes);
-        m_processed_data[i] = m_data[i];
-    }
-
-    update_processing_state(ProcessingState::READY);
 }
 
 //=============================================================================
