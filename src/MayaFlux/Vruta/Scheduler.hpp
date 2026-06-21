@@ -548,12 +548,7 @@ private:
     std::atomic<uint32_t> m_conditional_pending_count { 0 };
     PendingTaskOp m_conditional_pending_ops[MAX_PENDING_CONDITIONAL];
 
-#if MAYAFLUX_USE_JTHREAD
     std::jthread m_conditional_thread;
-#else
-    std::thread m_conditional_thread;
-    std::atomic<bool> m_conditional_stop { false };
-#endif
 };
 
 }

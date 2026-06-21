@@ -445,18 +445,10 @@ void TaskScheduler::start_conditional_thread()
     if (m_conditional_thread.joinable())
         return;
 
-#if MAYAFLUX_USE_JTHREAD
     m_conditional_thread = std::jthread([this](const std::stop_token& st) {
         while (!st.stop_requested())
             pump_conditional();
     });
-#else
-    m_conditional_stop.store(false, std::memory_order_release);
-    m_conditional_thread = std::thread([this]() {
-        while (!m_conditional_stop.load(std::memory_order_acquire))
-            pump_conditional();
-    });
-#endif
 }
 
 void TaskScheduler::pause_all_tasks()
