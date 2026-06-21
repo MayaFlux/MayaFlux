@@ -86,7 +86,6 @@ jobs:
             cmake
             eigen
             onedpl
-            fmt
             glfw
             glm
             llvm
@@ -118,7 +117,7 @@ jobs:
           brew reinstall cmake
 
           # Re-establish all the paths when cache is hit
-          for tool in ffmpeg shaderc googletest pkg-config eigen onedpl fmt glfw glm llvm; do
+          for tool in ffmpeg shaderc googletest pkg-config eigen onedpl glfw glm llvm; do
             if TOOL_PREFIX=$(brew --prefix $tool 2>/dev/null); then
               if [ -d "$TOOL_PREFIX/lib/pkgconfig" ]; then
                 export PKG_CONFIG_PATH="$TOOL_PREFIX/lib/pkgconfig:$PKG_CONFIG_PATH"
@@ -297,7 +296,7 @@ jobs:
           echo "  ✓ LLVM (Lila JIT - Homebrew)"
           echo "  [Tier 2 - Homebrew Libraries]"
           echo "  ✓ GLFW, FFmpeg"
-          echo "  ✓ Eigen3, GLM, magic_enum, fmt"
+          echo "  ✓ Eigen3, GLM, magic_enum"
           echo "  ✓ Vulkan SDK"
           echo "  [Tier 3 - Header-Only Direct]"
           echo "  ✓ STB (direct git clone)"

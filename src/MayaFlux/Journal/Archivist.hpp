@@ -1,9 +1,37 @@
 #pragma once
 
-#include "Format.hpp"
 #include "JournalEntry.hpp"
 
+#include <format>
+
+namespace MayaFlux::Journal::fmt {
+using std::format;
+using std::format_string;
+using std::make_format_args;
+using std::vformat;
+}
+
 namespace MayaFlux::Journal {
+
+template <typename... Args>
+using format_string = fmt::format_string<Args...>;
+
+template <typename... Args>
+inline std::string format(format_string<std::remove_cvref_t<Args>...> fmt_str, Args&&... args)
+{
+    return fmt::format(fmt_str, std::forward<Args>(args)...);
+}
+
+template <typename... Args>
+inline std::string format_runtime(std::string_view fmt_str, Args&&... args)
+{
+    return std::vformat(fmt_str, std::make_format_args(args...));
+}
+
+inline std::string vformat(std::string_view fmt_str, auto fmt_args)
+{
+    return fmt::vformat(fmt_str, fmt_args);
+}
 
 class Sink;
 

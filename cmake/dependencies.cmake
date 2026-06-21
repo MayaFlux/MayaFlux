@@ -33,7 +33,6 @@ else()
 
     if(APPLE)
         find_package(oneDPL)
-        find_package(fmt REQUIRED)
         find_package(Vulkan REQUIRED)
         pkg_check_modules(HIDAPI REQUIRED IMPORTED_TARGET hidapi)
         pkg_check_modules(Glfw REQUIRED IMPORTED_TARGET glfw3>=3.4)

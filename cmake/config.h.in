@@ -111,20 +111,6 @@
 #define MAYAFLUX_HOST_API
 #endif
 
-// C++20 std::format availability detection
-#ifdef MAYAFLUX_PLATFORM_MACOS
-#define MAYAFLUX_USE_FMT 1
-#define MAYAFLUX_USE_STD_FORMAT 0
-#else
-#if __has_include(<format>) && defined(__cpp_lib_format)
-#define MAYAFLUX_USE_STD_FORMAT 1
-#define MAYAFLUX_USE_FMT 0
-#else
-#define MAYAFLUX_USE_FMT 1
-#define MAYAFLUX_USE_STD_FORMAT 0
-#endif
-#endif
-
 #if defined(__x86_64__) || defined(_M_X64) || defined(__i386__) || defined(_M_IX86)
 
     #if defined(_MSC_VER)

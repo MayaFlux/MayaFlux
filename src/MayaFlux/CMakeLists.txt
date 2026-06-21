@@ -159,7 +159,6 @@ if(WIN32)
 else()
     if(APPLE)
         target_link_libraries(MayaFluxLib PRIVATE oneDPL)
-        target_link_libraries(MayaFluxLib PUBLIC fmt::fmt)
         target_link_libraries(MayaFluxLib PUBLIC Vulkan::Vulkan PkgConfig::Glfw)
         target_link_libraries(MayaFluxLib PRIVATE "-framework CoreFoundation")
         target_link_libraries(MayaFluxLib PRIVATE "-framework AppKit" "-framework UniformTypeIdentifiers")
@@ -170,8 +169,6 @@ else()
             "-framework AudioUnit"
             "-framework AudioToolbox"
             )
-
-        message(STATUS "MayaFlux Journal: Using fmt library on macOS")
     else()
         target_link_libraries(MayaFluxLib PUBLIC
         PkgConfig::Vulkan

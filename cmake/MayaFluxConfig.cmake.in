@@ -104,7 +104,6 @@ else()
     if(APPLE)
         message(STATUS "=== macOS-specific Dependencies ===")
         find_package(oneDPL QUIET)
-        find_package(fmt REQUIRED)
         find_package(Vulkan REQUIRED)
         set(_MAYAFLUX_THREADING_BACKEND "oneDPL")
 
@@ -322,7 +321,7 @@ if(NOT TARGET MayaFlux::MayaFluxLib)
     # Platform-specific threading backends
     # ========================================================================
     if(APPLE)
-        target_link_libraries(MayaFlux::MayaFluxLib INTERFACE oneDPL fmt::fmt)
+        target_link_libraries(MayaFlux::MayaFluxLib INTERFACE oneDPL)
     elseif(UNIX AND NOT APPLE)
         target_link_libraries(MayaFlux::MayaFluxLib INTERFACE TBB::tbb)
     endif()
