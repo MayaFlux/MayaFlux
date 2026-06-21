@@ -461,7 +461,7 @@ Auto-generated docs:
 | BroadcastSource             | Stable      | Lock-free cross-thread signal delivery to coroutines                     |
 | Yantra Grammar System       | In Progress | Core framework stable; additional grammars planned for 0.4               |
 
-**Current version**: 0.4.0-dev  
+**Current version**: 0.5.0-dev  
 **Trajectory**: 0.4 feature freeze approaching. Focus on Forma orchestration layer completion, documentation, contributor programs, and conference submissions (ICMC, NIME, CppCon, LAC).
 
 ---
