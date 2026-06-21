@@ -116,7 +116,8 @@ void GeometryBuffer::setup_rendering(const RenderConfig& config)
             resolved_config.fragment_shader = "point.frag.spv";
     }
 
-    const bool frag_samples_texture = resolved_config.fragment_shader.find("textured") != std::string::npos;
+    const bool frag_samples_texture = !resolved_config.default_texture_binding.empty()
+        || resolved_config.fragment_shader.find("textured") != std::string::npos;
 
     if (textured && !frag_samples_texture) {
         MF_WARN(Journal::Component::Buffers, Journal::Context::Init,
