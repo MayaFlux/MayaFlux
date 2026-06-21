@@ -1,0 +1,13 @@
+#!/bin/sh
+set -e
+
+case "$1" in
+    purge)
+        if getent group mayaflux > /dev/null 2>&1; then
+            delgroup mayaflux || true
+        fi
+        rm -f /etc/security/limits.d/50-mayaflux.conf
+        ;;
+esac
+
+#DEBHELPER#

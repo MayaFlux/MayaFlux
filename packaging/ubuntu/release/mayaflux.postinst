@@ -1,0 +1,12 @@
+#!/bin/sh
+set -e
+
+case "$1" in
+    configure)
+        if ! getent group mayaflux > /dev/null 2>&1; then
+            addgroup --system mayaflux
+        fi
+        ;;
+esac
+
+#DEBHELPER#

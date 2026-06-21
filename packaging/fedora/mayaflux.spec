@@ -1,5 +1,5 @@
 Name:           mayaflux
-Version:        0.3.0
+Version:        0.4.0
 Release:        1%{?dist}
 Summary:        Modern C++ framework for real-time graphics and audio with JIT compilation
 
@@ -21,8 +21,6 @@ BuildRequires:  clang-devel >= 21
 BuildRequires:  cmake >= 3.25
 BuildRequires:  ninja-build
 BuildRequires:  pkgconfig
-BuildRequires:  rtaudio-devel
-BuildRequires:  glfw-devel >= 3.4
 BuildRequires:  glm-devel
 BuildRequires:  eigen3-devel
 BuildRequires:  spirv-headers-devel
@@ -36,19 +34,24 @@ BuildRequires:  vulkan-validation-layers
 BuildRequires:  ffmpeg-free-devel
 BuildRequires:  assimp-devel
 BuildRequires:  stb-devel
-BuildRequires:  magic_enum-devel
 BuildRequires:  tbb-devel
 BuildRequires:  gtest-devel
 BuildRequires:  libshaderc-devel
 BuildRequires:  glslc
 BuildRequires:  wayland-devel
+BuildRequires:  wayland-protocols-devel
+BuildRequires:  libxkbcommon-devel
 BuildRequires:  hidapi-devel
-BuildRequires:  rtmidi-devel
 BuildRequires:  asio-standalone
 BuildRequires:  freetype-devel
 BuildRequires:  utf8proc-devel
 BuildRequires:  fontconfig-devel
+BuildRequires:  json-devel
+BuildRequires:  pipewire-devel
+BuildRequires:  alsa-lib-devel
+BuildRequires:  dbus-devel
 BuildRequires:  git
+BuildRequires:  ccache
 
 # Runtime = BuildRequires (all needed for live coding/JIT)
 Requires:       gcc-c++ >= 15
@@ -59,8 +62,6 @@ Requires:       llvm-libs >= 21
 Requires:       clang-devel >= 21
 Requires:       cmake >= 3.25
 Requires:       pkgconfig
-Requires:       rtaudio-devel
-Requires:       glfw-devel >= 3.4
 Requires:       glm-devel
 Requires:       eigen3-devel
 Requires:       spirv-headers-devel
@@ -74,18 +75,21 @@ Requires:       vulkan-validation-layers
 Requires:       ffmpeg-free-devel
 Requires:       assimp-devel
 Requires:       stb-devel
-Requires:       magic_enum-devel
 Requires:       tbb-devel
 Requires:       gtest-devel
 Requires:       libshaderc-devel
 Requires:       glslc
 Requires:       wayland-devel
+Requires:       wayland-protocols-devel
+Requires:       libxkbcommon-devel
 Requires:       hidapi-devel
-Requires:       rtmidi-devel
 Requires:       asio-standalone
 Requires:       freetype-devel
 Requires:       utf8proc-devel
 Requires:       fontconfig-devel
+Requires:       pipewire-devel
+Requires:       alsa-lib-devel
+Requires:       json-devel
 
 Provides:       mayaflux = %{version}-%{release}
 Conflicts:      mayaflux-dev
@@ -113,29 +117,25 @@ and live coding features. This is intentional.
 %autosetup -n MayaFlux-%{version}
 
 %build
-%cmake -G Ninja \
-	-DCMAKE_BUILD_TYPE=RelWithDebInfo \
-    -DCMAKE_CXX_STANDARD=23 \
-    -DCMAKE_INSTALL_LIBDIR=%{_libdir} \
-    -DMAYAFLUX_PORTABLE=OFF \
-    -DMAYAFLUX_BUILD_TESTS=OFF
+export CCACHE_SLOPPINESS=pch_defines,time_macros,include_file_mtime,include_file_ctime
+%cmake --preset linux-ship-rel
 
-%cmake_build --parallel
+%cmake_build
 
 %install
 %cmake_install
-
-if [ "%{_libdir}" != "/usr/lib" ]; then
-    mkdir -p %{buildroot}%{_libdir}
-    mv %{buildroot}/usr/lib/*.so* %{buildroot}%{_libdir}/ 2>/dev/null || true
-    mv %{buildroot}/usr/lib/pkgconfig %{buildroot}%{_libdir}/ 2>/dev/null || true
-    mv %{buildroot}/usr/lib/cmake %{buildroot}%{_libdir}/ 2>/dev/null || true
-fi
 
 mkdir -p %{buildroot}%{_sysconfdir}/profile.d
 cat > %{buildroot}%{_sysconfdir}/profile.d/mayaflux.sh << 'EOF'
 export MAYAFLUX_ROOT="%{_prefix}"
 export CMAKE_PREFIX_PATH="%{_prefix}:${CMAKE_PREFIX_PATH}"
+EOF
+
+mkdir -p %{buildroot}%{_sysconfdir}/security/limits.d
+cat > %{buildroot}%{_sysconfdir}/security/limits.d/50-mayaflux.conf << 'EOF'
+@mayaflux    -    rtprio     95
+@mayaflux    -    memlock    unlimited
+@mayaflux    -    nice       -19
 EOF
 
 %check
@@ -146,19 +146,32 @@ EOF
 %doc README.md
 %{_bindir}/lila_server
 %{_libdir}/libMayaFluxLib.so*
+%{_libdir}/libMayaFluxHost.so*
 %{_libdir}/libLila.so*
+%{_libdir}/libminiz.a
 %{_includedir}/MayaFlux/
 %{_includedir}/Lila/
 %{_datadir}/MayaFlux/
 %{_libdir}/pkgconfig/*.pc
 %{_libdir}/cmake/MayaFlux/
 %config(noreplace) %{_sysconfdir}/profile.d/mayaflux.sh
+%config(noreplace) %{_sysconfdir}/security/limits.d/50-mayaflux.conf
+
+%pre
+getent group mayaflux > /dev/null 2>&1 || groupadd --system mayaflux
 
 %post -p /sbin/ldconfig
-%postun -p /sbin/ldconfig
+
+%preun
+
+%postun
+/sbin/ldconfig
+if [ $1 -eq 0 ]; then
+    groupdel mayaflux 2>/dev/null || :
+fi
 
 %changelog
-* Wed Apr 22 2026 MayaFlux Collective <mayafluxcollective@proton.me> - 0.3.0-1
+* Sun Jun 21 2026 MayaFlux Collective <mayafluxcollective@proton.me> - 0.4.0-1
 - Initial stable release
 - Full source build with C++23 support
 - All development dependencies included for JIT/live coding

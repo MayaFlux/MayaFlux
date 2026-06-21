@@ -75,20 +75,19 @@ jobs:
       run_tests: ${{ inputs.run_tests }}
       create_distribution: true
 
-  build_linux:
+  build_linux_arch:
     needs: determine_version
     if: ${{ inputs.target_os == 'linux' || inputs.target_os == 'all' }}
-    uses: ./.github/workflows/build-linux.yml
+    uses: ./.github/workflows/build-linux-arch.yml
     with:
       version: ${{ needs.determine_version.outputs.VERSION }}
       clean_version: ${{ needs.determine_version.outputs.CLEAN_VERSION }}
       is_dev: "0"
       run_tests: ${{ inputs.run_tests }}
       create_distribution: true
-      artifact_name: MayaFlux-${{ needs.determine_version.outputs.VERSION
-        }}-linux-fedora43-x64
-      distribution_name: linux-fedora43-x64
-      os_display_name: Linux
+      artifact_name: MayaFlux-${{ needs.determine_version.outputs.VERSION }}-linux-arch
+      distribution_name: linux-arch
+      os_display_name: Arch Linux
 
   build_windows:
     needs: determine_version
@@ -105,7 +104,7 @@ jobs:
       os_display_name: Windows
 
   create_release:
-    needs: [determine_version, build_macos, build_linux, build_windows]
+    needs: [determine_version, build_macos, build_linux_arch, build_windows]
     if: ${{ success() }}
     runs-on: ubuntu-latest
     permissions:
@@ -129,7 +128,7 @@ jobs:
           SHORT_SHA=${GITHUB_SHA:0:8}
           PLATFORMS=""
           ls artifacts/MayaFlux-*-macos-arm64.* 1>/dev/null 2>&1 && PLATFORMS="${PLATFORMS}macOS "
-          ls artifacts/MayaFlux-*-linux-fedora43-x64.* 1>/dev/null 2>&1 && PLATFORMS="${PLATFORMS}Linux "
+          ls artifacts/MayaFlux-*-linux-arch.* 1>/dev/null 2>&1 && PLATFORMS="${PLATFORMS}Linux "
           ls artifacts/MayaFlux-*-windows-x64.* 1>/dev/null 2>&1 && PLATFORMS="${PLATFORMS}Windows "
           echo "SHORT_SHA=$SHORT_SHA" >> $GITHUB_OUTPUT
           echo "PLATFORMS=$PLATFORMS" >> $GITHUB_OUTPUT
@@ -160,7 +159,7 @@ jobs:
           sed \
             -e "s/{{VERSION}}/${{ needs.determine_version.outputs.VERSION }}/g" \
             -e "s/{{COMMIT_SHA}}/${{ steps.meta.outputs.SHORT_SHA }}/g" \
-            .github/workflows/distribution/shared/release_body_030.md > release_body.md
+            .github/workflows/distribution/shared/release_body_040.md > release_body.md
 
           cat changelog.md >> release_body.md
 

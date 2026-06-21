@@ -17,7 +17,7 @@
     {
       "guid": "mayaflux",
       "name": "MayaFlux",
-      "description": "C++20/23 framework for real-time computation across sound, geometry, image, and network as a unified numerical substrate. Audio, visual, and control data share the same processing infrastructure with scheduling annotations determining domain at runtime. Lock-free dispatch, coroutine composition, live coding via embedded Lila JIT (LLVM ORC), and grammar-driven offline compute. Independent Vulkan pipeline with dynamic rendering, multi-window support, and compute shaders. Designed for researchers, artists, educators investigating digital-native paradigms in multimedia. Currently stable at 0.3.0. GPLv3 licensed.",
+      "description": "C++20/23 framework for real-time computation across sound, geometry, image, and network as a unified numerical substrate. Audio, visual, and control data share the same processing infrastructure with scheduling annotations determining domain at runtime. Lock-free dispatch, coroutine composition, live coding via embedded Lila JIT (LLVM ORC), and grammar-driven offline compute. Independent Vulkan pipeline with dynamic rendering, multi-window support, and compute shaders. Designed for researchers, artists, educators investigating digital-native paradigms in multimedia. Currently stable at 0.4.0. GPLv3 licensed.",
       "webpageUrl": {
         "url": "https://mayaflux.org",
         "wellKnown": ""

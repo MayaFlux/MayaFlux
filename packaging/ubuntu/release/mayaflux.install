@@ -7,6 +7,7 @@ usr/lib/*.so*
 # Pkg-config and CMake configuration files
 usr/lib/pkgconfig/*.pc
 usr/lib/cmake/MayaFlux/*
+usr/lib/libminiz.a
 
 # Headers (MayaFlux and Lila)
 usr/include/MayaFlux/*
