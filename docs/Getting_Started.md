@@ -202,32 +202,33 @@ void compose()
     surf_node->set_mesh(data);
 
     auto surf_buf = vega.GeometryBuffer(surf_node) | Graphics;
-    surf_buf->set_texture(img);
+    surf_buf->set_texture(img->get_gpu_texture());
     surf_buf->setup_rendering({
         .target_window = window,
         .fragment_shader = "mesh_textured_lit.frag.spv",
-        .topology = Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST,
     });
     surf_buf->get_render_processor()->set_view_transform_source(view);
 
     // Light agent: influences the surface render processor
-    auto light_pos = make_persistent_shared<glm::vec3>(0.0F, 1.5F, 0.0F);
+    auto& light_pos = make_persistent<glm::vec3>(0.0F, 1.5F, 0.0F);
     constexpr glm::vec3 half { 0.04F, 0.04F, 0.04F };
     auto& mgr = *MayaFlux::get_buffer_manager();
 
     auto light = std::make_shared<Nexus::Agent>(
         0.0F,
-        [](const Nexus::PerceptionContext&) {},
-        [](const Nexus::InfluenceContext&) {});
-    light->set_position(*light_pos);
+        [](const Nexus::PerceptionContext&) { },
+        [](const Nexus::InfluenceContext&) { });
+    light->set_position(light_pos);
     light->set_color(glm::vec3(1.0F, 0.9F, 0.7F));
     light->set_intensity(1.5F);
     light->set_radius(4.0F);
-    light->render(mgr, { .target_window = window,
-        .topology = Portal::Graphics::PrimitiveTopology::LINE_LIST });
+
+    light->render(mgr, { .target_window = window, .topology = Portal::Graphics::PrimitiveTopology::LINE_LIST });
     light->get_render_processor(window)->set_view_transform_source(view);
+
     light->set_vertices<LineVertex>(Kakshya::to_line_vertices(
-        Kinesis::cuboid_wireframe(*light_pos, half, glm::vec3(1.0F, 0.9F, 0.7F))));
+        Kinesis::cuboid_wireframe(light_pos, half, glm::vec3(1.0F, 0.9F, 0.7F))));
+
     light->add_influence_target(surf_buf->get_render_processor());
 
     auto fabric = make_persistent_shared<Nexus::Fabric>(
@@ -254,12 +255,12 @@ void compose()
         .finalise();
 
     // Keyboard: move the light
-    constexpr float step = 0.05F;
-    auto move = [&](glm::vec3 delta) {
-        *light_pos += delta;
-        light->set_position(*light_pos);
+    static constexpr float step = 0.05F;
+    auto move = [light, half, &light_pos, &mgr](glm::vec3 delta) {
+        light_pos += delta;
+        light->set_position(light_pos);
         light->set_vertices<LineVertex>(Kakshya::to_line_vertices(
-            Kinesis::cuboid_wireframe(*light_pos, half, glm::vec3(1.0F, 0.9F, 0.7F))));
+            Kinesis::cuboid_wireframe(light_pos, half, glm::vec3(1.0F, 0.9F, 0.7F))));
     };
 
     auto mk_mover = [&](glm::vec3 d) {
@@ -267,12 +268,12 @@ void compose()
             [move, d](const Nexus::InfluenceContext&) { move(d); });
     };
 
-    fabric->wire(mk_mover({ step,  0,     0    })).on(window, IO::Keys::D, true).finalise();
-    fabric->wire(mk_mover({-step,  0,     0    })).on(window, IO::Keys::A, true).finalise();
-    fabric->wire(mk_mover({ 0,     step,  0    })).on(window, IO::Keys::W, true).finalise();
-    fabric->wire(mk_mover({ 0,    -step,  0    })).on(window, IO::Keys::S, true).finalise();
-    fabric->wire(mk_mover({ 0,     0,     step })).on(window, IO::Keys::Q, true).finalise();
-    fabric->wire(mk_mover({ 0,     0,    -step })).on(window, IO::Keys::E, true).finalise();
+    fabric->wire(mk_mover({ step, 0, 0 })).on(window, IO::Keys::D, true).finalise();
+    fabric->wire(mk_mover({ -step, 0, 0 })).on(window, IO::Keys::A, true).finalise();
+    fabric->wire(mk_mover({ 0, step, 0 })).on(window, IO::Keys::W, true).finalise();
+    fabric->wire(mk_mover({ 0, -step, 0 })).on(window, IO::Keys::S, true).finalise();
+    fabric->wire(mk_mover({ 0, 0, step })).on(window, IO::Keys::Q, true).finalise();
+    fabric->wire(mk_mover({ 0, 0, -step })).on(window, IO::Keys::E, true).finalise();
 
     window->show();
 }
