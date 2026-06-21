@@ -78,8 +78,8 @@ All dependencies are required. CMake will not generate if any are missing.
 - fontconfig (system font discovery)
 
 **macOS:**
-- macOS 15+ (Sequoia), Apple Silicon or Intel
-- Apple Clang 16+ via Xcode Command Line Tools
+- macOS 26+ (Tahoe), Apple Silicon or Intel
+- Apple Clang 17+ via Xcode Command Line Tools
 - GLFW (via Homebrew, for windowing)
 - Frameworks linked automatically: CoreAudio, AudioUnit, AudioToolbox, CoreMIDI, AppKit, UniformTypeIdentifiers, CoreFoundation
 
@@ -306,7 +306,7 @@ No. MayaFlux compiles with Apple Clang from Xcode Command Line Tools. Homebrew L
 
 ### What is the minimum macOS version?
 
-macOS 15 (Sequoia) on both Apple Silicon and Intel. Earlier versions lack the C++20 stdlib coverage MayaFlux requires.
+macOS 26 (Tahoe) on both Apple Silicon and Intel. Earlier versions lack the C++20 stdlib coverage MayaFlux requires.
 
 ### What happens if a dependency is missing?
 

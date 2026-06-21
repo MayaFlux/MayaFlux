@@ -31,11 +31,11 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: macos-15
-            name: "macOS 15+ ARM64 (Apple Silicon)"
+          - os: macos-26
+            name: "macOS 26+ ARM64 (Apple Silicon)"
             arch: arm64
-          - os: macos-15-intel
-            name: "macOS 15 x86_64 (Intel)"
+          - os: macos-26-intel
+            name: "macOS 26 x86_64 (Intel)"
             arch: x64
 
     steps:
@@ -47,24 +47,6 @@ jobs:
 
       - name: Install build tools on macOS
         run: brew install md5sha1sum
-
-      - name: Check system Clang C++23 support
-        shell: bash
-        run: |
-          echo "=== System Clang Version ==="
-          clang++ --version
-          echo "=== Testing C++23 standard library support ==="
-          cat > test.cpp << 'EOF'
-          #include <ranges>
-          #include <vector>
-          #include <cstddef>
-          int main() {
-              auto x = 42UZ;
-              auto v = std::views::iota(0, 5) | std::ranges::to<std::vector>();
-              return 0;
-          }
-          EOF
-          clang++ -std=c++2b test.cpp -o test && echo "✅ C++23 features work" || (echo "❌ C++23 features failed" && exit 1)
 
       - name: Setup ccache
         uses: hendrikmuhs/ccache-action@v1.2

@@ -31,7 +31,7 @@ endif()
 
 if(APPLE)
     message(STATUS
-            "Using system Clang on macOS (minimum macOS 14 required for C++23)")
+            "Using system Clang on macOS (minimum macOS 26 required for C++23)")
 endif()
 
 if(WIN32)
