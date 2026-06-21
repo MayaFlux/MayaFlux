@@ -4,33 +4,12 @@
 
 #include <format>
 
-namespace MayaFlux::Journal::fmt {
-using std::format;
-using std::format_string;
-using std::make_format_args;
-using std::vformat;
-}
-
 namespace MayaFlux::Journal {
-
-template <typename... Args>
-using format_string = fmt::format_string<Args...>;
-
-template <typename... Args>
-inline std::string format(format_string<std::remove_cvref_t<Args>...> fmt_str, Args&&... args)
-{
-    return fmt::format(fmt_str, std::forward<Args>(args)...);
-}
 
 template <typename... Args>
 inline std::string format_runtime(std::string_view fmt_str, Args&&... args)
 {
     return std::vformat(fmt_str, std::make_format_args(args...));
-}
-
-inline std::string vformat(std::string_view fmt_str, auto fmt_args)
-{
-    return fmt::vformat(fmt_str, fmt_args);
 }
 
 class Sink;
@@ -288,7 +267,7 @@ inline void format_print(std::string_view message)
  * @param args        The format arguments.
  */
 template <typename... Args>
-inline void format_print(format_string<std::remove_cvref_t<Args>...> fmt_str, Args&&... args)
+inline void format_print(std::format_string<std::remove_cvref_t<Args>...> fmt_str, Args&&... args)
 {
     std::cout << "[MayaFlux] " << format(fmt_str, std::forward<Args>(args)...) << '\n';
 }
@@ -334,7 +313,7 @@ inline void format_print(const char* fmt_str, Args&&... args)
  */
 template <typename... Args>
 [[noreturn]] void fatal(Component component, Context context,
-    std::source_location location, format_string<Args...> fmt_str, Args&&... args)
+    std::source_location location, std::format_string<Args...> fmt_str, Args&&... args)
 {
     auto msg = format(fmt_str, std::forward<Args>(args)...);
     Archivist::instance().scribe(Severity::FATAL, component, context, msg, location);

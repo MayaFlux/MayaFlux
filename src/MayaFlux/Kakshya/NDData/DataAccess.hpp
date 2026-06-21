@@ -81,12 +81,12 @@ public:
     [[nodiscard]] std::string type_description() const
     {
         if (is_structured()) {
-            return Journal::format("{}×{} ({})",
+            return std::format("{}×{} ({})",
                 element_count(),
                 component_count(),
                 modality_to_string(m_modality));
         }
-        return Journal::format("scalar×{} ({})",
+        return std::format("scalar×{} ({})",
             element_count(),
             modality_to_string(m_modality));
     }
