@@ -37,9 +37,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
     container:
-      image: fedora:43
+      image: fedora:44
       options: --privileged
-    name: "Fedora 43 (GCC 15, LLVM 21)"
+    name: "Fedora 44 (GCC 16, LLVM 22)"
 
     steps:
       - name: Checkout code

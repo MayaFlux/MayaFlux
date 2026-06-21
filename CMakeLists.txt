@@ -1,8 +1,4 @@
-if(WIN32)
-    cmake_minimum_required(VERSION 4.0)
-else()
-    cmake_minimum_required(VERSION 3.31...4.3)
-endif()
+cmake_minimum_required(VERSION 4.0)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
