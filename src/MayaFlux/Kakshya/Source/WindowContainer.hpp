@@ -3,6 +3,8 @@
 #include "MayaFlux/Kakshya/SignalSourceContainer.hpp"
 #include "MayaFlux/Portal/Graphics/GraphicsUtils.hpp"
 
+#include "MayaFlux/Transitive/Memory/SeqLock.hpp"
+
 namespace MayaFlux::Core {
 class Window;
 class VKImage;
@@ -183,9 +185,9 @@ public:
     [[nodiscard]] std::vector<uint64_t> linear_index_to_coordinates(uint64_t linear_index) const override;
 
     void clear() override;
-    void lock() override;
-    void unlock() override;
-    bool try_lock() override;
+    void lock() override { }
+    void unlock() override { }
+    bool try_lock() override { return true; }
 
     [[nodiscard]] const void* get_raw_data() const override;
     [[nodiscard]] bool has_data() const override;
@@ -301,8 +303,9 @@ private:
 
     std::function<void(const std::shared_ptr<SignalSourceContainer>&, ProcessingState)> m_state_callback;
 
-    mutable std::shared_mutex m_data_mutex;
-    mutable std::mutex m_state_mutex;
+    mutable Memory::Seqlock m_data_lock;
+    mutable Memory::Seqlock m_region_lock;
+    mutable Memory::Seqlock m_cb_lock;
 
     std::atomic<uint32_t> m_registered_readers { 0 };
     std::atomic<uint32_t> m_consumed_readers { 0 };

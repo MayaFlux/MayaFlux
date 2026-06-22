@@ -144,115 +144,100 @@ void WindowContainer::set_memory_layout(MemoryLayout layout)
 
 std::vector<DataVariant> WindowContainer::get_region_data(const Region& region) const
 {
-    std::shared_lock lock(m_data_mutex);
-
-    if (m_processed_data.empty())
-        return {};
-
-    const auto* src = std::get_if<std::vector<uint8_t>>(&m_processed_data[0]);
-    if (!src || src->empty())
-        return {};
-
-    const auto& dims = m_structure.dimensions;
-    const std::span<const uint8_t> src_span { src->data(), src->size() };
-
     std::vector<DataVariant> result;
 
-    for (const auto& [name, group] : m_region_groups) {
-        for (const auto& r : group.regions) {
-            if (!regions_intersect(r, region))
-                continue;
-            try {
-                result.emplace_back(extract_nd_region<uint8_t>(src_span, r, dims));
-            } catch (const std::exception& e) {
-                MF_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-                    "WindowContainer::get_region_data extraction failed — {}", e.what());
+    seqlock_read_void(m_data_lock, 8, [&] {
+        if (m_processed_data.empty())
+            return;
+        const auto* src = std::get_if<std::vector<uint8_t>>(&m_processed_data[0]);
+        if (!src || src->empty())
+            return;
+
+        const std::span<const uint8_t> src_span { src->data(), src->size() };
+        const auto& dims = m_structure.dimensions;
+
+        for (const auto& [name, group] : m_region_groups) {
+            for (const auto& r : group.regions) {
+                if (!regions_intersect(r, region))
+                    continue;
+                try {
+                    result.emplace_back(extract_nd_region<uint8_t>(src_span, r, dims));
+                } catch (const std::exception& e) {
+                    MF_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+                        "WindowContainer::get_region_data extraction failed : {}", e.what());
+                }
             }
         }
-    }
-
+    });
     return result;
 }
 
 std::shared_ptr<Core::VKImage> WindowContainer::to_image() const
 {
-    std::shared_lock lock(m_data_mutex);
+    std::shared_ptr<Core::VKImage> img;
+    seqlock_read_void(m_data_lock, 8, [&] {
+        if (m_processed_data.empty()) {
+            MF_RT_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+                "WindowContainer::to_image : no readback data available for '{}'",
+                m_window->get_create_info().title);
+            return;
+        }
 
-    if (m_processed_data.empty()) {
-        MF_RT_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-            "WindowContainer::to_image : no readback data available for '{}'",
-            m_window->get_create_info().title);
-        return nullptr;
-    }
+        const auto* pixels = std::get_if<std::vector<uint8_t>>(&m_processed_data[0]);
+        if (!pixels || pixels->empty()) {
+            MF_RT_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+                "WindowContainer::to_image : processed_data[0] is not uint8_t or is empty for '{}'",
+                m_window->get_create_info().title);
+            return;
+        }
 
-    const auto* pixels = std::get_if<std::vector<uint8_t>>(&m_processed_data[0]);
-    if (!pixels || pixels->empty()) {
-        MF_RT_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-            "WindowContainer::to_image : processed_data[0] is not uint8_t or is empty for '{}'",
-            m_window->get_create_info().title);
-        return nullptr;
-    }
+        const auto img_fmt = surface_format_to_image_format(query_surface_format(m_window));
+        img = Portal::Graphics::TextureLoom::instance().create_2d(
+            m_structure.get_width(), m_structure.get_height(), img_fmt, pixels->data());
 
-    const auto fmt = query_surface_format(m_window);
-    const auto img_fmt = surface_format_to_image_format(fmt);
-    const uint32_t w = m_structure.get_width();
-    const uint32_t h = m_structure.get_height();
-
-    auto img = Portal::Graphics::TextureLoom::instance().create_2d(
-        w, h, img_fmt, pixels->data());
-
-    if (!img) {
-        MF_RT_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-            "WindowContainer::to_image : TextureLoom::create_2d failed for '{}'",
-            m_window->get_create_info().title);
-    }
-
+        if (!img) {
+            MF_RT_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+                "WindowContainer::to_image : TextureLoom::create_2d failed for '{}'",
+                m_window->get_create_info().title);
+        }
+    });
     return img;
 }
 
 std::shared_ptr<Core::VKImage> WindowContainer::to_image(
     const std::shared_ptr<Buffers::VKBuffer>& staging) const
 {
-    std::shared_lock lock(m_data_mutex);
-
-    if (m_processed_data.empty()) {
-        MF_RT_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-            "WindowContainer::to_image(staging) : no readback data for '{}'",
-            m_window->get_create_info().title);
-        return nullptr;
-    }
-
-    const auto* pixels = std::get_if<std::vector<uint8_t>>(&m_processed_data[0]);
-    if (!pixels || pixels->empty()) {
-        MF_RT_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-            "WindowContainer::to_image(staging) : processed_data[0] is not uint8_t or is empty for '{}'",
-            m_window->get_create_info().title);
-        return nullptr;
-    }
-
-    const auto fmt = query_surface_format(m_window);
-    const auto img_fmt = surface_format_to_image_format(fmt);
-    const uint32_t w = m_structure.get_width();
-    const uint32_t h = m_structure.get_height();
-
-    auto& loom = Portal::Graphics::TextureLoom::instance();
-
-    auto img = loom.create_2d(w, h, img_fmt, nullptr);
-    if (!img) {
-        MF_RT_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-            "WindowContainer::to_image(staging) : VKImage allocation failed for '{}'",
-            m_window->get_create_info().title);
-        return nullptr;
-    }
-
-    loom.upload_data(img, pixels->data(), pixels->size(), staging);
+    std::shared_ptr<Core::VKImage> img;
+    seqlock_read_void(m_data_lock, 8, [&] {
+        if (m_processed_data.empty()) {
+            MF_RT_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+                "WindowContainer::to_image(staging) : no readback data for '{}'",
+                m_window->get_create_info().title);
+            return;
+        }
+        const auto* pixels = std::get_if<std::vector<uint8_t>>(&m_processed_data[0]);
+        if (!pixels || pixels->empty()) {
+            MF_RT_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+                "WindowContainer::to_image(staging) : processed_data[0] is not uint8_t or is empty for '{}'",
+                m_window->get_create_info().title);
+            return;
+        }
+        const auto img_fmt = surface_format_to_image_format(query_surface_format(m_window));
+        auto& loom = Portal::Graphics::TextureLoom::instance();
+        img = loom.create_2d(m_structure.get_width(), m_structure.get_height(), img_fmt, nullptr);
+        if (!img) {
+            MF_RT_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+                "WindowContainer::to_image(staging) : VKImage allocation failed for '{}'",
+                m_window->get_create_info().title);
+            return;
+        }
+        loom.upload_data(img, pixels->data(), pixels->size(), staging);
+    });
     return img;
 }
 
 std::shared_ptr<Core::VKImage> WindowContainer::image_at(uint32_t frame_index) const
 {
-    std::shared_lock lock(m_data_mutex);
-
     if (frame_index >= m_data.size()) {
         MF_RT_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
             "WindowContainer::to_image({}) : out of range (capacity={})",
@@ -260,43 +245,42 @@ std::shared_ptr<Core::VKImage> WindowContainer::image_at(uint32_t frame_index) c
         return nullptr;
     }
 
-    {
-        const uint64_t written = m_frames_written.load(std::memory_order_acquire);
-        const uint32_t head = m_write_head.load(std::memory_order_acquire);
-        const bool ring_full = written >= m_frame_capacity;
-        const bool slot_valid = ring_full || frame_index < head;
-        if (!slot_valid) {
-            MF_RT_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-                "WindowContainer::image_at({}) : frame index is ahead of write head ({}), data may be stale or uninitialized",
-                frame_index, head);
-            return nullptr;
-        }
-    }
+    const uint64_t written = m_frames_written.load(std::memory_order_acquire);
+    const uint32_t head = m_write_head.load(std::memory_order_acquire);
+    const bool ring_full = written >= m_frame_capacity;
 
-    const auto* pixels = std::get_if<std::vector<uint8_t>>(&m_data[frame_index]);
-    if (!pixels || pixels->empty()) {
+    if (!ring_full && frame_index >= head) {
         MF_RT_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-            "WindowContainer::image_at({}) : slot is empty", frame_index);
+            "WindowContainer::image_at({}) : frame index is ahead of write head ({}), data may be stale or uninitialized",
+            frame_index, head);
         return nullptr;
     }
 
-    const auto img_fmt = surface_format_to_image_format(query_surface_format(m_window));
-    auto img = Portal::Graphics::TextureLoom::instance().create_2d(
-        m_structure.get_width(), m_structure.get_height(), img_fmt, pixels->data());
+    std::shared_ptr<Core::VKImage> img;
 
-    if (!img) {
-        MF_RT_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-            "WindowContainer::image_at({}) : TextureLoom::create_2d failed", frame_index);
-    }
+    seqlock_read_void(m_data_lock, 8, [&] {
+        const auto* pixels = std::get_if<std::vector<uint8_t>>(&m_data[frame_index]);
+        if (!pixels || pixels->empty()) {
+            MF_RT_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+                "WindowContainer::image_at({}) : slot is empty", frame_index);
+            return;
+        }
 
+        const auto img_fmt = surface_format_to_image_format(query_surface_format(m_window));
+        img = Portal::Graphics::TextureLoom::instance().create_2d(
+            m_structure.get_width(), m_structure.get_height(), img_fmt, pixels->data());
+
+        if (!img) {
+            MF_RT_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+                "WindowContainer::image_at({}) : TextureLoom::create_2d failed", frame_index);
+        }
+    });
     return img;
 }
 
 std::shared_ptr<Core::VKImage> WindowContainer::image_at(
     uint32_t frame_index, const std::shared_ptr<Buffers::VKBuffer>& staging) const
 {
-    std::shared_lock lock(m_data_mutex);
-
     if (frame_index >= m_data.size()) {
         MF_RT_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
             "WindowContainer::image_at(staging, {}) : out of range (capacity={})",
@@ -304,95 +288,88 @@ std::shared_ptr<Core::VKImage> WindowContainer::image_at(
         return nullptr;
     }
 
-    {
-        const uint64_t written = m_frames_written.load(std::memory_order_acquire);
-        const uint32_t head = m_write_head.load(std::memory_order_acquire);
-        const bool ring_full = written >= m_frame_capacity;
-        const bool slot_valid = ring_full || frame_index < head;
-        if (!slot_valid) {
-            MF_RT_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-                "WindowContainer::image_at(staging, {}) : frame index is ahead of write head ({}), data may be stale or uninitialized",
-                frame_index, head);
-            return nullptr;
-        }
-    }
-
-    const auto* pixels = std::get_if<std::vector<uint8_t>>(&m_data[frame_index]);
-    if (!pixels || pixels->empty()) {
+    const uint64_t written = m_frames_written.load(std::memory_order_acquire);
+    const uint32_t head = m_write_head.load(std::memory_order_acquire);
+    const bool ring_full = written >= m_frame_capacity;
+    if (!ring_full && frame_index >= head) {
         MF_RT_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-            "WindowContainer::image_at(staging, {}) — slot is empty", frame_index);
+            "WindowContainer::image_at(staging, {}) : frame index is ahead of write head ({}), data may be stale or uninitialized",
+            frame_index, head);
         return nullptr;
     }
 
-    const auto img_fmt = surface_format_to_image_format(query_surface_format(m_window));
-    auto& loom = Portal::Graphics::TextureLoom::instance();
+    std::shared_ptr<Core::VKImage> img;
+    seqlock_read_void(m_data_lock, 8, [&] {
+        const auto* pixels = std::get_if<std::vector<uint8_t>>(&m_data[frame_index]);
+        if (!pixels || pixels->empty()) {
+            MF_RT_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+                "WindowContainer::image_at(staging, {}) — slot is empty", frame_index);
+            return;
+        }
 
-    auto img = loom.create_2d(
-        m_structure.get_width(), m_structure.get_height(), img_fmt, nullptr);
-    if (!img) {
-        MF_RT_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-            "WindowContainer::image_at(staging, {}) : VKImage allocation failed", frame_index);
-        return nullptr;
-    }
+        const auto img_fmt = surface_format_to_image_format(query_surface_format(m_window));
+        auto& loom = Portal::Graphics::TextureLoom::instance();
+        img = loom.create_2d(m_structure.get_width(), m_structure.get_height(), img_fmt, nullptr);
 
-    loom.upload_data(img, pixels->data(), pixels->size(), staging);
+        if (!img) {
+            MF_RT_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+                "WindowContainer::image_at(staging, {}) : VKImage allocation failed", frame_index);
+            return;
+        }
+        loom.upload_data(img, pixels->data(), pixels->size(), staging);
+    });
     return img;
 }
 
 std::shared_ptr<Core::VKImage> WindowContainer::region_to_image(const Region& region) const
 {
-    std::shared_lock lock(m_data_mutex);
-
-    if (m_processed_data.empty()) {
-        MF_RT_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-            "WindowContainer::region_to_image — no readback data for '{}'",
-            m_window->get_create_info().title);
-        return nullptr;
-    }
-
-    const auto* src = std::get_if<std::vector<uint8_t>>(&m_processed_data[0]);
-    if (!src || src->empty()) {
-        MF_RT_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-            "WindowContainer::region_to_image — processed_data[0] is not uint8_t or is empty for '{}'",
-            m_window->get_create_info().title);
-        return nullptr;
-    }
-
-    std::vector<uint8_t> cropped;
-    try {
-        cropped = extract_region_data<uint8_t>(
-            std::span<const uint8_t> { src->data(), src->size() },
-            region,
-            m_structure.dimensions);
-    } catch (const std::exception& e) {
-        MF_RT_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-            "WindowContainer::region_to_image — crop failed for '{}': {}",
-            m_window->get_create_info().title, e.what());
-        return nullptr;
-    }
-
     if (region.start_coordinates.size() < 2 || region.end_coordinates.size() < 2) {
         MF_RT_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
             "WindowContainer::region_to_image — region must have at least 2 coordinates (SPATIAL_Y, SPATIAL_X)");
         return nullptr;
     }
 
-    const auto rh = static_cast<uint32_t>(
-        region.end_coordinates[0] - region.start_coordinates[0] + 1);
-    const auto rw = static_cast<uint32_t>(
-        region.end_coordinates[1] - region.start_coordinates[1] + 1);
+    std::shared_ptr<Core::VKImage> img;
+    seqlock_read_void(m_data_lock, 8, [&] {
+        if (m_processed_data.empty()) {
+            MF_RT_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+                "WindowContainer::region_to_image — no readback data for '{}'",
+                m_window->get_create_info().title);
+            return;
+        }
 
-    const auto fmt = query_surface_format(m_window);
-    const auto img_fmt = surface_format_to_image_format(fmt);
+        const auto* src = std::get_if<std::vector<uint8_t>>(&m_processed_data[0]);
+        if (!src || src->empty()) {
+            MF_RT_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+                "WindowContainer::region_to_image — processed_data[0] is not uint8_t or is empty for '{}'",
+                m_window->get_create_info().title);
+            return;
+        }
 
-    auto img = Portal::Graphics::TextureLoom::instance().create_2d(
-        rw, rh, img_fmt, cropped.data());
+        std::vector<uint8_t> cropped;
+        try {
+            cropped = extract_region_data<uint8_t>(
+                std::span<const uint8_t> { src->data(), src->size() },
+                region,
+                m_structure.dimensions);
+        } catch (const std::exception& e) {
+            MF_RT_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+                "WindowContainer::region_to_image — crop failed for '{}': {}",
+                m_window->get_create_info().title, e.what());
+            return;
+        }
 
-    if (!img) {
-        MF_RT_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-            "WindowContainer::region_to_image — TextureLoom::create_2d failed ({}x{}) for '{}'",
-            rw, rh, m_window->get_create_info().title);
-    }
+        const auto rh = static_cast<uint32_t>(region.end_coordinates[0] - region.start_coordinates[0] + 1);
+        const auto rw = static_cast<uint32_t>(region.end_coordinates[1] - region.start_coordinates[1] + 1);
+        const auto img_fmt = surface_format_to_image_format(query_surface_format(m_window));
+
+        img = Portal::Graphics::TextureLoom::instance().create_2d(rw, rh, img_fmt, cropped.data());
+        if (!img) {
+            MF_RT_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+                "WindowContainer::region_to_image — TextureLoom::create_2d failed ({}x{}) for '{}'",
+                rw, rh, m_window->get_create_info().title);
+        }
+    });
 
     return img;
 }
@@ -405,14 +382,20 @@ void WindowContainer::set_region_data(const Region& /*region*/, const std::vecto
 
 std::vector<DataVariant> WindowContainer::get_region_group_data(const RegionGroup& /*group*/) const
 {
-    std::shared_lock lock(m_data_mutex);
-    return m_processed_data;
+    std::optional<std::vector<DataVariant>> result;
+    seqlock_read_void(m_data_lock, 8, [&] {
+        result = m_processed_data;
+    });
+    return result.value_or(std::vector<DataVariant> {});
 }
 
 std::vector<DataVariant> WindowContainer::get_segments_data(const std::vector<RegionSegment>& /*segments*/) const
 {
-    std::shared_lock lock(m_data_mutex);
-    return m_processed_data;
+    std::optional<std::vector<DataVariant>> result;
+    seqlock_read_void(m_data_lock, 8, [&] {
+        result = m_processed_data;
+    });
+    return result.value_or(std::vector<DataVariant> {});
 }
 
 uint64_t WindowContainer::coordinates_to_linear_index(const std::vector<uint64_t>& coordinates) const
@@ -427,16 +410,14 @@ std::vector<uint64_t> WindowContainer::linear_index_to_coordinates(uint64_t inde
 
 void WindowContainer::clear()
 {
-    std::unique_lock lock(m_data_mutex);
     const size_t sz = m_structure.get_total_elements();
-    m_processed_data.resize(1);
-    m_processed_data[0] = std::vector<uint8_t>(sz, 0U);
+    {
+        Memory::SeqlockWriteGuard g(m_data_lock);
+        m_processed_data.resize(1);
+        m_processed_data[0] = std::vector<uint8_t>(sz, 0U);
+    }
     update_processing_state(ProcessingState::IDLE);
 }
-
-void WindowContainer::lock() { m_data_mutex.lock(); }
-void WindowContainer::unlock() { m_data_mutex.unlock(); }
-bool WindowContainer::try_lock() { return m_data_mutex.try_lock(); }
 
 const void* WindowContainer::get_raw_data() const
 {
@@ -448,10 +429,13 @@ const void* WindowContainer::get_raw_data() const
 
 bool WindowContainer::has_data() const
 {
-    std::shared_lock lock(m_data_mutex);
-    if (m_processed_data.empty())
-        return false;
-    return std::visit([](const auto& v) { return !v.empty(); }, m_processed_data[0]);
+    bool result = false;
+    seqlock_read_void(m_data_lock, 8, [&] {
+        if (m_processed_data.empty())
+            return;
+        result = std::visit([](const auto& v) { return !v.empty(); }, m_processed_data[0]);
+    });
+    return result;
 }
 
 void WindowContainer::load_region(const Region& /*region*/)
@@ -473,7 +457,7 @@ bool WindowContainer::is_region_loaded(const Region& /*region*/) const
 
 void WindowContainer::handle_surface_resize()
 {
-    std::unique_lock lock(m_data_mutex);
+    Memory::SeqlockWriteGuard g(m_data_lock);
     m_write_head.store(0, std::memory_order_release);
     m_frames_written.store(0, std::memory_order_release);
     setup_dimensions();
@@ -485,27 +469,33 @@ void WindowContainer::handle_surface_resize()
 
 void WindowContainer::add_region_group(const RegionGroup& group)
 {
-    std::lock_guard lock(m_state_mutex);
+    Memory::SeqlockWriteGuard g(m_region_lock);
     m_region_groups[group.name] = group;
 }
 
 RegionGroup WindowContainer::get_region_group(const std::string& name) const
 {
     static const RegionGroup empty;
-    std::shared_lock lock(m_data_mutex);
-    auto it = m_region_groups.find(name);
-    return it != m_region_groups.end() ? it->second : empty;
+    std::optional<RegionGroup> result;
+    seqlock_read_void(m_region_lock, 8, [&] {
+        auto it = m_region_groups.find(name);
+        result = (it != m_region_groups.end()) ? it->second : empty;
+    });
+    return result.value_or(empty);
 }
 
 std::unordered_map<std::string, RegionGroup> WindowContainer::get_all_region_groups() const
 {
-    std::shared_lock lock(m_data_mutex);
-    return m_region_groups;
+    std::optional<std::unordered_map<std::string, RegionGroup>> result;
+    seqlock_read_void(m_region_lock, 8, [&] {
+        result = m_region_groups;
+    });
+    return result.value_or(std::unordered_map<std::string, RegionGroup> {});
 }
 
 void WindowContainer::remove_region_group(const std::string& name)
 {
-    std::lock_guard lock(m_state_mutex);
+    Memory::SeqlockWriteGuard g(m_region_lock);
     m_region_groups.erase(name);
 }
 
@@ -524,21 +514,22 @@ void WindowContainer::update_processing_state(ProcessingState new_state)
     if (old == new_state)
         return;
 
-    std::lock_guard lock(m_state_mutex);
-    if (m_state_callback)
-        m_state_callback(shared_from_this(), new_state);
+    seqlock_read_void(m_cb_lock, 8, [&] {
+        if (m_state_callback)
+            m_state_callback(shared_from_this(), new_state);
+    });
 }
 
 void WindowContainer::register_state_change_callback(
     std::function<void(const std::shared_ptr<SignalSourceContainer>&, ProcessingState)> callback)
 {
-    std::lock_guard lock(m_state_mutex);
+    Memory::SeqlockWriteGuard g(m_cb_lock);
     m_state_callback = std::move(callback);
 }
 
 void WindowContainer::unregister_state_change_callback()
 {
-    std::lock_guard lock(m_state_mutex);
+    Memory::SeqlockWriteGuard g(m_cb_lock);
     m_state_callback = nullptr;
 }
 
@@ -687,60 +678,54 @@ void WindowContainer::get_frames_impl(
 
 auto WindowContainer::get_frame_typed(uint64_t frame_index) const -> std::span<const uint8_t>
 {
-    std::shared_lock lock(m_data_mutex);
+    std::span<const uint8_t> result;
+    seqlock_read_void(m_data_lock, 8, [&] {
+        const uint64_t h = m_structure.get_height();
+        if (frame_index >= h || m_processed_data.empty())
+            return;
 
-    const uint64_t h = m_structure.get_height();
-    if (frame_index >= h || m_processed_data.empty()) {
-        return {};
-    }
+        const auto* pixels = std::get_if<std::vector<uint8_t>>(&m_processed_data[0]);
+        if (!pixels || pixels->empty())
+            return;
 
-    const auto* pixels = std::get_if<std::vector<uint8_t>>(&m_processed_data[0]);
-    if (!pixels || pixels->empty()) {
-        return {};
-    }
+        const uint64_t row_elems = m_structure.get_width() * m_structure.get_channel_count();
+        const uint64_t offset = frame_index * row_elems;
+        if (offset + row_elems > pixels->size())
+            return;
 
-    const uint64_t w = m_structure.get_width();
-    const uint64_t c = m_structure.get_channel_count();
-    const uint64_t row_elems = w * c;
-    const uint64_t offset = frame_index * row_elems;
+        result = std::span<const uint8_t>(pixels->data() + offset, row_elems);
+    });
 
-    if (offset + row_elems > pixels->size()) {
-        return {};
-    }
-
-    return { pixels->data() + offset, row_elems };
+    return result;
 }
 
 void WindowContainer::get_frames_typed(std::span<uint8_t> output, uint64_t start_frame, uint64_t num_frames) const
 {
-    std::shared_lock lock(m_data_mutex);
+    seqlock_read_void(m_data_lock, 8, [&] {
+        const uint64_t h = m_structure.get_height();
+        if (start_frame >= h || output.empty() || m_processed_data.empty()) {
+            std::ranges::fill(output, uint8_t { 0 });
+            return;
+        }
 
-    const uint64_t h = m_structure.get_height();
-    if (start_frame >= h || output.empty() || m_processed_data.empty()) {
-        std::ranges::fill(output, uint8_t { 0 });
-        return;
-    }
+        const auto* pixels = std::get_if<std::vector<uint8_t>>(&m_processed_data[0]);
+        if (!pixels || pixels->empty()) {
+            std::ranges::fill(output, uint8_t { 0 });
+            return;
+        }
 
-    const auto* pixels = std::get_if<std::vector<uint8_t>>(&m_processed_data[0]);
-    if (!pixels || pixels->empty()) {
-        std::ranges::fill(output, uint8_t { 0 });
-        return;
-    }
+        const uint64_t row_elems = m_structure.get_width() * m_structure.get_channel_count();
+        const uint64_t frames_to_copy = std::min(num_frames, h - start_frame);
+        const uint64_t elems_to_copy = std::min(frames_to_copy * row_elems, static_cast<uint64_t>(output.size()));
+        const uint64_t src_offset = start_frame * row_elems;
 
-    const uint64_t w = m_structure.get_width();
-    const uint64_t c = m_structure.get_channel_count();
-    const uint64_t row_elems = w * c;
-    const uint64_t frames_to_copy = std::min(num_frames, h - start_frame);
-    const uint64_t elems_to_copy = std::min(frames_to_copy * row_elems, static_cast<uint64_t>(output.size()));
+        std::copy_n(pixels->begin() + static_cast<std::ptrdiff_t>(src_offset),
+            static_cast<std::ptrdiff_t>(elems_to_copy),
+            output.begin());
 
-    const uint64_t src_offset = start_frame * row_elems;
-    std::copy_n(pixels->begin() + static_cast<std::ptrdiff_t>(src_offset),
-        static_cast<std::ptrdiff_t>(elems_to_copy),
-        output.begin());
-
-    if (elems_to_copy < output.size()) {
-        std::fill(output.begin() + static_cast<std::ptrdiff_t>(elems_to_copy), output.end(), uint8_t { 0 });
-    }
+        if (elems_to_copy < output.size())
+            std::fill(output.begin() + static_cast<std::ptrdiff_t>(elems_to_copy), output.end(), uint8_t { 0 });
+    });
 }
 
 void WindowContainer::get_value_impl(
@@ -748,22 +733,21 @@ void WindowContainer::get_value_impl(
     void* out,
     const std::type_info& type) const
 {
-    if (type != typeid(uint8_t) || coords.size() < 3 || m_processed_data.empty())
-        return;
-
-    const auto* pixels = std::get_if<std::vector<uint8_t>>(&m_processed_data[0]);
-    if (!pixels)
+    if (type != typeid(uint8_t) || coords.size() < 3)
         return;
 
     const uint64_t w = m_structure.get_width();
     const uint64_t c = m_structure.get_channel_count();
     const uint64_t idx = (coords[0] * w + coords[1]) * c + coords[2];
 
-    if (idx >= pixels->size())
-        return;
-
-    std::shared_lock lock(m_data_mutex);
-    *static_cast<uint8_t*>(out) = (*pixels)[idx];
+    seqlock_read_void(m_data_lock, 8, [&] {
+        if (m_processed_data.empty())
+            return;
+        const auto* pixels = std::get_if<std::vector<uint8_t>>(&m_processed_data[0]);
+        if (!pixels || idx >= pixels->size())
+            return;
+        *static_cast<uint8_t*>(out) = (*pixels)[idx];
+    });
 }
 
 } // namespace MayaFlux::Kakshya
