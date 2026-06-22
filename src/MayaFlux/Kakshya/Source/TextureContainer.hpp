@@ -3,6 +3,8 @@
 #include "MayaFlux/Kakshya/SignalSourceContainer.hpp"
 #include "MayaFlux/Portal/Graphics/GraphicsUtils.hpp"
 
+#include "MayaFlux/Transitive/Memory/SeqLock.hpp"
+
 namespace MayaFlux::Core {
 class VKImage;
 }
@@ -346,9 +348,9 @@ public:
     [[nodiscard]] std::unordered_map<std::string, RegionGroup> get_all_region_groups() const override;
     void remove_region_group(const std::string& name) override;
 
-    void lock() override;
-    void unlock() override;
-    [[nodiscard]] bool try_lock() override;
+    void lock() override { }
+    void unlock() override { }
+    [[nodiscard]] bool try_lock() override { return true; }
 
     [[nodiscard]] const void* get_raw_data() const override;
     [[nodiscard]] bool has_data() const override;
@@ -437,7 +439,7 @@ private:
     std::atomic<bool> m_ready_for_processing { false };
     std::atomic<int> m_processing_token { -1 };
 
-    mutable std::shared_mutex m_data_mutex;
+    Memory::SeqlockArray m_slot_locks;
     std::mutex m_state_mutex;
 
     std::function<void(const std::shared_ptr<SignalSourceContainer>&, ProcessingState)> m_state_cb;

@@ -188,6 +188,7 @@ TextureContainer::TextureContainer(uint32_t width, uint32_t height, ImageFormat 
         m_data.emplace_back(make_empty_storage(m_format, element_count));
     }
 
+    m_slot_locks.resize(m_data.size());
     setup_dimensions();
 
     m_ready_for_processing.store(true);
@@ -244,23 +245,21 @@ void TextureContainer::from_image(const std::shared_ptr<Core::VKImage>& image, u
     }
 
     const size_t sz = byte_size();
-
     const size_t element_count = static_cast<size_t>(m_width) * m_height * m_channels;
-    m_data[layer] = make_empty_storage(m_format, element_count);
 
-    auto [ptr, bytes] = variant_bytes_mut(m_data[layer]);
-    if (!ptr || bytes != sz) {
-        MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-            "TextureContainer::from_image variant size mismatch ({} vs {})", bytes, sz);
-        return;
+    {
+        Memory::SeqlockWriteGuard g(m_slot_locks[layer]);
+        m_data[layer] = make_empty_storage(m_format, element_count);
+        auto [ptr, bytes] = variant_bytes_mut(m_data[layer]);
+        if (!ptr || bytes != sz) {
+            MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+                "TextureContainer::from_image variant size mismatch ({} vs {})", bytes, sz);
+            return;
+        }
+        TextureLoom::instance().download_data(image, ptr, sz, nullptr);
     }
 
-    TextureLoom::instance().download_data(image, ptr, sz, nullptr);
-
     update_processing_state(ProcessingState::READY);
-
-    MF_DEBUG(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-        "TextureContainer: downloaded {} bytes from VKImage", sz);
 }
 
 void TextureContainer::from_image(
@@ -276,24 +275,24 @@ void TextureContainer::from_image(
 
     if (layer >= m_data.size()) {
         MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-            "TextureContainer::from_image(staging) layer {} out of range ({})",
-            layer, m_data.size());
+            "TextureContainer::from_image(staging) layer {} out of range ({})", layer, m_data.size());
         return;
     }
 
     const size_t sz = byte_size();
     const size_t element_count = static_cast<size_t>(m_width) * m_height * m_channels;
-    m_data[layer] = make_empty_storage(m_format, element_count);
 
-    auto [ptr, bytes] = variant_bytes_mut(m_data[layer]);
-    if (!ptr || bytes != sz) {
-        MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-            "TextureContainer::from_image(staging) variant size mismatch ({} vs {})",
-            bytes, sz);
-        return;
+    {
+        Memory::SeqlockWriteGuard g(m_slot_locks[layer]);
+        m_data[layer] = make_empty_storage(m_format, element_count);
+        auto [ptr, bytes] = variant_bytes_mut(m_data[layer]);
+        if (!ptr || bytes != sz) {
+            MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+                "TextureContainer::from_image(staging) variant size mismatch ({} vs {})", bytes, sz);
+            return;
+        }
+        TextureLoom::instance().download_data(image, ptr, sz, staging);
     }
-
-    TextureLoom::instance().download_data(image, ptr, sz, staging);
 
     update_processing_state(ProcessingState::READY);
 }
@@ -314,14 +313,13 @@ void TextureContainer::from_image_array(const std::shared_ptr<Core::VKImage>& im
         return;
     }
 
-    // Download is done as one contiguous block and split into per-layer slots.
     const size_t layer_bytes = byte_size();
     std::vector<uint8_t> combined(layer_bytes * n);
     TextureLoom::instance().download_data(image, combined.data(), combined.size(), nullptr);
 
-    std::unique_lock lock(m_data_mutex);
+    const size_t element_count = static_cast<size_t>(m_width) * m_height * m_channels;
     for (uint32_t i = 0; i < n; ++i) {
-        const size_t element_count = static_cast<size_t>(m_width) * m_height * m_channels;
+        Memory::SeqlockWriteGuard g(m_slot_locks[i]);
         m_data[i] = make_empty_storage(m_format, element_count);
         auto [ptr, bytes] = variant_bytes_mut(m_data[i]);
         if (ptr && bytes == layer_bytes)
@@ -353,9 +351,9 @@ void TextureContainer::from_image_array(
     std::vector<uint8_t> combined(layer_bytes * n);
     TextureLoom::instance().download_data(image, combined.data(), combined.size(), staging);
 
-    std::unique_lock lock(m_data_mutex);
+    const size_t element_count = static_cast<size_t>(m_width) * m_height * m_channels;
     for (uint32_t i = 0; i < n; ++i) {
-        const size_t element_count = static_cast<size_t>(m_width) * m_height * m_channels;
+        Memory::SeqlockWriteGuard g(m_slot_locks[i]);
         m_data[i] = make_empty_storage(m_format, element_count);
         auto [ptr, bytes] = variant_bytes_mut(m_data[i]);
         if (ptr && bytes == layer_bytes)
@@ -367,22 +365,20 @@ void TextureContainer::from_image_array(
 
 std::shared_ptr<Core::VKImage> TextureContainer::to_image(uint32_t layer) const
 {
-    std::shared_lock lock(m_data_mutex);
-
     if (layer >= m_data.size()) {
         MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
             "TextureContainer::to_image layer {} out of range ({})", layer, m_data.size());
         return nullptr;
     }
 
-    auto [ptr, bytes] = variant_bytes(m_data[layer]);
-    if (!ptr || bytes == 0) {
-        MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-            "TextureContainer::to_image called on empty/invalid buffer");
-        return nullptr;
-    }
+    std::shared_ptr<Core::VKImage> img;
+    seqlock_read_void(m_slot_locks[layer], 8, [&] {
+        auto [ptr, bytes] = variant_bytes(m_data[layer]);
+        if (!ptr || bytes == 0)
+            return;
+        img = TextureLoom::instance().create_2d(m_width, m_height, m_format, ptr);
+    });
 
-    auto img = TextureLoom::instance().create_2d(m_width, m_height, m_format, ptr);
     if (!img) {
         MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
             "TextureContainer::to_image: TextureLoom failed to create VKImage");
@@ -393,99 +389,105 @@ std::shared_ptr<Core::VKImage> TextureContainer::to_image(uint32_t layer) const
 std::shared_ptr<Core::VKImage> TextureContainer::to_image(
     uint32_t layer, const std::shared_ptr<Buffers::VKBuffer>& staging) const
 {
-    std::shared_lock lock(m_data_mutex);
-
     if (layer >= m_data.size()) {
         MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
             "TextureContainer::to_image(staging) layer {} out of range ({})", layer, m_data.size());
         return nullptr;
     }
 
-    auto [ptr, bytes] = variant_bytes(m_data[layer]);
-    if (!ptr || bytes == 0) {
-        MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-            "TextureContainer::to_image(staging) called on empty/invalid buffer");
-        return nullptr;
-    }
-
-    auto& loom = TextureLoom::instance();
-
-    auto img = loom.create_2d(m_width, m_height, m_format, nullptr);
-    if (!img) {
-        MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-            "TextureContainer::to_image(staging): VKImage allocation failed");
-        return nullptr;
-    }
-
-    loom.upload_data(img, ptr, bytes, staging);
+    std::shared_ptr<Core::VKImage> img;
+    seqlock_read_void(m_slot_locks[layer], 8, [&] {
+        auto [ptr, bytes] = variant_bytes(m_data[layer]);
+        if (!ptr || bytes == 0) {
+            MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+                "TextureContainer::to_image(staging) called on empty/invalid buffer");
+            return;
+        }
+        auto& loom = TextureLoom::instance();
+        img = loom.create_2d(m_width, m_height, m_format, nullptr);
+        if (!img) {
+            MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+                "TextureContainer::to_image(staging): VKImage allocation failed");
+            return;
+        }
+        loom.upload_data(img, ptr, bytes, staging);
+    });
     return img;
 }
 
 std::shared_ptr<Core::VKImage> TextureContainer::to_image_array() const
 {
-    std::shared_lock lock(m_data_mutex);
-
     const auto n = static_cast<uint32_t>(m_data.size());
     if (n == 0)
         return nullptr;
 
     if (n == 1) {
-        auto [ptr, bytes] = variant_bytes(m_data[0]);
-        if (!ptr || bytes == 0)
-            return nullptr;
-        return TextureLoom::instance().create_2d(m_width, m_height, m_format, ptr);
-    }
-
-    const size_t layer_bytes = byte_size();
-    std::vector<uint8_t> combined(layer_bytes * n);
-
-    for (uint32_t i = 0; i < n; ++i) {
-        auto [ptr, bytes] = variant_bytes(m_data[i]);
-        if (!ptr || bytes != layer_bytes) {
-            MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-                "TextureContainer::to_image_array layer {} has unexpected byte count "
-                "({} vs {})",
-                i, bytes, layer_bytes);
-            return nullptr;
-        }
-        std::memcpy(combined.data() + i * layer_bytes, ptr, layer_bytes);
-    }
-
-    return TextureLoom::instance().create_2d_array(
-        m_width, m_height, n, m_format, combined.data());
-}
-
-std::shared_ptr<Core::VKImage> TextureContainer::to_image_array(
-    const std::shared_ptr<Buffers::VKBuffer>& staging) const
-{
-    std::shared_lock lock(m_data_mutex);
-
-    const auto n = static_cast<uint32_t>(m_data.size());
-    if (n == 0)
-        return nullptr;
-
-    if (n == 1) {
-        auto [ptr, bytes] = variant_bytes(m_data[0]);
-        if (!ptr || bytes == 0)
-            return nullptr;
-        auto& loom = TextureLoom::instance();
-        auto img = loom.create_2d(m_width, m_height, m_format, nullptr);
-        if (!img)
-            return nullptr;
-        loom.upload_data(img, ptr, bytes, staging);
+        std::shared_ptr<Core::VKImage> img;
+        seqlock_read_void(m_slot_locks[0], 8, [&] {
+            auto [ptr, bytes] = variant_bytes(m_data[0]);
+            if (!ptr || bytes == 0)
+                return;
+            img = TextureLoom::instance().create_2d(m_width, m_height, m_format, ptr);
+        });
         return img;
     }
 
     const size_t layer_bytes = byte_size();
     std::vector<uint8_t> combined(layer_bytes * n);
     for (uint32_t i = 0; i < n; ++i) {
-        auto [ptr, bytes] = variant_bytes(m_data[i]);
-        if (!ptr || bytes != layer_bytes) {
-            MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-                "TextureContainer::to_image_array(staging) layer {} size mismatch", i);
+        bool ok = seqlock_read_void(m_slot_locks[i], 8, [&] {
+            auto [ptr, bytes] = variant_bytes(m_data[i]);
+            if (!ptr || bytes != layer_bytes) {
+                MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+                    "TextureContainer::to_image_array layer {} has unexpected byte count ({} vs {})",
+                    i, bytes, layer_bytes);
+                return;
+            }
+            std::memcpy(combined.data() + i * layer_bytes, ptr, layer_bytes);
+        });
+        if (!ok)
             return nullptr;
-        }
-        std::memcpy(combined.data() + i * layer_bytes, ptr, layer_bytes);
+    }
+
+    return TextureLoom::instance().create_2d_array(m_width, m_height, n, m_format, combined.data());
+}
+
+std::shared_ptr<Core::VKImage> TextureContainer::to_image_array(
+    const std::shared_ptr<Buffers::VKBuffer>& staging) const
+{
+    const auto n = static_cast<uint32_t>(m_data.size());
+    if (n == 0)
+        return nullptr;
+
+    if (n == 1) {
+        std::shared_ptr<Core::VKImage> img;
+        seqlock_read_void(m_slot_locks[0], 8, [&] {
+            auto [ptr, bytes] = variant_bytes(m_data[0]);
+            if (!ptr || bytes == 0)
+                return;
+            auto& loom = TextureLoom::instance();
+            img = loom.create_2d(m_width, m_height, m_format, nullptr);
+            if (img)
+                loom.upload_data(img, ptr, bytes, staging);
+        });
+        return img;
+    }
+
+    const size_t layer_bytes = byte_size();
+    std::vector<uint8_t> combined(layer_bytes * n);
+    for (uint32_t i = 0; i < n; ++i) {
+        bool ok = seqlock_read_void(m_slot_locks[i], 8, [&] {
+            auto [ptr, bytes] = variant_bytes(m_data[i]);
+            if (!ptr || bytes != layer_bytes) {
+                MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+                    "TextureContainer::to_image_array(staging) layer {} size mismatch", i);
+                return;
+            }
+            std::memcpy(combined.data() + i * layer_bytes, ptr, layer_bytes);
+        });
+
+        if (!ok)
+            return nullptr;
     }
 
     auto& loom = TextureLoom::instance();
@@ -560,7 +562,8 @@ void TextureContainer::set_pixels(std::span<const uint8_t> data, uint32_t layer)
             data.size(), buf->size());
         return;
     }
-    std::unique_lock lock(m_data_mutex);
+
+    Memory::SeqlockWriteGuard g(m_slot_locks[layer]);
     std::ranges::copy(data, buf->begin());
 }
 
@@ -584,7 +587,8 @@ void TextureContainer::set_pixels(std::span<const uint16_t> data, uint32_t layer
             data.size(), buf->size());
         return;
     }
-    std::unique_lock lock(m_data_mutex);
+
+    Memory::SeqlockWriteGuard g(m_slot_locks[layer]);
     std::ranges::copy(data, buf->begin());
 }
 
@@ -608,7 +612,8 @@ void TextureContainer::set_pixels(std::span<const float> data, uint32_t layer)
             data.size(), buf->size());
         return;
     }
-    std::unique_lock lock(m_data_mutex);
+
+    Memory::SeqlockWriteGuard g(m_slot_locks[layer]);
     std::ranges::copy(data, buf->begin());
 }
 
@@ -648,33 +653,49 @@ uint64_t TextureContainer::get_num_frames() const
 
 std::vector<DataVariant> TextureContainer::get_region_data(const Region& region) const
 {
-    std::shared_lock lock(m_data_mutex);
     if (m_data.empty())
         return {};
 
-    return std::visit(
-        [&](const auto& vec) -> std::vector<DataVariant> {
-            using T = typename std::decay_t<decltype(vec)>::value_type;
-            if constexpr (std::is_same_v<T, uint8_t>
-                || std::is_same_v<T, uint16_t>
-                || std::is_same_v<T, float>) {
-                auto extracted = extract_region_data<T>(
-                    std::span<const T>(vec.data(), vec.size()),
-                    region,
-                    m_structure.dimensions);
-                return { DataVariant(std::move(extracted)) };
-            } else {
-                return {};
-            }
-        },
-        m_data[0]);
+    const size_t layer = (m_data.size() > 1 && !region.start_coordinates.empty())
+        ? static_cast<size_t>(region.start_coordinates[0])
+        : 0;
+
+    if (layer >= m_data.size())
+        return {};
+
+    std::optional<std::vector<DataVariant>> result;
+    seqlock_read_void(m_slot_locks[layer], 8, [&] {
+        result = std::visit(
+            [&](const auto& vec) -> std::vector<DataVariant> {
+                using T = typename std::decay_t<decltype(vec)>::value_type;
+                if constexpr (std::is_same_v<T, uint8_t>
+                    || std::is_same_v<T, uint16_t>
+                    || std::is_same_v<T, float>) {
+                    auto extracted = extract_region_data<T>(
+                        std::span<const T>(vec.data(), vec.size()),
+                        region,
+                        m_structure.dimensions);
+                    return { DataVariant(std::move(extracted)) };
+                } else {
+                    return {};
+                }
+            },
+            m_data[layer]);
+    });
+    return result.value_or(std::vector<DataVariant> {});
 }
 
 std::vector<DataVariant> TextureContainer::get_segments_data(
     const std::vector<RegionSegment>& /*segments*/) const
 {
-    std::shared_lock lock(m_data_mutex);
-    return m_data;
+    std::vector<DataVariant> out;
+    out.reserve(m_data.size());
+    for (size_t i = 0; i < m_data.size(); ++i) {
+        seqlock_read_void(m_slot_locks[i], 8, [&] {
+            out.push_back(m_data[i]);
+        });
+    }
+    return out;
 }
 
 void TextureContainer::set_region_data(
@@ -685,13 +706,20 @@ void TextureContainer::set_region_data(
     if (region.start_coordinates.size() < 2 || region.end_coordinates.size() < 2)
         return;
 
-    const uint64_t y0 = region.start_coordinates[0];
-    const uint64_t x0 = region.start_coordinates[1];
-    const uint64_t y1 = std::min(region.end_coordinates[0], static_cast<uint64_t>(m_height - 1));
-    const uint64_t x1 = std::min(region.end_coordinates[1], static_cast<uint64_t>(m_width - 1));
+    const size_t layer = (m_data.size() > 1 && !region.start_coordinates.empty())
+        ? static_cast<size_t>(region.start_coordinates[0])
+        : 0;
 
-    std::unique_lock lock(m_data_mutex);
+    if (layer >= m_data.size())
+        return;
 
+    const size_t coord_offset = (m_data.size() > 1) ? 1 : 0;
+    const uint64_t y0 = region.start_coordinates[coord_offset];
+    const uint64_t x0 = region.start_coordinates[coord_offset + 1];
+    const uint64_t y1 = std::min(region.end_coordinates[coord_offset], static_cast<uint64_t>(m_height - 1));
+    const uint64_t x1 = std::min(region.end_coordinates[coord_offset + 1], static_cast<uint64_t>(m_width - 1));
+
+    Memory::SeqlockWriteGuard g(m_slot_locks[layer]);
     std::visit(
         [&](auto& dst_vec) {
             using T = typename std::decay_t<decltype(dst_vec)>::value_type;
@@ -705,7 +733,6 @@ void TextureContainer::set_region_data(
                         "container element type");
                     return;
                 }
-
                 size_t src_idx = 0;
                 for (uint64_t y = y0; y <= y1 && src_idx < src->size(); ++y) {
                     for (uint64_t x = x0; x <= x1 && src_idx < src->size(); ++x) {
@@ -718,7 +745,7 @@ void TextureContainer::set_region_data(
                 }
             }
         },
-        m_data[0]);
+        m_data[layer]);
 }
 
 std::type_index TextureContainer::value_element_type() const
@@ -746,11 +773,11 @@ std::vector<uint64_t> TextureContainer::linear_index_to_coordinates(uint64_t ind
 
 void TextureContainer::clear()
 {
-    std::unique_lock lock(m_data_mutex);
     const size_t element_count = static_cast<size_t>(m_width) * m_height * m_channels;
 
-    for (auto& data : m_data) {
-        data = make_empty_storage(m_format, element_count);
+    for (size_t i = 0; i < m_data.size(); ++i) {
+        Memory::SeqlockWriteGuard g(m_slot_locks[i]);
+        m_data[i] = make_empty_storage(m_format, element_count);
     }
 
     update_processing_state(ProcessingState::IDLE);
@@ -845,14 +872,12 @@ void TextureContainer::add_region_group(const RegionGroup& group)
 RegionGroup TextureContainer::get_region_group(const std::string& name) const
 {
     static const RegionGroup empty;
-    std::shared_lock lock(m_data_mutex);
     auto it = m_region_groups.find(name);
     return it != m_region_groups.end() ? it->second : empty;
 }
 
 std::unordered_map<std::string, RegionGroup> TextureContainer::get_all_region_groups() const
 {
-    std::shared_lock lock(m_data_mutex);
     return m_region_groups;
 }
 
@@ -861,10 +886,6 @@ void TextureContainer::remove_region_group(const std::string& name)
     std::lock_guard lock(m_state_mutex);
     m_region_groups.erase(name);
 }
-
-void TextureContainer::lock() { m_data_mutex.lock(); }
-void TextureContainer::unlock() { m_data_mutex.unlock(); }
-bool TextureContainer::try_lock() { return m_data_mutex.try_lock(); }
 
 const void* TextureContainer::get_raw_data() const
 {
@@ -902,20 +923,22 @@ auto TextureContainer::get_frame_typed(uint64_t frame_index) const -> DataSpanVa
         return { std::span<const uint8_t> {} };
     }
 
-    std::shared_lock lock(m_data_mutex);
     const size_t layer_elems = static_cast<size_t>(m_width) * m_height * m_channels;
-
-    return std::visit(
-        [&](const auto& vec) -> DataSpanVariant {
-            using T = typename std::decay_t<decltype(vec)>::value_type;
-            if constexpr (std::is_same_v<T, uint8_t> || std::is_same_v<T, uint16_t> || std::is_same_v<T, float>) {
-                const size_t n = std::min(layer_elems, vec.size());
-                return DataSpanVariant(std::span<const T>(vec.data(), n));
-            } else {
-                return { std::span<const uint8_t> {} };
-            }
-        },
-        m_data[frame_index]);
+    DataSpanVariant out { std::span<const uint8_t> {} };
+    seqlock_read_void(m_slot_locks[frame_index], 8, [&] {
+        out = std::visit(
+            [&](const auto& vec) -> DataSpanVariant {
+                using T = typename std::decay_t<decltype(vec)>::value_type;
+                if constexpr (std::is_same_v<T, uint8_t> || std::is_same_v<T, uint16_t> || std::is_same_v<T, float>) {
+                    const size_t nn = std::min(layer_elems, vec.size());
+                    return DataSpanVariant(std::span<const T>(vec.data(), nn));
+                } else {
+                    return { std::span<const uint8_t> {} };
+                }
+            },
+            m_data[frame_index]);
+    });
+    return out;
 }
 
 void TextureContainer::get_frames_typed(
@@ -948,40 +971,39 @@ void TextureContainer::get_frames_typed(
 template <typename T>
 auto TextureContainer::get_frame_typed_as(uint64_t frame_index) const -> std::span<const T>
 {
-    if (frame_index >= m_data.size()) {
+    if (frame_index >= m_data.size())
         return {};
-    }
 
-    std::shared_lock lock(m_data_mutex);
-    const auto* vec = std::get_if<std::vector<T>>(&m_data[frame_index]);
-    if (!vec || vec->empty()) {
-        return {};
-    }
+    std::span<const T> result;
+    seqlock_read_void(m_slot_locks[frame_index], 8, [&] {
+        const auto* vec = std::get_if<std::vector<T>>(&m_data[frame_index]);
+        if (!vec || vec->empty())
+            return;
+        const size_t layer_elems = static_cast<size_t>(m_width) * m_height * m_channels;
+        const size_t n = std::min(layer_elems, vec->size());
+        result = std::span<const T>(vec->data(), n);
+    });
 
-    const size_t layer_elems = static_cast<size_t>(m_width) * m_height * m_channels;
-    const size_t n = std::min(layer_elems, vec->size());
-    return std::span<const T>(vec->data(), n);
+    return result;
 }
 
 template <typename T>
 void TextureContainer::get_frames_typed_as(std::span<T> output, uint64_t start_frame, uint64_t num_frames) const
 {
-    std::shared_lock lock(m_data_mutex);
-
     const size_t layer_elems = static_cast<size_t>(m_width) * m_height * m_channels;
     size_t out_idx = 0;
 
     for (uint64_t layer = start_frame;
         layer < start_frame + num_frames && layer < m_data.size() && out_idx < output.size();
         ++layer) {
-        const auto* vec = std::get_if<std::vector<T>>(&m_data[layer]);
-        if (!vec || vec->empty()) {
-            break;
-        }
-
-        const size_t copy_n = std::min(layer_elems, std::min(vec->size(), output.size() - out_idx));
-        std::copy_n(vec->begin(), static_cast<std::ptrdiff_t>(copy_n), output.begin() + static_cast<std::ptrdiff_t>(out_idx));
-        out_idx += copy_n;
+        seqlock_read_void(m_slot_locks[layer], 8, [&] {
+            const auto* vec = std::get_if<std::vector<T>>(&m_data[layer]);
+            if (!vec || vec->empty())
+                return;
+            const size_t copy_n = std::min(layer_elems, std::min(vec->size(), output.size() - out_idx));
+            std::copy_n(vec->begin(), static_cast<std::ptrdiff_t>(copy_n), output.begin() + static_cast<std::ptrdiff_t>(out_idx));
+            out_idx += copy_n;
+        });
     }
 
     if (out_idx < output.size()) {
@@ -994,19 +1016,25 @@ void TextureContainer::get_value_impl(
     void* out,
     const std::type_info& type) const
 {
-    if (coords.size() < 3 || m_data.empty())
+    if (coords.empty() || m_data.empty())
         return;
 
-    const size_t idx = (coords[0] * m_width + coords[1]) * m_channels + coords[2];
+    const size_t layer = (m_data.size() > 1) ? static_cast<size_t>(coords[0]) : 0;
+    if (layer >= m_data.size() || coords.size() < (m_data.size() > 1 ? 4U : 3U))
+        return;
 
-    std::shared_lock lock(m_data_mutex);
-    std::visit([&](const auto& vec) {
-        using T = typename std::decay_t<decltype(vec)>::value_type;
-        if (type != typeid(T) || idx >= vec.size())
-            return;
-        *static_cast<T*>(out) = vec[idx];
-    },
-        m_data[0]);
+    const size_t co = (m_data.size() > 1) ? 1 : 0;
+    const size_t idx = (coords[co] * m_width + coords[co + 1]) * m_channels + coords[co + 2];
+
+    seqlock_read_void(m_slot_locks[layer], 8, [&] {
+        std::visit([&](const auto& vec) {
+            using T = typename std::decay_t<decltype(vec)>::value_type;
+            if (type != typeid(T) || idx >= vec.size())
+                return;
+            *static_cast<T*>(out) = vec[idx];
+        },
+            m_data[layer]);
+    });
 }
 
 void TextureContainer::set_value_impl(
@@ -1014,19 +1042,24 @@ void TextureContainer::set_value_impl(
     const void* in,
     const std::type_info& type)
 {
-    if (coords.size() < 3 || m_data.empty())
+    if (coords.empty() || m_data.empty())
         return;
 
-    const size_t idx = (coords[0] * m_width + coords[1]) * m_channels + coords[2];
+    const size_t layer = (m_data.size() > 1) ? static_cast<size_t>(coords[0]) : 0;
+    if (layer >= m_data.size() || coords.size() < (m_data.size() > 1 ? 4U : 3U))
+        return;
 
-    std::unique_lock lock(m_data_mutex);
+    const size_t co = (m_data.size() > 1) ? 1 : 0;
+    const size_t idx = (coords[co] * m_width + coords[co + 1]) * m_channels + coords[co + 2];
+
+    Memory::SeqlockWriteGuard g(m_slot_locks[layer]);
     std::visit([&](auto& vec) {
         using T = typename std::decay_t<decltype(vec)>::value_type;
         if (type != typeid(T) || idx >= vec.size())
             return;
         vec[idx] = *static_cast<const T*>(in);
     },
-        m_data[0]);
+        m_data[layer]);
 }
 
 } // namespace MayaFlux::Kakshya
