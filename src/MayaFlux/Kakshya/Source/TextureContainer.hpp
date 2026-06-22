@@ -370,7 +370,7 @@ public:
     [[nodiscard]] bool is_region_loaded(const Region&) const override { return true; }
 
     void add_region_group(const RegionGroup& group) override;
-    [[nodiscard]] const RegionGroup& get_region_group(const std::string& name) const override;
+    [[nodiscard]] RegionGroup get_region_group(const std::string& name) const override;
     [[nodiscard]] std::unordered_map<std::string, RegionGroup> get_all_region_groups() const override;
     void remove_region_group(const std::string& name) override;
 

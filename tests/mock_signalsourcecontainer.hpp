@@ -180,7 +180,7 @@ public:
         m_region_groups[group.name] = group;
     }
 
-    const RegionGroup& get_region_group(const std::string& name) const override
+    RegionGroup get_region_group(const std::string& name) const override
     {
         static RegionGroup empty("empty");
         auto it = m_region_groups.find(name);
