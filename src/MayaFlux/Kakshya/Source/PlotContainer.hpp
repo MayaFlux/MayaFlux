@@ -2,6 +2,8 @@
 
 #include "MayaFlux/Kakshya/SignalSourceContainer.hpp"
 
+#include "MayaFlux/Transitive/Memory/SeqLock.hpp"
+
 namespace MayaFlux::Nodes {
 class Node;
 namespace Network {
@@ -316,6 +318,10 @@ private:
     ContainerDataStructure m_structure;
     std::shared_ptr<DataProcessor> m_processor;
     std::shared_ptr<DataProcessingChain> m_chain;
+
+    Memory::SeqlockArray m_series_locks;
+    mutable Memory::Seqlock m_region_lock;
+    mutable Memory::Seqlock m_cb_lock;
 
     std::unordered_map<std::string, RegionGroup> m_region_groups;
 

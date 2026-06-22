@@ -40,6 +40,9 @@ uint32_t PlotContainer::add_series(std::string name, uint64_t count,
 {
     m_data.emplace_back(std::vector<double>(count, 0.0));
     m_processed_data.emplace_back(std::vector<double>(count, 0.0));
+
+    m_series_locks.resize(m_data.size());
+
     m_structure.dimensions.emplace_back(std::move(name), count, 1, role);
     m_structure.modality = DataModality::TENSOR_ND;
 
@@ -66,6 +69,7 @@ void PlotContainer::write_series(uint32_t index, std::span<const double> samples
     }
 
     const uint64_t n = std::min<uint64_t>(samples.size(), vec->size());
+    Memory::SeqlockWriteGuard g(m_series_locks[index]);
     std::copy_n(samples.begin(), n, vec->begin());
 }
 
@@ -82,6 +86,7 @@ void PlotContainer::write_sample(uint32_t index, uint64_t sample_index, double v
         return;
     }
 
+    Memory::SeqlockWriteGuard g(m_series_locks[index]);
     (*vec)[sample_index] = value;
 }
 
@@ -221,25 +226,27 @@ std::vector<DataVariant> PlotContainer::get_region_data(const Region& region) co
     if (region.start_coordinates.empty() || region.end_coordinates.empty())
         return {};
 
-    const uint64_t series_idx = region.start_coordinates[0];
+    const auto series_idx = static_cast<size_t>(region.start_coordinates[0]);
     if (series_idx >= m_data.size())
         return {};
 
-    const auto* src = std::get_if<std::vector<double>>(&m_data[series_idx]);
-    if (!src || src->empty())
-        return {};
+    std::optional<std::vector<DataVariant>> result;
+    seqlock_read_void(m_series_locks[series_idx], 8, [&] {
+        const auto* src = std::get_if<std::vector<double>>(&m_data[series_idx]);
+        if (!src || src->empty())
+            return;
+        const uint64_t s = (region.start_coordinates.size() > 1) ? region.start_coordinates[1] : 0;
+        const uint64_t e = (region.end_coordinates.size() > 1)
+            ? std::min(region.end_coordinates[1], static_cast<uint64_t>(src->size() - 1))
+            : static_cast<uint64_t>(src->size() - 1);
+        if (s > e)
+            return;
+        std::vector<double> slice(src->begin() + static_cast<ptrdiff_t>(s),
+            src->begin() + static_cast<ptrdiff_t>(e + 1));
+        result = { DataVariant(std::move(slice)) };
+    });
 
-    const uint64_t s = (region.start_coordinates.size() > 1) ? region.start_coordinates[1] : 0;
-    const uint64_t e = (region.end_coordinates.size() > 1)
-        ? std::min(region.end_coordinates[1], static_cast<uint64_t>(src->size() - 1))
-        : static_cast<uint64_t>(src->size() - 1);
-
-    if (s > e)
-        return {};
-
-    std::vector<double> slice(src->begin() + static_cast<ptrdiff_t>(s),
-        src->begin() + static_cast<ptrdiff_t>(e + 1));
-    return { DataVariant(std::move(slice)) };
+    return result.value_or(std::vector<DataVariant> {});
 }
 
 void PlotContainer::set_region_data(const Region& region, const std::vector<DataVariant>& data)
@@ -247,23 +254,23 @@ void PlotContainer::set_region_data(const Region& region, const std::vector<Data
     if (data.empty() || region.start_coordinates.empty())
         return;
 
-    const uint64_t series_idx = region.start_coordinates[0];
+    const auto series_idx = static_cast<size_t>(region.start_coordinates[0]);
     if (series_idx >= m_data.size())
-        return;
-
-    auto* dst = std::get_if<std::vector<double>>(&m_data[series_idx]);
-    if (!dst)
         return;
 
     const auto* src = std::get_if<std::vector<double>>(&data[0]);
     if (!src || src->empty())
         return;
 
+    Memory::SeqlockWriteGuard g(m_series_locks[series_idx]);
+    auto* dst = std::get_if<std::vector<double>>(&m_data[series_idx]);
+    if (!dst)
+        return;
+
     const uint64_t s = (region.start_coordinates.size() > 1) ? region.start_coordinates[1] : 0;
     const uint64_t e = (region.end_coordinates.size() > 1)
         ? std::min(region.end_coordinates[1], static_cast<uint64_t>(dst->size() - 1))
         : static_cast<uint64_t>(dst->size() - 1);
-
     if (s > e)
         return;
 
@@ -345,23 +352,33 @@ std::vector<DataAccess> PlotContainer::all_channel_data()
 
 void PlotContainer::add_region_group(const RegionGroup& group)
 {
+    Memory::SeqlockWriteGuard g(m_region_lock);
     m_region_groups[group.name] = group;
 }
 
 RegionGroup PlotContainer::get_region_group(const std::string& name) const
 {
     static const RegionGroup empty;
-    auto it = m_region_groups.find(name);
-    return it != m_region_groups.end() ? it->second : empty;
+    std::optional<RegionGroup> result;
+    seqlock_read_void(m_region_lock, 8, [&] {
+        auto it = m_region_groups.find(name);
+        result = (it != m_region_groups.end()) ? it->second : empty;
+    });
+    return result.value_or(empty);
 }
 
 std::unordered_map<std::string, RegionGroup> PlotContainer::get_all_region_groups() const
 {
-    return m_region_groups;
+    std::optional<std::unordered_map<std::string, RegionGroup>> result;
+    seqlock_read_void(m_region_lock, 8, [&] {
+        result = m_region_groups;
+    });
+    return result.value_or(std::unordered_map<std::string, RegionGroup> {});
 }
 
 void PlotContainer::remove_region_group(const std::string& name)
 {
+    Memory::SeqlockWriteGuard g(m_region_lock);
     m_region_groups.erase(name);
 }
 
@@ -376,19 +393,26 @@ ProcessingState PlotContainer::get_processing_state() const
 
 void PlotContainer::update_processing_state(ProcessingState state)
 {
-    m_processing_state.store(state, std::memory_order_release);
-    if (m_state_cb)
-        m_state_cb(shared_from_this(), state);
+    ProcessingState prev = m_processing_state.exchange(state);
+    if (prev == state)
+        return;
+
+    seqlock_read_void(m_cb_lock, 8, [&] {
+        if (m_state_cb)
+            m_state_cb(shared_from_this(), state);
+    });
 }
 
 void PlotContainer::register_state_change_callback(
     std::function<void(const std::shared_ptr<SignalSourceContainer>&, ProcessingState)> cb)
 {
+    Memory::SeqlockWriteGuard g(m_cb_lock);
     m_state_cb = std::move(cb);
 }
 
 void PlotContainer::unregister_state_change_callback()
 {
+    Memory::SeqlockWriteGuard g(m_cb_lock);
     m_state_cb = nullptr;
 }
 
@@ -435,24 +459,31 @@ auto PlotContainer::get_frame_typed(uint64_t frame_index) const -> std::span<con
 {
     if (frame_index >= m_data.size())
         return {};
-    const auto* vec = std::get_if<std::vector<double>>(&m_data[frame_index]);
-    if (!vec || vec->empty())
-        return {};
-    return { vec->data(), vec->size() };
+
+    std::span<const double> result;
+    seqlock_read_void(m_series_locks[frame_index], 8, [&] {
+        const auto* vec = std::get_if<std::vector<double>>(&m_data[frame_index]);
+        if (!vec || vec->empty())
+            return;
+        result = { vec->data(), vec->size() };
+    });
+    return result;
 }
 
 void PlotContainer::get_frames_typed(std::span<double> output, uint64_t start_frame, uint64_t num_frames) const
 {
     size_t out = 0;
     for (uint64_t i = start_frame; i < start_frame + num_frames && i < m_data.size(); ++i) {
-        const auto* vec = std::get_if<std::vector<double>>(&m_data[i]);
-        if (!vec)
-            continue;
-        for (double v : *vec) {
-            if (out >= output.size())
+        seqlock_read_void(m_series_locks[i], 8, [&] {
+            const auto* vec = std::get_if<std::vector<double>>(&m_data[i]);
+            if (!vec)
                 return;
-            output[out++] = v;
-        }
+            for (double v : *vec) {
+                if (out >= output.size())
+                    return;
+                output[out++] = v;
+            }
+        });
     }
 }
 
@@ -487,11 +518,14 @@ void PlotContainer::get_value_impl(
     if (type != typeid(double) || coords.size() < 2 || coords[0] >= m_data.size())
         return;
 
-    const auto* vec = std::get_if<std::vector<double>>(&m_data[coords[0]]);
-    if (!vec || coords[1] >= vec->size())
-        return;
+    const auto idx = static_cast<size_t>(coords[0]);
 
-    *static_cast<double*>(out) = (*vec)[coords[1]];
+    seqlock_read_void(m_series_locks[idx], 8, [&] {
+        const auto* vec = std::get_if<std::vector<double>>(&m_data[idx]);
+        if (!vec || coords[1] >= vec->size())
+            return;
+        *static_cast<double*>(out) = (*vec)[coords[1]];
+    });
 }
 
 void PlotContainer::set_value_impl(
@@ -502,7 +536,10 @@ void PlotContainer::set_value_impl(
     if (type != typeid(double) || coords.size() < 2 || coords[0] >= m_data.size())
         return;
 
-    auto* vec = std::get_if<std::vector<double>>(&m_data[coords[0]]);
+    const auto idx = static_cast<size_t>(coords[0]);
+
+    Memory::SeqlockWriteGuard g(m_series_locks[idx]);
+    auto* vec = std::get_if<std::vector<double>>(&m_data[idx]);
     if (!vec || coords[1] >= vec->size())
         return;
 
