@@ -798,21 +798,22 @@ void TextureContainer::update_processing_state(ProcessingState state)
     if (prev == state)
         return;
 
-    std::lock_guard lock(m_state_mutex);
-    if (m_state_cb)
-        m_state_cb(shared_from_this(), state);
+    seqlock_read_void(m_cb_lock, 8, [&] {
+        if (m_state_cb)
+            m_state_cb(shared_from_this(), state);
+    });
 }
 
 void TextureContainer::register_state_change_callback(
     std::function<void(const std::shared_ptr<SignalSourceContainer>&, ProcessingState)> cb)
 {
-    std::lock_guard lock(m_state_mutex);
+    Memory::SeqlockWriteGuard g(m_cb_lock);
     m_state_cb = std::move(cb);
 }
 
 void TextureContainer::unregister_state_change_callback()
 {
-    std::lock_guard lock(m_state_mutex);
+    Memory::SeqlockWriteGuard g(m_cb_lock);
     m_state_cb = nullptr;
 }
 
@@ -865,25 +866,33 @@ std::vector<DataAccess> TextureContainer::all_channel_data()
 
 void TextureContainer::add_region_group(const RegionGroup& group)
 {
-    std::lock_guard lock(m_state_mutex);
+    Memory::SeqlockWriteGuard g(m_region_lock);
     m_region_groups[group.name] = group;
 }
 
 RegionGroup TextureContainer::get_region_group(const std::string& name) const
 {
     static const RegionGroup empty;
-    auto it = m_region_groups.find(name);
-    return it != m_region_groups.end() ? it->second : empty;
+    std::optional<RegionGroup> result;
+    seqlock_read_void(m_region_lock, 8, [&] {
+        auto it = m_region_groups.find(name);
+        result = (it != m_region_groups.end()) ? it->second : empty;
+    });
+    return result.value_or(empty);
 }
 
 std::unordered_map<std::string, RegionGroup> TextureContainer::get_all_region_groups() const
 {
-    return m_region_groups;
+    std::optional<std::unordered_map<std::string, RegionGroup>> result;
+    seqlock_read_void(m_region_lock, 8, [&] {
+        result = m_region_groups;
+    });
+    return result.value_or(std::unordered_map<std::string, RegionGroup> {});
 }
 
 void TextureContainer::remove_region_group(const std::string& name)
 {
-    std::lock_guard lock(m_state_mutex);
+    Memory::SeqlockWriteGuard g(m_region_lock);
     m_region_groups.erase(name);
 }
 

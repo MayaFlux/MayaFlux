@@ -440,7 +440,8 @@ private:
     std::atomic<int> m_processing_token { -1 };
 
     Memory::SeqlockArray m_slot_locks;
-    std::mutex m_state_mutex;
+    Memory::Seqlock m_region_lock;
+    mutable Memory::Seqlock m_cb_lock;
 
     std::function<void(const std::shared_ptr<SignalSourceContainer>&, ProcessingState)> m_state_cb;
     std::unordered_map<std::string, RegionGroup> m_region_groups;
