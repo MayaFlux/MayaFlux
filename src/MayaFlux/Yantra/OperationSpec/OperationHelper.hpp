@@ -76,7 +76,7 @@ public:
             auto const_span = Kakshya::convert_variant<double>(compute_data);
             return std::span<double>(const_cast<double*>(const_span.data()), const_span.size());
         }
-        if constexpr (std::is_base_of_v<Eigen::MatrixBase<T>, T>) {
+        if constexpr (is_eigen_matrix_v<T>) {
             Kakshya::DataVariant variant = create_data_variant_from_eigen(compute_data);
             return Kakshya::convert_variant<double>(variant, s_complex_strategy);
         }
@@ -112,7 +112,7 @@ public:
             return Kakshya::convert_variants<double>(variant, s_complex_strategy);
         }
 
-        if constexpr (std::is_base_of_v<Eigen::MatrixBase<T>, T>)
+        if constexpr (is_eigen_matrix_v<T>)
             return extract_from_eigen_matrix(compute_data);
 
         return std::vector<std::span<double>> {};
@@ -176,7 +176,7 @@ public:
             return compute_data->get_data();
         }
 
-        if constexpr (std::is_base_of_v<Eigen::MatrixBase<T>, T>) {
+        if constexpr (is_eigen_matrix_v<T>) {
             return convert_eigen_matrix_to_variant(compute_data);
         }
     }
