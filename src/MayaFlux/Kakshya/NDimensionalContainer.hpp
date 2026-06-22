@@ -321,7 +321,7 @@ public:
      * @param name Name of the region group
      * @return Reference to the RegionGroup
      */
-    [[nodiscard]] virtual const RegionGroup& get_region_group(const std::string& name) const = 0;
+    [[nodiscard]] virtual RegionGroup get_region_group(const std::string& name) const = 0;
 
     /**
      * @brief Get all region groups in the container.

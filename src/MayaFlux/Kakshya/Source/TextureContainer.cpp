@@ -885,7 +885,7 @@ void TextureContainer::add_region_group(const RegionGroup& group)
     m_region_groups[group.name] = group;
 }
 
-const RegionGroup& TextureContainer::get_region_group(const std::string& name) const
+RegionGroup TextureContainer::get_region_group(const std::string& name) const
 {
     static const RegionGroup empty;
     std::shared_lock lock(m_data_mutex);

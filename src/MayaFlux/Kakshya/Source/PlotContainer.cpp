@@ -393,7 +393,7 @@ void PlotContainer::add_region_group(const RegionGroup& group)
     m_region_groups[group.name] = group;
 }
 
-const RegionGroup& PlotContainer::get_region_group(const std::string& name) const
+RegionGroup PlotContainer::get_region_group(const std::string& name) const
 {
     static const RegionGroup empty;
     auto it = m_region_groups.find(name);

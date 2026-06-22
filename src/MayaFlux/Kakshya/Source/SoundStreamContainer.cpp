@@ -353,7 +353,7 @@ void SoundStreamContainer::add_region_group(const RegionGroup& group)
     m_region_groups[group.name] = group;
 }
 
-const RegionGroup& SoundStreamContainer::get_region_group(const std::string& name) const
+RegionGroup SoundStreamContainer::get_region_group(const std::string& name) const
 {
     static const RegionGroup empty_group;
 

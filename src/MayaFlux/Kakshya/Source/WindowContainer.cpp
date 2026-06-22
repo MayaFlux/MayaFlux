@@ -510,7 +510,7 @@ void WindowContainer::add_region_group(const RegionGroup& group)
     m_region_groups[group.name] = group;
 }
 
-const RegionGroup& WindowContainer::get_region_group(const std::string& name) const
+RegionGroup WindowContainer::get_region_group(const std::string& name) const
 {
     static const RegionGroup empty;
     std::shared_lock lock(m_data_mutex);

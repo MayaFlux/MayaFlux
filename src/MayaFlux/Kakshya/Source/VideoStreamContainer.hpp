@@ -194,7 +194,7 @@ public:
     // =========================================================================
 
     void add_region_group(const RegionGroup& group) override;
-    const RegionGroup& get_region_group(const std::string& name) const override;
+    RegionGroup get_region_group(const std::string& name) const override;
     std::unordered_map<std::string, RegionGroup> get_all_region_groups() const override;
     void remove_region_group(const std::string& name) override;
 
