@@ -3,6 +3,7 @@
 #include "MayaFlux/Kakshya/StreamContainer.hpp"
 
 #include "MayaFlux/Transitive/Memory/RingBuffer.hpp"
+#include "MayaFlux/Transitive/Memory/SeqLock.hpp"
 
 namespace MayaFlux::Registry::Service {
 struct IOService;
@@ -78,9 +79,9 @@ public:
     [[nodiscard]] std::vector<uint64_t> linear_index_to_coordinates(uint64_t linear_index) const override;
 
     void clear() override;
-    void lock() override { m_data_mutex.lock(); }
-    void unlock() override { m_data_mutex.unlock(); }
-    bool try_lock() override { return m_data_mutex.try_lock(); }
+    void lock() override { }
+    void unlock() override { }
+    bool try_lock() override { return true; }
 
     [[nodiscard]] const void* get_raw_data() const override;
     [[nodiscard]] bool has_data() const override;
@@ -323,8 +324,9 @@ protected:
     std::vector<DataVariant> m_data;
     std::vector<DataVariant> m_processed_data;
 
-    mutable std::shared_mutex m_data_mutex;
-    mutable std::mutex m_state_mutex;
+    mutable Memory::Seqlock m_data_lock;
+    mutable Memory::Seqlock m_region_lock;
+    mutable Memory::Seqlock m_cb_lock;
 
     std::atomic<ProcessingState> m_processing_state { ProcessingState::IDLE };
     std::atomic<int> m_processing_token_channel { -1 };
@@ -336,7 +338,7 @@ protected:
     std::unordered_map<std::string, RegionGroup> m_region_groups;
 
     std::atomic<uint64_t> m_read_position { 0 };
-    bool m_looping_enabled = false;
+    bool m_looping_enabled {};
     Region m_loop_region;
 
     std::atomic<uint32_t> m_registered_readers { 0 };

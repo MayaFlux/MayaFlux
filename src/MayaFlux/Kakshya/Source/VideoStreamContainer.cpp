@@ -85,35 +85,37 @@ void VideoStreamContainer::setup_ring(uint64_t total_frames,
     uint32_t refill_threshold,
     uint64_t reader_id)
 {
-    std::unique_lock data_lock(m_data_mutex);
+    {
+        Memory::SeqlockWriteGuard g(m_data_lock);
 
-    m_width = width;
-    m_height = height;
-    m_channels = channels;
-    m_frame_rate = frame_rate;
-    m_total_source_frames = total_frames;
-    m_ring_capacity = ring_capacity;
-    m_num_frames = total_frames;
-    m_cache_head.store(0, std::memory_order_relaxed);
-    m_refill_threshold = refill_threshold;
-    m_io_reader_id = reader_id;
+        m_width = width;
+        m_height = height;
+        m_channels = channels;
+        m_frame_rate = frame_rate;
+        m_total_source_frames = total_frames;
+        m_ring_capacity = ring_capacity;
+        m_num_frames = total_frames;
+        m_cache_head.store(0, std::memory_order_relaxed);
+        m_refill_threshold = refill_threshold;
+        m_io_reader_id = reader_id;
 
-    m_io_service = Registry::BackendRegistry::instance()
-                       .get_service<Registry::Service::IOService>();
+        m_io_service = Registry::BackendRegistry::instance()
+                           .get_service<Registry::Service::IOService>();
 
-    const size_t frame_bytes = get_frame_byte_size();
+        const size_t frame_bytes = get_frame_byte_size();
 
-    m_data.resize(1);
-    auto& pixels = m_data[0].emplace<std::vector<uint8_t>>();
-    pixels.resize(frame_bytes * ring_capacity, 0);
+        m_data.resize(1);
+        auto& pixels = m_data[0].emplace<std::vector<uint8_t>>();
+        pixels.resize(frame_bytes * ring_capacity, 0);
 
-    m_slot_frame = std::vector<std::atomic<uint64_t>>(ring_capacity);
-    for (auto& sf : m_slot_frame)
-        sf.store(UINT64_MAX, std::memory_order_relaxed);
+        m_slot_frame = std::vector<std::atomic<uint64_t>>(ring_capacity);
+        for (auto& sf : m_slot_frame)
+            sf.store(UINT64_MAX, std::memory_order_relaxed);
 
-    m_ready_queue.reset();
+        m_ready_queue.reset();
+        setup_dimensions();
+    }
 
-    setup_dimensions();
     update_processing_state(ProcessingState::IDLE);
 }
 
@@ -177,24 +179,22 @@ std::span<const uint8_t> VideoStreamContainer::get_frame_pixels(uint64_t frame_i
         return {};
 
     if (m_ring_capacity == 0) {
-        std::shared_lock lock(m_data_mutex);
-
-        if (m_data.empty())
-            return {};
-
-        const auto* pixels = std::get_if<std::vector<uint8_t>>(&m_data[0]);
-        if (!pixels)
-            return {};
-
-        const size_t offset = frame_index * frame_bytes;
-        if (offset + frame_bytes > pixels->size())
-            return {};
-
-        return { pixels->data() + offset, frame_bytes };
+        std::span<const uint8_t> result;
+        seqlock_read_void(m_data_lock, 8, [&] {
+            if (m_data.empty())
+                return;
+            const auto* pixels = std::get_if<std::vector<uint8_t>>(&m_data[0]);
+            if (!pixels)
+                return;
+            const size_t offset = frame_index * frame_bytes;
+            if (offset + frame_bytes > pixels->size())
+                return;
+            result = { pixels->data() + offset, frame_bytes };
+        });
+        return result;
     }
 
-    uint32_t slot = slot_for(frame_index);
-
+    const uint32_t slot = slot_for(frame_index);
     if (m_slot_frame[slot].load(std::memory_order_acquire) == frame_index) {
         const auto* pixels = std::get_if<std::vector<uint8_t>>(&m_data[0]);
         if (!pixels)
@@ -221,24 +221,25 @@ std::vector<uint64_t> VideoStreamContainer::linear_index_to_coordinates(uint64_t
 
 std::vector<DataVariant> VideoStreamContainer::get_region_data(const Region& region) const
 {
-    std::shared_lock lock(m_data_mutex);
+    std::optional<std::vector<DataVariant>> result;
+    seqlock_read_void(m_data_lock, 8, [&] {
+        if (m_data.empty())
+            return;
 
-    if (m_data.empty())
-        return {};
+        const auto* pixels = std::get_if<std::vector<uint8_t>>(&m_data[0]);
+        if (!pixels || pixels->empty())
+            return;
 
-    const auto* pixels = std::get_if<std::vector<uint8_t>>(&m_data[0]);
-    if (!pixels || pixels->empty())
-        return {};
+        const std::span<const uint8_t> src { pixels->data(), pixels->size() };
+        try {
+            result = { extract_nd_region<uint8_t>(src, region, m_structure.dimensions) };
+        } catch (const std::exception& e) {
+            MF_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+                "VideoStreamContainer::get_region_data extraction failed — {}", e.what());
+        }
+    });
 
-    const std::span<const uint8_t> src { pixels->data(), pixels->size() };
-
-    try {
-        return { extract_nd_region<uint8_t>(src, region, m_structure.dimensions) };
-    } catch (const std::exception& e) {
-        MF_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-            "VideoStreamContainer::get_region_data extraction failed — {}", e.what());
-        return {};
-    }
+    return result.value_or(std::vector<DataVariant> {});
 }
 
 void VideoStreamContainer::set_region_data(const Region& /*region*/, const std::vector<DataVariant>& /*data*/)
@@ -249,39 +250,51 @@ void VideoStreamContainer::set_region_data(const Region& /*region*/, const std::
 
 std::vector<DataVariant> VideoStreamContainer::get_region_group_data(const RegionGroup& /*group*/) const
 {
-    std::shared_lock lock(m_data_mutex);
-    return m_data;
+    std::optional<std::vector<DataVariant>> result;
+    seqlock_read_void(m_data_lock, 8, [&] {
+        result = m_data;
+    });
+    return result.value_or(std::vector<DataVariant> {});
 }
 
 std::vector<DataVariant> VideoStreamContainer::get_segments_data(const std::vector<RegionSegment>& /*segments*/) const
 {
-    std::shared_lock lock(m_data_mutex);
-    return m_data;
+    std::optional<std::vector<DataVariant>> result;
+    seqlock_read_void(m_data_lock, 8, [&] {
+        result = m_data;
+    });
+    return result.value_or(std::vector<DataVariant> {});
 }
 
 void VideoStreamContainer::add_region_group(const RegionGroup& group)
 {
-    std::lock_guard lock(m_state_mutex);
+    Memory::SeqlockWriteGuard g(m_region_lock);
     m_region_groups[group.name] = group;
 }
 
 RegionGroup VideoStreamContainer::get_region_group(const std::string& name) const
 {
     static const RegionGroup empty;
-    std::shared_lock lock(m_data_mutex);
-    auto it = m_region_groups.find(name);
-    return it != m_region_groups.end() ? it->second : empty;
+    std::optional<RegionGroup> result;
+    seqlock_read_void(m_region_lock, 8, [&] {
+        auto it = m_region_groups.find(name);
+        result = (it != m_region_groups.end()) ? it->second : empty;
+    });
+    return result.value_or(empty);
 }
 
 std::unordered_map<std::string, RegionGroup> VideoStreamContainer::get_all_region_groups() const
 {
-    std::shared_lock lock(m_data_mutex);
-    return m_region_groups;
+    std::optional<std::unordered_map<std::string, RegionGroup>> result;
+    seqlock_read_void(m_region_lock, 8, [&] {
+        result = m_region_groups;
+    });
+    return result.value_or(std::unordered_map<std::string, RegionGroup> {});
 }
 
 void VideoStreamContainer::remove_region_group(const std::string& name)
 {
-    std::lock_guard lock(m_state_mutex);
+    Memory::SeqlockWriteGuard g(m_region_lock);
     m_region_groups.erase(name);
 }
 
@@ -395,16 +408,15 @@ uint64_t VideoStreamContainer::peek_sequential(std::span<double> output, uint64_
 
 void VideoStreamContainer::clear()
 {
-    std::unique_lock lock(m_data_mutex);
-
-    std::ranges::for_each(m_data, [](auto& v) {
-        std::visit([](auto& vec) { vec.clear(); }, v);
-    });
-
-    m_num_frames = 0;
-    m_read_position.store(0);
-
-    setup_dimensions();
+    {
+        Memory::SeqlockWriteGuard g(m_data_lock);
+        std::ranges::for_each(m_data, [](auto& v) {
+            std::visit([](auto& vec) { vec.clear(); }, v);
+        });
+        m_num_frames = 0;
+        m_read_position.store(0);
+        setup_dimensions();
+    }
     update_processing_state(ProcessingState::IDLE);
 }
 
@@ -424,10 +436,13 @@ bool VideoStreamContainer::has_data() const
     if (m_ring_capacity > 0)
         return m_total_source_frames > 0;
 
-    std::shared_lock lock(m_data_mutex);
-    if (m_data.empty())
-        return false;
-    return std::visit([](const auto& vec) { return !vec.empty(); }, m_data[0]);
+    bool result = false;
+    seqlock_read_void(m_data_lock, 8, [&] {
+        if (m_data.empty())
+            return;
+        result = std::visit([](const auto& vec) { return !vec.empty(); }, m_data[0]);
+    });
+    return result;
 }
 
 // =========================================================================
@@ -443,9 +458,23 @@ void VideoStreamContainer::update_processing_state(ProcessingState new_state)
 
 void VideoStreamContainer::notify_state_change(ProcessingState new_state)
 {
-    std::lock_guard lock(m_state_mutex);
-    if (m_state_callback)
-        m_state_callback(shared_from_this(), new_state);
+    seqlock_read_void(m_cb_lock, 8, [&] {
+        if (m_state_callback)
+            m_state_callback(shared_from_this(), new_state);
+    });
+}
+
+void VideoStreamContainer::register_state_change_callback(
+    std::function<void(const std::shared_ptr<SignalSourceContainer>&, ProcessingState)> callback)
+{
+    Memory::SeqlockWriteGuard g(m_cb_lock);
+    m_state_callback = std::move(callback);
+}
+
+void VideoStreamContainer::unregister_state_change_callback()
+{
+    Memory::SeqlockWriteGuard g(m_cb_lock);
+    m_state_callback = nullptr;
 }
 
 void VideoStreamContainer::get_frames_impl(
@@ -481,19 +510,6 @@ void VideoStreamContainer::get_frames_typed(std::span<uint8_t> output, uint64_t 
         auto frame = get_frame_typed(start_frame + i);
         std::ranges::copy(frame, output.begin() + static_cast<size_t>(i) * frame_size);
     }
-}
-
-void VideoStreamContainer::register_state_change_callback(
-    std::function<void(const std::shared_ptr<SignalSourceContainer>&, ProcessingState)> callback)
-{
-    std::lock_guard lock(m_state_mutex);
-    m_state_callback = std::move(callback);
-}
-
-void VideoStreamContainer::unregister_state_change_callback()
-{
-    std::lock_guard lock(m_state_mutex);
-    m_state_callback = nullptr;
 }
 
 bool VideoStreamContainer::is_ready_for_processing() const
@@ -538,7 +554,6 @@ void VideoStreamContainer::set_default_processor(const std::shared_ptr<DataProce
 
 std::shared_ptr<DataProcessor> VideoStreamContainer::get_default_processor() const
 {
-    std::lock_guard lock(m_state_mutex);
     return m_default_processor;
 }
 
