@@ -76,7 +76,7 @@ public:
         m_processed_data.reserve(channel_data.size());
 
         for (const auto& channel : channel_data) {
-            m_processed_data.emplace_back(Kakshya::DataVariant { channel });
+            m_processed_data.emplace_back(channel);
         }
 
         m_num_channels = static_cast<uint32_t>(channel_data.size());
@@ -131,7 +131,7 @@ public:
         return result;
     }
 
-    std::vector<DataVariant> get_region_group_data(const RegionGroup& regions) const override
+    std::vector<DataVariant> get_region_group_data(const RegionGroup& /*regions*/) const override
     {
         /* std::vector<DataVariant> all_data;
         for (const auto& region : regions) {
@@ -209,21 +209,6 @@ public:
     void clear() override
     {
         m_processed_data.clear();
-    }
-
-    void lock() override
-    {
-        // No-op for mock
-    }
-
-    void unlock() override
-    {
-        // No-op for mock
-    }
-
-    bool try_lock() override
-    {
-        return true;
     }
 
     const void* get_raw_data() const override
@@ -364,7 +349,7 @@ public:
 
     const std::vector<DataVariant>& get_data() override { return m_processed_data; }
 
-    DataAccess channel_data(size_t channel)
+    DataAccess channel_data(size_t channel) override
     {
         if (channel >= m_processed_data.size()) {
             throw std::out_of_range("Channel index out of range");
@@ -372,7 +357,7 @@ public:
         return DataAccess { m_processed_data[channel], m_data_structure.dimensions, m_data_structure.modality };
     }
 
-    std::vector<DataAccess> all_channel_data()
+    std::vector<DataAccess> all_channel_data() override
     {
         std::vector<DataAccess> result;
         result.reserve(m_processed_data.size());

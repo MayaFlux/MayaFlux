@@ -79,9 +79,6 @@ public:
     [[nodiscard]] std::vector<uint64_t> linear_index_to_coordinates(uint64_t linear_index) const override;
 
     void clear() override;
-    void lock() override { }
-    void unlock() override { }
-    bool try_lock() override { return true; }
 
     [[nodiscard]] const void* get_raw_data() const override;
     [[nodiscard]] bool has_data() const override;

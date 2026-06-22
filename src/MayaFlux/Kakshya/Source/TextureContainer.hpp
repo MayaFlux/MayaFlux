@@ -348,10 +348,6 @@ public:
     [[nodiscard]] std::unordered_map<std::string, RegionGroup> get_all_region_groups() const override;
     void remove_region_group(const std::string& name) override;
 
-    void lock() override { }
-    void unlock() override { }
-    [[nodiscard]] bool try_lock() override { return true; }
-
     [[nodiscard]] const void* get_raw_data() const override;
     [[nodiscard]] bool has_data() const override;
 

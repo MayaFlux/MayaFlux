@@ -450,22 +450,6 @@ public:
     virtual void clear() = 0;
 
     /**
-     * @brief Acquire a lock for thread-safe access.
-     */
-    virtual void lock() = 0;
-
-    /**
-     * @brief Release a previously acquired lock.
-     */
-    virtual void unlock() = 0;
-
-    /**
-     * @brief Attempt to acquire a lock without blocking.
-     * @return true if lock was acquired, false otherwise
-     */
-    virtual bool try_lock() = 0;
-
-    /**
      * @brief Get a raw pointer to the underlying data storage.
      * @return Pointer to raw data (type depends on DataVariant)
      */
