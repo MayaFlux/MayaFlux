@@ -155,6 +155,112 @@ public:
         }
     }
 
+    // =========================================================================
+    // Native extraction -- no double coercion
+    //
+    // extract_native_data returns data in the source's own scalar type.
+    // Use this for GPU staging, Kinesis::Vision callers, and any path that
+    // should not widen to double.
+    //
+    // For DataVariant / vector<DataVariant> the native type is runtime-
+    // determined; these overloads return DataSpanVariant / vector<DataSpanVariant>
+    // so the caller can branch on element_type() exactly as with get_frame().
+    //
+    // For SignalSourceContainer the native type is queried via value_element_type().
+    // For Eigen the native type is T::Scalar.
+    // Region types are not supported: region data comes out of containers as
+    // DataVariant and is already accessible via the DataVariant overload below.
+    // =========================================================================
+
+    /**
+     * @brief Extract a single DataVariant as a type-erased span without conversion.
+     *
+     * Returns a DataSpanVariant whose active alternative matches the variant's
+     * native element type. No allocation, no coercion.
+     * Call element_type() on the result or use as<E>() when E is known statically.
+     *
+     * @param variant Source variant.
+     * @return DataSpanVariant aliasing the variant's internal storage.
+     */
+    static Kakshya::DataSpanVariant extract_native_data(const Kakshya::DataVariant& variant)
+    {
+        return std::visit([](const auto& vec) -> Kakshya::DataSpanVariant {
+            return std::span<const typename std::decay_t<decltype(vec)>::value_type>(
+                vec.data(), vec.size());
+        },
+            variant);
+    }
+
+    /**
+     * @brief Extract a vector of DataVariants as type-erased spans without conversion.
+     *
+     * One DataSpanVariant per channel/variant in the input. Each span aliases
+     * the variant's internal storage; no allocation or coercion.
+     *
+     * @param variants Source variants.
+     * @return Per-channel DataSpanVariants.
+     */
+    static std::vector<Kakshya::DataSpanVariant> extract_native_data(
+        const std::vector<Kakshya::DataVariant>& variants)
+    {
+        std::vector<Kakshya::DataSpanVariant> result;
+        result.reserve(variants.size());
+        for (const auto& v : variants)
+            result.push_back(extract_native_data(v));
+        return result;
+    }
+
+    /**
+     * @brief Extract native-typed channel spans from a SignalSourceContainer.
+     *
+     * Queries value_element_type() to determine the native scalar, then
+     * retrieves each channel's data as a FrameView (which already carries the
+     * native span). Returns one DataSpanVariant per channel; no double coercion.
+     *
+     * @param container Source container. Must have data.
+     * @param use_processed If true, reads processed_data; otherwise raw data.
+     * @return Per-channel DataSpanVariants in native element type.
+     */
+    static std::vector<Kakshya::DataSpanVariant> extract_native_data(
+        const std::shared_ptr<Kakshya::SignalSourceContainer>& container,
+        bool use_processed = false)
+    {
+        if (!container || !container->has_data())
+            return {};
+
+        const auto& variants = use_processed
+            ? container->get_processed_data()
+            : container->get_data();
+
+        return extract_native_data(variants);
+    }
+
+    /**
+     * @brief Extract native-typed column spans from any Eigen matrix.
+     *
+     * Returns one span per column in T::Scalar, aliasing the matrix's own
+     * storage via Eigen::Map. The matrix must outlive the returned spans.
+     *
+     * @tparam EigenMatrix Any Eigen matrix type. T::Scalar is the native type.
+     * @param matrix Source matrix.
+     * @return Per-column spans in T::Scalar.
+     */
+    template <typename EigenMatrix>
+        requires is_eigen_matrix_v<EigenMatrix>
+    static auto extract_native_data(const EigenMatrix& matrix)
+        -> std::vector<std::span<const typename EigenMatrix::Scalar>>
+    {
+        using Scalar = typename EigenMatrix::Scalar;
+        std::vector<std::span<const Scalar>> result;
+        result.reserve(static_cast<size_t>(matrix.cols()));
+
+        for (int col = 0; col < matrix.cols(); ++col) {
+            // Eigen stores column-major by default; col pointer is contiguous.
+            result.emplace_back(matrix.col(col).data(), static_cast<size_t>(matrix.rows()));
+        }
+        return result;
+    }
+
     /**
      * @brief Convert ComputeData to DataVariant format
      * @tparam T ComputeData type
