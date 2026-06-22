@@ -243,71 +243,6 @@ void SoundStreamContainer::get_frames_typed(std::span<double> output, uint64_t s
     }
 }
 
-double SoundStreamContainer::get_value_at(const std::vector<uint64_t>& coordinates) const
-{
-    if (!has_data() || coordinates.size() != 2) {
-        return 0.0;
-    }
-
-    uint64_t frame = coordinates[0];
-    uint64_t channel = coordinates[1];
-
-    if (frame >= m_num_frames || channel >= m_num_channels) {
-        return 0.0;
-    }
-
-    const auto& spans = get_span_cache();
-
-    if (m_structure.organization == OrganizationStrategy::INTERLEAVED) {
-        if (spans.empty())
-            return 0.0;
-
-        uint64_t linear_index = frame * m_num_channels + channel;
-        return (linear_index < spans[0].size()) ? spans[0][linear_index] : 0.0;
-    }
-
-    if (channel >= spans.size())
-        return 0.0;
-
-    return (frame < spans[channel].size()) ? spans[channel][frame] : 0.0;
-}
-
-void SoundStreamContainer::set_value_at(const std::vector<uint64_t>& coordinates, double value)
-{
-    if (coordinates.size() != 2)
-        return;
-
-    uint64_t frame = coordinates[0];
-    uint64_t channel = coordinates[1];
-
-    if (frame >= m_num_frames || channel >= m_num_channels) {
-        return;
-    }
-
-    const auto& spans = get_span_cache();
-
-    if (m_structure.organization == OrganizationStrategy::INTERLEAVED) {
-        if (spans.empty())
-            return;
-
-        uint64_t linear_index = frame * m_num_channels + channel;
-        if (linear_index < spans[0].size()) {
-            const_cast<std::span<double>&>(spans[0])[linear_index] = value;
-        }
-
-    } else {
-        if (channel >= spans.size())
-            return;
-
-        if (frame < spans[channel].size()) {
-            const_cast<std::span<double>&>(spans[channel])[frame] = value;
-        }
-    }
-
-    invalidate_span_cache();
-    m_double_extraction_dirty.store(true, std::memory_order_release);
-}
-
 uint64_t SoundStreamContainer::coordinates_to_linear_index(const std::vector<uint64_t>& coordinates) const
 {
     return coordinates_to_linear(coordinates, m_structure.dimensions);
@@ -878,6 +813,69 @@ const std::vector<std::span<double>>& SoundStreamContainer::get_span_cache() con
 void SoundStreamContainer::invalidate_span_cache()
 {
     m_span_cache_dirty.store(true, std::memory_order_release);
+}
+
+void SoundStreamContainer::get_value_impl(
+    const std::vector<uint64_t>& coords,
+    void* out,
+    const std::type_info& type) const
+{
+    if (type != typeid(double) || coords.size() != 2 || !has_data())
+        return;
+
+    const uint64_t frame = coords[0];
+    const uint64_t channel = coords[1];
+
+    if (frame >= m_num_frames || channel >= m_num_channels)
+        return;
+
+    const auto& spans = get_span_cache();
+
+    if (m_structure.organization == OrganizationStrategy::INTERLEAVED) {
+        if (spans.empty())
+            return;
+        const uint64_t idx = frame * m_num_channels + channel;
+        if (idx >= spans[0].size())
+            return;
+        *static_cast<double*>(out) = spans[0][idx];
+    } else {
+        if (channel >= spans.size() || frame >= spans[channel].size())
+            return;
+        *static_cast<double*>(out) = spans[channel][frame];
+    }
+}
+
+void SoundStreamContainer::set_value_impl(
+    const std::vector<uint64_t>& coords,
+    const void* in,
+    const std::type_info& type)
+{
+    if (type != typeid(double) || coords.size() != 2)
+        return;
+
+    const uint64_t frame = coords[0];
+    const uint64_t channel = coords[1];
+
+    if (frame >= m_num_frames || channel >= m_num_channels)
+        return;
+
+    const auto& spans = get_span_cache();
+
+    if (m_structure.organization == OrganizationStrategy::INTERLEAVED) {
+        if (spans.empty())
+            return;
+        const uint64_t idx = frame * m_num_channels + channel;
+        if (idx >= spans[0].size())
+            return;
+        const_cast<std::span<double>&>(spans[0])[idx] = *static_cast<const double*>(in);
+    } else {
+        if (channel >= spans.size() || frame >= spans[channel].size())
+            return;
+        const_cast<std::span<double>&>(spans[channel])[frame] = *static_cast<const double*>(in);
+    }
+
+    invalidate_span_cache();
+    m_double_extraction_dirty.store(true, std::memory_order_release);
 }
 
 }

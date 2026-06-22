@@ -287,26 +287,6 @@ std::vector<DataVariant> PlotContainer::get_segments_data(const std::vector<Regi
     return m_processed_data;
 }
 
-double PlotContainer::get_value_at(const std::vector<uint64_t>& coordinates) const
-{
-    if (coordinates.size() < 2 || coordinates[0] >= m_data.size())
-        return 0.0;
-    const auto* vec = std::get_if<std::vector<double>>(&m_data[coordinates[0]]);
-    if (!vec || coordinates[1] >= vec->size())
-        return 0.0;
-    return (*vec)[coordinates[1]];
-}
-
-void PlotContainer::set_value_at(const std::vector<uint64_t>& coordinates, double value)
-{
-    if (coordinates.size() < 2 || coordinates[0] >= m_data.size())
-        return;
-    auto* vec = std::get_if<std::vector<double>>(&m_data[coordinates[0]]);
-    if (!vec || coordinates[1] >= vec->size())
-        return;
-    (*vec)[coordinates[1]] = value;
-}
-
 uint64_t PlotContainer::coordinates_to_linear_index(const std::vector<uint64_t>& coordinates) const
 {
     if (coordinates.size() < 2)
@@ -478,7 +458,7 @@ void PlotContainer::get_frames_typed(std::span<double> output, uint64_t start_fr
 
 auto PlotContainer::get_frame_span_impl(uint64_t frame_index) const -> DataSpanVariant
 {
-    return DataSpanVariant(get_frame_typed(frame_index));
+    return { get_frame_typed(frame_index) };
 }
 
 void PlotContainer::get_frames_impl(
@@ -497,6 +477,36 @@ void PlotContainer::get_frames_impl(
     }
 
     get_frames_typed(std::span<double>(static_cast<double*>(output), count), start_frame, num_frames);
+}
+
+void PlotContainer::get_value_impl(
+    const std::vector<uint64_t>& coords,
+    void* out,
+    const std::type_info& type) const
+{
+    if (type != typeid(double) || coords.size() < 2 || coords[0] >= m_data.size())
+        return;
+
+    const auto* vec = std::get_if<std::vector<double>>(&m_data[coords[0]]);
+    if (!vec || coords[1] >= vec->size())
+        return;
+
+    *static_cast<double*>(out) = (*vec)[coords[1]];
+}
+
+void PlotContainer::set_value_impl(
+    const std::vector<uint64_t>& coords,
+    const void* in,
+    const std::type_info& type)
+{
+    if (type != typeid(double) || coords.size() < 2 || coords[0] >= m_data.size())
+        return;
+
+    auto* vec = std::get_if<std::vector<double>>(&m_data[coords[0]]);
+    if (!vec || coords[1] >= vec->size())
+        return;
+
+    (*vec)[coords[1]] = *static_cast<const double*>(in);
 }
 
 } // namespace MayaFlux::Kakshya

@@ -225,8 +225,7 @@ public:
     [[nodiscard]] std::vector<DataVariant> get_region_group_data(const RegionGroup& group) const override;
     [[nodiscard]] std::vector<DataVariant> get_segments_data(const std::vector<RegionSegment>& segments) const override;
 
-    [[nodiscard]] double get_value_at(const std::vector<uint64_t>& coordinates) const override;
-    void set_value_at(const std::vector<uint64_t>& coordinates, double value) override;
+    [[nodiscard]] std::type_index value_element_type() const override { return typeid(double); }
 
     [[nodiscard]] uint64_t coordinates_to_linear_index(const std::vector<uint64_t>& coordinates) const override;
     [[nodiscard]] std::vector<uint64_t> linear_index_to_coordinates(uint64_t linear_index) const override;
@@ -295,6 +294,12 @@ public:
 protected:
     [[nodiscard]] auto get_frame_span_impl(uint64_t frame_index) const -> DataSpanVariant override;
     void get_frames_impl(void* output, size_t count, uint64_t start_frame, uint64_t num_frames, const std::type_info& type) const override;
+
+    void get_value_impl(const std::vector<uint64_t>& coords,
+        void* out, const std::type_info& type) const override;
+
+    void set_value_impl(const std::vector<uint64_t>& coords,
+        const void* in, const std::type_info& type) override;
 
 private:
     /**

@@ -154,15 +154,7 @@ public:
         }
     }
 
-    double get_value_at(const std::vector<uint64_t>&) const override
-    {
-        return 0.0;
-    }
-
-    void set_value_at(const std::vector<uint64_t>&, double) override
-    {
-        // No-op for mock
-    }
+    std::type_index value_element_type() const override { return typeid(double); }
 
     void add_region_group(const RegionGroup& group) override
     {
@@ -394,6 +386,42 @@ public:
 protected:
     [[nodiscard]] auto get_frame_span_impl(uint64_t /*frame_index*/) const -> DataSpanVariant override { return {}; }
     void get_frames_impl(void* output, size_t count, uint64_t start_frame, uint64_t num_frames, const std::type_info& type) const override { /* default implementation does nothing */ }
+
+    void get_value_impl(const std::vector<uint64_t>& coords, void* out, const std::type_info& type) const override
+    {
+        if (type != typeid(double) || coords.size() < 2)
+            return;
+
+        uint64_t frame = coords[0];
+        uint64_t channel = coords[1];
+
+        if (frame >= m_num_frames || channel >= m_num_channels)
+            return;
+
+        const auto& channel_data = std::get<std::vector<double>>(m_processed_data[channel]);
+        if (frame >= channel_data.size())
+            return;
+
+        *static_cast<double*>(out) = channel_data[frame];
+    }
+
+    void set_value_impl(const std::vector<uint64_t>& coords, const void* in, const std::type_info& type) override
+    {
+        if (type != typeid(double) || coords.size() < 2)
+            return;
+
+        uint64_t frame = coords[0];
+        uint64_t channel = coords[1];
+
+        if (frame >= m_num_frames || channel >= m_num_channels)
+            return;
+
+        auto& channel_data = std::get<std::vector<double>>(m_processed_data[channel]);
+        if (frame >= channel_data.size())
+            return;
+
+        channel_data[frame] = *static_cast<const double*>(in);
+    }
 
 private:
     uint32_t m_num_channels { 1 };

@@ -415,27 +415,6 @@ std::vector<DataVariant> WindowContainer::get_segments_data(const std::vector<Re
     return m_processed_data;
 }
 
-double WindowContainer::get_value_at(const std::vector<uint64_t>& coordinates) const
-{
-    if (coordinates.size() < 3 || m_processed_data.empty())
-        return 0.0;
-
-    const auto* pixels = std::get_if<std::vector<uint8_t>>(&m_processed_data[0]);
-    if (!pixels)
-        return 0.0;
-
-    const uint64_t w = m_structure.get_width();
-    const uint64_t c = m_structure.get_channel_count();
-    const uint64_t idx = (coordinates[0] * w + coordinates[1]) * c + coordinates[2];
-
-    if (idx >= pixels->size())
-        return 0.0;
-
-    return static_cast<double>((*pixels)[idx]) / 255.0;
-}
-
-void WindowContainer::set_value_at(const std::vector<uint64_t>& /*coords*/, double /*value*/) { }
-
 uint64_t WindowContainer::coordinates_to_linear_index(const std::vector<uint64_t>& coordinates) const
 {
     return coordinates_to_linear(coordinates, m_structure.dimensions);
@@ -762,6 +741,29 @@ void WindowContainer::get_frames_typed(std::span<uint8_t> output, uint64_t start
     if (elems_to_copy < output.size()) {
         std::fill(output.begin() + static_cast<std::ptrdiff_t>(elems_to_copy), output.end(), uint8_t { 0 });
     }
+}
+
+void WindowContainer::get_value_impl(
+    const std::vector<uint64_t>& coords,
+    void* out,
+    const std::type_info& type) const
+{
+    if (type != typeid(uint8_t) || coords.size() < 3 || m_processed_data.empty())
+        return;
+
+    const auto* pixels = std::get_if<std::vector<uint8_t>>(&m_processed_data[0]);
+    if (!pixels)
+        return;
+
+    const uint64_t w = m_structure.get_width();
+    const uint64_t c = m_structure.get_channel_count();
+    const uint64_t idx = (coords[0] * w + coords[1]) * c + coords[2];
+
+    if (idx >= pixels->size())
+        return;
+
+    std::shared_lock lock(m_data_mutex);
+    *static_cast<uint8_t*>(out) = (*pixels)[idx];
 }
 
 } // namespace MayaFlux::Kakshya

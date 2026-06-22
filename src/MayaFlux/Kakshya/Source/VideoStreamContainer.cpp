@@ -205,62 +205,6 @@ std::span<const uint8_t> VideoStreamContainer::get_frame_pixels(uint64_t frame_i
     return {};
 }
 
-double VideoStreamContainer::get_value_at(const std::vector<uint64_t>& coordinates) const
-{
-    if (coordinates.size() < 4 || m_data.empty())
-        return 0.0;
-
-    const auto* pixels = std::get_if<std::vector<uint8_t>>(&m_data[0]);
-    if (!pixels)
-        return 0.0;
-
-    const uint64_t frame = coordinates[0];
-    const uint64_t y = coordinates[1];
-    const uint64_t x = coordinates[2];
-    const uint64_t c = coordinates[3];
-
-    if (frame >= m_num_frames || y >= m_height || x >= m_width || c >= m_channels)
-        return 0.0;
-
-    const size_t idx = (frame * m_height * m_width * m_channels)
-        + (y * m_width * m_channels)
-        + (x * m_channels)
-        + c;
-
-    if (idx >= pixels->size())
-        return 0.0;
-
-    return static_cast<double>((*pixels)[idx]) / 255.0;
-}
-
-void VideoStreamContainer::set_value_at(const std::vector<uint64_t>& coordinates, double value)
-{
-    if (coordinates.size() < 4 || m_data.empty())
-        return;
-
-    auto* pixels = std::get_if<std::vector<uint8_t>>(&m_data[0]);
-    if (!pixels)
-        return;
-
-    const uint64_t frame = coordinates[0];
-    const uint64_t y = coordinates[1];
-    const uint64_t x = coordinates[2];
-    const uint64_t c = coordinates[3];
-
-    if (frame >= m_num_frames || y >= m_height || x >= m_width || c >= m_channels)
-        return;
-
-    const size_t idx = (frame * m_height * m_width * m_channels)
-        + (y * m_width * m_channels)
-        + (x * m_channels)
-        + c;
-
-    if (idx >= pixels->size())
-        return;
-
-    (*pixels)[idx] = static_cast<uint8_t>(std::clamp(value * 255.0, 0.0, 255.0));
-}
-
 uint64_t VideoStreamContainer::coordinates_to_linear_index(const std::vector<uint64_t>& coordinates) const
 {
     return coordinates_to_linear(coordinates, m_structure.dimensions);
@@ -651,6 +595,64 @@ std::vector<DataAccess> VideoStreamContainer::all_channel_data()
     if (m_data.empty())
         return {};
     return { DataAccess(m_data[0], m_structure.dimensions, DataModality::VIDEO_COLOR) };
+}
+
+void VideoStreamContainer::get_value_impl(
+    const std::vector<uint64_t>& coords,
+    void* out,
+    const std::type_info& type) const
+{
+    if (type != typeid(uint8_t) || coords.size() < 4)
+        return;
+
+    const uint64_t frame = coords[0];
+    const uint64_t y = coords[1];
+    const uint64_t x = coords[2];
+    const uint64_t c = coords[3];
+
+    if (frame >= m_num_frames || y >= m_height || x >= m_width || c >= m_channels)
+        return;
+
+    auto pixels = get_frame_pixels(frame);
+    if (pixels.empty())
+        return;
+
+    const size_t idx = (y * m_width + x) * m_channels + c;
+    if (idx >= pixels.size())
+        return;
+
+    *static_cast<uint8_t*>(out) = pixels[idx];
+}
+
+void VideoStreamContainer::set_value_impl(
+    const std::vector<uint64_t>& coords,
+    const void* in,
+    const std::type_info& type)
+{
+    if (type != typeid(uint8_t) || coords.size() < 4 || m_data.empty())
+        return;
+
+    auto* pixels = std::get_if<std::vector<uint8_t>>(&m_data[0]);
+    if (!pixels)
+        return;
+
+    const uint64_t frame = coords[0];
+    const uint64_t y = coords[1];
+    const uint64_t x = coords[2];
+    const uint64_t c = coords[3];
+
+    if (frame >= m_num_frames || y >= m_height || x >= m_width || c >= m_channels)
+        return;
+
+    const size_t idx = (frame * m_height * m_width * m_channels)
+        + (y * m_width * m_channels)
+        + (x * m_channels)
+        + c;
+
+    if (idx >= pixels->size())
+        return;
+
+    (*pixels)[idx] = *static_cast<const uint8_t*>(in);
 }
 
 } // namespace MayaFlux::Kakshya

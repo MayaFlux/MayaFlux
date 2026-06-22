@@ -721,28 +721,17 @@ void TextureContainer::set_region_data(
         m_data[0]);
 }
 
-double TextureContainer::get_value_at(const std::vector<uint64_t>& coordinates) const
+std::type_index TextureContainer::value_element_type() const
 {
-    if (coordinates.size() < 3 || m_data.empty())
-        return 0.0;
-
-    const size_t elem_idx = (coordinates[0] * m_width + coordinates[1]) * m_channels
-        + coordinates[2];
-
-    std::shared_lock lock(m_data_mutex);
-    return read_normalized_at(m_data[0], m_format, elem_idx);
-}
-
-void TextureContainer::set_value_at(const std::vector<uint64_t>& coordinates, double value)
-{
-    if (coordinates.size() < 3 || m_data.empty())
-        return;
-
-    const size_t elem_idx = (coordinates[0] * m_width + coordinates[1]) * m_channels
-        + coordinates[2];
-
-    std::unique_lock lock(m_data_mutex);
-    write_normalized_at(m_data[0], m_format, elem_idx, value);
+    switch (storage_kind_for(m_format)) {
+    case StorageKind::U8:
+        return typeid(uint8_t);
+    case StorageKind::U16:
+        return typeid(uint16_t);
+    case StorageKind::F32:
+        return typeid(float);
+    }
+    return typeid(uint8_t);
 }
 
 uint64_t TextureContainer::coordinates_to_linear_index(const std::vector<uint64_t>& coords) const
@@ -998,6 +987,46 @@ void TextureContainer::get_frames_typed_as(std::span<T> output, uint64_t start_f
     if (out_idx < output.size()) {
         std::fill(output.begin() + static_cast<std::ptrdiff_t>(out_idx), output.end(), T {});
     }
+}
+
+void TextureContainer::get_value_impl(
+    const std::vector<uint64_t>& coords,
+    void* out,
+    const std::type_info& type) const
+{
+    if (coords.size() < 3 || m_data.empty())
+        return;
+
+    const size_t idx = (coords[0] * m_width + coords[1]) * m_channels + coords[2];
+
+    std::shared_lock lock(m_data_mutex);
+    std::visit([&](const auto& vec) {
+        using T = typename std::decay_t<decltype(vec)>::value_type;
+        if (type != typeid(T) || idx >= vec.size())
+            return;
+        *static_cast<T*>(out) = vec[idx];
+    },
+        m_data[0]);
+}
+
+void TextureContainer::set_value_impl(
+    const std::vector<uint64_t>& coords,
+    const void* in,
+    const std::type_info& type)
+{
+    if (coords.size() < 3 || m_data.empty())
+        return;
+
+    const size_t idx = (coords[0] * m_width + coords[1]) * m_channels + coords[2];
+
+    std::unique_lock lock(m_data_mutex);
+    std::visit([&](auto& vec) {
+        using T = typename std::decay_t<decltype(vec)>::value_type;
+        if (type != typeid(T) || idx >= vec.size())
+            return;
+        vec[idx] = *static_cast<const T*>(in);
+    },
+        m_data[0]);
 }
 
 } // namespace MayaFlux::Kakshya
