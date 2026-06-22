@@ -255,7 +255,6 @@ public:
         result.reserve(static_cast<size_t>(matrix.cols()));
 
         for (int col = 0; col < matrix.cols(); ++col) {
-            // Eigen stores column-major by default; col pointer is contiguous.
             result.emplace_back(matrix.col(col).data(), static_cast<size_t>(matrix.rows()));
         }
         return result;
@@ -345,6 +344,76 @@ public:
             info.modality = modality;
 
             return std::make_tuple(double_data, info);
+        }
+    }
+
+    /**
+     * @brief Extract native-typed channel spans and structure metadata from
+     *        a Datum or direct ComputeData, without double coercion.
+     *
+     * Mirrors extract_structured_double in structure: same DataStructureInfo
+     * population, same Datum unwrapping, same container handling for
+     * RegionLike types. The only difference is that channel data is returned
+     * as DataSpanVariant (type-erased native span) rather than span<double>.
+     *
+     * Use this as the entry point for Kinesis::Vision operations and any
+     * other pipeline that must preserve the source's native element type
+     * (uint8_t pixel data, uint16_t depth, float HDR, etc.).
+     *
+     * For RegionLike data types the region variants are returned as
+     * DataSpanVariant via extract_native_data(DataVariant), consistent with
+     * the non-region overloads.
+     *
+     * Callers branch on DataSpanVariant::element_type() or use
+     * FrameView::as<E>() / DataSpanVariant::get_if<span<const E>>() when
+     * the native type is statically known.
+     *
+     * @tparam T OperationReadyData type.
+     * @param compute_data Datum or direct ComputeData to extract from.
+     * @return Tuple of [native channel spans, DataStructureInfo].
+     * @throws std::runtime_error if a container is required but absent.
+     */
+    template <OperationReadyData T>
+    static std::tuple<std::vector<Kakshya::DataSpanVariant>, DataStructureInfo>
+    extract_structured_native(T& compute_data)
+    {
+        if constexpr (is_IO<T>::value) {
+            DataStructureInfo info {};
+            info.original_type = std::type_index(typeid(std::decay_t<decltype(compute_data.data)>));
+            info.dimensions = compute_data.dimensions;
+            info.modality = compute_data.modality;
+
+            if constexpr (RequiresContainer<std::decay_t<decltype(compute_data.data)>>) {
+                if (!compute_data.has_container()) {
+                    error<std::runtime_error>(
+                        Journal::Component::Yantra,
+                        Journal::Context::ContainerProcessing,
+                        std::source_location::current(),
+                        "Container is required for region-like data extraction but not provided");
+                }
+
+                const auto region_variants = [&]() -> std::vector<Kakshya::DataVariant> {
+                    if constexpr (std::is_same_v<std::decay_t<decltype(compute_data.data)>, Kakshya::Region>) {
+                        return compute_data.container.value()->get_region_data(compute_data.data);
+                    } else if constexpr (std::is_same_v<std::decay_t<decltype(compute_data.data)>, Kakshya::RegionGroup>) {
+                        return compute_data.container.value()->get_region_group_data(compute_data.data);
+                    } else {
+                        return compute_data.container.value()->get_segments_data(compute_data.data);
+                    }
+                }();
+                return { extract_native_data(region_variants), info };
+            } else {
+                auto spans = extract_native_data(compute_data.data);
+                return { std::move(spans), info };
+            }
+        } else {
+            DataStructureInfo info {};
+            info.original_type = std::type_index(typeid(T));
+            auto spans = extract_native_data(compute_data);
+            auto [dimensions, modality] = infer_structure(compute_data);
+            info.dimensions = dimensions;
+            info.modality = modality;
+            return { std::move(spans), info };
         }
     }
 
