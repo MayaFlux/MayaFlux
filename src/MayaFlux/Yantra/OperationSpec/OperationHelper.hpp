@@ -5,8 +5,6 @@
 
 #include "MayaFlux/Kakshya/Utils/DataUtils.hpp"
 
-#include <typeindex>
-
 namespace MayaFlux::Yantra {
 
 /**
@@ -305,6 +303,31 @@ public:
             return container->get_region_group_data(compute_data);
         } else if constexpr (std::is_same_v<T, std::vector<Kakshya::RegionSegment>>) {
             return container->get_segments_data(compute_data);
+        }
+    }
+
+    /**
+     * @brief Populate DataStructureInfo from a Datum without extracting spans.
+     * @tparam T OperationReadyData type.
+     * @param compute_data Source Datum.
+     * @return DataStructureInfo with original_type, dimensions, modality populated.
+     */
+    template <OperationReadyData T>
+    static DataStructureInfo get_structure_info(T& compute_data)
+    {
+        if constexpr (is_IO<T>::value) {
+            DataStructureInfo info {};
+            info.original_type = std::type_index(typeid(std::decay_t<decltype(compute_data.data)>));
+            info.dimensions = compute_data.dimensions;
+            info.modality = compute_data.modality;
+            return info;
+        } else {
+            DataStructureInfo info {};
+            info.original_type = std::type_index(typeid(T));
+            auto [dims, mod] = infer_structure(compute_data);
+            info.dimensions = std::move(dims);
+            info.modality = mod;
+            return info;
         }
     }
 

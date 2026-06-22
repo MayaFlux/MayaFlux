@@ -5,7 +5,6 @@
 #include "MayaFlux/Journal/Archivist.hpp"
 
 #include <glm/gtc/type_ptr.hpp>
-#include <typeindex>
 
 namespace MayaFlux::Kakshya {
 
