@@ -2,6 +2,8 @@
 
 #include "MayaFlux/Kakshya/StreamContainer.hpp"
 
+#include "MayaFlux/Transitive/Memory/SeqLock.hpp"
+
 namespace MayaFlux::Kakshya {
 
 /**
@@ -59,9 +61,9 @@ public:
     std::vector<uint64_t> linear_index_to_coordinates(uint64_t linear_index) const override;
 
     void clear() override;
-    void lock() override { m_data_mutex.lock(); }
-    void unlock() override { m_data_mutex.unlock(); }
-    bool try_lock() override { return m_data_mutex.try_lock(); }
+    void lock() override { }
+    void unlock() override { }
+    bool try_lock() override { return true; }
 
     const void* get_raw_data() const override;
     bool has_data() const override;
@@ -107,13 +109,13 @@ public:
     void register_state_change_callback(
         std::function<void(const std::shared_ptr<SignalSourceContainer>&, ProcessingState)> callback) override
     {
-        std::lock_guard<std::mutex> lock(m_state_mutex);
-        m_state_callback = callback;
+        Memory::SeqlockWriteGuard g(m_cb_lock);
+        m_state_callback = std::move(callback);
     }
 
     void unregister_state_change_callback() override
     {
-        std::lock_guard<std::mutex> lock(m_state_mutex);
+        Memory::SeqlockWriteGuard g(m_cb_lock);
         m_state_callback = nullptr;
     }
 
@@ -241,9 +243,10 @@ protected:
 
     std::function<void(std::shared_ptr<SignalSourceContainer>, ProcessingState)> m_state_callback;
 
-    mutable std::shared_mutex m_data_mutex;
-    mutable std::mutex m_state_mutex;
-    mutable std::mutex m_reader_mutex;
+    mutable Memory::Seqlock m_data_lock;
+    mutable Memory::Seqlock m_region_lock;
+    mutable Memory::Seqlock m_cb_lock;
+    mutable Memory::Seqlock m_reader_lock;
 
     mutable std::vector<double> m_cached_ext_buffer;
 

@@ -62,7 +62,7 @@ uint64_t SoundStreamContainer::get_total_elements() const
 void SoundStreamContainer::set_memory_layout(MemoryLayout layout)
 {
     if (layout != m_structure.memory_layout) {
-        std::unique_lock lock(m_data_mutex);
+        Memory::SeqlockWriteGuard g(m_data_lock);
         reorganize_data_layout(layout);
         m_structure.memory_layout = layout;
         setup_dimensions();
@@ -115,24 +115,19 @@ void SoundStreamContainer::set_region_data(const Region& region, const std::vect
         if (m_data.empty() || data.empty())
             return;
 
-        std::unique_lock lock(m_data_mutex);
-
+        Memory::SeqlockWriteGuard g(m_data_lock);
         auto dest_span = convert_variant<double>(m_data[0]);
         auto src_span = convert_variant<double>(data[0]);
 
-        set_or_update_region_data<double>(
-            dest_span, src_span, region, m_structure.dimensions);
-
+        set_or_update_region_data<double>(dest_span, src_span, region, m_structure.dimensions);
     } else {
         size_t channels_to_update = std::min(m_data.size(), data.size());
+        Memory::SeqlockWriteGuard g(m_data_lock);
 
-        std::unique_lock lock(m_data_mutex);
         for (size_t i = 0; i < channels_to_update; ++i) {
             auto dest_span = convert_variant<double>(m_data[i]);
             auto src_span = convert_variant<double>(data[i]);
-
-            set_or_update_region_data<double>(
-                dest_span, src_span, region, m_structure.dimensions);
+            set_or_update_region_data<double>(dest_span, src_span, region, m_structure.dimensions);
         }
     }
 
@@ -255,25 +250,23 @@ std::vector<uint64_t> SoundStreamContainer::linear_index_to_coordinates(uint64_t
 
 void SoundStreamContainer::clear()
 {
-    std::unique_lock lock(m_data_mutex);
-
-    std::ranges::for_each(m_data, [](auto& vec) {
-        std::visit([](auto& v) { v.clear(); }, vec);
-    });
-
-    std::ranges::for_each(m_processed_data, [](auto& vec) {
-        std::visit([](auto& v) { v.clear(); }, vec);
-    });
-
-    m_num_frames = 0;
-    m_circular_write_position = 0;
-
-    m_read_position = std::vector<std::atomic<uint64_t>>(m_num_channels);
-    for (auto& pos : m_read_position) {
-        pos.store(0);
+    {
+        Memory::SeqlockWriteGuard g(m_data_lock);
+        std::ranges::for_each(m_data, [](auto& vec) {
+            std::visit([](auto& v) { v.clear(); }, vec);
+        });
+        std::ranges::for_each(m_processed_data, [](auto& vec) {
+            std::visit([](auto& v) { v.clear(); }, vec);
+        });
+        m_num_frames = 0;
+        m_circular_write_position = 0;
+        m_read_position = std::vector<std::atomic<uint64_t>>(m_num_channels);
+        for (auto& pos : m_read_position)
+            pos.store(0);
+        setup_dimensions();
     }
 
-    setup_dimensions();
+    invalidate_span_cache();
     update_processing_state(ProcessingState::IDLE);
 }
 
@@ -285,16 +278,18 @@ const void* SoundStreamContainer::get_raw_data() const
 
 bool SoundStreamContainer::has_data() const
 {
-    std::shared_lock lock(m_data_mutex);
-
-    return std::ranges::any_of(m_data, [](const auto& variant) {
-        return std::visit([](const auto& vec) { return !vec.empty(); }, variant);
+    bool result = false;
+    seqlock_read_void(m_data_lock, 8, [&] {
+        result = std::ranges::any_of(m_data, [](const auto& variant) {
+            return std::visit([](const auto& vec) { return !vec.empty(); }, variant);
+        });
     });
+    return result;
 }
 
 void SoundStreamContainer::add_region_group(const RegionGroup& group)
 {
-    std::lock_guard<std::mutex> lock(m_state_mutex);
+    Memory::SeqlockWriteGuard g(m_region_lock);
     m_region_groups[group.name] = group;
 }
 
@@ -302,20 +297,27 @@ RegionGroup SoundStreamContainer::get_region_group(const std::string& name) cons
 {
     static const RegionGroup empty_group;
 
-    std::shared_lock lock(m_data_mutex);
-    auto it = m_region_groups.find(name);
-    return it != m_region_groups.end() ? it->second : empty_group;
+    std::optional<RegionGroup> result;
+    seqlock_read_void(m_region_lock, 8, [&] {
+        auto it = m_region_groups.find(name);
+        result = (it != m_region_groups.end()) ? it->second : empty_group;
+    });
+    return result.value_or(empty_group);
 }
 
 std::unordered_map<std::string, RegionGroup> SoundStreamContainer::get_all_region_groups() const
 {
-    std::lock_guard<std::mutex> lock(m_state_mutex);
-    return m_region_groups;
+    std::optional<std::unordered_map<std::string, RegionGroup>> result;
+
+    seqlock_read_void(m_region_lock, 8, [&] {
+        result = m_region_groups;
+    });
+    return result.value_or(std::unordered_map<std::string, RegionGroup> {});
 }
 
 void SoundStreamContainer::remove_region_group(const std::string& name)
 {
-    std::lock_guard<std::mutex> lock(m_state_mutex);
+    Memory::SeqlockWriteGuard g(m_region_lock);
     m_region_groups.erase(name);
 }
 
@@ -559,7 +561,7 @@ void SoundStreamContainer::update_processing_state(ProcessingState new_state)
         notify_state_change(new_state);
 
         if (new_state == ProcessingState::READY) {
-            std::lock_guard<std::mutex> lock(m_reader_mutex);
+            Memory::SeqlockWriteGuard g(m_reader_lock);
             m_consumed_dimensions.clear();
         }
     }
@@ -567,10 +569,10 @@ void SoundStreamContainer::update_processing_state(ProcessingState new_state)
 
 void SoundStreamContainer::notify_state_change(ProcessingState new_state)
 {
-    std::lock_guard<std::mutex> lock(m_state_mutex);
-    if (m_state_callback) {
-        m_state_callback(shared_from_this(), new_state);
-    }
+    seqlock_read_void(m_cb_lock, 8, [&] {
+        if (m_state_callback)
+            m_state_callback(shared_from_this(), new_state);
+    });
 }
 
 bool SoundStreamContainer::is_ready_for_processing() const
@@ -619,24 +621,21 @@ void SoundStreamContainer::set_default_processor(const std::shared_ptr<DataProce
 
 std::shared_ptr<DataProcessor> SoundStreamContainer::get_default_processor() const
 {
-    std::lock_guard<std::mutex> lock(m_state_mutex);
     return m_default_processor;
 }
 
 uint32_t SoundStreamContainer::register_dimension_reader(uint32_t dimension_index)
 {
-    std::lock_guard<std::mutex> lock(m_reader_mutex);
+    Memory::SeqlockWriteGuard g(m_reader_lock);
     m_active_readers[dimension_index]++;
-
     uint32_t reader_id = m_dimension_to_next_reader_id[dimension_index]++;
     m_reader_consumed_dimensions[reader_id] = std::unordered_set<uint32_t>();
-
     return reader_id;
 }
 
 void SoundStreamContainer::unregister_dimension_reader(uint32_t dimension_index)
 {
-    std::lock_guard<std::mutex> lock(m_reader_mutex);
+    Memory::SeqlockWriteGuard g(m_reader_lock);
     if (auto it = m_active_readers.find(dimension_index); it != m_active_readers.end()) {
         auto& [dim, count] = *it;
         if (--count <= 0) {
@@ -648,41 +647,46 @@ void SoundStreamContainer::unregister_dimension_reader(uint32_t dimension_index)
 
 bool SoundStreamContainer::has_active_readers() const
 {
-    std::lock_guard<std::mutex> lock(m_reader_mutex);
-    return !m_active_readers.empty();
+    bool result = false;
+    seqlock_read_void(m_reader_lock, 8, [&] {
+        result = !m_active_readers.empty();
+    });
+    return result;
 }
 
 void SoundStreamContainer::mark_dimension_consumed(uint32_t dimension_index, uint32_t reader_id)
 {
+    Memory::SeqlockWriteGuard g(m_reader_lock);
     if (m_reader_consumed_dimensions.contains(reader_id)) {
         m_reader_consumed_dimensions[reader_id].insert(dimension_index);
     } else {
-
-        MF_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing, "Attempted to mark dimension {} as consumed for unknown reader_id {}. This may indicate the reader was not registered or has already been unregistered. Please ensure readers are properly registered before marking dimensions as consumed.",
+        MF_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+            "Attempted to mark dimension {} as consumed for unknown reader_id {}. "
+            "This may indicate the reader was not registered or has already been unregistered. "
+            "Please ensure readers are properly registered before marking dimensions as consumed.",
             dimension_index, reader_id);
     }
 }
 
 bool SoundStreamContainer::all_dimensions_consumed() const
 {
-    std::lock_guard<std::mutex> lock(m_reader_mutex);
-
-    return std::ranges::all_of(m_active_readers, [this](const auto& dim_reader_pair) {
-        const auto& [dim, expected_count] = dim_reader_pair;
-
-        auto actual_count = std::ranges::count_if(m_reader_consumed_dimensions,
-            [dim](const auto& reader_dims_pair) {
-                return reader_dims_pair.second.contains(dim);
-            });
-
-        return actual_count >= expected_count;
+    bool result = false;
+    seqlock_read_void(m_reader_lock, 8, [&] {
+        result = std::ranges::all_of(m_active_readers, [this](const auto& dim_reader_pair) {
+            const auto& [dim, expected_count] = dim_reader_pair;
+            auto actual_count = std::ranges::count_if(m_reader_consumed_dimensions,
+                [dim](const auto& reader_dims_pair) {
+                    return reader_dims_pair.second.contains(dim);
+                });
+            return actual_count >= expected_count;
+        });
     });
+    return result;
 }
 
 void SoundStreamContainer::clear_all_consumption()
 {
-    std::lock_guard<std::mutex> lock(m_reader_mutex);
-
+    Memory::SeqlockWriteGuard g(m_reader_lock);
     std::ranges::for_each(m_reader_consumed_dimensions,
         [](auto& reader_dims_pair) {
             reader_dims_pair.second.clear();
@@ -735,17 +739,19 @@ void SoundStreamContainer::reorganize_data_layout(MemoryLayout new_layout)
 
 std::span<const double> SoundStreamContainer::get_data_as_double() const
 {
-    if (!m_double_extraction_dirty.load(std::memory_order_acquire)) {
+    if (!m_double_extraction_dirty.load(std::memory_order_acquire))
         return { m_cached_ext_buffer };
-    }
 
     if (m_structure.organization == OrganizationStrategy::INTERLEAVED) {
         if (m_data.empty())
             return {};
 
-        std::shared_lock data_lock(m_data_mutex);
-        auto span = convert_variant<double>(m_data[0]);
-        return { span.data(), span.size() };
+        std::span<const double> result;
+        seqlock_read_void(m_data_lock, 8, [&] {
+            auto span = convert_variant<double>(m_data[0]);
+            result = { span.data(), span.size() };
+        });
+        return result;
     }
 
     const auto& spans = get_span_cache();
@@ -788,24 +794,22 @@ std::vector<DataAccess> SoundStreamContainer::all_channel_data()
 
 const std::vector<std::span<double>>& SoundStreamContainer::get_span_cache() const
 {
-    if (!m_span_cache_dirty.load(std::memory_order_acquire) && m_span_cache.has_value()) {
+    if (!m_span_cache_dirty.load(std::memory_order_acquire) && m_span_cache.has_value())
         return *m_span_cache;
-    }
 
-    std::unique_lock data_lock(m_data_mutex);
+    seqlock_read_void(m_data_lock, 8, [&] {
+        if (!m_span_cache_dirty.load(std::memory_order_acquire) && m_span_cache.has_value())
+            return;
 
-    if (!m_span_cache_dirty.load(std::memory_order_acquire) && m_span_cache.has_value()) {
-        return *m_span_cache;
-    }
+        auto spans = m_data
+            | std::views::transform([](auto& variant) {
+                  return convert_variant<double>(const_cast<DataVariant&>(variant));
+              })
+            | std::ranges::to<std::vector>();
 
-    auto spans = m_data
-        | std::views::transform([](auto& variant) {
-              return convert_variant<double>(const_cast<DataVariant&>(variant));
-          })
-        | std::ranges::to<std::vector>();
-
-    m_span_cache = std::move(spans);
-    m_span_cache_dirty.store(false, std::memory_order_release);
+        m_span_cache = std::move(spans);
+        m_span_cache_dirty.store(false, std::memory_order_release);
+    });
 
     return *m_span_cache;
 }

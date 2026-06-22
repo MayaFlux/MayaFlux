@@ -14,23 +14,22 @@ SoundFileContainer::SoundFileContainer(uint32_t sample_rate, uint32_t num_channe
 
 void SoundFileContainer::setup(uint64_t num_frames, uint32_t sample_rate, uint32_t num_channels)
 {
-    std::unique_lock lock(m_data_mutex);
-
-    m_num_frames = num_frames;
-    m_sample_rate = sample_rate;
-    m_num_channels = num_channels;
-
-    setup_dimensions();
+    {
+        Memory::SeqlockWriteGuard g(m_data_lock);
+        m_num_frames = num_frames;
+        m_sample_rate = sample_rate;
+        m_num_channels = num_channels;
+        setup_dimensions();
+    }
     update_processing_state(ProcessingState::IDLE);
 }
 
 void SoundFileContainer::set_raw_data(const std::vector<DataVariant>& data)
 {
-    std::unique_lock lock(m_data_mutex);
-
+    Memory::SeqlockWriteGuard g(m_data_lock);
     m_data.resize(data.size());
-    std::ranges::copy(data, m_data.begin());
 
+    std::ranges::copy(data, m_data.begin());
     if (!m_data.empty()) {
         auto elements = std::visit([](const auto& vec) { return vec.size(); }, m_data[0]);
         m_num_frames = (m_structure.organization == OrganizationStrategy::INTERLEAVED)
