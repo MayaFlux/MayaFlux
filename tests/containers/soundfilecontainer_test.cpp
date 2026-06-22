@@ -45,12 +45,12 @@ TEST_F(SoundFileContainerTest, BasicConstructionAndSetup)
 
 TEST_F(SoundFileContainerTest, FrameAndCoordinateAccess)
 {
-    auto frame0 = container->get_frame(0);
+    auto frame0 = container->get_frame(0).as<double>();
     ASSERT_EQ(frame0.size(), 2);
     EXPECT_DOUBLE_EQ(frame0[0], 0.1);
     EXPECT_DOUBLE_EQ(frame0[1], 0.2);
 
-    auto frame2 = container->get_frame(2);
+    auto frame2 = container->get_frame(2).as<double>();
     ASSERT_EQ(frame2.size(), 2);
     EXPECT_DOUBLE_EQ(frame2[0], 0.5);
     EXPECT_DOUBLE_EQ(frame2[1], 0.6);
@@ -214,7 +214,7 @@ TEST_F(SoundFileContainerTest, OrganizationStrategyHandling)
 
     EXPECT_EQ(planar_container->get_structure().organization, OrganizationStrategy::PLANAR);
 
-    auto frame0 = planar_container->get_frame(0);
+    auto frame0 = planar_container->get_frame(0).as<double>();
     ASSERT_EQ(frame0.size(), 2);
     EXPECT_DOUBLE_EQ(frame0[0], 0.1);
     EXPECT_DOUBLE_EQ(frame0[1], 0.2);

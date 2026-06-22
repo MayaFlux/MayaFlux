@@ -287,31 +287,6 @@ std::vector<DataVariant> PlotContainer::get_segments_data(const std::vector<Regi
     return m_processed_data;
 }
 
-std::span<const double> PlotContainer::get_frame(uint64_t frame_index) const
-{
-    if (frame_index >= m_data.size())
-        return {};
-    const auto* vec = std::get_if<std::vector<double>>(&m_data[frame_index]);
-    if (!vec || vec->empty())
-        return {};
-    return { vec->data(), vec->size() };
-}
-
-void PlotContainer::get_frames(std::span<double> output, uint64_t start_frame, uint64_t num_frames) const
-{
-    size_t out = 0;
-    for (uint64_t i = start_frame; i < start_frame + num_frames && i < m_data.size(); ++i) {
-        const auto* vec = std::get_if<std::vector<double>>(&m_data[i]);
-        if (!vec)
-            continue;
-        for (double v : *vec) {
-            if (out >= output.size())
-                return;
-            output[out++] = v;
-        }
-    }
-}
-
 double PlotContainer::get_value_at(const std::vector<uint64_t>& coordinates) const
 {
     if (coordinates.size() < 2 || coordinates[0] >= m_data.size())
@@ -474,6 +449,54 @@ void PlotContainer::set_default_processor(const std::shared_ptr<DataProcessor>& 
 std::shared_ptr<DataProcessor> PlotContainer::get_default_processor() const
 {
     return m_processor;
+}
+
+auto PlotContainer::get_frame_typed(uint64_t frame_index) const -> std::span<const double>
+{
+    if (frame_index >= m_data.size())
+        return {};
+    const auto* vec = std::get_if<std::vector<double>>(&m_data[frame_index]);
+    if (!vec || vec->empty())
+        return {};
+    return { vec->data(), vec->size() };
+}
+
+void PlotContainer::get_frames_typed(std::span<double> output, uint64_t start_frame, uint64_t num_frames) const
+{
+    size_t out = 0;
+    for (uint64_t i = start_frame; i < start_frame + num_frames && i < m_data.size(); ++i) {
+        const auto* vec = std::get_if<std::vector<double>>(&m_data[i]);
+        if (!vec)
+            continue;
+        for (double v : *vec) {
+            if (out >= output.size())
+                return;
+            output[out++] = v;
+        }
+    }
+}
+
+auto PlotContainer::get_frame_span_impl(uint64_t frame_index) const -> DataSpanVariant
+{
+    return DataSpanVariant(get_frame_typed(frame_index));
+}
+
+void PlotContainer::get_frames_impl(
+    void* output,
+    size_t count,
+    uint64_t start_frame,
+    uint64_t num_frames,
+    const std::type_info& type) const
+{
+    if (type != typeid(double)) {
+        error<std::runtime_error>(
+            Journal::Component::Kakshya,
+            Journal::Context::Runtime,
+            std::source_location::current(),
+            "PlotContainer only supports double");
+    }
+
+    get_frames_typed(std::span<double>(static_cast<double*>(output), count), start_frame, num_frames);
 }
 
 } // namespace MayaFlux::Kakshya

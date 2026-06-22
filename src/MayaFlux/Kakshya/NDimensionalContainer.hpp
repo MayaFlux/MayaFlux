@@ -286,7 +286,10 @@ public:
      * @param frame_index Index of the frame (in the temporal dimension)
      * @return Span of data representing one complete frame
      */
-    [[nodiscard]] virtual std::span<const double> get_frame(uint64_t frame_index) const = 0;
+    [[nodiscard]] auto get_frame(uint64_t frame_index) const -> FrameView
+    {
+        return FrameView(get_frame_span_impl(frame_index));
+    }
 
     /**
      * @brief Get multiple frames efficiently.
@@ -294,7 +297,45 @@ public:
      * @param start_frame First frame index
      * @param num_frames Number of frames to retrieve
      */
-    virtual void get_frames(std::span<double> output, uint64_t start_frame, uint64_t num_frames) const = 0;
+    template <DataVariantElement T>
+    void get_frames(std::span<T> output, uint64_t start_frame, uint64_t num_frames) const
+    {
+        get_frames_impl(output.data(), output.size(), start_frame, num_frames, typeid(T));
+    }
+
+    /**
+     * @brief Get a single frame of data as a typed span.
+     * @tparam T Element type to interpret the frame data as
+     * @param frame_index Index of the frame (in the temporal dimension)
+     * @return Span of data representing one complete frame, interpreted as type T
+     */
+    template <DataVariantElement T>
+    [[nodiscard]] auto get_frame_as(uint64_t frame_index) const -> std::span<const T>
+    {
+        return get_frame(frame_index).template as<T>();
+    }
+
+    /**
+     * @brief Get multiple frames efficiently as a typed span.
+     *
+     * Convenience wrapper over get_frames() for callers that know the element
+     * type statically but hold the output buffer as a plain vector rather than
+     * a typed span. Deduces T from the vector element type; no visitor, no
+     * type query needed at the call site.
+     *
+     * @tparam T Element type. Must satisfy DataVariantElement and match the
+     *           container's native element type. The impl silently no-ops or
+     *           errors on mismatch depending on the container.
+     * @param output      Destination vector. Resized to num_frames * frame_size
+     *                    by the caller before passing; content is overwritten.
+     * @param start_frame First frame index.
+     * @param num_frames  Number of frames to retrieve.
+     */
+    template <DataVariantElement T>
+    void get_frames_as(std::vector<T>& output, uint64_t start_frame, uint64_t num_frames) const
+    {
+        get_frames_impl(output.data(), output.size(), start_frame, num_frames, typeid(T));
+    }
 
     /**
      * @brief Get a single value at the specified coordinates.
@@ -414,6 +455,10 @@ public:
      * @note This may trigger reorganization of existing data to match the new structure.
      */
     virtual void set_structure(ContainerDataStructure structure) = 0;
+
+protected:
+    [[nodiscard]] virtual auto get_frame_span_impl(uint64_t frame_index) const -> DataSpanVariant = 0;
+    virtual void get_frames_impl(void* output, size_t count, uint64_t start_frame, uint64_t num_frames, const std::type_info& type) const = 0;
 };
 
 } // namespace MayaFlux::Kakshya

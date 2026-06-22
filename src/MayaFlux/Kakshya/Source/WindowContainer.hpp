@@ -252,8 +252,6 @@ public:
 
     [[nodiscard]] uint64_t get_frame_size() const override;
     [[nodiscard]] uint64_t get_num_frames() const override;
-    [[nodiscard]] std::span<const double> get_frame(uint64_t frame_index) const override;
-    void get_frames(std::span<double> output, uint64_t start_frame, uint64_t num_frames) const override;
 
     // -------------------------------------------------------------------------
     // Consumer tracking — dimension_index and reader_id are opaque slot handles.
@@ -277,6 +275,10 @@ public:
     [[nodiscard]] DataAccess channel_data(size_t channel_index) override;
     [[nodiscard]] std::vector<DataAccess> all_channel_data() override;
 
+protected:
+    [[nodiscard]] auto get_frame_span_impl(uint64_t frame_index) const -> DataSpanVariant override;
+    void get_frames_impl(void* output, size_t count, uint64_t start_frame, uint64_t num_frames, const std::type_info& type) const override;
+
 private:
     std::shared_ptr<Core::Window> m_window;
 
@@ -297,8 +299,6 @@ private:
     mutable std::shared_mutex m_data_mutex;
     mutable std::mutex m_state_mutex;
 
-    mutable std::vector<double> m_frame_cache;
-
     std::atomic<uint32_t> m_registered_readers { 0 };
     std::atomic<uint32_t> m_consumed_readers { 0 };
     std::atomic<uint32_t> m_next_reader_id { 0 };
@@ -307,6 +307,10 @@ private:
     std::atomic<uint64_t> m_frames_written { 0 };
 
     void setup_dimensions();
+
+private:
+    [[nodiscard]] auto get_frame_typed(uint64_t frame_index) const -> std::span<const uint8_t>;
+    void get_frames_typed(std::span<uint8_t> output, uint64_t start_frame, uint64_t num_frames) const;
 };
 
 } // namespace MayaFlux::Kakshya

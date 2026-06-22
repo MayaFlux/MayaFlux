@@ -205,16 +205,6 @@ std::span<const uint8_t> VideoStreamContainer::get_frame_pixels(uint64_t frame_i
     return {};
 }
 
-std::span<const double> VideoStreamContainer::get_frame(uint64_t /*frame_index*/) const
-{
-    return {};
-}
-
-void VideoStreamContainer::get_frames(std::span<double> output, uint64_t /*start_frame*/, uint64_t /*num_frames*/) const
-{
-    std::ranges::fill(output, 0.0);
-}
-
 double VideoStreamContainer::get_value_at(const std::vector<uint64_t>& coordinates) const
 {
     if (coordinates.size() < 4 || m_data.empty())
@@ -512,6 +502,41 @@ void VideoStreamContainer::notify_state_change(ProcessingState new_state)
     std::lock_guard lock(m_state_mutex);
     if (m_state_callback)
         m_state_callback(shared_from_this(), new_state);
+}
+
+void VideoStreamContainer::get_frames_impl(
+    void* output,
+    size_t count,
+    uint64_t start_frame,
+    uint64_t num_frames,
+    const std::type_info& type) const
+{
+    if (type != typeid(uint8_t)) {
+        error<std::runtime_error>(Journal::Component::Kakshya, Journal::Context::Runtime, std::source_location::current(), "VideoStreamContainer only supports uint8_t");
+    }
+
+    auto* out = static_cast<uint8_t*>(output);
+    get_frames_typed(std::span<uint8_t>(out, count), start_frame, num_frames);
+}
+
+void VideoStreamContainer::get_frames_typed(std::span<uint8_t> output, uint64_t start_frame, uint64_t num_frames) const
+{
+    const size_t frame_size = get_frame_byte_size();
+    const size_t required = static_cast<size_t>(num_frames) * frame_size;
+
+    if (output.size() < required) {
+        error<std::runtime_error>(
+            Journal::Component::Kakshya,
+            Journal::Context::Runtime,
+            std::source_location::current(),
+            "VideoStreamContainer::get_frames_typed: output buffer too small ({} < {})",
+            output.size(), required);
+    }
+
+    for (uint64_t i = 0; i < num_frames; ++i) {
+        auto frame = get_frame_typed(start_frame + i);
+        std::ranges::copy(frame, output.begin() + static_cast<size_t>(i) * frame_size);
+    }
 }
 
 void VideoStreamContainer::register_state_change_callback(

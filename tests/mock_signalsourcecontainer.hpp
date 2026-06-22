@@ -154,17 +154,6 @@ public:
         }
     }
 
-    std::span<const double> get_frame(uint64_t) const override
-    {
-        static std::vector<double> empty;
-        return {};
-    }
-
-    void get_frames(std::span<double>, uint64_t, uint64_t) const override
-    {
-        // No-op for mock
-    }
-
     double get_value_at(const std::vector<uint64_t>&) const override
     {
         return 0.0;
@@ -401,6 +390,10 @@ public:
         }
         return result;
     }
+
+protected:
+    [[nodiscard]] auto get_frame_span_impl(uint64_t /*frame_index*/) const -> DataSpanVariant override { return {}; }
+    void get_frames_impl(void* output, size_t count, uint64_t start_frame, uint64_t num_frames, const std::type_info& type) const override { /* default implementation does nothing */ }
 
 private:
     uint32_t m_num_channels { 1 };

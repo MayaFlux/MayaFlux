@@ -185,7 +185,17 @@ std::vector<DataVariant> SoundStreamContainer::get_segments_data(const std::vect
         | std::ranges::to<std::vector>();
 }
 
-std::span<const double> SoundStreamContainer::get_frame(uint64_t frame_index) const
+void SoundStreamContainer::get_frames_impl(void* output, size_t count, uint64_t start_frame, uint64_t num_frames, const std::type_info& type) const
+{
+    if (type == typeid(double)) {
+        get_frames_typed(std::span<double>(static_cast<double*>(output), count), start_frame, num_frames);
+        return;
+    }
+    MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+        "SoundStreamContainer::get_frames_impl: unsupported type requested");
+}
+
+std::span<const double> SoundStreamContainer::get_frame_typed(uint64_t frame_index) const
 {
     if (frame_index >= m_num_frames) {
         return {};
@@ -206,7 +216,7 @@ std::span<const double> SoundStreamContainer::get_frame(uint64_t frame_index) co
     return { frame_span.data(), frame_span.size() };
 }
 
-void SoundStreamContainer::get_frames(std::span<double> output, uint64_t start_frame, uint64_t num_frames) const
+void SoundStreamContainer::get_frames_typed(std::span<double> output, uint64_t start_frame, uint64_t num_frames) const
 {
     if (start_frame >= m_num_frames || output.empty()) {
         std::ranges::fill(output, 0.0);

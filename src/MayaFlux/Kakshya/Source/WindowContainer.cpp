@@ -683,47 +683,68 @@ uint64_t WindowContainer::get_num_frames() const
     return m_structure.get_height();
 }
 
-std::span<const double> WindowContainer::get_frame(uint64_t frame_index) const
+auto WindowContainer::get_frame_span_impl(uint64_t frame_index) const -> DataSpanVariant
+{
+    return { get_frame_typed(frame_index) };
+}
+
+void WindowContainer::get_frames_impl(
+    void* output,
+    size_t count,
+    uint64_t start_frame,
+    uint64_t num_frames,
+    const std::type_info& type) const
+{
+    if (type != typeid(uint8_t)) {
+        error<std::runtime_error>(
+            Journal::Component::Kakshya,
+            Journal::Context::Runtime,
+            std::source_location::current(),
+            "WindowContainer only supports uint8_t");
+    }
+
+    get_frames_typed(std::span<uint8_t>(static_cast<uint8_t*>(output), count), start_frame, num_frames);
+}
+
+auto WindowContainer::get_frame_typed(uint64_t frame_index) const -> std::span<const uint8_t>
 {
     std::shared_lock lock(m_data_mutex);
 
     const uint64_t h = m_structure.get_height();
-    if (frame_index >= h || m_processed_data.empty())
+    if (frame_index >= h || m_processed_data.empty()) {
         return {};
+    }
 
     const auto* pixels = std::get_if<std::vector<uint8_t>>(&m_processed_data[0]);
-    if (!pixels || pixels->empty())
+    if (!pixels || pixels->empty()) {
         return {};
+    }
 
     const uint64_t w = m_structure.get_width();
     const uint64_t c = m_structure.get_channel_count();
     const uint64_t row_elems = w * c;
     const uint64_t offset = frame_index * row_elems;
 
-    if (offset + row_elems > pixels->size())
+    if (offset + row_elems > pixels->size()) {
         return {};
+    }
 
-    auto& cache = m_frame_cache;
-    cache.resize(row_elems);
-    for (uint64_t i = 0; i < row_elems; ++i)
-        cache[i] = static_cast<double>((*pixels)[offset + i]) / 255.0;
-
-    return { cache.data(), cache.size() };
+    return { pixels->data() + offset, row_elems };
 }
 
-void WindowContainer::get_frames(std::span<double> output, uint64_t start_frame, uint64_t num_frames) const
+void WindowContainer::get_frames_typed(std::span<uint8_t> output, uint64_t start_frame, uint64_t num_frames) const
 {
     std::shared_lock lock(m_data_mutex);
 
     const uint64_t h = m_structure.get_height();
     if (start_frame >= h || output.empty() || m_processed_data.empty()) {
-        std::ranges::fill(output, 0.0);
+        std::ranges::fill(output, uint8_t { 0 });
         return;
     }
 
     const auto* pixels = std::get_if<std::vector<uint8_t>>(&m_processed_data[0]);
     if (!pixels || pixels->empty()) {
-        std::ranges::fill(output, 0.0);
+        std::ranges::fill(output, uint8_t { 0 });
         return;
     }
 
@@ -731,15 +752,16 @@ void WindowContainer::get_frames(std::span<double> output, uint64_t start_frame,
     const uint64_t c = m_structure.get_channel_count();
     const uint64_t row_elems = w * c;
     const uint64_t frames_to_copy = std::min(num_frames, h - start_frame);
-    const uint64_t elems_to_copy = std::min(frames_to_copy * row_elems,
-        static_cast<uint64_t>(output.size()));
+    const uint64_t elems_to_copy = std::min(frames_to_copy * row_elems, static_cast<uint64_t>(output.size()));
 
     const uint64_t src_offset = start_frame * row_elems;
-    for (uint64_t i = 0; i < elems_to_copy; ++i)
-        output[i] = static_cast<double>((*pixels)[src_offset + i]) / 255.0;
+    std::copy_n(pixels->begin() + static_cast<std::ptrdiff_t>(src_offset),
+        static_cast<std::ptrdiff_t>(elems_to_copy),
+        output.begin());
 
-    if (elems_to_copy < output.size())
-        std::fill(output.begin() + elems_to_copy, output.end(), 0.0);
+    if (elems_to_copy < output.size()) {
+        std::fill(output.begin() + static_cast<std::ptrdiff_t>(elems_to_copy), output.end(), uint8_t { 0 });
+    }
 }
 
 } // namespace MayaFlux::Kakshya

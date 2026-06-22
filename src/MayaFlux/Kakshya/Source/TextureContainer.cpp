@@ -646,38 +646,6 @@ uint64_t TextureContainer::get_num_frames() const
     return m_height;
 }
 
-std::span<const double> TextureContainer::get_frame(uint64_t frame_index) const
-{
-    if (frame_index >= m_data.size())
-        return {};
-
-    std::shared_lock lock(m_data_mutex);
-
-    const size_t row_elems = static_cast<size_t>(m_width) * m_channels;
-
-    m_frame_cache.resize(row_elems);
-    for (size_t i = 0; i < row_elems; ++i)
-        m_frame_cache[i] = read_normalized_at(m_data[frame_index], m_format, i);
-
-    return { m_frame_cache.data(), m_frame_cache.size() };
-}
-
-void TextureContainer::get_frames(
-    std::span<double> output, uint64_t start_frame, uint64_t num_frames) const
-{
-    std::shared_lock lock(m_data_mutex);
-
-    const size_t row_elems = static_cast<size_t>(m_width) * m_channels;
-    size_t out_idx = 0;
-
-    for (uint64_t layer = start_frame;
-        layer < start_frame + num_frames && layer < m_data.size();
-        ++layer) {
-        for (size_t i = 0; i < row_elems && out_idx < output.size(); ++i, ++out_idx)
-            output[out_idx] = read_normalized_at(m_data[layer], m_format, i);
-    }
-}
-
 std::vector<DataVariant> TextureContainer::get_region_data(const Region& region) const
 {
     std::shared_lock lock(m_data_mutex);
@@ -927,6 +895,109 @@ bool TextureContainer::has_data() const
 
     auto [ptr, bytes] = variant_bytes(m_data[0]);
     return ptr && bytes > 0;
+}
+
+void TextureContainer::get_frames_impl(
+    void* output,
+    size_t count,
+    uint64_t start_frame,
+    uint64_t num_frames,
+    const std::type_info& type) const
+{
+    get_frames_typed(output, count, start_frame, num_frames, type);
+}
+
+auto TextureContainer::get_frame_typed(uint64_t frame_index) const -> DataSpanVariant
+{
+    if (frame_index >= m_data.size()) {
+        return { std::span<const uint8_t> {} };
+    }
+
+    std::shared_lock lock(m_data_mutex);
+    const size_t layer_elems = static_cast<size_t>(m_width) * m_height * m_channels;
+
+    return std::visit(
+        [&](const auto& vec) -> DataSpanVariant {
+            using T = typename std::decay_t<decltype(vec)>::value_type;
+            if constexpr (std::is_same_v<T, uint8_t> || std::is_same_v<T, uint16_t> || std::is_same_v<T, float>) {
+                const size_t n = std::min(layer_elems, vec.size());
+                return DataSpanVariant(std::span<const T>(vec.data(), n));
+            } else {
+                return { std::span<const uint8_t> {} };
+            }
+        },
+        m_data[frame_index]);
+}
+
+void TextureContainer::get_frames_typed(
+    void* output,
+    size_t count,
+    uint64_t start_frame,
+    uint64_t num_frames,
+    const std::type_info& type) const
+{
+    if (type == typeid(uint8_t)) {
+        get_frames_typed_as<uint8_t>(std::span<uint8_t>(static_cast<uint8_t*>(output), count), start_frame, num_frames);
+        return;
+    }
+    if (type == typeid(uint16_t)) {
+        get_frames_typed_as<uint16_t>(std::span<uint16_t>(static_cast<uint16_t*>(output), count), start_frame, num_frames);
+        return;
+    }
+    if (type == typeid(float)) {
+        get_frames_typed_as<float>(std::span<float>(static_cast<float*>(output), count), start_frame, num_frames);
+        return;
+    }
+
+    error<std::runtime_error>(
+        Journal::Component::Kakshya,
+        Journal::Context::Runtime,
+        std::source_location::current(),
+        "TextureContainer supports only uint8_t, uint16_t, and float for typed frame extraction");
+}
+
+template <typename T>
+auto TextureContainer::get_frame_typed_as(uint64_t frame_index) const -> std::span<const T>
+{
+    if (frame_index >= m_data.size()) {
+        return {};
+    }
+
+    std::shared_lock lock(m_data_mutex);
+    const auto* vec = std::get_if<std::vector<T>>(&m_data[frame_index]);
+    if (!vec || vec->empty()) {
+        return {};
+    }
+
+    const size_t layer_elems = static_cast<size_t>(m_width) * m_height * m_channels;
+    const size_t n = std::min(layer_elems, vec->size());
+    return std::span<const T>(vec->data(), n);
+}
+
+template <typename T>
+void TextureContainer::get_frames_typed_as(std::span<T> output, uint64_t start_frame, uint64_t num_frames) const
+{
+    std::shared_lock lock(m_data_mutex);
+
+    const size_t layer_elems = static_cast<size_t>(m_width) * m_height * m_channels;
+    size_t out_idx = 0;
+
+    for (uint64_t layer = start_frame;
+        layer < start_frame + num_frames && layer < m_data.size() && out_idx < output.size();
+        ++layer) {
+        const auto* vec = std::get_if<std::vector<T>>(&m_data[layer]);
+        if (!vec || vec->empty()) {
+            break;
+        }
+
+        const size_t copy_n = std::min(layer_elems, std::min(vec->size(), output.size() - out_idx));
+        std::copy_n(vec->begin(), static_cast<std::ptrdiff_t>(copy_n), output.begin() + static_cast<std::ptrdiff_t>(out_idx));
+        out_idx += copy_n;
+    }
+
+    if (out_idx < output.size()) {
+        std::fill(output.begin() + static_cast<std::ptrdiff_t>(out_idx), output.end(), T {});
+    }
 }
 
 } // namespace MayaFlux::Kakshya

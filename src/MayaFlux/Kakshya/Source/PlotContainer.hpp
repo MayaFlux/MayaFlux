@@ -225,9 +225,6 @@ public:
     [[nodiscard]] std::vector<DataVariant> get_region_group_data(const RegionGroup& group) const override;
     [[nodiscard]] std::vector<DataVariant> get_segments_data(const std::vector<RegionSegment>& segments) const override;
 
-    [[nodiscard]] std::span<const double> get_frame(uint64_t frame_index) const override;
-    void get_frames(std::span<double> output, uint64_t start_frame, uint64_t num_frames) const override;
-
     [[nodiscard]] double get_value_at(const std::vector<uint64_t>& coordinates) const override;
     void set_value_at(const std::vector<uint64_t>& coordinates, double value) override;
 
@@ -295,6 +292,10 @@ public:
     void mark_dimension_consumed(uint32_t, uint32_t) override { }
     [[nodiscard]] bool all_dimensions_consumed() const override { return true; }
 
+protected:
+    [[nodiscard]] auto get_frame_span_impl(uint64_t frame_index) const -> DataSpanVariant override;
+    void get_frames_impl(void* output, size_t count, uint64_t start_frame, uint64_t num_frames, const std::type_info& type) const override;
+
 private:
     /**
      * @brief Return the PlotProcessor, creating and attaching it if absent.
@@ -318,7 +319,8 @@ private:
 
     std::function<void(const std::shared_ptr<SignalSourceContainer>&, ProcessingState)> m_state_cb;
 
-    mutable std::vector<double> m_frame_cache;
+    [[nodiscard]] auto get_frame_typed(uint64_t frame_index) const -> std::span<const double>;
+    void get_frames_typed(std::span<double> output, uint64_t start_frame, uint64_t num_frames) const;
 };
 
 } // namespace MayaFlux::Kakshya

@@ -72,9 +72,6 @@ public:
     std::vector<DataVariant> get_region_group_data(const RegionGroup& group) const override;
     std::vector<DataVariant> get_segments_data(const std::vector<RegionSegment>& segment) const override;
 
-    [[nodiscard]] std::span<const double> get_frame(uint64_t frame_index) const override;
-    void get_frames(std::span<double> output, uint64_t start_frame, uint64_t num_frames) const override;
-
     [[nodiscard]] double get_value_at(const std::vector<uint64_t>& coordinates) const override;
     void set_value_at(const std::vector<uint64_t>& coordinates, double value) override;
 
@@ -379,6 +376,26 @@ protected:
     {
         return static_cast<uint32_t>(frame_index % m_ring_capacity);
     }
+
+    [[nodiscard]] DataSpanVariant get_frame_span_impl(uint64_t frame_index) const override
+    {
+        return { get_frame_typed(frame_index) };
+    }
+
+    void get_frames_impl(
+        void* output,
+        size_t count,
+        uint64_t start_frame,
+        uint64_t num_frames,
+        const std::type_info& type) const override;
+
+private:
+    [[nodiscard]] std::span<const uint8_t> get_frame_typed(uint64_t frame_index) const
+    {
+        return get_frame_pixels(frame_index);
+    }
+
+    void get_frames_typed(std::span<uint8_t> output, uint64_t start_frame, uint64_t num_frames) const;
 };
 
 } // namespace MayaFlux::Kakshya
