@@ -23,10 +23,10 @@ uint64_t calculate_frame_size(const std::vector<DataDimension>& dimensions)
         [](const DataDimension& dim) constexpr { return dim.size; });
 }
 
-std::type_index get_variant_type_index(const DataVariant& data)
+std::type_index get_variant_element_type(const DataVariant& data)
 {
     return std::visit([](const auto& vec) -> std::type_index {
-        return std::type_index(typeid(decltype(vec)));
+        return typeid(typename std::decay_t<decltype(vec)>::value_type);
     },
         data);
 }

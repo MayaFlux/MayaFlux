@@ -280,9 +280,16 @@ uint64_t calculate_total_elements(const std::vector<DataDimension>& dimensions);
 uint64_t calculate_frame_size(const std::vector<DataDimension>& dimensions);
 
 /**
- * @brief Get type index from DataVariant
+ * @brief Return the native element type of a DataVariant as a type_index.
+ *
+ * Returns typeid(E) where E is the value_type of the active alternative,
+ * consistent with NDDataContainer::value_element_type() and
+ * FrameView::element_type().
+ *
+ * @param data Source variant.
+ * @return std::type_index of the element type (e.g. typeid(uint8_t)).
  */
-std::type_index get_variant_type_index(const DataVariant& data);
+[[nodiscard]] std::type_index get_variant_element_type(const DataVariant& data);
 
 /**
  * @brief Extract a single frame of data from a span.
@@ -536,17 +543,6 @@ std::optional<T> extract_from_variant_at(const DataVariant& variant, uint64_t po
  * @param output Destination DataVariant.
  */
 void safe_copy_data_variant(const DataVariant& input, DataVariant& output);
-
-/**
- * @brief Safely copy data from a DataVariant to a span of doubles.
- * @param input Source DataVariant.
- * @param output Destination span of doubles.
- * @throws std::runtime_error if complex types are involved.
- */
-inline std::span<const double> safe_copy_data_variant_to_span(const DataVariant& input, std::vector<double>& output)
-{
-    return extract_from_variant(input, output);
-}
 
 /**
  * @brief Safely copy data from a DataVariant to another DataVariant of a specific type.
