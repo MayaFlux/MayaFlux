@@ -186,7 +186,6 @@ TextureContainer::TextureContainer(uint32_t width, uint32_t height, ImageFormat 
 
     for (uint32_t i = 0; i < std::max(layers, 1U); ++i) {
         m_data.emplace_back(make_empty_storage(m_format, element_count));
-        m_processed_data.emplace_back(make_empty_storage(m_format, element_count));
     }
 
     setup_dimensions();
@@ -258,11 +257,6 @@ void TextureContainer::from_image(const std::shared_ptr<Core::VKImage>& image, u
 
     TextureLoom::instance().download_data(image, ptr, sz, nullptr);
 
-    {
-        std::unique_lock lock(m_data_mutex);
-        m_processed_data[layer] = m_data[layer];
-    }
-
     update_processing_state(ProcessingState::READY);
 
     MF_DEBUG(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
@@ -301,11 +295,6 @@ void TextureContainer::from_image(
 
     TextureLoom::instance().download_data(image, ptr, sz, staging);
 
-    {
-        std::unique_lock lock(m_data_mutex);
-        m_processed_data[layer] = m_data[layer];
-    }
-
     update_processing_state(ProcessingState::READY);
 }
 
@@ -337,7 +326,6 @@ void TextureContainer::from_image_array(const std::shared_ptr<Core::VKImage>& im
         auto [ptr, bytes] = variant_bytes_mut(m_data[i]);
         if (ptr && bytes == layer_bytes)
             std::memcpy(ptr, combined.data() + i * layer_bytes, layer_bytes);
-        m_processed_data[i] = m_data[i];
     }
 
     update_processing_state(ProcessingState::READY);
@@ -372,7 +360,6 @@ void TextureContainer::from_image_array(
         auto [ptr, bytes] = variant_bytes_mut(m_data[i]);
         if (ptr && bytes == layer_bytes)
             std::memcpy(ptr, combined.data() + i * layer_bytes, layer_bytes);
-        m_processed_data[i] = m_data[i];
     }
 
     update_processing_state(ProcessingState::READY);
@@ -575,7 +562,6 @@ void TextureContainer::set_pixels(std::span<const uint8_t> data, uint32_t layer)
     }
     std::unique_lock lock(m_data_mutex);
     std::ranges::copy(data, buf->begin());
-    m_processed_data[layer] = m_data[layer];
 }
 
 void TextureContainer::set_pixels(std::span<const uint16_t> data, uint32_t layer)
@@ -600,7 +586,6 @@ void TextureContainer::set_pixels(std::span<const uint16_t> data, uint32_t layer
     }
     std::unique_lock lock(m_data_mutex);
     std::ranges::copy(data, buf->begin());
-    m_processed_data[layer] = m_data[layer];
 }
 
 void TextureContainer::set_pixels(std::span<const float> data, uint32_t layer)
@@ -625,7 +610,6 @@ void TextureContainer::set_pixels(std::span<const float> data, uint32_t layer)
     }
     std::unique_lock lock(m_data_mutex);
     std::ranges::copy(data, buf->begin());
-    m_processed_data[layer] = m_data[layer];
 }
 
 //=============================================================================
@@ -664,19 +648,16 @@ uint64_t TextureContainer::get_num_frames() const
 
 std::span<const double> TextureContainer::get_frame(uint64_t frame_index) const
 {
-    if (frame_index >= m_height)
+    if (frame_index >= m_data.size())
         return {};
 
     std::shared_lock lock(m_data_mutex);
-    if (m_data.empty())
-        return {};
 
     const size_t row_elems = static_cast<size_t>(m_width) * m_channels;
-    const size_t offset = static_cast<size_t>(frame_index) * row_elems;
 
     m_frame_cache.resize(row_elems);
     for (size_t i = 0; i < row_elems; ++i)
-        m_frame_cache[i] = read_normalized_at(m_data[0], m_format, offset + i);
+        m_frame_cache[i] = read_normalized_at(m_data[frame_index], m_format, i);
 
     return { m_frame_cache.data(), m_frame_cache.size() };
 }
@@ -685,16 +666,15 @@ void TextureContainer::get_frames(
     std::span<double> output, uint64_t start_frame, uint64_t num_frames) const
 {
     std::shared_lock lock(m_data_mutex);
-    if (m_data.empty())
-        return;
 
     const size_t row_elems = static_cast<size_t>(m_width) * m_channels;
     size_t out_idx = 0;
 
-    for (uint64_t r = start_frame; r < start_frame + num_frames && r < m_height; ++r) {
-        const size_t offset = static_cast<size_t>(r) * row_elems;
+    for (uint64_t layer = start_frame;
+        layer < start_frame + num_frames && layer < m_data.size();
+        ++layer) {
         for (size_t i = 0; i < row_elems && out_idx < output.size(); ++i, ++out_idx)
-            output[out_idx] = read_normalized_at(m_data[0], m_format, offset + i);
+            output[out_idx] = read_normalized_at(m_data[layer], m_format, i);
     }
 }
 
@@ -726,7 +706,7 @@ std::vector<DataVariant> TextureContainer::get_segments_data(
     const std::vector<RegionSegment>& /*segments*/) const
 {
     std::shared_lock lock(m_data_mutex);
-    return m_processed_data;
+    return m_data;
 }
 
 void TextureContainer::set_region_data(
@@ -771,8 +751,6 @@ void TextureContainer::set_region_data(
             }
         },
         m_data[0]);
-
-    m_processed_data[0] = m_data[0];
 }
 
 double TextureContainer::get_value_at(const std::vector<uint64_t>& coordinates) const
@@ -814,9 +792,8 @@ void TextureContainer::clear()
     std::unique_lock lock(m_data_mutex);
     const size_t element_count = static_cast<size_t>(m_width) * m_height * m_channels;
 
-    for (size_t i = 0; i < m_data.size(); ++i) {
-        m_data[i] = make_empty_storage(m_format, element_count);
-        m_processed_data[i] = make_empty_storage(m_format, element_count);
+    for (auto& data : m_data) {
+        data = make_empty_storage(m_format, element_count);
     }
 
     update_processing_state(ProcessingState::IDLE);
