@@ -14,15 +14,17 @@ if(WIN32)
     find_package(utf8proc CONFIG REQUIRED)
     find_package(nlohmann_json CONFIG REQUIRED)
 
-    find_package(LLVM CONFIG REQUIRED HINTS "$ENV{LLVM_DEV_DIR}")
-    find_package(Clang CONFIG REQUIRED HINTS "$ENV{Clang_DEV_DIR}")
+    cmake_path(CONVERT "$ENV{LLVM_DEV_DIR}" TO_CMAKE_PATH_LIST _llvm_hint NORMALIZE)
+    cmake_path(CONVERT "$ENV{Clang_DEV_DIR}" TO_CMAKE_PATH_LIST _clang_hint NORMALIZE)
+    find_package(LLVM CONFIG REQUIRED HINTS "${_llvm_hint}")
+    find_package(Clang CONFIG REQUIRED HINTS "${_clang_hint}")
 
+    cmake_path(CONVERT "$ENV{FFMPEG_ROOT}" TO_CMAKE_PATH_LIST _ffmpeg_root NORMALIZE)
     foreach(component avcodec avformat avutil swresample swscale avdevice)
-        string(TOUPPER ${component} comp_upper)
         add_library(FFmpeg::${component} UNKNOWN IMPORTED)
         set_target_properties(FFmpeg::${component} PROPERTIES
-            IMPORTED_LOCATION "$ENV{FFMPEG_ROOT}/lib/${component}.lib"
-            INTERFACE_INCLUDE_DIRECTORIES "$ENV{FFMPEG_ROOT}/include")
+            IMPORTED_LOCATION "${_ffmpeg_root}/lib/${component}.lib"
+            INTERFACE_INCLUDE_DIRECTORIES "${_ffmpeg_root}/include")
     endforeach()
 
     set(MAYAFLUX_EIGEN_INCLUDE ${eigen3_INCLUDE_DIRS})

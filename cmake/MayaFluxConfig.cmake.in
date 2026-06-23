@@ -41,16 +41,15 @@ if(WIN32)
         list(APPEND CMAKE_PREFIX_PATH "@VCPKG_INSTALLED_DIR@/x64-windows")
     endif()
 
-    find_package(Vulkan REQUIRED)
-
-    find_package(eigen3 CONFIG REQUIRED)
-    find_package(glm CONFIG REQUIRED)
-    find_package(hidapi CONFIG REQUIRED)
-    find_package(asio CONFIG REQUIRED)
-    find_package(assimp CONFIG REQUIRED)
-    find_package(freetype CONFIG REQUIRED)
-    find_package(utf8proc CONFIG REQUIRED)
-    find_package(nlohmann_json CONFIG REQUIRED)
+    find_dependency(Vulkan)
+    find_dependency(eigen3 CONFIG)
+    find_dependency(glm CONFIG)
+    find_dependency(hidapi CONFIG)
+    find_dependency(asio CONFIG)
+    find_dependency(assimp CONFIG)
+    find_dependency(freetype CONFIG)
+    find_dependency(utf8proc CONFIG)
+    find_dependency(nlohmann_json CONFIG)
 
     find_library(SPIRV_CROSS_CORE_LIB NAMES spirv-cross-core 
         PATHS "$ENV{VULKAN_SDK}/Lib" REQUIRED NO_DEFAULT_PATH)
@@ -103,8 +102,8 @@ else()
 
     if(APPLE)
         message(STATUS "=== macOS-specific Dependencies ===")
-        find_package(oneDPL QUIET)
-        find_package(Vulkan REQUIRED)
+        find_dependency(oneDPL)
+        find_dependency(Vulkan)
         set(_MAYAFLUX_THREADING_BACKEND "oneDPL")
 
         pkg_check_modules(HIDAPI REQUIRED IMPORTED_TARGET hidapi)
@@ -144,10 +143,10 @@ else()
         )
     endif()
 
-    find_package(LLVM CONFIG REQUIRED)
-    find_package(Clang CONFIG REQUIRED)
-    find_package(glm REQUIRED)
-    find_package(Freetype REQUIRED)
+    find_dependency(LLVM CONFIG)
+    find_dependency(Clang CONFIG)
+    find_dependency(glm)
+    find_dependency(Freetype)
 
     pkg_check_modules(Eigen REQUIRED IMPORTED_TARGET eigen3)
     pkg_check_modules(Asio REQUIRED IMPORTED_TARGET asio)
@@ -203,14 +202,18 @@ if(NOT TARGET MayaFlux::MayaFluxLib)
     add_library(MayaFlux::MayaFluxLib SHARED IMPORTED)
 
     set_target_properties(MayaFlux::MayaFluxLib PROPERTIES
-        IMPORTED_LOCATION "${_MAYAFLUX_LIBDIR}/${CMAKE_SHARED_LIBRARY_PREFIX}MayaFluxLib${CMAKE_SHARED_LIBRARY_SUFFIX}"
         INTERFACE_INCLUDE_DIRECTORIES "${PACKAGE_PREFIX_DIR}/include;${PACKAGE_PREFIX_DIR}/share/MayaFlux/runtime"
     )
 
     # Platform-specific import lib (Windows only)
     if(WIN32)
         set_target_properties(MayaFlux::MayaFluxLib PROPERTIES
-            IMPORTED_IMPLIB "@PACKAGE_CMAKE_INSTALL_PREFIX@/lib/MayaFluxLib.lib"
+            IMPORTED_LOCATION "${PACKAGE_PREFIX_DIR}/bin/MayaFluxLib.dll"
+            IMPORTED_IMPLIB   "${_MAYAFLUX_LIBDIR}/MayaFluxLib.lib"
+        )
+    else()
+        set_target_properties(MayaFlux::MayaFluxLib PROPERTIES
+            IMPORTED_LOCATION "${_MAYAFLUX_LIBDIR}/${CMAKE_SHARED_LIBRARY_PREFIX}MayaFluxLib${CMAKE_SHARED_LIBRARY_SUFFIX}"
         )
     endif()
 
@@ -365,14 +368,11 @@ endif()
 if(NOT TARGET MayaFlux::Lila)
     add_library(MayaFlux::Lila SHARED IMPORTED)
 
-    set_target_properties(MayaFlux::Lila PROPERTIES
-        IMPORTED_LOCATION "${_MAYAFLUX_LIBDIR}/${CMAKE_SHARED_LIBRARY_PREFIX}Lila${CMAKE_SHARED_LIBRARY_SUFFIX}"
-        INTERFACE_INCLUDE_DIRECTORIES "${PACKAGE_PREFIX_DIR}/include;${PACKAGE_PREFIX_DIR}/share/MayaFlux/runtime"
-    )
-
     if(WIN32)
         set_target_properties(MayaFlux::Lila PROPERTIES
-            IMPORTED_IMPLIB "${_MAYAFLUX_LIBDIR}/Lila.lib"
+            IMPORTED_LOCATION "${PACKAGE_PREFIX_DIR}/bin/Lila.dll"
+            IMPORTED_IMPLIB   "${_MAYAFLUX_LIBDIR}/Lila.lib"
+            INTERFACE_INCLUDE_DIRECTORIES "${PACKAGE_PREFIX_DIR}/include;${PACKAGE_PREFIX_DIR}/share/MayaFlux/runtime"
         )
 
         target_compile_definitions(MayaFlux::Lila INTERFACE ASIO_STANDALONE)
@@ -384,6 +384,10 @@ if(NOT TARGET MayaFlux::Lila)
             legacy_stdio_definitions
         )
     else()
+        set_target_properties(MayaFlux::Lila PROPERTIES IMPORTED_LOCATION
+                              "${_MAYAFLUX_LIBDIR}/${CMAKE_SHARED_LIBRARY_PREFIX}Lila${CMAKE_SHARED_LIBRARY_SUFFIX}"
+                              INTERFACE_INCLUDE_DIRECTORIES
+                              "${PACKAGE_PREFIX_DIR}/include;${PACKAGE_PREFIX_DIR}/share/MayaFlux/runtime")
         execute_process(
             COMMAND llvm-config --ldflags
             OUTPUT_VARIABLE _LILA_LLVM_LDFLAGS
@@ -427,14 +431,16 @@ endif()
 if(NOT TARGET MayaFlux::MayaFluxHost)
     add_library(MayaFlux::MayaFluxHost SHARED IMPORTED)
 
-    set_target_properties(MayaFlux::MayaFluxHost PROPERTIES
-        IMPORTED_LOCATION "${_MAYAFLUX_LIBDIR}/${CMAKE_SHARED_LIBRARY_PREFIX}MayaFluxHost${CMAKE_SHARED_LIBRARY_SUFFIX}"
-        INTERFACE_INCLUDE_DIRECTORIES "${PACKAGE_PREFIX_DIR}/include/MayaFlux/Host/Live;${PACKAGE_PREFIX_DIR}/share/MayaFlux/runtime"
-    )
-
     if(WIN32)
         set_target_properties(MayaFlux::MayaFluxHost PROPERTIES
-            IMPORTED_IMPLIB "${_MAYAFLUX_LIBDIR}/MayaFluxHost.lib"
+            IMPORTED_LOCATION "${PACKAGE_PREFIX_DIR}/bin/MayaFluxHost.dll"
+            IMPORTED_IMPLIB   "${_MAYAFLUX_LIBDIR}/MayaFluxHost.lib"
+            INTERFACE_INCLUDE_DIRECTORIES "${PACKAGE_PREFIX_DIR}/include/MayaFlux/Host/Live;${PACKAGE_PREFIX_DIR}/share/MayaFlux/runtime"
+        )
+    else()
+        set_target_properties(MayaFlux::MayaFluxHost PROPERTIES
+            IMPORTED_LOCATION "${_MAYAFLUX_LIBDIR}/${CMAKE_SHARED_LIBRARY_PREFIX}MayaFluxHost${CMAKE_SHARED_LIBRARY_SUFFIX}"
+            INTERFACE_INCLUDE_DIRECTORIES "${PACKAGE_PREFIX_DIR}/include/MayaFlux/Host/Live;${PACKAGE_PREFIX_DIR}/share/MayaFlux/runtime"
         )
     endif()
 

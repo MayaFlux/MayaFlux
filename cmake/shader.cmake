@@ -5,15 +5,16 @@
 option(MAYAFLUX_USE_SHADERC "Enable GLSL compilation via Shaderc" ON)
 
 if(WIN32)
+    cmake_path(CONVERT "$ENV{VULKAN_SDK}" TO_CMAKE_PATH_LIST _vulkan_sdk NORMALIZE)
     find_package(Vulkan REQUIRED)
     find_library(SPIRV_CROSS_CORE_LIB NAMES spirv-cross-core
-        PATHS "$ENV{VULKAN_SDK}/Lib" REQUIRED NO_DEFAULT_PATH)
+        PATHS "${_vulkan_sdk}/Lib" REQUIRED NO_DEFAULT_PATH)
     find_library(SPIRV_CROSS_CPP_LIB NAMES spirv-cross-cpp
-        PATHS "$ENV{VULKAN_SDK}/Lib" REQUIRED NO_DEFAULT_PATH)
+        PATHS "${_vulkan_sdk}/Lib" REQUIRED NO_DEFAULT_PATH)
     find_library(SPIRV_CROSS_GLSL_LIB NAMES spirv-cross-glsl
-        PATHS "$ENV{VULKAN_SDK}/Lib" REQUIRED NO_DEFAULT_PATH)
+        PATHS "${_vulkan_sdk}/Lib" REQUIRED NO_DEFAULT_PATH)
     find_path(SPIRV_CROSS_INCLUDE_DIR spirv_cross/spirv_cross.hpp
-        PATHS "$ENV{VULKAN_SDK}/Include" REQUIRED NO_DEFAULT_PATH)
+        PATHS "${_vulkan_sdk}/Include" REQUIRED NO_DEFAULT_PATH)
 
     add_library(spirv-cross-core STATIC IMPORTED)
     set_target_properties(spirv-cross-core PROPERTIES
@@ -103,12 +104,12 @@ if(MAYAFLUX_USE_SHADERC)
         else()
             find_library(SHADERC_COMBINED_LIB
                 NAMES shaderc_combined
-                PATHS "$ENV{VULKAN_SDK}/Lib"
+                PATHS "${_vulkan_sdk}/Lib"
                 NO_DEFAULT_PATH
             )
             find_path(SHADERC_INCLUDE_DIR
                 NAMES shaderc/shaderc.h
-                PATHS "$ENV{VULKAN_SDK}/Include"
+                PATHS "${_vulkan_sdk}/Include"
                 NO_DEFAULT_PATH
             )
             if(SHADERC_COMBINED_LIB AND SHADERC_INCLUDE_DIR)
