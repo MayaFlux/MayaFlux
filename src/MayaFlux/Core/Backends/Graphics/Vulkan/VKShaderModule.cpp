@@ -8,6 +8,7 @@
 #include <shaderc/shaderc.hpp>
 #endif
 
+#include <spirv-tools/libspirv.h>
 #include <spirv_cross/spirv_cross.hpp>
 
 namespace MayaFlux::Core {
@@ -285,6 +286,45 @@ bool VKShaderModule::create_from_spirv_file(
         "Loaded SPIR-V from file: '{}'", spirv_path);
 
     return create_from_spirv(device, spirv_code, stage, entry_point, enable_reflection);
+}
+
+bool VKShaderModule::create_from_spirv_asm(
+    vk::Device device,
+    const std::string& spirv_asm,
+    vk::ShaderStageFlagBits stage,
+    const std::string& entry_point,
+    bool enable_reflection)
+{
+    spv_context ctx = spvContextCreate(SPV_ENV_VULKAN_1_3);
+    spv_binary binary = nullptr;
+    spv_diagnostic diag = nullptr;
+
+    const spv_result_t result = spvTextToBinary(
+        ctx,
+        spirv_asm.c_str(),
+        spirv_asm.size(),
+        &binary,
+        &diag);
+
+    if (result != SPV_SUCCESS) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "SPIR-V assembly failed: {}",
+            (diag && diag->error) ? diag->error : "unknown error");
+        spvDiagnosticDestroy(diag);
+        spvContextDestroy(ctx);
+        return false;
+    }
+
+    std::vector<uint32_t> words(binary->code, binary->code + binary->wordCount);
+
+    spvBinaryDestroy(binary);
+    spvDiagnosticDestroy(diag);
+    spvContextDestroy(ctx);
+
+    MF_DEBUG(Journal::Component::Core, Journal::Context::GraphicsBackend,
+        "Assembled SPIR-V ({} words) from assembly text", words.size());
+
+    return create_from_spirv(device, words, stage, entry_point, enable_reflection);
 }
 
 // ============================================================================
