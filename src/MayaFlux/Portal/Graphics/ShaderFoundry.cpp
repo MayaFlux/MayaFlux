@@ -383,6 +383,27 @@ ShaderID ShaderFoundry::load_shader(const ShaderSpec& spec)
         return INVALID_SHADER;
     }
 
+    if (spec.kernel.has_value()) {
+        const std::string glsl = detail::emit_glsl_kernel(spec);
+        const std::string key = generate_source_cache_key(glsl, ShaderStage::COMPUTE);
+        auto module = compile_from_source_cached(glsl, ShaderStage::COMPUTE, key);
+        if (!module) {
+            MF_ERROR(Journal::Component::Portal, Journal::Context::ShaderCompilation,
+                "Failed to compile kernel shader");
+            return INVALID_SHADER;
+        }
+        const ShaderID id = m_next_shader_id++;
+        auto& state = m_shaders[id];
+        state.module = module;
+        state.filepath = key;
+        state.stage = ShaderStage::COMPUTE;
+        state.entry_point = "main";
+        m_shader_filepath_cache[key] = id;
+        MF_INFO(Journal::Component::Portal, Journal::Context::ShaderCompilation,
+            "Compiled kernel shader (ID: {}, key: {})", id, key);
+        return id;
+    }
+
     const std::string asm_text = detail::emit_spirv_asm(spec);
     const std::string key = generate_source_cache_key(asm_text, ShaderStage::COMPUTE);
 

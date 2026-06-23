@@ -3,6 +3,33 @@
 namespace MayaFlux::Portal::Graphics::detail {
 
 /**
+ * Maps GpuDataFormat to the GLSL type name used in SSBO array declarations.
+ */
+std::string_view glsl_type(Kakshya::GpuDataFormat fmt) noexcept
+{
+    switch (fmt) {
+    case Kakshya::GpuDataFormat::FLOAT32:
+        return "float";
+    case Kakshya::GpuDataFormat::VEC2_F32:
+        return "vec2";
+    case Kakshya::GpuDataFormat::VEC3_F32:
+        return "vec3";
+    case Kakshya::GpuDataFormat::VEC4_F32:
+        return "vec4";
+    case Kakshya::GpuDataFormat::INT32:
+        return "int";
+    case Kakshya::GpuDataFormat::UINT32:
+        return "uint";
+    case Kakshya::GpuDataFormat::UINT8:
+        return "uint";
+    case Kakshya::GpuDataFormat::UINT16:
+        return "uint";
+    default:
+        return "float";
+    }
+}
+
+/**
  * Emit a fixed header common to all generated compute kernels.
  * Assigns IDs for void, voidfn, u32, f32, v3u32, glsl extension import,
  * and the GlobalInvocationId builtin.
@@ -440,6 +467,65 @@ std::string emit_spirv_asm(const ShaderSpec& spec)
         break;
     }
     return src;
+}
+
+std::string emit_glsl_kernel(const ShaderSpec& spec)
+{
+    const auto& ws = spec.workgroup_size;
+    const auto& ks = *spec.kernel;
+
+    bool has_image = false;
+    for (const auto& b : spec.bindings) {
+        if (b.modality == Kakshya::DataModality::IMAGE_2D)
+            has_image = true;
+    }
+
+    std::string o;
+    o += "#version 460\n";
+    o += "layout(local_size_x = " + std::to_string(ws[0])
+        + ", local_size_y = " + std::to_string(ws[1])
+        + ", local_size_z = " + std::to_string(ws[2]) + ") in;\n\n";
+
+    for (const auto& b : spec.bindings) {
+        if (b.modality == Kakshya::DataModality::IMAGE_2D) {
+            const std::string qual = (b.direction == BindingDirection::Input)
+                ? "readonly"
+                : "writeonly";
+            o += "layout(set = 0, binding = " + std::to_string(b.binding_index)
+                + ", rgba32f) " + qual + " uniform image2D " + b.name + ";\n";
+            continue;
+        }
+        if (b.modality == Kakshya::DataModality::TEXTURE_2D) {
+            o += "layout(set = 0, binding = " + std::to_string(b.binding_index)
+                + ") uniform sampler2D " + b.name + ";\n";
+            continue;
+        }
+        const auto t = std::string(glsl_type(b.format));
+        o += "layout(set = 0, binding = " + std::to_string(b.binding_index)
+            + ", std430) buffer Block_" + b.name
+            + " { " + t + " " + b.name + "[]; };\n";
+    }
+
+    if (!spec.pc_fields.empty()) {
+        o += "\nlayout(push_constant) uniform PC {\n";
+        for (const auto& f : spec.pc_fields)
+            o += "    " + std::string(glsl_type(f.format)) + " " + f.name + ";\n";
+        o += "} pc;\n";
+    }
+
+    o += "\nvoid main() {\n";
+    o += "    uint i = gl_GlobalInvocationID.x;\n";
+    if (has_image)
+        o += "    ivec2 coord = ivec2(gl_GlobalInvocationID.xy);\n";
+
+    for (const auto& f : spec.pc_fields) {
+        const auto t = std::string(glsl_type(f.format));
+        o += "    " + t + " " + f.name + " = pc." + f.name + ";\n";
+    }
+
+    o += ks.body;
+    o += "\n}\n";
+    return o;
 }
 
 } // namespace MayaFlux::Portal::Graphics::detail
