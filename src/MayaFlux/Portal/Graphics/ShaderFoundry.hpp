@@ -2,6 +2,8 @@
 
 #include "ShaderUtils.hpp"
 
+#include "ShaderSpec.hpp"
+
 namespace MayaFlux::Core {
 class VulkanBackend;
 class VKShaderModule;
@@ -181,6 +183,22 @@ public:
      * @return ShaderID, or INVALID_SHADER on failure
      */
     ShaderID load_shader(const ShaderSource& source);
+
+    /**
+     * @brief Compile and cache a compute shader from a declarative ShaderSpec.
+     *
+     * Emits GLSL #version 460 source from the spec, compiles it via the
+     * existing shaderc path, and caches the result by content hash.
+     * Subsequent calls with a spec that produces identical GLSL are cache
+     * hits and return the existing ShaderID at no cost.
+     *
+     * The emitted shader is always a compute stage. Entry point is "main".
+     * Binding 0 at set 0 is never emitted; it is engine-reserved.
+     *
+     * @param spec ShaderSpec produced by ShaderSpec::Assemble::build().
+     * @return ShaderID on success, INVALID_SHADER on compilation failure.
+     */
+    ShaderID load_shader(const ShaderSpec& spec);
 
     /**
      * @brief Hot-reload shader (returns new ID)
