@@ -157,41 +157,102 @@ struct KernelSource {
  * @enum KernelOp
  * @brief Named operation the SPIR-V emitter knows how to lower to opcodes.
  *
- * Each value maps to a fixed, unambiguous instruction sequence. The emitter
- * in VKShaderModule::emit_spirv_asm() handles each case explicitly.
- * No string parsing or expression compilation is involved.
+ * Each value maps to a fixed, unambiguous instruction sequence. No string
+ * parsing or expression compilation is involved.
  *
  * Naming convention: operands are listed in application order.
  * PC fields are consumed in declaration order from ShaderSpec::pc_fields.
  * SSBO operands are the InOut/Output bindings in declaration order.
  *
- * Single-SSBO elementwise operations (sig[i] = f(sig[i], pc...)):
+ * Single-SSBO elementwise — arithmetic (sig[i] = f(sig[i], pc...)):
  *   Scale        sig[i] = sig[i] * pc[0]
  *   ScaleOffset  sig[i] = sig[i] * pc[0] + pc[1]
+ *   Fma          sig[i] = sig[i] * pc[0] + pc[1]   (fused, single instruction)
  *   Offset       sig[i] = sig[i] + pc[0]
  *   Clip         sig[i] = clamp(sig[i], pc[0], pc[1])
  *   Abs          sig[i] = abs(sig[i])
  *   Negate       sig[i] = -sig[i]
+ *   Floor        sig[i] = floor(sig[i])
+ *   Ceil         sig[i] = ceil(sig[i])
+ *   Round        sig[i] = round(sig[i])
+ *   Trunc        sig[i] = trunc(sig[i])
+ *   Fract        sig[i] = fract(sig[i])
+ *   Sqrt         sig[i] = sqrt(sig[i])
+ *   InverseSqrt  sig[i] = 1/sqrt(sig[i])
  *
- * Two-SSBO elementwise operations (out[i] = f(a[i], b[i])):
+ * Single-SSBO elementwise — transcendental (sig[i] = f(sig[i])):
+ *   Sin          sig[i] = sin(sig[i])
+ *   Cos          sig[i] = cos(sig[i])
+ *   Tan          sig[i] = tan(sig[i])
+ *   Asin         sig[i] = asin(sig[i])
+ *   Acos         sig[i] = acos(sig[i])
+ *   Atan         sig[i] = atan(sig[i])
+ *   Sinh         sig[i] = sinh(sig[i])
+ *   Cosh         sig[i] = cosh(sig[i])
+ *   Tanh         sig[i] = tanh(sig[i])
+ *   Exp          sig[i] = e^sig[i]
+ *   Exp2         sig[i] = 2^sig[i]
+ *   Log          sig[i] = ln(sig[i])
+ *   Log2         sig[i] = log2(sig[i])
+ *
+ * Two-SSBO elementwise (out[i] = f(a[i], b[i])):
  *   Add          out[i] = a[i] + b[i]
  *   Multiply     out[i] = a[i] * b[i]
  *   Mix          out[i] = a[i] + (b[i] - a[i]) * pc[0]
+ *   Pow          out[i] = pow(a[i], b[i])
+ *   Atan2        out[i] = atan(a[i], b[i])
+ *   Min          out[i] = min(a[i], b[i])
+ *   MaxTwo       out[i] = max(a[i], b[i])
+ *   Step         out[i] = step(a[i], b[i])   edge=a, x=b
+ *
+ * Two-SSBO + one PC:
+ *   SmoothStep   out[i] = smoothstep(a[i], b[i], pc[0])
  *
  * Reduction operations (one InOut SSBO, shared memory):
  *   Sum          accumulate + into shared[lid], tree reduce
  *   Max          accumulate max into shared[lid], tree reduce
  */
 enum class KernelOp : uint8_t {
+    // arithmetic
     Scale,
     ScaleOffset,
+    Fma,
     Offset,
     Clip,
     Abs,
     Negate,
+    Floor,
+    Ceil,
+    Round,
+    Trunc,
+    Fract,
+    Sqrt,
+    InverseSqrt,
+    // transcendental
+    Sin,
+    Cos,
+    Tan,
+    Asin,
+    Acos,
+    Atan,
+    Sinh,
+    Cosh,
+    Tanh,
+    Exp,
+    Exp2,
+    Log,
+    Log2,
+    // two-SSBO
     Add,
     Multiply,
     Mix,
+    Pow,
+    Atan2,
+    Min,
+    MaxTwo,
+    Step,
+    SmoothStep,
+    // reduction
     Sum,
     Max,
 };
