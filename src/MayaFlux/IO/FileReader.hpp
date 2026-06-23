@@ -3,7 +3,6 @@
 #include "MayaFlux/Kakshya/Region/Region.hpp"
 
 #include "filesystem"
-#include "typeindex"
 
 namespace MayaFlux::Kakshya {
 

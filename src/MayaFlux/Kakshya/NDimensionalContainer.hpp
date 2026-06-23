@@ -286,7 +286,10 @@ public:
      * @param frame_index Index of the frame (in the temporal dimension)
      * @return Span of data representing one complete frame
      */
-    [[nodiscard]] virtual std::span<const double> get_frame(uint64_t frame_index) const = 0;
+    [[nodiscard]] auto get_frame(uint64_t frame_index) const -> FrameView
+    {
+        return FrameView(get_frame_span_impl(frame_index));
+    }
 
     /**
      * @brief Get multiple frames efficiently.
@@ -294,21 +297,94 @@ public:
      * @param start_frame First frame index
      * @param num_frames Number of frames to retrieve
      */
-    virtual void get_frames(std::span<double> output, uint64_t start_frame, uint64_t num_frames) const = 0;
+    template <DataVariantElement T>
+    void get_frames(std::span<T> output, uint64_t start_frame, uint64_t num_frames) const
+    {
+        get_frames_impl(output.data(), output.size(), start_frame, num_frames, typeid(T));
+    }
 
     /**
-     * @brief Get a single value at the specified coordinates.
-     * @param coordinates N-dimensional coordinates
-     * @return Value at the specified location
+     * @brief Get a single frame of data as a typed span.
+     * @tparam T Element type to interpret the frame data as
+     * @param frame_index Index of the frame (in the temporal dimension)
+     * @return Span of data representing one complete frame, interpreted as type T
      */
-    [[nodiscard]] virtual double get_value_at(const std::vector<uint64_t>& coordinates) const = 0;
+    template <DataVariantElement T>
+    [[nodiscard]] auto get_frame_as(uint64_t frame_index) const -> std::span<const T>
+    {
+        return get_frame(frame_index).template as<T>();
+    }
 
     /**
-     * @brief Set a single value at the specified coordinates.
-     * @param coordinates N-dimensional coordinates
-     * @param value Value to set
+     * @brief Get multiple frames efficiently as a typed span.
+     *
+     * Convenience wrapper over get_frames() for callers that know the element
+     * type statically but hold the output buffer as a plain vector rather than
+     * a typed span. Deduces T from the vector element type; no visitor, no
+     * type query needed at the call site.
+     *
+     * @tparam T Element type. Must satisfy DataVariantElement and match the
+     *           container's native element type. The impl silently no-ops or
+     *           errors on mismatch depending on the container.
+     * @param output      Destination vector. Resized to num_frames * frame_size
+     *                    by the caller before passing; content is overwritten.
+     * @param start_frame First frame index.
+     * @param num_frames  Number of frames to retrieve.
      */
-    virtual void set_value_at(const std::vector<uint64_t>& coordinates, double value) = 0;
+    template <DataVariantElement T>
+    void get_frames_as(std::vector<T>& output, uint64_t start_frame, uint64_t num_frames) const
+    {
+        get_frames_impl(output.data(), output.size(), start_frame, num_frames, typeid(T));
+    }
+
+    /**
+     * @brief Runtime query for the native scalar element type of this container.
+     *
+     * Mirrors FrameView::element_type(). Typical return values:
+     * - typeid(uint8_t)  -- 8-bit image / video / window
+     * - typeid(uint16_t) -- 16-bit image
+     * - typeid(float)    -- HDR image
+     * - typeid(double)   -- audio / plot
+     *
+     * Use this to branch once before calling get_value_at<T>() when the
+     * container's native type is not statically known at the call site.
+     */
+    [[nodiscard]] virtual std::type_index value_element_type() const = 0;
+
+    /**
+     * @brief Read a single element at the given N-dimensional coordinates.
+     *
+     * Returns a default-constructed T on coordinate out-of-range or type mismatch.
+     * No conversion is performed: T must match the container's native element type
+     * (query value_element_type() first when the type is not statically known).
+     *
+     * @tparam T Element type. Must satisfy DataVariantElement.
+     * @param coordinates N-dimensional coordinate vector.
+     * @return Native-typed value, zero-initialised on error.
+     */
+    template <DataVariantElement T>
+    [[nodiscard]] T get_value_at(const std::vector<uint64_t>& coordinates) const
+    {
+        T v {};
+        get_value_impl(coordinates, &v, typeid(T));
+        return v;
+    }
+
+    /**
+     * @brief Write a single element at the given N-dimensional coordinates.
+     *
+     * No-ops on coordinate out-of-range or type mismatch.
+     * T must match the container's native element type.
+     *
+     * @tparam T Element type. Must satisfy DataVariantElement.
+     * @param coordinates N-dimensional coordinate vector.
+     * @param value       Value to write.
+     */
+    template <DataVariantElement T>
+    void set_value_at(const std::vector<uint64_t>& coordinates, T value)
+    {
+        set_value_impl(coordinates, &value, typeid(T));
+    }
 
     /**
      * @brief Add a named group of regions to the container.
@@ -321,7 +397,7 @@ public:
      * @param name Name of the region group
      * @return Reference to the RegionGroup
      */
-    [[nodiscard]] virtual const RegionGroup& get_region_group(const std::string& name) const = 0;
+    [[nodiscard]] virtual RegionGroup get_region_group(const std::string& name) const = 0;
 
     /**
      * @brief Get all region groups in the container.
@@ -374,22 +450,6 @@ public:
     virtual void clear() = 0;
 
     /**
-     * @brief Acquire a lock for thread-safe access.
-     */
-    virtual void lock() = 0;
-
-    /**
-     * @brief Release a previously acquired lock.
-     */
-    virtual void unlock() = 0;
-
-    /**
-     * @brief Attempt to acquire a lock without blocking.
-     * @return true if lock was acquired, false otherwise
-     */
-    virtual bool try_lock() = 0;
-
-    /**
      * @brief Get a raw pointer to the underlying data storage.
      * @return Pointer to raw data (type depends on DataVariant)
      */
@@ -414,6 +474,53 @@ public:
      * @note This may trigger reorganization of existing data to match the new structure.
      */
     virtual void set_structure(ContainerDataStructure structure) = 0;
+
+protected:
+    /**
+     * @brief Implementation-specific method to retrieve a frame span.
+     * @param frame_index Index of the frame to retrieve
+     * @return DataSpanVariant representing the frame's data
+     */
+    [[nodiscard]] virtual auto get_frame_span_impl(uint64_t frame_index) const -> DataSpanVariant = 0;
+
+    /**
+     * @brief Implementation-specific method to retrieve multiple frames.
+     *
+     * Implementations write up to count * frame_size elements into output,
+     * starting from start_frame. The type parameter indicates the expected
+     * element type; implementations may choose to support or reject it based
+     * on their native data type, but must not write past the output buffer
+     * regardless.
+     *
+     * @param output Pointer to caller-owned buffer for frame data
+     * @param count Number of frames to retrieve (output buffer size in frames)
+     * @param start_frame First frame index to retrieve
+     * @param num_frames Number of frames to retrieve
+     * @param type Type information for the expected element type (e.g. float, uint8_t)
+     */
+    virtual void get_frames_impl(void* output, size_t count, uint64_t start_frame, uint64_t num_frames, const std::type_info& type) const = 0;
+
+    /**
+     * @brief Type-erased single-element read.
+     *
+     * Implementations copy the native element at @p coords into @p out
+     * if @p type matches their native type, otherwise no-op.
+     * @p out points to a caller-owned buffer of exactly sizeof(native type) bytes.
+     */
+    virtual void get_value_impl(const std::vector<uint64_t>& coords,
+        void* out,
+        const std::type_info& type) const = 0;
+
+    /**
+     * @brief Type-erased single-element write.
+     *
+     * Implementations copy from @p in into their storage at @p coords
+     * if @p type matches their native type, otherwise no-op.
+     * @p in points to a caller-owned buffer of exactly sizeof(native type) bytes.
+     */
+    virtual void set_value_impl(const std::vector<uint64_t>& coords,
+        const void* in,
+        const std::type_info& type) = 0;
 };
 
 } // namespace MayaFlux::Kakshya

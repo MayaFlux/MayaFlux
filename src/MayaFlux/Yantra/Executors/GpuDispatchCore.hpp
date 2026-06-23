@@ -183,6 +183,24 @@ protected:
     void stage_image_storage(size_t binding_index, std::shared_ptr<Core::VKImage> image);
 
     /**
+     * @brief Stage a flat native-typed byte buffer for FLOAT32 bindings,
+     *        bypassing the double-to-float cast in flatten_channels_to_staging.
+     *
+     * Intended for pixel data (uint8_t, uint16_t) and pre-converted float
+     * buffers that should reach the GPU without an intermediate double widening.
+     * Once staged, prepare_gpu_inputs will upload these bytes directly via
+     * upload_raw rather than the float staging path.
+     *
+     * Calling this clears any previously staged native bytes for the slot.
+     * It does not affect m_binding_data (PASSTHROUGH) or m_staging_floats.
+     *
+     * @param binding_index Binding slot. Must match a FLOAT32 INPUT binding.
+     * @param data          Raw bytes in the element type the shader expects.
+     * @param byte_size     Total byte count.
+     */
+    void stage_native_bytes(size_t binding_index, const void* data, size_t byte_size);
+
+    /**
      * @brief Register a VKImage + sampler for an IMAGE_SAMPLED binding.
      *
      * The image will be transitioned to eShaderReadOnlyOptimal if needed.
@@ -281,6 +299,23 @@ protected:
         const std::vector<std::vector<double>>& channels,
         const DataStructureInfo& structure_info);
 
+    /**
+     * @brief Flatten native-typed DataVariant channels into m_native_staging_bytes
+     *        without any conversion.
+     *
+     * Called by prepare_gpu_inputs when structure_info.original_type indicates
+     * a non-double native type and no explicit stage_native_bytes call has been
+     * made. Visits the variant's active alternative and memcpys bytes directly.
+     *
+     * No-ops when channels is empty or the modality is structured.
+     *
+     * @param variants      Per-channel DataVariants from the container.
+     * @param structure_info Dimension/modality metadata.
+     */
+    void flatten_native_variants_to_staging(
+        const std::vector<Kakshya::DataVariant>& variants,
+        const DataStructureInfo& structure_info);
+
     [[nodiscard]] size_t find_first_output_index() const;
     [[nodiscard]] size_t largest_binding_data_element_count() const;
 
@@ -303,6 +338,11 @@ private:
     GpuShaderConfig m_gpu_config;
 
     size_t m_last_effective_element_count {};
+
+    /// Native-typed staging buffer. Non-empty when stage_native_bytes() has
+    /// been called or flatten_native_variants_to_staging() produced output.
+    /// Takes precedence over m_staging_floats in prepare_gpu_inputs.
+    std::vector<uint8_t> m_native_staging_bytes;
 };
 
 } // namespace MayaFlux::Yantra

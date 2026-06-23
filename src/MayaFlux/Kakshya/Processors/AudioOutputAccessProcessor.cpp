@@ -100,8 +100,7 @@ void AudioOutputAccessProcessor::process(
     }
 
     {
-
-        std::unique_lock lock(ac->m_data_mutex);
+        Memory::SeqlockWriteGuard g(ac->m_data_lock);
         auto& pd = ac->get_processed_data();
         if (m_organization == OrganizationStrategy::PLANAR) {
             pd.resize(m_channel_count);
@@ -116,7 +115,7 @@ void AudioOutputAccessProcessor::process(
     const uint64_t write_head = ac->get_num_frames();
 
     {
-        std::unique_lock lock(ac->m_data_mutex);
+        Memory::SeqlockWriteGuard g(ac->m_data_lock);
         if (m_organization == OrganizationStrategy::PLANAR) {
             if (ac->m_data.size() < m_channel_count)
                 ac->m_data.resize(m_channel_count, DataVariant(std::vector<double> {}));

@@ -235,4 +235,88 @@ bool seqlock_read_void(
     return false;
 }
 
+// =============================================================================
+// SeqlockArray
+// =============================================================================
+
+/**
+ * @class SeqlockArray
+ * @brief Indexed collection of independent, equal-ranked Seqlock instances.
+ *
+ * Manages N independently lockable Seqlock slots with no privileged index.
+ * Suitable wherever a container holds N equal data slots (layers, channels,
+ * ring positions) that may be written and read independently and concurrently.
+ *
+ * Slots are heap-allocated individually via unique_ptr to satisfy alignas(64)
+ * without violating the non-copyable / non-movable contract of Seqlock.
+ *
+ * resize() is not safe to call concurrently with any read or write operation
+ * on this instance.
+ *
+ * @code
+ * SeqlockArray locks(num_slots);
+ *
+ * // writer
+ * {
+ *     SeqlockWriteGuard g(locks[slot]);
+ *     std::ranges::copy(src, dst.begin());
+ * }
+ *
+ * // reader
+ * auto result = seqlock_read(locks[slot], 8, [&]{ return read_slot(slot); });
+ * @endcode
+ */
+class SeqlockArray {
+public:
+    SeqlockArray() = default;
+
+    explicit SeqlockArray(size_t n)
+    {
+        resize(n);
+    }
+
+    SeqlockArray(const SeqlockArray&) = delete;
+    SeqlockArray& operator=(const SeqlockArray&) = delete;
+    SeqlockArray(SeqlockArray&&) = delete;
+    SeqlockArray& operator=(SeqlockArray&&) = delete;
+
+    ~SeqlockArray() = default;
+
+    /**
+     * @brief Replace the slot array with n default-constructed Seqlock instances.
+     *
+     * Not concurrent-safe. Call only during initialisation or reconfiguration
+     * when no readers or writers are active.
+     *
+     * @param n New slot count.
+     */
+    void resize(size_t n)
+    {
+        m_slots.clear();
+        m_slots.reserve(n);
+        for (size_t i = 0; i < n; ++i)
+            m_slots.emplace_back(std::make_unique<Seqlock>());
+    }
+
+    /**
+     * @brief Number of slots.
+     */
+    [[nodiscard]] size_t size() const noexcept { return m_slots.size(); }
+
+    /**
+     * @brief Access the Seqlock at index @p i.
+     * @pre i < size()
+     */
+    [[nodiscard]] Seqlock& operator[](size_t i) noexcept { return *m_slots[i]; }
+
+    /**
+     * @brief Access the Seqlock at index @p i (const overload).
+     * @pre i < size()
+     */
+    [[nodiscard]] const Seqlock& operator[](size_t i) const noexcept { return *m_slots[i]; }
+
+private:
+    std::vector<std::unique_ptr<Seqlock>> m_slots;
+};
+
 } // namespace MayaFlux::Memory

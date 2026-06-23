@@ -161,7 +161,7 @@ void PlotProcessor::process(const std::shared_ptr<SignalSourceContainer>& contai
         staging.resize(plot->series_size(idx));
 
         {
-            auto frame = plot->get_frame(idx);
+            auto frame = plot->get_frame(idx).as<double>();
             if (frame.size() == staging.size()) {
                 std::ranges::copy(frame, staging.begin());
             } else {

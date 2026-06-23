@@ -3,6 +3,8 @@
 #include "MayaFlux/Kakshya/SignalSourceContainer.hpp"
 #include "MayaFlux/Portal/Graphics/GraphicsUtils.hpp"
 
+#include "MayaFlux/Transitive/Memory/SeqLock.hpp"
+
 namespace MayaFlux::Core {
 class VKImage;
 }
@@ -290,8 +292,7 @@ public:
         const std::vector<RegionSegment>& segments) const override;
     [[nodiscard]] std::vector<DataVariant> get_region_group_data(const RegionGroup&) const override { return m_processed_data; }
 
-    [[nodiscard]] double get_value_at(const std::vector<uint64_t>& coordinates) const override;
-    void set_value_at(const std::vector<uint64_t>& coordinates, double value) override;
+    [[nodiscard]] std::type_index value_element_type() const override;
     [[nodiscard]] uint64_t coordinates_to_linear_index(const std::vector<uint64_t>& coords) const override;
     [[nodiscard]] std::vector<uint64_t> linear_index_to_coordinates(uint64_t index) const override;
     void clear() override;
@@ -299,33 +300,6 @@ public:
     //=========================================================================
     // SignalSourceContainer
     //=========================================================================
-
-    /**
-     * @brief Returns a normalized double view of one pixel row.
-     *
-     * Maps frame_index to row index (SPATIAL_Y). Each uint8_t sample is
-     * normalized to [0.0, 1.0]. The returned span is backed by m_frame_cache
-     * and remains valid until the next call to get_frame() or clear().
-     *
-     * @param frame_index Row index in [0, height).
-     * @return Span of width * channels doubles, or empty if out of range.
-     */
-    [[nodiscard]] std::span<const double> get_frame(uint64_t frame_index) const override;
-
-    /**
-     * @brief Copy a range of pixel rows into output as normalized doubles.
-     *
-     * Rows [start_frame, start_frame + num_frames) are written sequentially.
-     * Each uint8_t sample is normalized to [0.0, 1.0]. Rows beyond the image
-     * height are skipped silently.
-     *
-     * @param output      Destination buffer. Must hold at least
-     *                    num_frames * width * channels doubles.
-     * @param start_frame First row index.
-     * @param num_frames  Number of rows to copy.
-     */
-    void get_frames(std::span<double> output,
-        uint64_t start_frame, uint64_t num_frames) const override;
 
     /**
      * @brief Write DataVariant bytes into the pixel buffer at the region bounds.
@@ -370,13 +344,9 @@ public:
     [[nodiscard]] bool is_region_loaded(const Region&) const override { return true; }
 
     void add_region_group(const RegionGroup& group) override;
-    [[nodiscard]] const RegionGroup& get_region_group(const std::string& name) const override;
+    [[nodiscard]] RegionGroup get_region_group(const std::string& name) const override;
     [[nodiscard]] std::unordered_map<std::string, RegionGroup> get_all_region_groups() const override;
     void remove_region_group(const std::string& name) override;
-
-    void lock() override;
-    void unlock() override;
-    [[nodiscard]] bool try_lock() override;
 
     [[nodiscard]] const void* get_raw_data() const override;
     [[nodiscard]] bool has_data() const override;
@@ -431,6 +401,20 @@ public:
      */
     [[nodiscard]] bool all_dimensions_consumed() const override { return true; }
 
+protected:
+    [[nodiscard]] auto get_frame_span_impl(uint64_t frame_index) const -> DataSpanVariant override
+    {
+        return get_frame_typed(frame_index);
+    }
+
+    void get_frames_impl(void* output, size_t count, uint64_t start_frame, uint64_t num_frames, const std::type_info& type) const override;
+
+    void get_value_impl(const std::vector<uint64_t>& coords,
+        void* out, const std::type_info& type) const override;
+
+    void set_value_impl(const std::vector<uint64_t>& coords,
+        const void* in, const std::type_info& type) override;
+
 private:
     void setup_dimensions();
 
@@ -451,17 +435,24 @@ private:
     std::atomic<bool> m_ready_for_processing { false };
     std::atomic<int> m_processing_token { -1 };
 
-    mutable std::shared_mutex m_data_mutex;
-    std::mutex m_state_mutex;
+    Memory::SeqlockArray m_slot_locks;
+    Memory::Seqlock m_region_lock;
+    mutable Memory::Seqlock m_cb_lock;
 
     std::function<void(const std::shared_ptr<SignalSourceContainer>&, ProcessingState)> m_state_cb;
     std::unordered_map<std::string, RegionGroup> m_region_groups;
 
-    /** @brief Backing storage for per-channel DataVariants returned by channel_data(). */
-    mutable std::vector<DataVariant> m_channel_cache;
-
     /** @brief Row cache backing the double span returned by get_frame(). */
     mutable std::vector<double> m_frame_cache;
+
+    [[nodiscard]] auto get_frame_typed(uint64_t frame_index) const -> DataSpanVariant;
+    void get_frames_typed(void* output, size_t count, uint64_t start_frame, uint64_t num_frames, const std::type_info& type) const;
+
+    template <typename T>
+    [[nodiscard]] auto get_frame_typed_as(uint64_t frame_index) const -> std::span<const T>;
+
+    template <typename T>
+    void get_frames_typed_as(std::span<T> output, uint64_t start_frame, uint64_t num_frames) const;
 };
 
 } // namespace MayaFlux::Kakshya

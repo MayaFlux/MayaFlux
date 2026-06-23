@@ -45,12 +45,12 @@ TEST_F(SoundFileContainerTest, BasicConstructionAndSetup)
 
 TEST_F(SoundFileContainerTest, FrameAndCoordinateAccess)
 {
-    auto frame0 = container->get_frame(0);
+    auto frame0 = container->get_frame(0).as<double>();
     ASSERT_EQ(frame0.size(), 2);
     EXPECT_DOUBLE_EQ(frame0[0], 0.1);
     EXPECT_DOUBLE_EQ(frame0[1], 0.2);
 
-    auto frame2 = container->get_frame(2);
+    auto frame2 = container->get_frame(2).as<double>();
     ASSERT_EQ(frame2.size(), 2);
     EXPECT_DOUBLE_EQ(frame2[0], 0.5);
     EXPECT_DOUBLE_EQ(frame2[1], 0.6);
@@ -59,11 +59,11 @@ TEST_F(SoundFileContainerTest, FrameAndCoordinateAccess)
     EXPECT_TRUE(frame4.empty());
 
     std::vector<uint64_t> coords = { 1, 1 };
-    double val = container->get_value_at(coords);
+    auto val = container->get_value_at<double>(coords);
     EXPECT_DOUBLE_EQ(val, 0.4);
 
     container->set_value_at(coords, 1.23);
-    EXPECT_DOUBLE_EQ(container->get_value_at(coords), 1.23);
+    EXPECT_DOUBLE_EQ(container->get_value_at<double>(coords), 1.23);
 
     uint64_t lin = container->coordinates_to_linear_index({ 2, 0 });
     EXPECT_EQ(lin, 4);
@@ -130,7 +130,7 @@ TEST_F(SoundFileContainerTest, StateAndProcessing)
     EXPECT_EQ(container->get_processing_state(), ProcessingState::IDLE);
 
     bool called = false;
-    container->register_state_change_callback([&](std::shared_ptr<SignalSourceContainer>, ProcessingState state) {
+    container->register_state_change_callback([&](const std::shared_ptr<SignalSourceContainer>&, ProcessingState state) {
         if (state == ProcessingState::PROCESSED)
             called = true;
     });
@@ -200,8 +200,8 @@ TEST_F(SoundFileContainerTest, DurationAndTimeConversion)
 TEST_F(SoundFileContainerTest, OrganizationStrategyHandling)
 {
     std::vector<DataVariant> planar_data;
-    planar_data.push_back(std::vector<double> { 0.1, 0.3, 0.5, 0.7 });
-    planar_data.push_back(std::vector<double> { 0.2, 0.4, 0.6, 0.8 });
+    planar_data.emplace_back(std::vector<double> { 0.1, 0.3, 0.5, 0.7 });
+    planar_data.emplace_back(std::vector<double> { 0.2, 0.4, 0.6, 0.8 });
 
     auto planar_container = std::make_shared<SoundFileContainer>();
     planar_container->setup(4, 48000, 2);
@@ -214,7 +214,7 @@ TEST_F(SoundFileContainerTest, OrganizationStrategyHandling)
 
     EXPECT_EQ(planar_container->get_structure().organization, OrganizationStrategy::PLANAR);
 
-    auto frame0 = planar_container->get_frame(0);
+    auto frame0 = planar_container->get_frame(0).as<double>();
     ASSERT_EQ(frame0.size(), 2);
     EXPECT_DOUBLE_EQ(frame0[0], 0.1);
     EXPECT_DOUBLE_EQ(frame0[1], 0.2);

@@ -2,6 +2,8 @@
 
 #include "MayaFlux/Kakshya/SignalSourceContainer.hpp"
 
+#include "MayaFlux/Transitive/Memory/SeqLock.hpp"
+
 namespace MayaFlux::Nodes {
 class Node;
 namespace Network {
@@ -225,19 +227,12 @@ public:
     [[nodiscard]] std::vector<DataVariant> get_region_group_data(const RegionGroup& group) const override;
     [[nodiscard]] std::vector<DataVariant> get_segments_data(const std::vector<RegionSegment>& segments) const override;
 
-    [[nodiscard]] std::span<const double> get_frame(uint64_t frame_index) const override;
-    void get_frames(std::span<double> output, uint64_t start_frame, uint64_t num_frames) const override;
-
-    [[nodiscard]] double get_value_at(const std::vector<uint64_t>& coordinates) const override;
-    void set_value_at(const std::vector<uint64_t>& coordinates, double value) override;
+    [[nodiscard]] std::type_index value_element_type() const override { return typeid(double); }
 
     [[nodiscard]] uint64_t coordinates_to_linear_index(const std::vector<uint64_t>& coordinates) const override;
     [[nodiscard]] std::vector<uint64_t> linear_index_to_coordinates(uint64_t linear_index) const override;
 
     void clear() override;
-    void lock() override { }
-    void unlock() override { }
-    bool try_lock() override { return true; }
 
     [[nodiscard]] const void* get_raw_data() const override;
     [[nodiscard]] bool has_data() const override;
@@ -247,7 +242,7 @@ public:
     void set_structure(ContainerDataStructure s) override { m_structure = std::move(s); }
 
     void add_region_group(const RegionGroup& group) override;
-    [[nodiscard]] const RegionGroup& get_region_group(const std::string& name) const override;
+    [[nodiscard]] RegionGroup get_region_group(const std::string& name) const override;
     [[nodiscard]] std::unordered_map<std::string, RegionGroup> get_all_region_groups() const override;
     void remove_region_group(const std::string& name) override;
 
@@ -295,6 +290,16 @@ public:
     void mark_dimension_consumed(uint32_t, uint32_t) override { }
     [[nodiscard]] bool all_dimensions_consumed() const override { return true; }
 
+protected:
+    [[nodiscard]] auto get_frame_span_impl(uint64_t frame_index) const -> DataSpanVariant override;
+    void get_frames_impl(void* output, size_t count, uint64_t start_frame, uint64_t num_frames, const std::type_info& type) const override;
+
+    void get_value_impl(const std::vector<uint64_t>& coords,
+        void* out, const std::type_info& type) const override;
+
+    void set_value_impl(const std::vector<uint64_t>& coords,
+        const void* in, const std::type_info& type) override;
+
 private:
     /**
      * @brief Return the PlotProcessor, creating and attaching it if absent.
@@ -311,6 +316,10 @@ private:
     std::shared_ptr<DataProcessor> m_processor;
     std::shared_ptr<DataProcessingChain> m_chain;
 
+    Memory::SeqlockArray m_series_locks;
+    mutable Memory::Seqlock m_region_lock;
+    mutable Memory::Seqlock m_cb_lock;
+
     std::unordered_map<std::string, RegionGroup> m_region_groups;
 
     std::atomic<ProcessingState> m_processing_state { ProcessingState::IDLE };
@@ -318,7 +327,8 @@ private:
 
     std::function<void(const std::shared_ptr<SignalSourceContainer>&, ProcessingState)> m_state_cb;
 
-    mutable std::vector<double> m_frame_cache;
+    [[nodiscard]] auto get_frame_typed(uint64_t frame_index) const -> std::span<const double>;
+    void get_frames_typed(std::span<double> output, uint64_t start_frame, uint64_t num_frames) const;
 };
 
 } // namespace MayaFlux::Kakshya

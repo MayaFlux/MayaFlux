@@ -80,6 +80,15 @@ void GpuDispatchCore::stage_image_sampled(size_t binding_index,
     m_image_bindings[binding_index] = { .image = std::move(image), .sampler = sampler, .kind = GpuBufferBinding::ElementType::IMAGE_SAMPLED };
 }
 
+void GpuDispatchCore::stage_native_bytes(size_t binding_index, const void* data, size_t byte_size)
+{
+    if (binding_index >= m_native_staging_bytes.size())
+        m_native_staging_bytes.resize(binding_index + 1);
+
+    m_native_staging_bytes.resize(byte_size);
+    std::memcpy(m_native_staging_bytes.data(), data, byte_size);
+}
+
 //==============================================================================
 // Virtual override points
 //==============================================================================
@@ -183,8 +192,13 @@ void GpuDispatchCore::prepare_gpu_inputs(
 
         case GpuBufferBinding::ElementType::FLOAT32:
         default:
-            m_resources.ensure_buffer(i, float_byte_size);
-            m_resources.upload(i, m_staging_floats.data(), float_byte_size);
+            if (!m_native_staging_bytes.empty()) {
+                m_resources.ensure_buffer(i, m_native_staging_bytes.size());
+                m_resources.upload_raw(i, m_native_staging_bytes.data(), m_native_staging_bytes.size());
+            } else {
+                m_resources.ensure_buffer(i, float_byte_size);
+                m_resources.upload(i, m_staging_floats.data(), float_byte_size);
+            }
             break;
         }
     }
@@ -385,6 +399,7 @@ void GpuDispatchCore::flatten_channels_to_staging(
     const DataStructureInfo& structure_info)
 {
     m_staging_floats.clear();
+    m_native_staging_bytes.clear();
 
     if (Kakshya::is_structured_modality(structure_info.modality))
         return;
@@ -410,6 +425,38 @@ void GpuDispatchCore::flatten_channels_to_staging(
     for (const auto& ch : channels) {
         for (double v : ch)
             m_staging_floats.push_back(static_cast<float>(v));
+    }
+}
+
+void GpuDispatchCore::flatten_native_variants_to_staging(
+    const std::vector<Kakshya::DataVariant>& variants,
+    const DataStructureInfo& structure_info)
+{
+    m_native_staging_bytes.clear();
+
+    if (variants.empty() || Kakshya::is_structured_modality(structure_info.modality))
+        return;
+
+    size_t total_bytes = 0;
+    for (const auto& v : variants) {
+        std::visit([&](const auto& vec) {
+            total_bytes += vec.size() * sizeof(typename std::decay_t<decltype(vec)>::value_type);
+        },
+            v);
+    }
+
+    m_native_staging_bytes.reserve(total_bytes);
+
+    for (const auto& v : variants) {
+        std::visit([&](const auto& vec) {
+            using T = typename std::decay_t<decltype(vec)>::value_type;
+            const auto* bytes = reinterpret_cast<const uint8_t*>(vec.data());
+            m_native_staging_bytes.insert(
+                m_native_staging_bytes.end(),
+                bytes,
+                bytes + vec.size() * sizeof(T));
+        },
+            v);
     }
 }
 

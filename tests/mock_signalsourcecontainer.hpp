@@ -76,7 +76,7 @@ public:
         m_processed_data.reserve(channel_data.size());
 
         for (const auto& channel : channel_data) {
-            m_processed_data.emplace_back(Kakshya::DataVariant { channel });
+            m_processed_data.emplace_back(channel);
         }
 
         m_num_channels = static_cast<uint32_t>(channel_data.size());
@@ -131,7 +131,7 @@ public:
         return result;
     }
 
-    std::vector<DataVariant> get_region_group_data(const RegionGroup& regions) const override
+    std::vector<DataVariant> get_region_group_data(const RegionGroup& /*regions*/) const override
     {
         /* std::vector<DataVariant> all_data;
         for (const auto& region : regions) {
@@ -154,33 +154,14 @@ public:
         }
     }
 
-    std::span<const double> get_frame(uint64_t) const override
-    {
-        static std::vector<double> empty;
-        return {};
-    }
-
-    void get_frames(std::span<double>, uint64_t, uint64_t) const override
-    {
-        // No-op for mock
-    }
-
-    double get_value_at(const std::vector<uint64_t>&) const override
-    {
-        return 0.0;
-    }
-
-    void set_value_at(const std::vector<uint64_t>&, double) override
-    {
-        // No-op for mock
-    }
+    std::type_index value_element_type() const override { return typeid(double); }
 
     void add_region_group(const RegionGroup& group) override
     {
         m_region_groups[group.name] = group;
     }
 
-    const RegionGroup& get_region_group(const std::string& name) const override
+    RegionGroup get_region_group(const std::string& name) const override
     {
         static RegionGroup empty("empty");
         auto it = m_region_groups.find(name);
@@ -228,21 +209,6 @@ public:
     void clear() override
     {
         m_processed_data.clear();
-    }
-
-    void lock() override
-    {
-        // No-op for mock
-    }
-
-    void unlock() override
-    {
-        // No-op for mock
-    }
-
-    bool try_lock() override
-    {
-        return true;
     }
 
     const void* get_raw_data() const override
@@ -383,7 +349,7 @@ public:
 
     const std::vector<DataVariant>& get_data() override { return m_processed_data; }
 
-    DataAccess channel_data(size_t channel)
+    DataAccess channel_data(size_t channel) override
     {
         if (channel >= m_processed_data.size()) {
             throw std::out_of_range("Channel index out of range");
@@ -391,7 +357,7 @@ public:
         return DataAccess { m_processed_data[channel], m_data_structure.dimensions, m_data_structure.modality };
     }
 
-    std::vector<DataAccess> all_channel_data()
+    std::vector<DataAccess> all_channel_data() override
     {
         std::vector<DataAccess> result;
         result.reserve(m_processed_data.size());
@@ -400,6 +366,46 @@ public:
             result.emplace_back(i, m_data_structure.dimensions, m_data_structure.modality);
         }
         return result;
+    }
+
+protected:
+    [[nodiscard]] auto get_frame_span_impl(uint64_t /*frame_index*/) const -> DataSpanVariant override { return {}; }
+    void get_frames_impl(void* output, size_t count, uint64_t start_frame, uint64_t num_frames, const std::type_info& type) const override { /* default implementation does nothing */ }
+
+    void get_value_impl(const std::vector<uint64_t>& coords, void* out, const std::type_info& type) const override
+    {
+        if (type != typeid(double) || coords.size() < 2)
+            return;
+
+        uint64_t frame = coords[0];
+        uint64_t channel = coords[1];
+
+        if (frame >= m_num_frames || channel >= m_num_channels)
+            return;
+
+        const auto& channel_data = std::get<std::vector<double>>(m_processed_data[channel]);
+        if (frame >= channel_data.size())
+            return;
+
+        *static_cast<double*>(out) = channel_data[frame];
+    }
+
+    void set_value_impl(const std::vector<uint64_t>& coords, const void* in, const std::type_info& type) override
+    {
+        if (type != typeid(double) || coords.size() < 2)
+            return;
+
+        uint64_t frame = coords[0];
+        uint64_t channel = coords[1];
+
+        if (frame >= m_num_frames || channel >= m_num_channels)
+            return;
+
+        auto& channel_data = std::get<std::vector<double>>(m_processed_data[channel]);
+        if (frame >= channel_data.size())
+            return;
+
+        channel_data[frame] = *static_cast<const double*>(in);
     }
 
 private:

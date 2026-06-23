@@ -2,6 +2,8 @@
 
 #include "MayaFlux/Kakshya/StreamContainer.hpp"
 
+#include "MayaFlux/Transitive/Memory/SeqLock.hpp"
+
 namespace MayaFlux::Kakshya {
 
 /**
@@ -53,19 +55,12 @@ public:
     std::vector<DataVariant> get_region_group_data(const RegionGroup& group) const override;
     std::vector<DataVariant> get_segments_data(const std::vector<RegionSegment>& segment) const override;
 
-    std::span<const double> get_frame(uint64_t frame_index) const override;
-    void get_frames(std::span<double> output, uint64_t start_frame, uint64_t num_frames) const override;
-
-    double get_value_at(const std::vector<uint64_t>& coordinates) const override;
-    void set_value_at(const std::vector<uint64_t>& coordinates, double value) override;
+    [[nodiscard]] std::type_index value_element_type() const override { return typeid(double); }
 
     uint64_t coordinates_to_linear_index(const std::vector<uint64_t>& coordinates) const override;
     std::vector<uint64_t> linear_index_to_coordinates(uint64_t linear_index) const override;
 
     void clear() override;
-    void lock() override { m_data_mutex.lock(); }
-    void unlock() override { m_data_mutex.unlock(); }
-    bool try_lock() override { return m_data_mutex.try_lock(); }
 
     const void* get_raw_data() const override;
     bool has_data() const override;
@@ -76,7 +71,7 @@ public:
     inline void set_structure(ContainerDataStructure structure) override { m_structure = structure; }
 
     void add_region_group(const RegionGroup& group) override;
-    const RegionGroup& get_region_group(const std::string& name) const override;
+    RegionGroup get_region_group(const std::string& name) const override;
     std::unordered_map<std::string, RegionGroup> get_all_region_groups() const override;
     void remove_region_group(const std::string& name) override;
 
@@ -111,13 +106,13 @@ public:
     void register_state_change_callback(
         std::function<void(const std::shared_ptr<SignalSourceContainer>&, ProcessingState)> callback) override
     {
-        std::lock_guard<std::mutex> lock(m_state_mutex);
-        m_state_callback = callback;
+        Memory::SeqlockWriteGuard g(m_cb_lock);
+        m_state_callback = std::move(callback);
     }
 
     void unregister_state_change_callback() override
     {
-        std::lock_guard<std::mutex> lock(m_state_mutex);
+        Memory::SeqlockWriteGuard g(m_cb_lock);
         m_state_callback = nullptr;
     }
 
@@ -245,9 +240,10 @@ protected:
 
     std::function<void(std::shared_ptr<SignalSourceContainer>, ProcessingState)> m_state_callback;
 
-    mutable std::shared_mutex m_data_mutex;
-    mutable std::mutex m_state_mutex;
-    mutable std::mutex m_reader_mutex;
+    mutable Memory::Seqlock m_data_lock;
+    mutable Memory::Seqlock m_region_lock;
+    mutable Memory::Seqlock m_cb_lock;
+    mutable Memory::Seqlock m_reader_lock;
 
     mutable std::vector<double> m_cached_ext_buffer;
 
@@ -256,9 +252,25 @@ protected:
 
     ContainerDataStructure m_structure;
 
+    auto get_frame_span_impl(uint64_t frame_index) const -> DataSpanVariant override
+    {
+        return get_frame_typed(frame_index);
+    }
+
+    void get_frames_impl(void* output, size_t count, uint64_t start_frame, uint64_t num_frames, const std::type_info& type) const override;
+
+    void get_value_impl(const std::vector<uint64_t>& coords,
+        void* out, const std::type_info& type) const override;
+
+    void set_value_impl(const std::vector<uint64_t>& coords,
+        const void* in, const std::type_info& type) override;
+
 private:
     mutable std::optional<std::vector<std::span<double>>> m_span_cache;
     mutable std::atomic<bool> m_span_cache_dirty { true };
+
+    std::span<const double> get_frame_typed(uint64_t frame_index) const;
+    void get_frames_typed(std::span<double> output, uint64_t start_frame, uint64_t num_frames) const;
 };
 
 } // namespace MayaFlux::Kakshya

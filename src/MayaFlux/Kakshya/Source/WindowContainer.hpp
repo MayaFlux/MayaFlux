@@ -3,6 +3,8 @@
 #include "MayaFlux/Kakshya/SignalSourceContainer.hpp"
 #include "MayaFlux/Portal/Graphics/GraphicsUtils.hpp"
 
+#include "MayaFlux/Transitive/Memory/SeqLock.hpp"
+
 namespace MayaFlux::Core {
 class Window;
 class VKImage;
@@ -177,16 +179,12 @@ public:
     [[nodiscard]] std::vector<DataVariant> get_region_group_data(const RegionGroup& group) const override;
     [[nodiscard]] std::vector<DataVariant> get_segments_data(const std::vector<RegionSegment>& segments) const override;
 
-    [[nodiscard]] double get_value_at(const std::vector<uint64_t>& coordinates) const override;
-    void set_value_at(const std::vector<uint64_t>& coordinates, double value) override;
+    [[nodiscard]] std::type_index value_element_type() const override { return typeid(uint8_t); }
 
     [[nodiscard]] uint64_t coordinates_to_linear_index(const std::vector<uint64_t>& coordinates) const override;
     [[nodiscard]] std::vector<uint64_t> linear_index_to_coordinates(uint64_t linear_index) const override;
 
     void clear() override;
-    void lock() override;
-    void unlock() override;
-    bool try_lock() override;
 
     [[nodiscard]] const void* get_raw_data() const override;
     [[nodiscard]] bool has_data() const override;
@@ -200,7 +198,7 @@ public:
     // -------------------------------------------------------------------------
 
     void add_region_group(const RegionGroup& group) override;
-    [[nodiscard]] const RegionGroup& get_region_group(const std::string& name) const override;
+    [[nodiscard]] RegionGroup get_region_group(const std::string& name) const override;
     [[nodiscard]] std::unordered_map<std::string, RegionGroup> get_all_region_groups() const override;
     void remove_region_group(const std::string& name) override;
 
@@ -252,8 +250,6 @@ public:
 
     [[nodiscard]] uint64_t get_frame_size() const override;
     [[nodiscard]] uint64_t get_num_frames() const override;
-    [[nodiscard]] std::span<const double> get_frame(uint64_t frame_index) const override;
-    void get_frames(std::span<double> output, uint64_t start_frame, uint64_t num_frames) const override;
 
     // -------------------------------------------------------------------------
     // Consumer tracking — dimension_index and reader_id are opaque slot handles.
@@ -277,6 +273,16 @@ public:
     [[nodiscard]] DataAccess channel_data(size_t channel_index) override;
     [[nodiscard]] std::vector<DataAccess> all_channel_data() override;
 
+protected:
+    [[nodiscard]] auto get_frame_span_impl(uint64_t frame_index) const -> DataSpanVariant override;
+    void get_frames_impl(void* output, size_t count, uint64_t start_frame, uint64_t num_frames, const std::type_info& type) const override;
+
+    void get_value_impl(const std::vector<uint64_t>& coords,
+        void* out, const std::type_info& type) const override;
+
+    void set_value_impl(const std::vector<uint64_t>& coords,
+        const void* in, const std::type_info& type) override { }
+
 private:
     std::shared_ptr<Core::Window> m_window;
 
@@ -294,10 +300,9 @@ private:
 
     std::function<void(const std::shared_ptr<SignalSourceContainer>&, ProcessingState)> m_state_callback;
 
-    mutable std::shared_mutex m_data_mutex;
-    mutable std::mutex m_state_mutex;
-
-    mutable std::vector<double> m_frame_cache;
+    mutable Memory::Seqlock m_data_lock;
+    mutable Memory::Seqlock m_region_lock;
+    mutable Memory::Seqlock m_cb_lock;
 
     std::atomic<uint32_t> m_registered_readers { 0 };
     std::atomic<uint32_t> m_consumed_readers { 0 };
@@ -307,6 +312,10 @@ private:
     std::atomic<uint64_t> m_frames_written { 0 };
 
     void setup_dimensions();
+
+private:
+    [[nodiscard]] auto get_frame_typed(uint64_t frame_index) const -> std::span<const uint8_t>;
+    void get_frames_typed(std::span<uint8_t> output, uint64_t start_frame, uint64_t num_frames) const;
 };
 
 } // namespace MayaFlux::Kakshya

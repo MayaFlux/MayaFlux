@@ -3,6 +3,7 @@
 #include "MayaFlux/Kakshya/StreamContainer.hpp"
 
 #include "MayaFlux/Transitive/Memory/RingBuffer.hpp"
+#include "MayaFlux/Transitive/Memory/SeqLock.hpp"
 
 namespace MayaFlux::Registry::Service {
 struct IOService;
@@ -72,19 +73,12 @@ public:
     std::vector<DataVariant> get_region_group_data(const RegionGroup& group) const override;
     std::vector<DataVariant> get_segments_data(const std::vector<RegionSegment>& segment) const override;
 
-    [[nodiscard]] std::span<const double> get_frame(uint64_t frame_index) const override;
-    void get_frames(std::span<double> output, uint64_t start_frame, uint64_t num_frames) const override;
-
-    [[nodiscard]] double get_value_at(const std::vector<uint64_t>& coordinates) const override;
-    void set_value_at(const std::vector<uint64_t>& coordinates, double value) override;
+    [[nodiscard]] std::type_index value_element_type() const override { return typeid(uint8_t); }
 
     [[nodiscard]] uint64_t coordinates_to_linear_index(const std::vector<uint64_t>& coordinates) const override;
     [[nodiscard]] std::vector<uint64_t> linear_index_to_coordinates(uint64_t linear_index) const override;
 
     void clear() override;
-    void lock() override { m_data_mutex.lock(); }
-    void unlock() override { m_data_mutex.unlock(); }
-    bool try_lock() override { return m_data_mutex.try_lock(); }
 
     [[nodiscard]] const void* get_raw_data() const override;
     [[nodiscard]] bool has_data() const override;
@@ -194,7 +188,7 @@ public:
     // =========================================================================
 
     void add_region_group(const RegionGroup& group) override;
-    const RegionGroup& get_region_group(const std::string& name) const override;
+    RegionGroup get_region_group(const std::string& name) const override;
     std::unordered_map<std::string, RegionGroup> get_all_region_groups() const override;
     void remove_region_group(const std::string& name) override;
 
@@ -327,8 +321,9 @@ protected:
     std::vector<DataVariant> m_data;
     std::vector<DataVariant> m_processed_data;
 
-    mutable std::shared_mutex m_data_mutex;
-    mutable std::mutex m_state_mutex;
+    mutable Memory::Seqlock m_data_lock;
+    mutable Memory::Seqlock m_region_lock;
+    mutable Memory::Seqlock m_cb_lock;
 
     std::atomic<ProcessingState> m_processing_state { ProcessingState::IDLE };
     std::atomic<int> m_processing_token_channel { -1 };
@@ -340,7 +335,7 @@ protected:
     std::unordered_map<std::string, RegionGroup> m_region_groups;
 
     std::atomic<uint64_t> m_read_position { 0 };
-    bool m_looping_enabled = false;
+    bool m_looping_enabled {};
     Region m_loop_region;
 
     std::atomic<uint32_t> m_registered_readers { 0 };
@@ -379,6 +374,32 @@ protected:
     {
         return static_cast<uint32_t>(frame_index % m_ring_capacity);
     }
+
+    [[nodiscard]] DataSpanVariant get_frame_span_impl(uint64_t frame_index) const override
+    {
+        return { get_frame_typed(frame_index) };
+    }
+
+    void get_frames_impl(
+        void* output,
+        size_t count,
+        uint64_t start_frame,
+        uint64_t num_frames,
+        const std::type_info& type) const override;
+
+    void get_value_impl(const std::vector<uint64_t>& coords,
+        void* out, const std::type_info& type) const override;
+
+    void set_value_impl(const std::vector<uint64_t>& coords,
+        const void* in, const std::type_info& type) override;
+
+private:
+    [[nodiscard]] std::span<const uint8_t> get_frame_typed(uint64_t frame_index) const
+    {
+        return get_frame_pixels(frame_index);
+    }
+
+    void get_frames_typed(std::span<uint8_t> output, uint64_t start_frame, uint64_t num_frames) const;
 };
 
 } // namespace MayaFlux::Kakshya

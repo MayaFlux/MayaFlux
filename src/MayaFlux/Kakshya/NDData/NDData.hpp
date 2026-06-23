@@ -2,7 +2,21 @@
 
 #include <glm/glm.hpp>
 
+#include "typeindex"
+
 namespace MayaFlux::Kakshya {
+
+namespace detail {
+
+    template <typename V>
+    struct span_const_from_vector_variant;
+
+    template <typename... Vecs>
+    struct span_const_from_vector_variant<std::variant<Vecs...>> {
+        using type = std::variant<std::span<const typename Vecs::value_type>...>;
+    };
+
+} // namespace detail
 
 /**
  * @enum GpuDataFormat
@@ -74,6 +88,63 @@ using DataVariant = std::variant<
     std::vector<glm::vec4>, ///< 4D vector data
     std::vector<glm::mat4> ///< 4x4 matrix data
     >;
+
+/**
+ * @brief Type traits to determine if a type is a valid DataVariant element.
+ *
+ * This trait is used to constrain template functions that operate on DataVariant types,
+ * ensuring that only supported data types are used in the context of NDData containers.
+ */
+template <typename T>
+struct is_data_variant_element : std::false_type { };
+
+/**  high precision floating point data (double) (audio) */
+template <>
+struct is_data_variant_element<double> : std::true_type { };
+
+/**  standard precision floating point data (float) (params) */
+template <>
+struct is_data_variant_element<float> : std::true_type { };
+
+/**  8-bit unsigned integer data (uint8_t) (images, compressed audio) */
+template <>
+struct is_data_variant_element<uint8_t> : std::true_type { };
+
+/**  16-bit unsigned integer data (uint16_t) (CD audio, images) */
+template <>
+struct is_data_variant_element<uint16_t> : std::true_type { };
+
+/**  32-bit unsigned integer data (uint32_t) (high precision int) */
+template <>
+struct is_data_variant_element<uint32_t> : std::true_type { };
+
+/**  complex data (spectral) */
+template <>
+struct is_data_variant_element<std::complex<float>> : std::true_type { };
+
+/**  high precision complex data (spectral) */
+template <>
+struct is_data_variant_element<std::complex<double>> : std::true_type { };
+
+/**  2D vector data (glm::vec2) */
+template <>
+struct is_data_variant_element<glm::vec2> : std::true_type { };
+
+/**  3D vector data (glm::vec3) */
+template <>
+struct is_data_variant_element<glm::vec3> : std::true_type { };
+
+/**  4D vector data (glm::vec4) */
+template <>
+struct is_data_variant_element<glm::vec4> : std::true_type { };
+
+/**  4x4 matrix data (glm::mat4) */
+template <>
+struct is_data_variant_element<glm::mat4> : std::true_type { };
+
+/**  Concept to constrain types to valid DataVariant elements */
+template <typename T>
+concept DataVariantElement = is_data_variant_element<std::remove_cvref_t<T>>::value;
 
 /**
  * @brief Data modality types for cross-modal analysis
@@ -504,6 +575,123 @@ private:
 
         return variants;
     }
+};
+
+using DataSpanVariant = typename detail::span_const_from_vector_variant<DataVariant>::type;
+
+/**
+ * @class FrameView
+ * @brief Zero-copy typed view over one frame of container storage.
+ *
+ * FrameView is the return type of NDDataContainer::get_frame(). It holds a
+ * DataSpanVariant — a span into the container's live storage — without copying
+ * or converting data. The active span alternative matches the container's native
+ * element type: uint8_t for 8-bit image and video, uint16_t for 16-bit image,
+ * float for HDR image, double for audio.
+ *
+ * Callers retrieve typed data via as(), which returns an empty span on type
+ * mismatch rather than throwing. element_type() provides a runtime query for
+ * callers whose branch depends on the native type.
+ *
+ * @par Lifetime
+ * The span inside FrameView points directly into the owning container's internal
+ * buffer. It is valid only for the duration of the current processing turn.
+ * FrameView must not be stored across buffer cycles, frame callbacks, or any
+ * point at which the container may write new data.
+ *
+ * @par Threading
+ * FrameView is not thread-safe. The container's read lock (if any) is held only
+ * during get_frame_span_impl(); it is released before FrameView is returned.
+ * Callers must not access the view concurrently with container writes.
+ *
+ * @see NDDataContainer::get_frame(), DataSpanVariant, DataVariantElement
+ */
+class FrameView {
+public:
+    /** @brief Construct an empty FrameView. empty() returns true. */
+    FrameView() = default;
+
+    /**
+     * @brief Construct from a DataSpanVariant produced by get_frame_span_impl().
+     * @param span Active alternative must match the container's native element type.
+     */
+    explicit FrameView(DataSpanVariant span)
+        : m_span(span)
+    {
+    }
+
+    /** @brief Returns true if the view holds no elements. */
+    [[nodiscard]] bool empty() const
+    {
+        return std::visit([](const auto& s) { return s.empty(); }, m_span);
+    }
+
+    /** @brief Number of elements in the frame, in units of the native element type. */
+    [[nodiscard]] size_t size() const
+    {
+        return std::visit([](const auto& s) { return s.size(); }, m_span);
+    }
+
+    /**
+     * @brief Runtime query for the native element type of this frame.
+     *
+     * Returns std::type_index of the active span's value_type. Typical values:
+     * - typeid(uint8_t)  — 8-bit image/video (RGBA, etc.)
+     * - typeid(uint16_t) — 16-bit image (UNORM or half-float encoded)
+     * - typeid(float)    — HDR image (R32F/RGBA32F)
+     * - typeid(double)   — audio
+     *
+     * Use this to branch once before calling as<T>() when the container type
+     * is not statically known at the call site.
+     */
+    [[nodiscard]] std::type_index element_type() const
+    {
+        return std::visit([](const auto& s) {
+            return std::type_index(typeid(typename std::decay_t<decltype(s)>::value_type));
+        },
+            m_span);
+    }
+
+    /**
+     * @brief Return a typed span over the frame data without conversion.
+     *
+     * Returns an empty span if T does not match the native element type.
+     * Callers should query element_type() first when the type is not statically known.
+     * The returned span is valid only for the lifetime of the owning container's frame buffer.
+     *
+     * @tparam T Element type. Must satisfy DataVariantElement.
+     * @return Span of const T, empty on type mismatch.
+     */
+    /**
+     * @brief Return a typed span over the frame data without conversion or allocation.
+     *
+     * Returns an empty span if T does not match the native element type.
+     * No exception is thrown on mismatch; check empty() or call element_type() first
+     * when the container type is not statically known.
+     *
+     * The returned span aliases the container's internal buffer directly.
+     * See class-level lifetime and threading notes.
+     *
+     * @tparam T Element type. Must satisfy DataVariantElement.
+     * @return Span of const T into live storage, empty on type mismatch.
+     */
+    template <DataVariantElement T>
+    [[nodiscard]] std::span<const T> as() const
+    {
+        const auto* s = std::get_if<std::span<const T>>(&m_span);
+        return s ? *s : std::span<const T> {};
+    }
+
+    /**
+     * @brief Direct access to the underlying DataSpanVariant for internal use.
+     *
+     * Intended for infrastructure (processors, Yantra pipeline) that must
+     * forward the view without branching on type. Not for general callers.
+     */
+    [[nodiscard]] const DataSpanVariant& raw() const { return m_span; }
+
+private:
+    DataSpanVariant m_span;
 };
 
 } // namespace MayaFlux::Kakshya

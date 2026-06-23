@@ -143,7 +143,7 @@ infer_structure(const T& data, const std::shared_ptr<Kakshya::SignalSourceContai
         return infer_from_region_group(data, container);
     } else if constexpr (std::is_same_v<T, std::vector<Kakshya::RegionSegment>>) {
         return infer_from_segments(data, container);
-    } else if constexpr (std::is_base_of_v<Eigen::MatrixBase<T>, T>) {
+    } else if constexpr (is_eigen_matrix_v<T>) {
         return infer_from_eigen(data);
     } else {
         return infer_generic_structure(data);

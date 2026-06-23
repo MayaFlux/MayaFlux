@@ -97,8 +97,8 @@ TEST_F(DynamicSoundStreamTest, UnderstandDataLayout)
               << ", " << read_buffer[2] << ", " << read_buffer[3] << "]" << '\n';
 
     if (container->get_num_frames() >= 2) {
-        auto frame0 = container->get_frame(0);
-        auto frame1 = container->get_frame(1);
+        auto frame0 = container->get_frame(0).as<double>();
+        auto frame1 = container->get_frame(1).as<double>();
 
         std::cout << "Frame 0 via get_frame: [";
         for (size_t i = 0; i < frame0.size(); ++i) {
@@ -216,12 +216,12 @@ TEST_F(DynamicSoundStreamTest, PlanarOrganizationTest)
     uint64_t frames_written = container->write_frames(planar_data, 0);
     EXPECT_EQ(frames_written, 4);
 
-    auto frame0 = container->get_frame(0);
+    auto frame0 = container->get_frame(0).as<double>();
     ASSERT_EQ(frame0.size(), 2);
     EXPECT_DOUBLE_EQ(frame0[0], 0.1);
     EXPECT_DOUBLE_EQ(frame0[1], 0.2);
 
-    auto frame1 = container->get_frame(1);
+    auto frame1 = container->get_frame(1).as<double>();
     ASSERT_EQ(frame1.size(), 2);
     EXPECT_DOUBLE_EQ(frame1[0], 0.3);
     EXPECT_DOUBLE_EQ(frame1[1], 0.4);

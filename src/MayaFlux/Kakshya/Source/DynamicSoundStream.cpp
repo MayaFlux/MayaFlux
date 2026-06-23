@@ -163,53 +163,42 @@ uint64_t DynamicSoundStream::write_frames(std::vector<std::span<const double>> d
     return num_frames;
 }
 
-uint64_t DynamicSoundStream::write_frames(std::span<const double> data, uint64_t start_frame, uint32_t channel)
+uint64_t DynamicSoundStream::write_frames(
+    std::span<const double> data, uint64_t start_frame, uint32_t channel)
 {
     auto num_frames = validate_single_channel(data, start_frame, channel);
-
     if (!num_frames)
         return 0;
 
     if (m_is_circular && start_frame + num_frames > m_circular_capacity) {
         uint64_t frames_to_end = m_circular_capacity - start_frame;
         uint64_t frames_from_start = num_frames - frames_to_end;
-
-        if (frames_to_end > 0) {
+        if (frames_to_end > 0)
             write_frames(data.subspan(0, frames_to_end), start_frame, channel);
-        }
-
-        if (frames_from_start > 0) {
+        if (frames_from_start > 0)
             write_frames(data.subspan(frames_to_end, frames_from_start), 0, channel);
-        }
-
         return num_frames;
     }
 
     if (m_structure.organization == OrganizationStrategy::INTERLEAVED) {
-        std::unique_lock lock(m_data_mutex);
-
-        if (m_data.empty()) {
+        Memory::SeqlockWriteGuard g(m_data_lock);
+        if (m_data.empty())
             expand_to(start_frame + num_frames);
-        }
 
         auto& interleaved_data = std::get<std::vector<double>>(m_data[0]);
-        uint32_t num_channels = get_num_channels();
+        const uint32_t num_channels = get_num_channels();
 
         for (uint64_t frame = 0; frame < num_frames; ++frame) {
-            uint64_t interleaved_index = (start_frame + frame) * num_channels + channel;
-            if (interleaved_index < interleaved_data.size()) {
-                interleaved_data[interleaved_index] = data[frame];
-            }
+            uint64_t idx = (start_frame + frame) * num_channels + channel;
+            if (idx < interleaved_data.size())
+                interleaved_data[idx] = data[frame];
         }
     } else {
-        std::unique_lock lock(m_data_mutex);
-
-        if (channel >= m_data.size()) {
+        Memory::SeqlockWriteGuard g(m_data_lock);
+        if (channel >= m_data.size())
             return 0;
-        }
 
         auto dest_span = convert_variant<double>(m_data[channel]);
-
         if (start_frame + num_frames > dest_span.size()) {
             std::vector<double> current_data(dest_span.begin(), dest_span.end());
             current_data.resize(start_frame + num_frames, 0.0);
@@ -221,90 +210,72 @@ uint64_t DynamicSoundStream::write_frames(std::span<const double> data, uint64_t
             dest_span.begin() + start_frame);
     }
 
-    if (m_is_circular) {
+    if (m_is_circular)
         m_num_frames = std::min(m_circular_capacity, m_num_frames);
-    }
 
     invalidate_span_cache();
     m_double_extraction_dirty.store(true, std::memory_order_release);
-
     return num_frames;
 }
 
 std::span<const double> DynamicSoundStream::get_channel_frames(uint32_t channel, uint64_t start_frame, uint64_t num_frames) const
 {
-    if (channel >= get_num_channels()) {
+    if (channel >= get_num_channels())
         return {};
-    }
 
     if (m_structure.organization == OrganizationStrategy::INTERLEAVED) {
-        MF_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing, "Direct span access not supported for interleaved data. Use get_frames() or Kakshya::extract_channel_data() instead.");
+        MF_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+            "Direct span access not supported for interleaved data. "
+            "Use get_frames() or Kakshya::extract_channel_data() instead.");
         return {};
     }
 
-    std::shared_lock lock(m_data_mutex);
-
-    if (channel >= m_data.size()) {
-        return {};
-    }
-
-    const auto& channel_data = std::get<std::vector<double>>(m_data[channel]);
-
-    if (start_frame >= channel_data.size()) {
-        return {};
-    }
-
-    uint64_t available_frames = channel_data.size() - start_frame;
-    uint64_t actual_frames = std::min(num_frames, available_frames);
-
-    return { channel_data.data() + start_frame, actual_frames };
+    std::span<const double> result;
+    seqlock_read_void(m_data_lock, 8, [&] {
+        if (channel >= m_data.size())
+            return;
+        const auto& channel_data = std::get<std::vector<double>>(m_data[channel]);
+        if (start_frame >= channel_data.size())
+            return;
+        uint64_t available_frames = channel_data.size() - start_frame;
+        uint64_t actual_frames = std::min(num_frames, available_frames);
+        result = { channel_data.data() + start_frame, actual_frames };
+    });
+    return result;
 }
 
 void DynamicSoundStream::get_channel_frames(std::span<double> output, uint32_t channel, uint64_t start_frame) const
 {
-    if (channel >= get_num_channels() || output.empty()) {
+    if (channel >= get_num_channels() || output.empty())
         return;
-    }
 
-    uint64_t num_frames = output.size();
+    const uint64_t num_frames = output.size();
 
     if (m_structure.organization == OrganizationStrategy::INTERLEAVED) {
-        std::shared_lock lock(m_data_mutex);
-
-        if (m_data.empty()) {
-            std::ranges::fill(output, 0.0);
-            return;
-        }
-
-        const auto& interleaved_data = std::get<std::vector<double>>(m_data[0]);
-        uint32_t num_channels = get_num_channels();
-
-        for (uint64_t frame = 0; frame < num_frames; ++frame) {
-            uint64_t interleaved_index = (start_frame + frame) * num_channels + channel;
-            if (interleaved_index < interleaved_data.size()) {
-                output[frame] = interleaved_data[interleaved_index];
-            } else {
-                output[frame] = 0.0;
+        seqlock_read_void(m_data_lock, 8, [&] {
+            if (m_data.empty()) {
+                std::ranges::fill(output, 0.0);
+                return;
             }
-        }
+            const auto& interleaved_data = std::get<std::vector<double>>(m_data[0]);
+            const uint32_t num_channels = get_num_channels();
+            for (uint64_t frame = 0; frame < num_frames; ++frame) {
+                uint64_t idx = (start_frame + frame) * num_channels + channel;
+                output[frame] = (idx < interleaved_data.size()) ? interleaved_data[idx] : 0.0;
+            }
+        });
     } else {
-        std::shared_lock lock(m_data_mutex);
-
-        if (channel >= m_data.size()) {
-            std::ranges::fill(output, 0.0);
-            return;
-        }
-
-        const auto& channel_data = std::get<std::vector<double>>(m_data[channel]);
-
-        for (uint64_t frame = 0; frame < num_frames; ++frame) {
-            uint64_t data_index = start_frame + frame;
-            if (data_index < channel_data.size()) {
-                output[frame] = channel_data[data_index];
-            } else {
-                output[frame] = 0.0;
+        seqlock_read_void(m_data_lock, 8, [&] {
+            if (channel >= m_data.size()) {
+                std::ranges::fill(output, 0.0);
+                return;
             }
-        }
+            const auto& channel_data = std::get<std::vector<double>>(m_data[channel]);
+            for (uint64_t frame = 0; frame < num_frames; ++frame) {
+                uint64_t idx = start_frame + frame;
+                output[frame] = (idx < channel_data.size()) ? channel_data[idx] : 0.0;
+            }
+        });
     }
 }
 
@@ -374,25 +345,25 @@ void DynamicSoundStream::disable_circular_buffer()
 
 void DynamicSoundStream::set_all_data(const std::vector<DataVariant>& data)
 {
-    std::unique_lock lock(m_data_mutex);
-    m_data.resize(data.size());
+    {
+        Memory::SeqlockWriteGuard g(m_data_lock);
+        m_data.resize(data.size());
+        std::ranges::for_each(std::views::zip(data, m_data),
+            [](auto&& pair) {
+                auto&& [source, dest] = pair;
+                safe_copy_data_variant(source, dest);
+            });
 
-    std::ranges::for_each(std::views::zip(data, m_data),
-        [](auto&& pair) {
-            auto&& [source, dest] = pair;
-            safe_copy_data_variant(source, dest);
-        });
+        m_num_frames = std::visit([](const auto& vec) {
+            return static_cast<uint64_t>(vec.size());
+        },
+            m_data[0]);
+        if (m_structure.organization == OrganizationStrategy::INTERLEAVED)
+            m_num_frames = (get_num_channels() > 0) ? m_num_frames / get_num_channels() : 0;
 
-    m_num_frames = std::visit([](const auto& vec) {
-        return static_cast<uint64_t>(vec.size());
-    },
-        m_data[0]);
-
-    if (m_structure.organization == OrganizationStrategy::INTERLEAVED) {
-        m_num_frames = (get_num_channels() > 0) ? m_num_frames / get_num_channels() : 0;
+        setup_dimensions();
     }
 
-    setup_dimensions();
     update_processing_state(ProcessingState::READY);
 }
 

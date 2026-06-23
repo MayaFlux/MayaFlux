@@ -5,8 +5,6 @@
 
 #include "MayaFlux/Kakshya/Utils/DataUtils.hpp"
 
-#include <typeindex>
-
 namespace MayaFlux::Yantra {
 
 /**
@@ -76,7 +74,7 @@ public:
             auto const_span = Kakshya::convert_variant<double>(compute_data);
             return std::span<double>(const_cast<double*>(const_span.data()), const_span.size());
         }
-        if constexpr (std::is_base_of_v<Eigen::MatrixBase<T>, T>) {
+        if constexpr (is_eigen_matrix_v<T>) {
             Kakshya::DataVariant variant = create_data_variant_from_eigen(compute_data);
             return Kakshya::convert_variant<double>(variant, s_complex_strategy);
         }
@@ -112,7 +110,7 @@ public:
             return Kakshya::convert_variants<double>(variant, s_complex_strategy);
         }
 
-        if constexpr (std::is_base_of_v<Eigen::MatrixBase<T>, T>)
+        if constexpr (is_eigen_matrix_v<T>)
             return extract_from_eigen_matrix(compute_data);
 
         return std::vector<std::span<double>> {};
@@ -155,6 +153,111 @@ public:
         }
     }
 
+    // =========================================================================
+    // Native extraction -- no double coercion
+    //
+    // extract_native_data returns data in the source's own scalar type.
+    // Use this for GPU staging, Kinesis::Vision callers, and any path that
+    // should not widen to double.
+    //
+    // For DataVariant / vector<DataVariant> the native type is runtime-
+    // determined; these overloads return DataSpanVariant / vector<DataSpanVariant>
+    // so the caller can branch on element_type() exactly as with get_frame().
+    //
+    // For SignalSourceContainer the native type is queried via value_element_type().
+    // For Eigen the native type is T::Scalar.
+    // Region types are not supported: region data comes out of containers as
+    // DataVariant and is already accessible via the DataVariant overload below.
+    // =========================================================================
+
+    /**
+     * @brief Extract a single DataVariant as a type-erased span without conversion.
+     *
+     * Returns a DataSpanVariant whose active alternative matches the variant's
+     * native element type. No allocation, no coercion.
+     * Call element_type() on the result or use as<E>() when E is known statically.
+     *
+     * @param variant Source variant.
+     * @return DataSpanVariant aliasing the variant's internal storage.
+     */
+    static Kakshya::DataSpanVariant extract_native_data(const Kakshya::DataVariant& variant)
+    {
+        return std::visit([](const auto& vec) -> Kakshya::DataSpanVariant {
+            return std::span<const typename std::decay_t<decltype(vec)>::value_type>(
+                vec.data(), vec.size());
+        },
+            variant);
+    }
+
+    /**
+     * @brief Extract a vector of DataVariants as type-erased spans without conversion.
+     *
+     * One DataSpanVariant per channel/variant in the input. Each span aliases
+     * the variant's internal storage; no allocation or coercion.
+     *
+     * @param variants Source variants.
+     * @return Per-channel DataSpanVariants.
+     */
+    static std::vector<Kakshya::DataSpanVariant> extract_native_data(
+        const std::vector<Kakshya::DataVariant>& variants)
+    {
+        std::vector<Kakshya::DataSpanVariant> result;
+        result.reserve(variants.size());
+        for (const auto& v : variants)
+            result.push_back(extract_native_data(v));
+        return result;
+    }
+
+    /**
+     * @brief Extract native-typed channel spans from a SignalSourceContainer.
+     *
+     * Queries value_element_type() to determine the native scalar, then
+     * retrieves each channel's data as a FrameView (which already carries the
+     * native span). Returns one DataSpanVariant per channel; no double coercion.
+     *
+     * @param container Source container. Must have data.
+     * @param use_processed If true, reads processed_data; otherwise raw data.
+     * @return Per-channel DataSpanVariants in native element type.
+     */
+    static std::vector<Kakshya::DataSpanVariant> extract_native_data(
+        const std::shared_ptr<Kakshya::SignalSourceContainer>& container,
+        bool use_processed = false)
+    {
+        if (!container || !container->has_data())
+            return {};
+
+        const auto& variants = use_processed
+            ? container->get_processed_data()
+            : container->get_data();
+
+        return extract_native_data(variants);
+    }
+
+    /**
+     * @brief Extract native-typed column spans from any Eigen matrix.
+     *
+     * Returns one span per column in T::Scalar, aliasing the matrix's own
+     * storage via Eigen::Map. The matrix must outlive the returned spans.
+     *
+     * @tparam EigenMatrix Any Eigen matrix type. T::Scalar is the native type.
+     * @param matrix Source matrix.
+     * @return Per-column spans in T::Scalar.
+     */
+    template <typename EigenMatrix>
+        requires is_eigen_matrix_v<EigenMatrix>
+    static auto extract_native_data(const EigenMatrix& matrix)
+        -> std::vector<std::span<const typename EigenMatrix::Scalar>>
+    {
+        using Scalar = typename EigenMatrix::Scalar;
+        std::vector<std::span<const Scalar>> result;
+        result.reserve(static_cast<size_t>(matrix.cols()));
+
+        for (int col = 0; col < matrix.cols(); ++col) {
+            result.emplace_back(matrix.col(col).data(), static_cast<size_t>(matrix.rows()));
+        }
+        return result;
+    }
+
     /**
      * @brief Convert ComputeData to DataVariant format
      * @tparam T ComputeData type
@@ -176,7 +279,7 @@ public:
             return compute_data->get_data();
         }
 
-        if constexpr (std::is_base_of_v<Eigen::MatrixBase<T>, T>) {
+        if constexpr (is_eigen_matrix_v<T>) {
             return convert_eigen_matrix_to_variant(compute_data);
         }
     }
@@ -200,6 +303,31 @@ public:
             return container->get_region_group_data(compute_data);
         } else if constexpr (std::is_same_v<T, std::vector<Kakshya::RegionSegment>>) {
             return container->get_segments_data(compute_data);
+        }
+    }
+
+    /**
+     * @brief Populate DataStructureInfo from a Datum without extracting spans.
+     * @tparam T OperationReadyData type.
+     * @param compute_data Source Datum.
+     * @return DataStructureInfo with original_type, dimensions, modality populated.
+     */
+    template <OperationReadyData T>
+    static DataStructureInfo get_structure_info(T& compute_data)
+    {
+        if constexpr (is_IO<T>::value) {
+            DataStructureInfo info {};
+            info.original_type = std::type_index(typeid(std::decay_t<decltype(compute_data.data)>));
+            info.dimensions = compute_data.dimensions;
+            info.modality = compute_data.modality;
+            return info;
+        } else {
+            DataStructureInfo info {};
+            info.original_type = std::type_index(typeid(T));
+            auto [dims, mod] = infer_structure(compute_data);
+            info.dimensions = std::move(dims);
+            info.modality = mod;
+            return info;
         }
     }
 
@@ -239,6 +367,76 @@ public:
             info.modality = modality;
 
             return std::make_tuple(double_data, info);
+        }
+    }
+
+    /**
+     * @brief Extract native-typed channel spans and structure metadata from
+     *        a Datum or direct ComputeData, without double coercion.
+     *
+     * Mirrors extract_structured_double in structure: same DataStructureInfo
+     * population, same Datum unwrapping, same container handling for
+     * RegionLike types. The only difference is that channel data is returned
+     * as DataSpanVariant (type-erased native span) rather than span<double>.
+     *
+     * Use this as the entry point for Kinesis::Vision operations and any
+     * other pipeline that must preserve the source's native element type
+     * (uint8_t pixel data, uint16_t depth, float HDR, etc.).
+     *
+     * For RegionLike data types the region variants are returned as
+     * DataSpanVariant via extract_native_data(DataVariant), consistent with
+     * the non-region overloads.
+     *
+     * Callers branch on DataSpanVariant::element_type() or use
+     * FrameView::as<E>() / DataSpanVariant::get_if<span<const E>>() when
+     * the native type is statically known.
+     *
+     * @tparam T OperationReadyData type.
+     * @param compute_data Datum or direct ComputeData to extract from.
+     * @return Tuple of [native channel spans, DataStructureInfo].
+     * @throws std::runtime_error if a container is required but absent.
+     */
+    template <OperationReadyData T>
+    static std::tuple<std::vector<Kakshya::DataSpanVariant>, DataStructureInfo>
+    extract_structured_native(T& compute_data)
+    {
+        if constexpr (is_IO<T>::value) {
+            DataStructureInfo info {};
+            info.original_type = std::type_index(typeid(std::decay_t<decltype(compute_data.data)>));
+            info.dimensions = compute_data.dimensions;
+            info.modality = compute_data.modality;
+
+            if constexpr (RequiresContainer<std::decay_t<decltype(compute_data.data)>>) {
+                if (!compute_data.has_container()) {
+                    error<std::runtime_error>(
+                        Journal::Component::Yantra,
+                        Journal::Context::ContainerProcessing,
+                        std::source_location::current(),
+                        "Container is required for region-like data extraction but not provided");
+                }
+
+                const auto region_variants = [&]() -> std::vector<Kakshya::DataVariant> {
+                    if constexpr (std::is_same_v<std::decay_t<decltype(compute_data.data)>, Kakshya::Region>) {
+                        return compute_data.container.value()->get_region_data(compute_data.data);
+                    } else if constexpr (std::is_same_v<std::decay_t<decltype(compute_data.data)>, Kakshya::RegionGroup>) {
+                        return compute_data.container.value()->get_region_group_data(compute_data.data);
+                    } else {
+                        return compute_data.container.value()->get_segments_data(compute_data.data);
+                    }
+                }();
+                return { extract_native_data(region_variants), info };
+            } else {
+                auto spans = extract_native_data(compute_data.data);
+                return { std::move(spans), info };
+            }
+        } else {
+            DataStructureInfo info {};
+            info.original_type = std::type_index(typeid(T));
+            auto spans = extract_native_data(compute_data);
+            auto [dimensions, modality] = infer_structure(compute_data);
+            info.dimensions = dimensions;
+            info.modality = modality;
+            return { std::move(spans), info };
         }
     }
 
