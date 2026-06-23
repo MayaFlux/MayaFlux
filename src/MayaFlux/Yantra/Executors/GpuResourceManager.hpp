@@ -67,7 +67,7 @@ struct GpuResourceManagerImpl;
  * Manages storage buffers, pipeline, shader, and descriptor sets.
  * PIMPL hides vk:: types from the header entirely.
  */
-class GpuResourceManager {
+class MAYAFLUX_API GpuResourceManager {
 public:
     GpuResourceManager();
     ~GpuResourceManager();
