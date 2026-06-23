@@ -115,7 +115,7 @@ else()
     target_link_libraries(MayaFluxLib PUBLIC Transitive)
 endif()
 
-target_link_libraries(MayaFluxLib PRIVATE ${SPIRV_CROSS_LIBRARIES})
+target_link_libraries(MayaFluxLib PRIVATE ${SPIRV_CROSS_LIBRARIES} SPIRV-Tools-shared)
 
 if(MAYAFLUX_USE_SHADERC)
     if(WIN32)
@@ -130,6 +130,7 @@ if(MAYAFLUX_USE_SHADERC)
     endif()
     target_compile_definitions(MayaFluxLib PRIVATE MAYAFLUX_USE_SHADERC)
 endif()
+
 
 if(WIN32)
     target_link_libraries(MayaFluxLib PUBLIC
