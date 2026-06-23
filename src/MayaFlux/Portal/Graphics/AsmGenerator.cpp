@@ -11,6 +11,12 @@ std::string emit_header(const ShaderSpec& spec)
 {
     const auto& ws = spec.workgroup_size;
 
+    bool has_storage_image = false;
+    for (const auto& b : spec.bindings) {
+        if (b.modality == Kakshya::DataModality::IMAGE_2D)
+            has_storage_image = true;
+    }
+
     std::string iface = "%gid_var";
     for (const auto& b : spec.bindings) {
         if (b.modality == Kakshya::DataModality::TEXTURE_2D
@@ -18,11 +24,19 @@ std::string emit_header(const ShaderSpec& spec)
             continue;
         iface += " %buf_" + b.name;
     }
+    if (has_storage_image) {
+        for (const auto& b : spec.bindings) {
+            if (b.modality == Kakshya::DataModality::IMAGE_2D)
+                iface += " %img_" + b.name;
+        }
+    }
     if (!spec.pc_fields.empty())
         iface += " %pc";
 
     std::string o;
     o += "OpCapability Shader\n";
+    if (has_storage_image)
+        o += "OpCapability StorageImageWriteWithoutFormat\n";
     o += "%glsl = OpExtInstImport \"GLSL.std.450\"\n";
     o += "OpMemoryModel Logical GLSL450\n";
     o += "OpEntryPoint GLCompute %main \"main\" " + iface + "\n";
@@ -45,12 +59,29 @@ std::string emit_decorations(const ShaderSpec& spec)
         if (b.modality == Kakshya::DataModality::TEXTURE_2D
             || b.modality == Kakshya::DataModality::IMAGE_2D)
             continue;
+
         o += "OpDecorate %rta_" + b.name + " ArrayStride 4\n";
         o += "OpMemberDecorate %blk_" + b.name + " 0 Offset 0\n";
         o += "OpDecorate %blk_" + b.name + " Block\n";
         o += "OpDecorate %buf_" + b.name + " DescriptorSet 0\n";
         o += "OpDecorate %buf_" + b.name + " Binding "
             + std::to_string(b.binding_index) + "\n";
+    }
+
+    for (const auto& b : spec.bindings) {
+        if (b.modality != Kakshya::DataModality::IMAGE_2D)
+            continue;
+
+        const std::string var = "%img_" + b.name;
+        o += "OpDecorate " + var + " DescriptorSet 0\n";
+        o += "OpDecorate " + var + " Binding "
+            + std::to_string(b.binding_index) + "\n";
+
+        if (b.direction == BindingDirection::Input) {
+            o += "OpDecorate " + var + " NonWritable\n";
+        } else if (b.direction == BindingDirection::Output) {
+            o += "OpDecorate " + var + " NonReadable\n";
+        }
     }
 
     if (!spec.pc_fields.empty()) {
@@ -92,6 +123,28 @@ std::string emit_types(const ShaderSpec& spec)
         o += "%pf32_" + b.name + " = OpTypePointer StorageBuffer %f32\n";
     }
     o += "\n";
+
+    bool any_image = false;
+    for (const auto& b : spec.bindings) {
+        if (b.modality == Kakshya::DataModality::IMAGE_2D) {
+            any_image = true;
+            break;
+        }
+    }
+    if (any_image) {
+        o += "%i32          = OpTypeInt 32 1\n";
+        o += "%v2i32        = OpTypeVector %i32 2\n";
+        o += "%v4f32        = OpTypeVector %f32 4\n";
+        o += "%img_czero    = OpConstant %f32 0.0\n";
+        o += "%img2d_t      = OpTypeImage %f32 2D 0 0 0 2 Unknown\n";
+        o += "%ptr_img2d    = OpTypePointer UniformConstant %img2d_t\n";
+        for (const auto& b : spec.bindings) {
+            if (b.modality != Kakshya::DataModality::IMAGE_2D)
+                continue;
+            o += "%img_" + b.name + " = OpVariable %ptr_img2d UniformConstant\n";
+        }
+        o += "\n";
+    }
 
     if (!spec.pc_fields.empty()) {
         o += "%pc_blk = OpTypeStruct";
@@ -257,12 +310,123 @@ std::string emit_reduction_body(const ShaderSpec& spec)
     return o;
 }
 
+/**
+ * Emit the entry point body for specs whose bindings include IMAGE_2D slots.
+ *
+ * Assumes workgroup_size is {8, 8, 1} or any 2D shape. GlobalInvocationId
+ * x/y components are used as the texel coordinate. One output IMAGE_2D
+ * binding is required. PC fields provide float operands identical to the
+ * SSBO elementwise path. The op is applied per-channel on the rgba vec4
+ * loaded from the first input IMAGE_2D, or on a zero vec4 if no input image
+ * is declared.
+ */
+std::string emit_image_body(const ShaderSpec& spec)
+{
+    const BindingSlot* img_out = nullptr;
+    const BindingSlot* img_in = nullptr;
+    for (const auto& b : spec.bindings) {
+        if (b.modality != Kakshya::DataModality::IMAGE_2D)
+            continue;
+        if (b.direction == BindingDirection::Output && !img_out)
+            img_out = &b;
+        else if (b.direction != BindingDirection::Output && !img_in)
+            img_in = &b;
+    }
+
+    std::string o;
+    o += "%main  = OpFunction %void None %voidfn\n";
+    o += "%entry = OpLabel\n";
+    o += "%gid3  = OpLoad %v3u32 %gid_var\n";
+    o += "%ix    = OpCompositeExtract %u32 %gid3 0\n";
+    o += "%iy    = OpCompositeExtract %u32 %gid3 1\n";
+    o += "%six   = OpBitcast %i32 %ix\n";
+    o += "%siy   = OpBitcast %i32 %iy\n";
+    o += "%coord = OpCompositeConstruct %v2i32 %six %siy\n\n";
+
+    for (size_t fi = 0; fi < spec.pc_fields.size(); ++fi) {
+        const auto& f = spec.pc_fields[fi];
+        o += "%ppc_" + f.name + " = OpAccessChain %ppc_f32 %pc %c"
+            + std::to_string(fi) + "u\n";
+        o += "%pc_" + f.name + " = OpLoad %f32 %ppc_" + f.name + "\n";
+    }
+    if (!spec.pc_fields.empty())
+        o += "\n";
+
+    if (img_in) {
+        o += "%raw_in = OpImageRead %v4f32 %img_" + std::string(img_in->name) + " %coord\n";
+    } else {
+        o += "%raw_in = OpCompositeConstruct %v4f32 %img_czero %img_czero %img_czero %img_czero\n";
+    }
+
+    o += "%ch_r = OpCompositeExtract %f32 %raw_in 0\n";
+    o += "%ch_g = OpCompositeExtract %f32 %raw_in 1\n";
+    o += "%ch_b = OpCompositeExtract %f32 %raw_in 2\n";
+    o += "%ch_a = OpCompositeExtract %f32 %raw_in 3\n\n";
+
+    const std::string p0 = spec.pc_fields.empty() ? "" : ("%pc_" + spec.pc_fields[0].name);
+    const std::string p1 = spec.pc_fields.size() > 1 ? ("%pc_" + spec.pc_fields[1].name) : "";
+
+    auto emit_channel_op = [&](const std::string& ch, const std::string& suffix) {
+        switch (spec.op) {
+        case KernelOp::Scale:
+            o += "%res_" + suffix + " = OpFMul %f32 " + ch + " " + p0 + "\n";
+            break;
+        case KernelOp::ScaleOffset:
+            o += "%mul_" + suffix + " = OpFMul %f32 " + ch + " " + p0 + "\n";
+            o += "%res_" + suffix + " = OpFAdd %f32 %mul_" + suffix + " " + p1 + "\n";
+            break;
+        case KernelOp::Offset:
+            o += "%res_" + suffix + " = OpFAdd %f32 " + ch + " " + p0 + "\n";
+            break;
+        case KernelOp::Clip:
+            o += "%res_" + suffix + " = OpExtInst %f32 %glsl FClamp " + ch + " " + p0 + " " + p1 + "\n";
+            break;
+        case KernelOp::Abs:
+            o += "%res_" + suffix + " = OpExtInst %f32 %glsl FAbs " + ch + "\n";
+            break;
+        case KernelOp::Negate:
+            o += "%res_" + suffix + " = OpFNegate %f32 " + ch + "\n";
+            break;
+        default:
+            o += "%res_" + suffix + " = OpCopyObject %f32 " + ch + "\n";
+            break;
+        }
+    };
+
+    emit_channel_op("%ch_r", "r");
+    emit_channel_op("%ch_g", "g");
+    emit_channel_op("%ch_b", "b");
+    emit_channel_op("%ch_a", "a");
+    o += "\n";
+
+    o += "%out_vec = OpCompositeConstruct %v4f32 %res_r %res_g %res_b %res_a\n";
+    if (img_out)
+        o += "OpImageWrite %img_" + std::string(img_out->name) + " %coord %out_vec\n";
+
+    o += "OpReturn\n";
+    o += "OpFunctionEnd\n";
+    return o;
+}
+
 std::string emit_spirv_asm(const ShaderSpec& spec)
 {
     std::string src;
     src += emit_header(spec);
     src += emit_decorations(spec);
     src += emit_types(spec);
+
+    bool has_image = false;
+    for (const auto& b : spec.bindings) {
+        if (b.modality == Kakshya::DataModality::IMAGE_2D) {
+            has_image = true;
+            break;
+        }
+    }
+
+    if (has_image) {
+        src += emit_image_body(spec);
+        return src;
+    }
 
     switch (spec.tmpl) {
     case KernelTemplate::Reduction:
