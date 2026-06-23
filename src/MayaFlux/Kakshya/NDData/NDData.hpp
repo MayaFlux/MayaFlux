@@ -41,6 +41,18 @@ enum class GpuDataFormat : uint8_t {
 };
 
 /**
+ * @brief Byte size of one element of a GpuDataFormat.
+ *
+ * Single authoritative source for format sizing. Used by TextureAccess,
+ * ShaderSpec, and any other system that needs to derive byte counts from
+ * GpuDataFormat without duplicating the switch.
+ *
+ * @param fmt GpuDataFormat value.
+ * @return Byte size of one element, or 0 for unrecognised formats.
+ */
+MAYAFLUX_API size_t gpu_data_format_bytes(GpuDataFormat fmt) noexcept;
+
+/**
  * @brief Memory layout for multi-dimensional data.
  *
  * Specifies how multi-dimensional data is mapped to linear memory.
