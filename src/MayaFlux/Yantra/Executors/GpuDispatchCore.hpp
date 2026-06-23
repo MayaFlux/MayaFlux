@@ -1,6 +1,7 @@
 #pragma once
 
-#include "GpuResourceManager.hpp"
+#include "ShaderSpecBinding.hpp"
+
 #include "MayaFlux/Yantra/OperationSpec/ExecutionContext.hpp"
 
 #include "MayaFlux/Yantra/OperationSpec/OperationHelper.hpp"
