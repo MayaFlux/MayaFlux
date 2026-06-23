@@ -27,7 +27,7 @@ BuildRequires:  glm-devel
 BuildRequires:  eigen3-devel
 BuildRequires:  spirv-headers-devel
 BuildRequires:  spirv-cross-devel
-BuildRequires:  spirv-tools
+BuildRequires:  spirv-tools-devel
 BuildRequires:  vulkan-headers
 BuildRequires:  vulkan-loader
 BuildRequires:  vulkan-loader-devel
@@ -68,7 +68,7 @@ Requires:       glm-devel
 Requires:       eigen3-devel
 Requires:       spirv-headers-devel
 Requires:       spirv-cross-devel
-Requires:       spirv-tools
+Requires:       spirv-tools-devel
 Requires:       vulkan-headers
 Requires:       vulkan-loader
 Requires:       vulkan-loader-devel

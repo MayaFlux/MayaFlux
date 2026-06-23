@@ -28,9 +28,6 @@ endif()
 
 find_package(PkgConfig QUIET)
 
-# Shader support
-set(MAYAFLUX_USE_SHADERC @MAYAFLUX_USE_SHADERC@)
-
 # Windows-specific dependency resolution
 if(WIN32)
     message(STATUS "=== Windows Dependency Resolution ===")
@@ -80,6 +77,29 @@ if(WIN32)
         )
     endif()
 
+    find_library(SPIRV_TOOLS_IMPLIB NAMES SPIRV-Tools-shared
+        PATHS "${_vulkan_sdk}/Lib" NO_DEFAULT_PATH REQUIRED)
+    find_program(SPIRV_TOOLS_DLL NAMES SPIRV-Tools-shared.dll
+        PATHS "${_vulkan_sdk}/Bin" NO_DEFAULT_PATH REQUIRED)
+    find_path(SPIRV_TOOLS_INCLUDE_DIR spirv-tools/libspirv.hpp
+        PATHS "${_vulkan_sdk}/Include" NO_DEFAULT_PATH REQUIRED)
+
+    add_library(SPIRV-Tools-shared SHARED IMPORTED)
+    set_target_properties(SPIRV-Tools-shared PROPERTIES
+        IMPORTED_LOCATION                "${SPIRV_TOOLS_DLL}"
+        IMPORTED_IMPLIB                  "${SPIRV_TOOLS_IMPLIB}"
+        IMPORTED_LOCATION_DEBUG          "${SPIRV_TOOLS_DLL}"
+        IMPORTED_IMPLIB_DEBUG            "${SPIRV_TOOLS_IMPLIB}"
+        IMPORTED_LOCATION_RELEASE        "${SPIRV_TOOLS_DLL}"
+        IMPORTED_IMPLIB_RELEASE          "${SPIRV_TOOLS_IMPLIB}"
+        IMPORTED_LOCATION_RELWITHDEBINFO "${SPIRV_TOOLS_DLL}"
+        IMPORTED_IMPLIB_RELWITHDEBINFO   "${SPIRV_TOOLS_IMPLIB}"
+        IMPORTED_LOCATION_MINSIZEREL     "${SPIRV_TOOLS_DLL}"
+        IMPORTED_IMPLIB_MINSIZEREL       "${SPIRV_TOOLS_IMPLIB}"
+        INTERFACE_INCLUDE_DIRECTORIES    "${SPIRV_TOOLS_INCLUDE_DIR}"
+        INTERFACE_COMPILE_DEFINITIONS    "SPIRV_TOOLS_SHARED_LIB"
+    )
+
     # FFmpeg components
     if(NOT TARGET FFmpeg::avcodec)
         foreach(component avcodec avformat avutil swresample swscale avdevice)
@@ -95,10 +115,6 @@ else()
     message(STATUS "=== Unix/Linux Dependency Resolution ===")
 
     find_package(PkgConfig REQUIRED)
-
-    if(MAYAFLUX_USE_SHADERC)
-        pkg_check_modules(shaderc QUIET IMPORTED_TARGET shaderc)
-    endif()
 
     if(APPLE)
         message(STATUS "=== macOS-specific Dependencies ===")
@@ -142,6 +158,24 @@ else()
             INTERFACE_INCLUDE_DIRECTORIES ${SPIRV_CROSS_INCLUDE_DIR}
         )
     endif()
+
+
+    find_dependency(SPIRV-Tools CONFIG)
+
+    if(TARGET SPIRV-Tools-shared)
+        message(STATUS "SPIRV-Tools: Found via CMake config (${SPIRV-Tools_VERSION})")
+    else()
+        find_library(SPIRV_TOOLS_LIB_PATH NAMES SPIRV-Tools-shared REQUIRED)
+        find_path(SPIRV_TOOLS_INCLUDE_PATH spirv-tools/libspirv.hpp REQUIRED)
+        add_library(SPIRV-Tools-shared SHARED IMPORTED)
+        set_target_properties(SPIRV-Tools-shared PROPERTIES
+            IMPORTED_LOCATION             ${SPIRV_TOOLS_LIB_PATH}
+            INTERFACE_INCLUDE_DIRECTORIES ${SPIRV_TOOLS_INCLUDE_PATH}
+        )
+        message(STATUS "SPIRV-Tools: Found shared library at ${SPIRV_TOOLS_LIB_PATH}")
+    endif()
+
+    pkg_check_modules(shaderc QUIET IMPORTED_TARGET shaderc)
 
     find_dependency(LLVM CONFIG)
     find_dependency(Clang CONFIG)
@@ -330,20 +364,19 @@ if(NOT TARGET MayaFlux::MayaFluxLib)
     endif()
 
     # ========================================================================
-    # Optional shader support
+    # shader compilation support
     # ========================================================================
-    if(MAYAFLUX_USE_SHADERC)
-        if(WIN32)
-            if(TARGET Vulkan::shaderc_combined)
-                target_link_libraries(MayaFlux::MayaFluxLib INTERFACE Vulkan::shaderc_combined)
-            elseif(TARGET shaderc_combined)
-                target_link_libraries(MayaFlux::MayaFluxLib INTERFACE shaderc_combined)
-            endif()
-        elseif(UNIX AND TARGET PkgConfig::shaderc)
-            target_link_libraries(MayaFlux::MayaFluxLib INTERFACE PkgConfig::shaderc)
+    if(WIN32)
+        if(TARGET Vulkan::shaderc_combined)
+            target_link_libraries(MayaFlux::MayaFluxLib INTERFACE Vulkan::shaderc_combined)
+        elseif(TARGET shaderc_combined)
+            target_link_libraries(MayaFlux::MayaFluxLib INTERFACE shaderc_combined)
         endif()
-        target_compile_definitions(MayaFlux::MayaFluxLib INTERFACE MAYAFLUX_USE_SHADERC)
+    elseif(UNIX AND TARGET PkgConfig::shaderc)
+        target_link_libraries(MayaFlux::MayaFluxLib INTERFACE PkgConfig::shaderc)
+        target_link_libraries(MayaFlux::MayaFluxLib INTERFACE SPIRV-Tools-shared)
     endif()
+    target_link_libraries(MayaFlux::MayaFluxLib INTERFACE ${SPIRV_CROSS_LIBRARIES})
 
     # ========================================================================
 
@@ -356,8 +389,6 @@ if(NOT TARGET MayaFlux::MayaFluxLib)
         else()
             message(STATUS "  Threading backend: PPL (built-in)")
         endif()
-        message(STATUS "  Shader compilation: ${MAYAFLUX_USE_SHADERC}")
-        message(STATUS "  Shader reflection: ${MAYAFLUX_USE_SPIRV_REFLECT}")
     endif()
 endif()
 

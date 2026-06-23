@@ -115,22 +115,18 @@ else()
     target_link_libraries(MayaFluxLib PUBLIC Transitive)
 endif()
 
-target_link_libraries(MayaFluxLib PRIVATE ${SPIRV_CROSS_LIBRARIES} SPIRV-Tools-shared)
-
-if(MAYAFLUX_USE_SHADERC)
-    if(WIN32)
-        if(TARGET Vulkan::shaderc_combined)
-            target_link_libraries(MayaFluxLib PRIVATE Vulkan::shaderc_combined)
-        elseif(TARGET shaderc_combined)
-            target_link_libraries(MayaFluxLib PRIVATE shaderc_combined)
-        endif()
-
+if(WIN32)
+    if(TARGET Vulkan::shaderc_combined)
+        target_link_libraries(MayaFluxLib PRIVATE Vulkan::shaderc_combined)
     else()
-        target_link_libraries(MayaFluxLib PRIVATE PkgConfig::shaderc)
+        target_link_libraries(MayaFluxLib PRIVATE shaderc_combined)
     endif()
-    target_compile_definitions(MayaFluxLib PRIVATE MAYAFLUX_USE_SHADERC)
+else()
+    target_link_libraries(MayaFluxLib PRIVATE PkgConfig::shaderc)
+    target_link_libraries(MayaFluxLib PRIVATE SPIRV-Tools-shared)
 endif()
 
+target_link_libraries(MayaFluxLib PRIVATE ${SPIRV_CROSS_LIBRARIES})
 
 if(WIN32)
     target_link_libraries(MayaFluxLib PUBLIC
