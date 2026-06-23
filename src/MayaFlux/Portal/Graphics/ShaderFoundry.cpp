@@ -10,141 +10,6 @@
 
 namespace MayaFlux::Portal::Graphics {
 
-namespace {
-
-    constexpr std::string_view glsl_type(Kakshya::GpuDataFormat fmt)
-    {
-        using F = Kakshya::GpuDataFormat;
-        switch (fmt) {
-        case F::FLOAT32:
-            return "float";
-        case F::FLOAT64:
-            return "double";
-        case F::INT32:
-            return "int";
-        case F::UINT32:
-        case F::UINT8:
-        case F::UINT16:
-            return "uint";
-        case F::VEC2_F32:
-            return "vec2";
-        case F::VEC3_F32:
-            return "vec3";
-        case F::VEC4_F32:
-            return "vec4";
-        case F::VEC2_F64:
-            return "dvec2";
-        case F::VEC3_F64:
-            return "dvec3";
-        case F::VEC4_F64:
-            return "dvec4";
-        default:
-            return "float";
-        }
-    }
-
-    std::string emit_spec_bindings(const ShaderSpec& spec)
-    {
-        std::string out;
-        for (const auto& b : spec.bindings) {
-            const bool is_sampler = b.modality == Kakshya::DataModality::TEXTURE_2D;
-            const bool is_image = b.modality == Kakshya::DataModality::IMAGE_2D;
-            const std::string idx = std::to_string(b.binding_index);
-
-            if (is_sampler) {
-                out += "layout(set = 0, binding = " + idx
-                    + ") uniform sampler2D " + b.name + ";\n";
-                continue;
-            }
-
-            if (is_image) {
-                std::string_view access;
-                switch (b.direction) {
-                case BindingDirection::Input:
-                    access = "readonly ";
-                    break;
-                case BindingDirection::Output:
-                    access = "writeonly ";
-                    break;
-                default:
-                    access = "";
-                    break;
-                }
-                out += "layout(set = 0, binding = " + idx
-                    + ", rgba32f) " + std::string(access)
-                    + "uniform image2D " + b.name + ";\n";
-                continue;
-            }
-
-            std::string_view qualifier = (b.direction == BindingDirection::Input)
-                ? "readonly "
-                : "";
-            out += "layout(set = 0, binding = " + idx + ") "
-                + std::string(qualifier) + "buffer _B" + idx
-                + " { " + std::string(glsl_type(b.format)) + " "
-                + b.name + "[]; };\n";
-        }
-        return out;
-    }
-
-    std::string emit_spec_push_constants(const ShaderSpec& spec)
-    {
-        if (spec.pc_fields.empty())
-            return {};
-
-        std::string out = "layout(push_constant) uniform PC {\n";
-        for (const auto& f : spec.pc_fields)
-            out += "    " + std::string(glsl_type(f.format)) + " " + f.name + ";\n";
-        out += "} pc;\n";
-        return out;
-    }
-
-    std::string emit_spec_glsl(const ShaderSpec& spec)
-    {
-        const auto& ws = spec.workgroup_size;
-        const std::string ls = "local_size_x = " + std::to_string(ws[0])
-            + ", local_size_y = " + std::to_string(ws[1])
-            + ", local_size_z = " + std::to_string(ws[2]);
-
-        std::string src = "#version 460\n\n";
-        src += "layout(" + ls + ") in;\n\n";
-        src += emit_spec_bindings(spec);
-        src += "\n";
-        src += emit_spec_push_constants(spec);
-
-        switch (spec.tmpl) {
-        case KernelTemplate::Reduction: {
-            const uint32_t local = ws[0];
-            src += "\nshared float _shared[" + std::to_string(local) + "];\n";
-            src += "\nvoid main() {\n";
-            src += "    uint i   = gl_GlobalInvocationID.x;\n";
-            src += "    uint lid = gl_LocalInvocationID.x;\n";
-            src += "    _shared[lid] = " + spec.body_expr + ";\n";
-            src += "    barrier();\n";
-            src += "    for (uint s = " + std::to_string(local)
-                + "u / 2u; s > 0u; s >>= 1u) {\n";
-            src += "        if (lid < s) _shared[lid] += _shared[lid + s];\n";
-            src += "        barrier();\n";
-            src += "    }\n";
-            src += "}\n";
-            break;
-        }
-        case KernelTemplate::Elementwise:
-        case KernelTemplate::Stencil:
-        case KernelTemplate::GeometryEmit:
-        default:
-            src += "\nvoid main() {\n";
-            src += "    uint i = gl_GlobalInvocationID.x;\n";
-            src += "    " + spec.body_expr + "\n";
-            src += "}\n";
-            break;
-        }
-
-        return src;
-    }
-
-} // namespace
-
 bool ShaderFoundry::s_initialized = false;
 
 bool ShaderFoundry::initialize(
@@ -382,6 +247,22 @@ std::shared_ptr<Core::VKShaderModule> ShaderFoundry::compile_from_spirv(
     return shader;
 }
 
+std::shared_ptr<Core::VKShaderModule> ShaderFoundry::compile_from_spirv_asm(
+    const std::string& spirv_asm,
+    ShaderStage stage,
+    const std::string& entry_point)
+{
+    auto shader = create_shader_module();
+    if (!shader->create_from_spirv_asm(
+            get_device(), spirv_asm, to_vulkan_stage(stage),
+            entry_point, m_config.enable_reflection)) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::ShaderCompilation,
+            "Failed to assemble generated SPIR-V");
+        return nullptr;
+    }
+    return shader;
+}
+
 std::shared_ptr<Core::VKShaderModule> ShaderFoundry::compile(const ShaderSource& shader_source)
 {
     switch (shader_source.type) {
@@ -393,6 +274,9 @@ std::shared_ptr<Core::VKShaderModule> ShaderFoundry::compile(const ShaderSource&
 
     case ShaderSource::SourceType::SPIRV_FILE:
         return compile_from_spirv(shader_source.content, shader_source.stage, shader_source.entry_point);
+
+    case ShaderSource::SourceType::SPIRV_ASM:
+        return compile_from_spirv_asm(shader_source.content, shader_source.stage, shader_source.entry_point);
 
     default:
         MF_ERROR(Journal::Component::Portal, Journal::Context::ShaderCompilation,
@@ -499,8 +383,8 @@ ShaderID ShaderFoundry::load_shader(const ShaderSpec& spec)
         return INVALID_SHADER;
     }
 
-    const std::string glsl = emit_spec_glsl(spec);
-    const std::string key = generate_source_cache_key(glsl, ShaderStage::COMPUTE);
+    const std::string asm_text = detail::emit_spirv_asm(spec);
+    const std::string key = generate_source_cache_key(asm_text, ShaderStage::COMPUTE);
 
     auto id_it = m_shader_filepath_cache.find(key);
     if (id_it != m_shader_filepath_cache.end()) {
@@ -509,7 +393,7 @@ ShaderID ShaderFoundry::load_shader(const ShaderSpec& spec)
         return id_it->second;
     }
 
-    auto module = compile_from_source(glsl, ShaderStage::COMPUTE);
+    auto module = compile_from_spirv_asm(asm_text, ShaderStage::COMPUTE);
     if (!module) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::ShaderCompilation,
             "Failed to compile generated shader (key: {})", key);

@@ -16,6 +16,45 @@ namespace MayaFlux::Portal::Graphics {
 class ComputePress;
 class RenderFlow;
 
+namespace detail {
+
+    /**
+     * Emit a fixed header common to all generated compute kernels.
+     * Assigns IDs for void, voidfn, u32, f32, v3u32, glsl extension import,
+     * and the GlobalInvocationId builtin.
+     */
+    std::string emit_header(const ShaderSpec& spec);
+
+    /**
+     * Emit decorations for all SSBO bindings and push constant member offsets.
+     */
+    std::string emit_decorations(const ShaderSpec& spec);
+
+    /**
+     * Emit type declarations for all used types, including void, voidfn, u32, f32,
+     * v3u32, and the GlobalInvocationId builtin.
+     */
+    std::string emit_types(const ShaderSpec& spec);
+
+    /**
+     * Emit the entry point body for Elementwise/Stencil templates.
+     * Loads the index, loads PC fields, loads SSBO elements, applies op, stores.
+     */
+    std::string emit_elementwise_body(const ShaderSpec& spec);
+
+    /**
+     * Emit the entry point body for Reduction templates.
+     * Loads the index, loads PC fields, loads SSBO elements, applies op, stores.
+     */
+    std::string emit_reduction_body(const ShaderSpec& spec);
+
+    /**
+     * Emit the complete SPIR-V assembly for a given ShaderSpec.
+     * Combines header, decorations, types, and entry point body.
+     */
+    std::string emit_spirv_asm(const ShaderSpec& spec);
+}
+
 /**
  * @class ShaderFoundry
  * @brief Portal-level shader compilation and caching
@@ -187,9 +226,12 @@ public:
     /**
      * @brief Compile and cache a compute shader from a declarative ShaderSpec.
      *
-     * Emits GLSL #version 460 source from the spec, compiles it via the
-     * existing shaderc path, and caches the result by content hash.
-     * Subsequent calls with a spec that produces identical GLSL are cache
+     * Emits SPIR-V assembly text from the spec via detail::emit_spirv_asm(),
+     * assembles it via VKShaderModule::create_from_spirv_asm() using
+     * SPIRV-Tools, and caches the result by content hash. No shaderc or
+     * GLSL toolchain is involved.
+     *
+     * Subsequent calls with a spec that produces identical assembly are cache
      * hits and return the existing ShaderID at no cost.
      *
      * The emitted shader is always a compute stage. Entry point is "main".
@@ -695,6 +737,11 @@ private:
 
     std::shared_ptr<Core::VKShaderModule> compile_from_spirv(
         const std::string& spirv_path,
+        ShaderStage stage,
+        const std::string& entry_point = "main");
+
+    std::shared_ptr<Core::VKShaderModule> compile_from_spirv_asm(
+        const std::string& spirv_asm,
         ShaderStage stage,
         const std::string& entry_point = "main");
 

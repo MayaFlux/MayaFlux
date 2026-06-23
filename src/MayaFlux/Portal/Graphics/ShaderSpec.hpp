@@ -19,23 +19,60 @@ enum class BindingDirection : uint8_t {
  * @brief Structural shape of the generated compute kernel.
  *
  * Determines thread dispatch math, binding structure, and loop shape.
- * The body expression from ShaderSpec is substituted into the selected template.
  */
 enum class KernelTemplate : uint8_t {
-    Elementwise, ///< f(x[i]) -> y[i]; one thread per element, index variable "i"
+    Elementwise, ///< f(x[i]) -> y[i]; one thread per element
     Reduction, ///< f(x[0..n]) -> scalar; shared-memory tree reduction
-    Stencil, ///< f(x[i-k..i+k]) -> y[i]; neighbourhood reads, radius supplied via PC
-    GeometryEmit, ///< Writes into vertex SSBO with atomic counter; no output SSBO
+    Stencil, ///< f(x[i-k..i+k]) -> y[i]; neighbourhood reads, radius in PC
+    GeometryEmit, ///< Writes into vertex SSBO with atomic counter
+};
+
+/**
+ * @enum KernelOp
+ * @brief Named operation the SPIR-V emitter knows how to lower to opcodes.
+ *
+ * Each value maps to a fixed, unambiguous instruction sequence. The emitter
+ * in VKShaderModule::emit_spirv_asm() handles each case explicitly.
+ * No string parsing or expression compilation is involved.
+ *
+ * Naming convention: operands are listed in application order.
+ * PC fields are consumed in declaration order from ShaderSpec::pc_fields.
+ * SSBO operands are the InOut/Output bindings in declaration order.
+ *
+ * Single-SSBO elementwise operations (sig[i] = f(sig[i], pc...)):
+ *   Scale        sig[i] = sig[i] * pc[0]
+ *   ScaleOffset  sig[i] = sig[i] * pc[0] + pc[1]
+ *   Offset       sig[i] = sig[i] + pc[0]
+ *   Clip         sig[i] = clamp(sig[i], pc[0], pc[1])
+ *   Abs          sig[i] = abs(sig[i])
+ *   Negate       sig[i] = -sig[i]
+ *
+ * Two-SSBO elementwise operations (out[i] = f(a[i], b[i])):
+ *   Add          out[i] = a[i] + b[i]
+ *   Multiply     out[i] = a[i] * b[i]
+ *   Mix          out[i] = a[i] + (b[i] - a[i]) * pc[0]
+ *
+ * Reduction operations (one InOut SSBO, shared memory):
+ *   Sum          accumulate + into shared[lid], tree reduce
+ *   Max          accumulate max into shared[lid], tree reduce
+ */
+enum class KernelOp : uint8_t {
+    Scale,
+    ScaleOffset,
+    Offset,
+    Clip,
+    Abs,
+    Negate,
+    Add,
+    Multiply,
+    Mix,
+    Sum,
+    Max,
 };
 
 /**
  * @struct BindingSlot
  * @brief Declaration of one SSBO or image binding in a generated shader.
- *
- * For SSBO bindings use any scalar or vector GpuDataFormat.
- * For image bindings set modality to TEXTURE_2D (emits sampler2D) or
- * IMAGE_2D (emits image2D storage); the generator maps modality to the
- * correct GLSL declaration.
  */
 struct BindingSlot {
     std::string name;
@@ -48,9 +85,6 @@ struct BindingSlot {
 /**
  * @struct PushConstantField
  * @brief One field in the generated push constant block.
- *
- * Valid formats: FLOAT32, INT32, UINT32, VEC2_F32, VEC3_F32, VEC4_F32.
- * GLSL type name and byte size are derived from format by the generator.
  */
 struct PushConstantField {
     std::string name;
@@ -61,33 +95,31 @@ struct PushConstantField {
  * @struct ShaderSpec
  * @brief Complete declarative description of a generated compute shader.
  *
- * Pure value type. Carries no Vulkan state. Consumed by
- * ShaderFoundry::load_shader(const ShaderSpec&) which emits GLSL,
- * compiles via the existing shaderc path, and caches by content hash.
+ * Pure value type. Consumed by ShaderFoundry::load_shader(const ShaderSpec&)
+ * which emits SPIR-V assembly via VKShaderModule::emit_spirv_asm() and
+ * assembles it via VKShaderModule::create_from_spirv_asm(). No shaderc
+ * or GLSL toolchain is involved.
  *
- * Binding indices start at 1. Index 0 at set 0 is engine-reserved
- * (ViewTransform UBO) and is never emitted by the generator.
+ * Binding indices start at 1. Index 0 at set 0 is engine-reserved.
  *
- * The body_expr is substituted verbatim into the selected KernelTemplate.
- * Within it, binding names are the declared names (e.g. "sig[i] * pc.gain").
- * The loop index variable is always "i".
+ * The op field selects a named operation the emitter knows how to lower
+ * to SPIR-V opcodes deterministically. PC fields are consumed in
+ * declaration order as operands.
  *
- * Build via ShaderSpec::Assemble:
  * @code
- * ShaderID id = get_shader_foundry().load_shader(
- *     ShaderSpec::Assemble{}
- *         .ssbo("sig", BindingDirection::InOut, Kakshya::GpuDataFormat::FLOAT32)
- *         .pc("gain")
- *         .body("sig[i] = sig[i] * pc.gain;")
- *         .build()
- * );
+ * auto spec = ShaderSpec::Assemble{}
+ *     .ssbo("sig", BindingDirection::InOut, Kakshya::GpuDataFormat::FLOAT32)
+ *     .pc("gain")
+ *     .pc("offset")
+ *     .op(KernelOp::ScaleOffset)
+ *     .build();
  * @endcode
  */
 struct ShaderSpec {
     KernelTemplate tmpl { KernelTemplate::Elementwise };
+    KernelOp op { KernelOp::Scale };
     std::vector<BindingSlot> bindings;
     std::vector<PushConstantField> pc_fields;
-    std::string body_expr;
     std::array<uint32_t, 3> workgroup_size { 256, 1, 1 };
     uint32_t push_constant_bytes { 0 };
 
@@ -95,12 +127,7 @@ struct ShaderSpec {
      * @class Assemble
      * @brief Fluent assembler producing a ShaderSpec.
      *
-     * Accumulates binding, PC, and body declarations, then constructs
-     * the ShaderSpec in build(). Nested to make the relationship to
-     * ShaderSpec explicit at every call site.
-     *
      * Binding indices are assigned in declaration order starting at 1.
-     * Index 0 at set 0 is engine-reserved (ViewTransform UBO).
      */
     class Assemble {
     public:
@@ -114,11 +141,17 @@ struct ShaderSpec {
         }
 
         /**
+         * @brief Set the named operation the emitter will lower to SPIR-V.
+         * @param o KernelOp value.
+         */
+        Assemble& op(KernelOp o)
+        {
+            m_op = o;
+            return *this;
+        }
+
+        /**
          * @brief Declare an SSBO binding.
-         * @param name      Variable name in body_expr and generated GLSL.
-         * @param direction Input, Output, or InOut.
-         * @param format    Element type of the buffer array.
-         * @param modality  Semantic meaning; defaults to SCALAR_F32.
          */
         Assemble& ssbo(
             std::string name,
@@ -138,7 +171,6 @@ struct ShaderSpec {
 
         /**
          * @brief Declare a sampled image binding (sampler2D).
-         * @param name Variable name in body_expr.
          */
         Assemble& texture(std::string name)
         {
@@ -154,8 +186,6 @@ struct ShaderSpec {
 
         /**
          * @brief Declare a storage image binding (image2D).
-         * @param name      Variable name in body_expr.
-         * @param direction Input (readonly), Output (writeonly), or InOut (read_write).
          */
         Assemble& storage_image(
             std::string name,
@@ -173,8 +203,6 @@ struct ShaderSpec {
 
         /**
          * @brief Declare a push constant field with explicit format.
-         * @param name   Field name; accessible in body_expr as pc.<name>.
-         * @param format GpuDataFormat (scalar or vector).
          */
         Assemble& pc(std::string name, Kakshya::GpuDataFormat format)
         {
@@ -186,13 +214,6 @@ struct ShaderSpec {
         Assemble& pc(std::string name)
         {
             return pc(std::move(name), Kakshya::GpuDataFormat::FLOAT32);
-        }
-
-        /** @brief Set the GLSL body substituted into the kernel template. */
-        Assemble& body(std::string expr)
-        {
-            m_body = std::move(expr);
-            return *this;
         }
 
         /** @brief Override workgroup size. Defaults to {256, 1, 1}. */
@@ -211,9 +232,9 @@ struct ShaderSpec {
 
             return ShaderSpec {
                 .tmpl = m_tmpl,
+                .op = m_op,
                 .bindings = std::move(m_bindings),
                 .pc_fields = std::move(m_pc_fields),
-                .body_expr = std::move(m_body),
                 .workgroup_size = m_workgroup,
                 .push_constant_bytes = pc_bytes,
             };
@@ -221,9 +242,9 @@ struct ShaderSpec {
 
     private:
         KernelTemplate m_tmpl { KernelTemplate::Elementwise };
+        KernelOp m_op { KernelOp::Scale };
         std::vector<BindingSlot> m_bindings;
         std::vector<PushConstantField> m_pc_fields;
-        std::string m_body;
         std::array<uint32_t, 3> m_workgroup { 256, 1, 1 };
         uint32_t m_next_binding { 1 };
     };

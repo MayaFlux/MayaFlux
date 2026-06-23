@@ -319,10 +319,23 @@ bool VKShaderModule::create_from_spirv_asm(
 
     spvBinaryDestroy(binary);
     spvDiagnosticDestroy(diag);
+
+    spv_const_binary_t bin { .code = words.data(), .wordCount = words.size() };
+    spv_diagnostic val_diag = nullptr;
+    const spv_result_t val = spvValidate(ctx, &bin, &val_diag);
+    if (val != SPV_SUCCESS) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "SPIR-V validation failed: {}",
+            (val_diag && val_diag->error) ? val_diag->error : "unknown");
+        spvDiagnosticDestroy(val_diag);
+        spvContextDestroy(ctx);
+        return false;
+    }
+    spvDiagnosticDestroy(val_diag);
     spvContextDestroy(ctx);
 
     MF_DEBUG(Journal::Component::Core, Journal::Context::GraphicsBackend,
-        "Assembled SPIR-V ({} words) from assembly text", words.size());
+        "Assembled and validated SPIR-V ({} words)", words.size());
 
     return create_from_spirv(device, words, stage, entry_point, enable_reflection);
 }
