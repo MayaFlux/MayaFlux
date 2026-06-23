@@ -25,16 +25,12 @@ else()
 endif()
 
 if(WIN32 AND MAYAFLUX_DEV)
-    add_custom_target(copy_runtime_dlls ALL
+    add_custom_command(TARGET lila_server POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            $<TARGET_FILE:MayaFluxLib>
-            $<TARGET_FILE:Lila>
-            $<TARGET_FILE:MayaFluxHost>
-            ${CMAKE_BINARY_DIR}
-        DEPENDS MayaFluxLib Lila MayaFluxHost
-        COMMENT "Copying runtime DLLs to binary directory"
+            $<TARGET_RUNTIME_DLLS:lila_server>
+            $<TARGET_FILE_DIR:lila_server>
+        COMMAND_EXPAND_LISTS
     )
-    add_dependencies(lila_server copy_runtime_dlls)
 endif()
 
 if(NOT MAYAFLUX_BUILD_PROJECT)
@@ -58,7 +54,12 @@ set_target_properties(project_launcher PROPERTIES
 )
 
 if(WIN32)
-    add_dependencies(project_launcher copy_runtime_dlls)
+    add_custom_command(TARGET project_launcher POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_RUNTIME_DLLS:project_launcher>
+            $<TARGET_FILE_DIR:project_launcher>
+        COMMAND_EXPAND_LISTS
+    )
     set_target_properties(project_launcher PROPERTIES
         VS_DEBUGGER_ENVIRONMENT "PATH=$<TARGET_FILE_DIR:MayaFluxLib>;$<TARGET_FILE_DIR:MayaFluxHost>;$<TARGET_FILE_DIR:Lila>;$ENV{FFMPEG_ROOT}/bin;$ENV{PATH}"
     )
