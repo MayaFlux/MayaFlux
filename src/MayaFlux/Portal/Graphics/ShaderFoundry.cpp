@@ -247,6 +247,22 @@ std::shared_ptr<Core::VKShaderModule> ShaderFoundry::compile_from_spirv(
     return shader;
 }
 
+std::shared_ptr<Core::VKShaderModule> ShaderFoundry::compile_from_spirv_asm(
+    const std::string& spirv_asm,
+    ShaderStage stage,
+    const std::string& entry_point)
+{
+    auto shader = create_shader_module();
+    if (!shader->create_from_spirv_asm(
+            get_device(), spirv_asm, to_vulkan_stage(stage),
+            entry_point, m_config.enable_reflection)) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::ShaderCompilation,
+            "Failed to assemble generated SPIR-V");
+        return nullptr;
+    }
+    return shader;
+}
+
 std::shared_ptr<Core::VKShaderModule> ShaderFoundry::compile(const ShaderSource& shader_source)
 {
     switch (shader_source.type) {
@@ -258,6 +274,9 @@ std::shared_ptr<Core::VKShaderModule> ShaderFoundry::compile(const ShaderSource&
 
     case ShaderSource::SourceType::SPIRV_FILE:
         return compile_from_spirv(shader_source.content, shader_source.stage, shader_source.entry_point);
+
+    case ShaderSource::SourceType::SPIRV_ASM:
+        return compile_from_spirv_asm(shader_source.content, shader_source.stage, shader_source.entry_point);
 
     default:
         MF_ERROR(Journal::Component::Portal, Journal::Context::ShaderCompilation,
@@ -354,6 +373,67 @@ ShaderID ShaderFoundry::load_shader(
 ShaderID ShaderFoundry::load_shader(const ShaderSource& source)
 {
     return load_shader(source.content, source.stage, source.entry_point);
+}
+
+ShaderID ShaderFoundry::load_shader(const ShaderSpec& spec)
+{
+    if (!is_initialized()) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::ShaderCompilation,
+            "ShaderFoundry not initialized");
+        return INVALID_SHADER;
+    }
+
+    if (spec.kernel.has_value()) {
+        const std::string glsl = detail::emit_glsl_kernel(spec);
+        const std::string key = generate_source_cache_key(glsl, ShaderStage::COMPUTE);
+        auto module = compile_from_source_cached(glsl, ShaderStage::COMPUTE, key);
+        if (!module) {
+            MF_ERROR(Journal::Component::Portal, Journal::Context::ShaderCompilation,
+                "Failed to compile kernel shader");
+            return INVALID_SHADER;
+        }
+        const ShaderID id = m_next_shader_id++;
+        auto& state = m_shaders[id];
+        state.module = module;
+        state.filepath = key;
+        state.stage = ShaderStage::COMPUTE;
+        state.entry_point = "main";
+        m_shader_filepath_cache[key] = id;
+        MF_INFO(Journal::Component::Portal, Journal::Context::ShaderCompilation,
+            "Compiled kernel shader (ID: {}, key: {})", id, key);
+        return id;
+    }
+
+    const std::string asm_text = detail::emit_spirv_asm(spec);
+    const std::string key = generate_source_cache_key(asm_text, ShaderStage::COMPUTE);
+
+    auto id_it = m_shader_filepath_cache.find(key);
+    if (id_it != m_shader_filepath_cache.end()) {
+        MF_DEBUG(Journal::Component::Portal, Journal::Context::ShaderCompilation,
+            "Using cached generated shader: {}", key);
+        return id_it->second;
+    }
+
+    auto module = compile_from_spirv_asm(asm_text, ShaderStage::COMPUTE);
+    if (!module) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::ShaderCompilation,
+            "Failed to compile generated shader (key: {})", key);
+        return INVALID_SHADER;
+    }
+
+    const ShaderID id = m_next_shader_id++;
+    auto& state = m_shaders[id];
+    state.module = module;
+    state.filepath = key;
+    state.stage = ShaderStage::COMPUTE;
+    state.entry_point = "main";
+
+    m_shader_filepath_cache[key] = id;
+
+    MF_INFO(Journal::Component::Portal, Journal::Context::ShaderCompilation,
+        "Compiled generated shader (ID: {}, key: {})", id, key);
+
+    return id;
 }
 
 std::optional<std::filesystem::path> ShaderFoundry::resolve_shader_path(const std::string& filepath) const

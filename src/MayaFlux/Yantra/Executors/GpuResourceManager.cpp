@@ -126,10 +126,16 @@ bool GpuResourceManager::initialise(const GpuShaderConfig& config,
     auto& foundry = Portal::Graphics::get_shader_foundry();
     auto& compute_press = Portal::Graphics::get_compute_press();
 
-    m_shader_id = foundry.load_shader(config.shader_path);
+    if (config.shader_id != Portal::Graphics::INVALID_SHADER) {
+        m_shader_id = config.shader_id;
+    } else {
+        m_shader_id = foundry.load_shader(config.shader_path);
+    }
+
     if (m_shader_id == Portal::Graphics::INVALID_SHADER) {
         MF_ERROR(Journal::Component::Yantra, Journal::Context::BufferProcessing,
-            "GpuResourceManager: failed to load shader '{}'", config.shader_path);
+            "GpuResourceManager: failed to load shader '{}'",
+            config.shader_path.empty() ? "<generated>" : config.shader_path);
         return false;
     }
 

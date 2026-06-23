@@ -49,14 +49,15 @@ struct ShaderCompilerConfig {
  * @brief Shader source descriptor for compilation
  */
 struct ShaderSource {
-    std::string content; ///< Shader source code or SPIR-V path
+    std::string content; ///< Shader source code, SPIR-V path, or SPIR-V assembly text
     ShaderStage stage;
     std::string entry_point = "main";
 
     enum class SourceType : uint8_t {
         GLSL_STRING, ///< In-memory GLSL source
         GLSL_FILE, ///< Path to .comp/.vert/.frag/etc
-        SPIRV_FILE ///< Path to .spv file
+        SPIRV_FILE, ///< Path to .spv file
+        SPIRV_ASM, ///< In-memory SPIR-V assembly text (assembled via SPIRV-Tools, no shaderc)
     } type = SourceType::GLSL_FILE;
 
     ShaderSource() = default;

@@ -6,6 +6,34 @@
 
 namespace MayaFlux::Kakshya {
 
+size_t gpu_data_format_bytes(GpuDataFormat fmt) noexcept
+{
+    switch (fmt) {
+    case GpuDataFormat::UINT8:
+        return 1;
+    case GpuDataFormat::UINT16:
+        return 2;
+    case GpuDataFormat::FLOAT32:
+    case GpuDataFormat::INT32:
+    case GpuDataFormat::UINT32:
+        return 4;
+    case GpuDataFormat::FLOAT64:
+    case GpuDataFormat::VEC2_F32:
+        return 8;
+    case GpuDataFormat::VEC3_F32:
+        return 12;
+    case GpuDataFormat::VEC4_F32:
+    case GpuDataFormat::VEC2_F64:
+        return 16;
+    case GpuDataFormat::VEC3_F64:
+        return 24;
+    case GpuDataFormat::VEC4_F64:
+        return 32;
+    default:
+        return 0;
+    }
+}
+
 DataDimension::DataDimension(std::string n, uint64_t s, uint64_t st, Role r)
     : name(std::move(n))
     , size(s)

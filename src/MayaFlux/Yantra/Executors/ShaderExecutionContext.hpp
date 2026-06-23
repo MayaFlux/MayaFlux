@@ -44,7 +44,7 @@ namespace MayaFlux::Yantra {
  */
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>,
     ComputeData OutputType = InputType>
-class MAYAFLUX_API ShaderExecutionContext : public GpuExecutionContext<InputType, OutputType> {
+class ShaderExecutionContext : public GpuExecutionContext<InputType, OutputType> {
 public:
     using input_type = typename GpuExecutionContext<InputType, OutputType>::input_type;
     using output_type = typename GpuExecutionContext<InputType, OutputType>::output_type;

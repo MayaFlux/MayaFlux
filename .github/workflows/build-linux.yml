@@ -67,7 +67,7 @@ jobs:
             eigen3-devel \
             spirv-headers-devel \
             spirv-cross-devel \
-            spirv-tools \
+            spirv-tools-devel \
             vulkan-headers \
             vulkan-loader \
             vulkan-loader-devel \

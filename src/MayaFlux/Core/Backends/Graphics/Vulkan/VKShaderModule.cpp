@@ -4,10 +4,9 @@
 
 #include <fstream>
 
-#ifdef MAYAFLUX_USE_SHADERC
 #include <shaderc/shaderc.hpp>
-#endif
 
+#include <spirv-tools/libspirv.h>
 #include <spirv_cross/spirv_cross.hpp>
 
 namespace MayaFlux::Core {
@@ -285,6 +284,58 @@ bool VKShaderModule::create_from_spirv_file(
         "Loaded SPIR-V from file: '{}'", spirv_path);
 
     return create_from_spirv(device, spirv_code, stage, entry_point, enable_reflection);
+}
+
+bool VKShaderModule::create_from_spirv_asm(
+    vk::Device device,
+    const std::string& spirv_asm,
+    vk::ShaderStageFlagBits stage,
+    const std::string& entry_point,
+    bool enable_reflection)
+{
+    spv_context ctx = spvContextCreate(SPV_ENV_VULKAN_1_3);
+    spv_binary binary = nullptr;
+    spv_diagnostic diag = nullptr;
+
+    const spv_result_t result = spvTextToBinary(
+        ctx,
+        spirv_asm.c_str(),
+        spirv_asm.size(),
+        &binary,
+        &diag);
+
+    if (result != SPV_SUCCESS) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "SPIR-V assembly failed: {}",
+            (diag && diag->error) ? diag->error : "unknown error");
+        spvDiagnosticDestroy(diag);
+        spvContextDestroy(ctx);
+        return false;
+    }
+
+    std::vector<uint32_t> words(binary->code, binary->code + binary->wordCount);
+
+    spvBinaryDestroy(binary);
+    spvDiagnosticDestroy(diag);
+
+    spv_const_binary_t bin { .code = words.data(), .wordCount = words.size() };
+    spv_diagnostic val_diag = nullptr;
+    const spv_result_t val = spvValidate(ctx, &bin, &val_diag);
+    if (val != SPV_SUCCESS) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "SPIR-V validation failed: {}",
+            (val_diag && val_diag->error) ? val_diag->error : "unknown");
+        spvDiagnosticDestroy(val_diag);
+        spvContextDestroy(ctx);
+        return false;
+    }
+    spvDiagnosticDestroy(val_diag);
+    spvContextDestroy(ctx);
+
+    MF_DEBUG(Journal::Component::Core, Journal::Context::GraphicsBackend,
+        "Assembled and validated SPIR-V ({} words)", words.size());
+
+    return create_from_spirv(device, words, stage, entry_point, enable_reflection);
 }
 
 // ============================================================================
@@ -663,7 +714,6 @@ std::vector<uint32_t> VKShaderModule::compile_glsl_to_spirv(
     const std::vector<std::string>& include_directories,
     const std::unordered_map<std::string, std::string>& defines)
 {
-#ifdef MAYAFLUX_USE_SHADERC
     shaderc::Compiler compiler;
     shaderc::CompileOptions options;
 
@@ -727,10 +777,6 @@ std::vector<uint32_t> VKShaderModule::compile_glsl_to_spirv(
         vk::to_string(stage), spirv.size() * 4);
 
     return spirv;
-
-#else
-    return compile_glsl_to_spirv_external(glsl_source, stage, include_directories, defines);
-#endif
 }
 
 std::vector<uint32_t> VKShaderModule::read_spirv_file(const std::string& filepath)
@@ -789,142 +835,6 @@ std::string VKShaderModule::read_text_file(const std::string& filepath)
 
     return content;
 }
-
-#ifndef MAYAFLUX_USE_SHADERC
-namespace {
-    bool is_command_available(const std::string& command)
-    {
-#if defined(MAYAFLUX_PLATFORM_WINDOWS)
-        std::string check_cmd = "where " + command + " >nul 2>&1";
-#else
-        std::string check_cmd = "command -v " + command + " >/dev/null 2>&1";
-#endif
-        return std::system(check_cmd.c_str()) == 0;
-    }
-
-    std::string get_null_device()
-    {
-#if defined(MAYAFLUX_PLATFORM_WINDOWS)
-        return "nul";
-#else
-        return "/dev/null";
-#endif
-    }
-}
-
-std::vector<uint32_t> VKShaderModule::compile_glsl_to_spirv_external(
-    const std::string& glsl_source,
-    vk::ShaderStageFlagBits stage,
-    const std::vector<std::string>& include_directories,
-    const std::unordered_map<std::string, std::string>& defines)
-{
-    namespace fs = std::filesystem;
-
-    if (!is_command_available("glslc")) {
-        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
-            "glslc compiler not found in PATH. Install Vulkan SDK or enable MAYAFLUX_USE_SHADERC");
-        return {};
-    }
-
-    fs::path temp_dir = fs::temp_directory_path();
-    fs::path glsl_temp = temp_dir / "mayaflux_shader_temp.glsl";
-    fs::path spirv_temp = temp_dir / "mayaflux_shader_temp.spv";
-
-    {
-        std::ofstream out(glsl_temp);
-        if (!out.is_open()) {
-            MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
-                "Failed to create temporary GLSL file: '{}'", glsl_temp.string());
-            return {};
-        }
-        out << glsl_source;
-    }
-
-    std::string stage_flag;
-    switch (stage) {
-    case vk::ShaderStageFlagBits::eVertex:
-        stage_flag = "-fshader-stage=vertex";
-        break;
-    case vk::ShaderStageFlagBits::eFragment:
-        stage_flag = "-fshader-stage=fragment";
-        break;
-    case vk::ShaderStageFlagBits::eCompute:
-        stage_flag = "-fshader-stage=compute";
-        break;
-    case vk::ShaderStageFlagBits::eGeometry:
-        stage_flag = "-fshader-stage=geometry";
-        break;
-    case vk::ShaderStageFlagBits::eTessellationControl:
-        stage_flag = "-fshader-stage=tesscontrol";
-        break;
-    case vk::ShaderStageFlagBits::eTessellationEvaluation:
-        stage_flag = "-fshader-stage=tesseval";
-        break;
-    case vk::ShaderStageFlagBits::eMeshEXT:
-        stage_flag = "-fshader-stage=mesh";
-        break;
-    case vk::ShaderStageFlagBits::eTaskEXT:
-        stage_flag = "-fshader-stage=task";
-        break;
-    default:
-        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
-            "Unsupported shader stage for external compilation: {}", vk::to_string(stage));
-        fs::remove(glsl_temp);
-        return {};
-    }
-
-#if defined(MAYAFLUX_PLATFORM_WINDOWS)
-    std::string cmd = "glslc --target-env=vulkan1.3 " + stage_flag + " \"" + glsl_temp.string() + "\" -o \"" + spirv_temp.string() + "\"";
-#else
-    std::string cmd = "glslc --target-env=vulkan1.3 " + stage_flag + " '" + glsl_temp.string() + "' -o '" + spirv_temp.string() + "'";
-#endif
-
-    for (const auto& dir : include_directories) {
-#if defined(MAYAFLUX_PLATFORM_WINDOWS)
-        cmd += " -I\"" + dir + "\"";
-#else
-        cmd += " -I'" + dir + "'";
-#endif
-    }
-
-    for (const auto& [name, value] : defines) {
-        cmd += " -D" + name;
-        if (!value.empty()) {
-            cmd += "=" + value;
-        }
-    }
-
-    std::string null_device = get_null_device();
-
-    MF_DEBUG(Journal::Component::Core, Journal::Context::GraphicsBackend,
-        "Invoking external glslc : {}", cmd);
-
-    int result = std::system(cmd.c_str());
-
-    fs::remove(glsl_temp);
-
-    if (result != 0) {
-        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
-            "External glslc compilation failed (exit code: {})", result);
-        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
-            "Make sure Vulkan SDK is installed or enable MAYAFLUX_USE_SHADERC for runtime compilation");
-        fs::remove(spirv_temp);
-        return {};
-    }
-
-    auto spirv_code = read_spirv_file(spirv_temp.string());
-
-    fs::remove(spirv_temp);
-
-    if (!spirv_code.empty()) {
-        MF_INFO(Journal::Component::Core, Journal::Context::GraphicsBackend,
-            "Compiled GLSL ({} stage) via external glslc -> {} bytes SPIR-V",
-            vk::to_string(stage), spirv_code.size() * 4);
-    }
-
-    return spirv_code;
-}
-#endif
 
 Stage VKShaderModule::get_stage_type() const
 {

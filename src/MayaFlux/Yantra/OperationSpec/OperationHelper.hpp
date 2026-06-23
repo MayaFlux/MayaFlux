@@ -46,7 +46,7 @@ struct DataStructureInfo {
  * - Lossless conversions (except complex → double)
  * - Thread-safe operation
  */
-class OperationHelper {
+class MAYAFLUX_API OperationHelper {
 public:
     /**
      * @brief Set global complex conversion strategy

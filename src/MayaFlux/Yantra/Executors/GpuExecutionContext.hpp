@@ -29,7 +29,7 @@ namespace MayaFlux::Yantra {
  */
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>,
     ComputeData OutputType = InputType>
-class MAYAFLUX_API GpuExecutionContext : public GpuDispatchCore {
+class GpuExecutionContext : public GpuDispatchCore {
 public:
     using input_type = Datum<InputType>;
     using output_type = Datum<OutputType>;

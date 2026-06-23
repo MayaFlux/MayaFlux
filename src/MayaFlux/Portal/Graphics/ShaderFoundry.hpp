@@ -2,6 +2,8 @@
 
 #include "ShaderUtils.hpp"
 
+#include "ShaderSpec.hpp"
+
 namespace MayaFlux::Core {
 class VulkanBackend;
 class VKShaderModule;
@@ -13,6 +15,25 @@ namespace MayaFlux::Portal::Graphics {
 
 class ComputePress;
 class RenderFlow;
+
+namespace detail {
+    /**
+     * @brief Emit complete SPIR-V assembly text for a generated compute kernel.
+     * @param spec ShaderSpec produced by ShaderSpec::Assemble::build().
+     * @return SPIR-V assembly string suitable for spvTextToBinary.
+     */
+    std::string emit_spirv_asm(const ShaderSpec& spec);
+
+    /**
+     * Emit a complete GLSL compute shader from spec metadata and a KernelSource body.
+     *
+     * Binding names are used directly as GLSL identifiers. The body text from
+     * KernelSource::parse() is injected verbatim inside main() after uint i and
+     * optional ivec2 coord are declared. Push constant fields are accessible as
+     * pc.<name>. SSBO arrays are accessible as <name>[i].
+     */
+    std::string emit_glsl_kernel(const ShaderSpec& spec);
+}
 
 /**
  * @class ShaderFoundry
@@ -181,6 +202,25 @@ public:
      * @return ShaderID, or INVALID_SHADER on failure
      */
     ShaderID load_shader(const ShaderSource& source);
+
+    /**
+     * @brief Compile and cache a compute shader from a declarative ShaderSpec.
+     *
+     * Emits SPIR-V assembly text from the spec via detail::emit_spirv_asm(),
+     * assembles it via VKShaderModule::create_from_spirv_asm() using
+     * SPIRV-Tools, and caches the result by content hash. No shaderc or
+     * GLSL toolchain is involved.
+     *
+     * Subsequent calls with a spec that produces identical assembly are cache
+     * hits and return the existing ShaderID at no cost.
+     *
+     * The emitted shader is always a compute stage. Entry point is "main".
+     * Binding 0 at set 0 is never emitted; it is engine-reserved.
+     *
+     * @param spec ShaderSpec produced by ShaderSpec::Assemble::build().
+     * @return ShaderID on success, INVALID_SHADER on compilation failure.
+     */
+    ShaderID load_shader(const ShaderSpec& spec);
 
     /**
      * @brief Hot-reload shader (returns new ID)
@@ -677,6 +717,11 @@ private:
 
     std::shared_ptr<Core::VKShaderModule> compile_from_spirv(
         const std::string& spirv_path,
+        ShaderStage stage,
+        const std::string& entry_point = "main");
+
+    std::shared_ptr<Core::VKShaderModule> compile_from_spirv_asm(
+        const std::string& spirv_asm,
         ShaderStage stage,
         const std::string& entry_point = "main");
 

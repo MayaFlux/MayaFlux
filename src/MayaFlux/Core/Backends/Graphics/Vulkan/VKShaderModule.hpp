@@ -182,6 +182,27 @@ public:
         bool enable_reflection = true);
 
     /**
+     * @brief Create shader module from SPIR-V assembly text.
+     *
+     * Assembles human-readable SPIR-V opcodes to binary via spvTextToBinary
+     * targeting Vulkan 1.3, then delegates to create_from_spirv(). Does not
+     * require shaderc or any GLSL toolchain.
+     *
+     * @param device            Logical device.
+     * @param spirv_asm         SPIR-V assembly text.
+     * @param stage             Shader stage.
+     * @param entry_point       Entry point function name (default: "main").
+     * @param enable_reflection Extract descriptor bindings and resources.
+     * @return true if assembly and module creation succeeded.
+     */
+    bool create_from_spirv_asm(
+        vk::Device device,
+        const std::string& spirv_asm,
+        vk::ShaderStageFlagBits stage,
+        const std::string& entry_point = "main",
+        bool enable_reflection = true);
+
+    /**
      * @brief Create shader module from GLSL source string
      * @param device Logical device
      * @param glsl_source GLSL source code
@@ -432,21 +453,6 @@ private:
      * @return File contents, or empty string on failure
      */
     static std::string read_text_file(const std::string& filepath);
-
-#ifndef MAYAFLUX_USE_SHADERC
-    /*
-     * @brief Compile GLSL to SPIR-V using external compiler
-     * @param glsl_source GLSL source code
-     * @param stage Shader stage (affects compiler settings)
-     * @param include_directories Include paths
-     * @param defines Preprocessor macros
-     */
-    static std::vector<uint32_t> compile_glsl_to_spirv_external(
-        const std::string& glsl_source,
-        vk::ShaderStageFlagBits stage,
-        const std::vector<std::string>& include_directories = {},
-        const std::unordered_map<std::string, std::string>& defines = {});
-#endif
 
     /**
      * @brief Update specialization info from current map
