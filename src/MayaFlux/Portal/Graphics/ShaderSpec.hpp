@@ -28,6 +28,132 @@ enum class KernelTemplate : uint8_t {
 };
 
 /**
+ * @struct KernelSource
+ * @brief Parsed representation of a user-supplied kernel lambda.
+ *
+ * Produced by the MF_KERNEL macro, which stringifies the lambda text
+ * at the call site. The parameter names must match binding and push
+ * constant field names declared on the enclosing ShaderSpec in
+ * declaration order: SSBO bindings first, then PC fields, then
+ * optionally a uint32_t index parameter named i.
+ *
+ * The body is extracted verbatim between the outermost braces and
+ * injected into the generated GLSL compute shader by the emitter.
+ *
+ * @code
+ * auto spec = ShaderSpec::Assemble{}
+ *     .ssbo("sig", BindingDirection::InOut, Kakshya::GpuDataFormat::FLOAT32)
+ *     .pc("gain")
+ *     .kernel(MF_KERNEL([](float* sig, float gain, uint32_t i) {
+ *         sig[i] = sig[i] * gain + sin(float(i) * 0.01f);
+ *     }))
+ *     .build();
+ * @endcode
+ */
+struct KernelSource {
+    std::string raw;
+    std::vector<std::string> param_names;
+    std::string body;
+
+    /**
+     * @brief Parse parameter names and body from a stringified lambda.
+     *
+     * Extracts identifiers from the parameter list by stripping type
+     * tokens (everything up to and including the last space or * before
+     * the identifier). Extracts body as the text between the first { and
+     * the matching closing }.
+     *
+     * @param stringified Raw text produced by MF_KERNEL.
+     * @return Populated KernelSource.
+     */
+    [[nodiscard]] static KernelSource parse(std::string_view stringified)
+    {
+        KernelSource ks;
+        ks.raw = std::string(stringified);
+
+        ///< Locate parameter list: between first '(' after '[' and its matching ')'
+        const auto bracket = stringified.find('[');
+        const auto paren_open = stringified.find('(', bracket);
+        if (paren_open == std::string_view::npos)
+            return ks;
+
+        std::size_t depth = 1;
+        std::size_t paren_close = paren_open + 1;
+        while (paren_close < stringified.size() && depth > 0) {
+            if (stringified[paren_close] == '(') {
+                ++depth;
+            } else if (stringified[paren_close] == ')') {
+                --depth;
+            }
+            ++paren_close;
+        }
+        --paren_close; ///< points at the closing ')'
+
+        const auto params_text = stringified.substr(paren_open + 1, paren_close - paren_open - 1);
+
+        ///< Split on ',' and extract the last token (the identifier) from each param
+        auto extract_name = [](std::string_view param) -> std::string {
+            ///< strip trailing whitespace
+            auto end = param.find_last_not_of(" \t\n\r");
+            if (end == std::string_view::npos)
+                return {};
+            param = param.substr(0, end + 1);
+            ///< find last space or * - identifier follows
+            auto sep = param.find_last_of(" *\t");
+            if (sep == std::string_view::npos)
+                return std::string(param);
+            return std::string(param.substr(sep + 1));
+        };
+
+        std::size_t start = 0;
+        while (start < params_text.size()) {
+            ///< find next comma not inside <> or ()
+            int angle = 0, paren = 0;
+            std::size_t pos = start;
+            while (pos < params_text.size()) {
+                char c = params_text[pos];
+                if (c == '<') {
+                    ++angle;
+                } else if (c == '>') {
+                    --angle;
+                } else if (c == '(') {
+                    ++paren;
+                } else if (c == ')') {
+                    --paren;
+                } else if (c == ',' && angle == 0 && paren == 0) {
+                    break;
+                }
+                ++pos;
+            }
+            auto name = extract_name(params_text.substr(start, pos - start));
+            if (!name.empty())
+                ks.param_names.push_back(std::move(name));
+            start = (pos < params_text.size()) ? pos + 1 : pos;
+        }
+
+        ///< Locate body: between first '{' after ')' and its matching '}'
+        const auto brace_open = stringified.find('{', paren_close);
+        if (brace_open == std::string_view::npos)
+            return ks;
+
+        depth = 1;
+        std::size_t brace_close = brace_open + 1;
+        while (brace_close < stringified.size() && depth > 0) {
+            if (stringified[brace_close] == '{') {
+                ++depth;
+            } else if (stringified[brace_close] == '}') {
+                --depth;
+            }
+            ++brace_close;
+        }
+        --brace_close;
+
+        ks.body = std::string(stringified.substr(brace_open + 1, brace_close - brace_open - 1));
+        return ks;
+    }
+};
+
+/**
  * @enum KernelOp
  * @brief Named operation the SPIR-V emitter knows how to lower to opcodes.
  *
@@ -122,6 +248,7 @@ struct ShaderSpec {
     std::vector<PushConstantField> pc_fields;
     std::array<uint32_t, 3> workgroup_size { 256, 1, 1 };
     uint32_t push_constant_bytes { 0 };
+    std::optional<KernelSource> kernel; ///< When set, KernelOp is ignored.
 
     /**
      * @class Assemble
@@ -223,6 +350,16 @@ struct ShaderSpec {
             return *this;
         }
 
+        /**
+         * @brief Supply a user kernel via MF_KERNEL. When set, KernelOp is ignored.
+         * @param ks KernelSource produced by MF_KERNEL.
+         */
+        Assemble& kernel(KernelSource ks)
+        {
+            m_kernel = std::move(ks);
+            return *this;
+        }
+
         /** @brief Finalise and return the ShaderSpec. */
         [[nodiscard]] ShaderSpec build()
         {
@@ -237,6 +374,7 @@ struct ShaderSpec {
                 .pc_fields = std::move(m_pc_fields),
                 .workgroup_size = m_workgroup,
                 .push_constant_bytes = pc_bytes,
+                .kernel = std::move(m_kernel),
             };
         }
 
@@ -247,7 +385,25 @@ struct ShaderSpec {
         std::vector<PushConstantField> m_pc_fields;
         std::array<uint32_t, 3> m_workgroup { 256, 1, 1 };
         uint32_t m_next_binding { 1 };
+        std::optional<KernelSource> m_kernel;
     };
 };
+
+/**
+ * @brief Stringifies a kernel lambda for use with ShaderSpec::Assemble::kernel().
+ *
+ * The lambda is never evaluated. Its text is captured at the call site and
+ * parsed into parameter names and a body by KernelSource::parse(). Parameter
+ * names must match the binding and push constant field names declared on the
+ * enclosing ShaderSpec in declaration order.
+ *
+ * @code
+ * .kernel(MF_KERNEL([](float* sig, float gain, uint32_t i) {
+ *     sig[i] *= gain;
+ * }))
+ * @endcode
+ */
+#define MF_KERNEL(lambda) \
+    MayaFlux::Portal::Graphics::KernelSource::parse(#lambda)
 
 } // namespace MayaFlux::Portal::Graphics
