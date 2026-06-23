@@ -50,7 +50,7 @@ mkdir -p "$BUILD_DIR" "$INSTALL_DIR"
 # ---------------------------------------------
 export CCACHE_SLOPPINESS=pch_defines,time_macros,include_file_mtime,include_file_ctime
 cmake -G Ninja -S . -B "$BUILD_DIR" \
-    -DMAYAFLUX_SHIP_DEV=ON \
+    -DCMAKE_BUILD_TYPE=RelWithDebInfo \
     -DCMAKE_INSTALL_PREFIX="/usr"
 
 cmake --build "$BUILD_DIR" --parallel

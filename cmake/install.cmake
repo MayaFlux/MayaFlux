@@ -143,22 +143,60 @@ else()
     set(ARCH_NAME "x64")
 endif()
 
-execute_process(
-    COMMAND ${CMAKE_COMMAND}
-        -DSOURCE_DIR=${CMAKE_SOURCE_DIR}
-        -DOUTPUT_FILE=${CMAKE_BINARY_DIR}/generated_version.json
-        -DPROJECT_VERSION=${PROJECT_VERSION}
-        -DPLATFORM=${PLATFORM_NAME}
-        -DARCHITECTURE=${ARCH_NAME}
-        -P ${CMAKE_SOURCE_DIR}/cmake/generate_version_file.cmake
-    RESULT_VARIABLE VERSION_RESULT
-)
+find_package(Git QUIET)
 
-if(NOT VERSION_RESULT EQUAL 0)
-    message(WARNING "Failed to generate version file during configuration")
+if(GIT_FOUND)
+    execute_process(
+        COMMAND ${GIT_EXECUTABLE} rev-parse --short=8 HEAD
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        OUTPUT_VARIABLE GIT_COMMIT_HASH
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET
+    )
+    execute_process(
+        COMMAND ${GIT_EXECUTABLE} rev-parse --abbrev-ref HEAD
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        OUTPUT_VARIABLE GIT_BRANCH
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET
+    )
+    execute_process(
+        COMMAND ${GIT_EXECUTABLE} describe --tags --dirty --always
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        OUTPUT_VARIABLE GIT_DESCRIBE
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET
+    )
+    execute_process(
+        COMMAND ${GIT_EXECUTABLE} diff --quiet HEAD
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        RESULT_VARIABLE GIT_DIRTY
+    )
+    if(NOT GIT_DIRTY EQUAL 0)
+        set(GIT_COMMIT_HASH "${GIT_COMMIT_HASH}-dirty")
+        set(GIT_DESCRIBE "${GIT_DESCRIBE}-dirty")
+    endif()
+else()
+    set(GIT_COMMIT_HASH "unknown")
+    set(GIT_BRANCH "unknown")
+    set(GIT_DESCRIBE "unknown")
 endif()
 
-install(FILES ${CMAKE_BINARY_DIR}/generated_version.json
+string(TIMESTAMP BUILD_TIMESTAMP "%Y-%m-%d %H:%M:%S UTC" UTC)
+
+file(WRITE "${CMAKE_BINARY_DIR}/generated_version.json"
+"{\n\
+  \"version\": \"${PROJECT_VERSION}\",\n\
+  \"commit\": \"${GIT_COMMIT_HASH}\",\n\
+  \"branch\": \"${GIT_BRANCH}\",\n\
+  \"describe\": \"${GIT_DESCRIBE}\",\n\
+  \"build_time\": \"${BUILD_TIMESTAMP}\",\n\
+  \"platform\": \"${PLATFORM_NAME}\",\n\
+  \"architecture\": \"${ARCH_NAME}\"\n\
+}\n"
+)
+
+install(FILES "${CMAKE_BINARY_DIR}/generated_version.json"
     DESTINATION share/MayaFlux
     RENAME .version
 )
