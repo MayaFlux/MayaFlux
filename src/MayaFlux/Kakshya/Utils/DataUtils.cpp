@@ -1,5 +1,7 @@
 #include "DataUtils.hpp"
 
+#include "MayaFlux/Transitive/Parallel/Execution.hpp"
+
 namespace MayaFlux::Kakshya {
 
 uint64_t calculate_total_elements(const std::vector<DataDimension>& dimensions)
@@ -54,6 +56,40 @@ void safe_copy_data_variant(const DataVariant& input, DataVariant& output)
         }
     },
         input, output);
+}
+
+std::span<const float> as_normalised_float(
+    const DataVariant& variant, std::vector<float>& storage)
+{
+    return std::visit([&storage](const auto& vec) -> std::span<const float> {
+        using T = typename std::decay_t<decltype(vec)>::value_type;
+
+        if constexpr (std::is_same_v<T, float>) {
+            return { vec.data(), vec.size() };
+
+        } else if constexpr (std::is_same_v<T, uint8_t>) {
+            storage.resize(vec.size());
+            constexpr float k = 1.0F / 255.0F;
+
+            std::transform(Parallel::par_unseq,
+                vec.begin(), vec.end(), storage.begin(),
+                [](uint8_t v) { return static_cast<float>(v) * k; });
+            return { storage.data(), storage.size() };
+
+        } else if constexpr (std::is_same_v<T, uint16_t>) {
+            storage.resize(vec.size());
+            constexpr float k = 1.0F / 65535.0F;
+
+            std::transform(Parallel::par_unseq,
+                vec.begin(), vec.end(), storage.begin(),
+                [](uint16_t v) { return static_cast<float>(v) * k; });
+            return { storage.data(), storage.size() };
+
+        } else {
+            return {};
+        }
+    },
+        variant);
 }
 
 void set_metadata_value(std::unordered_map<std::string, std::any>& metadata, const std::string& key, std::any value)
