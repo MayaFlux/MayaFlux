@@ -225,6 +225,33 @@ public:
      */
     void handle_surface_resize();
 
+    /**
+     * @brief processed_data[frame_index] as a normalised float span.
+     *
+     * Valid after WindowAccessProcessor has written processed_data[frame_index].
+     * uint8_t values divided by 255.0f; uint16_t by 65535.0f; float is zero-copy.
+     * Returns empty span if frame_index is out of range or the variant holds a
+     * non-pixel type.
+     *
+     * Result is cached per slot and reused until invalidate_float_frame_cache()
+     * is called for that slot.
+     *
+     * @param frame_index Zero-based index into processed_data. Defaults to 0.
+     * @return Normalised float span, width * height * channels elements.
+     */
+    [[nodiscard]] std::span<const float> processed_frame_as_float(uint32_t frame_index = 0) const;
+
+    /**
+     * @brief Invalidate the normalised float cache for a specific processed_data slot.
+     *
+     * Called by WindowAccessProcessor after each successful readback into
+     * processed_data[frame_index]. Forces recomputation on the next
+     * processed_frame_as_float() call for that slot.
+     *
+     * @param frame_index Zero-based index into processed_data.
+     */
+    void invalidate_float_frame_cache(uint32_t frame_index);
+
     // =========================================================================
     // SignalSourceContainer
     // =========================================================================
@@ -290,6 +317,9 @@ private:
     std::vector<DataVariant> m_data;
     std::vector<DataVariant> m_processed_data;
 
+    mutable std::vector<std::vector<float>> m_normalised_cache;
+    mutable std::vector<std::atomic<bool>> m_normalised_dirty;
+
     std::unordered_map<std::string, RegionGroup> m_region_groups;
 
     std::shared_ptr<DataProcessor> m_default_processor;
@@ -313,7 +343,6 @@ private:
 
     void setup_dimensions();
 
-private:
     [[nodiscard]] auto get_frame_typed(uint64_t frame_index) const -> std::span<const uint8_t>;
     void get_frames_typed(std::span<uint8_t> output, uint64_t start_frame, uint64_t num_frames) const;
 };
