@@ -4,30 +4,30 @@
  * @file AsmGenerator.cpp
  * @brief SPIR-V assembly and GLSL kernel emitters for ShaderSpec.
  *
- * The assembly path (emit_spirv_asm) is complete for all binding modalities:
+ * The assembly path (emit_spirv_asm) covers all binding modalities and
+ * kernel templates:
  *
  * SSBO (SCALAR_F32, VEC2_F32, VEC3_F32, VEC4_F32) — all KernelOps via
- * emit_elementwise_body. Element type, ArrayStride, and pointer type are
- * derived from GpuDataFormat. Scalar PC operands are splatted to vector
- * width via OpCompositeConstruct before arithmetic.
+ * emit_elementwise_body. ArrayStride, element type, and pointer type derived
+ * from GpuDataFormat. Scalar PC operands splatted to vector width via
+ * OpCompositeConstruct before arithmetic.
  *
  * IMAGE_2D storage images — emit_image_body handles any number of Input/InOut
- * images and one Output image. All single- and two-operand KernelOps apply
- * per channel. StorageImageReadWithoutFormat emitted when any input image
- * is present.
+ * images and one Output image with all single- and two-operand KernelOps
+ * applied per channel.
  *
- * TEXTURE_2D sampled images — emit_image_body loads each sampled texture via
- * OpTypeSampledImage / OpImageSampleExplicitLod at normalised UV derived from
- * GlobalInvocationID divided by width/height push constant fields. By
- * convention the first two PC fields of any spec with TEXTURE_2D bindings
- * are width and height; op-specific PC fields follow.
+ * TEXTURE_2D sampled images — emit_image_body loads each binding via
+ * OpTypeSampledImage / OpImageSampleExplicitLod at normalised UV derived
+ * from GlobalInvocationID divided by width/height PC fields (first two PC
+ * fields by convention when TEXTURE_2D bindings are present).
  *
- * GLSL kernel path (emit_glsl_kernel) handles all three modalities when
- * spec.kernel is set via MF_KERNEL.
+ * KernelTemplate::Reduction — emit_reduction_body emits a structured
+ * workgroup tree reduction with OpLoopMerge, OpPhi for the stride variable,
+ * OpULessThan active-thread guard, and two OpControlBarrier synchronisation
+ * points per iteration. Supports KernelOp::Sum and KernelOp::Max.
  *
- * Remaining incomplete path: emit_reduction_body. The shared memory tree
- * is partially emitted but lacks OpLoopMerge and the back-edge. KernelOp::Sum
- * and KernelOp::Max produce invalid SPIR-V. No caller exercises this path.
+ * GLSL kernel path (emit_glsl_kernel) handles all three binding modalities
+ * when spec.kernel is set via MF_KERNEL.
  */
 
 namespace MayaFlux::Portal::Graphics::detail {
@@ -132,6 +132,9 @@ namespace {
         if (!spec.pc_fields.empty())
             iface += " %pc";
 
+        if (spec.tmpl == KernelTemplate::Reduction)
+            iface += " %lid_var";
+
         std::string o;
         o += "OpCapability Shader\n";
 
@@ -196,6 +199,9 @@ namespace {
             o += "OpDecorate %tex_" + b.name + " Binding "
                 + std::to_string(b.binding_index) + "\n";
         }
+
+        if (spec.tmpl == KernelTemplate::Reduction)
+            o += "OpDecorate %lid_var BuiltIn LocalInvocationId\n";
 
         if (!spec.pc_fields.empty()) {
             o += "OpDecorate %pc_blk Block\n";
@@ -317,6 +323,21 @@ namespace {
                 o += "%tex_" + b.name + " = OpVariable %ptr_simg UniformConstant\n";
             }
             o += "%lod_zero   = OpConstant %f32 0.0\n";
+            o += "\n";
+        }
+
+        if (spec.tmpl == KernelTemplate::Reduction) {
+            const uint32_t local = spec.workgroup_size[0];
+            const std::string ls = std::to_string(local);
+            o += "%bool        = OpTypeBool\n";
+            o += "%lid_var  = OpVariable %ptr_in_v3u32 Input\n";
+            o += "%arr_sh_t    = OpTypeArray %f32 %c" + ls + "u\n";
+            o += "%psh_arr     = OpTypePointer Workgroup %arr_sh_t\n";
+            o += "%shared      = OpVariable %psh_arr Workgroup\n";
+            o += "%psh_f32     = OpTypePointer Workgroup %f32\n";
+            o += "%c" + ls + "u   = OpConstant %u32 " + ls + "\n";
+            o += "%c2u         = OpConstant %u32 2\n";
+            o += "%c264u       = OpConstant %u32 264\n"; // AcquireRelease | WorkgroupMemory
             o += "\n";
         }
 
@@ -603,38 +624,75 @@ namespace {
         const uint32_t local = spec.workgroup_size[0];
         const std::string ls = std::to_string(local);
         const bool is_max = (spec.op == KernelOp::Max);
+        const auto& b0 = spec.bindings.front();
 
         std::string o;
-        o += "%arr_t   = OpTypeArray %f32 %c" + ls + "u\n";
-        o += "%pshared = OpTypePointer Workgroup %f32\n";
-        o += "%shared  = OpVariable %pshared Workgroup\n\n";
-        o += "%c" + ls + "u = OpConstant %u32 " + ls + "\n\n";
+        o += "%main    = OpFunction %void None %voidfn\n";
+        o += "%entry   = OpLabel\n";
 
-        o += "%main  = OpFunction %void None %voidfn\n";
-        o += "%entry = OpLabel\n";
-        o += "%gid3  = OpLoad %v3u32 %gid_var\n";
-        o += "%i     = OpCompositeExtract %u32 %gid3 0\n";
-        o += "%lid   = OpCompositeExtract %u32 %gid3 0\n\n";
+        o += "%gid3    = OpLoad %v3u32 %gid_var\n";
+        o += "%i       = OpCompositeExtract %u32 %gid3 0\n";
+        o += "%lid3    = OpLoad %v3u32 %lid_var\n";
+        o += "%lid     = OpCompositeExtract %u32 %lid3 0\n\n";
 
-        const auto& b0 = spec.bindings.front();
-        o += "%gep0    = OpAccessChain %pf32_" + b0.name + " %buf_" + b0.name + " %c0u %i\n";
-        o += "%elem    = OpLoad %f32 %gep0\n";
-        o += "%pgep_sh = OpAccessChain %pshared %shared %lid\n";
-        o += "OpStore %pgep_sh %elem\n";
+        o += "%gep_in  = OpAccessChain %pelem_" + b0.name
+            + " %buf_" + b0.name + " %c0u %i\n";
+        o += "%elem    = OpLoad %f32 %gep_in\n";
+        o += "%pgsh    = OpAccessChain %psh_f32 %shared %lid\n";
+        o += "OpStore %pgsh %elem\n";
         o += "OpControlBarrier %c2u %c2u %c264u\n\n";
 
-        o += "%s_init = OpShiftRightLogical %u32 %c" + ls + "u %c1u\n";
-        o += "; reduction tree (caller must ensure workgroup is power of two)\n";
+        o += "%s_init  = OpShiftRightLogical %u32 %c" + ls + "u %c1u\n";
+        o += "OpBranch %loop_hdr\n\n";
+
+        o += "%loop_hdr = OpLabel\n";
+        o += "%stride  = OpPhi %u32 %s_init %entry %s_next %loop_cont\n";
+        o += "OpLoopMerge %loop_merge %loop_cont None\n";
+        o += "OpBranch %loop_body\n\n";
+
+        o += "%loop_body = OpLabel\n";
+        o += "%active  = OpULessThan %bool %lid %stride\n";
+        o += "OpSelectionMerge %sel_merge None\n";
+        o += "OpBranchConditional %active %do_op %sel_merge\n\n";
+
+        o += "%do_op   = OpLabel\n";
+        o += "%pgsh_a  = OpAccessChain %psh_f32 %shared %lid\n";
+        o += "%a       = OpLoad %f32 %pgsh_a\n";
+        o += "%lid_b   = OpIAdd %u32 %lid %stride\n";
+        o += "%pgsh_b  = OpAccessChain %psh_f32 %shared %lid_b\n";
+        o += "%b       = OpLoad %f32 %pgsh_b\n";
+
         if (is_max) {
-            o += "%cur  = OpLoad %f32 %pgep_sh\n";
-            o += "%res  = OpExtInst %f32 %glsl FMax %cur %elem\n";
+            o += "%combined = OpExtInst %f32 %glsl FMax %a %b\n";
         } else {
-            o += "%cur  = OpLoad %f32 %pgep_sh\n";
-            o += "%res  = OpFAdd %f32 %cur %elem\n";
+            o += "%combined = OpFAdd %f32 %a %b\n";
         }
-        o += "OpStore %pgep_sh %res\n";
-        o += "OpControlBarrier %c2u %c2u %c264u\n\n";
 
+        o += "OpStore %pgsh_a %combined\n";
+        o += "OpBranch %sel_merge\n\n";
+
+        o += "%sel_merge = OpLabel\n";
+        o += "OpBranch %loop_cont\n\n";
+
+        o += "%loop_cont = OpLabel\n";
+        o += "OpControlBarrier %c2u %c2u %c264u\n";
+        o += "%s_next  = OpShiftRightLogical %u32 %stride %c1u\n";
+        o += "%done    = OpIEqual %bool %s_next %c0u\n";
+        o += "OpBranchConditional %done %loop_merge %loop_hdr\n\n";
+
+        o += "%loop_merge = OpLabel\n";
+        o += "%is_zero = OpIEqual %bool %lid %c0u\n";
+        o += "OpSelectionMerge %write_merge None\n";
+        o += "OpBranchConditional %is_zero %do_write %write_merge\n\n";
+
+        o += "%do_write = OpLabel\n";
+        o += "%result  = OpLoad %f32 %pgsh\n";
+        o += "%gep_out = OpAccessChain %pelem_" + b0.name
+            + " %buf_" + b0.name + " %c0u %c0u\n";
+        o += "OpStore %gep_out %result\n";
+        o += "OpBranch %write_merge\n\n";
+
+        o += "%write_merge = OpLabel\n";
         o += "OpReturn\n";
         o += "OpFunctionEnd\n";
         return o;
