@@ -205,6 +205,53 @@ MAYAFLUX_API void download_from_gpu_async(
     std::shared_ptr<VKBuffer>& staging);
 
 /**
+ * @brief Resolve the GPU-resident image from any GpuImageSource buffer.
+ *
+ * Selects get_texture() or get_gpu_texture() at compile time based on which
+ * the concrete buffer type exposes. Returns nullptr if the buffer has not yet
+ * produced a GPU texture.
+ *
+ * @tparam T A type satisfying GpuImageSource.
+ * @param buffer The pixel-bearing buffer to query.
+ * @return GPU-resident VKImage, or nullptr.
+ */
+template <GpuImageSource T>
+[[nodiscard]] std::shared_ptr<Core::VKImage> resolve_gpu_image(const T& buffer)
+{
+    if constexpr (requires(const T& b) {
+                      { b.get_texture() } -> std::convertible_to<std::shared_ptr<Core::VKImage>>;
+                  }) {
+        return buffer.get_texture();
+    } else {
+        return buffer.get_gpu_texture();
+    }
+}
+
+/**
+ * @brief Download a VKImage to CPU and return a normalised float span.
+ *
+ * Downloads @p image into @p raw_staging via TextureLoom::download_data,
+ * then normalises into @p work via Kakshya::as_normalised_float.
+ *
+ * @p raw_staging is resized to match the image byte footprint when the image
+ * dimensions or format change. @p work is the caller-owned scratch buffer
+ * reused across calls to avoid per-frame allocation.
+ *
+ * Returns an empty span if @p image is null, not initialised, or its format
+ * has no ImageFormat mapping.
+ *
+ * @param image       GPU-resident source image.
+ * @param raw_staging Persistent byte buffer for the GPU download. Reuse across calls.
+ * @param work        Persistent float buffer for normalisation output. Reuse across calls.
+ * @return Normalised float span pointing into @p work (or directly into the
+ *         variant storage for float-format images).
+ */
+[[nodiscard]] MAYAFLUX_API std::span<const float> download_and_normalise(
+    const std::shared_ptr<Core::VKImage>& image,
+    std::vector<uint8_t>& raw_staging,
+    std::vector<float>& work);
+
+/**
  * @brief Create staging buffer for transfers
  * @param size Size in bytes
  * @return Host-visible staging buffer ready for transfers

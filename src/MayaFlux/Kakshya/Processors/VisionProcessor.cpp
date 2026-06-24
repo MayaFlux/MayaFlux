@@ -5,6 +5,7 @@
 #include "MayaFlux/Kakshya/Source/VideoStreamContainer.hpp"
 #include "MayaFlux/Kakshya/Source/WindowContainer.hpp"
 
+#include "MayaFlux/Kriya/Awaiters/BroadcastAwaiter.hpp"
 #include "MayaFlux/Vruta/BroadcastSource.hpp"
 
 namespace MayaFlux::Kakshya {
