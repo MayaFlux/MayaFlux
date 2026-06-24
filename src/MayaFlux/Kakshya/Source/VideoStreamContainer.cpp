@@ -694,9 +694,20 @@ std::span<const float> VideoStreamContainer::processed_frame_as_float(uint64_t f
     if (frame_index >= m_processed_data.size())
         return {};
 
-    if (frame_index >= m_float_frame_cache.size()) {
-        m_float_frame_cache.resize(frame_index + 1);
-        m_float_frame_dirty[frame_index].store(true, std::memory_order_relaxed);
+    if (frame_index >= m_float_frame_dirty.size()) {
+        const size_t old_size = m_float_frame_dirty.size();
+        const size_t new_size = frame_index + 1;
+        auto new_dirty = std::vector<std::atomic<bool>>(new_size);
+
+        for (size_t i = 0; i < old_size; ++i) {
+            new_dirty[i].store(m_float_frame_dirty[i].load(std::memory_order_relaxed),
+                std::memory_order_relaxed);
+        }
+
+        for (size_t i = old_size; i < new_size; ++i)
+            new_dirty[i].store(true, std::memory_order_relaxed);
+        m_float_frame_dirty = std::move(new_dirty);
+        m_float_frame_cache.resize(new_size);
     }
 
     if (!m_float_frame_dirty[frame_index].load(std::memory_order_acquire))
