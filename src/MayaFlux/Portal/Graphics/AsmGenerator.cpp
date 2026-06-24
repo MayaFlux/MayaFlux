@@ -4,62 +4,30 @@
  * @file AsmGenerator.cpp
  * @brief SPIR-V assembly and GLSL kernel emitters for ShaderSpec.
  *
- * Current state
+ * The assembly path (emit_spirv_asm) covers all binding modalities and
+ * kernel templates:
  *
- * SPIR-V assembly path (emit_spirv_asm): complete for SCALAR_F32 SSBOs with
- * any KernelOp. IMAGE_2D storage image output path (emit_image_body) is
- * complete for single-output write ops (Scale, ScaleOffset, Offset, Clip,
- * Abs, Negate). GLSL kernel path (emit_glsl_kernel): complete, dispatched
+ * SSBO (SCALAR_F32, VEC2_F32, VEC3_F32, VEC4_F32) — all KernelOps via
+ * emit_elementwise_body. ArrayStride, element type, and pointer type derived
+ * from GpuDataFormat. Scalar PC operands splatted to vector width via
+ * OpCompositeConstruct before arithmetic.
+ *
+ * IMAGE_2D storage images — emit_image_body handles any number of Input/InOut
+ * images and one Output image with all single- and two-operand KernelOps
+ * applied per channel.
+ *
+ * TEXTURE_2D sampled images — emit_image_body loads each binding via
+ * OpTypeSampledImage / OpImageSampleExplicitLod at normalised UV derived
+ * from GlobalInvocationID divided by width/height PC fields (first two PC
+ * fields by convention when TEXTURE_2D bindings are present).
+ *
+ * KernelTemplate::Reduction — emit_reduction_body emits a structured
+ * workgroup tree reduction with OpLoopMerge, OpPhi for the stride variable,
+ * OpULessThan active-thread guard, and two OpControlBarrier synchronisation
+ * points per iteration. Supports KernelOp::Sum and KernelOp::Max.
+ *
+ * GLSL kernel path (emit_glsl_kernel) handles all three binding modalities
  * when spec.kernel is set via MF_KERNEL.
- *
- * What needs adding after Kinesis::Vision is active
- *
- * 1. Multi-component SSBO types in the SPIR-V assembly path.
- *    emit_decorations hardcodes ArrayStride 4 for every SSBO binding.
- *    emit_types hardcodes OpTypeRuntimeArray %f32 for every SSBO binding.
- *    emit_elementwise_body hardcodes %pf32_<name> pointer and scalar load/store.
- *    VEC2_F32 (stride 8), VEC3_F32 (stride 12), VEC4_F32 (stride 16) all
- *    produce wrong access chains. Fix: ssbo_type_info() helper maps
- *    GpuDataFormat to (elem_type, ptr_type_name, array_stride). Emit
- *    deduplicated vector type declarations in emit_types, use typed access
- *    chains and OpVectorTimesScalar / splat constructs in emit_elementwise_body
- *    for ops that mix scalar PC with vector SSBO elements. No caller exists
- *    yet — Kinesis::Vision pixel ops on uint8/float pixel SSBOs are the first
- *    concrete callers.
- *
- * 2. IMAGE_2D two-image ops (read-from-storage-image + write).
- *    emit_image_body resolves one img_in and one img_out. KernelOp::Add,
- *    Multiply, Mix in emit_image_body fall through to default (passthrough)
- *    because they need two img_in slots. Fix: extend the img_in resolution
- *    to collect all Input/InOut IMAGE_2D bindings as an ordered list, then
- *    emit OpImageRead for each and apply the two-operand op. StorageImageRead
- *    WithoutFormat capability must also be added to emit_header when any
- *    Input IMAGE_2D binding is present. Callers: Kinesis::Vision blend,
- *    composite, difference ops.
- *
- * 3. TEXTURE_2D sampled image bindings in the SPIR-V assembly path.
- *    emit_header, emit_decorations, emit_types all silently skip TEXTURE_2D
- *    bindings. No OpTypeSampledImage, no combined image sampler variable, no
- *    OpImageSampleExplicitLod in the body. Fix requires OpCapability Sampled1D
- *    or similar, OpTypeSampler, OpTypeSampledImage, OpVariable for the combined
- *    sampler, and OpImageSampleExplicitLod or OpImageFetch in the body. This
- *    is structurally heavier than storage image. Callers: Kinesis::Vision
- *    filter ops that read from a TextureContainer as a sampled source.
- *
- * 4. MF_KERNEL image body.
- *    emit_glsl_kernel generates correct GLSL for SSBO and IMAGE_2D bindings,
- *    but TEXTURE_2D sampled bindings use sampler2D which requires a combined
- *    image sampler descriptor — a different GpuBufferBinding::ElementType than
- *    IMAGE_STORAGE. The GLSL generation is correct; the binding declaration
- *    in bindings_from_spec maps TEXTURE_2D to IMAGE_SAMPLED which is correct.
- *    No gap in the GLSL path; gap is only in the SPIR-V assembly path (see 3).
- *
- * 5. Reduction body completion.
- *    emit_reduction_body is a placeholder. The shared memory tree is partially
- *    emitted but the loop structure is missing — no OpLoopMerge, no back-edge.
- *    KernelOp::Sum and KernelOp::Max route here but produce invalid SPIR-V.
- *    Fix: full workgroup reduction loop with OpLoopMerge/OpBranch/OpPhi.
- *    No caller exercises this path yet.
  */
 
 namespace MayaFlux::Portal::Graphics::detail {
@@ -92,6 +60,41 @@ namespace {
     }
 
     /**
+     * Returns the SPIR-V type ID string for the element type of an SSBO binding.
+     */
+    std::string_view ssbo_elem_spirv_type(Kakshya::GpuDataFormat fmt) noexcept
+    {
+        switch (fmt) {
+        case Kakshya::GpuDataFormat::VEC2_F32:
+            return "%v2f32";
+        case Kakshya::GpuDataFormat::VEC3_F32:
+            return "%v3f32";
+        case Kakshya::GpuDataFormat::VEC4_F32:
+            return "%v4f32";
+        default:
+            return "%f32";
+        }
+    }
+
+    /**
+     * Returns the component count for a GpuDataFormat SSBO element.
+     * Scalar formats return 1.
+     */
+    uint32_t ssbo_elem_components(Kakshya::GpuDataFormat fmt) noexcept
+    {
+        switch (fmt) {
+        case Kakshya::GpuDataFormat::VEC2_F32:
+            return 2;
+        case Kakshya::GpuDataFormat::VEC3_F32:
+            return 3;
+        case Kakshya::GpuDataFormat::VEC4_F32:
+            return 4;
+        default:
+            return 1;
+        }
+    }
+
+    /**
      * Emit a fixed header common to all generated compute kernels.
      * Assigns IDs for void, voidfn, u32, f32, v3u32, glsl extension import,
      * and the GlobalInvocationId builtin.
@@ -101,16 +104,23 @@ namespace {
         const auto& ws = spec.workgroup_size;
 
         bool has_storage_image = false;
+        bool has_input_image = false;
         for (const auto& b : spec.bindings) {
-            if (b.modality == Kakshya::DataModality::IMAGE_2D)
+            if (b.modality == Kakshya::DataModality::IMAGE_2D) {
                 has_storage_image = true;
+                if (b.direction != BindingDirection::Output)
+                    has_input_image = true;
+            }
         }
 
         std::string iface = "%gid_var";
         for (const auto& b : spec.bindings) {
-            if (b.modality == Kakshya::DataModality::TEXTURE_2D
-                || b.modality == Kakshya::DataModality::IMAGE_2D)
+            if (b.modality == Kakshya::DataModality::IMAGE_2D)
                 continue;
+            if (b.modality == Kakshya::DataModality::TEXTURE_2D) {
+                iface += " %tex_" + b.name;
+                continue;
+            }
             iface += " %buf_" + b.name;
         }
         if (has_storage_image) {
@@ -122,10 +132,17 @@ namespace {
         if (!spec.pc_fields.empty())
             iface += " %pc";
 
+        if (spec.tmpl == KernelTemplate::Reduction)
+            iface += " %lid_var";
+
         std::string o;
         o += "OpCapability Shader\n";
+
         if (has_storage_image)
             o += "OpCapability StorageImageWriteWithoutFormat\n";
+        if (has_input_image)
+            o += "OpCapability StorageImageReadWithoutFormat\n";
+
         o += "%glsl = OpExtInstImport \"GLSL.std.450\"\n";
         o += "OpMemoryModel Logical GLSL450\n";
         o += "OpEntryPoint GLCompute %main \"main\" " + iface + "\n";
@@ -149,7 +166,9 @@ namespace {
                 || b.modality == Kakshya::DataModality::IMAGE_2D)
                 continue;
 
-            o += "OpDecorate %rta_" + b.name + " ArrayStride 4\n";
+            const auto stride = static_cast<uint32_t>(Kakshya::gpu_data_format_bytes(b.format));
+            o += "OpDecorate %rta_" + b.name + " ArrayStride "
+                + std::to_string(stride) + "\n";
             o += "OpMemberDecorate %blk_" + b.name + " 0 Offset 0\n";
             o += "OpDecorate %blk_" + b.name + " Block\n";
             o += "OpDecorate %buf_" + b.name + " DescriptorSet 0\n";
@@ -173,13 +192,25 @@ namespace {
             }
         }
 
+        for (const auto& b : spec.bindings) {
+            if (b.modality != Kakshya::DataModality::TEXTURE_2D)
+                continue;
+            o += "OpDecorate %tex_" + b.name + " DescriptorSet 0\n";
+            o += "OpDecorate %tex_" + b.name + " Binding "
+                + std::to_string(b.binding_index) + "\n";
+        }
+
+        if (spec.tmpl == KernelTemplate::Reduction)
+            o += "OpDecorate %lid_var BuiltIn LocalInvocationId\n";
+
         if (!spec.pc_fields.empty()) {
             o += "OpDecorate %pc_blk Block\n";
             uint32_t off = 0;
             for (size_t i = 0; i < spec.pc_fields.size(); ++i) {
                 o += "OpMemberDecorate %pc_blk " + std::to_string(i)
                     + " Offset " + std::to_string(off) + "\n";
-                off += Kakshya::gpu_data_format_bytes(spec.pc_fields[i].format);
+                off += static_cast<uint32_t>(
+                    Kakshya::gpu_data_format_bytes(spec.pc_fields[i].format));
             }
         }
         o += "\n";
@@ -201,26 +232,62 @@ namespace {
         o += "%ptr_in_v3u32 = OpTypePointer Input %v3u32\n";
         o += "%gid_var = OpVariable %ptr_in_v3u32 Input\n\n";
 
+        bool need_v2f32 = false;
+        bool need_v3f32 = false;
+        bool need_v4f32 = false;
+
         for (const auto& b : spec.bindings) {
             if (b.modality == Kakshya::DataModality::TEXTURE_2D
                 || b.modality == Kakshya::DataModality::IMAGE_2D)
                 continue;
-            o += "%rta_" + b.name + " = OpTypeRuntimeArray %f32\n";
-            o += "%blk_" + b.name + " = OpTypeStruct %rta_" + b.name + "\n";
-            o += "%pblk_" + b.name + " = OpTypePointer StorageBuffer %blk_" + b.name + "\n";
-            o += "%buf_" + b.name + " = OpVariable %pblk_" + b.name + " StorageBuffer\n";
-            o += "%pf32_" + b.name + " = OpTypePointer StorageBuffer %f32\n";
-        }
-        o += "\n";
-
-        bool any_image = false;
-        for (const auto& b : spec.bindings) {
-            if (b.modality == Kakshya::DataModality::IMAGE_2D) {
-                any_image = true;
+            switch (b.format) {
+            case Kakshya::GpuDataFormat::VEC2_F32:
+                need_v2f32 = true;
+                break;
+            case Kakshya::GpuDataFormat::VEC3_F32:
+                need_v3f32 = true;
+                break;
+            case Kakshya::GpuDataFormat::VEC4_F32:
+                need_v4f32 = true;
+                break;
+            default:
                 break;
             }
         }
-        if (any_image) {
+
+        if (need_v2f32)
+            o += "%v2f32 = OpTypeVector %f32 2\n";
+        if (need_v3f32)
+            o += "%v3f32 = OpTypeVector %f32 3\n";
+
+        bool has_image_2d = false;
+        for (const auto& b : spec.bindings) {
+            if (b.modality == Kakshya::DataModality::IMAGE_2D) {
+                has_image_2d = true;
+                break;
+            }
+        }
+        if (need_v4f32 && !has_image_2d)
+            o += "%v4f32 = OpTypeVector %f32 4\n";
+        if (need_v2f32 || need_v3f32 || (need_v4f32 && !has_image_2d))
+            o += "\n";
+
+        for (const auto& b : spec.bindings) {
+            if (b.modality == Kakshya::DataModality::TEXTURE_2D
+                || b.modality == Kakshya::DataModality::IMAGE_2D)
+                continue;
+
+            const std::string_view etype = ssbo_elem_spirv_type(b.format);
+            o += "%rta_" + b.name + " = OpTypeRuntimeArray " + std::string(etype) + "\n";
+            o += "%blk_" + b.name + " = OpTypeStruct %rta_" + b.name + "\n";
+            o += "%pblk_" + b.name + " = OpTypePointer StorageBuffer %blk_" + b.name + "\n";
+            o += "%buf_" + b.name + " = OpVariable %pblk_" + b.name + " StorageBuffer\n";
+            o += "%pelem_" + b.name + " = OpTypePointer StorageBuffer "
+                + std::string(etype) + "\n";
+        }
+        o += "\n";
+
+        if (has_image_2d) {
             o += "%i32          = OpTypeInt 32 1\n";
             o += "%v2i32        = OpTypeVector %i32 2\n";
             o += "%v4f32        = OpTypeVector %f32 4\n";
@@ -232,6 +299,45 @@ namespace {
                     continue;
                 o += "%img_" + b.name + " = OpVariable %ptr_img2d UniformConstant\n";
             }
+            o += "\n";
+        }
+
+        bool has_texture_2d = false;
+        for (const auto& b : spec.bindings) {
+            if (b.modality == Kakshya::DataModality::TEXTURE_2D) {
+                has_texture_2d = true;
+                break;
+            }
+        }
+
+        if (has_texture_2d) {
+            if (!need_v2f32 && !has_image_2d)
+                o += "%v2f32      = OpTypeVector %f32 2\n";
+            o += "%sampler_t  = OpTypeSampler\n";
+            o += "%img2d_s_t  = OpTypeImage %f32 2D 0 0 0 1 Unknown\n";
+            o += "%simgc_t    = OpTypeSampledImage %img2d_s_t\n";
+            o += "%ptr_simg   = OpTypePointer UniformConstant %simgc_t\n";
+            for (const auto& b : spec.bindings) {
+                if (b.modality != Kakshya::DataModality::TEXTURE_2D)
+                    continue;
+                o += "%tex_" + b.name + " = OpVariable %ptr_simg UniformConstant\n";
+            }
+            o += "%lod_zero   = OpConstant %f32 0.0\n";
+            o += "\n";
+        }
+
+        if (spec.tmpl == KernelTemplate::Reduction) {
+            const uint32_t local = spec.workgroup_size[0];
+            const std::string ls = std::to_string(local);
+            o += "%bool        = OpTypeBool\n";
+            o += "%lid_var  = OpVariable %ptr_in_v3u32 Input\n";
+            o += "%arr_sh_t    = OpTypeArray %f32 %c" + ls + "u\n";
+            o += "%psh_arr     = OpTypePointer Workgroup %arr_sh_t\n";
+            o += "%shared      = OpVariable %psh_arr Workgroup\n";
+            o += "%psh_f32     = OpTypePointer Workgroup %f32\n";
+            o += "%c" + ls + "u   = OpConstant %u32 " + ls + "\n";
+            o += "%c2u         = OpConstant %u32 2\n";
+            o += "%c264u       = OpConstant %u32 264\n"; // AcquireRelease | WorkgroupMemory
             o += "\n";
         }
 
@@ -285,58 +391,106 @@ namespace {
             ssbos.push_back(&b);
         }
 
+        Kakshya::GpuDataFormat primary_fmt = Kakshya::GpuDataFormat::FLOAT32;
         for (const auto* b : ssbos) {
-            o += "%gep_" + b->name + " = OpAccessChain %pf32_" + b->name
+            if (b->direction != BindingDirection::Output) {
+                primary_fmt = b->format;
+                break;
+            }
+        }
+        const std::string_view etype = ssbo_elem_spirv_type(primary_fmt);
+        const uint32_t ncomp = ssbo_elem_components(primary_fmt);
+        const bool is_vector = (ncomp > 1);
+
+        for (const auto* b : ssbos) {
+            o += "%gep_" + b->name + " = OpAccessChain %pelem_" + b->name
                 + " %buf_" + b->name + " %c0u %i\n";
-            if (b->direction != BindingDirection::Output)
-                o += "%val_" + b->name + " = OpLoad %f32 %gep_" + b->name + "\n";
+            if (b->direction != BindingDirection::Output) {
+                o += "%val_" + b->name + " = OpLoad " + std::string(etype)
+                    + " %gep_" + b->name + "\n";
+            }
         }
         o += "\n";
 
-        std::string result;
+        auto pc_operand = [&](const std::string& field_name) -> std::string {
+            if (!is_vector)
+                return "%pc_" + field_name;
+            const std::string splat = "%spc_" + field_name;
+            std::string construct = splat + " = OpCompositeConstruct "
+                + std::string(etype);
+            const std::string scalar = " %pc_" + field_name;
+            for (uint32_t c = 0; c < ncomp; ++c)
+                construct += scalar;
+            o += construct + "\n";
+            return splat;
+        };
+
         const std::string v0 = ssbos.empty() ? "" : ("%val_" + ssbos[0]->name);
         const std::string v1 = ssbos.size() > 1 ? ("%val_" + ssbos[1]->name) : "";
-        const std::string p0 = spec.pc_fields.empty() ? "" : ("%pc_" + spec.pc_fields[0].name);
-        const std::string p1 = spec.pc_fields.size() > 1 ? ("%pc_" + spec.pc_fields[1].name) : "";
+        const std::string p0 = spec.pc_fields.empty() ? ""
+                                                      : pc_operand(spec.pc_fields[0].name);
+        const std::string p1 = spec.pc_fields.size() > 1
+            ? pc_operand(spec.pc_fields[1].name)
+            : "";
 
+        std::string result;
+        const std::string et = std::string(etype);
         switch (spec.op) {
         case KernelOp::Scale:
-            o += "%res = OpFMul %f32 " + v0 + " " + p0 + "\n";
+            if (is_vector) {
+                o += "%res = OpVectorTimesScalar " + et + " " + v0
+                    + " %pc_" + spec.pc_fields[0].name + "\n";
+            } else {
+                o += "%res = OpFMul " + et + " " + v0 + " " + p0 + "\n";
+            }
+
             result = "%res";
             break;
         case KernelOp::ScaleOffset:
-            o += "%mul = OpFMul %f32 " + v0 + " " + p0 + "\n";
-            o += "%res = OpFAdd %f32 %mul " + p1 + "\n";
+            if (is_vector) {
+                o += "%scaled = OpVectorTimesScalar " + et + " " + v0
+                    + " %pc_" + spec.pc_fields[0].name + "\n";
+                o += "%res = OpFAdd " + et + " %scaled " + p1 + "\n";
+            } else {
+                o += "%mul = OpFMul " + et + " " + v0 + " " + p0 + "\n";
+                o += "%res = OpFAdd " + et + " %mul " + p1 + "\n";
+            }
+
             result = "%res";
             break;
         case KernelOp::Offset:
-            o += "%res = OpFAdd %f32 " + v0 + " " + p0 + "\n";
+            o += "%res = OpFAdd " + et + " " + v0 + " " + p0 + "\n";
             result = "%res";
             break;
         case KernelOp::Clip:
-            o += "%res = OpExtInst %f32 %glsl FClamp " + v0 + " " + p0 + " " + p1 + "\n";
+            o += "%res = OpExtInst " + et + " %glsl FClamp " + v0
+                + " " + p0 + " " + p1 + "\n";
             result = "%res";
             break;
         case KernelOp::Abs:
-            o += "%res = OpExtInst %f32 %glsl FAbs " + v0 + "\n";
+            o += "%res = OpExtInst " + et + " %glsl FAbs " + v0 + "\n";
             result = "%res";
             break;
         case KernelOp::Negate:
-            o += "%res = OpFNegate %f32 " + v0 + "\n";
+            o += "%res = OpFNegate " + et + " " + v0 + "\n";
             result = "%res";
             break;
         case KernelOp::Add:
-            o += "%res = OpFAdd %f32 " + v0 + " " + v1 + "\n";
+            o += "%res = OpFAdd " + et + " " + v0 + " " + v1 + "\n";
             result = "%res";
             break;
         case KernelOp::Multiply:
-            o += "%res = OpFMul %f32 " + v0 + " " + v1 + "\n";
+            o += "%res = OpFMul " + et + " " + v0 + " " + v1 + "\n";
             result = "%res";
             break;
         case KernelOp::Mix:
             o += "%dlt = OpFSub %f32 " + v1 + " " + v0 + "\n";
             o += "%scl = OpFMul %f32 %dlt " + p0 + "\n";
             o += "%res = OpFAdd %f32 " + v0 + " %scl\n";
+            result = "%res";
+            break;
+        case KernelOp::Sub:
+            o += "%res = OpFSub " + et + " " + v0 + " " + v1 + "\n";
             result = "%res";
             break;
         case KernelOp::Fma:
@@ -448,7 +602,8 @@ namespace {
             result = "%res";
             break;
         default:
-            result = v0;
+            o += "%res = OpCopyObject " + et + " " + v0 + "\n";
+            result = "%res";
             break;
         }
         o += "\n";
@@ -457,7 +612,6 @@ namespace {
             if (b->direction == BindingDirection::Input)
                 continue;
             o += "OpStore %gep_" + b->name + " " + result + "\n";
-            break;
         }
 
         o += "OpReturn\n";
@@ -470,38 +624,75 @@ namespace {
         const uint32_t local = spec.workgroup_size[0];
         const std::string ls = std::to_string(local);
         const bool is_max = (spec.op == KernelOp::Max);
+        const auto& b0 = spec.bindings.front();
 
         std::string o;
-        o += "%arr_t   = OpTypeArray %f32 %c" + ls + "u\n";
-        o += "%pshared = OpTypePointer Workgroup %f32\n";
-        o += "%shared  = OpVariable %pshared Workgroup\n\n";
-        o += "%c" + ls + "u = OpConstant %u32 " + ls + "\n\n";
+        o += "%main    = OpFunction %void None %voidfn\n";
+        o += "%entry   = OpLabel\n";
 
-        o += "%main  = OpFunction %void None %voidfn\n";
-        o += "%entry = OpLabel\n";
-        o += "%gid3  = OpLoad %v3u32 %gid_var\n";
-        o += "%i     = OpCompositeExtract %u32 %gid3 0\n";
-        o += "%lid   = OpCompositeExtract %u32 %gid3 0\n\n";
+        o += "%gid3    = OpLoad %v3u32 %gid_var\n";
+        o += "%i       = OpCompositeExtract %u32 %gid3 0\n";
+        o += "%lid3    = OpLoad %v3u32 %lid_var\n";
+        o += "%lid     = OpCompositeExtract %u32 %lid3 0\n\n";
 
-        const auto& b0 = spec.bindings.front();
-        o += "%gep0    = OpAccessChain %pf32_" + b0.name + " %buf_" + b0.name + " %c0u %i\n";
-        o += "%elem    = OpLoad %f32 %gep0\n";
-        o += "%pgep_sh = OpAccessChain %pshared %shared %lid\n";
-        o += "OpStore %pgep_sh %elem\n";
+        o += "%gep_in  = OpAccessChain %pelem_" + b0.name
+            + " %buf_" + b0.name + " %c0u %i\n";
+        o += "%elem    = OpLoad %f32 %gep_in\n";
+        o += "%pgsh    = OpAccessChain %psh_f32 %shared %lid\n";
+        o += "OpStore %pgsh %elem\n";
         o += "OpControlBarrier %c2u %c2u %c264u\n\n";
 
-        o += "%s_init = OpShiftRightLogical %u32 %c" + ls + "u %c1u\n";
-        o += "; reduction tree (caller must ensure workgroup is power of two)\n";
+        o += "%s_init  = OpShiftRightLogical %u32 %c" + ls + "u %c1u\n";
+        o += "OpBranch %loop_hdr\n\n";
+
+        o += "%loop_hdr = OpLabel\n";
+        o += "%stride  = OpPhi %u32 %s_init %entry %s_next %loop_cont\n";
+        o += "OpLoopMerge %loop_merge %loop_cont None\n";
+        o += "OpBranch %loop_body\n\n";
+
+        o += "%loop_body = OpLabel\n";
+        o += "%active  = OpULessThan %bool %lid %stride\n";
+        o += "OpSelectionMerge %sel_merge None\n";
+        o += "OpBranchConditional %active %do_op %sel_merge\n\n";
+
+        o += "%do_op   = OpLabel\n";
+        o += "%pgsh_a  = OpAccessChain %psh_f32 %shared %lid\n";
+        o += "%a       = OpLoad %f32 %pgsh_a\n";
+        o += "%lid_b   = OpIAdd %u32 %lid %stride\n";
+        o += "%pgsh_b  = OpAccessChain %psh_f32 %shared %lid_b\n";
+        o += "%b       = OpLoad %f32 %pgsh_b\n";
+
         if (is_max) {
-            o += "%cur  = OpLoad %f32 %pgep_sh\n";
-            o += "%res  = OpExtInst %f32 %glsl FMax %cur %elem\n";
+            o += "%combined = OpExtInst %f32 %glsl FMax %a %b\n";
         } else {
-            o += "%cur  = OpLoad %f32 %pgep_sh\n";
-            o += "%res  = OpFAdd %f32 %cur %elem\n";
+            o += "%combined = OpFAdd %f32 %a %b\n";
         }
-        o += "OpStore %pgep_sh %res\n";
-        o += "OpControlBarrier %c2u %c2u %c264u\n\n";
 
+        o += "OpStore %pgsh_a %combined\n";
+        o += "OpBranch %sel_merge\n\n";
+
+        o += "%sel_merge = OpLabel\n";
+        o += "OpBranch %loop_cont\n\n";
+
+        o += "%loop_cont = OpLabel\n";
+        o += "OpControlBarrier %c2u %c2u %c264u\n";
+        o += "%s_next  = OpShiftRightLogical %u32 %stride %c1u\n";
+        o += "%done    = OpIEqual %bool %s_next %c0u\n";
+        o += "OpBranchConditional %done %loop_merge %loop_hdr\n\n";
+
+        o += "%loop_merge = OpLabel\n";
+        o += "%is_zero = OpIEqual %bool %lid %c0u\n";
+        o += "OpSelectionMerge %write_merge None\n";
+        o += "OpBranchConditional %is_zero %do_write %write_merge\n\n";
+
+        o += "%do_write = OpLabel\n";
+        o += "%result  = OpLoad %f32 %pgsh\n";
+        o += "%gep_out = OpAccessChain %pelem_" + b0.name
+            + " %buf_" + b0.name + " %c0u %c0u\n";
+        o += "OpStore %gep_out %result\n";
+        o += "OpBranch %write_merge\n\n";
+
+        o += "%write_merge = OpLabel\n";
         o += "OpReturn\n";
         o += "OpFunctionEnd\n";
         return o;
@@ -520,14 +711,14 @@ namespace {
     std::string emit_image_body(const ShaderSpec& spec)
     {
         const BindingSlot* img_out = nullptr;
-        const BindingSlot* img_in = nullptr;
+        std::vector<const BindingSlot*> img_inputs;
         for (const auto& b : spec.bindings) {
             if (b.modality != Kakshya::DataModality::IMAGE_2D)
                 continue;
             if (b.direction == BindingDirection::Output && !img_out) {
                 img_out = &b;
-            } else if (b.direction != BindingDirection::Output && !img_in) {
-                img_in = &b;
+            } else if (b.direction != BindingDirection::Output) {
+                img_inputs.push_back(&b);
             }
         }
 
@@ -550,51 +741,126 @@ namespace {
         if (!spec.pc_fields.empty())
             o += "\n";
 
-        if (img_in) {
-            o += "%raw_in = OpImageRead %v4f32 %img_" + std::string(img_in->name) + " %coord\n";
-        } else {
-            o += "%raw_in = OpCompositeConstruct %v4f32 %img_czero %img_czero %img_czero %img_czero\n";
+        std::vector<const BindingSlot*> tex_inputs;
+        for (const auto& b : spec.bindings) {
+            if (b.modality == Kakshya::DataModality::TEXTURE_2D)
+                tex_inputs.push_back(&b);
         }
 
-        o += "%ch_r = OpCompositeExtract %f32 %raw_in 0\n";
-        o += "%ch_g = OpCompositeExtract %f32 %raw_in 1\n";
-        o += "%ch_b = OpCompositeExtract %f32 %raw_in 2\n";
-        o += "%ch_a = OpCompositeExtract %f32 %raw_in 3\n\n";
+        if (!tex_inputs.empty()) {
+            const std::string pw = spec.pc_fields.size() > 0
+                ? ("%pc_" + spec.pc_fields[0].name)
+                : "%lod_zero";
+            const std::string ph = spec.pc_fields.size() > 1
+                ? ("%pc_" + spec.pc_fields[1].name)
+                : "%lod_zero";
+            o += "%fix = OpConvertUToF %f32 %ix\n";
+            o += "%fiy = OpConvertUToF %f32 %iy\n";
+            o += "%u   = OpFDiv %f32 %fix " + pw + "\n";
+            o += "%v   = OpFDiv %f32 %fiy " + ph + "\n";
+            o += "%uv  = OpCompositeConstruct %v2f32 %u %v\n\n";
 
-        const std::string p0 = spec.pc_fields.empty() ? "" : ("%pc_" + spec.pc_fields[0].name);
-        const std::string p1 = spec.pc_fields.size() > 1 ? ("%pc_" + spec.pc_fields[1].name) : "";
+            for (size_t ti = 0; ti < tex_inputs.size(); ++ti) {
+                const std::string idx = std::to_string(img_inputs.size() + ti);
+                o += "%simg_" + tex_inputs[ti]->name
+                    + " = OpLoad %simgc_t %tex_" + tex_inputs[ti]->name + "\n";
+                o += "%raw_in" + idx + " = OpImageSampleExplicitLod %v4f32 %simg_"
+                    + tex_inputs[ti]->name + " %uv Lod %lod_zero\n";
+            }
+            o += "\n";
+        }
 
-        auto emit_channel_op = [&](const std::string& ch, const std::string& suffix) {
+        for (size_t ii = 0; ii < img_inputs.size(); ++ii) {
+            o += "%raw_in" + std::to_string(ii) + " = OpImageRead %v4f32 %img_"
+                + img_inputs[ii]->name + " %coord\n";
+        }
+        if (img_inputs.empty()) {
+            o += "%raw_in0 = OpCompositeConstruct %v4f32 %img_czero %img_czero"
+                 " %img_czero %img_czero\n";
+        }
+        o += "\n";
+
+        o += "%ch0_r = OpCompositeExtract %f32 %raw_in0 0\n";
+        o += "%ch0_g = OpCompositeExtract %f32 %raw_in0 1\n";
+        o += "%ch0_b = OpCompositeExtract %f32 %raw_in0 2\n";
+        o += "%ch0_a = OpCompositeExtract %f32 %raw_in0 3\n";
+
+        const bool has_second = img_inputs.size() > 1
+            || (!img_inputs.empty() && !tex_inputs.empty())
+            || tex_inputs.size() > 1;
+
+        const std::string second_idx = img_inputs.size() > 1
+            ? "1"
+            : (!tex_inputs.empty() ? std::to_string(img_inputs.size()) : "");
+
+        if (has_second && !second_idx.empty()) {
+            o += "%ch1_r = OpCompositeExtract %f32 %raw_in" + second_idx + " 0\n";
+            o += "%ch1_g = OpCompositeExtract %f32 %raw_in" + second_idx + " 1\n";
+            o += "%ch1_b = OpCompositeExtract %f32 %raw_in" + second_idx + " 2\n";
+            o += "%ch1_a = OpCompositeExtract %f32 %raw_in" + second_idx + " 3\n";
+        }
+        o += "\n";
+
+        const std::string p0 = spec.pc_fields.empty()
+            ? ""
+            : ("%pc_" + spec.pc_fields[0].name);
+        const std::string p1 = spec.pc_fields.size() > 1
+            ? ("%pc_" + spec.pc_fields[1].name)
+            : "";
+
+        auto emit_channel_op = [&](
+                                   const std::string& c0, const std::string& c1,
+                                   const std::string& suffix) {
             switch (spec.op) {
             case KernelOp::Scale:
-                o += "%res_" + suffix + " = OpFMul %f32 " + ch + " " + p0 + "\n";
+                o += "%res_" + suffix + " = OpFMul %f32 " + c0 + " " + p0 + "\n";
                 break;
             case KernelOp::ScaleOffset:
-                o += "%mul_" + suffix + " = OpFMul %f32 " + ch + " " + p0 + "\n";
+                o += "%mul_" + suffix + " = OpFMul %f32 " + c0 + " " + p0 + "\n";
                 o += "%res_" + suffix + " = OpFAdd %f32 %mul_" + suffix + " " + p1 + "\n";
                 break;
             case KernelOp::Offset:
-                o += "%res_" + suffix + " = OpFAdd %f32 " + ch + " " + p0 + "\n";
+                o += "%res_" + suffix + " = OpFAdd %f32 " + c0 + " " + p0 + "\n";
                 break;
             case KernelOp::Clip:
-                o += "%res_" + suffix + " = OpExtInst %f32 %glsl FClamp " + ch + " " + p0 + " " + p1 + "\n";
+                o += "%res_" + suffix + " = OpExtInst %f32 %glsl FClamp "
+                    + c0 + " " + p0 + " " + p1 + "\n";
                 break;
             case KernelOp::Abs:
-                o += "%res_" + suffix + " = OpExtInst %f32 %glsl FAbs " + ch + "\n";
+                o += "%res_" + suffix + " = OpExtInst %f32 %glsl FAbs " + c0 + "\n";
                 break;
             case KernelOp::Negate:
-                o += "%res_" + suffix + " = OpFNegate %f32 " + ch + "\n";
+                o += "%res_" + suffix + " = OpFNegate %f32 " + c0 + "\n";
+                break;
+            case KernelOp::Add:
+                o += "%res_" + suffix + " = OpFAdd %f32 " + c0 + " " + c1 + "\n";
+                break;
+            case KernelOp::Multiply:
+                o += "%res_" + suffix + " = OpFMul %f32 " + c0 + " " + c1 + "\n";
+                break;
+            case KernelOp::Mix:
+                o += "%res_" + suffix + " = OpExtInst %f32 %glsl FMix "
+                    + c0 + " " + c1 + " " + p0 + "\n";
+                break;
+            case KernelOp::Sub:
+                o += "%res_" + suffix + " = OpFSub %f32 " + c0 + " " + c1 + "\n";
                 break;
             default:
-                o += "%res_" + suffix + " = OpCopyObject %f32 " + ch + "\n";
+                o += "%res_" + suffix + " = OpCopyObject %f32 " + c0 + "\n";
                 break;
             }
         };
 
-        emit_channel_op("%ch_r", "r");
-        emit_channel_op("%ch_g", "g");
-        emit_channel_op("%ch_b", "b");
-        emit_channel_op("%ch_a", "a");
+        const std::string zero = "%img_czero";
+        const std::string c1r = has_second ? "%ch1_r" : zero;
+        const std::string c1g = has_second ? "%ch1_g" : zero;
+        const std::string c1b = has_second ? "%ch1_b" : zero;
+        const std::string c1a = has_second ? "%ch1_a" : zero;
+
+        emit_channel_op("%ch0_r", c1r, "r");
+        emit_channel_op("%ch0_g", c1g, "g");
+        emit_channel_op("%ch0_b", c1b, "b");
+        emit_channel_op("%ch0_a", c1a, "a");
         o += "\n";
 
         o += "%out_vec = OpCompositeConstruct %v4f32 %res_r %res_g %res_b %res_a\n";

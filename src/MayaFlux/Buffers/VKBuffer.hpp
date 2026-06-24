@@ -670,4 +670,24 @@ protected:
     void ensure_initialized(const std::shared_ptr<VKBuffer>& buffer);
 };
 
+/**
+ * @concept GpuImageSource
+ * @brief Satisfied by any VKBuffer subclass that exposes a GPU-resident image.
+ *
+ * Covers all pixel-bearing buffer types via whichever accessor they provide:
+ *   - get_texture()     TextureBuffer and all its children
+ *   - get_gpu_texture() NodeTextureBuffer
+ *
+ * New pixel-bearing buffer types satisfy this concept automatically by
+ * implementing either method with the correct return type. No registration
+ * or base class change required.
+ *
+ * Processors constrained by GpuImageSource use if constexpr to select
+ * the correct accessor at compile time.
+ */
+template <typename T>
+concept GpuImageSource = std::derived_from<T, VKBuffer> && (requires(const T& b) {
+            { b.get_texture() } -> std::convertible_to<std::shared_ptr<Core::VKImage>>; } || requires(const T& b) {
+            { b.get_gpu_texture() } -> std::convertible_to<std::shared_ptr<Core::VKImage>>; });
+
 } // namespace MayaFlux::Buffers

@@ -1,6 +1,11 @@
 #include "StagingUtils.hpp"
 
 #include "MayaFlux/Buffers/AudioBuffer.hpp"
+#include "MayaFlux/Core/Backends/Graphics/Vulkan/VKImage.hpp"
+
+#include "MayaFlux/Kakshya/Utils/DataUtils.hpp"
+#include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
+
 #include "MayaFlux/Registry/BackendRegistry.hpp"
 #include "MayaFlux/Registry/Service/BufferService.hpp"
 
@@ -444,6 +449,35 @@ void download_from_gpu_async(
 
     std::memcpy(data, ptr, size);
     buffer_service->release_fenced(handle);
+}
+
+std::span<const float> download_and_normalise(
+    const std::shared_ptr<Core::VKImage>& image,
+    std::vector<uint8_t>& raw_staging,
+    std::vector<float>& work,
+    const std::shared_ptr<VKBuffer>& gpu_staging)
+{
+    if (!image || !image->is_initialized())
+        return {};
+
+    auto& loom = Portal::Graphics::TextureLoom::instance();
+
+    const auto fmt_opt = loom.from_vulkan_format(image->get_format());
+    if (!fmt_opt)
+        return {};
+
+    const size_t byte_size = static_cast<size_t>(image->get_width())
+        * image->get_height()
+        * loom.get_bytes_per_pixel(*fmt_opt);
+
+    if (byte_size == 0)
+        return {};
+
+    raw_staging.resize(byte_size);
+    loom.download_data(image, raw_staging.data(), byte_size, gpu_staging);
+
+    Kakshya::DataVariant variant { raw_staging };
+    return Kakshya::as_normalised_float(variant, work);
 }
 
 void upload_audio_to_gpu(

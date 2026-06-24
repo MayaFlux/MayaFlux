@@ -573,6 +573,27 @@ inline std::span<double> convert_variant_to_double(DataVariant& data,
 }
 
 /**
+ * @brief Extract a DataVariant holding pixel data as a normalised float span.
+ *
+ * Normalisation factors:
+ *   uint8_t  -> divided by 255.0f
+ *   uint16_t -> divided by 65535.0f
+ *   float    -> zero-copy span directly into the variant's storage
+ *
+ * Does not mutate the variant. Writes into @p storage only when conversion
+ * is required. Returns an empty span if the active alternative is not one
+ * of the three pixel types (double, complex, and GLM variants return empty).
+ *
+ * @param variant Source DataVariant.
+ * @param storage Caller-supplied buffer. Reuse across calls to avoid
+ *                per-frame allocation. Untouched when float is active.
+ * @return Normalised float span. Points into @p storage for uint8/uint16,
+ *         directly into the variant's internal storage for float.
+ */
+[[nodiscard]] MAYAFLUX_API std::span<const float> as_normalised_float(
+    const DataVariant& variant, std::vector<float>& storage);
+
+/**
  * @brief Set a value in a metadata map (key-value).
  * @param metadata Metadata map.
  * @param key Key to set.

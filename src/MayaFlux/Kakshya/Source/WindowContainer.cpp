@@ -5,6 +5,7 @@
 #include "MayaFlux/Kakshya/NDData/DataAccess.hpp"
 #include "MayaFlux/Kakshya/Processors/WindowAccessProcessor.hpp"
 #include "MayaFlux/Kakshya/Utils/CoordUtils.hpp"
+#include "MayaFlux/Kakshya/Utils/DataUtils.hpp"
 #include "MayaFlux/Kakshya/Utils/RegionUtils.hpp"
 #include "MayaFlux/Kakshya/Utils/SurfaceUtils.hpp"
 
@@ -97,6 +98,11 @@ void WindowContainer::setup_dimensions()
     m_data.resize(m_frame_capacity);
     for (auto& slot : m_data)
         slot = std::vector<uint8_t>(sz, 0U);
+
+    m_normalised_cache.resize(m_frame_capacity);
+    m_normalised_dirty = std::vector<std::atomic<bool>>(m_frame_capacity);
+    for (auto& flag : m_normalised_dirty)
+        flag.store(true, std::memory_order_relaxed);
 
     m_processed_data.resize(1);
     m_processed_data[0] = std::vector<uint8_t>(sz, 0U);
@@ -461,6 +467,32 @@ void WindowContainer::handle_surface_resize()
     m_write_head.store(0, std::memory_order_release);
     m_frames_written.store(0, std::memory_order_release);
     setup_dimensions();
+}
+
+std::span<const float> WindowContainer::processed_frame_as_float(uint32_t frame_index) const
+{
+    if (frame_index >= m_processed_data.size())
+        return {};
+
+    if (!m_normalised_dirty[frame_index].load(std::memory_order_acquire))
+        return { m_normalised_cache[frame_index] };
+
+    std::span<const float> result;
+    seqlock_read_void(m_data_lock, 8, [&] {
+        result = Kakshya::as_normalised_float(m_processed_data[frame_index], m_normalised_cache[frame_index]);
+    });
+
+    if (!result.empty())
+        m_normalised_dirty[frame_index].store(false, std::memory_order_release);
+
+    return result;
+}
+
+void WindowContainer::invalidate_float_frame_cache(uint32_t frame_index)
+{
+    if (frame_index >= m_normalised_dirty.size())
+        return;
+    m_normalised_dirty[frame_index].store(true, std::memory_order_release);
 }
 
 // =========================================================================

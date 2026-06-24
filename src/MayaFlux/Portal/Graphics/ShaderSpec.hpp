@@ -199,6 +199,7 @@ struct KernelSource {
  *   Add          out[i] = a[i] + b[i]
  *   Multiply     out[i] = a[i] * b[i]
  *   Mix          out[i] = a[i] + (b[i] - a[i]) * pc[0]
+ *   Sub          out[i] = a[i] - b[i]
  *   Pow          out[i] = pow(a[i], b[i])
  *   Atan2        out[i] = atan(a[i], b[i])
  *   Min          out[i] = min(a[i], b[i])
@@ -246,6 +247,7 @@ enum class KernelOp : uint8_t {
     Add,
     Multiply,
     Mix,
+    Sub,
     Pow,
     Atan2,
     Min,

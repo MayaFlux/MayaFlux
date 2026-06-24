@@ -5,6 +5,7 @@
 #include "MayaFlux/Kakshya/NDData/DataAccess.hpp"
 #include "MayaFlux/Kakshya/Processors/FrameAccessProcessor.hpp"
 #include "MayaFlux/Kakshya/Utils/CoordUtils.hpp"
+#include "MayaFlux/Kakshya/Utils/DataUtils.hpp"
 #include "MayaFlux/Kakshya/Utils/RegionUtils.hpp"
 
 #include "MayaFlux/Registry/BackendRegistry.hpp"
@@ -114,6 +115,14 @@ void VideoStreamContainer::setup_ring(uint64_t total_frames,
 
         m_ready_queue.reset();
         setup_dimensions();
+    }
+
+    if (m_float_frame_cache.size() != ring_capacity) {
+        m_float_frame_cache.resize(ring_capacity);
+        m_float_frame_dirty = std::vector<std::atomic<bool>>(ring_capacity);
+
+        for (auto& flag : m_float_frame_dirty)
+            flag.store(true, std::memory_order_relaxed);
     }
 
     update_processing_state(ProcessingState::IDLE);
@@ -668,6 +677,36 @@ void VideoStreamContainer::set_value_impl(
         return;
 
     (*pixels)[idx] = *static_cast<const uint8_t*>(in);
+}
+
+std::span<const float> VideoStreamContainer::processed_frame_as_float(uint64_t frame_index) const
+{
+    if (frame_index >= m_processed_data.size())
+        return {};
+
+    if (frame_index >= m_float_frame_cache.size()) {
+        m_float_frame_cache.resize(frame_index + 1);
+        m_float_frame_dirty[frame_index].store(true, std::memory_order_relaxed);
+    }
+
+    if (!m_float_frame_dirty[frame_index].load(std::memory_order_acquire))
+        return { m_float_frame_cache[frame_index] };
+
+    auto result = as_normalised_float(m_processed_data[frame_index], m_float_frame_cache[frame_index]);
+    if (!result.empty())
+        m_float_frame_dirty[frame_index].store(false, std::memory_order_release);
+
+    return result;
+}
+
+void VideoStreamContainer::invalidate_float_frame_cache()
+{
+    if (m_processed_data.size() > m_float_frame_dirty.size()) {
+        m_float_frame_cache.resize(m_processed_data.size());
+        m_float_frame_dirty = std::vector<std::atomic<bool>>(m_processed_data.size());
+    }
+    for (auto& flag : m_float_frame_dirty)
+        flag.store(true, std::memory_order_release);
 }
 
 } // namespace MayaFlux::Kakshya

@@ -261,6 +261,22 @@ public:
      */
     void set_pixels(std::span<const float> data, uint32_t layer = 0);
 
+    /**
+     * @brief Layer pixel data as a normalised float span.
+     *
+     * uint8_t source is divided by 255.0f. uint16_t by 65535.0f.
+     * float source is zero-copy into the variant's own storage.
+     * Returns empty span if layer is out of range or the variant
+     * holds a non-pixel type.
+     *
+     * Result is cached per layer and reused until set_pixels()
+     * or from_image() invalidates it for that layer.
+     *
+     * @param layer Array layer index. Defaults to 0.
+     * @return Normalised float span, w * h * channels elements.
+     */
+    [[nodiscard]] std::span<const float> as_normalised_float(uint32_t layer = 0) const;
+
     //=========================================================================
     // Metadata
     //=========================================================================
@@ -428,6 +444,9 @@ private:
     std::vector<DataVariant> m_processed_data;
     std::shared_ptr<DataProcessor> m_processor;
     std::shared_ptr<DataProcessingChain> m_chain;
+
+    mutable std::vector<std::vector<float>> m_normalised_cache;
+    mutable std::vector<std::atomic<bool>> m_normalised_dirty;
 
     ContainerDataStructure m_structure;
 
