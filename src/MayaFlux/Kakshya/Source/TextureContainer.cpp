@@ -1,11 +1,15 @@
 #include "TextureContainer.hpp"
 
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/VKImage.hpp"
-#include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Kakshya/NDData/DataAccess.hpp"
+
 #include "MayaFlux/Kakshya/Utils/CoordUtils.hpp"
+#include "MayaFlux/Kakshya/Utils/DataUtils.hpp"
 #include "MayaFlux/Kakshya/Utils/RegionUtils.hpp"
+
 #include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
+
+#include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux::Kakshya {
 
@@ -188,6 +192,12 @@ TextureContainer::TextureContainer(uint32_t width, uint32_t height, ImageFormat 
         m_data.emplace_back(make_empty_storage(m_format, element_count));
     }
 
+    m_normalised_cache.resize(m_data.size());
+
+    m_normalised_dirty = std::vector<std::atomic<bool>>(m_data.size());
+    for (auto& flag : m_normalised_dirty)
+        flag.store(true, std::memory_order_relaxed);
+
     m_slot_locks.resize(m_data.size());
     setup_dimensions();
 
@@ -259,6 +269,7 @@ void TextureContainer::from_image(const std::shared_ptr<Core::VKImage>& image, u
         TextureLoom::instance().download_data(image, ptr, sz, nullptr);
     }
 
+    m_normalised_dirty[layer].store(true, std::memory_order_release);
     update_processing_state(ProcessingState::READY);
 }
 
@@ -294,6 +305,7 @@ void TextureContainer::from_image(
         TextureLoom::instance().download_data(image, ptr, sz, staging);
     }
 
+    m_normalised_dirty[layer].store(true, std::memory_order_release);
     update_processing_state(ProcessingState::READY);
 }
 
@@ -324,6 +336,8 @@ void TextureContainer::from_image_array(const std::shared_ptr<Core::VKImage>& im
         auto [ptr, bytes] = variant_bytes_mut(m_data[i]);
         if (ptr && bytes == layer_bytes)
             std::memcpy(ptr, combined.data() + i * layer_bytes, layer_bytes);
+
+        m_normalised_dirty[i].store(true, std::memory_order_release);
     }
 
     update_processing_state(ProcessingState::READY);
@@ -358,6 +372,8 @@ void TextureContainer::from_image_array(
         auto [ptr, bytes] = variant_bytes_mut(m_data[i]);
         if (ptr && bytes == layer_bytes)
             std::memcpy(ptr, combined.data() + i * layer_bytes, layer_bytes);
+
+        m_normalised_dirty[i].store(true, std::memory_order_release);
     }
 
     update_processing_state(ProcessingState::READY);
@@ -565,6 +581,7 @@ void TextureContainer::set_pixels(std::span<const uint8_t> data, uint32_t layer)
 
     Memory::SeqlockWriteGuard g(m_slot_locks[layer]);
     std::ranges::copy(data, buf->begin());
+    m_normalised_dirty[layer].store(true, std::memory_order_release);
 }
 
 void TextureContainer::set_pixels(std::span<const uint16_t> data, uint32_t layer)
@@ -590,6 +607,7 @@ void TextureContainer::set_pixels(std::span<const uint16_t> data, uint32_t layer
 
     Memory::SeqlockWriteGuard g(m_slot_locks[layer]);
     std::ranges::copy(data, buf->begin());
+    m_normalised_dirty[layer].store(true, std::memory_order_release);
 }
 
 void TextureContainer::set_pixels(std::span<const float> data, uint32_t layer)
@@ -615,6 +633,26 @@ void TextureContainer::set_pixels(std::span<const float> data, uint32_t layer)
 
     Memory::SeqlockWriteGuard g(m_slot_locks[layer]);
     std::ranges::copy(data, buf->begin());
+    m_normalised_dirty[layer].store(true, std::memory_order_release);
+}
+
+std::span<const float> TextureContainer::as_normalised_float(uint32_t layer) const
+{
+    if (layer >= m_data.size())
+        return {};
+
+    if (!m_normalised_dirty[layer].load(std::memory_order_acquire))
+        return { m_normalised_cache[layer] };
+
+    std::span<const float> result;
+    seqlock_read_void(m_slot_locks[layer], 8, [&] {
+        result = Kakshya::as_normalised_float(m_data[layer], m_normalised_cache[layer]);
+    });
+
+    if (!result.empty())
+        m_normalised_dirty[layer].store(false, std::memory_order_release);
+
+    return result;
 }
 
 //=============================================================================
