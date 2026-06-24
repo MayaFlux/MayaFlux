@@ -4,24 +4,30 @@
  * @file AsmGenerator.cpp
  * @brief SPIR-V assembly and GLSL kernel emitters for ShaderSpec.
  *
- * SPIR-V assembly path (emit_spirv_asm): complete for all SSBO element types
- * (SCALAR_F32, VEC2_F32, VEC3_F32, VEC4_F32) with all KernelOps. IMAGE_2D
- * storage image path (emit_image_body) supports single and dual input images
- * with all single- and two-operand KernelOps. GLSL kernel path
- * (emit_glsl_kernel): complete, dispatched when spec.kernel is set via
- * MF_KERNEL.
+ * The assembly path (emit_spirv_asm) is complete for all binding modalities:
  *
- * Remaining gap
+ * SSBO (SCALAR_F32, VEC2_F32, VEC3_F32, VEC4_F32) — all KernelOps via
+ * emit_elementwise_body. Element type, ArrayStride, and pointer type are
+ * derived from GpuDataFormat. Scalar PC operands are splatted to vector
+ * width via OpCompositeConstruct before arithmetic.
  *
- * TEXTURE_2D sampled image bindings in the SPIR-V assembly path.
- * emit_header, emit_decorations, and emit_types all silently skip TEXTURE_2D
- * bindings. No OpTypeSampledImage, no combined image sampler variable, no
- * OpImageSampleExplicitLod in the body. Fix requires OpTypeSampler,
- * OpTypeSampledImage, OpVariable for the combined sampler, and
- * OpImageSampleExplicitLod or OpImageFetch in the body. The GLSL path via
- * MF_KERNEL handles TEXTURE_2D correctly today. The assembly path gap only
- * matters for filter ops that read a TextureContainer as a sampled source
- * without a user-supplied kernel.
+ * IMAGE_2D storage images — emit_image_body handles any number of Input/InOut
+ * images and one Output image. All single- and two-operand KernelOps apply
+ * per channel. StorageImageReadWithoutFormat emitted when any input image
+ * is present.
+ *
+ * TEXTURE_2D sampled images — emit_image_body loads each sampled texture via
+ * OpTypeSampledImage / OpImageSampleExplicitLod at normalised UV derived from
+ * GlobalInvocationID divided by width/height push constant fields. By
+ * convention the first two PC fields of any spec with TEXTURE_2D bindings
+ * are width and height; op-specific PC fields follow.
+ *
+ * GLSL kernel path (emit_glsl_kernel) handles all three modalities when
+ * spec.kernel is set via MF_KERNEL.
+ *
+ * Remaining incomplete path: emit_reduction_body. The shared memory tree
+ * is partially emitted but lacks OpLoopMerge and the back-edge. KernelOp::Sum
+ * and KernelOp::Max produce invalid SPIR-V. No caller exercises this path.
  */
 
 namespace MayaFlux::Portal::Graphics::detail {
@@ -109,9 +115,12 @@ namespace {
 
         std::string iface = "%gid_var";
         for (const auto& b : spec.bindings) {
-            if (b.modality == Kakshya::DataModality::TEXTURE_2D
-                || b.modality == Kakshya::DataModality::IMAGE_2D)
+            if (b.modality == Kakshya::DataModality::IMAGE_2D)
                 continue;
+            if (b.modality == Kakshya::DataModality::TEXTURE_2D) {
+                iface += " %tex_" + b.name;
+                continue;
+            }
             iface += " %buf_" + b.name;
         }
         if (has_storage_image) {
@@ -178,6 +187,14 @@ namespace {
             } else if (b.direction == BindingDirection::Output) {
                 o += "OpDecorate " + var + " NonReadable\n";
             }
+        }
+
+        for (const auto& b : spec.bindings) {
+            if (b.modality != Kakshya::DataModality::TEXTURE_2D)
+                continue;
+            o += "OpDecorate %tex_" + b.name + " DescriptorSet 0\n";
+            o += "OpDecorate %tex_" + b.name + " Binding "
+                + std::to_string(b.binding_index) + "\n";
         }
 
         if (!spec.pc_fields.empty()) {
@@ -276,6 +293,30 @@ namespace {
                     continue;
                 o += "%img_" + b.name + " = OpVariable %ptr_img2d UniformConstant\n";
             }
+            o += "\n";
+        }
+
+        bool has_texture_2d = false;
+        for (const auto& b : spec.bindings) {
+            if (b.modality == Kakshya::DataModality::TEXTURE_2D) {
+                has_texture_2d = true;
+                break;
+            }
+        }
+
+        if (has_texture_2d) {
+            if (!need_v2f32 && !has_image_2d)
+                o += "%v2f32      = OpTypeVector %f32 2\n";
+            o += "%sampler_t  = OpTypeSampler\n";
+            o += "%img2d_s_t  = OpTypeImage %f32 2D 0 0 0 1 Unknown\n";
+            o += "%simgc_t    = OpTypeSampledImage %img2d_s_t\n";
+            o += "%ptr_simg   = OpTypePointer UniformConstant %simgc_t\n";
+            for (const auto& b : spec.bindings) {
+                if (b.modality != Kakshya::DataModality::TEXTURE_2D)
+                    continue;
+                o += "%tex_" + b.name + " = OpVariable %ptr_simg UniformConstant\n";
+            }
+            o += "%lod_zero   = OpConstant %f32 0.0\n";
             o += "\n";
         }
 
@@ -642,6 +683,35 @@ namespace {
         if (!spec.pc_fields.empty())
             o += "\n";
 
+        std::vector<const BindingSlot*> tex_inputs;
+        for (const auto& b : spec.bindings) {
+            if (b.modality == Kakshya::DataModality::TEXTURE_2D)
+                tex_inputs.push_back(&b);
+        }
+
+        if (!tex_inputs.empty()) {
+            const std::string pw = spec.pc_fields.size() > 0
+                ? ("%pc_" + spec.pc_fields[0].name)
+                : "%lod_zero";
+            const std::string ph = spec.pc_fields.size() > 1
+                ? ("%pc_" + spec.pc_fields[1].name)
+                : "%lod_zero";
+            o += "%fix = OpConvertUToF %f32 %ix\n";
+            o += "%fiy = OpConvertUToF %f32 %iy\n";
+            o += "%u   = OpFDiv %f32 %fix " + pw + "\n";
+            o += "%v   = OpFDiv %f32 %fiy " + ph + "\n";
+            o += "%uv  = OpCompositeConstruct %v2f32 %u %v\n\n";
+
+            for (size_t ti = 0; ti < tex_inputs.size(); ++ti) {
+                const std::string idx = std::to_string(img_inputs.size() + ti);
+                o += "%simg_" + tex_inputs[ti]->name
+                    + " = OpLoad %simgc_t %tex_" + tex_inputs[ti]->name + "\n";
+                o += "%raw_in" + idx + " = OpImageSampleExplicitLod %v4f32 %simg_"
+                    + tex_inputs[ti]->name + " %uv Lod %lod_zero\n";
+            }
+            o += "\n";
+        }
+
         for (size_t ii = 0; ii < img_inputs.size(); ++ii) {
             o += "%raw_in" + std::to_string(ii) + " = OpImageRead %v4f32 %img_"
                 + img_inputs[ii]->name + " %coord\n";
@@ -657,12 +727,19 @@ namespace {
         o += "%ch0_b = OpCompositeExtract %f32 %raw_in0 2\n";
         o += "%ch0_a = OpCompositeExtract %f32 %raw_in0 3\n";
 
-        const bool has_second = img_inputs.size() > 1;
-        if (has_second) {
-            o += "%ch1_r = OpCompositeExtract %f32 %raw_in1 0\n";
-            o += "%ch1_g = OpCompositeExtract %f32 %raw_in1 1\n";
-            o += "%ch1_b = OpCompositeExtract %f32 %raw_in1 2\n";
-            o += "%ch1_a = OpCompositeExtract %f32 %raw_in1 3\n";
+        const bool has_second = img_inputs.size() > 1
+            || (!img_inputs.empty() && !tex_inputs.empty())
+            || tex_inputs.size() > 1;
+
+        const std::string second_idx = img_inputs.size() > 1
+            ? "1"
+            : (!tex_inputs.empty() ? std::to_string(img_inputs.size()) : "");
+
+        if (has_second && !second_idx.empty()) {
+            o += "%ch1_r = OpCompositeExtract %f32 %raw_in" + second_idx + " 0\n";
+            o += "%ch1_g = OpCompositeExtract %f32 %raw_in" + second_idx + " 1\n";
+            o += "%ch1_b = OpCompositeExtract %f32 %raw_in" + second_idx + " 2\n";
+            o += "%ch1_a = OpCompositeExtract %f32 %raw_in" + second_idx + " 3\n";
         }
         o += "\n";
 
