@@ -48,6 +48,8 @@ enum class VisionOp : uint8_t {
     Open,
     Close,
     MorphGradient,
+    ConnectedComponents,
+    FindContours,
 
     HarrisResponse,
     ExtractPeaks,
