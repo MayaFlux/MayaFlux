@@ -201,4 +201,31 @@ void normalize_range_inplace(std::span<float> data, float lo, float hi)
         });
 }
 
+std::vector<float> downsample_2x(
+    std::span<const float> src, uint32_t w, uint32_t h,
+    uint32_t& out_w, uint32_t& out_h)
+{
+    out_w = w / 2;
+    out_h = h / 2;
+    const size_t n = static_cast<size_t>(out_w) * out_h;
+    std::vector<float> out(n);
+
+    P::for_each(P::par_unseq,
+        std::views::iota(size_t { 0 }, n).begin(),
+        std::views::iota(size_t { 0 }, n).end(),
+        [&](size_t idx) {
+            const uint32_t ox = static_cast<uint32_t>(idx % out_w);
+            const uint32_t oy = static_cast<uint32_t>(idx / out_w);
+            const uint32_t sx = ox * 2;
+            const uint32_t sy = oy * 2;
+            out[idx] = (src[static_cast<size_t>(sy) * w + sx]
+                           + src[static_cast<size_t>(sy) * w + sx + 1]
+                           + src[static_cast<size_t>(sy + 1) * w + sx]
+                           + src[static_cast<size_t>(sy + 1) * w + sx + 1])
+                * 0.25F;
+        });
+
+    return out;
+}
+
 } // namespace MayaFlux::Kinesis::Vision

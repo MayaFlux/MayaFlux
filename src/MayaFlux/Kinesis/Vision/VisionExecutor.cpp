@@ -47,6 +47,17 @@ VisionResult VisionExecutor::run(
     for (const auto& step : sequence.steps) {
         switch (step.op) {
 
+        case VisionOp::Downsample2x: {
+            uint32_t new_w = 0, new_h = 0;
+            current = downsample_2x(current, w, h, new_w, new_h);
+            w = new_w;
+            h = new_h;
+            result.w = w;
+            result.h = h;
+            result.structured = std::monostate {};
+            break;
+        }
+
             // =====================================================================
             // Colour space
             // =====================================================================

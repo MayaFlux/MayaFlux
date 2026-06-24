@@ -29,6 +29,8 @@ enum class VisionOp : uint8_t {
     RgbaToHsv,
     GrayToRgba,
 
+    Downsample2x,
+
     Threshold,
     ThresholdAdaptive,
     ThresholdOtsu,
@@ -173,6 +175,11 @@ struct VisionSequence {
         Builder& gray_to_rgba()
         {
             return push(VisionOp::GrayToRgba);
+        }
+
+        Builder& downsample_2x()
+        {
+            return push(VisionOp::Downsample2x);
         }
 
         Builder& threshold(float value)

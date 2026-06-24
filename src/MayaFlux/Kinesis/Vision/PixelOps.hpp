@@ -130,4 +130,21 @@ MAYAFLUX_API void normalize_inplace(std::span<float> data);
  */
 MAYAFLUX_API void normalize_range_inplace(std::span<float> data, float lo, float hi);
 
+/**
+ * @brief 2x box-filter downsample of a single-channel float image.
+ *
+ * Output dimensions are floor(w/2) x floor(h/2). Each output pixel is the
+ * mean of its 2x2 source block.
+ *
+ * @param src   Single-channel float span, size must be w * h.
+ * @param w     Input width in pixels.
+ * @param h     Input height in pixels.
+ * @param out_w Output width written here (floor(w/2)).
+ * @param out_h Output height written here (floor(h/2)).
+ * @return      Downsampled float vector of length out_w * out_h.
+ */
+[[nodiscard]] MAYAFLUX_API std::vector<float> downsample_2x(
+    std::span<const float> src, uint32_t w, uint32_t h,
+    uint32_t& out_w, uint32_t& out_h);
+
 } // namespace MayaFlux::Kinesis::Vision
