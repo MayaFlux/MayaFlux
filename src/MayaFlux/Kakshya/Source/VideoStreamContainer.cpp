@@ -1,6 +1,7 @@
 #include "VideoStreamContainer.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
+#include "MayaFlux/Kakshya/DataProcessingChain.hpp"
 #include "MayaFlux/Kakshya/DataProcessor.hpp"
 #include "MayaFlux/Kakshya/NDData/DataAccess.hpp"
 #include "MayaFlux/Kakshya/Processors/FrameAccessProcessor.hpp"
@@ -26,6 +27,7 @@ VideoStreamContainer::VideoStreamContainer(uint32_t width,
     , m_channels(channels)
     , m_frame_rate(frame_rate)
 {
+    m_processing_chain = std::make_shared<DataProcessingChain>();
     m_structure = ContainerDataStructure::image_interleaved();
     m_structure.modality = DataModality::VIDEO_COLOR;
 
@@ -564,6 +566,14 @@ void VideoStreamContainer::set_default_processor(const std::shared_ptr<DataProce
 std::shared_ptr<DataProcessor> VideoStreamContainer::get_default_processor() const
 {
     return m_default_processor;
+}
+
+std::shared_ptr<DataProcessingChain> VideoStreamContainer::get_processing_chain()
+{
+    if (!m_processing_chain)
+        m_processing_chain = std::make_shared<DataProcessingChain>();
+
+    return m_processing_chain;
 }
 
 // =========================================================================

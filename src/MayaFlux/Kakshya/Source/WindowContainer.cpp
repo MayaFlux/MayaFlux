@@ -2,6 +2,7 @@
 
 #include "MayaFlux/Core/Backends/Windowing/Window.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
+#include "MayaFlux/Kakshya/DataProcessingChain.hpp"
 #include "MayaFlux/Kakshya/NDData/DataAccess.hpp"
 #include "MayaFlux/Kakshya/Processors/WindowAccessProcessor.hpp"
 #include "MayaFlux/Kakshya/Utils/CoordUtils.hpp"
@@ -60,6 +61,7 @@ WindowContainer::WindowContainer(std::shared_ptr<Core::Window> window,
             "WindowContainer requires a valid window");
     }
 
+    m_processing_chain = std::make_shared<DataProcessingChain>();
     setup_dimensions();
 
     MF_INFO(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
@@ -604,6 +606,9 @@ std::shared_ptr<DataProcessor> WindowContainer::get_default_processor() const
 
 std::shared_ptr<DataProcessingChain> WindowContainer::get_processing_chain()
 {
+    if (!m_processing_chain)
+        m_processing_chain = std::make_shared<DataProcessingChain>();
+
     return m_processing_chain;
 }
 

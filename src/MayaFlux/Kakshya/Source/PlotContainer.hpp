@@ -273,7 +273,7 @@ public:
     void set_default_processor(const std::shared_ptr<DataProcessor>& processor) override;
     [[nodiscard]] std::shared_ptr<DataProcessor> get_default_processor() const override;
 
-    [[nodiscard]] std::shared_ptr<DataProcessingChain> get_processing_chain() override { return m_chain; }
+    [[nodiscard]] std::shared_ptr<DataProcessingChain> get_processing_chain() override;
     void set_processing_chain(const std::shared_ptr<DataProcessingChain>& chain) override { m_chain = chain; }
 
     [[nodiscard]] std::vector<DataVariant>& get_processed_data() override { return m_processed_data; }
