@@ -16,8 +16,9 @@ namespace {
     {
         const size_t n = static_cast<size_t>(w) * h;
 
-        auto dx = filter_separable(gray, w, h, kx, { (const float[]) { 1.0F, 2.0F, 1.0F }, 3 });
-        auto dy = filter_separable(gray, w, h, { (const float[]) { 1.0F, 2.0F, 1.0F }, 3 }, ky);
+        static constexpr float smooth[] = { 1.0f, 2.0f, 1.0f };
+        auto dx = filter_separable(gray, w, h, kx, smooth);
+        auto dy = filter_separable(gray, w, h, smooth, ky);
 
         std::vector<float> mag(n);
         std::vector<float> ang(n);
