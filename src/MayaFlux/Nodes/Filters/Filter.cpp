@@ -203,7 +203,7 @@ std::vector<double> Filter::process_batch(unsigned int num_samples)
 {
     std::vector<double> output(num_samples);
     for (unsigned int i = 0; i < num_samples; ++i) {
-        output[i] = process_sample(0.0); // The input value doesn't matter since we have an input node
+        output[i] = process_sample(0.0);
     }
     return output;
 }
