@@ -5,6 +5,7 @@
 #include "MayaFlux/Kakshya/NDData/DataAccess.hpp"
 #include "MayaFlux/Kakshya/Processors/FrameAccessProcessor.hpp"
 #include "MayaFlux/Kakshya/Utils/CoordUtils.hpp"
+#include "MayaFlux/Kakshya/Utils/DataUtils.hpp"
 #include "MayaFlux/Kakshya/Utils/RegionUtils.hpp"
 
 #include "MayaFlux/Registry/BackendRegistry.hpp"
@@ -668,6 +669,30 @@ void VideoStreamContainer::set_value_impl(
         return;
 
     (*pixels)[idx] = *static_cast<const uint8_t*>(in);
+}
+
+std::span<const float> VideoStreamContainer::processed_frame_as_float(
+    uint64_t frame_index) const
+{
+    if (frame_index >= m_processed_data.size())
+        return {};
+
+    if (!m_float_frame_dirty.load(std::memory_order_acquire)
+        && m_float_frame_cached_index == frame_index)
+        return { m_float_frame_cache };
+
+    auto result = as_normalised_float(m_processed_data[frame_index], m_float_frame_cache);
+    if (!result.empty()) {
+        m_float_frame_cached_index = frame_index;
+        m_float_frame_dirty.store(false, std::memory_order_release);
+    }
+
+    return result;
+}
+
+void VideoStreamContainer::invalidate_float_frame_cache()
+{
+    m_float_frame_dirty.store(true, std::memory_order_release);
 }
 
 } // namespace MayaFlux::Kakshya

@@ -393,6 +393,23 @@ protected:
     void set_value_impl(const std::vector<uint64_t>& coords,
         const void* in, const std::type_info& type) override;
 
+    /**
+     * @brief Processed frame at @p frame_index as a normalised float span.
+     *
+     * Valid after FrameAccessProcessor has written processed_data.
+     * uint8_t source values are divided by 255.0f. float source is
+     * zero-copy. Returns empty span if frame_index is out of range or
+     * the variant holds a non-pixel type.
+     *
+     * The cache covers the last requested frame_index only. A call with
+     * a different index invalidates and recomputes.
+     *
+     * @param frame_index Zero-based index into processed_data. Defaults to 0.
+     * @return Normalised float span, w * h * channels elements.
+     */
+    [[nodiscard]] std::span<const float> processed_frame_as_float(
+        uint64_t frame_index = 0) const;
+
 private:
     [[nodiscard]] std::span<const uint8_t> get_frame_typed(uint64_t frame_index) const
     {
@@ -400,6 +417,12 @@ private:
     }
 
     void get_frames_typed(std::span<uint8_t> output, uint64_t start_frame, uint64_t num_frames) const;
+
+    void invalidate_float_frame_cache();
+
+    mutable std::vector<float> m_float_frame_cache;
+    mutable std::atomic<bool> m_float_frame_dirty { true };
+    mutable uint64_t m_float_frame_cached_index { std::numeric_limits<uint64_t>::max() };
 };
 
 } // namespace MayaFlux::Kakshya
