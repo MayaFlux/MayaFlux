@@ -11,40 +11,34 @@
 namespace MayaFlux::Buffers {
 
 /**
- * @class VisionBufferProcessor
+ * @class ImageCVProcessor
  * @brief BufferProcessor executing a Kinesis::Vision pipeline on a GpuImageSource buffer.
  *
- * Compatible with any VKBuffer subclass satisfying GpuImageSource: TextureBuffer
- * and its children (VideoContainerBuffer, TextBuffer), NodeTextureBuffer, and
- * NetworkTextureBuffer. The correct image accessor (get_texture or get_gpu_texture)
- * is resolved at compile time via resolve_gpu_image.
+ * Renamed from ImageCVProcessor. ImageCVProcessor makes the domain
+ * (computer vision on image data) explicit and avoids collision with
+ * VisionProcessor (the Kakshya DataProcessor over pixel containers).
  *
- * Each processing_function call downloads the current GPU image via
- * download_and_normalise, runs the configured VisionSequence through VisionExecutor,
- * stores the VisionResult, and signals the BroadcastSource if wired.
- *
- * m_raw_staging and m_float_work are reused across calls to avoid per-frame
- * allocation. Image dimensions are read from the VKImage each call so dimension
- * changes (resize, video seek) are handled transparently.
+ * m_gpu_staging is a persistent host-visible VKBuffer allocated once in
+ * on_attach, sized to the image footprint. Passed to download_and_normalise
+ * on every call so TextureLoom::download_data uses the fenced path rather
+ * than waitIdle, avoiding graphics queue stalls on each frame download.
  *
  * @tparam T A VKBuffer subclass satisfying GpuImageSource.
- *
- * @see VisionProcessor, GpuImageSource, resolve_gpu_image, download_and_normalise
  */
 template <GpuImageSource T>
-class VisionBufferProcessor : public BufferProcessor {
+class ImageCVProcessor : public BufferProcessor {
 public:
     /**
      * @brief Construct with the vision pipeline to execute each processing_function call.
      * @param sequence Ordered VisionSteps describing the pipeline.
      */
-    explicit VisionBufferProcessor(Kinesis::Vision::VisionSequence sequence)
+    explicit ImageCVProcessor(Kinesis::Vision::VisionSequence sequence)
         : m_sequence(std::move(sequence))
     {
         m_processing_token = ProcessingToken::GRAPHICS_BACKEND;
     }
 
-    ~VisionBufferProcessor() override = default;
+    ~ImageCVProcessor() override = default;
 
     /**
      * @brief Validate the buffer type and reset executor state.
@@ -62,12 +56,18 @@ public:
                 Journal::Component::Buffers,
                 Journal::Context::BufferProcessing,
                 std::source_location::current(),
-                "VisionBufferProcessor<T>: buffer is not the expected type");
+                "ImageCVProcessor<T>: buffer is not the expected type");
         }
         m_buffer = typed;
         m_executor.reset();
+
+        if (!m_gpu_staging) {
+            constexpr size_t k_max_frame_bytes = 3840 * 2160 * 4;
+            m_gpu_staging = create_image_staging_buffer(k_max_frame_bytes);
+        }
+
         MF_INFO(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-            "VisionBufferProcessor attached");
+            "ImageCVProcessor attached");
     }
 
     /**
@@ -78,6 +78,7 @@ public:
     {
         m_buffer.reset();
         m_executor.reset();
+        m_gpu_staging.reset();
     }
 
     /**
@@ -97,7 +98,7 @@ public:
         if (!image || !image->is_initialized())
             return;
 
-        auto frame = download_and_normalise(image, m_raw_staging, m_float_work);
+        auto frame = download_and_normalise(image, m_raw_staging, m_float_work, m_gpu_staging);
         if (frame.empty())
             return;
 
@@ -160,9 +161,9 @@ private:
 
     std::vector<uint8_t> m_raw_staging;
     std::vector<float> m_float_work;
+    std::shared_ptr<VKBuffer> m_gpu_staging;
 
     std::weak_ptr<T> m_buffer;
-
     std::shared_ptr<Vruta::BroadcastSource<Kinesis::Vision::VisionResult>> m_result_source;
     std::atomic<bool> m_is_processing { false };
 };

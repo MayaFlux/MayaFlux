@@ -454,7 +454,8 @@ void download_from_gpu_async(
 std::span<const float> download_and_normalise(
     const std::shared_ptr<Core::VKImage>& image,
     std::vector<uint8_t>& raw_staging,
-    std::vector<float>& work)
+    std::vector<float>& work,
+    const std::shared_ptr<VKBuffer>& gpu_staging)
 {
     if (!image || !image->is_initialized())
         return {};
@@ -473,11 +474,9 @@ std::span<const float> download_and_normalise(
         return {};
 
     raw_staging.resize(byte_size);
-    loom.download_data(
-        image, raw_staging.data(), byte_size, nullptr);
+    loom.download_data(image, raw_staging.data(), byte_size, gpu_staging);
 
     Kakshya::DataVariant variant { raw_staging };
-
     return Kakshya::as_normalised_float(variant, work);
 }
 

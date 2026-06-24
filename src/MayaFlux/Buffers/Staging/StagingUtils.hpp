@@ -243,13 +243,15 @@ template <GpuImageSource T>
  * @param image       GPU-resident source image.
  * @param raw_staging Persistent byte buffer for the GPU download. Reuse across calls.
  * @param work        Persistent float buffer for normalisation output. Reuse across calls.
+ * @param gpu_staging Optional persistent staging buffer for device-local images. Reuse across calls.
  * @return Normalised float span pointing into @p work (or directly into the
  *         variant storage for float-format images).
  */
 [[nodiscard]] MAYAFLUX_API std::span<const float> download_and_normalise(
     const std::shared_ptr<Core::VKImage>& image,
     std::vector<uint8_t>& raw_staging,
-    std::vector<float>& work);
+    std::vector<float>& work,
+    const std::shared_ptr<VKBuffer>& gpu_staging);
 
 /**
  * @brief Create staging buffer for transfers
