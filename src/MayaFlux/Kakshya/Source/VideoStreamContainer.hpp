@@ -420,9 +420,8 @@ private:
 
     void invalidate_float_frame_cache();
 
-    mutable std::vector<float> m_float_frame_cache;
-    mutable std::atomic<bool> m_float_frame_dirty { true };
-    mutable uint64_t m_float_frame_cached_index { std::numeric_limits<uint64_t>::max() };
+    mutable std::vector<std::vector<float>> m_float_frame_cache;
+    mutable std::vector<std::atomic<bool>> m_float_frame_dirty;
 };
 
 } // namespace MayaFlux::Kakshya
