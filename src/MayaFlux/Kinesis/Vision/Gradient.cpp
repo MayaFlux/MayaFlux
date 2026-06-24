@@ -125,10 +125,17 @@ std::vector<float> canny(
         }
     }
 
-    for (size_t idx = 0; idx < n; ++idx) {
-        if (!strong[idx])
-            continue;
+    std::vector<size_t> stack;
+    for (size_t i = 0; i < n; ++i) {
+        if (strong[i])
+            stack.push_back(i);
+    }
+
+    while (!stack.empty()) {
+        const size_t idx = stack.back();
+        stack.pop_back();
         out[idx] = 1.0F;
+
         const auto px = static_cast<int32_t>(idx % w);
         const auto py = static_cast<int32_t>(idx / w);
 
@@ -143,8 +150,8 @@ std::vector<float> canny(
                     || ny >= static_cast<int32_t>(h))
                     continue;
                 const size_t ni = static_cast<size_t>(ny) * w + nx;
-                if (weak[ni])
-                    out[ni] = 1.0F;
+                if (weak[ni] && out[ni] == 0.0F)
+                    stack.push_back(ni);
             }
         }
     }
