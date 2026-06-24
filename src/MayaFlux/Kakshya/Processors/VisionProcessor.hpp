@@ -4,6 +4,11 @@
 #include "MayaFlux/Kinesis/Vision/VisionExecutor.hpp"
 #include "MayaFlux/Kinesis/Vision/VisionOp.hpp"
 
+namespace MayaFlux::Vruta {
+template <typename T>
+class BroadcastSource;
+}
+
 namespace MayaFlux::Kakshya {
 
 /**
@@ -83,17 +88,32 @@ public:
      */
     [[nodiscard]] const Kinesis::Vision::VisionResult& get_result() const { return m_result; }
 
+    /**
+     * @brief Shared BroadcastSource signalled with each VisionResult after a
+     *        successful process() call.
+     *
+     * Created on first call. Wire with Kriya::on_signal to consume results
+     * from a coroutine without polling get_result().
+     *
+     * One coroutine per source. For multiple consumers create one
+     * VisionProcessor per consumer or poll get_result() directly.
+     *
+     * @return Shared pointer to the BroadcastSource, never null after first call.
+     */
+    [[nodiscard]] std::shared_ptr<Vruta::BroadcastSource<Kinesis::Vision::VisionResult>> get_result_source();
+
 private:
     Kinesis::Vision::VisionSequence m_sequence;
     Kinesis::Vision::VisionExecutor m_executor;
     Kinesis::Vision::VisionResult m_result;
 
-    uint32_t m_width { 0 };
-    uint32_t m_height { 0 };
+    uint32_t m_width {};
+    uint32_t m_height {};
 
     mutable std::vector<float> m_float_storage;
 
     std::atomic<bool> m_is_processing { false };
+    std::shared_ptr<Vruta::BroadcastSource<Kinesis::Vision::VisionResult>> m_result_source;
 };
 
 } // namespace MayaFlux::Kakshya

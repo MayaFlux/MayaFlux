@@ -5,6 +5,8 @@
 #include "MayaFlux/Kakshya/Source/VideoStreamContainer.hpp"
 #include "MayaFlux/Kakshya/Source/WindowContainer.hpp"
 
+#include "MayaFlux/Vruta/BroadcastSource.hpp"
+
 namespace MayaFlux::Kakshya {
 
 VisionProcessor::VisionProcessor(Kinesis::Vision::VisionSequence sequence)
@@ -69,7 +71,11 @@ void VisionProcessor::process(const std::shared_ptr<SignalSourceContainer>& cont
         return;
 
     m_is_processing.store(true, std::memory_order_release);
+
     m_result = m_executor.run(m_sequence, frame, m_width, m_height);
+    if (m_result_source)
+        m_result_source->signal(m_result);
+
     m_is_processing.store(false, std::memory_order_release);
 }
 
@@ -79,4 +85,10 @@ void VisionProcessor::set_sequence(Kinesis::Vision::VisionSequence sequence)
     m_executor.reset();
 }
 
+std::shared_ptr<Vruta::BroadcastSource<Kinesis::Vision::VisionResult>> VisionProcessor::get_result_source()
+{
+    if (!m_result_source)
+        m_result_source = std::make_shared<Vruta::BroadcastSource<Kinesis::Vision::VisionResult>>();
+    return m_result_source;
+}
 } // namespace MayaFlux::Kakshya
