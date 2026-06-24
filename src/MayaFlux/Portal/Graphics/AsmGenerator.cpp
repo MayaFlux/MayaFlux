@@ -14,20 +14,8 @@
  *
  * What needs adding after Kinesis::Vision is active
  *
- * 1. Multi-component SSBO types in the SPIR-V assembly path.
- *    emit_decorations hardcodes ArrayStride 4 for every SSBO binding.
- *    emit_types hardcodes OpTypeRuntimeArray %f32 for every SSBO binding.
- *    emit_elementwise_body hardcodes %pf32_<name> pointer and scalar load/store.
- *    VEC2_F32 (stride 8), VEC3_F32 (stride 12), VEC4_F32 (stride 16) all
- *    produce wrong access chains. Fix: ssbo_type_info() helper maps
- *    GpuDataFormat to (elem_type, ptr_type_name, array_stride). Emit
- *    deduplicated vector type declarations in emit_types, use typed access
- *    chains and OpVectorTimesScalar / splat constructs in emit_elementwise_body
- *    for ops that mix scalar PC with vector SSBO elements. No caller exists
- *    yet — Kinesis::Vision pixel ops on uint8/float pixel SSBOs are the first
- *    concrete callers.
  *
- * 2. IMAGE_2D two-image ops (read-from-storage-image + write).
+ * 1. IMAGE_2D two-image ops (read-from-storage-image + write).
  *    emit_image_body resolves one img_in and one img_out. KernelOp::Add,
  *    Multiply, Mix in emit_image_body fall through to default (passthrough)
  *    because they need two img_in slots. Fix: extend the img_in resolution
@@ -37,7 +25,7 @@
  *    Input IMAGE_2D binding is present. Callers: Kinesis::Vision blend,
  *    composite, difference ops.
  *
- * 3. TEXTURE_2D sampled image bindings in the SPIR-V assembly path.
+ * 2. TEXTURE_2D sampled image bindings in the SPIR-V assembly path.
  *    emit_header, emit_decorations, emit_types all silently skip TEXTURE_2D
  *    bindings. No OpTypeSampledImage, no combined image sampler variable, no
  *    OpImageSampleExplicitLod in the body. Fix requires OpCapability Sampled1D
@@ -46,15 +34,7 @@
  *    is structurally heavier than storage image. Callers: Kinesis::Vision
  *    filter ops that read from a TextureContainer as a sampled source.
  *
- * 4. MF_KERNEL image body.
- *    emit_glsl_kernel generates correct GLSL for SSBO and IMAGE_2D bindings,
- *    but TEXTURE_2D sampled bindings use sampler2D which requires a combined
- *    image sampler descriptor — a different GpuBufferBinding::ElementType than
- *    IMAGE_STORAGE. The GLSL generation is correct; the binding declaration
- *    in bindings_from_spec maps TEXTURE_2D to IMAGE_SAMPLED which is correct.
- *    No gap in the GLSL path; gap is only in the SPIR-V assembly path (see 3).
- *
- * 5. Reduction body completion.
+ * 3. Reduction body completion.
  *    emit_reduction_body is a placeholder. The shared memory tree is partially
  *    emitted but the loop structure is missing — no OpLoopMerge, no back-edge.
  *    KernelOp::Sum and KernelOp::Max route here but produce invalid SPIR-V.
@@ -88,6 +68,41 @@ namespace {
             return "uint";
         default:
             return "float";
+        }
+    }
+
+    /**
+     * Returns the SPIR-V type ID string for the element type of an SSBO binding.
+     */
+    std::string_view ssbo_elem_spirv_type(Kakshya::GpuDataFormat fmt) noexcept
+    {
+        switch (fmt) {
+        case Kakshya::GpuDataFormat::VEC2_F32:
+            return "%v2f32";
+        case Kakshya::GpuDataFormat::VEC3_F32:
+            return "%v3f32";
+        case Kakshya::GpuDataFormat::VEC4_F32:
+            return "%v4f32";
+        default:
+            return "%f32";
+        }
+    }
+
+    /**
+     * Returns the component count for a GpuDataFormat SSBO element.
+     * Scalar formats return 1.
+     */
+    uint32_t ssbo_elem_components(Kakshya::GpuDataFormat fmt) noexcept
+    {
+        switch (fmt) {
+        case Kakshya::GpuDataFormat::VEC2_F32:
+            return 2;
+        case Kakshya::GpuDataFormat::VEC3_F32:
+            return 3;
+        case Kakshya::GpuDataFormat::VEC4_F32:
+            return 4;
+        default:
+            return 1;
         }
     }
 
@@ -149,7 +164,9 @@ namespace {
                 || b.modality == Kakshya::DataModality::IMAGE_2D)
                 continue;
 
-            o += "OpDecorate %rta_" + b.name + " ArrayStride 4\n";
+            const auto stride = static_cast<uint32_t>(Kakshya::gpu_data_format_bytes(b.format));
+            o += "OpDecorate %rta_" + b.name + " ArrayStride "
+                + std::to_string(stride) + "\n";
             o += "OpMemberDecorate %blk_" + b.name + " 0 Offset 0\n";
             o += "OpDecorate %blk_" + b.name + " Block\n";
             o += "OpDecorate %buf_" + b.name + " DescriptorSet 0\n";
@@ -179,7 +196,8 @@ namespace {
             for (size_t i = 0; i < spec.pc_fields.size(); ++i) {
                 o += "OpMemberDecorate %pc_blk " + std::to_string(i)
                     + " Offset " + std::to_string(off) + "\n";
-                off += Kakshya::gpu_data_format_bytes(spec.pc_fields[i].format);
+                off += static_cast<uint32_t>(
+                    Kakshya::gpu_data_format_bytes(spec.pc_fields[i].format));
             }
         }
         o += "\n";
@@ -201,26 +219,62 @@ namespace {
         o += "%ptr_in_v3u32 = OpTypePointer Input %v3u32\n";
         o += "%gid_var = OpVariable %ptr_in_v3u32 Input\n\n";
 
+        bool need_v2f32 = false;
+        bool need_v3f32 = false;
+        bool need_v4f32 = false;
+
         for (const auto& b : spec.bindings) {
             if (b.modality == Kakshya::DataModality::TEXTURE_2D
                 || b.modality == Kakshya::DataModality::IMAGE_2D)
                 continue;
-            o += "%rta_" + b.name + " = OpTypeRuntimeArray %f32\n";
-            o += "%blk_" + b.name + " = OpTypeStruct %rta_" + b.name + "\n";
-            o += "%pblk_" + b.name + " = OpTypePointer StorageBuffer %blk_" + b.name + "\n";
-            o += "%buf_" + b.name + " = OpVariable %pblk_" + b.name + " StorageBuffer\n";
-            o += "%pf32_" + b.name + " = OpTypePointer StorageBuffer %f32\n";
-        }
-        o += "\n";
-
-        bool any_image = false;
-        for (const auto& b : spec.bindings) {
-            if (b.modality == Kakshya::DataModality::IMAGE_2D) {
-                any_image = true;
+            switch (b.format) {
+            case Kakshya::GpuDataFormat::VEC2_F32:
+                need_v2f32 = true;
+                break;
+            case Kakshya::GpuDataFormat::VEC3_F32:
+                need_v3f32 = true;
+                break;
+            case Kakshya::GpuDataFormat::VEC4_F32:
+                need_v4f32 = true;
+                break;
+            default:
                 break;
             }
         }
-        if (any_image) {
+
+        if (need_v2f32)
+            o += "%v2f32 = OpTypeVector %f32 2\n";
+        if (need_v3f32)
+            o += "%v3f32 = OpTypeVector %f32 3\n";
+
+        bool has_image_2d = false;
+        for (const auto& b : spec.bindings) {
+            if (b.modality == Kakshya::DataModality::IMAGE_2D) {
+                has_image_2d = true;
+                break;
+            }
+        }
+        if (need_v4f32 && !has_image_2d)
+            o += "%v4f32 = OpTypeVector %f32 4\n";
+        if (need_v2f32 || need_v3f32 || (need_v4f32 && !has_image_2d))
+            o += "\n";
+
+        for (const auto& b : spec.bindings) {
+            if (b.modality == Kakshya::DataModality::TEXTURE_2D
+                || b.modality == Kakshya::DataModality::IMAGE_2D)
+                continue;
+
+            const std::string_view etype = ssbo_elem_spirv_type(b.format);
+            o += "%rta_" + b.name + " = OpTypeRuntimeArray " + std::string(etype) + "\n";
+            o += "%blk_" + b.name + " = OpTypeStruct %rta_" + b.name + "\n";
+            o += "%pblk_" + b.name + " = OpTypePointer StorageBuffer %blk_" + b.name + "\n";
+            o += "%buf_" + b.name + " = OpVariable %pblk_" + b.name + " StorageBuffer\n";
+            o += "%pelem_" + b.name + " = OpTypePointer StorageBuffer "
+                + std::string(etype) + "\n";
+        }
+        o += "\n";
+
+        if (has_image_2d) {
             o += "%i32          = OpTypeInt 32 1\n";
             o += "%v2i32        = OpTypeVector %i32 2\n";
             o += "%v4f32        = OpTypeVector %f32 4\n";
@@ -285,52 +339,96 @@ namespace {
             ssbos.push_back(&b);
         }
 
+        Kakshya::GpuDataFormat primary_fmt = Kakshya::GpuDataFormat::FLOAT32;
         for (const auto* b : ssbos) {
-            o += "%gep_" + b->name + " = OpAccessChain %pf32_" + b->name
+            if (b->direction != BindingDirection::Output) {
+                primary_fmt = b->format;
+                break;
+            }
+        }
+        const std::string_view etype = ssbo_elem_spirv_type(primary_fmt);
+        const uint32_t ncomp = ssbo_elem_components(primary_fmt);
+        const bool is_vector = (ncomp > 1);
+
+        for (const auto* b : ssbos) {
+            o += "%gep_" + b->name + " = OpAccessChain %pelem_" + b->name
                 + " %buf_" + b->name + " %c0u %i\n";
-            if (b->direction != BindingDirection::Output)
-                o += "%val_" + b->name + " = OpLoad %f32 %gep_" + b->name + "\n";
+            if (b->direction != BindingDirection::Output) {
+                o += "%val_" + b->name + " = OpLoad " + std::string(etype)
+                    + " %gep_" + b->name + "\n";
+            }
         }
         o += "\n";
 
-        std::string result;
+        auto pc_operand = [&](const std::string& field_name) -> std::string {
+            if (!is_vector)
+                return "%pc_" + field_name;
+            const std::string splat = "%spc_" + field_name;
+            std::string construct = splat + " = OpCompositeConstruct "
+                + std::string(etype);
+            const std::string scalar = " %pc_" + field_name;
+            for (uint32_t c = 0; c < ncomp; ++c)
+                construct += scalar;
+            o += construct + "\n";
+            return splat;
+        };
+
         const std::string v0 = ssbos.empty() ? "" : ("%val_" + ssbos[0]->name);
         const std::string v1 = ssbos.size() > 1 ? ("%val_" + ssbos[1]->name) : "";
-        const std::string p0 = spec.pc_fields.empty() ? "" : ("%pc_" + spec.pc_fields[0].name);
-        const std::string p1 = spec.pc_fields.size() > 1 ? ("%pc_" + spec.pc_fields[1].name) : "";
+        const std::string p0 = spec.pc_fields.empty() ? ""
+                                                      : pc_operand(spec.pc_fields[0].name);
+        const std::string p1 = spec.pc_fields.size() > 1
+            ? pc_operand(spec.pc_fields[1].name)
+            : "";
 
+        std::string result;
+        const std::string et = std::string(etype);
         switch (spec.op) {
         case KernelOp::Scale:
-            o += "%res = OpFMul %f32 " + v0 + " " + p0 + "\n";
+            if (is_vector) {
+                o += "%res = OpVectorTimesScalar " + et + " " + v0
+                    + " %pc_" + spec.pc_fields[0].name + "\n";
+            } else {
+                o += "%res = OpFMul " + et + " " + v0 + " " + p0 + "\n";
+            }
+
             result = "%res";
             break;
         case KernelOp::ScaleOffset:
-            o += "%mul = OpFMul %f32 " + v0 + " " + p0 + "\n";
-            o += "%res = OpFAdd %f32 %mul " + p1 + "\n";
+            if (is_vector) {
+                o += "%scaled = OpVectorTimesScalar " + et + " " + v0
+                    + " %pc_" + spec.pc_fields[0].name + "\n";
+                o += "%res = OpFAdd " + et + " %scaled " + p1 + "\n";
+            } else {
+                o += "%mul = OpFMul " + et + " " + v0 + " " + p0 + "\n";
+                o += "%res = OpFAdd " + et + " %mul " + p1 + "\n";
+            }
+
             result = "%res";
             break;
         case KernelOp::Offset:
-            o += "%res = OpFAdd %f32 " + v0 + " " + p0 + "\n";
+            o += "%res = OpFAdd " + et + " " + v0 + " " + p0 + "\n";
             result = "%res";
             break;
         case KernelOp::Clip:
-            o += "%res = OpExtInst %f32 %glsl FClamp " + v0 + " " + p0 + " " + p1 + "\n";
+            o += "%res = OpExtInst " + et + " %glsl FClamp " + v0
+                + " " + p0 + " " + p1 + "\n";
             result = "%res";
             break;
         case KernelOp::Abs:
-            o += "%res = OpExtInst %f32 %glsl FAbs " + v0 + "\n";
+            o += "%res = OpExtInst " + et + " %glsl FAbs " + v0 + "\n";
             result = "%res";
             break;
         case KernelOp::Negate:
-            o += "%res = OpFNegate %f32 " + v0 + "\n";
+            o += "%res = OpFNegate " + et + " " + v0 + "\n";
             result = "%res";
             break;
         case KernelOp::Add:
-            o += "%res = OpFAdd %f32 " + v0 + " " + v1 + "\n";
+            o += "%res = OpFAdd " + et + " " + v0 + " " + v1 + "\n";
             result = "%res";
             break;
         case KernelOp::Multiply:
-            o += "%res = OpFMul %f32 " + v0 + " " + v1 + "\n";
+            o += "%res = OpFMul " + et + " " + v0 + " " + v1 + "\n";
             result = "%res";
             break;
         case KernelOp::Mix:
@@ -448,7 +546,8 @@ namespace {
             result = "%res";
             break;
         default:
-            result = v0;
+            o += "%res = OpCopyObject " + et + " " + v0 + "\n";
+            result = "%res";
             break;
         }
         o += "\n";
@@ -457,7 +556,6 @@ namespace {
             if (b->direction == BindingDirection::Input)
                 continue;
             o += "OpStore %gep_" + b->name + " " + result + "\n";
-            break;
         }
 
         o += "OpReturn\n";
