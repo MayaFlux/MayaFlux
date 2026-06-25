@@ -38,6 +38,28 @@ namespace MayaFlux::Kinesis::Vision {
     std::span<const float> src, uint32_t w, uint32_t h,
     std::span<const float> kernel_x, std::span<const float> kernel_y);
 
+/**
+ * @brief Separable 2D filter writing into caller-supplied buffers.
+ *
+ * Horizontal pass writes into @p tmp, vertical pass writes into @p dst.
+ * All three spans must be size >= w * h and must not alias each other.
+ *
+ * @param src      Input span, size w * h.
+ * @param tmp      Scratch span for horizontal pass, size >= w * h.
+ * @param dst      Output span, size >= w * h.
+ * @param w        Image width in pixels.
+ * @param h        Image height in pixels.
+ * @param kernel_x Horizontal 1D kernel, odd length.
+ * @param kernel_y Vertical 1D kernel, odd length.
+ */
+MAYAFLUX_API void filter_separable(
+    std::span<const float> src,
+    std::span<float> tmp,
+    std::span<float> dst,
+    uint32_t w, uint32_t h,
+    std::span<const float> kernel_x,
+    std::span<const float> kernel_y);
+
 // ============================================================================
 // Gaussian blur
 // ============================================================================
@@ -56,5 +78,22 @@ namespace MayaFlux::Kinesis::Vision {
  */
 [[nodiscard]] MAYAFLUX_API std::vector<float> gaussian_blur(
     std::span<const float> src, uint32_t w, uint32_t h, float sigma);
+
+/**
+ * @brief Gaussian blur writing into caller-supplied buffers.
+ *
+ * @param src   Input span, size w * h.
+ * @param tmp   Scratch span for horizontal pass, size >= w * h.
+ * @param dst   Output span, size >= w * h.
+ * @param w     Image width in pixels.
+ * @param h     Image height in pixels.
+ * @param sigma Standard deviation in pixels. Must be > 0.
+ */
+MAYAFLUX_API void gaussian_blur(
+    std::span<const float> src,
+    std::span<float> tmp,
+    std::span<float> dst,
+    uint32_t w, uint32_t h,
+    float sigma);
 
 } // namespace MayaFlux::Kinesis::Vision

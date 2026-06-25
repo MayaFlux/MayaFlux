@@ -6,31 +6,30 @@ namespace P = MayaFlux::Parallel;
 
 namespace MayaFlux::Kinesis::Vision {
 
-std::vector<float> rgba_to_gray(
-    std::span<const float> rgba, uint32_t w, uint32_t h)
+void rgba_to_gray(std::span<const float> rgba, std::span<float> dst, uint32_t w, uint32_t h)
 {
     const size_t n = static_cast<size_t>(w) * h;
-    std::vector<float> out(n);
-
     P::for_each(P::par_unseq,
         std::views::iota(size_t { 0 }, n).begin(),
         std::views::iota(size_t { 0 }, n).end(),
         [&](size_t i) {
             const size_t p = i * 4;
-            out[i] = rgba[p] * 0.299F
-                + rgba[p + 1] * 0.587F
-                + rgba[p + 2] * 0.114F;
+            dst[i] = rgba[p] * 0.299F + rgba[p + 1] * 0.587F + rgba[p + 2] * 0.114F;
         });
+}
 
+std::vector<float> rgba_to_gray(std::span<const float> rgba, uint32_t w, uint32_t h)
+{
+    std::vector<float> out(static_cast<size_t>(w) * h);
+    rgba_to_gray(rgba, out, w, h);
     return out;
 }
 
-std::vector<float> rgba_to_hsv(
-    std::span<const float> rgba, uint32_t w, uint32_t h)
+void rgba_to_hsv(
+    std::span<const float> rgba, std::span<float> dst,
+    uint32_t w, uint32_t h)
 {
     const size_t n = static_cast<size_t>(w) * h;
-    std::vector<float> out(n * 3);
-
     P::for_each(P::par_unseq,
         std::views::iota(size_t { 0 }, n).begin(),
         std::views::iota(size_t { 0 }, n).end(),
@@ -57,48 +56,64 @@ std::vector<float> rgba_to_hsv(
                     h_val += 1.0F;
             }
 
-            out[i * 3] = h_val;
-            out[i * 3 + 1] = cmax > 0.0F ? delta / cmax : 0.0F;
-            out[i * 3 + 2] = cmax;
+            dst[i * 3] = h_val;
+            dst[i * 3 + 1] = cmax > 0.0F ? delta / cmax : 0.0F;
+            dst[i * 3 + 2] = cmax;
         });
+}
 
+std::vector<float> rgba_to_hsv(std::span<const float> rgba, uint32_t w, uint32_t h)
+{
+    std::vector<float> out(static_cast<size_t>(w) * h * 3);
+    rgba_to_hsv(rgba, out, w, h);
     return out;
 }
 
-std::vector<float> gray_to_rgba(
-    std::span<const float> gray, uint32_t w, uint32_t h)
+void gray_to_rgba(
+    std::span<const float> gray, std::span<float> dst,
+    uint32_t w, uint32_t h)
 {
     const size_t n = static_cast<size_t>(w) * h;
-    std::vector<float> out(n * 4);
-
     P::for_each(P::par_unseq,
         std::views::iota(size_t { 0 }, n).begin(),
         std::views::iota(size_t { 0 }, n).end(),
         [&](size_t i) {
             const float v = gray[i];
-            out[i * 4] = v;
-            out[i * 4 + 1] = v;
-            out[i * 4 + 2] = v;
-            out[i * 4 + 3] = 1.0F;
+            dst[i * 4] = v;
+            dst[i * 4 + 1] = v;
+            dst[i * 4 + 2] = v;
+            dst[i * 4 + 3] = 1.0F;
         });
+}
 
+std::vector<float> gray_to_rgba(std::span<const float> gray, uint32_t w, uint32_t h)
+{
+    std::vector<float> out(static_cast<size_t>(w) * h * 4);
+    gray_to_rgba(gray, out, w, h);
     return out;
+}
+
+void threshold(
+    std::span<const float> gray, std::span<float> dst,
+    float value)
+{
+    P::transform(P::par_unseq, gray.begin(), gray.end(), dst.begin(),
+        [value](float v) { return v >= value ? 1.0F : 0.0F; });
 }
 
 std::vector<float> threshold(std::span<const float> gray, float value)
 {
     std::vector<float> out(gray.size());
-    P::transform(P::par_unseq, gray.begin(), gray.end(), out.begin(),
-        [value](float v) { return v >= value ? 1.0F : 0.0F; });
+    threshold(gray, out, value);
     return out;
 }
 
-std::vector<float> threshold_adaptive(
-    std::span<const float> gray, uint32_t w, uint32_t h,
+void threshold_adaptive(
+    std::span<const float> gray, std::span<float> dst,
+    uint32_t w, uint32_t h,
     uint32_t block_size, float offset)
 {
     const size_t n = static_cast<size_t>(w) * h;
-    std::vector<float> out(n);
     const auto half = static_cast<int32_t>(block_size / 2);
 
     P::for_each(P::par_unseq,
@@ -121,13 +136,20 @@ std::vector<float> threshold_adaptive(
             }
 
             const float mean = sum / static_cast<float>(count);
-            out[idx] = gray[idx] >= (mean - offset) ? 1.0F : 0.0F;
+            dst[idx] = gray[idx] >= (mean - offset) ? 1.0F : 0.0F;
         });
+}
 
+std::vector<float> threshold_adaptive(
+    std::span<const float> gray, uint32_t w, uint32_t h,
+    uint32_t block_size, float offset)
+{
+    std::vector<float> out(static_cast<size_t>(w) * h);
+    threshold_adaptive(gray, out, w, h, block_size, offset);
     return out;
 }
 
-std::vector<float> threshold_otsu(std::span<const float> gray)
+void threshold_otsu(std::span<const float> gray, std::span<float> dst)
 {
     constexpr int32_t bins = 256;
     std::array<float, bins> hist {};
@@ -171,60 +193,51 @@ std::vector<float> threshold_otsu(std::span<const float> gray)
     }
 
     const float t_norm = static_cast<float>(best_t) / static_cast<float>(bins - 1);
-    return threshold(gray, t_norm);
+    threshold(gray, dst, t_norm);
 }
 
-void normalize_inplace(std::span<float> data)
+std::vector<float> threshold_otsu(std::span<const float> gray)
 {
-    if (data.empty())
-        return;
-
-    const auto [mn, mx] = std::ranges::minmax(data);
-    const float range = mx - mn;
-    if (range == 0.0F)
-        return;
-
-    const float inv = 1.0F / range;
-    P::transform(P::par_unseq, data.begin(), data.end(), data.begin(),
-        [mn, inv](float v) { return (v - mn) * inv; });
+    std::vector<float> out(gray.size());
+    threshold_otsu(gray, out);
+    return out;
 }
 
-void normalize_range_inplace(std::span<float> data, float lo, float hi)
+void downsample_2x(
+    std::span<const float> src,
+    std::span<float> dst,
+    uint32_t w, uint32_t h,
+    uint32_t& new_w, uint32_t& new_h)
 {
-    if (lo == hi)
-        return;
-
-    const float inv = 1.0F / (hi - lo);
-    P::transform(P::par_unseq, data.begin(), data.end(), data.begin(),
-        [lo, inv](float v) {
-            return std::clamp((v - lo) * inv, 0.0F, 1.0F);
-        });
-}
-
-std::vector<float> downsample_2x(
-    std::span<const float> src, uint32_t w, uint32_t h,
-    uint32_t& out_w, uint32_t& out_h)
-{
-    out_w = w / 2;
-    out_h = h / 2;
-    const size_t n = static_cast<size_t>(out_w) * out_h;
-    std::vector<float> out(n);
+    new_w = w / 2;
+    new_h = h / 2;
+    const size_t n = static_cast<size_t>(new_w) * new_h;
 
     P::for_each(P::par_unseq,
         std::views::iota(size_t { 0 }, n).begin(),
         std::views::iota(size_t { 0 }, n).end(),
         [&](size_t idx) {
-            const uint32_t ox = static_cast<uint32_t>(idx % out_w);
-            const uint32_t oy = static_cast<uint32_t>(idx / out_w);
+            const auto ox = static_cast<uint32_t>(idx % new_w);
+            const auto oy = static_cast<uint32_t>(idx / new_w);
             const uint32_t sx = ox * 2;
             const uint32_t sy = oy * 2;
-            out[idx] = (src[static_cast<size_t>(sy) * w + sx]
+            dst[idx] = (src[static_cast<size_t>(sy) * w + sx]
                            + src[static_cast<size_t>(sy) * w + sx + 1]
                            + src[static_cast<size_t>(sy + 1) * w + sx]
                            + src[static_cast<size_t>(sy + 1) * w + sx + 1])
                 * 0.25F;
         });
+}
 
+std::vector<float> downsample_2x(
+    std::span<const float> src,
+    uint32_t w, uint32_t h,
+    uint32_t& new_w, uint32_t& new_h)
+{
+    new_w = w / 2;
+    new_h = h / 2;
+    std::vector<float> out(static_cast<size_t>(new_w) * new_h);
+    downsample_2x(src, out, w, h, new_w, new_h);
     return out;
 }
 

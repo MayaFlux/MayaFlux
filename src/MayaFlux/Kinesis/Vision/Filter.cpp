@@ -1,6 +1,7 @@
 #include "Filter.hpp"
 
 #include "MayaFlux/Transitive/Parallel/Execution.hpp"
+#include <Eigen/Core>
 
 namespace P = MayaFlux::Parallel;
 
@@ -65,32 +66,55 @@ std::vector<float> filter_separable(
     const size_t n = static_cast<size_t>(w) * h;
     std::vector<float> tmp(n);
     std::vector<float> out(n);
-
-    convolve_horizontal(src, tmp, w, h, kernel_x);
-    convolve_vertical(tmp, out, w, h, kernel_y);
-
+    filter_separable(src, tmp, out, w, h, kernel_x, kernel_y);
     return out;
+}
+
+void filter_separable(
+    std::span<const float> src,
+    std::span<float> tmp,
+    std::span<float> dst,
+    uint32_t w, uint32_t h,
+    std::span<const float> kernel_x,
+    std::span<const float> kernel_y)
+{
+    convolve_horizontal(src, tmp, w, h, kernel_x);
+    convolve_vertical(tmp, dst, w, h, kernel_y);
 }
 
 std::vector<float> gaussian_blur(
     std::span<const float> src, uint32_t w, uint32_t h, float sigma)
+{
+    const size_t n = static_cast<size_t>(w) * h;
+    std::vector<float> tmp(n);
+    std::vector<float> out(n);
+    gaussian_blur(src, tmp, out, w, h, sigma);
+    return out;
+}
+
+void gaussian_blur(
+    std::span<const float> src,
+    std::span<float> tmp,
+    std::span<float> dst,
+    uint32_t w, uint32_t h,
+    float sigma)
 {
     const auto radius = static_cast<int32_t>(std::ceil(3.0F * sigma));
     const int32_t size = 2 * radius + 1;
 
     std::vector<float> kernel(static_cast<size_t>(size));
     float sum = 0.0F;
-    const float inv_2s2 = 1.0F / (2.0F * sigma * sigma);
 
+    const float inv_2s2 = 1.0F / (2.0F * sigma * sigma);
     for (int32_t i = -radius; i <= radius; ++i) {
         const float v = std::exp(-static_cast<float>(i * i) * inv_2s2);
         kernel[static_cast<size_t>(i + radius)] = v;
         sum += v;
     }
-    for (auto& v : kernel)
-        v /= sum;
 
-    return filter_separable(src, w, h, kernel, kernel);
+    auto kmap = Eigen::Map<Eigen::ArrayXf>(kernel.data(), static_cast<Eigen::Index>(kernel.size()));
+    kmap /= sum;
+    filter_separable(src, tmp, dst, w, h, kernel, kernel);
 }
 
 } // namespace MayaFlux::Kinesis::Vision

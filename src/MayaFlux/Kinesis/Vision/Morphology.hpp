@@ -38,6 +38,11 @@ namespace MayaFlux::Kinesis::Vision {
 [[nodiscard]] MAYAFLUX_API std::vector<float> erode(
     std::span<const float> mask, uint32_t w, uint32_t h, uint32_t radius);
 
+/** @brief Erosion writing into @p dst. Same contract as the returning overload. */
+MAYAFLUX_API void erode(
+    std::span<const float> mask, std::span<float> dst,
+    uint32_t w, uint32_t h, uint32_t radius);
+
 /**
  * @brief Morphological dilation with square structuring element.
  *
@@ -51,6 +56,11 @@ namespace MayaFlux::Kinesis::Vision {
  */
 [[nodiscard]] MAYAFLUX_API std::vector<float> dilate(
     std::span<const float> mask, uint32_t w, uint32_t h, uint32_t radius);
+
+/** @brief Dilation writing into @p dst. */
+MAYAFLUX_API void dilate(
+    std::span<const float> mask, std::span<float> dst,
+    uint32_t w, uint32_t h, uint32_t radius);
 
 // ============================================================================
 // Compound operations
@@ -71,6 +81,16 @@ namespace MayaFlux::Kinesis::Vision {
     std::span<const float> mask, uint32_t w, uint32_t h, uint32_t radius);
 
 /**
+ * @brief Morphological opening writing into @p dst.
+ *
+ * @p tmp is used for the intermediate erode result. Size >= w * h, must not
+ * alias @p mask or @p dst.
+ */
+MAYAFLUX_API void open(
+    std::span<const float> mask, std::span<float> tmp, std::span<float> dst,
+    uint32_t w, uint32_t h, uint32_t radius);
+
+/**
  * @brief Morphological closing: dilate then erode.
  *
  * Fills small holes and gaps in foreground regions.
@@ -83,6 +103,11 @@ namespace MayaFlux::Kinesis::Vision {
  */
 [[nodiscard]] MAYAFLUX_API std::vector<float> close(
     std::span<const float> mask, uint32_t w, uint32_t h, uint32_t radius);
+
+/** @brief Morphological closing writing into @p dst. @p tmp same contract as open. */
+MAYAFLUX_API void close(
+    std::span<const float> mask, std::span<float> tmp, std::span<float> dst,
+    uint32_t w, uint32_t h, uint32_t radius);
 
 /**
  * @brief Morphological gradient: dilate minus erode.
@@ -97,5 +122,14 @@ namespace MayaFlux::Kinesis::Vision {
  */
 [[nodiscard]] MAYAFLUX_API std::vector<float> morph_gradient(
     std::span<const float> mask, uint32_t w, uint32_t h, uint32_t radius);
+
+/**
+ * @brief Morphological gradient (dilate - erode) writing into @p dst.
+ *
+ * @p tmp used for the dilate intermediate. Eigen subtraction for final step.
+ */
+MAYAFLUX_API void morph_gradient(
+    std::span<const float> mask, std::span<float> tmp, std::span<float> dst,
+    uint32_t w, uint32_t h, uint32_t radius);
 
 } // namespace MayaFlux::Kinesis::Vision
