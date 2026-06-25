@@ -1,10 +1,13 @@
 #include "Gradient.hpp"
 
 #include "ImageFilter.hpp"
+#include "KernelSpec.hpp"
 
 #include "MayaFlux/Transitive/Parallel/Execution.hpp"
 
 #include <Eigen/Core>
+
+namespace K = MayaFlux::Kinesis::Vision::Kernels;
 
 namespace P = MayaFlux::Parallel;
 
@@ -54,9 +57,8 @@ namespace {
         std::span<const float> kx,
         std::span<const float> ky)
     {
-        static constexpr float smooth[] = { 1.0F, 2.0F, 1.0F };
-        filter_separable(gray, tmp, dx, w, h, kx, smooth);
-        filter_separable(gray, tmp, dy, w, h, smooth, ky);
+        filter_separable(gray, tmp, dx, w, h, kx, K::sobel_smooth);
+        filter_separable(gray, tmp, dy, w, h, K::sobel_smooth, ky);
     }
 
 } // namespace
@@ -66,9 +68,7 @@ void sobel(
     std::span<float> dx, std::span<float> dy, std::span<float> tmp,
     uint32_t w, uint32_t h)
 {
-    static constexpr float kx[] = { -1.0F, 0.0F, 1.0F };
-    static constexpr float ky[] = { -1.0F, 0.0F, 1.0F };
-    gradient_into_buffers(gray, dx, dy, tmp, w, h, kx, ky);
+    gradient_into_buffers(gray, dx, dy, tmp, w, h, K::sobel_kx, K::sobel_ky);
 }
 
 GradientResult sobel(std::span<const float> gray, uint32_t w, uint32_t h)
@@ -101,9 +101,7 @@ void scharr(
     std::span<float> dx, std::span<float> dy, std::span<float> tmp,
     uint32_t w, uint32_t h)
 {
-    static constexpr float kx[] = { -3.0F, 0.0F, 3.0F };
-    static constexpr float ky[] = { -3.0F, 0.0F, 3.0F };
-    gradient_into_buffers(gray, dx, dy, tmp, w, h, kx, ky);
+    gradient_into_buffers(gray, dx, dy, tmp, w, h, K::scharr_kx, K::scharr_ky);
 }
 
 GradientResult scharr(std::span<const float> gray, uint32_t w, uint32_t h)
