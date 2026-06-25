@@ -241,6 +241,35 @@ private:
         uint32_t w, uint32_t h,
         float k, float sigma,
         Eigen::Index en);
+
+    /**
+     * @brief Fused horizontal separable filter over three channel pairs.
+     *
+     * Applies @p kernel horizontally to src0/src1/src2 simultaneously,
+     * writing results into dst0/dst1/dst2. One row scan reads all three
+     * sources and writes all three destinations, reducing source data
+     * fetches by 3x vs three separate convolve_horizontal calls.
+     *
+     * All spans must be size >= w * h. No aliasing between src and dst spans.
+     */
+    void step_filter_h3(
+        size_t src0, size_t src1, size_t src2,
+        size_t dst0, size_t dst1, size_t dst2,
+        uint32_t w, uint32_t h,
+        std::span<const float> kernel);
+
+    /**
+     * @brief Fused vertical separable filter over three channel pairs.
+     *
+     * Same contract as step_filter_h3 but operates vertically.
+     * Processes one output row at a time, reading three source buffers
+     * and writing three destination buffers per row.
+     */
+    void step_filter_v3(
+        size_t src0, size_t src1, size_t src2,
+        size_t dst0, size_t dst1, size_t dst2,
+        uint32_t w, uint32_t h,
+        std::span<const float> kernel);
 };
 
 } // namespace MayaFlux::Kinesis::Vision

@@ -85,6 +85,254 @@ const std::vector<float>& VisionExecutor::gaussian_kernel(float sigma)
 // Step implementations
 // =============================================================================
 
+void VisionExecutor::step_filter_h3(
+    size_t src0, size_t src1, size_t src2,
+    size_t dst0, size_t dst1, size_t dst2,
+    uint32_t w, uint32_t h,
+    std::span<const float> kernel)
+{
+    const auto half = static_cast<int32_t>(kernel.size() / 2);
+    const auto iw = static_cast<int32_t>(w);
+
+    const float* s0 = slot_vec(src0).data();
+    const float* s1 = slot_vec(src1).data();
+    const float* s2 = slot_vec(src2).data();
+    float* d0 = slot_vec(dst0).data();
+    float* d1 = slot_vec(dst1).data();
+    float* d2 = slot_vec(dst2).data();
+
+    P::for_each(P::par_unseq,
+        std::views::iota(uint32_t { 0 }, h).begin(),
+        std::views::iota(uint32_t { 0 }, h).end(),
+        [&](uint32_t row) {
+            const size_t row_off = static_cast<size_t>(row) * w;
+            const float* r0 = s0 + row_off;
+            const float* r1 = s1 + row_off;
+            const float* r2 = s2 + row_off;
+            float* o0 = d0 + row_off;
+            float* o1 = d1 + row_off;
+            float* o2 = d2 + row_off;
+
+            for (int32_t px = 0; px < std::min(half, iw); ++px) {
+                float a0 = 0.0F, a1 = 0.0F, a2 = 0.0F;
+                for (int32_t k = -half; k <= half; ++k) {
+                    const int32_t nx = std::clamp(px + k, 0, iw - 1);
+                    const float kv = kernel[static_cast<size_t>(k + half)];
+                    a0 += r0[nx] * kv;
+                    a1 += r1[nx] * kv;
+                    a2 += r2[nx] * kv;
+                }
+                o0[px] = a0;
+                o1[px] = a1;
+                o2[px] = a2;
+            }
+
+            const int32_t interior_end = iw - half;
+
+#ifdef MAYAFLUX_ARCH_X64
+            int32_t px = half;
+            for (; px + 8 <= interior_end; px += 8) {
+                __m256 acc0 = _mm256_setzero_ps();
+                __m256 acc1 = _mm256_setzero_ps();
+                __m256 acc2 = _mm256_setzero_ps();
+                for (int32_t k = -half; k <= half; ++k) {
+                    const __m256 kv = _mm256_set1_ps(kernel[static_cast<size_t>(k + half)]);
+                    acc0 = _mm256_fmadd_ps(_mm256_loadu_ps(r0 + px + k), kv, acc0);
+                    acc1 = _mm256_fmadd_ps(_mm256_loadu_ps(r1 + px + k), kv, acc1);
+                    acc2 = _mm256_fmadd_ps(_mm256_loadu_ps(r2 + px + k), kv, acc2);
+                }
+                _mm256_storeu_ps(o0 + px, acc0);
+                _mm256_storeu_ps(o1 + px, acc1);
+                _mm256_storeu_ps(o2 + px, acc2);
+            }
+            for (; px < iw; ++px) {
+                float a0 = 0.0F, a1 = 0.0F, a2 = 0.0F;
+                for (int32_t k = -half; k <= half; ++k) {
+                    const int32_t nx = std::clamp(px + k, 0, iw - 1);
+                    const float kv = kernel[static_cast<size_t>(k + half)];
+                    a0 += r0[nx] * kv;
+                    a1 += r1[nx] * kv;
+                    a2 += r2[nx] * kv;
+                }
+                o0[px] = a0;
+                o1[px] = a1;
+                o2[px] = a2;
+            }
+
+#elif defined(MAYAFLUX_ARCH_ARM64)
+        int32_t px = half;
+        for (; px + 4 <= interior_end; px += 4) {
+            float32x4_t acc0 = vdupq_n_f32(0.0F);
+            float32x4_t acc1 = vdupq_n_f32(0.0F);
+            float32x4_t acc2 = vdupq_n_f32(0.0F);
+            for (int32_t k = -half; k <= half; ++k) {
+                const float32x4_t kv = vdupq_n_f32(kernel[static_cast<size_t>(k + half)]);
+                acc0 = vmlaq_f32(acc0, vld1q_f32(r0 + px + k), kv);
+                acc1 = vmlaq_f32(acc1, vld1q_f32(r1 + px + k), kv);
+                acc2 = vmlaq_f32(acc2, vld1q_f32(r2 + px + k), kv);
+            }
+            vst1q_f32(o0 + px, acc0);
+            vst1q_f32(o1 + px, acc1);
+            vst1q_f32(o2 + px, acc2);
+        }
+        for (; px < iw; ++px) {
+            float a0 = 0.0F, a1 = 0.0F, a2 = 0.0F;
+            for (int32_t k = -half; k <= half; ++k) {
+                const int32_t nx = std::clamp(px + k, 0, iw - 1);
+                const float kv = kernel[static_cast<size_t>(k + half)];
+                a0 += r0[nx] * kv;
+                a1 += r1[nx] * kv;
+                a2 += r2[nx] * kv;
+            }
+            o0[px] = a0;
+            o1[px] = a1;
+            o2[px] = a2;
+        }
+
+#else
+        for (int32_t px = half; px < interior_end; ++px) {
+            float a0 = 0.0F, a1 = 0.0F, a2 = 0.0F;
+            for (int32_t k = -half; k <= half; ++k) {
+                const float kv = kernel[static_cast<size_t>(k + half)];
+                a0 += r0[px + k] * kv;
+                a1 += r1[px + k] * kv;
+                a2 += r2[px + k] * kv;
+            }
+            o0[px] = a0;
+            o1[px] = a1;
+            o2[px] = a2;
+        }
+        for (int32_t px = interior_end; px < iw; ++px) {
+            float a0 = 0.0F, a1 = 0.0F, a2 = 0.0F;
+            for (int32_t k = -half; k <= half; ++k) {
+                const int32_t nx = std::clamp(px + k, 0, iw - 1);
+                const float kv = kernel[static_cast<size_t>(k + half)];
+                a0 += r0[nx] * kv;
+                a1 += r1[nx] * kv;
+                a2 += r2[nx] * kv;
+            }
+            o0[px] = a0;
+            o1[px] = a1;
+            o2[px] = a2;
+        }
+#endif
+        });
+}
+
+void VisionExecutor::step_filter_v3(
+    size_t src0, size_t src1, size_t src2,
+    size_t dst0, size_t dst1, size_t dst2,
+    uint32_t w, uint32_t h,
+    std::span<const float> kernel)
+{
+    const auto half = static_cast<int32_t>(kernel.size() / 2);
+    const auto ih = static_cast<int32_t>(h);
+    const auto iw = static_cast<int32_t>(w);
+
+    const float* s0 = slot_vec(src0).data();
+    const float* s1 = slot_vec(src1).data();
+    const float* s2 = slot_vec(src2).data();
+    float* d0 = slot_vec(dst0).data();
+    float* d1 = slot_vec(dst1).data();
+    float* d2 = slot_vec(dst2).data();
+
+    P::for_each(P::par_unseq,
+        std::views::iota(uint32_t { 0 }, h).begin(),
+        std::views::iota(uint32_t { 0 }, h).end(),
+        [&](uint32_t row) {
+            const auto py = static_cast<int32_t>(row);
+            const bool border = (py < half || py >= ih - half);
+            float* o0_row = d0 + static_cast<size_t>(row) * w;
+            float* o1_row = d1 + static_cast<size_t>(row) * w;
+            float* o2_row = d2 + static_cast<size_t>(row) * w;
+
+#ifdef MAYAFLUX_ARCH_X64
+            int32_t px = 0;
+            if (!border) {
+                for (; px + 8 <= iw; px += 8) {
+                    __m256 acc0 = _mm256_setzero_ps();
+                    __m256 acc1 = _mm256_setzero_ps();
+                    __m256 acc2 = _mm256_setzero_ps();
+                    for (int32_t k = -half; k <= half; ++k) {
+                        const __m256 kv = _mm256_set1_ps(kernel[static_cast<size_t>(k + half)]);
+                        const size_t off = static_cast<size_t>(py + k) * w + px;
+                        acc0 = _mm256_fmadd_ps(_mm256_loadu_ps(s0 + off), kv, acc0);
+                        acc1 = _mm256_fmadd_ps(_mm256_loadu_ps(s1 + off), kv, acc1);
+                        acc2 = _mm256_fmadd_ps(_mm256_loadu_ps(s2 + off), kv, acc2);
+                    }
+                    _mm256_storeu_ps(o0_row + px, acc0);
+                    _mm256_storeu_ps(o1_row + px, acc1);
+                    _mm256_storeu_ps(o2_row + px, acc2);
+                }
+            }
+            for (; px < iw; ++px) {
+                float a0 = 0.0F, a1 = 0.0F, a2 = 0.0F;
+                for (int32_t k = -half; k <= half; ++k) {
+                    const int32_t ny = border ? std::clamp(py + k, 0, ih - 1) : py + k;
+                    const size_t off = static_cast<size_t>(ny) * w + px;
+                    const float kv = kernel[static_cast<size_t>(k + half)];
+                    a0 += s0[off] * kv;
+                    a1 += s1[off] * kv;
+                    a2 += s2[off] * kv;
+                }
+                o0_row[px] = a0;
+                o1_row[px] = a1;
+                o2_row[px] = a2;
+            }
+
+#elif defined(MAYAFLUX_ARCH_ARM64)
+        int32_t px = 0;
+        if (!border) {
+            for (; px + 4 <= iw; px += 4) {
+                float32x4_t acc0 = vdupq_n_f32(0.0F);
+                float32x4_t acc1 = vdupq_n_f32(0.0F);
+                float32x4_t acc2 = vdupq_n_f32(0.0F);
+                for (int32_t k = -half; k <= half; ++k) {
+                    const float32x4_t kv = vdupq_n_f32(kernel[static_cast<size_t>(k + half)]);
+                    const size_t off = static_cast<size_t>(py + k) * w + px;
+                    acc0 = vmlaq_f32(acc0, vld1q_f32(s0 + off), kv);
+                    acc1 = vmlaq_f32(acc1, vld1q_f32(s1 + off), kv);
+                    acc2 = vmlaq_f32(acc2, vld1q_f32(s2 + off), kv);
+                }
+                vst1q_f32(o0_row + px, acc0);
+                vst1q_f32(o1_row + px, acc1);
+                vst1q_f32(o2_row + px, acc2);
+            }
+        }
+        for (; px < iw; ++px) {
+            float a0 = 0.0F, a1 = 0.0F, a2 = 0.0F;
+            for (int32_t k = -half; k <= half; ++k) {
+                const int32_t ny = border ? std::clamp(py + k, 0, ih - 1) : py + k;
+                const size_t off = static_cast<size_t>(ny) * w + px;
+                const float kv = kernel[static_cast<size_t>(k + half)];
+                a0 += s0[off] * kv;
+                a1 += s1[off] * kv;
+                a2 += s2[off] * kv;
+            }
+            o0_row[px] = a0;
+            o1_row[px] = a1;
+            o2_row[px] = a2;
+        }
+
+#else
+        for (int32_t px = 0; px < iw; ++px) {
+            float a0 = 0.0F, a1 = 0.0F, a2 = 0.0F;
+            for (int32_t k = -half; k <= half; ++k) {
+                const int32_t ny = std::clamp(py + k, 0, ih - 1);
+                const size_t off = static_cast<size_t>(ny) * w + px;
+                const float kv = kernel[static_cast<size_t>(k + half)];
+                a0 += s0[off] * kv;
+                a1 += s1[off] * kv;
+                a2 += s2[off] * kv;
+            }
+            o0_row[px] = a0;
+            o1_row[px] = a1;
+            o2_row[px] = a2;
+        }
+#endif
+        });
+}
+
 void VisionExecutor::step_filter_separable(
     size_t src_slot, size_t dst_slot,
     uint32_t w, uint32_t h,
@@ -114,7 +362,6 @@ void VisionExecutor::step_harris(
     sobel(slot_vec(src_slot), slot_vec(k_slot_dx), slot_vec(k_slot_dy),
         slot_vec(k_slot_tmp), w, h);
 
-    // structure tensor products
     {
         const float* dx_ptr = slot_vec(k_slot_dx).data();
         const float* dy_ptr = slot_vec(k_slot_dy).data();
@@ -135,11 +382,18 @@ void VisionExecutor::step_harris(
             });
     }
 
-    step_gaussian_blur(k_slot_ixx, k_slot_sxx, w, h, sigma);
-    step_gaussian_blur(k_slot_iyy, k_slot_syy, w, h, sigma);
-    step_gaussian_blur(k_slot_ixy, k_slot_sxy, w, h, sigma);
+    const auto& kern = gaussian_kernel(sigma);
 
-    // Harris response
+    step_filter_h3(
+        k_slot_ixx, k_slot_iyy, k_slot_ixy,
+        k_slot_dx, k_slot_dy, k_slot_tmp,
+        w, h, kern);
+
+    step_filter_v3(
+        k_slot_dx, k_slot_dy, k_slot_tmp,
+        k_slot_sxx, k_slot_syy, k_slot_sxy,
+        w, h, kern);
+
     {
         const float* sxx_ptr = slot_vec(k_slot_sxx).data();
         const float* syy_ptr = slot_vec(k_slot_syy).data();
