@@ -41,10 +41,13 @@ void VisionExecutor::ensure_slots(uint32_t w, uint32_t h)
     if (m_slot_w == w && m_slot_h == h)
         return;
 
-    const size_t n = static_cast<size_t>(w) * h * 4;
+    const size_t n = static_cast<size_t>(w) * h;
+    const size_t n_rgba = n * 4;
 
-    for (auto& slot : m_slots)
-        slot = std::vector<float>(n, 0.0F);
+    m_slots[k_slot_cur] = std::vector<float>(n_rgba, 0.0F);
+    for (size_t i = 1; i < k_slot_count; ++i)
+        m_slots[i] = std::vector<float>(n, 0.0F);
+
     m_slot_w = w;
     m_slot_h = h;
 }
@@ -111,27 +114,62 @@ void VisionExecutor::step_harris(
     sobel(slot_vec(src_slot), slot_vec(k_slot_dx), slot_vec(k_slot_dy),
         slot_vec(k_slot_tmp), w, h);
 
-    auto dx = slot_map(k_slot_dx, en);
-    auto dy = slot_map(k_slot_dy, en);
+    // structure tensor products
+    {
+        const float* dx_ptr = slot_vec(k_slot_dx).data();
+        const float* dy_ptr = slot_vec(k_slot_dy).data();
+        float* ixx_ptr = slot_vec(k_slot_ixx).data();
+        float* iyy_ptr = slot_vec(k_slot_iyy).data();
+        float* ixy_ptr = slot_vec(k_slot_ixy).data();
+        const auto n = static_cast<size_t>(en);
 
-    slot_map_mut(k_slot_ixx, en) = dx * dx;
-    slot_map_mut(k_slot_iyy, en) = dy * dy;
-    slot_map_mut(k_slot_ixy, en) = dx * dy;
+        P::for_each(P::par_unseq,
+            std::views::iota(size_t { 0 }, n).begin(),
+            std::views::iota(size_t { 0 }, n).end(),
+            [&](size_t i) {
+                const float dx = dx_ptr[i];
+                const float dy = dy_ptr[i];
+                ixx_ptr[i] = dx * dx;
+                iyy_ptr[i] = dy * dy;
+                ixy_ptr[i] = dx * dy;
+            });
+    }
 
     step_gaussian_blur(k_slot_ixx, k_slot_sxx, w, h, sigma);
     step_gaussian_blur(k_slot_iyy, k_slot_syy, w, h, sigma);
     step_gaussian_blur(k_slot_ixy, k_slot_sxy, w, h, sigma);
 
-    auto sxx = slot_map(k_slot_sxx, en);
-    auto syy = slot_map(k_slot_syy, en);
-    auto sxy = slot_map(k_slot_sxy, en);
-    auto dst = slot_map_mut(dst_slot, en);
+    // Harris response
+    {
+        const float* sxx_ptr = slot_vec(k_slot_sxx).data();
+        const float* syy_ptr = slot_vec(k_slot_syy).data();
+        const float* sxy_ptr = slot_vec(k_slot_sxy).data();
+        float* dst_ptr = slot_vec(dst_slot).data();
+        const auto n = static_cast<size_t>(en);
 
-    dst = (sxx * syy - sxy * sxy - k * (sxx + syy).square()).max(0.0F);
+        P::for_each(P::par_unseq,
+            std::views::iota(size_t { 0 }, n).begin(),
+            std::views::iota(size_t { 0 }, n).end(),
+            [&](size_t i) {
+                const float sxx = sxx_ptr[i];
+                const float syy = syy_ptr[i];
+                const float sxy = sxy_ptr[i];
+                const float det = sxx * syy - sxy * sxy;
+                const float trace = sxx + syy;
+                dst_ptr[i] = std::max(0.0F, det - k * trace * trace);
+            });
 
-    const float peak = dst.maxCoeff();
-    if (peak > 0.0F)
-        dst *= (1.0F / peak);
+        float peak = 0.0F;
+        for (size_t i = 0; i < n; ++i)
+            peak = std::max(peak, dst_ptr[i]);
+
+        if (peak > 0.0F) {
+            const float inv = 1.0F / peak;
+            P::transform(P::par_unseq,
+                dst_ptr, dst_ptr + n, dst_ptr,
+                [inv](float v) { return v * inv; });
+        }
+    }
 }
 
 // =============================================================================
