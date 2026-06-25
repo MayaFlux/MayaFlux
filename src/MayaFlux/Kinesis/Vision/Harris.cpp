@@ -5,6 +5,13 @@
 
 #include "MayaFlux/Transitive/Parallel/Execution.hpp"
 
+#ifdef MAYAFLUX_ARCH_X64
+#include <immintrin.h>
+#endif
+#ifdef MAYAFLUX_ARCH_ARM64
+#include <arm_neon.h>
+#endif
+
 namespace P = MayaFlux::Parallel;
 
 namespace MayaFlux::Kinesis::Vision {
@@ -103,28 +110,74 @@ void harris_response(
         const float* sxy_ptr = sxy.data();
         float* dst_ptr = dst.data();
 
-        P::for_each(P::par_unseq,
-            std::views::iota(size_t { 0 }, n).begin(),
-            std::views::iota(size_t { 0 }, n).end(),
-            [&](size_t i) {
-                const float s0 = sxx_ptr[i];
-                const float s1 = syy_ptr[i];
-                const float s01 = sxy_ptr[i];
-                const float det = s0 * s1 - s01 * s01;
-                const float trace = s0 + s1;
-                dst_ptr[i] = std::max(0.0F, det - k * trace * trace);
-            });
+#ifdef MAYAFLUX_ARCH_X64
+        const __m256 k_vec = _mm256_set1_ps(k);
+        const __m256 zero = _mm256_setzero_ps();
 
-        float peak = 0.0F;
-        for (size_t i = 0; i < n; ++i)
-            peak = std::max(peak, dst_ptr[i]);
+        size_t i = 0;
+        for (; i + 8 <= n; i += 8) {
+            const __m256 s0 = _mm256_loadu_ps(sxx_ptr + i);
+            const __m256 s1 = _mm256_loadu_ps(syy_ptr + i);
+            const __m256 s01 = _mm256_loadu_ps(sxy_ptr + i);
 
-        if (peak > 0.0F) {
-            const float inv = 1.0F / peak;
-            P::transform(P::par_unseq,
-                dst_ptr, dst_ptr + n, dst_ptr,
-                [inv](float v) { return v * inv; });
+            const __m256 det = _mm256_sub_ps(
+                _mm256_mul_ps(s0, s1),
+                _mm256_mul_ps(s01, s01));
+            const __m256 trace = _mm256_add_ps(s0, s1);
+            const __m256 resp = _mm256_max_ps(zero,
+                _mm256_fnmadd_ps(k_vec,
+                    _mm256_mul_ps(trace, trace),
+                    det));
+
+            _mm256_storeu_ps(dst_ptr + i, resp);
         }
+        for (; i < n; ++i) {
+            const float s0 = sxx_ptr[i];
+            const float s1 = syy_ptr[i];
+            const float s01 = sxy_ptr[i];
+            const float det = s0 * s1 - s01 * s01;
+            const float trace = s0 + s1;
+            dst_ptr[i] = std::max(0.0F, det - k * trace * trace);
+        }
+
+#elif defined(MAYAFLUX_ARCH_ARM64)
+        const float32x4_t k_vec = vdupq_n_f32(k);
+        const float32x4_t zero = vdupq_n_f32(0.0F);
+
+        size_t i = 0;
+        for (; i + 4 <= n; i += 4) {
+            const float32x4_t s0 = vld1q_f32(sxx_ptr + i);
+            const float32x4_t s1 = vld1q_f32(syy_ptr + i);
+            const float32x4_t s01 = vld1q_f32(sxy_ptr + i);
+
+            const float32x4_t det = vsubq_f32(
+                vmulq_f32(s0, s1),
+                vmulq_f32(s01, s01));
+            const float32x4_t trace = vaddq_f32(s0, s1);
+            const float32x4_t resp = vmaxq_f32(zero,
+                vmlsq_f32(det, k_vec, vmulq_f32(trace, trace)));
+
+            vst1q_f32(dst_ptr + i, resp);
+        }
+        for (; i < n; ++i) {
+            const float s0 = sxx_ptr[i];
+            const float s1 = syy_ptr[i];
+            const float s01 = sxy_ptr[i];
+            const float det = s0 * s1 - s01 * s01;
+            const float trace = s0 + s1;
+            dst_ptr[i] = std::max(0.0F, det - k * trace * trace);
+        }
+
+#else
+        for (size_t i = 0; i < n; ++i) {
+            const float s0 = sxx_ptr[i];
+            const float s1 = syy_ptr[i];
+            const float s01 = sxy_ptr[i];
+            const float det = s0 * s1 - s01 * s01;
+            const float trace = s0 + s1;
+            dst_ptr[i] = std::max(0.0F, det - k * trace * trace);
+        }
+#endif
     }
 }
 
