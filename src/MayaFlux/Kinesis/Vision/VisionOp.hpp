@@ -283,6 +283,11 @@ struct VisionSequence {
                     .window_radius = window_radius, .max_iterations = max_iterations, .eigen_threshold = eigen_threshold, .error_threshold = error_threshold });
         }
 
+        Builder& find_contours()
+        {
+            return push(VisionOp::FindContours);
+        }
+
         [[nodiscard]] VisionSequence build()
         {
             return VisionSequence { .steps = std::move(m_steps) };
