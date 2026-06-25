@@ -21,8 +21,8 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     endif()
 
     if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64")
-        add_compile_options(-mavx -mavx2)
-        message (STATUS "AVX and AVX2 support enabled for x86_64 architecture")
+        add_compile_options(-mavx -mavx2 -mfma)
+        message(STATUS "AVX, AVX2 and FMA support enabled for x86_64 architecture")
     endif()
 
 elseif(MSVC)
