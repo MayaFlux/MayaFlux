@@ -217,30 +217,6 @@ private:
 
     Kakshya::DataVariant m_prev_gray { std::vector<float> {} };
     std::vector<Keypoint> m_prev_keypoints;
-
-    // =========================================================================
-    // Internal step implementations
-    //
-    // Each writes into a named scratch slot rather than allocating.
-    // The caller (run()) swaps cur/nxt indices after each step.
-    // =========================================================================
-
-    void step_filter_separable(
-        size_t src_slot, size_t dst_slot,
-        uint32_t w, uint32_t h,
-        std::span<const float> kernel_x,
-        std::span<const float> kernel_y);
-
-    void step_gaussian_blur(
-        size_t src_slot, size_t dst_slot,
-        uint32_t w, uint32_t h,
-        float sigma);
-
-    void step_harris(
-        size_t src_slot, size_t dst_slot,
-        uint32_t w, uint32_t h,
-        float k, float sigma,
-        Eigen::Index en);
 };
 
 } // namespace MayaFlux::Kinesis::Vision

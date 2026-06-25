@@ -82,101 +82,6 @@ const std::vector<float>& VisionExecutor::gaussian_kernel(float sigma)
 }
 
 // =============================================================================
-// Step implementations
-// =============================================================================
-
-void VisionExecutor::step_filter_separable(
-    size_t src_slot, size_t dst_slot,
-    uint32_t w, uint32_t h,
-    std::span<const float> kernel_x,
-    std::span<const float> kernel_y)
-{
-    filter_separable(
-        slot_vec(src_slot), slot_vec(k_slot_tmp), slot_vec(dst_slot),
-        w, h, kernel_x, kernel_y);
-}
-
-void VisionExecutor::step_gaussian_blur(
-    size_t src_slot, size_t dst_slot,
-    uint32_t w, uint32_t h,
-    float sigma)
-{
-    const auto& kern = gaussian_kernel(sigma);
-    step_filter_separable(src_slot, dst_slot, w, h, kern, kern);
-}
-
-void VisionExecutor::step_harris(
-    size_t src_slot, size_t dst_slot,
-    uint32_t w, uint32_t h,
-    float k, float sigma,
-    Eigen::Index en)
-{
-    sobel(slot_vec(src_slot), slot_vec(k_slot_dx), slot_vec(k_slot_dy),
-        slot_vec(k_slot_tmp), w, h);
-
-    {
-        const float* dx_ptr = slot_vec(k_slot_dx).data();
-        const float* dy_ptr = slot_vec(k_slot_dy).data();
-        float* ixx_ptr = slot_vec(k_slot_ixx).data();
-        float* iyy_ptr = slot_vec(k_slot_iyy).data();
-        float* ixy_ptr = slot_vec(k_slot_ixy).data();
-        const auto n = static_cast<size_t>(en);
-
-        P::for_each(P::par_unseq,
-            std::views::iota(size_t { 0 }, n).begin(),
-            std::views::iota(size_t { 0 }, n).end(),
-            [&](size_t i) {
-                const float dx = dx_ptr[i];
-                const float dy = dy_ptr[i];
-                ixx_ptr[i] = dx * dx;
-                iyy_ptr[i] = dy * dy;
-                ixy_ptr[i] = dx * dy;
-            });
-    }
-
-    const auto& kern = gaussian_kernel(sigma);
-
-    const float* h_src[3] = { slot_vec(k_slot_ixx).data(), slot_vec(k_slot_iyy).data(), slot_vec(k_slot_ixy).data() };
-    float* h_dst[3] = { slot_vec(k_slot_dx).data(), slot_vec(k_slot_dy).data(), slot_vec(k_slot_tmp).data() };
-    filter_horizontal_planes({ h_src, 3 }, { h_dst, 3 }, w, h, kern);
-
-    const float* v_src[3] = { slot_vec(k_slot_dx).data(), slot_vec(k_slot_dy).data(), slot_vec(k_slot_tmp).data() };
-    float* v_dst[3] = { slot_vec(k_slot_sxx).data(), slot_vec(k_slot_syy).data(), slot_vec(k_slot_sxy).data() };
-    filter_vertical_planes({ v_src, 3 }, { v_dst, 3 }, w, h, kern);
-
-    {
-        const float* sxx_ptr = slot_vec(k_slot_sxx).data();
-        const float* syy_ptr = slot_vec(k_slot_syy).data();
-        const float* sxy_ptr = slot_vec(k_slot_sxy).data();
-        float* dst_ptr = slot_vec(dst_slot).data();
-        const auto n = static_cast<size_t>(en);
-
-        P::for_each(P::par_unseq,
-            std::views::iota(size_t { 0 }, n).begin(),
-            std::views::iota(size_t { 0 }, n).end(),
-            [&](size_t i) {
-                const float sxx = sxx_ptr[i];
-                const float syy = syy_ptr[i];
-                const float sxy = sxy_ptr[i];
-                const float det = sxx * syy - sxy * sxy;
-                const float trace = sxx + syy;
-                dst_ptr[i] = std::max(0.0F, det - k * trace * trace);
-            });
-
-        float peak = 0.0F;
-        for (size_t i = 0; i < n; ++i)
-            peak = std::max(peak, dst_ptr[i]);
-
-        if (peak > 0.0F) {
-            const float inv = 1.0F / peak;
-            P::transform(P::par_unseq,
-                dst_ptr, dst_ptr + n, dst_ptr,
-                [inv](float v) { return v * inv; });
-        }
-    }
-}
-
-// =============================================================================
 // reset
 // =============================================================================
 
@@ -289,7 +194,8 @@ VisionResult VisionExecutor::run(
 
         case VisionOp::GaussianBlur: {
             const auto& p = get_params<GaussianBlurParams>(step.params, step.op);
-            step_gaussian_blur(cur, nxt, w, h, p.sigma);
+            const auto& kern = gaussian_kernel(p.sigma);
+            filter_separable(slot_vec(cur), slot_vec(k_slot_tmp), slot_vec(nxt), w, h, kern, kern);
             std::swap(cur, nxt);
             result.structured = std::monostate {};
             break;
@@ -297,7 +203,7 @@ VisionResult VisionExecutor::run(
 
         case VisionOp::FilterSeparable: {
             const auto& p = get_params<FilterSeparableParams>(step.params, step.op);
-            step_filter_separable(cur, nxt, w, h, p.kernel_x, p.kernel_y);
+            filter_separable(slot_vec(cur), slot_vec(k_slot_tmp), slot_vec(nxt), w, h, p.kernel_x, p.kernel_y);
             std::swap(cur, nxt);
             result.structured = std::monostate {};
             break;
@@ -425,7 +331,13 @@ VisionResult VisionExecutor::run(
 
         case VisionOp::HarrisResponse: {
             const auto& p = get_params<HarrisParams>(step.params, step.op);
-            step_harris(cur, nxt, w, h, p.k, p.sigma, en);
+            harris_response(
+                slot_vec(cur),
+                slot_vec(k_slot_dx), slot_vec(k_slot_dy), slot_vec(k_slot_tmp),
+                slot_vec(k_slot_ixx), slot_vec(k_slot_iyy), slot_vec(k_slot_ixy),
+                slot_vec(k_slot_sxx), slot_vec(k_slot_syy), slot_vec(k_slot_sxy),
+                slot_vec(nxt),
+                w, h, p.k, gaussian_kernel(p.sigma));
             std::swap(cur, nxt);
             result.structured = std::monostate {};
             break;

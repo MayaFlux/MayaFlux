@@ -56,6 +56,78 @@ std::vector<float> harris_response(
     return response;
 }
 
+void harris_response(
+    std::span<const float> gray,
+    std::span<float> dx, std::span<float> dy, std::span<float> tmp,
+    std::span<float> ixx, std::span<float> iyy, std::span<float> ixy,
+    std::span<float> sxx, std::span<float> syy, std::span<float> sxy,
+    std::span<float> dst,
+    uint32_t w, uint32_t h,
+    float k,
+    std::span<const float> kern)
+{
+    const size_t n = static_cast<size_t>(w) * h;
+
+    sobel(gray, dx, dy, tmp, w, h);
+
+    {
+        const float* dx_ptr = dx.data();
+        const float* dy_ptr = dy.data();
+        float* ixx_ptr = ixx.data();
+        float* iyy_ptr = iyy.data();
+        float* ixy_ptr = ixy.data();
+
+        P::for_each(P::par_unseq,
+            std::views::iota(size_t { 0 }, n).begin(),
+            std::views::iota(size_t { 0 }, n).end(),
+            [&](size_t i) {
+                const float gx = dx_ptr[i];
+                const float gy = dy_ptr[i];
+                ixx_ptr[i] = gx * gx;
+                iyy_ptr[i] = gy * gy;
+                ixy_ptr[i] = gx * gy;
+            });
+    }
+
+    const float* h_src[3] = { ixx.data(), iyy.data(), ixy.data() };
+    float* h_dst[3] = { dx.data(), dy.data(), tmp.data() };
+    filter_horizontal_planes({ h_src, 3 }, { h_dst, 3 }, w, h, kern);
+
+    const float* v_src[3] = { dx.data(), dy.data(), tmp.data() };
+    float* v_dst[3] = { sxx.data(), syy.data(), sxy.data() };
+    filter_vertical_planes({ v_src, 3 }, { v_dst, 3 }, w, h, kern);
+
+    {
+        const float* sxx_ptr = sxx.data();
+        const float* syy_ptr = syy.data();
+        const float* sxy_ptr = sxy.data();
+        float* dst_ptr = dst.data();
+
+        P::for_each(P::par_unseq,
+            std::views::iota(size_t { 0 }, n).begin(),
+            std::views::iota(size_t { 0 }, n).end(),
+            [&](size_t i) {
+                const float s0 = sxx_ptr[i];
+                const float s1 = syy_ptr[i];
+                const float s01 = sxy_ptr[i];
+                const float det = s0 * s1 - s01 * s01;
+                const float trace = s0 + s1;
+                dst_ptr[i] = std::max(0.0F, det - k * trace * trace);
+            });
+
+        float peak = 0.0F;
+        for (size_t i = 0; i < n; ++i)
+            peak = std::max(peak, dst_ptr[i]);
+
+        if (peak > 0.0F) {
+            const float inv = 1.0F / peak;
+            P::transform(P::par_unseq,
+                dst_ptr, dst_ptr + n, dst_ptr,
+                [inv](float v) { return v * inv; });
+        }
+    }
+}
+
 std::vector<Keypoint> extract_peaks(
     std::span<const float> response, uint32_t w, uint32_t h,
     float threshold, uint32_t nms_radius)
