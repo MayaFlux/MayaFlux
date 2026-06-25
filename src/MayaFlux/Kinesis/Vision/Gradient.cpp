@@ -1,6 +1,6 @@
 #include "Gradient.hpp"
 
-#include "Filter.hpp"
+#include "ImageFilter.hpp"
 
 #include "MayaFlux/Transitive/Parallel/Execution.hpp"
 

@@ -1,7 +1,7 @@
 #include "Harris.hpp"
 
-#include "Filter.hpp"
 #include "Gradient.hpp"
+#include "ImageFilter.hpp"
 
 #include "MayaFlux/Transitive/Parallel/Execution.hpp"
 

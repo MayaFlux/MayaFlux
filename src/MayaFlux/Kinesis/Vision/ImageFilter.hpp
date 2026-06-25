@@ -1,7 +1,7 @@
 #pragma once
 
 /**
- * @file Filter.hpp
+ * @file ImageFilter.hpp
  * @brief 2D spatial filtering on normalised float image spans.
  *
  * Pure functions. No MayaFlux type dependencies.
@@ -17,6 +17,47 @@
 
 namespace MayaFlux::Kinesis::Vision {
 
+// ============================================================================
+// Multi-plane separable convolution
+// ============================================================================
+
+/**
+ * @brief Fused horizontal separable filter over N planes.
+ *
+ * Applies @p kernel horizontally to all source planes simultaneously.
+ * One row scan reads all N sources and writes all N destinations.
+ * N is src.size(); src.size() must equal dst.size().
+ *
+ * No aliasing between any src pointer and any dst pointer.
+ *
+ * @param src    Source plane pointers, each pointing to w * h floats.
+ * @param dst    Destination plane pointers, each pointing to w * h floats.
+ * @param w      Image width in pixels.
+ * @param h      Image height in pixels.
+ * @param kernel 1D kernel. Length must be odd.
+ */
+MAYAFLUX_API void filter_horizontal_planes(
+    std::span<const float* const> src,
+    std::span<float* const> dst,
+    uint32_t w, uint32_t h,
+    std::span<const float> kernel);
+
+/**
+ * @brief Fused vertical separable filter over N planes.
+ *
+ * Same contract as filter_horizontal_planes but operates vertically.
+ *
+ * @param src    Source plane pointers, each pointing to w * h floats.
+ * @param dst    Destination plane pointers, each pointing to w * h floats.
+ * @param w      Image width in pixels.
+ * @param h      Image height in pixels.
+ * @param kernel 1D kernel. Length must be odd.
+ */
+MAYAFLUX_API void filter_vertical_planes(
+    std::span<const float* const> src,
+    std::span<float* const> dst,
+    uint32_t w, uint32_t h,
+    std::span<const float> kernel);
 // ============================================================================
 // Separable convolution
 // ============================================================================
