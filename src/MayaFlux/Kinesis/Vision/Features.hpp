@@ -57,4 +57,18 @@ struct Keypoint {
     float angle;
 };
 
+/**
+ * @brief Pixel buffer captured mid-pipeline by a Snapshot step.
+ *
+ * pixels is a normalised float buffer in the format active at the snapshot
+ * point. channels distinguishes single-channel (grayscale, Harris response)
+ * from three-channel (HSV) and four-channel (RGBA).
+ */
+struct SnapshotEntry {
+    std::vector<float> pixels;
+    uint32_t w { 0 };
+    uint32_t h { 0 };
+    uint32_t channels { 0 };
+};
+
 } // namespace MayaFlux::Kinesis::Vision

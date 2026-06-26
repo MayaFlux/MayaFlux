@@ -29,6 +29,8 @@ enum class VisionOp : uint8_t {
     RgbaToHsv,
     GrayToRgba,
 
+    Downsample2x,
+
     Threshold,
     ThresholdAdaptive,
     ThresholdOtsu,
@@ -55,6 +57,7 @@ enum class VisionOp : uint8_t {
     ExtractPeaks,
 
     TrackKeypoints,
+    Snapshot,
 };
 
 // ============================================================================
@@ -108,6 +111,11 @@ struct TrackKeypointsParams {
     float error_threshold = 0.3F;
 };
 
+struct FindContoursParams {
+    float min_area { 0.0F };
+    uint32_t max_contours { 0 };
+};
+
 /**
  * @brief Parameter variant covering all ops that carry parameters.
  *
@@ -126,7 +134,8 @@ using VisionParams = std::variant<
     MorphParams,
     HarrisParams,
     ExtractPeaksParams,
-    TrackKeypointsParams>;
+    TrackKeypointsParams,
+    FindContoursParams>;
 
 /**
  * @brief One step in a VisionSequence: an op and its parameters.
@@ -143,6 +152,8 @@ struct VisionStep {
  */
 struct VisionSequence {
     std::vector<VisionStep> steps;
+    bool tracks_keypoints { false };
+    bool track_follows_peaks { false };
 
     /**
      * @brief Fluent builder for VisionSequence.
@@ -173,6 +184,11 @@ struct VisionSequence {
         Builder& gray_to_rgba()
         {
             return push(VisionOp::GrayToRgba);
+        }
+
+        Builder& downsample_2x()
+        {
+            return push(VisionOp::Downsample2x);
         }
 
         Builder& threshold(float value)
@@ -276,9 +292,29 @@ struct VisionSequence {
                     .window_radius = window_radius, .max_iterations = max_iterations, .eigen_threshold = eigen_threshold, .error_threshold = error_threshold });
         }
 
+        Builder& find_contours(float min_area = 0.0F, uint32_t max_contours = 0)
+        {
+            return push(VisionOp::FindContours,
+                FindContoursParams { .min_area = min_area, .max_contours = max_contours });
+        }
+
+        Builder& snapshot()
+        {
+            return push(VisionOp::Snapshot);
+        }
+
         [[nodiscard]] VisionSequence build()
         {
-            return VisionSequence { .steps = std::move(m_steps) };
+            VisionSequence seq { .steps = std::move(m_steps) };
+            for (size_t i = 0; i < seq.steps.size(); ++i) {
+                if (seq.steps[i].op == VisionOp::TrackKeypoints)
+                    seq.tracks_keypoints = true;
+                if (i + 1 < seq.steps.size()
+                    && seq.steps[i].op == VisionOp::ExtractPeaks
+                    && seq.steps[i + 1].op == VisionOp::TrackKeypoints)
+                    seq.track_follows_peaks = true;
+            }
+            return seq;
         }
 
     private:

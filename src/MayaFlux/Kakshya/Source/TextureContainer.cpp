@@ -1,6 +1,7 @@
 #include "TextureContainer.hpp"
 
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/VKImage.hpp"
+#include "MayaFlux/Kakshya/DataProcessingChain.hpp"
 #include "MayaFlux/Kakshya/NDData/DataAccess.hpp"
 
 #include "MayaFlux/Kakshya/Utils/CoordUtils.hpp"
@@ -186,6 +187,7 @@ TextureContainer::TextureContainer(uint32_t width, uint32_t height, ImageFormat 
     , m_channels(TextureLoom::get_channel_count(format))
     , m_bpp(TextureLoom::get_bytes_per_pixel(format))
 {
+    m_chain = std::make_shared<DataProcessingChain>();
     const size_t element_count = static_cast<size_t>(m_width) * m_height * m_channels;
 
     for (uint32_t i = 0; i < std::max(layers, 1U); ++i) {
@@ -952,6 +954,14 @@ bool TextureContainer::has_data() const
 
     auto [ptr, bytes] = variant_bytes(m_data[0]);
     return ptr && bytes > 0;
+}
+
+std::shared_ptr<DataProcessingChain> TextureContainer::get_processing_chain()
+{
+    if (!m_chain) {
+        m_chain = std::make_shared<DataProcessingChain>();
+    }
+    return m_chain;
 }
 
 void TextureContainer::get_frames_impl(

@@ -1,5 +1,6 @@
 #include "PlotContainer.hpp"
 
+#include "MayaFlux/Kakshya/DataProcessingChain.hpp"
 #include "MayaFlux/Kakshya/NDData/DataAccess.hpp"
 #include "MayaFlux/Kakshya/Processors/PlotProcessor.hpp"
 
@@ -14,6 +15,7 @@ namespace {
 
 PlotContainer::PlotContainer()
 {
+    m_chain = std::make_shared<DataProcessingChain>();
     m_structure = ContainerDataStructure(
         DataModality::TENSOR_ND,
         OrganizationStrategy::PLANAR,
@@ -453,6 +455,13 @@ void PlotContainer::set_default_processor(const std::shared_ptr<DataProcessor>& 
 std::shared_ptr<DataProcessor> PlotContainer::get_default_processor() const
 {
     return m_processor;
+}
+
+std::shared_ptr<DataProcessingChain> PlotContainer::get_processing_chain()
+{
+    if (!m_chain)
+        m_chain = std::make_shared<DataProcessingChain>();
+    return m_chain;
 }
 
 auto PlotContainer::get_frame_typed(uint64_t frame_index) const -> std::span<const double>

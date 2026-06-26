@@ -62,8 +62,10 @@ void VisionProcessor::process(const std::shared_ptr<SignalSourceContainer>& cont
 
     if (auto vc = std::dynamic_pointer_cast<VideoStreamContainer>(container)) {
         frame = vc->processed_frame_as_float(0);
+        vc->invalidate_float_frame_cache(0);
     } else if (auto wc = std::dynamic_pointer_cast<WindowContainer>(container)) {
         frame = wc->processed_frame_as_float(0);
+        wc->invalidate_float_frame_cache(0);
     } else if (auto tc = std::dynamic_pointer_cast<TextureContainer>(container)) {
         frame = tc->as_normalised_float(0);
     }

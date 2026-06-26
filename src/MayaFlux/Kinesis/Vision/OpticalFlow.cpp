@@ -1,7 +1,7 @@
 #include "OpticalFlow.hpp"
 
-#include "Filter.hpp"
 #include "Gradient.hpp"
+#include "ImageFilter.hpp"
 
 #include "MayaFlux/Transitive/Parallel/Execution.hpp"
 
@@ -179,7 +179,25 @@ std::vector<TrackResult> track_keypoints(
     float error_threshold)
 {
     auto grad = sobel(prev_gray, w, h);
+    return track_keypoints(prev_gray, curr_gray,
+        grad.dx, grad.dy,
+        w, h, prev_points,
+        window_radius, max_iterations,
+        eigen_threshold, error_threshold);
+}
 
+std::vector<TrackResult> track_keypoints(
+    std::span<const float> prev_gray,
+    std::span<const float> curr_gray,
+    std::span<const float> grad_dx,
+    std::span<const float> grad_dy,
+    uint32_t w, uint32_t h,
+    std::span<const glm::vec2> prev_points,
+    uint32_t window_radius,
+    uint32_t max_iterations,
+    float eigen_threshold,
+    float error_threshold)
+{
     const size_t np = prev_points.size();
     std::vector<TrackResult> results(np);
 
@@ -189,7 +207,7 @@ std::vector<TrackResult> track_keypoints(
         [&](size_t i) {
             results[i] = lk_point(
                 prev_gray, curr_gray,
-                grad.dx, grad.dy,
+                grad_dx, grad_dy,
                 w, h,
                 prev_points[i],
                 window_radius,

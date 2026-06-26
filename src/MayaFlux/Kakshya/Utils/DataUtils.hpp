@@ -594,6 +594,29 @@ inline std::span<double> convert_variant_to_double(DataVariant& data,
     const DataVariant& variant, std::vector<float>& storage);
 
 /**
+ * @brief Convert a normalised float span back to uint8_t pixels.
+ *
+ * Multiplies each value by 255 and clamps to [0, 255]. Output size must
+ * equal src.size(). Single-channel input with channels=1 writes one byte
+ * per pixel. Three or four channel input writes interleaved bytes.
+ *
+ * @param src      Normalised float span, values in [0, 1].
+ * @param dst      Output span, size must equal src.size().
+ */
+MAYAFLUX_API void denormalise_to_uint8(
+    std::span<const float> src,
+    std::span<uint8_t> dst);
+
+/**
+ * @brief Convert a normalised float span back to uint8_t, returning a new vector.
+ *
+ * @param src      Normalised float span, values in [0, 1].
+ * @return         uint8_t vector of the same length as src.
+ */
+[[nodiscard]] MAYAFLUX_API std::vector<uint8_t> denormalise_to_uint8(
+    std::span<const float> src);
+
+/**
  * @brief Set a value in a metadata map (key-value).
  * @param metadata Metadata map.
  * @param key Key to set.

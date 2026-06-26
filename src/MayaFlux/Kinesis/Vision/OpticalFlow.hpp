@@ -68,4 +68,37 @@ struct TrackResult {
     float eigen_threshold = 1e-4F,
     float error_threshold = 0.3F);
 
+/**
+ * @brief Track keypoints using a pre-computed Sobel gradient of prev_gray.
+ *
+ * Identical to the four-parameter overload but accepts caller-supplied dx
+ * and dy of the previous frame, avoiding recomputation when the gradient
+ * is already cached. dx and dy must be the Sobel gradient of prev_gray
+ * at the same w x h resolution.
+ *
+ * @param prev_gray  Previous frame, single-channel float, size w * h.
+ * @param curr_gray  Current frame, single-channel float, size w * h.
+ * @param grad_dx    Horizontal Sobel gradient of prev_gray, size w * h.
+ * @param grad_dy    Vertical Sobel gradient of prev_gray, size w * h.
+ * @param w          Image width in pixels.
+ * @param h          Image height in pixels.
+ * @param prev_points Points to track in normalised [0, 1] coordinates.
+ * @param window_radius   Half-size of the tracking patch in pixels.
+ * @param max_iterations  Maximum Newton-Raphson iterations per point.
+ * @param eigen_threshold Minimum eigenvalue for structure tensor validity.
+ * @param error_threshold Maximum residual error to accept a track.
+ * @return TrackResult per input point, same order.
+ */
+[[nodiscard]] MAYAFLUX_API std::vector<TrackResult> track_keypoints(
+    std::span<const float> prev_gray,
+    std::span<const float> curr_gray,
+    std::span<const float> grad_dx,
+    std::span<const float> grad_dy,
+    uint32_t w, uint32_t h,
+    std::span<const glm::vec2> prev_points,
+    uint32_t window_radius = 7,
+    uint32_t max_iterations = 20,
+    float eigen_threshold = 1e-4F,
+    float error_threshold = 0.3F);
+
 } // namespace MayaFlux::Kinesis::Vision

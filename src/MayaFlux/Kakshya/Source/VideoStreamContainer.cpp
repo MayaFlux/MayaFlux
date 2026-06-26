@@ -1,6 +1,7 @@
 #include "VideoStreamContainer.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
+#include "MayaFlux/Kakshya/DataProcessingChain.hpp"
 #include "MayaFlux/Kakshya/DataProcessor.hpp"
 #include "MayaFlux/Kakshya/NDData/DataAccess.hpp"
 #include "MayaFlux/Kakshya/Processors/FrameAccessProcessor.hpp"
@@ -26,6 +27,7 @@ VideoStreamContainer::VideoStreamContainer(uint32_t width,
     , m_channels(channels)
     , m_frame_rate(frame_rate)
 {
+    m_processing_chain = std::make_shared<DataProcessingChain>();
     m_structure = ContainerDataStructure::image_interleaved();
     m_structure.modality = DataModality::VIDEO_COLOR;
 
@@ -566,6 +568,14 @@ std::shared_ptr<DataProcessor> VideoStreamContainer::get_default_processor() con
     return m_default_processor;
 }
 
+std::shared_ptr<DataProcessingChain> VideoStreamContainer::get_processing_chain()
+{
+    if (!m_processing_chain)
+        m_processing_chain = std::make_shared<DataProcessingChain>();
+
+    return m_processing_chain;
+}
+
 // =========================================================================
 // Reader tracking
 // =========================================================================
@@ -684,9 +694,20 @@ std::span<const float> VideoStreamContainer::processed_frame_as_float(uint64_t f
     if (frame_index >= m_processed_data.size())
         return {};
 
-    if (frame_index >= m_float_frame_cache.size()) {
-        m_float_frame_cache.resize(frame_index + 1);
-        m_float_frame_dirty[frame_index].store(true, std::memory_order_relaxed);
+    if (frame_index >= m_float_frame_dirty.size()) {
+        const size_t old_size = m_float_frame_dirty.size();
+        const size_t new_size = frame_index + 1;
+        auto new_dirty = std::vector<std::atomic<bool>>(new_size);
+
+        for (size_t i = 0; i < old_size; ++i) {
+            new_dirty[i].store(m_float_frame_dirty[i].load(std::memory_order_relaxed),
+                std::memory_order_relaxed);
+        }
+
+        for (size_t i = old_size; i < new_size; ++i)
+            new_dirty[i].store(true, std::memory_order_relaxed);
+        m_float_frame_dirty = std::move(new_dirty);
+        m_float_frame_cache.resize(new_size);
     }
 
     if (!m_float_frame_dirty[frame_index].load(std::memory_order_acquire))
@@ -699,7 +720,14 @@ std::span<const float> VideoStreamContainer::processed_frame_as_float(uint64_t f
     return result;
 }
 
-void VideoStreamContainer::invalidate_float_frame_cache()
+void VideoStreamContainer::invalidate_float_frame_cache(uint32_t slot_index)
+{
+    if (slot_index >= m_float_frame_dirty.size())
+        return;
+    m_float_frame_dirty[slot_index].store(true, std::memory_order_release);
+}
+
+void VideoStreamContainer::reset_float_frame_cache()
 {
     if (m_processed_data.size() > m_float_frame_dirty.size()) {
         m_float_frame_cache.resize(m_processed_data.size());

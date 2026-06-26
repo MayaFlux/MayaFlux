@@ -1,5 +1,6 @@
 #include "SoundStreamContainer.hpp"
 
+#include "MayaFlux/Kakshya/DataProcessingChain.hpp"
 #include "MayaFlux/Kakshya/KakshyaUtils.hpp"
 
 #include "MayaFlux/Kakshya/NDData/DataAccess.hpp"
@@ -14,6 +15,7 @@ SoundStreamContainer::SoundStreamContainer(uint32_t sample_rate, uint32_t num_ch
     , m_num_frames(initial_capacity)
     , m_circular_mode(circular_mode)
 {
+    m_processing_chain = std::make_shared<DataProcessingChain>();
     setup_dimensions();
 
     m_read_position = std::vector<std::atomic<uint64_t>>(m_num_channels);
@@ -622,6 +624,14 @@ void SoundStreamContainer::set_default_processor(const std::shared_ptr<DataProce
 std::shared_ptr<DataProcessor> SoundStreamContainer::get_default_processor() const
 {
     return m_default_processor;
+}
+
+std::shared_ptr<DataProcessingChain> SoundStreamContainer::get_processing_chain()
+{
+    if (!m_processing_chain) {
+        m_processing_chain = std::make_shared<DataProcessingChain>();
+    }
+    return m_processing_chain;
 }
 
 uint32_t SoundStreamContainer::register_dimension_reader(uint32_t dimension_index)

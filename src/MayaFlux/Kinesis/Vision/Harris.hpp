@@ -42,6 +42,39 @@ namespace MayaFlux::Kinesis::Vision {
     float k = 0.04F, float sigma = 1.0F);
 
 /**
+ * @brief Compute the Harris corner response map into caller-supplied buffers.
+ *
+ * Writes the normalised response into @p dst. Intermediate buffers
+ * dx/dy/tmp/ixx/iyy/ixy/sxx/syy/sxy must each be size >= w * h and
+ * must not alias each other or @p gray.
+ *
+ * @param gray Single-channel float span, size w * h.
+ * @param dx   Scratch: horizontal gradient, size >= w * h.
+ * @param dy   Scratch: vertical gradient, size >= w * h.
+ * @param tmp  Scratch: filter horizontal pass, size >= w * h.
+ * @param ixx  Scratch: structure tensor Ixx, size >= w * h.
+ * @param iyy  Scratch: structure tensor Iyy, size >= w * h.
+ * @param ixy  Scratch: structure tensor Ixy, size >= w * h.
+ * @param sxx  Scratch: smoothed Sxx, size >= w * h.
+ * @param syy  Scratch: smoothed Syy, size >= w * h.
+ * @param sxy  Scratch: smoothed Sxy, size >= w * h.
+ * @param dst  Output response map, size >= w * h, values in [0, 1].
+ * @param w    Image width in pixels.
+ * @param h    Image height in pixels.
+ * @param k    Harris sensitivity parameter. Typical range [0.04, 0.06].
+ * @param kern Precomputed 1D Gaussian kernel for structure tensor smoothing.
+ */
+MAYAFLUX_API void harris_response(
+    std::span<const float> gray,
+    std::span<float> dx, std::span<float> dy, std::span<float> tmp,
+    std::span<float> ixx, std::span<float> iyy, std::span<float> ixy,
+    std::span<float> sxx, std::span<float> syy, std::span<float> sxy,
+    std::span<float> dst,
+    uint32_t w, uint32_t h,
+    float k,
+    std::span<const float> kern);
+
+/**
  * @brief Extract peaks from a response map via non-maximum suppression.
  *
  * A pixel is a peak if its response exceeds threshold and it is the

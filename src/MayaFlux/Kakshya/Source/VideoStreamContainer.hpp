@@ -257,7 +257,7 @@ public:
     void set_default_processor(const std::shared_ptr<DataProcessor>& processor) override;
     [[nodiscard]] std::shared_ptr<DataProcessor> get_default_processor() const override;
 
-    std::shared_ptr<DataProcessingChain> get_processing_chain() override { return m_processing_chain; }
+    std::shared_ptr<DataProcessingChain> get_processing_chain() override;
     void set_processing_chain(const std::shared_ptr<DataProcessingChain>& chain) override { m_processing_chain = chain; }
 
     // =========================================================================
@@ -287,7 +287,7 @@ public:
         return m_processing_token_channel.load() == channel;
     }
 
-    void invalidate_float_frame_cache();
+    void invalidate_float_frame_cache(uint32_t slot_index = 0);
 
     // =========================================================================
     // Data access
@@ -422,6 +422,8 @@ private:
 
     mutable std::vector<std::vector<float>> m_float_frame_cache;
     mutable std::vector<std::atomic<bool>> m_float_frame_dirty;
+
+    void reset_float_frame_cache();
 };
 
 } // namespace MayaFlux::Kakshya

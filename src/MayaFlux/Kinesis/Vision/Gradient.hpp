@@ -47,6 +47,26 @@ struct GradientResult {
     std::span<const float> gray, uint32_t w, uint32_t h);
 
 /**
+ * @brief Sobel gradient writing dx and dy into caller-supplied buffers.
+ *
+ * Does not compute magnitude or angle. @p tmp is used as the horizontal
+ * filter pass scratch. All buffers must be size >= w * h and must not alias.
+ *
+ * @param gray Input span, size w * h.
+ * @param dx   Output horizontal gradient, size >= w * h.
+ * @param dy   Output vertical gradient, size >= w * h.
+ * @param tmp  Scratch span for separable filter pass, size >= w * h.
+ * @param w    Image width in pixels.
+ * @param h    Image height in pixels.
+ */
+MAYAFLUX_API void sobel(
+    std::span<const float> gray,
+    std::span<float> dx,
+    std::span<float> dy,
+    std::span<float> tmp,
+    uint32_t w, uint32_t h);
+
+/**
  * @brief Scharr gradient operator.
  *
  * 3x3 Scharr kernels. Better rotational symmetry than Sobel.
@@ -59,6 +79,18 @@ struct GradientResult {
  */
 [[nodiscard]] MAYAFLUX_API GradientResult scharr(
     std::span<const float> gray, uint32_t w, uint32_t h);
+
+/**
+ * @brief Scharr gradient writing dx and dy into caller-supplied buffers.
+ *
+ * Same contract as the void sobel overload.
+ */
+MAYAFLUX_API void scharr(
+    std::span<const float> gray,
+    std::span<float> dx,
+    std::span<float> dy,
+    std::span<float> tmp,
+    uint32_t w, uint32_t h);
 
 // ============================================================================
 // Edge detection
@@ -81,6 +113,23 @@ struct GradientResult {
  */
 [[nodiscard]] MAYAFLUX_API std::vector<float> canny(
     std::span<const float> gray, uint32_t w, uint32_t h,
+    float sigma, float low_threshold, float high_threshold);
+
+/**
+ * @brief Canny edge detector writing into a caller-supplied buffer.
+ *
+ * @param gray           Input span, size w * h.
+ * @param dst            Output span, size >= w * h. Binary: 1.0f on edges.
+ * @param w              Image width in pixels.
+ * @param h              Image height in pixels.
+ * @param sigma          Gaussian pre-blur sigma. 0.0f skips blur.
+ * @param low_threshold  Hysteresis low threshold in [0, 1].
+ * @param high_threshold Hysteresis high threshold in [0, 1].
+ */
+MAYAFLUX_API void canny(
+    std::span<const float> gray,
+    std::span<float> dst,
+    uint32_t w, uint32_t h,
     float sigma, float low_threshold, float high_threshold);
 
 } // namespace MayaFlux::Kinesis::Vision

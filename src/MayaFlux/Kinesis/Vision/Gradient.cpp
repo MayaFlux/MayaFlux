@@ -1,8 +1,13 @@
 #include "Gradient.hpp"
 
-#include "Filter.hpp"
+#include "ImageFilter.hpp"
+#include "KernelSpec.hpp"
 
 #include "MayaFlux/Transitive/Parallel/Execution.hpp"
+
+#include <Eigen/Core>
+
+namespace K = MayaFlux::Kinesis::Vision::Kernels;
 
 namespace P = MayaFlux::Parallel;
 
@@ -16,7 +21,7 @@ namespace {
     {
         const size_t n = static_cast<size_t>(w) * h;
 
-        static constexpr float smooth[] = { 1.0f, 2.0f, 1.0f };
+        static constexpr float smooth[] = { 1.0F, 2.0F, 1.0F };
         auto dx = filter_separable(gray, w, h, kx, smooth);
         auto dy = filter_separable(gray, w, h, smooth, ky);
 
@@ -43,20 +48,85 @@ namespace {
         return { .dx = std::move(dx), .dy = std::move(dy), .magnitude = std::move(mag), .angle = std::move(ang) };
     }
 
+    void gradient_into_buffers(
+        std::span<const float> gray,
+        std::span<float> dx,
+        std::span<float> dy,
+        std::span<float> tmp,
+        uint32_t w, uint32_t h,
+        std::span<const float> kx,
+        std::span<const float> ky)
+    {
+        filter_separable(gray, tmp, dx, w, h, kx, K::sobel_smooth);
+        filter_separable(gray, tmp, dy, w, h, K::sobel_smooth, ky);
+    }
+
 } // namespace
+
+void sobel(
+    std::span<const float> gray,
+    std::span<float> dx, std::span<float> dy, std::span<float> tmp,
+    uint32_t w, uint32_t h)
+{
+    gradient_into_buffers(gray, dx, dy, tmp, w, h, K::sobel_kx, K::sobel_ky);
+}
 
 GradientResult sobel(std::span<const float> gray, uint32_t w, uint32_t h)
 {
-    const float kx[] = { -1.0F, 0.0F, 1.0F };
-    const float ky[] = { -1.0F, 0.0F, 1.0F };
-    return gradient_from_kernels(gray, w, h, kx, ky);
+    const size_t n = static_cast<size_t>(w) * h;
+    GradientResult r;
+    r.dx.resize(n);
+    r.dy.resize(n);
+    std::vector<float> tmp(n);
+    sobel(gray, r.dx, r.dy, tmp, w, h);
+
+    const auto en = static_cast<Eigen::Index>(n);
+    auto dx = Eigen::Map<const Eigen::ArrayXf>(r.dx.data(), en);
+    auto dy = Eigen::Map<const Eigen::ArrayXf>(r.dy.data(), en);
+    r.magnitude.resize(n);
+    r.angle.resize(n);
+
+    Eigen::Map<Eigen::ArrayXf>(r.magnitude.data(), en) = (dx.square() + dy.square()).sqrt();
+    const float peak = Eigen::Map<const Eigen::ArrayXf>(r.magnitude.data(), en).maxCoeff();
+    if (peak > 0.0F)
+        Eigen::Map<Eigen::ArrayXf>(r.magnitude.data(), en) /= peak;
+
+    P::transform(P::par_unseq, r.dx.begin(), r.dx.end(), r.dy.begin(), r.angle.begin(),
+        [](float gx, float gy) { return std::atan2(gy, gx); });
+    return r;
+}
+
+void scharr(
+    std::span<const float> gray,
+    std::span<float> dx, std::span<float> dy, std::span<float> tmp,
+    uint32_t w, uint32_t h)
+{
+    gradient_into_buffers(gray, dx, dy, tmp, w, h, K::scharr_kx, K::scharr_ky);
 }
 
 GradientResult scharr(std::span<const float> gray, uint32_t w, uint32_t h)
 {
-    const float kx[] = { -3.0F, 0.0F, 3.0F };
-    const float ky[] = { -3.0F, 0.0F, 3.0F };
-    return gradient_from_kernels(gray, w, h, kx, ky);
+    const size_t n = static_cast<size_t>(w) * h;
+    GradientResult r;
+    r.dx.resize(n);
+    r.dy.resize(n);
+    std::vector<float> tmp(n);
+    scharr(gray, r.dx, r.dy, tmp, w, h);
+
+    const auto en = static_cast<Eigen::Index>(n);
+    auto dx = Eigen::Map<const Eigen::ArrayXf>(r.dx.data(), en);
+    auto dy = Eigen::Map<const Eigen::ArrayXf>(r.dy.data(), en);
+    r.magnitude.resize(n);
+    r.angle.resize(n);
+
+    Eigen::Map<Eigen::ArrayXf>(r.magnitude.data(), en) = (dx.square() + dy.square()).sqrt();
+    const float peak = Eigen::Map<const Eigen::ArrayXf>(r.magnitude.data(), en).maxCoeff();
+    if (peak > 0.0F)
+        Eigen::Map<Eigen::ArrayXf>(r.magnitude.data(), en) /= peak;
+
+    P::transform(P::par_unseq, r.dx.begin(), r.dx.end(), r.dy.begin(), r.angle.begin(),
+        [](float gx, float gy) { return std::atan2(gy, gx); });
+    return r;
 }
 
 std::vector<float> canny(
@@ -158,6 +228,16 @@ std::vector<float> canny(
     }
 
     return out;
+}
+
+void canny(
+    std::span<const float> gray,
+    std::span<float> dst,
+    uint32_t w, uint32_t h,
+    float sigma, float low_threshold, float high_threshold)
+{
+    auto result = canny(gray, w, h, sigma, low_threshold, high_threshold);
+    std::ranges::copy(result, dst.begin());
 }
 
 } // namespace MayaFlux::Kinesis::Vision

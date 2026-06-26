@@ -228,7 +228,9 @@ protected:
             const Kinesis::Vision::VisionResult vr = m_executor.run(m_sequence, frame, w, h);
 
             VisionAnalysis analysis;
-            analysis.pixel_image = vr.pixel_image;
+            if (const auto* v = std::get_if<std::vector<float>>(&vr.pixel_image))
+                analysis.pixel_image = *v;
+
             analysis.w = vr.w;
             analysis.h = vr.h;
 
@@ -274,8 +276,9 @@ private:
         const DataStructureInfo& info)
     {
         std::vector<Kakshya::DataVariant> out_variants;
-        if (!vr.pixel_image.empty())
-            out_variants.emplace_back(vr.pixel_image);
+        const auto* pix = std::get_if<std::vector<float>>(&vr.pixel_image);
+        if (pix && !pix->empty())
+            out_variants.emplace_back(*pix);
 
         output_type out = this->convert_result(
             std::vector<std::vector<double>> {}, info);
