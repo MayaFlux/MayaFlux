@@ -250,7 +250,7 @@ public:
      *
      * @param frame_index Zero-based index into processed_data.
      */
-    void invalidate_float_frame_cache(uint32_t frame_index);
+    void invalidate_float_frame_cache(uint32_t frame_index = 0);
 
     // =========================================================================
     // SignalSourceContainer

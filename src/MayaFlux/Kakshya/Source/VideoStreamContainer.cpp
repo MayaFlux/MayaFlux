@@ -720,7 +720,14 @@ std::span<const float> VideoStreamContainer::processed_frame_as_float(uint64_t f
     return result;
 }
 
-void VideoStreamContainer::invalidate_float_frame_cache()
+void VideoStreamContainer::invalidate_float_frame_cache(uint32_t slot_index)
+{
+    if (slot_index >= m_float_frame_dirty.size())
+        return;
+    m_float_frame_dirty[slot_index].store(true, std::memory_order_release);
+}
+
+void VideoStreamContainer::reset_float_frame_cache()
 {
     if (m_processed_data.size() > m_float_frame_dirty.size()) {
         m_float_frame_cache.resize(m_processed_data.size());
