@@ -42,10 +42,8 @@ void VisionExecutor::ensure_slots(uint32_t w, uint32_t h)
         return;
 
     const size_t n = static_cast<size_t>(w) * h;
-    const size_t n_rgba = n * 4;
 
-    m_slots[k_slot_cur] = std::vector<float>(n_rgba, 0.0F);
-    for (size_t i = 1; i < k_slot_count; ++i)
+    for (size_t i = 0; i < k_slot_count; ++i)
         m_slots[i] = std::vector<float>(n, 0.0F);
 
     m_slot_w = w;
