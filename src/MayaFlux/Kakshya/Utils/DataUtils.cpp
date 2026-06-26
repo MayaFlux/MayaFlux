@@ -92,6 +92,21 @@ std::span<const float> as_normalised_float(
         variant);
 }
 
+void denormalise_to_uint8(std::span<const float> src, std::span<uint8_t> dst)
+{
+    Parallel::transform(Parallel::par_unseq, src.begin(), src.end(), dst.begin(),
+        [](float v) {
+            return static_cast<uint8_t>(std::clamp(v * 255.0F, 0.0F, 255.0F));
+        });
+}
+
+std::vector<uint8_t> denormalise_to_uint8(std::span<const float> src)
+{
+    std::vector<uint8_t> out(src.size());
+    denormalise_to_uint8(src, out);
+    return out;
+}
+
 void set_metadata_value(std::unordered_map<std::string, std::any>& metadata, const std::string& key, std::any value)
 {
     metadata[key] = std::move(value);
