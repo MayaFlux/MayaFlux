@@ -415,6 +415,8 @@ VisionResult VisionExecutor::run(
         }
 
         case VisionOp::Snapshot: {
+            if (slot_vec(cur).empty())
+                break;
             const size_t n = static_cast<size_t>(w) * h * channels;
             SnapshotEntry entry;
             entry.pixels.assign(slot_vec(cur).begin(), slot_vec(cur).begin() + n);
@@ -424,7 +426,6 @@ VisionResult VisionExecutor::run(
             result.snapshots.push_back(std::move(entry));
             break;
         }
-
         } // switch
     }
 
