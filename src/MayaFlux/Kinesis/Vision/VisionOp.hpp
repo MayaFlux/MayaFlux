@@ -151,6 +151,8 @@ struct VisionStep {
  */
 struct VisionSequence {
     std::vector<VisionStep> steps;
+    bool tracks_keypoints { false };
+    bool track_follows_peaks { false };
 
     /**
      * @brief Fluent builder for VisionSequence.
@@ -297,7 +299,16 @@ struct VisionSequence {
 
         [[nodiscard]] VisionSequence build()
         {
-            return VisionSequence { .steps = std::move(m_steps) };
+            VisionSequence seq { .steps = std::move(m_steps) };
+            for (size_t i = 0; i < seq.steps.size(); ++i) {
+                if (seq.steps[i].op == VisionOp::TrackKeypoints)
+                    seq.tracks_keypoints = true;
+                if (i + 1 < seq.steps.size()
+                    && seq.steps[i].op == VisionOp::ExtractPeaks
+                    && seq.steps[i + 1].op == VisionOp::TrackKeypoints)
+                    seq.track_follows_peaks = true;
+            }
+            return seq;
         }
 
     private:

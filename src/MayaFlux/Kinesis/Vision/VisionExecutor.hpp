@@ -216,6 +216,7 @@ private:
     // =========================================================================
 
     Kakshya::DataVariant m_prev_gray { std::vector<float> {} };
+    std::vector<float> m_curr_gray_cache;
     std::vector<Keypoint> m_prev_keypoints;
 };
 

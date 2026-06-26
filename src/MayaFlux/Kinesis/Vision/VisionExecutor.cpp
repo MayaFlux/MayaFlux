@@ -86,6 +86,7 @@ const std::vector<float>& VisionExecutor::gaussian_kernel(float sigma)
 void VisionExecutor::reset()
 {
     std::get<std::vector<float>>(m_prev_gray).clear();
+    m_curr_gray_cache.clear();
     m_prev_keypoints.clear();
 }
 
@@ -138,6 +139,12 @@ VisionResult VisionExecutor::run(
             rgba_to_gray(slot_vec(cur), slot_vec(nxt), w, h);
             channels = 1;
             std::swap(cur, nxt);
+
+            if (sequence.tracks_keypoints && !sequence.track_follows_peaks) {
+                m_curr_gray_cache.assign(slot_vec(cur).begin(),
+                    slot_vec(cur).begin() + static_cast<size_t>(w) * h);
+            }
+
             result.structured = std::monostate {};
             break;
         }
@@ -362,10 +369,16 @@ VisionResult VisionExecutor::run(
             const auto& p = get_params<ExtractPeaksParams>(step.params, step.op);
             auto kpts = extract_peaks(slot_vec(cur), w, h, p.threshold, p.nms_radius);
             m_prev_keypoints = kpts;
+
+            if (sequence.tracks_keypoints && !sequence.track_follows_peaks)
+                std::swap(std::get<std::vector<float>>(m_prev_gray), m_curr_gray_cache);
+
             result.structured = std::move(kpts);
-            slot_vec(cur).clear();
-            result.w = 0;
-            result.h = 0;
+            if (!sequence.track_follows_peaks) {
+                slot_vec(cur).clear();
+                result.w = 0;
+                result.h = 0;
+            }
             break;
         }
 
@@ -374,7 +387,7 @@ VisionResult VisionExecutor::run(
 
             auto& prev_vec = std::get<std::vector<float>>(m_prev_gray);
             if (prev_vec.empty() || m_prev_keypoints.empty()) {
-                prev_vec = slot_vec(cur);
+                std::swap(prev_vec, slot_vec(cur));
                 result.structured = std::vector<TrackResult> {};
                 slot_vec(cur).clear();
                 result.w = 0;
@@ -393,7 +406,7 @@ VisionResult VisionExecutor::run(
                 p.window_radius, p.max_iterations,
                 p.eigen_threshold, p.error_threshold);
 
-            prev_vec = slot_vec(cur);
+            std::swap(prev_vec, slot_vec(cur));
             result.structured = std::move(tracked);
             slot_vec(cur).clear();
             result.w = 0;
