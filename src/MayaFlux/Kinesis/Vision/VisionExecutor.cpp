@@ -100,6 +100,8 @@ VisionResult VisionExecutor::run(
 {
     ensure_slots(w, h);
 
+    uint32_t channels = 4;
+
     auto& cur_vec = slot_vec(k_slot_cur);
     cur_vec.assign(frame.begin(), frame.end());
 
@@ -116,7 +118,10 @@ VisionResult VisionExecutor::run(
 
         case VisionOp::Downsample2x: {
             uint32_t new_w = 0, new_h = 0;
-            downsample_2x(slot_vec(cur), slot_vec(nxt), w, h, new_w, new_h);
+            if (slot_vec(nxt).size() < static_cast<size_t>(w / 2) * (h / 2) * channels)
+                slot_vec(nxt).resize(static_cast<size_t>(w) * h * 4);
+
+            downsample_2x(slot_vec(cur), slot_vec(nxt), w, h, channels, new_w, new_h);
             w = new_w;
             h = new_h;
             result.w = w;
@@ -129,6 +134,7 @@ VisionResult VisionExecutor::run(
 
         case VisionOp::RgbaToGray: {
             rgba_to_gray(slot_vec(cur), slot_vec(nxt), w, h);
+            channels = 1;
             std::swap(cur, nxt);
             result.structured = std::monostate {};
             break;
@@ -136,6 +142,7 @@ VisionResult VisionExecutor::run(
 
         case VisionOp::RgbaToHsv: {
             rgba_to_hsv(slot_vec(cur), slot_vec(nxt), w, h);
+            channels = 3;
             std::swap(cur, nxt);
             result.structured = std::monostate {};
             break;
@@ -143,6 +150,7 @@ VisionResult VisionExecutor::run(
 
         case VisionOp::GrayToRgba: {
             gray_to_rgba(slot_vec(cur), slot_vec(nxt), w, h);
+            channels = 4;
             std::swap(cur, nxt);
             result.structured = std::monostate {};
             break;
