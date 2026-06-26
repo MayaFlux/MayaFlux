@@ -54,6 +54,7 @@ using StructuredOutput = std::variant<
 struct VisionResult {
     Kakshya::DataVariant pixel_image { std::vector<float> {} };
     StructuredOutput structured { std::monostate {} };
+    std::vector<SnapshotEntry> snapshots;
     uint32_t w { 0 };
     uint32_t h { 0 };
 

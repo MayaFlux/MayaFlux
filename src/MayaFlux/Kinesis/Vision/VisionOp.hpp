@@ -57,6 +57,7 @@ enum class VisionOp : uint8_t {
     ExtractPeaks,
 
     TrackKeypoints,
+    Snapshot,
 };
 
 // ============================================================================
@@ -295,6 +296,11 @@ struct VisionSequence {
         {
             return push(VisionOp::FindContours,
                 FindContoursParams { .min_area = min_area, .max_contours = max_contours });
+        }
+
+        Builder& snapshot()
+        {
+            return push(VisionOp::Snapshot);
         }
 
         [[nodiscard]] VisionSequence build()

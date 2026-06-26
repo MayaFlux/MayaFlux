@@ -414,6 +414,17 @@ VisionResult VisionExecutor::run(
             break;
         }
 
+        case VisionOp::Snapshot: {
+            const size_t n = static_cast<size_t>(w) * h * channels;
+            SnapshotEntry entry;
+            entry.pixels.assign(slot_vec(cur).begin(), slot_vec(cur).begin() + n);
+            entry.w = w;
+            entry.h = h;
+            entry.channels = channels;
+            result.snapshots.push_back(std::move(entry));
+            break;
+        }
+
         } // switch
     }
 
