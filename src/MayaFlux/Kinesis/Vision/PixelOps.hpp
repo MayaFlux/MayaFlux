@@ -235,4 +235,25 @@ MAYAFLUX_API void downsample_2x(
     uint32_t w, uint32_t h,
     uint32_t& new_w, uint32_t& new_h);
 
+/**
+ * @brief 2x box-filter downsample for multi-channel interleaved data.
+ *
+ * Each output pixel is the per-channel average of the corresponding 2x2
+ * block. Output dimensions are floor(w/2) x floor(h/2).
+ *
+ * @param src      Interleaved float span, size must be w * h * channels.
+ * @param dst      Output span, size must be >= floor(w/2) * floor(h/2) * channels.
+ * @param w        Input width in pixels.
+ * @param h        Input height in pixels.
+ * @param channels Channels per pixel (1 = existing behaviour, 4 = RGBA).
+ * @param new_w    Receives output width.
+ * @param new_h    Receives output height.
+ */
+MAYAFLUX_API void downsample_2x(
+    std::span<const float> src,
+    std::span<float> dst,
+    uint32_t w, uint32_t h,
+    uint32_t channels,
+    uint32_t& new_w, uint32_t& new_h);
+
 } // namespace MayaFlux::Kinesis::Vision

@@ -525,5 +525,85 @@ std::vector<float> downsample_2x(
     return out;
 }
 
+void downsample_2x(
+    std::span<const float> src,
+    std::span<float> dst,
+    uint32_t w, uint32_t h,
+    uint32_t channels,
+    uint32_t& new_w, uint32_t& new_h)
+{
+    if (channels == 1) {
+        downsample_2x(src, dst, w, h, new_w, new_h);
+        return;
+    }
+
+    new_w = w / 2;
+    new_h = h / 2;
+    const uint32_t ch = channels;
+    const uint32_t row_stride = w * ch;
+    const uint32_t out_stride = new_w * ch;
+
+    P::for_each(P::par_unseq,
+        std::views::iota(uint32_t { 0 }, new_h).begin(),
+        std::views::iota(uint32_t { 0 }, new_h).end(),
+        [&](uint32_t oy) {
+            const float* row0 = src.data() + static_cast<size_t>(oy * 2) * row_stride;
+            const float* row1 = src.data() + static_cast<size_t>(oy * 2 + 1) * row_stride;
+            float* drow = dst.data() + static_cast<size_t>(oy) * out_stride;
+
+            uint32_t ox = 0;
+
+#ifdef MAYAFLUX_ARCH_X64
+            if (ch == 4) {
+                const __m256 quarter = _mm256_set1_ps(0.25F);
+                for (; ox + 1 <= new_w; ++ox) {
+                    const float* p00 = row0 + ox * 8;
+                    const float* p01 = row0 + ox * 8 + 4;
+                    const float* p10 = row1 + ox * 8;
+                    const float* p11 = row1 + ox * 8 + 4;
+
+                    __m128 v00 = _mm_loadu_ps(p00);
+                    __m128 v01 = _mm_loadu_ps(p01);
+                    __m128 v10 = _mm_loadu_ps(p10);
+                    __m128 v11 = _mm_loadu_ps(p11);
+
+                    __m128 sum = _mm_add_ps(_mm_add_ps(v00, v01), _mm_add_ps(v10, v11));
+                    __m128 res = _mm_mul_ps(sum, _mm_set1_ps(0.25F));
+                    _mm_storeu_ps(drow + ox * 4, res);
+                }
+                return;
+            }
+#elif defined(MAYAFLUX_ARCH_ARM64)
+            if (ch == 4) {
+                for (; ox + 1 <= new_w; ++ox) {
+                    const float* p00 = row0 + ox * 8;
+                    const float* p01 = row0 + ox * 8 + 4;
+                    const float* p10 = row1 + ox * 8;
+                    const float* p11 = row1 + ox * 8 + 4;
+
+                    float32x4_t v00 = vld1q_f32(p00);
+                    float32x4_t v01 = vld1q_f32(p01);
+                    float32x4_t v10 = vld1q_f32(p10);
+                    float32x4_t v11 = vld1q_f32(p11);
+
+                    float32x4_t sum = vaddq_f32(vaddq_f32(v00, v01), vaddq_f32(v10, v11));
+                    vst1q_f32(drow + ox * 4, vmulq_n_f32(sum, 0.25F));
+                }
+                return;
+            }
+#endif
+
+            for (; ox < new_w; ++ox) {
+                const float* p00 = row0 + ox * 2 * ch;
+                const float* p01 = row0 + (ox * 2 + 1) * ch;
+                const float* p10 = row1 + ox * 2 * ch;
+                const float* p11 = row1 + (ox * 2 + 1) * ch;
+                float* out = drow + ox * ch;
+                for (uint32_t c = 0; c < ch; ++c)
+                    out[c] = (p00[c] + p01[c] + p10[c] + p11[c]) * 0.25F;
+            }
+        });
+}
+
 } // namespace MayaFlux::Kinesis::Vision
 // NOLINTEND
