@@ -123,7 +123,6 @@ VisionResult VisionExecutor::run(
 
         case VisionOp::Downsample2x: {
             uint32_t new_w = 0, new_h = 0;
-
             downsample_2x(slot_vec(cur), slot_vec(nxt), w, h, channels, new_w, new_h);
             w = new_w;
             h = new_h;
