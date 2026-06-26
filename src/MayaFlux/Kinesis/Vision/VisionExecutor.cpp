@@ -99,6 +99,11 @@ VisionResult VisionExecutor::run(
     uint32_t w, uint32_t h)
 {
     ensure_slots(w, h);
+    const size_t slot_min = static_cast<size_t>(m_slot_w) * m_slot_h * 4;
+    if (slot_vec(k_slot_nxt).size() < slot_min)
+        slot_vec(k_slot_nxt).resize(slot_min);
+    if (slot_vec(k_slot_cur).capacity() < slot_min)
+        slot_vec(k_slot_cur).reserve(slot_min);
 
     uint32_t channels = 4;
 
@@ -118,8 +123,6 @@ VisionResult VisionExecutor::run(
 
         case VisionOp::Downsample2x: {
             uint32_t new_w = 0, new_h = 0;
-            if (slot_vec(nxt).size() < static_cast<size_t>(w / 2) * (h / 2) * channels)
-                slot_vec(nxt).resize(static_cast<size_t>(w) * h * 4);
 
             downsample_2x(slot_vec(cur), slot_vec(nxt), w, h, channels, new_w, new_h);
             w = new_w;
@@ -403,9 +406,7 @@ VisionResult VisionExecutor::run(
     }
 
     result.pixel_image = std::move(m_slots[cur]);
-
-    m_slots[cur] = std::vector<float> {};
-
+    slot_vec(cur).reserve(static_cast<size_t>(m_slot_w) * m_slot_h * 4);
     return result;
 }
 
