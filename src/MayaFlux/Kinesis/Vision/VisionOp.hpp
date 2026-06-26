@@ -110,6 +110,11 @@ struct TrackKeypointsParams {
     float error_threshold = 0.3F;
 };
 
+struct FindContoursParams {
+    float min_area { 0.0F };
+    uint32_t max_contours { 0 };
+};
+
 /**
  * @brief Parameter variant covering all ops that carry parameters.
  *
@@ -128,7 +133,8 @@ using VisionParams = std::variant<
     MorphParams,
     HarrisParams,
     ExtractPeaksParams,
-    TrackKeypointsParams>;
+    TrackKeypointsParams,
+    FindContoursParams>;
 
 /**
  * @brief One step in a VisionSequence: an op and its parameters.
@@ -283,9 +289,10 @@ struct VisionSequence {
                     .window_radius = window_radius, .max_iterations = max_iterations, .eigen_threshold = eigen_threshold, .error_threshold = error_threshold });
         }
 
-        Builder& find_contours()
+        Builder& find_contours(float min_area = 0.0F, uint32_t max_contours = 0)
         {
-            return push(VisionOp::FindContours);
+            return push(VisionOp::FindContours,
+                FindContoursParams { .min_area = min_area, .max_contours = max_contours });
         }
 
         [[nodiscard]] VisionSequence build()

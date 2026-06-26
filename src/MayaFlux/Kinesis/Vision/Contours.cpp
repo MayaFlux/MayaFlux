@@ -16,7 +16,7 @@ namespace {
     // =========================================================================
 
     std::vector<glm::vec2> trace_contour(
-        const std::vector<uint8_t>& visited,
+        std::vector<uint8_t>& visited,
         std::span<const float> mask,
         uint32_t w, uint32_t h,
         uint32_t start_x, uint32_t start_y)
@@ -57,8 +57,10 @@ namespace {
                     continue;
 
                 if (is_fg(mask[static_cast<size_t>(ny) * w + nx])) {
-                    points.emplace_back(static_cast<float>(cx) / static_cast<float>(w),
+                    points.emplace_back(
+                        static_cast<float>(cx) / static_cast<float>(w),
                         static_cast<float>(cy) / static_cast<float>(h));
+                    visited[static_cast<size_t>(cy) * w + static_cast<size_t>(cx)] = 1;
                     cx = nx;
                     cy = ny;
                     dir = d;
@@ -109,7 +111,8 @@ namespace {
 } // namespace
 
 std::vector<Contour> find_contours(
-    std::span<const float> mask, uint32_t w, uint32_t h)
+    std::span<const float> mask, uint32_t w, uint32_t h,
+    float min_area, uint32_t max_contours)
 {
     const size_t n = static_cast<size_t>(w) * h;
     std::vector<uint8_t> visited(n, 0);
@@ -141,20 +144,25 @@ std::vector<Contour> find_contours(
 
             auto points = trace_contour(visited, mask, w, h, px, py);
 
-            for (const auto& p : points) {
-                const auto vx = static_cast<uint32_t>(p.x * static_cast<float>(w));
-                const auto vy = static_cast<uint32_t>(p.y * static_cast<float>(h));
-                visited[static_cast<size_t>(vy) * w + vx] = 1;
-            }
-
             if (points.size() < 3)
                 continue;
 
             const float area = polygon_area(points);
-            const float perim = polygon_perimeter(points);
 
+            if (area < min_area)
+                continue;
+
+            const float perim = polygon_perimeter(points);
             result.push_back({ .points = std::move(points), .area = area, .perimeter = perim });
         }
+    }
+
+    if (max_contours > 0 && result.size() > static_cast<size_t>(max_contours)) {
+        std::partial_sort(result.begin(),
+            result.begin() + static_cast<ptrdiff_t>(max_contours),
+            result.end(),
+            [](const Contour& a, const Contour& b) { return a.area > b.area; });
+        result.resize(max_contours);
     }
 
     return result;

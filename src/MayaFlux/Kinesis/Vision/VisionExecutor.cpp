@@ -312,7 +312,10 @@ VisionResult VisionExecutor::run(
         }
 
         case VisionOp::ConnectedComponents: {
-            result.structured = connected_components(slot_vec(cur), w, h);
+            const size_t n = static_cast<size_t>(w) * h;
+            result.structured = connected_components(
+                std::span<const float>(slot_vec(cur)).subspan(0, n),
+                w, h);
             slot_vec(cur).clear();
             result.w = 0;
             result.h = 0;
@@ -320,7 +323,11 @@ VisionResult VisionExecutor::run(
         }
 
         case VisionOp::FindContours: {
-            result.structured = find_contours(slot_vec(cur), w, h);
+            const auto& p = get_params<FindContoursParams>(step.params, step.op);
+            const size_t n = static_cast<size_t>(w) * h;
+            result.structured = find_contours(
+                std::span<const float>(slot_vec(cur)).subspan(0, n),
+                w, h, p.min_area, p.max_contours);
             slot_vec(cur).clear();
             result.w = 0;
             result.h = 0;
