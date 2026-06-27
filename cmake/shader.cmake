@@ -130,15 +130,27 @@ else()
 
     if(TARGET SPIRV-Tools-shared)
         message(STATUS "SPIRV-Tools: Found via CMake config (${SPIRV-Tools_VERSION})")
+        set(SPIRV_TOOLS_TARGET SPIRV-Tools-shared)
     else()
-        find_library(SPIRV_TOOLS_LIB_PATH NAMES SPIRV-Tools-shared REQUIRED)
+        find_library(SPIRV_TOOLS_LIB_PATH NAMES SPIRV-Tools-shared SPIRV-Tools)
         find_path(SPIRV_TOOLS_INCLUDE_PATH spirv-tools/libspirv.hpp REQUIRED)
-        add_library(SPIRV-Tools-shared SHARED IMPORTED)
-        set_target_properties(SPIRV-Tools-shared PROPERTIES
-            IMPORTED_LOCATION             ${SPIRV_TOOLS_LIB_PATH}
-            INTERFACE_INCLUDE_DIRECTORIES ${SPIRV_TOOLS_INCLUDE_PATH}
-        )
-        message(STATUS "SPIRV-Tools: Found shared library at ${SPIRV_TOOLS_LIB_PATH}")
+        if(SPIRV_TOOLS_LIB_PATH MATCHES "\\.a$")
+            add_library(SPIRV-Tools STATIC IMPORTED)
+            set_target_properties(SPIRV-Tools PROPERTIES
+                IMPORTED_LOCATION             ${SPIRV_TOOLS_LIB_PATH}
+                INTERFACE_INCLUDE_DIRECTORIES ${SPIRV_TOOLS_INCLUDE_PATH}
+            )
+            set(SPIRV_TOOLS_TARGET SPIRV-Tools)
+            message(STATUS "SPIRV-Tools: Found static library at ${SPIRV_TOOLS_LIB_PATH}")
+        else()
+            add_library(SPIRV-Tools-shared SHARED IMPORTED)
+            set_target_properties(SPIRV-Tools-shared PROPERTIES
+                IMPORTED_LOCATION             ${SPIRV_TOOLS_LIB_PATH}
+                INTERFACE_INCLUDE_DIRECTORIES ${SPIRV_TOOLS_INCLUDE_PATH}
+            )
+            set(SPIRV_TOOLS_TARGET SPIRV-Tools-shared)
+            message(STATUS "SPIRV-Tools: Found shared library at ${SPIRV_TOOLS_LIB_PATH}")
+        endif()
     endif()
 
     # Shaderc

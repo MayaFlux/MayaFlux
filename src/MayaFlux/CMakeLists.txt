@@ -123,7 +123,7 @@ if(WIN32)
     endif()
 else()
     target_link_libraries(MayaFluxLib PRIVATE PkgConfig::shaderc)
-    target_link_libraries(MayaFluxLib PRIVATE SPIRV-Tools-shared)
+    target_link_libraries(MayaFluxLib PRIVATE ${SPIRV_TOOLS_TARGET})
 endif()
 
 target_link_libraries(MayaFluxLib PRIVATE ${SPIRV_CROSS_LIBRARIES})
