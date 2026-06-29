@@ -175,4 +175,46 @@ std::unordered_map<std::string, std::any> create_coordinate_mapping(const std::s
 std::pair<size_t, uint64_t> coordinates_to_planar_indices(
     const std::vector<uint64_t>& coords,
     const std::vector<DataDimension>& dimensions);
+
+/**
+ * @brief Convert a normalised image rectangle to a pixel-space Region.
+ *
+ * Input coordinates are in image space: origin top-left, x and y in [0, 1],
+ * +Y downward. Output Region uses the IMAGE_COLOR coordinate convention:
+ * start/end as { y0, x0 } / { y1, x1 } (inclusive, clamped to [0, w-1] x [0, h-1]).
+ *
+ * This is the inverse of the normalisation performed by ConnectedComponents
+ * and Contours, and is the correct input form for get_region_data() on any
+ * pixel-bearing SignalSourceContainer.
+ *
+ * @param nx      Normalised left edge in [0, 1].
+ * @param ny      Normalised top edge in [0, 1].
+ * @param nw      Normalised width in [0, 1].
+ * @param nh      Normalised height in [0, 1].
+ * @param pixel_w Source image width in pixels.
+ * @param pixel_h Source image height in pixels.
+ * @return        Region with 2D spatial coordinates in pixel integers.
+ */
+[[nodiscard]] MAYAFLUX_API Region normalised_rect_to_region(
+    float nx, float ny, float nw, float nh,
+    uint32_t pixel_w, uint32_t pixel_h);
+
+/**
+ * @brief Compute the tight pixel-space Region enclosing a set of normalised points.
+ *
+ * Iterates @p points to find the axis-aligned bounding box in normalised
+ * image space, then delegates to normalised_rect_to_region. Coordinate
+ * convention is identical: origin top-left, +Y downward, output inclusive
+ * pixel integers as { y0, x0 } / { y1, x1 }.
+ *
+ * Returns a zero-area Region at { 0, 0 } / { 0, 0 } if @p points is empty.
+ *
+ * @param points  Normalised image-space points in [0, 1] x [0, 1].
+ * @param pixel_w Source image width in pixels.
+ * @param pixel_h Source image height in pixels.
+ * @return        Tight bounding Region in pixel integers.
+ */
+[[nodiscard]] MAYAFLUX_API Region normalised_points_tight_region(
+    std::span<const glm::vec2> points,
+    uint32_t pixel_w, uint32_t pixel_h);
 }
