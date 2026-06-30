@@ -284,10 +284,6 @@ protected:
         return OperationHelper::reconstruct_from_double<output_type>(result_data, metadata);
     }
 
-    std::shared_ptr<Kakshya::SignalSourceContainer> m_container;
-
-    ExecutionContext m_last_execution_context;
-
     output_type apply_hooks(const input_type& input, const ExecutionContext& context)
     {
         if (context.pre_execution_hook) {
@@ -304,9 +300,12 @@ protected:
         return result;
     }
 
+    std::shared_ptr<Kakshya::SignalSourceContainer> m_container;
+    ExecutionContext m_last_execution_context;
+    std::shared_ptr<GpuExecutionContext<InputType, OutputType>> m_gpu_backend;
+
 private:
     std::vector<std::shared_ptr<ComputeOperation>> m_dependencies;
-    std::shared_ptr<GpuExecutionContext<InputType, OutputType>> m_gpu_backend;
 
     /**
      * @brief Validate input/output types and warn about marker types
