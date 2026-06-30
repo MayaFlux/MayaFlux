@@ -1,0 +1,31 @@
+#version 460
+
+#include "include/vision_common.glsl"
+
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
+layout(set = 0, binding = 0, rgba32f) writeonly uniform image2D out_image;
+layout(set = 0, binding = 1, rgba32f) readonly uniform image2D in_image;
+
+void main()
+{
+    const ivec2 coord = thread_coord();
+    const ivec2 sz = imageSize(out_image);
+    if (coord.x >= sz.x || coord.y >= sz.y)
+        return;
+
+    const float tl = sample_clamped(in_image, coord + ivec2(-1, -1)).r;
+    const float tc = sample_clamped(in_image, coord + ivec2(0, -1)).r;
+    const float tr = sample_clamped(in_image, coord + ivec2(1, -1)).r;
+    const float ml = sample_clamped(in_image, coord + ivec2(-1, 0)).r;
+    const float mr = sample_clamped(in_image, coord + ivec2(1, 0)).r;
+    const float bl = sample_clamped(in_image, coord + ivec2(-1, 1)).r;
+    const float bc = sample_clamped(in_image, coord + ivec2(0, 1)).r;
+    const float br = sample_clamped(in_image, coord + ivec2(1, 1)).r;
+
+    const float gx = -3.0 * tl + 3.0 * tr - 10.0 * ml + 10.0 * mr - 3.0 * bl + 3.0 * br;
+    const float gy = -3.0 * tl - 10.0 * tc - 3.0 * tr + 3.0 * bl + 10.0 * bc + 3.0 * br;
+    const float mag = length(vec2(gx, gy)) / 32.0;
+
+    imageStore(out_image, coord, vec4(mag, mag, mag, 1.0));
+}

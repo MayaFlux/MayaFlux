@@ -1,0 +1,24 @@
+#version 460
+
+#include "include/vision_common.glsl"
+
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
+layout(set = 0, binding = 0, rgba32f) writeonly uniform image2D out_image;
+layout(set = 0, binding = 1, rgba32f) readonly uniform image2D in_image;
+
+void main()
+{
+    const ivec2 coord = thread_coord();
+    const ivec2 out_sz = imageSize(out_image);
+    if (coord.x >= out_sz.x || coord.y >= out_sz.y)
+        return;
+
+    const ivec2 src = coord * 2;
+    const vec4 tl = sample_clamped(in_image, src);
+    const vec4 tr = sample_clamped(in_image, src + ivec2(1, 0));
+    const vec4 bl = sample_clamped(in_image, src + ivec2(0, 1));
+    const vec4 br = sample_clamped(in_image, src + ivec2(1, 1));
+
+    imageStore(out_image, coord, (tl + tr + bl + br) * 0.25);
+}
