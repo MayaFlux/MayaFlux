@@ -1,0 +1,35 @@
+#version 460
+
+layout(local_size_x = 16, local_size_y = 16) in;
+
+/// @brief Cropped output patch. Dimensions set by VisionCropExecutionContext
+///        via set_output_dimensions(); always smaller than or equal to source.
+layout(set = 0, binding = 0, rgba8) uniform image2D out_image;
+
+/// @brief Full source frame uploaded by TextureExecutionContext.
+layout(set = 0, binding = 1) uniform sampler2D src_tex;
+
+/// @brief src_x, src_y: normalised top-left corner of the crop rect in source image space [0,1].
+/// @brief src_w, src_h: normalised width and height of the crop rect.
+/// @brief out_w, out_h: output pixel dimensions (matches set_output_dimensions).
+layout(push_constant) uniform PC {
+    float src_x;
+    float src_y;
+    float src_w;
+    float src_h;
+    uint out_w;
+    uint out_h;
+} pc;
+
+void main()
+{
+    ivec2 coord = ivec2(gl_GlobalInvocationID.xy);
+
+    if (coord.x >= int(pc.out_w) || coord.y >= int(pc.out_h))
+        return;
+
+    vec2 local_uv = (vec2(coord) + 0.5) / vec2(float(pc.out_w), float(pc.out_h));
+    vec2 src_uv = vec2(pc.src_x, pc.src_y) + local_uv * vec2(pc.src_w, pc.src_h);
+
+    imageStore(out_image, coord, texture(src_tex, src_uv));
+}
