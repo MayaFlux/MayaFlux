@@ -26,6 +26,7 @@ enum class KernelTemplate : uint8_t {
     Stencil, ///< f(x[i-k..i+k]) -> y[i]; neighbourhood reads, radius in PC
     GeometryEmit, ///< Writes into vertex SSBO with atomic counter
     BitonicSort, ///< Bitonic sort network; one thread per element
+    Convolve2D, ///< 2D separable or non-separable convolution; kernel weights in SSBO, radius in PC
 };
 
 /**
@@ -258,6 +259,10 @@ enum class KernelOp : uint8_t {
     // reduction
     Sum,
     Max,
+    // image body ops
+    CompareGE, ///< out[ch] = pixel[ch] >= pc[0] ? 1.0 : 0.0
+    ChannelDot, ///< out = dot(pixel.rgba, pc[0..3]) broadcast to all channels
+    ChannelReplicate, ///< out = pixel[pc_channel_index].xxxx (single channel to all)
 };
 
 /**
