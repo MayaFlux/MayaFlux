@@ -230,6 +230,21 @@ public:
         m_pending_container = nullptr;
     }
 
+    /**
+     * @brief Allocates the output storage image and stages it at binding 0.
+     *        Only called in CONTAINER mode from on_before_gpu_dispatch.
+     */
+    void prepare_output_image(uint32_t width, uint32_t height)
+    {
+        if (!m_output_image || m_output_image_w != width || m_output_image_h != height) {
+            m_output_image = Portal::Graphics::TextureLoom::instance()
+                                 .create_storage_image(width, height, m_output_format);
+            m_output_image_w = width;
+            m_output_image_h = height;
+        }
+        stage_image_storage(0, m_output_image);
+    }
+
 protected:
     // =========================================================================
     // GpuExecutionContext overrides
@@ -404,21 +419,6 @@ private:
     // =========================================================================
     // Helpers
     // =========================================================================
-
-    /**
-     * @brief Allocates the output storage image and stages it at binding 0.
-     *        Only called in CONTAINER mode from on_before_gpu_dispatch.
-     */
-    void prepare_output_image(uint32_t width, uint32_t height)
-    {
-        if (!m_output_image || m_output_image_w != width || m_output_image_h != height) {
-            m_output_image = Portal::Graphics::TextureLoom::instance()
-                                 .create_storage_image(width, height, m_output_format);
-            m_output_image_w = width;
-            m_output_image_h = height;
-        }
-        stage_image_storage(0, m_output_image);
-    }
 
     /**
      * @brief Extracts a TextureContainer pointer from datum.container if present.
