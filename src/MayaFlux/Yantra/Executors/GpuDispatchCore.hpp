@@ -126,6 +126,25 @@ public:
      */
     void download_binding(size_t index, void* dest, size_t byte_size);
 
+    /**
+     * @brief Replace the active shader and invalidate the compiled pipeline.
+     *
+     * Tears down the current GpuResourceManager state (pipeline, descriptor sets,
+     * shader handle) while preserving all staged image and buffer bindings. The
+     * next dispatch_core call will re-initialise with the new shader config.
+     *
+     * Use to drive a multi-op sequence through one context: stage the input image,
+     * call swap_shader + dispatch_core per op, pipe get_output_image(0) back in
+     * via stage_image between steps.
+     *
+     * @param config Shader config for the next dispatch.
+     */
+    void swap_shader(GpuShaderConfig config)
+    {
+        m_resources.cleanup();
+        m_gpu_config = std::move(config);
+    }
+
 protected:
     /**
      * @brief Declare the storage buffers the shader expects.
