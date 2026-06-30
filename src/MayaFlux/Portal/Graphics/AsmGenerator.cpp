@@ -309,7 +309,8 @@ namespace {
             o += "%i32          = OpTypeInt 32 1\n";
             o += "%v2i32        = OpTypeVector %i32 2\n";
             o += "%v4f32        = OpTypeVector %f32 4\n";
-            o += "%img_czero    = OpConstant %f32 0.0\n";
+            o += "%img_czero = OpConstant %f32 0.0\n";
+            o += "%img_cone  = OpConstant %f32 1.0\n";
             o += "%img2d_t      = OpTypeImage %f32 2D 0 0 0 2 Unknown\n";
             o += "%ptr_img2d    = OpTypePointer UniformConstant %img2d_t\n";
             for (const auto& b : spec.bindings) {
@@ -768,6 +769,12 @@ namespace {
         o += "%siy   = OpBitcast %i32 %iy\n";
         o += "%coord = OpCompositeConstruct %v2i32 %six %siy\n\n";
 
+        if (img_out)
+            o += "%img_out_val = OpLoad %img2d_t %img_" + std::string(img_out->name) + "\n";
+        for (size_t ii = 0; ii < img_inputs.size(); ++ii)
+            o += "%img_in_val" + std::to_string(ii) + " = OpLoad %img2d_t %img_" + img_inputs[ii]->name + "\n";
+        o += "\n";
+
         for (size_t fi = 0; fi < spec.pc_fields.size(); ++fi) {
             const auto& f = spec.pc_fields[fi];
             o += "%ppc_" + f.name + " = OpAccessChain %ppc_f32 %pc %c"
@@ -807,8 +814,8 @@ namespace {
         }
 
         for (size_t ii = 0; ii < img_inputs.size(); ++ii) {
-            o += "%raw_in" + std::to_string(ii) + " = OpImageRead %v4f32 %img_"
-                + img_inputs[ii]->name + " %coord\n";
+            const std::string idx = std::to_string(ii);
+            o += "%raw_in" + idx + " = OpImageRead %v4f32 %img_in_val" + idx + " %coord\n";
         }
         if (img_inputs.empty()) {
             o += "%raw_in0 = OpCompositeConstruct %v4f32 %img_czero %img_czero"
@@ -849,28 +856,25 @@ namespace {
             const std::string& wg = spec.pc_fields.size() > 1 ? "%pc_" + spec.pc_fields[1].name : "%img_czero";
             const std::string& wb = spec.pc_fields.size() > 2 ? "%pc_" + spec.pc_fields[2].name : "%img_czero";
             const std::string& wa = spec.pc_fields.size() > 3 ? "%pc_" + spec.pc_fields[3].name : "%img_czero";
-            o += "%dot_r = OpFMul %f32 %ch0_r " + wr + "\n";
-            o += "%dot_g = OpFMul %f32 %ch0_g " + wg + "\n";
-            o += "%dot_b = OpFMul %f32 %ch0_b " + wb + "\n";
-            o += "%dot_a = OpFMul %f32 %ch0_a " + wa + "\n";
-            o += "%dot_rg = OpFAdd %f32 %dot_r %dot_g\n";
+            o += "%dot_r   = OpFMul %f32 %ch0_r " + wr + "\n";
+            o += "%dot_g   = OpFMul %f32 %ch0_g " + wg + "\n";
+            o += "%dot_b   = OpFMul %f32 %ch0_b " + wb + "\n";
+            o += "%dot_a   = OpFMul %f32 %ch0_a " + wa + "\n";
+            o += "%dot_rg  = OpFAdd %f32 %dot_r %dot_g\n";
             o += "%dot_rgb = OpFAdd %f32 %dot_rg %dot_b\n";
             o += "%dot_val = OpFAdd %f32 %dot_rgb %dot_a\n";
             o += "%out_vec = OpCompositeConstruct %v4f32 %dot_val %dot_val %dot_val %dot_val\n";
             if (img_out)
-                o += "OpImageWrite %img_" + std::string(img_out->name) + " %coord %out_vec\n";
+                o += "OpImageWrite %img_out_val %coord %out_vec\n";
             o += "OpReturn\n";
             o += "OpFunctionEnd\n";
             return o;
         }
 
         if (spec.op == KernelOp::ChannelReplicate) {
-            o += "%src_vec = OpImageRead %v4f32 %img_" + std::string(img_inputs[0]->name) + " %coord\n";
-            o += "%ch0_val = OpCompositeExtract %f32 %src_vec 0\n";
-            o += "%one     = OpConstant %f32 1.0\n";
-            o += "%out_vec = OpCompositeConstruct %v4f32 %ch0_val %ch0_val %ch0_val %one\n";
+            o += "%out_vec = OpCompositeConstruct %v4f32 %ch0_r %ch0_r %ch0_r %img_cone\n";
             if (img_out)
-                o += "OpImageWrite %img_" + std::string(img_out->name) + " %coord %out_vec\n";
+                o += "OpImageWrite %img_out_val %coord %out_vec\n";
             o += "OpReturn\n";
             o += "OpFunctionEnd\n";
             return o;
@@ -913,13 +917,10 @@ namespace {
             case KernelOp::Sub:
                 o += "%res_" + suffix + " = OpFSub %f32 " + c0 + " " + c1 + "\n";
                 break;
-            case KernelOp::CompareGE: {
-                // out = pixel >= threshold ? 1.0 : 0.0
-                // p0 is the threshold PC
+            case KernelOp::CompareGE:
                 o += "%cmp_" + suffix + " = OpFOrdGreaterThanEqual %bool " + c0 + " " + p0 + "\n";
                 o += "%res_" + suffix + " = OpSelect %f32 %cmp_" + suffix + " %img_cone %img_czero\n";
                 break;
-            }
             default:
                 o += "%res_" + suffix + " = OpCopyObject %f32 " + c0 + "\n";
                 break;
@@ -940,7 +941,7 @@ namespace {
 
         o += "%out_vec = OpCompositeConstruct %v4f32 %res_r %res_g %res_b %res_a\n";
         if (img_out)
-            o += "OpImageWrite %img_" + std::string(img_out->name) + " %coord %out_vec\n";
+            o += "OpImageWrite %img_out_val %coord %out_vec\n";
 
         o += "OpReturn\n";
         o += "OpFunctionEnd\n";
@@ -1040,12 +1041,6 @@ namespace {
      */
     std::string emit_convolve2d_body(const ShaderSpec& spec)
     {
-        // Binding layout by convention:
-        //   IMAGE_2D Output  -> img_out
-        //   IMAGE_2D Input   -> img_src
-        //   SSBO FLOAT32 Input -> kernel weights, length (2*radius+1)^2
-        // PC fields (uint): radius, width, height
-
         const BindingSlot* img_out = nullptr;
         const BindingSlot* img_src = nullptr;
         const BindingSlot* kern_ssbo = nullptr;
@@ -1084,36 +1079,38 @@ namespace {
 
         o += "%conv_start = OpLabel\n";
 
+        o += "%img_src_val = OpLoad %img2d_t %img_" + std::string(img_src->name) + "\n";
+        o += "%img_out_val = OpLoad %img2d_t %img_" + std::string(img_out->name) + "\n";
+
         o += "%diam  = OpIMul %u32 %pc_radius %c2u\n";
         o += "%diam1 = OpIAdd %u32 %diam %c1u\n";
 
-        o += "%six   = OpBitcast %i32 %ix\n";
-        o += "%siy   = OpBitcast %i32 %iy\n";
-        o += "%srad  = OpBitcast %i32 %pc_radius\n";
-        o += "%sw    = OpBitcast %i32 %pc_width\n";
-        o += "%sh    = OpBitcast %i32 %pc_height\n";
-        o += "%si0   = OpConstant %i32 0\n";
-        o += "%si1   = OpConstant %i32 1\n";
+        o += "%six  = OpBitcast %i32 %ix\n";
+        o += "%siy  = OpBitcast %i32 %iy\n";
+        o += "%srad = OpBitcast %i32 %pc_radius\n";
+        o += "%sw   = OpBitcast %i32 %pc_width\n";
+        o += "%sh   = OpBitcast %i32 %pc_height\n";
+        o += "%si0  = OpConstant %i32 0\n";
+        o += "%si1  = OpConstant %i32 1\n";
+        o += "%sw_1 = OpISub %i32 %sw %si1\n";
+        o += "%sh_1 = OpISub %i32 %sh %si1\n";
 
         o += "%czero4 = OpCompositeConstruct %v4f32 %img_czero %img_czero %img_czero %img_czero\n";
-
-        o += "%ky_init = OpBitcast %i32 %pc_radius\n";
 
         o += "OpBranch %ky_hdr\n\n";
 
         o += "%ky_hdr = OpLabel\n";
-        o += "%ky_u  = OpPhi %u32 %c0u %conv_start %ky_next %ky_cont\n";
+        o += "%ky_u   = OpPhi %u32 %c0u %conv_start %ky_next %ky_cont\n";
         o += "%acc_ky = OpPhi %v4f32 %czero4 %conv_start %acc_kx_done %ky_cont\n";
         o += "%ky_done = OpUGreaterThanEqual %bool %ky_u %diam1\n";
         o += "OpLoopMerge %ky_merge %ky_cont None\n";
         o += "OpBranchConditional %ky_done %ky_merge %kx_pre\n\n";
 
         o += "%kx_pre = OpLabel\n";
-        o += "%ky_si = OpBitcast %i32 %ky_u\n";
+        o += "%ky_si  = OpBitcast %i32 %ky_u\n";
         o += "%ky_off = OpISub %i32 %ky_si %srad\n";
         o += "%sy_raw = OpIAdd %i32 %siy %ky_off\n";
         o += "%sy_lo  = OpExtInst %i32 %glsl SMax %sy_raw %si0\n";
-        o += "%sh_1   = OpISub %i32 %sh %si1\n";
         o += "%sy     = OpExtInst %i32 %glsl SMin %sy_lo %sh_1\n";
         o += "OpBranch %kx_hdr\n\n";
 
@@ -1129,11 +1126,10 @@ namespace {
         o += "%kx_off = OpISub %i32 %kx_si %srad\n";
         o += "%sx_raw = OpIAdd %i32 %six %kx_off\n";
         o += "%sx_lo  = OpExtInst %i32 %glsl SMax %sx_raw %si0\n";
-        o += "%sw_1   = OpISub %i32 %sw %si1\n";
         o += "%sx     = OpExtInst %i32 %glsl SMin %sx_lo %sw_1\n";
 
         o += "%sc     = OpCompositeConstruct %v2i32 %sx %sy\n";
-        o += "%px     = OpImageRead %v4f32 %img_" + std::string(img_src->name) + " %sc\n";
+        o += "%px     = OpImageRead %v4f32 %img_src_val %sc\n";
 
         o += "%kidx_r = OpIMul %u32 %ky_u %diam1\n";
         o += "%kidx   = OpIAdd %u32 %kidx_r %kx_u\n";
@@ -1159,10 +1155,10 @@ namespace {
         o += "OpBranch %ky_hdr\n\n";
 
         o += "%ky_merge = OpLabel\n";
-        o += "%final_acc = OpPhi %v4f32 %czero4 %conv_start %acc_ky %ky_hdr\n";
+        o += "%final_acc = OpPhi %v4f32 %acc_ky %ky_hdr\n";
 
         o += "%out_coord = OpCompositeConstruct %v2i32 %six %siy\n";
-        o += "OpImageWrite %img_" + std::string(img_out->name) + " %out_coord %final_acc\n";
+        o += "OpImageWrite %img_out_val %out_coord %final_acc\n";
         o += "OpBranch %main_merge\n\n";
 
         o += "%main_merge = OpLabel\n";
