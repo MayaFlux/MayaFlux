@@ -243,6 +243,8 @@ VisionResult run_gpu(
 
         ctx.swap_shader(cfg);
         ctx.stage_image(current);
+        ctx.prepare_output_image(w, h);
+        ctx.set_output_dimensions(w, h);
 
         switch (step.op) {
         case VisionOp::Threshold:
@@ -360,6 +362,9 @@ VisionResult run_gpu(
         const auto fence = ctx.dispatch_async({});
         foundry.wait_for_fence(fence);
         foundry.release_fence(fence);
+
+        ctx.clear_output_dimensions();
+        current = ctx.get_output_image(0);
 
         if (step.op == VisionOp::Downsample2x) {
             w = std::max(1U, w / 2);
