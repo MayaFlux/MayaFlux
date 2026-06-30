@@ -311,6 +311,8 @@ namespace {
             o += "%v4f32        = OpTypeVector %f32 4\n";
             o += "%img_czero = OpConstant %f32 0.0\n";
             o += "%img_cone  = OpConstant %f32 1.0\n";
+            o += "%ci0       = OpConstant %i32 0\n";
+            o += "%ci1       = OpConstant %i32 1\n";
             o += "%img2d_t      = OpTypeImage %f32 2D 0 0 0 2 Unknown\n";
             o += "%ptr_img2d    = OpTypePointer UniformConstant %img2d_t\n";
             for (const auto& b : spec.bindings) {
@@ -1090,10 +1092,8 @@ namespace {
         o += "%srad = OpBitcast %i32 %pc_radius\n";
         o += "%sw   = OpBitcast %i32 %pc_width\n";
         o += "%sh   = OpBitcast %i32 %pc_height\n";
-        o += "%si0  = OpConstant %i32 0\n";
-        o += "%si1  = OpConstant %i32 1\n";
-        o += "%sw_1 = OpISub %i32 %sw %si1\n";
-        o += "%sh_1 = OpISub %i32 %sh %si1\n";
+        o += "%sw_1 = OpISub %i32 %sw %ci1\n";
+        o += "%sh_1 = OpISub %i32 %sh %ci1\n";
 
         o += "%czero4 = OpCompositeConstruct %v4f32 %img_czero %img_czero %img_czero %img_czero\n";
 
@@ -1110,7 +1110,7 @@ namespace {
         o += "%ky_si  = OpBitcast %i32 %ky_u\n";
         o += "%ky_off = OpISub %i32 %ky_si %srad\n";
         o += "%sy_raw = OpIAdd %i32 %siy %ky_off\n";
-        o += "%sy_lo  = OpExtInst %i32 %glsl SMax %sy_raw %si0\n";
+        o += "%sy_lo  = OpExtInst %i32 %glsl SMax %sy_raw %ci0\n";
         o += "%sy     = OpExtInst %i32 %glsl SMin %sy_lo %sh_1\n";
         o += "OpBranch %kx_hdr\n\n";
 
@@ -1125,7 +1125,7 @@ namespace {
         o += "%kx_si  = OpBitcast %i32 %kx_u\n";
         o += "%kx_off = OpISub %i32 %kx_si %srad\n";
         o += "%sx_raw = OpIAdd %i32 %six %kx_off\n";
-        o += "%sx_lo  = OpExtInst %i32 %glsl SMax %sx_raw %si0\n";
+        o += "%sx_lo  = OpExtInst %i32 %glsl SMax %sx_raw %ci0\n";
         o += "%sx     = OpExtInst %i32 %glsl SMin %sx_lo %sw_1\n";
 
         o += "%sc     = OpCompositeConstruct %v2i32 %sx %sy\n";
