@@ -71,6 +71,12 @@ namespace {
             return "%v3f32";
         case Kakshya::GpuDataFormat::VEC4_F32:
             return "%v4f32";
+        case Kakshya::GpuDataFormat::UINT32:
+        case Kakshya::GpuDataFormat::UINT8:
+        case Kakshya::GpuDataFormat::UINT16:
+            return "%u32";
+        case Kakshya::GpuDataFormat::INT32:
+            return "%i32";
         default:
             return "%f32";
         }
@@ -260,6 +266,15 @@ namespace {
         if (need_v3f32)
             o += "%v3f32 = OpTypeVector %f32 3\n";
 
+        bool need_i32 = false;
+        for (const auto& b : spec.bindings) {
+            if (b.modality == Kakshya::DataModality::TEXTURE_2D
+                || b.modality == Kakshya::DataModality::IMAGE_2D)
+                continue;
+            if (b.format == Kakshya::GpuDataFormat::INT32)
+                need_i32 = true;
+        }
+
         bool has_image_2d = false;
         for (const auto& b : spec.bindings) {
             if (b.modality == Kakshya::DataModality::IMAGE_2D) {
@@ -271,6 +286,8 @@ namespace {
             o += "%v4f32 = OpTypeVector %f32 4\n";
         if (need_v2f32 || need_v3f32 || (need_v4f32 && !has_image_2d))
             o += "\n";
+        if (need_i32 && !has_image_2d)
+            o += "%i32 = OpTypeInt 32 1\n";
 
         for (const auto& b : spec.bindings) {
             if (b.modality == Kakshya::DataModality::TEXTURE_2D
@@ -342,13 +359,26 @@ namespace {
         }
 
         if (!spec.pc_fields.empty()) {
+            bool pc_has_uint = false;
+            bool pc_has_int = false;
             o += "%pc_blk = OpTypeStruct";
-            for (size_t i = 0; i < spec.pc_fields.size(); ++i)
-                o += " %f32";
+            for (const auto& f : spec.pc_fields) {
+                o += " " + std::string(ssbo_elem_spirv_type(f.format));
+                if (f.format == Kakshya::GpuDataFormat::UINT32) {
+                    pc_has_uint = true;
+                } else if (f.format == Kakshya::GpuDataFormat::INT32) {
+                    pc_has_int = true;
+                }
+            }
             o += "\n";
             o += "%ppc     = OpTypePointer PushConstant %pc_blk\n";
             o += "%pc      = OpVariable %ppc PushConstant\n";
-            o += "%ppc_f32 = OpTypePointer PushConstant %f32\n\n";
+            o += "%ppc_f32 = OpTypePointer PushConstant %f32\n";
+            if (pc_has_uint)
+                o += "%ppc_u32 = OpTypePointer PushConstant %u32\n";
+            if (pc_has_int)
+                o += "%ppc_i32 = OpTypePointer PushConstant %i32\n";
+            o += "\n";
         }
 
         o += "%c0u = OpConstant %u32 0\n";
@@ -377,9 +407,14 @@ namespace {
 
         for (size_t fi = 0; fi < spec.pc_fields.size(); ++fi) {
             const auto& f = spec.pc_fields[fi];
-            o += "%ppc_" + f.name + " = OpAccessChain %ppc_f32 %pc %c"
-                + std::to_string(fi) + "u\n";
-            o += "%pc_" + f.name + " = OpLoad %f32 %ppc_" + f.name + "\n";
+            const std::string_view pptr = (f.format == Kakshya::GpuDataFormat::UINT32)
+                ? "%ppc_u32"
+                : (f.format == Kakshya::GpuDataFormat::INT32 ? "%ppc_i32" : "%ppc_f32");
+            const std::string_view ld_type = ssbo_elem_spirv_type(f.format);
+            o += "%ppc_" + f.name + " = OpAccessChain " + std::string(pptr)
+                + " %pc %c" + std::to_string(fi) + "u\n";
+            o += "%pc_" + f.name + " = OpLoad " + std::string(ld_type)
+                + " %ppc_" + f.name + "\n";
         }
         o += "\n";
 
