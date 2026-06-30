@@ -101,6 +101,30 @@ public:
      */
     void set_input_layer(uint32_t layer) { m_pending_layer = layer; }
 
+    /**
+     * @brief Override the output storage image dimensions for the next dispatch.
+     *
+     * When set, on_before_gpu_dispatch allocates the output image at these
+     * dimensions rather than the input container dimensions, and
+     * calculate_dispatch_size dispatches workgroups to cover this extent.
+     * Callers are responsible for supplying matching push constants so the
+     * shader maps output pixels to the correct source coordinates.
+     *
+     * Pass std::nullopt to restore container-derived sizing.
+     *
+     * @param w Output width in pixels.
+     * @param h Output height in pixels.
+     */
+    void set_output_dimensions(uint32_t w, uint32_t h)
+    {
+        m_output_dim_override = { w, h };
+    }
+
+    void clear_output_dimensions()
+    {
+        m_output_dim_override = std::nullopt;
+    }
+
     // =========================================================================
     // Async dispatch — mirrors ShaderExecutionContext
     // =========================================================================
@@ -271,8 +295,13 @@ protected:
 
             if (m_output_mode == OutputMode::CONTAINER
                 || m_output_mode == OutputMode::IMAGE) {
-                prepare_output_image(m_pending_container->get_width(),
-                    m_pending_container->get_height());
+                const uint32_t ow = m_output_dim_override
+                    ? m_output_dim_override->first
+                    : m_pending_container->get_width();
+                const uint32_t oh = m_output_dim_override
+                    ? m_output_dim_override->second
+                    : m_pending_container->get_height();
+                prepare_output_image(ow, oh);
             }
         }
     }
@@ -287,8 +316,12 @@ protected:
     {
         if (m_pending_container) {
             const auto& ws = gpu_config().workgroup_size;
-            const uint32_t w = m_pending_container->get_width();
-            const uint32_t h = m_pending_container->get_height();
+            const uint32_t w = m_output_dim_override
+                ? m_output_dim_override->first
+                : m_pending_container->get_width();
+            const uint32_t h = m_output_dim_override
+                ? m_output_dim_override->second
+                : m_pending_container->get_height();
             return {
                 (w + ws[0] - 1) / ws[0],
                 (h + ws[1] - 1) / ws[1],
@@ -326,8 +359,12 @@ protected:
         if (m_output_mode == OutputMode::IMAGE)
             return output_type {};
 
-        const uint32_t w = m_pending_container ? m_pending_container->get_width() : img->get_width();
-        const uint32_t h = m_pending_container ? m_pending_container->get_height() : img->get_height();
+        const uint32_t w = m_output_dim_override
+            ? m_output_dim_override->first
+            : (m_pending_container ? m_pending_container->get_width() : img->get_width());
+        const uint32_t h = m_output_dim_override
+            ? m_output_dim_override->second
+            : (m_pending_container ? m_pending_container->get_height() : img->get_height());
 
         if (!m_output_container) {
             m_output_container = std::make_shared<Kakshya::TextureContainer>(
@@ -361,6 +398,8 @@ private:
     std::shared_ptr<Buffers::VKBuffer> m_download_staging;
     std::shared_ptr<Buffers::VKBuffer> m_upload_staging;
     std::vector<GpuBufferBinding> m_aux_bindings;
+
+    std::optional<std::pair<uint32_t, uint32_t>> m_output_dim_override;
 
     // =========================================================================
     // Helpers
