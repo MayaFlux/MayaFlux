@@ -1,6 +1,5 @@
 #pragma once
 
-#include "ShaderSpecBinding.hpp"
 #include "TextureExecutionContext.hpp"
 
 #include "MayaFlux/Kinesis/Vision/VisionExecutor.hpp"
@@ -61,7 +60,8 @@ namespace MayaFlux::Yantra {
  * @return         VisionResult matching the VisionExecutor::run() contract.
  */
 [[nodiscard]] MAYAFLUX_API Kinesis::Vision::VisionResult run_gpu(
-    TextureExecutionContext& ctx,
+    TextureExecutionContext& pixel_ctx,
+    TextureExecutionContext& structured_ctx,
     const Kinesis::Vision::VisionSequence& sequence,
     const std::shared_ptr<Core::VKImage>& image,
     uint32_t w, uint32_t h);

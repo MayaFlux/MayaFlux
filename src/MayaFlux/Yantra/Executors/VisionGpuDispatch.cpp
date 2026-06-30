@@ -189,6 +189,7 @@ GpuShaderConfig vision_gpu_config(VisionOp op, const VisionParams& /*params*/)
 
 VisionResult run_gpu(
     TextureExecutionContext& ctx,
+    TextureExecutionContext& structured_ctx,
     const VisionSequence& sequence,
     const std::shared_ptr<Core::VKImage>& image,
     uint32_t w, uint32_t h)
@@ -260,10 +261,70 @@ VisionResult run_gpu(
         }
         case VisionOp::ExtractPeaks: {
             const auto& p = std::get<ExtractPeaksParams>(step.params);
-            ctx.set_push_constants(ExtractPC {
-                .threshold = p.threshold, .nms_radius = p.nms_radius });
-            break;
+            constexpr uint32_t k_max_kp = 4096;
+
+            struct ExtractPeaksPC {
+                float threshold;
+                uint32_t nms_radius;
+                uint32_t width;
+                uint32_t height;
+                uint32_t max_keypoints;
+            };
+
+            structured_ctx.swap_shader({
+                .shader_path = "extract_peaks.comp",
+                .workgroup_size = { 8, 8, 1 },
+                .push_constant_size = sizeof(ExtractPeaksPC),
+            });
+
+            structured_ctx.set_output_size(1, sizeof(uint32_t));
+            structured_ctx.set_output_size(2, k_max_kp * 4 * sizeof(float));
+
+            structured_ctx.stage_image(current);
+            structured_ctx.set_push_constants(ExtractPeaksPC {
+                .threshold = p.threshold,
+                .nms_radius = p.nms_radius,
+                .width = w,
+                .height = h,
+                .max_keypoints = k_max_kp,
+            });
+
+            const auto fence = structured_ctx.dispatch_async({});
+            foundry.wait_for_fence(fence);
+            foundry.release_fence(fence);
+
+            const auto gpu_result = structured_ctx.collect_result();
+
+            uint32_t count = 0;
+            if (auto it = gpu_result.aux.find(1); it != gpu_result.aux.end())
+                std::memcpy(&count, it->second.data(), sizeof(uint32_t));
+            count = std::min(count, k_max_kp);
+
+            struct GpuKp {
+                float x, y, response, pad;
+            };
+            std::vector<GpuKp> raw(count);
+            if (count > 0) {
+                if (auto it = gpu_result.aux.find(2); it != gpu_result.aux.end())
+                    std::memcpy(raw.data(), it->second.data(), count * sizeof(GpuKp));
+            }
+
+            std::vector<Kinesis::Vision::Keypoint> kpts;
+            kpts.reserve(count);
+            for (const auto& kp : raw) {
+                kpts.push_back({ .position = { kp.x, kp.y },
+                    .response = kp.response,
+                    .scale = 1.0F,
+                    .angle = 0.0F });
+            }
+            std::ranges::sort(kpts, [](const auto& a, const auto& b) { return a.response > b.response; });
+
+            result.structured = std::move(kpts);
+            result.w = 0;
+            result.h = 0;
+            continue;
         }
+
         default:
             break;
         }
