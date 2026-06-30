@@ -88,8 +88,8 @@ GpuShaderConfig vision_gpu_config(VisionOp op, const VisionParams& /*params*/)
     switch (op) {
     case VisionOp::Threshold: {
         const auto spec = ShaderSpec::Assemble {}
-                              .storage_image("src", BindingDirection::Input)
                               .storage_image("out", BindingDirection::Output)
+                              .storage_image("src", BindingDirection::Input)
                               .pc("threshold")
                               .op(KernelOp::CompareGE)
                               .workgroup(k_wg2d[0], k_wg2d[1])
@@ -98,8 +98,8 @@ GpuShaderConfig vision_gpu_config(VisionOp op, const VisionParams& /*params*/)
     }
     case VisionOp::RgbaToGray: {
         const auto spec = ShaderSpec::Assemble {}
-                              .storage_image("src", BindingDirection::Input)
                               .storage_image("out", BindingDirection::Output)
+                              .storage_image("src", BindingDirection::Input)
                               .pc("wr")
                               .pc("wg")
                               .pc("wb")
@@ -111,8 +111,8 @@ GpuShaderConfig vision_gpu_config(VisionOp op, const VisionParams& /*params*/)
     }
     case VisionOp::GrayToRgba: {
         const auto spec = ShaderSpec::Assemble {}
-                              .storage_image("src", BindingDirection::Input)
                               .storage_image("out", BindingDirection::Output)
+                              .storage_image("src", BindingDirection::Input)
                               .op(KernelOp::ChannelReplicate)
                               .workgroup(k_wg2d[0], k_wg2d[1])
                               .build();
@@ -133,8 +133,8 @@ GpuShaderConfig vision_gpu_config(VisionOp op, const VisionParams& /*params*/)
     }
     case VisionOp::NormalizeRange: {
         const auto spec = ShaderSpec::Assemble {}
-                              .storage_image("src", BindingDirection::Input)
                               .storage_image("out", BindingDirection::Output)
+                              .storage_image("src", BindingDirection::Input)
                               .pc("scale")
                               .pc("offset")
                               .op(KernelOp::ScaleOffset)
@@ -142,8 +142,15 @@ GpuShaderConfig vision_gpu_config(VisionOp op, const VisionParams& /*params*/)
                               .build();
         return config_from_spec(spec);
     }
-    case VisionOp::NormalizeInplace:
-        return { .shader_path = "normalize_inplace.comp", .workgroup_size = k_wg2d };
+    case VisionOp::NormalizeInplace: {
+        const auto spec = ShaderSpec::Assemble {}
+                              .storage_image("out", BindingDirection::Output)
+                              .storage_image("src", BindingDirection::Input)
+                              .op(KernelOp::Scale)
+                              .workgroup(k_wg2d[0], k_wg2d[1])
+                              .build();
+        return config_from_spec(spec);
+    }
     case VisionOp::RgbaToHsv:
         return { .shader_path = "rgba_to_hsv.comp", .workgroup_size = k_wg2d };
     case VisionOp::Downsample2x:

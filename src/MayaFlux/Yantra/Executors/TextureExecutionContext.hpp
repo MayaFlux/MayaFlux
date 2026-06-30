@@ -79,12 +79,14 @@ public:
         Portal::Graphics::ImageFormat output_format = Portal::Graphics::ImageFormat::RGBA8,
         OutputMode mode = OutputMode::CONTAINER,
         size_t image_binding = 1,
-        std::vector<GpuBufferBinding> aux_bindings = {})
+        std::vector<GpuBufferBinding> aux_bindings = {},
+        bool input_as_storage = false)
         : Base(std::move(config))
         , m_output_format(output_format)
         , m_output_mode(mode)
         , m_image_binding(image_binding)
         , m_aux_bindings(std::move(aux_bindings))
+        , m_input_as_storage(input_as_storage)
     {
     }
 
@@ -200,10 +202,14 @@ public:
         const std::shared_ptr<Core::VKImage>& image,
         vk::Sampler sampler = nullptr)
     {
-        auto s = sampler
-            ? sampler
-            : Portal::Graphics::SamplerForge::instance().get_default_linear();
-        stage_image_sampled(m_image_binding, image, s);
+        if (m_input_as_storage) {
+            stage_image_storage(m_image_binding, image);
+        } else {
+            auto s = sampler
+                ? sampler
+                : Portal::Graphics::SamplerForge::instance().get_default_linear();
+            stage_image_sampled(m_image_binding, image, s);
+        }
         m_pending_container = nullptr;
     }
 
@@ -266,7 +272,9 @@ protected:
         bindings.push_back({ .set = 0,
             .binding = static_cast<uint32_t>(m_image_binding),
             .direction = GpuBufferBinding::Direction::INPUT,
-            .element_type = GpuBufferBinding::ElementType::IMAGE_SAMPLED });
+            .element_type = m_input_as_storage
+                ? GpuBufferBinding::ElementType::IMAGE_STORAGE
+                : GpuBufferBinding::ElementType::IMAGE_SAMPLED });
         bindings.insert(bindings.end(), m_aux_bindings.begin(), m_aux_bindings.end());
         return bindings;
     }
@@ -307,7 +315,11 @@ protected:
                 }
                 img = m_pending_container->to_image(m_pending_layer, m_upload_staging);
             }
-            stage_image_sampled(m_image_binding, std::move(img), sampler);
+            if (m_input_as_storage) {
+                stage_image_storage(m_image_binding, std::move(img));
+            } else {
+                stage_image_sampled(m_image_binding, std::move(img), sampler);
+            }
 
             if (m_output_mode == OutputMode::CONTAINER
                 || m_output_mode == OutputMode::IMAGE) {
@@ -330,14 +342,19 @@ protected:
         size_t total_elements,
         const DataStructureInfo& structure_info) const override
     {
+        const auto& ws = gpu_config().workgroup_size;
+        if (m_output_dim_override) {
+            const uint32_t w = m_output_dim_override->first;
+            const uint32_t h = m_output_dim_override->second;
+            return {
+                (w + ws[0] - 1) / ws[0],
+                (h + ws[1] - 1) / ws[1],
+                1U
+            };
+        }
         if (m_pending_container) {
-            const auto& ws = gpu_config().workgroup_size;
-            const uint32_t w = m_output_dim_override
-                ? m_output_dim_override->first
-                : m_pending_container->get_width();
-            const uint32_t h = m_output_dim_override
-                ? m_output_dim_override->second
-                : m_pending_container->get_height();
+            const uint32_t w = m_pending_container->get_width();
+            const uint32_t h = m_pending_container->get_height();
             return {
                 (w + ws[0] - 1) / ws[0],
                 (h + ws[1] - 1) / ws[1],
@@ -408,6 +425,7 @@ private:
     uint32_t m_pending_layer {};
     uint32_t m_output_image_w {};
     uint32_t m_output_image_h {};
+    bool m_input_as_storage {};
 
     std::shared_ptr<Kakshya::TextureContainer> m_pending_container;
     std::shared_ptr<Kakshya::TextureContainer> m_output_container;

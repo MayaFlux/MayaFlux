@@ -346,6 +346,12 @@ struct ShaderSpec {
             return *this;
         }
 
+        Assemble& start_binding(uint32_t n)
+        {
+            m_next_binding = n;
+            return *this;
+        }
+
         /**
          * @brief Declare an SSBO binding.
          */
@@ -453,7 +459,7 @@ struct ShaderSpec {
         std::vector<BindingSlot> m_bindings;
         std::vector<PushConstantField> m_pc_fields;
         std::array<uint32_t, 3> m_workgroup { 256, 1, 1 };
-        uint32_t m_next_binding { 1 };
+        uint32_t m_next_binding { 0 };
         std::optional<KernelSource> m_kernel;
     };
 };
