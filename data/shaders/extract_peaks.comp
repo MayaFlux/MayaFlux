@@ -1,0 +1,65 @@
+#version 460
+
+#include "include/vision_common.glsl"
+
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
+layout(set = 0, binding = 0, rgba32f) readonly uniform image2D in_image;
+
+layout(set = 0, binding = 1, std430) buffer CountBuf {
+    uint keypoint_count;
+};
+
+struct GpuKeypoint {
+    float x;
+    float y;
+    float response;
+    float pad;
+};
+
+layout(set = 0, binding = 2, std430) buffer KeypointBuf {
+    GpuKeypoint keypoints[];
+};
+
+layout(push_constant) uniform PC {
+    float threshold;
+    uint nms_radius;
+    uint width;
+    uint height;
+    uint max_keypoints;
+} pc;
+
+void main()
+{
+    const ivec2 coord = thread_coord();
+    if (coord.x >= int(pc.width) || coord.y >= int(pc.height))
+        return;
+
+    const float val = imageLoad(in_image, coord).r;
+    if (val < pc.threshold)
+        return;
+
+    const int r = int(pc.nms_radius);
+    const ivec2 sz = ivec2(int(pc.width), int(pc.height));
+
+    for (int dy = -r; dy <= r; ++dy) {
+        for (int dx = -r; dx <= r; ++dx) {
+            if (dx == 0 && dy == 0)
+                continue;
+            const ivec2 nb = coord + ivec2(dx, dy);
+            if (nb.x < 0 || nb.y < 0 || nb.x >= sz.x || nb.y >= sz.y)
+                continue;
+            if (imageLoad(in_image, nb).r >= val)
+                return;
+        }
+    }
+
+    const uint idx = atomicAdd(keypoint_count, 1u);
+    if (idx >= pc.max_keypoints)
+        return;
+
+    keypoints[idx].x = (float(coord.x) + 0.5) / float(pc.width);
+    keypoints[idx].y = (float(coord.y) + 0.5) / float(pc.height);
+    keypoints[idx].response = val;
+    keypoints[idx].pad = 0.0;
+}
