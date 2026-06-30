@@ -25,6 +25,7 @@ enum class KernelTemplate : uint8_t {
     Reduction, ///< f(x[0..n]) -> scalar; shared-memory tree reduction
     Stencil, ///< f(x[i-k..i+k]) -> y[i]; neighbourhood reads, radius in PC
     GeometryEmit, ///< Writes into vertex SSBO with atomic counter
+    BitonicSort, ///< Bitonic sort network; one thread per element
 };
 
 /**

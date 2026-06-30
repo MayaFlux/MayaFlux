@@ -343,7 +343,7 @@ namespace {
             o += "\n";
         }
 
-        if (spec.tmpl == KernelTemplate::Reduction) {
+        if (spec.tmpl == KernelTemplate::Reduction || spec.tmpl == KernelTemplate::BitonicSort) {
             const uint32_t local = spec.workgroup_size[0];
             const std::string ls = std::to_string(local);
             o += "%bool        = OpTypeBool\n";
@@ -907,6 +907,92 @@ namespace {
         return o;
     }
 
+    /**
+     * Emit the entry point body for BitonicSort template.
+     * Loads the index, loads PC fields, loads SSBO elements, applies op, stores.
+     */
+    std::string emit_bitonic_body(const ShaderSpec& spec)
+    {
+        const auto& bkeys = spec.bindings[0];
+        const auto& bidx = spec.bindings[1];
+
+        const std::string ktype(ssbo_elem_spirv_type(bkeys.format));
+        const std::string itype(ssbo_elem_spirv_type(bidx.format));
+
+        std::string o;
+        o += "%main           = OpFunction %void None %voidfn\n";
+        o += "%entry          = OpLabel\n";
+        o += "%gid3           = OpLoad %v3u32 %gid_var\n";
+        o += "%i              = OpCompositeExtract %u32 %gid3 0\n\n";
+
+        o += "%ppc_stage      = OpAccessChain %ppc_u32 %pc %c0u\n";
+        o += "%stage          = OpLoad %u32 %ppc_stage\n";
+        o += "%ppc_pass       = OpAccessChain %ppc_u32 %pc %c1u\n";
+        o += "%pass           = OpLoad %u32 %ppc_pass\n";
+        o += "%ppc_count      = OpAccessChain %ppc_u32 %pc %c2u\n";
+        o += "%count          = OpLoad %u32 %ppc_count\n";
+        o += "%ppc_desc       = OpAccessChain %ppc_u32 %pc %c3u\n";
+        o += "%descending     = OpLoad %u32 %ppc_desc\n\n";
+
+        o += "%c1u_shift      = OpShiftLeftLogical %u32 %c1u %pass\n";
+        o += "%partner        = OpBitwiseXor %u32 %i %c1u_shift\n\n";
+
+        o += "%partner_le_i   = OpULessThanEqual %bool %partner %i\n";
+        o += "OpSelectionMerge %early_merge None\n";
+        o += "OpBranchConditional %partner_le_i %early_ret %bounds_chk\n\n";
+
+        o += "%bounds_chk     = OpLabel\n";
+        o += "%i_oob          = OpUGreaterThanEqual %bool %i %count\n";
+        o += "%p_oob          = OpUGreaterThanEqual %bool %partner %count\n";
+        o += "%oob            = OpLogicalOr %bool %i_oob %p_oob\n";
+        o += "OpSelectionMerge %early_merge None\n";
+        o += "OpBranchConditional %oob %early_ret %do_sort\n\n";
+
+        o += "%do_sort        = OpLabel\n";
+
+        o += "%gep_ki         = OpAccessChain %pelem_" + bkeys.name
+            + " %buf_" + bkeys.name + " %c0u %i\n";
+        o += "%key_i          = OpLoad " + ktype + " %gep_ki\n";
+        o += "%gep_kp         = OpAccessChain %pelem_" + bkeys.name
+            + " %buf_" + bkeys.name + " %c0u %partner\n";
+        o += "%key_p          = OpLoad " + ktype + " %gep_kp\n\n";
+
+        o += "%gep_ii         = OpAccessChain %pelem_" + bidx.name
+            + " %buf_" + bidx.name + " %c0u %i\n";
+        o += "%idx_i          = OpLoad " + itype + " %gep_ii\n";
+        o += "%gep_ip         = OpAccessChain %pelem_" + bidx.name
+            + " %buf_" + bidx.name + " %c0u %partner\n";
+        o += "%idx_p          = OpLoad " + itype + " %gep_ip\n\n";
+
+        o += "%dir_shift      = OpShiftRightLogical %u32 %i %stage\n";
+        o += "%dir_bit        = OpBitwiseAnd %u32 %dir_shift %c1u\n\n";
+
+        o += "%gt             = OpFOrdGreaterThan %bool %key_i %key_p\n";
+        o += "%gt_u           = OpSelect %u32 %gt %c1u %c0u\n";
+        o += "%xor1           = OpBitwiseXor %u32 %gt_u %dir_bit\n";
+        o += "%xor2           = OpBitwiseXor %u32 %xor1 %descending\n";
+        o += "%do_swap        = OpINotEqual %bool %xor2 %c0u\n\n";
+
+        o += "%new_ki         = OpSelect " + ktype + " %do_swap %key_p %key_i\n";
+        o += "%new_kp         = OpSelect " + ktype + " %do_swap %key_i %key_p\n";
+        o += "%new_ii         = OpSelect " + itype + " %do_swap %idx_p %idx_i\n";
+        o += "%new_ip         = OpSelect " + itype + " %do_swap %idx_i %idx_p\n\n";
+
+        o += "OpStore %gep_ki %new_ki\n";
+        o += "OpStore %gep_kp %new_kp\n";
+        o += "OpStore %gep_ii %new_ii\n";
+        o += "OpStore %gep_ip %new_ip\n";
+        o += "OpBranch %early_merge\n\n";
+
+        o += "%early_ret      = OpLabel\n";
+        o += "OpBranch %early_merge\n\n";
+
+        o += "%early_merge    = OpLabel\n";
+        o += "OpReturn\n";
+        o += "OpFunctionEnd\n";
+        return o;
+    }
+
 } // namespace
 
 std::string emit_spirv_asm(const ShaderSpec& spec)
@@ -932,6 +1018,9 @@ std::string emit_spirv_asm(const ShaderSpec& spec)
     switch (spec.tmpl) {
     case KernelTemplate::Reduction:
         src += emit_reduction_body(spec);
+        break;
+    case KernelTemplate::BitonicSort:
+        src += emit_bitonic_body(spec);
         break;
     case KernelTemplate::Elementwise:
     case KernelTemplate::Stencil:
