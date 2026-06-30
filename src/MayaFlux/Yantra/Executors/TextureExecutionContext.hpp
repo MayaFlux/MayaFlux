@@ -256,16 +256,17 @@ protected:
      */
     [[nodiscard]] std::vector<GpuBufferBinding> declare_buffer_bindings() const override
     {
-        std::vector<GpuBufferBinding> bindings {
-            { .set = 0,
+        std::vector<GpuBufferBinding> bindings;
+        if (m_output_mode != OutputMode::SCALAR) {
+            bindings.push_back({ .set = 0,
                 .binding = 0,
                 .direction = GpuBufferBinding::Direction::OUTPUT,
-                .element_type = GpuBufferBinding::ElementType::IMAGE_STORAGE },
-            { .set = 0,
-                .binding = static_cast<uint32_t>(m_image_binding),
-                .direction = GpuBufferBinding::Direction::INPUT,
-                .element_type = GpuBufferBinding::ElementType::IMAGE_SAMPLED },
-        };
+                .element_type = GpuBufferBinding::ElementType::IMAGE_STORAGE });
+        }
+        bindings.push_back({ .set = 0,
+            .binding = static_cast<uint32_t>(m_image_binding),
+            .direction = GpuBufferBinding::Direction::INPUT,
+            .element_type = GpuBufferBinding::ElementType::IMAGE_SAMPLED });
         bindings.insert(bindings.end(), m_aux_bindings.begin(), m_aux_bindings.end());
         return bindings;
     }
