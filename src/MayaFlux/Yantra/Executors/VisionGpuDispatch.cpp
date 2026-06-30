@@ -77,6 +77,27 @@ namespace {
         return k;
     }
 
+    /**
+     * @brief Generate a 1D Gaussian kernel for separable convolution.
+     * @param radius Radius of the kernel in pixels. Kernel size is (2*radius + 1).
+     * @param sigma  Standard deviation of the Gaussian.
+     * @return       Normalized kernel weights as a vector.
+     */
+    std::vector<float> gaussian_kernel_1d(uint32_t radius, float sigma)
+    {
+        const uint32_t size = 2 * radius + 1;
+        std::vector<float> k(size);
+        float sum = 0.0F;
+        for (uint32_t i = 0; i < size; ++i) {
+            const float x = static_cast<float>(i) - static_cast<float>(radius);
+            k[i] = std::exp(-(x * x) / (2.0F * sigma * sigma));
+            sum += k[i];
+        }
+        for (auto& v : k)
+            v /= sum;
+        return k;
+    }
+
 } // namespace
 
 // ============================================================================
@@ -242,8 +263,8 @@ VisionResult run_gpu(
         case VisionOp::GaussianBlur: {
             const auto& p = std::get<GaussianBlurParams>(step.params);
             const auto radius = static_cast<uint32_t>(std::ceil(p.sigma * 3.0F));
-            const auto weights = gaussian_kernel_2d(radius, p.sigma);
-            ctx.set_binding_data(3, std::span<const float>(weights));
+            const auto weights = gaussian_kernel_1d(radius, p.sigma);
+            ctx.set_binding_data(2, std::span<const float>(weights));
             ctx.set_push_constants(GaussianPC { .radius = radius, .width = w, .height = h });
             break;
         }
