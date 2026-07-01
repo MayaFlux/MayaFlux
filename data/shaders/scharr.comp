@@ -1,6 +1,6 @@
 #version 460
 
-#include "include/vision_common.glsl"
+#include "include/vision_gradients.glsl"
 
 layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 
@@ -14,14 +14,8 @@ void main()
     if (coord.x >= sz.x || coord.y >= sz.y)
         return;
 
-    const float tl = sample_clamped(in_image, coord + ivec2(-1, -1)).r;
-    const float tc = sample_clamped(in_image, coord + ivec2(0, -1)).r;
-    const float tr = sample_clamped(in_image, coord + ivec2(1, -1)).r;
-    const float ml = sample_clamped(in_image, coord + ivec2(-1, 0)).r;
-    const float mr = sample_clamped(in_image, coord + ivec2(1, 0)).r;
-    const float bl = sample_clamped(in_image, coord + ivec2(-1, 1)).r;
-    const float bc = sample_clamped(in_image, coord + ivec2(0, 1)).r;
-    const float br = sample_clamped(in_image, coord + ivec2(1, 1)).r;
+    float tl, tc, tr, ml, mr, bl, bc, br;
+    SAMPLE_NEIGHBORHOOD_3X3(in_image, coord, tl, tc, tr, ml, mr, bl, bc, br);
 
     const float gx = -3.0 * tl + 3.0 * tr - 10.0 * ml + 10.0 * mr - 3.0 * bl + 3.0 * br;
     const float gy = -3.0 * tl - 10.0 * tc - 3.0 * tr + 3.0 * bl + 10.0 * bc + 3.0 * br;

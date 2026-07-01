@@ -1,6 +1,6 @@
 #version 460
 
-#include "include/vision_common.glsl"
+#include "include/vision_gradients.glsl"
 
 layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 
@@ -14,17 +14,7 @@ void main()
     if (coord.x >= sz.x || coord.y >= sz.y)
         return;
 
-    const float tl = sample_clamped(in_image, coord + ivec2(-1, -1)).r;
-    const float tc = sample_clamped(in_image, coord + ivec2(0, -1)).r;
-    const float tr = sample_clamped(in_image, coord + ivec2(1, -1)).r;
-    const float ml = sample_clamped(in_image, coord + ivec2(-1, 0)).r;
-    const float mr = sample_clamped(in_image, coord + ivec2(1, 0)).r;
-    const float bl = sample_clamped(in_image, coord + ivec2(-1, 1)).r;
-    const float bc = sample_clamped(in_image, coord + ivec2(0, 1)).r;
-    const float br = sample_clamped(in_image, coord + ivec2(1, 1)).r;
-
-    const float gx = -tl + tr - 2.0 * ml + 2.0 * mr - bl + br;
-    const float gy = -tl - 2.0 * tc - tr + bl + 2.0 * bc + br;
-
+    float gx, gy;
+    SOBEL_GRADIENT(in_image, coord, gx, gy);
     imageStore(out_image, coord, vec4(gx * gx, gy * gy, gx * gy, 0.0));
 }
