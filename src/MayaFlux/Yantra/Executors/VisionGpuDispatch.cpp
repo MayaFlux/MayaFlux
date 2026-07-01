@@ -229,7 +229,14 @@ VisionResult run_gpu(
     auto& foundry = Portal::Graphics::get_shader_foundry();
     std::shared_ptr<Core::VKImage> current = image;
 
+    Portal::Graphics::ShaderID last_shader_id = Portal::Graphics::INVALID_SHADER;
+    std::string last_shader_path;
+    std::shared_ptr<Core::VKImage> last_staged;
+    uint32_t last_w = 0, last_h = 0;
+
     ctx.prepare_output_image(w, h);
+    last_w = w;
+    last_h = h;
 
     for (const auto& step : sequence.steps) {
         const auto cfg = vision_gpu_config(step.op, step.params);
@@ -241,9 +248,20 @@ VisionResult run_gpu(
             return VisionResult {};
         }
 
-        ctx.swap_shader(cfg);
-        ctx.stage_image(current);
-        ctx.prepare_output_image(w, h);
+        if (cfg.shader_id != last_shader_id || cfg.shader_path != last_shader_path) {
+            ctx.swap_shader(cfg);
+            last_shader_id = cfg.shader_id;
+            last_shader_path = cfg.shader_path;
+        }
+        if (current != last_staged) {
+            ctx.stage_image(current);
+            last_staged = current;
+        }
+        if (w != last_w || h != last_h) {
+            ctx.prepare_output_image(w, h);
+            last_w = w;
+            last_h = h;
+        }
         ctx.set_output_dimensions(w, h);
 
         switch (step.op) {
@@ -422,6 +440,7 @@ VisionResult run_gpu(
 
         ctx.clear_output_dimensions();
         current = ctx.get_output_image(0);
+        last_staged = current;
 
         if (step.op == VisionOp::Downsample2x) {
             w = std::max(1U, w / 2);
@@ -429,9 +448,9 @@ VisionResult run_gpu(
             result.w = w;
             result.h = h;
             ctx.prepare_output_image(w, h);
+            last_w = w;
+            last_h = h;
         }
-
-        current = ctx.get_output_image(0);
     }
 
     return result;
