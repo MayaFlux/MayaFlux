@@ -53,13 +53,26 @@ namespace {
     constexpr std::array<uint32_t, 3> k_wg2d { 8, 8, 1 };
 
     /**
-     * @brief Generate a 2D Gaussian kernel for convolution.
+     * @brief 2D Gaussian kernel for convolution, cached by (radius, sigma
+     *        bit pattern).
+     *
+     * Sigma is a tuning parameter that rarely changes frame to frame;
+     * recomputing exp() over (2*radius+1)^2 taps and reallocating the
+     * kernel every call is pure repeated work for an identical result.
+     *
      * @param radius Radius of the kernel in pixels. Kernel size is (2*radius + 1)^2.
      * @param sigma  Standard deviation of the Gaussian.
      * @return       Normalized kernel weights as a flat vector in row-major order.
      */
-    std::vector<float> gaussian_kernel_2d(uint32_t radius, float sigma)
+    const std::vector<float>& gaussian_kernel_2d(uint32_t radius, float sigma)
     {
+        static std::unordered_map<uint64_t, std::vector<float>> cache;
+        const uint64_t key = (static_cast<uint64_t>(std::bit_cast<uint32_t>(sigma)) << 32)
+            | radius;
+        auto it = cache.find(key);
+        if (it != cache.end())
+            return it->second;
+
         const uint32_t diam = 2 * radius + 1;
         std::vector<float> k(static_cast<size_t>(diam) * diam);
         float sum = 0.0F;
@@ -74,17 +87,32 @@ namespace {
         }
         for (auto& v : k)
             v /= sum;
-        return k;
+
+        return cache.emplace(key, std::move(k)).first->second;
     }
 
     /**
-     * @brief Generate a 1D Gaussian kernel for separable convolution.
+     * @brief 1D Gaussian kernel for separable convolution, cached by
+     *        (radius, sigma bit pattern).
+     *
+     * Sigma is a tuning parameter that rarely changes frame to frame;
+     * recomputing exp() per tap and reallocating the kernel every call
+     * is pure repeated work for an identical result. Mirrors
+     * VisionExecutor::gaussian_kernel's caching rationale for the CPU path.
+     *
      * @param radius Radius of the kernel in pixels. Kernel size is (2*radius + 1).
      * @param sigma  Standard deviation of the Gaussian.
-     * @return       Normalized kernel weights as a vector.
+     * @return       Normalized kernel weights.
      */
-    std::vector<float> gaussian_kernel_1d(uint32_t radius, float sigma)
+    const std::vector<float>& gaussian_kernel_1d(uint32_t radius, float sigma)
     {
+        static std::unordered_map<uint64_t, std::vector<float>> cache;
+        const uint64_t key = (static_cast<uint64_t>(std::bit_cast<uint32_t>(sigma)) << 32)
+            | radius;
+        auto it = cache.find(key);
+        if (it != cache.end())
+            return it->second;
+
         const uint32_t size = 2 * radius + 1;
         std::vector<float> k(size);
         float sum = 0.0F;
@@ -95,7 +123,8 @@ namespace {
         }
         for (auto& v : k)
             v /= sum;
-        return k;
+
+        return cache.emplace(key, std::move(k)).first->second;
     }
 
 } // namespace
@@ -283,7 +312,7 @@ VisionResult run_gpu(
         case VisionOp::GaussianBlur: {
             const auto& p = std::get<GaussianBlurParams>(step.params);
             const auto radius = static_cast<uint32_t>(std::ceil(p.sigma * 3.0F));
-            const auto weights = gaussian_kernel_1d(radius, p.sigma);
+            const auto& weights = gaussian_kernel_1d(radius, p.sigma);
             ctx.set_binding_data(2, std::span<const float>(weights));
             ctx.set_push_constants(GaussianPC { .radius = radius, .width = w, .height = h });
             break;
@@ -305,7 +334,7 @@ VisionResult run_gpu(
         case VisionOp::HarrisResponse: {
             const auto& p = std::get<HarrisParams>(step.params);
             const auto radius = static_cast<uint32_t>(std::ceil(p.sigma * 3.0F));
-            const auto weights = gaussian_kernel_1d(radius, p.sigma);
+            const auto& weights = gaussian_kernel_1d(radius, p.sigma);
             struct HarrisPC {
                 float k;
                 uint32_t pass;
