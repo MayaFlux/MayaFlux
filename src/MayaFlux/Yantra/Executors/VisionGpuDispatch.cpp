@@ -129,6 +129,46 @@ namespace {
 
 } // namespace
 
+VisionGpuContexts::VisionGpuContexts()
+    : pixel {
+        GpuShaderConfig {},
+        Portal::Graphics::ImageFormat::RGBA32F,
+        TextureExecutionContext::OutputMode::IMAGE,
+        1,
+        std::vector<GpuBufferBinding> {
+            { .set = 0, .binding = 2, .direction = GpuBufferBinding::Direction::INPUT, .element_type = GpuBufferBinding::ElementType::FLOAT32 },
+        },
+        GpuBufferBinding::ElementType::IMAGE_STORAGE,
+    }
+    , structured {
+        GpuShaderConfig {},
+        Portal::Graphics::ImageFormat::RGBA32F,
+        TextureExecutionContext::OutputMode::SCALAR,
+        0,
+        std::vector<GpuBufferBinding> {
+            { .set = 0, .binding = 1, .direction = GpuBufferBinding::Direction::OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
+            { .set = 0, .binding = 2, .direction = GpuBufferBinding::Direction::OUTPUT, .element_type = GpuBufferBinding::ElementType::FLOAT32 },
+        },
+        GpuBufferBinding::ElementType::IMAGE_STORAGE,
+    }
+    , labels {
+        GpuShaderConfig {},
+        Portal::Graphics::ImageFormat::RGBA32F,
+        TextureExecutionContext::OutputMode::IMAGE,
+        1,
+        std::vector<GpuBufferBinding> {},
+        GpuBufferBinding::ElementType::IMAGE_STORAGE,
+    }
+{
+    structured.set_output_size(1, sizeof(uint32_t));
+    structured.set_output_size(2, static_cast<size_t>(4096) * 4 * sizeof(float));
+}
+
+std::unique_ptr<VisionGpuContexts> make_vision_gpu_contexts()
+{
+    return std::make_unique<VisionGpuContexts>();
+}
+
 // ============================================================================
 // vision_gpu_config
 // ============================================================================
@@ -245,12 +285,14 @@ GpuShaderConfig vision_gpu_config(VisionOp op, const VisionParams& /*params*/)
 // ============================================================================
 
 VisionResult run_gpu(
-    TextureExecutionContext& ctx,
-    TextureExecutionContext& structured_ctx,
+    VisionGpuContexts& contexts,
     const VisionSequence& sequence,
     const std::shared_ptr<Core::VKImage>& image,
     uint32_t w, uint32_t h)
 {
+    auto& ctx = contexts.pixel;
+    auto& structured_ctx = contexts.structured;
+
     VisionResult result;
     result.w = w;
     result.h = h;
@@ -490,6 +532,15 @@ VisionResult run_gpu(
     }
 
     return result;
+}
+
+VisionResult run_gpu(
+    const VisionSequence& sequence,
+    const std::shared_ptr<Core::VKImage>& image,
+    uint32_t w, uint32_t h)
+{
+    static auto contexts = make_vision_gpu_contexts();
+    return run_gpu(*contexts, sequence, image, w, h);
 }
 
 } // namespace MayaFlux::Yantra
