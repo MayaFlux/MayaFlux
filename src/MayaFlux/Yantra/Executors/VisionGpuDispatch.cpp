@@ -173,39 +173,39 @@ GpuShaderConfig vision_gpu_config(VisionOp op, const VisionParams& /*params*/)
         return config_from_spec(spec);
     }
     case VisionOp::RgbaToHsv:
-        return { .shader_path = "rgba_to_hsv.comp", .workgroup_size = k_wg2d };
+        return { .shader_path = "rgba_to_hsv.comp.spv", .workgroup_size = k_wg2d };
     case VisionOp::Downsample2x:
-        return { .shader_path = "downsample_2x.comp", .workgroup_size = k_wg2d };
+        return { .shader_path = "downsample_2x.comp.spv", .workgroup_size = k_wg2d };
     case VisionOp::FilterSeparable:
-        return { .shader_path = "filter_separable.comp", .workgroup_size = k_wg2d };
+        return { .shader_path = "filter_separable.comp.spv", .workgroup_size = k_wg2d };
     case VisionOp::Sobel:
-        return { .shader_path = "sobel.comp", .workgroup_size = k_wg2d };
+        return { .shader_path = "sobel.comp.spv", .workgroup_size = k_wg2d };
     case VisionOp::Scharr:
-        return { .shader_path = "scharr.comp", .workgroup_size = k_wg2d };
+        return { .shader_path = "scharr.comp.spv", .workgroup_size = k_wg2d };
     case VisionOp::Canny:
-        return { .shader_path = "canny.comp", .workgroup_size = k_wg2d, .push_constant_size = sizeof(CannyPC) };
+        return { .shader_path = "canny.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(CannyPC) };
     case VisionOp::Erode:
-        return { .shader_path = "erode.comp", .workgroup_size = k_wg2d, .push_constant_size = sizeof(MorphPC) };
+        return { .shader_path = "erode.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(MorphPC) };
     case VisionOp::Dilate:
-        return { .shader_path = "dilate.comp", .workgroup_size = k_wg2d, .push_constant_size = sizeof(MorphPC) };
+        return { .shader_path = "dilate.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(MorphPC) };
     case VisionOp::Open:
-        return { .shader_path = "open.comp", .workgroup_size = k_wg2d, .push_constant_size = sizeof(MorphPC) };
+        return { .shader_path = "open.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(MorphPC) };
     case VisionOp::Close:
-        return { .shader_path = "close.comp", .workgroup_size = k_wg2d, .push_constant_size = sizeof(MorphPC) };
+        return { .shader_path = "close.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(MorphPC) };
     case VisionOp::MorphGradient:
-        return { .shader_path = "morph_gradient.comp", .workgroup_size = k_wg2d, .push_constant_size = sizeof(MorphPC) };
+        return { .shader_path = "morph_gradient.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(MorphPC) };
     case VisionOp::HarrisResponse:
-        return { .shader_path = "harris_response.comp", .workgroup_size = k_wg2d, .push_constant_size = sizeof(HarrisPC) };
+        return { .shader_path = "harris_response.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(HarrisPC) };
     case VisionOp::ExtractPeaks:
-        return { .shader_path = "extract_peaks.comp", .workgroup_size = { 256, 1, 1 }, .push_constant_size = sizeof(ExtractPC) };
+        return { .shader_path = "extract_peaks.comp.spv", .workgroup_size = { 256, 1, 1 }, .push_constant_size = sizeof(ExtractPC) };
     case VisionOp::ConnectedComponents:
-        return { .shader_path = "connected_components.comp", .workgroup_size = { 256, 1, 1 } };
+        return { .shader_path = "connected_components.comp.spv", .workgroup_size = { 256, 1, 1 } };
     case VisionOp::FindContours:
-        return { .shader_path = "find_contours.comp", .workgroup_size = { 256, 1, 1 } };
+        return { .shader_path = "find_contours.comp.spv", .workgroup_size = { 256, 1, 1 } };
     case VisionOp::ThresholdAdaptive:
-        return { .shader_path = "threshold_adaptive.comp", .workgroup_size = k_wg2d };
+        return { .shader_path = "threshold_adaptive.comp.spv", .workgroup_size = k_wg2d };
     case VisionOp::ThresholdOtsu:
-        return { .shader_path = "threshold_otsu.comp", .workgroup_size = { 256, 1, 1 } };
+        return { .shader_path = "threshold_otsu.comp.spv", .workgroup_size = { 256, 1, 1 } };
     default:
         return GpuShaderConfig { .shader_id = Portal::Graphics::INVALID_SHADER };
     }
@@ -360,7 +360,7 @@ VisionResult run_gpu(
             };
 
             structured_ctx.swap_shader({
-                .shader_path = "extract_peaks.comp",
+                .shader_path = "extract_peaks.comp.spv",
                 .workgroup_size = { 8, 8, 1 },
                 .push_constant_size = sizeof(ExtractPeaksPC),
             });
