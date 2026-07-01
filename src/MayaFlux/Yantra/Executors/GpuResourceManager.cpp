@@ -195,10 +195,13 @@ bool GpuResourceManager::initialise(const GpuShaderConfig& config,
     }
 
     m_impl = std::make_unique<GpuResourceManagerImpl>();
-    m_impl->buffers.resize(bindings.size());
-    m_buffer_slots.resize(bindings.size());
-    m_image_slots.resize(bindings.size());
-
+    size_t max_binding = 0;
+    for (const auto& b : bindings)
+        max_binding = std::max(max_binding, static_cast<size_t>(b.binding));
+    const size_t capacity = bindings.empty() ? 0 : max_binding + 1;
+    m_impl->buffers.resize(capacity);
+    m_buffer_slots.resize(capacity);
+    m_image_slots.resize(capacity);
     m_ready = true;
     return true;
 }
@@ -364,16 +367,16 @@ void GpuResourceManager::dispatch(
 
     compute_press.dispatch(cmd_id, groups[0], groups[1], groups[2]);
 
-    for (size_t i = 0; i < bindings.size(); ++i) {
-        const auto et = bindings[i].element_type;
+    for (const auto& b : bindings) {
+        const auto et = b.element_type;
         const bool is_image = et == GpuBufferBinding::ElementType::IMAGE_STORAGE
             || et == GpuBufferBinding::ElementType::IMAGE_SAMPLED;
-        const bool is_output = bindings[i].direction == GpuBufferBinding::Direction::OUTPUT
-            || bindings[i].direction == GpuBufferBinding::Direction::INPUT_OUTPUT;
+        const bool is_output = b.direction == GpuBufferBinding::Direction::OUTPUT
+            || b.direction == GpuBufferBinding::Direction::INPUT_OUTPUT;
         if (is_output && !is_image) {
             foundry.buffer_barrier(
                 cmd_id,
-                m_impl->buffers[i].buffer,
+                m_impl->buffers[b.binding].buffer,
                 vk::AccessFlagBits::eShaderWrite,
                 vk::AccessFlagBits::eHostRead,
                 vk::PipelineStageFlagBits::eComputeShader,
@@ -421,11 +424,11 @@ void GpuResourceManager::dispatch_batched(
 
             compute_press.dispatch(cmd_id, groups[0], groups[1], groups[2]);
 
-            for (size_t i = 0; i < bindings.size(); ++i) {
-                if (bindings[i].direction == GpuBufferBinding::Direction::INPUT_OUTPUT) {
+            for (const auto& b : bindings) {
+                if (b.direction == GpuBufferBinding::Direction::INPUT_OUTPUT) {
                     foundry.buffer_barrier(
                         cmd_id,
-                        m_impl->buffers[i].buffer,
+                        m_impl->buffers[b.binding].buffer,
                         vk::AccessFlagBits::eShaderWrite | vk::AccessFlagBits::eShaderRead,
                         vk::AccessFlagBits::eShaderWrite | vk::AccessFlagBits::eShaderRead,
                         vk::PipelineStageFlagBits::eComputeShader,
@@ -434,12 +437,12 @@ void GpuResourceManager::dispatch_batched(
             }
         }
 
-        for (size_t i = 0; i < bindings.size(); ++i) {
-            if (bindings[i].direction == GpuBufferBinding::Direction::OUTPUT
-                || bindings[i].direction == GpuBufferBinding::Direction::INPUT_OUTPUT) {
+        for (const auto& b : bindings) {
+            if (b.direction == GpuBufferBinding::Direction::OUTPUT
+                || b.direction == GpuBufferBinding::Direction::INPUT_OUTPUT) {
                 foundry.buffer_barrier(
                     cmd_id,
-                    m_impl->buffers[i].buffer,
+                    m_impl->buffers[b.binding].buffer,
                     vk::AccessFlagBits::eShaderWrite,
                     vk::AccessFlagBits::eHostRead,
                     vk::PipelineStageFlagBits::eComputeShader,
@@ -469,16 +472,16 @@ Portal::Graphics::FenceID GpuResourceManager::dispatch_async(
 
     compute_press.dispatch(cmd_id, groups[0], groups[1], groups[2]);
 
-    for (size_t i = 0; i < bindings.size(); ++i) {
-        const auto et = bindings[i].element_type;
+    for (const auto& b : bindings) {
+        const auto et = b.element_type;
         const bool is_image = et == GpuBufferBinding::ElementType::IMAGE_STORAGE
             || et == GpuBufferBinding::ElementType::IMAGE_SAMPLED;
-        const bool is_output = bindings[i].direction == GpuBufferBinding::Direction::OUTPUT
-            || bindings[i].direction == GpuBufferBinding::Direction::INPUT_OUTPUT;
+        const bool is_output = b.direction == GpuBufferBinding::Direction::OUTPUT
+            || b.direction == GpuBufferBinding::Direction::INPUT_OUTPUT;
         if (is_output && !is_image) {
             foundry.buffer_barrier(
                 cmd_id,
-                m_impl->buffers[i].buffer,
+                m_impl->buffers[b.binding].buffer,
                 vk::AccessFlagBits::eShaderWrite,
                 vk::AccessFlagBits::eHostRead,
                 vk::PipelineStageFlagBits::eComputeShader,
