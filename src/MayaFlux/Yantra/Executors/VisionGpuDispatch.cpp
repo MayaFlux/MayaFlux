@@ -308,7 +308,7 @@ VisionResult run_gpu(
             });
 
             structured_ctx.set_output_size(1, sizeof(uint32_t));
-            structured_ctx.set_output_size(2, k_max_kp * 4 * sizeof(float));
+            structured_ctx.set_output_size(2, static_cast<size_t>(k_max_kp) * 4 * sizeof(float));
 
             structured_ctx.stage_image(current);
             structured_ctx.set_push_constants(ExtractPeaksPC {
@@ -319,7 +319,9 @@ VisionResult run_gpu(
                 .max_keypoints = k_max_kp,
             });
 
+            structured_ctx.set_output_dimensions(w, h);
             const auto fence = structured_ctx.dispatch_async({});
+            structured_ctx.clear_output_dimensions();
             foundry.wait_for_fence(fence);
             foundry.release_fence(fence);
 
