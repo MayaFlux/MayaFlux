@@ -286,8 +286,66 @@ VisionResult run_gpu(
         }
         case VisionOp::HarrisResponse: {
             const auto& p = std::get<HarrisParams>(step.params);
-            ctx.set_push_constants(HarrisPC { .k = p.k, .sigma = p.sigma });
-            break;
+            const auto radius = static_cast<uint32_t>(std::ceil(p.sigma * 3.0F));
+            const auto weights = gaussian_kernel_1d(radius, p.sigma);
+            struct HarrisPC {
+                float k;
+                uint32_t pass;
+                uint32_t width;
+                uint32_t height;
+            };
+
+            ctx.swap_shader({ .shader_path = "harris_grad_pack.comp.spv", .workgroup_size = k_wg2d });
+            ctx.stage_image(current);
+            ctx.invalidate_output_image();
+            ctx.prepare_output_image(w, h);
+            {
+                const auto f = ctx.dispatch_async({});
+                foundry.wait_for_fence(f);
+                foundry.release_fence(f);
+            }
+            auto packed = ctx.get_output_image(0);
+
+            const auto blur_cfg = vision_gpu_config(VisionOp::GaussianBlur, GaussianBlurParams { .sigma = p.sigma });
+            ctx.swap_shader(blur_cfg);
+            ctx.stage_image(packed);
+            ctx.set_binding_data(2, std::span<const float>(weights));
+            ctx.set_push_constants(GaussianPC { .radius = radius, .width = w, .height = h });
+            ctx.invalidate_output_image();
+            ctx.prepare_output_image(w, h);
+            {
+                const auto f = ctx.dispatch_async({});
+                foundry.wait_for_fence(f);
+                foundry.release_fence(f);
+            }
+            auto smoothed = ctx.get_output_image(0);
+
+            const GpuShaderConfig harris_resp_cfg {
+                .shader_path = "harris_response.comp.spv",
+                .workgroup_size = k_wg2d,
+                .push_constant_size = sizeof(HarrisPC),
+            };
+            ctx.swap_shader(harris_resp_cfg);
+            ctx.stage_image(smoothed);
+            ctx.set_push_constants(HarrisPC { .k = p.k, .pass = 0U, .width = w, .height = h });
+            ctx.invalidate_output_image();
+            ctx.prepare_output_image(w, h);
+            {
+                const auto f = ctx.dispatch_async({});
+                foundry.wait_for_fence(f);
+                foundry.release_fence(f);
+            }
+
+            ctx.set_push_constants(HarrisPC { .k = p.k, .pass = 1U, .width = w, .height = h });
+            {
+                const auto f = ctx.dispatch_async({});
+                foundry.wait_for_fence(f);
+                foundry.release_fence(f);
+            }
+            current = ctx.get_output_image(0);
+
+            result.structured = std::monostate {};
+            continue;
         }
         case VisionOp::ExtractPeaks: {
             const auto& p = std::get<ExtractPeaksParams>(step.params);
