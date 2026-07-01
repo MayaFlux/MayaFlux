@@ -80,13 +80,13 @@ public:
         OutputMode mode = OutputMode::CONTAINER,
         size_t image_binding = 1,
         std::vector<GpuBufferBinding> aux_bindings = {},
-        bool input_as_storage = false)
+        GpuBufferBinding::ElementType image_access = GpuBufferBinding::ElementType::IMAGE_SAMPLED)
         : Base(std::move(config))
         , m_output_format(output_format)
         , m_output_mode(mode)
         , m_image_binding(image_binding)
         , m_aux_bindings(std::move(aux_bindings))
-        , m_input_as_storage(input_as_storage)
+        , m_image_access(image_access)
     {
     }
 
@@ -202,7 +202,7 @@ public:
         const std::shared_ptr<Core::VKImage>& image,
         vk::Sampler sampler = nullptr)
     {
-        if (m_input_as_storage) {
+        if (m_image_access == GpuBufferBinding::ElementType::IMAGE_STORAGE) {
             stage_image_storage(m_image_binding, image);
         } else {
             auto s = sampler
@@ -289,9 +289,7 @@ protected:
         bindings.push_back({ .set = 0,
             .binding = static_cast<uint32_t>(m_image_binding),
             .direction = GpuBufferBinding::Direction::INPUT,
-            .element_type = m_input_as_storage
-                ? GpuBufferBinding::ElementType::IMAGE_STORAGE
-                : GpuBufferBinding::ElementType::IMAGE_SAMPLED });
+            .element_type = m_image_access });
         bindings.insert(bindings.end(), m_aux_bindings.begin(), m_aux_bindings.end());
         return bindings;
     }
@@ -332,7 +330,7 @@ protected:
                 }
                 img = m_pending_container->to_image(m_pending_layer, m_upload_staging);
             }
-            if (m_input_as_storage) {
+            if (m_image_access == GpuBufferBinding::ElementType::IMAGE_STORAGE) {
                 stage_image_storage(m_image_binding, std::move(img));
             } else {
                 stage_image_sampled(m_image_binding, std::move(img), sampler);
@@ -442,7 +440,7 @@ private:
     uint32_t m_pending_layer {};
     uint32_t m_output_image_w {};
     uint32_t m_output_image_h {};
-    bool m_input_as_storage {};
+    GpuBufferBinding::ElementType m_image_access { GpuBufferBinding::ElementType::IMAGE_SAMPLED };
 
     std::shared_ptr<Kakshya::TextureContainer> m_pending_container;
     std::shared_ptr<Kakshya::TextureContainer> m_output_container;
