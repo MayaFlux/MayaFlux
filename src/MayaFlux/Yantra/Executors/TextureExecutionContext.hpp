@@ -251,6 +251,23 @@ public:
         stage_image_storage(0, m_output_image);
     }
 
+    /**
+     * @brief Force the next prepare_output_image call to allocate a fresh image
+     *        regardless of whether requested dimensions match the cached one.
+     *
+     * Use when a caller holds a shared_ptr to the current output image as input
+     * to a subsequent dispatch on the same context (multi-pass sequences that
+     * chain intermediate results through one context) and dimensions happen to
+     * be unchanged between passes. Without this, prepare_output_image reuses the
+     * cached image, aliasing the just-captured input with the next pass's output.
+     *
+     * TODO: This is a stopgap; storage vs sampled is the wrong dichotomy.  We should have a separate "input" binding and "output" binding, and the caller should be able to stage a sampled input image and a storage output image simultaneously.  Then we can remove this method and the m_output_image_w/h cache.
+     */
+    void invalidate_output_image()
+    {
+        m_output_image.reset();
+    }
+
 protected:
     // =========================================================================
     // GpuExecutionContext overrides
