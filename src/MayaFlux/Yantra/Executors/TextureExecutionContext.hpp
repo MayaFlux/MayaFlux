@@ -238,11 +238,21 @@ public:
 
     /**
      * @brief Allocates the output storage image and stages it at binding 0.
-     *        Only called in CONTAINER mode from on_before_gpu_dispatch.
+     *        Only called in CONTAINER mode from on_before_gpu_dispatch, or
+     *        per-step by callers chaining multi-pass sequences.
+     *
+     * @param width       Output image width.
+     * @param height      Output image height.
+     * @param force_fresh When true, always allocates a new image regardless of
+     *                     the cached dimensions. Use when the previous output
+     *                     is staged as this pass's input and dimensions happen
+     *                     to be unchanged, to avoid aliasing input and output.
+     *                     Equivalent to invalidate_output_image() immediately
+     *                     before this call.
      */
-    void prepare_output_image(uint32_t width, uint32_t height)
+    void prepare_output_image(uint32_t width, uint32_t height, bool force_fresh = false)
     {
-        if (!m_output_image || m_output_image_w != width || m_output_image_h != height) {
+        if (force_fresh || !m_output_image || m_output_image_w != width || m_output_image_h != height) {
             m_output_image = Portal::Graphics::TextureLoom::instance()
                                  .create_storage_image(width, height, m_output_format);
             m_output_image_w = width;
@@ -261,7 +271,18 @@ public:
      * be unchanged between passes. Without this, prepare_output_image reuses the
      * cached image, aliasing the just-captured input with the next pass's output.
      *
-     * TODO: This is a stopgap; storage vs sampled is the wrong dichotomy.  We should have a separate "input" binding and "output" binding, and the caller should be able to stage a sampled input image and a storage output image simultaneously.  Then we can remove this method and the m_output_image_w/h cache.
+     * Equivalent to calling prepare_output_image(width, height, true).
+     * Prefer passing force_fresh directly at the call site; this remains for
+     * callers that need to invalidate ahead of a later prepare_output_image
+     * call rather than at the point of allocation.
+     *
+     * TODO: input binding and output binding are still one shared image slot
+     * across passes rather than two independently staged bindings. A caller
+     * chaining passes must still track that this pass's output is the next
+     * pass's input and request force_fresh accordingly. Separating input and
+     * output into distinct bindings would remove that bookkeeping requirement
+     * entirely, at which point this method and the dimension cache could
+     * both be removed.
      */
     void invalidate_output_image()
     {
