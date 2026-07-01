@@ -297,7 +297,7 @@ VisionResult run_gpu(
 
             ctx.swap_shader({ .shader_path = "harris_grad_pack.comp.spv", .workgroup_size = k_wg2d });
             ctx.stage_image(current);
-            ctx.prepare_output_image(w, h, true);
+            ctx.prepare_output_image(w, h);
             {
                 const auto f = ctx.dispatch_async({});
                 foundry.wait_for_fence(f);
@@ -310,7 +310,7 @@ VisionResult run_gpu(
             ctx.stage_image(packed);
             ctx.set_binding_data(2, std::span<const float>(weights));
             ctx.set_push_constants(GaussianPC { .radius = radius, .width = w, .height = h });
-            ctx.prepare_output_image(w, h, true);
+            ctx.prepare_output_image(w, h);
             {
                 const auto f = ctx.dispatch_async({});
                 foundry.wait_for_fence(f);
@@ -326,7 +326,7 @@ VisionResult run_gpu(
             ctx.swap_shader(harris_resp_cfg);
             ctx.stage_image(smoothed);
             ctx.set_push_constants(HarrisPC { .k = p.k, .pass = 0U, .width = w, .height = h });
-            ctx.prepare_output_image(w, h, true);
+            ctx.prepare_output_image(w, h);
             {
                 const auto f = ctx.dispatch_async({});
                 foundry.wait_for_fence(f);

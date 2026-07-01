@@ -70,24 +70,36 @@ public:
      *                      Ignored when mode is SCALAR.
      * @param mode          Controls what collect_gpu_outputs / collect_result return.
      * @param image_binding Binding index at which the input image is staged.
-     *                      Default 1 (binding 0 reserved for output storage image
-     *                      in CONTAINER mode; callers using SCALAR mode may set 0).
-     * @param aux_bindings  Additional buffer bindings to declare
+     *                      Default 1.
+     * @param aux_bindings  Additional buffer bindings to declare.
+     * @param image_access  Access mode for the input image binding: IMAGE_SAMPLED
+     *                      (default) or IMAGE_STORAGE.
+     * @param output_binding Binding index for the output storage image.
+     *                      Ignored when mode is SCALAR. Default 0.
      */
     explicit TextureExecutionContext(
         GpuShaderConfig config,
         Portal::Graphics::ImageFormat output_format = Portal::Graphics::ImageFormat::RGBA8,
         OutputMode mode = OutputMode::CONTAINER,
-        size_t image_binding = 1,
+        uint32_t image_binding = 1,
         std::vector<GpuBufferBinding> aux_bindings = {},
-        GpuBufferBinding::ElementType image_access = GpuBufferBinding::ElementType::IMAGE_SAMPLED)
+        GpuBufferBinding::ElementType image_access = GpuBufferBinding::ElementType::IMAGE_SAMPLED,
+        uint32_t output_binding = 0)
         : Base(std::move(config))
         , m_output_format(output_format)
         , m_output_mode(mode)
-        , m_image_binding(image_binding)
         , m_aux_bindings(std::move(aux_bindings))
-        , m_image_access(image_access)
     {
+        m_image_slots.push_back({ .binding = { .set = 0,
+                                      .binding = image_binding,
+                                      .direction = GpuBufferBinding::Direction::INPUT,
+                                      .element_type = image_access } });
+        if (m_output_mode != OutputMode::SCALAR) {
+            m_image_slots.push_back({ .binding = { .set = 0,
+                                          .binding = output_binding,
+                                          .direction = GpuBufferBinding::Direction::OUTPUT,
+                                          .element_type = GpuBufferBinding::ElementType::IMAGE_STORAGE } });
+        }
     }
 
     /**
@@ -188,36 +200,41 @@ public:
     // =========================================================================
 
     /**
-     * @brief Stage an arbitrary VKImage at the configured image binding.
+     * @brief Stage an arbitrary VKImage at the declared input image binding.
      *
-     * Bypasses container resolution.  The image must be in
-     * eShaderReadOnlyOptimal layout.  Use before dispatch_async when the
-     * source is a render-pass output or camera frame rather than a container.
+     * Bypasses container resolution. The image must be in
+     * eShaderReadOnlyOptimal layout for IMAGE_SAMPLED access, or eGeneral
+     * for IMAGE_STORAGE access. Use before dispatch_async when the source
+     * is a render-pass output or camera frame rather than a container.
      *
      * @param image   Initialized VKImage.
      * @param sampler Vulkan sampler. Defaults to the TextureLoom linear sampler
-     *                when nullptr.
+     *                when nullptr. Ignored for IMAGE_STORAGE access.
      */
     void stage_image(
         const std::shared_ptr<Core::VKImage>& image,
         vk::Sampler sampler = nullptr)
     {
-        if (m_image_access == GpuBufferBinding::ElementType::IMAGE_STORAGE) {
-            stage_image_storage(m_image_binding, image);
+        auto& slot = input_slot();
+        if (slot.binding.element_type == GpuBufferBinding::ElementType::IMAGE_STORAGE) {
+            stage_image_storage(slot.binding.binding, image);
         } else {
             auto s = sampler
                 ? sampler
                 : Portal::Graphics::SamplerForge::instance().get_default_linear();
-            stage_image_sampled(m_image_binding, image, s);
+            stage_image_sampled(slot.binding.binding, image, s);
         }
+        slot.image = image;
         m_pending_container = nullptr;
     }
 
     /**
-     * @brief Stage a TextureContainer layer at the configured image binding.
+     * @brief Stage a TextureContainer layer at the declared input image binding.
      *
      * Convenience for callers that hold a container and want explicit control
      * over layer and sampler rather than relying on Datum.container resolution.
+     * Always stages as IMAGE_SAMPLED regardless of the input slot's declared
+     * access mode.
      *
      * @param container Source TextureContainer.
      * @param layer     Array layer index (default 0).
@@ -228,65 +245,35 @@ public:
         uint32_t layer = 0,
         vk::Sampler sampler = nullptr)
     {
+        auto& slot = input_slot();
         auto img = container.to_image(layer);
         auto s = sampler
             ? sampler
             : Portal::Graphics::SamplerForge::instance().get_default_linear();
-        stage_image_sampled(m_image_binding, std::move(img), s);
+        stage_image_sampled(slot.binding.binding, img, s);
+        slot.image = img;
         m_pending_container = nullptr;
     }
 
     /**
-     * @brief Allocates the output storage image and stages it at binding 0.
-     *        Only called in CONTAINER mode from on_before_gpu_dispatch, or
-     *        per-step by callers chaining multi-pass sequences.
+     * @brief Allocates the output storage image and stages it at the
+     *        declared output binding.
      *
-     * @param width       Output image width.
-     * @param height      Output image height.
-     * @param force_fresh When true, always allocates a new image regardless of
-     *                     the cached dimensions. Use when the previous output
-     *                     is staged as this pass's input and dimensions happen
-     *                     to be unchanged, to avoid aliasing input and output.
-     *                     Equivalent to invalidate_output_image() immediately
-     *                     before this call.
+     * Only called in CONTAINER or IMAGE mode, from on_before_gpu_dispatch
+     * or per-step by callers chaining multi-pass sequences. Caches by
+     * dimension: reallocates only when width or height change from the
+     * previously staged output.
      */
-    void prepare_output_image(uint32_t width, uint32_t height, bool force_fresh = false)
+    void prepare_output_image(uint32_t width, uint32_t height)
     {
-        if (force_fresh || !m_output_image || m_output_image_w != width || m_output_image_h != height) {
-            m_output_image = Portal::Graphics::TextureLoom::instance()
-                                 .create_storage_image(width, height, m_output_format);
-            m_output_image_w = width;
-            m_output_image_h = height;
+        auto& slot = output_slot();
+        if (!slot.image || slot.width != width || slot.height != height) {
+            slot.image = Portal::Graphics::TextureLoom::instance()
+                             .create_storage_image(width, height, m_output_format);
+            slot.width = width;
+            slot.height = height;
         }
-        stage_image_storage(0, m_output_image);
-    }
-
-    /**
-     * @brief Force the next prepare_output_image call to allocate a fresh image
-     *        regardless of whether requested dimensions match the cached one.
-     *
-     * Use when a caller holds a shared_ptr to the current output image as input
-     * to a subsequent dispatch on the same context (multi-pass sequences that
-     * chain intermediate results through one context) and dimensions happen to
-     * be unchanged between passes. Without this, prepare_output_image reuses the
-     * cached image, aliasing the just-captured input with the next pass's output.
-     *
-     * Equivalent to calling prepare_output_image(width, height, true).
-     * Prefer passing force_fresh directly at the call site; this remains for
-     * callers that need to invalidate ahead of a later prepare_output_image
-     * call rather than at the point of allocation.
-     *
-     * TODO: input binding and output binding are still one shared image slot
-     * across passes rather than two independently staged bindings. A caller
-     * chaining passes must still track that this pass's output is the next
-     * pass's input and request force_fresh accordingly. Separating input and
-     * output into distinct bindings would remove that bookkeeping requirement
-     * entirely, at which point this method and the dimension cache could
-     * both be removed.
-     */
-    void invalidate_output_image()
-    {
-        m_output_image.reset();
+        stage_image_storage(slot.binding.binding, slot.image);
     }
 
 protected:
@@ -295,22 +282,14 @@ protected:
     // =========================================================================
 
     /**
-     * @brief Declare the image input and storage output bindings, plus any
+     * @brief Declare the image bindings from m_image_slots, plus any
      *        aux SSBO bindings provided at construction.
      */
     [[nodiscard]] std::vector<GpuBufferBinding> declare_buffer_bindings() const override
     {
         std::vector<GpuBufferBinding> bindings;
-        if (m_output_mode != OutputMode::SCALAR) {
-            bindings.push_back({ .set = 0,
-                .binding = 0,
-                .direction = GpuBufferBinding::Direction::OUTPUT,
-                .element_type = GpuBufferBinding::ElementType::IMAGE_STORAGE });
-        }
-        bindings.push_back({ .set = 0,
-            .binding = static_cast<uint32_t>(m_image_binding),
-            .direction = GpuBufferBinding::Direction::INPUT,
-            .element_type = m_image_access });
+        for (const auto& slot : m_image_slots)
+            bindings.push_back(slot.binding);
         bindings.insert(bindings.end(), m_aux_bindings.begin(), m_aux_bindings.end());
         return bindings;
     }
@@ -328,8 +307,9 @@ protected:
     }
 
     /**
-     * @brief Stages the pending TextureContainer as IMAGE_SAMPLED and,
-     *        in CONTAINER mode, allocates the output storage image at binding 0.
+     * @brief Stages the pending TextureContainer at the declared input image
+     *        binding and, in CONTAINER or IMAGE mode, allocates the output
+     *        storage image at the declared output binding.
      */
     void on_before_gpu_dispatch(
         const std::vector<std::vector<double>>& /*channels*/,
@@ -351,11 +331,14 @@ protected:
                 }
                 img = m_pending_container->to_image(m_pending_layer, m_upload_staging);
             }
-            if (m_image_access == GpuBufferBinding::ElementType::IMAGE_STORAGE) {
-                stage_image_storage(m_image_binding, std::move(img));
+
+            auto& in_slot = input_slot();
+            if (in_slot.binding.element_type == GpuBufferBinding::ElementType::IMAGE_STORAGE) {
+                stage_image_storage(in_slot.binding.binding, img);
             } else {
-                stage_image_sampled(m_image_binding, std::move(img), sampler);
+                stage_image_sampled(in_slot.binding.binding, img, sampler);
             }
+            in_slot.image = img;
 
             if (m_output_mode == OutputMode::CONTAINER
                 || m_output_mode == OutputMode::IMAGE) {
@@ -401,8 +384,8 @@ protected:
     }
 
     /**
-     * @brief In CONTAINER mode: downloads the storage image at binding 0 into
-     *        a new TextureContainer placed in output.container.
+     * @brief In CONTAINER mode: downloads the storage image at the declared
+     *        output binding into a new TextureContainer placed in output.container.
      *        In SCALAR mode: returns an empty DataIO (use collect_result() instead).
      */
     output_type collect_gpu_outputs(
@@ -413,13 +396,13 @@ protected:
         if (m_output_mode == OutputMode::SCALAR)
             return output_type {};
 
-        auto img = get_output_image(0);
+        auto img = get_output_image(output_slot().binding.binding);
         if (!img) {
             error<std::runtime_error>(
                 Journal::Component::Yantra,
                 Journal::Context::BufferProcessing,
                 std::source_location::current(),
-                "TextureExecutionContext: no output image at binding 0 after dispatch");
+                "TextureExecutionContext: no output image at declared output binding after dispatch");
         }
 
         Portal::Graphics::TextureLoom::instance().transition_layout(
@@ -454,14 +437,27 @@ protected:
     }
 
 private:
+    /**
+     * @struct ImageSlot
+     * @brief One declared image binding: its GpuBufferBinding descriptor,
+     *        the currently staged VKImage, and cached dimensions.
+     *
+     * direction on the stored GpuBufferBinding distinguishes the input slot
+     * from the output slot; element_type distinguishes IMAGE_STORAGE from
+     * IMAGE_SAMPLED. Binding index is caller-configurable at construction,
+     * never hardcoded elsewhere in this class.
+     */
+    struct ImageSlot {
+        GpuBufferBinding binding;
+        std::shared_ptr<Core::VKImage> image;
+        uint32_t width {};
+        uint32_t height {};
+    };
+
     Portal::Graphics::ImageFormat m_output_format;
-    std::shared_ptr<Core::VKImage> m_output_image;
     OutputMode m_output_mode;
-    size_t m_image_binding;
     uint32_t m_pending_layer {};
-    uint32_t m_output_image_w {};
-    uint32_t m_output_image_h {};
-    GpuBufferBinding::ElementType m_image_access { GpuBufferBinding::ElementType::IMAGE_SAMPLED };
+    std::vector<ImageSlot> m_image_slots;
 
     std::shared_ptr<Kakshya::TextureContainer> m_pending_container;
     std::shared_ptr<Kakshya::TextureContainer> m_output_container;
@@ -474,6 +470,43 @@ private:
     // =========================================================================
     // Helpers
     // =========================================================================
+
+    /**
+     * @brief Find the declared input image slot.
+     * @return Reference to the ImageSlot with Direction::INPUT.
+     */
+    [[nodiscard]] ImageSlot& input_slot()
+    {
+        for (auto& s : m_image_slots) {
+            if (s.binding.direction == GpuBufferBinding::Direction::INPUT)
+                return s;
+        }
+
+        error<std::runtime_error>(
+            Journal::Component::Yantra,
+            Journal::Context::BufferProcessing,
+            std::source_location::current(),
+            "TextureExecutionContext: no input image slot declared");
+    }
+
+    /**
+     * @brief Find the declared output image slot.
+     * @return Reference to the ImageSlot with Direction::OUTPUT.
+     * @note Only present when constructed with mode != SCALAR.
+     */
+    [[nodiscard]] ImageSlot& output_slot()
+    {
+        for (auto& s : m_image_slots) {
+            if (s.binding.direction == GpuBufferBinding::Direction::OUTPUT)
+                return s;
+        }
+
+        error<std::runtime_error>(
+            Journal::Component::Yantra,
+            Journal::Context::BufferProcessing,
+            std::source_location::current(),
+            "TextureExecutionContext: no output image slot declared (SCALAR mode?)");
+    }
 
     /**
      * @brief Extracts a TextureContainer pointer from datum.container if present.

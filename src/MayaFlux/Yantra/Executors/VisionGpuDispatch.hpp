@@ -47,10 +47,12 @@ namespace MayaFlux::Yantra {
 /**
  * @brief Execute a VisionSequence on the GPU through one TextureExecutionContext.
  *
- * The context must have been constructed with OutputMode::IMAGE and the
- * standard vision binding layout (storage image at binding 0, sampled
- * image at binding 1). It is mutated per step via swap_shader() and
- * stage_image(); no other external state is required.
+ * The context must have been constructed with OutputMode::IMAGE. Binding
+ * indices for the input and output image slots are whatever the context
+ * was constructed with; run_gpu makes no assumption about their values
+ * beyond calling get_output_image at the binding the caller configured
+ * as output. It is mutated per step via swap_shader() and stage_image();
+ * no other external state is required.
  *
  * @param ctx      Execution context. Reused across frames with no reset needed.
  * @param sequence Ordered steps to execute.
