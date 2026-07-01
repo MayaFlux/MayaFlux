@@ -1,0 +1,64 @@
+#version 460
+#include "include/vision_common.glsl"
+
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
+layout(set = 0, binding = 0, rgba32f) uniform image2D out_image;
+layout(set = 0, binding = 1, rgba32f) readonly uniform image2D in_image;
+
+layout(set = 0, binding = 2) coherent buffer PeakBuf {
+    uint peak_bits;
+} peak_buf;
+
+layout(push_constant) uniform PC {
+    float k;
+    uint pass;
+    uint width;
+    uint height;
+} pc;
+
+shared uint s_peak[64];
+
+void main()
+{
+    const ivec2 coord = thread_coord();
+    const bool in_bounds = coord.x < int(pc.width) && coord.y < int(pc.height);
+
+    if (pc.pass == 0u) {
+        const uint lid = gl_LocalInvocationID.y * 8u + gl_LocalInvocationID.x;
+        s_peak[lid] = 0u;
+
+        if (in_bounds) {
+            const vec4 s = imageLoad(in_image, coord);
+            const float sxx = s.r;
+            const float syy = s.g;
+            const float sxy = s.b;
+            const float det = sxx * syy - sxy * sxy;
+            const float tr = sxx + syy;
+            const float resp = max(0.0, det - pc.k * tr * tr);
+            imageStore(out_image, coord, vec4(resp, 0.0, 0.0, 0.0));
+            s_peak[lid] = floatBitsToUint(resp);
+        }
+        barrier();
+
+        for (uint stride = 32u; stride > 0u; stride >>= 1u) {
+            if (lid < stride)
+                s_peak[lid] = floatBitsToUint(
+                        max(uintBitsToFloat(s_peak[lid]),
+                            uintBitsToFloat(s_peak[lid + stride])));
+            memoryBarrierShared();
+            barrier();
+        }
+
+        if (lid == 0u)
+            atomicMax(peak_buf.peak_bits, s_peak[0]);
+    } else {
+        if (!in_bounds)
+            return;
+
+        const float peak = uintBitsToFloat(peak_buf.peak_bits);
+        const float val = imageLoad(out_image, coord).r;
+        const float norm = (peak > 1e-6) ? clamp(val / peak, 0.0, 1.0) : 0.0;
+        imageStore(out_image, coord, vec4(norm, 0.0, 0.0, 0.0));
+    }
+}
