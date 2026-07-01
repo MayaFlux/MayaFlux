@@ -54,6 +54,12 @@ namespace MayaFlux::Yantra {
  * as output. It is mutated per step via swap_shader() and stage_image();
  * no other external state is required.
  *
+ * When sequence.track_follows_peaks is true, the ExtractPeaks step skips
+ * collect_result() and leaves the count (binding 1) and keypoint (binding 2)
+ * SSBOs resident and unsorted on structured_ctx for the following
+ * TrackKeypoints step to consume directly. result.structured is monostate
+ * in that case; result.w/h remain populated.
+ *
  * @param ctx      Execution context. Reused across frames with no reset needed.
  * @param sequence Ordered steps to execute.
  * @param image    Input frame in eShaderReadOnlyOptimal layout.

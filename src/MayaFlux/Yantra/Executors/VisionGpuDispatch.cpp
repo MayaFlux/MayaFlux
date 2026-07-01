@@ -427,6 +427,13 @@ VisionResult run_gpu(
             foundry.wait_for_fence(fence);
             foundry.release_fence(fence);
 
+            if (sequence.track_follows_peaks) {
+                result.structured = std::monostate {};
+                result.w = w;
+                result.h = h;
+                continue;
+            }
+
             const auto gpu_result = structured_ctx.collect_result();
 
             uint32_t count = 0;
