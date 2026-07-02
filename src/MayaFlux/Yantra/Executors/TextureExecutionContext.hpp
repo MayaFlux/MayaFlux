@@ -139,6 +139,25 @@ public:
         m_output_dim_override = std::nullopt;
     }
 
+    /**
+     * @brief Direct access to an image slot's binding descriptor by index.
+     *
+     * Mutating .direction is used by callers driving dispatch_core_chained
+     * directly, where the batched-dispatch cross-pass barrier only fires for
+     * INPUT_OUTPUT. Caller is responsible for restoring OUTPUT afterward if
+     * the slot's normal dispatch_async path expects that.
+     */
+    GpuBufferBinding& slot_binding(uint32_t binding_index)
+    {
+        for (auto& s : m_image_slots) {
+            if (s.binding.binding == binding_index)
+                return s.binding;
+        }
+        error<std::runtime_error>(Journal::Component::Yantra, Journal::Context::BufferProcessing,
+            std::source_location::current(),
+            "TextureExecutionContext: no image slot at binding {}", binding_index);
+    }
+
     // =========================================================================
     // Async dispatch — mirrors ShaderExecutionContext
     // =========================================================================
@@ -193,6 +212,36 @@ public:
         GpuChannelResult raw;
         readback_aux(raw);
         return collect_gpu_outputs(raw, {}, {});
+    }
+
+    /**
+     * @brief Override for CHAINED mode: skips collect_gpu_outputs().
+     *
+     * Callers driving multi-pass image dispatch (e.g. ConnectedComponents
+     * merge loop) may flip an image slot to INPUT_OUTPUT for the cross-pass
+     * barrier in dispatch_batched, which leaves no OUTPUT-direction slot for
+     * collect_gpu_outputs' output_slot() lookup to find. Non-CHAINED modes
+     * are unaffected and fall through to the base implementation.
+     *
+     * @param input Ignored for CHAINED mode (image already staged manually).
+     * @param ctx   ExecutionContext; CHAINED mode requires pass_count and pc_updater.
+     */
+    output_type execute(const input_type& input, const ExecutionContext& ctx) override
+    {
+        if (ctx.mode != ExecutionMode::CHAINED)
+            return Base::execute(input, ctx);
+
+        if (!ensure_gpu_ready()) {
+            error<std::runtime_error>(
+                Journal::Component::Yantra,
+                Journal::Context::BufferProcessing,
+                std::source_location::current(),
+                "TextureExecutionContext: GPU initialisation failed");
+        }
+
+        auto [ch_copies, structure_info] = extract_inputs(input);
+        dispatch_core_chained(ch_copies, structure_info, ctx);
+        return output_type {};
     }
 
     // =========================================================================
