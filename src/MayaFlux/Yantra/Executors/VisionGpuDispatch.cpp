@@ -21,6 +21,10 @@ namespace {
         uint32_t block_size;
         float offset;
     };
+    struct OtsuHistPC {
+        uint32_t width;
+        uint32_t height;
+    };
     struct NormalizePC {
         float scale;
         float offset;
@@ -179,6 +183,8 @@ VisionGpuContexts::VisionGpuContexts()
         std::vector<GpuBufferBinding> {
             { .set = 0, .binding = 1, .direction = GpuBufferBinding::Direction::OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
             { .set = 0, .binding = 2, .direction = GpuBufferBinding::Direction::OUTPUT, .element_type = GpuBufferBinding::ElementType::FLOAT32 },
+            { .set = 0, .binding = 3, .direction = GpuBufferBinding::Direction::OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
+            { .set = 0, .binding = 4, .direction = GpuBufferBinding::Direction::OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
         },
         GpuBufferBinding::ElementType::IMAGE_STORAGE,
     }
@@ -196,6 +202,8 @@ VisionGpuContexts::VisionGpuContexts()
 {
     structured.set_output_size(1, sizeof(uint32_t));
     structured.set_output_size(2, static_cast<size_t>(4096) * 4 * sizeof(float));
+    structured.set_output_size(3, static_cast<size_t>(256) * sizeof(uint32_t));
+    structured.set_output_size(4, sizeof(uint32_t));
 }
 
 // ============================================================================
@@ -436,6 +444,75 @@ VisionResult VisionGpuExecutor::run(
             const auto& p = std::get<ThresholdAdaptiveParams>(step.params);
             pixel_ctx.set_push_constants(ThresholdAdaptivePC { .block_size = p.block_size, .offset = p.offset });
             break;
+        }
+        case VisionOp::ThresholdOtsu: {
+            structured_ctx.swap_shader({
+                .shader_path = "otsu_histogram.comp.spv",
+                .workgroup_size = k_wg2d,
+                .push_constant_size = sizeof(OtsuHistPC),
+            });
+            std::vector<uint32_t> zeros(256, 0);
+            structured_ctx.set_binding_data(3, std::span<const uint32_t>(zeros));
+            structured_ctx.stage_image(current);
+            structured_ctx.set_push_constants(OtsuHistPC { .width = w, .height = h });
+            structured_ctx.set_output_dimensions(w, h);
+            {
+                const auto f = structured_ctx.dispatch_async({});
+                structured_ctx.clear_output_dimensions();
+                foundry.wait_for_fence(f);
+                foundry.release_fence(f);
+            }
+
+            const auto hist_check = structured_ctx.collect_result();
+            std::vector<uint32_t> hist_readback(256, 0);
+            if (auto it = hist_check.aux.find(3); it != hist_check.aux.end())
+                std::memcpy(hist_readback.data(), it->second.data(), 256 * sizeof(uint32_t));
+
+            structured_ctx.swap_shader({
+                .shader_path = "otsu_select.comp.spv",
+                .workgroup_size = { 256, 1, 1 },
+            });
+            structured_ctx.set_binding_data(3, std::span<const uint32_t>(hist_readback));
+            structured_ctx.set_output_dimensions(256, 1);
+
+            {
+                const auto f = structured_ctx.dispatch_async({});
+                structured_ctx.clear_output_dimensions();
+                foundry.wait_for_fence(f);
+                foundry.release_fence(f);
+            }
+
+            const auto sel_result = structured_ctx.collect_result();
+            uint32_t best_bin = 0;
+            if (auto it = sel_result.aux.find(4); it != sel_result.aux.end())
+                std::memcpy(&best_bin, it->second.data(), sizeof(uint32_t));
+            const float t_norm = static_cast<float>(best_bin) / 255.0F;
+
+            const auto apply_cfg = config_from_spec(
+                ShaderSpec::Assemble {}
+                    .storage_image("out", BindingDirection::Output)
+                    .storage_image("src", BindingDirection::Input)
+                    .pc("threshold")
+                    .op(KernelOp::CompareGE)
+                    .workgroup(k_wg2d[0], k_wg2d[1])
+                    .build());
+            pixel_ctx.swap_shader(apply_cfg);
+            pixel_ctx.stage_image(current);
+            pixel_ctx.set_push_constants(ThresholdPC { .value = t_norm });
+            pixel_ctx.prepare_output_image(w, h);
+            {
+                const auto f = pixel_ctx.dispatch_async({});
+                foundry.wait_for_fence(f);
+                foundry.release_fence(f);
+            }
+            auto thresholded = pixel_ctx.get_output_image(0);
+
+            completed_ops[Kinesis::Vision::hash_vision_step(step.op, step.params)] = { .output = thresholded, .input = current };
+            result.debug_labels = thresholded;
+            current = thresholded;
+            last_staged = current;
+            result.structured = std::monostate {};
+            continue;
         }
         case VisionOp::Open:
         case VisionOp::Close: {

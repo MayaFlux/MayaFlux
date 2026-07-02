@@ -1,0 +1,31 @@
+#version 460
+
+#include "include/vision_common.glsl"
+
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
+layout(set = 0, binding = 0, rgba32f) readonly uniform image2D in_image;
+
+layout(set = 0, binding = 3, std430) buffer HistBuf {
+    uint hist[256];
+};
+
+layout(push_constant) uniform PC {
+    uint width;
+    uint height;
+} pc;
+
+/**
+ * @brief Accumulate a 256-bin intensity histogram via atomic increments.
+ *        Caller must zero-initialise hist before dispatch.
+ */
+void main()
+{
+    const ivec2 coord = thread_coord();
+    if (coord.x >= int(pc.width) || coord.y >= int(pc.height))
+        return;
+
+    const float v = clamp(imageLoad(in_image, coord).r, 0.0, 1.0);
+    const uint bin = uint(v * 255.0);
+    atomicAdd(hist[bin], 1u);
+}
