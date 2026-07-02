@@ -59,6 +59,19 @@ public:
      */
     virtual output_type execute(const input_type& input, const ExecutionContext& ctx)
     {
+        if (ctx.mode == ExecutionMode::DEPENDENCY) {
+            if (!ctx.execution_metadata.contains("dependency_stages")) {
+                error<std::runtime_error>(Journal::Component::Yantra,
+                    Journal::Context::Runtime,
+                    std::source_location::current(),
+                    "GpuExecutionContext: DEPENDENCY mode requires 'dependency_stages' in execution_metadata");
+            }
+            const auto& stages = safe_any_cast_or_throw<std::vector<DependencyStage>>(
+                ctx.execution_metadata.at("dependency_stages"));
+            dispatch_core_dependency(stages);
+            return output_type {};
+        }
+
         if (!ensure_gpu_ready()) {
             error<std::runtime_error>(
                 Journal::Component::Yantra,

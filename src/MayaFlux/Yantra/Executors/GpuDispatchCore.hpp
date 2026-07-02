@@ -12,6 +12,8 @@ class VKImage;
 
 namespace MayaFlux::Yantra {
 
+class GpuDispatchCore;
+
 /**
  * @struct GpuChannelResult
  * @brief Erased output of a GPU dispatch: reconstructed float data plus
@@ -20,6 +22,28 @@ namespace MayaFlux::Yantra {
 struct GpuChannelResult {
     std::vector<float> primary;
     std::unordered_map<size_t, std::vector<uint8_t>> aux;
+};
+
+/**
+ * @struct DependencyStage
+ * @brief One stage in a dispatch_core_dependency call.
+ *
+ * stage_fn is invoked with this context as the active target, exactly as
+ * if the caller had just called swap_shader(config) and were about to call
+ * dispatch_core — stage_image_at, set_binding_data, stage_passthrough,
+ * set_push_constants all apply normally inside stage_fn. Works identically
+ * for image-bearing and buffer-only shaders; nothing about this struct is
+ * image-specific.
+ *
+ * hazard_fn runs immediately after stage_fn, once this stage's resources
+ * (e.g. an image just allocated inside stage_fn) actually exist. Returns
+ * the hazard list for this stage; may be empty if nothing downstream in
+ * the same dependency call depends on this stage's output.
+ */
+struct DependencyStage {
+    GpuComputeConfig config;
+    std::function<void(GpuDispatchCore&)> stage_fn;
+    std::function<std::vector<Portal::Graphics::HazardResource>(GpuDispatchCore&)> hazard_fn;
 };
 
 /**
@@ -272,6 +296,25 @@ protected:
     [[nodiscard]] Portal::Graphics::FenceID dispatch_core_async(
         const std::vector<std::vector<double>>& channels,
         const DataStructureInfo& structure_info);
+
+    /**
+     * @brief Multi-pipeline dependency dispatch.
+     *
+     * For each stage, in order: applies its shader config (swap_shader
+     * equivalent), invokes stage_fn to perform whatever staging that stage
+     * needs, ensures its GpuResourceManager unit exists, binds its
+     * descriptors, invokes hazard_fn to resolve hazard resources now that
+     * this stage's data exists, then accumulates a Portal::Graphics::ComputeStage.
+     * After every stage is prepared, records and submits the full sequence in
+     * one command buffer via GpuResourceManager::dispatch_sequence.
+     *
+     * Restores the context's original shader config, bindings, and staged
+     * data after the sequence runs, so a subsequent unrelated dispatch_core
+     * call on this context is unaffected.
+     *
+     * @param stages Ordered list of stage descriptions.
+     */
+    void dispatch_core_dependency(const std::vector<DependencyStage>& stages);
 
     /**
      * @brief Effective element count used by the last dispatch_core or

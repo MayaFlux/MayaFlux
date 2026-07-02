@@ -511,37 +511,44 @@ VisionResult VisionGpuExecutor::run(
                 uint32_t width, height, write_to_b;
             };
             label_ctx.set_output_size(2, sizeof(uint32_t));
-            label_ctx.swap_shader({
-                .shader_path = "cc_seed.comp.spv",
-                .workgroup_size = k_wg2d,
-                .push_constant_size = sizeof(CcPC),
-            });
-            label_ctx.stage_image(current);
-            label_ctx.set_push_constants(CcPC { .width = w, .height = h, .write_to_b = 0 });
-            label_ctx.prepare_output_image(w, h);
             label_ctx.set_output_dimensions(w, h);
-            {
-                const auto f = label_ctx.dispatch_async({});
-                foundry.wait_for_fence(f);
-                foundry.release_fence(f);
-            }
-            auto img_a = label_ctx.get_output_image(0);
 
-            label_ctx.swap_shader({
-                .shader_path = "cc_propagate_tile.comp.spv",
-                .workgroup_size = k_wg2d,
-                .push_constant_size = sizeof(CcPC),
+            const CcPC pc { .width = w, .height = h, .write_to_b = 0 };
+            std::shared_ptr<Core::VKImage> img_a;
+
+            std::vector<DependencyStage> stages;
+
+            stages.push_back({
+                .config = { .shader_path = "cc_seed.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(CcPC) },
+                .stage_fn = [&](GpuDispatchCore& ctx) {
+                    label_ctx.stage_image(current);
+                    ctx.set_push_constants(pc);
+                    label_ctx.prepare_output_image(w, h);
+                    img_a = label_ctx.get_output_image(0);
+                },
+                .hazard_fn = nullptr,
             });
-            label_ctx.stage_image_at(0, img_a, GpuBufferBinding::ElementType::IMAGE_STORAGE);
-            {
-                uint32_t zero = 0;
-                label_ctx.set_binding_data(2, std::span<const uint32_t>(&zero, 1));
-                label_ctx.set_push_constants(CcPC { .width = w, .height = h, .write_to_b = 0 });
-                label_ctx.set_output_dimensions(w, h);
-                const auto f = label_ctx.dispatch_async({});
-                foundry.wait_for_fence(f);
-                foundry.release_fence(f);
-            }
+
+            stages.push_back({
+                .config = { .shader_path = "cc_propagate_tile.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(CcPC) },
+                .stage_fn = [&](GpuDispatchCore& ctx) {
+                    ctx.stage_image_at(0, img_a, GpuBufferBinding::ElementType::IMAGE_STORAGE);
+                    uint32_t zero = 0;
+                    ctx.set_binding_data(2, std::span<const uint32_t>(&zero, 1));
+                    ctx.set_push_constants(pc); },
+                .hazard_fn = [&](GpuDispatchCore&) -> std::vector<Portal::Graphics::HazardResource> {
+                    return { {
+                        .binding = { .set = 0, .binding = 0, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::IMAGE_STORAGE },
+                        .image = img_a->get_image(),
+                        .buffer = nullptr,
+                    } };
+                },
+            });
+
+            ExecutionContext seed_tile_ctx;
+            seed_tile_ctx.mode = ExecutionMode::DEPENDENCY;
+            seed_tile_ctx.execution_metadata["dependency_stages"] = stages;
+            label_ctx.execute(Datum<> {}, seed_tile_ctx);
 
             constexpr uint32_t k_max_merge_rounds = 64;
             label_ctx.swap_shader({
@@ -554,37 +561,35 @@ VisionResult VisionGpuExecutor::run(
             {
                 uint32_t zero = 0;
                 label_ctx.set_binding_data(2, std::span<const uint32_t>(&zero, 1));
-                label_ctx.set_output_dimensions(w, h);
-
-                const CcPC pc { .width = w, .height = h, .write_to_b = 0 };
                 ExecutionContext chained_ctx;
                 chained_ctx.mode = ExecutionMode::CHAINED;
                 chained_ctx.execution_metadata["pass_count"] = k_max_merge_rounds;
                 chained_ctx.execution_metadata["passes_per_batch"] = k_max_merge_rounds;
                 chained_ctx.execution_metadata["pc_updater"] = std::function<void(uint32_t, void*)>(
                     [pc](uint32_t, void* dst) { std::memcpy(dst, &pc, sizeof(CcPC)); });
-
                 label_ctx.execute(Datum<> {}, chained_ctx);
             }
             label_ctx.slot_binding(0).direction = GpuBufferBinding::Direction::OUTPUT;
 
-            auto read_img = img_a;
-            label_ctx.swap_shader({
-                .shader_path = "cc_colorize.comp.spv",
-                .workgroup_size = k_wg2d,
-                .push_constant_size = sizeof(CcPC),
+            std::vector<DependencyStage> colorize_stages;
+            std::shared_ptr<Core::VKImage> colorized;
+            colorize_stages.push_back({
+                .config = { .shader_path = "cc_colorize.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(CcPC) },
+                .stage_fn = [&](GpuDispatchCore& ctx) {
+                    label_ctx.stage_image(img_a);
+                    ctx.set_push_constants(pc);
+                    label_ctx.prepare_output_image(w, h);
+                    colorized = label_ctx.get_output_image(0);
+                },
+                .hazard_fn = nullptr,
             });
-            label_ctx.stage_image(read_img);
-            label_ctx.set_push_constants(CcPC { .width = w, .height = h, .write_to_b = 0 });
-            label_ctx.prepare_output_image(w, h);
-            label_ctx.set_output_dimensions(w, h);
-            {
-                const auto f = label_ctx.dispatch_async({});
-                foundry.wait_for_fence(f);
-                foundry.release_fence(f);
-            }
+            ExecutionContext colorize_ctx;
+            colorize_ctx.mode = ExecutionMode::DEPENDENCY;
+            colorize_ctx.execution_metadata["dependency_stages"] = colorize_stages;
+            label_ctx.execute(Datum<> {}, colorize_ctx);
+
             label_ctx.clear_output_dimensions();
-            result.debug_labels = label_ctx.get_output_image(0);
+            result.debug_labels = colorized;
             result.structured = std::monostate {};
             current = result.debug_labels;
             last_staged = current;

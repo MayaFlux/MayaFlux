@@ -339,6 +339,70 @@ Portal::Graphics::FenceID GpuDispatchCore::dispatch_core_async(
         m_push_constants.size());
 }
 
+// GpuDispatchCore.cpp
+
+void GpuDispatchCore::dispatch_core_dependency(const std::vector<DependencyStage>& stages)
+{
+    const GpuComputeConfig original_config = m_gpu_config;
+    const auto original_bindings = m_bindings;
+    const auto original_image_bindings = m_image_bindings;
+    const auto original_binding_data = m_binding_data;
+    const auto original_passthrough_bytes = m_passthrough_bytes;
+    const auto original_push_constants = m_push_constants;
+
+    std::vector<std::string> keys;
+    std::vector<std::array<uint32_t, 3>> groups_per_key;
+    std::vector<std::vector<uint8_t>> pc_per_key;
+    std::vector<std::vector<Portal::Graphics::HazardResource>> hazards_per_key;
+
+    keys.reserve(stages.size());
+    groups_per_key.reserve(stages.size());
+    pc_per_key.reserve(stages.size());
+    hazards_per_key.reserve(stages.size());
+
+    for (const auto& stage : stages) {
+        m_gpu_config = stage.config;
+        m_bindings = declare_buffer_bindings();
+        m_image_bindings.clear();
+        m_binding_data.clear();
+        m_passthrough_bytes.clear();
+        m_push_constants.clear();
+
+        stage.stage_fn(*this);
+
+        if (!ensure_gpu_ready()) {
+            error<std::runtime_error>(Journal::Component::Yantra,
+                Journal::Context::BufferProcessing,
+                std::source_location::current(),
+                "GpuDispatchCore: dispatch_core_dependency failed to initialise key '{}'",
+                stage.config.shader_path);
+        }
+
+        prepare_gpu_inputs({}, {});
+
+        for (size_t i = 0; i < m_bindings.size(); ++i) {
+            const auto et = m_bindings[i].element_type;
+            if (et != GpuBufferBinding::ElementType::IMAGE_STORAGE
+                && et != GpuBufferBinding::ElementType::IMAGE_SAMPLED)
+                m_resources.bind_descriptor(m_gpu_config.shader_path, i, m_bindings[i]);
+        }
+
+        keys.push_back(m_gpu_config.shader_path);
+        groups_per_key.push_back(calculate_dispatch_size(largest_binding_data_element_count(), {}));
+        pc_per_key.push_back(m_push_constants);
+        hazards_per_key.push_back(stage.hazard_fn ? stage.hazard_fn(*this) : std::vector<Portal::Graphics::HazardResource> {});
+    }
+
+    m_resources.dispatch_sequence(keys, groups_per_key, pc_per_key, hazards_per_key);
+
+    m_gpu_config = original_config;
+    m_bindings = original_bindings;
+    m_image_bindings = original_image_bindings;
+    m_binding_data = original_binding_data;
+    m_passthrough_bytes = original_passthrough_bytes;
+    m_push_constants = original_push_constants;
+}
+
 //==============================================================================
 // Readback helpers
 //==============================================================================
