@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::GpuSync::PathGeneratorNode::set_path_color" name="MayaFlux::Nodes::GpuSync::PathGeneratorNode::set_path_color">
+<area shape="rect" id="Node000001" title="Set path color (applied to all generated vertices)" alt="" coords="253,5,453,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1PathGeneratorNode_a6137ab76c162b67724ca112e4b0bb2b4.html#a6137ab76c162b67724ca112e4b0bb2b4" title="Set uniform color mode." alt="" coords="5,5,205,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="240,35,206,35,206,30,240,30"/>
+</map>

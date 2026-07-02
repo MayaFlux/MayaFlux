@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::gpu_data_format_bytes" name="MayaFlux::Kakshya::gpu_data_format_bytes">
+<area shape="rect" id="Node000001" title="Byte size of one element of a GpuDataFormat." alt="" coords="272,5,448,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderSpec_1_1Assemble_a44f5c516ff6ccfe853b704dffbdd1749.html#a44f5c516ff6ccfe853b704dffbdd1749" title="Finalise and return the ShaderSpec." alt="" coords="5,5,224,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="258,28,224,28,224,23,258,23"/>
+</map>

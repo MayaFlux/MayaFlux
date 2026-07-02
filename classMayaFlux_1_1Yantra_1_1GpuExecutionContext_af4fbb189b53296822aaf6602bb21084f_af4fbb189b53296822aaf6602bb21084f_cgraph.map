@@ -1,0 +1,13 @@
+<map id="MayaFlux::Yantra::GpuExecutionContext::extract_inputs" name="MayaFlux::Yantra::GpuExecutionContext::extract_inputs">
+<area shape="rect" id="Node000001" title="Extract channel data and structure metadata from the input Datum." alt="" coords="5,105,236,145"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1OperationHelper_a6ffe0cfc498a566687f8abea00c131d7.html#a6ffe0cfc498a566687f8abea00c131d7" title="Extract a single DataVariant as a type&#45;erased span without conversion." alt="" coords="302,5,509,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="164,103,283,55,309,47,311,52,285,60,166,108"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1OperationHelper_a86f4c84e8740ec41db439c868a93454a.html#a86f4c84e8740ec41db439c868a93454a" title="Extract structured double data from Datum container or direct ComputeData with automatic container ha..." alt="" coords="284,69,527,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="236,108,270,104,271,109,237,113"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1GpuDispatchCore_a86cc092320d45b21425850df138c3b1e.html#a86cc092320d45b21425850df138c3b1e" title="Flatten native&#45;typed DataVariant channels into m_native_staging_bytes without any conversion." alt="" coords="293,134,518,189"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="237,137,279,143,278,148,236,143"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Yantra_1_1OperationHelper_a11b13053f06d1f59350df4e2f9d19fa0.html#a11b13053f06d1f59350df4e2f9d19fa0" title="Populate DataStructureInfo from a Datum without extracting spans." alt="" coords="302,213,509,253"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="162,143,220,170,285,198,313,207,311,212,283,202,218,175,160,148"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kakshya_aad7719e4acdefe05f4f105ee1b688039.html#aad7719e4acdefe05f4f105ee1b688039" title="Check if a modality represents structured data (vectors, matrices)." alt="" coords="575,141,745,181"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="518,159,561,159,561,164,518,164"/>
+</map>

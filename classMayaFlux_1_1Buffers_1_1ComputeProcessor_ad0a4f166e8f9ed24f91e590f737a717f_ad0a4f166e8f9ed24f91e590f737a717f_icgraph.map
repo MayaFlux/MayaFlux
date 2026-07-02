@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::ComputeProcessor::set_dispatch_mode" name="MayaFlux::Buffers::ComputeProcessor::set_dispatch_mode">
+<area shape="rect" id="Node000001" title="Set dispatch mode." alt="" coords="332,77,504,132"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1SDFFieldProcessor_a2d12e9b581c7a74c7998f7e7c172060b.html#a2d12e9b581c7a74c7998f7e7c172060b" title=" " alt="" coords="41,5,248,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="318,81,247,62,249,57,319,76"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1SDFMeshProcessor_a7b902da4cd7c3ee9b065ee33dbf3c10d.html#a7b902da4cd7c3ee9b065ee33dbf3c10d" title=" " alt="" coords="5,85,284,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="318,107,284,107,284,102,318,102"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1SDFMeshProcessor_a4e4c266786a720161fd91e51667d4be2.html#a4e4c266786a720161fd91e51667d4be2" title="Construct in GPU&#45;field mode with externally owned buffers." alt="" coords="5,149,284,189"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="319,131,285,139,234,151,232,146,283,134,318,126"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Network::MeshFieldOperator::bind" name="MayaFlux::Nodes::Network::MeshFieldOperator::bind">
+<area shape="rect" id="Node000001" title="Bind a VectorField to a slot." alt="" coords="5,13,204,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1MeshFieldOperator_a7e72107b7bf5fdf32735c1a365cbd86e.html#a7e72107b7bf5fdf32735c1a365cbd86e" title="Return an existing FieldOperator for the slot, or create and initialise one from the slot&#39;s current v..." alt="" coords="252,5,451,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="204,30,238,30,238,35,204,35"/>
+</map>

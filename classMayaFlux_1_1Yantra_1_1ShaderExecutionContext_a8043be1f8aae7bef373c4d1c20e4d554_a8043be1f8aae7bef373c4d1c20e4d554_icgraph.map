@@ -1,0 +1,11 @@
+<map id="MayaFlux::Yantra::ShaderExecutionContext::next_binding_index" name="MayaFlux::Yantra::ShaderExecutionContext::next_binding_index">
+<area shape="rect" id="Node000001" title="Returns one past the highest binding index currently registered." alt="" coords="240,94,427,149"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1ShaderExecutionContext_af8b028d6a2e47916df351bb69da221cd.html#af8b028d6a2e47916df351bb69da221cd" title="Add an INPUT_OUTPUT binding, inferring the next available binding index." alt="" coords="5,5,192,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="262,91,191,60,159,48,161,43,193,55,264,86"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1ShaderExecutionContext_ab04b5f92d4c4ce9ed176fb3cabde6baa.html#ab04b5f92d4c4ce9ed176fb3cabde6baa" title="Declare an INPUT_OUTPUT binding at an explicit index without pre&#45;staging data." alt="" coords="5,69,192,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="226,109,192,105,193,99,227,104"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1ShaderExecutionContext_a8482c17bf60e9d60a08499cdc3833184.html#a8482c17bf60e9d60a08499cdc3833184" title="Add an INPUT binding, inferring the next available binding index." alt="" coords="5,133,192,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="227,139,193,143,192,138,226,133"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1ShaderExecutionContext_afb7d0c15480bc90cd80579afb7e2219b.html#afb7d0c15480bc90cd80579afb7e2219b" title="Add an OUTPUT binding, inferring the next available binding index." alt="" coords="5,197,192,237"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="264,157,193,188,161,200,159,195,191,183,262,152"/>
+</map>

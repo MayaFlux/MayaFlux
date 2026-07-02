@@ -1,0 +1,9 @@
+<map id="MayaFlux::Portal::Graphics::ShaderFoundry::get_vk_shader_module" name="MayaFlux::Portal::Graphics::ShaderFoundry::get_vk_shader_module">
+<area shape="rect" id="Node000001" title=" " alt="" coords="601,30,799,85"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1RenderFlow_ae9388c1a899276d6d021dcbff1326eea.html#ae9388c1a899276d6d021dcbff1326eea" title="Create graphics pipeline for dynamic rendering (no render pass object)" alt="" coords="330,5,545,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="587,46,545,41,545,36,588,41"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ComputePress_a92da11722411d5f02bed2ba7dcf02278.html#a92da11722411d5f02bed2ba7dcf02278" title="Create compute pipeline." alt="" coords="321,69,553,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="588,74,554,78,553,73,588,68"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ComputePress_ad0f8d812bde066c3f0a74005057322ad.html#ad0f8d812bde066c3f0a74005057322ad" title="Create pipeline with auto&#45;reflection." alt="" coords="5,69,273,109"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="307,92,274,92,274,87,307,87"/>
+</map>

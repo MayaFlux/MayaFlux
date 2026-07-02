@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Network::NodeNetwork::topology_to_string" name="MayaFlux::Nodes::Network::NodeNetwork::topology_to_string">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,5,204,60"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Reflect_aad91118cbd25bd9e35a3ced9aa4e6dbd.html#aad91118cbd25bd9e35a3ced9aa4e6dbd" title="Universal enum to string converter using magic_enum (original case)" alt="" coords="252,13,399,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="204,30,238,30,238,35,204,35"/>
+</map>

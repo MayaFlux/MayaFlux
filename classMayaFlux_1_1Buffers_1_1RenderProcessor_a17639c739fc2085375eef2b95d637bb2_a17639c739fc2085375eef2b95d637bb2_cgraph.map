@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::RenderProcessor::disable_alpha_blending" name="MayaFlux::Buffers::RenderProcessor::disable_alpha_blending">
+<area shape="rect" id="Node000001" title="Disable blending on the color attachment, restoring opaque writes." alt="" coords="5,5,192,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_a136e2f3b1509673fac3f61277056d0a1.html#a136e2f3b1509673fac3f61277056d0a1" title="Set blend mode for color attachment." alt="" coords="240,5,399,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="192,30,226,30,226,35,192,35"/>
+</map>

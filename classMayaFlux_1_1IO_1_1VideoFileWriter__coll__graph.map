@@ -1,0 +1,3 @@
+<map id="MayaFlux::IO::VideoFileWriter" name="MayaFlux::IO::VideoFileWriter">
+<area shape="rect" id="Node000001" title="Asynchronous video file encoder with a lock&#45;free work queue." alt="" coords="5,5,213,551"/>
+</map>

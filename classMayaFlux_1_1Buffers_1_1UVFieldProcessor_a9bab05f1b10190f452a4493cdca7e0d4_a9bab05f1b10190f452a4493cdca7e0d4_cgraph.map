@@ -1,0 +1,13 @@
+<map id="MayaFlux::Buffers::UVFieldProcessor::on_attach" name="MayaFlux::Buffers::UVFieldProcessor::on_attach">
+<area shape="rect" id="Node000001" title="Called when this processor is attached to a buffer." alt="" coords="5,81,164,136"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_ae72d99984f65f41164441d313ae0af88.html#ae72d99984f65f41164441d313ae0af88" title="Bind a VKBuffer to a named shader descriptor." alt="" coords="212,41,379,96"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="164,91,198,84,199,90,165,96"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1BufferProcessor_aabc0443cf162db0fdca77c2f555a1920.html#aabc0443cf162db0fdca77c2f555a1920" title="Called when this processor is attached to a buffer." alt="" coords="221,120,369,175"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="165,121,208,129,207,134,164,126"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VKBufferProcessor_ad871cad95dbb2a178d1752aa8573eabc.html#ad871cad95dbb2a178d1752aa8573eabc" title=" " alt="" coords="427,41,621,96"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="379,66,413,66,413,71,379,71"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_a0c7a59c0847791ed0915dcd64e8df783.html#a0c7a59c0847791ed0915dcd64e8df783" title="Query for a backend service." alt="" coords="687,5,853,60"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="621,52,673,44,674,49,622,57"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aa28c6f5592e5893508bafb62aefcc496.html#aa28c6f5592e5893508bafb62aefcc496" title="Get the global registry instance." alt="" coords="669,85,871,125"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="622,80,656,85,655,91,621,86"/>
+</map>

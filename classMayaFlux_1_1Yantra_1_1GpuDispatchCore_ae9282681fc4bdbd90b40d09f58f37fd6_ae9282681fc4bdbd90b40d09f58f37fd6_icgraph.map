@@ -1,0 +1,11 @@
+<map id="MayaFlux::Yantra::GpuDispatchCore::set_binding_data" name="MayaFlux::Yantra::GpuDispatchCore::set_binding_data">
+<area shape="rect" id="Node000001" title="Pre&#45;stage typed data for a specific binding slot, bypassing the default channel&#45;flattening path in pr..." alt="" coords="240,101,465,141"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1ShaderExecutionContext_af8b028d6a2e47916df351bb69da221cd.html#af8b028d6a2e47916df351bb69da221cd" title="Add an INPUT_OUTPUT binding, inferring the next available binding index." alt="" coords="5,5,192,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="289,99,191,60,158,48,160,43,193,55,291,94"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1ShaderExecutionContext_a551eebf6f30be72dbaefe33192e6d8c6.html#a551eebf6f30be72dbaefe33192e6d8c6" title="Add an INPUT_OUTPUT binding at an explicit index." alt="" coords="5,69,192,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="226,108,192,104,192,98,227,103"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1ShaderExecutionContext_a8482c17bf60e9d60a08499cdc3833184.html#a8482c17bf60e9d60a08499cdc3833184" title="Add an INPUT binding, inferring the next available binding index." alt="" coords="5,133,192,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="227,140,192,144,192,139,226,135"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1ShaderExecutionContext_abc21f825da961b13f6b6de0dfeadbff3.html#abc21f825da961b13f6b6de0dfeadbff3" title="Add an INPUT binding at an explicit index." alt="" coords="5,197,192,237"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="291,149,193,188,160,200,158,195,191,183,289,144"/>
+</map>

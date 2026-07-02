@@ -1,0 +1,11 @@
+<map id="MayaFlux::Kinesis::SpatialIndex::query_grid" name="MayaFlux::Kinesis::SpatialIndex::query_grid">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,101,185,141"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1detail_ae3bbcb703b0c604d4f165c133aa4fec8.html#ae3bbcb703b0c604d4f165c133aa4fec8" title=" " alt="" coords="242,5,405,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="136,99,232,55,250,48,252,53,234,60,138,104"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_1_1detail_a88d918cb23a3287143dab2d8b23b8363.html#a88d918cb23a3287143dab2d8b23b8363" title=" " alt="" coords="248,69,399,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="185,106,234,99,235,104,186,111"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_1_1detail_ac0e5f5322b9a660315380629ddfefd3e.html#ac0e5f5322b9a660315380629ddfefd3e" title=" " alt="" coords="248,133,399,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="186,131,235,138,234,144,185,137"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kinesis_a31247312c35641202ffc7008252f088d.html#a31247312c35641202ffc7008252f088d" title="Round x to the nearest multiple of step." alt="" coords="233,198,413,223"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="137,139,234,183,260,192,259,197,232,188,134,144"/>
+</map>

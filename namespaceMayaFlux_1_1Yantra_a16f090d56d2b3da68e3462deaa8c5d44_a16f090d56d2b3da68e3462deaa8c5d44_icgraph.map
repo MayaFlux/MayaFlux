@@ -1,0 +1,5 @@
+<map id="MayaFlux::Yantra::config_from_spec" name="MayaFlux::Yantra::config_from_spec">
+<area shape="rect" id="Node000001" title="Derive a GpuShaderConfig from a ShaderSpec." alt="" coords="287,5,468,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1ComputationGrammar_1_1RuleBuilder_a6496b387f981b5b5757ade35e25092df.html#a6496b387f981b5b5757ade35e25092df" title="Sets the executor function for this rule." alt="" coords="5,5,239,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="273,28,239,28,239,23,273,23"/>
+</map>

@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kakshya::VideoStreamContainer::processed_frame_as_float" name="MayaFlux::Kakshya::VideoStreamContainer::processed_frame_as_float">
+<area shape="rect" id="Node000001" title="Processed frame at frame_index as a normalised float span." alt="" coords="5,27,205,82"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kakshya_a3fce6f8c1ae722c66e6717c2f42c8b39.html#a3fce6f8c1ae722c66e6717c2f42c8b39" title="Extract a DataVariant holding pixel data as a normalised float span." alt="" coords="253,5,412,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="206,39,239,35,240,40,206,44"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_a04fb0b546bfa364a04dfe6f609f8b769.html#a04fb0b546bfa364a04dfe6f609f8b769" title="Transfer ownership of an existing object to the persistent store for process lifetime." alt="" coords="269,70,396,95"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="206,64,256,71,255,76,206,70"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1internal_ac26a7a92aa4af34c366aad03b68ea71e.html#ac26a7a92aa4af34c366aad03b68ea71e" title=" " alt="" coords="460,63,604,103"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="396,80,447,80,447,85,396,85"/>
+</map>

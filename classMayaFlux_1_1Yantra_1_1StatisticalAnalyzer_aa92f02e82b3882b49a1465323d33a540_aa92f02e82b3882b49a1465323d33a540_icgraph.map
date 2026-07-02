@@ -1,0 +1,7 @@
+<map id="MayaFlux::Yantra::StatisticalAnalyzer::classify_statistical_level" name="MayaFlux::Yantra::StatisticalAnalyzer::classify_statistical_level">
+<area shape="rect" id="Node000001" title="Classify statistical value qualitatively." alt="" coords="584,5,831,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1StatisticalAnalyzer_a853e8c531c62174e89938bf0eae8a7d9.html#a853e8c531c62174e89938bf0eae8a7d9" title="Create comprehensive analysis result." alt="" coords="303,5,536,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="570,28,536,28,536,23,570,23"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1StatisticalAnalyzer_ada59b9d30d969a895d8693fc96381700.html#ada59b9d30d969a895d8693fc96381700" title="Core analysis implementation &#45; creates analysis result AND pipeline output." alt="" coords="5,5,255,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="289,28,255,28,255,23,289,23"/>
+</map>

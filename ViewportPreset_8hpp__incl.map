@@ -1,0 +1,19 @@
+<map id="ViewportPreset.hpp" name="ViewportPreset.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="363,5,513,31"/>
+<area shape="rect" id="Node000002" href="$NavigationMappings_8hpp.html" title=" " alt="" coords="5,79,204,119"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="390,33,198,78,197,73,389,28"/>
+<area shape="rect" id="Node000004" href="$NavigationState_8hpp.html" title=" " alt="" coords="228,79,427,119"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="423,33,366,73,363,69,420,29"/>
+<area shape="rect" id="Node000007" href="$OrbitState_8hpp.html" title=" " alt="" coords="451,79,649,119"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="456,29,513,69,510,73,453,33"/>
+<area shape="rect" id="Node000008" href="$PanZoom2DState_8hpp.html" title=" " alt="" coords="673,79,872,119"/>
+<area shape="poly" id="edge8_Node000001_Node000008" title=" " alt="" coords="487,28,680,73,679,78,486,33"/>
+<area shape="rect" id="Node000003" href="$Keys_8hpp.html" title=" " alt="" coords="21,167,188,192"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="107,119,107,153,102,153,102,119"/>
+<area shape="rect" id="Node000005" href="$ViewTransform_8hpp.html" title=" " alt="" coords="477,167,623,192"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="382,116,505,159,503,164,380,121"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="441,240,659,265"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="553,192,553,226,547,226,547,192"/>
+<area shape="poly" id="edge7_Node000007_Node000005" title=" " alt="" coords="553,119,553,153,547,153,547,119"/>
+<area shape="poly" id="edge9_Node000008_Node000005" title=" " alt="" coords="720,121,597,164,595,159,718,116"/>
+</map>

@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::BufferProcessor::on_attach" name="MayaFlux::Buffers::BufferProcessor::on_attach">
+<area shape="rect" id="Node000001" title="Called when this processor is attached to a buffer." alt="" coords="224,84,372,139"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1SDFFieldProcessor_aa2fd55b43d30f242320ddfe34191c9c3.html#aa2fd55b43d30f242320ddfe34191c9c3" title="Called when this processor is attached to a buffer." alt="" coords="7,5,174,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="211,81,162,63,164,58,213,76"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1SDFMeshProcessor_acbfe1f40aeb776d9bbc1109821cef211.html#acbfe1f40aeb776d9bbc1109821cef211" title="Called when this processor is attached to a buffer." alt="" coords="5,84,176,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="210,114,176,114,176,109,210,109"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1UVFieldProcessor_a9bab05f1b10190f452a4493cdca7e0d4.html#a9bab05f1b10190f452a4493cdca7e0d4" title="Called when this processor is attached to a buffer." alt="" coords="11,163,170,217"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="213,146,164,165,162,160,211,141"/>
+</map>

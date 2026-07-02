@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::TextureProcessor::initialize_gpu_resources" name="MayaFlux::Buffers::TextureProcessor::initialize_gpu_resources">
+<area shape="rect" id="Node000001" title="Initialize all GPU resources:" alt="" coords="211,5,408,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1TextureProcessor_ab9346c297fb651892a403b3ff5837aed.html#ab9346c297fb651892a403b3ff5837aed" title="Called when this processor is attached to a buffer." alt="" coords="5,5,163,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="197,35,163,35,163,30,197,30"/>
+</map>

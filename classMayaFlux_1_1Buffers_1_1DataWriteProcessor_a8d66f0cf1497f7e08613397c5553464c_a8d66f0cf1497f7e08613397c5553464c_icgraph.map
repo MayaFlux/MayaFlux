@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::DataWriteProcessor::upload_raw" name="MayaFlux::Buffers::DataWriteProcessor::upload_raw">
+<area shape="rect" id="Node000001" title=" " alt="" coords="419,5,577,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1DataWriteProcessor_aef00e0d69e0b2afcdf9cd0c1a7b6a3f5.html#aef00e0d69e0b2afcdf9cd0c1a7b6a3f5" title=" " alt="" coords="212,5,371,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="405,35,371,35,371,30,405,30"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1DataWriteProcessor_a18dd4906836ca9a87f85379c327156e2.html#a18dd4906836ca9a87f85379c327156e2" title="The core processing function that must be implemented by derived classes." alt="" coords="5,5,164,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="198,35,164,35,164,30,198,30"/>
+</map>

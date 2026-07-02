@@ -1,0 +1,13 @@
+<map id="MayaFlux::Kakshya::to_mesh_vertex" name="MayaFlux::Kakshya::to_mesh_vertex">
+<area shape="rect" id="Node000001" title="Project raw Vertex to MeshVertex." alt="" coords="468,101,627,141"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kakshya_af09aa07eacd20ac64c4d53ccfbf545e2.html#af09aa07eacd20ac64c4d53ccfbf545e2" title="Batch&#45;project raw Vertex vector to MeshVertex." alt="" coords="261,101,420,141"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="454,124,420,124,420,119,454,119"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_acc2e60a131ea6d8848f2d1775fa312fc.html#acc2e60a131ea6d8848f2d1775fa312fc" title="Geometry function for a horizontal fader in NDC space." alt="" coords="5,5,213,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="290,97,212,60,180,48,182,43,214,55,293,92"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_aafeb6776198f5902f794c44c256ae458.html#aafeb6776198f5902f794c44c256ae458" title="Geometry function for a level meter in NDC space." alt="" coords="19,69,200,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="247,111,200,104,201,99,248,106"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_a2bcbbccb587c45eed4896dfc157845d7.html#a2bcbbccb587c45eed4896dfc157845d7" title="Geometry function for a boolean toggle in NDC space." alt="" coords="19,133,200,173"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="248,137,201,143,200,138,247,132"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_a8b3015e1c75748d3550afbba1369ce23.html#a8b3015e1c75748d3550afbba1369ce23" title="Geometry function for a vertical fader in NDC space." alt="" coords="13,197,205,237"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="293,150,214,188,182,200,180,195,212,183,290,146"/>
+</map>

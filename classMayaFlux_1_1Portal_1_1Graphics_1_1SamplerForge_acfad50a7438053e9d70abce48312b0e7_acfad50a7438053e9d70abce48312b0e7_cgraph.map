@@ -1,0 +1,5 @@
+<map id="MayaFlux::Portal::Graphics::SamplerForge::destroy_sampler" name="MayaFlux::Portal::Graphics::SamplerForge::destroy_sampler">
+<area shape="rect" id="Node000001" title="Destroy a specific sampler." alt="" coords="5,5,203,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1SamplerForge_a15a0922824ec316d8aa5b8f8bb7e3e73.html#a15a0922824ec316d8aa5b8f8bb7e3e73" title="Check if factory is initialized." alt="" coords="251,13,461,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="203,30,237,30,237,35,203,35"/>
+</map>

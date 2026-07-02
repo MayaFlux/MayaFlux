@@ -1,0 +1,23 @@
+<map id="MayaFlux::Portal::Text::impress" name="MayaFlux::Portal::Text::impress">
+<area shape="rect" id="Node000001" title="Append a UTF&#45;8 string into an existing TextBuffer at the current cursor." alt="" coords="5,99,172,139"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Text_a522e05c65ba0e3717be6b0eb9641284d.html#a522e05c65ba0e3717be6b0eb9641284d" title="Lay out a UTF&#45;8 string into a sequence of screen&#45;space quads." alt="" coords="220,41,387,81"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="163,96,214,82,215,88,165,101"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Portal_1_1Text_1_1GlyphAtlas_abcf654455e02ba66cb60f60dc3aa6880.html#abcf654455e02ba66cb60f60dc3aa6880" title="Line advance in pixels for this atlas&#39;s pixel_size." alt="" coords="451,69,633,109"/>
+<area shape="poly" id="edge7_Node000001_Node000006" title=" " alt="" coords="172,111,437,93,438,99,172,116"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Portal_1_1Text_a17ac9505e8d9ad50aab019db4abf56f3.html#a17ac9505e8d9ad50aab019db4abf56f3" title="Write glyph quads into a caller&#45;provided RGBA8 pixel buffer." alt="" coords="220,163,387,203"/>
+<area shape="poly" id="edge8_Node000001_Node000007" title=" " alt="" coords="157,136,223,156,222,161,156,141"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Text_1_1GlyphAtlas_acd3a40ac86a5630200940400072dccfa.html#acd3a40ac86a5630200940400072dccfa" title="Return metrics for a glyph, rasterizing it into the atlas if needed." alt="" coords="435,5,649,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="387,46,421,41,421,46,388,51"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="388,68,438,74,437,80,387,74"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Text_1_1GlyphAtlas_acf50eee0b2cefa0a2a03d4de8720e36f.html#acf50eee0b2cefa0a2a03d4de8720e36f" title=" " alt="" coords="697,8,864,48"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="650,24,684,24,684,30,650,29"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Text_1_1FontFace_accda82c104b9bee41559e89f118f5e5f.html#accda82c104b9bee41559e89f118f5e5f" title="Raw FT_Face handle for use by GlyphAtlas." alt="" coords="912,39,1079,79"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="865,37,898,42,898,47,864,43"/>
+<area shape="poly" id="edge6_Node000006_Node000005" title=" " alt="" coords="633,81,898,63,898,68,633,86"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Portal_1_1Text_1_1GlyphAtlas_af19455784bf36672a17bfc98d23a9516.html#af19455784bf36672a17bfc98d23a9516" title="Atlas texture dimension (width == height == atlas_size)." alt="" coords="455,133,629,173"/>
+<area shape="poly" id="edge9_Node000007_Node000008" title=" " alt="" coords="387,170,441,163,441,168,388,175"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Kakshya_1_1TextureContainer_a7e2d3ad1dacc0f2676238095b7526f71.html#a7e2d3ad1dacc0f2676238095b7526f71" title="Read&#45;only byte&#45;level view over the pixel buffer." alt="" coords="435,197,649,237"/>
+<area shape="poly" id="edge10_Node000007_Node000009" title=" " alt="" coords="388,192,421,197,421,202,387,197"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Portal_1_1Text_1_1GlyphAtlas_aff661f5d52169b1201cbbcc51d20d797.html#aff661f5d52169b1201cbbcc51d20d797" title="The atlas texture as a TextureContainer (R8, atlas_size x atlas_size)." alt="" coords="459,261,625,301"/>
+<area shape="poly" id="edge11_Node000007_Node000010" title=" " alt="" coords="341,200,436,247,455,254,454,259,434,252,339,205"/>
+</map>

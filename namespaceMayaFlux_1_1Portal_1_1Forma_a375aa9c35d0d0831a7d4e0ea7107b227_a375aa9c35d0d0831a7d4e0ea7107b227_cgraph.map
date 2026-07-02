@@ -1,0 +1,11 @@
+<map id="MayaFlux::Portal::Forma::inspect" name="MayaFlux::Portal::Forma::inspect">
+<area shape="rect" id="Node000001" title="Open a dedicated window inspecting a NodeNetwork." alt="" coords="5,5,187,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Forma_aa4199727a94debd4a9d4434732886fff.html#aa4199727a94debd4a9d4434732886fff" title="Construct a Surface, creating Layer and Context internally." alt="" coords="235,5,416,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="187,23,221,23,221,28,187,28"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Forma_acc0e19957fa04def8004abe53daa52dc.html#acc0e19957fa04def8004abe53daa52dc" title="Construct a Layer and a Context wired to window." alt="" coords="464,5,645,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="416,23,450,23,450,28,416,28"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_a04fb0b546bfa364a04dfe6f609f8b769.html#a04fb0b546bfa364a04dfe6f609f8b769" title="Transfer ownership of an existing object to the persistent store for process lifetime." alt="" coords="693,13,820,38"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="646,23,679,23,679,28,646,28"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1internal_ac26a7a92aa4af34c366aad03b68ea71e.html#ac26a7a92aa4af34c366aad03b68ea71e" title=" " alt="" coords="868,5,1012,45"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="820,23,854,23,854,28,820,28"/>
+</map>

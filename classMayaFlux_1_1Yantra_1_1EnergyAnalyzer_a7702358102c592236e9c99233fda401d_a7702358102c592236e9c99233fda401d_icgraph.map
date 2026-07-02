@@ -1,0 +1,9 @@
+<map id="MayaFlux::Yantra::EnergyAnalyzer::validate_window_parameters" name="MayaFlux::Yantra::EnergyAnalyzer::validate_window_parameters">
+<area shape="rect" id="Node000001" title=" " alt="" coords="300,70,497,125"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1EnergyAnalyzer_a5bbd78a5adc0cd2a5b2a53158632356c.html#a5bbd78a5adc0cd2a5b2a53158632356c" title="Construct EnergyAnalyzer with configurable window parameters." alt="" coords="34,5,223,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="286,69,251,60,206,48,208,43,253,55,287,64"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1EnergyAnalyzer_aefc4d5533424ff5cf01f7a8d6052e5e5.html#aefc4d5533424ff5cf01f7a8d6052e5e5" title="Handle analysis&#45;specific parameters." alt="" coords="35,70,222,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="286,100,222,100,222,95,286,95"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1EnergyAnalyzer_ac4fff7f0a875947b75c0136cf82af19f.html#ac4fff7f0a875947b75c0136cf82af19f" title="Set window parameters for analysis." alt="" coords="5,149,252,189"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="287,130,205,152,204,147,286,125"/>
+</map>

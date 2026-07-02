@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::download_and_normalise" name="MayaFlux::Buffers::download_and_normalise">
+<area shape="rect" id="Node000001" title="Download a VKImage to CPU and return a normalised float span." alt="" coords="5,37,193,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kakshya_a3fce6f8c1ae722c66e6717c2f42c8b39.html#a3fce6f8c1ae722c66e6717c2f42c8b39" title="Extract a DataVariant holding pixel data as a normalised float span." alt="" coords="261,5,419,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="193,42,247,35,248,40,194,48"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a6887ad297693c2392be7960daab06002.html#a6887ad297693c2392be7960daab06002" title=" " alt="" coords="241,69,439,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="194,67,228,72,227,77,193,72"/>
+</map>

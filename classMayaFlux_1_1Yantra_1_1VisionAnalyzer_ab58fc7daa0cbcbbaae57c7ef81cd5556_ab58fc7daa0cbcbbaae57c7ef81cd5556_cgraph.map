@@ -1,0 +1,5 @@
+<map id="MayaFlux::Yantra::VisionAnalyzer::get_vision_analysis" name="MayaFlux::Yantra::VisionAnalyzer::get_vision_analysis">
+<area shape="rect" id="Node000001" title="Get the last VisionAnalysis result." alt="" coords="5,5,220,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1UniversalAnalyzer_a1419ca2f81544fa0c4e223730aaea180.html#a1419ca2f81544fa0c4e223730aaea180" title="Access cached analysis from last operation." alt="" coords="268,5,491,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="220,23,254,23,254,28,220,28"/>
+</map>

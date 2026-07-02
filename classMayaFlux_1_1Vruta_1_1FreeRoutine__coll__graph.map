@@ -1,0 +1,5 @@
+<map id="MayaFlux::Vruta::FreeRoutine" name="MayaFlux::Vruta::FreeRoutine">
+<area shape="rect" id="Node000001" title="Coroutine resumed when a caller&#45;supplied condition becomes true." alt="" coords="5,419,212,724"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Vruta_1_1Routine.html" title="Base class for all coroutine types in the MayaFlux engine." alt="" coords="18,5,199,371"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="111,384,111,418,106,418,106,384"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="MayaFlux::IO::ImageReader::close" name="MayaFlux::IO::ImageReader::close">
+<area shape="rect" id="Node000001" title="Close the currently open file." alt="" coords="256,37,459,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1ImageReader_a6f7eb96fe2b0cf72967ed2263dcaa23a.html#a6f7eb96fe2b0cf72967ed2263dcaa23a" title="Open a file for reading." alt="" coords="5,5,208,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="242,45,208,41,208,36,243,40"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1ImageReader_aab9991f8498f9aec1022be090a2a4673.html#aab9991f8498f9aec1022be090a2a4673" title=" " alt="" coords="5,69,208,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="243,75,208,79,208,74,242,69"/>
+</map>

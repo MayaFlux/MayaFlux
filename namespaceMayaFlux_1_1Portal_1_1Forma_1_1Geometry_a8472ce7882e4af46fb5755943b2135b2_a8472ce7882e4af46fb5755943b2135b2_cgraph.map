@@ -1,0 +1,13 @@
+<map id="MayaFlux::Portal::Forma::Geometry::drawable_canvas" name="MayaFlux::Portal::Forma::Geometry::drawable_canvas">
+<area shape="rect" id="Node000001" title="Geometry function for a drawable curve canvas in NDC space." alt="" coords="5,133,220,173"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kinesis_1_1AABB2D_a6244e0bb95e47c9914259ac9f60bbe01.html#a6244e0bb95e47c9914259ac9f60bbe01" title=" " alt="" coords="284,5,433,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="141,131,198,93,267,55,282,48,284,53,269,60,201,98,144,135"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kinesis_1_1AABB2D_a32bac0d1a4f876c992486eed5dc9fd6f.html#a32bac0d1a4f876c992486eed5dc9fd6f" title=" " alt="" coords="284,69,433,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="190,131,270,110,271,115,191,136"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_a41838c872de7478363ca82e83df687e8.html#a41838c872de7478363ca82e83df687e8" title="Containment test for a convex or concave polygon." alt="" coords="284,133,433,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="220,151,270,151,270,156,220,156"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Kinesis_1_1AABB2D_ab8e372add789f6bd44fa66a92618456a.html#ab8e372add789f6bd44fa66a92618456a" title=" " alt="" coords="284,197,433,237"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="191,171,271,192,270,197,190,176"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_af668d56bbf7441d552c3ee5c38c3ae62.html#af668d56bbf7441d552c3ee5c38c3ae62" title="Write a vertex array into a GeometryFn output buffer." alt="" coords="268,261,449,301"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="144,171,201,209,269,247,284,254,282,258,267,252,198,213,141,176"/>
+</map>

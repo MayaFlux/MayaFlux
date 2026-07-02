@@ -1,0 +1,10 @@
+<map id="MayaFlux::IO::ModelReader::close" name="MayaFlux::IO::ModelReader::close">
+<area shape="rect" id="Node000001" title="Close the currently open file." alt="" coords="507,33,709,73"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1ModelReader_ad139ba0a544c0712059cc8913bb59bc5.html#ad139ba0a544c0712059cc8913bb59bc5" title="Load all meshes from a file in one call." alt="" coords="5,5,208,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="515,33,458,24,328,18,208,21,208,15,328,12,459,19,516,28"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1ModelReader_aef5ccec4e2fe310509f07e4467f57dd2.html#aef5ccec4e2fe310509f07e4467f57dd2" title="Open a file for reading." alt="" coords="256,33,459,73"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="493,56,459,56,459,51,493,51"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1ModelReader_a4b9701ebef05fe9200231268775e2f7c.html#a4b9701ebef05fe9200231268775e2f7c" title=" " alt="" coords="256,97,459,137"/>
+<area shape="poly" id="edge4_Node000001_Node000004" title=" " alt="" coords="517,79,437,100,436,95,515,74"/>
+<area shape="poly" id="edge3_Node000003_Node000002" title=" " alt="" coords="242,43,208,39,208,34,243,38"/>
+</map>

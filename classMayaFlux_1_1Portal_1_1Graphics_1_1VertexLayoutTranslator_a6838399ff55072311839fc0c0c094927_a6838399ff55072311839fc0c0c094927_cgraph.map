@@ -1,0 +1,5 @@
+<map id="MayaFlux::Portal::Graphics::VertexLayoutTranslator::translate_layout" name="MayaFlux::Portal::Graphics::VertexLayoutTranslator::translate_layout">
+<area shape="rect" id="Node000001" title="Translate a semantic vertex layout to Vulkan binding/attribute descriptions." alt="" coords="5,5,203,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1VertexLayoutTranslator_a6ef987151c75964fbf02fdaa442d0620.html#a6ef987151c75964fbf02fdaa442d0620" title="Convert semantic modality to Vulkan format." alt="" coords="251,5,448,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="203,30,237,30,237,35,203,35"/>
+</map>

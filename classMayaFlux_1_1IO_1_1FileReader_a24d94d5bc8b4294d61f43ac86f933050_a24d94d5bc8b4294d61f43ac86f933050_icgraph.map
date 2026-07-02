@@ -1,0 +1,24 @@
+<map id="MayaFlux::IO::FileReader::resolve_path" name="MayaFlux::IO::FileReader::resolve_path">
+<area shape="rect" id="Node000001" title="Resolve a filepath against the project source root if not found as&#45;is." alt="" coords="552,229,737,269"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1SoundFileReader_a55edd9ee43004846f85961b546c811c9.html#a55edd9ee43004846f85961b546c811c9" title="Check if this reader can open the given file." alt="" coords="279,5,504,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="626,218,606,181,578,138,543,96,502,60,481,48,484,43,506,55,547,92,583,135,610,178,631,216"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1FileReaderRegistry_a1e0907a0a9bdbdbfe771c00b56a495ba.html#a1e0907a0a9bdbdbfe771c00b56a495ba" title="Create appropriate reader for a file based on extension." alt="" coords="299,69,484,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="616,220,566,171,536,145,503,124,477,112,479,107,505,119,539,141,570,167,619,217"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1IO_1_1ImageReader_a2889b29418927a60ae1f8d574ae5895b.html#a2889b29418927a60ae1f8d574ae5895b" title="Load image from file (static utility)" alt="" coords="290,133,493,173"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="591,226,503,188,468,176,469,171,505,183,593,221"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1IO_1_1ImageReader_ae660058c52405b4605ecce4c631a4b44.html#ae660058c52405b4605ecce4c631a4b44" title="Load image directly into GPU texture (static utility)" alt="" coords="290,197,493,237"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="538,239,493,233,493,227,538,233"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1IO_1_1ImageReader_a6f7eb96fe2b0cf72967ed2263dcaa23a.html#a6f7eb96fe2b0cf72967ed2263dcaa23a" title="Open a file for reading." alt="" coords="290,261,493,301"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="538,265,493,271,493,266,538,260"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1IO_1_1ModelReader_aef5ccec4e2fe310509f07e4467f57dd2.html#aef5ccec4e2fe310509f07e4467f57dd2" title="Open a file for reading." alt="" coords="290,389,493,429"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="619,282,570,332,539,358,505,380,479,392,477,387,503,375,536,353,566,328,616,278"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1IO_1_1SoundFileReader_a25d2ebc2d552f532a46fbb493f8d88d3.html#a25d2ebc2d552f532a46fbb493f8d88d3" title="Open an audio file for reading." alt="" coords="279,325,504,365"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="593,278,505,316,469,328,468,323,503,311,591,273"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1IO_1_1VideoFileReader_a4fde32d3018bb43d67972a0ff5fc0965.html#a4fde32d3018bb43d67972a0ff5fc0965" title="Open a file for reading." alt="" coords="280,453,503,493"/>
+<area shape="poly" id="edge11_Node000001_Node000011" title=" " alt="" coords="631,283,610,320,583,364,547,407,506,444,484,456,481,451,502,439,543,403,578,361,606,318,626,281"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1SoundFileReader_a52301b9864559415b9df442d6884d946.html#a52301b9864559415b9df442d6884d946" title="Load an audio file into a size&#45;bounded DynamicSoundStream." alt="" coords="5,165,231,205"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="295,53,280,60,239,85,200,114,141,167,137,163,197,109,236,80,277,55,293,48"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1IO_1_1ModelReader_ad139ba0a544c0712059cc8913bb59bc5.html#ad139ba0a544c0712059cc8913bb59bc5" title="Load all meshes from a file in one call." alt="" coords="17,389,219,429"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="276,412,219,412,219,407,276,407"/>
+<area shape="poly" id="edge10_Node000010_Node000003" title=" " alt="" coords="293,323,277,316,236,290,197,261,137,208,141,204,200,257,239,286,280,311,295,318"/>
+</map>

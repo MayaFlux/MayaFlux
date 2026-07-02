@@ -1,0 +1,16 @@
+<map id="MayaFlux::Kakshya::ContiguousAccessProcessor::on_attach" name="MayaFlux::Kakshya::ContiguousAccessProcessor::on_attach">
+<area shape="rect" id="Node000001" title="Attach the processor to a signal source container." alt="" coords="5,43,208,97"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kakshya_1_1ContainerDataStructure_a27b9d48a60ea2512b02a8196c6581eec.html#a27b9d48a60ea2512b02a8196c6581eec" title="Extract channel count from dimensions." alt="" coords="511,5,686,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="194,40,256,27,318,21,382,19,498,22,498,27,382,25,318,27,256,33,195,45"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1ContiguousAccessProcessor_aca05ee63009dd88d08bdb79c0fa821c0.html#aca05ee63009dd88d08bdb79c0fa821c0" title="Store dimension and layout metadata from the container." alt="" coords="256,121,459,176"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="195,95,258,115,256,120,194,100"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1ContiguousAccessProcessor_a39d753c064f0ccb0764dcb59c65f920e.html#a39d753c064f0ccb0764dcb59c65f920e" title="Validate the container&#39;s structure and output configuration." alt="" coords="256,43,459,97"/>
+<area shape="poly" id="edge6_Node000001_Node000006" title=" " alt="" coords="208,67,242,67,242,73,208,73"/>
+<area shape="poly" id="edge3_Node000003_Node000002" title=" " alt="" coords="432,119,457,106,481,89,505,70,517,64,520,68,508,75,484,93,460,111,435,124"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Kakshya_1_1ContainerDataStructure_a707364e4c5a8e950a981eaf7ff5edff6.html#a707364e4c5a8e950a981eaf7ff5edff6" title="Get samples per channel (time dimension only)." alt="" coords="507,85,691,154"/>
+<area shape="poly" id="edge4_Node000003_Node000004" title=" " alt="" coords="459,134,493,129,494,135,459,139"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Kakshya_1_1ContainerDataStructure_ab431dba6cb69464326e81fe5e4bf83b0.html#ab431dba6cb69464326e81fe5e4bf83b0" title="Get total elements across all dimensions." alt="" coords="511,179,686,233"/>
+<area shape="poly" id="edge5_Node000003_Node000005" title=" " alt="" coords="459,170,498,179,497,185,458,175"/>
+<area shape="poly" id="edge7_Node000006_Node000002" title=" " alt="" coords="458,52,497,46,498,51,459,57"/>
+<area shape="poly" id="edge8_Node000006_Node000004" title=" " alt="" coords="459,88,494,95,493,100,458,93"/>
+</map>

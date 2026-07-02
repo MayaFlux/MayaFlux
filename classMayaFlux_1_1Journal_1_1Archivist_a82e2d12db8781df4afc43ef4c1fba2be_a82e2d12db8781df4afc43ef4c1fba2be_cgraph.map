@@ -1,0 +1,5 @@
+<map id="MayaFlux::Journal::Archivist::shutdown" name="MayaFlux::Journal::Archivist::shutdown">
+<area shape="rect" id="Node000001" title="Shutdown the logging system." alt="" coords="5,5,156,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Journal_1_1Archivist_a8b7829e34d79ec5bbbf02e3d4afbdab9.html#a8b7829e34d79ec5bbbf02e3d4afbdab9" title="Get the singleton instance of the Archivist." alt="" coords="204,5,351,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="156,23,190,23,190,28,156,28"/>
+</map>

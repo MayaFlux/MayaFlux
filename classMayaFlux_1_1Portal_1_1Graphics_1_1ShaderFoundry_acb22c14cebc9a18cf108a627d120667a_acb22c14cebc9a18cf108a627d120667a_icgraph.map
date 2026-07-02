@@ -1,0 +1,19 @@
+<map id="MayaFlux::Portal::Graphics::ShaderFoundry::compile_from_source" name="MayaFlux::Portal::Graphics::ShaderFoundry::compile_from_source">
+<area shape="rect" id="Node000001" title=" " alt="" coords="844,70,1041,125"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_a23013e23149b90cc22041c02e618cf0a.html#a23013e23149b90cc22041c02e618cf0a" title="Compile shader from ShaderSource descriptor." alt="" coords="591,5,788,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="832,69,760,48,761,43,833,64"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_aa6c0ffba6a18470328705f5c9f27690f.html#aa6c0ffba6a18470328705f5c9f27690f" title=" " alt="" coords="591,70,788,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="830,100,788,100,788,95,830,95"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ae87f819ac9d895c64a969332bcc120f1.html#ae87f819ac9d895c64a969332bcc120f1" title="Universal shader loader &#45; auto&#45;detects source type." alt="" coords="583,149,796,189"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="833,131,761,152,760,147,832,126"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Yantra_a16f090d56d2b3da68e3462deaa8c5d44.html#a16f090d56d2b3da68e3462deaa8c5d44" title="Derive a GpuShaderConfig from a ShaderSpec." alt="" coords="320,53,501,93"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="602,147,581,138,557,123,533,108,501,96,502,91,536,103,560,118,584,134,604,142"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ad83f46edd697dd2be9760d5d2ca94f7b.html#ad83f46edd697dd2be9760d5d2ca94f7b" title="Load shader from explicit ShaderSource descriptor." alt="" coords="304,117,517,157"/>
+<area shape="poly" id="edge6_Node000004_Node000007" title=" " alt="" coords="569,158,517,152,518,147,569,153"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_a2470e6d877935c4ca8a7fa4d1537bf88.html#a2470e6d877935c4ca8a7fa4d1537bf88" title="Hot&#45;reload shader (returns new ID)" alt="" coords="297,181,524,221"/>
+<area shape="poly" id="edge7_Node000004_Node000008" title=" " alt="" coords="569,186,525,191,524,186,569,180"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_acb0d34c2c49f2f4b7865c5b366075c63.html#acb0d34c2c49f2f4b7865c5b366075c63" title=" " alt="" coords="287,245,535,285"/>
+<area shape="poly" id="edge8_Node000004_Node000009" title=" " alt="" coords="633,197,536,236,496,248,495,243,534,231,631,192"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Yantra_1_1ComputationGrammar_1_1RuleBuilder_a6496b387f981b5b5757ade35e25092df.html#a6496b387f981b5b5757ade35e25092df" title="Sets the executor function for this rule." alt="" coords="5,53,239,93"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="306,76,239,76,239,71,306,71"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="MayaFlux::Yantra::GpuDispatchCore::readback_aux" name="MayaFlux::Yantra::GpuDispatchCore::readback_aux">
+<area shape="rect" id="Node000001" title="Read back all OUTPUT bindings that have explicit size overrides into the aux map of a GpuChannelResul..." alt="" coords="5,35,231,75"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1GpuResourceManager_a5e56fc87b5147d2898350192d082f8bc.html#a5e56fc87b5147d2898350192d082f8bc" title=" " alt="" coords="279,5,507,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="230,40,265,36,265,42,231,45"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_a08fa9b6412b634215b72b52676318691.html#a08fa9b6412b634215b72b52676318691" title=" " alt="" coords="316,70,469,95"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="231,63,302,71,302,76,230,69"/>
+</map>

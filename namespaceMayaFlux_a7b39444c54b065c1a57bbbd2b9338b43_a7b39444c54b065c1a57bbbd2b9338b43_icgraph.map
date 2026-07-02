@@ -1,0 +1,10 @@
+<map id="MayaFlux::reversed" name="MayaFlux::reversed">
+<area shape="rect" id="Node000001" title="Reverse time order of single&#45;channel data (non&#45;destructive)" alt="" coords="793,42,944,67"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a6999262b0f729dbdf1076f3a63355188.html#a6999262b0f729dbdf1076f3a63355188" title="Cross&#45;correlation via FFT." alt="" coords="563,35,745,75"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="780,57,745,57,745,52,780,52"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_af87d4b84d6d3f96cb339c7216db65678.html#af87d4b84d6d3f96cb339c7216db65678" title="Matched filter (normalised cross&#45;correlation)" alt="" coords="336,5,515,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="548,44,514,39,515,34,549,39"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1ConvolutionTransformer_a9d070c72f78555559c94e86b6274fcab.html#a9d070c72f78555559c94e86b6274fcab" title="Applies the configured convolution operation." alt="" coords="5,35,288,75"/>
+<area shape="poly" id="edge4_Node000002_Node000004" title=" " alt="" coords="549,60,515,60,336,60,288,60,288,54,336,55,515,55,549,54"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="323,39,288,42,288,37,322,33"/>
+</map>

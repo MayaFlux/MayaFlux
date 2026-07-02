@@ -1,0 +1,7 @@
+<map id="MayaFlux::Yantra::DetectionSummary" name="MayaFlux::Yantra::DetectionSummary">
+<area shape="rect" id="Node000001" title="Flattened structured outputs from one VisionResult." alt="" coords="82,208,279,348"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kinesis_1_1Vision_1_1GradientResult.html" title="Gradient maps produced by Sobel and Scharr operators." alt="" coords="5,5,164,145"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="120,144,143,192,138,194,115,147"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kinesis_1_1Vision_1_1ComponentResult.html" title="Result of connected component labelling." alt="" coords="189,15,367,135"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="252,137,224,195,219,192,247,134"/>
+</map>

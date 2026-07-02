@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kakshya::SoundStreamContainer::advance_read_position" name="MayaFlux::Kakshya::SoundStreamContainer::advance_read_position">
+<area shape="rect" id="Node000001" title="Advance the read position by a specified amount." alt="" coords="5,49,185,104"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kakshya_a6b9b1e820df114a20a5384233008e015.html#a6b9b1e820df114a20a5384233008e015" title="Advance current positions by a number of frames, with optional looping." alt="" coords="233,57,392,97"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="186,74,220,74,220,79,186,79"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kakshya_1_1ContainerDataStructure_a27b9d48a60ea2512b02a8196c6581eec.html#a27b9d48a60ea2512b02a8196c6581eec" title="Extract channel count from dimensions." alt="" coords="445,5,619,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="392,58,430,50,432,56,393,63"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Kakshya_1_1ContainerDataStructure_a707364e4c5a8e950a981eaf7ff5edff6.html#a707364e4c5a8e950a981eaf7ff5edff6" title="Get samples per channel (time dimension only)." alt="" coords="440,85,624,154"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="393,89,427,96,426,101,392,95"/>
+</map>

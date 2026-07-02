@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::WindowContainer::get_region_data" name="MayaFlux::Kakshya::WindowContainer::get_region_data">
+<area shape="rect" id="Node000001" title="Extract data for all regions across all region groups that spatially intersect region." alt="" coords="5,5,172,60"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kakshya_a87a81c8814eeeda9c096e85b6aef3281.html#a87a81c8814eeeda9c096e85b6aef3281" title="Test whether two N&#45;dimensional regions overlap on every shared axis." alt="" coords="220,13,379,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="172,30,206,30,206,35,172,35"/>
+</map>

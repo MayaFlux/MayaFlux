@@ -1,0 +1,13 @@
+<map id="MayaFlux::Portal::Forma::Geometry::stroke_slider" name="MayaFlux::Portal::Forma::Geometry::stroke_slider">
+<area shape="rect" id="Node000001" title="Geometry function for a value scrubber along an arbitrary polyline." alt="" coords="5,133,191,173"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kinesis_1_1AABB3D_a22d32b442e5e9315fbf8a92e435890d1.html#a22d32b442e5e9315fbf8a92e435890d1" title=" " alt="" coords="255,5,404,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="123,131,174,93,237,55,251,48,254,53,240,60,177,98,126,135"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kinesis_1_1AABB3D_ae961e7dccc0de10f7d110fdc34363389.html#ae961e7dccc0de10f7d110fdc34363389" title=" " alt="" coords="255,69,404,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="170,131,243,110,244,116,172,136"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_a58fbcc2d4a3ef76e13eafa9f31dc86df.html#a58fbcc2d4a3ef76e13eafa9f31dc86df" title="Polyline as a LINE_LIST (open path, 2 * (pts.size() &#45; 1) vertices)." alt="" coords="255,133,404,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="191,151,241,151,241,156,191,156"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kinesis_aaad8296728bdd19e73f8c579dfa7117b.html#aaad8296728bdd19e73f8c579dfa7117b" title="Containment test for a polyline with a uniform half&#45;thickness." alt="" coords="255,197,404,237"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="172,171,244,191,243,196,170,176"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_af668d56bbf7441d552c3ee5c38c3ae62.html#af668d56bbf7441d552c3ee5c38c3ae62" title="Write a vertex array into a GeometryFn output buffer." alt="" coords="239,261,420,301"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="126,171,177,209,240,247,254,253,251,258,237,252,174,213,123,176"/>
+</map>

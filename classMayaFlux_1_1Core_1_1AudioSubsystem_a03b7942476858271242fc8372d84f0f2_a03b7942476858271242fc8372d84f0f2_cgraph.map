@@ -1,0 +1,11 @@
+<map id="MayaFlux::Core::AudioSubsystem::initialize" name="MayaFlux::Core::AudioSubsystem::initialize">
+<area shape="rect" id="Node000001" title="Initialize audio processing with provided handle." alt="" coords="5,37,247,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1AudioSubsystem_aca9a2ea6c2e17b011cc38d879974d73f.html#aca9a2ea6c2e17b011cc38d879974d73f" title=" " alt="" coords="295,5,536,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="247,41,281,38,281,43,247,47"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1AudioSubsystem_a2ada5fcceecc70a2a49005d51d1977ee.html#a2ada5fcceecc70a2a49005d51d1977ee" title=" " alt="" coords="295,69,536,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="247,68,281,72,281,77,247,73"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aa28c6f5592e5893508bafb62aefcc496.html#aa28c6f5592e5893508bafb62aefcc496" title="Get the global registry instance." alt="" coords="584,33,785,73"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="536,71,570,66,571,71,537,76"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_a22c6ffe496c721c1bdfe28c9a86c1c4f.html#a22c6ffe496c721c1bdfe28c9a86c1c4f" title="Register a backend service capability." alt="" coords="587,98,783,153"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="537,103,573,108,573,113,536,108"/>
+</map>

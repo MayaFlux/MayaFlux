@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::NetworkSubsystem" name="MayaFlux::Core::NetworkSubsystem">
+<area shape="rect" id="Node000001" title="General&#45;purpose network transport subsystem." alt="" coords="5,393,256,1013"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1ISubsystem.html" title="Base interface for all subsystems in the MayaFlux processing architecture." alt="" coords="31,5,231,345"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="133,359,133,393,128,393,128,359"/>
+</map>

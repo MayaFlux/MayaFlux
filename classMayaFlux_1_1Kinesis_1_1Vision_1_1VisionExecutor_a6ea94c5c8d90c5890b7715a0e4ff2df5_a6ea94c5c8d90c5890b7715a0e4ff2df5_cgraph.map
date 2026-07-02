@@ -1,0 +1,77 @@
+<map id="MayaFlux::Kinesis::Vision::VisionExecutor::run" name="MayaFlux::Kinesis::Vision::VisionExecutor::run">
+<area shape="rect" id="Node000001" title="Execute a VisionSequence on one frame." alt="" coords="5,767,200,807"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_a1a9454235bea896a97476f0fac3a93f0.html#a1a9454235bea896a97476f0fac3a93f0" title="Canny edge detector." alt="" coords="271,144,420,184"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="104,766,119,650,148,479,168,390,191,308,217,241,231,214,246,194,257,185,261,189,250,198,236,217,222,243,196,310,173,391,154,480,124,651,109,767"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_a68bd62ba0feea86a92e8dca22a3da0c0.html#a68bd62ba0feea86a92e8dca22a3da0c0" title="Sobel gradient writing dx and dy into caller&#45;supplied buffers." alt="" coords="528,96,677,136"/>
+<area shape="poly" id="edge38_Node000001_Node000004" title=" " alt="" coords="103,766,113,637,139,443,158,343,181,252,211,178,228,150,246,130,276,110,309,95,344,86,380,81,451,81,516,91,515,96,451,87,380,86,345,91,311,100,279,114,250,134,232,154,216,181,187,254,163,344,144,444,119,637,108,767"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_a5e90ae850ffc0b1ae14564b0711333b8.html#a5e90ae850ffc0b1ae14564b0711333b8" title="Morphological closing writing into dst." alt="" coords="271,437,420,477"/>
+<area shape="poly" id="edge5_Node000001_Node000005" title=" " alt="" coords="106,766,120,711,147,636,165,596,188,557,215,520,246,487,257,479,260,484,250,491,219,523,192,560,170,599,152,638,125,712,111,767"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_a9d11af35caf01831b3d0878e0e2ad43a.html#a9d11af35caf01831b3d0878e0e2ad43a" title="Dilation writing into dst." alt="" coords="528,405,677,445"/>
+<area shape="poly" id="edge9_Node000001_Node000006" title=" " alt="" coords="101,766,104,687,110,633,121,574,139,513,165,455,200,402,222,379,247,359,285,339,326,330,369,330,412,337,454,349,494,364,559,396,557,401,492,369,452,354,411,342,368,335,326,336,286,344,249,364,226,383,204,406,170,457,144,515,127,575,115,634,109,687,106,767"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_a2f151c2361da03554d3b5e7536b32994.html#a2f151c2361da03554d3b5e7536b32994" title="Erosion writing into dst." alt="" coords="528,485,677,525"/>
+<area shape="poly" id="edge12_Node000001_Node000007" title=" " alt="" coords="114,765,166,695,204,656,247,622,286,604,357,580,522,527,523,532,358,585,288,609,249,626,207,660,171,699,119,768"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_a440bc780340fe16d4f30e55bfcfbc92a.html#a440bc780340fe16d4f30e55bfcfbc92a" title="Label connected foreground components in a binary mask." alt="" coords="491,639,715,679"/>
+<area shape="poly" id="edge8_Node000001_Node000008" title=" " alt="" coords="116,765,138,737,168,706,205,675,247,652,308,635,372,628,434,629,492,634,491,639,434,634,372,634,309,640,249,657,208,680,172,709,142,741,120,768"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_ac8b40fb175115b0952db7cabcb0a5e06.html#ac8b40fb175115b0952db7cabcb0a5e06" title="2x box&#45;filter downsample writing into a caller&#45;supplied buffer." alt="" coords="257,731,433,771"/>
+<area shape="poly" id="edge10_Node000001_Node000009" title=" " alt="" coords="200,770,243,763,244,768,201,775"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Kinesis_1_1Vision_1_1VisionExecutor_aae4315344b871170f69b84afefd64e10.html#aae4315344b871170f69b84afefd64e10" title="Ensure all slots are sized to n_pixels floats." alt="" coords="262,795,429,850"/>
+<area shape="poly" id="edge11_Node000001_Node000010" title=" " alt="" coords="201,798,248,806,248,811,200,804"/>
+<area shape="rect" id="Node000011" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_a2682c3a4f14c271b6718dcd9ba442afa.html#a2682c3a4f14c271b6718dcd9ba442afa" title="Extract peaks from a response map via non&#45;maximum suppression." alt="" coords="264,875,427,915"/>
+<area shape="poly" id="edge13_Node000001_Node000011" title=" " alt="" coords="141,804,249,859,270,867,268,872,247,864,138,809"/>
+<area shape="rect" id="Node000013" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_a1856299c33e154b079ba24386240e112.html#a1856299c33e154b079ba24386240e112" title="Apply a separable 2D filter via two 1D passes." alt="" coords="260,1027,431,1067"/>
+<area shape="poly" id="edge15_Node000001_Node000013" title=" " alt="" coords="117,805,168,891,206,942,250,989,291,1018,287,1022,246,993,202,945,164,894,112,808"/>
+<area shape="rect" id="Node000014" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_a591a299c81614b1ca1d40bd8939a3863.html#a591a299c81614b1ca1d40bd8939a3863" title="Extract outer contours from a binary mask." alt="" coords="267,667,424,707"/>
+<area shape="poly" id="edge17_Node000001_Node000014" title=" " alt="" coords="142,764,247,716,266,709,268,714,249,721,144,769"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1Kinesis_1_1Vision_1_1VisionExecutor_ac49ac2f0acfd53892f63a34d7682edfd.html#ac49ac2f0acfd53892f63a34d7682edfd" title="Return a reference to the precomputed 1D Gaussian kernel for sigma." alt="" coords="262,1091,429,1146"/>
+<area shape="poly" id="edge19_Node000001_Node000015" title=" " alt="" coords="111,806,127,859,154,931,195,1009,220,1045,250,1077,255,1081,252,1085,246,1081,216,1048,190,1011,149,934,122,861,106,808"/>
+<area shape="rect" id="Node000016" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_a231b7d570e2b2fb7021dd9404adf41eb.html#a231b7d570e2b2fb7021dd9404adf41eb" title="Global threshold writing into caller&#45;supplied buffer." alt="" coords="268,1171,423,1211"/>
+<area shape="poly" id="edge20_Node000001_Node000016" title=" " alt="" coords="109,806,119,873,143,966,161,1017,185,1067,214,1114,250,1155,258,1162,254,1166,246,1159,210,1117,180,1070,156,1019,138,968,114,874,103,807"/>
+<area shape="rect" id="Node000017" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_a34f8f0aa7bc1c3f64bc41832cca0b4b9.html#a34f8f0aa7bc1c3f64bc41832cca0b4b9" title="Compute the Harris corner response map." alt="" coords="259,208,432,248"/>
+<area shape="poly" id="edge21_Node000001_Node000017" title=" " alt="" coords="101,766,104,677,110,615,122,545,140,471,165,397,200,327,246,265,259,253,262,257,250,268,205,330,170,399,145,473,127,546,116,615,109,678,106,766"/>
+<area shape="rect" id="Node000018" href="$namespaceMayaFlux_aeab6358bb22d5e99a73934d063aeb7ba.html#aeab6358bb22d5e99a73934d063aeb7ba" title="Find peak amplitude in single&#45;channel data." alt="" coords="539,269,666,294"/>
+<area shape="poly" id="edge31_Node000001_Node000018" title=" " alt="" coords="101,767,103,684,109,626,121,563,138,498,164,434,200,376,222,350,246,326,277,304,312,288,348,276,386,269,460,264,526,267,525,272,460,269,387,274,350,282,314,293,280,309,250,330,225,353,204,379,169,437,143,500,126,565,115,627,109,684,106,767"/>
+<area shape="rect" id="Node000019" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_adee48db13e7533625d68ef76ae8154f0.html#adee48db13e7533625d68ef76ae8154f0" title="Morphological gradient (dilate &#45; erode) writing into dst." alt="" coords="259,501,432,541"/>
+<area shape="poly" id="edge25_Node000001_Node000019" title=" " alt="" coords="109,765,128,723,158,667,197,609,246,558,264,546,267,550,250,562,201,613,162,670,133,725,114,767"/>
+<area shape="rect" id="Node000020" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_af131687fd335f5c5c154f7d8e8e503a4.html#af131687fd335f5c5c154f7d8e8e503a4" title="Morphological opening writing into dst." alt="" coords="271,373,420,413"/>
+<area shape="poly" id="edge28_Node000001_Node000020" title=" " alt="" coords="103,766,114,701,138,609,157,559,181,510,210,464,246,423,257,415,260,419,250,427,215,467,185,513,162,561,143,611,119,702,109,767"/>
+<area shape="rect" id="Node000021" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_a102ddcfd0d76c2cd221b69d5ad7609bf.html#a102ddcfd0d76c2cd221b69d5ad7609bf" title="Convert RGBA to luminance gray using BT.601 coefficients." alt="" coords="268,1235,423,1275"/>
+<area shape="poly" id="edge32_Node000001_Node000021" title=" " alt="" coords="107,807,114,883,135,994,153,1055,177,1115,209,1171,250,1221,258,1228,254,1232,246,1225,205,1174,172,1117,148,1057,129,995,109,884,102,807"/>
+<area shape="rect" id="Node000022" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_a57396593f32b8db4bba3e15a75f39cf5.html#a57396593f32b8db4bba3e15a75f39cf5" title="Convert RGBA to HSV writing into caller&#45;supplied buffer." alt="" coords="271,1299,420,1339"/>
+<area shape="poly" id="edge33_Node000001_Node000022" title=" " alt="" coords="106,807,109,893,116,954,127,1021,145,1091,170,1161,205,1227,250,1285,261,1294,257,1298,246,1289,200,1230,165,1163,140,1093,122,1022,110,955,104,894,101,807"/>
+<area shape="rect" id="Node000023" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_aa893d9e11d816e1cc3e999353d6f0d05.html#aa893d9e11d816e1cc3e999353d6f0d05" title="Scharr gradient writing dx and dy into caller&#45;supplied buffers." alt="" coords="271,1363,420,1403"/>
+<area shape="poly" id="edge34_Node000001_Node000023" title=" " alt="" coords="109,807,125,918,155,1081,175,1166,198,1243,223,1306,250,1349,261,1358,257,1362,246,1352,218,1308,193,1244,170,1167,150,1082,120,919,104,807"/>
+<area shape="rect" id="Node000024" href="$classMayaFlux_1_1Kinesis_1_1Vision_1_1VisionExecutor_af24034409ac07f5b2c9ea7d7760c8496.html#af24034409ac07f5b2c9ea7d7760c8496" title="Zero&#45;copy read&#45;only Eigen::Map&lt;const ArrayXf&gt; over slot i." alt="" coords="262,1427,429,1482"/>
+<area shape="poly" id="edge35_Node000001_Node000024" title=" " alt="" coords="109,807,124,929,153,1111,173,1205,196,1292,221,1364,235,1392,250,1413,253,1416,249,1420,246,1416,231,1394,217,1366,190,1294,168,1206,148,1112,119,930,104,808"/>
+<area shape="rect" id="Node000025" href="$classMayaFlux_1_1Kinesis_1_1Vision_1_1VisionExecutor_a0aa6eb08a52d8a711ef902855472eb97.html#a0aa6eb08a52d8a711ef902855472eb97" title="Zero&#45;copy mutable Eigen::Map&lt;ArrayXf&gt; over slot i." alt="" coords="262,1506,429,1561"/>
+<area shape="poly" id="edge36_Node000001_Node000025" title=" " alt="" coords="108,807,121,942,149,1147,168,1255,191,1354,219,1436,234,1467,250,1492,254,1496,250,1499,246,1495,229,1470,214,1438,186,1355,163,1256,143,1148,116,943,103,807"/>
+<area shape="rect" id="Node000026" href="$classMayaFlux_1_1Kinesis_1_1Vision_1_1VisionExecutor_a2e9c1e1abae2ae4ee8e6299c31046418.html#a2e9c1e1abae2ae4ee8e6299c31046418" title="Mutable reference to the vector&lt;float&gt; inside slot i." alt="" coords="262,1585,429,1639"/>
+<area shape="poly" id="edge37_Node000001_Node000026" title=" " alt="" coords="108,807,119,956,144,1184,163,1304,187,1415,216,1507,232,1543,250,1570,254,1574,250,1578,246,1574,228,1546,211,1509,182,1417,158,1305,139,1185,114,956,102,807"/>
+<area shape="rect" id="Node000027" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_ac34a7d1299cdc6af5382c30298e9a830.html#ac34a7d1299cdc6af5382c30298e9a830" title="Adaptive threshold writing into caller&#45;supplied buffer." alt="" coords="248,1664,443,1704"/>
+<area shape="poly" id="edge39_Node000001_Node000027" title=" " alt="" coords="107,807,115,969,138,1223,156,1356,181,1479,212,1581,230,1620,250,1650,253,1653,249,1657,246,1654,225,1623,207,1583,175,1481,151,1357,132,1224,110,970,102,807"/>
+<area shape="rect" id="Node000029" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_ab59ddf976c954d2878179d22df017af5.html#ab59ddf976c954d2878179d22df017af5" title="Otsu threshold writing into caller&#45;supplied buffer." alt="" coords="262,939,429,979"/>
+<area shape="poly" id="edge41_Node000001_Node000029" title=" " alt="" coords="122,805,174,864,210,896,249,924,261,931,258,935,247,929,207,900,171,868,118,809"/>
+<area shape="rect" id="Node000030" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_aa6176a6ce2a5ab346931cfe9b5bfe0fb.html#aa6176a6ce2a5ab346931cfe9b5bfe0fb" title="Track keypoints from prev_gray to curr_gray via Lucas&#45;Kanade." alt="" coords="259,29,432,69"/>
+<area shape="poly" id="edge43_Node000001_Node000030" title=" " alt="" coords="103,766,116,632,144,429,163,323,186,224,214,143,229,111,246,86,258,75,262,79,250,90,234,114,219,145,191,226,168,324,149,430,121,633,108,767"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_aabf55f6ea7ae15d5c5e05e27075aa54b.html#aabf55f6ea7ae15d5c5e05e27075aa54b" title="Separable Gaussian blur." alt="" coords="523,200,683,240"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="421,178,510,197,509,202,420,183"/>
+<area shape="poly" id="edge4_Node000002_Node000004" title=" " alt="" coords="420,147,514,130,515,135,421,153"/>
+<area shape="poly" id="edge3_Node000003_Node000003" title=" " alt="" coords="555,200,552,190,560,181,577,175,603,173,632,176,649,183,646,188,631,181,603,179,578,181,563,185,557,191,560,199"/>
+<area shape="poly" id="edge6_Node000005_Node000006" title=" " alt="" coords="420,445,514,434,515,439,421,451"/>
+<area shape="poly" id="edge7_Node000005_Node000007" title=" " alt="" coords="421,469,515,486,514,492,420,474"/>
+<area shape="rect" id="Node000012" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_a225b87b5c8afcb04eb942b3afae6efc4.html#a225b87b5c8afcb04eb942b3afae6efc4" title="Global threshold writing into caller&#45;supplied buffer." alt="" coords="528,907,677,947"/>
+<area shape="poly" id="edge14_Node000011_Node000012" title=" " alt="" coords="427,902,515,913,514,918,427,907"/>
+<area shape="poly" id="edge16_Node000013_Node000013" title=" " alt="" coords="300,1027,297,1017,305,1008,321,1002,345,1000,374,1003,389,1010,387,1015,372,1008,345,1005,322,1007,308,1012,303,1018,305,1026"/>
+<area shape="poly" id="edge18_Node000014_Node000008" title=" " alt="" coords="424,676,476,670,477,675,424,681"/>
+<area shape="poly" id="edge22_Node000017_Node000003" title=" " alt="" coords="432,223,509,220,509,226,432,228"/>
+<area shape="poly" id="edge24_Node000017_Node000004" title=" " alt="" coords="414,205,441,194,465,178,489,162,536,139,539,144,492,166,468,183,444,198,416,210"/>
+<area shape="poly" id="edge23_Node000017_Node000018" title=" " alt="" coords="433,243,528,263,527,268,432,249"/>
+<area shape="poly" id="edge26_Node000019_Node000006" title=" " alt="" coords="408,499,442,487,540,448,542,453,444,492,410,504"/>
+<area shape="poly" id="edge27_Node000019_Node000007" title=" " alt="" coords="432,513,514,508,515,513,432,519"/>
+<area shape="poly" id="edge29_Node000020_Node000006" title=" " alt="" coords="421,400,515,412,514,417,420,405"/>
+<area shape="poly" id="edge30_Node000020_Node000007" title=" " alt="" coords="416,411,444,423,468,439,492,455,539,478,536,482,489,460,465,443,441,428,414,416"/>
+<area shape="rect" id="Node000028" href="$namespaceMayaFlux_ad2f0572dfef62bb7629c7ef74ff29449.html#ad2f0572dfef62bb7629c7ef74ff29449" title="Calculate mean of single&#45;channel data." alt="" coords="537,1671,668,1697"/>
+<area shape="poly" id="edge40_Node000027_Node000028" title=" " alt="" coords="443,1681,524,1681,524,1687,443,1687"/>
+<area shape="poly" id="edge42_Node000029_Node000012" title=" " alt="" coords="429,946,514,935,515,940,429,951"/>
+<area shape="poly" id="edge44_Node000030_Node000004" title=" " alt="" coords="424,67,515,91,514,96,422,72"/>
+<area shape="poly" id="edge45_Node000030_Node000030" title=" " alt="" coords="300,30,297,20,305,10,321,5,345,3,374,6,389,13,387,18,372,11,345,8,322,10,308,15,303,21,305,28"/>
+</map>

@@ -1,0 +1,8 @@
+<map id="MayaFlux::Vruta::TaskScheduler::get_all_tasks" name="MayaFlux::Vruta::TaskScheduler::get_all_tasks">
+<area shape="rect" id="Node000001" title="Get all tasks for inspection/debugging." alt="" coords="464,5,695,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Inspector_aca4b73c0629b03f894065c7a777a240c.html#aca4b73c0629b03f894065c7a777a240c" title="Inspect the full TaskScheduler state." alt="" coords="5,5,187,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="450,25,416,24,235,24,187,25,187,20,235,19,416,19,450,19"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Inspector_a0f4d0d547948a4c7024fdadb1ebcef90.html#a0f4d0d547948a4c7024fdadb1ebcef90" title="Inspect tasks for a specific processing token." alt="" coords="235,33,416,73"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="451,42,416,46,416,41,450,37"/>
+<area shape="poly" id="edge3_Node000003_Node000002" title=" " alt="" coords="221,43,187,39,187,34,221,38"/>
+</map>

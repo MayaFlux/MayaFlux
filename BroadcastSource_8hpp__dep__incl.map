@@ -1,0 +1,15 @@
+<map id="BroadcastSource.hpp" name="BroadcastSource.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="155,5,313,31"/>
+<area shape="rect" id="Node000002" href="$BroadcastAwaiter_8hpp.html" title=" " alt="" coords="92,79,256,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="217,43,186,80,182,77,213,40"/>
+<area shape="rect" id="Node000003" href="$BroadcastEvents_8hpp.html" title=" " alt="" coords="5,152,164,177"/>
+<area shape="poly" id="edge5_Node000001_Node000003" title=" " alt="" coords="143,37,109,54,82,80,75,97,74,117,82,151,77,152,69,117,69,96,77,77,105,50,141,32"/>
+<area shape="rect" id="Node000005" href="$VisionProcessor_8cpp.html" title=" " alt="" coords="203,152,353,177"/>
+<area shape="poly" id="edge7_Node000001_Node000005" title=" " alt="" coords="253,41,271,78,279,118,281,151,276,152,274,119,266,80,248,43"/>
+<area shape="rect" id="Node000006" href="$ImageCVProcessor_8hpp.html" title=" " alt="" coords="331,79,502,104"/>
+<area shape="poly" id="edge6_Node000001_Node000006" title=" " alt="" coords="277,33,388,76,386,81,275,38"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="151,115,101,154,98,150,147,110"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="204,110,262,150,259,154,201,114"/>
+<area shape="rect" id="Node000004" href="$BroadcastEvents_8cpp.html" title=" " alt="" coords="5,225,164,251"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="87,191,87,225,82,225,82,191"/>
+</map>

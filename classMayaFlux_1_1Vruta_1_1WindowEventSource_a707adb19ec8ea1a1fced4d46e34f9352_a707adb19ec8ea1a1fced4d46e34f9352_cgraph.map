@@ -1,0 +1,5 @@
+<map id="MayaFlux::Vruta::WindowEventSource::signal" name="MayaFlux::Vruta::WindowEventSource::signal">
+<area shape="rect" id="Node000001" title="Enqueue a window event and resume matching waiters." alt="" coords="5,5,232,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Vruta_1_1EventSource_a169f338b283bd988304786b0f68c5033.html#a169f338b283bd988304786b0f68c5033" title="Iterates the waiter list, passing the type&#45;erased signal to each." alt="" coords="280,5,499,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="232,23,266,23,266,28,232,28"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="MayaFlux::Portal::Forma::Layer::Slot::id" name="MayaFlux::Portal::Forma::Layer::Slot::id">
+<area shape="rect" id="Node000001" title="Explicit id accessor, for clarity in chained expressions." alt="" coords="464,5,645,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Plot_aed3496c600d70e7b2eb8492ce08c14d0.html#aed3496c600d70e7b2eb8492ce08c14d0" title="Place a plot element onto a Surface using a pre&#45;built FormaBuffer." alt="" coords="235,5,416,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="450,28,416,28,416,23,450,23"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Forma_a0134941e72f794b2ad2318f03eacb98b.html#a0134941e72f794b2ad2318f03eacb98b" title="Create a live plot in a new window." alt="" coords="5,5,187,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="221,28,187,28,187,23,221,23"/>
+</map>

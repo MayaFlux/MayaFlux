@@ -1,0 +1,19 @@
+<map id="MayaFlux::Buffers::SDFMeshProcessor::on_attach" name="MayaFlux::Buffers::SDFMeshProcessor::on_attach">
+<area shape="rect" id="Node000001" title="Called when this processor is attached to a buffer." alt="" coords="5,81,176,136"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_ae72d99984f65f41164441d313ae0af88.html#ae72d99984f65f41164441d313ae0af88" title="Bind a VKBuffer to a named shader descriptor." alt="" coords="224,9,391,64"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="173,79,211,66,213,71,174,84"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1BufferProcessor_aabc0443cf162db0fdca77c2f555a1920.html#aabc0443cf162db0fdca77c2f555a1920" title="Called when this processor is attached to a buffer." alt="" coords="233,147,381,201"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="177,132,221,145,219,150,176,137"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1SDFMeshProcessor_a224e5afcd9812c2767437b3b79b7c034.html#a224e5afcd9812c2767437b3b79b7c034" title=" " alt="" coords="439,84,637,139"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="176,107,425,108,425,113,176,112"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VKBufferProcessor_ad871cad95dbb2a178d1752aa8573eabc.html#ad871cad95dbb2a178d1752aa8573eabc" title=" " alt="" coords="441,5,635,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="391,33,427,32,427,37,391,38"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_a0c7a59c0847791ed0915dcd64e8df783.html#a0c7a59c0847791ed0915dcd64e8df783" title="Query for a backend service." alt="" coords="721,77,888,132"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="636,56,709,76,708,81,635,61"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aa28c6f5592e5893508bafb62aefcc496.html#aa28c6f5592e5893508bafb62aefcc496" title="Get the global registry instance." alt="" coords="704,13,905,53"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="635,30,690,30,690,35,635,35"/>
+<area shape="poly" id="edge8_Node000007_Node000004" title=" " alt="" coords="638,106,707,104,707,110,638,112"/>
+<area shape="poly" id="edge9_Node000007_Node000005" title=" " alt="" coords="625,81,685,63,717,54,719,59,686,69,627,87"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Buffers_1_1SDFMeshProcessor_a7141a3bf580a8b2df47958b5edbe51e8.html#a7141a3bf580a8b2df47958b5edbe51e8" title=" " alt="" coords="685,157,924,197"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="638,133,709,151,708,156,637,138"/>
+</map>

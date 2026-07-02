@@ -1,0 +1,26 @@
+<map id="MayaFlux::Nexus::Fabric::name" name="MayaFlux::Nexus::Fabric::name">
+<area shape="rect" id="Node000001" title="Assigned name, empty if the Fabric was constructed outside a Tapestry." alt="" coords="840,165,1021,205"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nexus_1_1StateEncoder_ad8fc616eab6adf9f0af8ec03db3f3b3e.html#ad8fc616eab6adf9f0af8ec03db3f3b3e" title="Encode the given Fabric to {base_path}.exr and {base_path}.json." alt="" coords="563,5,792,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="903,157,854,107,823,81,791,60,765,48,768,43,793,55,827,77,857,103,906,153"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nexus_1_1Fabric_a652235587a57b6af5dbe973d1a1325ee.html#a652235587a57b6af5dbe973d1a1325ee" title="Look up a registered Expanse crossing function by name." alt="" coords="587,69,768,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="877,162,791,124,755,112,757,107,793,119,879,157"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nexus_1_1Fabric_afb84a41750937a5353e7e67a2cd9e752.html#afb84a41750937a5353e7e67a2cd9e752" title="Look up a registered Expanse containment function by name." alt="" coords="587,133,768,173"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="826,175,768,167,768,162,827,170"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Nexus_1_1Fabric_a50280b4fa1257633fce6063188f4e458.html#a50280b4fa1257633fce6063188f4e458" title="Look up a registered influence function by name." alt="" coords="587,197,768,237"/>
+<area shape="poly" id="edge9_Node000001_Node000008" title=" " alt="" coords="827,201,768,209,768,203,826,196"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Nexus_1_1Fabric_aab6a346ae31eaaaee670c0a84df94a42.html#aab6a346ae31eaaaee670c0a84df94a42" title="Look up a registered perception function by name." alt="" coords="587,261,768,301"/>
+<area shape="poly" id="edge11_Node000001_Node000009" title=" " alt="" coords="879,214,793,252,757,264,755,259,791,247,877,209"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Nexus_1_1Fabric_a62577dfac48d8caa26721f3db066c151.html#a62577dfac48d8caa26721f3db066c151" title="Look up a registered radiation function by name." alt="" coords="587,325,768,365"/>
+<area shape="poly" id="edge13_Node000001_Node000010" title=" " alt="" coords="906,218,857,268,827,294,793,316,768,328,765,323,791,311,823,289,854,264,903,214"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nexus_1_1StateDecoder_aaaa98335e2669252675c7eef36693d08.html#aaaa98335e2669252675c7eef36693d08" title="Decode and apply to fabric." alt="" coords="284,101,515,141"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="573,104,515,111,514,105,573,99"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nexus_1_1StateDecoder_a4bbc19256f60fe110344ba93422ab45c.html#a4bbc19256f60fe110344ba93422ab45c" title="Patch existing entities and construct missing ones from schema." alt="" coords="284,197,515,237"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="582,116,564,124,540,139,516,156,439,200,437,195,513,151,537,134,561,119,579,111"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nexus_1_1StateDecoder_ab8adc484d13d63fc196d40e45179e27d.html#ab8adc484d13d63fc196d40e45179e27d" title="Reconstruct all Fabrics in tapestry from base_dir." alt="" coords="5,197,236,237"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="270,220,236,220,236,215,270,215"/>
+<area shape="poly" id="edge7_Node000007_Node000004" title=" " alt="" coords="573,144,514,137,515,132,573,139"/>
+<area shape="poly" id="edge8_Node000007_Node000005" title=" " alt="" coords="577,179,487,200,486,195,576,174"/>
+<area shape="poly" id="edge10_Node000008_Node000005" title=" " alt="" coords="573,220,515,220,515,215,573,215"/>
+<area shape="poly" id="edge12_Node000009_Node000005" title=" " alt="" coords="576,261,486,240,487,235,577,256"/>
+<area shape="poly" id="edge14_Node000010_Node000005" title=" " alt="" coords="581,323,562,316,488,278,428,240,431,235,491,273,564,311,583,318"/>
+</map>

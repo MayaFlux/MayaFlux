@@ -1,0 +1,7 @@
+<map id="MayaFlux::Vruta::EventManager::find_event_by_name" name="MayaFlux::Vruta::EventManager::find_event_by_name">
+<area shape="rect" id="Node000001" title="Find event entry by name." alt="" coords="532,5,763,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Vruta_1_1EventManager_aba97fd15be98da5a463d3538e0ca743b.html#aba97fd15be98da5a463d3538e0ca743b" title="Get a named event." alt="" coords="253,5,484,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="518,28,484,28,484,23,518,23"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Inspector_a885422dd7d11c55d1cdd923f6ce6b5ce.html#a885422dd7d11c55d1cdd923f6ce6b5ce" title="Inspect the full EventManager state." alt="" coords="5,5,205,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="240,28,205,28,205,23,240,23"/>
+</map>

@@ -1,0 +1,17 @@
+<map id="MayaFlux::Portal::Forma::inspect" name="MayaFlux::Portal::Forma::inspect">
+<area shape="rect" id="Node000001" title="Open a dedicated window inspecting a single Buffer and its processing chain." alt="" coords="5,37,187,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Forma_aa4199727a94debd4a9d4434732886fff.html#aa4199727a94debd4a9d4434732886fff" title="Construct a Surface, creating Layer and Context internally." alt="" coords="243,5,425,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="187,43,229,37,230,42,187,48"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Reflect_af36b8c0b76748f4977c97757ce35f583.html#af36b8c0b76748f4977c97757ce35f583" title="Returns the unqualified dynamic type name of obj." alt="" coords="235,69,433,109"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="187,67,222,72,221,77,187,72"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Forma_acc0e19957fa04def8004abe53daa52dc.html#acc0e19957fa04def8004abe53daa52dc" title="Construct a Layer and a Context wired to window." alt="" coords="483,5,665,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="425,23,469,23,469,28,425,28"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_a04fb0b546bfa364a04dfe6f609f8b769.html#a04fb0b546bfa364a04dfe6f609f8b769" title="Transfer ownership of an existing object to the persistent store for process lifetime." alt="" coords="715,13,841,38"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="665,23,701,23,701,28,665,28"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1internal_ac26a7a92aa4af34c366aad03b68ea71e.html#ac26a7a92aa4af34c366aad03b68ea71e" title=" " alt="" coords="889,5,1033,45"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="842,23,876,23,876,28,842,28"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Reflect_aad04433875dfe461d8c83856332a04fa.html#aad04433875dfe461d8c83856332a04fa" title="Returns the demangled fully qualified dynamic type name of obj." alt="" coords="495,69,653,109"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="434,87,481,87,481,92,434,92"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Reflect_1_1detail_aa9b2765992d33a9b7c0322d049491c64.html#aa9b2765992d33a9b7c0322d049491c64" title=" " alt="" coords="481,133,667,173"/>
+<area shape="poly" id="edge7_Node000006_Node000008" title=" " alt="" coords="410,107,486,127,485,132,409,112"/>
+</map>

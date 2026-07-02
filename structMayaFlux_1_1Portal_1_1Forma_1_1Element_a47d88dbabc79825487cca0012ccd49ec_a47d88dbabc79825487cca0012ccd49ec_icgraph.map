@@ -1,0 +1,5 @@
+<map id="MayaFlux::Portal::Forma::Element::with_text" name="MayaFlux::Portal::Forma::Element::with_text">
+<area shape="rect" id="Node000001" title="Press text into a new GPU texture and bind it to the attached FormaBuffer." alt="" coords="235,5,416,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Plot_ac76725b0c967171fcbaa2ccb619fb6d7.html#ac76725b0c967171fcbaa2ccb619fb6d7" title="Place a text label element onto surface using a pre&#45;built buffer." alt="" coords="5,5,187,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="221,28,187,28,187,23,221,23"/>
+</map>

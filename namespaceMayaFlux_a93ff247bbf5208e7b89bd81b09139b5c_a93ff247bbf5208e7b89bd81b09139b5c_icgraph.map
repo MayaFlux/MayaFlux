@@ -1,0 +1,13 @@
+<map id="MayaFlux::register_audio_buffer" name="MayaFlux::register_audio_buffer">
+<area shape="rect" id="Node000001" title="Registers an AudioBuffer with the default engine&#39;s buffer manager." alt="" coords="496,55,640,95"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_ac734347fdb4e8e30e91ba79308e18d21.html#ac734347fdb4e8e30e91ba79308e18d21" title="creates a new buffer of the specified type and registers it" alt="" coords="268,5,448,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="482,55,405,33,406,28,483,50"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_a156aa5a54a2a941e0eb8f9618d601be1.html#a156aa5a54a2a941e0eb8f9618d601be1" title="Creates a new AudioBuffer for input listening." alt="" coords="271,55,445,95"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="482,78,446,78,446,73,482,73"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_a7053b2753707ee4f8671524b071d0957.html#a7053b2753707ee4f8671524b071d0957" title=" " alt="" coords="286,119,430,159"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="489,102,425,122,423,117,488,97"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1MeshGroupHandle_a5bcd3e3d81114072dedc34bb262cfbdc.html#a5bcd3e3d81114072dedc34bb262cfbdc" title=" " alt="" coords="5,90,220,130"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="272,132,220,125,220,120,273,127"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_a447a8bab9f7e6bed3a294721a556cbe8.html#a447a8bab9f7e6bed3a294721a556cbe8" title=" " alt="" coords="36,155,189,180"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="273,152,190,161,189,156,272,146"/>
+</map>

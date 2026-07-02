@@ -1,0 +1,9 @@
+<map id="MayaFlux::Nodes::Generator::Random::set_type" name="MayaFlux::Nodes::Generator::Random::set_type">
+<area shape="rect" id="Node000001" title="Changes the probability distribution type." alt="" coords="5,13,213,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kinesis_1_1Stochastic_1_1Stochastic_ab32c1610addd677ac3ec3e2ee1a23752.html#ab32c1610addd677ac3ec3e2ee1a23752" title="Changes active algorithm." alt="" coords="261,5,425,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="213,30,248,30,248,35,213,35"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kinesis_1_1Stochastic_1_1Stochastic_a842a1e7286485ab870a4cadca914d94e.html#a842a1e7286485ab870a4cadca914d94e" title="Resets internal state for stateful algorithms." alt="" coords="473,5,637,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="426,30,460,30,460,35,426,35"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Kinesis_1_1Stochastic_1_1GeneratorState_afd7c657635f930c9e3da5446de6c05a5.html#afd7c657635f930c9e3da5446de6c05a5" title=" " alt="" coords="685,5,881,60"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="637,30,672,30,672,35,637,35"/>
+</map>

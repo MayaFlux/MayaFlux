@@ -1,0 +1,17 @@
+<map id="MayaFlux::IO::save_image" name="MayaFlux::IO::save_image">
+<area shape="rect" id="Node000001" title="Save a VKImage directly to disk via the ImageWriter registry." alt="" coords="5,101,152,141"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1ImageWriterRegistry_a2460e4fa98bf558cbbd92facd212b0a5.html#a2460e4fa98bf558cbbd92facd212b0a5" title=" " alt="" coords="200,37,397,77"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="147,99,216,79,217,84,149,104"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1IO_ae74e134903752924b1f4a6bda9732de8.html#ae74e134903752924b1f4a6bda9732de8" title="Download pixel data from a GPU&#45;resident VKImage into host ImageData." alt="" coords="209,101,388,141"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="152,119,196,119,196,124,152,124"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1IO_1_1ImageWriterRegistry_a25caa467f66d3d18650bdffcc77b8125.html#a25caa467f66d3d18650bdffcc77b8125" title=" " alt="" coords="200,165,397,205"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="149,139,217,159,216,164,147,144"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1IO_1_1ImageData_ae98f576c9d2c433e1a321922f76795da.html#ae98f576c9d2c433e1a321922f76795da" title="Raw data pointer, dispatched on variant." alt="" coords="479,5,667,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="368,99,396,87,420,71,444,55,465,47,467,52,447,60,423,75,399,92,370,104"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_aa0f056b6e351a1ef300e21cb51077dbe.html#aa0f056b6e351a1ef300e21cb51077dbe" title="Convert Vulkan format to Portal ImageFormat." alt="" coords="445,69,700,109"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="388,108,431,103,432,108,388,114"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a1d702ea8bef8765e8895776bd67b0cc8.html#a1d702ea8bef8765e8895776bd67b0cc8" title="Get the number of color channels for a given format." alt="" coords="451,133,695,173"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="388,129,438,135,437,140,388,134"/>
+<area shape="rect" id="Node000007" href="$structMayaFlux_1_1IO_1_1ImageData_a12afd81ebcc2660cfe912a96c5542dfc.html#a12afd81ebcc2660cfe912a96c5542dfc" title="Check that the active variant matches the declared format." alt="" coords="479,197,667,237"/>
+<area shape="poly" id="edge6_Node000003_Node000007" title=" " alt="" coords="370,139,399,151,423,167,447,183,467,191,465,196,444,188,420,172,396,156,368,144"/>
+</map>

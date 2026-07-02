@@ -1,0 +1,13 @@
+<map id="Spatial" name="Spatial">
+<area shape="rect" id="node1" href="dir_17219ed2cd28ae564130a384b2de4d82.html" title="Tendency" alt="" coords="27,125,109,151"/>
+<area shape="rect" id="node2" href="dir_ffc0cf4a5f0725f0d2ec931c81a54855.html" title="Viewport" alt="" coords="133,125,213,151"/>
+<area shape="rect" id="node3" href="dir_1173f6694d7d47f305ed76ee04f1f117.html" title="Spatial" alt="" coords="140,52,207,77"/>
+<area shape="poly" id="edge1" href="dir_000071_000078.html" alt="" coords="158,80,98,120,95,115,155,75"/>
+<area shape="rect" id="edge1-headlabel" href="dir_000071_000078.html" title="1" alt="" coords="100,115,110,129"/>
+<area shape="poly" id="edge3" href="dir_000071_000084.html" alt="" coords="176,78,176,112,171,112,171,78"/>
+<area shape="rect" id="edge3-headlabel" href="dir_000071_000084.html" title="1" alt="" coords="177,100,186,114"/>
+<area shape="rect" id="node4" href="dir_ab78b5ea7d224bd3b6129089c2cbe6d1.html" title="Journal" alt="" coords="237,125,304,151"/>
+<area shape="poly" id="edge2" href="dir_000071_000033.html" alt="" coords="191,75,245,115,242,119,187,80"/>
+<area shape="rect" id="edge2-headlabel" href="dir_000071_000033.html" title="2" alt="" coords="240,100,250,115"/>
+<area shape="rect" id="clust1" href="dir_a8ec6d67cf3caa06b6fdb4f1cb0d9531.html" title="Kinesis" alt="" coords="16,16,224,161"/>
+</map>

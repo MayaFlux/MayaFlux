@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::catmull_rom_spline" name="MayaFlux::Kinesis::catmull_rom_spline">
+<area shape="rect" id="Node000001" title="Catmull&#45;Rom spline interpolation using Eigen matrices." alt="" coords="5,13,156,53"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kinesis_1_1BasisMatrices_a818351b64ca1e3653ad9c97cca70e765.html#a818351b64ca1e3653ad9c97cca70e765" title=" " alt="" coords="204,5,375,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="156,30,191,30,191,35,156,35"/>
+</map>

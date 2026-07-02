@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kakshya::readback_region" name="MayaFlux::Kakshya::readback_region">
+<area shape="rect" id="Node000001" title="Read a pixel rectangle from the last completed swapchain frame into a DataVariant whose element type ..." alt="" coords="5,69,164,109"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Core_a536f388ac516606e0df343ebf0047db6.html#a536f388ac516606e0df343ebf0047db6" title="Reverse&#45;map a vk::Format to the nearest GraphicsSurfaceInfo::SurfaceFormat." alt="" coords="222,5,385,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="153,67,221,47,222,52,155,72"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Core_a66e7e5fc1d7c3871957638e02a002aaf.html#a66e7e5fc1d7c3871957638e02a002aaf" title="Query DataVariant&#45;dispatch traits for a surface format." alt="" coords="219,69,388,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="165,87,205,87,205,92,165,92"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Core_a78d9f935bef82a58cc0eedeb4fea4934.html#a78d9f935bef82a58cc0eedeb4fea4934" title="Byte width of a single pixel for a given Vulkan format." alt="" coords="212,133,395,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="155,107,222,127,221,132,153,112"/>
+</map>

@@ -1,0 +1,13 @@
+<map id="MayaFlux::IO::VideoEncodeContext::close" name="MayaFlux::IO::VideoEncodeContext::close">
+<area shape="rect" id="Node000001" title="Release all owned resources." alt="" coords="1072,37,1272,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1VideoEncodeContext_a4ab278db5ffaa734991943992f2fa18f.html#a4ab278db5ffaa734991943992f2fa18f" title="Open the encoder and register a video stream in the mux context." alt="" coords="811,5,1011,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1058,46,1011,40,1011,35,1058,41"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1IO_1_1VideoEncodeContext_a4555edfb73bf4f95531d33b9d4a16e76.html#a4555edfb73bf4f95531d33b9d4a16e76" title=" " alt="" coords="797,69,1024,109"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="1059,74,1025,78,1024,73,1058,69"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1VideoFileWriter_a696c64fcff4d95462a6640f48495c71f.html#a696c64fcff4d95462a6640f48495c71f" title=" " alt="" coords="533,5,749,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="797,28,749,28,749,23,797,23"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1VideoFileWriter_a2fd67ecbf341032261b25a5a835c288f.html#a2fd67ecbf341032261b25a5a835c288f" title=" " alt="" coords="269,5,485,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="520,28,485,28,485,23,520,23"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1IO_1_1VideoFileWriter_a65a25d8b5e52b1d9b54806c73b4d89aa.html#a65a25d8b5e52b1d9b54806c73b4d89aa" title=" " alt="" coords="5,5,221,45"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="256,28,221,28,221,23,256,23"/>
+</map>

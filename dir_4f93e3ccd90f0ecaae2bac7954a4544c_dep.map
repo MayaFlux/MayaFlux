@@ -1,0 +1,16 @@
+<map id="Principals" name="Principals">
+<area shape="rect" id="node1" href="dir_b74c9975ae0def1155f60142dc3d8d39.html" title="Pheme" alt="" coords="36,125,103,151"/>
+<area shape="rect" id="node2" href="dir_4f93e3ccd90f0ecaae2bac7954a4544c.html" title="Principals" alt="" coords="27,52,112,77"/>
+<area shape="poly" id="edge4" href="dir_000058_000053.html" alt="" coords="72,78,72,112,67,112,67,78"/>
+<area shape="rect" id="edge4-headlabel" href="dir_000058_000053.html" title="6" alt="" coords="73,100,82,114"/>
+<area shape="rect" id="node3" href="dir_64c2d47494cb42df00b60c7e5b15f956.html" title="Buffers" alt="" coords="134,125,202,151"/>
+<area shape="poly" id="edge1" href="dir_000058_000005.html" alt="" coords="87,75,142,115,139,119,84,80"/>
+<area shape="rect" id="edge1-headlabel" href="dir_000058_000005.html" title="6" alt="" coords="137,100,147,115"/>
+<area shape="rect" id="node4" href="dir_a8ec6d67cf3caa06b6fdb4f1cb0d9531.html" title="Kinesis" alt="" coords="227,125,296,151"/>
+<area shape="poly" id="edge2" href="dir_000058_000035.html" alt="" coords="101,75,218,118,216,123,99,80"/>
+<area shape="rect" id="edge2-headlabel" href="dir_000058_000035.html" title="1" alt="" coords="211,104,220,118"/>
+<area shape="rect" id="node5" href="dir_ab78b5ea7d224bd3b6129089c2cbe6d1.html" title="Journal" alt="" coords="320,125,387,151"/>
+<area shape="poly" id="edge3" href="dir_000058_000033.html" alt="" coords="113,74,307,122,306,128,111,79"/>
+<area shape="rect" id="edge3-headlabel" href="dir_000058_000033.html" title="2" alt="" coords="299,108,309,123"/>
+<area shape="rect" id="clust1" href="dir_2aafd82a918cb12068e3f0affa67bf0a.html" title="Nexus" alt="" coords="16,16,123,161"/>
+</map>

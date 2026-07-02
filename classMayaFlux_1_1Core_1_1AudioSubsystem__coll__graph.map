@@ -1,0 +1,24 @@
+<map id="MayaFlux::Core::AudioSubsystem" name="MayaFlux::Core::AudioSubsystem">
+<area shape="rect" id="Node000001" title="Audio processing subsystem managing real&#45;time audio I/O and processing." alt="" coords="337,945,570,1485"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1ISubsystem.html" title="Base interface for all subsystems in the MayaFlux processing architecture." alt="" coords="5,530,205,870"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="215,875,220,881,339,1053,334,1056,215,884,211,877"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Core_1_1GlobalStreamInfo.html" title="Comprehensive configuration for digital audio stream processing." alt="" coords="230,517,469,883"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="386,882,393,921,395,929,390,930,388,922,380,883"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Core_1_1GlobalStreamInfo_1_1ChannelConfig.html" title="Configuration for input or output data channels." alt="" coords="181,153,395,293"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="300,293,326,501,321,501,294,293"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Core_1_1SubsystemTokens.html" title="Processing token configuration for subsystem operation." alt="" coords="419,163,615,283"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="521,283,520,559,514,739,501,922,501,929,495,929,496,921,508,739,514,559,516,283"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Core_1_1SubsystemProcessingHandle.html" title="Unified interface combining buffer and node processing for subsystems." alt="" coords="897,640,1124,760"/>
+<area shape="poly" id="edge11_Node000006_Node000005" title=" " alt="" coords="540,282,576,360,600,401,629,438,687,496,753,549,820,594,884,632,881,637,817,599,750,553,684,500,625,442,596,404,571,363,535,284"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="949,762,584,1097,580,1093,945,758"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Core_1_1BufferProcessingHandle.html" title="Thread&#45;safe interface for buffer operations within a processing domain." alt="" coords="639,5,873,440"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="874,439,974,624,969,627,870,441"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Core_1_1NodeProcessingHandle.html" title="Interface for node graph operations within a processing domain." alt="" coords="897,103,1125,343"/>
+<area shape="poly" id="edge7_Node000006_Node000008" title=" " alt="" coords="1013,343,1013,623,1008,623,1008,343"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Core_1_1TaskSchedulerHandle.html" title=" " alt="" coords="1149,123,1366,323"/>
+<area shape="poly" id="edge8_Node000006_Node000009" title=" " alt="" coords="1208,324,1051,627,1046,624,1204,322"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Core_1_1WindowManagerHandle.html" title=" " alt="" coords="1390,163,1623,283"/>
+<area shape="poly" id="edge9_Node000006_Node000010" title=" " alt="" coords="1482,284,1439,363,1411,404,1379,442,1321,498,1258,549,1194,595,1133,634,1130,629,1191,590,1255,545,1318,494,1375,438,1406,401,1434,360,1477,282"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Core_1_1InputManagerHandle.html" title=" " alt="" coords="1647,133,1862,313"/>
+<area shape="poly" id="edge10_Node000006_Node000011" title=" " alt="" coords="1725,314,1688,381,1665,413,1638,442,1581,488,1519,528,1454,563,1387,594,1256,642,1141,675,1140,669,1255,637,1385,589,1451,558,1516,523,1578,483,1634,438,1661,410,1684,378,1720,312"/>
+</map>

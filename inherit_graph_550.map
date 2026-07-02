@@ -1,0 +1,37 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="Node000000" href="$classMayaFlux_1_1Yantra_1_1ComputeOperation.html" title="Base interface for all computational operations in the processing pipeline." alt="" coords="5,357,267,397"/>
+<area shape="rect" id="Node000001" href="$classMayaFlux_1_1Yantra_1_1UniversalAnalyzer.html" title="Template&#45;flexible analyzer base with instance&#45;defined I/O types." alt="" coords="315,165,570,205"/>
+<area shape="poly" id="edge150_Node000000_Node000001" title=" " alt="" coords="179,348,408,203,411,208,182,352"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Yantra_1_1UniversalExtractor.html" title="Template&#45;flexible extractor base with instance&#45;defined I/O types." alt="" coords="315,325,571,365"/>
+<area shape="poly" id="edge156_Node000000_Node000007" title=" " alt="" coords="280,360,314,356,315,361,280,365"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Yantra_1_1UniversalSorter.html" title="Template&#45;flexible sorter base with instance&#45;defined I/O types." alt="" coords="325,389,561,429"/>
+<area shape="poly" id="edge158_Node000000_Node000009" title=" " alt="" coords="281,390,325,394,324,400,280,395"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Yantra_1_1UniversalTransformer.html" title="Template&#45;flexible transformer base with instance&#45;defined I/O types." alt="" coords="341,606,545,661"/>
+<area shape="poly" id="edge161_Node000000_Node000012" title=" " alt="" coords="173,404,410,604,407,608,170,408"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1EnergyAnalyzer.html" title="High&#45;performance energy analyzer with zero&#45;copy processing." alt="" coords="629,5,883,45"/>
+<area shape="poly" id="edge151_Node000001_Node000002" title=" " alt="" coords="474,154,537,103,576,77,618,55,649,43,651,48,620,60,579,82,540,108,477,158"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1GpuAnalyzer.html" title="Concrete UniversalAnalyzer that dispatches entirely via a GpuExecutionContext." alt="" coords="643,69,869,109"/>
+<area shape="poly" id="edge152_Node000001_Node000003" title=" " alt="" coords="506,158,618,119,662,107,664,112,619,124,507,163"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1Granular_1_1AttributeOp.html" title="Computes a scalar attribute per grain and writes it onto each Region." alt="" coords="657,133,855,173"/>
+<area shape="poly" id="edge153_Node000001_Node000004" title=" " alt="" coords="584,168,656,161,657,166,584,174"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1StatisticalAnalyzer.html" title="High&#45;performance statistical analyzer with zero&#45;copy processing." alt="" coords="629,197,883,237"/>
+<area shape="poly" id="edge154_Node000001_Node000005" title=" " alt="" coords="584,197,629,202,628,207,584,202"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Yantra_1_1VisionAnalyzer.html" title="UniversalAnalyzer that takes any pixel&#45;bearing input, runs a VisionSequence via VisionExecutor,..." alt="" coords="629,261,883,301"/>
+<area shape="poly" id="edge155_Node000001_Node000006" title=" " alt="" coords="507,208,619,247,664,259,662,264,618,252,506,213"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Yantra_1_1GpuExtractor.html" title="Concrete UniversalExtractor that dispatches entirely via a GpuExecutionContext." alt="" coords="643,325,869,365"/>
+<area shape="poly" id="edge157_Node000007_Node000008" title=" " alt="" coords="584,343,642,343,642,348,584,348"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Yantra_1_1GpuSorter.html" title="Concrete UniversalSorter that dispatches entirely via a GpuExecutionContext." alt="" coords="653,389,859,429"/>
+<area shape="poly" id="edge159_Node000009_Node000010" title=" " alt="" coords="575,407,653,407,653,412,575,412"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Yantra_1_1StandardSorter.html" title="Concrete implementation for standard comparison&#45;based sorting." alt="" coords="638,453,874,493"/>
+<area shape="poly" id="edge160_Node000009_Node000011" title=" " alt="" coords="555,430,658,451,657,456,554,435"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Yantra_1_1ConvolutionTransformer.html" title="Concrete transformer for convolution&#45;based operations." alt="" coords="619,517,893,557"/>
+<area shape="poly" id="edge162_Node000012_Node000013" title=" " alt="" coords="525,599,618,567,662,555,664,560,619,572,527,604"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1Yantra_1_1GpuTransformer.html" title="Concrete UniversalTransformer that dispatches entirely via a GpuExecutionContext." alt="" coords="633,581,879,621"/>
+<area shape="poly" id="edge163_Node000012_Node000014" title=" " alt="" coords="558,619,632,611,633,617,558,624"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1Yantra_1_1MathematicalTransformer.html" title="Concrete transformer for mathematical operations." alt="" coords="619,645,893,685"/>
+<area shape="poly" id="edge164_Node000012_Node000015" title=" " alt="" coords="558,642,618,649,618,654,558,648"/>
+<area shape="rect" id="Node000016" href="$classMayaFlux_1_1Yantra_1_1SpectralTransformer.html" title="Concrete transformer for frequency&#45;domain operations." alt="" coords="659,710,853,765"/>
+<area shape="poly" id="edge165_Node000012_Node000016" title=" " alt="" coords="529,663,620,695,659,707,658,712,618,700,527,668"/>
+<area shape="rect" id="Node000017" href="$classMayaFlux_1_1Yantra_1_1TemporalTransformer.html" title="Concrete transformer for time&#45;domain operations." alt="" coords="655,789,857,843"/>
+<area shape="poly" id="edge166_Node000012_Node000017" title=" " alt="" coords="482,669,544,724,581,751,620,775,655,790,653,795,617,780,578,756,540,728,478,673"/>
+</map>

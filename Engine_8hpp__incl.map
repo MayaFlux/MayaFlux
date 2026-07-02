@@ -1,0 +1,28 @@
+<map id="Engine.hpp" name="Engine.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="567,5,662,31"/>
+<area shape="rect" id="Node000002" href="$SubsystemManager_8hpp.html" title=" " alt="" coords="19,79,197,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="567,29,203,79,203,74,567,23"/>
+<area shape="rect" id="Node000006" href="$GlobalGraphicsInfo_8hpp.html" title=" " alt="" coords="222,79,397,104"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="568,33,372,78,371,73,566,28"/>
+<area shape="rect" id="Node000008" href="$GlobalInputConfig_8hpp.html" title=" " alt="" coords="821,79,987,104"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="662,28,845,73,843,78,661,33"/>
+<area shape="rect" id="Node000010" href="$GlobalNetworkConfig_8hpp.html" title=" " alt="" coords="421,79,609,104"/>
+<area shape="poly" id="edge10_Node000001_Node000010" title=" " alt="" coords="600,33,544,73,541,68,597,29"/>
+<area shape="rect" id="Node000011" href="$GlobalStreamInfo_8hpp.html" title=" " alt="" coords="633,79,797,104"/>
+<area shape="poly" id="edge12_Node000001_Node000011" title=" " alt="" coords="632,29,689,68,686,73,629,33"/>
+<area shape="rect" id="Node000012" href="$NodeSpec_8hpp.html" title=" " alt="" coords="1011,79,1239,104"/>
+<area shape="poly" id="edge14_Node000001_Node000012" title=" " alt="" coords="663,23,1030,74,1029,79,662,29"/>
+<area shape="rect" id="Node000003" href="$Subsystem_8hpp.html" title=" " alt="" coords="5,159,211,185"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="111,104,111,145,105,145,105,104"/>
+<area shape="rect" id="Node000004" href="$ProcessingArchitecture_8hpp.html" title="Unified processing architecture for multimodal subsystem coordination." alt="" coords="11,240,205,280"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="111,185,111,226,105,226,105,185"/>
+<area shape="rect" id="Node000005" href="$ProcessingTokens_8hpp.html" title=" " alt="" coords="11,328,205,368"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="111,280,111,314,105,314,105,280"/>
+<area shape="rect" id="Node000007" href="$Mirror_8hpp.html" title=" " alt="" coords="538,152,691,192"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="354,101,529,146,528,151,353,107"/>
+<area shape="poly" id="edge9_Node000008_Node000007" title=" " alt="" coords="863,107,698,151,697,146,861,101"/>
+<area shape="rect" id="Node000009" href="$InputBinding_8hpp.html" title=" " alt="" coords="825,152,983,192"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="907,104,907,138,901,138,901,104"/>
+<area shape="poly" id="edge11_Node000010_Node000007" title=" " alt="" coords="531,102,581,141,578,145,528,106"/>
+<area shape="poly" id="edge13_Node000011_Node000007" title=" " alt="" coords="702,106,651,145,648,141,698,102"/>
+</map>

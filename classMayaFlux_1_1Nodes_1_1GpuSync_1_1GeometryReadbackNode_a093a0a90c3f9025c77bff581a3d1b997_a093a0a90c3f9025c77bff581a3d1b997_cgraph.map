@@ -1,0 +1,9 @@
+<map id="MayaFlux::Nodes::GpuSync::GeometryReadbackNode::GeometryReadbackNode" name="MayaFlux::Nodes::GpuSync::GeometryReadbackNode::GeometryReadbackNode">
+<area shape="rect" id="Node000001" title="Construct from a GPU vertex buffer." alt="" coords="5,70,205,125"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kakshya_1_1VertexLayout_a7b7a30b2a13cb2676713a352f298f607.html#a7b7a30b2a13cb2676713a352f298f607" title="Factory: layout for MeshVertex (position, color, weight, uv, normal, tangent)" alt="" coords="257,5,449,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="199,67,270,47,271,52,201,72"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GeometryWriterNode_a79b8530548d0f4b4c464071439faaac5.html#a79b8530548d0f4b4c464071439faaac5" title="Set cached vertex layout." alt="" coords="253,70,453,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="205,95,240,95,240,100,205,100"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GeometryWriterNode_ae5284939e0d0c2d570576488644f8068.html#ae5284939e0d0c2d570576488644f8068" title="Set vertex stride (bytes per vertex)" alt="" coords="253,149,453,203"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="193,122,254,142,252,147,191,127"/>
+</map>

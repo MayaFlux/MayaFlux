@@ -1,0 +1,15 @@
+<map id="MayaFlux::Buffers::FeedbackBuffer" name="MayaFlux::Buffers::FeedbackBuffer">
+<area shape="rect" id="Node000001" title="Buffer with temporal memory for recursive processing." alt="" coords="310,1100,513,1360"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1AudioBuffer.html" title="Concrete audio implementation of the Buffer interface for double&#45;precision audio data." alt="" coords="188,557,405,1037"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="366,1050,379,1099,374,1100,361,1051"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1Buffer.html" title="Backend&#45;agnostic interface for sequential data storage and transformation." alt="" coords="5,175,223,455"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="174,466,208,556,203,558,169,468"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="38,5,190,85"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="117,99,117,175,111,175,111,99"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Buffers_1_1BufferRoutingState.html" title="Represents the state of routing transitions for a buffer." alt="" coords="247,215,387,415"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="315,415,310,541,305,540,310,415"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Memory_1_1HistoryBuffer.html" title=" " alt="" coords="430,617,625,977"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="482,979,453,1084,448,1083,476,977"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Memory_1_1HistoryBuffer.html" title="History buffer for difference equations and recursive relations." alt="" coords="430,135,625,495"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="530,508,530,617,525,617,525,508"/>
+</map>

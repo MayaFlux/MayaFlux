@@ -1,0 +1,7 @@
+<map id="MayaFlux::IO::IOManager::save_image" name="MayaFlux::IO::IOManager::save_image">
+<area shape="rect" id="Node000001" title="Save image data to disk asynchronously." alt="" coords="240,37,427,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1IOManager_ac91dd7d537b2c0090b05d8bd5b74847e.html#ac91dd7d537b2c0090b05d8bd5b74847e" title=" " alt="" coords="5,5,192,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="226,45,192,41,193,35,227,40"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1IOManager_abc5b4f20992fe093fcf290e073a12895.html#abc5b4f20992fe093fcf290e073a12895" title=" " alt="" coords="5,69,192,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="227,75,193,79,192,74,226,69"/>
+</map>

@@ -1,0 +1,30 @@
+<map id="MayaFlux::Yantra::TemporalTransformer::transform_implementation" name="MayaFlux::Yantra::TemporalTransformer::transform_implementation">
+<area shape="rect" id="Node000001" title="Core transformation implementation for temporal operations." alt="" coords="5,265,208,319"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1TemporalTransformer_ad19829f4971af1d2ed744d06a1c4b7f0.html#ad19829f4971af1d2ed744d06a1c4b7f0" title="Extracts per&#45;channel spans, applies func to each, and reconstructs." alt="" coords="256,65,459,119"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="126,262,179,197,215,161,254,130,264,124,266,128,258,134,219,165,183,201,130,266"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1TemporalTransformer_a3a0a6da6a934dd790da7097f6293986f.html#a3a0a6da6a934dd790da7097f6293986f" title="Creates output with proper type conversion." alt="" coords="507,9,710,49"/>
+<area shape="poly" id="edge7_Node000001_Node000003" title=" " alt="" coords="113,263,131,215,159,156,200,97,226,71,255,50,312,24,374,11,436,7,494,9,494,14,436,12,374,16,314,29,257,54,229,75,204,100,164,158,136,217,118,265"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a0cfec1af1622af88f33b6be6dd83303a.html#a0cfec1af1622af88f33b6be6dd83303a" title="Prepend delay_samples zero&#45;valued (or fill_value) samples, returning a new vector." alt="" coords="283,144,432,184"/>
+<area shape="poly" id="edge8_Node000001_Node000007" title=" " alt="" coords="143,262,194,227,255,194,272,186,274,191,257,198,197,232,146,267"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a6131edb983725d9f54630b65f7fe4c78.html#a6131edb983725d9f54630b65f7fe4c78" title="Apply equal&#45;power (cosine) fade&#45;in then fade&#45;out envelope in&#45;place The cosine taper maintains constan..." alt="" coords="283,208,432,248"/>
+<area shape="poly" id="edge9_Node000001_Node000008" title=" " alt="" coords="207,264,268,248,270,253,209,269"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a4a67fd9d73c45ff8d9071580e0b298c6.html#a4a67fd9d73c45ff8d9071580e0b298c6" title="Catmull&#45;Rom cubic interpolation from src into dst (caller sizes dst) Branchless boundary clamping; Ho..." alt="" coords="259,272,455,312"/>
+<area shape="poly" id="edge10_Node000001_Node000009" title=" " alt="" coords="208,289,246,289,246,295,208,295"/>
+<area shape="rect" id="Node000010" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_ae8f0b8267e09c5846dc178fb580112e9.html#ae8f0b8267e09c5846dc178fb580112e9" title="Linear interpolation from src into dst (caller sizes dst) Branchless inner loop with precomputed step..." alt="" coords="531,414,686,469"/>
+<area shape="poly" id="edge11_Node000001_Node000010" title=" " alt="" coords="209,312,459,372,542,406,539,411,458,377,207,317"/>
+<area shape="rect" id="Node000011" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_aa6dcc3c22e38342dd3e5aacdfe2f7b97.html#aa6dcc3c22e38342dd3e5aacdfe2f7b97" title="Reverse temporal order in&#45;place." alt="" coords="283,387,432,427"/>
+<area shape="poly" id="edge12_Node000001_Node000011" title=" " alt="" coords="159,317,257,366,289,379,287,384,255,370,157,322"/>
+<area shape="rect" id="Node000012" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a6046994db12cc0fc1e893fcd5ae06507.html#a6046994db12cc0fc1e893fcd5ae06507" title="Extract a contiguous slice by ratio, returning a new vector." alt="" coords="283,451,432,491"/>
+<area shape="poly" id="edge13_Node000001_Node000012" title=" " alt="" coords="131,318,185,378,219,409,257,436,271,444,269,449,255,441,216,413,181,381,127,322"/>
+<area shape="rect" id="Node000013" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a17a3baa6a35cd4bc53cd4cbc7b7ab2ce.html#a17a3baa6a35cd4bc53cd4cbc7b7ab2ce" title="Time&#45;stretch via linear interpolation resampling Fast but alias&#45;naive: no anti&#45;aliasing pre&#45;filter is..." alt="" coords="274,515,441,555"/>
+<area shape="poly" id="edge14_Node000001_Node000013" title=" " alt="" coords="122,318,143,359,173,408,211,458,258,501,265,506,262,510,254,505,208,461,169,411,139,362,118,321"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="458,64,514,50,515,55,459,69"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1OperationHelper_a86f4c84e8740ec41db439c868a93454a.html#a86f4c84e8740ec41db439c868a93454a" title="Extract structured double data from Datum container or direct ComputeData with automatic container ha..." alt="" coords="759,69,1001,109"/>
+<area shape="poly" id="edge5_Node000002_Node000005" title=" " alt="" coords="459,89,745,87,745,93,459,94"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Yantra_1_1UniversalTransformer_a952e85a0a582c7ba24c8fa85e2490294.html#a952e85a0a582c7ba24c8fa85e2490294" title="Indicates whether the transformation modifies the input data directly." alt="" coords="507,127,711,167"/>
+<area shape="poly" id="edge6_Node000002_Node000006" title=" " alt="" coords="459,111,504,121,502,126,458,117"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1ComputeOperation_ac364bad27ce3e4d35add89333c9a24b8.html#ac364bad27ce3e4d35add89333c9a24b8" title="Convert processed double data back to OutputType using metadata and optional callback." alt="" coords="779,5,981,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="710,25,765,24,765,30,710,31"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="700,47,776,64,775,69,699,52"/>
+<area shape="poly" id="edge15_Node000013_Node000010" title=" " alt="" coords="423,512,458,500,531,472,532,476,460,505,425,517"/>
+</map>

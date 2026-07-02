@@ -1,0 +1,11 @@
+<map id="MayaFlux::register_graphics_buffer" name="MayaFlux::register_graphics_buffer">
+<area shape="rect" id="Node000001" title="Registers a VKBuffer with the default engine&#39;s buffer manager." alt="" coords="496,27,640,67"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_a6c961098bba1f4e3788484800a66b926.html#a6c961098bba1f4e3788484800a66b926" title="creates a new graphics buffer of the specified type and registers it" alt="" coords="268,5,448,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="482,38,448,33,448,28,483,33"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_a7053b2753707ee4f8671524b071d0957.html#a7053b2753707ee4f8671524b071d0957" title=" " alt="" coords="286,55,430,95"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="483,61,430,68,430,63,482,56"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1MeshGroupHandle_a5bcd3e3d81114072dedc34bb262cfbdc.html#a5bcd3e3d81114072dedc34bb262cfbdc" title=" " alt="" coords="5,26,220,66"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="272,68,220,61,220,56,273,63"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_a447a8bab9f7e6bed3a294721a556cbe8.html#a447a8bab9f7e6bed3a294721a556cbe8" title=" " alt="" coords="36,91,189,116"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="273,88,190,97,189,92,272,82"/>
+</map>

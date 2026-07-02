@@ -1,0 +1,112 @@
+<map id="MayaFlux::bind_viewport_preset" name="MayaFlux::bind_viewport_preset">
+<area shape="rect" id="Node000001" title="Bind a navigation preset to all RenderProcessors currently registered against a window using default ..." alt="" coords="5,493,192,533"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_a9be701daac0c0484aed1f9ad9f8d130e.html#a9be701daac0c0484aed1f9ad9f8d130e" title="Bind a navigation preset to a window and render processor using default settings." alt="" coords="240,493,427,533"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="192,511,226,511,226,516,192,516"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_afbca6a63a999ca7602156fffa2c7dcd3.html#afbca6a63a999ca7602156fffa2c7dcd3" title="Bind the fly navigation controller to a window and render processor." alt="" coords="507,355,653,395"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="365,491,473,426,524,399,527,403,476,430,368,495"/>
+<area shape="rect" id="Node000031" href="$namespaceMayaFlux_ae1c3585aeff050b127d356422bf64f2a.html#ae1c3585aeff050b127d356422bf64f2a" title="Bind the orbit navigation controller to a window and render processor." alt="" coords="501,525,659,565"/>
+<area shape="poly" id="edge35_Node000002_Node000031" title=" " alt="" coords="427,523,488,531,487,536,427,528"/>
+<area shape="rect" id="Node000039" href="$namespaceMayaFlux_ac830fe2d111c7598a5c75d700dc364a4.html#ac830fe2d111c7598a5c75d700dc364a4" title="Bind the 2D pan/zoom controller to a window and render processor." alt="" coords="503,589,657,629"/>
+<area shape="poly" id="edge50_Node000002_Node000039" title=" " alt="" coords="376,531,476,575,497,582,495,587,474,580,374,536"/>
+<area shape="rect" id="Node000044" href="$namespaceMayaFlux_a0c14a83b32a093a88b5e133b0a562502.html#a0c14a83b32a093a88b5e133b0a562502" title="Bind the screenspace navigation controller to a window and render processor." alt="" coords="475,440,685,480"/>
+<area shape="poly" id="edge59_Node000002_Node000044" title=" " alt="" coords="426,491,473,480,474,486,427,496"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_ac32839d2593eb11735b40cd2829b72a3.html#ac32839d2593eb11735b40cd2829b72a3" title="Apply a mouse delta to yaw and pitch." alt="" coords="771,5,921,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="582,354,597,295,625,215,644,171,668,129,697,90,732,55,757,40,760,44,735,59,702,93,673,132,649,174,629,217,602,297,588,355"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kinesis_a758a2dd2ae02348f8abefa9f3703fdaa.html#a758a2dd2ae02348f8abefa9f3703fdaa" title="Dolly eye along the current forward vector." alt="" coords="771,133,921,173"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="590,353,611,316,643,270,684,223,732,183,757,170,759,175,735,188,688,227,647,274,616,319,594,355"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Kinesis_a9c48c41e32b3a27a4602996f86b222ba.html#a9c48c41e32b3a27a4602996f86b222ba" title="Compute a ViewTransform from the current NavigationState." alt="" coords="752,69,940,109"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="585,353,603,306,633,242,676,176,702,146,732,119,739,114,742,118,735,123,706,149,680,179,638,245,608,308,590,355"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_1_1Kinesis_a8c37f3f923bb7a07404d3b97eddcb00c.html#a8c37f3f923bb7a07404d3b97eddcb00c" title="Construct a NavigationState from a NavigationConfig." alt="" coords="759,197,933,237"/>
+<area shape="poly" id="edge8_Node000003_Node000009" title=" " alt="" coords="601,352,657,304,694,277,732,254,762,240,764,245,735,258,697,282,661,308,604,357"/>
+<area shape="rect" id="Node000010" href="$namespaceMayaFlux_af9fb24f66b99c0cda04201284a219677.html#af9fb24f66b99c0cda04201284a219677" title="Schedule a key press handler." alt="" coords="747,313,945,338"/>
+<area shape="poly" id="edge9_Node000003_Node000010" title=" " alt="" coords="652,359,763,338,764,343,653,364"/>
+<area shape="rect" id="Node000021" href="$namespaceMayaFlux_aa0213ccfa76fafbb55a88f9982da7cee.html#aa0213ccfa76fafbb55a88f9982da7cee" title="Schedule a key release handler." alt="" coords="745,362,947,387"/>
+<area shape="poly" id="edge20_Node000003_Node000021" title=" " alt="" coords="653,372,731,372,731,377,653,377"/>
+<area shape="rect" id="Node000023" href="$namespaceMayaFlux_a04a9ebaa3b5d4ee64cd760f2efedf5c7.html#a04a9ebaa3b5d4ee64cd760f2efedf5c7" title="Schedule a mouse movement handler." alt="" coords="743,411,949,437"/>
+<area shape="poly" id="edge23_Node000003_Node000023" title=" " alt="" coords="653,385,764,406,763,411,652,391"/>
+<area shape="rect" id="Node000025" href="$namespaceMayaFlux_a6613e51ffdbc148b6667699e873a87a6.html#a6613e51ffdbc148b6667699e873a87a6" title="Schedule a mouse button press handler." alt="" coords="765,461,927,501"/>
+<area shape="poly" id="edge26_Node000003_Node000025" title=" " alt="" coords="620,392,673,419,734,446,760,455,758,460,732,450,671,424,618,397"/>
+<area shape="rect" id="Node000027" href="$namespaceMayaFlux_ad19b4b6af5aacd5aa72c828b3ffa85a0.html#ad19b4b6af5aacd5aa72c828b3ffa85a0" title="Schedule a mouse button release handler." alt="" coords="765,525,927,565"/>
+<area shape="poly" id="edge29_Node000003_Node000027" title=" " alt="" coords="636,392,663,407,687,426,704,449,711,471,718,492,735,511,754,523,751,528,732,515,714,494,706,473,699,451,683,430,660,412,634,397"/>
+<area shape="rect" id="Node000029" href="$namespaceMayaFlux_a07d5520bf6595375c13cc1b166a911a5.html#a07d5520bf6595375c13cc1b166a911a5" title="Schedule a mouse scroll handler." alt="" coords="770,590,922,615"/>
+<area shape="poly" id="edge32_Node000003_Node000029" title=" " alt="" coords="641,392,666,407,687,426,701,447,707,467,710,505,713,541,721,558,735,575,758,590,756,594,732,579,716,561,708,542,704,505,702,468,696,449,683,430,663,411,638,397"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Kinesis_a2ca46156e4c80497361cf46a29703186.html#a2ca46156e4c80497361cf46a29703186" title="Advance eye position by held movement flags against elapsed time." alt="" coords="1020,69,1173,109"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="940,87,1006,87,1006,92,940,92"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Kinesis_ae0906b7d41d8d5f13ff814247327d614.html#ae0906b7d41d8d5f13ff814247327d614" title="Build a ViewTransform from the current NavigationState without mutating it." alt="" coords="1015,140,1178,180"/>
+<area shape="poly" id="edge7_Node000006_Node000008" title=" " alt="" coords="918,107,1013,134,1011,139,917,112"/>
+<area shape="rect" id="Node000011" href="$namespaceMayaFlux_a0dfe4501e157cd6e14b62baab5fa9b84.html#a0dfe4501e157cd6e14b62baab5fa9b84" title="Gets the event manager from the default engine." alt="" coords="1017,404,1176,444"/>
+<area shape="poly" id="edge10_Node000010_Node000011" title=" " alt="" coords="931,336,960,347,975,357,985,368,994,379,1008,390,1020,396,1017,401,1005,394,991,383,981,372,972,361,957,352,929,341"/>
+<area shape="rect" id="Node000020" href="$namespaceMayaFlux_1_1Kriya_a26ea8275b201cc7cf821b0fbde8d852d.html#a26ea8275b201cc7cf821b0fbde8d852d" title="Creates an Event coroutine that triggers on specific key press." alt="" coords="1017,212,1176,252"/>
+<area shape="poly" id="edge19_Node000010_Node000020" title=" " alt="" coords="902,310,958,291,981,277,1005,262,1021,255,1023,260,1008,266,984,281,960,296,904,315"/>
+<area shape="rect" id="Node000012" href="$namespaceMayaFlux_ac4ab74951370ff0dd899203f3b94c775.html#ac4ab74951370ff0dd899203f3b94c775" title="Gets the default engine instance." alt="" coords="1237,383,1408,409"/>
+<area shape="poly" id="edge11_Node000011_Node000012" title=" " alt="" coords="1176,412,1224,406,1224,411,1176,417"/>
+<area shape="rect" id="Node000019" href="$classMayaFlux_1_1Core_1_1Engine_ab7563eb97d9ca4dc3f7df55db3ebed03.html#ab7563eb97d9ca4dc3f7df55db3ebed03" title="Gets the event manager." alt="" coords="1235,433,1411,473"/>
+<area shape="poly" id="edge18_Node000011_Node000019" title=" " alt="" coords="1176,432,1221,437,1220,443,1176,437"/>
+<area shape="rect" id="Node000013" href="$namespaceMayaFlux_1_1internal_ac0f0b4b1cae6af4441db0ea022e15583.html#ac0f0b4b1cae6af4441db0ea022e15583" title=" " alt="" coords="1459,376,1629,416"/>
+<area shape="poly" id="edge12_Node000012_Node000013" title=" " alt="" coords="1409,393,1445,393,1445,399,1409,399"/>
+<area shape="rect" id="Node000014" href="$namespaceMayaFlux_1_1internal_a3cc5413e05c2f9c9f04372841aa0a5b1.html#a3cc5413e05c2f9c9f04372841aa0a5b1" title=" " alt="" coords="1677,376,1821,416"/>
+<area shape="poly" id="edge13_Node000013_Node000014" title=" " alt="" coords="1630,393,1664,393,1664,399,1630,399"/>
+<area shape="rect" id="Node000015" href="$namespaceMayaFlux_1_1internal_ac4d6952d58cdfd56964a883d40aa655d.html#ac4d6952d58cdfd56964a883d40aa655d" title=" " alt="" coords="1869,344,2063,384"/>
+<area shape="poly" id="edge14_Node000014_Node000015" title=" " alt="" coords="1822,383,1855,378,1856,383,1822,388"/>
+<area shape="rect" id="Node000017" href="$classMayaFlux_1_1Journal_1_1Archivist_a82e2d12db8781df4afc43ef4c1fba2be.html#a82e2d12db8781df4afc43ef4c1fba2be" title="Shutdown the logging system." alt="" coords="1891,408,2041,448"/>
+<area shape="poly" id="edge16_Node000014_Node000017" title=" " alt="" coords="1822,404,1878,412,1877,418,1822,409"/>
+<area shape="rect" id="Node000016" href="$namespaceMayaFlux_1_1internal_ac26a7a92aa4af34c366aad03b68ea71e.html#ac26a7a92aa4af34c366aad03b68ea71e" title=" " alt="" coords="2112,344,2256,384"/>
+<area shape="poly" id="edge15_Node000015_Node000016" title=" " alt="" coords="2063,361,2098,361,2098,367,2063,367"/>
+<area shape="rect" id="Node000018" href="$classMayaFlux_1_1Journal_1_1Archivist_a8b7829e34d79ec5bbbf02e3d4afbdab9.html#a8b7829e34d79ec5bbbf02e3d4afbdab9" title="Get the singleton instance of the Archivist." alt="" coords="2111,408,2257,448"/>
+<area shape="poly" id="edge17_Node000017_Node000018" title=" " alt="" coords="2041,425,2097,425,2097,431,2041,431"/>
+<area shape="poly" id="edge21_Node000021_Node000011" title=" " alt="" coords="912,385,1004,403,1003,408,911,390"/>
+<area shape="rect" id="Node000022" href="$namespaceMayaFlux_1_1Kriya_a01aa3f167bd1f04105be7ff4d6c63862.html#a01aa3f167bd1f04105be7ff4d6c63862" title="Creates an Event coroutine that triggers on specific key release." alt="" coords="1017,276,1176,316"/>
+<area shape="poly" id="edge22_Node000021_Node000022" title=" " alt="" coords="913,359,958,347,1006,326,1024,318,1026,323,1008,330,960,352,914,364"/>
+<area shape="poly" id="edge24_Node000023_Node000011" title=" " alt="" coords="949,421,1004,421,1004,427,949,427"/>
+<area shape="rect" id="Node000024" href="$namespaceMayaFlux_1_1Kriya_a3865277b1ccf9ef433f9797fc4bb70cb.html#a3865277b1ccf9ef433f9797fc4bb70cb" title="Creates an Event coroutine that triggers on mouse movement." alt="" coords="1007,340,1187,380"/>
+<area shape="poly" id="edge25_Node000023_Node000024" title=" " alt="" coords="905,409,958,396,1013,381,1015,386,959,401,906,414"/>
+<area shape="poly" id="edge27_Node000025_Node000011" title=" " alt="" coords="926,460,1003,442,1005,448,927,466"/>
+<area shape="rect" id="Node000026" href="$namespaceMayaFlux_1_1Kriya_a61d0d58f158de776ac8a832d194e31bd.html#a61d0d58f158de776ac8a832d194e31bd" title="Creates an Event coroutine that triggers on specific mouse button press." alt="" coords="1007,468,1187,508"/>
+<area shape="poly" id="edge28_Node000025_Node000026" title=" " alt="" coords="927,481,993,483,993,488,927,486"/>
+<area shape="poly" id="edge30_Node000027_Node000011" title=" " alt="" coords="926,526,957,511,972,498,981,484,990,469,1005,454,1014,448,1017,453,1008,458,994,472,985,486,976,501,960,516,928,531"/>
+<area shape="rect" id="Node000028" href="$namespaceMayaFlux_1_1Kriya_a55759930e6bca7daaa6ab7c21107a325.html#a55759930e6bca7daaa6ab7c21107a325" title="Creates an Event coroutine that triggers on specific mouse button release." alt="" coords="1007,532,1187,572"/>
+<area shape="poly" id="edge31_Node000027_Node000028" title=" " alt="" coords="927,545,993,547,993,552,927,550"/>
+<area shape="poly" id="edge33_Node000029_Node000011" title=" " alt="" coords="921,594,940,586,957,575,969,561,976,547,981,517,985,486,992,470,1005,454,1009,450,1013,454,1009,458,997,473,990,487,986,518,981,549,974,564,960,579,943,591,923,599"/>
+<area shape="rect" id="Node000030" href="$namespaceMayaFlux_1_1Kriya_a454b114a833332a3d166874f702a0908.html#a454b114a833332a3d166874f702a0908" title="Creates an Event coroutine that triggers on mouse scroll." alt="" coords="1007,596,1187,636"/>
+<area shape="poly" id="edge34_Node000029_Node000030" title=" " alt="" coords="922,604,993,608,992,613,922,609"/>
+<area shape="poly" id="edge44_Node000031_Node000010" title=" " alt="" coords="638,523,663,509,683,490,695,472,702,454,704,418,708,383,716,365,731,347,737,343,740,347,735,351,721,368,713,384,710,419,707,455,700,474,687,494,666,513,641,527"/>
+<area shape="poly" id="edge45_Node000031_Node000021" title=" " alt="" coords="634,523,660,509,683,490,699,466,705,443,713,419,732,397,739,392,742,396,735,401,717,422,710,444,704,469,687,494,663,513,637,528"/>
+<area shape="poly" id="edge46_Node000031_Node000023" title=" " alt="" coords="625,523,684,490,707,468,717,457,732,447,752,439,754,443,735,452,720,461,711,471,687,494,628,527"/>
+<area shape="poly" id="edge47_Node000031_Node000025" title=" " alt="" coords="659,524,751,501,753,506,660,529"/>
+<area shape="poly" id="edge48_Node000031_Node000027" title=" " alt="" coords="660,543,752,543,752,548,660,548"/>
+<area shape="poly" id="edge49_Node000031_Node000029" title=" " alt="" coords="660,560,774,585,773,590,659,565"/>
+<area shape="rect" id="Node000032" href="$namespaceMayaFlux_1_1Kinesis_a8cfcb27d8f60ecdb09499c5b3a0c3cb5.html#a8cfcb27d8f60ecdb09499c5b3a0c3cb5" title="Pan the focal point in the camera&#39;s local right/up plane." alt="" coords="771,640,921,680"/>
+<area shape="poly" id="edge36_Node000031_Node000032" title=" " alt="" coords="661,562,687,575,702,588,711,600,720,613,735,624,759,637,757,641,732,629,717,616,707,604,698,591,684,580,659,567"/>
+<area shape="rect" id="Node000035" href="$namespaceMayaFlux_1_1Kinesis_a06795089d3c81cb46950eeac2b38cd84.html#a06795089d3c81cb46950eeac2b38cd84" title="Apply a mouse delta to azimuth and elevation." alt="" coords="771,704,921,744"/>
+<area shape="poly" id="edge39_Node000031_Node000035" title=" " alt="" coords="661,559,687,575,700,590,707,605,712,634,717,663,723,677,735,690,760,706,757,710,732,694,719,680,712,665,707,635,702,607,695,593,684,579,658,563"/>
+<area shape="rect" id="Node000036" href="$namespaceMayaFlux_1_1Kinesis_a7650c2ba51294b2dc890269d0cfda866.html#a7650c2ba51294b2dc890269d0cfda866" title="Dolly the camera toward or away from the focal point." alt="" coords="771,768,921,808"/>
+<area shape="poly" id="edge40_Node000031_Node000036" title=" " alt="" coords="661,558,687,575,704,598,711,622,712,667,712,711,719,733,735,754,760,771,757,775,731,758,715,735,707,712,706,667,706,622,699,601,683,579,658,562"/>
+<area shape="rect" id="Node000037" href="$namespaceMayaFlux_1_1Kinesis_a769e83ad025b5225ead375eae1f009a6.html#a769e83ad025b5225ead375eae1f009a6" title="Build a ViewTransform from the current OrbitState." alt="" coords="733,832,959,872"/>
+<area shape="poly" id="edge41_Node000031_Node000037" title=" " alt="" coords="661,557,687,575,708,607,716,638,716,669,712,699,708,729,707,759,715,789,735,818,739,822,735,826,731,822,711,791,702,760,702,729,706,699,711,668,711,639,703,609,683,579,658,561"/>
+<area shape="rect" id="Node000038" href="$namespaceMayaFlux_1_1Kinesis_aa02d8bdd7651b407bf74c8cec391204c.html#aa02d8bdd7651b407bf74c8cec391204c" title="Construct an OrbitState from an OrbitConfig." alt="" coords="771,896,921,936"/>
+<area shape="poly" id="edge43_Node000031_Node000038" title=" " alt="" coords="661,556,687,575,702,595,712,615,721,654,719,693,712,731,704,769,703,807,711,844,721,863,735,882,759,900,756,904,731,886,716,866,706,846,697,807,699,769,706,730,713,693,715,655,707,617,697,598,683,579,658,561"/>
+<area shape="rect" id="Node000033" href="$namespaceMayaFlux_1_1Kinesis_a4da7d21f0e7424468283bf416b00ccf7.html#a4da7d21f0e7424468283bf416b00ccf7" title="Derive eye position from the current orbit state." alt="" coords="1022,777,1171,817"/>
+<area shape="poly" id="edge37_Node000032_Node000033" title=" " alt="" coords="922,674,960,690,1018,726,1066,766,1063,770,1015,731,957,694,920,679"/>
+<area shape="rect" id="Node000034" href="$namespaceMayaFlux_1_1Kinesis_ace716df2f40f1b0e620049c240637942.html#ace716df2f40f1b0e620049c240637942" title="Uniform scaling of a scalar&#45;output tendency." alt="" coords="1022,660,1171,700"/>
+<area shape="poly" id="edge38_Node000032_Node000034" title=" " alt="" coords="921,663,1009,670,1008,676,921,669"/>
+<area shape="poly" id="edge42_Node000037_Node000033" title=" " alt="" coords="938,829,1008,814,1009,819,939,835"/>
+<area shape="poly" id="edge55_Node000039_Node000023" title=" " alt="" coords="655,593,684,575,696,560,702,545,706,512,710,480,718,463,732,447,739,441,742,446,735,451,722,466,715,481,711,513,708,546,701,563,687,579,658,597"/>
+<area shape="poly" id="edge56_Node000039_Node000025" title=" " alt="" coords="655,590,684,575,699,560,707,544,715,527,732,511,751,500,754,505,735,515,720,531,712,546,703,563,687,579,658,595"/>
+<area shape="poly" id="edge57_Node000039_Node000027" title=" " alt="" coords="656,588,751,565,753,570,657,594"/>
+<area shape="poly" id="edge58_Node000039_Node000029" title=" " alt="" coords="657,605,756,602,756,608,657,610"/>
+<area shape="rect" id="Node000040" href="$namespaceMayaFlux_1_1Kinesis_a736831f01d0296c17887b54048fbaea9.html#a736831f01d0296c17887b54048fbaea9" title="Pan by a pixel delta, scaled to world units by the current zoom level." alt="" coords="765,960,927,1000"/>
+<area shape="poly" id="edge51_Node000039_Node000040" title=" " alt="" coords="587,629,600,691,627,777,646,823,671,868,700,910,735,946,753,958,750,963,732,950,696,913,666,870,641,825,622,778,595,692,582,630"/>
+<area shape="rect" id="Node000041" href="$namespaceMayaFlux_1_1Kinesis_a301cb96ab21a2e7aa91d40a4142cbee9.html#a301cb96ab21a2e7aa91d40a4142cbee9" title="Zoom by multiplying the half&#45;height, clamped to [min_zoom, max_zoom]." alt="" coords="759,1024,933,1064"/>
+<area shape="poly" id="edge52_Node000039_Node000041" title=" " alt="" coords="585,629,595,701,619,804,638,860,663,914,695,966,735,1010,748,1020,745,1024,732,1014,691,969,659,917,633,862,614,805,590,702,580,630"/>
+<area shape="rect" id="Node000042" href="$namespaceMayaFlux_1_1Kinesis_a07e10918948daa6b2fcdda2181b6b539.html#a07e10918948daa6b2fcdda2181b6b539" title="Build a ViewTransform from the current PanZoom2DState." alt="" coords="751,1089,941,1143"/>
+<area shape="poly" id="edge53_Node000039_Node000042" title=" " alt="" coords="585,630,591,711,600,767,613,829,632,895,658,959,692,1020,735,1074,741,1080,737,1083,731,1078,688,1023,653,962,627,896,608,831,595,768,586,711,579,630"/>
+<area shape="rect" id="Node000043" href="$namespaceMayaFlux_1_1Kinesis_a2690bd8175ee8aec016cbaa02b8fd511.html#a2690bd8175ee8aec016cbaa02b8fd511" title="Construct a PanZoom2DState from a PanZoom2DConfig." alt="" coords="760,1168,932,1208"/>
+<area shape="poly" id="edge54_Node000039_Node000043" title=" " alt="" coords="583,630,585,724,590,790,601,864,620,942,647,1019,685,1091,709,1124,735,1154,749,1165,746,1170,732,1158,704,1127,681,1094,642,1021,615,943,596,865,585,791,579,724,578,630"/>
+<area shape="poly" id="edge60_Node000044_Node000005" title=" " alt="" coords="641,438,664,423,683,405,700,376,706,348,707,321,704,294,701,267,703,239,712,211,731,183,757,165,760,170,735,187,716,214,708,240,707,267,709,293,712,321,712,349,705,378,687,408,667,428,644,442"/>
+<area shape="poly" id="edge61_Node000044_Node000008" title=" " alt="" coords="636,438,661,423,683,405,694,391,700,378,705,351,711,324,719,311,732,298,761,279,789,269,816,266,842,266,897,267,926,261,957,247,972,236,981,224,990,211,1005,198,1028,184,1031,189,1008,202,994,215,985,227,976,240,960,252,927,266,897,272,842,272,816,271,790,274,763,284,735,302,723,314,716,326,710,352,705,380,698,394,687,409,664,428,639,442"/>
+<area shape="poly" id="edge62_Node000044_Node000009" title=" " alt="" coords="638,438,663,423,683,405,696,386,702,367,705,330,709,293,717,273,731,254,746,242,749,246,735,258,721,276,714,294,711,330,708,368,701,388,687,408,666,428,641,442"/>
+<area shape="poly" id="edge63_Node000044_Node000023" title=" " alt="" coords="685,443,738,436,739,441,686,448"/>
+<area shape="poly" id="edge64_Node000044_Node000025" title=" " alt="" coords="686,466,752,471,751,476,685,471"/>
+<area shape="poly" id="edge65_Node000044_Node000027" title=" " alt="" coords="637,477,734,511,760,519,759,524,733,516,635,483"/>
+<area shape="poly" id="edge66_Node000044_Node000029" title=" " alt="" coords="633,478,661,493,687,511,702,529,711,545,719,561,735,575,758,587,756,591,732,580,715,564,706,548,698,532,684,515,658,497,631,483"/>
+</map>

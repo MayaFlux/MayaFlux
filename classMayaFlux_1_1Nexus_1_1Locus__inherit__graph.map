@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nexus::Locus" name="MayaFlux::Nexus::Locus">
+<area shape="rect" id="Node000001" title="Agent that perceives the world from a navigation state and influences how the things it touches are v..." alt="" coords="13,619,187,964"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nexus_1_1Agent.html" title="Object that both perceives nearby entities and acts on MayaFlux objects." alt="" coords="5,5,195,571"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="103,584,103,618,97,618,97,584"/>
+</map>

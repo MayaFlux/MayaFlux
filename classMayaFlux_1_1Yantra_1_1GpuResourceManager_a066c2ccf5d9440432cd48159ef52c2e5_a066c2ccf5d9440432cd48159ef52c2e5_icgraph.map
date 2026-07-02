@@ -1,0 +1,19 @@
+<map id="MayaFlux::Yantra::GpuResourceManager::buffer_allocated_bytes" name="MayaFlux::Yantra::GpuResourceManager::buffer_allocated_bytes">
+<area shape="rect" id="Node000001" title=" " alt="" coords="1079,56,1313,96"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1GpuExecutionContext_a6763eb3e1063231b21a9451753dbc74b.html#a6763eb3e1063231b21a9451753dbc74b" title="Reconstruct Datum&lt;OutputType&gt; from a GpuChannelResult." alt="" coords="800,5,1031,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1071,56,1026,48,1027,43,1072,51"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1GpuDispatchCore_ae5e1220e72a191e7b1200563b38e2c64.html#ae5e1220e72a191e7b1200563b38e2c64" title="Read back the primary output buffer into a float vector." alt="" coords="803,88,1028,128"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="1065,94,1028,98,1028,93,1065,88"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1GpuExecutionContext_a1dbe3b76ec8aefe2f57803a889443155.html#a1dbe3b76ec8aefe2f57803a889443155" title="Dispatch to GPU and reconstruct a typed output Datum." alt="" coords="248,124,479,164"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="786,12,725,9,659,11,592,19,528,35,485,53,447,77,387,126,383,122,443,73,483,48,526,29,591,14,659,6,725,4,786,7"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1ShaderExecutionContext_a61530137eabb72da29cf4248b7600bde.html#a61530137eabb72da29cf4248b7600bde" title="Injects multipass configuration into the context before dispatch when set_multipass() has been called..." alt="" coords="5,124,200,164"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="234,147,200,147,200,141,234,141"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Yantra_1_1ShaderExecutionContext_ad608c762cd34187f4a6a8378b8c4cef9.html#ad608c762cd34187f4a6a8378b8c4cef9" title="Collect the result of the last async dispatch." alt="" coords="546,45,733,99"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="788,94,732,87,733,81,789,89"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Yantra_1_1GpuDispatchCore_a899fb89ec912ff8a784fa8d4efadbe39.html#a899fb89ec912ff8a784fa8d4efadbe39" title="Full single&#45;pass dispatch." alt="" coords="527,124,752,164"/>
+<area shape="poly" id="edge6_Node000005_Node000007" title=" " alt="" coords="790,127,753,132,752,127,789,122"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Yantra_1_1GpuDispatchCore_ab2351a76c5db238842099c55a1d08386.html#ab2351a76c5db238842099c55a1d08386" title="Multi&#45;pass (chained) dispatch." alt="" coords="527,188,752,228"/>
+<area shape="poly" id="edge8_Node000005_Node000008" title=" " alt="" coords="859,136,753,179,716,190,714,185,751,173,857,131"/>
+<area shape="poly" id="edge7_Node000007_Node000003" title=" " alt="" coords="513,147,479,147,479,141,513,141"/>
+<area shape="poly" id="edge9_Node000008_Node000003" title=" " alt="" coords="538,187,449,167,451,161,540,182"/>
+</map>

@@ -1,0 +1,24 @@
+<map id="UniversalAnalyzer.hpp" name="UniversalAnalyzer.hpp">
+<area shape="rect" id="Node000001" title="Modern, digital&#45;first universal analyzer framework for Maya Flux." alt="" coords="340,5,508,31"/>
+<area shape="rect" id="Node000002" href="$EnergyAnalyzer_8hpp.html" title="Span&#45;based energy analysis for digital signals in Maya Flux." alt="" coords="75,79,226,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="368,37,196,81,194,76,366,32"/>
+<area shape="rect" id="Node000007" href="$GpuAnalyzer_8hpp.html" title=" " alt="" coords="446,79,578,104"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="450,37,499,76,496,81,447,41"/>
+<area shape="rect" id="Node000008" href="$StatisticalAnalyzer_8hpp.html" title=" " alt="" coords="251,79,421,104"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="401,41,352,81,349,76,398,37"/>
+<area shape="rect" id="Node000009" href="$VisionAnalyzer_8hpp.html" title=" " alt="" coords="603,79,749,104"/>
+<area shape="poly" id="edge11_Node000001_Node000009" title=" " alt="" coords="479,32,636,76,634,81,477,37"/>
+<area shape="rect" id="Node000003" href="$GranularWorkflow_8hpp.html" title=" " alt="" coords="5,152,171,177"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="133,116,100,154,96,150,129,113"/>
+<area shape="rect" id="Node000005" href="$MatrixHelper_8hpp.html" title="Region&#45;aware and matrix transformation functions leveraging existing ecosystem." alt="" coords="195,152,330,177"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="182,109,246,150,243,154,179,114"/>
+<area shape="rect" id="Node000006" href="$Yantra_8cpp.html" title=" " alt="" coords="354,152,443,177"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="204,105,359,149,358,154,203,110"/>
+<area shape="rect" id="Node000004" href="$GranularWorkflow_8cpp.html" title=" " alt="" coords="6,225,170,251"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="91,191,91,225,85,225,85,191"/>
+<area shape="poly" id="edge8_Node000008_Node000003" title=" " alt="" coords="284,110,129,154,127,149,282,105"/>
+<area shape="poly" id="edge9_Node000008_Node000005" title=" " alt="" coords="316,116,276,154,273,150,312,112"/>
+<area shape="poly" id="edge10_Node000008_Node000006" title=" " alt="" coords="357,113,391,150,387,154,353,116"/>
+<area shape="rect" id="Node000010" href="$VisionAnalyzer_8cpp.html" title=" " alt="" coords="603,152,749,177"/>
+<area shape="poly" id="edge12_Node000009_Node000010" title=" " alt="" coords="679,118,679,152,673,152,673,118"/>
+</map>

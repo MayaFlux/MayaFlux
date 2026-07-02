@@ -1,0 +1,14 @@
+<map id="MayaFlux::IO::VideoFileWriter::~VideoFileWriter" name="MayaFlux::IO::VideoFileWriter::~VideoFileWriter">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,43,221,83"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1VideoFileWriter_abb3a46542ba67391e8caff0efd0fa0f9.html#abb3a46542ba67391e8caff0efd0fa0f9" title=" " alt="" coords="533,5,749,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="221,52,519,31,520,37,222,58"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1VideoFileWriter_a610aa34ce6d52c4a9d0e1fe0053d3e0c.html#a610aa34ce6d52c4a9d0e1fe0053d3e0c" title=" " alt="" coords="269,71,485,111"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="222,71,256,75,256,80,221,77"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1VideoFileWriter_a525c5787720892de0339211a5a3c58b8.html#a525c5787720892de0339211a5a3c58b8" title=" " alt="" coords="797,5,1013,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="749,23,784,23,784,28,749,28"/>
+<area shape="poly" id="edge4_Node000004_Node000002" title=" " alt="" coords="458,68,546,46,548,51,459,73"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_a0c7a59c0847791ed0915dcd64e8df783.html#a0c7a59c0847791ed0915dcd64e8df783" title="Query for a backend service." alt="" coords="558,70,725,125"/>
+<area shape="poly" id="edge5_Node000004_Node000005" title=" " alt="" coords="485,91,544,92,544,98,485,96"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aa28c6f5592e5893508bafb62aefcc496.html#aa28c6f5592e5893508bafb62aefcc496" title="Get the global registry instance." alt="" coords="541,149,742,189"/>
+<area shape="poly" id="edge6_Node000004_Node000006" title=" " alt="" coords="446,108,534,135,561,143,559,148,533,140,444,113"/>
+</map>

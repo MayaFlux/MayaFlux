@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::OscParser::serialize" name="MayaFlux::Core::OscParser::serialize">
+<area shape="rect" id="Node000001" title="Serialize an OSC message to wire format." alt="" coords="248,5,444,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Network_aabc9bb62bb500595d574694238b7954b.html#aabc9bb62bb500595d574694238b7954b" title="Serialize an OSC message to wire bytes for sending via NetworkService." alt="" coords="5,5,200,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="234,28,200,28,200,23,234,23"/>
+</map>

@@ -1,0 +1,11 @@
+<map id="MayaFlux::Buffers::SDFMeshProcessor::set_resolution" name="MayaFlux::Buffers::SDFMeshProcessor::set_resolution">
+<area shape="rect" id="Node000001" title="Replace the grid resolution and mark dirty." alt="" coords="5,70,180,125"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1SDFMeshProcessor_a224e5afcd9812c2767437b3b79b7c034.html#a224e5afcd9812c2767437b3b79b7c034" title=" " alt="" coords="228,70,427,125"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="180,95,214,95,214,100,180,100"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1SDFMeshProcessor_a7141a3bf580a8b2df47958b5edbe51e8.html#a7141a3bf580a8b2df47958b5edbe51e8" title=" " alt="" coords="475,5,713,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="426,68,474,55,505,46,506,52,475,60,428,73"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_a0c7a59c0847791ed0915dcd64e8df783.html#a0c7a59c0847791ed0915dcd64e8df783" title="Query for a backend service." alt="" coords="511,70,677,125"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="427,95,496,95,496,100,427,100"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aa28c6f5592e5893508bafb62aefcc496.html#aa28c6f5592e5893508bafb62aefcc496" title="Get the global registry instance." alt="" coords="493,149,695,189"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="428,122,507,143,505,148,426,127"/>
+</map>

@@ -1,0 +1,9 @@
+<map id="MayaFlux::Nodes::GpuSync::MeshWriterNode::compute_frame" name="MayaFlux::Nodes::GpuSync::MeshWriterNode::compute_frame">
+<area shape="rect" id="Node000001" title="Compute GPU data for this frame." alt="" coords="503,37,753,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1SDFNode_a3b05244a99b639a2b98cf60744654a2b.html#a3b05244a99b639a2b98cf60744654a2b" title=" " alt="" coords="255,37,455,77"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="489,60,455,60,455,55,489,55"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1SDFNode_a8d93283e3887f0b2a717c407a008d703.html#a8d93283e3887f0b2a717c407a008d703" title="Re&#45;extract the isosurface if dirty, then upload via parent." alt="" coords="5,5,207,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="241,45,207,41,207,36,241,40"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1SDFNode_a61950494104522a83fb51c0149ea3345.html#a61950494104522a83fb51c0149ea3345" title="Construct and evaluate the initial isosurface." alt="" coords="6,69,206,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="241,75,206,79,206,74,240,69"/>
+</map>

@@ -1,0 +1,9 @@
+<map id="MayaFlux::Vruta::EventManager::add_event" name="MayaFlux::Vruta::EventManager::add_event">
+<area shape="rect" id="Node000001" title="Add a event to the manager." alt="" coords="5,37,236,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Vruta_1_1EventManager_a57dfab40ee4b14db2bef10e6c4c5e9d2.html#a57dfab40ee4b14db2bef10e6c4c5e9d2" title="Generate automatic name for a event based on its type." alt="" coords="284,5,515,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="236,41,270,37,271,43,237,47"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Vruta_1_1EventManager_a3b542907af4a0afa35f1b87a604932e4.html#a3b542907af4a0afa35f1b87a604932e4" title="Remove an event by name." alt="" coords="284,69,515,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="237,68,271,72,270,77,236,73"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Vruta_1_1EventManager_ac3366b2763d938f824fa0c47b28c6bab.html#ac3366b2763d938f824fa0c47b28c6bab" title="Generates a unique event ID for new events." alt="" coords="563,5,793,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="515,23,549,23,549,28,515,28"/>
+</map>

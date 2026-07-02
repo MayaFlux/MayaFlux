@@ -1,0 +1,11 @@
+<map id="MayaFlux::Nodes::Network::WaveguideNetwork::process_unidirectional" name="MayaFlux::Nodes::Network::WaveguideNetwork::process_unidirectional">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,109,220,164"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1WaveguideNetwork_a825031825f9ee9008f5a15ff05dab0db.html#a825031825f9ee9008f5a15ff05dab0db" title=" " alt="" coords="293,5,515,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="175,107,267,70,292,62,294,67,269,75,177,112"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1WaveguideNetwork_a5380c95ced55a73450d9ce48f9514941.html#a5380c95ced55a73450d9ce48f9514941" title=" " alt="" coords="268,85,540,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="220,122,254,118,255,124,221,128"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Memory_1_1HistoryBuffer_a6f256636f3f3fc99269c77a8dc096b09.html#a6f256636f3f3fc99269c77a8dc096b09" title="Push new value to front of history." alt="" coords="303,149,505,189"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="221,146,289,153,288,159,220,151"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1Network_1_1WaveguideNetwork_aa8f858b5296340957130efb861fcc959.html#aa8f858b5296340957130efb861fcc959" title="Read from delay line with linear fractional interpolation." alt="" coords="305,213,503,268"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="177,162,269,198,294,207,292,212,267,203,175,166"/>
+</map>

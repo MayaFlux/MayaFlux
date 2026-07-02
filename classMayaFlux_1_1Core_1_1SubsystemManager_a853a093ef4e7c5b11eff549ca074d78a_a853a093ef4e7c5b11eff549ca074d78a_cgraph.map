@@ -1,0 +1,9 @@
+<map id="MayaFlux::Core::SubsystemManager::stop_graphics_subsystem" name="MayaFlux::Core::SubsystemManager::stop_graphics_subsystem">
+<area shape="rect" id="Node000001" title="Stop the graphics subsystem." alt="" coords="5,5,209,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1SubsystemManager_ae1bba18e8d4bdf50cfdd0bc6f6f7a855.html#ae1bba18e8d4bdf50cfdd0bc6f6f7a855" title="Get typed access to the graphics subsystem." alt="" coords="257,13,505,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="210,30,244,30,244,35,210,35"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1SubsystemManager_a91312240ebdc99232e28a80ea5cd1f51.html#a91312240ebdc99232e28a80ea5cd1f51" title="Get access to a specific subsystem by type." alt="" coords="553,13,757,53"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="506,30,539,30,539,35,506,35"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1SubsystemManager_a653e25775b3ec620d14eec5e48aab270.html#a653e25775b3ec620d14eec5e48aab270" title="Check if a subsystem type exists." alt="" coords="805,13,1009,53"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="757,30,792,30,792,35,757,35"/>
+</map>

@@ -1,0 +1,8 @@
+<map id="MayaFlux::Kinesis::Discrete::interpolate_linear" name="MayaFlux::Kinesis::Discrete::interpolate_linear">
+<area shape="rect" id="Node000001" title="Linear interpolation from src into dst (caller sizes dst) Branchless inner loop with precomputed step..." alt="" coords="471,27,625,82"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a17a3baa6a35cd4bc53cd4cbc7b7ab2ce.html#a17a3baa6a35cd4bc53cd4cbc7b7ab2ce" title="Time&#45;stretch via linear interpolation resampling Fast but alias&#45;naive: no anti&#45;aliasing pre&#45;filter is..." alt="" coords="256,5,423,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="457,45,422,40,423,34,458,39"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1TemporalTransformer_ad3890517ed8b6bb33c19146ce905c80e.html#ad3890517ed8b6bb33c19146ce905c80e" title="Core transformation implementation for temporal operations." alt="" coords="5,27,208,82"/>
+<area shape="poly" id="edge3_Node000001_Node000003" title=" " alt="" coords="457,59,423,60,256,60,208,59,208,54,256,55,423,55,457,54"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="242,40,209,45,208,39,242,35"/>
+</map>

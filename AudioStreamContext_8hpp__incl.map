@@ -1,0 +1,17 @@
+<map id="AudioStreamContext.hpp" name="AudioStreamContext.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="107,5,293,31"/>
+<area shape="rect" id="Node000002" href="$FFmpegDemuxContext_8hpp.html" title=" " alt="" coords="99,79,301,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="203,31,203,65,197,65,197,31"/>
+<area shape="rect" id="Node000003" href="$FileReader_8hpp.html" title=" " alt="" coords="98,152,302,177"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="203,104,203,138,197,138,197,104"/>
+<area shape="rect" id="Node000004" href="$Region_8hpp.html" title=" " alt="" coords="20,225,215,265"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="190,179,149,218,145,214,186,176"/>
+<area shape="rect" id="Node000008" title=" " alt="" coords="239,233,329,258"/>
+<area shape="poly" id="edge7_Node000003_Node000008" title=" " alt="" coords="214,176,263,221,260,225,211,179"/>
+<area shape="rect" id="Node000005" href="$NDData_8hpp.html" title=" " alt="" coords="17,313,218,353"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="120,266,120,299,115,299,115,266"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="5,401,109,427"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="105,355,77,392,72,389,101,352"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="134,401,221,427"/>
+<area shape="poly" id="edge6_Node000005_Node000007" title=" " alt="" coords="134,352,162,389,158,392,130,355"/>
+</map>

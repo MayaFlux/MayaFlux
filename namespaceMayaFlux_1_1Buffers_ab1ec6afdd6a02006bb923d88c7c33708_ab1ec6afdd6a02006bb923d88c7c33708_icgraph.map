@@ -1,0 +1,11 @@
+<map id="MayaFlux::Buffers::extract_network_gpu_data" name="MayaFlux::Buffers::extract_network_gpu_data">
+<area shape="rect" id="Node000001" title="Extract GPU geometry data from a NodeNetwork via its GraphicsOperator." alt="" coords="773,53,968,93"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1NetworkGeometryProcessor_ac6c764a77a3082815a103b602eddaf77.html#ac6c764a77a3082815a103b602eddaf77" title="BufferProcessor interface &#45; aggregates and uploads network geometry." alt="" coords="519,5,724,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="760,58,724,52,725,46,760,52"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1DescriptorBindingsProcessor_ae11e2177a6d99ff2f85d4b1f52cfff55.html#ae11e2177a6d99ff2f85d4b1f52cfff55" title=" " alt="" coords="517,84,725,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="760,92,726,98,725,93,759,87"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1DescriptorBindingsProcessor_aeb95fbc5d56f8dd9841bf1663e2eb27d.html#aeb95fbc5d56f8dd9841bf1663e2eb27d" title="Update descriptor from binding source (node, audio buffer, etc.)" alt="" coords="261,84,469,139"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="504,114,469,114,469,109,504,109"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1DescriptorBindingsProcessor_a7f3868a3f75b5b5b82dcac442b63db4b.html#a7f3868a3f75b5b5b82dcac442b63db4b" title=" " alt="" coords="5,84,213,139"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="248,114,213,114,213,109,248,109"/>
+</map>

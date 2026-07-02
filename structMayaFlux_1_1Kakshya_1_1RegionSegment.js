@@ -1,0 +1,27 @@
+var structMayaFlux_1_1Kakshya_1_1RegionSegment =
+[
+    [ "RegionSegment", "structMayaFlux_1_1Kakshya_1_1RegionSegment_a572f4eed93a5990562db451e8097f045.html#a572f4eed93a5990562db451e8097f045", null ],
+    [ "RegionSegment", "structMayaFlux_1_1Kakshya_1_1RegionSegment_afd895f6ab5d011977a29ccab0e3171ab.html#afd895f6ab5d011977a29ccab0e3171ab", null ],
+    [ "RegionSegment", "structMayaFlux_1_1Kakshya_1_1RegionSegment_a71794e6bbff15fba47ffe541e665461b.html#a71794e6bbff15fba47ffe541e665461b", null ],
+    [ "advance_position", "structMayaFlux_1_1Kakshya_1_1RegionSegment_a2e5c7734f99179daeafd246b323a141c.html#a2e5c7734f99179daeafd246b323a141c", null ],
+    [ "clear_cache", "structMayaFlux_1_1Kakshya_1_1RegionSegment_af9c90e5da928206eaeb2f22370ab4636.html#af9c90e5da928206eaeb2f22370ab4636", null ],
+    [ "contains_position", "structMayaFlux_1_1Kakshya_1_1RegionSegment_a43d98312278c3289325fe777bb008747.html#a43d98312278c3289325fe777bb008747", null ],
+    [ "get_cache_age_seconds", "structMayaFlux_1_1Kakshya_1_1RegionSegment_aa758ddbaaf8b3c418437df1895c44b2d.html#aa758ddbaaf8b3c418437df1895c44b2d", null ],
+    [ "get_processing_metadata", "structMayaFlux_1_1Kakshya_1_1RegionSegment_a6b89aeaee926d96882ba8d31bc36b3c6.html#a6b89aeaee926d96882ba8d31bc36b3c6", null ],
+    [ "get_total_elements", "structMayaFlux_1_1Kakshya_1_1RegionSegment_a4b1f6f95db006ac5486f391f1f23a957.html#a4b1f6f95db006ac5486f391f1f23a957", null ],
+    [ "is_at_end", "structMayaFlux_1_1Kakshya_1_1RegionSegment_a85396cc9b1dfa7dd052285326da1453f.html#a85396cc9b1dfa7dd052285326da1453f", null ],
+    [ "mark_active", "structMayaFlux_1_1Kakshya_1_1RegionSegment_a227988fed1ee3c714733d517061f0521.html#a227988fed1ee3c714733d517061f0521", null ],
+    [ "mark_cached", "structMayaFlux_1_1Kakshya_1_1RegionSegment_a74cd2dd8d021a52544472fac1cbbc151.html#a74cd2dd8d021a52544472fac1cbbc151", null ],
+    [ "mark_inactive", "structMayaFlux_1_1Kakshya_1_1RegionSegment_a89179aa2edc1d2eb6962b7ab0518aca2.html#a89179aa2edc1d2eb6962b7ab0518aca2", null ],
+    [ "reset_position", "structMayaFlux_1_1Kakshya_1_1RegionSegment_aef427a4b8842736eaecef0eaa7690a9d.html#aef427a4b8842736eaecef0eaa7690a9d", null ],
+    [ "set_processing_metadata", "structMayaFlux_1_1Kakshya_1_1RegionSegment_a52d26766a372388847af5ae71eb9ee11.html#a52d26766a372388847af5ae71eb9ee11", null ],
+    [ "cache", "structMayaFlux_1_1Kakshya_1_1RegionSegment_a4e9a9c5d1f08f124aaa19528af409375.html#a4e9a9c5d1f08f124aaa19528af409375", null ],
+    [ "current_position", "structMayaFlux_1_1Kakshya_1_1RegionSegment_aace329701837f5e42e86cd4779ebb436.html#aace329701837f5e42e86cd4779ebb436", null ],
+    [ "is_active", "structMayaFlux_1_1Kakshya_1_1RegionSegment_a5f8407d325ebb6a93ce6664f4ad8ffe8.html#a5f8407d325ebb6a93ce6664f4ad8ffe8", null ],
+    [ "is_cached", "structMayaFlux_1_1Kakshya_1_1RegionSegment_a205513b8c7af14f282b56c2ba3f97ead.html#a205513b8c7af14f282b56c2ba3f97ead", null ],
+    [ "offset_in_region", "structMayaFlux_1_1Kakshya_1_1RegionSegment_a60c0f61d39bb0d03e291ae264a1f4eaf.html#a60c0f61d39bb0d03e291ae264a1f4eaf", null ],
+    [ "processing_metadata", "structMayaFlux_1_1Kakshya_1_1RegionSegment_a66da6e758602bce6e76ea7a2acd6936a.html#a66da6e758602bce6e76ea7a2acd6936a", null ],
+    [ "segment_size", "structMayaFlux_1_1Kakshya_1_1RegionSegment_a809b2368f9a657a2748ceecd733f585b.html#a809b2368f9a657a2748ceecd733f585b", null ],
+    [ "source_region", "structMayaFlux_1_1Kakshya_1_1RegionSegment_a3ff9ac9f55d21c38f0499f75197998ad.html#a3ff9ac9f55d21c38f0499f75197998ad", null ],
+    [ "state", "structMayaFlux_1_1Kakshya_1_1RegionSegment_a0bb8da32e2e5677a95b4874faa31cc9e.html#a0bb8da32e2e5677a95b4874faa31cc9e", null ]
+];

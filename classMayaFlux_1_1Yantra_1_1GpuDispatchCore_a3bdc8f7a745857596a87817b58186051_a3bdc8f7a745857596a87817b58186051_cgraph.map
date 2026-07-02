@@ -1,0 +1,5 @@
+<map id="MayaFlux::Yantra::GpuDispatchCore::download_binding" name="MayaFlux::Yantra::GpuDispatchCore::download_binding">
+<area shape="rect" id="Node000001" title="Read back a specific binding into a caller&#45;provided destination." alt="" coords="5,5,231,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1GpuResourceManager_a5e56fc87b5147d2898350192d082f8bc.html#a5e56fc87b5147d2898350192d082f8bc" title=" " alt="" coords="279,5,507,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="231,23,265,23,265,28,231,28"/>
+</map>

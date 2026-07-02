@@ -1,0 +1,24 @@
+<map id="Gradient.hpp" name="Gradient.hpp">
+<area shape="rect" id="Node000001" title="Gradient and edge detection on normalised float image spans." alt="" coords="257,5,363,31"/>
+<area shape="rect" id="Node000002" href="$Gradient_8cpp.html" title=" " alt="" coords="5,79,111,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="257,37,100,81,98,76,255,32"/>
+<area shape="rect" id="Node000003" href="$Harris_8cpp.html" title=" " alt="" coords="135,79,223,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="278,40,202,81,199,76,275,35"/>
+<area shape="rect" id="Node000004" href="$OpticalFlow_8cpp.html" title=" " alt="" coords="247,79,373,104"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="313,44,313,79,307,79,307,44"/>
+<area shape="rect" id="Node000005" href="$VisionExecutor_8cpp.html" title=" " alt="" coords="302,152,446,177"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="347,36,369,54,387,78,392,98,392,118,382,152,377,151,386,117,387,98,382,80,366,57,344,40"/>
+<area shape="rect" id="Node000006" href="$VisionExecutor_8hpp.html" title="Dispatch engine for VisionSequence execution." alt="" coords="483,79,628,104"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="363,32,516,76,515,81,362,37"/>
+<area shape="poly" id="edge9_Node000006_Node000005" title=" " alt="" coords="515,111,405,154,403,149,513,106"/>
+<area shape="rect" id="Node000007" href="$ImageCVProcessor_8hpp.html" title=" " alt="" coords="470,152,641,177"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="558,118,558,152,553,152,553,118"/>
+<area shape="rect" id="Node000008" href="$VisionAnalyzer_8hpp.html" title=" " alt="" coords="665,152,811,177"/>
+<area shape="poly" id="edge7_Node000006_Node000008" title=" " alt="" coords="598,106,709,149,707,154,596,111"/>
+<area shape="rect" id="Node000010" href="$VisionProcessor_8hpp.html" title=" " alt="" coords="835,152,987,177"/>
+<area shape="poly" id="edge10_Node000006_Node000010" title=" " alt="" coords="626,104,854,149,853,155,625,109"/>
+<area shape="rect" id="Node000009" href="$VisionAnalyzer_8cpp.html" title=" " alt="" coords="665,225,811,251"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="741,191,741,225,735,225,735,191"/>
+<area shape="rect" id="Node000011" href="$VisionProcessor_8cpp.html" title=" " alt="" coords="836,225,987,251"/>
+<area shape="poly" id="edge11_Node000010_Node000011" title=" " alt="" coords="914,191,914,225,909,225,909,191"/>
+</map>

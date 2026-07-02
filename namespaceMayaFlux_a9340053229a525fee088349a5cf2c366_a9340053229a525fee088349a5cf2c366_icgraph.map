@@ -1,0 +1,5 @@
+<map id="MayaFlux::choose_mesh" name="MayaFlux::choose_mesh">
+<area shape="rect" id="Node000001" title="Present a native open&#45;file dialog filtered to 3D model formats and load the chosen file via IOManager..." alt="" coords="204,13,387,38"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Creator_a8da68fc8f85e79c5b23268301130b011.html#a8da68fc8f85e79c5b23268301130b011" title=" " alt="" coords="5,5,156,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="190,28,156,28,156,23,190,23"/>
+</map>

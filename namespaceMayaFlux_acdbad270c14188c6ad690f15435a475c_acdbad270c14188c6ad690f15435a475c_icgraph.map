@@ -1,0 +1,45 @@
+<map id="MayaFlux::get_io_manager" name="MayaFlux::get_io_manager">
+<area shape="rect" id="Node000001" title="Retrieves the global IOManager instance for file loading and buffer management." alt="" coords="575,407,773,433"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_a9406cae5639d13e90301c60223097b5e.html#a9406cae5639d13e90301c60223097b5e" title="Present a native open&#45;file dialog filtered to audio formats and load the chosen file via IOManager::l..." alt="" coords="334,19,517,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="666,394,654,329,628,242,609,196,586,150,558,108,525,70,507,57,486,47,488,42,510,52,528,66,562,104,591,148,614,194,633,240,659,328,672,393"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_acdbe8e579e7859794f2c83ebc17e6bbc.html#acdbe8e579e7859794f2c83ebc17e6bbc" title="Present a native open&#45;file dialog filtered to image formats and load the chosen file via IOManager::l..." alt="" coords="331,81,519,106"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="665,395,649,339,622,266,604,228,581,191,555,156,525,126,494,108,496,104,528,122,559,153,586,188,608,226,627,264,654,337,670,393"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_a9340053229a525fee088349a5cf2c366.html#a9340053229a525fee088349a5cf2c366" title="Present a native open&#45;file dialog filtered to 3D model formats and load the chosen file via IOManager..." alt="" coords="334,137,517,162"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="662,395,644,347,616,288,576,228,552,200,525,177,503,164,505,160,528,172,556,197,580,224,621,286,649,345,667,393"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_a486e8f5ee61e21ddb186eb7e82d5d4a3.html#a486e8f5ee61e21ddb186eb7e82d5d4a3" title="Present a native open&#45;file dialog filtered to 3D model formats and load the chosen file as a MeshNetw..." alt="" coords="334,187,517,227"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="657,397,635,362,605,320,568,277,525,241,504,229,507,224,528,236,572,273,610,316,640,359,661,394"/>
+<area shape="rect" id="Node000010" href="$namespaceMayaFlux_a1d1789231897148a72a4d3589f44bed7.html#a1d1789231897148a72a4d3589f44bed7" title="Present a native open&#45;file dialog filtered to video formats and load the chosen file via IOManager::l..." alt="" coords="334,251,517,277"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="652,399,599,344,564,315,525,290,498,279,500,274,528,286,567,310,602,340,656,395"/>
+<area shape="rect" id="Node000011" href="$namespaceMayaFlux_a36c554a7012df7e010ff0b6cea17420f.html#a36c554a7012df7e010ff0b6cea17420f" title="Construct a built SamplingPipeline from an audio file." alt="" coords="328,301,523,326"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="642,402,589,370,526,340,491,329,492,324,528,335,591,366,644,398"/>
+<area shape="rect" id="Node000013" href="$namespaceMayaFlux_a5dca32bb8cd22edc175764aeea406b3a.html#a5dca32bb8cd22edc175764aeea406b3a" title="Construct one built SamplingPipeline per channel from an audio file." alt="" coords="324,350,527,375"/>
+<area shape="poly" id="edge12_Node000001_Node000013" title=" " alt="" coords="604,407,481,378,482,373,605,402"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1Creator_ad22f7326cc92cfd7fbcb22cc6409de68.html#ad22f7326cc92cfd7fbcb22cc6409de68" title=" " alt="" coords="350,400,501,440"/>
+<area shape="poly" id="edge13_Node000001_Node000014" title=" " alt="" coords="560,423,501,423,501,417,560,417"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1Creator_a77f281127fea250a5f51c7ea96e6a562.html#a77f281127fea250a5f51c7ea96e6a562" title=" " alt="" coords="350,464,501,504"/>
+<area shape="poly" id="edge14_Node000001_Node000015" title=" " alt="" coords="611,439,502,467,500,462,610,434"/>
+<area shape="rect" id="Node000016" href="$classMayaFlux_1_1Creator_acbafcab8b5d5edaa62b033dd73d85b93.html#acbafcab8b5d5edaa62b033dd73d85b93" title=" " alt="" coords="349,528,502,568"/>
+<area shape="poly" id="edge15_Node000001_Node000016" title=" " alt="" coords="647,443,593,481,528,518,499,530,497,526,525,514,591,476,644,439"/>
+<area shape="rect" id="Node000017" href="$classMayaFlux_1_1Creator_ac3595091dadf34878aad6760080b7bbe.html#ac3595091dadf34878aad6760080b7bbe" title=" " alt="" coords="343,592,507,632"/>
+<area shape="poly" id="edge16_Node000001_Node000017" title=" " alt="" coords="659,446,606,513,569,550,528,582,505,594,503,590,525,578,566,546,602,510,655,443"/>
+<area shape="rect" id="Node000018" href="$namespaceMayaFlux_a9cc3e2fb1bbb15299ccc77dd059165c4.html#a9cc3e2fb1bbb15299ccc77dd059165c4" title=" " alt="" coords="353,656,497,696"/>
+<area shape="poly" id="edge17_Node000001_Node000018" title=" " alt="" coords="665,447,646,490,616,543,577,598,554,624,528,646,499,662,496,658,525,642,550,620,573,595,612,540,641,487,660,444"/>
+<area shape="rect" id="Node000020" href="$namespaceMayaFlux_ab9750c87f5b8b7f043e16feb0fb22c98.html#ab9750c87f5b8b7f043e16feb0fb22c98" title="Present a native save&#45;file dialog and write container to the chosen path via IOManager::write()." alt="" coords="341,721,509,746"/>
+<area shape="poly" id="edge19_Node000001_Node000020" title=" " alt="" coords="670,447,654,502,627,573,608,611,586,647,559,681,528,710,506,723,504,718,525,706,555,677,581,644,604,608,622,571,649,500,665,445"/>
+<area shape="rect" id="Node000021" href="$namespaceMayaFlux_ae1c8addb2adcbc6f147806d011c178bf.html#ae1c8addb2adcbc6f147806d011c178bf" title="Present a native save&#45;file dialog filtered to image formats and save buffer to the chosen path via IO..." alt="" coords="339,770,512,795"/>
+<area shape="poly" id="edge20_Node000001_Node000021" title=" " alt="" coords="672,447,660,511,634,596,616,641,592,685,563,725,528,761,510,772,508,768,525,757,559,722,587,682,611,639,629,594,655,509,667,446"/>
+<area shape="rect" id="Node000022" href="$namespaceMayaFlux_a389dccb14fa37e7dbbdf35d8d2af7fe2.html#a389dccb14fa37e7dbbdf35d8d2af7fe2" title="Present a native save&#45;file dialog filtered to image formats and save buffer to the chosen path via IO..." alt="" coords="339,819,512,845"/>
+<area shape="poly" id="edge21_Node000001_Node000022" title=" " alt="" coords="674,446,664,519,641,617,622,670,598,721,567,769,528,810,511,821,508,817,525,806,563,765,593,718,617,668,636,615,659,518,668,446"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Creator_a0bf7a0fff018d0f46f8ff2e62f2ead3d.html#a0bf7a0fff018d0f46f8ff2e62f2ead3d" title=" " alt="" coords="65,5,216,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="320,32,216,30,216,24,320,27"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Creator_a378ef0f88abe5494665b1b3eabb29e1d.html#a378ef0f88abe5494665b1b3eabb29e1d" title=" " alt="" coords="65,69,216,109"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="318,94,216,93,216,88,318,89"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Creator_a8da68fc8f85e79c5b23268301130b011.html#a8da68fc8f85e79c5b23268301130b011" title=" " alt="" coords="65,133,216,173"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="320,153,216,155,216,150,320,148"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Creator_a916847654e5a7c9035c3e07f4b3b5953.html#a916847654e5a7c9035c3e07f4b3b5953" title=" " alt="" coords="63,197,218,237"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="320,213,218,217,218,212,320,208"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Core_1_1BackendResourceManager_a1fe5c96d56ec273270cbd6d95450fd6c.html#a1fe5c96d56ec273270cbd6d95450fd6c" title=" " alt="" coords="5,293,276,333"/>
+<area shape="poly" id="edge11_Node000011_Node000012" title=" " alt="" coords="314,316,276,316,276,311,314,311"/>
+<area shape="rect" id="Node000019" href="$namespaceMayaFlux_a7f14af2dfe49baed8dd4aea79974e62a.html#a7f14af2dfe49baed8dd4aea79974e62a" title=" " alt="" coords="64,663,217,689"/>
+<area shape="poly" id="edge18_Node000018_Node000019" title=" " alt="" coords="340,679,218,679,218,673,340,673"/>
+</map>

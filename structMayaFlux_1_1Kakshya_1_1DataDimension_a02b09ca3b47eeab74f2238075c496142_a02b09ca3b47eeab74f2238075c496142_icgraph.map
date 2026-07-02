@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kakshya::DataDimension::spatial_2d" name="MayaFlux::Kakshya::DataDimension::spatial_2d">
+<area shape="rect" id="Node000001" title="Convenience constructor for a 2D spatial dimension." alt="" coords="537,13,736,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1VisionAnalyzer_a7f2606a889a0b1ef6393f97df0280924.html#a7f2606a889a0b1ef6393f97df0280924" title=" " alt="" coords="303,5,489,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="524,35,490,35,490,30,524,30"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1VisionAnalyzer_a6894626eb161191d2811f594d04914bd.html#a6894626eb161191d2811f594d04914bd" title="Pure virtual analysis implementation &#45; derived classes implement this." alt="" coords="5,13,255,53"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="289,35,255,35,255,30,289,30"/>
+</map>

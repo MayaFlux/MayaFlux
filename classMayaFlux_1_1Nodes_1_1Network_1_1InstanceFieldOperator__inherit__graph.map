@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::Network::InstanceFieldOperator" name="MayaFlux::Nodes::Network::InstanceFieldOperator">
+<area shape="rect" id="Node000001" title="Drives GeometrySlot transforms from stateless Kinesis fields." alt="" coords="5,461,196,781"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1InstanceOperator.html" title="Abstract base for operators that process InstanceNetwork slots." alt="" coords="5,233,196,413"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="103,427,103,461,98,461,98,427"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1NetworkOperator.html" title="Domain&#45;agnostic interpretive lens for network processing." alt="" coords="5,5,196,185"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="103,199,103,233,98,233,98,199"/>
+</map>

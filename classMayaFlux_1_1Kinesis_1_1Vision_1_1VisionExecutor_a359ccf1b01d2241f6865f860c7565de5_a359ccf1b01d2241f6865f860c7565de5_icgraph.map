@@ -1,0 +1,19 @@
+<map id="MayaFlux::Kinesis::Vision::VisionExecutor::reset" name="MayaFlux::Kinesis::Vision::VisionExecutor::reset">
+<area shape="rect" id="Node000001" title="Clear stored inter&#45;frame state." alt="" coords="236,277,403,332"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1ImageCVProcessor_af69d9fc01aefb701c7ac26b3d952b254.html#af69d9fc01aefb701c7ac26b3d952b254" title="Validate the buffer type and reset executor state." alt="" coords="13,5,181,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="302,265,285,221,260,170,227,119,186,73,171,62,175,58,190,69,231,115,264,168,290,219,307,263"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1VisionProcessor_a5cebcf32c74ebe3f096ffc93b97b7be7.html#a5cebcf32c74ebe3f096ffc93b97b7be7" title="Cache frame geometry from get_structure()." alt="" coords="17,84,176,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="291,267,246,209,218,179,186,152,169,141,172,137,190,148,221,175,250,205,295,264"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1ImageCVProcessor_a7bd52ed990ee575e7594d186c87c9f5e.html#a7bd52ed990ee575e7594d186c87c9f5e" title="Clear state and reset executor." alt="" coords="13,163,181,217"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="261,273,187,231,163,220,165,215,189,226,264,268"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1VisionProcessor_aac378033868c8fca3fec1e8cbc3aaa72.html#aac378033868c8fca3fec1e8cbc3aaa72" title="Clear cached geometry and reset executor state." alt="" coords="17,241,176,296"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="222,292,176,284,177,279,223,286"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Yantra_1_1VisionAnalyzer_a4a3cdfc88c5b0d23bcdc9e380568540a.html#a4a3cdfc88c5b0d23bcdc9e380568540a" title="Clear stored optical flow state." alt="" coords="5,321,188,361"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="223,323,188,329,188,323,222,318"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1ImageCVProcessor_adba1f74cc4f5136f01ffc354a155e7be.html#adba1f74cc4f5136f01ffc354a155e7be" title="Replace the pipeline and reset inter&#45;frame executor state." alt="" coords="11,385,183,440"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="256,341,189,375,162,388,160,383,187,370,254,336"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Kakshya_1_1VisionProcessor_ab4d9aa3e2b1a6d2cb8691ea10974f73c.html#ab4d9aa3e2b1a6d2cb8691ea10974f73c" title="Replace the pipeline and reset inter&#45;frame executor state." alt="" coords="17,464,176,519"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="293,345,248,400,220,428,190,453,169,466,167,462,186,449,216,424,244,396,289,341"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Yantra_1_1VisionAnalyzer_a713145c05ca2d432a46c47bcb04ddd58.html#a713145c05ca2d432a46c47bcb04ddd58" title="Replace the pipeline and reset inter&#45;frame executor state." alt="" coords="5,543,188,583"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="307,346,289,390,264,439,231,489,190,532,169,546,166,541,186,528,226,485,259,436,284,387,302,344"/>
+</map>

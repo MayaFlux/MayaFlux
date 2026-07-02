@@ -1,0 +1,7 @@
+<map id="MayaFlux::Core::VKContext::destroy_surface" name="MayaFlux::Core::VKContext::destroy_surface">
+<area shape="rect" id="Node000001" title="Destroy a specific surface Called when window is unregistered." alt="" coords="292,37,492,77"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Core_1_1WindowRenderContext_ab15a8ec6c660b65ebe3e2a0fc8094585.html#ab15a8ec6c660b65ebe3e2a0fc8094585" title=" " alt="" coords="9,5,240,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="278,46,240,42,241,37,279,41"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1BackendWindowHandler_a2179912b3470858a70a12e7a94691a1f.html#a2179912b3470858a70a12e7a94691a1f" title=" " alt="" coords="5,69,244,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="279,74,244,78,244,72,278,68"/>
+</map>

@@ -1,0 +1,9 @@
+<map id="MayaFlux::Core::BackendResourceManager::record_deferred_commands" name="MayaFlux::Core::BackendResourceManager::record_deferred_commands">
+<area shape="rect" id="Node000001" title="Record deferred command recording for buffer operations." alt="" coords="5,13,275,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1VKCommandManager_a260142fccb73a3e08f3138cc6b05850e.html#a260142fccb73a3e08f3138cc6b05850e" title="Record deferred commands for later submission." alt="" coords="323,5,539,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="275,30,309,30,309,35,275,35"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1VKCommandManager_a8e859b77baae66a4cad3578d2a863f76.html#a8e859b77baae66a4cad3578d2a863f76" title="Begin single&#45;time command (for transfers, etc.)" alt="" coords="587,5,803,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="539,30,573,30,573,35,539,35"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1VKCommandManager_ab25f2104b7f013fca0c7876ade0632b5.html#ab25f2104b7f013fca0c7876ade0632b5" title="Allocate a command buffer with specified level." alt="" coords="851,13,1107,53"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="803,30,837,30,837,35,803,35"/>
+</map>

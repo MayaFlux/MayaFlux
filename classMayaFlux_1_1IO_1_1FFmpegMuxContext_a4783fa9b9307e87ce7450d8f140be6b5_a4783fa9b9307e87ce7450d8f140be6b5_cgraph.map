@@ -1,0 +1,13 @@
+<map id="MayaFlux::IO::FFmpegMuxContext::open" name="MayaFlux::IO::FFmpegMuxContext::open">
+<area shape="rect" id="Node000001" title="Allocate an output context and open the avio layer for writing." alt="" coords="5,69,253,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1FFmpegMuxContext_a81f6c081e70f3ae170a1ce0ba77c546b.html#a81f6c081e70f3ae170a1ce0ba77c546b" title="Write the container trailer, flush avio, and release all resources." alt="" coords="301,5,549,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="222,67,318,46,320,51,223,72"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1FFmpegDemuxContext_a8ea9c7c404909356ac05d7aa28270c3e.html#a8ea9c7c404909356ac05d7aa28270c3e" title="Initialise FFmpeg logging level once per process." alt="" coords="317,69,533,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="253,87,303,87,303,92,253,92"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1IO_aebbe2b023d66faf2ca36cef8e2ae4d2a.html#aebbe2b023d66faf2ca36cef8e2ae4d2a" title="Anchor a relative output path to Config::SOURCE_DIR." alt="" coords="343,133,507,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="223,107,330,130,329,135,222,112"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_ac8ded33a4e354a3259e25ea984c19053.html#ac8ded33a4e354a3259e25ea984c19053" title="Normalize single&#45;channel data (non&#45;destructive)" alt="" coords="597,141,764,166"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="508,151,583,151,583,156,508,156"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a5de3d13e1b9ceb59d3acb04361e2a5e5.html#a5de3d13e1b9ceb59d3acb04361e2a5e5" title="Normalize to [target_min, target_max] in&#45;place Single&#45;pass min/max reduction followed by a single tra..." alt="" coords="812,133,961,173"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="764,151,798,151,798,156,764,156"/>
+</map>

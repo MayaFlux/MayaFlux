@@ -1,0 +1,6 @@
+<map id="MayaFlux::Vruta::TaskScheduler::cancel_task" name="MayaFlux::Vruta::TaskScheduler::cancel_task">
+<area shape="rect" id="Node000001" title="Cancels and removes a task from the scheduler." alt="" coords="5,29,236,69"/>
+<area shape="poly" id="edge1_Node000001_Node000001" title=" " alt="" coords="69,30,66,20,75,10,93,5,121,3,153,5,170,13,168,18,151,11,121,8,94,10,77,15,71,21,74,28"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_afb823dfb8ca7ec5182cfaa8e3ee93649.html#afb823dfb8ca7ec5182cfaa8e3ee93649" title="Find task entry by routine pointer." alt="" coords="284,29,515,69"/>
+<area shape="poly" id="edge2_Node000001_Node000002" title=" " alt="" coords="236,47,270,47,270,52,236,52"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::Discrete::exponential" name="MayaFlux::Kinesis::Discrete::exponential">
+<area shape="rect" id="Node000001" title="Exponential map y = a * base^(b*x) applied in&#45;place Scalar transcendental — not SIMD hot&#45;path." alt="" coords="336,5,497,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1MathematicalTransformer_a6e33d648c252e4cff7c42a3d50779efb.html#a6e33d648c252e4cff7c42a3d50779efb" title="Core transformation implementation." alt="" coords="5,5,288,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="323,28,288,28,288,23,323,23"/>
+</map>

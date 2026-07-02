@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kinesis::AABB2D::from_ndc" name="MayaFlux::Kinesis::AABB2D::from_ndc">
+<area shape="rect" id="Node000001" title=" " alt="" coords="235,69,384,109"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_a4f2f4fb6414ec5070985ecd0834d143d.html#a4f2f4fb6414ec5070985ecd0834d143d" title="Geometry function for a crosshair indicator in NDC space." alt="" coords="5,5,187,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="228,68,162,48,164,43,229,63"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_a18141cf209fa12ba32c3027de9a6256f.html#a18141cf209fa12ba32c3027de9a6256f" title="Geometry function for a positioned point in NDC space." alt="" coords="5,69,187,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="221,92,187,92,187,87,221,87"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_a74d7b915c22c558bc5175284bc9dc811.html#a74d7b915c22c558bc5175284bc9dc811" title="Geometry function for a radial indicator in NDC space." alt="" coords="5,133,187,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="229,116,164,136,162,131,228,111"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Yantra::StatisticalAnalyzer::get_statistical_analysis" name="MayaFlux::Yantra::StatisticalAnalyzer::get_statistical_analysis">
+<area shape="rect" id="Node000001" title="Get last statistical analysis result (type&#45;safe)" alt="" coords="5,5,212,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1UniversalAnalyzer_a1419ca2f81544fa0c4e223730aaea180.html#a1419ca2f81544fa0c4e223730aaea180" title="Access cached analysis from last operation." alt="" coords="260,13,483,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="212,30,246,30,246,35,212,35"/>
+</map>

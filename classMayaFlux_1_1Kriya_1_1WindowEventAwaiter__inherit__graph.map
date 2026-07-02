@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kriya::WindowEventAwaiter" name="MayaFlux::Kriya::WindowEventAwaiter">
+<area shape="rect" id="Node000001" title="Awaiter for suspending on GLFW window input events with optional filtering." alt="" coords="5,279,223,599"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kriya_1_1EventAwaiter.html" title="Abstract base for all event&#45;driven awaiters." alt="" coords="7,5,221,231"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="117,244,117,278,111,278,111,244"/>
+</map>

@@ -1,0 +1,38 @@
+<map id="MayaFlux::Kakshya::DynamicSoundStream::enable_circular_buffer" name="MayaFlux::Kakshya::DynamicSoundStream::enable_circular_buffer">
+<area shape="rect" id="Node000001" title="Enable circular buffer mode with fixed capacity." alt="" coords="5,387,180,441"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1DynamicSoundStream_aa4e4316022347f61b6ff80925a636ac4.html#aa4e4316022347f61b6ff80925a636ac4" title="Pre&#45;allocate capacity for the specified number of frames." alt="" coords="228,237,403,292"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="133,384,261,297,264,302,136,389"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_aa614dad97adb83d9b5e5b10e839e033c.html#aa614dad97adb83d9b5e5b10e839e033c" title=" " alt="" coords="905,280,1077,335"/>
+<area shape="poly" id="edge15_Node000001_Node000008" title=" " alt="" coords="180,401,891,316,892,322,181,406"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_adab595bb0b0f3acc2900e680a4d0ad63.html#adab595bb0b0f3acc2900e680a4d0ad63" title="Set the loop region using a Region." alt="" coords="229,419,401,473"/>
+<area shape="poly" id="edge16_Node000001_Node000012" title=" " alt="" coords="181,424,216,429,215,434,180,429"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_a1c63bd4249d63fc2ba58568bedf63ebc.html#a1c63bd4249d63fc2ba58568bedf63ebc" title="Enable or disable looping behavior for the stream." alt="" coords="229,497,401,552"/>
+<area shape="poly" id="edge19_Node000001_Node000015" title=" " alt="" coords="146,439,229,482,243,489,241,494,227,487,143,444"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1DynamicSoundStream_a76f02825c588ece2a442fa91655dd672.html#a76f02825c588ece2a442fa91655dd672" title=" " alt="" coords="451,187,625,241"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="402,242,437,234,438,239,404,247"/>
+<area shape="poly" id="edge13_Node000002_Node000008" title=" " alt="" coords="403,270,674,290,892,301,892,306,673,295,403,275"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_a2198982176e99651ef683458877dd741.html#a2198982176e99651ef683458877dd741" title="Get the total number of elements in the container." alt="" coords="679,5,851,60"/>
+<area shape="poly" id="edge14_Node000002_Node000009" title=" " alt="" coords="352,235,449,172,510,139,559,117,672,69,685,63,687,68,674,74,561,122,513,144,452,176,355,239"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1DynamicSoundStream_a6ee56fd9b5665418b0968ddb46ee17c7.html#a6ee56fd9b5665418b0968ddb46ee17c7" title=" " alt="" coords="677,187,852,241"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="626,211,664,211,664,217,626,217"/>
+<area shape="poly" id="edge8_Node000003_Node000008" title=" " alt="" coords="626,238,674,250,787,273,892,291,891,296,786,278,673,255,625,243"/>
+<area shape="poly" id="edge9_Node000003_Node000009" title=" " alt="" coords="557,185,606,128,637,97,672,69,678,65,681,69,675,73,641,101,610,131,561,188"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Kakshya_1_1DynamicSoundStream_ab6699b2bd18a8cce7d242a4b7bc27c8a.html#ab6699b2bd18a8cce7d242a4b7bc27c8a" title=" " alt="" coords="677,108,852,163"/>
+<area shape="poly" id="edge11_Node000003_Node000011" title=" " alt="" coords="617,184,671,165,673,170,619,189"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kakshya_a446e512dc040ea0ab603d860100224a8.html#a446e512dc040ea0ab603d860100224a8" title="Get typed span from DataVariant using concepts." alt="" coords="912,194,1071,234"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="853,211,898,211,898,217,853,217"/>
+<area shape="poly" id="edge7_Node000004_Node000008" title=" " alt="" coords="833,239,913,272,911,277,831,244"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Kakshya_ab16b9c38ab1e261f3f3e1d058c841d85.html#ab16b9c38ab1e261f3f3e1d058c841d85" title="Convert a span of one data type to another (with type conversion)." alt="" coords="1127,194,1285,234"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="1071,211,1113,211,1113,217,1071,217"/>
+<area shape="rect" id="Node000007" href="$structMayaFlux_1_1Kakshya_1_1DataConverter_a5ada60bc3ff099a631f9a979e89feb19.html#a5ada60bc3ff099a631f9a979e89feb19" title=" " alt="" coords="1333,194,1508,234"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="1286,211,1320,211,1320,217,1286,217"/>
+<area shape="rect" id="Node000010" href="$structMayaFlux_1_1Kakshya_1_1ContainerDataStructure_ab431dba6cb69464326e81fe5e4bf83b0.html#ab431dba6cb69464326e81fe5e4bf83b0" title="Get total elements across all dimensions." alt="" coords="904,5,1079,60"/>
+<area shape="poly" id="edge10_Node000009_Node000010" title=" " alt="" coords="851,30,890,30,890,35,851,35"/>
+<area shape="poly" id="edge12_Node000011_Node000011" title=" " alt="" coords="720,108,721,98,729,89,743,83,765,81,790,84,805,92,802,97,789,90,765,87,744,89,732,93,726,100,726,108"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_a669a80f06f304c8ac1c8139c409f2731.html#a669a80f06f304c8ac1c8139c409f2731" title="Set the current read position in the primary temporal dimension per channel." alt="" coords="452,419,624,473"/>
+<area shape="poly" id="edge17_Node000012_Node000013" title=" " alt="" coords="402,443,438,443,438,449,402,449"/>
+<area shape="rect" id="Node000014" href="$namespaceMayaFlux_1_1Kakshya_ad71d9cdc381afef072b00776b5ebf7a7.html#ad71d9cdc381afef072b00776b5ebf7a7" title="Wrap a position within loop boundaries if looping is enabled." alt="" coords="673,426,856,466"/>
+<area shape="poly" id="edge18_Node000013_Node000014" title=" " alt="" coords="624,443,660,443,660,449,624,449"/>
+<area shape="rect" id="Node000016" href="$structMayaFlux_1_1Kakshya_1_1Region_a1b041dac695640864ce6456f0815df4c.html#a1b041dac695640864ce6456f0815df4c" title="Create a Region representing a time span (e.g., a segment of frames)." alt="" coords="459,505,617,545"/>
+<area shape="poly" id="edge20_Node000015_Node000016" title=" " alt="" coords="402,522,445,522,445,527,402,527"/>
+</map>

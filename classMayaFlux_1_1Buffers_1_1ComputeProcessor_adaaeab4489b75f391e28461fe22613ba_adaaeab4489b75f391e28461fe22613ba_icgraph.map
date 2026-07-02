@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::ComputeProcessor::set_manual_dispatch" name="MayaFlux::Buffers::ComputeProcessor::set_manual_dispatch">
+<area shape="rect" id="Node000001" title="Set manual dispatch group counts." alt="" coords="260,45,432,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1SDFMeshProcessor_a5b15461ec59043b64861f543b2748bf6.html#a5b15461ec59043b64861f543b2748bf6" title="Called before each process callback." alt="" coords="23,5,194,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="246,59,194,50,195,44,247,53"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1SDFFieldProcessor_a2d12e9b581c7a74c7998f7e7c172060b.html#a2d12e9b581c7a74c7998f7e7c172060b" title=" " alt="" coords="5,84,212,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="247,91,213,97,212,92,246,86"/>
+</map>

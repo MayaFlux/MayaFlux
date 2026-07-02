@@ -1,0 +1,27 @@
+<map id="MayaFlux::Kakshya::VertexLayout::for_points" name="MayaFlux::Kakshya::VertexLayout::for_points">
+<area shape="rect" id="Node000001" title="Factory: layout for PointVertex (position, color, size, uv, normal, tangent)" alt="" coords="917,269,1099,309"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kakshya_a562ff192477ad177d1466c4bfd6abf96.html#a562ff192477ad177d1466c4bfd6abf96" title="Assemble point&#45;vertex&#45;compatible bytes from one or more data channels." alt="" coords="659,41,836,81"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="990,258,971,220,944,176,909,132,868,96,835,79,838,74,871,91,913,129,948,173,975,217,995,255"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1FormaProcessor_a401c2e721b9e5b01e0b458e856b87268.html#a401c2e721b9e5b01e0b458e856b87268" title=" " alt="" coords="628,105,867,145"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="981,261,932,208,901,182,868,160,842,148,845,143,871,155,905,178,936,205,985,257"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Nodes_1_1Network_1_1FieldOperator_a72f536e0dec68e5cb9d20eea3a5a5ef6.html#a72f536e0dec68e5cb9d20eea3a5a5ef6" title="Get vertex layout describing vertex structure." alt="" coords="625,169,869,209"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="958,265,868,224,832,212,834,207,870,219,960,260"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Buffers_1_1FormaProcessor_af52e83f359c4f12c30576e8fe3c42587.html#af52e83f359c4f12c30576e8fe3c42587" title="Called when this processor is attached to a buffer." alt="" coords="648,233,847,273"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="903,278,846,270,847,264,904,272"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Buffers_1_1DataWriteProcessor_aca8cf954a0c10aad3ed46ee95c2705d2.html#aca8cf954a0c10aad3ed46ee95c2705d2" title="Called when this processor is attached to a buffer." alt="" coords="668,298,827,353"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="904,306,827,317,826,312,904,301"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1PointCollectionNode_a6529267bb12caf59f4e93c3a82e62c00.html#a6529267bb12caf59f4e93c3a82e62c00" title="Create empty point source." alt="" coords="647,377,847,431"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="964,319,870,368,842,379,840,374,868,363,962,314"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1PointCollectionNode_a39a470fe14b0ebdf43cc45f4820b2ec7.html#a39a470fe14b0ebdf43cc45f4820b2ec7" title="Create with initial points." alt="" coords="647,455,847,510"/>
+<area shape="poly" id="edge11_Node000001_Node000012" title=" " alt="" coords="988,323,940,385,907,418,871,446,849,458,846,454,868,442,904,414,936,382,984,319"/>
+<area shape="rect" id="Node000013" href="$namespaceMayaFlux_1_1Kakshya_a669ad32b77cbaaba65566c05bfb277c3.html#a669ad32b77cbaaba65566c05bfb277c3" title="Deduce a VertexLayout from a vertex struct type." alt="" coords="668,535,827,575"/>
+<area shape="poly" id="edge12_Node000001_Node000013" title=" " alt="" coords="999,323,981,369,954,424,918,478,896,503,871,525,850,537,828,546,826,541,848,532,868,521,892,499,914,475,950,421,976,367,994,322"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kakshya_af93f8cc09a86b4c3e1d44bcdeacef34c.html#af93f8cc09a86b4c3e1d44bcdeacef34c" title="Extract a VertexAccess from a DataVariant." alt="" coords="419,5,577,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="644,49,577,39,578,34,645,44"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1DataWriteProcessor_aac28897a400f6ff216a91d90937043a5.html#aac28897a400f6ff216a91d90937043a5" title=" " alt="" coords="419,70,577,125"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="645,79,578,89,577,83,644,73"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1DataWriteProcessor_aef00e0d69e0b2afcdf9cd0c1a7b6a3f5.html#aef00e0d69e0b2afcdf9cd0c1a7b6a3f5" title=" " alt="" coords="212,70,371,125"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="405,100,371,100,371,95,405,95"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1DataWriteProcessor_a18dd4906836ca9a87f85379c327156e2.html#a18dd4906836ca9a87f85379c327156e2" title="The core processing function that must be implemented by derived classes." alt="" coords="5,70,164,125"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="198,100,164,100,164,95,198,95"/>
+</map>

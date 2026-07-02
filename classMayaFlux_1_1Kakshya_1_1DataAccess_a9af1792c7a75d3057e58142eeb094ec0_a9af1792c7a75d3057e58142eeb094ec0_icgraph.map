@@ -1,0 +1,13 @@
+<map id="MayaFlux::Kakshya::DataAccess::view" name="MayaFlux::Kakshya::DataAccess::view">
+<area shape="rect" id="Node000001" title="Get explicit typed view of data." alt="" coords="756,77,915,117"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Buffers_a7dbb34a80a731e87a2c34d293aaf691c.html#a7dbb34a80a731e87a2c34d293aaf691c" title="Download GPU buffer to AudioBuffer (expects double precision)" alt="" coords="511,13,708,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="750,75,680,55,681,50,751,70"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Buffers_ab91dc7fea50f8badadc42ab1cea40a06.html#ab91dc7fea50f8badadc42ab1cea40a06" title="Upload data from DataAccess view to GPU buffer (precision&#45;preserving)" alt="" coords="535,77,683,117"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="742,99,683,99,683,94,742,94"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Buffers_a269e2e2fe557f37f522dedeec5837da4.html#a269e2e2fe557f37f522dedeec5837da4" title="Upload structured data with GLM double&#45;precision types." alt="" coords="521,141,698,181"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="751,123,681,143,680,138,750,118"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1TransferProcessor_a9df8346f192d67c6c0f7f61ee19dfc56.html#a9df8346f192d67c6c0f7f61ee19dfc56" title=" " alt="" coords="268,5,463,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="497,35,463,35,463,30,497,30"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1TransferProcessor_a1aa8adc7dc5d176a81893bf932cb493f.html#a1aa8adc7dc5d176a81893bf932cb493f" title="The core processing function that must be implemented by derived classes." alt="" coords="5,5,220,60"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="254,35,220,35,220,30,254,30"/>
+</map>

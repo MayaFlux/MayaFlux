@@ -1,0 +1,26 @@
+var classMayaFlux_1_1Nodes_1_1GpuSync_1_1GpuComputeNode =
+[
+    [ "GpuComputeNode", "classMayaFlux_1_1Nodes_1_1GpuSync_1_1GpuComputeNode_a376d58d9959c500cf287d223202fc794.html#a376d58d9959c500cf287d223202fc794", null ],
+    [ "~GpuComputeNode", "classMayaFlux_1_1Nodes_1_1GpuSync_1_1GpuComputeNode_a631a07f4d2d40a7ac2b6426d0003bfca.html#a631a07f4d2d40a7ac2b6426d0003bfca", null ],
+    [ "clear_gpu_update_flag", "classMayaFlux_1_1Nodes_1_1GpuSync_1_1GpuComputeNode_ad91b13cfdc1cd0ce0ef216b717500ca3.html#ad91b13cfdc1cd0ce0ef216b717500ca3", null ],
+    [ "compute_frame", "classMayaFlux_1_1Nodes_1_1GpuSync_1_1GpuComputeNode_ac45f63b783a4c9fe0e47d2d2968b7d2d.html#ac45f63b783a4c9fe0e47d2d2968b7d2d", null ],
+    [ "get_last_context", "classMayaFlux_1_1Nodes_1_1GpuSync_1_1GpuComputeNode_a967c079c5a0f3f5e8d3b7610603647eb.html#a967c079c5a0f3f5e8d3b7610603647eb", null ],
+    [ "is_pending", "classMayaFlux_1_1Nodes_1_1GpuSync_1_1GpuComputeNode_a454d608cea941abad0c17f97c6dd3dd2.html#a454d608cea941abad0c17f97c6dd3dd2", null ],
+    [ "is_ready", "classMayaFlux_1_1Nodes_1_1GpuSync_1_1GpuComputeNode_aba027e8e8f5e6bcbc2cb1a0ad0a2c680.html#aba027e8e8f5e6bcbc2cb1a0ad0a2c680", null ],
+    [ "needs_gpu_update", "classMayaFlux_1_1Nodes_1_1GpuSync_1_1GpuComputeNode_af4942276ff4dc6e9e9adb33ca4aa4d5f.html#af4942276ff4dc6e9e9adb33ca4aa4d5f", null ],
+    [ "notify_tick", "classMayaFlux_1_1Nodes_1_1GpuSync_1_1GpuComputeNode_ad2ab5112794abfc426639f331f749747.html#ad2ab5112794abfc426639f331f749747", null ],
+    [ "on_complete", "classMayaFlux_1_1Nodes_1_1GpuSync_1_1GpuComputeNode_a90f30fd1911e8fde844ac09dc5f7caab.html#a90f30fd1911e8fde844ac09dc5f7caab", null ],
+    [ "remove_complete_hook", "classMayaFlux_1_1Nodes_1_1GpuSync_1_1GpuComputeNode_a2bf62459a76c1bbd095da0a7a39a0fcc.html#a2bf62459a76c1bbd095da0a7a39a0fcc", null ],
+    [ "restore_state", "classMayaFlux_1_1Nodes_1_1GpuSync_1_1GpuComputeNode_a14b752e548b1071936ec62b0e052b778.html#a14b752e548b1071936ec62b0e052b778", null ],
+    [ "save_state", "classMayaFlux_1_1Nodes_1_1GpuSync_1_1GpuComputeNode_a7ae6006f82ec6d2903afb6d5a172dd60.html#a7ae6006f82ec6d2903afb6d5a172dd60", null ],
+    [ "set_dirty", "classMayaFlux_1_1Nodes_1_1GpuSync_1_1GpuComputeNode_a12131e31ffb16d63b75ec9c723c4ccea.html#a12131e31ffb16d63b75ec9c723c4ccea", null ],
+    [ "update_context", "classMayaFlux_1_1Nodes_1_1GpuSync_1_1GpuComputeNode_adf52c667a12a86d027fbc2da6525200b.html#adf52c667a12a86d027fbc2da6525200b", null ],
+    [ "m_complete_callbacks", "classMayaFlux_1_1Nodes_1_1GpuSync_1_1GpuComputeNode_adeb83d03d6219041cb5d0d0141dfcf04.html#adeb83d03d6219041cb5d0d0141dfcf04", null ],
+    [ "m_context_storage", "classMayaFlux_1_1Nodes_1_1GpuSync_1_1GpuComputeNode_a6f5e03b3e8af8929a73c47926ee7b06d.html#a6f5e03b3e8af8929a73c47926ee7b06d", null ],
+    [ "m_continuous", "classMayaFlux_1_1Nodes_1_1GpuSync_1_1GpuComputeNode_a1592029e981390038bf311eda5a23619.html#a1592029e981390038bf311eda5a23619", null ],
+    [ "m_dirty", "classMayaFlux_1_1Nodes_1_1GpuSync_1_1GpuComputeNode_a69500a6b199c4ffeb0f21b39069beac5.html#a69500a6b199c4ffeb0f21b39069beac5", null ],
+    [ "m_executor", "classMayaFlux_1_1Nodes_1_1GpuSync_1_1GpuComputeNode_a104bea3dbc55693dd0b94f54e4e47925.html#a104bea3dbc55693dd0b94f54e4e47925", null ],
+    [ "m_last_result", "classMayaFlux_1_1Nodes_1_1GpuSync_1_1GpuComputeNode_a2b4616079d59ee5325fd17cfd0098a61.html#a2b4616079d59ee5325fd17cfd0098a61", null ],
+    [ "m_pending_fence", "classMayaFlux_1_1Nodes_1_1GpuSync_1_1GpuComputeNode_ac237cd1a4e344d6d8a972e5175bbfc37.html#ac237cd1a4e344d6d8a972e5175bbfc37", null ],
+    [ "m_ready", "classMayaFlux_1_1Nodes_1_1GpuSync_1_1GpuComputeNode_a622267e5997fea0b24c120beb980dfe0.html#a622267e5997fea0b24c120beb980dfe0", null ]
+];

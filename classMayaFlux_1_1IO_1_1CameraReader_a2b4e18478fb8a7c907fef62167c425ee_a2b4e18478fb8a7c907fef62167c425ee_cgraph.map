@@ -1,0 +1,11 @@
+<map id="MayaFlux::IO::CameraReader::set_container" name="MayaFlux::IO::CameraReader::set_container">
+<area shape="rect" id="Node000001" title="Store a weak reference to the container for IOService dispatch." alt="" coords="5,37,219,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1CameraReader_a29d5e39abb4d964890768a1417f1d7a0.html#a29d5e39abb4d964890768a1417f1d7a0" title=" " alt="" coords="267,37,480,77"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="219,55,253,55,253,60,219,60"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1CameraReader_acd2e39cd757265017806bdd387e73be6.html#acd2e39cd757265017806bdd387e73be6" title=" " alt="" coords="528,5,741,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="480,42,514,37,515,43,481,47"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1IO_1_1CameraReader_ae5520e3cfd342a1da5ef8ec3f4a2e0f5.html#ae5520e3cfd342a1da5ef8ec3f4a2e0f5" title=" " alt="" coords="528,69,741,109"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="481,68,515,72,514,77,480,73"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1CameraReader_aceb647a569e2f50e85db159deb71464d.html#aceb647a569e2f50e85db159deb71464d" title="Decode one frame from the device into the container&#39;s m_data[0]." alt="" coords="789,5,1003,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="742,23,775,23,775,28,742,28"/>
+</map>

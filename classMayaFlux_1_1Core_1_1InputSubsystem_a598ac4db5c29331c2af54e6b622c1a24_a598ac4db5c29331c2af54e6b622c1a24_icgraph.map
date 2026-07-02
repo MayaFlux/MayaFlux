@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::InputSubsystem::get_midi_devices" name="MayaFlux::Core::InputSubsystem::get_midi_devices">
+<area shape="rect" id="Node000001" title="Get all MIDI devices." alt="" coords="204,5,441,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_a09cf231cd5db74158008fd748e5d670d.html#a09cf231cd5db74158008fd748e5d670d" title="Get a list of connected MIDI devices." alt="" coords="5,5,156,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="190,28,157,28,157,23,190,23"/>
+</map>

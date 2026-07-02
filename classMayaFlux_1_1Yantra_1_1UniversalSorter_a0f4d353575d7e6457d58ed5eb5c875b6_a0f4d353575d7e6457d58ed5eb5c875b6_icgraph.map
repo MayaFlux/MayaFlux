@@ -1,0 +1,7 @@
+<map id="MayaFlux::Yantra::UniversalSorter::organize_into_groups" name="MayaFlux::Yantra::UniversalSorter::organize_into_groups">
+<area shape="rect" id="Node000001" title="Organize results into hierarchical groups (override for custom grouping)" alt="" coords="509,13,717,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1UniversalSorter_a337dd62431974606d8c4aa24d483bfb2.html#a337dd62431974606d8c4aa24d483bfb2" title="Apply granularity&#45;based output formatting." alt="" coords="257,5,461,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="496,35,461,35,461,30,496,30"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1UniversalSorter_aa5089c6b4964c3e22584acb413b331b2.html#aa5089c6b4964c3e22584acb413b331b2" title="Core operation implementation &#45; called by ComputeOperation interface." alt="" coords="5,13,209,53"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="244,35,210,35,210,30,244,30"/>
+</map>

@@ -1,0 +1,13 @@
+<map id="MayaFlux::Core::VKShaderModule::reflect_spirv" name="MayaFlux::Core::VKShaderModule::reflect_spirv">
+<area shape="rect" id="Node000001" title="Perform reflection on SPIR&#45;V bytecode." alt="" coords="791,69,985,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1VKShaderModule_a547d3afa17397c3b9ba00ca3c9365b3a.html#a547d3afa17397c3b9ba00ca3c9365b3a" title="Create shader module from SPIR&#45;V binary." alt="" coords="547,69,743,109"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="777,92,743,92,743,87,777,87"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1VKShaderModule_a2e97ca8110a506203fb1319d9bab4009.html#a2e97ca8110a506203fb1319d9bab4009" title="Create shader module from GLSL source string." alt="" coords="286,5,481,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="548,69,465,48,466,43,550,63"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Core_1_1VKShaderModule_a8ecd930a4c2dc182dd8c8351424ce55f.html#a8ecd930a4c2dc182dd8c8351424ce55f" title="Create shader module from SPIR&#45;V assembly text." alt="" coords="268,69,499,109"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="533,92,499,92,499,87,533,87"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Core_1_1VKShaderModule_a77fa0fbf0086facdad539470581c844d.html#a77fa0fbf0086facdad539470581c844d" title="Create shader module from SPIR&#45;V file." alt="" coords="272,133,495,173"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="550,115,466,136,465,131,548,110"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1VKShaderModule_a2ddceda97cc3410a6ff63b5d5356264b.html#a2ddceda97cc3410a6ff63b5d5356264b" title="Create shader module from GLSL file." alt="" coords="5,5,220,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="272,28,220,28,220,23,272,23"/>
+</map>

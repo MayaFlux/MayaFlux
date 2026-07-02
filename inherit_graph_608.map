@@ -1,0 +1,41 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="Node000000" title=" " alt="" coords="5,728,117,753"/>
+<area shape="rect" id="Node000001" href="$structMayaFlux_1_1Kakshya_1_1is__data__variant__element_3_01double_01_4.html" title="high precision floating point data (double) (audio)" alt="" coords="209,5,392,60"/>
+<area shape="poly" id="edge278_Node000000_Node000001" title=" " alt="" coords="60,714,65,580,80,388,93,288,111,197,134,122,148,92,163,70,184,52,208,41,210,46,187,57,167,73,152,95,139,124,116,198,98,289,85,388,70,581,66,714"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kakshya_1_1is__data__variant__element_3_01float_01_4.html" title="standard precision floating point data (float) (params)" alt="" coords="209,84,392,139"/>
+<area shape="poly" id="edge279_Node000000_Node000002" title=" " alt="" coords="61,714,68,594,85,425,98,338,115,259,137,193,149,168,163,148,184,131,208,120,210,125,187,136,167,152,154,171,142,196,120,260,103,339,90,426,73,595,66,714"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kakshya_1_1is__data__variant__element_3_01glm_1_1mat4_01_4.html" title="4x4 matrix data (glm::mat4)" alt="" coords="209,163,392,217"/>
+<area shape="poly" id="edge280_Node000000_Node000003" title=" " alt="" coords="62,714,71,608,90,463,103,389,120,321,140,265,163,227,184,210,208,199,210,204,187,215,167,230,145,268,125,323,108,390,95,464,76,609,67,714"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Kakshya_1_1is__data__variant__element_3_01glm_1_1vec2_01_4.html" title="2D vector data (glm::vec2)" alt="" coords="209,241,392,296"/>
+<area shape="poly" id="edge281_Node000000_Node000004" title=" " alt="" coords="63,714,74,623,95,501,124,383,143,337,163,306,184,289,208,278,210,283,187,294,167,309,147,340,130,385,100,502,80,623,68,714"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Kakshya_1_1is__data__variant__element_3_01glm_1_1vec3_01_4.html" title="3D vector data (glm::vec3)" alt="" coords="209,320,392,375"/>
+<area shape="poly" id="edge282_Node000000_Node000005" title=" " alt="" coords="60,714,63,648,77,560,90,512,108,466,132,422,163,384,184,368,208,357,210,362,187,373,167,388,137,425,113,468,95,514,82,561,68,649,65,714"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Kakshya_1_1is__data__variant__element_3_01glm_1_1vec4_01_4.html" title="4D vector data (glm::vec4)" alt="" coords="209,399,392,453"/>
+<area shape="poly" id="edge283_Node000000_Node000006" title=" " alt="" coords="62,714,70,661,87,594,100,558,117,523,138,491,164,463,185,448,208,437,210,442,187,452,167,467,142,494,122,526,105,560,92,595,75,662,67,714"/>
+<area shape="rect" id="Node000007" href="$structMayaFlux_1_1Kakshya_1_1is__data__variant__element_3_01std_1_1complex_3_01double_01_4_01_4.html" title="high precision complex data (spectral)" alt="" coords="195,477,406,532"/>
+<area shape="poly" id="edge284_Node000000_Node000007" title=" " alt="" coords="66,714,79,676,98,629,126,582,164,541,194,523,197,528,167,545,131,585,103,631,84,677,72,716"/>
+<area shape="rect" id="Node000008" href="$structMayaFlux_1_1Kakshya_1_1is__data__variant__element_3_01std_1_1complex_3_01float_01_4_01_4.html" title="complex data (spectral)" alt="" coords="203,556,398,611"/>
+<area shape="poly" id="edge285_Node000000_Node000008" title=" " alt="" coords="75,715,112,666,136,641,164,620,202,601,204,606,167,624,140,645,116,670,80,718"/>
+<area shape="rect" id="Node000009" href="$structMayaFlux_1_1Kakshya_1_1is__data__variant__element_3_01uint16__t_01_4.html" title="16&#45;bit unsigned integer data (uint16_t) (CD audio, images)" alt="" coords="209,635,392,689"/>
+<area shape="poly" id="edge286_Node000000_Node000009" title=" " alt="" coords="105,720,164,698,208,684,210,689,166,703,107,725"/>
+<area shape="rect" id="Node000010" href="$structMayaFlux_1_1Kakshya_1_1is__data__variant__element_3_01uint32__t_01_4.html" title="32&#45;bit unsigned integer data (uint32_t) (high precision int)" alt="" coords="209,713,392,768"/>
+<area shape="poly" id="edge287_Node000000_Node000010" title=" " alt="" coords="131,738,209,738,209,743,131,743"/>
+<area shape="rect" id="Node000011" href="$structMayaFlux_1_1Kakshya_1_1is__data__variant__element_3_01uint8__t_01_4.html" title="8&#45;bit unsigned integer data (uint8_t) (images, compressed audio)" alt="" coords="209,792,392,847"/>
+<area shape="poly" id="edge288_Node000000_Node000011" title=" " alt="" coords="108,756,166,777,210,791,209,796,164,782,106,761"/>
+<area shape="rect" id="Node000012" href="$structMayaFlux_1_1Reflect_1_1is__optional_3_01std_1_1optional_3_01T_01_4_01_4.html" title=" " alt="" coords="206,871,395,925"/>
+<area shape="poly" id="edge289_Node000000_Node000012" title=" " alt="" coords="80,763,116,810,140,835,167,856,207,875,205,880,164,860,136,839,112,814,75,766"/>
+<area shape="rect" id="Node000013" href="$structMayaFlux_1_1Reflect_1_1is__string__map_3_01std_1_1map_3_01std_1_1string_00_01V_01_4_01_4.html" title=" " alt="" coords="211,949,390,1004"/>
+<area shape="poly" id="edge290_Node000000_Node000013" title=" " alt="" coords="72,766,84,803,103,849,131,895,167,935,188,949,212,959,210,964,186,953,164,939,127,898,99,851,79,805,67,767"/>
+<area shape="rect" id="Node000014" href="$structMayaFlux_1_1Reflect_1_1is__string__map_3_01std_1_1unordered__map_3_01std_1_1string_00_01V_01_4_01_4.html" title=" " alt="" coords="197,1029,405,1098"/>
+<area shape="poly" id="edge291_Node000000_Node000014" title=" " alt="" coords="68,767,76,818,94,884,123,953,143,985,167,1013,198,1035,195,1039,164,1017,139,988,118,956,89,886,71,820,63,768"/>
+<area shape="rect" id="Node000015" href="$structMayaFlux_1_1Reflect_1_1is__vector_3_01std_1_1vector_3_01T_01_4_01_4.html" title=" " alt="" coords="218,1123,383,1177"/>
+<area shape="poly" id="edge292_Node000000_Node000015" title=" " alt="" coords="65,767,67,835,80,927,93,976,111,1024,136,1069,167,1108,191,1126,219,1137,217,1142,188,1130,163,1112,131,1072,106,1026,88,977,75,928,62,836,59,767"/>
+<area shape="rect" id="Node000016" href="$structMayaFlux_1_1Yantra_1_1OperationRegistry_1_1has__operation__category_3_01T_00_01std_1_1void68b05939811cc477a9872a2b188d26e4.html" title=" " alt="" coords="165,1202,436,1271"/>
+<area shape="poly" id="edge293_Node000000_Node000016" title=" " alt="" coords="68,767,80,860,100,986,130,1107,147,1155,167,1187,181,1200,178,1204,163,1190,143,1157,125,1109,95,987,74,861,63,767"/>
+<area shape="rect" id="Node000017" href="$structMayaFlux_1_1Yantra_1_1OperationRegistry_1_1has__operation__traits_3_01T_00_01std_1_1void__1b9fe5f86103ad3333429e8d21ea06ef.html" title=" " alt="" coords="171,1295,430,1394"/>
+<area shape="poly" id="edge294_Node000000_Node000017" title=" " alt="" coords="67,767,77,877,96,1030,110,1109,126,1181,145,1240,168,1282,178,1293,174,1297,163,1285,140,1243,121,1182,104,1110,91,1031,72,878,62,767"/>
+<area shape="rect" id="Node000018" href="$structMayaFlux_1_1Yantra_1_1is__IO_3_01Datum_3_01T_01_4_01_4.html" title="Specialization for Datum types." alt="" coords="223,1418,378,1458"/>
+<area shape="poly" id="edge295_Node000000_Node000018" title=" " alt="" coords="66,767,70,900,84,1092,97,1191,115,1281,138,1355,152,1383,167,1404,193,1423,224,1433,222,1438,191,1427,163,1408,147,1386,133,1357,110,1282,92,1192,79,1093,65,900,60,767"/>
+<area shape="rect" id="Node000019" href="$structMayaFlux_1_1Yantra_1_1is__eigen__matrix_3_01Eigen_1_1Matrix_3_01Scalar_00_01Rows_00_01Colsd77dc38c48d4c8bbaf10d92b3fa97938.html" title=" " alt="" coords="207,1483,394,1567"/>
+<area shape="poly" id="edge296_Node000000_Node000019" title=" " alt="" coords="66,767,70,911,85,1120,97,1229,115,1329,138,1411,152,1444,167,1468,186,1486,208,1500,206,1504,183,1490,163,1472,147,1446,133,1413,110,1330,92,1229,79,1121,65,911,60,767"/>
+</map>

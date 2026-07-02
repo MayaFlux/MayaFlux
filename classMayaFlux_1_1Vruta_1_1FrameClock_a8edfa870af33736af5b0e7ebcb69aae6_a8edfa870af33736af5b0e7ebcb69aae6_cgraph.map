@@ -1,0 +1,7 @@
+<map id="MayaFlux::Vruta::FrameClock::current_time" name="MayaFlux::Vruta::FrameClock::current_time">
+<area shape="rect" id="Node000001" title="Convert current frame to seconds." alt="" coords="5,37,220,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Vruta_1_1FrameClock_a6bad3c463e6f0e95c2d5b219af98ac93.html#a6bad3c463e6f0e95c2d5b219af98ac93" title="Get current frame position (thread&#45;safe read)" alt="" coords="268,5,483,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="220,42,254,37,255,43,220,47"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Vruta_ae0c8dba07be9c5bb1de354a581570e64.html#ae0c8dba07be9c5bb1de354a581570e64" title="Convert processing units to seconds for any rate." alt="" coords="291,69,460,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="220,68,277,75,277,80,220,73"/>
+</map>

@@ -1,0 +1,15 @@
+<map id="MayaFlux::Buffers::ComputeProcessor" name="MayaFlux::Buffers::ComputeProcessor">
+<area shape="rect" id="Node000001" title="Specialized ShaderProcessor for Compute Pipelines." alt="" coords="205,1423,383,1757"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1SDFFieldProcessor.html" title="Preprocessor that evaluates an SDF field into a corner grid on the GPU." alt="" coords="5,1975,175,2315"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="204,1771,190,1806,160,1891,134,1976,129,1975,155,1889,185,1804,200,1769"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1SDFMeshProcessor.html" title="ComputeProcessor that dispatches mc_emit.comp directly into the owning VKBuffer (Usage::VERTEX),..." alt="" coords="199,1805,389,2485"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="297,1771,297,1805,291,1805,291,1771"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1UVFieldProcessor.html" title="Compute pass that writes UV and optionally samples colour into a vertex SSBO." alt="" coords="413,1955,602,2335"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="388,1769,403,1804,456,1954,451,1956,398,1806,383,1771"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor.html" title="Abstract base class for shader&#45;based buffer processing." alt="" coords="195,516,393,1375"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="297,1389,297,1422,291,1422,291,1389"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VKBufferProcessor.html" title=" " alt="" coords="197,313,391,468"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="297,482,297,516,291,516,291,482"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1BufferProcessor.html" title="Central computational transformation interface for continuous buffer processing." alt="" coords="204,5,384,265"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="297,279,297,313,291,313,291,279"/>
+</map>

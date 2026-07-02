@@ -1,0 +1,7 @@
+<map id="MayaFlux::Yantra::transform_regions" name="MayaFlux::Yantra::transform_regions">
+<area shape="rect" id="Node000001" title="Region&#45;selective transformation using container&#45;based extraction (OUT&#45;OF&#45;PLACE)" alt="" coords="5,37,212,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1OperationHelper_ad367bd6ef37555bb3918e5545cac03bd.html#ad367bd6ef37555bb3918e5545cac03bd" title="extract numeric data from single&#45;variant types" alt="" coords="264,5,479,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="212,42,250,37,251,43,212,47"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1OperationHelper_ab87e318fc808c4e06d895135af6097e2.html#ab87e318fc808c4e06d895135af6097e2" title="Setup operation buffer from Datum or ComputeData type." alt="" coords="260,69,483,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="212,67,247,71,246,77,212,73"/>
+</map>

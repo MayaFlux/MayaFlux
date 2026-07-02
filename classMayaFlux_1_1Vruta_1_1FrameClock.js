@@ -1,0 +1,28 @@
+var classMayaFlux_1_1Vruta_1_1FrameClock =
+[
+    [ "FrameClock", "classMayaFlux_1_1Vruta_1_1FrameClock_a9799ba4d807597f7603450273d8e0a16.html#a9799ba4d807597f7603450273d8e0a16", null ],
+    [ "calculate_elapsed_frames", "classMayaFlux_1_1Vruta_1_1FrameClock_a9cf319193f711638017593d285c61410.html#a9cf319193f711638017593d285c61410", null ],
+    [ "current_frame", "classMayaFlux_1_1Vruta_1_1FrameClock_ad3c6324ab15bbd2d73bbb1c28e1aff6a.html#ad3c6324ab15bbd2d73bbb1c28e1aff6a", null ],
+    [ "current_position", "classMayaFlux_1_1Vruta_1_1FrameClock_a6bad3c463e6f0e95c2d5b219af98ac93.html#a6bad3c463e6f0e95c2d5b219af98ac93", null ],
+    [ "current_time", "classMayaFlux_1_1Vruta_1_1FrameClock_a8edfa870af33736af5b0e7ebcb69aae6.html#a8edfa870af33736af5b0e7ebcb69aae6", null ],
+    [ "frame_rate", "classMayaFlux_1_1Vruta_1_1FrameClock_a1592258e64a2333bbc230bf67b2249e6.html#a1592258e64a2333bbc230bf67b2249e6", null ],
+    [ "get_frame_lag", "classMayaFlux_1_1Vruta_1_1FrameClock_ab3ba8642e898e8431ca0c7e080c75862.html#ab3ba8642e898e8431ca0c7e080c75862", null ],
+    [ "get_measured_fps", "classMayaFlux_1_1Vruta_1_1FrameClock_a851fbf14caef6177f4fece2360697e7d.html#a851fbf14caef6177f4fece2360697e7d", null ],
+    [ "is_frame_late", "classMayaFlux_1_1Vruta_1_1FrameClock_a3dbd90e2fe75911a83adc66e5b00d987.html#a3dbd90e2fe75911a83adc66e5b00d987", null ],
+    [ "rate", "classMayaFlux_1_1Vruta_1_1FrameClock_a72b273dc9633e0ac6a561d47a352a147.html#a72b273dc9633e0ac6a561d47a352a147", null ],
+    [ "recalculate_frame_duration", "classMayaFlux_1_1Vruta_1_1FrameClock_a2c3e03bc14aed1d08092794239d96413.html#a2c3e03bc14aed1d08092794239d96413", null ],
+    [ "reset", "classMayaFlux_1_1Vruta_1_1FrameClock_a6a6b19783f4e023f516e3a01acbf47c6.html#a6a6b19783f4e023f516e3a01acbf47c6", null ],
+    [ "set_target_fps", "classMayaFlux_1_1Vruta_1_1FrameClock_ad0199f958167262038efa15283438a98.html#ad0199f958167262038efa15283438a98", null ],
+    [ "tick", "classMayaFlux_1_1Vruta_1_1FrameClock_afa8bf00d8c274fe72ed19a1d79d5d80d.html#afa8bf00d8c274fe72ed19a1d79d5d80d", null ],
+    [ "time_until_next_frame", "classMayaFlux_1_1Vruta_1_1FrameClock_adc2220a1a3fbbda6f569a8de6214ae4a.html#adc2220a1a3fbbda6f569a8de6214ae4a", null ],
+    [ "update_fps_measurement", "classMayaFlux_1_1Vruta_1_1FrameClock_af70d4296e0405df126928ec6f16229bc.html#af70d4296e0405df126928ec6f16229bc", null ],
+    [ "wait_for_next_frame", "classMayaFlux_1_1Vruta_1_1FrameClock_ad98808b4668fcf7a5e9b40963a3eb750.html#ad98808b4668fcf7a5e9b40963a3eb750", null ],
+    [ "FPS_SMOOTHING_ALPHA", "classMayaFlux_1_1Vruta_1_1FrameClock_a5c66e56fc0bc8373b3cba92fb87e8086.html#a5c66e56fc0bc8373b3cba92fb87e8086", null ],
+    [ "m_current_frame", "classMayaFlux_1_1Vruta_1_1FrameClock_ab9996295a4ab097b765c7cdcc6287635.html#ab9996295a4ab097b765c7cdcc6287635", null ],
+    [ "m_frame_duration", "classMayaFlux_1_1Vruta_1_1FrameClock_a8a37ecf49b69403c453664822b2945ef.html#a8a37ecf49b69403c453664822b2945ef", null ],
+    [ "m_last_tick_time", "classMayaFlux_1_1Vruta_1_1FrameClock_a0d95069ec5328102232feaf84fd08ebb.html#a0d95069ec5328102232feaf84fd08ebb", null ],
+    [ "m_measured_fps", "classMayaFlux_1_1Vruta_1_1FrameClock_a6ab80d28f9bb2bbc834ff7e0d7f33478.html#a6ab80d28f9bb2bbc834ff7e0d7f33478", null ],
+    [ "m_next_frame_time", "classMayaFlux_1_1Vruta_1_1FrameClock_a8d6568a867af330c9306fd8f79f2bfd3.html#a8d6568a867af330c9306fd8f79f2bfd3", null ],
+    [ "m_start_time", "classMayaFlux_1_1Vruta_1_1FrameClock_aa06bc6163e914ad41cdd3275dd909075.html#aa06bc6163e914ad41cdd3275dd909075", null ],
+    [ "m_target_fps", "classMayaFlux_1_1Vruta_1_1FrameClock_ac857d379a6e4a456c739ca76f5b1eb72.html#ac857d379a6e4a456c739ca76f5b1eb72", null ]
+];

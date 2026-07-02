@@ -1,0 +1,29 @@
+<map id="MayaFlux::Yantra::UniversalTransformer::set_transformation_parameter" name="MayaFlux::Yantra::UniversalTransformer::set_transformation_parameter">
+<area shape="rect" id="Node000001" title="Transformation&#45;specific parameter handling (override for custom parameters)" alt="" coords="889,275,1121,329"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1UniversalTransformer_aa787bdc8f1e1eb6da36f4ae9d000f623.html#aa787bdc8f1e1eb6da36f4ae9d000f623" title="Type&#45;safe parameter management with transformation&#45;specific defaults." alt="" coords="623,131,827,171"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="961,267,906,225,840,186,811,174,813,169,843,181,909,220,964,263"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Yantra_1_1ConvolutionTransformer_af7ef123e9b350dc7c48a44cb04c0692e.html#af7ef123e9b350dc7c48a44cb04c0692e" title="Sets transformation parameters." alt="" coords="609,196,841,251"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="894,274,823,253,824,248,895,268"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Yantra_1_1MathematicalTransformer_a57d4bcc5d6b9ab87b810dfb540b76f71.html#a57d4bcc5d6b9ab87b810dfb540b76f71" title="Sets transformation parameters." alt="" coords="609,275,841,329"/>
+<area shape="poly" id="edge11_Node000001_Node000012" title=" " alt="" coords="876,305,841,305,841,299,876,299"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Yantra_1_1SpectralTransformer_aec9d1bb5cd72d03551daf977703b9566.html#aec9d1bb5cd72d03551daf977703b9566" title="Sets transformation parameters." alt="" coords="609,353,841,408"/>
+<area shape="poly" id="edge12_Node000001_Node000013" title=" " alt="" coords="895,336,824,356,823,351,894,330"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1Yantra_1_1TemporalTransformer_a30a654df7dcad3420e58429202e26029.html#a30a654df7dcad3420e58429202e26029" title="Sets transformation parameters." alt="" coords="609,432,841,487"/>
+<area shape="poly" id="edge13_Node000001_Node000014" title=" " alt="" coords="963,341,908,383,843,423,818,434,816,430,840,418,905,378,960,336"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1ConvolutionTransformer_a85c0304af273a7392b541dc0ad831502.html#a85c0304af273a7392b541dc0ad831502" title="Sets default parameter values for all convolution operations." alt="" coords="335,5,555,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="673,127,560,74,531,63,533,58,562,69,676,122"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1MathematicalTransformer_a404e6d3c6430702a48561c15667bdb63.html#a404e6d3c6430702a48561c15667bdb63" title="Sets default parameter values for all mathematical operations." alt="" coords="329,84,561,139"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="609,138,561,131,562,125,610,132"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Yantra_1_1SpectralTransformer_acf7aef1ac919323a3879c5450a26d7db.html#acf7aef1ac919323a3879c5450a26d7db" title="Sets default parameter values for all spectral operations." alt="" coords="348,163,543,217"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="610,170,543,179,543,174,609,165"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Yantra_1_1TemporalTransformer_af000b192db7f38c8afc54bb790e723e1.html#af000b192db7f38c8afc54bb790e723e1" title="Sets default parameter values for all temporal operations." alt="" coords="344,241,547,296"/>
+<area shape="poly" id="edge8_Node000002_Node000009" title=" " alt="" coords="623,179,611,186,596,197,587,208,578,220,563,232,542,243,539,239,560,228,574,216,583,205,593,193,608,181,621,174"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1ConvolutionTransformer_a10602064d45d9bb8321ec2741c6d8b48.html#a10602064d45d9bb8321ec2741c6d8b48" title="Constructs a ConvolutionTransformer with specified operation." alt="" coords="11,13,275,53"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="321,35,275,35,275,30,321,30"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Yantra_1_1MathematicalTransformer_a16e2431e3167923d2763eba3593492de.html#a16e2431e3167923d2763eba3593492de" title="Constructs a MathematicalTransformer with specified operation." alt="" coords="5,91,281,131"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="316,114,282,114,282,109,316,109"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Yantra_1_1SpectralTransformer_aa11603e62a0837edcc9485b3aae45808.html#aa11603e62a0837edcc9485b3aae45808" title="Constructs a SpectralTransformer with specified operation." alt="" coords="24,170,263,210"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="334,193,263,193,263,187,334,187"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Yantra_1_1TemporalTransformer_ad66e5e9f84d2d7fef6657fd89f9849a1.html#ad66e5e9f84d2d7fef6657fd89f9849a1" title="Constructs a TemporalTransformer with specified operation." alt="" coords="20,249,267,289"/>
+<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="330,271,267,271,267,266,330,266"/>
+</map>

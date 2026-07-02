@@ -1,0 +1,9 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="Node000000" href="$classMayaFlux_1_1Kriya_1_1EventAwaiter.html" title="Abstract base for all event&#45;driven awaiters." alt="" coords="5,77,228,102"/>
+<area shape="rect" id="Node000001" href="$classMayaFlux_1_1Kriya_1_1BroadcastAwaiter.html" title="Awaiter for suspending a coroutine until a BroadcastSource&lt;T&gt; fires." alt="" coords="288,5,489,45"/>
+<area shape="poly" id="edge79_Node000000_Node000001" title=" " alt="" coords="184,71,302,43,303,48,186,76"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kriya_1_1NetworkAwaiter.html" title="Awaiter for suspending a coroutine until a network message arrives." alt="" coords="293,69,484,109"/>
+<area shape="poly" id="edge80_Node000000_Node000002" title=" " alt="" coords="242,87,293,87,293,92,242,92"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kriya_1_1WindowEventAwaiter.html" title="Awaiter for suspending on GLFW window input events with optional filtering." alt="" coords="276,133,501,173"/>
+<area shape="poly" id="edge81_Node000000_Node000003" title=" " alt="" coords="186,103,303,131,302,136,184,108"/>
+</map>

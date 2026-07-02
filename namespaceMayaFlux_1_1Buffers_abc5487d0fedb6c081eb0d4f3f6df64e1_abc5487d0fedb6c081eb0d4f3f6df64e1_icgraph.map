@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::download_from_gpu" name="MayaFlux::Buffers::download_from_gpu">
+<area shape="rect" id="Node000001" title="Download from GPU buffer to raw data (auto&#45;detects host&#45;visible vs device&#45;local)" alt="" coords="208,69,363,109"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Buffers_ad1ebb56b44fda03711dc07302a75dc76.html#ad1ebb56b44fda03711dc07302a75dc76" title="Download from GPU buffer to typed span." alt="" coords="5,5,160,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="207,68,146,48,147,43,209,63"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Buffers_a50260feafa2d5225aa5883a71845e8a5.html#a50260feafa2d5225aa5883a71845e8a5" title="Download from GPU buffer to vector." alt="" coords="5,69,160,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="194,92,161,92,161,87,194,87"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Buffers_add2c1891c03233b4d9bdbabb12e331f1.html#add2c1891c03233b4d9bdbabb12e331f1" title="Download GPU buffer to DataAccess&#45;compatible format (precision&#45;preserving)" alt="" coords="9,133,157,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="209,116,147,136,146,131,207,111"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::NodeGraphManager::get_networks" name="MayaFlux::Nodes::NodeGraphManager::get_networks">
+<area shape="rect" id="Node000001" title="Get all networks for a specific token." alt="" coords="235,13,451,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Inspector_a47b36fa77f82dfbb6031c649b54101b0.html#a47b36fa77f82dfbb6031c649b54101b0" title="Inspect the full NodeGraphManager state across all active tokens." alt="" coords="5,5,187,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="221,35,187,35,187,30,221,30"/>
+</map>

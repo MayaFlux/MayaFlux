@@ -1,0 +1,31 @@
+<map id="MayaFlux::Nexus::StateEncoder::encode" name="MayaFlux::Nexus::StateEncoder::encode">
+<area shape="rect" id="Node000001" title="Encode the given Fabric to {base_path}.exr and {base_path}.json." alt="" coords="5,319,235,359"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nexus_1_1Fabric_a2557668b6dec4b19b327a57384589f95.html#a2557668b6dec4b19b327a57384589f95" title="List all registered entity ids in insertion order." alt="" coords="293,5,474,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="125,318,143,265,175,195,221,120,249,86,281,55,288,50,291,55,284,59,253,89,225,123,180,197,148,267,130,320"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1ImageWriterRegistry_a2460e4fa98bf558cbbd92facd212b0a5.html#a2460e4fa98bf558cbbd92facd212b0a5" title=" " alt="" coords="285,69,482,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="128,317,150,276,184,223,228,167,281,119,290,113,293,118,284,123,232,171,188,226,155,279,133,320"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nexus_1_1Fabric_ab79a83afbad5b153aa846fef92f2e4fc.html#ab79a83afbad5b153aa846fef92f2e4fc" title="Get the Agent registered under id." alt="" coords="293,133,474,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="136,316,195,251,236,215,281,183,293,177,296,181,284,188,239,219,199,255,139,320"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nexus_1_1Fabric_ae00cd0d71eb5d5cb4795d7fe6153456a.html#ae00cd0d71eb5d5cb4795d7fe6153456a" title="Get the Emitter registered under id." alt="" coords="293,197,474,237"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="152,316,211,282,282,247,300,240,302,245,284,252,214,287,154,321"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nexus_1_1Fabric_a0bc3c28aabf0452b2692e724162a5fb6.html#a0bc3c28aabf0452b2692e724162a5fb6" title="Get the Sensor registered under id." alt="" coords="293,261,474,301"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="212,316,279,301,280,307,213,321"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nexus_1_1Fabric_ad3ca3a881b0b38037172fcaeea45167f.html#ad3ca3a881b0b38037172fcaeea45167f" title="Stable id for this Fabric, assigned by Tapestry at construction." alt="" coords="283,326,484,351"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="235,336,269,336,269,341,235,341"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1IO_1_1ImageWriterRegistry_a25caa467f66d3d18650bdffcc77b8125.html#a25caa467f66d3d18650bdffcc77b8125" title=" " alt="" coords="285,376,482,416"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="213,356,278,370,277,376,212,361"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Nexus_1_1Fabric_abf266806b445883a743ada674ecc06d0.html#abf266806b445883a743ada674ecc06d0" title="Return the kind of entity registered under id." alt="" coords="293,440,474,480"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="154,356,214,391,284,426,302,433,300,438,282,430,211,395,152,361"/>
+<area shape="rect" id="Node000010" href="$namespaceMayaFlux_1_1Nexus_1_1State_af2d8ee40bfa39d1e4e18d08b6e493391.html#af2d8ee40bfa39d1e4e18d08b6e493391" title="Map Fabric::Kind to its lowercase JSON string token via magic_enum." alt="" coords="295,504,472,544"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="139,357,199,422,239,458,284,490,296,496,293,501,281,494,236,463,195,426,136,361"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Nexus_1_1Fabric_abe4bf318d5e96e6abd7e0d8a06368407.html#abe4bf318d5e96e6abd7e0d8a06368407" title="Assigned name, empty if the Fabric was constructed outside a Tapestry." alt="" coords="293,568,474,608"/>
+<area shape="poly" id="edge12_Node000001_Node000013" title=" " alt="" coords="133,357,155,399,188,452,232,506,284,554,293,559,290,564,281,558,228,510,184,455,150,401,128,360"/>
+<area shape="rect" id="Node000014" href="$namespaceMayaFlux_a878fe1820a72f64efebc516b1749f77d.html#a878fe1820a72f64efebc516b1749f77d" title="Normalize single&#45;channel data to specified peak level (in&#45;place)" alt="" coords="304,633,463,658"/>
+<area shape="poly" id="edge13_Node000001_Node000014" title=" " alt="" coords="129,358,147,411,178,482,199,519,224,555,252,589,284,618,295,625,292,629,281,622,248,593,220,559,195,522,174,484,142,413,124,360"/>
+<area shape="rect" id="Node000011" href="$namespaceMayaFlux_1_1Reflect_a33dff0234606d8a7a9b4b026a3874e0a.html#a33dff0234606d8a7a9b4b026a3874e0a" title="Universal enum to lowercase string converter using magic_enum." alt="" coords="532,504,728,544"/>
+<area shape="poly" id="edge10_Node000010_Node000011" title=" " alt="" coords="472,521,518,521,518,527,472,527"/>
+<area shape="rect" id="Node000012" href="$namespaceMayaFlux_1_1Reflect_ab5371cce72bc91cd1babe7826f27f39a.html#ab5371cce72bc91cd1babe7826f27f39a" title="Convert string to lowercase." alt="" coords="776,504,923,544"/>
+<area shape="poly" id="edge11_Node000011_Node000012" title=" " alt="" coords="728,521,762,521,762,527,728,527"/>
+<area shape="rect" id="Node000015" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a5de3d13e1b9ceb59d3acb04361e2a5e5.html#a5de3d13e1b9ceb59d3acb04361e2a5e5" title="Normalize to [target_min, target_max] in&#45;place Single&#45;pass min/max reduction followed by a single tra..." alt="" coords="555,625,705,665"/>
+<area shape="poly" id="edge14_Node000014_Node000015" title=" " alt="" coords="463,643,541,643,541,648,463,648"/>
+</map>

@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::FormaProcessor::FormaProcessor" name="MayaFlux::Buffers::FormaProcessor::FormaProcessor">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,69,244,109"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kakshya_1_1VertexLayout_a35c3aa5d9780535ccc1391e60789260c.html#a35c3aa5d9780535ccc1391e60789260c" title="Factory: layout for LineVertex (position, color, thickness, uv, normal, tangent)" alt="" coords="302,5,474,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="207,67,291,46,293,51,208,72"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kakshya_1_1VertexLayout_a7b7a30b2a13cb2676713a352f298f607.html#a7b7a30b2a13cb2676713a352f298f607" title="Factory: layout for MeshVertex (position, color, weight, uv, normal, tangent)" alt="" coords="292,69,484,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="244,87,278,87,278,92,244,92"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Kakshya_1_1VertexLayout_ad0ac6ab6a88dd81d2ac8acda3c5c15bd.html#ad0ac6ab6a88dd81d2ac8acda3c5c15bd" title="Factory: layout for PointVertex (position, color, size, uv, normal, tangent)" alt="" coords="297,133,479,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="208,107,293,127,291,133,207,112"/>
+</map>

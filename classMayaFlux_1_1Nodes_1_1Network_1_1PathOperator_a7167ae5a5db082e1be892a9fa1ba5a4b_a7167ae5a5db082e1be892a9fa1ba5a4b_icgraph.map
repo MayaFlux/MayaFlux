@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::Network::PathOperator::get_vertex_count" name="MayaFlux::Nodes::Network::PathOperator::get_vertex_count">
+<area shape="rect" id="Node000001" title="Get number of vertices (may differ from point count for topology/path)" alt="" coords="295,37,531,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1PathOperator_a84b1caf77878e28aad437c6495f47846.html#a84b1caf77878e28aad437c6495f47846" title="Get vertex layout describing vertex structure." alt="" coords="5,5,247,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="281,45,247,41,247,36,282,40"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1PathOperator_ae2d672448f1dea809590200b9e9cfd3c.html#ae2d672448f1dea809590200b9e9cfd3c" title="Query operator internal state." alt="" coords="26,69,226,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="282,75,227,81,226,76,281,69"/>
+</map>

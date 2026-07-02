@@ -1,0 +1,13 @@
+<map id="MayaFlux::Yantra::extract_silence" name="MayaFlux::Yantra::extract_silence">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,149,193,189"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a6e714cafd4d54be74cddd9f70b10b7f2.html#a6e714cafd4d54be74cddd9f70b10b7f2" title="Build [start, end) intervals from window start indices." alt="" coords="256,5,417,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="125,146,177,109,240,70,253,64,255,68,243,75,180,114,128,151"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_aa54c72a38f9a05432b827e1e0944cf79.html#aa54c72a38f9a05432b827e1e0944cf79" title="Merge overlapping or adjacent half&#45;open intervals." alt="" coords="241,85,432,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="174,146,248,126,250,131,175,151"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_ad2883aeb684971b088f71e1d858803bd.html#ad2883aeb684971b088f71e1d858803bd" title="Compute the number of analysis windows for a given data size." alt="" coords="248,149,425,189"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="193,166,234,166,234,171,193,171"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_ace9bc7c524eeeff35f5d23bf4b14a6ce.html#ace9bc7c524eeeff35f5d23bf4b14a6ce" title="RMS energy per window." alt="" coords="262,213,411,253"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="175,186,250,207,248,212,174,191"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a69f49533d37355b710cef50b84ad2ab3.html#a69f49533d37355b710cef50b84ad2ab3" title="Copy data from a set of half&#45;open intervals into a flat vector." alt="" coords="247,277,426,317"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="127,187,179,224,243,262,257,269,255,274,240,267,176,229,124,191"/>
+</map>

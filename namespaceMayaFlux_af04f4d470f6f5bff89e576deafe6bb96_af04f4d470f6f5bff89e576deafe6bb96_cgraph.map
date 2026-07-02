@@ -1,0 +1,5 @@
+<map id="MayaFlux::create_custom_domain" name="MayaFlux::create_custom_domain">
+<area shape="rect" id="Node000001" title="Creates a custom domain from individual tokens with validation." alt="" coords="5,5,196,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_a4268e96ce726f2a9ddab921661ca5a58.html#a4268e96ce726f2a9ddab921661ca5a58" title="Composes individual ProcessingTokens into a unified Domain." alt="" coords="244,13,453,38"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="196,23,230,23,230,28,196,28"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Yantra::UniversalExtractor::get_extractor_name" name="MayaFlux::Yantra::UniversalExtractor::get_extractor_name">
+<area shape="rect" id="Node000001" title="Get extractor&#45;specific name (derived classes override this)" alt="" coords="257,5,477,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1UniversalExtractor_a5574d6f9a5f8a27f07fdf5ab06158d2b.html#a5574d6f9a5f8a27f07fdf5ab06158d2b" title="Gets human&#45;readable name for this extractor." alt="" coords="5,5,209,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="244,28,210,28,210,23,244,23"/>
+</map>

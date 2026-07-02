@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::SDFMeshProcessor::corner_count" name="MayaFlux::Buffers::SDFMeshProcessor::corner_count">
+<area shape="rect" id="Node000001" title=" " alt="" coords="475,53,713,93"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1SDFMeshProcessor_a224e5afcd9812c2767437b3b79b7c034.html#a224e5afcd9812c2767437b3b79b7c034" title=" " alt="" coords="228,45,427,100"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="461,75,427,75,427,70,461,70"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1SDFMeshProcessor_acbfe1f40aeb776d9bbc1109821cef211.html#acbfe1f40aeb776d9bbc1109821cef211" title="Called when this processor is attached to a buffer." alt="" coords="7,5,178,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="214,56,178,50,179,45,215,51"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1SDFMeshProcessor_ae6bf748f1a04834532fa8ad380f42279.html#ae6bf748f1a04834532fa8ad380f42279" title="Replace the grid resolution and mark dirty." alt="" coords="5,84,180,139"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="215,94,181,100,180,94,214,89"/>
+</map>

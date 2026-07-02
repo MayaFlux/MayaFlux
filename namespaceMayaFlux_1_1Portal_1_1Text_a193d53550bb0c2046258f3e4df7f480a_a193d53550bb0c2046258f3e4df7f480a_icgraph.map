@@ -1,0 +1,10 @@
+<map id="MayaFlux::Portal::Text::find_font" name="MayaFlux::Portal::Text::find_font">
+<area shape="rect" id="Node000001" title="Locate a system font file by family name and optional style." alt="" coords="672,29,839,69"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Text_a6122faf76c34bdb1ad854e9641791839.html#a6122faf76c34bdb1ad854e9641791839" title="Locate a system font by family and style, then load it as the default." alt="" coords="457,29,624,69"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="658,52,624,52,624,47,658,47"/>
+<area shape="poly" id="edge4_Node000002_Node000002" title=" " alt="" coords="577,18,564,11,541,8,520,10,508,15,503,21,506,28,501,30,498,20,505,10,519,5,541,3,566,6,579,13"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Text_ab942e659934e6d68aa5f94300b7ed912.html#ab942e659934e6d68aa5f94300b7ed912" title="Initialize Portal::Text." alt="" coords="243,29,409,69"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="443,52,410,52,410,47,443,47"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1GraphicsSubsystem_a1278000eee96b8f7c3cefbe13f7f91a9.html#a1278000eee96b8f7c3cefbe13f7f91a9" title="Initialize with graphics configuration." alt="" coords="5,29,195,69"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="229,52,195,52,195,47,229,47"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::VKBuffer::get_default_processor" name="MayaFlux::Buffers::VKBuffer::get_default_processor">
+<area shape="rect" id="Node000001" title="Get the currently attached default processor." alt="" coords="209,34,371,89"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_af6dd001810af7fa06b5b2fd83d04303a.html#af6dd001810af7fa06b5b2fd83d04303a" title="Create a clone of this buffer with the same data and properties." alt="" coords="9,5,157,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="195,48,157,41,158,36,196,42"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1RootGraphicsBuffer_a029200f36add1c03e20ad38528c6eded.html#a029200f36add1c03e20ad38528c6eded" title="Processes this root buffer using default processing." alt="" coords="5,70,161,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="196,80,162,86,161,81,195,75"/>
+</map>

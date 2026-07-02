@@ -1,0 +1,11 @@
+<map id="MayaFlux::Buffers::ImageCVProcessor&lt; T &gt;" name="MayaFlux::Buffers::ImageCVProcessor&lt; T &gt;">
+<area shape="rect" id="Node000001" title="BufferProcessor executing a Kinesis::Vision pipeline on a GpuImageSource buffer." alt="" coords="299,668,473,988"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferProcessor.html" title="Central computational transformation interface for continuous buffer processing." alt="" coords="5,175,185,435"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="135,447,163,527,200,604,248,674,301,738,297,741,243,677,196,607,158,529,130,449"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kinesis_1_1Vision_1_1VisionSequence.html" title="Ordered sequence of VisionSteps describing a complete vision pipeline." alt="" coords="210,245,375,365"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="306,365,357,651,352,652,301,366"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kinesis_1_1Vision_1_1VisionExecutor.html" title="Stateful executor for a VisionSequence." alt="" coords="400,5,559,605"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="460,606,453,645,451,653,446,652,447,643,455,605"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Kinesis_1_1Vision_1_1VisionResult.html" title="Result of executing a VisionSequence on one frame." alt="" coords="583,225,725,385"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="643,386,617,493,598,551,574,607,534,672,487,731,482,728,529,669,569,604,593,549,612,492,638,385"/>
+</map>

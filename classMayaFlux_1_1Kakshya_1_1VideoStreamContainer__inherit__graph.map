@@ -1,0 +1,15 @@
+<map id="MayaFlux::Kakshya::VideoStreamContainer" name="MayaFlux::Kakshya::VideoStreamContainer">
+<area shape="rect" id="Node000001" title="Concrete base implementation for streaming video containers." alt="" coords="113,1084,324,1839"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1CameraContainer.html" title="Single&#45;slot live video container for camera device streams." alt="" coords="9,1887,212,2107"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="142,1852,135,1887,130,1886,137,1851"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Kakshya_1_1VideoFileContainer.html" title="File&#45;backed video container — semantic marker over VideoStreamContainer." alt="" coords="236,1927,417,2067"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="300,1852,315,1926,310,1927,295,1853"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1StreamContainer.html" title="Data&#45;driven interface for temporal stream containers with navigable read position." alt="" coords="124,756,313,1036"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="221,1050,221,1084,216,1084,216,1050"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1SignalSourceContainer.html" title="Data&#45;driven interface for managing arbitrary processable signal sources." alt="" coords="113,428,324,708"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="221,722,221,756,216,756,216,722"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1NDDataContainer.html" title="Abstract interface for N&#45;dimensional data containers." alt="" coords="5,5,187,380"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="164,392,176,427,170,429,159,394"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="211,153,471,233"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="327,247,267,429,262,427,322,245"/>
+</map>

@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kriya::key_held" name="MayaFlux::Kriya::key_held">
+<area shape="rect" id="Node000001" title="Creates an Event coroutine that triggers on key press and repeats while held." alt="" coords="468,45,663,70"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nexus_1_1Wiring_af32900423bc2e18633ca0f7dd74f051a.html#af32900423bc2e18633ca0f7dd74f051a" title="Apply the configured wiring." alt="" coords="235,5,420,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="457,45,420,40,421,35,458,40"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Context_ae213a276596a93e469537511b17630ee.html#ae213a276596a93e469537511b17630ee" title="Called repeatedly while a key is held and the element has focus." alt="" coords="237,69,418,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="457,75,418,80,418,75,457,69"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Context_adf3083a490c76194f3d2d60c5210634d.html#adf3083a490c76194f3d2d60c5210634d" title="Attach key&#45;delta handlers to a Mapped&lt;float&gt; element." alt="" coords="5,69,187,109"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="223,92,187,92,187,87,223,87"/>
+</map>

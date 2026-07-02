@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::BufferAccessControl::add_audio_buffer" name="MayaFlux::Buffers::BufferAccessControl::add_audio_buffer">
+<area shape="rect" id="Node000001" title="Adds an audio buffer to a token and channel." alt="" coords="224,49,377,104"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferAccessControl_ae10b17df86560e065378c3dc8ac90c0d.html#ae10b17df86560e065378c3dc8ac90c0d" title="Adds a buffer to a token (dispatches based on token type)" alt="" coords="14,5,167,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="210,60,167,51,168,46,211,55"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1BufferSupplyMixing_a9ee7968dba43bfa9035781971311b14a.html#a9ee7968dba43bfa9035781971311b14a" title="Clones an audio buffer for each channel in the specified list." alt="" coords="5,85,176,154"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="211,98,177,105,176,99,210,92"/>
+</map>

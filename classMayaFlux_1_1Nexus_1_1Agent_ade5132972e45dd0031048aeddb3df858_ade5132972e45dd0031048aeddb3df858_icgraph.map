@@ -1,0 +1,9 @@
+<map id="MayaFlux::Nexus::Agent::set_position" name="MayaFlux::Nexus::Agent::set_position">
+<area shape="rect" id="Node000001" title="Set the position, enabling spatial indexing and queries for this object." alt="" coords="233,69,415,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nexus_1_1Locus_a8e9e5ff3ba69a3d52b5b4354b6b13c82.html#a8e9e5ff3ba69a3d52b5b4354b6b13c82" title="Perceive: run the user perception callable, then integrate the view." alt="" coords="5,5,185,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="238,68,167,48,168,43,240,63"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nexus_1_1Locus_a7c0b5ade3a05f7a0dd4087f27aa4cb46.html#a7c0b5ade3a05f7a0dd4087f27aa4cb46" title="Construct from a NavigationConfig with perception and influence functions." alt="" coords="5,69,185,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="219,92,186,92,186,87,219,87"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nexus_1_1Locus_ac594c11c182537980b6511b2979f0d1a.html#ac594c11c182537980b6511b2979f0d1a" title="Construct from a NavigationConfig with named perception and influence functions." alt="" coords="5,133,185,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="240,116,168,136,167,131,238,110"/>
+</map>

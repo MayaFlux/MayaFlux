@@ -1,0 +1,7 @@
+<map id="MayaFlux::Yantra::UniversalExtractor::get_extraction_parameter" name="MayaFlux::Yantra::UniversalExtractor::get_extraction_parameter">
+<area shape="rect" id="Node000001" title=" " alt="" coords="257,34,461,89"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1UniversalExtractor_ab915f3f436cbb7947607e12e33274cb2.html#ab915f3f436cbb7947607e12e33274cb2" title="Retrieves a parameter&#39;s current value." alt="" coords="5,5,209,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="244,48,209,43,210,37,244,42"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1UniversalExtractor_adf6edc5333cb0a5d8aadf5b00d9f4ed6.html#adf6edc5333cb0a5d8aadf5b00d9f4ed6" title="Helper to get typed parameter with default value." alt="" coords="5,70,209,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="244,80,210,85,209,80,244,75"/>
+</map>

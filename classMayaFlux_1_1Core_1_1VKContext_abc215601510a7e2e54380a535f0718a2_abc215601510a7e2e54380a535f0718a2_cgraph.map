@@ -1,0 +1,29 @@
+<map id="MayaFlux::Core::VKContext::initialize" name="MayaFlux::Core::VKContext::initialize">
+<area shape="rect" id="Node000001" title="Initialize Vulkan context." alt="" coords="5,209,205,249"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1VKContext_aa076977c33941d8fc34f2bfe2fd295a7.html#aa076977c33941d8fc34f2bfe2fd295a7" title="Cleanup all Vulkan resources." alt="" coords="256,101,456,141"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="152,207,295,144,297,149,154,212"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Core_1_1VKInstance_ad5009d0f849278358ae38dcc785627d6.html#ad5009d0f849278358ae38dcc785627d6" title="Get the Vulkan instance handle." alt="" coords="507,133,712,173"/>
+<area shape="poly" id="edge5_Node000001_Node000005" title=" " alt="" coords="205,212,493,168,493,173,206,217"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Core_1_1VKInstance_af5c4bbfc606cb6b5cd1d465d5946918f.html#af5c4bbfc606cb6b5cd1d465d5946918f" title="Initialize Vulkan instance." alt="" coords="253,249,459,289"/>
+<area shape="poly" id="edge6_Node000001_Node000006" title=" " alt="" coords="206,243,240,248,239,253,205,248"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Core_1_1VKDevice_ae95255bb5e4c00b54d5f712a12631b8d.html#ae95255bb5e4c00b54d5f712a12631b8d" title="Initialize device (pick physical device and create logical device)" alt="" coords="259,392,453,432"/>
+<area shape="poly" id="edge11_Node000001_Node000010" title=" " alt="" coords="136,247,318,382,315,386,133,252"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1VKDevice_a3587e8580ec6e76e6b1fb4332dffe8da.html#a3587e8580ec6e76e6b1fb4332dffe8da" title="Cleanup device resources." alt="" coords="512,5,707,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="400,99,506,55,527,47,529,52,508,60,402,104"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1VKInstance_a136aad0427c8e257dcb540047c333cd6.html#a136aad0427c8e257dcb540047c333cd6" title="Cleanup Vulkan instance." alt="" coords="507,69,712,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="456,106,493,101,493,107,456,111"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="456,131,493,136,493,141,456,137"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Core_1_1VKInstance_ab6d0d8e03bb2101a3e5203df7722def6.html#ab6d0d8e03bb2101a3e5203df7722def6" title="Check if requested validation layers are available." alt="" coords="507,198,712,253"/>
+<area shape="poly" id="edge7_Node000006_Node000007" title=" " alt="" coords="458,249,493,243,493,248,459,254"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Core_1_1VKInstance_afad35012d9953c1b64f68150632cec74.html#afad35012d9953c1b64f68150632cec74" title="Validation layer callback." alt="" coords="760,300,965,340"/>
+<area shape="poly" id="edge8_Node000006_Node000008" title=" " alt="" coords="459,277,746,306,746,311,458,282"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Core_1_1VKInstance_ac9a554cd2ed26a5a194ae795d0db1792.html#ac9a554cd2ed26a5a194ae795d0db1792" title="Setup debug messenger for validation layer output." alt="" coords="507,328,712,368"/>
+<area shape="poly" id="edge9_Node000006_Node000009" title=" " alt="" coords="422,287,532,321,530,326,420,292"/>
+<area shape="poly" id="edge10_Node000009_Node000008" title=" " alt="" coords="712,334,746,330,747,335,713,339"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Core_1_1VKDevice_a9209b1b553a580d2c39329529cc63864.html#a9209b1b553a580d2c39329529cc63864" title="Create the logical device and retrieve queue handles." alt="" coords="512,392,707,432"/>
+<area shape="poly" id="edge12_Node000010_Node000011" title=" " alt="" coords="454,409,498,409,498,415,454,415"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Core_1_1VKDevice_a30ebd817f55cb5573ec46a9ffd6bd4bb.html#a30ebd817f55cb5573ec46a9ffd6bd4bb" title="Pick a suitable physical device (GPU)" alt="" coords="512,456,707,496"/>
+<area shape="poly" id="edge13_Node000010_Node000012" title=" " alt="" coords="437,429,517,450,516,455,435,435"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Core_1_1VKDevice_ac31b7e039abe1da74b754973d2a3eb00.html#ac31b7e039abe1da74b754973d2a3eb00" title="Find queue families on the given physical device." alt="" coords="765,456,960,496"/>
+<area shape="poly" id="edge14_Node000012_Node000013" title=" " alt="" coords="707,473,751,473,751,479,707,479"/>
+</map>

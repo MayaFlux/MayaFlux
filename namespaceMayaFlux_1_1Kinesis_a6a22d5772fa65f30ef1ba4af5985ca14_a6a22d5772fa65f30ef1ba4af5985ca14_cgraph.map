@@ -1,0 +1,6 @@
+<map id="MayaFlux::Kinesis::generate_quad" name="MayaFlux::Kinesis::generate_quad">
+<area shape="rect" id="Node000001" title="Generate a textured quad centred on the origin." alt="" coords="5,29,155,69"/>
+<area shape="poly" id="edge1_Node000001_Node000001" title=" " alt="" coords="43,30,41,20,46,11,60,5,80,3,103,6,116,13,113,18,102,11,80,8,61,10,50,15,46,21,48,28"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_ace716df2f40f1b0e620049c240637942.html#ace716df2f40f1b0e620049c240637942" title="Uniform scaling of a scalar&#45;output tendency." alt="" coords="203,29,352,69"/>
+<area shape="poly" id="edge2_Node000001_Node000002" title=" " alt="" coords="155,47,189,47,189,52,155,52"/>
+</map>

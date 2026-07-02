@@ -1,0 +1,5 @@
+<map id="MayaFlux::Vruta::SoundRoutine::next_execution" name="MayaFlux::Vruta::SoundRoutine::next_execution">
+<area shape="rect" id="Node000001" title="Gets the sample position when this routine should next execute." alt="" coords="5,5,232,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Vruta_1_1SoundRoutine_a2632252e0b740f454ecd97a00007ddfc.html#a2632252e0b740f454ecd97a00007ddfc" title="Checks if the coroutine is still active." alt="" coords="280,5,507,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="232,23,266,23,266,28,232,28"/>
+</map>

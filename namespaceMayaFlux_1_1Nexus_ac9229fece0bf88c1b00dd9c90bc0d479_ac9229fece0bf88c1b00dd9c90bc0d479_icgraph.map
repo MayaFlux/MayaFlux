@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nexus::push_audio_data" name="MayaFlux::Nexus::push_audio_data">
+<area shape="rect" id="Node000001" title="Push samples to every audio sink in sinks." alt="" coords="244,37,419,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nexus_1_1Agent_aa64eb196b545fb1d8bb33f8ac675a43d.html#aa64eb196b545fb1d8bb33f8ac675a43d" title="Push samples to all registered audio sinks." alt="" coords="10,5,191,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="230,46,191,41,192,35,231,41"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nexus_1_1Emitter_aeff057ffb93f577a890f7993681af0cc.html#aeff057ffb93f577a890f7993681af0cc" title="Push samples to all registered audio sinks." alt="" coords="5,69,196,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="231,74,197,79,196,73,230,69"/>
+</map>

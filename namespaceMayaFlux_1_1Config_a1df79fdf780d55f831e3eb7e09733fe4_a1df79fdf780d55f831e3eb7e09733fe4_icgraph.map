@@ -1,0 +1,7 @@
+<map id="MayaFlux::Config::get_global_graphics_config" name="MayaFlux::Config::get_global_graphics_config">
+<area shape="rect" id="Node000001" title="Gets the graphics configuration from the default engine." alt="" coords="327,5,504,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Config_a926b14a6baa31cfcd77dcb32ca8a2417.html#a926b14a6baa31cfcd77dcb32ca8a2417" title="Load engine configuration from a JSON file, applying any present fields to the pre&#45;Init config struct..." alt="" coords="108,5,279,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="312,28,279,28,279,23,312,23"/>
+<area shape="rect" id="Node000003" href="$main_8cpp_a0ddf1224851353fc92bfbff6f499fa97.html#a0ddf1224851353fc92bfbff6f499fa97" title=" " alt="" coords="5,13,60,38"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="94,28,60,28,60,23,94,23"/>
+</map>

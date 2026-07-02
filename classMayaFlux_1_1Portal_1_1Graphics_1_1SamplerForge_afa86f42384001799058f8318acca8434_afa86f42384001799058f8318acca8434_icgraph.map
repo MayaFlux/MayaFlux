@@ -1,0 +1,11 @@
+<map id="MayaFlux::Portal::Graphics::SamplerForge::create_sampler" name="MayaFlux::Portal::Graphics::SamplerForge::create_sampler">
+<area shape="rect" id="Node000001" title=" " alt="" coords="565,69,795,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1SamplerForge_ad25bae266361d43df981d38d888b013e.html#ad25bae266361d43df981d38d888b013e" title="Get or create a sampler with the given configuration." alt="" coords="300,69,517,109"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="552,92,518,92,518,87,552,87"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1SamplerForge_ade63c03afc20d0cee517408a7de6ba39.html#ade63c03afc20d0cee517408a7de6ba39" title="Get an anisotropic sampler (high quality)" alt="" coords="15,5,243,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="306,69,216,48,217,43,308,64"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1SamplerForge_a46fed27700393079b4a9ba50bb2073b1.html#a46fed27700393079b4a9ba50bb2073b1" title="Get a default linear sampler." alt="" coords="5,69,252,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="286,92,252,92,252,87,286,87"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1SamplerForge_a98abd9597dc9dce341946786fd85f57b.html#a98abd9597dc9dce341946786fd85f57b" title="Get a default nearest sampler." alt="" coords="27,134,230,189"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="318,115,231,138,230,133,316,110"/>
+</map>

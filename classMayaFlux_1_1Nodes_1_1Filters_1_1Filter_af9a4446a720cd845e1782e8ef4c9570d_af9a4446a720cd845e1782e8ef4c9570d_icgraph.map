@@ -1,0 +1,9 @@
+<map id="MayaFlux::Nodes::Filters::Filter::get_last_context" name="MayaFlux::Nodes::Filters::Filter::get_last_context">
+<area shape="rect" id="Node000001" title="Gets the last created context object." alt="" coords="467,37,649,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Filters_1_1Filter_ac2259ae23e570a9998150aa47956b1d8.html#ac2259ae23e570a9998150aa47956b1d8" title="Notifies all registered callbacks with the current filter context." alt="" coords="236,37,419,77"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="453,60,419,60,419,55,453,55"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Filters_1_1FIR_a071284d0c86de8a9edb5d7c575c3eba4.html#a071284d0c86de8a9edb5d7c575c3eba4" title="Processes a single sample through the FIR filter." alt="" coords="5,5,188,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="222,45,188,41,189,35,223,40"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Filters_1_1IIR_a6859dce1d8f4deb25b345da083da8f0d.html#a6859dce1d8f4deb25b345da083da8f0d" title="Processes a single sample through the IIR filter." alt="" coords="5,69,188,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="223,74,189,79,188,74,222,69"/>
+</map>

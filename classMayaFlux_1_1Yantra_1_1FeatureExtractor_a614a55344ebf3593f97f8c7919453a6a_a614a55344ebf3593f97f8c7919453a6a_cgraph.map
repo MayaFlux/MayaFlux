@@ -1,0 +1,9 @@
+<map id="MayaFlux::Yantra::FeatureExtractor::set_extraction_parameter" name="MayaFlux::Yantra::FeatureExtractor::set_extraction_parameter">
+<area shape="rect" id="Node000001" title="Handle extractor&#45;specific parameters." alt="" coords="5,77,196,132"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1UniversalExtractor_a9d96320e2cde28d5355d6c4fc8980182.html#a9d96320e2cde28d5355d6c4fc8980182" title="Extraction&#45;specific parameter handling (override for custom parameters)" alt="" coords="244,5,485,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="196,76,250,61,251,66,197,81"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1FeatureExtractor_adf23493724205404de085a12fe60227f.html#adf23493724205404de085a12fe60227f" title="Convert string to extraction method enum." alt="" coords="263,85,466,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="196,102,249,102,249,107,196,107"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1FeatureExtractor_ad5df64d9d7ca8951b8926051f1928083.html#ad5df64d9d7ca8951b8926051f1928083" title="Validate extraction parameters." alt="" coords="253,149,477,189"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="197,125,269,143,267,148,196,130"/>
+</map>

@@ -1,0 +1,84 @@
+<map id="FileReader.hpp" name="FileReader.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="882,5,1001,31"/>
+<area shape="rect" id="Node000002" href="$FFmpegDemuxContext_8hpp.html" title=" " alt="" coords="535,79,737,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="880,36,686,81,685,76,879,31"/>
+<area shape="rect" id="Node000006" href="$SoundFileReader_8hpp.html" title=" " alt="" coords="253,225,411,251"/>
+<area shape="poly" id="edge47_Node000001_Node000006" title=" " alt="" coords="868,27,654,44,382,72,252,90,140,109,56,131,29,142,13,154,8,165,13,175,40,184,103,197,258,223,257,228,102,202,39,189,9,179,3,165,9,150,26,138,54,126,138,104,251,84,382,67,653,39,868,22"/>
+<area shape="rect" id="Node000023" href="$ImageReader_8hpp.html" title=" " alt="" coords="1155,225,1291,251"/>
+<area shape="poly" id="edge28_Node000001_Node000023" title=" " alt="" coords="1015,29,1069,45,1127,69,1181,103,1204,125,1224,151,1232,170,1234,191,1229,226,1224,225,1228,190,1226,171,1219,153,1200,129,1178,108,1125,73,1068,50,1014,34"/>
+<area shape="rect" id="Node000034" href="$ModelReader_8hpp.html" title=" " alt="" coords="1391,79,1526,104"/>
+<area shape="poly" id="edge44_Node000001_Node000034" title=" " alt="" coords="1015,27,1392,78,1391,83,1014,32"/>
+<area shape="rect" id="Node000003" href="$AudioEncodeContext_8cpp.html" title=" " alt="" coords="23,152,207,177"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="539,108,199,155,198,149,539,103"/>
+<area shape="rect" id="Node000004" href="$AudioStreamContext_8hpp.html" title=" " alt="" coords="231,152,417,177"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="573,110,375,154,374,149,572,104"/>
+<area shape="poly" id="edge22_Node000002_Node000006" title=" " alt="" coords="593,111,488,154,412,193,353,228,350,223,410,189,486,150,591,106"/>
+<area shape="rect" id="Node000008" href="$VideoFileReader_8hpp.html" title=" " alt="" coords="429,299,584,324"/>
+<area shape="poly" id="edge23_Node000002_Node000008" title=" " alt="" coords="589,112,559,129,534,154,517,191,508,232,507,270,508,298,503,299,501,270,503,232,512,190,530,150,556,125,586,107"/>
+<area shape="rect" id="Node000017" href="$CameraReader_8hpp.html" title=" " alt="" coords="801,225,948,251"/>
+<area shape="poly" id="edge17_Node000002_Node000017" title=" " alt="" coords="671,108,743,150,859,223,856,227,740,154,668,113"/>
+<area shape="rect" id="Node000019" href="$FFmpegDemuxContext_8cpp.html" title=" " alt="" coords="804,152,1004,177"/>
+<area shape="poly" id="edge20_Node000002_Node000019" title=" " alt="" coords="693,105,861,149,860,154,692,110"/>
+<area shape="rect" id="Node000020" href="$FFmpegMuxContext_8cpp.html" title=" " alt="" coords="1028,152,1209,177"/>
+<area shape="poly" id="edge21_Node000002_Node000020" title=" " alt="" coords="728,103,1041,149,1041,155,727,109"/>
+<area shape="rect" id="Node000021" href="$VideoStreamContext_8hpp.html" title=" " alt="" coords="543,152,729,177"/>
+<area shape="poly" id="edge24_Node000002_Node000021" title=" " alt="" coords="639,118,639,152,633,152,633,118"/>
+<area shape="rect" id="Node000005" href="$AudioStreamContext_8cpp.html" title=" " alt="" coords="44,225,228,251"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="282,185,168,228,166,223,280,180"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="330,191,334,225,328,226,324,191"/>
+<area shape="poly" id="edge16_Node000004_Node000008" title=" " alt="" coords="361,182,426,223,468,262,499,297,495,300,464,266,423,227,358,186"/>
+<area shape="rect" id="Node000007" href="$SoundFileReader_8cpp.html" title=" " alt="" coords="248,299,405,324"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="333,265,330,299,325,298,328,264"/>
+<area shape="poly" id="edge7_Node000006_Node000008" title=" " alt="" coords="374,253,479,296,477,301,372,258"/>
+<area shape="rect" id="Node000009" href="$IOManager_8hpp.html" title=" " alt="" coords="620,372,740,397"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="548,327,653,369,651,374,546,332"/>
+<area shape="rect" id="Node000016" href="$VideoFileReader_8cpp.html" title=" " alt="" coords="429,372,584,397"/>
+<area shape="poly" id="edge15_Node000008_Node000016" title=" " alt="" coords="509,338,509,372,504,372,504,338"/>
+<area shape="rect" id="Node000010" href="$BufferOperation_8cpp.html" title=" " alt="" coords="225,445,377,471"/>
+<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="607,402,363,448,362,443,606,397"/>
+<area shape="rect" id="Node000011" href="$Creator_8cpp.html" title=" " alt="" coords="401,445,497,471"/>
+<area shape="poly" id="edge10_Node000009_Node000011" title=" " alt="" coords="631,404,488,448,486,443,629,399"/>
+<area shape="rect" id="Node000012" href="$Depot_8cpp.html" title=" " alt="" coords="521,445,609,471"/>
+<area shape="poly" id="edge11_Node000009_Node000012" title=" " alt="" coords="652,407,586,447,583,443,649,402"/>
+<area shape="rect" id="Node000013" href="$Engine_8cpp.html" title=" " alt="" coords="633,445,727,471"/>
+<area shape="poly" id="edge12_Node000009_Node000013" title=" " alt="" coords="683,411,683,445,677,445,677,411"/>
+<area shape="rect" id="Node000014" href="$IOManager_8cpp.html" title=" " alt="" coords="991,445,1110,471"/>
+<area shape="poly" id="edge13_Node000009_Node000014" title=" " alt="" coords="754,397,992,443,991,448,753,403"/>
+<area shape="rect" id="Node000015" href="$Rigs_8cpp.html" title=" " alt="" coords="751,445,828,471"/>
+<area shape="poly" id="edge14_Node000009_Node000015" title=" " alt="" coords="711,403,773,443,770,447,708,407"/>
+<area shape="poly" id="edge19_Node000017_Node000009" title=" " alt="" coords="848,261,792,301,696,374,693,370,789,297,845,256"/>
+<area shape="rect" id="Node000018" href="$CameraReader_8cpp.html" title=" " alt="" coords="802,299,947,324"/>
+<area shape="poly" id="edge18_Node000017_Node000018" title=" " alt="" coords="877,264,877,299,872,299,872,264"/>
+<area shape="poly" id="edge26_Node000021_Node000008" title=" " alt="" coords="618,189,583,227,519,300,515,297,580,224,614,186"/>
+<area shape="poly" id="edge25_Node000021_Node000017" title=" " alt="" coords="688,179,837,223,835,228,687,184"/>
+<area shape="rect" id="Node000022" href="$VideoStreamContext_8cpp.html" title=" " alt="" coords="593,225,777,251"/>
+<area shape="poly" id="edge27_Node000021_Node000022" title=" " alt="" coords="654,187,680,224,675,227,650,190"/>
+<area shape="rect" id="Node000024" href="$Decoder_8cpp.html" title=" " alt="" coords="1159,299,1262,324"/>
+<area shape="poly" id="edge29_Node000023_Node000024" title=" " alt="" coords="1221,265,1215,299,1210,298,1216,264"/>
+<area shape="rect" id="Node000025" href="$ImageReader_8cpp.html" title=" " alt="" coords="1286,299,1421,324"/>
+<area shape="poly" id="edge30_Node000023_Node000025" title=" " alt="" coords="1257,255,1333,296,1331,301,1255,260"/>
+<area shape="rect" id="Node000026" href="$ImageWriter_8hpp.html" title=" " alt="" coords="1004,299,1135,324"/>
+<area shape="poly" id="edge31_Node000023_Node000026" title=" " alt="" coords="1187,259,1096,301,1093,296,1185,254"/>
+<area shape="poly" id="edge36_Node000026_Node000009" title=" " alt="" coords="994,329,741,375,740,370,993,324"/>
+<area shape="rect" id="Node000027" href="$EXRWriter_8hpp.html" title=" " alt="" coords="845,372,960,397"/>
+<area shape="poly" id="edge32_Node000026_Node000027" title=" " alt="" coords="1031,332,931,374,929,369,1029,327"/>
+<area shape="rect" id="Node000029" href="$Encoder_8cpp.html" title=" " alt="" coords="1321,372,1421,397"/>
+<area shape="poly" id="edge35_Node000026_Node000029" title=" " alt="" coords="1132,324,1323,369,1321,374,1130,330"/>
+<area shape="rect" id="Node000030" href="$ImageExport_8cpp.html" title=" " alt="" coords="1134,445,1266,471"/>
+<area shape="poly" id="edge37_Node000026_Node000030" title=" " alt="" coords="1149,322,1330,349,1435,370,1441,385,1435,399,1412,411,1368,424,1261,448,1260,443,1367,419,1410,406,1432,396,1436,385,1432,374,1329,355,1149,327"/>
+<area shape="rect" id="Node000031" href="$ImageExport_8hpp.html" title=" " alt="" coords="984,372,1117,397"/>
+<area shape="poly" id="edge38_Node000026_Node000031" title=" " alt="" coords="1066,338,1056,373,1051,371,1060,337"/>
+<area shape="rect" id="Node000032" href="$STBImageWriter_8hpp.html" title=" " alt="" coords="1141,372,1296,397"/>
+<area shape="poly" id="edge41_Node000026_Node000032" title=" " alt="" coords="1107,327,1196,369,1193,374,1105,332"/>
+<area shape="poly" id="edge34_Node000027_Node000014" title=" " alt="" coords="940,401,1028,443,1025,448,938,406"/>
+<area shape="rect" id="Node000028" href="$EXRWriter_8cpp.html" title=" " alt="" coords="852,445,967,471"/>
+<area shape="poly" id="edge33_Node000027_Node000028" title=" " alt="" coords="908,411,911,445,906,445,903,411"/>
+<area shape="poly" id="edge39_Node000031_Node000014" title=" " alt="" coords="1053,411,1053,445,1048,445,1048,411"/>
+<area shape="poly" id="edge40_Node000031_Node000030" title=" " alt="" coords="1088,401,1177,443,1175,448,1086,406"/>
+<area shape="poly" id="edge42_Node000032_Node000014" title=" " alt="" coords="1180,405,1079,448,1077,443,1178,400"/>
+<area shape="rect" id="Node000033" href="$STBImageWriter_8cpp.html" title=" " alt="" coords="1291,445,1445,471"/>
+<area shape="poly" id="edge43_Node000032_Node000033" title=" " alt="" coords="1256,401,1345,443,1343,448,1254,406"/>
+<area shape="poly" id="edge45_Node000034_Node000014" title=" " alt="" coords="1461,118,1461,237,1461,313,1460,361,1452,380,1435,399,1409,415,1373,425,1285,437,1193,442,1123,448,1111,450,1110,445,1123,443,1193,437,1284,432,1372,420,1407,410,1432,395,1448,377,1455,360,1456,313,1456,237,1456,118"/>
+<area shape="rect" id="Node000035" href="$ModelReader_8cpp.html" title=" " alt="" coords="1497,152,1631,177"/>
+<area shape="poly" id="edge46_Node000034_Node000035" title=" " alt="" coords="1489,110,1548,150,1545,154,1486,114"/>
+</map>

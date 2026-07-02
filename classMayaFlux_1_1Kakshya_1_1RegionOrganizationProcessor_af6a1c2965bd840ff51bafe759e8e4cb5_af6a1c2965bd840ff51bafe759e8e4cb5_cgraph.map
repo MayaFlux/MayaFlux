@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::RegionOrganizationProcessor::process_region_segment" name="MayaFlux::Kakshya::RegionOrganizationProcessor::process_region_segment">
+<area shape="rect" id="Node000001" title="Process a single region segment." alt="" coords="5,5,219,60"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kakshya_aa54974c0e7035a5e1d91aa1c3c29d49c.html#aa54974c0e7035a5e1d91aa1c3c29d49c" title="Safely copy data from a DataVariant to another DataVariant, handling type conversion." alt="" coords="267,13,444,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="219,30,253,30,253,35,219,35"/>
+</map>

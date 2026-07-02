@@ -1,0 +1,5 @@
+<map id="MayaFlux::Portal::Forma::Inspector::node_network" name="MayaFlux::Portal::Forma::Inspector::node_network">
+<area shape="rect" id="Node000001" title="Inspect a NodeNetwork and its per&#45;network metadata." alt="" coords="235,13,425,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Inspector_a47b36fa77f82dfbb6031c649b54101b0.html#a47b36fa77f82dfbb6031c649b54101b0" title="Inspect the full NodeGraphManager state across all active tokens." alt="" coords="5,5,187,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="221,35,187,35,187,30,221,30"/>
+</map>

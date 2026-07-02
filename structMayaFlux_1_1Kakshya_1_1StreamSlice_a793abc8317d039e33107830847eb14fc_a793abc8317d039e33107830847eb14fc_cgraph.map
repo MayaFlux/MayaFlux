@@ -1,0 +1,11 @@
+<map id="MayaFlux::Kakshya::StreamSlice::from_frame_range" name="MayaFlux::Kakshya::StreamSlice::from_frame_range">
+<area shape="rect" id="Node000001" title="Construct a slice spanning a frame sub&#45;region across all channels." alt="" coords="5,101,235,141"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kakshya_1_1Region_a182856464b376cd037d3473fa34e67d7.html#a182856464b376cd037d3473fa34e67d7" title="Create a Region representing a span in audio (frames and channels)." alt="" coords="299,5,457,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="169,99,282,55,303,47,305,52,284,60,171,104"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kakshya_1_1StreamSlice_ad68a01daa665b75b00361937f283301b.html#ad68a01daa665b75b00361937f283301b" title=" " alt="" coords="283,69,473,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="234,104,269,100,270,105,235,110"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Kakshya_1_1StreamSlice_ab3e621c1437a800e9df55a6a50c98bd9.html#ab3e621c1437a800e9df55a6a50c98bd9" title=" " alt="" coords="289,133,467,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="235,133,275,138,275,143,234,138"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Kakshya_1_1StreamSlice_a2882b45899cd4ea7363a62d7cd758d58.html#a2882b45899cd4ea7363a62d7cd758d58" title=" " alt="" coords="286,197,470,237"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="171,139,284,183,305,190,303,195,282,188,169,144"/>
+</map>

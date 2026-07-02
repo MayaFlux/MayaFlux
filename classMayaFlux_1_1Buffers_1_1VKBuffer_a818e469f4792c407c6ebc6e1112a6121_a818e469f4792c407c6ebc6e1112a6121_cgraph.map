@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::VKBuffer::clear" name="MayaFlux::Buffers::VKBuffer::clear">
+<area shape="rect" id="Node000001" title="Clear buffer contents." alt="" coords="5,37,153,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_aeed198b7008219af3eea770413f392ba.html#aeed198b7008219af3eea770413f392ba" title="Whether this VKBuffer should be host&#45;visible." alt="" coords="201,5,384,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="153,44,187,38,188,44,154,49"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_ab2774aad8e6ca3ee02ff9b31c2f8f6f7.html#ab2774aad8e6ca3ee02ff9b31c2f8f6f7" title="Check whether Vulkan handles are present (buffer registered)" alt="" coords="208,69,377,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="154,66,195,72,194,77,153,71"/>
+</map>

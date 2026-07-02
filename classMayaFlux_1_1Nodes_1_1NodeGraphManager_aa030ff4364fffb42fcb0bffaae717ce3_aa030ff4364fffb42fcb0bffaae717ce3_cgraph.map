@@ -1,0 +1,9 @@
+<map id="MayaFlux::Nodes::NodeGraphManager::process_sample" name="MayaFlux::Nodes::NodeGraphManager::process_sample">
+<area shape="rect" id="Node000001" title="Process a single sample for a specific channel." alt="" coords="5,37,221,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_ab7485f6b5bd28a3d64ffaa5034d3ed9a.html#ab7485f6b5bd28a3d64ffaa5034d3ed9a" title="Gets or creates the root node for a specific token and channel." alt="" coords="269,5,485,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="221,42,255,37,256,43,222,47"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_a4abd4114d034a6b8fd0a0f61c2a18491.html#a4abd4114d034a6b8fd0a0f61c2a18491" title="Normalizes a sample to the range [&#45;1, 1] based on the number of nodes." alt="" coords="269,69,485,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="222,68,256,72,255,77,221,73"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_a9c43d6dbcd53013e4d61fa43f038384a.html#a9c43d6dbcd53013e4d61fa43f038384a" title="Ensures a root node exists for the given token and channel." alt="" coords="533,5,749,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="485,23,520,23,520,28,485,28"/>
+</map>

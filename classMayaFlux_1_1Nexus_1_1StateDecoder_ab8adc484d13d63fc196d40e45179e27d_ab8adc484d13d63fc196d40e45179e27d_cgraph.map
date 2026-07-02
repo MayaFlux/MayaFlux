@@ -1,0 +1,54 @@
+<map id="MayaFlux::Nexus::StateDecoder::reconstruct" name="MayaFlux::Nexus::StateDecoder::reconstruct">
+<area shape="rect" id="Node000001" title="Reconstruct all Fabrics in tapestry from base_dir." alt="" coords="5,163,236,203"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nexus_1_1Tapestry_aae5f16adc0ea5376ea8ab31eb4c0592c.html#aae5f16adc0ea5376ea8ab31eb4c0592c" title="Create and register a named Expanse." alt="" coords="300,5,499,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="141,160,202,108,241,80,283,55,299,48,301,53,285,60,244,84,205,112,144,164"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nexus_1_1Tapestry_ae296c3dae1311014d572aa83636b221d.html#ae296c3dae1311014d572aa83636b221d" title="create_fabric a new unnamed Fabric into the Tapestry." alt="" coords="300,69,499,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="171,160,283,119,309,111,311,116,285,124,173,165"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nexus_1_1Tapestry_a95b33acab612c67037bd1205609cc4fb.html#a95b33acab612c67037bd1205609cc4fb" title="Look up a named Fabric." alt="" coords="300,133,499,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="236,168,286,163,286,168,237,173"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1IO_1_1JSONSerializer_a9722723cb9849422458d73654df019b3.html#a9722723cb9849422458d73654df019b3" title="Last error message, empty if no error." alt="" coords="563,177,772,217"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="236,183,549,192,549,197,236,188"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1IO_1_1JSONSerializer_a374e5e6d710241a9d67a77d73faa48f9.html#a374e5e6d710241a9d67a77d73faa48f9" title="Read path and deserialize into T." alt="" coords="563,241,772,281"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="236,197,549,242,548,247,236,202"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nexus_1_1StateDecoder_a4bbc19256f60fe110344ba93422ab45c.html#a4bbc19256f60fe110344ba93422ab45c" title="Patch existing entities and construct missing ones from schema." alt="" coords="284,580,515,620"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="138,201,379,567,375,570,133,204"/>
+<area shape="poly" id="edge14_Node000007_Node000005" title=" " alt="" coords="401,579,414,512,443,418,464,366,490,316,522,269,561,227,567,223,570,227,564,231,526,272,495,319,469,369,448,419,420,513,406,580"/>
+<area shape="poly" id="edge16_Node000007_Node000006" title=" " alt="" coords="403,579,420,522,451,445,472,403,497,363,527,325,561,291,567,286,571,291,564,295,531,328,502,366,477,406,456,447,425,524,408,581"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Nexus_1_1Fabric_aade08c978cd3577569308e185ab76937.html#aade08c978cd3577569308e185ab76937" title="Register an Expanse for per&#45;commit crossing detection." alt="" coords="820,431,1001,471"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="416,578,476,521,517,492,562,470,623,452,687,442,749,438,806,439,806,444,749,443,687,447,624,457,564,474,520,497,480,526,420,582"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Nexus_1_1Fabric_a2557668b6dec4b19b327a57384589f95.html#a2557668b6dec4b19b327a57384589f95" title="List all registered entity ids in insertion order." alt="" coords="577,804,758,844"/>
+<area shape="poly" id="edge9_Node000007_Node000010" title=" " alt="" coords="414,619,438,655,472,701,515,749,564,790,574,796,571,800,561,794,511,753,468,705,433,658,410,622"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Nexus_1_1Fabric_ab79a83afbad5b153aa846fef92f2e4fc.html#ab79a83afbad5b153aa846fef92f2e4fc" title="Get the Agent registered under id." alt="" coords="577,868,758,908"/>
+<area shape="poly" id="edge10_Node000007_Node000011" title=" " alt="" coords="410,619,430,667,462,730,507,797,534,827,564,854,572,859,569,863,561,858,531,831,503,800,458,733,425,669,405,621"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Nexus_1_1Fabric_ae00cd0d71eb5d5cb4795d7fe6153456a.html#ae00cd0d71eb5d5cb4795d7fe6153456a" title="Get the Emitter registered under id." alt="" coords="577,932,758,972"/>
+<area shape="poly" id="edge11_Node000007_Node000012" title=" " alt="" coords="408,620,424,678,454,759,475,802,500,844,530,884,564,918,571,923,567,927,561,922,526,887,496,847,470,804,449,761,419,680,403,621"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Nexus_1_1Fabric_a0bc3c28aabf0452b2692e724162a5fb6.html#a0bc3c28aabf0452b2692e724162a5fb6" title="Get the Sensor registered under id." alt="" coords="577,996,758,1036"/>
+<area shape="poly" id="edge12_Node000007_Node000013" title=" " alt="" coords="406,620,418,689,446,786,467,839,493,891,525,940,565,982,570,986,566,991,561,986,521,943,489,894,462,841,441,788,413,690,401,621"/>
+<area shape="rect" id="Node000014" href="$namespaceMayaFlux_1_1Nexus_1_1State_a1f55759f773e0700e485e66e1c2b464a.html#a1f55759f773e0700e485e66e1c2b464a" title="Return true if s maps to a known Fabric::Kind token." alt="" coords="579,1060,756,1100"/>
+<area shape="poly" id="edge13_Node000007_Node000014" title=" " alt="" coords="404,620,414,699,424,753,438,814,459,876,486,938,521,996,565,1046,569,1050,566,1054,561,1050,517,999,481,940,454,878,433,815,418,755,408,700,399,621"/>
+<area shape="rect" id="Node000015" href="$namespaceMayaFlux_1_1Nexus_1_1State_a20484da4eb4cae5fb877a7fbadecfbcd.html#a20484da4eb4cae5fb877a7fbadecfbcd" title="Parse a JSON kind token to Fabric::Kind (case&#45;insensitive)." alt="" coords="579,305,756,345"/>
+<area shape="poly" id="edge15_Node000007_Node000015" title=" " alt="" coords="406,579,427,533,460,473,505,410,531,381,561,355,569,350,572,354,564,359,535,384,509,413,464,476,431,535,411,581"/>
+<area shape="rect" id="Node000016" href="$classMayaFlux_1_1Nexus_1_1Fabric_a652235587a57b6af5dbe973d1a1325ee.html#a652235587a57b6af5dbe973d1a1325ee" title="Look up a registered Expanse crossing function by name." alt="" coords="577,484,758,524"/>
+<area shape="poly" id="edge17_Node000007_Node000016" title=" " alt="" coords="448,578,562,533,585,526,586,531,564,539,449,582"/>
+<area shape="rect" id="Node000018" href="$classMayaFlux_1_1Nexus_1_1Fabric_afb84a41750937a5353e7e67a2cd9e752.html#afb84a41750937a5353e7e67a2cd9e752" title="Look up a registered Expanse containment function by name." alt="" coords="577,548,758,588"/>
+<area shape="poly" id="edge19_Node000007_Node000018" title=" " alt="" coords="514,584,562,578,563,583,515,589"/>
+<area shape="rect" id="Node000019" href="$classMayaFlux_1_1Nexus_1_1Fabric_a50280b4fa1257633fce6063188f4e458.html#a50280b4fa1257633fce6063188f4e458" title="Look up a registered influence function by name." alt="" coords="577,612,758,652"/>
+<area shape="poly" id="edge21_Node000007_Node000019" title=" " alt="" coords="515,611,563,617,562,622,514,616"/>
+<area shape="rect" id="Node000020" href="$classMayaFlux_1_1Nexus_1_1Fabric_aab6a346ae31eaaaee670c0a84df94a42.html#aab6a346ae31eaaaee670c0a84df94a42" title="Look up a registered perception function by name." alt="" coords="577,676,758,716"/>
+<area shape="poly" id="edge23_Node000007_Node000020" title=" " alt="" coords="449,618,564,661,586,669,585,674,562,667,448,622"/>
+<area shape="rect" id="Node000021" href="$classMayaFlux_1_1Nexus_1_1Fabric_a62577dfac48d8caa26721f3db066c151.html#a62577dfac48d8caa26721f3db066c151" title="Look up a registered radiation function by name." alt="" coords="577,740,758,780"/>
+<area shape="poly" id="edge25_Node000007_Node000021" title=" " alt="" coords="423,618,483,671,522,700,564,726,578,732,576,737,561,730,519,705,480,675,419,622"/>
+<area shape="rect" id="Node000022" href="$classMayaFlux_1_1Nexus_1_1Fabric_ae2ed78ffdc65b33f6a871aecc34162ab.html#ae2ed78ffdc65b33f6a871aecc34162ab" title="Begin wiring an Emitter into the Fabric." alt="" coords="577,369,758,409"/>
+<area shape="poly" id="edge27_Node000007_Node000022" title=" " alt="" coords="413,578,472,505,514,463,561,426,585,412,588,417,564,430,518,467,476,508,417,581"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Nexus_1_1Fabric_ad3ca3a881b0b38037172fcaeea45167f.html#ad3ca3a881b0b38037172fcaeea45167f" title="Stable id for this Fabric, assigned by Tapestry at construction." alt="" coords="1049,406,1251,431"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="1001,436,1041,431,1042,436,1002,441"/>
+<area shape="rect" id="Node000017" href="$classMayaFlux_1_1Nexus_1_1Fabric_abe4bf318d5e96e6abd7e0d8a06368407.html#abe4bf318d5e96e6abd7e0d8a06368407" title="Assigned name, empty if the Fabric was constructed outside a Tapestry." alt="" coords="820,612,1001,652"/>
+<area shape="poly" id="edge18_Node000016_Node000017" title=" " alt="" coords="744,522,773,534,829,566,876,601,873,605,826,571,771,538,742,526"/>
+<area shape="poly" id="edge20_Node000018_Node000017" title=" " alt="" coords="745,585,822,606,820,611,743,591"/>
+<area shape="poly" id="edge22_Node000019_Node000017" title=" " alt="" coords="758,629,806,629,806,635,758,635"/>
+<area shape="poly" id="edge24_Node000020_Node000017" title=" " alt="" coords="743,673,820,653,822,658,745,679"/>
+<area shape="poly" id="edge26_Node000021_Node000017" title=" " alt="" coords="742,738,771,726,826,693,873,659,876,663,829,698,773,730,744,742"/>
+<area shape="rect" id="Node000023" href="$classMayaFlux_1_1Nexus_1_1Fabric_ac855aedd03d3bbeec79a28c7610a541b.html#ac855aedd03d3bbeec79a28c7610a541b" title=" " alt="" coords="820,367,1001,407"/>
+<area shape="poly" id="edge28_Node000022_Node000023" title=" " alt="" coords="758,386,806,385,806,390,758,391"/>
+<area shape="poly" id="edge29_Node000023_Node000009" title=" " alt="" coords="1002,396,1042,402,1041,407,1001,401"/>
+</map>

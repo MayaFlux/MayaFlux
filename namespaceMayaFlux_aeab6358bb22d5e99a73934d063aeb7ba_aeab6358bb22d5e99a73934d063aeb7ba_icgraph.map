@@ -1,0 +1,29 @@
+<map id="MayaFlux::peak" name="MayaFlux::peak">
+<area shape="rect" id="Node000001" title="Find peak amplitude in single&#45;channel data." alt="" coords="964,245,1091,270"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a718383f1c65bd89371249e51a6170a28.html#a718383f1c65bd89371249e51a6170a28" title="Auto&#45;correlation via FFT." alt="" coords="685,29,864,69"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1015,233,1000,198,979,158,950,117,914,83,890,70,863,61,865,56,892,65,918,79,954,114,984,155,1005,196,1020,231"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_a34f8f0aa7bc1c3f64bc41832cca0b4b9.html#a34f8f0aa7bc1c3f64bc41832cca0b4b9" title="Compute the Harris corner response map." alt="" coords="688,93,861,133"/>
+<area shape="poly" id="edge4_Node000001_Node000004" title=" " alt="" coords="1006,236,966,194,942,172,915,154,861,132,863,127,917,150,945,168,970,190,1010,232"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kinesis_1_1Vision_1_1VisionExecutor_a6ea94c5c8d90c5890b7715a0e4ff2df5.html#a6ea94c5c8d90c5890b7715a0e4ff2df5" title="Execute a VisionSequence on one frame." alt="" coords="347,121,541,161"/>
+<area shape="poly" id="edge11_Node000001_Node000005" title=" " alt="" coords="996,239,958,217,915,199,818,173,718,157,623,148,541,144,542,139,623,143,718,152,819,168,917,193,961,212,998,235"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_a3d21cceb0140e9ece08283ded3f36062.html#a3d21cceb0140e9ece08283ded3f36062" title="Normalize multi&#45;channel data relative to global peak (in&#45;place)" alt="" coords="695,208,854,248"/>
+<area shape="poly" id="edge9_Node000001_Node000009" title=" " alt="" coords="950,251,854,240,855,235,950,246"/>
+<area shape="rect" id="Node000010" href="$namespaceMayaFlux_a6c005491d04af34e5c7495328069c07b.html#a6c005491d04af34e5c7495328069c07b" title="Find peak amplitude in specific channel." alt="" coords="683,273,867,298"/>
+<area shape="poly" id="edge10_Node000001_Node000010" title=" " alt="" coords="950,268,867,278,867,273,950,263"/>
+<area shape="rect" id="Node000011" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_a6c2a0bbccfb6da6f7456370f8e838b41.html#a6c2a0bbccfb6da6f7456370f8e838b41" title="Scharr gradient operator." alt="" coords="700,323,849,363"/>
+<area shape="poly" id="edge12_Node000001_Node000011" title=" " alt="" coords="992,279,917,313,850,332,849,327,915,308,990,274"/>
+<area shape="rect" id="Node000012" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_a6cbf48aad865ab1d2553cadfe2fe43e8.html#a6cbf48aad865ab1d2553cadfe2fe43e8" title="Sobel gradient operator." alt="" coords="700,387,849,427"/>
+<area shape="poly" id="edge13_Node000001_Node000012" title=" " alt="" coords="1012,283,973,331,947,356,917,377,885,392,850,401,849,396,883,387,915,372,943,352,969,328,1008,280"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Yantra_1_1MathematicalTransformer_a6e33d648c252e4cff7c42a3d50779efb.html#a6e33d648c252e4cff7c42a3d50779efb" title="Core transformation implementation." alt="" coords="633,451,916,491"/>
+<area shape="poly" id="edge14_Node000001_Node000013" title=" " alt="" coords="1020,284,1006,320,984,362,955,405,918,441,897,453,894,448,914,437,951,402,980,360,1001,318,1015,282"/>
+<area shape="poly" id="edge2_Node000002_Node000002" title=" " alt="" coords="817,18,802,11,775,8,750,10,736,15,730,21,733,28,728,30,725,20,733,10,749,5,775,3,804,6,820,13"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1ConvolutionTransformer_a9d070c72f78555559c94e86b6274fcab.html#a9d070c72f78555559c94e86b6274fcab" title="Applies the configured convolution operation." alt="" coords="303,29,585,69"/>
+<area shape="poly" id="edge3_Node000002_Node000003" title=" " alt="" coords="671,52,586,52,586,47,671,47"/>
+<area shape="poly" id="edge5_Node000004_Node000005" title=" " alt="" coords="674,124,542,136,541,130,674,119"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Yantra_1_1VisionAnalyzer_a6894626eb161191d2811f594d04914bd.html#a6894626eb161191d2811f594d04914bd" title="Pure virtual analysis implementation &#45; derived classes implement this." alt="" coords="5,57,255,97"/>
+<area shape="poly" id="edge6_Node000005_Node000006" title=" " alt="" coords="332,121,228,100,229,95,334,116"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Kakshya_1_1VisionProcessor_ab9b6b50546df64540aee0f0bbbb7939a.html#ab9b6b50546df64540aee0f0bbbb7939a" title="Execute the VisionSequence on processed_data[0]." alt="" coords="39,121,221,161"/>
+<area shape="poly" id="edge7_Node000005_Node000007" title=" " alt="" coords="333,144,221,144,221,139,333,139"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Buffers_1_1ImageCVProcessor_a03dd11926b797b52ccbdfa37c2b5e4e1.html#a03dd11926b797b52ccbdfa37c2b5e4e1" title="Download the current GPU image, run the VisionSequence, store the result." alt="" coords="19,186,241,241"/>
+<area shape="poly" id="edge8_Node000005_Node000008" title=" " alt="" coords="343,167,242,190,241,185,342,162"/>
+</map>

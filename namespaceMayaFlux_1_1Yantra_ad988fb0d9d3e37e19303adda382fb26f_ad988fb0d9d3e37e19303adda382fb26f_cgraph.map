@@ -1,0 +1,7 @@
+<map id="MayaFlux::Yantra::bindings_from_spec" name="MayaFlux::Yantra::bindings_from_spec">
+<area shape="rect" id="Node000001" title="Derive a GpuBufferBinding list from a ShaderSpec." alt="" coords="5,37,203,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Yantra_a318eac3f9c8db687d15d2c709ff4ce99.html#a318eac3f9c8db687d15d2c709ff4ce99" title="Translate a BindingDirection to a GpuBufferBinding::Direction." alt="" coords="251,5,405,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="203,41,237,36,237,41,203,46"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Yantra_a6fa3d19769cac1586119c6fecb5b31a8.html#a6fa3d19769cac1586119c6fecb5b31a8" title="Translate a BindingSlot modality to a GpuBufferBinding::ElementType." alt="" coords="251,69,405,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="203,69,237,74,237,79,203,74"/>
+</map>

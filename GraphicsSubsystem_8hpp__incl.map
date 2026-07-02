@@ -1,0 +1,13 @@
+<map id="GraphicsSubsystem.hpp" name="GraphicsSubsystem.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="126,5,305,31"/>
+<area shape="rect" id="Node000002" href="$GlobalGraphicsInfo_8hpp.html" title=" " alt="" coords="5,79,228,119"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="202,33,153,72,150,68,199,29"/>
+<area shape="rect" id="Node000004" href="$Subsystem_8hpp.html" title=" " alt="" coords="253,86,375,111"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="232,29,290,75,287,79,228,33"/>
+<area shape="rect" id="Node000003" href="$Mirror_8hpp.html" title=" " alt="" coords="40,167,193,207"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="119,119,119,153,114,153,114,119"/>
+<area shape="rect" id="Node000005" href="$ProcessingArchitecture_8hpp.html" title="Unified processing architecture for multimodal subsystem coordination." alt="" coords="218,167,413,207"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="317,111,317,152,312,153,312,112"/>
+<area shape="rect" id="Node000006" href="$ProcessingTokens_8hpp.html" title=" " alt="" coords="218,255,413,295"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="318,207,318,241,313,241,313,207"/>
+</map>

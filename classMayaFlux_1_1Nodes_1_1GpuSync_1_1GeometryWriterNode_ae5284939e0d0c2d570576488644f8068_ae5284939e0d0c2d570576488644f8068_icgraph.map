@@ -1,0 +1,23 @@
+<map id="MayaFlux::Nodes::GpuSync::GeometryWriterNode::set_vertex_stride" name="MayaFlux::Nodes::GpuSync::GeometryWriterNode::set_vertex_stride">
+<area shape="rect" id="Node000001" title="Set vertex stride (bytes per vertex)" alt="" coords="365,301,565,356"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GeometryReadbackNode_a093a0a90c3f9025c77bff581a3d1b997.html#a093a0a90c3f9025c77bff581a3d1b997" title="Construct from a GPU vertex buffer." alt="" coords="61,5,261,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="450,289,431,240,403,181,364,123,341,97,316,75,290,59,261,48,263,43,292,54,319,71,345,94,369,120,407,179,436,237,454,287"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GlyphGeometryNode_aa2c050b302cf38e5125047fd4f1cd6d7.html#aa2c050b302cf38e5125047fd4f1cd6d7" title="Construct from a UTF&#45;8 string with an explicit FontFace." alt="" coords="5,85,317,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="442,290,421,253,392,212,357,172,316,139,293,127,295,122,319,134,361,168,396,208,425,250,447,287"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GlyphGeometryNode_ae6d0646f782caeb8a210c8344e63130b.html#ae6d0646f782caeb8a210c8344e63130b" title="Construct from a UTF&#45;8 string using the default font." alt="" coords="5,149,317,189"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="430,293,379,245,349,222,316,203,287,191,289,186,319,198,352,218,383,241,433,289"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1MeshWriterNode_a1bd7b484b9414cafed5105c4f0322e64.html#a1bd7b484b9414cafed5105c4f0322e64" title=" " alt="" coords="33,213,289,253"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="395,298,316,267,273,255,274,250,318,262,397,293"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1PathGeneratorNode_a2311404755197ec5b4aad0fb2e2639a4.html#a2311404755197ec5b4aad0fb2e2639a4" title="Create path generator with custom interpolation function." alt="" coords="15,277,307,317"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="351,319,307,315,308,309,352,314"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1PathGeneratorNode_a3d7dbfa965115dd6284a5e96cb20e180.html#a3d7dbfa965115dd6284a5e96cb20e180" title="Create path generator with interpolation mode." alt="" coords="15,341,307,381"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="352,343,308,348,307,343,351,338"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1PointCollectionNode_a6529267bb12caf59f4e93c3a82e62c00.html#a6529267bb12caf59f4e93c3a82e62c00" title="Create empty point source." alt="" coords="61,405,261,460"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="396,364,318,395,262,412,261,407,316,390,394,359"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1PointCollectionNode_a39a470fe14b0ebdf43cc45f4820b2ec7.html#a39a470fe14b0ebdf43cc45f4820b2ec7" title="Create with initial points." alt="" coords="61,484,261,539"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="437,368,385,423,353,450,319,474,262,496,260,492,316,469,350,446,382,419,433,365"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1TopologyGeneratorNode_ae848f76ace7050e302c2d0401490c0aa.html#ae848f76ace7050e302c2d0401490c0aa" title="Create with custom connection function." alt="" coords="61,563,261,617"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="451,370,430,413,401,462,364,511,319,552,292,568,262,578,261,573,289,563,316,548,360,507,397,459,425,410,446,368"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1TopologyGeneratorNode_a9cfcecca907cd156259693c33e2ac2dd.html#a9cfcecca907cd156259693c33e2ac2dd" title="Create topology generator." alt="" coords="61,641,261,696"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="458,370,442,429,414,499,374,570,348,603,319,631,292,648,262,659,261,654,290,643,316,627,345,599,370,567,409,497,437,427,453,369"/>
+</map>

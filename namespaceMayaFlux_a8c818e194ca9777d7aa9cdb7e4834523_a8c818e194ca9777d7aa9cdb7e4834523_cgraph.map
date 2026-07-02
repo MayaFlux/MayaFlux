@@ -1,0 +1,5 @@
+<map id="MayaFlux::bind_serial" name="MayaFlux::bind_serial">
+<area shape="rect" id="Node000001" title="Create binding for Serial device." alt="" coords="5,13,171,38"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Core_1_1InputBinding_aa1eab79d25efbd3b33af864f6932cb63.html#aa1eab79d25efbd3b33af864f6932cb63" title="Bind to Serial device." alt="" coords="219,5,433,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="171,23,205,23,205,28,171,28"/>
+</map>

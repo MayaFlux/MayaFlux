@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kakshya::from_eigen_matrix" name="MayaFlux::Kakshya::from_eigen_matrix">
+<area shape="rect" id="Node000001" title="Convenience function for direct conversion." alt="" coords="260,41,419,81"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_ad749165fadbbc95da3bed4335964be7d.html#ad749165fadbbc95da3bed4335964be7d" title="Process DataVariant through interpolation." alt="" coords="34,5,183,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="246,49,183,40,184,34,246,44"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1OperationHelper_a1299b2cab6169c487b93d1735f8221e9.html#a1299b2cab6169c487b93d1735f8221e9" title="Reconstruct DataVariant from double data and structure info." alt="" coords="5,70,212,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="247,78,213,84,212,79,246,73"/>
+</map>

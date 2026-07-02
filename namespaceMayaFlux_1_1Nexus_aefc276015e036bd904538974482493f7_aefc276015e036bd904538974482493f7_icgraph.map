@@ -1,0 +1,11 @@
+<map id="MayaFlux::Nexus::add_render_sink" name="MayaFlux::Nexus::add_render_sink">
+<area shape="rect" id="Node000001" title="Create and register a render sink targeting window." alt="" coords="244,101,411,141"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nexus_1_1Agent_a5e774c6dcc913e4abf5cd1c62b984ff1.html#a5e774c6dcc913e4abf5cd1c62b984ff1" title="Register a render output targeting window." alt="" coords="10,5,191,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="275,97,195,60,164,48,166,43,197,55,278,93"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nexus_1_1Emitter_a89d25f43665b9086c73083378483b797.html#a89d25f43665b9086c73083378483b797" title="Register a render output targeting window." alt="" coords="5,69,196,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="230,110,196,105,197,100,231,105"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nexus_1_1Agent_aa8d5941eada9cc6923e55ccb53672a35.html#aa8d5941eada9cc6923e55ccb53672a35" title="Register a render output targeting window with a producer function." alt="" coords="10,133,191,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="231,138,192,143,191,138,230,132"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nexus_1_1Emitter_aa79ab1cb084d0a65ca9b2934585d9115.html#aa79ab1cb084d0a65ca9b2934585d9115" title="Register a render output targeting window with a producer function." alt="" coords="5,197,196,237"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="278,150,197,188,166,200,164,195,195,183,275,145"/>
+</map>

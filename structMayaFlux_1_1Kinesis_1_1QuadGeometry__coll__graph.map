@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::QuadGeometry" name="MayaFlux::Kinesis::QuadGeometry">
+<area shape="rect" id="Node000001" title="Textured quad vertex data together with its semantic layout descriptor." alt="" coords="21,308,163,388"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kakshya_1_1VertexLayout.html" title="Complete description of vertex data layout in a buffer." alt="" coords="5,5,179,245"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="95,246,95,291,89,291,89,246"/>
+</map>

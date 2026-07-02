@@ -1,0 +1,24 @@
+<map id="GpuResourceManager.hpp" name="GpuResourceManager.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="307,5,499,31"/>
+<area shape="rect" id="Node000002" href="$ComputePress_8hpp.html" title=" " alt="" coords="309,79,498,119"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="406,31,406,65,401,65,401,31"/>
+<area shape="rect" id="Node000003" href="$ShaderFoundry_8hpp.html" title=" " alt="" coords="331,167,476,192"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="406,119,406,153,401,153,401,119"/>
+<area shape="rect" id="Node000004" href="$ShaderUtils_8hpp.html" title=" " alt="" coords="266,240,391,265"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="393,194,353,232,349,229,390,190"/>
+<area shape="rect" id="Node000011" href="$ShaderSpec_8hpp.html" title=" " alt="" coords="461,240,588,265"/>
+<area shape="poly" id="edge10_Node000003_Node000011" title=" " alt="" coords="424,190,495,231,492,235,421,194"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="5,321,145,346"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="293,268,126,319,125,314,291,263"/>
+<area shape="rect" id="Node000006" href="$GraphicsUtils_8hpp.html" title=" " alt="" coords="169,321,307,346"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="317,268,263,314,260,310,314,263"/>
+<area shape="rect" id="Node000007" href="$VertexLayout_8hpp.html" title=" " alt="" coords="331,313,532,353"/>
+<area shape="poly" id="edge6_Node000004_Node000007" title=" " alt="" coords="345,263,398,303,394,307,342,268"/>
+<area shape="rect" id="Node000008" href="$NDData_8hpp.html" title=" " alt="" coords="450,401,551,427"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="450,352,483,389,479,392,446,355"/>
+<area shape="rect" id="Node000009" title=" " alt="" coords="389,475,493,500"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="493,429,461,466,457,462,489,425"/>
+<area shape="rect" id="Node000010" title=" " alt="" coords="517,475,604,500"/>
+<area shape="poly" id="edge9_Node000008_Node000010" title=" " alt="" coords="513,425,544,462,540,466,509,429"/>
+<area shape="poly" id="edge11_Node000011_Node000008" title=" " alt="" coords="533,265,547,305,549,329,546,354,536,375,523,393,519,389,532,372,541,353,544,329,541,306,528,267"/>
+</map>

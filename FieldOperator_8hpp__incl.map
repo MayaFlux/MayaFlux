@@ -1,0 +1,23 @@
+<map id="FieldOperator.hpp" name="FieldOperator.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="268,5,405,31"/>
+<area shape="rect" id="Node000002" href="$GraphicsOperator_8hpp.html" title=" " alt="" coords="255,86,418,111"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="339,31,339,72,334,72,334,31"/>
+<area shape="rect" id="Node000008" href="$Tendency_8hpp.html" title=" " alt="" coords="379,255,582,295"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="367,29,401,48,432,77,455,118,469,162,478,204,482,240,477,241,473,205,464,163,450,120,428,80,398,52,364,33"/>
+<area shape="rect" id="Node000009" href="$VertexSpec_8hpp.html" title=" " alt="" coords="38,79,230,119"/>
+<area shape="poly" id="edge9_Node000001_Node000009" title=" " alt="" coords="308,33,196,76,194,71,306,28"/>
+<area shape="rect" id="Node000003" href="$VertexLayout_8hpp.html" title=" " alt="" coords="153,255,355,295"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="355,110,377,128,399,152,411,180,411,194,406,208,382,234,352,252,350,247,379,229,401,205,406,193,406,181,394,155,374,132,352,114"/>
+<area shape="rect" id="Node000007" href="$NetworkOperator_8hpp.html" title=" " alt="" coords="231,174,392,199"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="336,112,321,161,316,160,331,111"/>
+<area shape="rect" id="Node000004" href="$NDData_8hpp.html" title=" " alt="" coords="257,343,358,368"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="269,293,294,329,289,332,265,296"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="402,416,506,441"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="332,366,419,408,417,412,330,370"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="264,416,351,441"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="310,368,310,402,305,402,305,368"/>
+<area shape="poly" id="edge8_Node000008_Node000005" title=" " alt="" coords="480,296,461,403,456,402,475,295"/>
+<area shape="rect" id="Node000010" href="$VertexFormats_8hpp.html" title=" " alt="" coords="5,167,207,207"/>
+<area shape="poly" id="edge10_Node000009_Node000010" title=" " alt="" coords="130,120,119,154,114,153,125,118"/>
+<area shape="poly" id="edge11_Node000010_Node000003" title=" " alt="" coords="140,204,211,245,208,250,137,209"/>
+</map>
