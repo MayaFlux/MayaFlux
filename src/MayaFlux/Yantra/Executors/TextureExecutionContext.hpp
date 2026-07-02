@@ -217,12 +217,12 @@ public:
     {
         auto& slot = input_slot();
         if (slot.binding.element_type == GpuBufferBinding::ElementType::IMAGE_STORAGE) {
-            stage_image_storage(slot.binding.binding, image);
+            stage_image_at(slot.binding.binding, image, GpuBufferBinding::ElementType::IMAGE_STORAGE);
         } else {
             auto s = sampler
                 ? sampler
                 : Portal::Graphics::SamplerForge::instance().get_default_linear();
-            stage_image_sampled(slot.binding.binding, image, s);
+            stage_image_at(slot.binding.binding, image, GpuBufferBinding::ElementType::IMAGE_SAMPLED, s);
         }
         slot.image = image;
         m_pending_container = nullptr;
@@ -250,7 +250,7 @@ public:
         auto s = sampler
             ? sampler
             : Portal::Graphics::SamplerForge::instance().get_default_linear();
-        stage_image_sampled(slot.binding.binding, img, s);
+        stage_image_at(slot.binding.binding, img, GpuBufferBinding::ElementType::IMAGE_SAMPLED, s);
         slot.image = img;
         m_pending_container = nullptr;
     }
@@ -273,7 +273,7 @@ public:
             slot.width = width;
             slot.height = height;
         }
-        stage_image_storage(slot.binding.binding, slot.image);
+        stage_image_at(slot.binding.binding, slot.image, GpuBufferBinding::ElementType::IMAGE_STORAGE);
     }
 
 protected:
@@ -334,9 +334,9 @@ protected:
 
             auto& in_slot = input_slot();
             if (in_slot.binding.element_type == GpuBufferBinding::ElementType::IMAGE_STORAGE) {
-                stage_image_storage(in_slot.binding.binding, img);
+                stage_image_at(in_slot.binding.binding, img, GpuBufferBinding::ElementType::IMAGE_STORAGE);
             } else {
-                stage_image_sampled(in_slot.binding.binding, img, sampler);
+                stage_image_at(in_slot.binding.binding, img, GpuBufferBinding::ElementType::IMAGE_SAMPLED, sampler);
             }
             in_slot.image = img;
 

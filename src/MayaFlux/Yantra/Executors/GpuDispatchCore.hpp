@@ -145,6 +145,24 @@ public:
         m_gpu_config = std::move(config);
     }
 
+    /**
+     * @brief Register a VKImage at an explicit binding index.
+     *
+     * Dispatches to the storage or sampled path based on kind. The image
+     * will be transitioned to eGeneral (STORAGE) or eShaderReadOnlyOptimal
+     * (SAMPLED) if not already there.
+     *
+     * @param binding_index Index matching the declared image binding.
+     * @param image         Initialised VKImage.
+     * @param kind           IMAGE_STORAGE or IMAGE_SAMPLED.
+     * @param sampler        Vulkan sampler handle. Required for IMAGE_SAMPLED,
+     *                       ignored for IMAGE_STORAGE.
+     */
+    void stage_image_at(size_t binding_index,
+        std::shared_ptr<Core::VKImage> image,
+        GpuBufferBinding::ElementType kind,
+        vk::Sampler sampler = nullptr);
+
 protected:
     /**
      * @brief Declare the storage buffers the shader expects.
@@ -193,16 +211,6 @@ protected:
     void stage_passthrough(size_t binding_index, const void* data, size_t byte_size);
 
     /**
-     * @brief Register a VKImage for an IMAGE_STORAGE binding.
-     *
-     * The image will be transitioned to eGeneral layout if not already there.
-     *
-     * @param binding_index Index matching the IMAGE_STORAGE declaration.
-     * @param image         Initialised VKImage.
-     */
-    void stage_image_storage(size_t binding_index, std::shared_ptr<Core::VKImage> image);
-
-    /**
      * @brief Stage a flat native-typed byte buffer for FLOAT32 bindings,
      *        bypassing the double-to-float cast in flatten_channels_to_staging.
      *
@@ -219,19 +227,6 @@ protected:
      * @param byte_size     Total byte count.
      */
     void stage_native_bytes(size_t binding_index, const void* data, size_t byte_size);
-
-    /**
-     * @brief Register a VKImage + sampler for an IMAGE_SAMPLED binding.
-     *
-     * The image will be transitioned to eShaderReadOnlyOptimal if needed.
-     *
-     * @param binding_index Index matching the IMAGE_SAMPLED declaration.
-     * @param image         Initialised VKImage.
-     * @param sampler       Vulkan sampler handle.
-     */
-    void stage_image_sampled(size_t binding_index,
-        std::shared_ptr<Core::VKImage> image,
-        vk::Sampler sampler);
 
     [[nodiscard]] const GpuShaderConfig& gpu_config() const;
 

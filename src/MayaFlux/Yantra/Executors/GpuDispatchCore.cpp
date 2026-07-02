@@ -64,20 +64,18 @@ void GpuDispatchCore::stage_passthrough(size_t binding_index, const void* data, 
     std::memcpy(slot.data(), data, byte_size);
 }
 
-void GpuDispatchCore::stage_image_storage(size_t binding_index, std::shared_ptr<Core::VKImage> image)
-{
-    if (binding_index >= m_image_bindings.size())
-        m_image_bindings.resize(binding_index + 1);
-    m_image_bindings[binding_index] = { .image = std::move(image), .sampler = nullptr, .kind = GpuBufferBinding::ElementType::IMAGE_STORAGE };
-}
-
-void GpuDispatchCore::stage_image_sampled(size_t binding_index,
+void GpuDispatchCore::stage_image_at(size_t binding_index,
     std::shared_ptr<Core::VKImage> image,
+    GpuBufferBinding::ElementType kind,
     vk::Sampler sampler)
 {
     if (binding_index >= m_image_bindings.size())
         m_image_bindings.resize(binding_index + 1);
-    m_image_bindings[binding_index] = { .image = std::move(image), .sampler = sampler, .kind = GpuBufferBinding::ElementType::IMAGE_SAMPLED };
+    m_image_bindings[binding_index] = {
+        .image = std::move(image),
+        .sampler = (kind == GpuBufferBinding::ElementType::IMAGE_SAMPLED) ? sampler : nullptr,
+        .kind = kind,
+    };
 }
 
 void GpuDispatchCore::stage_native_bytes(size_t binding_index, const void* data, size_t byte_size)
