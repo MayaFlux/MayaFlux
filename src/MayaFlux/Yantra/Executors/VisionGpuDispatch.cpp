@@ -288,8 +288,9 @@ VisionResult VisionGpuExecutor::run(
     const std::shared_ptr<Core::VKImage>& image,
     uint32_t w, uint32_t h)
 {
-    auto& ctx = contexts.pixel;
+    auto& pixel_ctx = contexts.pixel;
     auto& structured_ctx = contexts.structured;
+    auto& label_ctx = contexts.labels;
 
     VisionResult result;
     result.w = w;
@@ -303,7 +304,7 @@ VisionResult VisionGpuExecutor::run(
     std::shared_ptr<Core::VKImage> last_staged;
     uint32_t last_w = 0, last_h = 0;
 
-    ctx.prepare_output_image(w, h);
+    pixel_ctx.prepare_output_image(w, h);
     last_w = w;
     last_h = h;
 
@@ -318,43 +319,43 @@ VisionResult VisionGpuExecutor::run(
         }
 
         if (cfg.shader_id != last_shader_id || cfg.shader_path != last_shader_path) {
-            ctx.swap_shader(cfg);
+            pixel_ctx.swap_shader(cfg);
             last_shader_id = cfg.shader_id;
             last_shader_path = cfg.shader_path;
         }
         if (current != last_staged) {
-            ctx.stage_image(current);
+            pixel_ctx.stage_image(current);
             last_staged = current;
         }
         if (w != last_w || h != last_h) {
-            ctx.prepare_output_image(w, h);
+            pixel_ctx.prepare_output_image(w, h);
             last_w = w;
             last_h = h;
         }
-        ctx.set_output_dimensions(w, h);
+        pixel_ctx.set_output_dimensions(w, h);
 
         switch (step.op) {
         case VisionOp::Threshold:
-            ctx.set_push_constants(ThresholdPC {
+            pixel_ctx.set_push_constants(ThresholdPC {
                 .value = std::get<ThresholdParams>(step.params).value });
             break;
         case VisionOp::NormalizeRange: {
             const auto& p = std::get<NormalizeRangeParams>(step.params);
             const float scale = (p.hi > p.lo) ? 1.0F / (p.hi - p.lo) : 1.0F;
             const float off = (p.hi > p.lo) ? -p.lo / (p.hi - p.lo) : 0.0F;
-            ctx.set_push_constants(NormalizePC { .scale = scale, .offset = off });
+            pixel_ctx.set_push_constants(NormalizePC { .scale = scale, .offset = off });
             break;
         }
         case VisionOp::RgbaToGray:
-            ctx.set_push_constants(RgbaToGrayPC {
+            pixel_ctx.set_push_constants(RgbaToGrayPC {
                 .wr = 0.299F, .wg = 0.587F, .wb = 0.114F, .wa = 0.0F });
             break;
         case VisionOp::GaussianBlur: {
             const auto& p = std::get<GaussianBlurParams>(step.params);
             const auto radius = static_cast<uint32_t>(std::ceil(p.sigma * 3.0F));
             const auto& weights = gaussian_kernel_1d(radius, p.sigma);
-            ctx.set_binding_data(2, std::span<const float>(weights));
-            ctx.set_push_constants(GaussianPC { .radius = radius, .width = w, .height = h });
+            pixel_ctx.set_binding_data(2, std::span<const float>(weights));
+            pixel_ctx.set_push_constants(GaussianPC { .radius = radius, .width = w, .height = h });
             break;
         }
         case VisionOp::Erode:
@@ -362,12 +363,12 @@ VisionResult VisionGpuExecutor::run(
         case VisionOp::Open:
         case VisionOp::Close:
         case VisionOp::MorphGradient:
-            ctx.set_push_constants(MorphPC {
+            pixel_ctx.set_push_constants(MorphPC {
                 .radius = std::get<MorphParams>(step.params).radius });
             break;
         case VisionOp::Canny: {
             const auto& p = std::get<CannyParams>(step.params);
-            ctx.set_push_constants(CannyPC {
+            pixel_ctx.set_push_constants(CannyPC {
                 .sigma = p.sigma, .lo = p.low_threshold, .hi = p.high_threshold });
             break;
         }
@@ -382,51 +383,51 @@ VisionResult VisionGpuExecutor::run(
                 uint32_t height;
             };
 
-            ctx.swap_shader({ .shader_path = "harris_grad_pack.comp.spv", .workgroup_size = k_wg2d });
-            ctx.stage_image(current);
-            ctx.prepare_output_image(w, h);
+            pixel_ctx.swap_shader({ .shader_path = "harris_grad_pack.comp.spv", .workgroup_size = k_wg2d });
+            pixel_ctx.stage_image(current);
+            pixel_ctx.prepare_output_image(w, h);
             {
-                const auto f = ctx.dispatch_async({});
+                const auto f = pixel_ctx.dispatch_async({});
                 foundry.wait_for_fence(f);
                 foundry.release_fence(f);
             }
-            auto packed = ctx.get_output_image(0);
+            auto packed = pixel_ctx.get_output_image(0);
 
             const auto blur_cfg = config(VisionOp::GaussianBlur, GaussianBlurParams { .sigma = p.sigma });
-            ctx.swap_shader(blur_cfg);
-            ctx.stage_image(packed);
-            ctx.set_binding_data(2, std::span<const float>(weights));
-            ctx.set_push_constants(GaussianPC { .radius = radius, .width = w, .height = h });
-            ctx.prepare_output_image(w, h);
+            pixel_ctx.swap_shader(blur_cfg);
+            pixel_ctx.stage_image(packed);
+            pixel_ctx.set_binding_data(2, std::span<const float>(weights));
+            pixel_ctx.set_push_constants(GaussianPC { .radius = radius, .width = w, .height = h });
+            pixel_ctx.prepare_output_image(w, h);
             {
-                const auto f = ctx.dispatch_async({});
+                const auto f = pixel_ctx.dispatch_async({});
                 foundry.wait_for_fence(f);
                 foundry.release_fence(f);
             }
-            auto smoothed = ctx.get_output_image(0);
+            auto smoothed = pixel_ctx.get_output_image(0);
 
             const GpuShaderConfig harris_resp_cfg {
                 .shader_path = "harris_response.comp.spv",
                 .workgroup_size = k_wg2d,
                 .push_constant_size = sizeof(HarrisPC),
             };
-            ctx.swap_shader(harris_resp_cfg);
-            ctx.stage_image(smoothed);
-            ctx.set_push_constants(HarrisPC { .k = p.k, .pass = 0U, .width = w, .height = h });
-            ctx.prepare_output_image(w, h);
+            pixel_ctx.swap_shader(harris_resp_cfg);
+            pixel_ctx.stage_image(smoothed);
+            pixel_ctx.set_push_constants(HarrisPC { .k = p.k, .pass = 0U, .width = w, .height = h });
+            pixel_ctx.prepare_output_image(w, h);
             {
-                const auto f = ctx.dispatch_async({});
+                const auto f = pixel_ctx.dispatch_async({});
                 foundry.wait_for_fence(f);
                 foundry.release_fence(f);
             }
 
-            ctx.set_push_constants(HarrisPC { .k = p.k, .pass = 1U, .width = w, .height = h });
+            pixel_ctx.set_push_constants(HarrisPC { .k = p.k, .pass = 1U, .width = w, .height = h });
             {
-                const auto f = ctx.dispatch_async({});
+                const auto f = pixel_ctx.dispatch_async({});
                 foundry.wait_for_fence(f);
                 foundry.release_fence(f);
             }
-            current = ctx.get_output_image(0);
+            current = pixel_ctx.get_output_image(0);
 
             result.structured = std::monostate {};
             continue;
@@ -506,84 +507,85 @@ VisionResult VisionGpuExecutor::run(
             continue;
         }
         case VisionOp::ConnectedComponents: {
-            auto& lctx = contexts.labels;
-
             struct CcPC {
                 uint32_t width, height, write_to_b;
             };
 
-            lctx.set_output_size(2, sizeof(uint32_t));
+            label_ctx.set_output_size(2, sizeof(uint32_t));
 
-            lctx.swap_shader({
+            label_ctx.swap_shader({
                 .shader_path = "cc_seed.comp.spv",
                 .workgroup_size = k_wg2d,
                 .push_constant_size = sizeof(CcPC),
             });
-            lctx.stage_image(current);
-            lctx.set_push_constants(CcPC { .width = w, .height = h, .write_to_b = 0 });
-            lctx.prepare_output_image(w, h);
-            lctx.set_output_dimensions(w, h);
+            label_ctx.stage_image(current);
+            label_ctx.set_push_constants(CcPC { .width = w, .height = h, .write_to_b = 0 });
+            label_ctx.prepare_output_image(w, h);
+            label_ctx.set_output_dimensions(w, h);
             {
-                const auto f = lctx.dispatch_async({});
+                const auto f = label_ctx.dispatch_async({});
                 foundry.wait_for_fence(f);
                 foundry.release_fence(f);
             }
-            auto img_a = lctx.get_output_image(0);
-            auto img_b = Portal::Graphics::TextureLoom::instance()
-                             .create_storage_image(w, h, Portal::Graphics::ImageFormat::RGBA32F);
-            lctx.stage_image_at(4, img_b, GpuBufferBinding::ElementType::IMAGE_STORAGE);
+            auto img_a = label_ctx.get_output_image(0);
+
+            if (!m_cc_ping_pong_b || m_cc_ping_pong_w != w || m_cc_ping_pong_h != h) {
+                m_cc_ping_pong_b = Portal::Graphics::TextureLoom::instance()
+                                       .create_storage_image(w, h, Portal::Graphics::ImageFormat::RGBA32F);
+                m_cc_ping_pong_w = w;
+                m_cc_ping_pong_h = h;
+            }
+            label_ctx.stage_image_at(4, m_cc_ping_pong_b, GpuBufferBinding::ElementType::IMAGE_STORAGE);
 
             constexpr uint32_t k_max_iterations = 256;
-            lctx.swap_shader({
+            label_ctx.swap_shader({
                 .shader_path = "cc_propagate.comp.spv",
                 .workgroup_size = k_wg2d,
                 .push_constant_size = sizeof(CcPC),
             });
-            lctx.stage_image_at(0, img_a, GpuBufferBinding::ElementType::IMAGE_STORAGE);
-            lctx.stage_image_at(4, img_b, GpuBufferBinding::ElementType::IMAGE_STORAGE);
+            label_ctx.stage_image_at(0, img_a, GpuBufferBinding::ElementType::IMAGE_STORAGE);
+            label_ctx.stage_image_at(4, m_cc_ping_pong_b, GpuBufferBinding::ElementType::IMAGE_STORAGE);
 
             bool write_b = true;
             auto read_img = img_a;
 
-            uint32_t iters_run = 0;
             for (uint32_t iter = 0; iter < k_max_iterations; ++iter) {
                 uint32_t zero = 0;
-                lctx.set_binding_data(2, std::span<const uint32_t>(&zero, 1));
-                lctx.stage_image(read_img);
-                lctx.set_push_constants(CcPC { .width = w, .height = h, .write_to_b = write_b ? 1u : 0u });
-                lctx.set_output_dimensions(w, h);
-                const auto f = lctx.dispatch_async({});
+                label_ctx.set_binding_data(2, std::span<const uint32_t>(&zero, 1));
+                label_ctx.stage_image(read_img);
+                label_ctx.set_push_constants(CcPC { .width = w, .height = h, .write_to_b = write_b ? 1U : 0U });
+                label_ctx.set_output_dimensions(w, h);
+                const auto f = label_ctx.dispatch_async({});
                 foundry.wait_for_fence(f);
                 foundry.release_fence(f);
 
                 uint32_t changed = 0;
-                lctx.download_binding(2, &changed, sizeof(uint32_t));
+                label_ctx.download_binding(2, &changed, sizeof(uint32_t));
 
-                read_img = write_b ? img_b : img_a;
+                read_img = write_b ? m_cc_ping_pong_b : img_a;
                 write_b = !write_b;
-                iters_run = iter + 1;
 
                 if (changed == 0)
                     break;
             }
 
-            lctx.swap_shader({
+            label_ctx.swap_shader({
                 .shader_path = "cc_colorize.comp.spv",
                 .workgroup_size = k_wg2d,
                 .push_constant_size = sizeof(CcPC),
             });
-            lctx.stage_image(read_img);
-            lctx.set_push_constants(CcPC { .width = w, .height = h, .write_to_b = 0 });
-            lctx.prepare_output_image(w, h);
-            lctx.set_output_dimensions(w, h);
+            label_ctx.stage_image(read_img);
+            label_ctx.set_push_constants(CcPC { .width = w, .height = h, .write_to_b = 0 });
+            label_ctx.prepare_output_image(w, h);
+            label_ctx.set_output_dimensions(w, h);
             {
-                const auto f = lctx.dispatch_async({});
+                const auto f = label_ctx.dispatch_async({});
                 foundry.wait_for_fence(f);
                 foundry.release_fence(f);
             }
 
-            lctx.clear_output_dimensions();
-            result.debug_labels = lctx.get_output_image(0);
+            label_ctx.clear_output_dimensions();
+            result.debug_labels = label_ctx.get_output_image(0);
             result.structured = std::monostate {};
             current = result.debug_labels;
             last_staged = current;
@@ -593,12 +595,12 @@ VisionResult VisionGpuExecutor::run(
             break;
         }
 
-        const auto fence = ctx.dispatch_async({});
+        const auto fence = pixel_ctx.dispatch_async({});
         foundry.wait_for_fence(fence);
         foundry.release_fence(fence);
 
-        ctx.clear_output_dimensions();
-        current = ctx.get_output_image(0);
+        pixel_ctx.clear_output_dimensions();
+        current = pixel_ctx.get_output_image(0);
         last_staged = current;
 
         if (step.op == VisionOp::Downsample2x) {
@@ -606,7 +608,7 @@ VisionResult VisionGpuExecutor::run(
             h = std::max(1U, h / 2);
             result.w = w;
             result.h = h;
-            ctx.prepare_output_image(w, h);
+            pixel_ctx.prepare_output_image(w, h);
             last_w = w;
             last_h = h;
         }

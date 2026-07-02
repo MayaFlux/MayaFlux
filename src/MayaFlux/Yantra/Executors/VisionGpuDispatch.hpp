@@ -156,6 +156,9 @@ public:
 
 private:
     std::unique_ptr<VisionGpuContexts> m_contexts;
+    std::shared_ptr<Core::VKImage> m_cc_ping_pong_b;
+    uint32_t m_cc_ping_pong_w { 0 };
+    uint32_t m_cc_ping_pong_h { 0 };
 };
 
 } // namespace MayaFlux::Yantra
