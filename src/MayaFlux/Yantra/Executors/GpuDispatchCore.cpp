@@ -28,15 +28,15 @@ void GpuDispatchCore::set_output_size(size_t index, size_t byte_size)
 
 bool GpuDispatchCore::ensure_gpu_ready()
 {
-    if (m_resources.is_ready())
+    if (m_resources.is_ready(m_gpu_config.shader_path))
         return true;
     m_bindings = declare_buffer_bindings();
-    return m_resources.initialise(m_gpu_config, m_bindings);
+    return m_resources.initialise(m_gpu_config.shader_path, m_gpu_config, m_bindings);
 }
 
 bool GpuDispatchCore::is_gpu_ready() const
 {
-    return m_resources.is_ready();
+    return m_resources.is_ready(m_gpu_config.shader_path);
 }
 
 std::shared_ptr<Core::VKImage> GpuDispatchCore::get_output_image(size_t binding_index) const
@@ -109,6 +109,8 @@ void GpuDispatchCore::prepare_gpu_inputs(
     const std::vector<std::vector<double>>& channels,
     const DataStructureInfo& structure_info)
 {
+    const auto& key = m_gpu_config.shader_path;
+
     flatten_channels_to_staging(channels, structure_info);
     const size_t float_byte_size = m_staging_floats.size() * sizeof(float);
 
@@ -120,8 +122,8 @@ void GpuDispatchCore::prepare_gpu_inputs(
         const size_t idx = b.binding;
 
         if (idx < m_binding_data.size() && !m_binding_data[idx].empty()) {
-            m_resources.ensure_buffer(idx, m_binding_data[idx].size());
-            m_resources.upload_raw(idx, m_binding_data[idx].data(), m_binding_data[idx].size());
+            m_resources.ensure_buffer(key, idx, m_binding_data[idx].size());
+            m_resources.upload_raw(key, idx, m_binding_data[idx].data(), m_binding_data[idx].size());
             continue;
         }
 
@@ -133,10 +135,10 @@ void GpuDispatchCore::prepare_gpu_inputs(
                 const size_t sz = (idx < m_output_size_overrides.size() && m_output_size_overrides[idx] > 0)
                     ? m_output_size_overrides[idx]
                     : fallback_bytes;
-                m_resources.ensure_buffer(idx, sz);
+                m_resources.ensure_buffer(key, idx, sz);
                 if (idx < m_output_size_overrides.size() && m_output_size_overrides[idx] > 0) {
                     std::vector<uint8_t> zeros(sz, 0);
-                    m_resources.upload_raw(idx, zeros.data(), sz);
+                    m_resources.upload_raw(key, idx, zeros.data(), sz);
                 }
                 continue;
             }
@@ -145,8 +147,8 @@ void GpuDispatchCore::prepare_gpu_inputs(
         switch (b.element_type) {
         case GpuBufferBinding::ElementType::PASSTHROUGH:
             if (idx < m_passthrough_bytes.size() && !m_passthrough_bytes[idx].empty()) {
-                m_resources.ensure_buffer(idx, m_passthrough_bytes[idx].size());
-                m_resources.upload_raw(idx, m_passthrough_bytes[idx].data(),
+                m_resources.ensure_buffer(key, idx, m_passthrough_bytes[idx].size());
+                m_resources.upload_raw(key, idx, m_passthrough_bytes[idx].data(),
                     m_passthrough_bytes[idx].size());
             }
             break;
@@ -159,7 +161,7 @@ void GpuDispatchCore::prepare_gpu_inputs(
                 m_resources.transition_image(img, img->get_current_layout(),
                     vk::ImageLayout::eGeneral);
             }
-            m_resources.bind_image_storage(idx, img, b);
+            m_resources.bind_image_storage(key, idx, img, b);
         } break;
 
         case GpuBufferBinding::ElementType::IMAGE_SAMPLED: {
@@ -171,7 +173,7 @@ void GpuDispatchCore::prepare_gpu_inputs(
                 m_resources.transition_image(img, img->get_current_layout(),
                     vk::ImageLayout::eShaderReadOnlyOptimal);
             }
-            m_resources.bind_image_sampled(idx, img, sampler, b);
+            m_resources.bind_image_sampled(key, idx, img, sampler, b);
         } break;
 
         case GpuBufferBinding::ElementType::UINT32:
@@ -181,8 +183,8 @@ void GpuDispatchCore::prepare_gpu_inputs(
                     * (b.element_type == GpuBufferBinding::ElementType::UINT32
                             ? sizeof(uint32_t)
                             : sizeof(int32_t));
-                m_resources.ensure_buffer(idx, raw_bytes);
-                m_resources.upload_raw(idx,
+                m_resources.ensure_buffer(key, idx, raw_bytes);
+                m_resources.upload_raw(key, idx,
                     reinterpret_cast<const uint8_t*>(channels[0].data()),
                     raw_bytes);
             }
@@ -191,11 +193,11 @@ void GpuDispatchCore::prepare_gpu_inputs(
         case GpuBufferBinding::ElementType::FLOAT32:
         default:
             if (!m_native_staging_bytes.empty()) {
-                m_resources.ensure_buffer(idx, m_native_staging_bytes.size());
-                m_resources.upload_raw(idx, m_native_staging_bytes.data(), m_native_staging_bytes.size());
+                m_resources.ensure_buffer(key, idx, m_native_staging_bytes.size());
+                m_resources.upload_raw(key, idx, m_native_staging_bytes.data(), m_native_staging_bytes.size());
             } else {
-                m_resources.ensure_buffer(idx, float_byte_size);
-                m_resources.upload(idx, m_staging_floats.data(), float_byte_size);
+                m_resources.ensure_buffer(key, idx, float_byte_size);
+                m_resources.upload(key, idx, m_staging_floats.data(), float_byte_size);
             }
             break;
         }
@@ -248,7 +250,7 @@ GpuChannelResult GpuDispatchCore::dispatch_core(
     for (const auto& b : m_bindings) {
         if (b.element_type != GpuBufferBinding::ElementType::IMAGE_STORAGE
             && b.element_type != GpuBufferBinding::ElementType::IMAGE_SAMPLED)
-            m_resources.bind_descriptor(b.binding, b);
+            m_resources.bind_descriptor(m_gpu_config.shader_path, b.binding, b);
     }
 
     const size_t effective = m_staging_floats.empty()
@@ -257,7 +259,7 @@ GpuChannelResult GpuDispatchCore::dispatch_core(
     const auto groups = calculate_dispatch_size(effective, structure_info);
 
     m_resources.dispatch(
-        groups, m_bindings,
+        m_gpu_config.shader_path, groups, m_bindings,
         m_push_constants.empty() ? nullptr : m_push_constants.data(),
         m_push_constants.size());
 
@@ -279,7 +281,7 @@ GpuChannelResult GpuDispatchCore::dispatch_core_chained(
         const auto et = m_bindings[i].element_type;
         if (et != GpuBufferBinding::ElementType::IMAGE_STORAGE
             && et != GpuBufferBinding::ElementType::IMAGE_SAMPLED)
-            m_resources.bind_descriptor(i, m_bindings[i]);
+            m_resources.bind_descriptor(m_gpu_config.shader_path, i, m_bindings[i]);
     }
 
     const size_t effective = m_staging_floats.empty()
@@ -298,6 +300,7 @@ GpuChannelResult GpuDispatchCore::dispatch_core_chained(
     const auto& pc_updater = safe_any_cast_or_throw<std::function<void(uint32_t, void*)>>(ctx.execution_metadata.at("pc_updater"));
 
     m_resources.dispatch_batched(
+        m_gpu_config.shader_path,
         pass_count, groups, m_bindings,
         [&](uint32_t pass, std::vector<uint8_t>& pc_data) { pc_updater(pass, pc_data.data()); },
         m_gpu_config.push_constant_size,
@@ -320,7 +323,7 @@ Portal::Graphics::FenceID GpuDispatchCore::dispatch_core_async(
         const auto et = m_bindings[i].element_type;
         if (et != GpuBufferBinding::ElementType::IMAGE_STORAGE
             && et != GpuBufferBinding::ElementType::IMAGE_SAMPLED)
-            m_resources.bind_descriptor(i, m_bindings[i]);
+            m_resources.bind_descriptor(m_gpu_config.shader_path, i, m_bindings[i]);
     }
 
     const size_t effective = m_staging_floats.empty()
@@ -331,7 +334,7 @@ Portal::Graphics::FenceID GpuDispatchCore::dispatch_core_async(
     m_last_effective_element_count = effective;
 
     return m_resources.dispatch_async(
-        groups, m_bindings,
+        m_gpu_config.shader_path, groups, m_bindings,
         m_push_constants.empty() ? nullptr : m_push_constants.data(),
         m_push_constants.size());
 }
@@ -353,10 +356,10 @@ std::vector<float> GpuDispatchCore::readback_primary(size_t float_count)
         break;
     }
 
-    const size_t allocated = m_resources.buffer_allocated_bytes(idx);
+    const size_t allocated = m_resources.buffer_allocated_bytes(m_gpu_config.shader_path, idx);
     const size_t byte_size = std::min(float_count * sizeof(float), allocated);
     std::vector<float> out(byte_size / sizeof(float));
-    m_resources.download(idx, out.data(), byte_size);
+    m_resources.download(m_gpu_config.shader_path, idx, out.data(), byte_size);
     return out;
 }
 
@@ -377,7 +380,7 @@ void GpuDispatchCore::readback_aux(GpuChannelResult& result)
             && m_output_size_overrides[idx] > 0) {
             const size_t sz = m_output_size_overrides[idx];
             std::vector<uint8_t> raw(sz);
-            m_resources.download(idx, reinterpret_cast<float*>(raw.data()), sz);
+            m_resources.download(m_gpu_config.shader_path, idx, reinterpret_cast<float*>(raw.data()), sz);
             result.aux[idx] = std::move(raw);
         }
     }
@@ -385,7 +388,7 @@ void GpuDispatchCore::readback_aux(GpuChannelResult& result)
 
 void GpuDispatchCore::download_binding(size_t index, void* dest, size_t byte_size)
 {
-    m_resources.download(index, reinterpret_cast<float*>(dest), byte_size);
+    m_resources.download(m_gpu_config.shader_path, index, reinterpret_cast<float*>(dest), byte_size);
 }
 
 //==============================================================================

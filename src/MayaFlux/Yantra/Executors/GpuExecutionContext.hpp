@@ -165,7 +165,7 @@ protected:
 
         if (is_native_non_double) {
             const size_t out_idx = find_first_output_index();
-            const size_t allocated = m_resources.buffer_allocated_bytes(out_idx);
+            const size_t allocated = m_resources.buffer_allocated_bytes(gpu_config().shader_path, out_idx);
             if (allocated > 0) {
                 std::vector<uint8_t> raw_bytes(allocated);
                 download_binding(out_idx, raw_bytes.data(), allocated);
