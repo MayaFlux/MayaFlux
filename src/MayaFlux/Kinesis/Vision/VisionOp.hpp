@@ -1,5 +1,7 @@
 #pragma once
 
+#include "MayaFlux/Transitive/Reflect/EnumReflect.hpp"
+
 /**
  * @file VisionOp.hpp
  * @brief Declarative description of a Kinesis::Vision processing sequence.
@@ -350,7 +352,7 @@ inline void hash_combine(size_t& seed, size_t value)
  */
 inline size_t hash_vision_step(VisionOp op, const VisionParams& params)
 {
-    size_t seed = std::hash<uint8_t> {}(static_cast<uint8_t>(op));
+    size_t seed = std::hash<std::string_view> {}(Reflect::enum_to_string(op));
 
     std::visit([&seed](const auto& p) {
         using T = std::decay_t<decltype(p)>;

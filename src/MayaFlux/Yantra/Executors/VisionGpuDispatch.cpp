@@ -303,6 +303,7 @@ VisionResult VisionGpuExecutor::run(
     std::string last_shader_path;
     std::shared_ptr<Core::VKImage> last_staged;
     uint32_t last_w = 0, last_h = 0;
+    std::unordered_map<size_t, std::shared_ptr<Core::VKImage>> completed_ops;
 
     pixel_ctx.prepare_output_image(w, h);
     last_w = w;
@@ -335,6 +336,32 @@ VisionResult VisionGpuExecutor::run(
         pixel_ctx.set_output_dimensions(w, h);
 
         switch (step.op) {
+        case VisionOp::Downsample2x: {
+            const uint32_t new_w = std::max(1U, w / 2);
+            const uint32_t new_h = std::max(1U, h / 2);
+
+            pixel_ctx.prepare_output_image(new_w, new_h);
+            pixel_ctx.set_output_dimensions(new_w, new_h);
+            {
+                const auto f = pixel_ctx.dispatch_async({});
+                foundry.wait_for_fence(f);
+                foundry.release_fence(f);
+            }
+            pixel_ctx.clear_output_dimensions();
+
+            current = pixel_ctx.get_output_image(0);
+            last_staged = current;
+            completed_ops[Kinesis::Vision::hash_vision_step(step.op, step.params)] = current;
+
+            w = new_w;
+            h = new_h;
+            result.w = w;
+            result.h = h;
+            last_w = w;
+            last_h = h;
+
+            continue;
+        }
         case VisionOp::Threshold:
             pixel_ctx.set_push_constants(ThresholdPC {
                 .value = std::get<ThresholdParams>(step.params).value });
@@ -404,6 +431,7 @@ VisionResult VisionGpuExecutor::run(
 
             current = pixel_ctx.get_output_image(0);
             last_staged = current;
+            completed_ops[Kinesis::Vision::hash_vision_step(step.op, step.params)] = current;
             result.structured = std::monostate {};
             continue;
         }
@@ -469,6 +497,7 @@ VisionResult VisionGpuExecutor::run(
                 foundry.release_fence(f);
             }
             current = pixel_ctx.get_output_image(0);
+            completed_ops[Kinesis::Vision::hash_vision_step(step.op, step.params)] = current;
 
             result.structured = std::monostate {};
             continue;
@@ -634,6 +663,7 @@ VisionResult VisionGpuExecutor::run(
             result.structured = std::monostate {};
             current = result.debug_labels;
             last_staged = current;
+            completed_ops[Kinesis::Vision::hash_vision_step(step.op, step.params)] = current;
             continue;
         }
         default:
@@ -647,16 +677,7 @@ VisionResult VisionGpuExecutor::run(
         pixel_ctx.clear_output_dimensions();
         current = pixel_ctx.get_output_image(0);
         last_staged = current;
-
-        if (step.op == VisionOp::Downsample2x) {
-            w = std::max(1U, w / 2);
-            h = std::max(1U, h / 2);
-            result.w = w;
-            result.h = h;
-            pixel_ctx.prepare_output_image(w, h);
-            last_w = w;
-            last_h = h;
-        }
+        completed_ops[Kinesis::Vision::hash_vision_step(step.op, step.params)] = current;
     }
 
     return result;
