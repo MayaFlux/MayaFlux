@@ -923,6 +923,10 @@ namespace {
                 o += "%cmp_" + suffix + " = OpFOrdGreaterThanEqual %bool " + c0 + " " + p0 + "\n";
                 o += "%res_" + suffix + " = OpSelect %f32 %cmp_" + suffix + " %img_cone %img_czero\n";
                 break;
+            case KernelOp::CompareGEPreserve:
+                o += "%cmp_" + suffix + " = OpFOrdGreaterThanEqual %bool " + c0 + " " + p0 + "\n";
+                o += "%res_" + suffix + " = OpSelect %f32 %cmp_" + suffix + " " + p1 + " " + c0 + "\n";
+                break;
             default:
                 o += "%res_" + suffix + " = OpCopyObject %f32 " + c0 + "\n";
                 break;

@@ -211,6 +211,12 @@ struct KernelSource {
  * Two-SSBO + one PC:
  *   SmoothStep   out[i] = smoothstep(a[i], b[i], pc[0])
  *
+ * Image body elementwise (out = f(pixel, pc)):
+ *   CompareGE           out[ch] = pixel[ch] >= pc[0] ? 1.0 : 0.0
+ *   CompareGEPreserve   out[ch] = pixel[ch] >= pc[0] ? pc[1] : pixel[ch]
+ *   ChannelDot          out = dot(pixel.rgba, pc[0..3]) broadcast to all channels
+ *   ChannelReplicate    out = pixel[pc_channel_index].xxxx (single channel to all)
+ *
  * Reduction operations (one InOut SSBO, shared memory):
  *   Sum          accumulate + into shared[lid], tree reduce
  *   Max          accumulate max into shared[lid], tree reduce
@@ -261,6 +267,7 @@ enum class KernelOp : uint8_t {
     Max,
     // image body ops
     CompareGE, ///< out[ch] = pixel[ch] >= pc[0] ? 1.0 : 0.0
+    CompareGEPreserve, ///< out[ch] = pixel[ch] >= pc[0] ? pc[1] : pixel[ch]
     ChannelDot, ///< out = dot(pixel.rgba, pc[0..3]) broadcast to all channels
     ChannelReplicate, ///< out = pixel[pc_channel_index].xxxx (single channel to all)
 };
