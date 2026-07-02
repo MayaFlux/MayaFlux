@@ -48,6 +48,10 @@ namespace {
         uint32_t width;
         uint32_t height;
     };
+    struct CompletedOp {
+        std::shared_ptr<Core::VKImage> output;
+        std::shared_ptr<Core::VKImage> input;
+    };
 
     /** Standard 2D workgroup used by all pixel-to-pixel vision shaders */
     constexpr std::array<uint32_t, 3> k_wg2d { 8, 8, 1 };
@@ -303,7 +307,7 @@ VisionResult VisionGpuExecutor::run(
     std::string last_shader_path;
     std::shared_ptr<Core::VKImage> last_staged;
     uint32_t last_w = 0, last_h = 0;
-    std::unordered_map<size_t, std::shared_ptr<Core::VKImage>> completed_ops;
+    std::unordered_map<size_t, CompletedOp> completed_ops;
 
     pixel_ctx.prepare_output_image(w, h);
     last_w = w;
@@ -349,9 +353,10 @@ VisionResult VisionGpuExecutor::run(
             }
             pixel_ctx.clear_output_dimensions();
 
-            current = pixel_ctx.get_output_image(0);
+            auto downsampled = pixel_ctx.get_output_image(0);
+            completed_ops[Kinesis::Vision::hash_vision_step(step.op, step.params)] = { .output = downsampled, .input = current };
+            current = downsampled;
             last_staged = current;
-            completed_ops[Kinesis::Vision::hash_vision_step(step.op, step.params)] = current;
 
             w = new_w;
             h = new_h;
@@ -429,9 +434,10 @@ VisionResult VisionGpuExecutor::run(
                 foundry.release_fence(f);
             }
 
-            current = pixel_ctx.get_output_image(0);
+            auto opened_closed = pixel_ctx.get_output_image(0);
+            completed_ops[Kinesis::Vision::hash_vision_step(step.op, step.params)] = { .output = opened_closed, .input = current };
+            current = opened_closed;
             last_staged = current;
-            completed_ops[Kinesis::Vision::hash_vision_step(step.op, step.params)] = current;
             result.structured = std::monostate {};
             continue;
         }
@@ -452,6 +458,7 @@ VisionResult VisionGpuExecutor::run(
                 uint32_t height;
             };
 
+            auto harris_input = current;
             pixel_ctx.swap_shader({ .shader_path = "harris_grad_pack.comp.spv", .workgroup_size = k_wg2d });
             pixel_ctx.stage_image(current);
             pixel_ctx.prepare_output_image(w, h);
@@ -497,7 +504,7 @@ VisionResult VisionGpuExecutor::run(
                 foundry.release_fence(f);
             }
             current = pixel_ctx.get_output_image(0);
-            completed_ops[Kinesis::Vision::hash_vision_step(step.op, step.params)] = current;
+            completed_ops[Kinesis::Vision::hash_vision_step(step.op, step.params)] = { .output = current, .input = harris_input };
 
             result.structured = std::monostate {};
             continue;
@@ -615,6 +622,7 @@ VisionResult VisionGpuExecutor::run(
                 },
             });
 
+            auto cc_input = current;
             ExecutionContext seed_tile_ctx;
             seed_tile_ctx.mode = ExecutionMode::DEPENDENCY;
             seed_tile_ctx.execution_metadata["dependency_stages"] = stages;
@@ -663,13 +671,14 @@ VisionResult VisionGpuExecutor::run(
             result.structured = std::monostate {};
             current = result.debug_labels;
             last_staged = current;
-            completed_ops[Kinesis::Vision::hash_vision_step(step.op, step.params)] = current;
+            completed_ops[Kinesis::Vision::hash_vision_step(step.op, step.params)] = { .output = current, .input = cc_input };
             continue;
         }
         default:
             break;
         }
 
+        auto dispatch_input = current;
         const auto fence = pixel_ctx.dispatch_async({});
         foundry.wait_for_fence(fence);
         foundry.release_fence(fence);
@@ -677,7 +686,7 @@ VisionResult VisionGpuExecutor::run(
         pixel_ctx.clear_output_dimensions();
         current = pixel_ctx.get_output_image(0);
         last_staged = current;
-        completed_ops[Kinesis::Vision::hash_vision_step(step.op, step.params)] = current;
+        completed_ops[Kinesis::Vision::hash_vision_step(step.op, step.params)] = { .output = current, .input = dispatch_input };
     }
 
     return result;
