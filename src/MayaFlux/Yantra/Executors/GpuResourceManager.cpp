@@ -425,7 +425,23 @@ void GpuResourceManager::dispatch_batched(
             compute_press.dispatch(cmd_id, groups[0], groups[1], groups[2]);
 
             for (const auto& b : bindings) {
-                if (b.direction == GpuBufferBinding::Direction::INPUT_OUTPUT) {
+                if (b.direction != GpuBufferBinding::Direction::INPUT_OUTPUT)
+                    continue;
+
+                const bool is_image = b.element_type == GpuBufferBinding::ElementType::IMAGE_STORAGE
+                    || b.element_type == GpuBufferBinding::ElementType::IMAGE_SAMPLED;
+
+                if (is_image) {
+                    foundry.image_barrier(
+                        cmd_id,
+                        m_image_slots[b.binding]->get_image(),
+                        vk::ImageLayout::eGeneral,
+                        vk::ImageLayout::eGeneral,
+                        vk::AccessFlagBits::eShaderWrite | vk::AccessFlagBits::eShaderRead,
+                        vk::AccessFlagBits::eShaderWrite | vk::AccessFlagBits::eShaderRead,
+                        vk::PipelineStageFlagBits::eComputeShader,
+                        vk::PipelineStageFlagBits::eComputeShader);
+                } else {
                     foundry.buffer_barrier(
                         cmd_id,
                         m_impl->buffers[b.binding].buffer,
