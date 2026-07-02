@@ -28,15 +28,15 @@ void GpuDispatchCore::set_output_size(size_t index, size_t byte_size)
 
 bool GpuDispatchCore::ensure_gpu_ready()
 {
-    if (m_resources.is_ready(m_gpu_config.shader_path))
+    if (m_resources.is_ready(dispatch_key()))
         return true;
     m_bindings = declare_buffer_bindings();
-    return m_resources.initialise(m_gpu_config.shader_path, m_gpu_config, m_bindings);
+    return m_resources.initialise(dispatch_key(), m_gpu_config, m_bindings);
 }
 
 bool GpuDispatchCore::is_gpu_ready() const
 {
-    return m_resources.is_ready(m_gpu_config.shader_path);
+    return m_resources.is_ready(dispatch_key());
 }
 
 std::shared_ptr<Core::VKImage> GpuDispatchCore::get_output_image(size_t binding_index) const
@@ -109,7 +109,7 @@ void GpuDispatchCore::prepare_gpu_inputs(
     const std::vector<std::vector<double>>& channels,
     const DataStructureInfo& structure_info)
 {
-    const auto& key = m_gpu_config.shader_path;
+    const auto& key = dispatch_key();
 
     flatten_channels_to_staging(channels, structure_info);
     const size_t float_byte_size = m_staging_floats.size() * sizeof(float);
@@ -250,7 +250,7 @@ GpuChannelResult GpuDispatchCore::dispatch_core(
     for (const auto& b : m_bindings) {
         if (b.element_type != GpuBufferBinding::ElementType::IMAGE_STORAGE
             && b.element_type != GpuBufferBinding::ElementType::IMAGE_SAMPLED)
-            m_resources.bind_descriptor(m_gpu_config.shader_path, b.binding, b);
+            m_resources.bind_descriptor(dispatch_key(), b.binding, b);
     }
 
     const size_t effective = m_staging_floats.empty()
@@ -259,7 +259,7 @@ GpuChannelResult GpuDispatchCore::dispatch_core(
     const auto groups = calculate_dispatch_size(effective, structure_info);
 
     m_resources.dispatch(
-        m_gpu_config.shader_path, groups, m_bindings,
+        dispatch_key(), groups, m_bindings,
         m_push_constants.empty() ? nullptr : m_push_constants.data(),
         m_push_constants.size());
 
@@ -281,7 +281,7 @@ GpuChannelResult GpuDispatchCore::dispatch_core_chained(
         const auto et = m_bindings[i].element_type;
         if (et != GpuBufferBinding::ElementType::IMAGE_STORAGE
             && et != GpuBufferBinding::ElementType::IMAGE_SAMPLED)
-            m_resources.bind_descriptor(m_gpu_config.shader_path, i, m_bindings[i]);
+            m_resources.bind_descriptor(dispatch_key(), i, m_bindings[i]);
     }
 
     const size_t effective = m_staging_floats.empty()
@@ -300,7 +300,7 @@ GpuChannelResult GpuDispatchCore::dispatch_core_chained(
     const auto& pc_updater = safe_any_cast_or_throw<std::function<void(uint32_t, void*)>>(ctx.execution_metadata.at("pc_updater"));
 
     m_resources.dispatch_batched(
-        m_gpu_config.shader_path,
+        dispatch_key(),
         pass_count, groups, m_bindings,
         [&](uint32_t pass, std::vector<uint8_t>& pc_data) { pc_updater(pass, pc_data.data()); },
         m_gpu_config.push_constant_size,
@@ -323,7 +323,7 @@ Portal::Graphics::FenceID GpuDispatchCore::dispatch_core_async(
         const auto et = m_bindings[i].element_type;
         if (et != GpuBufferBinding::ElementType::IMAGE_STORAGE
             && et != GpuBufferBinding::ElementType::IMAGE_SAMPLED)
-            m_resources.bind_descriptor(m_gpu_config.shader_path, i, m_bindings[i]);
+            m_resources.bind_descriptor(dispatch_key(), i, m_bindings[i]);
     }
 
     const size_t effective = m_staging_floats.empty()
@@ -334,7 +334,7 @@ Portal::Graphics::FenceID GpuDispatchCore::dispatch_core_async(
     m_last_effective_element_count = effective;
 
     return m_resources.dispatch_async(
-        m_gpu_config.shader_path, groups, m_bindings,
+        dispatch_key(), groups, m_bindings,
         m_push_constants.empty() ? nullptr : m_push_constants.data(),
         m_push_constants.size());
 }
@@ -384,10 +384,10 @@ void GpuDispatchCore::dispatch_core_dependency(const std::vector<DependencyStage
             const auto et = m_bindings[i].element_type;
             if (et != GpuBufferBinding::ElementType::IMAGE_STORAGE
                 && et != GpuBufferBinding::ElementType::IMAGE_SAMPLED)
-                m_resources.bind_descriptor(m_gpu_config.shader_path, i, m_bindings[i]);
+                m_resources.bind_descriptor(dispatch_key(), i, m_bindings[i]);
         }
 
-        keys.push_back(m_gpu_config.shader_path);
+        keys.push_back(dispatch_key());
         groups_per_key.push_back(calculate_dispatch_size(largest_binding_data_element_count(), {}));
         pc_per_key.push_back(m_push_constants);
         hazards_per_key.push_back(stage.hazard_fn ? stage.hazard_fn(*this) : std::vector<Portal::Graphics::HazardResource> {});
@@ -420,10 +420,10 @@ std::vector<float> GpuDispatchCore::readback_primary(size_t float_count)
         break;
     }
 
-    const size_t allocated = m_resources.buffer_allocated_bytes(m_gpu_config.shader_path, idx);
+    const size_t allocated = m_resources.buffer_allocated_bytes(dispatch_key(), idx);
     const size_t byte_size = std::min(float_count * sizeof(float), allocated);
     std::vector<float> out(byte_size / sizeof(float));
-    m_resources.download(m_gpu_config.shader_path, idx, out.data(), byte_size);
+    m_resources.download(dispatch_key(), idx, out.data(), byte_size);
     return out;
 }
 
@@ -444,7 +444,7 @@ void GpuDispatchCore::readback_aux(GpuChannelResult& result)
             && m_output_size_overrides[idx] > 0) {
             const size_t sz = m_output_size_overrides[idx];
             std::vector<uint8_t> raw(sz);
-            m_resources.download(m_gpu_config.shader_path, idx, reinterpret_cast<float*>(raw.data()), sz);
+            m_resources.download(dispatch_key(), idx, reinterpret_cast<float*>(raw.data()), sz);
             result.aux[idx] = std::move(raw);
         }
     }
@@ -452,7 +452,7 @@ void GpuDispatchCore::readback_aux(GpuChannelResult& result)
 
 void GpuDispatchCore::download_binding(size_t index, void* dest, size_t byte_size)
 {
-    m_resources.download(m_gpu_config.shader_path, index, reinterpret_cast<float*>(dest), byte_size);
+    m_resources.download(dispatch_key(), index, reinterpret_cast<float*>(dest), byte_size);
 }
 
 //==============================================================================

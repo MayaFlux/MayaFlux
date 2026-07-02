@@ -187,6 +187,24 @@ public:
         GpuBufferBinding::ElementType kind,
         vk::Sampler sampler = nullptr);
 
+    /**
+     * @brief The key used for this context's GpuResourceManager unit.
+     *
+     * shader_path when non-empty (named .comp files). Falls back to the
+     * numeric shader_id when shader_path is empty, which is always the case
+     * for assembled ShaderSpec configs (config_from_spec never sets
+     * shader_path — only shader_id, via ShaderFoundry's content-hash cache).
+     * Without this fallback, every assembled shader collapses onto the same
+     * empty-string key and silently overwrites the previous assembled
+     * shader's pipeline/bindings.
+     */
+    [[nodiscard]] std::string dispatch_key() const
+    {
+        return m_gpu_config.shader_path.empty()
+            ? std::to_string(m_gpu_config.shader_id)
+            : m_gpu_config.shader_path;
+    }
+
 protected:
     /**
      * @brief Declare the storage buffers the shader expects.
