@@ -17,5 +17,6 @@ void main()
     float gx, gy;
     SOBEL_GRADIENT(in_image, coord, gx, gy);
     const float mag = length(vec2(gx, gy));
-    imageStore(out_image, coord, vec4(mag, mag, mag, 1.0));
+    const float angle = atan(gy, gx);
+    imageStore(out_image, coord, vec4(mag, angle, 0.0, 1.0));
 }
