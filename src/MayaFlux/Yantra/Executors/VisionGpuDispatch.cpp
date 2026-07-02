@@ -17,6 +17,10 @@ namespace {
     struct ThresholdPC {
         float value;
     };
+    struct ThresholdAdaptivePC {
+        uint32_t block_size;
+        float offset;
+    };
     struct NormalizePC {
         float scale;
         float offset;
@@ -306,7 +310,7 @@ GpuComputeConfig VisionGpuExecutor::config(VisionOp op, const VisionParams& /*pa
     case VisionOp::FindContours:
         return { .shader_path = "find_contours.comp.spv", .workgroup_size = { 256, 1, 1 } };
     case VisionOp::ThresholdAdaptive:
-        return { .shader_path = "threshold_adaptive.comp.spv", .workgroup_size = k_wg2d };
+        return { .shader_path = "threshold_adaptive.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(ThresholdAdaptivePC) };
     case VisionOp::ThresholdOtsu:
         return { .shader_path = "threshold_otsu.comp.spv", .workgroup_size = { 256, 1, 1 } };
     default:
@@ -428,6 +432,11 @@ VisionResult VisionGpuExecutor::run(
             pixel_ctx.set_push_constants(MorphPC {
                 .radius = std::get<MorphParams>(step.params).radius });
             break;
+        case VisionOp::ThresholdAdaptive: {
+            const auto& p = std::get<ThresholdAdaptiveParams>(step.params);
+            pixel_ctx.set_push_constants(ThresholdAdaptivePC { .block_size = p.block_size, .offset = p.offset });
+            break;
+        }
         case VisionOp::Open:
         case VisionOp::Close: {
             const auto radius = std::get<MorphParams>(step.params).radius;

@@ -1,0 +1,41 @@
+#version 460
+
+#include "include/vision_common.glsl"
+
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
+layout(set = 0, binding = 0, rgba32f) writeonly uniform image2D out_image;
+layout(set = 0, binding = 1, rgba32f) readonly uniform image2D in_image;
+
+layout(push_constant) uniform PC {
+    uint block_size;
+    float offset;
+} pc;
+
+/**
+ * @brief Adaptive threshold. Each pixel compares against the mean of its
+ *        block_size x block_size clamped neighbourhood minus offset.
+ */
+void main()
+{
+    const ivec2 coord = thread_coord();
+    const ivec2 sz = imageSize(out_image);
+    if (coord.x >= sz.x || coord.y >= sz.y)
+        return;
+
+    const int half_block = int(pc.block_size) / 2;
+    float sum = 0.0;
+    int count = 0;
+
+    for (int dy = -half_block; dy <= half_block; ++dy) {
+        for (int dx = -half_block; dx <= half_block; ++dx) {
+            sum += sample_clamped(in_image, coord + ivec2(dx, dy)).r;
+            ++count;
+        }
+    }
+
+    const float mean = sum / float(count);
+    const float self = sample_clamped(in_image, coord).r;
+    const float result = (self >= (mean - pc.offset)) ? 1.0 : 0.0;
+    imageStore(out_image, coord, vec4(result, result, result, 1.0));
+}
