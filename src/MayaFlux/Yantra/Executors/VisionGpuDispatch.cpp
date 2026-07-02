@@ -26,7 +26,9 @@ namespace {
     };
     struct HarrisPC {
         float k;
-        float sigma;
+        uint32_t pass;
+        uint32_t width;
+        uint32_t height;
     };
     struct ExtractPC {
         float threshold;
@@ -51,6 +53,27 @@ namespace {
     struct CompletedOp {
         std::shared_ptr<Core::VKImage> output;
         std::shared_ptr<Core::VKImage> input;
+    };
+    struct ClassifyPC {
+        float threshold;
+        float value;
+    };
+    struct HysteresisPC {
+        uint32_t width;
+        uint32_t height;
+    };
+    struct FinalizePC {
+        float threshold;
+    };
+    struct ExtractPeaksPC {
+        float threshold;
+        uint32_t nms_radius;
+        uint32_t width;
+        uint32_t height;
+        uint32_t max_keypoints;
+    };
+    struct CcPC {
+        uint32_t width, height, write_to_b;
     };
 
     /** Standard 2D workgroup used by all pixel-to-pixel vision shaders */
@@ -511,10 +534,6 @@ VisionResult VisionGpuExecutor::run(
             }
             auto suppressed = pixel_ctx.get_output_image(0);
 
-            struct ClassifyPC {
-                float threshold;
-                float value;
-            };
             const auto classify_cfg = config(VisionOp::Canny, step.params);
             pixel_ctx.swap_shader(classify_cfg);
             pixel_ctx.stage_image(suppressed);
@@ -536,11 +555,6 @@ VisionResult VisionGpuExecutor::run(
                 foundry.release_fence(f);
             }
             auto classified = pixel_ctx.get_output_image(0);
-
-            struct HysteresisPC {
-                uint32_t width;
-                uint32_t height;
-            };
 
             constexpr uint32_t k_max_hysteresis_rounds = 64;
             label_ctx.set_output_size(2, sizeof(uint32_t));
@@ -567,9 +581,6 @@ VisionResult VisionGpuExecutor::run(
             label_ctx.slot_binding(0).direction = GpuBufferBinding::Direction::OUTPUT;
             auto hysteresis_result = classified;
 
-            struct FinalizePC {
-                float threshold;
-            };
             const auto finalize_cfg = config_from_spec(
                 ShaderSpec::Assemble {}
                     .storage_image("out", BindingDirection::Output)
@@ -601,12 +612,6 @@ VisionResult VisionGpuExecutor::run(
             const auto& p = std::get<HarrisParams>(step.params);
             const auto radius = static_cast<uint32_t>(std::ceil(p.sigma * 3.0F));
             const auto& weights = gaussian_kernel_1d(radius, p.sigma);
-            struct HarrisPC {
-                float k;
-                uint32_t pass;
-                uint32_t width;
-                uint32_t height;
-            };
 
             auto harris_input = current;
             pixel_ctx.swap_shader({ .shader_path = "harris_grad_pack.comp.spv", .workgroup_size = k_wg2d });
@@ -662,14 +667,6 @@ VisionResult VisionGpuExecutor::run(
         case VisionOp::ExtractPeaks: {
             const auto& p = std::get<ExtractPeaksParams>(step.params);
             constexpr uint32_t k_max_kp = 4096;
-
-            struct ExtractPeaksPC {
-                float threshold;
-                uint32_t nms_radius;
-                uint32_t width;
-                uint32_t height;
-                uint32_t max_keypoints;
-            };
 
             structured_ctx.swap_shader({
                 .shader_path = "extract_peaks.comp.spv",
@@ -734,9 +731,6 @@ VisionResult VisionGpuExecutor::run(
             continue;
         }
         case VisionOp::ConnectedComponents: {
-            struct CcPC {
-                uint32_t width, height, write_to_b;
-            };
             label_ctx.set_output_size(2, sizeof(uint32_t));
             label_ctx.set_output_dimensions(w, h);
 
