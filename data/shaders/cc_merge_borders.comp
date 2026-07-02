@@ -1,0 +1,71 @@
+#version 460
+
+#extension GL_KHR_shader_subgroup_basic : require
+#extension GL_KHR_shader_subgroup_arithmetic : require
+
+layout(local_size_x = 8, local_size_y = 8) in;
+
+#include "include/vision_common.glsl"
+#include "include/vision_cc.glsl"
+
+layout(set = 0, binding = 0, rgba32f) uniform image2D io_labels;
+layout(set = 0, binding = 2, std430) buffer ChangedBuf {
+    uint changed[];
+};
+
+layout(push_constant) uniform PC {
+    uint width;
+    uint height;
+} pc;
+
+const uint TILE = 32;
+
+/**
+ * @brief One cross-tile boundary relaxation pass. Only pixels on a tile
+ *        edge (local coordinate 0 or TILE-1 within their tile) compare
+ *        against their immediate neighbour across the tile boundary and
+ *        adopt the minimum label. Interior pixels no-op. Sets changed[0]
+ *        if any border pixel's label decreased.
+ */
+void main()
+{
+    ivec2 coord = thread_coord();
+    if (coord.x >= int(pc.width) || coord.y >= int(pc.height))
+        return;
+
+    uvec2 local_coord = uvec2(coord) % TILE;
+    bool on_border = local_coord.x == 0u || local_coord.x == TILE - 1u
+            || local_coord.y == 0u || local_coord.y == TILE - 1u;
+
+    bool changed_here = false;
+
+    if (on_border) {
+        uint self_label = floatBitsToUint(imageLoad(io_labels, coord).r);
+
+        if (self_label != CC_BACKGROUND) {
+            uint min_label = self_label;
+
+            for (int dy = -1; dy <= 1; ++dy) {
+                for (int dx = -1; dx <= 1; ++dx) {
+                    if (dx == 0 && dy == 0)
+                        continue;
+                    ivec2 nc = coord + ivec2(dx, dy);
+                    if (nc.x < 0 || nc.y < 0 || nc.x >= int(pc.width) || nc.y >= int(pc.height))
+                        continue;
+                    uint nl = floatBitsToUint(imageLoad(io_labels, nc).r);
+                    if (nl != CC_BACKGROUND && nl < min_label)
+                        min_label = nl;
+                }
+            }
+
+            if (min_label < self_label) {
+                imageStore(io_labels, coord, vec4(uintBitsToFloat(min_label), 0.0, 0.0, 0.0));
+                changed_here = true;
+            }
+        }
+    }
+
+    bool subgroup_changed = subgroupOr(changed_here);
+    if (subgroup_changed && subgroupElect())
+        atomicMax(changed[0], 1u);
+}

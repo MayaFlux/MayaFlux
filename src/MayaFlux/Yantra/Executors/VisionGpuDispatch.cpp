@@ -510,9 +510,7 @@ VisionResult VisionGpuExecutor::run(
             struct CcPC {
                 uint32_t width, height, write_to_b;
             };
-
             label_ctx.set_output_size(2, sizeof(uint32_t));
-
             label_ctx.swap_shader({
                 .shader_path = "cc_seed.comp.spv",
                 .workgroup_size = k_wg2d,
@@ -529,31 +527,34 @@ VisionResult VisionGpuExecutor::run(
             }
             auto img_a = label_ctx.get_output_image(0);
 
-            if (!m_cc_ping_pong_b || m_cc_ping_pong_w != w || m_cc_ping_pong_h != h) {
-                m_cc_ping_pong_b = Portal::Graphics::TextureLoom::instance()
-                                       .create_storage_image(w, h, Portal::Graphics::ImageFormat::RGBA32F);
-                m_cc_ping_pong_w = w;
-                m_cc_ping_pong_h = h;
-            }
-            label_ctx.stage_image_at(4, m_cc_ping_pong_b, GpuBufferBinding::ElementType::IMAGE_STORAGE);
-
-            constexpr uint32_t k_max_iterations = 256;
             label_ctx.swap_shader({
-                .shader_path = "cc_propagate.comp.spv",
+                .shader_path = "cc_propagate_tile.comp.spv",
                 .workgroup_size = k_wg2d,
                 .push_constant_size = sizeof(CcPC),
             });
             label_ctx.stage_image_at(0, img_a, GpuBufferBinding::ElementType::IMAGE_STORAGE);
-            label_ctx.stage_image_at(4, m_cc_ping_pong_b, GpuBufferBinding::ElementType::IMAGE_STORAGE);
-
-            bool write_b = true;
-            auto read_img = img_a;
-
-            for (uint32_t iter = 0; iter < k_max_iterations; ++iter) {
+            {
                 uint32_t zero = 0;
                 label_ctx.set_binding_data(2, std::span<const uint32_t>(&zero, 1));
-                label_ctx.stage_image(read_img);
-                label_ctx.set_push_constants(CcPC { .width = w, .height = h, .write_to_b = write_b ? 1U : 0U });
+                label_ctx.set_push_constants(CcPC { .width = w, .height = h, .write_to_b = 0 });
+                label_ctx.set_output_dimensions(w, h);
+                const auto f = label_ctx.dispatch_async({});
+                foundry.wait_for_fence(f);
+                foundry.release_fence(f);
+            }
+
+            constexpr uint32_t k_max_merge_rounds = 32;
+            label_ctx.swap_shader({
+                .shader_path = "cc_merge_borders.comp.spv",
+                .workgroup_size = k_wg2d,
+                .push_constant_size = sizeof(CcPC),
+            });
+            label_ctx.stage_image_at(0, img_a, GpuBufferBinding::ElementType::IMAGE_STORAGE);
+
+            for (uint32_t round = 0; round < k_max_merge_rounds; ++round) {
+                uint32_t zero = 0;
+                label_ctx.set_binding_data(2, std::span<const uint32_t>(&zero, 1));
+                label_ctx.set_push_constants(CcPC { .width = w, .height = h, .write_to_b = 0 });
                 label_ctx.set_output_dimensions(w, h);
                 const auto f = label_ctx.dispatch_async({});
                 foundry.wait_for_fence(f);
@@ -561,13 +562,11 @@ VisionResult VisionGpuExecutor::run(
 
                 uint32_t changed = 0;
                 label_ctx.download_binding(2, &changed, sizeof(uint32_t));
-
-                read_img = write_b ? m_cc_ping_pong_b : img_a;
-                write_b = !write_b;
-
                 if (changed == 0)
                     break;
             }
+
+            auto read_img = img_a;
 
             label_ctx.swap_shader({
                 .shader_path = "cc_colorize.comp.spv",
@@ -583,7 +582,6 @@ VisionResult VisionGpuExecutor::run(
                 foundry.wait_for_fence(f);
                 foundry.release_fence(f);
             }
-
             label_ctx.clear_output_dimensions();
             result.debug_labels = label_ctx.get_output_image(0);
             result.structured = std::monostate {};
