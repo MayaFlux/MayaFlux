@@ -10,52 +10,34 @@ namespace MayaFlux::Yantra {
  * @file VisionGpuDispatch.hpp
  * @brief GPU execution layer for Kinesis::Vision::VisionSequence.
  *
- * run_gpu() mirrors VisionExecutor::run() in contract: same input types,
- * same VisionResult output. Internally it drives a VisionGpuContexts through
- * the sequence via swap_shader() + stage_image() + dispatch_core() per step,
- * keeping the working image GPU-resident between steps via OutputMode::IMAGE.
+ * VisionGpuExecutor::run() mirrors VisionExecutor::run() in contract: same
+ * input types, same VisionResult output. Internally it drives a
+ * VisionGpuContexts through the sequence via swap_shader() + stage_image()
+ * + dispatch_core() per step, keeping the working image GPU-resident
+ * between steps via OutputMode::IMAGE.
  *
- * vision_gpu_config() is the inspectable shader config table. It returns
- * the GpuShaderConfig for any given VisionOp. Ops that are expressible
- * via ShaderSpec are assembled at call time (no .comp file); ops requiring
- * neighbourhood access or structured output name a .comp file. Ops with
- * no GPU implementation return a config with INVALID_SHADER.
+ * VisionGpuExecutor::config() is the inspectable shader config table. It
+ * returns the GpuShaderConfig for any given VisionOp. Ops that are
+ * expressible via ShaderSpec are assembled at call time (no .comp file);
+ * ops requiring neighbourhood access or structured output name a .comp
+ * file. Ops with no GPU implementation return a config with INVALID_SHADER.
  *
  * The caller is responsible for only passing sequences composed of ops
- * whose config is valid. run_gpu() logs an error and returns a default
+ * whose config is valid. run() logs an error and returns a default
  * VisionResult on encountering INVALID_SHADER mid-sequence.
  */
-
-/**
- * @brief GpuShaderConfig for a given VisionOp and its parameters.
- *
- * Assembled ops (Threshold, NormalizeInplace, NormalizeRange, RgbaToGray,
- * GrayToRgba) produce a config via ShaderSpec::Assemble + config_from_spec
- * with no .comp file. All other implemented ops reference a .comp path
- * under Portal/Shaders/Vision/. Unimplemented ops return a config with
- * shader_id == INVALID_SHADER.
- *
- * @param op     VisionOp to look up.
- * @param params Parameters for that op; used to derive push constant size
- *               for assembled ops.
- */
-[[nodiscard]] MAYAFLUX_API GpuShaderConfig vision_gpu_config(
-    Kinesis::Vision::VisionOp op,
-    const Kinesis::Vision::VisionParams& params);
 
 /**
  * @brief Fixed set of TextureExecutionContexts covering every GPU-implemented
  *        VisionOp shape.
  *
- * Constructed once via make_vision_gpu_contexts() and reused across every
- * subsequent run_gpu() call. Never rebuilt inside run_gpu or per-step; the
- * bindings each member declares are fixed at construction and dictated
- * entirely by the shaders they drive, not by caller preference.
+ * Owned exclusively by VisionGpuExecutor, which lazily constructs and holds
+ * one instance per executor via m_contexts. Never rebuilt inside run() or
+ * per-step; the bindings each member declares are fixed at construction and
+ * dictated entirely by the shaders they drive, not by caller preference.
  *
  * There is exactly one correct binding layout per member, so this struct
- * carries no configuration surface. Callers with no reason to own contexts
- * explicitly should use the three-argument run_gpu() overload instead of
- * constructing this directly.
+ * carries no configuration surface.
  */
 struct MAYAFLUX_API VisionGpuContexts {
     TextureExecutionContext pixel; ///< Image pipeline. IMAGE mode. Drives
@@ -78,69 +60,102 @@ struct MAYAFLUX_API VisionGpuContexts {
      * TextureExecutionContext has no copy or move constructor (it owns GPU
      * resource handles), so each member is built directly in this
      * constructor's initializer list rather than assigned from a temporary.
-     * Prefer make_vision_gpu_contexts() over calling this directly; it
-     * returns a stable heap-owned instance suitable for storing and reusing.
+     * Constructed lazily by VisionGpuExecutor on first run(); never
+     * constructed directly by callers.
      */
     VisionGpuContexts();
 };
 
 /**
- * @brief Heap-allocate a VisionGpuContexts with the one correct binding
- *        layout for every currently GPU-implemented VisionOp.
+ * @class VisionGpuExecutor
+ * @brief Stateful GPU dispatch engine for VisionSequence execution.
  *
- * Returned as a unique_ptr because TextureExecutionContext is immovable;
- * VisionGpuContexts cannot be returned by value. Call once and hold the
- * result. The instance is safe to reuse indefinitely across frames; no
- * member needs resetting between run_gpu() calls.
+ * Owns a lazily-constructed VisionGpuContexts (m_contexts) plus any
+ * op-specific persistent GPU state that doesn't belong on a shared
+ * context (e.g. ConnectedComponents' ping-pong output image). Mirrors
+ * VisionExecutor's ownership model on the CPU side: construct one
+ * instance per independent pipeline, hold it, call run() every frame.
  *
- * @return Heap-owned, fully configured VisionGpuContexts.
+ * Immovable: TextureExecutionContext owns GPU resource handles with no
+ * copy or move constructor, so VisionGpuContexts and therefore
+ * VisionGpuExecutor cannot be copied or moved either. Construct once,
+ * hold by reference, pointer, or shared_ptr, reuse indefinitely.
+ *
+ * Not safe to call run() concurrently from multiple threads on the same
+ * instance. Independent pipelines running concurrently should each own
+ * a separate VisionGpuExecutor instance.
  */
-[[nodiscard]] MAYAFLUX_API std::unique_ptr<VisionGpuContexts> make_vision_gpu_contexts();
+class MAYAFLUX_API VisionGpuExecutor {
+public:
+    /**
+     * @brief GpuShaderConfig for a given VisionOp and its parameters.
+     *
+     * Assembled ops (Threshold, NormalizeInplace, NormalizeRange, RgbaToGray,
+     * GrayToRgba) produce a config via ShaderSpec::Assemble + config_from_spec
+     * with no .comp file. All other implemented ops reference a .comp path
+     * under Portal/Shaders/Vision/. Unimplemented ops return a config with
+     * shader_id == INVALID_SHADER.
+     *
+     * Stateless; does not depend on or affect m_contexts.
+     *
+     * @param op     VisionOp to look up.
+     * @param params Parameters for that op; used to derive push constant size
+     *               for assembled ops.
+     */
+    [[nodiscard]] static GpuShaderConfig config(
+        Kinesis::Vision::VisionOp op,
+        const Kinesis::Vision::VisionParams& params);
 
-/**
- * @brief Execute a VisionSequence on the GPU through a caller-owned context set.
- *
- * Explicit form. contexts must have been constructed via
- * make_vision_gpu_contexts() or an equivalent caller-built VisionGpuContexts.
- * Reused across calls with no reset needed; construction is the caller's
- * responsibility and never happens inside this function.
- *
- * Prefer this overload only when explicit ownership is required, e.g. running
- * more than one independent GPU vision pipeline concurrently, each needing
- * its own context set. Otherwise use the three-argument overload.
- *
- * @param contexts Long-lived context set. Never constructed internally.
- * @param sequence Ordered steps to execute.
- * @param image    Input frame in eShaderReadOnlyOptimal layout.
- * @param w        Frame width in pixels.
- * @param h        Frame height in pixels.
- * @return         VisionResult matching the VisionExecutor::run() contract.
- */
-[[nodiscard]] MAYAFLUX_API Kinesis::Vision::VisionResult run_gpu(
-    VisionGpuContexts& contexts,
-    const Kinesis::Vision::VisionSequence& sequence,
-    const std::shared_ptr<Core::VKImage>& image,
-    uint32_t w, uint32_t h);
+    /**
+     * @brief Execute a VisionSequence on the GPU through an explicit context set.
+     *
+     * contexts is caller-supplied rather than the instance's own lazily-built
+     * m_contexts. Reused across calls with no reset needed; construction is
+     * the caller's responsibility and never happens inside this function.
+     *
+     * @param contexts Long-lived context set. Never constructed internally.
+     * @param sequence Ordered steps to execute.
+     * @param image    Input frame in eShaderReadOnlyOptimal layout.
+     * @param w        Frame width in pixels.
+     * @param h        Frame height in pixels.
+     * @return         VisionResult matching the VisionExecutor::run() contract.
+     */
+    [[nodiscard]] Kinesis::Vision::VisionResult run(
+        VisionGpuContexts& contexts,
+        const Kinesis::Vision::VisionSequence& sequence,
+        const std::shared_ptr<Core::VKImage>& image,
+        uint32_t w, uint32_t h);
 
-/**
- * @brief Execute a VisionSequence on the GPU using a process-wide default
- *        context set.
- *
- * Convenience form for callers with no reason to own contexts explicitly.
- * The default VisionGpuContexts is constructed once on first call and
- * reused for every subsequent call to this overload. Not safe to call
- * concurrently from multiple threads; matches the existing single-caller
- * assumption of the explicit overload.
- *
- * @param sequence Ordered steps to execute.
- * @param image    Input frame in eShaderReadOnlyOptimal layout.
- * @param w        Frame width in pixels.
- * @param h        Frame height in pixels.
- * @return         VisionResult matching the VisionExecutor::run() contract.
- */
-[[nodiscard]] MAYAFLUX_API Kinesis::Vision::VisionResult run_gpu(
-    const Kinesis::Vision::VisionSequence& sequence,
-    const std::shared_ptr<Core::VKImage>& image,
-    uint32_t w, uint32_t h);
+    /**
+     * @brief Execute a VisionSequence on the GPU using this instance's own
+     *        lazily-constructed context set.
+     *
+     * m_contexts is built on first call and reused for every subsequent
+     * call to this overload on the same VisionGpuExecutor instance. The
+     * primary entry point; prefer this over the explicit-contexts overload
+     * unless a caller specifically needs to inspect or share a
+     * VisionGpuContexts across multiple calls outside this class.
+     *
+     * @param sequence Ordered steps to execute.
+     * @param image    Input frame in eShaderReadOnlyOptimal layout.
+     * @param w        Frame width in pixels.
+     * @param h        Frame height in pixels.
+     * @return         VisionResult matching the VisionExecutor::run() contract.
+     */
+    [[nodiscard]] Kinesis::Vision::VisionResult run(
+        const Kinesis::Vision::VisionSequence& sequence,
+        const std::shared_ptr<Core::VKImage>& image,
+        uint32_t w, uint32_t h);
+
+    VisionGpuExecutor() = default;
+    ~VisionGpuExecutor() = default;
+    VisionGpuExecutor(const VisionGpuExecutor&) = delete;
+    VisionGpuExecutor& operator=(const VisionGpuExecutor&) = delete;
+    VisionGpuExecutor(VisionGpuExecutor&&) = delete;
+    VisionGpuExecutor& operator=(VisionGpuExecutor&&) = delete;
+
+private:
+    std::unique_ptr<VisionGpuContexts> m_contexts;
+};
 
 } // namespace MayaFlux::Yantra

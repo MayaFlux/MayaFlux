@@ -167,16 +167,11 @@ VisionGpuContexts::VisionGpuContexts()
     structured.set_output_size(2, static_cast<size_t>(4096) * 4 * sizeof(float));
 }
 
-std::unique_ptr<VisionGpuContexts> make_vision_gpu_contexts()
-{
-    return std::make_unique<VisionGpuContexts>();
-}
-
 // ============================================================================
 // vision_gpu_config
 // ============================================================================
 
-GpuShaderConfig vision_gpu_config(VisionOp op, const VisionParams& /*params*/)
+GpuShaderConfig VisionGpuExecutor::config(VisionOp op, const VisionParams& /*params*/)
 {
     switch (op) {
     case VisionOp::Threshold: {
@@ -287,7 +282,7 @@ GpuShaderConfig vision_gpu_config(VisionOp op, const VisionParams& /*params*/)
 // run_gpu
 // ============================================================================
 
-VisionResult run_gpu(
+VisionResult VisionGpuExecutor::run(
     VisionGpuContexts& contexts,
     const VisionSequence& sequence,
     const std::shared_ptr<Core::VKImage>& image,
@@ -313,7 +308,7 @@ VisionResult run_gpu(
     last_h = h;
 
     for (const auto& step : sequence.steps) {
-        const auto cfg = vision_gpu_config(step.op, step.params);
+        const auto cfg = config(step.op, step.params);
 
         if (cfg.shader_id == Portal::Graphics::INVALID_SHADER && cfg.shader_path.empty()) {
             MF_ERROR(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
@@ -397,7 +392,7 @@ VisionResult run_gpu(
             }
             auto packed = ctx.get_output_image(0);
 
-            const auto blur_cfg = vision_gpu_config(VisionOp::GaussianBlur, GaussianBlurParams { .sigma = p.sigma });
+            const auto blur_cfg = config(VisionOp::GaussianBlur, GaussianBlurParams { .sigma = p.sigma });
             ctx.swap_shader(blur_cfg);
             ctx.stage_image(packed);
             ctx.set_binding_data(2, std::span<const float>(weights));
@@ -620,13 +615,15 @@ VisionResult run_gpu(
     return result;
 }
 
-VisionResult run_gpu(
+VisionResult VisionGpuExecutor::run(
     const VisionSequence& sequence,
     const std::shared_ptr<Core::VKImage>& image,
     uint32_t w, uint32_t h)
 {
-    static auto contexts = make_vision_gpu_contexts();
-    return run_gpu(*contexts, sequence, image, w, h);
+    if (!m_contexts)
+        m_contexts = std::make_unique<VisionGpuContexts>();
+
+    return run(*m_contexts, sequence, image, w, h);
 }
 
 } // namespace MayaFlux::Yantra
