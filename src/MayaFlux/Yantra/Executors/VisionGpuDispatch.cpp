@@ -360,12 +360,53 @@ VisionResult VisionGpuExecutor::run(
         }
         case VisionOp::Erode:
         case VisionOp::Dilate:
-        case VisionOp::Open:
-        case VisionOp::Close:
         case VisionOp::MorphGradient:
             pixel_ctx.set_push_constants(MorphPC {
                 .radius = std::get<MorphParams>(step.params).radius });
             break;
+        case VisionOp::Open:
+        case VisionOp::Close: {
+            const auto radius = std::get<MorphParams>(step.params).radius;
+            const bool is_open = (step.op == VisionOp::Open);
+
+            const GpuComputeConfig first_cfg {
+                .shader_path = is_open ? "erode.comp.spv" : "dilate.comp.spv",
+                .workgroup_size = k_wg2d,
+                .push_constant_size = sizeof(MorphPC),
+            };
+            pixel_ctx.swap_shader(first_cfg);
+            pixel_ctx.stage_image(current);
+            pixel_ctx.set_push_constants(MorphPC { .radius = radius });
+            pixel_ctx.prepare_output_image(w, h);
+            pixel_ctx.set_output_dimensions(w, h);
+            {
+                const auto f = pixel_ctx.dispatch_async({});
+                foundry.wait_for_fence(f);
+                foundry.release_fence(f);
+            }
+            auto intermediate = pixel_ctx.get_output_image(0);
+
+            const GpuComputeConfig second_cfg {
+                .shader_path = is_open ? "dilate.comp.spv" : "erode.comp.spv",
+                .workgroup_size = k_wg2d,
+                .push_constant_size = sizeof(MorphPC),
+            };
+            pixel_ctx.swap_shader(second_cfg);
+            pixel_ctx.stage_image(intermediate);
+            pixel_ctx.set_push_constants(MorphPC { .radius = radius });
+            pixel_ctx.prepare_output_image(w, h);
+            pixel_ctx.set_output_dimensions(w, h);
+            {
+                const auto f = pixel_ctx.dispatch_async({});
+                foundry.wait_for_fence(f);
+                foundry.release_fence(f);
+            }
+
+            current = pixel_ctx.get_output_image(0);
+            last_staged = current;
+            result.structured = std::monostate {};
+            continue;
+        }
         case VisionOp::Canny: {
             const auto& p = std::get<CannyParams>(step.params);
             pixel_ctx.set_push_constants(CannyPC {
