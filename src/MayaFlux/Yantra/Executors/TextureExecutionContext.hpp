@@ -78,7 +78,7 @@ public:
      *                      Ignored when mode is SCALAR. Default 0.
      */
     explicit TextureExecutionContext(
-        GpuShaderConfig config,
+        GpuComputeConfig config,
         Portal::Graphics::ImageFormat output_format = Portal::Graphics::ImageFormat::RGBA8,
         OutputMode mode = OutputMode::CONTAINER,
         uint32_t image_binding = 1,

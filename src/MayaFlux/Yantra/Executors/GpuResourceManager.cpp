@@ -117,7 +117,7 @@ GpuResourceManager::~GpuResourceManager()
     cleanup();
 }
 
-bool GpuResourceManager::initialise(const GpuShaderConfig& config,
+bool GpuResourceManager::initialise(const GpuComputeConfig& config,
     const std::vector<GpuBufferBinding>& bindings)
 {
     if (m_ready)

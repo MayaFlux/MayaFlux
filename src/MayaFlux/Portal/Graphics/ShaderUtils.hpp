@@ -45,6 +45,23 @@ struct ShaderCompilerConfig {
 };
 
 /**
+ * @struct GpuComputeConfig
+ * @brief Plain-data description of the compute shader to dispatch.
+ *
+ * Either shader_path or shader_id must be set. If shader_id is not
+ * INVALID_SHADER it takes precedence and shader_path is ignored,
+ * allowing callers who already hold a compiled ShaderID (e.g. from
+ * ShaderFoundry::load_shader(const ShaderSpec&)) to bypass file
+ * resolution entirely.
+ */
+struct GpuComputeConfig {
+    std::string shader_path;
+    std::array<uint32_t, 3> workgroup_size { 256, 1, 1 };
+    size_t push_constant_size { 0 };
+    ShaderID shader_id { INVALID_SHADER };
+};
+
+/**
  * @struct ShaderSource
  * @brief Shader source descriptor for compilation
  */

@@ -131,7 +131,7 @@ namespace {
 
 VisionGpuContexts::VisionGpuContexts()
     : pixel {
-        GpuShaderConfig {},
+        GpuComputeConfig {},
         Portal::Graphics::ImageFormat::RGBA32F,
         TextureExecutionContext::OutputMode::IMAGE,
         1,
@@ -141,7 +141,7 @@ VisionGpuContexts::VisionGpuContexts()
         GpuBufferBinding::ElementType::IMAGE_STORAGE,
     }
     , structured {
-        GpuShaderConfig {},
+        GpuComputeConfig {},
         Portal::Graphics::ImageFormat::RGBA32F,
         TextureExecutionContext::OutputMode::SCALAR,
         0,
@@ -152,7 +152,7 @@ VisionGpuContexts::VisionGpuContexts()
         GpuBufferBinding::ElementType::IMAGE_STORAGE,
     }
     , labels {
-        GpuShaderConfig {},
+        GpuComputeConfig {},
         Portal::Graphics::ImageFormat::RGBA32F,
         TextureExecutionContext::OutputMode::IMAGE,
         1,
@@ -171,7 +171,7 @@ VisionGpuContexts::VisionGpuContexts()
 // vision_gpu_config
 // ============================================================================
 
-GpuShaderConfig VisionGpuExecutor::config(VisionOp op, const VisionParams& /*params*/)
+GpuComputeConfig VisionGpuExecutor::config(VisionOp op, const VisionParams& /*params*/)
 {
     switch (op) {
     case VisionOp::Threshold: {
@@ -274,7 +274,7 @@ GpuShaderConfig VisionGpuExecutor::config(VisionOp op, const VisionParams& /*par
     case VisionOp::ThresholdOtsu:
         return { .shader_path = "threshold_otsu.comp.spv", .workgroup_size = { 256, 1, 1 } };
     default:
-        return GpuShaderConfig { .shader_id = Portal::Graphics::INVALID_SHADER };
+        return GpuComputeConfig { .shader_id = Portal::Graphics::INVALID_SHADER };
     }
 }
 
@@ -406,7 +406,7 @@ VisionResult VisionGpuExecutor::run(
             }
             auto smoothed = pixel_ctx.get_output_image(0);
 
-            const GpuShaderConfig harris_resp_cfg {
+            const GpuComputeConfig harris_resp_cfg {
                 .shader_path = "harris_response.comp.spv",
                 .workgroup_size = k_wg2d,
                 .push_constant_size = sizeof(HarrisPC),

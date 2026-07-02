@@ -4,7 +4,7 @@
 
 namespace MayaFlux::Yantra {
 
-GpuDispatchCore::GpuDispatchCore(GpuShaderConfig config)
+GpuDispatchCore::GpuDispatchCore(GpuComputeConfig config)
     : m_gpu_config(std::move(config))
 {
 }
@@ -46,7 +46,7 @@ std::shared_ptr<Core::VKImage> GpuDispatchCore::get_output_image(size_t binding_
     return m_image_bindings[binding_index].image;
 }
 
-const GpuShaderConfig& GpuDispatchCore::gpu_config() const
+const GpuComputeConfig& GpuDispatchCore::gpu_config() const
 {
     return m_gpu_config;
 }

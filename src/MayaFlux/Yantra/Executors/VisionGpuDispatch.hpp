@@ -17,7 +17,7 @@ namespace MayaFlux::Yantra {
  * between steps via OutputMode::IMAGE.
  *
  * VisionGpuExecutor::config() is the inspectable shader config table. It
- * returns the GpuShaderConfig for any given VisionOp. Ops that are
+ * returns the GpuComputeConfig for any given VisionOp. Ops that are
  * expressible via ShaderSpec are assembled at call time (no .comp file);
  * ops requiring neighbourhood access or structured output name a .comp
  * file. Ops with no GPU implementation return a config with INVALID_SHADER.
@@ -88,7 +88,7 @@ struct MAYAFLUX_API VisionGpuContexts {
 class MAYAFLUX_API VisionGpuExecutor {
 public:
     /**
-     * @brief GpuShaderConfig for a given VisionOp and its parameters.
+     * @brief GpuComputeConfig for a given VisionOp and its parameters.
      *
      * Assembled ops (Threshold, NormalizeInplace, NormalizeRange, RgbaToGray,
      * GrayToRgba) produce a config via ShaderSpec::Assemble + config_from_spec
@@ -102,7 +102,7 @@ public:
      * @param params Parameters for that op; used to derive push constant size
      *               for assembled ops.
      */
-    [[nodiscard]] static GpuShaderConfig config(
+    [[nodiscard]] static GpuComputeConfig config(
         Kinesis::Vision::VisionOp op,
         const Kinesis::Vision::VisionParams& params);
 

@@ -37,7 +37,7 @@ struct GpuChannelResult {
  */
 class MAYAFLUX_API GpuDispatchCore {
 public:
-    explicit GpuDispatchCore(GpuShaderConfig config);
+    explicit GpuDispatchCore(GpuComputeConfig config);
     virtual ~GpuDispatchCore() = default;
 
     GpuDispatchCore(const GpuDispatchCore&) = delete;
@@ -139,7 +139,7 @@ public:
      *
      * @param config Shader config for the next dispatch.
      */
-    void swap_shader(GpuShaderConfig config)
+    void swap_shader(GpuComputeConfig config)
     {
         m_resources.cleanup();
         m_gpu_config = std::move(config);
@@ -228,7 +228,7 @@ protected:
      */
     void stage_native_bytes(size_t binding_index, const void* data, size_t byte_size);
 
-    [[nodiscard]] const GpuShaderConfig& gpu_config() const;
+    [[nodiscard]] const GpuComputeConfig& gpu_config() const;
 
     /**
      * @brief Full single-pass dispatch.  Drives prepare_gpu_inputs,
@@ -350,7 +350,7 @@ protected:
     std::vector<ImageBinding> m_image_bindings;
 
 private:
-    GpuShaderConfig m_gpu_config;
+    GpuComputeConfig m_gpu_config;
 
     size_t m_last_effective_element_count {};
 

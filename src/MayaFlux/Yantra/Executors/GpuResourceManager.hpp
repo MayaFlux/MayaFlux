@@ -4,59 +4,8 @@
 
 namespace MayaFlux::Yantra {
 
-/**
- * @struct GpuShaderConfig
- * @brief Plain-data description of the compute shader to dispatch.
- *
- * Either shader_path or shader_id must be set. If shader_id is not
- * INVALID_SHADER it takes precedence and shader_path is ignored,
- * allowing callers who already hold a compiled ShaderID (e.g. from
- * ShaderFoundry::load_shader(const ShaderSpec&)) to bypass file
- * resolution entirely.
- */
-struct GpuShaderConfig {
-    std::string shader_path;
-    std::array<uint32_t, 3> workgroup_size { 256, 1, 1 };
-    size_t push_constant_size { 0 };
-    Portal::Graphics::ShaderID shader_id { Portal::Graphics::INVALID_SHADER };
-};
-
-/**
- * @struct GpuBufferBinding
- * @brief Declares a single storage buffer the shader expects.
- */
-struct GpuBufferBinding {
-    uint32_t set { 0 };
-    uint32_t binding { 0 };
-    bool skip_auto_readback { false };
-
-    enum class Direction : uint8_t {
-        INPUT,
-        OUTPUT,
-        INPUT_OUTPUT
-    } direction { Direction::INPUT };
-
-    /**
-     * @brief Element type the shader expects in this buffer.
-     *
-     * FLOAT32          — cast double channels to float (default).
-     * UINT32           — reinterpret variant bytes as uint32_t.
-     * INT32            — reinterpret variant bytes as int32_t.
-     * PASSTHROUGH      — upload raw variant bytes with no cast; caller
-     *                    must pre-stage via stage_passthrough() for
-     *                    INPUT / INPUT_OUTPUT bindings.
-     * IMAGE_STORAGE,   — writeonly/readonly image2D — eStorageImage descriptor
-     * IMAGE_SAMPLED    — sampler2D — eCombinedImageSampler descriptor
-     */
-    enum class ElementType : uint8_t {
-        FLOAT32,
-        UINT32,
-        INT32,
-        PASSTHROUGH,
-        IMAGE_STORAGE,
-        IMAGE_SAMPLED
-    } element_type { ElementType::FLOAT32 };
-};
+using GpuComputeConfig = Portal::Graphics::GpuComputeConfig;
+using GpuBufferBinding = Portal::Graphics::GpuBufferBinding;
 
 struct GpuResourceManagerImpl;
 
@@ -77,7 +26,7 @@ public:
     GpuResourceManager(GpuResourceManager&&) = delete;
     GpuResourceManager& operator=(GpuResourceManager&&) = delete;
 
-    bool initialise(const GpuShaderConfig& config,
+    bool initialise(const GpuComputeConfig& config,
         const std::vector<GpuBufferBinding>& bindings);
 
     void ensure_buffer(size_t index, size_t required_bytes);

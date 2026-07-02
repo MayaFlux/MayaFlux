@@ -26,12 +26,12 @@ The raw dispatch capability is comparable. Everything else is not.
 
 | OpenCL | Yantra | Notes |
 |---|---|---|
-| `cl_program` / kernel source | `.comp` GLSL file compiled to SPIR-V | `GpuShaderConfig::shader_path` |
+| `cl_program` / kernel source | `.comp` GLSL file compiled to SPIR-V | `GpuComputeConfig::shader_path` |
 | `cl_command_queue` | Implicit in `GpuDispatchCore` | Managed by `GpuResourceManager` |
 | `clCreateBuffer` | `exec->input(data)` / `output(bytes)` / `in_out(data)` | Staging is automatic on `execute()` |
 | `clSetKernelArg` | Fluent binding calls on the executor | Bindings by direction and index |
 | Push constants / kernel scalars | `exec->push(struct)` | Copies struct into push constant block |
-| `NDRange` / work-group size | `GpuShaderConfig::workgroup_size` + automatic dispatch sizing | Override `calculate_dispatch_size()` for non-1D grids |
+| `NDRange` / work-group size | `GpuComputeConfig::workgroup_size` + automatic dispatch sizing | Override `calculate_dispatch_size()` for non-1D grids |
 | `clEnqueueNDRangeKernel` | `exec->execute(datum, ctx)` (sync) | Drives staging, dispatch, and readback |
 | `clEnqueueNDRangeKernel` (non-blocking) | `exec->dispatch_async(datum)` | Returns `FenceID` |
 | Events / fences | `Portal::Graphics::FenceID` + `ShaderFoundry::is_fence_signaled(fence)` | Poll until signaled, then call `collect_result()` |
@@ -84,12 +84,12 @@ Key substitutions: `__global` becomes `layout(set=0, binding=N) buffer`; `get_gl
 
 ## Step 2: Configure the Executor
 
-Replace `clCreateContext` / `clCreateProgramWithSource` / `clBuildProgram` with `GpuShaderConfig` + `ShaderExecutionContext`. The GPU context is initialised by the engine; you never manage a device or queue.
+Replace `clCreateContext` / `clCreateProgramWithSource` / `clBuildProgram` with `GpuComputeConfig` + `ShaderExecutionContext`. The GPU context is initialised by the engine; you never manage a device or queue.
 
 ```cpp
 #include <MayaFlux/Yantra/Executors/ShaderExecutionContext.hpp>
 
-GpuShaderConfig cfg;
+GpuComputeConfig cfg;
 cfg.shader_path        = "multiply.comp";
 cfg.workgroup_size     = { 256, 1, 1 };
 cfg.push_constant_size = sizeof(MyPC);
@@ -226,7 +226,7 @@ cl_mem img_out = clCreateImage2D(ctx, CL_MEM_WRITE_ONLY, &fmt, w, h, 0, nullptr,
 ```cpp
 // Yantra: TextureExecutionContext manages VkImage lifecycle
 TextureExecutionContext tex_ctx(
-    GpuShaderConfig { "image_pass.comp", { 16, 16, 1 }, sizeof(MyPC) },
+    GpuComputeConfig { "image_pass.comp", { 16, 16, 1 }, sizeof(MyPC) },
     Portal::Graphics::ImageFormat::RGBA8);
 
 tex_ctx.stage_container(my_texture_container, /*layer=*/0);

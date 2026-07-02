@@ -63,7 +63,7 @@ namespace MayaFlux::Yantra {
 }
 
 /**
- * @brief Derive a GpuShaderConfig from a ShaderSpec.
+ * @brief Derive a GpuComputeConfig from a ShaderSpec.
  *
  * Compiles (or retrieves cached) the shader via ShaderFoundry and
  * packages the result with workgroup size and push constant size.
@@ -87,10 +87,10 @@ namespace MayaFlux::Yantra {
  * my_op->set_gpu_backend(exec);
  * @endcode
  */
-[[nodiscard]] inline GpuShaderConfig config_from_spec(
+[[nodiscard]] inline GpuComputeConfig config_from_spec(
     const Portal::Graphics::ShaderSpec& spec)
 {
-    return GpuShaderConfig {
+    return GpuComputeConfig {
         .workgroup_size = spec.workgroup_size,
         .push_constant_size = spec.push_constant_bytes,
         .shader_id = Portal::Graphics::get_shader_foundry().load_shader(spec),
