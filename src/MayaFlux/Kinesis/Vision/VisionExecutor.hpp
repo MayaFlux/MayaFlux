@@ -9,6 +9,10 @@
 #include "MayaFlux/Kakshya/NDData/EigenAccess.hpp"
 #include "MayaFlux/Kakshya/NDData/NDData.hpp"
 
+namespace MayaFlux::Core {
+class VKImage;
+}
+
 /**
  * @file VisionExecutor.hpp
  * @brief Dispatch engine for VisionSequence execution.
@@ -55,6 +59,7 @@ struct VisionResult {
     Kakshya::DataVariant pixel_image { std::vector<float> {} };
     StructuredOutput structured { std::monostate {} };
     std::vector<SnapshotEntry> snapshots;
+    std::shared_ptr<Core::VKImage> debug_labels;
     uint32_t w { 0 };
     uint32_t h { 0 };
 

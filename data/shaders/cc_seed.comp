@@ -1,0 +1,32 @@
+#version 450
+
+layout(local_size_x = 8, local_size_y = 8) in;
+
+#include "include/vision_common.glsl"
+#include "include/vision_cc.glsl"
+
+layout(set = 0, binding = 0, rgba32f) writeonly uniform image2D out_labels;
+layout(set = 0, binding = 1, rgba32f) readonly uniform image2D in_mask;
+
+layout(push_constant) uniform PC {
+    uint width;
+    uint height;
+} pc;
+
+/**
+ * @brief Assigns each foreground pixel a unique initial label equal to its
+ *        flat index. Background pixels receive CC_BACKGROUND.
+ */
+void main()
+{
+    ivec2 coord = thread_coord();
+    if (coord.x >= int(pc.width) || coord.y >= int(pc.height))
+        return;
+
+    float v = imageLoad(in_mask, coord).r;
+    uint label = CC_BACKGROUND;
+    if (v >= 0.5)
+        label = cc_flat_index(uvec2(coord), pc.width);
+
+    write_safe(out_labels, coord, vec4(uintBitsToFloat(label), 0.0, 0.0, 0.0));
+}

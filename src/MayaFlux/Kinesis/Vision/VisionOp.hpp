@@ -281,6 +281,11 @@ struct VisionSequence {
                 ExtractPeaksParams { .threshold = threshold, .nms_radius = nms_radius });
         }
 
+        Builder& connected_components()
+        {
+            return push(VisionOp::ConnectedComponents);
+        }
+
         Builder& track_keypoints(
             uint32_t window_radius = 7,
             uint32_t max_iterations = 20,

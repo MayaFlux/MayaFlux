@@ -1,0 +1,47 @@
+#version 450
+
+layout(local_size_x = 8, local_size_y = 8) in;
+
+#include "include/vision_common.glsl"
+#include "include/vision_cc.glsl"
+
+layout(set = 0, binding = 0, rgba32f) writeonly uniform image2D out_color;
+layout(set = 0, binding = 1, rgba32f) readonly uniform image2D in_labels;
+
+layout(push_constant) uniform PC {
+    uint width;
+    uint height;
+} pc;
+
+/**
+ * @brief Hash a label into a stable, visually distinct RGB color.
+ *        Background maps to black.
+ */
+vec3 label_to_color(uint label)
+{
+    if (label == CC_BACKGROUND)
+        return vec3(0.0);
+
+    uint h = label;
+    h ^= h >> 16;
+    h *= 0x7feb352du;
+    h ^= h >> 15;
+    h *= 0x846ca68bu;
+    h ^= h >> 16;
+
+    float r = float(h & 0xFFu) / 255.0;
+    float g = float((h >> 8) & 0xFFu) / 255.0;
+    float b = float((h >> 16) & 0xFFu) / 255.0;
+    return vec3(r, g, b);
+}
+
+void main()
+{
+    ivec2 coord = thread_coord();
+    if (coord.x >= int(pc.width) || coord.y >= int(pc.height))
+        return;
+
+    uint label = floatBitsToUint(imageLoad(in_labels, coord).r);
+    vec3 color = label_to_color(label);
+    write_safe(out_color, coord, vec4(color, 1.0));
+}
