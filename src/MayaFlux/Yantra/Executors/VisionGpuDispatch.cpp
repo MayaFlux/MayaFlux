@@ -543,31 +543,32 @@ VisionResult VisionGpuExecutor::run(
                 foundry.release_fence(f);
             }
 
-            constexpr uint32_t k_max_merge_rounds = 32;
+            constexpr uint32_t k_max_merge_rounds = 64;
             label_ctx.swap_shader({
                 .shader_path = "cc_merge_borders.comp.spv",
                 .workgroup_size = k_wg2d,
                 .push_constant_size = sizeof(CcPC),
             });
             label_ctx.stage_image_at(0, img_a, GpuBufferBinding::ElementType::IMAGE_STORAGE);
-
-            for (uint32_t round = 0; round < k_max_merge_rounds; ++round) {
+            label_ctx.slot_binding(0).direction = GpuBufferBinding::Direction::INPUT_OUTPUT;
+            {
                 uint32_t zero = 0;
                 label_ctx.set_binding_data(2, std::span<const uint32_t>(&zero, 1));
-                label_ctx.set_push_constants(CcPC { .width = w, .height = h, .write_to_b = 0 });
                 label_ctx.set_output_dimensions(w, h);
-                const auto f = label_ctx.dispatch_async({});
-                foundry.wait_for_fence(f);
-                foundry.release_fence(f);
 
-                uint32_t changed = 0;
-                label_ctx.download_binding(2, &changed, sizeof(uint32_t));
-                if (changed == 0)
-                    break;
+                const CcPC pc { .width = w, .height = h, .write_to_b = 0 };
+                ExecutionContext chained_ctx;
+                chained_ctx.mode = ExecutionMode::CHAINED;
+                chained_ctx.execution_metadata["pass_count"] = k_max_merge_rounds;
+                chained_ctx.execution_metadata["passes_per_batch"] = k_max_merge_rounds;
+                chained_ctx.execution_metadata["pc_updater"] = std::function<void(uint32_t, void*)>(
+                    [pc](uint32_t, void* dst) { std::memcpy(dst, &pc, sizeof(CcPC)); });
+
+                label_ctx.execute(Datum<> {}, chained_ctx);
             }
+            label_ctx.slot_binding(0).direction = GpuBufferBinding::Direction::OUTPUT;
 
             auto read_img = img_a;
-
             label_ctx.swap_shader({
                 .shader_path = "cc_colorize.comp.spv",
                 .workgroup_size = k_wg2d,
