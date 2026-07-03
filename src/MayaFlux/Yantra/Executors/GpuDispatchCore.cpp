@@ -7,6 +7,7 @@ namespace MayaFlux::Yantra {
 GpuDispatchCore::GpuDispatchCore(GpuComputeConfig config)
     : m_gpu_config(std::move(config))
 {
+    update_dispatch_key_cache();
 }
 
 //==============================================================================
@@ -360,6 +361,7 @@ void GpuDispatchCore::dispatch_core_dependency(const std::vector<DependencyStage
 
     for (const auto& stage : stages) {
         m_gpu_config = stage.config;
+        update_dispatch_key_cache();
         m_bindings = declare_buffer_bindings();
         m_image_bindings.clear();
         m_binding_data.clear();
@@ -401,6 +403,7 @@ void GpuDispatchCore::dispatch_core_dependency(const std::vector<DependencyStage
     m_resources.dispatch_sequence(keys, groups_per_key, pc_per_key, hazards_per_key);
 
     m_gpu_config = original_config;
+    update_dispatch_key_cache();
     m_bindings = original_bindings;
     m_image_bindings = original_image_bindings;
     m_binding_data = original_binding_data;
@@ -560,6 +563,13 @@ size_t GpuDispatchCore::largest_binding_data_element_count() const
             max_bytes = std::max(max_bytes, m_binding_data[idx].size());
     }
     return max_bytes / sizeof(float);
+}
+
+void GpuDispatchCore::update_dispatch_key_cache()
+{
+    m_cached_dispatch_key = m_gpu_config.shader_path.empty()
+        ? std::to_string(m_gpu_config.shader_id)
+        : m_gpu_config.shader_path;
 }
 
 } // namespace MayaFlux::Yantra

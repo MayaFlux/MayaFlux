@@ -126,6 +126,11 @@ public:
         m_resources.upload_shared_raw(tag, data, byte_size);
     }
 
+    void download_shared(const std::string& tag, void* dest, size_t byte_size)
+    {
+        m_resources.download_shared(tag, dest, byte_size);
+    }
+
     [[nodiscard]] Portal::Graphics::HazardResource shared_buffer_hazard(
         const std::string& tag, const GpuBufferBinding& spec) const
     {
@@ -190,6 +195,7 @@ public:
     void swap_shader(GpuComputeConfig config)
     {
         m_gpu_config = std::move(config);
+        update_dispatch_key_cache();
     }
 
     /**
@@ -221,12 +227,7 @@ public:
      * empty-string key and silently overwrites the previous assembled
      * shader's pipeline/bindings.
      */
-    [[nodiscard]] std::string dispatch_key() const
-    {
-        return m_gpu_config.shader_path.empty()
-            ? std::to_string(m_gpu_config.shader_id)
-            : m_gpu_config.shader_path;
-    }
+    [[nodiscard]] const std::string& dispatch_key() const { return m_cached_dispatch_key; }
 
 protected:
     /**
@@ -436,6 +437,7 @@ protected:
 
 private:
     GpuComputeConfig m_gpu_config;
+    std::string m_cached_dispatch_key;
 
     size_t m_last_effective_element_count {};
 
@@ -443,6 +445,8 @@ private:
     /// been called or flatten_native_variants_to_staging() produced output.
     /// Takes precedence over m_staging_floats in prepare_gpu_inputs.
     std::vector<uint8_t> m_native_staging_bytes;
+
+    void update_dispatch_key_cache();
 };
 
 } // namespace MayaFlux::Yantra
