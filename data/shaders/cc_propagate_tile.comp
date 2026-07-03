@@ -1,0 +1,103 @@
+#version 460
+
+#extension GL_KHR_shader_subgroup_basic : require
+#extension GL_KHR_shader_subgroup_arithmetic : require
+
+layout(local_size_x = 8, local_size_y = 8) in;
+
+#include "include/vision_common.glsl"
+#include "include/vision_cc.glsl"
+
+layout(set = 0, binding = 0, rgba32f) uniform image2D io_labels;
+layout(set = 0, binding = 2, std430) buffer ChangedBuf {
+    uint changed[];
+};
+
+layout(push_constant) uniform PC {
+    uint width;
+    uint height;
+} pc;
+
+const uint TILE = 32;
+const uint PIXELS_PER_THREAD = (TILE * TILE) / (8 * 8);
+
+shared uint tile_labels[TILE * TILE];
+
+uint tile_index(uvec2 local_coord)
+{
+    return local_coord.y * TILE + local_coord.x;
+}
+
+/**
+ * @brief Fully resolves label equivalence within one TILE x TILE block
+ *        using shared memory, converging via repeated min-relaxation with
+ *        barrier() between passes. One dispatch does all intra-tile work;
+ *        no global memory traffic during convergence except the final
+ *        subgroup-reduced changed-flag write. Boundary pixels against
+ *        other tiles are resolved by a separate merge pass.
+ */
+void main()
+{
+    ivec2 tile_origin = ivec2(gl_WorkGroupID.xy) * int(TILE);
+    uint tid = gl_LocalInvocationID.y * 8u + gl_LocalInvocationID.x;
+
+    for (uint p = 0u; p < PIXELS_PER_THREAD; ++p) {
+        uint idx = tid + p * 64u;
+        uvec2 local_coord = uvec2(idx % TILE, idx / TILE);
+        ivec2 coord = tile_origin + ivec2(local_coord);
+
+        uint label = CC_BACKGROUND;
+        if (coord.x < int(pc.width) && coord.y < int(pc.height))
+            label = floatBitsToUint(imageLoad(io_labels, coord).r);
+
+        tile_labels[tile_index(local_coord)] = label;
+    }
+
+    barrier();
+
+    bool tile_changed = false;
+
+    for (uint pass = 0u; pass < TILE; ++pass) {
+        for (uint p = 0u; p < PIXELS_PER_THREAD; ++p) {
+            uint idx = tid + p * 64u;
+            uvec2 local_coord = uvec2(idx % TILE, idx / TILE);
+            uint self_label = tile_labels[tile_index(local_coord)];
+
+            if (self_label == CC_BACKGROUND)
+                continue;
+
+            uint min_label = self_label;
+            for (int dy = -1; dy <= 1; ++dy) {
+                for (int dx = -1; dx <= 1; ++dx) {
+                    if (dx == 0 && dy == 0)
+                        continue;
+                    ivec2 nc = ivec2(local_coord) + ivec2(dx, dy);
+                    if (nc.x < 0 || nc.y < 0 || nc.x >= int(TILE) || nc.y >= int(TILE))
+                        continue;
+                    uint nl = tile_labels[tile_index(uvec2(nc))];
+                    if (nl != CC_BACKGROUND && nl < min_label)
+                        min_label = nl;
+                }
+            }
+            if (min_label < self_label) {
+                tile_labels[tile_index(local_coord)] = min_label;
+                tile_changed = true;
+            }
+        }
+        barrier();
+    }
+
+    for (uint p = 0u; p < PIXELS_PER_THREAD; ++p) {
+        uint idx = tid + p * 64u;
+        uvec2 local_coord = uvec2(idx % TILE, idx / TILE);
+        ivec2 coord = tile_origin + ivec2(local_coord);
+        if (coord.x < int(pc.width) && coord.y < int(pc.height)) {
+            uint label = tile_labels[tile_index(local_coord)];
+            imageStore(io_labels, coord, vec4(uintBitsToFloat(label), 0.0, 0.0, 0.0));
+        }
+    }
+
+    bool subgroup_changed = subgroupOr(tile_changed);
+    if (subgroup_changed && subgroupElect())
+        atomicMax(changed[0], 1u);
+}
