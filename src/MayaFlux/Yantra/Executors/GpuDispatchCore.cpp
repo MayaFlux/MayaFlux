@@ -382,9 +382,16 @@ void GpuDispatchCore::dispatch_core_dependency(const std::vector<DependencyStage
 
         for (size_t i = 0; i < m_bindings.size(); ++i) {
             const auto et = m_bindings[i].element_type;
-            if (et != GpuBufferBinding::ElementType::IMAGE_STORAGE
-                && et != GpuBufferBinding::ElementType::IMAGE_SAMPLED)
-                m_resources.bind_descriptor(dispatch_key(), i, m_bindings[i]);
+            if (et == GpuBufferBinding::ElementType::IMAGE_STORAGE
+                || et == GpuBufferBinding::ElementType::IMAGE_SAMPLED)
+                continue;
+
+            if (i < m_shared_bindings.size() && !m_shared_bindings[i].empty()) {
+                m_resources.bind_shared_descriptor(dispatch_key(), m_shared_bindings[i], m_bindings[i]);
+                continue;
+            }
+
+            m_resources.bind_descriptor(dispatch_key(), i, m_bindings[i]);
         }
 
         keys.push_back(dispatch_key());

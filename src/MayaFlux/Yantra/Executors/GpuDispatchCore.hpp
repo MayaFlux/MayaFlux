@@ -109,6 +109,18 @@ public:
         set_binding_data(index, std::span<const T>(data));
     }
 
+    void ensure_shared_buffer(const std::string& tag, size_t required_bytes)
+    {
+        m_resources.ensure_shared_buffer(tag, required_bytes);
+    }
+
+    void bind_shared_buffer(size_t binding_index, const std::string& tag)
+    {
+        if (binding_index >= m_shared_bindings.size())
+            m_shared_bindings.resize(binding_index + 1);
+        m_shared_bindings[binding_index] = tag;
+    }
+
     /**
      * @brief Declare the byte capacity of an output binding independently
      *        of input data.  Required for edge lists, histograms, count
@@ -402,6 +414,7 @@ protected:
     std::vector<size_t> m_output_size_overrides;
     std::vector<std::vector<uint8_t>> m_passthrough_bytes;
     std::vector<std::vector<uint8_t>> m_binding_data;
+    std::vector<std::string> m_shared_bindings;
 
     struct ImageBinding {
         std::shared_ptr<Core::VKImage> image;

@@ -45,6 +45,11 @@ public:
     void download(const std::string& key, size_t index, float* dest, size_t byte_size);
     void bind_descriptor(const std::string& key, size_t index, const GpuBufferBinding& spec);
 
+    void ensure_shared_buffer(const std::string& tag, size_t required_bytes);
+    void bind_shared_descriptor(const std::string& key, const std::string& tag, const GpuBufferBinding& spec);
+    void download_shared(const std::string& tag, void* dest, size_t byte_size);
+    void upload_shared_raw(const std::string& tag, const uint8_t* data, size_t byte_size);
+
     /**
      * @brief Bind a storage image descriptor at the given slot index.
      * @param key     Pipeline unit to bind into.
@@ -160,6 +165,9 @@ private:
 
         bool ready {};
     };
+
+    struct SharedBuffers;
+    std::unique_ptr<SharedBuffers> m_shared;
 
     [[nodiscard]] PipelineUnit& unit_for(const std::string& key);
     [[nodiscard]] const PipelineUnit* find_unit(const std::string& key) const;

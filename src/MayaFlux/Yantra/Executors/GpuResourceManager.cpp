@@ -24,6 +24,7 @@ struct VulkanBufferSlot {
 
 struct GpuResourceManagerImpl {
     std::vector<VulkanBufferSlot> buffers;
+    std::unordered_map<std::string, VulkanBufferSlot> shared_buffers;
 };
 
 //==============================================================================
@@ -106,11 +107,18 @@ namespace {
 
 } // anonymous namespace
 
+struct GpuResourceManager::SharedBuffers {
+    std::unordered_map<std::string, VulkanBufferSlot> slots;
+};
+
 //==============================================================================
 // Lifecycle
 //==============================================================================
 
-GpuResourceManager::GpuResourceManager() = default;
+GpuResourceManager::GpuResourceManager()
+    : m_shared(std::make_unique<SharedBuffers>())
+{
+}
 
 GpuResourceManager::~GpuResourceManager()
 {
@@ -328,6 +336,47 @@ void GpuResourceManager::bind_descriptor(const std::string& key, size_t index, c
 size_t GpuResourceManager::buffer_allocated_bytes(const std::string& key, size_t index) const
 {
     return find_unit(key)->buffer_slots[index].allocated_bytes;
+}
+
+void GpuResourceManager::ensure_shared_buffer(const std::string& tag, size_t required_bytes)
+{
+    auto& slot = m_shared->slots[tag];
+    if (slot.allocated_bytes >= required_bytes)
+        return;
+
+    auto& foundry = Portal::Graphics::get_shader_foundry();
+    allocate_slot(foundry.get_device(), foundry.get_physical_device(), slot, required_bytes);
+}
+
+void GpuResourceManager::bind_shared_descriptor(const std::string& key, const std::string& tag, const GpuBufferBinding& spec)
+{
+    auto& unit = unit_for(key);
+    auto& foundry = Portal::Graphics::get_shader_foundry();
+    auto it = m_shared->slots.find(tag);
+    if (it == m_shared->slots.end())
+        error<std::runtime_error>(
+            Journal::Component::Yantra,
+            Journal::Context::BufferProcessing,
+            std::source_location::current(),
+            "GpuResourceManager: no shared buffer for tag '{}'", tag);
+
+    foundry.update_descriptor_buffer(
+        unit.descriptor_set_ids[spec.set],
+        spec.binding,
+        vk::DescriptorType::eStorageBuffer,
+        it->second.buffer, 0, it->second.allocated_bytes);
+}
+
+void GpuResourceManager::download_shared(const std::string& tag, void* dest, size_t byte_size)
+{
+    auto& slot = m_shared->slots.at(tag);
+    std::memcpy(dest, slot.mapped_ptr, byte_size);
+}
+
+void GpuResourceManager::upload_shared_raw(const std::string& tag, const uint8_t* data, size_t byte_size)
+{
+    auto& slot = m_shared->slots.at(tag);
+    std::memcpy(slot.mapped_ptr, data, byte_size);
 }
 
 void GpuResourceManager::bind_image_storage(
