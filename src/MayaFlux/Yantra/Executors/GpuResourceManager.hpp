@@ -50,6 +50,9 @@ public:
     void download_shared(const std::string& tag, void* dest, size_t byte_size);
     void upload_shared_raw(const std::string& tag, const uint8_t* data, size_t byte_size);
 
+    [[nodiscard]] Portal::Graphics::HazardResource make_shared_buffer_hazard(
+        const std::string& tag, const GpuBufferBinding& spec) const;
+
     /**
      * @brief Bind a storage image descriptor at the given slot index.
      * @param key     Pipeline unit to bind into.

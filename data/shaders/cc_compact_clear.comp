@@ -5,6 +5,8 @@
 
 layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 
+layout(set = 0, binding = 1, rgba32f) readonly uniform image2D in_labels;
+
 layout(set = 0, binding = 0, std430) buffer LookupBuf {
     uint lookup[];
 };
@@ -20,13 +22,14 @@ layout(set = 0, binding = 4, std430) buffer BoxBuf {
 layout(push_constant) uniform PC {
     uint width;
     uint height;
+    uint max_components;
 } pc;
 
 /**
- * @brief Zero-fills lookup and count, and writes the min/max sentinel
- *        pattern into box_extents, entirely on GPU. Dispatched once per
- *        frame before cc_compact_claim, replacing a CPU-side fill and
- *        upload of the same buffers.
+ * @brief Zero-fills lookup across every possible raw label and writes the
+ *        min/max sentinel pattern into the first max_components slots of
+ *        box_extents, entirely on GPU. lookup is sized width * height;
+ *        box_extents is sized max_components * 5.
  */
 void main()
 {
@@ -34,16 +37,21 @@ void main()
     if (coord.x >= int(pc.width) || coord.y >= int(pc.height))
         return;
 
-    uint idx = uint(coord.y) * pc.width + uint(coord.x);
-    lookup[idx] = CC_UNCLAIMED;
+    uint root = floatBitsToUint(imageLoad(in_labels, coord).r);
+    if (root != CC_BACKGROUND)
+        lookup[root] = CC_UNCLAIMED;
 
-    if (idx == 0u)
+    uint flat_idx = uint(coord.y) * pc.width + uint(coord.x);
+
+    if (flat_idx == 0u)
         count[0] = 0u;
 
-    uint base = idx * 5u;
-    box_extents[base + 0u] = 0xFFFFFFFFu;
-    box_extents[base + 1u] = 0xFFFFFFFFu;
-    box_extents[base + 2u] = 0u;
-    box_extents[base + 3u] = 0u;
-    box_extents[base + 4u] = 0u;
+    if (flat_idx < pc.max_components) {
+        uint base = flat_idx * 5u;
+        box_extents[base + 0u] = 0xFFFFFFFFu;
+        box_extents[base + 1u] = 0xFFFFFFFFu;
+        box_extents[base + 2u] = 0u;
+        box_extents[base + 3u] = 0u;
+        box_extents[base + 4u] = 0u;
+    }
 }

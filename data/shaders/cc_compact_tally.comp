@@ -11,19 +11,15 @@ layout(set = 0, binding = 0, std430) buffer LookupBuf {
     uint lookup[];
 };
 
-layout(set = 0, binding = 2, std430) buffer CounterBuf {
-    uint count[1];
-};
-
 layout(push_constant) uniform PC {
     uint width;
     uint height;
 } pc;
 
 /**
- * @brief First-writer-wins claim of a compact 1..count index per distinct
- *        root label. lookup must be sized w * h, zero-initialised before
- *        dispatch. count[0] must be zero-initialised before dispatch.
+ * @brief Tallies pixel count per raw equivalence-class root label into
+ *        lookup, reused as a histogram. lookup must be zero-initialised
+ *        before dispatch by cc_compact_clear.
  */
 void main()
 {
@@ -35,13 +31,5 @@ void main()
     if (root == CC_BACKGROUND)
         return;
 
-    uint prev = atomicCompSwap(lookup[root], CC_UNCLAIMED, CC_UNCLAIMED);
-    if (prev != CC_UNCLAIMED)
-        return;
-
-    uint won = atomicCompSwap(lookup[root], CC_UNCLAIMED, 1u);
-    if (won == CC_UNCLAIMED) {
-        uint idx = atomicAdd(count[0], 1u) + 1u;
-        lookup[root] = idx;
-    }
+    atomicAdd(lookup[root], 1u);
 }

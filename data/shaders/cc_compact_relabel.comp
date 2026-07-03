@@ -8,8 +8,12 @@ layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 layout(set = 0, binding = 3, rgba32f) writeonly uniform image2D out_labels;
 layout(set = 0, binding = 1, rgba32f) readonly uniform image2D in_labels;
 
-layout(set = 0, binding = 0, std430) readonly buffer LookupBuf {
+layout(set = 0, binding = 0, std430) buffer LookupBuf {
     uint lookup[];
+};
+
+layout(set = 0, binding = 2, std430) buffer CounterBuf {
+    uint count[1];
 };
 
 layout(set = 0, binding = 4, std430) buffer BoxBuf {
@@ -19,15 +23,19 @@ layout(set = 0, binding = 4, std430) buffer BoxBuf {
 layout(push_constant) uniform PC {
     uint width;
     uint height;
+    uint min_pixel_count;
+    uint max_components;
 } pc;
 
 /**
  * @brief Relabels each foreground pixel to its compact index and
  *        accumulates bounding box extents per component. box_extents
  *        holds 5 uints per component slot: x_min, y_min, x_max, y_max,
- *        pixel_count, indexed by (compact_index - 1) * 5. Must be
- *        zero-initialised for min/max fields at a sentinel and zero
- *        for pixel_count before dispatch.
+ *        pixel_count, indexed by (compact_index - 1) * 5. Components with
+ *        a raw tally below min_pixel_count are discarded as background.
+ *        The high bit of each lookup entry marks a resolved claim; the
+ *        low 31 bits carry either the raw tally (pre-claim) or the
+ *        compact index (post-claim).
  */
 void main()
 {
@@ -41,7 +49,29 @@ void main()
         return;
     }
 
-    uint compact = lookup[root];
+    uint raw = lookup[root];
+    uint tally = raw & 0x7FFFFFFFu;
+
+    if (tally < pc.min_pixel_count) {
+        write_safe(out_labels, coord, vec4(uintBitsToFloat(CC_BACKGROUND), 0.0, 0.0, 0.0));
+        return;
+    }
+
+    if ((raw & 0x80000000u) == 0u) {
+        uint prev = atomicOr(lookup[root], 0x80000000u);
+        if ((prev & 0x80000000u) == 0u) {
+            uint idx = atomicAdd(count[0], 1u) + 1u;
+            lookup[root] = (idx <= pc.max_components)
+                ? (0x80000000u | idx) : (0x80000000u | 0xFFFFFFu);
+        }
+    }
+
+    uint compact = lookup[root] & 0x7FFFFFFFu;
+    if (compact == 0u || compact == 0xFFFFFFu || compact > pc.max_components) {
+        write_safe(out_labels, coord, vec4(uintBitsToFloat(CC_BACKGROUND), 0.0, 0.0, 0.0));
+        return;
+    }
+
     write_safe(out_labels, coord, vec4(uintBitsToFloat(compact), 0.0, 0.0, 0.0));
 
     uint base = (compact - 1u) * 5u;

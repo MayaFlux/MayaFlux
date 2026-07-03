@@ -1,0 +1,49 @@
+#version 460
+
+#include "include/vision_cc.glsl"
+
+layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+
+layout(set = 0, binding = 0, std430) buffer LookupBuf {
+    uint lookup[];
+};
+
+layout(set = 0, binding = 2, std430) buffer CounterBuf {
+    uint count[1];
+};
+
+/**
+ * @brief One thread per potential raw label. Threads with zero count exit.
+ *        Surviving candidates race to claim a compact slot from the top
+ *        via bounded insertion sort into the first max_components entries
+ *        of lookup, keyed by count descending. Losing candidates below
+ *        the current minimum are discarded (left as CC_UNCLAIMED).
+ *
+ *        Trades exact global top-K for a lock-free single-pass admission
+ *        test against a running per-thread-group threshold, acceptable
+ *        because compaction only needs "large components survive", not
+ *        a strict total order.
+ */
+layout(push_constant) uniform PC {
+    uint total_labels;
+    uint max_components;
+} pc;
+
+void main()
+{
+    uint label = gl_GlobalInvocationID.x;
+    if (label >= pc.total_labels)
+        return;
+
+    uint n = lookup[label];
+    if (n == 0u)
+        return;
+
+    uint idx = atomicAdd(count[0], 1u);
+    if (idx < pc.max_components) {
+        lookup[label] = (idx + 1u) | 0x80000000u;
+        return;
+    }
+
+    lookup[label] = CC_UNCLAIMED;
+}

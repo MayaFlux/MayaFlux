@@ -121,6 +121,17 @@ public:
         m_shared_bindings[binding_index] = tag;
     }
 
+    void upload_shared_raw(const std::string& tag, const uint8_t* data, size_t byte_size)
+    {
+        m_resources.upload_shared_raw(tag, data, byte_size);
+    }
+
+    [[nodiscard]] Portal::Graphics::HazardResource shared_buffer_hazard(
+        const std::string& tag, const GpuBufferBinding& spec) const
+    {
+        return m_resources.make_shared_buffer_hazard(tag, spec);
+    }
+
     /**
      * @brief Declare the byte capacity of an output binding independently
      *        of input data.  Required for edge lists, histograms, count

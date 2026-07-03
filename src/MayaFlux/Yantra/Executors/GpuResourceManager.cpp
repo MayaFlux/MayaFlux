@@ -379,6 +379,19 @@ void GpuResourceManager::upload_shared_raw(const std::string& tag, const uint8_t
     std::memcpy(slot.mapped_ptr, data, byte_size);
 }
 
+Portal::Graphics::HazardResource GpuResourceManager::make_shared_buffer_hazard(
+    const std::string& tag, const GpuBufferBinding& spec) const
+{
+    auto it = m_shared->slots.find(tag);
+    vk::Buffer handle = (it != m_shared->slots.end()) ? it->second.buffer : vk::Buffer {};
+
+    return Portal::Graphics::HazardResource {
+        .binding = spec,
+        .image = nullptr,
+        .buffer = handle,
+    };
+}
+
 void GpuResourceManager::bind_image_storage(
     const std::string& key, size_t index,
     const std::shared_ptr<Core::VKImage>& image,
