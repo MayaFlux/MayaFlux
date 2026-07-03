@@ -1,0 +1,49 @@
+#version 460
+
+#include "include/vision_common.glsl"
+#include "include/vision_cc.glsl"
+
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
+layout(set = 0, binding = 0, std430) buffer LookupBuf {
+    uint lookup[];
+};
+
+layout(set = 0, binding = 2, std430) buffer CounterBuf {
+    uint count[1];
+};
+
+layout(set = 0, binding = 4, std430) buffer BoxBuf {
+    uint box_extents[];
+};
+
+layout(push_constant) uniform PC {
+    uint width;
+    uint height;
+} pc;
+
+/**
+ * @brief Zero-fills lookup and count, and writes the min/max sentinel
+ *        pattern into box_extents, entirely on GPU. Dispatched once per
+ *        frame before cc_compact_claim, replacing a CPU-side fill and
+ *        upload of the same buffers.
+ */
+void main()
+{
+    ivec2 coord = thread_coord();
+    if (coord.x >= int(pc.width) || coord.y >= int(pc.height))
+        return;
+
+    uint idx = uint(coord.y) * pc.width + uint(coord.x);
+    lookup[idx] = CC_UNCLAIMED;
+
+    if (idx == 0u)
+        count[0] = 0u;
+
+    uint base = idx * 5u;
+    box_extents[base + 0u] = 0xFFFFFFFFu;
+    box_extents[base + 1u] = 0xFFFFFFFFu;
+    box_extents[base + 2u] = 0u;
+    box_extents[base + 3u] = 0u;
+    box_extents[base + 4u] = 0u;
+}

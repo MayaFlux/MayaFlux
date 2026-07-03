@@ -1,0 +1,47 @@
+#version 460
+
+#include "include/vision_common.glsl"
+#include "include/vision_cc.glsl"
+
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
+layout(set = 0, binding = 1, rgba32f) readonly uniform image2D in_labels;
+
+layout(set = 0, binding = 0, std430) buffer LookupBuf {
+    uint lookup[];
+};
+
+layout(set = 0, binding = 2, std430) buffer CounterBuf {
+    uint count[1];
+};
+
+layout(push_constant) uniform PC {
+    uint width;
+    uint height;
+} pc;
+
+/**
+ * @brief First-writer-wins claim of a compact 1..count index per distinct
+ *        root label. lookup must be sized w * h, zero-initialised before
+ *        dispatch. count[0] must be zero-initialised before dispatch.
+ */
+void main()
+{
+    ivec2 coord = thread_coord();
+    if (coord.x >= int(pc.width) || coord.y >= int(pc.height))
+        return;
+
+    uint root = floatBitsToUint(imageLoad(in_labels, coord).r);
+    if (root == CC_BACKGROUND)
+        return;
+
+    uint prev = atomicCompSwap(lookup[root], CC_UNCLAIMED, CC_UNCLAIMED);
+    if (prev != CC_UNCLAIMED)
+        return;
+
+    uint won = atomicCompSwap(lookup[root], CC_UNCLAIMED, 1u);
+    if (won == CC_UNCLAIMED) {
+        uint idx = atomicAdd(count[0], 1u) + 1u;
+        lookup[root] = idx;
+    }
+}

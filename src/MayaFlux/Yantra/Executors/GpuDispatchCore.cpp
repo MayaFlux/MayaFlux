@@ -339,8 +339,6 @@ Portal::Graphics::FenceID GpuDispatchCore::dispatch_core_async(
         m_push_constants.size());
 }
 
-// GpuDispatchCore.cpp
-
 void GpuDispatchCore::dispatch_core_dependency(const std::vector<DependencyStage>& stages)
 {
     const GpuComputeConfig original_config = m_gpu_config;

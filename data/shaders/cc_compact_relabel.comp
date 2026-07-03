@@ -1,0 +1,53 @@
+#version 460
+
+#include "include/vision_common.glsl"
+#include "include/vision_cc.glsl"
+
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
+layout(set = 0, binding = 3, rgba32f) writeonly uniform image2D out_labels;
+layout(set = 0, binding = 1, rgba32f) readonly uniform image2D in_labels;
+
+layout(set = 0, binding = 0, std430) readonly buffer LookupBuf {
+    uint lookup[];
+};
+
+layout(set = 0, binding = 4, std430) buffer BoxBuf {
+    uint box_extents[];
+};
+
+layout(push_constant) uniform PC {
+    uint width;
+    uint height;
+} pc;
+
+/**
+ * @brief Relabels each foreground pixel to its compact index and
+ *        accumulates bounding box extents per component. box_extents
+ *        holds 5 uints per component slot: x_min, y_min, x_max, y_max,
+ *        pixel_count, indexed by (compact_index - 1) * 5. Must be
+ *        zero-initialised for min/max fields at a sentinel and zero
+ *        for pixel_count before dispatch.
+ */
+void main()
+{
+    ivec2 coord = thread_coord();
+    if (coord.x >= int(pc.width) || coord.y >= int(pc.height))
+        return;
+
+    uint root = floatBitsToUint(imageLoad(in_labels, coord).r);
+    if (root == CC_BACKGROUND) {
+        write_safe(out_labels, coord, vec4(uintBitsToFloat(CC_BACKGROUND), 0.0, 0.0, 0.0));
+        return;
+    }
+
+    uint compact = lookup[root];
+    write_safe(out_labels, coord, vec4(uintBitsToFloat(compact), 0.0, 0.0, 0.0));
+
+    uint base = (compact - 1u) * 5u;
+    atomicMin(box_extents[base + 0u], uint(coord.x));
+    atomicMin(box_extents[base + 1u], uint(coord.y));
+    atomicMax(box_extents[base + 2u], uint(coord.x));
+    atomicMax(box_extents[base + 3u], uint(coord.y));
+    atomicAdd(box_extents[base + 4u], 1u);
+}
