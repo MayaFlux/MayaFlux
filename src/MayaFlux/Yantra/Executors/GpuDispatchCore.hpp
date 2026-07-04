@@ -447,6 +447,7 @@ private:
     std::vector<uint8_t> m_native_staging_bytes;
 
     void update_dispatch_key_cache();
+    void bind_all_descriptors();
 };
 
 } // namespace MayaFlux::Yantra

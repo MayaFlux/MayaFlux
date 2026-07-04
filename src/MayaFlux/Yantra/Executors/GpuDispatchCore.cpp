@@ -248,11 +248,7 @@ GpuChannelResult GpuDispatchCore::dispatch_core(
     on_before_gpu_dispatch(channels, structure_info);
     prepare_gpu_inputs(channels, structure_info);
 
-    for (const auto& b : m_bindings) {
-        if (b.element_type != GpuBufferBinding::ElementType::IMAGE_STORAGE
-            && b.element_type != GpuBufferBinding::ElementType::IMAGE_SAMPLED)
-            m_resources.bind_descriptor(dispatch_key(), b.binding, b);
-    }
+    bind_all_descriptors();
 
     const size_t effective = m_staging_floats.empty()
         ? largest_binding_data_element_count()
@@ -278,12 +274,7 @@ GpuChannelResult GpuDispatchCore::dispatch_core_chained(
     on_before_gpu_dispatch(channels, structure_info);
     prepare_gpu_inputs(channels, structure_info);
 
-    for (size_t i = 0; i < m_bindings.size(); ++i) {
-        const auto et = m_bindings[i].element_type;
-        if (et != GpuBufferBinding::ElementType::IMAGE_STORAGE
-            && et != GpuBufferBinding::ElementType::IMAGE_SAMPLED)
-            m_resources.bind_descriptor(dispatch_key(), i, m_bindings[i]);
-    }
+    bind_all_descriptors();
 
     const size_t effective = m_staging_floats.empty()
         ? largest_binding_data_element_count()
@@ -320,12 +311,7 @@ Portal::Graphics::FenceID GpuDispatchCore::dispatch_core_async(
     on_before_gpu_dispatch(channels, structure_info);
     prepare_gpu_inputs(channels, structure_info);
 
-    for (size_t i = 0; i < m_bindings.size(); ++i) {
-        const auto et = m_bindings[i].element_type;
-        if (et != GpuBufferBinding::ElementType::IMAGE_STORAGE
-            && et != GpuBufferBinding::ElementType::IMAGE_SAMPLED)
-            m_resources.bind_descriptor(dispatch_key(), i, m_bindings[i]);
-    }
+    bind_all_descriptors();
 
     const size_t effective = m_staging_floats.empty()
         ? largest_binding_data_element_count()
@@ -380,19 +366,7 @@ void GpuDispatchCore::dispatch_core_dependency(const std::vector<DependencyStage
 
         prepare_gpu_inputs({}, {});
 
-        for (size_t i = 0; i < m_bindings.size(); ++i) {
-            const auto et = m_bindings[i].element_type;
-            if (et == GpuBufferBinding::ElementType::IMAGE_STORAGE
-                || et == GpuBufferBinding::ElementType::IMAGE_SAMPLED)
-                continue;
-
-            if (i < m_shared_bindings.size() && !m_shared_bindings[i].empty()) {
-                m_resources.bind_shared_descriptor(dispatch_key(), m_shared_bindings[i], m_bindings[i]);
-                continue;
-            }
-
-            m_resources.bind_descriptor(dispatch_key(), i, m_bindings[i]);
-        }
+        bind_all_descriptors();
 
         keys.push_back(dispatch_key());
         groups_per_key.push_back(calculate_dispatch_size(largest_binding_data_element_count(), {}));
@@ -570,6 +544,23 @@ void GpuDispatchCore::update_dispatch_key_cache()
     m_cached_dispatch_key = m_gpu_config.shader_path.empty()
         ? std::to_string(m_gpu_config.shader_id)
         : m_gpu_config.shader_path;
+}
+
+void GpuDispatchCore::bind_all_descriptors()
+{
+    for (size_t i = 0; i < m_bindings.size(); ++i) {
+        const auto et = m_bindings[i].element_type;
+        if (et == GpuBufferBinding::ElementType::IMAGE_STORAGE
+            || et == GpuBufferBinding::ElementType::IMAGE_SAMPLED)
+            continue;
+
+        if (i < m_shared_bindings.size() && !m_shared_bindings[i].empty()) {
+            m_resources.bind_shared_descriptor(dispatch_key(), m_shared_bindings[i], m_bindings[i]);
+            continue;
+        }
+
+        m_resources.bind_descriptor(dispatch_key(), i, m_bindings[i]);
+    }
 }
 
 } // namespace MayaFlux::Yantra
