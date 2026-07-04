@@ -77,7 +77,7 @@ public:
      * @param output_binding Binding index for the output storage image.
      *                      Ignored when mode is SCALAR. Default 0.
      */
-    explicit TextureExecutionContext(
+    TextureExecutionContext(
         GpuComputeConfig config,
         Portal::Graphics::ImageFormat output_format = Portal::Graphics::ImageFormat::RGBA8,
         OutputMode mode = OutputMode::CONTAINER,
@@ -99,6 +99,39 @@ public:
                                           .binding = output_binding,
                                           .direction = GpuBufferBinding::Direction::OUTPUT,
                                           .element_type = GpuBufferBinding::ElementType::IMAGE_STORAGE } });
+        }
+    }
+
+    /**
+     * @brief Construct from an explicit, fully-specified binding list.
+     *
+     * For dispatch shapes the positional constructor's image/aux split does
+     * not fit cleanly: any combination of input image, output image, and
+     * SSBOs declared directly as GpuBufferBinding entries. mode still governs
+     * collect_gpu_outputs / collect_result; the caller is responsible for the
+     * binding list matching that mode (e.g. an OUTPUT IMAGE_STORAGE entry
+     * present whenever mode != SCALAR).
+     *
+     * @param config   Shader path, workgroup size, push constant size.
+     * @param bindings Full binding list, image and buffer entries mixed freely.
+     * @param mode     Controls what collect_gpu_outputs / collect_result return.
+     */
+    TextureExecutionContext(
+        GpuComputeConfig config,
+        const std::vector<GpuBufferBinding>& bindings,
+        OutputMode mode = OutputMode::SCALAR)
+        : Base(std::move(config))
+        , m_output_format(Portal::Graphics::ImageFormat::RGBA8)
+        , m_output_mode(mode)
+    {
+        for (const auto& b : bindings) {
+            const bool is_image = b.element_type == GpuBufferBinding::ElementType::IMAGE_STORAGE
+                || b.element_type == GpuBufferBinding::ElementType::IMAGE_SAMPLED;
+            if (is_image) {
+                m_image_slots.push_back({ .binding = b });
+            } else {
+                m_aux_bindings.push_back(b);
+            }
         }
     }
 

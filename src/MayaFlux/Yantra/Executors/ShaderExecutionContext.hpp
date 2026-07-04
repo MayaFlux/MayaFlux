@@ -371,15 +371,6 @@ public:
         return result;
     }
 
-protected:
-    /**
-     * @brief Returns the binding list declared via constructor or fluent API.
-     */
-    [[nodiscard]] std::vector<GpuBufferBinding> declare_buffer_bindings() const override
-    {
-        return m_bindings;
-    }
-
     /**
      * @brief Injects multipass configuration into the context before dispatch
      *        when set_multipass() has been called.
@@ -394,6 +385,15 @@ protected:
             return GpuExecutionContext<InputType, OutputType>::execute(input, chained);
         }
         return GpuExecutionContext<InputType, OutputType>::execute(input, ctx);
+    }
+
+protected:
+    /**
+     * @brief Returns the binding list declared via constructor or fluent API.
+     */
+    [[nodiscard]] std::vector<GpuBufferBinding> declare_buffer_bindings() const override
+    {
+        return m_bindings;
     }
 
 private:
