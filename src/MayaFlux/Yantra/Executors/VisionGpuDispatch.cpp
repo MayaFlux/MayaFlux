@@ -83,9 +83,27 @@ namespace {
     struct CcPC {
         uint32_t width, height, write_to_b;
     };
+    struct ClearPC {
+        uint32_t width;
+        uint32_t height;
+        uint32_t max_components;
+    };
+    struct TallyPC {
+        uint32_t width;
+        uint32_t height;
+    };
+    struct RelabelPC {
+        uint32_t width;
+        uint32_t height;
+        uint32_t min_pixel_count;
+        uint32_t max_components;
+    };
 
     /** Standard 2D workgroup used by all pixel-to-pixel vision shaders */
     constexpr std::array<uint32_t, 3> k_wg2d { 8, 8, 1 };
+
+    /** Maximum number of connected components that can be labeled in a single pass */
+    constexpr uint32_t k_max_components = 4096;
 
     /**
      * @brief 2D Gaussian kernel for convolution, cached by (radius, sigma
@@ -199,6 +217,16 @@ VisionGpuContexts::VisionGpuContexts()
         },
         GpuBufferBinding::ElementType::IMAGE_STORAGE,
     }
+    , compact { GpuComputeConfig {}, //
+        Portal::Graphics::ImageFormat::RGBA32F, //
+        TextureExecutionContext::OutputMode::IMAGE, //
+        1, //
+        std::vector<GpuBufferBinding> {
+            { .set = 0, .binding = 0, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
+            { .set = 0, .binding = 2, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
+            { .set = 0, .binding = 4, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
+        },
+        GpuBufferBinding::ElementType::IMAGE_STORAGE, 3 }
 {
     structured.set_output_size(1, sizeof(uint32_t));
     structured.set_output_size(2, static_cast<size_t>(4096) * 4 * sizeof(float));
@@ -339,6 +367,7 @@ VisionResult VisionGpuExecutor::run(
     auto& pixel_ctx = contexts.pixel;
     auto& structured_ctx = contexts.structured;
     auto& label_ctx = contexts.labels;
+    auto& compact_ctx = contexts.compact;
 
     VisionResult result;
     result.w = w;
@@ -899,26 +928,14 @@ VisionResult VisionGpuExecutor::run(
             label_ctx.clear_output_dimensions();
             label_ctx.set_output_dimensions(w, h);
 
-            constexpr uint32_t k_max_components = 4096;
             constexpr uint32_t k_min_pixel_count = 1;
 
-            struct ClearPC {
-                uint32_t width;
-                uint32_t height;
-                uint32_t max_components;
-            };
-            struct TallyPC {
-                uint32_t width;
-                uint32_t height;
-            };
-            struct RelabelPC {
-                uint32_t width;
-                uint32_t height;
-                uint32_t min_pixel_count;
-                uint32_t max_components;
-            };
+            compact_ctx.clear_output_dimensions();
+            compact_ctx.set_output_dimensions(w, h);
 
-            label_ctx.ensure_shared_buffer("cc_compact_lookup", static_cast<size_t>(w) * h * sizeof(uint32_t));
+            compact_ctx.ensure_shared_buffer("cc_compact_lookup", static_cast<size_t>(w) * h * sizeof(uint32_t));
+            compact_ctx.ensure_shared_buffer("cc_compact_boxes", static_cast<size_t>(k_max_components) * 5 * sizeof(uint32_t));
+            compact_ctx.ensure_shared_buffer("cc_compact_count", sizeof(uint32_t));
 
             std::vector<DependencyStage> compact_stages;
             std::shared_ptr<Core::VKImage> compact_labels;
@@ -926,50 +943,65 @@ VisionResult VisionGpuExecutor::run(
             compact_stages.push_back({
                 .config = { .shader_path = "cc_compact_clear.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(ClearPC) },
                 .stage_fn = [&](GpuDispatchCore& ctx) {
-        ctx.bind_shared_buffer(0, "cc_compact_lookup");
-        label_ctx.stage_image_at(1, colorized, GpuBufferBinding::ElementType::IMAGE_STORAGE);
-        ctx.set_output_size(2, sizeof(uint32_t));
-        ctx.set_output_size(4, static_cast<size_t>(k_max_components) * 5 * sizeof(uint32_t));
+        ctx.bind_shared_buffer(2, "cc_compact_lookup");
+        ctx.bind_shared_buffer(3, "cc_compact_count");
+        ctx.bind_shared_buffer(4, "cc_compact_boxes");
+        compact_ctx.stage_image_at(1, img_a, GpuBufferBinding::ElementType::IMAGE_STORAGE);
         ctx.set_push_constants(ClearPC { .width = w, .height = h, .max_components = k_max_components }); },
                 .hazard_fn = [](GpuDispatchCore& ctx) -> std::vector<Portal::Graphics::HazardResource> {
-                    return { ctx.shared_buffer_hazard("cc_compact_lookup",
-                        { .set = 0, .binding = 0, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 }) };
+                    return {
+                        ctx.shared_buffer_hazard("cc_compact_lookup",
+                            { .set = 0, .binding = 0, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 }),
+                        ctx.shared_buffer_hazard("cc_compact_count",
+                            { .set = 0, .binding = 2, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 }),
+                        ctx.shared_buffer_hazard("cc_compact_boxes",
+                            { .set = 0, .binding = 4, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 }),
+                    };
                 },
             });
 
             compact_stages.push_back({
                 .config = { .shader_path = "cc_compact_tally.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(TallyPC) },
                 .stage_fn = [&](GpuDispatchCore& ctx) {
-        ctx.bind_shared_buffer(0, "cc_compact_lookup");
-        label_ctx.stage_image_at(1, colorized, GpuBufferBinding::ElementType::IMAGE_STORAGE);
+        ctx.bind_shared_buffer(2, "cc_compact_lookup");
+        compact_ctx.stage_image_at(1, img_a, GpuBufferBinding::ElementType::IMAGE_STORAGE);
         ctx.set_push_constants(TallyPC { .width = w, .height = h }); },
                 .hazard_fn = [](GpuDispatchCore& ctx) -> std::vector<Portal::Graphics::HazardResource> {
-                    return { ctx.shared_buffer_hazard("cc_compact_lookup",
-                        { .set = 0, .binding = 0, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 }) };
+                    return {
+                        ctx.shared_buffer_hazard("cc_compact_lookup",
+                            { .set = 0, .binding = 0, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 }),
+                    };
                 },
             });
 
             compact_stages.push_back({
                 .config = { .shader_path = "cc_compact_relabel.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(RelabelPC) },
                 .stage_fn = [&](GpuDispatchCore& ctx) {
-                    ctx.bind_shared_buffer(0, "cc_compact_lookup");
-                    label_ctx.stage_image_at(1, colorized, GpuBufferBinding::ElementType::IMAGE_STORAGE);
-                    ctx.set_push_constants(RelabelPC { .width = w, .height = h, .min_pixel_count = k_min_pixel_count, .max_components = k_max_components });
-                    label_ctx.prepare_output_image(w, h);
-                    compact_labels = label_ctx.get_output_image(0);
+                    ctx.bind_shared_buffer(2, "cc_compact_lookup");
+                    ctx.bind_shared_buffer(3, "cc_compact_count");
+                    ctx.bind_shared_buffer(4, "cc_compact_boxes");
+                    compact_ctx.stage_image_at(1, img_a, GpuBufferBinding::ElementType::IMAGE_STORAGE);
+                    ctx.set_push_constants(RelabelPC {
+                        .width = w,
+                        .height = h,
+                        .min_pixel_count = k_min_pixel_count,
+                        .max_components = k_max_components });
+                    compact_ctx.prepare_output_image(w, h);
+                    compact_labels = compact_ctx.get_output_image(3);
                 },
                 .hazard_fn = nullptr,
             });
 
-            ExecutionContext compact_ctx;
-            compact_ctx.mode = ExecutionMode::DEPENDENCY;
-            compact_ctx.execution_metadata["dependency_stages"] = compact_stages;
-            label_ctx.execute(Datum<> {}, compact_ctx);
+            ExecutionContext compact_exec_ctx;
+            compact_exec_ctx.mode = ExecutionMode::DEPENDENCY;
+            compact_exec_ctx.execution_metadata["dependency_stages"] = compact_stages;
+            compact_ctx.execute(Datum<> {}, compact_exec_ctx);
 
-            const auto compact_result = label_ctx.collect_result();
+            uint32_t cc_count_readback = 0;
+            compact_ctx.download_shared("cc_compact_count", &cc_count_readback, sizeof(uint32_t));
+
             std::vector<uint32_t> boxes_readback(static_cast<size_t>(k_max_components) * 5, 0);
-            if (auto it = compact_result.aux.find(4); it != compact_result.aux.end())
-                std::memcpy(boxes_readback.data(), it->second.data(), boxes_readback.size() * sizeof(uint32_t));
+            compact_ctx.download_shared("cc_compact_boxes", boxes_readback.data(), boxes_readback.size() * sizeof(uint32_t));
 
             Kinesis::Vision::ComponentResult cc_out;
             for (size_t i = 0; i < boxes_readback.size(); i += 5) {
@@ -994,7 +1026,7 @@ VisionResult VisionGpuExecutor::run(
             cc_out.truncated = cc_out.count >= k_max_components;
 
             result.structured = std::move(cc_out);
-            result.debug_labels = compact_labels;
+            result.debug_labels = colorized;
             current = compact_labels;
             last_staged = current;
             completed_ops[Kinesis::Vision::hash_vision_step(step.op, step.params)] = { .output = current, .input = cc_input };

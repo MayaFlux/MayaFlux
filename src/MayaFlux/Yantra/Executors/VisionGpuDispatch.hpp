@@ -52,6 +52,7 @@ struct MAYAFLUX_API VisionGpuContexts {
                                     ///< image output and structured aux
                                     ///< data (ConnectedComponents,
                                     ///< FindContours).
+    TextureExecutionContext compact; ///< Connected-components compaction context.
 
     /**
      * @brief Construct all three contexts in place with the one correct

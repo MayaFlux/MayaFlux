@@ -1,5 +1,4 @@
 #version 460
-
 #include "include/vision_common.glsl"
 #include "include/vision_cc.glsl"
 
@@ -26,7 +25,7 @@ layout(push_constant) uniform PC {
 } pc;
 
 /**
- * @brief Zero-fills lookup across every possible raw label and writes the
+ * @brief Zero-fills lookup across every flat pixel index and writes the
  *        min/max sentinel pattern into the first max_components slots of
  *        box_extents, entirely on GPU. lookup is sized width * height;
  *        box_extents is sized max_components * 5.
@@ -37,11 +36,8 @@ void main()
     if (coord.x >= int(pc.width) || coord.y >= int(pc.height))
         return;
 
-    uint root = floatBitsToUint(imageLoad(in_labels, coord).r);
-    if (root != CC_BACKGROUND)
-        lookup[root] = CC_UNCLAIMED;
-
     uint flat_idx = uint(coord.y) * pc.width + uint(coord.x);
+    lookup[flat_idx] = CC_UNCLAIMED;
 
     if (flat_idx == 0u)
         count[0] = 0u;

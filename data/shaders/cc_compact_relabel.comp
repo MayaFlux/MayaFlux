@@ -49,24 +49,22 @@ void main()
         return;
     }
 
-    uint raw = lookup[root];
-    uint tally = raw & 0x7FFFFFFFu;
-
+    uint tally = lookup[root];
     if (tally < pc.min_pixel_count) {
         write_safe(out_labels, coord, vec4(uintBitsToFloat(CC_BACKGROUND), 0.0, 0.0, 0.0));
         return;
     }
 
-    if ((raw & 0x80000000u) == 0u) {
-        uint prev = atomicOr(lookup[root], 0x80000000u);
-        if ((prev & 0x80000000u) == 0u) {
-            uint idx = atomicAdd(count[0], 1u) + 1u;
-            lookup[root] = (idx <= pc.max_components)
-                ? (0x80000000u | idx) : (0x80000000u | 0xFFFFFFu);
-        }
+    uint compact;
+    uint prev = atomicCompSwap(lookup[root], tally, tally | 0x80000000u);
+    if (prev == tally) {
+        uint idx = atomicAdd(count[0], 1u) + 1u;
+        compact = (idx <= pc.max_components) ? idx : 0xFFFFFFu;
+        atomicExchange(lookup[root], 0x80000000u | compact);
+    } else {
+        compact = lookup[root] & 0x7FFFFFFFu;
     }
 
-    uint compact = lookup[root] & 0x7FFFFFFFu;
     if (compact == 0u || compact == 0xFFFFFFu || compact > pc.max_components) {
         write_safe(out_labels, coord, vec4(uintBitsToFloat(CC_BACKGROUND), 0.0, 0.0, 0.0));
         return;
