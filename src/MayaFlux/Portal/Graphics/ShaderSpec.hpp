@@ -302,8 +302,6 @@ struct PushConstantField {
  * assembles it via VKShaderModule::create_from_spirv_asm(). No shaderc
  * or GLSL toolchain is involved.
  *
- * Binding indices start at 1. Index 0 at set 0 is engine-reserved.
- *
  * The op field selects a named operation the emitter knows how to lower
  * to SPIR-V opcodes deterministically. PC fields are consumed in
  * declaration order as operands.

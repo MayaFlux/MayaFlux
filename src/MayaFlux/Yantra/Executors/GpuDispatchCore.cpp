@@ -563,4 +563,23 @@ void GpuDispatchCore::bind_all_descriptors()
     }
 }
 
+/* void GpuDispatchCore::bind_all_descriptors()
+{
+    for (auto& m_binding : m_bindings) {
+        const auto et = m_binding.element_type;
+        if (et == GpuBufferBinding::ElementType::IMAGE_STORAGE
+            || et == GpuBufferBinding::ElementType::IMAGE_SAMPLED)
+            continue;
+
+        const size_t idx = m_binding.binding;
+
+        if (idx < m_shared_bindings.size() && !m_shared_bindings[idx].empty()) {
+            m_resources.bind_shared_descriptor(dispatch_key(), m_shared_bindings[idx], m_binding);
+            continue;
+        }
+
+        m_resources.bind_descriptor(dispatch_key(), idx, m_binding);
+    }
+} */
+
 } // namespace MayaFlux::Yantra

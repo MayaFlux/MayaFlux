@@ -52,9 +52,7 @@ struct MAYAFLUX_API VisionGpuContexts {
                                     ///< image output and structured aux
                                     ///< data (ConnectedComponents,
                                     ///< FindContours).
-    TextureExecutionContext cc_parent_init;
-    TextureExecutionContext cc_union;
-    TextureExecutionContext cc_colorize;
+    TextureExecutionContext cc_pipeline;
 
     /**
      * @brief Construct all three contexts in place with the one correct

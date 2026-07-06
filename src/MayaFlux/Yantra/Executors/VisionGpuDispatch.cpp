@@ -218,36 +218,14 @@ VisionGpuContexts::VisionGpuContexts()
         },
         GpuBufferBinding::ElementType::IMAGE_STORAGE,
     }
-    , cc_parent_init {
-        GpuComputeConfig {},
-        Portal::Graphics::ImageFormat::RGBA32F,
-        TextureExecutionContext::OutputMode::IMAGE,
-        1,
-        std::vector<GpuBufferBinding> {
-            { .set = 0, .binding = 2, .direction = GpuBufferBinding::Direction::OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
-        },
-        GpuBufferBinding::ElementType::IMAGE_STORAGE,
-        0,
-    }
-    , cc_union {
+    , cc_pipeline {
         GpuComputeConfig {},
         Portal::Graphics::ImageFormat::RGBA32F,
         TextureExecutionContext::OutputMode::IMAGE,
         1,
         std::vector<GpuBufferBinding> {
             { .set = 0, .binding = 2, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
-            { .set = 0, .binding = 3, .direction = GpuBufferBinding::Direction::OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
-        },
-        GpuBufferBinding::ElementType::IMAGE_STORAGE,
-        0,
-    }
-    , cc_colorize {
-        GpuComputeConfig {},
-        Portal::Graphics::ImageFormat::RGBA32F,
-        TextureExecutionContext::OutputMode::IMAGE,
-        1,
-        std::vector<GpuBufferBinding> {
-            { .set = 0, .binding = 2, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
+            { .set = 0, .binding = 3, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
         },
         GpuBufferBinding::ElementType::IMAGE_STORAGE,
         0,
@@ -392,9 +370,7 @@ VisionResult VisionGpuExecutor::run(
     auto& pixel_ctx = contexts.pixel;
     auto& structured_ctx = contexts.structured;
     auto& label_ctx = contexts.labels;
-    auto& cc_parent_init = contexts.cc_parent_init;
-    auto& cc_union = contexts.cc_union;
-    auto& cc_colorize = contexts.cc_colorize;
+    auto& cc_pipeline = contexts.cc_pipeline;
 
     VisionResult result;
     result.w = w;
@@ -873,12 +849,6 @@ VisionResult VisionGpuExecutor::run(
             continue;
         }
         case VisionOp::ConnectedComponents: {
-            label_ctx.swap_shader({
-                .shader_path = "cc_seed.comp.spv",
-                .workgroup_size = k_wg2d,
-                .push_constant_size = sizeof(uint32_t) * 2,
-            });
-
             struct SeedPC {
                 uint32_t width;
                 uint32_t height;
@@ -889,121 +859,80 @@ VisionResult VisionGpuExecutor::run(
                 continue;
             }
 
-            label_ctx.stage_image(current);
-            label_ctx.set_output_dimensions(w, h);
-            label_ctx.set_push_constants(pc);
-            label_ctx.prepare_output_image(w, h);
-
             const auto seed_input = current;
-            {
-                const auto fence = label_ctx.dispatch_async({});
-                if (fence == Portal::Graphics::INVALID_FENCE) {
-                    continue;
-                }
-                foundry.wait_for_fence(fence);
-                foundry.release_fence(fence);
-            }
-            auto seed_output = label_ctx.get_output_image(0);
-            if (!seed_output) {
-                continue;
-            }
 
-            cc_parent_init.swap_shader({
-                .shader_path = "cc_parent_init.comp.spv",
-                .workgroup_size = k_wg2d,
-                .push_constant_size = sizeof(uint32_t) * 2,
-            });
-            cc_parent_init.set_output_size(2, static_cast<size_t>(w) * h * sizeof(uint32_t));
-            cc_parent_init.stage_image(seed_input);
-            cc_parent_init.set_output_dimensions(w, h);
-            cc_parent_init.set_push_constants(pc);
-            cc_parent_init.prepare_output_image(w, h);
+            cc_pipeline.ensure_shared_buffer("cc_parent", static_cast<size_t>(w) * h * sizeof(uint32_t));
+            cc_pipeline.ensure_shared_buffer("cc_changed", sizeof(uint32_t));
 
-            std::vector<uint32_t> parent_data(static_cast<size_t>(w) * h);
-            bool parent_read_ok = false;
-            {
-                const auto fence = cc_parent_init.dispatch_async({});
-                if (fence != Portal::Graphics::INVALID_FENCE) {
-                    foundry.wait_for_fence(fence);
-                    foundry.release_fence(fence);
+            const double diagonal = std::sqrt(static_cast<double>(w) * w + static_cast<double>(h) * h);
+            const auto k_union_passes = static_cast<uint32_t>(std::ceil(std::log2(std::max(2.0, diagonal))));
 
-                    const auto gpu_result = cc_parent_init.collect_result();
-                    if (auto it = gpu_result.aux.find(2); it != gpu_result.aux.end() && it->second.size() >= parent_data.size() * sizeof(uint32_t)) {
-                        std::memcpy(parent_data.data(), it->second.data(), parent_data.size() * sizeof(uint32_t));
-                        parent_read_ok = true;
-                    }
-                }
-            }
-
+            std::shared_ptr<Core::VKImage> seed_output;
             std::shared_ptr<Core::VKImage> colorized;
 
-            if (parent_read_ok) {
-                cc_union.swap_shader({
-                    .shader_path = "cc_union.comp.spv",
-                    .workgroup_size = k_wg2d,
-                    .push_constant_size = sizeof(uint32_t) * 2,
+            std::vector<DependencyStage> stages;
+
+            stages.push_back({
+                .config = { .shader_path = "cc_seed.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(SeedPC) },
+                .stage_fn = [&](GpuDispatchCore& ctx) {
+                    cc_pipeline.stage_image(seed_input);
+                    ctx.set_push_constants(pc);
+                    cc_pipeline.set_output_dimensions(w, h);
+                    cc_pipeline.prepare_output_image(w, h);
+                    seed_output = cc_pipeline.get_output_image(0);
+                },
+                .hazard_fn = nullptr,
+            });
+
+            stages.push_back({
+                .config = { .shader_path = "cc_parent_init.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(SeedPC) },
+                .stage_fn = [&](GpuDispatchCore& ctx) {
+            ctx.bind_shared_buffer(2, "cc_parent");
+            cc_pipeline.stage_image_at(1, seed_input, GpuBufferBinding::ElementType::IMAGE_STORAGE);
+            ctx.set_push_constants(pc); },
+                .hazard_fn = [&](GpuDispatchCore& ctx) -> std::vector<Portal::Graphics::HazardResource> {
+                    return {
+                        ctx.shared_buffer_hazard("cc_parent",
+                            { .set = 0, .binding = 2, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 }),
+                    };
+                },
+            });
+
+            for (uint32_t pass = 0; pass < k_union_passes; ++pass) {
+                stages.push_back({
+                    .config = { .shader_path = "cc_union.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(SeedPC) },
+                    .stage_fn = [&](GpuDispatchCore& ctx) {
+                ctx.bind_shared_buffer(2, "cc_parent");
+                ctx.bind_shared_buffer(3, "cc_changed");
+                cc_pipeline.stage_image_at(1, seed_input, GpuBufferBinding::ElementType::IMAGE_STORAGE);
+                ctx.set_push_constants(pc); },
+                    .hazard_fn = [&](GpuDispatchCore& ctx) -> std::vector<Portal::Graphics::HazardResource> {
+                        return {
+                            ctx.shared_buffer_hazard("cc_parent",
+                                { .set = 0, .binding = 2, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 }),
+                            ctx.shared_buffer_hazard("cc_changed",
+                                { .set = 0, .binding = 3, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 }),
+                        };
+                    },
                 });
-                cc_union.set_output_size(2, static_cast<size_t>(w) * h * sizeof(uint32_t));
-                cc_union.set_output_size(3, sizeof(uint32_t));
-
-                constexpr uint32_t k_max_union_passes = 32;
-
-                for (uint32_t pass = 0; pass < k_max_union_passes; ++pass) {
-                    const uint32_t zero = 0;
-                    cc_union.set_binding_data(2, std::span<const uint32_t>(parent_data.data(), parent_data.size()));
-                    cc_union.set_binding_data(3, std::span<const uint32_t>(&zero, 1));
-
-                    cc_union.stage_image(seed_input);
-                    cc_union.set_output_dimensions(w, h);
-                    cc_union.set_push_constants(pc);
-                    cc_union.prepare_output_image(w, h);
-
-                    const auto fence = cc_union.dispatch_async({});
-                    if (fence == Portal::Graphics::INVALID_FENCE) {
-                        break;
-                    }
-                    foundry.wait_for_fence(fence);
-                    foundry.release_fence(fence);
-
-                    const auto gpu_result = cc_union.collect_result();
-
-                    auto parent_it = gpu_result.aux.find(2);
-                    if (parent_it == gpu_result.aux.end() || parent_it->second.size() < parent_data.size() * sizeof(uint32_t)) {
-                        break;
-                    }
-                    std::memcpy(parent_data.data(), parent_it->second.data(), parent_data.size() * sizeof(uint32_t));
-
-                    uint32_t changed_flag = 0;
-                    auto changed_it = gpu_result.aux.find(3);
-                    if (changed_it == gpu_result.aux.end() || changed_it->second.size() < sizeof(uint32_t)) {
-                        break;
-                    }
-                    std::memcpy(&changed_flag, changed_it->second.data(), sizeof(uint32_t));
-
-                    if (changed_flag == 0) {
-                        break;
-                    }
-                }
-
-                cc_colorize.swap_shader({
-                    .shader_path = "cc_colorize.comp.spv",
-                    .workgroup_size = k_wg2d,
-                    .push_constant_size = sizeof(uint32_t) * 2,
-                });
-                cc_colorize.set_output_size(2, static_cast<size_t>(w) * h * sizeof(uint32_t));
-                cc_colorize.set_binding_data(2, std::span<const uint32_t>(parent_data.data(), parent_data.size()));
-                cc_colorize.stage_image(seed_input);
-                cc_colorize.set_output_dimensions(w, h);
-                cc_colorize.set_push_constants(pc);
-                cc_colorize.prepare_output_image(w, h);
-
-                const auto fence = cc_colorize.dispatch_async({});
-                if (fence != Portal::Graphics::INVALID_FENCE) {
-                    foundry.wait_for_fence(fence);
-                    foundry.release_fence(fence);
-                    colorized = cc_colorize.get_output_image(0);
-                }
             }
+
+            stages.push_back({
+                .config = { .shader_path = "cc_colorize.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(SeedPC) },
+                .stage_fn = [&](GpuDispatchCore& ctx) {
+                    ctx.bind_shared_buffer(2, "cc_parent");
+                    cc_pipeline.stage_image_at(1, seed_input, GpuBufferBinding::ElementType::IMAGE_STORAGE);
+                    ctx.set_push_constants(pc);
+                    cc_pipeline.prepare_output_image(w, h);
+                    colorized = cc_pipeline.get_output_image(0);
+                },
+                .hazard_fn = nullptr,
+            });
+
+            ExecutionContext dep_ctx;
+            dep_ctx.mode = ExecutionMode::DEPENDENCY;
+            dep_ctx.execution_metadata["dependency_stages"] = stages;
+            cc_pipeline.execute(Datum<> {}, dep_ctx);
 
             result.debug_labels = colorized ? colorized : seed_output;
             current = seed_output;
