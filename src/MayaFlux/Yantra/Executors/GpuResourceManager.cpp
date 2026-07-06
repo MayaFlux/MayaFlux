@@ -35,13 +35,22 @@ namespace {
 
     uint32_t find_memory_type(vk::PhysicalDevice phys,
         uint32_t type_filter,
-        vk::MemoryPropertyFlags props)
+        vk::MemoryPropertyFlags props,
+        vk::MemoryPropertyFlags fallback_props = {})
     {
         auto mem_props = phys.getMemoryProperties();
         for (uint32_t i = 0; i < mem_props.memoryTypeCount; ++i) {
             if ((type_filter & (1U << i))
                 && (mem_props.memoryTypes[i].propertyFlags & props) == props) {
                 return i;
+            }
+        }
+        if (fallback_props) {
+            for (uint32_t i = 0; i < mem_props.memoryTypeCount; ++i) {
+                if ((type_filter & (1U << i))
+                    && (mem_props.memoryTypes[i].propertyFlags & fallback_props) == fallback_props) {
+                    return i;
+                }
             }
         }
         error<std::runtime_error>(
@@ -84,6 +93,9 @@ namespace {
         vk::MemoryAllocateInfo ai;
         ai.allocationSize = req.size;
         ai.memoryTypeIndex = find_memory_type(phys, req.memoryTypeBits,
+            vk::MemoryPropertyFlagBits::eHostVisible
+                | vk::MemoryPropertyFlagBits::eHostCoherent
+                | vk::MemoryPropertyFlagBits::eHostCached,
             vk::MemoryPropertyFlagBits::eHostVisible
                 | vk::MemoryPropertyFlagBits::eHostCoherent);
 

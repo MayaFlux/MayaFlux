@@ -1,11 +1,9 @@
 #version 460
 #include "include/vision_common.glsl"
 #include "include/vision_cc.glsl"
-#include "include/vision_colorspace.glsl"
 
 layout(local_size_x = 8, local_size_y = 8) in;
 
-layout(set = 0, binding = 0, rgba32f) uniform writeonly image2D out_image;
 layout(set = 0, binding = 1, rgba32f) uniform readonly image2D in_image;
 
 layout(set = 0, binding = 2, std430) buffer ParentBuf {
@@ -43,6 +41,7 @@ layout(set = 0, binding = 9, std430) buffer BoundsCountBuf {
 layout(push_constant) uniform PushConstants {
     uint width;
     uint height;
+    uint max_components;
 } pc;
 
 /**
@@ -61,23 +60,25 @@ uint find_root(uint x)
 }
 
 /**
- * @brief Derives a stable, visually distinct hue from an arbitrary root
- *        index via a multiplicative hash, then converts to RGB at fixed
- *        saturation and value.
+ * @brief Claim stage: exactly one invocation per unique root increments
+ *        compact_count, determined by which invocation's atomicCompSwap
+ *        against the CC_UNCLAIMED sentinel actually succeeds. Losing
+ *        invocations observe a non-CC_UNCLAIMED value (either the
+ *        in-flight sentinel or the final id) and never increment. No
+ *        invocation waits on another within this dispatch; label_lut is
+ *        guaranteed settled to its final id by the time cc_compact_resolve
+ *        runs as a separate, later dispatch.
  */
-vec3 color_for_root(uint root)
+void claim_dense_id(uint root)
 {
-    uint h = root * 2654435761u;
-    float hue = float(h & 0xFFFFu) / 65536.0;
-    return hsv_to_rgb(vec3(hue, 0.85, 0.95));
+    uint prev = atomicCompSwap(label_lut[root], CC_UNCLAIMED, 0xFFFFFFFEu);
+    if (prev != CC_UNCLAIMED)
+        return;
+
+    uint new_id = atomicAdd(compact_count[0], 1u) + 1u;
+    atomicExchange(label_lut[root], new_id);
 }
 
-/**
- * @brief Colorizes each foreground pixel by its connected component root.
- *        Background pixels are written black. Bindings 3 through 9 are
- *        unused here but declared to match cc_pipeline's fixed binding
- *        layout, shared across every stage in the CC chain.
- */
 void main()
 {
     const ivec2 coord = thread_coord();
@@ -87,12 +88,9 @@ void main()
     const uint idx = cc_flat_index(uvec2(coord), pc.width);
     const uint p = parent[idx];
 
-    if (p == CC_BACKGROUND) {
-        imageStore(out_image, coord, vec4(0.0, 0.0, 0.0, 1.0));
+    if (p == CC_BACKGROUND)
         return;
-    }
 
     const uint root = find_root(idx);
-    const vec3 color = color_for_root(root);
-    imageStore(out_image, coord, vec4(color, 1.0));
+    claim_dense_id(root);
 }

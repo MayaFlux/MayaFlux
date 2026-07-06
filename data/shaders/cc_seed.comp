@@ -1,6 +1,5 @@
-#version 450
+#version 460
 #extension GL_KHR_shader_subgroup_basic : enable
-
 #include "include/vision_common.glsl"
 #include "include/vision_cc.glsl"
 
@@ -8,6 +7,38 @@ layout(local_size_x = 8, local_size_y = 8) in;
 
 layout(set = 0, binding = 0, rgba32f) uniform writeonly image2D out_image;
 layout(set = 0, binding = 1, rgba32f) uniform readonly image2D in_image;
+
+layout(set = 0, binding = 2, std430) buffer ParentBuf {
+    uint parent[];
+};
+
+layout(set = 0, binding = 3, std430) buffer ChangedBuf {
+    uint changed[1];
+};
+
+layout(set = 0, binding = 4, std430) buffer LabelLutBuf {
+    uint label_lut[];
+};
+
+layout(set = 0, binding = 5, std430) buffer CountBuf {
+    uint compact_count[1];
+};
+
+layout(set = 0, binding = 6, std430) buffer DenseBuf {
+    uint dense_label[];
+};
+
+layout(set = 0, binding = 7, std430) buffer BoundsMinBuf {
+    uvec2 bounds_min[];
+};
+
+layout(set = 0, binding = 8, std430) buffer BoundsMaxBuf {
+    uvec2 bounds_max[];
+};
+
+layout(set = 0, binding = 9, std430) buffer BoundsCountBuf {
+    uint bounds_count[];
+};
 
 layout(push_constant) uniform PushConstants {
     uint width;
@@ -18,16 +49,17 @@ layout(push_constant) uniform PushConstants {
  * @brief Seed stage: assign each foreground pixel a unique provisional
  *        label equal to its flat index + 1. Background pixels receive
  *        CC_BACKGROUND. No propagation or merging occurs in this stage.
+ *        Bindings 2 through 9 are unused here but declared to match
+ *        cc_pipeline's fixed binding layout, shared across every stage
+ *        in the CC dependency chain.
  */
 void main()
 {
     const ivec2 coord = thread_coord();
     if (coord.x >= int(pc.width) || coord.y >= int(pc.height))
         return;
-
     const float mask_value = imageLoad(in_image, coord).r;
     const uint label = (mask_value >= 0.5)
         ? cc_flat_index(uvec2(coord), pc.width) + 1u : CC_BACKGROUND;
-
     imageStore(out_image, coord, vec4(uintBitsToFloat(label), 0.0, 0.0, 1.0));
 }

@@ -1,4 +1,4 @@
-#version 450
+#version 460
 #include "include/vision_common.glsl"
 #include "include/vision_cc.glsl"
 
@@ -11,6 +11,34 @@ layout(set = 0, binding = 2, std430) buffer ParentBuf {
     uint parent[];
 };
 
+layout(set = 0, binding = 3, std430) buffer ChangedBuf {
+    uint changed[1];
+};
+
+layout(set = 0, binding = 4, std430) buffer LabelLutBuf {
+    uint label_lut[];
+};
+
+layout(set = 0, binding = 5, std430) buffer CountBuf {
+    uint compact_count[1];
+};
+
+layout(set = 0, binding = 6, std430) buffer DenseBuf {
+    uint dense_label[];
+};
+
+layout(set = 0, binding = 7, std430) buffer BoundsMinBuf {
+    uvec2 bounds_min[];
+};
+
+layout(set = 0, binding = 8, std430) buffer BoundsMaxBuf {
+    uvec2 bounds_max[];
+};
+
+layout(set = 0, binding = 9, std430) buffer BoundsCountBuf {
+    uint bounds_count[];
+};
+
 layout(push_constant) uniform PushConstants {
     uint width;
     uint height;
@@ -21,7 +49,9 @@ layout(push_constant) uniform PushConstants {
  *        Each foreground pixel becomes its own root: parent[idx] = idx.
  *        Background pixels are marked CC_BACKGROUND. No union or path
  *        compression occurs in this stage. out_image is unused scratch
- *        required by IMAGE mode's binding contract.
+ *        required by IMAGE mode's binding contract. Bindings 3 through 9
+ *        are unused here but declared to match cc_pipeline's fixed
+ *        binding layout, shared across every stage in the CC chain.
  */
 void main()
 {
