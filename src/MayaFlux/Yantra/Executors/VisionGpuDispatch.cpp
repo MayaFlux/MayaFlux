@@ -1,5 +1,6 @@
 #include "VisionGpuDispatch.hpp"
 
+#include "MayaFlux/IO/ImageExport.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Portal/Graphics/ShaderFoundry.hpp"
 
@@ -217,16 +218,40 @@ VisionGpuContexts::VisionGpuContexts()
         },
         GpuBufferBinding::ElementType::IMAGE_STORAGE,
     }
-    , compact { GpuComputeConfig {}, //
-        Portal::Graphics::ImageFormat::RGBA32F, //
-        TextureExecutionContext::OutputMode::IMAGE, //
-        1, //
+    , cc_parent_init {
+        GpuComputeConfig {},
+        Portal::Graphics::ImageFormat::RGBA32F,
+        TextureExecutionContext::OutputMode::IMAGE,
+        1,
         std::vector<GpuBufferBinding> {
-            { .set = 0, .binding = 0, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
-            { .set = 0, .binding = 2, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
-            { .set = 0, .binding = 4, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
+            { .set = 0, .binding = 2, .direction = GpuBufferBinding::Direction::OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
         },
-        GpuBufferBinding::ElementType::IMAGE_STORAGE, 3 }
+        GpuBufferBinding::ElementType::IMAGE_STORAGE,
+        0,
+    }
+    , cc_union {
+        GpuComputeConfig {},
+        Portal::Graphics::ImageFormat::RGBA32F,
+        TextureExecutionContext::OutputMode::IMAGE,
+        1,
+        std::vector<GpuBufferBinding> {
+            { .set = 0, .binding = 2, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
+            { .set = 0, .binding = 3, .direction = GpuBufferBinding::Direction::OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
+        },
+        GpuBufferBinding::ElementType::IMAGE_STORAGE,
+        0,
+    }
+    , cc_colorize {
+        GpuComputeConfig {},
+        Portal::Graphics::ImageFormat::RGBA32F,
+        TextureExecutionContext::OutputMode::IMAGE,
+        1,
+        std::vector<GpuBufferBinding> {
+            { .set = 0, .binding = 2, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
+        },
+        GpuBufferBinding::ElementType::IMAGE_STORAGE,
+        0,
+    }
 {
     structured.set_output_size(1, sizeof(uint32_t));
     structured.set_output_size(2, static_cast<size_t>(4096) * 4 * sizeof(float));
@@ -367,7 +392,9 @@ VisionResult VisionGpuExecutor::run(
     auto& pixel_ctx = contexts.pixel;
     auto& structured_ctx = contexts.structured;
     auto& label_ctx = contexts.labels;
-    auto& compact_ctx = contexts.compact;
+    auto& cc_parent_init = contexts.cc_parent_init;
+    auto& cc_union = contexts.cc_union;
+    auto& cc_colorize = contexts.cc_colorize;
 
     VisionResult result;
     result.w = w;
@@ -846,190 +873,143 @@ VisionResult VisionGpuExecutor::run(
             continue;
         }
         case VisionOp::ConnectedComponents: {
-            label_ctx.set_output_size(2, sizeof(uint32_t));
-            label_ctx.set_output_dimensions(w, h);
-
-            const CcPC pc { .width = w, .height = h, .write_to_b = 0 };
-            std::shared_ptr<Core::VKImage> img_a;
-
-            std::vector<DependencyStage> stages;
-
-            stages.push_back({
-                .config = { .shader_path = "cc_seed.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(CcPC) },
-                .stage_fn = [&](GpuDispatchCore& ctx) {
-                    label_ctx.stage_image(current);
-                    ctx.set_push_constants(pc);
-                    label_ctx.prepare_output_image(w, h);
-                    img_a = label_ctx.get_output_image(0);
-                },
-                .hazard_fn = nullptr,
-            });
-
-            stages.push_back({
-                .config = { .shader_path = "cc_propagate_tile.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(CcPC) },
-                .stage_fn = [&](GpuDispatchCore& ctx) {
-                    ctx.stage_image_at(0, img_a, GpuBufferBinding::ElementType::IMAGE_STORAGE);
-                    uint32_t zero = 0;
-                    ctx.set_binding_data(2, std::span<const uint32_t>(&zero, 1));
-                    ctx.set_push_constants(pc); },
-                .hazard_fn = [&](GpuDispatchCore&) -> std::vector<Portal::Graphics::HazardResource> {
-                    return { {
-                        .binding = { .set = 0, .binding = 0, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::IMAGE_STORAGE },
-                        .image = img_a->get_image(),
-                        .buffer = nullptr,
-                    } };
-                },
-            });
-
-            auto cc_input = current;
-            ExecutionContext seed_tile_ctx;
-            seed_tile_ctx.mode = ExecutionMode::DEPENDENCY;
-            seed_tile_ctx.execution_metadata["dependency_stages"] = stages;
-            label_ctx.execute(Datum<> {}, seed_tile_ctx);
-
-            constexpr uint32_t k_max_merge_rounds = 64;
             label_ctx.swap_shader({
-                .shader_path = "cc_merge_borders.comp.spv",
+                .shader_path = "cc_seed.comp.spv",
                 .workgroup_size = k_wg2d,
-                .push_constant_size = sizeof(CcPC),
+                .push_constant_size = sizeof(uint32_t) * 2,
             });
-            label_ctx.stage_image_at(0, img_a, GpuBufferBinding::ElementType::IMAGE_STORAGE);
-            label_ctx.slot_binding(0).direction = GpuBufferBinding::Direction::INPUT_OUTPUT;
-            {
-                uint32_t zero = 0;
-                label_ctx.set_binding_data(2, std::span<const uint32_t>(&zero, 1));
-                ExecutionContext chained_ctx;
-                chained_ctx.mode = ExecutionMode::CHAINED;
-                chained_ctx.execution_metadata["pass_count"] = k_max_merge_rounds;
-                chained_ctx.execution_metadata["passes_per_batch"] = k_max_merge_rounds;
-                chained_ctx.execution_metadata["pc_updater"] = std::function<void(uint32_t, void*)>(
-                    [pc](uint32_t, void* dst) { std::memcpy(dst, &pc, sizeof(CcPC)); });
-                label_ctx.execute(Datum<> {}, chained_ctx);
+
+            struct SeedPC {
+                uint32_t width;
+                uint32_t height;
+            };
+            const SeedPC pc { .width = w, .height = h };
+
+            if (!current) {
+                continue;
             }
-            label_ctx.slot_binding(0).direction = GpuBufferBinding::Direction::OUTPUT;
 
-            std::vector<DependencyStage> colorize_stages;
-            std::shared_ptr<Core::VKImage> colorized;
-            colorize_stages.push_back({
-                .config = { .shader_path = "cc_colorize.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(CcPC) },
-                .stage_fn = [&](GpuDispatchCore& ctx) {
-                    label_ctx.stage_image(img_a);
-                    ctx.set_push_constants(pc);
-                    label_ctx.prepare_output_image(w, h);
-                    colorized = label_ctx.get_output_image(0);
-                },
-                .hazard_fn = nullptr,
-            });
-            ExecutionContext colorize_ctx;
-            colorize_ctx.mode = ExecutionMode::DEPENDENCY;
-            colorize_ctx.execution_metadata["dependency_stages"] = colorize_stages;
-            label_ctx.execute(Datum<> {}, colorize_ctx);
-
-            label_ctx.clear_output_dimensions();
+            label_ctx.stage_image(current);
             label_ctx.set_output_dimensions(w, h);
+            label_ctx.set_push_constants(pc);
+            label_ctx.prepare_output_image(w, h);
 
-            constexpr uint32_t k_min_pixel_count = 1;
-
-            compact_ctx.clear_output_dimensions();
-            compact_ctx.set_output_dimensions(w, h);
-
-            compact_ctx.ensure_shared_buffer("cc_compact_lookup", static_cast<size_t>(w) * h * sizeof(uint32_t));
-            compact_ctx.ensure_shared_buffer("cc_compact_boxes", static_cast<size_t>(k_max_components) * 5 * sizeof(uint32_t));
-            compact_ctx.ensure_shared_buffer("cc_compact_count", sizeof(uint32_t));
-
-            std::vector<DependencyStage> compact_stages;
-            std::shared_ptr<Core::VKImage> compact_labels;
-
-            compact_stages.push_back({
-                .config = { .shader_path = "cc_compact_clear.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(ClearPC) },
-                .stage_fn = [&](GpuDispatchCore& ctx) {
-        ctx.bind_shared_buffer(2, "cc_compact_lookup");
-        ctx.bind_shared_buffer(3, "cc_compact_count");
-        ctx.bind_shared_buffer(4, "cc_compact_boxes");
-        compact_ctx.stage_image_at(1, img_a, GpuBufferBinding::ElementType::IMAGE_STORAGE);
-        ctx.set_push_constants(ClearPC { .width = w, .height = h, .max_components = k_max_components }); },
-                .hazard_fn = [](GpuDispatchCore& ctx) -> std::vector<Portal::Graphics::HazardResource> {
-                    return {
-                        ctx.shared_buffer_hazard("cc_compact_lookup",
-                            { .set = 0, .binding = 0, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 }),
-                        ctx.shared_buffer_hazard("cc_compact_count",
-                            { .set = 0, .binding = 2, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 }),
-                        ctx.shared_buffer_hazard("cc_compact_boxes",
-                            { .set = 0, .binding = 4, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 }),
-                    };
-                },
-            });
-
-            compact_stages.push_back({
-                .config = { .shader_path = "cc_compact_tally.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(TallyPC) },
-                .stage_fn = [&](GpuDispatchCore& ctx) {
-        ctx.bind_shared_buffer(2, "cc_compact_lookup");
-        compact_ctx.stage_image_at(1, img_a, GpuBufferBinding::ElementType::IMAGE_STORAGE);
-        ctx.set_push_constants(TallyPC { .width = w, .height = h }); },
-                .hazard_fn = [](GpuDispatchCore& ctx) -> std::vector<Portal::Graphics::HazardResource> {
-                    return {
-                        ctx.shared_buffer_hazard("cc_compact_lookup",
-                            { .set = 0, .binding = 0, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 }),
-                    };
-                },
-            });
-
-            compact_stages.push_back({
-                .config = { .shader_path = "cc_compact_relabel.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(RelabelPC) },
-                .stage_fn = [&](GpuDispatchCore& ctx) {
-                    ctx.bind_shared_buffer(2, "cc_compact_lookup");
-                    ctx.bind_shared_buffer(3, "cc_compact_count");
-                    ctx.bind_shared_buffer(4, "cc_compact_boxes");
-                    compact_ctx.stage_image_at(1, img_a, GpuBufferBinding::ElementType::IMAGE_STORAGE);
-                    ctx.set_push_constants(RelabelPC {
-                        .width = w,
-                        .height = h,
-                        .min_pixel_count = k_min_pixel_count,
-                        .max_components = k_max_components });
-                    compact_ctx.prepare_output_image(w, h);
-                    compact_labels = compact_ctx.get_output_image(3);
-                },
-                .hazard_fn = nullptr,
-            });
-
-            ExecutionContext compact_exec_ctx;
-            compact_exec_ctx.mode = ExecutionMode::DEPENDENCY;
-            compact_exec_ctx.execution_metadata["dependency_stages"] = compact_stages;
-            compact_ctx.execute(Datum<> {}, compact_exec_ctx);
-
-            uint32_t cc_count_readback = 0;
-            compact_ctx.download_shared("cc_compact_count", &cc_count_readback, sizeof(uint32_t));
-
-            std::vector<uint32_t> boxes_readback(static_cast<size_t>(k_max_components) * 5, 0);
-            compact_ctx.download_shared("cc_compact_boxes", boxes_readback.data(), boxes_readback.size() * sizeof(uint32_t));
-
-            Kinesis::Vision::ComponentResult cc_out;
-            for (size_t i = 0; i < boxes_readback.size(); i += 5) {
-                if (boxes_readback[i + 4] == 0)
+            const auto seed_input = current;
+            {
+                const auto fence = label_ctx.dispatch_async({});
+                if (fence == Portal::Graphics::INVALID_FENCE) {
                     continue;
-                const float inv_w = 1.0F / static_cast<float>(w);
-                const float inv_h = 1.0F / static_cast<float>(h);
-                const auto x_min = boxes_readback[i + 0];
-                const auto y_min = boxes_readback[i + 1];
-                const auto x_max = boxes_readback[i + 2];
-                const auto y_max = boxes_readback[i + 3];
-                cc_out.boxes.push_back({
-                    .x = static_cast<float>(x_min) * inv_w,
-                    .y = static_cast<float>(y_min) * inv_h,
-                    .w = static_cast<float>(x_max - x_min + 1) * inv_w,
-                    .h = static_cast<float>(y_max - y_min + 1) * inv_h,
-                    .confidence = 1.0F,
-                    .label_id = static_cast<uint32_t>(i / 5) + 1,
-                });
+                }
+                foundry.wait_for_fence(fence);
+                foundry.release_fence(fence);
             }
-            cc_out.count = static_cast<uint32_t>(cc_out.boxes.size());
-            cc_out.truncated = cc_out.count >= k_max_components;
+            auto seed_output = label_ctx.get_output_image(0);
+            if (!seed_output) {
+                continue;
+            }
 
-            result.structured = std::move(cc_out);
-            result.debug_labels = colorized;
-            current = compact_labels;
+            cc_parent_init.swap_shader({
+                .shader_path = "cc_parent_init.comp.spv",
+                .workgroup_size = k_wg2d,
+                .push_constant_size = sizeof(uint32_t) * 2,
+            });
+            cc_parent_init.set_output_size(2, static_cast<size_t>(w) * h * sizeof(uint32_t));
+            cc_parent_init.stage_image(seed_input);
+            cc_parent_init.set_output_dimensions(w, h);
+            cc_parent_init.set_push_constants(pc);
+            cc_parent_init.prepare_output_image(w, h);
+
+            std::vector<uint32_t> parent_data(static_cast<size_t>(w) * h);
+            bool parent_read_ok = false;
+            {
+                const auto fence = cc_parent_init.dispatch_async({});
+                if (fence != Portal::Graphics::INVALID_FENCE) {
+                    foundry.wait_for_fence(fence);
+                    foundry.release_fence(fence);
+
+                    const auto gpu_result = cc_parent_init.collect_result();
+                    if (auto it = gpu_result.aux.find(2); it != gpu_result.aux.end() && it->second.size() >= parent_data.size() * sizeof(uint32_t)) {
+                        std::memcpy(parent_data.data(), it->second.data(), parent_data.size() * sizeof(uint32_t));
+                        parent_read_ok = true;
+                    }
+                }
+            }
+
+            std::shared_ptr<Core::VKImage> colorized;
+
+            if (parent_read_ok) {
+                cc_union.swap_shader({
+                    .shader_path = "cc_union.comp.spv",
+                    .workgroup_size = k_wg2d,
+                    .push_constant_size = sizeof(uint32_t) * 2,
+                });
+                cc_union.set_output_size(2, static_cast<size_t>(w) * h * sizeof(uint32_t));
+                cc_union.set_output_size(3, sizeof(uint32_t));
+
+                constexpr uint32_t k_max_union_passes = 32;
+
+                for (uint32_t pass = 0; pass < k_max_union_passes; ++pass) {
+                    const uint32_t zero = 0;
+                    cc_union.set_binding_data(2, std::span<const uint32_t>(parent_data.data(), parent_data.size()));
+                    cc_union.set_binding_data(3, std::span<const uint32_t>(&zero, 1));
+
+                    cc_union.stage_image(seed_input);
+                    cc_union.set_output_dimensions(w, h);
+                    cc_union.set_push_constants(pc);
+                    cc_union.prepare_output_image(w, h);
+
+                    const auto fence = cc_union.dispatch_async({});
+                    if (fence == Portal::Graphics::INVALID_FENCE) {
+                        break;
+                    }
+                    foundry.wait_for_fence(fence);
+                    foundry.release_fence(fence);
+
+                    const auto gpu_result = cc_union.collect_result();
+
+                    auto parent_it = gpu_result.aux.find(2);
+                    if (parent_it == gpu_result.aux.end() || parent_it->second.size() < parent_data.size() * sizeof(uint32_t)) {
+                        break;
+                    }
+                    std::memcpy(parent_data.data(), parent_it->second.data(), parent_data.size() * sizeof(uint32_t));
+
+                    uint32_t changed_flag = 0;
+                    auto changed_it = gpu_result.aux.find(3);
+                    if (changed_it == gpu_result.aux.end() || changed_it->second.size() < sizeof(uint32_t)) {
+                        break;
+                    }
+                    std::memcpy(&changed_flag, changed_it->second.data(), sizeof(uint32_t));
+
+                    if (changed_flag == 0) {
+                        break;
+                    }
+                }
+
+                cc_colorize.swap_shader({
+                    .shader_path = "cc_colorize.comp.spv",
+                    .workgroup_size = k_wg2d,
+                    .push_constant_size = sizeof(uint32_t) * 2,
+                });
+                cc_colorize.set_output_size(2, static_cast<size_t>(w) * h * sizeof(uint32_t));
+                cc_colorize.set_binding_data(2, std::span<const uint32_t>(parent_data.data(), parent_data.size()));
+                cc_colorize.stage_image(seed_input);
+                cc_colorize.set_output_dimensions(w, h);
+                cc_colorize.set_push_constants(pc);
+                cc_colorize.prepare_output_image(w, h);
+
+                const auto fence = cc_colorize.dispatch_async({});
+                if (fence != Portal::Graphics::INVALID_FENCE) {
+                    foundry.wait_for_fence(fence);
+                    foundry.release_fence(fence);
+                    colorized = cc_colorize.get_output_image(0);
+                }
+            }
+
+            result.debug_labels = colorized ? colorized : seed_output;
+            current = seed_output;
             last_staged = current;
-            completed_ops[Kinesis::Vision::hash_vision_step(step.op, step.params)] = { .output = current, .input = cc_input };
+            completed_ops[Kinesis::Vision::hash_vision_step(step.op, step.params)] = { .output = current, .input = seed_input };
+            result.structured = std::monostate {};
             continue;
         }
         default:

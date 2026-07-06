@@ -1,0 +1,37 @@
+#version 450
+#include "include/vision_common.glsl"
+#include "include/vision_cc.glsl"
+
+layout(local_size_x = 8, local_size_y = 8) in;
+
+layout(set = 0, binding = 0, rgba32f) uniform writeonly image2D out_image;
+layout(set = 0, binding = 1, rgba32f) uniform readonly image2D in_image;
+
+layout(set = 0, binding = 2, std430) buffer ParentBuf {
+    uint parent[];
+};
+
+layout(push_constant) uniform PushConstants {
+    uint width;
+    uint height;
+} pc;
+
+/**
+ * @brief Initializes the union-find parent buffer from the mask.
+ *        Each foreground pixel becomes its own root: parent[idx] = idx.
+ *        Background pixels are marked CC_BACKGROUND. No union or path
+ *        compression occurs in this stage. out_image is unused scratch
+ *        required by IMAGE mode's binding contract.
+ */
+void main()
+{
+    const ivec2 coord = thread_coord();
+    if (coord.x >= int(pc.width) || coord.y >= int(pc.height))
+        return;
+
+    const uint idx = cc_flat_index(uvec2(coord), pc.width);
+    const float mask_value = imageLoad(in_image, coord).r;
+
+    parent[idx] = (mask_value >= 0.5) ? idx : CC_BACKGROUND;
+    imageStore(out_image, coord, vec4(0.0));
+}

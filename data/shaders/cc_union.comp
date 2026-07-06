@@ -1,0 +1,95 @@
+#version 450
+#extension GL_KHR_shader_subgroup_basic : enable
+#extension GL_KHR_shader_subgroup_arithmetic : enable
+#include "include/vision_common.glsl"
+#include "include/vision_cc.glsl"
+#include "include/vision_relax.glsl"
+
+layout(local_size_x = 8, local_size_y = 8) in;
+
+layout(set = 0, binding = 1, rgba32f) uniform readonly image2D in_image;
+
+layout(set = 0, binding = 2, std430) buffer ParentBuf {
+    uint parent[];
+};
+
+layout(set = 0, binding = 3, std430) buffer ChangedBuf {
+    uint changed[1];
+};
+
+layout(push_constant) uniform PushConstants {
+    uint width;
+    uint height;
+} pc;
+
+/**
+ * @brief Finds the root of x with path halving.
+ */
+uint find_root(uint x)
+{
+    uint p = parent[x];
+    while (p != x) {
+        uint gp = parent[p];
+        atomicCompSwap(parent[x], p, gp);
+        x = p;
+        p = parent[x];
+    }
+    return x;
+}
+
+/**
+ * @brief Unions the sets containing a and b, smaller root wins. Reports
+ *        via did_change when a link was actually made.
+ */
+bool union_sets(uint a, uint b)
+{
+    uint ra = find_root(a);
+    uint rb = find_root(b);
+    bool made_link = false;
+    while (ra != rb) {
+        uint hi = max(ra, rb);
+        uint lo = min(ra, rb);
+        uint prev = atomicCompSwap(parent[hi], hi, lo);
+        if (prev == hi) {
+            made_link = true;
+            break;
+        }
+        ra = find_root(hi);
+        rb = find_root(lo);
+    }
+    return made_link;
+}
+
+/**
+ * @brief One union pass over left and top neighbors, reporting whether
+ *        any invocation in this dispatch made a new link.
+ */
+void main()
+{
+    const ivec2 coord = thread_coord();
+    if (coord.x >= int(pc.width) || coord.y >= int(pc.height))
+        return;
+
+    const uint idx = cc_flat_index(uvec2(coord), pc.width);
+    if (parent[idx] == CC_BACKGROUND)
+        return;
+
+    bool did_change = false;
+
+    if (coord.x > 0) {
+        const uint left_idx = cc_flat_index(uvec2(coord.x - 1, coord.y), pc.width);
+        if (parent[left_idx] != CC_BACKGROUND) {
+            if (union_sets(idx, left_idx))
+                did_change = true;
+        }
+    }
+    if (coord.y > 0) {
+        const uint top_idx = cc_flat_index(uvec2(coord.x, coord.y - 1), pc.width);
+        if (parent[top_idx] != CC_BACKGROUND) {
+            if (union_sets(idx, top_idx))
+                did_change = true;
+        }
+    }
+
+    REPORT_CHANGED(did_change, changed);
+}
