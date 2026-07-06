@@ -113,6 +113,11 @@ struct TrackKeypointsParams {
     float error_threshold = 0.3F;
 };
 
+struct ConnectedComponentsParams {
+    bool export_labels { false };
+    bool with_colors { false };
+};
+
 struct FindContoursParams {
     float min_area { 0.0F };
     uint32_t max_contours { 0 };
@@ -137,6 +142,7 @@ using VisionParams = std::variant<
     HarrisParams,
     ExtractPeaksParams,
     TrackKeypointsParams,
+    ConnectedComponentsParams,
     FindContoursParams>;
 
 /**
@@ -283,9 +289,10 @@ struct VisionSequence {
                 ExtractPeaksParams { .threshold = threshold, .nms_radius = nms_radius });
         }
 
-        Builder& connected_components()
+        Builder& connected_components(bool export_labels = false, bool with_colors = false)
         {
-            return push(VisionOp::ConnectedComponents);
+            return push(VisionOp::ConnectedComponents,
+                ConnectedComponentsParams { .export_labels = export_labels, .with_colors = with_colors });
         }
 
         Builder& track_keypoints(

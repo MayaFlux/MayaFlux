@@ -852,6 +852,7 @@ VisionResult VisionGpuExecutor::run(
             continue;
         }
         case VisionOp::ConnectedComponents: {
+            const auto& p = std::get<Kinesis::Vision::ConnectedComponentsParams>(step.params);
 
             const CCSeedPC seed_pc { .width = w, .height = h };
 
@@ -985,17 +986,19 @@ VisionResult VisionGpuExecutor::run(
                 },
             });
 
-            finish_stages.push_back({
-                .config = { .shader_path = "cc_colorize.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(CCSeedPC) },
-                .stage_fn = [&](GpuDispatchCore& ctx) {
-                    ctx.bind_shared_buffer(2, "cc_parent");
-                    cc_pipeline.stage_image_at(1, seed_input, GpuBufferBinding::ElementType::IMAGE_STORAGE);
-                    ctx.set_push_constants(seed_pc);
-                    cc_pipeline.prepare_output_image(w, h);
-                    colorized = cc_pipeline.get_output_image(0);
-                },
-                .hazard_fn = nullptr,
-            });
+            if (p.with_colors) {
+                finish_stages.push_back({
+                    .config = { .shader_path = "cc_colorize.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(CCSeedPC) },
+                    .stage_fn = [&](GpuDispatchCore& ctx) {
+                        ctx.bind_shared_buffer(2, "cc_parent");
+                        cc_pipeline.stage_image_at(1, seed_input, GpuBufferBinding::ElementType::IMAGE_STORAGE);
+                        ctx.set_push_constants(seed_pc);
+                        cc_pipeline.prepare_output_image(w, h);
+                        colorized = cc_pipeline.get_output_image(0);
+                    },
+                    .hazard_fn = nullptr,
+                });
+            }
 
             ExecutionContext finish_ctx;
             finish_ctx.mode = ExecutionMode::DEPENDENCY;
@@ -1008,9 +1011,6 @@ VisionResult VisionGpuExecutor::run(
             cc_pipeline.download_shared("cc_compact_count", &compact_count, sizeof(uint32_t));
             compact_count = std::min(compact_count, k_max_components);
 
-            std::vector<uint32_t> dense_label(static_cast<size_t>(w) * h);
-            cc_pipeline.download_shared("cc_dense_label", dense_label.data(), dense_label.size() * sizeof(uint32_t));
-
             std::vector<glm::uvec2> bmin(k_max_components);
             std::vector<glm::uvec2> bmax(k_max_components);
             std::vector<uint32_t> bcount(k_max_components);
@@ -1022,9 +1022,13 @@ VisionResult VisionGpuExecutor::run(
             const float inv_h = 1.0F / static_cast<float>(h);
 
             Kinesis::Vision::ComponentResult cc_result;
-            cc_result.label_map = std::move(dense_label);
             cc_result.count = compact_count;
             cc_result.boxes.reserve(compact_count);
+
+            if (p.export_labels) {
+                cc_result.label_map.resize(static_cast<size_t>(w) * h);
+                cc_pipeline.download_shared("cc_dense_label", cc_result.label_map.data(), cc_result.label_map.size() * sizeof(uint32_t));
+            }
 
             for (uint32_t i = 0; i < compact_count; ++i) {
                 if (bcount[i] == 0)
