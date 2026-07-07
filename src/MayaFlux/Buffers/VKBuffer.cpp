@@ -219,37 +219,14 @@ void VKBuffer::set_modality(Kakshya::DataModality modality)
 
 vk::BufferUsageFlags VKBuffer::get_usage_flags() const
 {
-    vk::BufferUsageFlags flags = vk::BufferUsageFlagBits::eTransferSrc | vk::BufferUsageFlagBits::eTransferDst;
-
-    switch (m_usage) {
-    case Usage::STAGING:
-        break;
-    case Usage::DEVICE:
-    case Usage::COMPUTE:
-        flags |= vk::BufferUsageFlagBits::eStorageBuffer;
-        break;
-    case Usage::VERTEX:
-        flags |= vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer;
-        break;
-    case Usage::INDEX:
-        flags |= vk::BufferUsageFlagBits::eIndexBuffer;
-        break;
-    case Usage::UNIFORM:
-        flags |= vk::BufferUsageFlagBits::eUniformBuffer;
-        break;
-    case Usage::UNIFORM_BDA:
-        flags |= vk::BufferUsageFlagBits::eUniformBuffer
-            | vk::BufferUsageFlagBits::eShaderDeviceAddress;
-        break;
-    case Usage::STORAGE_BDA:
-        flags |= vk::BufferUsageFlagBits::eStorageBuffer
-            | vk::BufferUsageFlagBits::eShaderDeviceAddress;
-        break;
-    case Usage::HOST_STORAGE:
-        flags |= vk::BufferUsageFlagBits::eStorageBuffer;
+    if (m_usage == Usage::INDIRECT) {
+        auto default_flag = vk::BufferUsageFlagBits::eTransferSrc | vk::BufferUsageFlagBits::eTransferDst;
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferManagement,
+            "Indirect buffer usage is not supported in VKBuffer. Force returning default {} flag.", vk::to_string(default_flag));
+        return default_flag;
     }
 
-    return flags;
+    return Portal::Graphics::to_buffer_usage_flags(static_cast<Portal::Graphics::BufferUsageHint>(m_usage));
 }
 
 vk::MemoryPropertyFlags VKBuffer::get_memory_properties() const

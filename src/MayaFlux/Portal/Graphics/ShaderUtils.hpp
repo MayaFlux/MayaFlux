@@ -13,6 +13,69 @@ struct VertexAttribute;
 
 namespace MayaFlux::Portal::Graphics {
 
+/**
+ * @enum BufferUsageHint
+ * @brief Semantic usage hint for buffer allocation and memory properties
+ *
+ * This enum describes the intended usage pattern of a buffer, which informs
+ * the graphics backend how to allocate memory and set Vulkan usage flags.
+ * It is not a direct mapping to Vulkan flags, but rather a higher-level
+ * abstraction for common use cases.
+ */
+enum class BufferUsageHint : uint8_t {
+    STAGING, ///< Host-visible staging buffer (CPU-writable, eTransferSrc|Dst)
+    DEVICE, ///< Device-local GPU-only buffer
+    COMPUTE, ///< Storage buffer for compute shaders (device-local)
+    VERTEX, ///< Vertex buffer
+    INDEX, ///< Index buffer
+    UNIFORM, ///< Uniform buffer (host-visible)
+    UNIFORM_BDA, ///< Uniform buffer with device address query support
+    STORAGE_BDA, ///< Storage buffer with device address query support
+    INDIRECT, ///< Indirect draw/dispatch buffer (device-local)
+    HOST_STORAGE, ///< Host-visible storage buffer (eStorageBuffer + eHostVisible|eHostCoherent)
+};
+
+/**
+ * @brief Resolve the extra vk::BufferUsageFlags a BufferUsageHint requires,
+ *        on top of whatever base usage the caller already applies.
+ */
+[[nodiscard]] inline vk::BufferUsageFlags to_buffer_usage_flags(BufferUsageHint hint)
+{
+    vk::BufferUsageFlags flags = vk::BufferUsageFlagBits::eTransferSrc | vk::BufferUsageFlagBits::eTransferDst;
+
+    switch (hint) {
+    case BufferUsageHint::INDIRECT:
+        return vk::BufferUsageFlagBits::eIndirectBuffer;
+    case BufferUsageHint::STAGING:
+        break;
+    case BufferUsageHint::DEVICE:
+    case BufferUsageHint::COMPUTE:
+        flags |= vk::BufferUsageFlagBits::eStorageBuffer;
+        break;
+    case BufferUsageHint::VERTEX:
+        flags |= vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer;
+        break;
+    case BufferUsageHint::INDEX:
+        flags |= vk::BufferUsageFlagBits::eIndexBuffer;
+        break;
+    case BufferUsageHint::UNIFORM:
+        flags |= vk::BufferUsageFlagBits::eUniformBuffer;
+        break;
+    case BufferUsageHint::UNIFORM_BDA:
+        flags |= vk::BufferUsageFlagBits::eUniformBuffer
+            | vk::BufferUsageFlagBits::eShaderDeviceAddress;
+        break;
+    case BufferUsageHint::STORAGE_BDA:
+        flags |= vk::BufferUsageFlagBits::eStorageBuffer
+            | vk::BufferUsageFlagBits::eShaderDeviceAddress;
+        break;
+    case BufferUsageHint::HOST_STORAGE:
+        flags |= vk::BufferUsageFlagBits::eStorageBuffer;
+    }
+
+    return flags;
+}
+
 using ShaderID = uint64_t;
 using DescriptorSetID = uint64_t;
 using CommandBufferID = uint64_t;
