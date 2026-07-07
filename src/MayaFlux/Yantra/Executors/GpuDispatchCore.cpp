@@ -304,6 +304,47 @@ GpuChannelResult GpuDispatchCore::dispatch_core_chained(
     return result;
 }
 
+GpuChannelResult GpuDispatchCore::dispatch_core_chained_indirect(
+    const std::vector<std::vector<double>>& channels,
+    const DataStructureInfo& structure_info,
+    const ExecutionContext& ctx)
+{
+    on_before_gpu_dispatch(channels, structure_info);
+    prepare_gpu_inputs(channels, structure_info);
+
+    bind_all_descriptors();
+
+    const size_t effective = m_staging_floats.empty()
+        ? largest_binding_data_element_count()
+        : m_staging_floats.size();
+    const auto groups = calculate_dispatch_size(effective, structure_info);
+
+    if (!ctx.execution_metadata.contains("pass_count")
+        || !ctx.execution_metadata.contains("pc_updater")
+        || !ctx.execution_metadata.contains("indirect_dispatch_binding")) {
+        error<std::runtime_error>(Journal::Component::Yantra,
+            Journal::Context::Runtime,
+            std::source_location::current(),
+            "GpuDispatchCore: dispatch_core_chained_indirect requires 'pass_count', 'pc_updater', and 'indirect_dispatch_binding' in execution_metadata");
+    }
+
+    const auto pass_count = safe_any_cast_or_throw<uint32_t>(ctx.execution_metadata.at("pass_count"));
+    const auto& pc_updater = safe_any_cast_or_throw<std::function<void(uint32_t, void*)>>(ctx.execution_metadata.at("pc_updater"));
+    const auto indirect_binding = safe_any_cast_or_throw<uint32_t>(ctx.execution_metadata.at("indirect_dispatch_binding"));
+
+    m_resources.dispatch_batched_indirect(
+        dispatch_key(),
+        pass_count, indirect_binding, groups, m_bindings,
+        [&](uint32_t pass, std::vector<uint8_t>& pc_data) { pc_updater(pass, pc_data.data()); },
+        m_gpu_config.push_constant_size,
+        ctx.execution_metadata);
+
+    GpuChannelResult result;
+    result.primary = readback_primary(effective);
+    readback_aux(result);
+    return result;
+}
+
 Portal::Graphics::FenceID GpuDispatchCore::dispatch_core_async(
     const std::vector<std::vector<double>>& channels,
     const DataStructureInfo& structure_info)

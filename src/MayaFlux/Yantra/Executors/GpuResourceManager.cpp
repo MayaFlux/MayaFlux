@@ -588,6 +588,91 @@ void GpuResourceManager::dispatch_batched(const std::string& key,
     }
 }
 
+void GpuResourceManager::dispatch_batched_indirect(const std::string& key,
+    uint32_t pass_count,
+    uint32_t indirect_binding,
+    const std::array<uint32_t, 3>& groups,
+    const std::vector<GpuBufferBinding>& bindings,
+    const std::function<void(uint32_t pass, std::vector<uint8_t>&)>& push_constant_updater,
+    size_t push_constant_size,
+    const std::unordered_map<std::string, std::any>& execution_metadata)
+{
+    auto& unit = unit_for(key);
+    auto& foundry = Portal::Graphics::get_shader_foundry();
+    auto& compute_press = Portal::Graphics::get_compute_press();
+
+    const uint32_t workgroups_per_pass = groups[0] * groups[1] * groups[2];
+
+    const uint32_t default_passes = std::max(1U, 65536U / std::max(1U, workgroups_per_pass));
+    const uint32_t passes_per_batch = [&] {
+        auto it = execution_metadata.find("passes_per_batch");
+        if (it != execution_metadata.end())
+            return safe_any_cast_or_default<uint32_t>(it->second, default_passes);
+        return default_passes;
+    }();
+
+    for (uint32_t base = 0; base < pass_count; base += passes_per_batch) {
+        const uint32_t batch_end = std::min(base + passes_per_batch, pass_count);
+
+        auto cmd_id = foundry.begin_commands(
+            Portal::Graphics::ShaderFoundry::CommandBufferType::COMPUTE);
+
+        for (uint32_t pass = base; pass < batch_end; ++pass) {
+            std::vector<uint8_t> pc_data(push_constant_size);
+            push_constant_updater(pass, pc_data);
+
+            compute_press.bind_all(
+                cmd_id, unit.pipeline_id, unit.descriptor_set_ids,
+                pc_data.data(), push_constant_size);
+
+            compute_press.dispatch_indirect(cmd_id, unit.impl->buffers[indirect_binding].buffer);
+
+            for (const auto& b : bindings) {
+                if (b.direction != GpuBufferBinding::Direction::INPUT_OUTPUT)
+                    continue;
+
+                const bool is_image = b.element_type == GpuBufferBinding::ElementType::IMAGE_STORAGE
+                    || b.element_type == GpuBufferBinding::ElementType::IMAGE_SAMPLED;
+
+                if (is_image) {
+                    foundry.image_barrier(
+                        cmd_id,
+                        unit.image_slots[b.binding]->get_image(),
+                        vk::ImageLayout::eGeneral,
+                        vk::ImageLayout::eGeneral,
+                        vk::AccessFlagBits::eShaderWrite | vk::AccessFlagBits::eShaderRead,
+                        vk::AccessFlagBits::eShaderWrite | vk::AccessFlagBits::eShaderRead,
+                        vk::PipelineStageFlagBits::eComputeShader,
+                        vk::PipelineStageFlagBits::eComputeShader);
+                } else {
+                    foundry.buffer_barrier(
+                        cmd_id,
+                        unit.impl->buffers[b.binding].buffer,
+                        vk::AccessFlagBits::eShaderWrite | vk::AccessFlagBits::eShaderRead,
+                        vk::AccessFlagBits::eShaderWrite | vk::AccessFlagBits::eShaderRead,
+                        vk::PipelineStageFlagBits::eComputeShader,
+                        vk::PipelineStageFlagBits::eComputeShader);
+                }
+            }
+        }
+
+        for (const auto& b : bindings) {
+            if (b.direction == GpuBufferBinding::Direction::OUTPUT
+                || b.direction == GpuBufferBinding::Direction::INPUT_OUTPUT) {
+                foundry.buffer_barrier(
+                    cmd_id,
+                    unit.impl->buffers[b.binding].buffer,
+                    vk::AccessFlagBits::eShaderWrite,
+                    vk::AccessFlagBits::eHostRead,
+                    vk::PipelineStageFlagBits::eComputeShader,
+                    vk::PipelineStageFlagBits::eHost);
+            }
+        }
+
+        foundry.submit_and_wait(cmd_id);
+    }
+}
+
 Portal::Graphics::FenceID GpuResourceManager::dispatch_async(const std::string& key,
     const std::array<uint32_t, 3>& groups,
     const std::vector<GpuBufferBinding>& bindings,

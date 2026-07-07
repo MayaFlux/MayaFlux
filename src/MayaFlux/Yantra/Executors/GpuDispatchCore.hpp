@@ -323,6 +323,24 @@ protected:
         const ExecutionContext& ctx);
 
     /**
+     * @brief Multi-pass dispatch where a GPU-resident indirect buffer gates
+     *        each pass's workgroup count instead of a fixed pass_count.
+     *
+     * Calls dispatch_batched_indirect on GpuResourceManager and reads back
+     * once after all passes.
+     *
+     * @param channels       Extracted double channels.
+     * @param structure_info Dimension/modality metadata.
+     * @param ctx            ExecutionContext carrying pass_count, pc_updater,
+     *                        and indirect_dispatch_binding.
+     * @return GpuChannelResult containing primary float readback and aux buffers.
+     */
+    GpuChannelResult dispatch_core_chained_indirect(
+        const std::vector<std::vector<double>>& channels,
+        const DataStructureInfo& structure_info,
+        const ExecutionContext& ctx);
+
+    /**
      * @brief Non-blocking variant of dispatch_core.
      *
      * Performs the full setup (on_before_gpu_dispatch, prepare_gpu_inputs,

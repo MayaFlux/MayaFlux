@@ -82,9 +82,18 @@ public:
 
         auto [ch_copies, structure_info] = extract_inputs(input);
 
-        const GpuChannelResult raw = (ctx.mode == ExecutionMode::CHAINED)
-            ? dispatch_core_chained(ch_copies, structure_info, ctx)
-            : dispatch_core(ch_copies, structure_info);
+        GpuChannelResult raw;
+        switch (ctx.mode) {
+        case ExecutionMode::CHAINED:
+            raw = dispatch_core_chained(ch_copies, structure_info, ctx);
+            break;
+        case ExecutionMode::CHAINED_INDIRECT:
+            raw = dispatch_core_chained_indirect(ch_copies, structure_info, ctx);
+            break;
+        default:
+            raw = dispatch_core(ch_copies, structure_info);
+            break;
+        }
 
         return collect_gpu_outputs(raw, ch_copies, structure_info);
     }

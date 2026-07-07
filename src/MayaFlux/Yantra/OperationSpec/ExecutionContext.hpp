@@ -27,6 +27,7 @@ enum class ExecutionMode : uint8_t {
     ASYNC, ///< Asynchronous execution
     PARALLEL, ///< Parallel with other operations
     CHAINED, ///< Part of a sequential chain
+    CHAINED_INDIRECT, ///< Chained dispatch where a GPU-written indirect buffer gates each pass's workgroup count.
     DEPENDENCY ///< Part of dependency graph
 };
 

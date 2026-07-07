@@ -261,7 +261,7 @@ public:
      */
     output_type execute(const input_type& input, const ExecutionContext& ctx) override
     {
-        if (ctx.mode != ExecutionMode::CHAINED)
+        if (ctx.mode != ExecutionMode::CHAINED && ctx.mode != ExecutionMode::CHAINED_INDIRECT)
             return Base::execute(input, ctx);
 
         if (!ensure_gpu_ready()) {
@@ -273,7 +273,13 @@ public:
         }
 
         auto [ch_copies, structure_info] = extract_inputs(input);
-        dispatch_core_chained(ch_copies, structure_info, ctx);
+
+        if (ctx.mode == ExecutionMode::CHAINED_INDIRECT) {
+            dispatch_core_chained_indirect(ch_copies, structure_info, ctx);
+        } else {
+            dispatch_core_chained(ch_copies, structure_info, ctx);
+        }
+
         return output_type {};
     }
 
