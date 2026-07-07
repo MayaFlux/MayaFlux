@@ -159,6 +159,18 @@ struct GpuBufferBinding {
     } element_type { ElementType::FLOAT32 };
 };
 
+/**
+ * @brief Byte width of one GpuBufferBinding::ElementType element.
+ *
+ * Bridges to Kakshya::gpu_data_format_bytes for FLOAT32/UINT32/INT32,
+ * the single authoritative sizing source. Returns 0 for PASSTHROUGH,
+ * IMAGE_STORAGE, and IMAGE_SAMPLED, which carry no fixed element width.
+ *
+ * @param et ElementType to size.
+ * @return Byte width, or 0 if unsized.
+ */
+[[nodiscard]] size_t element_type_bytes(GpuBufferBinding::ElementType et) noexcept;
+
 //============================================================================
 // Shader Types
 //============================================================================
