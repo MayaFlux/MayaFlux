@@ -39,7 +39,8 @@ public:
         const GpuComputeConfig& config,
         const std::vector<GpuBufferBinding>& bindings);
 
-    void ensure_buffer(const std::string& key, size_t index, size_t required_bytes);
+    void ensure_buffer(const std::string& key, size_t index, size_t required_bytes,
+        Portal::Graphics::BufferUsageHint usage_hint = Portal::Graphics::BufferUsageHint::COMPUTE_STORAGE);
     void upload(const std::string& key, size_t index, const float* data, size_t byte_size);
     void upload_raw(const std::string& key, size_t index, const uint8_t* data, size_t byte_size);
     void download(const std::string& key, size_t index, float* dest, size_t byte_size);

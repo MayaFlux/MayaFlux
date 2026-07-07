@@ -33,6 +33,7 @@ enum class BufferUsageHint : uint8_t {
     STORAGE_BDA, ///< Storage buffer with device address query support
     INDIRECT, ///< Indirect draw/dispatch buffer (device-local)
     HOST_STORAGE, ///< Host-visible storage buffer (eStorageBuffer + eHostVisible|eHostCoherent)
+    COMPUTE_STORAGE, ///< Bare eStorageBuffer, no transfer flags. GpuResourceManager's host-visible/host-coherent compute buffers.
 };
 
 /**
@@ -41,11 +42,18 @@ enum class BufferUsageHint : uint8_t {
  */
 [[nodiscard]] inline vk::BufferUsageFlags to_buffer_usage_flags(BufferUsageHint hint)
 {
-    vk::BufferUsageFlags flags = vk::BufferUsageFlagBits::eTransferSrc | vk::BufferUsageFlagBits::eTransferDst;
-
     switch (hint) {
     case BufferUsageHint::INDIRECT:
         return vk::BufferUsageFlagBits::eIndirectBuffer;
+    case BufferUsageHint::COMPUTE_STORAGE:
+        return vk::BufferUsageFlagBits::eStorageBuffer;
+    default:
+        break;
+    }
+
+    vk::BufferUsageFlags flags = vk::BufferUsageFlagBits::eTransferSrc | vk::BufferUsageFlagBits::eTransferDst;
+
+    switch (hint) {
     case BufferUsageHint::STAGING:
         break;
     case BufferUsageHint::DEVICE:
@@ -71,6 +79,9 @@ enum class BufferUsageHint : uint8_t {
         break;
     case BufferUsageHint::HOST_STORAGE:
         flags |= vk::BufferUsageFlagBits::eStorageBuffer;
+        break;
+    default:
+        break;
     }
 
     return flags;

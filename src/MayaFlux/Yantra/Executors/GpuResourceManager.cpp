@@ -78,13 +78,14 @@ namespace {
     }
 
     void allocate_slot(vk::Device device, vk::PhysicalDevice phys,
-        VulkanBufferSlot& slot, size_t byte_size)
+        VulkanBufferSlot& slot, size_t byte_size,
+        vk::BufferUsageFlags extra_usage = vk::BufferUsageFlagBits::eStorageBuffer)
     {
         free_slot(device, slot);
 
         vk::BufferCreateInfo bi;
         bi.size = byte_size;
-        bi.usage = vk::BufferUsageFlagBits::eStorageBuffer;
+        bi.usage = extra_usage;
         bi.sharingMode = vk::SharingMode::eExclusive;
         slot.buffer = device.createBuffer(bi);
 
@@ -299,7 +300,8 @@ void GpuResourceManager::cleanup()
 // Buffer operations
 //==============================================================================
 
-void GpuResourceManager::ensure_buffer(const std::string& key, size_t index, size_t required_bytes)
+void GpuResourceManager::ensure_buffer(const std::string& key, size_t index,
+    size_t required_bytes, Portal::Graphics::BufferUsageHint usage_hint)
 {
     auto& unit = unit_for(key);
     auto& vk_slot = unit.impl->buffers[index];
@@ -309,7 +311,7 @@ void GpuResourceManager::ensure_buffer(const std::string& key, size_t index, siz
 
     auto& foundry = Portal::Graphics::get_shader_foundry();
     allocate_slot(foundry.get_device(), foundry.get_physical_device(),
-        vk_slot, required_bytes);
+        vk_slot, required_bytes, Portal::Graphics::to_buffer_usage_flags(usage_hint));
 
     unit.buffer_slots[index].allocated_bytes = required_bytes;
 }
