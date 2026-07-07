@@ -595,8 +595,8 @@ void GpuDispatchCore::bind_all_descriptors()
             || et == GpuBufferBinding::ElementType::IMAGE_SAMPLED)
             continue;
 
-        if (i < m_shared_bindings.size() && !m_shared_bindings[i].empty()) {
-            m_resources.bind_shared_descriptor(dispatch_key(), m_shared_bindings[i], m_bindings[i]);
+        if (i < m_shared_bindings.size() && m_shared_bindings[i]) {
+            m_resources.bind_shared_descriptor(dispatch_key(), i, m_bindings[i]);
             continue;
         }
 

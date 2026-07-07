@@ -46,13 +46,15 @@ public:
     void download(const std::string& key, size_t index, float* dest, size_t byte_size);
     void bind_descriptor(const std::string& key, size_t index, const GpuBufferBinding& spec);
 
-    void ensure_shared_buffer(const std::string& tag, size_t required_bytes);
-    void bind_shared_descriptor(const std::string& key, const std::string& tag, const GpuBufferBinding& spec);
-    void download_shared(const std::string& tag, void* dest, size_t byte_size);
-    void upload_shared_raw(const std::string& tag, const uint8_t* data, size_t byte_size);
+    void ensure_shared_buffer(size_t binding_index, size_t element_count,
+        GpuBufferBinding::ElementType element_type,
+        Portal::Graphics::BufferUsageHint usage_hint = Portal::Graphics::BufferUsageHint::COMPUTE_STORAGE);
+    void bind_shared_descriptor(const std::string& key, size_t binding_index, const GpuBufferBinding& spec);
+    void download_shared(size_t binding_index, void* dest, size_t byte_size);
+    void upload_shared_raw(size_t binding_index, const uint8_t* data, size_t byte_size);
 
     [[nodiscard]] Portal::Graphics::HazardResource make_shared_buffer_hazard(
-        const std::string& tag, const GpuBufferBinding& spec) const;
+        size_t binding_index, const GpuBufferBinding& spec) const;
 
     /**
      * @brief Bind a storage image descriptor at the given slot index.

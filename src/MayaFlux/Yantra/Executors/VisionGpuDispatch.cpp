@@ -862,14 +862,14 @@ VisionResult VisionGpuExecutor::run(
 
             const auto seed_input = current;
 
-            cc_pipeline.ensure_shared_buffer("cc_parent", static_cast<size_t>(w) * h * sizeof(uint32_t));
-            cc_pipeline.ensure_shared_buffer("cc_changed", sizeof(uint32_t));
-            cc_pipeline.ensure_shared_buffer("cc_label_lut", static_cast<size_t>(w) * h * sizeof(uint32_t));
-            cc_pipeline.ensure_shared_buffer("cc_compact_count", sizeof(uint32_t));
-            cc_pipeline.ensure_shared_buffer("cc_dense_label", static_cast<size_t>(w) * h * sizeof(uint32_t));
-            cc_pipeline.ensure_shared_buffer("cc_bounds_min", static_cast<size_t>(k_max_components) * sizeof(uint32_t) * 2);
-            cc_pipeline.ensure_shared_buffer("cc_bounds_max", static_cast<size_t>(k_max_components) * sizeof(uint32_t) * 2);
-            cc_pipeline.ensure_shared_buffer("cc_bounds_count", static_cast<size_t>(k_max_components) * sizeof(uint32_t));
+            cc_pipeline.ensure_shared_buffer(2, static_cast<size_t>(w) * h, GpuBufferBinding::ElementType::UINT32);
+            cc_pipeline.ensure_shared_buffer(3, 1, GpuBufferBinding::ElementType::UINT32);
+            cc_pipeline.ensure_shared_buffer(4, static_cast<size_t>(w) * h, GpuBufferBinding::ElementType::UINT32);
+            cc_pipeline.ensure_shared_buffer(5, 1, GpuBufferBinding::ElementType::UINT32);
+            cc_pipeline.ensure_shared_buffer(6, static_cast<size_t>(w) * h, GpuBufferBinding::ElementType::UINT32);
+            cc_pipeline.ensure_shared_buffer(7, static_cast<size_t>(k_max_components) * 2, GpuBufferBinding::ElementType::UINT32);
+            cc_pipeline.ensure_shared_buffer(8, static_cast<size_t>(k_max_components) * 2, GpuBufferBinding::ElementType::UINT32);
+            cc_pipeline.ensure_shared_buffer(9, k_max_components, GpuBufferBinding::ElementType::UINT32);
 
             const double diagonal = std::sqrt(static_cast<double>(w) * w + static_cast<double>(h) * h);
             const auto k_union_passes = static_cast<uint32_t>(std::ceil(std::log2(std::max(2.0, diagonal))));
@@ -890,12 +890,11 @@ VisionResult VisionGpuExecutor::run(
             init_stages.push_back({
                 .config = { .shader_path = "cc_parent_init.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(CCSeedPC) },
                 .stage_fn = [&](GpuDispatchCore& ctx) {
-            ctx.bind_shared_buffer(2, "cc_parent");
             cc_pipeline.stage_image_at(1, seed_input, GpuBufferBinding::ElementType::IMAGE_STORAGE);
             ctx.set_push_constants(seed_pc); },
                 .hazard_fn = [&](GpuDispatchCore& ctx) -> std::vector<Portal::Graphics::HazardResource> {
                     return {
-                        ctx.shared_buffer_hazard("cc_parent",
+                        ctx.shared_buffer_hazard(2,
                             { .set = 0, .binding = 2, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 }),
                     };
                 },
@@ -907,13 +906,6 @@ VisionResult VisionGpuExecutor::run(
             cc_pipeline.execute(Datum<> {}, init_ctx);
 
             cc_pipeline.swap_shader({ .shader_path = "cc_union.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(CCUnionChainPC) });
-            cc_pipeline.bind_shared_buffer(2, "cc_parent");
-            cc_pipeline.bind_shared_buffer(3, "cc_changed");
-            cc_pipeline.bind_shared_buffer(4, "cc_label_lut");
-            cc_pipeline.bind_shared_buffer(5, "cc_compact_count");
-            cc_pipeline.bind_shared_buffer(7, "cc_bounds_min");
-            cc_pipeline.bind_shared_buffer(8, "cc_bounds_max");
-            cc_pipeline.bind_shared_buffer(9, "cc_bounds_count");
             cc_pipeline.stage_image_at(1, seed_input, GpuBufferBinding::ElementType::IMAGE_STORAGE);
 
             ExecutionContext union_ctx;
@@ -941,20 +933,13 @@ VisionResult VisionGpuExecutor::run(
             finish_stages.push_back({
                 .config = { .shader_path = "cc_compact_claim.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(CCCompactPC) },
                 .stage_fn = [&](GpuDispatchCore& ctx) {
-            ctx.bind_shared_buffer(2, "cc_parent");
-            ctx.bind_shared_buffer(4, "cc_label_lut");
-            ctx.bind_shared_buffer(5, "cc_compact_count");
-            ctx.bind_shared_buffer(6, "cc_dense_label");
-            ctx.bind_shared_buffer(7, "cc_bounds_min");
-            ctx.bind_shared_buffer(8, "cc_bounds_max");
-            ctx.bind_shared_buffer(9, "cc_bounds_count");
             cc_pipeline.stage_image_at(1, seed_input, GpuBufferBinding::ElementType::IMAGE_STORAGE);
             ctx.set_push_constants(compact_pc); },
                 .hazard_fn = [&](GpuDispatchCore& ctx) -> std::vector<Portal::Graphics::HazardResource> {
                     return {
-                        ctx.shared_buffer_hazard("cc_label_lut",
+                        ctx.shared_buffer_hazard(4,
                             { .set = 0, .binding = 4, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 }),
-                        ctx.shared_buffer_hazard("cc_compact_count",
+                        ctx.shared_buffer_hazard(5,
                             { .set = 0, .binding = 5, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 }),
                     };
                 },
@@ -963,24 +948,17 @@ VisionResult VisionGpuExecutor::run(
             finish_stages.push_back({
                 .config = { .shader_path = "cc_compact_resolve.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(CCCompactPC) },
                 .stage_fn = [&](GpuDispatchCore& ctx) {
-            ctx.bind_shared_buffer(2, "cc_parent");
-            ctx.bind_shared_buffer(4, "cc_label_lut");
-            ctx.bind_shared_buffer(5, "cc_compact_count");
-            ctx.bind_shared_buffer(6, "cc_dense_label");
-            ctx.bind_shared_buffer(7, "cc_bounds_min");
-            ctx.bind_shared_buffer(8, "cc_bounds_max");
-            ctx.bind_shared_buffer(9, "cc_bounds_count");
             cc_pipeline.stage_image_at(1, seed_input, GpuBufferBinding::ElementType::IMAGE_STORAGE);
             ctx.set_push_constants(compact_pc); },
                 .hazard_fn = [&](GpuDispatchCore& ctx) -> std::vector<Portal::Graphics::HazardResource> {
                     return {
-                        ctx.shared_buffer_hazard("cc_dense_label",
+                        ctx.shared_buffer_hazard(6,
                             { .set = 0, .binding = 6, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 }),
-                        ctx.shared_buffer_hazard("cc_bounds_min",
+                        ctx.shared_buffer_hazard(7,
                             { .set = 0, .binding = 7, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 }),
-                        ctx.shared_buffer_hazard("cc_bounds_max",
+                        ctx.shared_buffer_hazard(8,
                             { .set = 0, .binding = 8, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 }),
-                        ctx.shared_buffer_hazard("cc_bounds_count",
+                        ctx.shared_buffer_hazard(9,
                             { .set = 0, .binding = 9, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 }),
                     };
                 },
@@ -990,7 +968,6 @@ VisionResult VisionGpuExecutor::run(
                 finish_stages.push_back({
                     .config = { .shader_path = "cc_colorize.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(CCSeedPC) },
                     .stage_fn = [&](GpuDispatchCore& ctx) {
-                        ctx.bind_shared_buffer(2, "cc_parent");
                         cc_pipeline.stage_image_at(1, seed_input, GpuBufferBinding::ElementType::IMAGE_STORAGE);
                         ctx.set_push_constants(seed_pc);
                         cc_pipeline.prepare_output_image(w, h);
@@ -1008,15 +985,15 @@ VisionResult VisionGpuExecutor::run(
             result.debug_labels = colorized ? colorized : nullptr;
 
             uint32_t compact_count = 0;
-            cc_pipeline.download_shared("cc_compact_count", &compact_count, sizeof(uint32_t));
+            cc_pipeline.download_shared(5, &compact_count, sizeof(uint32_t));
             compact_count = std::min(compact_count, k_max_components);
 
             std::vector<glm::uvec2> bmin(k_max_components);
             std::vector<glm::uvec2> bmax(k_max_components);
             std::vector<uint32_t> bcount(k_max_components);
-            cc_pipeline.download_shared("cc_bounds_min", bmin.data(), bmin.size() * sizeof(glm::uvec2));
-            cc_pipeline.download_shared("cc_bounds_max", bmax.data(), bmax.size() * sizeof(glm::uvec2));
-            cc_pipeline.download_shared("cc_bounds_count", bcount.data(), bcount.size() * sizeof(uint32_t));
+            cc_pipeline.download_shared(7, bmin.data(), bmin.size() * sizeof(glm::uvec2));
+            cc_pipeline.download_shared(8, bmax.data(), bmax.size() * sizeof(glm::uvec2));
+            cc_pipeline.download_shared(9, bcount.data(), bcount.size() * sizeof(uint32_t));
 
             const float inv_w = 1.0F / static_cast<float>(w);
             const float inv_h = 1.0F / static_cast<float>(h);
@@ -1027,7 +1004,7 @@ VisionResult VisionGpuExecutor::run(
 
             if (p.export_labels) {
                 cc_result.label_map.resize(static_cast<size_t>(w) * h);
-                cc_pipeline.download_shared("cc_dense_label", cc_result.label_map.data(), cc_result.label_map.size() * sizeof(uint32_t));
+                cc_pipeline.download_shared(6, cc_result.label_map.data(), cc_result.label_map.size() * sizeof(uint32_t));
             }
 
             for (uint32_t i = 0; i < compact_count; ++i) {

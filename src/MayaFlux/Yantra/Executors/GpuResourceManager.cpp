@@ -121,7 +121,7 @@ namespace {
 } // anonymous namespace
 
 struct GpuResourceManager::SharedBuffers {
-    std::unordered_map<std::string, VulkanBufferSlot> slots;
+    std::vector<VulkanBufferSlot> slots;
 };
 
 //==============================================================================
@@ -352,52 +352,63 @@ size_t GpuResourceManager::buffer_allocated_bytes(const std::string& key, size_t
     return find_unit(key)->buffer_slots[index].allocated_bytes;
 }
 
-void GpuResourceManager::ensure_shared_buffer(const std::string& tag, size_t required_bytes)
+void GpuResourceManager::ensure_shared_buffer(size_t binding_index, size_t element_count,
+    GpuBufferBinding::ElementType element_type,
+    Portal::Graphics::BufferUsageHint usage_hint)
 {
-    auto& slot = m_shared->slots[tag];
-    if (slot.allocated_bytes >= required_bytes)
-        return;
-
-    auto& foundry = Portal::Graphics::get_shader_foundry();
-    allocate_slot(foundry.get_device(), foundry.get_physical_device(), slot, required_bytes);
-}
-
-void GpuResourceManager::bind_shared_descriptor(const std::string& key, const std::string& tag, const GpuBufferBinding& spec)
-{
-    auto& unit = unit_for(key);
-    auto& foundry = Portal::Graphics::get_shader_foundry();
-    auto it = m_shared->slots.find(tag);
-    if (it == m_shared->slots.end())
+    const size_t width = Portal::Graphics::element_type_bytes(element_type);
+    if (width == 0) {
         error<std::runtime_error>(
             Journal::Component::Yantra,
             Journal::Context::BufferProcessing,
             std::source_location::current(),
-            "GpuResourceManager: no shared buffer for tag '{}'", tag);
+            "GpuResourceManager: ensure_shared_buffer requires a sized element_type");
+    }
+
+    if (binding_index >= m_shared->slots.size())
+        m_shared->slots.resize(binding_index + 1);
+
+    auto& slot = m_shared->slots[binding_index];
+    const size_t required_bytes = element_count * width;
+    if (slot.allocated_bytes >= required_bytes)
+        return;
+
+    auto& foundry = Portal::Graphics::get_shader_foundry();
+    allocate_slot(foundry.get_device(), foundry.get_physical_device(),
+        slot, required_bytes, Portal::Graphics::to_buffer_usage_flags(usage_hint));
+}
+
+void GpuResourceManager::bind_shared_descriptor(const std::string& key, size_t binding_index, const GpuBufferBinding& spec)
+{
+    auto& unit = unit_for(key);
+    auto& foundry = Portal::Graphics::get_shader_foundry();
+    auto& slot = m_shared->slots.at(binding_index);
 
     foundry.update_descriptor_buffer(
         unit.descriptor_set_ids[spec.set],
         spec.binding,
         vk::DescriptorType::eStorageBuffer,
-        it->second.buffer, 0, it->second.allocated_bytes);
+        slot.buffer, 0, slot.allocated_bytes);
 }
 
-void GpuResourceManager::download_shared(const std::string& tag, void* dest, size_t byte_size)
+void GpuResourceManager::download_shared(size_t binding_index, void* dest, size_t byte_size)
 {
-    auto& slot = m_shared->slots.at(tag);
+    auto& slot = m_shared->slots.at(binding_index);
     std::memcpy(dest, slot.mapped_ptr, byte_size);
 }
 
-void GpuResourceManager::upload_shared_raw(const std::string& tag, const uint8_t* data, size_t byte_size)
+void GpuResourceManager::upload_shared_raw(size_t binding_index, const uint8_t* data, size_t byte_size)
 {
-    auto& slot = m_shared->slots.at(tag);
+    auto& slot = m_shared->slots.at(binding_index);
     std::memcpy(slot.mapped_ptr, data, byte_size);
 }
 
 Portal::Graphics::HazardResource GpuResourceManager::make_shared_buffer_hazard(
-    const std::string& tag, const GpuBufferBinding& spec) const
+    size_t binding_index, const GpuBufferBinding& spec) const
 {
-    auto it = m_shared->slots.find(tag);
-    vk::Buffer handle = (it != m_shared->slots.end()) ? it->second.buffer : vk::Buffer {};
+    vk::Buffer handle = binding_index < m_shared->slots.size()
+        ? m_shared->slots[binding_index].buffer
+        : vk::Buffer {};
 
     return Portal::Graphics::HazardResource {
         .binding = spec,
