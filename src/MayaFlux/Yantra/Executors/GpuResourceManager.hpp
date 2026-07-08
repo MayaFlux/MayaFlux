@@ -108,10 +108,10 @@ public:
 
     void dispatch_batched_indirect(const std::string& key,
         uint32_t pass_count,
-        uint32_t indirect_binding,
+        size_t indirect_binding,
         const std::array<uint32_t, 3>& groups,
         const std::vector<GpuBufferBinding>& bindings,
-        const std::function<void(uint32_t pass, std::vector<uint8_t>&)>& push_constant_updater,
+        const std::function<void(uint32_t pass, uint32_t phase, std::vector<uint8_t>&)>& push_constant_updater,
         size_t push_constant_size,
         const std::unordered_map<std::string, std::any>& execution_metadata = {});
 

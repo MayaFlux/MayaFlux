@@ -14,29 +14,6 @@ struct VertexAttribute;
 namespace MayaFlux::Portal::Graphics {
 
 /**
- * @enum BufferUsageHint
- * @brief Semantic usage hint for buffer allocation and memory properties
- *
- * This enum describes the intended usage pattern of a buffer, which informs
- * the graphics backend how to allocate memory and set Vulkan usage flags.
- * It is not a direct mapping to Vulkan flags, but rather a higher-level
- * abstraction for common use cases.
- */
-enum class BufferUsageHint : uint8_t {
-    STAGING, ///< Host-visible staging buffer (CPU-writable, eTransferSrc|Dst)
-    DEVICE, ///< Device-local GPU-only buffer
-    COMPUTE, ///< Storage buffer for compute shaders (device-local)
-    VERTEX, ///< Vertex buffer
-    INDEX, ///< Index buffer
-    UNIFORM, ///< Uniform buffer (host-visible)
-    UNIFORM_BDA, ///< Uniform buffer with device address query support
-    STORAGE_BDA, ///< Storage buffer with device address query support
-    INDIRECT, ///< Indirect draw/dispatch buffer (device-local)
-    HOST_STORAGE, ///< Host-visible storage buffer (eStorageBuffer + eHostVisible|eHostCoherent)
-    COMPUTE_STORAGE, ///< Bare eStorageBuffer, no transfer flags. GpuResourceManager's host-visible/host-coherent compute buffers.
-};
-
-/**
  * @brief Resolve the extra vk::BufferUsageFlags a BufferUsageHint requires,
  *        on top of whatever base usage the caller already applies.
  */

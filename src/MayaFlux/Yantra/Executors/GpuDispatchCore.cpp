@@ -312,32 +312,41 @@ GpuChannelResult GpuDispatchCore::dispatch_core_chained_indirect(
     on_before_gpu_dispatch(channels, structure_info);
     prepare_gpu_inputs(channels, structure_info);
 
+    m_bindings = declare_buffer_bindings();
+    if (!ensure_gpu_ready()) {
+        error<std::runtime_error>(Journal::Component::Yantra,
+            Journal::Context::BufferProcessing,
+            std::source_location::current(),
+            "GpuDispatchCore: dispatch_core_chained_indirect GPU initialisation failed");
+    }
+
     bind_all_descriptors();
 
-    const size_t effective = m_staging_floats.empty()
-        ? largest_binding_data_element_count()
-        : m_staging_floats.size();
+    const size_t effective = m_staging_floats.empty() ? largest_binding_data_element_count() : m_staging_floats.size();
     const auto groups = calculate_dispatch_size(effective, structure_info);
 
-    if (!ctx.execution_metadata.contains("pass_count")
-        || !ctx.execution_metadata.contains("pc_updater")
-        || !ctx.execution_metadata.contains("indirect_dispatch_binding")) {
-        error<std::runtime_error>(Journal::Component::Yantra,
-            Journal::Context::Runtime,
+    if (!ctx.execution_metadata.contains("pass_count") || !ctx.execution_metadata.contains("pc_updater")) {
+        error<std::runtime_error>(Journal::Component::Yantra, Journal::Context::Runtime,
             std::source_location::current(),
-            "GpuDispatchCore: dispatch_core_chained_indirect requires 'pass_count', 'pc_updater', and 'indirect_dispatch_binding' in execution_metadata");
+            "GpuDispatchCore: dispatch_core_chained_indirect requires 'pass_count' and 'pc_updater' in execution_metadata");
     }
 
     const auto pass_count = safe_any_cast_or_throw<uint32_t>(ctx.execution_metadata.at("pass_count"));
-    const auto& pc_updater = safe_any_cast_or_throw<std::function<void(uint32_t, void*)>>(ctx.execution_metadata.at("pc_updater"));
-    const auto indirect_binding = safe_any_cast_or_throw<uint32_t>(ctx.execution_metadata.at("indirect_dispatch_binding"));
+    const auto& pc_updater = safe_any_cast_or_throw<std::function<void(uint32_t, uint32_t, void*)>>(ctx.execution_metadata.at("pc_updater"));
+
+    const auto indirect_it = std::ranges::find_if(m_bindings, [](const auto& b) {
+        return b.usage_hint == Portal::Graphics::BufferUsageHint::INDIRECT;
+    });
+    if (indirect_it == m_bindings.end()) {
+        error<std::runtime_error>(Journal::Component::Yantra, Journal::Context::Runtime,
+            std::source_location::current(),
+            "GpuDispatchCore: dispatch_core_chained_indirect requires a binding with usage_hint INDIRECT");
+    }
 
     m_resources.dispatch_batched_indirect(
-        dispatch_key(),
-        pass_count, indirect_binding, groups, m_bindings,
-        [&](uint32_t pass, std::vector<uint8_t>& pc_data) { pc_updater(pass, pc_data.data()); },
-        m_gpu_config.push_constant_size,
-        ctx.execution_metadata);
+        dispatch_key(), pass_count, indirect_it->binding, groups, m_bindings,
+        [&](uint32_t pass, uint32_t phase, std::vector<uint8_t>& pc_data) { pc_updater(pass, phase, pc_data.data()); },
+        m_gpu_config.push_constant_size, ctx.execution_metadata);
 
     GpuChannelResult result;
     result.primary = readback_primary(effective);
