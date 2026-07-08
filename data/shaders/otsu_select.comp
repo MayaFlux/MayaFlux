@@ -1,0 +1,76 @@
+#version 460
+
+layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+
+layout(set = 0, binding = 0, rgba32f) readonly uniform image2D in_image;
+
+layout(set = 0, binding = 3, std430) buffer HistBuf {
+    uint hist[256];
+};
+
+layout(set = 0, binding = 4, std430) buffer ThresholdBuf {
+    uint best_bin[1];
+};
+
+shared float s_prob[256];
+
+/**
+ * @brief Single-workgroup Otsu threshold selection. Loads the 256-bin
+ *        histogram into shared memory as normalised probabilities, then
+ *        invocation 0 performs a serial cumulative scan maximising
+ *        inter-class variance. Writes the winning bin index to best_bin[0].
+ */
+void main()
+{
+    const uint tid = gl_LocalInvocationID.x;
+    s_prob[tid] = float(hist[tid]);
+    barrier();
+
+    if (tid != 0u)
+        return;
+
+    float total = 0.0;
+    for (uint i = 0u; i < 256u; ++i)
+        total += s_prob[i];
+
+    if (total <= 0.0) {
+        best_bin[0] = 0u;
+        return;
+    }
+
+    for (uint i = 0u; i < 256u; ++i)
+        s_prob[i] /= total;
+
+    float sum_all = 0.0;
+    for (uint i = 0u; i < 256u; ++i)
+        sum_all += float(i) * s_prob[i];
+
+    float sum_bg = 0.0;
+    float w_bg = 0.0;
+    float best_var = 0.0;
+    uint best_t = 0u;
+
+    for (uint t = 0u; t < 256u; ++t) {
+        w_bg += s_prob[t];
+        if (w_bg <= 0.0)
+            continue;
+
+        const float w_fg = 1.0 - w_bg;
+        if (w_fg <= 0.0)
+            break;
+
+        sum_bg += float(t) * s_prob[t];
+
+        const float mean_bg = sum_bg / w_bg;
+        const float mean_fg = (sum_all - sum_bg) / w_fg;
+        const float diff = mean_fg - mean_bg;
+        const float var = w_bg * w_fg * diff * diff;
+
+        if (var > best_var) {
+            best_var = var;
+            best_t = t;
+        }
+    }
+
+    best_bin[0] = best_t;
+}

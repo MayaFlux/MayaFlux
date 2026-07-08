@@ -374,4 +374,46 @@ std::pair<size_t, uint64_t> coordinates_to_planar_indices(
     return { coords[channel_dim_idx], coords[time_dim_idx] };
 }
 
+Region normalised_rect_to_region(
+    float nx, float ny, float nw, float nh,
+    uint32_t pixel_w, uint32_t pixel_h)
+{
+    const auto fw = static_cast<float>(pixel_w);
+    const auto fh = static_cast<float>(pixel_h);
+
+    const auto x0 = static_cast<uint64_t>(std::clamp(nx * fw, 0.0F, fw - 1.0F));
+    const auto y0 = static_cast<uint64_t>(std::clamp(ny * fh, 0.0F, fh - 1.0F));
+    const auto x1 = static_cast<uint64_t>(std::clamp((nx + nw) * fw - 1.0F, 0.0F, fw - 1.0F));
+    const auto y1 = static_cast<uint64_t>(std::clamp((ny + nh) * fh - 1.0F, 0.0F, fh - 1.0F));
+
+    return Region(std::vector { y0, x0 }, std::vector { y1, x1 });
+}
+
+Region normalised_points_tight_region(
+    std::span<const glm::vec2> points,
+    uint32_t pixel_w, uint32_t pixel_h)
+{
+    if (points.empty())
+        return Region {};
+
+    float min_x = points[0].x, max_x = points[0].x;
+    float min_y = points[0].y, max_y = points[0].y;
+
+    for (const auto& p : points.subspan(1)) {
+        if (p.x < min_x)
+            min_x = p.x;
+        if (p.x > max_x)
+            max_x = p.x;
+        if (p.y < min_y)
+            min_y = p.y;
+        if (p.y > max_y)
+            max_y = p.y;
+    }
+
+    return normalised_rect_to_region(
+        min_x, min_y,
+        max_x - min_x, max_y - min_y,
+        pixel_w, pixel_h);
+}
+
 }

@@ -39,6 +39,32 @@ namespace {
         return perim;
     }
 
+    bool point_in_contour(const std::vector<glm::vec2>& pts, float px, float py) noexcept
+    {
+        int winding = 0;
+        const size_t n = pts.size();
+        for (size_t i = 0; i < n; ++i) {
+            const glm::vec2 a = pts[i];
+            const glm::vec2 b = pts[(i + 1) % n];
+            if (a.y <= py) {
+                if (b.y > py) {
+                    const float cross = (b.x - a.x) * (py - a.y)
+                        - (b.y - a.y) * (px - a.x);
+                    if (cross > 0.0F)
+                        ++winding;
+                }
+            } else {
+                if (b.y <= py) {
+                    const float cross = (b.x - a.x) * (py - a.y)
+                        - (b.y - a.y) * (px - a.x);
+                    if (cross < 0.0F)
+                        --winding;
+                }
+            }
+        }
+        return winding != 0;
+    }
+
 } // namespace
 
 std::vector<Contour> find_contours(
@@ -180,6 +206,30 @@ std::vector<Contour> find_contours(
     }
 
     return out;
+}
+
+void apply_contour_mask(
+    std::span<float> pixels,
+    uint32_t w, uint32_t h,
+    uint32_t channels,
+    const Contour& contour,
+    float origin_x, float origin_y,
+    float scale_x, float scale_y)
+{
+    if (pixels.empty() || contour.points.empty() || channels == 0)
+        return;
+
+    for (uint32_t row = 0; row < h; ++row) {
+        const float py = origin_y + (static_cast<float>(row) + 0.5F) * scale_y;
+        for (uint32_t col = 0; col < w; ++col) {
+            const float px = origin_x + (static_cast<float>(col) + 0.5F) * scale_x;
+            if (!point_in_contour(contour.points, px, py)) {
+                const size_t base = (static_cast<size_t>(row) * w + col) * channels;
+                for (uint32_t c = 0; c < channels; ++c)
+                    pixels[base + c] = 0.0F;
+            }
+        }
+    }
 }
 
 } // namespace MayaFlux::Kinesis::Vision

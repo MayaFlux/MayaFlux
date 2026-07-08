@@ -4,59 +4,8 @@
 
 namespace MayaFlux::Yantra {
 
-/**
- * @struct GpuShaderConfig
- * @brief Plain-data description of the compute shader to dispatch.
- *
- * Either shader_path or shader_id must be set. If shader_id is not
- * INVALID_SHADER it takes precedence and shader_path is ignored,
- * allowing callers who already hold a compiled ShaderID (e.g. from
- * ShaderFoundry::load_shader(const ShaderSpec&)) to bypass file
- * resolution entirely.
- */
-struct GpuShaderConfig {
-    std::string shader_path;
-    std::array<uint32_t, 3> workgroup_size { 256, 1, 1 };
-    size_t push_constant_size { 0 };
-    Portal::Graphics::ShaderID shader_id { Portal::Graphics::INVALID_SHADER };
-};
-
-/**
- * @struct GpuBufferBinding
- * @brief Declares a single storage buffer the shader expects.
- */
-struct GpuBufferBinding {
-    uint32_t set { 0 };
-    uint32_t binding { 0 };
-    bool skip_auto_readback { false };
-
-    enum class Direction : uint8_t {
-        INPUT,
-        OUTPUT,
-        INPUT_OUTPUT
-    } direction { Direction::INPUT };
-
-    /**
-     * @brief Element type the shader expects in this buffer.
-     *
-     * FLOAT32          — cast double channels to float (default).
-     * UINT32           — reinterpret variant bytes as uint32_t.
-     * INT32            — reinterpret variant bytes as int32_t.
-     * PASSTHROUGH      — upload raw variant bytes with no cast; caller
-     *                    must pre-stage via stage_passthrough() for
-     *                    INPUT / INPUT_OUTPUT bindings.
-     * IMAGE_STORAGE,   — writeonly/readonly image2D — eStorageImage descriptor
-     * IMAGE_SAMPLED    — sampler2D — eCombinedImageSampler descriptor
-     */
-    enum class ElementType : uint8_t {
-        FLOAT32,
-        UINT32,
-        INT32,
-        PASSTHROUGH,
-        IMAGE_STORAGE,
-        IMAGE_SAMPLED
-    } element_type { ElementType::FLOAT32 };
-};
+using GpuComputeConfig = Portal::Graphics::GpuComputeConfig;
+using GpuBufferBinding = Portal::Graphics::GpuBufferBinding;
 
 struct GpuResourceManagerImpl;
 
@@ -64,8 +13,10 @@ struct GpuResourceManagerImpl;
  * @class GpuResourceManager
  * @brief Encapsulates all Vulkan resource lifecycle behind Portal facades.
  *
- * Manages storage buffers, pipeline, shader, and descriptor sets.
- * PIMPL hides vk:: types from the header entirely.
+ * Manages a keyed set of pipelines, each with its own storage buffers,
+ * pipeline, shader, and descriptor sets. There is no distinct single-
+ * pipeline mode: a caller using exactly one shader simply uses one key
+ * throughout. PIMPL hides vk:: types from the header entirely.
  */
 class MAYAFLUX_API GpuResourceManager {
 public:
@@ -77,39 +28,62 @@ public:
     GpuResourceManager(GpuResourceManager&&) = delete;
     GpuResourceManager& operator=(GpuResourceManager&&) = delete;
 
-    bool initialise(const GpuShaderConfig& config,
+    /**
+     * @brief Create (or confirm existing) pipeline for the given key.
+     *
+     * Create-if-absent: if a unit already exists and is ready for this
+     * key, returns true immediately without recreating anything. Call
+     * release(key) first to force recreation with a different config.
+     */
+    bool initialise(const std::string& key,
+        const GpuComputeConfig& config,
         const std::vector<GpuBufferBinding>& bindings);
 
-    void ensure_buffer(size_t index, size_t required_bytes);
-    void upload(size_t index, const float* data, size_t byte_size);
-    void upload_raw(size_t index, const uint8_t* data, size_t byte_size);
-    void download(size_t index, float* dest, size_t byte_size);
-    void bind_descriptor(size_t index, const GpuBufferBinding& spec);
+    void ensure_buffer(const std::string& key, size_t index, size_t required_bytes,
+        Portal::Graphics::BufferUsageHint usage_hint = Portal::Graphics::BufferUsageHint::COMPUTE_STORAGE);
+    void upload(const std::string& key, size_t index, const float* data, size_t byte_size);
+    void upload_raw(const std::string& key, size_t index, const uint8_t* data, size_t byte_size);
+    void download(const std::string& key, size_t index, float* dest, size_t byte_size);
+    void bind_descriptor(const std::string& key, size_t index, const GpuBufferBinding& spec);
+
+    void ensure_shared_buffer(size_t binding_index, size_t element_count,
+        GpuBufferBinding::ElementType element_type,
+        Portal::Graphics::BufferUsageHint usage_hint = Portal::Graphics::BufferUsageHint::COMPUTE_STORAGE);
+    void bind_shared_descriptor(const std::string& key, size_t binding_index, const GpuBufferBinding& spec);
+    void download_shared(size_t binding_index, void* dest, size_t byte_size);
+    void upload_shared_raw(size_t binding_index, const uint8_t* data, size_t byte_size);
+
+    [[nodiscard]] Portal::Graphics::HazardResource make_shared_buffer_hazard(
+        size_t binding_index, const GpuBufferBinding& spec) const;
 
     /**
      * @brief Bind a storage image descriptor at the given slot index.
+     * @param key     Pipeline unit to bind into.
      * @param index   Slot index matching the binding declaration.
      * @param image   VKImage to bind. Must be initialised and in eGeneral layout.
      * @param spec    Binding declaration. element_type must be IMAGE_STORAGE.
      */
-    void bind_image_storage(size_t index,
+    void bind_image_storage(const std::string& key, size_t index,
         const std::shared_ptr<Core::VKImage>& image,
         const GpuBufferBinding& spec);
 
     /**
      * @brief Bind a combined image+sampler descriptor at the given slot index.
+     * @param key     Pipeline unit to bind into.
      * @param index   Slot index matching the binding declaration.
      * @param image   VKImage to bind. Must be in eShaderReadOnlyOptimal layout.
      * @param sampler Vulkan sampler handle from SamplerForge.
      * @param spec    Binding declaration. element_type must be IMAGE_SAMPLED.
      */
-    void bind_image_sampled(size_t index,
+    void bind_image_sampled(const std::string& key, size_t index,
         const std::shared_ptr<Core::VKImage>& image,
         vk::Sampler sampler,
         const GpuBufferBinding& spec);
 
     /**
      * @brief Transition a VKImage layout via an immediate command submission.
+     *
+     * Not tied to any pipeline unit; operates on the image directly.
      * @param image      Image to transition.
      * @param old_layout Source layout.
      * @param new_layout Target layout.
@@ -118,16 +92,26 @@ public:
         vk::ImageLayout old_layout,
         vk::ImageLayout new_layout);
 
-    void dispatch(const std::array<uint32_t, 3>& groups,
+    void dispatch(const std::string& key,
+        const std::array<uint32_t, 3>& groups,
         const std::vector<GpuBufferBinding>& bindings,
         const uint8_t* push_constant_data,
         size_t push_constant_size);
 
-    void dispatch_batched(
+    void dispatch_batched(const std::string& key,
         uint32_t pass_count,
         const std::array<uint32_t, 3>& groups,
         const std::vector<GpuBufferBinding>& bindings,
         const std::function<void(uint32_t pass, std::vector<uint8_t>&)>& push_constant_updater,
+        size_t push_constant_size,
+        const std::unordered_map<std::string, std::any>& execution_metadata = {});
+
+    void dispatch_batched_indirect(const std::string& key,
+        uint32_t pass_count,
+        size_t indirect_binding,
+        const std::array<uint32_t, 3>& groups,
+        const std::vector<GpuBufferBinding>& bindings,
+        const std::function<void(uint32_t pass, uint32_t phase, std::vector<uint8_t>&)>& push_constant_updater,
         size_t push_constant_size,
         const std::unordered_map<std::string, std::any>& execution_metadata = {});
 
@@ -139,6 +123,7 @@ public:
      * FenceID immediately. Readback must be deferred until
      * ShaderFoundry::is_fence_signaled returns true for the returned ID.
      *
+     * @param key                Pipeline unit to dispatch.
      * @param groups             Workgroup counts {x, y, z}.
      * @param bindings           Binding declarations; output barriers inserted.
      * @param push_constant_data Pointer to push constant bytes, or nullptr.
@@ -146,31 +131,63 @@ public:
      * @return FenceID to poll with ShaderFoundry::is_fence_signaled.
      *         Returns INVALID_FENCE if not ready or submission fails.
      */
-    [[nodiscard]] Portal::Graphics::FenceID dispatch_async(
+    [[nodiscard]] Portal::Graphics::FenceID dispatch_async(const std::string& key,
         const std::array<uint32_t, 3>& groups,
         const std::vector<GpuBufferBinding>& bindings,
         const uint8_t* push_constant_data,
         size_t push_constant_size);
 
+    /**
+     * @brief Record a dispatch for each requested key into one command
+     *        buffer via ComputePress::record_sequence, submitted once.
+     *
+     * Each key must already be initialise()'d. Vectors are parallel,
+     * indexed by position, one entry per key in the same order as keys.
+     */
+    void dispatch_sequence(
+        const std::vector<std::string>& keys,
+        const std::vector<std::array<uint32_t, 3>>& groups_per_key,
+        const std::vector<std::vector<uint8_t>>& push_constants_per_key,
+        const std::vector<std::vector<Portal::Graphics::HazardResource>>& hazards_per_key);
+
+    /**
+     * @brief Destroy the pipeline, shader, descriptor sets, and buffers
+     *        for a single key, without affecting any other key.
+     */
+    void release(const std::string& key);
+
+    /**
+     * @brief Destroy every key currently held. Called from the destructor.
+     */
     void cleanup();
 
-    [[nodiscard]] bool is_ready() const { return m_ready; }
-    [[nodiscard]] size_t buffer_allocated_bytes(size_t index) const;
+    [[nodiscard]] bool is_ready(const std::string& key) const;
+    [[nodiscard]] size_t buffer_allocated_bytes(const std::string& key, size_t index) const;
 
 private:
-    Portal::Graphics::ShaderID m_shader_id { Portal::Graphics::INVALID_SHADER };
-    Portal::Graphics::ComputePipelineID m_pipeline_id { Portal::Graphics::INVALID_COMPUTE_PIPELINE };
-    std::vector<Portal::Graphics::DescriptorSetID> m_descriptor_set_ids;
+    struct PipelineUnit {
+        Portal::Graphics::ShaderID shader_id { Portal::Graphics::INVALID_SHADER };
+        Portal::Graphics::ComputePipelineID pipeline_id { Portal::Graphics::INVALID_COMPUTE_PIPELINE };
+        std::vector<Portal::Graphics::DescriptorSetID> descriptor_set_ids;
 
-    std::unique_ptr<GpuResourceManagerImpl> m_impl;
+        std::unique_ptr<GpuResourceManagerImpl> impl;
 
-    struct BufferSlot {
-        size_t allocated_bytes {};
+        struct BufferSlot {
+            size_t allocated_bytes {};
+        };
+        std::vector<BufferSlot> buffer_slots;
+        std::vector<std::shared_ptr<Core::VKImage>> image_slots;
+
+        bool ready {};
     };
-    std::vector<BufferSlot> m_buffer_slots;
-    std::vector<std::shared_ptr<Core::VKImage>> m_image_slots;
 
-    bool m_ready {};
+    struct SharedBuffers;
+    std::unique_ptr<SharedBuffers> m_shared;
+
+    [[nodiscard]] PipelineUnit& unit_for(const std::string& key);
+    [[nodiscard]] const PipelineUnit* find_unit(const std::string& key) const;
+
+    std::unordered_map<std::string, std::unique_ptr<PipelineUnit>> m_units;
 }; // class GpuResourceManager
 
 } // namespace MayaFlux::Yantra

@@ -1,0 +1,96 @@
+#version 460
+#include "include/vision_common.glsl"
+#include "include/vision_cc.glsl"
+
+layout(local_size_x = 8, local_size_y = 8) in;
+
+layout(set = 0, binding = 1, rgba32f) uniform readonly image2D in_image;
+
+layout(set = 0, binding = 2, std430) buffer ParentBuf {
+    uint parent[];
+};
+
+layout(set = 0, binding = 3, std430) buffer ChangedBuf {
+    uint changed[1];
+};
+
+layout(set = 0, binding = 4, std430) buffer LabelLutBuf {
+    uint label_lut[];
+};
+
+layout(set = 0, binding = 5, std430) buffer CountBuf {
+    uint compact_count[1];
+};
+
+layout(set = 0, binding = 6, std430) buffer DenseBuf {
+    uint dense_label[];
+};
+
+layout(set = 0, binding = 7, std430) buffer BoundsMinBuf {
+    uvec2 bounds_min[];
+};
+
+layout(set = 0, binding = 8, std430) buffer BoundsMaxBuf {
+    uvec2 bounds_max[];
+};
+
+layout(set = 0, binding = 9, std430) buffer BoundsCountBuf {
+    uint bounds_count[];
+};
+
+layout(push_constant) uniform PushConstants {
+    uint width;
+    uint height;
+    uint max_components;
+} pc;
+
+/**
+ * @brief Finds the root of x with path halving.
+ */
+uint find_root(uint x)
+{
+    uint p = parent[x];
+    while (p != x) {
+        uint gp = parent[p];
+        atomicCompSwap(parent[x], p, gp);
+        x = p;
+        p = parent[x];
+    }
+    return x;
+}
+
+/**
+ * @brief Resolve stage: every root has a settled dense id in label_lut
+ *        by the time this dispatch runs, since cc_compact_claim already
+ *        completed and its writes are visible across dispatch boundaries.
+ *        Writes dense_label per pixel and folds coordinate and count
+ *        into that label's bounds.
+ */
+void main()
+{
+    const ivec2 coord = thread_coord();
+    if (coord.x >= int(pc.width) || coord.y >= int(pc.height))
+        return;
+
+    const uint idx = cc_flat_index(uvec2(coord), pc.width);
+    const uint p = parent[idx];
+
+    if (p == CC_BACKGROUND) {
+        dense_label[idx] = CC_UNCLAIMED;
+        return;
+    }
+
+    const uint root = find_root(idx);
+    const uint dense_id = label_lut[root];
+    dense_label[idx] = dense_id;
+
+    if (dense_id == CC_UNCLAIMED || dense_id > pc.max_components)
+        return;
+
+    const uint bi = dense_id - 1u;
+    atomicMin(bounds_min[bi].x, uint(coord.x));
+    atomicMin(bounds_min[bi].y, uint(coord.y));
+    atomicMax(bounds_max[bi].x, uint(coord.x));
+    atomicMax(bounds_max[bi].y, uint(coord.y));
+    atomicAdd(bounds_count[bi], 1u);
+}

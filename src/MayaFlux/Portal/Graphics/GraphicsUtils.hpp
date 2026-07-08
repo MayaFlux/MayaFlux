@@ -105,6 +105,98 @@ enum class BlendOp : uint8_t {
 };
 
 //============================================================================
+// GPU Buffer Bindings
+//============================================================================
+
+/**
+ * @enum BufferUsageHint
+ * @brief Semantic usage hint for buffer allocation and memory properties
+ *
+ * This enum describes the intended usage pattern of a buffer, which informs
+ * the graphics backend how to allocate memory and set Vulkan usage flags.
+ * It is not a direct mapping to Vulkan flags, but rather a higher-level
+ * abstraction for common use cases.
+ */
+enum class BufferUsageHint : uint8_t {
+    STAGING, ///< Host-visible staging buffer (CPU-writable, eTransferSrc|Dst)
+    DEVICE, ///< Device-local GPU-only buffer
+    COMPUTE, ///< Storage buffer for compute shaders (device-local)
+    VERTEX, ///< Vertex buffer
+    INDEX, ///< Index buffer
+    UNIFORM, ///< Uniform buffer (host-visible)
+    UNIFORM_BDA, ///< Uniform buffer with device address query support
+    STORAGE_BDA, ///< Storage buffer with device address query support
+    INDIRECT, ///< Indirect draw/dispatch buffer (device-local)
+    HOST_STORAGE, ///< Host-visible storage buffer (eStorageBuffer + eHostVisible|eHostCoherent)
+    COMPUTE_STORAGE, ///< Bare eStorageBuffer, no transfer flags. GpuResourceManager's host-visible/host-coherent compute buffers.
+};
+
+/**
+ * @struct GpuBufferBinding
+ * @brief Declares a single storage buffer or image binding a compute shader expects.
+ *
+ * Vulkan-agnostic description consumed by ComputePress/ShaderFoundry to
+ * derive descriptor types, barrier targets, and staging behavior. Carries
+ * no vk:: types itself; translation to vk::DescriptorType happens at the
+ * point of use.
+ */
+struct GpuBufferBinding {
+    uint32_t set { 0 }; ///< Descriptor set index.
+    uint32_t binding { 0 }; ///< Binding index within the set.
+    bool skip_auto_readback { false }; ///< Skip automatic CPU readback after dispatch for this binding.
+
+    /**
+     * @enum Direction
+     * @brief Data flow direction for this binding.
+     *
+     * INPUT_OUTPUT bindings receive a cross-pass memory barrier when used
+     * across multiple recorded dispatches in one command buffer (see
+     * ComputePress::record_sequence), since the same resource is both
+     * read and written by consecutive stages.
+     */
+    enum class Direction : uint8_t {
+        INPUT,
+        OUTPUT,
+        INPUT_OUTPUT
+    } direction { Direction::INPUT };
+
+    /**
+     * @enum ElementType
+     * @brief Element type the shader expects in this binding.
+     *
+     * FLOAT32          — cast double channels to float (default).
+     * UINT32           — reinterpret variant bytes as uint32_t.
+     * INT32            — reinterpret variant bytes as int32_t.
+     * PASSTHROUGH      — upload raw variant bytes with no cast; caller
+     *                    must pre-stage for INPUT / INPUT_OUTPUT bindings.
+     * IMAGE_STORAGE    — writeonly/readonly image2D, storage image descriptor.
+     * IMAGE_SAMPLED    — sampler2D, combined image sampler descriptor.
+     */
+    enum class ElementType : uint8_t {
+        FLOAT32,
+        UINT32,
+        INT32,
+        PASSTHROUGH,
+        IMAGE_STORAGE,
+        IMAGE_SAMPLED
+    } element_type { ElementType::FLOAT32 };
+
+    BufferUsageHint usage_hint { BufferUsageHint::COMPUTE_STORAGE }; ///< Hint for buffer allocation and memory properties.
+};
+
+/**
+ * @brief Byte width of one GpuBufferBinding::ElementType element.
+ *
+ * Bridges to Kakshya::gpu_data_format_bytes for FLOAT32/UINT32/INT32,
+ * the single authoritative sizing source. Returns 0 for PASSTHROUGH,
+ * IMAGE_STORAGE, and IMAGE_SAMPLED, which carry no fixed element width.
+ *
+ * @param et ElementType to size.
+ * @return Byte width, or 0 if unsized.
+ */
+[[nodiscard]] size_t element_type_bytes(GpuBufferBinding::ElementType et) noexcept;
+
+//============================================================================
 // Shader Types
 //============================================================================
 

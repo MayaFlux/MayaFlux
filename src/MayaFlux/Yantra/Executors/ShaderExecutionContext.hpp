@@ -16,7 +16,7 @@ namespace MayaFlux::Yantra {
  * Construction followed by fluent configuration:
  * @code
  * auto executor = std::make_shared<ShaderExecutionContext<>>(
- *     GpuShaderConfig { "graph_build.comp", { 256, 1, 1 }, sizeof(GraphBuildPC) });
+ *     GpuComputeConfig { "graph_build.comp", { 256, 1, 1 }, sizeof(GraphBuildPC) });
  * executor->input(positions)
  *          .input(attributes)
  *          .output(k_max_edges * 2 * sizeof(float))
@@ -60,7 +60,7 @@ public:
      * @param name     Executor name for logging and error messages.
      */
     explicit ShaderExecutionContext(
-        GpuShaderConfig config,
+        GpuComputeConfig config,
         std::vector<GpuBufferBinding> bindings = {},
         std::string name = "ShaderExecutionContext")
         : GpuExecutionContext<InputType, OutputType>(std::move(config))
@@ -371,15 +371,6 @@ public:
         return result;
     }
 
-protected:
-    /**
-     * @brief Returns the binding list declared via constructor or fluent API.
-     */
-    [[nodiscard]] std::vector<GpuBufferBinding> declare_buffer_bindings() const override
-    {
-        return m_bindings;
-    }
-
     /**
      * @brief Injects multipass configuration into the context before dispatch
      *        when set_multipass() has been called.
@@ -394,6 +385,15 @@ protected:
             return GpuExecutionContext<InputType, OutputType>::execute(input, chained);
         }
         return GpuExecutionContext<InputType, OutputType>::execute(input, ctx);
+    }
+
+protected:
+    /**
+     * @brief Returns the binding list declared via constructor or fluent API.
+     */
+    [[nodiscard]] std::vector<GpuBufferBinding> declare_buffer_bindings() const override
+    {
+        return m_bindings;
     }
 
 private:
@@ -439,7 +439,7 @@ template <ComputeData InputType = std::vector<Kakshya::DataVariant>,
     ComputeData OutputType = InputType>
 std::shared_ptr<ShaderExecutionContext<InputType, OutputType>>
 make_shader_executor(
-    GpuShaderConfig config,
+    GpuComputeConfig config,
     std::vector<GpuBufferBinding> bindings,
     std::string name = "ShaderExecutionContext")
 {

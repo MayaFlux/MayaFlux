@@ -1,0 +1,35 @@
+#version 450
+
+layout(local_size_x = 8, local_size_y = 8) in;
+
+layout(set = 0, binding = 0, rgba32f) uniform image2D in_image;
+layout(set = 0, binding = 1) buffer ProbeBuf {
+    uint probe_bits;
+    uint sentinel_bits;
+} probe;
+
+layout(push_constant) uniform PC {
+    uint width;
+    uint height;
+} pc;
+
+/**
+ * @brief Minimal isolation probe. Reads the center texel and separately
+ *        round-trips a known sentinel through the same image via
+ *        imageStore/imageLoad, to isolate upload/sampling correctness
+ *        from SSBO writeback correctness.
+ */
+void main()
+{
+    if (gl_GlobalInvocationID.x != 0u || gl_GlobalInvocationID.y != 0u)
+        return;
+
+    ivec2 coord = ivec2(pc.width / 2u, pc.height / 2u);
+    vec4 texel = imageLoad(in_image, coord);
+    probe.probe_bits = floatBitsToUint(texel.r);
+
+    ivec2 corner = ivec2(0, 0);
+    imageStore(in_image, corner, vec4(0.5, 0.0, 0.0, 1.0));
+    vec4 written_back = imageLoad(in_image, corner);
+    probe.sentinel_bits = floatBitsToUint(written_back.r);
+}

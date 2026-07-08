@@ -34,7 +34,7 @@ public:
     using input_type = Datum<InputType>;
     using output_type = Datum<OutputType>;
 
-    explicit GpuExecutionContext(GpuShaderConfig config)
+    explicit GpuExecutionContext(GpuComputeConfig config)
         : GpuDispatchCore(std::move(config))
     {
     }
@@ -59,6 +59,19 @@ public:
      */
     virtual output_type execute(const input_type& input, const ExecutionContext& ctx)
     {
+        if (ctx.mode == ExecutionMode::DEPENDENCY) {
+            if (!ctx.execution_metadata.contains("dependency_stages")) {
+                error<std::runtime_error>(Journal::Component::Yantra,
+                    Journal::Context::Runtime,
+                    std::source_location::current(),
+                    "GpuExecutionContext: DEPENDENCY mode requires 'dependency_stages' in execution_metadata");
+            }
+            const auto& stages = safe_any_cast_or_throw<std::vector<DependencyStage>>(
+                ctx.execution_metadata.at("dependency_stages"));
+            dispatch_core_dependency(stages);
+            return output_type {};
+        }
+
         if (!ensure_gpu_ready()) {
             error<std::runtime_error>(
                 Journal::Component::Yantra,
@@ -69,9 +82,18 @@ public:
 
         auto [ch_copies, structure_info] = extract_inputs(input);
 
-        const GpuChannelResult raw = (ctx.mode == ExecutionMode::CHAINED)
-            ? dispatch_core_chained(ch_copies, structure_info, ctx)
-            : dispatch_core(ch_copies, structure_info);
+        GpuChannelResult raw;
+        switch (ctx.mode) {
+        case ExecutionMode::CHAINED:
+            raw = dispatch_core_chained(ch_copies, structure_info, ctx);
+            break;
+        case ExecutionMode::CHAINED_INDIRECT:
+            raw = dispatch_core_chained_indirect(ch_copies, structure_info, ctx);
+            break;
+        default:
+            raw = dispatch_core(ch_copies, structure_info);
+            break;
+        }
 
         return collect_gpu_outputs(raw, ch_copies, structure_info);
     }
@@ -165,7 +187,7 @@ protected:
 
         if (is_native_non_double) {
             const size_t out_idx = find_first_output_index();
-            const size_t allocated = m_resources.buffer_allocated_bytes(out_idx);
+            const size_t allocated = m_resources.buffer_allocated_bytes(dispatch_key(), out_idx);
             if (allocated > 0) {
                 std::vector<uint8_t> raw_bytes(allocated);
                 download_binding(out_idx, raw_bytes.data(), allocated);

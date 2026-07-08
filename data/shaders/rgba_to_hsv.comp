@@ -1,0 +1,22 @@
+#version 460
+
+#include "include/vision_common.glsl"
+#include "include/vision_colorspace.glsl"
+
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
+layout(set = 0, binding = 0, rgba32f) writeonly uniform image2D out_image;
+layout(set = 0, binding = 1, rgba32f) readonly uniform image2D in_image;
+
+void main()
+{
+    const ivec2 coord = thread_coord();
+    const ivec2 sz = imageSize(out_image);
+    if (coord.x >= sz.x || coord.y >= sz.y)
+        return;
+
+    const vec4 rgba = imageLoad(in_image, coord);
+    const vec3 hsv = rgb_to_hsv(rgba.rgb);
+
+    imageStore(out_image, coord, vec4(hsv, rgba.a));
+}

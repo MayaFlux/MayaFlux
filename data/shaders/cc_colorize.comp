@@ -1,0 +1,98 @@
+#version 460
+#include "include/vision_common.glsl"
+#include "include/vision_cc.glsl"
+#include "include/vision_colorspace.glsl"
+
+layout(local_size_x = 8, local_size_y = 8) in;
+
+layout(set = 0, binding = 0, rgba32f) uniform writeonly image2D out_image;
+layout(set = 0, binding = 1, rgba32f) uniform readonly image2D in_image;
+
+layout(set = 0, binding = 2, std430) buffer ParentBuf {
+    uint parent[];
+};
+
+layout(set = 0, binding = 3, std430) buffer ChangedBuf {
+    uint changed[1];
+};
+
+layout(set = 0, binding = 4, std430) buffer LabelLutBuf {
+    uint label_lut[];
+};
+
+layout(set = 0, binding = 5, std430) buffer CountBuf {
+    uint compact_count[1];
+};
+
+layout(set = 0, binding = 6, std430) buffer DenseBuf {
+    uint dense_label[];
+};
+
+layout(set = 0, binding = 7, std430) buffer BoundsMinBuf {
+    uvec2 bounds_min[];
+};
+
+layout(set = 0, binding = 8, std430) buffer BoundsMaxBuf {
+    uvec2 bounds_max[];
+};
+
+layout(set = 0, binding = 9, std430) buffer BoundsCountBuf {
+    uint bounds_count[];
+};
+
+layout(push_constant) uniform PushConstants {
+    uint width;
+    uint height;
+} pc;
+
+/**
+ * @brief Finds the root of x with path halving.
+ */
+uint find_root(uint x)
+{
+    uint p = parent[x];
+    while (p != x) {
+        uint gp = parent[p];
+        atomicCompSwap(parent[x], p, gp);
+        x = p;
+        p = parent[x];
+    }
+    return x;
+}
+
+/**
+ * @brief Derives a stable, visually distinct hue from an arbitrary root
+ *        index via a multiplicative hash, then converts to RGB at fixed
+ *        saturation and value.
+ */
+vec3 color_for_root(uint root)
+{
+    uint h = root * 2654435761u;
+    float hue = float(h & 0xFFFFu) / 65536.0;
+    return hsv_to_rgb(vec3(hue, 0.85, 0.95));
+}
+
+/**
+ * @brief Colorizes each foreground pixel by its connected component root.
+ *        Background pixels are written black. Bindings 3 through 9 are
+ *        unused here but declared to match cc_pipeline's fixed binding
+ *        layout, shared across every stage in the CC chain.
+ */
+void main()
+{
+    const ivec2 coord = thread_coord();
+    if (coord.x >= int(pc.width) || coord.y >= int(pc.height))
+        return;
+
+    const uint idx = cc_flat_index(uvec2(coord), pc.width);
+    const uint p = parent[idx];
+
+    if (p == CC_BACKGROUND) {
+        imageStore(out_image, coord, vec4(0.0, 0.0, 0.0, 1.0));
+        return;
+    }
+
+    const uint root = find_root(idx);
+    const vec3 color = color_for_root(root);
+    imageStore(out_image, coord, vec4(color, 1.0));
+}

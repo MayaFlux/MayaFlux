@@ -13,6 +13,57 @@ struct VertexAttribute;
 
 namespace MayaFlux::Portal::Graphics {
 
+/**
+ * @brief Resolve the extra vk::BufferUsageFlags a BufferUsageHint requires,
+ *        on top of whatever base usage the caller already applies.
+ */
+[[nodiscard]] inline vk::BufferUsageFlags to_buffer_usage_flags(BufferUsageHint hint)
+{
+    switch (hint) {
+    case BufferUsageHint::INDIRECT:
+        return vk::BufferUsageFlagBits::eIndirectBuffer;
+    case BufferUsageHint::COMPUTE_STORAGE:
+        return vk::BufferUsageFlagBits::eStorageBuffer;
+    default:
+        break;
+    }
+
+    vk::BufferUsageFlags flags = vk::BufferUsageFlagBits::eTransferSrc | vk::BufferUsageFlagBits::eTransferDst;
+
+    switch (hint) {
+    case BufferUsageHint::STAGING:
+        break;
+    case BufferUsageHint::DEVICE:
+    case BufferUsageHint::COMPUTE:
+        flags |= vk::BufferUsageFlagBits::eStorageBuffer;
+        break;
+    case BufferUsageHint::VERTEX:
+        flags |= vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer;
+        break;
+    case BufferUsageHint::INDEX:
+        flags |= vk::BufferUsageFlagBits::eIndexBuffer;
+        break;
+    case BufferUsageHint::UNIFORM:
+        flags |= vk::BufferUsageFlagBits::eUniformBuffer;
+        break;
+    case BufferUsageHint::UNIFORM_BDA:
+        flags |= vk::BufferUsageFlagBits::eUniformBuffer
+            | vk::BufferUsageFlagBits::eShaderDeviceAddress;
+        break;
+    case BufferUsageHint::STORAGE_BDA:
+        flags |= vk::BufferUsageFlagBits::eStorageBuffer
+            | vk::BufferUsageFlagBits::eShaderDeviceAddress;
+        break;
+    case BufferUsageHint::HOST_STORAGE:
+        flags |= vk::BufferUsageFlagBits::eStorageBuffer;
+        break;
+    default:
+        break;
+    }
+
+    return flags;
+}
+
 using ShaderID = uint64_t;
 using DescriptorSetID = uint64_t;
 using CommandBufferID = uint64_t;
@@ -42,6 +93,23 @@ struct ShaderCompilerConfig {
     std::unordered_map<std::string, std::string> defines; ///< Preprocessor macros
 
     ShaderCompilerConfig() = default;
+};
+
+/**
+ * @struct GpuComputeConfig
+ * @brief Plain-data description of the compute shader to dispatch.
+ *
+ * Either shader_path or shader_id must be set. If shader_id is not
+ * INVALID_SHADER it takes precedence and shader_path is ignored,
+ * allowing callers who already hold a compiled ShaderID (e.g. from
+ * ShaderFoundry::load_shader(const ShaderSpec&)) to bypass file
+ * resolution entirely.
+ */
+struct GpuComputeConfig {
+    std::string shader_path;
+    std::array<uint32_t, 3> workgroup_size { 256, 1, 1 };
+    size_t push_constant_size { 0 };
+    ShaderID shader_id { INVALID_SHADER };
 };
 
 /**

@@ -1,0 +1,48 @@
+#version 460
+
+#include "include/vision_common.glsl"
+
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
+layout(set = 0, binding = 0, rgba32f) writeonly uniform image2D out_image;
+layout(set = 0, binding = 1, rgba32f) readonly uniform image2D in_image;
+
+const float PI = 3.14159265358979;
+
+/**
+ * @brief Quantize a signed gradient angle in [-pi, pi] to the nearest of
+ *        four discrete directions: 0, 45, 90, 135 degrees. Returns the
+ *        integer offset pair for the positive-side neighbor along that
+ *        direction; the negative-side neighbor is its negation.
+ */
+ivec2 quantized_direction(float angle)
+{
+    float deg = mod(degrees(angle) + 180.0, 180.0);
+
+    if (deg < 22.5 || deg >= 157.5)
+        return ivec2(1, 0);
+    if (deg < 67.5)
+        return ivec2(1, 1);
+    if (deg < 112.5)
+        return ivec2(0, 1);
+    return ivec2(1, -1);
+}
+
+void main()
+{
+    const ivec2 coord = thread_coord();
+    const ivec2 sz = imageSize(out_image);
+    if (coord.x >= sz.x || coord.y >= sz.y)
+        return;
+
+    const vec4 self = sample_clamped(in_image, coord);
+    const float mag = self.r;
+    const float angle = self.g;
+
+    const ivec2 dir = quantized_direction(angle);
+    const float mag_pos = sample_clamped(in_image, coord + dir).r;
+    const float mag_neg = sample_clamped(in_image, coord - dir).r;
+
+    const float suppressed = (mag >= mag_pos && mag >= mag_neg) ? mag : 0.0;
+    imageStore(out_image, coord, vec4(suppressed, suppressed, suppressed, 1.0));
+}

@@ -1,0 +1,50 @@
+#version 460
+
+#extension GL_KHR_shader_subgroup_basic : require
+#extension GL_KHR_shader_subgroup_arithmetic : require
+
+layout(local_size_x = 8, local_size_y = 8) in;
+
+#include "include/vision_common.glsl"
+#include "include/vision_relax.glsl"
+
+layout(set = 0, binding = 0, rgba32f) uniform image2D io_edges;
+layout(set = 0, binding = 2, std430) buffer ChangedBuf {
+    uint changed[];
+};
+
+layout(push_constant) uniform PC {
+    uint width;
+    uint height;
+} pc;
+
+const float STRONG = 1.0;
+const float WEAK = 0.5;
+
+/**
+ * @brief One hysteresis relaxation pass. Weak pixels adjacent to a strong
+ *        pixel are promoted to strong. Strong pixels are stable and never
+ *        revert. Sets changed[0] if any pixel was promoted this pass.
+ */
+void main()
+{
+    ivec2 coord = thread_coord();
+    if (coord.x >= int(pc.width) || coord.y >= int(pc.height))
+        return;
+
+    float self_val = imageLoad(io_edges, coord).r;
+    bool changed_here = false;
+
+    if (self_val == WEAK) {
+        FOR_EACH_8NEIGHBOR(coord, pc.width, pc.height,
+        {
+            if (imageLoad(io_edges, nc).r == STRONG) {
+                imageStore(io_edges, coord, vec4(STRONG, 0.0, 0.0, 1.0));
+                changed_here = true;
+                break;
+            }
+        } ) ;
+}
+
+REPORT_CHANGED(changed_here, changed);
+}

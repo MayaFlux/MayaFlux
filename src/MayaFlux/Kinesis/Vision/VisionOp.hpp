@@ -1,5 +1,7 @@
 #pragma once
 
+#include "MayaFlux/Transitive/Reflect/EnumReflect.hpp"
+
 /**
  * @file VisionOp.hpp
  * @brief Declarative description of a Kinesis::Vision processing sequence.
@@ -111,6 +113,11 @@ struct TrackKeypointsParams {
     float error_threshold = 0.3F;
 };
 
+struct ConnectedComponentsParams {
+    bool export_labels { false };
+    bool with_colors { false };
+};
+
 struct FindContoursParams {
     float min_area { 0.0F };
     uint32_t max_contours { 0 };
@@ -135,6 +142,7 @@ using VisionParams = std::variant<
     HarrisParams,
     ExtractPeaksParams,
     TrackKeypointsParams,
+    ConnectedComponentsParams,
     FindContoursParams>;
 
 /**
@@ -281,6 +289,12 @@ struct VisionSequence {
                 ExtractPeaksParams { .threshold = threshold, .nms_radius = nms_radius });
         }
 
+        Builder& connected_components(bool export_labels = false, bool with_colors = false)
+        {
+            return push(VisionOp::ConnectedComponents,
+                ConnectedComponentsParams { .export_labels = export_labels, .with_colors = with_colors });
+        }
+
         Builder& track_keypoints(
             uint32_t window_radius = 7,
             uint32_t max_iterations = 20,
@@ -327,5 +341,69 @@ struct VisionSequence {
         }
     };
 };
+
+/**
+ * @brief Combine a hash into an existing seed, FNV-style.
+ */
+inline void hash_combine(size_t& seed, size_t value)
+{
+    seed ^= value + 0x9e3779b9U + (seed << 6) + (seed >> 2);
+}
+
+/**
+ * @brief Hash a VisionStep's op and parameters together.
+ *
+ * Used to key GPU dispatch memoization within a single VisionGpuExecutor::run()
+ * call, so an op run earlier in a sequence with identical parameters can be
+ * reused rather than redispatched (e.g. Canny reusing an earlier Sobel step).
+ */
+inline size_t hash_vision_step(VisionOp op, const VisionParams& params)
+{
+    size_t seed = std::hash<std::string_view> {}(Reflect::enum_to_string(op));
+
+    std::visit([&seed](const auto& p) {
+        using T = std::decay_t<decltype(p)>;
+        if constexpr (std::is_same_v<T, std::monostate>) {
+        } else if constexpr (std::is_same_v<T, ThresholdParams>) {
+            hash_combine(seed, std::hash<float> {}(p.value));
+        } else if constexpr (std::is_same_v<T, ThresholdAdaptiveParams>) {
+            hash_combine(seed, std::hash<uint32_t> {}(p.block_size));
+            hash_combine(seed, std::hash<float> {}(p.offset));
+        } else if constexpr (std::is_same_v<T, NormalizeRangeParams>) {
+            hash_combine(seed, std::hash<float> {}(p.lo));
+            hash_combine(seed, std::hash<float> {}(p.hi));
+        } else if constexpr (std::is_same_v<T, GaussianBlurParams>) {
+            hash_combine(seed, std::hash<float> {}(p.sigma));
+        } else if constexpr (std::is_same_v<T, FilterSeparableParams>) {
+            for (float v : p.kernel_x)
+                hash_combine(seed, std::hash<float> {}(v));
+            for (float v : p.kernel_y)
+                hash_combine(seed, std::hash<float> {}(v));
+        } else if constexpr (std::is_same_v<T, CannyParams>) {
+            hash_combine(seed, std::hash<float> {}(p.sigma));
+            hash_combine(seed, std::hash<float> {}(p.low_threshold));
+            hash_combine(seed, std::hash<float> {}(p.high_threshold));
+        } else if constexpr (std::is_same_v<T, MorphParams>) {
+            hash_combine(seed, std::hash<uint32_t> {}(p.radius));
+        } else if constexpr (std::is_same_v<T, HarrisParams>) {
+            hash_combine(seed, std::hash<float> {}(p.k));
+            hash_combine(seed, std::hash<float> {}(p.sigma));
+        } else if constexpr (std::is_same_v<T, ExtractPeaksParams>) {
+            hash_combine(seed, std::hash<float> {}(p.threshold));
+            hash_combine(seed, std::hash<uint32_t> {}(p.nms_radius));
+        } else if constexpr (std::is_same_v<T, TrackKeypointsParams>) {
+            hash_combine(seed, std::hash<uint32_t> {}(p.window_radius));
+            hash_combine(seed, std::hash<uint32_t> {}(p.max_iterations));
+            hash_combine(seed, std::hash<float> {}(p.eigen_threshold));
+            hash_combine(seed, std::hash<float> {}(p.error_threshold));
+        } else if constexpr (std::is_same_v<T, FindContoursParams>) {
+            hash_combine(seed, std::hash<float> {}(p.min_area));
+            hash_combine(seed, std::hash<uint32_t> {}(p.max_contours));
+        }
+    },
+        params);
+
+    return seed;
+}
 
 } // namespace MayaFlux::Kinesis::Vision

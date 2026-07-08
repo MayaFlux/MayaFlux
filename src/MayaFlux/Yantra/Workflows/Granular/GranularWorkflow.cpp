@@ -662,7 +662,7 @@ Datum<Kakshya::RegionGroup> SortOp::sort_implementation(
         const uint32_t n_passes = stage_count * (stage_count + 1U) / 2U;
 
         auto executor = std::make_shared<ShaderExecutionContext<>>(
-            GpuShaderConfig {
+            GpuComputeConfig {
                 .shader_path = "sort_by_attribute.comp",
                 .workgroup_size = { 256, 1, 1 },
                 .push_constant_size = sizeof(SortPC) });

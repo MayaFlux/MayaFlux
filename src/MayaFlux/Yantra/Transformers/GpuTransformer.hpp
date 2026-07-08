@@ -18,7 +18,7 @@ namespace MayaFlux::Yantra {
  * @code
  * auto op = std::make_shared<GpuTransformer<>>(
  *     std::make_shared<GpuExecutionContext<>>(
- *         GpuShaderConfig { "my_shader.comp", { 256, 1, 1 }, sizeof(MyPC) }));
+ *         GpuComputeConfig { "my_shader.comp", { 256, 1, 1 }, sizeof(MyPC) }));
  * op->get_executor()->input(data).output(output_bytes).push(pc);
  * pipeline->add_operation(op, "my_shader");
  * @endcode

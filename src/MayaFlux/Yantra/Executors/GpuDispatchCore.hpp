@@ -12,6 +12,8 @@ class VKImage;
 
 namespace MayaFlux::Yantra {
 
+class GpuDispatchCore;
+
 /**
  * @struct GpuChannelResult
  * @brief Erased output of a GPU dispatch: reconstructed float data plus
@@ -20,6 +22,28 @@ namespace MayaFlux::Yantra {
 struct GpuChannelResult {
     std::vector<float> primary;
     std::unordered_map<size_t, std::vector<uint8_t>> aux;
+};
+
+/**
+ * @struct DependencyStage
+ * @brief One stage in a dispatch_core_dependency call.
+ *
+ * stage_fn is invoked with this context as the active target, exactly as
+ * if the caller had just called swap_shader(config) and were about to call
+ * dispatch_core — stage_image_at, set_binding_data, stage_passthrough,
+ * set_push_constants all apply normally inside stage_fn. Works identically
+ * for image-bearing and buffer-only shaders; nothing about this struct is
+ * image-specific.
+ *
+ * hazard_fn runs immediately after stage_fn, once this stage's resources
+ * (e.g. an image just allocated inside stage_fn) actually exist. Returns
+ * the hazard list for this stage; may be empty if nothing downstream in
+ * the same dependency call depends on this stage's output.
+ */
+struct DependencyStage {
+    GpuComputeConfig config;
+    std::function<void(GpuDispatchCore&)> stage_fn;
+    std::function<std::vector<Portal::Graphics::HazardResource>(GpuDispatchCore&)> hazard_fn;
 };
 
 /**
@@ -37,7 +61,7 @@ struct GpuChannelResult {
  */
 class MAYAFLUX_API GpuDispatchCore {
 public:
-    explicit GpuDispatchCore(GpuShaderConfig config);
+    explicit GpuDispatchCore(GpuComputeConfig config);
     virtual ~GpuDispatchCore() = default;
 
     GpuDispatchCore(const GpuDispatchCore&) = delete;
@@ -85,6 +109,32 @@ public:
         set_binding_data(index, std::span<const T>(data));
     }
 
+    void ensure_shared_buffer(size_t binding_index, size_t element_count,
+        GpuBufferBinding::ElementType element_type,
+        Portal::Graphics::BufferUsageHint usage_hint = Portal::Graphics::BufferUsageHint::COMPUTE_STORAGE)
+    {
+        m_resources.ensure_shared_buffer(binding_index, element_count, element_type, usage_hint);
+        if (binding_index >= m_shared_bindings.size())
+            m_shared_bindings.resize(binding_index + 1, 0);
+        m_shared_bindings[binding_index] = 1;
+    }
+
+    void upload_shared_raw(size_t binding_index, const uint8_t* data, size_t byte_size)
+    {
+        m_resources.upload_shared_raw(binding_index, data, byte_size);
+    }
+
+    void download_shared(size_t binding_index, void* dest, size_t byte_size)
+    {
+        m_resources.download_shared(binding_index, dest, byte_size);
+    }
+
+    [[nodiscard]] Portal::Graphics::HazardResource shared_buffer_hazard(
+        size_t binding_index, const GpuBufferBinding& spec) const
+    {
+        return m_resources.make_shared_buffer_hazard(binding_index, spec);
+    }
+
     /**
      * @brief Declare the byte capacity of an output binding independently
      *        of input data.  Required for edge lists, histograms, count
@@ -125,6 +175,57 @@ public:
      * @param byte_size Size in bytes to read back (must not exceed allocated size).
      */
     void download_binding(size_t index, void* dest, size_t byte_size);
+
+    /**
+     * @brief Switch which shader subsequent dispatch_core calls target.
+     *
+     * No longer destroys any GpuResourceManager state: each shader path
+     * is a persistent key in GpuResourceManager, created once and reused.
+     * Switching back to a previously-used shader is free. Preserves all
+     * staged image and buffer bindings, same as before.
+     *
+     * Use to drive a multi-op sequence through one context: stage the input
+     * image, call swap_shader + dispatch_core per op, pipe get_output_image(0)
+     * back in via stage_image between steps.
+     *
+     * @param config Shader config for the next dispatch.
+     */
+    void swap_shader(GpuComputeConfig config)
+    {
+        m_gpu_config = std::move(config);
+        update_dispatch_key_cache();
+    }
+
+    /**
+     * @brief Register a VKImage at an explicit binding index.
+     *
+     * Dispatches to the storage or sampled path based on kind. The image
+     * will be transitioned to eGeneral (STORAGE) or eShaderReadOnlyOptimal
+     * (SAMPLED) if not already there.
+     *
+     * @param binding_index Index matching the declared image binding.
+     * @param image         Initialised VKImage.
+     * @param kind           IMAGE_STORAGE or IMAGE_SAMPLED.
+     * @param sampler        Vulkan sampler handle. Required for IMAGE_SAMPLED,
+     *                       ignored for IMAGE_STORAGE.
+     */
+    void stage_image_at(size_t binding_index,
+        std::shared_ptr<Core::VKImage> image,
+        GpuBufferBinding::ElementType kind,
+        vk::Sampler sampler = nullptr);
+
+    /**
+     * @brief The key used for this context's GpuResourceManager unit.
+     *
+     * shader_path when non-empty (named .comp files). Falls back to the
+     * numeric shader_id when shader_path is empty, which is always the case
+     * for assembled ShaderSpec configs (config_from_spec never sets
+     * shader_path — only shader_id, via ShaderFoundry's content-hash cache).
+     * Without this fallback, every assembled shader collapses onto the same
+     * empty-string key and silently overwrites the previous assembled
+     * shader's pipeline/bindings.
+     */
+    [[nodiscard]] const std::string& dispatch_key() const { return m_cached_dispatch_key; }
 
 protected:
     /**
@@ -174,16 +275,6 @@ protected:
     void stage_passthrough(size_t binding_index, const void* data, size_t byte_size);
 
     /**
-     * @brief Register a VKImage for an IMAGE_STORAGE binding.
-     *
-     * The image will be transitioned to eGeneral layout if not already there.
-     *
-     * @param binding_index Index matching the IMAGE_STORAGE declaration.
-     * @param image         Initialised VKImage.
-     */
-    void stage_image_storage(size_t binding_index, std::shared_ptr<Core::VKImage> image);
-
-    /**
      * @brief Stage a flat native-typed byte buffer for FLOAT32 bindings,
      *        bypassing the double-to-float cast in flatten_channels_to_staging.
      *
@@ -201,20 +292,7 @@ protected:
      */
     void stage_native_bytes(size_t binding_index, const void* data, size_t byte_size);
 
-    /**
-     * @brief Register a VKImage + sampler for an IMAGE_SAMPLED binding.
-     *
-     * The image will be transitioned to eShaderReadOnlyOptimal if needed.
-     *
-     * @param binding_index Index matching the IMAGE_SAMPLED declaration.
-     * @param image         Initialised VKImage.
-     * @param sampler       Vulkan sampler handle.
-     */
-    void stage_image_sampled(size_t binding_index,
-        std::shared_ptr<Core::VKImage> image,
-        vk::Sampler sampler);
-
-    [[nodiscard]] const GpuShaderConfig& gpu_config() const;
+    [[nodiscard]] const GpuComputeConfig& gpu_config() const;
 
     /**
      * @brief Full single-pass dispatch.  Drives prepare_gpu_inputs,
@@ -243,6 +321,24 @@ protected:
         const ExecutionContext& ctx);
 
     /**
+     * @brief Multi-pass dispatch where a GPU-resident indirect buffer gates
+     *        each pass's workgroup count instead of a fixed pass_count.
+     *
+     * Calls dispatch_batched_indirect on GpuResourceManager and reads back
+     * once after all passes.
+     *
+     * @param channels       Extracted double channels.
+     * @param structure_info Dimension/modality metadata.
+     * @param ctx            ExecutionContext carrying pass_count, pc_updater,
+     *                        and indirect_dispatch_binding.
+     * @return GpuChannelResult containing primary float readback and aux buffers.
+     */
+    GpuChannelResult dispatch_core_chained_indirect(
+        const std::vector<std::vector<double>>& channels,
+        const DataStructureInfo& structure_info,
+        const ExecutionContext& ctx);
+
+    /**
      * @brief Non-blocking variant of dispatch_core.
      *
      * Performs the full setup (on_before_gpu_dispatch, prepare_gpu_inputs,
@@ -258,6 +354,25 @@ protected:
     [[nodiscard]] Portal::Graphics::FenceID dispatch_core_async(
         const std::vector<std::vector<double>>& channels,
         const DataStructureInfo& structure_info);
+
+    /**
+     * @brief Multi-pipeline dependency dispatch.
+     *
+     * For each stage, in order: applies its shader config (swap_shader
+     * equivalent), invokes stage_fn to perform whatever staging that stage
+     * needs, ensures its GpuResourceManager unit exists, binds its
+     * descriptors, invokes hazard_fn to resolve hazard resources now that
+     * this stage's data exists, then accumulates a Portal::Graphics::ComputeStage.
+     * After every stage is prepared, records and submits the full sequence in
+     * one command buffer via GpuResourceManager::dispatch_sequence.
+     *
+     * Restores the context's original shader config, bindings, and staged
+     * data after the sequence runs, so a subsequent unrelated dispatch_core
+     * call on this context is unaffected.
+     *
+     * @param stages Ordered list of stage descriptions.
+     */
+    void dispatch_core_dependency(const std::vector<DependencyStage>& stages);
 
     /**
      * @brief Effective element count used by the last dispatch_core or
@@ -327,6 +442,7 @@ protected:
     std::vector<size_t> m_output_size_overrides;
     std::vector<std::vector<uint8_t>> m_passthrough_bytes;
     std::vector<std::vector<uint8_t>> m_binding_data;
+    std::vector<uint8_t> m_shared_bindings;
 
     struct ImageBinding {
         std::shared_ptr<Core::VKImage> image;
@@ -336,7 +452,8 @@ protected:
     std::vector<ImageBinding> m_image_bindings;
 
 private:
-    GpuShaderConfig m_gpu_config;
+    GpuComputeConfig m_gpu_config;
+    std::string m_cached_dispatch_key;
 
     size_t m_last_effective_element_count {};
 
@@ -344,6 +461,9 @@ private:
     /// been called or flatten_native_variants_to_staging() produced output.
     /// Takes precedence over m_staging_floats in prepare_gpu_inputs.
     std::vector<uint8_t> m_native_staging_bytes;
+
+    void update_dispatch_key_cache();
+    void bind_all_descriptors();
 };
 
 } // namespace MayaFlux::Yantra

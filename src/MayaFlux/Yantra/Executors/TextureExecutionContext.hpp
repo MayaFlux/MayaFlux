@@ -70,22 +70,69 @@ public:
      *                      Ignored when mode is SCALAR.
      * @param mode          Controls what collect_gpu_outputs / collect_result return.
      * @param image_binding Binding index at which the input image is staged.
-     *                      Default 1 (binding 0 reserved for output storage image
-     *                      in CONTAINER mode; callers using SCALAR mode may set 0).
-     * @param aux_bindings  Additional buffer bindings to declare
+     *                      Default 1.
+     * @param aux_bindings  Additional buffer bindings to declare.
+     * @param image_access  Access mode for the input image binding: IMAGE_SAMPLED
+     *                      (default) or IMAGE_STORAGE.
+     * @param output_binding Binding index for the output storage image.
+     *                      Ignored when mode is SCALAR. Default 0.
      */
-    explicit TextureExecutionContext(
-        GpuShaderConfig config,
+    TextureExecutionContext(
+        GpuComputeConfig config,
         Portal::Graphics::ImageFormat output_format = Portal::Graphics::ImageFormat::RGBA8,
         OutputMode mode = OutputMode::CONTAINER,
-        size_t image_binding = 1,
-        std::vector<GpuBufferBinding> aux_bindings = {})
+        uint32_t image_binding = 1,
+        std::vector<GpuBufferBinding> aux_bindings = {},
+        GpuBufferBinding::ElementType image_access = GpuBufferBinding::ElementType::IMAGE_SAMPLED,
+        uint32_t output_binding = 0)
         : Base(std::move(config))
         , m_output_format(output_format)
         , m_output_mode(mode)
-        , m_image_binding(image_binding)
         , m_aux_bindings(std::move(aux_bindings))
     {
+        m_image_slots.push_back({ .binding = { .set = 0,
+                                      .binding = image_binding,
+                                      .direction = GpuBufferBinding::Direction::INPUT,
+                                      .element_type = image_access } });
+        if (m_output_mode != OutputMode::SCALAR) {
+            m_image_slots.push_back({ .binding = { .set = 0,
+                                          .binding = output_binding,
+                                          .direction = GpuBufferBinding::Direction::OUTPUT,
+                                          .element_type = GpuBufferBinding::ElementType::IMAGE_STORAGE } });
+        }
+    }
+
+    /**
+     * @brief Construct from an explicit, fully-specified binding list.
+     *
+     * For dispatch shapes the positional constructor's image/aux split does
+     * not fit cleanly: any combination of input image, output image, and
+     * SSBOs declared directly as GpuBufferBinding entries. mode still governs
+     * collect_gpu_outputs / collect_result; the caller is responsible for the
+     * binding list matching that mode (e.g. an OUTPUT IMAGE_STORAGE entry
+     * present whenever mode != SCALAR).
+     *
+     * @param config   Shader path, workgroup size, push constant size.
+     * @param bindings Full binding list, image and buffer entries mixed freely.
+     * @param mode     Controls what collect_gpu_outputs / collect_result return.
+     */
+    TextureExecutionContext(
+        GpuComputeConfig config,
+        const std::vector<GpuBufferBinding>& bindings,
+        OutputMode mode = OutputMode::SCALAR)
+        : Base(std::move(config))
+        , m_output_format(Portal::Graphics::ImageFormat::RGBA8)
+        , m_output_mode(mode)
+    {
+        for (const auto& b : bindings) {
+            const bool is_image = b.element_type == GpuBufferBinding::ElementType::IMAGE_STORAGE
+                || b.element_type == GpuBufferBinding::ElementType::IMAGE_SAMPLED;
+            if (is_image) {
+                m_image_slots.push_back({ .binding = b });
+            } else {
+                m_aux_bindings.push_back(b);
+            }
+        }
     }
 
     /**
@@ -100,6 +147,49 @@ public:
      * @param layer Array layer index. Must be < TextureContainer::get_layer_count().
      */
     void set_input_layer(uint32_t layer) { m_pending_layer = layer; }
+
+    /**
+     * @brief Override the output storage image dimensions for the next dispatch.
+     *
+     * When set, on_before_gpu_dispatch allocates the output image at these
+     * dimensions rather than the input container dimensions, and
+     * calculate_dispatch_size dispatches workgroups to cover this extent.
+     * Callers are responsible for supplying matching push constants so the
+     * shader maps output pixels to the correct source coordinates.
+     *
+     * Pass std::nullopt to restore container-derived sizing.
+     *
+     * @param w Output width in pixels.
+     * @param h Output height in pixels.
+     */
+    void set_output_dimensions(uint32_t w, uint32_t h)
+    {
+        m_output_dim_override = { w, h };
+    }
+
+    void clear_output_dimensions()
+    {
+        m_output_dim_override = std::nullopt;
+    }
+
+    /**
+     * @brief Direct access to an image slot's binding descriptor by index.
+     *
+     * Mutating .direction is used by callers driving dispatch_core_chained
+     * directly, where the batched-dispatch cross-pass barrier only fires for
+     * INPUT_OUTPUT. Caller is responsible for restoring OUTPUT afterward if
+     * the slot's normal dispatch_async path expects that.
+     */
+    GpuBufferBinding& slot_binding(uint32_t binding_index)
+    {
+        for (auto& s : m_image_slots) {
+            if (s.binding.binding == binding_index)
+                return s.binding;
+        }
+        error<std::runtime_error>(Journal::Component::Yantra, Journal::Context::BufferProcessing,
+            std::source_location::current(),
+            "TextureExecutionContext: no image slot at binding {}", binding_index);
+    }
 
     // =========================================================================
     // Async dispatch — mirrors ShaderExecutionContext
@@ -157,37 +247,82 @@ public:
         return collect_gpu_outputs(raw, {}, {});
     }
 
+    /**
+     * @brief Override for CHAINED mode: skips collect_gpu_outputs().
+     *
+     * Callers driving multi-pass image dispatch (e.g. ConnectedComponents
+     * merge loop) may flip an image slot to INPUT_OUTPUT for the cross-pass
+     * barrier in dispatch_batched, which leaves no OUTPUT-direction slot for
+     * collect_gpu_outputs' output_slot() lookup to find. Non-CHAINED modes
+     * are unaffected and fall through to the base implementation.
+     *
+     * @param input Ignored for CHAINED mode (image already staged manually).
+     * @param ctx   ExecutionContext; CHAINED mode requires pass_count and pc_updater.
+     */
+    output_type execute(const input_type& input, const ExecutionContext& ctx) override
+    {
+        if (ctx.mode != ExecutionMode::CHAINED && ctx.mode != ExecutionMode::CHAINED_INDIRECT)
+            return Base::execute(input, ctx);
+
+        if (!ensure_gpu_ready()) {
+            error<std::runtime_error>(
+                Journal::Component::Yantra,
+                Journal::Context::BufferProcessing,
+                std::source_location::current(),
+                "TextureExecutionContext: GPU initialisation failed");
+        }
+
+        auto [ch_copies, structure_info] = extract_inputs(input);
+
+        if (ctx.mode == ExecutionMode::CHAINED_INDIRECT) {
+            dispatch_core_chained_indirect(ch_copies, structure_info, ctx);
+        } else {
+            dispatch_core_chained(ch_copies, structure_info, ctx);
+        }
+
+        return output_type {};
+    }
+
     // =========================================================================
     // Manual image staging — for callers that already hold a VKImage
     // =========================================================================
 
     /**
-     * @brief Stage an arbitrary VKImage at the configured image binding.
+     * @brief Stage an arbitrary VKImage at the declared input image binding.
      *
-     * Bypasses container resolution.  The image must be in
-     * eShaderReadOnlyOptimal layout.  Use before dispatch_async when the
-     * source is a render-pass output or camera frame rather than a container.
+     * Bypasses container resolution. The image must be in
+     * eShaderReadOnlyOptimal layout for IMAGE_SAMPLED access, or eGeneral
+     * for IMAGE_STORAGE access. Use before dispatch_async when the source
+     * is a render-pass output or camera frame rather than a container.
      *
      * @param image   Initialized VKImage.
      * @param sampler Vulkan sampler. Defaults to the TextureLoom linear sampler
-     *                when nullptr.
+     *                when nullptr. Ignored for IMAGE_STORAGE access.
      */
     void stage_image(
         const std::shared_ptr<Core::VKImage>& image,
         vk::Sampler sampler = nullptr)
     {
-        auto s = sampler
-            ? sampler
-            : Portal::Graphics::SamplerForge::instance().get_default_linear();
-        stage_image_sampled(m_image_binding, image, s);
+        auto& slot = input_slot();
+        if (slot.binding.element_type == GpuBufferBinding::ElementType::IMAGE_STORAGE) {
+            stage_image_at(slot.binding.binding, image, GpuBufferBinding::ElementType::IMAGE_STORAGE);
+        } else {
+            auto s = sampler
+                ? sampler
+                : Portal::Graphics::SamplerForge::instance().get_default_linear();
+            stage_image_at(slot.binding.binding, image, GpuBufferBinding::ElementType::IMAGE_SAMPLED, s);
+        }
+        slot.image = image;
         m_pending_container = nullptr;
     }
 
     /**
-     * @brief Stage a TextureContainer layer at the configured image binding.
+     * @brief Stage a TextureContainer layer at the declared input image binding.
      *
      * Convenience for callers that hold a container and want explicit control
      * over layer and sampler rather than relying on Datum.container resolution.
+     * Always stages as IMAGE_SAMPLED regardless of the input slot's declared
+     * access mode.
      *
      * @param container Source TextureContainer.
      * @param layer     Array layer index (default 0).
@@ -198,12 +333,35 @@ public:
         uint32_t layer = 0,
         vk::Sampler sampler = nullptr)
     {
+        auto& slot = input_slot();
         auto img = container.to_image(layer);
         auto s = sampler
             ? sampler
             : Portal::Graphics::SamplerForge::instance().get_default_linear();
-        stage_image_sampled(m_image_binding, std::move(img), s);
+        stage_image_at(slot.binding.binding, img, GpuBufferBinding::ElementType::IMAGE_SAMPLED, s);
+        slot.image = img;
         m_pending_container = nullptr;
+    }
+
+    /**
+     * @brief Allocates the output storage image and stages it at the
+     *        declared output binding.
+     *
+     * Only called in CONTAINER or IMAGE mode, from on_before_gpu_dispatch
+     * or per-step by callers chaining multi-pass sequences. Caches by
+     * dimension: reallocates only when width or height change from the
+     * previously staged output.
+     */
+    void prepare_output_image(uint32_t width, uint32_t height)
+    {
+        auto& slot = output_slot();
+        if (!slot.image || slot.width != width || slot.height != height) {
+            slot.image = Portal::Graphics::TextureLoom::instance()
+                             .create_storage_image(width, height, m_output_format);
+            slot.width = width;
+            slot.height = height;
+        }
+        stage_image_at(slot.binding.binding, slot.image, GpuBufferBinding::ElementType::IMAGE_STORAGE);
     }
 
 protected:
@@ -212,21 +370,14 @@ protected:
     // =========================================================================
 
     /**
-     * @brief Declare the image input and storage output bindings, plus any
+     * @brief Declare the image bindings from m_image_slots, plus any
      *        aux SSBO bindings provided at construction.
      */
     [[nodiscard]] std::vector<GpuBufferBinding> declare_buffer_bindings() const override
     {
-        std::vector<GpuBufferBinding> bindings {
-            { .set = 0,
-                .binding = 0,
-                .direction = GpuBufferBinding::Direction::OUTPUT,
-                .element_type = GpuBufferBinding::ElementType::IMAGE_STORAGE },
-            { .set = 0,
-                .binding = static_cast<uint32_t>(m_image_binding),
-                .direction = GpuBufferBinding::Direction::INPUT,
-                .element_type = GpuBufferBinding::ElementType::IMAGE_SAMPLED },
-        };
+        std::vector<GpuBufferBinding> bindings;
+        for (const auto& slot : m_image_slots)
+            bindings.push_back(slot.binding);
         bindings.insert(bindings.end(), m_aux_bindings.begin(), m_aux_bindings.end());
         return bindings;
     }
@@ -244,8 +395,9 @@ protected:
     }
 
     /**
-     * @brief Stages the pending TextureContainer as IMAGE_SAMPLED and,
-     *        in CONTAINER mode, allocates the output storage image at binding 0.
+     * @brief Stages the pending TextureContainer at the declared input image
+     *        binding and, in CONTAINER or IMAGE mode, allocates the output
+     *        storage image at the declared output binding.
      */
     void on_before_gpu_dispatch(
         const std::vector<std::vector<double>>& /*channels*/,
@@ -267,12 +419,24 @@ protected:
                 }
                 img = m_pending_container->to_image(m_pending_layer, m_upload_staging);
             }
-            stage_image_sampled(m_image_binding, std::move(img), sampler);
+
+            auto& in_slot = input_slot();
+            if (in_slot.binding.element_type == GpuBufferBinding::ElementType::IMAGE_STORAGE) {
+                stage_image_at(in_slot.binding.binding, img, GpuBufferBinding::ElementType::IMAGE_STORAGE);
+            } else {
+                stage_image_at(in_slot.binding.binding, img, GpuBufferBinding::ElementType::IMAGE_SAMPLED, sampler);
+            }
+            in_slot.image = img;
 
             if (m_output_mode == OutputMode::CONTAINER
                 || m_output_mode == OutputMode::IMAGE) {
-                prepare_output_image(m_pending_container->get_width(),
-                    m_pending_container->get_height());
+                const uint32_t ow = m_output_dim_override
+                    ? m_output_dim_override->first
+                    : m_pending_container->get_width();
+                const uint32_t oh = m_output_dim_override
+                    ? m_output_dim_override->second
+                    : m_pending_container->get_height();
+                prepare_output_image(ow, oh);
             }
         }
     }
@@ -285,8 +449,17 @@ protected:
         size_t total_elements,
         const DataStructureInfo& structure_info) const override
     {
+        const auto& ws = gpu_config().workgroup_size;
+        if (m_output_dim_override) {
+            const uint32_t w = m_output_dim_override->first;
+            const uint32_t h = m_output_dim_override->second;
+            return {
+                (w + ws[0] - 1) / ws[0],
+                (h + ws[1] - 1) / ws[1],
+                1U
+            };
+        }
         if (m_pending_container) {
-            const auto& ws = gpu_config().workgroup_size;
             const uint32_t w = m_pending_container->get_width();
             const uint32_t h = m_pending_container->get_height();
             return {
@@ -299,8 +472,8 @@ protected:
     }
 
     /**
-     * @brief In CONTAINER mode: downloads the storage image at binding 0 into
-     *        a new TextureContainer placed in output.container.
+     * @brief In CONTAINER mode: downloads the storage image at the declared
+     *        output binding into a new TextureContainer placed in output.container.
      *        In SCALAR mode: returns an empty DataIO (use collect_result() instead).
      */
     output_type collect_gpu_outputs(
@@ -311,13 +484,13 @@ protected:
         if (m_output_mode == OutputMode::SCALAR)
             return output_type {};
 
-        auto img = get_output_image(0);
+        auto img = get_output_image(output_slot().binding.binding);
         if (!img) {
             error<std::runtime_error>(
                 Journal::Component::Yantra,
                 Journal::Context::BufferProcessing,
                 std::source_location::current(),
-                "TextureExecutionContext: no output image at binding 0 after dispatch");
+                "TextureExecutionContext: no output image at declared output binding after dispatch");
         }
 
         Portal::Graphics::TextureLoom::instance().transition_layout(
@@ -326,8 +499,12 @@ protected:
         if (m_output_mode == OutputMode::IMAGE)
             return output_type {};
 
-        const uint32_t w = m_pending_container ? m_pending_container->get_width() : img->get_width();
-        const uint32_t h = m_pending_container ? m_pending_container->get_height() : img->get_height();
+        const uint32_t w = m_output_dim_override
+            ? m_output_dim_override->first
+            : (m_pending_container ? m_pending_container->get_width() : img->get_width());
+        const uint32_t h = m_output_dim_override
+            ? m_output_dim_override->second
+            : (m_pending_container ? m_pending_container->get_height() : img->get_height());
 
         if (!m_output_container) {
             m_output_container = std::make_shared<Kakshya::TextureContainer>(
@@ -348,13 +525,27 @@ protected:
     }
 
 private:
+    /**
+     * @struct ImageSlot
+     * @brief One declared image binding: its GpuBufferBinding descriptor,
+     *        the currently staged VKImage, and cached dimensions.
+     *
+     * direction on the stored GpuBufferBinding distinguishes the input slot
+     * from the output slot; element_type distinguishes IMAGE_STORAGE from
+     * IMAGE_SAMPLED. Binding index is caller-configurable at construction,
+     * never hardcoded elsewhere in this class.
+     */
+    struct ImageSlot {
+        GpuBufferBinding binding;
+        std::shared_ptr<Core::VKImage> image;
+        uint32_t width {};
+        uint32_t height {};
+    };
+
     Portal::Graphics::ImageFormat m_output_format;
-    std::shared_ptr<Core::VKImage> m_output_image;
     OutputMode m_output_mode;
-    size_t m_image_binding;
     uint32_t m_pending_layer {};
-    uint32_t m_output_image_w {};
-    uint32_t m_output_image_h {};
+    std::vector<ImageSlot> m_image_slots;
 
     std::shared_ptr<Kakshya::TextureContainer> m_pending_container;
     std::shared_ptr<Kakshya::TextureContainer> m_output_container;
@@ -362,23 +553,47 @@ private:
     std::shared_ptr<Buffers::VKBuffer> m_upload_staging;
     std::vector<GpuBufferBinding> m_aux_bindings;
 
+    std::optional<std::pair<uint32_t, uint32_t>> m_output_dim_override;
+
     // =========================================================================
     // Helpers
     // =========================================================================
 
     /**
-     * @brief Allocates the output storage image and stages it at binding 0.
-     *        Only called in CONTAINER mode from on_before_gpu_dispatch.
+     * @brief Find the declared input image slot.
+     * @return Reference to the ImageSlot with Direction::INPUT.
      */
-    void prepare_output_image(uint32_t width, uint32_t height)
+    [[nodiscard]] ImageSlot& input_slot()
     {
-        if (!m_output_image || m_output_image_w != width || m_output_image_h != height) {
-            m_output_image = Portal::Graphics::TextureLoom::instance()
-                                 .create_storage_image(width, height, m_output_format);
-            m_output_image_w = width;
-            m_output_image_h = height;
+        for (auto& s : m_image_slots) {
+            if (s.binding.direction == GpuBufferBinding::Direction::INPUT)
+                return s;
         }
-        stage_image_storage(0, m_output_image);
+
+        error<std::runtime_error>(
+            Journal::Component::Yantra,
+            Journal::Context::BufferProcessing,
+            std::source_location::current(),
+            "TextureExecutionContext: no input image slot declared");
+    }
+
+    /**
+     * @brief Find the declared output image slot.
+     * @return Reference to the ImageSlot with Direction::OUTPUT.
+     * @note Only present when constructed with mode != SCALAR.
+     */
+    [[nodiscard]] ImageSlot& output_slot()
+    {
+        for (auto& s : m_image_slots) {
+            if (s.binding.direction == GpuBufferBinding::Direction::OUTPUT)
+                return s;
+        }
+
+        error<std::runtime_error>(
+            Journal::Component::Yantra,
+            Journal::Context::BufferProcessing,
+            std::source_location::current(),
+            "TextureExecutionContext: no output image slot declared (SCALAR mode?)");
     }
 
     /**

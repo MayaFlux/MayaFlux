@@ -24,6 +24,7 @@ struct ComponentResult {
     std::vector<uint32_t> label_map; ///< Per-pixel label, same size as input mask.
     std::vector<BoundingBox> boxes; ///< One BoundingBox per component, label 1..count.
     uint32_t count; ///< Number of components found.
+    bool truncated { false };
 };
 
 /**

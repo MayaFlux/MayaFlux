@@ -42,4 +42,33 @@ namespace MayaFlux::Kinesis::Vision {
     std::span<const float> mask, uint32_t w, uint32_t h,
     float min_area = 0.0F, uint32_t max_contours = 0);
 
+/**
+ * @brief Zero all pixels in @p pixels that fall outside @p contour.
+ *
+ * For each pixel in the buffer, reconstructs its normalised image-space
+ * position from its row/column index, the crop origin (@p origin_x,
+ * @p origin_y), and the pixel dimensions. Tests containment using the
+ * winding number algorithm against the contour's point polygon. Pixels
+ * outside the polygon have all channel values set to 0.
+ *
+ * The buffer is modified in place. Pixels inside the polygon are untouched.
+ *
+ * @param pixels   Interleaved float buffer, size must be w * h * channels.
+ * @param w        Buffer width in pixels.
+ * @param h        Buffer height in pixels.
+ * @param channels Channels per pixel.
+ * @param contour  Contour whose polygon defines the keep region.
+ * @param origin_x Normalised x coordinate of the buffer's left edge.
+ * @param origin_y Normalised y coordinate of the buffer's top edge.
+ * @param scale_x  Normalised width covered by one pixel column.
+ * @param scale_y  Normalised height covered by one pixel row.
+ */
+MAYAFLUX_API void apply_contour_mask(
+    std::span<float> pixels,
+    uint32_t w, uint32_t h,
+    uint32_t channels,
+    const Contour& contour,
+    float origin_x, float origin_y,
+    float scale_x, float scale_y);
+
 } // namespace MayaFlux::Kinesis::Vision

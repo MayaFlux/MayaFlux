@@ -119,10 +119,10 @@ Containers are pure storage with processing state and optional reader support. T
 
 Bridges `Datum<T>` to Vulkan SSBO and image dispatch. Executors own buffer staging, dispatch sizing, and readback. Operations delegate to executors; executors do not own computational identity.
 
-### GpuShaderConfig
+### GpuComputeConfig
 
 ```cpp
-GpuShaderConfig cfg;
+GpuComputeConfig cfg;
 cfg.shader_path        = "my_pass.comp";
 cfg.workgroup_size     = { 256, 1, 1 };
 cfg.push_constant_size = sizeof(MyPC);
@@ -148,7 +148,7 @@ Concrete executor for SSBO buffer shaders. Fluent API assigns binding indices se
 
 ```cpp
 auto exec = std::make_shared<ShaderExecutionContext<>>(
-    GpuShaderConfig { "graph_build.comp", { 256, 1, 1 }, sizeof(GraphBuildPC) });
+    GpuComputeConfig { "graph_build.comp", { 256, 1, 1 }, sizeof(GraphBuildPC) });
 
 // Sequential auto-index (0, 1, 2, 3):
 exec->input(positions, GpuBufferBinding::ElementType::VEC3_F32)
@@ -202,7 +202,7 @@ Executor for shaders operating on `VkImage`. Does not use the double-channel ext
 
 ```cpp
 TextureExecutionContext ctx(
-    GpuShaderConfig { "warp.comp", { 16, 16, 1 }, sizeof(WarpPC) },
+    GpuComputeConfig { "warp.comp", { 16, 16, 1 }, sizeof(WarpPC) },
     Portal::Graphics::ImageFormat::RGBA8,
     TextureExecutionContext::OutputMode::CONTAINER,
     /*image_binding=*/1,

@@ -1,0 +1,129 @@
+#version 460
+#extension GL_KHR_shader_subgroup_basic : enable
+#extension GL_KHR_shader_subgroup_arithmetic : enable
+#include "include/vision_common.glsl"
+#include "include/vision_cc.glsl"
+#include "include/vision_relax.glsl"
+
+layout(local_size_x = 8, local_size_y = 8) in;
+
+layout(set = 0, binding = 1, rgba32f) uniform readonly image2D in_image;
+
+layout(set = 0, binding = 2, std430) buffer ParentBuf {
+    uint parent[];
+};
+
+layout(set = 0, binding = 3, std430) buffer ChangedBuf {
+    uint changed[1];
+};
+
+layout(set = 0, binding = 4, std430) buffer LabelLutBuf {
+    uint label_lut[];
+};
+
+layout(set = 0, binding = 5, std430) buffer CountBuf {
+    uint compact_count[1];
+};
+
+layout(set = 0, binding = 7, std430) buffer BoundsMinBuf {
+    uvec2 bounds_min[];
+};
+
+layout(set = 0, binding = 8, std430) buffer BoundsMaxBuf {
+    uvec2 bounds_max[];
+};
+
+layout(set = 0, binding = 9, std430) buffer BoundsCountBuf {
+    uint bounds_count[];
+};
+
+layout(push_constant) uniform PushConstants {
+    uint width;
+    uint height;
+    uint is_final_pass;
+    uint max_components;
+} pc;
+
+/**
+ * @brief Jumps every root pointer to its grandparent, doubling reach
+ *        each pass. Standard parallel pointer-jumping: after ceil(log2(d))
+ *        passes over a chain of length d, every node points directly to
+ *        the true root.
+ */
+void main()
+{
+    const ivec2 coord = thread_coord();
+    if (coord.x >= int(pc.width) || coord.y >= int(pc.height))
+        return;
+
+    const uint idx = cc_flat_index(uvec2(coord), pc.width);
+
+    if (parent[idx] == CC_BACKGROUND) {
+        if (pc.is_final_pass != 0u) {
+            label_lut[idx] = CC_UNCLAIMED;
+            if (idx == 0u)
+                compact_count[0] = 0u;
+            if (idx < pc.max_components) {
+                bounds_min[idx] = uvec2(0xFFFFFFFFu, 0xFFFFFFFFu);
+                bounds_max[idx] = uvec2(0u, 0u);
+                bounds_count[idx] = 0u;
+            }
+        }
+        return;
+    }
+
+    bool did_change = false;
+
+    if (coord.x > 0) {
+        const uint left_idx = cc_flat_index(uvec2(coord.x - 1, coord.y), pc.width);
+        if (parent[left_idx] != CC_BACKGROUND) {
+            const uint mine = parent[idx];
+            const uint theirs = parent[left_idx];
+            const uint merged = min(mine, theirs);
+            if (merged != mine) {
+                atomicMin(parent[idx], merged);
+                did_change = true;
+            }
+            if (merged != theirs) {
+                atomicMin(parent[left_idx], merged);
+                did_change = true;
+            }
+        }
+    }
+    if (coord.y > 0) {
+        const uint top_idx = cc_flat_index(uvec2(coord.x, coord.y - 1), pc.width);
+        if (parent[top_idx] != CC_BACKGROUND) {
+            const uint mine = parent[idx];
+            const uint theirs = parent[top_idx];
+            const uint merged = min(mine, theirs);
+            if (merged != mine) {
+                atomicMin(parent[idx], merged);
+                did_change = true;
+            }
+            if (merged != theirs) {
+                atomicMin(parent[top_idx], merged);
+                did_change = true;
+            }
+        }
+    }
+
+    const uint p = parent[idx];
+    const uint gp = parent[p];
+    if (gp != p) {
+        atomicMin(parent[idx], gp);
+        did_change = true;
+    }
+
+    REPORT_CHANGED(did_change, changed);
+
+    if (pc.is_final_pass != 0u) {
+        label_lut[idx] = CC_UNCLAIMED;
+        if (idx == 0u)
+            compact_count[0] = 0u;
+        if (idx < pc.max_components) {
+            bounds_min[idx] = uvec2(0xFFFFFFFFu, 0xFFFFFFFFu);
+            bounds_max[idx] = uvec2(0u, 0u);
+            bounds_count[idx] = 0u;
+        }
+    }
+}

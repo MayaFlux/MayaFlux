@@ -68,17 +68,7 @@ class MAYAFLUX_API VKBuffer : public Buffer {
 public:
     using RenderConfig = Portal::Graphics::RenderConfig;
 
-    enum class Usage : uint8_t {
-        STAGING, ///< Host-visible staging buffer (CPU-writable, eTransferSrc|Dst)
-        DEVICE, ///< Device-local GPU-only buffer
-        COMPUTE, ///< Storage buffer for compute shaders (device-local)
-        VERTEX, ///< Vertex buffer
-        INDEX, ///< Index buffer
-        UNIFORM, ///< Uniform buffer (host-visible)
-        UNIFORM_BDA, ///< Uniform buffer with device address query support
-        STORAGE_BDA, ///< Storage buffer with device address query support
-        HOST_STORAGE, ///< Host-visible storage buffer (eStorageBuffer + eHostVisible|eHostCoherent)
-    };
+    using Usage = Portal::Graphics::BufferUsageHint;
 
     /**
      * @brief Context shared with BufferProcessors during pipeline execution

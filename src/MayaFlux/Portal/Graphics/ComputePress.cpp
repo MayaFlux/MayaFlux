@@ -392,4 +392,56 @@ void ComputePress::bind_all(
     }
 }
 
+void ComputePress::record_sequence(
+    CommandBufferID cmd_id,
+    const std::vector<ComputeStage>& stages)
+{
+    auto& foundry = *m_shader_foundry;
+
+    for (size_t i = 0; i < stages.size(); ++i) {
+        const auto& stage = stages[i];
+
+        bind_all(
+            cmd_id,
+            stage.pipeline_id,
+            stage.descriptor_set_ids,
+            stage.push_constant_data.empty() ? nullptr : stage.push_constant_data.data(),
+            stage.push_constant_data.size());
+
+        dispatch(cmd_id, stage.groups[0], stage.groups[1], stage.groups[2]);
+
+        for (const auto& hazard : stage.hazard_resources) {
+            if (hazard.binding.direction != GpuBufferBinding::Direction::INPUT_OUTPUT)
+                continue;
+
+            const bool is_image = hazard.binding.element_type == GpuBufferBinding::ElementType::IMAGE_STORAGE
+                || hazard.binding.element_type == GpuBufferBinding::ElementType::IMAGE_SAMPLED;
+
+            if (is_image) {
+                foundry.image_barrier(
+                    cmd_id,
+                    hazard.image,
+                    vk::ImageLayout::eGeneral,
+                    vk::ImageLayout::eGeneral,
+                    vk::AccessFlagBits::eShaderWrite | vk::AccessFlagBits::eShaderRead,
+                    vk::AccessFlagBits::eShaderWrite | vk::AccessFlagBits::eShaderRead,
+                    vk::PipelineStageFlagBits::eComputeShader,
+                    vk::PipelineStageFlagBits::eComputeShader);
+            } else {
+                foundry.buffer_barrier(
+                    cmd_id,
+                    hazard.buffer,
+                    vk::AccessFlagBits::eShaderWrite | vk::AccessFlagBits::eShaderRead,
+                    vk::AccessFlagBits::eShaderWrite | vk::AccessFlagBits::eShaderRead,
+                    vk::PipelineStageFlagBits::eComputeShader,
+                    vk::PipelineStageFlagBits::eComputeShader);
+            }
+        }
+
+        MF_DEBUG(Journal::Component::Portal, Journal::Context::GPUCompute,
+            "record_sequence: stage {} of {} recorded ({} hazard barriers)",
+            i + 1, stages.size(), stage.hazard_resources.size());
+    }
+}
+
 } // namespace MayaFlux::Portal::Graphics

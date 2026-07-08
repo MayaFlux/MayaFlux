@@ -601,6 +601,16 @@ void BackendResourceManager::transition_image_layout(
             barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead | vk::AccessFlagBits::eShaderWrite;
             src_stage = vk::PipelineStageFlagBits::eTopOfPipe;
             dst_stage = vk::PipelineStageFlagBits::eComputeShader;
+        } else if (old_layout == vk::ImageLayout::eGeneral && new_layout == vk::ImageLayout::eShaderReadOnlyOptimal) {
+            barrier.srcAccessMask = vk::AccessFlagBits::eShaderWrite;
+            barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
+            src_stage = vk::PipelineStageFlagBits::eComputeShader;
+            dst_stage = vk::PipelineStageFlagBits::eComputeShader;
+        } else if (old_layout == vk::ImageLayout::eShaderReadOnlyOptimal && new_layout == vk::ImageLayout::eGeneral) {
+            barrier.srcAccessMask = vk::AccessFlagBits::eShaderRead;
+            barrier.dstAccessMask = vk::AccessFlagBits::eShaderWrite;
+            src_stage = vk::PipelineStageFlagBits::eComputeShader;
+            dst_stage = vk::PipelineStageFlagBits::eComputeShader;
         } else {
             barrier.srcAccessMask = vk::AccessFlagBits::eMemoryRead | vk::AccessFlagBits::eMemoryWrite;
             barrier.dstAccessMask = vk::AccessFlagBits::eMemoryRead | vk::AccessFlagBits::eMemoryWrite;
@@ -854,11 +864,11 @@ void BackendResourceManager::download_image_data(
         barrier.subresourceRange.levelCount = image->get_mip_levels();
         barrier.subresourceRange.baseArrayLayer = 0;
         barrier.subresourceRange.layerCount = image->get_array_layers();
-        barrier.srcAccessMask = vk::AccessFlagBits::eShaderRead;
+        barrier.srcAccessMask = vk::AccessFlagBits::eShaderWrite | vk::AccessFlagBits::eShaderRead;
         barrier.dstAccessMask = vk::AccessFlagBits::eTransferRead;
 
         cmd.pipelineBarrier(
-            vk::PipelineStageFlagBits::eFragmentShader,
+            vk::PipelineStageFlagBits::eFragmentShader | vk::PipelineStageFlagBits::eComputeShader,
             vk::PipelineStageFlagBits::eTransfer,
             vk::DependencyFlags {}, {}, {}, barrier);
 

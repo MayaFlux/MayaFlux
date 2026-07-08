@@ -25,6 +25,8 @@ enum class KernelTemplate : uint8_t {
     Reduction, ///< f(x[0..n]) -> scalar; shared-memory tree reduction
     Stencil, ///< f(x[i-k..i+k]) -> y[i]; neighbourhood reads, radius in PC
     GeometryEmit, ///< Writes into vertex SSBO with atomic counter
+    BitonicSort, ///< Bitonic sort network; one thread per element
+    Convolve2D, ///< 2D separable or non-separable convolution; kernel weights in SSBO, radius in PC
 };
 
 /**
@@ -209,6 +211,12 @@ struct KernelSource {
  * Two-SSBO + one PC:
  *   SmoothStep   out[i] = smoothstep(a[i], b[i], pc[0])
  *
+ * Image body elementwise (out = f(pixel, pc)):
+ *   CompareGE           out[ch] = pixel[ch] >= pc[0] ? 1.0 : 0.0
+ *   CompareGEPreserve   out[ch] = pixel[ch] >= pc[0] ? pc[1] : pixel[ch]
+ *   ChannelDot          out = dot(pixel.rgba, pc[0..3]) broadcast to all channels
+ *   ChannelReplicate    out = pixel[pc_channel_index].xxxx (single channel to all)
+ *
  * Reduction operations (one InOut SSBO, shared memory):
  *   Sum          accumulate + into shared[lid], tree reduce
  *   Max          accumulate max into shared[lid], tree reduce
@@ -257,6 +265,11 @@ enum class KernelOp : uint8_t {
     // reduction
     Sum,
     Max,
+    // image body ops
+    CompareGE, ///< out[ch] = pixel[ch] >= pc[0] ? 1.0 : 0.0
+    CompareGEPreserve, ///< out[ch] = pixel[ch] >= pc[0] ? pc[1] : pixel[ch]
+    ChannelDot, ///< out = dot(pixel.rgba, pc[0..3]) broadcast to all channels
+    ChannelReplicate, ///< out = pixel[pc_channel_index].xxxx (single channel to all)
 };
 
 /**
@@ -288,8 +301,6 @@ struct PushConstantField {
  * which emits SPIR-V assembly via VKShaderModule::emit_spirv_asm() and
  * assembles it via VKShaderModule::create_from_spirv_asm(). No shaderc
  * or GLSL toolchain is involved.
- *
- * Binding indices start at 1. Index 0 at set 0 is engine-reserved.
  *
  * The op field selects a named operation the emitter knows how to lower
  * to SPIR-V opcodes deterministically. PC fields are consumed in
@@ -337,6 +348,12 @@ struct ShaderSpec {
         Assemble& op(KernelOp o)
         {
             m_op = o;
+            return *this;
+        }
+
+        Assemble& start_binding(uint32_t n)
+        {
+            m_next_binding = n;
             return *this;
         }
 
@@ -447,7 +464,7 @@ struct ShaderSpec {
         std::vector<BindingSlot> m_bindings;
         std::vector<PushConstantField> m_pc_fields;
         std::array<uint32_t, 3> m_workgroup { 256, 1, 1 };
-        uint32_t m_next_binding { 1 };
+        uint32_t m_next_binding { 0 };
         std::optional<KernelSource> m_kernel;
     };
 };

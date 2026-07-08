@@ -50,7 +50,7 @@ public:
  * Usage:
  * @code
  * auto exec = std::make_shared<Yantra::ShaderExecutionContext<>>(
- *     Yantra::GpuShaderConfig { "my_shader.comp", { 256, 1, 1 }, sizeof(MyPC) });
+ *     Yantra::GpuComputeConfig { "my_shader.comp", { 256, 1, 1 }, sizeof(MyPC) });
  * exec->input(input_data).output(output_bytes).push(pc);
  *
  * auto node = std::make_shared<GpuComputeNode>(std::move(exec));
