@@ -95,9 +95,10 @@ namespace {
         uint32_t block_width;
         uint32_t block_height;
     };
-    struct CCCompressPC {
+    struct CCCompressIndirectPC {
         uint32_t block_width;
         uint32_t block_height;
+        uint32_t phase;
     };
     struct CCFinalLabelPC {
         uint32_t width;
@@ -243,6 +244,7 @@ VisionGpuContexts::VisionGpuContexts()
             { .set = 0, .binding = 7, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
             { .set = 0, .binding = 8, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
             { .set = 0, .binding = 9, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
+            { .set = 0, .binding = 10, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32, .usage_hint = Portal::Graphics::BufferUsageHint::INDIRECT },
         },
         GpuBufferBinding::ElementType::IMAGE_STORAGE,
         0,
@@ -948,16 +950,29 @@ VisionResult VisionGpuExecutor::run(
             cc_ctx.execution_metadata["dependency_stages"] = cc_stages;
             cc_pipeline.execute(Datum<> {}, cc_ctx);
 
-            cc_pipeline.swap_shader({ .shader_path = "cc_compress.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(CCCompressPC) });
+            cc_pipeline.ensure_shared_buffer(10, 3, GpuBufferBinding::ElementType::UINT32,
+                Portal::Graphics::BufferUsageHint::INDIRECT);
+            const std::array<uint32_t, 3> full_grid_indirect {
+                (block_width + 7U) / 8U,
+                (block_height + 7U) / 8U,
+                1U
+            };
+            cc_pipeline.upload_shared_raw(10, reinterpret_cast<const uint8_t*>(full_grid_indirect.data()), full_grid_indirect.size() * sizeof(uint32_t));
+
+            cc_pipeline.swap_shader({ .shader_path = "cc_compress.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(CCCompressIndirectPC) });
 
             ExecutionContext compress_ctx;
-            compress_ctx.mode = ExecutionMode::CHAINED;
+            compress_ctx.mode = ExecutionMode::CHAINED_INDIRECT;
             compress_ctx.execution_metadata["pass_count"] = k_compress_passes;
-            compress_ctx.execution_metadata["passes_per_batch"] = k_compress_passes;
-            compress_ctx.execution_metadata["pc_updater"] = std::function<void(uint32_t, void*)>(
-                [block_width, block_height](uint32_t /*pass*/, void* dst) {
-                    const CCCompressPC compress_pc { .block_width = block_width, .block_height = block_height };
-                    std::memcpy(dst, &compress_pc, sizeof(CCCompressPC));
+            compress_ctx.execution_metadata["indirect_dispatch_binding"] = 10U;
+            compress_ctx.execution_metadata["pc_updater"] = std::function<void(uint32_t, uint32_t, void*)>(
+                [block_width, block_height](uint32_t /*pass*/, uint32_t phase, void* dst) {
+                    const CCCompressIndirectPC compress_pc {
+                        .block_width = block_width,
+                        .block_height = block_height,
+                        .phase = phase,
+                    };
+                    std::memcpy(dst, &compress_pc, sizeof(CCCompressIndirectPC));
                 });
             cc_pipeline.execute(Datum<> {}, compress_ctx);
 

@@ -15,20 +15,48 @@ layout(set = 0, binding = 3, std430) buffer ChangedBuf {
     uint changed[1];
 };
 
+layout(set = 0, binding = 10, std430) buffer IndirectBuf {
+    uint indirect_cmd[3];
+};
+
 layout(push_constant) uniform PushConstants {
     uint block_width;
     uint block_height;
+    uint phase;
 } pc;
 
 /**
- * @brief Compression (BUF Algorithm 1, Compression stage, adapted for
- *        chained multi-pass dispatch). Each block jumps its pointer to
- *        its grandparent, halving path length every pass. After
- *        ceil(log2(diagonal_in_blocks)) passes every block points
- *        directly to its component's true root.
+ * @brief Compression, CHAINED_INDIRECT-aware. Phase 0 is the real
+ *        grandparent-jump pass, reporting convergence via changed[0].
+ *        Phase 1 is the gate: reads changed[0] from the pass that just
+ *        ran and writes next pass's indirect workgroup count, full grid
+ *        if still converging, zero if not, then resets changed[0] for
+ *        the next real pass to report into.
+ *
+ * All-GPU convergence: once changed[0] reads 0 in the gate, every
+ * subsequent phase-0 dispatch runs with a zero workgroup count and
+ * costs no meaningful GPU time, no CPU readback or synchronization
+ * anywhere in the sequence.
  */
 void main()
 {
+    if (pc.phase == 2u) {
+        if (gl_GlobalInvocationID.x == 0u && gl_GlobalInvocationID.y == 0u) {
+            const uint did_change = changed[0];
+            if (did_change != 0u) {
+                indirect_cmd[0] = (pc.block_width + 7u) / 8u;
+                indirect_cmd[1] = (pc.block_height + 7u) / 8u;
+                indirect_cmd[2] = 1u;
+            } else {
+                indirect_cmd[0] = 0u;
+                indirect_cmd[1] = 0u;
+                indirect_cmd[2] = 0u;
+            }
+            changed[0] = 0u;
+        }
+        return;
+    }
+
     const uvec2 block_coord = gl_GlobalInvocationID.xy;
     if (block_coord.x >= pc.block_width || block_coord.y >= pc.block_height)
         return;
