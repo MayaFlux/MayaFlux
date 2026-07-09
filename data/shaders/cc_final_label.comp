@@ -5,6 +5,7 @@
 layout(local_size_x = 8, local_size_y = 8) in;
 
 layout(set = 0, binding = 0, rgba32f) uniform writeonly image2D out_image;
+layout(set = 0, binding = 1, rgba32f) uniform readonly image2D in_image;
 
 layout(set = 0, binding = 2, std430) buffer BlockLabelBuf {
     uint block_label[];
@@ -64,18 +65,27 @@ uint claim_dense_id(uint root)
     return id;
 }
 
+bool cc_pixel_foreground(ivec2 coord, uint width, uint height)
+{
+    if (coord.x >= int(width) || coord.y >= int(height))
+        return false;
+    return imageLoad(in_image, coord).r >= 0.5;
+}
+
 /**
  * @brief FinalLabeling. Each thread resolves its block's already-flat
- *        root (post-Compression, block_label[idx] IS the root directly),
- *        claims or retrieves that root's dense compact id, writes the
- *        colorized/dense label to all up-to-4 internal pixels of
- *        out_image, and folds the block's pixel-precision extent into
- *        that component's bounding box.
+ *        root, claims or retrieves that root's dense compact id, writes
+ *        the colorized label to all 4 pixel positions of the block
+ *        (block-quantized, matching the debug/visual convention), and
+ *        folds ONLY the block's genuinely-foreground pixels into that
+ *        component's bounding box.
  *
- * Bounding boxes are accumulated at pixel precision (the block's actual
- * foreground pixel positions), not block precision, since a block only
- * partially covering the image edge would otherwise overstate its extent
- * by rounding to the full 2x2 footprint.
+ * Bounding box precision is intentionally decoupled from label/color
+ * precision: a block straddling a component's true edge still colors
+ * all 4 of its pixels for visual continuity, but a background pixel
+ * within that block is excluded from bounds_min/bounds_max/bounds_count,
+ * so boxes reflect the true pixel-precision extent of the component
+ * rather than the coarser 2x2 block footprint.
  */
 void main()
 {
@@ -113,6 +123,10 @@ void main()
                 if (px.x >= int(pc.width) || px.y >= int(pc.height))
                     continue;
                 write_safe(out_image, px, color);
+
+                if (!cc_pixel_foreground(px, pc.width, pc.height))
+                    continue;
+
                 atomicMin(bounds_min[bi].x, uint(px.x));
                 atomicMin(bounds_min[bi].y, uint(px.y));
                 atomicMax(bounds_max[bi].x, uint(px.x));
