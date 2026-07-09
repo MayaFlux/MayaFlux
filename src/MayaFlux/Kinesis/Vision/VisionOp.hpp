@@ -162,6 +162,7 @@ struct VisionSequence {
     std::vector<VisionStep> steps;
     bool tracks_keypoints { false };
     bool track_follows_peaks { false };
+    bool contours_follow_cc { false };
 
     /**
      * @brief Fluent builder for VisionSequence.
@@ -327,6 +328,12 @@ struct VisionSequence {
                     && seq.steps[i].op == VisionOp::ExtractPeaks
                     && seq.steps[i + 1].op == VisionOp::TrackKeypoints)
                     seq.track_follows_peaks = true;
+                if (i + 1 < seq.steps.size()
+                    && seq.steps[i].op == VisionOp::ConnectedComponents
+                    && seq.steps[i + 1].op == VisionOp::FindContours) {
+                    seq.contours_follow_cc = true;
+                    std::get<ConnectedComponentsParams>(seq.steps[i].params).export_labels = true;
+                }
             }
             return seq;
         }
