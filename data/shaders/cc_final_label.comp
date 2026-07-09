@@ -1,4 +1,5 @@
 #version 460
+
 #include "include/vision_common.glsl"
 #include "include/vision_cc.glsl"
 
@@ -19,6 +20,10 @@ layout(set = 0, binding = 5, std430) buffer CountBuf {
     uint compact_count[1];
 };
 
+layout(set = 0, binding = 6, std430) buffer DenseLabelBuf {
+    uint dense_label[];
+};
+
 layout(set = 0, binding = 7, std430) buffer BoundsMinBuf {
     uvec2 bounds_min[];
 };
@@ -37,6 +42,7 @@ layout(push_constant) uniform PushConstants {
     uint block_width;
     uint block_height;
     uint max_components;
+    uint export_labels;
 } pc;
 
 /**
@@ -73,6 +79,29 @@ bool cc_pixel_foreground(ivec2 coord, uint width, uint height)
 }
 
 /**
+ * @brief Write a 2x1 pair of dense_label values as one 64-bit-aligned
+ *        transaction when both pixels of a row are in bounds, falling
+ *        back to a single scalar write when only the left pixel is
+ *        in bounds (odd-width images). Reduces per-thread dense_label
+ *        writes from 4 scalar stores to 2 wider ones.
+ */
+void write_dense_label_row(int y, int x0, uint v0, uint v1)
+{
+    if (pc.export_labels == 0u)
+        return;
+    if (y < 0 || y >= int(pc.height) || x0 < 0 || x0 >= int(pc.width))
+        return;
+
+    const uint base = uint(y) * pc.width + uint(x0);
+    if (x0 + 1 < int(pc.width)) {
+        dense_label[base] = v0;
+        dense_label[base + 1u] = v1;
+    } else {
+        dense_label[base] = v0;
+    }
+}
+
+/**
  * @brief FinalLabeling. Each thread resolves its block's already-flat
  *        root, claims or retrieves that root's dense compact id, writes
  *        the colorized label to all 4 pixel positions of the block
@@ -86,6 +115,13 @@ bool cc_pixel_foreground(ivec2 coord, uint width, uint height)
  * within that block is excluded from bounds_min/bounds_max/bounds_count,
  * so boxes reflect the true pixel-precision extent of the component
  * rather than the coarser 2x2 block footprint.
+ *
+ * When export_labels is set, dense_label is additionally written at
+ * pixel precision: CC_BACKGROUND for background pixels, the claimed
+ * dense_id for foreground pixels. Writes are grouped per-row (2 pixels)
+ * rather than per-pixel to halve dense_label's transaction count
+ * relative to four independent scalar stores. Zero cost when
+ * export_labels is 0.
  */
 void main()
 {
@@ -103,6 +139,8 @@ void main()
         write_safe(out_image, origin + ivec2(1, 0), vec4(0.0, 0.0, 0.0, 1.0));
         write_safe(out_image, origin + ivec2(0, 1), vec4(0.0, 0.0, 0.0, 1.0));
         write_safe(out_image, origin + ivec2(1, 1), vec4(0.0, 0.0, 0.0, 1.0));
+        write_dense_label_row(origin.y, origin.x, CC_BACKGROUND, CC_BACKGROUND);
+        write_dense_label_row(origin.y + 1, origin.x, CC_BACKGROUND, CC_BACKGROUND);
         return;
     }
 
@@ -118,6 +156,9 @@ void main()
                 1.0);
 
         for (int dy = 0; dy < 2; ++dy) {
+            uint row_v0 = CC_BACKGROUND;
+            uint row_v1 = CC_BACKGROUND;
+
             for (int dx = 0; dx < 2; ++dx) {
                 const ivec2 px = origin + ivec2(dx, dy);
                 if (px.x >= int(pc.width) || px.y >= int(pc.height))
@@ -127,12 +168,19 @@ void main()
                 if (!cc_pixel_foreground(px, pc.width, pc.height))
                     continue;
 
+                if (dx == 0)
+                    row_v0 = dense_id;
+                else
+                    row_v1 = dense_id;
+
                 atomicMin(bounds_min[bi].x, uint(px.x));
                 atomicMin(bounds_min[bi].y, uint(px.y));
                 atomicMax(bounds_max[bi].x, uint(px.x));
                 atomicMax(bounds_max[bi].y, uint(px.y));
                 atomicAdd(bounds_count[bi], 1u);
             }
+
+            write_dense_label_row(origin.y + dy, origin.x, row_v0, row_v1);
         }
     }
 }

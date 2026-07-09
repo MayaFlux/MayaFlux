@@ -105,6 +105,7 @@ namespace {
         uint32_t block_width;
         uint32_t block_height;
         uint32_t max_components;
+        uint32_t export_labels;
     };
     struct CCResetPC {
         uint32_t lut_size;
@@ -886,13 +887,14 @@ VisionResult VisionGpuExecutor::run(
             cc_pipeline.ensure_shared_buffer(3, 1, GpuBufferBinding::ElementType::UINT32);
             cc_pipeline.ensure_shared_buffer(4, static_cast<size_t>(block_width) * block_height, GpuBufferBinding::ElementType::UINT32);
             cc_pipeline.ensure_shared_buffer(5, 1, GpuBufferBinding::ElementType::UINT32);
+            cc_pipeline.ensure_shared_buffer(6, static_cast<size_t>(w) * h, GpuBufferBinding::ElementType::UINT32);
             cc_pipeline.ensure_shared_buffer(7, static_cast<size_t>(k_max_components) * 2, GpuBufferBinding::ElementType::UINT32);
             cc_pipeline.ensure_shared_buffer(8, static_cast<size_t>(k_max_components) * 2, GpuBufferBinding::ElementType::UINT32);
             cc_pipeline.ensure_shared_buffer(9, k_max_components, GpuBufferBinding::ElementType::UINT32);
 
             const CCBlockInitPC init_pc { .width = w, .height = h, .block_width = block_width, .block_height = block_height };
             const CCMergePC merge_pc { .width = w, .height = h, .block_width = block_width, .block_height = block_height };
-            const CCFinalLabelPC final_pc { .width = w, .height = h, .block_width = block_width, .block_height = block_height, .max_components = k_max_components };
+            const CCFinalLabelPC final_pc { .width = w, .height = h, .block_width = block_width, .block_height = block_height, .max_components = k_max_components, .export_labels = 1U };
 
             cc_pipeline.swap_shader({ .shader_path = "cc_reset.comp.spv", .workgroup_size = { 256, 1, 1 }, .push_constant_size = sizeof(CCResetPC) });
             cc_pipeline.set_push_constants(CCResetPC {
