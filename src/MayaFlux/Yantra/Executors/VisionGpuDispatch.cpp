@@ -111,6 +111,24 @@ namespace {
         uint32_t lut_size;
         uint32_t max_components;
     };
+    struct ContourSegmentsPC {
+        uint32_t width;
+        uint32_t height;
+        uint32_t max_segments;
+    };
+    struct ContourLinkPC {
+        uint32_t width;
+        uint32_t height;
+        uint32_t phase;
+    };
+    struct ContourEndpointResetPC {
+        uint32_t slot_count;
+    };
+    struct ContourTracePC {
+        uint32_t max_components;
+        uint32_t max_points_per_contour;
+        uint32_t phase;
+    };
 
     /** Standard 2D workgroup used by all pixel-to-pixel vision shaders */
     constexpr std::array<uint32_t, 3> k_wg2d { 8, 8, 1 };
@@ -245,12 +263,6 @@ VisionGpuContexts::VisionGpuContexts()
             { .set = 0, .binding = 8, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
             { .set = 0, .binding = 9, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
             { .set = 0, .binding = 10, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
-            { .set = 0, .binding = 11, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
-            { .set = 0, .binding = 14, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
-            { .set = 0, .binding = 15, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
-            { .set = 0, .binding = 16, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
-            { .set = 0, .binding = 17, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
-            { .set = 0, .binding = 18, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
         },
         GpuBufferBinding::ElementType::IMAGE_STORAGE,
         0,
@@ -1022,6 +1034,187 @@ VisionResult VisionGpuExecutor::run(
             }
 
             result.structured = std::move(cc_result);
+            result.w = 0;
+            result.h = 0;
+            continue;
+        }
+        case VisionOp::FindContours: {
+            if (!sequence.contours_follow_cc) {
+                MF_ERROR(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
+                    "run_gpu: FindContours requires ConnectedComponents(export_labels=true) as the immediately preceding step");
+                return VisionResult {};
+            }
+
+            const auto& p = std::get<Kinesis::Vision::FindContoursParams>(step.params);
+
+            static TextureExecutionContext contours_ctx {
+                GpuComputeConfig {},
+                Portal::Graphics::ImageFormat::RGBA32F,
+                TextureExecutionContext::OutputMode::IMAGE,
+                1,
+                std::vector<GpuBufferBinding> {
+                    { .set = 0, .binding = 2, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
+                    { .set = 0, .binding = 3, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
+                    { .set = 0, .binding = 4, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
+                    { .set = 0, .binding = 5, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
+                    { .set = 0, .binding = 6, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
+                    { .set = 0, .binding = 7, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
+                    { .set = 0, .binding = 8, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
+                    { .set = 0, .binding = 9, .direction = GpuBufferBinding::Direction::INPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
+                },
+                GpuBufferBinding::ElementType::IMAGE_STORAGE,
+            };
+
+            constexpr uint32_t k_max_segments = 524288;
+            constexpr uint32_t k_max_points_per_contour = 4096;
+            const uint32_t grid_w = w + 1U;
+            const uint32_t grid_h = h + 1U;
+            const uint32_t endpoint_slot_count = grid_w * grid_h * 2U;
+
+            contours_ctx.ensure_shared_buffer(2, static_cast<size_t>(k_max_segments) * 9, GpuBufferBinding::ElementType::UINT32);
+            contours_ctx.ensure_shared_buffer(3, 1, GpuBufferBinding::ElementType::UINT32);
+            contours_ctx.ensure_shared_buffer(4, static_cast<size_t>(endpoint_slot_count), GpuBufferBinding::ElementType::UINT32);
+            contours_ctx.ensure_shared_buffer(5, static_cast<size_t>(k_max_segments) * 2U, GpuBufferBinding::ElementType::UINT32);
+            contours_ctx.ensure_shared_buffer(6, static_cast<size_t>(k_max_components) + 1U, GpuBufferBinding::ElementType::UINT32);
+            contours_ctx.ensure_shared_buffer(7, static_cast<size_t>(k_max_components) * k_max_points_per_contour * 2U, GpuBufferBinding::ElementType::UINT32);
+            contours_ctx.ensure_shared_buffer(8, static_cast<size_t>(k_max_components), GpuBufferBinding::ElementType::UINT32);
+
+            {
+                const uint32_t zero = 0;
+                contours_ctx.upload_shared_raw(3, reinterpret_cast<const uint8_t*>(&zero), sizeof(uint32_t));
+            }
+
+            const uint32_t dense_label_count = static_cast<uint32_t>(w) * h;
+            std::vector<uint32_t> dense_label(dense_label_count, 0);
+            cc_pipeline.download_shared(6, dense_label.data(), dense_label.size() * sizeof(uint32_t));
+
+            contours_ctx.ensure_shared_buffer(9, static_cast<size_t>(w) * h, GpuBufferBinding::ElementType::UINT32);
+            contours_ctx.upload_shared_raw(9, reinterpret_cast<const uint8_t*>(dense_label.data()), dense_label.size() * sizeof(uint32_t));
+
+            contours_ctx.swap_shader({ .shader_path = "contour_segments.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(ContourSegmentsPC) });
+            contours_ctx.stage_image_at(1, image, GpuBufferBinding::ElementType::IMAGE_SAMPLED);
+            contours_ctx.prepare_output_image(w, h);
+            contours_ctx.set_push_constants(ContourSegmentsPC { .width = w, .height = h, .max_segments = k_max_segments });
+            contours_ctx.set_output_dimensions(w, h);
+            {
+                const auto fence = contours_ctx.dispatch_async({});
+                foundry.wait_for_fence(fence);
+                foundry.release_fence(fence);
+            }
+            contours_ctx.clear_output_dimensions();
+
+            uint32_t segment_count = 0;
+            contours_ctx.download_shared(3, &segment_count, sizeof(uint32_t));
+            segment_count = std::min(segment_count, k_max_segments);
+
+            contours_ctx.swap_shader({ .shader_path = "contour_endpoint_reset.comp.spv", .workgroup_size = { 256, 1, 1 }, .push_constant_size = sizeof(ContourEndpointResetPC) });
+            contours_ctx.stage_image_at(1, image, GpuBufferBinding::ElementType::IMAGE_SAMPLED);
+            contours_ctx.prepare_output_image(w, h);
+            contours_ctx.set_push_constants(ContourEndpointResetPC { .slot_count = endpoint_slot_count });
+            contours_ctx.set_output_dimensions(endpoint_slot_count, 1U);
+            {
+                const auto reset_fence = contours_ctx.dispatch_async({});
+                foundry.wait_for_fence(reset_fence);
+                foundry.release_fence(reset_fence);
+            }
+            contours_ctx.clear_output_dimensions();
+
+            const uint32_t link_groups = (segment_count + 255U) / 256U;
+
+            contours_ctx.swap_shader({ .shader_path = "contour_link.comp.spv", .workgroup_size = { 256, 1, 1 }, .push_constant_size = sizeof(ContourLinkPC) });
+            contours_ctx.stage_image_at(1, image, GpuBufferBinding::ElementType::IMAGE_SAMPLED);
+            contours_ctx.prepare_output_image(w, h);
+            contours_ctx.set_push_constants(ContourLinkPC { .width = w, .height = h, .phase = 0U });
+            contours_ctx.set_output_dimensions(link_groups * 256U, 1U);
+            {
+                const auto fence = contours_ctx.dispatch_async({});
+                foundry.wait_for_fence(fence);
+                foundry.release_fence(fence);
+            }
+
+            contours_ctx.set_push_constants(ContourLinkPC { .width = w, .height = h, .phase = 1U });
+            {
+                const auto fence = contours_ctx.dispatch_async({});
+                foundry.wait_for_fence(fence);
+                foundry.release_fence(fence);
+            }
+            contours_ctx.clear_output_dimensions();
+
+            {
+                std::vector<uint32_t> owner_reset(static_cast<size_t>(k_max_components) + 1U, CC_UNCLAIMED_HOST);
+                contours_ctx.upload_shared_raw(6, reinterpret_cast<const uint8_t*>(owner_reset.data()), owner_reset.size() * sizeof(uint32_t));
+            }
+
+            contours_ctx.swap_shader({ .shader_path = "contour_trace.comp.spv", .workgroup_size = { 256, 1, 1 }, .push_constant_size = sizeof(ContourTracePC) });
+            contours_ctx.stage_image_at(1, image, GpuBufferBinding::ElementType::IMAGE_SAMPLED);
+            contours_ctx.prepare_output_image(w, h);
+            contours_ctx.set_push_constants(ContourTracePC { .max_components = k_max_components, .max_points_per_contour = k_max_points_per_contour, .phase = 0U });
+            contours_ctx.set_output_dimensions(link_groups * 256U, 1U);
+            {
+                const auto fence = contours_ctx.dispatch_async({});
+                foundry.wait_for_fence(fence);
+                foundry.release_fence(fence);
+            }
+
+            contours_ctx.set_push_constants(ContourTracePC { .max_components = k_max_components, .max_points_per_contour = k_max_points_per_contour, .phase = 1U });
+            {
+                const auto fence = contours_ctx.dispatch_async({});
+                foundry.wait_for_fence(fence);
+                foundry.release_fence(fence);
+            }
+            contours_ctx.clear_output_dimensions();
+
+            std::vector<uint32_t> point_counts(k_max_components);
+            contours_ctx.download_shared(8, point_counts.data(), point_counts.size() * sizeof(uint32_t));
+
+            std::vector<uint32_t> claimed_labels;
+            for (uint32_t i = 0; i < k_max_components; ++i)
+                if (point_counts[i] > 0)
+                    claimed_labels.push_back(i);
+
+            std::vector<glm::vec2> all_points(static_cast<size_t>(k_max_components) * k_max_points_per_contour);
+            contours_ctx.download_shared(7, all_points.data(), all_points.size() * sizeof(glm::vec2));
+
+            std::vector<Kinesis::Vision::Contour> out_contours;
+            out_contours.reserve(claimed_labels.size());
+            for (uint32_t label_id : claimed_labels) {
+                const uint32_t n = point_counts[label_id];
+                if (n < 3)
+                    continue;
+
+                std::vector<glm::vec2> pts(
+                    all_points.begin() + static_cast<ptrdiff_t>(label_id) * k_max_points_per_contour,
+                    all_points.begin() + static_cast<ptrdiff_t>(label_id) * k_max_points_per_contour + n);
+
+                float area = 0.0F;
+                float perimeter = 0.0F;
+                for (size_t j = 0; j < pts.size(); ++j) {
+                    const auto& a = pts[j];
+                    const auto& b = pts[(j + 1) % pts.size()];
+                    area += a.x * b.y - b.x * a.y;
+                    perimeter += glm::length(b - a);
+                }
+                area = std::abs(area) * 0.5F;
+
+                if (area < p.min_area)
+                    continue;
+
+                out_contours.push_back({ .points = std::move(pts), .area = area, .perimeter = perimeter });
+            }
+
+            if (p.max_contours > 0 && out_contours.size() > static_cast<size_t>(p.max_contours)) {
+                std::partial_sort(out_contours.begin(),
+                    out_contours.begin() + static_cast<ptrdiff_t>(p.max_contours),
+                    out_contours.end(),
+                    [](const auto& a, const auto& b) { return a.area > b.area; });
+                out_contours.resize(p.max_contours);
+            }
+
+            MF_LOG(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
+                "run_gpu: FindContours segments={} contours={}",
+                segment_count, out_contours.size());
+
+            result.structured = std::move(out_contours);
             result.w = 0;
             result.h = 0;
             continue;

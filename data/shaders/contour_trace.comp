@@ -1,0 +1,131 @@
+#version 460
+#include "include/vision_cc.glsl"
+
+layout(local_size_x = 256) in;
+
+struct Segment {
+    uint label_id;
+    uint gx0;
+    uint gy0;
+    uint gx1;
+    uint gy1;
+    float x0;
+    float y0;
+    float x1;
+    float y1;
+};
+
+layout(set = 0, binding = 2, std430) buffer SegmentBuf {
+    Segment segments[];
+};
+
+layout(set = 0, binding = 3, std430) buffer SegmentCountBuf {
+    uint segment_count[1];
+};
+
+struct SegmentLinks {
+    uint next_at_start;
+    uint next_at_end;
+};
+
+layout(set = 0, binding = 5, std430) buffer SegmentLinkBuf {
+    SegmentLinks segment_links[];
+};
+
+/**
+ * @brief First-writer-wins claim: label_id -> the one segment index that
+ *        owns tracing this label's boundary. Sized max_components + 1
+ *        (label ids are 1-based). CC_UNCLAIMED sentinel means unclaimed.
+ */
+layout(set = 0, binding = 6, std430) buffer TraceOwnerBuf {
+    uint trace_owner[];
+};
+
+/**
+ * @brief Ordered output points, max_contours * max_points_per_contour,
+ *        indexed as (label_id - 1) * max_points_per_contour + point_idx.
+ */
+layout(set = 0, binding = 7, std430) buffer ContourPointsBuf {
+    vec2 contour_points[];
+};
+
+layout(set = 0, binding = 8, std430) buffer ContourPointCountBuf {
+    uint contour_point_count[];
+};
+
+layout(push_constant) uniform PushConstants {
+    uint max_components;
+    uint max_points_per_contour;
+    uint phase;
+} pc;
+
+/**
+ * @brief Phase 0: each segment attempts to claim ownership of tracing
+ *        its label. First segment (by dispatch order, effectively
+ *        arbitrary) to claim wins; all others no-op for that label.
+ */
+void claim_phase()
+{
+    const uint idx = gl_GlobalInvocationID.x;
+    if (idx >= segment_count[0])
+        return;
+
+    const uint label_id = segments[idx].label_id;
+    if (label_id == 0u || label_id > pc.max_components)
+        return;
+
+    atomicCompSwap(trace_owner[label_id], CC_UNCLAIMED, idx);
+}
+
+/**
+ * @brief Phase 1: only threads whose segment index is the claimed owner
+ *        for their label actually trace. Walks next_at_end from the
+ *        owning segment's endpoint, appending the shared endpoint at
+ *        each step, until the walk returns to the owning segment.
+ *        Bounded by segment_count to guarantee termination even on
+ *        malformed (non-closed) input.
+ */
+void trace_phase()
+{
+    const uint idx = gl_GlobalInvocationID.x;
+    if (idx >= segment_count[0])
+        return;
+
+    const uint label_id = segments[idx].label_id;
+    if (label_id == 0u || label_id > pc.max_components)
+        return;
+    if (trace_owner[label_id] != idx)
+        return;
+
+    const uint out_base = (label_id - 1u) * pc.max_points_per_contour;
+
+    uint count = 0u;
+    uint cur = idx;
+    const uint start = idx;
+
+    for (uint step = 0u; step < segment_count[0]; ++step) {
+        const Segment s = segments[cur];
+
+        if (count < pc.max_points_per_contour)
+            contour_points[out_base + count] = vec2(s.x0, s.y0);
+        ++count;
+
+        const uint next = segment_links[cur].next_at_end;
+        if (next == 0xFFFFFFFFu)
+            break;
+
+        cur = next;
+        if (cur == start)
+            break;
+    }
+
+    contour_point_count[label_id - 1u] = min(count, pc.max_points_per_contour);
+}
+
+void main()
+{
+    if (pc.phase == 0u)
+        claim_phase();
+    else
+        trace_phase();
+}
