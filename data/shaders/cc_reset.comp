@@ -1,0 +1,48 @@
+#version 460
+#include "include/vision_cc.glsl"
+
+layout(local_size_x = 256) in;
+
+layout(set = 0, binding = 4, std430) buffer LabelLutBuf {
+    uint label_lut[];
+};
+layout(set = 0, binding = 5, std430) buffer CountBuf {
+    uint compact_count[1];
+};
+layout(set = 0, binding = 7, std430) buffer BoundsMinBuf {
+    uvec2 bounds_min[];
+};
+layout(set = 0, binding = 8, std430) buffer BoundsMaxBuf {
+    uvec2 bounds_max[];
+};
+layout(set = 0, binding = 9, std430) buffer BoundsCountBuf {
+    uint bounds_count[];
+};
+
+layout(push_constant) uniform PushConstants {
+    uint lut_size;
+    uint max_components;
+} pc;
+
+/**
+ * @brief Resets FinalLabeling's claim/bounds state on GPU. Replaces a
+ *        3-upload CPU round trip every frame with a single dispatch.
+ *        Thread count covers max(lut_size, max_components); each thread
+ *        clears whichever buffers its index is in range for.
+ */
+void main()
+{
+    const uint i = gl_GlobalInvocationID.x;
+
+    if (i < pc.lut_size)
+        label_lut[i] = CC_UNCLAIMED;
+
+    if (i == 0u)
+        compact_count[0] = 0u;
+
+    if (i < pc.max_components) {
+        bounds_min[i] = uvec2(0xFFFFFFFFu, 0xFFFFFFFFu);
+        bounds_max[i] = uvec2(0u, 0u);
+        bounds_count[i] = 0u;
+    }
+}

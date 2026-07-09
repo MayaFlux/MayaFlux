@@ -1,0 +1,50 @@
+#version 460
+#extension GL_KHR_shader_subgroup_basic : enable
+#extension GL_KHR_shader_subgroup_arithmetic : enable
+#include "include/vision_common.glsl"
+#include "include/vision_cc.glsl"
+#include "include/vision_relax.glsl"
+
+layout(local_size_x = 8, local_size_y = 8) in;
+
+layout(set = 0, binding = 2, std430) buffer BlockLabelBuf {
+    uint block_label[];
+};
+
+layout(set = 0, binding = 3, std430) buffer ChangedBuf {
+    uint changed[1];
+};
+
+layout(push_constant) uniform PushConstants {
+    uint block_width;
+    uint block_height;
+} pc;
+
+/**
+ * @brief Compression (BUF Algorithm 1, Compression stage, adapted for
+ *        chained multi-pass dispatch). Each block jumps its pointer to
+ *        its grandparent, halving path length every pass. After
+ *        ceil(log2(diagonal_in_blocks)) passes every block points
+ *        directly to its component's true root.
+ */
+void main()
+{
+    const uvec2 block_coord = gl_GlobalInvocationID.xy;
+    if (block_coord.x >= pc.block_width || block_coord.y >= pc.block_height)
+        return;
+
+    const uint idx = block_coord.y * pc.block_width + block_coord.x;
+    if (block_label[idx] == CC_BACKGROUND)
+        return;
+
+    const uint p = block_label[idx];
+    const uint gp = block_label[p];
+
+    bool did_change = false;
+    if (gp != p) {
+        atomicMin(block_label[idx], gp);
+        did_change = true;
+    }
+
+    REPORT_CHANGED(did_change, changed);
+}

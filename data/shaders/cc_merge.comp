@@ -1,0 +1,140 @@
+#version 460
+#include "include/vision_common.glsl"
+#include "include/vision_cc.glsl"
+
+layout(local_size_x = 8, local_size_y = 8) in;
+
+layout(set = 0, binding = 1, rgba32f) uniform readonly image2D in_image;
+
+layout(set = 0, binding = 2, std430) buffer BlockLabelBuf {
+    uint block_label[];
+};
+
+layout(push_constant) uniform PushConstants {
+    uint width;
+    uint height;
+    uint block_width;
+    uint block_height;
+} pc;
+
+uint cc_block_flat_index(uvec2 block_coord, uint block_width)
+{
+    return block_coord.y * block_width + block_coord.x;
+}
+
+bool cc_pixel_foreground(ivec2 coord, uint width, uint height)
+{
+    if (coord.x < 0 || coord.y < 0 || coord.x >= int(width) || coord.y >= int(height))
+        return false;
+    return imageLoad(in_image, coord).r >= 0.5;
+}
+
+/**
+ * @brief Finds the root of a block-label tree with path halving.
+ */
+uint find_root(uint x)
+{
+    uint p = block_label[x];
+    while (p != x) {
+        uint gp = block_label[p];
+        atomicCompSwap(block_label[x], p, gp);
+        x = p;
+        p = block_label[x];
+    }
+    return x;
+}
+
+/**
+ * @brief Union by root comparison: attaches the higher root under the
+ *        lower one. Retries under contention via atomicCompSwap, mirroring
+ *        the paper's Union procedure, since a straight atomicMin at the
+ *        root can race with a concurrent Find seeing a stale value.
+ */
+void cc_union(uint a, uint b)
+{
+    uint ra = find_root(a);
+    uint rb = find_root(b);
+    while (ra != rb) {
+        uint lo = min(ra, rb);
+        uint hi = max(ra, rb);
+        uint prev = atomicCompSwap(block_label[hi], hi, lo);
+        if (prev == hi)
+            return;
+        ra = find_root(ra);
+        rb = find_root(rb);
+    }
+}
+
+/**
+ * @brief Merge kernel (BUF Algorithm 2). One thread per block. Computes
+ *        a 16-bit connectivity bitmask from the block's 3 relevant
+ *        internal pixels (top-left, top-right, bottom-left; bottom-right
+ *        never contributes per the paper), then Unions against up to 4
+ *        predecessor-direction neighbor blocks (top-left, top, top-right,
+ *        left) whose corresponding bitmask bits are set and whose
+ *        boundary pixel is foreground. Only predecessor-direction
+ *        neighbors are checked: Union is symmetric, so successor-direction
+ *        neighbors will be handled when their own thread runs.
+ */
+void main()
+{
+    const uvec2 block_coord = gl_GlobalInvocationID.xy;
+    if (block_coord.x >= pc.block_width || block_coord.y >= pc.block_height)
+        return;
+
+    const uint idx = cc_block_flat_index(block_coord, pc.block_width);
+    if (block_label[idx] == CC_BACKGROUND)
+        return;
+
+    const ivec2 origin = ivec2(block_coord * 2u);
+
+    const bool tl = cc_pixel_foreground(origin, pc.width, pc.height);
+    const bool tr = cc_pixel_foreground(origin + ivec2(1, 0), pc.width, pc.height);
+    const bool bl = cc_pixel_foreground(origin + ivec2(0, 1), pc.width, pc.height);
+
+    uint bs = 0u;
+    if (tl) bs |= 0x0777u;
+    if (tr) bs |= (0x0777u << 1);
+    if (bl) bs |= (0x0777u << 4);
+
+    if (bs == 0u)
+        return;
+
+    // top-left neighbor block
+    if (((bs & 0x0001u) != 0u) && cc_pixel_foreground(origin + ivec2(-1, -1), pc.width, pc.height)) {
+        if (block_coord.x > 0u && block_coord.y > 0u) {
+            const uint nidx = cc_block_flat_index(block_coord - uvec2(1u, 1u), pc.block_width);
+            if (block_label[nidx] != CC_BACKGROUND)
+                cc_union(idx, nidx);
+        }
+    }
+
+    // top neighbor block
+    if ((((bs & 0x0002u) != 0u) && cc_pixel_foreground(origin + ivec2(0, -1), pc.width, pc.height))
+            || (((bs & 0x0004u) != 0u) && cc_pixel_foreground(origin + ivec2(1, -1), pc.width, pc.height))) {
+        if (block_coord.y > 0u) {
+            const uint nidx = cc_block_flat_index(block_coord - uvec2(0u, 1u), pc.block_width);
+            if (block_label[nidx] != CC_BACKGROUND)
+                cc_union(idx, nidx);
+        }
+    }
+
+    // top-right neighbor block
+    if (((bs & 0x0008u) != 0u) && cc_pixel_foreground(origin + ivec2(2, -1), pc.width, pc.height)) {
+        if (block_coord.y > 0u && block_coord.x + 1u < pc.block_width) {
+            const uint nidx = cc_block_flat_index(block_coord + uvec2(1u, -1), pc.block_width);
+            if (block_label[nidx] != CC_BACKGROUND)
+                cc_union(idx, nidx);
+        }
+    }
+
+    // left neighbor block
+    if ((((bs & 0x0010u) != 0u) && cc_pixel_foreground(origin + ivec2(-1, 0), pc.width, pc.height))
+            || (((bs & 0x0100u) != 0u) && cc_pixel_foreground(origin + ivec2(-1, 1), pc.width, pc.height))) {
+        if (block_coord.x > 0u) {
+            const uint nidx = cc_block_flat_index(block_coord - uvec2(1u, 0u), pc.block_width);
+            if (block_label[nidx] != CC_BACKGROUND)
+                cc_union(idx, nidx);
+        }
+    }
+}

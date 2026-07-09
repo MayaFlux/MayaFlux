@@ -1,0 +1,124 @@
+#version 460
+#include "include/vision_common.glsl"
+#include "include/vision_cc.glsl"
+
+layout(local_size_x = 8, local_size_y = 8) in;
+
+layout(set = 0, binding = 0, rgba32f) uniform writeonly image2D out_image;
+
+layout(set = 0, binding = 2, std430) buffer BlockLabelBuf {
+    uint block_label[];
+};
+
+layout(set = 0, binding = 4, std430) buffer LabelLutBuf {
+    uint label_lut[];
+};
+
+layout(set = 0, binding = 5, std430) buffer CountBuf {
+    uint compact_count[1];
+};
+
+layout(set = 0, binding = 7, std430) buffer BoundsMinBuf {
+    uvec2 bounds_min[];
+};
+
+layout(set = 0, binding = 8, std430) buffer BoundsMaxBuf {
+    uvec2 bounds_max[];
+};
+
+layout(set = 0, binding = 9, std430) buffer BoundsCountBuf {
+    uint bounds_count[];
+};
+
+layout(push_constant) uniform PushConstants {
+    uint width;
+    uint height;
+    uint block_width;
+    uint block_height;
+    uint max_components;
+} pc;
+
+/**
+ * @brief Claim a dense sequential id for a root, first-writer-wins via
+ *        atomicCompSwap against the CC_UNCLAIMED sentinel. Losing threads
+ *        observe a non-CC_UNCLAIMED value and never increment
+ *        compact_count. Mirrors the existing per-pixel claim pattern,
+ *        now operating on block roots instead of pixel roots, so at most
+ *        (block_width * block_height) claims occur instead of (w * h).
+ */
+uint claim_dense_id(uint root)
+{
+    uint prev = atomicCompSwap(label_lut[root], CC_UNCLAIMED, 0xFFFFFFFEu);
+    if (prev == CC_UNCLAIMED) {
+        uint new_id = atomicAdd(compact_count[0], 1u) + 1u;
+        atomicExchange(label_lut[root], new_id);
+        return new_id;
+    }
+    // Spin until the winning thread finishes writing the real id. Bounded:
+    // the winner is a single atomicExchange away from completion at the
+    // point any other thread observes the in-flight sentinel.
+    uint id = label_lut[root];
+    while (id == 0xFFFFFFFEu) {
+        id = label_lut[root];
+    }
+    return id;
+}
+
+/**
+ * @brief FinalLabeling. Each thread resolves its block's already-flat
+ *        root (post-Compression, block_label[idx] IS the root directly),
+ *        claims or retrieves that root's dense compact id, writes the
+ *        colorized/dense label to all up-to-4 internal pixels of
+ *        out_image, and folds the block's pixel-precision extent into
+ *        that component's bounding box.
+ *
+ * Bounding boxes are accumulated at pixel precision (the block's actual
+ * foreground pixel positions), not block precision, since a block only
+ * partially covering the image edge would otherwise overstate its extent
+ * by rounding to the full 2x2 footprint.
+ */
+void main()
+{
+    const uvec2 block_coord = gl_GlobalInvocationID.xy;
+    if (block_coord.x >= pc.block_width || block_coord.y >= pc.block_height)
+        return;
+
+    const uint idx = block_coord.y * pc.block_width + block_coord.x;
+    const uint root = block_label[idx];
+
+    const ivec2 origin = ivec2(block_coord * 2u);
+
+    if (root == CC_BACKGROUND) {
+        write_safe(out_image, origin, vec4(0.0, 0.0, 0.0, 1.0));
+        write_safe(out_image, origin + ivec2(1, 0), vec4(0.0, 0.0, 0.0, 1.0));
+        write_safe(out_image, origin + ivec2(0, 1), vec4(0.0, 0.0, 0.0, 1.0));
+        write_safe(out_image, origin + ivec2(1, 1), vec4(0.0, 0.0, 0.0, 1.0));
+        return;
+    }
+
+    const uint dense_id = claim_dense_id(root);
+
+    if (dense_id != CC_UNCLAIMED && dense_id <= pc.max_components) {
+        const uint bi = dense_id - 1u;
+        const uint hashed = dense_id * 2654435761u;
+        const vec4 color = vec4(
+                float((hashed >> 16) & 0xFFu) / 255.0,
+                float((hashed >> 8) & 0xFFu) / 255.0,
+                float(hashed & 0xFFu) / 255.0,
+                1.0);
+
+        for (int dy = 0; dy < 2; ++dy) {
+            for (int dx = 0; dx < 2; ++dx) {
+                const ivec2 px = origin + ivec2(dx, dy);
+                if (px.x >= int(pc.width) || px.y >= int(pc.height))
+                    continue;
+                write_safe(out_image, px, color);
+                atomicMin(bounds_min[bi].x, uint(px.x));
+                atomicMin(bounds_min[bi].y, uint(px.y));
+                atomicMax(bounds_max[bi].x, uint(px.x));
+                atomicMax(bounds_max[bi].y, uint(px.y));
+                atomicAdd(bounds_count[bi], 1u);
+            }
+        }
+    }
+}

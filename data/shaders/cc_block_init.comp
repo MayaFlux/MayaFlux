@@ -1,0 +1,78 @@
+#version 460
+#include "include/vision_common.glsl"
+#include "include/vision_cc.glsl"
+
+layout(local_size_x = 8, local_size_y = 8) in;
+
+layout(set = 0, binding = 1, rgba32f) uniform readonly image2D in_image;
+
+/**
+ * @brief Block-indexed union-find label buffer. One entry per 2x2 block,
+ *        sized (bw * bh) where bw = ceil(width/2), bh = ceil(height/2).
+ *        Foreground blocks are labeled with their own flat block index.
+ *        Background blocks are CC_BACKGROUND. This buffer is the union-find
+ *        forest: Merge and Compression operate on it directly, no separate
+ *        parent array.
+ */
+layout(set = 0, binding = 2, std430) buffer BlockLabelBuf {
+    uint block_label[];
+};
+
+layout(push_constant) uniform PushConstants {
+    uint width;
+    uint height;
+    uint block_width;
+    uint block_height;
+} pc;
+
+/**
+ * @brief Flatten a block coordinate to its index in block_label.
+ */
+uint cc_block_flat_index(uvec2 block_coord, uint block_width)
+{
+    return block_coord.y * block_width + block_coord.x;
+}
+
+/**
+ * @brief Reads a single pixel from in_image, treating out-of-bounds
+ *        (right/bottom edge on an odd-sized image) as background.
+ */
+bool cc_pixel_foreground(ivec2 coord, uint width, uint height)
+{
+    if (coord.x >= int(width) || coord.y >= int(height))
+        return false;
+    return imageLoad(in_image, coord).r >= 0.5;
+}
+
+/**
+ * @brief Block Initialization (BUF Algorithm 1, Init stage).
+ *
+ * Each thread owns one 2x2 pixel block. A block is foreground if any of
+ * its up to 4 pixels is foreground. Foreground blocks are self-labeled
+ * with their own flat block index, coded directly into block_label as
+ * both the provisional label and the union-find self-parent (label ==
+ * own index means "root of a single-node tree"). Background blocks are
+ * marked CC_BACKGROUND and take no further part in Merge or Compression.
+ *
+ * No bitmask computation here. Merge reads pixel foreground state
+ * directly from in_image against each block's actual position, so
+ * Initialization's only job is establishing which blocks exist as
+ * union-find nodes and their starting self-label.
+ */
+void main()
+{
+    const uvec2 block_coord = gl_GlobalInvocationID.xy;
+    if (block_coord.x >= pc.block_width || block_coord.y >= pc.block_height)
+        return;
+
+    const ivec2 origin = ivec2(block_coord * 2u);
+
+    const bool fg =
+        cc_pixel_foreground(origin, pc.width, pc.height)
+            || cc_pixel_foreground(origin + ivec2(1, 0), pc.width, pc.height)
+            || cc_pixel_foreground(origin + ivec2(0, 1), pc.width, pc.height)
+            || cc_pixel_foreground(origin + ivec2(1, 1), pc.width, pc.height);
+
+    const uint idx = cc_block_flat_index(block_coord, pc.block_width);
+    block_label[idx] = fg ? idx : CC_BACKGROUND;
+}
