@@ -709,10 +709,11 @@ VisionResult VisionGpuExecutor::run(
                 const HysteresisPC hpc { .width = w, .height = h };
                 ExecutionContext chained_ctx;
                 chained_ctx.mode = ExecutionMode::CHAINED;
-                chained_ctx.execution_metadata["pass_count"] = k_max_hysteresis_rounds;
-                chained_ctx.execution_metadata["passes_per_batch"] = k_max_hysteresis_rounds;
-                chained_ctx.execution_metadata["pc_updater"] = std::function<void(uint32_t, void*)>(
-                    [hpc](uint32_t, void* dst) { std::memcpy(dst, &hpc, sizeof(HysteresisPC)); });
+                chained_ctx.parameters = ChainedParams {
+                    .pass_count = k_max_hysteresis_rounds,
+                    .pc_updater = [hpc](uint32_t, void* dst) { std::memcpy(dst, &hpc, sizeof(HysteresisPC)); },
+                    .passes_per_batch = k_max_hysteresis_rounds,
+                };
                 label_ctx.execute(Datum<> {}, chained_ctx);
             }
             label_ctx.slot_binding(0).direction = GpuBufferBinding::Direction::OUTPUT;
@@ -947,7 +948,7 @@ VisionResult VisionGpuExecutor::run(
 
             ExecutionContext cc_ctx;
             cc_ctx.mode = ExecutionMode::DEPENDENCY;
-            cc_ctx.execution_metadata["dependency_stages"] = cc_stages;
+            cc_ctx.parameters = DependencyParams { .stages = cc_stages };
             cc_pipeline.execute(Datum<> {}, cc_ctx);
 
             cc_pipeline.ensure_shared_buffer(10, 3, GpuBufferBinding::ElementType::UINT32,
@@ -963,17 +964,17 @@ VisionResult VisionGpuExecutor::run(
 
             ExecutionContext compress_ctx;
             compress_ctx.mode = ExecutionMode::CHAINED_INDIRECT;
-            compress_ctx.execution_metadata["pass_count"] = k_compress_passes;
-            compress_ctx.execution_metadata["indirect_dispatch_binding"] = 10U;
-            compress_ctx.execution_metadata["pc_updater"] = std::function<void(uint32_t, uint32_t, void*)>(
-                [block_width, block_height](uint32_t /*pass*/, uint32_t phase, void* dst) {
+            compress_ctx.parameters = ChainedIndirectParams {
+                .pass_count = k_compress_passes,
+                .pc_updater = [block_width, block_height](uint32_t /*pass*/, uint32_t phase, void* dst) {
                     const CCCompressIndirectPC compress_pc {
                         .block_width = block_width,
                         .block_height = block_height,
                         .phase = phase,
                     };
                     std::memcpy(dst, &compress_pc, sizeof(CCCompressIndirectPC));
-                });
+                },
+            };
             cc_pipeline.execute(Datum<> {}, compress_ctx);
 
             cc_pipeline.swap_shader({ .shader_path = "cc_final_label.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(CCFinalLabelPC) });

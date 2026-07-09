@@ -281,22 +281,9 @@ GpuChannelResult GpuDispatchCore::dispatch_core_chained(
         : m_staging_floats.size();
     const auto groups = calculate_dispatch_size(effective, structure_info);
 
-    if (!ctx.execution_metadata.contains("pass_count") || !ctx.execution_metadata.contains("pc_updater")) {
-        error<std::runtime_error>(Journal::Component::Yantra,
-            Journal::Context::Runtime,
-            std::source_location::current(),
-            "GpuDispatchCore: dispatch_core_chained requires 'pass_count' and 'pc_updater' in execution_metadata");
-    }
-
-    const auto pass_count = safe_any_cast_or_throw<uint32_t>(ctx.execution_metadata.at("pass_count"));
-    const auto& pc_updater = safe_any_cast_or_throw<std::function<void(uint32_t, void*)>>(ctx.execution_metadata.at("pc_updater"));
-
     m_resources.dispatch_batched(
-        dispatch_key(),
-        pass_count, groups, m_bindings,
-        [&](uint32_t pass, std::vector<uint8_t>& pc_data) { pc_updater(pass, pc_data.data()); },
-        m_gpu_config.push_constant_size,
-        ctx.execution_metadata);
+        dispatch_key(), groups, m_bindings,
+        m_gpu_config.push_constant_size, ctx);
 
     GpuChannelResult result;
     result.primary = readback_primary(effective);
@@ -322,17 +309,10 @@ GpuChannelResult GpuDispatchCore::dispatch_core_chained_indirect(
 
     bind_all_descriptors();
 
-    const size_t effective = m_staging_floats.empty() ? largest_binding_data_element_count() : m_staging_floats.size();
+    const size_t effective = m_staging_floats.empty()
+        ? largest_binding_data_element_count()
+        : m_staging_floats.size();
     const auto groups = calculate_dispatch_size(effective, structure_info);
-
-    if (!ctx.execution_metadata.contains("pass_count") || !ctx.execution_metadata.contains("pc_updater")) {
-        error<std::runtime_error>(Journal::Component::Yantra, Journal::Context::Runtime,
-            std::source_location::current(),
-            "GpuDispatchCore: dispatch_core_chained_indirect requires 'pass_count' and 'pc_updater' in execution_metadata");
-    }
-
-    const auto pass_count = safe_any_cast_or_throw<uint32_t>(ctx.execution_metadata.at("pass_count"));
-    const auto& pc_updater = safe_any_cast_or_throw<std::function<void(uint32_t, uint32_t, void*)>>(ctx.execution_metadata.at("pc_updater"));
 
     const auto indirect_it = std::ranges::find_if(m_bindings, [](const auto& b) {
         return b.usage_hint == Portal::Graphics::BufferUsageHint::INDIRECT;
@@ -344,9 +324,8 @@ GpuChannelResult GpuDispatchCore::dispatch_core_chained_indirect(
     }
 
     m_resources.dispatch_batched_indirect(
-        dispatch_key(), pass_count, indirect_it->binding, groups, m_bindings,
-        [&](uint32_t pass, uint32_t phase, std::vector<uint8_t>& pc_data) { pc_updater(pass, phase, pc_data.data()); },
-        m_gpu_config.push_constant_size, ctx.execution_metadata);
+        dispatch_key(), indirect_it->binding, groups, m_bindings,
+        m_gpu_config.push_constant_size, ctx);
 
     GpuChannelResult result;
     result.primary = readback_primary(effective);

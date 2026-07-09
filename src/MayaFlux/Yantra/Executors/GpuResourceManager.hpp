@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MayaFlux/Portal/Graphics/ComputePress.hpp"
+#include "MayaFlux/Yantra/OperationSpec/ExecutionContext.hpp"
 
 namespace MayaFlux::Yantra {
 
@@ -99,21 +100,17 @@ public:
         size_t push_constant_size);
 
     void dispatch_batched(const std::string& key,
-        uint32_t pass_count,
         const std::array<uint32_t, 3>& groups,
         const std::vector<GpuBufferBinding>& bindings,
-        const std::function<void(uint32_t pass, std::vector<uint8_t>&)>& push_constant_updater,
         size_t push_constant_size,
-        const std::unordered_map<std::string, std::any>& execution_metadata = {});
+        const ExecutionContext& ctx);
 
     void dispatch_batched_indirect(const std::string& key,
-        uint32_t pass_count,
         size_t indirect_binding,
         const std::array<uint32_t, 3>& groups,
         const std::vector<GpuBufferBinding>& bindings,
-        const std::function<void(uint32_t pass, uint32_t phase, std::vector<uint8_t>&)>& push_constant_updater,
         size_t push_constant_size,
-        const std::unordered_map<std::string, std::any>& execution_metadata = {});
+        const ExecutionContext& ctx);
 
     /**
      * @brief Submit a compute dispatch without blocking.

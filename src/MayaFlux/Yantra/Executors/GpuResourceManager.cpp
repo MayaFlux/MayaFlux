@@ -516,13 +516,14 @@ void GpuResourceManager::dispatch(const std::string& key,
 }
 
 void GpuResourceManager::dispatch_batched(const std::string& key,
-    uint32_t pass_count,
     const std::array<uint32_t, 3>& groups,
     const std::vector<GpuBufferBinding>& bindings,
-    const std::function<void(uint32_t pass, std::vector<uint8_t>&)>& push_constant_updater,
     size_t push_constant_size,
-    const std::unordered_map<std::string, std::any>& execution_metadata)
+    const ExecutionContext& ctx)
 {
+    const auto& params = safe_variant_get_or_throw<ChainedParams>(ctx.parameters,
+        "GpuResourceManager: dispatch_batched requires ChainedParams");
+
     auto& unit = unit_for(key);
     auto& foundry = Portal::Graphics::get_shader_foundry();
     auto& compute_press = Portal::Graphics::get_compute_press();
@@ -530,27 +531,19 @@ void GpuResourceManager::dispatch_batched(const std::string& key,
     const uint32_t workgroups_per_pass = groups[0] * groups[1] * groups[2];
 
     const uint32_t default_passes = std::max(1U, 65536U / std::max(1U, workgroups_per_pass));
-    const uint32_t passes_per_batch = [&] {
-        auto it = execution_metadata.find("passes_per_batch");
-        if (it != execution_metadata.end())
-            return safe_any_cast_or_default<uint32_t>(it->second, default_passes);
-        return default_passes;
-    }();
 
-    for (uint32_t base = 0; base < pass_count; base += passes_per_batch) {
-        const uint32_t batch_end = std::min(base + passes_per_batch, pass_count);
-
+    const uint32_t effective_passes_per_batch = params.passes_per_batch.value_or(default_passes);
+    for (uint32_t base = 0; base < params.pass_count; base += effective_passes_per_batch) {
+        const uint32_t batch_end = std::min(base + effective_passes_per_batch, params.pass_count);
         auto cmd_id = foundry.begin_commands(
             Portal::Graphics::ShaderFoundry::CommandBufferType::COMPUTE);
 
         for (uint32_t pass = base; pass < batch_end; ++pass) {
             std::vector<uint8_t> pc_data(push_constant_size);
-            push_constant_updater(pass, pc_data);
-
+            params.pc_updater(pass, pc_data.data());
             compute_press.bind_all(
                 cmd_id, unit.pipeline_id, unit.descriptor_set_ids,
                 pc_data.data(), push_constant_size);
-
             compute_press.dispatch(cmd_id, groups[0], groups[1], groups[2]);
 
             for (const auto& b : bindings) {
@@ -600,14 +593,15 @@ void GpuResourceManager::dispatch_batched(const std::string& key,
 }
 
 void GpuResourceManager::dispatch_batched_indirect(const std::string& key,
-    uint32_t pass_count,
     size_t indirect_binding,
     const std::array<uint32_t, 3>& groups,
     const std::vector<GpuBufferBinding>& bindings,
-    const std::function<void(uint32_t pass, uint32_t phase, std::vector<uint8_t>&)>& push_constant_updater,
     size_t push_constant_size,
-    const std::unordered_map<std::string, std::any>& execution_metadata)
+    const ExecutionContext& ctx)
 {
+    const auto& params = safe_variant_get_or_throw<ChainedIndirectParams>(ctx.parameters,
+        "GpuResourceManager: dispatch_batched_indirect requires ChainedIndirectParams");
+
     auto& unit = unit_for(key);
     auto& foundry = Portal::Graphics::get_shader_foundry();
     auto& compute_press = Portal::Graphics::get_compute_press();
@@ -617,20 +611,15 @@ void GpuResourceManager::dispatch_batched_indirect(const std::string& key,
     std::memcpy(m_shared->slots.at(indirect_binding).mapped_ptr, init_cmd, sizeof(init_cmd));
 
     const uint32_t default_passes = std::max(1U, 65536U / std::max(1U, groups[0] * groups[1] * groups[2]));
-    const uint32_t passes_per_batch = [&] {
-        auto it = execution_metadata.find("passes_per_batch");
-        if (it != execution_metadata.end())
-            return safe_any_cast_or_default<uint32_t>(it->second, default_passes);
-        return default_passes;
-    }();
+    const uint32_t effective_passes_per_batch = params.passes_per_batch.value_or(default_passes);
 
-    for (uint32_t base = 0; base < pass_count; base += passes_per_batch) {
-        const uint32_t batch_end = std::min(base + passes_per_batch, pass_count);
+    for (uint32_t base = 0; base < params.pass_count; base += effective_passes_per_batch) {
+        const uint32_t batch_end = std::min(base + effective_passes_per_batch, params.pass_count);
         auto cmd_id = foundry.begin_commands(Portal::Graphics::ShaderFoundry::CommandBufferType::COMPUTE);
 
         for (uint32_t pass = base; pass < batch_end; ++pass) {
             std::vector<uint8_t> pc_data(push_constant_size);
-            push_constant_updater(pass, 1, pc_data);
+            params.pc_updater(pass, 1, pc_data.data());
             compute_press.bind_all(cmd_id, unit.pipeline_id, unit.descriptor_set_ids, pc_data.data(), push_constant_size);
             compute_press.dispatch_indirect(cmd_id, indirect_buffer);
 
@@ -644,7 +633,7 @@ void GpuResourceManager::dispatch_batched_indirect(const std::string& key,
             }
 
             std::vector<uint8_t> gate_pc_data(push_constant_size);
-            push_constant_updater(pass, 2, gate_pc_data);
+            params.pc_updater(pass, 2, gate_pc_data.data());
             compute_press.bind_all(cmd_id, unit.pipeline_id, unit.descriptor_set_ids, gate_pc_data.data(), push_constant_size);
             compute_press.dispatch(cmd_id, 1, 1, 1);
 

@@ -259,6 +259,22 @@ bool any_equal(const std::any& a, const std::any& b)
     return *va.value == safe_any_cast_or_throw<T>(b);
 }
 
+/**
+ * @brief Extract T from a variant or throw with a diagnostic message.
+ *
+ * @tparam T Expected alternative type.
+ * @param v Variant to inspect.
+ * @param context_msg Diagnostic prefix identifying the calling site.
+ * @throws std::runtime_error if the active alternative is not T.
+ */
+template <typename T, typename Variant>
+T safe_variant_get_or_throw(const Variant& v, std::string_view context_msg)
+{
+    if (const auto* p = std::get_if<T>(&v))
+        return *p;
+    throw std::runtime_error(std::string(context_msg) + ": expected alternative not active");
+}
+
 // === Universal Type Handler System ===
 
 template <typename T>

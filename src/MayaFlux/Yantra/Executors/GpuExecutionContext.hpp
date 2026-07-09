@@ -53,22 +53,16 @@ public:
      * use dispatch_core.  Both paths are defined in GpuDispatchCore.cpp.
      *
      * @param input Input Datum to process.
-     * @param ctx   ExecutionContext; CHAINED mode requires 'pass_count' and
-     *              'pc_updater' in execution_metadata.
+     * @param ctx ExecutionContext; CHAINED mode requires ChainedParams, CHAINED_INDIRECT requires
+     *            ChainedIndirectParams, DEPENDENCY requires DependencyParams in parameters.
      * @throws std::runtime_error If GPU initialisation fails.
      */
     virtual output_type execute(const input_type& input, const ExecutionContext& ctx)
     {
         if (ctx.mode == ExecutionMode::DEPENDENCY) {
-            if (!ctx.execution_metadata.contains("dependency_stages")) {
-                error<std::runtime_error>(Journal::Component::Yantra,
-                    Journal::Context::Runtime,
-                    std::source_location::current(),
-                    "GpuExecutionContext: DEPENDENCY mode requires 'dependency_stages' in execution_metadata");
-            }
-            const auto& stages = safe_any_cast_or_throw<std::vector<DependencyStage>>(
-                ctx.execution_metadata.at("dependency_stages"));
-            dispatch_core_dependency(stages);
+            const auto& dependency_params = safe_variant_get_or_throw<DependencyParams>(ctx.parameters,
+                "GpuExecutionContext: DEPENDENCY mode requires DependencyParams");
+            dispatch_core_dependency(dependency_params.stages);
             return output_type {};
         }
 

@@ -6,6 +6,8 @@
 
 namespace MayaFlux::Yantra {
 
+struct DependencyStage;
+
 /**
  * @enum OperationType
  * @brief Operation categories for organization and discovery
@@ -40,6 +42,40 @@ using OperationHookCallback = std::function<void(std::any&)>;
  * @brief Callback type for custom reconstruction logic
  */
 using ReconstructionCallback = std::function<std::any(std::vector<std::vector<double>>&, std::any&)>;
+
+/**
+ * @brief Parameters for ExecutionMode::CHAINED.
+ */
+struct ChainedParams {
+    uint32_t pass_count;
+    std::function<void(uint32_t, void*)> pc_updater;
+    std::optional<uint32_t> passes_per_batch;
+};
+
+/**
+ * @brief Parameters for ExecutionMode::CHAINED_INDIRECT.
+ *
+ * The indirect binding itself is discovered from declare_buffer_bindings
+ * via usage_hint == INDIRECT, not carried here.
+ */
+struct ChainedIndirectParams {
+    uint32_t pass_count;
+    std::function<void(uint32_t, uint32_t, void*)> pc_updater;
+    std::optional<uint32_t> passes_per_batch;
+};
+
+/**
+ * @brief Parameters for ExecutionMode::DEPENDENCY.
+ */
+struct DependencyParams {
+    std::vector<DependencyStage> stages;
+};
+
+using ExecutionParams = std::variant<
+    std::monostate,
+    ChainedParams,
+    ChainedIndirectParams,
+    DependencyParams>;
 
 /**
  * @struct ExecutionContext
@@ -89,6 +125,15 @@ struct MAYAFLUX_API ExecutionContext {
      * @brief Optional timeout for operation execution.
      */
     std::chrono::milliseconds timeout { 0 };
+
+    /**
+     * @brief Optional parameters specific to the execution mode.
+     *
+     * For example, `ChainedParams` for ExecutionMode::CHAINED,
+     * `ChainedIndirectParams` for ExecutionMode::CHAINED_INDIRECT,
+     * or `DependencyParams` for ExecutionMode::DEPENDENCY.
+     */
+    ExecutionParams parameters;
 
     /**
      * @brief Arbitrary metadata parameters used by operations.
