@@ -95,10 +95,9 @@ namespace {
         uint32_t block_width;
         uint32_t block_height;
     };
-    struct CCCompressIndirectPC {
+    struct CCCompressPC {
         uint32_t block_width;
         uint32_t block_height;
-        uint32_t phase;
     };
     struct CCFinalLabelPC {
         uint32_t width;
@@ -960,22 +959,15 @@ VisionResult VisionGpuExecutor::run(
             };
             cc_pipeline.upload_shared_raw(10, reinterpret_cast<const uint8_t*>(full_grid_indirect.data()), full_grid_indirect.size() * sizeof(uint32_t));
 
-            cc_pipeline.swap_shader({ .shader_path = "cc_compress.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(CCCompressIndirectPC) });
-
-            ExecutionContext compress_ctx;
-            compress_ctx.mode = ExecutionMode::CHAINED_INDIRECT;
-            compress_ctx.parameters = ChainedIndirectParams {
-                .pass_count = k_compress_passes,
-                .pc_updater = [block_width, block_height](uint32_t /*pass*/, uint32_t phase, void* dst) {
-                    const CCCompressIndirectPC compress_pc {
-                        .block_width = block_width,
-                        .block_height = block_height,
-                        .phase = phase,
-                    };
-                    std::memcpy(dst, &compress_pc, sizeof(CCCompressIndirectPC));
-                },
-            };
-            cc_pipeline.execute(Datum<> {}, compress_ctx);
+            cc_pipeline.swap_shader({ .shader_path = "cc_compress.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(CCCompressPC) });
+            cc_pipeline.set_push_constants(CCCompressPC { .block_width = block_width, .block_height = block_height });
+            cc_pipeline.set_output_dimensions(block_width, block_height);
+            {
+                const auto fence = cc_pipeline.dispatch_async({});
+                foundry.wait_for_fence(fence);
+                foundry.release_fence(fence);
+            }
+            cc_pipeline.clear_output_dimensions();
 
             cc_pipeline.swap_shader({ .shader_path = "cc_final_label.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(CCFinalLabelPC) });
             cc_pipeline.stage_image_at(1, seed_input, GpuBufferBinding::ElementType::IMAGE_STORAGE);
