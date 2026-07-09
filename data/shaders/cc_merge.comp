@@ -52,16 +52,15 @@ uint find_root(uint x)
  */
 void cc_union(uint a, uint b)
 {
-    uint ra = find_root(a);
-    uint rb = find_root(b);
-    while (ra != rb) {
+    while (true) {
+        uint ra = find_root(a);
+        uint rb = find_root(b);
+        if (ra == rb)
+            return;
+
         uint lo = min(ra, rb);
         uint hi = max(ra, rb);
-        uint prev = atomicCompSwap(block_label[hi], hi, lo);
-        if (prev == hi)
-            return;
-        ra = find_root(ra);
-        rb = find_root(rb);
+        atomicCompSwap(block_label[hi], hi, lo);
     }
 }
 
@@ -100,7 +99,6 @@ void main()
     if (bs == 0u)
         return;
 
-    // top-left neighbor block
     if (((bs & 0x0001u) != 0u) && cc_pixel_foreground(origin + ivec2(-1, -1), pc.width, pc.height)) {
         if (block_coord.x > 0u && block_coord.y > 0u) {
             const uint nidx = cc_block_flat_index(block_coord - uvec2(1u, 1u), pc.block_width);
@@ -109,7 +107,6 @@ void main()
         }
     }
 
-    // top neighbor block
     if ((((bs & 0x0002u) != 0u) && cc_pixel_foreground(origin + ivec2(0, -1), pc.width, pc.height))
             || (((bs & 0x0004u) != 0u) && cc_pixel_foreground(origin + ivec2(1, -1), pc.width, pc.height))) {
         if (block_coord.y > 0u) {
@@ -119,16 +116,18 @@ void main()
         }
     }
 
-    // top-right neighbor block
     if (((bs & 0x0008u) != 0u) && cc_pixel_foreground(origin + ivec2(2, -1), pc.width, pc.height)) {
         if (block_coord.y > 0u && block_coord.x + 1u < pc.block_width) {
-            const uint nidx = cc_block_flat_index(block_coord + uvec2(1u, -1), pc.block_width);
-            if (block_label[nidx] != CC_BACKGROUND)
-                cc_union(idx, nidx);
+            const uint nidx = cc_block_flat_index(block_coord + uvec2(1u, 0u), pc.block_width);
+            const ivec2 nidx_check = ivec2(block_coord) + ivec2(1, -1);
+            if (nidx_check.y >= 0) {
+                const uint real_nidx = cc_block_flat_index(uvec2(block_coord.x + 1u, block_coord.y - 1u), pc.block_width);
+                if (block_label[real_nidx] != CC_BACKGROUND)
+                    cc_union(idx, real_nidx);
+            }
         }
     }
 
-    // left neighbor block
     if ((((bs & 0x0010u) != 0u) && cc_pixel_foreground(origin + ivec2(-1, 0), pc.width, pc.height))
             || (((bs & 0x0100u) != 0u) && cc_pixel_foreground(origin + ivec2(-1, 1), pc.width, pc.height))) {
         if (block_coord.x > 0u) {

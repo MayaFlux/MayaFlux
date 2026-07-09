@@ -44,6 +44,7 @@ struct DependencyStage {
     GpuComputeConfig config;
     std::function<void(GpuDispatchCore&)> stage_fn;
     std::function<std::vector<Portal::Graphics::HazardResource>(GpuDispatchCore&)> hazard_fn;
+    std::optional<std::array<uint32_t, 3>> explicit_groups;
 };
 
 /**

@@ -905,34 +905,42 @@ VisionResult VisionGpuExecutor::run(
             }
             cc_pipeline.clear_output_dimensions();
 
+            const std::array<uint32_t, 3> block_groups {
+                (block_width + k_wg2d[0] - 1U) / k_wg2d[0],
+                (block_height + k_wg2d[1] - 1U) / k_wg2d[1],
+                1U
+            };
+
             std::vector<DependencyStage> cc_stages;
 
             cc_stages.push_back({
                 .config = { .shader_path = "cc_block_init.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(CCBlockInitPC) },
                 .stage_fn = [&](GpuDispatchCore& ctx) {
-            cc_pipeline.stage_image_at(1, seed_input, GpuBufferBinding::ElementType::IMAGE_STORAGE);
-            ctx.set_push_constants(init_pc);
-            cc_pipeline.set_output_dimensions(block_width, block_height); },
+        cc_pipeline.stage_image_at(1, seed_input, GpuBufferBinding::ElementType::IMAGE_STORAGE);
+        ctx.set_push_constants(init_pc);
+        cc_pipeline.set_output_dimensions(block_width, block_height); },
                 .hazard_fn = [&](GpuDispatchCore& ctx) -> std::vector<Portal::Graphics::HazardResource> {
                     return {
                         ctx.shared_buffer_hazard(2,
                             { .set = 0, .binding = 2, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 }),
                     };
                 },
+                .explicit_groups = block_groups,
             });
 
             cc_stages.push_back({
                 .config = { .shader_path = "cc_merge.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(CCMergePC) },
                 .stage_fn = [&](GpuDispatchCore& ctx) {
-            cc_pipeline.stage_image_at(1, seed_input, GpuBufferBinding::ElementType::IMAGE_STORAGE);
-            ctx.set_push_constants(merge_pc);
-            cc_pipeline.set_output_dimensions(block_width, block_height); },
+        cc_pipeline.stage_image_at(1, seed_input, GpuBufferBinding::ElementType::IMAGE_STORAGE);
+        ctx.set_push_constants(merge_pc);
+        cc_pipeline.set_output_dimensions(block_width, block_height); },
                 .hazard_fn = [&](GpuDispatchCore& ctx) -> std::vector<Portal::Graphics::HazardResource> {
                     return {
                         ctx.shared_buffer_hazard(2,
                             { .set = 0, .binding = 2, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 }),
                     };
                 },
+                .explicit_groups = block_groups,
             });
 
             ExecutionContext cc_ctx;

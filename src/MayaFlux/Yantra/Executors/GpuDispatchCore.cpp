@@ -419,7 +419,7 @@ void GpuDispatchCore::dispatch_core_dependency(const std::vector<DependencyStage
         bind_all_descriptors();
 
         keys.push_back(dispatch_key());
-        groups_per_key.push_back(calculate_dispatch_size(largest_binding_data_element_count(), {}));
+        groups_per_key.push_back(stage.explicit_groups ? *stage.explicit_groups : calculate_dispatch_size(largest_binding_data_element_count(), {}));
         pc_per_key.push_back(m_push_constants);
         hazards_per_key.push_back(stage.hazard_fn ? stage.hazard_fn(*this) : std::vector<Portal::Graphics::HazardResource> {});
     }
