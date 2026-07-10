@@ -1,0 +1,197 @@
+#version 460
+#include "include/vision_cc.glsl"
+
+layout(local_size_x = 8, local_size_y = 8) in;
+
+layout(set = 0, binding = 6, std430) buffer DenseLabelBuf {
+    uint dense_label[];
+};
+
+layout(set = 1, binding = 4, std430) buffer TraceOwnerBuf {
+    uint trace_owner[];
+};
+
+layout(set = 1, binding = 5, std430) buffer ContourPointsBuf {
+    vec2 contour_points[];
+};
+
+layout(set = 1, binding = 6, std430) buffer ContourPointCountBuf {
+    uint contour_point_count[];
+};
+
+layout(set = 1, binding = 7, std430) buffer AreaPerimeterBuf {
+    vec2 area_perimeter[];
+};
+
+layout(set = 2, binding = 0, std430) buffer SortKeysBuf {
+    float sort_keys[];
+};
+
+layout(set = 2, binding = 1, std430) buffer SortIndicesBuf {
+    float sort_indices[];
+};
+
+layout(push_constant) uniform PushConstants {
+    uint width;
+    uint height;
+    uint max_components;
+    uint max_points_per_contour;
+    uint phase;
+    float min_area;
+} pc;
+
+const float NEG_INFINITY = -1.0 / 0.0;
+
+uint label_at(int x, int y)
+{
+    if (x < 0 || y < 0 || x >= int(pc.width) || y >= int(pc.height))
+        return CC_BACKGROUND;
+    return dense_label[uint(y) * pc.width + uint(x)];
+}
+
+/**
+ * @brief Phase 0: each pixel checks whether it is the canonical start
+ *        point for its label (topmost pixel of the topmost row that
+ *        contains the label, leftmost such pixel), and if so claims
+ *        trace ownership. Also initialises this dispatch's sort slots.
+ */
+void claim_phase()
+{
+    const ivec2 coord = ivec2(gl_GlobalInvocationID.xy);
+
+    const uint linear_idx = gl_GlobalInvocationID.y * pc.width + gl_GlobalInvocationID.x;
+    if (linear_idx < pc.max_components) {
+        sort_keys[linear_idx] = NEG_INFINITY;
+        sort_indices[linear_idx] = float(linear_idx);
+    }
+
+    if (coord.x >= int(pc.width) || coord.y >= int(pc.height))
+        return;
+
+    const uint here = label_at(coord.x, coord.y);
+    if (here == CC_BACKGROUND || here == 0u || here > pc.max_components)
+        return;
+
+    const uint left = label_at(coord.x - 1, coord.y);
+    const uint above = label_at(coord.x, coord.y - 1);
+
+    if (left == here)
+        return;
+
+    if (above == here) {
+        const uint above_left = label_at(coord.x - 1, coord.y - 1);
+        if (above_left != here)
+            return;
+    }
+
+    atomicCompSwap(trace_owner[here], CC_UNCLAIMED, linear_idx);
+}
+
+/**
+ * @brief Phase 1: Moore boundary tracing directly on dense_label, run
+ *        only by the pixel that won ownership for its label in phase 0.
+ *        Bounded by max_points_per_contour to guarantee termination.
+ *        No segment/link intermediate structures; the boundary is
+ *        re-derived from the label field at each step.
+ */
+void trace_phase()
+{
+    const ivec2 coord = ivec2(gl_GlobalInvocationID.xy);
+    if (coord.x >= int(pc.width) || coord.y >= int(pc.height))
+        return;
+
+    const uint here = label_at(coord.x, coord.y);
+    if (here == CC_BACKGROUND || here == 0u || here > pc.max_components)
+        return;
+
+    const uint linear_idx = gl_GlobalInvocationID.y * pc.width + gl_GlobalInvocationID.x;
+    if (trace_owner[here] != linear_idx)
+        return;
+
+    const int dx8[8] = int[8](1, 1, 0, -1, -1, -1, 0, 1);
+    const int dy8[8] = int[8](0, 1, 1, 1, 0, -1, -1, -1);
+
+    int cx = coord.x;
+    int cy = coord.y;
+
+    int start_dir = 0;
+    for (int d = 0; d < 8; ++d) {
+        if (label_at(cx + dx8[d], cy + dy8[d]) != here) {
+            start_dir = d;
+            break;
+        }
+    }
+
+    const int orig_x = cx;
+    const int orig_y = cy;
+    int dir = start_dir;
+    bool first = true;
+
+    const uint out_base = (here - 1u) * pc.max_points_per_contour;
+    uint count = 0u;
+
+    for (uint step = 0u; step < pc.max_points_per_contour * 8u; ++step) {
+        bool step_found = false;
+
+        for (int i = 0; i < 8; ++i) {
+            const int d = (dir + 6 + i) % 8;
+            const int nx = cx + dx8[d];
+            const int ny = cy + dy8[d];
+
+            if (label_at(nx, ny) != here)
+                continue;
+
+            if (count < pc.max_points_per_contour)
+                contour_points[out_base + count] = vec2(float(cx) / float(pc.width), float(cy) / float(pc.height));
+            ++count;
+
+            cx = nx;
+            cy = ny;
+            dir = d;
+            step_found = true;
+            break;
+        }
+
+        if (!step_found)
+            break;
+        if (!first && cx == orig_x && cy == orig_y)
+            break;
+        first = false;
+        if (count >= pc.max_points_per_contour)
+            break;
+    }
+
+    const uint n = min(count, pc.max_points_per_contour);
+    contour_point_count[here - 1u] = n;
+
+    if (n < 3u)
+        return;
+
+    float area = 0.0;
+    float perimeter = 0.0;
+    for (uint j = 0u; j < n; ++j) {
+        const vec2 a = contour_points[out_base + j];
+        const vec2 b = contour_points[out_base + ((j + 1u) % n)];
+        area += a.x * b.y - b.x * a.y;
+        perimeter += length(b - a);
+    }
+    area = abs(area) * 0.5;
+
+    const uint slot = here - 1u;
+    area_perimeter[slot] = vec2(area, perimeter);
+
+    if (area < pc.min_area) {
+        contour_point_count[slot] = 0u;
+        sort_keys[slot] = NEG_INFINITY;
+    } else {
+        sort_keys[slot] = area;
+    }
+}
+
+void main()
+{
+    if (pc.phase == 0u)
+        claim_phase();
+    else
+        trace_phase();
+}
