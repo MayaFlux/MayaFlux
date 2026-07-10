@@ -130,6 +130,7 @@ namespace {
         uint32_t height;
         uint32_t max_components;
         uint32_t max_points_per_contour;
+        uint32_t max_contours;
     };
     struct ContourMarchPC {
         uint32_t width;
@@ -1208,8 +1209,9 @@ VisionResult VisionGpuExecutor::run(
                 cc_pipeline.clear_output_dimensions();
 
                 cc_pipeline.swap_shader({ .shader_path = "contour_render.comp.spv", .workgroup_size = { 256, 1, 1 }, .push_constant_size = sizeof(ContourRenderPC) });
-                cc_pipeline.set_push_constants(ContourRenderPC { .width = w, .height = h, .max_components = k_max_components, .max_points_per_contour = k_max_points_per_contour });
-                cc_pipeline.set_output_dimensions(k_max_trace_slots * k_max_points_per_contour, 1U);
+                cc_pipeline.set_push_constants(ContourRenderPC { .width = w, .height = h, .max_components = k_max_components, .max_points_per_contour = k_max_points_per_contour, .max_contours = p.max_contours });
+                const uint32_t render_slots = p.max_contours > 0U ? std::min(p.max_contours, k_max_components) : k_max_trace_slots;
+                cc_pipeline.set_output_dimensions(render_slots * k_max_points_per_contour, 1U);
                 {
                     const auto fence = cc_pipeline.dispatch_async({});
                     foundry.wait_for_fence(fence);
@@ -1235,18 +1237,34 @@ VisionResult VisionGpuExecutor::run(
             if (points_written > 0)
                 cc_pipeline.download_shared(1, 8, flat_points_full.data(), static_cast<size_t>(points_written) * sizeof(glm::vec2));
 
-            std::vector<Kinesis::Vision::Contour> out_contours;
-            out_contours.reserve(compacted_count);
+            std::vector<uint32_t> order;
+            if (p.max_contours > 0U) {
+                const uint32_t take = std::min(p.max_contours, compacted_count);
+                std::vector<float> sorted_indices(take);
+                cc_pipeline.download_shared(2, 1, sorted_indices.data(), take * sizeof(float));
+                order.reserve(take);
+                for (float f : sorted_indices)
+                    order.push_back(static_cast<uint32_t>(f));
+            } else {
+                order.resize(compacted_count);
+                for (uint32_t i = 0; i < compacted_count; ++i)
+                    order[i] = i;
+            }
 
-            for (uint32_t i = 0; i < compacted_count; ++i) {
-                const auto& m = meta[i];
+            std::vector<Kinesis::Vision::Contour> out_contours;
+            out_contours.reserve(order.size());
+
+            for (uint32_t idx : order) {
+                if (idx >= compacted_count)
+                    continue;
+                const auto& m = meta[idx];
                 if (m.y < 3)
                     continue;
 
                 std::vector<glm::vec2> pts(
                     flat_points_full.begin() + m.x,
                     flat_points_full.begin() + m.x + m.y);
-                const glm::vec2 ap = area_perim[i];
+                const glm::vec2 ap = area_perim[idx];
                 out_contours.push_back({ .points = std::move(pts), .area = ap.x, .perimeter = ap.y, .parent_label = m.z });
             }
 

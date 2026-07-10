@@ -11,11 +11,16 @@ layout(set = 1, binding = 10, std430) buffer ContourMetaBuf {
     uvec4 contour_meta[];
 };
 
+layout(set = 2, binding = 1, std430) buffer SortIndicesBuf {
+    float sort_indices[];
+};
+
 layout(push_constant) uniform PushConstants {
     uint width;
     uint height;
     uint max_components;
     uint max_points_per_contour;
+    uint max_contours;
 } pc;
 
 void plot(ivec2 p)
@@ -49,8 +54,15 @@ void draw_line(ivec2 a, ivec2 b)
 void main()
 {
     const uint idx = gl_GlobalInvocationID.x;
-    const uint contour_idx = idx / pc.max_points_per_contour;
+    const uint slot = idx / pc.max_points_per_contour;
     const uint edge = idx % pc.max_points_per_contour;
+
+    const uint limit = pc.max_contours > 0u ? min(pc.max_contours, pc.max_components) : pc.max_components;
+    if (slot >= limit)
+        return;
+
+    const uint contour_idx = pc.max_contours > 0u
+        ? uint(sort_indices[slot]) : slot;
 
     if (contour_idx >= pc.max_components)
         return;
