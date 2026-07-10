@@ -3,6 +3,7 @@
 #include "MayaFlux/IO/ImageExport.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Portal/Graphics/ShaderFoundry.hpp"
+#include "MayaFlux/Yantra/Executors/ShaderExecutionContext.hpp"
 
 namespace MayaFlux::Yantra {
 
@@ -128,6 +129,7 @@ namespace {
         uint32_t max_components;
         uint32_t max_points_per_contour;
         uint32_t phase;
+        float min_area;
     };
 
     /** Standard 2D workgroup used by all pixel-to-pixel vision shaders */
@@ -1061,6 +1063,9 @@ VisionResult VisionGpuExecutor::run(
                     { .set = 0, .binding = 7, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
                     { .set = 0, .binding = 8, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
                     { .set = 0, .binding = 9, .direction = GpuBufferBinding::Direction::INPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
+                    { .set = 0, .binding = 10, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::FLOAT32 },
+                    { .set = 0, .binding = 11, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::FLOAT32 },
+                    { .set = 0, .binding = 12, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::FLOAT32 },
                 },
                 GpuBufferBinding::ElementType::IMAGE_STORAGE,
             };
@@ -1078,6 +1083,9 @@ VisionResult VisionGpuExecutor::run(
             contours_ctx.ensure_shared_buffer(6, static_cast<size_t>(k_max_components) + 1U, GpuBufferBinding::ElementType::UINT32);
             contours_ctx.ensure_shared_buffer(7, static_cast<size_t>(k_max_components) * k_max_points_per_contour * 2U, GpuBufferBinding::ElementType::UINT32);
             contours_ctx.ensure_shared_buffer(8, static_cast<size_t>(k_max_components), GpuBufferBinding::ElementType::UINT32);
+            contours_ctx.ensure_shared_buffer(10, static_cast<size_t>(k_max_components) * 2U, GpuBufferBinding::ElementType::FLOAT32);
+            contours_ctx.ensure_shared_buffer(11, k_max_components, GpuBufferBinding::ElementType::FLOAT32);
+            contours_ctx.ensure_shared_buffer(12, k_max_components, GpuBufferBinding::ElementType::FLOAT32);
 
             {
                 const uint32_t zero = 0;
@@ -1145,18 +1153,23 @@ VisionResult VisionGpuExecutor::run(
                 contours_ctx.upload_shared_raw(6, reinterpret_cast<const uint8_t*>(owner_reset.data()), owner_reset.size() * sizeof(uint32_t));
             }
 
+            const uint32_t trace_phase0_groups = std::max(
+                link_groups * 256U,
+                (k_max_components + 255U) / 256U * 256U);
+
             contours_ctx.swap_shader({ .shader_path = "contour_trace.comp.spv", .workgroup_size = { 256, 1, 1 }, .push_constant_size = sizeof(ContourTracePC) });
             contours_ctx.stage_image_at(1, image, GpuBufferBinding::ElementType::IMAGE_SAMPLED);
             contours_ctx.prepare_output_image(w, h);
-            contours_ctx.set_push_constants(ContourTracePC { .max_components = k_max_components, .max_points_per_contour = k_max_points_per_contour, .phase = 0U });
-            contours_ctx.set_output_dimensions(link_groups * 256U, 1U);
+            contours_ctx.set_push_constants(ContourTracePC { .max_components = k_max_components, .max_points_per_contour = k_max_points_per_contour, .phase = 0U, .min_area = p.min_area });
+            contours_ctx.set_output_dimensions(trace_phase0_groups, 1U);
             {
                 const auto fence = contours_ctx.dispatch_async({});
                 foundry.wait_for_fence(fence);
                 foundry.release_fence(fence);
             }
 
-            contours_ctx.set_push_constants(ContourTracePC { .max_components = k_max_components, .max_points_per_contour = k_max_points_per_contour, .phase = 1U });
+            contours_ctx.set_push_constants(ContourTracePC { .max_components = k_max_components, .max_points_per_contour = k_max_points_per_contour, .phase = 1U, .min_area = p.min_area });
+            contours_ctx.set_output_dimensions(link_groups * 256U, 1U);
             {
                 const auto fence = contours_ctx.dispatch_async({});
                 foundry.wait_for_fence(fence);
@@ -1164,20 +1177,81 @@ VisionResult VisionGpuExecutor::run(
             }
             contours_ctx.clear_output_dimensions();
 
+            // ------------------------------------------------------------------
+            // GPU top-k selection by area, only when the caller asked for a cap.
+            // Operates on the same shared buffers (11=keys, 12=indices) that
+            // contour_trace.comp just wrote, entirely GPU-resident.
+            // ------------------------------------------------------------------
+            if (p.max_contours > 0U) {
+                constexpr uint32_t k = 12U; // log2(k_max_components); k_max_components is already a power of two
+                constexpr uint32_t total_passes = k * (k + 1U) / 2U;
+
+                static const auto bitonic_spec = ShaderSpec::Assemble {}
+                                                     .tmpl(KernelTemplate::BitonicSort)
+                                                     .start_binding(11)
+                                                     .ssbo("keys", BindingDirection::InOut, Kakshya::GpuDataFormat::FLOAT32)
+                                                     .ssbo("indices", BindingDirection::InOut, Kakshya::GpuDataFormat::FLOAT32)
+                                                     .pc("stage", Kakshya::GpuDataFormat::UINT32)
+                                                     .pc("pass", Kakshya::GpuDataFormat::UINT32)
+                                                     .pc("count", Kakshya::GpuDataFormat::UINT32)
+                                                     .pc("descending", Kakshya::GpuDataFormat::UINT32)
+                                                     .workgroup(256)
+                                                     .build();
+
+                static ShaderExecutionContext<> bitonic_ctx {
+                    config_from_spec(bitonic_spec),
+                    bindings_from_spec(bitonic_spec)
+                };
+
+                bitonic_ctx.ensure_shared_buffer(11, k_max_components, GpuBufferBinding::ElementType::FLOAT32);
+                bitonic_ctx.ensure_shared_buffer(12, k_max_components, GpuBufferBinding::ElementType::FLOAT32);
+
+                bitonic_ctx.set_multipass(total_passes,
+                    [k](uint32_t p_idx, void* pc_ptr) {
+                        uint32_t stage = 0, pass = 0, remaining = p_idx;
+                        for (uint32_t s = 0; s < k; ++s) {
+                            if (remaining <= s) {
+                                stage = s;
+                                pass = remaining;
+                                break;
+                            }
+                            remaining -= (s + 1);
+                        }
+                        struct PC {
+                            uint32_t stage, pass, count, descending;
+                        };
+                        *static_cast<PC*>(pc_ptr) = { stage, pass, k_max_components, 1U };
+                    });
+
+                ExecutionContext bitonic_exec_ctx;
+                bitonic_ctx.execute(Datum<std::vector<Kakshya::DataVariant>> {}, bitonic_exec_ctx);
+            }
+
             std::vector<uint32_t> point_counts(k_max_components);
             contours_ctx.download_shared(8, point_counts.data(), point_counts.size() * sizeof(uint32_t));
 
-            std::vector<uint32_t> claimed_labels;
-            for (uint32_t i = 0; i < k_max_components; ++i)
-                if (point_counts[i] > 0)
-                    claimed_labels.push_back(i);
+            std::vector<uint32_t> selected_labels;
+            if (p.max_contours > 0U) {
+                std::vector<float> sorted_indices(p.max_contours);
+                contours_ctx.download_shared(12, sorted_indices.data(), p.max_contours * sizeof(float));
+                selected_labels.reserve(p.max_contours);
+                for (float f : sorted_indices)
+                    selected_labels.push_back(static_cast<uint32_t>(f));
+            } else {
+                for (uint32_t i = 0; i < k_max_components; ++i)
+                    if (point_counts[i] > 0)
+                        selected_labels.push_back(i);
+            }
+
+            std::vector<glm::vec2> area_perimeter(k_max_components);
+            contours_ctx.download_shared(10, area_perimeter.data(), area_perimeter.size() * sizeof(glm::vec2));
 
             std::vector<glm::vec2> all_points(static_cast<size_t>(k_max_components) * k_max_points_per_contour);
             contours_ctx.download_shared(7, all_points.data(), all_points.size() * sizeof(glm::vec2));
 
             std::vector<Kinesis::Vision::Contour> out_contours;
-            out_contours.reserve(claimed_labels.size());
-            for (uint32_t label_id : claimed_labels) {
+            out_contours.reserve(selected_labels.size());
+            for (uint32_t label_id : selected_labels) {
                 const uint32_t n = point_counts[label_id];
                 if (n < 3)
                     continue;
@@ -1186,28 +1260,8 @@ VisionResult VisionGpuExecutor::run(
                     all_points.begin() + static_cast<ptrdiff_t>(label_id) * k_max_points_per_contour,
                     all_points.begin() + static_cast<ptrdiff_t>(label_id) * k_max_points_per_contour + n);
 
-                float area = 0.0F;
-                float perimeter = 0.0F;
-                for (size_t j = 0; j < pts.size(); ++j) {
-                    const auto& a = pts[j];
-                    const auto& b = pts[(j + 1) % pts.size()];
-                    area += a.x * b.y - b.x * a.y;
-                    perimeter += glm::length(b - a);
-                }
-                area = std::abs(area) * 0.5F;
-
-                if (area < p.min_area)
-                    continue;
-
-                out_contours.push_back({ .points = std::move(pts), .area = area, .perimeter = perimeter });
-            }
-
-            if (p.max_contours > 0 && out_contours.size() > static_cast<size_t>(p.max_contours)) {
-                std::partial_sort(out_contours.begin(),
-                    out_contours.begin() + static_cast<ptrdiff_t>(p.max_contours),
-                    out_contours.end(),
-                    [](const auto& a, const auto& b) { return a.area > b.area; });
-                out_contours.resize(p.max_contours);
+                const glm::vec2 ap = area_perimeter[label_id];
+                out_contours.push_back({ .points = std::move(pts), .area = ap.x, .perimeter = ap.y });
             }
 
             MF_LOG(Journal::Component::Yantra, Journal::Context::ComputeMatrix,

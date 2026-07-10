@@ -53,20 +53,62 @@ layout(set = 0, binding = 8, std430) buffer ContourPointCountBuf {
     uint contour_point_count[];
 };
 
+/**
+ * @brief Area (x) and perimeter (y) per label slot, indexed by
+ *        (label_id - 1). Written only for labels this dispatch actually
+ *        traces; slots for unclaimed or untraced labels are left at
+ *        whatever ensure_shared_buffer's zero-init left them.
+ */
+layout(set = 0, binding = 10, std430) buffer AreaPerimeterBuf {
+    vec2 area_perimeter[];
+};
+
+/**
+ * @brief Bitonic sort key per label slot, indexed by (label_id - 1).
+ *        Valid, unfiltered labels carry their area; unclaimed or
+ *        min_area-filtered labels carry -infinity so they sort last
+ *        under descending order.
+ */
+layout(set = 0, binding = 11, std430) buffer SortKeysBuf {
+    float sort_keys[];
+};
+
+/**
+ * @brief Sort index per label slot, indexed by (label_id - 1). Initial
+ *        value is always its own slot index; the bitonic pass permutes
+ *        this buffer in place alongside SortKeysBuf.
+ */
+layout(set = 0, binding = 12, std430) buffer SortIndicesBuf {
+    float sort_indices[];
+};
+
 layout(push_constant) uniform PushConstants {
     uint max_components;
     uint max_points_per_contour;
     uint phase;
+    float min_area;
 } pc;
+
+const float NEG_INFINITY = -1.0 / 0.0;
 
 /**
  * @brief Phase 0: each segment attempts to claim ownership of tracing
  *        its label. First segment (by dispatch order, effectively
  *        arbitrary) to claim wins; all others no-op for that label.
+ *        Also initialises this label's sort slot to a filtered-out
+ *        state so every slot in [0, max_components) is well-formed for
+ *        the bitonic pass regardless of whether trace_phase ever visits
+ *        it.
  */
 void claim_phase()
 {
     const uint idx = gl_GlobalInvocationID.x;
+
+    if (idx < pc.max_components) {
+        sort_keys[idx] = NEG_INFINITY;
+        sort_indices[idx] = float(idx);
+    }
+
     if (idx >= segment_count[0])
         return;
 
@@ -83,7 +125,12 @@ void claim_phase()
  *        owning segment's endpoint, appending the shared endpoint at
  *        each step, until the walk returns to the owning segment.
  *        Bounded by segment_count to guarantee termination even on
- *        malformed (non-closed) input.
+ *        malformed (non-closed) input. Accumulates shoelace area and
+ *        perimeter over the same point sequence inline, then applies
+ *        the min_area filter by zeroing contour_point_count on failure
+ *        so the point set is excluded downstream exactly like an
+ *        untraced label. Writes the final sort key from the (possibly
+ *        filtered) area.
  */
 void trace_phase()
 {
@@ -119,7 +166,31 @@ void trace_phase()
             break;
     }
 
-    contour_point_count[label_id - 1u] = min(count, pc.max_points_per_contour);
+    const uint n = min(count, pc.max_points_per_contour);
+    contour_point_count[label_id - 1u] = n;
+
+    if (n < 3u)
+        return;
+
+    float area = 0.0;
+    float perimeter = 0.0;
+    for (uint j = 0u; j < n; ++j) {
+        const vec2 a = contour_points[out_base + j];
+        const vec2 b = contour_points[out_base + ((j + 1u) % n)];
+        area += a.x * b.y - b.x * a.y;
+        perimeter += length(b - a);
+    }
+    area = abs(area) * 0.5;
+
+    const uint slot = label_id - 1u;
+    area_perimeter[slot] = vec2(area, perimeter);
+
+    if (area < pc.min_area) {
+        contour_point_count[slot] = 0u;
+        sort_keys[slot] = NEG_INFINITY;
+    } else {
+        sort_keys[slot] = area;
+    }
 }
 
 void main()
