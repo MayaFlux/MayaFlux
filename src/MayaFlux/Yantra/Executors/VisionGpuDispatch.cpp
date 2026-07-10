@@ -1171,6 +1171,8 @@ VisionResult VisionGpuExecutor::run(
                 foundry.release_fence(fence);
             }
 
+            const auto t_trace_claim_end = std::chrono::steady_clock::now();
+
             cc_pipeline.set_push_constants(ContourTracePC { .max_components = k_max_components, .max_points_per_contour = k_max_points_per_contour, .phase = 1U, .min_area = p.min_area });
             cc_pipeline.set_output_dimensions(link_groups * 256U, 1U);
             {
@@ -1199,27 +1201,30 @@ VisionResult VisionGpuExecutor::run(
                         .workgroup(256)
                         .build()));
 
-                for (uint32_t p_idx = 0; p_idx < total_passes; ++p_idx) {
-                    uint32_t stage = 0, pass = 0, remaining = p_idx;
-                    for (uint32_t s = 0; s < k; ++s) {
-                        if (remaining <= s) {
-                            stage = s;
-                            pass = remaining;
-                            break;
+                cc_pipeline.set_output_dimensions(k_max_components, 1U);
+
+                ExecutionContext bitonic_ctx;
+                bitonic_ctx.mode = ExecutionMode::CHAINED;
+                bitonic_ctx.parameters = ChainedParams {
+                    .pass_count = total_passes,
+                    .pc_updater = [k](uint32_t p_idx, void* pc_ptr) {
+                        uint32_t stage = 0, pass = 0, remaining = p_idx;
+                        for (uint32_t s = 0; s < k; ++s) {
+                            if (remaining <= s) {
+                                stage = s;
+                                pass = remaining;
+                                break;
+                            }
+                            remaining -= (s + 1);
                         }
-                        remaining -= (s + 1);
-                    }
-                    struct PC {
-                        uint32_t stage, pass, count, descending;
-                    };
-                    cc_pipeline.set_push_constants(PC { .stage = stage, .pass = pass, .count = k_max_components, .descending = 1U });
-                    cc_pipeline.set_output_dimensions(k_max_components, 1U);
-                    {
-                        const auto fence = cc_pipeline.dispatch_async({});
-                        foundry.wait_for_fence(fence);
-                        foundry.release_fence(fence);
-                    }
-                }
+                        struct PC {
+                            uint32_t stage, pass, count, descending;
+                        };
+                        *static_cast<PC*>(pc_ptr) = { .stage = stage, .pass = pass, .count = k_max_components, .descending = 1U };
+                    },
+                };
+
+                cc_pipeline.execute(Datum<std::vector<Kakshya::DataVariant>> {}, bitonic_ctx);
                 cc_pipeline.clear_output_dimensions();
             }
 
@@ -1250,11 +1255,12 @@ VisionResult VisionGpuExecutor::run(
                 const auto t_end = std::chrono::steady_clock::now();
                 auto us = [](auto a, auto b) { return std::chrono::duration_cast<std::chrono::microseconds>(b - a).count(); };
                 MF_LOG(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
-                    "run_gpu: FindContours(as_image) timing us: dense_label={} segments={} link={} trace={} sort={} render={} total={}",
+                    "run_gpu: FindContours(as_image) timing us: dense_label={} segments={} link={} trace_claim={} trace_walk={} sort={} render={} total={}",
                     us(t_dense_label_start, t_dense_label_end),
                     us(t_dense_label_end, t_segments_end),
                     us(t_segments_end, t_link_end),
-                    us(t_link_end, t_trace_end),
+                    us(t_link_end, t_trace_claim_end),
+                    us(t_trace_claim_end, t_trace_end),
                     us(t_trace_end, t_sort_end),
                     us(t_sort_end, t_end),
                     us(t_start, t_end));
@@ -1307,11 +1313,12 @@ VisionResult VisionGpuExecutor::run(
             const auto t_end = std::chrono::steady_clock::now();
             auto us = [](auto a, auto b) { return std::chrono::duration_cast<std::chrono::microseconds>(b - a).count(); };
             MF_LOG(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
-                "run_gpu: FindContours timing us: dense_label={} segments={} link={} trace={} sort={} readback={} total={}",
+                "run_gpu: FindContours(as_image) timing us: dense_label={} segments={} link={} trace_claim={} trace_walk={} sort={} render={} total={}",
                 us(t_dense_label_start, t_dense_label_end),
                 us(t_dense_label_end, t_segments_end),
                 us(t_segments_end, t_link_end),
-                us(t_link_end, t_trace_end),
+                us(t_link_end, t_trace_claim_end),
+                us(t_trace_claim_end, t_trace_end),
                 us(t_trace_end, t_sort_end),
                 us(t_sort_end, t_end),
                 us(t_start, t_end));

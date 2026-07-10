@@ -347,7 +347,7 @@ namespace {
             o += "\n";
         }
 
-        if (spec.tmpl == KernelTemplate::Reduction || spec.tmpl == KernelTemplate::BitonicSort) {
+        if (spec.tmpl == KernelTemplate::Reduction) {
             const uint32_t local = spec.workgroup_size[0];
             const std::string ls = std::to_string(local);
             o += "%bool        = OpTypeBool\n";
@@ -985,15 +985,13 @@ namespace {
         o += "%partner        = OpBitwiseXor %u32 %i %c1u_shift\n\n";
 
         o += "%partner_le_i   = OpULessThanEqual %bool %partner %i\n";
-        o += "OpSelectionMerge %early_merge None\n";
-        o += "OpBranchConditional %partner_le_i %early_ret %bounds_chk\n\n";
-
-        o += "%bounds_chk     = OpLabel\n";
         o += "%i_oob          = OpUGreaterThanEqual %bool %i %count\n";
         o += "%p_oob          = OpUGreaterThanEqual %bool %partner %count\n";
-        o += "%oob            = OpLogicalOr %bool %i_oob %p_oob\n";
+        o += "%oob_raw        = OpLogicalOr %bool %i_oob %p_oob\n";
+        o += "%skip           = OpLogicalOr %bool %partner_le_i %oob_raw\n\n";
+
         o += "OpSelectionMerge %early_merge None\n";
-        o += "OpBranchConditional %oob %early_ret %do_sort\n\n";
+        o += "OpBranchConditional %skip %early_ret %do_sort\n\n";
 
         o += "%do_sort        = OpLabel\n";
 
