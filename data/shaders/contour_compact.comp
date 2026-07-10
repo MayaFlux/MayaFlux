@@ -7,15 +7,15 @@ layout(set = 1, binding = 4, std430) buffer TraceOwnerBuf {
     uint trace_owner[];
 };
 
-layout(set = 1, binding = 8, std430) buffer HoleOwnerBuf {
+layout(set = 1, binding = 5, std430) buffer HoleOwnerBuf {
     uint hole_owner[];
 };
 
-layout(set = 1, binding = 13, std430) buffer CompactedOwnersBuf {
+layout(set = 1, binding = 6, std430) buffer CompactedOwnersBuf {
     uvec2 compacted_owners[];
 };
 
-layout(set = 1, binding = 14, std430) buffer CompactedCountBuf {
+layout(set = 1, binding = 7, std430) buffer CompactedCountBuf {
     uint compacted_count[];
 };
 

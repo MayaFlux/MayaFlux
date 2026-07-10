@@ -3,11 +3,11 @@ layout(local_size_x = 256) in;
 
 layout(set = 0, binding = 0, rgba32f) uniform writeonly image2D out_image;
 
-layout(set = 1, binding = 16, std430) buffer FlatPointsBuf {
+layout(set = 1, binding = 8, std430) buffer FlatPointsBuf {
     vec2 flat_points[];
 };
 
-layout(set = 1, binding = 18, std430) buffer ContourMetaBuf {
+layout(set = 1, binding = 10, std430) buffer ContourMetaBuf {
     uvec4 contour_meta[];
 };
 

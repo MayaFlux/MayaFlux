@@ -26,59 +26,31 @@ layout(set = 1, binding = 4, std430) buffer TraceOwnerBuf {
  *        holes on the same component land in distinct slots without
  *        needing dynamic allocation.
  */
-layout(set = 1, binding = 8, std430) buffer HoleOwnerBuf {
+layout(set = 1, binding = 5, std430) buffer HoleOwnerBuf {
     uint hole_owner[];
 };
 
-layout(set = 1, binding = 5, std430) buffer ContourPointsBuf {
-    vec2 contour_points[];
-};
-
-layout(set = 1, binding = 6, std430) buffer ContourPointCountBuf {
-    uint contour_point_count[];
-};
-
-layout(set = 1, binding = 7, std430) buffer AreaPerimeterBuf {
-    vec2 area_perimeter[];
-};
-
-/**
- * @brief Hole equivalents of ContourPointsBuf / ContourPointCountBuf /
- *        AreaPerimeterBuf, indexed the same way as HoleOwnerBuf.
- */
-layout(set = 1, binding = 9, std430) buffer HolePointsBuf {
-    vec2 hole_points[];
-};
-
-layout(set = 1, binding = 10, std430) buffer HolePointCountBuf {
-    uint hole_point_count[];
-};
-
-layout(set = 1, binding = 11, std430) buffer HoleAreaPerimeterBuf {
-    vec2 hole_area_perimeter[];
-};
-
-layout(set = 1, binding = 12, std430) buffer HoleClaimFlagBuf {
-    uint hole_claim_flag[];
-};
-
-layout(set = 1, binding = 13, std430) buffer CompactedOwnersBuf {
+layout(set = 1, binding = 6, std430) buffer CompactedOwnersBuf {
     uvec2 compacted_owners[];
 };
 
-layout(set = 1, binding = 16, std430) buffer FlatPointsBuf {
+layout(set = 1, binding = 7, std430) buffer CompactedCountBuf {
+    uint compacted_count_buf[];
+};
+
+layout(set = 1, binding = 8, std430) buffer FlatPointsBuf {
     vec2 flat_points[];
 };
 
-layout(set = 1, binding = 17, std430) buffer PointCursorBuf {
+layout(set = 1, binding = 9, std430) buffer PointCursorBuf {
     uint point_cursor[];
 };
 
-layout(set = 1, binding = 18, std430) buffer ContourMetaBuf {
+layout(set = 1, binding = 10, std430) buffer ContourMetaBuf {
     uvec4 contour_meta[];
 };
 
-layout(set = 1, binding = 19, std430) buffer ContourAreaPerimBuf {
+layout(set = 1, binding = 11, std430) buffer ContourAreaPerimBuf {
     vec2 contour_area_perim[];
 };
 
@@ -169,9 +141,6 @@ void claim_hole_phase()
     const ivec2 coord = ivec2(gl_GlobalInvocationID.xy);
     const uint linear_idx = gl_GlobalInvocationID.y * pc.width + gl_GlobalInvocationID.x;
 
-    if (coord.x < int(pc.width) && coord.y < int(pc.height))
-        hole_claim_flag[linear_idx] = 0u;
-
     if (coord.x >= int(pc.width) || coord.y >= int(pc.height))
         return;
 
@@ -201,7 +170,6 @@ void claim_hole_phase()
     const uint base_slot = (here - 1u) * pc.max_holes_per_label;
     for (uint s = 0u; s < pc.max_holes_per_label; ++s) {
         if (atomicCompSwap(hole_owner[base_slot + s], CC_UNCLAIMED, linear_idx) == CC_UNCLAIMED) {
-            hole_claim_flag[linear_idx] = s + 1u;
             return;
         }
     }
@@ -301,28 +269,6 @@ float shoelace_perimeter(uint out_base, uint n)
     for (uint j = 0u; j < n; ++j) {
         const vec2 a = flat_points[out_base + j];
         const vec2 b = flat_points[out_base + ((j + 1u) % n)];
-        perim += length(b - a);
-    }
-    return perim;
-}
-
-float shoelace_area(uint out_base, uint n, bool from_hole_buf)
-{
-    float area = 0.0;
-    for (uint j = 0u; j < n; ++j) {
-        const vec2 a = from_hole_buf ? hole_points[out_base + j] : contour_points[out_base + j];
-        const vec2 b = from_hole_buf ? hole_points[out_base + ((j + 1u) % n)] : contour_points[out_base + ((j + 1u) % n)];
-        area += a.x * b.y - b.x * a.y;
-    }
-    return abs(area) * 0.5;
-}
-
-float shoelace_perimeter(uint out_base, uint n, bool from_hole_buf)
-{
-    float perim = 0.0;
-    for (uint j = 0u; j < n; ++j) {
-        const vec2 a = from_hole_buf ? hole_points[out_base + j] : contour_points[out_base + j];
-        const vec2 b = from_hole_buf ? hole_points[out_base + ((j + 1u) % n)] : contour_points[out_base + ((j + 1u) % n)];
         perim += length(b - a);
     }
     return perim;
