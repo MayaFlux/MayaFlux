@@ -63,6 +63,16 @@ layout(set = 1, binding = 7, std430) buffer AreaPerimeterBuf {
     vec2 area_perimeter[];
 };
 
+struct WalkNode {
+    uint next;
+    float x0;
+    float y0;
+};
+
+layout(set = 1, binding = 8, std430) buffer WalkNodeBuf {
+    WalkNode walk_nodes[];
+};
+
 /**
  * @brief Bitonic sort key per label slot, indexed by (label_id - 1).
  *        Valid, unfiltered labels carry their area; unclaimed or
@@ -151,17 +161,16 @@ void trace_phase()
     const uint start = idx;
 
     for (uint step = 0u; step < segment_count[0]; ++step) {
-        const Segment s = segments[cur];
+        const WalkNode node = walk_nodes[cur];
 
         if (count < pc.max_points_per_contour)
-            contour_points[out_base + count] = vec2(s.x0, s.y0);
+            contour_points[out_base + count] = vec2(node.x0, node.y0);
         ++count;
 
-        const uint next = segment_links[cur].next_at_end;
-        if (next == 0xFFFFFFFFu)
+        if (node.next == 0xFFFFFFFFu)
             break;
 
-        cur = next;
+        cur = node.next;
         if (cur == start)
             break;
     }

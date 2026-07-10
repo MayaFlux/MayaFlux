@@ -42,6 +42,16 @@ layout(push_constant) uniform PushConstants {
     uint phase;
 } pc;
 
+struct WalkNode {
+    uint next;
+    float x0;
+    float y0;
+};
+
+layout(set = 1, binding = 8, std430) buffer WalkNodeBuf {
+    WalkNode walk_nodes[];
+};
+
 /**
  * @brief Grid index from exact integer pixel-boundary coordinates, no
  *        float round-trip. gx in [0, width], gy in [0, height].
@@ -85,4 +95,8 @@ void main()
 
     segment_links[idx].next_at_start = other_at(grid_index(s.gx0, s.gy0), idx);
     segment_links[idx].next_at_end = other_at(grid_index(s.gx1, s.gy1), idx);
+
+    walk_nodes[idx].next = segment_links[idx].next_at_end;
+    walk_nodes[idx].x0 = s.x0;
+    walk_nodes[idx].y0 = s.y0;
 }

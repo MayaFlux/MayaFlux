@@ -48,20 +48,21 @@ void draw_line(ivec2 a, ivec2 b)
 
 void main()
 {
-    const uint label = gl_GlobalInvocationID.x;
+    const uint idx = gl_GlobalInvocationID.x;
+    const uint label = idx / pc.max_points_per_contour;
+    const uint edge = idx % pc.max_points_per_contour;
+
     if (label >= pc.max_components)
         return;
 
     const uint n = contour_point_count[label];
-    if (n < 3u)
+    if (n < 3u || edge >= n)
         return;
 
     const uint base = label * pc.max_points_per_contour;
-    for (uint i = 0; i < n; ++i) {
-        const vec2 a = contour_points[base + i];
-        const vec2 b = contour_points[base + ((i + 1u) % n)];
-        const ivec2 pa = ivec2(a.x * float(pc.width), a.y * float(pc.height));
-        const ivec2 pb = ivec2(b.x * float(pc.width), b.y * float(pc.height));
-        draw_line(pa, pb);
-    }
+    const vec2 a = contour_points[base + edge];
+    const vec2 b = contour_points[base + ((edge + 1u) % n)];
+    const ivec2 pa = ivec2(a.x * float(pc.width), a.y * float(pc.height));
+    const ivec2 pb = ivec2(b.x * float(pc.width), b.y * float(pc.height));
+    draw_line(pa, pb);
 }

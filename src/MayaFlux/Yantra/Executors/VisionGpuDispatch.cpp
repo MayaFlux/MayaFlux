@@ -285,6 +285,7 @@ VisionGpuContexts::VisionGpuContexts()
             { .set = 1, .binding = 5, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
             { .set = 1, .binding = 6, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
             { .set = 1, .binding = 7, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::FLOAT32 },
+            { .set = 1, .binding = 8, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
             { .set = 2, .binding = 0, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::FLOAT32 },
             { .set = 2, .binding = 1, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::FLOAT32 },
         },
@@ -1087,6 +1088,7 @@ VisionResult VisionGpuExecutor::run(
             cc_pipeline.ensure_shared_buffer(1, 5, static_cast<size_t>(k_max_components) * k_max_points_per_contour * 2U, GpuBufferBinding::ElementType::UINT32);
             cc_pipeline.ensure_shared_buffer(1, 6, static_cast<size_t>(k_max_components), GpuBufferBinding::ElementType::UINT32);
             cc_pipeline.ensure_shared_buffer(1, 7, static_cast<size_t>(k_max_components) * 2U, GpuBufferBinding::ElementType::FLOAT32);
+            cc_pipeline.ensure_shared_buffer(1, 8, static_cast<size_t>(k_max_segments) * 3U, GpuBufferBinding::ElementType::UINT32);
             cc_pipeline.ensure_shared_buffer(2, 0, k_max_components, GpuBufferBinding::ElementType::FLOAT32); // SortKeysBuf
             cc_pipeline.ensure_shared_buffer(2, 1, k_max_components, GpuBufferBinding::ElementType::FLOAT32); // SortIndicesBuf
 
@@ -1244,7 +1246,7 @@ VisionResult VisionGpuExecutor::run(
 
                 cc_pipeline.swap_shader({ .shader_path = "contour_render.comp.spv", .workgroup_size = { 256, 1, 1 }, .push_constant_size = sizeof(ContourRenderPC) });
                 cc_pipeline.set_push_constants(ContourRenderPC { .width = w, .height = h, .max_components = k_max_components, .max_points_per_contour = k_max_points_per_contour });
-                cc_pipeline.set_output_dimensions(k_max_components, 1U);
+                cc_pipeline.set_output_dimensions(k_max_components * k_max_points_per_contour, 1U);
                 {
                     const auto fence = cc_pipeline.dispatch_async({});
                     foundry.wait_for_fence(fence);
