@@ -15,15 +15,15 @@ struct Segment {
     float y1;
 };
 
-layout(set = 0, binding = 2, std430) buffer SegmentBuf {
+layout(set = 1, binding = 0, std430) buffer SegmentBuf {
     Segment segments[];
 };
 
-layout(set = 0, binding = 3, std430) buffer SegmentCountBuf {
+layout(set = 1, binding = 1, std430) buffer SegmentCountBuf {
     uint segment_count[1];
 };
 
-layout(set = 0, binding = 4, std430) buffer EndpointSlots {
+layout(set = 1, binding = 2, std430) buffer EndpointSlots {
     uint endpoint_slots[];
 };
 
@@ -32,7 +32,7 @@ struct SegmentLinks {
     uint next_at_end;
 };
 
-layout(set = 0, binding = 5, std430) buffer SegmentLinkBuf {
+layout(set = 1, binding = 3, std430) buffer SegmentLinkBuf {
     SegmentLinks segment_links[];
 };
 

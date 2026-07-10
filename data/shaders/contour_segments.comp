@@ -4,7 +4,7 @@
 
 layout(local_size_x = 8, local_size_y = 8) in;
 
-layout(set = 0, binding = 9, std430) buffer DenseLabelBuf {
+layout(set = 0, binding = 6, std430) buffer DenseLabelBuf {
     uint dense_label[];
 };
 
@@ -20,11 +20,11 @@ struct Segment {
     float y1;
 };
 
-layout(set = 0, binding = 2, std430) buffer SegmentBuf {
+layout(set = 1, binding = 0, std430) buffer SegmentBuf {
     Segment segments[];
 };
 
-layout(set = 0, binding = 3, std430) buffer SegmentCountBuf {
+layout(set = 1, binding = 1, std430) buffer SegmentCountBuf {
     uint segment_count[1];
 };
 

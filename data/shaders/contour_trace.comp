@@ -15,11 +15,11 @@ struct Segment {
     float y1;
 };
 
-layout(set = 0, binding = 2, std430) buffer SegmentBuf {
+layout(set = 1, binding = 0, std430) buffer SegmentBuf {
     Segment segments[];
 };
 
-layout(set = 0, binding = 3, std430) buffer SegmentCountBuf {
+layout(set = 1, binding = 1, std430) buffer SegmentCountBuf {
     uint segment_count[1];
 };
 
@@ -28,7 +28,7 @@ struct SegmentLinks {
     uint next_at_end;
 };
 
-layout(set = 0, binding = 5, std430) buffer SegmentLinkBuf {
+layout(set = 1, binding = 3, std430) buffer SegmentLinkBuf {
     SegmentLinks segment_links[];
 };
 
@@ -37,7 +37,7 @@ layout(set = 0, binding = 5, std430) buffer SegmentLinkBuf {
  *        owns tracing this label's boundary. Sized max_components + 1
  *        (label ids are 1-based). CC_UNCLAIMED sentinel means unclaimed.
  */
-layout(set = 0, binding = 6, std430) buffer TraceOwnerBuf {
+layout(set = 1, binding = 4, std430) buffer TraceOwnerBuf {
     uint trace_owner[];
 };
 
@@ -45,11 +45,11 @@ layout(set = 0, binding = 6, std430) buffer TraceOwnerBuf {
  * @brief Ordered output points, max_contours * max_points_per_contour,
  *        indexed as (label_id - 1) * max_points_per_contour + point_idx.
  */
-layout(set = 0, binding = 7, std430) buffer ContourPointsBuf {
+layout(set = 1, binding = 5, std430) buffer ContourPointsBuf {
     vec2 contour_points[];
 };
 
-layout(set = 0, binding = 8, std430) buffer ContourPointCountBuf {
+layout(set = 1, binding = 6, std430) buffer ContourPointCountBuf {
     uint contour_point_count[];
 };
 
@@ -59,7 +59,7 @@ layout(set = 0, binding = 8, std430) buffer ContourPointCountBuf {
  *        traces; slots for unclaimed or untraced labels are left at
  *        whatever ensure_shared_buffer's zero-init left them.
  */
-layout(set = 0, binding = 10, std430) buffer AreaPerimeterBuf {
+layout(set = 1, binding = 7, std430) buffer AreaPerimeterBuf {
     vec2 area_perimeter[];
 };
 
@@ -69,7 +69,7 @@ layout(set = 0, binding = 10, std430) buffer AreaPerimeterBuf {
  *        min_area-filtered labels carry -infinity so they sort last
  *        under descending order.
  */
-layout(set = 0, binding = 11, std430) buffer SortKeysBuf {
+layout(set = 2, binding = 0, std430) buffer SortKeysBuf {
     float sort_keys[];
 };
 
@@ -78,7 +78,7 @@ layout(set = 0, binding = 11, std430) buffer SortKeysBuf {
  *        value is always its own slot index; the bitonic pass permutes
  *        this buffer in place alongside SortKeysBuf.
  */
-layout(set = 0, binding = 12, std430) buffer SortIndicesBuf {
+layout(set = 2, binding = 1, std430) buffer SortIndicesBuf {
     float sort_indices[];
 };
 
