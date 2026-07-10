@@ -1114,9 +1114,18 @@ VisionResult VisionGpuExecutor::run(
                 foundry.release_fence(fence);
             }
 
-            const auto t_march_claim_end = std::chrono::steady_clock::now();
+            const auto t_march_claim_outer_end = std::chrono::steady_clock::now();
 
             cc_pipeline.set_push_constants(ContourMarchPC { .width = w, .height = h, .max_components = k_max_components, .max_points_per_contour = k_max_points_per_contour, .max_holes_per_label = k_max_holes_per_label, .phase = 1U, .min_area = p.min_area });
+            {
+                const auto fence = cc_pipeline.dispatch_async({});
+                foundry.wait_for_fence(fence);
+                foundry.release_fence(fence);
+            }
+
+            const auto t_march_claim_hole_end = std::chrono::steady_clock::now();
+
+            cc_pipeline.set_push_constants(ContourMarchPC { .width = w, .height = h, .max_components = k_max_components, .max_points_per_contour = k_max_points_per_contour, .max_holes_per_label = k_max_holes_per_label, .phase = 2U, .min_area = p.min_area });
             {
                 const auto fence = cc_pipeline.dispatch_async({});
                 foundry.wait_for_fence(fence);
@@ -1197,10 +1206,9 @@ VisionResult VisionGpuExecutor::run(
                 const auto t_end = std::chrono::steady_clock::now();
                 auto us = [](auto a, auto b) { return std::chrono::duration_cast<std::chrono::microseconds>(b - a).count(); };
                 MF_LOG(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
-                    "run_gpu: FindContours(as_image) timing us: setup={} march_claim={} march_trace={} sort={} render={} total={}",
+                    "run_gpu: FindContours(as_image) timing us: setup={} march={} sort={} render={} total={}",
                     us(t_start, t_setup_end),
-                    us(t_setup_end, t_march_claim_end),
-                    us(t_march_claim_end, t_march_trace_end),
+                    us(t_setup_end, t_march_trace_end),
                     us(t_march_trace_end, t_sort_end),
                     us(t_sort_end, t_end),
                     us(t_start, t_end));
@@ -1279,10 +1287,9 @@ VisionResult VisionGpuExecutor::run(
             const auto t_end = std::chrono::steady_clock::now();
             auto us = [](auto a, auto b) { return std::chrono::duration_cast<std::chrono::microseconds>(b - a).count(); };
             MF_LOG(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
-                "run_gpu: FindContours timing us: setup={} march_claim={} march_trace={} sort={} readback={} total={}",
+                "run_gpu: FindContours timing us: setup={} march={} sort={} readback={} total={}",
                 us(t_start, t_setup_end),
-                us(t_setup_end, t_march_claim_end),
-                us(t_march_claim_end, t_march_trace_end),
+                us(t_setup_end, t_march_trace_end),
                 us(t_march_trace_end, t_sort_end),
                 us(t_sort_end, t_end),
                 us(t_start, t_end));

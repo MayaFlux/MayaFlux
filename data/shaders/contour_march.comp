@@ -7,6 +7,14 @@ layout(set = 0, binding = 6, std430) buffer DenseLabelBuf {
     uint dense_label[];
 };
 
+layout(set = 0, binding = 7, std430) buffer BoundsMinBuf {
+    uvec2 bounds_min[];
+};
+
+layout(set = 0, binding = 8, std430) buffer BoundsMaxBuf {
+    uvec2 bounds_max[];
+};
+
 layout(set = 1, binding = 4, std430) buffer TraceOwnerBuf {
     uint trace_owner[];
 };
@@ -68,7 +76,7 @@ layout(push_constant) uniform PushConstants {
     uint max_components;
     uint max_points_per_contour;
     uint max_holes_per_label;
-    uint phase;
+    uint phase; // 0 = claim outer, 1 = claim hole, 2 = trace
     float min_area;
 } pc;
 
@@ -87,16 +95,53 @@ uint label_at(int x, int y)
 }
 
 /**
- * @brief Phase 0: claims trace ownership for outer boundaries (unchanged
- *        from before) and, additionally, for hole boundaries using only
- *        dense_label. A hole start point is a foreground pixel whose
- *        right neighbour is background, mirroring the outer start's
- *        left-neighbour test, per Suzuki-Abe's local border-start rule.
- *        No second label field, no separate connectivity pass: holes are
- *        detected as a transition condition on the same buffer the
- *        outer trace already reads.
+ * @brief Phase 0: claims trace ownership for outer boundary starts. A
+ *        background-to-foreground transition scanning left to right,
+ *        with the usual diagonal exception so a pixel with foreground
+ *        directly above and above-left is not re-claimed as a new
+ *        start. Also initialises the sort key slots.
  */
-void claim_phase()
+void claim_outer_phase()
+{
+    const ivec2 coord = ivec2(gl_GlobalInvocationID.xy);
+    const uint linear_idx = gl_GlobalInvocationID.y * pc.width + gl_GlobalInvocationID.x;
+
+    if (linear_idx < pc.max_components) {
+        sort_keys[linear_idx] = NEG_INFINITY;
+        sort_indices[linear_idx] = float(linear_idx);
+    }
+
+    if (coord.x >= int(pc.width) || coord.y >= int(pc.height))
+        return;
+
+    const uint here = label_at(coord.x, coord.y);
+    if (is_background(here) || here > pc.max_components)
+        return;
+
+    if (uint(coord.y) != bounds_min[here - 1u].y)
+        return;
+
+    const uint left = label_at(coord.x - 1, coord.y);
+    if (left == here)
+        return;
+
+    atomicCompSwap(trace_owner[here], CC_UNCLAIMED, linear_idx);
+}
+
+/**
+ * @brief Phase 1: claims trace ownership for hole boundary starts.
+ *        Runs strictly after claim_outer_phase (separate dispatch), so
+ *        trace_owner is already fully resolved and a pixel that won
+ *        outer ownership can be excluded outright. A hole-start
+ *        candidate is a foreground pixel with background to its right,
+ *        where that background pixel lies strictly inside the
+ *        component's bounding box (a hole touching the bbox edge would
+ *        connect to exterior background and therefore not be enclosed)
+ *        and has non-background directly above it (restricting the
+ *        claim to the hole's topmost row, so a multi-row hole is
+ *        claimed exactly once rather than once per row).
+ */
+void claim_hole_phase()
 {
     const ivec2 coord = ivec2(gl_GlobalInvocationID.xy);
     const uint linear_idx = gl_GlobalInvocationID.y * pc.width + gl_GlobalInvocationID.x;
@@ -104,36 +149,30 @@ void claim_phase()
     if (coord.x < int(pc.width) && coord.y < int(pc.height))
         hole_claim_flag[linear_idx] = 0u;
 
+    if (coord.x >= int(pc.width) || coord.y >= int(pc.height))
+        return;
+
     const uint here = label_at(coord.x, coord.y);
     if (is_background(here) || here > pc.max_components)
         return;
 
-    const uint left = label_at(coord.x - 1, coord.y);
-    const uint above = label_at(coord.x, coord.y - 1);
-
-    bool is_outer_start = (left != here);
-    if (is_outer_start && above == here) {
-        const uint above_left = label_at(coord.x - 1, coord.y - 1);
-        if (above_left == here)
-            is_outer_start = false;
-    }
-
-    if (is_outer_start) {
-        atomicCompSwap(trace_owner[here], CC_UNCLAIMED, linear_idx);
+    if (trace_owner[here] == linear_idx)
         return;
-    }
+
+    const uvec2 bmin = bounds_min[here - 1u];
+    const uvec2 bmax = bounds_max[here - 1u];
 
     const uint right = label_at(coord.x + 1, coord.y);
     if (!is_background(right))
         return;
 
-    bool is_hole_start = true;
-    if (above == here) {
-        const uint above_right = label_at(coord.x + 1, coord.y - 1);
-        if (is_background(above_right))
-            is_hole_start = false;
-    }
-    if (!is_hole_start)
+    if (uint(coord.x) + 1u <= bmin.x || uint(coord.x) + 1u >= bmax.x)
+        return;
+    if (uint(coord.y) <= bmin.y || uint(coord.y) >= bmax.y)
+        return;
+
+    const uint right_above = label_at(coord.x + 1, coord.y - 1);
+    if (is_background(right_above))
         return;
 
     const uint base_slot = (here - 1u) * pc.max_holes_per_label;
@@ -146,12 +185,14 @@ void claim_phase()
 }
 
 /**
- * @brief Bounded Moore boundary walk. When tracing_hole is false, walks
- *        pixels equal to target_label (outer boundary). When true, walks
- *        the background pixels bordering the hole from the inside,
- *        following the same 8-direction search but testing for
- *        "background adjacent to target_label" instead of "equal to
- *        target_label" as the step-acceptance condition.
+ * @brief Bounded Moore boundary walk, used for both outer and hole
+ *        traces. tracing_hole selects the acceptance test: equal to
+ *        target_label for an outer walk, background for a hole walk.
+ *        Hole walks begin their neighbour search from the direction
+ *        pointing back toward the claiming foreground pixel (west),
+ *        since they enter via a foreground-to-background transition
+ *        rather than the background-to-foreground orientation the
+ *        outer walk's default start direction assumes.
  */
 void walk_boundary(
     int start_x, int start_y,
@@ -169,11 +210,14 @@ void walk_boundary(
     int cy = start_y;
 
     int start_dir = 0;
+    if (tracing_hole) {
+        start_dir = 4;
+    }
     for (int d = 0; d < 8; ++d) {
-        const uint n = label_at(cx + dx8[d], cy + dy8[d]);
+        const uint n = label_at(cx + dx8[(start_dir + d) % 8], cy + dy8[(start_dir + d) % 8]);
         const bool inside = tracing_hole ? is_background(n) : (n == target_label);
         if (!inside) {
-            start_dir = d;
+            start_dir = (start_dir + d) % 8;
             break;
         }
     }
@@ -183,6 +227,7 @@ void walk_boundary(
     int dir = start_dir;
     bool first = true;
     uint count = 0u;
+    int entry_dir_at_start = -1;
 
     for (uint step = 0u; step < max_points * 8u; ++step) {
         bool step_found = false;
@@ -248,12 +293,9 @@ float shoelace_perimeter(uint out_base, uint n, bool from_hole_buf)
 }
 
 /**
- * @brief Phase 1: runs the bounded Moore trace for whichever ownership
- *        this invocation's pixel won in phase 0: outer boundary, a hole
- *        slot, or neither. A foreground pixel can win outer ownership;
- *        a foreground pixel with a background right-neighbour can win
- *        a hole slot. Both checks are cheap since trace_owner/hole_owner
- *        lookups are direct indexed reads.
+ * @brief Phase 2: runs the bounded Moore trace for whichever ownership
+ *        this invocation's pixel won: outer boundary, a hole slot, or
+ *        neither.
  */
 void trace_phase()
 {
@@ -289,38 +331,36 @@ void trace_phase()
         return;
     }
 
-    const uint base_slot = (here - 1u) * pc.max_holes_per_label;
-    for (uint s = 0u; s < pc.max_holes_per_label; ++s) {
-        const uint claim = hole_claim_flag[linear_idx];
-        if (claim == 0u)
-            return;
-
-        const uint slot_in_label = claim - 1u;
-        const uint base_slot = (here - 1u) * pc.max_holes_per_label;
-        const uint slot = base_slot + slot_in_label;
-
-        const uint out_base = slot * pc.max_points_per_contour;
-        uint n = 0u;
-        walk_boundary(coord.x + 1, coord.y, here, true, out_base, pc.max_points_per_contour, true, n);
-
-        hole_point_count[slot] = n;
-        if (n < 3u)
-            return;
-
-        const float area = shoelace_area(out_base, n, true);
-        const float perimeter = shoelace_perimeter(out_base, n, true);
-        hole_area_perimeter[slot] = vec2(area, perimeter);
-
-        if (area < pc.min_area)
-            hole_point_count[slot] = 0u;
+    const uint claim = hole_claim_flag[linear_idx];
+    if (claim == 0u)
         return;
-    }
+
+    const uint slot_in_label = claim - 1u;
+    const uint base_slot = (here - 1u) * pc.max_holes_per_label;
+    const uint slot = base_slot + slot_in_label;
+
+    const uint out_base = slot * pc.max_points_per_contour;
+    uint n = 0u;
+    walk_boundary(coord.x + 1, coord.y, here, true, out_base, pc.max_points_per_contour, true, n);
+
+    hole_point_count[slot] = n;
+    if (n < 3u)
+        return;
+
+    const float area = shoelace_area(out_base, n, true);
+    const float perimeter = shoelace_perimeter(out_base, n, true);
+    hole_area_perimeter[slot] = vec2(area, perimeter);
+
+    if (area < pc.min_area)
+        hole_point_count[slot] = 0u;
 }
 
 void main()
 {
     if (pc.phase == 0u)
-        claim_phase();
+        claim_outer_phase();
+    else if (pc.phase == 1u)
+        claim_hole_phase();
     else
         trace_phase();
 }
