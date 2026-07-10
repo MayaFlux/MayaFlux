@@ -139,6 +139,11 @@ namespace {
         uint32_t max_holes_per_label;
         uint32_t phase;
         float min_area;
+        uint32_t compacted_count;
+    };
+    struct ContourCompactPC {
+        uint32_t max_components;
+        uint32_t max_holes_per_label;
     };
 
     /** Standard 2D workgroup used by all pixel-to-pixel vision shaders */
@@ -290,6 +295,8 @@ VisionGpuContexts::VisionGpuContexts()
             { .set = 1, .binding = 10, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
             { .set = 1, .binding = 11, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::FLOAT32 },
             { .set = 1, .binding = 12, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
+            { .set = 1, .binding = 13, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
+            { .set = 1, .binding = 14, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
             { .set = 2, .binding = 0, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::FLOAT32 },
             { .set = 2, .binding = 1, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::FLOAT32 },
         },
@@ -1090,6 +1097,8 @@ VisionResult VisionGpuExecutor::run(
             cc_pipeline.ensure_shared_buffer(1, 10, static_cast<size_t>(k_max_components) * k_max_holes_per_label, GpuBufferBinding::ElementType::UINT32);
             cc_pipeline.ensure_shared_buffer(1, 11, static_cast<size_t>(k_max_components) * k_max_holes_per_label * 2U, GpuBufferBinding::ElementType::FLOAT32);
             cc_pipeline.ensure_shared_buffer(1, 12, static_cast<size_t>(w) * h, GpuBufferBinding::ElementType::UINT32);
+            cc_pipeline.ensure_shared_buffer(1, 13, static_cast<size_t>(k_max_components) * (1U + k_max_holes_per_label) * 2U, GpuBufferBinding::ElementType::UINT32);
+            cc_pipeline.ensure_shared_buffer(1, 14, 1U, GpuBufferBinding::ElementType::UINT32);
             cc_pipeline.ensure_shared_buffer(2, 0, k_max_components, GpuBufferBinding::ElementType::FLOAT32);
             cc_pipeline.ensure_shared_buffer(2, 1, k_max_components, GpuBufferBinding::ElementType::FLOAT32);
 
@@ -1099,6 +1108,9 @@ VisionResult VisionGpuExecutor::run(
 
                 std::vector<uint32_t> hole_owner_reset(static_cast<size_t>(k_max_components) * k_max_holes_per_label, CC_UNCLAIMED_HOST);
                 cc_pipeline.upload_shared_raw(1, 8, reinterpret_cast<const uint8_t*>(hole_owner_reset.data()), hole_owner_reset.size() * sizeof(uint32_t));
+
+                const uint32_t zero = 0;
+                cc_pipeline.upload_shared_raw(1, 14, reinterpret_cast<const uint8_t*>(&zero), sizeof(uint32_t));
             }
 
             const auto t_setup_end = std::chrono::steady_clock::now();
@@ -1106,7 +1118,7 @@ VisionResult VisionGpuExecutor::run(
             cc_pipeline.swap_shader({ .shader_path = "contour_march.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(ContourMarchPC) });
             cc_pipeline.stage_image_at(1, image, GpuBufferBinding::ElementType::IMAGE_SAMPLED);
             cc_pipeline.prepare_output_image(w, h);
-            cc_pipeline.set_push_constants(ContourMarchPC { .width = w, .height = h, .max_components = k_max_components, .max_points_per_contour = k_max_points_per_contour, .max_holes_per_label = k_max_holes_per_label, .phase = 0U, .min_area = p.min_area });
+            cc_pipeline.set_push_constants(ContourMarchPC { .width = w, .height = h, .max_components = k_max_components, .max_points_per_contour = k_max_points_per_contour, .max_holes_per_label = k_max_holes_per_label, .phase = 0U, .min_area = p.min_area, .compacted_count = 0U });
             cc_pipeline.set_output_dimensions(w, h);
             {
                 const auto fence = cc_pipeline.dispatch_async({});
@@ -1116,7 +1128,7 @@ VisionResult VisionGpuExecutor::run(
 
             const auto t_march_claim_outer_end = std::chrono::steady_clock::now();
 
-            cc_pipeline.set_push_constants(ContourMarchPC { .width = w, .height = h, .max_components = k_max_components, .max_points_per_contour = k_max_points_per_contour, .max_holes_per_label = k_max_holes_per_label, .phase = 1U, .min_area = p.min_area });
+            cc_pipeline.set_push_constants(ContourMarchPC { .width = w, .height = h, .max_components = k_max_components, .max_points_per_contour = k_max_points_per_contour, .max_holes_per_label = k_max_holes_per_label, .phase = 1U, .min_area = p.min_area, .compacted_count = 0U });
             {
                 const auto fence = cc_pipeline.dispatch_async({});
                 foundry.wait_for_fence(fence);
@@ -1125,7 +1137,26 @@ VisionResult VisionGpuExecutor::run(
 
             const auto t_march_claim_hole_end = std::chrono::steady_clock::now();
 
-            cc_pipeline.set_push_constants(ContourMarchPC { .width = w, .height = h, .max_components = k_max_components, .max_points_per_contour = k_max_points_per_contour, .max_holes_per_label = k_max_holes_per_label, .phase = 2U, .min_area = p.min_area });
+            cc_pipeline.clear_output_dimensions();
+
+            cc_pipeline.swap_shader({ .shader_path = "contour_compact.comp.spv", .workgroup_size = { 256, 1, 1 }, .push_constant_size = sizeof(ContourCompactPC) });
+            cc_pipeline.set_push_constants(ContourCompactPC { .max_components = k_max_components, .max_holes_per_label = k_max_holes_per_label });
+            const uint32_t total_owner_slots = k_max_components * (1U + k_max_holes_per_label);
+            cc_pipeline.set_output_dimensions(total_owner_slots, 1);
+            {
+                const auto fence = cc_pipeline.dispatch_async({});
+                foundry.wait_for_fence(fence);
+                foundry.release_fence(fence);
+            }
+            cc_pipeline.clear_output_dimensions();
+
+            uint32_t compacted_count = 0;
+            cc_pipeline.download_shared(1, 14, &compacted_count, sizeof(uint32_t));
+            MF_LOG(Journal::Component::Yantra, Journal::Context::ComputeMatrix, "FindContours: compacted_count={}", compacted_count);
+
+            cc_pipeline.swap_shader({ .shader_path = "contour_march.comp.spv", .workgroup_size = { 256, 1, 1 }, .push_constant_size = sizeof(ContourMarchPC) });
+            cc_pipeline.set_push_constants(ContourMarchPC { .width = w, .height = h, .max_components = k_max_components, .max_points_per_contour = k_max_points_per_contour, .max_holes_per_label = k_max_holes_per_label, .phase = 2U, .min_area = p.min_area, .compacted_count = compacted_count });
+            cc_pipeline.set_output_dimensions(std::max(compacted_count, 1U), 1);
             {
                 const auto fence = cc_pipeline.dispatch_async({});
                 foundry.wait_for_fence(fence);

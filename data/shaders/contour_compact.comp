@@ -1,0 +1,62 @@
+#version 460
+#include "include/vision_cc.glsl"
+
+layout(local_size_x = 256) in;
+
+layout(set = 1, binding = 4, std430) buffer TraceOwnerBuf {
+    uint trace_owner[];
+};
+
+layout(set = 1, binding = 8, std430) buffer HoleOwnerBuf {
+    uint hole_owner[];
+};
+
+layout(set = 1, binding = 13, std430) buffer CompactedOwnersBuf {
+    uvec2 compacted_owners[];
+};
+
+layout(set = 1, binding = 14, std430) buffer CompactedCountBuf {
+    uint compacted_count[];
+};
+
+layout(push_constant) uniform PushConstants {
+    uint max_components;
+    uint max_holes_per_label;
+} pc;
+
+const uint HOLE_FLAG = 0x80000000u;
+
+/**
+ * @brief Scans the fixed-size ownership tables (not the image) and
+ *        appends one compacted entry per claimed outer owner and per
+ *        claimed hole slot. Dispatched over max_components * (1 +
+ *        max_holes_per_label) threads, independent of image resolution.
+ */
+void main()
+{
+    const uint idx = gl_GlobalInvocationID.x;
+    const uint total_slots = pc.max_components * (1u + pc.max_holes_per_label);
+    if (idx >= total_slots)
+        return;
+
+    if (idx < pc.max_components) {
+        const uint label = idx + 1u;
+        const uint owner = trace_owner[label];
+        if (owner == CC_UNCLAIMED)
+            return;
+
+        const uint slot = atomicAdd(compacted_count[0], 1u);
+        compacted_owners[slot] = uvec2(owner, idx);
+        return;
+    }
+
+    const uint hole_idx = idx - pc.max_components;
+    const uint owner = hole_owner[hole_idx];
+    if (owner == CC_UNCLAIMED)
+        return;
+
+    const uint label = hole_idx / pc.max_holes_per_label;
+    const uint hole_slot = hole_idx % pc.max_holes_per_label;
+    const uint slot = atomicAdd(compacted_count[0], 1u);
+    compacted_owners[slot] = uvec2(owner, HOLE_FLAG | (hole_slot << 12) | label);
+}

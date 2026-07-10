@@ -62,6 +62,10 @@ layout(set = 1, binding = 12, std430) buffer HoleClaimFlagBuf {
     uint hole_claim_flag[];
 };
 
+layout(set = 1, binding = 13, std430) buffer CompactedOwnersBuf {
+    uvec2 compacted_owners[];
+};
+
 layout(set = 2, binding = 0, std430) buffer SortKeysBuf {
     float sort_keys[];
 };
@@ -78,9 +82,12 @@ layout(push_constant) uniform PushConstants {
     uint max_holes_per_label;
     uint phase; // 0 = claim outer, 1 = claim hole, 2 = trace
     float min_area;
+    uint compacted_count;
 } pc;
 
 const float NEG_INFINITY = -1.0 / 0.0;
+
+const uint HOLE_FLAG = 0x80000000u;
 
 bool is_background(uint label)
 {
@@ -355,6 +362,70 @@ void trace_phase()
         hole_point_count[slot] = 0u;
 }
 
+/**
+ * @brief Phase 2, compacted variant. Dispatched over compacted_count
+ *        threads instead of w*h pixels. Each thread reads its owner's
+ *        linear_idx and packed metadata directly, deriving coord from
+ *        linear_idx rather than gl_GlobalInvocationID, and runs exactly
+ *        one boundary walk with no non-owner early-return waste.
+ */
+void trace_phase_compacted()
+{
+    const uint i = gl_GlobalInvocationID.x;
+    if (i >= pc.compacted_count)
+        return;
+
+    const uvec2 entry = compacted_owners[i];
+    const uint linear_idx = entry.x;
+    const uint meta = entry.y;
+
+    const int cx = int(linear_idx % pc.width);
+    const int cy = int(linear_idx / pc.width);
+
+    if ((meta & HOLE_FLAG) == 0u) {
+        const uint here = meta;
+        const uint out_base = here * pc.max_points_per_contour;
+        uint n = 0u;
+        walk_boundary(cx, cy, here + 1u, false, out_base, pc.max_points_per_contour, false, n);
+
+        contour_point_count[here] = n;
+        if (n < 3u)
+            return;
+
+        const float area = shoelace_area(out_base, n, false);
+        const float perimeter = shoelace_perimeter(out_base, n, false);
+        area_perimeter[here] = vec2(area, perimeter);
+
+        if (area < pc.min_area) {
+            contour_point_count[here] = 0u;
+            sort_keys[here] = NEG_INFINITY;
+        } else {
+            sort_keys[here] = area;
+        }
+        return;
+    }
+
+    const uint label = meta & 0xFFFu;
+    const uint hole_slot = (meta >> 12u) & 0xFFu;
+    const uint base_slot = label * pc.max_holes_per_label;
+    const uint slot = base_slot + hole_slot;
+
+    const uint out_base = slot * pc.max_points_per_contour;
+    uint n = 0u;
+    walk_boundary(cx + 1, cy, label + 1u, true, out_base, pc.max_points_per_contour, true, n);
+
+    hole_point_count[slot] = n;
+    if (n < 3u)
+        return;
+
+    const float area = shoelace_area(out_base, n, true);
+    const float perimeter = shoelace_perimeter(out_base, n, true);
+    hole_area_perimeter[slot] = vec2(area, perimeter);
+
+    if (area < pc.min_area)
+        hole_point_count[slot] = 0u;
+}
+
 void main()
 {
     if (pc.phase == 0u)
@@ -362,5 +433,5 @@ void main()
     else if (pc.phase == 1u)
         claim_hole_phase();
     else
-        trace_phase();
+        trace_phase_compacted();
 }
