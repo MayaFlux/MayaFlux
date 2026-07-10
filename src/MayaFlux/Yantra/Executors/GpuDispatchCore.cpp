@@ -324,7 +324,7 @@ GpuChannelResult GpuDispatchCore::dispatch_core_chained_indirect(
     }
 
     m_resources.dispatch_batched_indirect(
-        dispatch_key(), indirect_it->binding, groups, m_bindings,
+        dispatch_key(), indirect_it->set, indirect_it->binding, groups, m_bindings,
         m_gpu_config.push_constant_size, ctx);
 
     GpuChannelResult result;
@@ -583,8 +583,9 @@ void GpuDispatchCore::bind_all_descriptors()
             || et == GpuBufferBinding::ElementType::IMAGE_SAMPLED)
             continue;
 
-        if (i < m_shared_bindings.size() && m_shared_bindings[i]) {
-            m_resources.bind_shared_descriptor(dispatch_key(), i, m_bindings[i]);
+        const auto key = std::make_pair(m_bindings[i].set, static_cast<size_t>(m_bindings[i].binding));
+        if (m_shared_bindings.contains(key)) {
+            m_resources.bind_shared_descriptor(dispatch_key(), m_bindings[i].set, m_bindings[i].binding, m_bindings[i]);
             continue;
         }
 

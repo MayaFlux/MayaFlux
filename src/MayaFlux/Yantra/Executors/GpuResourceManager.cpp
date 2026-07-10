@@ -121,7 +121,7 @@ namespace {
 } // anonymous namespace
 
 struct GpuResourceManager::SharedBuffers {
-    std::vector<VulkanBufferSlot> slots;
+    std::map<std::pair<uint32_t, size_t>, VulkanBufferSlot> slots;
 };
 
 //==============================================================================
@@ -352,7 +352,7 @@ size_t GpuResourceManager::buffer_allocated_bytes(const std::string& key, size_t
     return find_unit(key)->buffer_slots[index].allocated_bytes;
 }
 
-void GpuResourceManager::ensure_shared_buffer(size_t binding_index, size_t element_count,
+void GpuResourceManager::ensure_shared_buffer(uint32_t set, size_t binding_index, size_t element_count,
     GpuBufferBinding::ElementType element_type,
     Portal::Graphics::BufferUsageHint usage_hint)
 {
@@ -365,10 +365,7 @@ void GpuResourceManager::ensure_shared_buffer(size_t binding_index, size_t eleme
             "GpuResourceManager: ensure_shared_buffer requires a sized element_type");
     }
 
-    if (binding_index >= m_shared->slots.size())
-        m_shared->slots.resize(binding_index + 1);
-
-    auto& slot = m_shared->slots[binding_index];
+    auto& slot = m_shared->slots[{ set, binding_index }];
     const size_t required_bytes = element_count * width;
     if (slot.allocated_bytes >= required_bytes)
         return;
@@ -378,11 +375,11 @@ void GpuResourceManager::ensure_shared_buffer(size_t binding_index, size_t eleme
         slot, required_bytes, Portal::Graphics::to_buffer_usage_flags(usage_hint));
 }
 
-void GpuResourceManager::bind_shared_descriptor(const std::string& key, size_t binding_index, const GpuBufferBinding& spec)
+void GpuResourceManager::bind_shared_descriptor(const std::string& key, uint32_t set, size_t binding_index, const GpuBufferBinding& spec)
 {
     auto& unit = unit_for(key);
     auto& foundry = Portal::Graphics::get_shader_foundry();
-    auto& slot = m_shared->slots.at(binding_index);
+    auto& slot = m_shared->slots.at({ set, binding_index });
 
     foundry.update_descriptor_buffer(
         unit.descriptor_set_ids[spec.set],
@@ -391,25 +388,23 @@ void GpuResourceManager::bind_shared_descriptor(const std::string& key, size_t b
         slot.buffer, 0, slot.allocated_bytes);
 }
 
-void GpuResourceManager::download_shared(size_t binding_index, void* dest, size_t byte_size)
+void GpuResourceManager::download_shared(uint32_t set, size_t binding_index, void* dest, size_t byte_size)
 {
-    auto& slot = m_shared->slots.at(binding_index);
+    auto& slot = m_shared->slots.at({ set, binding_index });
     std::memcpy(dest, slot.mapped_ptr, byte_size);
 }
 
-void GpuResourceManager::upload_shared_raw(size_t binding_index, const uint8_t* data, size_t byte_size)
+void GpuResourceManager::upload_shared_raw(uint32_t set, size_t binding_index, const uint8_t* data, size_t byte_size)
 {
-    auto& slot = m_shared->slots.at(binding_index);
+    auto& slot = m_shared->slots.at({ set, binding_index });
     std::memcpy(slot.mapped_ptr, data, byte_size);
 }
 
 Portal::Graphics::HazardResource GpuResourceManager::make_shared_buffer_hazard(
-    size_t binding_index, const GpuBufferBinding& spec) const
+    const GpuBufferBinding& spec) const
 {
-    vk::Buffer handle = binding_index < m_shared->slots.size()
-        ? m_shared->slots[binding_index].buffer
-        : vk::Buffer {};
-
+    const auto it = m_shared->slots.find({ spec.set, static_cast<size_t>(spec.binding) });
+    vk::Buffer handle = it != m_shared->slots.end() ? it->second.buffer : vk::Buffer {};
     return Portal::Graphics::HazardResource {
         .binding = spec,
         .image = nullptr,
@@ -593,7 +588,7 @@ void GpuResourceManager::dispatch_batched(const std::string& key,
 }
 
 void GpuResourceManager::dispatch_batched_indirect(const std::string& key,
-    size_t indirect_binding,
+    uint32_t indirect_set, size_t indirect_binding,
     const std::array<uint32_t, 3>& groups,
     const std::vector<GpuBufferBinding>& bindings,
     size_t push_constant_size,
@@ -606,9 +601,10 @@ void GpuResourceManager::dispatch_batched_indirect(const std::string& key,
     auto& foundry = Portal::Graphics::get_shader_foundry();
     auto& compute_press = Portal::Graphics::get_compute_press();
 
-    const vk::Buffer indirect_buffer = m_shared->slots.at(indirect_binding).buffer;
+    auto& indirect_slot = m_shared->slots.at({ indirect_set, indirect_binding });
+    const vk::Buffer indirect_buffer = indirect_slot.buffer;
     const uint32_t init_cmd[3] = { groups[0], groups[1], groups[2] };
-    std::memcpy(m_shared->slots.at(indirect_binding).mapped_ptr, init_cmd, sizeof(init_cmd));
+    std::memcpy(indirect_slot.mapped_ptr, init_cmd, sizeof(init_cmd));
 
     const uint32_t default_passes = std::max(1U, 65536U / std::max(1U, groups[0] * groups[1] * groups[2]));
     const uint32_t effective_passes_per_batch = params.passes_per_batch.value_or(default_passes);

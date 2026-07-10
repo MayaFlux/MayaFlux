@@ -903,14 +903,14 @@ VisionResult VisionGpuExecutor::run(
                 static_cast<double>(block_width) * block_width + static_cast<double>(block_height) * block_height);
             const auto k_compress_passes = static_cast<uint32_t>(std::ceil(std::log2(std::max(2.0, block_diagonal))));
 
-            cc_pipeline.ensure_shared_buffer(2, static_cast<size_t>(block_width) * block_height, GpuBufferBinding::ElementType::UINT32);
-            cc_pipeline.ensure_shared_buffer(3, 1, GpuBufferBinding::ElementType::UINT32);
-            cc_pipeline.ensure_shared_buffer(4, static_cast<size_t>(block_width) * block_height, GpuBufferBinding::ElementType::UINT32);
-            cc_pipeline.ensure_shared_buffer(5, 1, GpuBufferBinding::ElementType::UINT32);
-            cc_pipeline.ensure_shared_buffer(6, static_cast<size_t>(w) * h, GpuBufferBinding::ElementType::UINT32);
-            cc_pipeline.ensure_shared_buffer(7, static_cast<size_t>(k_max_components) * 2, GpuBufferBinding::ElementType::UINT32);
-            cc_pipeline.ensure_shared_buffer(8, static_cast<size_t>(k_max_components) * 2, GpuBufferBinding::ElementType::UINT32);
-            cc_pipeline.ensure_shared_buffer(9, k_max_components, GpuBufferBinding::ElementType::UINT32);
+            cc_pipeline.ensure_shared_buffer(0, 2, static_cast<size_t>(block_width) * block_height, GpuBufferBinding::ElementType::UINT32);
+            cc_pipeline.ensure_shared_buffer(0, 3, 1, GpuBufferBinding::ElementType::UINT32);
+            cc_pipeline.ensure_shared_buffer(0, 4, static_cast<size_t>(block_width) * block_height, GpuBufferBinding::ElementType::UINT32);
+            cc_pipeline.ensure_shared_buffer(0, 5, 1, GpuBufferBinding::ElementType::UINT32);
+            cc_pipeline.ensure_shared_buffer(0, 6, static_cast<size_t>(w) * h, GpuBufferBinding::ElementType::UINT32);
+            cc_pipeline.ensure_shared_buffer(0, 7, static_cast<size_t>(k_max_components) * 2, GpuBufferBinding::ElementType::UINT32);
+            cc_pipeline.ensure_shared_buffer(0, 8, static_cast<size_t>(k_max_components) * 2, GpuBufferBinding::ElementType::UINT32);
+            cc_pipeline.ensure_shared_buffer(0, 9, k_max_components, GpuBufferBinding::ElementType::UINT32);
 
             const CCBlockInitPC init_pc { .width = w, .height = h, .block_width = block_width, .block_height = block_height };
             const CCMergePC merge_pc { .width = w, .height = h, .block_width = block_width, .block_height = block_height };
@@ -945,7 +945,7 @@ VisionResult VisionGpuExecutor::run(
         cc_pipeline.set_output_dimensions(block_width, block_height); },
                 .hazard_fn = [&](GpuDispatchCore& ctx) -> std::vector<Portal::Graphics::HazardResource> {
                     return {
-                        ctx.shared_buffer_hazard(2,
+                        ctx.shared_buffer_hazard(
                             { .set = 0, .binding = 2, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 }),
                     };
                 },
@@ -960,7 +960,7 @@ VisionResult VisionGpuExecutor::run(
         cc_pipeline.set_output_dimensions(block_width, block_height); },
                 .hazard_fn = [&](GpuDispatchCore& ctx) -> std::vector<Portal::Graphics::HazardResource> {
                     return {
-                        ctx.shared_buffer_hazard(2,
+                        ctx.shared_buffer_hazard(
                             { .set = 0, .binding = 2, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 }),
                     };
                 },
@@ -972,14 +972,14 @@ VisionResult VisionGpuExecutor::run(
             cc_ctx.parameters = DependencyParams { .stages = cc_stages };
             cc_pipeline.execute(Datum<> {}, cc_ctx);
 
-            cc_pipeline.ensure_shared_buffer(10, 3, GpuBufferBinding::ElementType::UINT32,
+            cc_pipeline.ensure_shared_buffer(0, 10, 3, GpuBufferBinding::ElementType::UINT32,
                 Portal::Graphics::BufferUsageHint::INDIRECT);
             const std::array<uint32_t, 3> full_grid_indirect {
                 (block_width + 7U) / 8U,
                 (block_height + 7U) / 8U,
                 1U
             };
-            cc_pipeline.upload_shared_raw(10, reinterpret_cast<const uint8_t*>(full_grid_indirect.data()), full_grid_indirect.size() * sizeof(uint32_t));
+            cc_pipeline.upload_shared_raw(0, 10, reinterpret_cast<const uint8_t*>(full_grid_indirect.data()), full_grid_indirect.size() * sizeof(uint32_t));
 
             cc_pipeline.swap_shader({ .shader_path = "cc_compress.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(CCCompressPC) });
             cc_pipeline.set_push_constants(CCCompressPC { .block_width = block_width, .block_height = block_height });
@@ -1006,7 +1006,7 @@ VisionResult VisionGpuExecutor::run(
             result.debug_labels = p.with_colors ? cc_pipeline.get_output_image(0) : nullptr;
 
             uint32_t compact_count = 0;
-            cc_pipeline.download_shared(5, &compact_count, sizeof(uint32_t));
+            cc_pipeline.download_shared(0, 5, &compact_count, sizeof(uint32_t));
             compact_count = std::min(compact_count, k_max_components);
 
             Kinesis::Vision::ComponentResult cc_result;
@@ -1017,9 +1017,9 @@ VisionResult VisionGpuExecutor::run(
                 std::vector<glm::uvec2> bmin(compact_count);
                 std::vector<glm::uvec2> bmax(compact_count);
                 std::vector<uint32_t> bcount(compact_count);
-                cc_pipeline.download_shared(7, bmin.data(), bmin.size() * sizeof(glm::uvec2));
-                cc_pipeline.download_shared(8, bmax.data(), bmax.size() * sizeof(glm::uvec2));
-                cc_pipeline.download_shared(9, bcount.data(), bcount.size() * sizeof(uint32_t));
+                cc_pipeline.download_shared(0, 7, bmin.data(), bmin.size() * sizeof(glm::uvec2));
+                cc_pipeline.download_shared(0, 8, bmax.data(), bmax.size() * sizeof(glm::uvec2));
+                cc_pipeline.download_shared(0, 9, bcount.data(), bcount.size() * sizeof(uint32_t));
 
                 const float inv_w = 1.0F / static_cast<float>(w);
                 const float inv_h = 1.0F / static_cast<float>(h);
@@ -1076,28 +1076,28 @@ VisionResult VisionGpuExecutor::run(
             const uint32_t grid_h = h + 1U;
             const uint32_t endpoint_slot_count = grid_w * grid_h * 2U;
 
-            contours_ctx.ensure_shared_buffer(2, static_cast<size_t>(k_max_segments) * 9, GpuBufferBinding::ElementType::UINT32);
-            contours_ctx.ensure_shared_buffer(3, 1, GpuBufferBinding::ElementType::UINT32);
-            contours_ctx.ensure_shared_buffer(4, static_cast<size_t>(endpoint_slot_count), GpuBufferBinding::ElementType::UINT32);
-            contours_ctx.ensure_shared_buffer(5, static_cast<size_t>(k_max_segments) * 2U, GpuBufferBinding::ElementType::UINT32);
-            contours_ctx.ensure_shared_buffer(6, static_cast<size_t>(k_max_components) + 1U, GpuBufferBinding::ElementType::UINT32);
-            contours_ctx.ensure_shared_buffer(7, static_cast<size_t>(k_max_components) * k_max_points_per_contour * 2U, GpuBufferBinding::ElementType::UINT32);
-            contours_ctx.ensure_shared_buffer(8, static_cast<size_t>(k_max_components), GpuBufferBinding::ElementType::UINT32);
-            contours_ctx.ensure_shared_buffer(10, static_cast<size_t>(k_max_components) * 2U, GpuBufferBinding::ElementType::FLOAT32);
-            contours_ctx.ensure_shared_buffer(11, k_max_components, GpuBufferBinding::ElementType::FLOAT32);
-            contours_ctx.ensure_shared_buffer(12, k_max_components, GpuBufferBinding::ElementType::FLOAT32);
+            contours_ctx.ensure_shared_buffer(0, 2, static_cast<size_t>(k_max_segments) * 9, GpuBufferBinding::ElementType::UINT32);
+            contours_ctx.ensure_shared_buffer(0, 3, 1, GpuBufferBinding::ElementType::UINT32);
+            contours_ctx.ensure_shared_buffer(0, 4, static_cast<size_t>(endpoint_slot_count), GpuBufferBinding::ElementType::UINT32);
+            contours_ctx.ensure_shared_buffer(0, 5, static_cast<size_t>(k_max_segments) * 2U, GpuBufferBinding::ElementType::UINT32);
+            contours_ctx.ensure_shared_buffer(0, 6, static_cast<size_t>(k_max_components) + 1U, GpuBufferBinding::ElementType::UINT32);
+            contours_ctx.ensure_shared_buffer(0, 7, static_cast<size_t>(k_max_components) * k_max_points_per_contour * 2U, GpuBufferBinding::ElementType::UINT32);
+            contours_ctx.ensure_shared_buffer(0, 8, static_cast<size_t>(k_max_components), GpuBufferBinding::ElementType::UINT32);
+            contours_ctx.ensure_shared_buffer(0, 10, static_cast<size_t>(k_max_components) * 2U, GpuBufferBinding::ElementType::FLOAT32);
+            contours_ctx.ensure_shared_buffer(0, 11, k_max_components, GpuBufferBinding::ElementType::FLOAT32);
+            contours_ctx.ensure_shared_buffer(0, 12, k_max_components, GpuBufferBinding::ElementType::FLOAT32);
 
             {
                 const uint32_t zero = 0;
-                contours_ctx.upload_shared_raw(3, reinterpret_cast<const uint8_t*>(&zero), sizeof(uint32_t));
+                contours_ctx.upload_shared_raw(0, 3, reinterpret_cast<const uint8_t*>(&zero), sizeof(uint32_t));
             }
 
             const uint32_t dense_label_count = static_cast<uint32_t>(w) * h;
             std::vector<uint32_t> dense_label(dense_label_count, 0);
-            cc_pipeline.download_shared(6, dense_label.data(), dense_label.size() * sizeof(uint32_t));
+            cc_pipeline.download_shared(0, 6, dense_label.data(), dense_label.size() * sizeof(uint32_t));
 
-            contours_ctx.ensure_shared_buffer(9, static_cast<size_t>(w) * h, GpuBufferBinding::ElementType::UINT32);
-            contours_ctx.upload_shared_raw(9, reinterpret_cast<const uint8_t*>(dense_label.data()), dense_label.size() * sizeof(uint32_t));
+            contours_ctx.ensure_shared_buffer(0, 9, static_cast<size_t>(w) * h, GpuBufferBinding::ElementType::UINT32);
+            contours_ctx.upload_shared_raw(0, 9, reinterpret_cast<const uint8_t*>(dense_label.data()), dense_label.size() * sizeof(uint32_t));
 
             contours_ctx.swap_shader({ .shader_path = "contour_segments.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(ContourSegmentsPC) });
             contours_ctx.stage_image_at(1, image, GpuBufferBinding::ElementType::IMAGE_SAMPLED);
@@ -1112,7 +1112,7 @@ VisionResult VisionGpuExecutor::run(
             contours_ctx.clear_output_dimensions();
 
             uint32_t segment_count = 0;
-            contours_ctx.download_shared(3, &segment_count, sizeof(uint32_t));
+            contours_ctx.download_shared(0, 3, &segment_count, sizeof(uint32_t));
             segment_count = std::min(segment_count, k_max_segments);
 
             contours_ctx.swap_shader({ .shader_path = "contour_endpoint_reset.comp.spv", .workgroup_size = { 256, 1, 1 }, .push_constant_size = sizeof(ContourEndpointResetPC) });
@@ -1150,7 +1150,7 @@ VisionResult VisionGpuExecutor::run(
 
             {
                 std::vector<uint32_t> owner_reset(static_cast<size_t>(k_max_components) + 1U, CC_UNCLAIMED_HOST);
-                contours_ctx.upload_shared_raw(6, reinterpret_cast<const uint8_t*>(owner_reset.data()), owner_reset.size() * sizeof(uint32_t));
+                contours_ctx.upload_shared_raw(0, 6, reinterpret_cast<const uint8_t*>(owner_reset.data()), owner_reset.size() * sizeof(uint32_t));
             }
 
             const uint32_t trace_phase0_groups = std::max(
@@ -1228,12 +1228,12 @@ VisionResult VisionGpuExecutor::run(
             }
 
             std::vector<uint32_t> point_counts(k_max_components);
-            contours_ctx.download_shared(8, point_counts.data(), point_counts.size() * sizeof(uint32_t));
+            contours_ctx.download_shared(0, 8, point_counts.data(), point_counts.size() * sizeof(uint32_t));
 
             std::vector<uint32_t> selected_labels;
             if (p.max_contours > 0U) {
                 std::vector<float> sorted_indices(p.max_contours);
-                contours_ctx.download_shared(12, sorted_indices.data(), p.max_contours * sizeof(float));
+                contours_ctx.download_shared(0, 12, sorted_indices.data(), p.max_contours * sizeof(float));
                 selected_labels.reserve(p.max_contours);
                 for (float f : sorted_indices)
                     selected_labels.push_back(static_cast<uint32_t>(f));
@@ -1244,10 +1244,10 @@ VisionResult VisionGpuExecutor::run(
             }
 
             std::vector<glm::vec2> area_perimeter(k_max_components);
-            contours_ctx.download_shared(10, area_perimeter.data(), area_perimeter.size() * sizeof(glm::vec2));
+            contours_ctx.download_shared(0, 10, area_perimeter.data(), area_perimeter.size() * sizeof(glm::vec2));
 
             std::vector<glm::vec2> all_points(static_cast<size_t>(k_max_components) * k_max_points_per_contour);
-            contours_ctx.download_shared(7, all_points.data(), all_points.size() * sizeof(glm::vec2));
+            contours_ctx.download_shared(0, 7, all_points.data(), all_points.size() * sizeof(glm::vec2));
 
             std::vector<Kinesis::Vision::Contour> out_contours;
             out_contours.reserve(selected_labels.size());
