@@ -136,6 +136,7 @@ namespace {
         uint32_t height;
         uint32_t max_components;
         uint32_t max_points_per_contour;
+        uint32_t max_holes_per_label;
         uint32_t phase;
         float min_area;
     };
@@ -285,6 +286,10 @@ VisionGpuContexts::VisionGpuContexts()
             { .set = 1, .binding = 6, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
             { .set = 1, .binding = 7, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::FLOAT32 },
             { .set = 1, .binding = 8, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
+            { .set = 1, .binding = 9, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
+            { .set = 1, .binding = 10, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
+            { .set = 1, .binding = 11, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::FLOAT32 },
+            { .set = 1, .binding = 12, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
             { .set = 2, .binding = 0, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::FLOAT32 },
             { .set = 2, .binding = 1, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::FLOAT32 },
         },
@@ -1074,17 +1079,26 @@ VisionResult VisionGpuExecutor::run(
             const auto& p = std::get<Kinesis::Vision::FindContoursParams>(step.params);
 
             constexpr uint32_t k_max_points_per_contour = 4096;
+            constexpr uint32_t k_max_holes_per_label = 4;
 
             cc_pipeline.ensure_shared_buffer(1, 4, static_cast<size_t>(k_max_components) + 1U, GpuBufferBinding::ElementType::UINT32);
             cc_pipeline.ensure_shared_buffer(1, 5, static_cast<size_t>(k_max_components) * k_max_points_per_contour * 2U, GpuBufferBinding::ElementType::UINT32);
             cc_pipeline.ensure_shared_buffer(1, 6, static_cast<size_t>(k_max_components), GpuBufferBinding::ElementType::UINT32);
             cc_pipeline.ensure_shared_buffer(1, 7, static_cast<size_t>(k_max_components) * 2U, GpuBufferBinding::ElementType::FLOAT32);
+            cc_pipeline.ensure_shared_buffer(1, 8, static_cast<size_t>(k_max_components) * k_max_holes_per_label, GpuBufferBinding::ElementType::UINT32);
+            cc_pipeline.ensure_shared_buffer(1, 9, static_cast<size_t>(k_max_components) * k_max_holes_per_label * k_max_points_per_contour * 2U, GpuBufferBinding::ElementType::UINT32);
+            cc_pipeline.ensure_shared_buffer(1, 10, static_cast<size_t>(k_max_components) * k_max_holes_per_label, GpuBufferBinding::ElementType::UINT32);
+            cc_pipeline.ensure_shared_buffer(1, 11, static_cast<size_t>(k_max_components) * k_max_holes_per_label * 2U, GpuBufferBinding::ElementType::FLOAT32);
+            cc_pipeline.ensure_shared_buffer(1, 12, static_cast<size_t>(w) * h, GpuBufferBinding::ElementType::UINT32);
             cc_pipeline.ensure_shared_buffer(2, 0, k_max_components, GpuBufferBinding::ElementType::FLOAT32);
             cc_pipeline.ensure_shared_buffer(2, 1, k_max_components, GpuBufferBinding::ElementType::FLOAT32);
 
             {
                 std::vector<uint32_t> owner_reset(static_cast<size_t>(k_max_components) + 1U, CC_UNCLAIMED_HOST);
                 cc_pipeline.upload_shared_raw(1, 4, reinterpret_cast<const uint8_t*>(owner_reset.data()), owner_reset.size() * sizeof(uint32_t));
+
+                std::vector<uint32_t> hole_owner_reset(static_cast<size_t>(k_max_components) * k_max_holes_per_label, CC_UNCLAIMED_HOST);
+                cc_pipeline.upload_shared_raw(1, 8, reinterpret_cast<const uint8_t*>(hole_owner_reset.data()), hole_owner_reset.size() * sizeof(uint32_t));
             }
 
             const auto t_setup_end = std::chrono::steady_clock::now();
@@ -1092,7 +1106,7 @@ VisionResult VisionGpuExecutor::run(
             cc_pipeline.swap_shader({ .shader_path = "contour_march.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(ContourMarchPC) });
             cc_pipeline.stage_image_at(1, image, GpuBufferBinding::ElementType::IMAGE_SAMPLED);
             cc_pipeline.prepare_output_image(w, h);
-            cc_pipeline.set_push_constants(ContourMarchPC { .width = w, .height = h, .max_components = k_max_components, .max_points_per_contour = k_max_points_per_contour, .phase = 0U, .min_area = p.min_area });
+            cc_pipeline.set_push_constants(ContourMarchPC { .width = w, .height = h, .max_components = k_max_components, .max_points_per_contour = k_max_points_per_contour, .max_holes_per_label = k_max_holes_per_label, .phase = 0U, .min_area = p.min_area });
             cc_pipeline.set_output_dimensions(w, h);
             {
                 const auto fence = cc_pipeline.dispatch_async({});
@@ -1102,7 +1116,7 @@ VisionResult VisionGpuExecutor::run(
 
             const auto t_march_claim_end = std::chrono::steady_clock::now();
 
-            cc_pipeline.set_push_constants(ContourMarchPC { .width = w, .height = h, .max_components = k_max_components, .max_points_per_contour = k_max_points_per_contour, .phase = 1U, .min_area = p.min_area });
+            cc_pipeline.set_push_constants(ContourMarchPC { .width = w, .height = h, .max_components = k_max_components, .max_points_per_contour = k_max_points_per_contour, .max_holes_per_label = k_max_holes_per_label, .phase = 1U, .min_area = p.min_area });
             {
                 const auto fence = cc_pipeline.dispatch_async({});
                 foundry.wait_for_fence(fence);
@@ -1221,6 +1235,16 @@ VisionResult VisionGpuExecutor::run(
             std::vector<glm::vec2> all_points(static_cast<size_t>(k_max_components) * k_max_points_per_contour);
             cc_pipeline.download_shared(1, 5, all_points.data(), all_points.size() * sizeof(glm::vec2));
 
+            const size_t total_hole_slots = static_cast<size_t>(k_max_components) * k_max_holes_per_label;
+            std::vector<uint32_t> hole_point_counts(total_hole_slots);
+            cc_pipeline.download_shared(1, 10, hole_point_counts.data(), hole_point_counts.size() * sizeof(uint32_t));
+
+            std::vector<glm::vec2> hole_area_perimeter(total_hole_slots);
+            cc_pipeline.download_shared(1, 11, hole_area_perimeter.data(), hole_area_perimeter.size() * sizeof(glm::vec2));
+
+            std::vector<glm::vec2> all_hole_points(total_hole_slots * k_max_points_per_contour);
+            cc_pipeline.download_shared(1, 9, all_hole_points.data(), all_hole_points.size() * sizeof(glm::vec2));
+
             std::vector<Kinesis::Vision::Contour> out_contours;
             out_contours.reserve(selected_labels.size());
             for (uint32_t label_id : selected_labels) {
@@ -1233,7 +1257,23 @@ VisionResult VisionGpuExecutor::run(
                     all_points.begin() + static_cast<ptrdiff_t>(label_id) * k_max_points_per_contour + n);
 
                 const glm::vec2 ap = area_perimeter[label_id];
-                out_contours.push_back({ .points = std::move(pts), .area = ap.x, .perimeter = ap.y });
+                out_contours.push_back({ .points = std::move(pts), .area = ap.x, .perimeter = ap.y, .parent_label = 0U });
+
+                const uint32_t parent_label = label_id + 1U;
+                const uint32_t base_slot = label_id * k_max_holes_per_label;
+                for (uint32_t s = 0; s < k_max_holes_per_label; ++s) {
+                    const uint32_t slot = base_slot + s;
+                    const uint32_t hn = hole_point_counts[slot];
+                    if (hn < 3)
+                        continue;
+
+                    std::vector<glm::vec2> hpts(
+                        all_hole_points.begin() + static_cast<ptrdiff_t>(slot) * k_max_points_per_contour,
+                        all_hole_points.begin() + static_cast<ptrdiff_t>(slot) * k_max_points_per_contour + hn);
+
+                    const glm::vec2 hap = hole_area_perimeter[slot];
+                    out_contours.push_back({ .points = std::move(hpts), .area = hap.x, .perimeter = hap.y, .parent_label = parent_label });
+                }
             }
 
             const auto t_end = std::chrono::steady_clock::now();
