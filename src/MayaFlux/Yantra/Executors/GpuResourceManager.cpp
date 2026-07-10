@@ -496,7 +496,10 @@ void GpuResourceManager::dispatch(const std::string& key,
             || et == GpuBufferBinding::ElementType::IMAGE_SAMPLED;
         const bool is_output = b.direction == GpuBufferBinding::Direction::OUTPUT
             || b.direction == GpuBufferBinding::Direction::INPUT_OUTPUT;
-        if (is_output && !is_image) {
+
+        const bool is_shared = m_shared->slots.contains({ b.set, static_cast<size_t>(b.binding) });
+        if (is_output && !is_image && !is_shared
+            && static_cast<size_t>(b.binding) < unit.impl->buffers.size()) {
             foundry.buffer_barrier(
                 cmd_id,
                 unit.impl->buffers[b.binding].buffer,
@@ -547,18 +550,21 @@ void GpuResourceManager::dispatch_batched(const std::string& key,
 
                 const bool is_image = b.element_type == GpuBufferBinding::ElementType::IMAGE_STORAGE
                     || b.element_type == GpuBufferBinding::ElementType::IMAGE_SAMPLED;
+                const bool is_shared = m_shared->slots.contains({ b.set, static_cast<size_t>(b.binding) });
 
                 if (is_image) {
-                    foundry.image_barrier(
-                        cmd_id,
-                        unit.image_slots[b.binding]->get_image(),
-                        vk::ImageLayout::eGeneral,
-                        vk::ImageLayout::eGeneral,
-                        vk::AccessFlagBits::eShaderWrite | vk::AccessFlagBits::eShaderRead,
-                        vk::AccessFlagBits::eShaderWrite | vk::AccessFlagBits::eShaderRead,
-                        vk::PipelineStageFlagBits::eComputeShader,
-                        vk::PipelineStageFlagBits::eComputeShader);
-                } else {
+                    if (static_cast<size_t>(b.binding) < unit.image_slots.size() && unit.image_slots[b.binding]) {
+                        foundry.image_barrier(
+                            cmd_id,
+                            unit.image_slots[b.binding]->get_image(),
+                            vk::ImageLayout::eGeneral,
+                            vk::ImageLayout::eGeneral,
+                            vk::AccessFlagBits::eShaderWrite | vk::AccessFlagBits::eShaderRead,
+                            vk::AccessFlagBits::eShaderWrite | vk::AccessFlagBits::eShaderRead,
+                            vk::PipelineStageFlagBits::eComputeShader,
+                            vk::PipelineStageFlagBits::eComputeShader);
+                    }
+                } else if (!is_shared && static_cast<size_t>(b.binding) < unit.impl->buffers.size()) {
                     foundry.buffer_barrier(
                         cmd_id,
                         unit.impl->buffers[b.binding].buffer,
@@ -573,13 +579,18 @@ void GpuResourceManager::dispatch_batched(const std::string& key,
         for (const auto& b : bindings) {
             if (b.direction == GpuBufferBinding::Direction::OUTPUT
                 || b.direction == GpuBufferBinding::Direction::INPUT_OUTPUT) {
-                foundry.buffer_barrier(
-                    cmd_id,
-                    unit.impl->buffers[b.binding].buffer,
-                    vk::AccessFlagBits::eShaderWrite,
-                    vk::AccessFlagBits::eHostRead,
-                    vk::PipelineStageFlagBits::eComputeShader,
-                    vk::PipelineStageFlagBits::eHost);
+                const bool is_image = b.element_type == GpuBufferBinding::ElementType::IMAGE_STORAGE
+                    || b.element_type == GpuBufferBinding::ElementType::IMAGE_SAMPLED;
+                const bool is_shared = m_shared->slots.contains({ b.set, static_cast<size_t>(b.binding) });
+                if (!is_image && !is_shared && static_cast<size_t>(b.binding) < unit.impl->buffers.size()) {
+                    foundry.buffer_barrier(
+                        cmd_id,
+                        unit.impl->buffers[b.binding].buffer,
+                        vk::AccessFlagBits::eShaderWrite,
+                        vk::AccessFlagBits::eHostRead,
+                        vk::PipelineStageFlagBits::eComputeShader,
+                        vk::PipelineStageFlagBits::eHost);
+                }
             }
         }
 
@@ -620,29 +631,22 @@ void GpuResourceManager::dispatch_batched_indirect(const std::string& key,
             compute_press.dispatch_indirect(cmd_id, indirect_buffer);
 
             for (const auto& b : bindings) {
-                if (b.direction != GpuBufferBinding::Direction::INPUT_OUTPUT)
-                    continue;
-                foundry.buffer_barrier(cmd_id, unit.impl->buffers[b.binding].buffer,
-                    vk::AccessFlagBits::eShaderWrite | vk::AccessFlagBits::eShaderRead,
-                    vk::AccessFlagBits::eShaderWrite | vk::AccessFlagBits::eShaderRead,
-                    vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader);
-            }
-
-            std::vector<uint8_t> gate_pc_data(push_constant_size);
-            params.pc_updater(pass, 2, gate_pc_data.data());
-            compute_press.bind_all(cmd_id, unit.pipeline_id, unit.descriptor_set_ids, gate_pc_data.data(), push_constant_size);
-            compute_press.dispatch(cmd_id, 1, 1, 1);
-
-            foundry.buffer_barrier(cmd_id, indirect_buffer,
-                vk::AccessFlagBits::eShaderWrite, vk::AccessFlagBits::eIndirectCommandRead,
-                vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eDrawIndirect);
-        }
-
-        for (const auto& b : bindings) {
-            if (b.direction == GpuBufferBinding::Direction::OUTPUT || b.direction == GpuBufferBinding::Direction::INPUT_OUTPUT) {
-                foundry.buffer_barrier(cmd_id, unit.impl->buffers[b.binding].buffer,
-                    vk::AccessFlagBits::eShaderWrite, vk::AccessFlagBits::eHostRead,
-                    vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eHost);
+                const auto et = b.element_type;
+                const bool is_image = et == GpuBufferBinding::ElementType::IMAGE_STORAGE
+                    || et == GpuBufferBinding::ElementType::IMAGE_SAMPLED;
+                const bool is_output = b.direction == GpuBufferBinding::Direction::OUTPUT
+                    || b.direction == GpuBufferBinding::Direction::INPUT_OUTPUT;
+                const bool is_shared = m_shared->slots.contains({ b.set, static_cast<size_t>(b.binding) });
+                if (is_output && !is_image && !is_shared
+                    && static_cast<size_t>(b.binding) < unit.impl->buffers.size()) {
+                    foundry.buffer_barrier(
+                        cmd_id,
+                        unit.impl->buffers[b.binding].buffer,
+                        vk::AccessFlagBits::eShaderWrite,
+                        vk::AccessFlagBits::eShaderRead | vk::AccessFlagBits::eShaderWrite,
+                        vk::PipelineStageFlagBits::eComputeShader,
+                        vk::PipelineStageFlagBits::eComputeShader);
+                }
             }
         }
         foundry.submit_and_wait(cmd_id);
