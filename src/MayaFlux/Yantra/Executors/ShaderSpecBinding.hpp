@@ -53,7 +53,7 @@ namespace MayaFlux::Yantra {
     out.reserve(spec.bindings.size());
     for (const auto& b : spec.bindings) {
         out.push_back({
-            .set = 0,
+            .set = b.set,
             .binding = b.binding_index,
             .direction = to_binding_direction(b.direction),
             .element_type = to_element_type(b.modality),

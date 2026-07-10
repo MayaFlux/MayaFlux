@@ -281,6 +281,7 @@ struct BindingSlot {
     BindingDirection direction;
     Kakshya::GpuDataFormat format;
     Kakshya::DataModality modality { Kakshya::DataModality::SCALAR_F32 };
+    uint32_t set { 0 };
     uint32_t binding_index { 0 };
 };
 
@@ -351,6 +352,12 @@ struct ShaderSpec {
             return *this;
         }
 
+        Assemble& start_set(uint32_t s)
+        {
+            m_set = s;
+            return *this;
+        }
+
         Assemble& start_binding(uint32_t n)
         {
             m_next_binding = n;
@@ -360,10 +367,7 @@ struct ShaderSpec {
         /**
          * @brief Declare an SSBO binding.
          */
-        Assemble& ssbo(
-            std::string name,
-            BindingDirection direction,
-            Kakshya::GpuDataFormat format,
+        Assemble& ssbo(std::string name, BindingDirection direction, Kakshya::GpuDataFormat format,
             Kakshya::DataModality modality = Kakshya::DataModality::SCALAR_F32)
         {
             m_bindings.push_back({
@@ -371,6 +375,7 @@ struct ShaderSpec {
                 .direction = direction,
                 .format = format,
                 .modality = modality,
+                .set = m_set,
                 .binding_index = m_next_binding++,
             });
             return *this;
@@ -464,6 +469,7 @@ struct ShaderSpec {
         std::vector<BindingSlot> m_bindings;
         std::vector<PushConstantField> m_pc_fields;
         std::array<uint32_t, 3> m_workgroup { 256, 1, 1 };
+        uint32_t m_set { 0 };
         uint32_t m_next_binding { 0 };
         std::optional<KernelSource> m_kernel;
     };

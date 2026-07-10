@@ -177,7 +177,7 @@ namespace {
                 + std::to_string(stride) + "\n";
             o += "OpMemberDecorate %blk_" + b.name + " 0 Offset 0\n";
             o += "OpDecorate %blk_" + b.name + " Block\n";
-            o += "OpDecorate %buf_" + b.name + " DescriptorSet 0\n";
+            o += "OpDecorate %buf_" + b.name + " DescriptorSet " + std::to_string(b.set) + "\n";
             o += "OpDecorate %buf_" + b.name + " Binding "
                 + std::to_string(b.binding_index) + "\n";
         }
@@ -187,7 +187,7 @@ namespace {
                 continue;
 
             const std::string var = "%img_" + b.name;
-            o += "OpDecorate " + var + " DescriptorSet 0\n";
+            o += "OpDecorate " + var + " DescriptorSet " + std::to_string(b.set) + "\n";
             o += "OpDecorate " + var + " Binding "
                 + std::to_string(b.binding_index) + "\n";
 
@@ -201,7 +201,7 @@ namespace {
         for (const auto& b : spec.bindings) {
             if (b.modality != Kakshya::DataModality::TEXTURE_2D)
                 continue;
-            o += "OpDecorate %tex_" + b.name + " DescriptorSet 0\n";
+            o += "OpDecorate %tex_" + b.name + " DescriptorSet " + std::to_string(b.set) + "\n";
             o += "OpDecorate %tex_" + b.name + " Binding "
                 + std::to_string(b.binding_index) + "\n";
         }
