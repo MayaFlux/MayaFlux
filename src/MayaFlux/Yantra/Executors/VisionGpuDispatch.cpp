@@ -17,6 +17,17 @@ namespace {
     constexpr uint32_t CC_BACKGROUND_HOST = 0xFFFFFFFFU;
     constexpr uint32_t CC_UNCLAIMED_HOST = 0U;
 
+    /** Standard 2D workgroup used by all pixel-to-pixel vision shaders */
+    constexpr std::array<uint32_t, 3> k_wg2d { 8, 8, 1 };
+    /** Maximum number of connected components that can be labeled in a single pass */
+    constexpr uint32_t k_max_components = 4096;
+    /** Maximum number of points that can be stored in a single contour */
+    constexpr uint32_t k_max_points_per_contour = 4096;
+    /** Maximum number of contours that can be stored in a single pass */
+    constexpr uint32_t k_max_holes_per_label = 4;
+    /** Maximum number of trace slots that can be stored in a single pass (for contour tracing) */
+    constexpr uint32_t k_max_trace_slots = k_max_components * (1U + k_max_holes_per_label);
+
     struct ThresholdPC {
         float value;
     };
@@ -146,12 +157,6 @@ namespace {
         uint32_t max_components;
         uint32_t max_holes_per_label;
     };
-
-    /** Standard 2D workgroup used by all pixel-to-pixel vision shaders */
-    constexpr std::array<uint32_t, 3> k_wg2d { 8, 8, 1 };
-
-    /** Maximum number of connected components that can be labeled in a single pass */
-    constexpr uint32_t k_max_components = 4096;
 
     /**
      * @brief 2D Gaussian kernel for convolution, cached by (radius, sigma
@@ -1080,10 +1085,6 @@ VisionResult VisionGpuExecutor::run(
             }
 
             const auto& p = std::get<Kinesis::Vision::FindContoursParams>(step.params);
-
-            constexpr uint32_t k_max_points_per_contour = 4096;
-            constexpr uint32_t k_max_holes_per_label = 4;
-            constexpr uint32_t k_max_trace_slots = k_max_components * (1U + k_max_holes_per_label);
 
             cc_pipeline.ensure_shared_buffer(1, 4, static_cast<size_t>(k_max_components) + 1U, GpuBufferBinding::ElementType::UINT32);
             cc_pipeline.ensure_shared_buffer(1, 5, static_cast<size_t>(k_max_components) * k_max_holes_per_label, GpuBufferBinding::ElementType::UINT32);
