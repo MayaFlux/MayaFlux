@@ -179,11 +179,14 @@ void claim_hole_phase()
  * @brief Bounded Moore boundary walk, used for both outer and hole
  *        traces. tracing_hole selects the acceptance test: equal to
  *        target_label for an outer walk, background for a hole walk.
- *        Hole walks begin their neighbour search from the direction
- *        pointing back toward the claiming foreground pixel (west),
- *        since they enter via a foreground-to-background transition
- *        rather than the background-to-foreground orientation the
- *        outer walk's default start direction assumes.
+ *        Search order at each step begins two positions counterclockwise
+ *        from the direction of the last move (the standard Moore
+ *        backtrack convention), and the initial direction is derived
+ *        the same way: the direction from which the walk conceptually
+ *        arrived at the start pixel, not a raw forward scan. This keeps
+ *        the first step's search order consistent with every subsequent
+ *        step, so a diagonal neighbour is never accepted ahead of an
+ *        orthogonal one still on the true boundary.
  */
 void walk_boundary(
     int start_x, int start_y,
@@ -199,19 +202,11 @@ void walk_boundary(
     int cx = start_x;
     int cy = start_y;
 
-    int start_dir = tracing_hole ? 4 : 0;
-    for (int d = 0; d < 8; ++d) {
-        const uint n = label_at(cx + dx8[(start_dir + d) % 8], cy + dy8[(start_dir + d) % 8]);
-        const bool inside = tracing_hole ? is_background(n) : (n == target_label);
-        if (!inside) {
-            start_dir = (start_dir + d) % 8;
-            break;
-        }
-    }
+    const int arrival_dir = tracing_hole ? 2 : 6;
 
+    int dir = arrival_dir;
     const int orig_x = cx;
     const int orig_y = cy;
-    int dir = start_dir;
     bool first = true;
     uint count = 0u;
 
@@ -252,26 +247,19 @@ void walk_boundary(
     out_count = min(count, max_points);
 }
 
-float shoelace_area(uint out_base, uint n)
+void shoelace_area_perimeter(uint out_base, uint n, out float area_out, out float perimeter_out)
 {
     float area = 0.0;
-    for (uint j = 0u; j < n; ++j) {
-        const vec2 a = flat_points[out_base + j];
-        const vec2 b = flat_points[out_base + ((j + 1u) % n)];
-        area += a.x * b.y - b.x * a.y;
-    }
-    return abs(area) * 0.5;
-}
-
-float shoelace_perimeter(uint out_base, uint n)
-{
     float perim = 0.0;
     for (uint j = 0u; j < n; ++j) {
-        const vec2 a = flat_points[out_base + j];
-        const vec2 b = flat_points[out_base + ((j + 1u) % n)];
+        const vec2 a = flat_points[out_base + j] * vec2(float(pc.width), float(pc.height));
+        const vec2 b = flat_points[out_base + ((j + 1u) % n)] * vec2(float(pc.width), float(pc.height));
+        area += a.x * b.y - b.x * a.y;
         perim += length(b - a);
     }
-    return perim;
+    area = abs(area) * 0.5;
+    area_out = (area + perim * 0.5 + 1.0) / (float(pc.width) * float(pc.height));
+    perimeter_out = perim;
 }
 
 /**
@@ -309,8 +297,8 @@ void trace_phase_compacted()
 
     bool ok = n >= 3u;
     if (ok) {
-        const float area = shoelace_area(out_base, n);
-        const float perimeter = shoelace_perimeter(out_base, n);
+        float area, perimeter;
+        shoelace_area_perimeter(out_base, n, area, perimeter);
         ok = area >= pc.min_area;
         if (ok) {
             contour_area_perim[i] = vec2(area, perimeter);
