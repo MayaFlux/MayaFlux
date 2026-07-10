@@ -130,6 +130,16 @@ namespace {
         uint32_t phase;
         float min_area;
     };
+    struct ContourClearPC {
+        uint32_t width;
+        uint32_t height;
+    };
+    struct ContourRenderPC {
+        uint32_t width;
+        uint32_t height;
+        uint32_t max_components;
+        uint32_t max_points_per_contour;
+    };
 
     /** Standard 2D workgroup used by all pixel-to-pixel vision shaders */
     constexpr std::array<uint32_t, 3> k_wg2d { 8, 8, 1 };
@@ -1068,8 +1078,8 @@ VisionResult VisionGpuExecutor::run(
                     { .set = 0, .binding = 8, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
                     { .set = 0, .binding = 9, .direction = GpuBufferBinding::Direction::INPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
                     { .set = 0, .binding = 10, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::FLOAT32 },
-                    { .set = 0, .binding = 11, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::FLOAT32 },
-                    { .set = 0, .binding = 12, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::FLOAT32 },
+                    { .set = 1, .binding = 0, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::FLOAT32 },
+                    { .set = 1, .binding = 1, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::FLOAT32 },
                 },
                 GpuBufferBinding::ElementType::IMAGE_STORAGE,
             };
@@ -1088,8 +1098,8 @@ VisionResult VisionGpuExecutor::run(
             contours_ctx.ensure_shared_buffer(0, 7, static_cast<size_t>(k_max_components) * k_max_points_per_contour * 2U, GpuBufferBinding::ElementType::UINT32);
             contours_ctx.ensure_shared_buffer(0, 8, static_cast<size_t>(k_max_components), GpuBufferBinding::ElementType::UINT32);
             contours_ctx.ensure_shared_buffer(0, 10, static_cast<size_t>(k_max_components) * 2U, GpuBufferBinding::ElementType::FLOAT32);
-            contours_ctx.ensure_shared_buffer(0, 11, k_max_components, GpuBufferBinding::ElementType::FLOAT32);
-            contours_ctx.ensure_shared_buffer(0, 12, k_max_components, GpuBufferBinding::ElementType::FLOAT32);
+            contours_ctx.ensure_shared_buffer(1, 0, k_max_components, GpuBufferBinding::ElementType::FLOAT32);
+            contours_ctx.ensure_shared_buffer(1, 1, k_max_components, GpuBufferBinding::ElementType::FLOAT32);
 
             {
                 const uint32_t zero = 0;
@@ -1227,13 +1237,42 @@ VisionResult VisionGpuExecutor::run(
                 structured_ctx.clear_output_dimensions();
             }
 
+            if (p.as_image) {
+                contours_ctx.swap_shader({ .shader_path = "contour_render_clear.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(ContourClearPC) });
+                contours_ctx.prepare_output_image(w, h);
+                contours_ctx.set_push_constants(ContourClearPC { .width = w, .height = h });
+                contours_ctx.set_output_dimensions(w, h);
+                {
+                    const auto fence = contours_ctx.dispatch_async({});
+                    foundry.wait_for_fence(fence);
+                    foundry.release_fence(fence);
+                }
+                contours_ctx.clear_output_dimensions();
+
+                contours_ctx.swap_shader({ .shader_path = "contour_render.comp.spv", .workgroup_size = { 256, 1, 1 }, .push_constant_size = sizeof(ContourRenderPC) });
+                contours_ctx.set_push_constants(ContourRenderPC { .width = w, .height = h, .max_components = k_max_components, .max_points_per_contour = k_max_points_per_contour });
+                contours_ctx.set_output_dimensions(k_max_components, 1U);
+                {
+                    const auto fence = contours_ctx.dispatch_async({});
+                    foundry.wait_for_fence(fence);
+                    foundry.release_fence(fence);
+                }
+                contours_ctx.clear_output_dimensions();
+
+                result.debug_contours = contours_ctx.get_output_image(0);
+                result.structured = std::monostate {};
+                result.w = 0;
+                result.h = 0;
+                continue;
+            }
+
             std::vector<uint32_t> point_counts(k_max_components);
             contours_ctx.download_shared(0, 8, point_counts.data(), point_counts.size() * sizeof(uint32_t));
 
             std::vector<uint32_t> selected_labels;
             if (p.max_contours > 0U) {
                 std::vector<float> sorted_indices(p.max_contours);
-                contours_ctx.download_shared(0, 12, sorted_indices.data(), p.max_contours * sizeof(float));
+                contours_ctx.download_shared(1, 1, sorted_indices.data(), p.max_contours * sizeof(float));
                 selected_labels.reserve(p.max_contours);
                 for (float f : sorted_indices)
                     selected_labels.push_back(static_cast<uint32_t>(f));

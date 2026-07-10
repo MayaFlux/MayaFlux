@@ -1,0 +1,67 @@
+#version 460
+layout(local_size_x = 256) in;
+
+layout(set = 0, binding = 0, rgba32f) uniform writeonly image2D out_image;
+
+layout(set = 0, binding = 7, std430) buffer ContourPointsBuf {
+    vec2 contour_points[];
+};
+
+layout(set = 0, binding = 8, std430) buffer ContourPointCountBuf {
+    uint contour_point_count[];
+};
+
+layout(push_constant) uniform PushConstants {
+    uint width;
+    uint height;
+    uint max_components;
+    uint max_points_per_contour;
+} pc;
+
+void plot(ivec2 p)
+{
+    if (p.x >= 0 && p.x < int(pc.width) && p.y >= 0 && p.y < int(pc.height))
+        imageStore(out_image, p, vec4(1.0, 1.0, 1.0, 1.0));
+}
+
+void draw_line(ivec2 a, ivec2 b)
+{
+    int dx = abs(b.x - a.x), sx = a.x < b.x ? 1 : -1;
+    int dy = -abs(b.y - a.y), sy = a.y < b.y ? 1 : -1;
+    int err = dx + dy;
+    ivec2 p = a;
+    for (int i = 0; i < 4096; ++i) {
+        plot(p);
+        if (p == b)
+            break;
+        int e2 = 2 * err;
+        if (e2 >= dy) {
+            err += dy;
+            p.x += sx;
+        }
+        if (e2 <= dx) {
+            err += dx;
+            p.y += sy;
+        }
+    }
+}
+
+void main()
+{
+    const uint label = gl_GlobalInvocationID.x;
+    if (label >= pc.max_components)
+        return;
+
+    const uint n = contour_point_count[label];
+    if (n < 3u)
+        return;
+
+    const uint base = label * pc.max_points_per_contour;
+    for (uint i = 0; i < n; ++i) {
+        const vec2 a = contour_points[base + i];
+        const vec2 b = contour_points[base + ((i + 1u) % n)];
+        const ivec2 pa = ivec2(a.x * float(pc.width), a.y * float(pc.height));
+        const ivec2 pb = ivec2(b.x * float(pc.width), b.y * float(pc.height));
+        draw_line(pa, pb);
+    }
+}
