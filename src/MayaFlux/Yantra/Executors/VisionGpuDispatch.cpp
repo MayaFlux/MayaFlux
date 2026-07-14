@@ -1006,7 +1006,9 @@ VisionResult VisionGpuExecutor::run(
 
             ExecutionContext cc_ctx;
             cc_ctx.mode = ExecutionMode::DEPENDENCY;
-            cc_ctx.parameters = DependencyParams { .stages = cc_stages };
+            DependencyParams params;
+            params.stages = cc_stages;
+            cc_ctx.parameters = params;
             cc_pipeline.execute(Datum<> {}, cc_ctx);
 
             cc_pipeline.ensure_shared_buffer(0, 10, 3, GpuBufferBinding::ElementType::UINT32,

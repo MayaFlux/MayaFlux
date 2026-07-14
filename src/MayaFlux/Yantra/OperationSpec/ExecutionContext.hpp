@@ -69,6 +69,13 @@ struct ChainedIndirectParams {
  */
 struct DependencyParams {
     std::vector<DependencyStage> stages;
+
+    ~DependencyParams();
+    DependencyParams();
+    DependencyParams(const DependencyParams&);
+    DependencyParams(DependencyParams&&) noexcept;
+    DependencyParams& operator=(const DependencyParams&);
+    DependencyParams& operator=(DependencyParams&&) noexcept;
 };
 
 using ExecutionParams = std::variant<
