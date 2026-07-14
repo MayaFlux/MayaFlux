@@ -121,6 +121,8 @@ struct ConnectedComponentsParams {
 struct FindContoursParams {
     float min_area { 0.0F };
     uint32_t max_contours { 0 };
+    uint32_t max_points_per_contour { 0 };
+    bool as_image { false };
 };
 
 /**
@@ -162,6 +164,7 @@ struct VisionSequence {
     std::vector<VisionStep> steps;
     bool tracks_keypoints { false };
     bool track_follows_peaks { false };
+    bool contours_follow_cc { false };
 
     /**
      * @brief Fluent builder for VisionSequence.
@@ -306,10 +309,10 @@ struct VisionSequence {
                     .window_radius = window_radius, .max_iterations = max_iterations, .eigen_threshold = eigen_threshold, .error_threshold = error_threshold });
         }
 
-        Builder& find_contours(float min_area = 0.0F, uint32_t max_contours = 0)
+        Builder& find_contours(float min_area = 0.0F, uint32_t max_contours = 0, uint32_t max_points_per_contour = 0, bool as_image = false)
         {
             return push(VisionOp::FindContours,
-                FindContoursParams { .min_area = min_area, .max_contours = max_contours });
+                FindContoursParams { .min_area = min_area, .max_contours = max_contours, .max_points_per_contour = max_points_per_contour, .as_image = as_image });
         }
 
         Builder& snapshot()
@@ -327,6 +330,12 @@ struct VisionSequence {
                     && seq.steps[i].op == VisionOp::ExtractPeaks
                     && seq.steps[i + 1].op == VisionOp::TrackKeypoints)
                     seq.track_follows_peaks = true;
+                if (i + 1 < seq.steps.size()
+                    && seq.steps[i].op == VisionOp::ConnectedComponents
+                    && seq.steps[i + 1].op == VisionOp::FindContours) {
+                    seq.contours_follow_cc = true;
+                    std::get<ConnectedComponentsParams>(seq.steps[i].params).export_labels = true;
+                }
             }
             return seq;
         }

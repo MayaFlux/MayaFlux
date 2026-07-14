@@ -44,6 +44,7 @@ struct DependencyStage {
     GpuComputeConfig config;
     std::function<void(GpuDispatchCore&)> stage_fn;
     std::function<std::vector<Portal::Graphics::HazardResource>(GpuDispatchCore&)> hazard_fn;
+    std::optional<std::array<uint32_t, 3>> explicit_groups;
 };
 
 /**
@@ -109,30 +110,28 @@ public:
         set_binding_data(index, std::span<const T>(data));
     }
 
-    void ensure_shared_buffer(size_t binding_index, size_t element_count,
+    void ensure_shared_buffer(uint32_t set, size_t binding_index, size_t element_count,
         GpuBufferBinding::ElementType element_type,
         Portal::Graphics::BufferUsageHint usage_hint = Portal::Graphics::BufferUsageHint::COMPUTE_STORAGE)
     {
-        m_resources.ensure_shared_buffer(binding_index, element_count, element_type, usage_hint);
-        if (binding_index >= m_shared_bindings.size())
-            m_shared_bindings.resize(binding_index + 1, 0);
-        m_shared_bindings[binding_index] = 1;
+        m_resources.ensure_shared_buffer(set, binding_index, element_count, element_type, usage_hint);
+        m_shared_bindings.insert({ set, binding_index });
     }
 
-    void upload_shared_raw(size_t binding_index, const uint8_t* data, size_t byte_size)
+    void upload_shared_raw(uint32_t set, size_t binding_index, const uint8_t* data, size_t byte_size)
     {
-        m_resources.upload_shared_raw(binding_index, data, byte_size);
+        m_resources.upload_shared_raw(set, binding_index, data, byte_size);
     }
 
-    void download_shared(size_t binding_index, void* dest, size_t byte_size)
+    void download_shared(uint32_t set, size_t binding_index, void* dest, size_t byte_size)
     {
-        m_resources.download_shared(binding_index, dest, byte_size);
+        m_resources.download_shared(set, binding_index, dest, byte_size);
     }
 
     [[nodiscard]] Portal::Graphics::HazardResource shared_buffer_hazard(
-        size_t binding_index, const GpuBufferBinding& spec) const
+        const GpuBufferBinding& spec) const
     {
-        return m_resources.make_shared_buffer_hazard(binding_index, spec);
+        return m_resources.make_shared_buffer_hazard(spec);
     }
 
     /**
@@ -442,7 +441,7 @@ protected:
     std::vector<size_t> m_output_size_overrides;
     std::vector<std::vector<uint8_t>> m_passthrough_bytes;
     std::vector<std::vector<uint8_t>> m_binding_data;
-    std::vector<uint8_t> m_shared_bindings;
+    std::set<std::pair<uint32_t, size_t>> m_shared_bindings;
 
     struct ImageBinding {
         std::shared_ptr<Core::VKImage> image;

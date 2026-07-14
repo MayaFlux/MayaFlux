@@ -43,6 +43,13 @@ struct Contour {
     std::vector<glm::vec2> points;
     float area;
     float perimeter;
+
+    /**
+     * @brief 0 for an outer contour. For a hole contour, the label id
+     *        (1-based) of the foreground component this hole is
+     *        enclosed by.
+     */
+    uint32_t parent_label { 0U };
 };
 
 /**

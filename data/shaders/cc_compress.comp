@@ -1,0 +1,47 @@
+#version 460
+
+#include "include/vision_common.glsl"
+#include "include/vision_cc.glsl"
+
+layout(local_size_x = 8, local_size_y = 8) in;
+
+layout(set = 0, binding = 2, std430) buffer BlockLabelBuf {
+    uint block_label[];
+};
+
+layout(push_constant) uniform PushConstants {
+    uint block_width;
+    uint block_height;
+} pc;
+
+/**
+ * @brief Resolves idx's root via full pointer-chasing with path halving,
+ *        matching cc_merge's find_root. Single dispatch: every thread
+ *        walks its own chain to convergence in one invocation, replacing
+ *        the prior CHAINED_INDIRECT multi-pass grandparent-jump gate.
+ */
+uint find_root(uint x)
+{
+    uint p = block_label[x];
+    while (p != x) {
+        uint gp = block_label[p];
+        atomicCompSwap(block_label[x], p, gp);
+        x = p;
+        p = block_label[x];
+    }
+    return x;
+}
+
+void main()
+{
+    const uvec2 block_coord = gl_GlobalInvocationID.xy;
+    if (block_coord.x >= pc.block_width || block_coord.y >= pc.block_height)
+        return;
+
+    const uint idx = block_coord.y * pc.block_width + block_coord.x;
+    if (block_label[idx] == CC_BACKGROUND)
+        return;
+
+    const uint root = find_root(idx);
+    block_label[idx] = root;
+}

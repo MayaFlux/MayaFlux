@@ -27,6 +27,8 @@ enum class KernelTemplate : uint8_t {
     GeometryEmit, ///< Writes into vertex SSBO with atomic counter
     BitonicSort, ///< Bitonic sort network; one thread per element
     Convolve2D, ///< 2D separable or non-separable convolution; kernel weights in SSBO, radius in PC
+    Scan, ///< Inclusive prefix scan over one InOut SSBO, double-buffered
+          ///< Hillis-Steele in shared memory. Op selects the combine function.
 };
 
 /**
@@ -220,6 +222,7 @@ struct KernelSource {
  * Reduction operations (one InOut SSBO, shared memory):
  *   Sum          accumulate + into shared[lid], tree reduce
  *   Max          accumulate max into shared[lid], tree reduce
+ *   IndexScale   sig[i] = float(i) * sig[i]
  */
 enum class KernelOp : uint8_t {
     // arithmetic
@@ -265,7 +268,15 @@ enum class KernelOp : uint8_t {
     // reduction
     Sum,
     Max,
-    // image body ops
+    ScanSum, ///< Inclusive prefix sum: shared[i] = sum(x[0..i])
+    MaxIndex, ///< Reduction variant: finds max value AND its index.
+    ///< First InOut SSBO holds the values (overwritten with the
+    ///< max in slot 0). Second InOut SSBO (UINT32) receives the
+    ///< winning index in slot 0.
+    IndexScale, ///< out[i] = float(i) * a[i]. The only op that uses the
+    ///< invocation index itself as an arithmetic operand rather
+    ///< than purely for addressing.
+
     CompareGE, ///< out[ch] = pixel[ch] >= pc[0] ? 1.0 : 0.0
     CompareGEPreserve, ///< out[ch] = pixel[ch] >= pc[0] ? pc[1] : pixel[ch]
     ChannelDot, ///< out = dot(pixel.rgba, pc[0..3]) broadcast to all channels
@@ -281,6 +292,7 @@ struct BindingSlot {
     BindingDirection direction;
     Kakshya::GpuDataFormat format;
     Kakshya::DataModality modality { Kakshya::DataModality::SCALAR_F32 };
+    uint32_t set { 0 };
     uint32_t binding_index { 0 };
 };
 
@@ -351,6 +363,12 @@ struct ShaderSpec {
             return *this;
         }
 
+        Assemble& start_set(uint32_t s)
+        {
+            m_set = s;
+            return *this;
+        }
+
         Assemble& start_binding(uint32_t n)
         {
             m_next_binding = n;
@@ -360,10 +378,7 @@ struct ShaderSpec {
         /**
          * @brief Declare an SSBO binding.
          */
-        Assemble& ssbo(
-            std::string name,
-            BindingDirection direction,
-            Kakshya::GpuDataFormat format,
+        Assemble& ssbo(std::string name, BindingDirection direction, Kakshya::GpuDataFormat format,
             Kakshya::DataModality modality = Kakshya::DataModality::SCALAR_F32)
         {
             m_bindings.push_back({
@@ -371,6 +386,7 @@ struct ShaderSpec {
                 .direction = direction,
                 .format = format,
                 .modality = modality,
+                .set = m_set,
                 .binding_index = m_next_binding++,
             });
             return *this;
@@ -464,6 +480,7 @@ struct ShaderSpec {
         std::vector<BindingSlot> m_bindings;
         std::vector<PushConstantField> m_pc_fields;
         std::array<uint32_t, 3> m_workgroup { 256, 1, 1 };
+        uint32_t m_set { 0 };
         uint32_t m_next_binding { 0 };
         std::optional<KernelSource> m_kernel;
     };

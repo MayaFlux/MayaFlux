@@ -380,8 +380,7 @@ public:
         if (m_multipass_count > 0 && m_multipass_updater) {
             ExecutionContext chained = ctx;
             chained.mode = ExecutionMode::CHAINED;
-            chained.execution_metadata["pass_count"] = m_multipass_count;
-            chained.execution_metadata["pc_updater"] = m_multipass_updater;
+            chained.parameters = ChainedParams { .pass_count = m_multipass_count, .pc_updater = m_multipass_updater };
             return GpuExecutionContext<InputType, OutputType>::execute(input, chained);
         }
         return GpuExecutionContext<InputType, OutputType>::execute(input, ctx);

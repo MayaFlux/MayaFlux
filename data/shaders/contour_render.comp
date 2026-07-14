@@ -1,0 +1,81 @@
+#version 460
+layout(local_size_x = 256) in;
+
+layout(set = 0, binding = 0, rgba32f) uniform writeonly image2D out_image;
+
+layout(set = 1, binding = 8, std430) buffer FlatPointsBuf {
+    vec2 flat_points[];
+};
+
+layout(set = 1, binding = 10, std430) buffer ContourMetaBuf {
+    uvec4 contour_meta[];
+};
+
+layout(set = 2, binding = 1, std430) buffer SortIndicesBuf {
+    float sort_indices[];
+};
+
+layout(push_constant) uniform PushConstants {
+    uint width;
+    uint height;
+    uint max_components;
+    uint max_points_per_contour;
+    uint max_contours;
+} pc;
+
+void plot(ivec2 p)
+{
+    if (p.x >= 0 && p.x < int(pc.width) && p.y >= 0 && p.y < int(pc.height))
+        imageStore(out_image, p, vec4(1.0, 1.0, 1.0, 1.0));
+}
+
+void draw_line(ivec2 a, ivec2 b)
+{
+    int dx = abs(b.x - a.x), sx = a.x < b.x ? 1 : -1;
+    int dy = -abs(b.y - a.y), sy = a.y < b.y ? 1 : -1;
+    int err = dx + dy;
+    ivec2 p = a;
+    for (int i = 0; i < 4096; ++i) {
+        plot(p);
+        if (p == b)
+            break;
+        int e2 = 2 * err;
+        if (e2 >= dy) {
+            err += dy;
+            p.x += sx;
+        }
+        if (e2 <= dx) {
+            err += dx;
+            p.y += sy;
+        }
+    }
+}
+
+void main()
+{
+    const uint idx = gl_GlobalInvocationID.x;
+    const uint slot = idx / pc.max_points_per_contour;
+    const uint edge = idx % pc.max_points_per_contour;
+
+    const uint limit = pc.max_contours > 0u ? min(pc.max_contours, pc.max_components) : pc.max_components;
+    if (slot >= limit)
+        return;
+
+    const uint contour_idx = pc.max_contours > 0u
+        ? uint(sort_indices[slot]) : slot;
+
+    if (contour_idx >= pc.max_components)
+        return;
+
+    const uvec4 m = contour_meta[contour_idx];
+    const uint n = m.y;
+    if (n < 3u || edge >= n)
+        return;
+
+    const uint base = m.x;
+    const vec2 a = flat_points[base + edge];
+    const vec2 b = flat_points[base + ((edge + 1u) % n)];
+    const ivec2 pa = ivec2(a.x * float(pc.width), a.y * float(pc.height));
+    const ivec2 pb = ivec2(b.x * float(pc.width), b.y * float(pc.height));
+    draw_line(pa, pb);
+}

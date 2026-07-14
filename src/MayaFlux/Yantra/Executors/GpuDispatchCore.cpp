@@ -281,22 +281,9 @@ GpuChannelResult GpuDispatchCore::dispatch_core_chained(
         : m_staging_floats.size();
     const auto groups = calculate_dispatch_size(effective, structure_info);
 
-    if (!ctx.execution_metadata.contains("pass_count") || !ctx.execution_metadata.contains("pc_updater")) {
-        error<std::runtime_error>(Journal::Component::Yantra,
-            Journal::Context::Runtime,
-            std::source_location::current(),
-            "GpuDispatchCore: dispatch_core_chained requires 'pass_count' and 'pc_updater' in execution_metadata");
-    }
-
-    const auto pass_count = safe_any_cast_or_throw<uint32_t>(ctx.execution_metadata.at("pass_count"));
-    const auto& pc_updater = safe_any_cast_or_throw<std::function<void(uint32_t, void*)>>(ctx.execution_metadata.at("pc_updater"));
-
     m_resources.dispatch_batched(
-        dispatch_key(),
-        pass_count, groups, m_bindings,
-        [&](uint32_t pass, std::vector<uint8_t>& pc_data) { pc_updater(pass, pc_data.data()); },
-        m_gpu_config.push_constant_size,
-        ctx.execution_metadata);
+        dispatch_key(), groups, m_bindings,
+        m_gpu_config.push_constant_size, ctx);
 
     GpuChannelResult result;
     result.primary = readback_primary(effective);
@@ -322,17 +309,10 @@ GpuChannelResult GpuDispatchCore::dispatch_core_chained_indirect(
 
     bind_all_descriptors();
 
-    const size_t effective = m_staging_floats.empty() ? largest_binding_data_element_count() : m_staging_floats.size();
+    const size_t effective = m_staging_floats.empty()
+        ? largest_binding_data_element_count()
+        : m_staging_floats.size();
     const auto groups = calculate_dispatch_size(effective, structure_info);
-
-    if (!ctx.execution_metadata.contains("pass_count") || !ctx.execution_metadata.contains("pc_updater")) {
-        error<std::runtime_error>(Journal::Component::Yantra, Journal::Context::Runtime,
-            std::source_location::current(),
-            "GpuDispatchCore: dispatch_core_chained_indirect requires 'pass_count' and 'pc_updater' in execution_metadata");
-    }
-
-    const auto pass_count = safe_any_cast_or_throw<uint32_t>(ctx.execution_metadata.at("pass_count"));
-    const auto& pc_updater = safe_any_cast_or_throw<std::function<void(uint32_t, uint32_t, void*)>>(ctx.execution_metadata.at("pc_updater"));
 
     const auto indirect_it = std::ranges::find_if(m_bindings, [](const auto& b) {
         return b.usage_hint == Portal::Graphics::BufferUsageHint::INDIRECT;
@@ -344,9 +324,8 @@ GpuChannelResult GpuDispatchCore::dispatch_core_chained_indirect(
     }
 
     m_resources.dispatch_batched_indirect(
-        dispatch_key(), pass_count, indirect_it->binding, groups, m_bindings,
-        [&](uint32_t pass, uint32_t phase, std::vector<uint8_t>& pc_data) { pc_updater(pass, phase, pc_data.data()); },
-        m_gpu_config.push_constant_size, ctx.execution_metadata);
+        dispatch_key(), indirect_it->set, indirect_it->binding, groups, m_bindings,
+        m_gpu_config.push_constant_size, ctx);
 
     GpuChannelResult result;
     result.primary = readback_primary(effective);
@@ -419,7 +398,7 @@ void GpuDispatchCore::dispatch_core_dependency(const std::vector<DependencyStage
         bind_all_descriptors();
 
         keys.push_back(dispatch_key());
-        groups_per_key.push_back(calculate_dispatch_size(largest_binding_data_element_count(), {}));
+        groups_per_key.push_back(stage.explicit_groups ? *stage.explicit_groups : calculate_dispatch_size(largest_binding_data_element_count(), {}));
         pc_per_key.push_back(m_push_constants);
         hazards_per_key.push_back(stage.hazard_fn ? stage.hazard_fn(*this) : std::vector<Portal::Graphics::HazardResource> {});
     }
@@ -598,38 +577,20 @@ void GpuDispatchCore::update_dispatch_key_cache()
 
 void GpuDispatchCore::bind_all_descriptors()
 {
-    for (size_t i = 0; i < m_bindings.size(); ++i) {
-        const auto et = m_bindings[i].element_type;
-        if (et == GpuBufferBinding::ElementType::IMAGE_STORAGE
-            || et == GpuBufferBinding::ElementType::IMAGE_SAMPLED)
-            continue;
-
-        if (i < m_shared_bindings.size() && m_shared_bindings[i]) {
-            m_resources.bind_shared_descriptor(dispatch_key(), i, m_bindings[i]);
-            continue;
-        }
-
-        m_resources.bind_descriptor(dispatch_key(), i, m_bindings[i]);
-    }
-}
-
-/* void GpuDispatchCore::bind_all_descriptors()
-{
     for (auto& m_binding : m_bindings) {
         const auto et = m_binding.element_type;
         if (et == GpuBufferBinding::ElementType::IMAGE_STORAGE
             || et == GpuBufferBinding::ElementType::IMAGE_SAMPLED)
             continue;
 
-        const size_t idx = m_binding.binding;
-
-        if (idx < m_shared_bindings.size() && !m_shared_bindings[idx].empty()) {
-            m_resources.bind_shared_descriptor(dispatch_key(), m_shared_bindings[idx], m_binding);
+        const auto key = std::make_pair(m_binding.set, static_cast<size_t>(m_binding.binding));
+        if (m_shared_bindings.contains(key)) {
+            m_resources.bind_shared_descriptor(dispatch_key(), m_binding.set, m_binding.binding, m_binding);
             continue;
         }
 
-        m_resources.bind_descriptor(dispatch_key(), idx, m_binding);
+        m_resources.bind_descriptor(dispatch_key(), static_cast<size_t>(m_binding.binding), m_binding);
     }
-} */
+}
 
 } // namespace MayaFlux::Yantra

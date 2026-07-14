@@ -121,7 +121,7 @@ namespace {
 } // anonymous namespace
 
 struct GpuResourceManager::SharedBuffers {
-    std::vector<VulkanBufferSlot> slots;
+    std::map<std::pair<uint32_t, size_t>, VulkanBufferSlot> slots;
 };
 
 //==============================================================================
@@ -352,7 +352,7 @@ size_t GpuResourceManager::buffer_allocated_bytes(const std::string& key, size_t
     return find_unit(key)->buffer_slots[index].allocated_bytes;
 }
 
-void GpuResourceManager::ensure_shared_buffer(size_t binding_index, size_t element_count,
+void GpuResourceManager::ensure_shared_buffer(uint32_t set, size_t binding_index, size_t element_count,
     GpuBufferBinding::ElementType element_type,
     Portal::Graphics::BufferUsageHint usage_hint)
 {
@@ -365,10 +365,7 @@ void GpuResourceManager::ensure_shared_buffer(size_t binding_index, size_t eleme
             "GpuResourceManager: ensure_shared_buffer requires a sized element_type");
     }
 
-    if (binding_index >= m_shared->slots.size())
-        m_shared->slots.resize(binding_index + 1);
-
-    auto& slot = m_shared->slots[binding_index];
+    auto& slot = m_shared->slots[{ set, binding_index }];
     const size_t required_bytes = element_count * width;
     if (slot.allocated_bytes >= required_bytes)
         return;
@@ -378,11 +375,11 @@ void GpuResourceManager::ensure_shared_buffer(size_t binding_index, size_t eleme
         slot, required_bytes, Portal::Graphics::to_buffer_usage_flags(usage_hint));
 }
 
-void GpuResourceManager::bind_shared_descriptor(const std::string& key, size_t binding_index, const GpuBufferBinding& spec)
+void GpuResourceManager::bind_shared_descriptor(const std::string& key, uint32_t set, size_t binding_index, const GpuBufferBinding& spec)
 {
     auto& unit = unit_for(key);
     auto& foundry = Portal::Graphics::get_shader_foundry();
-    auto& slot = m_shared->slots.at(binding_index);
+    auto& slot = m_shared->slots.at({ set, binding_index });
 
     foundry.update_descriptor_buffer(
         unit.descriptor_set_ids[spec.set],
@@ -391,25 +388,23 @@ void GpuResourceManager::bind_shared_descriptor(const std::string& key, size_t b
         slot.buffer, 0, slot.allocated_bytes);
 }
 
-void GpuResourceManager::download_shared(size_t binding_index, void* dest, size_t byte_size)
+void GpuResourceManager::download_shared(uint32_t set, size_t binding_index, void* dest, size_t byte_size)
 {
-    auto& slot = m_shared->slots.at(binding_index);
+    auto& slot = m_shared->slots.at({ set, binding_index });
     std::memcpy(dest, slot.mapped_ptr, byte_size);
 }
 
-void GpuResourceManager::upload_shared_raw(size_t binding_index, const uint8_t* data, size_t byte_size)
+void GpuResourceManager::upload_shared_raw(uint32_t set, size_t binding_index, const uint8_t* data, size_t byte_size)
 {
-    auto& slot = m_shared->slots.at(binding_index);
+    auto& slot = m_shared->slots.at({ set, binding_index });
     std::memcpy(slot.mapped_ptr, data, byte_size);
 }
 
 Portal::Graphics::HazardResource GpuResourceManager::make_shared_buffer_hazard(
-    size_t binding_index, const GpuBufferBinding& spec) const
+    const GpuBufferBinding& spec) const
 {
-    vk::Buffer handle = binding_index < m_shared->slots.size()
-        ? m_shared->slots[binding_index].buffer
-        : vk::Buffer {};
-
+    const auto it = m_shared->slots.find({ spec.set, static_cast<size_t>(spec.binding) });
+    vk::Buffer handle = it != m_shared->slots.end() ? it->second.buffer : vk::Buffer {};
     return Portal::Graphics::HazardResource {
         .binding = spec,
         .image = nullptr,
@@ -501,7 +496,10 @@ void GpuResourceManager::dispatch(const std::string& key,
             || et == GpuBufferBinding::ElementType::IMAGE_SAMPLED;
         const bool is_output = b.direction == GpuBufferBinding::Direction::OUTPUT
             || b.direction == GpuBufferBinding::Direction::INPUT_OUTPUT;
-        if (is_output && !is_image) {
+
+        const bool is_shared = m_shared->slots.contains({ b.set, static_cast<size_t>(b.binding) });
+        if (is_output && !is_image && !is_shared
+            && static_cast<size_t>(b.binding) < unit.impl->buffers.size()) {
             foundry.buffer_barrier(
                 cmd_id,
                 unit.impl->buffers[b.binding].buffer,
@@ -516,13 +514,14 @@ void GpuResourceManager::dispatch(const std::string& key,
 }
 
 void GpuResourceManager::dispatch_batched(const std::string& key,
-    uint32_t pass_count,
     const std::array<uint32_t, 3>& groups,
     const std::vector<GpuBufferBinding>& bindings,
-    const std::function<void(uint32_t pass, std::vector<uint8_t>&)>& push_constant_updater,
     size_t push_constant_size,
-    const std::unordered_map<std::string, std::any>& execution_metadata)
+    const ExecutionContext& ctx)
 {
+    const auto& params = safe_variant_get_or_throw<ChainedParams>(ctx.parameters,
+        "GpuResourceManager: dispatch_batched requires ChainedParams");
+
     auto& unit = unit_for(key);
     auto& foundry = Portal::Graphics::get_shader_foundry();
     auto& compute_press = Portal::Graphics::get_compute_press();
@@ -530,27 +529,19 @@ void GpuResourceManager::dispatch_batched(const std::string& key,
     const uint32_t workgroups_per_pass = groups[0] * groups[1] * groups[2];
 
     const uint32_t default_passes = std::max(1U, 65536U / std::max(1U, workgroups_per_pass));
-    const uint32_t passes_per_batch = [&] {
-        auto it = execution_metadata.find("passes_per_batch");
-        if (it != execution_metadata.end())
-            return safe_any_cast_or_default<uint32_t>(it->second, default_passes);
-        return default_passes;
-    }();
 
-    for (uint32_t base = 0; base < pass_count; base += passes_per_batch) {
-        const uint32_t batch_end = std::min(base + passes_per_batch, pass_count);
-
+    const uint32_t effective_passes_per_batch = params.passes_per_batch.value_or(default_passes);
+    for (uint32_t base = 0; base < params.pass_count; base += effective_passes_per_batch) {
+        const uint32_t batch_end = std::min(base + effective_passes_per_batch, params.pass_count);
         auto cmd_id = foundry.begin_commands(
             Portal::Graphics::ShaderFoundry::CommandBufferType::COMPUTE);
 
         for (uint32_t pass = base; pass < batch_end; ++pass) {
             std::vector<uint8_t> pc_data(push_constant_size);
-            push_constant_updater(pass, pc_data);
-
+            params.pc_updater(pass, pc_data.data());
             compute_press.bind_all(
                 cmd_id, unit.pipeline_id, unit.descriptor_set_ids,
                 pc_data.data(), push_constant_size);
-
             compute_press.dispatch(cmd_id, groups[0], groups[1], groups[2]);
 
             for (const auto& b : bindings) {
@@ -559,18 +550,21 @@ void GpuResourceManager::dispatch_batched(const std::string& key,
 
                 const bool is_image = b.element_type == GpuBufferBinding::ElementType::IMAGE_STORAGE
                     || b.element_type == GpuBufferBinding::ElementType::IMAGE_SAMPLED;
+                const bool is_shared = m_shared->slots.contains({ b.set, static_cast<size_t>(b.binding) });
 
                 if (is_image) {
-                    foundry.image_barrier(
-                        cmd_id,
-                        unit.image_slots[b.binding]->get_image(),
-                        vk::ImageLayout::eGeneral,
-                        vk::ImageLayout::eGeneral,
-                        vk::AccessFlagBits::eShaderWrite | vk::AccessFlagBits::eShaderRead,
-                        vk::AccessFlagBits::eShaderWrite | vk::AccessFlagBits::eShaderRead,
-                        vk::PipelineStageFlagBits::eComputeShader,
-                        vk::PipelineStageFlagBits::eComputeShader);
-                } else {
+                    if (static_cast<size_t>(b.binding) < unit.image_slots.size() && unit.image_slots[b.binding]) {
+                        foundry.image_barrier(
+                            cmd_id,
+                            unit.image_slots[b.binding]->get_image(),
+                            vk::ImageLayout::eGeneral,
+                            vk::ImageLayout::eGeneral,
+                            vk::AccessFlagBits::eShaderWrite | vk::AccessFlagBits::eShaderRead,
+                            vk::AccessFlagBits::eShaderWrite | vk::AccessFlagBits::eShaderRead,
+                            vk::PipelineStageFlagBits::eComputeShader,
+                            vk::PipelineStageFlagBits::eComputeShader);
+                    }
+                } else if (!is_shared && static_cast<size_t>(b.binding) < unit.impl->buffers.size()) {
                     foundry.buffer_barrier(
                         cmd_id,
                         unit.impl->buffers[b.binding].buffer,
@@ -585,13 +579,18 @@ void GpuResourceManager::dispatch_batched(const std::string& key,
         for (const auto& b : bindings) {
             if (b.direction == GpuBufferBinding::Direction::OUTPUT
                 || b.direction == GpuBufferBinding::Direction::INPUT_OUTPUT) {
-                foundry.buffer_barrier(
-                    cmd_id,
-                    unit.impl->buffers[b.binding].buffer,
-                    vk::AccessFlagBits::eShaderWrite,
-                    vk::AccessFlagBits::eHostRead,
-                    vk::PipelineStageFlagBits::eComputeShader,
-                    vk::PipelineStageFlagBits::eHost);
+                const bool is_image = b.element_type == GpuBufferBinding::ElementType::IMAGE_STORAGE
+                    || b.element_type == GpuBufferBinding::ElementType::IMAGE_SAMPLED;
+                const bool is_shared = m_shared->slots.contains({ b.set, static_cast<size_t>(b.binding) });
+                if (!is_image && !is_shared && static_cast<size_t>(b.binding) < unit.impl->buffers.size()) {
+                    foundry.buffer_barrier(
+                        cmd_id,
+                        unit.impl->buffers[b.binding].buffer,
+                        vk::AccessFlagBits::eShaderWrite,
+                        vk::AccessFlagBits::eHostRead,
+                        vk::PipelineStageFlagBits::eComputeShader,
+                        vk::PipelineStageFlagBits::eHost);
+                }
             }
         }
 
@@ -600,64 +599,54 @@ void GpuResourceManager::dispatch_batched(const std::string& key,
 }
 
 void GpuResourceManager::dispatch_batched_indirect(const std::string& key,
-    uint32_t pass_count,
-    size_t indirect_binding,
+    uint32_t indirect_set, size_t indirect_binding,
     const std::array<uint32_t, 3>& groups,
     const std::vector<GpuBufferBinding>& bindings,
-    const std::function<void(uint32_t pass, uint32_t phase, std::vector<uint8_t>&)>& push_constant_updater,
     size_t push_constant_size,
-    const std::unordered_map<std::string, std::any>& execution_metadata)
+    const ExecutionContext& ctx)
 {
+    const auto& params = safe_variant_get_or_throw<ChainedIndirectParams>(ctx.parameters,
+        "GpuResourceManager: dispatch_batched_indirect requires ChainedIndirectParams");
+
     auto& unit = unit_for(key);
     auto& foundry = Portal::Graphics::get_shader_foundry();
     auto& compute_press = Portal::Graphics::get_compute_press();
 
-    const vk::Buffer indirect_buffer = m_shared->slots.at(indirect_binding).buffer;
+    auto& indirect_slot = m_shared->slots.at({ indirect_set, indirect_binding });
+    const vk::Buffer indirect_buffer = indirect_slot.buffer;
     const uint32_t init_cmd[3] = { groups[0], groups[1], groups[2] };
-    std::memcpy(m_shared->slots.at(indirect_binding).mapped_ptr, init_cmd, sizeof(init_cmd));
+    std::memcpy(indirect_slot.mapped_ptr, init_cmd, sizeof(init_cmd));
 
     const uint32_t default_passes = std::max(1U, 65536U / std::max(1U, groups[0] * groups[1] * groups[2]));
-    const uint32_t passes_per_batch = [&] {
-        auto it = execution_metadata.find("passes_per_batch");
-        if (it != execution_metadata.end())
-            return safe_any_cast_or_default<uint32_t>(it->second, default_passes);
-        return default_passes;
-    }();
+    const uint32_t effective_passes_per_batch = params.passes_per_batch.value_or(default_passes);
 
-    for (uint32_t base = 0; base < pass_count; base += passes_per_batch) {
-        const uint32_t batch_end = std::min(base + passes_per_batch, pass_count);
+    for (uint32_t base = 0; base < params.pass_count; base += effective_passes_per_batch) {
+        const uint32_t batch_end = std::min(base + effective_passes_per_batch, params.pass_count);
         auto cmd_id = foundry.begin_commands(Portal::Graphics::ShaderFoundry::CommandBufferType::COMPUTE);
 
         for (uint32_t pass = base; pass < batch_end; ++pass) {
             std::vector<uint8_t> pc_data(push_constant_size);
-            push_constant_updater(pass, 1, pc_data);
+            params.pc_updater(pass, 1, pc_data.data());
             compute_press.bind_all(cmd_id, unit.pipeline_id, unit.descriptor_set_ids, pc_data.data(), push_constant_size);
             compute_press.dispatch_indirect(cmd_id, indirect_buffer);
 
             for (const auto& b : bindings) {
-                if (b.direction != GpuBufferBinding::Direction::INPUT_OUTPUT)
-                    continue;
-                foundry.buffer_barrier(cmd_id, unit.impl->buffers[b.binding].buffer,
-                    vk::AccessFlagBits::eShaderWrite | vk::AccessFlagBits::eShaderRead,
-                    vk::AccessFlagBits::eShaderWrite | vk::AccessFlagBits::eShaderRead,
-                    vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader);
-            }
-
-            std::vector<uint8_t> gate_pc_data(push_constant_size);
-            push_constant_updater(pass, 2, gate_pc_data);
-            compute_press.bind_all(cmd_id, unit.pipeline_id, unit.descriptor_set_ids, gate_pc_data.data(), push_constant_size);
-            compute_press.dispatch(cmd_id, 1, 1, 1);
-
-            foundry.buffer_barrier(cmd_id, indirect_buffer,
-                vk::AccessFlagBits::eShaderWrite, vk::AccessFlagBits::eIndirectCommandRead,
-                vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eDrawIndirect);
-        }
-
-        for (const auto& b : bindings) {
-            if (b.direction == GpuBufferBinding::Direction::OUTPUT || b.direction == GpuBufferBinding::Direction::INPUT_OUTPUT) {
-                foundry.buffer_barrier(cmd_id, unit.impl->buffers[b.binding].buffer,
-                    vk::AccessFlagBits::eShaderWrite, vk::AccessFlagBits::eHostRead,
-                    vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eHost);
+                const auto et = b.element_type;
+                const bool is_image = et == GpuBufferBinding::ElementType::IMAGE_STORAGE
+                    || et == GpuBufferBinding::ElementType::IMAGE_SAMPLED;
+                const bool is_output = b.direction == GpuBufferBinding::Direction::OUTPUT
+                    || b.direction == GpuBufferBinding::Direction::INPUT_OUTPUT;
+                const bool is_shared = m_shared->slots.contains({ b.set, static_cast<size_t>(b.binding) });
+                if (is_output && !is_image && !is_shared
+                    && static_cast<size_t>(b.binding) < unit.impl->buffers.size()) {
+                    foundry.buffer_barrier(
+                        cmd_id,
+                        unit.impl->buffers[b.binding].buffer,
+                        vk::AccessFlagBits::eShaderWrite,
+                        vk::AccessFlagBits::eShaderRead | vk::AccessFlagBits::eShaderWrite,
+                        vk::PipelineStageFlagBits::eComputeShader,
+                        vk::PipelineStageFlagBits::eComputeShader);
+                }
             }
         }
         foundry.submit_and_wait(cmd_id);

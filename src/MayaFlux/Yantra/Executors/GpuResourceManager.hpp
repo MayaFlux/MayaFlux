@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MayaFlux/Portal/Graphics/ComputePress.hpp"
+#include "MayaFlux/Yantra/OperationSpec/ExecutionContext.hpp"
 
 namespace MayaFlux::Yantra {
 
@@ -46,15 +47,15 @@ public:
     void download(const std::string& key, size_t index, float* dest, size_t byte_size);
     void bind_descriptor(const std::string& key, size_t index, const GpuBufferBinding& spec);
 
-    void ensure_shared_buffer(size_t binding_index, size_t element_count,
+    void ensure_shared_buffer(uint32_t set, size_t binding_index, size_t element_count,
         GpuBufferBinding::ElementType element_type,
         Portal::Graphics::BufferUsageHint usage_hint = Portal::Graphics::BufferUsageHint::COMPUTE_STORAGE);
-    void bind_shared_descriptor(const std::string& key, size_t binding_index, const GpuBufferBinding& spec);
-    void download_shared(size_t binding_index, void* dest, size_t byte_size);
-    void upload_shared_raw(size_t binding_index, const uint8_t* data, size_t byte_size);
+    void bind_shared_descriptor(const std::string& key, uint32_t set, size_t binding_index, const GpuBufferBinding& spec);
+    void download_shared(uint32_t set, size_t binding_index, void* dest, size_t byte_size);
+    void upload_shared_raw(uint32_t set, size_t binding_index, const uint8_t* data, size_t byte_size);
 
     [[nodiscard]] Portal::Graphics::HazardResource make_shared_buffer_hazard(
-        size_t binding_index, const GpuBufferBinding& spec) const;
+        const GpuBufferBinding& spec) const;
 
     /**
      * @brief Bind a storage image descriptor at the given slot index.
@@ -99,21 +100,17 @@ public:
         size_t push_constant_size);
 
     void dispatch_batched(const std::string& key,
-        uint32_t pass_count,
         const std::array<uint32_t, 3>& groups,
         const std::vector<GpuBufferBinding>& bindings,
-        const std::function<void(uint32_t pass, std::vector<uint8_t>&)>& push_constant_updater,
         size_t push_constant_size,
-        const std::unordered_map<std::string, std::any>& execution_metadata = {});
+        const ExecutionContext& ctx);
 
     void dispatch_batched_indirect(const std::string& key,
-        uint32_t pass_count,
-        size_t indirect_binding,
+        uint32_t indirect_set, size_t indirect_binding,
         const std::array<uint32_t, 3>& groups,
         const std::vector<GpuBufferBinding>& bindings,
-        const std::function<void(uint32_t pass, uint32_t phase, std::vector<uint8_t>&)>& push_constant_updater,
         size_t push_constant_size,
-        const std::unordered_map<std::string, std::any>& execution_metadata = {});
+        const ExecutionContext& ctx);
 
     /**
      * @brief Submit a compute dispatch without blocking.

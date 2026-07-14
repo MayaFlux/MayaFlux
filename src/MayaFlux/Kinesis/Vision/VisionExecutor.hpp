@@ -60,6 +60,7 @@ struct VisionResult {
     StructuredOutput structured { std::monostate {} };
     std::vector<SnapshotEntry> snapshots;
     std::shared_ptr<Core::VKImage> debug_labels;
+    std::shared_ptr<Core::VKImage> debug_contours;
     uint32_t w { 0 };
     uint32_t h { 0 };
 

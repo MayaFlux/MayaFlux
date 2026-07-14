@@ -1,0 +1,325 @@
+#version 460
+#include "include/vision_cc.glsl"
+
+layout(local_size_x = 8, local_size_y = 8) in;
+
+layout(set = 0, binding = 6, std430) buffer DenseLabelBuf {
+    uint dense_label[];
+};
+
+layout(set = 0, binding = 7, std430) buffer BoundsMinBuf {
+    uvec2 bounds_min[];
+};
+
+layout(set = 0, binding = 8, std430) buffer BoundsMaxBuf {
+    uvec2 bounds_max[];
+};
+
+layout(set = 1, binding = 4, std430) buffer TraceOwnerBuf {
+    uint trace_owner[];
+};
+
+/**
+ * @brief Hole trace ownership, indexed by (label - 1) * k_max_holes_per_label + slot.
+ *        A hole-start pixel claims the first free slot for its parent
+ *        label via a linear scan over the small fixed cap, so multiple
+ *        holes on the same component land in distinct slots without
+ *        needing dynamic allocation.
+ */
+layout(set = 1, binding = 5, std430) buffer HoleOwnerBuf {
+    uint hole_owner[];
+};
+
+layout(set = 1, binding = 6, std430) buffer CompactedOwnersBuf {
+    uvec2 compacted_owners[];
+};
+
+layout(set = 1, binding = 7, std430) buffer CompactedCountBuf {
+    uint compacted_count_buf[];
+};
+
+layout(set = 1, binding = 8, std430) buffer FlatPointsBuf {
+    vec2 flat_points[];
+};
+
+layout(set = 1, binding = 9, std430) buffer PointCursorBuf {
+    uint point_cursor[];
+};
+
+layout(set = 1, binding = 10, std430) buffer ContourMetaBuf {
+    uvec4 contour_meta[];
+};
+
+layout(set = 1, binding = 11, std430) buffer ContourAreaPerimBuf {
+    vec2 contour_area_perim[];
+};
+
+layout(set = 2, binding = 0, std430) buffer SortKeysBuf {
+    float sort_keys[];
+};
+
+layout(set = 2, binding = 1, std430) buffer SortIndicesBuf {
+    float sort_indices[];
+};
+
+layout(push_constant) uniform PushConstants {
+    uint width;
+    uint height;
+    uint max_components;
+    uint max_points_per_contour;
+    uint max_holes_per_label;
+    uint phase;
+    float min_area;
+    uint compacted_count;
+} pc;
+
+const float NEG_INFINITY = -1.0 / 0.0;
+
+const uint HOLE_FLAG = 0x80000000u;
+
+bool is_background(uint label)
+{
+    return label == CC_BACKGROUND || label == 0u;
+}
+
+uint label_at(int x, int y)
+{
+    if (x < 0 || y < 0 || x >= int(pc.width) || y >= int(pc.height))
+        return CC_BACKGROUND;
+    return dense_label[uint(y) * pc.width + uint(x)];
+}
+
+/**
+ * @brief Phase 0: claims trace ownership for outer boundary starts. A
+ *        background-to-foreground transition scanning left to right,
+ *        with the usual diagonal exception so a pixel with foreground
+ *        directly above and above-left is not re-claimed as a new
+ *        start. Also initialises the sort key slots.
+ */
+void claim_outer_phase()
+{
+    const ivec2 coord = ivec2(gl_GlobalInvocationID.xy);
+    const uint linear_idx = gl_GlobalInvocationID.y * pc.width + gl_GlobalInvocationID.x;
+
+    if (linear_idx < pc.max_components) {
+        sort_keys[linear_idx] = NEG_INFINITY;
+        sort_indices[linear_idx] = float(linear_idx);
+    }
+
+    if (coord.x >= int(pc.width) || coord.y >= int(pc.height))
+        return;
+
+    const uint here = label_at(coord.x, coord.y);
+    if (is_background(here) || here > pc.max_components)
+        return;
+
+    if (uint(coord.y) != bounds_min[here - 1u].y)
+        return;
+
+    const uint left = label_at(coord.x - 1, coord.y);
+    if (left == here)
+        return;
+
+    atomicCompSwap(trace_owner[here], CC_UNCLAIMED, linear_idx);
+}
+
+/**
+ * @brief Phase 1: claims trace ownership for hole boundary starts.
+ *        Runs strictly after claim_outer_phase (separate dispatch), so
+ *        trace_owner is already fully resolved and a pixel that won
+ *        outer ownership can be excluded outright. A hole-start
+ *        candidate is a foreground pixel with background to its right,
+ *        where that background pixel lies strictly inside the
+ *        component's bounding box (a hole touching the bbox edge would
+ *        connect to exterior background and therefore not be enclosed)
+ *        and has non-background directly above it (restricting the
+ *        claim to the hole's topmost row, so a multi-row hole is
+ *        claimed exactly once rather than once per row).
+ */
+void claim_hole_phase()
+{
+    const ivec2 coord = ivec2(gl_GlobalInvocationID.xy);
+    const uint linear_idx = gl_GlobalInvocationID.y * pc.width + gl_GlobalInvocationID.x;
+
+    if (coord.x >= int(pc.width) || coord.y >= int(pc.height))
+        return;
+
+    const uint here = label_at(coord.x, coord.y);
+    if (is_background(here) || here > pc.max_components)
+        return;
+
+    if (trace_owner[here] == linear_idx)
+        return;
+
+    const uvec2 bmin = bounds_min[here - 1u];
+    const uvec2 bmax = bounds_max[here - 1u];
+
+    const uint right = label_at(coord.x + 1, coord.y);
+    if (!is_background(right))
+        return;
+
+    if (uint(coord.x) + 1u <= bmin.x || uint(coord.x) + 1u >= bmax.x)
+        return;
+    if (uint(coord.y) <= bmin.y || uint(coord.y) >= bmax.y)
+        return;
+
+    const uint right_above = label_at(coord.x + 1, coord.y - 1);
+    if (is_background(right_above))
+        return;
+
+    const uint base_slot = (here - 1u) * pc.max_holes_per_label;
+    for (uint s = 0u; s < pc.max_holes_per_label; ++s) {
+        if (atomicCompSwap(hole_owner[base_slot + s], CC_UNCLAIMED, linear_idx) == CC_UNCLAIMED) {
+            return;
+        }
+    }
+}
+
+/**
+ * @brief Bounded Moore boundary walk, used for both outer and hole
+ *        traces. tracing_hole selects the acceptance test: equal to
+ *        target_label for an outer walk, background for a hole walk.
+ *        Search order at each step begins two positions counterclockwise
+ *        from the direction of the last move (the standard Moore
+ *        backtrack convention), and the initial direction is derived
+ *        the same way: the direction from which the walk conceptually
+ *        arrived at the start pixel, not a raw forward scan. This keeps
+ *        the first step's search order consistent with every subsequent
+ *        step, so a diagonal neighbour is never accepted ahead of an
+ *        orthogonal one still on the true boundary.
+ */
+void walk_boundary(
+    int start_x, int start_y,
+    uint target_label,
+    bool tracing_hole,
+    uint out_base,
+    uint max_points,
+    out uint out_count)
+{
+    const int dx8[8] = int[8](1, 1, 0, -1, -1, -1, 0, 1);
+    const int dy8[8] = int[8](0, 1, 1, 1, 0, -1, -1, -1);
+
+    int cx = start_x;
+    int cy = start_y;
+
+    const int arrival_dir = tracing_hole ? 2 : 6;
+
+    int dir = arrival_dir;
+    const int orig_x = cx;
+    const int orig_y = cy;
+    bool first = true;
+    uint count = 0u;
+
+    for (uint step = 0u; step < max_points * 8u; ++step) {
+        bool step_found = false;
+
+        for (int i = 0; i < 8; ++i) {
+            const int d = (dir + 6 + i) % 8;
+            const int nx = cx + dx8[d];
+            const int ny = cy + dy8[d];
+
+            const uint n = label_at(nx, ny);
+            const bool inside = tracing_hole ? is_background(n) : (n == target_label);
+            if (!inside)
+                continue;
+
+            if (count < max_points) {
+                flat_points[out_base + count] = vec2(float(cx) / float(pc.width), float(cy) / float(pc.height));
+            }
+            ++count;
+
+            cx = nx;
+            cy = ny;
+            dir = d;
+            step_found = true;
+            break;
+        }
+
+        if (!step_found)
+            break;
+        if (!first && cx == orig_x && cy == orig_y)
+            break;
+        first = false;
+        if (count >= max_points)
+            break;
+    }
+
+    out_count = min(count, max_points);
+}
+
+void shoelace_area_perimeter(uint out_base, uint n, out float area_out, out float perimeter_out)
+{
+    float area = 0.0;
+    float perim = 0.0;
+    for (uint j = 0u; j < n; ++j) {
+        const vec2 a = flat_points[out_base + j] * vec2(float(pc.width), float(pc.height));
+        const vec2 b = flat_points[out_base + ((j + 1u) % n)] * vec2(float(pc.width), float(pc.height));
+        area += a.x * b.y - b.x * a.y;
+        perim += length(b - a);
+    }
+    area = abs(area) * 0.5;
+    area_out = (area + perim * 0.5 + 1.0) / (float(pc.width) * float(pc.height));
+    perimeter_out = perim;
+}
+
+/**
+ * @brief Phase 2, compacted variant. Dispatched over compacted_count
+ *        threads instead of w*h pixels. Each thread reads its owner's
+ *        linear_idx and packed metadata directly, deriving coord from
+ *        linear_idx rather than gl_GlobalInvocationID, and runs exactly
+ *        one boundary walk with no non-owner early-return waste.
+ */
+void trace_phase_compacted()
+{
+    const uint i = gl_GlobalInvocationID.x;
+    if (i >= pc.compacted_count)
+        return;
+
+    const uvec2 entry = compacted_owners[i];
+    const uint linear_idx = entry.x;
+    const uint meta = entry.y;
+
+    const int cx = int(linear_idx % pc.width);
+    const int cy = int(linear_idx / pc.width);
+
+    const uint out_base = atomicAdd(point_cursor[0], pc.max_points_per_contour);
+    uint n = 0u;
+    uint parent = 0xFFFFFFFFu;
+
+    if ((meta & HOLE_FLAG) == 0u) {
+        const uint here = meta;
+        walk_boundary(cx, cy, here + 1u, false, out_base, pc.max_points_per_contour, n);
+    } else {
+        const uint label = meta & 0xFFFu;
+        walk_boundary(cx + 1, cy, label + 1u, true, out_base, pc.max_points_per_contour, n);
+        parent = label + 1u;
+    }
+
+    bool ok = n >= 3u;
+    if (ok) {
+        float area, perimeter;
+        shoelace_area_perimeter(out_base, n, area, perimeter);
+        ok = area >= pc.min_area;
+        if (ok) {
+            contour_area_perim[i] = vec2(area, perimeter);
+            sort_keys[i] = area;
+        } else {
+            sort_keys[i] = NEG_INFINITY;
+        }
+    } else {
+        sort_keys[i] = NEG_INFINITY;
+    }
+    sort_indices[i] = float(i);
+
+    contour_meta[i] = uvec4(out_base, ok ? n : 0u, parent, 0u);
+}
+
+void main()
+{
+    if (pc.phase == 0u)
+        claim_outer_phase();
+    else if (pc.phase == 1u)
+        claim_hole_phase();
+    else
+        trace_phase_compacted();
+}
