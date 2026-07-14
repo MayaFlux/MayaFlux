@@ -68,7 +68,7 @@ layout(push_constant) uniform PushConstants {
     uint max_components;
     uint max_points_per_contour;
     uint max_holes_per_label;
-    uint phase; // 0 = claim outer, 1 = claim hole, 2 = trace
+    uint phase;
     float min_area;
     uint compacted_count;
 } pc;

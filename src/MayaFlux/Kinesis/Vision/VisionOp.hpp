@@ -121,6 +121,7 @@ struct ConnectedComponentsParams {
 struct FindContoursParams {
     float min_area { 0.0F };
     uint32_t max_contours { 0 };
+    uint32_t max_points_per_contour { 0 };
     bool as_image { false };
 };
 
@@ -308,10 +309,10 @@ struct VisionSequence {
                     .window_radius = window_radius, .max_iterations = max_iterations, .eigen_threshold = eigen_threshold, .error_threshold = error_threshold });
         }
 
-        Builder& find_contours(float min_area = 0.0F, uint32_t max_contours = 0, bool as_image = false)
+        Builder& find_contours(float min_area = 0.0F, uint32_t max_contours = 0, uint32_t max_points_per_contour = 0, bool as_image = false)
         {
             return push(VisionOp::FindContours,
-                FindContoursParams { .min_area = min_area, .max_contours = max_contours, .as_image = as_image });
+                FindContoursParams { .min_area = min_area, .max_contours = max_contours, .max_points_per_contour = max_points_per_contour, .as_image = as_image });
         }
 
         Builder& snapshot()

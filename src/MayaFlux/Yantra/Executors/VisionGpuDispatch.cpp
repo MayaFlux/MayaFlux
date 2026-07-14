@@ -1109,10 +1109,20 @@ VisionResult VisionGpuExecutor::run(
                 cc_pipeline.upload_shared_raw(1, 9, reinterpret_cast<const uint8_t*>(&zero), sizeof(uint32_t));
             }
 
+            auto max_points = p.max_points_per_contour > 0 ? std::min<uint32_t>(p.max_points_per_contour, k_max_points_per_contour) : k_max_points_per_contour;
             cc_pipeline.swap_shader({ .shader_path = "contour_march.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(ContourMarchPC) });
             cc_pipeline.stage_image_at(1, image, GpuBufferBinding::ElementType::IMAGE_SAMPLED);
             cc_pipeline.prepare_output_image(w, h);
-            cc_pipeline.set_push_constants(ContourMarchPC { .width = w, .height = h, .max_components = k_max_components, .max_points_per_contour = k_max_points_per_contour, .max_holes_per_label = k_max_holes_per_label, .phase = 0U, .min_area = p.min_area, .compacted_count = 0U });
+            cc_pipeline.set_push_constants(ContourMarchPC {
+                .width = w,
+                .height = h,
+                .max_components = k_max_components,
+                .max_points_per_contour = max_points,
+                .max_holes_per_label = k_max_holes_per_label,
+                .phase = 0U,
+                .min_area = p.min_area,
+                .compacted_count = 0U });
+
             cc_pipeline.set_output_dimensions(w, h);
             {
                 const auto fence = cc_pipeline.dispatch_async({});
@@ -1120,7 +1130,15 @@ VisionResult VisionGpuExecutor::run(
                 foundry.release_fence(fence);
             }
 
-            cc_pipeline.set_push_constants(ContourMarchPC { .width = w, .height = h, .max_components = k_max_components, .max_points_per_contour = k_max_points_per_contour, .max_holes_per_label = k_max_holes_per_label, .phase = 1U, .min_area = p.min_area, .compacted_count = 0U });
+            cc_pipeline.set_push_constants(ContourMarchPC {
+                .width = w,
+                .height = h,
+                .max_components = k_max_components,
+                .max_points_per_contour = max_points,
+                .max_holes_per_label = k_max_holes_per_label,
+                .phase = 1U,
+                .min_area = p.min_area,
+                .compacted_count = 0U });
             {
                 const auto fence = cc_pipeline.dispatch_async({});
                 foundry.wait_for_fence(fence);
@@ -1144,7 +1162,15 @@ VisionResult VisionGpuExecutor::run(
             cc_pipeline.download_shared(1, 7, &compacted_count, sizeof(uint32_t));
 
             cc_pipeline.swap_shader({ .shader_path = "contour_march.comp.spv", .workgroup_size = { 256, 1, 1 }, .push_constant_size = sizeof(ContourMarchPC) });
-            cc_pipeline.set_push_constants(ContourMarchPC { .width = w, .height = h, .max_components = k_max_components, .max_points_per_contour = k_max_points_per_contour, .max_holes_per_label = k_max_holes_per_label, .phase = 2U, .min_area = p.min_area, .compacted_count = compacted_count });
+            cc_pipeline.set_push_constants(ContourMarchPC {
+                .width = w,
+                .height = h,
+                .max_components = k_max_components,
+                .max_points_per_contour = max_points,
+                .max_holes_per_label = k_max_holes_per_label,
+                .phase = 2U,
+                .min_area = p.min_area,
+                .compacted_count = compacted_count });
             cc_pipeline.set_output_dimensions(std::max(compacted_count, 1U), 1);
             {
                 const auto fence = cc_pipeline.dispatch_async({});
