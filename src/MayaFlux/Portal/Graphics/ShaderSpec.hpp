@@ -222,6 +222,7 @@ struct KernelSource {
  * Reduction operations (one InOut SSBO, shared memory):
  *   Sum          accumulate + into shared[lid], tree reduce
  *   Max          accumulate max into shared[lid], tree reduce
+ *   IndexScale   sig[i] = float(i) * sig[i]
  */
 enum class KernelOp : uint8_t {
     // arithmetic
@@ -272,7 +273,10 @@ enum class KernelOp : uint8_t {
     ///< First InOut SSBO holds the values (overwritten with the
     ///< max in slot 0). Second InOut SSBO (UINT32) receives the
     ///< winning index in slot 0.
-    // image body ops
+    IndexScale, ///< out[i] = float(i) * a[i]. The only op that uses the
+    ///< invocation index itself as an arithmetic operand rather
+    ///< than purely for addressing.
+
     CompareGE, ///< out[ch] = pixel[ch] >= pc[0] ? 1.0 : 0.0
     CompareGEPreserve, ///< out[ch] = pixel[ch] >= pc[0] ? pc[1] : pixel[ch]
     ChannelDot, ///< out = dot(pixel.rgba, pc[0..3]) broadcast to all channels

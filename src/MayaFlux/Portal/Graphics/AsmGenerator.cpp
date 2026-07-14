@@ -665,6 +665,12 @@ namespace {
             o += "%res = OpExtInst %f32 %glsl SmoothStep " + v0 + " " + v1 + " " + p0 + "\n";
             result = "%res";
             break;
+        case KernelOp::IndexScale: {
+            o += "%i_f32 = OpConvertUToF %f32 %i\n";
+            o += "%res = OpFMul " + et + " " + v0 + " %i_f32\n";
+            result = "%res";
+            break;
+        }
         default:
             o += "%res = OpCopyObject " + et + " " + v0 + "\n";
             result = "%res";
@@ -762,12 +768,28 @@ namespace {
         return o;
     }
 
+    /**
+     * @brief Emit the entry point body for the Scan template (inclusive
+     *        prefix sum over one InOut SSBO).
+     *
+     * Double-buffered Hillis-Steele scan in workgroup shared memory:
+     * log2(local_size) fixed passes, unrolled at generation time, each pass
+     * reading exclusively from one shared array and writing exclusively to
+     * the other, so no lane can read a value another lane has already
+     * overwritten in the same pass. Strides are derived via successive
+     * OpShiftLeftLogical on %c1u rather than emitting a fresh OpConstant
+     * per pass, since a literal-valued constant can collide with an
+     * existing constant of the same value already declared elsewhere in
+     * the module.
+     *
+     * @param spec ShaderSpec with tmpl == KernelTemplate::Scan and exactly
+     *             one InOut FLOAT32 SSBO binding.
+     * @return SPIR-V function body text for %main.
+     */
     std::string emit_scan_body(const ShaderSpec& spec)
     {
         const uint32_t local = spec.workgroup_size[0];
-        const std::string ls = std::to_string(local);
         const auto log2_local = static_cast<uint32_t>(std::log2(static_cast<double>(local)));
-        const bool is_max_index = (spec.op == KernelOp::MaxIndex);
         const auto& b0 = spec.bindings.front();
 
         std::string o;
@@ -779,58 +801,35 @@ namespace {
         o += "%lid3    = OpLoad %v3u32 %lid_var\n";
         o += "%lid     = OpCompositeExtract %u32 %lid3 0\n\n";
 
-        // Load input element into shared_a[lid]; shared_a is the initial
-        // read buffer for pass 0.
         o += "%gep_in  = OpAccessChain %pelem_" + b0.name
             + " %buf_" + b0.name + " %c0u %i\n";
         o += "%elem    = OpLoad %f32 %gep_in\n";
         o += "%pgsh0   = OpAccessChain %psh_f32 %shared_a %lid\n";
         o += "OpStore %pgsh0 %elem\n";
-
-        if (is_max_index) {
-            o += "%pgidx0  = OpAccessChain %psh_u32 %shared_idx %lid\n";
-            o += "OpStore %pgidx0 %lid\n";
-        }
-
         o += "OpControlBarrier %c2u %c2u %c264u\n\n";
 
-        // log2(local) fixed passes, unrolled at generation time (no runtime
-        // loop needed since local is compile-time known), alternating which
-        // buffer is read from and written to each pass so no lane ever reads
-        // a value another lane has overwritten in the same pass.
         std::string read_buf = "%shared_a";
         std::string write_buf = "%shared_b";
+        std::string stride_val = "%c1u";
 
         for (uint32_t pass = 0; pass < log2_local; ++pass) {
-            const uint32_t stride = 1U << pass;
             const std::string ps = std::to_string(pass);
 
-            o += "%stride_" + ps + " = OpConstant %u32 " + std::to_string(stride) + "\n";
-            o += "%has_left_" + ps + " = OpUGreaterThanEqual %bool %lid %stride_" + ps + "\n";
+            o += "%has_left_" + ps + " = OpUGreaterThanEqual %bool %lid " + stride_val + "\n";
             o += "OpSelectionMerge %scan_merge_" + ps + " None\n";
             o += "OpBranchConditional %has_left_" + ps + " %scan_add_" + ps + " %scan_copy_" + ps + "\n\n";
 
-            // Lane has a left neighbour at this stride: write = read[lid] + read[lid-stride]
             o += "%scan_add_" + ps + " = OpLabel\n";
             o += "%self_ptr_" + ps + " = OpAccessChain %psh_f32 " + read_buf + " %lid\n";
             o += "%self_val_" + ps + " = OpLoad %f32 %self_ptr_" + ps + "\n";
-            o += "%left_idx_" + ps + " = OpISub %u32 %lid %stride_" + ps + "\n";
+            o += "%left_idx_" + ps + " = OpISub %u32 %lid " + stride_val + "\n";
             o += "%left_ptr_" + ps + " = OpAccessChain %psh_f32 " + read_buf + " %left_idx_" + ps + "\n";
             o += "%left_val_" + ps + " = OpLoad %f32 %left_ptr_" + ps + "\n";
             o += "%sum_" + ps + " = OpFAdd %f32 %self_val_" + ps + " %left_val_" + ps + "\n";
             o += "%wptr_add_" + ps + " = OpAccessChain %psh_f32 " + write_buf + " %lid\n";
             o += "OpStore %wptr_add_" + ps + " %sum_" + ps + "\n";
-
-            if (is_max_index) {
-                // Index scan is only meaningful for the final max-index stage,
-                // not the sum scan itself; MaxIndex composes Scan(ScanSum) with
-                // a separate reduction afterward (see emit_max_index_body), so
-                // no index propagation happens inside the scan passes.
-            }
-
             o += "OpBranch %scan_merge_" + ps + "\n\n";
 
-            // No left neighbour: value passes through unchanged.
             o += "%scan_copy_" + ps + " = OpLabel\n";
             o += "%pass_ptr_" + ps + " = OpAccessChain %psh_f32 " + read_buf + " %lid\n";
             o += "%pass_val_" + ps + " = OpLoad %f32 %pass_ptr_" + ps + "\n";
@@ -842,11 +841,14 @@ namespace {
             o += "OpControlBarrier %c2u %c2u %c264u\n\n";
 
             std::swap(read_buf, write_buf);
+
+            if (pass + 1 < log2_local) {
+                const std::string next_stride = "%stride_next_" + ps;
+                o += next_stride + " = OpShiftLeftLogical %u32 " + stride_val + " %c1u\n";
+                stride_val = next_stride;
+            }
         }
 
-        // After log2_local passes, the fully-scanned result sits in read_buf
-        // (the last buffer written to, now the "read" side after the final
-        // swap). Write it back to the InOut SSBO in place.
         o += "%final_ptr = OpAccessChain %psh_f32 " + read_buf + " %lid\n";
         o += "%final_val = OpLoad %f32 %final_ptr\n";
         o += "%gep_out = OpAccessChain %pelem_" + b0.name
@@ -862,8 +864,8 @@ namespace {
     {
         const uint32_t local = spec.workgroup_size[0];
         const std::string ls = std::to_string(local);
-        const auto& b0 = spec.bindings[0]; // values
-        const auto& b1 = spec.bindings[1]; // index output, UINT32
+        const auto& b0 = spec.bindings[0];
+        const auto& b1 = spec.bindings[1];
 
         std::string o;
         o += "%main    = OpFunction %void None %voidfn\n";

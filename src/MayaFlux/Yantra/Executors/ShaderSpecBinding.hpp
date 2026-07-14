@@ -26,13 +26,23 @@ namespace MayaFlux::Yantra {
  * @brief Translate a BindingSlot modality to a GpuBufferBinding::ElementType.
  */
 [[nodiscard]] inline GpuBufferBinding::ElementType to_element_type(
-    Kakshya::DataModality m) noexcept
+    Kakshya::DataModality m, Kakshya::GpuDataFormat fmt) noexcept
 {
     switch (m) {
     case Kakshya::DataModality::TEXTURE_2D:
         return GpuBufferBinding::ElementType::IMAGE_SAMPLED;
     case Kakshya::DataModality::IMAGE_2D:
         return GpuBufferBinding::ElementType::IMAGE_STORAGE;
+    default:
+        break;
+    }
+    switch (fmt) {
+    case Kakshya::GpuDataFormat::UINT32:
+    case Kakshya::GpuDataFormat::UINT8:
+    case Kakshya::GpuDataFormat::UINT16:
+        return GpuBufferBinding::ElementType::UINT32;
+    case Kakshya::GpuDataFormat::INT32:
+        return GpuBufferBinding::ElementType::INT32;
     default:
         return GpuBufferBinding::ElementType::FLOAT32;
     }
@@ -56,7 +66,7 @@ namespace MayaFlux::Yantra {
             .set = b.set,
             .binding = b.binding_index,
             .direction = to_binding_direction(b.direction),
-            .element_type = to_element_type(b.modality),
+            .element_type = to_element_type(b.modality, b.format),
         });
     }
     return out;
