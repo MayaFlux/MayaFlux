@@ -27,6 +27,8 @@ enum class KernelTemplate : uint8_t {
     GeometryEmit, ///< Writes into vertex SSBO with atomic counter
     BitonicSort, ///< Bitonic sort network; one thread per element
     Convolve2D, ///< 2D separable or non-separable convolution; kernel weights in SSBO, radius in PC
+    Scan, ///< Inclusive prefix scan over one InOut SSBO, double-buffered
+          ///< Hillis-Steele in shared memory. Op selects the combine function.
 };
 
 /**
@@ -265,6 +267,11 @@ enum class KernelOp : uint8_t {
     // reduction
     Sum,
     Max,
+    ScanSum, ///< Inclusive prefix sum: shared[i] = sum(x[0..i])
+    MaxIndex, ///< Reduction variant: finds max value AND its index.
+    ///< First InOut SSBO holds the values (overwritten with the
+    ///< max in slot 0). Second InOut SSBO (UINT32) receives the
+    ///< winning index in slot 0.
     // image body ops
     CompareGE, ///< out[ch] = pixel[ch] >= pc[0] ? 1.0 : 0.0
     CompareGEPreserve, ///< out[ch] = pixel[ch] >= pc[0] ? pc[1] : pixel[ch]

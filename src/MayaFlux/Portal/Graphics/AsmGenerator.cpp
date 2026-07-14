@@ -138,7 +138,7 @@ namespace {
         if (!spec.pc_fields.empty())
             iface += " %pc";
 
-        if (spec.tmpl == KernelTemplate::Reduction)
+        if (spec.tmpl == KernelTemplate::Reduction || spec.tmpl == KernelTemplate::Scan)
             iface += " %lid_var";
 
         std::string o;
@@ -206,7 +206,7 @@ namespace {
                 + std::to_string(b.binding_index) + "\n";
         }
 
-        if (spec.tmpl == KernelTemplate::Reduction)
+        if (spec.tmpl == KernelTemplate::Reduction || spec.tmpl == KernelTemplate::Scan)
             o += "OpDecorate %lid_var BuiltIn LocalInvocationId\n";
 
         if (!spec.pc_fields.empty()) {
@@ -350,15 +350,40 @@ namespace {
         if (spec.tmpl == KernelTemplate::Reduction) {
             const uint32_t local = spec.workgroup_size[0];
             const std::string ls = std::to_string(local);
+            const bool is_max_index = (spec.op == KernelOp::MaxIndex);
+
             o += "%bool        = OpTypeBool\n";
             o += "%lid_var  = OpVariable %ptr_in_v3u32 Input\n";
             o += "%arr_sh_t    = OpTypeArray %f32 %c" + ls + "u\n";
             o += "%psh_arr     = OpTypePointer Workgroup %arr_sh_t\n";
-            o += "%shared      = OpVariable %psh_arr Workgroup\n";
+            o += "%shared_a    = OpVariable %psh_arr Workgroup\n";
+            o += "%psh_f32     = OpTypePointer Workgroup %f32\n";
+
+            if (is_max_index) {
+                o += "%arr_shu_t   = OpTypeArray %u32 %c" + ls + "u\n";
+                o += "%pshu_arr    = OpTypePointer Workgroup %arr_shu_t\n";
+                o += "%shared_idx  = OpVariable %pshu_arr Workgroup\n";
+                o += "%psh_u32     = OpTypePointer Workgroup %u32\n";
+            }
+
+            o += "%c" + ls + "u   = OpConstant %u32 " + ls + "\n";
+            o += "%c2u         = OpConstant %u32 2\n";
+            o += "%c264u       = OpConstant %u32 264\n";
+            o += "\n";
+        } else if (spec.tmpl == KernelTemplate::Scan) {
+            const uint32_t local = spec.workgroup_size[0];
+            const std::string ls = std::to_string(local);
+
+            o += "%bool        = OpTypeBool\n";
+            o += "%lid_var     = OpVariable %ptr_in_v3u32 Input\n";
+            o += "%arr_sh_t    = OpTypeArray %f32 %c" + ls + "u\n";
+            o += "%psh_arr     = OpTypePointer Workgroup %arr_sh_t\n";
+            o += "%shared_a    = OpVariable %psh_arr Workgroup\n";
+            o += "%shared_b    = OpVariable %psh_arr Workgroup\n";
             o += "%psh_f32     = OpTypePointer Workgroup %f32\n";
             o += "%c" + ls + "u   = OpConstant %u32 " + ls + "\n";
             o += "%c2u         = OpConstant %u32 2\n";
-            o += "%c264u       = OpConstant %u32 264\n"; // AcquireRelease | WorkgroupMemory
+            o += "%c264u       = OpConstant %u32 264\n";
             o += "\n";
         }
 
@@ -677,7 +702,7 @@ namespace {
         o += "%gep_in  = OpAccessChain %pelem_" + b0.name
             + " %buf_" + b0.name + " %c0u %i\n";
         o += "%elem    = OpLoad %f32 %gep_in\n";
-        o += "%pgsh    = OpAccessChain %psh_f32 %shared %lid\n";
+        o += "%pgsh    = OpAccessChain %psh_f32 %shared_a %lid\n";
         o += "OpStore %pgsh %elem\n";
         o += "OpControlBarrier %c2u %c2u %c264u\n\n";
 
@@ -695,10 +720,10 @@ namespace {
         o += "OpBranchConditional %active %do_op %sel_merge\n\n";
 
         o += "%do_op   = OpLabel\n";
-        o += "%pgsh_a  = OpAccessChain %psh_f32 %shared %lid\n";
+        o += "%pgsh_a  = OpAccessChain %psh_f32 %shared_a %lid\n";
         o += "%a       = OpLoad %f32 %pgsh_a\n";
         o += "%lid_b   = OpIAdd %u32 %lid %stride\n";
-        o += "%pgsh_b  = OpAccessChain %psh_f32 %shared %lid_b\n";
+        o += "%pgsh_b  = OpAccessChain %psh_f32 %shared_a %lid_b\n";
         o += "%b       = OpLoad %f32 %pgsh_b\n";
 
         if (is_max) {
@@ -729,6 +754,188 @@ namespace {
         o += "%gep_out = OpAccessChain %pelem_" + b0.name
             + " %buf_" + b0.name + " %c0u %c0u\n";
         o += "OpStore %gep_out %result\n";
+        o += "OpBranch %write_merge\n\n";
+
+        o += "%write_merge = OpLabel\n";
+        o += "OpReturn\n";
+        o += "OpFunctionEnd\n";
+        return o;
+    }
+
+    std::string emit_scan_body(const ShaderSpec& spec)
+    {
+        const uint32_t local = spec.workgroup_size[0];
+        const std::string ls = std::to_string(local);
+        const auto log2_local = static_cast<uint32_t>(std::log2(static_cast<double>(local)));
+        const bool is_max_index = (spec.op == KernelOp::MaxIndex);
+        const auto& b0 = spec.bindings.front();
+
+        std::string o;
+        o += "%main    = OpFunction %void None %voidfn\n";
+        o += "%entry   = OpLabel\n";
+
+        o += "%gid3    = OpLoad %v3u32 %gid_var\n";
+        o += "%i       = OpCompositeExtract %u32 %gid3 0\n";
+        o += "%lid3    = OpLoad %v3u32 %lid_var\n";
+        o += "%lid     = OpCompositeExtract %u32 %lid3 0\n\n";
+
+        // Load input element into shared_a[lid]; shared_a is the initial
+        // read buffer for pass 0.
+        o += "%gep_in  = OpAccessChain %pelem_" + b0.name
+            + " %buf_" + b0.name + " %c0u %i\n";
+        o += "%elem    = OpLoad %f32 %gep_in\n";
+        o += "%pgsh0   = OpAccessChain %psh_f32 %shared_a %lid\n";
+        o += "OpStore %pgsh0 %elem\n";
+
+        if (is_max_index) {
+            o += "%pgidx0  = OpAccessChain %psh_u32 %shared_idx %lid\n";
+            o += "OpStore %pgidx0 %lid\n";
+        }
+
+        o += "OpControlBarrier %c2u %c2u %c264u\n\n";
+
+        // log2(local) fixed passes, unrolled at generation time (no runtime
+        // loop needed since local is compile-time known), alternating which
+        // buffer is read from and written to each pass so no lane ever reads
+        // a value another lane has overwritten in the same pass.
+        std::string read_buf = "%shared_a";
+        std::string write_buf = "%shared_b";
+
+        for (uint32_t pass = 0; pass < log2_local; ++pass) {
+            const uint32_t stride = 1U << pass;
+            const std::string ps = std::to_string(pass);
+
+            o += "%stride_" + ps + " = OpConstant %u32 " + std::to_string(stride) + "\n";
+            o += "%has_left_" + ps + " = OpUGreaterThanEqual %bool %lid %stride_" + ps + "\n";
+            o += "OpSelectionMerge %scan_merge_" + ps + " None\n";
+            o += "OpBranchConditional %has_left_" + ps + " %scan_add_" + ps + " %scan_copy_" + ps + "\n\n";
+
+            // Lane has a left neighbour at this stride: write = read[lid] + read[lid-stride]
+            o += "%scan_add_" + ps + " = OpLabel\n";
+            o += "%self_ptr_" + ps + " = OpAccessChain %psh_f32 " + read_buf + " %lid\n";
+            o += "%self_val_" + ps + " = OpLoad %f32 %self_ptr_" + ps + "\n";
+            o += "%left_idx_" + ps + " = OpISub %u32 %lid %stride_" + ps + "\n";
+            o += "%left_ptr_" + ps + " = OpAccessChain %psh_f32 " + read_buf + " %left_idx_" + ps + "\n";
+            o += "%left_val_" + ps + " = OpLoad %f32 %left_ptr_" + ps + "\n";
+            o += "%sum_" + ps + " = OpFAdd %f32 %self_val_" + ps + " %left_val_" + ps + "\n";
+            o += "%wptr_add_" + ps + " = OpAccessChain %psh_f32 " + write_buf + " %lid\n";
+            o += "OpStore %wptr_add_" + ps + " %sum_" + ps + "\n";
+
+            if (is_max_index) {
+                // Index scan is only meaningful for the final max-index stage,
+                // not the sum scan itself; MaxIndex composes Scan(ScanSum) with
+                // a separate reduction afterward (see emit_max_index_body), so
+                // no index propagation happens inside the scan passes.
+            }
+
+            o += "OpBranch %scan_merge_" + ps + "\n\n";
+
+            // No left neighbour: value passes through unchanged.
+            o += "%scan_copy_" + ps + " = OpLabel\n";
+            o += "%pass_ptr_" + ps + " = OpAccessChain %psh_f32 " + read_buf + " %lid\n";
+            o += "%pass_val_" + ps + " = OpLoad %f32 %pass_ptr_" + ps + "\n";
+            o += "%wptr_copy_" + ps + " = OpAccessChain %psh_f32 " + write_buf + " %lid\n";
+            o += "OpStore %wptr_copy_" + ps + " %pass_val_" + ps + "\n";
+            o += "OpBranch %scan_merge_" + ps + "\n\n";
+
+            o += "%scan_merge_" + ps + " = OpLabel\n";
+            o += "OpControlBarrier %c2u %c2u %c264u\n\n";
+
+            std::swap(read_buf, write_buf);
+        }
+
+        // After log2_local passes, the fully-scanned result sits in read_buf
+        // (the last buffer written to, now the "read" side after the final
+        // swap). Write it back to the InOut SSBO in place.
+        o += "%final_ptr = OpAccessChain %psh_f32 " + read_buf + " %lid\n";
+        o += "%final_val = OpLoad %f32 %final_ptr\n";
+        o += "%gep_out = OpAccessChain %pelem_" + b0.name
+            + " %buf_" + b0.name + " %c0u %i\n";
+        o += "OpStore %gep_out %final_val\n";
+
+        o += "OpReturn\n";
+        o += "OpFunctionEnd\n";
+        return o;
+    }
+
+    std::string emit_max_index_body(const ShaderSpec& spec)
+    {
+        const uint32_t local = spec.workgroup_size[0];
+        const std::string ls = std::to_string(local);
+        const auto& b0 = spec.bindings[0]; // values
+        const auto& b1 = spec.bindings[1]; // index output, UINT32
+
+        std::string o;
+        o += "%main    = OpFunction %void None %voidfn\n";
+        o += "%entry   = OpLabel\n";
+
+        o += "%gid3    = OpLoad %v3u32 %gid_var\n";
+        o += "%i       = OpCompositeExtract %u32 %gid3 0\n";
+        o += "%lid3    = OpLoad %v3u32 %lid_var\n";
+        o += "%lid     = OpCompositeExtract %u32 %lid3 0\n\n";
+
+        o += "%gep_in  = OpAccessChain %pelem_" + b0.name
+            + " %buf_" + b0.name + " %c0u %i\n";
+        o += "%elem    = OpLoad %f32 %gep_in\n";
+        o += "%pgsh    = OpAccessChain %psh_f32 %shared_a %lid\n";
+        o += "OpStore %pgsh %elem\n";
+        o += "%pgidx   = OpAccessChain %psh_u32 %shared_idx %lid\n";
+        o += "OpStore %pgidx %lid\n";
+        o += "OpControlBarrier %c2u %c2u %c264u\n\n";
+
+        o += "%s_init  = OpShiftRightLogical %u32 %c" + ls + "u %c1u\n";
+        o += "OpBranch %loop_hdr\n\n";
+
+        o += "%loop_hdr = OpLabel\n";
+        o += "%stride  = OpPhi %u32 %s_init %entry %s_next %loop_cont\n";
+        o += "OpLoopMerge %loop_merge %loop_cont None\n";
+        o += "OpBranch %loop_body\n\n";
+
+        o += "%loop_body = OpLabel\n";
+        o += "%active  = OpULessThan %bool %lid %stride\n";
+        o += "OpSelectionMerge %sel_merge None\n";
+        o += "OpBranchConditional %active %do_op %sel_merge\n\n";
+
+        o += "%do_op   = OpLabel\n";
+        o += "%pgsh_a  = OpAccessChain %psh_f32 %shared_a %lid\n";
+        o += "%a       = OpLoad %f32 %pgsh_a\n";
+        o += "%lid_b   = OpIAdd %u32 %lid %stride\n";
+        o += "%pgsh_b  = OpAccessChain %psh_f32 %shared_a %lid_b\n";
+        o += "%b       = OpLoad %f32 %pgsh_b\n";
+        o += "%pgidx_a = OpAccessChain %psh_u32 %shared_idx %lid\n";
+        o += "%idx_a   = OpLoad %u32 %pgidx_a\n";
+        o += "%pgidx_b = OpAccessChain %psh_u32 %shared_idx %lid_b\n";
+        o += "%idx_b   = OpLoad %u32 %pgidx_b\n";
+        o += "%b_wins  = OpFOrdGreaterThan %bool %b %a\n";
+        o += "%combined = OpSelect %f32 %b_wins %b %a\n";
+        o += "%combined_idx = OpSelect %u32 %b_wins %idx_b %idx_a\n";
+        o += "OpStore %pgsh_a %combined\n";
+        o += "OpStore %pgidx_a %combined_idx\n";
+        o += "OpBranch %sel_merge\n\n";
+
+        o += "%sel_merge = OpLabel\n";
+        o += "OpBranch %loop_cont\n\n";
+
+        o += "%loop_cont = OpLabel\n";
+        o += "OpControlBarrier %c2u %c2u %c264u\n";
+        o += "%s_next  = OpShiftRightLogical %u32 %stride %c1u\n";
+        o += "%done    = OpIEqual %bool %s_next %c0u\n";
+        o += "OpBranchConditional %done %loop_merge %loop_hdr\n\n";
+
+        o += "%loop_merge = OpLabel\n";
+        o += "%is_zero = OpIEqual %bool %lid %c0u\n";
+        o += "OpSelectionMerge %write_merge None\n";
+        o += "OpBranchConditional %is_zero %do_write %write_merge\n\n";
+
+        o += "%do_write = OpLabel\n";
+        o += "%result_v = OpLoad %f32 %pgsh\n";
+        o += "%result_i = OpLoad %u32 %pgidx\n";
+        o += "%gep_out_v = OpAccessChain %pelem_" + b0.name
+            + " %buf_" + b0.name + " %c0u %c0u\n";
+        o += "OpStore %gep_out_v %result_v\n";
+        o += "%gep_out_i = OpAccessChain %pelem_" + b1.name
+            + " %buf_" + b1.name + " %c0u %c0u\n";
+        o += "OpStore %gep_out_i %result_i\n";
         o += "OpBranch %write_merge\n\n";
 
         o += "%write_merge = OpLabel\n";
@@ -1198,7 +1405,10 @@ std::string emit_spirv_asm(const ShaderSpec& spec)
 
     switch (spec.tmpl) {
     case KernelTemplate::Reduction:
-        src += emit_reduction_body(spec);
+        src += (spec.op == KernelOp::MaxIndex) ? emit_max_index_body(spec) : emit_reduction_body(spec);
+        break;
+    case KernelTemplate::Scan:
+        src += emit_scan_body(spec);
         break;
     case KernelTemplate::BitonicSort:
         src += emit_bitonic_body(spec);
