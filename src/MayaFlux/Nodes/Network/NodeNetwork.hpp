@@ -288,7 +288,23 @@ public:
 
     /**
      * @brief Set the scalar multiplier applied to the network's output buffer after processing
-     * @param scale Linear scale factor (1.0 = unity, 0.0 = silence, >1.0 = amplify)
+     * @param scale Linear scale factor (1.0 = unity relative to the network's own output normalization, 0.0 = silence, >1.0 = amplify)
+     *
+     * The meaning of unity depends on the network type. ResonatorNetwork sums all
+     * resonator outputs and divides by sqrt(resonator_count) (RMS normalization)
+     * before this scale is applied, keeping perceived loudness roughly stable as
+     * resonators are added or removed. This is a statistical approximation: it
+     * assumes resonators are not strongly phase-correlated. When resonators share
+     * a single exciter and are tuned closely (the common formant-synthesis case),
+     * their peaks can align more than RMS assumes, so true worst-case output can
+     * exceed what RMS normalization implies. FinalLimiterProcessor at the root
+     * audio buffer remains the actual safety backstop regardless of this scale.
+     *
+     * If a specific relationship to raw resonator count is needed (e.g.
+     * compensating toward the sum a single resonator alone would produce), scale
+     * relative to get_node_count(): scale ~= sqrt(get_node_count()) approaches
+     * raw uncompensated sum, scale ~= 1.0 / sqrt(get_node_count()) approaches
+     * per-resonator average.
      */
     void set_output_scale(double scale) { m_output_scale = scale; }
 

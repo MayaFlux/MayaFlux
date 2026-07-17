@@ -158,6 +158,8 @@ void ResonatorNetwork::build_resonators(const std::vector<double>& frequencies,
         compute_biquad(r);
         m_resonators.push_back(std::move(r));
     }
+
+    m_norm_factor.store(1.0 / std::sqrt(static_cast<double>(m_resonators.size())), std::memory_order_release);
 }
 
 void ResonatorNetwork::compute_biquad(ResonatorNode& r)
@@ -220,7 +222,7 @@ void ResonatorNetwork::process_batch(unsigned int num_samples)
     thread_local std::vector<double> scratch;
     scratch.assign(num_samples, 0.0);
 
-    const double norm = 1.0 / static_cast<double>(m_resonators.size());
+    const double norm = m_norm_factor.load(std::memory_order_acquire);
 
     m_node_buffers.assign(m_resonators.size(), {});
     for (auto& nb : m_node_buffers)
