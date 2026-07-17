@@ -121,9 +121,8 @@ double RootNode::process_sample()
         double node_output = 0.0;
 
         if (!(state & NodeState::PROCESSED)) {
-            auto generator = std::dynamic_pointer_cast<Nodes::Generator::Generator>(node);
-            if (generator && generator->should_mock_process()) {
-                generator->process_sample();
+            if (node->should_mock_process()) {
+                node->process_sample();
             } else {
                 node_output = node->process_sample();
             }

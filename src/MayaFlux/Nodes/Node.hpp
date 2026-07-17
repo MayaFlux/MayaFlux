@@ -267,6 +267,26 @@ public:
     inline virtual double get_last_output() { return m_last_output; }
 
     /**
+     * @brief Allows RootNode to process the Generator without using the processed sample
+     * @param bMock_process True to mock process, false to process normally
+     *
+     * NOTE: This has no effect on the behaviour of process_sample (or process_batch).
+     * This is ONLY used by the RootNode when processing the node graph.
+     * If the output of the Generator needs to be ignored elsewhere, simply discard the return value.
+     *
+     * Calling process manually can be cumbersome. Using a coroutine just to call process
+     * is overkill. This method allows the RootNode to process the Generator without
+     * using the processed sample, which is useful for mocking processing.
+     */
+    virtual void enable_mock_process(bool mock_process);
+
+    /**
+     * @brief Checks if the generator should mock process
+     * @return True if the generator should mock process, false otherwise
+     */
+    [[nodiscard]] virtual bool should_mock_process() const;
+
+    /**
      * @brief Mark the specificed channel as a processor/user
      * @param channel_id The ID of the channel to register
      *
