@@ -2,6 +2,20 @@
 
 namespace MayaFlux::Nodes {
 
+void Node::enable_mock_process(bool mock_process)
+{
+    if (mock_process) {
+        atomic_add_flag(m_state, NodeState::MOCK_PROCESS);
+    } else {
+        atomic_remove_flag(m_state, NodeState::MOCK_PROCESS);
+    }
+}
+
+bool Node::should_mock_process() const
+{
+    return m_state.load() & NodeState::MOCK_PROCESS;
+}
+
 void Node::on_tick(const NodeHook& callback)
 {
     safe_add_callback(m_callbacks, callback);
