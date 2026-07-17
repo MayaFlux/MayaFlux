@@ -54,9 +54,14 @@ namespace MayaFlux::Nodes::Network {
  * OUTPUT:
  * =======
  * Each process_batch() call sums all resonator outputs into a single mixed audio
- * buffer, normalised by the number of active resonators to prevent clipping.
- * Alternatively, get_node_output(index) exposes the most recent individual
- * resonator output for cross-domain routing.
+ * buffer, RMS-normalised (divided by sqrt(resonator_count)) to keep perceived
+ * loudness roughly stable as resonator count changes. This is a statistical
+ * approximation assuming resonators are not strongly phase-correlated; a shared
+ * exciter driving closely-tuned resonators can peak more coherently than RMS
+ * assumes. FinalLimiterProcessor at the root audio buffer remains the actual
+ * safety backstop. See set_output_scale() for compensating toward raw resonator
+ * count via get_node_count(). Alternatively, get_node_output(index) exposes the
+ * most recent individual resonator output for cross-domain routing.
  *
  * USAGE:
  * ======
@@ -153,7 +158,8 @@ public:
      *
      * For each sample, each resonator draws from its individual exciter (or
      * the network-level exciter, or zero if none) and processes one sample. All
-     * resonator outputs are summed and normalised into m_last_audio_buffer.
+     * resonator outputs are summed and RMS-normalised (divided by sqrt(resonator_count))
+     * into m_last_audio_buffer before set_output_scale() is applied.
      */
     void process_batch(unsigned int num_samples) override;
 
@@ -387,6 +393,8 @@ private:
     std::shared_ptr<NodeNetwork> m_network_exciter; ///< Optional NodeNetwork exciter for ONE_TO_ONE mapping (may be nullptr)
 
     std::vector<std::vector<double>> m_node_buffers; ///< Per-resonator sample buffers populated each process_batch()
+
+    std::atomic<double> m_norm_factor { 1.0 }; ///< Normalisation factor for summed output, rms scaled by number of active resonators
 
     struct ParameterMapping {
         std::string param_name;
