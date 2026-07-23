@@ -344,7 +344,7 @@ Rolling builds tagged as `x.x.x-dev` (e.g., `0.5.0-dev`). These tags are reused:
 
 | Channel         | Tag Example | Stability | Use Case                           |
 | --------------- | ----------- | --------- | ---------------------------------- |
-| **Stable**      | `v0.4.0`    | Tested    | Production, learning, projects     |
+| **Stable**      | `v0.4.1`    | Tested    | Production, learning, projects     |
 | **Development** | `0.5.0-dev` | Unstable  | Testing new features, contributing |
 
 Weave defaults to stable releases. Development builds require manual download from the releases page.
@@ -461,7 +461,7 @@ Auto-generated docs:
 | BroadcastSource             | Stable      | Lock-free cross-thread signal delivery to coroutines                     |
 | Yantra Grammar System       | In Progress | Core framework stable; additional grammars planned for 0.4               |
 
-**Current version**: 0.4.0-dev  
+**Current version**: 0.4.1
 **Trajectory**: 0.4 feature freeze approaching. Focus on Forma orchestration layer completion, documentation, contributor programs, and conference submissions (ICMC, NIME, CppCon, LAC).
 
 ---

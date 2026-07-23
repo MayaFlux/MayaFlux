@@ -1,5 +1,5 @@
 Name:           mayaflux
-Version:        0.4.0
+Version:        0.4.1
 Release:        1%{?dist}
 Summary:        Modern C++ framework for real-time graphics and audio with JIT compilation
 
@@ -171,7 +171,7 @@ if [ $1 -eq 0 ]; then
 fi
 
 %changelog
-* Sun Jun 21 2026 MayaFlux Collective <mayafluxcollective@proton.me> - 0.4.0-1
+* Fri July 24 2026 MayaFlux Collective <mayafluxcollective@proton.me> - 0.4.1-1
 - Initial stable release
 - Full source build with C++23 support
 - All development dependencies included for JIT/live coding
