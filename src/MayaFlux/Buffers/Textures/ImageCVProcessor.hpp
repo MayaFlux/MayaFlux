@@ -3,12 +3,8 @@
 #include "MayaFlux/Buffers/BufferProcessor.hpp"
 #include "MayaFlux/Buffers/BufferSpec.hpp"
 #include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
-#include "MayaFlux/Buffers/VKBuffer.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
-
-#include "MayaFlux/Kinesis/Vision/VisionExecutor.hpp"
-#include "MayaFlux/Kinesis/Vision/VisionOp.hpp"
 
 #include "MayaFlux/Vruta/BroadcastSource.hpp"
 

@@ -1,8 +1,8 @@
 #pragma once
 
 #include "MayaFlux/Kakshya/DataProcessor.hpp"
-#include "MayaFlux/Kinesis/Vision/VisionExecutor.hpp"
-#include "MayaFlux/Kinesis/Vision/VisionOp.hpp"
+
+#include "MayaFlux/Yantra/Executors/VisionGpuDispatch.hpp"
 
 namespace MayaFlux::Vruta {
 template <typename T>
@@ -36,7 +36,7 @@ public:
      * @brief Construct with the vision pipeline to execute each process() call.
      * @param sequence Ordered VisionSteps describing the pipeline.
      */
-    explicit VisionProcessor(Kinesis::Vision::VisionSequence sequence);
+    explicit VisionProcessor(Kinesis::Vision::VisionSequence sequence, bool force_cpu = false);
 
     ~VisionProcessor() override = default;
 
@@ -104,7 +104,12 @@ public:
 
 private:
     Kinesis::Vision::VisionSequence m_sequence;
-    Kinesis::Vision::VisionExecutor m_executor;
+    std::unique_ptr<Yantra::VisionGpuExecutor> m_executor;
+    Kinesis::Vision::VisionExecutor m_cpu_executor;
+    bool m_force_cpu {};
+
+    std::shared_ptr<Buffers::VKBuffer> m_upload_staging;
+    std::shared_ptr<Core::VKImage> m_gpu_frame;
     Kinesis::Vision::VisionResult m_result;
 
     uint32_t m_width {};
