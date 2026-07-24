@@ -68,6 +68,7 @@ void ShaderProcessor::processing_function(const std::shared_ptr<Buffer>& buffer)
     }
 
     execute_shader(vk_buffer);
+    on_after_execute(m_last_command_buffer, vk_buffer);
 }
 
 void ShaderProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)

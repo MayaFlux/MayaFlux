@@ -28,6 +28,8 @@ struct ShaderConfig;
  * by GeometryBindingsProcessor after index data upload and consumed by
  * RenderProcessor to select the indexed draw path. They are null/zero for
  * all non-indexed geometry; no separate allocation object is required.
+ * The struct also contains a back_buffer / back_memory pair for double-buffered staging
+ * or ping pong operations, if needed by a processor. The back buffer is optional and may be VK_NULL_HANDLE.
  */
 struct VKBufferResources {
     vk::Buffer buffer;
@@ -37,6 +39,9 @@ struct VKBufferResources {
     vk::Buffer index_buffer;
     vk::DeviceMemory index_memory;
     size_t index_size_bytes { 0 };
+
+    vk::Buffer back_buffer { VK_NULL_HANDLE };
+    vk::DeviceMemory back_memory { VK_NULL_HANDLE };
 };
 
 using RenderPipelineID = uint64_t;
