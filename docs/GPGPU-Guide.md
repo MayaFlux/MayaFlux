@@ -115,6 +115,47 @@ Containers are pure storage with processing state and optional reader support. T
 
 ---
 
+### GpuBufferBinding
+
+Vulkan-agnostic description of a single storage buffer or image binding. Carries no `vk::` types; translation happens at the point of use in `ComputePress`/`ShaderFoundry`.
+
+```cpp
+struct GpuBufferBinding {
+    uint32_t set { 0 };
+    uint32_t binding { 0 };
+    bool skip_auto_readback { false };
+
+    enum class Direction : uint8_t { INPUT, OUTPUT, INPUT_OUTPUT } direction { Direction::INPUT };
+    enum class ElementType : uint8_t {
+        FLOAT32, UINT32, INT32, PASSTHROUGH, IMAGE_STORAGE, IMAGE_SAMPLED
+    } element_type { ElementType::FLOAT32 };
+
+    BufferUsageHint usage_hint { BufferUsageHint::COMPUTE_STORAGE };
+};
+```
+
+`set` is a real per-binding index, not always 0. Multi-set layouts are used directly, for example vision pipelines binding image data at `set=0` and structured scalar output at `set=1`.
+
+`skip_auto_readback` skips the automatic CPU readback after dispatch for this binding. Use for bindings that stay GPU-resident and are never needed on CPU.
+
+`usage_hint` (`BufferUsageHint`) controls allocation and memory properties:
+
+| Value | Meaning |
+|---|---|
+| `STAGING` | Host-visible staging buffer, transfer src/dst. |
+| `DEVICE` | Device-local GPU-only buffer. |
+| `COMPUTE` | Storage buffer for compute shaders, device-local. |
+| `VERTEX` | Vertex buffer. |
+| `INDEX` | Index buffer. |
+| `UNIFORM` | Uniform buffer, host-visible. |
+| `UNIFORM_BDA` | Uniform buffer with device address query support. |
+| `STORAGE_BDA` | Storage buffer with device address query support. |
+| `INDIRECT` | Indirect draw/dispatch buffer, device-local. |
+| `HOST_STORAGE` | Host-visible storage buffer, host visible and coherent. |
+| `COMPUTE_STORAGE` | Bare storage buffer, no transfer flags. Default for `GpuResourceManager` host-visible compute buffers. |
+
+`INPUT_OUTPUT` bindings receive a cross-pass memory barrier automatically when used across multiple recorded dispatches in one command buffer (`ComputePress::record_sequence`), since the same resource is read and written by consecutive stages.
+
 ## Executor Layer
 
 Bridges `Datum<T>` to Vulkan SSBO and image dispatch. Executors own buffer staging, dispatch sizing, and readback. Operations delegate to executors; executors do not own computational identity.
@@ -142,6 +183,18 @@ Subclass this only for custom channel layout or non-numeric input (e.g. image-on
 - `on_before_gpu_dispatch()` - per-dispatch mutation hook.
 - `calculate_dispatch_size()` - override for 2D/3D grids; default derives from element count.
 
+### Multi-stage and chained dispatch (GpuDispatchCore)
+
+Beyond the single-shot `execute()` / `dispatch_async()` pair, `GpuDispatchCore` exposes three additional dispatch entry points for cases where a single executor instance needs to run more than one distinct shader configuration or feed a batched pipeline.
+
+`dispatch_core_dependency(stages)` runs a sequence of `DependencyStage` configs on one core instance. Config, bindings, binding data, passthrough bytes, and push constants are snapshotted before the sequence and restored after. For each stage: the core's config, bindings, and staged data are cleared and rebuilt from the stage's own `config` and `stage_fn`, GPU readiness is (re-)ensured, descriptors are bound, and the resulting dispatch group counts, push constants, and hazard resources are collected per stage. Use this when several shader passes with different configs need to run back-to-back on shared core state without allocating a separate executor per pass.
+
+`dispatch_core_chained(channels, structure_info, ctx)` dispatches through `m_resources.dispatch_batched(...)` rather than a single `dispatch()`/`dispatch_async()` call, for use inside a `ComputeMatrix` chain where dispatch batching against the matrix's own scheduling is desired.
+
+`dispatch_core_chained_indirect(channels, structure_info, ctx)` is the same batched path but re-declares bindings and re-checks GPU readiness on every call rather than relying on a stable cached binding set, for indirect dispatch scenarios where binding shape can change between calls in the chain.
+
+None of the three replace `execute()` for the common single-shader case. They exist for multi-config sequences (`dispatch_core_dependency`) and matrix-driven batched dispatch (`dispatch_core_chained*`).
+
 ### ShaderExecutionContext\<InputType, OutputType\>
 
 Concrete executor for SSBO buffer shaders. Fluent API assigns binding indices sequentially unless an explicit index is provided. Explicit and sequential calls may be mixed: explicit calls set the binding; auto-index calls append after the highest index so far.
@@ -151,14 +204,14 @@ auto exec = std::make_shared<ShaderExecutionContext<>>(
     GpuComputeConfig { "graph_build.comp", { 256, 1, 1 }, sizeof(GraphBuildPC) });
 
 // Sequential auto-index (0, 1, 2, 3):
-exec->input(positions, GpuBufferBinding::ElementType::VEC3_F32)
+exec->input(positions, GpuBufferBinding::ElementType::PASSTHROUGH)
      .input(attributes)
      .output(k_max_edges * 2 * sizeof(float))
      .output(sizeof(uint32_t), GpuBufferBinding::ElementType::UINT32)
      .push(pc);
 
 // Explicit indices when slot order cannot be inferred:
-exec->input(0, positions, GpuBufferBinding::ElementType::VEC3_F32)
+exec->input(0, positions, GpuBufferBinding::ElementType::PASSTHROUGH)
      .in_out(1, scratch)
      .output(2, output_bytes);
 ```
@@ -175,7 +228,9 @@ Fluent methods:
 | `push(struct_or_value)` | Push constant | Copies into push constant block. |
 | `set_multipass(count, updater)` | CHAINED mode | Batches `count` passes; `updater(pass_index, pc_ptr)` called per pass. |
 
-`ElementType` values: `FLOAT32`, `FLOAT64`, `INT32`, `UINT32`, `VEC2_F32`, `VEC3_F32`, `VEC4_F32`, `VEC2_F64`, `VEC3_F64`, `VEC4_F64`, `IMAGE_STORAGE`, `IMAGE_SAMPLED`.
+`ElementType` values: `FLOAT32`, `UINT32`, `INT32`, `PASSTHROUGH`, `IMAGE_STORAGE`, `IMAGE_SAMPLED`.
+
+`FLOAT32` casts double channels to float, the default. `UINT32`/`INT32` reinterpret variant bytes as that integer type. `PASSTHROUGH` uploads raw variant bytes with no cast; the caller must pre-stage data manually for `INPUT`/`INPUT_OUTPUT` bindings using this type. There is no vec2/vec3/vec4 or double-precision `ElementType`; structured vector data goes through `DataVariant` at the `Datum` level, not through the binding's element type.
 
 **Synchronous dispatch:**
 ```cpp
@@ -241,6 +296,60 @@ auto raw    = ctx.collect_result();             // SCALAR mode
 ```
 
 ---
+
+## Declarative Shaders (ShaderSpec)
+
+`Portal::Graphics::ShaderSpec` is a code-first alternative to hand-written `.comp` files. `ShaderFoundry::load_shader(const ShaderSpec&)` emits SPIR-V assembly directly via `VKShaderModule::emit_spirv_asm()`, no GLSL or shaderc toolchain involved.
+
+```cpp
+auto spec = Portal::Graphics::ShaderSpec::Assemble{}
+    .ssbo("sig", BindingDirection::InOut, Kakshya::GpuDataFormat::FLOAT32)
+    .pc("gain")
+    .pc("offset")
+    .op(KernelOp::ScaleOffset)
+    .build();
+```
+
+`KernelTemplate` selects the shader body shape (elementwise SSBO, image body, convolution, reduction). `KernelOp` selects a named operation the emitter lowers to SPIR-V opcodes deterministically:
+
+- Arithmetic: `Scale`, `ScaleOffset`, `Fma`, `Offset`, `Clip`, `Abs`, `Negate`, `Floor`, `Ceil`, `Round`, `Trunc`, `Fract`, `Sqrt`, `InverseSqrt`.
+- Transcendental: `Sin`, `Cos`, `Tan`, `Asin`, `Acos`, `Atan`, `Sinh`, `Cosh`, `Tanh`, `Exp`, `Exp2`, `Log`, `Log2`.
+- Two-SSBO: `Add`, `Multiply`, `Mix`, `Sub`, `Pow`, `Atan2`, `Min`, `MaxTwo`, `Step`, `SmoothStep`.
+- Reduction (one InOut SSBO, shared memory tree reduce): `Sum`, `Max`.
+- Image body: `CompareGE`, `CompareGEPreserve`, `ChannelDot`, `ChannelReplicate`.
+
+`BindingSlot` declares one SSBO or image binding:
+
+```cpp
+struct BindingSlot {
+    std::string name;
+    BindingDirection direction;
+    Kakshya::GpuDataFormat format;
+    Kakshya::DataModality modality { Kakshya::DataModality::SCALAR_F32 };
+    uint32_t set { 0 };
+    uint32_t binding_index { 0 };
+};
+```
+
+For a custom kernel body not covered by `KernelOp`, `MF_KERNEL` stringifies a lambda at the call site and parses it into parameter names and a body. Parameter names must match the binding and push constant field names declared on the enclosing `ShaderSpec`, in declaration order. The lambda is never evaluated, only its text.
+
+```cpp
+.kernel(MF_KERNEL([](float* sig, float gain, uint32_t i) {
+    sig[i] *= gain;
+}))
+```
+
+### Bridging ShaderSpec to Yantra executors
+
+`ShaderSpecBinding.hpp` adapts `ShaderSpec` output to the `GpuBufferBinding` vocabulary used by `GpuResourceManager` and any `GpuExecutionContext` subclass:
+
+```cpp
+auto bindings = bindings_from_spec(spec);   // std::vector<GpuBufferBinding>
+```
+
+`to_binding_direction` maps `BindingDirection::Input/Output` to `GpuBufferBinding::Direction::INPUT/OUTPUT`, anything else to `INPUT_OUTPUT`. `to_element_type` maps `DataModality::TEXTURE_2D` to `IMAGE_SAMPLED`, `IMAGE_2D` to `IMAGE_STORAGE`, everything else to `FLOAT32`. This is a modality-driven mapping, not a format-driven one; a `ShaderSpec` binding with a numeric `GpuDataFormat` but non-image modality always becomes `FLOAT32` regardless of whether it was declared as int or float on the spec side.
+
+Use `bindings_from_spec` alongside a `GpuComputeConfig` derived from the compiled `ShaderSpec` to configure any concrete executor without depending on a specific executor type or writing GLSL.
 
 ## Operation Layer
 
@@ -585,7 +694,7 @@ void main() {
 
 | Data | Executor |
 |---|---|
-| `float`/`double`/`int`/`glm::vec*` SSBOs | `ShaderExecutionContext` |
+| `float`/`double`/`int` SSBOs, or `glm::vec*` via `PASSTHROUGH` | `ShaderExecutionContext` |
 | `VkImage` (sampled or storage) | `TextureExecutionContext` |
 | Custom AoS/SoA buffer layout | Subclass `GpuExecutionContext`; override `extract_inputs()` and `collect_gpu_outputs()`. |
 | 2D/3D dispatch grid | Override `calculate_dispatch_size()` in the subclass. |

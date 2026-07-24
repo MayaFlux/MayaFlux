@@ -41,6 +41,7 @@ The raw dispatch capability is comparable. Everything else is not.
 | `CL_MEM_READ_WRITE` | `GpuBufferBinding::Direction::INPUT_OUTPUT` | |
 | `clCreateImage2D` / image kernel args | `TextureExecutionContext` | Manages `VkImage` lifecycle, staging, and layout transitions |
 | Multiple kernels in sequence | `ComputationPipeline` or `ComputeMatrix` fluent chain | |
+| Manual multi-pass loop with per-pass kernel arg updates, batched on one queue | `dispatch_core_chained` / `GpuResourceManager::dispatch_batched` | Runs a fixed pass_count in batches without returning to the operation/matrix layer per pass |
 | Event dependencies between kernels | `ComputeMatrix` async chain | `with_async(input, chain_lambda, on_complete)` |
 | `clReleaseMemObject` / `clReleaseKernel` | RAII; nothing to release manually | |
 
@@ -113,7 +114,7 @@ exec->input(input_data, GpuBufferBinding::ElementType::FLOAT32)
      .push(pc);
 ```
 
-`ElementType` controls how the staging layer interprets the data before upload. For `glm::vec3` positions or other structured types, use `VEC3_F32`, `VEC4_F32`, etc., to bypass the double-conversion path.
+`ElementType` controls how the staging layer interprets the data before upload: `FLOAT32`, `UINT32`, `INT32`, `PASSTHROUGH`, `IMAGE_STORAGE`, `IMAGE_SAMPLED`. There is no vec-typed `ElementType`. For `glm::vec3` positions or other structured types, use `PASSTHROUGH` and pre-stage the raw bytes directly to bypass the double-conversion path.
 
 For in-place modification, replace an `input` + `output` pair with `in_out`:
 ```cpp
@@ -213,6 +214,8 @@ exec->in_out(data, GpuBufferBinding::ElementType::FLOAT32)
      });
 auto result = exec->execute(input_datum, ExecutionContext{});
 ```
+
+For pass counts large enough that batching against a workgroup ceiling matters, `GpuDispatchCore::dispatch_core_chained` performs the same repeated-dispatch pattern through `GpuResourceManager::dispatch_batched`, batching passes according to `ExecutionContext`'s `ChainedParams::passes_per_batch` rather than issuing one dispatch per pass from the caller's loop.
 
 ### Image processing
 
