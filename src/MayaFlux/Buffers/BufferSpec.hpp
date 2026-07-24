@@ -55,4 +55,9 @@ inline uint64_t s_registered_sample_rate { 48000 };
  */
 inline uint32_t s_preferred_buffer_size { 512 };
 
+/**
+ * @brief Global default frame rate. Updated by buffer manager upon engine instantiation.
+ */
+inline uint32_t s_preferred_frame_rate { 60 };
+
 }

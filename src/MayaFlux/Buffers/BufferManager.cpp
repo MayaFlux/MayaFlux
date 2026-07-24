@@ -19,6 +19,7 @@ BufferManager::BufferManager(
     uint32_t default_in_channels,
     uint64_t default_sample_rate,
     uint32_t default_buffer_size,
+    uint32_t default_frame_rate,
     ProcessingToken default_audio_token,
     ProcessingToken default_graphics_token)
     : m_unit_manager(std::make_unique<TokenUnitManager>(default_audio_token, default_graphics_token, default_buffer_size))
@@ -30,6 +31,7 @@ BufferManager::BufferManager(
 {
     s_registered_sample_rate = default_sample_rate;
     s_preferred_buffer_size = default_buffer_size;
+    s_preferred_frame_rate = default_frame_rate;
     validate_num_channels(default_audio_token, default_out_channels, default_buffer_size);
 
     if (default_in_channels) {

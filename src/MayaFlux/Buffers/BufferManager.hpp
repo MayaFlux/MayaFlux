@@ -42,6 +42,7 @@ public:
      * @param default_in_channels Number of input channels for the default domain (default: 0)
      * @param default_sample_rate Sample rate for the default domain (default: 48000)
      * @param default_buffer_size Buffer size for the default domain (default: 512)
+     * @param default_frame_rate Frame rate for the default domain (default: 60)
      * @param default_processing_token Primary processing domain (default: AUDIO_BACKEND)
      */
     BufferManager(
@@ -49,6 +50,7 @@ public:
         uint32_t default_in_channels = 0,
         uint64_t default_sample_rate = 48000,
         uint32_t default_buffer_size = 512,
+        uint32_t default_frame_rate = 60,
         ProcessingToken default_audio_token = ProcessingToken::AUDIO_BACKEND,
         ProcessingToken default_graphics_token = ProcessingToken::GRAPHICS_BACKEND);
 
