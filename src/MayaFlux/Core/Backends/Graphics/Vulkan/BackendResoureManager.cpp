@@ -30,6 +30,28 @@ void BackendResourceManager::setup_backend_service(const std::shared_ptr<Registr
         this->initialize_buffer(buffer);
     };
 
+    buffer_service->allocate_raw_buffer = [this](
+                                              size_t size_bytes,
+                                              uint32_t usage_flags,
+                                              uint32_t memory_property_flags,
+                                              bool host_visible,
+                                              void*& out_buffer,
+                                              void*& out_memory,
+                                              void*& out_mapped_ptr) -> void {
+        vk::Buffer buf;
+        vk::DeviceMemory mem;
+        void* mapped = nullptr;
+        this->allocate_raw_buffer(
+            size_bytes,
+            vk::BufferUsageFlags(usage_flags),
+            vk::MemoryPropertyFlags(memory_property_flags),
+            host_visible,
+            buf, mem, mapped);
+        out_buffer = static_cast<VkBuffer>(buf);
+        out_memory = static_cast<VkDeviceMemory>(mem);
+        out_mapped_ptr = mapped;
+    };
+
     buffer_service->destroy_buffer = [this](const std::shared_ptr<void>& vk_buf) {
         auto buffer = std::static_pointer_cast<Buffers::VKBuffer>(vk_buf);
         this->cleanup_buffer(buffer);
