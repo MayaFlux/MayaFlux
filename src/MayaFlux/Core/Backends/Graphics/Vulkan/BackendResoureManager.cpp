@@ -279,8 +279,11 @@ void BackendResourceManager::initialize_buffer(const std::shared_ptr<Buffers::VK
         buffer->is_host_visible(),
         vk_buffer, memory, mapped_ptr);
 
-    Buffers::VKBufferResources resources { .buffer = vk_buffer, .memory = memory, .mapped_ptr = mapped_ptr };
-    buffer->set_buffer_resources(resources);
+    auto& resources = buffer->get_buffer_resources();
+    resources.buffer = vk_buffer;
+    resources.memory = memory;
+    resources.mapped_ptr = mapped_ptr;
+
     m_managed_buffers.push_back(buffer);
 
     MF_INFO(Journal::Component::Core, Journal::Context::GraphicsBackend,
