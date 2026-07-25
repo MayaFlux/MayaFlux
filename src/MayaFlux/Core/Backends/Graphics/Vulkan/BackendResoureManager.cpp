@@ -164,6 +164,75 @@ void BackendResourceManager::setup_backend_service(const std::shared_ptr<Registr
     };
 }
 
+void BackendResourceManager::allocate_raw_buffer(
+    size_t size_bytes,
+    vk::BufferUsageFlags usage,
+    vk::MemoryPropertyFlags memory_properties,
+    bool host_visible,
+    vk::Buffer& out_buffer,
+    vk::DeviceMemory& out_memory,
+    void*& out_mapped_ptr)
+{
+    vk::BufferCreateInfo buffer_info {};
+    buffer_info.size = size_bytes;
+    buffer_info.usage = usage;
+    buffer_info.sharingMode = vk::SharingMode::eExclusive;
+
+    try {
+        out_buffer = m_context.get_device().createBuffer(buffer_info);
+    } catch (const vk::SystemError& e) {
+        error_rethrow(
+            Journal::Component::Core,
+            Journal::Context::GraphicsBackend,
+            std::source_location::current(),
+            "Failed to create raw VkBuffer: " + std::string(e.what()));
+    }
+
+    vk::MemoryRequirements mem_requirements = m_context.get_device().getBufferMemoryRequirements(out_buffer);
+
+    vk::MemoryAllocateInfo alloc_info;
+    alloc_info.allocationSize = mem_requirements.size;
+    alloc_info.memoryTypeIndex = find_memory_type(mem_requirements.memoryTypeBits, memory_properties);
+
+    try {
+        out_memory = m_context.get_device().allocateMemory(alloc_info);
+    } catch (const vk::SystemError& e) {
+        m_context.get_device().destroyBuffer(out_buffer);
+        error_rethrow(
+            Journal::Component::Core,
+            Journal::Context::GraphicsBackend,
+            std::source_location::current(),
+            "Failed to allocate raw VkDeviceMemory: " + std::string(e.what()));
+    }
+
+    try {
+        m_context.get_device().bindBufferMemory(out_buffer, out_memory, 0);
+    } catch (const vk::SystemError& e) {
+        m_context.get_device().freeMemory(out_memory);
+        m_context.get_device().destroyBuffer(out_buffer);
+        error_rethrow(
+            Journal::Component::Core,
+            Journal::Context::GraphicsBackend,
+            std::source_location::current(),
+            "Failed to bind raw buffer memory: " + std::string(e.what()));
+    }
+
+    out_mapped_ptr = nullptr;
+    if (host_visible) {
+        try {
+            out_mapped_ptr = m_context.get_device().mapMemory(out_memory, 0, size_bytes);
+        } catch (const vk::SystemError& e) {
+            m_context.get_device().freeMemory(out_memory);
+            m_context.get_device().destroyBuffer(out_buffer);
+            error_rethrow(
+                Journal::Component::Core,
+                Journal::Context::GraphicsBackend,
+                std::source_location::current(),
+                "Failed to map raw buffer memory: " + std::string(e.what()));
+        }
+    }
+}
+
 void BackendResourceManager::initialize_buffer(const std::shared_ptr<Buffers::VKBuffer>& buffer)
 {
     if (!buffer) {
@@ -171,79 +240,22 @@ void BackendResourceManager::initialize_buffer(const std::shared_ptr<Buffers::VK
             "Attempted to initialize null VKBuffer");
         return;
     }
-
     if (buffer->is_initialized()) {
         MF_WARN(Journal::Component::Core, Journal::Context::GraphicsBackend,
             "VKBuffer already initialized, skipping");
         return;
     }
 
-    vk::BufferCreateInfo buffer_info {};
-    buffer_info.size = buffer->get_size_bytes();
-    buffer_info.usage = buffer->get_usage_flags();
-    buffer_info.sharingMode = vk::SharingMode::eExclusive;
-
     vk::Buffer vk_buffer;
-    try {
-        vk_buffer = m_context.get_device().createBuffer(buffer_info);
-    } catch (const vk::SystemError& e) {
-        error_rethrow(
-            Journal::Component::Core,
-            Journal::Context::GraphicsBackend,
-            std::source_location::current(),
-            "Failed to create VkBuffer: " + std::string(e.what()));
-    }
-
-    vk::MemoryRequirements mem_requirements;
-    mem_requirements = m_context.get_device().getBufferMemoryRequirements(vk_buffer);
-
-    vk::MemoryAllocateInfo alloc_info;
-    alloc_info.allocationSize = mem_requirements.size;
-
-    alloc_info.memoryTypeIndex = find_memory_type(
-        mem_requirements.memoryTypeBits,
-        vk::MemoryPropertyFlags(buffer->get_memory_properties()));
-
     vk::DeviceMemory memory;
-    try {
-        memory = m_context.get_device().allocateMemory(alloc_info);
-    } catch (const vk::SystemError& e) {
-        m_context.get_device().destroyBuffer(vk_buffer);
-        error_rethrow(
-            Journal::Component::Core,
-            Journal::Context::GraphicsBackend,
-            std::source_location::current(),
-            "Failed to allocate VkDeviceMemory: " + std::string(e.what()));
-    }
-
-    try {
-        m_context.get_device().bindBufferMemory(vk_buffer, memory, 0);
-    } catch (const vk::SystemError& e) {
-        m_context.get_device().freeMemory(memory);
-        m_context.get_device().destroyBuffer(vk_buffer);
-
-        error_rethrow(
-            Journal::Component::Core,
-            Journal::Context::GraphicsBackend,
-            std::source_location::current(),
-            "Failed to bind buffer memory: " + std::string(e.what()));
-    }
-
     void* mapped_ptr = nullptr;
-    if (buffer->is_host_visible()) {
-        try {
-            mapped_ptr = m_context.get_device().mapMemory(memory, 0, buffer->get_size_bytes());
-        } catch (const vk::SystemError& e) {
-            m_context.get_device().freeMemory(memory);
-            m_context.get_device().destroyBuffer(vk_buffer);
 
-            error_rethrow(
-                Journal::Component::Core,
-                Journal::Context::GraphicsBackend,
-                std::source_location::current(),
-                "Failed to map buffer memory: " + std::string(e.what()));
-        }
-    }
+    allocate_raw_buffer(
+        buffer->get_size_bytes(),
+        buffer->get_usage_flags(),
+        vk::MemoryPropertyFlags(buffer->get_memory_properties()),
+        buffer->is_host_visible(),
+        vk_buffer, memory, mapped_ptr);
 
     Buffers::VKBufferResources resources { .buffer = vk_buffer, .memory = memory, .mapped_ptr = mapped_ptr };
     buffer->set_buffer_resources(resources);

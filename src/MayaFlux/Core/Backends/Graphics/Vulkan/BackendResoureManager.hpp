@@ -38,6 +38,34 @@ public:
     void initialize_buffer(const std::shared_ptr<Buffers::VKBuffer>& buffer);
 
     /**
+     * @brief Allocate a raw VkBuffer/VkDeviceMemory pair without an owning
+     *        VKBuffer object.
+     * @param size_bytes Buffer capacity in bytes.
+     * @param usage Vulkan buffer usage flags.
+     * @param memory_properties Vulkan memory property flags.
+     * @param host_visible When true, the allocation is mapped and out_mapped_ptr
+     *        is populated; when false, out_mapped_ptr is left null.
+     * @param out_buffer Receives the created vk::Buffer.
+     * @param out_memory Receives the bound vk::DeviceMemory.
+     * @param out_mapped_ptr Receives the mapped host pointer, or nullptr if
+     *        @p host_visible is false.
+     *
+     * Same allocation sequence as initialize_buffer() (createBuffer,
+     * getBufferMemoryRequirements, allocateMemory, bindBufferMemory, optional
+     * mapMemory), without requiring or populating a VKBuffer. Intended for
+     * VKBuffer subclasses that own secondary raw handle pairs directly in
+     * VKBufferResources::back_buffers rather than as separate VKBuffer objects.
+     */
+    void allocate_raw_buffer(
+        size_t size_bytes,
+        vk::BufferUsageFlags usage,
+        vk::MemoryPropertyFlags memory_properties,
+        bool host_visible,
+        vk::Buffer& out_buffer,
+        vk::DeviceMemory& out_memory,
+        void*& out_mapped_ptr);
+
+    /**
      * @brief Cleanup a buffer and release associated resources
      * @param buffer Shared pointer to the buffer to cleanup
      */
