@@ -54,42 +54,33 @@ class RenderProcessor;
 class MAYAFLUX_API RelaxationGridBuffer : public VKBuffer {
 public:
     /**
+     * @brief Either a shader file path or a generated ShaderSpec, resolved at
+     *        construction time by setup_processors().
+     */
+    using ShaderSource = std::variant<std::string, Portal::Graphics::ShaderSpec>;
+
+    /**
      * @brief Construct an unregistered double-buffered grid buffer.
      * @param width Grid width in cells.
      * @param height Grid height in cells.
      * @param cell_stride_bytes Size in bytes of one cell's state.
-     * @param rule_shader_path Path to the compute shader implementing the
-     *        local transition rule (reads state_in, writes state_out).
-     * @param emit_shader_path Path to the compute shader that reads the
-     *        front generation's state and writes vertex data into this
-     *        buffer's own Usage::VERTEX storage.
+     * @param rule_source Either a path to a hand-written rule shader (for
+     *        rules needing branchy multi-state logic, e.g. Conway, Wireworld)
+     *        or a generated ShaderSpec (e.g. RelaxationSpecs::jacobi_diffusion()).
+     * @param emit_source Either a path to a hand-written emit shader, or a
+     *        generated ShaderSpec (e.g. RelaxationSpecs::emit_binary()).
      *
-     * Allocates two raw handle pairs into m_resources.back_buffers, each
-     * sized width * height * cell_stride_bytes, via the backend's raw
-     * allocation path. The VKBuffer base's own storage is sized for one
-     * Kakshya::Vertex per cell.
+     * rule_source and emit_source are independent: a hand-written rule paired
+     * with a generated emit spec, or any other combination, is fully
+     * supported. Processors are constructed from whichever alternative each
+     * holds in setup_processors().
      */
     RelaxationGridBuffer(
         uint32_t width,
         uint32_t height,
         size_t cell_stride_bytes,
-        std::string rule_shader_path,
-        std::string emit_shader_path);
-
-    /**
-     * @brief Construct using generated ShaderSpecs instead of shader files.
-     * @param width Grid width in cells.
-     * @param height Grid height in cells.
-     * @param cell_stride_bytes Size in bytes of one cell's state.
-     * @param rule_spec ShaderSpec implementing the rule, e.g. RelaxationSpecs::jacobi_diffusion().
-     * @param emit_spec ShaderSpec implementing state-to-vertex mapping, e.g. RelaxationSpecs::emit_scalar_ramp().
-     */
-    RelaxationGridBuffer(
-        uint32_t width,
-        uint32_t height,
-        size_t cell_stride_bytes,
-        Portal::Graphics::ShaderSpec rule_spec,
-        Portal::Graphics::ShaderSpec emit_spec);
+        ShaderSource rule_source,
+        ShaderSource emit_source);
 
     /**
      * @brief Destructor.
@@ -202,13 +193,10 @@ private:
     uint32_t m_height; ///< Grid height in cells.
     size_t m_cell_stride_bytes; ///< Size in bytes of one cell's state, fixed at construction.
 
-    std::string m_rule_shader_path; ///< Compute shader path for the rule step, passed to RelaxationStepProcessor.
-    std::string m_emit_shader_path; ///< Compute shader path for vertex emission, passed to RelaxationEmitProcessor.
-    Portal::Graphics::ShaderSpec m_rule_spec; ///< Compute shader spec for the rule step, passed to RelaxationStepProcessor.
-    Portal::Graphics::ShaderSpec m_emit_spec; ///< Compute shader spec for vertex emission, passed to RelaxationEmitProcessor.
+    ShaderSource m_rule_source; ///< Either a path to a hand-written rule shader or a generated ShaderSpec.
+    ShaderSource m_emit_source; ///< Either a path to a hand-written emit shader or a generated ShaderSpec.
 
     bool m_front_is_a { true }; ///< True when back_buffers[0] holds the current front generation.
-    bool m_uses_spec_construction {}; ///< True when the constructor used ShaderSpec instead of shader paths.
     std::atomic<bool> m_snapshot_requested {}; ///< Set by request_snapshot(), cleared by consume_snapshot_request().
 };
 

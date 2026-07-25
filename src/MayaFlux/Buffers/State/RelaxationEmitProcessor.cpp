@@ -17,6 +17,20 @@ RelaxationEmitProcessor::RelaxationEmitProcessor(const Portal::Graphics::ShaderS
     m_config.bindings["vertices"] = ShaderBinding(0, 1, vk::DescriptorType::eStorageBuffer);
 }
 
+void RelaxationEmitProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
+{
+    ComputeProcessor::on_attach(buffer);
+    auto grid = std::dynamic_pointer_cast<RelaxationGridBuffer>(buffer);
+    if (grid) {
+        constexpr uint32_t k_workgroup_size = 256;
+        set_workgroup_size(k_workgroup_size, 1, 1);
+        set_dispatch_mode(ShaderDispatchConfig::DispatchMode::MANUAL);
+        set_manual_dispatch(
+            (grid->get_cell_count() + k_workgroup_size - 1) / k_workgroup_size,
+            1, 1);
+    }
+}
+
 bool RelaxationEmitProcessor::on_before_execute(
     Portal::Graphics::CommandBufferID /*cmd_id*/,
     const std::shared_ptr<VKBuffer>& buffer)

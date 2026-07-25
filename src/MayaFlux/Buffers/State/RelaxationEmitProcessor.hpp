@@ -52,6 +52,15 @@ protected:
      *         is a valid RelaxationGridBuffer.
      */
     bool on_before_execute(Portal::Graphics::CommandBufferID cmd_id, const std::shared_ptr<VKBuffer>& buffer) override;
+
+    /**
+     * @brief When attached to a RelaxationGridBuffer, sets up the dispatch
+     *        configuration to cover the entire grid with a single workgroup
+     *        dimension along Y and Z, and a workgroup size along X that is
+     *        either the default 16 or the value supplied at construction.
+     * @param buffer The attached buffer, expected to be a RelaxationGridBuffer.
+     */
+    void on_attach(const std::shared_ptr<Buffer>& buffer) override;
 };
 
 } // namespace MayaFlux::Buffers

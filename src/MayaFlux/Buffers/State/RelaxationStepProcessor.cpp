@@ -49,6 +49,14 @@ void RelaxationStepProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
 {
     ComputeProcessor::on_attach(buffer);
     m_grid = std::dynamic_pointer_cast<RelaxationGridBuffer>(buffer);
+
+    if (m_grid) {
+        set_workgroup_size(16, 16, 1);
+        set_dispatch_mode(ShaderDispatchConfig::DispatchMode::MANUAL);
+        uint32_t gx = (m_grid->get_grid_width() + 15) / 16;
+        uint32_t gy = (m_grid->get_grid_height() + 15) / 16;
+        set_manual_dispatch(gx, gy, 1);
+    }
 }
 
 void RelaxationStepProcessor::on_descriptors_created()
@@ -87,26 +95,31 @@ void RelaxationStepProcessor::on_after_execute(
         return;
     }
 
-    if (!m_snapshot_staging) {
-        m_snapshot_staging = create_staging_buffer(grid->get_state_bytes());
-    }
+    auto& resources = grid->get_buffer_resources();
+    const auto& front = resources.back_buffers[grid->front_index()];
+
+    std::vector<uint8_t> bytes(grid->get_state_bytes());
 
     auto buffer_service = Registry::BackendRegistry::instance()
                               .get_service<Registry::Service::BufferService>();
 
-    auto& resources = grid->get_buffer_resources();
-    const auto& front = resources.back_buffers[grid->front_index()];
+    if (!m_snapshot_staging || m_snapshot_staging->get_size_bytes() < bytes.size()) {
+        m_snapshot_staging = create_staging_buffer(bytes.size());
+    }
 
-    buffer_service->copy_buffer(
+    auto handle = buffer_service->copy_buffer_fenced(
         static_cast<void*>(front.buffer),
         static_cast<void*>(m_snapshot_staging->get_buffer()),
-        grid->get_state_bytes(), 0, 0);
+        bytes.size(), 0, 0);
+
+    buffer_service->wait_fenced(handle);
 
     auto& staging_resources = m_snapshot_staging->get_buffer_resources();
-    buffer_service->invalidate_range(staging_resources.memory, 0, grid->get_state_bytes());
+    buffer_service->invalidate_range(staging_resources.memory, 0, bytes.size());
 
-    std::vector<uint8_t> bytes(grid->get_state_bytes());
     std::memcpy(bytes.data(), staging_resources.mapped_ptr, bytes.size());
+    buffer_service->release_fenced(handle);
+
     grid->snapshot_source()->signal(bytes);
 }
 
