@@ -26,6 +26,10 @@ bool RelaxationEmitProcessor::on_before_execute(
         return false;
     }
 
+    if (!are_descriptors_ready()) {
+        return true;
+    }
+
     auto& foundry = Portal::Graphics::get_shader_foundry();
     auto& resources = grid->get_buffer_resources();
 

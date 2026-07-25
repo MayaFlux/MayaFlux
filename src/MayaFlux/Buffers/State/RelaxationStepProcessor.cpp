@@ -23,12 +23,19 @@ RelaxationStepProcessor::RelaxationStepProcessor(const Portal::Graphics::ShaderS
     m_config.bindings["state_out"] = ShaderBinding(0, 1, vk::DescriptorType::eStorageBuffer);
 }
 
-void RelaxationStepProcessor::write_state_descriptors(RelaxationGridBuffer* grid)
+void RelaxationStepProcessor::write_state_descriptors(const std::shared_ptr<RelaxationGridBuffer>& grid)
 {
-    auto& foundry = Portal::Graphics::get_shader_foundry();
     auto& resources = grid->get_buffer_resources();
-    const size_t bytes = grid->get_state_bytes();
+    if (resources.back_buffers.size() < 2) {
+        return;
+    }
 
+    if (m_descriptor_set_ids.empty()) {
+        return;
+    }
+
+    auto& foundry = Portal::Graphics::get_shader_foundry();
+    const size_t bytes = grid->get_state_bytes();
     foundry.update_descriptor_buffer(
         m_descriptor_set_ids[0], 0, vk::DescriptorType::eStorageBuffer,
         resources.back_buffers[grid->front_index()].buffer, 0, bytes);
@@ -38,16 +45,30 @@ void RelaxationStepProcessor::write_state_descriptors(RelaxationGridBuffer* grid
         resources.back_buffers[grid->back_index()].buffer, 0, bytes);
 }
 
+void RelaxationStepProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
+{
+    ComputeProcessor::on_attach(buffer);
+    m_grid = std::dynamic_pointer_cast<RelaxationGridBuffer>(buffer);
+}
+
+void RelaxationStepProcessor::on_descriptors_created()
+{
+    if (m_grid) {
+        write_state_descriptors(m_grid);
+    }
+}
+
 bool RelaxationStepProcessor::on_before_execute(
     Portal::Graphics::CommandBufferID /*cmd_id*/,
     const std::shared_ptr<VKBuffer>& buffer)
 {
-    auto* grid = dynamic_cast<RelaxationGridBuffer*>(buffer.get());
+    auto grid = std::dynamic_pointer_cast<RelaxationGridBuffer>(buffer);
     if (!grid) {
         return false;
     }
-
-    write_state_descriptors(grid);
+    if (are_descriptors_ready()) {
+        write_state_descriptors(grid);
+    }
     return !m_step_predicate || m_step_predicate();
 }
 

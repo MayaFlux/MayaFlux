@@ -88,13 +88,24 @@ protected:
      */
     void on_after_execute(Portal::Graphics::CommandBufferID cmd_id, const std::shared_ptr<VKBuffer>& buffer) override;
 
+    /**
+     * @brief Write the state_in / state_out descriptor bindings for the
+     *        current front/back assignment.
+     *
+     * Called once after the descriptor set is created, and again after
+     * any reallocation of the attached RelaxationGridBuffer's back_buffers.
+     */
+    void on_descriptors_created() override;
+
+    void on_attach(const std::shared_ptr<Buffer>& buffer) override;
+
 private:
     /**
      * @brief Issue direct ShaderFoundry descriptor writes for state_in and
      *        state_out against the grid's current front/back raw buffers.
      * @param grid The RelaxationGridBuffer whose state buffers are being bound.
      */
-    void write_state_descriptors(RelaxationGridBuffer* grid);
+    void write_state_descriptors(const std::shared_ptr<RelaxationGridBuffer>& grid);
 
     /** @brief Optional gate deciding whether a given cycle advances a generation. */
     StepPredicate m_step_predicate;
@@ -105,6 +116,8 @@ private:
      *        on first use.
      */
     std::shared_ptr<VKBuffer> m_snapshot_staging;
+
+    std::shared_ptr<RelaxationGridBuffer> m_grid; ///< The attached RelaxationGridBuffer, cached for descriptor writes and snapshot staging.
 };
 
 } // namespace MayaFlux::Buffers
