@@ -39,6 +39,21 @@ public:
     using StepPredicate = std::function<bool()>;
 
     /**
+     * @struct GridExtent
+     * @brief Leading push constant fields every relaxation rule shader
+     *        receives: grid width then height, at offset 0.
+     *
+     * Matches the convention AsmGenerator::emit_stencil_body reads for
+     * generated Stencil kernels, and which hand-written rule shaders are
+     * expected to declare as their first two push constant fields. Rule
+     * specific parameters follow at offset 8.
+     */
+    struct GridExtent {
+        uint32_t width;
+        uint32_t height;
+    };
+
+    /**
      * @brief Construct a step processor for the given rule shader file.
      * @param shader_path Path to the compute shader implementing the rule.
      * @param workgroup_x Local workgroup size along X, forwarded to ComputeProcessor.
@@ -97,7 +112,26 @@ protected:
      */
     void on_descriptors_created() override;
 
+    /**
+     * @brief When attached to a RelaxationGridBuffer, sets up the dispatch
+     *        configuration to cover the entire grid with a single workgroup
+     *        dimension along Y and Z, and a workgroup size along X that is
+     *        either the default 16 or the value supplied at construction.
+     * @param buffer The attached buffer, expected to be a RelaxationGridBuffer.
+     */
     void on_attach(const std::shared_ptr<Buffer>& buffer) override;
+
+    /**
+     * @brief Write the state descriptors for the current front/back
+     *        assignment, then run the normal shader processing path.
+     *
+     * The descriptor write must precede execute_shader's
+     * vkCmdBindDescriptorSets. Writing from on_before_execute updates a set
+     * already bound into the open command buffer, which the driver has
+     * consumed by then, freezing the bindings at whatever
+     * on_descriptors_created wrote.
+     */
+    void processing_function(const std::shared_ptr<Buffer>& buffer) override;
 
 private:
     /**
@@ -107,8 +141,18 @@ private:
      */
     void write_state_descriptors(const std::shared_ptr<RelaxationGridBuffer>& grid);
 
-    /** @brief Optional gate deciding whether a given cycle advances a generation. */
-    StepPredicate m_step_predicate;
+    /**
+     * @brief Size the push constant block to at least GridExtent and write
+     *        the attached grid's dimensions into its leading 8 bytes.
+     *
+     * Called from on_attach, the first point at which grid dimensions are
+     * known. A ShaderSpec-constructed processor already carries
+     * spec.push_constant_bytes in m_config; that size is preserved and only
+     * the leading extent fields are written, leaving trailing rule
+     * parameters available to set_push_constant_data_raw at any offset
+     * past sizeof(GridExtent).
+     */
+    void write_grid_extent_constants();
 
     /**
      * @brief Lazily-created, reused host-visible staging buffer for
@@ -117,6 +161,7 @@ private:
      */
     std::shared_ptr<VKBuffer> m_snapshot_staging;
 
+    StepPredicate m_step_predicate; ///< Optional gate deciding whether a given cycle advances a generation
     std::shared_ptr<RelaxationGridBuffer> m_grid; ///< The attached RelaxationGridBuffer, cached for descriptor writes and snapshot staging.
 };
 

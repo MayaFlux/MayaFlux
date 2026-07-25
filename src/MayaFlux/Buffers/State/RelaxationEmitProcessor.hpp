@@ -61,6 +61,13 @@ protected:
      * @param buffer The attached buffer, expected to be a RelaxationGridBuffer.
      */
     void on_attach(const std::shared_ptr<Buffer>& buffer) override;
+
+    /**
+     * @brief Write the cell_state and vertices descriptors for the grid's
+     *        current front generation, then run the normal shader
+     *        processing path.
+     */
+    void processing_function(const std::shared_ptr<Buffer>& buffer) override;
 };
 
 } // namespace MayaFlux::Buffers

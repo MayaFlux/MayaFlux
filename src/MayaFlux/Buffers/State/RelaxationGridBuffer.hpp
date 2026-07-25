@@ -144,6 +144,9 @@ public:
      */
     [[nodiscard]] uint32_t front_index() const { return m_front_is_a ? 0 : 1; }
 
+    /** @brief Temporary probe: total swap_generation calls since construction. */
+    [[nodiscard]] uint32_t swap_count() const { return m_swap_count; }
+
     /**
      * @brief Index into m_resources.back_buffers currently serving as the
      *        write target for the next rule dispatch.
@@ -182,7 +185,11 @@ private:
         return m_snapshot_requested.exchange(false, std::memory_order_acq_rel);
     }
 
-    void swap_generation() { m_front_is_a = !m_front_is_a; }
+    void swap_generation()
+    {
+        m_front_is_a = !m_front_is_a;
+        ++m_swap_count;
+    }
 
     /** @brief Signaled by RelaxationStepProcessor when a requested snapshot completes. */
     std::shared_ptr<Vruta::BroadcastSource<std::vector<uint8_t>>> m_snapshot_source {
@@ -198,6 +205,7 @@ private:
 
     bool m_front_is_a { true }; ///< True when back_buffers[0] holds the current front generation.
     std::atomic<bool> m_snapshot_requested {}; ///< Set by request_snapshot(), cleared by consume_snapshot_request().
+    uint32_t m_swap_count {}; ///< Temporary probe: total swap_generation calls.
 };
 
 } // namespace MayaFlux::Buffers

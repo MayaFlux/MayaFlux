@@ -58,4 +58,23 @@ bool RelaxationEmitProcessor::on_before_execute(
     return true;
 }
 
+void RelaxationEmitProcessor::processing_function(const std::shared_ptr<Buffer>& buffer)
+{
+    auto grid = std::dynamic_pointer_cast<RelaxationGridBuffer>(buffer);
+    if (grid && are_descriptors_ready()) {
+        auto& foundry = Portal::Graphics::get_shader_foundry();
+        auto& resources = grid->get_buffer_resources();
+
+        foundry.update_descriptor_buffer(
+            m_descriptor_set_ids[0], 0, vk::DescriptorType::eStorageBuffer,
+            resources.back_buffers[grid->front_index()].buffer, 0, grid->get_state_bytes());
+
+        foundry.update_descriptor_buffer(
+            m_descriptor_set_ids[0], 1, vk::DescriptorType::eStorageBuffer,
+            grid->get_buffer(), 0, grid->get_size_bytes());
+    }
+
+    ComputeProcessor::processing_function(buffer);
+}
+
 } // namespace MayaFlux::Buffers

@@ -45,6 +45,34 @@ void RelaxationStepProcessor::write_state_descriptors(const std::shared_ptr<Rela
         resources.back_buffers[grid->back_index()].buffer, 0, bytes);
 }
 
+void RelaxationStepProcessor::processing_function(const std::shared_ptr<Buffer>& buffer)
+{
+    if (m_grid && are_descriptors_ready()) {
+        write_state_descriptors(m_grid);
+        m_grid->swap_generation();
+    }
+
+    ComputeProcessor::processing_function(buffer);
+}
+
+void RelaxationStepProcessor::write_grid_extent_constants()
+{
+    if (m_config.push_constant_size < sizeof(GridExtent)) {
+        set_push_constant_size(sizeof(GridExtent));
+    }
+
+    auto& data = get_push_constant_data();
+    if (data.size() < m_config.push_constant_size) {
+        data.resize(m_config.push_constant_size);
+    }
+
+    const GridExtent extent {
+        .width = m_grid->get_grid_width(),
+        .height = m_grid->get_grid_height()
+    };
+    std::memcpy(data.data(), &extent, sizeof(GridExtent));
+}
+
 void RelaxationStepProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
 {
     ComputeProcessor::on_attach(buffer);
@@ -56,6 +84,7 @@ void RelaxationStepProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
         uint32_t gx = (m_grid->get_grid_width() + 15) / 16;
         uint32_t gy = (m_grid->get_grid_height() + 15) / 16;
         set_manual_dispatch(gx, gy, 1);
+        write_grid_extent_constants();
     }
 }
 
@@ -70,13 +99,10 @@ bool RelaxationStepProcessor::on_before_execute(
     Portal::Graphics::CommandBufferID /*cmd_id*/,
     const std::shared_ptr<VKBuffer>& buffer)
 {
-    auto grid = std::dynamic_pointer_cast<RelaxationGridBuffer>(buffer);
-    if (!grid) {
+    if (!std::dynamic_pointer_cast<RelaxationGridBuffer>(buffer)) {
         return false;
     }
-    if (are_descriptors_ready()) {
-        write_state_descriptors(grid);
-    }
+
     return !m_step_predicate || m_step_predicate();
 }
 
@@ -84,12 +110,10 @@ void RelaxationStepProcessor::on_after_execute(
     Portal::Graphics::CommandBufferID /*cmd_id*/,
     const std::shared_ptr<VKBuffer>& buffer)
 {
-    auto* grid = dynamic_cast<RelaxationGridBuffer*>(buffer.get());
+    auto grid = std::dynamic_pointer_cast<RelaxationGridBuffer>(buffer);
     if (!grid) {
         return;
     }
-
-    grid->swap_generation();
 
     if (!grid->consume_snapshot_request()) {
         return;
