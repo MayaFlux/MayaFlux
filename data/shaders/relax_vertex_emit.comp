@@ -37,16 +37,23 @@ void main() {
     float fx = (float(ix) + 0.5) / float(pc.width);
     float fy = (float(iy) + 0.5) / float(pc.height);
 
-    bool alive = cell_state[i] != 0u;
+    uint s = cell_state[i];
+    vec3 rgb = vec3(0.25, 0.25, 0.30);
+    if (s == 2u) {
+        rgb = vec3(1.0, 0.9, 0.3);
+    } else if (s == 3u) {
+        rgb = vec3(0.8, 0.2, 0.1);
+    }
+
     uint b = i * 15u;
 
     vertices[b + 0u] = (fx * 2.0 - 1.0) * pc.extent;
     vertices[b + 1u] = (fy * 2.0 - 1.0) * pc.extent;
-    vertices[b + 2u] = alive ? 0.0 : 2.0;
+    vertices[b + 2u] = (s != 0u) ? 0.0 : 2.0;
 
-    vertices[b + 3u] = 1.0;
-    vertices[b + 4u] = 1.0;
-    vertices[b + 5u] = 1.0;
+    vertices[b + 3u] = rgb.r;
+    vertices[b + 4u] = rgb.g;
+    vertices[b + 5u] = rgb.b;
 
     vertices[b + 6u] = pc.point_size;
 
