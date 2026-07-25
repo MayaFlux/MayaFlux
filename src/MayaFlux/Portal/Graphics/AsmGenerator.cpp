@@ -552,6 +552,17 @@ namespace {
             o += "%res = " + mul_op + " " + std::string(etype) + " " + center_val + " " + running_sum + "\n";
             result = "%res";
             break;
+        case KernelOp::WeightedBlend:
+            o += "%ppc_rate  = OpAccessChain %ppc_f32 %pc %c2u\n";
+            o += "%pc_rate   = OpLoad %f32 %ppc_rate\n";
+            o += "%ppc_wsum  = OpAccessChain %ppc_f32 %pc %c3u\n";
+            o += "%pc_wsum   = OpLoad %f32 %ppc_wsum\n";
+            o += "%scaled_sum = OpFMul %f32 " + running_sum + " %pc_wsum\n";
+            o += "%delta      = OpFSub %f32 %scaled_sum " + center_val + "\n";
+            o += "%weighted   = OpFMul %f32 %pc_rate %delta\n";
+            o += "%res        = OpFAdd %f32 " + center_val + " %weighted\n";
+            result = "%res";
+            break;
         default:
             result = running_sum;
             break;
