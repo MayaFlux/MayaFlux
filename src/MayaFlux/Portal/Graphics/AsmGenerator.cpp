@@ -827,7 +827,59 @@ namespace {
             result = "%res";
             break;
         }
+        case KernelOp::CompareGE: {
+            Kakshya::GpuDataFormat out_fmt = primary_fmt;
+            uint32_t out_ncomp = ncomp;
+            for (const auto* b : ssbos) {
+                if (b->direction == BindingDirection::Output) {
+                    out_fmt = b->format;
+                    out_ncomp = ssbo_elem_components(out_fmt);
+                    break;
+                }
+            }
+            const std::string_view out_etype = ssbo_elem_spirv_type(out_fmt);
+
+            std::string cmp_lhs = v0;
+            if (is_vector) {
+                o += "%cmp_scalar = OpCompositeExtract %f32 " + v0 + " 0\n";
+                cmp_lhs = "%cmp_scalar";
+            } else if (etype != "%f32") {
+                o += "%cmp_lhs_f = OpConvertUToF %f32 " + v0 + "\n";
+                cmp_lhs = "%cmp_lhs_f";
+            }
+
+            const bool has_threshold = !spec.pc_fields.empty();
+            std::string threshold_f;
+            if (has_threshold) {
+                threshold_f = p0;
+            } else {
+                o += "%cmp_zero_u = OpConvertUToF %f32 %c0u\n";
+                threshold_f = "%cmp_zero_u";
+            }
+
+            o += "%cmp = OpFOrdGreaterThanEqual %bool " + cmp_lhs + " " + threshold_f + "\n";
+            o += "%cmp_one_f = OpConvertUToF %f32 %c1u\n";
+            o += "%cmp_zero_f = OpConvertUToF %f32 %c0u\n";
+            o += "%cmp_scaled = OpSelect %f32 %cmp %cmp_one_f %cmp_zero_f\n";
+
+            if (out_ncomp > 1) {
+                o += "%res = OpCompositeConstruct " + std::string(out_etype);
+                for (uint32_t c = 0; c < out_ncomp; ++c)
+                    o += " %cmp_scaled";
+                o += "\n";
+            } else if (out_etype != "%f32") {
+                o += "%res = OpConvertFToU " + std::string(out_etype) + " %cmp_scaled\n";
+            } else {
+                o += "%res = OpCopyObject %f32 %cmp_scaled\n";
+            }
+            result = "%res";
+            break;
+        }
         default:
+            for (const auto* b : ssbos) {
+                if (b->direction == BindingDirection::Output && b->format != primary_fmt)
+                    return {};
+            }
             o += "%res = OpCopyObject " + et + " " + v0 + "\n";
             result = "%res";
             break;
