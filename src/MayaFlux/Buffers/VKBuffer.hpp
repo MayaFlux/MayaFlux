@@ -43,6 +43,7 @@ struct VKBufferResources {
     struct GenerationSlot {
         vk::Buffer buffer { VK_NULL_HANDLE };
         vk::DeviceMemory memory { VK_NULL_HANDLE };
+        void* mapped_ptr { nullptr };
     };
     std::vector<GenerationSlot> back_buffers;
 };
