@@ -27,6 +27,23 @@ class RelaxationGridBuffer;
 class MAYAFLUX_API RelaxationEmitProcessor : public ComputeProcessor {
 public:
     /**
+     * @struct EmitParams
+     * @brief Push constant block for the packed-vertex emit shader.
+     *
+     * Grid width and height occupy the leading fields, matching the
+     * convention RelaxationStepProcessor::GridExtent establishes for the
+     * rule stage. extent scales the emitted NDC span; point_size is written
+     * to the vertex scalar field at offset 24, which point.vert reads as
+     * gl_PointSize.
+     */
+    struct EmitParams {
+        uint32_t width;
+        uint32_t height;
+        float extent { 1.0F };
+        float point_size { 2.0F };
+    };
+
+    /**
      * @brief Construct an emit processor for the given shader file.
      * @param shader_path Path to the compute shader that reads cell_state
      *        and writes vertices.
@@ -41,6 +58,12 @@ public:
      *        the binary/scalar-ramp/rgba emit shaders.
      */
     explicit RelaxationEmitProcessor(const Portal::Graphics::ShaderSpec& spec);
+
+    /** @brief Set the NDC half-span the grid occupies. Takes effect next cycle. */
+    void set_extent(float extent);
+
+    /** @brief Set the per-point size written to the vertex scalar field. */
+    void set_point_size(float size);
 
 protected:
     /**
@@ -68,6 +91,16 @@ protected:
      *        processing path.
      */
     void processing_function(const std::shared_ptr<Buffer>& buffer) override;
+
+private:
+    /**
+     * @brief Size the push constant block to EmitParams and upload the
+     *        current parameters. Called from on_attach and from the setters.
+     */
+    void write_emit_constants();
+
+    EmitParams m_params {};
+    std::shared_ptr<RelaxationGridBuffer> m_grid;
 };
 
 } // namespace MayaFlux::Buffers

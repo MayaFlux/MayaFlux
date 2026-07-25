@@ -1,0 +1,66 @@
+#version 460
+layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+
+// 0 = empty, 1 = conductor, 2 = electron head, 3 = electron tail
+layout(set = 0, binding = 0, std430) buffer StateIn {
+    uint state_in[];
+};
+layout(set = 0, binding = 1, std430) buffer StateOut {
+    uint state_out[];
+};
+
+layout(push_constant) uniform PC {
+    uint width;
+    uint height;
+} pc;
+
+const uint EMPTY = 0;
+const uint CONDUCTOR = 1;
+const uint HEAD = 2;
+const uint TAIL = 3;
+
+/**
+ * @brief Wireworld cellular automaton.
+ *
+ * Transition rules: empty stays empty. Head always becomes tail. Tail
+ * always becomes conductor. Conductor becomes head if exactly 1 or 2 of
+ * its 8 neighbors are heads, otherwise stays conductor. Edge cells clamp
+ * to nearest in-bounds neighbor.
+ */
+void main() {
+    uint ix = gl_GlobalInvocationID.x;
+    uint iy = gl_GlobalInvocationID.y;
+    if (ix >= pc.width || iy >= pc.height) return;
+
+    uint idx = iy * pc.width + ix;
+    uint self = state_in[idx];
+
+    uint next = self;
+
+    if (self == HEAD) {
+        next = TAIL;
+    } else if (self == TAIL) {
+        next = CONDUCTOR;
+    } else if (self == CONDUCTOR) {
+        uint w1 = pc.width - 1;
+        uint h1 = pc.height - 1;
+        uint head_neighbors = 0;
+
+        for (int dy = -1; dy <= 1; ++dy) {
+            for (int dx = -1; dx <= 1; ++dx) {
+                if (dx == 0 && dy == 0) continue;
+                int nx = int(ix) + dx;
+                int ny = int(iy) + dy;
+                nx = clamp(nx, 0, int(w1));
+                ny = clamp(ny, 0, int(h1));
+                if (state_in[uint(ny) * pc.width + uint(nx)] == HEAD) {
+                    head_neighbors++;
+                }
+            }
+        }
+
+        next = (head_neighbors == 1 || head_neighbors == 2) ? HEAD : CONDUCTOR;
+    }
+
+    state_out[idx] = next;
+}

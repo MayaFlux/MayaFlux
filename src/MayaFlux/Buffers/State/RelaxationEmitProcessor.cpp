@@ -22,12 +22,14 @@ void RelaxationEmitProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
     ComputeProcessor::on_attach(buffer);
     auto grid = std::dynamic_pointer_cast<RelaxationGridBuffer>(buffer);
     if (grid) {
+        m_grid = grid;
         constexpr uint32_t k_workgroup_size = 256;
         set_workgroup_size(k_workgroup_size, 1, 1);
         set_dispatch_mode(ShaderDispatchConfig::DispatchMode::MANUAL);
         set_manual_dispatch(
             (grid->get_cell_count() + k_workgroup_size - 1) / k_workgroup_size,
             1, 1);
+        write_emit_constants();
     }
 }
 
@@ -75,6 +77,34 @@ void RelaxationEmitProcessor::processing_function(const std::shared_ptr<Buffer>&
     }
 
     ComputeProcessor::processing_function(buffer);
+}
+
+void RelaxationEmitProcessor::write_emit_constants()
+{
+    if (!m_grid) {
+        return;
+    }
+
+    m_params.width = m_grid->get_grid_width();
+    m_params.height = m_grid->get_grid_height();
+
+    auto& data = get_push_constant_data();
+    if (data.size() < sizeof(EmitParams)) {
+        set_push_constant_size(sizeof(EmitParams));
+    }
+    std::memcpy(data.data(), &m_params, sizeof(EmitParams));
+}
+
+void RelaxationEmitProcessor::set_extent(float extent)
+{
+    m_params.extent = extent;
+    write_emit_constants();
+}
+
+void RelaxationEmitProcessor::set_point_size(float size)
+{
+    m_params.point_size = size;
+    write_emit_constants();
 }
 
 } // namespace MayaFlux::Buffers

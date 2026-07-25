@@ -102,12 +102,12 @@ void RelaxationGridBuffer::setup_processors(ProcessingToken token)
 void RelaxationGridBuffer::setup_rendering(const RenderConfig& config)
 {
     RenderConfig resolved = config;
-    resolved.topology = Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST;
+    resolved.topology = Portal::Graphics::PrimitiveTopology::POINT_LIST;
 
     if (resolved.vertex_shader.empty())
-        resolved.vertex_shader = "triangle.vert.spv";
+        resolved.vertex_shader = "point.vert.spv";
     if (resolved.fragment_shader.empty())
-        resolved.fragment_shader = "triangle.frag.spv";
+        resolved.fragment_shader = "point.frag.spv";
 
     ShaderConfig sc { resolved.vertex_shader };
     apply_render_config(resolved, sc);
