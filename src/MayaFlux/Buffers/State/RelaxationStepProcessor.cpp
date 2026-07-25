@@ -16,6 +16,13 @@ RelaxationStepProcessor::RelaxationStepProcessor(const std::string& shader_path,
     m_config.bindings["state_out"] = ShaderBinding(0, 1, vk::DescriptorType::eStorageBuffer);
 }
 
+RelaxationStepProcessor::RelaxationStepProcessor(const Portal::Graphics::ShaderSpec& spec)
+    : ComputeProcessor(spec)
+{
+    m_config.bindings["state_in"] = ShaderBinding(0, 0, vk::DescriptorType::eStorageBuffer);
+    m_config.bindings["state_out"] = ShaderBinding(0, 1, vk::DescriptorType::eStorageBuffer);
+}
+
 void RelaxationStepProcessor::write_state_descriptors(RelaxationGridBuffer* grid)
 {
     auto& foundry = Portal::Graphics::get_shader_foundry();

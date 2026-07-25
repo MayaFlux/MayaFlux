@@ -48,6 +48,7 @@ struct ShaderConfig {
     std::string shader_path; ///< Path to shader file
     Portal::Graphics::ShaderStage stage = Portal::Graphics::ShaderStage::COMPUTE;
     std::string entry_point = "main";
+    Portal::Graphics::ShaderID shader_id { Portal::Graphics::INVALID_SHADER };
 
     std::unordered_map<std::string, ShaderBinding> bindings;
 
@@ -58,6 +59,11 @@ struct ShaderConfig {
     ShaderConfig() = default;
     ShaderConfig(std::string path)
         : shader_path(std::move(path))
+    {
+    }
+    ShaderConfig(const Portal::Graphics::ShaderSpec& spec)
+        : shader_id(Portal::Graphics::get_shader_foundry().load_shader(spec))
+        , push_constant_size(spec.push_constant_bytes)
     {
     }
 };

@@ -27,12 +27,20 @@ class RelaxationGridBuffer;
 class MAYAFLUX_API RelaxationEmitProcessor : public ComputeProcessor {
 public:
     /**
-     * @brief Construct an emit processor for the given shader.
+     * @brief Construct an emit processor for the given shader file.
      * @param shader_path Path to the compute shader that reads cell_state
      *        and writes vertices.
      * @param workgroup_x Local workgroup size along X, forwarded to ComputeProcessor.
      */
     explicit RelaxationEmitProcessor(const std::string& shader_path, uint32_t workgroup_x = 16);
+
+    /**
+     * @brief Construct an emit processor from a generated ShaderSpec.
+     * @param spec ShaderSpec implementing the state-to-vertex mapping,
+     *        typically an Elementwise spec built from a factory such as
+     *        the binary/scalar-ramp/rgba emit shaders.
+     */
+    explicit RelaxationEmitProcessor(const Portal::Graphics::ShaderSpec& spec);
 
 protected:
     /**

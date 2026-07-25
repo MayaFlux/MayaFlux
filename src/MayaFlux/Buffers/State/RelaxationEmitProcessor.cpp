@@ -10,6 +10,13 @@ RelaxationEmitProcessor::RelaxationEmitProcessor(const std::string& shader_path,
     m_config.bindings["vertices"] = ShaderBinding(0, 1, vk::DescriptorType::eStorageBuffer);
 }
 
+RelaxationEmitProcessor::RelaxationEmitProcessor(const Portal::Graphics::ShaderSpec& spec)
+    : ComputeProcessor(spec)
+{
+    m_config.bindings["cell_state"] = ShaderBinding(0, 0, vk::DescriptorType::eStorageBuffer);
+    m_config.bindings["vertices"] = ShaderBinding(0, 1, vk::DescriptorType::eStorageBuffer);
+}
+
 bool RelaxationEmitProcessor::on_before_execute(
     Portal::Graphics::CommandBufferID /*cmd_id*/,
     const std::shared_ptr<VKBuffer>& buffer)

@@ -337,18 +337,25 @@ void ShaderProcessor::initialize_shader()
     on_before_compile(m_config.shader_path);
 
     auto& foundry = Portal::Graphics::get_shader_foundry();
-    m_shader_id = foundry.load_shader(m_config.shader_path, m_config.stage, m_config.entry_point);
+
+    if (m_config.shader_id != Portal::Graphics::INVALID_SHADER) {
+        m_shader_id = m_config.shader_id;
+    } else {
+        m_shader_id = foundry.load_shader(m_config.shader_path, m_config.stage, m_config.entry_point);
+    }
 
     if (m_shader_id == Portal::Graphics::INVALID_SHADER) {
         MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-            "Failed to load shader: {}", m_config.shader_path);
+            "Failed to load shader: {}",
+            m_config.shader_path.empty() ? "<from spec>" : m_config.shader_path);
         return;
     }
 
     on_shader_loaded(m_shader_id);
 
     MF_INFO(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-        "Shader loaded: {} (ID: {})", m_config.shader_path, m_shader_id);
+        "Shader loaded: {} (ID: {})",
+        m_config.shader_path.empty() ? "<from spec>" : m_config.shader_path, m_shader_id);
 }
 
 std::optional<uint32_t> ShaderProcessor::resolve_ds_index(uint32_t set) const

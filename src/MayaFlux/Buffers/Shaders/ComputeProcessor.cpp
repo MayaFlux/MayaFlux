@@ -15,6 +15,14 @@ ComputeProcessor::ComputeProcessor(const std::string& shader_path, uint32_t work
     m_dispatch_config.workgroup_x = workgroup_x;
 }
 
+ComputeProcessor::ComputeProcessor(const Portal::Graphics::ShaderSpec& spec)
+    : ShaderProcessor(ShaderConfig(spec))
+{
+    m_dispatch_config.workgroup_x = spec.workgroup_size[0];
+    m_dispatch_config.workgroup_y = spec.workgroup_size[1];
+    m_dispatch_config.workgroup_z = spec.workgroup_size[2];
+}
+
 void ComputeProcessor::initialize_pipeline(const std::shared_ptr<VKBuffer>& buffer)
 {
     if (m_shader_id == Portal::Graphics::INVALID_SHADER) {

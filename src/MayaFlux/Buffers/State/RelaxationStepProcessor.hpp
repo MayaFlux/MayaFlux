@@ -39,11 +39,22 @@ public:
     using StepPredicate = std::function<bool()>;
 
     /**
-     * @brief Construct a step processor for the given rule shader.
+     * @brief Construct a step processor for the given rule shader file.
      * @param shader_path Path to the compute shader implementing the rule.
      * @param workgroup_x Local workgroup size along X, forwarded to ComputeProcessor.
      */
     explicit RelaxationStepProcessor(const std::string& shader_path, uint32_t workgroup_x = 16);
+
+    /**
+     * @brief Construct a step processor from a generated ShaderSpec.
+     * @param spec ShaderSpec implementing the rule, produced by a factory
+     *        such as a Stencil-based generated rule (e.g. Jacobi diffusion)
+     *        or by ShaderSpec::Assemble with MF_KERNEL for branchy rules.
+     *
+     * Forwards to ComputeProcessor(spec) directly; workgroup sizing comes
+     * from spec.workgroup_size rather than a separate parameter.
+     */
+    explicit RelaxationStepProcessor(const Portal::Graphics::ShaderSpec& spec);
 
     /**
      * @brief Set the predicate deciding whether this cycle advances a
