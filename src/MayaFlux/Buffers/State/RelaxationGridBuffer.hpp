@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MayaFlux/Buffers/VKBuffer.hpp"
+#include "MayaFlux/Portal/Graphics/ShaderSpec.hpp"
 #include "MayaFlux/Vruta/BroadcastSource.hpp"
 
 namespace MayaFlux::Buffers {
@@ -74,6 +75,21 @@ public:
         size_t cell_stride_bytes,
         std::string rule_shader_path,
         std::string emit_shader_path);
+
+    /**
+     * @brief Construct using generated ShaderSpecs instead of shader files.
+     * @param width Grid width in cells.
+     * @param height Grid height in cells.
+     * @param cell_stride_bytes Size in bytes of one cell's state.
+     * @param rule_spec ShaderSpec implementing the rule, e.g. RelaxationSpecs::jacobi_diffusion().
+     * @param emit_spec ShaderSpec implementing state-to-vertex mapping, e.g. RelaxationSpecs::emit_scalar_ramp().
+     */
+    RelaxationGridBuffer(
+        uint32_t width,
+        uint32_t height,
+        size_t cell_stride_bytes,
+        Portal::Graphics::ShaderSpec rule_spec,
+        Portal::Graphics::ShaderSpec emit_spec);
 
     /**
      * @brief Destructor.
@@ -182,26 +198,18 @@ private:
         std::make_shared<Vruta::BroadcastSource<std::vector<uint8_t>>>()
     };
 
-    /** @brief Grid width in cells, fixed at construction. */
-    uint32_t m_width;
+    uint32_t m_width; ///< Grid width in cells.
+    uint32_t m_height; ///< Grid height in cells.
+    size_t m_cell_stride_bytes; ///< Size in bytes of one cell's state, fixed at construction.
 
-    /** @brief Grid height in cells, fixed at construction. */
-    uint32_t m_height;
+    std::string m_rule_shader_path; ///< Compute shader path for the rule step, passed to RelaxationStepProcessor.
+    std::string m_emit_shader_path; ///< Compute shader path for vertex emission, passed to RelaxationEmitProcessor.
+    Portal::Graphics::ShaderSpec m_rule_spec; ///< Compute shader spec for the rule step, passed to RelaxationStepProcessor.
+    Portal::Graphics::ShaderSpec m_emit_spec; ///< Compute shader spec for vertex emission, passed to RelaxationEmitProcessor.
 
-    /** @brief Size in bytes of one cell's state, fixed at construction. */
-    size_t m_cell_stride_bytes;
-
-    /** @brief Compute shader path for the rule step, passed to RelaxationStepProcessor. */
-    std::string m_rule_shader_path;
-
-    /** @brief Compute shader path for vertex emission, passed to RelaxationEmitProcessor. */
-    std::string m_emit_shader_path;
-
-    /** @brief True when back_buffers[0] holds the current front generation. */
-    bool m_front_is_a { true };
-
-    /** @brief Set by request_snapshot(), cleared by consume_snapshot_request(). */
-    std::atomic<bool> m_snapshot_requested { false };
+    bool m_front_is_a { true }; ///< True when back_buffers[0] holds the current front generation.
+    bool m_uses_spec_construction {}; ///< True when the constructor used ShaderSpec instead of shader paths.
+    std::atomic<bool> m_snapshot_requested {}; ///< Set by request_snapshot(), cleared by consume_snapshot_request().
 };
 
 } // namespace MayaFlux::Buffers
