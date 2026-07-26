@@ -69,19 +69,23 @@ void NodeBindingsProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buff
 {
     update_push_constants_from_nodes();
 
-    auto& staging = buffer->get_pipeline_context().push_constant_staging;
+    auto& entries = buffer->get_pipeline_context().push_constant_bindings;
 
     for (const auto& [name, binding] : m_bindings) {
-        size_t end_offset = binding.push_constant_offset + binding.size;
+        auto it = std::ranges::find_if(entries, [&](const auto& e) {
+            return e.offset == binding.push_constant_offset;
+        });
 
-        if (staging.size() < end_offset) {
-            staging.resize(end_offset);
+        if (it == entries.end()) {
+            entries.push_back(Portal::Graphics::PushConstantBindingInfo {
+                .offset = binding.push_constant_offset,
+                .data = std::vector<uint8_t>(binding.size),
+                .name = name });
+            it = std::prev(entries.end());
         }
 
-        std::memcpy(
-            staging.data() + binding.push_constant_offset,
-            m_push_constant_data.data() + binding.push_constant_offset,
-            binding.size);
+        const auto begin = m_push_constant_data.begin() + binding.push_constant_offset;
+        it->data.assign(begin, begin + binding.size);
 
         MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
             "NodeBindingsProcessor: Merged binding '{}' at offset {} ({} bytes)",

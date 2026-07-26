@@ -278,12 +278,7 @@ void RenderProcessor::initialize_pipeline(const std::shared_ptr<VKBuffer>& buffe
     pipeline_config.semantic_vertex_layout = *local_layout;
     pipeline_config.use_vertex_shader_reflection = m_buffer_info[buffer].use_reflection;
 
-    const auto& staging = buffer->get_pipeline_context().push_constant_staging;
-    if (!staging.empty()) {
-        pipeline_config.push_constant_size = staging.size();
-    } else {
-        pipeline_config.push_constant_size = std::max(m_config.push_constant_size, m_push_constant_data.size());
-    }
+    pipeline_config.push_constant_size = resolve_push_constant_size(buffer);
 
     auto& descriptor_bindings = buffer->get_pipeline_context().descriptor_buffer_bindings;
     std::map<std::pair<uint32_t, uint32_t>, Portal::Graphics::DescriptorBindingInfo> unified_bindings;
@@ -610,19 +605,10 @@ void RenderProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
             1);
     }
 
-    const auto& staging = buffer->get_pipeline_context();
-    if (!staging.push_constant_staging.empty()) {
+    const auto push_data = resolve_push_constants(buffer);
+    if (!push_data.empty()) {
         flow.push_constants(
-            cmd_id,
-            m_pipeline_id,
-            staging.push_constant_staging.data(),
-            staging.push_constant_staging.size());
-    } else if (!m_push_constant_data.empty()) {
-        flow.push_constants(
-            cmd_id,
-            m_pipeline_id,
-            m_push_constant_data.data(),
-            m_push_constant_data.size());
+            cmd_id, m_pipeline_id, push_data.data(), push_data.size());
     }
 
     on_before_execute(cmd_id, buffer);

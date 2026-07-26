@@ -86,7 +86,7 @@ public:
      * and metadata during processing of this buffer in a chain.
      */
     struct PipelineContext {
-        std::vector<uint8_t> push_constant_staging;
+        std::vector<Portal::Graphics::PushConstantBindingInfo> push_constant_bindings;
 
         std::vector<Portal::Graphics::DescriptorBindingInfo> descriptor_buffer_bindings;
 

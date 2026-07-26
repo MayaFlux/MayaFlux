@@ -129,17 +129,24 @@ void FormaBindingsProcessor::flush_push_constant(
     const PushConstantTarget& pc,
     const std::shared_ptr<VKBuffer>& buffer)
 {
-    auto& staging = buffer->get_pipeline_context().push_constant_staging;
-    const size_t end = static_cast<size_t>(pc.offset) + pc.size;
+    auto& entries = buffer->get_pipeline_context().push_constant_bindings;
 
-    if (staging.size() < end)
-        staging.resize(end);
+    auto it = std::ranges::find_if(entries, [&](const auto& e) {
+        return e.offset == pc.offset;
+    });
+
+    if (it == entries.end()) {
+        entries.push_back(Portal::Graphics::PushConstantBindingInfo {
+            .offset = pc.offset,
+            .data = std::vector<uint8_t>(pc.size) });
+        it = std::prev(entries.end());
+    }
 
     if (pc.size == sizeof(float)) {
-        std::memcpy(staging.data() + pc.offset, &value, sizeof(float));
+        std::memcpy(it->data.data(), &value, sizeof(float));
     } else if (pc.size == sizeof(double)) {
         auto promoted = static_cast<double>(value);
-        std::memcpy(staging.data() + pc.offset, &promoted, sizeof(double));
+        std::memcpy(it->data.data(), &promoted, sizeof(double));
     }
 
     MF_RT_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,

@@ -239,6 +239,29 @@ void ShaderProcessor::set_push_constant_data_raw(const void* data, size_t size)
     std::memcpy(m_push_constant_data.data(), data, size);
 }
 
+size_t ShaderProcessor::resolve_push_constant_size(const std::shared_ptr<VKBuffer>& buffer) const
+{
+    size_t size = std::max(m_config.push_constant_size, m_push_constant_data.size());
+
+    for (const auto& entry : buffer->get_pipeline_context().push_constant_bindings) {
+        size = std::max(size, static_cast<size_t>(entry.offset) + entry.data.size());
+    }
+
+    return size;
+}
+
+std::vector<uint8_t> ShaderProcessor::resolve_push_constants(const std::shared_ptr<VKBuffer>& buffer) const
+{
+    std::vector<uint8_t> merged = m_push_constant_data;
+    merged.resize(resolve_push_constant_size(buffer));
+
+    for (const auto& entry : buffer->get_pipeline_context().push_constant_bindings) {
+        std::memcpy(merged.data() + entry.offset, entry.data.data(), entry.data.size());
+    }
+
+    return merged;
+}
+
 //==============================================================================
 // Specialization Constants
 //==============================================================================

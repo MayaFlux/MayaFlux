@@ -378,6 +378,18 @@ public:
     }
 
 protected:
+    /**
+     * @brief Byte width of this processor's push constant block, extended to
+     *        cover any fragment staged on the buffer.
+     */
+    [[nodiscard]] size_t resolve_push_constant_size(const std::shared_ptr<VKBuffer>& buffer) const;
+
+    /**
+     * @brief This processor's push constant data with buffer-staged fragments
+     *        overlaid at their declared offsets.
+     */
+    [[nodiscard]] std::vector<uint8_t> resolve_push_constants(const std::shared_ptr<VKBuffer>& buffer) const;
+
     //==========================================================================
     // Overridable Hooks for Specialized Processors
     //==========================================================================
