@@ -1,0 +1,67 @@
+#version 460
+layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+
+layout(set = 0, binding = 0, std430) readonly buffer CellState {
+    vec2 cell_state[];
+};
+layout(set = 0, binding = 1, std430) writeonly buffer Vertices {
+    float vertices[];
+};
+
+layout(push_constant) uniform PC {
+    uint width;
+    uint height;
+    float extent;
+    float point_size;
+} pc;
+
+/**
+ * @brief Emit one packed 60-byte Kakshya::Vertex per cell, coloured by the
+ *        autocatalyst concentration v.
+ *
+ * Every cell is drawn; there is no clip-based culling, since a continuous
+ * field has no empty state. v is remapped from its useful range of roughly
+ * [0, 0.4] and ramped dark blue to cyan to white.
+ */
+vec3 ramp(float t) {
+    vec3 low = vec3(0.02, 0.04, 0.15);
+    vec3 mid = vec3(0.05, 0.65, 0.75);
+    vec3 high = vec3(0.95, 1.0, 1.0);
+    return t < 0.5
+    ? mix(low, mid, t * 2.0) : mix(mid, high, (t - 0.5) * 2.0);
+}
+
+void main() {
+    uint i = gl_GlobalInvocationID.x;
+    if (i >= pc.width * pc.height) return;
+
+    uint ix = i % pc.width;
+    uint iy = i / pc.width;
+
+    float fx = (float(ix) + 0.5) / float(pc.width);
+    float fy = (float(iy) + 0.5) / float(pc.height);
+
+    vec3 rgb = ramp(clamp(cell_state[i].y * 2.5, 0.0, 1.0));
+    uint b = i * 15u;
+
+    vertices[b + 0u] = (fx * 2.0 - 1.0) * pc.extent;
+    vertices[b + 1u] = (fy * 2.0 - 1.0) * pc.extent;
+    vertices[b + 2u] = 0.0;
+
+    vertices[b + 3u] = rgb.r;
+    vertices[b + 4u] = rgb.g;
+    vertices[b + 5u] = rgb.b;
+
+    vertices[b + 6u] = pc.point_size;
+
+    vertices[b + 7u] = fx;
+    vertices[b + 8u] = fy;
+
+    vertices[b + 9u] = 0.0;
+    vertices[b + 10u] = 0.0;
+    vertices[b + 11u] = 1.0;
+
+    vertices[b + 12u] = 1.0;
+    vertices[b + 13u] = 0.0;
+    vertices[b + 14u] = 0.0;
+}

@@ -144,9 +144,6 @@ public:
      */
     [[nodiscard]] uint32_t front_index() const { return m_front_is_a ? 0 : 1; }
 
-    /** @brief Temporary probe: total swap_generation calls since construction. */
-    [[nodiscard]] uint32_t swap_count() const { return m_swap_count; }
-
     /**
      * @brief Index into m_resources.back_buffers currently serving as the
      *        write target for the next rule dispatch.
@@ -176,6 +173,12 @@ public:
         return m_snapshot_source;
     }
 
+    /** @brief The attached rule-stage processor, valid after setup_processors(). */
+    [[nodiscard]] std::shared_ptr<RelaxationStepProcessor> step_processor() const { return m_step_processor; }
+
+    /** @brief The attached emit-stage processor, valid after setup_processors(). */
+    [[nodiscard]] std::shared_ptr<RelaxationEmitProcessor> emit_processor() const { return m_emit_processor; }
+
 private:
     friend class RelaxationStepProcessor;
     friend class RelaxationEmitProcessor;
@@ -185,11 +188,7 @@ private:
         return m_snapshot_requested.exchange(false, std::memory_order_acq_rel);
     }
 
-    void swap_generation()
-    {
-        m_front_is_a = !m_front_is_a;
-        ++m_swap_count;
-    }
+    inline void swap_generation() { m_front_is_a = !m_front_is_a; }
 
     /** @brief Signaled by RelaxationStepProcessor when a requested snapshot completes. */
     std::shared_ptr<Vruta::BroadcastSource<std::vector<uint8_t>>> m_snapshot_source {
@@ -204,8 +203,10 @@ private:
     ShaderSource m_emit_source; ///< Either a path to a hand-written emit shader or a generated ShaderSpec.
 
     bool m_front_is_a { true }; ///< True when back_buffers[0] holds the current front generation.
-    std::atomic<bool> m_snapshot_requested {}; ///< Set by request_snapshot(), cleared by consume_snapshot_request().
-    uint32_t m_swap_count {}; ///< Temporary probe: total swap_generation calls.
+    std::atomic<bool> m_snapshot_requested { false }; ///< Set by request_snapshot(), cleared by consume_snapshot_request().
+
+    std::shared_ptr<RelaxationStepProcessor> m_step_processor; ///< Rule stage, retained for parameter access.
+    std::shared_ptr<RelaxationEmitProcessor> m_emit_processor; ///< Emit stage, retained for parameter access.
 };
 
 } // namespace MayaFlux::Buffers

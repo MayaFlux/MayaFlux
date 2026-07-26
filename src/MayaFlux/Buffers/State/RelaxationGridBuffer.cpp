@@ -75,12 +75,12 @@ void RelaxationGridBuffer::setup_processors(ProcessingToken token)
     layout.vertex_count = get_cell_count();
     set_vertex_layout(layout);
 
-    auto step_processor = std::visit(
+    m_step_processor = std::visit(
         [](const auto& src) { return std::make_shared<RelaxationStepProcessor>(src); },
         m_rule_source);
 
-    step_processor->set_processing_token(token);
-    set_default_processor(step_processor);
+    m_step_processor->set_processing_token(token);
+    set_default_processor(m_step_processor);
 
     auto chain = get_processing_chain();
     if (!chain) {
@@ -89,11 +89,11 @@ void RelaxationGridBuffer::setup_processors(ProcessingToken token)
     }
     chain->set_preferred_token(token);
 
-    auto emit_processor = std::visit(
+    m_emit_processor = std::visit(
         [](const auto& src) { return std::make_shared<RelaxationEmitProcessor>(src); },
         m_emit_source);
-    emit_processor->set_processing_token(token);
-    chain->add_processor(emit_processor, shared_from_this());
+    m_emit_processor->set_processing_token(token);
+    chain->add_processor(m_emit_processor, shared_from_this());
 
     MF_DEBUG(Journal::Component::Buffers, Journal::Context::Init,
         "RelaxationGridBuffer setup_processors: step + emit attached");

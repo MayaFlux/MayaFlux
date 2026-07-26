@@ -231,7 +231,6 @@ void ComputeProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
 
     on_before_execute(cmd_id, buffer);
 
-    const auto& staging = buffer->get_pipeline_context();
     const auto push_data = resolve_push_constants(buffer);
     if (!push_data.empty()) {
         compute_press.push_constants(
