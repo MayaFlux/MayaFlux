@@ -239,6 +239,29 @@ void ShaderProcessor::set_push_constant_data_raw(const void* data, size_t size)
     std::memcpy(m_push_constant_data.data(), data, size);
 }
 
+size_t ShaderProcessor::resolve_push_constant_size(const std::shared_ptr<VKBuffer>& buffer) const
+{
+    size_t size = std::max(m_config.push_constant_size, m_push_constant_data.size());
+
+    for (const auto& entry : buffer->get_pipeline_context().push_constant_bindings) {
+        size = std::max(size, static_cast<size_t>(entry.offset) + entry.data.size());
+    }
+
+    return size;
+}
+
+std::vector<uint8_t> ShaderProcessor::resolve_push_constants(const std::shared_ptr<VKBuffer>& buffer) const
+{
+    std::vector<uint8_t> merged = m_push_constant_data;
+    merged.resize(resolve_push_constant_size(buffer));
+
+    for (const auto& entry : buffer->get_pipeline_context().push_constant_bindings) {
+        std::memcpy(merged.data() + entry.offset, entry.data.data(), entry.data.size());
+    }
+
+    return merged;
+}
+
 //==============================================================================
 // Specialization Constants
 //==============================================================================
@@ -337,18 +360,25 @@ void ShaderProcessor::initialize_shader()
     on_before_compile(m_config.shader_path);
 
     auto& foundry = Portal::Graphics::get_shader_foundry();
-    m_shader_id = foundry.load_shader(m_config.shader_path, m_config.stage, m_config.entry_point);
+
+    if (m_config.shader_id != Portal::Graphics::INVALID_SHADER) {
+        m_shader_id = m_config.shader_id;
+    } else {
+        m_shader_id = foundry.load_shader(m_config.shader_path, m_config.stage, m_config.entry_point);
+    }
 
     if (m_shader_id == Portal::Graphics::INVALID_SHADER) {
         MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-            "Failed to load shader: {}", m_config.shader_path);
+            "Failed to load shader: {}",
+            m_config.shader_path.empty() ? "<from spec>" : m_config.shader_path);
         return;
     }
 
     on_shader_loaded(m_shader_id);
 
     MF_INFO(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-        "Shader loaded: {} (ID: {})", m_config.shader_path, m_shader_id);
+        "Shader loaded: {} (ID: {})",
+        m_config.shader_path.empty() ? "<from spec>" : m_config.shader_path, m_shader_id);
 }
 
 std::optional<uint32_t> ShaderProcessor::resolve_ds_index(uint32_t set) const

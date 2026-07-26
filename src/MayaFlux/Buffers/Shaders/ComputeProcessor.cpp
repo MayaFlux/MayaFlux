@@ -15,6 +15,14 @@ ComputeProcessor::ComputeProcessor(const std::string& shader_path, uint32_t work
     m_dispatch_config.workgroup_x = workgroup_x;
 }
 
+ComputeProcessor::ComputeProcessor(const Portal::Graphics::ShaderSpec& spec)
+    : ShaderProcessor(ShaderConfig(spec))
+{
+    m_dispatch_config.workgroup_x = spec.workgroup_size[0];
+    m_dispatch_config.workgroup_y = spec.workgroup_size[1];
+    m_dispatch_config.workgroup_z = spec.workgroup_size[2];
+}
+
 void ComputeProcessor::initialize_pipeline(const std::shared_ptr<VKBuffer>& buffer)
 {
     if (m_shader_id == Portal::Graphics::INVALID_SHADER) {
@@ -57,19 +65,10 @@ void ComputeProcessor::initialize_pipeline(const std::shared_ptr<VKBuffer>& buff
         descriptor_sets.push_back(set_bindings);
     }
 
-    const auto& staging = buffer->get_pipeline_context().push_constant_staging;
-    size_t push_constant_size = 0;
-
-    if (!staging.empty()) {
-        push_constant_size = staging.size();
-    } else {
-        push_constant_size = std::max(m_config.push_constant_size, m_push_constant_data.size());
-    }
-
     m_pipeline_id = compute_press.create_pipeline(
         m_shader_id,
         descriptor_sets,
-        push_constant_size);
+        resolve_push_constant_size(buffer));
 
     if (m_pipeline_id == Portal::Graphics::INVALID_COMPUTE_PIPELINE) {
         MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
@@ -232,19 +231,10 @@ void ComputeProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
 
     on_before_execute(cmd_id, buffer);
 
-    const auto& staging = buffer->get_pipeline_context();
-    if (!staging.push_constant_staging.empty()) {
+    const auto push_data = resolve_push_constants(buffer);
+    if (!push_data.empty()) {
         compute_press.push_constants(
-            cmd_id,
-            m_pipeline_id,
-            staging.push_constant_staging.data(),
-            staging.push_constant_staging.size());
-    } else if (!m_push_constant_data.empty()) {
-        compute_press.push_constants(
-            cmd_id,
-            m_pipeline_id,
-            m_push_constant_data.data(),
-            m_push_constant_data.size());
+            cmd_id, m_pipeline_id, push_data.data(), push_data.size());
     }
 
     auto dispatch_size = calculate_dispatch_size(buffer);

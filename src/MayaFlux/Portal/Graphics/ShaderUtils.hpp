@@ -138,6 +138,21 @@ struct ShaderSource {
 };
 
 /**
+ * @struct PushConstantBindingInfo
+ * @brief Self-describing push constant fragment staged on a VKBuffer.
+ *
+ * The push constant analogue of DescriptorBindingInfo. Where a descriptor
+ * entry carries its own set and binding, a push constant entry carries its
+ * own byte offset, so a shared list on the buffer merges into any
+ * processor's own push constant block without a per-processor key.
+ */
+struct PushConstantBindingInfo {
+    uint32_t offset {};
+    std::vector<uint8_t> data;
+    std::string name;
+};
+
+/**
  * @enum DescriptorRole
  * @brief Semantic descriptor type — maps to Vulkan descriptor types internally.
  *

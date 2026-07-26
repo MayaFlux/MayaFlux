@@ -1,0 +1,70 @@
+#version 460
+layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+
+layout(set = 0, binding = 0, std430) readonly buffer CellState {
+    uint cell_state[];
+};
+layout(set = 0, binding = 1, std430) writeonly buffer Vertices {
+    float vertices[];
+};
+
+layout(push_constant) uniform PC {
+    uint width;
+    uint height;
+    float extent;
+    float point_size;
+} pc;
+
+/**
+ * @brief Emit one packed 60-byte Kakshya::Vertex per cell.
+ *
+ * Field offsets in floats: position 0, color 3, scalar 6, uv 7,
+ * normal 9, tangent 12. std430 would pad a vec3-bearing struct to
+ * 16-byte alignment, so the record is written as raw floats.
+ *
+ * Dead cells are placed at z = 2.0, outside the Vulkan [0, 1] clip
+ * range, so they are discarded by clipping rather than relying on a
+ * zero gl_PointSize which the implementation may clamp to
+ * pointSizeRange minimum.
+ */
+void main() {
+    uint i = gl_GlobalInvocationID.x;
+    if (i >= pc.width * pc.height) return;
+
+    uint ix = i % pc.width;
+    uint iy = i / pc.width;
+
+    float fx = (float(ix) + 0.5) / float(pc.width);
+    float fy = (float(iy) + 0.5) / float(pc.height);
+
+    uint s = cell_state[i];
+    vec3 rgb = vec3(0.25, 0.25, 0.30);
+    if (s == 2u) {
+        rgb = vec3(1.0, 0.9, 0.3);
+    } else if (s == 3u) {
+        rgb = vec3(0.8, 0.2, 0.1);
+    }
+
+    uint b = i * 15u;
+
+    vertices[b + 0u] = (fx * 2.0 - 1.0) * pc.extent;
+    vertices[b + 1u] = (fy * 2.0 - 1.0) * pc.extent;
+    vertices[b + 2u] = (s != 0u) ? 0.0 : 2.0;
+
+    vertices[b + 3u] = rgb.r;
+    vertices[b + 4u] = rgb.g;
+    vertices[b + 5u] = rgb.b;
+
+    vertices[b + 6u] = pc.point_size;
+
+    vertices[b + 7u] = fx;
+    vertices[b + 8u] = fy;
+
+    vertices[b + 9u] = 0.0;
+    vertices[b + 10u] = 0.0;
+    vertices[b + 11u] = 1.0;
+
+    vertices[b + 12u] = 1.0;
+    vertices[b + 13u] = 0.0;
+    vertices[b + 14u] = 0.0;
+}

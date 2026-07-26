@@ -28,8 +28,8 @@ struct ShaderConfig;
  * by GeometryBindingsProcessor after index data upload and consumed by
  * RenderProcessor to select the indexed draw path. They are null/zero for
  * all non-indexed geometry; no separate allocation object is required.
- * The struct also contains a back_buffer / back_memory pair for double-buffered staging
- * or ping pong operations, if needed by a processor. The back buffer is optional and may be VK_NULL_HANDLE.
+ * back_buffers are reserved for double-buffered or N-buffered ping-pong state or
+ * other auxiliary buffers owned by a VKBuffer subclass. They are empty when unused.
  */
 struct VKBufferResources {
     vk::Buffer buffer;
@@ -40,8 +40,12 @@ struct VKBufferResources {
     vk::DeviceMemory index_memory;
     size_t index_size_bytes { 0 };
 
-    vk::Buffer back_buffer { VK_NULL_HANDLE };
-    vk::DeviceMemory back_memory { VK_NULL_HANDLE };
+    struct GenerationSlot {
+        vk::Buffer buffer { VK_NULL_HANDLE };
+        vk::DeviceMemory memory { VK_NULL_HANDLE };
+        void* mapped_ptr { nullptr };
+    };
+    std::vector<GenerationSlot> back_buffers;
 };
 
 using RenderPipelineID = uint64_t;
@@ -82,7 +86,7 @@ public:
      * and metadata during processing of this buffer in a chain.
      */
     struct PipelineContext {
-        std::vector<uint8_t> push_constant_staging;
+        std::vector<Portal::Graphics::PushConstantBindingInfo> push_constant_bindings;
 
         std::vector<Portal::Graphics::DescriptorBindingInfo> descriptor_buffer_bindings;
 
@@ -333,8 +337,11 @@ public:
         m_resources.index_size_bytes = size;
     }
 
-    /** Get all buffer resources at once */
-    inline const VKBufferResources& get_buffer_resources() { return m_resources; }
+    /** Get all buffer resources at once (read-only) */
+    inline const VKBufferResources& get_buffer_resources() const { return m_resources; }
+
+    /** Get all buffer resources at once (mutable). */
+    inline VKBufferResources& get_buffer_resources() { return m_resources; }
 
     /**
      * @brief Return the raw index buffer handle.

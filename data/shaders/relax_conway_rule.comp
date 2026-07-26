@@ -1,0 +1,53 @@
+#version 460
+layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+
+layout(set = 0, binding = 0, std430) buffer StateIn {
+    uint state_in[];
+};
+layout(set = 0, binding = 1, std430) buffer StateOut {
+    uint state_out[];
+};
+
+layout(push_constant) uniform PC {
+    uint width;
+    uint height;
+} pc;
+
+/**
+ * @brief Conway's Game of Life: B3/S23.
+ *
+ * state values are 0 (dead) or 1 (alive). Edge cells clamp to nearest
+ * in-bounds neighbor (no wraparound).
+ */
+void main() {
+    uint ix = gl_GlobalInvocationID.x;
+    uint iy = gl_GlobalInvocationID.y;
+    if (ix >= pc.width || iy >= pc.height) return;
+
+    uint w1 = pc.width - 1;
+    uint h1 = pc.height - 1;
+
+    uint alive = 0;
+    for (int dy = -1; dy <= 1; ++dy) {
+        for (int dx = -1; dx <= 1; ++dx) {
+            if (dx == 0 && dy == 0) continue;
+            int nx = int(ix) + dx;
+            int ny = int(iy) + dy;
+            nx = clamp(nx, 0, int(w1));
+            ny = clamp(ny, 0, int(h1));
+            alive += state_in[uint(ny) * pc.width + uint(nx)];
+        }
+    }
+
+    uint idx = iy * pc.width + ix;
+    uint self = state_in[idx];
+
+    uint next = 0;
+    if (self == 1) {
+        next = (alive == 2 || alive == 3) ? 1 : 0;
+    } else {
+        next = (alive == 3) ? 1 : 0;
+    }
+
+    state_out[idx] = next;
+}

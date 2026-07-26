@@ -423,6 +423,162 @@ namespace {
     }
 
     /**
+     * Emit the entry point body for the Elementwise template (also used
+     * as the fallback for GeometryEmit).
+     * Loads the index, loads PC fields, loads SSBO elements, applies op, stores.
+     *
+     * Fixed shape for a 3x3 Moore-neighborhood sum over a single input SSBO
+     * (scalar element format: FLOAT32, UINT32, or INT32), written to a single
+     * output SSBO of the same element count. Grid width and height are read
+     * from the first two PC fields, mirroring emit_image_body's width/height
+     * PC convention. Out-of-bounds neighbor reads clamp to the nearest
+     * in-bounds cell.
+     *
+     * The op field selects how the center cell's own value and the eight-
+     * neighbor sum combine into the output: Add sums center plus neighbor
+     * sum, Sub subtracts neighbor sum from center, Multiply scales center by
+     * neighbor sum. Any other op copies the neighbor sum through unchanged,
+     * matching emit_elementwise_body's own default-case convention.
+     */
+    std::string emit_stencil_body(const ShaderSpec& spec)
+    {
+        const BindingSlot* in_ssbo = nullptr;
+        const BindingSlot* out_ssbo = nullptr;
+        for (const auto& b : spec.bindings) {
+            if (b.direction == BindingDirection::Output && !out_ssbo) {
+                out_ssbo = &b;
+            } else if (b.direction != BindingDirection::Output && !in_ssbo) {
+                in_ssbo = &b;
+            }
+        }
+
+        const std::string_view etype = ssbo_elem_spirv_type(in_ssbo->format);
+        const bool is_float = (etype == "%f32");
+        const std::string add_op = is_float ? "OpFAdd" : "OpIAdd";
+        const std::string sub_op = is_float ? "OpFSub" : "OpISub";
+        const std::string mul_op = is_float ? "OpFMul" : "OpIMul";
+        const std::string in_name = in_ssbo->name;
+        const std::string out_name = out_ssbo->name;
+
+        std::string o;
+        o += "%main  = OpFunction %void None %voidfn\n";
+        o += "%entry = OpLabel\n";
+        o += "%gid3  = OpLoad %v3u32 %gid_var\n";
+        o += "%ix    = OpCompositeExtract %u32 %gid3 0\n";
+        o += "%iy    = OpCompositeExtract %u32 %gid3 1\n\n";
+
+        o += "%ppc_width  = OpAccessChain %ppc_u32 %pc %c0u\n";
+        o += "%pc_width   = OpLoad %u32 %ppc_width\n";
+        o += "%ppc_height = OpAccessChain %ppc_u32 %pc %c1u\n";
+        o += "%pc_height  = OpLoad %u32 %ppc_height\n\n";
+
+        o += "%w_m1 = OpISub %u32 %pc_width %c1u\n";
+        o += "%h_m1 = OpISub %u32 %pc_height %c1u\n\n";
+
+        o += "%i = OpIMul %u32 %iy %pc_width\n";
+        o += "%i_flat = OpIAdd %u32 %i %ix\n\n";
+
+        const std::array<std::pair<int, int>, 9> offsets = { { { -1, -1 }, { 0, -1 }, { 1, -1 },
+            { -1, 0 }, { 0, 0 }, { 1, 0 },
+            { -1, 1 }, { 0, 1 }, { 1, 1 } } };
+
+        std::string center_val;
+        std::string running_sum;
+        bool sum_started = false;
+
+        for (size_t n = 0; n < offsets.size(); ++n) {
+            const auto [dx, dy] = offsets[n];
+            const std::string ns = std::to_string(n);
+
+            std::string nx = "%ix";
+            if (dx == 1) {
+                o += "%nxr" + ns + " = OpIAdd %u32 %ix %c1u\n";
+                o += "%oobx" + ns + " = OpUGreaterThan %bool %nxr" + ns + " %w_m1\n";
+                o += "%nx" + ns + " = OpSelect %u32 %oobx" + ns + " %w_m1 %nxr" + ns + "\n";
+                nx = "%nx" + ns;
+            } else if (dx == -1) {
+                o += "%z" + ns + " = OpIEqual %bool %ix %c0u\n";
+                o += "%nxr" + ns + " = OpISub %u32 %ix %c1u\n";
+                o += "%nx" + ns + " = OpSelect %u32 %z" + ns + " %c0u %nxr" + ns + "\n";
+                nx = "%nx" + ns;
+            }
+
+            std::string ny = "%iy";
+            if (dy == 1) {
+                o += "%nyr" + ns + " = OpIAdd %u32 %iy %c1u\n";
+                o += "%ooby" + ns + " = OpUGreaterThan %bool %nyr" + ns + " %h_m1\n";
+                o += "%ny" + ns + " = OpSelect %u32 %ooby" + ns + " %h_m1 %nyr" + ns + "\n";
+                ny = "%ny" + ns;
+            } else if (dy == -1) {
+                o += "%zy" + ns + " = OpIEqual %bool %iy %c0u\n";
+                o += "%nyr" + ns + " = OpISub %u32 %iy %c1u\n";
+                o += "%ny" + ns + " = OpSelect %u32 %zy" + ns + " %c0u %nyr" + ns + "\n";
+                ny = "%ny" + ns;
+            }
+
+            o += "%nrow" + ns + " = OpIMul %u32 " + ny + " %pc_width\n";
+            o += "%nidx" + ns + " = OpIAdd %u32 %nrow" + ns + " " + nx + "\n";
+            o += "%ngep" + ns + " = OpAccessChain %pelem_" + in_name
+                + " %buf_" + in_name + " %c0u %nidx" + ns + "\n";
+            o += "%nval" + ns + " = OpLoad " + std::string(etype) + " %ngep" + ns + "\n";
+
+            if (dx == 0 && dy == 0) {
+                center_val = "%nval" + ns;
+                continue;
+            }
+
+            if (!sum_started) {
+                running_sum = "%nval" + ns;
+                sum_started = true;
+            } else {
+                const std::string next_sum = "%sum" + ns;
+                o += next_sum + " = " + add_op + " " + std::string(etype) + " " + running_sum + " %nval" + ns + "\n";
+                running_sum = next_sum;
+            }
+        }
+        o += "\n";
+
+        std::string result;
+        switch (spec.op) {
+        case KernelOp::Add:
+            o += "%res = " + add_op + " " + std::string(etype) + " " + center_val + " " + running_sum + "\n";
+            result = "%res";
+            break;
+        case KernelOp::Sub:
+            o += "%res = " + sub_op + " " + std::string(etype) + " " + center_val + " " + running_sum + "\n";
+            result = "%res";
+            break;
+        case KernelOp::Multiply:
+            o += "%res = " + mul_op + " " + std::string(etype) + " " + center_val + " " + running_sum + "\n";
+            result = "%res";
+            break;
+        case KernelOp::WeightedBlend:
+            o += "%ppc_rate  = OpAccessChain %ppc_f32 %pc %c2u\n";
+            o += "%pc_rate   = OpLoad %f32 %ppc_rate\n";
+            o += "%ppc_wsum  = OpAccessChain %ppc_f32 %pc %c3u\n";
+            o += "%pc_wsum   = OpLoad %f32 %ppc_wsum\n";
+            o += "%scaled_sum = OpFMul %f32 " + running_sum + " %pc_wsum\n";
+            o += "%delta      = OpFSub %f32 %scaled_sum " + center_val + "\n";
+            o += "%weighted   = OpFMul %f32 %pc_rate %delta\n";
+            o += "%res        = OpFAdd %f32 " + center_val + " %weighted\n";
+            result = "%res";
+            break;
+        default:
+            result = running_sum;
+            break;
+        }
+        o += "\n";
+
+        o += "%out_gep = OpAccessChain %pelem_" + out_name
+            + " %buf_" + out_name + " %c0u %i_flat\n";
+        o += "OpStore %out_gep " + result + "\n";
+
+        o += "OpReturn\n";
+        o += "OpFunctionEnd\n";
+        return o;
+    }
+
+    /**
      * Emit the entry point body for Elementwise/Stencil templates.
      * Loads the index, loads PC fields, loads SSBO elements, applies op, stores.
      */
@@ -671,7 +827,59 @@ namespace {
             result = "%res";
             break;
         }
+        case KernelOp::CompareGE: {
+            Kakshya::GpuDataFormat out_fmt = primary_fmt;
+            uint32_t out_ncomp = ncomp;
+            for (const auto* b : ssbos) {
+                if (b->direction == BindingDirection::Output) {
+                    out_fmt = b->format;
+                    out_ncomp = ssbo_elem_components(out_fmt);
+                    break;
+                }
+            }
+            const std::string_view out_etype = ssbo_elem_spirv_type(out_fmt);
+
+            std::string cmp_lhs = v0;
+            if (is_vector) {
+                o += "%cmp_scalar = OpCompositeExtract %f32 " + v0 + " 0\n";
+                cmp_lhs = "%cmp_scalar";
+            } else if (etype != "%f32") {
+                o += "%cmp_lhs_f = OpConvertUToF %f32 " + v0 + "\n";
+                cmp_lhs = "%cmp_lhs_f";
+            }
+
+            const bool has_threshold = !spec.pc_fields.empty();
+            std::string threshold_f;
+            if (has_threshold) {
+                threshold_f = p0;
+            } else {
+                o += "%cmp_zero_u = OpConvertUToF %f32 %c0u\n";
+                threshold_f = "%cmp_zero_u";
+            }
+
+            o += "%cmp = OpFOrdGreaterThanEqual %bool " + cmp_lhs + " " + threshold_f + "\n";
+            o += "%cmp_one_f = OpConvertUToF %f32 %c1u\n";
+            o += "%cmp_zero_f = OpConvertUToF %f32 %c0u\n";
+            o += "%cmp_scaled = OpSelect %f32 %cmp %cmp_one_f %cmp_zero_f\n";
+
+            if (out_ncomp > 1) {
+                o += "%res = OpCompositeConstruct " + std::string(out_etype);
+                for (uint32_t c = 0; c < out_ncomp; ++c)
+                    o += " %cmp_scaled";
+                o += "\n";
+            } else if (out_etype != "%f32") {
+                o += "%res = OpConvertFToU " + std::string(out_etype) + " %cmp_scaled\n";
+            } else {
+                o += "%res = OpCopyObject %f32 %cmp_scaled\n";
+            }
+            result = "%res";
+            break;
+        }
         default:
+            for (const auto* b : ssbos) {
+                if (b->direction == BindingDirection::Output && b->format != primary_fmt)
+                    return {};
+            }
             o += "%res = OpCopyObject " + et + " " + v0 + "\n";
             result = "%res";
             break;
@@ -1415,8 +1623,10 @@ std::string emit_spirv_asm(const ShaderSpec& spec)
     case KernelTemplate::BitonicSort:
         src += emit_bitonic_body(spec);
         break;
-    case KernelTemplate::Elementwise:
     case KernelTemplate::Stencil:
+        src += emit_stencil_body(spec);
+        break;
+    case KernelTemplate::Elementwise:
     case KernelTemplate::GeometryEmit:
     default:
         src += emit_elementwise_body(spec);

@@ -17,6 +17,18 @@ struct MAYAFLUX_API BufferService {
     std::function<void(const std::shared_ptr<void>&)> initialize_buffer;
 
     /**
+     * @brief Allocate a raw buffer/memory pair without an owning VKBuffer.
+     * @param size_bytes Buffer capacity in bytes.
+     * @param usage Opaque backend usage flags (vk::BufferUsageFlags, cast to void* representation by convention).
+     * @param memory_properties Opaque backend memory property flags.
+     * @param host_visible Whether to map the allocation and populate the mapped pointer output.
+     * @param out_buffer Receives the created buffer handle (opaque).
+     * @param out_memory Receives the bound memory handle (opaque).
+     * @param out_mapped_ptr Receives the mapped host pointer, or nullptr if not host-visible.
+     */
+    std::function<void(size_t, uint32_t, uint32_t, bool, void*&, void*&, void*&)> allocate_raw_buffer;
+
+    /**
      * @brief Destroy a buffer and free its associated memory
      * @param buffer Buffer handle to destroy
      *

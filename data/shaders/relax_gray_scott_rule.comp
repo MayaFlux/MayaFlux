@@ -1,0 +1,64 @@
+#version 460
+layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+
+layout(set = 0, binding = 0, std430) readonly buffer StateIn {
+    vec2 state_in[];
+};
+layout(set = 0, binding = 1, std430) writeonly buffer StateOut {
+    vec2 state_out[];
+};
+
+layout(push_constant) uniform PC {
+    uint width;
+    uint height;
+    float feed;
+    float kill;
+} pc;
+
+const float DIFF_U = 0.16;
+const float DIFF_V = 0.08;
+const float DT = 1.0;
+
+/**
+ * @brief Gray-Scott reaction-diffusion, one Euler step per dispatch.
+ *
+ * Cell state is vec2(u, v): u is the substrate, v the autocatalyst.
+ * Laplacian uses the standard 3x3 kernel with 0.2 orthogonal and 0.05
+ * diagonal weights summing to 1 against a -1 centre. Edges clamp to the
+ * nearest in-bounds cell, matching the other rule shaders.
+ *
+ * feed and kill select the pattern family. 0.060 / 0.062 gives coral
+ * growth; 0.030 / 0.062 gives mitosis; 0.014 / 0.054 gives solitons.
+ */
+vec2 fetch(uint x, uint y) {
+    uint cx = min(x, pc.width - 1u);
+    uint cy = min(y, pc.height - 1u);
+    return state_in[cy * pc.width + cx];
+}
+
+void main() {
+    uint ix = gl_GlobalInvocationID.x;
+    uint iy = gl_GlobalInvocationID.y;
+    if (ix >= pc.width || iy >= pc.height) return;
+
+    uint xm = ix == 0u ? 0u : ix - 1u;
+    uint ym = iy == 0u ? 0u : iy - 1u;
+    uint xp = ix + 1u;
+    uint yp = iy + 1u;
+
+    vec2 centre = fetch(ix, iy);
+
+    vec2 lap = centre * -1.0
+            + (fetch(xm, iy) + fetch(xp, iy) + fetch(ix, ym) + fetch(ix, yp)) * 0.2
+            + (fetch(xm, ym) + fetch(xp, ym) + fetch(xm, yp) + fetch(xp, yp)) * 0.05;
+
+    float u = centre.x;
+    float v = centre.y;
+    float uvv = u * v * v;
+
+    float du = DIFF_U * lap.x - uvv + pc.feed * (1.0 - u);
+    float dv = DIFF_V * lap.y + uvv - (pc.feed + pc.kill) * v;
+
+    state_out[iy * pc.width + ix] = clamp(
+            vec2(u + du * DT, v + dv * DT), vec2(0.0), vec2(1.0));
+}

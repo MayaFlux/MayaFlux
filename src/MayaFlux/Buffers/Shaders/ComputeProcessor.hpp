@@ -93,6 +93,17 @@ public:
      */
     explicit ComputeProcessor(const std::string& shader_path, uint32_t workgroup_x = 256);
 
+    /**
+     * @brief Construct processor from a generated ShaderSpec.
+     * @param spec ShaderSpec produced by ShaderSpec::Assemble::build().
+     *
+     * Delegates to ShaderProcessor(ShaderConfig(spec)) for compilation,
+     * then applies spec.workgroup_size to this processor's own
+     * ShaderDispatchConfig — workgroup sizing is a ComputeProcessor
+     * concern the shared ShaderProcessor base has no knowledge of.
+     */
+    explicit ComputeProcessor(const Portal::Graphics::ShaderSpec& spec);
+
     //==========================================================================
     // Dispatch Configuration
     //==========================================================================

@@ -48,6 +48,7 @@ struct ShaderConfig {
     std::string shader_path; ///< Path to shader file
     Portal::Graphics::ShaderStage stage = Portal::Graphics::ShaderStage::COMPUTE;
     std::string entry_point = "main";
+    Portal::Graphics::ShaderID shader_id { Portal::Graphics::INVALID_SHADER };
 
     std::unordered_map<std::string, ShaderBinding> bindings;
 
@@ -58,6 +59,11 @@ struct ShaderConfig {
     ShaderConfig() = default;
     ShaderConfig(std::string path)
         : shader_path(std::move(path))
+    {
+    }
+    ShaderConfig(const Portal::Graphics::ShaderSpec& spec)
+        : shader_id(Portal::Graphics::get_shader_foundry().load_shader(spec))
+        , push_constant_size(spec.push_constant_bytes)
     {
     }
 };
@@ -372,6 +378,18 @@ public:
     }
 
 protected:
+    /**
+     * @brief Byte width of this processor's push constant block, extended to
+     *        cover any fragment staged on the buffer.
+     */
+    [[nodiscard]] size_t resolve_push_constant_size(const std::shared_ptr<VKBuffer>& buffer) const;
+
+    /**
+     * @brief This processor's push constant data with buffer-staged fragments
+     *        overlaid at their declared offsets.
+     */
+    [[nodiscard]] std::vector<uint8_t> resolve_push_constants(const std::shared_ptr<VKBuffer>& buffer) const;
+
     //==========================================================================
     // Overridable Hooks for Specialized Processors
     //==========================================================================

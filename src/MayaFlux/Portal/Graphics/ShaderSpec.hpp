@@ -281,6 +281,20 @@ enum class KernelOp : uint8_t {
     CompareGEPreserve, ///< out[ch] = pixel[ch] >= pc[0] ? pc[1] : pixel[ch]
     ChannelDot, ///< out = dot(pixel.rgba, pc[0..3]) broadcast to all channels
     ChannelReplicate, ///< out = pixel[pc_channel_index].xxxx (single channel to all)
+
+    /**
+     * @brief Stencil-only: blends a cell toward a scaled neighbor sum by a
+     *        rate factor: out = center + pc[N] * (sum * pc[N+1] - center),
+     *        where N is the next available push-constant index after any
+     *        fields the template itself has already declared (e.g. width/
+     *        height for Stencil). pc[N] is the blend rate (0 = unchanged,
+     *        1 = fully adopt the scaled neighbor value); pc[N+1] is the
+     *        neighbor-sum scale, typically 1/neighbor_count to average
+     *        (0.125 for an 8-neighbor Moore stencil). Covers Jacobi-style
+     *        diffusion and any other rate-blended local-average relaxation.
+     *        Float element formats only.
+     */
+    WeightedBlend,
 };
 
 /**
