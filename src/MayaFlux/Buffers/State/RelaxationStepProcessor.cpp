@@ -115,34 +115,16 @@ void RelaxationStepProcessor::on_after_execute(
         return;
     }
 
+    grid->swap_generation();
+
     if (!grid->consume_snapshot_request()) {
         return;
     }
 
-    auto& resources = grid->get_buffer_resources();
-    const auto& front = resources.back_buffers[grid->front_index()];
+    const auto& front = grid->get_buffer_resources().back_buffers[grid->front_index()];
 
     std::vector<uint8_t> bytes(grid->get_state_bytes());
-
-    auto buffer_service = Registry::BackendRegistry::instance()
-                              .get_service<Registry::Service::BufferService>();
-
-    if (!m_snapshot_staging || m_snapshot_staging->get_size_bytes() < bytes.size()) {
-        m_snapshot_staging = create_staging_buffer(bytes.size());
-    }
-
-    auto handle = buffer_service->copy_buffer_fenced(
-        static_cast<void*>(front.buffer),
-        static_cast<void*>(m_snapshot_staging->get_buffer()),
-        bytes.size(), 0, 0);
-
-    buffer_service->wait_fenced(handle);
-
-    auto& staging_resources = m_snapshot_staging->get_buffer_resources();
-    buffer_service->invalidate_range(staging_resources.memory, 0, bytes.size());
-
-    std::memcpy(bytes.data(), staging_resources.mapped_ptr, bytes.size());
-    buffer_service->release_fenced(handle);
+    download_back_buffer(front, bytes.data(), bytes.size(), m_snapshot_staging);
 
     grid->snapshot_source()->signal(bytes);
 }

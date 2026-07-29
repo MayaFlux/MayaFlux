@@ -23,9 +23,9 @@ class RelaxationGridBuffer;
  *
  * After dispatch, on_after_execute swaps which back_buffers index is
  * considered front and, if requested via
- * RelaxationGridBuffer::request_snapshot(), stages a device-to-host
- * download of the newly-front state buffer using a lazily-created,
- * processor-owned staging VKBuffer, reused across requests.
+ * RelaxationGridBuffer::request_snapshot(), reads the newly-front state
+ * buffer directly via its mapped_ptr. back_buffers are HostVisible |
+ * HostCoherent, so no staging buffer or fenced transfer is required.
  *
  * Runs on the normal buffer processing cycle. Whether a generation
  * actually advances this cycle is decided by an optional step predicate,
@@ -96,8 +96,8 @@ protected:
     bool on_before_execute(Portal::Graphics::CommandBufferID cmd_id, const std::shared_ptr<VKBuffer>& buffer) override;
 
     /**
-     * @brief Swap front/back generation index and, if requested, stage a
-     *        snapshot download of the buffer just written.
+     * @brief Swap front/back generation index and, if requested, snapshot
+     *        the newly-front state buffer via a direct host-visible read.
      * @param cmd_id Command buffer the completed dispatch was recorded into.
      * @param buffer The attached RelaxationGridBuffer, received as VKBuffer.
      */
@@ -155,14 +155,19 @@ private:
     void write_grid_extent_constants();
 
     /**
-     * @brief Lazily-created, reused host-visible staging buffer for
-     *        snapshot downloads. Sized to RelaxationGridBuffer::get_state_bytes()
-     *        on first use.
+     * @brief Fallback staging buffer for download_back_buffer, unused while
+     *        back_buffers stays HostVisible | HostCoherent.
+     *
+     * Passed through on every snapshot regardless, since download_back_buffer
+     * takes the direct mapped_ptr branch for this buffer's actual memory type
+     * and never allocates or touches this member. Kept so a future back_buffers
+     * memory type change degrades to the fenced path automatically, with the
+     * staging buffer already lazily sized on first use of that path.
      */
     std::shared_ptr<VKBuffer> m_snapshot_staging;
 
     StepPredicate m_step_predicate; ///< Optional gate deciding whether a given cycle advances a generation
-    std::shared_ptr<RelaxationGridBuffer> m_grid; ///< The attached RelaxationGridBuffer, cached for descriptor writes and snapshot staging.
+    std::shared_ptr<RelaxationGridBuffer> m_grid; ///< The attached RelaxationGridBuffer, cached for descriptor writes and snapshot reads.
 };
 
 } // namespace MayaFlux::Buffers
