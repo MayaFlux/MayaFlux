@@ -203,6 +203,52 @@ void download_device_local(const std::shared_ptr<VKBuffer>& source, const std::s
     std::dynamic_pointer_cast<VKBuffer>(target)->set_data({ raw_bytes });
 }
 
+void download_back_buffer(
+    const VKBufferResources::GenerationSlot& slot,
+    void* data,
+    size_t size,
+    std::shared_ptr<VKBuffer>& staging)
+{
+    if (!data || size == 0)
+        return;
+
+    if (slot.mapped_ptr) {
+        std::memcpy(data, slot.mapped_ptr, size);
+        return;
+    }
+
+    auto buffer_service = Registry::BackendRegistry::instance()
+                              .get_service<Registry::Service::BufferService>();
+
+    if (!buffer_service
+        || !buffer_service->execute_fenced
+        || !buffer_service->wait_fenced
+        || !buffer_service->release_fenced
+        || !buffer_service->invalidate_range) {
+        error<std::runtime_error>(
+            Journal::Component::Buffers,
+            Journal::Context::BufferProcessing,
+            std::source_location::current(),
+            "download_back_buffer: BufferService unavailable");
+    }
+
+    if (!staging || staging->get_size_bytes() < size)
+        staging = create_staging_buffer(size);
+
+    auto handle = buffer_service->copy_buffer_fenced(
+        static_cast<void*>(slot.buffer),
+        static_cast<void*>(staging->get_buffer()),
+        size, 0, 0);
+
+    buffer_service->wait_fenced(handle);
+
+    auto& resources = staging->get_buffer_resources();
+    buffer_service->invalidate_range(resources.memory, 0, size);
+
+    std::memcpy(data, staging->get_mapped_ptr(), size);
+    buffer_service->release_fenced(handle);
+}
+
 bool is_device_local(const std::shared_ptr<VKBuffer>& buffer)
 {
     return buffer && !buffer->is_host_visible();

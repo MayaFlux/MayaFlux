@@ -1,7 +1,5 @@
 #include "ShaderProcessor.hpp"
 
-#include "MayaFlux/Journal/Archivist.hpp"
-
 namespace MayaFlux::Buffers {
 
 //==============================================================================
@@ -175,6 +173,23 @@ void ShaderProcessor::auto_bind_buffer(const std::shared_ptr<VKBuffer>& buffer)
 
     bind_buffer(descriptor_name, buffer);
     m_auto_bind_index++;
+}
+
+bool ShaderProcessor::download_bound(
+    const std::string& descriptor_name,
+    void* data,
+    size_t size,
+    const std::shared_ptr<VKBuffer>& staging) const
+{
+    auto buffer = get_bound_buffer(descriptor_name);
+    if (!buffer) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "download_bound: no buffer bound to descriptor '{}'", descriptor_name);
+        return false;
+    }
+
+    download_from_gpu(buffer, data, size, staging);
+    return true;
 }
 
 //==============================================================================

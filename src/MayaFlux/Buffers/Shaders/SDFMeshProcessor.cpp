@@ -9,8 +9,6 @@
 #include "MayaFlux/Registry/Service/BufferService.hpp"
 #include "MayaFlux/Transitive/Parallel/Execution.hpp"
 
-#include "MayaFlux/Journal/Archivist.hpp"
-
 namespace MayaFlux::Buffers {
 
 // ============================================================================

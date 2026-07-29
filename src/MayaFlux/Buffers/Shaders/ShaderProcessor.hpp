@@ -1,6 +1,7 @@
 #pragma once
 
-#include "MayaFlux/Buffers/VKBuffer.hpp"
+#include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
+
 #include "MayaFlux/Portal/Graphics/ComputePress.hpp"
 
 namespace MayaFlux::Buffers {
@@ -188,6 +189,33 @@ public:
      * Useful for simple single-buffer or input/output patterns.
      */
     void auto_bind_buffer(const std::shared_ptr<VKBuffer>& buffer);
+
+    /**
+     * @brief Download the buffer currently bound to a named descriptor.
+     * @param descriptor_name Logical name previously bound via bind_buffer.
+     * @param data Destination pointer, at least the bound buffer's size in bytes.
+     * @param size Byte count to copy.
+     * @param staging Optional staging buffer, forwarded to download_from_gpu.
+     * @return True if the name resolved to a bound buffer and the download ran.
+     */
+    bool download_bound(
+        const std::string& descriptor_name,
+        void* data,
+        size_t size,
+        const std::shared_ptr<VKBuffer>& staging = nullptr) const;
+
+    template <typename T>
+    bool download_bound(const std::string& descriptor_name, std::vector<T>& data) const
+    {
+        auto buffer = get_bound_buffer(descriptor_name);
+        if (!buffer) {
+            MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                "download_bound: no buffer bound to descriptor '{}'", descriptor_name);
+            return false;
+        }
+        download_from_gpu(buffer, data);
+        return true;
+    }
 
     //==========================================================================
     // Shader Management

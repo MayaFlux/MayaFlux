@@ -10,8 +10,6 @@
 #include "MayaFlux/Registry/BackendRegistry.hpp"
 #include "MayaFlux/Registry/Service/DisplayService.hpp"
 
-#include "MayaFlux/Journal/Archivist.hpp"
-
 namespace MayaFlux::Buffers {
 
 const Kakshya::VertexLayout* RenderProcessor::get_or_cache_vertex_layout(

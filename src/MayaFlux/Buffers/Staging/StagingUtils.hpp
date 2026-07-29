@@ -60,6 +60,24 @@ MAYAFLUX_API void download_host_visible(const std::shared_ptr<VKBuffer>& source,
 MAYAFLUX_API void download_device_local(const std::shared_ptr<VKBuffer>& source, const std::shared_ptr<VKBuffer>& target, const std::shared_ptr<VKBuffer>& staging_buffer);
 
 /**
+ * @brief Download a raw back_buffers slot to host memory.
+ * @param slot Source slot, typically from VKBuffer::get_back_buffer().
+ * @param size Byte count to copy.
+ * @param data Destination pointer, at least @p size bytes.
+ * @param staging Persistent staging buffer for device-local slots. Ignored,
+ *        and may be null, when slot.mapped_ptr is already valid.
+ *
+ * Reads slot.mapped_ptr directly when present (host-visible slot, no
+ * transfer). Otherwise records a fenced copy into @p staging exactly as
+ * download_from_gpu_async does, using slot.buffer as the copy source.
+ */
+MAYAFLUX_API void download_back_buffer(
+    const VKBufferResources::GenerationSlot& slot,
+    void* data,
+    size_t size,
+    std::shared_ptr<VKBuffer>& staging);
+
+/**
  * @brief Upload raw data to GPU buffer (auto-detects host-visible vs device-local)
  * @param data Source data pointer
  * @param size Size in bytes

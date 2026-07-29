@@ -1,7 +1,5 @@
 #include "ComputeProcessor.hpp"
 
-#include "MayaFlux/Journal/Archivist.hpp"
-
 namespace MayaFlux::Buffers {
 
 //==============================================================================
