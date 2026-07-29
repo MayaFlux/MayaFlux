@@ -52,16 +52,37 @@ public:
      */
     [[nodiscard]] std::shared_ptr<Buffer> get_target(const std::shared_ptr<Buffer>& source) const;
 
-private:
-    // Maps source VKBuffer -> target Buffer
-    std::unordered_map<std::shared_ptr<Buffer>, std::shared_ptr<Buffer>> m_target_map;
+    /**
+     * @brief Configure targets to receive downloads of every entry in a
+     *        VKBuffer's back_buffers, re-read every processing cycle.
+     * @param source VKBuffer whose back_buffers is being downloaded in full.
+     * @param targets CPU-side buffers to write into, one per back_buffers
+     *        entry, in order.
+     *
+     * back_buffers.size() is read fresh each call. If targets.size() does not
+     * match at process time, the call is skipped with an error rather than
+     * partially applied. Interpretation of individual entries (which one is
+     * "current", "front", or otherwise meaningful) is the calling code's
+     * concern; this call only moves bytes.
+     */
+    void configure_back_buffers(
+        const std::shared_ptr<Buffer>& source,
+        std::vector<std::shared_ptr<Buffer>> targets);
 
-    // Maps source VKBuffer -> staging buffer (for device-local transfers)
-    std::unordered_map<std::shared_ptr<Buffer>, std::shared_ptr<VKBuffer>> m_staging_buffers;
+    /**
+     * @brief Remove back_buffers configuration for a source.
+     */
+    void remove_back_buffers(const std::shared_ptr<Buffer>& source);
+
+private:
+    std::unordered_map<std::shared_ptr<Buffer>, std::shared_ptr<Buffer>> m_target_map; ///< Maps source VKBuffer -> target Buffer
+    std::unordered_map<std::shared_ptr<Buffer>, std::shared_ptr<VKBuffer>> m_staging_buffers; ///< Maps source VKBuffer -> staging buffer (for device-local transfers)
+    std::unordered_map<std::shared_ptr<Buffer>, std::vector<std::shared_ptr<Buffer>>> m_back_buffers_target_map; ///< Maps source VKBuffer -> vector of target Buffers for back_buffers
 
     void ensure_staging_buffer(const std::shared_ptr<VKBuffer>& source);
     void download_host_visible(const std::shared_ptr<VKBuffer>& source);
     void download_device_local(const std::shared_ptr<VKBuffer>& source);
+    void download_back_buffers(const std::shared_ptr<VKBuffer>& source);
 };
 
 } // namespace MayaFlux::Buffers

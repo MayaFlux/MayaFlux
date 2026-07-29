@@ -35,6 +35,11 @@ void BufferDownloadProcessor::processing_function(const std::shared_ptr<Buffer>&
         return;
     }
 
+    if (m_back_buffers_target_map.contains(buffer)) {
+        download_back_buffers(vk_buffer);
+        return;
+    }
+
     auto target_it = m_target_map.find(buffer);
     if (target_it == m_target_map.end() || !target_it->second) {
         MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
@@ -172,6 +177,64 @@ void BufferDownloadProcessor::configure_target(const std::shared_ptr<Buffer>& so
 void BufferDownloadProcessor::remove_target(const std::shared_ptr<Buffer>& source)
 {
     m_target_map.erase(source);
+}
+
+void BufferDownloadProcessor::configure_back_buffers(
+    const std::shared_ptr<Buffer>& source,
+    std::vector<std::shared_ptr<Buffer>> targets)
+{
+    if (!std::dynamic_pointer_cast<VKBuffer>(source)) {
+        error<std::runtime_error>(
+            Journal::Component::Buffers,
+            Journal::Context::BufferProcessing,
+            std::source_location::current(),
+            "Source must be a VKBuffer");
+    }
+
+    m_back_buffers_target_map[source] = std::move(targets);
+
+    MF_INFO(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+        "Configured back_buffers download targets for source buffer");
+}
+
+void BufferDownloadProcessor::remove_back_buffers(const std::shared_ptr<Buffer>& source)
+{
+    m_back_buffers_target_map.erase(source);
+}
+
+void BufferDownloadProcessor::download_back_buffers(const std::shared_ptr<VKBuffer>& source)
+{
+    auto it = m_back_buffers_target_map.find(std::static_pointer_cast<Buffer>(source));
+    if (it == m_back_buffers_target_map.end()) {
+        return;
+    }
+
+    auto& targets = it->second;
+    auto& resources = source->get_buffer_resources();
+
+    if (targets.size() != resources.back_buffers.size()) {
+        MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "download_back_buffers: {} targets configured, {} entries present",
+            targets.size(), resources.back_buffers.size());
+        return;
+    }
+
+    auto& staging = m_staging_buffers[std::static_pointer_cast<Buffer>(source)];
+
+    for (size_t i = 0; i < resources.back_buffers.size(); ++i) {
+        auto target = std::dynamic_pointer_cast<VKBuffer>(targets[i]);
+        if (!target) {
+            MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                "download_back_buffers: target {} is not a VKBuffer", i);
+            continue;
+        }
+
+        const size_t bytes = target->get_size_bytes();
+        std::vector<uint8_t> raw(bytes);
+        download_back_buffer(resources.back_buffers[i], raw.data(), bytes, staging);
+
+        target->set_data({ raw });
+    }
 }
 
 std::shared_ptr<Buffer> BufferDownloadProcessor::get_target(const std::shared_ptr<Buffer>& source) const

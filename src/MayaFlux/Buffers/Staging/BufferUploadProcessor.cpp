@@ -35,6 +35,11 @@ void BufferUploadProcessor::processing_function(const std::shared_ptr<Buffer>& b
         return;
     }
 
+    if (m_back_buffers_source_map.contains(buffer)) {
+        upload_back_buffers(vk_buffer);
+        return;
+    }
+
     auto source_it = m_source_map.find(buffer);
     if (source_it == m_source_map.end() || !source_it->second) {
         MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
@@ -156,6 +161,75 @@ void BufferUploadProcessor::configure_source(const std::shared_ptr<Buffer>& targ
 
     MF_INFO(Journal::Component::Buffers, Journal::Context::BufferProcessing,
         "Configured upload source for target buffer");
+}
+
+void BufferUploadProcessor::configure_back_buffers(
+    const std::shared_ptr<Buffer>& target,
+    std::vector<std::shared_ptr<Buffer>> sources)
+{
+    if (!std::dynamic_pointer_cast<VKBuffer>(target)) {
+        error<std::runtime_error>(
+            Journal::Component::Buffers,
+            Journal::Context::BufferProcessing,
+            std::source_location::current(),
+            "Target must be a VKBuffer");
+    }
+
+    m_back_buffers_source_map[target] = std::move(sources);
+
+    MF_INFO(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+        "Configured back_buffers upload sources for target buffer");
+}
+
+void BufferUploadProcessor::remove_back_buffers(const std::shared_ptr<Buffer>& target)
+{
+    m_back_buffers_source_map.erase(target);
+}
+
+void BufferUploadProcessor::upload_back_buffers(const std::shared_ptr<VKBuffer>& target)
+{
+    auto it = m_back_buffers_source_map.find(std::static_pointer_cast<Buffer>(target));
+    if (it == m_back_buffers_source_map.end()) {
+        return;
+    }
+
+    auto& sources = it->second;
+    auto& resources = target->get_buffer_resources();
+
+    if (sources.size() != resources.back_buffers.size()) {
+        MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "upload_back_buffers: {} sources configured, {} entries present",
+            sources.size(), resources.back_buffers.size());
+        return;
+    }
+
+    for (size_t i = 0; i < resources.back_buffers.size(); ++i) {
+        const auto& entry = resources.back_buffers[i];
+
+        if (!entry.mapped_ptr) {
+            MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                "upload_back_buffers: entry {} is not host-visible, unsupported", i);
+            continue;
+        }
+
+        auto source_vk = std::dynamic_pointer_cast<VKBuffer>(sources[i]);
+        if (!source_vk) {
+            MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                "upload_back_buffers: source {} is not a VKBuffer", i);
+            continue;
+        }
+
+        auto source_data = source_vk->get_data();
+        if (source_data.empty()) {
+            MF_RT_WARN(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                "upload_back_buffers: source {} has no data to upload", i);
+            continue;
+        }
+
+        Kakshya::DataAccess accessor(source_data[0], {}, source_vk->get_modality());
+        auto [ptr, bytes, format_hint] = accessor.gpu_buffer();
+        std::memcpy(entry.mapped_ptr, ptr, bytes);
+    }
 }
 
 void BufferUploadProcessor::remove_source(const std::shared_ptr<Buffer>& target)

@@ -47,6 +47,27 @@ public:
     void remove_source(const std::shared_ptr<Buffer>& target);
 
     /**
+     * @brief Configure sources to upload into every entry in a VKBuffer's
+     *        back_buffers, re-read every processing cycle.
+     * @param target VKBuffer whose back_buffers is being written in full.
+     * @param sources CPU-side buffers to read from, one per back_buffers
+     *        entry, in order.
+     *
+     * back_buffers.size() is read fresh each call. If sources.size() does not
+     * match at process time, the call is skipped with an error rather than
+     * partially applied. Direct memcpy per entry; entries without a mapped_ptr
+     * are unsupported and logged as an error rather than silently skipped.
+     */
+    void configure_back_buffers(
+        const std::shared_ptr<Buffer>& target,
+        std::vector<std::shared_ptr<Buffer>> sources);
+
+    /**
+     * @brief Remove back_buffers configuration for a target.
+     */
+    void remove_back_buffers(const std::shared_ptr<Buffer>& target);
+
+    /**
      * @brief Get configured source for a target
      * @param target VKBuffer to query
      * @return Source buffer, or nullptr if not configured
@@ -54,14 +75,13 @@ public:
     [[nodiscard]] std::shared_ptr<Buffer> get_source(const std::shared_ptr<Buffer>& target) const;
 
 private:
-    // Maps target VKBuffer -> source Buffer
-    std::unordered_map<std::shared_ptr<Buffer>, std::shared_ptr<Buffer>> m_source_map;
-
-    // Maps target VKBuffer -> staging buffer (for device-local transfers)
-    std::unordered_map<std::shared_ptr<Buffer>, std::shared_ptr<VKBuffer>> m_staging_buffers;
+    std::unordered_map<std::shared_ptr<Buffer>, std::shared_ptr<Buffer>> m_source_map; ///< Maps target VKBuffer -> source Buffer
+    std::unordered_map<std::shared_ptr<Buffer>, std::shared_ptr<VKBuffer>> m_staging_buffers; ///< Maps target VKBuffer -> staging buffer (for device-local transfers)
+    std::unordered_map<std::shared_ptr<Buffer>, std::vector<std::shared_ptr<Buffer>>> m_back_buffers_source_map; ///< Maps target VKBuffer -> vector of source Buffers for back_buffers
 
     void ensure_staging_buffer(const std::shared_ptr<VKBuffer>& target);
     void upload_device_local(const std::shared_ptr<VKBuffer>& target, const Kakshya::DataVariant& data);
+    void upload_back_buffers(const std::shared_ptr<VKBuffer>& target);
 };
 
 }
