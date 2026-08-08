@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Network::GraphicsOperator" name="MayaFlux::Nodes::Network::GraphicsOperator">
+<area shape="rect" id="Node000001" title="Operator that produces GPU&#45;renderable geometry." alt="" coords="5,233,219,588"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1NetworkOperator.html" title="Domain&#45;agnostic interpretive lens for network processing." alt="" coords="17,5,207,185"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="115,199,115,233,109,233,109,199"/>
+</map>

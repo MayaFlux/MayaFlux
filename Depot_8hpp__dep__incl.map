@@ -1,0 +1,22 @@
+<map id="Depot.hpp" name="Depot.hpp">
+<area shape="rect" id="Node000001" title="Audio file loading and container management API." alt="" coords="109,5,198,31"/>
+<area shape="rect" id="Node000002" href="$Creator_8cpp.html" title=" " alt="" coords="20,152,116,177"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="129,41,110,59,94,80,79,118,72,152,67,151,74,117,90,77,106,56,125,37"/>
+<area shape="rect" id="Node000003" href="$Creator_8hpp.html" title=" " alt="" coords="105,79,202,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="156,44,156,79,151,79,151,44"/>
+<area shape="rect" id="Node000004" href="$MayaFlux_8hpp.html" title=" " alt="" coords="75,225,189,251"/>
+<area shape="poly" id="edge10_Node000001_Node000004" title=" " alt="" coords="121,40,91,59,60,85,31,117,11,153,8,166,10,177,27,196,53,212,84,223,82,228,51,216,23,200,5,179,3,166,6,151,27,113,56,81,88,55,118,35"/>
+<area shape="rect" id="Node000008" href="$Depot_8cpp.html" title=" " alt="" coords="227,79,315,104"/>
+<area shape="poly" id="edge9_Node000001_Node000008" title=" " alt="" coords="185,35,253,76,250,81,183,40"/>
+<area shape="rect" id="Node000009" href="$Rigs_8cpp.html" title=" " alt="" coords="339,79,416,104"/>
+<area shape="poly" id="edge11_Node000001_Node000009" title=" " alt="" coords="203,32,342,76,340,81,201,37"/>
+<area shape="poly" id="edge3_Node000003_Node000002" title=" " alt="" coords="131,115,84,154,80,150,128,110"/>
+<area shape="poly" id="edge4_Node000003_Node000004" title=" " alt="" coords="152,118,136,226,131,225,147,118"/>
+<area shape="rect" id="Node000006" href="$Temporal_8hpp.html" title=" " alt="" coords="191,152,302,177"/>
+<area shape="poly" id="edge6_Node000003_Node000006" title=" " alt="" coords="181,110,233,150,230,154,178,114"/>
+<area shape="rect" id="Node000005" href="$LiveAid_8hpp.html" title=" " alt="" coords="83,299,181,324"/>
+<area shape="poly" id="edge5_Node000004_Node000005" title=" " alt="" coords="135,264,135,299,129,299,129,264"/>
+<area shape="poly" id="edge7_Node000006_Node000004" title=" " alt="" coords="218,187,152,227,149,223,215,182"/>
+<area shape="rect" id="Node000007" href="$Temporal_8cpp.html" title=" " alt="" coords="213,225,323,251"/>
+<area shape="poly" id="edge8_Node000006_Node000007" title=" " alt="" coords="257,190,267,224,262,226,252,192"/>
+</map>

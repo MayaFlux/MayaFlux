@@ -1,0 +1,6 @@
+<map id="MayaFlux::Kinesis::generate_parametric_surface" name="MayaFlux::Kinesis::generate_parametric_surface">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,29,164,84"/>
+<area shape="poly" id="edge1_Node000001_Node000001" title=" " alt="" coords="42,29,42,19,50,10,64,5,85,3,110,6,124,14,121,18,108,11,85,8,65,10,53,15,47,21,47,29"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1MeshInsertion_a618b35166b14858aca7b8f8c8ce693c8.html#a618b35166b14858aca7b8f8c8ce693c8" title="Insert a single flat mesh (no submesh tracking)." alt="" coords="212,37,399,77"/>
+<area shape="poly" id="edge2_Node000001_Node000002" title=" " alt="" coords="164,54,198,54,198,59,164,59"/>
+</map>

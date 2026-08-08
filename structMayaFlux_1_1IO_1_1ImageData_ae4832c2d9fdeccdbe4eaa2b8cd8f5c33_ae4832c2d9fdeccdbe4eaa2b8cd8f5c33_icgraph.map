@@ -1,0 +1,16 @@
+<map id="MayaFlux::IO::ImageData::as_uint8" name="MayaFlux::IO::ImageData::as_uint8">
+<area shape="rect" id="Node000001" title="Typed accessors." alt="" coords="547,101,735,141"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1STBImageWriter_a3f338a9ffa81f6d9b15196351264129f.html#a3f338a9ffa81f6d9b15196351264129f" title=" " alt="" coords="276,5,499,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="586,98,498,60,462,48,464,43,500,55,588,93"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1STBImageWriter_a4f31292d0d726328a5771db12b5a9704.html#a4f31292d0d726328a5771db12b5a9704" title=" " alt="" coords="276,69,499,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="532,110,499,106,499,101,533,105"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1IO_1_1STBImageWriter_a89f59e6e066c94d36713e69e2eb893cf.html#a89f59e6e066c94d36713e69e2eb893cf" title=" " alt="" coords="276,133,499,173"/>
+<area shape="poly" id="edge5_Node000001_Node000005" title=" " alt="" coords="533,138,499,142,499,137,532,132"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1IO_1_1STBImageWriter_ab8edaff8d7a36f8b0e94d0a000dadb43.html#ab8edaff8d7a36f8b0e94d0a000dadb43" title=" " alt="" coords="276,197,499,237"/>
+<area shape="poly" id="edge7_Node000001_Node000006" title=" " alt="" coords="588,150,500,188,464,200,462,195,498,183,586,145"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1STBImageWriter_a9cb5d049517c18ad1e45b8fefda0bda5.html#a9cb5d049517c18ad1e45b8fefda0bda5" title="Write image data to disk." alt="" coords="5,101,228,141"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="301,52,277,60,165,104,163,99,275,55,299,47"/>
+<area shape="poly" id="edge4_Node000004_Node000003" title=" " alt="" coords="263,107,228,111,228,106,262,101"/>
+<area shape="poly" id="edge6_Node000005_Node000003" title=" " alt="" coords="262,141,228,137,228,132,263,136"/>
+<area shape="poly" id="edge8_Node000006_Node000003" title=" " alt="" coords="299,196,275,188,163,144,165,139,277,183,301,191"/>
+</map>

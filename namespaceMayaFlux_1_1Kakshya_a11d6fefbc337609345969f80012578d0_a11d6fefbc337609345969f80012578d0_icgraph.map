@@ -1,0 +1,27 @@
+<map id="MayaFlux::Kakshya::coordinates_to_linear" name="MayaFlux::Kakshya::coordinates_to_linear">
+<area shape="rect" id="Node000001" title="Convert N&#45;dimensional coordinates to a linear index for interleaved data." alt="" coords="521,210,684,250"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_ad61a554e45549b00668c783e8ea70ad8.html#ad61a554e45549b00668c783e8ea70ad8" title="Convert coordinates to linear index based on current memory layout." alt="" coords="256,5,469,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="581,200,536,136,506,103,472,74,454,63,456,58,475,69,510,99,540,133,585,197"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_ad653f572b9de1ac20e409c037b43e3ed.html#ad653f572b9de1ac20e409c037b43e3ed" title="Convert coordinates to linear index based on current memory layout." alt="" coords="256,84,469,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="560,204,519,178,472,152,447,141,449,136,475,148,521,173,563,200"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1WindowContainer_a01cfa29f834952535a09d88957a01ea4.html#a01cfa29f834952535a09d88957a01ea4" title="Convert coordinates to linear index based on current memory layout." alt="" coords="252,163,473,217"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="507,217,473,211,474,206,508,212"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1TextureContainer_a61faa2878615dbb0ba9c4862c80d9cfc.html#a61faa2878615dbb0ba9c4862c80d9cfc" title="Convert coordinates to linear index based on current memory layout." alt="" coords="254,241,471,296"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="508,248,472,254,471,249,507,243"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Kakshya_aae6a6e0c3cb0bad70acafc465c1ac867.html#aae6a6e0c3cb0bad70acafc465c1ac867" title="Extract a region of data from a flat data span using a Region and dimension info." alt="" coords="283,321,442,361"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="563,260,521,286,474,310,440,323,438,318,472,305,518,281,560,256"/>
+<area shape="rect" id="Node000011" href="$namespaceMayaFlux_1_1Kakshya_af3d621c76a9ee24e200cf8e2ecabaa61.html#af3d621c76a9ee24e200cf8e2ecabaa61" title="Write or update a region of data in a flat data span (interleaved)." alt="" coords="263,449,462,489"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="578,262,475,375,390,450,387,447,471,371,574,259"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Kakshya_a9e9709829d80c948f8b9e169869bfbe7.html#a9e9709829d80c948f8b9e169869bfbe7" title="Extract a region of data from vector of vectors (planar data)." alt="" coords="25,193,184,233"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="269,320,250,309,234,294,226,277,217,262,202,247,182,235,184,230,206,243,222,259,230,275,239,290,254,305,272,316"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Kakshya_a1a50dada1a9e89b61762433a756442a8.html#a1a50dada1a9e89b61762433a756442a8" title="Extract a region of data from a vector using a Region and dimension info." alt="" coords="25,257,184,297"/>
+<area shape="poly" id="edge7_Node000006_Node000008" title=" " alt="" coords="269,320,184,299,185,294,271,315"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_1_1Kakshya_a0b120cdfd64c4367c5c738c5bceec0bd.html#a0b120cdfd64c4367c5c738c5bceec0bd" title="Extract region data from planar storage (separate per channel/variant)" alt="" coords="25,321,184,361"/>
+<area shape="poly" id="edge8_Node000006_Node000009" title=" " alt="" coords="270,343,184,343,184,338,270,338"/>
+<area shape="rect" id="Node000010" href="$namespaceMayaFlux_1_1Kakshya_a380dad5e7b8d9664e58bfade4f16aaff.html#a380dad5e7b8d9664e58bfade4f16aaff" title="Extract a region of data with organization strategy." alt="" coords="25,385,184,425"/>
+<area shape="poly" id="edge9_Node000006_Node000010" title=" " alt="" coords="271,366,185,388,184,382,269,361"/>
+<area shape="rect" id="Node000012" href="$namespaceMayaFlux_1_1Kakshya_ab04b636df167ce440f7c9dfe61234c82.html#ab04b636df167ce440f7c9dfe61234c82" title="Write or update a region of data in planar storage." alt="" coords="5,449,204,489"/>
+<area shape="poly" id="edge11_Node000011_Node000012" title=" " alt="" coords="249,471,204,471,204,466,249,466"/>
+<area shape="rect" id="Node000013" href="$namespaceMayaFlux_1_1Kakshya_a855054f1431d955e60b82f0f5ddd157d.html#a855054f1431d955e60b82f0f5ddd157d" title="Write or update a region of data with organization strategy." alt="" coords="5,513,204,553"/>
+<area shape="poly" id="edge12_Node000011_Node000013" title=" " alt="" coords="269,495,186,515,185,510,268,489"/>
+</map>

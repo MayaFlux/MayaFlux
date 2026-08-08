@@ -1,0 +1,13 @@
+<map id="MayaFlux::Portal::Graphics::ShaderSpec::Assemble::workgroup" name="MayaFlux::Portal::Graphics::ShaderSpec::Assemble::workgroup">
+<area shape="rect" id="Node000001" title="Override workgroup size." alt="" coords="236,149,433,203"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1VisionGpuExecutor_a37b115d59dbe1593c58ef631942b363e.html#a37b115d59dbe1593c58ef631942b363e" title="GpuComputeConfig for a given VisionOp and its parameters." alt="" coords="5,5,188,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="294,141,245,99,187,60,162,48,164,43,189,55,248,95,297,137"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Buffers_1_1RelaxationSpecs_a1279de64ea64bd40c10f69e9d59dde46.html#a1279de64ea64bd40c10f69e9d59dde46" title="Binary state&#45;to&#45;vertex emit: nonzero state draws at full scale, zero state degenerates to a zero&#45;scal..." alt="" coords="13,70,181,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="237,147,179,127,181,122,239,142"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Buffers_1_1RelaxationSpecs_ab027146e5827d27be349ad597cbad520.html#ab027146e5827d27be349ad597cbad520" title="Scalar&#45;ramp state&#45;to&#45;vertex emit: float state value scaled and offset into a visible output range." alt="" coords="13,149,181,203"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="223,179,181,179,181,173,223,173"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Buffers_1_1RelaxationSpecs_a664b6d74405ef8f23d5954e4c9b46940.html#a664b6d74405ef8f23d5954e4c9b46940" title="Jacobi&#45;style diffusion rule: each cell blends toward the average of its 8 Moore neighbors at the give..." alt="" coords="8,227,185,282"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="239,210,181,230,179,225,237,205"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Yantra_1_1VisionGpuExecutor_afdad8a5a64522f246a58a7f585bd34c6.html#afdad8a5a64522f246a58a7f585bd34c6" title="Execute a VisionSequence on the GPU through an explicit context set." alt="" coords="5,307,188,347"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="296,215,247,256,189,296,161,309,159,304,187,291,244,252,293,211"/>
+</map>

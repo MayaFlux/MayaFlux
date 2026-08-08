@@ -1,0 +1,24 @@
+<map id="MayaFlux::Portal::Graphics::TextureLoom::get_bytes_per_pixel" name="MayaFlux::Portal::Graphics::TextureLoom::get_bytes_per_pixel">
+<area shape="rect" id="Node000001" title="Get bytes per pixel for a format." alt="" coords="791,162,988,217"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a26861705b8952f21e0b0c8363d6d43e2.html#a26861705b8952f21e0b0c8363d6d43e2" title="Calculate image data size." alt="" coords="542,126,739,181"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="777,176,739,170,740,165,777,170"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Buffers_1_1TextureBuffer_ac591a11585eecc22824a7411e4f02dab.html#ac591a11585eecc22824a7411e4f02dab" title="Create texture buffer with dimensions." alt="" coords="539,205,743,245"/>
+<area shape="poly" id="edge11_Node000001_Node000011" title=" " alt="" coords="777,208,743,213,742,208,777,203"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a028cc0af273b37e3dadbdc908c67a7ed.html#a028cc0af273b37e3dadbdc908c67a7ed" title="Create a 2D texture from a DataVariant in one shot." alt="" coords="10,5,207,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="595,120,546,87,490,60,418,41,344,30,272,24,208,23,208,18,272,19,344,24,419,36,492,55,549,82,598,115"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_aaf5e48e2bb8325c1db70971a89cabec7.html#aaf5e48e2bb8325c1db70971a89cabec7" title="Create a 2D texture." alt="" coords="277,69,474,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="528,129,458,112,460,107,529,124"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a7657fd40adc1f7b7c82c8aca63f35a09.html#a7657fd40adc1f7b7c82c8aca63f35a09" title="Create a 2D texture array." alt="" coords="262,133,489,173"/>
+<area shape="poly" id="edge8_Node000002_Node000008" title=" " alt="" coords="528,156,489,156,489,151,528,151"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a7ac47f4e64fd980c46a937ca4c69a1d0.html#a7ac47f4e64fd980c46a937ca4c69a1d0" title="Create a 3D texture (volumetric)" alt="" coords="277,197,474,237"/>
+<area shape="poly" id="edge9_Node000002_Node000009" title=" " alt="" coords="529,183,460,200,458,195,528,178"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_ad61a4d872b3af82eb1af351bc6118126.html#ad61a4d872b3af82eb1af351bc6118126" title="Create a cubemap texture." alt="" coords="260,261,491,301"/>
+<area shape="poly" id="edge10_Node000002_Node000010" title=" " alt="" coords="549,190,540,195,526,209,517,223,508,238,492,252,469,263,467,259,489,247,504,234,513,220,522,206,537,191,546,185"/>
+<area shape="poly" id="edge4_Node000004_Node000003" title=" " alt="" coords="277,69,192,48,193,43,279,63"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1WindowContainer_a36dc887f4398346c40f92bd77b67025a.html#a36dc887f4398346c40f92bd77b67025a" title="Upload m_data[frame_index] to a new VKImage." alt="" coords="5,69,212,109"/>
+<area shape="poly" id="edge5_Node000004_Node000005" title=" " alt="" coords="263,92,212,92,212,87,263,87"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1WindowContainer_a54e6f5327b1e6000a2c148781a8f6717.html#a54e6f5327b1e6000a2c148781a8f6717" title="Crop a region from the last readback and upload it as a VKImage." alt="" coords="15,134,202,189"/>
+<area shape="poly" id="edge6_Node000004_Node000006" title=" " alt="" coords="288,116,203,139,202,134,287,110"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Kakshya_1_1WindowContainer_a31ff69a65227eb7c14504ae2c8ae5fe9.html#a31ff69a65227eb7c14504ae2c8ae5fe9" title="Upload the full surface readback to a new VKImage." alt="" coords="5,213,212,253"/>
+<area shape="poly" id="edge7_Node000004_Node000007" title=" " alt="" coords="269,118,262,123,245,142,238,162,231,183,214,203,194,216,191,211,210,199,226,180,233,160,241,139,258,119,266,114"/>
+</map>

@@ -1,0 +1,33 @@
+<map id="ModalNetwork.cpp" name="ModalNetwork.cpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="386,5,530,31"/>
+<area shape="rect" id="Node000002" href="$ModalNetwork_8hpp.html" title=" " alt="" coords="124,86,269,111"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="421,33,248,85,247,80,419,28"/>
+<area shape="rect" id="Node000012" href="$Analysis_8hpp.html" title="Discrete sequence analysis primitives for MayaFlux::Kinesis." alt="" coords="294,79,489,119"/>
+<area shape="poly" id="edge11_Node000001_Node000012" title=" " alt="" coords="450,33,418,70,414,66,446,29"/>
+<area shape="rect" id="Node000013" href="$Filter_8hpp.html" title=" " alt="" coords="432,167,607,207"/>
+<area shape="poly" id="edge12_Node000001_Node000013" title=" " alt="" coords="471,29,488,51,503,78,515,116,520,152,515,153,509,117,498,80,483,54,467,33"/>
+<area shape="rect" id="Node000014" href="$Sine_8hpp.html" title=" " alt="" coords="577,79,784,119"/>
+<area shape="poly" id="edge14_Node000001_Node000014" title=" " alt="" coords="491,28,615,72,613,77,489,33"/>
+<area shape="rect" id="Node000003" href="$Stochastic_8hpp.html" title=" " alt="" coords="5,174,241,199"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="189,113,145,165,140,161,185,110"/>
+<area shape="rect" id="Node000005" href="$NodeNetwork_8hpp.html" title=" " alt="" coords="266,174,405,199"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="217,109,306,164,303,169,214,114"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="87,262,159,287"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="126,200,126,248,121,248,121,200"/>
+<area shape="rect" id="Node000006" href="$OperatorChain_8hpp.html" title=" " alt="" coords="205,255,421,295"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="335,200,324,242,319,240,330,199"/>
+<area shape="rect" id="Node000008" href="$Node_8hpp.html" title=" " alt="" coords="445,262,642,287"/>
+<area shape="poly" id="edge7_Node000005_Node000008" title=" " alt="" coords="364,197,504,254,502,259,362,202"/>
+<area shape="rect" id="Node000007" href="$NetworkOperator_8hpp.html" title=" " alt="" coords="232,343,393,368"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="315,295,315,329,310,329,310,295"/>
+<area shape="rect" id="Node000009" href="$GpuContext_8hpp.html" title=" " alt="" coords="448,343,575,368"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="541,289,524,331,519,329,536,286"/>
+<area shape="rect" id="Node000010" href="$NodeUtils_8hpp.html" title=" " alt="" coords="599,343,826,368"/>
+<area shape="poly" id="edge9_Node000008_Node000010" title=" " alt="" coords="569,285,677,335,675,339,567,290"/>
+<area shape="rect" id="Node000011" href="$NodeSpec_8hpp.html" title=" " alt="" coords="655,416,770,441"/>
+<area shape="poly" id="edge10_Node000010_Node000011" title=" " alt="" coords="715,368,715,402,710,402,710,368"/>
+<area shape="poly" id="edge13_Node000013_Node000008" title=" " alt="" coords="527,206,539,248,534,249,522,208"/>
+<area shape="rect" id="Node000015" href="$Generator_8hpp.html" title=" " alt="" coords="631,174,746,199"/>
+<area shape="poly" id="edge15_Node000014_Node000015" title=" " alt="" coords="685,119,689,160,684,160,680,119"/>
+<area shape="poly" id="edge16_Node000015_Node000008" title=" " alt="" coords="670,202,576,257,574,253,668,197"/>
+</map>

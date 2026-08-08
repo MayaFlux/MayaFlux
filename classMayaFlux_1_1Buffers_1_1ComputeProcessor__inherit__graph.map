@@ -1,0 +1,19 @@
+<map id="MayaFlux::Buffers::ComputeProcessor" name="MayaFlux::Buffers::ComputeProcessor">
+<area shape="rect" id="Node000001" title="Specialized ShaderProcessor for Compute Pipelines." alt="" coords="473,1363,651,1717"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1RelaxationEmitProcessor.html" title="ComputeProcessor that reads the current front generation&#39;s raw state buffer from a RelaxationGridBuff..." alt="" coords="5,1985,207,2225"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="462,1587,401,1619,336,1660,274,1710,220,1767,187,1818,161,1874,142,1931,128,1986,122,1984,137,1930,157,1872,183,1815,216,1764,270,1706,333,1656,398,1614,460,1582"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1RelaxationStepProcessor.html" title="ComputeProcessor specialization driving one generation step of a RelaxationGridBuffer per dispatch." alt="" coords="231,1955,453,2255"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="481,1731,467,1766,396,1956,391,1954,462,1764,477,1729"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1SDFFieldProcessor.html" title="Preprocessor that evaluates an SDF field into a corner grid on the GPU." alt="" coords="477,1935,647,2275"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="565,1731,565,1935,559,1935,559,1731"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Buffers_1_1SDFMeshProcessor.html" title="ComputeProcessor that dispatches mc_emit.comp directly into the owning VKBuffer (Usage::VERTEX),..." alt="" coords="671,1765,861,2445"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="648,1730,662,1764,674,1797,669,1799,657,1766,643,1732"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Buffers_1_1UVFieldProcessor.html" title="Compute pass that writes UV and optionally samples colour into a vertex SSBO." alt="" coords="885,1915,1074,2295"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="664,1589,718,1622,774,1663,828,1710,875,1764,897,1799,916,1836,945,1914,940,1916,911,1838,893,1801,871,1767,825,1714,771,1667,715,1627,661,1594"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor.html" title="Abstract base class for shader&#45;based buffer processing." alt="" coords="463,516,661,1315"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="565,1329,565,1363,559,1363,559,1329"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VKBufferProcessor.html" title=" " alt="" coords="465,313,659,468"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="565,482,565,516,559,516,559,482"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1BufferProcessor.html" title="Central computational transformation interface for continuous buffer processing." alt="" coords="472,5,652,265"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="565,279,565,313,559,313,559,279"/>
+</map>

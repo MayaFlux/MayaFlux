@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::AudioBuffer::clone_to" name="MayaFlux::Buffers::AudioBuffer::clone_to">
+<area shape="rect" id="Node000001" title="Creates a clone of this audio buffer for a specific channel." alt="" coords="215,5,376,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1AudioBuffer_ad5e513a36661a328db1b5762c53dcedd.html#ad5e513a36661a328db1b5762c53dcedd" title="Creates a clone of this buffer for a specific channel or usage enum." alt="" coords="5,5,167,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="200,28,167,28,167,23,200,23"/>
+</map>

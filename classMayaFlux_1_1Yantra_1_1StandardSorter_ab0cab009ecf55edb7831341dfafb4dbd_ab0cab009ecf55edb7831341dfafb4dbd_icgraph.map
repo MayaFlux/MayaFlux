@@ -1,0 +1,14 @@
+<map id="MayaFlux::Yantra::StandardSorter::sort_copy" name="MayaFlux::Yantra::StandardSorter::sort_copy">
+<area shape="rect" id="Node000001" title="Copy&#45;based sorting (preserves input)" alt="" coords="507,63,707,103"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1StandardSorter_a6413f024a99f05c81b4f461ed4e4d7ee.html#a6413f024a99f05c81b4f461ed4e4d7ee" title="Main sorting implementation with type dispatch." alt="" coords="5,63,211,103"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="558,59,510,38,458,21,403,11,359,8,315,11,259,21,198,41,146,65,144,60,196,36,258,16,314,6,359,3,403,6,459,16,512,33,560,54"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1StandardSorter_a6b81e2c2a8916cee453f4ce66320a9d7.html#a6b81e2c2a8916cee453f4ce66320a9d7" title="In&#45;place sorting (modifies input)" alt="" coords="259,31,459,71"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="493,71,459,66,459,61,494,66"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1StandardSorter_a1187d263424d60d6834853aa7230e081.html#a1187d263424d60d6834853aa7230e081" title="Generate sort indices only." alt="" coords="259,95,459,135"/>
+<area shape="poly" id="edge4_Node000001_Node000004" title=" " alt="" coords="494,100,459,105,459,99,493,95"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1StandardSorter_a0e2d9acadf8b88678d56a9bbf134c88f.html#a0e2d9acadf8b88678d56a9bbf134c88f" title="Parallel sorting." alt="" coords="259,159,459,199"/>
+<area shape="poly" id="edge6_Node000001_Node000005" title=" " alt="" coords="551,111,460,149,426,161,424,156,458,144,549,106"/>
+<area shape="poly" id="edge3_Node000003_Node000002" title=" " alt="" coords="246,68,211,72,211,67,245,63"/>
+<area shape="poly" id="edge5_Node000004_Node000002" title=" " alt="" coords="245,103,211,99,211,93,246,98"/>
+<area shape="poly" id="edge7_Node000005_Node000002" title=" " alt="" coords="279,157,258,149,152,105,154,101,260,144,280,152"/>
+</map>

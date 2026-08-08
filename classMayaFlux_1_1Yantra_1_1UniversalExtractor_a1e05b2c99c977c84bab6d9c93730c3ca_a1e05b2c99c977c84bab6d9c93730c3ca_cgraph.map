@@ -1,0 +1,21 @@
+<map id="MayaFlux::Yantra::UniversalExtractor::extract_batch" name="MayaFlux::Yantra::UniversalExtractor::extract_batch">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,85,209,125"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Yantra_ad7cf7b78f78a2fa1b86172083c139a55.html#ad7cf7b78f78a2fa1b86172083c139a55" title="Convert a vector of raw values into a vector of Datum wrappers." alt="" coords="281,53,438,93"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="209,89,267,82,267,87,210,94"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1UniversalExtractor_a5056026e97d548e149fd073736f82815.html#a5056026e97d548e149fd073736f82815" title="Batch extraction for multiple inputs." alt="" coords="257,117,461,157"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="210,115,244,119,243,125,209,120"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1UniversalExtractor_a5181ece0b87181664eb848538f39c73d.html#a5181ece0b87181664eb848538f39c73d" title="Type&#45;safe extraction method." alt="" coords="509,117,713,157"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="461,134,496,134,496,139,461,139"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1UniversalExtractor_a2774b38e0d56c189256584b0187ea5df.html#a2774b38e0d56c189256584b0187ea5df" title="Core operation implementation &#45; called by ComputeOperation interface." alt="" coords="761,117,972,157"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="714,134,748,134,748,139,714,139"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Yantra_1_1UniversalExtractor_ab5944006bcd00920e40149451f125050.html#ab5944006bcd00920e40149451f125050" title="Apply scope filtering to results." alt="" coords="1030,85,1257,125"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="972,122,1016,117,1017,122,973,127"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Yantra_1_1UniversalExtractor_a37ec9e24638713bb07502e60a415c9f1.html#a37ec9e24638713bb07502e60a415c9f1" title="Pure virtual extraction implementation &#45; derived classes implement this." alt="" coords="1020,149,1267,189"/>
+<area shape="poly" id="edge9_Node000005_Node000010" title=" " alt="" coords="973,146,1007,150,1006,155,972,152"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Yantra_1_1UniversalExtractor_a9d4741cadeb96283919b0925065cb9fd.html#a9d4741cadeb96283919b0925065cb9fd" title="Apply content&#45;based filtering (override for custom filtering)" alt="" coords="1327,5,1531,60"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="1223,82,1312,59,1314,64,1224,87"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Yantra_1_1UniversalExtractor_a38ff22dd95a260af94e31857aaec4760.html#a38ff22dd95a260af94e31857aaec4760" title="Apply data sampling (override for custom sampling)" alt="" coords="1315,85,1543,125"/>
+<area shape="poly" id="edge7_Node000006_Node000008" title=" " alt="" coords="1257,102,1301,102,1301,107,1257,107"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Yantra_1_1UniversalExtractor_a36cb2c3d5f8f7d73960d6f6486f286b7.html#a36cb2c3d5f8f7d73960d6f6486f286b7" title="Filter results to target regions (override for custom filtering)" alt="" coords="1327,149,1531,204"/>
+<area shape="poly" id="edge8_Node000006_Node000009" title=" " alt="" coords="1224,122,1314,145,1312,150,1223,127"/>
+</map>

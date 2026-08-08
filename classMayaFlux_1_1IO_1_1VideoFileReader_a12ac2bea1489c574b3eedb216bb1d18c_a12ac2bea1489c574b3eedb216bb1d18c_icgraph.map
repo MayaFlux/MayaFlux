@@ -1,0 +1,7 @@
+<map id="MayaFlux::IO::VideoFileReader::start_decode_thread" name="MayaFlux::IO::VideoFileReader::start_decode_thread">
+<area shape="rect" id="Node000001" title=" " alt="" coords="276,37,499,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1VideoFileReader_a78b6b19d6d9126250ded73ea4b7b6629.html#a78b6b19d6d9126250ded73ea4b7b6629" title="Load file data into an existing container." alt="" coords="5,5,228,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="262,45,228,41,228,36,263,40"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1VideoFileReader_a67253a8d5bd744aa898d4f44b6814c95.html#a67253a8d5bd744aa898d4f44b6814c95" title="Seek to a specific position in the file." alt="" coords="5,69,228,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="263,75,228,79,228,74,262,69"/>
+</map>

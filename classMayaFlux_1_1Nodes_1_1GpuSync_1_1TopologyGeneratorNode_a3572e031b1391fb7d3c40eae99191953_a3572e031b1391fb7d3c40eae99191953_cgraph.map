@@ -1,0 +1,26 @@
+<map id="MayaFlux::Nodes::GpuSync::TopologyGeneratorNode::regenerate_topology" name="MayaFlux::Nodes::GpuSync::TopologyGeneratorNode::regenerate_topology">
+<area shape="rect" id="Node000001" title="Manually trigger connection regeneration." alt="" coords="5,258,205,313"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_a6d74d87a90faf6dcb17a752271eeeb17.html#a6d74d87a90faf6dcb17a752271eeeb17" title="Generate proximity graph using specified mode." alt="" coords="256,229,451,269"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="205,268,242,263,243,268,206,273"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1TopologyGeneratorNode_a185b8fd72b13fc2d267d401523578152.html#a185b8fd72b13fc2d267d401523578152" title=" " alt="" coords="253,294,453,349"/>
+<area shape="poly" id="edge12_Node000001_Node000012" title=" " alt="" coords="206,297,240,302,239,307,205,302"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_a20b38e53041af570b0c8a5aeec5d1a58.html#a20b38e53041af570b0c8a5aeec5d1a58" title="Custom proximity graph via user function." alt="" coords="515,5,699,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="362,228,383,191,413,144,453,96,500,55,509,49,512,54,503,59,457,100,418,148,387,194,367,230"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_a45146448dd2dea8cbbd59060db78afa4.html#a45146448dd2dea8cbbd59060db78afa4" title="Compute Gabriel graph." alt="" coords="533,69,682,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="371,227,425,174,461,144,500,119,519,110,521,115,503,124,464,149,429,178,374,231"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kinesis_a6b9c33386b278f658a8ac40e9f160b4a.html#a6b9c33386b278f658a8ac40e9f160b4a" title="Compute K&#45;nearest neighbors graph." alt="" coords="529,133,686,173"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="396,227,500,183,523,175,525,180,502,188,398,232"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Kinesis_a31bff583b9a47e0fe97108fad7e16a50.html#a31bff583b9a47e0fe97108fad7e16a50" title="Compute minimum spanning tree (Prim&#39;s algorithm)" alt="" coords="515,197,699,237"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="450,234,501,228,502,233,451,240"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Kinesis_a963bd2d6956c8a5d36bb6d23415bb1ed.html#a963bd2d6956c8a5d36bb6d23415bb1ed" title="Compute nearest neighbor graph." alt="" coords="518,261,697,301"/>
+<area shape="poly" id="edge7_Node000002_Node000008" title=" " alt="" coords="451,259,505,266,504,271,450,264"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_1_1Kinesis_a70a08bceb23fffad5537d7ca3fde8478.html#a70a08bceb23fffad5537d7ca3fde8478" title="Compute radius threshold graph." alt="" coords="520,325,695,365"/>
+<area shape="poly" id="edge8_Node000002_Node000009" title=" " alt="" coords="426,267,455,279,479,295,503,311,519,318,517,323,500,316,476,300,452,284,424,272"/>
+<area shape="rect" id="Node000010" href="$namespaceMayaFlux_1_1Kinesis_a2172d35410f483d4f3c385db1eac6815.html#a2172d35410f483d4f3c385db1eac6815" title="Compute relative neighborhood graph." alt="" coords="501,389,713,429"/>
+<area shape="poly" id="edge9_Node000002_Node000010" title=" " alt="" coords="437,267,455,279,473,304,480,329,486,353,503,375,509,380,506,384,499,379,481,355,475,330,469,306,451,283,434,272"/>
+<area shape="rect" id="Node000011" href="$namespaceMayaFlux_1_1Kinesis_a01a9ab53b52e981e35f5c872f1fdbb9d.html#a01a9ab53b52e981e35f5c872f1fdbb9d" title="Compute sequential chain graph." alt="" coords="533,453,682,493"/>
+<area shape="poly" id="edge11_Node000002_Node000011" title=" " alt="" coords="440,267,455,279,471,300,478,321,480,361,482,401,489,420,503,439,521,453,518,457,499,443,484,423,476,402,475,362,473,322,466,303,451,283,436,271"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Kinesis_aa7c4bdadf6a59ad467edbcc8b9b61c9d.html#aa7c4bdadf6a59ad467edbcc8b9b61c9d" title="Normalized distance from an anchor point using the specified metric." alt="" coords="761,293,911,333"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="682,235,714,247,790,284,787,289,712,252,680,240"/>
+<area shape="poly" id="edge10_Node000010_Node000007" title=" " alt="" coords="680,387,712,375,787,338,790,343,714,380,682,392"/>
+</map>

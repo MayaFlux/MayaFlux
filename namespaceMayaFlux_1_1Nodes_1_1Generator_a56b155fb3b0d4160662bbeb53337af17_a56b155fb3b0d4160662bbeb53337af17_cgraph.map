@@ -1,0 +1,9 @@
+<map id="MayaFlux::Nodes::Generator::generate_window" name="MayaFlux::Nodes::Generator::generate_window">
+<area shape="rect" id="Node000001" title="Generate window coefficients using C++20 ranges." alt="" coords="5,69,213,109"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Nodes_1_1Generator_a16a1bc78ab4e1a3ab92c56e6daff615b.html#a16a1bc78ab4e1a3ab92c56e6daff615b" title="Creates a Blackman window function." alt="" coords="261,5,469,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="189,67,271,46,273,51,191,72"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Nodes_1_1Generator_a68aa44271e6ac1352b69108ff5e66aa7.html#a68aa44271e6ac1352b69108ff5e66aa7" title="Creates a Hamming window function." alt="" coords="261,69,469,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="213,87,248,87,248,92,213,92"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Nodes_1_1Generator_ab3e4ccd857b10a9f996ac2ce202bec00.html#ab3e4ccd857b10a9f996ac2ce202bec00" title="Creates a Hann window function." alt="" coords="261,133,469,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="191,107,273,127,271,133,189,112"/>
+</map>

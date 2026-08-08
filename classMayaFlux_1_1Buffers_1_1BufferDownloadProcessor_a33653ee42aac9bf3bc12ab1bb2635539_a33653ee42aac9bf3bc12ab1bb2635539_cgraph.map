@@ -1,0 +1,11 @@
+<map id="MayaFlux::Buffers::BufferDownloadProcessor::download_device_local" name="MayaFlux::Buffers::BufferDownloadProcessor::download_device_local">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,77,195,132"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Buffers_ad3e1272df9634f271f195e4b46b49da8.html#ad3e1272df9634f271f195e4b46b49da8" title="Download data from a device&#45;local buffer using a staging buffer." alt="" coords="251,49,424,89"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="194,88,237,81,238,86,195,93"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1BufferDownloadProcessor_ab5189f153d5a98914b171aeece316d33.html#ab5189f153d5a98914b171aeece316d33" title=" " alt="" coords="243,113,432,168"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="195,116,230,122,229,127,194,122"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_a0c7a59c0847791ed0915dcd64e8df783.html#a0c7a59c0847791ed0915dcd64e8df783" title="Query for a backend service." alt="" coords="497,5,664,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="424,53,483,44,484,50,425,59"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aa28c6f5592e5893508bafb62aefcc496.html#aa28c6f5592e5893508bafb62aefcc496" title="Get the global registry instance." alt="" coords="480,85,681,125"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="425,79,467,85,466,90,424,84"/>
+</map>

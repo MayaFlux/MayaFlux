@@ -1,0 +1,7 @@
+<map id="MayaFlux::Config::set_journal_severity" name="MayaFlux::Config::set_journal_severity">
+<area shape="rect" id="Node000001" title="Sets the minimum severity level for journal entries to be logged." alt="" coords="5,37,168,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Journal_1_1Archivist_a8b7829e34d79ec5bbbf02e3d4afbdab9.html#a8b7829e34d79ec5bbbf02e3d4afbdab9" title="Get the singleton instance of the Archivist." alt="" coords="242,5,389,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="168,43,228,35,229,40,169,49"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Journal_1_1Archivist_aa3b412f52649f428b64d69a2c200e05b.html#aa3b412f52649f428b64d69a2c200e05b" title="Set the minimum severity level for logging." alt="" coords="216,69,415,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="169,66,203,71,202,76,168,71"/>
+</map>

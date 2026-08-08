@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::GeometryBuffer::set_texture" name="MayaFlux::Buffers::GeometryBuffer::set_texture">
+<area shape="rect" id="Node000001" title="Supply a diffuse texture, bound on the next graphics tick." alt="" coords="224,5,379,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1GeometryBuffer_a4bed9c933e8e726e4d8633eda36d0a8e.html#a4bed9c933e8e726e4d8633eda36d0a8e" title="Setup rendering with RenderProcessor." alt="" coords="5,5,176,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="210,35,176,35,176,30,210,30"/>
+</map>

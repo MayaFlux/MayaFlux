@@ -1,0 +1,15 @@
+<map id="MayaFlux::Portal::Graphics::ShaderSpec::Assemble::pc" name="MayaFlux::Portal::Graphics::ShaderSpec::Assemble::pc">
+<area shape="rect" id="Node000001" title="Declare a push constant field with explicit format." alt="" coords="255,196,456,236"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1VisionGpuExecutor_a37b115d59dbe1593c58ef631942b363e.html#a37b115d59dbe1593c58ef631942b363e" title="GpuComputeConfig for a given VisionOp and its parameters." alt="" coords="15,5,197,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="331,186,278,122,243,89,205,60,182,48,185,43,208,55,247,85,282,119,335,183"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Buffers_1_1RelaxationSpecs_a1279de64ea64bd40c10f69e9d59dde46.html#a1279de64ea64bd40c10f69e9d59dde46" title="Binary state&#45;to&#45;vertex emit: nonzero state draws at full scale, zero state degenerates to a zero&#45;scal..." alt="" coords="22,70,190,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="307,192,206,138,180,127,182,122,208,134,310,187"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Buffers_1_1RelaxationSpecs_ab027146e5827d27be349ad597cbad520.html#ab027146e5827d27be349ad597cbad520" title="Scalar&#45;ramp state&#45;to&#45;vertex emit: float state value scaled and offset into a visible output range." alt="" coords="22,149,190,203"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="240,200,190,192,191,187,241,195"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Buffers_1_1RelaxationSpecs_a664b6d74405ef8f23d5954e4c9b46940.html#a664b6d74405ef8f23d5954e4c9b46940" title="Jacobi&#45;style diffusion rule: each cell blends toward the average of its 8 Moore neighbors at the give..." alt="" coords="17,227,195,282"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="241,236,195,244,195,238,241,231"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderSpec_1_1Assemble_a80b96bcb6c1fec6cb46d4b58c03cc3bf.html#a80b96bcb6c1fec6cb46d4b58c03cc3bf" title="Declare a float push constant field." alt="" coords="5,307,207,347"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="309,245,208,296,173,309,171,304,206,291,307,240"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Yantra_1_1VisionGpuExecutor_afdad8a5a64522f246a58a7f585bd34c6.html#afdad8a5a64522f246a58a7f585bd34c6" title="Execute a VisionSequence on the GPU through an explicit context set." alt="" coords="15,371,197,411"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="332,248,279,305,245,335,208,361,184,373,182,368,205,356,242,331,275,302,328,245"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::BufferAccessControl::get_num_audio_out_channels" name="MayaFlux::Buffers::BufferAccessControl::get_num_audio_out_channels">
+<area shape="rect" id="Node000001" title="Gets the number of channels for an audio token." alt="" coords="5,5,228,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1TokenUnitManager_a024917026d236981dc80eacbda01cb23.html#a024917026d236981dc80eacbda01cb23" title="Gets the number of channels in an audio unit." alt="" coords="276,5,448,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="228,30,262,30,262,35,228,35"/>
+</map>

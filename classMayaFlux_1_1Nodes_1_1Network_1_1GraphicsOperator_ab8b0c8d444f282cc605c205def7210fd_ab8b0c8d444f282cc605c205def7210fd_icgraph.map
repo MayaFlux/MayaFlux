@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::Network::GraphicsOperator::get_vertex_data" name="MayaFlux::Nodes::Network::GraphicsOperator::get_vertex_data">
+<area shape="rect" id="Node000001" title="Get vertex data for GPU upload." alt="" coords="252,45,451,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1FieldOperator_a37c560c008b5eb6cf3e143c664efca00.html#a37c560c008b5eb6cf3e143c664efca00" title="Seed vertex data from the upstream operator&#39;s current output." alt="" coords="5,5,204,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="238,57,204,51,205,46,239,52"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1PhysicsOperator_a99411015af9da1e5754e9c7b01e5bcf7.html#a99411015af9da1e5754e9c7b01e5bcf7" title="Seed physics state from upstream operator&#39;s vertex data." alt="" coords="5,84,204,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="239,93,205,98,204,93,238,88"/>
+</map>

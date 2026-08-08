@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::ComputeProcessor::set_workgroup_size" name="MayaFlux::Buffers::ComputeProcessor::set_workgroup_size">
+<area shape="rect" id="Node000001" title="Set workgroup size (should match shader local_size)" alt="" coords="239,45,411,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1RelaxationEmitProcessor_a567c9e68c3737a738f3676b330581070.html#a567c9e68c3737a738f3676b330581070" title="When attached to a RelaxationGridBuffer, sets up the dispatch configuration to cover the entire grid ..." alt="" coords="5,5,191,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="225,58,190,52,191,46,226,53"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1RelaxationStepProcessor_a49ef6b05fb571cd521a95459fda6c2fa.html#a49ef6b05fb571cd521a95459fda6c2fa" title="When attached to a RelaxationGridBuffer, sets up the dispatch configuration to cover the entire grid ..." alt="" coords="6,84,190,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="226,92,191,98,190,93,225,87"/>
+</map>

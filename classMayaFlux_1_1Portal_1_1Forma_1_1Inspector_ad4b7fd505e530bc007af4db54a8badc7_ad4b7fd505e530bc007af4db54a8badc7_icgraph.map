@@ -1,0 +1,9 @@
+<map id="MayaFlux::Portal::Forma::Inspector::node" name="MayaFlux::Portal::Forma::Inspector::node">
+<area shape="rect" id="Node000001" title="Inspect a single Node and its full modulator tree." alt="" coords="464,49,645,89"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Inspector_abe9a5e679e96d003d8bb260955b55436.html#abe9a5e679e96d003d8bb260955b55436" title="Inspect a single RootNode for a specific token and channel." alt="" coords="235,49,416,89"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="450,71,416,71,416,66,450,66"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Inspector_a47b36fa77f82dfbb6031c649b54101b0.html#a47b36fa77f82dfbb6031c649b54101b0" title="Inspect the full NodeGraphManager state across all active tokens." alt="" coords="5,5,187,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="221,55,187,50,187,44,222,50"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Inspector_a26f23b2f7c593d04950ae58f88aed898.html#a26f23b2f7c593d04950ae58f88aed898" title="Inspect all RootNodes for a token." alt="" coords="5,85,187,125"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="222,88,187,93,187,88,221,82"/>
+</map>

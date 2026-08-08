@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::InputBinding::midi_cc" name="MayaFlux::Core::InputBinding::midi_cc">
+<area shape="rect" id="Node000001" title="Bind to MIDI Control Change messages." alt="" coords="232,5,447,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_ac350d9d754aa315ef8ab62d2d0c3e5d3.html#ac350d9d754aa315ef8ab62d2d0c3e5d3" title="Create binding for MIDI Control Change messages." alt="" coords="5,13,184,38"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="218,28,184,28,184,23,218,23"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::windowed_segments_per_channel" name="MayaFlux::windowed_segments_per_channel">
+<area shape="rect" id="Node000001" title="Split multi&#45;channel data into overlapping windows per channel." alt="" coords="5,5,184,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_aa96e90074f6daba021dc8db7cb6f0741.html#aa96e90074f6daba021dc8db7cb6f0741" title="Split single&#45;channel data into overlapping windows." alt="" coords="232,5,392,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="185,23,218,23,218,28,185,28"/>
+</map>

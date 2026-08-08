@@ -1,0 +1,28 @@
+<map id="AudioStreamContext.hpp" name="AudioStreamContext.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="274,5,459,31"/>
+<area shape="rect" id="Node000002" href="$AudioStreamContext_8cpp.html" title=" " alt="" coords="79,79,263,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="323,38,204,81,202,76,322,33"/>
+<area shape="rect" id="Node000003" href="$SoundFileReader_8hpp.html" title=" " alt="" coords="287,79,446,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="369,44,369,79,364,79,364,44"/>
+<area shape="rect" id="Node000005" href="$VideoFileReader_8hpp.html" title=" " alt="" coords="407,152,561,177"/>
+<area shape="poly" id="edge13_Node000001_Node000005" title=" " alt="" coords="408,35,436,53,461,77,472,96,479,116,486,151,480,152,474,118,467,98,457,80,433,57,405,39"/>
+<area shape="rect" id="Node000004" href="$SoundFileReader_8cpp.html" title=" " alt="" coords="225,152,383,177"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="349,116,316,154,312,150,345,113"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="399,109,466,149,463,154,396,113"/>
+<area shape="rect" id="Node000006" href="$IOManager_8hpp.html" title=" " alt="" coords="343,225,463,251"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="462,188,418,227,414,223,459,184"/>
+<area shape="rect" id="Node000013" href="$VideoFileReader_8cpp.html" title=" " alt="" coords="487,225,641,251"/>
+<area shape="poly" id="edge12_Node000005_Node000013" title=" " alt="" coords="509,184,553,223,549,227,505,188"/>
+<area shape="rect" id="Node000007" href="$BufferOperation_8cpp.html" title=" " alt="" coords="5,299,157,324"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="338,256,134,301,133,296,337,251"/>
+<area shape="rect" id="Node000008" href="$Creator_8cpp.html" title=" " alt="" coords="181,299,277,324"/>
+<area shape="poly" id="edge7_Node000006_Node000008" title=" " alt="" coords="363,258,259,301,257,296,361,253"/>
+<area shape="rect" id="Node000009" href="$Depot_8cpp.html" title=" " alt="" coords="301,299,389,324"/>
+<area shape="poly" id="edge8_Node000006_Node000009" title=" " alt="" coords="387,263,357,300,353,297,383,260"/>
+<area shape="rect" id="Node000010" href="$Engine_8cpp.html" title=" " alt="" coords="413,299,507,324"/>
+<area shape="poly" id="edge9_Node000006_Node000010" title=" " alt="" coords="423,260,453,297,449,300,418,263"/>
+<area shape="rect" id="Node000011" href="$IOManager_8cpp.html" title=" " alt="" coords="531,299,650,324"/>
+<area shape="poly" id="edge10_Node000006_Node000011" title=" " alt="" coords="446,253,561,296,559,301,445,258"/>
+<area shape="rect" id="Node000012" href="$Rigs_8cpp.html" title=" " alt="" coords="673,299,751,324"/>
+<area shape="poly" id="edge11_Node000006_Node000012" title=" " alt="" coords="466,251,663,296,674,298,673,304,662,301,465,256"/>
+</map>

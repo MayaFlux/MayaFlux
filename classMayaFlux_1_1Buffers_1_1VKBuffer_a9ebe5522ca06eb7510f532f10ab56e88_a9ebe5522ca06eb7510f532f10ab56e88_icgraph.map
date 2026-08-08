@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::VKBuffer::set_needs_depth_attachment" name="MayaFlux::Buffers::VKBuffer::set_needs_depth_attachment">
+<area shape="rect" id="Node000001" title="Mark this buffer as requiring depth testing when rendered." alt="" coords="303,77,456,132"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1InstanceNetworkBuffer_a76054285d20166d96ef7062734835307.html#a76054285d20166d96ef7062734835307" title=" " alt="" coords="41,5,219,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="289,81,219,61,220,56,290,76"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1MeshBuffer_a952adb7d8c6fc079a3031c7db7bd2ff7.html#a952adb7d8c6fc079a3031c7db7bd2ff7" title="Construct from a MeshWriterNode." alt="" coords="41,85,219,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="289,107,220,107,220,102,289,102"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1MeshNetworkBuffer_a6db6ab3ff001105ca916393d90854ca6.html#a6db6ab3ff001105ca916393d90854ca6" title="Construct from an existing MeshNetwork." alt="" coords="5,149,255,204"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="291,133,226,152,225,147,289,128"/>
+</map>

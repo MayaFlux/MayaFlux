@@ -1,0 +1,17 @@
+<map id="MayaFlux::get_input_manager" name="MayaFlux::get_input_manager">
+<area shape="rect" id="Node000001" title="Gets a handle to default input manager." alt="" coords="611,101,765,141"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_a020579332529de276f3dac3895d084f0.html#a020579332529de276f3dac3895d084f0" title="Register an input node with specified binding." alt="" coords="411,69,555,109"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="597,110,555,103,556,98,598,105"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_a325ef8e37e67d238bb2b8a6753610a53.html#a325ef8e37e67d238bb2b8a6753610a53" title="Unregister an input node." alt="" coords="403,133,563,173"/>
+<area shape="poly" id="edge8_Node000001_Node000007" title=" " alt="" coords="598,138,563,144,562,138,597,133"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Creator_a3f13054bc7cb54e7fe398d590a394354.html#a3f13054bc7cb54e7fe398d590a394354" title="Create and register HID input node." alt="" coords="204,5,355,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="404,68,343,48,344,43,406,63"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Creator_ac8f6b05c2d93b495ff3e853809a63848.html#ac8f6b05c2d93b495ff3e853809a63848" title="Create and register MIDI input node." alt="" coords="204,69,355,109"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="397,92,355,92,355,87,397,87"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Creator_a8d951e8e341c68c8bb93dda2e208965c.html#a8d951e8e341c68c8bb93dda2e208965c" title="Create and register OSC input node." alt="" coords="204,133,355,173"/>
+<area shape="poly" id="edge6_Node000002_Node000006" title=" " alt="" coords="406,116,344,136,343,131,404,111"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Creator_a0239b7b00b9af2304fc807745e38e182.html#a0239b7b00b9af2304fc807745e38e182" title="Create and register generic input node." alt="" coords="5,69,156,109"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="204,52,144,72,142,67,203,47"/>
+<area shape="poly" id="edge5_Node000005_Node000004" title=" " alt="" coords="191,92,156,92,156,87,191,87"/>
+<area shape="poly" id="edge7_Node000006_Node000004" title=" " alt="" coords="203,132,142,112,144,107,204,127"/>
+</map>

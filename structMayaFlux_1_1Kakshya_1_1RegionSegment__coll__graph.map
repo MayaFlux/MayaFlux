@@ -1,0 +1,8 @@
+<map id="MayaFlux::Kakshya::RegionSegment" name="MayaFlux::Kakshya::RegionSegment">
+<area shape="rect" id="Node000001" title="Represents a discrete segment of audio data with caching capabilities." alt="" coords="5,751,212,1231"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kakshya_1_1Region.html" title="Represents a point or span in N&#45;dimensional space." alt="" coords="33,5,184,445"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="105,446,103,508,103,688,104,734,99,734,98,688,98,508,99,445"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kakshya_1_1RegionCache.html" title="Stores cached data for a region, with metadata for cache management." alt="" coords="219,508,369,688"/>
+<area shape="poly" id="edge3_Node000003_Node000002" title=" " alt="" coords="186,376,245,492,240,495,182,378"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="254,689,221,758,217,756,249,687"/>
+</map>

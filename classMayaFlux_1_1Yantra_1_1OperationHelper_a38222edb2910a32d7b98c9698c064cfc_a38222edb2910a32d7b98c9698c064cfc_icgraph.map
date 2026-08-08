@@ -1,0 +1,5 @@
+<map id="MayaFlux::Yantra::OperationHelper::extract_structured_native" name="MayaFlux::Yantra::OperationHelper::extract_structured_native">
+<area shape="rect" id="Node000001" title="Extract native&#45;typed channel spans and structure metadata from a Datum or direct ComputeData,..." alt="" coords="303,5,543,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1VisionAnalyzer_a6894626eb161191d2811f594d04914bd.html#a6894626eb161191d2811f594d04914bd" title="Pure virtual analysis implementation &#45; derived classes implement this." alt="" coords="5,5,255,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="289,28,255,28,255,23,289,23"/>
+</map>

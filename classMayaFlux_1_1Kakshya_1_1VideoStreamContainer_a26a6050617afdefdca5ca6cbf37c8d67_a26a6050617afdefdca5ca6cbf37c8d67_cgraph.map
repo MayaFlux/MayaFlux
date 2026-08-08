@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kakshya::VideoStreamContainer::get_value_impl" name="MayaFlux::Kakshya::VideoStreamContainer::get_value_impl">
+<area shape="rect" id="Node000001" title="Type&#45;erased single&#45;element read." alt="" coords="5,45,175,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_a9e5b883b500963e343de6fe357520f45.html#a9e5b883b500963e343de6fe357520f45" title="Get raw pixel data for a single frame as uint8_t span." alt="" coords="223,45,392,100"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="175,70,209,70,209,75,175,75"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_acd69a7c5e27cc6fd492c480c481ee9ea.html#acd69a7c5e27cc6fd492c480c481ee9ea" title="Get the total byte size of one frame (width * height * channels)." alt="" coords="440,5,609,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="392,54,426,48,427,53,393,60"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_ac5764b3010fc7824fd6b5da810d65f50.html#ac5764b3010fc7824fd6b5da810d65f50" title=" " alt="" coords="440,84,609,139"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="393,85,427,91,426,97,392,90"/>
+</map>

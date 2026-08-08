@@ -1,0 +1,15 @@
+<map id="MayaFlux::Kinesis::Vision::downsample_2x" name="MayaFlux::Kinesis::Vision::downsample_2x">
+<area shape="rect" id="Node000001" title="2x box&#45;filter downsample writing into a caller&#45;supplied buffer." alt="" coords="545,69,721,109"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_a13a31efca492fc9aeb7b835e07eaf870.html#a13a31efca492fc9aeb7b835e07eaf870" title="2x box&#45;filter downsample for multi&#45;channel interleaved data." alt="" coords="312,5,488,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="546,68,473,48,474,43,547,63"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_a0a9c47209dac15579365068351e611fe.html#a0a9c47209dac15579365068351e611fe" title="2x box&#45;filter downsample." alt="" coords="312,69,488,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="531,92,488,92,488,87,531,87"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kinesis_1_1Vision_1_1VisionExecutor_a6ea94c5c8d90c5890b7715a0e4ff2df5.html#a6ea94c5c8d90c5890b7715a0e4ff2df5" title="Execute a VisionSequence on one frame." alt="" coords="303,133,497,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="547,116,474,136,473,131,546,110"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1VisionAnalyzer_a6894626eb161191d2811f594d04914bd.html#a6894626eb161191d2811f594d04914bd" title="Pure virtual analysis implementation &#45; derived classes implement this." alt="" coords="5,69,255,109"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="301,133,214,112,216,107,302,127"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1VisionProcessor_ab9b6b50546df64540aee0f0bbbb7939a.html#ab9b6b50546df64540aee0f0bbbb7939a" title="Execute the VisionSequence on processed_data[0]." alt="" coords="39,133,221,173"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="289,156,222,156,222,151,289,151"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1ImageCVProcessor_a03dd11926b797b52ccbdfa37c2b5e4e1.html#a03dd11926b797b52ccbdfa37c2b5e4e1" title="Download the current GPU image, run the VisionSequence, store the result." alt="" coords="19,198,241,253"/>
+<area shape="poly" id="edge6_Node000004_Node000007" title=" " alt="" coords="312,180,234,201,232,195,310,174"/>
+</map>

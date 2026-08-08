@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::VideoStreamContainer::get_frame_pixels" name="MayaFlux::Kakshya::VideoStreamContainer::get_frame_pixels">
+<area shape="rect" id="Node000001" title="Get raw pixel data for a single frame as uint8_t span." alt="" coords="223,5,392,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_a26a6050617afdefdca5ca6cbf37c8d67.html#a26a6050617afdefdca5ca6cbf37c8d67" title="Type&#45;erased single&#45;element read." alt="" coords="5,5,175,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="209,35,175,35,175,30,209,30"/>
+</map>

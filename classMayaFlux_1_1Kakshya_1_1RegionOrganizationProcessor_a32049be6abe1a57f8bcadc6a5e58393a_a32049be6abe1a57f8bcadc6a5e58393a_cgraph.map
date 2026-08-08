@@ -1,0 +1,19 @@
+<map id="MayaFlux::Kakshya::RegionOrganizationProcessor::process" name="MayaFlux::Kakshya::RegionOrganizationProcessor::process">
+<area shape="rect" id="Node000001" title="Processes audio data according to the current region organization." alt="" coords="5,84,219,139"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1RegionProcessorBase_a8d67fba8bb619b5bc20a8c271440973a.html#a8d67fba8bb619b5bc20a8c271440973a" title="Ensure output data is properly dimensioned for region extraction." alt="" coords="267,5,485,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="204,81,270,61,272,67,205,86"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kakshya_1_1ContainerDataStructure_a3b75e366535f258e9eeea41e897693d2.html#a3b75e366535f258e9eeea41e897693d2" title="Extract the size of non time dimensions (channel, spatial, frequency)" alt="" coords="289,84,463,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="219,109,275,109,275,114,219,114"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1RegionOrganizationProcessor_a5e871d9c925502ead2227e2c5669dab0.html#a5e871d9c925502ead2227e2c5669dab0" title="Process regions according to their selection pattern." alt="" coords="269,163,483,217"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="205,136,272,156,270,161,204,141"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1RegionOrganizationProcessor_a4ef39aa467134325fbcfefa5c4810f28.html#a4ef39aa467134325fbcfefa5c4810f28" title="Apply a transition between two regions." alt="" coords="533,55,747,109"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="455,160,484,148,532,120,549,112,551,117,535,124,487,152,458,165"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Kakshya_a4f4d80add8013fb73fabc262edc2e76c.html#a4f4d80add8013fb73fabc262edc2e76c" title=" " alt="" coords="557,134,723,174"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="483,173,543,164,544,170,483,178"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Kakshya_1_1RegionOrganizationProcessor_af6a1c2965bd840ff51bafe759e8e4cb5.html#af6a1c2965bd840ff51bafe759e8e4cb5" title="Process a single region segment." alt="" coords="533,199,747,253"/>
+<area shape="poly" id="edge6_Node000004_Node000007" title=" " alt="" coords="483,202,520,207,519,212,483,207"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Kakshya_1_1RegionOrganizationProcessor_ac1aefba0e5745f0a4998f2d80d8209b3.html#ac1aefba0e5745f0a4998f2d80d8209b3" title="Select the next segment to process according to the region&#39;s pattern." alt="" coords="533,277,747,332"/>
+<area shape="poly" id="edge8_Node000004_Node000009" title=" " alt="" coords="433,215,534,262,552,270,550,275,532,267,431,220"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Kakshya_aa54974c0e7035a5e1d91aa1c3c29d49c.html#aa54974c0e7035a5e1d91aa1c3c29d49c" title="Safely copy data from a DataVariant to another DataVariant, handling type conversion." alt="" coords="795,206,972,246"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="747,223,781,223,781,229,747,229"/>
+</map>

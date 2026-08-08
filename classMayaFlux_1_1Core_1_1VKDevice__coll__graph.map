@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::VKDevice" name="MayaFlux::Core::VKDevice">
+<area shape="rect" id="Node000001" title="Manages Vulkan physical device selection and logical device creation." alt="" coords="7,208,213,653"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Core_1_1QueueFamilyIndices.html" title="Stores indices of queue families we need." alt="" coords="5,5,215,145"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="113,146,113,191,107,191,107,146"/>
+</map>

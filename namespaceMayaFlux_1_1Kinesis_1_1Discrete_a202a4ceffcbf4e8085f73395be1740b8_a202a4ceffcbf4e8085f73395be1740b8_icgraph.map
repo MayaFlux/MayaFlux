@@ -1,0 +1,8 @@
+<map id="MayaFlux::Kinesis::Discrete::coefficient_of_variation" name="MayaFlux::Kinesis::Discrete::coefficient_of_variation">
+<area shape="rect" id="Node000001" title="Coefficient of variation (std_dev / mean) per window." alt="" coords="616,29,768,84"/>
+<area shape="poly" id="edge1_Node000001_Node000001" title=" " alt="" coords="735,18,719,11,692,8,669,10,654,15,647,21,648,29,642,29,643,19,651,10,668,5,692,3,721,6,737,14"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1StatisticalAnalyzer_ac6b9656bbc2b37d4603de52ef0115d85.html#ac6b9656bbc2b37d4603de52ef0115d85" title="Compute statistical values using span (zero&#45;copy processing)" alt="" coords="303,37,568,77"/>
+<area shape="poly" id="edge2_Node000001_Node000002" title=" " alt="" coords="602,59,568,59,568,54,602,54"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1StatisticalAnalyzer_ada59b9d30d969a895d8693fc96381700.html#ada59b9d30d969a895d8693fc96381700" title="Core analysis implementation &#45; creates analysis result AND pipeline output." alt="" coords="5,37,255,77"/>
+<area shape="poly" id="edge3_Node000002_Node000003" title=" " alt="" coords="289,59,255,59,255,54,289,54"/>
+</map>

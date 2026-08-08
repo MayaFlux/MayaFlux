@@ -1,0 +1,25 @@
+<map id="MayaFlux::Kakshya::SoundFileContainer::setup" name="MayaFlux::Kakshya::SoundFileContainer::setup">
+<area shape="rect" id="Node000001" title="Setup the container with file parameters." alt="" coords="5,221,197,261"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_a46cf2a36bf81975f79bc304b56edc004.html#a46cf2a36bf81975f79bc304b56edc004" title=" " alt="" coords="255,173,427,228"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="197,222,242,215,242,220,198,227"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_a5e0c8b987a5e6354c1e4d9c717b92b76.html#a5e0c8b987a5e6354c1e4d9c717b92b76" title="Update the processing state of the container." alt="" coords="245,252,437,307"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="198,253,232,259,231,264,197,259"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_ac71c3404aadefac0fe97e641021e1eba.html#ac71c3404aadefac0fe97e641021e1eba" title="Create dimension descriptors for a data modality." alt="" coords="485,173,657,228"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="428,198,471,198,471,203,428,203"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_aafb5f78e7e3682f8785ef62f77e5d77a.html#aafb5f78e7e3682f8785ef62f77e5d77a" title="Calculate memory strides based on shape and layout." alt="" coords="708,5,899,60"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="594,171,642,121,704,70,714,64,717,69,707,75,645,125,598,175"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_afae79b6c7314e95d426e396efe81787a.html#afae79b6c7314e95d426e396efe81787a" title="Convenience constructor for a channel dimension." alt="" coords="712,85,895,125"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="624,171,704,134,724,127,726,132,706,139,627,176"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_a6a1656bc7eafe4add39ec634481345a7.html#a6a1656bc7eafe4add39ec634481345a7" title="Convenience constructor for a frequency dimension." alt="" coords="705,149,901,189"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="657,186,691,181,692,187,658,191"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Kakshya_aedc3538e77f59c4a4d91df28e181d066.html#aedc3538e77f59c4a4d91df28e181d066" title="Convert DataModality enum to string representation." alt="" coords="724,213,883,253"/>
+<area shape="poly" id="edge6_Node000003_Node000007" title=" " alt="" coords="658,210,711,217,710,223,657,215"/>
+<area shape="rect" id="Node000009" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_a54ded63656235da79ab98ef3a576d3d2.html#a54ded63656235da79ab98ef3a576d3d2" title="Convenience constructor for a spatial dimension." alt="" coords="716,277,891,317"/>
+<area shape="poly" id="edge8_Node000003_Node000009" title=" " alt="" coords="632,226,659,238,706,262,725,270,724,275,704,267,656,243,630,230"/>
+<area shape="rect" id="Node000010" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_aab0cac54b47602cb00e2fd99b50839c3.html#aab0cac54b47602cb00e2fd99b50839c3" title="Convenience constructor for a temporal (time) dimension." alt="" coords="723,341,884,381"/>
+<area shape="poly" id="edge9_Node000003_Node000010" title=" " alt="" coords="643,226,659,239,676,262,683,285,690,306,707,327,713,331,710,336,703,331,686,308,678,286,671,264,655,243,640,230"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Reflect_aad91118cbd25bd9e35a3ced9aa4e6dbd.html#aad91118cbd25bd9e35a3ced9aa4e6dbd" title="Universal enum to string converter using magic_enum (original case)" alt="" coords="949,213,1096,253"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="883,230,935,230,935,235,883,235"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_a6b017a7f21c67f1c3faa5a30dbdc0750.html#a6b017a7f21c67f1c3faa5a30dbdc0750" title=" " alt="" coords="485,252,657,307"/>
+<area shape="poly" id="edge11_Node000011_Node000012" title=" " alt="" coords="438,277,472,277,472,282,438,282"/>
+</map>

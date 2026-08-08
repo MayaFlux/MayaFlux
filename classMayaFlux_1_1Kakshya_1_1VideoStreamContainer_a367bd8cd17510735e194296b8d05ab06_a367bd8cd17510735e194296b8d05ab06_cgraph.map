@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kakshya::VideoStreamContainer::get_frames_typed" name="MayaFlux::Kakshya::VideoStreamContainer::get_frames_typed">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,45,175,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_acd69a7c5e27cc6fd492c480c481ee9ea.html#acd69a7c5e27cc6fd492c480c481ee9ea" title="Get the total byte size of one frame (width * height * channels)." alt="" coords="223,5,392,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="174,54,209,48,210,53,175,60"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_afe3464a2b7c317e4889e0241cafdb67c.html#afe3464a2b7c317e4889e0241cafdb67c" title=" " alt="" coords="223,84,392,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="175,85,210,91,209,97,174,90"/>
+</map>

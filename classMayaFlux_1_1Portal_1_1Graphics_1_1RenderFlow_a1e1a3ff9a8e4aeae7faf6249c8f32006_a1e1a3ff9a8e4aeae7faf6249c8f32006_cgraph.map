@@ -1,0 +1,7 @@
+<map id="MayaFlux::Portal::Graphics::RenderFlow::begin_rendering" name="MayaFlux::Portal::Graphics::RenderFlow::begin_rendering">
+<area shape="rect" id="Node000001" title="Begin dynamic rendering to a window." alt="" coords="5,41,224,81"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ab2be21f08a8e73058950c603e8a77020.html#ab2be21f08a8e73058950c603e8a77020" title="Get Vulkan command buffer handle from CommandBufferID." alt="" coords="272,5,544,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="224,45,258,41,259,46,225,51"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1RenderFlow_a3a32c3c2de76283afb758fdab6804de4.html#a3a32c3c2de76283afb758fdab6804de4" title="Get current image view for window." alt="" coords="309,70,507,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="225,72,296,81,295,86,224,77"/>
+</map>

@@ -1,0 +1,29 @@
+<map id="MayaFlux::Buffers::BufferDownloadProcessor::processing_function" name="MayaFlux::Buffers::BufferDownloadProcessor::processing_function">
+<area shape="rect" id="Node000001" title="The core processing function that must be implemented by derived classes." alt="" coords="5,134,195,188"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferDownloadProcessor_a5c49454bae98ee5aacba5da6c4c48522.html#a5c49454bae98ee5aacba5da6c4c48522" title=" " alt="" coords="243,38,432,92"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="168,131,256,95,258,100,170,136"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1BufferDownloadProcessor_a33653ee42aac9bf3bc12ab1bb2635539.html#a33653ee42aac9bf3bc12ab1bb2635539" title=" " alt="" coords="480,199,669,254"/>
+<area shape="poly" id="edge8_Node000001_Node000007" title=" " alt="" coords="188,186,243,198,358,213,466,221,466,226,357,219,242,204,187,191"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Buffers_1_1BufferDownloadProcessor_aac8afafcfb3c8afdbb80423ea3cbe35c.html#aac8afafcfb3c8afdbb80423ea3cbe35c" title=" " alt="" coords="243,134,432,188"/>
+<area shape="poly" id="edge13_Node000001_Node000010" title=" " alt="" coords="195,158,229,158,229,164,195,164"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Buffers_ac52fcd2008aaa96c0cd0d4b638671e64.html#ac52fcd2008aaa96c0cd0d4b638671e64" title="Download a raw back_buffers slot to host memory." alt="" coords="491,36,659,76"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="432,59,477,57,477,62,432,64"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Buffers_a64c6abe8842e398d178e4275a4d4b404.html#a64c6abe8842e398d178e4275a4d4b404" title="Create staging buffer for transfers." alt="" coords="731,26,893,66"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="659,50,717,47,717,53,659,55"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_a0c7a59c0847791ed0915dcd64e8df783.html#a0c7a59c0847791ed0915dcd64e8df783" title="Query for a backend service." alt="" coords="972,30,1139,84"/>
+<area shape="poly" id="edge6_Node000003_Node000005" title=" " alt="" coords="630,33,672,21,717,12,812,3,907,12,962,23,961,28,906,17,812,8,718,17,674,26,632,38"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aa28c6f5592e5893508bafb62aefcc496.html#aa28c6f5592e5893508bafb62aefcc496" title="Get the global registry instance." alt="" coords="955,120,1156,160"/>
+<area shape="poly" id="edge7_Node000003_Node000006" title=" " alt="" coords="659,67,941,117,940,122,658,73"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="894,47,958,50,958,55,893,52"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="866,64,990,112,988,117,864,69"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Buffers_ad3e1272df9634f271f195e4b46b49da8.html#ad3e1272df9634f271f195e4b46b49da8" title="Download data from a device&#45;local buffer using a staging buffer." alt="" coords="725,205,899,245"/>
+<area shape="poly" id="edge9_Node000007_Node000008" title=" " alt="" coords="669,223,712,223,712,228,669,228"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Buffers_1_1BufferDownloadProcessor_ab5189f153d5a98914b171aeece316d33.html#ab5189f153d5a98914b171aeece316d33" title=" " alt="" coords="717,270,907,324"/>
+<area shape="poly" id="edge12_Node000007_Node000009" title=" " alt="" coords="668,251,707,263,706,268,666,256"/>
+<area shape="poly" id="edge10_Node000008_Node000005" title=" " alt="" coords="887,203,905,191,922,171,929,150,936,128,953,106,973,89,977,94,957,109,941,131,934,152,926,173,908,195,890,207"/>
+<area shape="poly" id="edge11_Node000008_Node000006" title=" " alt="" coords="872,202,906,190,986,162,987,167,908,195,874,207"/>
+<area shape="rect" id="Node000011" href="$namespaceMayaFlux_1_1Buffers_abfc2b0ee2aaa09871e8b027207bf8396.html#abfc2b0ee2aaa09871e8b027207bf8396" title="Download data from a host&#45;visible buffer." alt="" coords="727,141,897,181"/>
+<area shape="poly" id="edge14_Node000010_Node000011" title=" " alt="" coords="432,158,713,158,713,164,432,164"/>
+<area shape="poly" id="edge15_Node000011_Node000005" title=" " alt="" coords="859,138,977,87,979,92,861,143"/>
+<area shape="poly" id="edge16_Node000011_Node000006" title=" " alt="" coords="897,151,941,147,941,152,898,156"/>
+</map>

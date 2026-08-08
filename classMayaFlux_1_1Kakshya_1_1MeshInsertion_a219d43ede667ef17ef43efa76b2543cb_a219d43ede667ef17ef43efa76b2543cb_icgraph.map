@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::MeshInsertion::ensure_vertex_storage" name="MayaFlux::Kakshya::MeshInsertion::ensure_vertex_storage">
+<area shape="rect" id="Node000001" title=" " alt="" coords="212,5,379,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1MeshInsertion_a264df1d91cfb1f929fb4d7134d2d7602.html#a264df1d91cfb1f929fb4d7134d2d7602" title="Append one submesh batch, accumulating into the shared buffers." alt="" coords="5,5,164,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="198,35,164,35,164,30,198,30"/>
+</map>

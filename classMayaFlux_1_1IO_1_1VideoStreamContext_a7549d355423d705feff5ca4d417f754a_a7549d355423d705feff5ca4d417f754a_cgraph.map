@@ -1,0 +1,5 @@
+<map id="MayaFlux::IO::VideoStreamContext::rebuild_scaler_from_frame" name="MayaFlux::IO::VideoStreamContext::rebuild_scaler_from_frame">
+<area shape="rect" id="Node000001" title="Rebuild the SwsContext using the pixel format resolved from a live decoded frame." alt="" coords="5,5,205,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1VideoStreamContext_a37518951e40eec3177564a4e4f9de342.html#a37518951e40eec3177564a4e4f9de342" title="Allocate and initialise the SwsContext for pixel format conversion." alt="" coords="253,13,453,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="205,30,240,30,240,35,205,35"/>
+</map>

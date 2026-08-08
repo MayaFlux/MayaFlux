@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::compute_orbit_view_transform" name="MayaFlux::Kinesis::compute_orbit_view_transform">
+<area shape="rect" id="Node000001" title="Build a ViewTransform from the current OrbitState." alt="" coords="5,5,231,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_a4da7d21f0e7424468283bf416b00ccf7.html#a4da7d21f0e7424468283bf416b00ccf7" title="Derive eye position from the current orbit state." alt="" coords="279,5,428,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="231,23,265,23,265,28,231,28"/>
+</map>

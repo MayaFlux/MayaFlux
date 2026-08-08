@@ -1,0 +1,3 @@
+<map id="MayaFlux::IO::FFmpegMuxContext" name="MayaFlux::IO::FFmpegMuxContext">
+<area shape="rect" id="Node000001" title="RAII owner of a single AVFormatContext on the write path." alt="" coords="5,5,245,371"/>
+</map>

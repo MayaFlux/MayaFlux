@@ -1,0 +1,28 @@
+var classMayaFlux_1_1Buffers_1_1TextBuffer =
+[
+    [ "append_accumulated_text", "classMayaFlux_1_1Buffers_1_1TextBuffer_aea9eb2039618bde8b0ad966596f495be.html#aea9eb2039618bde8b0ad966596f495be", null ],
+    [ "clear_accumulated_text", "classMayaFlux_1_1Buffers_1_1TextBuffer_a34db20c3d979602e2a9c5337a75c4395.html#a34db20c3d979602e2a9c5337a75c4395", null ],
+    [ "get_accumulated_text", "classMayaFlux_1_1Buffers_1_1TextBuffer_ae8dbfe287b54fd5321e57a50cfaed2de.html#ae8dbfe287b54fd5321e57a50cfaed2de", null ],
+    [ "get_budget_height", "classMayaFlux_1_1Buffers_1_1TextBuffer_af140681842538866bfb1365b2eec3330.html#af140681842538866bfb1365b2eec3330", null ],
+    [ "get_budget_width", "classMayaFlux_1_1Buffers_1_1TextBuffer_ac4138f7cbce22ec172bc2e71b2d30df1.html#ac4138f7cbce22ec172bc2e71b2d30df1", null ],
+    [ "get_cursor_x", "classMayaFlux_1_1Buffers_1_1TextBuffer_a35d93a628f98d699e7e0931bdab56376.html#a35d93a628f98d699e7e0931bdab56376", null ],
+    [ "get_cursor_x", "classMayaFlux_1_1Buffers_1_1TextBuffer_ab56c55edeb35c2c41bf7cbc9515065f7.html#ab56c55edeb35c2c41bf7cbc9515065f7", null ],
+    [ "get_cursor_y", "classMayaFlux_1_1Buffers_1_1TextBuffer_a0bec6b5478495fe598b0d13f4fe56a7d.html#a0bec6b5478495fe598b0d13f4fe56a7d", null ],
+    [ "get_cursor_y", "classMayaFlux_1_1Buffers_1_1TextBuffer_acbccb66536c2e63465436bd671535cac.html#acbccb66536c2e63465436bd671535cac", null ],
+    [ "get_render_bounds_h", "classMayaFlux_1_1Buffers_1_1TextBuffer_aa43083630c2ed38147006bcaf0a87652.html#aa43083630c2ed38147006bcaf0a87652", null ],
+    [ "get_render_bounds_w", "classMayaFlux_1_1Buffers_1_1TextBuffer_aaa506c96e7d5dad791456985d910ee95.html#aaa506c96e7d5dad791456985d910ee95", null ],
+    [ "has_budget", "classMayaFlux_1_1Buffers_1_1TextBuffer_aaa413527c41ad529fb81dc0c13955824.html#aaa413527c41ad529fb81dc0c13955824", null ],
+    [ "reset_cursor", "classMayaFlux_1_1Buffers_1_1TextBuffer_adb4d91f008b296e230682d3d13662e8c.html#adb4d91f008b296e230682d3d13662e8c", null ],
+    [ "set_accumulated_text", "classMayaFlux_1_1Buffers_1_1TextBuffer_aed45d781af22c64d1e1d30abcb1f0372.html#aed45d781af22c64d1e1d30abcb1f0372", null ],
+    [ "set_budget", "classMayaFlux_1_1Buffers_1_1TextBuffer_ad4e629ee238732484042d5e31b580b38.html#ad4e629ee238732484042d5e31b580b38", null ],
+    [ "set_render_bounds", "classMayaFlux_1_1Buffers_1_1TextBuffer_a248fb8b48f5ff293e01b6027a25b511b.html#a248fb8b48f5ff293e01b6027a25b511b", null ],
+    [ "setup_rendering", "classMayaFlux_1_1Buffers_1_1TextBuffer_a20bb5344ba60f4af317a00cde144f63a.html#a20bb5344ba60f4af317a00cde144f63a", null ],
+    [ "TextureBuffer", "classMayaFlux_1_1Buffers_1_1TextBuffer_ac591a11585eecc22824a7411e4f02dab.html#ac591a11585eecc22824a7411e4f02dab", null ],
+    [ "m_accumulated_text", "classMayaFlux_1_1Buffers_1_1TextBuffer_ab750a90cff18cd0e0c50d7bb3af8e4ae.html#ab750a90cff18cd0e0c50d7bb3af8e4ae", null ],
+    [ "m_budget_height", "classMayaFlux_1_1Buffers_1_1TextBuffer_a47f604f7a417f6edbde7bc7edbeb17a4.html#a47f604f7a417f6edbde7bc7edbeb17a4", null ],
+    [ "m_budget_width", "classMayaFlux_1_1Buffers_1_1TextBuffer_a8303b41712ca7a6fe4413cf93c30c72d.html#a8303b41712ca7a6fe4413cf93c30c72d", null ],
+    [ "m_cursor_x", "classMayaFlux_1_1Buffers_1_1TextBuffer_a129696928a180425d5734a7029da9e30.html#a129696928a180425d5734a7029da9e30", null ],
+    [ "m_cursor_y", "classMayaFlux_1_1Buffers_1_1TextBuffer_ae505d334311d1b62dcdf1bf893919921.html#ae505d334311d1b62dcdf1bf893919921", null ],
+    [ "m_render_bounds_h", "classMayaFlux_1_1Buffers_1_1TextBuffer_a84e5d09ee2dc0ab362a03f1c22ac96b2.html#a84e5d09ee2dc0ab362a03f1c22ac96b2", null ],
+    [ "m_render_bounds_w", "classMayaFlux_1_1Buffers_1_1TextBuffer_aef4856ed9fc014b1daa3071551323ca7.html#aef4856ed9fc014b1daa3071551323ca7", null ]
+];

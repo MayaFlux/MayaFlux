@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::denormalise_to_uint8" name="MayaFlux::Kakshya::denormalise_to_uint8">
+<area shape="rect" id="Node000001" title="Convert a normalised float span back to uint8_t pixels." alt="" coords="216,5,379,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kakshya_a2481b1385fc996cfdf24472bd1ba8c7b.html#a2481b1385fc996cfdf24472bd1ba8c7b" title="Convert a normalised float span back to uint8_t, returning a new vector." alt="" coords="5,5,168,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="202,28,168,28,168,23,202,23"/>
+</map>

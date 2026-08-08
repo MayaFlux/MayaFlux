@@ -1,0 +1,9 @@
+<map id="MayaFlux::Core::InputSubsystem::wire_backend_to_manager" name="MayaFlux::Core::InputSubsystem::wire_backend_to_manager">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,69,243,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1InputManagerHandle_a749e51b8d80f770e72fbad4982360609.html#a749e51b8d80f770e72fbad4982360609" title="enqueue input value to InputManager" alt="" coords="291,5,514,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="211,67,301,46,302,51,213,72"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1IInputBackend_a4cea806b061a5e1828d19d1f16fca168.html#a4cea806b061a5e1828d19d1f16fca168" title="Register callback for device connect/disconnect events." alt="" coords="291,69,515,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="243,87,277,87,277,92,243,92"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1IInputBackend_a604f7428339fce1bc3d9d7dd225ce9ce.html#a604f7428339fce1bc3d9d7dd225ce9ce" title="Register callback for input values." alt="" coords="291,133,515,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="213,107,302,128,301,133,211,112"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::BufferProcessingControl::remove_audio_processor" name="MayaFlux::Buffers::BufferProcessingControl::remove_audio_processor">
+<area shape="rect" id="Node000001" title="Removes a processor from a specific audio buffer." alt="" coords="232,5,425,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingControl_af22ed5f9c5d3af97a0f100ca6b62a3ff.html#af22ed5f9c5d3af97a0f100ca6b62a3ff" title="Removes a processor from a buffer (dispatches based on buffer/token)" alt="" coords="5,5,184,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="218,35,184,35,184,30,218,30"/>
+</map>

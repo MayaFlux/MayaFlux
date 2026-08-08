@@ -1,0 +1,7 @@
+<map id="MayaFlux::Portal::Text::GlyphAtlas::ascender" name="MayaFlux::Portal::Text::GlyphAtlas::ascender">
+<area shape="rect" id="Node000001" title="Ascender in pixels for this atlas&#39;s pixel_size." alt="" coords="220,37,388,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Text_ad0d60d632777550dc22ddf928206cb76.html#ad0d60d632777550dc22ddf928206cb76" title="Composite a UTF&#45;8 string directly into a new GPU texture." alt="" coords="5,5,172,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="206,46,172,40,173,35,207,40"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Text_acf9c8473bfc47c7f6778e5643e600dbe.html#acf9c8473bfc47c7f6778e5643e600dbe" title="Re&#45;composite a UTF&#45;8 string into an existing GPU texture." alt="" coords="5,69,172,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="207,74,173,80,172,74,206,69"/>
+</map>

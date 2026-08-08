@@ -1,0 +1,11 @@
+<map id="MayaFlux::Kakshya::extract_region_data" name="MayaFlux::Kakshya::extract_region_data">
+<area shape="rect" id="Node000001" title="Extract a region of data from a flat data span using a Region and dimension info." alt="" coords="212,101,371,141"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kakshya_a9e9709829d80c948f8b9e169869bfbe7.html#a9e9709829d80c948f8b9e169869bfbe7" title="Extract a region of data from vector of vectors (planar data)." alt="" coords="5,5,164,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="239,97,163,60,136,48,138,43,165,55,241,92"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kakshya_a1a50dada1a9e89b61762433a756442a8.html#a1a50dada1a9e89b61762433a756442a8" title="Extract a region of data from a vector using a Region and dimension info." alt="" coords="5,69,164,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="198,110,164,104,164,99,199,104"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kakshya_a0b120cdfd64c4367c5c738c5bceec0bd.html#a0b120cdfd64c4367c5c738c5bceec0bd" title="Extract region data from planar storage (separate per channel/variant)" alt="" coords="5,133,164,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="199,138,164,144,164,138,198,133"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kakshya_a380dad5e7b8d9664e58bfade4f16aaff.html#a380dad5e7b8d9664e58bfade4f16aaff" title="Extract a region of data with organization strategy." alt="" coords="5,197,164,237"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="241,150,165,188,138,200,136,195,163,183,239,145"/>
+</map>

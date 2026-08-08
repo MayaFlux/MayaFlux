@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::GpuSync::GpuComputeContext" name="MayaFlux::Nodes::GpuSync::GpuComputeContext">
+<area shape="rect" id="Node000001" title="Context delivered to on_complete callbacks when a dispatch completes." alt="" coords="19,179,211,259"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1NodeContext.html" title="Base context class for node callbacks." alt="" coords="5,5,225,131"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="118,144,118,179,113,179,113,144"/>
+</map>

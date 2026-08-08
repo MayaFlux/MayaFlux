@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::GpuSync::GpuSync::compute_frame" name="MayaFlux::Nodes::GpuSync::GpuSync::compute_frame">
+<area shape="rect" id="Node000001" title="Compute GPU data for this frame." alt="" coords="324,5,524,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GeometryWriterNode_a88fb93c623d21d24aa9ec488de57076b.html#a88fb93c623d21d24aa9ec488de57076b" title="Process batch for geometry generation." alt="" coords="5,5,276,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="310,28,276,28,276,23,310,23"/>
+</map>

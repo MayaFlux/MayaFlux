@@ -1,0 +1,12 @@
+<map id="MayaFlux::IO::AudioEncodeContext::is_valid" name="MayaFlux::IO::AudioEncodeContext::is_valid">
+<area shape="rect" id="Node000001" title="True if codec, resampler, and FIFO are all ready." alt="" coords="787,37,987,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1AudioEncodeContext_a3427a70cf468d913a2e05b481932e13e.html#a3427a70cf468d913a2e05b481932e13e" title="Flush the FIFO remainder and encoder internal delay to the mux." alt="" coords="539,5,739,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="773,45,739,41,739,36,774,40"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1IO_1_1AudioEncodeContext_af4f3adaf13395558f0b8bbdf35a15787.html#af4f3adaf13395558f0b8bbdf35a15787" title="Encode a block of interleaved double&#45;precision PCM frames." alt="" coords="539,69,739,109"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="774,75,739,79,739,74,773,69"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1SoundFileWriter_afe05fe29e71e3b1f3f3c489669dab0eb.html#afe05fe29e71e3b1f3f3c489669dab0eb" title=" " alt="" coords="272,37,491,77"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="526,42,491,46,490,41,525,37"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1SoundFileWriter_a759a872c21f40482fee6d559b8b2567d.html#a759a872c21f40482fee6d559b8b2567d" title="Open the output file and spawn the worker thread." alt="" coords="5,37,224,77"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="258,60,224,60,224,55,258,55"/>
+<area shape="poly" id="edge5_Node000005_Node000003" title=" " alt="" coords="525,78,490,74,491,68,526,73"/>
+</map>

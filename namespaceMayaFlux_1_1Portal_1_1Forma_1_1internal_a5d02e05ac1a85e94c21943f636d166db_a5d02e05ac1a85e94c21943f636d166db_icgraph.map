@@ -1,0 +1,13 @@
+<map id="MayaFlux::Portal::Forma::internal::create_buffer_impl" name="MayaFlux::Portal::Forma::internal::create_buffer_impl">
+<area shape="rect" id="Node000001" title="Core buffer construction — capacity&#45;explicit path for internal use." alt="" coords="235,133,445,173"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Forma_aef5f942277f0299e61d080bd886aa1c5.html#aef5f942277f0299e61d080bd886aa1c5" title=" " alt="" coords="5,5,187,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="298,127,245,93,185,60,158,48,160,43,188,55,248,89,301,123"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Forma_a890de0c6a43b943d7028238f7c5354b2.html#a890de0c6a43b943d7028238f7c5354b2" title="Construct, register, and immediately submit a FormaBuffer from vertices." alt="" coords="5,69,187,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="249,132,172,112,173,107,251,127"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Portal_1_1Forma_a57e0ff0ed9869d6dc9df7630cb83c983.html#a57e0ff0ed9869d6dc9df7630cb83c983" title="Construct and register a FormaBuffer without creating a Mapped&lt;T&gt;." alt="" coords="5,133,187,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="221,156,187,156,187,151,221,151"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Portal_1_1Forma_ab7c80734b3a1d72b2c6bd738f2c4e708.html#ab7c80734b3a1d72b2c6bd738f2c4e708" title="Construct and register a FormaBuffer with additional texture bindings." alt="" coords="5,197,187,237"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="251,179,173,200,172,195,249,174"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Portal_1_1Forma_a0134941e72f794b2ad2318f03eacb98b.html#a0134941e72f794b2ad2318f03eacb98b" title="Create a live plot in a new window." alt="" coords="5,261,187,301"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="301,184,248,218,188,252,160,264,158,259,185,247,245,214,298,179"/>
+</map>

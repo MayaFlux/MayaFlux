@@ -1,0 +1,5 @@
+<map id="MayaFlux::Portal::Graphics::HazardResource" name="MayaFlux::Portal::Graphics::HazardResource">
+<area shape="rect" id="Node000001" title="One resource this stage&#39;s dispatch reads/writes that a later stage in the sequence depends on,..." alt="" coords="5,248,195,348"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Portal_1_1Graphics_1_1GpuBufferBinding.html" title="Declares a single storage buffer or image binding a compute shader expects." alt="" coords="5,5,195,185"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="103,186,103,232,97,232,97,186"/>
+</map>

@@ -1,0 +1,23 @@
+<map id="MayaFlux::Portal::Graphics::ShaderFoundry::compile_from_source" name="MayaFlux::Portal::Graphics::ShaderFoundry::compile_from_source">
+<area shape="rect" id="Node000001" title=" " alt="" coords="844,86,1041,141"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_a23013e23149b90cc22041c02e618cf0a.html#a23013e23149b90cc22041c02e618cf0a" title="Compile shader from ShaderSource descriptor." alt="" coords="591,21,788,61"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="832,85,760,64,761,59,833,80"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_aa6c0ffba6a18470328705f5c9f27690f.html#aa6c0ffba6a18470328705f5c9f27690f" title=" " alt="" coords="591,86,788,141"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="830,116,788,116,788,111,830,111"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ae87f819ac9d895c64a969332bcc120f1.html#ae87f819ac9d895c64a969332bcc120f1" title="Universal shader loader &#45; auto&#45;detects source type." alt="" coords="583,165,796,205"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="833,147,761,168,760,163,832,142"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Yantra_ad0c9de1a0cf6a0164f88b244cce126d5.html#ad0c9de1a0cf6a0164f88b244cce126d5" title="Derive a GpuComputeConfig from a ShaderSpec." alt="" coords="320,69,501,109"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="598,163,581,156,557,139,533,124,501,111,503,106,536,119,560,135,584,151,601,158"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ad83f46edd697dd2be9760d5d2ca94f7b.html#ad83f46edd697dd2be9760d5d2ca94f7b" title="Load shader from explicit ShaderSource descriptor." alt="" coords="304,133,517,173"/>
+<area shape="poly" id="edge8_Node000004_Node000009" title=" " alt="" coords="569,174,517,168,518,163,569,169"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_a2470e6d877935c4ca8a7fa4d1537bf88.html#a2470e6d877935c4ca8a7fa4d1537bf88" title="Hot&#45;reload shader (returns new ID)" alt="" coords="297,197,524,237"/>
+<area shape="poly" id="edge9_Node000004_Node000010" title=" " alt="" coords="569,202,525,207,524,202,569,196"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_acb0d34c2c49f2f4b7865c5b366075c63.html#acb0d34c2c49f2f4b7865c5b366075c63" title=" " alt="" coords="287,261,535,301"/>
+<area shape="poly" id="edge10_Node000004_Node000011" title=" " alt="" coords="633,213,536,252,496,264,495,259,534,247,631,208"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Yantra_1_1VisionGpuExecutor_a37b115d59dbe1593c58ef631942b363e.html#a37b115d59dbe1593c58ef631942b363e" title="GpuComputeConfig for a given VisionOp and its parameters." alt="" coords="31,5,213,45"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="306,69,212,48,213,43,307,64"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Yantra_1_1ComputationGrammar_1_1RuleBuilder_a6496b387f981b5b5757ade35e25092df.html#a6496b387f981b5b5757ade35e25092df" title="Sets the executor function for this rule." alt="" coords="5,69,239,109"/>
+<area shape="poly" id="edge6_Node000005_Node000007" title=" " alt="" coords="306,92,239,92,239,87,306,87"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Yantra_1_1VisionGpuExecutor_afdad8a5a64522f246a58a7f585bd34c6.html#afdad8a5a64522f246a58a7f585bd34c6" title="Execute a VisionSequence on the GPU through an explicit context set." alt="" coords="31,133,213,173"/>
+<area shape="poly" id="edge7_Node000005_Node000008" title=" " alt="" coords="307,115,213,136,212,131,306,110"/>
+</map>

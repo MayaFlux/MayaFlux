@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::InputManager::NodeRegistration" name="MayaFlux::Core::InputManager::NodeRegistration">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,493,220,573"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Core_1_1InputBinding.html" title="Specifies what input an InputNode wants to receive." alt="" coords="9,5,216,431"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="115,431,115,477,110,477,110,431"/>
+</map>

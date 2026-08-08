@@ -1,0 +1,19 @@
+<map id="MayaFlux::Buffers::ShaderProcessor::get_push_constant_data" name="MayaFlux::Buffers::ShaderProcessor::get_push_constant_data">
+<area shape="rect" id="Node000001" title="Get current push constant data." alt="" coords="501,163,660,217"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1NodeBindingsProcessor_ac3b7f2177e5238a79a7eab8fa403e3d5.html#ac3b7f2177e5238a79a7eab8fa403e3d5" title=" " alt="" coords="255,34,437,103"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="513,158,413,106,415,101,516,154"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1RelaxationEmitProcessor_a72daa538eceff6d124a9b03aac55a341.html#a72daa538eceff6d124a9b03aac55a341" title="Size the push constant block to EmitParams and upload the current parameters." alt="" coords="253,163,439,217"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="487,193,439,193,439,187,487,187"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Buffers_1_1RelaxationStepProcessor_ae4803875a5ca4c19491dee7ca7280bbb.html#ae4803875a5ca4c19491dee7ca7280bbb" title="Size the push constant block to at least GridExtent and write the attached grid&#39;s dimensions into its..." alt="" coords="239,280,453,335"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="514,226,403,282,400,278,512,221"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1NodeBindingsProcessor_a9e34683edc8a22b84caa07129b961dd2.html#a9e34683edc8a22b84caa07129b961dd2" title=" " alt="" coords="11,5,185,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="241,56,185,48,186,43,241,51"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1RelaxationEmitProcessor_a567c9e68c3737a738f3676b330581070.html#a567c9e68c3737a738f3676b330581070" title="When attached to a RelaxationGridBuffer, sets up the dispatch configuration to cover the entire grid ..." alt="" coords="5,84,191,139"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="245,161,184,141,186,136,247,156"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1RelaxationEmitProcessor_a0709f67fca184c5a63f09dfa2a5a504f.html#a0709f67fca184c5a63f09dfa2a5a504f" title="Set the NDC half&#45;span the grid occupies." alt="" coords="5,163,191,217"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="240,193,191,193,191,187,240,187"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1RelaxationEmitProcessor_a57e98803f4c824f46f53b4ceb2742f0b.html#a57e98803f4c824f46f53b4ceb2742f0b" title="Set the per&#45;point size written to the vertex scalar field." alt="" coords="5,241,191,296"/>
+<area shape="poly" id="edge6_Node000004_Node000007" title=" " alt="" coords="247,224,186,244,184,239,245,219"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Buffers_1_1RelaxationStepProcessor_a49ef6b05fb571cd521a95459fda6c2fa.html#a49ef6b05fb571cd521a95459fda6c2fa" title="When attached to a RelaxationGridBuffer, sets up the dispatch configuration to cover the entire grid ..." alt="" coords="6,320,190,375"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="226,329,191,335,190,330,225,324"/>
+</map>

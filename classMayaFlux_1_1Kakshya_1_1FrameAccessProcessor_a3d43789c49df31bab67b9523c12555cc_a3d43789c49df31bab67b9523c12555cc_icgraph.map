@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::FrameAccessProcessor::advance_frame" name="MayaFlux::Kakshya::FrameAccessProcessor::advance_frame">
+<area shape="rect" id="Node000001" title="Advance the frame cursor, respecting loop boundaries." alt="" coords="224,5,395,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1FrameAccessProcessor_a0656785d7195904d0b1b24d6b2fa33bb.html#a0656785d7195904d0b1b24d6b2fa33bb" title="Extract the current frame(s) into the container&#39;s processed_data." alt="" coords="5,5,176,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="210,35,176,35,176,30,210,30"/>
+</map>

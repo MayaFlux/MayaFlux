@@ -1,0 +1,11 @@
+<map id="MayaFlux::Core::ComputePipelineConfig::add_push_constant" name="MayaFlux::Core::ComputePipelineConfig::add_push_constant">
+<area shape="rect" id="Node000001" title=" " alt="" coords="620,37,863,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1BackendPipelineManager_aca992392679ff8f5de70d2c50c700b8c.html#aca992392679ff8f5de70d2c50c700b8c" title="Create a compute pipeline." alt="" coords="321,5,572,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="606,45,572,42,573,36,607,40"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ComputePress_a92da11722411d5f02bed2ba7dcf02278.html#a92da11722411d5f02bed2ba7dcf02278" title="Create compute pipeline." alt="" coords="331,69,563,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="607,75,563,79,563,74,606,69"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1BackendPipelineManager_a039f6bffc7131cf02ba1f0767d735f1d.html#a039f6bffc7131cf02ba1f0767d735f1d" title=" " alt="" coords="20,5,259,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="307,28,259,28,259,23,307,23"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ComputePress_ad0f8d812bde066c3f0a74005057322ad.html#ad0f8d812bde066c3f0a74005057322ad" title="Create pipeline with auto&#45;reflection." alt="" coords="5,69,273,109"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="317,92,274,92,274,87,317,87"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::VideoStreamContainer::is_frame_available" name="MayaFlux::Kakshya::VideoStreamContainer::is_frame_available">
+<area shape="rect" id="Node000001" title="Check if a frame is currently valid in the ring." alt="" coords="5,5,175,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_ac5764b3010fc7824fd6b5da810d65f50.html#ac5764b3010fc7824fd6b5da810d65f50" title=" " alt="" coords="223,5,392,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="175,30,209,30,209,35,175,35"/>
+</map>

@@ -1,0 +1,19 @@
+<map id="MayaFlux::Yantra::VisionAnalyzer&lt; InputType, OutputType &gt;" name="MayaFlux::Yantra::VisionAnalyzer&lt; InputType, OutputType &gt;">
+<area shape="rect" id="Node000001" title="UniversalAnalyzer that takes any pixel&#45;bearing input, runs a VisionSequence via VisionExecutor,..." alt="" coords="361,1772,607,2052"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1UniversalAnalyzer.html" title="Template&#45;flexible analyzer base with instance&#45;defined I/O types." alt="" coords="131,1129,378,1689"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="386,1696,392,1708,421,1771,416,1773,387,1710,381,1698"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1ComputeOperation.html" title="Base interface for all computational operations in the processing pipeline." alt="" coords="5,523,259,1047"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="189,1060,202,1129,197,1130,184,1061"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Yantra_1_1ExecutionContext.html" title="Context information controlling how a compute operation executes." alt="" coords="33,5,231,445"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="135,445,135,506,129,506,129,445"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Yantra_1_1Datum.html" title=" " alt="" coords="283,597,477,972"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="345,973,317,1113,312,1112,340,972"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="353,193,375,258"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="368,258,377,581,372,581,362,258"/>
+<area shape="rect" id="Node000007" href="$structMayaFlux_1_1Yantra_1_1Datum.html" title="Input/Output container for computation pipeline data flow with structure preservation." alt="" coords="400,43,616,408"/>
+<area shape="poly" id="edge6_Node000005_Node000007" title=" " alt="" coords="466,422,425,598,420,597,461,421"/>
+<area shape="rect" id="Node000008" href="$structMayaFlux_1_1Kinesis_1_1Vision_1_1VisionSequence.html" title="Ordered sequence of VisionSteps describing a complete vision pipeline." alt="" coords="401,1339,567,1479"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="487,1480,487,1755,481,1755,481,1480"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Kinesis_1_1Vision_1_1VisionExecutor.html" title="Stateful executor for a VisionSequence." alt="" coords="591,1109,750,1709"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="599,1711,584,1749,580,1758,575,1756,579,1747,594,1709"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nexus::Presence::invoke_perception" name="MayaFlux::Nexus::Presence::invoke_perception">
+<area shape="rect" id="Node000001" title="Invoke the perception function with the supplied context." alt="" coords="5,37,208,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nexus_1_1Presence_a8c2da782696841d55c4b035501d62059.html#a8c2da782696841d55c4b035501d62059" title="Current falloff radius, or the query radius if none was set." alt="" coords="256,5,459,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="208,42,242,37,243,43,208,47"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nexus_1_1Agent_a3917f2f179de92e3e36d57ceea2a529d.html#a3917f2f179de92e3e36d57ceea2a529d" title="Invoke the perception function with the supplied context." alt="" coords="267,69,448,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="208,68,253,73,253,79,208,73"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="MayaFlux::Portal::Network::NetworkSink::NetworkSink" name="MayaFlux::Portal::Network::NetworkSink::NetworkSink">
+<area shape="rect" id="Node000001" title="Open a send endpoint from a StreamConfig." alt="" coords="5,49,209,89"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_a0c7a59c0847791ed0915dcd64e8df783.html#a0c7a59c0847791ed0915dcd64e8df783" title="Query for a backend service." alt="" coords="275,5,441,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="209,51,261,44,261,49,210,57"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aa28c6f5592e5893508bafb62aefcc496.html#aa28c6f5592e5893508bafb62aefcc496" title="Get the global registry instance." alt="" coords="257,85,459,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="210,81,244,86,243,91,209,86"/>
+</map>

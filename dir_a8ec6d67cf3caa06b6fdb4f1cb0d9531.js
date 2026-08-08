@@ -1,0 +1,25 @@
+var dir_a8ec6d67cf3caa06b6fdb4f1cb0d9531 =
+[
+    [ "Discrete", "dir_08505309452268ce0ab74ecdbfb34fad.html", "dir_08505309452268ce0ab74ecdbfb34fad" ],
+    [ "Spatial", "dir_1173f6694d7d47f305ed76ee04f1f117.html", "dir_1173f6694d7d47f305ed76ee04f1f117" ],
+    [ "Tendency", "dir_17219ed2cd28ae564130a384b2de4d82.html", "dir_17219ed2cd28ae564130a384b2de4d82" ],
+    [ "Viewport", "dir_ffc0cf4a5f0725f0d2ec931c81a54855.html", "dir_ffc0cf4a5f0725f0d2ec931c81a54855" ],
+    [ "Vision", "dir_86848c0fdea2557e75761ae588074688.html", "dir_86848c0fdea2557e75761ae588074688" ],
+    [ "BasisMatrices.hpp", "BasisMatrices_8hpp.html", "BasisMatrices_8hpp" ],
+    [ "Geometry2D.cpp", "Geometry2D_8cpp.html", "Geometry2D_8cpp" ],
+    [ "Geometry2D.hpp", "Geometry2D_8hpp.html", "Geometry2D_8hpp" ],
+    [ "GeometryPrimitives.cpp", "GeometryPrimitives_8cpp.html", "GeometryPrimitives_8cpp" ],
+    [ "GeometryPrimitives.hpp", "GeometryPrimitives_8hpp.html", "GeometryPrimitives_8hpp" ],
+    [ "KMarchingTable.hpp", "KMarchingTable_8hpp.html", "KMarchingTable_8hpp" ],
+    [ "MarchingCube.cpp", "MarchingCube_8cpp.html", "MarchingCube_8cpp" ],
+    [ "MatrixTransforms.cpp", "MatrixTransforms_8cpp.html", "MatrixTransforms_8cpp" ],
+    [ "MatrixTransforms.hpp", "MatrixTransforms_8hpp.html", "MatrixTransforms_8hpp" ],
+    [ "Morphology.hpp", "Morphology_8hpp.html", "Morphology_8hpp" ],
+    [ "MotionCurves.cpp", "MotionCurves_8cpp.html", "MotionCurves_8cpp" ],
+    [ "MotionCurves.hpp", "MotionCurves_8hpp.html", "MotionCurves_8hpp" ],
+    [ "Scalar.hpp", "Scalar_8hpp.html", "Scalar_8hpp" ],
+    [ "Stochastic.cpp", "Stochastic_8cpp.html", null ],
+    [ "Stochastic.hpp", "Stochastic_8hpp.html", "Stochastic_8hpp" ],
+    [ "VertexSampler.cpp", "VertexSampler_8cpp.html", "VertexSampler_8cpp" ],
+    [ "VertexSampler.hpp", "VertexSampler_8hpp.html", "VertexSampler_8hpp" ]
+];

@@ -1,0 +1,20 @@
+<map id="MayaFlux::Core::BackendWindowHandler::register_window" name="MayaFlux::Core::BackendWindowHandler::register_window">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,133,244,173"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1VKContext_a6382877e444e62689aefafc83802ddb4.html#a6382877e444e62689aefafc83802ddb4" title="Create surface from window&#39;s native handles." alt="" coords="311,5,511,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="154,131,216,93,291,55,312,47,314,52,293,60,218,97,157,135"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Core_1_1BackendWindowHandler_ae086ac85738737b86ead3ef4a223f2e8.html#ae086ac85738737b86ead3ef4a223f2e8" title="Create synchronization objects for a window&#39;s swapchain." alt="" coords="292,69,531,109"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="214,131,307,110,309,115,216,136"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Core_1_1VKContext_af845c6be15bdbecf3f0dd9a205df2d78.html#af845c6be15bdbecf3f0dd9a205df2d78" title="Destroy a specific surface Called when window is unregistered." alt="" coords="311,133,511,173"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="244,151,297,151,297,156,244,156"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Core_1_1BackendWindowHandler_ae201b3e2121031059586c9abd5ba8480.html#ae201b3e2121031059586c9abd5ba8480" title=" " alt="" coords="292,197,531,237"/>
+<area shape="poly" id="edge7_Node000001_Node000007" title=" " alt="" coords="216,171,309,192,307,197,214,176"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Core_1_1VKContext_a27b861606ed58f40b035a8ba7e81477e.html#a27b861606ed58f40b035a8ba7e81477e" title="Update presentation support for a surface." alt="" coords="311,261,511,301"/>
+<area shape="poly" id="edge8_Node000001_Node000008" title=" " alt="" coords="157,171,218,209,293,247,314,255,312,260,291,252,216,214,154,176"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Parallel_a5da0996dba37190dffba9510d880a0c9.html#a5da0996dba37190dffba9510d880a0c9" title=" " alt="" coords="603,5,765,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="512,23,589,23,589,28,512,28"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1VKInstance_ad5009d0f849278358ae38dcc785627d6.html#ad5009d0f849278358ae38dcc785627d6" title="Get the Vulkan instance handle." alt="" coords="581,101,787,141"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="493,43,532,55,628,93,626,98,530,60,492,48"/>
+<area shape="poly" id="edge6_Node000006_Node000004" title=" " alt="" coords="511,139,567,132,568,138,512,144"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Core_1_1VKDevice_ad904370231ad01a05f5b23c4753206cd.html#ad904370231ad01a05f5b23c4753206cd" title="Update presentation queue family for a specific surface." alt="" coords="579,261,789,301"/>
+<area shape="poly" id="edge9_Node000008_Node000009" title=" " alt="" coords="512,279,565,279,565,284,512,284"/>
+</map>

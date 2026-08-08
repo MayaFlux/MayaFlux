@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::ShaderProcessor::are_descriptors_ready" name="MayaFlux::Buffers::ShaderProcessor::are_descriptors_ready">
+<area shape="rect" id="Node000001" title="Check if descriptors are initialized." alt="" coords="239,84,397,139"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1RelaxationEmitProcessor_aa82a1797cebba245d355fad0c55112ec.html#aa82a1797cebba245d355fad0c55112ec" title="Write the cell_state and vertices descriptor bindings for this cycle&#39;s dispatch." alt="" coords="5,5,191,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="227,82,174,63,176,58,229,77"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1RelaxationEmitProcessor_a22fb2108bb2043a57f158684a5882391.html#a22fb2108bb2043a57f158684a5882391" title="Write the cell_state and vertices descriptors for the grid&#39;s current front generation,..." alt="" coords="5,84,191,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="225,114,191,114,191,109,225,109"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1RelaxationStepProcessor_acd95f1f30127b73b53fcdf5461ce6f7d.html#acd95f1f30127b73b53fcdf5461ce6f7d" title="Write the state descriptors for the current front/back assignment, then run the normal shader process..." alt="" coords="6,163,190,217"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="229,146,176,165,174,160,227,141"/>
+</map>

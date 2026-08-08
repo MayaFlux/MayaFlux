@@ -1,0 +1,45 @@
+<map id="MayaFlux::Portal::Forma::Plot::WaveformBuilder::done" name="MayaFlux::Portal::Forma::Plot::WaveformBuilder::done">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,539,221,579"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Plot_a57543618b11e96799aa2fc84a1fe46fb.html#a57543618b11e96799aa2fc84a1fe46fb" title="Apply auto&#45;scaling to an AxisRange from a set of series." alt="" coords="292,56,473,96"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="113,538,121,460,145,347,165,284,191,223,225,164,267,113,282,101,286,105,271,117,229,167,196,225,170,286,150,348,127,461,118,539"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Plot_a45fd3bf9172041f96205cf19761e086b.html#a45fd3bf9172041f96205cf19761e086b" title="Begin a Series chain." alt="" coords="827,63,1008,103"/>
+<area shape="poly" id="edge16_Node000001_Node000004" title=" " alt="" coords="113,538,121,464,130,414,144,359,164,303,190,248,225,199,268,156,297,144,347,133,492,113,661,97,812,86,813,92,661,103,493,119,348,138,299,149,271,161,229,202,195,251,169,305,149,361,135,415,126,465,118,539"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Plot_aea939fb3eedc49c7052d67981185d813.html#aea939fb3eedc49c7052d67981185d813" title="TRIANGLE_STRIP background quad for a plot area." alt="" coords="292,171,473,211"/>
+<area shape="poly" id="edge5_Node000001_Node000005" title=" " alt="" coords="115,538,129,476,157,391,177,345,202,299,232,257,268,221,278,213,281,217,271,225,236,261,206,302,182,347,162,393,134,478,121,539"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Plot_1_1Series_a3142954d6c73ecd8f63f3a6d4f675bf7.html#a3142954d6c73ecd8f63f3a6d4f675bf7" title=" " alt="" coords="289,235,476,290"/>
+<area shape="poly" id="edge8_Node000001_Node000008" title=" " alt="" coords="119,538,138,490,169,426,212,359,238,328,268,301,276,294,279,299,271,305,242,332,216,362,174,429,143,492,124,539"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Plot_1_1Series_a78e94b4ef28ef5cea07f191bfff267d5.html#a78e94b4ef28ef5cea07f191bfff267d5" title=" " alt="" coords="269,315,496,355"/>
+<area shape="poly" id="edge9_Node000001_Node000009" title=" " alt="" coords="123,537,145,500,177,453,219,405,268,364,278,358,281,363,271,369,223,409,182,457,149,503,128,540"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Plot_1_1Series_a30177195cc141b33c43c62d4b58624bc.html#a30177195cc141b33c43c62d4b58624bc" title=" " alt="" coords="274,379,491,419"/>
+<area shape="poly" id="edge10_Node000001_Node000010" title=" " alt="" coords="132,536,189,483,227,454,268,428,283,421,285,426,271,433,230,458,193,487,136,540"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Plot_1_1Series_a01657eadd8c3aed972a8348eff5db263.html#a01657eadd8c3aed972a8348eff5db263" title=" " alt="" coords="292,443,473,483"/>
+<area shape="poly" id="edge11_Node000001_Node000011" title=" " alt="" coords="158,536,268,492,293,484,294,489,270,497,160,541"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Plot_1_1Series_a507379d465f2b668b77b28b59bdd2ee3.html#a507379d465f2b668b77b28b59bdd2ee3" title=" " alt="" coords="287,507,479,547"/>
+<area shape="poly" id="edge12_Node000001_Node000012" title=" " alt="" coords="221,543,273,537,273,542,222,548"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Plot_1_1Series_a791b6e94767fb923affd7844a26f669f.html#a791b6e94767fb923affd7844a26f669f" title=" " alt="" coords="292,571,473,611"/>
+<area shape="poly" id="edge13_Node000001_Node000013" title=" " alt="" coords="222,569,279,576,278,581,221,574"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Plot_1_1Series_a70e739c4caf6208b5b59791e1bfb21dd.html#a70e739c4caf6208b5b59791e1bfb21dd" title=" " alt="" coords="287,635,478,675"/>
+<area shape="poly" id="edge14_Node000001_Node000014" title=" " alt="" coords="160,576,270,620,294,628,293,633,268,625,158,581"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Plot_1_1Series_a28d3d41a7ac6abdc5361b5c69175ff8e.html#a28d3d41a7ac6abdc5361b5c69175ff8e" title="Resolve pending fluent tick requests into concrete tick label specs." alt="" coords="292,699,473,754"/>
+<area shape="poly" id="edge15_Node000001_Node000015" title=" " alt="" coords="136,577,194,630,231,659,271,684,284,691,281,696,268,689,228,663,191,634,133,581"/>
+<area shape="rect" id="Node000016" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Plot_1_1WaveformBuilder_acac4730da14e8d3cb77bcad92f6528bb.html#acac4730da14e8d3cb77bcad92f6528bb" title="Line thickness in pixels." alt="" coords="292,778,473,833"/>
+<area shape="poly" id="edge17_Node000001_Node000016" title=" " alt="" coords="127,578,148,617,180,667,222,719,271,765,281,771,278,776,268,769,218,723,176,670,144,620,122,580"/>
+<area shape="rect" id="Node000017" href="$structMayaFlux_1_1Portal_1_1Forma_1_1Plot_1_1AxisRange_acd26ae45dbbf0c536c01d97e7dcff4b9.html#acd26ae45dbbf0c536c01d97e7dcff4b9" title="Map a value into [&#45;1, 1] NDC within this range." alt="" coords="291,857,474,897"/>
+<area shape="poly" id="edge18_Node000001_Node000017" title=" " alt="" coords="122,578,139,631,168,703,188,741,212,779,239,813,271,843,281,850,278,855,268,847,235,817,207,782,183,744,163,705,134,633,117,580"/>
+<area shape="rect" id="Node000019" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Plot_1_1Series_a4aee1881101cadb4391e193a2aa258f0.html#a4aee1881101cadb4391e193a2aa258f0" title=" " alt="" coords="287,921,478,961"/>
+<area shape="poly" id="edge20_Node000001_Node000019" title=" " alt="" coords="120,578,133,642,160,731,180,779,205,826,235,869,271,907,277,912,274,916,268,911,231,873,200,829,175,781,155,733,128,643,115,579"/>
+<area shape="rect" id="Node000020" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Plot_1_1Series_ab5c8bafa46768bcc2017ad9b06b00999.html#ab5c8bafa46768bcc2017ad9b06b00999" title=" " alt="" coords="287,985,478,1025"/>
+<area shape="poly" id="edge21_Node000001_Node000020" title=" " alt="" coords="119,579,128,653,152,759,172,816,197,873,230,925,271,971,277,977,274,981,267,975,226,929,193,875,167,818,147,760,123,654,113,579"/>
+<area shape="rect" id="Node000021" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Plot_1_1Series_a375ba3a06975c5ddfc9e5f778f1c0b82.html#a375ba3a06975c5ddfc9e5f778f1c0b82" title=" " alt="" coords="288,1049,477,1089"/>
+<area shape="poly" id="edge22_Node000001_Node000021" title=" " alt="" coords="118,579,123,663,131,721,144,785,163,853,190,919,226,981,271,1035,278,1041,275,1045,267,1039,221,984,185,921,158,854,139,787,126,722,118,663,112,579"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Plot_a33d7c625b8a94ba599dd685f3c07e331.html#a33d7c625b8a94ba599dd685f3c07e331" title="Compute [min, max] over a scalar series." alt="" coords="571,5,752,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="473,57,557,42,558,47,474,62"/>
+<area shape="poly" id="edge4_Node000002_Node000004" title=" " alt="" coords="474,74,813,79,813,84,474,80"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="752,43,815,57,813,62,751,48"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Kakshya_1_1VertexLayout_a7b7a30b2a13cb2676713a352f298f607.html#a7b7a30b2a13cb2676713a352f298f607" title="Factory: layout for MeshVertex (position, color, weight, uv, normal, tangent)" alt="" coords="565,171,757,211"/>
+<area shape="poly" id="edge6_Node000005_Node000006" title=" " alt="" coords="474,188,552,188,552,193,474,193"/>
+<area shape="rect" id="Node000007" href="$structMayaFlux_1_1Kakshya_1_1VertexLayout_a391a8a7850356910c355a4dff9678bbf.html#a391a8a7850356910c355a4dff9678bbf" title="Factory: Create layout for textured quad primitives (position, texcoord)." alt="" coords="544,235,779,275"/>
+<area shape="poly" id="edge7_Node000005_Node000007" title=" " alt="" coords="471,208,561,229,560,234,470,213"/>
+<area shape="rect" id="Node000018" href="$structMayaFlux_1_1Portal_1_1Forma_1_1Plot_1_1AxisRange_a02839a2c4244b207696931de56887659.html#a02839a2c4244b207696931de56887659" title="Map a value into [0, 1] within this range." alt="" coords="559,857,764,897"/>
+<area shape="poly" id="edge19_Node000017_Node000018" title=" " alt="" coords="474,875,545,875,545,880,474,880"/>
+</map>

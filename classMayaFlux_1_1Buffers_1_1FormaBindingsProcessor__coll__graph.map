@@ -1,0 +1,15 @@
+<map id="MayaFlux::Buffers::FormaBindingsProcessor" name="MayaFlux::Buffers::FormaBindingsProcessor">
+<area shape="rect" id="Node000001" title="ShaderProcessor that reads Forma element state and routes it to push constants or descriptor bindings..." alt="" coords="315,1559,524,2019"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor.html" title="Abstract base class for shader&#45;based buffer processing." alt="" coords="320,731,519,1509"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="422,1523,422,1559,417,1559,417,1523"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VKBufferProcessor.html" title=" " alt="" coords="215,481,408,615"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="329,628,348,730,343,731,324,629"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1BufferProcessor.html" title="Central computational transformation interface for continuous buffer processing." alt="" coords="5,55,185,315"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="178,326,200,364,271,479,267,482,196,367,173,329"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Registry_1_1Service_1_1BufferService.html" title="Backend buffer management service interface." alt="" coords="210,5,413,365"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="314,366,314,464,309,464,309,366"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Registry_1_1Service_1_1ComputeService.html" title="Backend compute shader and pipeline service interface." alt="" coords="437,95,644,275"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="512,277,484,342,447,406,435,418,423,430,384,470,381,467,419,426,432,415,443,402,479,339,508,275"/>
+<area shape="rect" id="Node000007" href="$structMayaFlux_1_1Buffers_1_1ShaderConfig.html" title=" " alt="" coords="433,428,622,668"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="507,669,499,715,493,714,502,668"/>
+</map>

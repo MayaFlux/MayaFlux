@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::download_back_buffer" name="MayaFlux::Buffers::download_back_buffer">
+<area shape="rect" id="Node000001" title="Download a raw back_buffers slot to host memory." alt="" coords="480,53,648,93"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferDownloadProcessor_a5c49454bae98ee5aacba5da6c4c48522.html#a5c49454bae98ee5aacba5da6c4c48522" title=" " alt="" coords="243,5,432,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="466,58,432,52,433,47,467,53"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1RelaxationStepProcessor_a3a4b45ca44db8738e10a67e45cca614d.html#a3a4b45ca44db8738e10a67e45cca614d" title="Swap front/back generation index and, if requested, snapshot the newly&#45;front state buffer via a direc..." alt="" coords="245,84,429,139"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="467,92,430,98,429,93,466,87"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1BufferDownloadProcessor_a463aff930b610d9dbf3511a6577a5067.html#a463aff930b610d9dbf3511a6577a5067" title="The core processing function that must be implemented by derived classes." alt="" coords="5,5,195,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="229,35,195,35,195,30,229,30"/>
+</map>

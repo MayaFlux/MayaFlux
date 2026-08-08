@@ -1,0 +1,32 @@
+<map id="SurfaceUtils.hpp" name="SurfaceUtils.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="201,5,331,31"/>
+<area shape="rect" id="Node000002" href="$GlobalGraphicsInfo_8hpp.html" title=" " alt="" coords="5,79,228,119"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="245,33,166,75,163,70,243,28"/>
+<area shape="rect" id="Node000004" href="$DataAccess_8hpp.html" title=" " alt="" coords="311,79,512,119"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="289,28,366,70,363,74,286,33"/>
+<area shape="rect" id="Node000005" href="$NDData_8hpp.html" title=" " alt="" coords="215,174,317,199"/>
+<area shape="poly" id="edge15_Node000001_Node000005" title=" " alt="" coords="269,31,269,160,263,160,263,31"/>
+<area shape="rect" id="Node000003" href="$Mirror_8hpp.html" title=" " alt="" coords="37,167,191,207"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="119,119,118,153,112,153,113,119"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="381,121,298,169,296,165,378,116"/>
+<area shape="rect" id="Node000008" title=" " alt="" coords="341,174,497,199"/>
+<area shape="poly" id="edge7_Node000004_Node000008" title=" " alt="" coords="416,119,420,160,414,160,410,119"/>
+<area shape="rect" id="Node000009" href="$Archivist_8hpp.html" title=" " alt="" coords="522,174,746,199"/>
+<area shape="poly" id="edge8_Node000004_Node000009" title=" " alt="" coords="461,116,593,167,591,172,459,121"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="183,255,287,280"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="264,200,247,243,242,241,259,199"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="312,255,399,280"/>
+<area shape="poly" id="edge6_Node000005_Node000007" title=" " alt="" coords="281,198,334,244,330,248,277,202"/>
+<area shape="rect" id="Node000010" href="$JournalEntry_8hpp.html" title=" " alt="" coords="481,255,608,280"/>
+<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="623,202,570,248,566,244,619,198"/>
+<area shape="rect" id="Node000015" title=" " alt="" coords="633,255,699,280"/>
+<area shape="poly" id="edge14_Node000009_Node000015" title=" " alt="" coords="641,198,658,241,654,243,636,201"/>
+<area shape="rect" id="Node000011" href="$EnumReflect_8hpp.html" title=" " alt="" coords="241,328,427,368"/>
+<area shape="poly" id="edge10_Node000010_Node000011" title=" " alt="" coords="515,283,398,326,396,321,513,278"/>
+<area shape="rect" id="Node000012" title=" " alt="" coords="451,335,518,361"/>
+<area shape="poly" id="edge11_Node000010_Node000012" title=" " alt="" coords="538,282,504,326,500,322,534,279"/>
+<area shape="rect" id="Node000013" title=" " alt="" coords="543,335,667,361"/>
+<area shape="poly" id="edge12_Node000010_Node000013" title=" " alt="" coords="556,279,589,322,585,326,551,282"/>
+<area shape="rect" id="Node000014" title=" " alt="" coords="691,335,788,361"/>
+<area shape="poly" id="edge13_Node000010_Node000014" title=" " alt="" coords="574,278,699,328,697,333,572,282"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="MayaFlux::Portal::Forma::Inspector::root_audio_buffer" name="MayaFlux::Portal::Forma::Inspector::root_audio_buffer">
+<area shape="rect" id="Node000001" title="Inspect the root audio buffer for a specific token and channel." alt="" coords="255,34,436,89"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Inspector_a26f5c5dc3b9baeea3fcb72cd833377c2.html#a26f5c5dc3b9baeea3fcb72cd833377c2" title="Inspect the full BufferManager state across all active tokens." alt="" coords="5,5,207,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="241,48,206,43,207,38,242,43"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Inspector_a8f9b73d1b219f1cf2971f098b1666f10.html#a8f9b73d1b219f1cf2971f098b1666f10" title="Inspect all root audio buffers for a token across every channel." alt="" coords="15,70,197,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="242,80,197,86,197,81,241,74"/>
+</map>

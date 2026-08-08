@@ -1,0 +1,28 @@
+<map id="Presence.hpp" name="Presence.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="137,5,246,31"/>
+<area shape="rect" id="Node000002" href="$Encoder_8cpp.html" title=" " alt="" coords="39,299,139,324"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="151,39,115,57,77,83,42,115,15,153,9,173,9,194,15,214,25,234,52,270,77,297,73,300,48,274,21,237,10,216,4,195,4,172,10,151,38,111,74,79,113,53,148,34"/>
+<area shape="rect" id="Node000003" href="$Fabric_8hpp.html" title=" " alt="" coords="147,79,235,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="194,44,194,79,189,79,189,44"/>
+<area shape="rect" id="Node000012" href="$Presence_8cpp.html" title=" " alt="" coords="260,79,368,104"/>
+<area shape="poly" id="edge14_Node000001_Node000012" title=" " alt="" coords="224,35,295,76,292,81,221,40"/>
+<area shape="rect" id="Node000004" href="$Fabric_8cpp.html" title=" " alt="" coords="393,152,480,177"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="244,105,398,149,396,154,243,110"/>
+<area shape="rect" id="Node000005" href="$Schema_8hpp.html" title=" " alt="" coords="140,152,243,177"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="194,118,194,152,189,152,189,118"/>
+<area shape="rect" id="Node000009" href="$Tapestry_8hpp.html" title=" " alt="" coords="267,152,369,177"/>
+<area shape="poly" id="edge9_Node000003_Node000009" title=" " alt="" coords="225,108,298,149,296,154,222,113"/>
+<area shape="rect" id="Node000011" href="$Wiring_8cpp.html" title=" " alt="" coords="25,152,115,177"/>
+<area shape="poly" id="edge13_Node000003_Node000011" title=" " alt="" coords="161,113,91,154,88,149,158,109"/>
+<area shape="rect" id="Node000006" href="$Decoder_8hpp.html" title=" " alt="" coords="208,225,311,251"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="214,185,250,223,246,227,210,189"/>
+<area shape="rect" id="Node000008" href="$Encoder_8hpp.html" title=" " alt="" coords="82,225,183,251"/>
+<area shape="poly" id="edge7_Node000005_Node000008" title=" " alt="" coords="175,190,144,227,140,224,171,186"/>
+<area shape="rect" id="Node000007" href="$Decoder_8cpp.html" title=" " alt="" coords="208,299,311,324"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="262,264,262,299,257,299,257,264"/>
+<area shape="poly" id="edge8_Node000008_Node000002" title=" " alt="" coords="120,264,98,300,93,297,116,261"/>
+<area shape="poly" id="edge10_Node000009_Node000006" title=" " alt="" coords="302,190,271,227,267,224,297,186"/>
+<area shape="poly" id="edge11_Node000009_Node000008" title=" " alt="" coords="277,185,164,228,162,223,275,180"/>
+<area shape="rect" id="Node000010" href="$Tapestry_8cpp.html" title=" " alt="" coords="335,225,437,251"/>
+<area shape="poly" id="edge12_Node000009_Node000010" title=" " alt="" coords="340,185,377,223,373,227,336,189"/>
+</map>

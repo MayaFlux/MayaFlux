@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::RegionProcessorBase::cache_region_if_needed" name="MayaFlux::Kakshya::RegionProcessorBase::cache_region_if_needed">
+<area shape="rect" id="Node000001" title="Cache a region&#39;s data if beneficial and not already cached." alt="" coords="5,5,192,60"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kakshya_1_1RegionSegment_a4b1f6f95db006ac5486f391f1f23a957.html#a4b1f6f95db006ac5486f391f1f23a957" title="Get the total number of elements in the segment." alt="" coords="240,5,431,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="192,30,226,30,226,35,192,35"/>
+</map>

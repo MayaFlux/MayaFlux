@@ -1,0 +1,14 @@
+<map id="MayaFlux::normalize" name="MayaFlux::normalize">
+<area shape="rect" id="Node000001" title="Normalize single&#45;channel data to specified peak level (in&#45;place)" alt="" coords="613,133,772,158"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a718383f1c65bd89371249e51a6170a28.html#a718383f1c65bd89371249e51a6170a28" title="Auto&#45;correlation via FFT." alt="" coords="361,29,540,69"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="657,128,613,106,564,84,530,72,532,67,566,79,616,101,659,124"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nexus_1_1StateEncoder_ad8fc616eab6adf9f0af8ec03db3f3b3e.html#ad8fc616eab6adf9f0af8ec03db3f3b3e" title="Encode the given Fabric to {base_path}.exr and {base_path}.json." alt="" coords="336,93,565,133"/>
+<area shape="poly" id="edge4_Node000001_Node000004" title=" " alt="" coords="599,136,565,131,566,126,600,130"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_a6a020ef96480ab2d031f28a9d57a6626.html#a6a020ef96480ab2d031f28a9d57a6626" title="Normalize each channel independently to specified peak level (in&#45;place)" alt="" coords="371,157,530,197"/>
+<area shape="poly" id="edge5_Node000001_Node000005" title=" " alt="" coords="600,160,530,170,530,164,599,155"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_ab68b941d16a78b529008447cb966a076.html#ab68b941d16a78b529008447cb966a076" title="Normalize each channel independently (non&#45;destructive)" alt="" coords="367,221,534,261"/>
+<area shape="poly" id="edge6_Node000001_Node000006" title=" " alt="" coords="659,167,616,190,566,212,532,224,530,219,564,207,613,185,657,162"/>
+<area shape="poly" id="edge2_Node000002_Node000002" title=" " alt="" coords="492,18,477,11,451,8,427,10,414,15,408,21,411,28,406,30,403,20,410,10,426,5,451,3,479,6,494,13"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1ConvolutionTransformer_a9d070c72f78555559c94e86b6274fcab.html#a9d070c72f78555559c94e86b6274fcab" title="Applies the configured convolution operation." alt="" coords="5,29,288,69"/>
+<area shape="poly" id="edge3_Node000002_Node000003" title=" " alt="" coords="347,52,288,52,288,47,347,47"/>
+</map>

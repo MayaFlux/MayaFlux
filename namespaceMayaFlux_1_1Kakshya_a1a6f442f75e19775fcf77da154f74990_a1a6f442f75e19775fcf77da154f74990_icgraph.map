@@ -1,0 +1,19 @@
+<map id="MayaFlux::Kakshya::gpu_data_format_bytes" name="MayaFlux::Kakshya::gpu_data_format_bytes">
+<area shape="rect" id="Node000001" title="Byte size of one element of a GpuDataFormat." alt="" coords="548,264,724,304"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderSpec_1_1Assemble_a44f5c516ff6ccfe853b704dffbdd1749.html#a44f5c516ff6ccfe853b704dffbdd1749" title="Finalise and return the ShaderSpec." alt="" coords="281,196,500,236"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="549,263,463,239,464,233,551,258"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a4035b660b0531f6a27af86c892df6b49.html#a4035b660b0531f6a27af86c892df6b49" title="Byte width of one GpuBufferBinding::ElementType element." alt="" coords="292,296,489,336"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="535,300,490,306,489,301,534,295"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1VisionGpuExecutor_a37b115d59dbe1593c58ef631942b363e.html#a37b115d59dbe1593c58ef631942b363e" title="GpuComputeConfig for a given VisionOp and its parameters." alt="" coords="28,5,211,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="365,187,309,122,272,88,232,60,208,48,210,43,235,55,276,84,313,118,369,183"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Buffers_1_1RelaxationSpecs_a1279de64ea64bd40c10f69e9d59dde46.html#a1279de64ea64bd40c10f69e9d59dde46" title="Binary state&#45;to&#45;vertex emit: nonzero state draws at full scale, zero state degenerates to a zero&#45;scal..." alt="" coords="35,70,203,125"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="340,192,232,138,203,127,205,122,234,134,343,187"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Buffers_1_1RelaxationSpecs_ab027146e5827d27be349ad597cbad520.html#ab027146e5827d27be349ad597cbad520" title="Scalar&#45;ramp state&#45;to&#45;vertex emit: float state value scaled and offset into a visible output range." alt="" coords="35,149,203,203"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="267,201,203,191,204,186,268,195"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Buffers_1_1RelaxationSpecs_a664b6d74405ef8f23d5954e4c9b46940.html#a664b6d74405ef8f23d5954e4c9b46940" title="Jacobi&#45;style diffusion rule: each cell blends toward the average of its 8 Moore neighbors at the give..." alt="" coords="31,227,208,282"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="268,236,209,245,208,239,267,231"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Yantra_1_1VisionGpuExecutor_afdad8a5a64522f246a58a7f585bd34c6.html#afdad8a5a64522f246a58a7f585bd34c6" title="Execute a VisionSequence on the GPU through an explicit context set." alt="" coords="28,307,211,347"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="342,245,234,296,196,309,194,304,232,291,340,240"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Yantra_1_1GpuResourceManager_ad3b5f42928f36785bf91ab452c421a38.html#ad3b5f42928f36785bf91ab452c421a38" title=" " alt="" coords="5,371,233,411"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="305,342,194,373,192,368,304,337"/>
+</map>

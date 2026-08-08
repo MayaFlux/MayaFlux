@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::TCPBackend::ListenerState" name="MayaFlux::Core::TCPBackend::ListenerState">
+<area shape="rect" id="Node000001" title="State for a listening acceptor." alt="" coords="7,273,210,373"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Core_1_1EndpointInfo.html" title="Describes one logical send/receive endpoint managed by a backend." alt="" coords="5,5,212,211"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="111,211,111,257,106,257,106,211"/>
+</map>

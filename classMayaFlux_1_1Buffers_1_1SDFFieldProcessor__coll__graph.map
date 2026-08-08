@@ -1,0 +1,21 @@
+<map id="MayaFlux::Buffers::SDFFieldProcessor" name="MayaFlux::Buffers::SDFFieldProcessor">
+<area shape="rect" id="Node000001" title="Preprocessor that evaluates an SDF field into a corner grid on the GPU." alt="" coords="537,1969,707,2289"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1ComputeProcessor.html" title="Specialized ShaderProcessor for Compute Pipelines." alt="" coords="437,1572,615,1907"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="573,1920,585,1968,580,1970,568,1921"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor.html" title="Abstract base class for shader&#45;based buffer processing." alt="" coords="320,731,519,1509"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="491,1523,500,1571,495,1572,486,1524"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1VKBufferProcessor.html" title=" " alt="" coords="215,481,408,615"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="329,628,348,730,343,731,324,629"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1BufferProcessor.html" title="Central computational transformation interface for continuous buffer processing." alt="" coords="5,55,185,315"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="178,326,200,364,271,479,267,482,196,367,173,329"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Registry_1_1Service_1_1BufferService.html" title="Backend buffer management service interface." alt="" coords="210,5,413,365"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="314,366,314,464,309,464,309,366"/>
+<area shape="rect" id="Node000007" href="$structMayaFlux_1_1Registry_1_1Service_1_1ComputeService.html" title="Backend compute shader and pipeline service interface." alt="" coords="437,95,644,275"/>
+<area shape="poly" id="edge6_Node000004_Node000007" title=" " alt="" coords="512,277,484,342,447,406,435,418,423,430,384,470,381,467,419,426,432,415,443,402,479,339,508,275"/>
+<area shape="rect" id="Node000008" href="$structMayaFlux_1_1Buffers_1_1ShaderConfig.html" title=" " alt="" coords="433,428,622,668"/>
+<area shape="poly" id="edge7_Node000003_Node000008" title=" " alt="" coords="507,669,499,715,493,714,502,668"/>
+<area shape="rect" id="Node000009" href="$structMayaFlux_1_1Buffers_1_1ShaderDispatchConfig.html" title="Configuration for compute shader dispatch." alt="" coords="543,1010,725,1230"/>
+<area shape="poly" id="edge8_Node000002_Node000009" title=" " alt="" coords="618,1231,561,1556,555,1555,612,1230"/>
+<area shape="rect" id="Node000010" href="$structMayaFlux_1_1Buffers_1_1SDFFieldProcessor_1_1PC.html" title=" " alt="" coords="639,1639,797,1839"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="696,1840,668,1954,663,1953,691,1839"/>
+</map>

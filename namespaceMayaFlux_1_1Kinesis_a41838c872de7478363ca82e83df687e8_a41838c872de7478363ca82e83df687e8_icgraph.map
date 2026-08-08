@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kinesis::polygon_bounds" name="MayaFlux::Kinesis::polygon_bounds">
+<area shape="rect" id="Node000001" title="Containment test for a convex or concave polygon." alt="" coords="268,37,417,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_a8472ce7882e4af46fb5755943b2135b2.html#a8472ce7882e4af46fb5755943b2135b2" title="Geometry function for a drawable curve canvas in NDC space." alt="" coords="5,5,220,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="254,48,220,43,220,38,255,42"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_a74240663aa518aac26d2199cb983dd16.html#a74240663aa518aac26d2199cb983dd16" title="Geometry function for a 2D position picker in NDC space." alt="" coords="13,69,213,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="255,72,213,78,213,73,254,67"/>
+</map>

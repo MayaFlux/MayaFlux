@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::RootGraphicsBuffer::~RootGraphicsBuffer" name="MayaFlux::Buffers::RootGraphicsBuffer::~RootGraphicsBuffer">
+<area shape="rect" id="Node000001" title="Virtual destructor ensuring proper cleanup." alt="" coords="5,5,164,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1RootGraphicsBuffer_a4ef7b0e7dd634d15d3a54b7c3f369955.html#a4ef7b0e7dd634d15d3a54b7c3f369955" title="Removes buffers marked for deletion." alt="" coords="212,5,393,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="164,30,198,30,198,35,164,35"/>
+</map>

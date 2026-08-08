@@ -1,0 +1,5 @@
+<map id="MayaFlux::window_coords" name="MayaFlux::window_coords">
+<area shape="rect" id="Node000001" title="Convert NDC vec3 position to window pixel coordinates using window state." alt="" coords="5,13,200,38"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_a30381ca6f2bbc74b1a514e21089e8b74.html#a30381ca6f2bbc74b1a514e21089e8b74" title="Convert NDC to window pixel coordinates." alt="" coords="248,5,397,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="201,23,234,23,234,28,201,28"/>
+</map>

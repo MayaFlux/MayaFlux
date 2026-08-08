@@ -1,0 +1,14 @@
+<map id="MayaFlux::Portal::Forma::Geometry::toggle" name="MayaFlux::Portal::Forma::Geometry::toggle">
+<area shape="rect" id="Node000001" title="Geometry function for a boolean toggle in NDC space." alt="" coords="5,125,187,165"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kinesis_1_1AABB2D_a6244e0bb95e47c9914259ac9f60bbe01.html#a6244e0bb95e47c9914259ac9f60bbe01" title=" " alt="" coords="251,5,400,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="123,123,173,89,233,55,248,48,251,53,236,60,176,94,126,127"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_ae7264d97a31a6219d1a0c63714eea28e.html#ae7264d97a31a6219d1a0c63714eea28e" title="Generate a filled TRIANGLE_STRIP quad from an AABB2D." alt="" coords="251,93,400,133"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="187,130,236,123,237,128,187,135"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kakshya_af09aa07eacd20ac64c4d53ccfbf545e2.html#af09aa07eacd20ac64c4d53ccfbf545e2" title="Batch&#45;project raw Vertex vector to MeshVertex." alt="" coords="246,157,405,197"/>
+<area shape="poly" id="edge4_Node000001_Node000004" title=" " alt="" coords="187,155,233,162,232,167,187,161"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_af668d56bbf7441d552c3ee5c38c3ae62.html#af668d56bbf7441d552c3ee5c38c3ae62" title="Write a vertex array into a GeometryFn output buffer." alt="" coords="235,221,416,261"/>
+<area shape="poly" id="edge6_Node000001_Node000006" title=" " alt="" coords="139,163,236,207,254,214,252,219,234,212,137,168"/>
+<area shape="poly" id="edge3_Node000003_Node000003" title=" " alt="" coords="285,94,282,84,289,74,303,69,325,67,351,70,364,77,362,82,349,75,325,72,305,74,292,79,288,85,290,92"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kakshya_a7aca11e65c3ec397c37645fe66faf18d.html#a7aca11e65c3ec397c37645fe66faf18d" title="Project raw Vertex to MeshVertex." alt="" coords="464,157,623,197"/>
+<area shape="poly" id="edge5_Node000004_Node000005" title=" " alt="" coords="405,175,450,175,450,180,405,180"/>
+</map>

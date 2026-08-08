@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kakshya::normalised_rect_to_region" name="MayaFlux::Kakshya::normalised_rect_to_region">
+<area shape="rect" id="Node000001" title="Convert a normalised image rectangle to a pixel&#45;space Region." alt="" coords="300,41,495,81"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1VisionExtractor_a8e57a3a8b13e09eb599a4e4216351aad.html#a8e57a3a8b13e09eb599a4e4216351aad" title="Pure virtual extraction implementation &#45; derived classes implement this." alt="" coords="5,5,252,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="286,49,252,45,253,39,287,44"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kakshya_a11897ab8f477cfcc9da8a9e5f070794d.html#a11897ab8f477cfcc9da8a9e5f070794d" title="Compute the tight pixel&#45;space Region enclosing a set of normalised points." alt="" coords="39,70,218,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="287,79,219,88,218,83,286,73"/>
+</map>

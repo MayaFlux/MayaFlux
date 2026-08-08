@@ -1,0 +1,7 @@
+<map id="MayaFlux::Yantra::MathematicalTransformer::create_output" name="MayaFlux::Yantra::MathematicalTransformer::create_output">
+<area shape="rect" id="Node000001" title="Creates output with proper type conversion." alt="" coords="5,37,237,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1ComputeOperation_ac364bad27ce3e4d35add89333c9a24b8.html#ac364bad27ce3e4d35add89333c9a24b8" title="Convert processed double data back to OutputType using metadata and optional callback." alt="" coords="306,5,507,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="237,42,292,35,293,41,238,47"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1OperationHelper_a86f4c84e8740ec41db439c868a93454a.html#a86f4c84e8740ec41db439c868a93454a" title="Extract structured double data from Datum container or direct ComputeData with automatic container ha..." alt="" coords="285,69,528,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="238,68,272,72,271,77,237,73"/>
+</map>

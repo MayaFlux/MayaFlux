@@ -1,0 +1,40 @@
+<map id="GeometryPrimitives.hpp" name="GeometryPrimitives.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="203,5,384,31"/>
+<area shape="rect" id="Node000002" href="$MeshData_8hpp.html" title=" " alt="" coords="29,79,230,119"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="271,33,182,75,180,70,268,28"/>
+<area shape="rect" id="Node000010" href="$VertexFormats_8hpp.html" title=" " alt="" coords="193,167,394,207"/>
+<area shape="poly" id="edge10_Node000001_Node000010" title=" " alt="" coords="296,31,296,153,291,153,291,31"/>
+<area shape="rect" id="Node000011" href="$Bounds_8hpp.html" title=" " alt="" coords="375,79,561,119"/>
+<area shape="poly" id="edge12_Node000001_Node000011" title=" " alt="" coords="320,28,415,71,413,76,318,33"/>
+<area shape="rect" id="Node000003" href="$MeshAccess_8hpp.html" title=" " alt="" coords="37,174,168,199"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="126,120,113,161,108,160,121,118"/>
+<area shape="rect" id="Node000004" href="$RegionGroup_8hpp.html" title=" " alt="" coords="5,255,200,295"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="105,200,105,241,100,241,100,200"/>
+<area shape="rect" id="Node000009" href="$VertexLayout_8hpp.html" title=" " alt="" coords="224,262,360,287"/>
+<area shape="poly" id="edge8_Node000003_Node000009" title=" " alt="" coords="129,197,255,254,253,259,127,202"/>
+<area shape="rect" id="Node000005" href="$Region_8hpp.html" title=" " alt="" coords="67,350,162,375"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="108,295,114,336,108,337,103,295"/>
+<area shape="rect" id="Node000006" href="$NDData_8hpp.html" title=" " alt="" coords="66,431,267,471"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="124,374,150,417,146,420,119,377"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="264,519,368,544"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="204,468,283,510,280,514,201,473"/>
+<area shape="rect" id="Node000008" title=" " alt="" coords="123,519,210,544"/>
+<area shape="poly" id="edge7_Node000006_Node000008" title=" " alt="" coords="169,471,169,505,164,505,164,471"/>
+<area shape="poly" id="edge9_Node000009_Node000006" title=" " alt="" coords="283,290,235,344,186,420,182,417,231,341,279,286"/>
+<area shape="poly" id="edge11_Node000010_Node000009" title=" " alt="" coords="296,207,295,248,290,248,290,207"/>
+<area shape="rect" id="Node000012" href="$HitTest_8hpp.html" title=" " alt="" coords="419,167,605,207"/>
+<area shape="poly" id="edge13_Node000011_Node000012" title=" " alt="" coords="480,118,498,153,494,156,475,120"/>
+<area shape="rect" id="Node000013" href="$SpatialIndex_8hpp.html" title=" " alt="" coords="444,262,575,287"/>
+<area shape="poly" id="edge14_Node000012_Node000013" title=" " alt="" coords="514,207,513,248,507,248,509,207"/>
+<area shape="rect" id="Node000017" href="$ViewTransform_8hpp.html" title=" " alt="" coords="599,255,798,295"/>
+<area shape="poly" id="edge19_Node000012_Node000017" title=" " alt="" coords="554,204,647,247,645,252,552,209"/>
+<area shape="rect" id="Node000014" href="$TendencyFactories_8hpp.html" title=" " alt="" coords="245,343,448,383"/>
+<area shape="poly" id="edge15_Node000013_Node000014" title=" " alt="" coords="489,290,396,338,393,334,486,285"/>
+<area shape="rect" id="Node000016" title=" " alt="" coords="473,350,565,375"/>
+<area shape="poly" id="edge18_Node000013_Node000016" title=" " alt="" coords="513,287,519,336,513,336,508,288"/>
+<area shape="rect" id="Node000015" href="$Tendency_8hpp.html" title=" " alt="" coords="292,438,401,463"/>
+<area shape="poly" id="edge16_Node000014_Node000015" title=" " alt="" coords="349,383,349,424,344,424,344,383"/>
+<area shape="poly" id="edge17_Node000015_Node000007" title=" " alt="" coords="345,464,328,507,323,505,340,463"/>
+<area shape="rect" id="Node000018" title=" " alt="" coords="590,350,807,375"/>
+<area shape="poly" id="edge20_Node000017_Node000018" title=" " alt="" coords="701,295,701,336,696,336,696,295"/>
+</map>

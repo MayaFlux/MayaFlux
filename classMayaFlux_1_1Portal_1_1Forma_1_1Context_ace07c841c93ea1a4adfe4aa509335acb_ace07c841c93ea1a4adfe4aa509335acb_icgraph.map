@@ -1,0 +1,5 @@
+<map id="MayaFlux::Portal::Forma::Context::on_release" name="MayaFlux::Portal::Forma::Context::on_release">
+<area shape="rect" id="Node000001" title="Called when a mouse button is released over an element." alt="" coords="272,5,453,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_a93bc17f116ad6b024d7c2430c4ce8336.html#a93bc17f116ad6b024d7c2430c4ce8336" title="Wire drag interaction for a drawable canvas element." alt="" coords="5,5,224,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="258,28,224,28,224,23,258,23"/>
+</map>

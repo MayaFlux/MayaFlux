@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::VKSwapchain::choose_present_mode" name="MayaFlux::Core::VKSwapchain::choose_present_mode">
+<area shape="rect" id="Node000001" title="Choose best present mode from available modes based on config." alt="" coords="5,5,225,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Core_a921ab21e40ccaba71211bac8aad94025.html#a921ab21e40ccaba71211bac8aad94025" title=" " alt="" coords="273,5,419,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="226,23,259,23,259,28,226,28"/>
+</map>

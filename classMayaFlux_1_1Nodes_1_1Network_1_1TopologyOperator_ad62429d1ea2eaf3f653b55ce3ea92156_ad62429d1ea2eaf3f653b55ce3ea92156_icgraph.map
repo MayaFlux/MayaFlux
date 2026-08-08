@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::Network::TopologyOperator::get_point_count" name="MayaFlux::Nodes::Network::TopologyOperator::get_point_count">
+<area shape="rect" id="Node000001" title="Get source point count (before topology expansion)" alt="" coords="284,41,483,96"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1TopologyOperator_a05cd00e534293fb742264575978df592.html#a05cd00e534293fb742264575978df592" title="Get mutable access to point at global index." alt="" coords="21,5,220,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="270,56,220,49,220,44,271,51"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1TopologyOperator_ae48f0868cc943022e9a901aa5babfb7d.html#ae48f0868cc943022e9a901aa5babfb7d" title="Query operator internal state." alt="" coords="5,85,236,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="271,87,237,92,236,86,270,81"/>
+</map>

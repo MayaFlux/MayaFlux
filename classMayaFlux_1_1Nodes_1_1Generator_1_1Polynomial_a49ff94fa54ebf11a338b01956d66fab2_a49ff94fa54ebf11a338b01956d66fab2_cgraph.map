@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Generator::Polynomial::update_context" name="MayaFlux::Nodes::Generator::Polynomial::update_context">
+<area shape="rect" id="Node000001" title="Updates the context object with the current node state." alt="" coords="5,5,217,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Memory_1_1HistoryBuffer_a2f1571f77762d0d35adfc01dae46509f.html#a2f1571f77762d0d35adfc01dae46509f" title="Get mutable linearized view of entire history." alt="" coords="265,5,468,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="218,23,251,23,251,28,218,28"/>
+</map>

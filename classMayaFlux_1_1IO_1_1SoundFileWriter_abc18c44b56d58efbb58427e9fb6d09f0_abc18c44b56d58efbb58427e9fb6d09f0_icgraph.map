@@ -1,0 +1,8 @@
+<map id="MayaFlux::IO::SoundFileWriter::set_error" name="MayaFlux::IO::SoundFileWriter::set_error">
+<area shape="rect" id="Node000001" title=" " alt="" coords="539,5,757,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1SoundFileWriter_a759a872c21f40482fee6d559b8b2567d.html#a759a872c21f40482fee6d559b8b2567d" title="Open the output file and spawn the worker thread." alt="" coords="5,5,224,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="525,25,491,24,272,24,224,25,224,20,272,19,491,19,525,19"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1SoundFileWriter_afe05fe29e71e3b1f3f3c489669dab0eb.html#afe05fe29e71e3b1f3f3c489669dab0eb" title=" " alt="" coords="272,33,491,73"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="526,41,491,44,491,39,525,36"/>
+<area shape="poly" id="edge3_Node000003_Node000002" title=" " alt="" coords="258,43,224,39,225,34,259,38"/>
+</map>

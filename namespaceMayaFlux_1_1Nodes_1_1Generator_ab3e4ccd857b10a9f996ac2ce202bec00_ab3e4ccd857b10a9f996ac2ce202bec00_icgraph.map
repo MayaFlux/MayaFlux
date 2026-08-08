@@ -1,0 +1,11 @@
+<map id="MayaFlux::Nodes::Generator::HannWindow" name="MayaFlux::Nodes::Generator::HannWindow">
+<area shape="rect" id="Node000001" title="Creates a Hann window function." alt="" coords="731,27,939,67"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Nodes_1_1Generator_a56b155fb3b0d4160662bbeb53337af17.html#a56b155fb3b0d4160662bbeb53337af17" title="Generate window coefficients using C++20 ranges." alt="" coords="475,27,683,67"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="717,50,683,50,683,45,717,45"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_a985b4fbe457b036da9fbc809aed9aa3e.html#a985b4fbe457b036da9fbc809aed9aa3e" title="Apply window function to single&#45;channel data (in&#45;place)" alt="" coords="240,35,427,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="461,50,427,50,427,45,461,45"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_a6b5aed304676ea30ffe84686c4f2bfeb.html#a6b5aed304676ea30ffe84686c4f2bfeb" title=" " alt="" coords="5,5,192,31"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="226,37,192,32,193,27,227,31"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_a8372c8c48e13a9fe628b7bc573e72870.html#a8372c8c48e13a9fe628b7bc573e72870" title="Apply window function to multi&#45;channel data (in&#45;place)" alt="" coords="5,55,192,95"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="227,63,193,67,192,62,226,57"/>
+</map>

@@ -1,0 +1,26 @@
+<map id="VisionOp.hpp" name="VisionOp.hpp">
+<area shape="rect" id="Node000001" title="Declarative description of a Kinesis::Vision processing sequence." alt="" coords="360,5,468,31"/>
+<area shape="rect" id="Node000002" href="$VisionAnalyzer_8hpp.html" title=" " alt="" coords="257,152,403,177"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="403,44,339,153,334,150,398,42"/>
+<area shape="rect" id="Node000006" href="$VisionExecutor_8hpp.html" title="Dispatch engine for VisionSequence execution." alt="" coords="412,79,557,104"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="437,39,475,77,471,80,433,43"/>
+<area shape="rect" id="Node000003" href="$VisionAnalyzer_8cpp.html" title=" " alt="" coords="5,225,151,251"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="277,184,120,228,118,223,275,179"/>
+<area shape="rect" id="Node000004" href="$VisionExtractor_8hpp.html" title=" " alt="" coords="175,225,323,251"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="308,188,264,227,260,223,305,184"/>
+<area shape="rect" id="Node000005" href="$VisionSorter_8hpp.html" title=" " alt="" coords="347,225,475,251"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="355,184,400,223,396,227,352,188"/>
+<area shape="poly" id="edge6_Node000006_Node000002" title=" " alt="" coords="449,112,356,154,354,149,446,107"/>
+<area shape="rect" id="Node000007" href="$VisionExecutor_8cpp.html" title=" " alt="" coords="427,152,571,177"/>
+<area shape="poly" id="edge7_Node000006_Node000007" title=" " alt="" coords="492,117,500,151,494,152,487,118"/>
+<area shape="rect" id="Node000008" href="$VisionGpuDispatch_8hpp.html" title="GPU execution layer for Kinesis::Vision::VisionSequence." alt="" coords="645,152,818,177"/>
+<area shape="poly" id="edge8_Node000006_Node000008" title=" " alt="" coords="538,105,692,149,691,154,537,110"/>
+<area shape="rect" id="Node000009" href="$ImageCVProcessor_8hpp.html" title=" " alt="" coords="499,225,670,251"/>
+<area shape="poly" id="edge9_Node000008_Node000009" title=" " alt="" coords="697,186,610,228,608,223,695,181"/>
+<area shape="rect" id="Node000010" href="$VisionGpuDispatch_8cpp.html" title=" " alt="" coords="695,225,867,251"/>
+<area shape="poly" id="edge10_Node000008_Node000010" title=" " alt="" coords="749,187,775,224,770,227,745,190"/>
+<area shape="rect" id="Node000011" href="$VisionProcessor_8hpp.html" title=" " alt="" coords="891,225,1043,251"/>
+<area shape="poly" id="edge11_Node000008_Node000011" title=" " alt="" coords="783,179,930,223,928,228,782,184"/>
+<area shape="rect" id="Node000012" href="$VisionProcessor_8cpp.html" title=" " alt="" coords="892,299,1043,324"/>
+<area shape="poly" id="edge12_Node000011_Node000012" title=" " alt="" coords="970,264,970,299,965,299,965,264"/>
+</map>

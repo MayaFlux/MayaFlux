@@ -1,0 +1,9 @@
+<map id="MayaFlux::Vruta::FreeRoutine::is_active" name="MayaFlux::Vruta::FreeRoutine::is_active">
+<area shape="rect" id="Node000001" title="Checks if the coroutine is still active." alt="" coords="531,37,745,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Vruta_1_1FreeRoutine_ac18193e9508bc39896a60782408a9d6e.html#ac18193e9508bc39896a60782408a9d6e" title="Restarts the coroutine from the beginning." alt="" coords="268,5,483,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="517,45,483,41,483,36,518,40"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Vruta_1_1FreeRoutine_af33ab2007173c16b3e15091dd097dd92.html#af33ab2007173c16b3e15091dd097dd92" title="Attempts to resume the coroutine with explicit temporal context." alt="" coords="268,69,483,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="518,75,483,79,483,74,517,69"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Vruta_1_1FreeRoutine_a4340dc25671a862edb73c65914d5d0b9.html#a4340dc25671a862edb73c65914d5d0b9" title="Attempts to resume the coroutine if it&#39;s ready to execute." alt="" coords="5,69,220,109"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="255,92,220,92,220,87,255,87"/>
+</map>

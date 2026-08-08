@@ -1,0 +1,22 @@
+<map id="Sorters" name="Sorters">
+<area shape="rect" id="node1" href="dir_4864b7ee6c46e7550f33bc5a5fb74425.html" title="Data" alt="" coords="27,125,80,151"/>
+<area shape="rect" id="node2" href="dir_803684b81091026666df1805667fc619.html" title="Analyzers" alt="" coords="105,125,191,151"/>
+<area shape="rect" id="node3" href="dir_b13737862817de80cbf4a030cd1a2ce9.html" title="Executors" alt="" coords="216,125,301,151"/>
+<area shape="rect" id="node4" href="dir_d6e7b92be710a46408040e0908a6fd45.html" title="OperationSpec" alt="" coords="325,125,443,151"/>
+<area shape="rect" id="node5" href="dir_9ac7cf9947ac29e0816dea7a976a04ec.html" title="Sorters" alt="" coords="287,52,355,77"/>
+<area shape="poly" id="edge1" href="dir_000069_000009.html" alt="" coords="288,77,94,128,94,128,92,123,93,123,287,72"/>
+<area shape="rect" id="edge1-headlabel" href="dir_000069_000009.html" title="1" alt="" coords="95,125,105,140"/>
+<area shape="poly" id="edge2" href="dir_000069_000000.html" alt="" coords="294,80,190,122,188,118,292,75"/>
+<area shape="rect" id="edge2-headlabel" href="dir_000069_000000.html" title="1" alt="" coords="192,119,201,133"/>
+<area shape="poly" id="edge4" href="dir_000069_000013.html" alt="" coords="313,79,280,117,276,113,309,76"/>
+<area shape="rect" id="edge4-headlabel" href="dir_000069_000013.html" title="2" alt="" coords="283,110,292,125"/>
+<area shape="poly" id="edge5" href="dir_000069_000050.html" alt="" coords="334,76,367,113,363,117,330,79"/>
+<area shape="rect" id="edge5-headlabel" href="dir_000069_000050.html" title="1" alt="" coords="363,99,373,113"/>
+<area shape="rect" id="node6" href="dir_a8ec6d67cf3caa06b6fdb4f1cb0d9531.html" title="Kinesis" alt="" coords="467,125,536,151"/>
+<area shape="poly" id="edge3" href="dir_000069_000035.html" alt="" coords="351,75,460,118,458,123,349,80"/>
+<area shape="rect" id="edge3-headlabel" href="dir_000069_000035.html" title="1" alt="" coords="453,103,463,118"/>
+<area shape="rect" id="node7" href="dir_fa9701bc8dd421cc9c72fe138aba5a04.html" title="Transitive" alt="" coords="560,125,645,151"/>
+<area shape="poly" id="edge6" href="dir_000069_000083.html" alt="" coords="356,72,547,120,546,125,355,77"/>
+<area shape="rect" id="edge6-headlabel" href="dir_000069_000083.html" title="1" alt="" coords="539,106,549,121"/>
+<area shape="rect" id="clust1" href="dir_3792097c0c2bd0eb167930b710d4307a.html" title="Yantra" alt="" coords="16,16,453,161"/>
+</map>

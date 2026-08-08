@@ -1,0 +1,23 @@
+<map id="MayaFlux::Portal::Forma::plot" name="MayaFlux::Portal::Forma::plot">
+<area shape="rect" id="Node000001" title="Create a live plot in a new window." alt="" coords="5,101,187,141"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1internal_a5d02e05ac1a85e94c21943f636d166db.html#a5d02e05ac1a85e94c21943f636d166db" title="Core buffer construction — capacity&#45;explicit path for internal use." alt="" coords="235,5,445,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="136,99,234,55,255,47,257,52,236,60,138,104"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Forma_aa4199727a94debd4a9d4434732886fff.html#aa4199727a94debd4a9d4434732886fff" title="Construct a Surface, creating Layer and Context internally." alt="" coords="249,69,431,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="187,107,235,100,236,106,187,112"/>
+<area shape="rect" id="Node000007" href="$structMayaFlux_1_1Kakshya_1_1VertexLayout_a7b7a30b2a13cb2676713a352f298f607.html#a7b7a30b2a13cb2676713a352f298f607" title="Factory: layout for MeshVertex (position, color, weight, uv, normal, tangent)" alt="" coords="244,133,436,173"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="187,131,231,136,230,142,187,136"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Plot_aed3496c600d70e7b2eb8492ce08c14d0.html#aed3496c600d70e7b2eb8492ce08c14d0" title="Place a plot element onto a Surface using a pre&#45;built FormaBuffer." alt="" coords="249,197,431,237"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="138,139,236,183,257,190,255,195,234,188,136,144"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Portal_1_1Forma_acc0e19957fa04def8004abe53daa52dc.html#acc0e19957fa04def8004abe53daa52dc" title="Construct a Layer and a Context wired to window." alt="" coords="493,69,675,109"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="431,87,480,87,480,92,431,92"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_a04fb0b546bfa364a04dfe6f609f8b769.html#a04fb0b546bfa364a04dfe6f609f8b769" title="Transfer ownership of an existing object to the persistent store for process lifetime." alt="" coords="723,77,849,102"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="675,87,709,87,709,92,675,92"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1internal_ac26a7a92aa4af34c366aad03b68ea71e.html#ac26a7a92aa4af34c366aad03b68ea71e" title=" " alt="" coords="897,69,1041,109"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="850,87,884,87,884,92,850,92"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Layer_ad60e0b647ec7b8f3cab248eb7b771af9.html#ad60e0b647ec7b8f3cab248eb7b771af9" title="Add an element to the layer." alt="" coords="493,133,675,173"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="416,195,494,174,495,179,418,200"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Layer_1_1Slot_a9e5e62375b1039faf323b0eb0279e261.html#a9e5e62375b1039faf323b0eb0279e261" title="Explicit id accessor, for clarity in chained expressions." alt="" coords="493,197,675,237"/>
+<area shape="poly" id="edge9_Node000008_Node000010" title=" " alt="" coords="431,215,480,215,480,220,431,220"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Surface_a75c1be61d11b8a157158eee48c4e5992.html#a75c1be61d11b8a157158eee48c4e5992" title="Access the spatial registry." alt="" coords="493,261,675,301"/>
+<area shape="poly" id="edge10_Node000008_Node000011" title=" " alt="" coords="418,235,495,255,494,260,416,240"/>
+</map>
