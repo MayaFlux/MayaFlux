@@ -1,0 +1,48 @@
+#version 460
+
+#include "include/volume_common.glsl"
+
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 4) in;
+
+layout(set = 0, binding = 0, std430) readonly buffer VelocityIn {
+    vec4 velocity_in[];
+};
+layout(set = 0, binding = 1, std430) writeonly buffer DivergenceOut {
+    float divergence_out[];
+};
+
+layout(push_constant) uniform PC {
+    uint width;
+    uint height;
+    uint depth;
+    uint pad0;
+    float cell_size_x;
+    float cell_size_y;
+    float cell_size_z;
+    float pad1;
+} pc;
+
+void main()
+{
+    uvec3 gid = gl_GlobalInvocationID;
+    uvec3 dims = uvec3(pc.width, pc.height, pc.depth);
+
+    if (!volume_in_bounds(gid, dims)) {
+        return;
+    }
+
+    ivec3 c = ivec3(gid);
+
+    vec3 x_pos = velocity_in[volume_index_clamped(c + ivec3(1, 0, 0), dims)].xyz;
+    vec3 x_neg = velocity_in[volume_index_clamped(c - ivec3(1, 0, 0), dims)].xyz;
+    vec3 y_pos = velocity_in[volume_index_clamped(c + ivec3(0, 1, 0), dims)].xyz;
+    vec3 y_neg = velocity_in[volume_index_clamped(c - ivec3(0, 1, 0), dims)].xyz;
+    vec3 z_pos = velocity_in[volume_index_clamped(c + ivec3(0, 0, 1), dims)].xyz;
+    vec3 z_neg = velocity_in[volume_index_clamped(c - ivec3(0, 0, 1), dims)].xyz;
+
+    float d = (x_pos.x - x_neg.x) / (2.0 * pc.cell_size_x)
+            + (y_pos.y - y_neg.y) / (2.0 * pc.cell_size_y)
+            + (z_pos.z - z_neg.z) / (2.0 * pc.cell_size_z);
+
+    divergence_out[volume_index(gid, dims)] = d;
+}
