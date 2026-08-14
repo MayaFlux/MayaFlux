@@ -109,6 +109,12 @@ void SDFMeshProcessor::set_iso_level(float iso_level)
     m_dirty = true;
 }
 
+void SDFMeshProcessor::set_normal_coloring(bool enabled)
+{
+    m_normal_coloring = enabled;
+    m_dirty = true;
+}
+
 // ============================================================================
 // ShaderProcessor hooks
 // ============================================================================
@@ -176,6 +182,7 @@ bool SDFMeshProcessor::on_before_execute(
         .res_x = m_res_x,
         .res_y = m_res_y,
         .res_z = m_res_z,
+        .color_mode = m_normal_coloring ? 1U : 0U,
     };
     set_push_constant_data(pc);
 

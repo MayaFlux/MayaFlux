@@ -25,7 +25,7 @@ layout(push_constant) uniform PC {
     uint res_x;
     uint res_y;
     uint res_z;
-    uint _pad;
+    uint color_mode;
 } pc;
 
 float sample_grid(vec3 world_p)
@@ -72,15 +72,15 @@ vec3 interp_edge(vec3 p0, vec3 p1, float v0, float v1)
     return abs(d) < 1e-7 ? (p0 + p1) * 0.5 : p0 + ((pc.iso_level - v0) / d) * (p1 - p0);
 }
 
-void write_vertex(uint slot, vec3 pos, vec2 uv, vec3 normal)
+void write_vertex(uint slot, vec3 pos, vec2 uv, vec3 normal, vec3 color)
 {
     uint base = slot * 15u;
     vertices[base + 0] = pos.x;
     vertices[base + 1] = pos.y;
     vertices[base + 2] = pos.z;
-    vertices[base + 3] = 1.0;
-    vertices[base + 4] = 1.0;
-    vertices[base + 5] = 1.0;
+    vertices[base + 3] = color.r;
+    vertices[base + 4] = color.g;
+    vertices[base + 5] = color.b;
     vertices[base + 6] = 0.0;
     vertices[base + 7] = uv.x;
     vertices[base + 8] = uv.y;
@@ -90,6 +90,11 @@ void write_vertex(uint slot, vec3 pos, vec2 uv, vec3 normal)
     vertices[base + 12] = 1.0;
     vertices[base + 13] = 0.0;
     vertices[base + 14] = 0.0;
+}
+
+vec3 vertex_color(vec3 normal)
+{
+    return pc.color_mode == 0u ? vec3(1.0) : normal * 0.5 + 0.5;
 }
 
 void main()
@@ -169,16 +174,20 @@ void main()
 
         vec3 p0 = ep[idx0], p1 = ep[idx1], p2 = ep[idx2];
 
+        vec3 n0 = compute_normal(p0);
+        vec3 n1 = compute_normal(p1);
+        vec3 n2 = compute_normal(p2);
+
         uint base = atomicAdd(vertex_count, 3u);
 
         write_vertex(base + 0u, p0,
             vec2((p0.x - pc.bounds_min.x) / extent.x, (p0.y - pc.bounds_min.y) / extent.y),
-            compute_normal(p0));
+            n0, vertex_color(n0));
         write_vertex(base + 1u, p1,
             vec2((p1.x - pc.bounds_min.x) / extent.x, (p1.y - pc.bounds_min.y) / extent.y),
-            compute_normal(p1));
+            n1, vertex_color(n1));
         write_vertex(base + 2u, p2,
             vec2((p2.x - pc.bounds_min.x) / extent.x, (p2.y - pc.bounds_min.y) / extent.y),
-            compute_normal(p2));
+            n2, vertex_color(n2));
     }
 }

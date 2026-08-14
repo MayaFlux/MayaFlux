@@ -99,6 +99,19 @@ public:
 
     [[nodiscard]] bool is_dirty() const { return m_dirty; }
 
+    /**
+     * @brief Write the surface normal into the vertex color slot.
+     * @param enabled True to color by normal, false for flat white.
+     *
+     * Coloring by normal makes the surface readable with an unlit fragment
+     * shader, since the geometry's shape is otherwise invisible against a
+     * uniform white. Takes effect next cycle.
+     */
+    void set_normal_coloring(bool enabled);
+
+    /** @brief Whether vertices are colored by surface normal. */
+    [[nodiscard]] bool is_normal_coloring() const { return m_normal_coloring; }
+
 protected:
     void on_attach(const std::shared_ptr<Buffer>& buffer) override;
     void on_descriptors_created() override;
@@ -119,6 +132,7 @@ private:
     float m_iso_level;
     bool m_dirty { true };
     bool m_owns_buffers { true }; ///< false in GPU-field mode; buffers owned by SdfPrepProcessor.
+    bool m_normal_coloring {}; ///< False preserves the flat white mc_emit has always written.
 
     std::shared_ptr<VKBuffer> m_grid_buf;
     std::shared_ptr<VKBuffer> m_edge_buf;
@@ -132,7 +146,8 @@ private:
         uint32_t res_x;
         uint32_t res_y;
         uint32_t res_z;
-        uint32_t _pad[2] {};
+        uint32_t color_mode {}; ///< Zero writes white, non-zero writes the surface normal.
+        uint32_t _pad {};
     };
     static_assert(sizeof(McPC) % 16 == 0);
 

@@ -62,28 +62,6 @@ void VolumeSurfaceProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
 {
     ComputeProcessor::on_attach(buffer);
 
-    /* m_volume = std::dynamic_pointer_cast<VolumeGridBuffer>(buffer);
-    if (!m_volume) {
-        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-            "VolumeSurfaceProcessor requires a VolumeGridBuffer");
-        return;
-    }
-
-    if (!m_volume->has_field(m_field_name)) {
-        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-            "VolumeSurfaceProcessor: volume has no field '{}'", m_field_name);
-        m_volume.reset();
-        return;
-    }
-
-    const size_t expected = static_cast<size_t>(m_volume->get_cell_count()) * sizeof(float);
-    if (m_volume->get_field_bytes(m_field_name) != expected) {
-        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-            "VolumeSurfaceProcessor: field '{}' is not scalar", m_field_name);
-        m_volume.reset();
-        return;
-    } */
-
     bind_buffer("grid_out", m_grid_buf);
 
     write_params();
