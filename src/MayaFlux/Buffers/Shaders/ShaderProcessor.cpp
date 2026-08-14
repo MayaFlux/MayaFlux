@@ -40,6 +40,13 @@ void ShaderProcessor::processing_function(const std::shared_ptr<Buffer>& buffer)
         return;
     }
 
+    if (m_deferred_submission) {
+        resolve_pending_dispatch(false);
+        if (is_dispatch_pending()) {
+            return;
+        }
+    }
+
     if (!on_before_execute(m_last_command_buffer, vk_buffer)) {
         MF_RT_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
             "on_before_execute() reported failure, skipping shader execution");
@@ -278,6 +285,66 @@ std::vector<uint8_t> ShaderProcessor::resolve_push_constants(const std::shared_p
 }
 
 //==============================================================================
+// Submission
+//==============================================================================
+
+void ShaderProcessor::set_deferred_submission(bool deferred)
+{
+    if (!deferred && is_dispatch_pending()) {
+        resolve_pending_dispatch(true);
+    }
+    m_deferred_submission = deferred;
+}
+
+bool ShaderProcessor::resolve_pending_dispatch(bool block)
+{
+    if (!is_dispatch_pending()) {
+        return false;
+    }
+
+    auto& foundry = Portal::Graphics::get_shader_foundry();
+
+    if (block) {
+        foundry.wait_for_fence(m_pending_fence);
+    } else if (!foundry.is_fence_signaled(m_pending_fence)) {
+        return false;
+    }
+
+    const auto fence = m_pending_fence;
+    auto buffer = m_pending_buffer;
+
+    m_pending_fence = Portal::Graphics::INVALID_FENCE;
+    m_pending_buffer.reset();
+
+    on_dispatch_complete(buffer);
+    foundry.release_fence(fence);
+
+    return true;
+}
+
+void ShaderProcessor::submit_recorded(
+    Portal::Graphics::CommandBufferID cmd_id,
+    const std::shared_ptr<VKBuffer>& buffer)
+{
+    auto& foundry = Portal::Graphics::get_shader_foundry();
+
+    if (!m_deferred_submission) {
+        foundry.submit_and_wait(cmd_id);
+        return;
+    }
+
+    m_pending_fence = foundry.submit_async(cmd_id);
+
+    if (m_pending_fence == Portal::Graphics::INVALID_FENCE) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "Deferred submission failed, no fence returned");
+        return;
+    }
+
+    m_pending_buffer = buffer;
+}
+
+//==============================================================================
 // Specialization Constants
 //==============================================================================
 
@@ -365,6 +432,7 @@ void ShaderProcessor::on_before_descriptors_create() { }
 void ShaderProcessor::on_descriptors_created() { }
 bool ShaderProcessor::on_before_execute(Portal::Graphics::CommandBufferID, const std::shared_ptr<VKBuffer>&) { return true; }
 void ShaderProcessor::on_after_execute(Portal::Graphics::CommandBufferID, const std::shared_ptr<VKBuffer>&) { }
+void ShaderProcessor::on_dispatch_complete(const std::shared_ptr<VKBuffer>&) { }
 
 //==============================================================================
 // Private Implementation
@@ -474,6 +542,7 @@ void ShaderProcessor::update_descriptors(const std::shared_ptr<VKBuffer>& buffer
 
 void ShaderProcessor::cleanup()
 {
+    resolve_pending_dispatch(true);
     auto& foundry = Portal::Graphics::get_shader_foundry();
     auto& compute_press = Portal::Graphics::get_compute_press();
 

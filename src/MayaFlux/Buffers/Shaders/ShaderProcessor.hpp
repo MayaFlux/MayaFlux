@@ -397,6 +397,38 @@ public:
     [[nodiscard]] virtual std::shared_ptr<VKBuffer> get_output_buffer() const { return m_last_processed_buffer; }
 
     /**
+     * @brief Submit asynchronously and resolve at the top of a later cycle.
+     * @param deferred True to submit via submit_async, false for submit_and_wait.
+     *
+     * Only meaningful for children that submit their own command buffers.
+     * Children that record without submitting, such as RenderProcessor,
+     * are unaffected. Switching back to synchronous while a submission is
+     * outstanding waits for and releases it first.
+     */
+    void set_deferred_submission(bool deferred);
+
+    /** @brief Whether this processor submits asynchronously. */
+    [[nodiscard]] bool is_deferred_submission() const { return m_deferred_submission; }
+
+    /** @brief True while an asynchronous submission is outstanding. */
+    [[nodiscard]] bool is_dispatch_pending() const
+    {
+        return m_pending_fence != Portal::Graphics::INVALID_FENCE;
+    }
+
+    /**
+     * @brief Resolve an outstanding asynchronous submission.
+     * @param block True to wait for the fence, false to return immediately
+     *        when it is not yet signaled.
+     * @return True if a submission was resolved by this call.
+     *
+     * On resolution invokes on_dispatch_complete, then release_fence, which
+     * also frees the associated command buffer. Invoked with block=false at
+     * the top of processing_function and with block=true from cleanup.
+     */
+    bool resolve_pending_dispatch(bool block);
+
+    /**
      * @brief Check if compute has been executed at least once
      * @return True if processing_function() has been called
      */
@@ -488,6 +520,29 @@ protected:
     virtual void on_after_execute(Portal::Graphics::CommandBufferID cmd_id, const std::shared_ptr<VKBuffer>& buffer);
 
     /**
+     * @brief Called once when an asynchronous submission is observed complete.
+     * @param buffer Buffer processed by the completed submission.
+     *
+     * The correct place for device-to-host readback under deferred
+     * submission, since on_after_execute runs at record time, before the
+     * GPU has executed anything. Never invoked under synchronous
+     * submission, where submit_and_wait already precedes the return.
+     */
+    virtual void on_dispatch_complete(const std::shared_ptr<VKBuffer>& buffer);
+
+    /**
+     * @brief Submit a recorded command buffer honoring the submission mode.
+     * @param cmd_id Command buffer to submit.
+     * @param buffer Buffer being processed. Retained until resolution when
+     *        deferred, so on_dispatch_complete receives the same instance.
+     *
+     * Synchronous submission calls submit_and_wait and returns. Deferred
+     * submission calls submit_async and stores the fence; a failed
+     * submission falls back to leaving nothing pending.
+     */
+    void submit_recorded(Portal::Graphics::CommandBufferID cmd_id, const std::shared_ptr<VKBuffer>& buffer);
+
+    /**
      * @brief Resolve logical descriptor set index to actual index
      * @param set Logical set index from ShaderBinding
      * @return Resolved set index, or std::nullopt if invalid
@@ -510,6 +565,10 @@ protected:
 
     std::unordered_map<std::string, std::shared_ptr<VKBuffer>> m_bound_buffers;
     std::shared_ptr<VKBuffer> m_last_processed_buffer;
+
+    bool m_deferred_submission {}; ///< False submits synchronously, preserving pre-existing behaviour.
+    Portal::Graphics::FenceID m_pending_fence { Portal::Graphics::INVALID_FENCE }; ///< Outstanding async submission, if any.
+    std::shared_ptr<VKBuffer> m_pending_buffer; ///< Buffer retained for the outstanding submission.
 
     std::vector<uint8_t> m_push_constant_data;
 
