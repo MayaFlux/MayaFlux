@@ -24,6 +24,46 @@ If you configure without a dev preset, `project_launcher` will not exist as a ta
 
 ---
 
+## Requirements
+
+This list is only for building MayaFlux itself from source. If using Weave to create a standalone project, see the [Getting Started](Getting_Started.md) guide for that, where all dependencies are automatically handled via package managers.
+
+Building from source currently tracks 0.5-dev, ahead of Weave's 0.4.1, and the minimum OS floor is correspondingly newer:
+
+| Platform | Weave (0.4.1) | Building from source (0.5-dev) |
+|---|---|---|
+| Windows | 10, version 1909+ | 10, version 1909+ |
+| Fedora | 43 | 44 |
+| Ubuntu | 25.10 | 26.04 LTS |
+| macOS | 15 | 26 (Tahoe) |
+
+The Windows floor is set by MSVC 2022's own minimum supported OS, not by anything in `scripts/win64/setup_windows.ps1` or `packages.psd1`, neither contains an OS version check. Win32 windowing, WinMM, and WASAPI all predate Windows 10 by a wide margin and impose no additional constraint.
+
+**All platforms:** C++20 compiler (GCC 12+, Clang 16+, MSVC 2022+), CMake 3.28+, Vulkan SDK, FFmpeg (avcodec, avformat, avutil, swresample, swscale, avdevice), GLM, Eigen, HIDAPI, Asio, Assimp, FreeType, utf8proc, nlohmann_json, fmt, TBB, STB, LLVM 21+.
+
+All dependencies are required; CMake will not configure if any are missing.
+
+**Linux (Fedora 44+ / Ubuntu 26.04 LTS+):** PipeWire (audio and MIDI), libdbus-1 (XDG Portal file dialogs), wayland-protocols, libwayland-client, xkbcommon, fontconfig.
+**Note:** `jack2` conflicts with pipewire upstream. Use `pipewire-jack` which is functionally equivalent to jack2 but compatible with pipewire. If you have jack2 installed, remove it and install `pipewire-jack` instead.
+
+**macOS (26+, Tahoe):** Apple Silicon or Intel, Apple Clang 17+ via Xcode Command Line Tools, GLFW via Homebrew (windowing; see the macOS platform maintainer callout in `CONTRIBUTING.md`, this is expected to change). Frameworks linked automatically: CoreAudio, AudioUnit, AudioToolbox, CoreMIDI, AppKit, UniformTypeIdentifiers, CoreFoundation.
+
+**Windows (10, version 1909+):** Visual Studio 2022+ (MSVC) or MinGW-w64, LLVM 22+ (for Lila JIT).
+
+### Setup Scripts
+
+```sh
+./scripts/setup_linux.sh                      # Linux
+./scripts/setup_macos.sh                       # macOS
+.\scripts\win64\setup_windows.ps1              # Windows, run as Administrator
+```
+
+These install the dependency list above and configure environment variables. `setup_windows.ps1` installs everything via `packages.psd1` and must run elevated, UAC will prompt if launched normally.
+
+macOS note: Homebrew LLVM is not your compiler. MayaFlux compiles with Apple Clang from Xcode Command Line Tools. LLVM is a runtime dependency for Lila only, and the setup script installs it for that purpose.
+
+---
+
 ## Presets
 
 | Preset | MAYAFLUX_BUILD_PROJECT | MAYAFLUX_DEV | MAYAFLUX_BUILD_TESTS | Purpose |

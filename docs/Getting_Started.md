@@ -59,51 +59,13 @@ After Weave completes setup, jump to [Program Structure](#program-structure).
 
 ---
 
-## Building from Source
+## Building MayaFlux Itself From Source
 
-### Requirements: All Platforms
+Weave is the supported path for using MayaFlux; it downloads a prebuilt framework and generates a project against it, no compiler toolchain or dependency management on your end.
 
-- **Compiler:** C++20 (GCC 12+, Clang 16+, MSVC 2022+)
-- **Build system:** CMake 3.28+
-- **Required dependencies:** Vulkan SDK, FFmpeg (avcodec, avformat, avutil, swresample, swscale, avdevice), GLM, Eigen, HIDAPI, Asio, Assimp, FreeType, utf8proc, nlohmann_json, fmt, TBB, STB, LLVM 21+
+Building the framework itself from source is a different, separate task, for contributors modifying the engine, not for writing programs against it. If that's what you're doing, see [`docs/Dev_Getting_Started.md`](Dev_Getting_Started.md) in the MayaFlux repository, which covers dependencies, setup scripts, build presets, and the in-tree run loop.
 
-All dependencies are required. CMake will not generate if any are missing.
-
-### Requirements: Platform-Specific
-
-**Linux:**
-- PipeWire (audio and MIDI)
-- libdbus-1 (XDG Portal file dialogs)
-- wayland-protocols, libwayland-client, xkbcommon (windowing)
-- fontconfig (system font discovery)
-
-**macOS:**
-- macOS 26+ (Tahoe), Apple Silicon or Intel
-- Apple Clang 17+ via Xcode Command Line Tools
-- GLFW (via Homebrew, for windowing)
-- Frameworks linked automatically: CoreAudio, AudioUnit, AudioToolbox, CoreMIDI, AppKit, UniformTypeIdentifiers, CoreFoundation
-
-**Windows:**
-- Visual Studio 2022+ (MSVC) or MinGW-w64
-- LLVM 22+ (for Lila JIT)
-
-### Build
-
-```sh
-git clone https://github.com/MayaFlux/MayaFlux.git
-cd MayaFlux
-
-# Install all dependencies and configure environment variables
-./scripts/setup_macos.sh                      # macOS
-./scripts/setup_linux.sh                      # Linux
-.\scripts\win64\setup_windows.ps1             # Windows - must be run as Administrator (requires UAC elevation)
-
-# Build using CMakePresets
-cmake --preset linux-release       # or macos-release / windows-release
-cmake --build --preset linux-release
-```
-
-`setup_windows.ps1` installs all required packages via `packages.psd1` and configures environment variables. It must be run elevated; UAC will prompt if you launch it normally.
+If you're not sure which you need: if you want to write music, visuals, or interactive pieces with MayaFlux, use Weave. If you want to change how MayaFlux itself works, build from source.
 
 ---
 
@@ -302,19 +264,23 @@ What this shows:
 
 ### macOS: do I need Homebrew LLVM?
 
-No. MayaFlux compiles with Apple Clang from Xcode Command Line Tools. Homebrew LLVM is not used for compilation. LLVM is required as a runtime dependency for Lila (the JIT environment) and is installed by the setup script, but it is not your compiler.
+No. MayaFlux compiles with Apple Clang from Xcode Command Line Tools. Homebrew LLVM is not used for compilation. LLVM is required as a runtime dependency for Lila (the JIT environment) and is installed by the setup script, but it is not your compiler. This applies to building MayaFlux itself from source; see [`docs/Dev_Getting_Started.md`](Dev_Getting_Started.md).
 
-### What is the minimum macOS version?
+### What is the minimum OS version?
 
-macOS 26 (Tahoe) on both Apple Silicon and Intel. Earlier versions lack the C++20 stdlib coverage MayaFlux requires.
+Weave-installed MayaFlux (currently 0.4.1) targets: Windows 10 version 1909+, Fedora 43, Ubuntu 25.10, macOS 15.
+
+Building from source targets a newer floor, since source currently tracks 0.5-dev: Windows 10 version 1909+, Fedora 44, Ubuntu 26.04 LTS, macOS 26 (Tahoe). See [`docs/Dev_Getting_Started.md`](Dev_Getting_Started.md) for the from-source requirement list.
+
+The Windows floor is set by MSVC 2022's own minimum supported OS. Win32 windowing, WinMM, and WASAPI all predate this by a wide margin and impose no additional constraint.
 
 ### What happens if a dependency is missing?
 
-CMake configuration fails with an explicit error. There are no optional dependencies; everything in the requirements list is required for the build to complete.
+This applies to building MayaFlux itself from source. Weave-installed MayaFlux handles dependencies for you. See [`docs/Dev_Getting_Started.md`](Dev_Getting_Started.md) for the from-source dependency list and setup scripts.
 
 ### Can I use MayaFlux without the JIT (Lila)?
 
-Yes. Lila is part of the engine but you do not have to use it. Programs written entirely in `compose()` and compiled normally do not touch the JIT path. LLVM must still be present for the build to succeed.
+Yes. Lila is part of the engine but you do not have to use it. Programs written entirely in `compose()` and compiled normally do not touch the JIT path. Weave's live coding toggle controls whether Lila is embedded in your project at all.
 
 ### Where does my code go?
 
