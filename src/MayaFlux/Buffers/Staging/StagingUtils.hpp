@@ -35,6 +35,25 @@ MAYAFLUX_API void upload_host_visible(const std::shared_ptr<VKBuffer>& target, c
 MAYAFLUX_API void upload_device_local(const std::shared_ptr<VKBuffer>& target, const std::shared_ptr<VKBuffer>& staging_buffer, const Kakshya::DataVariant& data);
 
 /**
+ * @brief Upload host memory into a raw back_buffers slot.
+ * @param slot Destination slot, typically from VKBuffer::get_back_buffer().
+ * @param data Source pointer, at least @p size bytes.
+ * @param size Byte count to copy.
+ * @param staging Persistent staging buffer for device-local slots. Ignored,
+ *        and may be null, when slot.mapped_ptr is already valid.
+ *
+ * Writes through slot.mapped_ptr directly when present (host-visible slot,
+ * no transfer). Otherwise copies into @p staging and records a fenced
+ * device-to-device copy into slot.buffer, mirroring download_back_buffer
+ * with the direction reversed.
+ */
+MAYAFLUX_API void upload_back_buffer(
+    const VKBufferResources::GenerationSlot& slot,
+    const void* data,
+    size_t size,
+    std::shared_ptr<VKBuffer>& staging);
+
+/**
  * @brief Download data from a host-visible buffer
  * @param source Source VKBuffer to download data from
  * @param target Target VKBuffer to store the downloaded data
