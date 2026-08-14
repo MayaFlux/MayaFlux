@@ -1,8 +1,12 @@
 #include "VolumeGridBuffer.hpp"
 
 #include "MayaFlux/Buffers/BufferProcessingChain.hpp"
+#include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
+#include "MayaFlux/Buffers/Shaders/SDFMeshProcessor.hpp"
 #include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
+#include "MayaFlux/Buffers/State/VolumeSurfaceProcessor.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
+#include "MayaFlux/Kakshya/NDData/VertexFormats.hpp"
 #include "MayaFlux/Registry/BackendRegistry.hpp"
 #include "MayaFlux/Registry/Service/BufferService.hpp"
 
@@ -13,8 +17,9 @@ VolumeGridBuffer::VolumeGridBuffer(
     uint32_t height,
     uint32_t depth,
     std::initializer_list<FieldDecl> fields,
-    Kinesis::AABB3D bounds)
-    : VolumeGridBuffer(width, height, depth, std::vector<FieldDecl>(fields), bounds)
+    Kinesis::AABB3D bounds,
+    std::optional<SurfaceConfig> surface)
+    : VolumeGridBuffer(width, height, depth, std::vector<FieldDecl>(fields), bounds, std::move(surface))
 {
 }
 
@@ -23,12 +28,14 @@ VolumeGridBuffer::VolumeGridBuffer(
     uint32_t height,
     uint32_t depth,
     std::vector<FieldDecl> fields,
-    Kinesis::AABB3D bounds)
-    : VKBuffer(1, Usage::COMPUTE, Kakshya::DataModality::VOLUMETRIC_3D)
+    Kinesis::AABB3D bounds,
+    std::optional<SurfaceConfig> surface)
+    : VKBuffer(surface_storage_bytes(surface), Usage::VERTEX, Kakshya::DataModality::VERTICES_3D)
     , m_width(width)
     , m_height(height)
     , m_depth(depth)
     , m_bounds(bounds)
+    , m_surface(std::move(surface))
 {
     force_internal_usage(true);
     allocate_fields(fields);
@@ -134,8 +141,73 @@ void VolumeGridBuffer::setup_processors(ProcessingToken token)
     }
     chain->set_preferred_token(token);
 
+    if (!m_surface) {
+        MF_DEBUG(Journal::Component::Buffers, Journal::Context::Init,
+            "VolumeGridBuffer: chain established, no extraction configured");
+        return;
+    }
+
+    auto self = std::dynamic_pointer_cast<VolumeGridBuffer>(shared_from_this());
+
+    m_surface_processor = std::make_shared<VolumeSurfaceProcessor>(
+        self, m_surface->field_name,
+        m_surface->res_x, m_surface->res_y, m_surface->res_z,
+        m_surface->threshold);
+
+    auto svc = Registry::BackendRegistry::instance()
+                   .get_service<Registry::Service::BufferService>();
+
+    m_counter_buf = std::make_shared<VKBuffer>(
+        sizeof(uint32_t), Usage::HOST_STORAGE, Kakshya::DataModality::UNKNOWN);
+    svc->initialize_buffer(m_counter_buf);
+
+    m_mesh_processor = std::make_shared<SDFMeshProcessor>(
+        m_surface_processor->grid_buf(), m_counter_buf,
+        m_bounds.min, m_bounds.max,
+        m_surface->res_x, m_surface->res_y, m_surface->res_z, 0.0F);
+
+    const uint32_t max_vertices = m_surface_processor->worst_case_vertices();
+    auto layout = Kakshya::VertexLayout::for_meshes(sizeof(Kakshya::MeshVertex));
+    layout.vertex_count = max_vertices;
+    set_vertex_layout(layout);
+
+    m_surface_processor->set_processing_token(token);
+    m_mesh_processor->set_processing_token(token);
+
+    set_default_processor(m_surface_processor);
+    chain->add_processor(m_mesh_processor, self);
+
+    MF_INFO(Journal::Component::Buffers, Journal::Context::Init,
+        "VolumeGridBuffer: surfacing '{}' at {}x{}x{}, {} max vertices",
+        m_surface->field_name, m_surface->res_x, m_surface->res_y,
+        m_surface->res_z, max_vertices);
+
     MF_DEBUG(Journal::Component::Buffers, Journal::Context::Init,
         "VolumeGridBuffer: chain established, no stages attached");
+}
+
+void VolumeGridBuffer::setup_rendering(const RenderConfig& config)
+{
+    if (!m_surface) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::Init,
+            "setup_rendering: no SurfaceConfig was supplied at construction");
+        return;
+    }
+
+    RenderConfig resolved = config;
+    resolved.topology = Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST;
+
+    if (resolved.vertex_shader.empty())
+        resolved.vertex_shader = "triangle.vert.spv";
+    if (resolved.fragment_shader.empty())
+        resolved.fragment_shader = "triangle.frag.spv";
+
+    apply_render_config(resolved, ShaderConfig { resolved.vertex_shader });
+
+    get_processing_chain()->add_final_processor(m_render_processor, shared_from_this());
+
+    m_render_processor->set_vertex_range(0, 0);
+    set_needs_depth_attachment(true);
 }
 
 glm::vec3 VolumeGridBuffer::get_cell_size() const
@@ -320,6 +392,19 @@ void VolumeGridBuffer::read_field(const std::string& name, void* data, size_t si
 
     const uint32_t slot = field->read_is_a ? field->slot_a : field->slot_b;
     download_back_buffer(get_buffer_resources().back_buffers[slot], data, size, m_transfer_staging);
+}
+
+size_t VolumeGridBuffer::surface_storage_bytes(const std::optional<SurfaceConfig>& surface)
+{
+    if (!surface) {
+        return 1;
+    }
+
+    const uint64_t voxels = static_cast<uint64_t>(std::max(surface->res_x, 1U))
+        * std::max(surface->res_y, 1U)
+        * std::max(surface->res_z, 1U);
+
+    return static_cast<size_t>(voxels * 15U * sizeof(Kakshya::MeshVertex));
 }
 
 } // namespace MayaFlux::Buffers

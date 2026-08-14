@@ -6,6 +6,10 @@
 
 namespace MayaFlux::Buffers {
 
+class VolumeSurfaceProcessor;
+class SDFMeshProcessor;
+class RenderProcessor;
+
 /**
  * @class VolumeGridBuffer
  * @brief GPU-resident state for multi-field simulations evaluated over a
@@ -32,6 +36,17 @@ namespace MayaFlux::Buffers {
  * for these handles directly against ShaderFoundry, as
  * RelaxationStepProcessor does, resolving them through read_handle() and
  * write_handle().
+ *
+ * Chain layout:
+ *   default   - VolumeSurfaceProcessor, resampling the surfaced field
+ *   flat[0]   - SDFMeshProcessor, extracting the isosurface
+ *   flat[1..] - simulation stages, added by the caller at any point
+ *   final     - RenderProcessor
+ *
+ * Extraction occupies the default and first flat slots so that
+ * simulation stages appended by the caller always follow it. The surface
+ * therefore reflects the previous cycle's field rather than the current
+ * one, which at frame rate is not observable.
  *
  * The VKBuffer base owns no vertex output. Extraction is a separate
  * concern: attach SDFMeshProcessor against a scalar field for an
@@ -65,6 +80,25 @@ public:
     };
 
     /**
+     * @struct SurfaceConfig
+     * @brief Isosurface extraction parameters for a scalar field.
+     *
+     * Supplied at construction because the extraction resolution
+     * determines this buffer's own vertex storage size: mc_emit allocates
+     * slots by atomicAdd without a capacity check, so storage is sized to
+     * the worst case of fifteen vertices per voxel. At 48 cubed that is
+     * roughly 95 MB, at 64 cubed roughly 225 MB, so extraction resolution
+     * is worth keeping at or below the simulation resolution.
+     */
+    struct SurfaceConfig {
+        std::string field_name; ///< Scalar field surfaced. Stride must be sizeof(float).
+        uint32_t res_x; ///< Extraction cell count along X.
+        uint32_t res_y; ///< Extraction cell count along Y.
+        uint32_t res_z; ///< Extraction cell count along Z.
+        float threshold; ///< Field value the surface is placed at.
+    };
+
+    /**
      * @brief Construct an unregistered multi-field volume.
      * @param width Cell count along X.
      * @param height Cell count along Y.
@@ -79,7 +113,8 @@ public:
         uint32_t height,
         uint32_t depth,
         std::initializer_list<FieldDecl> fields,
-        Kinesis::AABB3D bounds);
+        Kinesis::AABB3D bounds,
+        std::optional<SurfaceConfig> surface = std::nullopt);
 
     /**
      * @brief Construct from a runtime-built field list.
@@ -94,7 +129,8 @@ public:
         uint32_t height,
         uint32_t depth,
         std::vector<FieldDecl> fields,
-        Kinesis::AABB3D bounds);
+        Kinesis::AABB3D bounds,
+        std::optional<SurfaceConfig> surface = std::nullopt);
 
     /**
      * @brief Destructor.
@@ -112,8 +148,30 @@ public:
      * The volume declares no default processor and no stages of its own.
      * Simulation identity is the sequence of processors the caller adds,
      * not a property of this class.
+     *
+     * When a SurfaceConfig was supplied at construction, two stages are
+     * appended: the field-to-corner-grid resample and the marching cubes
+     * extraction writing into this buffer's own vertex storage. Simulation
+     * stages added before this call keep their position ahead of them.
      */
     void setup_processors(ProcessingToken token) override;
+
+    /**
+     * @brief Attach a RenderProcessor drawing the extracted surface.
+     * @param config Render target. Vertex and fragment shaders default to
+     *        the untextured triangle pair; topology is forced to
+     *        TRIANGLE_LIST.
+     *
+     * Requires a SurfaceConfig at construction. Without one this buffer
+     * has no vertex storage and nothing to draw.
+     */
+    void setup_rendering(const RenderConfig& config);
+
+    /** @brief The surface extraction stage, valid after setup_rendering. */
+    [[nodiscard]] std::shared_ptr<VolumeSurfaceProcessor> surface_processor() const { return m_surface_processor; }
+
+    /** @brief The marching cubes stage, valid after setup_rendering. */
+    [[nodiscard]] std::shared_ptr<SDFMeshProcessor> mesh_processor() const { return m_mesh_processor; }
 
     /** @brief Cell count along X. */
     [[nodiscard]] uint32_t get_width() const { return m_width; }
@@ -240,8 +298,19 @@ private:
 
     std::vector<std::string> m_field_order;
     std::unordered_map<std::string, Field> m_fields;
+    std::optional<SurfaceConfig> m_surface;
 
     std::shared_ptr<VKBuffer> m_transfer_staging; ///< Reused across seed and read calls.
+    std::shared_ptr<VolumeSurfaceProcessor> m_surface_processor;
+    std::shared_ptr<SDFMeshProcessor> m_mesh_processor;
+    std::shared_ptr<VKBuffer> m_counter_buf; ///< Atomic vertex counter for the extraction stage.
+
+    /**
+     * @brief Bytes of vertex storage the extraction resolution requires.
+     * @param surface Extraction parameters, or nullopt for no extraction.
+     * @return Worst-case vertex bytes, or 1 when no surface is configured.
+     */
+    static size_t surface_storage_bytes(const std::optional<SurfaceConfig>& surface);
 };
 
 } // namespace MayaFlux::Buffers
