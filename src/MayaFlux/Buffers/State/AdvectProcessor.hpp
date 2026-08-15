@@ -1,15 +1,13 @@
 #pragma once
 
-#include "MayaFlux/Buffers/Shaders/ComputeProcessor.hpp"
+#include "VolumeFieldProcessor.hpp"
 
 namespace MayaFlux::Buffers {
 
-class VolumeGridBuffer;
-
 /**
  * @class AdvectProcessor
- * @brief ComputeProcessor carrying one field of a VolumeGridBuffer along
- *        that volume's velocity field by semi-Lagrangian backtrace.
+ * @brief VolumeFieldProcessor carrying one field along a velocity field
+ *        by semi-Lagrangian backtrace.
  *
  * Each cell traces its centre backward through the velocity field by one
  * time step, samples the carried field trilinearly at the arrival point,
@@ -22,16 +20,8 @@ class VolumeGridBuffer;
  * step. Naming a scalar carries density, temperature, or any other
  * passively transported quantity.
  *
- * Descriptor bindings for all three slots (velocity read, carried read,
- * carried write) are written directly via
- * ShaderFoundry::update_descriptor_buffer, since VolumeGridBuffer's field
- * storage consists of raw handle pairs with no VKBuffer wrapper. The
- * write happens in processing_function, before execute_shader binds the
- * descriptor set into the command buffer.
- *
- * The carried field is swapped after dispatch, so a subsequent stage
- * reading that field observes the advected values. A field named for both
- * velocity and carrier is swapped once.
+ * The carried field is registered for swap, so a subsequent stage reading
+ * that field observes the advected values.
  *
  * Usage:
  * @code
@@ -41,16 +31,15 @@ class VolumeGridBuffer;
  * chain->add_processor(carry, volume);
  * @endcode
  */
-class MAYAFLUX_API AdvectProcessor : public ComputeProcessor {
+class MAYAFLUX_API AdvectProcessor : public VolumeFieldProcessor {
 public:
     /**
      * @struct AdvectParams
      * @brief Push constant block the advection shader receives.
      *
-     * Lattice dimensions occupy the leading fields, matching the
-     * convention RelaxationStepProcessor::GridExtent establishes for 2D
-     * rules, extended to three axes. Explicit padding keeps cell_size on
-     * a 16-byte boundary for std430 vec3 alignment.
+     * The leading eight words are VolumeFieldProcessor::LatticeParams and
+     * are written by the base. This declaration exists to fix the offsets
+     * of the two fields past that prefix.
      */
     struct AdvectParams {
         uint32_t width;
@@ -70,7 +59,7 @@ public:
     /**
      * @brief Construct an advection stage.
      * @param velocity_field Name of the field traced through. Must have
-     *        stride sizeof(glm::vec4) and be double-buffered.
+     *        stride sizeof(glm::vec4).
      * @param carried_field Name of the field transported. May equal
      *        @p velocity_field for self-advection. Must be double-buffered.
      * @param shader_path Path to the compute shader implementing the trace.
@@ -113,80 +102,31 @@ public:
 
 protected:
     /**
-     * @brief Size the dispatch to the lattice and write the parameter
-     *        block, once the attached volume's dimensions are known.
-     * @param buffer The attached buffer, expected to be a VolumeGridBuffer.
+     * @brief Reserve the full parameter block and write the step and
+     *        dissipation words.
      */
-    void on_attach(const std::shared_ptr<Buffer>& buffer) override;
-
-    /**
-     * @brief Write the three field descriptors for the current slot
-     *        assignment.
-     *
-     * Called after descriptor set creation. The per-cycle write happens in
-     * processing_function; this covers the first cycle, before which no
-     * processing_function call has occurred against a ready descriptor set.
-     */
-    void on_descriptors_created() override;
-
-    /**
-     * @brief Reject buffers that are not VolumeGridBuffer.
-     * @param cmd_id Command buffer this cycle's dispatch will be recorded into.
-     * @param buffer The attached buffer, received as VKBuffer.
-     * @return True if the attached buffer is a VolumeGridBuffer.
-     */
-    bool on_before_execute(Portal::Graphics::CommandBufferID cmd_id, const std::shared_ptr<VKBuffer>& buffer) override;
-
-    /**
-     * @brief Swap the carried field's slots so downstream stages observe
-     *        the advected values.
-     * @param cmd_id Command buffer the dispatch was recorded into.
-     * @param buffer The attached buffer, received as VKBuffer.
-     */
-    void on_after_execute(Portal::Graphics::CommandBufferID cmd_id, const std::shared_ptr<VKBuffer>& buffer) override;
-
-    /**
-     * @brief Write the field descriptors for this cycle's slot assignment,
-     *        run the normal shader processing path, then swap the carried
-     *        field's slots.
-     *
-     * The descriptor write must precede execute_shader's
-     * vkCmdBindDescriptorSets. Writing from on_before_execute updates a set
-     * the driver has already consumed, freezing the bindings at whatever
-     * on_descriptors_created wrote.
-     *
-     * The swap is here rather than in on_after_execute because a slot
-     * exchange is not idempotent and on_after_execute is invoked more than
-     * once per cycle.
-     */
-    void processing_function(const std::shared_ptr<Buffer>& buffer) override;
+    void on_volume_ready() override;
 
 private:
     /**
-     * @brief Issue direct ShaderFoundry descriptor writes for the velocity
-     *        read slot, the carried read slot, and the carried write slot.
+     * @brief Write time step and dissipation past the shared prefix.
      */
-    void write_field_descriptors();
+    void write_tail();
 
     /**
-     * @brief Size the push constant block to at least AdvectParams and
-     *        write the attached volume's lattice dimensions and cell size.
-     *
-     * Called from on_attach, the first point at which the volume's extent
-     * is known, and again whenever set_time_step or set_dissipation
-     * changes a parameter. A ShaderSpec-constructed processor already
-     * carries spec.push_constant_bytes in m_config; that size is preserved
-     * and only the leading AdvectParams fields are written.
+     * @brief Build the binding table for the two field names.
+     * @param velocity_field Field traced through.
+     * @param carried_field Field transported.
+     * @return Table binding velocity read, carried read, and carried write.
      */
-    void write_params();
+    static std::vector<FieldBinding> make_bindings(
+        const std::string& velocity_field, const std::string& carried_field);
 
     std::string m_velocity_field;
     std::string m_carried_field;
 
     float m_time_step { 1.0F / 60.0F };
     float m_dissipation { 1.0F };
-
-    std::shared_ptr<VolumeGridBuffer> m_volume; ///< The attached volume, cached for descriptor writes and slot swaps.
 };
 
 } // namespace MayaFlux::Buffers

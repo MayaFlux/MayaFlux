@@ -1,56 +1,32 @@
 #pragma once
 
-#include "MayaFlux/Buffers/Shaders/ComputeProcessor.hpp"
+#include "VolumeFieldProcessor.hpp"
 
 namespace MayaFlux::Buffers {
 
-class VolumeGridBuffer;
-
 /**
  * @class PressureProcessor
- * @brief ComputeProcessor solving the pressure Poisson equation over a
- *        VolumeGridBuffer by Jacobi iteration.
+ * @brief VolumeFieldProcessor solving the pressure Poisson equation by
+ *        Jacobi iteration.
  *
  * Records every iteration into one command buffer via
- * ComputeProcessor::iteration_count, so a sixty-pass solve costs one
- * submission rather than sixty. Between consecutive passes a
+ * ComputeProcessor::iteration_count, so a forty-pass solve costs one
+ * submission rather than forty. Between consecutive passes a
  * compute-to-compute barrier is issued on both pressure slots, since the
  * attached volume's own handle is not what the passes touch.
  *
  * Both pressure slots are bound simultaneously rather than ping-ponged
  * through descriptor updates: a descriptor set bound into an open command
  * buffer cannot be rewritten mid-recording. Which slot a pass reads and
- * which it writes is carried in the parity field of the push constant
- * block, re-pushed before every dispatch.
+ * which it writes is carried in word three of the shared parameter
+ * prefix, re-pushed before every dispatch.
  *
  * After an odd iteration count the result sits in the slot that started
  * as the write target, so the pressure field is swapped once. After an
- * even count it sits where it started and no swap occurs.
- *
- * The pressure field must be double-buffered. The divergence field is
- * read only and may be single-buffered.
+ * even count it sits where it started and wants_swap returns false.
  */
-class MAYAFLUX_API PressureProcessor : public ComputeProcessor {
+class MAYAFLUX_API PressureProcessor : public VolumeFieldProcessor {
 public:
-    /**
-     * @struct PressureParams
-     * @brief Push constant block the Jacobi shader receives.
-     *
-     * Lattice dimensions occupy the leading fields, matching the
-     * convention AdvectProcessor::AdvectParams establishes for volume
-     * stages, with parity replacing that block's padding word.
-     */
-    struct PressureParams {
-        uint32_t width;
-        uint32_t height;
-        uint32_t depth;
-        uint32_t parity;
-        float cell_size_x;
-        float cell_size_y;
-        float cell_size_z;
-        float pad0;
-    };
-
     /**
      * @brief Construct a pressure solve stage.
      * @param divergence_field Name of the scalar field read as the
@@ -87,28 +63,7 @@ public:
 
 protected:
     /**
-     * @brief Size the dispatch to the lattice and write the parameter
-     *        block, once the attached volume's dimensions are known.
-     * @param buffer The attached buffer, expected to be a VolumeGridBuffer.
-     */
-    void on_attach(const std::shared_ptr<Buffer>& buffer) override;
-
-    /**
-     * @brief Write the three field descriptors for the current slot
-     *        assignment.
-     */
-    void on_descriptors_created() override;
-
-    /**
-     * @brief Reject buffers that are not VolumeGridBuffer.
-     * @param cmd_id Command buffer this cycle's dispatches will be recorded into.
-     * @param buffer The attached buffer, received as VKBuffer.
-     * @return True if the attached buffer is a VolumeGridBuffer.
-     */
-    bool on_before_execute(Portal::Graphics::CommandBufferID cmd_id, const std::shared_ptr<VKBuffer>& buffer) override;
-
-    /**
-     * @brief Write this pass's read/write parity into the push constant block.
+     * @brief Write this pass's read/write parity into the parameter block.
      * @param cmd_id Command buffer being recorded into.
      * @param buffer Buffer under processing.
      * @param index Zero-based iteration index.
@@ -134,39 +89,23 @@ protected:
         uint32_t index) override;
 
     /**
-     * @brief Write the field descriptors for this cycle's slot assignment,
-     *        run the normal shader processing path, then swap the pressure
-     *        field when the iteration count is odd.
-     *
-     * The swap is here rather than in on_after_execute because a slot
-     * exchange is not idempotent and on_after_execute is invoked more than
-     * once per cycle.
+     * @brief Swap only when the pass count leaves the result in the write slot.
+     * @return True when the iteration count is odd.
      */
-    void processing_function(const std::shared_ptr<Buffer>& buffer) override;
+    [[nodiscard]] bool wants_swap() const override;
 
 private:
     /**
-     * @brief Issue direct ShaderFoundry descriptor writes for the
-     *        divergence read slot and both pressure slots.
+     * @brief Build the binding table for the two field names.
+     * @param divergence_field Field read as the right-hand side.
+     * @param pressure_field Field solved, bound in both slots.
+     * @return Table binding divergence read and both pressure slots.
      */
-    void write_field_descriptors();
-
-    /**
-     * @brief Size the push constant block to at least PressureParams and
-     *        write the attached volume's lattice dimensions and cell size.
-     */
-    void write_params();
-
-    /**
-     * @brief Write the parity word of the staged push constant block.
-     * @param parity Zero to read slot A and write slot B, one for the reverse.
-     */
-    void write_parity(uint32_t parity);
+    static std::vector<FieldBinding> make_bindings(
+        const std::string& divergence_field, const std::string& pressure_field);
 
     std::string m_divergence_field;
     std::string m_pressure_field;
-
-    std::shared_ptr<VolumeGridBuffer> m_volume; ///< The attached volume, cached for descriptor writes and the slot swap.
 };
 
 } // namespace MayaFlux::Buffers
