@@ -109,9 +109,9 @@ void SDFMeshProcessor::set_iso_level(float iso_level)
     m_dirty = true;
 }
 
-void SDFMeshProcessor::set_normal_coloring(bool enabled)
+void SDFMeshProcessor::set_axis_palette(const glm::vec3& x, const glm::vec3& y, const glm::vec3& z)
 {
-    m_normal_coloring = enabled;
+    m_palette = { x, y, z };
     m_dirty = true;
 }
 
@@ -182,7 +182,12 @@ bool SDFMeshProcessor::on_before_execute(
         .res_x = m_res_x,
         .res_y = m_res_y,
         .res_z = m_res_z,
-        .color_mode = m_normal_coloring ? 1U : 0U,
+        ._pad = 0,
+        .palette = {
+            glm::vec4(m_palette[0], 1.0F),
+            glm::vec4(m_palette[1], 1.0F),
+            glm::vec4(m_palette[2], 1.0F),
+        },
     };
     set_push_constant_data(pc);
 

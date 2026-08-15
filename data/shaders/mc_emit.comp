@@ -25,7 +25,8 @@ layout(push_constant) uniform PC {
     uint res_x;
     uint res_y;
     uint res_z;
-    uint color_mode;
+    uint pad0;
+    vec4 palette[3];
 } pc;
 
 float sample_grid(vec3 world_p)
@@ -94,7 +95,11 @@ void write_vertex(uint slot, vec3 pos, vec2 uv, vec3 normal, vec3 color)
 
 vec3 vertex_color(vec3 normal)
 {
-    return pc.color_mode == 0u ? vec3(1.0) : normal * 0.5 + 0.5;
+    vec3 a = abs(normal);
+    if (a.x >= a.y && a.x >= a.z) {
+        return pc.palette[0].rgb;
+    }
+    return a.y >= a.z ? pc.palette[1].rgb : pc.palette[2].rgb;
 }
 
 void main()
