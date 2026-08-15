@@ -13,28 +13,19 @@
 namespace MayaFlux::Buffers {
 
 VolumeGridBuffer::VolumeGridBuffer(
-    uint32_t width,
-    uint32_t height,
-    uint32_t depth,
+    Kinesis::Lattice3D lattice,
     std::initializer_list<FieldDecl> fields,
-    Kinesis::AABB3D bounds,
     std::optional<SurfaceConfig> surface)
-    : VolumeGridBuffer(width, height, depth, std::vector<FieldDecl>(fields), bounds, std::move(surface))
+    : VolumeGridBuffer(lattice, std::vector<FieldDecl>(fields), std::move(surface))
 {
 }
 
 VolumeGridBuffer::VolumeGridBuffer(
-    uint32_t width,
-    uint32_t height,
-    uint32_t depth,
+    Kinesis::Lattice3D lattice,
     std::vector<FieldDecl> fields,
-    Kinesis::AABB3D bounds,
     std::optional<SurfaceConfig> surface)
     : VKBuffer(surface_storage_bytes(surface), Usage::VERTEX, Kakshya::DataModality::VERTICES_3D)
-    , m_width(width)
-    , m_height(height)
-    , m_depth(depth)
-    , m_bounds(bounds)
+    , m_lattice(lattice)
     , m_surface(std::move(surface))
 {
     force_internal_usage(true);
@@ -128,8 +119,8 @@ void VolumeGridBuffer::allocate_fields(const std::vector<FieldDecl>& decls)
 
     MF_INFO(Journal::Component::Buffers, Journal::Context::Init,
         "VolumeGridBuffer: {}x{}x{} lattice, {} fields, {} slots, {} bytes total",
-        m_width, m_height, m_depth, m_fields.size(),
-        resources.back_buffers.size(), total_bytes);
+        m_lattice.resolution.x, m_lattice.resolution.y, m_lattice.resolution.z,
+        m_fields.size(), resources.back_buffers.size(), total_bytes);
 }
 
 void VolumeGridBuffer::setup_processors(ProcessingToken token)
@@ -151,7 +142,7 @@ void VolumeGridBuffer::setup_processors(ProcessingToken token)
 
     m_surface_processor = std::make_shared<VolumeSurfaceProcessor>(
         self, m_surface->field_name,
-        m_surface->res_x, m_surface->res_y, m_surface->res_z,
+        m_lattice.resampled(m_surface->resolution),
         m_surface->threshold);
 
     auto svc = Registry::BackendRegistry::instance()
@@ -163,8 +154,8 @@ void VolumeGridBuffer::setup_processors(ProcessingToken token)
 
     m_mesh_processor = std::make_shared<SDFMeshProcessor>(
         m_surface_processor->grid_buf(), m_counter_buf,
-        m_bounds.min, m_bounds.max,
-        m_surface->res_x, m_surface->res_y, m_surface->res_z, 0.0F);
+        m_lattice.bounds.min, m_lattice.bounds.max,
+        m_surface->resolution.x, m_surface->resolution.y, m_surface->resolution.z, 0.0F);
 
     const uint32_t max_vertices = m_surface_processor->worst_case_vertices();
     auto layout = Kakshya::VertexLayout::for_meshes(sizeof(Kakshya::MeshVertex));
@@ -179,8 +170,8 @@ void VolumeGridBuffer::setup_processors(ProcessingToken token)
 
     MF_INFO(Journal::Component::Buffers, Journal::Context::Init,
         "VolumeGridBuffer: surfacing '{}' at {}x{}x{}, {} max vertices",
-        m_surface->field_name, m_surface->res_x, m_surface->res_y,
-        m_surface->res_z, max_vertices);
+        m_surface->field_name, m_surface->resolution.x, m_surface->resolution.y,
+        m_surface->resolution.z, max_vertices);
 
     MF_DEBUG(Journal::Component::Buffers, Journal::Context::Init,
         "VolumeGridBuffer: chain established, no stages attached");
@@ -208,27 +199,6 @@ void VolumeGridBuffer::setup_rendering(const RenderConfig& config)
 
     m_render_processor->set_vertex_range(0, 0);
     set_needs_depth_attachment(true);
-}
-
-glm::vec3 VolumeGridBuffer::get_cell_size() const
-{
-    const glm::vec3 extent = m_bounds.extent();
-    return glm::vec3 {
-        extent.x / static_cast<float>(m_width),
-        extent.y / static_cast<float>(m_height),
-        extent.z / static_cast<float>(m_depth),
-    };
-}
-
-glm::vec3 VolumeGridBuffer::cell_centre(uint32_t x, uint32_t y, uint32_t z) const
-{
-    const glm::vec3 cell = get_cell_size();
-    return m_bounds.min
-        + glm::vec3 {
-              (static_cast<float>(x) + 0.5F) * cell.x,
-              (static_cast<float>(y) + 0.5F) * cell.y,
-              (static_cast<float>(z) + 0.5F) * cell.z,
-          };
 }
 
 const VolumeGridBuffer::Field* VolumeGridBuffer::find_field(
@@ -314,13 +284,14 @@ void VolumeGridBuffer::seed(const std::string& name, const Kinesis::SpatialField
         return;
     }
 
-    std::vector<float> values(get_cell_count());
+    const glm::uvec3 res = m_lattice.resolution;
+    std::vector<float> values(m_lattice.cell_count());
 
     size_t i = 0;
-    for (uint32_t z = 0; z < m_depth; ++z) {
-        for (uint32_t y = 0; y < m_height; ++y) {
-            for (uint32_t x = 0; x < m_width; ++x) {
-                values[i++] = field(cell_centre(x, y, z));
+    for (uint32_t z = 0; z < res.z; ++z) {
+        for (uint32_t y = 0; y < res.y; ++y) {
+            for (uint32_t x = 0; x < res.x; ++x) {
+                values[i++] = field(m_lattice.cell_center({ x, y, z }));
             }
         }
     }
@@ -342,13 +313,14 @@ void VolumeGridBuffer::seed(const std::string& name, const Kinesis::VectorField&
         return;
     }
 
-    std::vector<glm::vec4> values(get_cell_count());
+    const glm::uvec3 res = m_lattice.resolution;
+    std::vector<glm::vec4> values(m_lattice.cell_count());
 
     size_t i = 0;
-    for (uint32_t z = 0; z < m_depth; ++z) {
-        for (uint32_t y = 0; y < m_height; ++y) {
-            for (uint32_t x = 0; x < m_width; ++x) {
-                values[i++] = glm::vec4(field(cell_centre(x, y, z)), 0.0F);
+    for (uint32_t z = 0; z < res.z; ++z) {
+        for (uint32_t y = 0; y < res.y; ++y) {
+            for (uint32_t x = 0; x < res.x; ++x) {
+                values[i++] = glm::vec4(field(m_lattice.cell_center({ x, y, z })), 0.0F);
             }
         }
     }
@@ -400,10 +372,8 @@ size_t VolumeGridBuffer::surface_storage_bytes(const std::optional<SurfaceConfig
         return 1;
     }
 
-    const uint64_t voxels = static_cast<uint64_t>(std::max(surface->res_x, 1U))
-        * std::max(surface->res_y, 1U)
-        * std::max(surface->res_z, 1U);
-
+    const glm::uvec3 res = glm::max(surface->resolution, glm::uvec3(1U));
+    const uint64_t voxels = static_cast<uint64_t>(res.x) * res.y * res.z;
     return static_cast<size_t>(voxels * 15U * sizeof(Kakshya::MeshVertex));
 }
 

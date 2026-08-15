@@ -2,6 +2,11 @@
 
 namespace MayaFlux::Buffers {
 
+namespace {
+    constexpr size_t k_dissipation_offset = 32;
+    constexpr size_t k_param_size = 48;
+}
+
 std::vector<VolumeFieldProcessor::FieldBinding> AdvectProcessor::make_bindings(
     const std::string& velocity_field, const std::string& carried_field)
 {
@@ -36,15 +41,15 @@ AdvectProcessor::AdvectProcessor(
 
 void AdvectProcessor::on_volume_ready()
 {
-    reserve_param_size(sizeof(AdvectParams));
+    reserve_param_size(k_param_size);
     write_lattice_params();
     write_tail();
 }
 
 void AdvectProcessor::write_tail()
 {
-    const float tail[2] { m_time_step, m_dissipation };
-    write_param_tail(offsetof(AdvectParams, time_step), tail, sizeof(tail));
+    write_lattice_word7(m_time_step);
+    write_param_tail(k_dissipation_offset, &m_dissipation, sizeof(float));
 }
 
 void AdvectProcessor::set_time_step(float dt)

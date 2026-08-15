@@ -1,8 +1,7 @@
 #pragma once
 
 #include "MayaFlux/Buffers/VKBuffer.hpp"
-#include "MayaFlux/Kinesis/Spatial/Bounds.hpp"
-#include "MayaFlux/Kinesis/Tendency/Tendency.hpp"
+#include "MayaFlux/Kinesis/Spatial/Lattice.hpp"
 
 namespace MayaFlux::Buffers {
 
@@ -87,49 +86,35 @@ public:
      * determines this buffer's own vertex storage size: mc_emit allocates
      * slots by atomicAdd without a capacity check, so storage is sized to
      * the worst case of fifteen vertices per voxel. At 48 cubed that is
-     * roughly 95 MB, at 64 cubed roughly 225 MB, so extraction resolution
-     * is worth keeping at or below the simulation resolution.
+     * roughly 95 MB, at 64 cubed roughly 225 MB.
      */
     struct SurfaceConfig {
         std::string field_name; ///< Scalar field surfaced. Stride must be sizeof(float).
-        uint32_t res_x; ///< Extraction cell count along X.
-        uint32_t res_y; ///< Extraction cell count along Y.
-        uint32_t res_z; ///< Extraction cell count along Z.
+        glm::uvec3 resolution; ///< Extraction cell count per axis, over the volume's own bounds.
         float threshold; ///< Field value the surface is placed at.
     };
 
     /**
      * @brief Construct an unregistered multi-field volume.
-     * @param width Cell count along X.
-     * @param height Cell count along Y.
-     * @param depth Cell count along Z.
+     * @param lattice Discretized extent every field is stored over.
      * @param fields Field declarations. Duplicated names are rejected with
      *        an error and the later declaration discarded.
-     * @param bounds World-space extent the lattice covers, used to derive
-     *        cell size for seeding and for gradient terms in shaders.
+     * @param surface Optional isosurface extraction parameters.
      */
     VolumeGridBuffer(
-        uint32_t width,
-        uint32_t height,
-        uint32_t depth,
+        Kinesis::Lattice3D lattice,
         std::initializer_list<FieldDecl> fields,
-        Kinesis::AABB3D bounds,
         std::optional<SurfaceConfig> surface = std::nullopt);
 
     /**
      * @brief Construct from a runtime-built field list.
-     * @param width Cell count along X.
-     * @param height Cell count along Y.
-     * @param depth Cell count along Z.
+     * @param lattice Discretized extent every field is stored over.
      * @param fields Field declarations.
-     * @param bounds World-space extent the lattice covers.
+     * @param surface Optional isosurface extraction parameters.
      */
     VolumeGridBuffer(
-        uint32_t width,
-        uint32_t height,
-        uint32_t depth,
+        Kinesis::Lattice3D lattice,
         std::vector<FieldDecl> fields,
-        Kinesis::AABB3D bounds,
         std::optional<SurfaceConfig> surface = std::nullopt);
 
     /**
@@ -173,23 +158,26 @@ public:
     /** @brief The marching cubes stage, valid after setup_rendering. */
     [[nodiscard]] std::shared_ptr<SDFMeshProcessor> mesh_processor() const { return m_mesh_processor; }
 
+    /** @brief The lattice every field is discretized over. */
+    [[nodiscard]] const Kinesis::Lattice3D& get_lattice() const { return m_lattice; }
+
     /** @brief Cell count along X. */
-    [[nodiscard]] uint32_t get_width() const { return m_width; }
+    [[nodiscard]] uint32_t get_width() const { return m_lattice.resolution.x; }
 
     /** @brief Cell count along Y. */
-    [[nodiscard]] uint32_t get_height() const { return m_height; }
+    [[nodiscard]] uint32_t get_height() const { return m_lattice.resolution.y; }
 
     /** @brief Cell count along Z. */
-    [[nodiscard]] uint32_t get_depth() const { return m_depth; }
+    [[nodiscard]] uint32_t get_depth() const { return m_lattice.resolution.z; }
 
-    /** @brief Total cell count, width * height * depth. */
-    [[nodiscard]] uint32_t get_cell_count() const { return m_width * m_height * m_depth; }
+    /** @brief Total cell count. */
+    [[nodiscard]] uint32_t get_cell_count() const { return static_cast<uint32_t>(m_lattice.cell_count()); }
 
     /** @brief World-space extent the lattice covers. */
-    [[nodiscard]] const Kinesis::AABB3D& get_bounds() const { return m_bounds; }
+    [[nodiscard]] const Kinesis::AABB3D& get_bounds() const { return m_lattice.bounds; }
 
     /** @brief World-space size of one cell along each axis. */
-    [[nodiscard]] glm::vec3 get_cell_size() const;
+    [[nodiscard]] glm::vec3 get_cell_size() const { return m_lattice.cell_size(); }
 
     /** @brief Whether a field of this name was declared. */
     [[nodiscard]] bool has_field(const std::string& name) const;
@@ -288,13 +276,7 @@ private:
      */
     [[nodiscard]] const Field* find_field(const std::string& name, const char* context) const;
 
-    /** @brief World-space centre of the cell at the given lattice index. */
-    [[nodiscard]] glm::vec3 cell_centre(uint32_t x, uint32_t y, uint32_t z) const;
-
-    uint32_t m_width;
-    uint32_t m_height;
-    uint32_t m_depth;
-    Kinesis::AABB3D m_bounds;
+    Kinesis::Lattice3D m_lattice;
 
     std::vector<std::string> m_field_order;
     std::unordered_map<std::string, Field> m_fields;

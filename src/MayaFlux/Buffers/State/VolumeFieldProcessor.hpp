@@ -17,6 +17,12 @@ class VolumeGridBuffer;
  * Subclasses supply only a binding table and whatever parameter words
  * follow the shared prefix.
  *
+ * The parameter block opens with a fixed prefix: three lattice extents, a
+ * subclass word, three cell sizes, a second subclass word. The layout is
+ * private to the base. Subclasses reach it through write_lattice_word3,
+ * write_lattice_word7, and write_param_tail, which rejects any offset
+ * overlapping the prefix.
+ *
  * The binding table drives both descriptor writes and validation. A field
  * appearing with both READ and WRITE access is required to be
  * double-buffered, since the stage would otherwise read a neighbourhood
@@ -55,26 +61,6 @@ public:
         uint32_t binding; ///< Binding index within set 0.
         std::string field; ///< Field name on the attached volume.
         FieldAccess access; ///< Which slot of that field.
-    };
-
-    /**
-     * @struct LatticeParams
-     * @brief Leading words of every volume stage's push constant block.
-     *
-     * Words three and seven are left to the subclass: PressureProcessor
-     * carries parity in word three, AdvectProcessor carries its time step
-     * in word seven, and the others leave both zero. Parameters beyond
-     * word seven are written through write_param_tail.
-     */
-    struct LatticeParams {
-        uint32_t width;
-        uint32_t height;
-        uint32_t depth;
-        uint32_t word3;
-        float cell_size_x;
-        float cell_size_y;
-        float cell_size_z;
-        float word7;
     };
 
     /** @brief The attached volume, or null if attachment failed validation. */
@@ -165,8 +151,8 @@ protected:
     void write_lattice_word3(uint32_t value);
 
     /**
-     * @brief Write word seven of the shared prefix.
-     * @param value Subclass-defined float, typically a rate or coefficient.
+     * @brief Write word seven of the parameter prefix, at byte offset 28.
+     * @param value Subclass-defined float, typically a rate or step.
      */
     void write_lattice_word7(float value);
 

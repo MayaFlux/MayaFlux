@@ -7,8 +7,25 @@ namespace {
     constexpr uint32_t k_workgroup_x = 8;
     constexpr uint32_t k_workgroup_y = 8;
     constexpr uint32_t k_workgroup_z = 4;
-    constexpr size_t k_word3_offset = offsetof(VolumeFieldProcessor::LatticeParams, word3);
-    constexpr size_t k_word7_offset = offsetof(VolumeFieldProcessor::LatticeParams, word7);
+
+    /**
+     * @struct LatticePrefix
+     * @brief Byte layout of the parameter block's leading eight words.
+     */
+    struct LatticePrefix {
+        uint32_t width;
+        uint32_t height;
+        uint32_t depth;
+        uint32_t word3;
+        float cell_size_x;
+        float cell_size_y;
+        float cell_size_z;
+        float word7;
+    };
+
+    constexpr size_t k_word3_offset = offsetof(LatticePrefix, word3);
+    constexpr size_t k_word7_offset = offsetof(LatticePrefix, word7);
+    constexpr size_t k_prefix_size = sizeof(LatticePrefix);
 }
 
 VolumeFieldProcessor::VolumeFieldProcessor(
@@ -85,12 +102,14 @@ bool VolumeFieldProcessor::validate_fields()
 
 void VolumeFieldProcessor::size_dispatch()
 {
+    const glm::uvec3 res = m_volume->get_lattice().resolution;
+
     set_workgroup_size(k_workgroup_x, k_workgroup_y, k_workgroup_z);
     set_dispatch_mode(ShaderDispatchConfig::DispatchMode::MANUAL);
     set_manual_dispatch(
-        (m_volume->get_width() + k_workgroup_x - 1) / k_workgroup_x,
-        (m_volume->get_height() + k_workgroup_y - 1) / k_workgroup_y,
-        (m_volume->get_depth() + k_workgroup_z - 1) / k_workgroup_z);
+        (res.x + k_workgroup_x - 1) / k_workgroup_x,
+        (res.y + k_workgroup_y - 1) / k_workgroup_y,
+        (res.z + k_workgroup_z - 1) / k_workgroup_z);
 }
 
 void VolumeFieldProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
@@ -108,7 +127,7 @@ void VolumeFieldProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
     }
 
     size_dispatch();
-    reserve_param_size(sizeof(LatticeParams));
+    reserve_param_size(k_prefix_size);
     write_lattice_params();
 
     on_volume_ready();
@@ -125,17 +144,18 @@ void VolumeFieldProcessor::write_lattice_params()
         data.resize(m_config.push_constant_size);
     }
 
-    const glm::vec3 cell = m_volume->get_cell_size();
+    const Kinesis::Lattice3D& lattice = m_volume->get_lattice();
+    const glm::vec3 cell = lattice.cell_size();
 
     uint32_t preserved_3 = 0;
     float preserved_7 = 0.0F;
     std::memcpy(&preserved_3, data.data() + k_word3_offset, sizeof(uint32_t));
     std::memcpy(&preserved_7, data.data() + k_word7_offset, sizeof(float));
 
-    const LatticeParams params {
-        .width = m_volume->get_width(),
-        .height = m_volume->get_height(),
-        .depth = m_volume->get_depth(),
+    const LatticePrefix prefix {
+        .width = lattice.resolution.x,
+        .height = lattice.resolution.y,
+        .depth = lattice.resolution.z,
         .word3 = preserved_3,
         .cell_size_x = cell.x,
         .cell_size_y = cell.y,
@@ -143,13 +163,13 @@ void VolumeFieldProcessor::write_lattice_params()
         .word7 = preserved_7,
     };
 
-    std::memcpy(data.data(), &params, sizeof(LatticeParams));
+    std::memcpy(data.data(), &prefix, k_prefix_size);
 }
 
 void VolumeFieldProcessor::write_lattice_word3(uint32_t value)
 {
     auto& data = get_push_constant_data();
-    if (data.size() < sizeof(LatticeParams)) {
+    if (data.size() < k_prefix_size) {
         return;
     }
 
@@ -159,7 +179,7 @@ void VolumeFieldProcessor::write_lattice_word3(uint32_t value)
 void VolumeFieldProcessor::write_lattice_word7(float value)
 {
     auto& data = get_push_constant_data();
-    if (data.size() < sizeof(LatticeParams)) {
+    if (data.size() < k_prefix_size) {
         return;
     }
 
@@ -168,10 +188,9 @@ void VolumeFieldProcessor::write_lattice_word7(float value)
 
 void VolumeFieldProcessor::write_param_tail(size_t offset, const void* data_in, size_t size)
 {
-    if (offset < k_word7_offset) {
+    if (offset < k_prefix_size) {
         MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-            "VolumeFieldProcessor: parameter offset {} overlaps the shared prefix",
-            offset);
+            "VolumeFieldProcessor: parameter offset {} overlaps the prefix", offset);
         return;
     }
 

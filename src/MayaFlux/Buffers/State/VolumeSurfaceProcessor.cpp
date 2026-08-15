@@ -13,17 +13,13 @@ namespace {
 VolumeSurfaceProcessor::VolumeSurfaceProcessor(
     std::shared_ptr<VolumeGridBuffer> volume,
     std::string field_name,
-    uint32_t res_x,
-    uint32_t res_y,
-    uint32_t res_z,
+    Kinesis::Lattice3D lattice,
     float threshold,
     const std::string& shader_path)
     : ComputeProcessor(shader_path, k_workgroup_x)
     , m_volume(std::move(volume))
     , m_field_name(std::move(field_name))
-    , m_res_x(std::max(res_x, 1U))
-    , m_res_y(std::max(res_y, 1U))
-    , m_res_z(std::max(res_z, 1U))
+    , m_lattice(std::move(lattice))
     , m_threshold(threshold)
 {
     m_config.bindings["field_in"] = ShaderBinding(0, 0, vk::DescriptorType::eStorageBuffer);
@@ -79,9 +75,9 @@ void VolumeSurfaceProcessor::write_params()
         .height = m_volume->get_height(),
         .depth = m_volume->get_depth(),
         .pad0 = 0,
-        .res_x = m_res_x,
-        .res_y = m_res_y,
-        .res_z = m_res_z,
+        .res_x = m_lattice.resolution.x,
+        .res_y = m_lattice.resolution.y,
+        .res_z = m_lattice.resolution.z,
         .threshold = m_threshold,
     };
 

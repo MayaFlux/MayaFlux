@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MayaFlux/Buffers/Shaders/ComputeProcessor.hpp"
+#include "MayaFlux/Kinesis/Spatial/Lattice.hpp"
 
 namespace MayaFlux::Buffers {
 
@@ -62,20 +63,18 @@ public:
 
     /**
      * @brief Construct a surface extraction bridge.
+     * @param volume Volume whose field is resampled.
      * @param field_name Name of the scalar field resampled. Must have
      *        stride sizeof(float).
-     * @param res_x Extraction cell count along X. Minimum 1.
-     * @param res_y Extraction cell count along Y. Minimum 1.
-     * @param res_z Extraction cell count along Z. Minimum 1.
+     * @param lattice Extraction lattice, normally the volume's own lattice
+     *        resampled to a different resolution over the same bounds.
      * @param threshold Field value the surface is placed at.
      * @param shader_path Path to the compute shader.
      */
     VolumeSurfaceProcessor(
         std::shared_ptr<VolumeGridBuffer> volume,
         std::string field_name,
-        uint32_t res_x,
-        uint32_t res_y,
-        uint32_t res_z,
+        Kinesis::Lattice3D lattice,
         float threshold,
         const std::string& shader_path = "volume_to_sdf_grid.comp");
 
@@ -99,22 +98,24 @@ public:
     [[nodiscard]] float get_threshold() const { return m_threshold; }
 
     /** @brief Extraction cell count along X. */
-    [[nodiscard]] uint32_t get_res_x() const { return m_res_x; }
+    [[nodiscard]] uint32_t get_res_x() const { return m_lattice.resolution.x; }
 
     /** @brief Extraction cell count along Y. */
-    [[nodiscard]] uint32_t get_res_y() const { return m_res_y; }
+    [[nodiscard]] uint32_t get_res_y() const { return m_lattice.resolution.y; }
 
     /** @brief Extraction cell count along Z. */
-    [[nodiscard]] uint32_t get_res_z() const { return m_res_z; }
+    [[nodiscard]] uint32_t get_res_z() const { return m_lattice.resolution.z; }
+
+    /** @brief The extraction lattice. */
+    [[nodiscard]] const Kinesis::Lattice3D& get_lattice() const { return m_lattice; }
 
     /**
-     * @brief Corner count of the grid, (res_x+1)*(res_y+1)*(res_z+1).
-     *
-     * The grid buffer holds this many floats.
+     * @brief Corner count of the grid, one greater per axis than the
+     *        extraction resolution. The grid buffer holds this many floats.
      */
     [[nodiscard]] uint32_t corner_count() const noexcept
     {
-        return (m_res_x + 1) * (m_res_y + 1) * (m_res_z + 1);
+        return static_cast<uint32_t>(m_lattice.corner_count());
     }
 
     /**
@@ -126,7 +127,7 @@ public:
      */
     [[nodiscard]] uint32_t worst_case_vertices() const noexcept
     {
-        return m_res_x * m_res_y * m_res_z * 15U;
+        return static_cast<uint32_t>(m_lattice.cell_count()) * 15U;
     }
 
 protected:
@@ -179,9 +180,7 @@ private:
     void rebuild_grid_buffer();
 
     std::string m_field_name;
-    uint32_t m_res_x;
-    uint32_t m_res_y;
-    uint32_t m_res_z;
+    Kinesis::Lattice3D m_lattice;
     float m_threshold;
 
     std::shared_ptr<VKBuffer> m_grid_buf;
