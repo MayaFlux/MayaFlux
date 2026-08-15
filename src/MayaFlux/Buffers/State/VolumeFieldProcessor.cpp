@@ -156,6 +156,16 @@ void VolumeFieldProcessor::write_lattice_word3(uint32_t value)
     std::memcpy(data.data() + k_word3_offset, &value, sizeof(uint32_t));
 }
 
+void VolumeFieldProcessor::write_lattice_word7(float value)
+{
+    auto& data = get_push_constant_data();
+    if (data.size() < sizeof(LatticeParams)) {
+        return;
+    }
+
+    std::memcpy(data.data() + k_word7_offset, &value, sizeof(float));
+}
+
 void VolumeFieldProcessor::write_param_tail(size_t offset, const void* data_in, size_t size)
 {
     if (offset < k_word7_offset) {

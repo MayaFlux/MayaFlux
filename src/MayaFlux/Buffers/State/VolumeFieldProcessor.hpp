@@ -165,6 +165,12 @@ protected:
     void write_lattice_word3(uint32_t value);
 
     /**
+     * @brief Write word seven of the shared prefix.
+     * @param value Subclass-defined float, typically a rate or coefficient.
+     */
+    void write_lattice_word7(float value);
+
+    /**
      * @brief Write subclass parameters past the shared prefix.
      * @param offset Byte offset from the start of the push constant block.
      *        Values below sizeof(LatticeParams) are rejected.
