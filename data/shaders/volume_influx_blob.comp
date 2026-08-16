@@ -1,0 +1,11 @@
+#version 460
+
+#include "include/volume_common.glsl"
+#include "include/volume_influx.glsl"
+
+float shape(vec3 p, float t)
+{
+    vec3 d = p - influx_center();
+    float r2 = dot(d, d) / max(pc.radius * pc.radius, 1e-8);
+    return exp(-r2 * max(pc.falloff, 1e-4));
+}
