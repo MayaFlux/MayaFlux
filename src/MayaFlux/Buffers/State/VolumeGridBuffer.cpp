@@ -347,6 +347,72 @@ void VolumeGridBuffer::seed_raw(const std::string& name, const void* data, size_
     upload_back_buffer(get_buffer_resources().back_buffers[slot], data, size, m_transfer_staging);
 }
 
+void VolumeGridBuffer::accumulate(const std::string& name, const Kinesis::SpatialField& field)
+{
+    const auto* decl = find_field(name, "accumulate");
+    if (!decl) {
+        return;
+    }
+
+    if (decl->stride_bytes != sizeof(float)) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferManagement,
+            "VolumeGridBuffer::accumulate: field '{}' has stride {}, SpatialField requires {}",
+            name, decl->stride_bytes, sizeof(float));
+        return;
+    }
+
+    const glm::uvec3 res = m_lattice.resolution;
+    std::vector<float> values(m_lattice.cell_count());
+
+    read_field(name, values.data(), values.size() * sizeof(float));
+
+    size_t i = 0;
+    for (uint32_t z = 0; z < res.z; ++z) {
+        for (uint32_t y = 0; y < res.y; ++y) {
+            for (uint32_t x = 0; x < res.x; ++x) {
+                values[i++] += field(m_lattice.cell_center({ x, y, z }));
+            }
+        }
+    }
+
+    seed_raw(name, values.data(), values.size() * sizeof(float));
+}
+
+void VolumeGridBuffer::accumulate(const std::string& name, const Kinesis::VectorField& field)
+{
+    const auto* decl = find_field(name, "accumulate");
+    if (!decl) {
+        return;
+    }
+
+    if (decl->stride_bytes != sizeof(glm::vec4)) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferManagement,
+            "VolumeGridBuffer::accumulate: field '{}' has stride {}, VectorField requires {}",
+            name, decl->stride_bytes, sizeof(glm::vec4));
+        return;
+    }
+
+    const glm::uvec3 res = m_lattice.resolution;
+    std::vector<glm::vec4> values(m_lattice.cell_count());
+
+    read_field(name, values.data(), values.size() * sizeof(glm::vec4));
+
+    size_t i = 0;
+    for (uint32_t z = 0; z < res.z; ++z) {
+        for (uint32_t y = 0; y < res.y; ++y) {
+            for (uint32_t x = 0; x < res.x; ++x) {
+                const glm::vec3 v = field(m_lattice.cell_center({ x, y, z }));
+                values[i].x += v.x;
+                values[i].y += v.y;
+                values[i].z += v.z;
+                ++i;
+            }
+        }
+    }
+
+    seed_raw(name, values.data(), values.size() * sizeof(glm::vec4));
+}
+
 void VolumeGridBuffer::read_field(const std::string& name, void* data, size_t size)
 {
     const auto* field = find_field(name, "read_field");

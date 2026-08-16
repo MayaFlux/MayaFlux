@@ -243,6 +243,27 @@ public:
     void seed_raw(const std::string& name, const void* data, size_t size);
 
     /**
+     * @brief Add sampled values into a scalar field.
+     * @param name Field name. Must have stride sizeof(float).
+     * @param field Sampled at each cell centre in world space and added
+     *        to whatever the field already holds.
+     *
+     * Blocking. Reads the current read slot to host memory, adds, and
+     * writes back, so it costs a full round trip at the lattice's byte
+     * size. Intended for authored injection on a coarse clock, not as a
+     * chain stage.
+     */
+    void accumulate(const std::string& name, const Kinesis::SpatialField& field);
+
+    /**
+     * @brief Add sampled values into a vector field.
+     * @param name Field name. Must have stride sizeof(glm::vec4).
+     * @param field Sampled at each cell centre in world space and added
+     *        to the first three components. The fourth is left as found.
+     */
+    void accumulate(const std::string& name, const Kinesis::VectorField& field);
+
+    /**
      * @brief Copy the current read slot of a field to host memory.
      * @param name Field name.
      * @param data Destination pointer, at least get_field_bytes(name) bytes.
