@@ -24,6 +24,7 @@ struct ShaderDispatchConfig {
     uint32_t group_count_x = 1;
     uint32_t group_count_y = 1;
     uint32_t group_count_z = 1;
+    uint32_t iteration_count = 1; ///< Dispatches recorded per execute cycle.
 
     std::function<std::array<uint32_t, 3>(const std::shared_ptr<VKBuffer>&)> custom_calculator;
 
@@ -137,6 +138,20 @@ public:
     void set_custom_dispatch(std::function<std::array<uint32_t, 3>(const std::shared_ptr<VKBuffer>&)> calculator);
 
     /**
+     * @brief Set how many dispatches are recorded per execute cycle.
+     * @param count Dispatch count. Values below 1 are clamped to 1.
+     *
+     * All iterations record into one command buffer and submit once.
+     * on_iteration runs before each; on_iteration_barrier runs between
+     * consecutive iterations. At the default of 1 the recorded command
+     * stream is identical to a single-dispatch cycle.
+     */
+    void set_iteration_count(uint32_t count);
+
+    /** @brief Dispatches recorded per execute cycle. */
+    [[nodiscard]] uint32_t get_iteration_count() const { return m_dispatch_config.iteration_count; }
+
+    /**
      * @brief Get current dispatch configuration
      */
     [[nodiscard]] const ShaderDispatchConfig& get_dispatch_config() const { return m_dispatch_config; }
@@ -157,6 +172,37 @@ protected:
      */
     virtual std::array<uint32_t, 3> calculate_dispatch_size(const std::shared_ptr<VKBuffer>& buffer);
 
+    /**
+     * @brief Called before each iteration's push constants and dispatch.
+     * @param cmd_id Command buffer being recorded into.
+     * @param buffer Buffer under processing.
+     * @param index Zero-based iteration index.
+     * @return False to skip this iteration's dispatch.
+     *
+     * The place to rewrite descriptor bindings for ping-pong resources and
+     * to update m_push_constant_data, since push constants are re-pushed
+     * after every successful return.
+     */
+    virtual bool on_iteration(
+        Portal::Graphics::CommandBufferID cmd_id,
+        const std::shared_ptr<VKBuffer>& buffer,
+        uint32_t index);
+
+    /**
+     * @brief Called after each iteration except the last.
+     * @param cmd_id Command buffer being recorded into.
+     * @param buffer Buffer under processing.
+     * @param index Zero-based index of the iteration just recorded.
+     *
+     * Default issues a compute-to-compute buffer_barrier on the attached
+     * buffer's own handle. Override when the hazard is on resources the
+     * attached buffer does not own, such as raw double-buffered state.
+     */
+    virtual void on_iteration_barrier(
+        Portal::Graphics::CommandBufferID cmd_id,
+        const std::shared_ptr<VKBuffer>& buffer,
+        uint32_t index);
+
     void initialize_pipeline(const std::shared_ptr<VKBuffer>& buffer) override;
 
     void initialize_descriptors(const std::shared_ptr<VKBuffer>& buffer) override;
@@ -165,6 +211,8 @@ protected:
 
 private:
     ShaderDispatchConfig m_dispatch_config;
+
+    std::vector<uint8_t> m_push_constant_scratch; ///< Coalesced push constant bindings, reused across iterations.
 
     void execute_shader(const std::shared_ptr<VKBuffer>& buffer) override;
 

@@ -232,4 +232,16 @@ Kakshya::MeshData generate_sdf_mesh(
     return data;
 }
 
+Kakshya::MeshData generate_sdf_mesh(
+    const Kinesis::SpatialField& field,
+    const Lattice3D& lattice,
+    float iso_level)
+{
+    return generate_sdf_mesh(
+        field,
+        lattice.bounds.min, lattice.bounds.max,
+        lattice.resolution.x, lattice.resolution.y, lattice.resolution.z,
+        iso_level);
+}
+
 } // namespace MayaFlux::Kinesis

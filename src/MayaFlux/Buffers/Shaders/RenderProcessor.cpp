@@ -110,28 +110,36 @@ void RenderProcessor::enable_depth_test(Portal::Graphics::CompareOp compare_op)
     m_needs_pipeline_rebuild = true;
 }
 
-void RenderProcessor::set_view_transform(const Kinesis::ViewTransform& vt)
+void RenderProcessor::set_view_transform(
+    const Kinesis::ViewTransform& vt,
+    bool enable_depth,
+    Portal::Graphics::CullMode cull)
 {
     m_view_transform = vt;
     m_view_transform_source = nullptr;
     m_view_transform_active = true;
 
-    if (!m_depth_enabled) {
+    if (enable_depth && !m_depth_enabled) {
         enable_depth_test();
     }
-    m_cull_mode = Portal::Graphics::CullMode::BACK;
+
+    set_cull_mode(cull);
 }
 
-void RenderProcessor::set_view_transform_source(std::function<Kinesis::ViewTransform()> fn)
+void RenderProcessor::set_view_transform_source(
+    std::function<Kinesis::ViewTransform()> fn,
+    bool enable_depth,
+    Portal::Graphics::CullMode cull)
 {
     m_view_transform_source = std::move(fn);
     m_view_transform.reset();
     m_view_transform_active = true;
 
-    if (!m_depth_enabled) {
+    if (enable_depth && !m_depth_enabled) {
         enable_depth_test();
     }
-    m_cull_mode = Portal::Graphics::CullMode::BACK;
+
+    set_cull_mode(cull);
 }
 
 void RenderProcessor::bind_texture(

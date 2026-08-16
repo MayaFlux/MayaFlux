@@ -1,0 +1,56 @@
+#version 460
+
+#include "include/volume_common.glsl"
+
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 4) in;
+
+layout(set = 0, binding = 0, std430) readonly buffer VelocityIn {
+    vec4 velocity_in[];
+};
+layout(set = 0, binding = 1, std430) readonly buffer CarriedIn {
+    vec4 carried_in[];
+};
+layout(set = 0, binding = 2, std430) writeonly buffer CarriedOut {
+    vec4 carried_out[];
+};
+
+layout(push_constant) uniform PC {
+    uint width;
+    uint height;
+    uint depth;
+    uint pad0;
+    float cell_size_x;
+    float cell_size_y;
+    float cell_size_z;
+    float time_step;
+    float dissipation;
+    float pad1;
+    float pad2;
+    float pad3;
+} pc;
+
+void main()
+{
+    uvec3 gid = gl_GlobalInvocationID;
+    uvec3 dims = uvec3(pc.width, pc.height, pc.depth);
+
+    if (!volume_in_bounds(gid, dims)) {
+        return;
+    }
+
+    uint index = volume_index(gid, dims);
+    vec3 cell_size = vec3(pc.cell_size_x, pc.cell_size_y, pc.cell_size_z);
+
+    vec3 origin = volume_backtrace(gid, velocity_in[index].xyz, cell_size, pc.time_step, dims);
+
+    uint idx[8];
+    vec3 f;
+    volume_trilinear_setup(origin, dims, idx, f);
+
+    vec4 c[8];
+    for (int i = 0; i < 8; ++i) {
+        c[i] = carried_in[idx[i]];
+    }
+
+    carried_out[index] = volume_blend8(c, f) * pc.dissipation;
+}

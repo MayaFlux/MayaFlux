@@ -11,6 +11,11 @@ class AudioBuffer;
 inline constexpr float k_buffer_growth_factor = 1.5F;
 
 /**
+ * @brief Opaque handle to an in-flight transfer.
+ */
+using TransferHandle = std::shared_ptr<void>;
+
+/**
  * @brief Upload data to a host-visible buffer
  * @param target Target VKBuffer to upload data into
  * @param data DataVariant containing the data to upload
@@ -33,6 +38,55 @@ MAYAFLUX_API void upload_host_visible(const std::shared_ptr<VKBuffer>& target, c
  * from the staging buffer to the target device-local buffer.
  */
 MAYAFLUX_API void upload_device_local(const std::shared_ptr<VKBuffer>& target, const std::shared_ptr<VKBuffer>& staging_buffer, const Kakshya::DataVariant& data);
+
+/**
+ * @brief Upload host memory into a raw back_buffers slot.
+ * @param slot Destination slot, typically from VKBuffer::get_back_buffer().
+ * @param data Source pointer, at least @p size bytes.
+ * @param size Byte count to copy.
+ * @param staging Persistent staging buffer for device-local slots. Ignored,
+ *        and may be null, when slot.mapped_ptr is already valid.
+ *
+ * Writes through slot.mapped_ptr directly when present (host-visible slot,
+ * no transfer). Otherwise copies into @p staging and records a fenced
+ * device-to-device copy into slot.buffer, mirroring download_back_buffer
+ * with the direction reversed.
+ */
+MAYAFLUX_API void upload_back_buffer(
+    const VKBufferResources::GenerationSlot& slot,
+    const void* data,
+    size_t size,
+    std::shared_ptr<VKBuffer>& staging);
+
+/**
+ * @brief Upload to a back_buffers slot without waiting for completion.
+ * @param slot Destination slot, typically from VKBuffer::get_back_buffer().
+ * @param data Source pointer, at least @p size bytes. Copied into staging
+ *        before returning, so the caller may free it immediately.
+ * @param size Byte count to copy.
+ * @param staging Persistent staging buffer, grown if too small.
+ * @return Handle to pass to resolve_transfer, or null for host-visible
+ *         slots where the write was a direct memcpy.
+ *
+ * The staging buffer is in use until the returned handle is resolved. Any
+ * further transfer through the same staging buffer must resolve this one
+ * first, or the copy source is overwritten mid-flight.
+ */
+MAYAFLUX_API TransferHandle upload_back_buffer_async(
+    const VKBufferResources::GenerationSlot& slot,
+    const void* data,
+    size_t size,
+    std::shared_ptr<VKBuffer>& staging);
+
+/**
+ * @brief Wait for a transfer and release its resources.
+ * @param handle Handle from upload_back_buffer_async. Nulled on return.
+ *
+ * No-op on a null handle. Blocks the calling thread until the fence
+ * signals, which is immediate when a frame or more has elapsed since
+ * submission.
+ */
+MAYAFLUX_API void resolve_transfer(TransferHandle& handle);
 
 /**
  * @brief Download data from a host-visible buffer

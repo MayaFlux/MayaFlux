@@ -180,6 +180,33 @@ std::array<uint32_t, 3> ComputeProcessor::calculate_dispatch_size(const std::sha
     }
 }
 
+void ComputeProcessor::set_iteration_count(uint32_t count)
+{
+    m_dispatch_config.iteration_count = std::max(1U, count);
+}
+
+bool ComputeProcessor::on_iteration(
+    Portal::Graphics::CommandBufferID,
+    const std::shared_ptr<VKBuffer>&,
+    uint32_t)
+{
+    return true;
+}
+
+void ComputeProcessor::on_iteration_barrier(
+    Portal::Graphics::CommandBufferID cmd_id,
+    const std::shared_ptr<VKBuffer>& buffer,
+    uint32_t)
+{
+    Portal::Graphics::get_shader_foundry().buffer_barrier(
+        cmd_id,
+        buffer->get_buffer(),
+        vk::AccessFlagBits::eShaderWrite,
+        vk::AccessFlagBits::eShaderRead | vk::AccessFlagBits::eShaderWrite,
+        vk::PipelineStageFlagBits::eComputeShader,
+        vk::PipelineStageFlagBits::eComputeShader);
+}
+
 void ComputeProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
 {
     if (m_pipeline_id == Portal::Graphics::INVALID_COMPUTE_PIPELINE || m_descriptor_set_ids.empty()) {
@@ -229,14 +256,45 @@ void ComputeProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
 
     on_before_execute(cmd_id, buffer);
 
-    const auto push_data = resolve_push_constants(buffer);
-    if (!push_data.empty()) {
-        compute_press.push_constants(
-            cmd_id, m_pipeline_id, push_data.data(), push_data.size());
-    }
+    const uint32_t iterations = std::max(1U, m_dispatch_config.iteration_count);
+    const auto dispatch_size = calculate_dispatch_size(buffer);
 
-    auto dispatch_size = calculate_dispatch_size(buffer);
-    compute_press.dispatch(cmd_id, dispatch_size[0], dispatch_size[1], dispatch_size[2]);
+    for (uint32_t i = 0; i < iterations; ++i) {
+        if (!on_iteration(cmd_id, buffer, i)) {
+            continue;
+        }
+
+        const auto& pc_bindings = buffer->get_pipeline_context().push_constant_bindings;
+
+        if (!pc_bindings.empty()) {
+            size_t required = 0;
+            for (const auto& pc : pc_bindings) {
+                required = std::max(required, static_cast<size_t>(pc.offset) + pc.data.size());
+            }
+
+            m_push_constant_scratch.assign(required, 0);
+
+            for (const auto& pc : pc_bindings) {
+                std::memcpy(m_push_constant_scratch.data() + pc.offset, pc.data.data(), pc.data.size());
+            }
+
+            compute_press.push_constants(
+                cmd_id, m_pipeline_id,
+                m_push_constant_scratch.data(),
+                m_push_constant_scratch.size());
+        } else if (!m_push_constant_data.empty()) {
+            compute_press.push_constants(
+                cmd_id, m_pipeline_id,
+                m_push_constant_data.data(),
+                m_push_constant_data.size());
+        }
+
+        compute_press.dispatch(cmd_id, dispatch_size[0], dispatch_size[1], dispatch_size[2]);
+
+        if (i + 1 < iterations) {
+            on_iteration_barrier(cmd_id, buffer, i);
+        }
+    }
 
     on_after_execute(cmd_id, buffer);
 
@@ -248,7 +306,7 @@ void ComputeProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
         vk::PipelineStageFlagBits::eComputeShader,
         vk::PipelineStageFlagBits::eComputeShader | vk::PipelineStageFlagBits::eTransfer);
 
-    foundry.submit_and_wait(cmd_id);
+    submit_recorded(cmd_id, buffer);
 }
 
 void ComputeProcessor::cleanup()

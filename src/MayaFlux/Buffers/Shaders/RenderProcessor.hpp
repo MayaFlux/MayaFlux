@@ -161,20 +161,29 @@ public:
     /**
      * @brief Set static view transform (evaluated once)
      * @param vt View and projection matrices
-     *
-     * Automatically enables depth testing and configures push
-     * constant size for the 128-byte ViewTransform block.
+     * @param enable_depth Enable the depth test if it is not already on.
+     *        False leaves depth state untouched, which is what volume
+     *        proxy geometry wants: a box that writes depth occludes every
+     *        later volume drawn at the same geometry.
+     * @param cull Face culling mode. BACK suits opaque geometry. Volume
+     *        rendering rasterises back faces so the entry clip works from
+     *        inside the bounds.
      */
-    void set_view_transform(const Kinesis::ViewTransform& vt);
+    void set_view_transform(
+        const Kinesis::ViewTransform& vt,
+        bool enable_depth = true,
+        Portal::Graphics::CullMode cull = Portal::Graphics::CullMode::BACK);
 
     /**
      * @brief Set dynamic view transform source (evaluated every frame)
      * @param fn Callable returning ViewTransform, invoked each execute_shader
-     *
-     * Automatically enables depth testing and configures push
-     * constant size for the 128-byte ViewTransform block.
+     * @param enable_depth Enable the depth test if it is not already on.
+     * @param cull Face culling mode.
      */
-    void set_view_transform_source(std::function<Kinesis::ViewTransform()> fn);
+    void set_view_transform_source(
+        std::function<Kinesis::ViewTransform()> fn,
+        bool enable_depth = true,
+        Portal::Graphics::CullMode cull = Portal::Graphics::CullMode::BACK);
 
     /** @brief Get current static view transform, if set */
     const std::optional<Kinesis::ViewTransform>& get_view_transform() const { return m_view_transform; }

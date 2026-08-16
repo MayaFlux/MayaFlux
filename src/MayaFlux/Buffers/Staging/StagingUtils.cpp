@@ -120,6 +120,94 @@ void upload_device_local(const std::shared_ptr<VKBuffer>& target, const std::sha
         bytes, 0, 0);
 }
 
+void upload_back_buffer(
+    const VKBufferResources::GenerationSlot& slot,
+    const void* data,
+    size_t size,
+    std::shared_ptr<VKBuffer>& staging)
+{
+    auto handle = upload_back_buffer_async(slot, data, size, staging);
+    resolve_transfer(handle);
+}
+
+TransferHandle upload_back_buffer_async(
+    const VKBufferResources::GenerationSlot& slot,
+    const void* data,
+    size_t size,
+    std::shared_ptr<VKBuffer>& staging)
+{
+    if (!data || size == 0)
+        return {};
+
+    if (slot.mapped_ptr) {
+        std::memcpy(slot.mapped_ptr, data, size);
+        return {};
+    }
+
+    auto buffer_service = Registry::BackendRegistry::instance()
+                              .get_service<Registry::Service::BufferService>();
+
+    if (!buffer_service
+        || !buffer_service->execute_fenced
+        || !buffer_service->wait_fenced
+        || !buffer_service->release_fenced
+        || !buffer_service->flush_range) {
+        error<std::runtime_error>(
+            Journal::Component::Buffers,
+            Journal::Context::BufferProcessing,
+            std::source_location::current(),
+            "upload_back_buffer_async: BufferService unavailable");
+    }
+
+    if (!staging || staging->get_size_bytes() < size)
+        staging = create_staging_buffer(size);
+
+    void* ptr = staging->get_mapped_ptr();
+    if (!ptr) {
+        error<std::runtime_error>(
+            Journal::Component::Buffers,
+            Journal::Context::BufferProcessing,
+            std::source_location::current(),
+            "upload_back_buffer_async: staging buffer has no mapped pointer");
+    }
+
+    std::memcpy(ptr, data, size);
+
+    auto& resources = staging->get_buffer_resources();
+    buffer_service->flush_range(resources.memory, 0, size);
+
+    auto handle = buffer_service->copy_buffer_fenced(
+        static_cast<void*>(staging->get_buffer()),
+        static_cast<void*>(slot.buffer),
+        size, 0, 0);
+
+    if (!handle) {
+        error<std::runtime_error>(
+            Journal::Component::Buffers,
+            Journal::Context::BufferProcessing,
+            std::source_location::current(),
+            "upload_back_buffer_async: copy_buffer_fenced returned null");
+    }
+
+    return handle;
+}
+
+void resolve_transfer(TransferHandle& handle)
+{
+    if (!handle)
+        return;
+
+    auto buffer_service = Registry::BackendRegistry::instance()
+                              .get_service<Registry::Service::BufferService>();
+
+    if (buffer_service && buffer_service->wait_fenced && buffer_service->release_fenced) {
+        buffer_service->wait_fenced(handle);
+        buffer_service->release_fenced(handle);
+    }
+
+    handle.reset();
+}
+
 void download_host_visible(const std::shared_ptr<VKBuffer>& source, const std::shared_ptr<VKBuffer>& target)
 {
     auto& source_resources = source->get_buffer_resources();

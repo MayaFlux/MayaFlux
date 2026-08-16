@@ -3,7 +3,7 @@
 #include "MayaFlux/Kakshya/NDData/MeshData.hpp"
 #include "MayaFlux/Kakshya/NDData/VertexFormats.hpp"
 
-#include "MayaFlux/Kinesis/Spatial/Bounds.hpp"
+#include "MayaFlux/Kinesis/Spatial/Lattice.hpp"
 
 namespace MayaFlux::Kinesis {
 
@@ -455,6 +455,18 @@ struct QuadGeometry {
     uint32_t res_x,
     uint32_t res_y,
     uint32_t res_z,
+    float iso_level = 0.0F);
+
+/**
+ * @brief Extract an isosurface mesh from a scalar field over a lattice.
+ * @param field Sampled at grid corners in world space.
+ * @param lattice Cell counts and world bounds of the evaluation volume.
+ * @param iso_level Field value the surface is placed at.
+ * @return Mesh data, empty if the field has no crossings at @p iso_level.
+ */
+MAYAFLUX_API Kakshya::MeshData generate_sdf_mesh(
+    const Kinesis::SpatialField& field,
+    const Lattice3D& lattice,
     float iso_level = 0.0F);
 
 } // namespace MayaFlux::Kinesis

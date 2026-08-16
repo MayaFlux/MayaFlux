@@ -1,0 +1,60 @@
+#version 460
+
+#include "include/volume_common.glsl"
+
+layout(local_size_x = 64) in;
+
+layout(set = 0, binding = 0, std430) readonly buffer FieldIn {
+    float field_in[];
+};
+layout(set = 0, binding = 1, std430) writeonly buffer GridOut {
+    float grid_out[];
+};
+
+layout(push_constant) uniform PC {
+    uint width;
+    uint height;
+    uint depth;
+    uint pad0;
+    uint res_x;
+    uint res_y;
+    uint res_z;
+    float threshold;
+} pc;
+
+void main()
+{
+    uint idx = gl_GlobalInvocationID.x;
+
+    uint nx = pc.res_x + 1u;
+    uint ny = pc.res_y + 1u;
+    uint total = nx * ny * (pc.res_z + 1u);
+
+    if (idx >= total) {
+        return;
+    }
+
+    uint cx = idx % nx;
+    uint cy = (idx / nx) % ny;
+    uint cz = idx / (nx * ny);
+
+    uvec3 dims = uvec3(pc.width, pc.height, pc.depth);
+
+    vec3 corner = vec3(
+            float(cx) / float(pc.res_x) * float(pc.width),
+            float(cy) / float(pc.res_y) * float(pc.height),
+            float(cz) / float(pc.res_z) * float(pc.depth));
+
+    corner = clamp(corner, vec3(0.5), vec3(dims) - 0.5);
+
+    uint samples[8];
+    vec3 f;
+    volume_trilinear_setup(corner, dims, samples, f);
+
+    float c[8];
+    for (int i = 0; i < 8; ++i) {
+        c[i] = field_in[samples[i]];
+    }
+
+    grid_out[idx] = pc.threshold - volume_blend8(c, f);
+}

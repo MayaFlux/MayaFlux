@@ -810,6 +810,7 @@ Kakshya::MeshData generate_box(
         std::span<const uint32_t>(indices),
         Kakshya::VertexLayout::for_meshes(sizeof(Kakshya::MeshVertex)));
     data.layout = Kakshya::VertexLayout::for_meshes(sizeof(Kakshya::MeshVertex));
+    data.layout.vertex_count = static_cast<uint32_t>(verts.size());
     return data;
 }
 

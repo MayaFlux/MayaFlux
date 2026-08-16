@@ -99,6 +99,22 @@ public:
 
     [[nodiscard]] bool is_dirty() const { return m_dirty; }
 
+    /**
+     * @brief Color each triangle by the dominant axis of its surface normal.
+     * @param x Color for surfaces facing along X.
+     * @param y Color for surfaces facing along Y.
+     * @param z Color for surfaces facing along Z.
+     *
+     * Selection is a hard choice rather than a blend, so the surface
+     * resolves into flat regions that switch as the geometry turns.
+     * Three identical colors give a flat surface, which is what the
+     * default reproduces. Takes effect next cycle.
+     */
+    void set_axis_palette(const glm::vec3& x, const glm::vec3& y, const glm::vec3& z);
+
+    /** @brief The three axis colors currently written into vertex color. */
+    [[nodiscard]] const std::array<glm::vec3, 3>& get_axis_palette() const { return m_palette; }
+
 protected:
     void on_attach(const std::shared_ptr<Buffer>& buffer) override;
     void on_descriptors_created() override;
@@ -119,6 +135,7 @@ private:
     float m_iso_level;
     bool m_dirty { true };
     bool m_owns_buffers { true }; ///< false in GPU-field mode; buffers owned by SdfPrepProcessor.
+    std::array<glm::vec3, 3> m_palette { glm::vec3(1.0F), glm::vec3(1.0F), glm::vec3(1.0F) };
 
     std::shared_ptr<VKBuffer> m_grid_buf;
     std::shared_ptr<VKBuffer> m_edge_buf;
@@ -132,7 +149,8 @@ private:
         uint32_t res_x;
         uint32_t res_y;
         uint32_t res_z;
-        uint32_t _pad[2] {};
+        uint32_t _pad {};
+        alignas(16) glm::vec4 palette[3] {}; ///< Axis-selected vertex colors, X then Y then Z.
     };
     static_assert(sizeof(McPC) % 16 == 0);
 

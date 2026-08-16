@@ -55,6 +55,8 @@ struct ShaderConfig {
 
     size_t push_constant_size = 0;
 
+    std::vector<Portal::Graphics::PushConstantField> pc_fields; ///< Retained from a ShaderSpec so feeds can resolve a field name to an offset. Empty for file shaders.
+
     std::unordered_map<uint32_t, uint32_t> specialization_constants;
 
     ShaderConfig() = default;
@@ -65,6 +67,7 @@ struct ShaderConfig {
     ShaderConfig(const Portal::Graphics::ShaderSpec& spec)
         : shader_id(Portal::Graphics::get_shader_foundry().load_shader(spec))
         , push_constant_size(spec.push_constant_bytes)
+        , pc_fields(spec.pc_fields)
     {
     }
 };
@@ -216,6 +219,60 @@ public:
         download_from_gpu(buffer, data);
         return true;
     }
+
+    //==========================================================================
+    // Feeds
+    //==========================================================================
+
+    /**
+     * @brief What a feed callable returns.
+     *
+     * A double lands in the push constant block. A DataVariant lands in a
+     * storage descriptor. Which one an entry expects is fixed when it is
+     * registered by the name it resolves to.
+     */
+    using FeedValue = std::variant<double, Kakshya::DataVariant>;
+
+    /** @brief A callable pulled once per processing cycle. */
+    using FeedSource = std::function<FeedValue()>;
+
+    /**
+     * @brief Supply a shader input from a callable, resolved by name.
+     * @param name A name already declared on this shader: a descriptor in
+     *        config.bindings, or a push constant field from the ShaderSpec
+     *        this processor was constructed from.
+     * @param source Callable pulled each cycle. Returns a DataVariant for a
+     *        descriptor name, a double for a push constant field.
+     *
+     * Resolution happens once, here. Descriptor names take precedence; a
+     * name matching neither is an error and registers nothing. File-shader
+     * processors have no record of push constant field names, so their
+     * constant feeds must use the explicit overload.
+     */
+    void feed(const std::string& name, FeedSource source);
+
+    /**
+     * @brief Supply a push constant from a callable at an explicit offset.
+     * @param name Logical name, used for removal and error reporting. Need
+     *        not match anything on the shader.
+     * @param source Callable returning a double.
+     * @param offset Byte offset in the push constant block.
+     * @param size Byte width written. Four narrows to float, eight keeps
+     *        double. Other values are rejected.
+     *
+     * The form hand-written shaders need, since their push constant block
+     * is described nowhere the processor can read.
+     */
+    void feed(const std::string& name, FeedSource source, uint32_t offset, size_t size = sizeof(float));
+
+    /** @brief Remove a feed. Any buffer it created is released. */
+    void remove_feed(const std::string& name);
+
+    /** @brief Whether a feed of this name is registered. */
+    [[nodiscard]] bool has_feed(const std::string& name) const;
+
+    /** @brief Names of every registered feed. */
+    [[nodiscard]] std::vector<std::string> get_feed_names() const;
 
     //==========================================================================
     // Shader Management
@@ -397,6 +454,38 @@ public:
     [[nodiscard]] virtual std::shared_ptr<VKBuffer> get_output_buffer() const { return m_last_processed_buffer; }
 
     /**
+     * @brief Submit asynchronously and resolve at the top of a later cycle.
+     * @param deferred True to submit via submit_async, false for submit_and_wait.
+     *
+     * Only meaningful for children that submit their own command buffers.
+     * Children that record without submitting, such as RenderProcessor,
+     * are unaffected. Switching back to synchronous while a submission is
+     * outstanding waits for and releases it first.
+     */
+    void set_deferred_submission(bool deferred);
+
+    /** @brief Whether this processor submits asynchronously. */
+    [[nodiscard]] bool is_deferred_submission() const { return m_deferred_submission; }
+
+    /** @brief True while an asynchronous submission is outstanding. */
+    [[nodiscard]] bool is_dispatch_pending() const
+    {
+        return m_pending_fence != Portal::Graphics::INVALID_FENCE;
+    }
+
+    /**
+     * @brief Resolve an outstanding asynchronous submission.
+     * @param block True to wait for the fence, false to return immediately
+     *        when it is not yet signaled.
+     * @return True if a submission was resolved by this call.
+     *
+     * On resolution invokes on_dispatch_complete, then release_fence, which
+     * also frees the associated command buffer. Invoked with block=false at
+     * the top of processing_function and with block=true from cleanup.
+     */
+    bool resolve_pending_dispatch(bool block);
+
+    /**
      * @brief Check if compute has been executed at least once
      * @return True if processing_function() has been called
      */
@@ -417,6 +506,15 @@ protected:
      *        overlaid at their declared offsets.
      */
     [[nodiscard]] std::vector<uint8_t> resolve_push_constants(const std::shared_ptr<VKBuffer>& buffer) const;
+
+    /**
+     * @brief Pull every feed and write its result.
+     *
+     * Called at the top of processing_function, before descriptors are
+     * rebuilt, so a storage feed creating its buffer binds the same cycle.
+     * Callables run on whichever thread drives the chain.
+     */
+    void pump_feeds();
 
     //==========================================================================
     // Overridable Hooks for Specialized Processors
@@ -488,6 +586,29 @@ protected:
     virtual void on_after_execute(Portal::Graphics::CommandBufferID cmd_id, const std::shared_ptr<VKBuffer>& buffer);
 
     /**
+     * @brief Called once when an asynchronous submission is observed complete.
+     * @param buffer Buffer processed by the completed submission.
+     *
+     * The correct place for device-to-host readback under deferred
+     * submission, since on_after_execute runs at record time, before the
+     * GPU has executed anything. Never invoked under synchronous
+     * submission, where submit_and_wait already precedes the return.
+     */
+    virtual void on_dispatch_complete(const std::shared_ptr<VKBuffer>& buffer);
+
+    /**
+     * @brief Submit a recorded command buffer honoring the submission mode.
+     * @param cmd_id Command buffer to submit.
+     * @param buffer Buffer being processed. Retained until resolution when
+     *        deferred, so on_dispatch_complete receives the same instance.
+     *
+     * Synchronous submission calls submit_and_wait and returns. Deferred
+     * submission calls submit_async and stores the fence; a failed
+     * submission falls back to leaving nothing pending.
+     */
+    void submit_recorded(Portal::Graphics::CommandBufferID cmd_id, const std::shared_ptr<VKBuffer>& buffer);
+
+    /**
      * @brief Resolve logical descriptor set index to actual index
      * @param set Logical set index from ShaderBinding
      * @return Resolved set index, or std::nullopt if invalid
@@ -510,6 +631,10 @@ protected:
 
     std::unordered_map<std::string, std::shared_ptr<VKBuffer>> m_bound_buffers;
     std::shared_ptr<VKBuffer> m_last_processed_buffer;
+
+    bool m_deferred_submission {}; ///< False submits synchronously, preserving pre-existing behaviour.
+    Portal::Graphics::FenceID m_pending_fence { Portal::Graphics::INVALID_FENCE }; ///< Outstanding async submission, if any.
+    std::shared_ptr<VKBuffer> m_pending_buffer; ///< Buffer retained for the outstanding submission.
 
     std::vector<uint8_t> m_push_constant_data;
 
@@ -544,6 +669,22 @@ private:
     //==========================================================================
     // Internal Implementation
     //==========================================================================
+
+    /**
+     * @struct Feed
+     * @brief One registered callable and where its result is written.
+     */
+    struct Feed {
+        FeedSource source;
+        bool is_storage {};
+        uint32_t offset {};
+        size_t size {};
+        std::string descriptor_name;
+        std::shared_ptr<VKBuffer> buffer;
+        bool mismatch_logged {};
+    };
+
+    std::unordered_map<std::string, Feed> m_feeds;
 
     void initialize_shader();
 };

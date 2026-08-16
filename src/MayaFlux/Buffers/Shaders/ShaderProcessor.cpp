@@ -1,5 +1,7 @@
 #include "ShaderProcessor.hpp"
 
+#include "MayaFlux/Kakshya/NDData/DataAccess.hpp"
+
 namespace MayaFlux::Buffers {
 
 //==============================================================================
@@ -38,6 +40,17 @@ void ShaderProcessor::processing_function(const std::shared_ptr<Buffer>& buffer)
         MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
             "ShaderProcessor can only process VKBuffers");
         return;
+    }
+
+    if (!m_feeds.empty()) {
+        pump_feeds();
+    }
+
+    if (m_deferred_submission) {
+        resolve_pending_dispatch(false);
+        if (is_dispatch_pending()) {
+            return;
+        }
     }
 
     if (!on_before_execute(m_last_command_buffer, vk_buffer)) {
@@ -193,6 +206,184 @@ bool ShaderProcessor::download_bound(
 }
 
 //==============================================================================
+// Feeds
+//==============================================================================
+
+void ShaderProcessor::feed(const std::string& name, FeedSource source)
+{
+    if (!source) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "feed: null source for '{}'", name);
+        return;
+    }
+
+    if (m_config.bindings.contains(name)) {
+        auto& entry = m_feeds[name];
+        entry.source = std::move(source);
+        entry.is_storage = true;
+        entry.offset = 0;
+        entry.size = 0;
+        entry.descriptor_name = name;
+        entry.buffer.reset();
+        entry.mismatch_logged = false;
+        return;
+    }
+
+    uint32_t offset = 0;
+    for (const auto& field : m_config.pc_fields) {
+        const size_t width = Kakshya::gpu_data_format_bytes(field.format);
+        if (field.name == name) {
+            auto& entry = m_feeds[name];
+            entry.source = std::move(source);
+            entry.is_storage = false;
+            entry.offset = offset;
+            entry.size = width;
+            entry.descriptor_name.clear();
+            entry.buffer.reset();
+            entry.mismatch_logged = false;
+            return;
+        }
+        offset += static_cast<uint32_t>(width);
+    }
+
+    MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+        "feed: '{}' matches no descriptor and no push constant field. "
+        "File-shader processors must supply an explicit offset.",
+        name);
+}
+
+void ShaderProcessor::feed(const std::string& name, FeedSource source, uint32_t offset, size_t size)
+{
+    if (!source) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "feed: null source for '{}'", name);
+        return;
+    }
+
+    if (size != sizeof(float) && size != sizeof(double)) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "feed: '{}' requests {} bytes, only 4 or 8 are written", name, size);
+        return;
+    }
+
+    auto& entry = m_feeds[name];
+    entry.source = std::move(source);
+    entry.is_storage = false;
+    entry.offset = offset;
+    entry.size = size;
+    entry.descriptor_name.clear();
+    entry.buffer.reset();
+    entry.mismatch_logged = false;
+}
+
+void ShaderProcessor::remove_feed(const std::string& name)
+{
+    auto it = m_feeds.find(name);
+    if (it == m_feeds.end()) {
+        return;
+    }
+
+    if (it->second.is_storage) {
+        unbind_buffer(it->second.descriptor_name);
+    }
+
+    m_feeds.erase(it);
+}
+
+bool ShaderProcessor::has_feed(const std::string& name) const
+{
+    return m_feeds.contains(name);
+}
+
+std::vector<std::string> ShaderProcessor::get_feed_names() const
+{
+    std::vector<std::string> names;
+    names.reserve(m_feeds.size());
+    for (const auto& [name, _] : m_feeds) {
+        names.push_back(name);
+    }
+    return names;
+}
+
+void ShaderProcessor::pump_feeds()
+{
+    for (auto& [name, entry] : m_feeds) {
+        FeedValue value = entry.source();
+
+        if (!entry.is_storage) {
+            const auto* scalar = std::get_if<double>(&value);
+            if (!scalar) {
+                if (!entry.mismatch_logged) {
+                    MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                        "feed '{}' writes a push constant but returned a DataVariant", name);
+                    entry.mismatch_logged = true;
+                }
+                continue;
+            }
+
+            auto& data = get_push_constant_data();
+            const size_t required = entry.offset + entry.size;
+            if (data.size() < required) {
+                data.resize(required);
+            }
+
+            if (entry.size == sizeof(float)) {
+                const auto narrowed = static_cast<float>(*scalar);
+                std::memcpy(data.data() + entry.offset, &narrowed, sizeof(float));
+            } else {
+                std::memcpy(data.data() + entry.offset, scalar, sizeof(double));
+            }
+            continue;
+        }
+
+        auto* variant = std::get_if<Kakshya::DataVariant>(&value);
+        if (!variant) {
+            if (!entry.mismatch_logged) {
+                MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                    "feed '{}' writes a storage descriptor but returned a double", name);
+                entry.mismatch_logged = true;
+            }
+            continue;
+        }
+
+        Kakshya::DataAccess accessor(*variant, {}, Kakshya::DataModality::UNKNOWN);
+        auto [ptr, bytes, format] = accessor.gpu_buffer();
+
+        if (!ptr || bytes == 0) {
+            MF_RT_WARN(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                "feed '{}' produced no bytes", name);
+            continue;
+        }
+
+        if (!entry.buffer) {
+            entry.buffer = std::make_shared<VKBuffer>(
+                static_cast<size_t>(static_cast<float>(bytes) * 1.5F),
+                m_config.bindings.at(entry.descriptor_name).type == vk::DescriptorType::eUniformBuffer
+                    ? VKBuffer::Usage::UNIFORM
+                    : VKBuffer::Usage::HOST_STORAGE,
+                Kakshya::DataModality::UNKNOWN);
+
+            bind_buffer(entry.descriptor_name, entry.buffer);
+
+            MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                "feed '{}' backing buffer created at {} bytes",
+                name, entry.buffer->get_size_bytes());
+        } else if (entry.buffer->get_size_bytes() < bytes) {
+            const size_t grown = bytes * 3 / 2;
+
+            MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                "feed '{}' backing buffer resized {} to {} bytes",
+                name, entry.buffer->get_size_bytes(), grown);
+
+            entry.buffer->resize(grown, false);
+            m_needs_descriptor_rebuild = true;
+        }
+
+        upload_host_visible(entry.buffer, *variant);
+    }
+}
+
+//==============================================================================
 // Shader Management
 //==============================================================================
 
@@ -275,6 +466,66 @@ std::vector<uint8_t> ShaderProcessor::resolve_push_constants(const std::shared_p
     }
 
     return merged;
+}
+
+//==============================================================================
+// Submission
+//==============================================================================
+
+void ShaderProcessor::set_deferred_submission(bool deferred)
+{
+    if (!deferred && is_dispatch_pending()) {
+        resolve_pending_dispatch(true);
+    }
+    m_deferred_submission = deferred;
+}
+
+bool ShaderProcessor::resolve_pending_dispatch(bool block)
+{
+    if (!is_dispatch_pending()) {
+        return false;
+    }
+
+    auto& foundry = Portal::Graphics::get_shader_foundry();
+
+    if (block) {
+        foundry.wait_for_fence(m_pending_fence);
+    } else if (!foundry.is_fence_signaled(m_pending_fence)) {
+        return false;
+    }
+
+    const auto fence = m_pending_fence;
+    auto buffer = m_pending_buffer;
+
+    m_pending_fence = Portal::Graphics::INVALID_FENCE;
+    m_pending_buffer.reset();
+
+    on_dispatch_complete(buffer);
+    foundry.release_fence(fence);
+
+    return true;
+}
+
+void ShaderProcessor::submit_recorded(
+    Portal::Graphics::CommandBufferID cmd_id,
+    const std::shared_ptr<VKBuffer>& buffer)
+{
+    auto& foundry = Portal::Graphics::get_shader_foundry();
+
+    if (!m_deferred_submission) {
+        foundry.submit_and_wait(cmd_id);
+        return;
+    }
+
+    m_pending_fence = foundry.submit_async(cmd_id);
+
+    if (m_pending_fence == Portal::Graphics::INVALID_FENCE) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "Deferred submission failed, no fence returned");
+        return;
+    }
+
+    m_pending_buffer = buffer;
 }
 
 //==============================================================================
@@ -365,6 +616,7 @@ void ShaderProcessor::on_before_descriptors_create() { }
 void ShaderProcessor::on_descriptors_created() { }
 bool ShaderProcessor::on_before_execute(Portal::Graphics::CommandBufferID, const std::shared_ptr<VKBuffer>&) { return true; }
 void ShaderProcessor::on_after_execute(Portal::Graphics::CommandBufferID, const std::shared_ptr<VKBuffer>&) { }
+void ShaderProcessor::on_dispatch_complete(const std::shared_ptr<VKBuffer>&) { }
 
 //==============================================================================
 // Private Implementation
@@ -474,6 +726,7 @@ void ShaderProcessor::update_descriptors(const std::shared_ptr<VKBuffer>& buffer
 
 void ShaderProcessor::cleanup()
 {
+    resolve_pending_dispatch(true);
     auto& foundry = Portal::Graphics::get_shader_foundry();
     auto& compute_press = Portal::Graphics::get_compute_press();
 
@@ -484,6 +737,7 @@ void ShaderProcessor::cleanup()
 
     m_descriptor_set_ids.clear();
     m_bound_buffers.clear();
+    m_feeds.clear();
     m_initialized = false;
 }
 

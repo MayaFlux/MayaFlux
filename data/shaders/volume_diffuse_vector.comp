@@ -1,0 +1,73 @@
+#version 460
+
+#include "include/volume_common.glsl"
+
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 4) in;
+
+layout(set = 0, binding = 0, std430) buffer Source {
+    vec4 source[];
+};
+layout(set = 0, binding = 1, std430) buffer TargetA {
+    vec4 target_a[];
+};
+layout(set = 0, binding = 2, std430) buffer TargetB {
+    vec4 target_b[];
+};
+
+layout(push_constant) uniform PC {
+    uint width;
+    uint height;
+    uint depth;
+    uint flags;
+    float cell_size_x;
+    float cell_size_y;
+    float cell_size_z;
+    float coefficient;
+} pc;
+
+vec4 fetch(uint index, uint parity)
+{
+    return parity == 0u ? target_a[index] : target_b[index];
+}
+
+void main()
+{
+    uvec3 gid = gl_GlobalInvocationID;
+    uvec3 dims = uvec3(pc.width, pc.height, pc.depth);
+
+    if (!volume_in_bounds(gid, dims)) {
+        return;
+    }
+
+    ivec3 c = ivec3(gid);
+    uint index = volume_index(gid, dims);
+
+    uint parity = pc.flags & 1u;
+    bool first = (pc.flags & 2u) != 0u;
+
+    vec4 x0 = first ? fetch(index, parity) : source[index];
+    if (first) {
+        source[index] = x0;
+    }
+
+    vec4 x_pos = fetch(volume_index_clamped(c + ivec3(1, 0, 0), dims), parity);
+    vec4 x_neg = fetch(volume_index_clamped(c - ivec3(1, 0, 0), dims), parity);
+    vec4 y_pos = fetch(volume_index_clamped(c + ivec3(0, 1, 0), dims), parity);
+    vec4 y_neg = fetch(volume_index_clamped(c - ivec3(0, 1, 0), dims), parity);
+    vec4 z_pos = fetch(volume_index_clamped(c + ivec3(0, 0, 1), dims), parity);
+    vec4 z_neg = fetch(volume_index_clamped(c - ivec3(0, 0, 1), dims), parity);
+
+    float ix2 = 1.0 / (pc.cell_size_x * pc.cell_size_x);
+    float iy2 = 1.0 / (pc.cell_size_y * pc.cell_size_y);
+    float iz2 = 1.0 / (pc.cell_size_z * pc.cell_size_z);
+
+    vec4 accumulated = ix2 * (x_pos + x_neg) + iy2 * (y_pos + y_neg) + iz2 * (z_pos + z_neg);
+    vec4 result = (x0 + pc.coefficient * accumulated)
+            / (1.0 + 2.0 * pc.coefficient * (ix2 + iy2 + iz2));
+
+    if (parity == 0u) {
+        target_b[index] = result;
+    } else {
+        target_a[index] = result;
+    }
+}
