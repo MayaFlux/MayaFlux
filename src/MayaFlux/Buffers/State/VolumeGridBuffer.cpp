@@ -3,11 +3,21 @@
 #include "MayaFlux/Buffers/BufferProcessingChain.hpp"
 #include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
 #include "MayaFlux/Buffers/Shaders/SDFMeshProcessor.hpp"
-#include "MayaFlux/Buffers/State/VolumeSurfaceProcessor.hpp"
+
 #include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Kakshya/NDData/VertexFormats.hpp"
+
 #include "MayaFlux/Registry/BackendRegistry.hpp"
 #include "MayaFlux/Registry/Service/BufferService.hpp"
+
+#include "AdvectProcessor.hpp"
+#include "BuoyancyProcessor.hpp"
+#include "DiffuseProcessor.hpp"
+#include "DivergenceProcessor.hpp"
+#include "PressureProcessor.hpp"
+#include "SolenoidalProcessor.hpp"
+#include "VolumeSurfaceProcessor.hpp"
+#include "WallProcessor.hpp"
 
 namespace MayaFlux::Buffers {
 
@@ -31,13 +41,42 @@ VolumeGridBuffer::VolumeGridBuffer(
     allocate_fields(fields);
 }
 
+VolumeGridBuffer::VolumeGridBuffer(
+    Kinesis::Lattice3D lattice,
+    std::optional<SurfaceConfig> surface)
+    : VKBuffer(surface_storage_bytes(surface), Usage::VERTEX, Kakshya::DataModality::VERTICES_3D)
+    , m_lattice(lattice)
+    , m_surface(std::move(surface))
+{
+    force_internal_usage(true);
+}
+
 VolumeGridBuffer::~VolumeGridBuffer()
 {
     resolve_transfer(m_pending_transfer);
 }
 
-void VolumeGridBuffer::allocate_fields(const std::vector<FieldDecl>& decls)
+bool VolumeGridBuffer::allocate_field(
+    const std::string& name, size_t stride_bytes, bool double_buffered)
 {
+    if (name.empty()) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::Init,
+            "VolumeGridBuffer: field declared with empty name, skipped");
+        return false;
+    }
+
+    if (stride_bytes == 0) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::Init,
+            "VolumeGridBuffer: field '{}' declares zero stride, skipped", name);
+        return false;
+    }
+
+    if (m_fields.contains(name)) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::Init,
+            "VolumeGridBuffer: duplicate field '{}', later declaration discarded", name);
+        return false;
+    }
+
     auto buffer_service = Registry::BackendRegistry::instance()
                               .get_service<Registry::Service::BufferService>();
 
@@ -59,58 +98,49 @@ void VolumeGridBuffer::allocate_fields(const std::vector<FieldDecl>& decls)
         static_cast<VkMemoryPropertyFlags>(vk::MemoryPropertyFlagBits::eDeviceLocal));
 
     auto& resources = get_buffer_resources();
-    const uint32_t cells = get_cell_count();
+    const size_t field_bytes = static_cast<size_t>(get_cell_count()) * stride_bytes;
+    const uint32_t slot_count = double_buffered ? 2 : 1;
 
-    size_t total_bytes = 0;
-    size_t largest_field = 0;
+    Field field {
+        .stride_bytes = stride_bytes,
+        .slot_a = static_cast<uint32_t>(resources.back_buffers.size()),
+        .slot_b = 0,
+        .read_is_a = true,
+    };
 
+    for (uint32_t i = 0; i < slot_count; ++i) {
+        void* out_buffer = nullptr;
+        void* out_memory = nullptr;
+        void* out_mapped = nullptr;
+
+        buffer_service->allocate_raw_buffer(
+            field_bytes, usage_flags, memory_flags, false,
+            out_buffer, out_memory, out_mapped);
+
+        VKBufferResources::GenerationSlot slot;
+        slot.buffer = static_cast<vk::Buffer>(static_cast<VkBuffer>(out_buffer));
+        slot.memory = static_cast<vk::DeviceMemory>(static_cast<VkDeviceMemory>(out_memory));
+        slot.mapped_ptr = out_mapped;
+
+        resources.back_buffers.push_back(slot);
+    }
+
+    field.slot_b = double_buffered ? field.slot_a + 1 : field.slot_a;
+
+    m_fields.emplace(name, field);
+    m_field_order.push_back(name);
+
+    MF_DEBUG(Journal::Component::Buffers, Journal::Context::Init,
+        "VolumeGridBuffer: field '{}', stride {}, {} slot(s), {} bytes",
+        name, stride_bytes, slot_count, field_bytes * slot_count);
+
+    return true;
+}
+
+void VolumeGridBuffer::allocate_fields(const std::vector<FieldDecl>& decls)
+{
     for (const auto& decl : decls) {
-        if (decl.stride_bytes == 0) {
-            MF_ERROR(Journal::Component::Buffers, Journal::Context::Init,
-                "VolumeGridBuffer: field '{}' declares zero stride, skipped", decl.name);
-            continue;
-        }
-
-        if (m_fields.contains(decl.name)) {
-            MF_ERROR(Journal::Component::Buffers, Journal::Context::Init,
-                "VolumeGridBuffer: duplicate field '{}', later declaration discarded", decl.name);
-            continue;
-        }
-
-        const size_t field_bytes = static_cast<size_t>(cells) * decl.stride_bytes;
-        const uint32_t slot_count = decl.double_buffered ? 2 : 1;
-
-        Field field {
-            .stride_bytes = decl.stride_bytes,
-            .slot_a = static_cast<uint32_t>(resources.back_buffers.size()),
-            .slot_b = 0,
-            .read_is_a = true,
-        };
-
-        for (uint32_t i = 0; i < slot_count; ++i) {
-            void* out_buffer = nullptr;
-            void* out_memory = nullptr;
-            void* out_mapped = nullptr;
-
-            buffer_service->allocate_raw_buffer(
-                field_bytes, usage_flags, memory_flags, false,
-                out_buffer, out_memory, out_mapped);
-
-            VKBufferResources::GenerationSlot slot;
-            slot.buffer = static_cast<vk::Buffer>(static_cast<VkBuffer>(out_buffer));
-            slot.memory = static_cast<vk::DeviceMemory>(static_cast<VkDeviceMemory>(out_memory));
-            slot.mapped_ptr = out_mapped;
-
-            resources.back_buffers.push_back(slot);
-        }
-
-        field.slot_b = decl.double_buffered ? field.slot_a + 1 : field.slot_a;
-
-        m_fields.emplace(decl.name, field);
-        m_field_order.push_back(decl.name);
-
-        total_bytes += field_bytes * slot_count;
-        largest_field = std::max(largest_field, field_bytes);
+        allocate_field(decl.name, decl.stride_bytes, decl.double_buffered);
     }
 
     if (m_fields.empty()) {
@@ -122,9 +152,45 @@ void VolumeGridBuffer::allocate_fields(const std::vector<FieldDecl>& decls)
     }
 
     MF_INFO(Journal::Component::Buffers, Journal::Context::Init,
-        "VolumeGridBuffer: {}x{}x{} lattice, {} fields, {} slots, {} bytes total",
+        "VolumeGridBuffer: {}x{}x{} lattice, {} fields, {} slots",
         m_lattice.resolution.x, m_lattice.resolution.y, m_lattice.resolution.z,
-        m_fields.size(), resources.back_buffers.size(), total_bytes);
+        m_fields.size(), get_buffer_resources().back_buffers.size());
+}
+
+ScalarRef VolumeGridBuffer::declare_scalar(std::string name)
+{
+    if (!allocate_field(name, sizeof(float), true)) {
+        return {};
+    }
+
+    return ScalarRef {
+        .name = std::move(name),
+        .owner = std::dynamic_pointer_cast<VolumeGridBuffer>(shared_from_this()),
+    };
+}
+
+ScalarRef VolumeGridBuffer::declare_scratch(std::string name)
+{
+    if (!allocate_field(name, sizeof(float), false)) {
+        return {};
+    }
+
+    return ScalarRef {
+        .name = std::move(name),
+        .owner = std::dynamic_pointer_cast<VolumeGridBuffer>(shared_from_this()),
+    };
+}
+
+VectorRef VolumeGridBuffer::declare_vector(std::string name)
+{
+    if (!allocate_field(name, sizeof(glm::vec4), true)) {
+        return {};
+    }
+
+    return VectorRef {
+        .name = std::move(name),
+        .owner = std::dynamic_pointer_cast<VolumeGridBuffer>(shared_from_this()),
+    };
 }
 
 void VolumeGridBuffer::setup_processors(ProcessingToken token)
@@ -203,6 +269,122 @@ void VolumeGridBuffer::setup_rendering(const RenderConfig& config)
 
     m_render_processor->set_vertex_range(0, 0);
     set_needs_depth_attachment(true);
+}
+
+VolumeGridBuffer::FlowStages VolumeGridBuffer::setup_flow(const FlowConfig& config)
+{
+    FlowStages stages;
+
+    auto self = std::dynamic_pointer_cast<VolumeGridBuffer>(shared_from_this());
+    auto chain = get_processing_chain();
+
+    if (!chain) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::Init,
+            "setup_flow: no processing chain, call after registration");
+        return stages;
+    }
+
+    const auto require = [this](const std::string& name, const char* role) {
+        if (name.empty()) {
+            MF_ERROR(Journal::Component::Buffers, Journal::Context::Init,
+                "setup_flow: no field supplied for '{}'", role);
+            return false;
+        }
+        if (!has_field(name)) {
+            MF_ERROR(Journal::Component::Buffers, Journal::Context::Init,
+                "setup_flow: '{}' names no field on this volume, supplied as '{}'",
+                name, role);
+            return false;
+        }
+        return true;
+    };
+
+    if (!require(config.velocity, "velocity")
+        || !require(config.divergence, "divergence")
+        || !require(config.pressure, "pressure")) {
+        return stages;
+    }
+
+    if (config.viscosity > 0.0F && !require(config.scratch, "scratch")) {
+        return stages;
+    }
+
+    stages.self_advect = std::make_shared<AdvectProcessor>(
+        config.velocity, config.velocity, "volume_advect_vector.comp");
+    stages.self_advect->set_time_step(config.time_step);
+    chain->add_processor(stages.self_advect, self);
+
+    if (config.buoyancy) {
+        const auto& b = *config.buoyancy;
+
+        if (!require(b.temperature, "buoyancy.temperature")
+            || !require(b.density, "buoyancy.density")) {
+            return stages;
+        }
+
+        stages.buoyancy = std::make_shared<BuoyancyProcessor>(
+            b.temperature, b.density, config.velocity,
+            b.direction, "volume_buoyancy.comp");
+        stages.buoyancy->set_time_step(config.time_step);
+        stages.buoyancy->set_temperature_gain(b.temperature_gain);
+        stages.buoyancy->set_density_gain(b.density_gain);
+        stages.buoyancy->set_ambient(b.ambient);
+        chain->add_processor(stages.buoyancy, self);
+    }
+
+    if (config.viscosity > 0.0F) {
+        stages.diffuse = std::make_shared<DiffuseProcessor>(
+            config.velocity, config.scratch, "volume_diffuse_vector.comp");
+        stages.diffuse->set_rate(config.viscosity);
+        stages.diffuse->set_time_step(config.time_step);
+        chain->add_processor(stages.diffuse, self);
+    }
+
+    if (config.walls) {
+        stages.wall_advected = std::make_shared<WallProcessor>(
+            config.velocity, "volume_wall.comp");
+        chain->add_processor(stages.wall_advected, self);
+    }
+
+    stages.divergence = std::make_shared<DivergenceProcessor>(
+        config.velocity, config.divergence, "volume_divergence.comp");
+    chain->add_processor(stages.divergence, self);
+
+    stages.pressure = std::make_shared<PressureProcessor>(
+        config.divergence, config.pressure, "volume_pressure_jacobi.comp");
+    stages.pressure->set_iteration_count(config.jacobi_iterations);
+    chain->add_processor(stages.pressure, self);
+
+    stages.solenoidal = std::make_shared<SolenoidalProcessor>(
+        config.pressure, config.velocity, "volume_solenoidal.comp");
+    chain->add_processor(stages.solenoidal, self);
+
+    if (config.walls) {
+        stages.wall_projected = std::make_shared<WallProcessor>(
+            config.velocity, "volume_wall.comp");
+        chain->add_processor(stages.wall_projected, self);
+    }
+
+    for (const auto& carried : config.carried) {
+        if (!require(carried.field, "carried")) {
+            continue;
+        }
+
+        auto advect = std::make_shared<AdvectProcessor>(
+            config.velocity, carried.field, "volume_advect_scalar.comp");
+        advect->set_time_step(config.time_step);
+        advect->set_dissipation(carried.dissipation);
+        chain->add_processor(advect, self);
+
+        stages.carriers.push_back(std::move(advect));
+    }
+
+    MF_INFO(Journal::Component::Buffers, Journal::Context::Init,
+        "VolumeGridBuffer::setup_flow: {} carried, buoyancy {}, viscosity {}, walls {}",
+        stages.carriers.size(), config.buoyancy ? "on" : "off",
+        config.viscosity, config.walls ? "on" : "off");
+
+    return stages;
 }
 
 const VolumeGridBuffer::Field* VolumeGridBuffer::find_field(

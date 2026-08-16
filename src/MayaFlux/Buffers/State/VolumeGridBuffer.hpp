@@ -10,6 +10,77 @@ namespace MayaFlux::Buffers {
 class VolumeSurfaceProcessor;
 class SDFMeshProcessor;
 class RenderProcessor;
+class VolumeGridBuffer;
+class AdvectProcessor;
+class BuoyancyProcessor;
+class WallProcessor;
+class DivergenceProcessor;
+class DiffuseProcessor;
+class PressureProcessor;
+class SolenoidalProcessor;
+
+/**
+ * @struct ScalarRef
+ * @brief A scalar field's name, issued by the volume that owns it.
+ *
+ * Exists so a field is spelled once, at declaration, rather than at every
+ * site that addresses it. A name typed twice is two independent literals
+ * that must agree; a mismatch surfaces as a stage that runs and does
+ * nothing, which is the hardest failure in this subsystem to diagnose.
+ *
+ * Converts implicitly to the field name, so a ref passes anywhere a
+ * processor expects a string. The type distinction bites where a
+ * signature demands one kind: a parameter taking ScalarRef cannot be
+ * handed a vector field.
+ *
+ * Carries a weak reference to its issuer so a ref from one volume used
+ * against another can be rejected rather than silently resolving to a
+ * same-named field.
+ */
+struct ScalarRef {
+    std::string name;
+    std::weak_ptr<VolumeGridBuffer> owner;
+
+    static constexpr size_t stride = sizeof(float);
+
+    operator const std::string&() const { return name; }
+
+    /**
+     * @brief Whether this ref was issued by the given volume.
+     * @param volume Volume to test against.
+     */
+    [[nodiscard]] bool issued_by(const VolumeGridBuffer* volume) const
+    {
+        auto o = owner.lock();
+        return o && o.get() == volume;
+    }
+};
+
+/**
+ * @struct VectorRef
+ * @brief A vector field's name, issued by the volume that owns it.
+ *
+ * As ScalarRef, for fields of glm::vec4 stride. The fourth component is
+ * carried through by every current stage and read by none.
+ */
+struct VectorRef {
+    std::string name;
+    std::weak_ptr<VolumeGridBuffer> owner;
+
+    static constexpr size_t stride = sizeof(glm::vec4);
+
+    operator const std::string&() const { return name; }
+
+    /**
+     * @brief Whether this ref was issued by the given volume.
+     * @param volume Volume to test against.
+     */
+    [[nodiscard]] bool issued_by(const VolumeGridBuffer* volume) const
+    {
+        auto o = owner.lock();
+        return o && o.get() == volume;
+    }
+};
 
 /**
  * @class VolumeGridBuffer
@@ -97,6 +168,75 @@ public:
     };
 
     /**
+     * @struct FlowConfig
+     * @brief Parameters for the incompressible flow stage arrangement.
+     *
+     * Carries what varies between simulations. What does not vary, the
+     * stage ordering, is fixed by setup_flow: buoyancy must precede the
+     * projection or the solve removes the divergence it injects, the wall
+     * condition must follow every stage that writes velocity, and carried
+     * scalars must be advected by the projected velocity rather than the
+     * raw one. Those are correctness constraints, not preferences, and
+     * they are the part callers get wrong.
+     */
+    struct FlowConfig {
+        /**
+         * @struct Carried
+         * @brief A scalar transported by the velocity field.
+         */
+        struct Carried {
+            ScalarRef field; ///< Field advected.
+            float dissipation { 1.0F }; ///< Per-cycle multiplier. One conserves.
+        };
+
+        /**
+         * @struct Buoyancy
+         * @brief Body force accumulated into velocity from two scalars.
+         */
+        struct Buoyancy {
+            ScalarRef temperature; ///< Drives motion along direction.
+            ScalarRef density; ///< Drives motion against it.
+            glm::vec3 direction { 0.0F, 1.0F, 0.0F }; ///< Axis and magnitude.
+            float temperature_gain { 1.0F };
+            float density_gain { 0.0F };
+            float ambient { 0.0F }; ///< Temperature at which the rise term vanishes.
+        };
+
+        VectorRef velocity; ///< Required.
+        ScalarRef divergence; ///< Required. Single-slot is correct.
+        ScalarRef pressure; ///< Required.
+        VectorRef scratch; ///< Required only when viscosity is above zero.
+
+        float time_step { 1.0F / 60.0F }; ///< Applied to every stage that integrates.
+        float viscosity { 0.0F }; ///< Zero omits the diffusion stage entirely.
+        uint32_t jacobi_iterations { 32 };
+        bool walls { true }; ///< Free-slip on the six faces, twice per cycle.
+
+        std::vector<Carried> carried;
+        std::optional<Buoyancy> buoyancy;
+    };
+
+    /**
+     * @struct FlowStages
+     * @brief Every stage setup_flow built, in no particular order.
+     *
+     * Returned rather than stored so each remains reachable for retuning,
+     * feeding, or inspection. Members are null where the config omitted
+     * the corresponding stage.
+     */
+    struct FlowStages {
+        std::shared_ptr<AdvectProcessor> self_advect;
+        std::shared_ptr<BuoyancyProcessor> buoyancy;
+        std::shared_ptr<DiffuseProcessor> diffuse;
+        std::shared_ptr<WallProcessor> wall_advected;
+        std::shared_ptr<DivergenceProcessor> divergence;
+        std::shared_ptr<PressureProcessor> pressure;
+        std::shared_ptr<SolenoidalProcessor> solenoidal;
+        std::shared_ptr<WallProcessor> wall_projected;
+        std::vector<std::shared_ptr<AdvectProcessor>> carriers; ///< Parallel to config.carried.
+    };
+
+    /**
      * @brief Construct an unregistered multi-field volume.
      * @param lattice Discretized extent every field is stored over.
      * @param fields Field declarations. Duplicated names are rejected with
@@ -117,6 +257,20 @@ public:
     VolumeGridBuffer(
         Kinesis::Lattice3D lattice,
         std::vector<FieldDecl> fields,
+        std::optional<SurfaceConfig> surface = std::nullopt);
+
+    /**
+     * @brief Construct a volume with no fields, to be declared after.
+     * @param lattice Discretized extent every field is stored over.
+     * @param surface Optional isosurface extraction parameters. Its field
+     *        name resolves at setup_processors, so it may name a field
+     *        declared after construction.
+     *
+     * Extraction storage is sized here because it depends only on the
+     * extraction resolution, so the SurfaceConfig cannot move later.
+     */
+    explicit VolumeGridBuffer(
+        Kinesis::Lattice3D lattice,
         std::optional<SurfaceConfig> surface = std::nullopt);
 
     /**
@@ -153,6 +307,22 @@ public:
      * has no vertex storage and nothing to draw.
      */
     void setup_rendering(const RenderConfig& config);
+
+    /**
+     * @brief Build and append the incompressible flow stages.
+     * @param config Fields and parameters. Every ref must have been issued
+     *        by this volume.
+     * @return The stages built, all already in the chain.
+     *
+     * Appends in the order: self-advection, buoyancy, diffusion, wall,
+     * divergence, pressure, solenoidal, wall, then one advection per
+     * carried scalar. Carriers run last so they are transported by the
+     * projected velocity.
+     *
+     * Stages added to the chain before this call keep their position
+     * ahead of it, which is where an influx stage belongs.
+     */
+    FlowStages setup_flow(const FlowConfig& config);
 
     /** @brief The surface extraction stage, valid after setup_rendering. */
     [[nodiscard]] std::shared_ptr<VolumeSurfaceProcessor> surface_processor() const { return m_surface_processor; }
@@ -216,6 +386,40 @@ public:
      * field consumed immediately after need not.
      */
     void swap_field(const std::string& name);
+
+    /**
+     * @brief Declare a double-buffered scalar field.
+     * @param name Lookup key, unique within this volume.
+     * @return Ref naming the field, or a ref with an empty name if the
+     *         declaration was rejected.
+     */
+    ScalarRef declare_scalar(std::string name);
+
+    /**
+     * @brief Declare a single-slot scalar field.
+     * @param name Lookup key, unique within this volume.
+     * @return Ref naming the field, or a ref with an empty name if the
+     *         declaration was rejected.
+     *
+     * Read and write resolve to one handle, which suits a quantity
+     * recomputed from other fields every cycle and never carried across
+     * cycles: divergence is the ordinary case. A stage that reads a
+     * neighbourhood of a field it also writes cannot use one of these,
+     * and VolumeFieldProcessor rejects that arrangement at attach.
+     */
+    ScalarRef declare_scratch(std::string name);
+
+    /**
+     * @brief Declare a double-buffered vector field.
+     * @param name Lookup key, unique within this volume.
+     * @return Ref naming the field, or a ref with an empty name if the
+     *         declaration was rejected.
+     *
+     * Vector fields are always double-buffered. The single-slot case
+     * saves one slot, a megabyte at 64 cubed, and every vector field in
+     * use is either advected or diffused, both of which require two.
+     */
+    VectorRef declare_vector(std::string name);
 
     /**
      * @brief Write initial values into a scalar field from a Kinesis field.
@@ -285,11 +489,19 @@ private:
     };
 
     /**
-     * @brief Populate m_fields from declarations and allocate one
-     *        device-local raw slot per field slot.
+     * @brief Populate m_fields from declarations.
      * @param decls Field declarations in declaration order.
      */
     void allocate_fields(const std::vector<FieldDecl>& decls);
+
+    /**
+     * @brief Allocate one field's slots and register it.
+     * @param name Lookup key.
+     * @param stride_bytes Bytes per cell.
+     * @param double_buffered Whether to allocate a second slot.
+     * @return True if the field was registered.
+     */
+    bool allocate_field(const std::string& name, size_t stride_bytes, bool double_buffered);
 
     /**
      * @brief Resolve a field by name.
