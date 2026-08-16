@@ -1,0 +1,48 @@
+#version 460
+
+#include "include/volume_common.glsl"
+
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 4) in;
+
+layout(set = 0, binding = 0, std430) readonly buffer VelocityIn {
+    vec4 velocity_in[];
+};
+layout(set = 0, binding = 1, std430) writeonly buffer VelocityOut {
+    vec4 velocity_out[];
+};
+
+layout(push_constant) uniform PC {
+    uint width;
+    uint height;
+    uint depth;
+    uint pad0;
+    float cell_size_x;
+    float cell_size_y;
+    float cell_size_z;
+    float pad1;
+} pc;
+
+void main()
+{
+    uvec3 gid = gl_GlobalInvocationID;
+    uvec3 dims = uvec3(pc.width, pc.height, pc.depth);
+
+    if (!volume_in_bounds(gid, dims)) {
+        return;
+    }
+
+    uint index = volume_index(gid, dims);
+    vec4 v = velocity_in[index];
+
+    if (gid.x == 0u || gid.x == dims.x - 1u) {
+        v.x = 0.0;
+    }
+    if (gid.y == 0u || gid.y == dims.y - 1u) {
+        v.y = 0.0;
+    }
+    if (gid.z == 0u || gid.z == dims.z - 1u) {
+        v.z = 0.0;
+    }
+
+    velocity_out[index] = v;
+}
