@@ -4,6 +4,7 @@
 
 #include "MayaFlux/Buffers/VKBuffer.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
+#include "MayaFlux/Kakshya/NDData/VertexFormats.hpp"
 #include "MayaFlux/Portal/Graphics/ShaderFoundry.hpp"
 
 namespace MayaFlux::Buffers {
@@ -134,7 +135,7 @@ bool UVFieldProcessor::on_before_execute(
         return false;
     }
 
-    m_pc.vertex_count = static_cast<uint32_t>(buffer->get_size_bytes() / 60U);
+    m_pc.vertex_count = static_cast<uint32_t>(buffer->get_size_bytes() / sizeof(Kakshya::MeshVertex));
     if (m_pc.vertex_count == 0) {
         return false;
     }

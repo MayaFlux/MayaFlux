@@ -32,7 +32,7 @@ enum class UVProjectionMode : uint8_t { ///< Backing type matches push constant 
  * is present, glm::vec3 colour (sampled from the image at the computed UV) at
  * byte offset 12.
  *
- * Push constant layout (uv_field.comp must match exactly, 80 bytes):
+ * Push constant layout (uv_field.comp must match exactly, 48 bytes):
  *   offset  0  uint  vertex_count
  *   offset  4  uint  mode          (UVProjectionMode)
  *   offset  8  uint  write_colour  (0 = UV only, 1 = also write sampled colour)
@@ -126,9 +126,6 @@ protected:
         const std::shared_ptr<VKBuffer>& buffer) override;
 
 private:
-    // -------------------------------------------------------------------------
-    // Push constant mirror (kept in sync with shader layout)
-    // -------------------------------------------------------------------------
     struct PushConstants {
         uint32_t vertex_count { 0 };
         uint32_t mode { static_cast<uint32_t>(UVProjectionMode::CARTESIAN) };

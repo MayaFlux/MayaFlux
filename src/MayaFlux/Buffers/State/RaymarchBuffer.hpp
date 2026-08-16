@@ -1,40 +1,31 @@
 #pragma once
 
+#include "MayaFlux/Buffers/Geometry/MeshBuffer.hpp"
+
 #include "RaymarchProcessor.hpp"
 
 namespace MayaFlux::Buffers {
 
 /**
  * @class RaymarchBuffer
- * @brief Proxy geometry bounding a scalar field, drawn by a fragment
- *        stage that integrates the field along the view ray.
+ * @brief Proxy box bounding a scalar field, drawn by a fragment stage that
+ *        integrates the field along the view ray.
  *
- * Holds thirty-six vertices, the twelve triangles of the box a
- * Lattice3D's bounds describe, written once at construction. The box is
- * only what rasterises the pixels the march covers: the image is produced
- * entirely in the fragment stage.
+ * A MeshBuffer holding the box Kinesis::generate_box produces over a
+ * Lattice3D's bounds. MeshProcessor uploads it and links the index buffer,
+ * so the geometry path is the ordinary indexed mesh path with nothing
+ * special about it. The image is produced entirely in the fragment stage;
+ * the box only rasterises the pixels the march covers.
  *
- * Owns no field. The field arrives through the RaymarchProcessor's source
+ * Owns no field. The field arrives through RaymarchProcessor's source
  * callable, so a VolumeGridBuffer running its own simulation chain is
- * untouched by this and its field is read where it lies. Any other owner
- * of a float array over the same lattice works identically.
+ * untouched and its field is read where it lies.
  *
  * Back faces are rasterised rather than front, and the fragment stage
- * clips the ray's entry against the box itself, so the volume survives
- * the observer moving inside its bounds.
- *
- * Usage:
- * @code
- * auto smoke = std::make_shared<RaymarchBuffer>(
- *     volume->get_lattice(),
- *     [volume] { return volume->read_handle("density"); },
- *     volume->get_field_bytes("density")) | Graphics;
- *
- * smoke->setup_rendering({ .target_window = window });
- * smoke->march_processor()->set_emission(3.0F);
- * @endcode
+ * clips ray entry against the box, so the volume survives the observer
+ * moving inside its bounds.
  */
-class MAYAFLUX_API RaymarchBuffer : public VKBuffer {
+class MAYAFLUX_API RaymarchBuffer : public MeshBuffer {
 public:
     /**
      * @brief Construct proxy geometry over a lattice.
@@ -50,20 +41,17 @@ public:
     ~RaymarchBuffer() override = default;
 
     /**
-     * @brief Establish the chain with the march staging processor in it.
+     * @brief Attach MeshProcessor for upload and RaymarchProcessor for staging.
      * @param token Processing domain, normally GRAPHICS_BACKEND.
      */
     void setup_processors(ProcessingToken token) override;
 
     /**
      * @brief Attach a RenderProcessor drawing the proxy box.
-     * @param config Render target. Shaders default to the raymarch pair,
-     *        topology is forced to TRIANGLE_LIST, culling to FRONT, and
-     *        alpha blending is enabled.
+     * @param config Render target. Shaders default to the raymarch pair.
      *
-     * Depth writes are disabled while depth testing stays on, so the
-     * volume occludes correctly against opaque geometry without occluding
-     * itself or anything drawn after it.
+     * Culls front faces and disables depth writes: a proxy box that writes
+     * depth occludes every later volume at the same geometry.
      */
     void setup_rendering(const RenderConfig& config);
 
@@ -74,11 +62,6 @@ public:
     [[nodiscard]] const Kinesis::Lattice3D& get_lattice() const { return m_lattice; }
 
 private:
-    /**
-     * @brief Write the twelve triangles of the bounding box.
-     */
-    void write_box();
-
     Kinesis::Lattice3D m_lattice;
     RaymarchProcessor::FieldSource m_source;
     size_t m_field_bytes;
