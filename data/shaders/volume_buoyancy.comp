@@ -1,0 +1,57 @@
+#version 460
+
+#include "include/volume_common.glsl"
+
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 4) in;
+
+layout(set = 0, binding = 0, std430) readonly buffer TemperatureIn {
+    float temperature_in[];
+};
+layout(set = 0, binding = 1, std430) readonly buffer DensityIn {
+    float density_in[];
+};
+layout(set = 0, binding = 2, std430) readonly buffer VelocityIn {
+    vec4 velocity_in[];
+};
+layout(set = 0, binding = 3, std430) writeonly buffer VelocityOut {
+    vec4 velocity_out[];
+};
+
+layout(push_constant) uniform PC {
+    uint width;
+    uint height;
+    uint depth;
+    uint pad0;
+    float cell_size_x;
+    float cell_size_y;
+    float cell_size_z;
+    float time_step;
+    float direction_x;
+    float direction_y;
+    float direction_z;
+    float ambient;
+    float temperature_gain;
+    float density_gain;
+    float pad1;
+    float pad2;
+} pc;
+
+void main()
+{
+    uvec3 gid = gl_GlobalInvocationID;
+    uvec3 dims = uvec3(pc.width, pc.height, pc.depth);
+
+    if (!volume_in_bounds(gid, dims)) {
+        return;
+    }
+
+    uint index = volume_index(gid, dims);
+
+    float rise = pc.temperature_gain * (temperature_in[index] - pc.ambient);
+    float fall = pc.density_gain * density_in[index];
+
+    vec3 direction = vec3(pc.direction_x, pc.direction_y, pc.direction_z);
+    vec4 v = velocity_in[index];
+
+    velocity_out[index] = vec4(v.xyz + direction * ((rise - fall) * pc.time_step), v.w);
+}
