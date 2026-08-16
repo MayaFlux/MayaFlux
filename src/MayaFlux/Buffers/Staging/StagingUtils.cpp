@@ -126,12 +126,22 @@ void upload_back_buffer(
     size_t size,
     std::shared_ptr<VKBuffer>& staging)
 {
+    auto handle = upload_back_buffer_async(slot, data, size, staging);
+    resolve_transfer(handle);
+}
+
+TransferHandle upload_back_buffer_async(
+    const VKBufferResources::GenerationSlot& slot,
+    const void* data,
+    size_t size,
+    std::shared_ptr<VKBuffer>& staging)
+{
     if (!data || size == 0)
-        return;
+        return {};
 
     if (slot.mapped_ptr) {
         std::memcpy(slot.mapped_ptr, data, size);
-        return;
+        return {};
     }
 
     auto buffer_service = Registry::BackendRegistry::instance()
@@ -146,7 +156,7 @@ void upload_back_buffer(
             Journal::Component::Buffers,
             Journal::Context::BufferProcessing,
             std::source_location::current(),
-            "upload_back_buffer: BufferService unavailable");
+            "upload_back_buffer_async: BufferService unavailable");
     }
 
     if (!staging || staging->get_size_bytes() < size)
@@ -158,7 +168,7 @@ void upload_back_buffer(
             Journal::Component::Buffers,
             Journal::Context::BufferProcessing,
             std::source_location::current(),
-            "upload_back_buffer: staging buffer has no mapped pointer");
+            "upload_back_buffer_async: staging buffer has no mapped pointer");
     }
 
     std::memcpy(ptr, data, size);
@@ -176,11 +186,26 @@ void upload_back_buffer(
             Journal::Component::Buffers,
             Journal::Context::BufferProcessing,
             std::source_location::current(),
-            "upload_back_buffer: copy_buffer_fenced returned null");
+            "upload_back_buffer_async: copy_buffer_fenced returned null");
     }
 
-    buffer_service->wait_fenced(handle);
-    buffer_service->release_fenced(handle);
+    return handle;
+}
+
+void resolve_transfer(TransferHandle& handle)
+{
+    if (!handle)
+        return;
+
+    auto buffer_service = Registry::BackendRegistry::instance()
+                              .get_service<Registry::Service::BufferService>();
+
+    if (buffer_service && buffer_service->wait_fenced && buffer_service->release_fenced) {
+        buffer_service->wait_fenced(handle);
+        buffer_service->release_fenced(handle);
+    }
+
+    handle.reset();
 }
 
 void download_host_visible(const std::shared_ptr<VKBuffer>& source, const std::shared_ptr<VKBuffer>& target)

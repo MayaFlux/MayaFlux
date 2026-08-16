@@ -3,7 +3,6 @@
 #include "MayaFlux/Buffers/BufferProcessingChain.hpp"
 #include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
 #include "MayaFlux/Buffers/Shaders/SDFMeshProcessor.hpp"
-#include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
 #include "MayaFlux/Buffers/State/VolumeSurfaceProcessor.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Kakshya/NDData/VertexFormats.hpp"
@@ -30,6 +29,11 @@ VolumeGridBuffer::VolumeGridBuffer(
 {
     force_internal_usage(true);
     allocate_fields(fields);
+}
+
+VolumeGridBuffer::~VolumeGridBuffer()
+{
+    resolve_transfer(m_pending_transfer);
 }
 
 void VolumeGridBuffer::allocate_fields(const std::vector<FieldDecl>& decls)
@@ -343,8 +347,11 @@ void VolumeGridBuffer::seed_raw(const std::string& name, const void* data, size_
         return;
     }
 
+    resolve_transfer(m_pending_transfer);
+
     const uint32_t slot = field->read_is_a ? field->slot_a : field->slot_b;
-    upload_back_buffer(get_buffer_resources().back_buffers[slot], data, size, m_transfer_staging);
+    m_pending_transfer = upload_back_buffer_async(
+        get_buffer_resources().back_buffers[slot], data, size, m_transfer_staging);
 }
 
 void VolumeGridBuffer::accumulate(const std::string& name, const Kinesis::SpatialField& field)
@@ -429,6 +436,7 @@ void VolumeGridBuffer::read_field(const std::string& name, void* data, size_t si
     }
 
     const uint32_t slot = field->read_is_a ? field->slot_a : field->slot_b;
+    resolve_transfer(m_pending_transfer);
     download_back_buffer(get_buffer_resources().back_buffers[slot], data, size, m_transfer_staging);
 }
 

@@ -3,6 +3,8 @@
 #include "MayaFlux/Buffers/VKBuffer.hpp"
 #include "MayaFlux/Kinesis/Spatial/Lattice.hpp"
 
+#include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
+
 namespace MayaFlux::Buffers {
 
 class VolumeSurfaceProcessor;
@@ -124,7 +126,7 @@ public:
      * during buffer service teardown, as with RelaxationGridBuffer. This
      * class performs no manual Vulkan destruction.
      */
-    ~VolumeGridBuffer() override = default;
+    ~VolumeGridBuffer() override;
 
     /**
      * @brief Establish the processing chain without attaching any stage.
@@ -307,6 +309,8 @@ private:
     std::shared_ptr<VolumeSurfaceProcessor> m_surface_processor;
     std::shared_ptr<SDFMeshProcessor> m_mesh_processor;
     std::shared_ptr<VKBuffer> m_counter_buf; ///< Atomic vertex counter for the extraction stage.
+
+    TransferHandle m_pending_transfer; ///< In-flight seed upload, resolved before the next transfer.
 
     /**
      * @brief Bytes of vertex storage the extraction resolution requires.
