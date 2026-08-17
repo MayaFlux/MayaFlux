@@ -57,6 +57,24 @@ namespace MayaFlux::Kakshya {
     const DataVariant& v, Portal::Graphics::ImageFormat format, size_t elem_index);
 
 /**
+ * @brief Read one element as a normalised double, with optional range remapping.
+ *
+ * Same as read_normalized_at, but if @p range is provided, the value is
+ * linearly remapped from [range.min, range.max] to [0.0, 1.0]. Values
+ * outside the range are clamped to 0.0 or 1.0.
+ *
+ * @param v          Source variant.
+ * @param format     Pixel format governing the uint16 interpretation.
+ * @param range      Optional value range for remapping.
+ * @param elem_index Element index. Returns 0.0 when out of range.
+ */
+[[nodiscard]]
+MAYAFLUX_API double read_normalized_at(const DataVariant& v,
+    Portal::Graphics::ImageFormat format,
+    const std::optional<DataDimension::ValueRange>& range,
+    size_t elem_index);
+
+/**
  * @brief Write one element from a normalised double.
  *
  * Inverse of read_normalized_at, with clamping on the integer paths.
@@ -69,5 +87,24 @@ namespace MayaFlux::Kakshya {
  */
 MAYAFLUX_API void write_normalized_at(
     DataVariant& v, Portal::Graphics::ImageFormat format, size_t elem_index, double value);
+
+/**
+ * @brief Write one element from a normalised double, with optional range remapping.
+ *
+ * Inverse of read_normalized_at, with clamping on the integer paths.
+ * If @p range is provided, the value is linearly remapped from [0.0, 1.0]
+ * to [range.min, range.max] before writing. Out-of-range indices are ignored.
+ *
+ * @param v          Destination variant.
+ * @param format     Pixel format governing the uint16 interpretation.
+ * @param range      Optional value range for remapping.
+ * @param elem_index Element index.
+ * @param value      Normalised value.
+ */
+MAYAFLUX_API void write_normalized_at(DataVariant& v,
+    Portal::Graphics::ImageFormat format,
+    const std::optional<DataDimension::ValueRange>& range,
+    size_t elem_index,
+    double value);
 
 } // namespace MayaFlux::Kakshya

@@ -26,11 +26,17 @@ std::vector<DataDimension::Role> ContainerDataStructure::get_expected_dimension_
     case DataModality::IMAGE_COLOR:
         return { DataDimension::Role::SPATIAL_Y, DataDimension::Role::SPATIAL_X, DataDimension::Role::CHANNEL };
 
+    case DataModality::DEPTH_MAP:
+        return { DataDimension::Role::SPATIAL_Y, DataDimension::Role::SPATIAL_X, DataDimension::Role::DEPTH };
+
     case DataModality::VIDEO_GRAYSCALE:
         return { DataDimension::Role::TIME, DataDimension::Role::SPATIAL_Y, DataDimension::Role::SPATIAL_X };
 
     case DataModality::VIDEO_COLOR:
         return { DataDimension::Role::TIME, DataDimension::Role::SPATIAL_Y, DataDimension::Role::SPATIAL_X, DataDimension::Role::CHANNEL };
+
+    case DataModality::VIDEO_DEPTH:
+        return { DataDimension::Role::TIME, DataDimension::Role::SPATIAL_Y, DataDimension::Role::SPATIAL_X, DataDimension::Role::DEPTH };
 
     case DataModality::SPECTRAL_2D:
         return { DataDimension::Role::TIME, DataDimension::Role::FREQUENCY };
@@ -77,6 +83,8 @@ size_t ContainerDataStructure::get_expected_variant_count(const std::vector<Data
     case DataModality::VIDEO_COLOR:
         return get_channel_count(dimensions);
         // return get_frame_count(dimensions) * get_channel_count(dimensions);
+    case DataModality::VIDEO_DEPTH:
+        return get_component_count(dimensions);
 
     default:
         return 1;
@@ -99,6 +107,7 @@ uint64_t ContainerDataStructure::get_variant_size(const std::vector<DataDimensio
             return get_pixels_count(dimensions);
 
         case DataModality::VIDEO_COLOR:
+        case DataModality::VIDEO_DEPTH:
             return get_frame_count(dimensions) * get_pixels_count(dimensions);
 
         default:
@@ -193,6 +202,17 @@ uint64_t ContainerDataStructure::get_samples_count(const std::vector<DataDimensi
     }
 
     return time_size * channel_size;
+}
+
+uint64_t ContainerDataStructure::get_component_count(const std::vector<DataDimension>& dimensions)
+{
+    for (const auto& dim : dimensions) {
+        if (dim.role == DataDimension::Role::CHANNEL
+            || dim.role == DataDimension::Role::DEPTH) {
+            return dim.size;
+        }
+    }
+    return 1;
 }
 
 uint64_t ContainerDataStructure::get_samples_count_per_channel(const std::vector<DataDimension>& dimensions)

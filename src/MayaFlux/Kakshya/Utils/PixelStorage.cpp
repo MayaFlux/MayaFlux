@@ -2,6 +2,65 @@
 
 namespace MayaFlux::Kakshya {
 
+namespace {
+
+    float decode_half(uint16_t h)
+    {
+        const uint32_t sign = static_cast<uint32_t>(h & 0x8000U) << 16;
+        const uint32_t exp = (h >> 10) & 0x1FU;
+        const uint32_t mant = h & 0x3FFU;
+
+        uint32_t bits {};
+
+        if (exp == 0) {
+            if (mant == 0) {
+                bits = sign;
+            } else {
+                uint32_t e = 0;
+                uint32_t m = mant;
+                while ((m & 0x400U) == 0) {
+                    m <<= 1;
+                    ++e;
+                }
+                m &= 0x3FFU;
+                bits = sign | ((113U - e) << 23) | (m << 13);
+            }
+        } else if (exp == 0x1FU) {
+            bits = sign | 0x7F800000U | (mant << 13);
+        } else {
+            bits = sign | ((exp - 15U + 127U) << 23) | (mant << 13);
+        }
+
+        float out {};
+        std::memcpy(&out, &bits, sizeof(out));
+        return out;
+    }
+
+    uint16_t encode_half(float f)
+    {
+        uint32_t bits {};
+        std::memcpy(&bits, &f, sizeof(bits));
+
+        const auto sign = static_cast<uint16_t>((bits >> 16) & 0x8000U);
+        const int32_t exp = static_cast<int32_t>((bits >> 23) & 0xFFU) - 127 + 15;
+        uint32_t mant = bits & 0x7FFFFFU;
+
+        if (exp >= 0x1F)
+            return static_cast<uint16_t>(sign | 0x7C00U);
+
+        if (exp <= 0) {
+            if (exp < -10)
+                return sign;
+            mant |= 0x800000U;
+            return static_cast<uint16_t>(sign | (mant >> static_cast<uint32_t>(14 - exp)));
+        }
+
+        return static_cast<uint16_t>(
+            sign | (static_cast<uint32_t>(exp) << 10) | (mant >> 13));
+    }
+
+} // namespace
+
 using Portal::Graphics::ImageFormat;
 
 size_t storage_element_size(ImageFormat format)
@@ -66,21 +125,50 @@ DataVariant make_empty_storage(ImageFormat format, size_t element_count)
     }
 }
 
-double read_normalized_at(const DataVariant& v, ImageFormat format, size_t elem_index)
+double read_normalized_at(const DataVariant& v,
+    ImageFormat format,
+    const std::optional<DataDimension::ValueRange>& range,
+    size_t elem_index)
 {
     return std::visit(
-        [format, elem_index](const auto& vec) -> double {
+        [&](const auto& vec) -> double {
             using T = typename std::decay_t<decltype(vec)>::value_type;
-            if (elem_index >= vec.size())
-                return 0.0;
-            if constexpr (std::is_same_v<T, uint8_t>) {
-                return static_cast<double>(vec[elem_index]) / 255.0;
-            } else if constexpr (std::is_same_v<T, uint16_t>) {
-                return is_float_format(format)
-                    ? static_cast<double>(vec[elem_index])
-                    : static_cast<double>(vec[elem_index]) / 65535.0;
-            } else if constexpr (std::is_same_v<T, float>) {
-                return static_cast<double>(vec[elem_index]);
+
+            if constexpr (std::is_same_v<T, uint8_t>
+                || std::is_same_v<T, uint16_t>
+                || std::is_same_v<T, float>) {
+
+                if (elem_index >= vec.size())
+                    return 0.0;
+
+                double raw {};
+                double type_max = 1.0;
+
+                if constexpr (std::is_same_v<T, uint8_t>) {
+                    raw = static_cast<double>(vec[elem_index]);
+                    type_max = 255.0;
+                } else if constexpr (std::is_same_v<T, uint16_t>) {
+                    if (is_float_format(format)) {
+                        raw = static_cast<double>(decode_half(vec[elem_index]));
+                    } else {
+                        raw = static_cast<double>(vec[elem_index]);
+                        type_max = 65535.0;
+                    }
+                } else {
+                    raw = static_cast<double>(vec[elem_index]);
+                }
+
+                if (!range)
+                    return raw / type_max;
+
+                if (range->invalid && raw == *range->invalid)
+                    return std::numeric_limits<double>::quiet_NaN();
+
+                const double span = range->max - range->min;
+                if (span <= 0.0)
+                    return 0.0;
+
+                return std::clamp((raw - range->min) / span, 0.0, 1.0);
             } else {
                 return 0.0;
             }
@@ -88,28 +176,69 @@ double read_normalized_at(const DataVariant& v, ImageFormat format, size_t elem_
         v);
 }
 
-void write_normalized_at(DataVariant& v, ImageFormat format, size_t elem_index, double value)
+double read_normalized_at(const DataVariant& v, ImageFormat format, size_t elem_index)
+{
+    return read_normalized_at(v, format, std::nullopt, elem_index);
+}
+
+void write_normalized_at(DataVariant& v,
+    ImageFormat format,
+    const std::optional<DataDimension::ValueRange>& range,
+    size_t elem_index,
+    double value)
 {
     std::visit(
-        [format, elem_index, value](auto& vec) {
+        [&](auto& vec) {
             using T = typename std::decay_t<decltype(vec)>::value_type;
-            if (elem_index >= vec.size())
-                return;
-            if constexpr (std::is_same_v<T, uint8_t>) {
-                vec[elem_index] = static_cast<uint8_t>(
-                    std::clamp(value * 255.0, 0.0, 255.0));
-            } else if constexpr (std::is_same_v<T, uint16_t>) {
-                if (is_float_format(format)) {
-                    vec[elem_index] = static_cast<uint16_t>(value);
+
+            if constexpr (std::is_same_v<T, uint8_t>
+                || std::is_same_v<T, uint16_t>
+                || std::is_same_v<T, float>) {
+
+                if (elem_index >= vec.size())
+                    return;
+
+                double raw {};
+
+                if (range) {
+                    if (std::isnan(value)) {
+                        if (!range->invalid)
+                            return;
+                        raw = *range->invalid;
+                    } else {
+                        raw = range->min
+                            + std::clamp(value, 0.0, 1.0) * (range->max - range->min);
+                    }
+                } else if constexpr (std::is_same_v<T, uint8_t>) {
+                    raw = std::clamp(value * 255.0, 0.0, 255.0);
+                } else if constexpr (std::is_same_v<T, uint16_t>) {
+                    raw = is_float_format(format)
+                        ? value
+                        : std::clamp(value * 65535.0, 0.0, 65535.0);
                 } else {
-                    vec[elem_index] = static_cast<uint16_t>(
-                        std::clamp(value * 65535.0, 0.0, 65535.0));
+                    raw = value;
                 }
-            } else if constexpr (std::is_same_v<T, float>) {
-                vec[elem_index] = static_cast<float>(value);
+
+                if constexpr (std::is_same_v<T, uint8_t>) {
+                    vec[elem_index] = static_cast<uint8_t>(std::clamp(raw, 0.0, 255.0));
+                } else if constexpr (std::is_same_v<T, uint16_t>) {
+                    if (is_float_format(format)) {
+                        vec[elem_index] = encode_half(static_cast<float>(raw));
+                    } else {
+                        vec[elem_index] = static_cast<uint16_t>(std::clamp(raw, 0.0, 65535.0));
+                    }
+                } else {
+                    vec[elem_index] = static_cast<float>(raw);
+                }
             }
         },
         v);
 }
 
+void write_normalized_at(DataVariant& v, ImageFormat format,
+    size_t elem_index, double value)
+{
+    write_normalized_at(v, format, std::nullopt, elem_index, value);
 }
+
+} // namespace MayaFlux::Kakshya

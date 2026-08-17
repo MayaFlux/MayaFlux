@@ -18,16 +18,6 @@ namespace MayaFlux::Kakshya {
 using Portal::Graphics::ImageFormat;
 using Portal::Graphics::TextureLoom;
 
-namespace {
-
-    using Portal::Graphics::ImageFormat;
-
-    enum class StorageKind : uint8_t { U8,
-        U16,
-        F32 };
-
-} // namespace
-
 //=============================================================================
 // Construction
 //=============================================================================

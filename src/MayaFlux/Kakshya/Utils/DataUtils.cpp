@@ -164,7 +164,7 @@ DataModality detect_data_modality(const std::vector<DataDimension>& dimensions)
         return DataModality::UNKNOWN;
     }
 
-    size_t time_dims = 0, spatial_dims = 0, channel_dims = 0, frequency_dims = 0, custom_dims = 0;
+    size_t time_dims = 0, spatial_dims = 0, channel_dims = 0, frequency_dims = 0, depth_dims = 0, custom_dims = 0;
     size_t total_spatial_elements = 1;
     size_t total_channels = 0;
 
@@ -212,6 +212,9 @@ DataModality detect_data_modality(const std::vector<DataDimension>& dimensions)
         case DataDimension::Role::FREQUENCY:
             frequency_dims++;
             break;
+        case DataDimension::Role::DEPTH:
+            depth_dims++;
+            break;
         case DataDimension::Role::CUSTOM:
         default:
             custom_dims++;
@@ -250,6 +253,12 @@ DataModality detect_data_modality(const std::vector<DataDimension>& dimensions)
         if (spatial_dims == 3) {
             return DataModality::VOLUMETRIC_3D;
         }
+    }
+
+    if (depth_dims == 1 && spatial_dims == 2) {
+        return time_dims >= 1
+            ? DataModality::VIDEO_DEPTH
+            : DataModality::DEPTH_MAP;
     }
 
     if (time_dims >= 1 && spatial_dims >= 2) {
