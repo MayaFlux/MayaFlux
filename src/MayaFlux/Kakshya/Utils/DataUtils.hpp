@@ -594,6 +594,22 @@ inline std::span<double> convert_variant_to_double(DataVariant& data,
     const DataVariant& variant, std::vector<float>& storage);
 
 /**
+ * @brief Get a pointer to the raw bytes of a DataVariant and its size.
+ *
+ * @param v DataVariant to inspect.
+ * @return Pair of (pointer, size in bytes).
+ */
+MAYAFLUX_API std::pair<const uint8_t*, size_t> variant_bytes(const DataVariant& v);
+
+/**
+ * @brief Get a mutable pointer to the raw bytes of a DataVariant and its size.
+ *
+ * @param v DataVariant to inspect.
+ * @return Pair of (mutable pointer, size in bytes).
+ */
+MAYAFLUX_API std::pair<uint8_t*, size_t> variant_bytes_mutable(DataVariant& v);
+
+/**
  * @brief Convert a normalised float span back to uint8_t pixels.
  *
  * Multiplies each value by 255 and clamps to [0, 255]. Output size must

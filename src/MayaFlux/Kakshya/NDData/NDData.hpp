@@ -244,6 +244,7 @@ struct MAYAFLUX_API DataDimension {
         BITANGENT, ///< Bitangent vectors
         UV, ///< Texture coordinates
         COLOR, ///< Color data (RGB/RGBA)
+        DEPTH, ///< Distance from the observation point (depth, disparity, range)
         INDEX, ///< Index buffer data
         MIP_LEVEL, ///< Mipmap levels
         CUSTOM ///< User-defined or application-specific
