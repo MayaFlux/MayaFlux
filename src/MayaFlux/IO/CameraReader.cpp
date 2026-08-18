@@ -133,10 +133,16 @@ CameraReader::create_container() const
         return nullptr;
     }
 
+    const auto fmt = to_image_format(m_requested_pixel_format);
+    if (!fmt) {
+        m_last_error = "Requested pixel format has no ImageFormat equivalent";
+        return nullptr;
+    }
+
     return std::make_shared<Kakshya::CameraContainer>(
         m_video->out_width,
         m_video->out_height,
-        4,
+        *fmt,
         m_video->frame_rate);
 }
 

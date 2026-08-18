@@ -183,6 +183,15 @@ private:
     void start_decode_thread();
     void stop_decode_thread();
     void decode_thread_func();
+
+    /**
+     * @brief Pixel format requested at open() time, as an AVPixelFormat int.
+     *
+     * Negative selects RGBA, matching VideoStreamContext::setup_scaler's
+     * default. Read by create_container(), which runs before the scaler is
+     * built and therefore cannot consult the negotiated format.
+     */
+    int m_requested_pixel_format { -1 };
 };
 
 } // namespace MayaFlux::IO
