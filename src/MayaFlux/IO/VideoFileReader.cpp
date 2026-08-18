@@ -83,7 +83,7 @@ bool VideoFileReader::open(const std::string& filepath, FileReadOptions options)
     }
 
     auto video = std::make_shared<VideoStreamContext>();
-    if (!video->open(*demux, m_target_width, m_target_height)) {
+    if (!video->open(*demux, m_target_width, m_target_height, m_target_format)) {
         set_error(video->last_error());
         return false;
     }
