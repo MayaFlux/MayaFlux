@@ -3,15 +3,15 @@
 namespace MayaFlux::Kakshya {
 
 VideoFileContainer::VideoFileContainer()
-    : VideoStreamContainer(0, 0, 4, 0.0)
+    : VideoStreamContainer(0, 0, Portal::Graphics::ImageFormat::RGBA8, 0.0)
 {
 }
 
 VideoFileContainer::VideoFileContainer(uint32_t width,
     uint32_t height,
-    uint32_t channels,
+    Portal::Graphics::ImageFormat format,
     double frame_rate)
-    : VideoStreamContainer(width, height, channels, frame_rate)
+    : VideoStreamContainer(width, height, format, frame_rate)
 {
 }
 

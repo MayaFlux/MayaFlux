@@ -38,14 +38,14 @@ namespace MayaFlux::Kakshya {
 class MAYAFLUX_API CameraContainer : public VideoStreamContainer {
 public:
     /**
-     * @brief Construct a CameraContainer with specified resolution.
+     * @brief Construct a CameraContainer with specified resolution and format.
      * @param width      Frame width in pixels.
      * @param height     Frame height in pixels.
-     * @param channels   Colour channels per pixel (default 4 for RGBA).
+     * @param format     Pixel format (determines channels and storage type).
      * @param frame_rate Device frame rate in fps.
      */
     CameraContainer(uint32_t width, uint32_t height,
-        uint32_t channels = 4, double frame_rate = 30.0);
+        Portal::Graphics::ImageFormat format, double frame_rate = 30.0);
 
     ~CameraContainer() override = default;
 

@@ -2,6 +2,8 @@
 
 #include "MayaFlux/Kakshya/StreamContainer.hpp"
 
+#include "MayaFlux/Kakshya/Utils/PixelStorage.hpp"
+
 #include "MayaFlux/Transitive/Memory/RingBuffer.hpp"
 #include "MayaFlux/Transitive/Memory/SeqLock.hpp"
 
@@ -20,16 +22,16 @@ namespace MayaFlux::Kakshya {
  * 1. A standalone streaming container for real-time video processing
  * 2. A base class for specialized containers like VideoFileContainer
  *
- * Data is stored as uint8_t pixels in RGBA interleaved layout (matching
- * Vulkan VK_FORMAT_R8G8B8A8_UNORM and the TextureBuffer pipeline).
- * Each frame is width * height * channels bytes. All frames are stored
- * contiguously in a single DataVariant.
+ * Data is stored in the DataVariant alternative matching the container's
+ * ImageFormat: uint8_t for 8-bit formats, uint16_t for 16-bit, float for
+ * 32-bit. Each frame is width * height * bytes_per_pixel bytes. All frames
+ * are stored contiguously in a single DataVariant.
  *
- * Dimensions follow VIDEO_COLOR convention:
+ * Dimensions follow the format's modality:
  *   dims[0] → TIME (frame count)
  *   dims[1] → SPATIAL_Y (height)
  *   dims[2] → SPATIAL_X (width)
- *   dims[3] → CHANNEL (colour channels, typically 4 for RGBA)
+ *   dims[3] → CHANNEL, or DEPTH for range formats (component count)
  *
  * Reader model follows WindowContainer's pattern: a simple atomic reader
  * count rather than per-dimension/per-channel tracking. Video frames are
@@ -45,12 +47,14 @@ public:
      * @brief Construct a VideoStreamContainer with specified parameters.
      * @param width       Frame width in pixels.
      * @param height      Frame height in pixels.
-     * @param channels    Colour channels per pixel (default 4 for RGBA).
+     * @param format      Pixel format; determines channel count, bytes per
+     *                    pixel, the DataVariant element type, and whether
+     *                    the structure is VIDEO_COLOR or VIDEO_DEPTH.
      * @param frame_rate  Temporal rate in frames per second.
      */
     VideoStreamContainer(uint32_t width = 0,
         uint32_t height = 0,
-        uint32_t channels = 4,
+        Portal::Graphics::ImageFormat format = Portal::Graphics::ImageFormat::RGBA8,
         double frame_rate = 0.0);
 
     ~VideoStreamContainer() override = default;
@@ -73,7 +77,7 @@ public:
     std::vector<DataVariant> get_region_group_data(const RegionGroup& group) const override;
     std::vector<DataVariant> get_segments_data(const std::vector<RegionSegment>& segment) const override;
 
-    [[nodiscard]] std::type_index value_element_type() const override { return typeid(uint8_t); }
+    [[nodiscard]] std::type_index value_element_type() const override;
 
     [[nodiscard]] uint64_t coordinates_to_linear_index(const std::vector<uint64_t>& coordinates) const override;
     [[nodiscard]] std::vector<uint64_t> linear_index_to_coordinates(uint64_t linear_index) const override;
@@ -103,7 +107,7 @@ public:
      * @param ring_capacity Number of frame slots (must be power of 2).
      * @param width         Frame width in pixels.
      * @param height        Frame height in pixels.
-     * @param channels      Colour channels per pixel.
+     * @param format        Pixel format for the ring's frames.
      * @param frame_rate    Frame rate in fps.
      * @param refill_threshold Frames of look-ahead below which refill callback fires.
      * @param reader_id The current class ID registered at the stream/file-read source
@@ -112,7 +116,7 @@ public:
         uint32_t ring_capacity,
         uint32_t width,
         uint32_t height,
-        uint32_t channels,
+        Portal::Graphics::ImageFormat format,
         double frame_rate,
         uint32_t refill_threshold,
         uint64_t reader_id = 0);
@@ -310,18 +314,32 @@ public:
 
     [[nodiscard]] uint32_t get_width() const { return m_width; }
     [[nodiscard]] uint32_t get_height() const { return m_height; }
-    [[nodiscard]] uint32_t get_channels() const { return m_channels; }
     [[nodiscard]] double get_frame_rate() const { return m_frame_rate; }
 
+    /** @brief Pixel format governing storage type, channel count, and modality. */
+    [[nodiscard]] Portal::Graphics::ImageFormat get_format() const { return m_format; }
+
+    /** @brief Component channels per pixel. Not bytes per pixel. */
+    [[nodiscard]] uint32_t get_channels() const { return m_channels; }
+
+    /** @brief Bytes occupied by one pixel across all channels. */
+    [[nodiscard]] size_t get_bytes_per_pixel() const { return m_bpp; }
+
+    /** @brief Elements in one frame: width * height * channels. */
+    [[nodiscard]] size_t get_frame_element_count() const;
+
     /**
-     * @brief Get raw pixel data for a single frame as uint8_t span.
+     * @brief Get raw pixel data for a single frame as a byte span.
      * @param frame_index Zero-based frame index.
      * @return Span of pixel bytes for the frame, empty if out of range.
      */
     [[nodiscard]] std::span<const uint8_t> get_frame_pixels(uint64_t frame_index) const;
 
     /**
-     * @brief Get the total byte size of one frame (width * height * channels).
+     * @brief Total byte size of one frame: width * height * bytes_per_pixel.
+     *
+     * Not width * height * channels. Those agree only for formats with one
+     * byte per component. Use get_frame_element_count() for element counts.
      */
     [[nodiscard]] size_t get_frame_byte_size() const;
 
@@ -332,6 +350,8 @@ protected:
     uint32_t m_width = 0;
     uint32_t m_height = 0;
     uint32_t m_channels = 4;
+    size_t m_bpp = 4;
+    Portal::Graphics::ImageFormat m_format = Portal::Graphics::ImageFormat::RGBA8;
     double m_frame_rate = 0.0;
     uint64_t m_num_frames = 0;
 
@@ -396,7 +416,7 @@ protected:
 
     [[nodiscard]] DataSpanVariant get_frame_span_impl(uint64_t frame_index) const override
     {
-        return { get_frame_typed(frame_index) };
+        return get_frame_typed(frame_index);
     }
 
     void get_frames_impl(
@@ -413,10 +433,18 @@ protected:
         const void* in, const std::type_info& type) override;
 
 private:
-    [[nodiscard]] std::span<const uint8_t> get_frame_typed(uint64_t frame_index) const
-    {
-        return get_frame_pixels(frame_index);
-    }
+    [[nodiscard]] DataSpanVariant get_frame_typed(uint64_t frame_index) const;
+
+    template <typename T>
+    void get_frames_typed_as(std::span<T> output, uint64_t start_frame, uint64_t num_frames) const;
+
+    /**
+     * @brief Value range declared on the component dimension, if any.
+     *
+     * Resolves DEPTH first, then CHANNEL, matching the two roles
+     * setup_dimensions() emits for the component axis.
+     */
+    [[nodiscard]] std::optional<DataDimension::ValueRange> component_range() const;
 
     void get_frames_typed(std::span<uint8_t> output, uint64_t start_frame, uint64_t num_frames) const;
 
