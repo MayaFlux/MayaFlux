@@ -1,5 +1,7 @@
 #include "PixelStorage.hpp"
 
+#include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
+
 namespace MayaFlux::Kakshya {
 
 namespace {
@@ -239,6 +241,27 @@ void write_normalized_at(DataVariant& v, ImageFormat format,
     size_t elem_index, double value)
 {
     write_normalized_at(v, format, std::nullopt, elem_index, value);
+}
+
+bool format_has_variant_storage(ImageFormat format)
+{
+    const uint32_t channels = Portal::Graphics::TextureLoom::get_channel_count(format);
+    return channels > 0
+        && storage_element_size(format) * channels
+        == Portal::Graphics::TextureLoom::get_bytes_per_pixel(format);
+}
+
+bool is_depth_format(ImageFormat format)
+{
+    switch (format) {
+    case ImageFormat::DEPTH16:
+    case ImageFormat::DEPTH24:
+    case ImageFormat::DEPTH32F:
+    case ImageFormat::DEPTH24_STENCIL8:
+        return true;
+    default:
+        return false;
+    }
 }
 
 } // namespace MayaFlux::Kakshya

@@ -107,4 +107,29 @@ MAYAFLUX_API void write_normalized_at(DataVariant& v,
     size_t elem_index,
     double value);
 
+/**
+ * @brief True when a format decomposes into whole DataVariant elements.
+ *
+ * False for DEPTH24 and DEPTH24_STENCIL8: both occupy 4 bytes per pixel in
+ * a packed layout that is not a whole number of uint8, uint16, or float
+ * elements. A container allocating storage_element_size * channels * pixels
+ * for either will not match what a bytes_per_pixel-sized write path produces.
+ *
+ * Derived from the format tables rather than enumerated, so it stays
+ * correct if a format is added.
+ *
+ * @param format Pixel format.
+ */
+[[nodiscard]] MAYAFLUX_API bool format_has_variant_storage(Portal::Graphics::ImageFormat format);
+
+/**
+ * @brief True when the format's values are range measurements rather than colour.
+ *
+ * Governs whether a container declares VIDEO_COLOR or VIDEO_DEPTH, and
+ * therefore whether its component axis carries Role::CHANNEL or Role::DEPTH.
+ *
+ * @param format Pixel format.
+ */
+[[nodiscard]] MAYAFLUX_API bool is_depth_format(Portal::Graphics::ImageFormat format);
+
 } // namespace MayaFlux::Kakshya
