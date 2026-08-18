@@ -481,4 +481,27 @@ std::vector<FileRegion> VideoStreamContext::extract_keyframe_regions(
     return regions;
 }
 
+std::optional<Portal::Graphics::ImageFormat> to_image_format(int av_pixel_format)
+{
+    using Portal::Graphics::ImageFormat;
+
+    if (av_pixel_format < 0)
+        return ImageFormat::RGBA8;
+
+    switch (static_cast<AVPixelFormat>(av_pixel_format)) {
+    case AV_PIX_FMT_RGBA:
+        return ImageFormat::RGBA8;
+    case AV_PIX_FMT_BGRA:
+        return ImageFormat::BGRA8;
+    case AV_PIX_FMT_RGB24:
+        return ImageFormat::RGB8;
+    case AV_PIX_FMT_GRAY8:
+        return ImageFormat::R8;
+    case AV_PIX_FMT_GRAY16LE:
+        return ImageFormat::R16;
+    default:
+        return std::nullopt;
+    }
+}
+
 } // namespace MayaFlux::IO
