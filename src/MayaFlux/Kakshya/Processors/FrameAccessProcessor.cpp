@@ -93,10 +93,13 @@ void FrameAccessProcessor::store_metadata(const std::shared_ptr<SignalSourceCont
 void FrameAccessProcessor::validate()
 {
     if (m_structure.modality != DataModality::VIDEO_COLOR
-        && m_structure.modality != DataModality::IMAGE_COLOR) {
+        && m_structure.modality != DataModality::IMAGE_COLOR
+        && m_structure.modality != DataModality::VIDEO_DEPTH
+        && m_structure.modality != DataModality::DEPTH_MAP) {
         error<std::runtime_error>(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
             std::source_location::current(),
-            "FrameAccessProcessor requires VIDEO_COLOR or IMAGE_COLOR modality, got {}",
+            "FrameAccessProcessor requires a frame-structured modality "
+            "(VIDEO_COLOR, IMAGE_COLOR, VIDEO_DEPTH, DEPTH_MAP), got {}",
             static_cast<int>(m_structure.modality));
     }
 
