@@ -217,6 +217,29 @@ namespace {
         return result;
     }
 
+    /**
+     * @brief Global item state, saved and restored by Push and Pop.
+     */
+    struct GlobalState {
+        uint16_t usage_page {};
+        int32_t logical_min {};
+        int32_t logical_max {};
+        uint32_t report_size {};
+        uint32_t report_count {};
+        uint8_t report_id {};
+    };
+
+    /**
+     * @brief A local usage carrying its own page.
+     *
+     * Extended 32-bit usages embed a page that applies only to that usage,
+     * so the page cannot be folded into the global state.
+     */
+    struct LocalUsage {
+        uint16_t page {};
+        uint16_t usage {};
+    };
+
 } // namespace
 
 // =============================================================================
@@ -225,22 +248,26 @@ namespace {
 
 TabletLayout TabletBackend::parse_descriptor(std::span<const uint8_t> descriptor)
 {
+
     TabletLayout layout;
 
-    uint16_t usage_page = 0;
-    int32_t logical_min = 0;
-    int32_t logical_max = 0;
-    uint32_t report_size = 0;
-    uint32_t report_count = 0;
-    uint8_t report_id = 0;
+    GlobalState global;
+    std::vector<GlobalState> global_stack;
 
-    std::vector<uint16_t> local_usages;
+    std::vector<LocalUsage> local_usages;
     uint32_t usage_min = 0;
     uint32_t usage_max = 0;
     bool has_usage_range = false;
 
     std::unordered_map<uint8_t, uint32_t> bit_cursor;
     bool digitizer_seen = false;
+
+    const auto clear_locals = [&]() {
+        local_usages.clear();
+        usage_min = 0;
+        usage_max = 0;
+        has_usage_range = false;
+    };
 
     size_t i = 0;
     while (i < descriptor.size()) {
@@ -269,30 +296,47 @@ TabletLayout TabletBackend::parse_descriptor(std::span<const uint8_t> descriptor
         if (type == 1) {
             switch (tag) {
             case 0x0:
-                usage_page = static_cast<uint16_t>(item_unsigned(payload, size));
-                if (usage_page == k_page_digitizer)
+                global.usage_page = static_cast<uint16_t>(item_unsigned(payload, size));
+                if (global.usage_page == k_page_digitizer)
                     digitizer_seen = true;
                 break;
+
             case 0x1:
-                logical_min = item_signed(payload, size);
+                global.logical_min = item_signed(payload, size);
                 break;
-            case 0x2:
-                logical_max = (size == 4)
-                    ? item_signed(payload, size)
-                    : static_cast<int32_t>(item_unsigned(payload, size));
-                if (logical_min < 0)
-                    logical_max = item_signed(payload, size);
+
+            case 0x2: {
+                const int32_t as_signed = item_signed(payload, size);
+                global.logical_max = (global.logical_min >= 0 && as_signed < 0)
+                    ? static_cast<int32_t>(item_unsigned(payload, size))
+                    : as_signed;
                 break;
+            }
+
             case 0x7:
-                report_size = item_unsigned(payload, size);
+                global.report_size = item_unsigned(payload, size);
                 break;
+
             case 0x8:
-                report_id = static_cast<uint8_t>(item_unsigned(payload, size));
+                global.report_id = static_cast<uint8_t>(item_unsigned(payload, size));
                 layout.uses_report_ids = true;
                 break;
+
             case 0x9:
-                report_count = item_unsigned(payload, size);
+                global.report_count = item_unsigned(payload, size);
                 break;
+
+            case 0xA:
+                global_stack.push_back(global);
+                break;
+
+            case 0xB:
+                if (!global_stack.empty()) {
+                    global = global_stack.back();
+                    global_stack.pop_back();
+                }
+                break;
+
             default:
                 break;
             }
@@ -304,23 +348,26 @@ TabletLayout TabletBackend::parse_descriptor(std::span<const uint8_t> descriptor
             case 0x0:
                 if (size == 4) {
                     const uint32_t full = item_unsigned(payload, size);
-                    usage_page = static_cast<uint16_t>(full >> 16U);
-                    local_usages.push_back(static_cast<uint16_t>(full & 0xFFFFU));
-                    if (usage_page == k_page_digitizer)
+                    const auto page = static_cast<uint16_t>(full >> 16U);
+                    local_usages.push_back({ .page = page, .usage = static_cast<uint16_t>(full & 0xFFFFU) });
+                    if (page == k_page_digitizer)
                         digitizer_seen = true;
                 } else {
-                    local_usages.push_back(
-                        static_cast<uint16_t>(item_unsigned(payload, size)));
+                    local_usages.push_back({ .page = global.usage_page,
+                        .usage = static_cast<uint16_t>(item_unsigned(payload, size)) });
                 }
                 break;
+
             case 0x1:
                 usage_min = item_unsigned(payload, size);
                 has_usage_range = true;
                 break;
+
             case 0x2:
                 usage_max = item_unsigned(payload, size);
                 has_usage_range = true;
                 break;
+
             default:
                 break;
             }
@@ -331,49 +378,48 @@ TabletLayout TabletBackend::parse_descriptor(std::span<const uint8_t> descriptor
             continue;
         }
 
-        if (tag == 0xA || tag == 0xC) {
-            local_usages.clear();
-            has_usage_range = false;
-            continue;
-        }
-
         if (tag != 0x8) {
-            local_usages.clear();
-            has_usage_range = false;
+            clear_locals();
             continue;
         }
 
         const uint32_t flags = item_unsigned(payload, size);
         const bool is_constant = (flags & 0x01U) != 0U;
 
-        uint32_t& cursor = bit_cursor[report_id];
+        if (global.report_size == 0 || global.report_count == 0) {
+            clear_locals();
+            continue;
+        }
 
-        for (uint32_t index = 0; index < report_count; ++index) {
-            uint16_t usage = 0;
+        uint32_t& cursor = bit_cursor[global.report_id];
+
+        for (uint32_t index = 0; index < global.report_count; ++index) {
+            LocalUsage current { .page = global.usage_page, .usage = 0 };
+
             if (!is_constant) {
                 if (index < local_usages.size()) {
-                    usage = local_usages[index];
+                    current = local_usages[index];
                 } else if (!local_usages.empty()) {
-                    usage = local_usages.back();
+                    current = local_usages.back();
                 } else if (has_usage_range) {
-                    usage = static_cast<uint16_t>(
+                    current.usage = static_cast<uint16_t>(
                         std::min(usage_min + index, usage_max));
                 }
             }
 
             const size_t slot = is_constant
                 ? k_slot_none
-                : slot_for_usage(usage_page, usage);
+                : slot_for_usage(current.page, current.usage);
 
             if (slot != k_slot_none) {
                 TabletField field;
-                field.report_id = report_id;
-                field.usage_page = usage_page;
-                field.usage = usage;
+                field.report_id = global.report_id;
+                field.usage_page = current.page;
+                field.usage = current.usage;
                 field.bit_offset = cursor;
-                field.bit_size = report_size;
-                field.logical_min = logical_min;
-                field.logical_max = logical_max;
+                field.bit_size = global.report_size;
+                field.logical_min = global.logical_min;
+                field.logical_max = global.logical_max;
                 field.slot = slot;
                 layout.fields.push_back(field);
 
@@ -385,11 +431,10 @@ TabletLayout TabletBackend::parse_descriptor(std::span<const uint8_t> descriptor
                     layout.has_serial = true;
             }
 
-            cursor += report_size;
+            cursor += global.report_size;
         }
 
-        local_usages.clear();
-        has_usage_range = false;
+        clear_locals();
     }
 
     if (!digitizer_seen)
