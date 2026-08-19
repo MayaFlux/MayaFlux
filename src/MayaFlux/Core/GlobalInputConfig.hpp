@@ -135,6 +135,25 @@ struct MAYAFLUX_API HIDBackendInfo {
     }
 };
 
+/**
+ * @brief Tablet backend configuration
+ */
+struct MAYAFLUX_API TabletBackendInfo {
+    bool enabled { false }; ///< Enable tablet backend
+    size_t read_buffer_size { 256 }; ///< Per-device read buffer size
+    int poll_timeout_ms { 2 }; ///< Timeout for hid_read_timeout
+    bool split_eraser { true }; ///< Report the eraser end as its own tool
+
+    static constexpr auto describe()
+    {
+        return std::make_tuple(
+            Reflect::member("enabled", &TabletBackendInfo::enabled),
+            Reflect::member("read_buffer_size", &TabletBackendInfo::read_buffer_size),
+            Reflect::member("poll_timeout_ms", &TabletBackendInfo::poll_timeout_ms),
+            Reflect::member("split_eraser", &TabletBackendInfo::split_eraser));
+    }
+};
+
 // ─────────────────────────────────────────────────────────────────────────────
 // MIDI Configuration (Future)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -269,6 +288,7 @@ struct MAYAFLUX_API GlobalInputConfig {
     MIDIBackendInfo midi; ///< MIDI backend configuration
     OSCConfigInfo osc; ///< OSC backend configuration
     SerialBackendInfo serial; ///< Serial backend configuration
+    TabletBackendInfo tablet; ///< Tablet backend configuration
 
     // ─────────────────────────────────────────────────────────────────────
     // Convenience Factory Methods
@@ -320,11 +340,22 @@ struct MAYAFLUX_API GlobalInputConfig {
     }
 
     /**
+     * @brief Create config with the tablet backend enabled
+     */
+    static GlobalInputConfig with_tablet()
+    {
+        GlobalInputConfig config;
+        config.tablet.enabled = true;
+        return config;
+    }
+
+    /**
      * @brief Check if any backend is enabled
      */
     [[nodiscard]] bool any_enabled() const
     {
-        return hid.enabled || midi.enabled || osc.enabled || serial.enabled;
+        return hid.enabled || midi.enabled || osc.enabled || serial.enabled
+            || tablet.enabled;
     }
 
     static constexpr auto describe()
@@ -333,7 +364,8 @@ struct MAYAFLUX_API GlobalInputConfig {
             Reflect::member("hid", &GlobalInputConfig::hid),
             Reflect::member("midi", &GlobalInputConfig::midi),
             Reflect::member("osc", &GlobalInputConfig::osc),
-            Reflect::member("serial", &GlobalInputConfig::serial));
+            Reflect::member("serial", &GlobalInputConfig::serial),
+            Reflect::member("tablet", &GlobalInputConfig::tablet));
     }
 };
 

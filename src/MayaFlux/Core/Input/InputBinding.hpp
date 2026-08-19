@@ -10,6 +10,7 @@ enum class InputType : uint8_t {
     MIDI, ///< MIDI controllers and instruments
     OSC, ///< Open Sound Control (network)
     SERIAL, ///< Serial port communication (Arduino, etc.)
+    TABLET, ///< Digitizers and styluses (pressure, tilt, rotation)
     CUSTOM ///< User-defined input backends
 };
 
@@ -66,6 +67,12 @@ struct MAYAFLUX_API InputBinding {
      * @param device_id Device ID (0 = any Serial device)
      */
     static InputBinding serial(uint32_t device_id = 0);
+
+    /**
+     * @brief Bind to a tablet tool
+     * @param device_id Tool ID (0 = any tool, pen and eraser alike)
+     */
+    static InputBinding tablet(uint32_t device_id = 0);
 
     // ────────────────────────────────────────────────────────────────────────
     // Factory Methods: Advanced HID Bindings

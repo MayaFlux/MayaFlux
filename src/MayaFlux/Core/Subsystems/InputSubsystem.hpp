@@ -144,6 +144,7 @@ private:
     void initialize_hid_backend();
     void initialize_midi_backend();
     void initialize_serial_backend();
+    void initialize_tablet_backend();
 
     void wire_backend_to_manager(IInputBackend* backend);
 

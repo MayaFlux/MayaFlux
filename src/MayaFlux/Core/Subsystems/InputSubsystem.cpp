@@ -5,6 +5,7 @@
 
 #include "MayaFlux/Core/Backends/Input/HIDBackend.hpp"
 #include "MayaFlux/Core/Backends/Input/MIDIBackend.hpp"
+#include "MayaFlux/Core/Backends/Input/TabletBackend.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
@@ -49,6 +50,10 @@ void InputSubsystem::initialize(SubsystemProcessingHandle& handle)
     }
     if (m_config.serial.enabled) {
         initialize_serial_backend();
+    }
+
+    if (m_config.tablet.enabled) {
+        initialize_tablet_backend();
     }
 
     register_backend_service();
@@ -353,6 +358,16 @@ void InputSubsystem::initialize_serial_backend()
 {
     MF_WARN(Journal::Component::Core, Journal::Context::InputSubsystem,
         "Serial backend not yet implemented");
+}
+
+void InputSubsystem::initialize_tablet_backend()
+{
+    TabletBackend::Config tablet_config;
+    tablet_config.read_buffer_size = m_config.tablet.read_buffer_size;
+    tablet_config.poll_timeout_ms = m_config.tablet.poll_timeout_ms;
+    tablet_config.split_eraser = m_config.tablet.split_eraser;
+
+    add_backend(std::make_unique<TabletBackend>(tablet_config));
 }
 
 [[nodiscard]] std::vector<InputDeviceInfo> InputSubsystem::get_hid_devices() const

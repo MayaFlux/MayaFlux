@@ -30,6 +30,11 @@ InputBinding InputBinding::serial(uint32_t device_id)
     return { .backend = InputType::SERIAL, .device_id = device_id };
 }
 
+InputBinding InputBinding::tablet(uint32_t device_id)
+{
+    return { .backend = InputType::TABLET, .device_id = device_id };
+}
+
 InputBinding InputBinding::hid_by_vid_pid(uint16_t vid, uint16_t pid)
 {
     return {
