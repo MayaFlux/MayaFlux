@@ -3,6 +3,7 @@
 #include "MayaFlux/Kinesis/Differential.hpp"
 #include "MayaFlux/Kinesis/HampelFilter.hpp"
 #include "MayaFlux/Kinesis/Stochastic/Estimate.hpp"
+#include "MayaFlux/Kinesis/SymbolicTrajectory.hpp"
 
 namespace MayaFlux::Kinesis {
 
@@ -97,8 +98,8 @@ template <typename T>
  *
  * for (auto raw : incoming_stream) {
  *     position.update(raw, dt);
- *     glm::vec2 vel = position.derivative<1>(dt);
- *     glm::vec2 acc = position.derivative<2>(dt);  // passes through the filter above
+ *     glm::vec2 vel = position.derivative<1>();
+ *     glm::vec2 acc = position.derivative<2>();  // passes through the filter above
  * }
  * ```
  */
@@ -142,13 +143,24 @@ public:
     void update(const T& raw_sample, double dt)
     {
         m_last_dt = dt;
+        ++m_generation;
         const auto raw_components = read_components(raw_sample);
         std::array<double, component_count> clean_components {};
         for (size_t i = 0; i < component_count; ++i) {
             m_estimates[i].update(raw_components[i]);
             clean_components[i] = m_estimates[i].value();
         }
-        m_history.push(assemble_from_components<T>(clean_components));
+        const T clean = assemble_from_components<T>(clean_components);
+        m_history.push(clean);
+
+        if constexpr (std::is_same_v<T, glm::vec2>) {
+            if (m_trajectory_2d)
+                m_trajectory_2d->update(clean);
+        }
+        if constexpr (std::is_same_v<T, glm::vec3>) {
+            if (m_trajectory_3d)
+                m_trajectory_3d->update(clean);
+        }
     }
 
     /**
@@ -157,15 +169,33 @@ public:
      * @tparam N Derivative order, forwarded to Differential::backward_difference
      * @return The derivative, filtered if filter_order(N, ...) was called,
      *         unfiltered otherwise
+     *
+     * Idempotent within a single update() cycle: the result for a given
+     * N is computed once and cached against the current generation
+     * counter (incremented every update()), and repeat calls to
+     * derivative<N>() before the next update() return the cached value
+     * rather than recomputing. This matters specifically because a
+     * configured HampelFilter's accept() has side effects (it may push
+     * into its own window or advance its rejection counter); calling
+     * derivative<N>() twice per frame without memoization would run
+     * accept() twice against the same underlying data in the same
+     * frame and silently corrupt the filter's state.
      */
     template <size_t N>
     [[nodiscard]] T derivative()
     {
+        auto cached = m_derivative_cache.find(N);
+        if (cached != m_derivative_cache.end() && cached->second.generation == m_generation)
+            return cached->second.value;
+
         const T raw = backward_difference<N>(m_history, m_last_dt);
+        T result = raw;
         auto it = m_filters.find(N);
-        if (it == m_filters.end())
-            return raw;
-        return it->second->accept(raw);
+        if (it != m_filters.end())
+            result = it->second->accept(raw);
+
+        m_derivative_cache[N] = DerivativeCacheEntry { m_generation, result };
+        return result;
     }
 
     /**
@@ -215,11 +245,72 @@ public:
      */
     [[nodiscard]] double last_dt() const { return m_last_dt; }
 
+    /**
+     * @brief Enable symbolic trajectory tracking over a 2D lattice
+     * @param lattice Partition to observe the channel's cleaned position through
+     * @param window Retained observation window, forwarded to SymbolicTrajectory
+     *
+     * Only valid when T = glm::vec2. A scalar or 3D channel has no
+     * meaningful 2D partition to observe; calling this on a channel of
+     * a different T is a compile error via the requires clause rather
+     * than a silent no-op.
+     */
+    void enable_trajectory_2d(Lattice2D lattice, size_t window = 16)
+        requires std::is_same_v<T, glm::vec2>
+    {
+        m_trajectory_2d = std::make_unique<SymbolicTrajectory<Lattice2D, glm::uvec2>>(lattice, window);
+    }
+
+    /**
+     * @brief Enable symbolic trajectory tracking over a 3D lattice
+     * @param lattice Partition to observe the channel's cleaned position through
+     * @param window Retained observation window, forwarded to SymbolicTrajectory
+     *
+     * Only valid when T = glm::vec3.
+     */
+    void enable_trajectory_3d(Lattice3D lattice, size_t window = 16)
+        requires std::is_same_v<T, glm::vec3>
+    {
+        m_trajectory_3d = std::make_unique<SymbolicTrajectory<Lattice3D, glm::uvec3>>(lattice, window);
+    }
+
+    /**
+     * @brief Direct access to the 2D trajectory, or nullptr if not enabled
+     */
+    [[nodiscard]] SymbolicTrajectory<Lattice2D, glm::uvec2>* trajectory_2d()
+        requires std::is_same_v<T, glm::vec2>
+    {
+        return m_trajectory_2d.get();
+    }
+
+    /**
+     * @brief Direct access to the 3D trajectory, or nullptr if not enabled
+     */
+    [[nodiscard]] SymbolicTrajectory<Lattice3D, glm::uvec3>* trajectory_3d()
+        requires std::is_same_v<T, glm::vec3>
+    {
+        return m_trajectory_3d.get();
+    }
+
 private:
     std::vector<Stochastic::Estimate> m_estimates;
     Memory::HistoryBuffer<T> m_history;
+    /**
+     * @brief One memoized derivative<N>() result, tagged by the update()
+     *        generation it was computed for
+     */
+    struct DerivativeCacheEntry {
+        uint64_t generation;
+        T value;
+    };
+
     std::map<size_t, std::unique_ptr<HampelFilter<T>>> m_filters;
+    std::map<size_t, DerivativeCacheEntry> m_derivative_cache;
     double m_last_dt { 0.0 };
+    uint64_t m_generation { 0 };
+
+    std::unique_ptr<SymbolicTrajectory<Lattice2D, glm::uvec2>> m_trajectory_2d;
+    std::unique_ptr<SymbolicTrajectory<Lattice3D, glm::uvec3>> m_trajectory_3d;
 };
 
 /**
