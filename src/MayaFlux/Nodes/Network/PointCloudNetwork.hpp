@@ -6,7 +6,7 @@
 #include "Operators/PathOperator.hpp"
 #include "Operators/TopologyOperator.hpp"
 
-#include "MayaFlux/Kinesis/Stochastic.hpp"
+#include "MayaFlux/Kinesis//Stochastic/Stochastic.hpp"
 
 namespace MayaFlux::Nodes::Network {
 

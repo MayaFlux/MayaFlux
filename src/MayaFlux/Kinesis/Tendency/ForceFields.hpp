@@ -2,7 +2,7 @@
 
 #include "Tendency.hpp"
 
-#include "MayaFlux/Kinesis/Stochastic.hpp"
+#include "MayaFlux/Kinesis/Stochastic/Stochastic.hpp"
 
 namespace MayaFlux::Kinesis::ForceFields {
 

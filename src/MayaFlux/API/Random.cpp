@@ -2,7 +2,7 @@
 
 #include "Core.hpp"
 #include "MayaFlux/Core/Engine.hpp"
-#include "MayaFlux/Kinesis/Stochastic.hpp"
+#include "MayaFlux/Kinesis/Stochastic/Stochastic.hpp"
 
 namespace MayaFlux {
 

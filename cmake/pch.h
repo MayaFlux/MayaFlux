@@ -428,4 +428,29 @@ struct is_convertible_data<From, To> : std::true_type { };
 template <typename From, typename To>
 inline constexpr bool is_convertible_data_v = is_convertible_data<From, To>::value;
 
+/**
+ * @brief Resolves the type that legally multiplies/divides T by a scalar.
+ * @tparam T Any type. Plain arithmetic T is its own scalar. GlmType T
+ *           (vec2/vec3/vec4/dvec2/dvec3/dvec4/mat2/mat3/mat4/dmat2/dmat3/dmat4)
+ *           resolves to its glm_component_type.
+ *
+ * glm vector and matrix types only define operator* and operator/ against
+ * their own value_type, not against an arbitrary double or float that
+ * happens to be numerically compatible. Generic numeric code that must
+ * scale both plain arithmetic values and glm types through the same
+ * formula needs this resolved once rather than special-cased per call site.
+ */
+template <typename T>
+struct scalar_of {
+    using type = T;
+};
+
+template <GlmType T>
+struct scalar_of<T> {
+    using type = glm_component_type<T>;
+};
+
+template <typename T>
+using scalar_t = typename scalar_of<T>::type;
+
 } // namespace MayaFlux

@@ -106,4 +106,112 @@ struct Lattice3D {
     }
 };
 
+/**
+ * @struct Lattice2D
+ * @brief A regular subdivision of an AABB2D into a cell count per axis.
+ *
+ * 2D sibling of Lattice3D. Pairs the continuous extent AABB2D describes
+ * with a discrete resolution: quadrant subdivision is resolution {2, 2},
+ * an NDC-space grid for hit testing or occupancy is any other
+ * resolution. Everything else is derived: cell size, cell centre,
+ * corner position, linear index.
+ *
+ * Indexing is x-major, y outermost, matching Lattice3D's convention
+ * with the z axis simply absent rather than fixed at 1: a 2D lattice is
+ * a distinct type from a 3D lattice with unit depth, not a special case
+ * of it, since callers working purely in 2D should never need to reason
+ * about a z coordinate that does not exist for their problem.
+ */
+struct Lattice2D {
+    glm::uvec2 resolution { 1U }; ///< Cell count per axis. Zero on either axis is invalid.
+    AABB2D bounds { .min = glm::vec2(-1.0F), .max = glm::vec2(1.0F) }; ///< Continuous extent subdivided.
+
+    /** @brief Edge length of one cell along each axis. */
+    [[nodiscard]] glm::vec2 cell_size() const noexcept
+    {
+        return glm::vec2(bounds.width(), bounds.height()) / glm::vec2(resolution);
+    }
+
+    /** @brief Total cell count. */
+    [[nodiscard]] size_t cell_count() const noexcept
+    {
+        return static_cast<size_t>(resolution.x) * resolution.y;
+    }
+
+    /** @brief Corner count, one greater than the cell count on each axis. */
+    [[nodiscard]] size_t corner_count() const noexcept
+    {
+        return static_cast<size_t>(resolution.x + 1U) * (resolution.y + 1U);
+    }
+
+    /**
+     * @brief Linear index of a cell, x-major.
+     * @param c Cell coordinate. Not bounds-checked.
+     */
+    [[nodiscard]] size_t index(const glm::uvec2& c) const noexcept
+    {
+        return static_cast<size_t>(c.y) * resolution.x + c.x;
+    }
+
+    /**
+     * @brief Whether a cell coordinate lies inside the lattice.
+     * @param c Cell coordinate.
+     */
+    [[nodiscard]] bool in_bounds(const glm::uvec2& c) const noexcept
+    {
+        return c.x < resolution.x && c.y < resolution.y;
+    }
+
+    /**
+     * @brief Position of a cell's centre.
+     * @param c Cell coordinate.
+     */
+    [[nodiscard]] glm::vec2 cell_center(const glm::uvec2& c) const noexcept
+    {
+        return bounds.min + (glm::vec2(c) + 0.5F) * cell_size();
+    }
+
+    /**
+     * @brief Position of a lattice corner.
+     * @param c Corner coordinate, valid up to resolution inclusive.
+     */
+    [[nodiscard]] glm::vec2 corner_position(const glm::uvec2& c) const noexcept
+    {
+        return bounds.min + glm::vec2(c) * cell_size();
+    }
+
+    /**
+     * @brief Cell containing a position, clamped to the lattice.
+     * @param p Position. Points outside bounds clamp to the edge cell.
+     */
+    [[nodiscard]] glm::uvec2 cell_at(const glm::vec2& p) const noexcept
+    {
+        const glm::vec2 local = (p - bounds.min) / cell_size();
+        const glm::vec2 clamped = glm::clamp(
+            glm::floor(local), glm::vec2(0.0F), glm::vec2(resolution) - 1.0F);
+        return glm::uvec2(clamped);
+    }
+
+    /**
+     * @brief A lattice over the same bounds at a different resolution.
+     * @param res New cell count per axis.
+     */
+    [[nodiscard]] Lattice2D resampled(const glm::uvec2& res) const noexcept
+    {
+        return { .resolution = res, .bounds = bounds };
+    }
+
+    /**
+     * @brief Quadrant lattice over NDC space, resolution {2, 2}.
+     *
+     * The specific case that motivated this type: NDC space split into
+     * four quadrants by sign of x and y. cell_at({0.3, -0.6}) returns
+     * {1, 0} (positive x, negative y quadrant).
+     */
+    [[nodiscard]] static Lattice2D ndc_quadrants() noexcept
+    {
+        return { .resolution = { 2U, 2U }, .bounds = { .min = glm::vec2(-1.0F), .max = glm::vec2(1.0F) } };
+    }
+};
+
 } // namespace MayaFlux::Kinesis

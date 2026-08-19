@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Stochastic.hpp"
+#include "Stochastic/Stochastic.hpp"
 
 #include "MayaFlux/Kakshya/NDData/VertexFormats.hpp"
 

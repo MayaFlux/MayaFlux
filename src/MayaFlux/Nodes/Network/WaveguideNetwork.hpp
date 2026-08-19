@@ -2,7 +2,7 @@
 
 #include "NodeNetwork.hpp"
 
-#include "MayaFlux/Kinesis/Stochastic.hpp"
+#include "MayaFlux/Kinesis/Stochastic/Stochastic.hpp"
 #include "MayaFlux/Transitive/Memory/RingBuffer.hpp"
 
 namespace MayaFlux::Nodes::Generator {
