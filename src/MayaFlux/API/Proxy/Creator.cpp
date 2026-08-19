@@ -14,6 +14,7 @@
 #include "MayaFlux/Nodes/Input/HIDNode.hpp"
 #include "MayaFlux/Nodes/Input/MIDINode.hpp"
 #include "MayaFlux/Nodes/Input/OSCNode.hpp"
+#include "MayaFlux/Nodes/Input/TabletNode.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
@@ -171,6 +172,15 @@ std::shared_ptr<Nodes::Input::OSCNode> Creator::read_osc(
     return node;
 }
 
+std::shared_ptr<Nodes::Input::TabletNode> Creator::read_tablet(
+    const Nodes::Input::TabletConfig& config,
+    const Core::InputBinding& binding)
+{
+    auto node = std::make_shared<Nodes::Input::TabletNode>(config);
+    register_input_node(node, binding);
+    return node;
+}
+
 std::shared_ptr<Nodes::Input::InputNode> Creator::read_input(
     const Nodes::Input::InputConfig& config,
     const Core::InputBinding& binding)
@@ -182,6 +192,8 @@ std::shared_ptr<Nodes::Input::InputNode> Creator::read_input(
         return read_midi(static_cast<const Nodes::Input::MIDIConfig&>(config), binding);
     case Core::InputType::OSC:
         return read_osc(static_cast<const Nodes::Input::OSCConfig&>(config), binding);
+    case Core::InputType::TABLET:
+        return read_tablet(static_cast<const Nodes::Input::TabletConfig&>(config), binding);
     default:
         MF_ERROR(Journal::Component::API, Journal::Context::Init,
             "Input type {} not yet implemented",

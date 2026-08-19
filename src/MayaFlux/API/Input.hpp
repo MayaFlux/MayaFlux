@@ -44,6 +44,12 @@ MAYAFLUX_API void unregister_input_node(const std::shared_ptr<Nodes::Input::Inpu
 MAYAFLUX_API std::vector<Core::InputDeviceInfo> get_hid_devices();
 
 /**
+ * @brief Get a list of connected tablet tools
+ * @return Vector of InputDeviceInfo, one per pen or eraser
+ */
+MAYAFLUX_API std::vector<Core::InputDeviceInfo> get_tablet_devices();
+
+/**
  * @brief Get a list of connected MIDI devices
  * @return Vector of InputDeviceInfo for each connected MIDI device
  */
@@ -141,5 +147,11 @@ MAYAFLUX_API Core::InputBinding bind_osc(const std::string& pattern = "");
  * @param device_id Device ID (0 = any Serial device)
  */
 MAYAFLUX_API Core::InputBinding bind_serial(uint32_t device_id = 0);
+
+/**
+ * @brief Create binding for a tablet tool
+ * @param device_id Tool ID (0 = any tool)
+ */
+MAYAFLUX_API Core::InputBinding bind_tablet(uint32_t device_id = 0);
 
 } // namespace MayaFlux

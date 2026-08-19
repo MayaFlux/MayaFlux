@@ -38,6 +38,11 @@ std::vector<Core::InputDeviceInfo> get_midi_devices()
     return get_input_subsystem().get_midi_devices();
 }
 
+std::vector<Core::InputDeviceInfo> get_tablet_devices()
+{
+    return get_input_subsystem().get_tablet_devices();
+}
+
 std::vector<Core::InputDeviceInfo> get_all_input_devices()
 {
     return get_input_subsystem().get_all_devices();
@@ -102,6 +107,11 @@ Core::InputBinding bind_osc(const std::string& pattern)
 Core::InputBinding bind_serial(uint32_t device_id)
 {
     return Core::InputBinding::serial(device_id);
+}
+
+Core::InputBinding bind_tablet(uint32_t device_id)
+{
+    return Core::InputBinding::tablet(device_id);
 }
 
 }

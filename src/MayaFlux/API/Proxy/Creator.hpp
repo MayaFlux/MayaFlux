@@ -232,6 +232,16 @@ public:
         const Core::InputBinding& binding);
 
     /**
+     * @brief Create and register tablet input node.
+     * @param config Tablet input configuration.
+     * @param binding Tablet input binding (use InputBinding::tablet(id)).
+     * @return Shared pointer to TabletNode (already registered).
+     */
+    std::shared_ptr<Nodes::Input::TabletNode> read_tablet(
+        const Nodes::Input::TabletConfig& config,
+        const Core::InputBinding& binding);
+
+    /**
      * @brief Create and register generic input node.
      * @param config Generic input configuration.
      * @param binding Generic input binding.

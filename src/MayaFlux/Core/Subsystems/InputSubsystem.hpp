@@ -116,6 +116,11 @@ public:
     [[nodiscard]] std::vector<InputDeviceInfo> get_midi_devices() const;
 
     /**
+     * @brief Get all tablet devices
+     */
+    [[nodiscard]] std::vector<InputDeviceInfo> get_tablet_devices() const;
+
+    /**
      * @brief Get device info by backend type and device ID
      */
     [[nodiscard]] std::optional<InputDeviceInfo> get_device_info(

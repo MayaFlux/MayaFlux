@@ -86,6 +86,7 @@ public:
         size_t read_buffer_size { 256 }; ///< Per-device read buffer
         int poll_timeout_ms { 2 }; ///< Timeout for hid_read_timeout
         bool split_eraser { true }; ///< Report the eraser end as its own tool
+        bool probe_all_devices { true }; ///< Read every HID descriptor rather than trusting enumeration
     };
 
     TabletBackend();

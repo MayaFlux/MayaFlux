@@ -384,6 +384,13 @@ void InputSubsystem::initialize_tablet_backend()
     return (it != m_backends.end()) ? it->second->get_devices() : std::vector<InputDeviceInfo> {};
 }
 
+[[nodiscard]] std::vector<InputDeviceInfo> InputSubsystem::get_tablet_devices() const
+{
+    std::shared_lock lock(m_backends_mutex);
+    auto it = m_backends.find(InputType::TABLET);
+    return (it != m_backends.end()) ? it->second->get_devices() : std::vector<InputDeviceInfo> {};
+}
+
 [[nodiscard]] std::optional<InputDeviceInfo> InputSubsystem::get_device_info(
     InputType backend_type,
     uint32_t device_id) const

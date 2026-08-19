@@ -44,11 +44,13 @@ namespace Nodes {
         class HIDNode;
         class MIDINode;
         class OSCNode;
+        class TabletNode;
 
         struct InputConfig;
         struct HIDConfig;
         struct MIDIConfig;
         struct OSCConfig;
+        struct TabletConfig;
     }
     class Constant;
     class StreamReaderNode;

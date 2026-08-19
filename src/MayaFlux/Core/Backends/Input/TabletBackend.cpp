@@ -521,11 +521,9 @@ size_t TabletBackend::refresh_devices()
     hid_device_info* devs = hid_enumerate(0x0, 0x0);
 
     for (hid_device_info* cur = devs; cur != nullptr; cur = cur->next) {
-        const bool is_digitizer = cur->usage_page == k_page_digitizer
-            && (cur->usage == k_usage_digitizer || cur->usage == k_usage_pen);
-        const bool unknown_usage = cur->usage_page == 0 && cur->usage == 0;
-
-        if (!is_digitizer && !unknown_usage)
+        if (!m_config.probe_all_devices
+            && cur->usage_page != k_page_digitizer
+            && cur->usage_page != 0)
             continue;
 
         std::string path(cur->path);
