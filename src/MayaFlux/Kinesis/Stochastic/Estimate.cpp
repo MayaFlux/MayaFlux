@@ -52,13 +52,13 @@ double Estimate::update(double sample)
     }
 }
 
-double Estimate::confidence(double delta) const
+double Estimate::confidence(double step) const
 {
     const double f = m_state.floor;
     if (f < 1e-12)
-        return (std::abs(delta) > 0.0) ? 1.0 : 0.0;
+        return (std::abs(step) > 0.0) ? 1.0 : 0.0;
 
-    const double ratio = std::abs(delta) / f;
+    const double ratio = std::abs(step) / f;
     return std::clamp(ratio / 3.0, 0.0, 1.0);
 }
 
@@ -126,14 +126,15 @@ double Estimate::update_quiet_period(double sample)
     }
 
     const auto view = m_history.linearized_view();
-    const double mean = std::accumulate(view.begin(), view.end(), 0.0) / static_cast<double>(view.size());
+
+    std::vector<double> chronological(view.rbegin(), view.rend());
+    std::span<const double> ordered(chronological);
+
+    const double mean = std::accumulate(chronological.begin(), chronological.end(), 0.0) / static_cast<double>(chronological.size());
     const double window_stddev = stddev(view);
+    const double trend_ratio = trend_explained_ratio(ordered);
 
-    double max_abs_delta = 0.0;
-    for (double v : view)
-        max_abs_delta = std::max(max_abs_delta, std::abs(v - mean));
-
-    const bool looks_quiet = max_abs_delta < 3.0 * window_stddev + 1e-9;
+    const bool looks_quiet = trend_ratio < 0.5;
 
     if (looks_quiet) {
         m_state.running_mean = mean;

@@ -392,18 +392,34 @@ template <typename T>
  * @brief Signed curvature from velocity and acceleration
  * @param vel Velocity vector
  * @param accel Acceleration vector
- * @return (vx*ay - vy*ax) / |v|^3, or 0 when speed is below 1e-6
+ * @param min_speed Speed below which curvature is reported as 0 rather
+ *        than computed. Default 1e-3, not 1e-6: curvature divides by
+ *        speed^3, so at real input scales (e.g. normalized 0..1 tablet
+ *        coordinates per second, where a slow-moving stroke is speed
+ *        0.05-0.5) a guard near machine epsilon never fires, and the
+ *        cubic denominator still amplifies ordinary acceleration noise
+ *        into numbers in the thousands. The threshold has to be picked
+ *        relative to the caller's actual speed scale, not left at a
+ *        constant close to zero; 1e-3 is a reasonable default for
+ *        normalized 0..1 spatial data but a caller working in different
+ *        units (pixels, millimeters) should pass one appropriate to that
+ *        scale rather than rely on this default.
+ * @return (vx*ay - vy*ax) / |v|^3, or 0 when speed is below min_speed
  *
  * dtheta/ds rather than dtheta/dt: speed-independent, so a sharp corner
  * drawn slowly and the same corner drawn fast report the same curvature,
  * unlike angular_velocity which conflates turn sharpness with pace.
- * Positive is a leftward (CCW) bend, negative rightward.
+ * Positive is a leftward (CCW) bend, negative rightward. Even with a
+ * correctly scaled min_speed, curvature remains numerically sensitive
+ * near that threshold since it is still a cubic denominator; treat
+ * curvature values from low-speed samples as low-confidence regardless
+ * of whether they cleared the guard.
  */
-[[nodiscard]] inline float curvature(const glm::vec2& vel, const glm::vec2& accel) noexcept
+[[nodiscard]] inline float curvature(const glm::vec2& vel, const glm::vec2& accel, float min_speed = 1e-3F) noexcept
 {
     const float speed_sq = glm::dot(vel, vel);
     const float spd = std::sqrt(speed_sq);
-    if (spd < 1e-6F)
+    if (spd < min_speed)
         return 0.0F;
     return cross_2d(vel, accel) / (speed_sq * spd);
 }
@@ -412,14 +428,16 @@ template <typename T>
  * @brief Signed curvature computed directly from a position HistoryBuffer
  * @param history Buffer of positions with capacity >= 3
  * @param dt Elapsed time between consecutive samples
- * @return curvature(velocity(history, dt), acceleration(history, dt))
+ * @param min_speed Forwarded to curvature(); see its doc for why the
+ *        default is scale-relative rather than machine-epsilon.
+ * @return curvature(velocity(history, dt), acceleration(history, dt), min_speed)
  *
  * Convenience wrapper chaining the two differences a caller would
  * otherwise compute separately before calling curvature() above.
  */
-[[nodiscard]] inline float curvature_from_history(const Memory::HistoryBuffer<glm::vec2>& history, double dt) noexcept
+[[nodiscard]] inline float curvature_from_history(const Memory::HistoryBuffer<glm::vec2>& history, double dt, float min_speed = 1e-3F) noexcept
 {
-    return curvature(velocity(history, dt), acceleration(history, dt));
+    return curvature(velocity(history, dt), acceleration(history, dt), min_speed);
 }
 
 // =============================================================================
@@ -692,9 +710,9 @@ template <typename T>
 }
 
 /** @brief Convenience overload of curvature_from_history over a raw span of positions, samples[0] newest. */
-[[nodiscard]] inline float curvature_from_history(std::span<const glm::vec2> samples, double dt) noexcept
+[[nodiscard]] inline float curvature_from_history(std::span<const glm::vec2> samples, double dt, float min_speed = 1e-3F) noexcept
 {
-    return curvature_from_history(to_history(samples), dt);
+    return curvature_from_history(to_history(samples), dt, min_speed);
 }
 
 /** @brief Convenience overload of path_length over a raw span of positions, samples[0] newest. */

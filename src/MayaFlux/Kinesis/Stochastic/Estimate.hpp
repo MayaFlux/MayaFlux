@@ -183,16 +183,47 @@ public:
     double update(double sample);
 
     /**
-     * @brief Confidence that a delta from the last sample is signal, not floor
-     * @param delta Difference to evaluate, typically a computed velocity
-     *        or step from Kinesis::Differential
+     * @brief Confidence that a step is signal, not floor
+     * @param step Difference in the same units as floor(): a per-sample
+     *        change, e.g. raw_sample - value(), or any other quantity
+     *        measured in the same units the stream itself is in.
      * @return 0.0 (indistinguishable from floor) to 1.0 (well above floor)
+     *
+     * step and floor() must be the same physical quantity. floor() is a
+     * static spread (units of the stream itself, e.g. position), not a
+     * rate. Passing a Kinesis::Differential velocity or acceleration
+     * here compares a rate against a static spread, which are different
+     * units and produces a meaningless, typically saturated result: a
+     * velocity is often numerically enormous relative to a small
+     * per-sample floor regardless of whether the motion is real signal
+     * or noise, since dividing by dt inflates the value independent of
+     * confidence. For a Differential-derived rate, use
+     * confidence_of_rate() instead, which performs the correct
+     * rate-to-step conversion before comparing.
      *
      * Not a hard threshold. A caller wanting a binary decision picks
      * their own cutoff against this; Estimate only reports where the
-     * delta sits relative to the learned floor.
+     * step sits relative to the learned floor.
      */
-    [[nodiscard]] double confidence(double delta) const;
+    [[nodiscard]] double confidence(double step) const;
+
+    /**
+     * @brief Confidence that a Differential-derived rate reflects signal, not floor
+     * @param rate A velocity, acceleration, or other per-second quantity
+     *        from Kinesis::Differential
+     * @param dt The same dt passed to the Differential call that produced rate
+     * @return 0.0 to 1.0, as confidence()
+     *
+     * Converts rate back to a per-sample step (rate * dt) before
+     * comparing against floor(), which is what makes the comparison
+     * dimensionally correct. Without this conversion, floor (a static
+     * spread) and rate (a quantity already divided by dt) are different
+     * units, and the ratio between them says nothing about confidence.
+     */
+    [[nodiscard]] double confidence_of_rate(double rate, double dt) const
+    {
+        return confidence(rate * dt);
+    }
 
     /**
      * @brief Current learned floor
