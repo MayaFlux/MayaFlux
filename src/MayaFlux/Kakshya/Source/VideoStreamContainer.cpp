@@ -12,6 +12,8 @@
 #include "MayaFlux/Registry/BackendRegistry.hpp"
 #include "MayaFlux/Registry/Service/IOService.hpp"
 
+#include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
+
 namespace MayaFlux::Kakshya {
 
 // =========================================================================
@@ -20,16 +22,29 @@ namespace MayaFlux::Kakshya {
 
 VideoStreamContainer::VideoStreamContainer(uint32_t width,
     uint32_t height,
-    uint32_t channels,
+    Portal::Graphics::ImageFormat format,
     double frame_rate)
     : m_width(width)
     , m_height(height)
-    , m_channels(channels)
+    , m_channels(Portal::Graphics::TextureLoom::get_channel_count(format))
+    , m_bpp(Portal::Graphics::TextureLoom::get_bytes_per_pixel(format))
+    , m_format(format)
     , m_frame_rate(frame_rate)
 {
+    if (!format_has_variant_storage(format)) {
+        error<std::invalid_argument>(
+            Journal::Component::Kakshya,
+            Journal::Context::ContainerProcessing,
+            std::source_location::current(),
+            "VideoStreamContainer: format has no DataVariant element type "
+            "(packed depth). Use DEPTH16 or DEPTH32F for CPU-resident range data");
+    }
+
     m_processing_chain = std::make_shared<DataProcessingChain>();
     m_structure = ContainerDataStructure::image_interleaved();
-    m_structure.modality = DataModality::VIDEO_COLOR;
+    m_structure.modality = is_depth_format(format)
+        ? DataModality::VIDEO_DEPTH
+        : DataModality::VIDEO_COLOR;
 
     if (width > 0 && height > 0)
         setup_dimensions();
@@ -42,12 +57,22 @@ VideoStreamContainer::VideoStreamContainer(uint32_t width,
 void VideoStreamContainer::setup_dimensions()
 {
     m_structure.dimensions = DataDimension::create_dimensions(
-        DataModality::VIDEO_COLOR,
+        m_structure.modality,
         { m_num_frames,
             static_cast<uint64_t>(m_height),
             static_cast<uint64_t>(m_width),
             static_cast<uint64_t>(m_channels) },
         MemoryLayout::ROW_MAJOR);
+}
+
+std::type_index VideoStreamContainer::value_element_type() const
+{
+    const size_t element_size = storage_element_size(m_format);
+    if (element_size == 2)
+        return typeid(uint16_t);
+    if (element_size == 4)
+        return typeid(float);
+    return typeid(uint8_t);
 }
 
 std::vector<DataDimension> VideoStreamContainer::get_dimensions() const
@@ -75,6 +100,17 @@ void VideoStreamContainer::set_memory_layout(MemoryLayout layout)
     m_structure.memory_layout = layout;
 }
 
+std::optional<DataDimension::ValueRange> VideoStreamContainer::component_range() const
+{
+    for (auto role : { DataDimension::Role::DEPTH, DataDimension::Role::CHANNEL }) {
+        auto it = std::ranges::find_if(m_structure.dimensions,
+            [role](const DataDimension& d) { return d.role == role; });
+        if (it != m_structure.dimensions.end())
+            return it->value_range;
+    }
+    return std::nullopt;
+}
+
 // =========================================================================
 // Ring buffer setup
 // =========================================================================
@@ -83,7 +119,7 @@ void VideoStreamContainer::setup_ring(uint64_t total_frames,
     uint32_t ring_capacity,
     uint32_t width,
     uint32_t height,
-    uint32_t channels,
+    Portal::Graphics::ImageFormat format,
     double frame_rate,
     uint32_t refill_threshold,
     uint64_t reader_id)
@@ -93,7 +129,13 @@ void VideoStreamContainer::setup_ring(uint64_t total_frames,
 
         m_width = width;
         m_height = height;
-        m_channels = channels;
+        m_format = format;
+        m_channels = Portal::Graphics::TextureLoom::get_channel_count(format);
+        m_bpp = Portal::Graphics::TextureLoom::get_bytes_per_pixel(format);
+        m_structure.modality = is_depth_format(format)
+            ? DataModality::VIDEO_DEPTH
+            : DataModality::VIDEO_COLOR;
+
         m_frame_rate = frame_rate;
         m_total_source_frames = total_frames;
         m_ring_capacity = ring_capacity;
@@ -136,14 +178,19 @@ void VideoStreamContainer::setup_ring(uint64_t total_frames,
 
 uint8_t* VideoStreamContainer::mutable_slot_ptr(uint64_t frame_index)
 {
-    if (m_ring_capacity == 0 || frame_index >= m_total_source_frames)
+    if (m_ring_capacity == 0 || frame_index >= m_total_source_frames || m_data.empty())
         return nullptr;
 
-    auto* pixels = std::get_if<std::vector<uint8_t>>(&m_data[0]);
-    if (!pixels)
+    auto [ptr, bytes] = variant_bytes_mutable(m_data[0]);
+    if (!ptr)
         return nullptr;
 
-    return pixels->data() + slot_for(frame_index) * get_frame_byte_size();
+    const size_t frame_bytes = get_frame_byte_size();
+    const size_t offset = slot_for(frame_index) * frame_bytes;
+    if (offset + frame_bytes > bytes)
+        return nullptr;
+
+    return ptr + offset;
 }
 
 void VideoStreamContainer::commit_frame(uint64_t frame_index)
@@ -180,6 +227,11 @@ bool VideoStreamContainer::is_frame_available(uint64_t frame_index) const
 
 size_t VideoStreamContainer::get_frame_byte_size() const
 {
+    return static_cast<size_t>(m_width) * m_height * m_bpp;
+}
+
+size_t VideoStreamContainer::get_frame_element_count() const
+{
     return static_cast<size_t>(m_width) * m_height * m_channels;
 }
 
@@ -194,23 +246,34 @@ std::span<const uint8_t> VideoStreamContainer::get_frame_pixels(uint64_t frame_i
         seqlock_read_void(m_data_lock, 8, [&] {
             if (m_data.empty())
                 return;
-            const auto* pixels = std::get_if<std::vector<uint8_t>>(&m_data[0]);
-            if (!pixels)
+
+            auto [ptr, bytes] = variant_bytes(m_data[0]);
+            if (!ptr)
                 return;
+
             const size_t offset = frame_index * frame_bytes;
-            if (offset + frame_bytes > pixels->size())
+            if (offset + frame_bytes > bytes)
                 return;
-            result = { pixels->data() + offset, frame_bytes };
+
+            result = { ptr + offset, frame_bytes };
         });
         return result;
     }
 
     const uint32_t slot = slot_for(frame_index);
     if (m_slot_frame[slot].load(std::memory_order_acquire) == frame_index) {
-        const auto* pixels = std::get_if<std::vector<uint8_t>>(&m_data[0]);
-        if (!pixels)
+        if (m_data.empty())
             return {};
-        return { pixels->data() + slot * frame_bytes, frame_bytes };
+
+        auto [ptr, bytes] = variant_bytes(m_data[0]);
+        if (!ptr)
+            return {};
+
+        const size_t offset = static_cast<size_t>(slot) * frame_bytes;
+        if (offset + frame_bytes > bytes)
+            return {};
+
+        return { ptr + offset, frame_bytes };
     }
 
     return {};
@@ -237,16 +300,30 @@ std::vector<DataVariant> VideoStreamContainer::get_region_data(const Region& reg
         if (m_data.empty())
             return;
 
-        const auto* pixels = std::get_if<std::vector<uint8_t>>(&m_data[0]);
-        if (!pixels || pixels->empty())
+        auto [ptr, bytes] = variant_bytes(m_data[0]);
+        if (!ptr || bytes == 0)
             return;
 
-        const std::span<const uint8_t> src { pixels->data(), pixels->size() };
+        const size_t element_size = storage_element_size(m_format);
+
         try {
-            result = { extract_nd_region<uint8_t>(src, region, m_structure.dimensions) };
+            if (element_size == 2) {
+                const std::span<const uint16_t> src {
+                    reinterpret_cast<const uint16_t*>(ptr), bytes / sizeof(uint16_t)
+                };
+                result = { extract_nd_region<uint16_t>(src, region, m_structure.dimensions) };
+            } else if (element_size == 4) {
+                const std::span<const float> src {
+                    reinterpret_cast<const float*>(ptr), bytes / sizeof(float)
+                };
+                result = { extract_nd_region<float>(src, region, m_structure.dimensions) };
+            } else {
+                const std::span<const uint8_t> src { ptr, bytes };
+                result = { extract_nd_region<uint8_t>(src, region, m_structure.dimensions) };
+            }
         } catch (const std::exception& e) {
             MF_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-                "VideoStreamContainer::get_region_data extraction failed — {}", e.what());
+                "VideoStreamContainer::get_region_data extraction failed: {}", e.what());
         }
     });
 
@@ -438,8 +515,9 @@ const void* VideoStreamContainer::get_raw_data() const
 
     if (m_data.empty())
         return nullptr;
-    const auto* v = std::get_if<std::vector<uint8_t>>(&m_data[0]);
-    return (v && !v->empty()) ? v->data() : nullptr;
+
+    auto [ptr, bytes] = variant_bytes(m_data[0]);
+    return bytes > 0 ? static_cast<const void*>(ptr) : nullptr;
 }
 
 bool VideoStreamContainer::has_data() const
@@ -489,39 +567,88 @@ void VideoStreamContainer::unregister_state_change_callback()
 }
 
 void VideoStreamContainer::get_frames_impl(
-    void* output,
-    size_t count,
-    uint64_t start_frame,
-    uint64_t num_frames,
-    const std::type_info& type) const
+    void* output, size_t count, uint64_t start_frame,
+    uint64_t num_frames, const std::type_info& type) const
 {
-    if (type != typeid(uint8_t)) {
-        error<std::runtime_error>(Journal::Component::Kakshya, Journal::Context::Runtime, std::source_location::current(), "VideoStreamContainer only supports uint8_t");
+    if (!output)
+        return;
+
+    const size_t element_size = storage_element_size(m_format);
+
+    if (type == typeid(uint8_t) && element_size == 1) {
+        get_frames_typed_as(std::span<uint8_t>(static_cast<uint8_t*>(output), count),
+            start_frame, num_frames);
+        return;
+    }
+    if (type == typeid(uint16_t) && element_size == 2) {
+        get_frames_typed_as(std::span<uint16_t>(static_cast<uint16_t*>(output), count),
+            start_frame, num_frames);
+        return;
+    }
+    if (type == typeid(float) && element_size == 4) {
+        get_frames_typed_as(std::span<float>(static_cast<float*>(output), count),
+            start_frame, num_frames);
+        return;
     }
 
-    auto* out = static_cast<uint8_t*>(output);
-    get_frames_typed(std::span<uint8_t>(out, count), start_frame, num_frames);
+    error<std::runtime_error>(
+        Journal::Component::Kakshya, Journal::Context::Runtime,
+        std::source_location::current(),
+        "VideoStreamContainer::get_frames_impl: requested type does not match storage");
 }
 
-void VideoStreamContainer::get_frames_typed(std::span<uint8_t> output, uint64_t start_frame, uint64_t num_frames) const
+DataSpanVariant VideoStreamContainer::get_frame_typed(uint64_t frame_index) const
 {
-    const size_t frame_size = get_frame_byte_size();
-    const size_t required = static_cast<size_t>(num_frames) * frame_size;
+    auto bytes = get_frame_pixels(frame_index);
+    if (bytes.empty())
+        return { std::span<const uint8_t> {} };
+
+    const size_t elements = get_frame_element_count();
+    const size_t element_size = storage_element_size(m_format);
+
+    if (element_size == 2) {
+        return { std::span<const uint16_t>(
+            reinterpret_cast<const uint16_t*>(bytes.data()), elements) };
+    }
+    if (element_size == 4) {
+        return { std::span<const float>(
+            reinterpret_cast<const float*>(bytes.data()), elements) };
+    }
+    return { std::span<const uint8_t>(bytes.data(), elements) };
+}
+
+template <typename T>
+void VideoStreamContainer::get_frames_typed_as(std::span<T> output,
+    uint64_t start_frame, uint64_t num_frames) const
+{
+    const size_t elements_per_frame = get_frame_element_count();
+    const size_t required = static_cast<size_t>(num_frames) * elements_per_frame;
 
     if (output.size() < required) {
         error<std::runtime_error>(
             Journal::Component::Kakshya,
             Journal::Context::Runtime,
             std::source_location::current(),
-            "VideoStreamContainer::get_frames_typed: output buffer too small ({} < {})",
+            "VideoStreamContainer::get_frames_typed_as: output buffer too small ({} < {})",
             output.size(), required);
     }
 
+    const size_t frame_bytes = get_frame_byte_size();
+
     for (uint64_t i = 0; i < num_frames; ++i) {
-        auto frame = get_frame_typed(start_frame + i);
-        std::ranges::copy(frame, output.begin() + static_cast<size_t>(i) * frame_size);
+        auto bytes = get_frame_pixels(start_frame + i);
+        if (bytes.size() < frame_bytes)
+            continue;
+        std::memcpy(output.data() + i * elements_per_frame, bytes.data(), frame_bytes);
     }
 }
+
+template void VideoStreamContainer::get_frames_typed_as<uint8_t>(
+    std::span<uint8_t>, uint64_t, uint64_t) const;
+template void VideoStreamContainer::get_frames_typed_as<uint16_t>(
+    std::span<uint16_t>, uint64_t, uint64_t) const;
+template void VideoStreamContainer::get_frames_typed_as<float>(
+    std::span<float>, uint64_t, uint64_t) const;
 
 bool VideoStreamContainer::is_ready_for_processing() const
 {
@@ -614,29 +741,27 @@ bool VideoStreamContainer::all_dimensions_consumed() const
 DataAccess VideoStreamContainer::channel_data(size_t /*channel*/)
 {
     MF_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-        "VideoStreamContainer::channel_data — not meaningful for interleaved pixel data; returning full surface");
+        "VideoStreamContainer stores interleaved pixels; channel_data returns the full surface");
 
     if (m_data.empty()) {
         static DataVariant empty_variant = std::vector<uint8_t>();
-        return { empty_variant, m_structure.dimensions, DataModality::VIDEO_COLOR };
+        return { empty_variant, m_structure.dimensions, m_structure.modality };
     }
 
-    return { m_data[0], m_structure.dimensions, DataModality::VIDEO_COLOR };
+    return { m_data[0], m_structure.dimensions, m_structure.modality };
 }
 
 std::vector<DataAccess> VideoStreamContainer::all_channel_data()
 {
     if (m_data.empty())
         return {};
-    return { DataAccess(m_data[0], m_structure.dimensions, DataModality::VIDEO_COLOR) };
+    return { DataAccess(m_data[0], m_structure.dimensions, m_structure.modality) };
 }
 
 void VideoStreamContainer::get_value_impl(
-    const std::vector<uint64_t>& coords,
-    void* out,
-    const std::type_info& type) const
+    const std::vector<uint64_t>& coords, void* out, const std::type_info& type) const
 {
-    if (type != typeid(uint8_t) || coords.size() < 4)
+    if (coords.size() < 4 || m_data.empty())
         return;
 
     const uint64_t frame = coords[0];
@@ -647,27 +772,39 @@ void VideoStreamContainer::get_value_impl(
     if (frame >= m_num_frames || y >= m_height || x >= m_width || c >= m_channels)
         return;
 
-    auto pixels = get_frame_pixels(frame);
-    if (pixels.empty())
+    const size_t slot = (m_ring_capacity == 0) ? frame : slot_for(frame);
+    if (m_ring_capacity != 0
+        && m_slot_frame[slot].load(std::memory_order_acquire) != frame)
         return;
 
-    const size_t idx = (y * m_width + x) * m_channels + c;
-    if (idx >= pixels.size())
-        return;
+    const size_t idx = slot * get_frame_element_count()
+        + (y * m_width + x) * m_channels
+        + c;
 
-    *static_cast<uint8_t*>(out) = pixels[idx];
+    if (type == typeid(float)) {
+        *static_cast<float*>(out) = static_cast<float>(
+            read_normalized_at(m_data[0], m_format, component_range(), idx));
+        return;
+    }
+    if (type == typeid(double)) {
+        *static_cast<double*>(out) = read_normalized_at(m_data[0], m_format, component_range(), idx);
+        return;
+    }
+    if (type == typeid(uint8_t) && storage_element_size(m_format) == 1) {
+        if (const auto* v = std::get_if<std::vector<uint8_t>>(&m_data[0]); v && idx < v->size())
+            *static_cast<uint8_t*>(out) = (*v)[idx];
+        return;
+    }
+    if (type == typeid(uint16_t) && storage_element_size(m_format) == 2) {
+        if (const auto* v = std::get_if<std::vector<uint16_t>>(&m_data[0]); v && idx < v->size())
+            *static_cast<uint16_t*>(out) = (*v)[idx];
+    }
 }
 
 void VideoStreamContainer::set_value_impl(
-    const std::vector<uint64_t>& coords,
-    const void* in,
-    const std::type_info& type)
+    const std::vector<uint64_t>& coords, const void* in, const std::type_info& type)
 {
-    if (type != typeid(uint8_t) || coords.size() < 4 || m_data.empty())
-        return;
-
-    auto* pixels = std::get_if<std::vector<uint8_t>>(&m_data[0]);
-    if (!pixels)
+    if (coords.size() < 4 || m_data.empty())
         return;
 
     const uint64_t frame = coords[0];
@@ -678,15 +815,30 @@ void VideoStreamContainer::set_value_impl(
     if (frame >= m_num_frames || y >= m_height || x >= m_width || c >= m_channels)
         return;
 
-    const size_t idx = (frame * m_height * m_width * m_channels)
-        + (y * m_width * m_channels)
-        + (x * m_channels)
+    const size_t slot = (m_ring_capacity == 0) ? frame : slot_for(frame);
+    const size_t idx = slot * get_frame_element_count()
+        + (y * m_width + x) * m_channels
         + c;
 
-    if (idx >= pixels->size())
+    if (type == typeid(float)) {
+        write_normalized_at(m_data[0], m_format, component_range(), idx,
+            static_cast<double>(*static_cast<const float*>(in)));
         return;
-
-    (*pixels)[idx] = *static_cast<const uint8_t*>(in);
+    }
+    if (type == typeid(double)) {
+        write_normalized_at(m_data[0], m_format, component_range(), idx,
+            *static_cast<const double*>(in));
+        return;
+    }
+    if (type == typeid(uint8_t) && storage_element_size(m_format) == 1) {
+        if (auto* v = std::get_if<std::vector<uint8_t>>(&m_data[0]); v && idx < v->size())
+            (*v)[idx] = *static_cast<const uint8_t*>(in);
+        return;
+    }
+    if (type == typeid(uint16_t) && storage_element_size(m_format) == 2) {
+        if (auto* v = std::get_if<std::vector<uint16_t>>(&m_data[0]); v && idx < v->size())
+            (*v)[idx] = *static_cast<const uint16_t*>(in);
+    }
 }
 
 std::span<const float> VideoStreamContainer::processed_frame_as_float(uint64_t frame_index) const

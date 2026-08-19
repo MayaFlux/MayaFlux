@@ -327,14 +327,19 @@ bool VideoStreamContext::setup_scaler(uint32_t target_width,
 
     const AVPixFmtDescriptor* desc = av_pix_fmt_desc_get(
         static_cast<AVPixelFormat>(out_pixel_format));
-    if (desc) {
-        int bits = 0;
-        for (int c = 0; c < desc->nb_components; ++c)
-            bits += desc->comp[c].depth;
-        out_bytes_per_pixel = static_cast<uint32_t>((bits + 7) / 8);
-    } else {
-        out_bytes_per_pixel = 4;
+    if (!desc) {
+        m_last_error = "setup_scaler: no descriptor for target pixel format";
+        return false;
     }
+
+    if (av_pix_fmt_count_planes(static_cast<AVPixelFormat>(out_pixel_format)) != 1) {
+        m_last_error = std::string("setup_scaler: target format ")
+            + (desc->name ? desc->name : "?")
+            + " is multi-planar; the read path writes a single packed plane";
+        return false;
+    }
+
+    out_bytes_per_pixel = static_cast<uint32_t>((av_get_bits_per_pixel(desc) + 7) / 8);
 
     out_linesize = static_cast<int>(out_width * out_bytes_per_pixel);
     int align_remainder = out_linesize % 32;
@@ -479,6 +484,33 @@ std::vector<FileRegion> VideoStreamContext::extract_keyframe_regions(
     av_seek_frame(demux.format_context, stream_index, 0, AVSEEK_FLAG_BACKWARD);
 
     return regions;
+}
+
+std::optional<Portal::Graphics::ImageFormat> to_image_format(int av_pixel_format)
+{
+    using Portal::Graphics::ImageFormat;
+
+    if (av_pixel_format < 0)
+        return ImageFormat::RGBA8;
+
+    switch (static_cast<AVPixelFormat>(av_pixel_format)) {
+    case AV_PIX_FMT_RGBA:
+        return ImageFormat::RGBA8;
+    case AV_PIX_FMT_BGRA:
+        return ImageFormat::BGRA8;
+    case AV_PIX_FMT_RGBA64LE:
+        return ImageFormat::RGBA16;
+    case AV_PIX_FMT_GRAYF32LE:
+        return ImageFormat::R32F;
+    case AV_PIX_FMT_RGB24:
+        return ImageFormat::RGB8;
+    case AV_PIX_FMT_GRAY8:
+        return ImageFormat::R8;
+    case AV_PIX_FMT_GRAY16LE:
+        return ImageFormat::R16;
+    default:
+        return std::nullopt;
+    }
 }
 
 } // namespace MayaFlux::IO

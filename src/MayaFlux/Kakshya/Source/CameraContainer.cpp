@@ -2,28 +2,26 @@
 
 #include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Kakshya/Processors/FrameAccessProcessor.hpp"
+#include "MayaFlux/Kakshya/Utils/DataUtils.hpp"
 #include "MayaFlux/Registry/BackendRegistry.hpp"
 #include "MayaFlux/Registry/Service/IOService.hpp"
 
 namespace MayaFlux::Kakshya {
 
 CameraContainer::CameraContainer(uint32_t width, uint32_t height,
-    uint32_t channels, double frame_rate)
-    : VideoStreamContainer(width, height, channels, frame_rate)
+    Portal::Graphics::ImageFormat format, double frame_rate)
+    : VideoStreamContainer(width, height, format, frame_rate)
 {
     m_num_frames = 1;
 
-    const size_t frame_bytes = get_frame_byte_size();
-
     m_data.resize(1);
-    auto& pixels = m_data[0].emplace<std::vector<uint8_t>>();
-    pixels.resize(frame_bytes, 0);
+    m_data[0] = make_empty_storage(format, get_frame_element_count());
 
     setup_dimensions();
 
     MF_INFO(Journal::Component::Kakshya, Journal::Context::Init,
         "CameraContainer created: {}x{} @{:.1f}fps ({} bytes/frame)",
-        width, height, frame_rate, frame_bytes);
+        width, height, frame_rate, get_frame_byte_size());
 }
 
 uint8_t* CameraContainer::mutable_frame_ptr()
@@ -31,11 +29,11 @@ uint8_t* CameraContainer::mutable_frame_ptr()
     if (m_data.empty())
         return nullptr;
 
-    auto* pixels = std::get_if<std::vector<uint8_t>>(&m_data[0]);
-    if (!pixels || pixels->empty())
+    auto [ptr, bytes] = variant_bytes_mutable(m_data[0]);
+    if (!ptr || bytes < get_frame_byte_size())
         return nullptr;
 
-    return pixels->data();
+    return ptr;
 }
 
 void CameraContainer::setup_io(uint64_t reader_id)

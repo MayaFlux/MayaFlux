@@ -30,13 +30,13 @@ public:
      * @brief Construct with explicit video parameters.
      * @param width      Frame width in pixels.
      * @param height     Frame height in pixels.
-     * @param channels   Colour channels per pixel (default 4).
+     * @param format     Pixel format (determines channels and storage type).
      * @param frame_rate Frame rate in fps.
      */
     VideoFileContainer(uint32_t width,
         uint32_t height,
-        uint32_t channels = 4,
-        double frame_rate = 0.0);
+        Portal::Graphics::ImageFormat format,
+        double frame_rate);
 
     ~VideoFileContainer() override = default;
 

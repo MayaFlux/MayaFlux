@@ -1,6 +1,7 @@
 #pragma once
 
 #include "FFmpegDemuxContext.hpp"
+#include "MayaFlux/Portal/Graphics/GraphicsUtils.hpp"
 
 extern "C" {
 struct AVCodecContext;
@@ -202,5 +203,16 @@ private:
      */
     bool setup_scaler(uint32_t target_width, uint32_t target_height, int target_format);
 };
+
+/**
+ * @brief Map an AVPixelFormat to the Portal ImageFormat backing it.
+ *
+ * Covers the formats a container can store. Returns nullopt for anything
+ * without a direct equivalent, including planar YUV and packed 24-bit
+ * layouts that swscale must convert before a container sees them.
+ *
+ * @param av_pixel_format AVPixelFormat as int; negative means RGBA.
+ */
+[[nodiscard]] std::optional<Portal::Graphics::ImageFormat> to_image_format(int av_pixel_format);
 
 } // namespace MayaFlux::IO

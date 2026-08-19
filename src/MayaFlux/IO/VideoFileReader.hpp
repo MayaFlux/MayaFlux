@@ -138,6 +138,15 @@ public:
     void set_audio_options(AudioReadOptions options) { m_audio_options = options; }
 
     /**
+     * @brief Request an output pixel format for the scaler.
+     *
+     * Must be called before open(). Negative selects AV_PIX_FMT_RGBA.
+     * Multi-planar targets are rejected by the scaler; the read path
+     * writes a single packed plane.
+     */
+    void set_target_format(int av_pixel_format) { m_target_format = av_pixel_format; }
+
+    /**
      * @brief After load_into_container(), retrieve the audio container if
      *        EXTRACT_AUDIO was set.
      */
@@ -249,6 +258,7 @@ private:
     std::atomic<bool> m_decode_stop { false };
     std::atomic<bool> m_decode_active { false };
     std::atomic<uint64_t> m_decode_head { 0 };
+    int m_target_format { -1 };
 
     std::shared_ptr<Registry::Service::IOService> m_io_service;
 

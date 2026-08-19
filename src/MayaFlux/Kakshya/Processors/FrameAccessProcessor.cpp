@@ -68,14 +68,22 @@ void FrameAccessProcessor::store_metadata(const std::shared_ptr<SignalSourceCont
 
     m_frame_byte_size = m_width * m_height * m_channels;
 
-    if (auto stream = std::dynamic_pointer_cast<StreamContainer>(container)) {
+    if (auto vc = std::dynamic_pointer_cast<VideoStreamContainer>(container)) {
+        m_looping_enabled = vc->is_looping();
+        m_loop_region = vc->get_loop_region();
+        m_frame_rate = vc->get_frame_rate();
+        m_frame_byte_size = vc->get_frame_byte_size();
+
+        const auto& stream_positions = vc->get_read_position();
+        if (!stream_positions.empty())
+            m_current_frame = stream_positions[0];
+    } else if (auto stream = std::dynamic_pointer_cast<StreamContainer>(container)) {
         m_looping_enabled = stream->is_looping();
         m_loop_region = stream->get_loop_region();
 
         const auto& stream_positions = stream->get_read_position();
-        if (!stream_positions.empty()) {
+        if (!stream_positions.empty())
             m_current_frame = stream_positions[0];
-        }
     }
 
     if (auto vc = std::dynamic_pointer_cast<VideoStreamContainer>(container))
@@ -85,10 +93,13 @@ void FrameAccessProcessor::store_metadata(const std::shared_ptr<SignalSourceCont
 void FrameAccessProcessor::validate()
 {
     if (m_structure.modality != DataModality::VIDEO_COLOR
-        && m_structure.modality != DataModality::IMAGE_COLOR) {
+        && m_structure.modality != DataModality::IMAGE_COLOR
+        && m_structure.modality != DataModality::VIDEO_DEPTH
+        && m_structure.modality != DataModality::DEPTH_MAP) {
         error<std::runtime_error>(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
             std::source_location::current(),
-            "FrameAccessProcessor requires VIDEO_COLOR or IMAGE_COLOR modality, got {}",
+            "FrameAccessProcessor requires a frame-structured modality "
+            "(VIDEO_COLOR, IMAGE_COLOR, VIDEO_DEPTH, DEPTH_MAP), got {}",
             static_cast<int>(m_structure.modality));
     }
 

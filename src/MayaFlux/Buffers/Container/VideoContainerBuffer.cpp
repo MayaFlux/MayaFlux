@@ -2,6 +2,7 @@
 
 #include "MayaFlux/Buffers/BufferProcessingChain.hpp"
 #include "MayaFlux/Buffers/Textures/TextureProcessor.hpp"
+#include "MayaFlux/Kakshya/Source/VideoStreamContainer.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
@@ -142,9 +143,17 @@ void VideoStreamReader::extract_frame_data(const std::shared_ptr<TextureBuffer>&
     }
 
     uint64_t expected_size = static_cast<uint64_t>(texture_buffer->get_width())
-        * texture_buffer->get_height() * 4;
+        * texture_buffer->get_height()
+        * Portal::Graphics::TextureLoom::get_bytes_per_pixel(texture_buffer->get_format());
 
     size_t copy_size = std::min(pixel_vec->size(), static_cast<size_t>(expected_size));
+
+    if (copy_size < expected_size) {
+        MF_WARN(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "VideoStreamReader: processed frame is {} bytes, texture expects {}; "
+            "uploading a partial surface",
+            pixel_vec->size(), expected_size);
+    }
 
     texture_buffer->set_pixel_data(pixel_vec->data(), copy_size);
 }
@@ -199,13 +208,26 @@ void VideoStreamReader::on_container_state_change(
 // VideoContainerBuffer implementation
 // =========================================================================
 
+namespace {
+
+    Portal::Graphics::ImageFormat resolve_container_format(
+        const std::shared_ptr<Kakshya::StreamContainer>& container,
+        Portal::Graphics::ImageFormat fallback)
+    {
+        if (auto vsc = std::dynamic_pointer_cast<Kakshya::VideoStreamContainer>(container))
+            return vsc->get_format();
+        return fallback;
+    }
+
+} // namespace
+
 VideoContainerBuffer::VideoContainerBuffer(
     const std::shared_ptr<Kakshya::StreamContainer>& container,
     Portal::Graphics::ImageFormat format)
     : TextureBuffer(
           static_cast<uint32_t>(container->get_structure().get_width()),
           static_cast<uint32_t>(container->get_structure().get_height()),
-          format)
+          resolve_container_format(container, format))
     , m_container(container)
 {
     if (!m_container) {

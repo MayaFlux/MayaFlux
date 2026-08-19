@@ -84,9 +84,12 @@ bool CameraReader::open(const CameraConfig& config)
         return false;
     }
 
+    m_requested_pixel_format = config.pixel_format;
+
     if (!m_video->open_device(*m_demux,
             config.target_width,
-            config.target_height)) {
+            config.target_height,
+            config.pixel_format)) {
         m_last_error = "Video stream open failed: " + m_video->last_error();
         MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
             "CameraReader::open — {}", m_last_error);
@@ -133,10 +136,16 @@ CameraReader::create_container() const
         return nullptr;
     }
 
+    const auto fmt = to_image_format(m_requested_pixel_format);
+    if (!fmt) {
+        m_last_error = "Requested pixel format has no ImageFormat equivalent";
+        return nullptr;
+    }
+
     return std::make_shared<Kakshya::CameraContainer>(
         m_video->out_width,
         m_video->out_height,
-        4,
+        *fmt,
         m_video->frame_rate);
 }
 

@@ -83,7 +83,7 @@ bool VideoFileReader::open(const std::string& filepath, FileReadOptions options)
     }
 
     auto video = std::make_shared<VideoStreamContext>();
-    if (!video->open(*demux, m_target_width, m_target_height)) {
+    if (!video->open(*demux, m_target_width, m_target_height, m_target_format)) {
         set_error(video->last_error());
         return false;
     }
@@ -296,9 +296,15 @@ bool VideoFileReader::load_into_container(
         ? m_refill_threshold
         : ring_cap / 4;
 
+    const auto fmt = to_image_format(video->out_pixel_format);
+    if (!fmt) {
+        set_error("Video output pixel format has no ImageFormat equivalent");
+        return false;
+    }
+
     vc->setup_ring(total, ring_cap,
         video->out_width, video->out_height,
-        video->out_bytes_per_pixel, video->frame_rate,
+        *fmt, video->frame_rate,
         threshold, m_reader_id);
 
     m_sws_buf.resize(

@@ -6,6 +6,7 @@
 
 #include "MayaFlux/Kakshya/Utils/CoordUtils.hpp"
 #include "MayaFlux/Kakshya/Utils/DataUtils.hpp"
+#include "MayaFlux/Kakshya/Utils/PixelStorage.hpp"
 #include "MayaFlux/Kakshya/Utils/RegionUtils.hpp"
 
 #include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
@@ -16,165 +17,6 @@ namespace MayaFlux::Kakshya {
 
 using Portal::Graphics::ImageFormat;
 using Portal::Graphics::TextureLoom;
-
-namespace {
-
-    using Portal::Graphics::ImageFormat;
-
-    enum class StorageKind : uint8_t { U8,
-        U16,
-        F32 };
-
-    StorageKind storage_kind_for(ImageFormat format)
-    {
-        switch (format) {
-        case ImageFormat::R8:
-        case ImageFormat::RG8:
-        case ImageFormat::RGB8:
-        case ImageFormat::RGBA8:
-        case ImageFormat::RGBA8_SRGB:
-        case ImageFormat::BGRA8:
-        case ImageFormat::BGRA8_SRGB:
-        case ImageFormat::DEPTH24:
-        case ImageFormat::DEPTH24_STENCIL8:
-            return StorageKind::U8;
-
-        case ImageFormat::R16:
-        case ImageFormat::RG16:
-        case ImageFormat::RGBA16:
-        case ImageFormat::R16F:
-        case ImageFormat::RG16F:
-        case ImageFormat::RGBA16F:
-        case ImageFormat::DEPTH16:
-            return StorageKind::U16;
-
-        case ImageFormat::R32F:
-        case ImageFormat::RG32F:
-        case ImageFormat::RGBA32F:
-        case ImageFormat::DEPTH32F:
-            return StorageKind::F32;
-
-        default:
-            return StorageKind::U8;
-        }
-    }
-
-    bool is_float_format(ImageFormat format)
-    {
-        switch (format) {
-        case ImageFormat::R16F:
-        case ImageFormat::RG16F:
-        case ImageFormat::RGBA16F:
-        case ImageFormat::R32F:
-        case ImageFormat::RG32F:
-        case ImageFormat::RGBA32F:
-        case ImageFormat::DEPTH32F:
-            return true;
-        default:
-            return false;
-        }
-    }
-
-    DataVariant make_empty_storage(ImageFormat format, size_t element_count)
-    {
-        switch (storage_kind_for(format)) {
-        case StorageKind::U8:
-            return std::vector<uint8_t>(element_count, 0U);
-        case StorageKind::U16:
-            return std::vector<uint16_t>(element_count, 0U);
-        case StorageKind::F32:
-            return std::vector<float>(element_count, 0.0F);
-        }
-        return std::vector<uint8_t>(element_count, 0U);
-    }
-
-    // Raw byte pointer + byte size from a DataVariant that is known to be
-    // one of the three image alternatives.
-    std::pair<const uint8_t*, size_t> variant_bytes(const DataVariant& v)
-    {
-        return std::visit(
-            [](const auto& vec) -> std::pair<const uint8_t*, size_t> {
-                using T = typename std::decay_t<decltype(vec)>::value_type;
-                if constexpr (std::is_same_v<T, uint8_t>
-                    || std::is_same_v<T, uint16_t>
-                    || std::is_same_v<T, float>) {
-                    return {
-                        reinterpret_cast<const uint8_t*>(vec.data()),
-                        vec.size() * sizeof(T)
-                    };
-                } else {
-                    return { nullptr, 0 };
-                }
-            },
-            v);
-    }
-
-    std::pair<uint8_t*, size_t> variant_bytes_mut(DataVariant& v)
-    {
-        return std::visit(
-            [](auto& vec) -> std::pair<uint8_t*, size_t> {
-                using T = typename std::decay_t<decltype(vec)>::value_type;
-                if constexpr (std::is_same_v<T, uint8_t>
-                    || std::is_same_v<T, uint16_t>
-                    || std::is_same_v<T, float>) {
-                    return {
-                        reinterpret_cast<uint8_t*>(vec.data()),
-                        vec.size() * sizeof(T)
-                    };
-                } else {
-                    return { nullptr, 0 };
-                }
-            },
-            v);
-    }
-
-    double read_normalized_at(const DataVariant& v, ImageFormat format, size_t elem_index)
-    {
-        return std::visit(
-            [format, elem_index](const auto& vec) -> double {
-                using T = typename std::decay_t<decltype(vec)>::value_type;
-                if (elem_index >= vec.size())
-                    return 0.0;
-                if constexpr (std::is_same_v<T, uint8_t>) {
-                    return static_cast<double>(vec[elem_index]) / 255.0;
-                } else if constexpr (std::is_same_v<T, uint16_t>) {
-                    return is_float_format(format)
-                        ? static_cast<double>(vec[elem_index])
-                        : static_cast<double>(vec[elem_index]) / 65535.0;
-                } else if constexpr (std::is_same_v<T, float>) {
-                    return static_cast<double>(vec[elem_index]);
-                } else {
-                    return 0.0;
-                }
-            },
-            v);
-    }
-
-    void write_normalized_at(DataVariant& v, ImageFormat format, size_t elem_index, double value)
-    {
-        std::visit(
-            [format, elem_index, value](auto& vec) {
-                using T = typename std::decay_t<decltype(vec)>::value_type;
-                if (elem_index >= vec.size())
-                    return;
-                if constexpr (std::is_same_v<T, uint8_t>) {
-                    vec[elem_index] = static_cast<uint8_t>(
-                        std::clamp(value * 255.0, 0.0, 255.0));
-                } else if constexpr (std::is_same_v<T, uint16_t>) {
-                    if (is_float_format(format)) {
-                        vec[elem_index] = static_cast<uint16_t>(value);
-                    } else {
-                        vec[elem_index] = static_cast<uint16_t>(
-                            std::clamp(value * 65535.0, 0.0, 65535.0));
-                    }
-                } else if constexpr (std::is_same_v<T, float>) {
-                    vec[elem_index] = static_cast<float>(value);
-                }
-            },
-            v);
-    }
-
-} // namespace
 
 //=============================================================================
 // Construction
@@ -262,7 +104,7 @@ void TextureContainer::from_image(const std::shared_ptr<Core::VKImage>& image, u
     {
         Memory::SeqlockWriteGuard g(m_slot_locks[layer]);
         m_data[layer] = make_empty_storage(m_format, element_count);
-        auto [ptr, bytes] = variant_bytes_mut(m_data[layer]);
+        auto [ptr, bytes] = variant_bytes_mutable(m_data[layer]);
         if (!ptr || bytes != sz) {
             MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
                 "TextureContainer::from_image variant size mismatch ({} vs {})", bytes, sz);
@@ -298,7 +140,7 @@ void TextureContainer::from_image(
     {
         Memory::SeqlockWriteGuard g(m_slot_locks[layer]);
         m_data[layer] = make_empty_storage(m_format, element_count);
-        auto [ptr, bytes] = variant_bytes_mut(m_data[layer]);
+        auto [ptr, bytes] = variant_bytes_mutable(m_data[layer]);
         if (!ptr || bytes != sz) {
             MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
                 "TextureContainer::from_image(staging) variant size mismatch ({} vs {})", bytes, sz);
@@ -335,7 +177,7 @@ void TextureContainer::from_image_array(const std::shared_ptr<Core::VKImage>& im
     for (uint32_t i = 0; i < n; ++i) {
         Memory::SeqlockWriteGuard g(m_slot_locks[i]);
         m_data[i] = make_empty_storage(m_format, element_count);
-        auto [ptr, bytes] = variant_bytes_mut(m_data[i]);
+        auto [ptr, bytes] = variant_bytes_mutable(m_data[i]);
         if (ptr && bytes == layer_bytes)
             std::memcpy(ptr, combined.data() + i * layer_bytes, layer_bytes);
 
@@ -371,7 +213,7 @@ void TextureContainer::from_image_array(
     for (uint32_t i = 0; i < n; ++i) {
         Memory::SeqlockWriteGuard g(m_slot_locks[i]);
         m_data[i] = make_empty_storage(m_format, element_count);
-        auto [ptr, bytes] = variant_bytes_mut(m_data[i]);
+        auto [ptr, bytes] = variant_bytes_mutable(m_data[i]);
         if (ptr && bytes == layer_bytes)
             std::memcpy(ptr, combined.data() + i * layer_bytes, layer_bytes);
 
@@ -532,7 +374,7 @@ std::span<uint8_t> TextureContainer::pixel_bytes(uint32_t layer)
 {
     if (layer >= m_data.size())
         return {};
-    auto [ptr, bytes] = variant_bytes_mut(m_data[layer]);
+    auto [ptr, bytes] = variant_bytes_mutable(m_data[layer]);
     return ptr ? std::span<uint8_t>(ptr, bytes) : std::span<uint8_t> {};
 }
 
@@ -790,14 +632,17 @@ void TextureContainer::set_region_data(
 
 std::type_index TextureContainer::value_element_type() const
 {
-    switch (storage_kind_for(m_format)) {
-    case StorageKind::U8:
+    size_t element_size = storage_element_size(m_format);
+    if (element_size == 1) {
         return typeid(uint8_t);
-    case StorageKind::U16:
+    }
+    if (element_size == 2) {
         return typeid(uint16_t);
-    case StorageKind::F32:
+    }
+    if (element_size == 4) {
         return typeid(float);
     }
+
     return typeid(uint8_t);
 }
 

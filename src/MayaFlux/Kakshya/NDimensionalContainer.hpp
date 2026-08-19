@@ -126,6 +126,14 @@ struct MAYAFLUX_API ContainerDataStructure {
     [[nodiscard]] uint64_t get_total_elements() const { return get_total_elements(dimensions); }
 
     /**
+     * @brief Get total number of components (channels, spatial, frequency).
+     * @param dimensions Vector of dimension descriptors
+     * @return Total number of components
+     */
+    [[nodiscard]] static uint64_t get_component_count(const std::vector<DataDimension>& dimensions);
+    [[nodiscard]] uint64_t get_component_count() const { return get_component_count(dimensions); }
+
+    /**
      * @brief Extract sample count from dimensions.
      * @param dimensions Vector of dimension descriptors
      * @return Number of samples in the temporal dimension

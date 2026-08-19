@@ -45,6 +45,7 @@ struct MAYAFLUX_API CameraConfig {
     uint32_t target_height { 1080 }; ///< Requested height in pixels.
     double target_fps { 30.0 }; ///< Hint only; device may ignore.
     std::string format_override; ///< Leave empty to use CAMERA_FORMAT for current platform.
+    int pixel_format { -1 }; ///< Target AVPixelFormat as int; negative selects AV_PIX_FMT_RGBA.
 };
 
 /**
@@ -183,6 +184,15 @@ private:
     void start_decode_thread();
     void stop_decode_thread();
     void decode_thread_func();
+
+    /**
+     * @brief Pixel format requested at open() time, as an AVPixelFormat int.
+     *
+     * Negative selects RGBA, matching VideoStreamContext::setup_scaler's
+     * default. Read by create_container(), which runs before the scaler is
+     * built and therefore cannot consult the negotiated format.
+     */
+    int m_requested_pixel_format { -1 };
 };
 
 } // namespace MayaFlux::IO

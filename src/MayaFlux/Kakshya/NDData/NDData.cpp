@@ -52,6 +52,11 @@ DataDimension DataDimension::channel(uint64_t count, uint64_t stride)
     return { "channel", count, stride, Role::CHANNEL };
 }
 
+DataDimension DataDimension::depth(uint64_t count, uint64_t stride)
+{
+    return { "depth", count, stride, Role::DEPTH };
+}
+
 DataDimension DataDimension::frequency(uint64_t bins, std::string name)
 {
     return { std::move(name), bins, 1, Role::FREQUENCY };
@@ -106,6 +111,20 @@ DataDimension DataDimension::grouped(
     DataDimension dim { std::move(name), element_count, 1, role };
     dim.grouping = ComponentGroup { components_per_element, 0 };
     return dim;
+}
+
+DataDimension& DataDimension::with_range(double min, double max,
+    std::optional<double> invalid)
+{
+    if (max <= min) {
+        MF_ERROR(Journal::Component::Kakshya, Journal::Context::Runtime,
+            "DataDimension::with_range on '{}': max ({}) must exceed min ({}); range not applied",
+            name, max, min);
+        return *this;
+    }
+
+    value_range = ValueRange { .min = min, .max = max, .invalid = invalid };
+    return *this;
 }
 
 std::string_view modality_to_string(DataModality modality)
@@ -204,6 +223,19 @@ std::vector<DataDimension> DataDimension::create_dimensions(
         dims.push_back(DataDimension::channel(shape[3], strides[3]));
         break;
 
+    case DataModality::DEPTH_MAP:
+        if (shape.size() != 3) {
+            error<std::invalid_argument>(
+                Journal::Component::Kakshya,
+                Journal::Context::Runtime,
+                std::source_location::current(),
+                "DEPTH_MAP requires 3D shape [height, width, components]");
+        }
+        dims.push_back(DataDimension::spatial(shape[0], 'y', strides[0]));
+        dims.push_back(DataDimension::spatial(shape[1], 'x', strides[1]));
+        dims.push_back(DataDimension::depth(shape[2], strides[2]));
+        break;
+
     case DataModality::SPECTRAL_2D:
         if (shape.size() != 2) {
             error<std::invalid_argument>(
@@ -255,6 +287,20 @@ std::vector<DataDimension> DataDimension::create_dimensions(
         dims.push_back(DataDimension::spatial(shape[1], 'y', strides[1]));
         dims.push_back(DataDimension::spatial(shape[2], 'x', strides[2]));
         dims.push_back(DataDimension::channel(shape[3], strides[3]));
+        break;
+
+    case DataModality::VIDEO_DEPTH:
+        if (shape.size() != 4) {
+            error<std::invalid_argument>(
+                Journal::Component::Kakshya,
+                Journal::Context::Runtime,
+                std::source_location::current(),
+                "VIDEO_DEPTH requires 4D shape [frames, height, width, components]");
+        }
+        dims.push_back(DataDimension::time(shape[0], "frames"));
+        dims.push_back(DataDimension::spatial(shape[1], 'y', strides[1]));
+        dims.push_back(DataDimension::spatial(shape[2], 'x', strides[2]));
+        dims.push_back(DataDimension::depth(shape[3], strides[3]));
         break;
 
     default:

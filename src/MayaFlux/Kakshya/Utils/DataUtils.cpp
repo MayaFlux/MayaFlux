@@ -92,6 +92,44 @@ std::span<const float> as_normalised_float(
         variant);
 }
 
+std::pair<const uint8_t*, size_t> variant_bytes(const DataVariant& v)
+{
+    return std::visit(
+        [](const auto& vec) -> std::pair<const uint8_t*, size_t> {
+            using T = typename std::decay_t<decltype(vec)>::value_type;
+            if constexpr (std::is_same_v<T, uint8_t>
+                || std::is_same_v<T, uint16_t>
+                || std::is_same_v<T, float>) {
+                return {
+                    reinterpret_cast<const uint8_t*>(vec.data()),
+                    vec.size() * sizeof(T)
+                };
+            } else {
+                return { nullptr, 0 };
+            }
+        },
+        v);
+}
+
+std::pair<uint8_t*, size_t> variant_bytes_mutable(DataVariant& v)
+{
+    return std::visit(
+        [](auto& vec) -> std::pair<uint8_t*, size_t> {
+            using T = typename std::decay_t<decltype(vec)>::value_type;
+            if constexpr (std::is_same_v<T, uint8_t>
+                || std::is_same_v<T, uint16_t>
+                || std::is_same_v<T, float>) {
+                return {
+                    reinterpret_cast<uint8_t*>(vec.data()),
+                    vec.size() * sizeof(T)
+                };
+            } else {
+                return { nullptr, 0 };
+            }
+        },
+        v);
+}
+
 void denormalise_to_uint8(std::span<const float> src, std::span<uint8_t> dst)
 {
     Parallel::transform(Parallel::par_unseq, src.begin(), src.end(), dst.begin(),
@@ -126,7 +164,7 @@ DataModality detect_data_modality(const std::vector<DataDimension>& dimensions)
         return DataModality::UNKNOWN;
     }
 
-    size_t time_dims = 0, spatial_dims = 0, channel_dims = 0, frequency_dims = 0, custom_dims = 0;
+    size_t time_dims = 0, spatial_dims = 0, channel_dims = 0, frequency_dims = 0, depth_dims = 0, custom_dims = 0;
     size_t total_spatial_elements = 1;
     size_t total_channels = 0;
 
@@ -174,6 +212,9 @@ DataModality detect_data_modality(const std::vector<DataDimension>& dimensions)
         case DataDimension::Role::FREQUENCY:
             frequency_dims++;
             break;
+        case DataDimension::Role::DEPTH:
+            depth_dims++;
+            break;
         case DataDimension::Role::CUSTOM:
         default:
             custom_dims++;
@@ -184,11 +225,11 @@ DataModality detect_data_modality(const std::vector<DataDimension>& dimensions)
     if (time_dims == 1 && spatial_dims == 0 && frequency_dims == 0) {
         if (channel_dims == 0) {
             return DataModality::AUDIO_1D;
-        } else if (channel_dims == 1) {
-            return (total_channels <= 1) ? DataModality::AUDIO_1D : DataModality::AUDIO_MULTICHANNEL;
-        } else {
-            return DataModality::AUDIO_MULTICHANNEL;
         }
+        if (channel_dims == 1) {
+            return (total_channels <= 1) ? DataModality::AUDIO_1D : DataModality::AUDIO_MULTICHANNEL;
+        }
+        return DataModality::AUDIO_MULTICHANNEL;
     }
 
     if (time_dims >= 1 && frequency_dims >= 1) {
@@ -202,23 +243,31 @@ DataModality detect_data_modality(const std::vector<DataDimension>& dimensions)
         if (spatial_dims == 2) {
             if (channel_dims == 0) {
                 return DataModality::IMAGE_2D;
-            } else if (channel_dims == 1 && total_channels >= 3) {
-                return DataModality::IMAGE_COLOR;
-            } else {
-                return DataModality::IMAGE_2D;
             }
-        } else if (spatial_dims == 3) {
+            if (channel_dims == 1 && total_channels >= 3) {
+                return DataModality::IMAGE_COLOR;
+            }
+            return DataModality::IMAGE_2D;
+        }
+
+        if (spatial_dims == 3) {
             return DataModality::VOLUMETRIC_3D;
         }
+    }
+
+    if (depth_dims == 1 && spatial_dims == 2) {
+        return time_dims >= 1
+            ? DataModality::VIDEO_DEPTH
+            : DataModality::DEPTH_MAP;
     }
 
     if (time_dims >= 1 && spatial_dims >= 2) {
         if (spatial_dims == 2) {
             if (channel_dims == 0 || (channel_dims == 1 && total_channels <= 1)) {
                 return DataModality::VIDEO_GRAYSCALE;
-            } else {
-                return DataModality::VIDEO_COLOR;
             }
+
+            return DataModality::VIDEO_COLOR;
         }
         return DataModality::TENSOR_ND;
     }

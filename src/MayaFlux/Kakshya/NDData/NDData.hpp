@@ -167,8 +167,10 @@ enum class DataModality : uint8_t {
     IMAGE_2D, ///< 2D image (grayscale or single channel)
     IMAGE_COLOR, ///< 2D RGB/RGBA image
     IMAGE_COLOR_ARRAY, ///< 4D (idx + 2D + color)
+    DEPTH_MAP, ///< [height, width, components] - range/disparity image
     VIDEO_GRAYSCALE, ///< 3D video (time + 2D grayscale)
     VIDEO_COLOR, ///< 4D video (time + 2D + color)
+    VIDEO_DEPTH, ///< [frames, height, width, components] - streaming range data
     TEXTURE_2D, ///< 2D texture data
     TENSOR_ND, ///< N-dimensional tensor
     SPECTRAL_2D, ///< 2D spectral data (time + frequency)
@@ -244,6 +246,7 @@ struct MAYAFLUX_API DataDimension {
         BITANGENT, ///< Bitangent vectors
         UV, ///< Texture coordinates
         COLOR, ///< Color data (RGB/RGBA)
+        DEPTH, ///< Distance from the observation point (depth, disparity, range)
         INDEX, ///< Index buffer data
         MIP_LEVEL, ///< Mipmap levels
         CUSTOM ///< User-defined or application-specific
@@ -272,6 +275,24 @@ struct MAYAFLUX_API DataDimension {
     };
 
     std::optional<ComponentGroup> grouping;
+
+    /**
+     * @brief Numeric interpretation of the values along this dimension.
+     *
+     * Size and stride describe how many numbers there are and where they sit.
+     * This describes what they mean: the span that maps onto [0, 1] under
+     * normalisation, and the raw value marking an absent reading.
+     *
+     * Absent for dimensions whose values are already normalised or whose
+     * range is implied by the storage type.
+     */
+    struct ValueRange {
+        double min {};
+        double max {};
+        std::optional<double> invalid;
+    };
+
+    std::optional<ValueRange> value_range;
 
     std::string name; ///< Human-readable identifier for the dimension
     uint64_t size {}; ///< Number of elements in this dimension
@@ -304,6 +325,21 @@ struct MAYAFLUX_API DataDimension {
      * @return DataDimension representing channels
      */
     static DataDimension channel(uint64_t count, uint64_t stride = 1);
+
+    /**
+     * @brief Convenience constructor for a depth dimension.
+     *
+     * The component axis of a range image. Size is the number of values per
+     * pixel: 1 for plain depth, 2 for depth paired with confidence.
+     *
+     * Carries no numeric interpretation by itself. Chain with_range() to
+     * declare the span and invalid marker, since raw depth is rarely in [0, 1].
+     *
+     * @param count  Components per pixel.
+     * @param stride Memory stride (default: 1).
+     * @return DataDimension representing depth components.
+     */
+    static DataDimension depth(uint64_t count = 1, uint64_t stride = 1);
 
     /**
      * @brief Convenience constructor for a frequency dimension.
@@ -356,6 +392,14 @@ struct MAYAFLUX_API DataDimension {
      * @param role Semantic role
      */
     static DataDimension grouped(std::string name, uint64_t element_count, uint8_t components_per_element, Role role = Role::CUSTOM);
+
+    /**
+     * @brief Attach a value range. Chainable.
+     * @param min     Value mapping to 0.0.
+     * @param max     Value mapping to 1.0. Must exceed min.
+     * @param invalid Raw value marking an absent reading.
+     */
+    DataDimension& with_range(double min, double max, std::optional<double> invalid = std::nullopt);
 
     /**
      * @brief Create dimension for vertex positions (vec3)
@@ -544,6 +588,16 @@ private:
             break;
         }
 
+        case DataModality::DEPTH_MAP: {
+            uint64_t pixels = shape[0] * shape[1];
+            uint64_t components = shape[2];
+            variants.reserve(components);
+            for (uint64_t c = 0; c < components; ++c) {
+                variants.emplace_back(std::vector<T>(pixels, default_value));
+            }
+            break;
+        }
+
         case DataModality::SPECTRAL_2D:
             variants.emplace_back(std::vector<T>(shape[0] * shape[1], default_value));
             break;
@@ -575,6 +629,17 @@ private:
                 for (uint64_t ch = 0; ch < channels; ++ch) {
                     variants.emplace_back(std::vector<T>(frame_size, default_value));
                 }
+            }
+            break;
+        }
+
+        case DataModality::VIDEO_DEPTH: {
+            uint64_t frames = shape[0];
+            uint64_t pixels = shape[1] * shape[2];
+            uint64_t components = shape[3];
+            variants.reserve(components);
+            for (uint64_t c = 0; c < components; ++c) {
+                variants.emplace_back(std::vector<T>(frames * pixels, default_value));
             }
             break;
         }
