@@ -39,6 +39,7 @@ struct EstimateState {
     double running_mean { 0.0 };
     double running_variance { 0.0 };
     double floor { 0.0 };
+    double filtered_value { 0.0 };
     double trend_slope { 0.0 };
     double trend_explained_ratio { 0.0 };
     double last_raw_sample { 0.0 };
@@ -49,6 +50,7 @@ struct EstimateState {
         running_mean = 0.0;
         running_variance = 0.0;
         floor = 0.0;
+        filtered_value = 0.0;
         trend_slope = 0.0;
         trend_explained_ratio = 0.0;
         last_raw_sample = 0.0;
@@ -97,6 +99,17 @@ struct EstimateState {
  * for (auto sample : incoming_stream) {
  *     double floor = est.update(sample);
  *     double conf = est.confidence(sample - est.state().last_raw_sample);
+ * }
+ * ```
+ *
+ * Feeding Differential with cleaned values:
+ * ```cpp
+ * Estimate est(EstimateModel::EWM_VARIANCE);
+ * Memory::HistoryBuffer<double> position_history(3);
+ * for (auto raw_sample : incoming_stream) {
+ *     est.update_into(raw_sample, position_history);
+ *     double vel = Differential::velocity(position_history, dt);
+ *     double acc = Differential::acceleration(position_history, dt);
  * }
  * ```
  *
@@ -188,6 +201,47 @@ public:
      * rather than a noise floor in the windowed-variance sense.
      */
     [[nodiscard]] double floor() const { return m_state.floor; }
+
+    /**
+     * @brief Current filtered value, the cleaned counterpart to the raw sample
+     *
+     * This is the value a caller should differentiate, not the raw
+     * sample last passed to update(). Estimate exists to turn a noisy
+     * arriving stream into something Kinesis::Differential can safely
+     * take derivatives of: differentiation amplifies noise, so feeding
+     * Differential's HistoryBuffer-based functions a raw high-resolution
+     * device stream directly produces a velocity/acceleration/jerk
+     * signal dominated by sensor noise rather than motion.
+     *
+     * What "filtered" means depends on the active model:
+     * - ROLLING_VARIANCE / MEDIAN_ABSOLUTE_DEVIATION: the window mean
+     *   or median, a straightforward smoothing filter
+     * - EWM_VARIANCE: the exponentially weighted running mean
+     * - QUIET_PERIOD_FLOOR: the last quiet-period mean while the stream
+     *   looks calm, but the raw sample itself while the stream looks
+     *   active, since lagging behind a stale mean during real motion
+     *   would corrupt exactly the transient a caller most wants intact
+     * - TREND: the trend line's value at the newest sample, tracking
+     *   directional motion while smoothing residual jitter around it
+     */
+    [[nodiscard]] double value() const { return m_state.filtered_value; }
+
+    /**
+     * @brief Feed one sample and push the filtered result into a HistoryBuffer
+     * @param sample Raw value for this step
+     * @param out History buffer to receive the filtered value, so a
+     *        caller can hand this buffer directly to Kinesis::Differential
+     *        instead of maintaining a separate raw-sample buffer
+     *
+     * Equivalent to update(sample) followed by out.push(value()), given
+     * as one call since running an Estimate purely to feed Differential
+     * is the primary intended usage rather than an incidental one.
+     */
+    void update_into(double sample, Memory::HistoryBuffer<double>& out)
+    {
+        update(sample);
+        out.push(m_state.filtered_value);
+    }
 
     /**
      * @brief Resets internal state

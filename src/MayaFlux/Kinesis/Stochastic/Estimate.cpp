@@ -68,10 +68,12 @@ double Estimate::update_rolling_variance(double sample)
     const auto view = m_history.linearized_view();
 
     const double v = variance(view);
+    const double mean = std::accumulate(view.begin(), view.end(), 0.0) / static_cast<double>(view.size());
 
-    m_state.running_mean = std::accumulate(view.begin(), view.end(), 0.0) / static_cast<double>(view.size());
+    m_state.running_mean = mean;
     m_state.running_variance = v;
     m_state.floor = std::sqrt(v);
+    m_state.filtered_value = mean;
 
     return m_state.floor;
 }
@@ -82,6 +84,7 @@ double Estimate::update_ewm_variance(double sample)
         m_state.running_mean = sample;
         m_state.running_variance = 0.0;
         m_state.floor = 0.0;
+        m_state.filtered_value = sample;
         return m_state.floor;
     }
 
@@ -92,6 +95,7 @@ double Estimate::update_ewm_variance(double sample)
     m_state.running_variance = (1.0 - m_adapt_rate) * (m_state.running_variance + m_adapt_rate * delta * delta2);
 
     m_state.floor = std::sqrt(m_state.running_variance);
+    m_state.filtered_value = m_state.running_mean;
 
     return m_state.floor;
 }
@@ -107,6 +111,7 @@ double Estimate::update_mad(double sample)
 
     m_state.running_mean = median;
     m_state.floor = median_absolute_deviation(view);
+    m_state.filtered_value = median;
 
     return m_state.floor;
 }
@@ -115,8 +120,10 @@ double Estimate::update_quiet_period(double sample)
 {
     m_history.push(sample);
 
-    if (m_state.sample_count < m_window)
+    if (m_state.sample_count < m_window) {
+        m_state.filtered_value = sample;
         return m_state.floor;
+    }
 
     const auto view = m_history.linearized_view();
     const double mean = std::accumulate(view.begin(), view.end(), 0.0) / static_cast<double>(view.size());
@@ -132,6 +139,9 @@ double Estimate::update_quiet_period(double sample)
         m_state.running_mean = mean;
         m_state.running_variance = window_stddev * window_stddev;
         m_state.floor = window_stddev;
+        m_state.filtered_value = mean;
+    } else {
+        m_state.filtered_value = sample;
     }
 
     return m_state.floor;
@@ -145,6 +155,7 @@ double Estimate::update_trend(double sample)
         m_state.trend_slope = 0.0;
         m_state.trend_explained_ratio = 0.0;
         m_state.floor = 0.0;
+        m_state.filtered_value = sample;
         return m_state.floor;
     }
 
@@ -153,19 +164,29 @@ double Estimate::update_trend(double sample)
     std::vector<double> chronological(view.rbegin(), view.rend());
     std::span<const double> ordered(chronological);
 
-    m_state.trend_slope = trend_slope(ordered);
+    const double slope = trend_slope(ordered);
+    m_state.trend_slope = slope;
     m_state.trend_explained_ratio = trend_explained_ratio(ordered);
 
     const double mean = std::accumulate(chronological.begin(), chronological.end(), 0.0) / static_cast<double>(chronological.size());
     m_state.running_mean = mean;
 
-    const auto n = static_cast<double>(chronological.size() - 1);
+    const auto n = static_cast<double>(chronological.size());
+    double sum_x = 0.0;
+    for (size_t i = 0; i < chronological.size(); ++i)
+        sum_x += static_cast<double>(i);
+    const double mean_x = sum_x / n;
+    const double intercept = mean - slope * mean_x;
+    const auto newest_x = static_cast<double>(chronological.size() - 1);
+    m_state.filtered_value = intercept + slope * newest_x;
+
     const double first = chronological.front();
     const double last = chronological.back();
+    const auto span_n = static_cast<double>(chronological.size() - 1);
 
     double residual_sq_sum = 0.0;
     for (size_t i = 0; i < chronological.size(); ++i) {
-        const double t = static_cast<double>(i) / n;
+        const double t = static_cast<double>(i) / span_n;
         const double trend_value = first + t * (last - first);
         const double residual = chronological[i] - trend_value;
         residual_sq_sum += residual * residual;
