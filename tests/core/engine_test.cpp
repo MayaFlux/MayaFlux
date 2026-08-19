@@ -7,7 +7,7 @@
 #include "MayaFlux/Core/Engine.hpp"
 #include "MayaFlux/Core/SubsystemManager.hpp"
 #include "MayaFlux/Core/Subsystems/AudioSubsystem.hpp"
-#include "MayaFlux/Kinesis/Stochastic.hpp"
+#include "MayaFlux/Kinesis/Stochastic/Stochastic.hpp"
 #include "MayaFlux/Kriya/Tasks.hpp"
 #include "MayaFlux/Nodes/Generators/Sine.hpp"
 #include "MayaFlux/Nodes/NodeGraphManager.hpp"

@@ -4,7 +4,7 @@
 #include "MayaFlux/Core/Input/InputManager.hpp"
 #include "MayaFlux/Core/Windowing/WindowManager.hpp"
 #include "MayaFlux/IO/IOManager.hpp"
-#include "MayaFlux/Kinesis/Stochastic.hpp"
+#include "MayaFlux/Kinesis/Stochastic/Stochastic.hpp"
 #include "MayaFlux/Nodes/NodeGraphManager.hpp"
 #include "MayaFlux/Vruta/EventManager.hpp"
 #include "MayaFlux/Vruta/Scheduler.hpp"

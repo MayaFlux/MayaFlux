@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MayaFlux/Kinesis/Stochastic.hpp"
+#include "MayaFlux/Kinesis/Stochastic/Stochastic.hpp"
 #include "NodeNetwork.hpp"
 
 namespace MayaFlux::Nodes::Generator {
