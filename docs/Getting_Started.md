@@ -124,7 +124,6 @@ The example below is complete and runnable. It loads a texture, generates a para
 #define MAYASIMPLE
 #include "MayaFlux/MayaFlux.hpp"
 #include "MayaFlux/Nexus/Tapestry.hpp"
-#include "MayaFlux/Kinesis/GeometryPrimitives.hpp"
 
 void settings()
 {
@@ -132,7 +131,7 @@ void settings()
     stream.sample_rate = 48000;
     stream.buffer_size = 256;
     stream.output.channels = 2;
-}
+};
 
 void compose()
 {
@@ -240,7 +239,7 @@ void compose()
     fabric->wire(mk_mover({ 0, 0, -step })).on(window, IO::Keys::E, true).finalise();
 
     window->show();
-}
+};
 ```
 
 What this shows:
