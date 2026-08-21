@@ -145,7 +145,7 @@ void compose()
             glm::radians(45.0F), 1920.0F / 1080.0F, 0.1F, 100.0F);
     }
     
-    // Supply your own image relative to project_launcher
+    // Supply your own image relative to the base directory of the project
     auto img = vega.read_image("res/texture.png") | Graphics;
 
     // Parametric surface: initial geometry
