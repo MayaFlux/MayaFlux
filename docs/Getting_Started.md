@@ -124,6 +124,7 @@ The example below is complete and runnable. It loads a texture, generates a para
 #define MAYASIMPLE
 #include "MayaFlux/MayaFlux.hpp"
 #include "MayaFlux/Nexus/Tapestry.hpp"
+#include "MayaFlux/Kinesis/GeometryPrimitives.hpp"
 
 void settings()
 {
@@ -142,8 +143,9 @@ void compose()
             glm::vec3(0.0F, 2.0F, 5.0F),
             glm::vec3(0.0F),
             glm::radians(45.0F), 1920.0F / 1080.0F, 0.1F, 100.0F);
-    };
-
+    }
+    
+    // Supply your own image relative to project_launcher
     auto img = vega.read_image("res/texture.png") | Graphics;
 
     // Parametric surface: initial geometry
