@@ -131,7 +131,7 @@ void settings()
     stream.sample_rate = 48000;
     stream.buffer_size = 256;
     stream.output.channels = 2;
-}
+};
 
 void compose()
 {
@@ -142,8 +142,9 @@ void compose()
             glm::vec3(0.0F, 2.0F, 5.0F),
             glm::vec3(0.0F),
             glm::radians(45.0F), 1920.0F / 1080.0F, 0.1F, 100.0F);
-    };
-
+    }
+    
+    // Supply your own image relative to the base directory of the project
     auto img = vega.read_image("res/texture.png") | Graphics;
 
     // Parametric surface: initial geometry
@@ -238,7 +239,7 @@ void compose()
     fabric->wire(mk_mover({ 0, 0, -step })).on(window, IO::Keys::E, true).finalise();
 
     window->show();
-}
+};
 ```
 
 What this shows:

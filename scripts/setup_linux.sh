@@ -60,6 +60,15 @@ install_arch() {
         "nlohmann-json"
         "libpipewire"
     )
+    if pacman -Qs jack >/dev/null 2>&1; then
+        printf "JACK installation detected, would you like to install required package \"pipewire-jack\"? Y/N "
+        read answer
+        if [ "$answer" != "${answer#[Yy]}" ]; then
+          PACKAGES+=("pipewire-jack")
+        else
+          echo "WARNING: Not installing \"pipewire-jack\" may cause issues initializing and playing audio in MayaFlux"
+        fi
+    fi
     echo -e "${YELLOW}Installing: ${PACKAGES[*]}${NC}"
     sudo pacman -Syu --noconfirm "${PACKAGES[@]}"
 }
