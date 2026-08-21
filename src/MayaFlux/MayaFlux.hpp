@@ -72,6 +72,7 @@
 #include "Buffers/Container/SoundContainerBuffer.hpp"
 #include "Buffers/Container/SoundStreamWriter.hpp"
 #include "Buffers/Container/VideoContainerBuffer.hpp"
+#include "Buffers/Forma/FormaBindingsProcessor.hpp"
 #include "Buffers/Forma/FormaBuffer.hpp"
 #include "Buffers/Geometry/CompositeGeometryBuffer.hpp"
 #include "Buffers/Geometry/ComputeMeshBuffer.hpp"
@@ -92,14 +93,13 @@
 #include "Buffers/Shaders/ComputeProcessor.hpp"
 #include "Buffers/Shaders/DescriptorBindingsProcessor.hpp"
 #include "Buffers/Shaders/RenderProcessor.hpp"
+#include "Buffers/Shaders/SDFFieldProcessor.hpp"
 #include "Buffers/Staging/AudioWriteProcessor.hpp"
 #include "Buffers/Staging/BufferDownloadProcessor.hpp"
 #include "Buffers/Staging/BufferUploadProcessor.hpp"
 #include "Buffers/Staging/DataWriteProcessor.hpp"
 #include "Buffers/Textures/NodeTextureBuffer.hpp"
 #include "Buffers/Textures/TextureBuffer.hpp"
-#include "MayaFlux/Buffers/Forma/FormaBindingsProcessor.hpp"
-#include "MayaFlux/Buffers/Shaders/SDFFieldProcessor.hpp"
 
 #include "Kriya/Awaiters/DelayAwaiters.hpp"
 #include "Kriya/Awaiters/EventAwaiter.hpp"
@@ -122,6 +122,8 @@
 #include "Kakshya/Source/SoundFileContainer.hpp"
 #include "Kakshya/Source/VideoFileContainer.hpp"
 #include "Kakshya/Source/WindowContainer.hpp"
+
+#include "Kinesis/GeometryPrimitives.hpp"
 
 #include "Journal/Archivist.hpp"
 
@@ -182,6 +184,34 @@ using namespace MayaFlux;
 #include "MayaFlux/Kinesis/Discrete/Taper.hpp"
 #include "MayaFlux/Yantra/Workflows/Granular/GranularWorkflow.hpp"
 using namespace MayaFlux::Yantra;
+#endif
+
+// ============================================================================
+// Simulations: physics-based processing pipelines.
+// Enable individually or use MAYAFLUX_ALL_SIMULATIONS to load all.
+// Advanced users who build directly with Yantra operations can ignore this.
+// ============================================================================
+
+#if defined(MAYAFLUX_ALL_SIMULATIONS)
+#define MAYAFLUX_GRID_SIMULATION
+#endif
+
+#ifdef MAYAFLUX_GRID_SIMULATION
+#include "Buffers/Shaders/SDFMeshProcessor.hpp"
+#include "Buffers/State/AdvectProcessor.hpp"
+#include "Buffers/State/BuoyancyProcessor.hpp"
+#include "Buffers/State/DiffuseProcessor.hpp"
+#include "Buffers/State/DivergenceProcessor.hpp"
+#include "Buffers/State/InfluxProcessor.hpp"
+#include "Buffers/State/PressureProcessor.hpp"
+#include "Buffers/State/RaymarchBuffer.hpp"
+#include "Buffers/State/RelaxationEmitProcessor.hpp"
+#include "Buffers/State/RelaxationGridBuffer.hpp"
+#include "Buffers/State/RelaxationStepProcessor.hpp"
+#include "Buffers/State/SolenoidalProcessor.hpp"
+#include "Buffers/State/VolumeGridBuffer.hpp"
+#include "Buffers/State/VolumeSurfaceProcessor.hpp"
+#include "Buffers/State/WallProcessor.hpp"
 #endif
 
 /**
