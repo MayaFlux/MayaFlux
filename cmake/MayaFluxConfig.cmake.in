@@ -1,5 +1,7 @@
 @PACKAGE_INIT@
 
+include(CMakeFindDependencyMacro)
+
 set(_MAYAFLUX_LIBDIR "@CMAKE_INSTALL_LIBDIR@")
 
 if(NOT IS_ABSOLUTE "${_MAYAFLUX_LIBDIR}")

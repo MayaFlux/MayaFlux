@@ -76,7 +76,7 @@ public:
         std::string field_name,
         Kinesis::Lattice3D lattice,
         float threshold,
-        const std::string& shader_path = "volume_to_sdf_grid.comp");
+        const std::string& shader_path = "volume_to_sdf_grid.comp.spv");
 
     ~VolumeSurfaceProcessor() override = default;
 

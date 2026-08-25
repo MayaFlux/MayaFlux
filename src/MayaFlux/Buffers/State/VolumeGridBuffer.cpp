@@ -310,7 +310,7 @@ VolumeGridBuffer::FlowStages VolumeGridBuffer::setup_flow(const FlowConfig& conf
     }
 
     stages.self_advect = std::make_shared<AdvectProcessor>(
-        config.velocity, config.velocity, "volume_advect_vector.comp");
+        config.velocity, config.velocity, "volume_advect_vector.comp.spv");
     stages.self_advect->set_time_step(config.time_step);
     chain->add_processor(stages.self_advect, self);
 
@@ -324,7 +324,7 @@ VolumeGridBuffer::FlowStages VolumeGridBuffer::setup_flow(const FlowConfig& conf
 
         stages.buoyancy = std::make_shared<BuoyancyProcessor>(
             b.temperature, b.density, config.velocity,
-            b.direction, "volume_buoyancy.comp");
+            b.direction, "volume_buoyancy.comp.spv");
         stages.buoyancy->set_time_step(config.time_step);
         stages.buoyancy->set_temperature_gain(b.temperature_gain);
         stages.buoyancy->set_density_gain(b.density_gain);
@@ -334,7 +334,7 @@ VolumeGridBuffer::FlowStages VolumeGridBuffer::setup_flow(const FlowConfig& conf
 
     if (config.viscosity > 0.0F) {
         stages.diffuse = std::make_shared<DiffuseProcessor>(
-            config.velocity, config.scratch, "volume_diffuse_vector.comp");
+            config.velocity, config.scratch, "volume_diffuse_vector.comp.spv");
         stages.diffuse->set_rate(config.viscosity);
         stages.diffuse->set_time_step(config.time_step);
         chain->add_processor(stages.diffuse, self);
@@ -342,26 +342,26 @@ VolumeGridBuffer::FlowStages VolumeGridBuffer::setup_flow(const FlowConfig& conf
 
     if (config.walls) {
         stages.wall_advected = std::make_shared<WallProcessor>(
-            config.velocity, "volume_wall.comp");
+            config.velocity, "volume_wall.comp.spv");
         chain->add_processor(stages.wall_advected, self);
     }
 
     stages.divergence = std::make_shared<DivergenceProcessor>(
-        config.velocity, config.divergence, "volume_divergence.comp");
+        config.velocity, config.divergence, "volume_divergence.comp.spv");
     chain->add_processor(stages.divergence, self);
 
     stages.pressure = std::make_shared<PressureProcessor>(
-        config.divergence, config.pressure, "volume_pressure_jacobi.comp");
+        config.divergence, config.pressure, "volume_pressure_jacobi.comp.spv");
     stages.pressure->set_iteration_count(config.jacobi_iterations);
     chain->add_processor(stages.pressure, self);
 
     stages.solenoidal = std::make_shared<SolenoidalProcessor>(
-        config.pressure, config.velocity, "volume_solenoidal.comp");
+        config.pressure, config.velocity, "volume_solenoidal.comp.spv");
     chain->add_processor(stages.solenoidal, self);
 
     if (config.walls) {
         stages.wall_projected = std::make_shared<WallProcessor>(
-            config.velocity, "volume_wall.comp");
+            config.velocity, "volume_wall.comp.spv");
         chain->add_processor(stages.wall_projected, self);
     }
 
@@ -371,7 +371,7 @@ VolumeGridBuffer::FlowStages VolumeGridBuffer::setup_flow(const FlowConfig& conf
         }
 
         auto advect = std::make_shared<AdvectProcessor>(
-            config.velocity, carried.field, "volume_advect_scalar.comp");
+            config.velocity, carried.field, "volume_advect_scalar.comp.spv");
         advect->set_time_step(config.time_step);
         advect->set_dissipation(carried.dissipation);
         chain->add_processor(advect, self);
