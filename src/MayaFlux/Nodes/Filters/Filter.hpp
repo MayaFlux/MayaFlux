@@ -235,6 +235,33 @@ public:
     void add_coef(int index, double value, coefficients type = coefficients::ALL);
 
     /**
+     * @brief Mutable view of the feedback taps, excluding a[0]
+     *
+     * a[0] is held at 1.0 by setACoefficients and is not addressable here:
+     * index 0 of the returned span is a[1]. The span has fixed extent, so
+     * coefficient count changes remain the province of setACoefficients.
+     *
+     * Edits are visible to the recursion immediately and are not atomic with
+     * respect to a sample in flight. A sweep requiring sample-accurate
+     * coefficient changes should drive update_coefs_from_node instead.
+     */
+    [[nodiscard]] inline std::span<double> edit_feedback_coefs()
+    {
+        return std::span<double>(m_coef_a).subspan(1);
+    }
+
+    /**
+     * @brief Mutable view of the feedforward coefficients
+     *
+     * Carries no invariant; every element is freely assignable. Fixed extent,
+     * with the same non-atomicity caveat as edit_feedback_coefs().
+     */
+    [[nodiscard]] inline std::span<double> edit_feedforward_coefs()
+    {
+        return std::span<double>(m_coef_b);
+    }
+
+    /**
      * @brief Resets the filter's internal state
      *
      * Clears the input and output history buffers, effectively
