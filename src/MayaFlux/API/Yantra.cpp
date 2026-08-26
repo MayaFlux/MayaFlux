@@ -1,11 +1,11 @@
 #include "Yantra.hpp"
 
-#include "MayaFlux/Nodes/Generators/WindowGenerator.hpp"
 #include "MayaFlux/Yantra/Analyzers/EnergyAnalyzer.hpp"
 #include "MayaFlux/Yantra/Analyzers/StatisticalAnalyzer.hpp"
 #include "MayaFlux/Yantra/Extractors/FeatureExtractor.hpp"
 
 #include "MayaFlux/Kinesis/Discrete/Analysis.hpp"
+#include "MayaFlux/Kinesis/Discrete/Taper.hpp"
 #include "MayaFlux/Kinesis/Discrete/Transform.hpp"
 
 namespace MayaFlux {
@@ -825,23 +825,20 @@ std::vector<double> extract_zero_crossing_regions(const Kakshya::DataVariant& da
 
 void apply_window(std::vector<double>& data, const std::string& window_type)
 {
-    Nodes::Generator::WindowType win_type {};
-
-    if (window_type == "hann" || window_type == "hanning") {
-        win_type = Nodes::Generator::WindowType::HANNING;
-    } else if (window_type == "hamming") {
-        win_type = Nodes::Generator::WindowType::HAMMING;
-    } else if (window_type == "blackman") {
-        win_type = Nodes::Generator::WindowType::BLACKMAN;
-    } else if (window_type == "rectangular" || window_type == "rect") {
-        win_type = Nodes::Generator::WindowType::RECTANGULAR;
-    } else {
-        win_type = Nodes::Generator::WindowType::HANNING;
+    if (window_type == "rectangular" || window_type == "rect") {
+        Kinesis::Discrete::apply_rectangular(data);
+        return;
+    }
+    if (window_type == "hamming") {
+        Kinesis::Discrete::apply_hamming(data);
+        return;
+    }
+    if (window_type == "blackman") {
+        Kinesis::Discrete::apply_blackman(data);
+        return;
     }
 
-    auto window = Nodes::Generator::generate_window(data.size(), win_type);
-    for (size_t i = 0; i < data.size() && i < window.size(); ++i)
-        data[i] *= window[i];
+    Kinesis::Discrete::apply_hann(data);
 }
 
 void apply_window(Kakshya::DataVariant& data, const std::string& window_type)
