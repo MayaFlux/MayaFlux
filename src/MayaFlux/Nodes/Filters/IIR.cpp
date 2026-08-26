@@ -15,7 +15,8 @@ IIR::IIR(const std::vector<double>& a_coef, const std::vector<double>& b_coef)
 double IIR::process_sample(double input)
 {
     if (is_bypass_enabled()) {
-        return input;
+        m_last_output = input;
+        return m_last_output;
     }
 
     double processed_input = input;
@@ -61,7 +62,8 @@ double IIR::process_sample(double input)
         try_reset_processed_state(m_input_node);
     }
 
-    return output * get_gain();
+    m_last_output = output * get_gain();
+    return m_last_output;
 }
 
 void IIR::save_state()
