@@ -202,4 +202,27 @@ MAYAFLUX_API void interpolate_cubic(std::span<const double> src,
     std::span<const double> data,
     double stretch_factor);
 
+/**
+ * @brief Linear ramp from start to end over n samples
+ * @param n Length in samples
+ * @param start First value
+ * @param end Last value
+ * @return Vector of length n; n == 1 returns { start }
+ */
+[[nodiscard]] MAYAFLUX_API std::vector<double> ramp_linear(size_t n, double start = 0.0, double end = 1.0);
+
+/**
+ * @brief Exponential ramp from start to end over n samples
+ *
+ * Each step multiplies by a constant growth factor. A true exponential
+ * cannot originate at zero, so @p start is clamped away from it; callers
+ * wanting a curve that begins at silence should offset the result.
+ *
+ * @param n Length in samples
+ * @param start First value, clamped to magnitude >= 1e-9
+ * @param end Last value
+ * @return Vector of length n; n == 1 returns { start }
+ */
+[[nodiscard]] MAYAFLUX_API std::vector<double> ramp_exponential(size_t n, double start = 0.001, double end = 1.0);
+
 } // namespace MayaFlux::Kinesis::Discrete

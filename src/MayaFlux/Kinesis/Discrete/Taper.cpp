@@ -1,5 +1,7 @@
 #include "Taper.hpp"
 
+#include <algorithm>
+
 namespace MayaFlux::Kinesis::Discrete {
 
 // ============================================================================
@@ -47,9 +49,14 @@ std::vector<double> blackman(size_t n)
     return w;
 }
 
-std::vector<double> rectangular(size_t n)
+std::vector<double> rectangular(size_t n, size_t support, size_t offset)
 {
-    return std::vector<double>(n, 1.0);
+    std::vector<double> w(n, 0.0);
+    const size_t start = std::min(offset, n);
+    const size_t end = std::min(start + support, n);
+    for (size_t i = start; i < end; ++i)
+        w[i] = 1.0;
+    return w;
 }
 
 std::vector<double> trapezoid(size_t n, size_t fade_len)
@@ -117,6 +124,23 @@ void apply_blackman(std::span<double> data) noexcept
         const double x = scale * static_cast<double>(i);
         data[i] *= 0.42 - 0.5 * std::cos(x) + 0.08 * std::cos(2.0 * x);
     }
+}
+
+void apply_rectangular(std::span<double> data, size_t support, size_t offset) noexcept
+{
+    const size_t n = data.size();
+    if (n == 0 || support == 0) {
+        std::ranges::fill(data, 0.0);
+        return;
+    }
+
+    const size_t start = std::min(offset, n);
+    const size_t end = std::min(start + support, n);
+
+    for (size_t i = 0; i < start; ++i)
+        data[i] = 0.0;
+    for (size_t i = end; i < n; ++i)
+        data[i] = 0.0;
 }
 
 void apply_trapezoid(std::span<double> data, size_t fade_len) noexcept

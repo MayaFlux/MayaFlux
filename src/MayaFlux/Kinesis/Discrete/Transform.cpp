@@ -236,4 +236,45 @@ std::vector<double> time_stretch(std::span<const double> data, double stretch_fa
     return out;
 }
 
+std::vector<double> ramp_linear(size_t n, double start, double end)
+{
+    if (n == 0)
+        return {};
+    if (n == 1)
+        return { start };
+
+    std::vector<double> out(n);
+    const double step = (end - start) / static_cast<double>(n - 1);
+    for (size_t i = 0; i < n; ++i)
+        out[i] = start + step * static_cast<double>(i);
+    return out;
+}
+
+std::vector<double> ramp_exponential(size_t n, double start, double end)
+{
+    if (n == 0)
+        return {};
+
+    constexpr double k_min_magnitude = 1e-9;
+    double s = start;
+    if (std::abs(s) < k_min_magnitude)
+        s = std::copysign(k_min_magnitude, s == 0.0 ? 1.0 : s);
+
+    if (n == 1)
+        return { s };
+
+    double e = end;
+    if (std::abs(e) < k_min_magnitude)
+        e = std::copysign(k_min_magnitude, e == 0.0 ? 1.0 : e);
+    if ((s < 0.0) != (e < 0.0))
+        e = std::copysign(std::abs(e), s);
+
+    std::vector<double> out(n);
+    const double growth = std::pow(e / s, 1.0 / static_cast<double>(n - 1));
+    out[0] = s;
+    for (size_t i = 1; i < n; ++i)
+        out[i] = out[i - 1] * growth;
+    return out;
+}
+
 } // namespace MayaFlux::Kinesis::Discrete
