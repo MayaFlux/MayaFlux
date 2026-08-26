@@ -6,21 +6,11 @@ namespace MayaFlux::Nodes::Filters {
 
 Filter::Filter(const std::shared_ptr<Node>& input, const std::vector<double>& a_coef, const std::vector<double>& b_coef)
     : m_input_node(input)
-    , m_coef_a(a_coef)
-    , m_coef_b(b_coef)
     , m_context(0.0, m_input_history, m_output_history, m_coef_a, m_coef_b)
     , m_context_gpu(0.0, m_input_history, m_output_history, m_coef_a, m_coef_b, get_gpu_data_buffer())
 {
-    if (m_coef_a.empty() || m_coef_b.empty()) {
-        error<std::invalid_argument>(Journal::Component::Nodes, Journal::Context::Configuration, std::source_location::current(),
-            "IIR coefficients cannot be empty. Received a_coef size: {}, b_coef size: {}", m_coef_a.size(), m_coef_b.size());
-    }
-    if (m_coef_a[0] == 0.0F) {
-        error<std::invalid_argument>(Journal::Component::Nodes, Journal::Context::Configuration, std::source_location::current(),
-            "First denominator coefficient (a[0]) cannot be zero. Received a[0]: {}", m_coef_a[0]);
-    }
-    m_input_history.assign(m_coef_b.size(), 0.0);
-    m_output_history.assign(m_coef_a.size(), 0.0);
+    setACoefficients(a_coef);
+    setBCoefficients(b_coef);
 }
 
 Filter::Filter(const std::vector<double>& a_coef, const std::vector<double>& b_coef)
@@ -78,12 +68,16 @@ void Filter::setACoefficients(const std::vector<double>& new_coefs)
         error<std::invalid_argument>(Journal::Component::Nodes, Journal::Context::Configuration, std::source_location::current(),
             "Denominator coefficients cannot be empty. Received size: {}", new_coefs.size());
     }
-    if (new_coefs[0] == 0.0F) {
+    if (std::abs(new_coefs[0]) < k_min_leading_coef) {
         error<std::invalid_argument>(Journal::Component::Nodes, Journal::Context::Configuration, std::source_location::current(),
-            "First denominator coefficient (a[0]) cannot be zero. Received a[0]: {}", new_coefs[0]);
+            "First denominator coefficient (a[0]) magnitude below {}. Received a[0]: {}", k_min_leading_coef, new_coefs[0]);
     }
 
     m_coef_a = new_coefs;
+    const double a0 = m_coef_a[0];
+    for (auto& coef : m_coef_a) {
+        coef /= a0;
+    }
     m_output_history.assign(m_coef_a.size(), 0.0);
 }
 

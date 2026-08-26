@@ -11,6 +11,15 @@ enum coefficients : uint8_t {
 };
 
 /**
+ * @brief Minimum permissible magnitude for the leading denominator coefficient
+ *
+ * Normalization divides by a[0]. Coefficients arriving from
+ * update_coefs_from_node carry arbitrary signal values, so a magnitude
+ * floor bounds the resulting gain rather than rejecting only exact zero.
+ */
+inline constexpr double k_min_leading_coef = 1e-6;
+
+/**
  * @class FilterContext
  * @brief Specialized context for filter node callbacks
  *
@@ -378,9 +387,11 @@ public:
      * @brief Updates the feedback (denominator) coefficients
      * @param new_coefs New coefficient values
      *
-     * Sets the 'a' coefficients in the difference equation, which
-     * are applied to previous output samples. The method ensures
-     * proper normalization and buffer sizing.
+     * Sets the 'a' coefficients in the difference equation, which are applied
+     * to previous output samples. The vector is normalized on entry so that
+     * a[0] is 1.0; getACoefficients() therefore returns the normalized form,
+     * not the values as supplied. Rejects vectors whose leading coefficient
+     * magnitude falls below k_min_leading_coef.
      */
     void setACoefficients(const std::vector<double>& new_coefs);
 

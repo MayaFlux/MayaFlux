@@ -48,8 +48,6 @@ double IIR::process_sample(double input)
         output -= m_coef_a[i] * m_output_history[i];
     }
 
-    // output /= m_coef_a[0];
-
     update_outputs(output);
 
     if ((!m_state_saved || (m_state_saved && m_fire_events_during_snapshot))
