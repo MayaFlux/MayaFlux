@@ -262,6 +262,19 @@ public:
     }
 
     /**
+     * @brief Largest pole magnitude of the current denominator
+     *
+     * Below 1.0 the recurrence converges; at or above 1.0 it diverges and
+     * the filter will run away on the next sample. Useful after writing
+     * through edit_feedback_coefs, which places poles without any check.
+     *
+     * Delegates to Kinesis::Discrete::max_pole_magnitude. Orders 1 and 2
+     * are closed-form; higher orders solve a companion matrix and are not
+     * suitable for the audio thread.
+     */
+    [[nodiscard]] double max_pole_magnitude() const;
+
+    /**
      * @brief Resets the filter's internal state
      *
      * Clears the input and output history buffers, effectively
