@@ -1,26 +1,18 @@
 #include "Filter.hpp"
 
+#include "MayaFlux/Kinesis/Discrete/Coefficients.hpp"
+
 #include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux::Nodes::Filters {
 
 Filter::Filter(const std::shared_ptr<Node>& input, const std::vector<double>& a_coef, const std::vector<double>& b_coef)
     : m_input_node(input)
-    , m_coef_a(a_coef)
-    , m_coef_b(b_coef)
     , m_context(0.0, m_input_history, m_output_history, m_coef_a, m_coef_b)
     , m_context_gpu(0.0, m_input_history, m_output_history, m_coef_a, m_coef_b, get_gpu_data_buffer())
 {
-    if (m_coef_a.empty() || m_coef_b.empty()) {
-        error<std::invalid_argument>(Journal::Component::Nodes, Journal::Context::Configuration, std::source_location::current(),
-            "IIR coefficients cannot be empty. Received a_coef size: {}, b_coef size: {}", m_coef_a.size(), m_coef_b.size());
-    }
-    if (m_coef_a[0] == 0.0F) {
-        error<std::invalid_argument>(Journal::Component::Nodes, Journal::Context::Configuration, std::source_location::current(),
-            "First denominator coefficient (a[0]) cannot be zero. Received a[0]: {}", m_coef_a[0]);
-    }
-    m_input_history.assign(m_coef_b.size(), 0.0);
-    m_output_history.assign(m_coef_a.size(), 0.0);
+    setACoefficients(a_coef);
+    setBCoefficients(b_coef);
 }
 
 Filter::Filter(const std::vector<double>& a_coef, const std::vector<double>& b_coef)
@@ -66,10 +58,10 @@ void Filter::update_inputs(double current_sample)
 
 void Filter::update_outputs(double current_sample)
 {
-    m_output_history[0] = current_sample;
     for (unsigned int i = m_output_history.size() - 1; i > 0; i--) {
         m_output_history[i] = m_output_history[i - 1];
     }
+    m_output_history[0] = current_sample;
 }
 
 void Filter::setACoefficients(const std::vector<double>& new_coefs)
@@ -78,12 +70,16 @@ void Filter::setACoefficients(const std::vector<double>& new_coefs)
         error<std::invalid_argument>(Journal::Component::Nodes, Journal::Context::Configuration, std::source_location::current(),
             "Denominator coefficients cannot be empty. Received size: {}", new_coefs.size());
     }
-    if (new_coefs[0] == 0.0F) {
+    if (std::abs(new_coefs[0]) < k_min_leading_coef) {
         error<std::invalid_argument>(Journal::Component::Nodes, Journal::Context::Configuration, std::source_location::current(),
-            "First denominator coefficient (a[0]) cannot be zero. Received a[0]: {}", new_coefs[0]);
+            "First denominator coefficient (a[0]) magnitude below {}. Received a[0]: {}", k_min_leading_coef, new_coefs[0]);
     }
 
     m_coef_a = new_coefs;
+    const double a0 = m_coef_a[0];
+    for (auto& coef : m_coef_a) {
+        coef /= a0;
+    }
     m_output_history.assign(m_coef_a.size(), 0.0);
 }
 
@@ -116,26 +112,48 @@ void Filter::update_coef_from_input(int length, coefficients type)
 
 void Filter::add_coef_internal(uint64_t index, double value, std::vector<double>& buffer)
 {
-    if (index > buffer.size()) {
-        buffer.resize(index + 1, 1.F);
+    if (index >= buffer.size()) {
+        buffer.resize(index + 1, 0.0);
     }
-    buffer.at(index) = value;
+    buffer[index] = value;
+
+    if (&buffer == &m_coef_a) {
+        if (std::abs(m_coef_a[0]) < k_min_leading_coef) {
+            MF_WARN(Journal::Component::Nodes, Journal::Context::Configuration,
+                "Leading denominator coefficient {} below floor; restoring 1.0", m_coef_a[0]);
+            m_coef_a[0] = 1.0;
+        }
+        const double a0 = m_coef_a[0];
+        if (a0 != 1.0) {
+            for (auto& coef : m_coef_a) {
+                coef /= a0;
+            }
+        }
+        m_output_history.resize(m_coef_a.size(), 0.0);
+    } else {
+        m_input_history.resize(m_coef_b.size(), 0.0);
+    }
 }
 
 void Filter::add_coef(int index, double value, coefficients type)
 {
     switch (type) {
     case coefficients::INPUT:
-        add_coef_internal(index, value, m_coef_a);
+        add_coef_internal(index, value, m_coef_b);
         break;
     case coefficients::OUTPUT:
-        add_coef_internal(index, value, m_coef_b);
+        add_coef_internal(index, value, m_coef_a);
         break;
     default:
         add_coef_internal(index, value, m_coef_a);
         add_coef_internal(index, value, m_coef_b);
         break;
     }
+}
+
+double Filter::max_pole_magnitude() const
+{
+    return Kinesis::Discrete::max_pole_magnitude(m_coef_a);
 }
 
 void Filter::reset()

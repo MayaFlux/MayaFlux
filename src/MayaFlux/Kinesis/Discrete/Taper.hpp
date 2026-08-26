@@ -54,11 +54,26 @@ namespace MayaFlux::Kinesis::Discrete {
 [[nodiscard]] MAYAFLUX_API std::vector<double> blackman(size_t n);
 
 /**
- * @brief Rectangular (unity) taper coefficients
- * @param n Length in samples
- * @return Coefficient vector of length n, all 1.0
+ * @brief Rectangular (boxcar) taper coefficients
+ *
+ * Unity across a contiguous support region, zero elsewhere. The default
+ * arguments give unity across the whole length, which is the identity
+ * taper; a narrower @p support gates a region and suppresses the rest,
+ * which is the form used for frame extraction, impulse response
+ * truncation, and segment isolation ahead of a transform.
+ *
+ * A @p support of 0 yields an all-zero vector. An @p offset at or beyond
+ * @p n leaves no unity region.
+ *
+ * @param n       Length in samples
+ * @param support Width of the unity region; defaults to the full length
+ * @param offset  Index where the unity region begins
+ * @return Coefficient vector of length n
  */
-[[nodiscard]] MAYAFLUX_API std::vector<double> rectangular(size_t n);
+[[nodiscard]] MAYAFLUX_API std::vector<double> rectangular(
+    size_t n,
+    size_t support = std::numeric_limits<size_t>::max(),
+    size_t offset = 0);
 
 /**
  * @brief Trapezoid taper coefficients with configurable flat region
@@ -105,6 +120,22 @@ MAYAFLUX_API void apply_hamming(std::span<double> data) noexcept;
  * @param data Target span (modified in place)
  */
 MAYAFLUX_API void apply_blackman(std::span<double> data) noexcept;
+
+/**
+ * @brief Apply a rectangular taper in-place without materialising coefficients
+ *
+ * Zeroes everything outside the support region and leaves the region
+ * itself untouched, since its coefficients are unity. The default
+ * arguments gate nothing and leave @p data unchanged.
+ *
+ * @param data    Target span (modified in place)
+ * @param support Width of the unity region; defaults to the full length
+ * @param offset  Index where the unity region begins
+ */
+MAYAFLUX_API void apply_rectangular(
+    std::span<double> data,
+    size_t support = std::numeric_limits<size_t>::max(),
+    size_t offset = 0) noexcept;
 
 /**
  * @brief Apply a trapezoid taper in-place without materialising coefficients

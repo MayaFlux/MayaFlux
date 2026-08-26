@@ -11,6 +11,15 @@ enum coefficients : uint8_t {
 };
 
 /**
+ * @brief Minimum permissible magnitude for the leading denominator coefficient
+ *
+ * Normalization divides by a[0]. Coefficients arriving from
+ * update_coefs_from_node carry arbitrary signal values, so a magnitude
+ * floor bounds the resulting gain rather than rejecting only exact zero.
+ */
+inline constexpr double k_min_leading_coef = 1e-6;
+
+/**
  * @class FilterContext
  * @brief Specialized context for filter node callbacks
  *
@@ -226,6 +235,46 @@ public:
     void add_coef(int index, double value, coefficients type = coefficients::ALL);
 
     /**
+     * @brief Mutable view of the feedback taps, excluding a[0]
+     *
+     * a[0] is held at 1.0 by setACoefficients and is not addressable here:
+     * index 0 of the returned span is a[1]. The span has fixed extent, so
+     * coefficient count changes remain the province of setACoefficients.
+     *
+     * Edits are visible to the recursion immediately and are not atomic with
+     * respect to a sample in flight. A sweep requiring sample-accurate
+     * coefficient changes should drive update_coefs_from_node instead.
+     */
+    [[nodiscard]] inline std::span<double> edit_feedback_coefs()
+    {
+        return std::span<double>(m_coef_a).subspan(1);
+    }
+
+    /**
+     * @brief Mutable view of the feedforward coefficients
+     *
+     * Carries no invariant; every element is freely assignable. Fixed extent,
+     * with the same non-atomicity caveat as edit_feedback_coefs().
+     */
+    [[nodiscard]] inline std::span<double> edit_feedforward_coefs()
+    {
+        return std::span<double>(m_coef_b);
+    }
+
+    /**
+     * @brief Largest pole magnitude of the current denominator
+     *
+     * Below 1.0 the recurrence converges; at or above 1.0 it diverges and
+     * the filter will run away on the next sample. Useful after writing
+     * through edit_feedback_coefs, which places poles without any check.
+     *
+     * Delegates to Kinesis::Discrete::max_pole_magnitude. Orders 1 and 2
+     * are closed-form; higher orders solve a companion matrix and are not
+     * suitable for the audio thread.
+     */
+    [[nodiscard]] double max_pole_magnitude() const;
+
+    /**
      * @brief Resets the filter's internal state
      *
      * Clears the input and output history buffers, effectively
@@ -378,9 +427,11 @@ public:
      * @brief Updates the feedback (denominator) coefficients
      * @param new_coefs New coefficient values
      *
-     * Sets the 'a' coefficients in the difference equation, which
-     * are applied to previous output samples. The method ensures
-     * proper normalization and buffer sizing.
+     * Sets the 'a' coefficients in the difference equation, which are applied
+     * to previous output samples. The vector is normalized on entry so that
+     * a[0] is 1.0; getACoefficients() therefore returns the normalized form,
+     * not the values as supplied. Rejects vectors whose leading coefficient
+     * magnitude falls below k_min_leading_coef.
      */
     void setACoefficients(const std::vector<double>& new_coefs);
 
