@@ -123,6 +123,160 @@ MAYAFLUX_API void biquad_high_shelf(double frequency, double slope, double gain_
     double sample_rate, std::vector<double>& a, std::vector<double>& b);
 
 // ============================================================================
+// Windowed-sinc FIR design
+// ============================================================================
+
+/**
+ * @brief Windowed-sinc lowpass FIR coefficients
+ *
+ * Truncates the ideal lowpass impulse response to @p taps and applies a Hann
+ * taper. Transition width narrows as taps increases; stopband attenuation is
+ * set by the taper, not the length.
+ *
+ * Returned in FIR tap order: index 0 multiplies the newest sample. Group
+ * delay is (taps - 1) / 2 samples.
+ *
+ * @param frequency   Cutoff in Hz, clamped to (0, sample_rate/2)
+ * @param sample_rate Sampling rate in Hz
+ * @param taps        Kernel length; odd values give an integer group delay
+ * @return Coefficient vector of length taps
+ */
+[[nodiscard]] MAYAFLUX_API std::vector<double> sinc_lowpass(
+    double frequency, double sample_rate, size_t taps);
+
+/**
+ * @brief Windowed-sinc highpass FIR coefficients
+ *
+ * Spectral inversion of the corresponding lowpass. Requires odd @p taps for
+ * the inversion to be exact; even lengths are incremented internally.
+ *
+ * @param frequency   Cutoff in Hz, clamped to (0, sample_rate/2)
+ * @param sample_rate Sampling rate in Hz
+ * @param taps        Kernel length, forced odd
+ * @return Coefficient vector of length taps or taps + 1
+ */
+[[nodiscard]] MAYAFLUX_API std::vector<double> sinc_highpass(
+    double frequency, double sample_rate, size_t taps);
+
+/**
+ * @brief Windowed-sinc bandpass FIR coefficients
+ *
+ * Difference of two lowpass kernels. Requires low_hz < high_hz; the arguments
+ * are swapped internally if supplied in the other order.
+ *
+ * @param low_hz      Lower cutoff in Hz
+ * @param high_hz     Upper cutoff in Hz
+ * @param sample_rate Sampling rate in Hz
+ * @param taps        Kernel length, forced odd
+ * @return Coefficient vector of length taps or taps + 1
+ */
+[[nodiscard]] MAYAFLUX_API std::vector<double> sinc_bandpass(
+    double low_hz, double high_hz, double sample_rate, size_t taps);
+
+// ============================================================================
+// Least-squares polynomial kernels
+// ============================================================================
+
+/**
+ * @brief Savitzky-Golay FIR coefficients for smoothing or differentiation
+ *
+ * Fits a polynomial of degree @p poly_order to a sliding window by least
+ * squares and evaluates the requested derivative of that fit at the window
+ * centre. With derivative 0 this smooths while preserving peak shape better
+ * than a boxcar of the same length; with derivative 1 or 2 it estimates rate
+ * of change with far less noise amplification than a raw finite difference,
+ * since the differentiation acts on the fitted polynomial rather than on the
+ * samples.
+ *
+ * This is the block and node form of the kernel that
+ * Kinesis::Differential::backward_difference computes per sample on glm types.
+ * The streaming form divides by an observed dt and handles irregular timing;
+ * this form assumes uniform spacing and returns coefficients in sample units,
+ * so a caller needing physical units scales by 1 / dt^derivative.
+ *
+ * Returned in FIR tap order: index 0 multiplies the newest sample. Group
+ * delay is (window - 1) / 2 samples.
+ *
+ * @param window     Kernel length, forced odd, must exceed poly_order
+ * @param poly_order Degree of the fitted polynomial
+ * @param derivative Which derivative of the fit to evaluate; 0 smooths
+ * @return Coefficient vector of length window, or empty if window <= poly_order
+ */
+[[nodiscard]] MAYAFLUX_API std::vector<double> savitzky_golay(
+    size_t window, size_t poly_order, size_t derivative = 0);
+
+/**
+ * @brief Lagrange fractional-delay FIR coefficients
+ *
+ * Interpolates between samples at a non-integer offset by fitting a polynomial
+ * through @p order + 1 consecutive points. Order 1 is linear interpolation;
+ * order 3 at a fractional position reproduces the Catmull-Rom weights held as
+ * a matrix in Kinesis::BasisMatrices, generalised to any order.
+ *
+ * Accuracy is highest when @p delay falls near the centre of the tap span,
+ * so callers wanting a delay of D samples with order N typically use an
+ * integer delay line of D - N/2 followed by this kernel for the remainder.
+ *
+ * @param delay Delay in samples, need not be integral; clamped to [0, order]
+ * @param order Polynomial order; produces order + 1 taps
+ * @return Coefficient vector of length order + 1
+ */
+[[nodiscard]] MAYAFLUX_API std::vector<double> lagrange_delay(
+    double delay, size_t order);
+
+// ============================================================================
+// Direct pole placement
+// ============================================================================
+
+/**
+ * @brief Two-pole resonator specified by z-plane pole position
+ *
+ * Places a conjugate pole pair at radius @p pole_radius and angle
+ * @p pole_angle rather than deriving them from a cutoff and Q. Ring time
+ * grows as the radius approaches 1.0; the resonant frequency is
+ * pole_angle * sample_rate / (2 * pi).
+ *
+ * The numerator is a single scalar normalising peak magnitude to unity, so
+ * b has length 1 and no zeros are placed. For a resonator with zeros at
+ * DC and Nyquist, use biquad_bandpass instead.
+ *
+ * @param pole_radius Pole magnitude, clamped to [0, 0.9999]
+ * @param pole_angle  Pole angle in radians, in [0, pi]
+ * @param a           Denominator output, resized to 3, a[0] == 1.0
+ * @param b           Numerator output, resized to 1
+ */
+MAYAFLUX_API void resonator(double pole_radius, double pole_angle,
+    std::vector<double>& a, std::vector<double>& b);
+
+/**
+ * @brief One-pole filter specified by pole position
+ *
+ * A positive @p pole gives a lowpass whose smoothing increases as the value
+ * approaches 1.0; a negative pole gives a highpass. The numerator normalises
+ * DC gain to unity for positive poles and Nyquist gain to unity for negative.
+ *
+ * @param pole Pole position on the real axis, clamped to (-0.9999, 0.9999)
+ * @param a    Denominator output, resized to 2, a[0] == 1.0
+ * @param b    Numerator output, resized to 1
+ */
+MAYAFLUX_API void one_pole(double pole,
+    std::vector<double>& a, std::vector<double>& b);
+
+/**
+ * @brief DC blocking filter
+ *
+ * A zero at DC with a pole just inside it, removing constant offset while
+ * leaving everything above the corner essentially untouched. The corner
+ * frequency falls as @p pole approaches 1.0.
+ *
+ * @param pole Pole position, clamped to [0, 0.9999]; 0.995 is a typical value
+ * @param a    Denominator output, resized to 2, a[0] == 1.0
+ * @param b    Numerator output, resized to 2
+ */
+MAYAFLUX_API void dc_block(double pole,
+    std::vector<double>& a, std::vector<double>& b);
+
+// ============================================================================
 // Composition
 // ============================================================================
 
