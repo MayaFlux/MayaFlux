@@ -6,6 +6,7 @@
 #include "MayaFlux/Journal/Archivist.hpp"
 
 #include <linux/input-event-codes.h>
+#include <poll.h>
 #include <sys/mman.h>
 #include <sys/timerfd.h>
 #include <unistd.h>
@@ -166,8 +167,39 @@ bool WaylandWindow::should_close() const
 
 void WaylandWindow::poll()
 {
-    wl_display_dispatch_pending(m_display);
-    wl_display_flush(m_display);
+    if (!m_display)
+        return;
+
+    while (wl_display_prepare_read(m_display) != 0) {
+        if (wl_display_dispatch_pending(m_display) < 0) {
+            handle_display_error();
+            return;
+        }
+    }
+
+    if (wl_display_flush(m_display) < 0 && errno != EAGAIN) {
+        wl_display_cancel_read(m_display);
+        handle_display_error();
+        return;
+    }
+
+    pollfd pfd {};
+    pfd.fd = wl_display_get_fd(m_display);
+    pfd.events = POLLIN;
+
+    if (::poll(&pfd, 1, 0) > 0 && (pfd.revents & (POLLIN | POLLHUP | POLLERR))) {
+        if (wl_display_read_events(m_display) < 0) {
+            handle_display_error();
+            return;
+        }
+    } else {
+        wl_display_cancel_read(m_display);
+    }
+
+    if (wl_display_dispatch_pending(m_display) < 0) {
+        handle_display_error();
+        return;
+    }
 
     if (m_repeat_fd >= 0 && !m_held_keys.empty()) {
         uint64_t expirations = 0;
@@ -188,6 +220,29 @@ void WaylandWindow::poll()
             static_cast<int32_t>(m_state.current_height));
         wl_surface_commit(m_surface);
         wl_display_flush(m_display);
+    }
+}
+
+void WaylandWindow::handle_display_error()
+{
+    const int err = wl_display_get_error(m_display);
+
+    if (err == EPROTO) {
+        const wl_interface* iface = nullptr;
+        uint32_t id = 0;
+        const uint32_t code = wl_display_get_protocol_error(m_display, &iface, &id);
+        MF_ERROR(Journal::Component::Core, Journal::Context::WindowingSubsystem,
+            "Wayland protocol error: interface={}, id={}, code={}",
+            iface ? iface->name : "unknown", id, code);
+    } else {
+        MF_ERROR(Journal::Component::Core, Journal::Context::WindowingSubsystem,
+            "Wayland display error: {}", err);
+    }
+
+    if (!m_should_close.exchange(true)) {
+        WindowEvent ev;
+        ev.type = WindowEventType::WINDOW_CLOSED;
+        emit(ev);
     }
 }
 
@@ -550,7 +605,7 @@ void WaylandWindow::on_keyboard_repeat_info(void* data, wl_keyboard*,
         return;
 
     if (rate > 0)
-        self->m_key_repeat_config.interval_ms = 1000u / static_cast<uint32_t>(rate);
+        self->m_key_repeat_config.interval_ms = 1000U / static_cast<uint32_t>(rate);
     if (delay > 0)
         self->m_key_repeat_config.initial_delay_ms = static_cast<uint32_t>(delay);
 }

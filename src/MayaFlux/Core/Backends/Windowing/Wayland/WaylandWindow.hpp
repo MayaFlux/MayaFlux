@@ -145,6 +145,9 @@ private:
     /** @brief Signal an event through both the event source and the callback. */
     void emit(const WindowEvent& ev);
 
+    /** @brief Log the display error, mark the window closed, emit WINDOW_CLOSED once. */
+    void handle_display_error();
+
     // -------------------------------------------------------------------------
     // Registry listener (static trampoline + instance handler)
     // -------------------------------------------------------------------------
