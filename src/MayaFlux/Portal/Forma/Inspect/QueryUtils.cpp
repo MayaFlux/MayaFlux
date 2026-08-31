@@ -131,6 +131,18 @@ ValueRow make_value_row(
     };
 }
 
+ValueRow make_value_row(
+    const ValueSpec& spec,
+    RowBuffer row_buf,
+    Surface& surface,
+    LayoutCursor& cursor,
+    float row_h,
+    glm::vec3 bg)
+{
+    return make_value_row(spec, std::move(row_buf), surface, cursor,
+        cursor.x_min(), cursor.x_max(), row_h, bg);
+}
+
 ValueGroup make_value_group(
     std::span<const ValueSpec> values,
     RowBuffer header_buf,
@@ -161,6 +173,19 @@ ValueGroup make_value_group(
         .header = std::move(header),
         .rows = std::move(rows),
     };
+}
+
+ValueGroup make_value_group(
+    std::span<const ValueSpec> values,
+    RowBuffer header_buf,
+    std::span<const RowBuffer> row_bufs,
+    Surface& surface,
+    LayoutCursor& cursor,
+    float row_h,
+    bool initially_open)
+{
+    return make_value_group(values, std::move(header_buf), row_bufs,
+        surface, cursor, cursor.x_min(), cursor.x_max(), row_h, initially_open);
 }
 
 } // namespace MayaFlux::Portal::Forma

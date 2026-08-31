@@ -134,6 +134,26 @@ struct Collapsible {
         LayoutCursor& cursor,
         float x_min, float x_max, float row_h);
 
+    /**
+     * @brief Register the header element using the cursor's column extents.
+     *
+     * Equivalent to the explicit-extent overload with x_min and x_max taken
+     * from @p cursor. Use with a column-scoped LayoutCursor so the header
+     * spans exactly the column the cursor advances within.
+     *
+     * @param buf     Pre-created FormaBuffer sized for this header.
+     * @param surface Surface to register the header on.
+     * @param cursor  Layout cursor. Supplies column extents and is advanced
+     *                by @p row_h on return.
+     * @param row_h   Header strip height in NDC units.
+     * @return *this, with results populated.
+     */
+    MAYAFLUX_API Collapsible& place(
+        std::shared_ptr<Buffers::FormaBuffer> buf,
+        Surface& surface,
+        LayoutCursor& cursor,
+        float row_h);
+
     // =========================================================================
     // Post-placement helpers
     // =========================================================================

@@ -122,6 +122,20 @@ struct ValueGroup {
     glm::vec3 bg = glm::vec3(0.15F));
 
 /**
+ * @brief make_value_row using the cursor's column extents.
+ *
+ * Equivalent to the explicit-extent overload with x_min and x_max taken
+ * from @p cursor.
+ */
+[[nodiscard]] ValueRow make_value_row(
+    const ValueSpec& spec,
+    RowBuffer row_buf,
+    Surface& surface,
+    LayoutCursor& cursor,
+    float row_h,
+    glm::vec3 bg = glm::vec3(0.15F));
+
+/**
  * @brief Construct a collapsible header followed by N value rows under it.
  *
  * The header and all row buffers are pre-created by the caller. Once
@@ -145,6 +159,21 @@ struct ValueGroup {
     Surface& surface,
     LayoutCursor& cursor,
     float x_min, float x_max, float row_h,
+    bool initially_open = false);
+
+/**
+ * @brief make_value_group using the cursor's column extents.
+ *
+ * Equivalent to the explicit-extent overload with x_min and x_max taken
+ * from @p cursor.
+ */
+[[nodiscard]] ValueGroup make_value_group(
+    std::span<const ValueSpec> values,
+    RowBuffer header_buf,
+    std::span<const RowBuffer> row_bufs,
+    Surface& surface,
+    LayoutCursor& cursor,
+    float row_h,
     bool initially_open = false);
 
 } // namespace MayaFlux::Portal::Forma

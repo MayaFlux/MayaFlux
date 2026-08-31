@@ -119,6 +119,16 @@ Collapsible& Collapsible::place(
     return *this;
 }
 
+Collapsible& Collapsible::place(
+    std::shared_ptr<Buffers::FormaBuffer> in_buf,
+    Surface& surface,
+    LayoutCursor& cursor,
+    float row_h)
+{
+    return place(std::move(in_buf), surface, cursor,
+        cursor.x_min(), cursor.x_max(), row_h);
+}
+
 void Collapsible::attach(Layer& layer, uint32_t body_id) const
 {
     layer.relate(header_id, body_id);
