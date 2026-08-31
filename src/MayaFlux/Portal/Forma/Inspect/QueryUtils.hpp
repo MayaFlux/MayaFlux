@@ -46,6 +46,12 @@ struct ValueRow {
     std::shared_ptr<Buffers::FormaBuffer> buf;
     std::shared_ptr<Core::VKImage> text;
     Link link;
+
+    /// @brief NDC region occupied by this row. Valid after make_value_row.
+    Kinesis::AABB2D row_bounds {};
+
+    /// @brief Row region, satisfying Kinesis::HasBounds.
+    [[nodiscard]] Kinesis::AABB2D bounds() const noexcept { return row_bounds; }
 };
 
 /**
@@ -57,6 +63,22 @@ struct ValueRow {
 struct ValueGroup {
     Collapsible header;
     std::vector<ValueRow> rows;
+
+    /**
+     * @brief Union of the header strip and every row region.
+     *
+     * Collapses to the header region alone when the group has no rows.
+     */
+    [[nodiscard]] Kinesis::AABB2D bounds() const noexcept
+    {
+        Kinesis::AABB2D b = header.bounds();
+        for (const auto& r : rows) {
+            const auto rb = r.bounds();
+            b.min = glm::min(b.min, rb.min);
+            b.max = glm::max(b.max, rb.max);
+        }
+        return b;
+    }
 };
 
 /**

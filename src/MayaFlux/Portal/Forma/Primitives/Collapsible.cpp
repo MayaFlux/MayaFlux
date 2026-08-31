@@ -108,6 +108,11 @@ Collapsible& Collapsible::place(
             m.sync();
         });
 
+    header_bounds = Kinesis::AABB2D {
+        .min = { x_min, cursor.y() },
+        .max = { x_max, y_top },
+    };
+
     header_id = hid;
     open = open_state;
     cursor_out = cursor;

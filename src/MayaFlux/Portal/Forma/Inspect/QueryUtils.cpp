@@ -84,6 +84,7 @@ ValueRow make_value_row(
     const float top = cursor.y();
     const float bot = top - row_h;
     cursor.advance(row_h);
+    const Kinesis::AABB2D row_rect { .min = { x_min, bot }, .max = { x_max, top } };
 
     const uint32_t stride = Kakshya::VertexLayout::for_meshes().stride_bytes;
     std::vector<uint8_t> bytes(static_cast<size_t>(12) * stride, 0);
@@ -99,7 +100,7 @@ ValueRow make_value_row(
 
     Element el;
     el.buffer = row_buf.buf;
-    el.bounds_hint = Kinesis::AABB2D { .min = { x_min, bot }, .max = { x_max, top } };
+    el.bounds_hint = row_rect;
     el.interactive = false;
     el.name = spec.label;
     const uint32_t id = surface.layer().add(el);
@@ -126,6 +127,7 @@ ValueRow make_value_row(
         .buf = std::move(row_buf.buf),
         .text = std::move(row_buf.text_image),
         .link = std::move(link),
+        .row_bounds = row_rect,
     };
 }
 

@@ -83,6 +83,17 @@ GeometryFn<float> radial(
     };
 }
 
+GeometryFn<float> radial(
+    Kinesis::AABB2D region,
+    float angle_start,
+    float angle_end,
+    glm::vec3 color)
+{
+    return radial(region.center(),
+        std::min(region.width(), region.height()) * 0.5F,
+        angle_start, angle_end, color);
+}
+
 GeometryFn<glm::vec2> point(
     glm::vec3 color,
     float size,

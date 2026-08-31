@@ -490,4 +490,139 @@ subtract_bounds(
     };
 }
 
+/**
+ * @brief Direction of a placed region relative to its anchor.
+ *
+ * Over ignores the gap argument and centers the new region on the anchor.
+ */
+enum class Side : uint8_t {
+    Right,
+    Left,
+    Above,
+    Below,
+    Over,
+};
+
+/**
+ * @brief Cross-axis alignment of a placed region against its anchor.
+ *
+ * Start and End refer to the anchor's leading and trailing edge on the cross
+ * axis: min.x and max.x for vertical placement, max.y and min.y for
+ * horizontal placement, so Start is always the visually upper or leftward
+ * edge in NDC. Span matches the anchor's full cross-axis extent and ignores
+ * the corresponding size argument.
+ */
+enum class Align : uint8_t {
+    Center,
+    Start,
+    End,
+    Span,
+};
+
+/**
+ * @brief Compute a region of size (@p w, @p h) positioned relative to @p anchor.
+ *
+ * @param anchor Region to place against.
+ * @param side   Direction of placement.
+ * @param w      Width in NDC units. Ignored when @p side is vertical and
+ *               @p align is Span.
+ * @param h      Height in NDC units. Ignored when @p side is horizontal and
+ *               @p align is Span.
+ * @param gap    Separation from the anchor edge. Ignored for Side::Over.
+ * @param align  Cross-axis alignment.
+ */
+[[nodiscard]] inline AABB2D place(
+    AABB2D anchor, Side side, float w, float h,
+    float gap = 0.F, Align align = Align::Center) noexcept
+{
+    const glm::vec2 c = anchor.center();
+
+    if (side == Side::Over) {
+        return { .min = { c.x - w * 0.5F, c.y - h * 0.5F },
+            .max = { c.x + w * 0.5F, c.y + h * 0.5F } };
+    }
+
+    if (side == Side::Below || side == Side::Above) {
+        float x0 {};
+        float x1 {};
+        switch (align) {
+        case Align::Center:
+            x0 = c.x - w * 0.5F;
+            x1 = c.x + w * 0.5F;
+            break;
+        case Align::Start:
+            x0 = anchor.min.x;
+            x1 = anchor.min.x + w;
+            break;
+        case Align::End:
+            x0 = anchor.max.x - w;
+            x1 = anchor.max.x;
+            break;
+        case Align::Span:
+            x0 = anchor.min.x;
+            x1 = anchor.max.x;
+            break;
+        }
+        return side == Side::Below
+            ? AABB2D { .min = { x0, anchor.min.y - gap - h }, .max = { x1, anchor.min.y - gap } }
+            : AABB2D { .min = { x0, anchor.max.y + gap }, .max = { x1, anchor.max.y + gap + h } };
+    }
+
+    float y0 {};
+    float y1 {};
+    switch (align) {
+    case Align::Center:
+        y0 = c.y - h * 0.5F;
+        y1 = c.y + h * 0.5F;
+        break;
+    case Align::Start:
+        y0 = anchor.max.y - h;
+        y1 = anchor.max.y;
+        break;
+    case Align::End:
+        y0 = anchor.min.y;
+        y1 = anchor.min.y + h;
+        break;
+    case Align::Span:
+        y0 = anchor.min.y;
+        y1 = anchor.max.y;
+        break;
+    }
+    return side == Side::Right
+        ? AABB2D { .min = { anchor.max.x + gap, y0 }, .max = { anchor.max.x + gap + w, y1 } }
+        : AABB2D { .min = { anchor.min.x - gap - w, y0 }, .max = { anchor.min.x - gap, y1 } };
+}
+
+// =============================================================================
+// HasBounds
+// =============================================================================
+
+/**
+ * @brief Any type carrying a spatial footprint usable as a placement anchor.
+ *
+ * Satisfied by Portal::Forma::Mapped<T>, Collapsible, ValueGroup, and
+ * ValueRow. AABB2D itself does not satisfy it, so the overloads below never
+ * collide with the AABB2D-taking primaries.
+ */
+template <typename T>
+concept HasBounds = requires(const T& t) {
+    { t.bounds() } -> std::convertible_to<AABB2D>;
+};
+
+/// @brief Extract the anchor region from any HasBounds object.
+template <HasBounds T>
+[[nodiscard]] AABB2D bounds_of(const T& obj)
+{
+    return obj.bounds();
+}
+
+/// @brief place() accepting any HasBounds anchor.
+template <HasBounds A>
+[[nodiscard]] AABB2D place(
+    const A& anchor, Side side, float w, float h,
+    float gap = 0.F, Align align = Align::Center)
+{
+    return place(bounds_of(anchor), side, w, h, gap, align);
+}
+
 } // namespace MayaFlux::Kinesis

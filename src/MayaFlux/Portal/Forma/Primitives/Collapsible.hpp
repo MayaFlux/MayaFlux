@@ -53,6 +53,12 @@ struct Collapsible {
     /// @brief Cursor positioned below the header, ready for body elements. Valid after place().
     LayoutCursor cursor_out;
 
+    /// @brief NDC region occupied by the header strip. Valid after place().
+    Kinesis::AABB2D header_bounds {};
+
+    /// @brief Header strip region, satisfying Kinesis::HasBounds.
+    [[nodiscard]] Kinesis::AABB2D bounds() const noexcept { return header_bounds; }
+
     // =========================================================================
     // Configuration - set before place()
     // =========================================================================

@@ -24,7 +24,20 @@ public:
     {
     }
 
-    explicit LayoutCursor(float y_start)
+    /**
+     * @brief Construct a cursor at @p y_start scoped to a horizontal column.
+     *
+     * Bounds returned by advance() span [@p x_min, @p x_max] rather than the
+     * full NDC width. The default extents reproduce the previous behaviour,
+     * so existing call sites are unaffected.
+     *
+     * @param y_start Starting NDC Y baseline.
+     * @param x_min   Left edge of the column in NDC.
+     * @param x_max   Right edge of the column in NDC.
+     */
+    explicit LayoutCursor(float y_start, float x_min = -1.F, float x_max = 1.F)
+        : m_x_min(x_min)
+        , m_x_max(x_max)
     {
         m_state = std::make_shared<MappedState<float>>();
         m_state->write(y_start);
@@ -38,16 +51,37 @@ public:
 
     [[nodiscard]] float y() const { return m_state->value; }
 
+    [[nodiscard]] float x_min() const noexcept { return m_x_min; }
+    [[nodiscard]] float x_max() const noexcept { return m_x_max; }
+
+    /**
+     * @brief Reset both cursors to the lower of their two current Y values.
+     *
+     * Used after a row spanning several columns so that independent column
+     * cursors resume from a common baseline.
+     *
+     * @note LayoutCursor copies share one MappedState. Calling sync_to on two
+     *       cursors copied from one another is a no-op, since both already
+     *       reference the same baseline.
+     */
+    void sync_to(LayoutCursor& other)
+    {
+        const float y = std::min(m_state->value, other.m_state->value);
+        m_state->write(y);
+        other.m_state->write(y);
+    }
+
     /**
      * @brief Advance the cursor downward by @p height and return the NDC
-     *        AABB occupied by the primitive just placed.
+     *        AABB occupied by the primitive just placed, scoped to the
+     *        cursor's column extents.
      */
     Kinesis::AABB2D advance(float height)
     {
         const float top = m_state->value;
         const float bot = top - height;
         m_state->write(bot);
-        return Kinesis::AABB2D { .min = { -1.F, bot }, .max = { 1.F, top } };
+        return Kinesis::AABB2D { .min = { m_x_min, bot }, .max = { m_x_max, top } };
     }
 
     /**
@@ -63,6 +97,8 @@ public:
 
 private:
     std::shared_ptr<MappedState<float>> m_state;
+    float m_x_min { -1.F };
+    float m_x_max { 1.F };
 };
 
 } // namespace MayaFlux::Portal::Forma

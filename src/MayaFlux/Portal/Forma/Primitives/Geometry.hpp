@@ -135,6 +135,23 @@ void write_verts(std::vector<uint8_t>& out, const V& v)
     float angle_end,
     glm::vec3 color = glm::vec3(0.9F));
 
+/**
+ * @brief Region-taking radial indicator.
+ *
+ * Centers the arc on @p region and derives the radius from the region's
+ * smaller half-extent, so the sweep is inscribed regardless of aspect.
+ *
+ * @param region      NDC region the arc is inscribed in.
+ * @param angle_start Start angle in radians (value = 0).
+ * @param angle_end   End angle in radians (value = 1).
+ * @param color       Line color.
+ */
+[[nodiscard]] MAYAFLUX_API GeometryFn<float> radial(
+    Kinesis::AABB2D region,
+    float angle_start,
+    float angle_end,
+    glm::vec3 color = glm::vec3(0.9F));
+
 // =============================================================================
 // Point
 //
@@ -370,5 +387,75 @@ MAYAFLUX_API void wire_canvas_drag(
     uint32_t id,
     std::shared_ptr<MappedState<std::vector<float>>> state,
     Kinesis::AABB2D bounds);
+
+// =============================================================================
+// HasBounds overloads
+//
+// Thin wrappers accepting any Kinesis::HasBounds anchor in place of an
+// explicit AABB2D. Kinesis::AABB2D does not satisfy HasBounds, so these
+// never compete with the primaries above.
+// =============================================================================
+
+template <Kinesis::HasBounds B>
+[[nodiscard]] GeometryFn<float> horizontal_fader(
+    const B& anchor, float handle_w,
+    glm::vec3 track_color = glm::vec3(0.3F),
+    glm::vec3 handle_color = glm::vec3(0.9F))
+{
+    return horizontal_fader(Kinesis::bounds_of(anchor), handle_w, track_color, handle_color);
+}
+
+template <Kinesis::HasBounds B>
+[[nodiscard]] GeometryFn<float> vertical_fader(
+    const B& anchor, float handle_h,
+    glm::vec3 track_color = glm::vec3(0.3F),
+    glm::vec3 handle_color = glm::vec3(0.9F))
+{
+    return vertical_fader(Kinesis::bounds_of(anchor), handle_h, track_color, handle_color);
+}
+
+template <Kinesis::HasBounds B>
+[[nodiscard]] GeometryFn<bool> toggle(
+    const B& anchor,
+    glm::vec3 color_off = glm::vec3(0.25F),
+    glm::vec3 color_on = glm::vec3(0.2F, 0.7F, 0.4F))
+{
+    return toggle(Kinesis::bounds_of(anchor), color_off, color_on);
+}
+
+template <Kinesis::HasBounds B>
+[[nodiscard]] GeometryFn<float> level_meter(
+    const B& anchor, bool horizontal = true,
+    glm::vec3 fill_color = glm::vec3(0.2F, 0.7F, 0.3F),
+    glm::vec3 track_color = glm::vec3(0.15F))
+{
+    return level_meter(Kinesis::bounds_of(anchor), horizontal, fill_color, track_color);
+}
+
+template <Kinesis::HasBounds B>
+[[nodiscard]] GeometryFn<glm::vec2> position_picker(
+    const B& anchor,
+    glm::vec3 color = glm::vec3(0.9F),
+    float size = 8.0F)
+{
+    return position_picker(Kinesis::bounds_of(anchor), color, size);
+}
+
+template <Kinesis::HasBounds B>
+[[nodiscard]] GeometryFn<std::vector<float>> drawable_canvas(
+    const B& anchor,
+    glm::vec3 color = glm::vec3(0.8F),
+    float thickness = 1.5F)
+{
+    return drawable_canvas(Kinesis::bounds_of(anchor), color, thickness);
+}
+
+template <Kinesis::HasBounds B>
+[[nodiscard]] GeometryFn<float> radial(
+    const B& anchor, float angle_start, float angle_end,
+    glm::vec3 color = glm::vec3(0.9F))
+{
+    return radial(Kinesis::bounds_of(anchor), angle_start, angle_end, color);
+}
 
 } // namespace MayaFlux::Portal::Forma::Geometry
