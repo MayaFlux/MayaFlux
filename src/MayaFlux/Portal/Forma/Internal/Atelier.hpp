@@ -4,6 +4,8 @@
 #include "MayaFlux/Portal/Forma/Primitives/Mapped.hpp"
 #include "MayaFlux/Portal/Forma/Surface.hpp"
 
+#include "MayaFlux/Portal/Forma/Plot/Plot.hpp"
+
 namespace MayaFlux::Nodes {
 class NodeGraphManager;
 }
@@ -183,6 +185,27 @@ namespace internal {
 
             return mapped;
         }
+
+        /**
+         * @brief Create and place every adornment declared on @p spec.
+         *
+         * Builds one buffer per axis label, tick label, legend swatch, and
+         * legend label, then hands each to the corresponding Plot placement
+         * function. Each adornment is related to @p relate_to so removal and
+         * visibility cascade from the series element.
+         *
+         * Lives here rather than in Plot because it constructs buffers,
+         * which requires the BufferManager. Plot composes placement from
+         * arguments it is given.
+         *
+         * @param surface   Surface to place on.
+         * @param spec      Series spec carrying the adornment declarations.
+         * @param relate_to Element id the adornments are related to.
+         */
+        void place_adornments(
+            Surface& surface,
+            const Plot::SeriesSpec& spec,
+            uint32_t relate_to);
 
     private:
         Atelier();

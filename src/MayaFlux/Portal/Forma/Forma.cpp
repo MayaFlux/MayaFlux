@@ -27,62 +27,6 @@ namespace {
     constexpr uint32_t k_inspect_w = 480;
     constexpr uint32_t k_inspect_h = 900;
 
-    constexpr size_t k_text_label_capacity = static_cast<size_t>(6) * sizeof(Kakshya::MeshVertex);
-    constexpr size_t k_rect_capacity = static_cast<size_t>(4) * sizeof(Kakshya::Vertex);
-
-    void place_plot_adornments(
-        Surface& surface,
-        const Plot::SeriesSpec& spec,
-        uint32_t relate_to)
-    {
-        const auto& win = surface.window();
-        auto& atelier = internal::atelier();
-
-        for (const auto& label : spec.labels) {
-            auto buf = atelier.create_buffer(
-                win,
-                k_text_label_capacity,
-                Graphics::PrimitiveTopology::TRIANGLE_LIST,
-                {},
-                { { "text", nullptr } });
-            (void)Plot::place_label(surface, std::move(buf), label, relate_to);
-        }
-
-        for (const auto& ticks : spec.tick_labels) {
-            for (const auto& label : Plot::plot_tick_labels(ticks)) {
-                auto buf = atelier.create_buffer(
-                    win,
-                    k_text_label_capacity,
-                    Graphics::PrimitiveTopology::TRIANGLE_LIST,
-                    {},
-                    { { "text", nullptr } });
-                (void)Plot::place_label(surface, std::move(buf), label, relate_to);
-            }
-        }
-
-        if (spec.legend) {
-            auto layout = Plot::layout_legend(*spec.legend);
-
-            for (const auto& swatch : layout.swatches) {
-                auto buf = atelier.create_buffer(
-                    win,
-                    k_rect_capacity,
-                    Graphics::PrimitiveTopology::TRIANGLE_STRIP);
-                (void)Plot::place_rect(surface, std::move(buf), swatch, relate_to);
-            }
-
-            for (const auto& label : layout.labels) {
-                auto buf = atelier.create_buffer(
-                    win,
-                    k_text_label_capacity,
-                    Graphics::PrimitiveTopology::TRIANGLE_LIST,
-                    {},
-                    { { "text", nullptr } });
-                (void)Plot::place_label(surface, std::move(buf), label, relate_to);
-            }
-        }
-    }
-
 } // namespace
 
 // =============================================================================
@@ -192,7 +136,7 @@ plot(
         surface.layer().relate(mapped.element.id, bg_id);
         surface.layer().send_to_back(bg_id);
 
-        place_plot_adornments(surface, spec, mapped.element.id);
+        internal::atelier().place_adornments(surface, spec, mapped.element.id);
 
         return { std::move(mapped), std::move(surface) };
     }
@@ -200,7 +144,7 @@ plot(
     auto buf = atelier.create_buffer(window, spec.capacity_for(N), spec.topology);
     auto mapped = Plot::place(surface, std::move(buf), spec, std::move(container));
 
-    place_plot_adornments(surface, spec, mapped.element.id);
+    internal::atelier().place_adornments(surface, spec, mapped.element.id);
 
     return { std::move(mapped), std::move(surface) };
 }

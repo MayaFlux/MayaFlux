@@ -12,6 +12,11 @@
 
 namespace MayaFlux::Portal::Forma::internal {
 
+namespace {
+    constexpr size_t k_text_label_capacity = static_cast<size_t>(6) * sizeof(Kakshya::MeshVertex);
+    constexpr size_t k_rect_capacity = static_cast<size_t>(4) * sizeof(Kakshya::Vertex);
+}
+
 // =============================================================================
 // Lifecycle
 // =============================================================================
@@ -142,6 +147,58 @@ Surface Atelier::create_surface(std::shared_ptr<Core::Window> window, std::strin
 {
     auto [layer, ctx] = create_layer(window, std::move(name));
     return { std::move(window), std::move(layer), std::move(ctx) };
+}
+
+void Atelier::place_adornments(
+    Surface& surface,
+    const Plot::SeriesSpec& spec,
+    uint32_t relate_to)
+{
+    const auto& win = surface.window();
+
+    for (const auto& label : spec.labels) {
+        auto buf = create_buffer(
+            win,
+            k_text_label_capacity,
+            Graphics::PrimitiveTopology::TRIANGLE_LIST,
+            {},
+            { { "text", nullptr } });
+        (void)Plot::place_label(surface, std::move(buf), label, relate_to);
+    }
+
+    for (const auto& ticks : spec.tick_labels) {
+        for (const auto& label : Plot::plot_tick_labels(ticks)) {
+            auto buf = create_buffer(
+                win,
+                k_text_label_capacity,
+                Graphics::PrimitiveTopology::TRIANGLE_LIST,
+                {},
+                { { "text", nullptr } });
+            (void)Plot::place_label(surface, std::move(buf), label, relate_to);
+        }
+    }
+
+    if (spec.legend) {
+        auto layout = Plot::layout_legend(*spec.legend);
+
+        for (const auto& swatch : layout.swatches) {
+            auto buf = create_buffer(
+                win,
+                k_rect_capacity,
+                Graphics::PrimitiveTopology::TRIANGLE_STRIP);
+            (void)Plot::place_rect(surface, std::move(buf), swatch, relate_to);
+        }
+
+        for (const auto& label : layout.labels) {
+            auto buf = create_buffer(
+                win,
+                k_text_label_capacity,
+                Graphics::PrimitiveTopology::TRIANGLE_LIST,
+                {},
+                { { "text", nullptr } });
+            (void)Plot::place_label(surface, std::move(buf), label, relate_to);
+        }
+    }
 }
 
 } // namespace MayaFlux::Portal::Forma::internal

@@ -1,7 +1,5 @@
 #pragma once
 
-#include "Plot/Plot.hpp"
-
 #include "Internal/Atelier.hpp"
 
 namespace MayaFlux::Vruta {
