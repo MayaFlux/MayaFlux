@@ -4,6 +4,8 @@
 
 #include "MayaFlux/Portal/Forma/Context.hpp"
 
+#include "MayaFlux/Kinesis/Spatial/Projection.hpp"
+
 namespace MayaFlux::Portal::Forma::Geometry {
 
 /**
@@ -120,7 +122,7 @@ template <typename T>
  * @param track_color Track quad color.
  * @param handle_color Handle quad color.
  */
-[[nodiscard]] MAYAFLUX_API GeometryFn<float> horizontal_fader(
+[[nodiscard]] MAYAFLUX_API Form<float> horizontal_fader(
     Kinesis::AABB2D bounds,
     float handle_w,
     glm::vec3 track_color = glm::vec3(0.3F),
@@ -146,7 +148,7 @@ template <typename T>
  * @param track_color  Track quad color.
  * @param handle_color Handle quad color.
  */
-[[nodiscard]] MAYAFLUX_API GeometryFn<float> vertical_fader(
+[[nodiscard]] MAYAFLUX_API Form<float> vertical_fader(
     Kinesis::AABB2D bounds,
     float handle_h,
     glm::vec3 track_color = glm::vec3(0.3F),
@@ -171,7 +173,7 @@ template <typename T>
  * @param angle_end   End angle in radians (value = 1).
  * @param color       Line color.
  */
-[[nodiscard]] MAYAFLUX_API GeometryFn<float> radial(
+[[nodiscard]] MAYAFLUX_API Form<float> radial(
     Kinesis::AABB2D region,
     float angle_start,
     float angle_end,
@@ -196,7 +198,7 @@ template <typename T>
  * @param size       Point size in pixels.
  * @param hit_radius Hit region radius in NDC units.
  */
-[[nodiscard]] MAYAFLUX_API GeometryFn<glm::vec2> point(
+[[nodiscard]] MAYAFLUX_API Form<glm::vec2> point(
     glm::vec3 color = glm::vec3(1.0F),
     float size = 10.0F,
     float hit_radius = 0.04F);
@@ -214,7 +216,7 @@ template <typename T>
  * @param color  Point color.
  * @param size   Point size in pixels.
  */
-[[nodiscard]] MAYAFLUX_API GeometryFn<glm::vec2> position_picker(
+[[nodiscard]] MAYAFLUX_API Form<glm::vec2> position_picker(
     Kinesis::AABB2D bounds,
     glm::vec3 color = glm::vec3(0.9F),
     float size = 8.0F);
@@ -256,7 +258,7 @@ template <typename T>
  * @param handle_color   Color of the handle point.
  * @param handle_size    Handle point size in pixels.
  */
-[[nodiscard]] MAYAFLUX_API GeometryFn<float> stroke_slider(
+[[nodiscard]] MAYAFLUX_API Form<float> stroke_slider(
     std::span<const glm::vec2> path,
     std::shared_ptr<Buffers::FormaBuffer> handle_buf,
     float half_thickness = 0.02F,
@@ -290,7 +292,7 @@ template <typename T>
  * @param color_off Fill color when false.
  * @param color_on  Fill color when true.
  */
-[[nodiscard]] MAYAFLUX_API GeometryFn<bool> toggle(
+[[nodiscard]] MAYAFLUX_API Form<bool> toggle(
     Kinesis::AABB2D region,
     glm::vec3 color_off = glm::vec3(0.25F),
     glm::vec3 color_on = glm::vec3(0.2F, 0.7F, 0.4F));
@@ -319,7 +321,7 @@ template <typename T>
  * @param fill_color  Color of the active (filled) portion.
  * @param track_color Color of the inactive remainder.
  */
-[[nodiscard]] MAYAFLUX_API GeometryFn<float> level_meter(
+[[nodiscard]] MAYAFLUX_API Form<float> level_meter(
     Kinesis::AABB2D bounds,
     bool horizontal = true,
     glm::vec3 fill_color = glm::vec3(0.2F, 0.7F, 0.3F),
@@ -343,11 +345,8 @@ template <typename T>
  * @param color      Line color.
  * @param thickness  Line thickness (maps to LineVertex::thickness).
  * @param hit_radius Hit region radius in NDC units.
- *
- * @note Pass @c PrimitiveTopology::LINE_LIST explicitly to create_element —
- *       the default TRIANGLE_STRIP will misinterpret the 4 vertices.
  */
-[[nodiscard]] MAYAFLUX_API GeometryFn<glm::vec2> crosshair(
+[[nodiscard]] MAYAFLUX_API Form<glm::vec2> crosshair(
     float arm_len = 0.04F,
     glm::vec3 color = glm::vec3(0.9F),
     float thickness = 1.F,
@@ -388,7 +387,7 @@ template <typename T>
  * @param color       Line color.
  * @param thickness   LineVertex thickness value.
  */
-[[nodiscard]] MAYAFLUX_API GeometryFn<std::vector<float>> drawable_canvas(
+[[nodiscard]] MAYAFLUX_API Form<std::vector<float>> drawable_canvas(
     Kinesis::AABB2D bounds,
     glm::vec3 color = glm::vec3(0.8F),
     float thickness = 1.5F);

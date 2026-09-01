@@ -118,6 +118,15 @@ struct Form {
         , wire(std::move(w))
     {
     }
+
+    /**
+     * @brief Implicit conversion to the underlying geometry function.
+     *
+     * This allows a Form to be passed directly to create_element, which
+     * accepts a GeometryFn. The default topology and capacity are used,
+     * and no interaction is registered.
+     */
+    operator const GeometryFn<T>&() const& { return geometry; }
 };
 
 /**

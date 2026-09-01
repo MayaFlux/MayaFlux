@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Internal/Atelier.hpp"
+#include "Primitives/Geometry.hpp"
 
 namespace MayaFlux::Vruta {
 class Event;
@@ -253,6 +254,47 @@ template <typename T>
     return internal::atelier().create_element<T>(
         layer, std::move(window), std::move(geom), std::move(initial),
         topology, capacity, std::move(project));
+}
+
+/**
+ * @brief Realize a Form on @p surface.
+ *
+ * Builds the buffer at the Form's capacity and topology, registers the
+ * element, syncs so the geometry function's bounds_hint and contains reach
+ * the Layer before the first frame, then runs the Form's interaction wiring.
+ *
+ * A bare GeometryFn converts to a Form, so this also serves as the simplest
+ * element construction path for a caller's own geometry.
+ *
+ * @tparam T       MappedState value type.
+ * @param surface  Canvas to register on.
+ * @param form     Geometry, topology, capacity, and interaction.
+ * @param initial  Starting value written into MappedState.
+ * @param project  Optional T to float projection for outbound readers.
+ * @return Fully constructed Mapped<T>, wired.
+ */
+template <typename T>
+[[nodiscard]] Mapped<T> create(
+    Surface& surface,
+    Geometry::Form<T> form,
+    T initial,
+    std::function<float(T)> project = {})
+{
+    auto mapped = internal::atelier().create_element<T>(
+        surface.layer(), surface.window(),
+        std::move(form.geometry), std::move(initial),
+        form.topology, form.capacity, std::move(project));
+
+    mapped.sync();
+    if (mapped.element.bounds_hint)
+        surface.layer().set_bounds(mapped.element.id, *mapped.element.bounds_hint);
+    if (mapped.element.contains)
+        surface.layer().set_contains(mapped.element.id, mapped.element.contains);
+
+    if (form.wire)
+        form.wire(surface.ctx(), mapped.element.id, mapped.state);
+
+    return mapped;
 }
 
 /**
