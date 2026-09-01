@@ -168,7 +168,21 @@ Context& Context::key_step(
     });
 
     return *this;
-} 
+}
+
+Context& Context::wire_drag(
+    uint32_t id,
+    std::function<void(glm::vec2)> sink,
+    IO::MouseButtons btn)
+{
+    if (!sink)
+        return *this;
+
+    on_drag(id, btn,
+        [sink = std::move(sink)](uint32_t, glm::vec2 ndc) { sink(ndc); });
+
+    return *this;
+}
 
 // =============================================================================
 // Handler registration / cancellation
