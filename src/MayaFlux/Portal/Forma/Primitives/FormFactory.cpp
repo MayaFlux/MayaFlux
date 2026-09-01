@@ -117,7 +117,7 @@ Form<glm::vec2> point(
     return { std::move(fn),
         Graphics::PrimitiveTopology::POINT_LIST,
         sizeof(Kakshya::PointVertex),
-        drag_with<glm::vec2>([](glm::vec2 ndc) { return ndc; }) };
+        follow_move() };
 }
 
 Form<glm::vec2> position_picker(
@@ -329,7 +329,7 @@ Form<glm::vec2> crosshair(
     return { std::move(fn),
         Graphics::PrimitiveTopology::LINE_LIST,
         static_cast<size_t>(4) * sizeof(Kakshya::LineVertex),
-        drag_with<glm::vec2>([](glm::vec2 ndc) { return ndc; }) };
+        follow_move() };
 }
 
 Form<std::vector<float>> drawable_canvas(

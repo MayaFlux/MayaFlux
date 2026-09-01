@@ -102,6 +102,21 @@ template <typename T>
     };
 }
 
+/**
+ * @brief Produce a Form::wire that writes the cursor position on hover.
+ *
+ * No button held. For geometry whose value is an NDC position rather than
+ * a normalized parameter.
+ */
+[[nodiscard]] inline auto follow_move()
+{
+    return [](Context& ctx, uint32_t id, std::shared_ptr<MappedState<glm::vec2>> state) {
+        ctx.on_move(id, [state = std::move(state)](uint32_t, glm::vec2 ndc) {
+            state->write(ndc);
+        });
+    };
+}
+
 // =============================================================================
 // Horizontal fader
 //
