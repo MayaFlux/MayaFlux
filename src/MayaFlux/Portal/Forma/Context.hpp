@@ -210,6 +210,23 @@ public:
         float clamp_min = 0.0F,
         float clamp_max = 1.0F);
 
+    /**
+     * @brief Register a drag handler receiving only the cursor position.
+     *
+     * Thin composition over on_drag for callers that already know the element
+     * id and have no use for it in the callback. The sink performs whatever
+     * mapping and write the gesture implies.
+     *
+     * @param id   Element id.
+     * @param sink Called with the current NDC cursor position on each drag event.
+     * @param btn  Mouse button that must be held.
+     * @return *this for chaining.
+     */
+    Context& wire_drag(
+        uint32_t id,
+        std::function<void(glm::vec2)> sink,
+        IO::MouseButtons btn = IO::MouseButtons::Left);
+
     // =========================================================================
     // State query
     // =========================================================================

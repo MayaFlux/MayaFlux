@@ -107,6 +107,17 @@ struct Mapped {
     bool force_redraw_on_sync { false };
 
     /**
+     * @brief Current spatial footprint, satisfying Kinesis::HasBounds.
+     *
+     * Returns the element's bounds_hint as last written by the geometry
+     * function, or a zero region when the geometry function sets none.
+     */
+    [[nodiscard]] Kinesis::AABB2D bounds() const noexcept
+    {
+        return element.bounds_hint.value_or(Kinesis::AABB2D {});
+    }
+
+    /**
      * @brief Call once per graphics tick.
      *
      * If state->version has advanced since last_version, invokes geometry_fn

@@ -157,6 +157,91 @@ public:
      */
     Layer::Slot add(Element element) { return m_layer->add(std::move(element)); }
 
+    // =========================================================================
+    // Named regions
+    // =========================================================================
+
+    /**
+     * @brief Rect of size (@p w, @p h) at the top-left corner, inset by @p margin.
+     * @param w      Width in NDC units.
+     * @param h      Height in NDC units.
+     * @param margin Inset from both screen edges in NDC units.
+     */
+    [[nodiscard]] Kinesis::AABB2D top_left(float w, float h, float margin = 0.02F) const noexcept
+    {
+        return { .min = { -1.F + margin, 1.F - margin - h },
+            .max = { -1.F + margin + w, 1.F - margin } };
+    }
+
+    /// @copydoc top_left
+    [[nodiscard]] Kinesis::AABB2D top_right(float w, float h, float margin = 0.02F) const noexcept
+    {
+        return { .min = { 1.F - margin - w, 1.F - margin - h },
+            .max = { 1.F - margin, 1.F - margin } };
+    }
+
+    /// @copydoc top_left
+    [[nodiscard]] Kinesis::AABB2D bottom_left(float w, float h, float margin = 0.02F) const noexcept
+    {
+        return { .min = { -1.F + margin, -1.F + margin },
+            .max = { -1.F + margin + w, -1.F + margin + h } };
+    }
+
+    /// @copydoc top_left
+    [[nodiscard]] Kinesis::AABB2D bottom_right(float w, float h, float margin = 0.02F) const noexcept
+    {
+        return { .min = { 1.F - margin - w, -1.F + margin },
+            .max = { 1.F - margin, -1.F + margin + h } };
+    }
+
+    /**
+     * @brief Full-width strip of height @p h along the top edge.
+     * @param h      Strip height in NDC units.
+     * @param margin Inset from the top and side edges in NDC units.
+     */
+    [[nodiscard]] Kinesis::AABB2D top_strip(float h, float margin = 0.F) const noexcept
+    {
+        return { .min = { -1.F + margin, 1.F - margin - h },
+            .max = { 1.F - margin, 1.F - margin } };
+    }
+
+    /// @copydoc top_strip
+    [[nodiscard]] Kinesis::AABB2D bottom_strip(float h, float margin = 0.F) const noexcept
+    {
+        return { .min = { -1.F + margin, -1.F + margin },
+            .max = { 1.F - margin, -1.F + margin + h } };
+    }
+
+    /**
+     * @brief Full-height strip of width @p w along the left edge.
+     * @param w      Strip width in NDC units.
+     * @param margin Inset from the left and vertical edges in NDC units.
+     */
+    [[nodiscard]] Kinesis::AABB2D left_strip(float w, float margin = 0.F) const noexcept
+    {
+        return { .min = { -1.F + margin, -1.F + margin },
+            .max = { -1.F + margin + w, 1.F - margin } };
+    }
+
+    /// @copydoc left_strip
+    [[nodiscard]] Kinesis::AABB2D right_strip(float w, float margin = 0.F) const noexcept
+    {
+        return { .min = { 1.F - margin - w, -1.F + margin },
+            .max = { 1.F - margin, 1.F - margin } };
+    }
+
+    /// @brief Rect of size (@p w, @p h) centered on the NDC origin.
+    [[nodiscard]] Kinesis::AABB2D center_rect(float w, float h) const noexcept
+    {
+        return { .min = { -w * 0.5F, -h * 0.5F }, .max = { w * 0.5F, h * 0.5F } };
+    }
+
+    /// @brief The entire NDC surface.
+    [[nodiscard]] Kinesis::AABB2D full() const noexcept
+    {
+        return { .min = glm::vec2(-1.F), .max = glm::vec2(1.F) };
+    }
+
 private:
     std::shared_ptr<Core::Window> m_window;
     std::shared_ptr<Layer> m_layer;

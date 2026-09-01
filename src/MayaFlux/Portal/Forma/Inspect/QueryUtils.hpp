@@ -46,6 +46,12 @@ struct ValueRow {
     std::shared_ptr<Buffers::FormaBuffer> buf;
     std::shared_ptr<Core::VKImage> text;
     Link link;
+
+    /// @brief NDC region occupied by this row. Valid after make_value_row.
+    Kinesis::AABB2D row_bounds {};
+
+    /// @brief Row region, satisfying Kinesis::HasBounds.
+    [[nodiscard]] Kinesis::AABB2D bounds() const noexcept { return row_bounds; }
 };
 
 /**
@@ -57,6 +63,22 @@ struct ValueRow {
 struct ValueGroup {
     Collapsible header;
     std::vector<ValueRow> rows;
+
+    /**
+     * @brief Union of the header strip and every row region.
+     *
+     * Collapses to the header region alone when the group has no rows.
+     */
+    [[nodiscard]] Kinesis::AABB2D bounds() const noexcept
+    {
+        Kinesis::AABB2D b = header.bounds();
+        for (const auto& r : rows) {
+            const auto rb = r.bounds();
+            b.min = glm::min(b.min, rb.min);
+            b.max = glm::max(b.max, rb.max);
+        }
+        return b;
+    }
 };
 
 /**
@@ -100,6 +122,20 @@ struct ValueGroup {
     glm::vec3 bg = glm::vec3(0.15F));
 
 /**
+ * @brief make_value_row using the cursor's column extents.
+ *
+ * Equivalent to the explicit-extent overload with x_min and x_max taken
+ * from @p cursor.
+ */
+[[nodiscard]] ValueRow make_value_row(
+    const ValueSpec& spec,
+    RowBuffer row_buf,
+    Surface& surface,
+    LayoutCursor& cursor,
+    float row_h,
+    glm::vec3 bg = glm::vec3(0.15F));
+
+/**
  * @brief Construct a collapsible header followed by N value rows under it.
  *
  * The header and all row buffers are pre-created by the caller. Once
@@ -123,6 +159,21 @@ struct ValueGroup {
     Surface& surface,
     LayoutCursor& cursor,
     float x_min, float x_max, float row_h,
+    bool initially_open = false);
+
+/**
+ * @brief make_value_group using the cursor's column extents.
+ *
+ * Equivalent to the explicit-extent overload with x_min and x_max taken
+ * from @p cursor.
+ */
+[[nodiscard]] ValueGroup make_value_group(
+    std::span<const ValueSpec> values,
+    RowBuffer header_buf,
+    std::span<const RowBuffer> row_bufs,
+    Surface& surface,
+    LayoutCursor& cursor,
+    float row_h,
     bool initially_open = false);
 
 } // namespace MayaFlux::Portal::Forma

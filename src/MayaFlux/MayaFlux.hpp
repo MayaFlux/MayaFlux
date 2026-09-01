@@ -147,7 +147,7 @@
 #include "Portal/Text/Text.hpp"
 
 #include "Portal/Forma/Forma.hpp"
-#include "Portal/Forma/Primitives/Geometry.hpp"
+#include "Portal/Forma/Primitives/FormFactory.hpp"
 
 #include "Portal/System/System.hpp"
 

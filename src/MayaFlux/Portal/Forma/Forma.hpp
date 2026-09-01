@@ -1,55 +1,13 @@
 #pragma once
 
-#include "Bridge.hpp"
-#include "Plot/Plot.hpp"
-#include "Surface.hpp"
-
-namespace MayaFlux::Nodes {
-class NodeGraphManager;
-}
-
-namespace MayaFlux::Core {
-class Window;
-class WindowManager;
-struct WindowCreateInfo;
-}
+#include "Internal/Atelier.hpp"
+#include "Primitives/Geometry.hpp"
 
 namespace MayaFlux::Vruta {
-class TaskScheduler;
-class EventManager;
 class Event;
 }
 
-namespace MayaFlux::Buffers {
-class BufferManager;
-}
-
 namespace MayaFlux::Portal::Forma {
-
-class Inspector;
-
-// =============================================================================
-// Internal
-// =============================================================================
-
-namespace internal {
-
-    /**
-     * @brief Core buffer construction — capacity-explicit path for internal use.
-     *
-     * Called by public create_buffer overloads and by internal .cpp callers
-     * (plot, Collapsible) that know their capacity upfront.
-     */
-    [[nodiscard]] MAYAFLUX_API std::shared_ptr<Buffers::FormaBuffer> create_buffer_impl(
-        std::shared_ptr<Core::Window> window,
-        size_t capacity,
-        Graphics::PrimitiveTopology topology,
-        const std::string& texture_binding = {},
-        std::vector<std::pair<std::string, std::shared_ptr<Core::VKImage>>> additional_textures = {});
-
-    constexpr size_t k_capacity_bytes = 4096;
-
-} // namespace internal
 
 /**
  * @file Forma.hpp
@@ -220,7 +178,7 @@ template <typename V>
 {
     using Vertex = std::ranges::range_value_t<V>;
     const size_t cap = std::ranges::size(vertices) * sizeof(Vertex);
-    auto buf = internal::create_buffer_impl(std::move(window), cap, topology);
+    auto buf = internal::atelier().create_buffer(std::move(window), cap, topology);
     buf->submit(vertices);
     return buf;
 }
@@ -233,7 +191,7 @@ template <typename V>
     const V& vertex,
     Graphics::PrimitiveTopology topology = Graphics::PrimitiveTopology::TRIANGLE_STRIP)
 {
-    auto buf = internal::create_buffer_impl(std::move(window), sizeof(V), topology);
+    auto buf = internal::atelier().create_buffer(std::move(window), sizeof(V), topology);
     buf->submit(vertex);
     return buf;
 }
@@ -293,10 +251,49 @@ template <typename T>
     size_t capacity = internal::k_capacity_bytes,
     std::function<float(T)> project = {})
 {
-    auto buf = create_buffer(std::move(window), capacity, topology);
-    auto mapped = make_mapped<T>(initial, std::move(geom), buf);
-    mapped.element.id = layer.add(mapped.element);
-    bridge().register_element(mapped, std::move(project));
+    return internal::atelier().create_element<T>(
+        layer, std::move(window), std::move(geom), std::move(initial),
+        topology, capacity, std::move(project));
+}
+
+/**
+ * @brief Realize a Form on @p surface.
+ *
+ * Builds the buffer at the Form's capacity and topology, registers the
+ * element, syncs so the geometry function's bounds_hint and contains reach
+ * the Layer before the first frame, then runs the Form's interaction wiring.
+ *
+ * A bare GeometryFn converts to a Form, so this also serves as the simplest
+ * element construction path for a caller's own geometry.
+ *
+ * @tparam T       MappedState value type.
+ * @param surface  Canvas to register on.
+ * @param form     Geometry, topology, capacity, and interaction.
+ * @param initial  Starting value written into MappedState.
+ * @param project  Optional T to float projection for outbound readers.
+ * @return Fully constructed Mapped<T>, wired.
+ */
+template <typename T>
+[[nodiscard]] Mapped<T> create(
+    Surface& surface,
+    Geometry::Form<T> form,
+    T initial,
+    std::function<float(T)> project = {})
+{
+    auto mapped = internal::atelier().create_element<T>(
+        surface.layer(), surface.window(),
+        std::move(form.geometry), std::move(initial),
+        form.topology, form.capacity, std::move(project));
+
+    mapped.sync();
+    if (mapped.element.bounds_hint)
+        surface.layer().set_bounds(mapped.element.id, *mapped.element.bounds_hint);
+    if (mapped.element.contains)
+        surface.layer().set_contains(mapped.element.id, mapped.element.contains);
+
+    if (form.wire)
+        form.wire(surface.ctx(), mapped.element.id, mapped.state);
+
     return mapped;
 }
 
@@ -337,18 +334,8 @@ template <typename T>
     Graphics::PrimitiveTopology topology = Graphics::PrimitiveTopology::TRIANGLE_STRIP,
     std::function<float(T)> project = {})
 {
-    auto mapped = create_element<T>(
-        surface.layer(), surface.window(),
-        std::move(geom), std::move(initial),
-        topology, internal::k_capacity_bytes, std::move(project));
-
-    mapped.sync();
-    if (mapped.element.bounds_hint)
-        surface.layer().set_bounds(mapped.element.id, *mapped.element.bounds_hint);
-    if (mapped.element.contains)
-        surface.layer().set_contains(mapped.element.id, mapped.element.contains);
-
-    return mapped;
+    return internal::atelier().create_element<T>(
+        surface, std::move(geom), std::move(initial), topology, std::move(project));
 }
 
 /**

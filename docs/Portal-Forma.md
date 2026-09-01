@@ -88,15 +88,15 @@ function. All coordinates are NDC (z = 0).
 
 ### Filled shapes - `Kakshya::Vertex`, TRIANGLE_LIST
 
-| Function | Description |
-|---|---|
-| `filled_rect(region, color)` | 4-vertex TRIANGLE_STRIP rect. Also in `GeometryPrimitives.hpp`. |
-| `filled_rect_gradient(region, bl, br, tl, tr)` | Same shape, per-corner colors. |
-| `filled_rounded_rect(region, corner_r, segments, color)` | Rounded rect decomposed into body rects + corner fans. |
-| `filled_circle(center, radius, segments, color)` | Triangle fan. |
-| `filled_ring(center, inner_r, outer_r, segments, color)` | Annulus as quad strip. |
-| `filled_polygon(center, radius, sides, rotation, color)` | Regular n-gon fan. |
-| `filled_arc(center, radius, start, end, segments, color)` | Pie-slice sector fan. |
+| Function                                                  | Description                                                     |
+| --------------------------------------------------------- | --------------------------------------------------------------- |
+| `filled_rect(region, color)`                              | 4-vertex TRIANGLE_STRIP rect. Also in `GeometryPrimitives.hpp`. |
+| `filled_rect_gradient(region, bl, br, tl, tr)`            | Same shape, per-corner colors.                                  |
+| `filled_rounded_rect(region, corner_r, segments, color)`  | Rounded rect decomposed into body rects + corner fans.          |
+| `filled_circle(center, radius, segments, color)`          | Triangle fan.                                                   |
+| `filled_ring(center, inner_r, outer_r, segments, color)`  | Annulus as quad strip.                                          |
+| `filled_polygon(center, radius, sides, rotation, color)`  | Regular n-gon fan.                                              |
+| `filled_arc(center, radius, start, end, segments, color)` | Pie-slice sector fan.                                           |
 
 ```cpp
 // Rounded panel background
@@ -114,14 +114,14 @@ auto buf = Portal::Forma::create_buffer(
 
 ### Outlines - `Kakshya::LineVertex`, LINE_LIST
 
-| Function | Description |
-|---|---|
-| `rect_outline(region, color, thickness)` | 4 edges, 8 vertices. |
-| `circle_outline(center, radius, segments, color, thickness)` | Closed loop. |
-| `arc_outline(center, radius, start, end, segments, color, thickness)` | Open arc. |
-| `polygon_outline(center, radius, sides, rotation, color, thickness)` | Closed n-gon. |
-| `polyline(pts, color, thickness)` | Open path from a span of `glm::vec2`. |
-| `polyline_colored(pts, colors, thickness)` | Same, per-vertex colors. |
+| Function                                                              | Description                           |
+| --------------------------------------------------------------------- | ------------------------------------- |
+| `rect_outline(region, color, thickness)`                              | 4 edges, 8 vertices.                  |
+| `circle_outline(center, radius, segments, color, thickness)`          | Closed loop.                          |
+| `arc_outline(center, radius, start, end, segments, color, thickness)` | Open arc.                             |
+| `polygon_outline(center, radius, sides, rotation, color, thickness)`  | Closed n-gon.                         |
+| `polyline(pts, color, thickness)`                                     | Open path from a span of `glm::vec2`. |
+| `polyline_colored(pts, colors, thickness)`                            | Same, per-vertex colors.              |
 
 ```cpp
 // Border around a panel
@@ -151,81 +151,118 @@ auto path = Kinesis::arc_path({ 0.F, 0.F }, 0.4F, 0.4F,
 auto handle_buf = Portal::Forma::create_buffer(
     window, Portal::Graphics::PrimitiveTopology::POINT_LIST);
 
-auto el = Portal::Forma::create_element<float>(
-    surface,
-    Portal::Forma::Geometry::stroke_slider(path, handle_buf),
-    0.5F,
-    Portal::Graphics::PrimitiveTopology::LINE_LIST);
+auto el = Portal::Forma::create(
+    surface, Portal::Forma::Geometry::stroke_slider(path, handle_buf), 0.5F);
 ```
 
 ---
 
-## Geometry functions for Mapped\<T\>
+## Form : geometry with everything its realization needs
 
-`Portal::Forma::Geometry` provides ready-made geometry functions for `create_element<T>`. Each produces a closure over its configuration parameters; pass the result directly as the `geom` argument.
+A geometry function alone is not enough to construct an element. Its topology
+is fixed by the vertex kind it writes, its capacity by the vertex count, and
+its interaction by the forward placement it performs. All three are knowledge
+the geometry factory already has, and the call site would otherwise restate
+them.
+
+`Form<T>` carries all four together:
+
+```cpp
+template <typename T>
+struct Form {
+    GeometryFn<T> geometry;
+    Portal::Graphics::PrimitiveTopology topology;
+    size_t capacity;
+    std::function<void(Context&, uint32_t, std::shared_ptr<MappedState<T>>)> wire;
+};
+```
+
+`Portal::Forma::create` realizes one: builds the buffer at the Form's capacity
+and topology, registers the element, syncs so `bounds_hint` and `contains`
+from the geometry function reach the Layer before the first frame, then runs
+the wiring.
+
+```cpp
+constexpr Kinesis::AABB2D track { glm::vec2(-0.8F, -0.08F), glm::vec2(0.8F, 0.08F) };
+
+auto el = Portal::Forma::create(
+    surface, Portal::Forma::Geometry::horizontal_fader(track, 0.04F), 0.5F);
+
+auto constant = vega.Constant(0.0) | Audio[0];
+Portal::Forma::bridge().at(el.state).write(constant);
+```
+
+That is the whole fader: geometry, correct topology, correct buffer size, and
+a drag whose inverse matches the handle placement.
+
+Nothing enumerates the set of Forms. Any function returning one participates
+identically, including one you write. A bare `GeometryFn<T>` converts to a
+`Form<T>` with default topology, default capacity, and no interaction, so
+custom geometry passes to `create` unchanged.
+
+Every field is public and overridable before `create`. To keep the geometry
+but supply your own interaction:
+
+```cpp
+auto form = Portal::Forma::Geometry::horizontal_fader(track, 0.04F);
+form.wire = {};
+
+auto el = Portal::Forma::create(surface, std::move(form), 0.5F);
+
+surface.ctx().on_drag(el.element.id, IO::MouseButtons::Left,
+    [state = el.state](uint32_t, glm::vec2 ndc) { /* your mapping */ });
+```
+
+`capacity` is a hint. `FormaProcessor` grows the buffer when a sync exceeds
+it, at the cost of one reallocation.
+
+---
+
+## Geometry functions
+
+`Portal::Forma::Geometry` provides ready-made Forms. Each closes over its
+configuration parameters and carries the interaction inverse to the placement
+it performs.
 
 ### Controls
 
-| Function | T | Topology | Notes |
-|---|---|---|---|
-| `horizontal_fader(bounds, handle_w)` | `float [0,1]` | TRIANGLE_STRIP | Track + handle quads. Hit region follows handle. |
-| `vertical_fader(bounds, handle_h)` | `float [0,1]` | TRIANGLE_STRIP | Same, vertical orientation. |
-| `stroke_slider(path, handle_buf, ...)` | `float [0,1]` | LINE_LIST | Arc-length scrubber along any polyline. Requires a separate POINT_LIST handle buffer. |
-| `toggle(region, color_off, color_on)` | `bool` | TRIANGLE_STRIP | Color switches on write. Wire `on_press` to flip state. |
-| `drawable_canvas(bounds, color, thickness)` | `vector<float>` | LINE_LIST | N samples rendered as a polyline. Use `wire_canvas_drag` to wire interaction. |
+| Function                                    | T               | Carries                                                                                                                                  |
+| ------------------------------------------- | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `horizontal_fader(bounds, handle_w)`        | `float [0,1]`   | Drag mapping cursor x to handle position, offset by half a handle so the handle centre tracks the cursor. Hit region follows the handle. |
+| `vertical_fader(bounds, handle_h)`          | `float [0,1]`   | Same, y axis.                                                                                                                            |
+| `stroke_slider(path, handle_buf, ...)`      | `float [0,1]`   | Drag mapping cursor to nearest arc-length position on the path. Requires a separate POINT_LIST handle buffer.                            |
+| `toggle(region, color_off, color_on)`       | `bool`          | Press flipping the value.                                                                                                                |
+| `drawable_canvas(bounds, color, thickness)` | `vector<float>` | Drag painting sample values, interpolating across indices under fast drag.                                                               |
 
 ### Readouts
 
-| Function | T | Topology | Notes |
-|---|---|---|---|
-| `level_meter(bounds, horizontal, fill, track)` | `float [0,1]` | TRIANGLE_STRIP | Fills proportional bar. No hit region. |
-| `radial(center, radius, start, end, color)` | `float [0,1]` | LINE_LIST | Sweeping indicator line. |
+| Function                                       | T             | Carries                                                                                                         |
+| ---------------------------------------------- | ------------- | --------------------------------------------------------------------------------------------------------------- |
+| `level_meter(bounds, horizontal, fill, track)` | `float [0,1]` | Nothing. Driven from a node or a Bridge write.                                                                  |
+| `radial(region, start, end, color)`            | `float [0,1]` | Drag mapping cursor angle about the region's centre onto the sweep. Radius is the region's smaller half-extent. |
 
 ### Positional
 
-| Function | T | Topology | Notes |
-|---|---|---|---|
-| `point(color, size, hit_radius)` | `glm::vec2` (NDC) | POINT_LIST | Single point. Hit region is a circle. |
-| `crosshair(arm_len, color, thickness, hit_radius)` | `glm::vec2` (NDC) | LINE_LIST | Two crossing segments. |
-| `position_picker(bounds, color, size)` | `glm::vec2 [0,1]²` | POINT_LIST | Maps unit square to NDC bounds. |
+| Function                                           | T                  | Carries                                                         |
+| -------------------------------------------------- | ------------------ | --------------------------------------------------------------- |
+| `point(color, size, hit_radius)`                   | `glm::vec2` (NDC)  | Hover, writing the cursor position. Hit region is a circle.     |
+| `crosshair(arm_len, color, thickness, hit_radius)` | `glm::vec2` (NDC)  | Hover, writing the cursor position.                             |
+| `position_picker(bounds, color, size)`             | `glm::vec2 [0,1]²` | Drag mapping cursor to unit-square coordinates over the bounds. |
 
-### Drawable canvas
+---
 
-`drawable_canvas` renders a `vector<float>` of N samples as a LINE_LIST polyline across the canvas bounds. Sample values are in [0, 1] mapped to the Y axis.
-
-`wire_canvas_drag` registers the drag interaction in one call: it maps NDC cursor position to sample index and amplitude, interpolates between the previous and current index to fill gaps under fast drag, and increments `state->version` to trigger `sync()`.
-
-```cpp
-constexpr Kinesis::AABB2D bounds { glm::vec2(-0.8F, -0.6F), glm::vec2(0.8F, 0.6F) };
-constexpr uint32_t k_n = 256;
-
-auto el = Portal::Forma::create_element<std::vector<float>>(
-    surface,
-    Portal::Forma::Geometry::drawable_canvas(bounds),
-    std::vector<float>(k_n, 0.5F),
-    Portal::Graphics::PrimitiveTopology::LINE_LIST);
-
-Portal::Forma::Geometry::wire_canvas_drag(surface.ctx(), el.element.id, el.state, bounds);
-```
-
-The state vector routes to any bulk float consumer via Bridge:
+Any factory whose first parameter is an `AABB2D` accepts an anchor instead
+through `Geometry::at`:
 
 ```cpp
-// Wavetable / envelope - direct to AudioWriteProcessor
-auto writer = std::make_shared<Buffers::AudioWriteProcessor>();
-auto audio_buf = std::make_shared<Buffers::AudioBuffer>(0, k_n);
-audio_buf->set_default_processor(writer);
-register_audio_buffer(audio_buf, 0);
-Portal::Forma::bridge().at(el.state).write(writer);
+auto fader = Portal::Forma::create(surface, Geometry::horizontal_fader(track, 0.04F), 0.5F);
 
-// IIR coefficient array
-auto iir = vega.IIR(rand, a_coefs, b_coefs) | Audio[0];
-Portal::Forma::bridge().at(el.state).write(
-    [iir](std::span<const float> s) {
-        std::vector<double> coefs(s.begin(), s.end());
-        iir->setBCoefficients(coefs);
-    });
+// a meter occupying the fader's own region
+auto meter = Portal::Forma::create(surface, Geometry::at(fader, Geometry::level_meter), 0.F);
 ```
+
+`at` works for any factory, including yours. Anything exposing `bounds()`
+serves as the anchor: `Mapped<T>`, `Collapsible`, `ValueRow`, `ValueGroup`.
 
 ---
 
@@ -388,12 +425,10 @@ el.set_text("active", Portal::Text::PressParams { .render_bounds = { 256, 48 } }
 
 ## Mapped\<T\> : typed dynamic geometry
 
-When geometry must update in response to a changing value, use
-`create_element<T>`. The geometry function converts the current `T` into
-vertex bytes and is rerun automatically when the value changes.
+When geometry must update in response to a changing value, write a geometry function and pass it to create.
 
 ```cpp
-auto el = Portal::Forma::create_element<float>(
+auto el = Portal::Forma::create<float>(
     surface,
     [track](float v, std::vector<uint8_t>& out, Portal::Forma::Element& elem) {
         float right = track.min.x + v * track.width();
@@ -405,15 +440,22 @@ auto el = Portal::Forma::create_element<float>(
         } });
         elem.bounds_hint = track;
     },
-    0.0F,
-    Portal::Graphics::PrimitiveTopology::TRIANGLE_STRIP);
+    0.0F);
 ```
 
-The geometry function receives the current value, a byte buffer to write into,
-and a mutable `Element&`. Writing `elem.bounds_hint` or `elem.contains` inside
-the geometry function updates the spatial description as the shape changes.
-The `Surface`-accepting overload of `create_element` runs one `sync()` on
-construction so bounds and containment are live before the first frame.
+The geometry function receives the current value, a byte buffer to write into, and a mutable `Element&`.
+Writing `elem.bounds_hint` or `elem.contains` inside the geometry function updates the spatial description as the shape changes.
+A raw geometry function converts to a `Form<T>` with default topology and capacity and no interaction,
+so pass topology explicitly by constructing the Form yourself when the vertex kind is not `TRIANGLE_STRIP`:
+
+```cpp
+Portal::Forma::Geometry::Form<float> form {
+    std::move(my_geometry_fn),
+    Portal::Graphics::PrimitiveTopology::LINE_LIST,
+    4 * sizeof(Kakshya::LineVertex),
+};
+auto el = Portal::Forma::create(surface, std::move(form), 0.F);
+```
 
 `el.state` is the `shared_ptr<MappedState<T>>`. Write a new value from any
 thread via `el.state->write(v)`. The geometry function reruns on the next
@@ -528,17 +570,8 @@ Portal::Forma::bridge().at(el.state)
 ```cpp
 constexpr Kinesis::AABB2D track { glm::vec2(-0.8F, -0.08F), glm::vec2(0.8F, 0.08F) };
 
-auto el = Portal::Forma::create_element<float>(
-    surface,
-    Portal::Forma::Geometry::horizontal_fader(track, 0.04F),
-    0.5F,
-    Portal::Graphics::PrimitiveTopology::TRIANGLE_STRIP);
-
-surface.ctx().on_drag(el.element.id, IO::MouseButtons::Left,
-    [state = el.state, track](uint32_t, glm::vec2 ndc) {
-        state->write(std::clamp(
-            (ndc.x - track.min.x) / track.width(), 0.F, 1.F));
-    });
+auto el = Portal::Forma::create(
+    surface, Portal::Forma::Geometry::horizontal_fader(track, 0.04F), 0.5F);
 
 auto constant = vega.Constant(0.0) | Audio[0];
 Portal::Forma::bridge().at(el.state).write(constant);
@@ -546,33 +579,81 @@ Portal::Forma::bridge().at(el.state).write(constant);
 
 ---
 
+## Layout
+
+`Kinesis::place` computes a region positioned against an anchor.
+
+```cpp
+constexpr Kinesis::AABB2D fader { { -0.8F, -0.05F }, { 0.8F, 0.05F } };
+
+const auto label = Kinesis::place(fader, Kinesis::Side::Below, 0.F, 0.05F,
+    0.01F, Kinesis::Align::Span);
+
+const auto readout = Kinesis::place(fader, Kinesis::Side::Right, 0.2F, 0.1F, 0.02F);
+```
+
+`Side` is `Right`, `Left`, `Above`, `Below`, or `Over`. `Align` controls the
+cross axis: `Center`, `Start`, `End`, or `Span`, where `Span` matches the
+anchor's full cross-axis extent and ignores the corresponding size argument.
+
+The anchor may be any object exposing `bounds()`, so a placed element anchors
+the next one directly:
+
+```cpp
+auto fader = Portal::Forma::create(surface, Geometry::horizontal_fader(track, 0.04F), 0.5F);
+const auto below = Kinesis::place(fader, Kinesis::Side::Below, 0.F, 0.05F, 0.01F, Kinesis::Align::Span);
+```
+
+`LayoutCursor` advances a Y baseline and can be scoped to a column:
+
+```cpp
+Portal::Forma::LayoutCursor left  { 1.F, -0.95F, -0.05F };
+Portal::Forma::LayoutCursor right { 1.F,  0.05F,  0.95F };
+
+const auto a = left.advance(0.08F);
+const auto b = right.advance(0.08F);
+
+left.sync_to(right);   // both resume from the lower of the two baselines
+```
+
+`Surface` produces named screen regions without NDC arithmetic:
+
+```cpp
+const auto corner = surface.top_right(0.28F, 0.13F);
+const auto status = surface.bottom_strip(0.04F);
+const auto panel  = surface.top_left(0.35F, 0.8F);
+
+Portal::Forma::LayoutCursor cursor { panel.max.y, panel.min.x, panel.max.x };
+```
+
+`top_left`, `top_right`, `bottom_left`, `bottom_right`, `top_strip`,
+`bottom_strip`, `left_strip`, `right_strip`, `center_rect`, and `full`.
+
 ## Quick examples
 
 ### Mouse follower
 
+The Form carries hover-follow, so the point tracks the cursor with no callback registration.
+
 ```cpp
-auto el = Portal::Forma::create_element<glm::vec2>(
+auto el = Portal::Forma::create(
     surface,
     Portal::Forma::Geometry::point({ 0.2F, 0.8F, 1.0F }, 14.0F, 0.04F),
-    glm::vec2 { 0.F, 0.F },
-    Portal::Graphics::PrimitiveTopology::POINT_LIST);
-
-surface.ctx().on_move(el.element.id, [state = el.state](uint32_t, glm::vec2 ndc) {
-    state->write(ndc);
-});
+    glm::vec2 { 0.F, 0.F });
 ```
 
 ### Radial indicator
 
+The Form carries angular drag, so dragging anywhere sweeps the indicator to the cursor's angle.
+
 ```cpp
-auto el = Portal::Forma::create_element<float>(
+auto el = Portal::Forma::create(
     surface,
     Portal::Forma::Geometry::radial(
-        { 0.F, 0.F }, 0.3F,
+        Kinesis::AABB2D::from_ndc({ 0.F, 0.F }, glm::vec2(0.3F)),
         glm::radians(225.F), glm::radians(-45.F),
         { 1.F, 0.8F, 0.2F }),
-    0.5F,
-    Portal::Graphics::PrimitiveTopology::LINE_LIST);
+    0.5F);
 ```
 
 ### Horizontal fader
@@ -580,11 +661,8 @@ auto el = Portal::Forma::create_element<float>(
 ```cpp
 constexpr Kinesis::AABB2D track { glm::vec2(-0.6F, -0.05F), glm::vec2(0.6F, 0.05F) };
 
-auto el = Portal::Forma::create_element<float>(
-    surface,
-    Portal::Forma::Geometry::horizontal_fader(track, 0.04F),
-    0.5F,
-    Portal::Graphics::PrimitiveTopology::TRIANGLE_STRIP);
+auto el = Portal::Forma::create(
+    surface, Portal::Forma::Geometry::horizontal_fader(track, 0.04F), 0.5F);
 ```
 
 ### 2D position picker
@@ -592,18 +670,10 @@ auto el = Portal::Forma::create_element<float>(
 ```cpp
 constexpr Kinesis::AABB2D area { glm::vec2(-0.5F, -0.5F), glm::vec2(0.5F, 0.5F) };
 
-auto el = Portal::Forma::create_element<glm::vec2>(
+auto el = Portal::Forma::create(
     surface,
     Portal::Forma::Geometry::position_picker(area, { 0.9F, 0.4F, 0.1F }, 10.F),
-    glm::vec2 { 0.5F, 0.5F },
-    Portal::Graphics::PrimitiveTopology::POINT_LIST);
-
-surface.ctx().on_drag(el.element.id, IO::MouseButtons::Left,
-    [state = el.state, area](uint32_t, glm::vec2 ndc) {
-        state->write(glm::clamp(
-            (ndc - area.min) / glm::vec2(area.width(), area.height()),
-            glm::vec2(0.F), glm::vec2(1.F)));
-    });
+    glm::vec2 { 0.5F, 0.5F });
 ```
 
 ### Labeled interactive button

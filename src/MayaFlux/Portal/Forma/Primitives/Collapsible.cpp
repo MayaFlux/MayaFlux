@@ -108,10 +108,25 @@ Collapsible& Collapsible::place(
             m.sync();
         });
 
+    header_bounds = Kinesis::AABB2D {
+        .min = { x_min, cursor.y() },
+        .max = { x_max, y_top },
+    };
+
     header_id = hid;
     open = open_state;
     cursor_out = cursor;
     return *this;
+}
+
+Collapsible& Collapsible::place(
+    std::shared_ptr<Buffers::FormaBuffer> in_buf,
+    Surface& surface,
+    LayoutCursor& cursor,
+    float row_h)
+{
+    return place(std::move(in_buf), surface, cursor,
+        cursor.x_min(), cursor.x_max(), row_h);
 }
 
 void Collapsible::attach(Layer& layer, uint32_t body_id) const

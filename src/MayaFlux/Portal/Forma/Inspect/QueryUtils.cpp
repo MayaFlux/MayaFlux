@@ -84,6 +84,7 @@ ValueRow make_value_row(
     const float top = cursor.y();
     const float bot = top - row_h;
     cursor.advance(row_h);
+    const Kinesis::AABB2D row_rect { .min = { x_min, bot }, .max = { x_max, top } };
 
     const uint32_t stride = Kakshya::VertexLayout::for_meshes().stride_bytes;
     std::vector<uint8_t> bytes(static_cast<size_t>(12) * stride, 0);
@@ -99,7 +100,7 @@ ValueRow make_value_row(
 
     Element el;
     el.buffer = row_buf.buf;
-    el.bounds_hint = Kinesis::AABB2D { .min = { x_min, bot }, .max = { x_max, top } };
+    el.bounds_hint = row_rect;
     el.interactive = false;
     el.name = spec.label;
     const uint32_t id = surface.layer().add(el);
@@ -126,7 +127,20 @@ ValueRow make_value_row(
         .buf = std::move(row_buf.buf),
         .text = std::move(row_buf.text_image),
         .link = std::move(link),
+        .row_bounds = row_rect,
     };
+}
+
+ValueRow make_value_row(
+    const ValueSpec& spec,
+    RowBuffer row_buf,
+    Surface& surface,
+    LayoutCursor& cursor,
+    float row_h,
+    glm::vec3 bg)
+{
+    return make_value_row(spec, std::move(row_buf), surface, cursor,
+        cursor.x_min(), cursor.x_max(), row_h, bg);
 }
 
 ValueGroup make_value_group(
@@ -159,6 +173,19 @@ ValueGroup make_value_group(
         .header = std::move(header),
         .rows = std::move(rows),
     };
+}
+
+ValueGroup make_value_group(
+    std::span<const ValueSpec> values,
+    RowBuffer header_buf,
+    std::span<const RowBuffer> row_bufs,
+    Surface& surface,
+    LayoutCursor& cursor,
+    float row_h,
+    bool initially_open)
+{
+    return make_value_group(values, std::move(header_buf), row_bufs,
+        surface, cursor, cursor.x_min(), cursor.x_max(), row_h, initially_open);
 }
 
 } // namespace MayaFlux::Portal::Forma

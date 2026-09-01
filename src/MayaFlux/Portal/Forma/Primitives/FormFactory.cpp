@@ -1,19 +1,18 @@
-#include "Geometry.hpp"
+#include "FormFactory.hpp"
 
 #include "MayaFlux/Kinesis/Geometry2D.hpp"
 #include "MayaFlux/Kinesis/GeometryPrimitives.hpp"
-#include "MayaFlux/Portal/Forma/Context.hpp"
 
 namespace MayaFlux::Portal::Forma::Geometry {
 
-GeometryFn<float> horizontal_fader(
+Form<float> horizontal_fader(
     Kinesis::AABB2D bounds,
     float handle_w,
     glm::vec3 track_color,
     glm::vec3 handle_color)
 {
-    return [bounds, handle_w, track_color, handle_color](
-               float v, std::vector<uint8_t>& out, Element& el) {
+    GeometryFn<float> fn = [bounds, handle_w, track_color, handle_color](
+                               float v, std::vector<uint8_t>& out, Element& el) {
         float x = bounds.min.x + v * (bounds.width() - handle_w);
         float yt = bounds.min.y + bounds.height() * 0.35F;
         float yb = bounds.min.y + bounds.height() * 0.65F;
@@ -30,16 +29,21 @@ GeometryFn<float> horizontal_fader(
         el.bounds_hint = handle;
         el.contains = {};
     };
+
+    return { std::move(fn),
+        Graphics::PrimitiveTopology::TRIANGLE_STRIP,
+        static_cast<size_t>(8) * sizeof(Kakshya::MeshVertex),
+        drag_with<float>(Kinesis::axis_fraction(bounds, handle_w, true)) };
 }
 
-GeometryFn<float> vertical_fader(
+Form<float> vertical_fader(
     Kinesis::AABB2D bounds,
     float handle_h,
     glm::vec3 track_color,
     glm::vec3 handle_color)
 {
-    return [bounds, handle_h, track_color, handle_color](
-               float v, std::vector<uint8_t>& out, Element& el) {
+    GeometryFn<float> fn = [bounds, handle_h, track_color, handle_color](
+                               float v, std::vector<uint8_t>& out, Element& el) {
         const float y = bounds.min.y + v * (bounds.height() - handle_h);
         const float xl = bounds.min.x + bounds.width() * 0.35F;
         const float xr = bounds.min.x + bounds.width() * 0.65F;
@@ -56,22 +60,29 @@ GeometryFn<float> vertical_fader(
         el.bounds_hint = handle;
         el.contains = {};
     };
+
+    return { std::move(fn),
+        Graphics::PrimitiveTopology::TRIANGLE_STRIP,
+        static_cast<size_t>(8) * sizeof(Kakshya::MeshVertex),
+        drag_with<float>(Kinesis::axis_fraction(bounds, handle_h, false)) };
 }
 
-GeometryFn<float> radial(
-    glm::vec2 center,
-    float radius,
+Form<float> radial(
+    Kinesis::AABB2D region,
     float angle_start,
     float angle_end,
     glm::vec3 color)
 {
-    return [center, radius, angle_start, angle_end, color](
-               float v, std::vector<uint8_t>& out, Element& el) {
-        float angle = angle_start + v * (angle_end - angle_start);
-        glm::vec2 tip = center + radius * glm::vec2(std::cos(angle), std::sin(angle));
+    const glm::vec2 center = region.center();
+    const float radius = std::min(region.width(), region.height()) * 0.5F;
+
+    GeometryFn<float> fn = [center, radius, angle_start, angle_end, color](
+                               float v, std::vector<uint8_t>& out, Element& el) {
+        const float angle = angle_start + v * (angle_end - angle_start);
+        const glm::vec2 tip = center + radius * glm::vec2(std::cos(angle), std::sin(angle));
 
         using V = Kakshya::LineVertex;
-        std::vector<V> verts = {
+        const std::vector<V> verts = {
             { .position = { center.x, center.y, 0 }, .color = color },
             { .position = { tip.x, tip.y, 0 }, .color = color },
         };
@@ -81,14 +92,19 @@ GeometryFn<float> radial(
         el.bounds_hint = Kinesis::AABB2D::from_ndc(center, glm::vec2(radius));
         el.contains = Kinesis::circular_bounds(center, radius);
     };
+
+    return { std::move(fn),
+        Graphics::PrimitiveTopology::LINE_LIST,
+        static_cast<size_t>(2) * sizeof(Kakshya::LineVertex),
+        drag_with<float>(Kinesis::angle_fraction(center, angle_start, angle_end)) };
 }
 
-GeometryFn<glm::vec2> point(
+Form<glm::vec2> point(
     glm::vec3 color,
     float size,
     float hit_radius)
 {
-    return [color, size, hit_radius](glm::vec2 pos, std::vector<uint8_t>& out, Element& el) {
+    GeometryFn<glm::vec2> fn = [color, size, hit_radius](glm::vec2 pos, std::vector<uint8_t>& out, Element& el) {
         write_verts(out, Kakshya::PointVertex {
                              .position = { pos.x, pos.y, 0.0F },
                              .color = color,
@@ -97,15 +113,20 @@ GeometryFn<glm::vec2> point(
         el.bounds_hint = Kinesis::AABB2D::from_ndc(pos, glm::vec2(hit_radius));
         el.contains = Kinesis::circular_bounds(pos, hit_radius);
     };
+
+    return { std::move(fn),
+        Graphics::PrimitiveTopology::POINT_LIST,
+        sizeof(Kakshya::PointVertex),
+        follow_move() };
 }
 
-GeometryFn<glm::vec2> position_picker(
+Form<glm::vec2> position_picker(
     Kinesis::AABB2D bounds,
     glm::vec3 color,
     float size)
 {
-    return [bounds, color, size](
-               glm::vec2 v, std::vector<uint8_t>& out, Element& el) {
+    GeometryFn<glm::vec2> fn = [bounds, color, size](
+                                   glm::vec2 v, std::vector<uint8_t>& out, Element& el) {
         float x = bounds.min.x + v.x * bounds.width();
         float y = bounds.min.y + v.y * bounds.height();
 
@@ -124,9 +145,14 @@ GeometryFn<glm::vec2> position_picker(
                 bounds.max,
                 glm::vec2(bounds.min.x, bounds.max.y) } });
     };
+
+    return { std::move(fn),
+        Graphics::PrimitiveTopology::POINT_LIST,
+        sizeof(Kakshya::PointVertex),
+        drag_with<glm::vec2>(Kinesis::unit_square(bounds)) };
 }
 
-GeometryFn<float> stroke_slider(
+Form<float> stroke_slider(
     std::span<const glm::vec2> path,
     std::shared_ptr<Buffers::FormaBuffer> handle_buf,
     float half_thickness,
@@ -154,16 +180,19 @@ GeometryFn<float> stroke_slider(
     }
     aabb = aabb.expanded(half_thickness);
 
-    return [pts = std::move(pts),
-               seg_lengths = std::move(seg_lengths),
-               total_len,
-               aabb,
-               handle_buf = std::move(handle_buf),
-               half_thickness,
-               track_color,
-               fill_color,
-               handle_color,
-               handle_size](float v, std::vector<uint8_t>& out, Element& el) {
+    auto project = Kinesis::path_fraction(path);
+    const size_t cap = pts.size() * 4 * sizeof(Kakshya::LineVertex);
+
+    GeometryFn<float> fn = [pts = std::move(pts),
+                               seg_lengths = std::move(seg_lengths),
+                               total_len,
+                               aabb,
+                               handle_buf = std::move(handle_buf),
+                               half_thickness,
+                               track_color,
+                               fill_color,
+                               handle_color,
+                               handle_size](float v, std::vector<uint8_t>& out, Element& el) {
         if (pts.size() < 2) {
             out.clear();
             return;
@@ -216,29 +245,39 @@ GeometryFn<float> stroke_slider(
             handle_buf->submit(hbytes);
         }
     };
+
+    return { std::move(fn),
+        Graphics::PrimitiveTopology::LINE_LIST,
+        cap,
+        drag_with<float>(std::move(project)) };
 }
 
-GeometryFn<bool> toggle(
+Form<bool> toggle(
     Kinesis::AABB2D region,
     glm::vec3 color_off,
     glm::vec3 color_on)
 {
-    return [region, color_off, color_on](
-               bool v, std::vector<uint8_t>& out, Element& el) {
+    GeometryFn<bool> fn = [region, color_off, color_on](
+                              bool v, std::vector<uint8_t>& out, Element& el) {
         write_verts(out, Kakshya::to_mesh_vertices(Kinesis::filled_rect(region, v ? color_on : color_off)));
         el.bounds_hint = region;
         el.contains = {};
     };
+
+    return { std::move(fn),
+        Graphics::PrimitiveTopology::TRIANGLE_STRIP,
+        static_cast<size_t>(4) * sizeof(Kakshya::MeshVertex),
+        press_flip() };
 }
 
-GeometryFn<float> level_meter(
+Form<float> level_meter(
     Kinesis::AABB2D bounds,
     bool horizontal,
     glm::vec3 fill_color,
     glm::vec3 track_color)
 {
-    return [bounds, horizontal, fill_color, track_color](
-               float v, std::vector<uint8_t>& out, Element& el) {
+    GeometryFn<float> fn = [bounds, horizontal, fill_color, track_color](
+                               float v, std::vector<uint8_t>& out, Element& el) {
         const float t = std::clamp(v, 0.F, 1.F);
 
         Kinesis::AABB2D fill {}, remainder {};
@@ -261,16 +300,20 @@ GeometryFn<float> level_meter(
         el.bounds_hint = bounds;
         el.contains = {};
     };
+
+    return { std::move(fn),
+        Graphics::PrimitiveTopology::TRIANGLE_STRIP,
+        static_cast<size_t>(8) * sizeof(Kakshya::MeshVertex) };
 }
 
-GeometryFn<glm::vec2> crosshair(
+Form<glm::vec2> crosshair(
     float arm_len,
     glm::vec3 color,
     float thickness,
     float hit_radius)
 {
-    return [arm_len, color, thickness, hit_radius](
-               glm::vec2 pos, std::vector<uint8_t>& out, Element& el) {
+    GeometryFn<glm::vec2> fn = [arm_len, color, thickness, hit_radius](
+                                   glm::vec2 pos, std::vector<uint8_t>& out, Element& el) {
         using V = Kakshya::LineVertex;
         const std::array<V, 4> verts { {
             { .position = { pos.x - arm_len, pos.y, 0.F }, .color = color, .thickness = thickness },
@@ -282,15 +325,20 @@ GeometryFn<glm::vec2> crosshair(
         el.bounds_hint = Kinesis::AABB2D::from_ndc(pos, glm::vec2(arm_len));
         el.contains = Kinesis::circular_bounds(pos, hit_radius);
     };
+
+    return { std::move(fn),
+        Graphics::PrimitiveTopology::LINE_LIST,
+        static_cast<size_t>(4) * sizeof(Kakshya::LineVertex),
+        follow_move() };
 }
 
-GeometryFn<std::vector<float>> drawable_canvas(
+Form<std::vector<float>> drawable_canvas(
     Kinesis::AABB2D bounds,
     glm::vec3 color,
     float thickness)
 {
-    return [bounds, color, thickness](
-               const std::vector<float>& v, std::vector<uint8_t>& out, Element& el) {
+    GeometryFn<std::vector<float>> fn = [bounds, color, thickness](
+                                            const std::vector<float>& v, std::vector<uint8_t>& out, Element& el) {
         if (v.size() < 2) {
             out.clear();
             el.bounds_hint = bounds;
@@ -329,6 +377,11 @@ GeometryFn<std::vector<float>> drawable_canvas(
                 bounds.max,
                 glm::vec2(bounds.min.x, bounds.max.y) } });
     };
+
+    Form<std::vector<float>> form { std::move(fn) };
+    form.topology = Graphics::PrimitiveTopology::LINE_LIST;
+    form.wire = paint_over(bounds);
+    return form;
 }
 
 void wire_canvas_drag(
