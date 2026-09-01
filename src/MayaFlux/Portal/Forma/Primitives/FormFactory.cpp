@@ -1,8 +1,7 @@
-#include "Geometry.hpp"
+#include "FormFactory.hpp"
 
 #include "MayaFlux/Kinesis/Geometry2D.hpp"
 #include "MayaFlux/Kinesis/GeometryPrimitives.hpp"
-#include "MayaFlux/Portal/Forma/Context.hpp"
 
 namespace MayaFlux::Portal::Forma::Geometry {
 
@@ -59,19 +58,21 @@ GeometryFn<float> vertical_fader(
 }
 
 GeometryFn<float> radial(
-    glm::vec2 center,
-    float radius,
+    Kinesis::AABB2D region,
     float angle_start,
     float angle_end,
     glm::vec3 color)
 {
+    const glm::vec2 center = region.center();
+    const float radius = std::min(region.width(), region.height()) * 0.5F;
+
     return [center, radius, angle_start, angle_end, color](
                float v, std::vector<uint8_t>& out, Element& el) {
-        float angle = angle_start + v * (angle_end - angle_start);
-        glm::vec2 tip = center + radius * glm::vec2(std::cos(angle), std::sin(angle));
+        const float angle = angle_start + v * (angle_end - angle_start);
+        const glm::vec2 tip = center + radius * glm::vec2(std::cos(angle), std::sin(angle));
 
         using V = Kakshya::LineVertex;
-        std::vector<V> verts = {
+        const std::vector<V> verts = {
             { .position = { center.x, center.y, 0 }, .color = color },
             { .position = { tip.x, tip.y, 0 }, .color = color },
         };
@@ -81,17 +82,6 @@ GeometryFn<float> radial(
         el.bounds_hint = Kinesis::AABB2D::from_ndc(center, glm::vec2(radius));
         el.contains = Kinesis::circular_bounds(center, radius);
     };
-}
-
-GeometryFn<float> radial(
-    Kinesis::AABB2D region,
-    float angle_start,
-    float angle_end,
-    glm::vec3 color)
-{
-    return radial(region.center(),
-        std::min(region.width(), region.height()) * 0.5F,
-        angle_start, angle_end, color);
 }
 
 GeometryFn<glm::vec2> point(
