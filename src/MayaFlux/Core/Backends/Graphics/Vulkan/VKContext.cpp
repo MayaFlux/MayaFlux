@@ -58,7 +58,7 @@ bool VKContext::initialize(const GlobalGraphicsConfig& graphics_config, bool ena
         return false;
     }
 
-    if (!m_device.initialize(m_instance.get_instance(), nullptr, m_graphics_config.backend_info)) {
+    if (!m_device.initialize(m_instance.get_instance(), m_graphics_config.backend_info)) {
         MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
             "Failed to initialize Vulkan device!");
         cleanup();

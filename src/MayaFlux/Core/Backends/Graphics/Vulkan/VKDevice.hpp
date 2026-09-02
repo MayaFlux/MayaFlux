@@ -40,13 +40,12 @@ public:
     VKDevice& operator=(VKDevice&&) noexcept;
 
     /**
-     * @brief Initialize device (pick physical device and create logical device)
+     * @brief Select a physical device and create the logical device
      * @param instance Vulkan instance
-     * @param backend_info Graphics surface configuration
-     * @param temp_surface Temporary surface for presentation support checks (real surface created with windows and swapchain later)
+     * @param backend_info Graphics backend configuration, including device selection
      * @return true if initialization succeeded
      */
-    bool initialize(vk::Instance instance, vk::SurfaceKHR temp_surface, const GraphicsBackendInfo& backend_info);
+    bool initialize(vk::Instance instance, const GraphicsBackendInfo& backend_info);
 
     /**
      * @brief Cleanup device resources
@@ -82,6 +81,12 @@ public:
      * @brief Get queue family indices
      */
     [[nodiscard]] const QueueFamilyIndices& get_queue_families() const { return m_queue_families; }
+
+    /** @brief Name of the selected physical device */
+    [[nodiscard]] const std::string& get_device_name() const { return m_device_name; }
+
+    /** @brief Whether the graphics queue family passed the surfaceless presentation probe */
+    [[nodiscard]] bool graphics_family_presents() const { return m_graphics_presents; }
 
     /**
      * @brief Update presentation queue family for a specific surface
@@ -122,20 +127,19 @@ private:
     QueueFamilyIndices m_queue_families; ///< Indices of required queue families
 
     /**
-     * @brief Pick a suitable physical device (GPU)
+     * @brief Select a physical device by config selector or score
      * @param instance Vulkan instance
-     * @param temp_surface Temporary surface for presentation support checks
+     * @param backend_info Graphics backend configuration
      * @return true if a suitable device was found
      */
-    bool pick_physical_device(vk::Instance instance, vk::SurfaceKHR temp_surface);
+    bool pick_physical_device(vk::Instance instance, const GraphicsBackendInfo& backend_info);
 
     /**
      * @brief Find queue families on the given physical device
      * @param device Physical device to query
-     * @param surface Optional surface to check for presentation support
      * @return QueueFamilyIndices with found queue family indices
      */
-    QueueFamilyIndices find_queue_families(vk::PhysicalDevice device, vk::SurfaceKHR surface = nullptr);
+    static QueueFamilyIndices find_queue_families(vk::PhysicalDevice device);
 
     /**
      * @brief Create the logical device and retrieve queue handles
@@ -147,7 +151,9 @@ private:
     bool create_logical_device(vk::Instance instance, const GraphicsBackendInfo& backend_info);
 
     bool m_presentation_initialized {}; ///< Whether presentation support has been initialized
-
     bool m_supports_mesh_shaders {}; ///< Whether the device supports mesh shaders
+    bool m_graphics_presents {}; ///< Graphics family passed the surfaceless presentation probe
+    std::string m_device_name; ///< Selected device name, cached for logging
+    std::array<uint8_t, VK_UUID_SIZE> m_device_uuid {}; ///< Selected device UUID
 };
 }
