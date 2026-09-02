@@ -465,7 +465,29 @@ VisionResult VisionGpuExecutor::run(
     last_w = w;
     last_h = h;
 
-    for (const auto& step : sequence.steps) {
+    size_t begin = 0;
+
+    if (contexts.suspended.is_active()) {
+        if (!foundry.is_fence_signaled(contexts.suspended.fence)) {
+            VisionResult pending;
+            pending.status = VisionStatus::SUSPENDED;
+            pending.suspended_at = contexts.suspended.step_index;
+            return pending;
+        }
+
+        foundry.release_fence(contexts.suspended.fence);
+        contexts.suspended.fence = Portal::Graphics::INVALID_FENCE;
+
+        begin = contexts.suspended.step_index;
+        current = contexts.suspended.working;
+        w = contexts.suspended.w;
+        h = contexts.suspended.h;
+        result = std::move(contexts.suspended.partial);
+        contexts.suspended.working.reset();
+    }
+
+    for (size_t i = begin; i < sequence.steps.size(); ++i) {
+        const auto& step = sequence.steps[i];
         const auto cfg = config(step.op, step.params);
 
         if (cfg.shader_id == Portal::Graphics::INVALID_SHADER && cfg.shader_path.empty()) {
@@ -1308,6 +1330,22 @@ VisionResult VisionGpuExecutor::run(
 
         auto dispatch_input = current;
         const auto fence = pixel_ctx.dispatch_async({});
+
+        if (step.deferred) {
+            contexts.suspended = {
+                .fence = fence,
+                .step_index = i,
+                .working = pixel_ctx.get_output_image(0),
+                .w = w,
+                .h = h,
+                .partial = std::move(result),
+            };
+            VisionResult pending;
+            pending.status = VisionStatus::SUSPENDED;
+            pending.suspended_at = i;
+            return pending;
+        }
+
         foundry.wait_for_fence(fence);
         foundry.release_fence(fence);
 

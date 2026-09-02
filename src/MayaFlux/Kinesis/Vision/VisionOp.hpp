@@ -149,10 +149,16 @@ using VisionParams = std::variant<
 
 /**
  * @brief One step in a VisionSequence: an op and its parameters.
+ *
+ * A deferred step submits its GPU work without waiting on the fence. The
+ * run that submits it returns SUSPENDED at that step index; a subsequent
+ * run polls the fence, and once signalled resumes the sequence from the
+ * following step. How many calls that takes is not the executor's concern.
  */
 struct VisionStep {
     VisionOp op;
     VisionParams params { std::monostate {} };
+    bool deferred { false };
 };
 
 /**
@@ -338,6 +344,16 @@ struct VisionSequence {
                 }
             }
             return seq;
+        }
+
+        /**
+         * @brief Mark the most recently pushed step deferred.
+         */
+        Builder& defer()
+        {
+            if (!m_steps.empty())
+                m_steps.back().deferred = true;
+            return *this;
         }
 
     private:

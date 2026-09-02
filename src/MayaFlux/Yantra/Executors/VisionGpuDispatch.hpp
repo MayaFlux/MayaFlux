@@ -55,6 +55,33 @@ struct MAYAFLUX_API VisionGpuContexts {
     TextureExecutionContext cc_pipeline;
 
     /**
+     * @brief Outstanding work at a deferred step, and the point to resume.
+     *
+     * fence is INVALID_FENCE when nothing is outstanding. While live, run
+     * polls it and does nothing else: the prefix already executed on the
+     * call that armed this, and its outputs are held here.
+     *
+     * working is the image the deferred step consumed, retained so the
+     * remainder of the sequence sees the pixels the submission was made
+     * against rather than whatever the caller passes on the polling call.
+     */
+    struct Suspension {
+        Portal::Graphics::FenceID fence { Portal::Graphics::INVALID_FENCE };
+        size_t step_index { 0 };
+        std::shared_ptr<Core::VKImage> working;
+        uint32_t w { 0 };
+        uint32_t h { 0 };
+        Kinesis::Vision::VisionResult partial;
+
+        [[nodiscard]] bool is_active() const
+        {
+            return fence != Portal::Graphics::INVALID_FENCE;
+        }
+    };
+
+    Suspension suspended;
+
+    /**
      * @brief Construct all three contexts in place with the one correct
      *        binding layout for every currently GPU-implemented VisionOp.
      *
@@ -147,6 +174,24 @@ public:
         const Kinesis::Vision::VisionSequence& sequence,
         const std::shared_ptr<Core::VKImage>& image,
         uint32_t w, uint32_t h);
+
+    /**
+     * @brief Abandon outstanding work and clear the resume point.
+     *
+     * Waits on the fence before releasing it, then discards the retained
+     * working image and partial result. Call when the pixel source changes
+     * so the next run starts a fresh sequence. Safe with nothing outstanding.
+     */
+    void reset();
+
+    /**
+     * @brief True when a deferred step has work outstanding and the next run
+     *        will poll rather than start a fresh sequence.
+     */
+    [[nodiscard]] bool is_suspended() const
+    {
+        return m_contexts && m_contexts->suspended.is_active();
+    }
 
     VisionGpuExecutor() = default;
     ~VisionGpuExecutor() = default;

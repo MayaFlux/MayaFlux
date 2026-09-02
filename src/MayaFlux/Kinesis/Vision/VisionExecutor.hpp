@@ -43,6 +43,19 @@ using StructuredOutput = std::variant<
     std::vector<TrackResult>>;
 
 /**
+ * @brief Whether a run carried the sequence to its end.
+ *
+ * SUSPENDED means a deferred step has work outstanding. The result carries
+ * nothing and must not be consumed. Call run again with the same arguments
+ * to poll; the executor resumes where it left off and ignores the image
+ * argument until the sequence completes.
+ */
+enum class VisionStatus : uint8_t {
+    COMPLETE,
+    SUSPENDED,
+};
+
+/**
  * @brief Result of executing a VisionSequence on one frame.
  *
  * pixel_image holds the final normalised float pixel buffer as a DataVariant
@@ -63,6 +76,17 @@ struct VisionResult {
     std::shared_ptr<Core::VKImage> debug_contours;
     uint32_t w { 0 };
     uint32_t h { 0 };
+    VisionStatus status { VisionStatus::COMPLETE };
+    size_t suspended_at { 0 };
+
+    /**
+     * @brief True when the sequence reached its end and this result may be
+     *        consumed, cached, or broadcast.
+     */
+    [[nodiscard]] bool is_ready() const noexcept
+    {
+        return status == VisionStatus::COMPLETE;
+    }
 
     /**
      * @brief Zero-copy float span into pixel_image storage.
