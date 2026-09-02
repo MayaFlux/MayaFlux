@@ -204,21 +204,6 @@ public:
 
 private:
     std::unique_ptr<VisionGpuContexts> m_contexts;
-
-    void op_extract_peaks(
-        VisionGpuContexts& contexts,
-        const Kinesis::Vision::VisionSequence& sequence,
-        const Kinesis::Vision::ExtractPeaksParams& p);
-
-    void op_connected_components(
-        VisionGpuContexts& contexts,
-        const Kinesis::Vision::ConnectedComponentsParams& p);
-
-    bool op_find_contours(
-        VisionGpuContexts& contexts,
-        const Kinesis::Vision::VisionSequence& sequence,
-        const std::shared_ptr<Core::VKImage>& image,
-        const Kinesis::Vision::FindContoursParams& p);
 };
 
 } // namespace MayaFlux::Yantra
