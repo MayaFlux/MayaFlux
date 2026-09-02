@@ -820,7 +820,6 @@ namespace {
     bool op_find_contours(
         VisionGpuContexts& contexts,
         const VisionSequence& sequence,
-        const std::shared_ptr<Core::VKImage>& image,
         const FindContoursParams& p)
     {
         if (!sequence.contours_follow_cc) {
@@ -859,7 +858,7 @@ namespace {
 
         auto max_points = p.max_points_per_contour > 0 ? std::min<uint32_t>(p.max_points_per_contour, k_max_points_per_contour) : k_max_points_per_contour;
         cc_pipeline.swap_shader({ .shader_path = "contour_march.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(ContourMarchPC) });
-        cc_pipeline.stage_image_at(1, image, GpuBufferBinding::ElementType::IMAGE_SAMPLED);
+        cc_pipeline.stage_image_at(1, contexts.source, GpuBufferBinding::ElementType::IMAGE_SAMPLED);
         cc_pipeline.prepare_output_image(w, h);
         cc_pipeline.set_push_constants(ContourMarchPC {
             .width = w,
@@ -1251,6 +1250,31 @@ GpuComputeConfig VisionGpuExecutor::config(VisionOp op, const VisionParams& /*pa
     }
 }
 
+void VisionGpuExecutor::reset()
+{
+    if (!m_contexts)
+        return;
+
+    auto& contexts = *m_contexts;
+
+    if (contexts.suspended.is_active()) {
+        auto& foundry = Portal::Graphics::get_shader_foundry();
+        foundry.wait_for_fence(contexts.suspended.fence);
+        foundry.release_fence(contexts.suspended.fence);
+        contexts.suspended.fence = Portal::Graphics::INVALID_FENCE;
+    }
+
+    contexts.pass.sequence = nullptr;
+    contexts.pass.index = 0;
+    contexts.pass.result = Kinesis::Vision::VisionResult {};
+    contexts.pass.current.reset();
+    contexts.pass.forget();
+    contexts.pass.completed.clear();
+
+    contexts.source.reset();
+    contexts.bound_staged.reset();
+}
+
 // ============================================================================
 // run_gpu
 // ============================================================================
@@ -1271,6 +1295,12 @@ VisionResult VisionGpuExecutor::run(
     size_t begin = 0;
 
     if (contexts.suspended.is_active()) {
+        if (&sequence != contexts.pass.sequence) {
+            MF_WARN(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
+                "run_gpu: polling a suspension with a different sequence; "
+                "the walk continues on the sequence the run started from");
+        }
+
         if (!foundry.is_fence_signaled(contexts.suspended.fence)) {
             VisionResult pending;
             pending.status = VisionStatus::SUSPENDED;
@@ -1281,10 +1311,11 @@ VisionResult VisionGpuExecutor::run(
         foundry.release_fence(contexts.suspended.fence);
         contexts.suspended.fence = Portal::Graphics::INVALID_FENCE;
 
-        begin = contexts.pass.index;
+        begin = contexts.pass.index + 1;
     } else {
         contexts.pass.begin(sequence, w, h);
         contexts.pass.current = image;
+        contexts.source = image;
     }
 
     for (contexts.pass.index = begin; contexts.pass.index < sequence.steps.size(); ++contexts.pass.index) {
@@ -1407,7 +1438,7 @@ VisionResult VisionGpuExecutor::run(
             continue;
         }
         case VisionOp::FindContours: {
-            if (!op_find_contours(contexts, sequence, image,
+            if (!op_find_contours(contexts, sequence,
                     std::get<Kinesis::Vision::FindContoursParams>(step.params)))
                 return VisionResult {};
             continue;
@@ -1420,7 +1451,9 @@ VisionResult VisionGpuExecutor::run(
         const auto fence = pixel_ctx.dispatch_async({});
 
         if (step.deferred) {
+            pixel_ctx.clear_output_dimensions();
             contexts.pass.current = pixel_ctx.get_output_image(0);
+            contexts.bound_staged = contexts.pass.current;
             contexts.suspended.fence = fence;
 
             VisionResult pending;

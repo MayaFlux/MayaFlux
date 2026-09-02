@@ -65,6 +65,20 @@ struct MAYAFLUX_API VisionGpuContexts {
     Kinesis::Vision::GpuVisionPass pass;
 
     /**
+     * @brief Input image the current walk started from.
+     *
+     * Ops needing the original frame rather than the working image read this
+     * (contour_march stages it at binding 1). Set on a fresh run and untouched
+     * across suspensions, so a polling call uses the frame the sequence began
+     * on rather than whatever argument it was passed.
+     *
+     * GPU-only. The CPU pass has no equivalent: its handle is an index into a
+     * reused slot pool, so retaining the input handle would retain a slot whose
+     * contents the ping-pong overwrites.
+     */
+    std::shared_ptr<Core::VKImage> source;
+
+    /**
      * @brief Shader currently bound on pixel, and the image staged into it.
      *
      * TextureExecutionContext does not report its own state, so run tracks
