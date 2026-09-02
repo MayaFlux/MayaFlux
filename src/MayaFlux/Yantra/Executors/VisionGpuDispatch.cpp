@@ -365,6 +365,151 @@ namespace {
         return { .output = opened_closed, .input = morph_input };
     }
 
+    CompletedOp op_canny(
+        VisionGpuContexts& contexts,
+        std::unordered_map<size_t, CompletedOp>& completed,
+        const VisionParams& params,
+        const CannyParams& p)
+    {
+        auto& pixel_ctx = contexts.pixel;
+        auto& label_ctx = contexts.labels;
+        auto w = contexts.pass.w;
+        auto h = contexts.pass.h;
+        auto& foundry = Portal::Graphics::get_shader_foundry();
+
+        const auto canny_input = contexts.pass.current;
+
+        const auto blur_key = Kinesis::Vision::hash_vision_step(
+            VisionOp::GaussianBlur, GaussianBlurParams { .sigma = p.sigma });
+        std::shared_ptr<Core::VKImage> blurred;
+        if (auto it = completed.find(blur_key);
+            it != completed.end() && it->second.input == canny_input) {
+            blurred = it->second.output;
+        } else {
+            const auto radius = static_cast<uint32_t>(std::ceil(p.sigma * 3.0F));
+            const auto& weights = gaussian_kernel_1d(radius, p.sigma);
+            const auto blur_cfg = VisionGpuExecutor::config(VisionOp::GaussianBlur, GaussianBlurParams { .sigma = p.sigma });
+            pixel_ctx.swap_shader(blur_cfg);
+            pixel_ctx.stage_image(canny_input);
+            pixel_ctx.set_binding_data(2, std::span<const float>(weights));
+            pixel_ctx.set_push_constants(GaussianPC { .radius = radius, .width = w, .height = h });
+            pixel_ctx.prepare_output_image(w, h);
+            {
+                const auto f = pixel_ctx.dispatch_async({});
+                foundry.wait_for_fence(f);
+                foundry.release_fence(f);
+            }
+            blurred = pixel_ctx.get_output_image(0);
+            completed[blur_key] = { .output = blurred, .input = canny_input };
+        }
+
+        const auto sobel_key = Kinesis::Vision::hash_vision_step(VisionOp::Sobel, std::monostate {});
+        std::shared_ptr<Core::VKImage> grad;
+        if (auto it = completed.find(sobel_key);
+            it != completed.end() && it->second.input == blurred) {
+            grad = it->second.output;
+        } else {
+            const auto sobel_cfg = VisionGpuExecutor::config(VisionOp::Sobel, std::monostate {});
+            pixel_ctx.swap_shader(sobel_cfg);
+            pixel_ctx.stage_image(blurred);
+            pixel_ctx.prepare_output_image(w, h);
+            {
+                const auto f = pixel_ctx.dispatch_async({});
+                foundry.wait_for_fence(f);
+                foundry.release_fence(f);
+            }
+            grad = pixel_ctx.get_output_image(0);
+            completed[sobel_key] = { .output = grad, .input = blurred };
+        }
+
+        const GpuComputeConfig nms_cfg {
+            .shader_path = "canny_nms.comp.spv",
+            .workgroup_size = k_wg2d,
+        };
+        pixel_ctx.swap_shader(nms_cfg);
+        pixel_ctx.stage_image(grad);
+        pixel_ctx.prepare_output_image(w, h);
+        {
+            const auto f = pixel_ctx.dispatch_async({});
+            foundry.wait_for_fence(f);
+            foundry.release_fence(f);
+        }
+        auto suppressed = pixel_ctx.get_output_image(0);
+
+        const auto classify_cfg = VisionGpuExecutor::config(VisionOp::Canny, params);
+        pixel_ctx.swap_shader(classify_cfg);
+        pixel_ctx.stage_image(suppressed);
+        pixel_ctx.set_push_constants(ClassifyPC { .threshold = p.low_threshold, .value = 0.5F });
+        pixel_ctx.prepare_output_image(w, h);
+        {
+            const auto f = pixel_ctx.dispatch_async({});
+            foundry.wait_for_fence(f);
+            foundry.release_fence(f);
+        }
+        auto classified_weak = pixel_ctx.get_output_image(0);
+
+        pixel_ctx.stage_image(classified_weak);
+        pixel_ctx.set_push_constants(ClassifyPC { .threshold = p.high_threshold, .value = 1.0F });
+        pixel_ctx.prepare_output_image(w, h);
+        {
+            const auto f = pixel_ctx.dispatch_async({});
+            foundry.wait_for_fence(f);
+            foundry.release_fence(f);
+        }
+        auto classified = pixel_ctx.get_output_image(0);
+
+        constexpr uint32_t k_max_hysteresis_rounds = 64;
+        label_ctx.set_output_size(2, sizeof(uint32_t));
+        label_ctx.set_output_dimensions(w, h);
+        label_ctx.swap_shader({
+            .shader_path = "canny_hysteresis.comp.spv",
+            .workgroup_size = k_wg2d,
+            .push_constant_size = sizeof(HysteresisPC),
+        });
+        label_ctx.stage_image_at(0, classified, GpuBufferBinding::ElementType::IMAGE_STORAGE);
+        label_ctx.slot_binding(0).direction = GpuBufferBinding::Direction::INPUT_OUTPUT;
+        {
+            uint32_t zero = 0;
+            label_ctx.set_binding_data(2, std::span<const uint32_t>(&zero, 1));
+            const HysteresisPC hpc { .width = w, .height = h };
+            ExecutionContext chained_ctx;
+            chained_ctx.mode = ExecutionMode::CHAINED;
+            chained_ctx.parameters = ChainedParams {
+                .pass_count = k_max_hysteresis_rounds,
+                .pc_updater = [hpc](uint32_t, void* dst) { std::memcpy(dst, &hpc, sizeof(HysteresisPC)); },
+                .passes_per_batch = k_max_hysteresis_rounds,
+            };
+            label_ctx.execute(Datum<> {}, chained_ctx);
+        }
+        label_ctx.slot_binding(0).direction = GpuBufferBinding::Direction::OUTPUT;
+        auto hysteresis_result = classified;
+
+        const auto finalize_cfg = config_from_spec(
+            ShaderSpec::Assemble {}
+                .storage_image("out", BindingDirection::Output)
+                .storage_image("src", BindingDirection::Input)
+                .pc("threshold")
+                .op(KernelOp::CompareGE)
+                .workgroup(k_wg2d[0], k_wg2d[1])
+                .build());
+        pixel_ctx.swap_shader(finalize_cfg);
+        pixel_ctx.stage_image(hysteresis_result);
+        pixel_ctx.set_push_constants(FinalizePC { .threshold = 1.0F });
+        pixel_ctx.prepare_output_image(w, h);
+        {
+            const auto f = pixel_ctx.dispatch_async({});
+            foundry.wait_for_fence(f);
+            foundry.release_fence(f);
+        }
+        auto finalized = pixel_ctx.get_output_image(0);
+
+        contexts.pass.result.debug_labels = finalized;
+        contexts.pass.current = finalized;
+        contexts.pass.result.structured = std::monostate {};
+
+        return { .output = finalized, .input = canny_input };
+    }
+
     CompletedOp op_harris_response(
         VisionGpuContexts& contexts,
         const HarrisParams& p)
@@ -1242,139 +1387,9 @@ VisionResult VisionGpuExecutor::run(
             continue;
         }
         case VisionOp::Canny: {
-            const auto& p = std::get<CannyParams>(step.params);
-            auto canny_input = contexts.pass.current;
-
-            const auto blur_key = Kinesis::Vision::hash_vision_step(
-                VisionOp::GaussianBlur, GaussianBlurParams { .sigma = p.sigma });
-            std::shared_ptr<Core::VKImage> blurred;
-            if (auto it = completed_ops.find(blur_key);
-                it != completed_ops.end() && it->second.input == canny_input) {
-                blurred = it->second.output;
-            } else {
-                const auto radius = static_cast<uint32_t>(std::ceil(p.sigma * 3.0F));
-                const auto& weights = gaussian_kernel_1d(radius, p.sigma);
-                const auto blur_cfg = config(VisionOp::GaussianBlur, GaussianBlurParams { .sigma = p.sigma });
-                pixel_ctx.swap_shader(blur_cfg);
-                pixel_ctx.stage_image(canny_input);
-                pixel_ctx.set_binding_data(2, std::span<const float>(weights));
-                pixel_ctx.set_push_constants(GaussianPC { .radius = radius, .width = w, .height = h });
-                pixel_ctx.prepare_output_image(w, h);
-                {
-                    const auto f = pixel_ctx.dispatch_async({});
-                    foundry.wait_for_fence(f);
-                    foundry.release_fence(f);
-                }
-                blurred = pixel_ctx.get_output_image(0);
-                completed_ops[blur_key] = { .output = blurred, .input = canny_input };
-            }
-
-            const auto sobel_key = Kinesis::Vision::hash_vision_step(VisionOp::Sobel, std::monostate {});
-            std::shared_ptr<Core::VKImage> grad;
-            if (auto it = completed_ops.find(sobel_key);
-                it != completed_ops.end() && it->second.input == blurred) {
-                grad = it->second.output;
-            } else {
-                const auto sobel_cfg = config(VisionOp::Sobel, std::monostate {});
-                pixel_ctx.swap_shader(sobel_cfg);
-                pixel_ctx.stage_image(blurred);
-                pixel_ctx.prepare_output_image(w, h);
-                {
-                    const auto f = pixel_ctx.dispatch_async({});
-                    foundry.wait_for_fence(f);
-                    foundry.release_fence(f);
-                }
-                grad = pixel_ctx.get_output_image(0);
-                completed_ops[sobel_key] = { .output = grad, .input = blurred };
-            }
-
-            const GpuComputeConfig nms_cfg {
-                .shader_path = "canny_nms.comp.spv",
-                .workgroup_size = k_wg2d,
-            };
-            pixel_ctx.swap_shader(nms_cfg);
-            pixel_ctx.stage_image(grad);
-            pixel_ctx.prepare_output_image(w, h);
-            {
-                const auto f = pixel_ctx.dispatch_async({});
-                foundry.wait_for_fence(f);
-                foundry.release_fence(f);
-            }
-            auto suppressed = pixel_ctx.get_output_image(0);
-
-            const auto classify_cfg = config(VisionOp::Canny, step.params);
-            pixel_ctx.swap_shader(classify_cfg);
-            pixel_ctx.stage_image(suppressed);
-            pixel_ctx.set_push_constants(ClassifyPC { .threshold = p.low_threshold, .value = 0.5F });
-            pixel_ctx.prepare_output_image(w, h);
-            {
-                const auto f = pixel_ctx.dispatch_async({});
-                foundry.wait_for_fence(f);
-                foundry.release_fence(f);
-            }
-            auto classified_weak = pixel_ctx.get_output_image(0);
-
-            pixel_ctx.stage_image(classified_weak);
-            pixel_ctx.set_push_constants(ClassifyPC { .threshold = p.high_threshold, .value = 1.0F });
-            pixel_ctx.prepare_output_image(w, h);
-            {
-                const auto f = pixel_ctx.dispatch_async({});
-                foundry.wait_for_fence(f);
-                foundry.release_fence(f);
-            }
-            auto classified = pixel_ctx.get_output_image(0);
-
-            constexpr uint32_t k_max_hysteresis_rounds = 64;
-            label_ctx.set_output_size(2, sizeof(uint32_t));
-            label_ctx.set_output_dimensions(w, h);
-            label_ctx.swap_shader({
-                .shader_path = "canny_hysteresis.comp.spv",
-                .workgroup_size = k_wg2d,
-                .push_constant_size = sizeof(HysteresisPC),
-            });
-            label_ctx.stage_image_at(0, classified, GpuBufferBinding::ElementType::IMAGE_STORAGE);
-            label_ctx.slot_binding(0).direction = GpuBufferBinding::Direction::INPUT_OUTPUT;
-            {
-                uint32_t zero = 0;
-                label_ctx.set_binding_data(2, std::span<const uint32_t>(&zero, 1));
-                const HysteresisPC hpc { .width = w, .height = h };
-                ExecutionContext chained_ctx;
-                chained_ctx.mode = ExecutionMode::CHAINED;
-                chained_ctx.parameters = ChainedParams {
-                    .pass_count = k_max_hysteresis_rounds,
-                    .pc_updater = [hpc](uint32_t, void* dst) { std::memcpy(dst, &hpc, sizeof(HysteresisPC)); },
-                    .passes_per_batch = k_max_hysteresis_rounds,
-                };
-                label_ctx.execute(Datum<> {}, chained_ctx);
-            }
-            label_ctx.slot_binding(0).direction = GpuBufferBinding::Direction::OUTPUT;
-            auto hysteresis_result = classified;
-
-            const auto finalize_cfg = config_from_spec(
-                ShaderSpec::Assemble {}
-                    .storage_image("out", BindingDirection::Output)
-                    .storage_image("src", BindingDirection::Input)
-                    .pc("threshold")
-                    .op(KernelOp::CompareGE)
-                    .workgroup(k_wg2d[0], k_wg2d[1])
-                    .build());
-            pixel_ctx.swap_shader(finalize_cfg);
-            pixel_ctx.stage_image(hysteresis_result);
-            pixel_ctx.set_push_constants(FinalizePC { .threshold = 1.0F });
-            pixel_ctx.prepare_output_image(w, h);
-            {
-                const auto f = pixel_ctx.dispatch_async({});
-                foundry.wait_for_fence(f);
-                foundry.release_fence(f);
-            }
-            auto finalized = pixel_ctx.get_output_image(0);
-
-            completed_ops[Kinesis::Vision::hash_vision_step(step.op, step.params)] = { .output = finalized, .input = canny_input };
-
-            contexts.pass.result.debug_labels = finalized;
-            contexts.pass.current = finalized;
+            completed_ops[Kinesis::Vision::hash_vision_step(step.op, step.params)] = op_canny(contexts, completed_ops, step.params,
+                std::get<CannyParams>(step.params));
             last_staged = contexts.pass.current;
-            contexts.pass.result.structured = std::monostate {};
             continue;
         }
         case VisionOp::HarrisResponse: {
