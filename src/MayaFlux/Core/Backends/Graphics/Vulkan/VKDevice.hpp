@@ -9,16 +9,47 @@ struct GraphicsBackendInfo;
 /**
  * @struct QueueFamilyIndices
  * @brief Stores indices of queue families we need
+ *
+ * Immutable after VKDevice::create_logical_device. Presentation is a property
+ * of the device, the family, and the platform, resolved once at device
+ * selection, so present_family_mask is never renegotiated per surface.
  */
 struct QueueFamilyIndices {
+    static constexpr uint32_t MAX_TRACKED_FAMILIES = 32; ///< Width of present_family_mask
+
     std::optional<uint32_t> graphics_family;
     std::optional<uint32_t> compute_family;
     std::optional<uint32_t> transfer_family;
-    std::optional<uint32_t> present_family;
+
+    /** @brief Bit i set when family i passed the surfaceless presentation probe. */
+    uint32_t present_family_mask {};
 
     [[nodiscard]] bool is_complete() const
     {
         return graphics_family.has_value();
+    }
+
+    /** @brief Whether family @p index can present. */
+    [[nodiscard]] bool can_present(uint32_t index) const
+    {
+        return index < MAX_TRACKED_FAMILIES && (present_family_mask & (1U << index)) != 0;
+    }
+
+    /**
+     * @brief Family the engine presents on by default.
+     * @return The graphics family when it can present, otherwise the lowest
+     *         presentation-capable family, otherwise empty.
+     */
+    [[nodiscard]] std::optional<uint32_t> preferred_present_family() const
+    {
+        if (graphics_family.has_value() && can_present(graphics_family.value()))
+            return graphics_family;
+
+        for (uint32_t i = 0; i < MAX_TRACKED_FAMILIES; ++i) {
+            if (can_present(i))
+                return i;
+        }
+        return std::nullopt;
     }
 };
 
@@ -40,13 +71,12 @@ public:
     VKDevice& operator=(VKDevice&&) noexcept;
 
     /**
-     * @brief Initialize device (pick physical device and create logical device)
+     * @brief Select a physical device and create the logical device
      * @param instance Vulkan instance
-     * @param backend_info Graphics surface configuration
-     * @param temp_surface Temporary surface for presentation support checks (real surface created with windows and swapchain later)
+     * @param backend_info Graphics backend configuration, including device selection
      * @return true if initialization succeeded
      */
-    bool initialize(vk::Instance instance, vk::SurfaceKHR temp_surface, const GraphicsBackendInfo& backend_info);
+    bool initialize(vk::Instance instance, const GraphicsBackendInfo& backend_info);
 
     /**
      * @brief Cleanup device resources
@@ -83,12 +113,39 @@ public:
      */
     [[nodiscard]] const QueueFamilyIndices& get_queue_families() const { return m_queue_families; }
 
+    /** @brief Name of the selected physical device */
+    [[nodiscard]] const std::string& get_device_name() const { return m_device_name; }
+
+    /** @brief Whether the graphics queue family passed the surfaceless presentation probe */
+    [[nodiscard]] bool graphics_family_presents() const { return m_graphics_presents; }
+
     /**
-     * @brief Update presentation queue family for a specific surface
-     * @param surface Surface to check presentation support for
-     * @return true if presentation support found
+     * @brief Confirm the graphics family presents to a concrete surface
+     * @param surface Surface to check
+     * @return true if presentation is supported
+     *
+     * Device selection already guarantees this when require_presentation is
+     * set; this confirms the surfaceless probe against a real surface. Const
+     * and non-mutating, so it is safe from any thread.
      */
-    bool update_presentation_queue(vk::SurfaceKHR surface);
+    [[nodiscard]] bool graphics_family_can_present(vk::SurfaceKHR surface) const;
+
+    /**
+     * @brief Queue for a presentation-capable family
+     * @param family_index Family index, must be set in present_family_mask
+     * @return Queue handle, or null if the family has no presentation support
+     *
+     * A queue is created for every family in the mask, not only the one the
+     * engine's default present path uses, so a caller driving its own
+     * presentation has a queue available without recreating the device.
+     */
+    [[nodiscard]] vk::Queue get_present_queue(uint32_t family_index) const;
+
+    /**
+     * @brief Queue for the preferred presentation family
+     * @return Queue handle, or null when no family can present
+     */
+    [[nodiscard]] vk::Queue get_preferred_present_queue() const;
 
     /**
      * @brief Wait for the device to become idle
@@ -122,20 +179,19 @@ private:
     QueueFamilyIndices m_queue_families; ///< Indices of required queue families
 
     /**
-     * @brief Pick a suitable physical device (GPU)
+     * @brief Select a physical device by config selector or score
      * @param instance Vulkan instance
-     * @param temp_surface Temporary surface for presentation support checks
+     * @param backend_info Graphics backend configuration
      * @return true if a suitable device was found
      */
-    bool pick_physical_device(vk::Instance instance, vk::SurfaceKHR temp_surface);
+    bool pick_physical_device(vk::Instance instance, const GraphicsBackendInfo& backend_info);
 
     /**
      * @brief Find queue families on the given physical device
      * @param device Physical device to query
-     * @param surface Optional surface to check for presentation support
      * @return QueueFamilyIndices with found queue family indices
      */
-    QueueFamilyIndices find_queue_families(vk::PhysicalDevice device, vk::SurfaceKHR surface = nullptr);
+    static QueueFamilyIndices find_queue_families(vk::PhysicalDevice device);
 
     /**
      * @brief Create the logical device and retrieve queue handles
@@ -146,8 +202,10 @@ private:
      */
     bool create_logical_device(vk::Instance instance, const GraphicsBackendInfo& backend_info);
 
-    bool m_presentation_initialized {}; ///< Whether presentation support has been initialized
-
+    bool m_graphics_presents {}; ///< Graphics family passed the surfaceless presentation probe
+    std::unordered_map<uint32_t, vk::Queue> m_present_queues; ///< One queue per presentation-capable family
+    std::string m_device_name; ///< Selected device name, cached for logging
+    std::array<uint8_t, VK_UUID_SIZE> m_device_uuid {}; ///< Selected device UUID
     bool m_supports_mesh_shaders {}; ///< Whether the device supports mesh shaders
 };
 }

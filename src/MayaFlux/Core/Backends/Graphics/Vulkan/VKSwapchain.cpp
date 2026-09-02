@@ -12,7 +12,7 @@ VKSwapchain::~VKSwapchain()
 
 bool VKSwapchain::create(VKContext& context,
     vk::SurfaceKHR surface,
-    const WindowCreateInfo& window_config)
+    const WindowCreateInfo& window_config, const std::vector<uint32_t>& sharing_families)
 {
     m_context = &context;
     m_surface = surface;
@@ -91,17 +91,18 @@ bool VKSwapchain::create(VKContext& context,
             "Surface does not support eTransferSrc; frame capture will be unavailable");
     }
 
-    const auto& queue_families = m_context->get_queue_families();
+    m_sharing_families = sharing_families;
 
-    std::vector<uint32_t> queue_family_indices;
-    uint32_t graphics_family = queue_families.graphics_family.value();
-    uint32_t present_family = queue_families.present_family.value();
+    std::vector<uint32_t> unique_families;
+    for (uint32_t f : sharing_families) {
+        if (std::ranges::find(unique_families, f) == unique_families.end())
+            unique_families.push_back(f);
+    }
 
-    if (graphics_family != present_family) {
-        queue_family_indices = { graphics_family, present_family };
+    if (unique_families.size() > 1) {
         create_info.imageSharingMode = vk::SharingMode::eConcurrent;
-        create_info.queueFamilyIndexCount = static_cast<uint32_t>(queue_family_indices.size());
-        create_info.pQueueFamilyIndices = queue_family_indices.data();
+        create_info.queueFamilyIndexCount = static_cast<uint32_t>(unique_families.size());
+        create_info.pQueueFamilyIndices = unique_families.data();
     } else {
         create_info.imageSharingMode = vk::SharingMode::eExclusive;
         create_info.queueFamilyIndexCount = 0;
@@ -154,7 +155,7 @@ bool VKSwapchain::recreate(uint32_t width, uint32_t height)
 
     cleanup_swapchain();
 
-    return create(*m_context, m_surface, *m_window_config);
+    return create(*m_context, m_surface, *m_window_config, m_sharing_families);
 }
 
 void VKSwapchain::cleanup()

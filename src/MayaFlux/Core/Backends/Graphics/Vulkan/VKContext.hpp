@@ -72,11 +72,30 @@ public:
     }
 
     /**
-     * @brief Update presentation support for a surface
+     * @brief Confirm the graphics family presents to a surface
      * @param surface Surface to check
      * @return true if presentation is supported
      */
-    bool update_present_family(vk::SurfaceKHR surface);
+    [[nodiscard]] bool graphics_family_can_present(vk::SurfaceKHR surface) const
+    {
+        return m_device.graphics_family_can_present(surface);
+    }
+
+    /**
+     * @brief Queue for a presentation-capable family
+     */
+    [[nodiscard]] vk::Queue get_present_queue(uint32_t family_index) const
+    {
+        return m_device.get_present_queue(family_index);
+    }
+
+    /**
+     * @brief Queue for the preferred presentation family
+     */
+    [[nodiscard]] vk::Queue get_preferred_present_queue() const
+    {
+        return m_device.get_preferred_present_queue();
+    }
 
     /**
      * @brief Create surface from window's native handles

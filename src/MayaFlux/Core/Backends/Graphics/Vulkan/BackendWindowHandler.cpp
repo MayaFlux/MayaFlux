@@ -574,9 +574,9 @@ bool BackendWindowHandler::register_window(const std::shared_ptr<Window>& window
         return false;
     }
 
-    if (!m_context.update_present_family(surface)) {
+    if (!m_context.graphics_family_can_present(surface)) {
         MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
-            "No presentation support for window '{}'", window->get_create_info().title);
+            "Graphics queue family cannot present to window '{}'", window->get_create_info().title);
         m_context.destroy_surface(surface);
         return false;
     }

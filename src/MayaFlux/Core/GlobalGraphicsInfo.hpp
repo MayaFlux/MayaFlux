@@ -32,6 +32,44 @@ struct MAYAFLUX_API GraphicsBackendInfo {
         bool fill_mode_non_solid = false;
     } required_features;
 
+    /**
+     * @brief Preferred physical device class when no explicit selector matches.
+     *
+     * AUTO scores discrete above integrated above virtual above everything
+     * else. The other values pin the class; if no device of that class
+     * survives the presentation and extension filters, selection falls back
+     * to AUTO ordering unless strict_device_selection is set.
+     *
+     * EXTERNAL is a heuristic, not a device type. Vulkan reports an external GPU
+     * as DISCRETE GPU, indistinguishable from a built-in one. EXTERNAL therefore
+     * means DISCRETE plus a preference for the highest PCI bus number, since
+     * a Thunderbolt-attached device sits behind a PCIe switch well above the
+     * root complex. It requires VK_EXT_pci_bus_info; without that extension
+     * EXTERNAL behaves as DISCRETE and says so in the log.
+     */
+    enum class DevicePreference : uint8_t {
+        AUTO,
+        DISCRETE,
+        INTEGRATED,
+        VIRTUAL,
+        EXTERNAL
+    } device_preference = DevicePreference::AUTO;
+
+    /** @brief Index into enumeration order; negative disables. Debugging escape hatch, prefer device_uuid. */
+    int32_t device_index = -1;
+
+    /** @brief Device UUID as 32 lowercase hex chars, no separators; empty disables. Read it from the startup candidate table. */
+    std::string device_uuid;
+
+    /** @brief Case-insensitive substring of the device name; empty disables. Ambiguous matches take the highest scoring one. */
+    std::string device_name;
+
+    /** @brief Require the graphics queue family to support presentation. Set false for headless or compute-only. */
+    bool require_presentation = true;
+
+    /** @brief Treat an unmatched selector as fatal rather than falling back to scoring. */
+    bool strict_device_selection = false;
+
     /** @brief Memory allocation strategy */
     enum class MemoryStrategy : uint8_t {
         CONSERVATIVE, ///< Minimize allocations
@@ -74,6 +112,12 @@ struct MAYAFLUX_API GraphicsBackendInfo {
         return std::make_tuple(
             Reflect::member("enable_validation", &GraphicsBackendInfo::enable_validation),
             Reflect::member("enable_debug_markers", &GraphicsBackendInfo::enable_debug_markers),
+            Reflect::member("device_preference", &GraphicsBackendInfo::device_preference),
+            Reflect::member("device_index", &GraphicsBackendInfo::device_index),
+            Reflect::member("device_uuid", &GraphicsBackendInfo::device_uuid),
+            Reflect::member("device_name", &GraphicsBackendInfo::device_name),
+            Reflect::member("require_presentation", &GraphicsBackendInfo::require_presentation),
+            Reflect::member("strict_device_selection", &GraphicsBackendInfo::strict_device_selection),
             // Reflect::member("required_features", &GraphicsBackendInfo::required_features),
             Reflect::member("memory_strategy", &GraphicsBackendInfo::memory_strategy),
             Reflect::member("command_pooling", &GraphicsBackendInfo::command_pooling),
