@@ -433,6 +433,470 @@ GpuComputeConfig VisionGpuExecutor::config(VisionOp op, const VisionParams& /*pa
     }
 }
 
+void VisionGpuExecutor::op_extract_peaks(
+    VisionGpuContexts& contexts,
+    const VisionSequence& sequence,
+    const ExtractPeaksParams& p)
+{
+    auto& structured_ctx = contexts.structured;
+    auto w = contexts.pass.w;
+    auto h = contexts.pass.h;
+    auto& foundry = Portal::Graphics::get_shader_foundry();
+
+    constexpr uint32_t k_max_kp = 4096;
+
+    structured_ctx.swap_shader({
+        .shader_path = "extract_peaks.comp.spv",
+        .workgroup_size = { 8, 8, 1 },
+        .push_constant_size = sizeof(ExtractPeaksPC),
+    });
+
+    structured_ctx.set_output_size(1, sizeof(uint32_t));
+    structured_ctx.set_output_size(2, static_cast<size_t>(k_max_kp) * 4 * sizeof(float));
+
+    structured_ctx.stage_image(contexts.pass.current);
+    structured_ctx.set_push_constants(ExtractPeaksPC {
+        .threshold = p.threshold,
+        .nms_radius = p.nms_radius,
+        .width = w,
+        .height = h,
+        .max_keypoints = k_max_kp,
+    });
+
+    structured_ctx.set_output_dimensions(w, h);
+    const auto fence = structured_ctx.dispatch_async({});
+    structured_ctx.clear_output_dimensions();
+    foundry.wait_for_fence(fence);
+    foundry.release_fence(fence);
+
+    if (sequence.track_follows_peaks) {
+        contexts.pass.result.structured = std::monostate {};
+        contexts.pass.result.w = w;
+        contexts.pass.result.h = h;
+        return;
+    }
+
+    const auto gpu_result = structured_ctx.collect_result();
+
+    uint32_t count = 0;
+    if (auto it = gpu_result.aux.find(1); it != gpu_result.aux.end())
+        std::memcpy(&count, it->second.data(), sizeof(uint32_t));
+    count = std::min(count, k_max_kp);
+
+    struct GpuKp {
+        float x, y, response, pad;
+    };
+    std::vector<GpuKp> raw(count);
+    if (count > 0) {
+        if (auto it = gpu_result.aux.find(2); it != gpu_result.aux.end())
+            std::memcpy(raw.data(), it->second.data(), count * sizeof(GpuKp));
+    }
+
+    std::vector<Kinesis::Vision::Keypoint> kpts;
+    kpts.reserve(count);
+    for (const auto& kp : raw) {
+        kpts.push_back({ .position = { kp.x, kp.y },
+            .response = kp.response,
+            .scale = 1.0F,
+            .angle = 0.0F });
+    }
+    std::ranges::sort(kpts, [](const auto& a, const auto& b) { return a.response > b.response; });
+
+    contexts.pass.result.structured = std::move(kpts);
+    contexts.pass.result.w = 0;
+    contexts.pass.result.h = 0;
+}
+
+void VisionGpuExecutor::op_connected_components(
+    VisionGpuContexts& contexts,
+    const ConnectedComponentsParams& p)
+{
+    auto& cc_pipeline = contexts.cc_pipeline;
+    auto w = contexts.pass.w;
+    auto h = contexts.pass.h;
+    auto& foundry = Portal::Graphics::get_shader_foundry();
+
+    const auto seed_input = contexts.pass.current;
+
+    const uint32_t block_width = (w + 1U) / 2U;
+    const uint32_t block_height = (h + 1U) / 2U;
+    const double block_diagonal = std::sqrt(
+        static_cast<double>(block_width) * block_width + static_cast<double>(block_height) * block_height);
+    const auto k_compress_passes = static_cast<uint32_t>(std::ceil(std::log2(std::max(2.0, block_diagonal))));
+
+    cc_pipeline.ensure_shared_buffer(0, 2, static_cast<size_t>(block_width) * block_height, GpuBufferBinding::ElementType::UINT32);
+    cc_pipeline.ensure_shared_buffer(0, 3, 1, GpuBufferBinding::ElementType::UINT32);
+    cc_pipeline.ensure_shared_buffer(0, 4, static_cast<size_t>(block_width) * block_height, GpuBufferBinding::ElementType::UINT32);
+    cc_pipeline.ensure_shared_buffer(0, 5, 1, GpuBufferBinding::ElementType::UINT32);
+    cc_pipeline.ensure_shared_buffer(0, 6, static_cast<size_t>(w) * h, GpuBufferBinding::ElementType::UINT32);
+    cc_pipeline.ensure_shared_buffer(0, 7, static_cast<size_t>(k_max_components) * 2, GpuBufferBinding::ElementType::UINT32);
+    cc_pipeline.ensure_shared_buffer(0, 8, static_cast<size_t>(k_max_components) * 2, GpuBufferBinding::ElementType::UINT32);
+    cc_pipeline.ensure_shared_buffer(0, 9, k_max_components, GpuBufferBinding::ElementType::UINT32);
+
+    const CCBlockInitPC init_pc { .width = w, .height = h, .block_width = block_width, .block_height = block_height };
+    const CCMergePC merge_pc { .width = w, .height = h, .block_width = block_width, .block_height = block_height };
+    const CCFinalLabelPC final_pc { .width = w, .height = h, .block_width = block_width, .block_height = block_height, .max_components = k_max_components, .export_labels = 1U };
+
+    cc_pipeline.swap_shader({ .shader_path = "cc_reset.comp.spv", .workgroup_size = { 256, 1, 1 }, .push_constant_size = sizeof(CCResetPC) });
+    cc_pipeline.set_push_constants(CCResetPC {
+        .lut_size = block_width * block_height,
+        .max_components = k_max_components,
+    });
+    cc_pipeline.set_output_dimensions(std::max(block_width * block_height, k_max_components), 1);
+    {
+        const auto reset_fence = cc_pipeline.dispatch_async({});
+        foundry.wait_for_fence(reset_fence);
+        foundry.release_fence(reset_fence);
+    }
+    cc_pipeline.clear_output_dimensions();
+
+    const std::array<uint32_t, 3> block_groups {
+        (block_width + k_wg2d[0] - 1U) / k_wg2d[0],
+        (block_height + k_wg2d[1] - 1U) / k_wg2d[1],
+        1U
+    };
+
+    std::vector<DependencyStage> cc_stages;
+
+    cc_stages.push_back({
+        .config = { .shader_path = "cc_block_init.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(CCBlockInitPC) },
+        .stage_fn = [&](GpuDispatchCore& ctx) {
+        cc_pipeline.stage_image_at(1, seed_input, GpuBufferBinding::ElementType::IMAGE_STORAGE);
+        ctx.set_push_constants(init_pc);
+        cc_pipeline.set_output_dimensions(block_width, block_height); },
+        .hazard_fn = [&](GpuDispatchCore& ctx) -> std::vector<Portal::Graphics::HazardResource> {
+            return {
+                ctx.shared_buffer_hazard(
+                    { .set = 0, .binding = 2, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 }),
+            };
+        },
+        .explicit_groups = block_groups,
+    });
+
+    cc_stages.push_back({
+        .config = { .shader_path = "cc_merge.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(CCMergePC) },
+        .stage_fn = [&](GpuDispatchCore& ctx) {
+        cc_pipeline.stage_image_at(1, seed_input, GpuBufferBinding::ElementType::IMAGE_STORAGE);
+        ctx.set_push_constants(merge_pc);
+        cc_pipeline.set_output_dimensions(block_width, block_height); },
+        .hazard_fn = [&](GpuDispatchCore& ctx) -> std::vector<Portal::Graphics::HazardResource> {
+            return {
+                ctx.shared_buffer_hazard(
+                    { .set = 0, .binding = 2, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 }),
+            };
+        },
+        .explicit_groups = block_groups,
+    });
+
+    ExecutionContext cc_ctx;
+    cc_ctx.mode = ExecutionMode::DEPENDENCY;
+    DependencyParams params;
+    params.stages = cc_stages;
+    cc_ctx.parameters = params;
+    cc_pipeline.execute(Datum<> {}, cc_ctx);
+
+    cc_pipeline.ensure_shared_buffer(0, 10, 3, GpuBufferBinding::ElementType::UINT32,
+        Portal::Graphics::BufferUsageHint::INDIRECT);
+    const std::array<uint32_t, 3> full_grid_indirect {
+        (block_width + 7U) / 8U,
+        (block_height + 7U) / 8U,
+        1U
+    };
+    cc_pipeline.upload_shared_raw(0, 10, reinterpret_cast<const uint8_t*>(full_grid_indirect.data()), full_grid_indirect.size() * sizeof(uint32_t));
+
+    cc_pipeline.swap_shader({ .shader_path = "cc_compress.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(CCCompressPC) });
+    cc_pipeline.set_push_constants(CCCompressPC { .block_width = block_width, .block_height = block_height });
+    cc_pipeline.set_output_dimensions(block_width, block_height);
+    {
+        const auto fence = cc_pipeline.dispatch_async({});
+        foundry.wait_for_fence(fence);
+        foundry.release_fence(fence);
+    }
+    cc_pipeline.clear_output_dimensions();
+
+    cc_pipeline.swap_shader({ .shader_path = "cc_final_label.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(CCFinalLabelPC) });
+    cc_pipeline.stage_image_at(1, seed_input, GpuBufferBinding::ElementType::IMAGE_STORAGE);
+    cc_pipeline.set_push_constants(final_pc);
+    cc_pipeline.set_output_dimensions(w, h);
+    cc_pipeline.prepare_output_image(w, h);
+    {
+        const auto fence = cc_pipeline.dispatch_async({});
+        foundry.wait_for_fence(fence);
+        foundry.release_fence(fence);
+    }
+    cc_pipeline.clear_output_dimensions();
+
+    contexts.pass.result.debug_labels = p.with_colors ? cc_pipeline.get_output_image(0) : nullptr;
+
+    uint32_t compact_count = 0;
+    cc_pipeline.download_shared(0, 5, &compact_count, sizeof(uint32_t));
+    compact_count = std::min(compact_count, k_max_components);
+
+    Kinesis::Vision::ComponentResult cc_result;
+    cc_result.count = compact_count;
+    cc_result.boxes.reserve(compact_count);
+
+    if (compact_count > 0) {
+        std::vector<glm::uvec2> bmin(compact_count);
+        std::vector<glm::uvec2> bmax(compact_count);
+        std::vector<uint32_t> bcount(compact_count);
+        cc_pipeline.download_shared(0, 7, bmin.data(), bmin.size() * sizeof(glm::uvec2));
+        cc_pipeline.download_shared(0, 8, bmax.data(), bmax.size() * sizeof(glm::uvec2));
+        cc_pipeline.download_shared(0, 9, bcount.data(), bcount.size() * sizeof(uint32_t));
+
+        const float inv_w = 1.0F / static_cast<float>(w);
+        const float inv_h = 1.0F / static_cast<float>(h);
+
+        for (uint32_t i = 0; i < compact_count; ++i) {
+            if (bcount[i] == 0)
+                continue;
+            const float x = static_cast<float>(bmin[i].x) * inv_w;
+            const float y = static_cast<float>(bmin[i].y) * inv_h;
+            const float bw = static_cast<float>(bmax[i].x - bmin[i].x + 1) * inv_w;
+            const float bh = static_cast<float>(bmax[i].y - bmin[i].y + 1) * inv_h;
+            cc_result.boxes.push_back({ .x = x, .y = y, .w = bw, .h = bh, .confidence = 1.0F, .label_id = i + 1 });
+        }
+    }
+
+    contexts.pass.result.structured = std::move(cc_result);
+    contexts.pass.result.w = 0;
+    contexts.pass.result.h = 0;
+}
+
+bool VisionGpuExecutor::op_find_contours(
+    VisionGpuContexts& contexts,
+    const VisionSequence& sequence,
+    const std::shared_ptr<Core::VKImage>& image,
+    const FindContoursParams& p)
+{
+    if (!sequence.contours_follow_cc) {
+        MF_ERROR(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
+            "run_gpu: FindContours requires ConnectedComponents(export_labels=true) as the immediately preceding step");
+        return false;
+    }
+
+    auto& cc_pipeline = contexts.cc_pipeline;
+    auto w = contexts.pass.w;
+    auto h = contexts.pass.h;
+    auto& foundry = Portal::Graphics::get_shader_foundry();
+
+    cc_pipeline.ensure_shared_buffer(1, 4, static_cast<size_t>(k_max_components) + 1U, GpuBufferBinding::ElementType::UINT32);
+    cc_pipeline.ensure_shared_buffer(1, 5, static_cast<size_t>(k_max_components) * k_max_holes_per_label, GpuBufferBinding::ElementType::UINT32);
+    cc_pipeline.ensure_shared_buffer(1, 6, static_cast<size_t>(k_max_trace_slots) * 2U, GpuBufferBinding::ElementType::UINT32);
+    cc_pipeline.ensure_shared_buffer(1, 7, 1U, GpuBufferBinding::ElementType::UINT32);
+    cc_pipeline.ensure_shared_buffer(1, 8, static_cast<size_t>(k_max_trace_slots) * k_max_points_per_contour * 2U, GpuBufferBinding::ElementType::FLOAT32);
+    cc_pipeline.ensure_shared_buffer(1, 9, 1U, GpuBufferBinding::ElementType::UINT32);
+    cc_pipeline.ensure_shared_buffer(1, 10, static_cast<size_t>(k_max_trace_slots) * 4U, GpuBufferBinding::ElementType::UINT32);
+    cc_pipeline.ensure_shared_buffer(1, 11, static_cast<size_t>(k_max_trace_slots) * 2U, GpuBufferBinding::ElementType::FLOAT32);
+    cc_pipeline.ensure_shared_buffer(2, 0, k_max_components, GpuBufferBinding::ElementType::FLOAT32);
+    cc_pipeline.ensure_shared_buffer(2, 1, k_max_components, GpuBufferBinding::ElementType::FLOAT32);
+
+    {
+        std::vector<uint32_t> owner_reset(static_cast<size_t>(k_max_components) + 1U, CC_UNCLAIMED_HOST);
+        cc_pipeline.upload_shared_raw(1, 4, reinterpret_cast<const uint8_t*>(owner_reset.data()), owner_reset.size() * sizeof(uint32_t));
+
+        std::vector<uint32_t> hole_owner_reset(static_cast<size_t>(k_max_components) * k_max_holes_per_label, CC_UNCLAIMED_HOST);
+        cc_pipeline.upload_shared_raw(1, 5, reinterpret_cast<const uint8_t*>(hole_owner_reset.data()), hole_owner_reset.size() * sizeof(uint32_t));
+
+        const uint32_t zero = 0;
+        cc_pipeline.upload_shared_raw(1, 7, reinterpret_cast<const uint8_t*>(&zero), sizeof(uint32_t));
+        cc_pipeline.upload_shared_raw(1, 9, reinterpret_cast<const uint8_t*>(&zero), sizeof(uint32_t));
+    }
+
+    auto max_points = p.max_points_per_contour > 0 ? std::min<uint32_t>(p.max_points_per_contour, k_max_points_per_contour) : k_max_points_per_contour;
+    cc_pipeline.swap_shader({ .shader_path = "contour_march.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(ContourMarchPC) });
+    cc_pipeline.stage_image_at(1, image, GpuBufferBinding::ElementType::IMAGE_SAMPLED);
+    cc_pipeline.prepare_output_image(w, h);
+    cc_pipeline.set_push_constants(ContourMarchPC {
+        .width = w,
+        .height = h,
+        .max_components = k_max_components,
+        .max_points_per_contour = max_points,
+        .max_holes_per_label = k_max_holes_per_label,
+        .phase = 0U,
+        .min_area = p.min_area,
+        .compacted_count = 0U });
+
+    cc_pipeline.set_output_dimensions(w, h);
+    {
+        const auto fence = cc_pipeline.dispatch_async({});
+        foundry.wait_for_fence(fence);
+        foundry.release_fence(fence);
+    }
+
+    cc_pipeline.set_push_constants(ContourMarchPC {
+        .width = w,
+        .height = h,
+        .max_components = k_max_components,
+        .max_points_per_contour = max_points,
+        .max_holes_per_label = k_max_holes_per_label,
+        .phase = 1U,
+        .min_area = p.min_area,
+        .compacted_count = 0U });
+    {
+        const auto fence = cc_pipeline.dispatch_async({});
+        foundry.wait_for_fence(fence);
+        foundry.release_fence(fence);
+    }
+
+    cc_pipeline.clear_output_dimensions();
+
+    cc_pipeline.swap_shader({ .shader_path = "contour_compact.comp.spv", .workgroup_size = { 256, 1, 1 }, .push_constant_size = sizeof(ContourCompactPC) });
+    cc_pipeline.set_push_constants(ContourCompactPC { .max_components = k_max_components, .max_holes_per_label = k_max_holes_per_label });
+    const uint32_t total_owner_slots = k_max_components * (1U + k_max_holes_per_label);
+    cc_pipeline.set_output_dimensions(total_owner_slots, 1);
+    {
+        const auto fence = cc_pipeline.dispatch_async({});
+        foundry.wait_for_fence(fence);
+        foundry.release_fence(fence);
+    }
+    cc_pipeline.clear_output_dimensions();
+
+    uint32_t compacted_count = 0;
+    cc_pipeline.download_shared(1, 7, &compacted_count, sizeof(uint32_t));
+
+    cc_pipeline.swap_shader({ .shader_path = "contour_march.comp.spv", .workgroup_size = { 256, 1, 1 }, .push_constant_size = sizeof(ContourMarchPC) });
+    cc_pipeline.set_push_constants(ContourMarchPC {
+        .width = w,
+        .height = h,
+        .max_components = k_max_components,
+        .max_points_per_contour = max_points,
+        .max_holes_per_label = k_max_holes_per_label,
+        .phase = 2U,
+        .min_area = p.min_area,
+        .compacted_count = compacted_count });
+    cc_pipeline.set_output_dimensions(std::max(compacted_count, 1U), 1);
+    {
+        const auto fence = cc_pipeline.dispatch_async({});
+        foundry.wait_for_fence(fence);
+        foundry.release_fence(fence);
+    }
+    cc_pipeline.clear_output_dimensions();
+
+    if (p.max_contours > 0U) {
+        constexpr uint32_t k = 12U;
+        constexpr uint32_t total_passes = k * (k + 1U) / 2U;
+
+        cc_pipeline.swap_shader(config_from_spec(
+            ShaderSpec::Assemble {}
+                .tmpl(KernelTemplate::BitonicSort)
+                .start_set(2)
+                .ssbo("keys", BindingDirection::InOut, Kakshya::GpuDataFormat::FLOAT32)
+                .ssbo("indices", BindingDirection::InOut, Kakshya::GpuDataFormat::FLOAT32)
+                .pc("stage", Kakshya::GpuDataFormat::UINT32)
+                .pc("pass", Kakshya::GpuDataFormat::UINT32)
+                .pc("count", Kakshya::GpuDataFormat::UINT32)
+                .pc("descending", Kakshya::GpuDataFormat::UINT32)
+                .workgroup(256)
+                .build()));
+
+        cc_pipeline.set_output_dimensions(k_max_components, 1U);
+
+        ExecutionContext bitonic_ctx;
+        bitonic_ctx.mode = ExecutionMode::CHAINED;
+        bitonic_ctx.parameters = ChainedParams {
+            .pass_count = total_passes,
+            .pc_updater = [k](uint32_t p_idx, void* pc_ptr) {
+                uint32_t stage = 0, pass = 0, remaining = p_idx;
+                for (uint32_t s = 0; s < k; ++s) {
+                    if (remaining <= s) {
+                        stage = s;
+                        pass = remaining;
+                        break;
+                    }
+                    remaining -= (s + 1);
+                }
+                struct PC {
+                    uint32_t stage, pass, count, descending;
+                };
+                *static_cast<PC*>(pc_ptr) = { .stage = stage, .pass = pass, .count = k_max_components, .descending = 1U };
+            },
+        };
+
+        cc_pipeline.execute(Datum<std::vector<Kakshya::DataVariant>> {}, bitonic_ctx);
+        cc_pipeline.clear_output_dimensions();
+    }
+
+    if (p.as_image) {
+        cc_pipeline.swap_shader({ .shader_path = "contour_render_clear.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(ContourClearPC) });
+        cc_pipeline.prepare_output_image(w, h);
+        cc_pipeline.set_push_constants(ContourClearPC { .width = w, .height = h });
+        cc_pipeline.set_output_dimensions(w, h);
+        {
+            const auto fence = cc_pipeline.dispatch_async({});
+            foundry.wait_for_fence(fence);
+            foundry.release_fence(fence);
+        }
+        cc_pipeline.clear_output_dimensions();
+
+        cc_pipeline.swap_shader({ .shader_path = "contour_render.comp.spv", .workgroup_size = { 256, 1, 1 }, .push_constant_size = sizeof(ContourRenderPC) });
+        cc_pipeline.set_push_constants(ContourRenderPC { .width = w, .height = h, .max_components = k_max_components, .max_points_per_contour = k_max_points_per_contour, .max_contours = p.max_contours });
+        const uint32_t render_slots = p.max_contours > 0U ? std::min(p.max_contours, k_max_components) : k_max_trace_slots;
+        cc_pipeline.set_output_dimensions(render_slots * k_max_points_per_contour, 1U);
+        {
+            const auto fence = cc_pipeline.dispatch_async({});
+            foundry.wait_for_fence(fence);
+            foundry.release_fence(fence);
+        }
+        cc_pipeline.clear_output_dimensions();
+
+        contexts.pass.result.debug_contours = cc_pipeline.get_output_image(0);
+        contexts.pass.result.structured = std::monostate {};
+        contexts.pass.result.w = 0;
+        contexts.pass.result.h = 0;
+        return true;
+    }
+
+    std::vector<glm::uvec4> meta(compacted_count);
+    cc_pipeline.download_shared(1, 10, meta.data(), compacted_count * sizeof(glm::uvec4));
+    std::vector<glm::vec2> area_perim(compacted_count);
+    cc_pipeline.download_shared(1, 11, area_perim.data(), compacted_count * sizeof(glm::vec2));
+    uint32_t points_written = 0;
+    cc_pipeline.download_shared(1, 9, &points_written, sizeof(uint32_t));
+    std::vector<glm::vec2> flat_points_full(points_written);
+
+    if (points_written > 0)
+        cc_pipeline.download_shared(1, 8, flat_points_full.data(), static_cast<size_t>(points_written) * sizeof(glm::vec2));
+
+    std::vector<uint32_t> order;
+    if (p.max_contours > 0U) {
+        const uint32_t take = std::min(p.max_contours, compacted_count);
+        std::vector<float> sorted_indices(take);
+        cc_pipeline.download_shared(2, 1, sorted_indices.data(), take * sizeof(float));
+        order.reserve(take);
+        for (float f : sorted_indices)
+            order.push_back(static_cast<uint32_t>(f));
+    } else {
+        order.resize(compacted_count);
+        for (uint32_t i = 0; i < compacted_count; ++i)
+            order[i] = i;
+    }
+
+    std::vector<Kinesis::Vision::Contour> out_contours;
+    out_contours.reserve(order.size());
+
+    for (uint32_t idx : order) {
+        if (idx >= compacted_count)
+            continue;
+        const auto& m = meta[idx];
+        if (m.y < 3)
+            continue;
+        if (m.x > points_written || m.y > points_written - m.x)
+            continue;
+
+        std::vector<glm::vec2> pts(
+            flat_points_full.begin() + m.x,
+            flat_points_full.begin() + m.x + m.y);
+        const glm::vec2 ap = area_perim[idx];
+        out_contours.push_back({ .points = std::move(pts), .area = ap.x, .perimeter = ap.y, .parent_label = m.z });
+    }
+
+    contexts.pass.result.structured = std::move(out_contours);
+    contexts.pass.result.w = 0;
+    contexts.pass.result.h = 0;
+    return true;
+}
+
 // ============================================================================
 // run_gpu
 // ============================================================================
@@ -877,68 +1341,7 @@ VisionResult VisionGpuExecutor::run(
         }
         case VisionOp::ExtractPeaks: {
             const auto& p = std::get<ExtractPeaksParams>(step.params);
-            constexpr uint32_t k_max_kp = 4096;
-
-            structured_ctx.swap_shader({
-                .shader_path = "extract_peaks.comp.spv",
-                .workgroup_size = { 8, 8, 1 },
-                .push_constant_size = sizeof(ExtractPeaksPC),
-            });
-
-            structured_ctx.set_output_size(1, sizeof(uint32_t));
-            structured_ctx.set_output_size(2, static_cast<size_t>(k_max_kp) * 4 * sizeof(float));
-
-            structured_ctx.stage_image(contexts.pass.current);
-            structured_ctx.set_push_constants(ExtractPeaksPC {
-                .threshold = p.threshold,
-                .nms_radius = p.nms_radius,
-                .width = w,
-                .height = h,
-                .max_keypoints = k_max_kp,
-            });
-
-            structured_ctx.set_output_dimensions(w, h);
-            const auto fence = structured_ctx.dispatch_async({});
-            structured_ctx.clear_output_dimensions();
-            foundry.wait_for_fence(fence);
-            foundry.release_fence(fence);
-
-            if (sequence.track_follows_peaks) {
-                contexts.pass.result.structured = std::monostate {};
-                contexts.pass.result.w = w;
-                contexts.pass.result.h = h;
-                continue;
-            }
-
-            const auto gpu_result = structured_ctx.collect_result();
-
-            uint32_t count = 0;
-            if (auto it = gpu_result.aux.find(1); it != gpu_result.aux.end())
-                std::memcpy(&count, it->second.data(), sizeof(uint32_t));
-            count = std::min(count, k_max_kp);
-
-            struct GpuKp {
-                float x, y, response, pad;
-            };
-            std::vector<GpuKp> raw(count);
-            if (count > 0) {
-                if (auto it = gpu_result.aux.find(2); it != gpu_result.aux.end())
-                    std::memcpy(raw.data(), it->second.data(), count * sizeof(GpuKp));
-            }
-
-            std::vector<Kinesis::Vision::Keypoint> kpts;
-            kpts.reserve(count);
-            for (const auto& kp : raw) {
-                kpts.push_back({ .position = { kp.x, kp.y },
-                    .response = kp.response,
-                    .scale = 1.0F,
-                    .angle = 0.0F });
-            }
-            std::ranges::sort(kpts, [](const auto& a, const auto& b) { return a.response > b.response; });
-
-            contexts.pass.result.structured = std::move(kpts);
-            contexts.pass.result.w = 0;
-            contexts.pass.result.h = 0;
+            op_extract_peaks(contexts, sequence, p);
             continue;
         }
         case VisionOp::ConnectedComponents: {
@@ -948,374 +1351,13 @@ VisionResult VisionGpuExecutor::run(
                 continue;
             }
 
-            const auto seed_input = contexts.pass.current;
-
-            const uint32_t block_width = (w + 1U) / 2U;
-            const uint32_t block_height = (h + 1U) / 2U;
-            const double block_diagonal = std::sqrt(
-                static_cast<double>(block_width) * block_width + static_cast<double>(block_height) * block_height);
-            const auto k_compress_passes = static_cast<uint32_t>(std::ceil(std::log2(std::max(2.0, block_diagonal))));
-
-            cc_pipeline.ensure_shared_buffer(0, 2, static_cast<size_t>(block_width) * block_height, GpuBufferBinding::ElementType::UINT32);
-            cc_pipeline.ensure_shared_buffer(0, 3, 1, GpuBufferBinding::ElementType::UINT32);
-            cc_pipeline.ensure_shared_buffer(0, 4, static_cast<size_t>(block_width) * block_height, GpuBufferBinding::ElementType::UINT32);
-            cc_pipeline.ensure_shared_buffer(0, 5, 1, GpuBufferBinding::ElementType::UINT32);
-            cc_pipeline.ensure_shared_buffer(0, 6, static_cast<size_t>(w) * h, GpuBufferBinding::ElementType::UINT32);
-            cc_pipeline.ensure_shared_buffer(0, 7, static_cast<size_t>(k_max_components) * 2, GpuBufferBinding::ElementType::UINT32);
-            cc_pipeline.ensure_shared_buffer(0, 8, static_cast<size_t>(k_max_components) * 2, GpuBufferBinding::ElementType::UINT32);
-            cc_pipeline.ensure_shared_buffer(0, 9, k_max_components, GpuBufferBinding::ElementType::UINT32);
-
-            const CCBlockInitPC init_pc { .width = w, .height = h, .block_width = block_width, .block_height = block_height };
-            const CCMergePC merge_pc { .width = w, .height = h, .block_width = block_width, .block_height = block_height };
-            const CCFinalLabelPC final_pc { .width = w, .height = h, .block_width = block_width, .block_height = block_height, .max_components = k_max_components, .export_labels = 1U };
-
-            cc_pipeline.swap_shader({ .shader_path = "cc_reset.comp.spv", .workgroup_size = { 256, 1, 1 }, .push_constant_size = sizeof(CCResetPC) });
-            cc_pipeline.set_push_constants(CCResetPC {
-                .lut_size = block_width * block_height,
-                .max_components = k_max_components,
-            });
-            cc_pipeline.set_output_dimensions(std::max(block_width * block_height, k_max_components), 1);
-            {
-                const auto reset_fence = cc_pipeline.dispatch_async({});
-                foundry.wait_for_fence(reset_fence);
-                foundry.release_fence(reset_fence);
-            }
-            cc_pipeline.clear_output_dimensions();
-
-            const std::array<uint32_t, 3> block_groups {
-                (block_width + k_wg2d[0] - 1U) / k_wg2d[0],
-                (block_height + k_wg2d[1] - 1U) / k_wg2d[1],
-                1U
-            };
-
-            std::vector<DependencyStage> cc_stages;
-
-            cc_stages.push_back({
-                .config = { .shader_path = "cc_block_init.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(CCBlockInitPC) },
-                .stage_fn = [&](GpuDispatchCore& ctx) {
-        cc_pipeline.stage_image_at(1, seed_input, GpuBufferBinding::ElementType::IMAGE_STORAGE);
-        ctx.set_push_constants(init_pc);
-        cc_pipeline.set_output_dimensions(block_width, block_height); },
-                .hazard_fn = [&](GpuDispatchCore& ctx) -> std::vector<Portal::Graphics::HazardResource> {
-                    return {
-                        ctx.shared_buffer_hazard(
-                            { .set = 0, .binding = 2, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 }),
-                    };
-                },
-                .explicit_groups = block_groups,
-            });
-
-            cc_stages.push_back({
-                .config = { .shader_path = "cc_merge.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(CCMergePC) },
-                .stage_fn = [&](GpuDispatchCore& ctx) {
-        cc_pipeline.stage_image_at(1, seed_input, GpuBufferBinding::ElementType::IMAGE_STORAGE);
-        ctx.set_push_constants(merge_pc);
-        cc_pipeline.set_output_dimensions(block_width, block_height); },
-                .hazard_fn = [&](GpuDispatchCore& ctx) -> std::vector<Portal::Graphics::HazardResource> {
-                    return {
-                        ctx.shared_buffer_hazard(
-                            { .set = 0, .binding = 2, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 }),
-                    };
-                },
-                .explicit_groups = block_groups,
-            });
-
-            ExecutionContext cc_ctx;
-            cc_ctx.mode = ExecutionMode::DEPENDENCY;
-            DependencyParams params;
-            params.stages = cc_stages;
-            cc_ctx.parameters = params;
-            cc_pipeline.execute(Datum<> {}, cc_ctx);
-
-            cc_pipeline.ensure_shared_buffer(0, 10, 3, GpuBufferBinding::ElementType::UINT32,
-                Portal::Graphics::BufferUsageHint::INDIRECT);
-            const std::array<uint32_t, 3> full_grid_indirect {
-                (block_width + 7U) / 8U,
-                (block_height + 7U) / 8U,
-                1U
-            };
-            cc_pipeline.upload_shared_raw(0, 10, reinterpret_cast<const uint8_t*>(full_grid_indirect.data()), full_grid_indirect.size() * sizeof(uint32_t));
-
-            cc_pipeline.swap_shader({ .shader_path = "cc_compress.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(CCCompressPC) });
-            cc_pipeline.set_push_constants(CCCompressPC { .block_width = block_width, .block_height = block_height });
-            cc_pipeline.set_output_dimensions(block_width, block_height);
-            {
-                const auto fence = cc_pipeline.dispatch_async({});
-                foundry.wait_for_fence(fence);
-                foundry.release_fence(fence);
-            }
-            cc_pipeline.clear_output_dimensions();
-
-            cc_pipeline.swap_shader({ .shader_path = "cc_final_label.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(CCFinalLabelPC) });
-            cc_pipeline.stage_image_at(1, seed_input, GpuBufferBinding::ElementType::IMAGE_STORAGE);
-            cc_pipeline.set_push_constants(final_pc);
-            cc_pipeline.set_output_dimensions(w, h);
-            cc_pipeline.prepare_output_image(w, h);
-            {
-                const auto fence = cc_pipeline.dispatch_async({});
-                foundry.wait_for_fence(fence);
-                foundry.release_fence(fence);
-            }
-            cc_pipeline.clear_output_dimensions();
-
-            contexts.pass.result.debug_labels = p.with_colors ? cc_pipeline.get_output_image(0) : nullptr;
-
-            uint32_t compact_count = 0;
-            cc_pipeline.download_shared(0, 5, &compact_count, sizeof(uint32_t));
-            compact_count = std::min(compact_count, k_max_components);
-
-            Kinesis::Vision::ComponentResult cc_result;
-            cc_result.count = compact_count;
-            cc_result.boxes.reserve(compact_count);
-
-            if (compact_count > 0) {
-                std::vector<glm::uvec2> bmin(compact_count);
-                std::vector<glm::uvec2> bmax(compact_count);
-                std::vector<uint32_t> bcount(compact_count);
-                cc_pipeline.download_shared(0, 7, bmin.data(), bmin.size() * sizeof(glm::uvec2));
-                cc_pipeline.download_shared(0, 8, bmax.data(), bmax.size() * sizeof(glm::uvec2));
-                cc_pipeline.download_shared(0, 9, bcount.data(), bcount.size() * sizeof(uint32_t));
-
-                const float inv_w = 1.0F / static_cast<float>(w);
-                const float inv_h = 1.0F / static_cast<float>(h);
-
-                for (uint32_t i = 0; i < compact_count; ++i) {
-                    if (bcount[i] == 0)
-                        continue;
-                    const float x = static_cast<float>(bmin[i].x) * inv_w;
-                    const float y = static_cast<float>(bmin[i].y) * inv_h;
-                    const float bw = static_cast<float>(bmax[i].x - bmin[i].x + 1) * inv_w;
-                    const float bh = static_cast<float>(bmax[i].y - bmin[i].y + 1) * inv_h;
-                    cc_result.boxes.push_back({ .x = x, .y = y, .w = bw, .h = bh, .confidence = 1.0F, .label_id = i + 1 });
-                }
-            }
-
-            contexts.pass.result.structured = std::move(cc_result);
-            contexts.pass.result.w = 0;
-            contexts.pass.result.h = 0;
+            op_connected_components(contexts, p);
             continue;
         }
         case VisionOp::FindContours: {
-            if (!sequence.contours_follow_cc) {
-                MF_ERROR(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
-                    "run_gpu: FindContours requires ConnectedComponents(export_labels=true) as the immediately preceding step");
+            if (!op_find_contours(contexts, sequence, image,
+                    std::get<Kinesis::Vision::FindContoursParams>(step.params)))
                 return VisionResult {};
-            }
-
-            const auto& p = std::get<Kinesis::Vision::FindContoursParams>(step.params);
-
-            cc_pipeline.ensure_shared_buffer(1, 4, static_cast<size_t>(k_max_components) + 1U, GpuBufferBinding::ElementType::UINT32);
-            cc_pipeline.ensure_shared_buffer(1, 5, static_cast<size_t>(k_max_components) * k_max_holes_per_label, GpuBufferBinding::ElementType::UINT32);
-            cc_pipeline.ensure_shared_buffer(1, 6, static_cast<size_t>(k_max_trace_slots) * 2U, GpuBufferBinding::ElementType::UINT32);
-            cc_pipeline.ensure_shared_buffer(1, 7, 1U, GpuBufferBinding::ElementType::UINT32);
-            cc_pipeline.ensure_shared_buffer(1, 8, static_cast<size_t>(k_max_trace_slots) * k_max_points_per_contour * 2U, GpuBufferBinding::ElementType::FLOAT32);
-            cc_pipeline.ensure_shared_buffer(1, 9, 1U, GpuBufferBinding::ElementType::UINT32);
-            cc_pipeline.ensure_shared_buffer(1, 10, static_cast<size_t>(k_max_trace_slots) * 4U, GpuBufferBinding::ElementType::UINT32);
-            cc_pipeline.ensure_shared_buffer(1, 11, static_cast<size_t>(k_max_trace_slots) * 2U, GpuBufferBinding::ElementType::FLOAT32);
-            cc_pipeline.ensure_shared_buffer(2, 0, k_max_components, GpuBufferBinding::ElementType::FLOAT32);
-            cc_pipeline.ensure_shared_buffer(2, 1, k_max_components, GpuBufferBinding::ElementType::FLOAT32);
-
-            {
-                std::vector<uint32_t> owner_reset(static_cast<size_t>(k_max_components) + 1U, CC_UNCLAIMED_HOST);
-                cc_pipeline.upload_shared_raw(1, 4, reinterpret_cast<const uint8_t*>(owner_reset.data()), owner_reset.size() * sizeof(uint32_t));
-
-                std::vector<uint32_t> hole_owner_reset(static_cast<size_t>(k_max_components) * k_max_holes_per_label, CC_UNCLAIMED_HOST);
-                cc_pipeline.upload_shared_raw(1, 5, reinterpret_cast<const uint8_t*>(hole_owner_reset.data()), hole_owner_reset.size() * sizeof(uint32_t));
-
-                const uint32_t zero = 0;
-                cc_pipeline.upload_shared_raw(1, 7, reinterpret_cast<const uint8_t*>(&zero), sizeof(uint32_t));
-                cc_pipeline.upload_shared_raw(1, 9, reinterpret_cast<const uint8_t*>(&zero), sizeof(uint32_t));
-            }
-
-            auto max_points = p.max_points_per_contour > 0 ? std::min<uint32_t>(p.max_points_per_contour, k_max_points_per_contour) : k_max_points_per_contour;
-            cc_pipeline.swap_shader({ .shader_path = "contour_march.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(ContourMarchPC) });
-            cc_pipeline.stage_image_at(1, image, GpuBufferBinding::ElementType::IMAGE_SAMPLED);
-            cc_pipeline.prepare_output_image(w, h);
-            cc_pipeline.set_push_constants(ContourMarchPC {
-                .width = w,
-                .height = h,
-                .max_components = k_max_components,
-                .max_points_per_contour = max_points,
-                .max_holes_per_label = k_max_holes_per_label,
-                .phase = 0U,
-                .min_area = p.min_area,
-                .compacted_count = 0U });
-
-            cc_pipeline.set_output_dimensions(w, h);
-            {
-                const auto fence = cc_pipeline.dispatch_async({});
-                foundry.wait_for_fence(fence);
-                foundry.release_fence(fence);
-            }
-
-            cc_pipeline.set_push_constants(ContourMarchPC {
-                .width = w,
-                .height = h,
-                .max_components = k_max_components,
-                .max_points_per_contour = max_points,
-                .max_holes_per_label = k_max_holes_per_label,
-                .phase = 1U,
-                .min_area = p.min_area,
-                .compacted_count = 0U });
-            {
-                const auto fence = cc_pipeline.dispatch_async({});
-                foundry.wait_for_fence(fence);
-                foundry.release_fence(fence);
-            }
-
-            cc_pipeline.clear_output_dimensions();
-
-            cc_pipeline.swap_shader({ .shader_path = "contour_compact.comp.spv", .workgroup_size = { 256, 1, 1 }, .push_constant_size = sizeof(ContourCompactPC) });
-            cc_pipeline.set_push_constants(ContourCompactPC { .max_components = k_max_components, .max_holes_per_label = k_max_holes_per_label });
-            const uint32_t total_owner_slots = k_max_components * (1U + k_max_holes_per_label);
-            cc_pipeline.set_output_dimensions(total_owner_slots, 1);
-            {
-                const auto fence = cc_pipeline.dispatch_async({});
-                foundry.wait_for_fence(fence);
-                foundry.release_fence(fence);
-            }
-            cc_pipeline.clear_output_dimensions();
-
-            uint32_t compacted_count = 0;
-            cc_pipeline.download_shared(1, 7, &compacted_count, sizeof(uint32_t));
-
-            cc_pipeline.swap_shader({ .shader_path = "contour_march.comp.spv", .workgroup_size = { 256, 1, 1 }, .push_constant_size = sizeof(ContourMarchPC) });
-            cc_pipeline.set_push_constants(ContourMarchPC {
-                .width = w,
-                .height = h,
-                .max_components = k_max_components,
-                .max_points_per_contour = max_points,
-                .max_holes_per_label = k_max_holes_per_label,
-                .phase = 2U,
-                .min_area = p.min_area,
-                .compacted_count = compacted_count });
-            cc_pipeline.set_output_dimensions(std::max(compacted_count, 1U), 1);
-            {
-                const auto fence = cc_pipeline.dispatch_async({});
-                foundry.wait_for_fence(fence);
-                foundry.release_fence(fence);
-            }
-            cc_pipeline.clear_output_dimensions();
-
-            if (p.max_contours > 0U) {
-                constexpr uint32_t k = 12U;
-                constexpr uint32_t total_passes = k * (k + 1U) / 2U;
-
-                cc_pipeline.swap_shader(config_from_spec(
-                    ShaderSpec::Assemble {}
-                        .tmpl(KernelTemplate::BitonicSort)
-                        .start_set(2)
-                        .ssbo("keys", BindingDirection::InOut, Kakshya::GpuDataFormat::FLOAT32)
-                        .ssbo("indices", BindingDirection::InOut, Kakshya::GpuDataFormat::FLOAT32)
-                        .pc("stage", Kakshya::GpuDataFormat::UINT32)
-                        .pc("pass", Kakshya::GpuDataFormat::UINT32)
-                        .pc("count", Kakshya::GpuDataFormat::UINT32)
-                        .pc("descending", Kakshya::GpuDataFormat::UINT32)
-                        .workgroup(256)
-                        .build()));
-
-                cc_pipeline.set_output_dimensions(k_max_components, 1U);
-
-                ExecutionContext bitonic_ctx;
-                bitonic_ctx.mode = ExecutionMode::CHAINED;
-                bitonic_ctx.parameters = ChainedParams {
-                    .pass_count = total_passes,
-                    .pc_updater = [k](uint32_t p_idx, void* pc_ptr) {
-                        uint32_t stage = 0, pass = 0, remaining = p_idx;
-                        for (uint32_t s = 0; s < k; ++s) {
-                            if (remaining <= s) {
-                                stage = s;
-                                pass = remaining;
-                                break;
-                            }
-                            remaining -= (s + 1);
-                        }
-                        struct PC {
-                            uint32_t stage, pass, count, descending;
-                        };
-                        *static_cast<PC*>(pc_ptr) = { .stage = stage, .pass = pass, .count = k_max_components, .descending = 1U };
-                    },
-                };
-
-                cc_pipeline.execute(Datum<std::vector<Kakshya::DataVariant>> {}, bitonic_ctx);
-                cc_pipeline.clear_output_dimensions();
-            }
-
-            if (p.as_image) {
-                cc_pipeline.swap_shader({ .shader_path = "contour_render_clear.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(ContourClearPC) });
-                cc_pipeline.prepare_output_image(w, h);
-                cc_pipeline.set_push_constants(ContourClearPC { .width = w, .height = h });
-                cc_pipeline.set_output_dimensions(w, h);
-                {
-                    const auto fence = cc_pipeline.dispatch_async({});
-                    foundry.wait_for_fence(fence);
-                    foundry.release_fence(fence);
-                }
-                cc_pipeline.clear_output_dimensions();
-
-                cc_pipeline.swap_shader({ .shader_path = "contour_render.comp.spv", .workgroup_size = { 256, 1, 1 }, .push_constant_size = sizeof(ContourRenderPC) });
-                cc_pipeline.set_push_constants(ContourRenderPC { .width = w, .height = h, .max_components = k_max_components, .max_points_per_contour = k_max_points_per_contour, .max_contours = p.max_contours });
-                const uint32_t render_slots = p.max_contours > 0U ? std::min(p.max_contours, k_max_components) : k_max_trace_slots;
-                cc_pipeline.set_output_dimensions(render_slots * k_max_points_per_contour, 1U);
-                {
-                    const auto fence = cc_pipeline.dispatch_async({});
-                    foundry.wait_for_fence(fence);
-                    foundry.release_fence(fence);
-                }
-                cc_pipeline.clear_output_dimensions();
-
-                contexts.pass.result.debug_contours = cc_pipeline.get_output_image(0);
-                contexts.pass.result.structured = std::monostate {};
-                contexts.pass.result.w = 0;
-                contexts.pass.result.h = 0;
-                continue;
-            }
-
-            std::vector<glm::uvec4> meta(compacted_count);
-            cc_pipeline.download_shared(1, 10, meta.data(), compacted_count * sizeof(glm::uvec4));
-            std::vector<glm::vec2> area_perim(compacted_count);
-            cc_pipeline.download_shared(1, 11, area_perim.data(), compacted_count * sizeof(glm::vec2));
-            uint32_t points_written = 0;
-            cc_pipeline.download_shared(1, 9, &points_written, sizeof(uint32_t));
-            std::vector<glm::vec2> flat_points_full(points_written);
-
-            if (points_written > 0)
-                cc_pipeline.download_shared(1, 8, flat_points_full.data(), static_cast<size_t>(points_written) * sizeof(glm::vec2));
-
-            std::vector<uint32_t> order;
-            if (p.max_contours > 0U) {
-                const uint32_t take = std::min(p.max_contours, compacted_count);
-                std::vector<float> sorted_indices(take);
-                cc_pipeline.download_shared(2, 1, sorted_indices.data(), take * sizeof(float));
-                order.reserve(take);
-                for (float f : sorted_indices)
-                    order.push_back(static_cast<uint32_t>(f));
-            } else {
-                order.resize(compacted_count);
-                for (uint32_t i = 0; i < compacted_count; ++i)
-                    order[i] = i;
-            }
-
-            std::vector<Kinesis::Vision::Contour> out_contours;
-            out_contours.reserve(order.size());
-
-            for (uint32_t idx : order) {
-                if (idx >= compacted_count)
-                    continue;
-                const auto& m = meta[idx];
-                if (m.y < 3)
-                    continue;
-
-                std::vector<glm::vec2> pts(
-                    flat_points_full.begin() + m.x,
-                    flat_points_full.begin() + m.x + m.y);
-                const glm::vec2 ap = area_perim[idx];
-                out_contours.push_back({ .points = std::move(pts), .area = ap.x, .perimeter = ap.y, .parent_label = m.z });
-            }
-
-            contexts.pass.result.structured = std::move(out_contours);
-            contexts.pass.result.w = 0;
-            contexts.pass.result.h = 0;
             continue;
         }
         default:
