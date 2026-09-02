@@ -8,6 +8,7 @@
 
 #include "MayaFlux/Vruta/BroadcastSource.hpp"
 
+#include "MayaFlux/Kinesis/Vision/VisionExecutor.hpp"
 #include "MayaFlux/Yantra/Executors/VisionGpuDispatch.hpp"
 
 namespace MayaFlux::Buffers {

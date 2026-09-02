@@ -2,7 +2,7 @@
 
 #include "TextureExecutionContext.hpp"
 
-#include "MayaFlux/Kinesis/Vision/VisionExecutor.hpp"
+#include "MayaFlux/Kinesis/Vision/VisionContext.hpp"
 
 namespace MayaFlux::Yantra {
 
