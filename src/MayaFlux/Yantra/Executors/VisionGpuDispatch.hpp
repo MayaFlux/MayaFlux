@@ -55,23 +55,25 @@ struct MAYAFLUX_API VisionGpuContexts {
     TextureExecutionContext cc_pipeline;
 
     /**
+     * @brief Walk state for the current run: sequence position, geometry,
+     *        working image, and the result under construction.
+     *
+     * Lives here rather than as a run local so a deferred step's yield
+     * preserves it without copying. Reset by begin() at the top of a fresh
+     * run; left intact across a suspension.
+     */
+    Kinesis::Vision::GpuVisionPass pass;
+
+    /**
      * @brief Outstanding work at a deferred step, and the point to resume.
      *
      * fence is INVALID_FENCE when nothing is outstanding. While live, run
-     * polls it and does nothing else: the prefix already executed on the
-     * call that armed this, and its outputs are held here.
-     *
-     * working is the image the deferred step consumed, retained so the
-     * remainder of the sequence sees the pixels the submission was made
-     * against rather than whatever the caller passes on the polling call.
+     * polls it and does nothing else. The working image, geometry, and
+     * partial result the resumed sequence needs are already in pass, which
+     * is not reset while a suspension is active.
      */
     struct Suspension {
         Portal::Graphics::FenceID fence { Portal::Graphics::INVALID_FENCE };
-        size_t step_index { 0 };
-        std::shared_ptr<Core::VKImage> working;
-        uint32_t w { 0 };
-        uint32_t h { 0 };
-        Kinesis::Vision::VisionResult partial;
 
         [[nodiscard]] bool is_active() const
         {

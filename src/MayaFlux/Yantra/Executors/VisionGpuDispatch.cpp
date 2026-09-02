@@ -448,12 +448,7 @@ VisionResult VisionGpuExecutor::run(
     auto& label_ctx = contexts.labels;
     auto& cc_pipeline = contexts.cc_pipeline;
 
-    VisionResult result;
-    result.w = w;
-    result.h = h;
-
     auto& foundry = Portal::Graphics::get_shader_foundry();
-    std::shared_ptr<Core::VKImage> current = image;
 
     Portal::Graphics::ShaderID last_shader_id = Portal::Graphics::INVALID_SHADER;
     std::string last_shader_path;
@@ -471,23 +466,25 @@ VisionResult VisionGpuExecutor::run(
         if (!foundry.is_fence_signaled(contexts.suspended.fence)) {
             VisionResult pending;
             pending.status = VisionStatus::SUSPENDED;
-            pending.suspended_at = contexts.suspended.step_index;
+            pending.suspended_at = contexts.pass.index;
             return pending;
         }
 
         foundry.release_fence(contexts.suspended.fence);
         contexts.suspended.fence = Portal::Graphics::INVALID_FENCE;
 
-        begin = contexts.suspended.step_index;
-        current = contexts.suspended.working;
-        w = contexts.suspended.w;
-        h = contexts.suspended.h;
-        result = std::move(contexts.suspended.partial);
-        contexts.suspended.working.reset();
+        begin = contexts.pass.index;
+    } else {
+        contexts.pass.begin(sequence, w, h);
+        contexts.pass.current = image;
     }
 
-    for (size_t i = begin; i < sequence.steps.size(); ++i) {
-        const auto& step = sequence.steps[i];
+    for (contexts.pass.index = begin; contexts.pass.index < sequence.steps.size(); ++contexts.pass.index) {
+        const auto& step = sequence.steps[contexts.pass.index];
+
+        const uint32_t w = contexts.pass.w;
+        const uint32_t h = contexts.pass.h;
+
         const auto cfg = config(step.op, step.params);
 
         if (cfg.shader_id == Portal::Graphics::INVALID_SHADER && cfg.shader_path.empty()) {
@@ -502,9 +499,9 @@ VisionResult VisionGpuExecutor::run(
             last_shader_id = cfg.shader_id;
             last_shader_path = cfg.shader_path;
         }
-        if (current != last_staged) {
-            pixel_ctx.stage_image(current);
-            last_staged = current;
+        if (contexts.pass.current != last_staged) {
+            pixel_ctx.stage_image(contexts.pass.current);
+            last_staged = contexts.pass.current;
         }
         if (w != last_w || h != last_h) {
             pixel_ctx.prepare_output_image(w, h);
@@ -528,16 +525,13 @@ VisionResult VisionGpuExecutor::run(
             pixel_ctx.clear_output_dimensions();
 
             auto downsampled = pixel_ctx.get_output_image(0);
-            completed_ops[Kinesis::Vision::hash_vision_step(step.op, step.params)] = { .output = downsampled, .input = current };
-            current = downsampled;
-            last_staged = current;
+            completed_ops[Kinesis::Vision::hash_vision_step(step.op, step.params)] = { .output = downsampled, .input = contexts.pass.current };
+            contexts.pass.current = downsampled;
+            last_staged = contexts.pass.current;
 
-            w = new_w;
-            h = new_h;
-            result.w = w;
-            result.h = h;
-            last_w = w;
-            last_h = h;
+            contexts.pass.set_geometry(new_w, new_h);
+            last_w = new_w;
+            last_h = new_h;
 
             continue;
         }
@@ -583,7 +577,7 @@ VisionResult VisionGpuExecutor::run(
             });
             std::vector<uint32_t> zeros(256, 0);
             structured_ctx.set_binding_data(3, std::span<const uint32_t>(zeros));
-            structured_ctx.stage_image(current);
+            structured_ctx.stage_image(contexts.pass.current);
             structured_ctx.set_push_constants(OtsuHistPC { .width = w, .height = h });
             structured_ctx.set_output_dimensions(w, h);
             {
@@ -627,7 +621,7 @@ VisionResult VisionGpuExecutor::run(
                     .workgroup(k_wg2d[0], k_wg2d[1])
                     .build());
             pixel_ctx.swap_shader(apply_cfg);
-            pixel_ctx.stage_image(current);
+            pixel_ctx.stage_image(contexts.pass.current);
             pixel_ctx.set_push_constants(ThresholdPC { .value = t_norm });
             pixel_ctx.prepare_output_image(w, h);
             {
@@ -637,11 +631,11 @@ VisionResult VisionGpuExecutor::run(
             }
             auto thresholded = pixel_ctx.get_output_image(0);
 
-            completed_ops[Kinesis::Vision::hash_vision_step(step.op, step.params)] = { .output = thresholded, .input = current };
-            result.debug_labels = thresholded;
-            current = thresholded;
-            last_staged = current;
-            result.structured = std::monostate {};
+            completed_ops[Kinesis::Vision::hash_vision_step(step.op, step.params)] = { .output = thresholded, .input = contexts.pass.current };
+            contexts.pass.result.debug_labels = thresholded;
+            contexts.pass.current = thresholded;
+            last_staged = contexts.pass.current;
+            contexts.pass.result.structured = std::monostate {};
             continue;
         }
         case VisionOp::Open:
@@ -655,7 +649,7 @@ VisionResult VisionGpuExecutor::run(
                 .push_constant_size = sizeof(MorphPC),
             };
             pixel_ctx.swap_shader(first_cfg);
-            pixel_ctx.stage_image(current);
+            pixel_ctx.stage_image(contexts.pass.current);
             pixel_ctx.set_push_constants(MorphPC { .radius = radius });
             pixel_ctx.prepare_output_image(w, h);
             pixel_ctx.set_output_dimensions(w, h);
@@ -683,15 +677,15 @@ VisionResult VisionGpuExecutor::run(
             }
 
             auto opened_closed = pixel_ctx.get_output_image(0);
-            completed_ops[Kinesis::Vision::hash_vision_step(step.op, step.params)] = { .output = opened_closed, .input = current };
-            current = opened_closed;
-            last_staged = current;
-            result.structured = std::monostate {};
+            completed_ops[Kinesis::Vision::hash_vision_step(step.op, step.params)] = { .output = opened_closed, .input = contexts.pass.current };
+            contexts.pass.current = opened_closed;
+            last_staged = contexts.pass.current;
+            contexts.pass.result.structured = std::monostate {};
             continue;
         }
         case VisionOp::Canny: {
             const auto& p = std::get<CannyParams>(step.params);
-            auto canny_input = current;
+            auto canny_input = contexts.pass.current;
 
             const auto blur_key = Kinesis::Vision::hash_vision_step(
                 VisionOp::GaussianBlur, GaussianBlurParams { .sigma = p.sigma });
@@ -819,10 +813,10 @@ VisionResult VisionGpuExecutor::run(
 
             completed_ops[Kinesis::Vision::hash_vision_step(step.op, step.params)] = { .output = finalized, .input = canny_input };
 
-            result.debug_labels = finalized;
-            current = finalized;
-            last_staged = current;
-            result.structured = std::monostate {};
+            contexts.pass.result.debug_labels = finalized;
+            contexts.pass.current = finalized;
+            last_staged = contexts.pass.current;
+            contexts.pass.result.structured = std::monostate {};
             continue;
         }
         case VisionOp::HarrisResponse: {
@@ -830,9 +824,9 @@ VisionResult VisionGpuExecutor::run(
             const auto radius = static_cast<uint32_t>(std::ceil(p.sigma * 3.0F));
             const auto& weights = gaussian_kernel_1d(radius, p.sigma);
 
-            auto harris_input = current;
+            auto harris_input = contexts.pass.current;
             pixel_ctx.swap_shader({ .shader_path = "harris_grad_pack.comp.spv", .workgroup_size = k_wg2d });
-            pixel_ctx.stage_image(current);
+            pixel_ctx.stage_image(contexts.pass.current);
             pixel_ctx.prepare_output_image(w, h);
             {
                 const auto f = pixel_ctx.dispatch_async({});
@@ -875,10 +869,10 @@ VisionResult VisionGpuExecutor::run(
                 foundry.wait_for_fence(f);
                 foundry.release_fence(f);
             }
-            current = pixel_ctx.get_output_image(0);
-            completed_ops[Kinesis::Vision::hash_vision_step(step.op, step.params)] = { .output = current, .input = harris_input };
+            contexts.pass.current = pixel_ctx.get_output_image(0);
+            completed_ops[Kinesis::Vision::hash_vision_step(step.op, step.params)] = { .output = contexts.pass.current, .input = harris_input };
 
-            result.structured = std::monostate {};
+            contexts.pass.result.structured = std::monostate {};
             continue;
         }
         case VisionOp::ExtractPeaks: {
@@ -894,7 +888,7 @@ VisionResult VisionGpuExecutor::run(
             structured_ctx.set_output_size(1, sizeof(uint32_t));
             structured_ctx.set_output_size(2, static_cast<size_t>(k_max_kp) * 4 * sizeof(float));
 
-            structured_ctx.stage_image(current);
+            structured_ctx.stage_image(contexts.pass.current);
             structured_ctx.set_push_constants(ExtractPeaksPC {
                 .threshold = p.threshold,
                 .nms_radius = p.nms_radius,
@@ -910,9 +904,9 @@ VisionResult VisionGpuExecutor::run(
             foundry.release_fence(fence);
 
             if (sequence.track_follows_peaks) {
-                result.structured = std::monostate {};
-                result.w = w;
-                result.h = h;
+                contexts.pass.result.structured = std::monostate {};
+                contexts.pass.result.w = w;
+                contexts.pass.result.h = h;
                 continue;
             }
 
@@ -942,19 +936,19 @@ VisionResult VisionGpuExecutor::run(
             }
             std::ranges::sort(kpts, [](const auto& a, const auto& b) { return a.response > b.response; });
 
-            result.structured = std::move(kpts);
-            result.w = 0;
-            result.h = 0;
+            contexts.pass.result.structured = std::move(kpts);
+            contexts.pass.result.w = 0;
+            contexts.pass.result.h = 0;
             continue;
         }
         case VisionOp::ConnectedComponents: {
             const auto& p = std::get<Kinesis::Vision::ConnectedComponentsParams>(step.params);
 
-            if (!current) {
+            if (!contexts.pass.current) {
                 continue;
             }
 
-            const auto seed_input = current;
+            const auto seed_input = contexts.pass.current;
 
             const uint32_t block_width = (w + 1U) / 2U;
             const uint32_t block_height = (h + 1U) / 2U;
@@ -1064,7 +1058,7 @@ VisionResult VisionGpuExecutor::run(
             }
             cc_pipeline.clear_output_dimensions();
 
-            result.debug_labels = p.with_colors ? cc_pipeline.get_output_image(0) : nullptr;
+            contexts.pass.result.debug_labels = p.with_colors ? cc_pipeline.get_output_image(0) : nullptr;
 
             uint32_t compact_count = 0;
             cc_pipeline.download_shared(0, 5, &compact_count, sizeof(uint32_t));
@@ -1096,9 +1090,9 @@ VisionResult VisionGpuExecutor::run(
                 }
             }
 
-            result.structured = std::move(cc_result);
-            result.w = 0;
-            result.h = 0;
+            contexts.pass.result.structured = std::move(cc_result);
+            contexts.pass.result.w = 0;
+            contexts.pass.result.h = 0;
             continue;
         }
         case VisionOp::FindContours: {
@@ -1270,10 +1264,10 @@ VisionResult VisionGpuExecutor::run(
                 }
                 cc_pipeline.clear_output_dimensions();
 
-                result.debug_contours = cc_pipeline.get_output_image(0);
-                result.structured = std::monostate {};
-                result.w = 0;
-                result.h = 0;
+                contexts.pass.result.debug_contours = cc_pipeline.get_output_image(0);
+                contexts.pass.result.structured = std::monostate {};
+                contexts.pass.result.w = 0;
+                contexts.pass.result.h = 0;
                 continue;
             }
 
@@ -1319,30 +1313,25 @@ VisionResult VisionGpuExecutor::run(
                 out_contours.push_back({ .points = std::move(pts), .area = ap.x, .perimeter = ap.y, .parent_label = m.z });
             }
 
-            result.structured = std::move(out_contours);
-            result.w = 0;
-            result.h = 0;
+            contexts.pass.result.structured = std::move(out_contours);
+            contexts.pass.result.w = 0;
+            contexts.pass.result.h = 0;
             continue;
         }
         default:
             break;
         }
 
-        auto dispatch_input = current;
+        auto dispatch_input = contexts.pass.current;
         const auto fence = pixel_ctx.dispatch_async({});
 
         if (step.deferred) {
-            contexts.suspended = {
-                .fence = fence,
-                .step_index = i,
-                .working = pixel_ctx.get_output_image(0),
-                .w = w,
-                .h = h,
-                .partial = std::move(result),
-            };
+            contexts.pass.current = pixel_ctx.get_output_image(0);
+            contexts.suspended.fence = fence;
+
             VisionResult pending;
             pending.status = VisionStatus::SUSPENDED;
-            pending.suspended_at = i;
+            pending.suspended_at = contexts.pass.index;
             return pending;
         }
 
@@ -1350,12 +1339,12 @@ VisionResult VisionGpuExecutor::run(
         foundry.release_fence(fence);
 
         pixel_ctx.clear_output_dimensions();
-        current = pixel_ctx.get_output_image(0);
-        last_staged = current;
-        completed_ops[Kinesis::Vision::hash_vision_step(step.op, step.params)] = { .output = current, .input = dispatch_input };
+        contexts.pass.current = pixel_ctx.get_output_image(0);
+        last_staged = contexts.pass.current;
+        completed_ops[Kinesis::Vision::hash_vision_step(step.op, step.params)] = { .output = contexts.pass.current, .input = dispatch_input };
     }
 
-    return result;
+    return std::move(contexts.pass.result);
 }
 
 VisionResult VisionGpuExecutor::run(
