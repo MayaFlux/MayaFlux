@@ -68,6 +68,15 @@ public:
     void reset();
 
 private:
+    /**
+     * @brief Walk state for the current run: sequence position, geometry,
+     *        working slot index, and the result under construction.
+     *
+     * Reset by begin() at the top of each run. Inter-frame state is separate,
+     * below.
+     */
+    CpuVisionPass m_pass;
+
     // =========================================================================
     // Scratch pool
     //

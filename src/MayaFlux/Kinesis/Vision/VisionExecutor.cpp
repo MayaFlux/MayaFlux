@@ -106,127 +106,123 @@ VisionResult VisionExecutor::run(
     if (slot_vec(k_slot_cur).capacity() < slot_min)
         slot_vec(k_slot_cur).reserve(slot_min);
 
-    uint32_t channels = 4;
-
     auto& cur_vec = slot_vec(k_slot_cur);
     cur_vec.assign(frame.begin(), frame.end());
 
-    size_t cur = k_slot_cur;
+    m_pass.begin(sequence, w, h);
+    m_pass.current = k_slot_cur;
+
     size_t nxt = k_slot_nxt;
-    auto en = static_cast<Eigen::Index>(static_cast<size_t>(w) * h);
+    auto en = static_cast<Eigen::Index>(m_pass.plane_size());
 
-    VisionResult result;
-    result.w = w;
-    result.h = h;
+    for (m_pass.index = 0; m_pass.index < sequence.steps.size(); ++m_pass.index) {
+        const auto& step = m_pass.step();
 
-    for (const auto& step : sequence.steps) {
         switch (step.op) {
-
         case VisionOp::Downsample2x: {
             uint32_t new_w = 0, new_h = 0;
-            downsample_2x(slot_vec(cur), slot_vec(nxt), w, h, channels, new_w, new_h);
+            downsample_2x(slot_vec(m_pass.current), slot_vec(nxt), w, h, m_pass.channels, new_w, new_h);
             w = new_w;
             h = new_h;
-            result.w = w;
-            result.h = h;
-            en = static_cast<Eigen::Index>(static_cast<size_t>(w) * h);
-            std::swap(cur, nxt);
-            result.structured = std::monostate {};
+            m_pass.set_geometry(w, h);
+            en = static_cast<Eigen::Index>(m_pass.plane_size());
+            std::swap(m_pass.current, nxt);
+            m_pass.result.structured = std::monostate {};
             break;
         }
 
         case VisionOp::RgbaToGray: {
-            rgba_to_gray(slot_vec(cur), slot_vec(nxt), w, h);
-            channels = 1;
-            std::swap(cur, nxt);
+            rgba_to_gray(slot_vec(m_pass.current), slot_vec(nxt), w, h);
+            m_pass.channels = 1;
+            std::swap(m_pass.current, nxt);
 
             if (sequence.tracks_keypoints && !sequence.track_follows_peaks) {
-                m_curr_gray_cache.assign(slot_vec(cur).begin(),
-                    slot_vec(cur).begin() + static_cast<size_t>(w) * h);
+                m_curr_gray_cache.assign(slot_vec(m_pass.current).begin(),
+                    slot_vec(m_pass.current).begin() + m_pass.plane_size());
             }
 
-            result.structured = std::monostate {};
+            m_pass.result.structured = std::monostate {};
             break;
         }
 
         case VisionOp::RgbaToHsv: {
-            rgba_to_hsv(slot_vec(cur), slot_vec(nxt), w, h);
-            channels = 3;
-            std::swap(cur, nxt);
-            result.structured = std::monostate {};
+            rgba_to_hsv(slot_vec(m_pass.current), slot_vec(nxt), w, h);
+            m_pass.channels = 3;
+            std::swap(m_pass.current, nxt);
+            m_pass.result.structured = std::monostate {};
             break;
         }
 
         case VisionOp::GrayToRgba: {
-            gray_to_rgba(slot_vec(cur), slot_vec(nxt), w, h);
-            channels = 4;
-            std::swap(cur, nxt);
-            result.structured = std::monostate {};
+            gray_to_rgba(slot_vec(m_pass.current), slot_vec(nxt), w, h);
+            m_pass.channels = 4;
+            std::swap(m_pass.current, nxt);
+            m_pass.result.structured = std::monostate {};
             break;
         }
 
         case VisionOp::Threshold: {
             const auto& p = get_params<ThresholdParams>(step.params, step.op);
-            slot_map_mut(cur, en) = (slot_map(cur, en) >= p.value).cast<float>();
-            result.structured = std::monostate {};
+            slot_map_mut(m_pass.current, en) = (slot_map(m_pass.current, en) >= p.value).cast<float>();
+            m_pass.result.structured = std::monostate {};
             break;
         }
 
         case VisionOp::ThresholdAdaptive: {
             const auto& p = get_params<ThresholdAdaptiveParams>(step.params, step.op);
-            threshold_adaptive(slot_vec(cur), slot_vec(nxt), w, h, p.block_size, p.offset);
-            std::swap(cur, nxt);
-            result.structured = std::monostate {};
+            threshold_adaptive(slot_vec(m_pass.current), slot_vec(nxt), w, h, p.block_size, p.offset);
+            std::swap(m_pass.current, nxt);
+            m_pass.result.structured = std::monostate {};
             break;
         }
 
         case VisionOp::ThresholdOtsu: {
-            threshold_otsu(slot_vec(cur), slot_vec(nxt));
-            std::swap(cur, nxt);
-            result.structured = std::monostate {};
+            threshold_otsu(slot_vec(m_pass.current), slot_vec(nxt));
+            std::swap(m_pass.current, nxt);
+            m_pass.result.structured = std::monostate {};
             break;
         }
 
         case VisionOp::NormalizeInplace: {
-            auto m = slot_map_mut(cur, en);
+            auto m = slot_map_mut(m_pass.current, en);
             const float mn = m.minCoeff();
             const float mx = m.maxCoeff();
             if (mx > mn)
                 m = (m - mn) / (mx - mn);
-            result.structured = std::monostate {};
+            m_pass.result.structured = std::monostate {};
             break;
         }
 
         case VisionOp::NormalizeRange: {
             const auto& p = get_params<NormalizeRangeParams>(step.params, step.op);
             if (p.hi > p.lo) {
-                auto m = slot_map_mut(cur, en);
+                auto m = slot_map_mut(m_pass.current, en);
                 m = ((m - p.lo) / (p.hi - p.lo)).max(0.0F).min(1.0F);
             }
-            result.structured = std::monostate {};
+            m_pass.result.structured = std::monostate {};
             break;
         }
 
         case VisionOp::GaussianBlur: {
             const auto& p = get_params<GaussianBlurParams>(step.params, step.op);
             const auto& kern = gaussian_kernel(p.sigma);
-            filter_separable(slot_vec(cur), slot_vec(k_slot_tmp), slot_vec(nxt), w, h, kern, kern);
-            std::swap(cur, nxt);
-            result.structured = std::monostate {};
+            filter_separable(slot_vec(m_pass.current), slot_vec(k_slot_tmp), slot_vec(nxt), w, h, kern, kern);
+            std::swap(m_pass.current, nxt);
+            m_pass.result.structured = std::monostate {};
             break;
         }
 
         case VisionOp::FilterSeparable: {
             const auto& p = get_params<FilterSeparableParams>(step.params, step.op);
-            filter_separable(slot_vec(cur), slot_vec(k_slot_tmp), slot_vec(nxt), w, h, p.kernel_x, p.kernel_y);
-            std::swap(cur, nxt);
-            result.structured = std::monostate {};
+            filter_separable(slot_vec(m_pass.current), slot_vec(k_slot_tmp), slot_vec(nxt), w, h, p.kernel_x, p.kernel_y);
+            std::swap(m_pass.current, nxt);
+            m_pass.result.structured = std::monostate {};
             break;
         }
 
         case VisionOp::Sobel: {
             GradientResult grad;
-            sobel(slot_vec(cur), slot_vec(k_slot_dx), slot_vec(k_slot_dy),
+            sobel(slot_vec(m_pass.current), slot_vec(k_slot_dx), slot_vec(k_slot_dy),
                 slot_vec(k_slot_tmp), w, h);
 
             auto dx = slot_map(k_slot_dx, en);
@@ -247,14 +243,14 @@ VisionResult VisionExecutor::run(
                 slot_vec(k_slot_dy).begin(), grad.angle.begin(),
                 [](float gx, float gy) { return std::atan2(gy, gx); });
 
-            result.structured = std::move(grad);
-            std::swap(cur, nxt);
+            m_pass.result.structured = std::move(grad);
+            std::swap(m_pass.current, nxt);
             break;
         }
 
         case VisionOp::Scharr: {
             GradientResult grad;
-            scharr(slot_vec(cur), slot_vec(k_slot_dx), slot_vec(k_slot_dy),
+            scharr(slot_vec(m_pass.current), slot_vec(k_slot_dx), slot_vec(k_slot_dy),
                 slot_vec(k_slot_tmp), w, h);
 
             auto dx = slot_map(k_slot_dx, en);
@@ -275,109 +271,109 @@ VisionResult VisionExecutor::run(
                 slot_vec(k_slot_dy).begin(), grad.angle.begin(),
                 [](float gx, float gy) { return std::atan2(gy, gx); });
 
-            result.structured = std::move(grad);
-            std::swap(cur, nxt);
+            m_pass.result.structured = std::move(grad);
+            std::swap(m_pass.current, nxt);
             break;
         }
 
         case VisionOp::Canny: {
             const auto& p = get_params<CannyParams>(step.params, step.op);
-            canny(slot_vec(cur), slot_vec(nxt), w, h, p.sigma, p.low_threshold, p.high_threshold);
-            std::swap(cur, nxt);
-            result.structured = std::monostate {};
+            canny(slot_vec(m_pass.current), slot_vec(nxt), w, h, p.sigma, p.low_threshold, p.high_threshold);
+            std::swap(m_pass.current, nxt);
+            m_pass.result.structured = std::monostate {};
             break;
         }
 
         case VisionOp::Erode: {
             const auto& p = get_params<MorphParams>(step.params, step.op);
-            erode(slot_vec(cur), slot_vec(nxt), w, h, p.radius);
-            std::swap(cur, nxt);
-            result.structured = std::monostate {};
+            erode(slot_vec(m_pass.current), slot_vec(nxt), w, h, p.radius);
+            std::swap(m_pass.current, nxt);
+            m_pass.result.structured = std::monostate {};
             break;
         }
 
         case VisionOp::Dilate: {
             const auto& p = get_params<MorphParams>(step.params, step.op);
-            dilate(slot_vec(cur), slot_vec(nxt), w, h, p.radius);
-            std::swap(cur, nxt);
-            result.structured = std::monostate {};
+            dilate(slot_vec(m_pass.current), slot_vec(nxt), w, h, p.radius);
+            std::swap(m_pass.current, nxt);
+            m_pass.result.structured = std::monostate {};
             break;
         }
 
         case VisionOp::Open: {
             const auto& p = get_params<MorphParams>(step.params, step.op);
-            open(slot_vec(cur), slot_vec(k_slot_tmp), slot_vec(nxt), w, h, p.radius);
-            std::swap(cur, nxt);
-            result.structured = std::monostate {};
+            open(slot_vec(m_pass.current), slot_vec(k_slot_tmp), slot_vec(nxt), w, h, p.radius);
+            std::swap(m_pass.current, nxt);
+            m_pass.result.structured = std::monostate {};
             break;
         }
 
         case VisionOp::Close: {
             const auto& p = get_params<MorphParams>(step.params, step.op);
-            close(slot_vec(cur), slot_vec(k_slot_tmp), slot_vec(nxt), w, h, p.radius);
-            std::swap(cur, nxt);
-            result.structured = std::monostate {};
+            close(slot_vec(m_pass.current), slot_vec(k_slot_tmp), slot_vec(nxt), w, h, p.radius);
+            std::swap(m_pass.current, nxt);
+            m_pass.result.structured = std::monostate {};
             break;
         }
 
         case VisionOp::MorphGradient: {
             const auto& p = get_params<MorphParams>(step.params, step.op);
-            morph_gradient(slot_vec(cur), slot_vec(k_slot_tmp), slot_vec(nxt), w, h, p.radius);
-            std::swap(cur, nxt);
-            result.structured = std::monostate {};
+            morph_gradient(slot_vec(m_pass.current), slot_vec(k_slot_tmp), slot_vec(nxt), w, h, p.radius);
+            std::swap(m_pass.current, nxt);
+            m_pass.result.structured = std::monostate {};
             break;
         }
 
         case VisionOp::ConnectedComponents: {
-            const size_t n = static_cast<size_t>(w) * h;
-            result.structured = connected_components(
-                std::span<const float>(slot_vec(cur)).subspan(0, n),
+            const size_t n = m_pass.plane_size();
+            m_pass.result.structured = connected_components(
+                std::span<const float>(slot_vec(m_pass.current)).subspan(0, n),
                 w, h);
-            slot_vec(cur).clear();
-            result.w = 0;
-            result.h = 0;
+            slot_vec(m_pass.current).clear();
+            m_pass.result.w = 0;
+            m_pass.result.h = 0;
             break;
         }
 
         case VisionOp::FindContours: {
             const auto& p = get_params<FindContoursParams>(step.params, step.op);
-            const size_t n = static_cast<size_t>(w) * h;
-            result.structured = find_contours(
-                std::span<const float>(slot_vec(cur)).subspan(0, n),
+            const size_t n = m_pass.plane_size();
+            m_pass.result.structured = find_contours(
+                std::span<const float>(slot_vec(m_pass.current)).subspan(0, n),
                 w, h, p.min_area, p.max_contours);
-            slot_vec(cur).clear();
-            result.w = 0;
-            result.h = 0;
+            slot_vec(m_pass.current).clear();
+            m_pass.result.w = 0;
+            m_pass.result.h = 0;
             break;
         }
 
         case VisionOp::HarrisResponse: {
             const auto& p = get_params<HarrisParams>(step.params, step.op);
             harris_response(
-                slot_vec(cur),
+                slot_vec(m_pass.current),
                 slot_vec(k_slot_dx), slot_vec(k_slot_dy), slot_vec(k_slot_tmp),
                 slot_vec(k_slot_ixx), slot_vec(k_slot_iyy), slot_vec(k_slot_ixy),
                 slot_vec(k_slot_sxx), slot_vec(k_slot_syy), slot_vec(k_slot_sxy),
                 slot_vec(nxt),
                 w, h, p.k, gaussian_kernel(p.sigma));
-            std::swap(cur, nxt);
-            result.structured = std::monostate {};
+            std::swap(m_pass.current, nxt);
+            m_pass.result.structured = std::monostate {};
             break;
         }
 
         case VisionOp::ExtractPeaks: {
             const auto& p = get_params<ExtractPeaksParams>(step.params, step.op);
-            auto kpts = extract_peaks(slot_vec(cur), w, h, p.threshold, p.nms_radius);
+            auto kpts = extract_peaks(slot_vec(m_pass.current), w, h, p.threshold, p.nms_radius);
             m_prev_keypoints = kpts;
 
             if (sequence.tracks_keypoints && !sequence.track_follows_peaks)
                 std::swap(std::get<std::vector<float>>(m_prev_gray), m_curr_gray_cache);
 
-            result.structured = std::move(kpts);
+            m_pass.result.structured = std::move(kpts);
             if (!sequence.track_follows_peaks) {
-                slot_vec(cur).clear();
-                result.w = 0;
-                result.h = 0;
+                slot_vec(m_pass.current).clear();
+                m_pass.result.w = 0;
+                m_pass.result.h = 0;
             }
             break;
         }
@@ -387,11 +383,11 @@ VisionResult VisionExecutor::run(
 
             auto& prev_vec = std::get<std::vector<float>>(m_prev_gray);
             if (prev_vec.empty() || m_prev_keypoints.empty()) {
-                std::swap(prev_vec, slot_vec(cur));
-                result.structured = std::vector<TrackResult> {};
-                slot_vec(cur).clear();
-                result.w = 0;
-                result.h = 0;
+                std::swap(prev_vec, slot_vec(m_pass.current));
+                m_pass.result.structured = std::vector<TrackResult> {};
+                slot_vec(m_pass.current).clear();
+                m_pass.result.w = 0;
+                m_pass.result.h = 0;
                 break;
             }
 
@@ -401,37 +397,40 @@ VisionResult VisionExecutor::run(
                 prev_pos.push_back(kp.position);
 
             auto tracked = track_keypoints(
-                prev_vec, slot_vec(cur),
+                prev_vec, slot_vec(m_pass.current),
                 w, h, prev_pos,
                 p.window_radius, p.max_iterations,
                 p.eigen_threshold, p.error_threshold);
 
-            std::swap(prev_vec, slot_vec(cur));
-            result.structured = std::move(tracked);
-            slot_vec(cur).clear();
-            result.w = 0;
-            result.h = 0;
+            std::swap(prev_vec, slot_vec(m_pass.current));
+            m_pass.result.structured = std::move(tracked);
+            slot_vec(m_pass.current).clear();
+            m_pass.result.w = 0;
+            m_pass.result.h = 0;
             break;
         }
 
         case VisionOp::Snapshot: {
-            if (slot_vec(cur).empty())
+            if (slot_vec(m_pass.current).empty())
                 break;
-            const size_t n = static_cast<size_t>(w) * h * channels;
+            const size_t n = m_pass.plane_size() * m_pass.channels;
             SnapshotEntry entry;
-            entry.pixels.assign(slot_vec(cur).begin(), slot_vec(cur).begin() + n);
+            entry.pixels.assign(slot_vec(m_pass.current).begin(), slot_vec(m_pass.current).begin() + n);
             entry.w = w;
             entry.h = h;
-            entry.channels = channels;
-            result.snapshots.push_back(std::move(entry));
+            entry.channels = m_pass.channels;
+            m_pass.result.snapshots.push_back(std::move(entry));
             break;
         }
-        } // switch
+        }
     }
 
-    result.pixel_image = std::move(m_slots[cur]);
-    slot_vec(cur).reserve(static_cast<size_t>(m_slot_w) * m_slot_h * 4);
-    return result;
+    m_pass.result.pixel_image = std::move(m_slots[m_pass.current]);
+    slot_vec(m_pass.current).reserve(static_cast<size_t>(m_slot_w) * m_slot_h * 4);
+
+    VisionResult out = std::move(m_pass.result);
+    m_pass.result = VisionResult {};
+    return out;
 }
 
 } // namespace MayaFlux::Kinesis::Vision
