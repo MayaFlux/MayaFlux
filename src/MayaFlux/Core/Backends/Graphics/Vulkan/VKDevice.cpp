@@ -10,6 +10,14 @@
 #endif
 
 #if defined(WIN32_BACKEND)
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+// Windows header should be included before vulkan_win32.h, dummy comment to prevent auto sort
 #include <vulkan/vulkan_win32.h>
 #endif
 
