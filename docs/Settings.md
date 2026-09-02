@@ -35,6 +35,14 @@ A complete file covering all four sections plus journal:
   },
   "graphics": {
     "target_frame_rate": 60,
+    "backend_info": {
+      "device_preference": 0,
+      "device_index": -1,
+      "device_uuid": "",
+      "device_name": "",
+      "require_presentation": true,
+      "strict_device_selection": false
+    },
     "surface_info": {
       "format": "B8G8R8A8_SRGB",
       "color_space": "SRGB_NONLINEAR",
@@ -144,6 +152,86 @@ The windowing backend (`GLFW` on macOS, `WAYLAND` on Linux, `WINDOWS` on Windows
 On macOS, `gfx.glfw_preinit_config` exposes GLFW pre-init hints.
 
 Key repeat timing for native backends (Wayland, Win32) is in `gfx.key_repeat_config`.
+
+### GPU selection
+
+On a machine with more than one GPU, `gfx.backend_info` decides which one the
+engine runs on. Every enumerated device is logged during startup with
+the information needed to pin it: (example)
+
+```log
+GPU [0] AMD Radeon RX 7900 XTX (RADV NAVI31) | type=DiscreteGpu driver=MesaRadv (radv)
+api=1.4.354 | uuid=00000000030000000000000000000000 | gfx=0 compute=1 transfer=0 |
+present=gfx:yes mask:0x7 mesh=yes vram=24560MB pci_bus=3 | score=4623
+```
+
+Devices that cannot be used are listed too, with the reason: no graphics queue
+family, an API version below 1.3, no `VK_KHR_swapchain`, or no presentation
+support on the graphics queue family.
+
+```cpp
+void settings() {
+    auto& gfx = MayaFlux::Config::get_global_graphics_config();
+
+    // Prefer a device class. AUTO scores discrete above integrated above virtual.
+    gfx.backend_info.device_preference =
+        Core::GraphicsBackendInfo::DevicePreference::DISCRETE;
+
+    // Or pin one exactly, by the uuid from the startup log.
+    gfx.backend_info.device_uuid = "00000000030000000000000000000000";
+
+    // Or by a case-insensitive substring of the device name.
+    gfx.backend_info.device_name = "7900";
+
+    // Fail at startup rather than falling back if the selector matches nothing.
+    gfx.backend_info.strict_device_selection = true;
+}
+```
+
+Selectors apply in precedence order: `device_index`, `device_uuid`,
+`device_name`, then `device_preference` as a scoring bias. `device_index` is
+an index into enumeration order, which is loader and driver dependent, so it
+is a debugging escape hatch rather than a durable setting. `device_uuid` is
+the only selector stable across driver updates and enumeration reordering.
+
+`DevicePreference` options: `AUTO`, `DISCRETE`, `INTEGRATED`, `VIRTUAL`,
+`EXTERNAL`. In JSON these are integers in that order, since the enum does not
+currently serialise to a string.
+
+`EXTERNAL` is a heuristic rather than a device class. Vulkan reports a
+Thunderbolt eGPU as a discrete GPU, indistinguishable from a built-in one, so
+`EXTERNAL` means discrete weighted toward the highest PCI bus number, on the
+reasoning that an externally attached device sits behind a PCIe switch well
+above the root complex. It needs `VK_EXT_pci_bus_info`, which is common on
+Linux and rare elsewhere; without it, `EXTERNAL` behaves as `DISCRETE`.
+
+Set `require_presentation` to false for headless and compute-only work,
+including any run with `windowing_backend` set to `NONE`. With it true, a
+device whose graphics queue family cannot present is rejected.
+
+`MAYAFLUX_GPU` overrides the config at runtime without a rebuild. An
+all-digits value is an index, anything else a name substring:
+
+```sh
+MAYAFLUX_GPU=1 ./my_piece
+MAYAFLUX_GPU=intel ./my_piece
+```
+
+Selection composes below driver-level filtering rather than overriding it.
+`VK_DRIVER_FILES`, `MESA_VK_DEVICE_SELECT`, `DRI_PRIME`, and
+`__NV_PRIME_RENDER_OFFLOAD` all act before the engine sees the device list, so
+if a GPU is missing from the startup log entirely, one of those is the reason.
+
+### Device extensions
+
+`required_extensions` and `optional_extensions` on `gfx.backend_info` request
+Vulkan device extensions beyond what the engine enables itself. A required
+extension the device does not support fails at startup with the name; an
+unsupported optional one is skipped with a warning.
+
+```cpp
+gfx.backend_info.optional_extensions = { "VK_EXT_memory_budget" };
+```
 
 ---
 
