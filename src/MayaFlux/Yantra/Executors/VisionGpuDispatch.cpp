@@ -308,6 +308,9 @@ namespace {
         contexts.pass.current = thresholded;
         contexts.pass.result.structured = std::monostate {};
 
+        contexts.bound_config = apply_cfg;
+        contexts.bound_staged = otsu_input;
+
         return { .output = thresholded, .input = otsu_input };
     }
 
@@ -361,6 +364,9 @@ namespace {
         auto opened_closed = pixel_ctx.get_output_image(0);
         contexts.pass.current = opened_closed;
         contexts.pass.result.structured = std::monostate {};
+
+        contexts.bound_config = second_cfg;
+        contexts.bound_staged = intermediate;
 
         return { .output = opened_closed, .input = morph_input };
     }
@@ -507,6 +513,9 @@ namespace {
         contexts.pass.current = finalized;
         contexts.pass.result.structured = std::monostate {};
 
+        contexts.bound_config = finalize_cfg;
+        contexts.bound_staged = hysteresis_result;
+
         return { .output = finalized, .input = canny_input };
     }
 
@@ -571,6 +580,9 @@ namespace {
 
         contexts.pass.current = pixel_ctx.get_output_image(0);
         contexts.pass.result.structured = std::monostate {};
+
+        contexts.bound_config = harris_resp_cfg;
+        contexts.bound_staged = smoothed;
 
         return { .output = contexts.pass.current, .input = harris_input };
     }
@@ -1255,17 +1267,7 @@ VisionResult VisionGpuExecutor::run(
     auto& cc_pipeline = contexts.cc_pipeline;
 
     auto& foundry = Portal::Graphics::get_shader_foundry();
-
-    Portal::Graphics::ShaderID last_shader_id = Portal::Graphics::INVALID_SHADER;
-    std::string last_shader_path;
-    std::shared_ptr<Core::VKImage> last_staged;
-    uint32_t last_w = 0, last_h = 0;
     std::unordered_map<size_t, CompletedOp> completed_ops;
-
-    pixel_ctx.prepare_output_image(w, h);
-    last_w = w;
-    last_h = h;
-
     size_t begin = 0;
 
     if (contexts.suspended.is_active()) {
@@ -1300,19 +1302,19 @@ VisionResult VisionGpuExecutor::run(
             return VisionResult {};
         }
 
-        if (cfg.shader_id != last_shader_id || cfg.shader_path != last_shader_path) {
+        if (cfg.shader_id != contexts.bound_config.shader_id
+            || cfg.shader_path != contexts.bound_config.shader_path) {
             pixel_ctx.swap_shader(cfg);
-            last_shader_id = cfg.shader_id;
-            last_shader_path = cfg.shader_path;
+            contexts.bound_config = cfg;
         }
-        if (contexts.pass.current != last_staged) {
+        if (contexts.pass.current != contexts.bound_staged) {
             pixel_ctx.stage_image(contexts.pass.current);
-            last_staged = contexts.pass.current;
+            contexts.bound_staged = contexts.pass.current;
         }
-        if (w != last_w || h != last_h) {
+        if (w != contexts.pass.storage_w || h != contexts.pass.storage_h) {
             pixel_ctx.prepare_output_image(w, h);
-            last_w = w;
-            last_h = h;
+            contexts.pass.storage_w = w;
+            contexts.pass.storage_h = h;
         }
         pixel_ctx.set_output_dimensions(w, h);
 
@@ -1333,11 +1335,11 @@ VisionResult VisionGpuExecutor::run(
             auto downsampled = pixel_ctx.get_output_image(0);
             completed_ops[Kinesis::Vision::hash_vision_step(step.op, step.params)] = { .output = downsampled, .input = contexts.pass.current };
             contexts.pass.current = downsampled;
-            last_staged = contexts.pass.current;
+            contexts.bound_staged = contexts.pass.current;
 
             contexts.pass.set_geometry(new_w, new_h);
-            last_w = new_w;
-            last_h = new_h;
+            contexts.pass.storage_w = new_w;
+            contexts.pass.storage_h = new_h;
 
             continue;
         }
@@ -1377,19 +1379,16 @@ VisionResult VisionGpuExecutor::run(
         }
         case VisionOp::ThresholdOtsu: {
             completed_ops[Kinesis::Vision::hash_vision_step(step.op, step.params)] = op_threshold_otsu(contexts);
-            last_staged = contexts.pass.current;
             continue;
         }
         case VisionOp::Open:
         case VisionOp::Close: {
             completed_ops[Kinesis::Vision::hash_vision_step(step.op, step.params)] = op_open_close(contexts, step.op, std::get<MorphParams>(step.params));
-            last_staged = contexts.pass.current;
             continue;
         }
         case VisionOp::Canny: {
             completed_ops[Kinesis::Vision::hash_vision_step(step.op, step.params)] = op_canny(contexts, completed_ops, step.params,
                 std::get<CannyParams>(step.params));
-            last_staged = contexts.pass.current;
             continue;
         }
         case VisionOp::HarrisResponse: {
@@ -1435,7 +1434,7 @@ VisionResult VisionGpuExecutor::run(
 
         pixel_ctx.clear_output_dimensions();
         contexts.pass.current = pixel_ctx.get_output_image(0);
-        last_staged = contexts.pass.current;
+        contexts.bound_staged = contexts.pass.current;
         completed_ops[Kinesis::Vision::hash_vision_step(step.op, step.params)] = { .output = contexts.pass.current, .input = dispatch_input };
     }
 

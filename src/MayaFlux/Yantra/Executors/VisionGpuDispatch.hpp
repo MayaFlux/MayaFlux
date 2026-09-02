@@ -65,6 +65,17 @@ struct MAYAFLUX_API VisionGpuContexts {
     Kinesis::Vision::GpuVisionPass pass;
 
     /**
+     * @brief Shader currently bound on pixel, and the image staged into it.
+     *
+     * TextureExecutionContext does not report its own state, so run tracks
+     * it. Held here rather than as a run local: a swap_shader or stage_image
+     * elided on one call stays elided on the next. The allocated output
+     * dimensions live in pass.storage_w / pass.storage_h.
+     */
+    GpuComputeConfig bound_config;
+    std::shared_ptr<Core::VKImage> bound_staged;
+
+    /**
      * @brief Outstanding work at a deferred step, and the point to resume.
      *
      * fence is INVALID_FENCE when nothing is outstanding. While live, run
