@@ -38,9 +38,15 @@ public:
      * @param context Vulkan context (provides device and configuration)
      * @param surface Window surface
      * @param window_config per-window configuration overrides
+     * @param sharing_families Queue families that will access the swapchain
+     *        images. Empty or single-entry yields eExclusive; two or more
+     *        distinct families yields eConcurrent. Supply both graphics and
+     *        present families when driving presentation on a separate queue.
      * @return True if creation succeeded
      */
-    bool create(VKContext& context, vk::SurfaceKHR surface, const WindowCreateInfo& window_config);
+    bool create(VKContext& context, vk::SurfaceKHR surface,
+        const WindowCreateInfo& window_config,
+        const std::vector<uint32_t>& sharing_families = {});
 
     /**
      * @brief Recreate swapchain (for window resize)
@@ -95,6 +101,7 @@ private:
     VKContext* m_context = nullptr; // Non-owning pointer to context
     vk::SurfaceKHR m_surface;
     const WindowCreateInfo* m_window_config = nullptr; // Store for recreation
+    std::vector<uint32_t> m_sharing_families;
 
     vk::SwapchainKHR m_swapchain;
     std::vector<vk::Image> m_images;

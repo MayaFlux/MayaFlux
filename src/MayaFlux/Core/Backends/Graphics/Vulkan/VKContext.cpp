@@ -199,11 +199,6 @@ void VKContext::destroy_surface(vk::SurfaceKHR surface)
     }
 }
 
-bool VKContext::update_present_family(vk::SurfaceKHR surface)
-{
-    return m_device.update_presentation_queue(surface);
-}
-
 void VKContext::cleanup()
 {
     for (auto surface : m_surfaces) {

@@ -21,7 +21,6 @@
 namespace MayaFlux::Core {
 
 namespace {
-
     /**
      * @brief Scratch native connection plus surfaceless presentation query.
      *
@@ -143,6 +142,7 @@ namespace {
         QueueFamilyIndices families;
         bool has_swapchain {};
         bool has_mesh_shader {};
+        uint32_t present_family_mask {};
         bool graphics_presents {};
         bool has_pci_info {};
         uint32_t pci_bus {};
@@ -208,6 +208,11 @@ VKDevice::VKDevice(VKDevice&& other) noexcept
     , m_compute_queue(other.m_compute_queue)
     , m_transfer_queue(other.m_transfer_queue)
     , m_queue_families(other.m_queue_families)
+    , m_graphics_presents(other.m_graphics_presents)
+    , m_present_queues(std::move(other.m_present_queues))
+    , m_device_name(std::move(other.m_device_name))
+    , m_device_uuid(other.m_device_uuid)
+    , m_supports_mesh_shaders(other.m_supports_mesh_shaders)
 {
     other.m_physical_device = VK_NULL_HANDLE;
     other.m_logical_device = VK_NULL_HANDLE;
@@ -226,6 +231,11 @@ VKDevice& VKDevice::operator=(VKDevice&& other) noexcept
         m_compute_queue = other.m_compute_queue;
         m_transfer_queue = other.m_transfer_queue;
         m_queue_families = other.m_queue_families;
+        m_graphics_presents = other.m_graphics_presents;
+        m_present_queues = std::move(other.m_present_queues);
+        m_device_name = std::move(other.m_device_name);
+        m_device_uuid = other.m_device_uuid;
+        m_supports_mesh_shaders = other.m_supports_mesh_shaders;
 
         other.m_physical_device = VK_NULL_HANDLE;
         other.m_logical_device = VK_NULL_HANDLE;
@@ -257,6 +267,11 @@ void VKDevice::cleanup()
     m_compute_queue = nullptr;
     m_transfer_queue = nullptr;
     m_queue_families = {};
+    m_present_queues.clear();
+    m_device_name.clear();
+    m_device_uuid = {};
+    m_graphics_presents = false;
+    m_supports_mesh_shaders = false;
 }
 
 bool VKDevice::pick_physical_device(vk::Instance instance, const GraphicsBackendInfo& backend_info)
@@ -349,8 +364,19 @@ bool VKDevice::pick_physical_device(vk::Instance instance, const GraphicsBackend
                 && mesh_features.taskShader == VK_TRUE;
         }
 
-        if (cand.families.graphics_family.has_value()) {
-            cand.graphics_presents = probe.supports(device, cand.families.graphics_family.value());
+        {
+            auto family_props = device.getQueueFamilyProperties();
+            const uint32_t probe_count = std::min<uint32_t>(static_cast<uint32_t>(family_props.size()), QueueFamilyIndices::MAX_TRACKED_FAMILIES);
+
+            for (uint32_t f = 0; f < probe_count; ++f) {
+                if (probe.supports(device, f))
+                    cand.present_family_mask |= (1U << f);
+            }
+
+            cand.families.present_family_mask = cand.present_family_mask;
+
+            if (cand.families.graphics_family.has_value())
+                cand.graphics_presents = cand.families.can_present(cand.families.graphics_family.value());
         }
 
         if (!cand.families.graphics_family.has_value()) {
@@ -403,7 +429,7 @@ bool VKDevice::pick_physical_device(vk::Instance instance, const GraphicsBackend
     for (const auto& cand : candidates) {
         MF_INFO(Journal::Component::Core, Journal::Context::GraphicsBackend,
             "GPU [{}] {} | type={} driver={} ({}) api={}.{}.{} | uuid={} | "
-            "gfx={} compute={} transfer={} | present={} mesh={} vram={}MB pci_bus={} | score={}{}{}",
+            "gfx={} compute={} transfer={} | present=gfx:{} mask:{:#x} mesh={} vram={}MB pci_bus={} | score={}{}{}",
             cand.index, cand.name, vk::to_string(cand.type),
             vk::to_string(cand.driver_id), cand.driver_name,
             VK_API_VERSION_MAJOR(cand.api_version),
@@ -414,6 +440,7 @@ bool VKDevice::pick_physical_device(vk::Instance instance, const GraphicsBackend
             cand.families.compute_family.has_value() ? std::to_string(cand.families.compute_family.value()) : "none",
             cand.families.transfer_family.has_value() ? std::to_string(cand.families.transfer_family.value()) : "none",
             cand.graphics_presents ? "yes" : "no",
+            cand.present_family_mask,
             cand.has_mesh_shader ? "yes" : "no",
             cand.device_local_bytes >> 20U,
             cand.has_pci_info ? std::to_string(cand.pci_bus) : "n/a",
@@ -513,7 +540,7 @@ bool VKDevice::pick_physical_device(vk::Instance instance, const GraphicsBackend
     m_device_name = selected->name;
     m_device_uuid = selected->uuid;
 
-    MF_INFO(Journal::Component::Core, Journal::Context::GraphicsBackend,
+    MF_LOG(Journal::Component::Core, Journal::Context::GraphicsBackend,
         "Selected GPU [{}] {} by {} (uuid={}, score={})",
         selected->index, selected->name, selection_basis, selected->uuid_hex, selected->score);
 
@@ -554,47 +581,26 @@ QueueFamilyIndices VKDevice::find_queue_families(vk::PhysicalDevice device)
     return indices;
 }
 
-bool VKDevice::update_presentation_queue(vk::SurfaceKHR surface)
+bool VKDevice::graphics_family_can_present(vk::SurfaceKHR surface) const
 {
-    if (!surface) {
-        MF_WARN(Journal::Component::Core, Journal::Context::GraphicsBackend,
-            "No surface provided for presentation support check");
+    if (!surface || !m_queue_families.graphics_family.has_value())
         return false;
-    }
 
-    auto queue_families = m_physical_device.getQueueFamilyProperties();
+    return m_physical_device.getSurfaceSupportKHR(
+               m_queue_families.graphics_family.value(), surface)
+        == VK_TRUE;
+}
 
-    for (uint32_t i = 0; i < queue_families.size(); i++) {
-        if (queue_families[i].queueCount > 0) {
-            vk::Bool32 presentSupport = m_physical_device.getSurfaceSupportKHR(i, surface);
-            if (presentSupport) {
-                if (i == m_queue_families.graphics_family.value()) {
-                    m_queue_families.present_family = i;
-                    m_presentation_initialized = true;
-                    MF_INFO(Journal::Component::Core, Journal::Context::GraphicsBackend,
-                        "Graphics queue family {} supports presentation", i);
-                    return true;
-                }
-            }
-        }
-    }
+vk::Queue VKDevice::get_present_queue(uint32_t family_index) const
+{
+    auto it = m_present_queues.find(family_index);
+    return it != m_present_queues.end() ? it->second : nullptr;
+}
 
-    for (uint32_t i = 0; i < queue_families.size(); i++) {
-        if (queue_families[i].queueCount > 0) {
-            vk::Bool32 presentSupport = m_physical_device.getSurfaceSupportKHR(i, surface);
-            if (presentSupport) {
-                m_queue_families.present_family = i;
-                m_presentation_initialized = true;
-                MF_INFO(Journal::Component::Core, Journal::Context::GraphicsBackend,
-                    "Found presentation support in queue family {}", i);
-                return true;
-            }
-        }
-    }
-
-    MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
-        "No queue family with presentation support found!");
-    return false;
+vk::Queue VKDevice::get_preferred_present_queue() const
+{
+    auto family = m_queue_families.preferred_present_family();
+    return family.has_value() ? get_present_queue(family.value()) : nullptr;
 }
 
 void VKDevice::query_supported_extensions()
@@ -625,6 +631,11 @@ bool VKDevice::create_logical_device(vk::Instance /*instance*/, const GraphicsBa
 
     if (m_queue_families.transfer_family.has_value() && m_queue_families.transfer_family != m_queue_families.graphics_family) {
         unique_queue_families.insert(m_queue_families.transfer_family.value());
+    }
+
+    for (uint32_t f = 0; f < QueueFamilyIndices::MAX_TRACKED_FAMILIES; ++f) {
+        if (m_queue_families.can_present(f))
+            unique_queue_families.insert(f);
     }
 
     std::vector<vk::DeviceQueueCreateInfo> queue_create_infos;
@@ -719,6 +730,11 @@ bool VKDevice::create_logical_device(vk::Instance /*instance*/, const GraphicsBa
         m_transfer_queue = m_logical_device.getQueue(m_queue_families.transfer_family.value(), 0);
     } else {
         m_transfer_queue = m_graphics_queue;
+    }
+
+    for (uint32_t f = 0; f < QueueFamilyIndices::MAX_TRACKED_FAMILIES; ++f) {
+        if (m_queue_families.can_present(f))
+            m_present_queues[f] = m_logical_device.getQueue(f, 0);
     }
 
     return true;
