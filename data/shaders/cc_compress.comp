@@ -5,7 +5,7 @@
 
 layout(local_size_x = 8, local_size_y = 8) in;
 
-layout(set = 0, binding = 2, std430) buffer BlockLabelBuf {
+layout(set = 0, binding = 2, std430) coherent volatile buffer BlockLabelBuf {
     uint block_label[];
 };
 

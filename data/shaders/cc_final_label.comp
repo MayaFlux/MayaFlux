@@ -12,7 +12,7 @@ layout(set = 0, binding = 2, std430) buffer BlockLabelBuf {
     uint block_label[];
 };
 
-layout(set = 0, binding = 4, std430) buffer LabelLutBuf {
+layout(set = 0, binding = 4, std430) coherent volatile buffer LabelLutBuf {
     uint label_lut[];
 };
 
