@@ -2,6 +2,7 @@
 
 #include "MayaFlux/Kakshya/DataProcessor.hpp"
 
+#include "MayaFlux/Kinesis/Vision/VisionExecutor.hpp"
 #include "MayaFlux/Yantra/Executors/VisionGpuDispatch.hpp"
 
 namespace MayaFlux::Vruta {

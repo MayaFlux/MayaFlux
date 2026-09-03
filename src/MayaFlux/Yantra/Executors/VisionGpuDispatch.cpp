@@ -46,15 +46,15 @@ namespace {
     struct MorphPC {
         uint32_t radius;
     };
+    struct IngestPC {
+        uint32_t width;
+        uint32_t height;
+    };
     struct HarrisPC {
         float k;
         uint32_t pass;
         uint32_t width;
         uint32_t height;
-    };
-    struct ExtractPC {
-        float threshold;
-        uint32_t nms_radius;
     };
     struct CannyPC {
         float sigma;
@@ -233,6 +233,905 @@ namespace {
         return cache.emplace(key, std::move(k)).first->second;
     }
 
+    GpuVisionPass::Completed op_threshold_otsu(VisionGpuContexts& contexts)
+    {
+        auto& pixel_ctx = contexts.pixel;
+        auto& structured_ctx = contexts.structured;
+        auto w = contexts.pass.w;
+        auto h = contexts.pass.h;
+        auto& foundry = Portal::Graphics::get_shader_foundry();
+
+        const auto otsu_input = contexts.pass.current;
+
+        structured_ctx.swap_shader({
+            .shader_path = "otsu_histogram.comp.spv",
+            .workgroup_size = k_wg2d,
+            .push_constant_size = sizeof(OtsuHistPC),
+        });
+        std::vector<uint32_t> zeros(256, 0);
+        structured_ctx.set_binding_data(3, std::span<const uint32_t>(zeros));
+        structured_ctx.stage_image(contexts.pass.current);
+        structured_ctx.set_push_constants(OtsuHistPC { .width = w, .height = h });
+        structured_ctx.set_output_dimensions(w, h);
+        {
+            const auto f = structured_ctx.dispatch_async({});
+            structured_ctx.clear_output_dimensions();
+            foundry.wait_for_fence(f);
+            foundry.release_fence(f);
+        }
+
+        const auto hist_check = structured_ctx.collect_result();
+        std::vector<uint32_t> hist_readback(256, 0);
+        if (auto it = hist_check.aux.find(3); it != hist_check.aux.end())
+            std::memcpy(hist_readback.data(), it->second.data(), 256 * sizeof(uint32_t));
+
+        structured_ctx.swap_shader({
+            .shader_path = "otsu_select.comp.spv",
+            .workgroup_size = { 256, 1, 1 },
+        });
+        structured_ctx.set_binding_data(3, std::span<const uint32_t>(hist_readback));
+        structured_ctx.set_output_dimensions(256, 1);
+
+        {
+            const auto f = structured_ctx.dispatch_async({});
+            structured_ctx.clear_output_dimensions();
+            foundry.wait_for_fence(f);
+            foundry.release_fence(f);
+        }
+
+        const auto sel_result = structured_ctx.collect_result();
+        uint32_t best_bin = 0;
+        if (auto it = sel_result.aux.find(4); it != sel_result.aux.end())
+            std::memcpy(&best_bin, it->second.data(), sizeof(uint32_t));
+        const float t_norm = static_cast<float>(best_bin) / 255.0F;
+
+        const auto apply_cfg = config_from_spec(
+            ShaderSpec::Assemble {}
+                .storage_image("out", BindingDirection::Output)
+                .storage_image("src", BindingDirection::Input)
+                .pc("threshold")
+                .op(KernelOp::CompareGE)
+                .workgroup(k_wg2d[0], k_wg2d[1])
+                .build());
+        pixel_ctx.swap_shader(apply_cfg);
+        pixel_ctx.stage_image(contexts.pass.current);
+        pixel_ctx.set_push_constants(ThresholdPC { .value = t_norm });
+        pixel_ctx.prepare_output_image(w, h);
+        {
+            const auto f = pixel_ctx.dispatch_async({});
+            foundry.wait_for_fence(f);
+            foundry.release_fence(f);
+        }
+        auto thresholded = pixel_ctx.get_output_image(0);
+
+        contexts.pass.result.debug_labels = thresholded;
+        contexts.pass.current = thresholded;
+        contexts.pass.result.structured = std::monostate {};
+
+        contexts.bound_config = apply_cfg;
+        contexts.bound_staged = otsu_input;
+
+        return { .output = thresholded, .input = otsu_input };
+    }
+
+    GpuVisionPass::Completed op_open_close(
+        VisionGpuContexts& contexts,
+        VisionOp op,
+        const MorphParams& p)
+    {
+        auto& pixel_ctx = contexts.pixel;
+        auto w = contexts.pass.w;
+        auto h = contexts.pass.h;
+        auto& foundry = Portal::Graphics::get_shader_foundry();
+
+        const auto morph_input = contexts.pass.current;
+        const auto radius = p.radius;
+        const bool is_open = (op == VisionOp::Open);
+
+        const GpuComputeConfig first_cfg {
+            .shader_path = is_open ? "erode.comp.spv" : "dilate.comp.spv",
+            .workgroup_size = k_wg2d,
+            .push_constant_size = sizeof(MorphPC),
+        };
+        pixel_ctx.swap_shader(first_cfg);
+        pixel_ctx.stage_image(contexts.pass.current);
+        pixel_ctx.set_push_constants(MorphPC { .radius = radius });
+        pixel_ctx.prepare_output_image(w, h);
+        pixel_ctx.set_output_dimensions(w, h);
+        {
+            const auto f = pixel_ctx.dispatch_async({});
+            foundry.wait_for_fence(f);
+            foundry.release_fence(f);
+        }
+        auto intermediate = pixel_ctx.get_output_image(0);
+
+        const GpuComputeConfig second_cfg {
+            .shader_path = is_open ? "dilate.comp.spv" : "erode.comp.spv",
+            .workgroup_size = k_wg2d,
+            .push_constant_size = sizeof(MorphPC),
+        };
+        pixel_ctx.swap_shader(second_cfg);
+        pixel_ctx.stage_image(intermediate);
+        pixel_ctx.set_push_constants(MorphPC { .radius = radius });
+        pixel_ctx.prepare_output_image(w, h);
+        pixel_ctx.set_output_dimensions(w, h);
+        {
+            const auto f = pixel_ctx.dispatch_async({});
+            foundry.wait_for_fence(f);
+            foundry.release_fence(f);
+        }
+
+        auto opened_closed = pixel_ctx.get_output_image(0);
+        contexts.pass.current = opened_closed;
+        contexts.pass.result.structured = std::monostate {};
+
+        contexts.bound_config = second_cfg;
+        contexts.bound_staged = intermediate;
+
+        return { .output = opened_closed, .input = morph_input };
+    }
+
+    GpuVisionPass::Completed op_canny(
+        VisionGpuContexts& contexts,
+        const VisionParams& params,
+        const CannyParams& p)
+    {
+        auto& pixel_ctx = contexts.pixel;
+        auto& label_ctx = contexts.labels;
+        auto w = contexts.pass.w;
+        auto h = contexts.pass.h;
+        auto& foundry = Portal::Graphics::get_shader_foundry();
+
+        const auto canny_input = contexts.pass.current;
+
+        const auto blur_key = Kinesis::Vision::hash_vision_step(
+            VisionOp::GaussianBlur, GaussianBlurParams { .sigma = p.sigma });
+        std::shared_ptr<Core::VKImage> blurred;
+
+        if (auto it = contexts.pass.completed.find(blur_key);
+            it != contexts.pass.completed.end() && it->second.input == canny_input) {
+            blurred = it->second.output;
+        } else {
+            const auto radius = static_cast<uint32_t>(std::ceil(p.sigma * 3.0F));
+            const auto& weights = gaussian_kernel_1d(radius, p.sigma);
+            const auto blur_cfg = VisionGpuExecutor::config(VisionOp::GaussianBlur, GaussianBlurParams { .sigma = p.sigma });
+            pixel_ctx.swap_shader(blur_cfg);
+            pixel_ctx.stage_image(canny_input);
+            pixel_ctx.set_binding_data(2, std::span<const float>(weights));
+            pixel_ctx.set_push_constants(GaussianPC { .radius = radius, .width = w, .height = h });
+            pixel_ctx.prepare_output_image(w, h);
+            {
+                const auto f = pixel_ctx.dispatch_async({});
+                foundry.wait_for_fence(f);
+                foundry.release_fence(f);
+            }
+            blurred = pixel_ctx.get_output_image(0);
+            contexts.pass.completed[blur_key] = { .output = blurred, .input = canny_input };
+        }
+
+        const auto sobel_key = Kinesis::Vision::hash_vision_step(VisionOp::Sobel, std::monostate {});
+        std::shared_ptr<Core::VKImage> grad;
+        if (auto it = contexts.pass.completed.find(sobel_key);
+            it != contexts.pass.completed.end() && it->second.input == blurred) {
+            grad = it->second.output;
+        } else {
+            const auto sobel_cfg = VisionGpuExecutor::config(VisionOp::Sobel, std::monostate {});
+            pixel_ctx.swap_shader(sobel_cfg);
+            pixel_ctx.stage_image(blurred);
+            pixel_ctx.prepare_output_image(w, h);
+            {
+                const auto f = pixel_ctx.dispatch_async({});
+                foundry.wait_for_fence(f);
+                foundry.release_fence(f);
+            }
+            grad = pixel_ctx.get_output_image(0);
+            contexts.pass.completed[sobel_key] = { .output = grad, .input = blurred };
+        }
+
+        const GpuComputeConfig nms_cfg {
+            .shader_path = "canny_nms.comp.spv",
+            .workgroup_size = k_wg2d,
+        };
+        pixel_ctx.swap_shader(nms_cfg);
+        pixel_ctx.stage_image(grad);
+        pixel_ctx.prepare_output_image(w, h);
+        {
+            const auto f = pixel_ctx.dispatch_async({});
+            foundry.wait_for_fence(f);
+            foundry.release_fence(f);
+        }
+        auto suppressed = pixel_ctx.get_output_image(0);
+
+        const auto classify_cfg = VisionGpuExecutor::config(VisionOp::Canny, params);
+        pixel_ctx.swap_shader(classify_cfg);
+        pixel_ctx.stage_image(suppressed);
+        pixel_ctx.set_push_constants(ClassifyPC { .threshold = p.low_threshold, .value = 0.5F });
+        pixel_ctx.prepare_output_image(w, h);
+        {
+            const auto f = pixel_ctx.dispatch_async({});
+            foundry.wait_for_fence(f);
+            foundry.release_fence(f);
+        }
+        auto classified_weak = pixel_ctx.get_output_image(0);
+
+        pixel_ctx.stage_image(classified_weak);
+        pixel_ctx.set_push_constants(ClassifyPC { .threshold = p.high_threshold, .value = 1.0F });
+        pixel_ctx.prepare_output_image(w, h);
+        {
+            const auto f = pixel_ctx.dispatch_async({});
+            foundry.wait_for_fence(f);
+            foundry.release_fence(f);
+        }
+        auto classified = pixel_ctx.get_output_image(0);
+
+        constexpr uint32_t k_max_hysteresis_rounds = 64;
+        label_ctx.set_output_size(2, sizeof(uint32_t));
+        label_ctx.set_output_dimensions(w, h);
+        label_ctx.swap_shader({
+            .shader_path = "canny_hysteresis.comp.spv",
+            .workgroup_size = k_wg2d,
+            .push_constant_size = sizeof(HysteresisPC),
+        });
+        label_ctx.stage_image_at(0, classified, GpuBufferBinding::ElementType::IMAGE_STORAGE);
+        label_ctx.slot_binding(0).direction = GpuBufferBinding::Direction::INPUT_OUTPUT;
+        {
+            uint32_t zero = 0;
+            label_ctx.set_binding_data(2, std::span<const uint32_t>(&zero, 1));
+            const HysteresisPC hpc { .width = w, .height = h };
+            ExecutionContext chained_ctx;
+            chained_ctx.mode = ExecutionMode::CHAINED;
+            chained_ctx.parameters = ChainedParams {
+                .pass_count = k_max_hysteresis_rounds,
+                .pc_updater = [hpc](uint32_t, void* dst) { std::memcpy(dst, &hpc, sizeof(HysteresisPC)); },
+                .passes_per_batch = k_max_hysteresis_rounds,
+            };
+            label_ctx.execute(Datum<> {}, chained_ctx);
+        }
+        label_ctx.slot_binding(0).direction = GpuBufferBinding::Direction::OUTPUT;
+        auto hysteresis_result = classified;
+
+        const auto finalize_cfg = config_from_spec(
+            ShaderSpec::Assemble {}
+                .storage_image("out", BindingDirection::Output)
+                .storage_image("src", BindingDirection::Input)
+                .pc("threshold")
+                .op(KernelOp::CompareGE)
+                .workgroup(k_wg2d[0], k_wg2d[1])
+                .build());
+        pixel_ctx.swap_shader(finalize_cfg);
+        pixel_ctx.stage_image(hysteresis_result);
+        pixel_ctx.set_push_constants(FinalizePC { .threshold = 1.0F });
+        pixel_ctx.prepare_output_image(w, h);
+        {
+            const auto f = pixel_ctx.dispatch_async({});
+            foundry.wait_for_fence(f);
+            foundry.release_fence(f);
+        }
+        auto finalized = pixel_ctx.get_output_image(0);
+
+        contexts.pass.result.debug_labels = finalized;
+        contexts.pass.current = finalized;
+        contexts.pass.result.structured = std::monostate {};
+
+        contexts.bound_config = finalize_cfg;
+        contexts.bound_staged = hysteresis_result;
+
+        return { .output = finalized, .input = canny_input };
+    }
+
+    GpuVisionPass::Completed op_harris_response(
+        VisionGpuContexts& contexts,
+        const HarrisParams& p)
+    {
+        auto& pixel_ctx = contexts.pixel;
+        auto w = contexts.pass.w;
+        auto h = contexts.pass.h;
+        auto& foundry = Portal::Graphics::get_shader_foundry();
+
+        const auto radius = static_cast<uint32_t>(std::ceil(p.sigma * 3.0F));
+        const auto& weights = gaussian_kernel_1d(radius, p.sigma);
+
+        const auto harris_input = contexts.pass.current;
+
+        pixel_ctx.swap_shader({ .shader_path = "harris_grad_pack.comp.spv", .workgroup_size = k_wg2d });
+        pixel_ctx.stage_image(harris_input);
+        pixel_ctx.prepare_output_image(w, h);
+        {
+            const auto f = pixel_ctx.dispatch_async({});
+            foundry.wait_for_fence(f);
+            foundry.release_fence(f);
+        }
+        auto packed = pixel_ctx.get_output_image(0);
+
+        const auto blur_cfg = VisionGpuExecutor::config(VisionOp::GaussianBlur, GaussianBlurParams { .sigma = p.sigma });
+        pixel_ctx.swap_shader(blur_cfg);
+        pixel_ctx.stage_image(packed);
+        pixel_ctx.set_binding_data(2, std::span<const float>(weights));
+        pixel_ctx.set_push_constants(GaussianPC { .radius = radius, .width = w, .height = h });
+        pixel_ctx.prepare_output_image(w, h);
+        {
+            const auto f = pixel_ctx.dispatch_async({});
+            foundry.wait_for_fence(f);
+            foundry.release_fence(f);
+        }
+        auto smoothed = pixel_ctx.get_output_image(0);
+
+        const GpuComputeConfig harris_resp_cfg {
+            .shader_path = "harris_response.comp.spv",
+            .workgroup_size = k_wg2d,
+            .push_constant_size = sizeof(HarrisPC),
+        };
+        pixel_ctx.swap_shader(harris_resp_cfg);
+        pixel_ctx.stage_image(smoothed);
+
+        /** Zero PeakBuf (binding 2) before pass 0 so its atomicMax starts clean;
+         *  clear the staged bytes before pass 1 so the accumulated max survives. */
+        const uint32_t peak_reset = 0U;
+        pixel_ctx.set_binding_data(2, std::span<const uint32_t>(&peak_reset, 1));
+        pixel_ctx.set_push_constants(HarrisPC { .k = p.k, .pass = 0U, .width = w, .height = h });
+        pixel_ctx.prepare_output_image(w, h);
+        {
+            const auto f = pixel_ctx.dispatch_async({});
+            foundry.wait_for_fence(f);
+            foundry.release_fence(f);
+        }
+
+        pixel_ctx.set_binding_data(2, std::span<const uint32_t>(&peak_reset, 0));
+        pixel_ctx.set_push_constants(HarrisPC { .k = p.k, .pass = 1U, .width = w, .height = h });
+        {
+            const auto f = pixel_ctx.dispatch_async({});
+            foundry.wait_for_fence(f);
+            foundry.release_fence(f);
+        }
+
+        contexts.pass.current = pixel_ctx.get_output_image(0);
+        contexts.pass.result.structured = std::monostate {};
+
+        contexts.bound_config = harris_resp_cfg;
+        contexts.bound_staged = smoothed;
+
+        return { .output = contexts.pass.current, .input = harris_input };
+    }
+
+    void op_extract_peaks(
+        VisionGpuContexts& contexts,
+        const ExtractPeaksParams& p)
+    {
+        auto& structured_ctx = contexts.structured;
+        auto w = contexts.pass.w;
+        auto h = contexts.pass.h;
+        auto& foundry = Portal::Graphics::get_shader_foundry();
+
+        constexpr uint32_t k_max_kp = 4096;
+
+        structured_ctx.swap_shader({
+            .shader_path = "extract_peaks.comp.spv",
+            .workgroup_size = { 8, 8, 1 },
+            .push_constant_size = sizeof(ExtractPeaksPC),
+        });
+
+        structured_ctx.set_output_size(1, sizeof(uint32_t));
+        structured_ctx.set_output_size(2, static_cast<size_t>(k_max_kp) * 4 * sizeof(float));
+
+        structured_ctx.stage_image(contexts.pass.current);
+        structured_ctx.set_push_constants(ExtractPeaksPC {
+            .threshold = p.threshold,
+            .nms_radius = p.nms_radius,
+            .width = w,
+            .height = h,
+            .max_keypoints = k_max_kp,
+        });
+
+        structured_ctx.set_output_dimensions(w, h);
+        const auto fence = structured_ctx.dispatch_async({});
+        structured_ctx.clear_output_dimensions();
+        foundry.wait_for_fence(fence);
+        foundry.release_fence(fence);
+
+        const auto* next = contexts.pass.ahead();
+        if (next && next->op == VisionOp::TrackKeypoints) {
+            contexts.pass.result.structured = std::monostate {};
+            contexts.pass.result.w = w;
+            contexts.pass.result.h = h;
+            return;
+        }
+
+        const auto gpu_result = structured_ctx.collect_result();
+
+        uint32_t count = 0;
+        if (auto it = gpu_result.aux.find(1); it != gpu_result.aux.end())
+            std::memcpy(&count, it->second.data(), sizeof(uint32_t));
+        count = std::min(count, k_max_kp);
+
+        struct GpuKp {
+            float x, y, response, pad;
+        };
+        std::vector<GpuKp> raw(count);
+        if (count > 0) {
+            if (auto it = gpu_result.aux.find(2); it != gpu_result.aux.end())
+                std::memcpy(raw.data(), it->second.data(), count * sizeof(GpuKp));
+        }
+
+        std::vector<Kinesis::Vision::Keypoint> kpts;
+        kpts.reserve(count);
+        for (const auto& kp : raw) {
+            kpts.push_back({ .position = { kp.x, kp.y },
+                .response = kp.response,
+                .scale = 1.0F,
+                .angle = 0.0F });
+        }
+        std::ranges::sort(kpts, [](const auto& a, const auto& b) { return a.response > b.response; });
+
+        contexts.pass.result.structured = std::move(kpts);
+        contexts.pass.result.w = 0;
+        contexts.pass.result.h = 0;
+    }
+
+    void op_connected_components(
+        VisionGpuContexts& contexts,
+        const ConnectedComponentsParams& p)
+    {
+        auto& cc_pipeline = contexts.cc_pipeline;
+        auto w = contexts.pass.w;
+        auto h = contexts.pass.h;
+        auto& foundry = Portal::Graphics::get_shader_foundry();
+
+        const auto seed_input = contexts.pass.current;
+
+        const uint32_t block_width = (w + 1U) / 2U;
+        const uint32_t block_height = (h + 1U) / 2U;
+        const double block_diagonal = std::sqrt(
+            static_cast<double>(block_width) * block_width + static_cast<double>(block_height) * block_height);
+        const auto k_compress_passes = static_cast<uint32_t>(std::ceil(std::log2(std::max(2.0, block_diagonal))));
+
+        cc_pipeline.ensure_shared_buffer(0, 2, static_cast<size_t>(block_width) * block_height, GpuBufferBinding::ElementType::UINT32);
+        cc_pipeline.ensure_shared_buffer(0, 3, 1, GpuBufferBinding::ElementType::UINT32);
+        cc_pipeline.ensure_shared_buffer(0, 4, static_cast<size_t>(block_width) * block_height, GpuBufferBinding::ElementType::UINT32);
+        cc_pipeline.ensure_shared_buffer(0, 5, 1, GpuBufferBinding::ElementType::UINT32);
+        cc_pipeline.ensure_shared_buffer(0, 6, static_cast<size_t>(w) * h, GpuBufferBinding::ElementType::UINT32);
+        cc_pipeline.ensure_shared_buffer(0, 7, static_cast<size_t>(k_max_components) * 2, GpuBufferBinding::ElementType::UINT32);
+        cc_pipeline.ensure_shared_buffer(0, 8, static_cast<size_t>(k_max_components) * 2, GpuBufferBinding::ElementType::UINT32);
+        cc_pipeline.ensure_shared_buffer(0, 9, k_max_components, GpuBufferBinding::ElementType::UINT32);
+
+        const CCBlockInitPC init_pc { .width = w, .height = h, .block_width = block_width, .block_height = block_height };
+        const CCMergePC merge_pc { .width = w, .height = h, .block_width = block_width, .block_height = block_height };
+        const auto* next = contexts.pass.ahead();
+        const bool contours_follow = next && next->op == VisionOp::FindContours;
+        const uint32_t export_labels = (p.export_labels || contours_follow) ? 1U : 0U;
+
+        const CCFinalLabelPC final_pc {
+            .width = w,
+            .height = h,
+            .block_width = block_width,
+            .block_height = block_height,
+            .max_components = k_max_components,
+            .export_labels = export_labels
+        };
+
+        cc_pipeline.swap_shader({ .shader_path = "cc_reset.comp.spv", .workgroup_size = { 256, 1, 1 }, .push_constant_size = sizeof(CCResetPC) });
+        cc_pipeline.set_push_constants(CCResetPC {
+            .lut_size = block_width * block_height,
+            .max_components = k_max_components,
+        });
+        cc_pipeline.set_output_dimensions(std::max(block_width * block_height, k_max_components), 1);
+        {
+            const auto reset_fence = cc_pipeline.dispatch_async({});
+            foundry.wait_for_fence(reset_fence);
+            foundry.release_fence(reset_fence);
+        }
+        cc_pipeline.clear_output_dimensions();
+
+        const std::array<uint32_t, 3> block_groups {
+            (block_width + k_wg2d[0] - 1U) / k_wg2d[0],
+            (block_height + k_wg2d[1] - 1U) / k_wg2d[1],
+            1U
+        };
+
+        std::vector<DependencyStage> cc_stages;
+
+        cc_stages.push_back({
+            .config = { .shader_path = "cc_block_init.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(CCBlockInitPC) },
+            .stage_fn = [&](GpuDispatchCore& ctx) {
+        cc_pipeline.stage_image_at(1, seed_input, GpuBufferBinding::ElementType::IMAGE_STORAGE);
+        ctx.set_push_constants(init_pc);
+        cc_pipeline.set_output_dimensions(block_width, block_height); },
+            .hazard_fn = [&](GpuDispatchCore& ctx) -> std::vector<Portal::Graphics::HazardResource> {
+                return {
+                    ctx.shared_buffer_hazard(
+                        { .set = 0, .binding = 2, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 }),
+                };
+            },
+            .explicit_groups = block_groups,
+        });
+
+        cc_stages.push_back({
+            .config = { .shader_path = "cc_merge.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(CCMergePC) },
+            .stage_fn = [&](GpuDispatchCore& ctx) {
+        cc_pipeline.stage_image_at(1, seed_input, GpuBufferBinding::ElementType::IMAGE_STORAGE);
+        ctx.set_push_constants(merge_pc);
+        cc_pipeline.set_output_dimensions(block_width, block_height); },
+            .hazard_fn = [&](GpuDispatchCore& ctx) -> std::vector<Portal::Graphics::HazardResource> {
+                return {
+                    ctx.shared_buffer_hazard(
+                        { .set = 0, .binding = 2, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 }),
+                };
+            },
+            .explicit_groups = block_groups,
+        });
+
+        ExecutionContext cc_ctx;
+        cc_ctx.mode = ExecutionMode::DEPENDENCY;
+        DependencyParams params;
+        params.stages = cc_stages;
+        cc_ctx.parameters = params;
+        cc_pipeline.execute(Datum<> {}, cc_ctx);
+
+        cc_pipeline.ensure_shared_buffer(0, 10, 3, GpuBufferBinding::ElementType::UINT32,
+            Portal::Graphics::BufferUsageHint::INDIRECT);
+        const std::array<uint32_t, 3> full_grid_indirect {
+            (block_width + 7U) / 8U,
+            (block_height + 7U) / 8U,
+            1U
+        };
+        cc_pipeline.upload_shared_raw(0, 10, reinterpret_cast<const uint8_t*>(full_grid_indirect.data()), full_grid_indirect.size() * sizeof(uint32_t));
+
+        cc_pipeline.swap_shader({ .shader_path = "cc_compress.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(CCCompressPC) });
+        cc_pipeline.set_push_constants(CCCompressPC { .block_width = block_width, .block_height = block_height });
+        cc_pipeline.set_output_dimensions(block_width, block_height);
+        {
+            const auto fence = cc_pipeline.dispatch_async({});
+            foundry.wait_for_fence(fence);
+            foundry.release_fence(fence);
+        }
+        cc_pipeline.clear_output_dimensions();
+
+        cc_pipeline.swap_shader({ .shader_path = "cc_final_label.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(CCFinalLabelPC) });
+        cc_pipeline.stage_image_at(1, seed_input, GpuBufferBinding::ElementType::IMAGE_STORAGE);
+        cc_pipeline.set_push_constants(final_pc);
+        cc_pipeline.set_output_dimensions(w, h);
+        cc_pipeline.prepare_output_image(w, h);
+        {
+            const auto fence = cc_pipeline.dispatch_async({});
+            foundry.wait_for_fence(fence);
+            foundry.release_fence(fence);
+        }
+        cc_pipeline.clear_output_dimensions();
+
+        contexts.pass.result.debug_labels = p.with_colors ? cc_pipeline.get_output_image(0) : nullptr;
+
+        uint32_t compact_count = 0;
+        cc_pipeline.download_shared(0, 5, &compact_count, sizeof(uint32_t));
+        compact_count = std::min(compact_count, k_max_components);
+
+        Kinesis::Vision::ComponentResult cc_result;
+        cc_result.count = compact_count;
+        cc_result.boxes.reserve(compact_count);
+
+        if (compact_count > 0) {
+            std::vector<glm::uvec2> bmin(compact_count);
+            std::vector<glm::uvec2> bmax(compact_count);
+            std::vector<uint32_t> bcount(compact_count);
+            cc_pipeline.download_shared(0, 7, bmin.data(), bmin.size() * sizeof(glm::uvec2));
+            cc_pipeline.download_shared(0, 8, bmax.data(), bmax.size() * sizeof(glm::uvec2));
+            cc_pipeline.download_shared(0, 9, bcount.data(), bcount.size() * sizeof(uint32_t));
+
+            const float inv_w = 1.0F / static_cast<float>(w);
+            const float inv_h = 1.0F / static_cast<float>(h);
+
+            for (uint32_t i = 0; i < compact_count; ++i) {
+                if (bcount[i] == 0)
+                    continue;
+                const float x = static_cast<float>(bmin[i].x) * inv_w;
+                const float y = static_cast<float>(bmin[i].y) * inv_h;
+                const float bw = static_cast<float>(bmax[i].x - bmin[i].x + 1) * inv_w;
+                const float bh = static_cast<float>(bmax[i].y - bmin[i].y + 1) * inv_h;
+                cc_result.boxes.push_back({ .x = x, .y = y, .w = bw, .h = bh, .confidence = 1.0F, .label_id = i + 1 });
+            }
+        }
+
+        contexts.pass.result.structured = std::move(cc_result);
+        contexts.pass.result.w = 0;
+        contexts.pass.result.h = 0;
+    }
+
+    bool op_find_contours(
+        VisionGpuContexts& contexts,
+        const FindContoursParams& p)
+    {
+        const auto* prev = contexts.pass.behind();
+        if (!prev || prev->op != VisionOp::ConnectedComponents) {
+            MF_ERROR(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
+                "run_gpu: FindContours requires ConnectedComponents as the immediately preceding step");
+            return false;
+        }
+
+        auto& cc_pipeline = contexts.cc_pipeline;
+        auto w = contexts.pass.w;
+        auto h = contexts.pass.h;
+        auto& foundry = Portal::Graphics::get_shader_foundry();
+
+        cc_pipeline.ensure_shared_buffer(1, 4, static_cast<size_t>(k_max_components) + 1U, GpuBufferBinding::ElementType::UINT32);
+        cc_pipeline.ensure_shared_buffer(1, 5, static_cast<size_t>(k_max_components) * k_max_holes_per_label, GpuBufferBinding::ElementType::UINT32);
+        cc_pipeline.ensure_shared_buffer(1, 6, static_cast<size_t>(k_max_trace_slots) * 2U, GpuBufferBinding::ElementType::UINT32);
+        cc_pipeline.ensure_shared_buffer(1, 7, 1U, GpuBufferBinding::ElementType::UINT32);
+        cc_pipeline.ensure_shared_buffer(1, 8, static_cast<size_t>(k_max_trace_slots) * k_max_points_per_contour * 2U, GpuBufferBinding::ElementType::FLOAT32);
+        cc_pipeline.ensure_shared_buffer(1, 9, 1U, GpuBufferBinding::ElementType::UINT32);
+        cc_pipeline.ensure_shared_buffer(1, 10, static_cast<size_t>(k_max_trace_slots) * 4U, GpuBufferBinding::ElementType::UINT32);
+        cc_pipeline.ensure_shared_buffer(1, 11, static_cast<size_t>(k_max_trace_slots) * 2U, GpuBufferBinding::ElementType::FLOAT32);
+        cc_pipeline.ensure_shared_buffer(2, 0, k_max_components, GpuBufferBinding::ElementType::FLOAT32);
+        cc_pipeline.ensure_shared_buffer(2, 1, k_max_components, GpuBufferBinding::ElementType::FLOAT32);
+
+        {
+            std::vector<uint32_t> owner_reset(static_cast<size_t>(k_max_components) + 1U, CC_UNCLAIMED_HOST);
+            cc_pipeline.upload_shared_raw(1, 4, reinterpret_cast<const uint8_t*>(owner_reset.data()), owner_reset.size() * sizeof(uint32_t));
+
+            std::vector<uint32_t> hole_owner_reset(static_cast<size_t>(k_max_components) * k_max_holes_per_label, CC_UNCLAIMED_HOST);
+            cc_pipeline.upload_shared_raw(1, 5, reinterpret_cast<const uint8_t*>(hole_owner_reset.data()), hole_owner_reset.size() * sizeof(uint32_t));
+
+            const uint32_t zero = 0;
+            cc_pipeline.upload_shared_raw(1, 7, reinterpret_cast<const uint8_t*>(&zero), sizeof(uint32_t));
+            cc_pipeline.upload_shared_raw(1, 9, reinterpret_cast<const uint8_t*>(&zero), sizeof(uint32_t));
+        }
+
+        auto max_points = p.max_points_per_contour > 0 ? std::min<uint32_t>(p.max_points_per_contour, k_max_points_per_contour) : k_max_points_per_contour;
+        cc_pipeline.swap_shader({ .shader_path = "contour_march.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(ContourMarchPC) });
+        cc_pipeline.stage_image_at(1, contexts.source, GpuBufferBinding::ElementType::IMAGE_SAMPLED);
+        cc_pipeline.prepare_output_image(w, h);
+        cc_pipeline.set_push_constants(ContourMarchPC {
+            .width = w,
+            .height = h,
+            .max_components = k_max_components,
+            .max_points_per_contour = max_points,
+            .max_holes_per_label = k_max_holes_per_label,
+            .phase = 0U,
+            .min_area = p.min_area,
+            .compacted_count = 0U });
+
+        cc_pipeline.set_output_dimensions(w, h);
+        {
+            const auto fence = cc_pipeline.dispatch_async({});
+            foundry.wait_for_fence(fence);
+            foundry.release_fence(fence);
+        }
+
+        cc_pipeline.set_push_constants(ContourMarchPC {
+            .width = w,
+            .height = h,
+            .max_components = k_max_components,
+            .max_points_per_contour = max_points,
+            .max_holes_per_label = k_max_holes_per_label,
+            .phase = 1U,
+            .min_area = p.min_area,
+            .compacted_count = 0U });
+        {
+            const auto fence = cc_pipeline.dispatch_async({});
+            foundry.wait_for_fence(fence);
+            foundry.release_fence(fence);
+        }
+
+        cc_pipeline.clear_output_dimensions();
+
+        cc_pipeline.swap_shader({ .shader_path = "contour_compact.comp.spv", .workgroup_size = { 256, 1, 1 }, .push_constant_size = sizeof(ContourCompactPC) });
+        cc_pipeline.set_push_constants(ContourCompactPC { .max_components = k_max_components, .max_holes_per_label = k_max_holes_per_label });
+        const uint32_t total_owner_slots = k_max_components * (1U + k_max_holes_per_label);
+        cc_pipeline.set_output_dimensions(total_owner_slots, 1);
+        {
+            const auto fence = cc_pipeline.dispatch_async({});
+            foundry.wait_for_fence(fence);
+            foundry.release_fence(fence);
+        }
+        cc_pipeline.clear_output_dimensions();
+
+        uint32_t compacted_count = 0;
+        cc_pipeline.download_shared(1, 7, &compacted_count, sizeof(uint32_t));
+
+        cc_pipeline.swap_shader({ .shader_path = "contour_march.comp.spv", .workgroup_size = { 256, 1, 1 }, .push_constant_size = sizeof(ContourMarchPC) });
+        cc_pipeline.set_push_constants(ContourMarchPC {
+            .width = w,
+            .height = h,
+            .max_components = k_max_components,
+            .max_points_per_contour = max_points,
+            .max_holes_per_label = k_max_holes_per_label,
+            .phase = 2U,
+            .min_area = p.min_area,
+            .compacted_count = compacted_count });
+        cc_pipeline.set_output_dimensions(std::max(compacted_count, 1U), 1);
+        {
+            const auto fence = cc_pipeline.dispatch_async({});
+            foundry.wait_for_fence(fence);
+            foundry.release_fence(fence);
+        }
+        cc_pipeline.clear_output_dimensions();
+
+        if (p.max_contours > 0U) {
+            constexpr uint32_t k = 12U;
+            constexpr uint32_t total_passes = k * (k + 1U) / 2U;
+
+            cc_pipeline.swap_shader(config_from_spec(
+                ShaderSpec::Assemble {}
+                    .tmpl(KernelTemplate::BitonicSort)
+                    .start_set(2)
+                    .ssbo("keys", BindingDirection::InOut, Kakshya::GpuDataFormat::FLOAT32)
+                    .ssbo("indices", BindingDirection::InOut, Kakshya::GpuDataFormat::FLOAT32)
+                    .pc("stage", Kakshya::GpuDataFormat::UINT32)
+                    .pc("pass", Kakshya::GpuDataFormat::UINT32)
+                    .pc("count", Kakshya::GpuDataFormat::UINT32)
+                    .pc("descending", Kakshya::GpuDataFormat::UINT32)
+                    .workgroup(256)
+                    .build()));
+
+            cc_pipeline.set_output_dimensions(k_max_components, 1U);
+
+            ExecutionContext bitonic_ctx;
+            bitonic_ctx.mode = ExecutionMode::CHAINED;
+            bitonic_ctx.parameters = ChainedParams {
+                .pass_count = total_passes,
+                .pc_updater = [k](uint32_t p_idx, void* pc_ptr) {
+                    uint32_t stage = 0, pass = 0, remaining = p_idx;
+                    for (uint32_t s = 0; s < k; ++s) {
+                        if (remaining <= s) {
+                            stage = s;
+                            pass = remaining;
+                            break;
+                        }
+                        remaining -= (s + 1);
+                    }
+                    struct PC {
+                        uint32_t stage, pass, count, descending;
+                    };
+                    *static_cast<PC*>(pc_ptr) = { .stage = stage, .pass = pass, .count = k_max_components, .descending = 1U };
+                },
+            };
+
+            cc_pipeline.execute(Datum<std::vector<Kakshya::DataVariant>> {}, bitonic_ctx);
+            cc_pipeline.clear_output_dimensions();
+        }
+
+        if (p.as_image) {
+            cc_pipeline.swap_shader({ .shader_path = "contour_render_clear.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(ContourClearPC) });
+            cc_pipeline.prepare_output_image(w, h);
+            cc_pipeline.set_push_constants(ContourClearPC { .width = w, .height = h });
+            cc_pipeline.set_output_dimensions(w, h);
+            {
+                const auto fence = cc_pipeline.dispatch_async({});
+                foundry.wait_for_fence(fence);
+                foundry.release_fence(fence);
+            }
+            cc_pipeline.clear_output_dimensions();
+
+            cc_pipeline.swap_shader({ .shader_path = "contour_render.comp.spv", .workgroup_size = { 256, 1, 1 }, .push_constant_size = sizeof(ContourRenderPC) });
+            cc_pipeline.set_push_constants(ContourRenderPC { .width = w, .height = h, .max_components = k_max_components, .max_points_per_contour = k_max_points_per_contour, .max_contours = p.max_contours });
+            const uint32_t render_slots = p.max_contours > 0U ? std::min(p.max_contours, k_max_components) : k_max_trace_slots;
+            cc_pipeline.set_output_dimensions(render_slots * k_max_points_per_contour, 1U);
+            {
+                const auto fence = cc_pipeline.dispatch_async({});
+                foundry.wait_for_fence(fence);
+                foundry.release_fence(fence);
+            }
+            cc_pipeline.clear_output_dimensions();
+
+            contexts.pass.result.debug_contours = cc_pipeline.get_output_image(0);
+            contexts.pass.result.structured = std::monostate {};
+            contexts.pass.result.w = 0;
+            contexts.pass.result.h = 0;
+            return true;
+        }
+
+        std::vector<glm::uvec4> meta(compacted_count);
+        cc_pipeline.download_shared(1, 10, meta.data(), compacted_count * sizeof(glm::uvec4));
+        std::vector<glm::vec2> area_perim(compacted_count);
+        cc_pipeline.download_shared(1, 11, area_perim.data(), compacted_count * sizeof(glm::vec2));
+        uint32_t points_written = 0;
+        cc_pipeline.download_shared(1, 9, &points_written, sizeof(uint32_t));
+        std::vector<glm::vec2> flat_points_full(points_written);
+
+        if (points_written > 0)
+            cc_pipeline.download_shared(1, 8, flat_points_full.data(), static_cast<size_t>(points_written) * sizeof(glm::vec2));
+
+        std::vector<uint32_t> order;
+        if (p.max_contours > 0U) {
+            const uint32_t take = std::min(p.max_contours, compacted_count);
+            std::vector<float> sorted_indices(take);
+            cc_pipeline.download_shared(2, 1, sorted_indices.data(), take * sizeof(float));
+            order.reserve(take);
+            for (float f : sorted_indices)
+                order.push_back(static_cast<uint32_t>(f));
+        } else {
+            order.resize(compacted_count);
+            for (uint32_t i = 0; i < compacted_count; ++i)
+                order[i] = i;
+        }
+
+        std::vector<Kinesis::Vision::Contour> out_contours;
+        out_contours.reserve(order.size());
+
+        for (uint32_t idx : order) {
+            if (idx >= compacted_count)
+                continue;
+            const auto& m = meta[idx];
+            if (m.y < 3)
+                continue;
+            if (m.x > points_written || m.y > points_written - m.x)
+                continue;
+
+            std::vector<glm::vec2> pts(
+                flat_points_full.begin() + m.x,
+                flat_points_full.begin() + m.x + m.y);
+            const glm::vec2 ap = area_perim[idx];
+            out_contours.push_back({ .points = std::move(pts), .area = ap.x, .perimeter = ap.y, .parent_label = m.z });
+        }
+
+        contexts.pass.result.structured = std::move(out_contours);
+        contexts.pass.result.w = 0;
+        contexts.pass.result.h = 0;
+        return true;
+    }
+
+    /**
+     * @brief Release the previous run's ingest fences (instant: long signalled).
+     */
+    void reap_ingest_fences(VisionGpuContexts& contexts)
+    {
+        auto& foundry = Portal::Graphics::get_shader_foundry();
+        for (auto* slot : { &contexts.ingest_fence, &contexts.ingest_barrier_fence }) {
+            if (*slot != Portal::Graphics::INVALID_FENCE) {
+                foundry.wait_for_fence(*slot);
+                foundry.release_fence(*slot);
+                *slot = Portal::Graphics::INVALID_FENCE;
+            }
+        }
+    }
+
+    /**
+     * @brief Convert a non-storage seed frame to an rgba32f storage image.
+     *
+     * Frames already carrying storage usage pass through. Otherwise
+     * vision_ingest.comp samples the frame as a texture (sampler does the
+     * unorm/sRGB decode) into contexts.ingest's rgba32f output. The dispatch
+     * is not awaited — a trailing compute barrier gives the memory
+     * dependency, fences are reaped on the next run.
+     */
+    std::shared_ptr<Core::VKImage> op_ingest(
+        VisionGpuContexts& contexts,
+        const std::shared_ptr<Core::VKImage>& frame,
+        uint32_t w, uint32_t h)
+    {
+        if (!frame || !frame->is_initialized())
+            return frame;
+        if (static_cast<bool>(frame->get_usage_flags() & vk::ImageUsageFlagBits::eStorage))
+            return frame;
+
+        auto& foundry = Portal::Graphics::get_shader_foundry();
+        auto& ingest = contexts.ingest;
+
+        ingest.swap_shader({
+            .shader_path = "vision_ingest.comp.spv",
+            .workgroup_size = k_wg2d,
+            .push_constant_size = sizeof(IngestPC),
+        });
+        ingest.stage_image(frame);
+        ingest.set_push_constants(IngestPC { .width = w, .height = h });
+        ingest.prepare_output_image(w, h);
+        ingest.set_output_dimensions(w, h);
+        contexts.ingest_fence = ingest.dispatch_async({});
+        ingest.clear_output_dimensions();
+
+        auto out = ingest.get_output_image(0);
+
+        if (out) {
+            const auto bcmd = foundry.begin_commands(
+                Portal::Graphics::ShaderFoundry::CommandBufferType::COMPUTE);
+            foundry.image_barrier(bcmd, out->get_image(),
+                vk::ImageLayout::eGeneral, vk::ImageLayout::eGeneral,
+                vk::AccessFlagBits::eShaderWrite, vk::AccessFlagBits::eShaderRead,
+                vk::PipelineStageFlagBits::eComputeShader,
+                vk::PipelineStageFlagBits::eComputeShader);
+            contexts.ingest_barrier_fence = foundry.submit_async(bcmd);
+        }
+
+        return out;
+    }
+
 } // namespace
 
 VisionGpuContexts::VisionGpuContexts()
@@ -304,6 +1203,15 @@ VisionGpuContexts::VisionGpuContexts()
             { .set = 2, .binding = 1, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::FLOAT32 },
         },
         GpuBufferBinding::ElementType::IMAGE_STORAGE,
+        0,
+    }
+    , ingest {
+        GpuComputeConfig {},
+        Portal::Graphics::ImageFormat::RGBA32F,
+        TextureExecutionContext::OutputMode::IMAGE,
+        1,
+        std::vector<GpuBufferBinding> {},
+        GpuBufferBinding::ElementType::IMAGE_SAMPLED,
         0,
     }
 {
@@ -419,7 +1327,7 @@ GpuComputeConfig VisionGpuExecutor::config(VisionOp op, const VisionParams& /*pa
     case VisionOp::HarrisResponse:
         return { .shader_path = "harris_response.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(HarrisPC) };
     case VisionOp::ExtractPeaks:
-        return { .shader_path = "extract_peaks.comp.spv", .workgroup_size = { 256, 1, 1 }, .push_constant_size = sizeof(ExtractPC) };
+        return { .shader_path = "extract_peaks.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(ExtractPeaksPC) };
     case VisionOp::ConnectedComponents:
         return { .shader_path = "cc_colorize.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(uint32_t) * 2 };
     case VisionOp::FindContours:
@@ -431,6 +1339,33 @@ GpuComputeConfig VisionGpuExecutor::config(VisionOp op, const VisionParams& /*pa
     default:
         return GpuComputeConfig { .shader_id = Portal::Graphics::INVALID_SHADER };
     }
+}
+
+void VisionGpuExecutor::reset()
+{
+    if (!m_contexts)
+        return;
+
+    auto& contexts = *m_contexts;
+
+    reap_ingest_fences(contexts);
+
+    if (contexts.suspended.is_active()) {
+        auto& foundry = Portal::Graphics::get_shader_foundry();
+        foundry.wait_for_fence(contexts.suspended.fence);
+        foundry.release_fence(contexts.suspended.fence);
+        contexts.suspended.fence = Portal::Graphics::INVALID_FENCE;
+    }
+
+    contexts.pass.sequence = nullptr;
+    contexts.pass.index = 0;
+    contexts.pass.result = Kinesis::Vision::VisionResult {};
+    contexts.pass.current.reset();
+    contexts.pass.forget();
+    contexts.pass.completed.clear();
+
+    contexts.source.reset();
+    contexts.bound_staged.reset();
 }
 
 // ============================================================================
@@ -448,24 +1383,42 @@ VisionResult VisionGpuExecutor::run(
     auto& label_ctx = contexts.labels;
     auto& cc_pipeline = contexts.cc_pipeline;
 
-    VisionResult result;
-    result.w = w;
-    result.h = h;
-
     auto& foundry = Portal::Graphics::get_shader_foundry();
-    std::shared_ptr<Core::VKImage> current = image;
-
-    Portal::Graphics::ShaderID last_shader_id = Portal::Graphics::INVALID_SHADER;
-    std::string last_shader_path;
-    std::shared_ptr<Core::VKImage> last_staged;
-    uint32_t last_w = 0, last_h = 0;
     std::unordered_map<size_t, CompletedOp> completed_ops;
+    size_t begin = 0;
 
-    pixel_ctx.prepare_output_image(w, h);
-    last_w = w;
-    last_h = h;
+    if (contexts.suspended.is_active()) {
+        if (&sequence != contexts.pass.sequence) {
+            MF_WARN(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
+                "run_gpu: polling a suspension with a different sequence; "
+                "the walk continues on the sequence the run started from");
+        }
 
-    for (const auto& step : sequence.steps) {
+        if (!foundry.is_fence_signaled(contexts.suspended.fence)) {
+            VisionResult pending;
+            pending.status = VisionStatus::SUSPENDED;
+            pending.suspended_at = contexts.pass.index;
+            return pending;
+        }
+
+        foundry.release_fence(contexts.suspended.fence);
+        contexts.suspended.fence = Portal::Graphics::INVALID_FENCE;
+
+        begin = contexts.pass.index + 1;
+    } else {
+        reap_ingest_fences(contexts);
+        contexts.pass.begin(sequence, w, h);
+        const auto seed = op_ingest(contexts, image, w, h);
+        contexts.pass.current = seed;
+        contexts.source = seed;
+    }
+
+    for (contexts.pass.index = begin; contexts.pass.index < sequence.steps.size(); ++contexts.pass.index) {
+        const auto& step = sequence.steps[contexts.pass.index];
+
+        const uint32_t w = contexts.pass.w;
+        const uint32_t h = contexts.pass.h;
+
         const auto cfg = config(step.op, step.params);
 
         if (cfg.shader_id == Portal::Graphics::INVALID_SHADER && cfg.shader_path.empty()) {
@@ -475,19 +1428,19 @@ VisionResult VisionGpuExecutor::run(
             return VisionResult {};
         }
 
-        if (cfg.shader_id != last_shader_id || cfg.shader_path != last_shader_path) {
+        if (cfg.shader_id != contexts.bound_config.shader_id
+            || cfg.shader_path != contexts.bound_config.shader_path) {
             pixel_ctx.swap_shader(cfg);
-            last_shader_id = cfg.shader_id;
-            last_shader_path = cfg.shader_path;
+            contexts.bound_config = cfg;
         }
-        if (current != last_staged) {
-            pixel_ctx.stage_image(current);
-            last_staged = current;
+        if (contexts.pass.current != contexts.bound_staged) {
+            pixel_ctx.stage_image(contexts.pass.current);
+            contexts.bound_staged = contexts.pass.current;
         }
-        if (w != last_w || h != last_h) {
+        if (w != contexts.pass.storage_w || h != contexts.pass.storage_h) {
             pixel_ctx.prepare_output_image(w, h);
-            last_w = w;
-            last_h = h;
+            contexts.pass.storage_w = w;
+            contexts.pass.storage_h = h;
         }
         pixel_ctx.set_output_dimensions(w, h);
 
@@ -506,16 +1459,13 @@ VisionResult VisionGpuExecutor::run(
             pixel_ctx.clear_output_dimensions();
 
             auto downsampled = pixel_ctx.get_output_image(0);
-            completed_ops[Kinesis::Vision::hash_vision_step(step.op, step.params)] = { .output = downsampled, .input = current };
-            current = downsampled;
-            last_staged = current;
+            completed_ops[Kinesis::Vision::hash_vision_step(step.op, step.params)] = { .output = downsampled, .input = contexts.pass.current };
+            contexts.pass.current = downsampled;
+            contexts.bound_staged = contexts.pass.current;
 
-            w = new_w;
-            h = new_h;
-            result.w = w;
-            result.h = h;
-            last_w = w;
-            last_h = h;
+            contexts.pass.set_geometry(new_w, new_h);
+            contexts.pass.storage_w = new_w;
+            contexts.pass.storage_h = new_h;
 
             continue;
         }
@@ -554,770 +1504,76 @@ VisionResult VisionGpuExecutor::run(
             break;
         }
         case VisionOp::ThresholdOtsu: {
-            structured_ctx.swap_shader({
-                .shader_path = "otsu_histogram.comp.spv",
-                .workgroup_size = k_wg2d,
-                .push_constant_size = sizeof(OtsuHistPC),
-            });
-            std::vector<uint32_t> zeros(256, 0);
-            structured_ctx.set_binding_data(3, std::span<const uint32_t>(zeros));
-            structured_ctx.stage_image(current);
-            structured_ctx.set_push_constants(OtsuHistPC { .width = w, .height = h });
-            structured_ctx.set_output_dimensions(w, h);
-            {
-                const auto f = structured_ctx.dispatch_async({});
-                structured_ctx.clear_output_dimensions();
-                foundry.wait_for_fence(f);
-                foundry.release_fence(f);
-            }
-
-            const auto hist_check = structured_ctx.collect_result();
-            std::vector<uint32_t> hist_readback(256, 0);
-            if (auto it = hist_check.aux.find(3); it != hist_check.aux.end())
-                std::memcpy(hist_readback.data(), it->second.data(), 256 * sizeof(uint32_t));
-
-            structured_ctx.swap_shader({
-                .shader_path = "otsu_select.comp.spv",
-                .workgroup_size = { 256, 1, 1 },
-            });
-            structured_ctx.set_binding_data(3, std::span<const uint32_t>(hist_readback));
-            structured_ctx.set_output_dimensions(256, 1);
-
-            {
-                const auto f = structured_ctx.dispatch_async({});
-                structured_ctx.clear_output_dimensions();
-                foundry.wait_for_fence(f);
-                foundry.release_fence(f);
-            }
-
-            const auto sel_result = structured_ctx.collect_result();
-            uint32_t best_bin = 0;
-            if (auto it = sel_result.aux.find(4); it != sel_result.aux.end())
-                std::memcpy(&best_bin, it->second.data(), sizeof(uint32_t));
-            const float t_norm = static_cast<float>(best_bin) / 255.0F;
-
-            const auto apply_cfg = config_from_spec(
-                ShaderSpec::Assemble {}
-                    .storage_image("out", BindingDirection::Output)
-                    .storage_image("src", BindingDirection::Input)
-                    .pc("threshold")
-                    .op(KernelOp::CompareGE)
-                    .workgroup(k_wg2d[0], k_wg2d[1])
-                    .build());
-            pixel_ctx.swap_shader(apply_cfg);
-            pixel_ctx.stage_image(current);
-            pixel_ctx.set_push_constants(ThresholdPC { .value = t_norm });
-            pixel_ctx.prepare_output_image(w, h);
-            {
-                const auto f = pixel_ctx.dispatch_async({});
-                foundry.wait_for_fence(f);
-                foundry.release_fence(f);
-            }
-            auto thresholded = pixel_ctx.get_output_image(0);
-
-            completed_ops[Kinesis::Vision::hash_vision_step(step.op, step.params)] = { .output = thresholded, .input = current };
-            result.debug_labels = thresholded;
-            current = thresholded;
-            last_staged = current;
-            result.structured = std::monostate {};
+            contexts.pass.completed[Kinesis::Vision::hash_vision_step(step.op, step.params)] = op_threshold_otsu(contexts);
             continue;
         }
         case VisionOp::Open:
         case VisionOp::Close: {
-            const auto radius = std::get<MorphParams>(step.params).radius;
-            const bool is_open = (step.op == VisionOp::Open);
-
-            const GpuComputeConfig first_cfg {
-                .shader_path = is_open ? "erode.comp.spv" : "dilate.comp.spv",
-                .workgroup_size = k_wg2d,
-                .push_constant_size = sizeof(MorphPC),
-            };
-            pixel_ctx.swap_shader(first_cfg);
-            pixel_ctx.stage_image(current);
-            pixel_ctx.set_push_constants(MorphPC { .radius = radius });
-            pixel_ctx.prepare_output_image(w, h);
-            pixel_ctx.set_output_dimensions(w, h);
-            {
-                const auto f = pixel_ctx.dispatch_async({});
-                foundry.wait_for_fence(f);
-                foundry.release_fence(f);
-            }
-            auto intermediate = pixel_ctx.get_output_image(0);
-
-            const GpuComputeConfig second_cfg {
-                .shader_path = is_open ? "dilate.comp.spv" : "erode.comp.spv",
-                .workgroup_size = k_wg2d,
-                .push_constant_size = sizeof(MorphPC),
-            };
-            pixel_ctx.swap_shader(second_cfg);
-            pixel_ctx.stage_image(intermediate);
-            pixel_ctx.set_push_constants(MorphPC { .radius = radius });
-            pixel_ctx.prepare_output_image(w, h);
-            pixel_ctx.set_output_dimensions(w, h);
-            {
-                const auto f = pixel_ctx.dispatch_async({});
-                foundry.wait_for_fence(f);
-                foundry.release_fence(f);
-            }
-
-            auto opened_closed = pixel_ctx.get_output_image(0);
-            completed_ops[Kinesis::Vision::hash_vision_step(step.op, step.params)] = { .output = opened_closed, .input = current };
-            current = opened_closed;
-            last_staged = current;
-            result.structured = std::monostate {};
+            contexts.pass.completed[Kinesis::Vision::hash_vision_step(step.op, step.params)] = op_open_close(contexts, step.op, std::get<MorphParams>(step.params));
             continue;
         }
         case VisionOp::Canny: {
-            const auto& p = std::get<CannyParams>(step.params);
-            auto canny_input = current;
-
-            const auto blur_key = Kinesis::Vision::hash_vision_step(
-                VisionOp::GaussianBlur, GaussianBlurParams { .sigma = p.sigma });
-            std::shared_ptr<Core::VKImage> blurred;
-            if (auto it = completed_ops.find(blur_key);
-                it != completed_ops.end() && it->second.input == canny_input) {
-                blurred = it->second.output;
-            } else {
-                const auto radius = static_cast<uint32_t>(std::ceil(p.sigma * 3.0F));
-                const auto& weights = gaussian_kernel_1d(radius, p.sigma);
-                const auto blur_cfg = config(VisionOp::GaussianBlur, GaussianBlurParams { .sigma = p.sigma });
-                pixel_ctx.swap_shader(blur_cfg);
-                pixel_ctx.stage_image(canny_input);
-                pixel_ctx.set_binding_data(2, std::span<const float>(weights));
-                pixel_ctx.set_push_constants(GaussianPC { .radius = radius, .width = w, .height = h });
-                pixel_ctx.prepare_output_image(w, h);
-                {
-                    const auto f = pixel_ctx.dispatch_async({});
-                    foundry.wait_for_fence(f);
-                    foundry.release_fence(f);
-                }
-                blurred = pixel_ctx.get_output_image(0);
-                completed_ops[blur_key] = { .output = blurred, .input = canny_input };
-            }
-
-            const auto sobel_key = Kinesis::Vision::hash_vision_step(VisionOp::Sobel, std::monostate {});
-            std::shared_ptr<Core::VKImage> grad;
-            if (auto it = completed_ops.find(sobel_key);
-                it != completed_ops.end() && it->second.input == blurred) {
-                grad = it->second.output;
-            } else {
-                const auto sobel_cfg = config(VisionOp::Sobel, std::monostate {});
-                pixel_ctx.swap_shader(sobel_cfg);
-                pixel_ctx.stage_image(blurred);
-                pixel_ctx.prepare_output_image(w, h);
-                {
-                    const auto f = pixel_ctx.dispatch_async({});
-                    foundry.wait_for_fence(f);
-                    foundry.release_fence(f);
-                }
-                grad = pixel_ctx.get_output_image(0);
-                completed_ops[sobel_key] = { .output = grad, .input = blurred };
-            }
-
-            const GpuComputeConfig nms_cfg {
-                .shader_path = "canny_nms.comp.spv",
-                .workgroup_size = k_wg2d,
-            };
-            pixel_ctx.swap_shader(nms_cfg);
-            pixel_ctx.stage_image(grad);
-            pixel_ctx.prepare_output_image(w, h);
-            {
-                const auto f = pixel_ctx.dispatch_async({});
-                foundry.wait_for_fence(f);
-                foundry.release_fence(f);
-            }
-            auto suppressed = pixel_ctx.get_output_image(0);
-
-            const auto classify_cfg = config(VisionOp::Canny, step.params);
-            pixel_ctx.swap_shader(classify_cfg);
-            pixel_ctx.stage_image(suppressed);
-            pixel_ctx.set_push_constants(ClassifyPC { .threshold = p.low_threshold, .value = 0.5F });
-            pixel_ctx.prepare_output_image(w, h);
-            {
-                const auto f = pixel_ctx.dispatch_async({});
-                foundry.wait_for_fence(f);
-                foundry.release_fence(f);
-            }
-            auto classified_weak = pixel_ctx.get_output_image(0);
-
-            pixel_ctx.stage_image(classified_weak);
-            pixel_ctx.set_push_constants(ClassifyPC { .threshold = p.high_threshold, .value = 1.0F });
-            pixel_ctx.prepare_output_image(w, h);
-            {
-                const auto f = pixel_ctx.dispatch_async({});
-                foundry.wait_for_fence(f);
-                foundry.release_fence(f);
-            }
-            auto classified = pixel_ctx.get_output_image(0);
-
-            constexpr uint32_t k_max_hysteresis_rounds = 64;
-            label_ctx.set_output_size(2, sizeof(uint32_t));
-            label_ctx.set_output_dimensions(w, h);
-            label_ctx.swap_shader({
-                .shader_path = "canny_hysteresis.comp.spv",
-                .workgroup_size = k_wg2d,
-                .push_constant_size = sizeof(HysteresisPC),
-            });
-            label_ctx.stage_image_at(0, classified, GpuBufferBinding::ElementType::IMAGE_STORAGE);
-            label_ctx.slot_binding(0).direction = GpuBufferBinding::Direction::INPUT_OUTPUT;
-            {
-                uint32_t zero = 0;
-                label_ctx.set_binding_data(2, std::span<const uint32_t>(&zero, 1));
-                const HysteresisPC hpc { .width = w, .height = h };
-                ExecutionContext chained_ctx;
-                chained_ctx.mode = ExecutionMode::CHAINED;
-                chained_ctx.parameters = ChainedParams {
-                    .pass_count = k_max_hysteresis_rounds,
-                    .pc_updater = [hpc](uint32_t, void* dst) { std::memcpy(dst, &hpc, sizeof(HysteresisPC)); },
-                    .passes_per_batch = k_max_hysteresis_rounds,
-                };
-                label_ctx.execute(Datum<> {}, chained_ctx);
-            }
-            label_ctx.slot_binding(0).direction = GpuBufferBinding::Direction::OUTPUT;
-            auto hysteresis_result = classified;
-
-            const auto finalize_cfg = config_from_spec(
-                ShaderSpec::Assemble {}
-                    .storage_image("out", BindingDirection::Output)
-                    .storage_image("src", BindingDirection::Input)
-                    .pc("threshold")
-                    .op(KernelOp::CompareGE)
-                    .workgroup(k_wg2d[0], k_wg2d[1])
-                    .build());
-            pixel_ctx.swap_shader(finalize_cfg);
-            pixel_ctx.stage_image(hysteresis_result);
-            pixel_ctx.set_push_constants(FinalizePC { .threshold = 1.0F });
-            pixel_ctx.prepare_output_image(w, h);
-            {
-                const auto f = pixel_ctx.dispatch_async({});
-                foundry.wait_for_fence(f);
-                foundry.release_fence(f);
-            }
-            auto finalized = pixel_ctx.get_output_image(0);
-
-            completed_ops[Kinesis::Vision::hash_vision_step(step.op, step.params)] = { .output = finalized, .input = canny_input };
-
-            result.debug_labels = finalized;
-            current = finalized;
-            last_staged = current;
-            result.structured = std::monostate {};
+            auto done = op_canny(contexts, step.params, std::get<CannyParams>(step.params));
+            contexts.pass.completed[Kinesis::Vision::hash_vision_step(step.op, step.params)] = done;
             continue;
         }
         case VisionOp::HarrisResponse: {
-            const auto& p = std::get<HarrisParams>(step.params);
-            const auto radius = static_cast<uint32_t>(std::ceil(p.sigma * 3.0F));
-            const auto& weights = gaussian_kernel_1d(radius, p.sigma);
-
-            auto harris_input = current;
-            pixel_ctx.swap_shader({ .shader_path = "harris_grad_pack.comp.spv", .workgroup_size = k_wg2d });
-            pixel_ctx.stage_image(current);
-            pixel_ctx.prepare_output_image(w, h);
-            {
-                const auto f = pixel_ctx.dispatch_async({});
-                foundry.wait_for_fence(f);
-                foundry.release_fence(f);
-            }
-            auto packed = pixel_ctx.get_output_image(0);
-
-            const auto blur_cfg = config(VisionOp::GaussianBlur, GaussianBlurParams { .sigma = p.sigma });
-            pixel_ctx.swap_shader(blur_cfg);
-            pixel_ctx.stage_image(packed);
-            pixel_ctx.set_binding_data(2, std::span<const float>(weights));
-            pixel_ctx.set_push_constants(GaussianPC { .radius = radius, .width = w, .height = h });
-            pixel_ctx.prepare_output_image(w, h);
-            {
-                const auto f = pixel_ctx.dispatch_async({});
-                foundry.wait_for_fence(f);
-                foundry.release_fence(f);
-            }
-            auto smoothed = pixel_ctx.get_output_image(0);
-
-            const GpuComputeConfig harris_resp_cfg {
-                .shader_path = "harris_response.comp.spv",
-                .workgroup_size = k_wg2d,
-                .push_constant_size = sizeof(HarrisPC),
-            };
-            pixel_ctx.swap_shader(harris_resp_cfg);
-            pixel_ctx.stage_image(smoothed);
-            pixel_ctx.set_push_constants(HarrisPC { .k = p.k, .pass = 0U, .width = w, .height = h });
-            pixel_ctx.prepare_output_image(w, h);
-            {
-                const auto f = pixel_ctx.dispatch_async({});
-                foundry.wait_for_fence(f);
-                foundry.release_fence(f);
-            }
-
-            pixel_ctx.set_push_constants(HarrisPC { .k = p.k, .pass = 1U, .width = w, .height = h });
-            {
-                const auto f = pixel_ctx.dispatch_async({});
-                foundry.wait_for_fence(f);
-                foundry.release_fence(f);
-            }
-            current = pixel_ctx.get_output_image(0);
-            completed_ops[Kinesis::Vision::hash_vision_step(step.op, step.params)] = { .output = current, .input = harris_input };
-
-            result.structured = std::monostate {};
+            contexts.pass.completed[Kinesis::Vision::hash_vision_step(step.op, step.params)] = op_harris_response(contexts, std::get<HarrisParams>(step.params));
             continue;
         }
         case VisionOp::ExtractPeaks: {
-            const auto& p = std::get<ExtractPeaksParams>(step.params);
-            constexpr uint32_t k_max_kp = 4096;
-
-            structured_ctx.swap_shader({
-                .shader_path = "extract_peaks.comp.spv",
-                .workgroup_size = { 8, 8, 1 },
-                .push_constant_size = sizeof(ExtractPeaksPC),
-            });
-
-            structured_ctx.set_output_size(1, sizeof(uint32_t));
-            structured_ctx.set_output_size(2, static_cast<size_t>(k_max_kp) * 4 * sizeof(float));
-
-            structured_ctx.stage_image(current);
-            structured_ctx.set_push_constants(ExtractPeaksPC {
-                .threshold = p.threshold,
-                .nms_radius = p.nms_radius,
-                .width = w,
-                .height = h,
-                .max_keypoints = k_max_kp,
-            });
-
-            structured_ctx.set_output_dimensions(w, h);
-            const auto fence = structured_ctx.dispatch_async({});
-            structured_ctx.clear_output_dimensions();
-            foundry.wait_for_fence(fence);
-            foundry.release_fence(fence);
-
-            if (sequence.track_follows_peaks) {
-                result.structured = std::monostate {};
-                result.w = w;
-                result.h = h;
-                continue;
-            }
-
-            const auto gpu_result = structured_ctx.collect_result();
-
-            uint32_t count = 0;
-            if (auto it = gpu_result.aux.find(1); it != gpu_result.aux.end())
-                std::memcpy(&count, it->second.data(), sizeof(uint32_t));
-            count = std::min(count, k_max_kp);
-
-            struct GpuKp {
-                float x, y, response, pad;
-            };
-            std::vector<GpuKp> raw(count);
-            if (count > 0) {
-                if (auto it = gpu_result.aux.find(2); it != gpu_result.aux.end())
-                    std::memcpy(raw.data(), it->second.data(), count * sizeof(GpuKp));
-            }
-
-            std::vector<Kinesis::Vision::Keypoint> kpts;
-            kpts.reserve(count);
-            for (const auto& kp : raw) {
-                kpts.push_back({ .position = { kp.x, kp.y },
-                    .response = kp.response,
-                    .scale = 1.0F,
-                    .angle = 0.0F });
-            }
-            std::ranges::sort(kpts, [](const auto& a, const auto& b) { return a.response > b.response; });
-
-            result.structured = std::move(kpts);
-            result.w = 0;
-            result.h = 0;
+            op_extract_peaks(contexts, std::get<ExtractPeaksParams>(step.params));
             continue;
         }
         case VisionOp::ConnectedComponents: {
-            const auto& p = std::get<Kinesis::Vision::ConnectedComponentsParams>(step.params);
-
-            if (!current) {
+            if (!contexts.pass.current) {
                 continue;
             }
-
-            const auto seed_input = current;
-
-            const uint32_t block_width = (w + 1U) / 2U;
-            const uint32_t block_height = (h + 1U) / 2U;
-            const double block_diagonal = std::sqrt(
-                static_cast<double>(block_width) * block_width + static_cast<double>(block_height) * block_height);
-            const auto k_compress_passes = static_cast<uint32_t>(std::ceil(std::log2(std::max(2.0, block_diagonal))));
-
-            cc_pipeline.ensure_shared_buffer(0, 2, static_cast<size_t>(block_width) * block_height, GpuBufferBinding::ElementType::UINT32);
-            cc_pipeline.ensure_shared_buffer(0, 3, 1, GpuBufferBinding::ElementType::UINT32);
-            cc_pipeline.ensure_shared_buffer(0, 4, static_cast<size_t>(block_width) * block_height, GpuBufferBinding::ElementType::UINT32);
-            cc_pipeline.ensure_shared_buffer(0, 5, 1, GpuBufferBinding::ElementType::UINT32);
-            cc_pipeline.ensure_shared_buffer(0, 6, static_cast<size_t>(w) * h, GpuBufferBinding::ElementType::UINT32);
-            cc_pipeline.ensure_shared_buffer(0, 7, static_cast<size_t>(k_max_components) * 2, GpuBufferBinding::ElementType::UINT32);
-            cc_pipeline.ensure_shared_buffer(0, 8, static_cast<size_t>(k_max_components) * 2, GpuBufferBinding::ElementType::UINT32);
-            cc_pipeline.ensure_shared_buffer(0, 9, k_max_components, GpuBufferBinding::ElementType::UINT32);
-
-            const CCBlockInitPC init_pc { .width = w, .height = h, .block_width = block_width, .block_height = block_height };
-            const CCMergePC merge_pc { .width = w, .height = h, .block_width = block_width, .block_height = block_height };
-            const CCFinalLabelPC final_pc { .width = w, .height = h, .block_width = block_width, .block_height = block_height, .max_components = k_max_components, .export_labels = 1U };
-
-            cc_pipeline.swap_shader({ .shader_path = "cc_reset.comp.spv", .workgroup_size = { 256, 1, 1 }, .push_constant_size = sizeof(CCResetPC) });
-            cc_pipeline.set_push_constants(CCResetPC {
-                .lut_size = block_width * block_height,
-                .max_components = k_max_components,
-            });
-            cc_pipeline.set_output_dimensions(std::max(block_width * block_height, k_max_components), 1);
-            {
-                const auto reset_fence = cc_pipeline.dispatch_async({});
-                foundry.wait_for_fence(reset_fence);
-                foundry.release_fence(reset_fence);
-            }
-            cc_pipeline.clear_output_dimensions();
-
-            const std::array<uint32_t, 3> block_groups {
-                (block_width + k_wg2d[0] - 1U) / k_wg2d[0],
-                (block_height + k_wg2d[1] - 1U) / k_wg2d[1],
-                1U
-            };
-
-            std::vector<DependencyStage> cc_stages;
-
-            cc_stages.push_back({
-                .config = { .shader_path = "cc_block_init.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(CCBlockInitPC) },
-                .stage_fn = [&](GpuDispatchCore& ctx) {
-        cc_pipeline.stage_image_at(1, seed_input, GpuBufferBinding::ElementType::IMAGE_STORAGE);
-        ctx.set_push_constants(init_pc);
-        cc_pipeline.set_output_dimensions(block_width, block_height); },
-                .hazard_fn = [&](GpuDispatchCore& ctx) -> std::vector<Portal::Graphics::HazardResource> {
-                    return {
-                        ctx.shared_buffer_hazard(
-                            { .set = 0, .binding = 2, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 }),
-                    };
-                },
-                .explicit_groups = block_groups,
-            });
-
-            cc_stages.push_back({
-                .config = { .shader_path = "cc_merge.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(CCMergePC) },
-                .stage_fn = [&](GpuDispatchCore& ctx) {
-        cc_pipeline.stage_image_at(1, seed_input, GpuBufferBinding::ElementType::IMAGE_STORAGE);
-        ctx.set_push_constants(merge_pc);
-        cc_pipeline.set_output_dimensions(block_width, block_height); },
-                .hazard_fn = [&](GpuDispatchCore& ctx) -> std::vector<Portal::Graphics::HazardResource> {
-                    return {
-                        ctx.shared_buffer_hazard(
-                            { .set = 0, .binding = 2, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 }),
-                    };
-                },
-                .explicit_groups = block_groups,
-            });
-
-            ExecutionContext cc_ctx;
-            cc_ctx.mode = ExecutionMode::DEPENDENCY;
-            DependencyParams params;
-            params.stages = cc_stages;
-            cc_ctx.parameters = params;
-            cc_pipeline.execute(Datum<> {}, cc_ctx);
-
-            cc_pipeline.ensure_shared_buffer(0, 10, 3, GpuBufferBinding::ElementType::UINT32,
-                Portal::Graphics::BufferUsageHint::INDIRECT);
-            const std::array<uint32_t, 3> full_grid_indirect {
-                (block_width + 7U) / 8U,
-                (block_height + 7U) / 8U,
-                1U
-            };
-            cc_pipeline.upload_shared_raw(0, 10, reinterpret_cast<const uint8_t*>(full_grid_indirect.data()), full_grid_indirect.size() * sizeof(uint32_t));
-
-            cc_pipeline.swap_shader({ .shader_path = "cc_compress.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(CCCompressPC) });
-            cc_pipeline.set_push_constants(CCCompressPC { .block_width = block_width, .block_height = block_height });
-            cc_pipeline.set_output_dimensions(block_width, block_height);
-            {
-                const auto fence = cc_pipeline.dispatch_async({});
-                foundry.wait_for_fence(fence);
-                foundry.release_fence(fence);
-            }
-            cc_pipeline.clear_output_dimensions();
-
-            cc_pipeline.swap_shader({ .shader_path = "cc_final_label.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(CCFinalLabelPC) });
-            cc_pipeline.stage_image_at(1, seed_input, GpuBufferBinding::ElementType::IMAGE_STORAGE);
-            cc_pipeline.set_push_constants(final_pc);
-            cc_pipeline.set_output_dimensions(w, h);
-            cc_pipeline.prepare_output_image(w, h);
-            {
-                const auto fence = cc_pipeline.dispatch_async({});
-                foundry.wait_for_fence(fence);
-                foundry.release_fence(fence);
-            }
-            cc_pipeline.clear_output_dimensions();
-
-            result.debug_labels = p.with_colors ? cc_pipeline.get_output_image(0) : nullptr;
-
-            uint32_t compact_count = 0;
-            cc_pipeline.download_shared(0, 5, &compact_count, sizeof(uint32_t));
-            compact_count = std::min(compact_count, k_max_components);
-
-            Kinesis::Vision::ComponentResult cc_result;
-            cc_result.count = compact_count;
-            cc_result.boxes.reserve(compact_count);
-
-            if (compact_count > 0) {
-                std::vector<glm::uvec2> bmin(compact_count);
-                std::vector<glm::uvec2> bmax(compact_count);
-                std::vector<uint32_t> bcount(compact_count);
-                cc_pipeline.download_shared(0, 7, bmin.data(), bmin.size() * sizeof(glm::uvec2));
-                cc_pipeline.download_shared(0, 8, bmax.data(), bmax.size() * sizeof(glm::uvec2));
-                cc_pipeline.download_shared(0, 9, bcount.data(), bcount.size() * sizeof(uint32_t));
-
-                const float inv_w = 1.0F / static_cast<float>(w);
-                const float inv_h = 1.0F / static_cast<float>(h);
-
-                for (uint32_t i = 0; i < compact_count; ++i) {
-                    if (bcount[i] == 0)
-                        continue;
-                    const float x = static_cast<float>(bmin[i].x) * inv_w;
-                    const float y = static_cast<float>(bmin[i].y) * inv_h;
-                    const float bw = static_cast<float>(bmax[i].x - bmin[i].x + 1) * inv_w;
-                    const float bh = static_cast<float>(bmax[i].y - bmin[i].y + 1) * inv_h;
-                    cc_result.boxes.push_back({ .x = x, .y = y, .w = bw, .h = bh, .confidence = 1.0F, .label_id = i + 1 });
-                }
-            }
-
-            result.structured = std::move(cc_result);
-            result.w = 0;
-            result.h = 0;
+            op_connected_components(contexts, std::get<Kinesis::Vision::ConnectedComponentsParams>(step.params));
             continue;
         }
         case VisionOp::FindContours: {
-            if (!sequence.contours_follow_cc) {
-                MF_ERROR(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
-                    "run_gpu: FindContours requires ConnectedComponents(export_labels=true) as the immediately preceding step");
+            if (!op_find_contours(contexts,
+                    std::get<Kinesis::Vision::FindContoursParams>(step.params)))
                 return VisionResult {};
-            }
-
-            const auto& p = std::get<Kinesis::Vision::FindContoursParams>(step.params);
-
-            cc_pipeline.ensure_shared_buffer(1, 4, static_cast<size_t>(k_max_components) + 1U, GpuBufferBinding::ElementType::UINT32);
-            cc_pipeline.ensure_shared_buffer(1, 5, static_cast<size_t>(k_max_components) * k_max_holes_per_label, GpuBufferBinding::ElementType::UINT32);
-            cc_pipeline.ensure_shared_buffer(1, 6, static_cast<size_t>(k_max_trace_slots) * 2U, GpuBufferBinding::ElementType::UINT32);
-            cc_pipeline.ensure_shared_buffer(1, 7, 1U, GpuBufferBinding::ElementType::UINT32);
-            cc_pipeline.ensure_shared_buffer(1, 8, static_cast<size_t>(k_max_trace_slots) * k_max_points_per_contour * 2U, GpuBufferBinding::ElementType::FLOAT32);
-            cc_pipeline.ensure_shared_buffer(1, 9, 1U, GpuBufferBinding::ElementType::UINT32);
-            cc_pipeline.ensure_shared_buffer(1, 10, static_cast<size_t>(k_max_trace_slots) * 4U, GpuBufferBinding::ElementType::UINT32);
-            cc_pipeline.ensure_shared_buffer(1, 11, static_cast<size_t>(k_max_trace_slots) * 2U, GpuBufferBinding::ElementType::FLOAT32);
-            cc_pipeline.ensure_shared_buffer(2, 0, k_max_components, GpuBufferBinding::ElementType::FLOAT32);
-            cc_pipeline.ensure_shared_buffer(2, 1, k_max_components, GpuBufferBinding::ElementType::FLOAT32);
-
-            {
-                std::vector<uint32_t> owner_reset(static_cast<size_t>(k_max_components) + 1U, CC_UNCLAIMED_HOST);
-                cc_pipeline.upload_shared_raw(1, 4, reinterpret_cast<const uint8_t*>(owner_reset.data()), owner_reset.size() * sizeof(uint32_t));
-
-                std::vector<uint32_t> hole_owner_reset(static_cast<size_t>(k_max_components) * k_max_holes_per_label, CC_UNCLAIMED_HOST);
-                cc_pipeline.upload_shared_raw(1, 5, reinterpret_cast<const uint8_t*>(hole_owner_reset.data()), hole_owner_reset.size() * sizeof(uint32_t));
-
-                const uint32_t zero = 0;
-                cc_pipeline.upload_shared_raw(1, 7, reinterpret_cast<const uint8_t*>(&zero), sizeof(uint32_t));
-                cc_pipeline.upload_shared_raw(1, 9, reinterpret_cast<const uint8_t*>(&zero), sizeof(uint32_t));
-            }
-
-            auto max_points = p.max_points_per_contour > 0 ? std::min<uint32_t>(p.max_points_per_contour, k_max_points_per_contour) : k_max_points_per_contour;
-            cc_pipeline.swap_shader({ .shader_path = "contour_march.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(ContourMarchPC) });
-            cc_pipeline.stage_image_at(1, image, GpuBufferBinding::ElementType::IMAGE_SAMPLED);
-            cc_pipeline.prepare_output_image(w, h);
-            cc_pipeline.set_push_constants(ContourMarchPC {
-                .width = w,
-                .height = h,
-                .max_components = k_max_components,
-                .max_points_per_contour = max_points,
-                .max_holes_per_label = k_max_holes_per_label,
-                .phase = 0U,
-                .min_area = p.min_area,
-                .compacted_count = 0U });
-
-            cc_pipeline.set_output_dimensions(w, h);
-            {
-                const auto fence = cc_pipeline.dispatch_async({});
-                foundry.wait_for_fence(fence);
-                foundry.release_fence(fence);
-            }
-
-            cc_pipeline.set_push_constants(ContourMarchPC {
-                .width = w,
-                .height = h,
-                .max_components = k_max_components,
-                .max_points_per_contour = max_points,
-                .max_holes_per_label = k_max_holes_per_label,
-                .phase = 1U,
-                .min_area = p.min_area,
-                .compacted_count = 0U });
-            {
-                const auto fence = cc_pipeline.dispatch_async({});
-                foundry.wait_for_fence(fence);
-                foundry.release_fence(fence);
-            }
-
-            cc_pipeline.clear_output_dimensions();
-
-            cc_pipeline.swap_shader({ .shader_path = "contour_compact.comp.spv", .workgroup_size = { 256, 1, 1 }, .push_constant_size = sizeof(ContourCompactPC) });
-            cc_pipeline.set_push_constants(ContourCompactPC { .max_components = k_max_components, .max_holes_per_label = k_max_holes_per_label });
-            const uint32_t total_owner_slots = k_max_components * (1U + k_max_holes_per_label);
-            cc_pipeline.set_output_dimensions(total_owner_slots, 1);
-            {
-                const auto fence = cc_pipeline.dispatch_async({});
-                foundry.wait_for_fence(fence);
-                foundry.release_fence(fence);
-            }
-            cc_pipeline.clear_output_dimensions();
-
-            uint32_t compacted_count = 0;
-            cc_pipeline.download_shared(1, 7, &compacted_count, sizeof(uint32_t));
-
-            cc_pipeline.swap_shader({ .shader_path = "contour_march.comp.spv", .workgroup_size = { 256, 1, 1 }, .push_constant_size = sizeof(ContourMarchPC) });
-            cc_pipeline.set_push_constants(ContourMarchPC {
-                .width = w,
-                .height = h,
-                .max_components = k_max_components,
-                .max_points_per_contour = max_points,
-                .max_holes_per_label = k_max_holes_per_label,
-                .phase = 2U,
-                .min_area = p.min_area,
-                .compacted_count = compacted_count });
-            cc_pipeline.set_output_dimensions(std::max(compacted_count, 1U), 1);
-            {
-                const auto fence = cc_pipeline.dispatch_async({});
-                foundry.wait_for_fence(fence);
-                foundry.release_fence(fence);
-            }
-            cc_pipeline.clear_output_dimensions();
-
-            if (p.max_contours > 0U) {
-                constexpr uint32_t k = 12U;
-                constexpr uint32_t total_passes = k * (k + 1U) / 2U;
-
-                cc_pipeline.swap_shader(config_from_spec(
-                    ShaderSpec::Assemble {}
-                        .tmpl(KernelTemplate::BitonicSort)
-                        .start_set(2)
-                        .ssbo("keys", BindingDirection::InOut, Kakshya::GpuDataFormat::FLOAT32)
-                        .ssbo("indices", BindingDirection::InOut, Kakshya::GpuDataFormat::FLOAT32)
-                        .pc("stage", Kakshya::GpuDataFormat::UINT32)
-                        .pc("pass", Kakshya::GpuDataFormat::UINT32)
-                        .pc("count", Kakshya::GpuDataFormat::UINT32)
-                        .pc("descending", Kakshya::GpuDataFormat::UINT32)
-                        .workgroup(256)
-                        .build()));
-
-                cc_pipeline.set_output_dimensions(k_max_components, 1U);
-
-                ExecutionContext bitonic_ctx;
-                bitonic_ctx.mode = ExecutionMode::CHAINED;
-                bitonic_ctx.parameters = ChainedParams {
-                    .pass_count = total_passes,
-                    .pc_updater = [k](uint32_t p_idx, void* pc_ptr) {
-                        uint32_t stage = 0, pass = 0, remaining = p_idx;
-                        for (uint32_t s = 0; s < k; ++s) {
-                            if (remaining <= s) {
-                                stage = s;
-                                pass = remaining;
-                                break;
-                            }
-                            remaining -= (s + 1);
-                        }
-                        struct PC {
-                            uint32_t stage, pass, count, descending;
-                        };
-                        *static_cast<PC*>(pc_ptr) = { .stage = stage, .pass = pass, .count = k_max_components, .descending = 1U };
-                    },
-                };
-
-                cc_pipeline.execute(Datum<std::vector<Kakshya::DataVariant>> {}, bitonic_ctx);
-                cc_pipeline.clear_output_dimensions();
-            }
-
-            if (p.as_image) {
-                cc_pipeline.swap_shader({ .shader_path = "contour_render_clear.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(ContourClearPC) });
-                cc_pipeline.prepare_output_image(w, h);
-                cc_pipeline.set_push_constants(ContourClearPC { .width = w, .height = h });
-                cc_pipeline.set_output_dimensions(w, h);
-                {
-                    const auto fence = cc_pipeline.dispatch_async({});
-                    foundry.wait_for_fence(fence);
-                    foundry.release_fence(fence);
-                }
-                cc_pipeline.clear_output_dimensions();
-
-                cc_pipeline.swap_shader({ .shader_path = "contour_render.comp.spv", .workgroup_size = { 256, 1, 1 }, .push_constant_size = sizeof(ContourRenderPC) });
-                cc_pipeline.set_push_constants(ContourRenderPC { .width = w, .height = h, .max_components = k_max_components, .max_points_per_contour = k_max_points_per_contour, .max_contours = p.max_contours });
-                const uint32_t render_slots = p.max_contours > 0U ? std::min(p.max_contours, k_max_components) : k_max_trace_slots;
-                cc_pipeline.set_output_dimensions(render_slots * k_max_points_per_contour, 1U);
-                {
-                    const auto fence = cc_pipeline.dispatch_async({});
-                    foundry.wait_for_fence(fence);
-                    foundry.release_fence(fence);
-                }
-                cc_pipeline.clear_output_dimensions();
-
-                result.debug_contours = cc_pipeline.get_output_image(0);
-                result.structured = std::monostate {};
-                result.w = 0;
-                result.h = 0;
-                continue;
-            }
-
-            std::vector<glm::uvec4> meta(compacted_count);
-            cc_pipeline.download_shared(1, 10, meta.data(), compacted_count * sizeof(glm::uvec4));
-            std::vector<glm::vec2> area_perim(compacted_count);
-            cc_pipeline.download_shared(1, 11, area_perim.data(), compacted_count * sizeof(glm::vec2));
-            uint32_t points_written = 0;
-            cc_pipeline.download_shared(1, 9, &points_written, sizeof(uint32_t));
-            std::vector<glm::vec2> flat_points_full(points_written);
-
-            if (points_written > 0)
-                cc_pipeline.download_shared(1, 8, flat_points_full.data(), static_cast<size_t>(points_written) * sizeof(glm::vec2));
-
-            std::vector<uint32_t> order;
-            if (p.max_contours > 0U) {
-                const uint32_t take = std::min(p.max_contours, compacted_count);
-                std::vector<float> sorted_indices(take);
-                cc_pipeline.download_shared(2, 1, sorted_indices.data(), take * sizeof(float));
-                order.reserve(take);
-                for (float f : sorted_indices)
-                    order.push_back(static_cast<uint32_t>(f));
-            } else {
-                order.resize(compacted_count);
-                for (uint32_t i = 0; i < compacted_count; ++i)
-                    order[i] = i;
-            }
-
-            std::vector<Kinesis::Vision::Contour> out_contours;
-            out_contours.reserve(order.size());
-
-            for (uint32_t idx : order) {
-                if (idx >= compacted_count)
-                    continue;
-                const auto& m = meta[idx];
-                if (m.y < 3)
-                    continue;
-
-                std::vector<glm::vec2> pts(
-                    flat_points_full.begin() + m.x,
-                    flat_points_full.begin() + m.x + m.y);
-                const glm::vec2 ap = area_perim[idx];
-                out_contours.push_back({ .points = std::move(pts), .area = ap.x, .perimeter = ap.y, .parent_label = m.z });
-            }
-
-            result.structured = std::move(out_contours);
-            result.w = 0;
-            result.h = 0;
             continue;
         }
         default:
             break;
         }
 
-        auto dispatch_input = current;
+        auto dispatch_input = contexts.pass.current;
         const auto fence = pixel_ctx.dispatch_async({});
+
+        if (step.deferred) {
+            pixel_ctx.clear_output_dimensions();
+            contexts.pass.current = pixel_ctx.get_output_image(0);
+            contexts.bound_staged = contexts.pass.current;
+
+            const Kinesis::Vision::GpuVisionPass::Completed done {
+                .output = contexts.pass.current,
+                .input = dispatch_input
+            };
+            contexts.pass.completed[Kinesis::Vision::hash_vision_step(step.op, step.params)] = done;
+
+            contexts.suspended.fence = fence;
+
+            VisionResult pending;
+            pending.status = VisionStatus::SUSPENDED;
+            pending.suspended_at = contexts.pass.index;
+            return pending;
+        }
+
         foundry.wait_for_fence(fence);
         foundry.release_fence(fence);
 
         pixel_ctx.clear_output_dimensions();
-        current = pixel_ctx.get_output_image(0);
-        last_staged = current;
-        completed_ops[Kinesis::Vision::hash_vision_step(step.op, step.params)] = { .output = current, .input = dispatch_input };
+        contexts.pass.current = pixel_ctx.get_output_image(0);
+        contexts.bound_staged = contexts.pass.current;
+        completed_ops[Kinesis::Vision::hash_vision_step(step.op, step.params)] = { .output = contexts.pass.current, .input = dispatch_input };
     }
 
-    return result;
+    return std::move(contexts.pass.result);
 }
 
 VisionResult VisionGpuExecutor::run(

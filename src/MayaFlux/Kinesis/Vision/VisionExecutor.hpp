@@ -1,17 +1,8 @@
 #pragma once
 
-#include "ConnectedComponents.hpp"
-#include "Features.hpp"
-#include "Gradient.hpp"
-#include "OpticalFlow.hpp"
-#include "VisionOp.hpp"
+#include "VisionContext.hpp"
 
 #include "MayaFlux/Kakshya/NDData/EigenAccess.hpp"
-#include "MayaFlux/Kakshya/NDData/NDData.hpp"
-
-namespace MayaFlux::Core {
-class VKImage;
-}
 
 /**
  * @file VisionExecutor.hpp
@@ -33,49 +24,6 @@ class VKImage;
  */
 
 namespace MayaFlux::Kinesis::Vision {
-
-using StructuredOutput = std::variant<
-    std::monostate,
-    GradientResult,
-    ComponentResult,
-    std::vector<Contour>,
-    std::vector<Keypoint>,
-    std::vector<TrackResult>>;
-
-/**
- * @brief Result of executing a VisionSequence on one frame.
- *
- * pixel_image holds the final normalised float pixel buffer as a DataVariant
- * (active alternative: vector<float>). Empty when the terminal step produces
- * only structured output.
- *
- * Callers access pixel data via:
- *   EigenAccess(result.pixel_image).view<Eigen::VectorXf>()  -- zero-copy Eigen map
- *   std::get<std::vector<float>>(result.pixel_image)          -- direct vector access
- *
- * w and h are the dimensions of pixel_image. Both are 0 when pixel_image is empty.
- */
-struct VisionResult {
-    Kakshya::DataVariant pixel_image { std::vector<float> {} };
-    StructuredOutput structured { std::monostate {} };
-    std::vector<SnapshotEntry> snapshots;
-    std::shared_ptr<Core::VKImage> debug_labels;
-    std::shared_ptr<Core::VKImage> debug_contours;
-    uint32_t w { 0 };
-    uint32_t h { 0 };
-
-    /**
-     * @brief Zero-copy float span into pixel_image storage.
-     * @return Empty span if pixel_image is not vector<float> or is empty.
-     */
-    [[nodiscard]] std::span<const float> as_span() const noexcept
-    {
-        const auto* v = std::get_if<std::vector<float>>(&pixel_image);
-        if (!v || v->empty())
-            return {};
-        return { v->data(), v->size() };
-    }
-};
 
 /**
  * @class VisionExecutor
@@ -120,6 +68,15 @@ public:
     void reset();
 
 private:
+    /**
+     * @brief Walk state for the current run: sequence position, geometry,
+     *        working slot index, and the result under construction.
+     *
+     * Reset by begin() at the top of each run. Inter-frame state is separate,
+     * below.
+     */
+    CpuVisionPass m_pass;
+
     // =========================================================================
     // Scratch pool
     //

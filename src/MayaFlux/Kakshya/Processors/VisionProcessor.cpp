@@ -90,14 +90,27 @@ void VisionProcessor::process(const std::shared_ptr<SignalSourceContainer>& cont
         } else if (auto tc = std::dynamic_pointer_cast<TextureContainer>(container)) {
             frame = tc->as_normalised_float(0);
         }
+
         if (!frame.empty())
             m_result = m_cpu_executor.run(m_sequence, frame, m_width, m_height);
     } else if (m_gpu_frame) {
-        const void* raw = container->get_raw_data();
-        if (raw) {
+        if (m_executor->is_suspended()) {
+            auto poll = m_executor->run(m_sequence, m_gpu_frame, m_width, m_height);
+            if (!poll.is_ready()) {
+                m_is_processing.store(false, std::memory_order_release);
+                return;
+            }
+            m_result = std::move(poll);
+        } else if (const void* raw = container->get_raw_data()) {
             auto& loom = Portal::Graphics::TextureLoom::instance();
             loom.upload_data(m_gpu_frame, raw, m_gpu_frame->get_size_bytes(), m_upload_staging);
-            m_result = m_executor->run(m_sequence, m_gpu_frame, m_width, m_height);
+
+            auto pass = m_executor->run(m_sequence, m_gpu_frame, m_width, m_height);
+            if (!pass.is_ready()) {
+                m_is_processing.store(false, std::memory_order_release);
+                return;
+            }
+            m_result = std::move(pass);
         }
     }
 

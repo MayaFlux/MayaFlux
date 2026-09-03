@@ -2,7 +2,7 @@
 
 #include "TextureExecutionContext.hpp"
 
-#include "MayaFlux/Kinesis/Vision/VisionExecutor.hpp"
+#include "MayaFlux/Kinesis/Vision/VisionContext.hpp"
 
 namespace MayaFlux::Yantra {
 
@@ -53,6 +53,70 @@ struct MAYAFLUX_API VisionGpuContexts {
                                     ///< data (ConnectedComponents,
                                     ///< FindContours).
     TextureExecutionContext cc_pipeline;
+    TextureExecutionContext ingest; ///< Sampled-in, rgba32f-storage-out.
+                                    ///< IMAGE mode. Runs vision_ingest.comp
+                                    ///< at the top of a fresh run to convert
+                                    ///< a non-storage seed frame before any
+                                    ///< rgba32f op reads it.
+
+    /**
+     * @brief Walk state for the current run: sequence position, geometry,
+     *        working image, and the result under construction.
+     *
+     * Lives here rather than as a run local so a deferred step's yield
+     * preserves it without copying. Reset by begin() at the top of a fresh
+     * run; left intact across a suspension.
+     */
+    Kinesis::Vision::GpuVisionPass pass;
+
+    /**
+     * @brief Input image the current walk started from.
+     *
+     * Ops needing the original frame rather than the working image read this
+     * (contour_march stages it at binding 1). Set on a fresh run and untouched
+     * across suspensions, so a polling call uses the frame the sequence began
+     * on rather than whatever argument it was passed.
+     *
+     * GPU-only. The CPU pass has no equivalent: its handle is an index into a
+     * reused slot pool, so retaining the input handle would retain a slot whose
+     * contents the ping-pong overwrites.
+     */
+    std::shared_ptr<Core::VKImage> source;
+
+    /**
+     * @brief Shader currently bound on pixel, and the image staged into it.
+     *
+     * TextureExecutionContext does not report its own state, so run tracks
+     * it. Held here rather than as a run local: a swap_shader or stage_image
+     * elided on one call stays elided on the next. The allocated output
+     * dimensions live in pass.storage_w / pass.storage_h.
+     */
+    GpuComputeConfig bound_config;
+    std::shared_ptr<Core::VKImage> bound_staged;
+
+    /**
+     * @brief Outstanding work at a deferred step, and the point to resume.
+     *
+     * fence is INVALID_FENCE when nothing is outstanding. While live, run
+     * polls it and does nothing else. The working image, geometry, and
+     * partial result the resumed sequence needs are already in pass, which
+     * is not reset while a suspension is active.
+     */
+    struct Suspension {
+        Portal::Graphics::FenceID fence { Portal::Graphics::INVALID_FENCE };
+
+        [[nodiscard]] bool is_active() const
+        {
+            return fence != Portal::Graphics::INVALID_FENCE;
+        }
+    };
+
+    Suspension suspended;
+
+    /// op_ingest's dispatch + trailing-barrier fences. Not awaited by run();
+    /// reaped by reap_ingest_fences on the next fresh run and in reset().
+    Portal::Graphics::FenceID ingest_fence { Portal::Graphics::INVALID_FENCE };
+    Portal::Graphics::FenceID ingest_barrier_fence { Portal::Graphics::INVALID_FENCE };
 
     /**
      * @brief Construct all three contexts in place with the one correct
@@ -147,6 +211,24 @@ public:
         const Kinesis::Vision::VisionSequence& sequence,
         const std::shared_ptr<Core::VKImage>& image,
         uint32_t w, uint32_t h);
+
+    /**
+     * @brief Abandon outstanding work and clear the resume point.
+     *
+     * Waits on the fence before releasing it, then discards the retained
+     * working image and partial result. Call when the pixel source changes
+     * so the next run starts a fresh sequence. Safe with nothing outstanding.
+     */
+    void reset();
+
+    /**
+     * @brief True when a deferred step has work outstanding and the next run
+     *        will poll rather than start a fresh sequence.
+     */
+    [[nodiscard]] bool is_suspended() const
+    {
+        return m_contexts && m_contexts->suspended.is_active();
+    }
 
     VisionGpuExecutor() = default;
     ~VisionGpuExecutor() = default;

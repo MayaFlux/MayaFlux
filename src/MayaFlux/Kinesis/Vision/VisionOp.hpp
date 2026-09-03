@@ -149,10 +149,16 @@ using VisionParams = std::variant<
 
 /**
  * @brief One step in a VisionSequence: an op and its parameters.
+ *
+ * A deferred step submits its GPU work without waiting on the fence. The
+ * run that submits it returns SUSPENDED at that step index; a subsequent
+ * run polls the fence, and once signalled resumes the sequence from the
+ * following step. How many calls that takes is not the executor's concern.
  */
 struct VisionStep {
     VisionOp op;
     VisionParams params { std::monostate {} };
+    bool deferred { false };
 };
 
 /**
@@ -162,9 +168,6 @@ struct VisionStep {
  */
 struct VisionSequence {
     std::vector<VisionStep> steps;
-    bool tracks_keypoints { false };
-    bool track_follows_peaks { false };
-    bool contours_follow_cc { false };
 
     /**
      * @brief Fluent builder for VisionSequence.
@@ -322,22 +325,17 @@ struct VisionSequence {
 
         [[nodiscard]] VisionSequence build()
         {
-            VisionSequence seq { .steps = std::move(m_steps) };
-            for (size_t i = 0; i < seq.steps.size(); ++i) {
-                if (seq.steps[i].op == VisionOp::TrackKeypoints)
-                    seq.tracks_keypoints = true;
-                if (i + 1 < seq.steps.size()
-                    && seq.steps[i].op == VisionOp::ExtractPeaks
-                    && seq.steps[i + 1].op == VisionOp::TrackKeypoints)
-                    seq.track_follows_peaks = true;
-                if (i + 1 < seq.steps.size()
-                    && seq.steps[i].op == VisionOp::ConnectedComponents
-                    && seq.steps[i + 1].op == VisionOp::FindContours) {
-                    seq.contours_follow_cc = true;
-                    std::get<ConnectedComponentsParams>(seq.steps[i].params).export_labels = true;
-                }
-            }
-            return seq;
+            return VisionSequence { .steps = std::move(m_steps) };
+        }
+
+        /**
+         * @brief Mark the most recently pushed step deferred.
+         */
+        Builder& defer()
+        {
+            if (!m_steps.empty())
+                m_steps.back().deferred = true;
+            return *this;
         }
 
     private:
@@ -362,9 +360,9 @@ inline void hash_combine(size_t& seed, size_t value)
 /**
  * @brief Hash a VisionStep's op and parameters together.
  *
- * Used to key GPU dispatch memoization within a single VisionGpuExecutor::run()
- * call, so an op run earlier in a sequence with identical parameters can be
- * reused rather than redispatched (e.g. Canny reusing an earlier Sobel step).
+ * Keys GPU dispatch memoization on VisionPass::completed, which spans one
+ * walk including any suspensions. Two steps hashing equal are treated as
+ * interchangeable, so every field that changes the output must be hashed.
  */
 inline size_t hash_vision_step(VisionOp op, const VisionParams& params)
 {
@@ -408,11 +406,46 @@ inline size_t hash_vision_step(VisionOp op, const VisionParams& params)
         } else if constexpr (std::is_same_v<T, FindContoursParams>) {
             hash_combine(seed, std::hash<float> {}(p.min_area));
             hash_combine(seed, std::hash<uint32_t> {}(p.max_contours));
+            hash_combine(seed, std::hash<uint32_t> {}(p.max_points_per_contour));
+            hash_combine(seed, std::hash<bool> {}(p.as_image));
+        } else if constexpr (std::is_same_v<T, ConnectedComponentsParams>) {
+            hash_combine(seed, std::hash<bool> {}(p.export_labels));
+            hash_combine(seed, std::hash<bool> {}(p.with_colors));
         }
     },
         params);
 
     return seed;
+}
+
+/**
+ * @brief True when any step tracks keypoints.
+ *
+ * Whole-sequence, not index-local: the gray-frame capture this gates happens
+ * at RgbaToGray, arbitrarily far ahead of the TrackKeypoints step that needs
+ * it. Evaluate once per run; sequences are short.
+ */
+[[nodiscard]] inline bool tracks_keypoints(const VisionSequence& seq)
+{
+    return std::ranges::any_of(seq.steps,
+        [](const VisionStep& s) { return s.op == VisionOp::TrackKeypoints; });
+}
+
+/**
+ * @brief True when an ExtractPeaks step is immediately followed by TrackKeypoints.
+ *
+ * Whole-sequence for the same reason: the capture gate at RgbaToGray needs the
+ * answer before either step is reached. Ops sitting at the pair itself should
+ * use VisionPass::ahead() instead.
+ */
+[[nodiscard]] inline bool track_follows_peaks(const VisionSequence& seq)
+{
+    for (size_t i = 0; i + 1 < seq.steps.size(); ++i) {
+        if (seq.steps[i].op == VisionOp::ExtractPeaks
+            && seq.steps[i + 1].op == VisionOp::TrackKeypoints)
+            return true;
+    }
+    return false;
 }
 
 } // namespace MayaFlux::Kinesis::Vision

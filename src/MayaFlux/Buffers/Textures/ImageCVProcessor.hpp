@@ -8,6 +8,7 @@
 
 #include "MayaFlux/Vruta/BroadcastSource.hpp"
 
+#include "MayaFlux/Kinesis/Vision/VisionExecutor.hpp"
 #include "MayaFlux/Yantra/Executors/VisionGpuDispatch.hpp"
 
 namespace MayaFlux::Buffers {
@@ -131,9 +132,16 @@ public:
                     image->get_width(), image->get_height());
             }
         } else {
-            m_result = m_executor->run(
+            auto pass = m_executor->run(
                 m_sequence, image,
                 image->get_width(), image->get_height());
+
+            if (!pass.is_ready()) {
+                m_is_processing.store(false, std::memory_order_release);
+                return;
+            }
+
+            m_result = std::move(pass);
         }
 
         if (m_result_source)
