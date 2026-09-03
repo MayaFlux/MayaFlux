@@ -1,0 +1,32 @@
+#version 460
+
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
+layout(set = 0, binding = 0, rgba32f) uniform writeonly image2D out_image;
+layout(set = 0, binding = 1) uniform sampler2D in_tex;
+
+layout(push_constant) uniform PC {
+    uint width;
+    uint height;
+} pc;
+
+/**
+ * @brief Ingest prelude for the GPU vision pipeline.
+ *
+ * The vision compute shaders bind their input as an rgba32f storage image.
+ * A source frame from the normal texture path is an 8-bit sampled texture,
+ * which cannot legally be bound to an rgba32f storage descriptor. This pass
+ * runs once per run() before any rgba32f processing: it reads the source as
+ * a sampled texture — the sampler unit performs the unorm/sRGB decode to
+ * float — and writes the result into a dedicated rgba32f storage image the
+ * rest of the pipeline then consumes. An already-rgba32f source is copied
+ * unchanged.
+ */
+void main()
+{
+    const ivec2 coord = ivec2(gl_GlobalInvocationID.xy);
+    if (coord.x >= int(pc.width) || coord.y >= int(pc.height))
+        return;
+
+    imageStore(out_image, coord, texelFetch(in_tex, coord, 0));
+}

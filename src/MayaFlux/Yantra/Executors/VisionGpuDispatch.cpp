@@ -46,6 +46,10 @@ namespace {
     struct MorphPC {
         uint32_t radius;
     };
+    struct IngestPC {
+        uint32_t width;
+        uint32_t height;
+    };
     struct HarrisPC {
         float k;
         uint32_t pass;
@@ -1052,6 +1056,71 @@ namespace {
         return true;
     }
 
+    /**
+     * @brief Release the previous run's ingest fences (instant: long signalled).
+     */
+    void reap_ingest_fences(VisionGpuContexts& contexts)
+    {
+        auto& foundry = Portal::Graphics::get_shader_foundry();
+        for (auto* slot : { &contexts.ingest_fence, &contexts.ingest_barrier_fence }) {
+            if (*slot != Portal::Graphics::INVALID_FENCE) {
+                foundry.wait_for_fence(*slot);
+                foundry.release_fence(*slot);
+                *slot = Portal::Graphics::INVALID_FENCE;
+            }
+        }
+    }
+
+    /**
+     * @brief Convert a non-storage seed frame to an rgba32f storage image.
+     *
+     * Frames already carrying storage usage pass through. Otherwise
+     * vision_ingest.comp samples the frame as a texture (sampler does the
+     * unorm/sRGB decode) into contexts.ingest's rgba32f output. The dispatch
+     * is not awaited — a trailing compute barrier gives the memory
+     * dependency, fences are reaped on the next run.
+     */
+    std::shared_ptr<Core::VKImage> op_ingest(
+        VisionGpuContexts& contexts,
+        const std::shared_ptr<Core::VKImage>& frame,
+        uint32_t w, uint32_t h)
+    {
+        if (!frame || !frame->is_initialized())
+            return frame;
+        if (static_cast<bool>(frame->get_usage_flags() & vk::ImageUsageFlagBits::eStorage))
+            return frame;
+
+        auto& foundry = Portal::Graphics::get_shader_foundry();
+        auto& ingest = contexts.ingest;
+
+        ingest.swap_shader({
+            .shader_path = "vision_ingest.comp.spv",
+            .workgroup_size = k_wg2d,
+            .push_constant_size = sizeof(IngestPC),
+        });
+        ingest.stage_image(frame);
+        ingest.set_push_constants(IngestPC { .width = w, .height = h });
+        ingest.prepare_output_image(w, h);
+        ingest.set_output_dimensions(w, h);
+        contexts.ingest_fence = ingest.dispatch_async({});
+        ingest.clear_output_dimensions();
+
+        auto out = ingest.get_output_image(0);
+
+        if (out) {
+            const auto bcmd = foundry.begin_commands(
+                Portal::Graphics::ShaderFoundry::CommandBufferType::COMPUTE);
+            foundry.image_barrier(bcmd, out->get_image(),
+                vk::ImageLayout::eGeneral, vk::ImageLayout::eGeneral,
+                vk::AccessFlagBits::eShaderWrite, vk::AccessFlagBits::eShaderRead,
+                vk::PipelineStageFlagBits::eComputeShader,
+                vk::PipelineStageFlagBits::eComputeShader);
+            contexts.ingest_barrier_fence = foundry.submit_async(bcmd);
+        }
+
+        return out;
+    }
+
 } // namespace
 
 VisionGpuContexts::VisionGpuContexts()
@@ -1123,6 +1192,15 @@ VisionGpuContexts::VisionGpuContexts()
             { .set = 2, .binding = 1, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::FLOAT32 },
         },
         GpuBufferBinding::ElementType::IMAGE_STORAGE,
+        0,
+    }
+    , ingest {
+        GpuComputeConfig {},
+        Portal::Graphics::ImageFormat::RGBA32F,
+        TextureExecutionContext::OutputMode::IMAGE,
+        1,
+        std::vector<GpuBufferBinding> {},
+        GpuBufferBinding::ElementType::IMAGE_SAMPLED,
         0,
     }
 {
@@ -1259,6 +1337,8 @@ void VisionGpuExecutor::reset()
 
     auto& contexts = *m_contexts;
 
+    reap_ingest_fences(contexts);
+
     if (contexts.suspended.is_active()) {
         auto& foundry = Portal::Graphics::get_shader_foundry();
         foundry.wait_for_fence(contexts.suspended.fence);
@@ -1315,9 +1395,11 @@ VisionResult VisionGpuExecutor::run(
 
         begin = contexts.pass.index + 1;
     } else {
+        reap_ingest_fences(contexts);
         contexts.pass.begin(sequence, w, h);
-        contexts.pass.current = image;
-        contexts.source = image;
+        const auto seed = op_ingest(contexts, image, w, h);
+        contexts.pass.current = seed;
+        contexts.source = seed;
     }
 
     for (contexts.pass.index = begin; contexts.pass.index < sequence.steps.size(); ++contexts.pass.index) {

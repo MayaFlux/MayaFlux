@@ -53,6 +53,11 @@ struct MAYAFLUX_API VisionGpuContexts {
                                     ///< data (ConnectedComponents,
                                     ///< FindContours).
     TextureExecutionContext cc_pipeline;
+    TextureExecutionContext ingest; ///< Sampled-in, rgba32f-storage-out.
+                                    ///< IMAGE mode. Runs vision_ingest.comp
+                                    ///< at the top of a fresh run to convert
+                                    ///< a non-storage seed frame before any
+                                    ///< rgba32f op reads it.
 
     /**
      * @brief Walk state for the current run: sequence position, geometry,
@@ -107,6 +112,11 @@ struct MAYAFLUX_API VisionGpuContexts {
     };
 
     Suspension suspended;
+
+    /// op_ingest's dispatch + trailing-barrier fences. Not awaited by run();
+    /// reaped by reap_ingest_fences on the next fresh run and in reset().
+    Portal::Graphics::FenceID ingest_fence { Portal::Graphics::INVALID_FENCE };
+    Portal::Graphics::FenceID ingest_barrier_fence { Portal::Graphics::INVALID_FENCE };
 
     /**
      * @brief Construct all three contexts in place with the one correct
