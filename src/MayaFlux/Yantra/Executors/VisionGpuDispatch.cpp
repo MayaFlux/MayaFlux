@@ -52,10 +52,6 @@ namespace {
         uint32_t width;
         uint32_t height;
     };
-    struct ExtractPC {
-        float threshold;
-        uint32_t nms_radius;
-    };
     struct CannyPC {
         float sigma;
         float lo;
@@ -563,6 +559,11 @@ namespace {
         };
         pixel_ctx.swap_shader(harris_resp_cfg);
         pixel_ctx.stage_image(smoothed);
+
+        /** Zero PeakBuf (binding 2) before pass 0 so its atomicMax starts clean;
+         *  clear the staged bytes before pass 1 so the accumulated max survives. */
+        const uint32_t peak_reset = 0U;
+        pixel_ctx.set_binding_data(2, std::span<const uint32_t>(&peak_reset, 1));
         pixel_ctx.set_push_constants(HarrisPC { .k = p.k, .pass = 0U, .width = w, .height = h });
         pixel_ctx.prepare_output_image(w, h);
         {
@@ -571,6 +572,7 @@ namespace {
             foundry.release_fence(f);
         }
 
+        pixel_ctx.set_binding_data(2, std::span<const uint32_t>(&peak_reset, 0));
         pixel_ctx.set_push_constants(HarrisPC { .k = p.k, .pass = 1U, .width = w, .height = h });
         {
             const auto f = pixel_ctx.dispatch_async({});
@@ -1236,7 +1238,7 @@ GpuComputeConfig VisionGpuExecutor::config(VisionOp op, const VisionParams& /*pa
     case VisionOp::HarrisResponse:
         return { .shader_path = "harris_response.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(HarrisPC) };
     case VisionOp::ExtractPeaks:
-        return { .shader_path = "extract_peaks.comp.spv", .workgroup_size = { 256, 1, 1 }, .push_constant_size = sizeof(ExtractPC) };
+        return { .shader_path = "extract_peaks.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(ExtractPeaksPC) };
     case VisionOp::ConnectedComponents:
         return { .shader_path = "cc_colorize.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(uint32_t) * 2 };
     case VisionOp::FindContours:
