@@ -197,6 +197,18 @@ struct VisionPass {
         return at < steps.size() ? &steps[at] : nullptr;
     }
 
+    /**
+     * @brief Op at @p offset steps back, or nullptr before the start.
+     *
+     * Counterpart to ahead(), for ops validating what produced their input.
+     */
+    [[nodiscard]] const VisionStep* behind(size_t offset = 1) const noexcept
+    {
+        if (offset > index)
+            return nullptr;
+        return &sequence->steps[index - offset];
+    }
+
     void set_geometry(uint32_t width, uint32_t height) noexcept
     {
         w = width;

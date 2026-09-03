@@ -595,7 +595,6 @@ namespace {
 
     void op_extract_peaks(
         VisionGpuContexts& contexts,
-        const VisionSequence& sequence,
         const ExtractPeaksParams& p)
     {
         auto& structured_ctx = contexts.structured;
@@ -629,7 +628,8 @@ namespace {
         foundry.wait_for_fence(fence);
         foundry.release_fence(fence);
 
-        if (sequence.track_follows_peaks) {
+        const auto* next = contexts.pass.ahead();
+        if (next && next->op == VisionOp::TrackKeypoints) {
             contexts.pass.result.structured = std::monostate {};
             contexts.pass.result.w = w;
             contexts.pass.result.h = h;
@@ -695,7 +695,18 @@ namespace {
 
         const CCBlockInitPC init_pc { .width = w, .height = h, .block_width = block_width, .block_height = block_height };
         const CCMergePC merge_pc { .width = w, .height = h, .block_width = block_width, .block_height = block_height };
-        const CCFinalLabelPC final_pc { .width = w, .height = h, .block_width = block_width, .block_height = block_height, .max_components = k_max_components, .export_labels = 1U };
+        const auto* next = contexts.pass.ahead();
+        const bool contours_follow = next && next->op == VisionOp::FindContours;
+        const uint32_t export_labels = (p.export_labels || contours_follow) ? 1U : 0U;
+
+        const CCFinalLabelPC final_pc {
+            .width = w,
+            .height = h,
+            .block_width = block_width,
+            .block_height = block_height,
+            .max_components = k_max_components,
+            .export_labels = export_labels
+        };
 
         cc_pipeline.swap_shader({ .shader_path = "cc_reset.comp.spv", .workgroup_size = { 256, 1, 1 }, .push_constant_size = sizeof(CCResetPC) });
         cc_pipeline.set_push_constants(CCResetPC {
@@ -825,12 +836,12 @@ namespace {
 
     bool op_find_contours(
         VisionGpuContexts& contexts,
-        const VisionSequence& sequence,
         const FindContoursParams& p)
     {
-        if (!sequence.contours_follow_cc) {
+        const auto* prev = contexts.pass.behind();
+        if (!prev || prev->op != VisionOp::ConnectedComponents) {
             MF_ERROR(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
-                "run_gpu: FindContours requires ConnectedComponents(export_labels=true) as the immediately preceding step");
+                "run_gpu: FindContours requires ConnectedComponents as the immediately preceding step");
             return false;
         }
 
@@ -1511,7 +1522,7 @@ VisionResult VisionGpuExecutor::run(
             continue;
         }
         case VisionOp::ExtractPeaks: {
-            op_extract_peaks(contexts, sequence, std::get<ExtractPeaksParams>(step.params));
+            op_extract_peaks(contexts, std::get<ExtractPeaksParams>(step.params));
             continue;
         }
         case VisionOp::ConnectedComponents: {
@@ -1522,7 +1533,7 @@ VisionResult VisionGpuExecutor::run(
             continue;
         }
         case VisionOp::FindContours: {
-            if (!op_find_contours(contexts, sequence,
+            if (!op_find_contours(contexts,
                     std::get<Kinesis::Vision::FindContoursParams>(step.params)))
                 return VisionResult {};
             continue;

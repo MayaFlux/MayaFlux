@@ -114,6 +114,8 @@ VisionResult VisionExecutor::run(
 
     size_t nxt = k_slot_nxt;
     auto en = static_cast<Eigen::Index>(m_pass.plane_size());
+    const bool wants_tracking = tracks_keypoints(sequence);
+    const bool peaks_feed_track = track_follows_peaks(sequence);
 
     for (m_pass.index = 0; m_pass.index < sequence.steps.size(); ++m_pass.index) {
         const auto& step = m_pass.step();
@@ -136,7 +138,7 @@ VisionResult VisionExecutor::run(
             m_pass.channels = 1;
             std::swap(m_pass.current, nxt);
 
-            if (sequence.tracks_keypoints && !sequence.track_follows_peaks) {
+            if (wants_tracking && !peaks_feed_track) {
                 m_curr_gray_cache.assign(slot_vec(m_pass.current).begin(),
                     slot_vec(m_pass.current).begin() + m_pass.plane_size());
             }
@@ -366,11 +368,11 @@ VisionResult VisionExecutor::run(
             auto kpts = extract_peaks(slot_vec(m_pass.current), w, h, p.threshold, p.nms_radius);
             m_prev_keypoints = kpts;
 
-            if (sequence.tracks_keypoints && !sequence.track_follows_peaks)
+            if (wants_tracking && !peaks_feed_track)
                 std::swap(std::get<std::vector<float>>(m_prev_gray), m_curr_gray_cache);
 
             m_pass.result.structured = std::move(kpts);
-            if (!sequence.track_follows_peaks) {
+            if (!peaks_feed_track) {
                 slot_vec(m_pass.current).clear();
                 m_pass.result.w = 0;
                 m_pass.result.h = 0;
