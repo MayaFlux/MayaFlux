@@ -139,11 +139,23 @@ struct VisionPass {
     std::unordered_map<size_t, Completed> completed;
 
     /**
-     * @brief Reset the walk band for a fresh run, leaving storage, retained
-     *        state, and caches intact.
+     * @brief Reset the walk band for a fresh run.
+     *
+     * Clears the memo unconditionally: its keys compare image handles, which
+     * proxy for content only within one walk. Across runs the caller's input
+     * and the contexts' output images are reused in place, so an equal handle
+     * does not mean equal pixels.
+     *
+     * Retained cross-run state is dropped only when the geometry changes,
+     * since surviving between runs is what it is for.
      */
     void begin(const VisionSequence& seq, uint32_t width, uint32_t height)
     {
+        completed.clear();
+
+        if (width != w || height != h)
+            forget();
+
         sequence = &seq;
         index = 0;
         channels = 4;

@@ -233,7 +233,7 @@ namespace {
         return cache.emplace(key, std::move(k)).first->second;
     }
 
-    CompletedOp op_threshold_otsu(VisionGpuContexts& contexts)
+    GpuVisionPass::Completed op_threshold_otsu(VisionGpuContexts& contexts)
     {
         auto& pixel_ctx = contexts.pixel;
         auto& structured_ctx = contexts.structured;
@@ -314,7 +314,7 @@ namespace {
         return { .output = thresholded, .input = otsu_input };
     }
 
-    CompletedOp op_open_close(
+    GpuVisionPass::Completed op_open_close(
         VisionGpuContexts& contexts,
         VisionOp op,
         const MorphParams& p)
@@ -371,9 +371,8 @@ namespace {
         return { .output = opened_closed, .input = morph_input };
     }
 
-    CompletedOp op_canny(
+    GpuVisionPass::Completed op_canny(
         VisionGpuContexts& contexts,
-        std::unordered_map<size_t, CompletedOp>& completed,
         const VisionParams& params,
         const CannyParams& p)
     {
@@ -388,8 +387,9 @@ namespace {
         const auto blur_key = Kinesis::Vision::hash_vision_step(
             VisionOp::GaussianBlur, GaussianBlurParams { .sigma = p.sigma });
         std::shared_ptr<Core::VKImage> blurred;
-        if (auto it = completed.find(blur_key);
-            it != completed.end() && it->second.input == canny_input) {
+
+        if (auto it = contexts.pass.completed.find(blur_key);
+            it != contexts.pass.completed.end() && it->second.input == canny_input) {
             blurred = it->second.output;
         } else {
             const auto radius = static_cast<uint32_t>(std::ceil(p.sigma * 3.0F));
@@ -406,13 +406,13 @@ namespace {
                 foundry.release_fence(f);
             }
             blurred = pixel_ctx.get_output_image(0);
-            completed[blur_key] = { .output = blurred, .input = canny_input };
+            contexts.pass.completed[blur_key] = { .output = blurred, .input = canny_input };
         }
 
         const auto sobel_key = Kinesis::Vision::hash_vision_step(VisionOp::Sobel, std::monostate {});
         std::shared_ptr<Core::VKImage> grad;
-        if (auto it = completed.find(sobel_key);
-            it != completed.end() && it->second.input == blurred) {
+        if (auto it = contexts.pass.completed.find(sobel_key);
+            it != contexts.pass.completed.end() && it->second.input == blurred) {
             grad = it->second.output;
         } else {
             const auto sobel_cfg = VisionGpuExecutor::config(VisionOp::Sobel, std::monostate {});
@@ -425,7 +425,7 @@ namespace {
                 foundry.release_fence(f);
             }
             grad = pixel_ctx.get_output_image(0);
-            completed[sobel_key] = { .output = grad, .input = blurred };
+            contexts.pass.completed[sobel_key] = { .output = grad, .input = blurred };
         }
 
         const GpuComputeConfig nms_cfg {
@@ -519,7 +519,7 @@ namespace {
         return { .output = finalized, .input = canny_input };
     }
 
-    CompletedOp op_harris_response(
+    GpuVisionPass::Completed op_harris_response(
         VisionGpuContexts& contexts,
         const HarrisParams& p)
     {
@@ -1409,21 +1409,21 @@ VisionResult VisionGpuExecutor::run(
             break;
         }
         case VisionOp::ThresholdOtsu: {
-            completed_ops[Kinesis::Vision::hash_vision_step(step.op, step.params)] = op_threshold_otsu(contexts);
+            contexts.pass.completed[Kinesis::Vision::hash_vision_step(step.op, step.params)] = op_threshold_otsu(contexts);
             continue;
         }
         case VisionOp::Open:
         case VisionOp::Close: {
-            completed_ops[Kinesis::Vision::hash_vision_step(step.op, step.params)] = op_open_close(contexts, step.op, std::get<MorphParams>(step.params));
+            contexts.pass.completed[Kinesis::Vision::hash_vision_step(step.op, step.params)] = op_open_close(contexts, step.op, std::get<MorphParams>(step.params));
             continue;
         }
         case VisionOp::Canny: {
-            completed_ops[Kinesis::Vision::hash_vision_step(step.op, step.params)] = op_canny(contexts, completed_ops, step.params,
-                std::get<CannyParams>(step.params));
+            auto done = op_canny(contexts, step.params, std::get<CannyParams>(step.params));
+            contexts.pass.completed[Kinesis::Vision::hash_vision_step(step.op, step.params)] = done;
             continue;
         }
         case VisionOp::HarrisResponse: {
-            completed_ops[Kinesis::Vision::hash_vision_step(step.op, step.params)] = op_harris_response(contexts, std::get<HarrisParams>(step.params));
+            contexts.pass.completed[Kinesis::Vision::hash_vision_step(step.op, step.params)] = op_harris_response(contexts, std::get<HarrisParams>(step.params));
             continue;
         }
         case VisionOp::ExtractPeaks: {
@@ -1454,6 +1454,13 @@ VisionResult VisionGpuExecutor::run(
             pixel_ctx.clear_output_dimensions();
             contexts.pass.current = pixel_ctx.get_output_image(0);
             contexts.bound_staged = contexts.pass.current;
+
+            const Kinesis::Vision::GpuVisionPass::Completed done {
+                .output = contexts.pass.current,
+                .input = dispatch_input
+            };
+            contexts.pass.completed[Kinesis::Vision::hash_vision_step(step.op, step.params)] = done;
+
             contexts.suspended.fence = fence;
 
             VisionResult pending;
