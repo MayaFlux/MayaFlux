@@ -378,9 +378,9 @@ inline void hash_combine(size_t& seed, size_t value)
 /**
  * @brief Hash a VisionStep's op and parameters together.
  *
- * Used to key GPU dispatch memoization within a single VisionGpuExecutor::run()
- * call, so an op run earlier in a sequence with identical parameters can be
- * reused rather than redispatched (e.g. Canny reusing an earlier Sobel step).
+ * Keys GPU dispatch memoization on VisionPass::completed, which spans one
+ * walk including any suspensions. Two steps hashing equal are treated as
+ * interchangeable, so every field that changes the output must be hashed.
  */
 inline size_t hash_vision_step(VisionOp op, const VisionParams& params)
 {
@@ -424,6 +424,11 @@ inline size_t hash_vision_step(VisionOp op, const VisionParams& params)
         } else if constexpr (std::is_same_v<T, FindContoursParams>) {
             hash_combine(seed, std::hash<float> {}(p.min_area));
             hash_combine(seed, std::hash<uint32_t> {}(p.max_contours));
+            hash_combine(seed, std::hash<uint32_t> {}(p.max_points_per_contour));
+            hash_combine(seed, std::hash<bool> {}(p.as_image));
+        } else if constexpr (std::is_same_v<T, ConnectedComponentsParams>) {
+            hash_combine(seed, std::hash<bool> {}(p.export_labels));
+            hash_combine(seed, std::hash<bool> {}(p.with_colors));
         }
     },
         params);
