@@ -133,6 +133,12 @@ public:
     void set_interaction_radius(float radius) { m_interaction_radius = radius; }
 
     /**
+     * @brief Get the interaction radius for physics calculations.
+     * @return Interaction radius.
+     */
+    [[nodiscard]] float get_interaction_radius() const { return m_interaction_radius; }
+
+    /**
      * @brief Set the spring stiffness for interactions.
      * @param stiffness Spring stiffness value.
      */
