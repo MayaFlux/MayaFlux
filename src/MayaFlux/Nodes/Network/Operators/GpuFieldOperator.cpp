@@ -56,6 +56,19 @@ namespace {
     }
 
     /**
+     * @brief Whether a target accumulates onto its current value or replaces it.
+     *
+     * Matches FieldOperator: a position field is a displacement added to the
+     * vertex, every other target is written outright. FieldMode does not enter
+     * into it, because mode there selects whether reference data is restored
+     * before evaluation, and this operator holds no reference data.
+     */
+    [[nodiscard]] bool target_accumulates(Kinesis::FieldTarget t) noexcept
+    {
+        return t == Kinesis::FieldTarget::POSITION;
+    }
+
+    /**
      * @brief Vertex attribute modality a single-bit target addresses.
      */
     [[nodiscard]] std::optional<Kakshya::DataModality>
@@ -109,9 +122,6 @@ namespace {
 GpuFieldOperator::GpuFieldOperator(Kakshya::VertexLayout layout)
     : m_layout(std::move(layout))
 {
-    m_push_constants.resize(sizeof(float));
-    std::memcpy(m_push_constants.data(), &m_dt, sizeof(float));
-
     if (m_layout.stride_bytes == 0 || m_layout.stride_bytes % 4 != 0) {
         MF_ERROR(Journal::Component::Nodes, Journal::Context::NodeProcessing,
             "GpuFieldOperator: stride {} is not a nonzero multiple of 4. The "
@@ -278,14 +288,6 @@ void GpuFieldOperator::unbind(FieldTarget target)
     invalidate();
 }
 
-void GpuFieldOperator::set_mode(FieldMode mode)
-{
-    if (m_mode == mode)
-        return;
-    m_mode = mode;
-    invalidate();
-}
-
 void GpuFieldOperator::set_vertex_binding(uint32_t binding)
 {
     if (m_vertex_binding == binding)
@@ -305,17 +307,11 @@ void GpuFieldOperator::set_workgroup_size(uint32_t x)
 void GpuFieldOperator::invalidate()
 {
     m_spec_cache.reset();
+    ++m_revision;
 }
 
-void GpuFieldOperator::process(float dt)
+void GpuFieldOperator::process(float /*dt*/)
 {
-    m_dt = dt;
-    std::memcpy(m_push_constants.data(), &m_dt, sizeof(float));
-}
-
-std::span<const uint8_t> GpuFieldOperator::push_constants() const
-{
-    return { m_push_constants.data(), m_push_constants.size() };
 }
 
 void GpuFieldOperator::set_parameter(std::string_view param, double value)
@@ -326,8 +322,6 @@ void GpuFieldOperator::set_parameter(std::string_view param, double value)
 
 std::optional<double> GpuFieldOperator::query_state(std::string_view query) const
 {
-    if (query == "dt")
-        return static_cast<double>(m_dt);
     if (query == "binding_count")
         return static_cast<double>(m_bindings.size());
     if (query == "stride_words")
@@ -351,24 +345,14 @@ std::optional<Portal::Graphics::ShaderSpec> GpuFieldOperator::build_spec() const
         return std::nullopt;
     }
 
-    if (m_mode == Kinesis::FieldMode::ABSOLUTE) {
-        for (const auto& b : m_bindings) {
-            if (has_flag(b.targets, Kinesis::FieldTarget::POSITION)) {
-                MF_ERROR(Journal::Component::Nodes, Journal::Context::NodeProcessing,
-                    "GpuFieldOperator: ABSOLUTE mode with a POSITION binding requires "
-                    "a reference copy of the vertex records, which this operator does "
-                    "not allocate. Use ACCUMULATE, or drive POSITION from a separate "
-                    "operator that owns reference state.");
-                return std::nullopt;
-            }
-        }
-    }
-
     Portal::Graphics::ShaderSpec::Assemble assemble;
     assemble.start_binding(m_vertex_binding)
         .ssbo("vertices", Portal::Graphics::BindingDirection::InOut,
             Kakshya::GpuDataFormat::FLOAT32)
-        .pc("dt")
+        .pc("first_vertex", Kakshya::GpuDataFormat::UINT32)
+        .pc("vertex_count", Kakshya::GpuDataFormat::UINT32)
+        .pc("stride_words", Kakshya::GpuDataFormat::UINT32)
+        .pc("_pad", Kakshya::GpuDataFormat::UINT32)
         .workgroup(m_workgroup_size);
 
     std::vector<std::string_view> emitted;
@@ -383,13 +367,11 @@ std::optional<Portal::Graphics::ShaderSpec> GpuFieldOperator::build_spec() const
 
     const uint32_t pw = position->first;
     std::string body;
-    body += "    uint b = i * " + word(m_stride_words) + ";\n";
+    body += "    if (i >= vertex_count) { return; }\n";
+    body += "    uint b = (first_vertex + i) * stride_words;\n";
     body += "    vec3 p = vec3(vertices[b + " + word(pw)
         + "], vertices[b + " + word(pw + 1)
         + "], vertices[b + " + word(pw + 2) + "]);\n";
-
-    const bool scaled = m_mode == Kinesis::FieldMode::ACCUMULATE;
-    const char* assign = scaled ? " += " : " = ";
 
     for (Kinesis::FieldTarget t : Kinesis::k_field_targets) {
         const bool touched = std::ranges::any_of(m_bindings,
@@ -419,16 +401,17 @@ std::optional<Portal::Graphics::ShaderSpec> GpuFieldOperator::build_spec() const
                 + len + " : " + acc + ";\n";
         }
 
-        const std::string rhs = scaled ? (acc + " * dt") : acc;
+        const char* assign = target_accumulates(t) ? " += " : " = ";
         for (uint32_t k = 0; k < components; ++k) {
             body += "    vertices[b + " + word(w + k) + "]" + assign
-                + (components == 1 ? rhs : "(" + rhs + ")" + k_swizzle[k]) + ";\n";
+                + acc + (components == 1 ? "" : k_swizzle[k]) + ";\n";
         }
     }
 
     assemble.kernel(Portal::Graphics::KernelSource {
         .raw = {},
-        .param_names = { "vertices", "dt", "i" },
+        .param_names = { "vertices", "first_vertex", "vertex_count",
+            "stride_words", "_pad", "i" },
         .body = std::move(body),
     });
 

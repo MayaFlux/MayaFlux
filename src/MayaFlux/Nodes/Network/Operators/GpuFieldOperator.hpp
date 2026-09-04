@@ -10,7 +10,6 @@
 namespace MayaFlux::Nodes::Network {
 
 using FieldTarget = Kinesis::FieldTarget;
-using FieldMode = Kinesis::FieldMode;
 
 /**
  * @class GpuFieldOperator
@@ -37,6 +36,12 @@ using FieldMode = Kinesis::FieldMode;
  * the target is not POSITION: writing an absolute position would require a
  * reference copy of the original vertices, which this operator does not
  * allocate. bind() rejects that combination.
+
+ * Consumers compile a pipeline from build_spec() and hold it. revision()
+ * increments whenever that spec changes, so a consumer records the revision it
+ * built against and rebuilds when it differs. Rebinding is authoring-time work
+ * and is not synchronised against a running process_batch, matching
+ * OperatorChain's contract.
  *
  * @code
  * namespace MayaFlux::Fields {
@@ -106,9 +111,6 @@ public:
      */
     [[nodiscard]] size_t binding_count() const { return m_bindings.size(); }
 
-    void set_mode(FieldMode mode);
-    [[nodiscard]] FieldMode get_mode() const { return m_mode; }
-
     /**
      * @brief Descriptor binding index the vertex SSBO occupies.
      *
@@ -121,6 +123,15 @@ public:
      */
     void set_workgroup_size(uint32_t x);
 
+    /**
+     * @brief Monotonic counter incremented whenever build_spec()'s result changes.
+     *
+     * A consumer that compiles a pipeline from build_spec() records the
+     * revision it built against and rebuilds when it differs. A bool would not
+     * survive two consumers, since the first to observe it would clear it.
+     */
+    [[nodiscard]] uint64_t revision() const noexcept { return m_revision; }
+
     // -------------------------------------------------------------------------
     // Shader
     // -------------------------------------------------------------------------
@@ -129,26 +140,24 @@ public:
      * @brief Assemble the compute spec for the current bindings.
      *
      * Emits one GLSL function per distinct bound field, then a kernel that
-     * reads the position once and writes every touched target in a single
-     * pass. Fields sharing a target sum before the write; NORMAL and TANGENT
-     * normalise after the sum. Cached until a bind, unbind, or configuration
-     * change invalidates it. Returns nullopt when nothing is bound, when the
-     * layout carries no position attribute, or when ABSOLUTE mode meets a
-     * POSITION binding.
+     * guards against the dispatch tail, reads the position once, and writes
+     * every touched target in a single pass. Fields sharing a target sum
+     * before the write; NORMAL and TANGENT normalise after the sum. POSITION
+     * accumulates onto the existing vertex, every other target is assigned,
+     * matching FieldOperator.
      *
-     * ABSOLUTE with POSITION is refused here rather than at bind because mode
-     * may change after a field is bound. Writing an absolute position needs a
-     * reference copy of the original vertices, which this operator does not
-     * allocate.
+     * The kernel addresses a range rather than the whole buffer, since a
+     * NetworkGeometryBuffer aggregates one slice per producing operator. The
+     * range and the record stride arrive as push constants written by the
+     * processor, so neither the caller nor the field author offsets anything,
+     * and a layout or slice change needs no recompile. Attribute offsets are
+     * baked, since those describe the record the spec was built against.
+     *
+     * Cached until a bind, unbind or configuration change invalidates it.
+     * Returns nullopt when nothing is bound or the layout carries no position
+     * attribute.
      */
     [[nodiscard]] std::optional<Portal::Graphics::ShaderSpec> build_spec() const;
-
-    /**
-     * @brief Push constant bytes for the current cycle.
-     *
-     * Written by process(). Layout matches the block declared by build_spec().
-     */
-    [[nodiscard]] std::span<const uint8_t> push_constants() const;
 
     /**
      * @brief Layout the emitted shader addresses.
@@ -160,7 +169,11 @@ public:
     // -------------------------------------------------------------------------
 
     /**
-     * @brief Update push constant values. Performs no GPU work.
+     * @brief No per-cycle work.
+     *
+     * The operator holds only declarations. Dispatch, push constants and the
+     * vertex range all belong to the VertexFieldProcessor that consumes
+     * build_spec(). Present because NetworkOperator requires it.
      */
     void process(float dt) override;
 
@@ -197,10 +210,7 @@ private:
     uint32_t m_vertex_binding {};
     uint32_t m_workgroup_size { 256 };
     std::vector<Binding> m_bindings;
-    FieldMode m_mode { FieldMode::ACCUMULATE };
-
-    float m_dt { 0.016F };
-    std::vector<uint8_t> m_push_constants;
+    uint64_t m_revision {};
 
     mutable std::optional<Portal::Graphics::ShaderSpec> m_spec_cache;
 
