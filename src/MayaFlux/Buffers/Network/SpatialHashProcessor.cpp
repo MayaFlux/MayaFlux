@@ -12,7 +12,7 @@
 namespace MayaFlux::Buffers {
 
 std::optional<SpatialHashConfig> SpatialHashConfig::from_network(
-    const NetworkGeometryBuffer& buffer, float cell_size)
+    const std::shared_ptr<NetworkGeometryBuffer>& buffer, float cell_size)
 {
     if (cell_size <= 0.0F) {
         MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
@@ -20,7 +20,7 @@ std::optional<SpatialHashConfig> SpatialHashConfig::from_network(
         return std::nullopt;
     }
 
-    auto particle_net = std::dynamic_pointer_cast<Nodes::Network::ParticleNetwork>(buffer.get_network());
+    auto particle_net = std::dynamic_pointer_cast<Nodes::Network::ParticleNetwork>(buffer->get_network());
     if (!particle_net) {
         MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
             "SpatialHashConfig::from_network: buffer's network is not a ParticleNetwork");
@@ -72,13 +72,13 @@ std::optional<SpatialHashConfig> SpatialHashConfig::from_network(
     };
 }
 
-void SpatialHashConfig::declare_fields(NetworkGeometryBuffer& buffer) const
+void SpatialHashConfig::declare_fields(const std::shared_ptr<NetworkGeometryBuffer>& buffer) const
 {
     const uint32_t cells = cell_count();
-    buffer.declare_state("hash_cell_count", cells, sizeof(uint32_t), false);
-    buffer.declare_state("hash_cell_start", cells, sizeof(uint32_t), false);
-    buffer.declare_state("hash_cell_cursor", cells, sizeof(uint32_t), false);
-    buffer.declare_state("hash_particle_index", particle_count, sizeof(uint32_t), false);
+    buffer->declare_state("hash_cell_count", cells, sizeof(uint32_t), false);
+    buffer->declare_state("hash_cell_start", cells, sizeof(uint32_t), false);
+    buffer->declare_state("hash_cell_cursor", cells, sizeof(uint32_t), false);
+    buffer->declare_state("hash_particle_index", particle_count, sizeof(uint32_t), false);
 }
 
 //=============================================================================

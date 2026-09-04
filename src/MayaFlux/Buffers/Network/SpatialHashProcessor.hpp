@@ -61,7 +61,7 @@ struct SpatialHashConfig {
      *         not positive.
      */
     [[nodiscard]] static std::optional<SpatialHashConfig> from_network(
-        const NetworkGeometryBuffer& buffer, float cell_size);
+        const std::shared_ptr<NetworkGeometryBuffer>& buffer, float cell_size);
 
     /**
      * @brief Declare the four state fields the hash build stages read and
@@ -79,7 +79,7 @@ struct SpatialHashConfig {
      * overwrites the ones it owns each cycle rather than reading a previous
      * cycle's value, so none of them need a second ping-pong slot.
      */
-    void declare_fields(NetworkGeometryBuffer& buffer) const;
+    void declare_fields(const std::shared_ptr<NetworkGeometryBuffer>& buffer) const;
 };
 
 /**
