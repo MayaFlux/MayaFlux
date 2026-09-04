@@ -112,6 +112,18 @@ public:
 private:
     std::unordered_map<std::string, NetworkBinding> m_bindings;
     std::vector<uint8_t> m_staging_aggregate;
+
+    /**
+     * @brief Grow a binding's staging buffer to hold at least @p bytes.
+     *
+     * The target vertex buffer resizes with 1.5x headroom when a network grows,
+     * so the staging buffer it was sized against goes stale. Growing by the same
+     * factor keeps reallocation proportional to growth rather than per frame.
+     *
+     * @param binding Binding whose staging_buffer is checked and possibly replaced.
+     * @param bytes   Required capacity.
+     */
+    void ensure_staging(NetworkBinding& binding, size_t bytes);
 };
 
 } // namespace MayaFlux::Buffers

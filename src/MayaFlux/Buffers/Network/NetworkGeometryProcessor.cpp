@@ -136,7 +136,8 @@ void NetworkGeometryProcessor::processing_function(const std::shared_ptr<Buffer>
                 vk_buffer->resize(static_cast<size_t>(static_cast<float>(total) * 1.5F), false);
             }
 
-            upload_to_gpu(gpu_data.vertex_data.data(), total, vk_buffer, nullptr);
+            ensure_staging(binding, total);
+            upload_to_gpu(gpu_data.vertex_data.data(), total, vk_buffer, binding.staging_buffer);
 
             if (gpu_data.layout)
                 vk_buffer->set_vertex_layout(*gpu_data.layout);
@@ -194,10 +195,15 @@ void NetworkGeometryProcessor::processing_function(const std::shared_ptr<Buffer>
             byte_offset += s.bytes.size();
         }
 
-        upload_to_gpu(m_staging_aggregate.data(), total_bytes, vk_buffer, nullptr);
+        ensure_staging(binding, total_bytes);
+        upload_to_gpu(m_staging_aggregate.data(), total_bytes, vk_buffer, binding.staging_buffer);
 
-        if (slices.back().layout)
-            vk_buffer->set_vertex_layout(*slices.back().layout);
+        for (auto& slice : std::views::reverse(slices)) {
+            if (slice.layout) {
+                vk_buffer->set_vertex_layout(*slice.layout);
+                break;
+            }
+        }
 
         auto ngb = std::dynamic_pointer_cast<NetworkGeometryBuffer>(buffer);
         if (ngb) {
@@ -221,6 +227,21 @@ void NetworkGeometryProcessor::processing_function(const std::shared_ptr<Buffer>
             "Uploaded {} bytes ({} slices) from network '{}'",
             total_bytes, slices.size(), name);
     }
+}
+
+void NetworkGeometryProcessor::ensure_staging(NetworkBinding& binding, size_t bytes)
+{
+    if (!binding.gpu_vertex_buffer || binding.gpu_vertex_buffer->is_host_visible())
+        return;
+
+    if (binding.staging_buffer && binding.staging_buffer->get_size_bytes() >= bytes)
+        return;
+
+    const auto grown = static_cast<size_t>(static_cast<float>(bytes) * 1.5F);
+    binding.staging_buffer = create_staging_buffer(grown);
+
+    MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+        "NetworkGeometryProcessor: staging buffer grown to {} bytes", grown);
 }
 
 } // namespace MayaFlux::Buffers
