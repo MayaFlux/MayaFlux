@@ -148,6 +148,65 @@ public:
         uint32_t vertex_count,
         const std::optional<Kakshya::VertexLayout>& layout);
 
+    //-------------------------------------------------------------------------
+    // Auxiliary state
+    //-------------------------------------------------------------------------
+
+    /**
+     * @brief Declare a named auxiliary state field alongside the vertex data.
+     * @param name Lookup key, unique within this buffer.
+     * @param element_count Number of elements the field holds. Fixed at
+     *        declaration: it does not track later growth of the vertex
+     *        buffer itself, since NetworkGeometryProcessor's resize path
+     *        (1.5x headroom on overflow) has no knowledge of declared state
+     *        fields. Declare at the network's expected particle count.
+     * @param stride_bytes Bytes per element.
+     * @param double_buffered False resolves read and write to one slot,
+     *        which suits a value recomputed from other state each cycle.
+     * @return True if the field was registered.
+     *
+     * Mirrors VolumeGridBuffer::allocate_field: storage lives as raw handle
+     * pairs in the base VKBuffer's back_buffers, addressed by name rather
+     * than wrapped in a VKBuffer of its own. A processor resolves the
+     * handle it needs through read_state_handle/write_state_handle and
+     * writes its own descriptor directly against ShaderFoundry, the way
+     * VolumeFieldProcessor does for volume fields, rather than going
+     * through bind_buffer or the buffer's shared pipeline_context.
+     */
+    bool declare_state(
+        const std::string& name,
+        size_t element_count,
+        size_t stride_bytes,
+        bool double_buffered = true);
+
+    /** @brief Whether a state field of this name was declared. */
+    [[nodiscard]] bool has_state(const std::string& name) const;
+
+    /** @brief Byte size of one slot of the named state field, or 0 if undeclared. */
+    [[nodiscard]] size_t get_state_bytes(const std::string& name) const;
+
+    /**
+     * @brief Handle a stage should read the named state field from.
+     * @return Vulkan buffer handle, or nullptr if undeclared.
+     */
+    [[nodiscard]] vk::Buffer read_state_handle(const std::string& name) const;
+
+    /**
+     * @brief Handle a stage should write the named state field to.
+     * @return Vulkan buffer handle, or nullptr if undeclared. Equals
+     *         read_state_handle() for single-slot fields.
+     */
+    [[nodiscard]] vk::Buffer write_state_handle(const std::string& name) const;
+
+    /**
+     * @brief Exchange read and write slots for the named state field.
+     * @param name Field name. No effect on single-slot fields.
+     *
+     * Called by whichever stage last wrote the field, after its dispatch,
+     * so the next stage reading it observes the new values.
+     */
+    void swap_state(const std::string& name);
+
 protected:
     std::shared_ptr<Nodes::Network::NodeNetwork> m_network;
     std::shared_ptr<NetworkGeometryProcessor> m_processor;
@@ -160,6 +219,22 @@ private:
         uint32_t vertex_count {};
     };
     std::vector<ChainRenderEntry> m_chain_render_processors;
+
+    struct StateField {
+        size_t element_count;
+        size_t stride_bytes;
+        uint32_t slot_a;
+        uint32_t slot_b;
+        bool read_is_a;
+    };
+    std::unordered_map<std::string, StateField> m_state_fields;
+
+    /**
+     * @brief Resolve a declared state field by name.
+     * @param context Caller identifier used in the error path.
+     * @return Pointer to the field, or nullptr with an error logged.
+     */
+    [[nodiscard]] const StateField* find_state_field(const std::string& name, const char* context) const;
 
     /**
      * @brief Calculate initial buffer size based on network node count
