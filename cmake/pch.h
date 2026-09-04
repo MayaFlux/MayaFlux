@@ -4,6 +4,66 @@
 
 #include <glm/fwd.hpp>
 
+/**
+ * @def MF_BITMASK_OPERATORS
+ * @brief Generate bitwise operators for a scoped enum, in the enum's own namespace.
+ *
+ * Invoke immediately after the enum declaration, inside the same namespace.
+ * Placement is the point: operators defined alongside the enum are found by
+ * argument-dependent lookup, so nothing declared in an enclosing namespace can
+ * hide them and a sibling operator| on an unrelated type becomes an overload
+ * rather than a shadow.
+ *
+ * A trait-and-template mechanism was measured against this and rejected. Global
+ * operator templates are found by ordinary unqualified lookup rather than ADL,
+ * which means any operator| declared anywhere in an enclosing namespace silently
+ * removes them from consideration, with the failure surfacing at a distant call
+ * site long after the change that caused it.
+ *
+ * operator~ does not clamp to declared bits. Compose it with a mask that does:
+ * a & ~b keeps only bits that were in a to begin with.
+ *
+ * @code
+ * namespace MayaFlux::Kinesis {
+ * enum class FieldTarget : uint8_t { NONE = 0U, POSITION = 1U << 0U, ... };
+ * MF_BITMASK_OPERATORS(FieldTarget)
+ * }
+ * @endcode
+ */
+#define MF_BITMASK_OPERATORS(T)                                       \
+    [[nodiscard]] constexpr T operator|(T a, T b) noexcept            \
+    {                                                                 \
+        using U = std::underlying_type_t<T>;                          \
+        return static_cast<T>(static_cast<U>(a) | static_cast<U>(b)); \
+    }                                                                 \
+    [[nodiscard]] constexpr T operator&(T a, T b) noexcept            \
+    {                                                                 \
+        using U = std::underlying_type_t<T>;                          \
+        return static_cast<T>(static_cast<U>(a) & static_cast<U>(b)); \
+    }                                                                 \
+    [[nodiscard]] constexpr T operator^(T a, T b) noexcept            \
+    {                                                                 \
+        using U = std::underlying_type_t<T>;                          \
+        return static_cast<T>(static_cast<U>(a) ^ static_cast<U>(b)); \
+    }                                                                 \
+    [[nodiscard]] constexpr T operator~(T a) noexcept                 \
+    {                                                                 \
+        using U = std::underlying_type_t<T>;                          \
+        return static_cast<T>(~static_cast<U>(a));                    \
+    }                                                                 \
+    constexpr T& operator|=(T& a, T b) noexcept { return a = a | b; } \
+    constexpr T& operator&=(T& a, T b) noexcept { return a = a & b; } \
+    constexpr T& operator^=(T& a, T b) noexcept { return a = a ^ b; } \
+    [[nodiscard]] constexpr bool any_flag(T a) noexcept               \
+    {                                                                 \
+        return static_cast<std::underlying_type_t<T>>(a) != 0;        \
+    }                                                                 \
+    [[nodiscard]] constexpr bool has_flag(T mask, T bits) noexcept    \
+    {                                                                 \
+        return static_cast<std::underlying_type_t<T>>(mask & bits)    \
+            == static_cast<std::underlying_type_t<T>>(bits);          \
+    }
+
 // === Core MayaFlux Type System ===
 
 namespace MayaFlux {
