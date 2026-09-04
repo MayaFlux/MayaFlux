@@ -71,6 +71,7 @@ namespace Buffers {
     class MeshNetworkBuffer;
     class ComputeMeshBuffer;
     class NetworkGeometryBuffer;
+    class ParticleGeometryBuffer;
     class InstanceNetworkBuffer;
     class NetworkTextureBuffer;
     class NetworkAudioBuffer;
@@ -139,6 +140,7 @@ namespace IO {
     B(MeshNetworkBuffer, MayaFlux::Buffers::MeshNetworkBuffer)             \
     B(ComputeMeshBuffer, MayaFlux::Buffers::ComputeMeshBuffer)             \
     B(NetworkGeometryBuffer, MayaFlux::Buffers::NetworkGeometryBuffer)     \
+    B(ParticleGeometryBuffer, MayaFlux::Buffers::ParticleGeometryBuffer)   \
     B(NetworkTextureBuffer, MayaFlux::Buffers::NetworkTextureBuffer)       \
     B(InstanceNetworkBuffer, MayaFlux::Buffers::InstanceNetworkBuffer)     \
     B(NetworkAudioBuffer, MayaFlux::Buffers::NetworkAudioBuffer)
