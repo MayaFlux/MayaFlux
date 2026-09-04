@@ -62,6 +62,7 @@ void ShaderProcessor::processing_function(const std::shared_ptr<Buffer>& buffer)
     if (!m_initialized) {
         initialize_shader();
         initialize_pipeline(vk_buffer);
+        m_needs_pipeline_rebuild = false;
         m_initialized = true;
     }
 
