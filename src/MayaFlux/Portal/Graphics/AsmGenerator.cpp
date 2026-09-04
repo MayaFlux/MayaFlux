@@ -1679,6 +1679,12 @@ std::string emit_glsl_kernel(const ShaderSpec& spec)
         o += "} pc;\n";
     }
 
+    for (const auto& f : spec.functions) {
+        o += "\n" + f.return_type + " " + f.name + "(" + f.params + ") {\n";
+        o += f.body;
+        o += "\n}\n";
+    }
+
     o += "\nvoid main() {\n";
     o += "    uint i = gl_GlobalInvocationID.x;\n";
     if (has_image)
