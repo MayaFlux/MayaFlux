@@ -2,6 +2,10 @@
 
 #include "MayaFlux/Buffers/Shaders/ComputeProcessor.hpp"
 
+namespace MayaFlux::Nodes::Network {
+class ParticleFieldOperator;
+}
+
 namespace MayaFlux::Buffers {
 
 class NetworkGeometryBuffer;
@@ -345,6 +349,12 @@ private:
  * CPU: at tens of thousands of particles this is O(n * 27 * average
  * occupancy) instead of O(n^2), and it runs as one GPU dispatch instead of
  * a CPU loop. Must run after HashScatterProcessor.
+ *
+ * Reads density_saturation_count from the owning ParticleFieldOperator
+ * fresh whenever its revision() changes (checked in on_before_execute,
+ * the same hook VertexFieldProcessor::sync_revision() uses), so
+ * ParticleFieldOperator::set_density_saturation_count() takes effect on
+ * this processor's next dispatch with no rebuild.
  */
 class MAYAFLUX_API HashDensityColorProcessor : public NetworkStateFieldProcessor {
 public:
@@ -352,17 +362,23 @@ public:
      * @param config Grid parameters, shared with the build stages that
      *        must already have populated hash_cell_start/hash_cell_count/
      *        hash_particle_index this cycle.
-     * @param color_word_offset Word offset of the vertex record's colour
-     *        attribute, from VertexLayout::find_word_offset with
-     *        DataModality::VERTEX_COLORS_RGB. Construction does not
-     *        validate this against the buffer; a layout with no colour
-     *        attribute produces a processor that writes past the record
-     *        into whatever follows it.
+     * @param particle_op Owning operator. Colour word offset is resolved
+     *        from its vertex layout (DataModality::VERTEX_COLORS_RGB) at
+     *        construction; throws std::invalid_argument when the layout
+     *        carries no colour attribute. density_saturation_count is
+     *        re-read from this operator's config whenever revision()
+     *        changes.
      */
-    HashDensityColorProcessor(const SpatialHashConfig& config, uint32_t color_word_offset);
+    HashDensityColorProcessor(
+        const SpatialHashConfig& config,
+        std::shared_ptr<Nodes::Network::ParticleFieldOperator> particle_op);
 
 protected:
     void on_buffer_ready() override;
+
+    bool on_before_execute(
+        Portal::Graphics::CommandBufferID cmd_id,
+        const std::shared_ptr<VKBuffer>& buffer) override;
 
 private:
     struct Params {
@@ -377,9 +393,12 @@ private:
         uint32_t dim_x;
         uint32_t dim_y;
         uint32_t dim_z;
+        float density_saturation_count;
     };
 
     Params m_params;
+    std::shared_ptr<Nodes::Network::ParticleFieldOperator> m_particle_op;
+    uint64_t m_built_revision;
 };
 
 } // namespace MayaFlux::Buffers

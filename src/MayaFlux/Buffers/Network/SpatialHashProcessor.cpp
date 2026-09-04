@@ -3,6 +3,7 @@
 #include "NetworkGeometryBuffer.hpp"
 
 #include "MayaFlux/Nodes/Network/Operators/GraphicsOperator.hpp"
+#include "MayaFlux/Nodes/Network/Operators/ParticleFieldOperator.hpp"
 #include "MayaFlux/Nodes/Network/ParticleNetwork.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
@@ -486,6 +487,7 @@ namespace {
             .pc("dim_x", Kakshya::GpuDataFormat::UINT32)
             .pc("dim_y", Kakshya::GpuDataFormat::UINT32)
             .pc("dim_z", Kakshya::GpuDataFormat::UINT32)
+            .pc("density_saturation_count", Kakshya::GpuDataFormat::FLOAT32)
             .workgroup(256);
 
         std::string body;
@@ -524,7 +526,7 @@ namespace {
         body += "        }\n";
         body += "    }\n";
         body += "\n";
-        body += "    float density = clamp(float(neighbor_count) / 24.0, 0.0, 1.0);\n";
+        body += "    float density = clamp(float(neighbor_count) / density_saturation_count, 0.0, 1.0);\n";
         body += "    vec3 ember = vec3(0.03, 0.0, 0.06);\n";
         body += "    vec3 fire = vec3(0.95, 0.25, 0.02);\n";
         body += "    vec3 white_hot = vec3(1.0, 0.95, 0.7);\n";
@@ -539,17 +541,51 @@ namespace {
             .raw = {},
             .param_names = { "vertices", "cell_start", "cell_count", "particle_index",
                 "particle_count", "stride_words", "position_offset", "color_offset",
-                "grid_min_x", "grid_min_y", "grid_min_z", "cell_size", "dim_x", "dim_y", "dim_z", "i" },
+                "grid_min_x", "grid_min_y", "grid_min_z", "cell_size", "dim_x", "dim_y", "dim_z",
+                "density_saturation_count", "i" },
             .body = std::move(body),
         });
 
         return assemble.build();
     }
 
+    /**
+     * @brief Resolve the vertex record's colour word offset or fail loudly.
+     *
+     * A free function rather than inline in the member-initialiser list:
+     * the constructor needs the result before it can build m_params, and a
+     * throwing helper called there is the same shape
+     * VertexFieldProcessor::require_spec already uses for a precondition
+     * that must hold before construction can proceed at all.
+     */
+    uint32_t require_color_offset(
+        const std::shared_ptr<Nodes::Network::ParticleFieldOperator>& particle_op)
+    {
+        if (!particle_op) {
+            error<std::invalid_argument>(
+                Journal::Component::Buffers,
+                Journal::Context::BufferProcessing,
+                std::source_location::current(),
+                "HashDensityColorProcessor: null particle operator");
+        }
+
+        auto offset = particle_op->get_layout().find_word_offset(Kakshya::DataModality::VERTEX_COLORS_RGB);
+        if (!offset.has_value()) {
+            error<std::invalid_argument>(
+                Journal::Component::Buffers,
+                Journal::Context::BufferProcessing,
+                std::source_location::current(),
+                "HashDensityColorProcessor: vertex layout carries no word-aligned colour attribute");
+        }
+
+        return *offset;
+    }
+
 } // namespace
 
 HashDensityColorProcessor::HashDensityColorProcessor(
-    const SpatialHashConfig& config, uint32_t color_word_offset)
+    const SpatialHashConfig& config,
+    std::shared_ptr<Nodes::Network::ParticleFieldOperator> particle_op)
     : NetworkStateFieldProcessor(
           { FieldBinding { .name = "vertices", .binding = 0, .field = {} },
               FieldBinding { .name = "cell_start", .binding = 1, .field = "hash_cell_start" },
@@ -560,7 +596,7 @@ HashDensityColorProcessor::HashDensityColorProcessor(
         .particle_count = config.particle_count,
         .stride_words = config.stride_words,
         .position_offset = config.position_word_offset,
-        .color_offset = color_word_offset,
+        .color_offset = require_color_offset(particle_op),
         .grid_min_x = config.grid_min.x,
         .grid_min_y = config.grid_min.y,
         .grid_min_z = config.grid_min.z,
@@ -568,13 +604,33 @@ HashDensityColorProcessor::HashDensityColorProcessor(
         .dim_x = config.grid_dims.x,
         .dim_y = config.grid_dims.y,
         .dim_z = config.grid_dims.z,
+        .density_saturation_count = particle_op->get_particle_config().density_saturation_count,
     }
+    , m_particle_op(std::move(particle_op))
+    , m_built_revision(m_particle_op->revision())
 {
 }
 
 void HashDensityColorProcessor::on_buffer_ready()
 {
     dispatch_one_thread_per(m_params.particle_count, m_params);
+}
+
+bool HashDensityColorProcessor::on_before_execute(
+    Portal::Graphics::CommandBufferID cmd_id,
+    const std::shared_ptr<VKBuffer>& buffer)
+{
+    if (!NetworkStateFieldProcessor::on_before_execute(cmd_id, buffer)) {
+        return false;
+    }
+
+    if (m_particle_op->revision() != m_built_revision) {
+        m_params.density_saturation_count = m_particle_op->get_particle_config().density_saturation_count;
+        set_push_constant_data(m_params);
+        m_built_revision = m_particle_op->revision();
+    }
+
+    return true;
 }
 
 } // namespace MayaFlux::Buffers

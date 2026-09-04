@@ -82,17 +82,9 @@ void ParticleGeometryBuffer::wire_particle_field_operator(
     chain->add_processor(std::make_shared<HashScanProcessor>(*hash_config), self);
     chain->add_processor(std::make_shared<HashScatterProcessor>(*hash_config), self);
 
-    const auto& layout = particle_op->get_layout();
-    const auto color_offset = layout.find_word_offset(Kakshya::DataModality::VERTEX_COLORS_RGB);
-
     if (pconfig.density_color) {
-        if (color_offset.has_value()) {
-            chain->add_processor(
-                std::make_shared<HashDensityColorProcessor>(*hash_config, *color_offset), self);
-        } else {
-            MF_ERROR(Journal::Component::Buffers, Journal::Context::Init,
-                "ParticleGeometryBuffer: density_color requested but vertex layout has no colour attribute");
-        }
+        chain->add_processor(
+            std::make_shared<HashDensityColorProcessor>(*hash_config, particle_op), self);
     }
 
     if (!pconfig.absorb_radius.has_value()) {
@@ -106,21 +98,7 @@ void ParticleGeometryBuffer::wire_particle_field_operator(
     chain->add_processor(std::make_shared<ClaimProcessor>(claim_config), self);
     chain->add_processor(std::make_shared<ClaimFlattenProcessor>(claim_config), self);
     chain->add_processor(std::make_shared<ClaimAccumulateProcessor>(claim_config), self);
-
-    const auto size_attr = std::ranges::find_if(layout.attributes,
-        [](const auto& attr) { return attr.name == "size"; });
-    const bool have_size = size_attr != layout.attributes.end() && size_attr->offset_in_vertex % 4 == 0;
-
-    if (!color_offset.has_value() || !have_size) {
-        MF_ERROR(Journal::Component::Buffers, Journal::Context::Init,
-            "ParticleGeometryBuffer: mutation requested but vertex layout is missing a colour "
-            "or word-aligned size attribute; ClaimSwallowProcessor not attached");
-        return;
-    }
-
-    const uint32_t size_offset = size_attr->offset_in_vertex / 4;
-    chain->add_processor(
-        std::make_shared<ClaimSwallowProcessor>(claim_config, *color_offset, size_offset), self);
+    chain->add_processor(std::make_shared<ClaimSwallowProcessor>(claim_config, particle_op), self);
 }
 
 } // namespace MayaFlux::Buffers

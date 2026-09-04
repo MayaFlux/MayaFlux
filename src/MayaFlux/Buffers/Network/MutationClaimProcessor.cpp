@@ -2,6 +2,8 @@
 
 #include "NetworkGeometryBuffer.hpp"
 
+#include "MayaFlux/Nodes/Network/Operators/ParticleFieldOperator.hpp"
+
 #include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Portal/Graphics/ShaderFoundry.hpp"
 #include "MayaFlux/Portal/Graphics/ShaderSpec.hpp"
@@ -311,6 +313,10 @@ namespace {
             .pc("position_offset", Kakshya::GpuDataFormat::UINT32)
             .pc("color_offset", Kakshya::GpuDataFormat::UINT32)
             .pc("size_offset", Kakshya::GpuDataFormat::UINT32)
+            .pc("base_size", Kakshya::GpuDataFormat::FLOAT32)
+            .pc("growth_rate", Kakshya::GpuDataFormat::FLOAT32)
+            .pc("max_size", Kakshya::GpuDataFormat::FLOAT32)
+            .pc("dim_factor", Kakshya::GpuDataFormat::FLOAT32)
             .workgroup(256);
 
         std::string body;
@@ -329,7 +335,7 @@ namespace {
         body += "\n";
         body += "    if (root == i) {\n";
         body += "        float count = float(swallow_count[i]);\n";
-        body += "        float size = clamp(10.0 + count * 0.6, 10.0, 70.0);\n";
+        body += "        float size = clamp(base_size + count * growth_rate, base_size, max_size);\n";
         body += "        vertices[b + size_offset] = size;\n";
         body += "        vertices[b + color_offset] = base_col.x;\n";
         body += "        vertices[b + color_offset + 1u] = base_col.y;\n";
@@ -344,7 +350,7 @@ namespace {
         body += "    vertices[b + position_offset + 1u] = root_pos.y;\n";
         body += "    vertices[b + position_offset + 2u] = root_pos.z;\n";
         body += "\n";
-        body += "    vec3 dim_col = base_col * 0.08;\n";
+        body += "    vec3 dim_col = base_col * dim_factor;\n";
         body += "    vertices[b + color_offset] = dim_col.x;\n";
         body += "    vertices[b + color_offset + 1u] = dim_col.y;\n";
         body += "    vertices[b + color_offset + 2u] = dim_col.z;\n";
@@ -352,17 +358,55 @@ namespace {
         assemble.kernel(KernelSource {
             .raw = {},
             .param_names = { "vertices", "claimed_by", "swallow_count", "particle_count",
-                "stride_words", "position_offset", "color_offset", "size_offset", "i" },
+                "stride_words", "position_offset", "color_offset", "size_offset",
+                "base_size", "growth_rate", "max_size", "dim_factor", "i" },
             .body = std::move(body),
         });
 
         return assemble.build();
     }
 
+    /**
+     * @brief Resolve colour and size word offsets or fail loudly.
+     *
+     * A free function rather than inline in the member-initialiser list,
+     * the same shape HashDensityColorProcessor's require_color_offset
+     * uses: the constructor needs both before it can build m_params.
+     */
+    std::pair<uint32_t, uint32_t> require_color_and_size_offset(
+        const std::shared_ptr<Nodes::Network::ParticleFieldOperator>& particle_op)
+    {
+        if (!particle_op) {
+            error<std::invalid_argument>(
+                Journal::Component::Buffers,
+                Journal::Context::BufferProcessing,
+                std::source_location::current(),
+                "ClaimSwallowProcessor: null particle operator");
+        }
+
+        const auto& layout = particle_op->get_layout();
+
+        const auto color_offset = layout.find_word_offset(Kakshya::DataModality::VERTEX_COLORS_RGB);
+        const auto size_attr = std::ranges::find_if(layout.attributes,
+            [](const auto& attr) { return attr.name == "size"; });
+        const bool have_size = size_attr != layout.attributes.end() && size_attr->offset_in_vertex % 4 == 0;
+
+        if (!color_offset.has_value() || !have_size) {
+            error<std::invalid_argument>(
+                Journal::Component::Buffers,
+                Journal::Context::BufferProcessing,
+                std::source_location::current(),
+                "ClaimSwallowProcessor: vertex layout is missing a colour or word-aligned size attribute");
+        }
+
+        return { *color_offset, size_attr->offset_in_vertex / 4 };
+    }
+
 } // namespace
 
 ClaimSwallowProcessor::ClaimSwallowProcessor(
-    const MutationConfig& config, uint32_t color_word_offset, uint32_t size_word_offset)
+    const MutationConfig& config,
+    std::shared_ptr<Nodes::Network::ParticleFieldOperator> particle_op)
     : NetworkStateFieldProcessor(
           { FieldBinding { .name = "vertices", .binding = 0, .field = {} },
               FieldBinding { .name = "claimed_by", .binding = 1, .field = "mutation_claimed_by" },
@@ -372,15 +416,42 @@ ClaimSwallowProcessor::ClaimSwallowProcessor(
         .particle_count = config.hash.particle_count,
         .stride_words = config.hash.stride_words,
         .position_offset = config.hash.position_word_offset,
-        .color_offset = color_word_offset,
-        .size_offset = size_word_offset,
+        .color_offset = require_color_and_size_offset(particle_op).first,
+        .size_offset = require_color_and_size_offset(particle_op).second,
+        .base_size = particle_op->get_particle_config().swallow_base_size,
+        .growth_rate = particle_op->get_particle_config().swallow_growth_rate,
+        .max_size = particle_op->get_particle_config().swallow_max_size,
+        .dim_factor = particle_op->get_particle_config().swallow_dim_factor,
     }
+    , m_particle_op(std::move(particle_op))
+    , m_built_revision(m_particle_op->revision())
 {
 }
 
 void ClaimSwallowProcessor::on_buffer_ready()
 {
     dispatch_one_thread_per(m_params.particle_count, m_params);
+}
+
+bool ClaimSwallowProcessor::on_before_execute(
+    Portal::Graphics::CommandBufferID cmd_id,
+    const std::shared_ptr<VKBuffer>& buffer)
+{
+    if (!NetworkStateFieldProcessor::on_before_execute(cmd_id, buffer)) {
+        return false;
+    }
+
+    if (m_particle_op->revision() != m_built_revision) {
+        const auto& pconfig = m_particle_op->get_particle_config();
+        m_params.base_size = pconfig.swallow_base_size;
+        m_params.growth_rate = pconfig.swallow_growth_rate;
+        m_params.max_size = pconfig.swallow_max_size;
+        m_params.dim_factor = pconfig.swallow_dim_factor;
+        set_push_constant_data(m_params);
+        m_built_revision = m_particle_op->revision();
+    }
+
+    return true;
 }
 
 } // namespace MayaFlux::Buffers

@@ -217,26 +217,35 @@ private:
  * size next cycle instead of staying merged.
  *
  * Must run after ClaimAccumulateProcessor.
+ *
+ * Reads swallow_base_size/swallow_growth_rate/swallow_max_size/
+ * swallow_dim_factor from the owning ParticleFieldOperator fresh whenever
+ * its revision() changes (checked in on_before_execute, the same hook
+ * VertexFieldProcessor::sync_revision() uses), so the matching setters on
+ * ParticleFieldOperator take effect on this processor's next dispatch with
+ * no rebuild.
  */
 class MAYAFLUX_API ClaimSwallowProcessor : public NetworkStateFieldProcessor {
 public:
     /**
      * @param config Grid/particle parameters shared with the claim stages.
-     * @param color_word_offset Word offset of the vertex record's colour
-     *        attribute, from VertexLayout::find_word_offset with
-     *        DataModality::VERTEX_COLORS_RGB.
-     * @param size_word_offset Word offset of the vertex record's point-size
-     *        attribute. That field has no DataModality of its own
-     *        (VertexFormats.hpp maps it to size/thickness/weight depending
-     *        on primitive kind, tagged DataModality::UNKNOWN), so it isn't
-     *        reachable through VertexLayout::find_word_offset; the caller
-     *        locates it by VertexAttributeLayout::name ("size" for
-     *        PointVertex layouts) instead.
+     * @param particle_op Owning operator. Colour word offset is resolved
+     *        from its vertex layout (DataModality::VERTEX_COLORS_RGB);
+     *        size word offset by VertexAttributeLayout::name ("size", the
+     *        field VertexFormats.hpp tags DataModality::UNKNOWN, so it
+     *        isn't reachable through the modality-based lookup). Throws
+     *        std::invalid_argument when either is missing or misaligned.
      */
-    ClaimSwallowProcessor(const MutationConfig& config, uint32_t color_word_offset, uint32_t size_word_offset);
+    ClaimSwallowProcessor(
+        const MutationConfig& config,
+        std::shared_ptr<Nodes::Network::ParticleFieldOperator> particle_op);
 
 protected:
     void on_buffer_ready() override;
+
+    bool on_before_execute(
+        Portal::Graphics::CommandBufferID cmd_id,
+        const std::shared_ptr<VKBuffer>& buffer) override;
 
 private:
     struct Params {
@@ -245,9 +254,15 @@ private:
         uint32_t position_offset;
         uint32_t color_offset;
         uint32_t size_offset;
+        float base_size;
+        float growth_rate;
+        float max_size;
+        float dim_factor;
     };
 
     Params m_params;
+    std::shared_ptr<Nodes::Network::ParticleFieldOperator> m_particle_op;
+    uint64_t m_built_revision;
 };
 
 } // namespace MayaFlux::Buffers

@@ -219,6 +219,18 @@ public:
         return "GpuFieldOperator";
     }
 
+protected:
+    /**
+     * @brief Clear the cached spec and bump revision().
+     *
+     * Protected rather than private so a subclass with its own config
+     * surface (e.g. ParticleFieldOperator's particle-specific parameters)
+     * can signal a change through the same revision a consumer already
+     * checks for field-binding changes, rather than needing a second,
+     * parallel change-notification mechanism.
+     */
+    void invalidate();
+
 private:
     /**
      * @struct Binding
@@ -239,8 +251,6 @@ private:
     uint64_t m_revision {};
 
     mutable std::optional<Portal::Graphics::ShaderSpec> m_spec_cache;
-
-    void invalidate();
 
     /**
      * @brief Locate a target's word offset and component count in the layout.

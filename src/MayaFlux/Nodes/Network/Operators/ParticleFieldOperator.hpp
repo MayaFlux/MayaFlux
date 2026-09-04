@@ -11,27 +11,73 @@ namespace MayaFlux::Nodes::Network {
  *
  * Filled once, at construction, with designated initializers: the same
  * shape as VolumeGridBuffer::FlowConfig, a plain value handed over once
- * rather than a sequence of enable_x()/set_y() calls. There is no live
- * reconfiguration path yet; see ParticleFieldOperator's own doc for why.
+ * rather than a sequence of enable_x() calls.
+ *
+ * Two kinds of field here, deliberately not distinguished by type but
+ * documented per-field: cell_size/absorb_radius/density_color are
+ * structural — they decide *which* processors ParticleGeometryBuffer
+ * constructs in the first place, so changing them after wiring would mean
+ * tearing down and rebuilding part of the chain, and there is no live path
+ * for that yet. Every field below density_color is a tuning value read by
+ * a processor that exists regardless of its value; those do have a live
+ * path, through ParticleFieldOperator's own wrapper setters.
  */
 struct ParticleFieldConfig {
     /**
      * Spatial hash cell size. Nullopt derives it from the network's
      * PhysicsOperator::get_interaction_radius() when the buffer wires this
      * operator up. Only consulted when absorb_radius or density_color
-     * below actually needs the hash built.
+     * below actually needs the hash built. Structural: fixed at
+     * construction.
      */
     std::optional<float> cell_size;
 
     /**
      * Enables the deterministic claim/absorption pipeline at this distance.
      * Nullopt (the default) disables mutation entirely. Implies the
-     * spatial hash is built regardless of density_color.
+     * spatial hash is built regardless of density_color. Structural: fixed
+     * at construction.
      */
     std::optional<float> absorb_radius;
 
-    /** Enables neighbour-density colouring (ember-to-white-hot ramp). */
+    /**
+     * Enables neighbour-density colouring (ember-to-white-hot ramp).
+     * Structural: fixed at construction.
+     */
     bool density_color { false };
+
+    /**
+     * HashDensityColorProcessor: neighbour count at which the density ramp
+     * saturates to fully warm. Lower values make sparser clusters read as
+     * dense; live-tunable via set_density_saturation_count().
+     */
+    float density_saturation_count { 24.0F };
+
+    /**
+     * ClaimSwallowProcessor: a survivor's point size the cycle it has
+     * swallowed nothing. Live-tunable via set_swallow_base_size().
+     */
+    float swallow_base_size { 10.0F };
+
+    /**
+     * ClaimSwallowProcessor: point-size increase per particle a survivor
+     * swallowed this cycle. Live-tunable via set_swallow_growth_rate().
+     */
+    float swallow_growth_rate { 0.6F };
+
+    /**
+     * ClaimSwallowProcessor: point-size ceiling regardless of swallow
+     * count, so one runaway cluster can't dominate the screen.
+     * Live-tunable via set_swallow_max_size().
+     */
+    float swallow_max_size { 70.0F };
+
+    /**
+     * ClaimSwallowProcessor: brightness multiplier applied to an absorbed
+     * particle's cluster colour (0 invisible, 1 as bright as the
+     * survivor). Live-tunable via set_swallow_dim_factor().
+     */
+    float swallow_dim_factor { 0.08F };
 };
 
 /**
@@ -43,7 +89,7 @@ struct ParticleFieldConfig {
  * Lives in a ParticleNetwork's operator chain exactly like a plain
  * GpuFieldOperator (bind()/unbind()/build_spec() all work identically,
  * inherited without modification). The difference is entirely in what
- * NetworkGeometryBuffer::setup_processors does when it finds one of these
+ * ParticleGeometryBuffer::setup_processors does when it finds one of these
  * in the network's operator chain: it derives a SpatialHashConfig from the
  * network (bounds, particle count, vertex layout) and this operator's own
  * ParticleFieldConfig, then constructs and chains exactly the stages that
@@ -63,14 +109,16 @@ struct ParticleFieldConfig {
  * doesn't have to live on NetworkGeometryBuffer either, where every
  * non-particle network would pay for it.
  *
- * Configuration is fixed at construction: there is no live-update path for
- * cell_size, absorb_radius or density_color once the owning buffer has
- * wired the operator up, unlike field bindings, which already have one
- * (revision(), inherited from GpuFieldOperator, still works exactly as
- * before for bind()/unbind() calls). Reconstructing this operator with new
- * config requires rebuilding the buffer's chain, since which stages exist
- * at all depends on it. Extending that live-update path is future work,
- * not built ahead of a caller that needs it.
+ * Structural configuration (cell_size, absorb_radius, density_color) is
+ * fixed at construction, same as field bindings' effect on which stages
+ * exist. Tuning values (density_saturation_count and the four swallow_*
+ * fields) have a live-update path: each wrapper setter below mutates
+ * m_particle_config and calls invalidate(), the same revision counter
+ * field-binding changes already bump. HashDensityColorProcessor and
+ * ClaimSwallowProcessor each hold a shared_ptr back to this operator and
+ * check revision() before every dispatch, re-reading the current tuning
+ * values when it has changed, the same pattern
+ * VertexFieldProcessor::sync_revision() already uses for field bindings.
  *
  * @code
  * auto particle_op = particles->get_operator_chain()->emplace<ParticleFieldOperator>(
@@ -78,9 +126,12 @@ struct ParticleFieldConfig {
  *     ParticleFieldConfig{ .absorb_radius = 0.15F, .density_color = true });
  * particle_op->bind(FieldTarget::POSITION, Fields::orbit);
  *
- * auto geom_buf = vega.NetworkGeometryBuffer(particles) | Graphics;
+ * auto geom_buf = vega.ParticleGeometryBuffer(particles) | Graphics;
  * // Field displacement, hash build, and claim/swallow are all wired
- * // already; nothing else to call.
+ * // already.
+ *
+ * // Later, live, no rebuild:
+ * particle_op->set_swallow_growth_rate(1.2F);
  * @endcode
  */
 class MAYAFLUX_API ParticleFieldOperator : public GpuFieldOperator {
@@ -95,8 +146,23 @@ public:
      */
     explicit ParticleFieldOperator(Kakshya::VertexLayout layout, ParticleFieldConfig config = {});
 
-    /** @brief The configuration this operator was constructed with. */
+    /** @brief The current configuration, structural fields and tuning values alike. */
     [[nodiscard]] const ParticleFieldConfig& get_particle_config() const { return m_particle_config; }
+
+    /** @brief Live-update HashDensityColorProcessor's saturation point. */
+    void set_density_saturation_count(float count);
+
+    /** @brief Live-update ClaimSwallowProcessor's base survivor size. */
+    void set_swallow_base_size(float size);
+
+    /** @brief Live-update ClaimSwallowProcessor's per-swallow size increase. */
+    void set_swallow_growth_rate(float rate);
+
+    /** @brief Live-update ClaimSwallowProcessor's survivor size ceiling. */
+    void set_swallow_max_size(float size);
+
+    /** @brief Live-update ClaimSwallowProcessor's absorbed-particle dimming. */
+    void set_swallow_dim_factor(float factor);
 
     [[nodiscard]] std::string_view get_type_name() const override
     {
