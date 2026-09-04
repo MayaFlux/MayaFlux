@@ -225,6 +225,21 @@ bool GpuFieldOperator::accept(
     return true;
 }
 
+void GpuFieldOperator::store(
+    FieldTarget target,
+    const Kinesis::FieldSource& source,
+    uint32_t components,
+    bool temporal)
+{
+    m_bindings.push_back({
+        .targets = target,
+        .source = source,
+        .components = components,
+        .temporal = temporal,
+    });
+    invalidate();
+}
+
 void GpuFieldOperator::bind(FieldTarget target, const Kinesis::DualVectorField& field)
 {
     if (any_flag(target & ~Kinesis::k_vector_targets)) {
@@ -275,6 +290,55 @@ void GpuFieldOperator::bind(FieldTarget target, const Kinesis::DualUVField& fiel
 
     m_bindings.push_back({ .targets = target, .source = field.source, .components = 2 });
     invalidate();
+}
+
+void GpuFieldOperator::bind(FieldTarget target, const Kinesis::TemporalVectorField& field)
+{
+    if (any_flag(target & ~Kinesis::k_vector_targets)) {
+        MF_ERROR(Journal::Component::Nodes, Journal::Context::NodeProcessing,
+            "GpuFieldOperator::bind: mask {:#x} reaches bits {:#x} that a "
+            "three-component field cannot drive. Nothing was bound.",
+            static_cast<uint16_t>(target),
+            static_cast<uint16_t>(target & ~Kinesis::k_vector_targets));
+        return;
+    }
+
+    if (!accept(target, field.source, 3))
+        return;
+
+    store(target, field.source, 3, true);
+}
+
+void GpuFieldOperator::bind(FieldTarget target, const Kinesis::TemporalSpatialField& field)
+{
+    if (target != FieldTarget::SCALAR) {
+        MF_ERROR(Journal::Component::Nodes, Journal::Context::NodeProcessing,
+            "GpuFieldOperator::bind: a scalar field binds only to SCALAR, got "
+            "mask {:#x}",
+            static_cast<uint16_t>(target));
+        return;
+    }
+
+    if (!accept(target, field.source, 1))
+        return;
+
+    store(target, field.source, 1, true);
+}
+
+void GpuFieldOperator::bind(FieldTarget target, const Kinesis::TemporalUVField& field)
+{
+    if (target != FieldTarget::UV) {
+        MF_ERROR(Journal::Component::Nodes, Journal::Context::NodeProcessing,
+            "GpuFieldOperator::bind: a two-component field binds only to UV, got "
+            "mask {:#x}",
+            static_cast<uint16_t>(target));
+        return;
+    }
+
+    if (!accept(target, field.source, 2))
+        return;
+
+    store(target, field.source, 2, true);
 }
 
 void GpuFieldOperator::unbind(FieldTarget target)
@@ -352,7 +416,7 @@ std::optional<Portal::Graphics::ShaderSpec> GpuFieldOperator::build_spec() const
         .pc("first_vertex", Kakshya::GpuDataFormat::UINT32)
         .pc("vertex_count", Kakshya::GpuDataFormat::UINT32)
         .pc("stride_words", Kakshya::GpuDataFormat::UINT32)
-        .pc("_pad", Kakshya::GpuDataFormat::UINT32)
+        .pc("time", Kakshya::GpuDataFormat::FLOAT32)
         .workgroup(m_workgroup_size);
 
     std::vector<std::string_view> emitted;
@@ -390,8 +454,10 @@ std::optional<Portal::Graphics::ShaderSpec> GpuFieldOperator::build_spec() const
             + " = " + glsl_zero(components) + ";\n";
 
         for (const auto& b : m_bindings) {
-            if (has_flag(b.targets, t))
-                body += "    " + acc + " += " + b.source.name + "(p);\n";
+            if (has_flag(b.targets, t)) {
+                body += "    " + acc + " += " + b.source.name
+                    + (b.temporal ? "(p, time)" : "(p)") + ";\n";
+            }
         }
 
         if (t == Kinesis::FieldTarget::NORMAL || t == Kinesis::FieldTarget::TANGENT) {
@@ -410,8 +476,7 @@ std::optional<Portal::Graphics::ShaderSpec> GpuFieldOperator::build_spec() const
 
     assemble.kernel(Portal::Graphics::KernelSource {
         .raw = {},
-        .param_names = { "vertices", "first_vertex", "vertex_count",
-            "stride_words", "_pad", "i" },
+        .param_names = { "vertices", "first_vertex", "vertex_count", "stride_words", "time", "i" },
         .body = std::move(body),
     });
 

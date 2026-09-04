@@ -98,6 +98,26 @@ public:
     void bind(FieldTarget target, const Kinesis::DualUVField& field);
 
     /**
+     * @brief Bind a three-component field of position and time.
+     * @param target Mask over POSITION, COLOR, NORMAL and TANGENT.
+     * @param field  Temporal field with a usable shader half.
+     *
+     * Validation matches the DualField overload. The emitted function takes a
+     * second float argument supplied from the time push constant.
+     */
+    void bind(FieldTarget target, const Kinesis::TemporalVectorField& field);
+
+    /**
+     * @brief Bind a scalar field of position and time. Target must be SCALAR.
+     */
+    void bind(FieldTarget target, const Kinesis::TemporalSpatialField& field);
+
+    /**
+     * @brief Bind a two-component field of position and time. Target must be UV.
+     */
+    void bind(FieldTarget target, const Kinesis::TemporalUVField& field);
+
+    /**
      * @brief Clear the given targets.
      *
      * Removes each bit in the mask from every binding that carries it. A
@@ -117,6 +137,11 @@ public:
      * Must match what the owning processor pushes. Default 0.
      */
     void set_vertex_binding(uint32_t binding);
+
+    /**
+     * @brief Get the descriptor binding index the vertex SSBO occupies.
+     */
+    [[nodiscard]] uint32_t get_vertex_binding() const noexcept { return m_vertex_binding; }
 
     /**
      * @brief Workgroup size along x. Default 256.
@@ -203,6 +228,7 @@ private:
         FieldTarget targets;
         Kinesis::FieldSource source;
         uint32_t components;
+        bool temporal;
     };
 
     Kakshya::VertexLayout m_layout;
@@ -228,6 +254,11 @@ private:
      */
     bool accept(FieldTarget target, const Kinesis::FieldSource& source,
         uint32_t components);
+
+    /**
+     * @brief Store a binding after validation.
+     */
+    void store(FieldTarget, const Kinesis::FieldSource&, uint32_t, bool);
 };
 
 } // namespace MayaFlux::Nodes::Network
