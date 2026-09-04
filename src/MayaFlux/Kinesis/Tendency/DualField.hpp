@@ -28,6 +28,13 @@ namespace detail {
         using range = R;
     };
 
+    template <typename C, typename R, typename A, typename B>
+    struct FieldSignature<R (C::*)(A, B) const> {
+        using domain = std::decay_t<A>;
+        using range = R;
+        using aux = std::decay_t<B>;
+    };
+
 } // namespace detail
 
 /**
@@ -80,6 +87,45 @@ using DualVectorField = DualField<glm::vec3, glm::vec3>;
 using DualUVField = DualField<glm::vec3, glm::vec2>;
 
 /**
+ * @struct TemporalField
+ * @brief An authored expression of position and time, shader-only.
+ * @tparam D Domain type.
+ * @tparam R Range type.
+ *
+ * Carries no Tendency. Tendency<D, R> is a function of the domain alone, so a
+ * two-argument callable has no CPU half to hand to FieldOperator: the value
+ * depends on when it is asked, which a stateless Tendency cannot express.
+ *
+ * The second argument is supplied by whoever dispatches the shader. For
+ * VertexFieldProcessor it is seconds since the processor attached.
+ *
+ * @code
+ * namespace MayaFlux::Fields {
+ * using namespace MayaFlux::ShaderCompat;
+ *
+ * const auto breathe = MF_FIELD_T(breathe, [](vec3 p, float t) -> vec3 {
+ *     float d = length(p);
+ *     if (d < 0.001f) { return vec3(0.0f); }
+ *     return (p / d) * (sin(d * 2.5f - t * 2.0f) * 0.25f);
+ * });
+ * }
+ * @endcode
+ */
+template <typename D, typename R>
+struct TemporalField {
+    FieldSource source;
+
+    /**
+     * @brief Whether the shader half parsed into a usable function definition.
+     */
+    [[nodiscard]] bool has_source() const noexcept { return source.valid(); }
+};
+
+using TemporalSpatialField = TemporalField<glm::vec3, float>;
+using TemporalVectorField = TemporalField<glm::vec3, glm::vec3>;
+using TemporalUVField = TemporalField<glm::vec3, glm::vec2>;
+
+/**
  * @brief Build a DualField from a lambda and its stringified text.
  * @param name Name the emitted GLSL function will carry.
  * @param fn   The lambda itself, compiled by the host.
@@ -99,6 +145,28 @@ template <typename Lambda>
 
     return DualField<D, R> {
         .cpu = Tendency<D, R> { .fn = std::forward<Lambda>(fn) },
+        .source = FieldSource::parse(std::move(name), text),
+    };
+}
+
+/**
+ * @brief Build a TemporalField from a lambda and its stringified text.
+ *
+ * The auxiliary parameter must be float. Domain and range are deduced from the
+ * call operator, so the returned type follows the authored signature. Prefer
+ * MF_FIELD_T: this cannot check that fn and text correspond.
+ */
+template <typename Lambda>
+[[nodiscard]] auto temporal_field(std::string name, Lambda&&, std::string_view text)
+{
+    using Sig = detail::FieldSignature<std::decay_t<Lambda>>;
+    using D = typename Sig::domain;
+    using R = typename Sig::range;
+
+    static_assert(std::is_same_v<typename Sig::aux, float>,
+        "MF_FIELD_T: the second parameter must be float");
+
+    return TemporalField<D, R> {
         .source = FieldSource::parse(std::move(name), text),
     };
 }
@@ -124,3 +192,13 @@ template <typename Lambda>
  */
 #define MF_FIELD(name, lambda) \
     MayaFlux::Kinesis::dual_field(#name, lambda, #lambda)
+
+/**
+ * @brief Bind an authored expression of position and time to the shader backend.
+ *
+ * Same authoring rules as MF_FIELD, with one addition: the lambda takes a
+ * second float parameter and has no CPU half. Use MF_FIELD when the expression
+ * depends on position alone, so it remains bindable to FieldOperator.
+ */
+#define MF_FIELD_T(name, lambda) \
+    MayaFlux::Kinesis::temporal_field(#name, lambda, #lambda)
