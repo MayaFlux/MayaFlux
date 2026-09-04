@@ -1,0 +1,15 @@
+<map id="MayaFlux::Core::BackendResourceManager::execute_immediate_commands" name="MayaFlux::Core::BackendResourceManager::execute_immediate_commands">
+<area shape="rect" id="Node000001" title="Execute immediate command recording for buffer operations." alt="" coords="5,84,252,139"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1VKCommandManager_a8e859b77baae66a4cad3578d2a863f76.html#a8e859b77baae66a4cad3578d2a863f76" title="Begin single&#45;time command (for transfers, etc.)" alt="" coords="300,5,516,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="226,81,297,61,298,66,227,86"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1VKCommandManager_a37f459a66acc77d0b833ab5a993f8253.html#a37f459a66acc77d0b833ab5a993f8253" title="End and submit single&#45;time command." alt="" coords="300,84,516,139"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="252,109,286,109,286,114,252,114"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Core_1_1VKContext_a87b4589aa8858027f09e7370552b4d50.html#a87b4589aa8858027f09e7370552b4d50" title="Get graphics queue." alt="" coords="308,163,508,203"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="236,136,317,157,316,162,235,141"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1VKCommandManager_ab25f2104b7f013fca0c7876ade0632b5.html#ab25f2104b7f013fca0c7876ade0632b5" title="Allocate a command buffer with specified level." alt="" coords="564,13,820,53"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="516,30,550,30,550,35,516,35"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Core_1_1VKCommandManager_a59f7b69e5c3f53d77c1c5e8f2e206d89.html#a59f7b69e5c3f53d77c1c5e8f2e206d89" title="Free a command buffer back to the pool." alt="" coords="577,91,807,131"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="516,109,563,109,563,114,516,114"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Core_1_1VKDevice_af1941d43ae76316ef044a61450e7aa1c.html#af1941d43ae76316ef044a61450e7aa1c" title="Get graphics queue." alt="" coords="595,163,789,203"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="508,181,581,181,581,186,508,186"/>
+</map>

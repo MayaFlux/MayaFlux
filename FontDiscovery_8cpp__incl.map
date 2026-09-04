@@ -1,0 +1,21 @@
+<map id="FontDiscovery.cpp" name="FontDiscovery.cpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="214,5,354,31"/>
+<area shape="rect" id="Node000002" href="$FontDiscovery_8hpp.html" title=" " alt="" coords="5,86,147,111"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="255,33,120,84,118,79,253,28"/>
+<area shape="rect" id="Node000003" href="$HostEnvironment_8hpp.html" title=" " alt="" coords="171,79,397,119"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="287,31,287,65,281,65,281,31"/>
+<area shape="rect" id="Node000004" href="$Archivist_8hpp.html" title=" " alt="" coords="421,86,645,111"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="321,28,485,79,483,84,319,33"/>
+<area shape="rect" id="Node000005" href="$JournalEntry_8hpp.html" title=" " alt="" coords="409,167,535,192"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="526,113,491,158,487,154,522,110"/>
+<area shape="rect" id="Node000010" title=" " alt="" coords="560,167,627,192"/>
+<area shape="poly" id="edge9_Node000004_Node000010" title=" " alt="" coords="544,110,578,154,574,157,540,113"/>
+<area shape="rect" id="Node000006" href="$EnumReflect_8hpp.html" title=" " alt="" coords="169,240,354,280"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="442,195,326,238,324,233,440,190"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="379,247,445,273"/>
+<area shape="poly" id="edge6_Node000005_Node000007" title=" " alt="" coords="465,194,431,238,427,234,461,191"/>
+<area shape="rect" id="Node000008" title=" " alt="" coords="470,247,594,273"/>
+<area shape="poly" id="edge7_Node000005_Node000008" title=" " alt="" coords="483,191,517,234,513,238,479,194"/>
+<area shape="rect" id="Node000009" title=" " alt="" coords="618,247,715,273"/>
+<area shape="poly" id="edge8_Node000005_Node000009" title=" " alt="" coords="501,190,627,240,625,245,499,194"/>
+</map>

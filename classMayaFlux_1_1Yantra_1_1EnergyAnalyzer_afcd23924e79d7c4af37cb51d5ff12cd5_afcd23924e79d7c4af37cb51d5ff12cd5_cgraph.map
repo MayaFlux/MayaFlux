@@ -1,0 +1,5 @@
+<map id="MayaFlux::Yantra::EnergyAnalyzer::get_energy_analysis" name="MayaFlux::Yantra::EnergyAnalyzer::get_energy_analysis">
+<area shape="rect" id="Node000001" title="Get last energy analysis result (type&#45;safe)" alt="" coords="5,5,227,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1UniversalAnalyzer_a1419ca2f81544fa0c4e223730aaea180.html#a1419ca2f81544fa0c4e223730aaea180" title="Access cached analysis from last operation." alt="" coords="275,5,497,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="227,23,261,23,261,28,227,28"/>
+</map>

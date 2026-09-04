@@ -1,0 +1,33 @@
+<map id="Harris.cpp" name="Harris.cpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="516,5,604,31"/>
+<area shape="rect" id="Node000002" href="$Harris_8hpp.html" title="Harris corner detection and non&#45;maximum suppression." alt="" coords="323,86,413,111"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="533,33,409,83,407,78,531,28"/>
+<area shape="rect" id="Node000013" href="$Gradient_8hpp.html" title="Gradient and edge detection on normalised float image spans." alt="" coords="437,86,544,111"/>
+<area shape="poly" id="edge12_Node000001_Node000013" title=" " alt="" coords="552,33,512,77,508,74,548,29"/>
+<area shape="rect" id="Node000014" href="$ImageFilter_8hpp.html" title="2D spatial filtering on normalised float image spans." alt="" coords="568,86,691,111"/>
+<area shape="poly" id="edge13_Node000001_Node000014" title=" " alt="" coords="572,29,612,74,608,77,568,33"/>
+<area shape="rect" id="Node000015" href="$Execution_8hpp.html" title=" " alt="" coords="715,79,885,119"/>
+<area shape="poly" id="edge14_Node000001_Node000015" title=" " alt="" coords="596,28,730,72,729,77,594,33"/>
+<area shape="rect" id="Node000003" href="$Features_8hpp.html" title=" " alt="" coords="315,167,421,192"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="371,112,371,153,365,153,365,112"/>
+<area shape="rect" id="Node000004" href="$Bounds_8hpp.html" title=" " alt="" coords="275,240,461,280"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="371,192,371,226,365,226,365,192"/>
+<area shape="rect" id="Node000005" href="$HitTest_8hpp.html" title=" " alt="" coords="275,328,461,368"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="371,280,371,314,365,314,365,280"/>
+<area shape="rect" id="Node000006" href="$SpatialIndex_8hpp.html" title=" " alt="" coords="208,423,339,449"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="349,370,298,416,295,412,345,366"/>
+<area shape="rect" id="Node000011" href="$ViewTransform_8hpp.html" title=" " alt="" coords="363,416,562,456"/>
+<area shape="poly" id="edge10_Node000005_Node000011" title=" " alt="" coords="391,366,433,405,430,409,387,370"/>
+<area shape="rect" id="Node000007" href="$TendencyFactories_8hpp.html" title=" " alt="" coords="5,504,208,544"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="252,451,157,500,154,495,250,446"/>
+<area shape="rect" id="Node000010" title=" " alt="" coords="233,511,325,537"/>
+<area shape="poly" id="edge9_Node000006_Node000010" title=" " alt="" coords="277,449,280,497,274,498,271,449"/>
+<area shape="rect" id="Node000008" href="$Tendency_8hpp.html" title=" " alt="" coords="52,592,161,617"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="109,544,109,578,104,578,104,544"/>
+<area shape="rect" id="Node000009" title=" " alt="" coords="55,665,159,691"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="109,618,109,652,104,652,104,618"/>
+<area shape="rect" id="Node000012" title=" " alt="" coords="354,511,571,537"/>
+<area shape="poly" id="edge11_Node000011_Node000012" title=" " alt="" coords="465,456,465,497,460,497,460,456"/>
+<area shape="rect" id="Node000016" title=" " alt="" coords="757,167,843,192"/>
+<area shape="poly" id="edge15_Node000015_Node000016" title=" " alt="" coords="803,119,803,153,797,153,797,119"/>
+</map>

@@ -1,0 +1,13 @@
+<map id="MayaFlux::Yantra::EnergyAnalyzer::create_analysis_result" name="MayaFlux::Yantra::EnergyAnalyzer::create_analysis_result">
+<area shape="rect" id="Node000001" title="Create comprehensive analysis result from energy computation." alt="" coords="5,97,195,151"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1EnergyAnalyzer_af1aef54234b215a75101eafe2c87f30f.html#af1aef54234b215a75101eafe2c87f30f" title="Classify energy value into qualitative level." alt="" coords="243,5,469,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="153,94,242,55,264,47,266,52,244,60,155,99"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_ad2f0572dfef62bb7629c7ef74ff29449.html#ad2f0572dfef62bb7629c7ef74ff29449" title="Calculate mean of single&#45;channel data." alt="" coords="291,70,421,95"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="195,106,277,93,278,98,195,111"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a9c90017817936dc5ac65ff5e13eddba3.html#a9c90017817936dc5ac65ff5e13eddba3" title="Sample indices of local peak maxima in the full span." alt="" coords="265,144,447,184"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="195,136,251,145,251,150,195,141"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a3735f1ad5f405ceccbbe66cc73d4d3bd.html#a3735f1ad5f405ceccbbe66cc73d4d3bd" title="Sample indices of zero crossings in the full span." alt="" coords="269,233,443,287"/>
+<area shape="poly" id="edge5_Node000001_Node000005" title=" " alt="" coords="154,149,292,224,290,228,151,154"/>
+<area shape="poly" id="edge4_Node000004_Node000004" title=" " alt="" coords="308,144,306,134,313,125,330,119,356,117,386,120,402,127,400,132,384,125,356,123,331,125,316,129,311,135,314,143"/>
+<area shape="poly" id="edge6_Node000005_Node000005" title=" " alt="" coords="306,233,307,222,315,214,332,208,356,206,385,209,401,217,399,222,383,214,356,211,333,213,318,218,311,224,312,233"/>
+</map>

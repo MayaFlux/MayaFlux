@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kriya::CycleCoordinator::sync_pipelines" name="MayaFlux::Kriya::CycleCoordinator::sync_pipelines">
+<area shape="rect" id="Node000001" title="Create a synchronization routine for multiple pipelines." alt="" coords="301,5,549,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kriya_1_1CycleCoordinator_aa9fca21891187b79038097d41f16b8fb.html#aa9fca21891187b79038097d41f16b8fb" title="Create a synchronization routine based on real&#45;time rate." alt="" coords="5,5,253,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="288,28,253,28,253,23,288,23"/>
+</map>

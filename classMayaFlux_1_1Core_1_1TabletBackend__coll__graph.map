@@ -1,0 +1,7 @@
+<map id="MayaFlux::Core::TabletBackend" name="MayaFlux::Core::TabletBackend">
+<area shape="rect" id="Node000001" title="Cross&#45;platform tablet and stylus backend over raw HID." alt="" coords="124,333,343,979"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1IInputBackend.html" title="Abstract interface for input device backends." alt="" coords="5,5,221,271"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="150,283,161,332,156,334,144,284"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Core_1_1TabletBackend_1_1Config.html" title="Configuration for the tablet backend." alt="" coords="245,68,464,208"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="341,209,315,318,310,317,336,208"/>
+</map>

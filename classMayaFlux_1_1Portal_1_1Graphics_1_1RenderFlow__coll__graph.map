@@ -1,0 +1,9 @@
+<map id="MayaFlux::Portal::Graphics::RenderFlow" name="MayaFlux::Portal::Graphics::RenderFlow">
+<area shape="rect" id="Node000001" title="Graphics pipeline orchestration for dynamic rendering." alt="" coords="127,1273,356,1713"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry.html" title="Portal&#45;level shader compilation and caching." alt="" coords="5,248,237,1211"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="198,1210,204,1249,205,1257,200,1257,199,1250,193,1211"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Portal_1_1Graphics_1_1ShaderCompilerConfig.html" title="Configuration for shader compilation." alt="" coords="27,5,216,185"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="124,185,124,231,119,231,119,185"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Registry_1_1Service_1_1DisplayService.html" title="Backend display and presentation service interface." alt="" coords="262,567,461,891"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="367,892,360,1065,350,1159,335,1250,333,1258,328,1257,329,1249,345,1158,355,1065,362,892"/>
+</map>

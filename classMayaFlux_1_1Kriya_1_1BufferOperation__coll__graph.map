@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kriya::BufferOperation" name="MayaFlux::Kriya::BufferOperation">
+<area shape="rect" id="Node000001" title="Fundamental unit of operation in buffer processing pipelines." alt="" coords="5,573,236,1259"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kriya_1_1BufferCapture.html" title="Flexible data capture interface for buffer&#45;based processing pipelines." alt="" coords="11,5,230,511"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="123,511,123,557,118,557,118,511"/>
+</map>

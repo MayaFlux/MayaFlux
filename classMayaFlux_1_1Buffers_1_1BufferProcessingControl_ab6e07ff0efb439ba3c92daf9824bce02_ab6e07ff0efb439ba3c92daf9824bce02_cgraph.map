@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::BufferProcessingControl::remove_graphics_processor" name="MayaFlux::Buffers::BufferProcessingControl::remove_graphics_processor">
+<area shape="rect" id="Node000001" title="Removes a processor from the graphics processing chain." alt="" coords="5,45,217,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1TokenUnitManager_a0e7b0fe7658405d81011637c27121499.html#a0e7b0fe7658405d81011637c27121499" title="Gets an existing graphics unit without creating if missing (mutable)" alt="" coords="265,5,443,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="217,53,252,47,252,52,218,58"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1TokenUnitManager_adfa3bbc2ff0dea134e10dce005d61dee.html#adfa3bbc2ff0dea134e10dce005d61dee" title="Checks if a graphics unit exists for the given token." alt="" coords="267,84,441,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="218,87,253,93,252,98,217,92"/>
+</map>

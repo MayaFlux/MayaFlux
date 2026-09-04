@@ -1,0 +1,7 @@
+<map id="MayaFlux::Portal::Forma::Bridge::cancel_outbound" name="MayaFlux::Portal::Forma::Bridge::cancel_outbound">
+<area shape="rect" id="Node000001" title=" " alt="" coords="235,37,425,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Bridge_a367d65aefbad4e7a1d844a1a9be38d1a.html#a367d65aefbad4e7a1d844a1a9be38d1a" title="Cancel all inbound and outbound bindings for an element." alt="" coords="5,5,187,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="221,45,186,40,187,35,222,40"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Bridge_aadb281b88d67a45aae2377bc344ee500.html#aadb281b88d67a45aae2377bc344ee500" title=" " alt="" coords="5,69,187,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="222,75,187,80,186,74,221,70"/>
+</map>

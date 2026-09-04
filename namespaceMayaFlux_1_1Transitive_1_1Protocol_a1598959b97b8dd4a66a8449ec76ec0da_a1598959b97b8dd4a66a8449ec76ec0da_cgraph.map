@@ -1,0 +1,7 @@
+<map id="MayaFlux::Transitive::Protocol::write_blob" name="MayaFlux::Transitive::Protocol::write_blob">
+<area shape="rect" id="Node000001" title="Append a length&#45;prefixed blob padded to 4&#45;byte boundary." alt="" coords="5,37,164,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Transitive_1_1Protocol_ac36e4dc715dfd9e1c9d304a36e922a49.html#ac36e4dc715dfd9e1c9d304a36e922a49" title="Round len up to the next 4&#45;byte boundary." alt="" coords="212,5,384,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="164,43,198,38,199,43,165,48"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Transitive_1_1Protocol_a0d397ef699399b3a2e8948fcd587801d.html#a0d397ef699399b3a2e8948fcd587801d" title="Append a big&#45;endian int32." alt="" coords="216,69,380,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="165,67,203,72,202,78,164,72"/>
+</map>

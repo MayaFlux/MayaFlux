@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::TokenUnitManager::ensure_audio_channels" name="MayaFlux::Buffers::TokenUnitManager::ensure_audio_channels">
+<area shape="rect" id="Node000001" title="Ensures an audio unit exists and resizes it to the specified channel count." alt="" coords="5,5,200,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1TokenUnitManager_ac9fd8c50e96db19443030c7582b9cc20.html#ac9fd8c50e96db19443030c7582b9cc20" title="Gets or creates a root audio unit for the specified token." alt="" coords="248,5,420,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="200,30,234,30,234,35,200,35"/>
+</map>

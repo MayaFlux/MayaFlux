@@ -1,0 +1,11 @@
+<map id="MayaFlux::Portal::Graphics::ShaderSpec::Assemble::ssbo" name="MayaFlux::Portal::Graphics::ShaderSpec::Assemble::ssbo">
+<area shape="rect" id="Node000001" title="Declare an SSBO binding." alt="" coords="236,117,452,157"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1VisionGpuExecutor_a37b115d59dbe1593c58ef631942b363e.html#a37b115d59dbe1593c58ef631942b363e" title="GpuComputeConfig for a given VisionOp and its parameters." alt="" coords="5,5,188,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="294,113,187,60,157,48,159,43,189,55,296,108"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Buffers_1_1RelaxationSpecs_a1279de64ea64bd40c10f69e9d59dde46.html#a1279de64ea64bd40c10f69e9d59dde46" title="Binary state&#45;to&#45;vertex emit: nonzero state draws at full scale, zero state degenerates to a zero&#45;scal..." alt="" coords="13,70,181,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="222,120,180,114,181,108,223,115"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Buffers_1_1RelaxationSpecs_ab027146e5827d27be349ad597cbad520.html#ab027146e5827d27be349ad597cbad520" title="Scalar&#45;ramp state&#45;to&#45;vertex emit: float state value scaled and offset into a visible output range." alt="" coords="13,149,181,203"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="223,159,181,166,180,160,222,154"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Buffers_1_1RelaxationSpecs_a664b6d74405ef8f23d5954e4c9b46940.html#a664b6d74405ef8f23d5954e4c9b46940" title="Jacobi&#45;style diffusion rule: each cell blends toward the average of its 8 Moore neighbors at the give..." alt="" coords="8,227,185,282"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="292,166,189,217,162,230,160,225,187,212,290,161"/>
+</map>

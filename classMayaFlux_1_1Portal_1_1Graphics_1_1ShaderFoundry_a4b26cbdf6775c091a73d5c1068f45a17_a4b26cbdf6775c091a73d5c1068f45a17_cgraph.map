@@ -1,0 +1,5 @@
+<map id="MayaFlux::Portal::Graphics::ShaderFoundry::release_fence" name="MayaFlux::Portal::Graphics::ShaderFoundry::release_fence">
+<area shape="rect" id="Node000001" title="Destroy the fence and free its associated command buffer." alt="" coords="5,5,231,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_a148fdbfbb76b1df59986ea791e772885.html#a148fdbfbb76b1df59986ea791e772885" title="Get logical device handle." alt="" coords="279,5,484,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="231,23,265,23,265,28,231,28"/>
+</map>

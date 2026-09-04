@@ -1,0 +1,15 @@
+<map id="MayaFlux::Buffers::ShaderProcessor::are_descriptors_ready" name="MayaFlux::Buffers::ShaderProcessor::are_descriptors_ready">
+<area shape="rect" id="Node000001" title="Check if descriptors are initialized." alt="" coords="485,163,644,217"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1RelaxationEmitProcessor_aa82a1797cebba245d355fad0c55112ec.html#aa82a1797cebba245d355fad0c55112ec" title="Write the cell_state and vertices descriptor bindings for this cycle&#39;s dispatch." alt="" coords="252,5,437,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="528,154,486,113,436,74,416,62,419,58,439,69,490,109,532,151"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1RelaxationEmitProcessor_a22fb2108bb2043a57f158684a5882391.html#a22fb2108bb2043a57f158684a5882391" title="Write the cell_state and vertices descriptors for the grid&#39;s current front generation,..." alt="" coords="252,84,437,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="474,160,421,141,423,136,476,155"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1RelaxationStepProcessor_acd95f1f30127b73b53fcdf5461ce6f7d.html#acd95f1f30127b73b53fcdf5461ce6f7d" title="Write the state descriptors for the current front/back assignment, then run the normal shader process..." alt="" coords="253,163,437,217"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="471,193,437,193,437,187,471,187"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1VolumeFieldProcessor_a4b6c2bb138644003a801428ee64ed3d1.html#a4b6c2bb138644003a801428ee64ed3d1" title="Rewrite field descriptors, run the shader, then swap." alt="" coords="262,241,427,296"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="476,225,423,244,421,239,474,220"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1VolumeSurfaceProcessor_ad94a494b2dd038ba69c819a40227e4a6.html#ad94a494b2dd038ba69c819a40227e4a6" title="Write the field descriptor for this cycle&#39;s slot assignment, then run the normal shader processing pa..." alt="" coords="253,320,436,375"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="531,230,489,270,439,310,417,322,414,318,436,305,485,266,527,226"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1InfluxProcessor_aefba36ed55ddfe94f07ea9d85f8ddee7.html#aefba36ed55ddfe94f07ea9d85f8ddee7" title="The core processing function that must be implemented by derived classes." alt="" coords="5,241,204,296"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="248,271,204,271,204,266,248,266"/>
+</map>

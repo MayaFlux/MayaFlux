@@ -1,0 +1,13 @@
+<map id="MayaFlux::Kakshya::MeshInsertion::insert_submesh" name="MayaFlux::Kakshya::MeshInsertion::insert_submesh">
+<area shape="rect" id="Node000001" title="Append one submesh batch, accumulating into the shared buffers." alt="" coords="5,120,164,175"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1MeshInsertion_acb046bb77addd9e2336869574f89ab90.html#acb046bb77addd9e2336869574f89ab90" title=" " alt="" coords="222,5,389,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="127,117,211,69,222,63,224,68,213,74,130,122"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1MeshInsertion_a219d43ede667ef17ef43efa76b2543cb.html#a219d43ede667ef17ef43efa76b2543cb" title=" " alt="" coords="222,84,389,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="164,132,208,125,209,130,165,137"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Kakshya_1_1MeshSubrange_a071a7c376e87b2bff0b57ac03fb9c2c5.html#a071a7c376e87b2bff0b57ac03fb9c2c5" title="Convert this subrange to a Region for use in RegionGroup." alt="" coords="212,163,399,203"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="165,158,199,163,198,169,164,163"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1MeshInsertion_a7528865947d05ad76cd6c8148661b95f.html#a7528865947d05ad76cd6c8148661b95f" title=" " alt="" coords="218,228,393,283"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="136,172,213,213,228,220,225,225,211,218,133,177"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Kakshya_1_1Region_a22e5e7b4feb8bc29ddf2201ff3b246fe.html#a22e5e7b4feb8bc29ddf2201ff3b246fe" title="Set an attribute value by key." alt="" coords="447,163,605,203"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="399,181,433,181,433,186,399,186"/>
+</map>

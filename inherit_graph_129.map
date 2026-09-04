@@ -1,0 +1,7 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="Node000000" href="$structMayaFlux_1_1Core_1_1InputDeviceInfo.html" title="Information about a connected input device." alt="" coords="5,42,240,67"/>
+<area shape="rect" id="Node000001" href="$structMayaFlux_1_1Core_1_1HIDDeviceInfoExt.html" title="Extended HID device information." alt="" coords="299,5,500,45"/>
+<area shape="poly" id="edge68_Node000000_Node000001" title=" " alt="" coords="254,38,298,33,299,39,254,43"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Core_1_1TabletToolInfo.html" title="Extended information for a tablet tool." alt="" coords="288,70,511,95"/>
+<area shape="poly" id="edge69_Node000000_Node000002" title=" " alt="" coords="254,65,288,69,287,74,253,71"/>
+</map>

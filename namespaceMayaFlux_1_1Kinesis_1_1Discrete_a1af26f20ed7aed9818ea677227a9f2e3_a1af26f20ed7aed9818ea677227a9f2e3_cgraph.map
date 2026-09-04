@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kinesis::Discrete::estimate_frequency" name="MayaFlux::Kinesis::Discrete::estimate_frequency">
+<area shape="rect" id="Node000001" title="Estimate the dominant cycle frequency of a sampled signal." alt="" coords="5,37,220,77"/>
+<area shape="poly" id="edge1_Node000001_Node000001" title=" " alt="" coords="68,37,65,27,72,18,88,12,113,10,141,13,156,20,154,25,139,18,113,15,89,17,76,22,70,28,73,36"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a3735f1ad5f405ceccbbe66cc73d4d3bd.html#a3735f1ad5f405ceccbbe66cc73d4d3bd" title="Sample indices of zero crossings in the full span." alt="" coords="268,29,441,84"/>
+<area shape="poly" id="edge2_Node000001_Node000002" title=" " alt="" coords="220,54,254,54,254,59,220,59"/>
+<area shape="poly" id="edge3_Node000002_Node000002" title=" " alt="" coords="308,29,308,19,317,10,332,5,355,3,382,6,397,14,395,18,380,11,355,8,333,10,319,15,313,21,313,29"/>
+</map>

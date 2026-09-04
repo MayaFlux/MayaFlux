@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::RenderProcessor::set_cull_mode" name="MayaFlux::Buffers::RenderProcessor::set_cull_mode">
+<area shape="rect" id="Node000001" title="Set cull mode (e.g., none, front, back)" alt="" coords="235,45,393,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_ad4bce922597a90238f7d5fe1f1222a18.html#ad4bce922597a90238f7d5fe1f1222a18" title="Set static view transform (evaluated once)" alt="" coords="17,5,175,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="221,58,175,50,176,45,222,53"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_aa3642c3b5a3741efc59afa4a2b6a9a88.html#aa3642c3b5a3741efc59afa4a2b6a9a88" title="Set dynamic view transform source (evaluated every frame)" alt="" coords="5,84,187,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="222,92,187,98,186,93,221,86"/>
+</map>

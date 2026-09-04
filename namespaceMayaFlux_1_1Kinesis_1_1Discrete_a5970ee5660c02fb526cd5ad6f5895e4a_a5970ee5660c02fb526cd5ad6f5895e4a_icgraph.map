@@ -1,0 +1,14 @@
+<map id="MayaFlux::Kinesis::Discrete::peak" name="MayaFlux::Kinesis::Discrete::peak">
+<area shape="rect" id="Node000001" title="Peak amplitude per window." alt="" coords="877,49,1027,89"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1EnergyAnalyzer_aae10121eaa04e3e509079717b90890ef.html#aae10121eaa04e3e509079717b90890ef" title="Compute energy values using span (zero&#45;copy processing)" alt="" coords="633,5,829,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="863,57,829,51,830,46,864,52"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a6999262b0f729dbdf1076f3a63355188.html#a6999262b0f729dbdf1076f3a63355188" title="Cross&#45;correlation via FFT." alt="" coords="640,85,823,125"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="864,86,823,92,823,87,863,80"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1EnergyAnalyzer_a97561d0986bef72b733abe1670d3d6a7.html#a97561d0986bef72b733abe1670d3d6a7" title="Core analysis implementation &#45; creates analysis result AND pipeline output." alt="" coords="336,13,585,53"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="620,35,586,35,586,30,620,30"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_af87d4b84d6d3f96cb339c7216db65678.html#af87d4b84d6d3f96cb339c7216db65678" title="Matched filter (normalised cross&#45;correlation)" alt="" coords="371,81,550,121"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="626,106,550,105,550,99,626,100"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Yantra_1_1ConvolutionTransformer_a9d070c72f78555559c94e86b6274fcab.html#a9d070c72f78555559c94e86b6274fcab" title="Applies the configured convolution operation." alt="" coords="5,110,288,150"/>
+<area shape="poly" id="edge6_Node000004_Node000006" title=" " alt="" coords="628,130,586,135,432,143,288,141,288,135,432,137,585,130,627,124"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="358,113,289,119,288,114,357,108"/>
+</map>

@@ -1,0 +1,9 @@
+<map id="MayaFlux::IO::ImageData::as_float" name="MayaFlux::IO::ImageData::as_float">
+<area shape="rect" id="Node000001" title=" " alt="" coords="547,37,735,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1EXRWriter_abb15175d3720dc452a5ba299923c2a35.html#abb15175d3720dc452a5ba299923c2a35" title="Write image data to disk." alt="" coords="296,5,479,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="532,46,479,40,479,34,533,41"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1STBImageWriter_acba88d5fbcec71014787b593b82d3bba.html#acba88d5fbcec71014787b593b82d3bba" title=" " alt="" coords="276,69,499,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="533,74,499,78,499,73,532,68"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1STBImageWriter_a9cb5d049517c18ad1e45b8fefda0bda5.html#a9cb5d049517c18ad1e45b8fefda0bda5" title="Write image data to disk." alt="" coords="5,69,228,109"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="262,92,228,92,228,87,262,87"/>
+</map>

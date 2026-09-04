@@ -1,0 +1,7 @@
+<map id="MayaFlux::Portal::Text::set_default_font" name="MayaFlux::Portal::Text::set_default_font">
+<area shape="rect" id="Node000001" title="Load a font file and create the default GlyphAtlas at a given size." alt="" coords="5,41,172,81"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Text_1_1TypeFaceFoundry_a939375a455bfd4510f6a7a8f506b600d.html#a939375a455bfd4510f6a7a8f506b600d" title=" " alt="" coords="220,5,423,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="172,46,206,40,207,46,173,51"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Text_1_1TypeFaceFoundry_a5e853cbdb5eba7dad68dd9ac402ec468.html#a5e853cbdb5eba7dad68dd9ac402ec468" title="Locate a system font by family and style, then load it as the default." alt="" coords="237,70,405,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="173,72,224,80,223,85,172,77"/>
+</map>

@@ -1,0 +1,13 @@
+<map id="MayaFlux::Buffers::VolumeGridBuffer::allocate_field" name="MayaFlux::Buffers::VolumeGridBuffer::allocate_field">
+<area shape="rect" id="Node000001" title="Allocate one field&#39;s slots and register it." alt="" coords="520,131,752,171"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VolumeGridBuffer_aeb75a632f17e60f509b754c2dd8909fb.html#aeb75a632f17e60f509b754c2dd8909fb" title="Populate m_fields from declarations." alt="" coords="275,5,472,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="582,127,471,74,445,63,447,58,473,69,585,122"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1VolumeGridBuffer_ab78686513eac73eb5e587c26ac7f810c.html#ab78686513eac73eb5e587c26ac7f810c" title="Declare a double&#45;buffered scalar field." alt="" coords="277,84,470,139"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="506,134,470,129,471,123,507,129"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1VolumeGridBuffer_ae1d494595397c125e957b6cc3dffb694.html#ae1d494595397c125e957b6cc3dffb694" title="Declare a single&#45;slot scalar field." alt="" coords="277,163,470,217"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="507,173,471,178,470,173,506,168"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1VolumeGridBuffer_ab1fe4df88429e1ec83064176a1bb95eb.html#ab1fe4df88429e1ec83064176a1bb95eb" title="Declare a double&#45;buffered vector field." alt="" coords="277,241,470,296"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="583,180,473,231,444,244,442,239,471,226,581,175"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VolumeGridBuffer_a7b7e1f7b68aaab5ffeedac2bd328f611.html#a7b7e1f7b68aaab5ffeedac2bd328f611" title="Construct from a runtime&#45;built field list." alt="" coords="5,5,227,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="261,35,227,35,227,30,261,30"/>
+</map>

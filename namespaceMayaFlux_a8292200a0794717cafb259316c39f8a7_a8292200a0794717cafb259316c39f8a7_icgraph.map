@@ -1,0 +1,9 @@
+<map id="MayaFlux::clone_buffer_to_channels" name="MayaFlux::clone_buffer_to_channels">
+<area shape="rect" id="Node000001" title="Clones a buffer to multiple channels." alt="" coords="460,35,635,75"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_a7053b2753707ee4f8671524b071d0957.html#a7053b2753707ee4f8671524b071d0957" title=" " alt="" coords="268,35,412,75"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="446,57,413,57,413,52,446,52"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1MeshGroupHandle_a5bcd3e3d81114072dedc34bb262cfbdc.html#a5bcd3e3d81114072dedc34bb262cfbdc" title=" " alt="" coords="5,5,220,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="254,46,220,42,221,37,255,41"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_a447a8bab9f7e6bed3a294721a556cbe8.html#a447a8bab9f7e6bed3a294721a556cbe8" title=" " alt="" coords="36,70,189,95"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="254,68,190,76,189,71,254,63"/>
+</map>

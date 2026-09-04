@@ -1,0 +1,15 @@
+<map id="MayaFlux::Kinesis::Discrete::apply_spectral" name="MayaFlux::Kinesis::Discrete::apply_spectral">
+<area shape="rect" id="Node000001" title="Apply a per&#45;frame spectrum processor via WOLA analysis&#45;synthesis." alt="" coords="503,101,681,141"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a263b1692cd60aca7c49a65ab14e1560c.html#a263b1692cd60aca7c49a65ab14e1560c" title="Linear spectral tilt: scale each bin by a factor that rises linearly from 1 at bin 0 to enhancement_f..." alt="" coords="248,5,455,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="538,98,454,60,420,48,422,43,456,55,540,93"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a73b07fca8d027a71ba80fbbfdaad2f65.html#a73b07fca8d027a71ba80fbbfdaad2f65" title="Hard bandpass filter: zero all bins outside [lo_hz, hi_hz]." alt="" coords="265,69,438,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="489,110,438,103,438,98,489,105"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a6d215d96b4cc24a521bc46d5033d48fe.html#a6d215d96b4cc24a521bc46d5033d48fe" title="Hard spectral gate: zero bins whose magnitude is below the threshold." alt="" coords="265,133,437,173"/>
+<area shape="poly" id="edge5_Node000001_Node000005" title=" " alt="" coords="489,138,438,145,437,139,488,132"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a11e48599f29d5d6c715300f7721dfb45.html#a11e48599f29d5d6c715300f7721dfb45" title="Spectral phase inversion (conjugate all bins)" alt="" coords="261,197,442,237"/>
+<area shape="poly" id="edge7_Node000001_Node000006" title=" " alt="" coords="540,150,456,188,422,200,420,195,454,183,538,145"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1SpectralTransformer_a7823c1c101caf6098831e5ec802ebf19.html#a7823c1c101caf6098831e5ec802ebf19" title="Applies the configured spectral operation." alt="" coords="5,62,200,117"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="260,51,201,67,200,62,259,46"/>
+<area shape="poly" id="edge4_Node000004_Node000003" title=" " alt="" coords="251,92,200,92,200,87,251,87"/>
+<area shape="poly" id="edge6_Node000005_Node000003" title=" " alt="" coords="259,132,200,117,201,112,260,127"/>
+</map>

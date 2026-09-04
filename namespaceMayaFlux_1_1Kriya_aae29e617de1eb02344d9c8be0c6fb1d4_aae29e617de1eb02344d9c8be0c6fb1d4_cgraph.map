@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kriya::metro" name="MayaFlux::Kriya::metro">
+<area shape="rect" id="Node000001" title="Creates a periodic event generator that executes a callback at regular intervals." alt="" coords="5,45,180,70"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Vruta_aa9ec6c0df02f7be3eff1aa2d2a0020d4.html#aa9ec6c0df02f7be3eff1aa2d2a0020d4" title="Convert seconds to frames at a given frame rate." alt="" coords="228,5,419,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="180,43,214,38,215,43,181,48"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Vruta_a09f1b4929d6c87d96e68969b5c102ce9.html#a09f1b4929d6c87d96e68969b5c102ce9" title="Convert seconds to samples at a given sample rate." alt="" coords="228,69,419,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="181,67,215,72,214,77,180,72"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::VolumeGridBuffer::FlowConfig::Carried" name="MayaFlux::Buffers::VolumeGridBuffer::FlowConfig::Carried">
+<area shape="rect" id="Node000001" title="A scalar transported by the velocity field." alt="" coords="5,223,215,317"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Buffers_1_1ScalarRef.html" title="A scalar field&#39;s name, issued by the volume that owns it." alt="" coords="37,5,183,160"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="113,160,113,206,107,206,107,160"/>
+</map>

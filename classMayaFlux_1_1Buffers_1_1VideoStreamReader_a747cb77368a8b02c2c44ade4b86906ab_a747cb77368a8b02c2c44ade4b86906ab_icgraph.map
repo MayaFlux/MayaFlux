@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::VideoStreamReader::on_container_state_change" name="MayaFlux::Buffers::VideoStreamReader::on_container_state_change">
+<area shape="rect" id="Node000001" title="Respond to container state changes." alt="" coords="297,45,481,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VideoStreamReader_a16cb3ac3e0cefcc0d19d8bbbb02661a1.html#a16cb3ac3e0cefcc0d19d8bbbb02661a1" title="Replace the backing container." alt="" coords="37,5,217,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="283,59,217,49,218,44,284,54"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VideoStreamReader_ae3d6cdfabfbe11c28019374a02d80746.html#ae3d6cdfabfbe11c28019374a02d80746" title="Construct a VideoStreamReader for the given container." alt="" coords="5,84,249,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="284,91,250,96,249,91,284,86"/>
+</map>

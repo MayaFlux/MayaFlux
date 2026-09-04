@@ -1,0 +1,13 @@
+<map id="MayaFlux::Buffers::BufferProcessingChain::remove_processor_direct" name="MayaFlux::Buffers::BufferProcessingChain::remove_processor_direct">
+<area shape="rect" id="Node000001" title=" " alt="" coords="695,88,889,143"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingChain_ab06548041e8f068a9d83945bcac22a90.html#ab06548041e8f068a9d83945bcac22a90" title="Process pending processor operations." alt="" coords="437,37,647,106"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="681,98,646,92,647,87,682,93"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingChain_a9f8055bfaadaeaccacd1490883703e82.html#a9f8055bfaadaeaccacd1490883703e82" title="Removes a processor from the pipeline for a specific buffer." alt="" coords="458,131,626,185"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="681,137,627,146,626,141,681,132"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingChain_a23d4172a12da9ea88c8487ff720c824d.html#a23d4172a12da9ea88c8487ff720c824d" title="Applies the transformation pipeline to a buffer with intelligent execution." alt="" coords="221,5,389,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="423,55,389,49,390,44,424,49"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingChain_a59d5a166df6cf4d18c4250548a8f4b81.html#a59d5a166df6cf4d18c4250548a8f4b81" title="Internal processing method for non&#45;owning buffer contexts." alt="" coords="221,84,389,139"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="424,94,390,100,389,95,423,89"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingChain_a1b98bf6c28cf994a1cefad945b80817c.html#a1b98bf6c28cf994a1cefad945b80817c" title="Applies preprocessors, processing chain, post processors and final processors sequentially to a buffe..." alt="" coords="5,5,173,60"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="207,35,174,35,174,30,207,30"/>
+</map>

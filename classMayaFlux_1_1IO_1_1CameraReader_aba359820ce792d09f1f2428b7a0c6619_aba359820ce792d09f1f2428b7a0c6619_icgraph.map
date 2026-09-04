@@ -1,0 +1,5 @@
+<map id="MayaFlux::IO::CameraReader::pull_frame_all" name="MayaFlux::IO::CameraReader::pull_frame_all">
+<area shape="rect" id="Node000001" title="Signal the background decode thread to pull one frame." alt="" coords="267,5,480,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1CameraReader_a25ec3322a9e680a703b83504d18b3b2f.html#a25ec3322a9e680a703b83504d18b3b2f" title="Setup an IOService for this reader with the given reader_id." alt="" coords="5,5,219,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="253,28,219,28,219,23,253,23"/>
+</map>

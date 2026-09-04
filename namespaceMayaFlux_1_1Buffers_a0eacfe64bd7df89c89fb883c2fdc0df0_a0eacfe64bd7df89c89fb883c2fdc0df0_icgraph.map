@@ -1,0 +1,16 @@
+<map id="MayaFlux::Buffers::resolve_transfer" name="MayaFlux::Buffers::resolve_transfer">
+<area shape="rect" id="Node000001" title="Wait for a transfer and release its resources." alt="" coords="555,101,703,141"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VolumeGridBuffer_aa60ed3c879142afdc9251878925ddfe8.html#aa60ed3c879142afdc9251878925ddfe8" title="Copy the current read slot of a field to host memory." alt="" coords="286,5,495,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="581,97,506,60,471,48,473,43,508,55,583,92"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1VolumeGridBuffer_ae2929af740ac4ec6b8e076844ac64b2c.html#ae2929af740ac4ec6b8e076844ac64b2c" title="Write initial values into a field from raw host memory." alt="" coords="287,69,494,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="540,112,494,106,494,101,541,107"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Buffers_af191dd0b7ad35e5d915e1a414db2ecca.html#af191dd0b7ad35e5d915e1a414db2ecca" title="Upload host memory into a raw back_buffers slot." alt="" coords="316,133,465,173"/>
+<area shape="poly" id="edge6_Node000001_Node000006" title=" " alt="" coords="541,136,466,146,465,141,540,130"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1VolumeGridBuffer_a9fe83ee3f862e1963c51f044c2b0d30f.html#a9fe83ee3f862e1963c51f044c2b0d30f" title="Destructor." alt="" coords="275,198,507,253"/>
+<area shape="poly" id="edge7_Node000001_Node000007" title=" " alt="" coords="582,150,508,188,476,200,474,195,506,183,580,146"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VolumeGridBuffer_a773ec1e7a228ad23abc879801b7a283b.html#a773ec1e7a228ad23abc879801b7a283b" title="Add sampled values into a scalar field." alt="" coords="5,5,227,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="272,28,227,28,227,23,272,23"/>
+<area shape="poly" id="edge4_Node000004_Node000003" title=" " alt="" coords="290,69,202,48,203,43,292,64"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1VolumeGridBuffer_a63ecfa245dd0267774d87f711c1e50a0.html#a63ecfa245dd0267774d87f711c1e50a0" title="Write initial values into a scalar field from a Kinesis field." alt="" coords="28,69,204,109"/>
+<area shape="poly" id="edge5_Node000004_Node000005" title=" " alt="" coords="274,92,204,92,204,87,274,87"/>
+</map>

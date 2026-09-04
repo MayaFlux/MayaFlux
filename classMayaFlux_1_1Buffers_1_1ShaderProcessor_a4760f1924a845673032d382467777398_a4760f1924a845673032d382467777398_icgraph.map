@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::ShaderProcessor::get_bound_buffer" name="MayaFlux::Buffers::ShaderProcessor::get_bound_buffer">
+<area shape="rect" id="Node000001" title="Get bound buffer for a descriptor name." alt="" coords="301,5,460,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a009938e3bc19d99bb52ee9f67a0457d5.html#a009938e3bc19d99bb52ee9f67a0457d5" title="Download the buffer currently bound to a named descriptor." alt="" coords="5,13,253,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="287,35,254,35,254,30,287,30"/>
+</map>

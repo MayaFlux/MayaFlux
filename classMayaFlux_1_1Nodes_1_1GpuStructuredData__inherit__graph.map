@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::GpuStructuredData" name="MayaFlux::Nodes::GpuStructuredData">
+<area shape="rect" id="Node000001" title="GPU&#45;uploadable structured data (arrays of POD structs)" alt="" coords="5,5,264,211"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GeometryContext.html" title="Context for GeometryWriterNode &#45; provides vertex buffer access." alt="" coords="39,259,231,359"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="137,225,137,259,132,259,132,225"/>
+</map>

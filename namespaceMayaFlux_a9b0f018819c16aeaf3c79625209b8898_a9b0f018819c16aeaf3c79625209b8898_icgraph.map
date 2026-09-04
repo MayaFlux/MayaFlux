@@ -1,0 +1,5 @@
+<map id="MayaFlux::seconds_to_blocks" name="MayaFlux::seconds_to_blocks">
+<area shape="rect" id="Node000001" title="Converts a time duration in seconds to the equivalent number of processing blocks." alt="" coords="227,5,393,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_a91a577cf9a518db7f561907cb51239a6.html#a91a577cf9a518db7f561907cb51239a6" title="Routes a buffer from its current channel to a target channel with fade." alt="" coords="5,13,179,38"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="213,28,179,28,179,23,213,23"/>
+</map>

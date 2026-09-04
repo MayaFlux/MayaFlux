@@ -1,0 +1,10 @@
+<map id="MayaFlux::Yantra::TextureExecutionContext" name="MayaFlux::Yantra::TextureExecutionContext">
+<area shape="rect" id="Node000001" title="GpuExecutionContext specialisation for image compute shaders." alt="" coords="29,1559,239,2233"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1GpuExecutionContext.html" title=" " alt="" coords="23,1240,245,1509"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="137,1523,137,1558,131,1558,131,1523"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1GpuDispatchCore.html" title="Non&#45;template base that owns all type&#45;independent GPU dispatch logic." alt="" coords="5,5,252,859"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="134,872,136,1240,131,1240,128,872"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1GpuExecutionContext.html" title="Type&#45;parameterised shell over GpuDispatchCore." alt="" coords="150,908,390,1148"/>
+<area shape="poly" id="edge4_Node000004_Node000003" title=" " alt="" coords="236,871,244,907,239,908,231,873"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="221,1162,189,1241,184,1239,216,1160"/>
+</map>

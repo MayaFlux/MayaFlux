@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kriya::GetEventPromise::await_resume" name="MayaFlux::Kriya::GetEventPromise::await_resume">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,5,201,45"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Vruta_1_1event__promise_a1cbfeefa2c69973c853b77013d42ca39.html#a1cbfeefa2c69973c853b77013d42ca39" title="Transfer ownership of a NetworkSource to this coroutine frame." alt="" coords="249,5,424,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="201,23,235,23,235,28,201,28"/>
+</map>

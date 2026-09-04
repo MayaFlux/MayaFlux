@@ -1,0 +1,26 @@
+var VKDevice_8cpp =
+[
+    [ "api_version", "VKDevice_8cpp_a48c67bebc636af17a3ba7182bba63f6c.html#a48c67bebc636af17a3ba7182bba63f6c", null ],
+    [ "available", "VKDevice_8cpp_a970eb59e441b7dcae7a8695cb0b502ba.html#a970eb59e441b7dcae7a8695cb0b502ba", null ],
+    [ "device", "VKDevice_8cpp_a04efb311d6c024aa3c31fb19bdf5613a.html#a04efb311d6c024aa3c31fb19bdf5613a", null ],
+    [ "device_local_bytes", "VKDevice_8cpp_a5790e033672831adfcff5824a5b28093.html#a5790e033672831adfcff5824a5b28093", null ],
+    [ "driver_id", "VKDevice_8cpp_a3d890b2b6bd007c3a50e2038cd584388.html#a3d890b2b6bd007c3a50e2038cd584388", null ],
+    [ "driver_name", "VKDevice_8cpp_ad2543830d1c8db100fad98e67e969668.html#ad2543830d1c8db100fad98e67e969668", null ],
+    [ "families", "VKDevice_8cpp_a87f22e1ab7e918f1e3649e138496ae6b.html#a87f22e1ab7e918f1e3649e138496ae6b", null ],
+    [ "graphics_presents", "VKDevice_8cpp_a02ea77d5cd1a7a181f8c8a159069337a.html#a02ea77d5cd1a7a181f8c8a159069337a", null ],
+    [ "has_mesh_shader", "VKDevice_8cpp_a01adfc57d87fdc2d012852851ca663e7.html#a01adfc57d87fdc2d012852851ca663e7", null ],
+    [ "has_pci_info", "VKDevice_8cpp_a8df78b64c67e6b59461278caeda5185b.html#a8df78b64c67e6b59461278caeda5185b", null ],
+    [ "has_swapchain", "VKDevice_8cpp_a05bd7c07259d5e31e09c1f8cdfeadd73.html#a05bd7c07259d5e31e09c1f8cdfeadd73", null ],
+    [ "index", "VKDevice_8cpp_aafd95f8c7a99b9189ede7cdf0871ebe8.html#aafd95f8c7a99b9189ede7cdf0871ebe8", null ],
+    [ "instance", "VKDevice_8cpp_a4fed54a51a6ffc4a3919e904287a7b14.html#a4fed54a51a6ffc4a3919e904287a7b14", null ],
+    [ "mechanism", "VKDevice_8cpp_aef092f39092bc329af1160d4055a916c.html#aef092f39092bc329af1160d4055a916c", null ],
+    [ "name", "VKDevice_8cpp_a9b45b3e13bd9167aab02e17e08916231.html#a9b45b3e13bd9167aab02e17e08916231", null ],
+    [ "native_display", "VKDevice_8cpp_af1c9b0b847445b9f3407a3693b88f1a9.html#af1c9b0b847445b9f3407a3693b88f1a9", null ],
+    [ "pci_bus", "VKDevice_8cpp_a95b5d754f0d485fd795b1b65e232e4cc.html#a95b5d754f0d485fd795b1b65e232e4cc", null ],
+    [ "present_family_mask", "VKDevice_8cpp_af08f5ed323f0e451d1d85ddd0e7c761f.html#af08f5ed323f0e451d1d85ddd0e7c761f", null ],
+    [ "reject_reason", "VKDevice_8cpp_a46291c166c75349bcae5bec6be42cb43.html#a46291c166c75349bcae5bec6be42cb43", null ],
+    [ "score", "VKDevice_8cpp_ab0b028157cf1858e5edc8f940618aabf.html#ab0b028157cf1858e5edc8f940618aabf", null ],
+    [ "type", "VKDevice_8cpp_a3c12793fedd99dd1067f6de71dc86481.html#a3c12793fedd99dd1067f6de71dc86481", null ],
+    [ "uuid", "VKDevice_8cpp_a4f4414ed3368e687baad32f1195a2af8.html#a4f4414ed3368e687baad32f1195a2af8", null ],
+    [ "uuid_hex", "VKDevice_8cpp_aace1d9706ef6d8dfb4ee8955f6333cc8.html#aace1d9706ef6d8dfb4ee8955f6333cc8", null ]
+];

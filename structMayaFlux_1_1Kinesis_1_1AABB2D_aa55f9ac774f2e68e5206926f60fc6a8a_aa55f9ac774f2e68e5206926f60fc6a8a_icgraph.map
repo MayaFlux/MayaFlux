@@ -1,0 +1,16 @@
+<map id="MayaFlux::Kinesis::AABB2D::center" name="MayaFlux::Kinesis::AABB2D::center">
+<area shape="rect" id="Node000001" title=" " alt="" coords="432,133,581,173"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kinesis_1_1AABB2D_a137d0e3eea9f9ad0ecc19d7381c24e69.html#a137d0e3eea9f9ad0ecc19d7381c24e69" title=" " alt="" coords="235,73,384,113"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="426,132,375,116,377,111,428,127"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_a099d788ec02e2ae8bd592b7ba0b5833e.html#a099d788ec02e2ae8bd592b7ba0b5833e" title="Geometry function for a radial indicator in NDC space." alt="" coords="5,133,187,173"/>
+<area shape="poly" id="edge7_Node000001_Node000005" title=" " alt="" coords="418,156,187,156,187,151,418,151"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Kinesis_a6ca3e599f125cde1c6b65bd7b3ba0312.html#a6ca3e599f125cde1c6b65bd7b3ba0312" title="Compute a region of size (w, h) positioned relative to anchor." alt="" coords="235,193,384,233"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="428,180,377,196,375,191,426,175"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_aff8c6115503b8e4a30ed11689c447fae.html#aff8c6115503b8e4a30ed11689c447fae" title="Geometry function for a crosshair indicator in NDC space." alt="" coords="5,5,187,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="232,72,159,48,160,43,234,67"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_ada3fd1bf65007f6cb389c9673de971fe.html#ada3fd1bf65007f6cb389c9673de971fe" title="Geometry function for a positioned point in NDC space." alt="" coords="5,69,187,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="221,94,187,94,187,88,221,89"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="225,120,169,136,167,131,223,115"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Kinesis_a4dcf515e2d5cd037dbf1f22f85ca0a9f.html#a4dcf515e2d5cd037dbf1f22f85ca0a9f" title="place() accepting any HasBounds anchor." alt="" coords="21,197,171,237"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="221,218,171,219,171,213,221,212"/>
+</map>

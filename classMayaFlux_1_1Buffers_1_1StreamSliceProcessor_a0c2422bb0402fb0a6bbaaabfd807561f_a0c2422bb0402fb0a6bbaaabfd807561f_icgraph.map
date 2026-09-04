@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::StreamSliceProcessor::detach_slot" name="MayaFlux::Buffers::StreamSliceProcessor::detach_slot">
+<area shape="rect" id="Node000001" title=" " alt="" coords="252,34,415,89"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1StreamSliceProcessor_ae239eaa6391fc18b82d4e96e6873dde2.html#ae239eaa6391fc18b82d4e96e6873dde2" title="Assign a StreamSlice to a slot." alt="" coords="5,5,204,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="238,49,204,44,205,38,239,44"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1StreamSliceProcessor_a868e2e4d23f51adf755bb6abd0e51628.html#a868e2e4d23f51adf755bb6abd0e51628" title="Called when this processor is detached from a buffer." alt="" coords="23,70,186,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="239,79,186,87,186,82,238,74"/>
+</map>

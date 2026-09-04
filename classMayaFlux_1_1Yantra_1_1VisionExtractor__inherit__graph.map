@@ -1,0 +1,7 @@
+<map id="MayaFlux::Yantra::VisionExtractor&lt; InputType, OutputType &gt;" name="MayaFlux::Yantra::VisionExtractor&lt; InputType, OutputType &gt;">
+<area shape="rect" id="Node000001" title="Extracts a pixel sub&#45;region guided by a VisionAnalysis in input metadata." alt="" coords="31,1275,233,1604"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1UniversalExtractor.html" title="Template&#45;flexible extractor base with instance&#45;defined I/O types." alt="" coords="8,597,256,1227"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="135,1240,135,1274,129,1274,129,1240"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1ComputeOperation.html" title="Base interface for all computational operations in the processing pipeline." alt="" coords="5,5,259,549"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="135,563,135,597,129,597,129,563"/>
+</map>

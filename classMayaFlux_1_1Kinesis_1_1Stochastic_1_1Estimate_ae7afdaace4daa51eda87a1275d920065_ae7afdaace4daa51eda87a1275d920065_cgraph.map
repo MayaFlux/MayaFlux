@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::Stochastic::Estimate::update_into" name="MayaFlux::Kinesis::Stochastic::Estimate::update_into">
+<area shape="rect" id="Node000001" title="Feed one sample and push the filtered result into a HistoryBuffer." alt="" coords="5,5,160,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Memory_1_1HistoryBuffer_a6f256636f3f3fc99269c77a8dc096b09.html#a6f256636f3f3fc99269c77a8dc096b09" title="Push new value to front of history." alt="" coords="208,13,411,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="160,30,194,30,194,35,160,35"/>
+</map>

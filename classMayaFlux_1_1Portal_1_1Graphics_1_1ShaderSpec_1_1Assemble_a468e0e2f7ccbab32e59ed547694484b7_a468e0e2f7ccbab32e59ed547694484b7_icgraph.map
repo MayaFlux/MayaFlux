@@ -1,0 +1,13 @@
+<map id="MayaFlux::Portal::Graphics::ShaderSpec::Assemble::pc" name="MayaFlux::Portal::Graphics::ShaderSpec::Assemble::pc">
+<area shape="rect" id="Node000001" title="Declare a push constant field with explicit format." alt="" coords="255,156,456,196"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1VisionGpuExecutor_a37b115d59dbe1593c58ef631942b363e.html#a37b115d59dbe1593c58ef631942b363e" title="GpuComputeConfig for a given VisionOp and its parameters." alt="" coords="15,5,197,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="322,148,270,103,205,60,179,48,181,43,208,55,273,99,326,144"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Buffers_1_1RelaxationSpecs_a1279de64ea64bd40c10f69e9d59dde46.html#a1279de64ea64bd40c10f69e9d59dde46" title="Binary state&#45;to&#45;vertex emit: nonzero state draws at full scale, zero state degenerates to a zero&#45;scal..." alt="" coords="22,70,190,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="277,154,189,126,191,121,279,149"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Buffers_1_1RelaxationSpecs_ab027146e5827d27be349ad597cbad520.html#ab027146e5827d27be349ad597cbad520" title="Scalar&#45;ramp state&#45;to&#45;vertex emit: float state value scaled and offset into a visible output range." alt="" coords="22,149,190,203"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="241,179,190,179,190,173,241,173"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Buffers_1_1RelaxationSpecs_a664b6d74405ef8f23d5954e4c9b46940.html#a664b6d74405ef8f23d5954e4c9b46940" title="Jacobi&#45;style diffusion rule: each cell blends toward the average of its 8 Moore neighbors at the give..." alt="" coords="17,227,195,282"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="279,203,194,230,193,225,277,198"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderSpec_1_1Assemble_a80b96bcb6c1fec6cb46d4b58c03cc3bf.html#a80b96bcb6c1fec6cb46d4b58c03cc3bf" title="Declare a float push constant field." alt="" coords="5,307,207,347"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="325,207,273,252,208,296,179,309,176,304,205,291,270,248,322,203"/>
+</map>

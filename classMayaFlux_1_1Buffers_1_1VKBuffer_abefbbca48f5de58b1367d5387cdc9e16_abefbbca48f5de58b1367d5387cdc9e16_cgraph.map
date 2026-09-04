@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::VKBuffer::get_usage_flags" name="MayaFlux::Buffers::VKBuffer::get_usage_flags">
+<area shape="rect" id="Node000001" title="Get appropriate VkBufferUsageFlags for creation based on Usage." alt="" coords="5,5,197,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_adbe3a9497518e9fdb2db312b2ddb529d.html#adbe3a9497518e9fdb2db312b2ddb529d" title="Resolve the extra vk::BufferUsageFlags a BufferUsageHint requires, on top of whatever base usage the ..." alt="" coords="245,5,443,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="198,23,231,23,231,28,198,28"/>
+</map>

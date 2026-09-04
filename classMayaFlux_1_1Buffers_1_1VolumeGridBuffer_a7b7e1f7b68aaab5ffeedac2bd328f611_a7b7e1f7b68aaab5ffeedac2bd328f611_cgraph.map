@@ -1,0 +1,18 @@
+<map id="MayaFlux::Buffers::VolumeGridBuffer::VolumeGridBuffer" name="MayaFlux::Buffers::VolumeGridBuffer::VolumeGridBuffer">
+<area shape="rect" id="Node000001" title="Construct from a runtime&#45;built field list." alt="" coords="5,85,227,140"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VolumeGridBuffer_aeb75a632f17e60f509b754c2dd8909fb.html#aeb75a632f17e60f509b754c2dd8909fb" title="Populate m_fields from declarations." alt="" coords="287,49,485,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="226,95,273,89,274,94,227,101"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_ae0727e84d97568acace892b473215dfa.html#ae0727e84d97568acace892b473215dfa" title="Set whether this buffer is for internal engine usage." alt="" coords="275,129,497,169"/>
+<area shape="poly" id="edge8_Node000001_Node000008" title=" " alt="" coords="227,125,261,129,261,135,226,130"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VolumeGridBuffer_aca30ddb3fe275b513308b2bfeb98d98c.html#aca30ddb3fe275b513308b2bfeb98d98c" title="Allocate one field&#39;s slots and register it." alt="" coords="545,91,777,131"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="485,86,532,92,531,98,485,92"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_ade826fd1619beabe131e5bb65ecf2bcd.html#ade826fd1619beabe131e5bb65ecf2bcd" title="Get all buffer resources at once (read&#45;only)" alt="" coords="849,5,1003,60"/>
+<area shape="poly" id="edge7_Node000002_Node000004" title=" " alt="" coords="485,66,835,37,835,43,485,71"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="729,89,835,57,837,62,730,94"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1VolumeGridBuffer_a27911e66982be61da77a3bbd0121cd3f.html#a27911e66982be61da77a3bbd0121cd3f" title="Total cell count." alt="" coords="843,84,1009,139"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="778,109,829,109,829,114,778,114"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_a0c7a59c0847791ed0915dcd64e8df783.html#a0c7a59c0847791ed0915dcd64e8df783" title="Query for a backend service." alt="" coords="843,163,1009,217"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="730,129,830,159,829,164,729,134"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aa28c6f5592e5893508bafb62aefcc496.html#aa28c6f5592e5893508bafb62aefcc496" title="Get the global registry instance." alt="" coords="825,242,1027,282"/>
+<area shape="poly" id="edge6_Node000003_Node000007" title=" " alt="" coords="687,129,748,178,786,204,827,228,841,234,839,239,824,232,783,209,745,182,684,134"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="MayaFlux::Core::BackendPipelineManager::track_shader" name="MayaFlux::Core::BackendPipelineManager::track_shader">
+<area shape="rect" id="Node000001" title=" " alt="" coords="579,5,817,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1BackendPipelineManager_ac70dd77091d307d9d7a314fa283a6ba5.html#ac70dd77091d307d9d7a314fa283a6ba5" title="Create a shader module from SPIR&#45;V binary." alt="" coords="292,5,531,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="565,28,531,28,531,23,565,23"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1BackendPipelineManager_a039f6bffc7131cf02ba1f0767d735f1d.html#a039f6bffc7131cf02ba1f0767d735f1d" title=" " alt="" coords="5,5,244,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="278,28,244,28,244,23,278,23"/>
+</map>

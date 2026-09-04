@@ -1,0 +1,5 @@
+<map id="MayaFlux::Portal::Forma::Plot::data_range" name="MayaFlux::Portal::Forma::Plot::data_range">
+<area shape="rect" id="Node000001" title="Compute [min, max] over a scalar series." alt="" coords="5,5,187,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Plot_a45fd3bf9172041f96205cf19761e086b.html#a45fd3bf9172041f96205cf19761e086b" title="Begin a Series chain." alt="" coords="235,5,416,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="187,23,221,23,221,28,187,28"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="MayaFlux::Yantra::config_from_spec" name="MayaFlux::Yantra::config_from_spec">
+<area shape="rect" id="Node000001" title="Derive a GpuComputeConfig from a ShaderSpec." alt="" coords="287,37,468,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1VisionGpuExecutor_a37b115d59dbe1593c58ef631942b363e.html#a37b115d59dbe1593c58ef631942b363e" title="GpuComputeConfig for a given VisionOp and its parameters." alt="" coords="31,5,213,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="273,47,213,39,214,34,273,42"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1ComputationGrammar_1_1RuleBuilder_a6496b387f981b5b5757ade35e25092df.html#a6496b387f981b5b5757ade35e25092df" title="Sets the executor function for this rule." alt="" coords="5,69,239,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="273,73,239,77,238,72,273,68"/>
+</map>

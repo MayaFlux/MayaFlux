@@ -1,0 +1,43 @@
+<map id="MayaFlux::Buffers::VKBuffer" name="MayaFlux::Buffers::VKBuffer">
+<area shape="rect" id="Node000001" title="Vulkan&#45;backed buffer wrapper used in processing chains." alt="" coords="1298,461,1515,1140"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1RootBuffer.html" title=" " alt="" coords="8,1188,205,1845"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="1285,810,1183,818,1060,834,922,859,775,895,625,944,551,974,478,1008,408,1047,341,1089,278,1137,219,1190,208,1202,204,1199,215,1186,274,1133,338,1085,405,1042,476,1003,549,969,623,939,773,890,920,854,1059,829,1182,813,1284,804"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1CompositeGeometryBuffer.html" title="Buffer for aggregating multiple geometry nodes with independent topologies." alt="" coords="229,1312,453,1721"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="1285,823,1202,839,1106,862,999,893,887,932,774,980,663,1039,560,1108,512,1148,467,1190,444,1217,424,1247,392,1313,387,1310,419,1245,440,1214,463,1186,508,1144,557,1104,661,1034,772,975,885,927,998,888,1104,857,1201,834,1284,818"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1ComputeMeshBuffer.html" title="VKBuffer that evaluates a SpatialField isosurface via marching cubes on the GPU and renders directly ..." alt="" coords="478,1227,661,1807"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="1286,837,1145,886,1064,919,980,959,897,1006,816,1060,741,1121,675,1190,648,1228,644,1225,671,1186,738,1117,813,1056,894,1001,978,955,1062,914,1143,881,1284,832"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Buffers_1_1FormaBuffer.html" title="VKBuffer for 2D screen&#45;space Forma geometry." alt="" coords="685,1307,856,1727"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="1287,861,1185,918,1073,992,1017,1036,963,1083,914,1135,870,1190,837,1246,813,1307,808,1305,833,1244,866,1186,910,1131,960,1080,1014,1032,1070,988,1182,913,1284,856"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Buffers_1_1GeometryBuffer.html" title="Specialized buffer for generative geometry from GeometryWriterNode." alt="" coords="880,1317,1072,1717"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="1290,921,1238,980,1184,1045,1132,1116,1086,1189,1056,1252,1031,1317,1026,1315,1051,1250,1082,1187,1127,1113,1179,1042,1234,976,1286,918"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Buffers_1_1InstanceNetworkBuffer.html" title="VKBuffer that renders an InstanceNetwork as a single instanced draw call." alt="" coords="1097,1417,1295,1617"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="1305,1154,1228,1417,1223,1416,1300,1153"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Buffers_1_1MeshBuffer.html" title="VKBuffer subclass that owns a MeshData and manages its GPU upload." alt="" coords="1320,1317,1493,1717"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="1409,1154,1409,1316,1404,1316,1404,1154"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Buffers_1_1MeshNetworkBuffer.html" title="VKBuffer that renders a MeshNetwork as a single indexed draw call." alt="" coords="1517,1347,1707,1687"/>
+<area shape="poly" id="edge12_Node000001_Node000013" title=" " alt="" coords="1510,1153,1566,1346,1561,1347,1505,1154"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1Buffers_1_1NetworkGeometryBuffer.html" title="Specialized buffer for geometry from NodeNetwork instances." alt="" coords="1731,1312,1952,1721"/>
+<area shape="poly" id="edge13_Node000001_Node000014" title=" " alt="" coords="1527,925,1627,1047,1677,1116,1721,1187,1752,1247,1779,1311,1774,1313,1747,1250,1716,1189,1672,1119,1623,1051,1522,928"/>
+<area shape="rect" id="Node000016" href="$classMayaFlux_1_1Buffers_1_1NodeTextureBuffer.html" title="Staging buffer for uploading TextureNode pixel data to GPU textures." alt="" coords="1976,1302,2160,1731"/>
+<area shape="poly" id="edge15_Node000001_Node000016" title=" " alt="" coords="1529,854,1634,910,1752,985,1811,1029,1867,1078,1920,1130,1966,1186,2000,1241,2025,1301,2020,1303,1995,1244,1962,1190,1916,1134,1864,1082,1807,1034,1749,990,1632,915,1526,859"/>
+<area shape="rect" id="Node000017" href="$classMayaFlux_1_1Buffers_1_1RelaxationGridBuffer.html" title="GPU&#45;resident, double&#45;buffered SSBO state for synchronous local&#45;rule systems evaluated over a fixed 2D..." alt="" coords="2185,1227,2405,1807"/>
+<area shape="poly" id="edge16_Node000001_Node000017" title=" " alt="" coords="1530,831,1676,879,1760,913,1848,953,1936,1000,2022,1054,2102,1116,2174,1186,2204,1225,2199,1228,2170,1190,2099,1120,2019,1059,1934,1004,1846,958,1758,917,1674,884,1528,836"/>
+<area shape="rect" id="Node000018" href="$classMayaFlux_1_1Buffers_1_1TextureBuffer.html" title="A hybrid buffer managing both a textured quad geometry and its pixel data." alt="" coords="2429,1202,2624,1831"/>
+<area shape="poly" id="edge17_Node000001_Node000018" title=" " alt="" coords="1529,812,1618,826,1723,847,1839,876,1961,914,2085,963,2206,1024,2264,1059,2319,1098,2371,1140,2419,1186,2432,1200,2428,1204,2415,1190,2368,1144,2316,1102,2261,1063,2203,1028,2083,968,1959,919,1837,881,1722,852,1617,831,1529,818"/>
+<area shape="rect" id="Node000021" href="$classMayaFlux_1_1Buffers_1_1VolumeGridBuffer.html" title="GPU&#45;resident state for multi&#45;field simulations evaluated over a fixed 3D topology: incompressible flu..." alt="" coords="2649,1257,2834,1777"/>
+<area shape="poly" id="edge20_Node000001_Node000021" title=" " alt="" coords="1529,802,1634,810,1762,824,1905,848,2059,883,2215,932,2292,963,2368,998,2441,1037,2511,1081,2577,1131,2638,1186,2665,1219,2687,1255,2683,1258,2661,1222,2634,1190,2573,1135,2508,1086,2438,1042,2365,1002,2290,968,2213,937,2057,888,1904,853,1761,829,1634,815,1529,808"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1Buffer.html" title="Backend&#45;agnostic interface for sequential data storage and transformation." alt="" coords="1298,133,1515,413"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1409,427,1409,461,1404,461,1404,427"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="1331,5,1483,85"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="1409,99,1409,133,1404,133,1404,99"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1RootGraphicsBuffer.html" title="Root container for GPU buffer lifecycle management and batch processing." alt="" coords="5,1893,208,2353"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="109,1859,109,1893,104,1893,104,1859"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Buffers_1_1RaymarchBuffer.html" title="Proxy box bounding a scalar field, drawn by a fragment stage that integrates the field along the view..." alt="" coords="1327,2003,1487,2243"/>
+<area shape="poly" id="edge11_Node000011_Node000012" title=" " alt="" coords="1409,1730,1409,2003,1404,2003,1404,1730"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1Buffers_1_1NetworkTextureBuffer.html" title="NetworkGeometryBuffer extended with a GPU UV projection and texture sampling pass." alt="" coords="1745,2043,1937,2203"/>
+<area shape="poly" id="edge14_Node000014_Node000015" title=" " alt="" coords="1844,1735,1844,2043,1839,2043,1839,1735"/>
+<area shape="rect" id="Node000019" href="$classMayaFlux_1_1Buffers_1_1TextBuffer.html" title="TextureBuffer specialization for CPU&#45;composited glyph textures." alt="" coords="2321,1916,2516,2331"/>
+<area shape="poly" id="edge18_Node000018_Node000019" title=" " alt="" coords="2471,1845,2458,1916,2453,1915,2466,1844"/>
+<area shape="rect" id="Node000020" href="$classMayaFlux_1_1Buffers_1_1VideoContainerBuffer.html" title="TextureBuffer implementation backed by a VideoStreamContainer." alt="" coords="2540,2023,2729,2223"/>
+<area shape="poly" id="edge19_Node000018_Node000020" title=" " alt="" coords="2588,1844,2620,2022,2614,2023,2582,1845"/>
+</map>

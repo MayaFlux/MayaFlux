@@ -1,0 +1,5 @@
+<map id="MayaFlux::std_dev_per_channel" name="MayaFlux::std_dev_per_channel">
+<area shape="rect" id="Node000001" title="Calculate standard deviation per channel for multi&#45;channel data." alt="" coords="269,5,443,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_a16be9d2fb24e6e4c7bad01172d669503.html#a16be9d2fb24e6e4c7bad01172d669503" title="Calculate standard deviation across all channels (mix then analyze)" alt="" coords="5,13,221,38"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="256,28,222,28,222,23,256,23"/>
+</map>

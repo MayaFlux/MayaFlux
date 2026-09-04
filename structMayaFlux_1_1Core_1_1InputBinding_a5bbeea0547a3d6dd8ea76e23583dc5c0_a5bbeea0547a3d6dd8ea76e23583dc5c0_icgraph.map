@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::InputBinding::midi" name="MayaFlux::Core::InputBinding::midi">
+<area shape="rect" id="Node000001" title="Bind to MIDI device." alt="" coords="212,5,427,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_a9394af45babcdf41d80b56a92f9c3d22.html#a9394af45babcdf41d80b56a92f9c3d22" title="Create binding for MIDI device." alt="" coords="5,13,164,38"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="198,28,164,28,164,23,198,23"/>
+</map>

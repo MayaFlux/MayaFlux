@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::Lattice3D::resampled" name="MayaFlux::Kinesis::Lattice3D::resampled">
+<area shape="rect" id="Node000001" title="A lattice over the same bounds at a different resolution." alt="" coords="235,13,396,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VolumeGridBuffer_a8dc01e45e21328d05c5bb8da868087dc.html#a8dc01e45e21328d05c5bb8da868087dc" title="Establish the processing chain without attaching any stage." alt="" coords="5,5,187,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="221,35,187,35,187,30,221,30"/>
+</map>

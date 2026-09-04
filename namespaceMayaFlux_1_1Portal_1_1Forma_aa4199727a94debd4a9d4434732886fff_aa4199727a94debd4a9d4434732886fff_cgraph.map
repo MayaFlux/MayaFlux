@@ -1,0 +1,15 @@
+<map id="MayaFlux::Portal::Forma::create_surface" name="MayaFlux::Portal::Forma::create_surface">
+<area shape="rect" id="Node000001" title="Construct a Surface, creating Layer and Context internally." alt="" coords="5,41,187,81"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1internal_abdc2f8c3b42bcb7e0e99aae7e15a4615.html#abdc2f8c3b42bcb7e0e99aae7e15a4615" title="Accessor for the process&#45;wide Atelier." alt="" coords="235,5,416,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="186,44,221,39,221,44,187,50"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Forma_1_1internal_1_1Atelier_ad9fe6834e2c324c3cca619340a09ab0d.html#ad9fe6834e2c324c3cca619340a09ab0d" title="create_layer plus ownership of the window, as a Surface." alt="" coords="235,70,416,125"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="187,73,221,78,221,84,186,78"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Forma_1_1internal_1_1Atelier_ad532f0c0c5f3b22f4c31e182c127b3df.html#ad532f0c0c5f3b22f4c31e182c127b3df" title=" " alt="" coords="477,5,671,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="416,23,463,23,463,28,416,28"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Forma_1_1internal_1_1Atelier_af684f6f03bb9a9bcb744e2134e6f9769.html#af684f6f03bb9a9bcb744e2134e6f9769" title="Construct a Layer and a Context wired to window." alt="" coords="464,77,684,117"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="416,95,450,95,450,100,416,100"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_a04fb0b546bfa364a04dfe6f609f8b769.html#a04fb0b546bfa364a04dfe6f609f8b769" title="Transfer ownership of an existing object to the persistent store for process lifetime." alt="" coords="732,85,859,110"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="684,95,718,95,718,100,684,100"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1internal_ac26a7a92aa4af34c366aad03b68ea71e.html#ac26a7a92aa4af34c366aad03b68ea71e" title=" " alt="" coords="907,77,1051,117"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="859,95,893,95,893,100,859,100"/>
+</map>

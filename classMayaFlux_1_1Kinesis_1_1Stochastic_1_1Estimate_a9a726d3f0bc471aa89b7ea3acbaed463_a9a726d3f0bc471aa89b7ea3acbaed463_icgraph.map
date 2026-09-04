@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::Stochastic::Estimate::update_mad" name="MayaFlux::Kinesis::Stochastic::Estimate::update_mad">
+<area shape="rect" id="Node000001" title=" " alt="" coords="208,5,363,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kinesis_1_1Stochastic_1_1Estimate_a502f5a8057dafa0db29ae244dd666427.html#a502f5a8057dafa0db29ae244dd666427" title="Feed one new sample, updating the running estimate." alt="" coords="5,5,160,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="194,35,161,35,161,30,194,30"/>
+</map>

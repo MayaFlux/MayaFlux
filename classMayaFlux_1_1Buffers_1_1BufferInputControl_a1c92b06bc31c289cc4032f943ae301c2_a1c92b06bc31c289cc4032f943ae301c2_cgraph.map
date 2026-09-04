@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::BufferInputControl::process_audio_input" name="MayaFlux::Buffers::BufferInputControl::process_audio_input">
+<area shape="rect" id="Node000001" title="Processes incoming audio input data into input buffers." alt="" coords="5,5,160,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferInputControl_a0c48bcb1dd6f96ec9663913fb613cd17.html#a0c48bcb1dd6f96ec9663913fb613cd17" title="Sets up audio input buffers." alt="" coords="208,5,401,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="160,30,194,30,194,35,160,35"/>
+</map>

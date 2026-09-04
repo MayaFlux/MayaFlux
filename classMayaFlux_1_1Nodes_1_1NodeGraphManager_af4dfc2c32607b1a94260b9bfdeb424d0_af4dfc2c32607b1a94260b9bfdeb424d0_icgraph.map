@@ -1,0 +1,11 @@
+<map id="MayaFlux::Nodes::NodeGraphManager::get_all_root_nodes" name="MayaFlux::Nodes::NodeGraphManager::get_all_root_nodes">
+<area shape="rect" id="Node000001" title="Get spans of root nodes for a token (for custom processing)" alt="" coords="545,41,761,81"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_afa9b1939a0837b23079557de7481ce2a.html#afa9b1939a0837b23079557de7481ce2a" title="Process all nodes in a specific token domain Calls registered processor if available,..." alt="" coords="281,5,497,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="532,47,497,43,498,37,532,42"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_a0c180caaaa076b2a2609bc1d1f9258ea.html#a0c180caaaa076b2a2609bc1d1f9258ea" title="Terminates all active processing across all tokens and channels." alt="" coords="281,70,497,125"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="532,81,498,85,497,80,532,75"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_a749bef701cfc06a93ce3c4a6c3ef3d07.html#a749bef701cfc06a93ce3c4a6c3ef3d07" title="Process all active tokens sequentially." alt="" coords="11,5,227,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="267,28,228,28,228,23,267,23"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_ac72e466978d6713dfcbc620c50567363.html#ac72e466978d6713dfcbc620c50567363" title="Destroys the NodeGraphManager." alt="" coords="5,77,233,117"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="268,100,233,100,233,95,268,95"/>
+</map>

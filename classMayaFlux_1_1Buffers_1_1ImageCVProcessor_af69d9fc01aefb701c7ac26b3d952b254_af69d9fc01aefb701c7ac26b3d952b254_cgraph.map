@@ -1,0 +1,11 @@
+<map id="MayaFlux::Buffers::ImageCVProcessor::on_attach" name="MayaFlux::Buffers::ImageCVProcessor::on_attach">
+<area shape="rect" id="Node000001" title="Validate the buffer type and reset executor state." alt="" coords="5,81,173,136"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Buffers_a18cd4cb90edc64b2da0254917a13bfe3.html#a18cd4cb90edc64b2da0254917a13bfe3" title="Allocate a persistent host&#45;visible staging buffer sized for repeated streaming uploads to an image of..." alt="" coords="221,41,388,96"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="173,90,207,84,208,89,174,96"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kinesis_1_1Vision_1_1VisionExecutor_a359ccf1b01d2241f6865f860c7565de5.html#a359ccf1b01d2241f6865f860c7565de5" title="Clear stored inter&#45;frame state." alt="" coords="221,120,388,175"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="174,121,208,127,207,133,173,126"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_a0c7a59c0847791ed0915dcd64e8df783.html#a0c7a59c0847791ed0915dcd64e8df783" title="Query for a backend service." alt="" coords="453,5,620,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="388,53,439,45,440,50,389,58"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aa28c6f5592e5893508bafb62aefcc496.html#aa28c6f5592e5893508bafb62aefcc496" title="Get the global registry instance." alt="" coords="436,85,637,125"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="389,79,423,84,422,90,388,84"/>
+</map>

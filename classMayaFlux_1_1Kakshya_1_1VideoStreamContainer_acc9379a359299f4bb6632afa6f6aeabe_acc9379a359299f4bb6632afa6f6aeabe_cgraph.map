@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kakshya::VideoStreamContainer::mark_ready_for_processing" name="MayaFlux::Kakshya::VideoStreamContainer::mark_ready_for_processing">
+<area shape="rect" id="Node000001" title="Mark the container as ready or not ready for processing." alt="" coords="5,45,216,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_a81b10d1b0774357ee5f3a2fbc794c0a3.html#a81b10d1b0774357ee5f3a2fbc794c0a3" title="Check if the container currently holds any data." alt="" coords="275,5,445,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="216,53,261,46,262,51,217,58"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_aef2e149bad77bf7dbb1c088b9c7fb1f9.html#aef2e149bad77bf7dbb1c088b9c7fb1f9" title="Update the processing state of the container." alt="" coords="264,84,456,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="217,86,251,92,250,97,216,92"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_ab34266e533acd546a7042209fa6ce6d0.html#ab34266e533acd546a7042209fa6ce6d0" title=" " alt="" coords="504,84,673,139"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="457,109,490,109,490,114,457,114"/>
+</map>

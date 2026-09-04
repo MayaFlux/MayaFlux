@@ -1,0 +1,11 @@
+<map id="MayaFlux::Core::VKSwapchain::~VKSwapchain" name="MayaFlux::Core::VKSwapchain::~VKSwapchain">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,5,225,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1VKSwapchain_a81b9b3f6372e41b61f22e85927ff06e3.html#a81b9b3f6372e41b61f22e85927ff06e3" title="Cleanup swapchain resources." alt="" coords="273,5,493,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="225,23,260,23,260,28,225,28"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1VKSwapchain_abe5f9e7312b2874fd69f65d828aaafed.html#abe5f9e7312b2874fd69f65d828aaafed" title="Cleanup old swapchain during recreation." alt="" coords="541,5,761,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="493,23,528,23,528,28,493,28"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1VKContext_a41228db586851246809c40f704b64292.html#a41228db586851246809c40f704b64292" title="Get logical device." alt="" coords="809,5,1009,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="762,23,795,23,795,28,762,28"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Core_1_1VKDevice_ac91623c4b7b52f1f5f7460ef91021583.html#ac91623c4b7b52f1f5f7460ef91021583" title="Get logical device handle." alt="" coords="1057,5,1252,45"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="1009,23,1044,23,1044,28,1009,28"/>
+</map>

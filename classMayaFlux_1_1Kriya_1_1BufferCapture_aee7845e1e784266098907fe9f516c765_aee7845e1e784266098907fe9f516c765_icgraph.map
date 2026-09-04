@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kriya::BufferCapture::until_condition" name="MayaFlux::Kriya::BufferCapture::until_condition">
+<area shape="rect" id="Node000001" title="Set a condition that stops capture when met." alt="" coords="240,5,467,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kriya_1_1CaptureBuilder_a418e5ed06c3eb0854d59d2a3edb1bac3.html#a418e5ed06c3eb0854d59d2a3edb1bac3" title="Set stop condition (enables TRIGGERED mode)." alt="" coords="5,5,192,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="226,28,192,28,192,23,226,23"/>
+</map>

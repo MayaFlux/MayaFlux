@@ -1,0 +1,7 @@
+<map id="MayaFlux::Yantra::StatisticalAnalyzer::string_to_method" name="MayaFlux::Yantra::StatisticalAnalyzer::string_to_method">
+<area shape="rect" id="Node000001" title="Convert string to statistical method enum." alt="" coords="296,37,503,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1StatisticalAnalyzer_ae620a8cd7b60d390143c66a8a5bb9487.html#ae620a8cd7b60d390143c66a8a5bb9487" title="Handle analysis&#45;specific parameters." alt="" coords="5,5,248,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="282,46,248,42,249,37,283,41"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1StatisticalAnalyzer_ae495a508ec11a4109e31fdc92b255581.html#ae495a508ec11a4109e31fdc92b255581" title="Set method by string name." alt="" coords="23,69,230,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="282,74,231,80,230,75,282,68"/>
+</map>

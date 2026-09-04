@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::Vision::rgba_to_gray" name="MayaFlux::Kinesis::Vision::rgba_to_gray">
+<area shape="rect" id="Node000001" title="Convert RGBA to luminance gray using BT.601 coefficients." alt="" coords="5,5,160,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_a102ddcfd0d76c2cd221b69d5ad7609bf.html#a102ddcfd0d76c2cd221b69d5ad7609bf" title="Convert RGBA to luminance gray using BT.601 coefficients." alt="" coords="208,5,363,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="160,23,194,23,194,28,160,28"/>
+</map>

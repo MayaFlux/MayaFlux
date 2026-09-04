@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::GpuSync::PathGeneratorNode::force_uniform_thickness" name="MayaFlux::Nodes::GpuSync::PathGeneratorNode::force_uniform_thickness">
+<area shape="rect" id="Node000001" title="Set uniform thickness mode." alt="" coords="5,5,205,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1PathGeneratorNode_a9744577379f1ecdfcd4d1c1570c89b41.html#a9744577379f1ecdfcd4d1c1570c89b41" title="Set path thickness (applied to all generated vertices)" alt="" coords="253,5,453,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="205,30,240,30,240,35,205,35"/>
+</map>

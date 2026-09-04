@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::MotionChannel::estimate_for_component" name="MayaFlux::Kinesis::MotionChannel::estimate_for_component">
+<area shape="rect" id="Node000001" title="Direct access to one component&#39;s Estimate instance." alt="" coords="203,5,389,60"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_a22c3c18bba7d6e741fea4cd7b0b5c64c.html#a22c3c18bba7d6e741fea4cd7b0b5c64c" title="Curvature helper for MotionChannel&lt;glm::vec2&gt;, self&#45;calibrating its min_speed guard from the channel&#39;..." alt="" coords="5,13,155,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="189,35,155,35,155,30,189,30"/>
+</map>

@@ -1,0 +1,33 @@
+<map id="MayaFlux::Buffers::ShaderProcessor::set_push_constant_size" name="MayaFlux::Buffers::ShaderProcessor::set_push_constant_size">
+<area shape="rect" id="Node000001" title="Set push constant size from type." alt="" coords="501,516,660,571"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VolumeFieldProcessor_a3a29bb7895dbdfa59c2e4f1e6d649939.html#a3a29bb7895dbdfa59c2e4f1e6d649939" title="Raise the push constant block to at least this size." alt="" coords="263,163,429,217"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="552,506,363,219,368,216,556,503"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a957293274f9de20606b567a18ebc353c.html#a957293274f9de20606b567a18ebc353c" title="Update push constant data (type&#45;safe)" alt="" coords="267,437,425,492"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="487,515,425,494,426,489,489,510"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Buffers_1_1RelaxationEmitProcessor_a72daa538eceff6d124a9b03aac55a341.html#a72daa538eceff6d124a9b03aac55a341" title="Size the push constant block to EmitParams and upload the current parameters." alt="" coords="253,595,439,649"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="489,577,429,597,427,592,487,572"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1Buffers_1_1RelaxationStepProcessor_ae4803875a5ca4c19491dee7ca7280bbb.html#ae4803875a5ca4c19491dee7ca7280bbb" title="Size the push constant block to at least GridExtent and write the attached grid&#39;s dimensions into its..." alt="" coords="239,752,453,807"/>
+<area shape="poly" id="edge14_Node000001_Node000015" title=" " alt="" coords="545,582,376,754,372,750,541,579"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VolumeFieldProcessor_a85ff1d8555f41d205e6cf9d622cf2b74.html#a85ff1d8555f41d205e6cf9d622cf2b74" title="Cache and validate the volume, size the dispatch, write the shared parameter prefix,..." alt="" coords="15,5,181,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="302,156,250,114,189,74,168,63,171,58,192,69,253,110,305,151"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1AdvectProcessor_a0c6b57249714b70c283637ab685668ef.html#a0c6b57249714b70c283637ab685668ef" title="Reserve the full parameter block and write the step and dissipation words." alt="" coords="21,84,175,139"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="250,162,175,138,176,133,251,157"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1BuoyancyProcessor_aace1aa56f386797668051148b3e58eac.html#aace1aa56f386797668051148b3e58eac" title="Raise the parameter block and write the tail." alt="" coords="11,163,185,217"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="249,193,185,193,185,187,249,187"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1InfluxProcessor_a32ce482fadb6758138f24c1e77f96f41.html#a32ce482fadb6758138f24c1e77f96f41" title="Raise the parameter block and write everything past the prefix." alt="" coords="24,241,172,296"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="251,223,173,248,171,243,250,218"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Buffers_1_1SDFFieldProcessor_a5528daa08d9e732a3701cbfdca4da6b7.html#a5528daa08d9e732a3701cbfdca4da6b7" title="Called before each process callback." alt="" coords="15,320,181,375"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="280,434,190,388,165,377,167,372,192,384,283,429"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Buffers_1_1SDFMeshProcessor_a5b15461ec59043b64861f543b2748bf6.html#a5b15461ec59043b64861f543b2748bf6" title="Called before each process callback." alt="" coords="13,399,183,453"/>
+<area shape="poly" id="edge8_Node000007_Node000009" title=" " alt="" coords="253,453,183,442,184,437,254,448"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Buffers_1_1UVFieldProcessor_a6e613cfae4589b534a4ed260f37e18f4.html#a6e613cfae4589b534a4ed260f37e18f4" title="Called before each process callback." alt="" coords="19,477,177,532"/>
+<area shape="poly" id="edge9_Node000007_Node000010" title=" " alt="" coords="254,482,178,495,177,489,253,477"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Buffers_1_1RelaxationEmitProcessor_a567c9e68c3737a738f3676b330581070.html#a567c9e68c3737a738f3676b330581070" title="When attached to a RelaxationGridBuffer, sets up the dispatch configuration to cover the entire grid ..." alt="" coords="5,556,191,611"/>
+<area shape="poly" id="edge11_Node000011_Node000012" title=" " alt="" coords="239,608,190,600,191,595,240,603"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Buffers_1_1RelaxationEmitProcessor_a0709f67fca184c5a63f09dfa2a5a504f.html#a0709f67fca184c5a63f09dfa2a5a504f" title="Set the NDC half&#45;span the grid occupies." alt="" coords="5,635,191,689"/>
+<area shape="poly" id="edge12_Node000011_Node000013" title=" " alt="" coords="240,642,191,650,190,644,239,636"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1Buffers_1_1RelaxationEmitProcessor_a57e98803f4c824f46f53b4ceb2742f0b.html#a57e98803f4c824f46f53b4ceb2742f0b" title="Set the per&#45;point size written to the vertex scalar field." alt="" coords="5,713,191,768"/>
+<area shape="poly" id="edge13_Node000011_Node000014" title=" " alt="" coords="282,658,192,703,165,716,162,711,190,698,280,653"/>
+<area shape="rect" id="Node000016" href="$classMayaFlux_1_1Buffers_1_1RelaxationStepProcessor_a49ef6b05fb571cd521a95459fda6c2fa.html#a49ef6b05fb571cd521a95459fda6c2fa" title="When attached to a RelaxationGridBuffer, sets up the dispatch configuration to cover the entire grid ..." alt="" coords="6,792,190,847"/>
+<area shape="poly" id="edge15_Node000015_Node000016" title=" " alt="" coords="226,801,191,807,190,802,225,796"/>
+</map>

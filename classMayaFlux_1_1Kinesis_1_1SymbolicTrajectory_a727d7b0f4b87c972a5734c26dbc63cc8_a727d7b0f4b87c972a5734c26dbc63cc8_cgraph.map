@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kinesis::SymbolicTrajectory::dominant_cell" name="MayaFlux::Kinesis::SymbolicTrajectory::dominant_cell">
+<area shape="rect" id="Node000001" title="Cell with the most observations within the most recent window observations." alt="" coords="5,30,159,85"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Memory_1_1HistoryBuffer_ad88cb603850a43476f10adbbc9e3f673.html#ad88cb603850a43476f10adbbc9e3f673" title="Get buffer capacity." alt="" coords="207,5,409,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="159,44,193,39,193,44,159,49"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Memory_1_1HistoryBuffer_a2f1571f77762d0d35adfc01dae46509f.html#a2f1571f77762d0d35adfc01dae46509f" title="Get mutable linearized view of entire history." alt="" coords="207,69,409,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="159,66,193,70,193,76,159,71"/>
+</map>

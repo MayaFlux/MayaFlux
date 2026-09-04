@@ -1,0 +1,7 @@
+<map id="MayaFlux::Portal::Graphics::ComputePress::bind_pipeline" name="MayaFlux::Portal::Graphics::ComputePress::bind_pipeline">
+<area shape="rect" id="Node000001" title="Bind pipeline to active command buffer." alt="" coords="541,5,760,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ComputePress_a313d13f003f0f617d9e27addb3a3e7f3.html#a313d13f003f0f617d9e27addb3a3e7f3" title="All&#45;in&#45;one: bind pipeline + descriptors + push constants." alt="" coords="296,5,493,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="528,28,493,28,493,23,528,23"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ComputePress_a7ae9b1758904451eff179b5301dcc1d8.html#a7ae9b1758904451eff179b5301dcc1d8" title="Record multiple pipeline dispatches into one already&#45;open command buffer, inserting a barrier between..." alt="" coords="5,5,248,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="282,28,248,28,248,23,282,23"/>
+</map>

@@ -1,0 +1,13 @@
+<map id="MayaFlux::Core::GlobalGraphicsConfig" name="MayaFlux::Core::GlobalGraphicsConfig">
+<area shape="rect" id="Node000001" title=" " alt="" coords="437,348,659,468"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Core_1_1KeyRepeatConfig.html" title="Key repeat timing for native window backends." alt="" coords="5,85,211,205"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="150,204,185,245,224,283,270,315,320,341,371,361,422,377,420,382,370,366,318,345,267,319,221,287,181,249,146,207"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Core_1_1GraphicsSurfaceInfo.html" title="System&#45;wide configuration for visual stream processing." alt="" coords="235,25,432,265"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="404,264,449,322,460,335,457,338,445,326,400,267"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Core_1_1GraphicsBackendInfo.html" title="Configuration for graphics API backend (Vulkan/OpenGL/etc.)" alt="" coords="456,5,640,285"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="551,285,551,332,545,332,545,285"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Core_1_1GraphicsResourceLimits.html" title="Resource limits and budgets for graphics subsystem." alt="" coords="664,55,859,235"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="719,237,690,282,657,326,644,339,640,335,653,322,686,279,714,234"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Core_1_1TextConfig.html" title="Default font configuration for Portal::Text." alt="" coords="883,83,1075,208"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="943,210,911,250,872,287,826,319,776,344,725,365,676,381,674,376,723,360,774,339,824,314,869,283,907,247,938,206"/>
+</map>

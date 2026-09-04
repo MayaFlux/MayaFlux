@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::BufferAccessControl::get_audio_buffer_size" name="MayaFlux::Buffers::BufferAccessControl::get_audio_buffer_size">
+<area shape="rect" id="Node000001" title="Gets the buffer size for an audio token." alt="" coords="5,5,177,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1TokenUnitManager_ad321d898c2e645c2e302cd61cf931baa.html#ad321d898c2e645c2e302cd61cf931baa" title="Gets the buffer size for an audio unit." alt="" coords="225,5,397,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="178,30,212,30,212,35,178,35"/>
+</map>

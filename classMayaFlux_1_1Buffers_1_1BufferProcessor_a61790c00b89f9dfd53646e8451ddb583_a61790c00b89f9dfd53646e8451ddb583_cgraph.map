@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::BufferProcessor::set_processing_token" name="MayaFlux::Buffers::BufferProcessor::set_processing_token">
+<area shape="rect" id="Node000001" title="Gets the preferred processing backend for this processor." alt="" coords="5,5,157,60"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Buffers_a769af53675caeb565799a41ceab66823.html#a769af53675caeb565799a41ceab66823" title="Validates that a processing token has a valid, non&#45;conflicting configuration." alt="" coords="205,13,353,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="158,30,191,30,191,35,158,35"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::VulkanBackend::register_backend_services" name="MayaFlux::Core::VulkanBackend::register_backend_services">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,5,236,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aa28c6f5592e5893508bafb62aefcc496.html#aa28c6f5592e5893508bafb62aefcc496" title="Get the global registry instance." alt="" coords="284,5,485,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="236,23,270,23,270,28,236,28"/>
+</map>

@@ -1,0 +1,11 @@
+<map id="MayaFlux::Buffers::upload_back_buffer_async" name="MayaFlux::Buffers::upload_back_buffer_async">
+<area shape="rect" id="Node000001" title="Upload to a back_buffers slot without waiting for completion." alt="" coords="529,69,724,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VolumeGridBuffer_ae2929af740ac4ec6b8e076844ac64b2c.html#ae2929af740ac4ec6b8e076844ac64b2c" title="Write initial values into a field from raw host memory." alt="" coords="275,37,481,77"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="516,78,481,73,482,68,516,72"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Buffers_af191dd0b7ad35e5d915e1a414db2ecca.html#af191dd0b7ad35e5d915e1a414db2ecca" title="Upload host memory into a raw back_buffers slot." alt="" coords="303,101,453,141"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="516,106,453,114,453,109,515,101"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VolumeGridBuffer_a773ec1e7a228ad23abc879801b7a283b.html#a773ec1e7a228ad23abc879801b7a283b" title="Add sampled values into a scalar field." alt="" coords="5,5,227,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="261,46,227,42,227,36,262,40"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1VolumeGridBuffer_a63ecfa245dd0267774d87f711c1e50a0.html#a63ecfa245dd0267774d87f711c1e50a0" title="Write initial values into a scalar field from a Kinesis field." alt="" coords="28,69,204,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="261,74,205,81,204,76,260,69"/>
+</map>

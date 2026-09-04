@@ -1,0 +1,5 @@
+<map id="MayaFlux::IO::ModelReader" name="MayaFlux::IO::ModelReader">
+<area shape="rect" id="Node000001" title="Assimp&#45;backed loader for 3D model files." alt="" coords="5,373,200,719"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1FileReader.html" title="Abstract interface for reading various file formats into containers." alt="" coords="14,5,191,325"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="105,339,105,373,100,373,100,339"/>
+</map>

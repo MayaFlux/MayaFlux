@@ -1,0 +1,11 @@
+<map id="MayaFlux::Kakshya::StreamSlice::end_frame" name="MayaFlux::Kakshya::StreamSlice::end_frame">
+<area shape="rect" id="Node000001" title=" " alt="" coords="283,101,461,141"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kakshya_1_1StreamSlice_a793abc8317d039e33107830847eb14fc.html#a793abc8317d039e33107830847eb14fc" title="Construct a slice spanning a frame sub&#45;region across all channels." alt="" coords="5,5,235,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="319,97,234,60,198,48,200,43,236,55,321,93"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kakshya_1_1StreamSlice_a50a401098128db62668f45ed10e7fe5a.html#a50a401098128db62668f45ed10e7fe5a" title="Construct a slice spanning a frame and channel sub&#45;region." alt="" coords="27,69,213,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="268,111,213,104,214,99,269,106"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Kakshya_1_1StreamSlice_aee77dabfe2df2a0bdc9de61d21f61ef0.html#aee77dabfe2df2a0bdc9de61d21f61ef0" title="Construct a slice spanning the full stream across all channels." alt="" coords="24,133,216,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="270,137,217,144,216,139,269,132"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1StreamSliceProcessor_ae239eaa6391fc18b82d4e96e6873dde2.html#ae239eaa6391fc18b82d4e96e6873dde2" title="Assign a StreamSlice to a slot." alt="" coords="21,197,219,237"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="321,150,236,188,200,200,198,195,234,183,319,145"/>
+</map>

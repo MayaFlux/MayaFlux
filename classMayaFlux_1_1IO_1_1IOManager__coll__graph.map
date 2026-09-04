@@ -1,0 +1,9 @@
+<map id="MayaFlux::IO::IOManager" name="MayaFlux::IO::IOManager">
+<area shape="rect" id="Node000001" title="Optional orchestration layer for IO reader lifetime and IOService dispatch." alt="" coords="144,651,359,1196"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Core_1_1GlobalStreamInfo.html" title="Comprehensive configuration for digital audio stream processing." alt="" coords="5,223,244,588"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="172,588,183,634,178,635,167,589"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Core_1_1GlobalStreamInfo_1_1ChannelConfig.html" title="Configuration for input or output data channels." alt="" coords="18,5,231,145"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="127,146,127,206,122,206,122,146"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Registry_1_1Service_1_1AudioBackendService.html" title="Backend audio subsystem service interface." alt="" coords="269,345,487,465"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="366,466,325,635,319,634,361,465"/>
+</map>

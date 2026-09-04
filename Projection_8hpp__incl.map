@@ -1,0 +1,21 @@
+<map id="Projection.hpp" name="Projection.hpp">
+<area shape="rect" id="Node000001" title="NDC&#45;to&#45;value mappings, inverse to the forward placement performed by geometry functions." alt="" coords="311,5,425,31"/>
+<area shape="rect" id="Node000002" href="$Bounds_8hpp.html" title=" " alt="" coords="319,79,417,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="371,31,371,65,365,65,365,31"/>
+<area shape="rect" id="Node000003" href="$HitTest_8hpp.html" title=" " alt="" coords="275,152,461,192"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="371,104,371,138,365,138,365,104"/>
+<area shape="rect" id="Node000004" href="$SpatialIndex_8hpp.html" title=" " alt="" coords="208,247,339,273"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="349,194,298,240,295,236,345,190"/>
+<area shape="rect" id="Node000009" href="$ViewTransform_8hpp.html" title=" " alt="" coords="363,240,562,280"/>
+<area shape="poly" id="edge8_Node000003_Node000009" title=" " alt="" coords="391,190,433,229,430,233,387,194"/>
+<area shape="rect" id="Node000005" href="$TendencyFactories_8hpp.html" title=" " alt="" coords="5,328,208,368"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="252,275,157,324,154,319,250,270"/>
+<area shape="rect" id="Node000008" title=" " alt="" coords="233,335,325,361"/>
+<area shape="poly" id="edge7_Node000004_Node000008" title=" " alt="" coords="277,273,280,321,274,322,271,273"/>
+<area shape="rect" id="Node000006" href="$Tendency_8hpp.html" title=" " alt="" coords="52,416,161,441"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="109,368,109,402,104,402,104,368"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="55,489,159,515"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="109,442,109,476,104,476,104,442"/>
+<area shape="rect" id="Node000010" title=" " alt="" coords="354,335,571,361"/>
+<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="465,280,465,321,460,321,460,280"/>
+</map>

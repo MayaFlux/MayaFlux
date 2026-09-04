@@ -1,0 +1,21 @@
+<map id="MayaFlux::Portal::Forma::Inspector" name="MayaFlux::Portal::Forma::Inspector">
+<area shape="rect" id="Node000001" title="Forma subsystem for live introspection." alt="" coords="350,1483,543,1883"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferManager.html" title="Token&#45;based multimodal buffer management system for unified data stream processing." alt="" coords="5,753,189,1217"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="132,1217,161,1320,181,1371,204,1419,233,1465,266,1510,340,1588,336,1591,262,1513,228,1468,199,1421,176,1373,156,1322,127,1218"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager.html" title="Central manager for the computational processing node graph." alt="" coords="213,591,435,1380"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="393,1380,407,1458,408,1466,403,1467,401,1459,387,1381"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Nodes_1_1NodeConfig.html" title="Configuration settings for individual audio nodes." alt="" coords="219,263,429,429"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="327,429,327,574,321,574,321,429"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler.html" title="Token&#45;based multimodal task scheduling system for unified coroutine processing." alt="" coords="459,551,683,1420"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="496,1421,488,1467,482,1466,491,1420"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Vruta_1_1SampleClock.html" title="Sample&#45;accurate timing system for audio processing domain." alt="" coords="458,233,673,459"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="569,459,570,534,564,534,564,459"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Vruta_1_1IClock.html" title="Abstract base interface for all clock types in the multimodal scheduling system." alt="" coords="481,5,650,171"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="568,185,568,233,563,233,563,185"/>
+<area shape="rect" id="Node000008" href="$structMayaFlux_1_1Vruta_1_1TaskScheduler_1_1PendingTaskOp.html" title=" " alt="" coords="697,296,919,396"/>
+<area shape="poly" id="edge7_Node000005_Node000008" title=" " alt="" coords="779,398,737,469,697,552,691,566,686,564,692,550,732,467,774,395"/>
+<area shape="rect" id="Node000009" href="$structMayaFlux_1_1Vruta_1_1TaskEntry.html" title=" " alt="" coords="712,45,904,131"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="811,131,811,279,805,279,805,131"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Vruta_1_1EventManager.html" title=" " alt="" coords="706,763,929,1208"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="779,1209,745,1317,723,1371,697,1421,667,1468,632,1513,558,1591,554,1587,628,1509,662,1465,692,1419,718,1368,740,1315,774,1207"/>
+</map>

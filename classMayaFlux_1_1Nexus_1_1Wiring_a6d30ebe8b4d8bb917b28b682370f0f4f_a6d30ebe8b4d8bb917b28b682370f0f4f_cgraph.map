@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nexus::Wiring::use" name="MayaFlux::Nexus::Wiring::use">
+<area shape="rect" id="Node000001" title="Register a named factory." alt="" coords="5,13,221,38"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nexus_1_1Wiring_ab751bc024a6f508428873fcb35af6407.html#ab751bc024a6f508428873fcb35af6407" title="Active factory variant set by use for non&#45;Event factories." alt="" coords="269,5,455,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="221,23,255,23,255,28,221,28"/>
+</map>

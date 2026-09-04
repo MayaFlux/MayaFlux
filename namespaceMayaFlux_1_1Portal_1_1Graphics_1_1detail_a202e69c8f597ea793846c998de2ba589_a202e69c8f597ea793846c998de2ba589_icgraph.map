@@ -1,0 +1,5 @@
+<map id="MayaFlux::Portal::Graphics::detail::emit_glsl_kernel" name="MayaFlux::Portal::Graphics::detail::emit_glsl_kernel">
+<area shape="rect" id="Node000001" title="Emit a complete GLSL compute shader from spec metadata and a KernelSource body." alt="" coords="267,5,464,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_a13e367c810be0d3c0e473ef79929e6e7.html#a13e367c810be0d3c0e473ef79929e6e7" title="Compile and cache a compute shader from a declarative ShaderSpec." alt="" coords="5,5,219,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="253,28,219,28,219,23,253,23"/>
+</map>

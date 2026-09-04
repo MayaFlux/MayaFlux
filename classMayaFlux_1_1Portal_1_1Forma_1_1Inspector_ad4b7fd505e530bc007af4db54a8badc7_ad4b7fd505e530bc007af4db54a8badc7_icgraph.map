@@ -1,0 +1,13 @@
+<map id="MayaFlux::Portal::Forma::Inspector::node" name="MayaFlux::Portal::Forma::Inspector::node">
+<area shape="rect" id="Node000001" title="Inspect a single Node and its full modulator tree." alt="" coords="693,37,875,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Forma_adfbdd6c42f9561d725521af7689c221b.html#adfbdd6c42f9561d725521af7689c221b" title="Open a dedicated window inspecting a single Node and its modulator tree." alt="" coords="464,5,645,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="679,45,645,41,646,35,680,40"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Inspector_abe9a5e679e96d003d8bb260955b55436.html#abe9a5e679e96d003d8bb260955b55436" title="Inspect a single RootNode for a specific token and channel." alt="" coords="464,69,645,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="680,74,646,79,645,74,679,69"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Inspector_a47b36fa77f82dfbb6031c649b54101b0.html#a47b36fa77f82dfbb6031c649b54101b0" title="Inspect the full NodeGraphManager state across all active tokens." alt="" coords="235,26,416,81"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="450,76,416,70,417,65,451,70"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Inspector_a26f23b2f7c593d04950ae58f88aed898.html#a26f23b2f7c593d04950ae58f88aed898" title="Inspect all RootNodes for a token." alt="" coords="235,105,416,145"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="451,108,417,114,416,108,450,103"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Portal_1_1Forma_a9563fe8292595a238e507c2ff54f787e.html#a9563fe8292595a238e507c2ff54f787e" title="Open or show the NodeGraphManager inspection window." alt="" coords="5,33,187,73"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="221,56,187,56,187,51,221,51"/>
+</map>

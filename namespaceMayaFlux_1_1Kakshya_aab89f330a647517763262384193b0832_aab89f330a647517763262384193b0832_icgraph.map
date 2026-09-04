@@ -1,0 +1,15 @@
+<map id="MayaFlux::Kakshya::make_empty_storage" name="MayaFlux::Kakshya::make_empty_storage">
+<area shape="rect" id="Node000001" title=" " alt="" coords="312,165,475,205"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1CameraContainer_ad612bb1c55325c7292281a858d6e95f0.html#ad612bb1c55325c7292281a858d6e95f0" title="Construct a CameraContainer with specified resolution and format." alt="" coords="5,5,264,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="367,156,322,106,294,81,263,60,237,48,239,43,265,55,297,77,326,102,371,152"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1TextureContainer_abac896f510138972dfd5723eb2ea1e76.html#abac896f510138972dfd5723eb2ea1e76" title="Clear all data in the container." alt="" coords="48,69,221,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="344,161,263,124,221,110,222,105,265,119,346,156"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1TextureContainer_a743c8eb163bc2f1f4b2d7144c5b7c636.html#a743c8eb163bc2f1f4b2d7144c5b7c636" title="Download pixel data from a VKImage, reusing a caller&#45;supplied persistent staging buffer." alt="" coords="25,133,245,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="298,176,245,170,245,164,298,171"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1TextureContainer_af846db567bccbf9b74c0cbc0c406dc87.html#af846db567bccbf9b74c0cbc0c406dc87" title="Download pixel data from a VKImage into this container." alt="" coords="25,197,245,237"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="298,200,245,206,245,201,298,194"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1TextureContainer_a63aaa8f2c2773786001693a7da089cb9.html#a63aaa8f2c2773786001693a7da089cb9" title="Download each array layer of a Vulkan 2D array image into the corresponding layer slot." alt="" coords="49,262,221,317"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="345,214,265,252,222,267,220,262,263,247,343,209"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Kakshya_1_1TextureContainer_a9a8cbe115b3a38fb535f5655f888e0a9.html#a9a8cbe115b3a38fb535f5655f888e0a9" title="Download all array layers from a VKImage, reusing a caller&#45;supplied persistent staging buffer." alt="" coords="49,341,221,395"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="374,218,328,275,299,305,265,330,222,351,220,346,263,326,295,301,324,272,370,215"/>
+</map>

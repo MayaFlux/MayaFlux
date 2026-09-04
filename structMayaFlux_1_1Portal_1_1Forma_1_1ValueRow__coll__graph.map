@@ -1,0 +1,7 @@
+<map id="MayaFlux::Portal::Forma::ValueRow" name="MayaFlux::Portal::Forma::ValueRow">
+<area shape="rect" id="Node000001" title="One value row in a ValueGroup body." alt="" coords="107,348,280,468"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Portal_1_1Forma_1_1Link.html" title="A directed coupling between Forma participants." alt="" coords="5,55,179,235"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="129,234,167,331,162,333,124,236"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kinesis_1_1AABB2D.html" title="Axis&#45;aligned bounding rectangle in a 2D coordinate space." alt="" coords="203,5,389,285"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="244,286,225,334,220,332,239,284"/>
+</map>

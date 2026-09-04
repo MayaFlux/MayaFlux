@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::BufferAccessControl::get_root_audio_buffer" name="MayaFlux::Buffers::BufferAccessControl::get_root_audio_buffer">
+<area shape="rect" id="Node000001" title="Gets the root audio buffer for a specific token and channel (const)" alt="" coords="5,41,177,96"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1TokenUnitManager_a1fec27437763c5bec8ff1f2bcedd1a79.html#a1fec27437763c5bec8ff1f2bcedd1a79" title="Gets an existing audio unit without creating if missing." alt="" coords="235,5,407,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="177,53,221,46,222,51,178,58"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Buffers_1_1RootAudioUnit_ab300ec63a12ad8cde8c5ef4e7092367b.html#ab300ec63a12ad8cde8c5ef4e7092367b" title=" " alt="" coords="225,85,416,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="178,80,212,85,211,90,177,85"/>
+</map>

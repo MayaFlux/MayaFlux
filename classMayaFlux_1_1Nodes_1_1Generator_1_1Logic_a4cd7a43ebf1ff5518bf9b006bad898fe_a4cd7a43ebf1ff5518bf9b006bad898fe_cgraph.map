@@ -1,0 +1,24 @@
+<map id="MayaFlux::Nodes::Generator::Logic::process_sample" name="MayaFlux::Nodes::Generator::Logic::process_sample">
+<area shape="rect" id="Node000001" title="Processes a single input sample through the logic function." alt="" coords="5,227,213,267"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Logic_af61f26175e63fcb97fecc58562e980c2.html#af61f26175e63fcb97fecc58562e980c2" title=" " alt="" coords="261,5,469,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="119,225,141,189,172,143,212,96,260,55,269,49,272,54,263,59,216,99,176,146,145,191,124,228"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Nodes_a2b661b58f860423fa6cf1d12c5accbd8.html#a2b661b58f860423fa6cf1d12c5accbd8" title="Atomically adds a flag to a node state." alt="" coords="271,69,459,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="128,224,184,172,221,144,260,119,274,112,276,117,263,124,224,148,188,176,132,228"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Nodes_aa4e4a2ece2a22b6774a5978e557ea25e.html#aa4e4a2ece2a22b6774a5978e557ea25e" title="Atomically decrements the modulator count by a specified amount." alt="" coords="271,133,459,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="156,224,260,183,283,175,285,180,262,188,158,229"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Nodes_a7d0374eb13e0238f520338b13823a627.html#a7d0374eb13e0238f520338b13823a627" title="Atomically increments the modulator count by a specified amount." alt="" coords="271,197,459,237"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="213,232,257,227,258,232,214,237"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Logic_ad95a9cc80e842eb783fc2e9063c9990d.html#ad95a9cc80e842eb783fc2e9063c9990d" title=" " alt="" coords="773,316,1000,356"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="214,249,448,265,587,279,726,297,793,310,792,316,725,303,587,284,448,270,213,254"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Logic_a7a01f01a6161fd3fda7a7769aca0731a.html#a7a01f01a6161fd3fda7a7769aca0731a" title=" " alt="" coords="261,312,469,352"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="171,264,293,305,291,310,169,269"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Logic_af10ea4c6662404570141818fe29693ea.html#af10ea4c6662404570141818fe29693ea" title="Notifies all registered callbacks about a new sample." alt="" coords="261,376,469,416"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="133,265,189,313,225,339,263,362,277,369,275,373,260,366,222,343,186,317,130,269"/>
+<area shape="rect" id="Node000011" href="$namespaceMayaFlux_1_1Nodes_a7c82f258078606084a01f72dfba3bb92.html#a7c82f258078606084a01f72dfba3bb92" title="Attempts to reset the processed state of a node." alt="" coords="278,440,453,480"/>
+<area shape="poly" id="edge11_Node000001_Node000011" title=" " alt="" coords="124,265,146,300,177,343,217,388,263,426,273,432,270,436,260,430,213,392,173,347,142,303,120,268"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Logic_a5d9eb9e8a257bccb93937782b284884e.html#a5d9eb9e8a257bccb93937782b284884e" title="Retrieves the last created context object." alt="" coords="517,312,725,352"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="445,373,527,353,529,358,447,379"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Logic_a24fe3adaafc789f42b92eb0294f9575e.html#a24fe3adaafc789f42b92eb0294f9575e" title="Updates the context with the latest sample value." alt="" coords="517,376,725,416"/>
+<area shape="poly" id="edge9_Node000008_Node000010" title=" " alt="" coords="469,393,504,393,504,399,469,399"/>
+<area shape="poly" id="edge10_Node000010_Node000006" title=" " alt="" coords="710,373,784,356,785,362,711,379"/>
+</map>

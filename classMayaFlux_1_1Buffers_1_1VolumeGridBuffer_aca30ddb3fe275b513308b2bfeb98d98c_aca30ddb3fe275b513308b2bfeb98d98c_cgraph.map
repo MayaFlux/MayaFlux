@@ -1,0 +1,11 @@
+<map id="MayaFlux::Buffers::VolumeGridBuffer::allocate_field" name="MayaFlux::Buffers::VolumeGridBuffer::allocate_field">
+<area shape="rect" id="Node000001" title="Allocate one field&#39;s slots and register it." alt="" coords="5,131,237,171"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_ade826fd1619beabe131e5bb65ecf2bcd.html#ade826fd1619beabe131e5bb65ecf2bcd" title="Get all buffer resources at once (read&#45;only)" alt="" coords="309,5,463,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="160,129,284,69,299,63,301,68,286,74,162,134"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VolumeGridBuffer_a27911e66982be61da77a3bbd0121cd3f.html#a27911e66982be61da77a3bbd0121cd3f" title="Total cell count." alt="" coords="303,84,469,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="237,131,289,123,290,129,238,136"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_a0c7a59c0847791ed0915dcd64e8df783.html#a0c7a59c0847791ed0915dcd64e8df783" title="Query for a backend service." alt="" coords="303,163,469,217"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="238,166,290,173,289,179,237,171"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aa28c6f5592e5893508bafb62aefcc496.html#aa28c6f5592e5893508bafb62aefcc496" title="Get the global registry instance." alt="" coords="285,242,487,282"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="163,169,286,226,309,235,307,240,284,231,160,174"/>
+</map>

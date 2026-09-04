@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kakshya::CursorAccessProcessor" name="MayaFlux::Kakshya::CursorAccessProcessor">
+<area shape="rect" id="Node000001" title="Independent cursor reader for DynamicSoundStream, writing exclusively to a dynamic slot allocated at ..." alt="" coords="83,867,273,1387"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1DataProcessor.html" title="Interface for processing data within SignalSourceContainer objects." alt="" coords="5,325,156,485"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="96,498,146,866,140,867,90,498"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kakshya_1_1ContainerDataStructure.html" title="Container structure for consistent dimension ordering." alt="" coords="181,5,373,804"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="225,804,218,851,213,850,219,804"/>
+</map>

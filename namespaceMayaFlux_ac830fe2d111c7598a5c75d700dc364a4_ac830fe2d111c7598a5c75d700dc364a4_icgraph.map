@@ -1,0 +1,9 @@
+<map id="MayaFlux::bind_pan_zoom_preset" name="MayaFlux::bind_pan_zoom_preset">
+<area shape="rect" id="Node000001" title="Bind the 2D pan/zoom controller to a window and render processor." alt="" coords="475,37,628,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_aa1b5ed52d7fa0292fe10837a1cde8477.html#aa1b5ed52d7fa0292fe10837a1cde8477" title="Bind the 2D pan/zoom controller to all RenderProcessors currently registered against a window." alt="" coords="257,5,410,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="460,47,410,39,411,34,461,41"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_a9be701daac0c0484aed1f9ad9f8d130e.html#a9be701daac0c0484aed1f9ad9f8d130e" title="Bind a navigation preset to a window and render processor using default settings." alt="" coords="240,69,427,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="461,73,427,78,427,73,460,68"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_af2205e6997a812a91f5c4b88a8beb585.html#af2205e6997a812a91f5c4b88a8beb585" title="Bind a navigation preset to all RenderProcessors currently registered against a window using default ..." alt="" coords="5,69,192,109"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="227,92,192,92,192,87,227,87"/>
+</map>
