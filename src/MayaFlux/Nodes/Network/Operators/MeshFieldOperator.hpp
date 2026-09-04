@@ -52,7 +52,8 @@ public:
     /**
      * @brief Bind a VectorField to a slot.
      * @param slot_index Target slot index.
-     * @param target     Vertex attribute to drive (POSITION, COLOR, NORMAL, TANGENT).
+     * @param target     Mask of vertex attributes to drive. Any combination of
+     *                   POSITION, COLOR, NORMAL and TANGENT.
      * @param field      VectorField: glm::vec3 -> glm::vec3.
      *
      * Creates a FieldOperator for the slot if one does not yet exist.
@@ -64,7 +65,7 @@ public:
     /**
      * @brief Bind a SpatialField to a slot.
      * @param slot_index Target slot index.
-     * @param target     Vertex attribute to drive (SCALAR or UV).
+     * @param target     Must be FieldTarget::SCALAR.
      * @param field      SpatialField: glm::vec3 -> float.
      */
     void bind(uint32_t slot_index, FieldTarget target, Kinesis::SpatialField field);
@@ -78,9 +79,9 @@ public:
     void bind(uint32_t slot_index, FieldTarget target, Kinesis::UVField field);
 
     /**
-     * @brief Remove all fields bound to a target on a specific slot.
+     * @brief Remove all fields bound to the given targets on a specific slot.
      * @param slot_index Target slot index.
-     * @param target     Target to clear.
+     * @param target     Mask of targets to clear.
      */
     void unbind(uint32_t slot_index, FieldTarget target);
 
