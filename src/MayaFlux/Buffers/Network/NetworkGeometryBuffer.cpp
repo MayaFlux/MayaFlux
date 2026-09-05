@@ -110,6 +110,8 @@ void NetworkGeometryBuffer::setup_processors(ProcessingToken token)
     MF_DEBUG(Journal::Component::Buffers, Journal::Context::Init,
         "Setup NetworkGeometryProcessor for '{}' with token {}",
         m_binding_name, static_cast<int>(token));
+
+    wire_field_operators();
 }
 
 void NetworkGeometryBuffer::setup_rendering(const RenderConfig& config)

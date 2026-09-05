@@ -233,6 +233,9 @@ public:
     const NetworkOperator* get_operator() const override { return m_operator.get(); }
     bool has_operator() const override { return m_operator != nullptr; }
 
+    /** @brief Bounds the points were distributed within, as passed at construction. */
+    [[nodiscard]] Kinesis::SamplerBounds get_bounds() const { return m_bounds; }
+
     /**
      * @brief Create and set operator in one call
      */

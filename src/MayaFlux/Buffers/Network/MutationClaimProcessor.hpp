@@ -121,13 +121,13 @@ private:
  * absorb_radius, cube root specifically rather than mass directly so the
  * growth rate stays proportional to mass (ordinary exponential growth)
  * rather than to mass cubed (a finite-time singularity): see
- * ParticleFieldConfig::capture_growth's own doc. Live-tunable via
+ * SpatialFieldConfig::capture_growth's own doc. Live-tunable via
  * ParticleFieldOperator::set_capture_growth: checked in on_before_execute
  * the same way ClaimSwallowProcessor checks its own tuning values, so a
  * change takes effect on this processor's next dispatch with no rebuild.
  *
  * A candidate j is skipped when hash_cluster_id[j] differs from i's own
- * cluster_id, unless ParticleFieldConfig::cross_cluster is true: by default
+ * cluster_id, unless SpatialFieldConfig::cross_cluster is true: by default
  * two particles from different PhysicsOperator collections never claim each
  * other, however close they sit, so several independent populations can
  * share one hash grid and one dispatch without their claim graphs bleeding
@@ -278,7 +278,7 @@ public:
      *        processor is truncated to exactly this many entries, both on
      *        the claimed_by readback handed to physics_op and on the
      *        accreted_mass upload (padded with 0 beyond live_count). This is
-     *        the one enforcement point for ParticleFieldConfig::reserve_fraction's
+     *        the one enforcement point for SpatialFieldConfig::reserve_fraction's
      *        decoupling: PhysicsOperator never learns config.hash.particle_count
      *        exceeds its own simulated particle count, regardless of how much
      *        reserve capacity the GPU has spawned into. Also binds vertices

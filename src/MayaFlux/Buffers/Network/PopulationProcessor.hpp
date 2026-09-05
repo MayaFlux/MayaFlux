@@ -14,7 +14,7 @@ namespace MayaFlux::Buffers {
  *        spawn-as-copy over a seed's fixed, over-allocated capacity.
  *
  * hash.particle_count here is expected to already be live_count plus
- * whatever reserve capacity ParticleFieldConfig::reserve_fraction asked
+ * whatever reserve capacity SpatialFieldConfig::reserve_fraction asked
  * for -- the caller overrides SpatialHashConfig::particle_count to that
  * total before constructing this, so every hash/claim stage already
  * dispatches over the full reserve range. live_count is the boundary this
@@ -25,7 +25,7 @@ namespace MayaFlux::Buffers {
  * PhysicsOperator simulates is the permanent, authoritative population;
  * what exists here is disposable, GPU-local bookkeeping about which of the
  * seed's records currently render as alive, thrown away and rebuilt from
- * scratch the next time the network is reseeded (a fresh ParticleGeometryBuffer
+ * scratch the next time the network is reseeded (a fresh NetworkGeometryBuffer
  * wiring, not a new mechanism of its own). ClaimAccumulateProcessor is the
  * one enforcement point: it never lets anything past live_count reach
  * PhysicsOperator's own bond/mass tracking, however far spawn has grown the
@@ -104,7 +104,7 @@ private:
  * spawn_density_threshold, does atomicAdd(spawn_cursor[0], 1u) to claim the
  * next slot. A claim landing at or past total_count is over capacity and is
  * silently dropped: the reserve never grows past what
- * ParticleFieldConfig::reserve_fraction allocated at wiring time, matching
+ * SpatialFieldConfig::reserve_fraction allocated at wiring time, matching
  * "always over-allocate at seed time" rather than any live growth.
  *
  * The claimed slot is guaranteed to belong to no other thread this

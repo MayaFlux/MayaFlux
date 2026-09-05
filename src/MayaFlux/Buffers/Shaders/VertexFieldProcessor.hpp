@@ -70,7 +70,7 @@ class NetworkGeometryBuffer;
  * and populates hash_cluster_id from whatever the network's own primary
  * GraphicsOperator reports (all zero unless that operator overrides
  * GraphicsOperator::build_cluster_ids(), which today only PhysicsOperator
- * does) if nothing else -- a ParticleGeometryBuffer's own hash wiring, most
+ * does) if nothing else -- NetworkGeometryBuffer's own hash wiring, most
  * commonly -- has already done so. This is not particle-specific: a
  * cluster-scoped bind() against a PointCloudNetwork or any other
  * GraphicsOperator-backed network resolves through the same base-class
@@ -203,7 +203,7 @@ private:
      * Delegates the actual declare/derive/upload to
      * NetworkGeometryBuffer::ensure_cluster_ids(), which is itself
      * has_state-guarded, so calling this again after a revision rebuild is
-     * cheap and whichever caller (this processor, or a ParticleGeometryBuffer's
+     * cheap and whichever caller (this processor, or NetworkGeometryBuffer's
      * own hash wiring) reaches it first does the real work.
      */
     bool ensure_cluster_binding();

@@ -5,6 +5,7 @@
 #include "MayaFlux/Nodes/Network/Operators/GraphicsOperator.hpp"
 #include "MayaFlux/Nodes/Network/Operators/ParticleFieldOperator.hpp"
 #include "MayaFlux/Nodes/Network/ParticleNetwork.hpp"
+#include "MayaFlux/Nodes/Network/PointCloudNetwork.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Portal/Graphics/ShaderFoundry.hpp"
@@ -21,14 +22,21 @@ std::optional<SpatialHashConfig> SpatialHashConfig::from_network(
         return std::nullopt;
     }
 
-    auto particle_net = std::dynamic_pointer_cast<Nodes::Network::ParticleNetwork>(buffer->get_network());
-    if (!particle_net) {
+    const auto network = buffer->get_network();
+
+    Kinesis::SamplerBounds bounds;
+    if (auto particle_net = std::dynamic_pointer_cast<Nodes::Network::ParticleNetwork>(network)) {
+        bounds = particle_net->get_bounds();
+    } else if (auto cloud_net = std::dynamic_pointer_cast<Nodes::Network::PointCloudNetwork>(network)) {
+        bounds = cloud_net->get_bounds();
+    } else {
         MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-            "SpatialHashConfig::from_network: buffer's network is not a ParticleNetwork");
+            "SpatialHashConfig::from_network: buffer's network is neither a ParticleNetwork "
+            "nor a PointCloudNetwork");
         return std::nullopt;
     }
 
-    auto* graphics_op = dynamic_cast<Nodes::Network::GraphicsOperator*>(particle_net->get_operator());
+    auto* graphics_op = dynamic_cast<Nodes::Network::GraphicsOperator*>(network->get_operator());
     if (!graphics_op) {
         MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
             "SpatialHashConfig::from_network: network's primary operator is not a "
@@ -54,7 +62,6 @@ std::optional<SpatialHashConfig> SpatialHashConfig::from_network(
         return std::nullopt;
     }
 
-    const auto bounds = particle_net->get_bounds();
     const glm::vec3 extent = bounds.max - bounds.min;
 
     const glm::uvec3 dims {

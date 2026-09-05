@@ -251,7 +251,7 @@ public:
      * geometry, so this changes nothing for the particle path.
      *
      * has_state-guarded, so whichever caller reaches this first (a
-     * ParticleGeometryBuffer's own hash wiring, or a VertexFieldProcessor
+     * this buffer's own field-operator wiring, or a VertexFieldProcessor
      * attaching with a cluster-scoped GpuFieldOperator binding) does the
      * real work and the other finds it already done. Values come from
      * GraphicsOperator::build_cluster_ids(): every entry 0 for any operator
@@ -297,6 +297,19 @@ private:
     static size_t calculate_buffer_size(
         const std::shared_ptr<Nodes::Network::NodeNetwork>& network,
         float over_allocate_factor);
+
+    /**
+     * @brief Find a ParticleFieldOperator in the network's operator chain and
+     *        wire VertexFieldProcessor plus whichever spatial-hash / claim /
+     *        population stages its SpatialFieldConfig calls for.
+     *
+     * No-op unless the network is one of the field-compatible types
+     * (ParticleNetwork, PointCloudNetwork). Called at the end of
+     * setup_processors. Implemented in NetworkGeometryFieldWiring.cpp so the
+     * compute-processor headers it needs stay out of the base translation
+     * unit.
+     */
+    void wire_field_operators();
 };
 
 } // namespace MayaFlux::Buffers

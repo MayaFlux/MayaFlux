@@ -58,11 +58,11 @@ struct SpatialHashConfig {
      *        is no generic source for this, since not every ParticleNetwork
      *        operator has an equivalent concept, so the caller supplies it
      *        directly.
-     * @return Populated config, or nullopt when the buffer's network is not
-     *         a ParticleNetwork, its primary operator is not a
-     *         GraphicsOperator (or none is set), that operator's layout
-     *         carries no word-aligned position attribute, or cell_size is
-     *         not positive.
+     * @return Populated config, or nullopt when the buffer's network is
+     *         neither a ParticleNetwork nor a PointCloudNetwork, its primary
+     *         operator is not a GraphicsOperator (or none is set), that
+     *         operator's layout carries no word-aligned position attribute,
+     *         or cell_size is not positive.
      */
     [[nodiscard]] static std::optional<SpatialHashConfig> from_network(
         const std::shared_ptr<NetworkGeometryBuffer>& buffer, float cell_size);
@@ -85,7 +85,7 @@ struct SpatialHashConfig {
      *
      * Also declares hash_cluster_id, one uint32 per particle, at
      * particle_count elements. Unlike the four fields above it is written
-     * by no dispatch at all: ParticleGeometryBuffer uploads it once, at
+     * by no dispatch at all: NetworkGeometryBuffer uploads it once, at
      * wiring time, from PhysicsOperator::get_collections(), since cluster
      * membership is fixed the moment a collection is added and never
      * changes cycle to cycle. Declared here rather than by MutationConfig
@@ -262,7 +262,7 @@ public:
     /**
      * @param gate_alive When true, binds mutation_alive and skips a
      *        particle before counting it into any cell, so a population
-     *        with reserve capacity (see ParticleFieldConfig::reserve_fraction)
+     *        with reserve capacity (see SpatialFieldConfig::reserve_fraction)
      *        never lets a dead or not-yet-spawned slot occupy a cell. Must
      *        agree with whatever HashScatterProcessor in the same chain
      *        uses: count and scatter disagreeing about which particles
@@ -386,7 +386,7 @@ private:
  * this processor's next dispatch with no rebuild.
  *
  * A candidate j is skipped when hash_cluster_id[j] differs from i's own
- * cluster_id, unless ParticleFieldConfig::cross_cluster is true: by default
+ * cluster_id, unless SpatialFieldConfig::cross_cluster is true: by default
  * a particle's density reading only ever counts neighbours from its own
  * PhysicsOperator collection, the same boundary ClaimProcessor enforces, so
  * one population's density never reads warm just because a denser, unrelated

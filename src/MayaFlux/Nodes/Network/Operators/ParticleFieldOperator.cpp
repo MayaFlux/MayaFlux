@@ -2,7 +2,7 @@
 
 namespace MayaFlux::Nodes::Network {
 
-ParticleFieldOperator::ParticleFieldOperator(Kakshya::VertexLayout layout, ParticleFieldConfig config)
+ParticleFieldOperator::ParticleFieldOperator(Kakshya::VertexLayout layout, SpatialFieldConfig config)
     : GpuFieldOperator(std::move(layout))
     , m_particle_config(config)
 {

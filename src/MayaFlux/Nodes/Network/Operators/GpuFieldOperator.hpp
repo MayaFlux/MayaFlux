@@ -12,6 +12,195 @@ namespace MayaFlux::Nodes::Network {
 using FieldTarget = Kinesis::FieldTarget;
 
 /**
+ * @struct SpatialFieldConfig
+ * @brief Declarative configuration for the GPU-side spatial-relational work a
+ *        GpuFieldOperator can drive beyond plain field bindings: uniform-grid
+ *        spatial hashing, neighbour-density colouring, the deterministic
+ *        claim/absorption protocol, and opt-in population dynamics.
+ *
+ * Domain-neutral. Every stage this selects operates on the vertex records a
+ * GraphicsOperator produces, addressed through that operator's VertexLayout,
+ * with no dependency on what kind of network or primary operator sits behind
+ * them: a PhysicsOperator on a ParticleNetwork is one source, a
+ * TopologyOperator or PathOperator on a PointCloudNetwork is another. A
+ * handful of fields draw on concepts only a PhysicsOperator supplies
+ * (accreted mass, collection boundaries) and degrade to a documented no-op
+ * when none is present; each such field says so in its own entry.
+ *
+ * Filled once, at construction, with designated initializers: the same
+ * shape as VolumeGridBuffer::FlowConfig, a plain value handed over once
+ * rather than a sequence of enable_x() calls.
+ *
+ * Two kinds of field here, deliberately not distinguished by type but
+ * documented per-field: cell_size/absorb_radius/cosmetic_swallow/density_color
+ * are structural, as they decide *which* processors the geometry buffer
+ * constructs in the first place, so changing them after wiring would mean
+ * tearing down and rebuilding part of the chain, and there is no live path
+ * for that yet. Every other field is a tuning value read by a processor
+ * that exists regardless of its value; those do have a live path, through
+ * the setters on whichever GpuFieldOperator subclass carries this config
+ * (today ParticleFieldOperator; see each field's own doc for which setter).
+ */
+struct SpatialFieldConfig {
+    /**
+     * Spatial hash cell size. Nullopt derives it from the network's primary
+     * operator when that operator is a PhysicsOperator (its
+     * get_interaction_radius()); any other primary operator has no
+     * equivalent concept and must set this explicitly. Only consulted when
+     * absorb_radius or density_color below actually needs the hash built.
+     * Structural: fixed at construction.
+     */
+    std::optional<float> cell_size;
+
+    /**
+     * Enables the deterministic claim/absorption pipeline at this distance.
+     * Nullopt (the default) disables mutation entirely. Implies the
+     * spatial hash is built regardless of density_color. Structural: fixed
+     * at construction.
+     */
+    std::optional<float> absorb_radius;
+
+    /**
+     * Scales a claimant's effective capture radius by the cube root of its
+     * own currently accreted mass (mutation_accreted_mass, uploaded fresh
+     * each cycle from PhysicsOperator::get_accreted_mass_span when a
+     * PhysicsOperator drives the network): max(absorb_radius,
+     * cbrt(accreted_mass) * capture_growth). 0 (the default) makes every
+     * point claim at the fixed absorb_radius regardless of accreted mass.
+     * With no PhysicsOperator in the chain nothing maintains the accreted
+     * mass tally, so this stays inert whatever its value: see
+     * ClaimAccumulateProcessor.
+     *
+     * A fixed absorb_radius alone caps how much territory any body can ever
+     * sweep, however much mass it already holds, so growth plateaus as soon
+     * as that fixed neighbourhood is exhausted; scaling capture radius with
+     * mass instead makes accretion self-reinforcing. Cube root specifically,
+     * not mass directly: captured-mass rate scales with capture_radius
+     * cubed (a 3D volume query), so a radius proportional to mass directly
+     * gives a growth rate proportional to mass cubed, which reaches
+     * infinite mass in finite time for ANY nonzero capture_growth -- not a
+     * gradual curve, an instantaneous one-cycle explosion at a delay this
+     * value controls. Cube-rooting mass first (the same real-world
+     * reasoning PhysicsOperator::apply_bond_forces already uses for
+     * physical spread) keeps the growth rate proportional to mass itself:
+     * ordinary exponential growth, with a genuine, live-tunable doubling
+     * time rather than a hidden singularity. Live-tunable via
+     * set_capture_growth().
+     */
+    float capture_growth { 0.0F };
+
+    /**
+     * Whether ClaimSwallowProcessor's cosmetic pass (position snap onto
+     * root, size/colour from this cycle's swallow_count) is added to the
+     * chain. Default true: existing absorb_radius behaviour is unchanged.
+     *
+     * Set false when a caller wants claim resolution purely for its CPU
+     * side effect, PhysicsOperator::sync_bonds_from_claims (bond force and
+     * the persistent accreted-mass tally it maintains), without the GPU
+     * cosmetic pass fighting it: swallow_count resets every cycle (see
+     * ClaimInitProcessor), so it can only ever represent this instant's
+     * local cluster size, never true accumulation over time. A caller after
+     * real, permanent growth reads PhysicsOperator's accreted mass instead
+     * and drives size/colour from that on the CPU side, and doesn't want
+     * ClaimSwallowProcessor overwriting the same vertices with its own,
+     * necessarily transient, numbers. ClaimInit/Claim/Flatten/Accumulate
+     * still run regardless: they are what ClaimAccumulateProcessor's
+     * readback needs to populate PhysicsOperator's bonds at all. Structural:
+     * fixed at construction.
+     */
+    bool cosmetic_swallow { true };
+
+    /**
+     * Enables neighbour-density colouring (ember-to-white-hot ramp).
+     * Structural: fixed at construction.
+     */
+    bool density_color { false };
+
+    /**
+     * HashDensityColorProcessor: neighbour count at which the density ramp
+     * saturates to fully warm. Lower values make sparser clusters read as
+     * dense; live-tunable via set_density_saturation_count().
+     */
+    float density_saturation_count { 24.0F };
+
+    /**
+     * ClaimSwallowProcessor: a survivor's point size the cycle it has
+     * swallowed nothing. Live-tunable via set_swallow_base_size().
+     */
+    float swallow_base_size { 10.0F };
+
+    /**
+     * ClaimSwallowProcessor: point-size increase per particle a survivor
+     * swallowed this cycle. Live-tunable via set_swallow_growth_rate().
+     */
+    float swallow_growth_rate { 0.6F };
+
+    /**
+     * ClaimSwallowProcessor: point-size ceiling regardless of swallow
+     * count, so one runaway cluster can't dominate the screen.
+     * Live-tunable via set_swallow_max_size().
+     */
+    float swallow_max_size { 70.0F };
+
+    /**
+     * ClaimSwallowProcessor: brightness multiplier applied to an absorbed
+     * particle's cluster colour (0 invisible, 1 as bright as the
+     * survivor). Live-tunable via set_swallow_dim_factor().
+     */
+    float swallow_dim_factor { 0.08F };
+
+    /**
+     * Whether ClaimProcessor and HashDensityColorProcessor may see across
+     * cluster boundaries. False (the default) means a point in one cluster
+     * can never claim, be claimed by, or be counted as a density neighbour
+     * of a point in another: every hash-based neighbour query they run is
+     * scoped to hash_cluster_id[i], the per-vertex field
+     * NetworkGeometryBuffer::ensure_cluster_ids() derives from whatever
+     * GraphicsOperator::build_cluster_ids() returns (a PhysicsOperator tags
+     * one cluster per collection, a TopologyOperator or PathOperator one per
+     * set; every entry 0, and this guard a no-op, when the operator holds a
+     * single set). True restores the single global neighbourhood both
+     * processors used before hash_cluster_id existed: every point in the
+     * buffer is a candidate for every other, regardless of cluster.
+     * Live-tunable via set_cross_cluster().
+     */
+    bool cross_cluster { false };
+
+    /**
+     * Fraction of extra reserve capacity the geometry buffer allocates
+     * beyond the live point count, for PopulationSpawnProcessor to claim:
+     * reserve_count = ceil(live_count * reserve_fraction), and the
+     * vertex buffer plus every hash/claim/mutation state field is sized to
+     * live_count + reserve_count from the moment this operator is wired,
+     * never resized again afterward. 0 (the default) allocates no reserve
+     * and wires none of PopulationInitProcessor/PopulationSpawnProcessor/the
+     * alive-gating on HashCountProcessor/HashScatterProcessor/ClaimProcessor/
+     * ClaimAccumulateProcessor at all -- population dynamics is entirely
+     * opt-in and costs nothing unset.
+     *
+     * Requires absorb_radius to also be set: destruction is destroy-on-
+     * absorption, reusing mutation_claimed_by, so there is nothing for this
+     * to destroy without claims running. A nonzero reserve_fraction with no
+     * absorb_radius is treated as unset and logged.
+     *
+     * What spawns and dies here is deliberately not reflected to
+     * PhysicsOperator: see PopulationConfig's own doc for the full
+     * reasoning. Structural: fixed at construction, like absorb_radius
+     * itself, since it changes which processors get built.
+     */
+    float reserve_fraction { 0.0F };
+
+    /**
+     * PopulationSpawnProcessor: real neighbour count (same 27-cell query
+     * HashDensityColorProcessor performs) a live point must clear before
+     * it spawns a copy of itself into a fresh reserve slot. Only consulted
+     * when reserve_fraction enables population dynamics at all.
+     * Live-tunable via set_spawn_density_threshold().
+     */
+    float spawn_density_threshold { 30.0F };
+};
+
+/**
  * @class GpuFieldOperator
  * @brief Chain operator that declares Tendency field deformation as a compute
  *        shader rather than evaluating it on the CPU.
@@ -76,7 +265,7 @@ public:
      * @param target Mask over POSITION, COLOR, NORMAL and TANGENT.
      * @param field  Dual-source field with a usable shader half.
      * @param cluster Nullopt (the default) applies the field to every vertex
-     *        regardless of which PhysicsOperator collection produced it, the
+     *        regardless of which cluster it belongs to, the
      *        only behaviour that existed before this parameter. A value
      *        restricts the field to vertices whose cluster id equals it: see
      *        needs_cluster_id() for what that costs a consumer that never
@@ -262,7 +451,7 @@ protected:
      * @brief Clear the cached spec and bump revision().
      *
      * Protected rather than private so a subclass with its own config
-     * surface (e.g. ParticleFieldOperator's particle-specific parameters)
+     * surface (e.g. ParticleFieldOperator carrying a SpatialFieldConfig)
      * can signal a change through the same revision a consumer already
      * checks for field-binding changes, rather than needing a second,
      * parallel change-notification mechanism.

@@ -1,4 +1,4 @@
-#include "ParticleGeometryBuffer.hpp"
+#include "NetworkGeometryBuffer.hpp"
 
 #include "MutationClaimProcessor.hpp"
 #include "PopulationProcessor.hpp"
@@ -9,6 +9,9 @@
 #include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
 
 #include "MayaFlux/Nodes/Network/NodeNetwork.hpp"
+#include "MayaFlux/Nodes/Network/ParticleNetwork.hpp"
+#include "MayaFlux/Nodes/Network/PointCloudNetwork.hpp"
+#include "MayaFlux/Nodes/Network/Operators/GraphicsOperator.hpp"
 #include "MayaFlux/Nodes/Network/Operators/OperatorChain.hpp"
 #include "MayaFlux/Nodes/Network/Operators/ParticleFieldOperator.hpp"
 #include "MayaFlux/Nodes/Network/Operators/PhysicsOperator.hpp"
@@ -17,33 +20,53 @@
 
 namespace MayaFlux::Buffers {
 
-void ParticleGeometryBuffer::setup_processors(ProcessingToken token)
-{
-    NetworkGeometryBuffer::setup_processors(token);
+namespace {
 
-    auto network = get_network();
-    auto op_chain = network ? network->get_operator_chain() : nullptr;
+    /**
+     * @brief Whether this network type participates in GpuFieldOperator
+     *        chain wiring at all.
+     *
+     * ParticleNetwork and PointCloudNetwork both aggregate an unordered
+     * point set the field dispatch and spatial-hash stages address
+     * uniformly. MeshNetwork and InstanceNetwork carry structured
+     * connectivity none of these stages model, so their buffers skip the
+     * scan. Subclass if this list ever needs to diverge per network.
+     */
+    bool is_field_compatible_network(const Nodes::Network::NodeNetwork* network)
+    {
+        return dynamic_cast<const Nodes::Network::ParticleNetwork*>(network) != nullptr
+            || dynamic_cast<const Nodes::Network::PointCloudNetwork*>(network) != nullptr;
+    }
+
+} // namespace
+
+void NetworkGeometryBuffer::wire_field_operators()
+{
+    if (!is_field_compatible_network(m_network.get())) {
+        return;
+    }
+
+    auto op_chain = m_network ? m_network->get_operator_chain() : nullptr;
     if (!op_chain) {
         return;
     }
 
+    std::shared_ptr<Nodes::Network::ParticleFieldOperator> particle_op;
     for (const auto& op : op_chain->operators()) {
-        auto particle_op = std::dynamic_pointer_cast<Nodes::Network::ParticleFieldOperator>(op);
+        particle_op = std::dynamic_pointer_cast<Nodes::Network::ParticleFieldOperator>(op);
         if (particle_op) {
-            wire_particle_field_operator(particle_op);
-            return;
+            break;
         }
     }
-}
+    if (!particle_op) {
+        return;
+    }
 
-void ParticleGeometryBuffer::wire_particle_field_operator(
-    const std::shared_ptr<Nodes::Network::ParticleFieldOperator>& particle_op)
-{
     auto self = std::dynamic_pointer_cast<NetworkGeometryBuffer>(shared_from_this());
     auto chain = get_processing_chain();
     if (!self || !chain) {
         MF_ERROR(Journal::Component::Buffers, Journal::Context::Init,
-            "ParticleGeometryBuffer: no processing chain to wire particle stages onto");
+            "NetworkGeometryBuffer: no processing chain to wire field stages onto");
         return;
     }
 
@@ -65,7 +88,7 @@ void ParticleGeometryBuffer::wire_particle_field_operator(
         cell_size = physics->get_interaction_radius();
     } else {
         MF_ERROR(Journal::Component::Buffers, Journal::Context::Init,
-            "ParticleGeometryBuffer: ParticleFieldConfig has no cell_size and the network's "
+            "NetworkGeometryBuffer: SpatialFieldConfig has no cell_size and the network's "
             "primary operator is not a PhysicsOperator, so one cannot be derived");
         return;
     }
@@ -73,7 +96,7 @@ void ParticleGeometryBuffer::wire_particle_field_operator(
     auto hash_config = SpatialHashConfig::from_network(self, cell_size);
     if (!hash_config.has_value()) {
         MF_ERROR(Journal::Component::Buffers, Journal::Context::Init,
-            "ParticleGeometryBuffer: SpatialHashConfig::from_network failed");
+            "NetworkGeometryBuffer: SpatialHashConfig::from_network failed");
         return;
     }
 
@@ -82,7 +105,7 @@ void ParticleGeometryBuffer::wire_particle_field_operator(
 
     if (reserve_enabled && !pconfig.absorb_radius.has_value()) {
         MF_ERROR(Journal::Component::Buffers, Journal::Context::Init,
-            "ParticleGeometryBuffer: reserve_fraction requires absorb_radius (destroy-on-"
+            "NetworkGeometryBuffer: reserve_fraction requires absorb_radius (destroy-on-"
             "absorption has nothing to destroy without claims); reserve capacity disabled");
         reserve_enabled = false;
     }
@@ -103,8 +126,9 @@ void ParticleGeometryBuffer::wire_particle_field_operator(
 
     if (total_count != live_count) {
         std::vector<uint32_t> cluster_ids(total_count, 0U);
-        if (physics) {
-            auto live_ids = physics->build_cluster_ids();
+        if (auto* graphics_op
+            = dynamic_cast<Nodes::Network::GraphicsOperator*>(get_network()->get_operator())) {
+            auto live_ids = graphics_op->build_cluster_ids();
             std::copy_n(live_ids.begin(),
                 std::min<size_t>(live_ids.size(), live_count), cluster_ids.begin());
         }
