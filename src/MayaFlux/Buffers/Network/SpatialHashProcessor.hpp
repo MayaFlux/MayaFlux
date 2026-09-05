@@ -82,6 +82,20 @@ struct SpatialHashConfig {
      * buffer's chain. All four fields are single-slot: every stage fully
      * overwrites the ones it owns each cycle rather than reading a previous
      * cycle's value, so none of them need a second ping-pong slot.
+     *
+     * Also declares hash_cluster_id, one uint32 per particle, at
+     * particle_count elements. Unlike the four fields above it is written
+     * by no dispatch at all: ParticleGeometryBuffer uploads it once, at
+     * wiring time, from PhysicsOperator::get_collections(), since cluster
+     * membership is fixed the moment a collection is added and never
+     * changes cycle to cycle. Declared here rather than by MutationConfig
+     * because it is consumed by any hash-based neighbour query, not only
+     * the claim protocol: HashDensityColorProcessor reads it too, and a
+     * caller can enable density colouring with no absorb_radius at all, in
+     * which case MutationConfig::declare_fields never runs. Every entry is
+     * 0 when the operator carries at most one collection, so every
+     * cluster-aware guard built on this field is a no-op for the ordinary
+     * single-population case.
      */
     void declare_fields(const std::shared_ptr<NetworkGeometryBuffer>& buffer) const;
 };
@@ -355,6 +369,14 @@ private:
  * the same hook VertexFieldProcessor::sync_revision() uses), so
  * ParticleFieldOperator::set_density_saturation_count() takes effect on
  * this processor's next dispatch with no rebuild.
+ *
+ * A candidate j is skipped when hash_cluster_id[j] differs from i's own
+ * cluster_id, unless ParticleFieldConfig::cross_cluster is true: by default
+ * a particle's density reading only ever counts neighbours from its own
+ * PhysicsOperator collection, the same boundary ClaimProcessor enforces, so
+ * one population's density never reads warm just because a denser, unrelated
+ * population happens to occupy the same cells. Read fresh alongside
+ * density_saturation_count on every revision change.
  */
 class MAYAFLUX_API HashDensityColorProcessor : public NetworkStateFieldProcessor {
 public:
@@ -394,6 +416,7 @@ private:
         uint32_t dim_y;
         uint32_t dim_z;
         float density_saturation_count;
+        uint32_t cross_cluster;
     };
 
     Params m_params;

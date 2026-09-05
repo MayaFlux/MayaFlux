@@ -130,6 +130,7 @@ namespace {
             .ssbo("claimed_by", BindingDirection::InOut, Kakshya::GpuDataFormat::UINT32)
             .ssbo("claim_events", BindingDirection::InOut, Kakshya::GpuDataFormat::UINT32)
             .ssbo("accreted_mass", BindingDirection::Input, Kakshya::GpuDataFormat::FLOAT32)
+            .ssbo("cluster_id", BindingDirection::Input, Kakshya::GpuDataFormat::UINT32)
             .pc("particle_count", Kakshya::GpuDataFormat::UINT32)
             .pc("stride_words", Kakshya::GpuDataFormat::UINT32)
             .pc("position_offset", Kakshya::GpuDataFormat::UINT32)
@@ -142,6 +143,7 @@ namespace {
             .pc("dim_x", Kakshya::GpuDataFormat::UINT32)
             .pc("dim_y", Kakshya::GpuDataFormat::UINT32)
             .pc("dim_z", Kakshya::GpuDataFormat::UINT32)
+            .pc("cross_cluster", Kakshya::GpuDataFormat::UINT32)
             .workgroup(256);
 
         std::string body;
@@ -151,6 +153,7 @@ namespace {
                  "vertices[b + position_offset + 1u], vertices[b + position_offset + 2u]);\n";
         body += "    float capture_radius = max(absorb_radius, "
                 "pow(max(accreted_mass[i], 0.0001), 1.0 / 3.0) * capture_growth);\n";
+        body += "    uint my_cluster = cluster_id[i];\n";
         body += "    vec3 gmin = vec3(grid_min_x, grid_min_y, grid_min_z);\n";
         body += "    uvec3 dims = uvec3(dim_x, dim_y, dim_z);\n";
         body += "    ivec3 base = ivec3(floor((p - gmin) / cell_size));\n";
@@ -171,6 +174,7 @@ namespace {
         body += "                for (uint k = 0u; k < count; k = k + 1u) {\n";
         body += "                    uint j = particle_index[start + k];\n";
         body += "                    if (j <= i) { continue; }\n";
+        body += "                    if (cross_cluster == 0u && cluster_id[j] != my_cluster) { continue; }\n";
         body += "                    uint bj = j * stride_words;\n";
         body += "                    vec3 pj = vec3(vertices[bj + position_offset], "
                  "vertices[bj + position_offset + 1u], vertices[bj + position_offset + 2u]);\n";
@@ -186,9 +190,10 @@ namespace {
         assemble.kernel(KernelSource {
             .raw = {},
             .param_names = { "vertices", "cell_start", "cell_count", "particle_index", "claimed_by",
-                "claim_events", "accreted_mass", "particle_count", "stride_words", "position_offset",
-                "absorb_radius", "capture_growth",
-                "grid_min_x", "grid_min_y", "grid_min_z", "cell_size", "dim_x", "dim_y", "dim_z", "i" },
+                "claim_events", "accreted_mass", "cluster_id", "particle_count", "stride_words",
+                "position_offset", "absorb_radius", "capture_growth",
+                "grid_min_x", "grid_min_y", "grid_min_z", "cell_size", "dim_x", "dim_y", "dim_z",
+                "cross_cluster", "i" },
             .body = std::move(body),
         });
 
@@ -207,7 +212,8 @@ ClaimProcessor::ClaimProcessor(
               FieldBinding { .name = "particle_index", .binding = 3, .field = "hash_particle_index" },
               FieldBinding { .name = "claimed_by", .binding = 4, .field = "mutation_claimed_by" },
               FieldBinding { .name = "claim_events", .binding = 5, .field = "mutation_claim_events" },
-              FieldBinding { .name = "accreted_mass", .binding = 6, .field = "mutation_accreted_mass" } },
+              FieldBinding { .name = "accreted_mass", .binding = 6, .field = "mutation_accreted_mass" },
+              FieldBinding { .name = "cluster_id", .binding = 7, .field = "hash_cluster_id" } },
           build_claim_spec())
     , m_params {
         .particle_count = config.hash.particle_count,
@@ -222,6 +228,7 @@ ClaimProcessor::ClaimProcessor(
         .dim_x = config.hash.grid_dims.x,
         .dim_y = config.hash.grid_dims.y,
         .dim_z = config.hash.grid_dims.z,
+        .cross_cluster = particle_op->get_particle_config().cross_cluster ? 1U : 0U,
     }
     , m_particle_op(std::move(particle_op))
     , m_built_revision(m_particle_op->revision())
@@ -242,7 +249,9 @@ bool ClaimProcessor::on_before_execute(
     }
 
     if (m_particle_op->revision() != m_built_revision) {
-        m_params.capture_growth = m_particle_op->get_particle_config().capture_growth;
+        const auto& pconfig = m_particle_op->get_particle_config();
+        m_params.capture_growth = pconfig.capture_growth;
+        m_params.cross_cluster = pconfig.cross_cluster ? 1U : 0U;
         set_push_constant_data(m_params);
         m_built_revision = m_particle_op->revision();
     }

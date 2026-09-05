@@ -52,6 +52,11 @@ struct MutationConfig {
      * so a ClaimProcessor that tried to read swallow_count for this would
      * always see 0, making capture_growth silently inert regardless of its
      * value, which is exactly the bug this field exists to avoid repeating.
+     *
+     * Does not declare a cluster id field of its own: hash_cluster_id
+     * belongs to SpatialHashConfig::declare_fields, since it is shared with
+     * HashDensityColorProcessor and must exist even when mutation is never
+     * enabled at all.
      */
     void declare_fields(const std::shared_ptr<NetworkGeometryBuffer>& buffer) const;
 };
@@ -120,6 +125,16 @@ private:
  * ParticleFieldOperator::set_capture_growth: checked in on_before_execute
  * the same way ClaimSwallowProcessor checks its own tuning values, so a
  * change takes effect on this processor's next dispatch with no rebuild.
+ *
+ * A candidate j is skipped when hash_cluster_id[j] differs from i's own
+ * cluster_id, unless ParticleFieldConfig::cross_cluster is true: by default
+ * two particles from different PhysicsOperator collections never claim each
+ * other, however close they sit, so several independent populations can
+ * share one hash grid and one dispatch without their claim graphs bleeding
+ * into each other. Every particle carries cluster_id 0 unless the operator
+ * holds more than one collection (see SpatialHashConfig::declare_fields),
+ * so the guard is a no-op for the ordinary single-population case. Read
+ * fresh alongside capture_growth on every revision change.
  */
 class MAYAFLUX_API ClaimProcessor : public NetworkStateFieldProcessor {
 public:
@@ -154,6 +169,7 @@ private:
         uint32_t dim_x;
         uint32_t dim_y;
         uint32_t dim_z;
+        uint32_t cross_cluster;
     };
 
     Params m_params;

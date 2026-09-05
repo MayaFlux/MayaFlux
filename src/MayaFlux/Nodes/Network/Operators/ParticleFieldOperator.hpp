@@ -125,6 +125,22 @@ struct ParticleFieldConfig {
      * survivor). Live-tunable via set_swallow_dim_factor().
      */
     float swallow_dim_factor { 0.08F };
+
+    /**
+     * Whether ClaimProcessor and HashDensityColorProcessor may see across
+     * PhysicsOperator collection boundaries. False (the default) means a
+     * particle from one collection can never claim, be claimed by, or be
+     * counted as a density neighbour of a particle from another: every
+     * hash-based neighbour query they run is scoped to hash_cluster_id[i],
+     * a field ParticleGeometryBuffer builds automatically from
+     * PhysicsOperator::get_collections() the moment more than one
+     * collection exists (all zero, and this guard a no-op, otherwise).
+     * True restores the single global neighbourhood both processors used
+     * before hash_cluster_id existed: every particle in the buffer is a
+     * candidate for every other, regardless of which collection either one
+     * came from. Live-tunable via set_cross_cluster().
+     */
+    bool cross_cluster { false };
 };
 
 /**
@@ -213,6 +229,9 @@ public:
 
     /** @brief Live-update ClaimSwallowProcessor's absorbed-particle dimming. */
     void set_swallow_dim_factor(float factor);
+
+    /** @brief Live-update whether claims and density see across cluster boundaries. */
+    void set_cross_cluster(bool enabled);
 
     [[nodiscard]] std::string_view get_type_name() const override
     {

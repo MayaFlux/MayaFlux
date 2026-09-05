@@ -44,4 +44,10 @@ void ParticleFieldOperator::set_swallow_dim_factor(float factor)
     invalidate();
 }
 
+void ParticleFieldOperator::set_cross_cluster(bool enabled)
+{
+    m_particle_config.cross_cluster = enabled;
+    invalidate();
+}
+
 } // namespace MayaFlux::Nodes::Network

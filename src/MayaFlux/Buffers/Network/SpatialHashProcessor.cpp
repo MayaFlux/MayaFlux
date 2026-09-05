@@ -80,6 +80,7 @@ void SpatialHashConfig::declare_fields(const std::shared_ptr<NetworkGeometryBuff
     buffer->declare_state("hash_cell_start", cells, sizeof(uint32_t), false);
     buffer->declare_state("hash_cell_cursor", cells, sizeof(uint32_t), false);
     buffer->declare_state("hash_particle_index", particle_count, sizeof(uint32_t), false);
+    buffer->declare_state("hash_cluster_id", particle_count, sizeof(uint32_t), false);
 }
 
 //=============================================================================
@@ -476,6 +477,7 @@ namespace {
             .ssbo("cell_start", BindingDirection::Input, Kakshya::GpuDataFormat::UINT32)
             .ssbo("cell_count", BindingDirection::Input, Kakshya::GpuDataFormat::UINT32)
             .ssbo("particle_index", BindingDirection::Input, Kakshya::GpuDataFormat::UINT32)
+            .ssbo("cluster_id", BindingDirection::Input, Kakshya::GpuDataFormat::UINT32)
             .pc("particle_count", Kakshya::GpuDataFormat::UINT32)
             .pc("stride_words", Kakshya::GpuDataFormat::UINT32)
             .pc("position_offset", Kakshya::GpuDataFormat::UINT32)
@@ -488,6 +490,7 @@ namespace {
             .pc("dim_y", Kakshya::GpuDataFormat::UINT32)
             .pc("dim_z", Kakshya::GpuDataFormat::UINT32)
             .pc("density_saturation_count", Kakshya::GpuDataFormat::FLOAT32)
+            .pc("cross_cluster", Kakshya::GpuDataFormat::UINT32)
             .workgroup(256);
 
         std::string body;
@@ -495,6 +498,7 @@ namespace {
         body += "    uint b = i * stride_words;\n";
         body += "    vec3 p = vec3(vertices[b + position_offset], "
                  "vertices[b + position_offset + 1u], vertices[b + position_offset + 2u]);\n";
+        body += "    uint my_cluster = cluster_id[i];\n";
         body += "    vec3 gmin = vec3(grid_min_x, grid_min_y, grid_min_z);\n";
         body += "    uvec3 dims = uvec3(dim_x, dim_y, dim_z);\n";
         body += "    ivec3 base = ivec3(floor((p - gmin) / cell_size));\n";
@@ -515,6 +519,7 @@ namespace {
         body += "                for (uint k = 0u; k < count; k = k + 1u) {\n";
         body += "                    uint j = particle_index[start + k];\n";
         body += "                    if (j == i) { continue; }\n";
+        body += "                    if (cross_cluster == 0u && cluster_id[j] != my_cluster) { continue; }\n";
         body += "                    uint bj = j * stride_words;\n";
         body += "                    vec3 pj = vec3(vertices[bj + position_offset], "
                  "vertices[bj + position_offset + 1u], vertices[bj + position_offset + 2u]);\n";
@@ -539,10 +544,10 @@ namespace {
 
         assemble.kernel(KernelSource {
             .raw = {},
-            .param_names = { "vertices", "cell_start", "cell_count", "particle_index",
+            .param_names = { "vertices", "cell_start", "cell_count", "particle_index", "cluster_id",
                 "particle_count", "stride_words", "position_offset", "color_offset",
                 "grid_min_x", "grid_min_y", "grid_min_z", "cell_size", "dim_x", "dim_y", "dim_z",
-                "density_saturation_count", "i" },
+                "density_saturation_count", "cross_cluster", "i" },
             .body = std::move(body),
         });
 
@@ -590,7 +595,8 @@ HashDensityColorProcessor::HashDensityColorProcessor(
           { FieldBinding { .name = "vertices", .binding = 0, .field = {} },
               FieldBinding { .name = "cell_start", .binding = 1, .field = "hash_cell_start" },
               FieldBinding { .name = "cell_count", .binding = 2, .field = "hash_cell_count" },
-              FieldBinding { .name = "particle_index", .binding = 3, .field = "hash_particle_index" } },
+              FieldBinding { .name = "particle_index", .binding = 3, .field = "hash_particle_index" },
+              FieldBinding { .name = "cluster_id", .binding = 4, .field = "hash_cluster_id" } },
           build_density_spec())
     , m_params {
         .particle_count = config.particle_count,
@@ -605,6 +611,7 @@ HashDensityColorProcessor::HashDensityColorProcessor(
         .dim_y = config.grid_dims.y,
         .dim_z = config.grid_dims.z,
         .density_saturation_count = particle_op->get_particle_config().density_saturation_count,
+        .cross_cluster = particle_op->get_particle_config().cross_cluster ? 1U : 0U,
     }
     , m_particle_op(std::move(particle_op))
     , m_built_revision(m_particle_op->revision())
@@ -625,7 +632,9 @@ bool HashDensityColorProcessor::on_before_execute(
     }
 
     if (m_particle_op->revision() != m_built_revision) {
-        m_params.density_saturation_count = m_particle_op->get_particle_config().density_saturation_count;
+        const auto& pconfig = m_particle_op->get_particle_config();
+        m_params.density_saturation_count = pconfig.density_saturation_count;
+        m_params.cross_cluster = pconfig.cross_cluster ? 1U : 0U;
         set_push_constant_data(m_params);
         m_built_revision = m_particle_op->revision();
     }
