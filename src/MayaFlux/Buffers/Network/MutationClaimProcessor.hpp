@@ -291,12 +291,19 @@ public:
      * @param particle_op Required (must be non-null) when live_count is
      *        nonzero: supplies the vertex layout's size attribute offset.
      *        Ignored when live_count is 0.
+     * @param transfer_on_claim When true, binds hash_cluster_id and treats a
+     *        claim whose root sits in a different cluster as a transfer, not a
+     *        consumption: that absorbed vertex is neither counted into its
+     *        root's swallow_count nor (when live_count is nonzero) destroyed,
+     *        leaving ClaimTransferProcessor to relabel it. False (the default)
+     *        emits exactly today's shader, no cluster binding, no branch.
      */
     ClaimAccumulateProcessor(
         const MutationConfig& config,
         Nodes::Network::PhysicsOperator* physics_op,
         uint32_t live_count = 0,
-        const std::shared_ptr<Nodes::Network::GpuFieldOperator>& particle_op = nullptr);
+        const std::shared_ptr<Nodes::Network::GpuFieldOperator>& particle_op = nullptr,
+        bool transfer_on_claim = false);
 
 protected:
     void on_buffer_ready() override;
@@ -379,10 +386,16 @@ public:
      *        field VertexFormats.hpp tags DataModality::UNKNOWN, so it
      *        isn't reachable through the modality-based lookup). Throws
      *        std::invalid_argument when either is missing or misaligned.
+     * @param transfer_on_claim When true, binds hash_cluster_id and leaves an
+     *        absorbed vertex whose root is in a different cluster untouched
+     *        (no position snap, no dim): it is defecting, not dying, and
+     *        ClaimTransferProcessor relabels it. False (the default) emits
+     *        today's shader.
      */
     ClaimSwallowProcessor(
         const MutationConfig& config,
-        std::shared_ptr<Nodes::Network::GpuFieldOperator> particle_op);
+        std::shared_ptr<Nodes::Network::GpuFieldOperator> particle_op,
+        bool transfer_on_claim = false);
 
 protected:
     void on_buffer_ready() override;
@@ -407,6 +420,49 @@ private:
     Params m_params;
     std::shared_ptr<Nodes::Network::GpuFieldOperator> m_particle_op;
     uint64_t m_built_revision;
+};
+
+/**
+ * @class ClaimTransferProcessor
+ * @brief Relabels every vertex absorbed across a cluster boundary into its
+ *        claimant's cluster: the "hop" / transfer that
+ *        SpatialFieldConfig::transfer_on_claim enables.
+ *
+ * One thread per vertex. For an absorbed vertex (mutation_claimed_by[i] != i)
+ * whose flattened root sits in a different cluster, writes
+ * hash_cluster_id[i] = hash_cluster_id[root]. Survivors and same-cluster
+ * absorptions are left alone.
+ *
+ * Chained last in the claim group, after ClaimAccumulateProcessor and
+ * ClaimSwallowProcessor: those two each read hash_cluster_id to decide a
+ * defector is not theirs to consume or snap, and must see the pre-hop value
+ * to do so. Everything downstream (a cluster-scoped VertexFieldProcessor
+ * postprocessor, next cycle's ClaimProcessor and HashDensityColorProcessor)
+ * then reads the new membership.
+ *
+ * hash_cluster_id is single-slot and, unlike destroy-on-absorption, this
+ * write is not undone by anything: NetworkGeometryProcessor re-uploads the
+ * vertex record every cycle but never touches state fields, and
+ * ensure_cluster_ids()/build_cluster_ids() only run once at wiring time. So a
+ * hop persists with no per-cycle re-assertion, and accumulated hops are
+ * discarded only on a full reseed.
+ *
+ * No live tuning: whether this processor exists at all is
+ * SpatialFieldConfig::transfer_on_claim, fixed at construction.
+ */
+class MAYAFLUX_API ClaimTransferProcessor : public NetworkStateFieldProcessor {
+public:
+    explicit ClaimTransferProcessor(const MutationConfig& config);
+
+protected:
+    void on_buffer_ready() override;
+
+private:
+    struct Params {
+        uint32_t particle_count;
+    };
+
+    Params m_params;
 };
 
 } // namespace MayaFlux::Buffers

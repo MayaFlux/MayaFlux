@@ -197,6 +197,34 @@ struct SpatialFieldConfig {
      * Live-tunable via set_spawn_density_threshold().
      */
     float spawn_density_threshold { 30.0F };
+
+    /**
+     * Whether a claim that crosses a cluster boundary moves the absorbed
+     * vertex into the claimant's cluster (a "hop"/transfer) instead of
+     * destroying it (population dynamics) or cosmetically swallowing it.
+     * False (the default) leaves absorption purely destructive/cosmetic.
+     *
+     * Requires absorb_radius: there is no claim to reinterpret otherwise, and
+     * a value with absorb_radius unset is treated as unset and logged. Also
+     * needs cross_cluster on to do anything, since ClaimProcessor never lets a
+     * claim cross a cluster boundary while it is off; that being live-tunable,
+     * this simply stays inert (no cross-cluster claim exists to transform)
+     * rather than erroring, until cross_cluster is switched on. Needs more
+     * than one cluster, like every cluster-aware field here.
+     *
+     * The hop is a single write to hash_cluster_id[i], the one place cluster
+     * membership is ever reassigned at runtime. Unlike destroy-on-absorption
+     * it does not need re-asserting each cycle, since nothing re-uploads
+     * hash_cluster_id after wiring. Claims resolve by atomicMin (lowest index
+     * wins), so absorption flows toward the lowest global vertex index in
+     * contact and cluster boundaries migrate monotonically toward low-index
+     * territory rather than oscillating. GPU-local and rebuilt from
+     * build_cluster_ids() on the next reseed, same as population dynamics.
+     * Structural: fixed at construction, since it changes which processors
+     * (ClaimTransferProcessor, and the cluster-aware branches of
+     * ClaimAccumulateProcessor/ClaimSwallowProcessor) get built.
+     */
+    bool transfer_on_claim { false };
 };
 
 /**

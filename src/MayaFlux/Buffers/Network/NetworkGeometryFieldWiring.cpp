@@ -79,6 +79,12 @@ void NetworkGeometryBuffer::wire_field_operators()
         return;
     }
 
+    if (pconfig.transfer_on_claim && !pconfig.absorb_radius.has_value()) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::Init,
+            "NetworkGeometryBuffer: transfer_on_claim requires absorb_radius (there is no "
+            "claim to reinterpret without it); transfer disabled");
+    }
+
     auto* physics = dynamic_cast<Nodes::Network::PhysicsOperator*>(get_network()->get_operator());
 
     float cell_size = 0.0F;
@@ -164,17 +170,24 @@ void NetworkGeometryBuffer::wire_field_operators()
     MutationConfig claim_config { .hash = *hash_config, .absorb_radius = *pconfig.absorb_radius };
     claim_config.declare_fields(self);
 
+    const bool transfer_on_claim = pconfig.transfer_on_claim;
+
     chain->add_processor(std::make_shared<ClaimInitProcessor>(claim_config), self);
     chain->add_processor(
         std::make_shared<ClaimProcessor>(claim_config, field_op, reserve_enabled), self);
     chain->add_processor(std::make_shared<ClaimFlattenProcessor>(claim_config), self);
     chain->add_processor(
         std::make_shared<ClaimAccumulateProcessor>(
-            claim_config, physics, reserve_enabled ? live_count : 0U, field_op),
+            claim_config, physics, reserve_enabled ? live_count : 0U, field_op, transfer_on_claim),
         self);
 
     if (pconfig.cosmetic_swallow) {
-        chain->add_processor(std::make_shared<ClaimSwallowProcessor>(claim_config, field_op), self);
+        chain->add_processor(
+            std::make_shared<ClaimSwallowProcessor>(claim_config, field_op, transfer_on_claim), self);
+    }
+
+    if (transfer_on_claim) {
+        chain->add_processor(std::make_shared<ClaimTransferProcessor>(claim_config), self);
     }
 
     if (pop_config.has_value()) {

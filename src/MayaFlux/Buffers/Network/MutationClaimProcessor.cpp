@@ -366,7 +366,7 @@ void ClaimFlattenProcessor::on_iteration_barrier(
 
 namespace {
 
-    ShaderSpec build_claim_accumulate_spec(bool gate_alive)
+    ShaderSpec build_claim_accumulate_spec(bool gate_alive, bool transfer_on_claim)
     {
         ShaderSpec::Assemble assemble;
         assemble
@@ -377,6 +377,10 @@ namespace {
             assemble
                 .ssbo("alive", BindingDirection::InOut, Kakshya::GpuDataFormat::UINT32)
                 .ssbo("vertices", BindingDirection::InOut, Kakshya::GpuDataFormat::FLOAT32);
+        }
+
+        if (transfer_on_claim) {
+            assemble.ssbo("cluster_id", BindingDirection::Input, Kakshya::GpuDataFormat::UINT32);
         }
 
         assemble.pc("particle_count", Kakshya::GpuDataFormat::UINT32)
@@ -394,6 +398,9 @@ namespace {
         }
         body += "    uint root = claimed_by[i];\n";
         body += "    if (root != i) {\n";
+        if (transfer_on_claim) {
+            body += "        if (cluster_id[root] != cluster_id[i]) { return; }\n";
+        }
         body += "        atomicAdd(swallow_count[root], 1u);\n";
         if (gate_alive) {
             body += "        alive[i] = 0u;\n";
@@ -405,6 +412,9 @@ namespace {
         if (gate_alive) {
             param_names.emplace_back("alive");
             param_names.emplace_back("vertices");
+        }
+        if (transfer_on_claim) {
+            param_names.emplace_back("cluster_id");
         }
         param_names.emplace_back("particle_count");
         param_names.emplace_back("stride_words");
@@ -420,15 +430,20 @@ namespace {
         return assemble.build();
     }
 
-    std::vector<NetworkStateFieldProcessor::FieldBinding> claim_accumulate_bindings(bool gate_alive)
+    std::vector<NetworkStateFieldProcessor::FieldBinding> claim_accumulate_bindings(
+        bool gate_alive, bool transfer_on_claim)
     {
         std::vector<NetworkStateFieldProcessor::FieldBinding> bindings {
             { .name = "claimed_by", .binding = 0, .field = "mutation_claimed_by" },
             { .name = "swallow_count", .binding = 1, .field = "mutation_swallow_count" },
         };
+        uint32_t next = 2;
         if (gate_alive) {
-            bindings.push_back({ .name = "alive", .binding = 2, .field = "mutation_alive" });
-            bindings.push_back({ .name = "vertices", .binding = 3, .field = {} });
+            bindings.push_back({ .name = "alive", .binding = next++, .field = "mutation_alive" });
+            bindings.push_back({ .name = "vertices", .binding = next++, .field = {} });
+        }
+        if (transfer_on_claim) {
+            bindings.push_back({ .name = "cluster_id", .binding = next++, .field = "hash_cluster_id" });
         }
         return bindings;
     }
@@ -439,10 +454,11 @@ ClaimAccumulateProcessor::ClaimAccumulateProcessor(
     const MutationConfig& config,
     Nodes::Network::PhysicsOperator* physics_op,
     uint32_t live_count,
-    const std::shared_ptr<Nodes::Network::GpuFieldOperator>& particle_op)
+    const std::shared_ptr<Nodes::Network::GpuFieldOperator>& particle_op,
+    bool transfer_on_claim)
     : NetworkStateFieldProcessor(
-          claim_accumulate_bindings(live_count != 0),
-          build_claim_accumulate_spec(live_count != 0))
+          claim_accumulate_bindings(live_count != 0, transfer_on_claim),
+          build_claim_accumulate_spec(live_count != 0, transfer_on_claim))
     , m_params {
         .particle_count = config.hash.particle_count,
         .stride_words = config.hash.stride_words,
@@ -514,13 +530,19 @@ void ClaimAccumulateProcessor::processing_function(const std::shared_ptr<Buffer>
 
 namespace {
 
-    ShaderSpec build_claim_swallow_spec()
+    ShaderSpec build_claim_swallow_spec(bool transfer_on_claim)
     {
         ShaderSpec::Assemble assemble;
         assemble
             .ssbo("vertices", BindingDirection::InOut, Kakshya::GpuDataFormat::FLOAT32)
             .ssbo("claimed_by", BindingDirection::Input, Kakshya::GpuDataFormat::UINT32)
-            .ssbo("swallow_count", BindingDirection::Input, Kakshya::GpuDataFormat::UINT32)
+            .ssbo("swallow_count", BindingDirection::Input, Kakshya::GpuDataFormat::UINT32);
+
+        if (transfer_on_claim) {
+            assemble.ssbo("cluster_id", BindingDirection::Input, Kakshya::GpuDataFormat::UINT32);
+        }
+
+        assemble
             .pc("particle_count", Kakshya::GpuDataFormat::UINT32)
             .pc("stride_words", Kakshya::GpuDataFormat::UINT32)
             .pc("position_offset", Kakshya::GpuDataFormat::UINT32)
@@ -535,6 +557,9 @@ namespace {
         std::string body;
         body += "    if (i >= particle_count) { return; }\n";
         body += "    uint root = claimed_by[i];\n";
+        if (transfer_on_claim) {
+            body += "    if (root != i && cluster_id[root] != cluster_id[i]) { return; }\n";
+        }
         body += "    uint b = i * stride_words;\n";
         body += "    uint rb = root * stride_words;\n";
         body += "\n";
@@ -567,27 +592,45 @@ namespace {
         body += "    vertices[b + color_offset + 1u] = dim_col.y;\n";
         body += "    vertices[b + color_offset + 2u] = dim_col.z;\n";
 
+        std::vector<std::string> param_names { "vertices", "claimed_by", "swallow_count" };
+        if (transfer_on_claim) {
+            param_names.emplace_back("cluster_id");
+        }
+        param_names.insert(param_names.end(),
+            { "particle_count", "stride_words", "position_offset", "color_offset", "size_offset",
+                "base_size", "growth_rate", "max_size", "dim_factor", "i" });
+
         assemble.kernel(KernelSource {
             .raw = {},
-            .param_names = { "vertices", "claimed_by", "swallow_count", "particle_count",
-                "stride_words", "position_offset", "color_offset", "size_offset",
-                "base_size", "growth_rate", "max_size", "dim_factor", "i" },
+            .param_names = std::move(param_names),
             .body = std::move(body),
         });
 
         return assemble.build();
     }
 
+    std::vector<NetworkStateFieldProcessor::FieldBinding> claim_swallow_bindings(bool transfer_on_claim)
+    {
+        std::vector<NetworkStateFieldProcessor::FieldBinding> bindings {
+            { .name = "vertices", .binding = 0, .field = {} },
+            { .name = "claimed_by", .binding = 1, .field = "mutation_claimed_by" },
+            { .name = "swallow_count", .binding = 2, .field = "mutation_swallow_count" },
+        };
+        if (transfer_on_claim) {
+            bindings.push_back({ .name = "cluster_id", .binding = 3, .field = "hash_cluster_id" });
+        }
+        return bindings;
+    }
+
 } // namespace
 
 ClaimSwallowProcessor::ClaimSwallowProcessor(
     const MutationConfig& config,
-    std::shared_ptr<Nodes::Network::GpuFieldOperator> particle_op)
+    std::shared_ptr<Nodes::Network::GpuFieldOperator> particle_op,
+    bool transfer_on_claim)
     : NetworkStateFieldProcessor(
-          { FieldBinding { .name = "vertices", .binding = 0, .field = {} },
-              FieldBinding { .name = "claimed_by", .binding = 1, .field = "mutation_claimed_by" },
-              FieldBinding { .name = "swallow_count", .binding = 2, .field = "mutation_swallow_count" } },
-          build_claim_swallow_spec())
+          claim_swallow_bindings(transfer_on_claim),
+          build_claim_swallow_spec(transfer_on_claim))
     , m_params {
         .particle_count = config.hash.particle_count,
         .stride_words = config.hash.stride_words,
@@ -628,6 +671,53 @@ bool ClaimSwallowProcessor::on_before_execute(
     }
 
     return true;
+}
+
+//=============================================================================
+// ClaimTransferProcessor
+//=============================================================================
+
+namespace {
+
+    ShaderSpec build_claim_transfer_spec()
+    {
+        ShaderSpec::Assemble assemble;
+        assemble
+            .ssbo("claimed_by", BindingDirection::Input, Kakshya::GpuDataFormat::UINT32)
+            .ssbo("cluster_id", BindingDirection::InOut, Kakshya::GpuDataFormat::UINT32)
+            .pc("particle_count", Kakshya::GpuDataFormat::UINT32)
+            .workgroup(256);
+
+        std::string body;
+        body += "    if (i >= particle_count) { return; }\n";
+        body += "    uint root = claimed_by[i];\n";
+        body += "    if (root == i) { return; }\n";
+        body += "    if (cluster_id[root] == cluster_id[i]) { return; }\n";
+        body += "    cluster_id[i] = cluster_id[root];\n";
+
+        assemble.kernel(KernelSource {
+            .raw = {},
+            .param_names = { "claimed_by", "cluster_id", "particle_count", "i" },
+            .body = std::move(body),
+        });
+
+        return assemble.build();
+    }
+
+} // namespace
+
+ClaimTransferProcessor::ClaimTransferProcessor(const MutationConfig& config)
+    : NetworkStateFieldProcessor(
+          { FieldBinding { .name = "claimed_by", .binding = 0, .field = "mutation_claimed_by" },
+              FieldBinding { .name = "cluster_id", .binding = 1, .field = "hash_cluster_id" } },
+          build_claim_transfer_spec())
+    , m_params { .particle_count = config.hash.particle_count }
+{
+}
+
+void ClaimTransferProcessor::on_buffer_ready()
+{
+    dispatch_one_thread_per(m_params.particle_count, m_params);
 }
 
 } // namespace MayaFlux::Buffers
