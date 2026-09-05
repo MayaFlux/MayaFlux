@@ -2,7 +2,7 @@
 
 #include "NetworkGeometryBuffer.hpp"
 
-#include "MayaFlux/Nodes/Network/Operators/ParticleFieldOperator.hpp"
+#include "MayaFlux/Nodes/Network/Operators/GpuFieldOperator.hpp"
 #include "MayaFlux/Nodes/Network/Operators/PhysicsOperator.hpp"
 
 #include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
@@ -34,7 +34,7 @@ namespace {
      * constructor needs both before it can build m_params.
      */
     std::pair<uint32_t, uint32_t> require_color_and_size_offset(
-        const std::shared_ptr<Nodes::Network::ParticleFieldOperator>& particle_op)
+        const std::shared_ptr<Nodes::Network::GpuFieldOperator>& particle_op)
     {
         if (!particle_op) {
             error<std::invalid_argument>(
@@ -239,7 +239,7 @@ namespace {
 
 ClaimProcessor::ClaimProcessor(
     const MutationConfig& config,
-    std::shared_ptr<Nodes::Network::ParticleFieldOperator> particle_op,
+    std::shared_ptr<Nodes::Network::GpuFieldOperator> particle_op,
     bool gate_alive)
     : NetworkStateFieldProcessor(claim_bindings(gate_alive), build_claim_spec(gate_alive))
     , m_params {
@@ -247,7 +247,7 @@ ClaimProcessor::ClaimProcessor(
         .stride_words = config.hash.stride_words,
         .position_offset = config.hash.position_word_offset,
         .absorb_radius = config.absorb_radius,
-        .capture_growth = particle_op->get_particle_config().capture_growth,
+        .capture_growth = particle_op->get_field_config().capture_growth,
         .grid_min_x = config.hash.grid_min.x,
         .grid_min_y = config.hash.grid_min.y,
         .grid_min_z = config.hash.grid_min.z,
@@ -255,7 +255,7 @@ ClaimProcessor::ClaimProcessor(
         .dim_x = config.hash.grid_dims.x,
         .dim_y = config.hash.grid_dims.y,
         .dim_z = config.hash.grid_dims.z,
-        .cross_cluster = particle_op->get_particle_config().cross_cluster ? 1U : 0U,
+        .cross_cluster = particle_op->get_field_config().cross_cluster ? 1U : 0U,
     }
     , m_particle_op(std::move(particle_op))
     , m_built_revision(m_particle_op->revision())
@@ -276,7 +276,7 @@ bool ClaimProcessor::on_before_execute(
     }
 
     if (m_particle_op->revision() != m_built_revision) {
-        const auto& pconfig = m_particle_op->get_particle_config();
+        const auto& pconfig = m_particle_op->get_field_config();
         m_params.capture_growth = pconfig.capture_growth;
         m_params.cross_cluster = pconfig.cross_cluster ? 1U : 0U;
         set_push_constant_data(m_params);
@@ -439,7 +439,7 @@ ClaimAccumulateProcessor::ClaimAccumulateProcessor(
     const MutationConfig& config,
     Nodes::Network::PhysicsOperator* physics_op,
     uint32_t live_count,
-    const std::shared_ptr<Nodes::Network::ParticleFieldOperator>& particle_op)
+    const std::shared_ptr<Nodes::Network::GpuFieldOperator>& particle_op)
     : NetworkStateFieldProcessor(
           claim_accumulate_bindings(live_count != 0),
           build_claim_accumulate_spec(live_count != 0))
@@ -582,7 +582,7 @@ namespace {
 
 ClaimSwallowProcessor::ClaimSwallowProcessor(
     const MutationConfig& config,
-    std::shared_ptr<Nodes::Network::ParticleFieldOperator> particle_op)
+    std::shared_ptr<Nodes::Network::GpuFieldOperator> particle_op)
     : NetworkStateFieldProcessor(
           { FieldBinding { .name = "vertices", .binding = 0, .field = {} },
               FieldBinding { .name = "claimed_by", .binding = 1, .field = "mutation_claimed_by" },
@@ -594,10 +594,10 @@ ClaimSwallowProcessor::ClaimSwallowProcessor(
         .position_offset = config.hash.position_word_offset,
         .color_offset = require_color_and_size_offset(particle_op).first,
         .size_offset = require_color_and_size_offset(particle_op).second,
-        .base_size = particle_op->get_particle_config().swallow_base_size,
-        .growth_rate = particle_op->get_particle_config().swallow_growth_rate,
-        .max_size = particle_op->get_particle_config().swallow_max_size,
-        .dim_factor = particle_op->get_particle_config().swallow_dim_factor,
+        .base_size = particle_op->get_field_config().swallow_base_size,
+        .growth_rate = particle_op->get_field_config().swallow_growth_rate,
+        .max_size = particle_op->get_field_config().swallow_max_size,
+        .dim_factor = particle_op->get_field_config().swallow_dim_factor,
     }
     , m_particle_op(std::move(particle_op))
     , m_built_revision(m_particle_op->revision())
@@ -618,7 +618,7 @@ bool ClaimSwallowProcessor::on_before_execute(
     }
 
     if (m_particle_op->revision() != m_built_revision) {
-        const auto& pconfig = m_particle_op->get_particle_config();
+        const auto& pconfig = m_particle_op->get_field_config();
         m_params.base_size = pconfig.swallow_base_size;
         m_params.growth_rate = pconfig.swallow_growth_rate;
         m_params.max_size = pconfig.swallow_max_size;

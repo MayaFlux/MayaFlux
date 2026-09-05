@@ -3,7 +3,7 @@
 #include "NetworkGeometryBuffer.hpp"
 
 #include "MayaFlux/Nodes/Network/Operators/GraphicsOperator.hpp"
-#include "MayaFlux/Nodes/Network/Operators/ParticleFieldOperator.hpp"
+#include "MayaFlux/Nodes/Network/Operators/GpuFieldOperator.hpp"
 #include "MayaFlux/Nodes/Network/ParticleNetwork.hpp"
 #include "MayaFlux/Nodes/Network/PointCloudNetwork.hpp"
 
@@ -619,7 +619,7 @@ namespace {
      * that must hold before construction can proceed at all.
      */
     uint32_t require_color_offset(
-        const std::shared_ptr<Nodes::Network::ParticleFieldOperator>& particle_op)
+        const std::shared_ptr<Nodes::Network::GpuFieldOperator>& particle_op)
     {
         if (!particle_op) {
             error<std::invalid_argument>(
@@ -645,7 +645,7 @@ namespace {
 
 HashDensityColorProcessor::HashDensityColorProcessor(
     const SpatialHashConfig& config,
-    std::shared_ptr<Nodes::Network::ParticleFieldOperator> particle_op)
+    std::shared_ptr<Nodes::Network::GpuFieldOperator> particle_op)
     : NetworkStateFieldProcessor(
           { FieldBinding { .name = "vertices", .binding = 0, .field = {} },
               FieldBinding { .name = "cell_start", .binding = 1, .field = "hash_cell_start" },
@@ -665,8 +665,8 @@ HashDensityColorProcessor::HashDensityColorProcessor(
         .dim_x = config.grid_dims.x,
         .dim_y = config.grid_dims.y,
         .dim_z = config.grid_dims.z,
-        .density_saturation_count = particle_op->get_particle_config().density_saturation_count,
-        .cross_cluster = particle_op->get_particle_config().cross_cluster ? 1U : 0U,
+        .density_saturation_count = particle_op->get_field_config().density_saturation_count,
+        .cross_cluster = particle_op->get_field_config().cross_cluster ? 1U : 0U,
     }
     , m_particle_op(std::move(particle_op))
     , m_built_revision(m_particle_op->revision())
@@ -687,7 +687,7 @@ bool HashDensityColorProcessor::on_before_execute(
     }
 
     if (m_particle_op->revision() != m_built_revision) {
-        const auto& pconfig = m_particle_op->get_particle_config();
+        const auto& pconfig = m_particle_op->get_field_config();
         m_params.density_saturation_count = pconfig.density_saturation_count;
         m_params.cross_cluster = pconfig.cross_cluster ? 1U : 0U;
         set_push_constant_data(m_params);

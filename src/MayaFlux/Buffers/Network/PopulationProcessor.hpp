@@ -3,7 +3,7 @@
 #include "SpatialHashProcessor.hpp"
 
 namespace MayaFlux::Nodes::Network {
-class ParticleFieldOperator;
+class GpuFieldOperator;
 }
 
 namespace MayaFlux::Buffers {
@@ -122,7 +122,7 @@ private:
  * of which PhysicsOperator collection its particles came from. No caller
  * has asked for cluster-scoped spawn density yet; add it if one does.
  *
- * Reads spawn_density_threshold from the owning ParticleFieldOperator
+ * Reads spawn_density_threshold from the owning GpuFieldOperator
  * fresh whenever its revision() changes, the same on_before_execute check
  * every other tunable in this family uses.
  */
@@ -130,7 +130,7 @@ class MAYAFLUX_API PopulationSpawnProcessor : public NetworkStateFieldProcessor 
 public:
     PopulationSpawnProcessor(
         const PopulationConfig& config,
-        std::shared_ptr<Nodes::Network::ParticleFieldOperator> particle_op);
+        std::shared_ptr<Nodes::Network::GpuFieldOperator> particle_op);
 
 protected:
     void on_buffer_ready() override;
@@ -155,7 +155,7 @@ private:
     };
 
     Params m_params;
-    std::shared_ptr<Nodes::Network::ParticleFieldOperator> m_particle_op;
+    std::shared_ptr<Nodes::Network::GpuFieldOperator> m_particle_op;
     uint64_t m_built_revision;
 };
 

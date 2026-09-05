@@ -3,7 +3,7 @@
 #include "MayaFlux/Buffers/Shaders/ComputeProcessor.hpp"
 
 namespace MayaFlux::Nodes::Network {
-class ParticleFieldOperator;
+class GpuFieldOperator;
 }
 
 namespace MayaFlux::Buffers {
@@ -379,10 +379,10 @@ private:
  * occupancy) instead of O(n^2), and it runs as one GPU dispatch instead of
  * a CPU loop. Must run after HashScatterProcessor.
  *
- * Reads density_saturation_count from the owning ParticleFieldOperator
+ * Reads density_saturation_count from the owning GpuFieldOperator
  * fresh whenever its revision() changes (checked in on_before_execute,
  * the same hook VertexFieldProcessor::sync_revision() uses), so
- * ParticleFieldOperator::set_density_saturation_count() takes effect on
+ * GpuFieldOperator::set_density_saturation_count() takes effect on
  * this processor's next dispatch with no rebuild.
  *
  * A candidate j is skipped when hash_cluster_id[j] differs from i's own
@@ -408,7 +408,7 @@ public:
      */
     HashDensityColorProcessor(
         const SpatialHashConfig& config,
-        std::shared_ptr<Nodes::Network::ParticleFieldOperator> particle_op);
+        std::shared_ptr<Nodes::Network::GpuFieldOperator> particle_op);
 
 protected:
     void on_buffer_ready() override;
@@ -435,7 +435,7 @@ private:
     };
 
     Params m_params;
-    std::shared_ptr<Nodes::Network::ParticleFieldOperator> m_particle_op;
+    std::shared_ptr<Nodes::Network::GpuFieldOperator> m_particle_op;
     uint64_t m_built_revision;
 };
 

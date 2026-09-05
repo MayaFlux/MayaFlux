@@ -38,8 +38,7 @@ using FieldTarget = Kinesis::FieldTarget;
  * tearing down and rebuilding part of the chain, and there is no live path
  * for that yet. Every other field is a tuning value read by a processor
  * that exists regardless of its value; those do have a live path, through
- * the setters on whichever GpuFieldOperator subclass carries this config
- * (today ParticleFieldOperator; see each field's own doc for which setter).
+ * GpuFieldOperator's own setters (see each field's own doc for which one).
  */
 struct SpatialFieldConfig {
     /**
@@ -251,8 +250,12 @@ public:
      * @param layout Vertex layout describing the record the shader will write.
      *               stride_bytes and every bound attribute's offset_in_vertex
      *               must be divisible by 4; construction fails loudly otherwise.
+     * @param config Spatial-field configuration read by NetworkGeometryBuffer's
+     *               wiring: which of the spatial-hash / claim / density /
+     *               population stages to build, plus their live-tunable values.
+     *               Defaulted empty, meaning field displacement only.
      */
-    explicit GpuFieldOperator(Kakshya::VertexLayout layout);
+    explicit GpuFieldOperator(Kakshya::VertexLayout layout, SpatialFieldConfig config = {});
 
     ~GpuFieldOperator() override = default;
 
@@ -381,6 +384,46 @@ public:
     [[nodiscard]] uint64_t revision() const noexcept { return m_revision; }
 
     // -------------------------------------------------------------------------
+    // Spatial-field configuration
+    // -------------------------------------------------------------------------
+
+    /**
+     * @brief The current SpatialFieldConfig: structural fields (which stages
+     *        exist) and live-tunable values alike.
+     *
+     * Read by NetworkGeometryBuffer at wiring time to decide which stages to
+     * build, and re-read by HashDensityColorProcessor / ClaimProcessor /
+     * ClaimSwallowProcessor / PopulationSpawnProcessor whenever revision()
+     * changes, so the setters below take effect on the next dispatch with no
+     * rebuild.
+     */
+    [[nodiscard]] const SpatialFieldConfig& get_field_config() const { return m_field_config; }
+
+    /** @brief Live-update HashDensityColorProcessor's saturation point. */
+    void set_density_saturation_count(float count);
+
+    /** @brief Live-update ClaimProcessor's size-to-capture-radius scaling. */
+    void set_capture_growth(float growth);
+
+    /** @brief Live-update ClaimSwallowProcessor's base survivor size. */
+    void set_swallow_base_size(float size);
+
+    /** @brief Live-update ClaimSwallowProcessor's per-swallow size increase. */
+    void set_swallow_growth_rate(float rate);
+
+    /** @brief Live-update ClaimSwallowProcessor's survivor size ceiling. */
+    void set_swallow_max_size(float size);
+
+    /** @brief Live-update ClaimSwallowProcessor's absorbed-particle dimming. */
+    void set_swallow_dim_factor(float factor);
+
+    /** @brief Live-update whether claims and density see across cluster boundaries. */
+    void set_cross_cluster(bool enabled);
+
+    /** @brief Live-update PopulationSpawnProcessor's spawn density threshold. */
+    void set_spawn_density_threshold(float threshold);
+
+    // -------------------------------------------------------------------------
     // Shader
     // -------------------------------------------------------------------------
 
@@ -450,11 +493,10 @@ protected:
     /**
      * @brief Clear the cached spec and bump revision().
      *
-     * Protected rather than private so a subclass with its own config
-     * surface (e.g. ParticleFieldOperator carrying a SpatialFieldConfig)
-     * can signal a change through the same revision a consumer already
-     * checks for field-binding changes, rather than needing a second,
-     * parallel change-notification mechanism.
+     * Used by this class's own SpatialFieldConfig setters. Protected rather
+     * than private so a subclass with additional config surface can signal a
+     * change through the same revision a consumer already checks, rather than
+     * needing a second, parallel change-notification mechanism.
      */
     void invalidate();
 
@@ -472,6 +514,7 @@ private:
     };
 
     Kakshya::VertexLayout m_layout;
+    SpatialFieldConfig m_field_config;
     uint32_t m_stride_words {};
     uint32_t m_vertex_binding {};
     uint32_t m_workgroup_size { 256 };

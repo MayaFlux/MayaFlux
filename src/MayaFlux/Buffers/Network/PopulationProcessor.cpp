@@ -2,7 +2,7 @@
 
 #include "NetworkGeometryBuffer.hpp"
 
-#include "MayaFlux/Nodes/Network/Operators/ParticleFieldOperator.hpp"
+#include "MayaFlux/Nodes/Network/Operators/GpuFieldOperator.hpp"
 
 #include "MayaFlux/Portal/Graphics/ShaderSpec.hpp"
 
@@ -192,7 +192,7 @@ namespace {
 
 PopulationSpawnProcessor::PopulationSpawnProcessor(
     const PopulationConfig& config,
-    std::shared_ptr<Nodes::Network::ParticleFieldOperator> particle_op)
+    std::shared_ptr<Nodes::Network::GpuFieldOperator> particle_op)
     : NetworkStateFieldProcessor(
           { FieldBinding { .name = "vertices", .binding = 0, .field = {} },
               FieldBinding { .name = "cell_start", .binding = 1, .field = "hash_cell_start" },
@@ -213,7 +213,7 @@ PopulationSpawnProcessor::PopulationSpawnProcessor(
         .dim_x = config.hash.grid_dims.x,
         .dim_y = config.hash.grid_dims.y,
         .dim_z = config.hash.grid_dims.z,
-        .spawn_density_threshold = particle_op->get_particle_config().spawn_density_threshold,
+        .spawn_density_threshold = particle_op->get_field_config().spawn_density_threshold,
     }
     , m_particle_op(std::move(particle_op))
     , m_built_revision(m_particle_op->revision())
@@ -234,7 +234,7 @@ bool PopulationSpawnProcessor::on_before_execute(
     }
 
     if (m_particle_op->revision() != m_built_revision) {
-        m_params.spawn_density_threshold = m_particle_op->get_particle_config().spawn_density_threshold;
+        m_params.spawn_density_threshold = m_particle_op->get_field_config().spawn_density_threshold;
         set_push_constant_data(m_params);
         m_built_revision = m_particle_op->revision();
     }

@@ -11,9 +11,9 @@
 #include "MayaFlux/Nodes/Network/NodeNetwork.hpp"
 #include "MayaFlux/Nodes/Network/ParticleNetwork.hpp"
 #include "MayaFlux/Nodes/Network/PointCloudNetwork.hpp"
+#include "MayaFlux/Nodes/Network/Operators/GpuFieldOperator.hpp"
 #include "MayaFlux/Nodes/Network/Operators/GraphicsOperator.hpp"
 #include "MayaFlux/Nodes/Network/Operators/OperatorChain.hpp"
-#include "MayaFlux/Nodes/Network/Operators/ParticleFieldOperator.hpp"
 #include "MayaFlux/Nodes/Network/Operators/PhysicsOperator.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
@@ -51,14 +51,14 @@ void NetworkGeometryBuffer::wire_field_operators()
         return;
     }
 
-    std::shared_ptr<Nodes::Network::ParticleFieldOperator> particle_op;
+    std::shared_ptr<Nodes::Network::GpuFieldOperator> field_op;
     for (const auto& op : op_chain->operators()) {
-        particle_op = std::dynamic_pointer_cast<Nodes::Network::ParticleFieldOperator>(op);
-        if (particle_op) {
+        field_op = std::dynamic_pointer_cast<Nodes::Network::GpuFieldOperator>(op);
+        if (field_op) {
             break;
         }
     }
-    if (!particle_op) {
+    if (!field_op) {
         return;
     }
 
@@ -70,11 +70,11 @@ void NetworkGeometryBuffer::wire_field_operators()
         return;
     }
 
-    if (particle_op->binding_count() > 0) {
-        chain->add_postprocessor(std::make_shared<VertexFieldProcessor>(particle_op), self);
+    if (field_op->binding_count() > 0) {
+        chain->add_postprocessor(std::make_shared<VertexFieldProcessor>(field_op), self);
     }
 
-    const auto& pconfig = particle_op->get_particle_config();
+    const auto& pconfig = field_op->get_field_config();
     if (!pconfig.absorb_radius.has_value() && !pconfig.density_color) {
         return;
     }
@@ -153,7 +153,7 @@ void NetworkGeometryBuffer::wire_field_operators()
 
     if (pconfig.density_color) {
         chain->add_processor(
-            std::make_shared<HashDensityColorProcessor>(*hash_config, particle_op), self);
+            std::make_shared<HashDensityColorProcessor>(*hash_config, field_op), self);
     }
 
     if (!pconfig.absorb_radius.has_value()) {
@@ -165,20 +165,20 @@ void NetworkGeometryBuffer::wire_field_operators()
 
     chain->add_processor(std::make_shared<ClaimInitProcessor>(claim_config), self);
     chain->add_processor(
-        std::make_shared<ClaimProcessor>(claim_config, particle_op, reserve_enabled), self);
+        std::make_shared<ClaimProcessor>(claim_config, field_op, reserve_enabled), self);
     chain->add_processor(std::make_shared<ClaimFlattenProcessor>(claim_config), self);
     chain->add_processor(
         std::make_shared<ClaimAccumulateProcessor>(
-            claim_config, physics, reserve_enabled ? live_count : 0U, particle_op),
+            claim_config, physics, reserve_enabled ? live_count : 0U, field_op),
         self);
 
     if (pconfig.cosmetic_swallow) {
-        chain->add_processor(std::make_shared<ClaimSwallowProcessor>(claim_config, particle_op), self);
+        chain->add_processor(std::make_shared<ClaimSwallowProcessor>(claim_config, field_op), self);
     }
 
     if (pop_config.has_value()) {
         chain->add_processor(
-            std::make_shared<PopulationSpawnProcessor>(*pop_config, particle_op), self);
+            std::make_shared<PopulationSpawnProcessor>(*pop_config, field_op), self);
     }
 }
 

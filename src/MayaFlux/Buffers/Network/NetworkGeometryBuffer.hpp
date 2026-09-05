@@ -299,15 +299,18 @@ private:
         float over_allocate_factor);
 
     /**
-     * @brief Find a ParticleFieldOperator in the network's operator chain and
-     *        wire VertexFieldProcessor plus whichever spatial-hash / claim /
+     * @brief Find the first GpuFieldOperator in the network's operator chain
+     *        and wire its compute stages: a VertexFieldProcessor when it
+     *        carries bindings, plus whichever spatial-hash / claim / density /
      *        population stages its SpatialFieldConfig calls for.
      *
      * No-op unless the network is one of the field-compatible types
-     * (ParticleNetwork, PointCloudNetwork). Called at the end of
-     * setup_processors. Implemented in NetworkGeometryFieldWiring.cpp so the
-     * compute-processor headers it needs stay out of the base translation
-     * unit.
+     * (ParticleNetwork, PointCloudNetwork); mesh and instance buffers never
+     * reach the scan. Called at the end of setup_processors, so a scene that
+     * puts a GpuFieldOperator in the chain needs no hand-wired
+     * VertexFieldProcessor and must not add one itself. Implemented in
+     * NetworkGeometryFieldWiring.cpp to keep the compute-processor headers out
+     * of the base translation unit.
      */
     void wire_field_operators();
 };

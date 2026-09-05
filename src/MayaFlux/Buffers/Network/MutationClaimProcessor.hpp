@@ -122,7 +122,7 @@ private:
  * growth rate stays proportional to mass (ordinary exponential growth)
  * rather than to mass cubed (a finite-time singularity): see
  * SpatialFieldConfig::capture_growth's own doc. Live-tunable via
- * ParticleFieldOperator::set_capture_growth: checked in on_before_execute
+ * GpuFieldOperator::set_capture_growth: checked in on_before_execute
  * the same way ClaimSwallowProcessor checks its own tuning values, so a
  * change takes effect on this processor's next dispatch with no rebuild.
  *
@@ -152,7 +152,7 @@ public:
      */
     ClaimProcessor(
         const MutationConfig& config,
-        std::shared_ptr<Nodes::Network::ParticleFieldOperator> particle_op,
+        std::shared_ptr<Nodes::Network::GpuFieldOperator> particle_op,
         bool gate_alive = false);
 
 protected:
@@ -181,7 +181,7 @@ private:
     };
 
     Params m_params;
-    std::shared_ptr<Nodes::Network::ParticleFieldOperator> m_particle_op;
+    std::shared_ptr<Nodes::Network::GpuFieldOperator> m_particle_op;
     uint64_t m_built_revision;
 };
 
@@ -296,7 +296,7 @@ public:
         const MutationConfig& config,
         Nodes::Network::PhysicsOperator* physics_op,
         uint32_t live_count = 0,
-        const std::shared_ptr<Nodes::Network::ParticleFieldOperator>& particle_op = nullptr);
+        const std::shared_ptr<Nodes::Network::GpuFieldOperator>& particle_op = nullptr);
 
 protected:
     void on_buffer_ready() override;
@@ -363,10 +363,10 @@ private:
  * Must run after ClaimAccumulateProcessor.
  *
  * Reads swallow_base_size/swallow_growth_rate/swallow_max_size/
- * swallow_dim_factor from the owning ParticleFieldOperator fresh whenever
+ * swallow_dim_factor from the owning GpuFieldOperator fresh whenever
  * its revision() changes (checked in on_before_execute, the same hook
  * VertexFieldProcessor::sync_revision() uses), so the matching setters on
- * ParticleFieldOperator take effect on this processor's next dispatch with
+ * GpuFieldOperator take effect on this processor's next dispatch with
  * no rebuild.
  */
 class MAYAFLUX_API ClaimSwallowProcessor : public NetworkStateFieldProcessor {
@@ -382,7 +382,7 @@ public:
      */
     ClaimSwallowProcessor(
         const MutationConfig& config,
-        std::shared_ptr<Nodes::Network::ParticleFieldOperator> particle_op);
+        std::shared_ptr<Nodes::Network::GpuFieldOperator> particle_op);
 
 protected:
     void on_buffer_ready() override;
@@ -405,7 +405,7 @@ private:
     };
 
     Params m_params;
-    std::shared_ptr<Nodes::Network::ParticleFieldOperator> m_particle_op;
+    std::shared_ptr<Nodes::Network::GpuFieldOperator> m_particle_op;
     uint64_t m_built_revision;
 };
 

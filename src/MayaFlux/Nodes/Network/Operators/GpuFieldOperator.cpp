@@ -119,8 +119,9 @@ namespace {
 
 } // namespace
 
-GpuFieldOperator::GpuFieldOperator(Kakshya::VertexLayout layout)
+GpuFieldOperator::GpuFieldOperator(Kakshya::VertexLayout layout, SpatialFieldConfig config)
     : m_layout(std::move(layout))
+    , m_field_config(config)
 {
     if (m_layout.stride_bytes == 0 || m_layout.stride_bytes % 4 != 0) {
         MF_ERROR(Journal::Component::Nodes, Journal::Context::NodeProcessing,
@@ -133,6 +134,54 @@ GpuFieldOperator::GpuFieldOperator(Kakshya::VertexLayout layout)
     }
 
     m_stride_words = m_layout.stride_bytes / 4;
+}
+
+void GpuFieldOperator::set_density_saturation_count(float count)
+{
+    m_field_config.density_saturation_count = count;
+    invalidate();
+}
+
+void GpuFieldOperator::set_capture_growth(float growth)
+{
+    m_field_config.capture_growth = growth;
+    invalidate();
+}
+
+void GpuFieldOperator::set_swallow_base_size(float size)
+{
+    m_field_config.swallow_base_size = size;
+    invalidate();
+}
+
+void GpuFieldOperator::set_swallow_growth_rate(float rate)
+{
+    m_field_config.swallow_growth_rate = rate;
+    invalidate();
+}
+
+void GpuFieldOperator::set_swallow_max_size(float size)
+{
+    m_field_config.swallow_max_size = size;
+    invalidate();
+}
+
+void GpuFieldOperator::set_swallow_dim_factor(float factor)
+{
+    m_field_config.swallow_dim_factor = factor;
+    invalidate();
+}
+
+void GpuFieldOperator::set_cross_cluster(bool enabled)
+{
+    m_field_config.cross_cluster = enabled;
+    invalidate();
+}
+
+void GpuFieldOperator::set_spawn_density_threshold(float threshold)
+{
+    m_field_config.spawn_density_threshold = threshold;
+    invalidate();
 }
 
 std::optional<std::pair<uint32_t, uint32_t>>
