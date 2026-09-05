@@ -142,10 +142,18 @@ public:
      * @param config Grid/particle parameters shared with the claim stages.
      * @param particle_op Owning operator; only its capture_growth tuning
      *        value and revision() are read, live, in on_before_execute.
+     * @param gate_alive When true, binds mutation_alive and refuses to let
+     *        a dead particle claim anything: a candidate j can never be
+     *        dead (HashCountProcessor/HashScatterProcessor already exclude
+     *        dead particles from every cell), but i itself still runs
+     *        unless this guard skips it, and a dead claimant absorbing a
+     *        living particle would be a scavenging corpse, not a fixed
+     *        population. False (the default) emits exactly today's shader.
      */
     ClaimProcessor(
         const MutationConfig& config,
-        std::shared_ptr<Nodes::Network::ParticleFieldOperator> particle_op);
+        std::shared_ptr<Nodes::Network::ParticleFieldOperator> particle_op,
+        bool gate_alive = false);
 
 protected:
     void on_buffer_ready() override;
@@ -264,10 +272,31 @@ public:
      *        claimed_by via sync_bonds_from_claims when claim_events is
      *        nonzero, clear_bonds() otherwise. May be null to disable the
      *        readback entirely (GPU claim/swallow still runs unaffected).
+     * @param live_count Nonzero enables population dynamics: binds
+     *        mutation_alive and sets it to 0 for any particle absorbed this
+     *        cycle (destroy-on-absorption), and the CPU-facing side of this
+     *        processor is truncated to exactly this many entries, both on
+     *        the claimed_by readback handed to physics_op and on the
+     *        accreted_mass upload (padded with 0 beyond live_count). This is
+     *        the one enforcement point for ParticleFieldConfig::reserve_fraction's
+     *        decoupling: PhysicsOperator never learns config.hash.particle_count
+     *        exceeds its own simulated particle count, regardless of how much
+     *        reserve capacity the GPU has spawned into. Also binds vertices
+     *        and zeros a destroyed particle's size, every cycle for as long
+     *        as it stays dead: nothing else keeps it invisible against
+     *        NetworkGeometryProcessor's own unconditional re-upload of
+     *        PhysicsOperator's CPU-simulated (size-unaware) data each cycle.
+     *        0 (the default) disables all of this and matches today's
+     *        behaviour exactly, using config.hash.particle_count throughout.
+     * @param particle_op Required (must be non-null) when live_count is
+     *        nonzero: supplies the vertex layout's size attribute offset.
+     *        Ignored when live_count is 0.
      */
     ClaimAccumulateProcessor(
         const MutationConfig& config,
-        Nodes::Network::PhysicsOperator* physics_op);
+        Nodes::Network::PhysicsOperator* physics_op,
+        uint32_t live_count = 0,
+        const std::shared_ptr<Nodes::Network::ParticleFieldOperator>& particle_op = nullptr);
 
 protected:
     void on_buffer_ready() override;
@@ -278,11 +307,15 @@ protected:
 private:
     struct Params {
         uint32_t particle_count;
+        uint32_t stride_words;
+        uint32_t size_offset;
     };
 
     Params m_params;
     Nodes::Network::PhysicsOperator* m_physics_op;
+    uint32_t m_live_count;
     std::vector<uint32_t> m_claimed_by_readback;
+    std::vector<float> m_accreted_mass_padded;
     std::shared_ptr<VKBuffer> m_readback_staging;
     std::shared_ptr<VKBuffer> m_upload_staging;
 };

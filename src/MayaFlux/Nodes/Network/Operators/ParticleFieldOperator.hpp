@@ -141,6 +141,39 @@ struct ParticleFieldConfig {
      * came from. Live-tunable via set_cross_cluster().
      */
     bool cross_cluster { false };
+
+    /**
+     * Fraction of extra reserve capacity ParticleGeometryBuffer allocates
+     * beyond absorb_radius's own live particle count, for PopulationSpawnProcessor
+     * to claim: reserve_count = ceil(live_count * reserve_fraction), and the
+     * vertex buffer plus every hash/claim/mutation state field is sized to
+     * live_count + reserve_count from the moment this operator is wired,
+     * never resized again afterward. 0 (the default) allocates no reserve
+     * and wires none of PopulationInitProcessor/PopulationSpawnProcessor/the
+     * alive-gating on HashCountProcessor/HashScatterProcessor/ClaimProcessor/
+     * ClaimAccumulateProcessor at all -- population dynamics is entirely
+     * opt-in and costs nothing unset.
+     *
+     * Requires absorb_radius to also be set: destruction is destroy-on-
+     * absorption, reusing mutation_claimed_by, so there is nothing for this
+     * to destroy without claims running. A nonzero reserve_fraction with no
+     * absorb_radius is treated as unset and logged.
+     *
+     * What spawns and dies here is deliberately not reflected to
+     * PhysicsOperator: see PopulationConfig's own doc for the full
+     * reasoning. Structural: fixed at construction, like absorb_radius
+     * itself, since it changes which processors get built.
+     */
+    float reserve_fraction { 0.0F };
+
+    /**
+     * PopulationSpawnProcessor: real neighbour count (same 27-cell query
+     * HashDensityColorProcessor performs) a live particle must clear before
+     * it spawns a copy of itself into a fresh reserve slot. Only consulted
+     * when reserve_fraction enables population dynamics at all.
+     * Live-tunable via set_spawn_density_threshold().
+     */
+    float spawn_density_threshold { 30.0F };
 };
 
 /**
@@ -232,6 +265,9 @@ public:
 
     /** @brief Live-update whether claims and density see across cluster boundaries. */
     void set_cross_cluster(bool enabled);
+
+    /** @brief Live-update PopulationSpawnProcessor's spawn density threshold. */
+    void set_spawn_density_threshold(float threshold);
 
     [[nodiscard]] std::string_view get_type_name() const override
     {

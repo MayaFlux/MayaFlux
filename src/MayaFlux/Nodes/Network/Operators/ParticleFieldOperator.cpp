@@ -50,4 +50,10 @@ void ParticleFieldOperator::set_cross_cluster(bool enabled)
     invalidate();
 }
 
+void ParticleFieldOperator::set_spawn_density_threshold(float threshold)
+{
+    m_particle_config.spawn_density_threshold = threshold;
+    invalidate();
+}
+
 } // namespace MayaFlux::Nodes::Network

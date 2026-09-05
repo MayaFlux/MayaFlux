@@ -1,10 +1,12 @@
 #include "ParticleGeometryBuffer.hpp"
 
 #include "MutationClaimProcessor.hpp"
+#include "PopulationProcessor.hpp"
 #include "SpatialHashProcessor.hpp"
 
 #include "MayaFlux/Buffers/BufferProcessingChain.hpp"
 #include "MayaFlux/Buffers/Shaders/VertexFieldProcessor.hpp"
+#include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
 
 #include "MayaFlux/Nodes/Network/NodeNetwork.hpp"
 #include "MayaFlux/Nodes/Network/Operators/OperatorChain.hpp"
@@ -75,13 +77,55 @@ void ParticleGeometryBuffer::wire_particle_field_operator(
         return;
     }
 
+    const uint32_t live_count = hash_config->particle_count;
+    bool reserve_enabled = pconfig.reserve_fraction > 0.0F;
+
+    if (reserve_enabled && !pconfig.absorb_radius.has_value()) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::Init,
+            "ParticleGeometryBuffer: reserve_fraction requires absorb_radius (destroy-on-"
+            "absorption has nothing to destroy without claims); reserve capacity disabled");
+        reserve_enabled = false;
+    }
+
+    uint32_t total_count = live_count;
+    if (reserve_enabled) {
+        const auto reserve_count = static_cast<uint32_t>(
+            std::ceil(static_cast<float>(live_count) * pconfig.reserve_fraction));
+        total_count = live_count + reserve_count;
+
+        const size_t needed_bytes = static_cast<size_t>(total_count) * hash_config->stride_words * 4;
+        self->resize(needed_bytes, true);
+
+        hash_config->particle_count = total_count;
+    }
+
     hash_config->declare_fields(self);
-    self->ensure_cluster_ids();
+
+    if (total_count != live_count) {
+        std::vector<uint32_t> cluster_ids(total_count, 0U);
+        if (physics) {
+            auto live_ids = physics->build_cluster_ids();
+            std::copy_n(live_ids.begin(),
+                std::min<size_t>(live_ids.size(), live_count), cluster_ids.begin());
+        }
+        std::shared_ptr<VKBuffer> cluster_staging;
+        upload_back_buffer(self->write_state_slot("hash_cluster_id"), cluster_ids.data(),
+            cluster_ids.size() * sizeof(uint32_t), cluster_staging);
+    } else {
+        self->ensure_cluster_ids();
+    }
+
+    std::optional<PopulationConfig> pop_config;
+    if (reserve_enabled) {
+        pop_config = PopulationConfig { .hash = *hash_config, .live_count = live_count };
+        pop_config->declare_fields(self);
+        chain->add_processor(std::make_shared<PopulationInitProcessor>(*pop_config), self);
+    }
 
     chain->add_processor(std::make_shared<HashClearProcessor>(*hash_config), self);
-    chain->add_processor(std::make_shared<HashCountProcessor>(*hash_config), self);
+    chain->add_processor(std::make_shared<HashCountProcessor>(*hash_config, reserve_enabled), self);
     chain->add_processor(std::make_shared<HashScanProcessor>(*hash_config), self);
-    chain->add_processor(std::make_shared<HashScatterProcessor>(*hash_config), self);
+    chain->add_processor(std::make_shared<HashScatterProcessor>(*hash_config, reserve_enabled), self);
 
     if (pconfig.density_color) {
         chain->add_processor(
@@ -96,12 +140,21 @@ void ParticleGeometryBuffer::wire_particle_field_operator(
     claim_config.declare_fields(self);
 
     chain->add_processor(std::make_shared<ClaimInitProcessor>(claim_config), self);
-    chain->add_processor(std::make_shared<ClaimProcessor>(claim_config, particle_op), self);
+    chain->add_processor(
+        std::make_shared<ClaimProcessor>(claim_config, particle_op, reserve_enabled), self);
     chain->add_processor(std::make_shared<ClaimFlattenProcessor>(claim_config), self);
-    chain->add_processor(std::make_shared<ClaimAccumulateProcessor>(claim_config, physics), self);
+    chain->add_processor(
+        std::make_shared<ClaimAccumulateProcessor>(
+            claim_config, physics, reserve_enabled ? live_count : 0U, particle_op),
+        self);
 
     if (pconfig.cosmetic_swallow) {
         chain->add_processor(std::make_shared<ClaimSwallowProcessor>(claim_config, particle_op), self);
+    }
+
+    if (pop_config.has_value()) {
+        chain->add_processor(
+            std::make_shared<PopulationSpawnProcessor>(*pop_config, particle_op), self);
     }
 }
 

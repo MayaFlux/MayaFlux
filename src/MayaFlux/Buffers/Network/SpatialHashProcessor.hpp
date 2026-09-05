@@ -259,7 +259,18 @@ private:
  */
 class MAYAFLUX_API HashCountProcessor : public NetworkStateFieldProcessor {
 public:
-    explicit HashCountProcessor(const SpatialHashConfig& config);
+    /**
+     * @param gate_alive When true, binds mutation_alive and skips a
+     *        particle before counting it into any cell, so a population
+     *        with reserve capacity (see ParticleFieldConfig::reserve_fraction)
+     *        never lets a dead or not-yet-spawned slot occupy a cell. Must
+     *        agree with whatever HashScatterProcessor in the same chain
+     *        uses: count and scatter disagreeing about which particles
+     *        exist corrupts every cell's prefix-sum offset, not just the
+     *        affected particle's own. False (the default) emits exactly
+     *        today's shader, no new binding, no new branch.
+     */
+    explicit HashCountProcessor(const SpatialHashConfig& config, bool gate_alive = false);
 
 protected:
     void on_buffer_ready() override;
@@ -322,7 +333,11 @@ private:
  */
 class MAYAFLUX_API HashScatterProcessor : public NetworkStateFieldProcessor {
 public:
-    explicit HashScatterProcessor(const SpatialHashConfig& config);
+    /**
+     * @param gate_alive See HashCountProcessor's own doc: must agree with
+     *        whatever HashCountProcessor in the same chain uses.
+     */
+    explicit HashScatterProcessor(const SpatialHashConfig& config, bool gate_alive = false);
 
 protected:
     void on_buffer_ready() override;

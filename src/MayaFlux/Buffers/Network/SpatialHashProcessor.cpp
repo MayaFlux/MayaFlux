@@ -265,12 +265,18 @@ void HashClearProcessor::on_buffer_ready()
 
 namespace {
 
-    ShaderSpec build_count_spec()
+    ShaderSpec build_count_spec(bool gate_alive)
     {
         ShaderSpec::Assemble assemble;
         assemble
             .ssbo("vertices", BindingDirection::Input, Kakshya::GpuDataFormat::FLOAT32)
-            .ssbo("cell_count", BindingDirection::InOut, Kakshya::GpuDataFormat::UINT32)
+            .ssbo("cell_count", BindingDirection::InOut, Kakshya::GpuDataFormat::UINT32);
+
+        if (gate_alive) {
+            assemble.ssbo("alive", BindingDirection::Input, Kakshya::GpuDataFormat::UINT32);
+        }
+
+        assemble
             .pc("particle_count", Kakshya::GpuDataFormat::UINT32)
             .pc("stride_words", Kakshya::GpuDataFormat::UINT32)
             .pc("position_offset", Kakshya::GpuDataFormat::UINT32)
@@ -287,6 +293,9 @@ namespace {
 
         std::string body;
         body += "    if (i >= particle_count) { return; }\n";
+        if (gate_alive) {
+            body += "    if (alive[i] == 0u) { return; }\n";
+        }
         body += "    uint b = i * stride_words;\n";
         body += "    vec3 p = vec3(vertices[b + position_offset], "
                  "vertices[b + position_offset + 1u], vertices[b + position_offset + 2u]);\n";
@@ -295,24 +304,39 @@ namespace {
         body += "    uint cell = cell_of(p, gmin, cell_size, dims);\n";
         body += "    atomicAdd(cell_count[cell], 1u);\n";
 
+        std::vector<std::string> param_names { "vertices", "cell_count" };
+        if (gate_alive) {
+            param_names.emplace_back("alive");
+        }
+        param_names.insert(param_names.end(),
+            { "particle_count", "stride_words", "position_offset", "grid_min_x", "grid_min_y",
+                "grid_min_z", "cell_size", "dim_x", "dim_y", "dim_z", "i" });
+
         assemble.kernel(KernelSource {
             .raw = {},
-            .param_names = { "vertices", "cell_count", "particle_count", "stride_words",
-                "position_offset", "grid_min_x", "grid_min_y", "grid_min_z", "cell_size",
-                "dim_x", "dim_y", "dim_z", "i" },
+            .param_names = std::move(param_names),
             .body = std::move(body),
         });
 
         return assemble.build();
     }
 
+    std::vector<NetworkStateFieldProcessor::FieldBinding> count_bindings(bool gate_alive)
+    {
+        std::vector<NetworkStateFieldProcessor::FieldBinding> bindings {
+            { .name = "vertices", .binding = 0, .field = {} },
+            { .name = "cell_count", .binding = 1, .field = "hash_cell_count" },
+        };
+        if (gate_alive) {
+            bindings.push_back({ .name = "alive", .binding = 2, .field = "mutation_alive" });
+        }
+        return bindings;
+    }
+
 } // namespace
 
-HashCountProcessor::HashCountProcessor(const SpatialHashConfig& config)
-    : NetworkStateFieldProcessor(
-          { FieldBinding { .name = "vertices", .binding = 0, .field = {} },
-              FieldBinding { .name = "cell_count", .binding = 1, .field = "hash_cell_count" } },
-          build_count_spec())
+HashCountProcessor::HashCountProcessor(const SpatialHashConfig& config, bool gate_alive)
+    : NetworkStateFieldProcessor(count_bindings(gate_alive), build_count_spec(gate_alive))
     , m_params {
         .particle_count = config.particle_count,
         .stride_words = config.stride_words,
@@ -392,13 +416,19 @@ void HashScanProcessor::on_buffer_ready()
 
 namespace {
 
-    ShaderSpec build_scatter_spec()
+    ShaderSpec build_scatter_spec(bool gate_alive)
     {
         ShaderSpec::Assemble assemble;
         assemble
             .ssbo("vertices", BindingDirection::Input, Kakshya::GpuDataFormat::FLOAT32)
             .ssbo("cell_cursor", BindingDirection::InOut, Kakshya::GpuDataFormat::UINT32)
-            .ssbo("particle_index", BindingDirection::Output, Kakshya::GpuDataFormat::UINT32)
+            .ssbo("particle_index", BindingDirection::Output, Kakshya::GpuDataFormat::UINT32);
+
+        if (gate_alive) {
+            assemble.ssbo("alive", BindingDirection::Input, Kakshya::GpuDataFormat::UINT32);
+        }
+
+        assemble
             .pc("particle_count", Kakshya::GpuDataFormat::UINT32)
             .pc("stride_words", Kakshya::GpuDataFormat::UINT32)
             .pc("position_offset", Kakshya::GpuDataFormat::UINT32)
@@ -415,6 +445,9 @@ namespace {
 
         std::string body;
         body += "    if (i >= particle_count) { return; }\n";
+        if (gate_alive) {
+            body += "    if (alive[i] == 0u) { return; }\n";
+        }
         body += "    uint b = i * stride_words;\n";
         body += "    vec3 p = vec3(vertices[b + position_offset], "
                  "vertices[b + position_offset + 1u], vertices[b + position_offset + 2u]);\n";
@@ -424,25 +457,40 @@ namespace {
         body += "    uint slot = atomicAdd(cell_cursor[cell], 1u);\n";
         body += "    particle_index[slot] = i;\n";
 
+        std::vector<std::string> param_names { "vertices", "cell_cursor", "particle_index" };
+        if (gate_alive) {
+            param_names.emplace_back("alive");
+        }
+        param_names.insert(param_names.end(),
+            { "particle_count", "stride_words", "position_offset", "grid_min_x", "grid_min_y",
+                "grid_min_z", "cell_size", "dim_x", "dim_y", "dim_z", "i" });
+
         assemble.kernel(KernelSource {
             .raw = {},
-            .param_names = { "vertices", "cell_cursor", "particle_index", "particle_count",
-                "stride_words", "position_offset", "grid_min_x", "grid_min_y", "grid_min_z",
-                "cell_size", "dim_x", "dim_y", "dim_z", "i" },
+            .param_names = std::move(param_names),
             .body = std::move(body),
         });
 
         return assemble.build();
     }
 
+    std::vector<NetworkStateFieldProcessor::FieldBinding> scatter_bindings(bool gate_alive)
+    {
+        std::vector<NetworkStateFieldProcessor::FieldBinding> bindings {
+            { .name = "vertices", .binding = 0, .field = {} },
+            { .name = "cell_cursor", .binding = 1, .field = "hash_cell_cursor" },
+            { .name = "particle_index", .binding = 2, .field = "hash_particle_index" },
+        };
+        if (gate_alive) {
+            bindings.push_back({ .name = "alive", .binding = 3, .field = "mutation_alive" });
+        }
+        return bindings;
+    }
+
 } // namespace
 
-HashScatterProcessor::HashScatterProcessor(const SpatialHashConfig& config)
-    : NetworkStateFieldProcessor(
-          { FieldBinding { .name = "vertices", .binding = 0, .field = {} },
-              FieldBinding { .name = "cell_cursor", .binding = 1, .field = "hash_cell_cursor" },
-              FieldBinding { .name = "particle_index", .binding = 2, .field = "hash_particle_index" } },
-          build_scatter_spec())
+HashScatterProcessor::HashScatterProcessor(const SpatialHashConfig& config, bool gate_alive)
+    : NetworkStateFieldProcessor(scatter_bindings(gate_alive), build_scatter_spec(gate_alive))
     , m_params {
         .particle_count = config.particle_count,
         .stride_words = config.stride_words,

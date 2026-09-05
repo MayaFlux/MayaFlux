@@ -119,7 +119,7 @@ void ClaimInitProcessor::on_buffer_ready()
 
 namespace {
 
-    ShaderSpec build_claim_spec()
+    ShaderSpec build_claim_spec(bool gate_alive)
     {
         ShaderSpec::Assemble assemble;
         assemble
@@ -130,7 +130,13 @@ namespace {
             .ssbo("claimed_by", BindingDirection::InOut, Kakshya::GpuDataFormat::UINT32)
             .ssbo("claim_events", BindingDirection::InOut, Kakshya::GpuDataFormat::UINT32)
             .ssbo("accreted_mass", BindingDirection::Input, Kakshya::GpuDataFormat::FLOAT32)
-            .ssbo("cluster_id", BindingDirection::Input, Kakshya::GpuDataFormat::UINT32)
+            .ssbo("cluster_id", BindingDirection::Input, Kakshya::GpuDataFormat::UINT32);
+
+        if (gate_alive) {
+            assemble.ssbo("alive", BindingDirection::Input, Kakshya::GpuDataFormat::UINT32);
+        }
+
+        assemble
             .pc("particle_count", Kakshya::GpuDataFormat::UINT32)
             .pc("stride_words", Kakshya::GpuDataFormat::UINT32)
             .pc("position_offset", Kakshya::GpuDataFormat::UINT32)
@@ -148,6 +154,9 @@ namespace {
 
         std::string body;
         body += "    if (i >= particle_count) { return; }\n";
+        if (gate_alive) {
+            body += "    if (alive[i] == 0u) { return; }\n";
+        }
         body += "    uint b = i * stride_words;\n";
         body += "    vec3 p = vec3(vertices[b + position_offset], "
                  "vertices[b + position_offset + 1u], vertices[b + position_offset + 2u]);\n";
@@ -187,34 +196,52 @@ namespace {
         body += "        }\n";
         body += "    }\n";
 
+        std::vector<std::string> param_names {
+            "vertices", "cell_start", "cell_count", "particle_index", "claimed_by",
+            "claim_events", "accreted_mass", "cluster_id"
+        };
+        if (gate_alive) {
+            param_names.emplace_back("alive");
+        }
+        param_names.insert(param_names.end(),
+            { "particle_count", "stride_words", "position_offset", "absorb_radius", "capture_growth",
+                "grid_min_x", "grid_min_y", "grid_min_z", "cell_size", "dim_x", "dim_y", "dim_z",
+                "cross_cluster", "i" });
+
         assemble.kernel(KernelSource {
             .raw = {},
-            .param_names = { "vertices", "cell_start", "cell_count", "particle_index", "claimed_by",
-                "claim_events", "accreted_mass", "cluster_id", "particle_count", "stride_words",
-                "position_offset", "absorb_radius", "capture_growth",
-                "grid_min_x", "grid_min_y", "grid_min_z", "cell_size", "dim_x", "dim_y", "dim_z",
-                "cross_cluster", "i" },
+            .param_names = std::move(param_names),
             .body = std::move(body),
         });
 
         return assemble.build();
     }
 
+    std::vector<NetworkStateFieldProcessor::FieldBinding> claim_bindings(bool gate_alive)
+    {
+        std::vector<NetworkStateFieldProcessor::FieldBinding> bindings {
+            { .name = "vertices", .binding = 0, .field = {} },
+            { .name = "cell_start", .binding = 1, .field = "hash_cell_start" },
+            { .name = "cell_count", .binding = 2, .field = "hash_cell_count" },
+            { .name = "particle_index", .binding = 3, .field = "hash_particle_index" },
+            { .name = "claimed_by", .binding = 4, .field = "mutation_claimed_by" },
+            { .name = "claim_events", .binding = 5, .field = "mutation_claim_events" },
+            { .name = "accreted_mass", .binding = 6, .field = "mutation_accreted_mass" },
+            { .name = "cluster_id", .binding = 7, .field = "hash_cluster_id" },
+        };
+        if (gate_alive) {
+            bindings.push_back({ .name = "alive", .binding = 8, .field = "mutation_alive" });
+        }
+        return bindings;
+    }
+
 } // namespace
 
 ClaimProcessor::ClaimProcessor(
     const MutationConfig& config,
-    std::shared_ptr<Nodes::Network::ParticleFieldOperator> particle_op)
-    : NetworkStateFieldProcessor(
-          { FieldBinding { .name = "vertices", .binding = 0, .field = {} },
-              FieldBinding { .name = "cell_start", .binding = 1, .field = "hash_cell_start" },
-              FieldBinding { .name = "cell_count", .binding = 2, .field = "hash_cell_count" },
-              FieldBinding { .name = "particle_index", .binding = 3, .field = "hash_particle_index" },
-              FieldBinding { .name = "claimed_by", .binding = 4, .field = "mutation_claimed_by" },
-              FieldBinding { .name = "claim_events", .binding = 5, .field = "mutation_claim_events" },
-              FieldBinding { .name = "accreted_mass", .binding = 6, .field = "mutation_accreted_mass" },
-              FieldBinding { .name = "cluster_id", .binding = 7, .field = "hash_cluster_id" } },
-          build_claim_spec())
+    std::shared_ptr<Nodes::Network::ParticleFieldOperator> particle_op,
+    bool gate_alive)
+    : NetworkStateFieldProcessor(claim_bindings(gate_alive), build_claim_spec(gate_alive))
     , m_params {
         .particle_count = config.hash.particle_count,
         .stride_words = config.hash.stride_words,
@@ -339,42 +366,90 @@ void ClaimFlattenProcessor::on_iteration_barrier(
 
 namespace {
 
-    ShaderSpec build_claim_accumulate_spec()
+    ShaderSpec build_claim_accumulate_spec(bool gate_alive)
     {
         ShaderSpec::Assemble assemble;
         assemble
             .ssbo("claimed_by", BindingDirection::Input, Kakshya::GpuDataFormat::UINT32)
-            .ssbo("swallow_count", BindingDirection::InOut, Kakshya::GpuDataFormat::UINT32)
-            .pc("particle_count", Kakshya::GpuDataFormat::UINT32)
+            .ssbo("swallow_count", BindingDirection::InOut, Kakshya::GpuDataFormat::UINT32);
+
+        if (gate_alive) {
+            assemble
+                .ssbo("alive", BindingDirection::InOut, Kakshya::GpuDataFormat::UINT32)
+                .ssbo("vertices", BindingDirection::InOut, Kakshya::GpuDataFormat::FLOAT32);
+        }
+
+        assemble.pc("particle_count", Kakshya::GpuDataFormat::UINT32)
+            .pc("stride_words", Kakshya::GpuDataFormat::UINT32)
+            .pc("size_offset", Kakshya::GpuDataFormat::UINT32)
             .workgroup(256);
 
         std::string body;
         body += "    if (i >= particle_count) { return; }\n";
+        if (gate_alive) {
+            body += "    if (alive[i] == 0u) {\n";
+            body += "        vertices[i * stride_words + size_offset] = 0.0;\n";
+            body += "        return;\n";
+            body += "    }\n";
+        }
         body += "    uint root = claimed_by[i];\n";
         body += "    if (root != i) {\n";
         body += "        atomicAdd(swallow_count[root], 1u);\n";
+        if (gate_alive) {
+            body += "        alive[i] = 0u;\n";
+            body += "        vertices[i * stride_words + size_offset] = 0.0;\n";
+        }
         body += "    }\n";
+
+        std::vector<std::string> param_names { "claimed_by", "swallow_count" };
+        if (gate_alive) {
+            param_names.emplace_back("alive");
+            param_names.emplace_back("vertices");
+        }
+        param_names.emplace_back("particle_count");
+        param_names.emplace_back("stride_words");
+        param_names.emplace_back("size_offset");
+        param_names.emplace_back("i");
 
         assemble.kernel(KernelSource {
             .raw = {},
-            .param_names = { "claimed_by", "swallow_count", "particle_count", "i" },
+            .param_names = std::move(param_names),
             .body = std::move(body),
         });
 
         return assemble.build();
     }
 
+    std::vector<NetworkStateFieldProcessor::FieldBinding> claim_accumulate_bindings(bool gate_alive)
+    {
+        std::vector<NetworkStateFieldProcessor::FieldBinding> bindings {
+            { .name = "claimed_by", .binding = 0, .field = "mutation_claimed_by" },
+            { .name = "swallow_count", .binding = 1, .field = "mutation_swallow_count" },
+        };
+        if (gate_alive) {
+            bindings.push_back({ .name = "alive", .binding = 2, .field = "mutation_alive" });
+            bindings.push_back({ .name = "vertices", .binding = 3, .field = {} });
+        }
+        return bindings;
+    }
+
 } // namespace
 
 ClaimAccumulateProcessor::ClaimAccumulateProcessor(
     const MutationConfig& config,
-    Nodes::Network::PhysicsOperator* physics_op)
+    Nodes::Network::PhysicsOperator* physics_op,
+    uint32_t live_count,
+    const std::shared_ptr<Nodes::Network::ParticleFieldOperator>& particle_op)
     : NetworkStateFieldProcessor(
-          { FieldBinding { .name = "claimed_by", .binding = 0, .field = "mutation_claimed_by" },
-              FieldBinding { .name = "swallow_count", .binding = 1, .field = "mutation_swallow_count" } },
-          build_claim_accumulate_spec())
-    , m_params { .particle_count = config.hash.particle_count }
+          claim_accumulate_bindings(live_count != 0),
+          build_claim_accumulate_spec(live_count != 0))
+    , m_params {
+        .particle_count = config.hash.particle_count,
+        .stride_words = config.hash.stride_words,
+        .size_offset = live_count != 0 ? require_color_and_size_offset(particle_op).second : 0U,
+    }
     , m_physics_op(physics_op)
+    , m_live_count(live_count != 0 ? live_count : config.hash.particle_count)
 {
 }
 
@@ -407,16 +482,29 @@ void ClaimAccumulateProcessor::processing_function(const std::shared_ptr<Buffer>
             m_claimed_by_readback.size() * sizeof(uint32_t),
             m_readback_staging);
 
-        m_physics_op->sync_bonds_from_claims(m_claimed_by_readback);
+        m_physics_op->sync_bonds_from_claims(
+            std::span<const uint32_t>(m_claimed_by_readback).first(m_live_count));
     }
 
     auto accreted_mass = m_physics_op->get_accreted_mass_span();
     if (!accreted_mass.empty()) {
-        upload_back_buffer(
-            network_buffer->write_state_slot("mutation_accreted_mass"),
-            accreted_mass.data(),
-            accreted_mass.size() * sizeof(float),
-            m_upload_staging);
+        if (m_live_count == m_params.particle_count) {
+            upload_back_buffer(
+                network_buffer->write_state_slot("mutation_accreted_mass"),
+                accreted_mass.data(),
+                accreted_mass.size() * sizeof(float),
+                m_upload_staging);
+        } else {
+            m_accreted_mass_padded.assign(m_params.particle_count, 0.0F);
+            std::copy_n(accreted_mass.begin(),
+                std::min<size_t>(accreted_mass.size(), m_live_count),
+                m_accreted_mass_padded.begin());
+            upload_back_buffer(
+                network_buffer->write_state_slot("mutation_accreted_mass"),
+                m_accreted_mass_padded.data(),
+                m_accreted_mass_padded.size() * sizeof(float),
+                m_upload_staging);
+        }
     }
 }
 
