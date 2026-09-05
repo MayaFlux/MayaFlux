@@ -122,9 +122,9 @@ void NetworkGeometryBuffer::wire_field_operators()
         hash_config->particle_count = total_count;
     }
 
-    hash_config->declare_fields(self);
-
     if (total_count != live_count) {
+        hash_config->declare_fields(self);
+
         std::vector<uint32_t> cluster_ids(total_count, 0U);
         if (auto* graphics_op
             = dynamic_cast<Nodes::Network::GraphicsOperator*>(get_network()->get_operator())) {
@@ -137,6 +137,7 @@ void NetworkGeometryBuffer::wire_field_operators()
             cluster_ids.size() * sizeof(uint32_t), cluster_staging);
     } else {
         self->ensure_cluster_ids();
+        hash_config->declare_fields(self);
     }
 
     std::optional<PopulationConfig> pop_config;

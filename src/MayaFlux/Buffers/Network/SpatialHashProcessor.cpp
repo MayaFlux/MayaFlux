@@ -74,7 +74,7 @@ std::optional<SpatialHashConfig> SpatialHashConfig::from_network(
         .grid_min = bounds.min,
         .grid_dims = dims,
         .cell_size = cell_size,
-        .particle_count = static_cast<uint32_t>(graphics_op->get_point_count()),
+        .particle_count = static_cast<uint32_t>(graphics_op->get_vertex_count()),
         .stride_words = layout.stride_bytes / 4,
         .position_word_offset = *position_offset,
     };
@@ -87,7 +87,10 @@ void SpatialHashConfig::declare_fields(const std::shared_ptr<NetworkGeometryBuff
     buffer->declare_state("hash_cell_start", cells, sizeof(uint32_t), false);
     buffer->declare_state("hash_cell_cursor", cells, sizeof(uint32_t), false);
     buffer->declare_state("hash_particle_index", particle_count, sizeof(uint32_t), false);
-    buffer->declare_state("hash_cluster_id", particle_count, sizeof(uint32_t), false);
+
+    if (!buffer->has_state("hash_cluster_id")) {
+        buffer->declare_state("hash_cluster_id", particle_count, sizeof(uint32_t), false);
+    }
 }
 
 //=============================================================================
