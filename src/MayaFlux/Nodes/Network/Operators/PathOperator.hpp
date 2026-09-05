@@ -74,6 +74,24 @@ public:
     [[nodiscard]] size_t get_point_count() const override;
 
     /**
+     * @brief Overrides GraphicsOperator::build_cluster_ids() for real
+     *        multi-path scenes.
+     * @return get_vertex_count() elements: entry i is the index of the
+     *         path (in initialize_paths()/add_path() order) vertex i
+     *         belongs to, in the same concatenation order get_vertex_data()
+     *         itself produces. All zero when there is at most one path,
+     *         matching the base class default exactly.
+     *
+     * A single PathOperator holding several independent paths is the same
+     * "many complete vertex-array packs" shape PhysicsOperator's collections
+     * and TopologyOperator's topologies are. Overriding this is what lets a
+     * cluster-scoped GpuFieldOperator binding, or the spatial hash's own
+     * cluster guard, treat each path as its own population without a
+     * dynamic_cast anywhere in the buffer layer.
+     */
+    [[nodiscard]] std::vector<uint32_t> build_cluster_ids() const override;
+
+    /**
      * @brief Access a specific path node directly.
      * @param i Collection index.
      * @return Shared pointer to the PathGeneratorNode, or nullptr if out of range.

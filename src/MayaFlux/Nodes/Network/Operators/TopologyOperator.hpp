@@ -55,6 +55,25 @@ public:
     [[nodiscard]] size_t get_point_count() const override;
 
     /**
+     * @brief Overrides GraphicsOperator::build_cluster_ids() for real
+     *        multi-topology scenes.
+     * @return get_vertex_count() elements: entry i is the index of the
+     *         topology (in initialize_topologies()/add_topology() order)
+     *         vertex i belongs to, in the same concatenation order
+     *         get_vertex_data() itself produces. All zero when there is at
+     *         most one topology, matching the base class default exactly.
+     *
+     * A single TopologyOperator holding several independent topologies
+     * (initialize_topologies/add_topology, each its own connected MST/KNN
+     * graph) is the same "many complete vertex-array packs" shape
+     * PhysicsOperator's collections are. Overriding this is what lets a
+     * cluster-scoped GpuFieldOperator binding, or the spatial hash's own
+     * cluster guard, treat each topology as its own population without a
+     * dynamic_cast anywhere in the buffer layer.
+     */
+    [[nodiscard]] std::vector<uint32_t> build_cluster_ids() const override;
+
+    /**
      * @brief Access a specific topology node directly.
      * @param i Collection index.
      * @return Shared pointer to the TopologyGeneratorNode, or nullptr if out of range.

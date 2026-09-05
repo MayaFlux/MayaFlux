@@ -54,6 +54,12 @@ private:
      * @brief Derive grid/hash config and chain whichever stages the
      *        operator's ParticleFieldConfig calls for.
      * @param particle_op The operator found in the network's chain.
+     *
+     * Calls NetworkGeometryBuffer::ensure_cluster_ids(), which is a no-op if
+     * a cluster-scoped VertexFieldProcessor postprocessor, added earlier in
+     * this same function when the operator carries bindings, already
+     * declared and populated hash_cluster_id on its own attach ahead of the
+     * hash-wiring code below.
      */
     void wire_particle_field_operator(
         const std::shared_ptr<Nodes::Network::ParticleFieldOperator>& particle_op);

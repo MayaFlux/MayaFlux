@@ -229,18 +229,21 @@ void GpuFieldOperator::store(
     FieldTarget target,
     const Kinesis::FieldSource& source,
     uint32_t components,
-    bool temporal)
+    bool temporal,
+    std::optional<uint32_t> cluster)
 {
     m_bindings.push_back({
         .targets = target,
         .source = source,
         .components = components,
         .temporal = temporal,
+        .cluster = cluster,
     });
     invalidate();
 }
 
-void GpuFieldOperator::bind(FieldTarget target, const Kinesis::DualVectorField& field)
+void GpuFieldOperator::bind(FieldTarget target, const Kinesis::DualVectorField& field,
+    std::optional<uint32_t> cluster)
 {
     if (any_flag(target & ~Kinesis::k_vector_targets)) {
         MF_ERROR(Journal::Component::Nodes, Journal::Context::NodeProcessing,
@@ -254,11 +257,11 @@ void GpuFieldOperator::bind(FieldTarget target, const Kinesis::DualVectorField& 
     if (!accept(target, field.source, 3))
         return;
 
-    m_bindings.push_back({ .targets = target, .source = field.source, .components = 3 });
-    invalidate();
+    store(target, field.source, 3, false, cluster);
 }
 
-void GpuFieldOperator::bind(FieldTarget target, const Kinesis::DualSpatialField& field)
+void GpuFieldOperator::bind(FieldTarget target, const Kinesis::DualSpatialField& field,
+    std::optional<uint32_t> cluster)
 {
     if (target != FieldTarget::SCALAR) {
         MF_ERROR(Journal::Component::Nodes, Journal::Context::NodeProcessing,
@@ -271,11 +274,11 @@ void GpuFieldOperator::bind(FieldTarget target, const Kinesis::DualSpatialField&
     if (!accept(target, field.source, 1))
         return;
 
-    m_bindings.push_back({ .targets = target, .source = field.source, .components = 1 });
-    invalidate();
+    store(target, field.source, 1, false, cluster);
 }
 
-void GpuFieldOperator::bind(FieldTarget target, const Kinesis::DualUVField& field)
+void GpuFieldOperator::bind(FieldTarget target, const Kinesis::DualUVField& field,
+    std::optional<uint32_t> cluster)
 {
     if (target != FieldTarget::UV) {
         MF_ERROR(Journal::Component::Nodes, Journal::Context::NodeProcessing,
@@ -288,11 +291,11 @@ void GpuFieldOperator::bind(FieldTarget target, const Kinesis::DualUVField& fiel
     if (!accept(target, field.source, 2))
         return;
 
-    m_bindings.push_back({ .targets = target, .source = field.source, .components = 2 });
-    invalidate();
+    store(target, field.source, 2, false, cluster);
 }
 
-void GpuFieldOperator::bind(FieldTarget target, const Kinesis::TemporalVectorField& field)
+void GpuFieldOperator::bind(FieldTarget target, const Kinesis::TemporalVectorField& field,
+    std::optional<uint32_t> cluster)
 {
     if (any_flag(target & ~Kinesis::k_vector_targets)) {
         MF_ERROR(Journal::Component::Nodes, Journal::Context::NodeProcessing,
@@ -306,10 +309,11 @@ void GpuFieldOperator::bind(FieldTarget target, const Kinesis::TemporalVectorFie
     if (!accept(target, field.source, 3))
         return;
 
-    store(target, field.source, 3, true);
+    store(target, field.source, 3, true, cluster);
 }
 
-void GpuFieldOperator::bind(FieldTarget target, const Kinesis::TemporalSpatialField& field)
+void GpuFieldOperator::bind(FieldTarget target, const Kinesis::TemporalSpatialField& field,
+    std::optional<uint32_t> cluster)
 {
     if (target != FieldTarget::SCALAR) {
         MF_ERROR(Journal::Component::Nodes, Journal::Context::NodeProcessing,
@@ -322,10 +326,11 @@ void GpuFieldOperator::bind(FieldTarget target, const Kinesis::TemporalSpatialFi
     if (!accept(target, field.source, 1))
         return;
 
-    store(target, field.source, 1, true);
+    store(target, field.source, 1, true, cluster);
 }
 
-void GpuFieldOperator::bind(FieldTarget target, const Kinesis::TemporalUVField& field)
+void GpuFieldOperator::bind(FieldTarget target, const Kinesis::TemporalUVField& field,
+    std::optional<uint32_t> cluster)
 {
     if (target != FieldTarget::UV) {
         MF_ERROR(Journal::Component::Nodes, Journal::Context::NodeProcessing,
@@ -338,7 +343,7 @@ void GpuFieldOperator::bind(FieldTarget target, const Kinesis::TemporalUVField& 
     if (!accept(target, field.source, 2))
         return;
 
-    store(target, field.source, 2, true);
+    store(target, field.source, 2, true, cluster);
 }
 
 void GpuFieldOperator::unbind(FieldTarget target)
@@ -384,6 +389,12 @@ void GpuFieldOperator::set_parameter(std::string_view param, double value)
         "GpuFieldOperator: unknown parameter '{}' ({})", param, value);
 }
 
+bool GpuFieldOperator::needs_cluster_id() const
+{
+    return std::ranges::any_of(m_bindings,
+        [](const Binding& b) { return b.cluster.has_value(); });
+}
+
 std::optional<double> GpuFieldOperator::query_state(std::string_view query) const
 {
     if (query == "binding_count")
@@ -409,11 +420,19 @@ std::optional<Portal::Graphics::ShaderSpec> GpuFieldOperator::build_spec() const
         return std::nullopt;
     }
 
+    const bool needs_cluster = needs_cluster_id();
+
     Portal::Graphics::ShaderSpec::Assemble assemble;
     assemble.start_binding(m_vertex_binding)
         .ssbo("vertices", Portal::Graphics::BindingDirection::InOut,
-            Kakshya::GpuDataFormat::FLOAT32)
-        .pc("first_vertex", Kakshya::GpuDataFormat::UINT32)
+            Kakshya::GpuDataFormat::FLOAT32);
+
+    if (needs_cluster) {
+        assemble.ssbo("cluster_id", Portal::Graphics::BindingDirection::Input,
+            Kakshya::GpuDataFormat::UINT32);
+    }
+
+    assemble.pc("first_vertex", Kakshya::GpuDataFormat::UINT32)
         .pc("vertex_count", Kakshya::GpuDataFormat::UINT32)
         .pc("stride_words", Kakshya::GpuDataFormat::UINT32)
         .pc("time", Kakshya::GpuDataFormat::FLOAT32)
@@ -437,6 +456,10 @@ std::optional<Portal::Graphics::ShaderSpec> GpuFieldOperator::build_spec() const
         + "], vertices[b + " + word(pw + 1)
         + "], vertices[b + " + word(pw + 2) + "]);\n";
 
+    if (needs_cluster) {
+        body += "    uint my_cluster = cluster_id[first_vertex + i];\n";
+    }
+
     for (Kinesis::FieldTarget t : Kinesis::k_field_targets) {
         const bool touched = std::ranges::any_of(m_bindings,
             [t](const Binding& b) { return has_flag(b.targets, t); });
@@ -454,9 +477,17 @@ std::optional<Portal::Graphics::ShaderSpec> GpuFieldOperator::build_spec() const
             + " = " + glsl_zero(components) + ";\n";
 
         for (const auto& b : m_bindings) {
-            if (has_flag(b.targets, t)) {
-                body += "    " + acc + " += " + b.source.name
-                    + (b.temporal ? "(p, time)" : "(p)") + ";\n";
+            if (!has_flag(b.targets, t))
+                continue;
+
+            const std::string call = std::string(b.source.name)
+                + (b.temporal ? "(p, time)" : "(p)");
+
+            if (b.cluster.has_value()) {
+                body += "    if (my_cluster == " + word(*b.cluster) + ") { "
+                    + acc + " += " + call + "; }\n";
+            } else {
+                body += "    " + acc + " += " + call + ";\n";
             }
         }
 
@@ -474,9 +505,16 @@ std::optional<Portal::Graphics::ShaderSpec> GpuFieldOperator::build_spec() const
         }
     }
 
+    std::vector<std::string> param_names { "vertices" };
+    if (needs_cluster) {
+        param_names.emplace_back("cluster_id");
+    }
+    param_names.insert(param_names.end(),
+        { "first_vertex", "vertex_count", "stride_words", "time", "i" });
+
     assemble.kernel(Portal::Graphics::KernelSource {
         .raw = {},
-        .param_names = { "vertices", "first_vertex", "vertex_count", "stride_words", "time", "i" },
+        .param_names = std::move(param_names),
         .body = std::move(body),
     });
 

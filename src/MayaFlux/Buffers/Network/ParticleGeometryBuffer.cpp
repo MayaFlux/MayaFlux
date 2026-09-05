@@ -5,7 +5,6 @@
 
 #include "MayaFlux/Buffers/BufferProcessingChain.hpp"
 #include "MayaFlux/Buffers/Shaders/VertexFieldProcessor.hpp"
-#include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
 
 #include "MayaFlux/Nodes/Network/NodeNetwork.hpp"
 #include "MayaFlux/Nodes/Network/Operators/OperatorChain.hpp"
@@ -15,48 +14,6 @@
 #include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux::Buffers {
-
-namespace {
-
-    /**
-     * @brief Per-particle cluster id, global index order, derived from a
-     *        PhysicsOperator's own collections.
-     * @return All zero, sized to particle_count, when physics is null or
-     *         carries at most one collection. Otherwise entry i is the
-     *         index of the CollectionGroup particle i belongs to, in
-     *         PhysicsOperator::get_collections() order.
-     *
-     * Cluster membership is fixed once a collection is added; nothing here
-     * runs per cycle. The caller uploads the result exactly once, at wiring
-     * time, into SpatialHashConfig's own hash_cluster_id field -- shared by
-     * HashDensityColorProcessor and the claim protocol alike, so it is built
-     * whenever hashing happens at all, not only when absorb_radius is set.
-     */
-    std::vector<uint32_t> build_cluster_ids(
-        Nodes::Network::PhysicsOperator* physics,
-        size_t particle_count)
-    {
-        std::vector<uint32_t> ids(particle_count, 0U);
-
-        if (!physics || physics->get_collections().size() <= 1) {
-            return ids;
-        }
-
-        size_t offset = 0;
-        uint32_t cluster = 0;
-        for (const auto& group : physics->get_collections()) {
-            const size_t count = group.collection->get_point_count();
-            for (size_t i = 0; i < count && offset + i < particle_count; ++i) {
-                ids[offset + i] = cluster;
-            }
-            offset += count;
-            ++cluster;
-        }
-
-        return ids;
-    }
-
-} // namespace
 
 void ParticleGeometryBuffer::setup_processors(ProcessingToken token)
 {
@@ -119,14 +76,7 @@ void ParticleGeometryBuffer::wire_particle_field_operator(
     }
 
     hash_config->declare_fields(self);
-
-    auto cluster_ids = build_cluster_ids(physics, hash_config->particle_count);
-    std::shared_ptr<VKBuffer> cluster_staging;
-    upload_back_buffer(
-        self->write_state_slot("hash_cluster_id"),
-        cluster_ids.data(),
-        cluster_ids.size() * sizeof(uint32_t),
-        cluster_staging);
+    self->ensure_cluster_ids();
 
     chain->add_processor(std::make_shared<HashClearProcessor>(*hash_config), self);
     chain->add_processor(std::make_shared<HashCountProcessor>(*hash_config), self);

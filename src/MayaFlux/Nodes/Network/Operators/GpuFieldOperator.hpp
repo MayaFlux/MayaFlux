@@ -75,6 +75,12 @@ public:
      * @brief Bind a three-component field to one or more vec3 targets.
      * @param target Mask over POSITION, COLOR, NORMAL and TANGENT.
      * @param field  Dual-source field with a usable shader half.
+     * @param cluster Nullopt (the default) applies the field to every vertex
+     *        regardless of which PhysicsOperator collection produced it, the
+     *        only behaviour that existed before this parameter. A value
+     *        restricts the field to vertices whose cluster id equals it: see
+     *        needs_cluster_id() for what that costs a consumer that never
+     *        uses this.
      *
      * Binding nothing and returning is the response to an empty mask, a bit the
      * layout does not carry, a component-count mismatch on any bit, a field
@@ -84,45 +90,60 @@ public:
      *
      * Several fields may drive the same target. They sum before the write,
      * matching FieldOperator, and NORMAL and TANGENT normalise after the sum.
+     * A cluster-scoped field only contributes to that sum for vertices in its
+     * own cluster; an unscoped field sharing the target still contributes to
+     * every vertex regardless.
      */
-    void bind(FieldTarget target, const Kinesis::DualVectorField& field);
+    void bind(FieldTarget target, const Kinesis::DualVectorField& field,
+        std::optional<uint32_t> cluster = std::nullopt);
 
     /**
      * @brief Bind a scalar field. Target must be exactly SCALAR.
+     * @param cluster See the DualVectorField overload's own doc.
      */
-    void bind(FieldTarget target, const Kinesis::DualSpatialField& field);
+    void bind(FieldTarget target, const Kinesis::DualSpatialField& field,
+        std::optional<uint32_t> cluster = std::nullopt);
 
     /**
      * @brief Bind a two-component field. Target must be exactly UV.
+     * @param cluster See the DualVectorField overload's own doc.
      */
-    void bind(FieldTarget target, const Kinesis::DualUVField& field);
+    void bind(FieldTarget target, const Kinesis::DualUVField& field,
+        std::optional<uint32_t> cluster = std::nullopt);
 
     /**
      * @brief Bind a three-component field of position and time.
      * @param target Mask over POSITION, COLOR, NORMAL and TANGENT.
      * @param field  Temporal field with a usable shader half.
+     * @param cluster See the DualVectorField overload's own doc.
      *
      * Validation matches the DualField overload. The emitted function takes a
      * second float argument supplied from the time push constant.
      */
-    void bind(FieldTarget target, const Kinesis::TemporalVectorField& field);
+    void bind(FieldTarget target, const Kinesis::TemporalVectorField& field,
+        std::optional<uint32_t> cluster = std::nullopt);
 
     /**
      * @brief Bind a scalar field of position and time. Target must be SCALAR.
+     * @param cluster See the DualVectorField overload's own doc.
      */
-    void bind(FieldTarget target, const Kinesis::TemporalSpatialField& field);
+    void bind(FieldTarget target, const Kinesis::TemporalSpatialField& field,
+        std::optional<uint32_t> cluster = std::nullopt);
 
     /**
      * @brief Bind a two-component field of position and time. Target must be UV.
+     * @param cluster See the DualVectorField overload's own doc.
      */
-    void bind(FieldTarget target, const Kinesis::TemporalUVField& field);
+    void bind(FieldTarget target, const Kinesis::TemporalUVField& field,
+        std::optional<uint32_t> cluster = std::nullopt);
 
     /**
      * @brief Clear the given targets.
      *
      * Removes each bit in the mask from every binding that carries it. A
      * binding left with no targets is dropped; one that still drives another
-     * target survives.
+     * target survives. Cluster scope plays no part in the match: unbind(t)
+     * removes every binding driving t, scoped or not.
      */
     void unbind(FieldTarget target);
 
@@ -130,6 +151,19 @@ public:
      * @brief Number of bound fields. One binding may drive several targets.
      */
     [[nodiscard]] size_t binding_count() const { return m_bindings.size(); }
+
+    /**
+     * @brief Whether build_spec() needs a per-vertex cluster id this cycle.
+     * @return True only if at least one current binding was given a cluster
+     *         argument. False for every operator that has never called a
+     *         cluster-scoped bind() overload -- the ordinary case -- in
+     *         which build_spec() emits exactly the shader it always has,
+     *         with no cluster_id binding, no extra SSBO read, and no extra
+     *         branch anywhere in the kernel. VertexFieldProcessor checks
+     *         this to decide whether it needs to resolve and bind a
+     *         hash_cluster_id state field at all.
+     */
+    [[nodiscard]] bool needs_cluster_id() const;
 
     /**
      * @brief Descriptor binding index the vertex SSBO occupies.
@@ -181,6 +215,10 @@ public:
      * Cached until a bind, unbind or configuration change invalidates it.
      * Returns nullopt when nothing is bound or the layout carries no position
      * attribute.
+     *
+     * A cluster_id SSBO binding and the read that feeds it are emitted only
+     * when needs_cluster_id() is true: an operator with no cluster-scoped
+     * binding gets exactly the shader it always has, unchanged.
      */
     [[nodiscard]] std::optional<Portal::Graphics::ShaderSpec> build_spec() const;
 
@@ -241,6 +279,7 @@ private:
         Kinesis::FieldSource source;
         uint32_t components;
         bool temporal;
+        std::optional<uint32_t> cluster;
     };
 
     Kakshya::VertexLayout m_layout;
@@ -268,7 +307,8 @@ private:
     /**
      * @brief Store a binding after validation.
      */
-    void store(FieldTarget, const Kinesis::FieldSource&, uint32_t, bool);
+    void store(FieldTarget, const Kinesis::FieldSource&, uint32_t, bool,
+        std::optional<uint32_t> cluster);
 };
 
 } // namespace MayaFlux::Nodes::Network

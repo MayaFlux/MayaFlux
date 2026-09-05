@@ -8,6 +8,8 @@
 
 namespace MayaFlux::Buffers {
 
+class NetworkGeometryBuffer;
+
 /**
  * @class VertexFieldProcessor
  * @brief Compute pass that applies a GpuFieldOperator's generated shader to a
@@ -60,6 +62,22 @@ namespace MayaFlux::Buffers {
  * auto proc = std::make_shared<VertexFieldProcessor>(op);
  * chain->add_postprocessor(proc, self);
  * @endcode
+ *
+ * Cluster-scoped bindings (GpuFieldOperator::bind's cluster argument) need a
+ * per-vertex cluster id at dispatch time. When the operator reports
+ * needs_cluster_id(), on_attach resolves the target buffer as a
+ * NetworkGeometryBuffer and calls its ensure_cluster_ids(), which declares
+ * and populates hash_cluster_id from whatever the network's own primary
+ * GraphicsOperator reports (all zero unless that operator overrides
+ * GraphicsOperator::build_cluster_ids(), which today only PhysicsOperator
+ * does) if nothing else -- a ParticleGeometryBuffer's own hash wiring, most
+ * commonly -- has already done so. This is not particle-specific: a
+ * cluster-scoped bind() against a PointCloudNetwork or any other
+ * GraphicsOperator-backed network resolves through the same base-class
+ * default rather than silently assuming PhysicsOperator. An operator that
+ * never uses cluster-scoped bind() pays none of this: needs_cluster_id() is
+ * false, nothing here runs, and build_spec()
+ * emits exactly the shader it always has.
  */
 class MAYAFLUX_API VertexFieldProcessor : public ComputeProcessor {
 public:
@@ -118,6 +136,19 @@ protected:
     std::array<uint32_t, 3> calculate_dispatch_size(
         const std::shared_ptr<VKBuffer>& buffer) override;
 
+    /**
+     * @brief Write the cluster_id descriptor when the operator needs one.
+     *
+     * A no-op call when m_needs_cluster_id is false. hash_cluster_id's
+     * underlying allocation is fixed-size for the buffer's whole lifetime
+     * (NetworkGeometryBuffer::declare_state never resizes a declared state
+     * field the way the primary vertex buffer resizes), so a single write
+     * here each time descriptor sets are (re)created is sufficient; unlike
+     * NetworkStateFieldProcessor's own fields, nothing here needs rewriting
+     * every cycle for resize-safety.
+     */
+    void on_descriptors_created() override;
+
 private:
     /**
      * @struct RangeParams
@@ -141,6 +172,9 @@ private:
 
     std::chrono::steady_clock::time_point m_epoch { std::chrono::steady_clock::now() };
 
+    std::shared_ptr<NetworkGeometryBuffer> m_network_buffer;
+    bool m_needs_cluster_id {};
+
     /**
      * @brief Records the buffer can hold at the operator's stride.
      */
@@ -156,6 +190,23 @@ private:
      * @return False when the operator no longer yields a spec.
      */
     bool sync_revision();
+
+    /**
+     * @brief Ensure the backing hash_cluster_id state field exists, when
+     *        m_needs_cluster_id is true.
+     * @return False when cluster scoping is needed but the attached buffer
+     *         is not a NetworkGeometryBuffer, or NetworkGeometryBuffer::
+     *         ensure_cluster_ids() itself fails (no primary GraphicsOperator,
+     *         or it reports zero points). True when m_needs_cluster_id is
+     *         false: nothing to do.
+     *
+     * Delegates the actual declare/derive/upload to
+     * NetworkGeometryBuffer::ensure_cluster_ids(), which is itself
+     * has_state-guarded, so calling this again after a revision rebuild is
+     * cheap and whichever caller (this processor, or a ParticleGeometryBuffer's
+     * own hash wiring) reaches it first does the real work.
+     */
+    bool ensure_cluster_binding();
 };
 
 } // namespace MayaFlux::Buffers

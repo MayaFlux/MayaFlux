@@ -379,6 +379,27 @@ public:
     std::vector<CollectionGroup>& get_collections() { return m_collections; }
 
     /**
+     * @brief Per-particle collection index, global index order.
+     * @return get_point_count() elements, entry i equal to the index of the
+     *         CollectionGroup particle i belongs to in get_collections()
+     *         order. All zero when there is at most one collection.
+     *
+     * The single source of truth for "which complete vertex-array pack does
+     * this particle belong to", consumed by any GPU-side stage that needs
+     * to respect collection boundaries in a neighbour query (the spatial
+     * hash's ClaimProcessor/HashDensityColorProcessor, and optionally
+     * GpuFieldOperator's own cluster-scoped bindings): each such consumer
+     * uploads this once, at wiring time, into whatever state field it
+     * declares for the purpose, rather than every consumer reaching into
+     * get_collections() and re-deriving the same prefix sum independently.
+     *
+     * Overrides GraphicsOperator::build_cluster_ids(), whose default (every
+     * entry 0) is exactly what this returns when there is at most one
+     * collection; the override only differs once a second one exists.
+     */
+    [[nodiscard]] std::vector<uint32_t> build_cluster_ids() const override;
+
+    /**
      * @brief Apply ONE_TO_ONE parameter for physics-specific properties
      *
      * Supports:

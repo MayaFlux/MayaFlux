@@ -234,6 +234,34 @@ public:
      */
     void swap_state(const std::string& name);
 
+    /**
+     * @brief Ensure the hash_cluster_id state field exists, declaring and
+     *        populating it from the network's own primary GraphicsOperator
+     *        if nothing has already done so.
+     * @return True if hash_cluster_id exists by the time this returns
+     *         (already did, or was just created); false if there is no
+     *         primary GraphicsOperator to size it from, or it reports zero
+     *         vertices.
+     *
+     * Sized to get_vertex_count(), not get_point_count(): a GPU consumer
+     * indexes this field in lockstep with the vertex buffer itself, and for
+     * an operator whose rendered vertex count differs from its source point
+     * count (TopologyOperator/PathOperator after interpolation) those are
+     * two different numbers. Coincide for PhysicsOperator's point-sprite
+     * geometry, so this changes nothing for the particle path.
+     *
+     * has_state-guarded, so whichever caller reaches this first (a
+     * ParticleGeometryBuffer's own hash wiring, or a VertexFieldProcessor
+     * attaching with a cluster-scoped GpuFieldOperator binding) does the
+     * real work and the other finds it already done. Values come from
+     * GraphicsOperator::build_cluster_ids(): every entry 0 for any operator
+     * that has never overridden it, which is every one except PhysicsOperator
+     * today, so calling this against a PointCloudNetwork or plain
+     * FieldOperator-driven network is safe and simply declares a field
+     * whose only value is 0.
+     */
+    bool ensure_cluster_ids();
+
 protected:
     std::shared_ptr<Nodes::Network::NodeNetwork> m_network;
     std::shared_ptr<NetworkGeometryProcessor> m_processor;

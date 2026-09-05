@@ -782,6 +782,28 @@ void PhysicsOperator::apply_impulse(size_t index, const glm::vec3& impulse)
     }
 }
 
+std::vector<uint32_t> PhysicsOperator::build_cluster_ids() const
+{
+    std::vector<uint32_t> ids(get_vertex_count(), 0U);
+
+    if (m_collections.size() <= 1) {
+        return ids;
+    }
+
+    size_t offset = 0;
+    uint32_t cluster = 0;
+    for (const auto& group : m_collections) {
+        const size_t count = group.collection->get_vertex_count();
+        for (size_t i = 0; i < count && offset + i < ids.size(); ++i) {
+            ids[offset + i] = cluster;
+        }
+        offset += count;
+        ++cluster;
+    }
+
+    return ids;
+}
+
 void PhysicsOperator::add_force_field(Kinesis::VectorField field)
 {
     m_force_fields.push_back(std::move(field));

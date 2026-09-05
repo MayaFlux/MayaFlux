@@ -4,6 +4,7 @@
 
 #include "MayaFlux/Buffers/BufferProcessingChain.hpp"
 #include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
+#include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
 #include "MayaFlux/Nodes/Network/Operators/GraphicsOperator.hpp"
 
 #include "MayaFlux/Registry/BackendRegistry.hpp"
@@ -421,6 +422,43 @@ void NetworkGeometryBuffer::swap_state(const std::string& name)
     }
 
     it->second.read_is_a = !it->second.read_is_a;
+}
+
+bool NetworkGeometryBuffer::ensure_cluster_ids()
+{
+    if (has_state("hash_cluster_id")) {
+        return true;
+    }
+
+    auto* graphics_op = m_network
+        ? dynamic_cast<Nodes::Network::GraphicsOperator*>(m_network->get_operator())
+        : nullptr;
+    if (!graphics_op) {
+        return false;
+    }
+
+    const size_t vertex_count = graphics_op->get_vertex_count();
+    if (vertex_count == 0) {
+        return false;
+    }
+
+    if (!declare_state("hash_cluster_id", vertex_count, sizeof(uint32_t), false)) {
+        return false;
+    }
+
+    auto cluster_ids = graphics_op->build_cluster_ids();
+    if (cluster_ids.size() != vertex_count) {
+        cluster_ids.assign(vertex_count, 0U);
+    }
+
+    std::shared_ptr<VKBuffer> staging;
+    upload_back_buffer(
+        write_state_slot("hash_cluster_id"),
+        cluster_ids.data(),
+        cluster_ids.size() * sizeof(uint32_t),
+        staging);
+
+    return true;
 }
 
 } // namespace MayaFlux::Buffers

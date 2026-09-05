@@ -226,6 +226,28 @@ size_t PathOperator::get_point_count() const
     return total;
 }
 
+std::vector<uint32_t> PathOperator::build_cluster_ids() const
+{
+    std::vector<uint32_t> ids(get_vertex_count(), 0U);
+
+    if (m_paths.size() <= 1) {
+        return ids;
+    }
+
+    size_t offset = 0;
+    uint32_t cluster = 0;
+    for (const auto& path : m_paths) {
+        const size_t count = path->get_vertex_count();
+        for (size_t i = 0; i < count && offset + i < ids.size(); ++i) {
+            ids[offset + i] = cluster;
+        }
+        offset += count;
+        ++cluster;
+    }
+
+    return ids;
+}
+
 //-----------------------------------------------------------------------------
 // Parameter Control
 //-----------------------------------------------------------------------------

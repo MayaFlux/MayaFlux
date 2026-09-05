@@ -1,6 +1,9 @@
 #include "VertexFieldProcessor.hpp"
 
+#include "MayaFlux/Buffers/Network/NetworkGeometryBuffer.hpp"
+
 #include "MayaFlux/Journal/Archivist.hpp"
+#include "MayaFlux/Portal/Graphics/ShaderFoundry.hpp"
 
 namespace MayaFlux::Buffers {
 
@@ -46,12 +49,19 @@ VertexFieldProcessor::VertexFieldProcessor(
     : ComputeProcessor(require_spec(field_operator))
     , m_operator(std::move(field_operator))
     , m_built_revision(m_operator->revision())
+    , m_needs_cluster_id(m_operator->needs_cluster_id())
 {
     m_processing_token = ProcessingToken::GRAPHICS_BACKEND;
 
     add_binding("vertices",
         ShaderBinding(0, m_operator->get_vertex_binding(),
             Portal::Graphics::DescriptorRole::STORAGE));
+
+    if (m_needs_cluster_id) {
+        add_binding("cluster_id",
+            ShaderBinding(0, m_operator->get_vertex_binding() + 1,
+                Portal::Graphics::DescriptorRole::STORAGE));
+    }
 
     m_params.stride_words = m_operator->get_layout().stride_bytes / 4;
 
@@ -82,6 +92,9 @@ void VertexFieldProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
     }
 
     bind_buffer("vertices", vk_buf);
+
+    m_network_buffer = std::dynamic_pointer_cast<NetworkGeometryBuffer>(buffer);
+    ensure_cluster_binding();
 
     ComputeProcessor::on_attach(buffer);
 
@@ -132,6 +145,13 @@ bool VertexFieldProcessor::sync_revision()
         ShaderBinding(0, m_operator->get_vertex_binding(),
             Portal::Graphics::DescriptorRole::STORAGE));
 
+    m_needs_cluster_id = m_operator->needs_cluster_id();
+    if (m_needs_cluster_id) {
+        add_binding("cluster_id",
+            ShaderBinding(0, m_operator->get_vertex_binding() + 1,
+                Portal::Graphics::DescriptorRole::STORAGE));
+    }
+
     m_params.stride_words = m_operator->get_layout().stride_bytes / 4;
     m_built_revision = m_operator->revision();
 
@@ -139,7 +159,7 @@ bool VertexFieldProcessor::sync_revision()
         "VertexFieldProcessor: rebuilt for revision {} ({} bound fields)",
         m_built_revision, m_operator->binding_count());
 
-    return true;
+    return ensure_cluster_binding();
 }
 
 bool VertexFieldProcessor::on_before_execute(
@@ -197,6 +217,46 @@ std::array<uint32_t, 3> VertexFieldProcessor::calculate_dispatch_size(
     const uint32_t groups = (m_params.vertex_count + local_x - 1) / local_x;
 
     return { std::max(1U, groups), 1U, 1U };
+}
+
+bool VertexFieldProcessor::ensure_cluster_binding()
+{
+    if (!m_needs_cluster_id) {
+        return true;
+    }
+
+    if (!m_network_buffer) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "VertexFieldProcessor: operator has a cluster-scoped binding but the "
+            "attached buffer is not a NetworkGeometryBuffer, so hash_cluster_id "
+            "has nowhere to live. Dispatch suppressed.");
+        return false;
+    }
+
+    if (!m_network_buffer->ensure_cluster_ids()) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "VertexFieldProcessor: operator has a cluster-scoped binding but "
+            "hash_cluster_id could not be derived (no primary GraphicsOperator, "
+            "or it reports zero points). Dispatch suppressed.");
+        return false;
+    }
+
+    return true;
+}
+
+void VertexFieldProcessor::on_descriptors_created()
+{
+    if (!m_needs_cluster_id || !m_network_buffer || m_descriptor_set_ids.empty()) {
+        return;
+    }
+
+    auto& foundry = Portal::Graphics::get_shader_foundry();
+    const auto handle = m_network_buffer->read_state_handle("hash_cluster_id");
+    const auto bytes = m_network_buffer->get_state_bytes("hash_cluster_id");
+
+    foundry.update_descriptor_buffer(
+        m_descriptor_set_ids[0], m_operator->get_vertex_binding() + 1,
+        vk::DescriptorType::eStorageBuffer, handle, 0, bytes);
 }
 
 } // namespace MayaFlux::Buffers

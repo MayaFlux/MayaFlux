@@ -52,6 +52,38 @@ public:
     [[nodiscard]] virtual size_t get_point_count() const = 0;
 
     /**
+     * @brief Per-vertex collection index, global index order.
+     * @return get_vertex_count() elements, not get_point_count(): the
+     *         consumer indexes it in lockstep with the vertex buffer a
+     *         GpuFieldOperator dispatch or the spatial hash actually reads
+     *         (vertices[i], not points[i]), and for an operator whose
+     *         rendered vertex count differs from its source point count
+     *         (TopologyOperator/PathOperator after interpolation) those are
+     *         two different numbers. Default: every entry 0, meaning "one
+     *         population, no cluster distinction" -- correct for every
+     *         operator that carries no notion of multiple complete
+     *         vertex-array packs, which is every GraphicsOperator except
+     *         PhysicsOperator today. get_point_count() and get_vertex_count()
+     *         coincide for PhysicsOperator's point-sprite geometry, so this
+     *         default is exactly as correct there as a point_count-sized
+     *         array would have been.
+     *
+     * The source NetworkGeometryBuffer::ensure_cluster_ids() reads from when
+     * declaring and populating the hash_cluster_id state field a
+     * cluster-aware GPU stage (ClaimProcessor, HashDensityColorProcessor, a
+     * cluster-scoped GpuFieldOperator binding) consumes. An operator that
+     * does carry multiple collections overrides this once, here, and every
+     * such consumer picks it up with no further wiring: none of them
+     * dynamic_cast to a concrete operator type to get it. An override must
+     * size and order its result the same way: by rendered vertex, in the
+     * same concatenation order get_vertex_data() itself produces.
+     */
+    [[nodiscard]] virtual std::vector<uint32_t> build_cluster_ids() const
+    {
+        return std::vector<uint32_t>(get_vertex_count(), 0U);
+    }
+
+    /**
      * @brief Apply ONE_TO_ONE parameter mapping
      *
      * Default implementation handles common graphics properties:
