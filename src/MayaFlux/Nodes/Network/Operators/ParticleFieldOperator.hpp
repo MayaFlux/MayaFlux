@@ -14,13 +14,14 @@ namespace MayaFlux::Nodes::Network {
  * rather than a sequence of enable_x() calls.
  *
  * Two kinds of field here, deliberately not distinguished by type but
- * documented per-field: cell_size/absorb_radius/density_color are
- * structural — they decide *which* processors ParticleGeometryBuffer
+ * documented per-field: cell_size/absorb_radius/cosmetic_swallow/density_color
+ * are structural — they decide *which* processors ParticleGeometryBuffer
  * constructs in the first place, so changing them after wiring would mean
  * tearing down and rebuilding part of the chain, and there is no live path
- * for that yet. Every field below density_color is a tuning value read by
- * a processor that exists regardless of its value; those do have a live
- * path, through ParticleFieldOperator's own wrapper setters.
+ * for that yet. Every other field is a tuning value read by a processor
+ * that exists regardless of its value; those do have a live path, through
+ * ParticleFieldOperator's own wrapper setters (see each field's own doc for
+ * which one).
  */
 struct ParticleFieldConfig {
     /**
@@ -39,6 +40,52 @@ struct ParticleFieldConfig {
      * at construction.
      */
     std::optional<float> absorb_radius;
+
+    /**
+     * Scales a claimant's effective capture radius by the cube root of its
+     * own currently accreted mass (PhysicsOperator::get_accreted_mass_span,
+     * uploaded fresh each cycle into mutation_accreted_mass): max(absorb_radius,
+     * cbrt(accreted_mass) * capture_growth). 0 (the default) makes every
+     * particle claim at the fixed absorb_radius regardless of accreted mass.
+     *
+     * A fixed absorb_radius alone caps how much territory any body can ever
+     * sweep, however much mass it already holds, so growth plateaus as soon
+     * as that fixed neighbourhood is exhausted; scaling capture radius with
+     * mass instead makes accretion self-reinforcing. Cube root specifically,
+     * not mass directly: captured-mass rate scales with capture_radius
+     * cubed (a 3D volume query), so a radius proportional to mass directly
+     * gives a growth rate proportional to mass cubed, which reaches
+     * infinite mass in finite time for ANY nonzero capture_growth -- not a
+     * gradual curve, an instantaneous one-cycle explosion at a delay this
+     * value controls. Cube-rooting mass first (the same real-world
+     * reasoning PhysicsOperator::apply_bond_forces already uses for
+     * physical spread) keeps the growth rate proportional to mass itself:
+     * ordinary exponential growth, with a genuine, live-tunable doubling
+     * time rather than a hidden singularity. Live-tunable via
+     * set_capture_growth().
+     */
+    float capture_growth { 0.0F };
+
+    /**
+     * Whether ClaimSwallowProcessor's cosmetic pass (position snap onto
+     * root, size/colour from this cycle's swallow_count) is added to the
+     * chain. Default true: existing absorb_radius behaviour is unchanged.
+     *
+     * Set false when a caller wants claim resolution purely for its CPU
+     * side effect, PhysicsOperator::sync_bonds_from_claims (bond force and
+     * the persistent accreted-mass tally it maintains), without the GPU
+     * cosmetic pass fighting it: swallow_count resets every cycle (see
+     * ClaimInitProcessor), so it can only ever represent this instant's
+     * local cluster size, never true accumulation over time. A caller after
+     * real, permanent growth reads PhysicsOperator's accreted mass instead
+     * and drives size/colour from that on the CPU side, and doesn't want
+     * ClaimSwallowProcessor overwriting the same vertices with its own,
+     * necessarily transient, numbers. ClaimInit/Claim/Flatten/Accumulate
+     * still run regardless: they are what ClaimAccumulateProcessor's
+     * readback needs to populate PhysicsOperator's bonds at all. Structural:
+     * fixed at construction.
+     */
+    bool cosmetic_swallow { true };
 
     /**
      * Enables neighbour-density colouring (ember-to-white-hot ramp).
@@ -151,6 +198,9 @@ public:
 
     /** @brief Live-update HashDensityColorProcessor's saturation point. */
     void set_density_saturation_count(float count);
+
+    /** @brief Live-update ClaimProcessor's size-to-capture-radius scaling. */
+    void set_capture_growth(float growth);
 
     /** @brief Live-update ClaimSwallowProcessor's base survivor size. */
     void set_swallow_base_size(float size);

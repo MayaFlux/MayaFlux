@@ -2,6 +2,10 @@
 
 #include "SpatialHashProcessor.hpp"
 
+namespace MayaFlux::Nodes::Network {
+class PhysicsOperator;
+}
+
 namespace MayaFlux::Buffers {
 
 /**
@@ -29,6 +33,25 @@ struct MutationConfig {
      * pass starts from a fresh claimed_by[i] = i and swallow_count[i] = 0
      * and overwrites the whole array, so there is nothing to carry across
      * cycles in a second slot.
+     *
+     * Also declares mutation_claim_events, a single uint32 counter reset to
+     * 0 each cycle by ClaimInitProcessor and incremented by ClaimProcessor
+     * for every neighbour pair it finds within absorb_radius. Its sole
+     * purpose is letting ClaimAccumulateProcessor decide, with a cheap
+     * single-word readback, whether the full claimed_by/swallow_count
+     * arrays are worth downloading this cycle at all.
+     *
+     * Also declares mutation_accreted_mass, one float per particle,
+     * untouched by ClaimInitProcessor (deliberately: it is the one field in
+     * this whole pipeline meant to persist, not reset every cycle).
+     * ClaimAccumulateProcessor uploads PhysicsOperator's own accreted mass
+     * into it each cycle (see that class's own doc), and ClaimProcessor
+     * reads it back to scale capture_growth. It exists specifically because
+     * swallow_count cannot do this job: ClaimInitProcessor zeroes
+     * swallow_count before ClaimProcessor ever runs in the very same cycle,
+     * so a ClaimProcessor that tried to read swallow_count for this would
+     * always see 0, making capture_growth silently inert regardless of its
+     * value, which is exactly the bug this field exists to avoid repeating.
      */
     void declare_fields(const std::shared_ptr<NetworkGeometryBuffer>& buffer) const;
 };
@@ -65,10 +88,14 @@ private:
  * @class ClaimProcessor
  * @brief Deterministic pairwise claim over the completed spatial hash.
  *
- * One thread per particle i. Walks the same 27-cell neighbourhood
- * HashDensityColorProcessor does, and for every neighbour j with j > i and
- * length(pos(j) - pos(i)) < absorb_radius, does
- * atomicMin(claimed_by[j], i).
+ * One thread per particle i. Walks the cells within reach of i's own cell,
+ * where reach is 1 (the same 27-cell neighbourhood HashDensityColorProcessor
+ * uses) unless capture_growth (below) has grown i's effective capture radius
+ * past one cell_size, in which case reach grows to match: a fixed +/-1 reach
+ * would otherwise silently re-cap growth the moment a body's capture radius
+ * exceeds the grid's own cell size, defeating the point of capture_growth.
+ * For every neighbour j with j > i and length(pos(j) - pos(i)) < i's current
+ * capture radius, does atomicMin(claimed_by[j], i).
  *
  * atomicMin rather than atomicCompSwap: multiple particles below j's index
  * may race to claim it in the same dispatch, and atomicMin converges to the
@@ -80,13 +107,38 @@ private:
  *
  * Must run after HashScatterProcessor (needs the completed hash) and
  * ClaimInitProcessor (needs claimed_by reset) in the same cycle.
+ *
+ * When capture_growth is nonzero, the cube root of i's own accreted mass
+ * (mutation_accreted_mass, uploaded fresh each cycle by
+ * ClaimAccumulateProcessor from PhysicsOperator::get_accreted_mass_span; see
+ * that field's own doc for why this exists as a separate field rather than
+ * reusing swallow_count) scales its effective capture radius beyond
+ * absorb_radius, cube root specifically rather than mass directly so the
+ * growth rate stays proportional to mass (ordinary exponential growth)
+ * rather than to mass cubed (a finite-time singularity): see
+ * ParticleFieldConfig::capture_growth's own doc. Live-tunable via
+ * ParticleFieldOperator::set_capture_growth: checked in on_before_execute
+ * the same way ClaimSwallowProcessor checks its own tuning values, so a
+ * change takes effect on this processor's next dispatch with no rebuild.
  */
 class MAYAFLUX_API ClaimProcessor : public NetworkStateFieldProcessor {
 public:
-    explicit ClaimProcessor(const MutationConfig& config);
+    /**
+     * @param config Grid/particle parameters shared with the claim stages.
+     * @param particle_op Owning operator; only its capture_growth tuning
+     *        value and revision() are read, live, in on_before_execute.
+     */
+    ClaimProcessor(
+        const MutationConfig& config,
+        std::shared_ptr<Nodes::Network::ParticleFieldOperator> particle_op);
 
 protected:
     void on_buffer_ready() override;
+
+    /** @brief Re-sync capture_growth from particle_op when its revision changes. */
+    bool on_before_execute(
+        Portal::Graphics::CommandBufferID cmd_id,
+        const std::shared_ptr<VKBuffer>& buffer) override;
 
 private:
     struct Params {
@@ -94,6 +146,7 @@ private:
         uint32_t stride_words;
         uint32_t position_offset;
         float absorb_radius;
+        float capture_growth;
         float grid_min_x;
         float grid_min_y;
         float grid_min_z;
@@ -104,6 +157,8 @@ private:
     };
 
     Params m_params;
+    std::shared_ptr<Nodes::Network::ParticleFieldOperator> m_particle_op;
+    uint64_t m_built_revision;
 };
 
 /**
@@ -166,13 +221,43 @@ private:
  * reasoning HashCountProcessor and HashScanProcessor are kept separate for.
  *
  * Must run after ClaimFlattenProcessor and before ClaimSwallowProcessor.
+ *
+ * Also the point where mutation_claimed_by is made available to the CPU
+ * simulation: after its own dispatch, processing_function reads back the
+ * single mutation_claim_events counter and, only if it is nonzero (meaning
+ * at least one particle pair was actually claimed this cycle), downloads
+ * the full claimed_by array and hands it to physics_op's bond table. A zero
+ * count clears any existing bonds instead, since the claim graph itself is
+ * fully rebuilt from scratch every cycle (see ClaimInitProcessor) and
+ * carries no memory of previous cycles either. This keeps the expensive
+ * readback conditional on the algorithm having found something to report,
+ * rather than paid every cycle regardless.
+ *
+ * Also uploads physics_op's own accreted mass (PhysicsOperator::get_accreted_mass_span)
+ * into mutation_accreted_mass every cycle, unconditionally: unlike the
+ * download above, this one is cheap regardless (one float per particle,
+ * already computed CPU-side) and ClaimProcessor needs a fresh copy every
+ * cycle to scale capture_growth, so there is no "nothing to report" case to
+ * gate it on.
  */
 class MAYAFLUX_API ClaimAccumulateProcessor : public NetworkStateFieldProcessor {
 public:
-    explicit ClaimAccumulateProcessor(const MutationConfig& config);
+    /**
+     * @param config Grid/particle parameters shared with the claim stages.
+     * @param physics_op Non-owning; must outlive this processor. Receives
+     *        claimed_by via sync_bonds_from_claims when claim_events is
+     *        nonzero, clear_bonds() otherwise. May be null to disable the
+     *        readback entirely (GPU claim/swallow still runs unaffected).
+     */
+    ClaimAccumulateProcessor(
+        const MutationConfig& config,
+        Nodes::Network::PhysicsOperator* physics_op);
 
 protected:
     void on_buffer_ready() override;
+
+    /** @brief Dispatch as usual, then conditionally read back the result. */
+    void processing_function(const std::shared_ptr<Buffer>& buffer) override;
 
 private:
     struct Params {
@@ -180,24 +265,34 @@ private:
     };
 
     Params m_params;
+    Nodes::Network::PhysicsOperator* m_physics_op;
+    std::vector<uint32_t> m_claimed_by_readback;
+    std::shared_ptr<VKBuffer> m_readback_staging;
+    std::shared_ptr<VKBuffer> m_upload_staging;
 };
 
 /**
  * @class ClaimSwallowProcessor
  * @brief Visually swallows absorbed particles into their survivor, which
- *        grows with how much it has swallowed.
+ *        grows and heats up with how much it has swallowed.
  *
- * One thread per particle, coloured by a small fixed palette indexed by
- * claimed_by[i] % palette size, so each independent cluster reads as a
- * distinct colour rather than all survivors looking the same. A survivor
- * (claimed_by[i] == i) keeps its own position, takes the palette colour at
- * full brightness, and grows its point size with swallow_count[i] (clamped,
- * so an unusually large cluster doesn't dominate the screen). An absorbed
- * particle (claimed_by[i] != i) reads its root's current position directly
- * out of the same vertex buffer and overwrites its own position with it,
- * then takes the same palette colour at a fraction of its brightness so it
- * still reads as "belongs to that cluster" while visibly dimmer than the
- * survivor it vanished into.
+ * One thread per particle. Colour and size share one underlying quantity
+ * rather than being independent choices: size is base_size grown by
+ * swallow_count[root] (clamped at max_size), and colour is the same
+ * ember-to-white-hot ramp HashDensityColorProcessor uses, driven by how far
+ * that size sits between base_size and max_size. A cluster that has
+ * swallowed nothing stays base-size and ember-cool; one near the ceiling
+ * glows white-hot. This ties "how much has this cluster grown" to a single
+ * visible signal instead of an arbitrary per-cluster hue that carries no
+ * information about the cluster itself.
+ *
+ * A survivor (claimed_by[i] == i) keeps its own position and takes the heat
+ * colour at full brightness. An absorbed particle (claimed_by[i] != i) reads
+ * its root's current position directly out of the same vertex buffer and
+ * overwrites its own position with it, then takes its root's heat colour
+ * (computed from the root's own swallow_count, not its own) at a fraction of
+ * its brightness, so it still reads as "belongs to that cluster" while
+ * visibly dimmer than the survivor it vanished into.
  *
  * Safe to read another particle's position and swallow_count in the same
  * dispatch that writes positions and colours: only an absorbed particle's

@@ -192,11 +192,38 @@ public:
     [[nodiscard]] vk::Buffer read_state_handle(const std::string& name) const;
 
     /**
+     * @brief Full back_buffers slot a stage should read the named state
+     *        field from.
+     * @return The slot, or a default-constructed (null-handle) slot if
+     *         undeclared.
+     *
+     * Same resolution as read_state_handle, without narrowing to just the
+     * Vulkan handle: a CPU-side readback through StagingUtils::download_back_buffer
+     * needs the whole slot (it checks mapped_ptr for the host-visible fast
+     * path), not only .buffer. Returned by value since GenerationSlot is
+     * three handles wide.
+     */
+    [[nodiscard]] VKBufferResources::GenerationSlot read_state_slot(const std::string& name) const;
+
+    /**
      * @brief Handle a stage should write the named state field to.
      * @return Vulkan buffer handle, or nullptr if undeclared. Equals
      *         read_state_handle() for single-slot fields.
      */
     [[nodiscard]] vk::Buffer write_state_handle(const std::string& name) const;
+
+    /**
+     * @brief Full back_buffers slot a stage should write the named state
+     *        field to.
+     * @return The slot, or a default-constructed (null-handle) slot if
+     *         undeclared. Equals read_state_slot() for single-slot fields.
+     *
+     * Same resolution as write_state_handle, without narrowing to just the
+     * Vulkan handle: a CPU-side upload through StagingUtils::upload_back_buffer
+     * needs the whole slot (it checks mapped_ptr for the host-visible fast
+     * path), not only .buffer.
+     */
+    [[nodiscard]] VKBufferResources::GenerationSlot write_state_slot(const std::string& name) const;
 
     /**
      * @brief Exchange read and write slots for the named state field.

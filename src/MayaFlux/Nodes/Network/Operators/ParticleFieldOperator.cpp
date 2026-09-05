@@ -14,6 +14,12 @@ void ParticleFieldOperator::set_density_saturation_count(float count)
     invalidate();
 }
 
+void ParticleFieldOperator::set_capture_growth(float growth)
+{
+    m_particle_config.capture_growth = growth;
+    invalidate();
+}
+
 void ParticleFieldOperator::set_swallow_base_size(float size)
 {
     m_particle_config.swallow_base_size = size;

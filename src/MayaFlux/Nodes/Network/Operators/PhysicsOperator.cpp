@@ -450,6 +450,10 @@ void PhysicsOperator::apply_forces()
         apply_spatial_interactions();
     }
 
+    if (!m_bond_root.empty()) {
+        apply_bond_forces();
+    }
+
     if (!m_force_fields.empty()) {
         for (auto& group : m_collections) {
             auto& points = group.collection->get_points();
@@ -516,6 +520,138 @@ void PhysicsOperator::apply_spatial_interactions()
             }
         }
     }
+}
+
+std::optional<PhysicsOperator::GroupIndex> PhysicsOperator::resolve_global_index(size_t global_index) const
+{
+    size_t offset = 0;
+    for (size_t g = 0; g < m_collections.size(); ++g) {
+        size_t count = m_collections[g].collection->get_point_count();
+        if (global_index < offset + count) {
+            return GroupIndex { .group = g, .local = global_index - offset };
+        }
+        offset += count;
+    }
+    return std::nullopt;
+}
+
+/**
+ * @brief Pull each bonded particle toward its root with a spring.
+ *
+ * Rest length scales with cbrt(root's accreted mass): a grown body's
+ * satellites settle at a wider spread than a fresh one's, the same way any
+ * fixed-density accumulation of matter occupies more volume as it gains
+ * mass. Growth is a wider swarm of small particles, not a bigger point.
+ */
+void PhysicsOperator::apply_bond_forces()
+{
+    for (size_t i = 0; i < m_bond_root.size(); ++i) {
+        uint32_t root = m_bond_root[i];
+        if (root == i) {
+            continue;
+        }
+
+        auto self_idx = resolve_global_index(i);
+        auto root_idx = resolve_global_index(root);
+        if (!self_idx || !root_idx) {
+            continue;
+        }
+
+        auto& self_state = m_collections[self_idx->group].physics_state[self_idx->local];
+        const auto& self_pos = m_collections[self_idx->group].collection->get_points()[self_idx->local].position;
+        const auto& root_pos = m_collections[root_idx->group].collection->get_points()[root_idx->local].position;
+
+        glm::vec3 delta = root_pos - self_pos;
+        float distance = glm::length(delta);
+        if (distance < 0.001F) {
+            continue;
+        }
+
+        const float rest_length = m_bond_rest_length * std::cbrt(get_accreted_mass(root));
+
+        glm::vec3 direction = delta / distance;
+        self_state.force += direction * (m_bond_stiffness * (distance - rest_length));
+    }
+}
+
+void PhysicsOperator::sync_bonds_from_claims(std::span<const uint32_t> claimed_by)
+{
+    if (!m_bonds_enabled) {
+        return;
+    }
+
+    if (m_accreted_mass.size() != claimed_by.size()) {
+        m_accreted_mass.assign(claimed_by.size(), 1.0F);
+    }
+
+    for (size_t i = 0; i < claimed_by.size(); ++i) {
+        uint32_t root = claimed_by[i];
+        if (root == i || root >= m_accreted_mass.size()) {
+            continue;
+        }
+        m_accreted_mass[root] += m_accreted_mass[i];
+        m_accreted_mass[i] = 0.0F;
+    }
+
+    m_bond_root.assign(claimed_by.begin(), claimed_by.end());
+}
+
+void PhysicsOperator::clear_bonds()
+{
+    m_bond_root.clear();
+}
+
+void PhysicsOperator::enable_bonds(bool enable)
+{
+    m_bonds_enabled = enable;
+    if (!enable) {
+        clear_bonds();
+    }
+}
+
+float PhysicsOperator::get_accreted_mass(size_t global_index) const
+{
+    if (global_index >= m_accreted_mass.size()) {
+        return 1.0F;
+    }
+    return m_accreted_mass[global_index];
+}
+
+std::span<const float> PhysicsOperator::get_accreted_mass_span()
+{
+    const size_t count = get_point_count();
+    if (count > 0 && m_accreted_mass.size() != count) {
+        m_accreted_mass.assign(count, 1.0F);
+    }
+    return m_accreted_mass;
+}
+
+float PhysicsOperator::get_total_mass() const
+{
+    if (m_accreted_mass.empty()) {
+        float count = 0.0F;
+        for (const auto& group : m_collections) {
+            count += static_cast<float>(group.collection->get_point_count());
+        }
+        return count;
+    }
+
+    float total = 0.0F;
+    for (float mass : m_accreted_mass) {
+        total += mass;
+    }
+    return total;
+}
+
+size_t PhysicsOperator::bond_count() const
+{
+    size_t count = 0;
+    for (size_t i = 0; i < m_bond_root.size(); ++i) {
+        if (m_bond_root[i] != i) {
+            ++count;
+        }
+    }
+    return count;
 }
 
 void PhysicsOperator::apply_attraction_forces()

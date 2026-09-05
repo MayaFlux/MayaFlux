@@ -3,7 +3,9 @@
 #include "NetworkGeometryBuffer.hpp"
 
 #include "MayaFlux/Nodes/Network/Operators/ParticleFieldOperator.hpp"
+#include "MayaFlux/Nodes/Network/Operators/PhysicsOperator.hpp"
 
+#include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Portal/Graphics/ShaderFoundry.hpp"
 #include "MayaFlux/Portal/Graphics/ShaderSpec.hpp"
@@ -14,6 +16,8 @@ void MutationConfig::declare_fields(const std::shared_ptr<NetworkGeometryBuffer>
 {
     buffer->declare_state("mutation_claimed_by", hash.particle_count, sizeof(uint32_t), false);
     buffer->declare_state("mutation_swallow_count", hash.particle_count, sizeof(uint32_t), false);
+    buffer->declare_state("mutation_claim_events", 1, sizeof(uint32_t), false);
+    buffer->declare_state("mutation_accreted_mass", hash.particle_count, sizeof(float), false);
 }
 
 namespace {
@@ -21,6 +25,43 @@ namespace {
     using Portal::Graphics::BindingDirection;
     using Portal::Graphics::KernelSource;
     using Portal::Graphics::ShaderSpec;
+
+    /**
+     * @brief Resolve colour and size word offsets or fail loudly.
+     *
+     * A free function rather than inline in a member-initialiser list, the
+     * same shape HashDensityColorProcessor's require_color_offset uses: the
+     * constructor needs both before it can build m_params.
+     */
+    std::pair<uint32_t, uint32_t> require_color_and_size_offset(
+        const std::shared_ptr<Nodes::Network::ParticleFieldOperator>& particle_op)
+    {
+        if (!particle_op) {
+            error<std::invalid_argument>(
+                Journal::Component::Buffers,
+                Journal::Context::BufferProcessing,
+                std::source_location::current(),
+                "require_color_and_size_offset: null particle operator");
+        }
+
+        const auto& layout = particle_op->get_layout();
+
+        const auto color_offset = layout.find_word_offset(Kakshya::DataModality::VERTEX_COLORS_RGB);
+        const auto size_attr = std::ranges::find_if(layout.attributes,
+            [](const auto& attr) { return attr.name == "size"; });
+        const bool have_size = size_attr != layout.attributes.end() && size_attr->offset_in_vertex % 4 == 0;
+
+        if (!color_offset.has_value() || !have_size) {
+            error<std::invalid_argument>(
+                Journal::Component::Buffers,
+                Journal::Context::BufferProcessing,
+                std::source_location::current(),
+                "require_color_and_size_offset: vertex layout is missing a colour or "
+                "word-aligned size attribute");
+        }
+
+        return { *color_offset, size_attr->offset_in_vertex / 4 };
+    }
 
 } // namespace
 
@@ -36,6 +77,7 @@ namespace {
         assemble
             .ssbo("claimed_by", BindingDirection::Output, Kakshya::GpuDataFormat::UINT32)
             .ssbo("swallow_count", BindingDirection::Output, Kakshya::GpuDataFormat::UINT32)
+            .ssbo("claim_events", BindingDirection::Output, Kakshya::GpuDataFormat::UINT32)
             .pc("particle_count", Kakshya::GpuDataFormat::UINT32)
             .workgroup(256);
 
@@ -43,10 +85,11 @@ namespace {
         body += "    if (i >= particle_count) { return; }\n";
         body += "    claimed_by[i] = i;\n";
         body += "    swallow_count[i] = 0u;\n";
+        body += "    if (i == 0u) { claim_events[0] = 0u; }\n";
 
         assemble.kernel(KernelSource {
             .raw = {},
-            .param_names = { "claimed_by", "swallow_count", "particle_count", "i" },
+            .param_names = { "claimed_by", "swallow_count", "claim_events", "particle_count", "i" },
             .body = std::move(body),
         });
 
@@ -58,7 +101,8 @@ namespace {
 ClaimInitProcessor::ClaimInitProcessor(const MutationConfig& config)
     : NetworkStateFieldProcessor(
           { FieldBinding { .name = "claimed_by", .binding = 0, .field = "mutation_claimed_by" },
-              FieldBinding { .name = "swallow_count", .binding = 1, .field = "mutation_swallow_count" } },
+              FieldBinding { .name = "swallow_count", .binding = 1, .field = "mutation_swallow_count" },
+              FieldBinding { .name = "claim_events", .binding = 2, .field = "mutation_claim_events" } },
           build_claim_init_spec())
     , m_params { .particle_count = config.hash.particle_count }
 {
@@ -84,10 +128,13 @@ namespace {
             .ssbo("cell_count", BindingDirection::Input, Kakshya::GpuDataFormat::UINT32)
             .ssbo("particle_index", BindingDirection::Input, Kakshya::GpuDataFormat::UINT32)
             .ssbo("claimed_by", BindingDirection::InOut, Kakshya::GpuDataFormat::UINT32)
+            .ssbo("claim_events", BindingDirection::InOut, Kakshya::GpuDataFormat::UINT32)
+            .ssbo("accreted_mass", BindingDirection::Input, Kakshya::GpuDataFormat::FLOAT32)
             .pc("particle_count", Kakshya::GpuDataFormat::UINT32)
             .pc("stride_words", Kakshya::GpuDataFormat::UINT32)
             .pc("position_offset", Kakshya::GpuDataFormat::UINT32)
             .pc("absorb_radius", Kakshya::GpuDataFormat::FLOAT32)
+            .pc("capture_growth", Kakshya::GpuDataFormat::FLOAT32)
             .pc("grid_min_x", Kakshya::GpuDataFormat::FLOAT32)
             .pc("grid_min_y", Kakshya::GpuDataFormat::FLOAT32)
             .pc("grid_min_z", Kakshya::GpuDataFormat::FLOAT32)
@@ -102,14 +149,17 @@ namespace {
         body += "    uint b = i * stride_words;\n";
         body += "    vec3 p = vec3(vertices[b + position_offset], "
                  "vertices[b + position_offset + 1u], vertices[b + position_offset + 2u]);\n";
+        body += "    float capture_radius = max(absorb_radius, "
+                "pow(max(accreted_mass[i], 0.0001), 1.0 / 3.0) * capture_growth);\n";
         body += "    vec3 gmin = vec3(grid_min_x, grid_min_y, grid_min_z);\n";
         body += "    uvec3 dims = uvec3(dim_x, dim_y, dim_z);\n";
         body += "    ivec3 base = ivec3(floor((p - gmin) / cell_size));\n";
         body += "    base = clamp(base, ivec3(0), ivec3(dims) - ivec3(1));\n";
         body += "\n";
-        body += "    for (int dz = -1; dz <= 1; dz = dz + 1) {\n";
-        body += "        for (int dy = -1; dy <= 1; dy = dy + 1) {\n";
-        body += "            for (int dx = -1; dx <= 1; dx = dx + 1) {\n";
+        body += "    int reach = clamp(int(ceil(capture_radius / cell_size)), 1, 8);\n";
+        body += "    for (int dz = -reach; dz <= reach; dz = dz + 1) {\n";
+        body += "        for (int dy = -reach; dy <= reach; dy = dy + 1) {\n";
+        body += "            for (int dx = -reach; dx <= reach; dx = dx + 1) {\n";
         body += "                ivec3 nc = base + ivec3(dx, dy, dz);\n";
         body += "                if (nc.x < 0 || nc.y < 0 || nc.z < 0 || "
                  "nc.x >= int(dim_x) || nc.y >= int(dim_y) || nc.z >= int(dim_z)) {\n";
@@ -124,8 +174,9 @@ namespace {
         body += "                    uint bj = j * stride_words;\n";
         body += "                    vec3 pj = vec3(vertices[bj + position_offset], "
                  "vertices[bj + position_offset + 1u], vertices[bj + position_offset + 2u]);\n";
-        body += "                    if (length(pj - p) < absorb_radius) {\n";
+        body += "                    if (length(pj - p) < capture_radius) {\n";
         body += "                        atomicMin(claimed_by[j], i);\n";
+        body += "                        atomicAdd(claim_events[0], 1u);\n";
         body += "                    }\n";
         body += "                }\n";
         body += "            }\n";
@@ -135,7 +186,8 @@ namespace {
         assemble.kernel(KernelSource {
             .raw = {},
             .param_names = { "vertices", "cell_start", "cell_count", "particle_index", "claimed_by",
-                "particle_count", "stride_words", "position_offset", "absorb_radius",
+                "claim_events", "accreted_mass", "particle_count", "stride_words", "position_offset",
+                "absorb_radius", "capture_growth",
                 "grid_min_x", "grid_min_y", "grid_min_z", "cell_size", "dim_x", "dim_y", "dim_z", "i" },
             .body = std::move(body),
         });
@@ -145,19 +197,24 @@ namespace {
 
 } // namespace
 
-ClaimProcessor::ClaimProcessor(const MutationConfig& config)
+ClaimProcessor::ClaimProcessor(
+    const MutationConfig& config,
+    std::shared_ptr<Nodes::Network::ParticleFieldOperator> particle_op)
     : NetworkStateFieldProcessor(
           { FieldBinding { .name = "vertices", .binding = 0, .field = {} },
               FieldBinding { .name = "cell_start", .binding = 1, .field = "hash_cell_start" },
               FieldBinding { .name = "cell_count", .binding = 2, .field = "hash_cell_count" },
               FieldBinding { .name = "particle_index", .binding = 3, .field = "hash_particle_index" },
-              FieldBinding { .name = "claimed_by", .binding = 4, .field = "mutation_claimed_by" } },
+              FieldBinding { .name = "claimed_by", .binding = 4, .field = "mutation_claimed_by" },
+              FieldBinding { .name = "claim_events", .binding = 5, .field = "mutation_claim_events" },
+              FieldBinding { .name = "accreted_mass", .binding = 6, .field = "mutation_accreted_mass" } },
           build_claim_spec())
     , m_params {
         .particle_count = config.hash.particle_count,
         .stride_words = config.hash.stride_words,
         .position_offset = config.hash.position_word_offset,
         .absorb_radius = config.absorb_radius,
+        .capture_growth = particle_op->get_particle_config().capture_growth,
         .grid_min_x = config.hash.grid_min.x,
         .grid_min_y = config.hash.grid_min.y,
         .grid_min_z = config.hash.grid_min.z,
@@ -166,12 +223,31 @@ ClaimProcessor::ClaimProcessor(const MutationConfig& config)
         .dim_y = config.hash.grid_dims.y,
         .dim_z = config.hash.grid_dims.z,
     }
+    , m_particle_op(std::move(particle_op))
+    , m_built_revision(m_particle_op->revision())
 {
 }
 
 void ClaimProcessor::on_buffer_ready()
 {
     dispatch_one_thread_per(m_params.particle_count, m_params);
+}
+
+bool ClaimProcessor::on_before_execute(
+    Portal::Graphics::CommandBufferID cmd_id,
+    const std::shared_ptr<VKBuffer>& buffer)
+{
+    if (!NetworkStateFieldProcessor::on_before_execute(cmd_id, buffer)) {
+        return false;
+    }
+
+    if (m_particle_op->revision() != m_built_revision) {
+        m_params.capture_growth = m_particle_op->get_particle_config().capture_growth;
+        set_push_constant_data(m_params);
+        m_built_revision = m_particle_op->revision();
+    }
+
+    return true;
 }
 
 //=============================================================================
@@ -281,18 +357,58 @@ namespace {
 
 } // namespace
 
-ClaimAccumulateProcessor::ClaimAccumulateProcessor(const MutationConfig& config)
+ClaimAccumulateProcessor::ClaimAccumulateProcessor(
+    const MutationConfig& config,
+    Nodes::Network::PhysicsOperator* physics_op)
     : NetworkStateFieldProcessor(
           { FieldBinding { .name = "claimed_by", .binding = 0, .field = "mutation_claimed_by" },
               FieldBinding { .name = "swallow_count", .binding = 1, .field = "mutation_swallow_count" } },
           build_claim_accumulate_spec())
     , m_params { .particle_count = config.hash.particle_count }
+    , m_physics_op(physics_op)
 {
 }
 
 void ClaimAccumulateProcessor::on_buffer_ready()
 {
     dispatch_one_thread_per(m_params.particle_count, m_params);
+}
+
+void ClaimAccumulateProcessor::processing_function(const std::shared_ptr<Buffer>& buffer)
+{
+    NetworkStateFieldProcessor::processing_function(buffer);
+
+    auto network_buffer = get_network_buffer();
+    if (!network_buffer || !m_physics_op) {
+        return;
+    }
+
+    uint32_t claim_events = 0;
+    download_back_buffer(
+        network_buffer->read_state_slot("mutation_claim_events"),
+        &claim_events, sizeof(claim_events), m_readback_staging);
+
+    if (claim_events == 0u) {
+        m_physics_op->clear_bonds();
+    } else {
+        m_claimed_by_readback.resize(m_params.particle_count);
+        download_back_buffer(
+            network_buffer->read_state_slot("mutation_claimed_by"),
+            m_claimed_by_readback.data(),
+            m_claimed_by_readback.size() * sizeof(uint32_t),
+            m_readback_staging);
+
+        m_physics_op->sync_bonds_from_claims(m_claimed_by_readback);
+    }
+
+    auto accreted_mass = m_physics_op->get_accreted_mass_span();
+    if (!accreted_mass.empty()) {
+        upload_back_buffer(
+            network_buffer->write_state_slot("mutation_accreted_mass"),
+            accreted_mass.data(),
+            accreted_mass.size() * sizeof(float),
+            m_upload_staging);
+    }
 }
 
 //=============================================================================
@@ -323,34 +439,33 @@ namespace {
         body += "    if (i >= particle_count) { return; }\n";
         body += "    uint root = claimed_by[i];\n";
         body += "    uint b = i * stride_words;\n";
+        body += "    uint rb = root * stride_words;\n";
         body += "\n";
-        body += "    vec3 palette[6] = vec3[6](\n";
-        body += "        vec3(0.20, 0.90, 0.90),\n";
-        body += "        vec3(0.95, 0.25, 0.75),\n";
-        body += "        vec3(0.95, 0.85, 0.15),\n";
-        body += "        vec3(0.95, 0.45, 0.10),\n";
-        body += "        vec3(0.40, 0.95, 0.25),\n";
-        body += "        vec3(0.55, 0.35, 0.95));\n";
-        body += "    vec3 base_col = palette[root % 6u];\n";
+        body += "    float count = float(swallow_count[root]);\n";
+        body += "    float size = clamp(base_size + count * growth_rate, base_size, max_size);\n";
+        body += "    float t = clamp((size - base_size) / max(max_size - base_size, 0.001), 0.0, 1.0);\n";
+        body += "    vec3 ember = vec3(0.03, 0.0, 0.06);\n";
+        body += "    vec3 fire = vec3(0.95, 0.25, 0.02);\n";
+        body += "    vec3 white_hot = vec3(1.0, 0.95, 0.7);\n";
+        body += "    vec3 heat = t < 0.5\n";
+        body += "        ? mix(ember, fire, t * 2.0)\n";
+        body += "        : mix(fire, white_hot, (t - 0.5) * 2.0);\n";
         body += "\n";
         body += "    if (root == i) {\n";
-        body += "        float count = float(swallow_count[i]);\n";
-        body += "        float size = clamp(base_size + count * growth_rate, base_size, max_size);\n";
         body += "        vertices[b + size_offset] = size;\n";
-        body += "        vertices[b + color_offset] = base_col.x;\n";
-        body += "        vertices[b + color_offset + 1u] = base_col.y;\n";
-        body += "        vertices[b + color_offset + 2u] = base_col.z;\n";
+        body += "        vertices[b + color_offset] = heat.x;\n";
+        body += "        vertices[b + color_offset + 1u] = heat.y;\n";
+        body += "        vertices[b + color_offset + 2u] = heat.z;\n";
         body += "        return;\n";
         body += "    }\n";
         body += "\n";
-        body += "    uint rb = root * stride_words;\n";
         body += "    vec3 root_pos = vec3(vertices[rb + position_offset], "
                  "vertices[rb + position_offset + 1u], vertices[rb + position_offset + 2u]);\n";
         body += "    vertices[b + position_offset] = root_pos.x;\n";
         body += "    vertices[b + position_offset + 1u] = root_pos.y;\n";
         body += "    vertices[b + position_offset + 2u] = root_pos.z;\n";
         body += "\n";
-        body += "    vec3 dim_col = base_col * dim_factor;\n";
+        body += "    vec3 dim_col = heat * dim_factor;\n";
         body += "    vertices[b + color_offset] = dim_col.x;\n";
         body += "    vertices[b + color_offset + 1u] = dim_col.y;\n";
         body += "    vertices[b + color_offset + 2u] = dim_col.z;\n";
@@ -364,42 +479,6 @@ namespace {
         });
 
         return assemble.build();
-    }
-
-    /**
-     * @brief Resolve colour and size word offsets or fail loudly.
-     *
-     * A free function rather than inline in the member-initialiser list,
-     * the same shape HashDensityColorProcessor's require_color_offset
-     * uses: the constructor needs both before it can build m_params.
-     */
-    std::pair<uint32_t, uint32_t> require_color_and_size_offset(
-        const std::shared_ptr<Nodes::Network::ParticleFieldOperator>& particle_op)
-    {
-        if (!particle_op) {
-            error<std::invalid_argument>(
-                Journal::Component::Buffers,
-                Journal::Context::BufferProcessing,
-                std::source_location::current(),
-                "ClaimSwallowProcessor: null particle operator");
-        }
-
-        const auto& layout = particle_op->get_layout();
-
-        const auto color_offset = layout.find_word_offset(Kakshya::DataModality::VERTEX_COLORS_RGB);
-        const auto size_attr = std::ranges::find_if(layout.attributes,
-            [](const auto& attr) { return attr.name == "size"; });
-        const bool have_size = size_attr != layout.attributes.end() && size_attr->offset_in_vertex % 4 == 0;
-
-        if (!color_offset.has_value() || !have_size) {
-            error<std::invalid_argument>(
-                Journal::Component::Buffers,
-                Journal::Context::BufferProcessing,
-                std::source_location::current(),
-                "ClaimSwallowProcessor: vertex layout is missing a colour or word-aligned size attribute");
-        }
-
-        return { *color_offset, size_attr->offset_in_vertex / 4 };
     }
 
 } // namespace

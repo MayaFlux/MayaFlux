@@ -257,6 +257,110 @@ public:
     void clear_force_fields();
 
     /**
+     * @brief Adopt this cycle's GPU claim/absorption clustering as bonds.
+     * @param claimed_by One entry per particle, global index order: entry i
+     *        equals i if i is a cluster root, or the root's index if i was
+     *        absorbed into it. Same shape as MutationClaimProcessor's
+     *        mutation_claimed_by state field, since it is meant to be called
+     *        directly with that field's readback.
+     *
+     * Bonded (non-root) particles are pulled toward their root each cycle by
+     * apply_bond_forces, a spring toward bond_rest_length rather than the
+     * root's own absorb_radius, so the CPU-simulated particle stays close to
+     * its cluster even on a cycle where the GPU claim graph (fully rebuilt
+     * from scratch every cycle, see ClaimInitProcessor) briefly finds no
+     * claim for it. Replaces any previously adopted bonds outright: there is
+     * no incremental merge, the whole table is the current cycle's snapshot.
+     *
+     * @note Entries in claimed_by are validated against m_accreted_mass's
+     *       size before use as an index; an out-of-range entry is skipped
+     *       rather than trusted, since claimed_by comes from a GPU readback.
+     */
+    void sync_bonds_from_claims(std::span<const uint32_t> claimed_by);
+
+    /**
+     * @brief Drop every adopted bond.
+     *
+     * Called when the claim graph reports nothing claimed this cycle
+     * (see ClaimAccumulateProcessor), so stale bonds from an earlier cycle
+     * don't keep pulling particles together after they've genuinely drifted
+     * apart.
+     */
+    void clear_bonds();
+
+    /**
+     * @brief Spring constant pulling a bonded particle toward its root.
+     * @param stiffness Force per unit distance from bond_rest_length.
+     */
+    void set_bond_stiffness(float stiffness) { m_bond_stiffness = stiffness; }
+    [[nodiscard]] float get_bond_stiffness() const { return m_bond_stiffness; }
+
+    /**
+     * @brief Distance a bond settles at.
+     * @param rest_length Below this distance the bond pushes apart (repel);
+     *        above it, the bond pulls together (attract). 0 pulls a bonded
+     *        particle fully onto its root, matching the GPU cosmetic swallow.
+     */
+    void set_bond_rest_length(float rest_length) { m_bond_rest_length = rest_length; }
+    [[nodiscard]] float get_bond_rest_length() const { return m_bond_rest_length; }
+
+    /** @brief Number of particles currently bonded to a root other than themselves. */
+    [[nodiscard]] size_t bond_count() const;
+
+    /**
+     * @brief Enable or disable adopting bonds from sync_bonds_from_claims.
+     * @param enable False also clears any bonds currently held, so the
+     *        effect is immediate rather than waiting for the next zero-claim
+     *        cycle.
+     *
+     * Purely a toggle for comparing bonded vs. unbonded behaviour live: the
+     * GPU claim/swallow cosmetic pass is unaffected either way, since it
+     * never reads this flag. Only apply_bond_forces (a real physics effect)
+     * is gated by it.
+     */
+    void enable_bonds(bool enable);
+
+    [[nodiscard]] bool bonds_enabled() const { return m_bonds_enabled; }
+
+    /**
+     * @brief This particle's currently accreted mass.
+     * @return 1.0 (the seed value every particle starts at) before bonds
+     *         have ever synced, or if global_index is out of range.
+     *
+     * Populated by sync_bonds_from_claims, which is the only place mass
+     * moves: a satellite's mass transfers onto its current root every cycle
+     * it remains claimed and is never created or destroyed (see that
+     * method's own doc). Unlike ClaimAccumulateProcessor's GPU-side
+     * swallow_count, which ClaimInitProcessor wipes every cycle, this is a
+     * genuine permanent record of accumulated material, suitable for a
+     * growth effect that actually takes real time rather than saturating as
+     * soon as local density reaches steady state.
+     */
+    [[nodiscard]] float get_accreted_mass(size_t global_index) const;
+
+    /**
+     * @brief Every particle's currently accreted mass, in global index order.
+     * @return Empty if there are no particles yet; otherwise always
+     *         get_point_count() elements, lazily seeded to 1.0 each on the
+     *         first call, the same seeding sync_bonds_from_claims does, so a
+     *         caller can upload this from cycle one without waiting for the
+     *         first claim event to size it.
+     *
+     * Not const: may lazily initialise m_accreted_mass on first call.
+     */
+    [[nodiscard]] std::span<const float> get_accreted_mass_span();
+
+    /**
+     * @brief Sum of every particle's accreted mass.
+     * @return particle count before bonds have ever synced (each particle
+     *         starts at mass 1.0), and exactly that same value forever
+     *         after, since transfer neither creates nor destroys mass.
+     *         Useful as a caller's own reference point for what fraction of
+     *         the whole system a given body currently represents.
+     */
+    [[nodiscard]] float get_total_mass() const;
+
+    /**
      * @brief Fixed dt substituted when set_force_internal_dt(true).
      * @param dt Timestep in seconds. Default 0.016F.
      */
@@ -326,15 +430,35 @@ private:
     float m_attraction_strength { 1.0F };
     float m_internal_dt { 0.016F };
 
+    std::vector<uint32_t> m_bond_root; ///< Empty when no bonds are adopted; see sync_bonds_from_claims.
+    float m_bond_stiffness { 2.0F };
+    float m_bond_rest_length { 0.0F };
+    bool m_bonds_enabled { true };
+
+    std::vector<float> m_accreted_mass; ///< Lazily seeded to 1.0 per particle; see sync_bonds_from_claims.
+
     static std::optional<PhysicsParameter> string_to_parameter(std::string_view param);
 
     void apply_forces();
     void apply_spatial_interactions();
     void apply_attraction_forces();
     void apply_turbulence();
+    void apply_bond_forces();
     void integrate(float dt);
     void handle_boundary_conditions();
     void sync_to_point_collection();
+
+    /**
+     * @struct GroupIndex
+     * @brief A global particle index resolved to its owning collection.
+     */
+    struct GroupIndex {
+        size_t group;
+        size_t local;
+    };
+
+    /** @brief Resolve a global index the same way apply_impulse/get_data_at do. */
+    [[nodiscard]] std::optional<GroupIndex> resolve_global_index(size_t global_index) const;
 
     void apply_per_particle_force(
         std::string_view param,

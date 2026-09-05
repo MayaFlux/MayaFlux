@@ -54,18 +54,18 @@ void ParticleGeometryBuffer::wire_particle_field_operator(
         return;
     }
 
+    auto* physics = dynamic_cast<Nodes::Network::PhysicsOperator*>(get_network()->get_operator());
+
     float cell_size = 0.0F;
     if (pconfig.cell_size.has_value()) {
         cell_size = *pconfig.cell_size;
-    } else {
-        auto* physics = dynamic_cast<Nodes::Network::PhysicsOperator*>(get_network()->get_operator());
-        if (!physics) {
-            MF_ERROR(Journal::Component::Buffers, Journal::Context::Init,
-                "ParticleGeometryBuffer: ParticleFieldConfig has no cell_size and the network's "
-                "primary operator is not a PhysicsOperator, so one cannot be derived");
-            return;
-        }
+    } else if (physics) {
         cell_size = physics->get_interaction_radius();
+    } else {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::Init,
+            "ParticleGeometryBuffer: ParticleFieldConfig has no cell_size and the network's "
+            "primary operator is not a PhysicsOperator, so one cannot be derived");
+        return;
     }
 
     auto hash_config = SpatialHashConfig::from_network(self, cell_size);
@@ -95,10 +95,13 @@ void ParticleGeometryBuffer::wire_particle_field_operator(
     claim_config.declare_fields(self);
 
     chain->add_processor(std::make_shared<ClaimInitProcessor>(claim_config), self);
-    chain->add_processor(std::make_shared<ClaimProcessor>(claim_config), self);
+    chain->add_processor(std::make_shared<ClaimProcessor>(claim_config, particle_op), self);
     chain->add_processor(std::make_shared<ClaimFlattenProcessor>(claim_config), self);
-    chain->add_processor(std::make_shared<ClaimAccumulateProcessor>(claim_config), self);
-    chain->add_processor(std::make_shared<ClaimSwallowProcessor>(claim_config, particle_op), self);
+    chain->add_processor(std::make_shared<ClaimAccumulateProcessor>(claim_config, physics), self);
+
+    if (pconfig.cosmetic_swallow) {
+        chain->add_processor(std::make_shared<ClaimSwallowProcessor>(claim_config, particle_op), self);
+    }
 }
 
 } // namespace MayaFlux::Buffers

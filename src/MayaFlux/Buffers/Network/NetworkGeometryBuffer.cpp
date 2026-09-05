@@ -374,6 +374,17 @@ vk::Buffer NetworkGeometryBuffer::read_state_handle(const std::string& name) con
     return get_buffer_resources().back_buffers[slot].buffer;
 }
 
+VKBufferResources::GenerationSlot NetworkGeometryBuffer::read_state_slot(const std::string& name) const
+{
+    const auto* field = find_state_field(name, "read_state_slot");
+    if (!field) {
+        return {};
+    }
+
+    const uint32_t slot = field->read_is_a ? field->slot_a : field->slot_b;
+    return get_buffer_resources().back_buffers[slot];
+}
+
 vk::Buffer NetworkGeometryBuffer::write_state_handle(const std::string& name) const
 {
     const auto* field = find_state_field(name, "write_state_handle");
@@ -383,6 +394,17 @@ vk::Buffer NetworkGeometryBuffer::write_state_handle(const std::string& name) co
 
     const uint32_t slot = field->read_is_a ? field->slot_b : field->slot_a;
     return get_buffer_resources().back_buffers[slot].buffer;
+}
+
+VKBufferResources::GenerationSlot NetworkGeometryBuffer::write_state_slot(const std::string& name) const
+{
+    const auto* field = find_state_field(name, "write_state_slot");
+    if (!field) {
+        return {};
+    }
+
+    const uint32_t slot = field->read_is_a ? field->slot_b : field->slot_a;
+    return get_buffer_resources().back_buffers[slot];
 }
 
 void NetworkGeometryBuffer::swap_state(const std::string& name)
