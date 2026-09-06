@@ -14,19 +14,17 @@ namespace MayaFlux::Buffers {
  *        spawn-as-copy over a seed's fixed, over-allocated capacity.
  *
  * hash.particle_count here is expected to already be live_count plus
- * whatever reserve capacity SpatialFieldConfig::reserve_fraction asked
- * for -- the caller overrides SpatialHashConfig::particle_count to that
- * total before constructing this, so every hash/claim stage already
- * dispatches over the full reserve range. live_count is the boundary this
- * struct itself adds: everything at or past it starts dead, and is the only
- * region PopulationSpawnProcessor is allowed to write a new particle into.
+ * whatever reserve capacity SpatialFieldConfig::reserve_fraction asked for:
+ * the caller overrides SpatialHashConfig::particle_count to that total
+ * before constructing this, so every hash/claim stage already dispatches
+ * over the full reserve range. live_count is the boundary this struct
+ * itself adds: everything at or past it starts dead, and is the only region
+ * PopulationSpawnProcessor is allowed to write a new particle into.
  *
- * This entire mechanism is deliberately not reflected to the CPU. Whatever
- * PhysicsOperator simulates is the permanent, authoritative population;
- * what exists here is disposable, GPU-local bookkeeping about which of the
- * seed's records currently render as alive, thrown away and rebuilt from
- * scratch the next time the network is reseeded (a fresh NetworkGeometryBuffer
- * wiring, not a new mechanism of its own). ClaimAccumulateProcessor is the
+ * This mechanism is not reflected to the CPU. Whatever PhysicsOperator
+ * simulates is the authoritative population; what exists here is GPU-local
+ * bookkeeping about which of the seed's records currently render as alive,
+ * rebuilt from scratch on the next reseed. ClaimAccumulateProcessor is the
  * one enforcement point: it never lets anything past live_count reach
  * PhysicsOperator's own bond/mass tracking, however far spawn has grown the
  * live-looking population beyond it.
@@ -56,19 +54,16 @@ struct PopulationConfig {
  *        reserve region's vertex records, and seeds mutation_spawn_cursor.
  *
  * Dispatches exactly once, on the first cycle it attaches to a ready
- * buffer, then refuses every subsequent dispatch via on_before_execute: it
- * must never re-run, since a second pass would reset every destroy/spawn
- * decision made since the first one, undoing the whole point of the
- * mechanism it exists to bootstrap. Must run before HashCountProcessor/
- * HashScatterProcessor's first dispatch reads mutation_alive, so it belongs
- * at the front of the chain, ahead of HashClearProcessor.
+ * buffer, then refuses every subsequent dispatch via on_before_execute: a
+ * second pass would reset every destroy/spawn decision made since the
+ * first. Must run before HashCountProcessor/HashScatterProcessor's first
+ * dispatch reads mutation_alive, so it belongs at the front of the chain,
+ * ahead of HashClearProcessor.
  *
  * Zeroing the reserve region's vertex records (not just marking them dead)
- * matters because nothing else in the pipeline guarantees what those bytes
- * were before this ran: a fresh allocation's contents are not something
- * this codebase relies on being zero anywhere else, and a stray large or
- * NaN position/size would be a visible artifact the moment alive-gating
- * has a bug, rather than simply invisible as intended.
+ * matters because nothing else guarantees what those bytes held before this
+ * ran: a stray large or NaN position/size would be a visible artifact if
+ * alive-gating ever has a bug, rather than invisible.
  */
 class MAYAFLUX_API PopulationInitProcessor : public NetworkStateFieldProcessor {
 public:
@@ -115,12 +110,11 @@ private:
  * synchronise against is its own claimed slot's thread running the same
  * dispatch: that thread may observe mutation_alive for its own index
  * before or after this write lands, but either way it only ever reads,
- * never writes, so the race is benign -- worst case a freshly spawned
+ * never writes, so the race is benign: worst case, a freshly spawned
  * particle waits one extra cycle before it can itself become a source.
  *
  * Density is global, not cluster-scoped: a crowded region spawns regardless
- * of which PhysicsOperator collection its particles came from. No caller
- * has asked for cluster-scoped spawn density yet; add it if one does.
+ * of which PhysicsOperator collection its particles came from.
  *
  * Reads spawn_density_threshold from the owning GpuFieldOperator
  * fresh whenever its revision() changes, the same on_before_execute check

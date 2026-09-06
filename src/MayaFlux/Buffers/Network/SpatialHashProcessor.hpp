@@ -164,9 +164,7 @@ public:
      * No read/write distinction: every field this class or its subclasses
      * declare is single-slot (NetworkGeometryBuffer::declare_state with
      * double_buffered=false), and for a single-slot field read_state_handle
-     * and write_state_handle always resolve to the same handle. If a future
-     * caller genuinely needs a double-buffered hash field, that's the moment
-     * to add the distinction back, against a real binding that needs it.
+     * and write_state_handle resolve to the same handle.
      */
     struct FieldBinding {
         std::string name; ///< Shader binding name, as declared in ShaderConfig.
@@ -347,11 +345,9 @@ private:
  * @brief Sequential exclusive prefix sum over the per-cell histogram.
  *
  * Single invocation (workgroup and dispatch both {1,1,1}) looping over
- * every cell. Not parallel, deliberately: a parallel workgroup-shared-memory
- * scan is bounded to one workgroup's element count, which would cap grid
- * resolution; this has no such ceiling. Cell counts in the thousands cost
- * microseconds sequentially, which is cheap relative to the rest of the
- * frame. Revisit only if a real caller measures this as a bottleneck.
+ * every cell. Not parallel: a workgroup-shared-memory scan is bounded to one
+ * workgroup's element count, which would cap grid resolution; this has no
+ * such ceiling. Cell counts in the thousands cost microseconds sequentially.
  *
  * Writes both hash_cell_start (the offset each cell's particles begin at
  * in hash_particle_index) and hash_cell_cursor (seeded to the same values,
@@ -410,11 +406,9 @@ private:
  * the same one. Neighbour count maps to a cool-to-warm colour ramp written
  * into the vertex record's own colour attribute.
  *
- * This is the reason a uniform grid earns its keep over the brute-force
- * O(n^2) PhysicsOperator::apply_spatial_interactions already does on the
- * CPU: at tens of thousands of particles this is O(n * 27 * average
- * occupancy) instead of O(n^2), and it runs as one GPU dispatch instead of
- * a CPU loop. Must run after HashScatterProcessor.
+ * At tens of thousands of particles this is O(n * 27 * average occupancy)
+ * rather than the O(n^2) of PhysicsOperator::apply_spatial_interactions, in
+ * one GPU dispatch. Must run after HashScatterProcessor.
  *
  * Reads density_saturation_count from the owning GpuFieldOperator
  * fresh whenever its revision() changes (checked in on_before_execute,

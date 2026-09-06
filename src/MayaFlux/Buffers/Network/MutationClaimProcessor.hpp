@@ -41,17 +41,14 @@ struct MutationConfig {
      * single-word readback, whether the full claimed_by/swallow_count
      * arrays are worth downloading this cycle at all.
      *
-     * Also declares mutation_accreted_mass, one float per particle,
-     * untouched by ClaimInitProcessor (deliberately: it is the one field in
-     * this whole pipeline meant to persist, not reset every cycle).
-     * ClaimAccumulateProcessor uploads PhysicsOperator's own accreted mass
-     * into it each cycle (see that class's own doc), and ClaimProcessor
-     * reads it back to scale capture_growth. It exists specifically because
-     * swallow_count cannot do this job: ClaimInitProcessor zeroes
-     * swallow_count before ClaimProcessor ever runs in the very same cycle,
-     * so a ClaimProcessor that tried to read swallow_count for this would
-     * always see 0, making capture_growth silently inert regardless of its
-     * value, which is exactly the bug this field exists to avoid repeating.
+     * Also declares mutation_accreted_mass, one float per particle. Unlike
+     * the fields above it is not reset each cycle: ClaimInitProcessor never
+     * touches it. ClaimAccumulateProcessor uploads PhysicsOperator's own
+     * accreted mass into it each cycle (see that class's own doc), and
+     * ClaimProcessor reads it back to scale capture_growth. swallow_count
+     * cannot serve this role because ClaimInitProcessor zeroes it before
+     * ClaimProcessor runs in the same cycle, so a read of swallow_count here
+     * would always see 0.
      *
      * Does not declare a cluster id field of its own: hash_cluster_id
      * belongs to SpatialHashConfig::declare_fields, since it is shared with
@@ -195,8 +192,7 @@ private:
  * claimed_by[k] = claimed_by[claimed_by[k]] halves the distance from any
  * element to its root; ceil(log2(particle_count)) rounds is always enough
  * regardless of chain length, since no chain can exceed particle_count
- * links. This is the standard parallel union-find flattening technique,
- * not a MayaFlux-specific trick.
+ * links. This is the standard parallel union-find flattening technique.
  *
  * Implemented as one kernel dispatched multiple times via
  * ComputeProcessor's iteration mechanism (set_iteration_count), with
