@@ -1,5 +1,6 @@
 #include "PopulationProcessor.hpp"
 
+#include "NeighbourWalkHelper.hpp"
 #include "NetworkGeometryBuffer.hpp"
 
 #include "MayaFlux/Nodes/Network/Operators/GpuFieldOperator.hpp"
@@ -51,12 +52,7 @@ namespace {
         body += "        spawn_cursor[0] = live_count;\n";
         body += "    }\n";
 
-        assemble.kernel(KernelSource {
-            .raw = {},
-            .param_names = { "vertices", "alive", "spawn_cursor", "live_count", "total_count",
-                "stride_words", "i" },
-            .body = std::move(body),
-        });
+        assemble.kernel(KernelSource { .body = std::move(body) });
 
         return assemble.build();
     }
@@ -134,36 +130,11 @@ namespace {
         body += "    uint b = i * stride_words;\n";
         body += "    vec3 p = vec3(vertices[b + position_offset], "
                 "vertices[b + position_offset + 1u], vertices[b + position_offset + 2u]);\n";
-        body += "    vec3 gmin = vec3(grid_min_x, grid_min_y, grid_min_z);\n";
-        body += "    uvec3 dims = uvec3(dim_x, dim_y, dim_z);\n";
-        body += "    ivec3 base = ivec3(floor((p - gmin) / cell_size));\n";
-        body += "    base = clamp(base, ivec3(0), ivec3(dims) - ivec3(1));\n";
         body += "\n";
         body += "    uint neighbor_count = 0u;\n";
-        body += "    for (int dz = -1; dz <= 1; dz = dz + 1) {\n";
-        body += "        for (int dy = -1; dy <= 1; dy = dy + 1) {\n";
-        body += "            for (int dx = -1; dx <= 1; dx = dx + 1) {\n";
-        body += "                ivec3 nc = base + ivec3(dx, dy, dz);\n";
-        body += "                if (nc.x < 0 || nc.y < 0 || nc.z < 0 || "
-                "nc.x >= int(dim_x) || nc.y >= int(dim_y) || nc.z >= int(dim_z)) {\n";
-        body += "                    continue;\n";
-        body += "                }\n";
-        body += "                uint cell = uint(nc.x) + uint(nc.y) * dim_x + uint(nc.z) * dim_x * dim_y;\n";
-        body += "                uint start = cell_start[cell];\n";
-        body += "                uint count = cell_count[cell];\n";
-        body += "                for (uint k = 0u; k < count; k = k + 1u) {\n";
-        body += "                    uint j = particle_index[start + k];\n";
-        body += "                    if (j == i) { continue; }\n";
-        body += "                    uint bj = j * stride_words;\n";
-        body += "                    vec3 pj = vec3(vertices[bj + position_offset], "
-                "vertices[bj + position_offset + 1u], vertices[bj + position_offset + 2u]);\n";
-        body += "                    if (length(pj - p) < cell_size) {\n";
-        body += "                        neighbor_count = neighbor_count + 1u;\n";
-        body += "                    }\n";
-        body += "                }\n";
-        body += "            }\n";
-        body += "        }\n";
-        body += "    }\n";
+        detail::append_neighbour_walk(body, {
+            .on_hit = "neighbor_count = neighbor_count + 1u;",
+        });
         body += "\n";
         body += "    if (float(neighbor_count) < spawn_density_threshold) { return; }\n";
         body += "\n";
@@ -176,14 +147,7 @@ namespace {
         body += "    alive[slot] = 1u;\n";
         body += "    cluster_id[slot] = cluster_id[i];\n";
 
-        assemble.kernel(KernelSource {
-            .raw = {},
-            .param_names = { "vertices", "cell_start", "cell_count", "particle_index", "alive",
-                "cluster_id", "spawn_cursor", "total_count", "stride_words", "position_offset",
-                "grid_min_x", "grid_min_y", "grid_min_z", "cell_size", "dim_x", "dim_y", "dim_z",
-                "spawn_density_threshold", "i" },
-            .body = std::move(body),
-        });
+        assemble.kernel(KernelSource { .body = std::move(body) });
 
         return assemble.build();
     }
@@ -203,16 +167,7 @@ PopulationSpawnProcessor::PopulationSpawnProcessor(
               FieldBinding { .name = "spawn_cursor", .binding = 6, .field = "mutation_spawn_cursor" } },
           build_population_spawn_spec())
     , m_params {
-        .total_count = config.hash.particle_count,
-        .stride_words = config.hash.stride_words,
-        .position_offset = config.hash.position_word_offset,
-        .grid_min_x = config.hash.grid_min.x,
-        .grid_min_y = config.hash.grid_min.y,
-        .grid_min_z = config.hash.grid_min.z,
-        .cell_size = config.hash.cell_size,
-        .dim_x = config.hash.grid_dims.x,
-        .dim_y = config.hash.grid_dims.y,
-        .dim_z = config.hash.grid_dims.z,
+        .grid = make_grid_push_constants(config.hash),
         .spawn_density_threshold = particle_op->get_field_config().spawn_density_threshold,
     }
     , m_particle_op(std::move(particle_op))
@@ -222,24 +177,17 @@ PopulationSpawnProcessor::PopulationSpawnProcessor(
 
 void PopulationSpawnProcessor::on_buffer_ready()
 {
-    dispatch_one_thread_per(m_params.total_count, m_params);
+    dispatch_one_thread_per(m_params.grid.particle_count, m_params);
 }
 
 bool PopulationSpawnProcessor::on_before_execute(
     Portal::Graphics::CommandBufferID cmd_id,
     const std::shared_ptr<VKBuffer>& buffer)
 {
-    if (!NetworkStateFieldProcessor::on_before_execute(cmd_id, buffer)) {
-        return false;
-    }
-
-    if (m_particle_op->revision() != m_built_revision) {
+    return guard_and_resync(cmd_id, buffer, m_particle_op->revision(), m_built_revision, [this] {
         m_params.spawn_density_threshold = m_particle_op->get_field_config().spawn_density_threshold;
         set_push_constant_data(m_params);
-        m_built_revision = m_particle_op->revision();
-    }
-
-    return true;
+    });
 }
 
 } // namespace MayaFlux::Buffers

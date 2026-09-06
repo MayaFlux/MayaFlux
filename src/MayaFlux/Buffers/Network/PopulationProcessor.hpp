@@ -141,16 +141,7 @@ protected:
 
 private:
     struct Params {
-        uint32_t total_count;
-        uint32_t stride_words;
-        uint32_t position_offset;
-        float grid_min_x;
-        float grid_min_y;
-        float grid_min_z;
-        float cell_size;
-        uint32_t dim_x;
-        uint32_t dim_y;
-        uint32_t dim_z;
+        GridPushConstants grid;
         float spawn_density_threshold;
     };
 

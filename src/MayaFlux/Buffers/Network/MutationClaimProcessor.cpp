@@ -1,5 +1,6 @@
 #include "MutationClaimProcessor.hpp"
 
+#include "NeighbourWalkHelper.hpp"
 #include "NetworkGeometryBuffer.hpp"
 
 #include "MayaFlux/Nodes/Network/Operators/GpuFieldOperator.hpp"
@@ -87,11 +88,7 @@ namespace {
         body += "    swallow_count[i] = 0u;\n";
         body += "    if (i == 0u) { claim_events[0] = 0u; }\n";
 
-        assemble.kernel(KernelSource {
-            .raw = {},
-            .param_names = { "claimed_by", "swallow_count", "claim_events", "particle_count", "i" },
-            .body = std::move(body),
-        });
+        assemble.kernel(KernelSource { .body = std::move(body) });
 
         return assemble.build();
     }
@@ -163,56 +160,17 @@ namespace {
         body += "    float capture_radius = max(absorb_radius, "
                 "pow(max(accreted_mass[i], 0.0001), 1.0 / 3.0) * capture_growth);\n";
         body += "    uint my_cluster = cluster_id[i];\n";
-        body += "    vec3 gmin = vec3(grid_min_x, grid_min_y, grid_min_z);\n";
-        body += "    uvec3 dims = uvec3(dim_x, dim_y, dim_z);\n";
-        body += "    ivec3 base = ivec3(floor((p - gmin) / cell_size));\n";
-        body += "    base = clamp(base, ivec3(0), ivec3(dims) - ivec3(1));\n";
         body += "\n";
         body += "    int reach = clamp(int(ceil(capture_radius / cell_size)), 1, 8);\n";
-        body += "    for (int dz = -reach; dz <= reach; dz = dz + 1) {\n";
-        body += "        for (int dy = -reach; dy <= reach; dy = dy + 1) {\n";
-        body += "            for (int dx = -reach; dx <= reach; dx = dx + 1) {\n";
-        body += "                ivec3 nc = base + ivec3(dx, dy, dz);\n";
-        body += "                if (nc.x < 0 || nc.y < 0 || nc.z < 0 || "
-                 "nc.x >= int(dim_x) || nc.y >= int(dim_y) || nc.z >= int(dim_z)) {\n";
-        body += "                    continue;\n";
-        body += "                }\n";
-        body += "                uint cell = uint(nc.x) + uint(nc.y) * dim_x + uint(nc.z) * dim_x * dim_y;\n";
-        body += "                uint start = cell_start[cell];\n";
-        body += "                uint count = cell_count[cell];\n";
-        body += "                for (uint k = 0u; k < count; k = k + 1u) {\n";
-        body += "                    uint j = particle_index[start + k];\n";
-        body += "                    if (j <= i) { continue; }\n";
-        body += "                    if (cross_cluster == 0u && cluster_id[j] != my_cluster) { continue; }\n";
-        body += "                    uint bj = j * stride_words;\n";
-        body += "                    vec3 pj = vec3(vertices[bj + position_offset], "
-                 "vertices[bj + position_offset + 1u], vertices[bj + position_offset + 2u]);\n";
-        body += "                    if (length(pj - p) < capture_radius) {\n";
-        body += "                        atomicMin(claimed_by[j], i);\n";
-        body += "                        atomicAdd(claim_events[0], 1u);\n";
-        body += "                    }\n";
-        body += "                }\n";
-        body += "            }\n";
-        body += "        }\n";
-        body += "    }\n";
-
-        std::vector<std::string> param_names {
-            "vertices", "cell_start", "cell_count", "particle_index", "claimed_by",
-            "claim_events", "accreted_mass", "cluster_id"
-        };
-        if (gate_alive) {
-            param_names.emplace_back("alive");
-        }
-        param_names.insert(param_names.end(),
-            { "particle_count", "stride_words", "position_offset", "absorb_radius", "capture_growth",
-                "grid_min_x", "grid_min_y", "grid_min_z", "cell_size", "dim_x", "dim_y", "dim_z",
-                "cross_cluster", "i" });
-
-        assemble.kernel(KernelSource {
-            .raw = {},
-            .param_names = std::move(param_names),
-            .body = std::move(body),
+        detail::append_neighbour_walk(body, {
+            .reach = "reach",
+            .skip_self = "j <= i",
+            .cluster_scoped = true,
+            .radius = "capture_radius",
+            .on_hit = "atomicMin(claimed_by[j], i);\natomicAdd(claim_events[0], 1u);",
         });
+
+        assemble.kernel(KernelSource { .body = std::move(body) });
 
         return assemble.build();
     }
@@ -271,19 +229,12 @@ bool ClaimProcessor::on_before_execute(
     Portal::Graphics::CommandBufferID cmd_id,
     const std::shared_ptr<VKBuffer>& buffer)
 {
-    if (!NetworkStateFieldProcessor::on_before_execute(cmd_id, buffer)) {
-        return false;
-    }
-
-    if (m_particle_op->revision() != m_built_revision) {
+    return guard_and_resync(cmd_id, buffer, m_particle_op->revision(), m_built_revision, [this] {
         const auto& pconfig = m_particle_op->get_field_config();
         m_params.capture_growth = pconfig.capture_growth;
         m_params.cross_cluster = pconfig.cross_cluster ? 1U : 0U;
         set_push_constant_data(m_params);
-        m_built_revision = m_particle_op->revision();
-    }
-
-    return true;
+    });
 }
 
 //=============================================================================
@@ -304,11 +255,7 @@ namespace {
         body += "    if (i >= particle_count) { return; }\n";
         body += "    claimed_by[i] = claimed_by[claimed_by[i]];\n";
 
-        assemble.kernel(KernelSource {
-            .raw = {},
-            .param_names = { "claimed_by", "particle_count", "i" },
-            .body = std::move(body),
-        });
+        assemble.kernel(KernelSource { .body = std::move(body) });
 
         return assemble.build();
     }
@@ -408,24 +355,7 @@ namespace {
         }
         body += "    }\n";
 
-        std::vector<std::string> param_names { "claimed_by", "swallow_count" };
-        if (gate_alive) {
-            param_names.emplace_back("alive");
-            param_names.emplace_back("vertices");
-        }
-        if (transfer_on_claim) {
-            param_names.emplace_back("cluster_id");
-        }
-        param_names.emplace_back("particle_count");
-        param_names.emplace_back("stride_words");
-        param_names.emplace_back("size_offset");
-        param_names.emplace_back("i");
-
-        assemble.kernel(KernelSource {
-            .raw = {},
-            .param_names = std::move(param_names),
-            .body = std::move(body),
-        });
+        assemble.kernel(KernelSource { .body = std::move(body) });
 
         return assemble.build();
     }
@@ -592,19 +522,7 @@ namespace {
         body += "    vertices[b + color_offset + 1u] = dim_col.y;\n";
         body += "    vertices[b + color_offset + 2u] = dim_col.z;\n";
 
-        std::vector<std::string> param_names { "vertices", "claimed_by", "swallow_count" };
-        if (transfer_on_claim) {
-            param_names.emplace_back("cluster_id");
-        }
-        param_names.insert(param_names.end(),
-            { "particle_count", "stride_words", "position_offset", "color_offset", "size_offset",
-                "base_size", "growth_rate", "max_size", "dim_factor", "i" });
-
-        assemble.kernel(KernelSource {
-            .raw = {},
-            .param_names = std::move(param_names),
-            .body = std::move(body),
-        });
+        assemble.kernel(KernelSource { .body = std::move(body) });
 
         return assemble.build();
     }
@@ -656,21 +574,14 @@ bool ClaimSwallowProcessor::on_before_execute(
     Portal::Graphics::CommandBufferID cmd_id,
     const std::shared_ptr<VKBuffer>& buffer)
 {
-    if (!NetworkStateFieldProcessor::on_before_execute(cmd_id, buffer)) {
-        return false;
-    }
-
-    if (m_particle_op->revision() != m_built_revision) {
+    return guard_and_resync(cmd_id, buffer, m_particle_op->revision(), m_built_revision, [this] {
         const auto& pconfig = m_particle_op->get_field_config();
         m_params.base_size = pconfig.swallow_base_size;
         m_params.growth_rate = pconfig.swallow_growth_rate;
         m_params.max_size = pconfig.swallow_max_size;
         m_params.dim_factor = pconfig.swallow_dim_factor;
         set_push_constant_data(m_params);
-        m_built_revision = m_particle_op->revision();
-    }
-
-    return true;
+    });
 }
 
 //=============================================================================
@@ -695,11 +606,7 @@ namespace {
         body += "    if (cluster_id[root] == cluster_id[i]) { return; }\n";
         body += "    cluster_id[i] = cluster_id[root];\n";
 
-        assemble.kernel(KernelSource {
-            .raw = {},
-            .param_names = { "claimed_by", "cluster_id", "particle_count", "i" },
-            .body = std::move(body),
-        });
+        assemble.kernel(KernelSource { .body = std::move(body) });
 
         return assemble.build();
     }

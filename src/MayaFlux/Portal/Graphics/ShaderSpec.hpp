@@ -502,7 +502,9 @@ struct ShaderSpec {
 
         /**
          * @brief Supply a user kernel via MF_KERNEL. When set, KernelOp is ignored.
-         * @param ks KernelSource produced by MF_KERNEL.
+         * @param ks KernelSource produced by MF_KERNEL. If its param_names is
+         *        empty, build() fills it from the declared bindings, then the
+         *        push constant fields, then a trailing "i".
          */
         Assemble& kernel(KernelSource ks)
         {
@@ -516,6 +518,16 @@ struct ShaderSpec {
             uint32_t pc_bytes = 0;
             for (const auto& f : m_pc_fields)
                 pc_bytes += Kakshya::gpu_data_format_bytes(f.format);
+
+            if (m_kernel.has_value() && m_kernel->param_names.empty()) {
+                auto& names = m_kernel->param_names;
+                names.reserve(m_bindings.size() + m_pc_fields.size() + 1);
+                for (const auto& b : m_bindings)
+                    names.push_back(b.name);
+                for (const auto& f : m_pc_fields)
+                    names.push_back(f.name);
+                names.emplace_back("i");
+            }
 
             return ShaderSpec {
                 .tmpl = m_tmpl,

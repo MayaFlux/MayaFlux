@@ -554,18 +554,7 @@ std::optional<Portal::Graphics::ShaderSpec> GpuFieldOperator::build_spec() const
         }
     }
 
-    std::vector<std::string> param_names { "vertices" };
-    if (needs_cluster) {
-        param_names.emplace_back("cluster_id");
-    }
-    param_names.insert(param_names.end(),
-        { "first_vertex", "vertex_count", "stride_words", "time", "i" });
-
-    assemble.kernel(Portal::Graphics::KernelSource {
-        .raw = {},
-        .param_names = std::move(param_names),
-        .body = std::move(body),
-    });
+    assemble.kernel(Portal::Graphics::KernelSource { .body = std::move(body) });
 
     m_spec_cache = assemble.build();
     return m_spec_cache;

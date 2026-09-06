@@ -1,5 +1,6 @@
 #include "SpatialHashProcessor.hpp"
 
+#include "NeighbourWalkHelper.hpp"
 #include "NetworkGeometryBuffer.hpp"
 
 #include "MayaFlux/Nodes/Network/Operators/GraphicsOperator.hpp"
@@ -245,11 +246,7 @@ namespace {
         body += "        cell_count[i] = 0u;\n";
         body += "    }\n";
 
-        assemble.kernel(KernelSource {
-            .raw = {},
-            .param_names = { "cell_count", "cell_count_total", "i" },
-            .body = std::move(body),
-        });
+        assemble.kernel(KernelSource { .body = std::move(body) });
 
         return assemble.build();
     }
@@ -314,19 +311,7 @@ namespace {
         body += "    uint cell = cell_of(p, gmin, cell_size, dims);\n";
         body += "    atomicAdd(cell_count[cell], 1u);\n";
 
-        std::vector<std::string> param_names { "vertices", "cell_count" };
-        if (gate_alive) {
-            param_names.emplace_back("alive");
-        }
-        param_names.insert(param_names.end(),
-            { "particle_count", "stride_words", "position_offset", "grid_min_x", "grid_min_y",
-                "grid_min_z", "cell_size", "dim_x", "dim_y", "dim_z", "i" });
-
-        assemble.kernel(KernelSource {
-            .raw = {},
-            .param_names = std::move(param_names),
-            .body = std::move(body),
-        });
+        assemble.kernel(KernelSource { .body = std::move(body) });
 
         return assemble.build();
     }
@@ -347,18 +332,7 @@ namespace {
 
 HashCountProcessor::HashCountProcessor(const SpatialHashConfig& config, bool gate_alive)
     : NetworkStateFieldProcessor(count_bindings(gate_alive), build_count_spec(gate_alive))
-    , m_params {
-        .particle_count = config.particle_count,
-        .stride_words = config.stride_words,
-        .position_offset = config.position_word_offset,
-        .grid_min_x = config.grid_min.x,
-        .grid_min_y = config.grid_min.y,
-        .grid_min_z = config.grid_min.z,
-        .cell_size = config.cell_size,
-        .dim_x = config.grid_dims.x,
-        .dim_y = config.grid_dims.y,
-        .dim_z = config.grid_dims.z,
-    }
+    , m_params(make_grid_push_constants(config))
 {
 }
 
@@ -393,11 +367,7 @@ namespace {
         body += "        }\n";
         body += "    }\n";
 
-        assemble.kernel(KernelSource {
-            .raw = {},
-            .param_names = { "cell_count", "cell_start", "cell_cursor", "cell_count_total", "i" },
-            .body = std::move(body),
-        });
+        assemble.kernel(KernelSource { .body = std::move(body) });
 
         return assemble.build();
     }
@@ -467,19 +437,7 @@ namespace {
         body += "    uint slot = atomicAdd(cell_cursor[cell], 1u);\n";
         body += "    particle_index[slot] = i;\n";
 
-        std::vector<std::string> param_names { "vertices", "cell_cursor", "particle_index" };
-        if (gate_alive) {
-            param_names.emplace_back("alive");
-        }
-        param_names.insert(param_names.end(),
-            { "particle_count", "stride_words", "position_offset", "grid_min_x", "grid_min_y",
-                "grid_min_z", "cell_size", "dim_x", "dim_y", "dim_z", "i" });
-
-        assemble.kernel(KernelSource {
-            .raw = {},
-            .param_names = std::move(param_names),
-            .body = std::move(body),
-        });
+        assemble.kernel(KernelSource { .body = std::move(body) });
 
         return assemble.build();
     }
@@ -501,18 +459,7 @@ namespace {
 
 HashScatterProcessor::HashScatterProcessor(const SpatialHashConfig& config, bool gate_alive)
     : NetworkStateFieldProcessor(scatter_bindings(gate_alive), build_scatter_spec(gate_alive))
-    , m_params {
-        .particle_count = config.particle_count,
-        .stride_words = config.stride_words,
-        .position_offset = config.position_word_offset,
-        .grid_min_x = config.grid_min.x,
-        .grid_min_y = config.grid_min.y,
-        .grid_min_z = config.grid_min.z,
-        .cell_size = config.cell_size,
-        .dim_x = config.grid_dims.x,
-        .dim_y = config.grid_dims.y,
-        .dim_z = config.grid_dims.z,
-    }
+    , m_params(make_grid_push_constants(config))
 {
 }
 
@@ -557,37 +504,12 @@ namespace {
         body += "    vec3 p = vec3(vertices[b + position_offset], "
                  "vertices[b + position_offset + 1u], vertices[b + position_offset + 2u]);\n";
         body += "    uint my_cluster = cluster_id[i];\n";
-        body += "    vec3 gmin = vec3(grid_min_x, grid_min_y, grid_min_z);\n";
-        body += "    uvec3 dims = uvec3(dim_x, dim_y, dim_z);\n";
-        body += "    ivec3 base = ivec3(floor((p - gmin) / cell_size));\n";
-        body += "    base = clamp(base, ivec3(0), ivec3(dims) - ivec3(1));\n";
         body += "\n";
         body += "    uint neighbor_count = 0u;\n";
-        body += "    for (int dz = -1; dz <= 1; dz = dz + 1) {\n";
-        body += "        for (int dy = -1; dy <= 1; dy = dy + 1) {\n";
-        body += "            for (int dx = -1; dx <= 1; dx = dx + 1) {\n";
-        body += "                ivec3 nc = base + ivec3(dx, dy, dz);\n";
-        body += "                if (nc.x < 0 || nc.y < 0 || nc.z < 0 || "
-                 "nc.x >= int(dim_x) || nc.y >= int(dim_y) || nc.z >= int(dim_z)) {\n";
-        body += "                    continue;\n";
-        body += "                }\n";
-        body += "                uint cell = uint(nc.x) + uint(nc.y) * dim_x + uint(nc.z) * dim_x * dim_y;\n";
-        body += "                uint start = cell_start[cell];\n";
-        body += "                uint count = cell_count[cell];\n";
-        body += "                for (uint k = 0u; k < count; k = k + 1u) {\n";
-        body += "                    uint j = particle_index[start + k];\n";
-        body += "                    if (j == i) { continue; }\n";
-        body += "                    if (cross_cluster == 0u && cluster_id[j] != my_cluster) { continue; }\n";
-        body += "                    uint bj = j * stride_words;\n";
-        body += "                    vec3 pj = vec3(vertices[bj + position_offset], "
-                 "vertices[bj + position_offset + 1u], vertices[bj + position_offset + 2u]);\n";
-        body += "                    if (length(pj - p) < cell_size) {\n";
-        body += "                        neighbor_count = neighbor_count + 1u;\n";
-        body += "                    }\n";
-        body += "                }\n";
-        body += "            }\n";
-        body += "        }\n";
-        body += "    }\n";
+        detail::append_neighbour_walk(body, {
+            .cluster_scoped = true,
+            .on_hit = "neighbor_count = neighbor_count + 1u;",
+        });
         body += "\n";
         body += "    float density = clamp(float(neighbor_count) / density_saturation_count, 0.0, 1.0);\n";
         body += "    vec3 ember = vec3(0.03, 0.0, 0.06);\n";
@@ -600,14 +522,7 @@ namespace {
         body += "    vertices[b + color_offset + 1u] = col.y;\n";
         body += "    vertices[b + color_offset + 2u] = col.z;\n";
 
-        assemble.kernel(KernelSource {
-            .raw = {},
-            .param_names = { "vertices", "cell_start", "cell_count", "particle_index", "cluster_id",
-                "particle_count", "stride_words", "position_offset", "color_offset",
-                "grid_min_x", "grid_min_y", "grid_min_z", "cell_size", "dim_x", "dim_y", "dim_z",
-                "density_saturation_count", "cross_cluster", "i" },
-            .body = std::move(body),
-        });
+        assemble.kernel(KernelSource { .body = std::move(body) });
 
         return assemble.build();
     }
@@ -685,19 +600,12 @@ bool HashDensityColorProcessor::on_before_execute(
     Portal::Graphics::CommandBufferID cmd_id,
     const std::shared_ptr<VKBuffer>& buffer)
 {
-    if (!NetworkStateFieldProcessor::on_before_execute(cmd_id, buffer)) {
-        return false;
-    }
-
-    if (m_particle_op->revision() != m_built_revision) {
+    return guard_and_resync(cmd_id, buffer, m_particle_op->revision(), m_built_revision, [this] {
         const auto& pconfig = m_particle_op->get_field_config();
         m_params.density_saturation_count = pconfig.density_saturation_count;
         m_params.cross_cluster = pconfig.cross_cluster ? 1U : 0U;
         set_push_constant_data(m_params);
-        m_built_revision = m_particle_op->revision();
-    }
-
-    return true;
+    });
 }
 
 } // namespace MayaFlux::Buffers

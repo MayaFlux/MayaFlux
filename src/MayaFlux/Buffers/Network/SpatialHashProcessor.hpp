@@ -101,6 +101,42 @@ struct SpatialHashConfig {
 };
 
 /**
+ * @struct GridPushConstants
+ * @brief Uniform-grid push-constant block shared by the hash count/scatter and
+ *        population-spawn kernels. Field order is the push-constant declaration
+ *        order; do not rearrange.
+ */
+struct GridPushConstants {
+    uint32_t particle_count;
+    uint32_t stride_words;
+    uint32_t position_offset;
+    float grid_min_x;
+    float grid_min_y;
+    float grid_min_z;
+    float cell_size;
+    uint32_t dim_x;
+    uint32_t dim_y;
+    uint32_t dim_z;
+};
+
+/** @brief Populate a GridPushConstants from grid config. */
+inline GridPushConstants make_grid_push_constants(const SpatialHashConfig& c)
+{
+    return GridPushConstants {
+        .particle_count = c.particle_count,
+        .stride_words = c.stride_words,
+        .position_offset = c.position_word_offset,
+        .grid_min_x = c.grid_min.x,
+        .grid_min_y = c.grid_min.y,
+        .grid_min_z = c.grid_min.z,
+        .cell_size = c.cell_size,
+        .dim_x = c.grid_dims.x,
+        .dim_y = c.grid_dims.y,
+        .dim_z = c.grid_dims.z,
+    };
+}
+
+/**
  * @class NetworkStateFieldProcessor
  * @brief ComputeProcessor operating on named state fields of a
  *        NetworkGeometryBuffer, plus optionally the buffer's own primary
@@ -207,6 +243,33 @@ protected:
         set_push_constant_data(params);
     }
 
+    /**
+     * @brief Base on_before_execute guard, then a revision-gated tuning reload.
+     * @param current_revision The owning operator's revision() sampled now.
+     * @param built_revision Revision the push constants were last built for;
+     *        overwritten with current_revision when reload runs.
+     * @param reload Called only on a revision change; must re-read the tuning
+     *        fields into the Params struct and call set_push_constant_data.
+     * @return False when the base guard rejects the cycle.
+     */
+    template <typename F>
+    bool guard_and_resync(
+        Portal::Graphics::CommandBufferID cmd_id,
+        const std::shared_ptr<VKBuffer>& buffer,
+        uint64_t current_revision,
+        uint64_t& built_revision,
+        F&& reload)
+    {
+        if (!NetworkStateFieldProcessor::on_before_execute(cmd_id, buffer)) {
+            return false;
+        }
+        if (current_revision != built_revision) {
+            std::forward<F>(reload)();
+            built_revision = current_revision;
+        }
+        return true;
+    }
+
 private:
     /** @brief Register the binding table into m_config.bindings. */
     void register_bindings();
@@ -276,20 +339,7 @@ protected:
     void on_buffer_ready() override;
 
 private:
-    struct Params {
-        uint32_t particle_count;
-        uint32_t stride_words;
-        uint32_t position_offset;
-        float grid_min_x;
-        float grid_min_y;
-        float grid_min_z;
-        float cell_size;
-        uint32_t dim_x;
-        uint32_t dim_y;
-        uint32_t dim_z;
-    };
-
-    Params m_params;
+    GridPushConstants m_params;
 };
 
 /**
@@ -343,20 +393,7 @@ protected:
     void on_buffer_ready() override;
 
 private:
-    struct Params {
-        uint32_t particle_count;
-        uint32_t stride_words;
-        uint32_t position_offset;
-        float grid_min_x;
-        float grid_min_y;
-        float grid_min_z;
-        float cell_size;
-        uint32_t dim_x;
-        uint32_t dim_y;
-        uint32_t dim_z;
-    };
-
-    Params m_params;
+    GridPushConstants m_params;
 };
 
 /**
