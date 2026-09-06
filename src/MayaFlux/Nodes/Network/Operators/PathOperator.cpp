@@ -217,6 +217,27 @@ void PathOperator::mark_vertex_data_clean()
     }
 }
 
+std::vector<GraphicsOperator::DirtyVertexRange> PathOperator::dirty_vertex_ranges() const
+{
+    std::vector<DirtyVertexRange> ranges;
+
+    uint32_t offset = 0;
+    uint32_t index = 0;
+    for (const auto& path : m_paths) {
+        const auto count = static_cast<uint32_t>(path->get_vertex_count());
+        if (path->needs_gpu_update()) {
+            ranges.push_back(DirtyVertexRange {
+                .group_index = index,
+                .vertex_offset = offset,
+                .vertex_count = count });
+        }
+        offset += count;
+        ++index;
+    }
+
+    return ranges;
+}
+
 size_t PathOperator::get_point_count() const
 {
     size_t total = 0;

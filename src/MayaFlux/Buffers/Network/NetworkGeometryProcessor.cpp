@@ -183,6 +183,51 @@ void NetworkGeometryProcessor::processing_function(const std::shared_ptr<Buffer>
             continue;
         }
 
+        auto* primary_op = dynamic_cast<Nodes::Network::GraphicsOperator*>(
+            binding.network->get_operator());
+
+        bool chain_gfx_dirty = false;
+        bool needs_full_restore = false;
+        for (const auto& op : chain->operators()) {
+            if (op && op->demands_full_vertex_restore())
+                needs_full_restore = true;
+
+            auto* gfx = dynamic_cast<Nodes::Network::GraphicsOperator*>(op.get());
+            if (gfx && gfx->participates_in_rendering() && gfx->is_vertex_data_dirty())
+                chain_gfx_dirty = true;
+        }
+
+        if (primary_op && primary_op->supports_incremental_upload()
+            && !needs_full_restore
+            && total_bytes == binding.last_total_bytes
+            && !chain_gfx_dirty && primary.layout.has_value()) {
+
+            const auto ranges = primary_op->dirty_vertex_ranges();
+            const uint32_t stride = primary.layout->stride_bytes;
+            bool applied = stride > 0;
+
+            for (const auto& r : ranges) {
+                const auto pack = primary_op->get_vertex_data_for_collection(r.group_index);
+                const size_t offset = static_cast<size_t>(r.vertex_offset) * stride;
+                const size_t length = static_cast<size_t>(r.vertex_count) * stride;
+                if (length == 0)
+                    continue;
+                if (pack.size() < length || offset + length > vk_buffer->get_size_bytes()) {
+                    applied = false;
+                    break;
+                }
+                ensure_staging(binding, length);
+                upload_to_gpu(pack.data(), length, vk_buffer, binding.staging_buffer, offset);
+            }
+
+            if (applied) {
+                primary_op->mark_vertex_data_clean();
+                MF_RT_TRACE(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                    "Network '{}': incremental upload, {} dirty range(s)", name, ranges.size());
+                continue;
+            }
+        }
+
         if (total_bytes > vk_buffer->get_size_bytes()) {
             vk_buffer->resize(static_cast<size_t>(static_cast<float>(total_bytes) * 1.5F), false);
         }
@@ -222,6 +267,8 @@ void NetworkGeometryProcessor::processing_function(const std::shared_ptr<Buffer>
                 byte_offset += s.bytes.size();
             }
         }
+
+        binding.last_total_bytes = total_bytes;
 
         MF_RT_TRACE(Journal::Component::Buffers, Journal::Context::BufferProcessing,
             "Uploaded {} bytes ({} slices) from network '{}'",

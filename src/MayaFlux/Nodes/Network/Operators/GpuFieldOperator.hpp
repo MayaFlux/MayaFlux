@@ -517,6 +517,16 @@ public:
         return "GpuFieldOperator";
     }
 
+    /**
+     * @brief True once at least one field is bound: the VertexFieldProcessor
+     *        this operator drives writes pos += f in place, so the geometry
+     *        producer must keep restoring the reference vertices every frame.
+     */
+    [[nodiscard]] bool demands_full_vertex_restore() const override
+    {
+        return binding_count() > 0;
+    }
+
 protected:
     /**
      * @brief Clear the cached spec and bump revision().

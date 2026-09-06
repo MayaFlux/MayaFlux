@@ -47,6 +47,61 @@ public:
     virtual void mark_vertex_data_clean() = 0;
 
     /**
+     * @struct DirtyVertexRange
+     * @brief A contiguous span of vertex records that changed since the last
+     *        mark_vertex_data_clean().
+     *
+     * group_index selects which vertex-array pack the span's bytes come from,
+     * for a consumer that reads one pack at a time through
+     * get_vertex_data_for_collection(); it is 0 for an operator holding a
+     * single pack. vertex_offset and vertex_count are in global vertex-index
+     * order, the same concatenation order get_vertex_data() and
+     * build_cluster_ids() produce.
+     */
+    struct DirtyVertexRange {
+        uint32_t group_index {};
+        uint32_t vertex_offset {};
+        uint32_t vertex_count {};
+    };
+
+    /**
+     * @brief Vertex sub-ranges that changed since the last
+     *        mark_vertex_data_clean().
+     * @return One entry per contiguous dirty region, in global vertex-index
+     *         order, or empty when nothing changed.
+     *
+     * The default reports a single range spanning every vertex whenever
+     * is_vertex_data_dirty() is true, so a consumer that uploads per-range
+     * stays identical to one that re-uploads the whole buffer. An operator
+     * holding several independent vertex-array packs (PathOperator's paths,
+     * TopologyOperator's graphs) overrides this to report only the packs
+     * whose own geometry changed this cycle, so an edit to one pack leaves
+     * the uploaded bytes of the others, and any GPU-side accumulation already
+     * written into them, untouched.
+     */
+    [[nodiscard]] virtual std::vector<DirtyVertexRange> dirty_vertex_ranges() const
+    {
+        if (!is_vertex_data_dirty()) {
+            return {};
+        }
+        return { DirtyVertexRange { .vertex_count = static_cast<uint32_t>(get_vertex_count()) } };
+    }
+
+    /**
+     * @brief Whether every vertex mutation on this operator sets a group's
+     *        dirty flag, so dirty_vertex_ranges() is the complete record of
+     *        what changed since the last mark_vertex_data_clean().
+     *
+     * False by default: a consumer must re-upload the whole buffer. True for
+     * operators (PathOperator, TopologyOperator) whose per-group flags are
+     * authoritative, letting a consumer upload only the reported ranges and
+     * then call mark_vertex_data_clean(). An operator that reports true must
+     * also route every path through which its vertices change (add, edit,
+     * clear, interpolation-parameter changes) to a group dirty flag.
+     */
+    [[nodiscard]] virtual bool supports_incremental_upload() const { return false; }
+
+    /**
      * @brief Get source point count (before topology expansion)
      */
     [[nodiscard]] virtual size_t get_point_count() const = 0;

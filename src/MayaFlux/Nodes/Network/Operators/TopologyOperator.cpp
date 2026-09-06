@@ -182,6 +182,27 @@ void TopologyOperator::mark_vertex_data_clean()
     }
 }
 
+std::vector<GraphicsOperator::DirtyVertexRange> TopologyOperator::dirty_vertex_ranges() const
+{
+    std::vector<DirtyVertexRange> ranges;
+
+    uint32_t offset = 0;
+    uint32_t index = 0;
+    for (const auto& topology : m_topologies) {
+        const auto count = static_cast<uint32_t>(topology->get_vertex_count());
+        if (topology->needs_gpu_update()) {
+            ranges.push_back(DirtyVertexRange {
+                .group_index = index,
+                .vertex_offset = offset,
+                .vertex_count = count });
+        }
+        offset += count;
+        ++index;
+    }
+
+    return ranges;
+}
+
 size_t TopologyOperator::get_point_count() const
 {
     size_t total = 0;

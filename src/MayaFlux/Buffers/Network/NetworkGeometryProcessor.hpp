@@ -51,6 +51,16 @@ public:
         std::shared_ptr<Nodes::Network::NodeNetwork> network;
         std::shared_ptr<VKBuffer> gpu_vertex_buffer;
         std::shared_ptr<VKBuffer> staging_buffer;
+
+        /**
+         * @brief Aggregate byte size of the most recent full upload.
+         *
+         * A cycle whose freshly computed aggregate size still matches this,
+         * and whose primary operator supports_incremental_upload(), takes the
+         * per-range partial-upload path; any size change forces a full
+         * re-upload and refreshes this value.
+         */
+        size_t last_total_bytes {};
     };
 
     /**
