@@ -320,6 +320,21 @@ struct PushConstantField {
 };
 
 /**
+ * @struct FunctionDef
+ * @brief A standalone function emitted before main() in the generated GLSL.
+ *
+ * Body text is injected verbatim between the braces of the emitted signature.
+ * Consumed by the GLSL kernel path only: the SPIR-V assembly emitter has no
+ * function-call lowering and ignores this list.
+ */
+struct FunctionDef {
+    std::string return_type;
+    std::string name;
+    std::string params;
+    std::string body;
+};
+
+/**
  * @struct ShaderSpec
  * @brief Complete declarative description of a generated compute shader.
  *
@@ -348,6 +363,7 @@ struct ShaderSpec {
     std::vector<PushConstantField> pc_fields;
     std::array<uint32_t, 3> workgroup_size { 256, 1, 1 };
     uint32_t push_constant_bytes { 0 };
+    std::vector<FunctionDef> functions; ///< Emitted before main(). GLSL path only.
     std::optional<KernelSource> kernel; ///< When set, KernelOp is ignored.
 
     /**
@@ -461,8 +477,34 @@ struct ShaderSpec {
         }
 
         /**
+         * @brief Declare a function emitted before main() in the generated GLSL.
+         * @param return_type GLSL return type spelling.
+         * @param name        Function name, callable from the kernel body.
+         * @param params      Parameter list verbatim, including types ("vec3 p").
+         * @param body        Function body text without the enclosing braces.
+         *
+         * Requires a kernel supplied via MF_KERNEL. Names are emitted as given;
+         * two functions sharing a name produce a GLSL redefinition error rather
+         * than a silent override.
+         */
+        Assemble& function(
+            std::string return_type,
+            std::string name,
+            std::string params,
+            std::string body)
+        {
+            m_functions.push_back({ .return_type = std::move(return_type),
+                .name = std::move(name),
+                .params = std::move(params),
+                .body = std::move(body) });
+            return *this;
+        }
+
+        /**
          * @brief Supply a user kernel via MF_KERNEL. When set, KernelOp is ignored.
-         * @param ks KernelSource produced by MF_KERNEL.
+         * @param ks KernelSource produced by MF_KERNEL. If its param_names is
+         *        empty, build() fills it from the declared bindings, then the
+         *        push constant fields, then a trailing "i".
          */
         Assemble& kernel(KernelSource ks)
         {
@@ -477,6 +519,16 @@ struct ShaderSpec {
             for (const auto& f : m_pc_fields)
                 pc_bytes += Kakshya::gpu_data_format_bytes(f.format);
 
+            if (m_kernel.has_value() && m_kernel->param_names.empty()) {
+                auto& names = m_kernel->param_names;
+                names.reserve(m_bindings.size() + m_pc_fields.size() + 1);
+                for (const auto& b : m_bindings)
+                    names.push_back(b.name);
+                for (const auto& f : m_pc_fields)
+                    names.push_back(f.name);
+                names.emplace_back("i");
+            }
+
             return ShaderSpec {
                 .tmpl = m_tmpl,
                 .op = m_op,
@@ -484,6 +536,7 @@ struct ShaderSpec {
                 .pc_fields = std::move(m_pc_fields),
                 .workgroup_size = m_workgroup,
                 .push_constant_bytes = pc_bytes,
+                .functions = std::move(m_functions),
                 .kernel = std::move(m_kernel),
             };
         }
@@ -496,6 +549,7 @@ struct ShaderSpec {
         std::array<uint32_t, 3> m_workgroup { 256, 1, 1 };
         uint32_t m_set { 0 };
         uint32_t m_next_binding { 0 };
+        std::vector<FunctionDef> m_functions;
         std::optional<KernelSource> m_kernel;
     };
 };

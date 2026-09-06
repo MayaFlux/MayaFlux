@@ -176,6 +176,17 @@ public:
 
     void set_topology(Topology topology) override;
 
+    /**
+     * @brief Whether initialize() fabricates a PhysicsOperator when no primary
+     *        has been set.
+     *
+     * Enabled by default: a network constructed and processed with no further
+     * configuration still moves. Disable before initialize() when the primary
+     * is deliberately absent and the work happens in the operator chain.
+     */
+    void enable_default_operator(bool enabled) { m_default_operator = enabled; }
+    [[nodiscard]] bool default_operator_enabled() const { return m_default_operator; }
+
     //-------------------------------------------------------------------------
     // Parameter Mapping (Delegates to Operator)
     //-------------------------------------------------------------------------
@@ -201,6 +212,18 @@ private:
     void ensure_initialized();
     std::vector<PointVertex> generate_initial_vertices();
     PointVertex generate_single_vertex(Kinesis::SpatialDistribution mode, size_t index, size_t total);
+
+    /**
+     * @brief Whether an operator can serve as this network's primary.
+     *
+     * ParticleNetwork drives per-point motion, so a primary must own
+     * PointVertex storage and accept initialisation from a generated point
+     * distribution. The list is the set of operators that do, not a privilege
+     * granted to any one of them.
+     */
+    [[nodiscard]] static bool is_compatible(const NetworkOperator& op) noexcept;
+
+    bool m_default_operator { true };
 
     //-------------------------------------------------------------------------
     // Parameter Mapping Helpers

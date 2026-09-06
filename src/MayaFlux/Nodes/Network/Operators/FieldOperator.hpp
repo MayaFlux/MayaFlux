@@ -2,32 +2,14 @@
 
 #include "GraphicsOperator.hpp"
 
+#include "MayaFlux/Kinesis/Tendency/FieldBinding.hpp"
 #include "MayaFlux/Kinesis/Tendency/Tendency.hpp"
 #include "MayaFlux/Nodes/Graphics/VertexSpec.hpp"
 
 namespace MayaFlux::Nodes::Network {
 
-/**
- * @enum FieldTarget
- * @brief Vertex attribute targets for Tendency field evaluation
- */
-enum class FieldTarget : uint8_t {
-    POSITION,
-    COLOR,
-    NORMAL,
-    TANGENT,
-    SCALAR,
-    UV
-};
-
-/**
- * @enum FieldMode
- * @brief How fields are applied each frame
- */
-enum class FieldMode : uint8_t {
-    ABSOLUTE,
-    ACCUMULATE
-};
+using FieldTarget = Kinesis::FieldTarget;
+using FieldMode = Kinesis::FieldMode;
 
 /**
  * @class FieldOperator

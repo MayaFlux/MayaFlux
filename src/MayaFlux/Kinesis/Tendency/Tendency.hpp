@@ -44,7 +44,7 @@ struct Tendency {
 using ScalarField = Tendency<float, float>;
 using SpatialField = Tendency<glm::vec3, float>;
 using VectorField = Tendency<glm::vec3, glm::vec3>;
-using TemporalField = Tendency<float, float>;
+using TimedField = Tendency<float, float>;
 using UVField = Tendency<glm::vec3, glm::vec2>;
 
 // =========================================================================

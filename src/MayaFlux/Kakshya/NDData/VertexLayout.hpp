@@ -57,6 +57,30 @@ struct VertexLayout {
     std::vector<VertexAttributeLayout> attributes;
 
     /**
+     * @brief Word offset of the attribute matching the given modality, if any.
+     * @param modality Attribute kind to search for, e.g.
+     *        DataModality::VERTEX_POSITIONS_3D or ::VERTEX_COLORS_RGB.
+     * @return Byte offset divided by 4, or nullopt when no attribute of that
+     *         modality is present or its offset is not word-aligned.
+     *
+     * The alignment check exists for GPU code addressing this record as a
+     * flat float/uint array rather than through a struct: GpuFieldOperator
+     * and the particle spatial hash both index by word, not byte.
+     */
+    [[nodiscard]] std::optional<uint32_t> find_word_offset(DataModality modality) const
+    {
+        for (const auto& attr : attributes) {
+            if (attr.component_modality == modality) {
+                if (attr.offset_in_vertex % 4 != 0) {
+                    return std::nullopt;
+                }
+                return attr.offset_in_vertex / 4;
+            }
+        }
+        return std::nullopt;
+    }
+
+    /**
      * @brief Helper: compute stride from attributes if not explicitly set
      */
     void compute_stride()

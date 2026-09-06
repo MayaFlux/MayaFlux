@@ -191,6 +191,28 @@ size_t TopologyOperator::get_point_count() const
     return total;
 }
 
+std::vector<uint32_t> TopologyOperator::build_cluster_ids() const
+{
+    std::vector<uint32_t> ids(get_vertex_count(), 0U);
+
+    if (m_topologies.size() <= 1) {
+        return ids;
+    }
+
+    size_t offset = 0;
+    uint32_t cluster = 0;
+    for (const auto& topology : m_topologies) {
+        const size_t count = topology->get_vertex_count();
+        for (size_t i = 0; i < count && offset + i < ids.size(); ++i) {
+            ids[offset + i] = cluster;
+        }
+        offset += count;
+        ++cluster;
+    }
+
+    return ids;
+}
+
 //-----------------------------------------------------------------------------
 // Parameter Control
 //-----------------------------------------------------------------------------

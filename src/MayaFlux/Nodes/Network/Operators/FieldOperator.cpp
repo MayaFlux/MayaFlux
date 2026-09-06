@@ -179,51 +179,50 @@ void FieldOperator::process(float)
 
 void FieldOperator::bind(FieldTarget target, Kinesis::VectorField field)
 {
-    switch (target) {
-    case FieldTarget::POSITION:
-        m_position_fields.push_back(std::move(field));
-        break;
-    case FieldTarget::COLOR:
-        m_color_fields.push_back(std::move(field));
-        break;
-    case FieldTarget::NORMAL:
-        m_normal_fields.push_back(std::move(field));
-        break;
-    case FieldTarget::TANGENT:
-        m_tangent_fields.push_back(std::move(field));
-        break;
-    default:
+    if (!any_flag(target)) {
         MF_ERROR(Journal::Component::Nodes, Journal::Context::NodeProcessing,
-            "Cannot bind VectorField to scalar target {:d}",
-            static_cast<int>(target));
-        break;
+            "bind: empty target mask");
+        return;
     }
+
+    if (any_flag(target & ~Kinesis::k_vector_targets)) {
+        MF_ERROR(Journal::Component::Nodes, Journal::Context::NodeProcessing,
+            "Cannot bind VectorField to mask {:#x}: unreached bits {:#x}. "
+            "SCALAR needs a SpatialField, UV needs a UVField, and targets this "
+            "operator does not implement are rejected. Nothing was bound.",
+            static_cast<uint16_t>(target),
+            static_cast<uint16_t>(target & ~Kinesis::k_vector_targets));
+        return;
+    }
+
+    if (has_flag(target, FieldTarget::POSITION))
+        m_position_fields.push_back(field);
+    if (has_flag(target, FieldTarget::COLOR))
+        m_color_fields.push_back(field);
+    if (has_flag(target, FieldTarget::NORMAL))
+        m_normal_fields.push_back(field);
+    if (has_flag(target, FieldTarget::TANGENT))
+        m_tangent_fields.push_back(std::move(field));
 }
 
 void FieldOperator::bind(FieldTarget target, Kinesis::SpatialField field)
 {
-    switch (target) {
-    case FieldTarget::SCALAR:
-        m_scalar_fields.push_back(std::move(field));
-        break;
-    case FieldTarget::UV:
+    if (target != FieldTarget::SCALAR) {
         MF_ERROR(Journal::Component::Nodes, Journal::Context::NodeProcessing,
-            "UV target requires a UVField, not a SpatialField. "
-            "Use bind(FieldTarget::UV, Kinesis::UVField) instead.");
-        break;
-    default:
-        MF_ERROR(Journal::Component::Nodes, Journal::Context::NodeProcessing,
-            "Cannot bind SpatialField to vector target {:d}",
-            static_cast<int>(target));
-        break;
+            "SpatialField binds only to FieldTarget::SCALAR, got mask {:#x}. "
+            "UV requires a UVField; vector targets require a VectorField.",
+            static_cast<uint16_t>(target));
+        return;
     }
+    m_scalar_fields.push_back(std::move(field));
 }
 
 void FieldOperator::bind(FieldTarget target, Kinesis::UVField field)
 {
     if (target != FieldTarget::UV) {
         MF_ERROR(Journal::Component::Nodes, Journal::Context::NodeProcessing,
-            "UVField can only be bound to FieldTarget::UV");
+            "UVField binds only to FieldTarget::UV, got mask {:#x}",
+            static_cast<uint16_t>(target));
         return;
     }
     m_uv_fields.push_back(std::move(field));
@@ -231,26 +230,18 @@ void FieldOperator::bind(FieldTarget target, Kinesis::UVField field)
 
 void FieldOperator::unbind(FieldTarget target)
 {
-    switch (target) {
-    case FieldTarget::POSITION:
+    if (has_flag(target, FieldTarget::POSITION))
         m_position_fields.clear();
-        break;
-    case FieldTarget::COLOR:
+    if (has_flag(target, FieldTarget::COLOR))
         m_color_fields.clear();
-        break;
-    case FieldTarget::NORMAL:
+    if (has_flag(target, FieldTarget::NORMAL))
         m_normal_fields.clear();
-        break;
-    case FieldTarget::TANGENT:
+    if (has_flag(target, FieldTarget::TANGENT))
         m_tangent_fields.clear();
-        break;
-    case FieldTarget::SCALAR:
+    if (has_flag(target, FieldTarget::SCALAR))
         m_scalar_fields.clear();
-        break;
-    case FieldTarget::UV:
+    if (has_flag(target, FieldTarget::UV))
         m_uv_fields.clear();
-        break;
-    }
 }
 
 void FieldOperator::unbind_all()

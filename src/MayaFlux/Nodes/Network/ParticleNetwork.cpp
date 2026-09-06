@@ -21,6 +21,7 @@ ParticleNetwork::ParticleNetwork(
 {
     set_topology(Topology::INDEPENDENT);
     set_output_mode(OutputMode::GRAPHICS_BIND);
+    m_operator_chain = std::make_shared<OperatorChain>();
 
     MF_INFO(Journal::Component::Nodes, Journal::Context::NodeProcessing,
         "Created ParticleNetwork with {} points, bounds [{:.2f}, {:.2f}, {:.2f}] to [{:.2f}, {:.2f}, {:.2f}]",
@@ -41,7 +42,7 @@ void ParticleNetwork::initialize()
 
     auto positions = generate_initial_vertices();
 
-    if (!m_operator) {
+    if (!m_operator && m_default_operator) {
         auto physics = std::make_unique<PhysicsOperator>();
         physics->set_bounds(m_bounds.min, m_bounds.max);
         physics->initialize(positions);
@@ -94,14 +95,22 @@ void ParticleNetwork::process_batch(unsigned int num_samples)
 {
     ensure_initialized();
 
-    if (!is_enabled() || !m_operator) {
+    if (!is_enabled()) {
         return;
     }
 
     update_mapped_parameters();
 
-    for (unsigned int frame = 0; frame < num_samples; ++frame) {
-        m_operator->process(m_timestep);
+    if (m_operator) {
+        for (unsigned int frame = 0; frame < num_samples; ++frame) {
+            m_operator->process(m_timestep);
+        }
+    }
+
+    if (m_operator_chain && !m_operator_chain->empty()) {
+        for (unsigned int frame = 0; frame < num_samples; ++frame) {
+            m_operator_chain->process(m_timestep, m_operator.get());
+        }
     }
 
     MF_RT_TRACE(Journal::Component::Nodes, Journal::Context::NodeProcessing,
@@ -184,6 +193,14 @@ void ParticleNetwork::set_operator(std::unique_ptr<NetworkOperator> op)
     if (!op) {
         MF_ERROR(Journal::Component::Nodes, Journal::Context::NodeProcessing,
             "Cannot set null operator");
+        return;
+    }
+
+    if (!is_compatible(*op)) {
+        MF_ERROR(Journal::Component::Nodes, Journal::Context::NodeProcessing,
+            "ParticleNetwork: unsupported operator type '{}' rejected as primary. "
+            "The primary must own PointVertex storage; a chain operator need not.",
+            op->get_type_name());
         return;
     }
 
@@ -299,6 +316,12 @@ PointVertex ParticleNetwork::generate_single_vertex(Kinesis::SpatialDistribution
     return Kakshya::to_point_vertex(
         Kinesis::generate_sample_at(mode, index, total, m_bounds, m_random_gen),
         { 8.0F, 12.0F });
+}
+
+bool ParticleNetwork::is_compatible(const NetworkOperator& op) noexcept
+{
+    return dynamic_cast<const PhysicsOperator*>(&op) != nullptr
+        || dynamic_cast<const FieldOperator*>(&op) != nullptr;
 }
 
 } // namespace MayaFlux::Nodes::Network
