@@ -1,0 +1,5 @@
+<map id="MayaFlux::Portal::Graphics::ShaderSpec::Assemble::kernel" name="MayaFlux::Portal::Graphics::ShaderSpec::Assemble::kernel">
+<area shape="rect" id="Node000001" title="Supply a user kernel via MF_KERNEL." alt="" coords="275,5,501,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1GpuFieldOperator_a3ad4b99e462122dbf5f6b1c00d3632ff.html#a3ad4b99e462122dbf5f6b1c00d3632ff" title="Assemble the compute spec for the current bindings." alt="" coords="5,5,227,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="261,28,227,28,227,23,261,23"/>
+</map>

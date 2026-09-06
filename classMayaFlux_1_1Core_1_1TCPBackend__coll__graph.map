@@ -1,0 +1,7 @@
+<map id="MayaFlux::Core::TCPBackend" name="MayaFlux::Core::TCPBackend">
+<area shape="rect" id="Node000001" title="Connection&#45;oriented reliable stream transport over TCP via standalone Asio." alt="" coords="110,348,313,953"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1INetworkBackend.html" title="Abstract interface for network transport backends." alt="" coords="5,5,188,285"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="134,298,145,347,140,349,129,299"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Core_1_1TCPBackendInfo.html" title="Configuration for the TCP transport backend." alt="" coords="212,63,440,228"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="310,229,286,333,281,332,305,228"/>
+</map>

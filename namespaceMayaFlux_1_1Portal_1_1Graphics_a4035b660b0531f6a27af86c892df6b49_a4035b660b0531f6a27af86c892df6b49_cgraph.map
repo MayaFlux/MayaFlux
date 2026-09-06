@@ -1,0 +1,5 @@
+<map id="MayaFlux::Portal::Graphics::element_type_bytes" name="MayaFlux::Portal::Graphics::element_type_bytes">
+<area shape="rect" id="Node000001" title="Byte width of one GpuBufferBinding::ElementType element." alt="" coords="5,5,203,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kakshya_a1a6f442f75e19775fcf77da154f74990.html#a1a6f442f75e19775fcf77da154f74990" title="Byte size of one element of a GpuDataFormat." alt="" coords="251,5,427,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="203,23,237,23,237,28,203,28"/>
+</map>

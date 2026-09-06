@@ -1,0 +1,7 @@
+<map id="MayaFlux::Portal::Text::press" name="MayaFlux::Portal::Text::press">
+<area shape="rect" id="Node000001" title="Composite a UTF&#45;8 string into a new TextBuffer." alt="" coords="5,5,172,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Text_1_1GlyphAtlas_abcf654455e02ba66cb60f60dc3aa6880.html#abcf654455e02ba66cb60f60dc3aa6880" title="Line advance in pixels for this atlas&#39;s pixel_size." alt="" coords="220,5,401,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="172,23,207,23,207,28,172,28"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Text_1_1FontFace_accda82c104b9bee41559e89f118f5e5f.html#accda82c104b9bee41559e89f118f5e5f" title="Raw FT_Face handle for use by GlyphAtlas." alt="" coords="449,5,616,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="402,23,436,23,436,28,402,28"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Vruta::FrameClock::time_until_next_frame" name="MayaFlux::Vruta::FrameClock::time_until_next_frame">
+<area shape="rect" id="Node000001" title="Get time until next frame should occur." alt="" coords="268,5,483,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Vruta_1_1FrameClock_ad98808b4668fcf7a5e9b40963a3eb750.html#ad98808b4668fcf7a5e9b40963a3eb750" title="Wait (sleep) until next frame should occur." alt="" coords="5,5,220,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="255,28,220,28,220,23,255,23"/>
+</map>

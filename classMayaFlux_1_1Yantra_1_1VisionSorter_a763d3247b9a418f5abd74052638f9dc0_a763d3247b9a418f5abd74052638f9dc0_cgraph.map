@@ -1,0 +1,9 @@
+<map id="MayaFlux::Yantra::VisionSorter::VisionSorter" name="MayaFlux::Yantra::VisionSorter::VisionSorter">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,69,188,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1UniversalSorter_aa417b948d719abdc96ac77ccfcf6be7a.html#aa417b948d719abdc96ac77ccfcf6be7a" title="Configure sorting direction." alt="" coords="236,5,440,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="172,67,248,46,250,51,174,72"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1UniversalSorter_a58ca0a902513e4817124af0f448748aa.html#a58ca0a902513e4817124af0f448748aa" title="Configure output granularity." alt="" coords="236,69,440,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="188,87,222,87,222,92,188,92"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1UniversalSorter_a4cfdf30934ec481a6bd51da889e1885f.html#a4cfdf30934ec481a6bd51da889e1885f" title="Configure sorting strategy." alt="" coords="236,133,440,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="174,107,250,127,248,132,172,112"/>
+</map>

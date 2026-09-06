@@ -1,0 +1,9 @@
+<map id="MayaFlux::Journal::Archivist::set_context_filter" name="MayaFlux::Journal::Archivist::set_context_filter">
+<area shape="rect" id="Node000001" title="Enable or disable logging for a specific context." alt="" coords="541,5,704,60"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Config_ad6046ab275e8518b891fef05ef205ef5.html#ad6046ab275e8518b891fef05ef205ef5" title="Enables or disables logging for specific journal contexts." alt="" coords="327,13,493,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="527,35,493,35,493,30,527,30"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Config_a926b14a6baa31cfcd77dcb32ca8a2417.html#a926b14a6baa31cfcd77dcb32ca8a2417" title="Load engine configuration from a JSON file, applying any present fields to the pre&#45;Init config struct..." alt="" coords="108,13,279,53"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="313,35,279,35,279,30,313,30"/>
+<area shape="rect" id="Node000004" href="$main_8cpp_a0ddf1224851353fc92bfbff6f499fa97.html#a0ddf1224851353fc92bfbff6f499fa97" title=" " alt="" coords="5,20,60,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="94,35,60,35,60,30,94,30"/>
+</map>

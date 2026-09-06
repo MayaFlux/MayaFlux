@@ -1,0 +1,9 @@
+<map id="MayaFlux::Vruta::SoundRoutine::try_resume" name="MayaFlux::Vruta::SoundRoutine::try_resume">
+<area shape="rect" id="Node000001" title="Attempts to resume the coroutine if it&#39;s ready to execute." alt="" coords="5,37,232,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Vruta_1_1SoundRoutine_a6936d0555115de0ddde7aa770a6674c0.html#a6936d0555115de0ddde7aa770a6674c0" title="Attempts to resume the coroutine with explicit temporal context." alt="" coords="280,37,507,77"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="232,55,266,55,266,60,232,60"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Vruta_1_1SoundRoutine_aeda6ab20e0b2cb7e3aad713a192f57c9.html#aeda6ab20e0b2cb7e3aad713a192f57c9" title="Initializes the coroutine&#39;s state for execution." alt="" coords="555,5,781,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="507,41,541,37,541,43,507,47"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Vruta_1_1SoundRoutine_a2632252e0b740f454ecd97a00007ddfc.html#a2632252e0b740f454ecd97a00007ddfc" title="Checks if the coroutine is still active." alt="" coords="555,69,781,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="507,68,541,72,541,77,507,73"/>
+</map>

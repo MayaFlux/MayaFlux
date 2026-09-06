@@ -1,0 +1,35 @@
+<map id="MayaFlux::Yantra::infer_from_region_group" name="MayaFlux::Yantra::infer_from_region_group">
+<area shape="rect" id="Node000001" title="Infer structure from RegionGroup." alt="" coords="5,459,177,499"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_ac71c3404aadefac0fe97e641021e1eba.html#ac71c3404aadefac0fe97e641021e1eba" title="Create dimension descriptors for a data modality." alt="" coords="472,261,644,316"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="117,457,166,423,224,390,283,365,344,343,458,309,459,314,346,348,285,370,227,395,168,428,120,461"/>
+<area shape="rect" id="Node000010" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_aab0cac54b47602cb00e2fd99b50839c3.html#aab0cac54b47602cb00e2fd99b50839c3" title="Convenience constructor for a temporal (time) dimension." alt="" coords="709,469,871,509"/>
+<area shape="poly" id="edge18_Node000001_Node000010" title=" " alt="" coords="178,478,695,485,695,490,178,483"/>
+<area shape="rect" id="Node000011" href="$namespaceMayaFlux_1_1Kakshya_aa7c10c255af63923f0c0583a7d3a58de.html#aa7c10c255af63923f0c0583a7d3a58de" title="Extract bounds information from region group." alt="" coords="225,570,424,610"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="128,497,226,549,257,562,255,567,224,554,126,502"/>
+<area shape="rect" id="Node000012" href="$namespaceMayaFlux_1_1Yantra_ab40b463e00cbdbf34a526725f04b2f78.html#ab40b463e00cbdbf34a526725f04b2f78" title="Infer structure from Region (placeholder since regions are markers)" alt="" coords="239,405,411,445"/>
+<area shape="poly" id="edge11_Node000001_Node000012" title=" " alt="" coords="177,457,225,445,226,450,178,462"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_aafb5f78e7e3682f8785ef62f77e5d77a.html#aafb5f78e7e3682f8785ef62f77e5d77a" title="Calculate memory strides based on shape and layout." alt="" coords="695,5,885,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="567,260,585,219,612,169,647,117,690,71,697,66,700,70,694,75,651,120,616,171,590,221,572,262"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_afae79b6c7314e95d426e396efe81787a.html#afae79b6c7314e95d426e396efe81787a" title="Convenience constructor for a channel dimension." alt="" coords="699,85,881,125"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="574,259,622,197,654,163,690,134,701,128,703,133,694,139,658,167,626,200,579,263"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_ab8dcc89c5d4c2095dcdc5ade1cd84848.html#ab8dcc89c5d4c2095dcdc5ade1cd84848" title="Convenience constructor for a depth dimension." alt="" coords="706,149,874,189"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="593,259,639,228,691,198,706,191,709,196,693,203,642,232,596,263"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_a6a1656bc7eafe4add39ec634481345a7.html#a6a1656bc7eafe4add39ec634481345a7" title="Convenience constructor for a frequency dimension." alt="" coords="692,213,888,253"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="643,265,693,253,694,258,645,271"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Kakshya_aedc3538e77f59c4a4d91df28e181d066.html#aedc3538e77f59c4a4d91df28e181d066" title="Convert DataModality enum to string representation." alt="" coords="711,277,869,317"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="644,289,697,291,697,296,644,294"/>
+<area shape="rect" id="Node000009" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_a54ded63656235da79ab98ef3a576d3d2.html#a54ded63656235da79ab98ef3a576d3d2" title="Convenience constructor for a spatial dimension." alt="" coords="703,341,877,381"/>
+<area shape="poly" id="edge8_Node000002_Node000009" title=" " alt="" coords="645,313,712,334,711,339,643,318"/>
+<area shape="poly" id="edge9_Node000002_Node000010" title=" " alt="" coords="631,314,646,327,658,344,665,361,670,393,674,424,681,439,694,455,700,460,696,464,690,459,677,442,669,426,664,394,660,362,654,347,642,330,628,318"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Reflect_aad91118cbd25bd9e35a3ced9aa4e6dbd.html#aad91118cbd25bd9e35a3ced9aa4e6dbd" title="Universal enum to string converter using magic_enum (original case)" alt="" coords="936,277,1083,317"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="870,294,922,294,922,299,870,299"/>
+<area shape="poly" id="edge12_Node000012_Node000002" title=" " alt="" coords="353,402,407,366,471,326,483,320,485,325,473,331,410,370,356,407"/>
+<area shape="poly" id="edge17_Node000012_Node000010" title=" " alt="" coords="410,442,472,454,588,469,696,479,695,485,588,475,472,459,409,447"/>
+<area shape="rect" id="Node000013" href="$structMayaFlux_1_1Kakshya_1_1Region_a86ab8b71d580d67f6c46525eed760bab.html#a86ab8b71d580d67f6c46525eed760bab" title="Get an attribute value by key, with type conversion support." alt="" coords="479,341,637,381"/>
+<area shape="poly" id="edge13_Node000012_Node000013" title=" " alt="" coords="398,402,471,382,472,387,399,407"/>
+<area shape="rect" id="Node000014" href="$namespaceMayaFlux_1_1Yantra_a35bfca0f707fb3377c6f26456ed32470.html#a35bfca0f707fb3377c6f26456ed32470" title="Infer structure from SignalSourceContainer." alt="" coords="472,405,644,445"/>
+<area shape="poly" id="edge14_Node000012_Node000014" title=" " alt="" coords="411,422,458,422,458,427,411,427"/>
+<area shape="poly" id="edge16_Node000014_Node000010" title=" " alt="" coords="632,442,705,462,703,468,631,447"/>
+<area shape="rect" id="Node000015" href="$namespaceMayaFlux_1_1Kakshya_a88dd3a8013f6e990f4593616f261bc76.html#a88dd3a8013f6e990f4593616f261bc76" title="Detects data modality from dimension information." alt="" coords="708,405,872,445"/>
+<area shape="poly" id="edge15_Node000014_Node000015" title=" " alt="" coords="644,422,694,422,694,427,644,427"/>
+</map>

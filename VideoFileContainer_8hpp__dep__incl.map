@@ -1,0 +1,9 @@
+<map id="VideoFileContainer.hpp" name="VideoFileContainer.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="148,5,320,31"/>
+<area shape="rect" id="Node000002" href="$IOManager_8cpp.html" title=" " alt="" coords="5,79,124,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="195,38,93,81,91,76,193,34"/>
+<area shape="rect" id="Node000003" href="$VideoFileContainer_8cpp.html" title=" " alt="" coords="149,79,319,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="237,44,237,79,231,79,231,44"/>
+<area shape="rect" id="Node000004" href="$VideoFileReader_8cpp.html" title=" " alt="" coords="343,79,498,104"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="277,33,391,76,389,81,276,38"/>
+</map>

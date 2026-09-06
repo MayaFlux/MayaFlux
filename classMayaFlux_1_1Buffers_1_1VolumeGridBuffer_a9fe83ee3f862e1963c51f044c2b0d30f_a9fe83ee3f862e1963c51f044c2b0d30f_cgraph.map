@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::VolumeGridBuffer::~VolumeGridBuffer" name="MayaFlux::Buffers::VolumeGridBuffer::~VolumeGridBuffer">
+<area shape="rect" id="Node000001" title="Destructor." alt="" coords="5,41,237,96"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Buffers_a0eacfe64bd7df89c89fb883c2fdc0df0.html#a0eacfe64bd7df89c89fb883c2fdc0df0" title="Wait for a transfer and release its resources." alt="" coords="285,49,433,89"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="238,66,271,66,271,71,238,71"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_a0c7a59c0847791ed0915dcd64e8df783.html#a0c7a59c0847791ed0915dcd64e8df783" title="Query for a backend service." alt="" coords="499,5,665,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="433,54,485,46,485,51,434,59"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aa28c6f5592e5893508bafb62aefcc496.html#aa28c6f5592e5893508bafb62aefcc496" title="Get the global registry instance." alt="" coords="481,85,683,125"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="434,78,468,84,467,89,433,83"/>
+</map>

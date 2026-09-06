@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Network::GpuFieldOperator::set_cross_cluster" name="MayaFlux::Nodes::Network::GpuFieldOperator::set_cross_cluster">
+<area shape="rect" id="Node000001" title="Live&#45;update whether claims and density see across cluster boundaries." alt="" coords="5,5,204,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1GpuFieldOperator_a0415ac1c636670225767a5607af2e194.html#a0415ac1c636670225767a5607af2e194" title="Clear the cached spec and bump revision()." alt="" coords="252,13,469,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="204,30,238,30,238,35,204,35"/>
+</map>

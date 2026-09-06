@@ -1,0 +1,16 @@
+<map id="SoundContainerBuffer.hpp" name="SoundContainerBuffer.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="261,5,451,31"/>
+<area shape="rect" id="Node000002" href="$Depot_8cpp.html" title=" " alt="" coords="5,79,93,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="294,36,94,82,93,77,293,31"/>
+<area shape="rect" id="Node000003" href="$IOManager_8cpp.html" title=" " alt="" coords="118,79,237,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="316,38,208,81,206,76,314,33"/>
+<area shape="rect" id="Node000004" href="$SoundContainerBuffer_8cpp.html" title=" " alt="" coords="261,79,451,104"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="359,44,359,79,353,79,353,44"/>
+<area shape="rect" id="Node000005" href="$SoundFileBridge_8cpp.html" title=" " alt="" coords="412,152,567,177"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="405,34,438,52,466,77,477,96,485,116,491,151,486,152,480,117,473,98,462,80,435,56,403,38"/>
+<area shape="rect" id="Node000006" href="$SoundFileBridge_8hpp.html" title=" " alt="" coords="527,79,681,104"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="410,32,565,76,563,81,408,37"/>
+<area shape="poly" id="edge7_Node000006_Node000005" title=" " alt="" coords="576,113,509,154,507,150,573,109"/>
+<area shape="rect" id="Node000007" href="$BufferOperation_8cpp.html" title=" " alt="" coords="591,152,743,177"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="625,113,659,150,655,154,621,116"/>
+</map>

@@ -1,0 +1,9 @@
+<map id="MayaFlux::Portal::Forma::initialize" name="MayaFlux::Portal::Forma::initialize">
+<area shape="rect" id="Node000001" title="Store engine&#45;level references for use by all subsequent Forma calls." alt="" coords="5,37,187,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1internal_abdc2f8c3b42bcb7e0e99aae7e15a4615.html#abdc2f8c3b42bcb7e0e99aae7e15a4615" title="Accessor for the process&#45;wide Atelier." alt="" coords="241,5,423,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="187,42,227,37,228,42,187,48"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Forma_1_1internal_1_1Atelier_a2fb6e599a0001e4bb6c0c11dc5aa9154.html#a2fb6e599a0001e4bb6c0c11dc5aa9154" title=" " alt="" coords="235,69,429,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="187,67,221,72,221,77,187,72"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Forma_1_1internal_1_1Atelier_ad532f0c0c5f3b22f4c31e182c127b3df.html#ad532f0c0c5f3b22f4c31e182c127b3df" title=" " alt="" coords="477,5,672,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="423,23,463,23,463,28,423,28"/>
+</map>

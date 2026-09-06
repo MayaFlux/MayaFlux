@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::InfluxProcessor::restart" name="MayaFlux::Buffers::InfluxProcessor::restart">
+<area shape="rect" id="Node000001" title="Reset elapsed time to zero." alt="" coords="5,53,177,93"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VolumeFieldProcessor_acb1465f409e99804ba603f309a635818.html#acb1465f409e99804ba603f309a635818" title="The attached volume, or null if attachment failed validation." alt="" coords="225,5,391,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="177,54,212,48,213,53,178,59"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VolumeFieldProcessor_a4095b76d856fe604d407ff85813245d0.html#a4095b76d856fe604d407ff85813245d0" title="Write word seven of the parameter prefix, at byte offset 28." alt="" coords="225,84,391,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="178,85,212,92,212,97,177,91"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a08f86ff68a93950b07208ee936badf8e.html#a08f86ff68a93950b07208ee936badf8e" title="Get current push constant data." alt="" coords="439,84,597,139"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="391,109,425,109,425,114,391,114"/>
+</map>

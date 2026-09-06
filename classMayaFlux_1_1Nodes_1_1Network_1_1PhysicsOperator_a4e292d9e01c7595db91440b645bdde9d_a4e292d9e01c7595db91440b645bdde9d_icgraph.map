@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Network::PhysicsOperator::sync_bonds_from_claims" name="MayaFlux::Nodes::Network::PhysicsOperator::sync_bonds_from_claims">
+<area shape="rect" id="Node000001" title="Adopt this cycle&#39;s GPU claim/absorption clustering as bonds." alt="" coords="253,5,452,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1ClaimAccumulateProcessor_a647d18931fa71b692f0ce0bb97b778ba.html#a647d18931fa71b692f0ce0bb97b778ba" title="Dispatch as usual, then conditionally read back the result." alt="" coords="5,5,205,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="240,35,206,35,206,30,240,30"/>
+</map>

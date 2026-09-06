@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::VolumeSurfaceProcessor::write_params" name="MayaFlux::Buffers::VolumeSurfaceProcessor::write_params">
+<area shape="rect" id="Node000001" title="Size the push constant block to at least SurfaceParams and write the lattice dimensions,..." alt="" coords="236,45,419,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VolumeSurfaceProcessor_a52133629ecf6cbb276979d47e1ee88ac.html#a52133629ecf6cbb276979d47e1ee88ac" title="Validate the named field, bind the grid, and size the dispatch." alt="" coords="5,5,188,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="222,57,188,51,189,46,223,52"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VolumeSurfaceProcessor_a1f6e9110ee1386866b05937ec99802fc.html#a1f6e9110ee1386866b05937ec99802fc" title="Set the field value the surface is placed at." alt="" coords="5,84,188,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="223,93,189,99,188,93,222,88"/>
+</map>

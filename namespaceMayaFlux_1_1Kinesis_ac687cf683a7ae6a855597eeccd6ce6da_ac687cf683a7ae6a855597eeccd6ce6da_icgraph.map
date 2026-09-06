@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kinesis::bounds_of" name="MayaFlux::Kinesis::bounds_of">
+<area shape="rect" id="Node000001" title="Extract the anchor region from any HasBounds object." alt="" coords="235,37,384,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_a7cedfa7fe032da3e6f425edfef107ac5.html#a7cedfa7fe032da3e6f425edfef107ac5" title="Call a bounds&#45;taking factory with an anchor&#39;s region." alt="" coords="5,5,187,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="220,47,187,42,187,36,221,41"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_a4dcf515e2d5cd037dbf1f22f85ca0a9f.html#a4dcf515e2d5cd037dbf1f22f85ca0a9f" title="place() accepting any HasBounds anchor." alt="" coords="21,69,171,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="222,73,171,81,171,76,221,68"/>
+</map>

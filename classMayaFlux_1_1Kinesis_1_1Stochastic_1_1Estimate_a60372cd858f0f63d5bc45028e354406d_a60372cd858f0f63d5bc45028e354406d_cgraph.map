@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::Stochastic::Estimate::variance" name="MayaFlux::Kinesis::Stochastic::Estimate::variance">
+<area shape="rect" id="Node000001" title="Sample variance of a span." alt="" coords="5,5,160,60"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_ad2f0572dfef62bb7629c7ef74ff29449.html#ad2f0572dfef62bb7629c7ef74ff29449" title="Calculate mean of single&#45;channel data." alt="" coords="208,20,339,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="160,30,194,30,194,35,160,35"/>
+</map>

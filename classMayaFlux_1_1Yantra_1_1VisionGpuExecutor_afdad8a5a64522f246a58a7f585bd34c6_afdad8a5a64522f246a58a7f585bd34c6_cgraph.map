@@ -1,0 +1,22 @@
+<map id="MayaFlux::Yantra::VisionGpuExecutor::run" name="MayaFlux::Yantra::VisionGpuExecutor::run">
+<area shape="rect" id="Node000001" title="Execute a VisionSequence on the GPU through an explicit context set." alt="" coords="5,163,188,203"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kinesis_1_1Vision_1_1VisionPass_a148869cd4c47bb5c1f53f2dd328c7db5.html#a148869cd4c47bb5c1f53f2dd328c7db5" title="Reset the walk band for a fresh run." alt="" coords="243,49,426,89"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="131,161,235,105,266,91,268,96,237,110,133,165"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Kinesis_1_1Vision_1_1VisionPass_ad2fd007b41c7edd136a0154bcf34a539.html#ad2fd007b41c7edd136a0154bcf34a539" title=" " alt="" coords="505,84,655,139"/>
+<area shape="poly" id="edge10_Node000001_Node000004" title=" " alt="" coords="177,161,236,149,370,129,491,116,492,121,370,135,236,154,178,166"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a715d57394465ff2924727d7c82d87e7b.html#a715d57394465ff2924727d7c82d87e7b" title="Get the global shader compiler instance." alt="" coords="236,163,433,203"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="188,181,222,181,222,186,188,186"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_a5566e8633a3304ad12b1f90a2f9fe69b.html#a5566e8633a3304ad12b1f90a2f9fe69b" title="Hash a VisionStep&#39;s op and parameters together." alt="" coords="243,227,426,267"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="173,201,247,221,246,226,171,206"/>
+<area shape="rect" id="Node000010" href="$structMayaFlux_1_1Yantra_1_1VisionGpuContexts_1_1Suspension_a3561447c12a0233de0db19d1b761cffa.html#a3561447c12a0233de0db19d1b761cffa" title=" " alt="" coords="241,292,429,347"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="125,201,176,239,237,277,250,284,248,289,235,282,173,243,122,206"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kinesis_1_1Vision_1_1VisionPass_afb2117a1219245fe282794effe0e7ec2.html#afb2117a1219245fe282794effe0e7ec2" title="Discard retained cross&#45;run state." alt="" coords="505,5,655,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="426,53,491,43,492,48,426,58"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="426,82,492,93,491,99,426,87"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ab22eaae6b8210236918b85f409fc4c49.html#ab22eaae6b8210236918b85f409fc4c49" title=" " alt="" coords="481,163,679,203"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="434,181,468,181,468,186,434,186"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Reflect_aad91118cbd25bd9e35a3ced9aa4e6dbd.html#aad91118cbd25bd9e35a3ced9aa4e6dbd" title="Universal enum to string converter using magic_enum (original case)" alt="" coords="507,227,653,267"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="426,245,493,245,493,250,426,250"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_a46626f2fab4b9bd5c0d950d14fdfd300.html#a46626f2fab4b9bd5c0d950d14fdfd300" title="Combine a hash into an existing seed, FNV&#45;style." alt="" coords="498,291,662,331"/>
+<area shape="poly" id="edge8_Node000007_Node000009" title=" " alt="" coords="413,265,490,285,489,290,411,270"/>
+</map>

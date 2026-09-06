@@ -1,0 +1,10 @@
+<map id="MayaFlux::IO::TextFileWriter::should_rotate" name="MayaFlux::IO::TextFileWriter::should_rotate">
+<area shape="rect" id="Node000001" title=" " alt="" coords="769,5,976,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1TextFileWriter_ae2cd3c9ba0d11ba3eb43856778878859.html#ae2cd3c9ba0d11ba3eb43856778878859" title="Write raw bytes." alt="" coords="515,5,721,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="756,28,722,28,722,23,756,23"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1TextFileWriter_a73cbdceb6b61bf2ebe378b1c51a4a4c6.html#a73cbdceb6b61bf2ebe378b1c51a4a4c6" title="Write a line (appends newline)" alt="" coords="5,5,212,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="501,25,467,24,260,24,212,25,212,20,260,19,467,19,501,19"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1TextFileWriter_a0bc27e4c4b837ad9e0a06c90fd39e133.html#a0bc27e4c4b837ad9e0a06c90fd39e133" title="Write a string." alt="" coords="260,33,467,73"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="501,41,467,45,467,39,501,36"/>
+<area shape="poly" id="edge4_Node000004_Node000003" title=" " alt="" coords="246,43,212,39,213,34,247,38"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::VKContext::get_present_queue" name="MayaFlux::Core::VKContext::get_present_queue">
+<area shape="rect" id="Node000001" title="Queue for a presentation&#45;capable family." alt="" coords="5,5,205,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1VKDevice_ae64dd96c03c88d3d48816511416f7726.html#ae64dd96c03c88d3d48816511416f7726" title="Queue for a presentation&#45;capable family." alt="" coords="253,5,448,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="205,23,240,23,240,28,205,28"/>
+</map>

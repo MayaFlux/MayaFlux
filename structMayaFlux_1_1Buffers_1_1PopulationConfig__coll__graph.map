@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::PopulationConfig" name="MayaFlux::Buffers::PopulationConfig">
+<area shape="rect" id="Node000001" title="Parameters for GPU&#45;local population dynamics: destruction and spawn&#45;as&#45;copy over a seed&#39;s fixed,..." alt="" coords="17,288,157,368"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Buffers_1_1SpatialHashConfig.html" title="Uniform grid parameters shared by every stage of the hash build." alt="" coords="5,5,169,225"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="90,225,90,272,85,272,85,225"/>
+</map>

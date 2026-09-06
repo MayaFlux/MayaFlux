@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kakshya::VideoStreamContainer::mutable_slot_ptr" name="MayaFlux::Kakshya::VideoStreamContainer::mutable_slot_ptr">
+<area shape="rect" id="Node000001" title="Mutable pointer into m_data[0] for the decode thread to write into." alt="" coords="5,84,175,139"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_acd69a7c5e27cc6fd492c480c481ee9ea.html#acd69a7c5e27cc6fd492c480c481ee9ea" title="Total byte size of one frame: width * height * bytes_per_pixel." alt="" coords="224,5,393,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="166,81,219,62,221,67,168,86"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_ac5764b3010fc7824fd6b5da810d65f50.html#ac5764b3010fc7824fd6b5da810d65f50" title=" " alt="" coords="224,84,393,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="175,109,210,109,210,114,175,114"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kakshya_ad83915232ba3283db5c6ff26fa34dafe.html#ad83915232ba3283db5c6ff26fa34dafe" title="Get a mutable pointer to the raw bytes of a DataVariant and its size." alt="" coords="223,163,395,203"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="174,136,235,156,233,161,173,141"/>
+</map>

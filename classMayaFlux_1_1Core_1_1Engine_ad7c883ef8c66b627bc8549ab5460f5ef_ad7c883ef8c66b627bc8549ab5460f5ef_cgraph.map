@@ -1,0 +1,13 @@
+<map id="MayaFlux::Core::Engine::~Engine" name="MayaFlux::Core::Engine::~Engine">
+<area shape="rect" id="Node000001" title="Destroys the Engine instance and cleans up resources." alt="" coords="5,37,181,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1Engine_aeafd948b381d94be47920247d2f75115.html#aeafd948b381d94be47920247d2f75115" title="Stops all processing and performs clean shutdown." alt="" coords="229,45,437,70"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="181,55,216,55,216,60,181,60"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Forma_a2bcd2456c1f78a74fab895d79a68875c.html#a2bcd2456c1f78a74fab895d79a68875c" title="Release stored references." alt="" coords="485,37,667,77"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="437,55,472,55,472,60,437,60"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1internal_abdc2f8c3b42bcb7e0e99aae7e15a4615.html#abdc2f8c3b42bcb7e0e99aae7e15a4615" title="Accessor for the process&#45;wide Atelier." alt="" coords="725,5,907,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="666,43,711,37,712,42,667,48"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Portal_1_1Forma_1_1internal_1_1Atelier_a033981bc857fb67239841a34907f1561.html#a033981bc857fb67239841a34907f1561" title=" " alt="" coords="715,69,917,109"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="667,67,701,71,701,77,666,72"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Forma_1_1internal_1_1Atelier_ad532f0c0c5f3b22f4c31e182c127b3df.html#ad532f0c0c5f3b22f4c31e182c127b3df" title=" " alt="" coords="965,5,1160,45"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="907,23,952,23,952,28,907,28"/>
+</map>

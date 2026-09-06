@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::SpatialRegionProcessor::organize_container_data" name="MayaFlux::Kakshya::SpatialRegionProcessor::organize_container_data">
+<area shape="rect" id="Node000001" title="Build m_organized_regions from get_all_region_groups()." alt="" coords="228,5,419,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1SpatialRegionProcessor_ac7cd330628a0e752c1de8ab09e34d4f8.html#ac7cd330628a0e752c1de8ab09e34d4f8" title="Re&#45;sync m_organized_regions from the container&#39;s current group map." alt="" coords="5,5,180,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="214,35,180,35,180,30,214,30"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nexus::Emitter::set_influence_target" name="MayaFlux::Nexus::Emitter::set_influence_target">
+<area shape="rect" id="Node000001" title="Set the render processor to target for GPU&#45;side influence delivery." alt="" coords="5,5,196,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nexus_1_1Emitter_af119ccfb91484a896358ba923ed0f154.html#af119ccfb91484a896358ba923ed0f154" title="Disconnect from the current influence target." alt="" coords="244,5,435,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="196,23,230,23,230,28,196,28"/>
+</map>

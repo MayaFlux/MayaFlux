@@ -1,0 +1,30 @@
+<map id="MayaFlux::Nodes::Network::ResonatorNetwork::compute_biquad" name="MayaFlux::Nodes::Network::ResonatorNetwork::compute_biquad">
+<area shape="rect" id="Node000001" title="Compute RBJ biquad bandpass coefficients and push them into a resonator&#39;s IIR." alt="" coords="1423,113,1689,153"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ResonatorNetwork_a6b73907bb0bbf24c3a13d7c9bd2eee4f.html#a6b73907bb0bbf24c3a13d7c9bd2eee4f" title="Apply a FormantPreset to the current network." alt="" coords="1132,5,1375,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1498,110,1374,60,1336,48,1337,43,1376,55,1500,105"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ResonatorNetwork_a775dd0f369c0a2565e43ce2e3261e990.html#a775dd0f369c0a2565e43ce2e3261e990" title="Initialise all resonators from a frequency/Q pair list." alt="" coords="1154,70,1353,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="1409,118,1353,112,1353,106,1409,113"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ResonatorNetwork_a66387249a8bc89954017998babd26db9.html#a66387249a8bc89954017998babd26db9" title="Set centre frequency of a single resonator and recompute its coefficients." alt="" coords="1154,214,1353,269"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="1492,161,1376,204,1339,217,1337,211,1374,199,1490,156"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ResonatorNetwork_a871a6d5042b8462267ea7bafe0d7bf66.html#a871a6d5042b8462267ea7bafe0d7bf66" title="Set Q factor of a single resonator and recompute its coefficients." alt="" coords="1154,149,1353,189"/>
+<area shape="poly" id="edge12_Node000001_Node000012" title=" " alt="" coords="1409,153,1353,160,1353,155,1409,148"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ResonatorNetwork_aa247b6c744623dee3deb7add0847d13f.html#aa247b6c744623dee3deb7add0847d13f" title="Construct a ResonatorNetwork with explicit frequency and Q vectors." alt="" coords="804,79,1084,119"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="1140,100,1084,101,1084,95,1140,95"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ResonatorNetwork_a0b55eab5d6e6c27fb01a2da79b9a197f.html#a0b55eab5d6e6c27fb01a2da79b9a197f" title="Construct a ResonatorNetwork with a formant preset." alt="" coords="804,15,1084,55"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="1140,77,1043,57,1044,52,1141,72"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ResonatorNetwork_aed915868aaa9e030e2fe8ead8cfbdbe9.html#aed915868aaa9e030e2fe8ead8cfbdbe9" title="Apply ONE_TO_ONE values from a source network to the named parameter." alt="" coords="845,211,1043,266"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="1140,243,1044,242,1044,237,1140,238"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ResonatorNetwork_a89422384f591cf7be40324957a734cba.html#a89422384f591cf7be40324957a734cba" title="Set centre frequency of all resonators uniformly." alt="" coords="845,290,1043,345"/>
+<area shape="poly" id="edge9_Node000006_Node000010" title=" " alt="" coords="1141,271,1044,296,1043,290,1140,266"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ResonatorNetwork_aee31c5dd30c5a3f3dd7ad55c8ee2979e.html#aee31c5dd30c5a3f3dd7ad55c8ee2979e" title="Apply all registered parameter mappings for the current cycle." alt="" coords="305,179,509,234"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="830,235,509,215,510,210,831,229"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ResonatorNetwork_ab3fa42f883efda46b4961b24c3654c2f.html#ab3fa42f883efda46b4961b24c3654c2f" title="Processes num_samples through all resonators and accumulates output." alt="" coords="5,187,257,227"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="291,209,257,209,257,204,291,204"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ResonatorNetwork_a82469548f9169caa240ef3e7c8beabbd.html#a82469548f9169caa240ef3e7c8beabbd" title="Apply a BROADCAST value to the named parameter across all resonators." alt="" coords="557,146,756,201"/>
+<area shape="poly" id="edge10_Node000010_Node000011" title=" " alt="" coords="830,293,803,281,739,243,687,203,691,199,742,239,805,276,833,288"/>
+<area shape="poly" id="edge11_Node000011_Node000008" title=" " alt="" coords="544,191,510,196,509,190,543,186"/>
+<area shape="poly" id="edge13_Node000012_Node000007" title=" " alt="" coords="1150,195,1044,219,1043,214,1149,190"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ResonatorNetwork_a4e5df60f99085dfff1752ffea8193d7c.html#a4e5df60f99085dfff1752ffea8193d7c" title="Set Q factor of all resonators uniformly." alt="" coords="835,147,1053,187"/>
+<area shape="poly" id="edge14_Node000012_Node000013" title=" " alt="" coords="1140,171,1053,170,1053,165,1140,166"/>
+<area shape="poly" id="edge15_Node000013_Node000011" title=" " alt="" coords="822,172,756,174,756,168,822,167"/>
+</map>

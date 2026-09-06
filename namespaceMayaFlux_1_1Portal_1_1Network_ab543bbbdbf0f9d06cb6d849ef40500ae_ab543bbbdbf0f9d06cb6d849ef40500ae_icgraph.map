@@ -1,0 +1,9 @@
+<map id="MayaFlux::Portal::Network::is_initialized" name="MayaFlux::Portal::Network::is_initialized">
+<area shape="rect" id="Node000001" title="Return true if Portal::Network has been initialized." alt="" coords="619,37,813,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1NetworkSubsystem_a0464d61f9752a0848157b14c1ff0b37d.html#a0464d61f9752a0848157b14c1ff0b37d" title="Shutdown and cleanup subsystem resources." alt="" coords="312,5,571,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="605,47,570,43,571,38,605,42"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1NetworkSubsystem_aa9d246674c1e9ee84dd98e6d074b0010.html#aa9d246674c1e9ee84dd98e6d074b0010" title="Stop the subsystem&#39;s processing/event loops." alt="" coords="312,69,571,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="605,73,571,77,570,72,605,68"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1NetworkSubsystem_a381f631b4f9b5ac70877bd7c8de38a2f.html#a381f631b4f9b5ac70877bd7c8de38a2f" title=" " alt="" coords="5,5,264,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="299,28,264,28,264,23,299,23"/>
+</map>

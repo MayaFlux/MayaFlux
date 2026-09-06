@@ -1,0 +1,46 @@
+<map id="MayaFlux::Buffers::VKBuffer::get_buffer_resources" name="MayaFlux::Buffers::VKBuffer::get_buffer_resources">
+<area shape="rect" id="Node000001" title="Get all buffer resources at once (read&#45;only)" alt="" coords="824,552,977,607"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VolumeGridBuffer_aca30ddb3fe275b513308b2bfeb98d98c.html#aca30ddb3fe275b513308b2bfeb98d98c" title="Allocate one field&#39;s slots and register it." alt="" coords="544,170,776,210"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="894,539,885,471,865,387,849,343,829,301,804,261,774,227,754,212,757,208,778,223,809,258,834,298,854,341,870,385,890,470,899,538"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VolumeGridBuffer_aeb75a632f17e60f509b754c2dd8909fb.html#aeb75a632f17e60f509b754c2dd8909fb" title="Populate m_fields from declarations." alt="" coords="287,5,484,60"/>
+<area shape="poly" id="edge7_Node000001_Node000003" title=" " alt="" coords="897,538,891,459,873,357,858,304,836,252,809,203,774,160,743,133,709,110,672,91,633,75,556,54,484,42,485,36,557,48,635,70,674,86,712,105,747,129,778,156,813,200,841,250,863,302,878,356,896,458,902,538"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Buffers_1_1NetworkGeometryBuffer_a49223f96458541ca1db2829c87f7e588.html#a49223f96458541ca1db2829c87f7e588" title="Declare a named auxiliary state field alongside the vertex data." alt="" coords="569,316,751,371"/>
+<area shape="poly" id="edge8_Node000001_Node000008" title=" " alt="" coords="882,541,864,503,841,461,811,420,774,384,750,369,752,364,778,380,815,416,845,458,869,501,887,538"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Buffers_1_1VolumeGridBuffer_aa60ed3c879142afdc9251878925ddfe8.html#aa60ed3c879142afdc9251878925ddfe8" title="Copy the current read slot of a field to host memory." alt="" coords="555,710,765,750"/>
+<area shape="poly" id="edge10_Node000001_Node000010" title=" " alt="" coords="870,619,829,661,777,699,749,712,747,707,775,694,825,657,866,615"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Buffers_1_1VolumeGridBuffer_a8c75c46180c1f010b84b71de0f2b9251.html#a8c75c46180c1f010b84b71de0f2b9251" title="Handle a stage should read the named field from." alt="" coords="573,395,747,449"/>
+<area shape="poly" id="edge12_Node000001_Node000012" title=" " alt="" coords="866,543,825,501,775,463,747,449,749,444,777,458,828,497,870,540"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Buffers_1_1NetworkGeometryBuffer_a6f66a4b3a5f1cb429cd4294c7cd9f267.html#a6f66a4b3a5f1cb429cd4294c7cd9f267" title="Handle a stage should read the named state field from." alt="" coords="569,473,751,528"/>
+<area shape="poly" id="edge13_Node000001_Node000013" title=" " alt="" coords="809,552,744,531,745,526,811,547"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1Buffers_1_1NetworkGeometryBuffer_a55afe8de30b93223b308e3b88650a866.html#a55afe8de30b93223b308e3b88650a866" title="Full back_buffers slot a stage should read the named state field from." alt="" coords="569,552,751,607"/>
+<area shape="poly" id="edge14_Node000001_Node000014" title=" " alt="" coords="810,582,751,582,751,577,810,577"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1Buffers_1_1RelaxationGridBuffer_a35d1bb7ee44f51dded3ae5d2bb11c8ee.html#a35d1bb7ee44f51dded3ae5d2bb11c8ee" title="Construct an unregistered double&#45;buffered grid buffer." alt="" coords="577,631,743,685"/>
+<area shape="poly" id="edge15_Node000001_Node000015" title=" " alt="" coords="811,611,744,633,743,628,810,606"/>
+<area shape="rect" id="Node000016" href="$classMayaFlux_1_1Buffers_1_1VolumeGridBuffer_ae2929af740ac4ec6b8e076844ac64b2c.html#ae2929af740ac4ec6b8e076844ac64b2c" title="Write initial values into a field from raw host memory." alt="" coords="557,1011,763,1051"/>
+<area shape="poly" id="edge16_Node000001_Node000016" title=" " alt="" coords="902,620,897,700,880,802,864,856,842,909,814,958,778,1001,762,1013,759,1009,774,997,810,955,837,907,859,855,874,801,892,700,897,620"/>
+<area shape="rect" id="Node000018" href="$classMayaFlux_1_1Buffers_1_1RelaxationGridBuffer_a565b777a9fc6d9d269900e23b3794c2a.html#a565b777a9fc6d9d269900e23b3794c2a" title="Write initial state directly into the current front generation." alt="" coords="581,775,739,829"/>
+<area shape="poly" id="edge19_Node000001_Node000018" title=" " alt="" coords="884,621,842,693,812,731,778,764,741,785,738,780,774,760,808,728,838,691,879,618"/>
+<area shape="rect" id="Node000019" href="$classMayaFlux_1_1Buffers_1_1VolumeGridBuffer_a1aff0d109d892321752739eaccf2143a.html#a1aff0d109d892321752739eaccf2143a" title="Handle a stage should write the named field to." alt="" coords="571,853,749,908"/>
+<area shape="poly" id="edge20_Node000001_Node000019" title=" " alt="" coords="893,621,879,671,855,730,822,790,802,818,778,843,751,861,748,856,774,839,797,815,818,787,851,728,874,669,888,619"/>
+<area shape="rect" id="Node000020" href="$classMayaFlux_1_1Buffers_1_1NetworkGeometryBuffer_a260bb437d005904ff209c6517eb12012.html#a260bb437d005904ff209c6517eb12012" title="Handle a stage should write the named state field to." alt="" coords="569,932,751,987"/>
+<area shape="poly" id="edge21_Node000001_Node000020" title=" " alt="" coords="898,621,888,686,867,766,851,808,831,849,807,887,778,921,753,939,750,935,774,917,803,884,827,846,846,806,862,764,883,685,893,620"/>
+<area shape="rect" id="Node000021" href="$classMayaFlux_1_1Buffers_1_1NetworkGeometryBuffer_a7508b71852d5a55bed8b2119c0ee5a27.html#a7508b71852d5a55bed8b2119c0ee5a27" title="Full back_buffers slot a stage should write the named state field to." alt="" coords="569,237,751,292"/>
+<area shape="poly" id="edge22_Node000001_Node000021" title=" " alt="" coords="889,539,876,486,853,424,820,360,799,331,774,305,750,289,753,284,778,301,803,328,824,357,858,421,881,485,894,538"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="621,164,552,112,495,74,471,62,473,58,497,69,555,108,624,159"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1VolumeGridBuffer_ab78686513eac73eb5e587c26ac7f810c.html#ab78686513eac73eb5e587c26ac7f810c" title="Declare a double&#45;buffered scalar field." alt="" coords="289,163,482,217"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="530,193,482,193,482,187,530,187"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1VolumeGridBuffer_ae1d494595397c125e957b6cc3dffb694.html#ae1d494595397c125e957b6cc3dffb694" title="Declare a single&#45;slot scalar field." alt="" coords="289,241,482,296"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="577,216,482,244,481,239,576,211"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1VolumeGridBuffer_ab1fe4df88429e1ec83064176a1bb95eb.html#ab1fe4df88429e1ec83064176a1bb95eb" title="Declare a double&#45;buffered vector field." alt="" coords="289,84,482,139"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="576,169,481,141,482,136,577,164"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1VolumeGridBuffer_a7b7e1f7b68aaab5ffeedac2bd328f611.html#a7b7e1f7b68aaab5ffeedac2bd328f611" title="Construct from a runtime&#45;built field list." alt="" coords="5,5,227,60"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="273,35,227,35,227,30,273,30"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Buffers_1_1NetworkGeometryBuffer_ae11739d15cdd3c11ab02fcc200b39b34.html#ae11739d15cdd3c11ab02fcc200b39b34" title="Ensure the hash_cluster_id state field exists, declaring and populating it from the network&#39;s own pri..." alt="" coords="295,320,476,375"/>
+<area shape="poly" id="edge9_Node000008_Node000009" title=" " alt="" coords="556,348,476,349,476,343,556,342"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Buffers_1_1VolumeGridBuffer_a773ec1e7a228ad23abc879801b7a283b.html#a773ec1e7a228ad23abc879801b7a283b" title="Add sampled values into a scalar field." alt="" coords="275,829,496,869"/>
+<area shape="poly" id="edge11_Node000010_Node000011" title=" " alt="" coords="566,757,545,764,477,797,419,831,417,826,474,793,543,760,564,752"/>
+<area shape="poly" id="edge17_Node000016_Node000011" title=" " alt="" coords="555,1008,543,1002,498,971,458,935,400,871,404,867,462,931,501,967,545,997,558,1003"/>
+<area shape="rect" id="Node000017" href="$classMayaFlux_1_1Buffers_1_1VolumeGridBuffer_a63ecfa245dd0267774d87f711c1e50a0.html#a63ecfa245dd0267774d87f711c1e50a0" title="Write initial values into a scalar field from a Kinesis field." alt="" coords="297,1011,473,1051"/>
+<area shape="poly" id="edge18_Node000016_Node000017" title=" " alt="" coords="543,1034,474,1034,474,1029,543,1029"/>
+<area shape="poly" id="edge23_Node000021_Node000009" title=" " alt="" coords="557,298,477,323,475,318,556,293"/>
+</map>

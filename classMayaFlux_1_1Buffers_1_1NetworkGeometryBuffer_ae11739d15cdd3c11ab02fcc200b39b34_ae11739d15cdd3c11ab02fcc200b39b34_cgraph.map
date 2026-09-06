@@ -1,0 +1,32 @@
+<map id="MayaFlux::Buffers::NetworkGeometryBuffer::ensure_cluster_ids" name="MayaFlux::Buffers::NetworkGeometryBuffer::ensure_cluster_ids">
+<area shape="rect" id="Node000001" title="Ensure the hash_cluster_id state field exists, declaring and populating it from the network&#39;s own pri..." alt="" coords="5,208,187,263"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1NetworkGeometryBuffer_a49223f96458541ca1db2829c87f7e588.html#a49223f96458541ca1db2829c87f7e588" title="Declare a named auxiliary state field alongside the vertex data." alt="" coords="235,173,416,228"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="187,219,221,214,221,219,187,224"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1NetworkGeometryBuffer_a6a2efdd30bd187bbc289f8f01b466993.html#a6a2efdd30bd187bbc289f8f01b466993" title="Whether a state field of this name was declared." alt="" coords="235,321,416,376"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="148,261,236,306,250,313,248,318,233,311,146,265"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Buffers_af191dd0b7ad35e5d915e1a414db2ecca.html#af191dd0b7ad35e5d915e1a414db2ecca" title="Upload host memory into a raw back_buffers slot." alt="" coords="251,257,400,297"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="187,249,237,258,236,263,186,254"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Buffers_1_1NetworkGeometryBuffer_a7508b71852d5a55bed8b2119c0ee5a27.html#a7508b71852d5a55bed8b2119c0ee5a27" title="Full back_buffers slot a stage should write the named state field to." alt="" coords="235,84,416,139"/>
+<area shape="poly" id="edge16_Node000001_Node000011" title=" " alt="" coords="146,205,261,143,263,148,149,210"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_ade826fd1619beabe131e5bb65ecf2bcd.html#ade826fd1619beabe131e5bb65ecf2bcd" title="Get all buffer resources at once (read&#45;only)" alt="" coords="485,84,638,139"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="398,171,475,141,477,146,400,176"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_a0c7a59c0847791ed0915dcd64e8df783.html#a0c7a59c0847791ed0915dcd64e8df783" title="Query for a backend service." alt="" coords="935,241,1101,296"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="416,198,624,206,747,215,870,230,922,240,921,245,869,235,747,221,624,211,416,204"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aa28c6f5592e5893508bafb62aefcc496.html#aa28c6f5592e5893508bafb62aefcc496" title="Get the global registry instance." alt="" coords="917,345,1119,385"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="393,226,418,243,433,260,442,277,450,293,466,309,526,349,578,372,634,385,707,398,752,405,788,406,869,398,936,385,937,391,870,403,788,411,752,410,706,403,633,391,576,377,523,354,462,313,446,296,437,280,429,263,414,247,390,230"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Buffers_a0eacfe64bd7df89c89fb883c2fdc0df0.html#a0eacfe64bd7df89c89fb883c2fdc0df0" title="Wait for a transfer and release its resources." alt="" coords="714,329,862,369"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="399,294,464,309,588,327,701,339,700,344,587,332,464,314,398,299"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_1_1Buffers_a3bfdc2cd3755b1e59a32f648a8e590f2.html#a3bfdc2cd3755b1e59a32f648a8e590f2" title="Upload to a back_buffers slot without waiting for completion." alt="" coords="464,259,659,299"/>
+<area shape="poly" id="edge10_Node000007_Node000009" title=" " alt="" coords="401,275,450,275,450,281,400,280"/>
+<area shape="poly" id="edge8_Node000008_Node000004" title=" " alt="" coords="846,326,925,298,927,303,848,331"/>
+<area shape="poly" id="edge9_Node000008_Node000005" title=" " alt="" coords="863,351,904,354,904,359,862,356"/>
+<area shape="poly" id="edge14_Node000009_Node000004" title=" " alt="" coords="657,257,706,250,818,247,921,254,921,259,818,253,707,255,658,262"/>
+<area shape="poly" id="edge15_Node000009_Node000005" title=" " alt="" coords="584,297,637,341,671,362,707,378,760,390,815,393,869,391,919,384,919,390,870,396,815,398,760,395,706,383,668,367,634,345,581,301"/>
+<area shape="rect" id="Node000010" href="$namespaceMayaFlux_1_1Buffers_a64c6abe8842e398d178e4275a4d4b404.html#a64c6abe8842e398d178e4275a4d4b404" title="Create staging buffer for transfers." alt="" coords="707,265,869,305"/>
+<area shape="poly" id="edge11_Node000009_Node000010" title=" " alt="" coords="659,279,693,280,693,285,659,284"/>
+<area shape="poly" id="edge12_Node000010_Node000004" title=" " alt="" coords="869,276,921,273,921,278,870,282"/>
+<area shape="poly" id="edge13_Node000010_Node000005" title=" " alt="" coords="848,302,948,338,946,343,846,307"/>
+<area shape="poly" id="edge18_Node000011_Node000003" title=" " alt="" coords="416,109,471,109,471,114,416,114"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Buffers_1_1NetworkGeometryBuffer_a5d219c4139d7d6afcf90ffd71844035d.html#a5d219c4139d7d6afcf90ffd71844035d" title="Resolve a declared state field by name." alt="" coords="471,5,652,60"/>
+<area shape="poly" id="edge17_Node000011_Node000012" title=" " alt="" coords="407,81,465,62,467,67,409,86"/>
+</map>

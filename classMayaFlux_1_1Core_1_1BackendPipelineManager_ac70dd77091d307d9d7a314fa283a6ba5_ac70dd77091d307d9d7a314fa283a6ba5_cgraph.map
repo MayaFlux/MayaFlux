@@ -1,0 +1,9 @@
+<map id="MayaFlux::Core::BackendPipelineManager::create_shader_module" name="MayaFlux::Core::BackendPipelineManager::create_shader_module">
+<area shape="rect" id="Node000001" title="Create a shader module from SPIR&#45;V binary." alt="" coords="5,37,244,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1VKContext_a41228db586851246809c40f704b64292.html#a41228db586851246809c40f704b64292" title="Get logical device." alt="" coords="311,5,511,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="244,41,298,35,298,41,245,47"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1BackendPipelineManager_a3377e89bbe6bb1ca7998d44f094fbb03.html#a3377e89bbe6bb1ca7998d44f094fbb03" title=" " alt="" coords="292,69,531,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="245,68,279,72,278,77,244,73"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1VKDevice_ac91623c4b7b52f1f5f7460ef91021583.html#ac91623c4b7b52f1f5f7460ef91021583" title="Get logical device handle." alt="" coords="579,5,773,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="511,23,565,23,565,28,511,28"/>
+</map>

@@ -1,0 +1,11 @@
+<map id="MayaFlux::Core::VKContext::get_preferred_present_queue" name="MayaFlux::Core::VKContext::get_preferred_present_queue">
+<area shape="rect" id="Node000001" title="Queue for the preferred presentation family." alt="" coords="5,37,227,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1VKDevice_a702feebbf49ee57e90670e87a00caef2.html#a702feebbf49ee57e90670e87a00caef2" title="Queue for the preferred presentation family." alt="" coords="275,37,496,77"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="227,55,261,55,261,60,227,60"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1VKDevice_ae64dd96c03c88d3d48816511416f7726.html#ae64dd96c03c88d3d48816511416f7726" title="Queue for a presentation&#45;capable family." alt="" coords="567,5,762,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="496,42,553,35,554,41,496,47"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Core_1_1QueueFamilyIndices_ab1a52c36355a94436e7a90be057597bf.html#ab1a52c36355a94436e7a90be057597bf" title="Family the engine presents on by default." alt="" coords="544,69,785,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="496,67,531,71,530,77,496,73"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Core_1_1QueueFamilyIndices_a41911ae0be87c9df51c23b22ef317678.html#a41911ae0be87c9df51c23b22ef317678" title="Whether family index can present." alt="" coords="833,69,1051,109"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="786,87,819,87,819,92,786,92"/>
+</map>

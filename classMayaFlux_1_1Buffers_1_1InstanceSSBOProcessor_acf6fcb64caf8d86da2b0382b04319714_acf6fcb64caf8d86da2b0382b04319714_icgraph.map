@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::InstanceSSBOProcessor::clear_dirty_flags" name="MayaFlux::Buffers::InstanceSSBOProcessor::clear_dirty_flags">
+<area shape="rect" id="Node000001" title=" " alt="" coords="228,5,403,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1InstanceSSBOProcessor_a86faef936fc2be9ba29fc760cff3923b.html#a86faef936fc2be9ba29fc760cff3923b" title="The core processing function that must be implemented by derived classes." alt="" coords="5,5,180,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="214,35,180,35,180,30,214,30"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::NetworkStateFieldProcessor::on_buffer_ready" name="MayaFlux::Buffers::NetworkStateFieldProcessor::on_buffer_ready">
+<area shape="rect" id="Node000001" title="Hook for subclass setup, called at the end of on_attach." alt="" coords="259,5,464,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1NetworkStateFieldProcessor_a8208d3ec31b39f9877e3470335c11ed4.html#a8208d3ec31b39f9877e3470335c11ed4" title="Cache and validate the buffer, then call on_buffer_ready." alt="" coords="5,5,211,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="245,35,211,35,211,30,245,30"/>
+</map>

@@ -1,0 +1,97 @@
+<map id="GpuComputeNode.hpp" name="GpuComputeNode.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="518,5,687,31"/>
+<area shape="rect" id="Node000002" href="$GpuSync_8hpp.html" title=" " alt="" coords="457,86,564,111"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="591,33,536,79,533,75,587,29"/>
+<area shape="rect" id="Node000007" href="$ShaderExecutionContext_8hpp.html" title=" " alt="" coords="596,79,809,119"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="619,29,669,68,666,72,616,33"/>
+<area shape="rect" id="Node000003" href="$Node_8hpp.html" title=" " alt="" coords="395,167,592,192"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="511,112,501,154,496,153,506,111"/>
+<area shape="rect" id="Node000004" href="$GpuContext_8hpp.html" title=" " alt="" coords="229,240,355,265"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="462,195,338,238,337,233,460,190"/>
+<area shape="rect" id="Node000005" href="$NodeUtils_8hpp.html" title=" " alt="" coords="380,240,607,265"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="496,192,496,226,491,226,491,192"/>
+<area shape="rect" id="Node000006" href="$NodeSpec_8hpp.html" title=" " alt="" coords="432,321,547,346"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="495,266,493,307,488,307,490,265"/>
+<area shape="rect" id="Node000008" href="$GpuExecutionContext_8hpp.html" title=" " alt="" coords="623,167,814,192"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="709,118,716,153,711,154,704,119"/>
+<area shape="rect" id="Node000009" href="$GpuDispatchCore_8hpp.html" title=" " alt="" coords="652,240,815,265"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="724,192,731,226,726,227,718,193"/>
+<area shape="rect" id="Node000010" href="$ShaderSpecBinding_8hpp.html" title=" " alt="" coords="1167,321,1342,346"/>
+<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="810,263,1165,316,1165,321,809,268"/>
+<area shape="rect" id="Node000022" href="$ExecutionContext_8hpp.html" title=" " alt="" coords="255,489,454,529"/>
+<area shape="poly" id="edge33_Node000009_Node000022" title=" " alt="" coords="712,268,627,316,495,406,391,483,388,479,492,401,624,311,709,263"/>
+<area shape="rect" id="Node000030" href="$OperationHelper_8hpp.html" title=" " alt="" coords="638,313,837,353"/>
+<area shape="poly" id="edge34_Node000009_Node000030" title=" " alt="" coords="737,265,738,300,733,300,731,266"/>
+<area shape="rect" id="Node000011" href="$GpuResourceManager_8hpp.html" title=" " alt="" coords="1092,409,1284,434"/>
+<area shape="poly" id="edge10_Node000010_Node000011" title=" " alt="" coords="1248,348,1208,399,1204,396,1244,345"/>
+<area shape="rect" id="Node000013" href="$ShaderFoundry_8hpp.html" title=" " alt="" coords="1249,577,1394,603"/>
+<area shape="poly" id="edge31_Node000010_Node000013" title=" " alt="" coords="1266,345,1283,369,1298,400,1311,444,1318,489,1324,564,1319,564,1313,490,1306,446,1294,402,1278,372,1262,348"/>
+<area shape="rect" id="Node000021" href="$ShaderSpec_8hpp.html" title=" " alt="" coords="1409,658,1535,683"/>
+<area shape="poly" id="edge32_Node000010_Node000021" title=" " alt="" coords="1270,344,1296,369,1323,400,1369,466,1409,535,1464,644,1459,647,1404,538,1364,469,1319,403,1292,372,1266,348"/>
+<area shape="rect" id="Node000012" href="$ComputePress_8hpp.html" title=" " alt="" coords="1095,489,1284,529"/>
+<area shape="poly" id="edge11_Node000011_Node000012" title=" " alt="" coords="1191,434,1191,475,1186,475,1186,434"/>
+<area shape="poly" id="edge22_Node000011_Node000022" title=" " alt="" coords="1117,437,1063,444,912,460,794,470,524,492,468,498,467,493,524,487,793,464,911,455,1062,439,1116,431"/>
+<area shape="poly" id="edge12_Node000012_Node000013" title=" " alt="" coords="1222,527,1291,568,1288,572,1220,532"/>
+<area shape="rect" id="Node000014" href="$ShaderUtils_8hpp.html" title=" " alt="" coords="1259,658,1384,683"/>
+<area shape="poly" id="edge13_Node000013_Node000014" title=" " alt="" coords="1324,603,1324,644,1319,644,1319,603"/>
+<area shape="poly" id="edge20_Node000013_Node000021" title=" " alt="" coords="1345,600,1439,649,1436,654,1342,605"/>
+<area shape="rect" id="Node000015" title=" " alt="" coords="1294,746,1434,771"/>
+<area shape="poly" id="edge14_Node000014_Node000015" title=" " alt="" coords="1329,682,1354,732,1350,734,1325,685"/>
+<area shape="rect" id="Node000016" href="$GraphicsUtils_8hpp.html" title=" " alt="" coords="1081,746,1218,771"/>
+<area shape="poly" id="edge15_Node000014_Node000016" title=" " alt="" coords="1299,686,1186,742,1184,737,1297,681"/>
+<area shape="rect" id="Node000017" href="$VertexLayout_8hpp.html" title=" " alt="" coords="1155,827,1357,867"/>
+<area shape="poly" id="edge16_Node000014_Node000017" title=" " alt="" coords="1315,685,1299,710,1284,740,1272,777,1264,813,1258,812,1266,776,1279,738,1294,707,1311,682"/>
+<area shape="rect" id="Node000018" href="$NDData_8hpp.html" title=" " alt="" coords="892,915,993,940"/>
+<area shape="poly" id="edge17_Node000017_Node000018" title=" " alt="" coords="1182,869,1002,914,1001,909,1180,864"/>
+<area shape="rect" id="Node000019" title=" " alt="" coords="891,988,995,1013"/>
+<area shape="poly" id="edge18_Node000018_Node000019" title=" " alt="" coords="945,940,945,974,940,974,940,940"/>
+<area shape="rect" id="Node000020" title=" " alt="" coords="414,988,501,1013"/>
+<area shape="poly" id="edge19_Node000018_Node000020" title=" " alt="" coords="892,939,515,994,514,988,891,933"/>
+<area shape="poly" id="edge21_Node000021_Node000018" title=" " alt="" coords="1474,684,1467,728,1460,754,1449,780,1418,833,1398,851,1369,869,1340,881,1301,891,1204,907,1008,925,1007,920,1203,902,1300,886,1338,876,1367,864,1395,847,1414,829,1444,777,1455,752,1462,726,1468,683"/>
+<area shape="poly" id="edge30_Node000022_Node000020" title=" " alt="" coords="255,517,173,530,131,542,93,557,59,577,32,602,14,632,8,670,8,848,11,862,19,875,51,901,99,923,158,943,288,972,401,990,400,995,287,977,157,948,97,928,49,905,15,879,6,864,3,848,3,669,9,631,28,598,56,572,90,552,130,537,172,525,255,512"/>
+<area shape="rect" id="Node000023" href="$Archivist_8hpp.html" title=" " alt="" coords="184,577,408,603"/>
+<area shape="poly" id="edge23_Node000022_Node000023" title=" " alt="" coords="343,531,315,568,311,564,338,528"/>
+<area shape="rect" id="Node000024" href="$JournalEntry_8hpp.html" title=" " alt="" coords="287,658,414,683"/>
+<area shape="poly" id="edge24_Node000023_Node000024" title=" " alt="" coords="306,601,337,645,333,648,302,604"/>
+<area shape="rect" id="Node000029" title=" " alt="" coords="196,658,263,683"/>
+<area shape="poly" id="edge29_Node000023_Node000029" title=" " alt="" coords="288,605,250,649,246,646,284,601"/>
+<area shape="rect" id="Node000025" href="$EnumReflect_8hpp.html" title=" " alt="" coords="313,739,498,779"/>
+<area shape="poly" id="edge25_Node000024_Node000025" title=" " alt="" coords="360,682,388,725,384,728,356,685"/>
+<area shape="rect" id="Node000026" title=" " alt="" coords="523,746,589,771"/>
+<area shape="poly" id="edge26_Node000024_Node000026" title=" " alt="" coords="379,681,517,738,515,743,377,686"/>
+<area shape="rect" id="Node000027" title=" " alt="" coords="43,746,167,771"/>
+<area shape="poly" id="edge27_Node000024_Node000027" title=" " alt="" coords="318,686,152,744,150,739,317,681"/>
+<area shape="rect" id="Node000028" title=" " alt="" coords="191,746,289,771"/>
+<area shape="poly" id="edge28_Node000024_Node000028" title=" " alt="" coords="337,686,268,739,264,735,334,681"/>
+<area shape="rect" id="Node000031" href="$ContainerUtils_8hpp.html" title=" " alt="" coords="871,401,1051,441"/>
+<area shape="poly" id="edge35_Node000030_Node000031" title=" " alt="" coords="787,351,901,394,899,399,786,356"/>
+<area shape="rect" id="Node000036" href="$DataIO_8hpp.html" title=" " alt="" coords="672,401,837,441"/>
+<area shape="poly" id="edge42_Node000030_Node000036" title=" " alt="" coords="744,353,751,387,746,388,739,354"/>
+<area shape="rect" id="Node000037" href="$DataUtils_8hpp.html" title=" " alt="" coords="537,489,717,529"/>
+<area shape="poly" id="edge53_Node000030_Node000037" title=" " alt="" coords="710,356,685,377,662,403,645,440,634,477,629,475,640,438,658,400,681,373,707,351"/>
+<area shape="rect" id="Node000032" href="$SignalSourceContainer_8hpp.html" title=" " alt="" coords="1000,651,1235,691"/>
+<area shape="poly" id="edge36_Node000031_Node000032" title=" " alt="" coords="976,440,1101,638,1096,641,971,443"/>
+<area shape="rect" id="Node000033" href="$NDimensionalContainer_8hpp.html" title=" " alt="" coords="927,834,1131,859"/>
+<area shape="poly" id="edge37_Node000032_Node000033" title=" " alt="" coords="1103,692,1070,740,1052,782,1039,821,1034,819,1047,780,1066,737,1099,689"/>
+<area shape="rect" id="Node000034" href="$RegionGroup_8hpp.html" title=" " alt="" coords="814,746,997,771"/>
+<area shape="poly" id="edge39_Node000032_Node000034" title=" " alt="" coords="1072,693,947,743,945,738,1070,688"/>
+<area shape="poly" id="edge38_Node000033_Node000018" title=" " alt="" coords="1018,861,968,907,964,903,1015,858"/>
+<area shape="rect" id="Node000035" href="$Region_8hpp.html" title=" " alt="" coords="809,834,903,859"/>
+<area shape="poly" id="edge40_Node000034_Node000035" title=" " alt="" coords="901,773,872,823,867,820,896,770"/>
+<area shape="poly" id="edge41_Node000035_Node000018" title=" " alt="" coords="871,858,921,903,918,907,867,861"/>
+<area shape="poly" id="edge43_Node000036_Node000037" title=" " alt="" coords="728,444,668,484,665,479,725,439"/>
+<area shape="rect" id="Node000039" href="$StructureIntrospection_8hpp.html" title=" " alt="" coords="767,497,961,522"/>
+<area shape="poly" id="edge47_Node000036_Node000039" title=" " alt="" coords="781,440,840,486,836,490,777,444"/>
+<area shape="poly" id="edge44_Node000037_Node000018" title=" " alt="" coords="629,530,629,669,629,760,636,798,655,829,683,855,719,876,759,892,801,904,879,918,878,923,799,909,757,897,717,881,680,859,651,833,631,800,624,760,624,669,624,530"/>
+<area shape="poly" id="edge45_Node000037_Node000023" title=" " alt="" coords="548,532,358,577,357,572,547,527"/>
+<area shape="rect" id="Node000038" title=" " alt="" coords="433,577,589,603"/>
+<area shape="poly" id="edge46_Node000037_Node000038" title=" " alt="" coords="600,532,541,572,538,567,597,527"/>
+<area shape="rect" id="Node000040" href="$DataSpec_8hpp.html" title=" " alt="" coords="841,577,953,603"/>
+<area shape="poly" id="edge48_Node000039_Node000040" title=" " alt="" coords="871,521,890,564,885,566,866,523"/>
+<area shape="poly" id="edge52_Node000040_Node000032" title=" " alt="" coords="930,600,1053,644,1051,649,928,605"/>
+<area shape="rect" id="Node000041" title=" " alt="" coords="883,658,975,683"/>
+<area shape="poly" id="edge49_Node000040_Node000041" title=" " alt="" coords="905,602,922,644,917,646,900,604"/>
+<area shape="rect" id="Node000042" href="$RegionSegment_8hpp.html" title=" " alt="" coords="664,651,859,691"/>
+<area shape="poly" id="edge50_Node000040_Node000042" title=" " alt="" coords="879,605,808,646,805,641,876,601"/>
+<area shape="poly" id="edge51_Node000042_Node000035" title=" " alt="" coords="769,690,782,731,804,777,838,823,833,826,799,780,778,733,764,692"/>
+</map>

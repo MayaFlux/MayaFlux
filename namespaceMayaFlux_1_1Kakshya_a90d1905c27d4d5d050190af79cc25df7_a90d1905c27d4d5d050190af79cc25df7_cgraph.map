@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kakshya::format_has_variant_storage" name="MayaFlux::Kakshya::format_has_variant_storage">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,85,211,125"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a1a8ce2b9ced17d9ff6137c563c58a0e0.html#a1a8ce2b9ced17d9ff6137c563c58a0e0" title="Get bytes per pixel for a format." alt="" coords="282,5,479,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="184,82,268,60,270,65,185,87"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a1d702ea8bef8765e8895776bd67b0cc8.html#a1d702ea8bef8765e8895776bd67b0cc8" title="Get the number of color channels for a given format." alt="" coords="259,85,503,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="211,102,245,102,245,107,211,107"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kakshya_a754a1820ba7e75c2c8e0717eabd4e574.html#a754a1820ba7e75c2c8e0717eabd4e574" title=" " alt="" coords="298,149,463,189"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="195,122,285,144,284,149,193,127"/>
+</map>

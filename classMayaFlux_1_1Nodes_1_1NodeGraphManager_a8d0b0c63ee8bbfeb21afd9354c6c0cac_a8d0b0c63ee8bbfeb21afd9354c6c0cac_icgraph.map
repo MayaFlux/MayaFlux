@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::NodeGraphManager::process_channel" name="MayaFlux::Nodes::NodeGraphManager::process_channel">
+<area shape="rect" id="Node000001" title="Process a specific channel within a token domain." alt="" coords="269,13,485,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_ac7de635a4704e1ad846063babf541bd9.html#ac7de635a4704e1ad846063babf541bd9" title="Process all channels for a token and return channel&#45;separated data." alt="" coords="5,5,221,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="256,35,221,35,221,30,256,30"/>
+</map>

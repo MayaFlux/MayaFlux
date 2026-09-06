@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::smoothed_velocity" name="MayaFlux::Kinesis::smoothed_velocity">
+<area shape="rect" id="Node000001" title="Velocity averaged over a short window rather than a single interval." alt="" coords="203,5,352,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_ab92e280f6ca01fd01a046cbfd1d1585a.html#ab92e280f6ca01fd01a046cbfd1d1585a" title="Convenience overload of smoothed_velocity over a raw span, samples[0] newest." alt="" coords="5,5,155,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="189,28,155,28,155,23,189,23"/>
+</map>

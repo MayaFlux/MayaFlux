@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::GpuSync::ProceduralTextureNode::compute_frame" name="MayaFlux::Nodes::GpuSync::ProceduralTextureNode::compute_frame">
+<area shape="rect" id="Node000001" title="Compute frame &#45; generate all pixels via generator function." alt="" coords="5,5,205,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1TextureNode_a1c71b7474ac911097c4bb881a63d1708.html#a1c71b7474ac911097c4bb881a63d1708" title="Get mutable pixel buffer for direct write access." alt="" coords="253,5,453,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="205,30,240,30,240,35,205,35"/>
+</map>

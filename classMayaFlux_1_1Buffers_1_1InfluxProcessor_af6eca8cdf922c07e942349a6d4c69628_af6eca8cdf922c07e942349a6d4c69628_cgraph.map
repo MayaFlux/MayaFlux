@@ -1,0 +1,15 @@
+<map id="MayaFlux::Buffers::InfluxProcessor::set_rate" name="MayaFlux::Buffers::InfluxProcessor::set_rate">
+<area shape="rect" id="Node000001" title="Set the amount added per unit time at shape value one." alt="" coords="5,53,188,93"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VolumeFieldProcessor_acb1465f409e99804ba603f309a635818.html#acb1465f409e99804ba603f309a635818" title="The attached volume, or null if attachment failed validation." alt="" coords="475,5,640,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="188,62,461,38,461,44,189,67"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1InfluxProcessor_a01ca64335d4e3e111218cb774f9b1f54.html#a01ca64335d4e3e111218cb774f9b1f54" title="Write every parameter past the shared prefix." alt="" coords="236,81,427,121"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="189,81,223,85,222,90,188,86"/>
+<area shape="poly" id="edge3_Node000003_Node000002" title=" " alt="" coords="398,78,461,59,462,64,399,83"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1VolumeFieldProcessor_a4095b76d856fe604d407ff85813245d0.html#a4095b76d856fe604d407ff85813245d0" title="Write word seven of the parameter prefix, at byte offset 28." alt="" coords="475,84,640,139"/>
+<area shape="poly" id="edge4_Node000003_Node000004" title=" " alt="" coords="427,102,461,104,461,109,427,108"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1VolumeFieldProcessor_a31c30ba6b35e0eb1cab0490e7a4fc920.html#a31c30ba6b35e0eb1cab0490e7a4fc920" title="Write subclass parameters past the shared prefix." alt="" coords="475,163,640,217"/>
+<area shape="poly" id="edge6_Node000003_Node000006" title=" " alt="" coords="384,118,476,155,474,160,382,123"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a08f86ff68a93950b07208ee936badf8e.html#a08f86ff68a93950b07208ee936badf8e" title="Get current push constant data." alt="" coords="688,124,847,179"/>
+<area shape="poly" id="edge5_Node000004_Node000005" title=" " alt="" coords="641,124,675,131,674,136,640,130"/>
+<area shape="poly" id="edge7_Node000006_Node000005" title=" " alt="" coords="640,172,674,166,675,171,641,177"/>
+</map>

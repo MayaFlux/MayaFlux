@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kinesis::SymbolicTrajectory::crossings_in_window" name="MayaFlux::Kinesis::SymbolicTrajectory::crossings_in_window">
+<area shape="rect" id="Node000001" title="Crossings within the most recent window observations." alt="" coords="5,30,164,85"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Memory_1_1HistoryBuffer_ad88cb603850a43476f10adbbc9e3f673.html#ad88cb603850a43476f10adbbc9e3f673" title="Get buffer capacity." alt="" coords="212,5,415,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="164,44,198,39,199,44,165,49"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Memory_1_1HistoryBuffer_a2f1571f77762d0d35adfc01dae46509f.html#a2f1571f77762d0d35adfc01dae46509f" title="Get mutable linearized view of entire history." alt="" coords="212,69,415,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="165,66,199,71,198,76,164,71"/>
+</map>

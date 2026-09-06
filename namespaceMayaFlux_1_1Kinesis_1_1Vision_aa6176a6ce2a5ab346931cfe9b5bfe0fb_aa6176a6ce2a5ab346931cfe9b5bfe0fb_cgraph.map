@@ -1,0 +1,6 @@
+<map id="MayaFlux::Kinesis::Vision::track_keypoints" name="MayaFlux::Kinesis::Vision::track_keypoints">
+<area shape="rect" id="Node000001" title="Track keypoints from prev_gray to curr_gray via Lucas&#45;Kanade." alt="" coords="5,29,179,69"/>
+<area shape="poly" id="edge2_Node000001_Node000001" title=" " alt="" coords="53,30,51,20,57,10,71,5,92,3,116,6,130,13,127,18,115,11,92,8,72,10,60,15,56,21,58,28"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_a68bd62ba0feea86a92e8dca22a3da0c0.html#a68bd62ba0feea86a92e8dca22a3da0c0" title="Sobel gradient writing dx and dy into caller&#45;supplied buffers." alt="" coords="227,29,376,69"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="179,47,213,47,213,52,179,52"/>
+</map>

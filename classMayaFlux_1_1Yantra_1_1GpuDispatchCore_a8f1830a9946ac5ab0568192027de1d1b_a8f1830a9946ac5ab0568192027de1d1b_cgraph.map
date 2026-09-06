@@ -1,0 +1,24 @@
+<map id="MayaFlux::Yantra::GpuDispatchCore::ensure_gpu_ready" name="MayaFlux::Yantra::GpuDispatchCore::ensure_gpu_ready">
+<area shape="rect" id="Node000001" title="Ensure GPU resources are initialised." alt="" coords="5,101,231,141"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1GpuDispatchCore_af387940eb126638c393e0ad18760bbdf.html#af387940eb126638c393e0ad18760bbdf" title="Declare the storage buffers the shader expects." alt="" coords="280,5,505,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="165,99,278,55,302,47,304,52,280,60,167,104"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1GpuDispatchCore_a73fff9156201c282780b637feeb7f7e1.html#a73fff9156201c282780b637feeb7f7e1" title="The key used for this context&#39;s GpuResourceManager unit." alt="" coords="280,69,505,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="230,106,266,101,267,107,231,111"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1GpuResourceManager_a249701fcf6fc8a0d9aad6918397b8f3f.html#a249701fcf6fc8a0d9aad6918397b8f3f" title="Create (or confirm existing) pipeline for the given key." alt="" coords="279,197,507,237"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="167,139,280,183,304,191,302,196,278,188,165,144"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Yantra_1_1GpuResourceManager_a2dfd32e6a6365a401e48b634d287852f.html#a2dfd32e6a6365a401e48b634d287852f" title=" " alt="" coords="279,133,507,173"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="231,132,265,136,265,141,230,137"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1GpuResourceManager_af582f5210754d7530e9dbaad98f1859a.html#af582f5210754d7530e9dbaad98f1859a" title=" " alt="" coords="555,133,783,173"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="479,195,568,174,569,179,480,200"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_af50ca0aa0cb7511c99eaf758430efdce.html#af50ca0aa0cb7511c99eaf758430efdce" title=" " alt="" coords="570,197,767,237"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="507,215,556,215,556,220,507,220"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a715d57394465ff2924727d7c82d87e7b.html#a715d57394465ff2924727d7c82d87e7b" title="Get the global shader compiler instance." alt="" coords="570,261,767,301"/>
+<area shape="poly" id="edge7_Node000004_Node000008" title=" " alt="" coords="480,235,569,256,568,261,479,240"/>
+<area shape="rect" id="Node000010" href="$namespaceMayaFlux_a08fa9b6412b634215b72b52676318691.html#a08fa9b6412b634215b72b52676318691" title=" " alt="" coords="592,326,745,351"/>
+<area shape="poly" id="edge9_Node000004_Node000010" title=" " alt="" coords="423,235,482,274,556,311,582,320,581,325,554,316,480,278,420,240"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ComputePress_a89b259adf28ef041294928959e03fa9c.html#a89b259adf28ef041294928959e03fa9c" title=" " alt="" coords="831,197,1028,237"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="768,215,817,215,817,220,768,220"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ab22eaae6b8210236918b85f409fc4c49.html#ab22eaae6b8210236918b85f409fc4c49" title=" " alt="" coords="831,261,1028,301"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="768,279,817,279,817,284,768,284"/>
+<area shape="poly" id="edge11_Node000011_Node000005" title=" " alt="" coords="507,151,541,151,541,156,507,156"/>
+</map>

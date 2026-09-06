@@ -1,0 +1,5 @@
+<map id="MayaFlux::IO::TextFileWriter" name="MayaFlux::IO::TextFileWriter">
+<area shape="rect" id="Node000001" title="Simple text file writer for logs and text data." alt="" coords="5,319,204,824"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1FileWriter.html" title="Abstract base class for file writing operations." alt="" coords="19,5,190,271"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="107,284,107,319,102,319,102,284"/>
+</map>

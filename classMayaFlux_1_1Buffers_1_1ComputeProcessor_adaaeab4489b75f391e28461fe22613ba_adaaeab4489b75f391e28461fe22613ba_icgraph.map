@@ -1,0 +1,19 @@
+<map id="MayaFlux::Buffers::ComputeProcessor::set_manual_dispatch" name="MayaFlux::Buffers::ComputeProcessor::set_manual_dispatch">
+<area shape="rect" id="Node000001" title="Set manual dispatch group counts." alt="" coords="473,241,645,296"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1RelaxationEmitProcessor_a567c9e68c3737a738f3676b330581070.html#a567c9e68c3737a738f3676b330581070" title="When attached to a RelaxationGridBuffer, sets up the dispatch configuration to cover the entire grid ..." alt="" coords="229,5,415,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="538,230,493,151,461,110,424,73,407,62,410,58,427,69,465,106,497,148,543,228"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1RelaxationStepProcessor_a49ef6b05fb571cd521a95459fda6c2fa.html#a49ef6b05fb571cd521a95459fda6c2fa" title="When attached to a RelaxationGridBuffer, sets up the dispatch configuration to cover the entire grid ..." alt="" coords="230,84,414,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="522,233,477,191,424,152,403,141,406,136,427,148,480,187,525,229"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1SDFMeshProcessor_a5b15461ec59043b64861f543b2748bf6.html#a5b15461ec59043b64861f543b2748bf6" title="Called before each process callback." alt="" coords="237,163,407,217"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="462,239,404,220,406,215,464,234"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1HashScanProcessor_adebc5dc223712bda72b676ab65210f9f.html#adebc5dc223712bda72b676ab65210f9f" title="Hook for subclass setup, called at the end of on_attach." alt="" coords="235,241,409,296"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="460,271,409,271,409,266,460,266"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1SDFFieldProcessor_a2d12e9b581c7a74c7998f7e7c172060b.html#a2d12e9b581c7a74c7998f7e7c172060b" title=" " alt="" coords="219,320,425,375"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="464,303,406,322,404,317,462,298"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1VolumeFieldProcessor_a430b9dce7ab960e2ec311f081d0873a9.html#a430b9dce7ab960e2ec311f081d0873a9" title="Size the manual dispatch to cover the lattice." alt="" coords="239,399,405,453"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="525,308,480,349,427,388,403,401,400,396,424,384,477,345,521,304"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Buffers_1_1VolumeSurfaceProcessor_a8f0a252a3199565aeb2382371663e1dd.html#a8f0a252a3199565aeb2382371663e1dd" title="Construct a surface extraction bridge." alt="" coords="227,477,417,532"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="542,310,497,388,465,430,427,467,408,479,405,475,424,463,461,427,492,385,538,307"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Buffers_1_1VolumeFieldProcessor_a85ff1d8555f41d205e6cf9d622cf2b74.html#a85ff1d8555f41d205e6cf9d622cf2b74" title="Cache and validate the volume, size the dispatch, write the shared parameter prefix,..." alt="" coords="5,399,171,453"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="225,429,171,429,171,423,225,423"/>
+</map>

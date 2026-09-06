@@ -1,0 +1,25 @@
+<map id="MayaFlux::Nodes::Network::NetworkOperator" name="MayaFlux::Nodes::Network::NetworkOperator">
+<area shape="rect" id="Node000001" title="Domain&#45;agnostic interpretive lens for network processing." alt="" coords="689,5,880,185"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1GpuFieldOperator.html" title="Chain operator that declares Tendency field deformation as a compute shader rather than evaluating it..." alt="" coords="292,233,483,733"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="677,129,631,148,583,171,538,200,497,235,485,249,481,245,493,231,534,196,581,167,629,143,675,125"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1GraphicsOperator.html" title="Operator that produces GPU&#45;renderable geometry." alt="" coords="507,306,721,661"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="742,199,694,307,690,305,737,197"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Nodes_1_1Network_1_1InstanceOperator.html" title="Abstract base for operators that process InstanceNetwork slots." alt="" coords="803,393,993,573"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="817,198,874,392,869,394,812,199"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Nodes_1_1Network_1_1MeshOperator.html" title="Abstract base for operators that process MeshNetwork slots." alt="" coords="1139,383,1329,583"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="894,153,951,190,1006,231,1086,305,1156,381,1152,385,1082,309,1003,235,948,194,891,158"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Network_1_1FieldOperator.html" title="Pure field&#45;driven vertex manipulation via Tendency evaluation." alt="" coords="5,796,196,1536"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="551,674,526,707,496,735,457,757,420,764,383,762,348,757,314,751,279,751,245,760,210,783,196,798,192,794,207,779,243,755,279,746,314,746,349,751,384,757,419,759,455,752,492,731,522,704,546,671"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1Network_1_1PathOperator.html" title=" " alt="" coords="221,949,421,1383"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="537,674,496,735,479,750,463,759,448,768,433,783,410,822,390,863,360,950,355,948,385,861,405,819,429,780,445,763,460,754,476,746,492,732,533,671"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1Network_1_1PhysicsOperator.html" title="N&#45;body physics simulation with point rendering." alt="" coords="444,781,669,1551"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="601,675,592,781,586,780,595,674"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1Network_1_1TopologyOperator.html" title=" " alt="" coords="693,959,893,1373"/>
+<area shape="poly" id="edge6_Node000003_Node000007" title=" " alt="" coords="666,673,741,958,736,959,661,674"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Nodes_1_1Network_1_1InstanceFieldOperator.html" title="Drives GeometrySlot transforms from stateless Kinesis fields." alt="" coords="917,1006,1108,1326"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="918,586,988,1005,983,1006,913,587"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Nodes_1_1Network_1_1MeshFieldOperator.html" title="Chain operator that applies Tendency field deformation to the vertex data of individual MeshNetwork s..." alt="" coords="1133,946,1335,1386"/>
+<area shape="poly" id="edge10_Node000010_Node000011" title=" " alt="" coords="1237,597,1237,946,1231,946,1231,597"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Nodes_1_1Network_1_1MeshTransformOperator.html" title="Primary operator that drives slot local transforms via Tendency fields and propagates world transform..." alt="" coords="1360,1026,1567,1306"/>
+<area shape="poly" id="edge11_Node000010_Node000012" title=" " alt="" coords="1281,595,1350,780,1426,1025,1421,1027,1345,782,1276,597"/>
+</map>

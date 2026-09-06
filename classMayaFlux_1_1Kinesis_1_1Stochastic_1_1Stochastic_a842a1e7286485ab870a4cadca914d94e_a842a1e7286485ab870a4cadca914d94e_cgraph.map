@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::Stochastic::Stochastic::reset_state" name="MayaFlux::Kinesis::Stochastic::Stochastic::reset_state">
+<area shape="rect" id="Node000001" title="Resets internal state for stateful algorithms." alt="" coords="5,5,169,60"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kinesis_1_1Stochastic_1_1GeneratorState_afd7c657635f930c9e3da5446de6c05a5.html#afd7c657635f930c9e3da5446de6c05a5" title=" " alt="" coords="217,5,413,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="169,30,204,30,204,35,169,35"/>
+</map>

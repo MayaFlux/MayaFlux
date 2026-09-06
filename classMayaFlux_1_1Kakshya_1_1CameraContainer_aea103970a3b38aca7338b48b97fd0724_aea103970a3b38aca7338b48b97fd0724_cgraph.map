@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kakshya::CameraContainer::setup_io" name="MayaFlux::Kakshya::CameraContainer::setup_io">
+<area shape="rect" id="Node000001" title="Wire the CameraIOService callback for demand&#45;driven frame pulls." alt="" coords="5,49,204,89"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_a0c7a59c0847791ed0915dcd64e8df783.html#a0c7a59c0847791ed0915dcd64e8df783" title="Query for a backend service." alt="" coords="269,5,436,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="204,52,255,44,256,49,204,57"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aa28c6f5592e5893508bafb62aefcc496.html#aa28c6f5592e5893508bafb62aefcc496" title="Get the global registry instance." alt="" coords="252,85,453,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="204,80,239,85,238,91,204,86"/>
+</map>

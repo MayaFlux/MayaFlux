@@ -1,0 +1,21 @@
+<map id="MayaFlux::Buffers::VolumeGridBuffer" name="MayaFlux::Buffers::VolumeGridBuffer">
+<area shape="rect" id="Node000001" title="GPU&#45;resident state for multi&#45;field simulations evaluated over a fixed 3D topology: incompressible flu..." alt="" coords="637,1199,823,1699"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VKBuffer.html" title="Vulkan&#45;backed buffer wrapper used in processing chains." alt="" coords="520,477,737,1136"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="685,1149,693,1198,688,1199,680,1150"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1Buffer.html" title="Backend&#45;agnostic interface for sequential data storage and transformation." alt="" coords="5,135,223,415"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="234,409,237,413,384,564,522,699,518,703,381,568,233,417,230,413"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="38,5,190,85"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="117,99,117,135,111,135,111,99"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Portal_1_1Graphics_1_1RenderConfig.html" title="Unified rendering configuration for graphics buffers." alt="" coords="247,145,437,405"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="411,404,436,452,514,595,510,598,432,455,406,406"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Buffers_1_1VKBufferResources.html" title="Raw Vulkan handles owned by a VKBuffer instance." alt="" coords="461,175,602,375"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="552,374,568,461,563,462,547,375"/>
+<area shape="rect" id="Node000007" href="$structMayaFlux_1_1Buffers_1_1VKBuffer_1_1PipelineContext.html" title="Context shared with BufferProcessors during pipeline execution." alt="" coords="627,215,828,335"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="719,335,695,462,690,461,714,334"/>
+<area shape="rect" id="Node000008" href="$structMayaFlux_1_1Buffers_1_1VKBuffer_1_1EngineContext.html" title="Engine&#45;internal per&#45;frame binding state." alt="" coords="852,235,1027,315"/>
+<area shape="poly" id="edge7_Node000002_Node000008" title=" " alt="" coords="920,316,840,455,748,611,744,608,836,452,915,314"/>
+<area shape="rect" id="Node000009" href="$structMayaFlux_1_1Kinesis_1_1Lattice3D.html" title="A regular subdivision of an AABB3D into a cell count per axis." alt="" coords="906,687,1047,927"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="933,928,831,1192,826,1191,928,926"/>
+<area shape="rect" id="Node000010" href="$structMayaFlux_1_1Kinesis_1_1AABB3D.html" title="Axis&#45;aligned bounding box in 3D world space." alt="" coords="1051,145,1193,405"/>
+<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="1090,406,1077,454,1017,672,1011,670,1071,453,1085,404"/>
+</map>

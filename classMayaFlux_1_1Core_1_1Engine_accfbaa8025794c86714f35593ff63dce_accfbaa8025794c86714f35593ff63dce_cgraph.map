@@ -1,0 +1,15 @@
+<map id="MayaFlux::Core::Engine::operator=" name="MayaFlux::Core::Engine::operator=">
+<area shape="rect" id="Node000001" title="Move assignment operator." alt="" coords="5,37,181,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_afe8d554b31c372f2e0df38b03b51569a.html#afe8d554b31c372f2e0df38b03b51569a" title="Stops and cleans up the default engine." alt="" coords="229,45,348,70"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="181,55,216,55,216,60,181,60"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1internal_a3cc5413e05c2f9c9f04372841aa0a5b1.html#a3cc5413e05c2f9c9f04372841aa0a5b1" title=" " alt="" coords="396,37,540,77"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="348,55,382,55,382,60,348,60"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1internal_ac4d6952d58cdfd56964a883d40aa655d.html#ac4d6952d58cdfd56964a883d40aa655d" title=" " alt="" coords="588,5,781,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="540,44,574,39,575,44,541,49"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Journal_1_1Archivist_a82e2d12db8781df4afc43ef4c1fba2be.html#a82e2d12db8781df4afc43ef4c1fba2be" title="Shutdown the logging system." alt="" coords="609,69,760,109"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="541,65,596,74,595,79,540,71"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1internal_ac26a7a92aa4af34c366aad03b68ea71e.html#ac26a7a92aa4af34c366aad03b68ea71e" title=" " alt="" coords="831,5,975,45"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="782,23,817,23,817,28,782,28"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Journal_1_1Archivist_a8b7829e34d79ec5bbbf02e3d4afbdab9.html#a8b7829e34d79ec5bbbf02e3d4afbdab9" title="Get the singleton instance of the Archivist." alt="" coords="829,69,976,109"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="760,87,815,87,815,92,760,92"/>
+</map>

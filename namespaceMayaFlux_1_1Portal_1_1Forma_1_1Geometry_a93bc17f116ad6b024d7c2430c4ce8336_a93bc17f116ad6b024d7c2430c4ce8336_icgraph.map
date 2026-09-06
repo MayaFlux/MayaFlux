@@ -1,0 +1,7 @@
+<map id="MayaFlux::Portal::Forma::Geometry::wire_canvas_drag" name="MayaFlux::Portal::Forma::Geometry::wire_canvas_drag">
+<area shape="rect" id="Node000001" title="Wire drag interaction for a drawable canvas element." alt="" coords="497,5,716,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_a7b39cfe6094211ccc1811a8e95355b81.html#a7b39cfe6094211ccc1811a8e95355b81" title="Produce a Form::wire that registers canvas painting over bounds." alt="" coords="268,5,449,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="484,28,449,28,449,23,484,23"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_af2b3f26c66584f90f23a85aa2405e753.html#af2b3f26c66584f90f23a85aa2405e753" title="Geometry function for a drawable curve canvas in NDC space." alt="" coords="5,5,220,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="254,28,220,28,220,23,254,23"/>
+</map>

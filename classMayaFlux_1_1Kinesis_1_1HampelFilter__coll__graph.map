@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::HampelFilter&lt; T &gt;" name="MayaFlux::Kinesis::HampelFilter&lt; T &gt;">
+<area shape="rect" id="Node000001" title="Holds the last accepted value when a new sample looks like an isolated outlier relative to its recent..." alt="" coords="5,133,239,413"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="111,5,133,71"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="125,71,125,117,119,117,119,71"/>
+</map>

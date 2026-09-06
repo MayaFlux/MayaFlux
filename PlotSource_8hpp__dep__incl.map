@@ -1,0 +1,19 @@
+<map id="PlotSource.hpp" name="PlotSource.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="162,5,281,31"/>
+<area shape="rect" id="Node000002" href="$Plot_8hpp.html" title=" " alt="" coords="124,79,199,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="205,43,173,80,169,77,201,40"/>
+<area shape="rect" id="Node000009" href="$PlotSource_8cpp.html" title=" " alt="" coords="223,79,342,104"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="242,40,275,77,271,80,238,43"/>
+<area shape="rect" id="Node000003" href="$Atelier_8hpp.html" title=" " alt="" coords="62,152,154,177"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="147,117,119,153,115,150,142,113"/>
+<area shape="rect" id="Node000008" href="$Plot_8cpp.html" title=" " alt="" coords="179,152,253,177"/>
+<area shape="poly" id="edge7_Node000002_Node000008" title=" " alt="" coords="181,113,209,150,205,154,177,117"/>
+<area shape="rect" id="Node000004" href="$Atelier_8cpp.html" title=" " alt="" coords="5,225,96,251"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="92,190,62,227,58,224,88,186"/>
+<area shape="rect" id="Node000005" href="$Forma_8hpp.html" title="Factory free functions for the Forma surface system." alt="" coords="120,225,211,251"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="128,186,158,224,154,227,124,190"/>
+<area shape="rect" id="Node000006" href="$Engine_8cpp.html" title=" " alt="" coords="60,299,153,324"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="149,263,118,300,114,297,145,260"/>
+<area shape="rect" id="Node000007" href="$Forma_8cpp.html" title=" " alt="" coords="177,299,268,324"/>
+<area shape="poly" id="edge6_Node000005_Node000007" title=" " alt="" coords="185,260,215,297,211,300,181,263"/>
+</map>

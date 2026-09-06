@@ -1,0 +1,15 @@
+<map id="MayaFlux::Buffers::RelaxationSpecs::emit_binary" name="MayaFlux::Buffers::RelaxationSpecs::emit_binary">
+<area shape="rect" id="Node000001" title="Binary state&#45;to&#45;vertex emit: nonzero state draws at full scale, zero state degenerates to a zero&#45;scal..." alt="" coords="5,126,173,181"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderSpec_1_1Assemble_a44f5c516ff6ccfe853b704dffbdd1749.html#a44f5c516ff6ccfe853b704dffbdd1749" title="Finalise and return the ShaderSpec." alt="" coords="221,5,440,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="120,124,165,88,220,55,236,48,238,53,223,60,168,93,123,128"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderSpec_1_1Assemble_a0d253b7e25181d0a823f692deeee16ec.html#a0d253b7e25181d0a823f692deeee16ec" title="Set the named operation the emitter will lower to SPIR&#45;V." alt="" coords="229,69,432,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="173,129,241,110,242,115,174,134"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderSpec_1_1Assemble_a468e0e2f7ccbab32e59ed547694484b7.html#a468e0e2f7ccbab32e59ed547694484b7" title="Declare a push constant field with explicit format." alt="" coords="230,133,431,173"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="173,151,216,151,216,156,173,156"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderSpec_1_1Assemble_a59cdd9a2ab439b42c89835809aae45f4.html#a59cdd9a2ab439b42c89835809aae45f4" title="Declare an SSBO binding." alt="" coords="223,197,439,237"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="174,173,242,191,241,196,173,178"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderSpec_1_1Assemble_ab349ded3d71596d2354921387c82f84c.html#ab349ded3d71596d2354921387c82f84c" title="Override workgroup size." alt="" coords="232,262,429,317"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="124,179,170,213,223,247,236,254,234,259,220,252,167,218,121,183"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kakshya_a1a6f442f75e19775fcf77da154f74990.html#a1a6f442f75e19775fcf77da154f74990" title="Byte size of one element of a GpuDataFormat." alt="" coords="488,5,664,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="440,23,474,23,474,28,440,28"/>
+</map>

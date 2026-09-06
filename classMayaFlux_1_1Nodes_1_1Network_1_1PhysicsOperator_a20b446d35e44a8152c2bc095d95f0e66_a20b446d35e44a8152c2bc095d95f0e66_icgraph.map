@@ -1,0 +1,15 @@
+<map id="MayaFlux::Nodes::Network::PhysicsOperator::get_point_count" name="MayaFlux::Nodes::Network::PhysicsOperator::get_point_count">
+<area shape="rect" id="Node000001" title="Get source point count (before topology expansion)" alt="" coords="523,163,721,217"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1PhysicsOperator_a11d0cd990f5e4275aaeb1d3814ee483b.html#a11d0cd990f5e4275aaeb1d3814ee483b" title="Apply impulse to specific particle." alt="" coords="265,5,463,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="581,155,531,113,473,74,451,63,453,58,476,69,535,109,584,151"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1PhysicsOperator_addc9c26308edc1971470b5ab9ac7e2ff.html#addc9c26308edc1971470b5ab9ac7e2ff" title="Apply ONE_TO_ONE parameter for physics&#45;specific properties." alt="" coords="265,84,463,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="518,161,454,141,455,136,519,156"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Network_1_1PhysicsOperator_a153ac7cdfd75f576057ec8c1644ab34e.html#a153ac7cdfd75f576057ec8c1644ab34e" title="Every particle&#39;s currently accreted mass, in global index order." alt="" coords="265,163,463,217"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="509,193,464,193,464,187,509,187"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1Network_1_1PhysicsOperator_a7f15cc2511da635c3bfb19882e38bb0d.html#a7f15cc2511da635c3bfb19882e38bb0d" title="Get mutable access to point at global index." alt="" coords="265,241,463,296"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="519,224,455,244,454,239,518,219"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1Network_1_1PhysicsOperator_a9303657975a3a57026c6922df759a6c6.html#a9303657975a3a57026c6922df759a6c6" title="Query operator internal state." alt="" coords="253,321,475,361"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="585,229,535,271,476,310,445,323,443,318,473,305,532,267,582,225"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1ClaimAccumulateProcessor_a647d18931fa71b692f0ce0bb97b778ba.html#a647d18931fa71b692f0ce0bb97b778ba" title="Dispatch as usual, then conditionally read back the result." alt="" coords="5,163,205,217"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="251,193,205,193,205,187,251,187"/>
+</map>

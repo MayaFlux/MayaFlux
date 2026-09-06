@@ -1,0 +1,9 @@
+<map id="MayaFlux::Portal::Forma::Plot::plot_cursor" name="MayaFlux::Portal::Forma::Plot::plot_cursor">
+<area shape="rect" id="Node000001" title="GeometryFn&lt;float&gt; for a cursor or playhead line within a plot area." alt="" coords="5,69,187,109"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kinesis_1_1AABB2D_a32bac0d1a4f876c992486eed5dc9fd6f.html#a32bac0d1a4f876c992486eed5dc9fd6f" title=" " alt="" coords="251,5,400,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="168,67,240,46,241,52,169,72"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kinesis_1_1AABB2D_ab8e372add789f6bd44fa66a92618456a.html#ab8e372add789f6bd44fa66a92618456a" title=" " alt="" coords="251,69,400,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="187,87,237,87,237,92,187,92"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_af668d56bbf7441d552c3ee5c38c3ae62.html#af668d56bbf7441d552c3ee5c38c3ae62" title="Write a vertex array into a GeometryFn output buffer." alt="" coords="235,133,416,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="169,107,241,127,240,132,168,112"/>
+</map>

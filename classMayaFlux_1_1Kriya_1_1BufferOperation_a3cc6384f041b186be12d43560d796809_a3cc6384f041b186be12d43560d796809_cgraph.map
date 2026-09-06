@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kriya::BufferOperation::is_capture_phase_operation" name="MayaFlux::Kriya::BufferOperation::is_capture_phase_operation">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,69,244,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kriya_1_1BufferOperation_afe17bdae6a1510c49f2dc2105317377b.html#afe17bdae6a1510c49f2dc2105317377b" title="Get the execution phase hint for this operation." alt="" coords="292,5,531,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="214,67,307,46,309,51,216,72"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kriya_1_1BufferOperation_a9dd46473d7b974476837e9b200df0bd7.html#a9dd46473d7b974476837e9b200df0bd7" title="Getters for internal state (read&#45;only)" alt="" coords="292,69,531,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="244,87,278,87,278,92,244,92"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kriya_1_1BufferOperation_a792e3313503636c56cf26ec60dfc04fb.html#a792e3313503636c56cf26ec60dfc04fb" title="Check if this operation is a streaming operation." alt="" coords="292,133,531,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="216,107,309,128,307,133,214,112"/>
+</map>

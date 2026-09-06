@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::NetworkGeometryBuffer::write_state_slot" name="MayaFlux::Buffers::NetworkGeometryBuffer::write_state_slot">
+<area shape="rect" id="Node000001" title="Full back_buffers slot a stage should write the named state field to." alt="" coords="5,45,187,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1NetworkGeometryBuffer_a5d219c4139d7d6afcf90ffd71844035d.html#a5d219c4139d7d6afcf90ffd71844035d" title="Resolve a declared state field by name." alt="" coords="235,5,416,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="186,54,221,48,222,53,187,59"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_ade826fd1619beabe131e5bb65ecf2bcd.html#ade826fd1619beabe131e5bb65ecf2bcd" title="Get all buffer resources at once (read&#45;only)" alt="" coords="249,84,402,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="187,85,236,94,235,99,186,91"/>
+</map>

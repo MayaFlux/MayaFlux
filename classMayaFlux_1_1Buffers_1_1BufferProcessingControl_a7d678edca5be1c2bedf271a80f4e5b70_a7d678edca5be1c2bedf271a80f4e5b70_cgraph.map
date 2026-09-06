@@ -1,0 +1,18 @@
+<map id="MayaFlux::Buffers::BufferProcessingControl::connect_node_to_audio_buffer" name="MayaFlux::Buffers::BufferProcessingControl::connect_node_to_audio_buffer">
+<area shape="rect" id="Node000001" title="Connects a node directly to a specific audio buffer." alt="" coords="5,149,233,204"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingControl_a9eb403000a3a733a1db25bca6e9b9863.html#a9eb403000a3a733a1db25bca6e9b9863" title="Adds a processor to a specific audio buffer." alt="" coords="281,95,460,149"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="233,149,267,142,269,147,234,154"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_aeeb5db3214dcd90b0778eea361e62276.html#aeeb5db3214dcd90b0778eea361e62276" title="Mix multiple data streams with equal weighting." alt="" coords="311,208,430,233"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="234,194,298,205,297,211,233,199"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1TokenUnitManager_a012057e576d30bf8dce1f3870d59a4dd.html#a012057e576d30bf8dce1f3870d59a4dd" title="Gets all active audio processing tokens." alt="" coords="515,5,687,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="441,92,516,63,518,68,443,97"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1TokenUnitManager_a1fec27437763c5bec8ff1f2bcedd1a79.html#a1fec27437763c5bec8ff1f2bcedd1a79" title="Gets an existing audio unit without creating if missing." alt="" coords="515,84,687,139"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="460,115,501,113,502,119,460,121"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Buffers_1_1RootAudioUnit_adab6da56d6eb5d1fc2606c8c1ab8e01f.html#adab6da56d6eb5d1fc2606c8c1ab8e01f" title=" " alt="" coords="508,163,695,203"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="461,143,513,157,512,162,459,148"/>
+<area shape="poly" id="edge8_Node000006_Node000006" title=" " alt="" coords="333,210,325,200,329,190,345,184,371,181,403,185,415,195,412,199,401,190,371,187,346,189,333,194,330,199,337,206"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_aec6eff0979aee0842a5ba73791661498.html#aec6eff0979aee0842a5ba73791661498" title="Apply gain to single&#45;channel data (in&#45;place)" alt="" coords="519,228,684,253"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="430,223,505,230,505,235,430,228"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_aee40e89d5a4f3c24d38829506034425d.html#aee40e89d5a4f3c24d38829506034425d" title="Linear map y = a*x + b applied in&#45;place." alt="" coords="743,221,892,261"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="685,238,729,238,729,243,685,243"/>
+</map>

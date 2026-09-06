@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kinesis::total_turning" name="MayaFlux::Kinesis::total_turning">
+<area shape="rect" id="Node000001" title="Total absolute turning accumulated across a window." alt="" coords="5,37,155,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_a24e6b15161d46e1f90ac3bce7c503498.html#a24e6b15161d46e1f90ac3bce7c503498" title="Shortest signed angular difference between two headings." alt="" coords="203,5,352,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="154,43,189,37,189,42,155,48"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_ac5b1da8ec8674fb802ea4fc11e0e02e0.html#ac5b1da8ec8674fb802ea4fc11e0e02e0" title="Heading angle of a 2D vector." alt="" coords="203,69,352,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="155,67,189,72,189,78,154,72"/>
+</map>

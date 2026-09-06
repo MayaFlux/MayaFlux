@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::PlotContainer::get_structure" name="MayaFlux::Kakshya::PlotContainer::get_structure">
+<area shape="rect" id="Node000001" title="Get the data structure defining this container&#39;s layout." alt="" coords="235,5,439,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Plot_ac2b9ac10c611fd4c049443bac343d2e8.html#ac2b9ac10c611fd4c049443bac343d2e8" title="Collect all series from processed_data whose DataDimension role matches role." alt="" coords="5,5,187,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="221,28,187,28,187,23,221,23"/>
+</map>

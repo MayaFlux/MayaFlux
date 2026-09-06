@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::VideoStreamContainer::is_ring_mode" name="MayaFlux::Kakshya::VideoStreamContainer::is_ring_mode">
+<area shape="rect" id="Node000001" title="True if the container is operating in ring mode." alt="" coords="217,5,387,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1VideoFileContainer_a7f885ada7d0929abd523683fec21c30c.html#a7f885ada7d0929abd523683fec21c30c" title="Total duration in seconds." alt="" coords="5,5,169,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="203,35,169,35,169,30,203,30"/>
+</map>

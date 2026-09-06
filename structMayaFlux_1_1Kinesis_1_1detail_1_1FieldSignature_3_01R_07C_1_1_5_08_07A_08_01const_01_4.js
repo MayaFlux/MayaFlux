@@ -1,0 +1,5 @@
+var structMayaFlux_1_1Kinesis_1_1detail_1_1FieldSignature_3_01R_07C_1_1_5_08_07A_08_01const_01_4 =
+[
+    [ "domain", "structMayaFlux_1_1Kinesis_1_1detail_1_1FieldSignature_3_01R_07C_1_1_5_08_07A_08_01const_01_4_a6ad2750ecfe331adfebfbbd0905b8b4a.html#a6ad2750ecfe331adfebfbbd0905b8b4a", null ],
+    [ "range", "structMayaFlux_1_1Kinesis_1_1detail_1_1FieldSignature_3_01R_07C_1_1_5_08_07A_08_01const_01_4_a796f2f19ba44130d6b6a822b04a6ba42.html#a796f2f19ba44130d6b6a822b04a6ba42", null ]
+];

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Yantra::DependencyStage" name="MayaFlux::Yantra::DependencyStage">
+<area shape="rect" id="Node000001" title="One stage in a dispatch_core_dependency call." alt="" coords="5,208,220,328"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Portal_1_1Graphics_1_1GpuComputeConfig.html" title="Plain&#45;data description of the compute shader to dispatch." alt="" coords="18,5,207,145"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="115,146,115,192,110,192,110,146"/>
+</map>

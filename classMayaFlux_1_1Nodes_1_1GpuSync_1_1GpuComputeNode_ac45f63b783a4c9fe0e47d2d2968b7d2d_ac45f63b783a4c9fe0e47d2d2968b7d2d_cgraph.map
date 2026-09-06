@@ -1,0 +1,11 @@
+<map id="MayaFlux::Nodes::GpuSync::GpuComputeNode::compute_frame" name="MayaFlux::Nodes::GpuSync::GpuComputeNode::compute_frame">
+<area shape="rect" id="Node000001" title="Drive the async dispatch lifecycle." alt="" coords="5,41,265,81"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a715d57394465ff2924727d7c82d87e7b.html#a715d57394465ff2924727d7c82d87e7b" title="Get the global shader compiler instance." alt="" coords="327,8,525,48"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="265,44,313,38,314,44,266,49"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GpuComputeNode_ad2ab5112794abfc426639f331f749747.html#ad2ab5112794abfc426639f331f749747" title="Notifies all registered callbacks with the current context." alt="" coords="313,73,539,113"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="266,73,300,77,300,82,265,78"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ab22eaae6b8210236918b85f409fc4c49.html#ab22eaae6b8210236918b85f409fc4c49" title=" " alt="" coords="589,5,787,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="525,24,576,24,576,29,525,30"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GpuComputeNode_adf52c667a12a86d027fbc2da6525200b.html#adf52c667a12a86d027fbc2da6525200b" title="Updates the context object with the current node state." alt="" coords="587,70,789,125"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="539,92,573,93,573,98,539,98"/>
+</map>

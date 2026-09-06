@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kinesis::speed" name="MayaFlux::Kinesis::speed">
+<area shape="rect" id="Node000001" title="Absolute value of a scalar first difference." alt="" coords="203,69,352,109"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_a78d00906aadb427c971fd1ff13bb53af.html#a78d00906aadb427c971fd1ff13bb53af" title="Convenience overload of speed(double) over a raw span, samples[0] newest." alt="" coords="5,5,155,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="201,68,141,48,143,43,203,63"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_a1e242a3a5f40763dfd60f93ec3a505cf.html#a1e242a3a5f40763dfd60f93ec3a505cf" title="Convenience overload of speed(vec2) over a raw span, samples[0] newest." alt="" coords="5,69,155,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="189,92,155,92,155,87,189,87"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_aba09278d279e60c2e2d76d7c1616766c.html#aba09278d279e60c2e2d76d7c1616766c" title="Convenience overload of speed(vec3) over a raw span, samples[0] newest." alt="" coords="5,133,155,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="203,116,143,136,141,131,201,111"/>
+</map>

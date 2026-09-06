@@ -1,0 +1,31 @@
+<map id="MayaFlux::Nodes::Network::GpuFieldOperator::invalidate" name="MayaFlux::Nodes::Network::GpuFieldOperator::invalidate">
+<area shape="rect" id="Node000001" title="Clear the cached spec and bump revision()." alt="" coords="499,446,716,486"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1GpuFieldOperator_afb3bfdf53ca112c844b18a7b34017f87.html#afb3bfdf53ca112c844b18a7b34017f87" title="Live&#45;update ClaimProcessor&#39;s size&#45;to&#45;capture&#45;radius scaling." alt="" coords="252,5,451,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="599,433,586,359,559,264,539,213,514,162,484,115,449,73,435,62,439,58,453,69,489,112,519,160,544,210,564,262,591,358,604,432"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1GpuFieldOperator_aba2ad5e0181fe348f83a41f7d0d67ce2.html#aba2ad5e0181fe348f83a41f7d0d67ce2" title="Live&#45;update whether claims and density see across cluster boundaries." alt="" coords="252,84,451,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="596,434,578,374,548,299,506,221,479,184,449,152,434,141,438,137,452,148,483,181,510,218,553,297,583,372,601,432"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Network_1_1GpuFieldOperator_a5b1c6402bd5e83d2365997be48ff57b8.html#a5b1c6402bd5e83d2365997be48ff57b8" title="Live&#45;update HashDensityColorProcessor&#39;s saturation point." alt="" coords="252,163,451,217"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="590,435,568,389,537,335,497,279,449,231,433,220,436,215,452,227,501,276,542,332,573,387,595,432"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1Network_1_1GpuFieldOperator_a68bb31392c68a65282d5eb4c0312d007.html#a68bb31392c68a65282d5eb4c0312d007" title="Live&#45;update PopulationSpawnProcessor&#39;s spawn density threshold." alt="" coords="252,241,451,296"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="581,437,524,373,488,340,449,310,430,298,433,294,452,305,492,335,528,370,585,433"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1Network_1_1GpuFieldOperator_a9f16b5cc6b5bd790a82a8c9435088f24.html#a9f16b5cc6b5bd790a82a8c9435088f24" title="Live&#45;update ClaimSwallowProcessor&#39;s base survivor size." alt="" coords="252,320,451,375"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="556,442,450,388,424,377,426,372,452,384,559,437"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1Network_1_1GpuFieldOperator_a1961a23884d250a13dfec557baa3359d.html#a1961a23884d250a13dfec557baa3359d" title="Live&#45;update ClaimSwallowProcessor&#39;s absorbed&#45;particle dimming." alt="" coords="252,399,451,453"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="485,450,451,444,451,439,486,444"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Nodes_1_1Network_1_1GpuFieldOperator_ac8551ac1731df48898aa80bc95962c18.html#ac8551ac1731df48898aa80bc95962c18" title="Live&#45;update ClaimSwallowProcessor&#39;s per&#45;swallow size increase." alt="" coords="252,477,451,532"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="486,487,451,492,451,487,485,482"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Nodes_1_1Network_1_1GpuFieldOperator_a3a5ab9410a4dcd84a2c66bcae34b2837.html#a3a5ab9410a4dcd84a2c66bcae34b2837" title="Live&#45;update ClaimSwallowProcessor&#39;s survivor size ceiling." alt="" coords="252,556,451,611"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="557,495,452,546,423,558,421,553,450,541,554,490"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Nodes_1_1Network_1_1GpuFieldOperator_ad4e6c39dc97b95b88c85c6ad07e2759d.html#ad4e6c39dc97b95b88c85c6ad07e2759d" title="Descriptor binding index the vertex SSBO occupies." alt="" coords="252,635,451,689"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="584,498,528,561,491,594,452,624,430,637,427,632,449,620,488,590,524,557,580,495"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Nodes_1_1Network_1_1GpuFieldOperator_a0bf0d705ba5609e5a864b4820c0d8b2b.html#a0bf0d705ba5609e5a864b4820c0d8b2b" title="Workgroup size along x." alt="" coords="252,713,451,768"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="595,500,573,544,541,598,501,654,452,703,434,715,431,711,449,699,497,650,537,596,568,542,590,497"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Nodes_1_1Network_1_1GpuFieldOperator_a18d3ed8fd4d4de2fc5541de4f95cba7c.html#a18d3ed8fd4d4de2fc5541de4f95cba7c" title="Store a binding after validation." alt="" coords="252,793,451,833"/>
+<area shape="poly" id="edge11_Node000001_Node000012" title=" " alt="" coords="601,500,584,560,554,635,511,713,484,749,452,781,432,795,429,790,449,777,480,746,507,710,549,633,579,558,596,498"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1Nodes_1_1Network_1_1GpuFieldOperator_af11014c1a35193f73803f31c64271f98.html#af11014c1a35193f73803f31c64271f98" title="Clear the given targets." alt="" coords="252,857,451,897"/>
+<area shape="poly" id="edge14_Node000001_Node000015" title=" " alt="" coords="604,500,591,571,563,664,544,713,519,762,489,807,452,847,436,859,432,854,449,843,484,804,514,759,539,711,558,662,586,570,599,499"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Nodes_1_1Network_1_1GpuFieldOperator_a357cec594ff11f845e60cc7903450f62.html#a357cec594ff11f845e60cc7903450f62" title="Bind a three&#45;component field to one or more vec3 targets." alt="" coords="5,761,204,801"/>
+<area shape="poly" id="edge12_Node000012_Node000013" title=" " alt="" coords="238,801,204,796,205,791,239,795"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1Nodes_1_1Network_1_1GpuFieldOperator_ae95f07dfddaf57e71ce03b3aca792d79.html#ae95f07dfddaf57e71ce03b3aca792d79" title="Bind a three&#45;component field of position and time." alt="" coords="5,825,204,865"/>
+<area shape="poly" id="edge13_Node000012_Node000014" title=" " alt="" coords="239,830,205,834,204,829,238,825"/>
+</map>

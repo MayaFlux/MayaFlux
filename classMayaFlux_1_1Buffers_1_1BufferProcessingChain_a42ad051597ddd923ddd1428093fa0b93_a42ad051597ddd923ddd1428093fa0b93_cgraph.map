@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::BufferProcessingChain::analyze_token_compatibility" name="MayaFlux::Buffers::BufferProcessingChain::analyze_token_compatibility">
+<area shape="rect" id="Node000001" title="Analyzes token compatibility across all processors in the chain." alt="" coords="5,5,223,60"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Buffers_a38e5853247532e5155b787a4d89b20cb.html#a38e5853247532e5155b787a4d89b20cb" title="Determines if two processing tokens are compatible for joint execution." alt="" coords="271,13,444,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="223,30,257,30,257,35,223,35"/>
+</map>

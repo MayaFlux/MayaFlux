@@ -1,0 +1,23 @@
+<map id="MayaFlux::IO::ImageData::is_consistent" name="MayaFlux::IO::ImageData::is_consistent">
+<area shape="rect" id="Node000001" title="Check that the active variant matches the declared format." alt="" coords="940,133,1128,173"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1IO_ae74e134903752924b1f4a6bda9732de8.html#ae74e134903752924b1f4a6bda9732de8" title="Download pixel data from a GPU&#45;resident VKImage into host ImageData." alt="" coords="691,69,870,109"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="940,132,860,112,861,107,942,127"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1IO_1_1EXRWriter_abb15175d3720dc452a5ba299923c2a35.html#abb15175d3720dc452a5ba299923c2a35" title="Write image data to disk." alt="" coords="689,133,872,173"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="926,156,872,156,872,151,926,151"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1IO_1_1STBImageWriter_a9cb5d049517c18ad1e45b8fefda0bda5.html#a9cb5d049517c18ad1e45b8fefda0bda5" title="Write image data to disk." alt="" coords="669,197,892,237"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="942,179,861,200,860,195,940,174"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1IO_ab11998b0795fbdc7768a1e58037281cf.html#ab11998b0795fbdc7768a1e58037281cf" title="Download a TextureBuffer&#39;s GPU texture into host ImageData." alt="" coords="439,5,617,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="687,68,607,48,608,43,688,63"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1IO_a4f12c1b729a3d84c98e799a6af07ab19.html#a4f12c1b729a3d84c98e799a6af07ab19" title="Save a VKImage directly to disk via the ImageWriter registry." alt="" coords="455,69,601,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="678,92,601,92,601,87,678,87"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1IO_1_1IOManager_a20c6d4610f26db8604c8d2252a02c3a2.html#a20c6d4610f26db8604c8d2252a02c3a2" title="Save image data to disk asynchronously." alt="" coords="435,133,621,173"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="688,115,608,136,607,131,687,110"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1IO_a03a3f24fff1c3b2fc670ee5539f5ca80.html#a03a3f24fff1c3b2fc670ee5539f5ca80" title="Save a TextureBuffer&#39;s current GPU state to disk." alt="" coords="220,69,367,109"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="441,92,367,92,367,87,441,87"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1IO_a80678771111a87cd4dadffc367b550d7.html#a80678771111a87cd4dadffc367b550d7" title="Save a TextBuffer&#39;s rendered glyph texture to disk." alt="" coords="5,69,152,109"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="206,92,152,92,152,87,206,87"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1IO_1_1IOManager_ac91dd7d537b2c0090b05d8bd5b74847e.html#ac91dd7d537b2c0090b05d8bd5b74847e" title=" " alt="" coords="200,133,387,173"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="421,156,387,156,387,151,421,151"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1IO_1_1IOManager_abc5b4f20992fe093fcf290e073a12895.html#abc5b4f20992fe093fcf290e073a12895" title=" " alt="" coords="200,197,387,237"/>
+<area shape="poly" id="edge8_Node000007_Node000009" title=" " alt="" coords="442,180,368,200,366,195,440,174"/>
+</map>

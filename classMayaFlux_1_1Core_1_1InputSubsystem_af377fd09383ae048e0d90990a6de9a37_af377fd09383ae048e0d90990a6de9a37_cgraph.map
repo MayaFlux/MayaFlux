@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::InputSubsystem::start" name="MayaFlux::Core::InputSubsystem::start">
+<area shape="rect" id="Node000001" title="Start the subsystem&#39;s processing/event loops." alt="" coords="5,5,243,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1InputManagerHandle_a75cc866f9fc84578d59ee598e2f17e47.html#a75cc866f9fc84578d59ee598e2f17e47" title="start InputManager" alt="" coords="291,5,513,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="243,23,277,23,277,28,243,28"/>
+</map>

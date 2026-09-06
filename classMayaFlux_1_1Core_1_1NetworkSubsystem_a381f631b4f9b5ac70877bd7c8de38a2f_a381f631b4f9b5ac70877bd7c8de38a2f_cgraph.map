@@ -1,0 +1,13 @@
+<map id="MayaFlux::Core::NetworkSubsystem::~NetworkSubsystem" name="MayaFlux::Core::NetworkSubsystem::~NetworkSubsystem">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,101,264,141"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1NetworkSubsystem_a0464d61f9752a0848157b14c1ff0b37d.html#a0464d61f9752a0848157b14c1ff0b37d" title="Shutdown and cleanup subsystem resources." alt="" coords="312,101,571,141"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="264,119,298,119,298,124,264,124"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aa28c6f5592e5893508bafb62aefcc496.html#aa28c6f5592e5893508bafb62aefcc496" title="Get the global registry instance." alt="" coords="624,5,825,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="495,99,618,55,642,47,644,52,620,60,496,104"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Portal_1_1Network_ab543bbbdbf0f9d06cb6d849ef40500ae.html#ab543bbbdbf0f9d06cb6d849ef40500ae" title="Return true if Portal::Network has been initialized." alt="" coords="627,69,822,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="570,104,613,99,614,104,571,109"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Portal_1_1Network_a9c9f138ccab5ebeb7d899748401c0688.html#a9c9f138ccab5ebeb7d899748401c0688" title="Shutdown Portal::Network and release all resources." alt="" coords="627,133,822,173"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="571,133,614,138,613,143,570,139"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_af56fb38c9e3a502f619f6205beb49384.html#af56fb38c9e3a502f619f6205beb49384" title="Unregister a service." alt="" coords="619,198,831,253"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="498,139,638,191,636,196,496,144"/>
+</map>

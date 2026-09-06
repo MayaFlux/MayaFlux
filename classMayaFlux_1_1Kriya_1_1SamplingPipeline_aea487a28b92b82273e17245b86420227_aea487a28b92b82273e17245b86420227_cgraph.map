@@ -1,0 +1,16 @@
+<map id="MayaFlux::Kriya::SamplingPipeline::play_continuous" name="MayaFlux::Kriya::SamplingPipeline::play_continuous">
+<area shape="rect" id="Node000001" title="Load a slice into a voice slot and activate it with looping enabled." alt="" coords="5,54,203,94"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kriya_1_1SamplingPipeline_a56375779c7b0e71e58a8eef5a3658119.html#a56375779c7b0e71e58a8eef5a3658119" title="Finalize configuration and start processing." alt="" coords="251,22,448,62"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="203,58,237,54,238,59,203,64"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Kriya_1_1SamplingPipeline_a1627fcd024c2759273fa2410dcf0fe44.html#a1627fcd024c2759273fa2410dcf0fe44" title="Direct access to a voice&#39;s StreamSlice for configuration." alt="" coords="251,86,448,126"/>
+<area shape="poly" id="edge7_Node000001_Node000007" title=" " alt="" coords="203,84,238,89,237,94,203,90"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1BufferManager_a79b77923f74899398e1836f1144911a9.html#a79b77923f74899398e1836f1144911a9" title=" " alt="" coords="496,15,665,69"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="448,39,482,39,482,45,448,45"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_aeeb5db3214dcd90b0778eea361e62276.html#aeeb5db3214dcd90b0778eea361e62276" title="Mix multiple data streams with equal weighting." alt="" coords="713,29,832,55"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="666,39,700,39,700,45,666,45"/>
+<area shape="poly" id="edge6_Node000004_Node000004" title=" " alt="" coords="741,31,735,21,738,11,751,5,773,3,799,6,810,15,806,19,797,11,773,8,753,10,742,15,740,20,746,28"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_aec6eff0979aee0842a5ba73791661498.html#aec6eff0979aee0842a5ba73791661498" title="Apply gain to single&#45;channel data (in&#45;place)" alt="" coords="880,29,1045,55"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="832,39,866,39,866,45,832,45"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_aee40e89d5a4f3c24d38829506034425d.html#aee40e89d5a4f3c24d38829506034425d" title="Linear map y = a*x + b applied in&#45;place." alt="" coords="1093,22,1243,62"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="1046,39,1080,39,1080,45,1046,45"/>
+</map>

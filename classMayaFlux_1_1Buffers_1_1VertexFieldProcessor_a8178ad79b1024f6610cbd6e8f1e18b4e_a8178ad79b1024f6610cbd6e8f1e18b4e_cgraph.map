@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::VertexFieldProcessor::calculate_dispatch_size" name="MayaFlux::Buffers::VertexFieldProcessor::calculate_dispatch_size">
+<area shape="rect" id="Node000001" title="One thread per record in the resolved range." alt="" coords="5,5,189,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1ComputeProcessor_a396a08372efa9e54744f1bc9a5244db3.html#a396a08372efa9e54744f1bc9a5244db3" title="Get current dispatch configuration." alt="" coords="237,5,411,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="190,30,223,30,223,35,190,35"/>
+</map>

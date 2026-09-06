@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::SoundStreamContainer::coordinates_to_linear_index" name="MayaFlux::Kakshya::SoundStreamContainer::coordinates_to_linear_index">
+<area shape="rect" id="Node000001" title="Convert coordinates to linear index based on current memory layout." alt="" coords="5,5,219,60"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kakshya_a11d6fefbc337609345969f80012578d0.html#a11d6fefbc337609345969f80012578d0" title="Convert N&#45;dimensional coordinates to a linear index for interleaved data." alt="" coords="267,13,429,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="219,30,253,30,253,35,219,35"/>
+</map>

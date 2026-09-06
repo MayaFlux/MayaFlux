@@ -1,0 +1,3 @@
+<map id="MayaFlux::Portal::Graphics::VertexLayoutTranslator" name="MayaFlux::Portal::Graphics::VertexLayoutTranslator">
+<area shape="rect" id="Node000001" title="Translates semantic vertex layouts to Vulkan pipeline state." alt="" coords="5,5,207,145"/>
+</map>

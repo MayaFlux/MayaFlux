@@ -1,0 +1,11 @@
+<map id="MayaFlux::IO::VideoFileReader::close" name="MayaFlux::IO::VideoFileReader::close">
+<area shape="rect" id="Node000001" title="Close the currently open file." alt="" coords="5,101,228,141"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1VideoFileReader_aa07732da3871c5eff0e90e13180407fa.html#aa07732da3871c5eff0e90e13180407fa" title=" " alt="" coords="276,5,499,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="163,99,275,55,299,47,301,52,277,60,165,104"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aa28c6f5592e5893508bafb62aefcc496.html#aa28c6f5592e5893508bafb62aefcc496" title="Get the global registry instance." alt="" coords="287,69,488,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="228,106,273,100,273,105,228,111"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1VideoFileReader_aacb36f0a6a4373bef947e1d618cc6074.html#aacb36f0a6a4373bef947e1d618cc6074" title=" " alt="" coords="276,133,499,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="228,132,263,136,262,141,228,137"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_af56fb38c9e3a502f619f6205beb49384.html#af56fb38c9e3a502f619f6205beb49384" title="Unregister a service." alt="" coords="281,198,493,253"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="167,139,277,183,298,191,296,196,275,188,165,144"/>
+</map>

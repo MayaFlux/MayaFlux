@@ -1,0 +1,9 @@
+<map id="MayaFlux::Transitive::Protocol::read_string" name="MayaFlux::Transitive::Protocol::read_string">
+<area shape="rect" id="Node000001" title="Read a null&#45;terminated string from a byte buffer." alt="" coords="520,37,684,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1OscParser_a3bef65f17b2288f02e9bc97c55164279.html#a3bef65f17b2288f02e9bc97c55164279" title="Parse a single OSC message from raw bytes." alt="" coords="276,37,472,77"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="506,60,472,60,472,55,506,55"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Network_a4c5d68f71a3b9a20ada6268e0956e73c.html#a4c5d68f71a3b9a20ada6268e0956e73c" title="Parse a NetworkMessage payload as an OSC message." alt="" coords="19,5,214,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="262,46,214,40,215,35,263,41"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1InputManager_a1d40572bf2b17bd20898f5eeade44cf3.html#a1d40572bf2b17bd20898f5eeade44cf3" title="Setup OSC bridge if enabled in config." alt="" coords="5,69,228,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="262,74,229,78,228,73,262,69"/>
+</map>

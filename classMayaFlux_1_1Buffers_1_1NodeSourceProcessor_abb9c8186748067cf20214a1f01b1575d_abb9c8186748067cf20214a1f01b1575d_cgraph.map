@@ -1,0 +1,14 @@
+<map id="MayaFlux::Buffers::NodeSourceProcessor::processing_function" name="MayaFlux::Buffers::NodeSourceProcessor::processing_function">
+<area shape="rect" id="Node000001" title="Captures node computation output into a buffer." alt="" coords="5,44,168,99"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Buffers_aaa0a91ed33cd8bedc7d3b7b3c0b8c28e.html#aaa0a91ed33cd8bedc7d3b7b3c0b8c28e" title="Apply node output to an existing buffer with mixing." alt="" coords="216,51,439,91"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="169,69,202,69,202,74,169,74"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_aeeb5db3214dcd90b0778eea361e62276.html#aeeb5db3214dcd90b0778eea361e62276" title="Mix multiple data streams with equal weighting." alt="" coords="538,29,657,55"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="439,57,524,47,525,52,439,62"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Buffers_ae642092d63445f1884326aba3d9b5189.html#ae642092d63445f1884326aba3d9b5189" title="Wait for an active snapshot context to complete using exponential backoff." alt="" coords="487,79,708,119"/>
+<area shape="poly" id="edge6_Node000002_Node000006" title=" " alt="" coords="439,80,473,84,473,89,439,86"/>
+<area shape="poly" id="edge5_Node000003_Node000003" title=" " alt="" coords="558,31,550,21,554,11,570,5,597,3,631,7,644,16,641,20,629,11,597,8,572,10,558,15,555,20,562,27"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_aec6eff0979aee0842a5ba73791661498.html#aec6eff0979aee0842a5ba73791661498" title="Apply gain to single&#45;channel data (in&#45;place)" alt="" coords="756,29,921,55"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="657,39,742,39,742,45,657,45"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_aee40e89d5a4f3c24d38829506034425d.html#aee40e89d5a4f3c24d38829506034425d" title="Linear map y = a*x + b applied in&#45;place." alt="" coords="969,22,1119,62"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="922,39,956,39,956,45,922,45"/>
+</map>

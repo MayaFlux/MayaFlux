@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::CompositeGeometryProcessor::CompositeGeometryProcessor" name="MayaFlux::Buffers::CompositeGeometryProcessor::CompositeGeometryProcessor">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,41,233,96"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VKBufferProcessor_aa40f05490bbc83ae7def6e05fdfcef9b.html#aa40f05490bbc83ae7def6e05fdfcef9b" title=" " alt="" coords="281,41,488,96"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="234,66,268,66,268,71,234,71"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_a0c7a59c0847791ed0915dcd64e8df783.html#a0c7a59c0847791ed0915dcd64e8df783" title="Query for a backend service." alt="" coords="553,5,720,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="488,51,539,44,540,49,489,57"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aa28c6f5592e5893508bafb62aefcc496.html#aa28c6f5592e5893508bafb62aefcc496" title="Get the global registry instance." alt="" coords="536,85,737,125"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="489,81,523,86,522,91,488,86"/>
+</map>

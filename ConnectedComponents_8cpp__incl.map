@@ -1,0 +1,25 @@
+<map id="ConnectedComponents.cpp" name="ConnectedComponents.cpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="268,5,468,31"/>
+<area shape="rect" id="Node000002" href="$ConnectedComponents_8hpp.html" title="Connected component labelling on normalised float masks." alt="" coords="267,79,469,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="371,31,371,65,365,65,365,31"/>
+<area shape="rect" id="Node000003" href="$Features_8hpp.html" title=" " alt="" coords="315,152,421,177"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="371,104,371,138,365,138,365,104"/>
+<area shape="rect" id="Node000004" href="$Bounds_8hpp.html" title=" " alt="" coords="275,225,461,265"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="371,178,371,212,365,212,365,178"/>
+<area shape="rect" id="Node000005" href="$HitTest_8hpp.html" title=" " alt="" coords="275,313,461,353"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="371,266,371,299,365,299,365,266"/>
+<area shape="rect" id="Node000006" href="$SpatialIndex_8hpp.html" title=" " alt="" coords="208,409,339,434"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="349,356,298,401,295,397,345,352"/>
+<area shape="rect" id="Node000011" href="$ViewTransform_8hpp.html" title=" " alt="" coords="363,401,562,441"/>
+<area shape="poly" id="edge10_Node000005_Node000011" title=" " alt="" coords="391,352,433,390,430,394,387,356"/>
+<area shape="rect" id="Node000007" href="$TendencyFactories_8hpp.html" title=" " alt="" coords="5,489,208,529"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="252,437,157,485,154,481,250,432"/>
+<area shape="rect" id="Node000010" title=" " alt="" coords="233,497,325,522"/>
+<area shape="poly" id="edge9_Node000006_Node000010" title=" " alt="" coords="277,434,280,483,274,483,271,434"/>
+<area shape="rect" id="Node000008" href="$Tendency_8hpp.html" title=" " alt="" coords="52,577,161,603"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="109,530,109,563,104,563,104,530"/>
+<area shape="rect" id="Node000009" title=" " alt="" coords="55,651,159,676"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="109,603,109,637,104,637,104,603"/>
+<area shape="rect" id="Node000012" title=" " alt="" coords="354,497,571,522"/>
+<area shape="poly" id="edge11_Node000011_Node000012" title=" " alt="" coords="465,442,465,483,460,483,460,442"/>
+</map>

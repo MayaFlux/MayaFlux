@@ -1,0 +1,5 @@
+<map id="MayaFlux::apply_gain_channels" name="MayaFlux::apply_gain_channels">
+<area shape="rect" id="Node000001" title="Apply gain to multi&#45;channel data (in&#45;place)" alt="" coords="212,5,377,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_a3d21cceb0140e9ece08283ded3f36062.html#a3d21cceb0140e9ece08283ded3f36062" title="Normalize multi&#45;channel data relative to global peak (in&#45;place)" alt="" coords="5,5,164,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="199,28,164,28,164,23,199,23"/>
+</map>

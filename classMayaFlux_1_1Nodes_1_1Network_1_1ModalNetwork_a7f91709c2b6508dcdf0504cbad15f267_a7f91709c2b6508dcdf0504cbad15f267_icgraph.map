@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Network::ModalNetwork::generate_exciter_sample" name="MayaFlux::Nodes::Network::ModalNetwork::generate_exciter_sample">
+<area shape="rect" id="Node000001" title="Generate exciter signal for current sample." alt="" coords="280,5,479,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ModalNetwork_a0a7a7f26a40306a856e5be65c610f1a7.html#a0a7a7f26a40306a856e5be65c610f1a7" title="Process the network for the given number of samples." alt="" coords="5,13,232,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="266,35,232,35,232,30,266,30"/>
+</map>

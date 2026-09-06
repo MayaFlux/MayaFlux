@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Network::TopologyOperator::initialize" name="MayaFlux::Nodes::Network::TopologyOperator::initialize">
+<area shape="rect" id="Node000001" title="Initialize a single topology with single set of vertices." alt="" coords="5,13,215,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1TopologyOperator_a2a2c664e62a3738bba5b36839abf9ba8.html#a2a2c664e62a3738bba5b36839abf9ba8" title="Add a single topology with full per&#45;vertex control." alt="" coords="263,5,461,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="215,30,249,30,249,35,215,35"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::VKBuffer::get_memory_properties" name="MayaFlux::Buffers::VKBuffer::get_memory_properties">
+<area shape="rect" id="Node000001" title="Get appropriate VkMemoryPropertyFlags for allocation based on Usage." alt="" coords="5,5,176,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_aeed198b7008219af3eea770413f392ba.html#aeed198b7008219af3eea770413f392ba" title="Whether this VKBuffer should be host&#45;visible." alt="" coords="224,13,407,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="177,30,210,30,210,35,177,35"/>
+</map>

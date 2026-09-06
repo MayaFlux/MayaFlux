@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::WindowAccessProcessor" name="MayaFlux::Kakshya::WindowAccessProcessor">
+<area shape="rect" id="Node000001" title="Default DataProcessor for WindowContainer." alt="" coords="5,213,223,548"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1DataProcessor.html" title="Interface for processing data within SignalSourceContainer objects." alt="" coords="39,5,189,165"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="117,179,117,213,111,213,111,179"/>
+</map>

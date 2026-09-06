@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::VKBufferProcessor::initialize_buffer_service" name="MayaFlux::Buffers::VKBufferProcessor::initialize_buffer_service">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,41,212,96"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_a0c7a59c0847791ed0915dcd64e8df783.html#a0c7a59c0847791ed0915dcd64e8df783" title="Query for a backend service." alt="" coords="277,5,444,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="212,51,263,44,264,49,213,57"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aa28c6f5592e5893508bafb62aefcc496.html#aa28c6f5592e5893508bafb62aefcc496" title="Get the global registry instance." alt="" coords="260,85,461,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="213,81,247,86,246,91,212,86"/>
+</map>

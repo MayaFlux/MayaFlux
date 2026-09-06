@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Network::MeshNetwork" name="MayaFlux::Nodes::Network::MeshNetwork">
+<area shape="rect" id="Node000001" title="NodeNetwork subclass whose nodes are named, hierarchically transformable mesh slots." alt="" coords="5,813,231,1193"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1NodeNetwork.html" title="Abstract base class for structured collections of nodes with defined relationships." alt="" coords="19,5,217,765"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="121,779,121,813,115,813,115,779"/>
+</map>

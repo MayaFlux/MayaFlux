@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::BufferDownloadProcessor::download_host_visible" name="MayaFlux::Buffers::BufferDownloadProcessor::download_host_visible">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,41,195,96"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Buffers_abfc2b0ee2aaa09871e8b027207bf8396.html#abfc2b0ee2aaa09871e8b027207bf8396" title="Download data from a host&#45;visible buffer." alt="" coords="243,49,413,89"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="195,66,229,66,229,71,195,71"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_a0c7a59c0847791ed0915dcd64e8df783.html#a0c7a59c0847791ed0915dcd64e8df783" title="Query for a backend service." alt="" coords="479,5,645,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="413,53,465,45,465,50,414,58"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aa28c6f5592e5893508bafb62aefcc496.html#aa28c6f5592e5893508bafb62aefcc496" title="Get the global registry instance." alt="" coords="461,85,663,125"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="414,79,448,84,447,90,413,84"/>
+</map>

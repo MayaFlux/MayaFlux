@@ -1,0 +1,13 @@
+<map id="MayaFlux::Buffers::RelaxationStepProcessor::on_after_execute" name="MayaFlux::Buffers::RelaxationStepProcessor::on_after_execute">
+<area shape="rect" id="Node000001" title="Swap front/back generation index and, if requested, snapshot the newly&#45;front state buffer via a direc..." alt="" coords="5,52,189,107"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Buffers_ac52fcd2008aaa96c0cd0d4b638671e64.html#ac52fcd2008aaa96c0cd0d4b638671e64" title="Download a raw back_buffers slot to host memory." alt="" coords="237,59,405,99"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="190,77,224,77,224,82,190,82"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Buffers_a64c6abe8842e398d178e4275a4d4b404.html#a64c6abe8842e398d178e4275a4d4b404" title="Create staging buffer for transfers." alt="" coords="453,59,616,99"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="406,77,440,77,440,82,406,82"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_a0c7a59c0847791ed0915dcd64e8df783.html#a0c7a59c0847791ed0915dcd64e8df783" title="Query for a backend service." alt="" coords="681,5,848,60"/>
+<area shape="poly" id="edge5_Node000002_Node000004" title=" " alt="" coords="393,57,453,45,564,34,667,30,667,35,564,39,454,50,394,62"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aa28c6f5592e5893508bafb62aefcc496.html#aa28c6f5592e5893508bafb62aefcc496" title="Get the global registry instance." alt="" coords="664,95,865,135"/>
+<area shape="poly" id="edge6_Node000002_Node000005" title=" " alt="" coords="392,97,454,109,554,116,650,117,650,123,554,122,453,114,391,102"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="616,60,668,50,669,55,617,65"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="617,89,651,95,650,100,616,95"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::OrganizedRegion::contains_position" name="MayaFlux::Kakshya::OrganizedRegion::contains_position">
+<area shape="rect" id="Node000001" title="Check if position is within any segment." alt="" coords="5,5,201,60"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kakshya_1_1RegionSegment_a43d98312278c3289325fe777bb008747.html#a43d98312278c3289325fe777bb008747" title="Check if a position is within this segment." alt="" coords="249,5,437,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="202,30,236,30,236,35,202,35"/>
+</map>

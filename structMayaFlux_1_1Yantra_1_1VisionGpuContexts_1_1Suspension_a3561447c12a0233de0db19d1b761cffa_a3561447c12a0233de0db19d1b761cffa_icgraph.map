@@ -1,0 +1,5 @@
+<map id="MayaFlux::Yantra::VisionGpuContexts::Suspension::is_active" name="MayaFlux::Yantra::VisionGpuContexts::Suspension::is_active">
+<area shape="rect" id="Node000001" title=" " alt="" coords="236,5,424,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1VisionGpuExecutor_afdad8a5a64522f246a58a7f585bd34c6.html#afdad8a5a64522f246a58a7f585bd34c6" title="Execute a VisionSequence on the GPU through an explicit context set." alt="" coords="5,13,188,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="222,35,188,35,188,30,222,30"/>
+</map>

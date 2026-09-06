@@ -1,0 +1,26 @@
+<map id="MayaFlux::Buffers::VolumeGridBuffer::get_cell_count" name="MayaFlux::Buffers::VolumeGridBuffer::get_cell_count">
+<area shape="rect" id="Node000001" title="Total cell count." alt="" coords="824,275,991,329"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VolumeGridBuffer_aca30ddb3fe275b513308b2bfeb98d98c.html#aca30ddb3fe275b513308b2bfeb98d98c" title="Allocate one field&#39;s slots and register it." alt="" coords="544,170,776,210"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="852,270,775,228,733,213,735,208,777,224,854,265"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Buffers_1_1VolumeGridBuffer_aeb3c956e2f1d7c0e6cfc613e056f4b8f.html#aeb3c956e2f1d7c0e6cfc613e056f4b8f" title="Byte size of one slot of the named field, or 0 if undeclared." alt="" coords="577,239,743,293"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="810,291,743,281,744,275,811,285"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Buffers_1_1VolumeGridBuffer_aa60ed3c879142afdc9251878925ddfe8.html#aa60ed3c879142afdc9251878925ddfe8" title="Copy the current read slot of a field to host memory." alt="" coords="555,318,765,358"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="811,319,765,325,765,320,810,313"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Buffers_1_1VolumeGridBuffer_ae2929af740ac4ec6b8e076844ac64b2c.html#ae2929af740ac4ec6b8e076844ac64b2c" title="Write initial values into a field from raw host memory." alt="" coords="557,382,763,422"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="848,339,777,372,742,384,741,379,775,368,846,334"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VolumeGridBuffer_aeb75a632f17e60f509b754c2dd8909fb.html#aeb75a632f17e60f509b754c2dd8909fb" title="Populate m_fields from declarations." alt="" coords="287,5,484,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="623,163,565,118,495,74,471,62,473,58,497,69,568,114,627,159"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1VolumeGridBuffer_ab78686513eac73eb5e587c26ac7f810c.html#ab78686513eac73eb5e587c26ac7f810c" title="Declare a double&#45;buffered scalar field." alt="" coords="289,84,482,139"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="576,169,481,141,482,136,577,164"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1VolumeGridBuffer_ae1d494595397c125e957b6cc3dffb694.html#ae1d494595397c125e957b6cc3dffb694" title="Declare a single&#45;slot scalar field." alt="" coords="289,163,482,217"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="530,193,482,193,482,187,530,187"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1VolumeGridBuffer_ab1fe4df88429e1ec83064176a1bb95eb.html#ab1fe4df88429e1ec83064176a1bb95eb" title="Declare a double&#45;buffered vector field." alt="" coords="289,241,482,296"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="577,216,482,244,481,239,576,211"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1VolumeGridBuffer_a7b7e1f7b68aaab5ffeedac2bd328f611.html#a7b7e1f7b68aaab5ffeedac2bd328f611" title="Construct from a runtime&#45;built field list." alt="" coords="5,5,227,60"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="273,35,227,35,227,30,273,30"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Buffers_1_1VolumeGridBuffer_a773ec1e7a228ad23abc879801b7a283b.html#a773ec1e7a228ad23abc879801b7a283b" title="Add sampled values into a scalar field." alt="" coords="275,321,496,361"/>
+<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="541,342,496,342,496,337,541,336"/>
+<area shape="poly" id="edge11_Node000011_Node000010" title=" " alt="" coords="556,382,475,363,476,358,557,376"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Buffers_1_1VolumeGridBuffer_a63ecfa245dd0267774d87f711c1e50a0.html#a63ecfa245dd0267774d87f711c1e50a0" title="Write initial values into a scalar field from a Kinesis field." alt="" coords="297,385,473,425"/>
+<area shape="poly" id="edge12_Node000011_Node000012" title=" " alt="" coords="543,406,474,406,474,401,543,400"/>
+</map>

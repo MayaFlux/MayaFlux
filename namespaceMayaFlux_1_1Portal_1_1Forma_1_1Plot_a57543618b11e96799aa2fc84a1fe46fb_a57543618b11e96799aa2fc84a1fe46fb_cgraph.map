@@ -1,0 +1,8 @@
+<map id="MayaFlux::Portal::Forma::Plot::apply_auto_scale" name="MayaFlux::Portal::Forma::Plot::apply_auto_scale">
+<area shape="rect" id="Node000001" title="Apply auto&#45;scaling to an AxisRange from a set of series." alt="" coords="5,35,187,75"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Plot_a33d7c625b8a94ba599dd685f3c07e331.html#a33d7c625b8a94ba599dd685f3c07e331" title="Compute [min, max] over a scalar series." alt="" coords="235,5,416,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="187,40,221,36,221,41,187,46"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Plot_a45fd3bf9172041f96205cf19761e086b.html#a45fd3bf9172041f96205cf19761e086b" title="Begin a Series chain." alt="" coords="464,35,645,75"/>
+<area shape="poly" id="edge3_Node000001_Node000003" title=" " alt="" coords="187,54,235,55,416,55,450,54,450,60,416,60,235,60,187,59"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="417,34,451,39,450,44,416,40"/>
+</map>

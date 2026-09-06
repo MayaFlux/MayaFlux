@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nexus::Tapestry::create_expanse" name="MayaFlux::Nexus::Tapestry::create_expanse">
+<area shape="rect" id="Node000001" title="Create and register a named Expanse." alt="" coords="284,5,483,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nexus_1_1StateDecoder_ab8adc484d13d63fc196d40e45179e27d.html#ab8adc484d13d63fc196d40e45179e27d" title="Reconstruct all Fabrics in tapestry from base_dir." alt="" coords="5,5,236,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="270,28,236,28,236,23,270,23"/>
+</map>

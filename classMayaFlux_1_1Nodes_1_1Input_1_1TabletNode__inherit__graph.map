@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::Input::TabletNode" name="MayaFlux::Nodes::Input::TabletNode">
+<area shape="rect" id="Node000001" title="InputNode projecting one slot of a tablet frame." alt="" coords="5,1431,227,1971"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Input_1_1InputNode.html" title="Abstract base class for nodes that receive external input." alt="" coords="32,803,200,1383"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="119,1396,119,1430,113,1430,113,1396"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Node.html" title="Base interface for all computational processing nodes." alt="" coords="17,5,215,755"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="119,768,119,802,113,802,113,768"/>
+</map>

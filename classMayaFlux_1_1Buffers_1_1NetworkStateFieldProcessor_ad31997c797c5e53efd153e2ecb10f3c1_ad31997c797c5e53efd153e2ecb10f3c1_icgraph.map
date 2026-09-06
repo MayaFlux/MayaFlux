@@ -1,0 +1,11 @@
+<map id="MayaFlux::Buffers::NetworkStateFieldProcessor::guard_and_resync" name="MayaFlux::Buffers::NetworkStateFieldProcessor::guard_and_resync">
+<area shape="rect" id="Node000001" title="Base on_before_execute guard, then a revision&#45;gated tuning reload." alt="" coords="256,124,461,179"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1ClaimProcessor_ad3dd5f54dc3dcef339adab8b4c1518ca.html#ad3dd5f54dc3dcef339adab8b4c1518ca" title="Re&#45;sync capture_growth from particle_op when its revision changes." alt="" coords="9,5,205,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="296,120,207,74,181,63,183,58,209,69,299,115"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1ClaimSwallowProcessor_adfba67ca87b49bc544158e22715547dd.html#adfba67ca87b49bc544158e22715547dd" title="Called before each process callback." alt="" coords="18,84,195,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="242,136,195,128,196,123,243,130"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1PopulationSpawnProcessor_a0527488433e16d409914f906ada2854d.html#a0527488433e16d409914f906ada2854d" title="Reject buffers that are not the validated NetworkGeometryBuffer." alt="" coords="8,163,205,217"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="243,172,206,177,205,172,242,166"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1HashDensityColorProcessor_ad046ea3efa9d2eb1aeb20c4dc0d9a8bb.html#ad046ea3efa9d2eb1aeb20c4dc0d9a8bb" title="Called before each process callback." alt="" coords="5,241,208,296"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="297,187,209,231,180,244,178,239,207,226,294,183"/>
+</map>
