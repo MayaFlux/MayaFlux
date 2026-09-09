@@ -5,6 +5,7 @@
 namespace MayaFlux::Nodes::Network {
 class NodeNetwork;
 class ParticleNetwork;
+class GraphicsOperator;
 } // namespace MayaFlux::Nodes
 
 namespace MayaFlux::Buffers {
@@ -134,6 +135,27 @@ private:
      * @param bytes   Required capacity.
      */
     void ensure_staging(NetworkBinding& binding, size_t bytes);
+
+    /**
+     * @brief Upload only the vertex sub-ranges a multi-group primary operator
+     *        reports as dirty, instead of rebuilding the whole buffer.
+     * @return True when every dirty range was uploaded and the operator was
+     *         marked clean, so the caller skips its full-buffer path. False
+     *         when incremental upload does not apply (operator does not
+     *         support it, aggregate size changed since the last full upload,
+     *         a range fell outside the buffer) and the caller must fall back.
+     *
+     * An empty dirty-range list still returns true, skipping the upload
+     * entirely, so the caller must not invoke this while a downstream pass
+     * rewrites those vertex bytes in place each cycle.
+     */
+    bool try_incremental_upload(
+        Nodes::Network::GraphicsOperator* primary_op,
+        uint32_t primary_stride_bytes,
+        NetworkBinding& binding,
+        const std::shared_ptr<VKBuffer>& vk_buffer,
+        size_t expected_total_bytes,
+        const std::string& name);
 };
 
 } // namespace MayaFlux::Buffers

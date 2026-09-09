@@ -124,6 +124,20 @@ void NetworkGeometryProcessor::processing_function(const std::shared_ptr<Buffer>
         const bool has_chain = chain && !chain->empty();
 
         if (!has_chain) {
+            auto* primary_op = dynamic_cast<Nodes::Network::GraphicsOperator*>(
+                binding.network->get_operator());
+
+            if (primary_op && primary_op->supports_incremental_upload()) {
+                const auto layout = primary_op->get_vertex_layout();
+                const size_t total = static_cast<size_t>(primary_op->get_vertex_count())
+                    * layout.stride_bytes;
+                if (total > 0
+                    && try_incremental_upload(primary_op, layout.stride_bytes,
+                        binding, vk_buffer, total, name)) {
+                    continue;
+                }
+            }
+
             auto gpu_data = extract_network_gpu_data(binding.network, name);
             if (gpu_data.vertex_data.empty() || gpu_data.vertex_count == 0) {
                 if (vk_buffer->is_host_visible())
@@ -132,6 +146,7 @@ void NetworkGeometryProcessor::processing_function(const std::shared_ptr<Buffer>
             }
 
             size_t total = gpu_data.vertex_data.size();
+
             if (total > vk_buffer->get_size_bytes()) {
                 vk_buffer->resize(static_cast<size_t>(static_cast<float>(total) * 1.5F), false);
             }
@@ -141,6 +156,8 @@ void NetworkGeometryProcessor::processing_function(const std::shared_ptr<Buffer>
 
             if (gpu_data.layout)
                 vk_buffer->set_vertex_layout(*gpu_data.layout);
+
+            binding.last_total_bytes = total;
 
             MF_RT_TRACE(Journal::Component::Buffers, Journal::Context::BufferProcessing,
                 "Uploaded {} vertices from network '{}' ({} bytes)",
@@ -183,9 +200,6 @@ void NetworkGeometryProcessor::processing_function(const std::shared_ptr<Buffer>
             continue;
         }
 
-        auto* primary_op = dynamic_cast<Nodes::Network::GraphicsOperator*>(
-            binding.network->get_operator());
-
         bool chain_gfx_dirty = false;
         bool needs_full_restore = false;
         for (const auto& op : chain->operators()) {
@@ -197,35 +211,11 @@ void NetworkGeometryProcessor::processing_function(const std::shared_ptr<Buffer>
                 chain_gfx_dirty = true;
         }
 
-        if (primary_op && primary_op->supports_incremental_upload()
-            && !needs_full_restore
-            && total_bytes == binding.last_total_bytes
-            && !chain_gfx_dirty && primary.layout.has_value()) {
-
-            const auto ranges = primary_op->dirty_vertex_ranges();
-            const uint32_t stride = primary.layout->stride_bytes;
-            bool applied = stride > 0;
-
-            for (const auto& r : ranges) {
-                const auto pack = primary_op->get_vertex_data_for_collection(r.group_index);
-                const size_t offset = static_cast<size_t>(r.vertex_offset) * stride;
-                const size_t length = static_cast<size_t>(r.vertex_count) * stride;
-                if (length == 0)
-                    continue;
-                if (pack.size() < length || offset + length > vk_buffer->get_size_bytes()) {
-                    applied = false;
-                    break;
-                }
-                ensure_staging(binding, length);
-                upload_to_gpu(pack.data(), length, vk_buffer, binding.staging_buffer, offset);
-            }
-
-            if (applied) {
-                primary_op->mark_vertex_data_clean();
-                MF_RT_TRACE(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-                    "Network '{}': incremental upload, {} dirty range(s)", name, ranges.size());
-                continue;
-            }
+        if (!needs_full_restore && !chain_gfx_dirty && primary.layout.has_value()
+            && try_incremental_upload(
+                dynamic_cast<Nodes::Network::GraphicsOperator*>(binding.network->get_operator()),
+                primary.layout->stride_bytes, binding, vk_buffer, total_bytes, name)) {
+            continue;
         }
 
         if (total_bytes > vk_buffer->get_size_bytes()) {
@@ -289,6 +279,45 @@ void NetworkGeometryProcessor::ensure_staging(NetworkBinding& binding, size_t by
 
     MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
         "NetworkGeometryProcessor: staging buffer grown to {} bytes", grown);
+}
+
+bool NetworkGeometryProcessor::try_incremental_upload(
+    Nodes::Network::GraphicsOperator* primary_op,
+    uint32_t primary_stride_bytes,
+    NetworkBinding& binding,
+    const std::shared_ptr<VKBuffer>& vk_buffer,
+    size_t expected_total_bytes,
+    const std::string& name)
+{
+    if (!primary_op || !primary_op->supports_incremental_upload()
+        || primary_stride_bytes == 0
+        || expected_total_bytes != binding.last_total_bytes) {
+        return false;
+    }
+
+    const auto ranges = primary_op->dirty_vertex_ranges();
+
+    for (const auto& r : ranges) {
+        const auto pack = primary_op->get_vertex_data_for_collection(r.group_index);
+        const size_t offset = static_cast<size_t>(r.vertex_offset) * primary_stride_bytes;
+        const size_t length = static_cast<size_t>(r.vertex_count) * primary_stride_bytes;
+
+        if (length == 0)
+            continue;
+
+        if (pack.size() < length || offset + length > vk_buffer->get_size_bytes())
+            return false;
+
+        ensure_staging(binding, length);
+        upload_to_gpu(pack.data(), length, vk_buffer, binding.staging_buffer, offset);
+    }
+
+    primary_op->mark_vertex_data_clean();
+
+    MF_RT_TRACE(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+        "Network '{}': incremental upload, {} dirty range(s)", name, ranges.size());
+
+    return true;
 }
 
 } // namespace MayaFlux::Buffers
