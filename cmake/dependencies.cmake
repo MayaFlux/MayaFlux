@@ -99,6 +99,19 @@ target_include_directories(tinyexr INTERFACE
 )
 target_link_libraries(tinyexr INTERFACE miniz)
 
+add_library(tinyvdb STATIC ${CMAKE_SOURCE_DIR}/third_party/tinyvdb/tinyvdb_io.c)
+set_target_properties(tinyvdb PROPERTIES
+    LINKER_LANGUAGE C
+    C_STANDARD 11
+    POSITION_INDEPENDENT_CODE ON
+)
+target_compile_definitions(tinyvdb PRIVATE TVDB_NO_MMAP)
+target_include_directories(tinyvdb PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/third_party/tinyvdb>
+    $<INSTALL_INTERFACE:include/MayaFlux/thirdparty/tinyvdb>
+)
+target_link_libraries(tinyvdb PUBLIC miniz)
+
 add_library(magic_enum INTERFACE)
 target_include_directories(magic_enum INTERFACE
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/third_party/magic_enum>

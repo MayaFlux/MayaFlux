@@ -144,6 +144,7 @@ if(WIN32)
         assimp::assimp
         utf8proc::utf8proc
         tinyexr
+        tinyvdb
         winmm
         avrt
         ole32
@@ -195,5 +196,6 @@ else()
         Freetype::Freetype
         PkgConfig::UTF8PROC
         tinyexr
+        tinyvdb
     )
 endif()

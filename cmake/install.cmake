@@ -97,9 +97,34 @@ install(DIRECTORY ${CMAKE_SOURCE_DIR}/third_party/magic_enum/
     FILES_MATCHING PATTERN "*.hpp"
 )
 
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/third_party/tinyvdb/
+    DESTINATION include/MayaFlux/thirdparty/tinyvdb
+    FILES_MATCHING PATTERN "*.h"
+)
+
+install(FILES
+    ${CMAKE_SOURCE_DIR}/third_party/tinyvdb/NOTICE
+    DESTINATION share/MayaFlux/licenses/tinyvdb
+)
+
+install(TARGETS tinyvdb
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
+
 install(TARGETS miniz
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
+
+install(FILES
+    ${CMAKE_SOURCE_DIR}/third_party/tinyvdb/LICENSE
+    DESTINATION share/MayaFlux/licenses/tinyvdb
+)
+
+install(FILES ${CMAKE_SOURCE_DIR}/third_party/tinyexr/LICENSE
+    DESTINATION share/MayaFlux/licenses/tinyexr)
+
+install(FILES ${CMAKE_SOURCE_DIR}/third_party/magic_enum/LICENSE
+    DESTINATION share/MayaFlux/licenses/magic_enum)
 
 # ============================================================================
 # CMake Config Files
