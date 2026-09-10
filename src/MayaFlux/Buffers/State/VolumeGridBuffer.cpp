@@ -57,7 +57,10 @@ VolumeGridBuffer::~VolumeGridBuffer()
 }
 
 bool VolumeGridBuffer::allocate_field(
-    const std::string& name, size_t stride_bytes, bool double_buffered)
+    const std::string& name,
+    size_t stride_bytes,
+    bool double_buffered,
+    Kinesis::LatticeSemantics semantics)
 {
     if (name.empty()) {
         MF_ERROR(Journal::Component::Buffers, Journal::Context::Init,
@@ -106,6 +109,7 @@ bool VolumeGridBuffer::allocate_field(
         .slot_a = static_cast<uint32_t>(resources.back_buffers.size()),
         .slot_b = 0,
         .read_is_a = true,
+        .semantics = semantics,
     };
 
     for (uint32_t i = 0; i < slot_count; ++i) {
@@ -131,8 +135,9 @@ bool VolumeGridBuffer::allocate_field(
     m_field_order.push_back(name);
 
     MF_DEBUG(Journal::Component::Buffers, Journal::Context::Init,
-        "VolumeGridBuffer: field '{}', stride {}, {} slot(s), {} bytes",
-        name, stride_bytes, slot_count, field_bytes * slot_count);
+        "VolumeGridBuffer: field '{}', stride {}, {} slot(s), {} bytes, class {}",
+        name, stride_bytes, slot_count, field_bytes * slot_count,
+        Reflect::enum_to_string(semantics.value_class));
 
     return true;
 }
@@ -140,7 +145,7 @@ bool VolumeGridBuffer::allocate_field(
 void VolumeGridBuffer::allocate_fields(const std::vector<FieldDecl>& decls)
 {
     for (const auto& decl : decls) {
-        allocate_field(decl.name, decl.stride_bytes, decl.double_buffered);
+        allocate_field(decl.name, decl.stride_bytes, decl.double_buffered, decl.semantics);
     }
 
     if (m_fields.empty()) {
@@ -157,9 +162,9 @@ void VolumeGridBuffer::allocate_fields(const std::vector<FieldDecl>& decls)
         m_fields.size(), get_buffer_resources().back_buffers.size());
 }
 
-ScalarRef VolumeGridBuffer::declare_scalar(std::string name)
+ScalarRef VolumeGridBuffer::declare_scalar(std::string name, Kinesis::LatticeSemantics semantics)
 {
-    if (!allocate_field(name, sizeof(float), true)) {
+    if (!allocate_field(name, sizeof(float), true, semantics)) {
         return {};
     }
 
@@ -169,9 +174,9 @@ ScalarRef VolumeGridBuffer::declare_scalar(std::string name)
     };
 }
 
-ScalarRef VolumeGridBuffer::declare_scratch(std::string name)
+ScalarRef VolumeGridBuffer::declare_scratch(std::string name, Kinesis::LatticeSemantics semantics)
 {
-    if (!allocate_field(name, sizeof(float), false)) {
+    if (!allocate_field(name, sizeof(float), false, semantics)) {
         return {};
     }
 
@@ -181,9 +186,9 @@ ScalarRef VolumeGridBuffer::declare_scratch(std::string name)
     };
 }
 
-VectorRef VolumeGridBuffer::declare_vector(std::string name)
+VectorRef VolumeGridBuffer::declare_vector(std::string name, Kinesis::LatticeSemantics semantics)
 {
-    if (!allocate_field(name, sizeof(glm::vec4), true)) {
+    if (!allocate_field(name, sizeof(glm::vec4), true, semantics)) {
         return {};
     }
 
@@ -411,6 +416,24 @@ size_t VolumeGridBuffer::get_field_bytes(const std::string& name) const
         return 0;
     }
     return static_cast<size_t>(get_cell_count()) * it->second.stride_bytes;
+}
+
+size_t VolumeGridBuffer::get_field_stride(const std::string& name) const
+{
+    auto it = m_fields.find(name);
+    if (it == m_fields.end()) {
+        return 0;
+    }
+    return it->second.stride_bytes;
+}
+
+Kinesis::LatticeSemantics VolumeGridBuffer::get_field_semantics(const std::string& name) const
+{
+    auto it = m_fields.find(name);
+    if (it == m_fields.end()) {
+        return {};
+    }
+    return it->second.semantics;
 }
 
 std::vector<std::string> VolumeGridBuffer::get_field_names() const
