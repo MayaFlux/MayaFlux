@@ -9,8 +9,7 @@ extern "C" {
 #include "tinyvdb_sparse_tree.h"
 }
 
-#include <algorithm>
-#include <cstring>
+#include <deque>
 
 namespace MayaFlux::IO {
 
@@ -218,6 +217,92 @@ namespace {
         return alloc;
     }
 
+    const char* class_token(Kinesis::LatticeValueClass c)
+    {
+        switch (c) {
+        case Kinesis::LatticeValueClass::LevelSet:
+            return "level set";
+        case Kinesis::LatticeValueClass::FogVolume:
+            return "fog volume";
+        case Kinesis::LatticeValueClass::Staggered:
+            return "staggered";
+        default:
+            return "unknown";
+        }
+    }
+
+    const char* variance_token(Kinesis::VectorVariance v)
+    {
+        switch (v) {
+        case Kinesis::VectorVariance::Covariant:
+            return "covariant";
+        case Kinesis::VectorVariance::CovariantNormalize:
+            return "covariant normalize";
+        case Kinesis::VectorVariance::ContravariantRelative:
+            return "contravariant relative";
+        case Kinesis::VectorVariance::ContravariantAbsolute:
+            return "contravariant absolute";
+        default:
+            return "invariant";
+        }
+    }
+
+    /**
+     * @brief Backing store for metadata strings handed to tinyvdb.
+     *
+     * tvdb_meta_entry_t holds bare char pointers and tvdb_grid_destroy_owned
+     * frees whatever the grid owns. Keeping the strings here and detaching
+     * the entry array before destroy avoids handing tinyvdb pointers it did
+     * not allocate.
+     */
+    struct MetaStore {
+        std::deque<std::string> strings;
+        std::deque<std::vector<tvdb_meta_entry_t>> entries;
+
+        void attach(tvdb_grid_t& grid, const Kakshya::VolumeField& field)
+        {
+            auto& list = entries.emplace_back();
+
+            auto add = [&](const char* key, const char* value) {
+                std::string& k = strings.emplace_back(key);
+                std::string& t = strings.emplace_back("string");
+                std::string& v = strings.emplace_back(value);
+
+                tvdb_meta_entry_t entry;
+                std::memset(&entry, 0, sizeof(entry));
+                entry.name = k.data();
+                entry.type_name = t.data();
+                entry.value.type = TVDB_VALUE_STRING;
+                entry.value.u.s.str = v.data();
+                entry.value.u.s.len = v.size();
+                list.push_back(entry);
+            };
+
+            add("name", field.name.c_str());
+
+            add("class", class_token(field.semantics.value_class));
+            if (field.is_vector()) {
+                add("vector_type", variance_token(field.semantics.variance));
+            }
+
+            grid.metadata.entries = list.data();
+            grid.metadata.count = list.size();
+            grid.metadata.capacity = list.size();
+            grid.metadata.alloc = nullptr;
+        }
+
+        /**
+         * @brief Detach borrowed entries so tvdb_grid_destroy_owned does not
+         *        free memory this store owns.
+         */
+        static void detach(tvdb_grid_t& grid)
+        {
+            grid.metadata.entries = nullptr;
+            grid.metadata.count = 0;
+            grid.metadata.capacity = 0;
+        }
+    };
+
 } // namespace
 
 // ============================================================================
@@ -267,6 +352,7 @@ bool VDBWriter::write(
     std::vector<ActiveSet> actives;
     std::vector<tvdb_grid_t> built;
     std::vector<std::array<char, 32>> type_tokens;
+    MetaStore meta;
 
     actives.reserve(data.fields.size());
     built.reserve(data.fields.size());
@@ -304,12 +390,14 @@ bool VDBWriter::write(
             m_last_error = "tree build failed for field '" + field.name + "'";
             MF_ERROR(Journal::Component::IO, Journal::Context::FileIO, m_last_error);
             for (auto& g : built) {
+                MetaStore::detach(g);
                 tvdb_grid_destroy_owned(&g);
             }
             return false;
         }
 
         built.push_back(grid);
+        meta.attach(built.back(), field);
 
         MF_DEBUG(Journal::Component::IO, Journal::Context::FileIO,
             "VDBWriter: '{}' {} of {} cells active",
@@ -331,6 +419,7 @@ bool VDBWriter::write(
         compression_flags(options), 5, /*use_mmap=*/0, &err);
 
     for (auto& g : built) {
+        MetaStore::detach(g);
         tvdb_grid_destroy_owned(&g);
     }
 
