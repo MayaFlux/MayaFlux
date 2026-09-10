@@ -61,7 +61,7 @@ void TopologyOperator::add_topology(
         return;
     }
 
-    auto topology = std::make_shared<GpuSync::TopologyGeneratorNode>(mode, 1024);
+    auto topology = std::make_shared<GpuSync::TopologyGeneratorNode>(mode, true, 1024);
 
     topology->set_points(vertices);
     topology->compute_frame();
@@ -180,6 +180,27 @@ void TopologyOperator::mark_vertex_data_clean()
     for (auto& topology : m_topologies) {
         topology->mark_vertex_data_dirty(false);
     }
+}
+
+std::vector<GraphicsOperator::DirtyVertexRange> TopologyOperator::dirty_vertex_ranges() const
+{
+    std::vector<DirtyVertexRange> ranges;
+
+    uint32_t offset = 0;
+    uint32_t index = 0;
+    for (const auto& topology : m_topologies) {
+        const auto count = static_cast<uint32_t>(topology->get_vertex_count());
+        if (topology->needs_gpu_update()) {
+            ranges.push_back(DirtyVertexRange {
+                .group_index = index,
+                .vertex_offset = offset,
+                .vertex_count = count });
+        }
+        offset += count;
+        ++index;
+    }
+
+    return ranges;
 }
 
 size_t TopologyOperator::get_point_count() const

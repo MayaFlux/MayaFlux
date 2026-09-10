@@ -44,6 +44,28 @@ public:
     void mark_vertex_data_clean() override;
 
     /**
+     * @brief One DirtyVertexRange per topology whose TopologyGeneratorNode
+     *        needs a GPU update, so add_topology() or a point edit on one
+     *        graph re-uploads only that graph's expanded line vertices.
+     *
+     * Ranges are in add_topology() order, matching get_vertex_data() and
+     * build_cluster_ids(); group_index is the topology index and feeds
+     * get_vertex_data_for_collection(). Empty when no topology changed. A
+     * point edit within one graph still re-uploads that whole graph's range,
+     * since its connectivity rebuild is global; isolation here is across
+     * graphs, not within one.
+     */
+    [[nodiscard]] std::vector<DirtyVertexRange> dirty_vertex_ranges() const override;
+
+    /**
+     * @brief True: point edits, add_topology() and every proximity-parameter
+     *        change route through a TopologyGeneratorNode dirty flag, so
+     *        per-graph ranges are complete. Isolation is across graphs only;
+     *        a change inside one graph re-uploads that graph's whole range.
+     */
+    [[nodiscard]] bool supports_incremental_upload() const override { return true; }
+
+    /**
      * @brief Extract current vertex data as LineVertex array
      * @return Vector of LineVertex with current positions, colors, thicknesses
      */

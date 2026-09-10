@@ -11,7 +11,7 @@
 
 namespace MayaFlux::Buffers {
 
-void upload_host_visible(const std::shared_ptr<VKBuffer>& target, const Kakshya::DataVariant& data)
+void upload_host_visible(const std::shared_ptr<VKBuffer>& target, const Kakshya::DataVariant& data, size_t dst_offset)
 {
     Kakshya::DataAccess accessor(
         const_cast<Kakshya::DataVariant&>(data),
@@ -20,13 +20,13 @@ void upload_host_visible(const std::shared_ptr<VKBuffer>& target, const Kakshya:
 
     auto [ptr, bytes, format_hint] = accessor.gpu_buffer();
 
-    if (bytes > target->get_size_bytes()) {
+    if (dst_offset + bytes > target->get_size_bytes()) {
         error<std::runtime_error>(
             Journal::Component::Buffers,
             Journal::Context::BufferProcessing,
             std::source_location::current(),
-            "Upload data size {} exceeds buffer capacity {}",
-            bytes, target->get_size_bytes());
+            "Upload data size {} at offset {} exceeds buffer capacity {}",
+            bytes, dst_offset, target->get_size_bytes());
     }
 
     auto& target_resources = target->get_buffer_resources();
@@ -39,9 +39,9 @@ void upload_host_visible(const std::shared_ptr<VKBuffer>& target, const Kakshya:
             "Host-visible buffer has no mapped pointer");
     }
 
-    std::memcpy(mapped, ptr, bytes);
+    std::memcpy(static_cast<uint8_t*>(mapped) + dst_offset, ptr, bytes);
 
-    target->mark_dirty_range(0, bytes);
+    target->mark_dirty_range(dst_offset, bytes);
 
     auto buffer_service = Registry::BackendRegistry::instance()
                               .get_service<Registry::Service::BufferService>();
@@ -63,7 +63,7 @@ void upload_host_visible(const std::shared_ptr<VKBuffer>& target, const Kakshya:
     }
 }
 
-void upload_device_local(const std::shared_ptr<VKBuffer>& target, const std::shared_ptr<VKBuffer>& staging_buffer, const Kakshya::DataVariant& data)
+void upload_device_local(const std::shared_ptr<VKBuffer>& target, const std::shared_ptr<VKBuffer>& staging_buffer, const Kakshya::DataVariant& data, size_t dst_offset)
 {
     Kakshya::DataAccess accessor(
         const_cast<Kakshya::DataVariant&>(data),
@@ -72,13 +72,13 @@ void upload_device_local(const std::shared_ptr<VKBuffer>& target, const std::sha
 
     auto [ptr, bytes, format_hint] = accessor.gpu_buffer();
 
-    if (bytes > target->get_size_bytes()) {
+    if (dst_offset + bytes > target->get_size_bytes()) {
         error<std::runtime_error>(
             Journal::Component::Buffers,
             Journal::Context::BufferProcessing,
             std::source_location::current(),
-            "Upload data size {} exceeds buffer capacity {}",
-            bytes, target->get_size_bytes());
+            "Upload data size {} at offset {} exceeds buffer capacity {}",
+            bytes, dst_offset, target->get_size_bytes());
     }
 
     auto& staging_resources = staging_buffer->get_buffer_resources();
@@ -117,7 +117,7 @@ void upload_device_local(const std::shared_ptr<VKBuffer>& target, const std::sha
     buffer_service->copy_buffer(
         static_cast<void*>(staging_buffer->get_buffer()),
         static_cast<void*>(target->get_buffer()),
-        bytes, 0, 0);
+        bytes, 0, dst_offset);
 }
 
 void upload_back_buffer(
@@ -413,7 +413,8 @@ void upload_to_gpu(
     const void* data,
     size_t size,
     const std::shared_ptr<VKBuffer>& target,
-    const std::shared_ptr<VKBuffer>& staging)
+    const std::shared_ptr<VKBuffer>& staging,
+    size_t dst_offset)
 {
     if (!target) {
         error<std::invalid_argument>(
@@ -432,7 +433,7 @@ void upload_to_gpu(
     Kakshya::DataVariant data_variant(raw_bytes);
 
     if (target->is_host_visible()) {
-        upload_host_visible(target, data_variant);
+        upload_host_visible(target, data_variant, dst_offset);
     } else {
         std::shared_ptr<VKBuffer> staging_buf = staging;
 
@@ -440,7 +441,7 @@ void upload_to_gpu(
             staging_buf = create_staging_buffer(size);
         }
 
-        upload_device_local(target, staging_buf, data_variant);
+        upload_device_local(target, staging_buf, data_variant, dst_offset);
     }
 }
 

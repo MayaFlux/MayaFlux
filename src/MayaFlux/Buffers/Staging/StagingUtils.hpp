@@ -23,8 +23,12 @@ using TransferHandle = std::shared_ptr<void>;
  * This function handles uploading data from a Kakshya::DataVariant into a
  * host-visible VKBuffer. It maps the buffer memory, copies the data, and
  * marks the buffer as dirty for synchronization.
+ *
+ * @param dst_offset Byte offset into @p target to write at. The default 0
+ *        reproduces the whole-buffer overwrite exactly; a nonzero value
+ *        writes a sub-range and leaves the rest of the buffer untouched.
  */
-MAYAFLUX_API void upload_host_visible(const std::shared_ptr<VKBuffer>& target, const Kakshya::DataVariant& data);
+MAYAFLUX_API void upload_host_visible(const std::shared_ptr<VKBuffer>& target, const Kakshya::DataVariant& data, size_t dst_offset = 0);
 
 /**
  * @brief Upload data to a device-local buffer using a staging buffer
@@ -36,8 +40,13 @@ MAYAFLUX_API void upload_host_visible(const std::shared_ptr<VKBuffer>& target, c
  * device-local VKBuffer by utilizing a staging buffer. It copies the data
  * into the staging buffer, flushes it, and then issues a command to copy
  * from the staging buffer to the target device-local buffer.
+ *
+ * @param dst_offset Byte offset into @p target the staging copy lands at.
+ *        The default 0 reproduces the whole-buffer overwrite exactly; a
+ *        nonzero value writes a sub-range and leaves the rest untouched.
+ *        The staging buffer itself only needs to hold @p data.
  */
-MAYAFLUX_API void upload_device_local(const std::shared_ptr<VKBuffer>& target, const std::shared_ptr<VKBuffer>& staging_buffer, const Kakshya::DataVariant& data);
+MAYAFLUX_API void upload_device_local(const std::shared_ptr<VKBuffer>& target, const std::shared_ptr<VKBuffer>& staging_buffer, const Kakshya::DataVariant& data, size_t dst_offset = 0);
 
 /**
  * @brief Upload host memory into a raw back_buffers slot.
@@ -142,12 +151,17 @@ MAYAFLUX_API void download_back_buffer(
  * - Converts raw pointer → DataVariant
  * - Auto-detects if buffer is host-visible or device-local
  * - Handles staging buffer creation if needed
+ *
+ * @param dst_offset Byte offset into @p target to write at. The default 0
+ *        overwrites from the start; a nonzero value uploads a sub-range,
+ *        leaving the rest of @p target as it was.
  */
 MAYAFLUX_API void upload_to_gpu(
     const void* data,
     size_t size,
     const std::shared_ptr<VKBuffer>& target,
-    const std::shared_ptr<VKBuffer>& staging = nullptr);
+    const std::shared_ptr<VKBuffer>& staging = nullptr,
+    size_t dst_offset = 0);
 
 /**
  * @brief Upload typed data to GPU buffer

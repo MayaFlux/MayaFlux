@@ -1,7 +1,6 @@
 #pragma once
 
 #include "GeometryWriterNode.hpp"
-#include "MayaFlux/Transitive/Memory/RingBuffer.hpp"
 
 #include "MayaFlux/Kinesis/MotionCurves.hpp"
 #include "MayaFlux/Kinesis/Spatial/ProximityGraphs.hpp"
@@ -133,6 +132,16 @@ public:
      * @param points Vector of LineVertex data
      */
     void set_points(const std::vector<LineVertex>& points);
+
+    /**
+     * @brief Append several points, regenerating connections once.
+     * @param points Points to append, oldest first.
+     *
+     * add_point() regenerates the graph on every call when auto_connect is
+     * set, which for the cubic modes makes building a graph point by point
+     * cost one rebuild per point. This pays for one.
+     */
+    void add_points(std::span<const LineVertex> points);
 
     /**
      * @brief Clear all points and connections
@@ -293,7 +302,15 @@ public:
 private:
     Kinesis::ProximityMode m_mode;
     CustomConnectionFunction m_custom_func;
-    Memory::HistoryBuffer<LineVertex> m_points;
+
+    /**
+     * @brief Points, newest first: index 0 is the most recently added.
+     *
+     * Capped at m_max_points; add_point(), add_points() and set_points()
+     * drop the oldest entries past that bound.
+     */
+    std::vector<LineVertex> m_points;
+    size_t m_max_points;
     std::vector<LineVertex> m_vertices;
     std::vector<std::pair<size_t, size_t>> m_connections;
 
@@ -311,6 +328,32 @@ private:
 
     bool m_force_uniform_color {}; ///< If true, all vertices use m_line_color instead of per-vertex color
     bool m_force_uniform_thickness {}; ///< If true, all vertices use m_line_thickness instead of per-vertex thickness
+    bool m_geometry_dirty { true };
+    bool m_attributes_dirty {};
+
+    Kinesis::CurveEvaluator m_evaluator;
+
+    Eigen::MatrixXd m_positions;
+    std::vector<double> m_control_scratch;
+    std::vector<double> m_curve_primary;
+    std::vector<double> m_curve_secondary;
+
+#ifdef MAYAFLUX_PLATFORM_MACOS
+    std::vector<LineVertex> m_expand_cache;
+#endif
+
+    /** @brief Refill m_positions from m_points, in place. */
+    void refresh_positions();
+
+    /** @brief Rewrite colour and thickness over existing positions. */
+    void refresh_attributes();
+
+    /**
+     * @brief Write colour and thickness for the interpolated path.
+     * @param points Control point source.
+     * @param num_points Control point count.
+     */
+    void write_path_attributes(std::span<const LineVertex> points, size_t num_points);
 
     void build_vertex_buffer();
 
@@ -319,8 +362,6 @@ private:
         size_t num_points);
 
     void build_direct_connections(std::span<LineVertex> points, size_t num_points);
-
-    Eigen::MatrixXd points_to_eigen() const;
 };
 
 } // namespace MayaFlux::Nodes::GpuSync

@@ -51,6 +51,22 @@ public:
     {
         // Default: no-op (operator doesn't support per-point control)
     }
+
+    /**
+     * @brief Whether a downstream compute pass writes the network's vertex
+     *        buffer in place each cycle, so the geometry producer must keep
+     *        restoring the CPU-authoritative vertex data every frame.
+     *
+     * False by default. A GpuFieldOperator with bindings returns true: its
+     * VertexFieldProcessor adds a field onto the existing records (pos += f),
+     * a displacement from the uploaded geometry rather than an integrator,
+     * bounded only while the producer re-uploads the reference geometry every
+     * frame. NetworkGeometryProcessor suppresses its incremental /
+     * skip-when-clean upload path while any chain operator reports this. A
+     * later seed/render split gives the field pass its own reference and
+     * lifts the restriction.
+     */
+    [[nodiscard]] virtual bool demands_full_vertex_restore() const { return false; }
 };
 
 } // namespace MayaFlux::Nodes::Network

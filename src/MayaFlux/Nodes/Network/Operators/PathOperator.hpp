@@ -63,6 +63,24 @@ public:
     void mark_vertex_data_clean() override;
 
     /**
+     * @brief One DirtyVertexRange per path whose PathGeneratorNode needs a GPU
+     *        update, so add_control_point() on one path re-uploads only that
+     *        path's vertices.
+     *
+     * Ranges are in add_path() order, matching get_vertex_data() and
+     * build_cluster_ids(); group_index is the path index and feeds
+     * get_vertex_data_for_collection(). Empty when no path changed.
+     */
+    [[nodiscard]] std::vector<DirtyVertexRange> dirty_vertex_ranges() const override;
+
+    /**
+     * @brief True: add_control_point()/set_control_points()/clear_path() and
+     *        every interpolation-parameter change route through a
+     *        PathGeneratorNode dirty flag, so per-path ranges are complete.
+     */
+    [[nodiscard]] bool supports_incremental_upload() const override { return true; }
+
+    /**
      * @brief Extract current vertex data as LineVertex array
      * @return Vector of LineVertex with current positions, colors, thicknesses
      */

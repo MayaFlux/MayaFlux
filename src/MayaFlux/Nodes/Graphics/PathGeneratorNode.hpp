@@ -2,7 +2,6 @@
 
 #include "GeometryWriterNode.hpp"
 #include "MayaFlux/Kinesis/MotionCurves.hpp"
-#include "MayaFlux/Transitive/Memory/RingBuffer.hpp"
 
 namespace MayaFlux::Nodes::GpuSync {
 
@@ -241,7 +240,7 @@ public:
      * @brief Get maximum control point capacity
      * @return Maximum control points
      */
-    [[nodiscard]] size_t get_control_point_capacity() const { return m_control_points.capacity(); }
+    [[nodiscard]] size_t get_control_point_capacity() const { return m_max_control_points; }
 
     /**
      * @brief Get number of generated vertices
@@ -292,7 +291,15 @@ public:
 private:
     Kinesis::InterpolationMode m_mode;
     CustomPathFunction m_custom_func;
-    Memory::HistoryBuffer<LineVertex> m_control_points;
+
+    /**
+     * @brief Control points, newest first: index 0 is the most recently added.
+     *
+     * Capped at m_max_control_points; add_control_point() and
+     * set_control_points() drop the oldest entries past that bound.
+     */
+    std::vector<LineVertex> m_control_points;
+    size_t m_max_control_points;
     std::vector<LineVertex> m_vertices;
     std::vector<LineVertex> m_draw_vertices;
     std::vector<LineVertex> m_completed_draws;
@@ -301,8 +308,19 @@ private:
 
     std::vector<LineVertex> m_draw_window;
 
+    Kinesis::CurveEvaluator m_evaluator;
+
+    std::array<double, 12> m_segment_controls;
+    std::vector<double> m_curve_primary, m_curve_secondary;
+
     Eigen::Index m_samples_per_segment;
     double m_tension;
+
+    std::vector<LineVertex> m_range_cache;
+
+#ifdef MAYAFLUX_PLATFORM_MACOS
+    std::vector<LineVertex> m_expand_cache;
+#endif
 
     glm::vec3 m_current_color { 1.0F, 1.0F, 1.0F };
     float m_current_thickness { 2.0F };
@@ -311,11 +329,40 @@ private:
     bool m_force_uniform_thickness {};
     bool m_geometry_dirty { true };
     bool m_arc_length_parameterization {};
+    bool m_attributes_dirty {};
     Portal::Graphics::PrimitiveTopology m_primitive_topology { Portal::Graphics::PrimitiveTopology::LINE_STRIP };
 
     static constexpr size_t INVALID_SEGMENT { std::numeric_limits<size_t>::max() };
     size_t m_dirty_segment_start { INVALID_SEGMENT };
     size_t m_dirty_segment_end { INVALID_SEGMENT };
+
+    /** @brief Vertices emitted per four-point window. */
+    [[nodiscard]] size_t vertices_per_window() const;
+
+    /**
+     * @brief Evaluate one window and write its vertices.
+     * @param curve_verts Control point source.
+     * @param start_idx First control point of the window.
+     * @param dst Destination for vertices_per_window() vertices.
+     */
+    void write_curve_segment(
+        const std::vector<LineVertex>& curve_verts,
+        size_t start_idx,
+        LineVertex* dst);
+
+    /**
+     * @brief Write colour and thickness for one window, leaving positions intact.
+     * @param curve_verts Control point source.
+     * @param start_idx First control point of the window.
+     * @param dst Destination for vertices_per_window() vertices.
+     */
+    void write_segment_attributes(
+        const std::vector<LineVertex>& curve_verts,
+        size_t start_idx,
+        LineVertex* dst) const;
+
+    /** @brief Rewrite colour and thickness over existing geometry, no curve evaluation. */
+    void refresh_attributes();
 
     void generate_path_vertices();
     void generate_direct_path();
@@ -323,11 +370,6 @@ private:
     void generate_interpolated_path();
     void regenerate_geometry();
     void regenerate_segment_range(size_t start_ctrl_idx, size_t end_ctrl_idx);
-
-    void generate_curve_segment(
-        const std::vector<LineVertex>& curve_verts,
-        size_t start_idx,
-        std::vector<LineVertex>& output);
 
     void append_line_segment(
         const LineVertex& v0,

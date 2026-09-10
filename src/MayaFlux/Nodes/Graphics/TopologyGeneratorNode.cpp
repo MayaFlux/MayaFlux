@@ -4,21 +4,13 @@
 
 namespace MayaFlux::Nodes::GpuSync {
 
-namespace {
-    float distance_squared(const glm::vec3& a, const glm::vec3& b)
-    {
-        glm::vec3 diff = b - a;
-        return glm::dot(diff, diff);
-    }
-}
-
 TopologyGeneratorNode::TopologyGeneratorNode(
     Kinesis::ProximityMode mode,
     bool auto_connect,
     size_t max_points)
     : GeometryWriterNode(static_cast<uint32_t>(max_points * max_points))
     , m_mode(mode)
-    , m_points(max_points)
+    , m_max_points(max_points)
     , m_auto_connect(auto_connect)
 {
     const auto& stride = sizeof(LineVertex);
@@ -28,6 +20,7 @@ TopologyGeneratorNode::TopologyGeneratorNode(
     layout.vertex_count = 0;
     set_vertex_layout(layout);
 
+    m_points.reserve(max_points);
     m_vertices.reserve(max_points * max_points);
     m_connections.reserve(max_points * max_points);
 
@@ -43,7 +36,7 @@ TopologyGeneratorNode::TopologyGeneratorNode(
     : GeometryWriterNode(static_cast<uint32_t>(max_points * max_points))
     , m_mode(Kinesis::ProximityMode::CUSTOM)
     , m_custom_func(std::move(custom_func))
-    , m_points(max_points)
+    , m_max_points(max_points)
     , m_auto_connect(auto_connect)
 {
     const auto& stride = sizeof(LineVertex);
@@ -53,6 +46,7 @@ TopologyGeneratorNode::TopologyGeneratorNode(
     layout.vertex_count = 0;
     set_vertex_layout(layout);
 
+    m_points.reserve(max_points);
     m_vertices.reserve(max_points * max_points);
     m_connections.reserve(max_points * max_points);
 
@@ -60,15 +54,103 @@ TopologyGeneratorNode::TopologyGeneratorNode(
         "Created TopologyGeneratorNode with custom function");
 }
 
+void TopologyGeneratorNode::refresh_positions()
+{
+    m_positions.resize(3, static_cast<Eigen::Index>(m_points.size()));
+
+    Eigen::Index idx = 0;
+    for (const auto& point : m_points) {
+        m_positions(0, idx) = point.position.x;
+        m_positions(1, idx) = point.position.y;
+        m_positions(2, idx) = point.position.z;
+        ++idx;
+    }
+}
+
 void TopologyGeneratorNode::add_point(const LineVertex& point)
 {
-    m_points.push(point);
+    m_points.insert(m_points.begin(), point);
+    if (m_points.size() > m_max_points) {
+        m_points.pop_back();
+    }
 
     if (m_auto_connect) {
         regenerate_topology();
     }
 
+    m_geometry_dirty = true;
     m_vertex_data_dirty = true;
+}
+
+void TopologyGeneratorNode::add_points(std::span<const LineVertex> points)
+{
+    if (points.empty()) {
+        return;
+    }
+
+    for (const auto& pt : points) {
+        m_points.insert(m_points.begin(), pt);
+        if (m_points.size() > m_max_points) {
+            m_points.pop_back();
+        }
+    }
+
+    if (m_auto_connect) {
+        regenerate_topology();
+    }
+
+    m_geometry_dirty = true;
+    m_vertex_data_dirty = true;
+}
+
+void TopologyGeneratorNode::write_path_attributes(
+    std::span<const LineVertex> points,
+    size_t num_points)
+{
+    if (num_points < 2 || m_vertices.empty()) {
+        return;
+    }
+
+    const size_t num_segments = num_points - 1;
+    const size_t count = m_vertices.size() / 2 + 1;
+    const auto span = static_cast<float>(count - 1);
+
+    for (size_t i = 0; i + 1 < count; ++i) {
+        const float t0 = static_cast<float>(i) / span;
+        const float t1 = static_cast<float>(i + 1) / span;
+
+        const auto s0 = std::min<size_t>(
+            static_cast<size_t>(t0 * static_cast<float>(num_segments)), num_segments - 1);
+        const auto s1 = std::min<size_t>(
+            static_cast<size_t>(t1 * static_cast<float>(num_segments)), num_segments - 1);
+
+        LineVertex& v0 = m_vertices[i * 2];
+        LineVertex& v1 = m_vertices[i * 2 + 1];
+
+        v0.color = m_force_uniform_color ? m_line_color : points[s0].color;
+        v1.color = m_force_uniform_color ? m_line_color : points[s1].color;
+
+        v0.thickness = m_force_uniform_thickness ? m_line_thickness : points[s0].thickness;
+        v1.thickness = m_force_uniform_thickness ? m_line_thickness : points[s1].thickness;
+    }
+}
+
+void TopologyGeneratorNode::refresh_attributes()
+{
+    if (m_vertices.empty()) {
+        return;
+    }
+
+    const size_t num_points = m_points.size();
+
+    if (m_mode == Kinesis::ProximityMode::SEQUENTIAL
+        && num_points >= 2
+        && m_path_interpolation_mode != Kinesis::InterpolationMode::LINEAR) {
+        write_path_attributes(m_points, num_points);
+        return;
+    }
+
+    build_direct_connections(m_points, num_points);
 }
 
 void TopologyGeneratorNode::remove_point(size_t index)
@@ -79,19 +161,13 @@ void TopologyGeneratorNode::remove_point(size_t index)
         return;
     }
 
-    auto view = m_points.linearized_view();
-    std::vector<LineVertex> temp_points(view.begin(), view.end());
-    temp_points.erase(temp_points.begin() + static_cast<uint32_t>(index));
-
-    m_points.reset();
-    for (const auto& pt : temp_points) {
-        m_points.push(pt);
-    }
+    m_points.erase(m_points.begin() + static_cast<std::ptrdiff_t>(index));
 
     if (m_auto_connect) {
         regenerate_topology();
     }
 
+    m_geometry_dirty = true;
     m_vertex_data_dirty = true;
 }
 
@@ -103,34 +179,39 @@ void TopologyGeneratorNode::update_point(size_t index, const LineVertex& point)
         return;
     }
 
-    m_points.update(index, point);
+    m_points[index] = point;
 
     if (m_auto_connect) {
         regenerate_topology();
     }
 
+    m_geometry_dirty = true;
     m_vertex_data_dirty = true;
 }
 
 void TopologyGeneratorNode::set_points(const std::vector<LineVertex>& points)
 {
-    m_points.reset();
-    for (const auto& pt : points) {
-        m_points.push(pt);
+    m_points.assign(points.rbegin(), points.rend());
+    if (m_points.size() > m_max_points) {
+        m_points.erase(
+            m_points.begin() + static_cast<std::ptrdiff_t>(m_max_points),
+            m_points.end());
     }
 
     if (m_auto_connect) {
         regenerate_topology();
     }
 
+    m_geometry_dirty = true;
     m_vertex_data_dirty = true;
 }
 
 void TopologyGeneratorNode::clear()
 {
-    m_points.reset();
+    m_points.clear();
     m_connections.clear();
     m_vertices.clear();
+    m_geometry_dirty = true;
     m_vertex_data_dirty = true;
     m_needs_layout_update = true;
     regenerate_topology();
@@ -141,11 +222,12 @@ void TopologyGeneratorNode::regenerate_topology()
     m_connections.clear();
 
     if (m_points.empty()) {
+        m_geometry_dirty = true;
         m_vertex_data_dirty = true;
         return;
     }
 
-    Eigen::MatrixXd positions = points_to_eigen();
+    refresh_positions();
 
     Kinesis::ProximityConfig config;
     config.mode = m_mode;
@@ -153,7 +235,9 @@ void TopologyGeneratorNode::regenerate_topology()
     config.radius = m_connection_radius;
     config.custom_function = m_custom_func;
 
-    m_connections = Kinesis::generate_proximity_graph(positions, config);
+    m_connections = Kinesis::generate_proximity_graph(m_positions, config);
+
+    m_geometry_dirty = true;
     m_vertex_data_dirty = true;
 }
 
@@ -188,12 +272,14 @@ void TopologyGeneratorNode::set_line_color(const glm::vec3& color, bool force_un
 {
     m_line_color = color;
     m_force_uniform_color = force_uniform;
+    m_attributes_dirty = true;
     m_vertex_data_dirty = true;
 }
 
 void TopologyGeneratorNode::force_uniform_color(bool should_force)
 {
     m_force_uniform_color = should_force;
+    m_attributes_dirty = true;
     m_vertex_data_dirty = true;
 }
 
@@ -201,12 +287,14 @@ void TopologyGeneratorNode::set_line_thickness(float thickness, bool force_unifo
 {
     m_line_thickness = thickness;
     m_force_uniform_thickness = force_uniform;
+    m_attributes_dirty = true;
     m_vertex_data_dirty = true;
 }
 
 void TopologyGeneratorNode::force_uniform_thickness(bool should_force)
 {
     m_force_uniform_thickness = should_force;
+    m_attributes_dirty = true;
     m_vertex_data_dirty = true;
 }
 
@@ -224,13 +312,13 @@ const LineVertex& TopologyGeneratorNode::get_point(size_t index) const
 
 std::vector<LineVertex> TopologyGeneratorNode::get_points() const
 {
-    auto view = m_points.linearized_view();
-    return { view.begin(), view.end() };
+    return m_points;
 }
 
 void TopologyGeneratorNode::set_path_interpolation_mode(Kinesis::InterpolationMode mode)
 {
     m_path_interpolation_mode = mode;
+    m_geometry_dirty = true;
     m_vertex_data_dirty = true;
 }
 
@@ -238,6 +326,7 @@ void TopologyGeneratorNode::set_samples_per_segment(size_t samples)
 {
     if (samples >= 2) {
         m_samples_per_segment = samples;
+        m_geometry_dirty = true;
         m_vertex_data_dirty = true;
     }
 }
@@ -245,6 +334,7 @@ void TopologyGeneratorNode::set_samples_per_segment(size_t samples)
 void TopologyGeneratorNode::set_arc_length_reparameterization(bool enable)
 {
     m_use_arc_length_reparameterization = enable;
+    m_geometry_dirty = true;
     m_vertex_data_dirty = true;
 }
 
@@ -252,34 +342,39 @@ void TopologyGeneratorNode::build_vertex_buffer()
 {
     m_vertices.clear();
 
-    auto points = get_points();
-    size_t num_points = points.size();
+    const size_t num_points = m_points.size();
 
     if (m_mode == Kinesis::ProximityMode::SEQUENTIAL
         && num_points >= 2
         && m_path_interpolation_mode != Kinesis::InterpolationMode::LINEAR) {
-        build_interpolated_path(points, num_points);
+        build_interpolated_path(m_points, num_points);
     } else {
-        build_direct_connections(points, num_points);
+        build_direct_connections(m_points, num_points);
     }
-
-    m_vertex_data_dirty = true;
 }
 
 void TopologyGeneratorNode::compute_frame()
 {
+    if (m_geometry_dirty) {
+        build_vertex_buffer();
+        m_geometry_dirty = false;
+        m_attributes_dirty = false;
+    } else if (m_attributes_dirty) {
+        refresh_attributes();
+        m_attributes_dirty = false;
+        m_vertex_data_dirty = true;
+    }
+
     if (!m_vertex_data_dirty) {
         return;
     }
 
-    build_vertex_buffer();
-
 #ifdef MAYAFLUX_PLATFORM_MACOS
-    std::vector<LineVertex> expanded = expand_lines_to_triangles(m_vertices);
-    set_vertices<LineVertex>(std::span { expanded.data(), expanded.size() });
+    m_expand_cache = expand_lines_to_triangles(m_vertices);
+    set_vertices<LineVertex>(std::span { m_expand_cache.data(), m_expand_cache.size() });
 
     auto layout = get_vertex_layout();
-    layout->vertex_count = static_cast<uint32_t>(expanded.size());
+    layout->vertex_count = static_cast<uint32_t>(m_expand_cache.size());
     set_vertex_layout(*layout);
 #else
     set_vertices<LineVertex>(std::span { m_vertices.data(), m_vertices.size() });
@@ -288,59 +383,58 @@ void TopologyGeneratorNode::compute_frame()
     layout->vertex_count = static_cast<uint32_t>(m_vertices.size());
     set_vertex_layout(*layout);
 #endif
+
+    m_vertex_data_dirty = false;
 }
 
 void TopologyGeneratorNode::build_interpolated_path(
     std::span<LineVertex> points,
     size_t num_points)
 {
-    Eigen::MatrixXd control_points(3, num_points);
-    for (Eigen::Index i = 0; i < num_points; ++i) {
-        control_points.col(i) << points[i].position.x,
-            points[i].position.y,
-            points[i].position.z;
+    m_evaluator.configure(m_path_interpolation_mode, 0.5);
+
+    m_control_scratch.resize(num_points * 3);
+    for (size_t i = 0; i < num_points; ++i) {
+        m_control_scratch[i * 3 + 0] = points[i].position.x;
+        m_control_scratch[i * 3 + 1] = points[i].position.y;
+        m_control_scratch[i * 3 + 2] = points[i].position.z;
     }
 
-    size_t num_segments = num_points - 1;
-    Eigen::Index total_samples = 1 + (Eigen::Index)num_segments * ((Eigen::Index)m_samples_per_segment - 1);
+    const size_t num_segments = num_points - 1;
+    const auto total_samples = static_cast<Eigen::Index>(
+        1 + num_segments * (m_samples_per_segment - 1));
 
-    Eigen::MatrixXd dense_points = Kinesis::generate_interpolated_points(
-        control_points,
-        total_samples,
-        m_path_interpolation_mode,
-        0.5);
+    m_evaluator.evaluate_planar(m_control_scratch, 3, total_samples, m_curve_primary);
+
+    const std::vector<double>* curve = &m_curve_primary;
 
     if (m_use_arc_length_reparameterization) {
-        dense_points = Kinesis::reparameterize_by_arc_length(
-            dense_points, total_samples);
+        m_evaluator.reparameterize_planar(m_curve_primary, 3,
+            total_samples, total_samples, m_curve_secondary);
+        curve = &m_curve_secondary;
     }
 
-    m_vertices.clear();
-    m_vertices.reserve((dense_points.cols() - 1) * 2);
-
-    for (Eigen::Index i = 0; i < dense_points.cols() - 1; ++i) {
-        float t0 = float(i) / float(total_samples - 1);
-        float t1 = float(i + 1) / float(total_samples - 1);
-
-        auto segment_idx0 = std::min<size_t>(size_t(t0 * float(num_segments)), num_segments - 1);
-        auto segment_idx1 = std::min<size_t>(size_t(t1 * float(num_segments)), num_segments - 1);
-
-        glm::vec3 color0 = m_force_uniform_color ? m_line_color : points[segment_idx0].color;
-        glm::vec3 color1 = m_force_uniform_color ? m_line_color : points[segment_idx1].color;
-
-        float thick0 = m_force_uniform_thickness ? m_line_thickness : points[segment_idx0].thickness;
-        float thick1 = m_force_uniform_thickness ? m_line_thickness : points[segment_idx1].thickness;
-
-        m_vertices.emplace_back(LineVertex {
-            .position = glm::vec3(dense_points(0, i), dense_points(1, i), dense_points(2, i)),
-            .color = color0,
-            .thickness = thick0 });
-
-        m_vertices.emplace_back(LineVertex {
-            .position = glm::vec3(dense_points(0, i + 1), dense_points(1, i + 1), dense_points(2, i + 1)),
-            .color = color1,
-            .thickness = thick1 });
+    const auto count = static_cast<size_t>(total_samples);
+    if (count < 2) {
+        return;
     }
+
+    m_vertices.resize((count - 1) * 2);
+
+    const double* x = curve->data();
+    const double* y = x + count;
+    const double* z = y + count;
+
+    for (size_t i = 0; i + 1 < count; ++i) {
+        m_vertices[i * 2].position = {
+            static_cast<float>(x[i]), static_cast<float>(y[i]), static_cast<float>(z[i])
+        };
+        m_vertices[i * 2 + 1].position = {
+            static_cast<float>(x[i + 1]), static_cast<float>(y[i + 1]), static_cast<float>(z[i + 1])
+        };
+    }
+
+    write_path_attributes(points, num_points);
 }
 
 void TopologyGeneratorNode::build_direct_connections(
@@ -376,20 +470,6 @@ void TopologyGeneratorNode::build_direct_connections(
             .color = color_b,
             .thickness = thick_b });
     }
-}
-
-Eigen::MatrixXd TopologyGeneratorNode::points_to_eigen() const
-{
-    auto view = m_points.linearized_view();
-    Eigen::MatrixXd matrix(3, view.size());
-
-    Eigen::Index idx = 0;
-    for (const auto& point : view) {
-        matrix.col(idx++) << point.position.x,
-            point.position.y,
-            point.position.z;
-    }
-    return matrix;
 }
 
 } // namespace MayaFlux::Nodes::GpuSync
