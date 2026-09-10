@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MayaFlux/Kinesis/Spatial/HitTest.hpp"
+#include "HitTest.hpp"
 
 namespace MayaFlux::Kinesis {
 
