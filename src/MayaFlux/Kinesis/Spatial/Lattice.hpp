@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MayaFlux/Kinesis/Spatial/Bounds.hpp"
+#include "Bounds.hpp"
 
 namespace MayaFlux::Kinesis {
 
