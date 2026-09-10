@@ -597,6 +597,8 @@ void PathGeneratorNode::compute_frame()
     layout->vertex_count = static_cast<uint32_t>(m_combined_cache.size());
     set_vertex_layout(*layout);
 #endif
+
+    m_vertex_data_dirty = false;
 }
 
 void PathGeneratorNode::complete()
