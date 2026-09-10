@@ -303,9 +303,8 @@ private:
 
     Kinesis::CurveEvaluator m_evaluator;
 
-    Eigen::MatrixXd m_segment_controls;
-    Eigen::MatrixXd m_curve_primary;
-    Eigen::MatrixXd m_curve_secondary;
+    std::array<double, 12> m_segment_controls;
+    std::vector<double> m_curve_primary, m_curve_secondary;
 
     Eigen::Index m_samples_per_segment;
     double m_tension;

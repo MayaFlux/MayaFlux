@@ -150,40 +150,38 @@ void PathGeneratorNode::write_curve_segment(
 
     m_evaluator.configure(m_mode, m_tension);
 
-    m_segment_controls.resize(3, 4);
-    for (Eigen::Index i = 0; i < 4; ++i) {
-        const auto& pt = curve_verts[start_idx + static_cast<size_t>(i)].position;
-        m_segment_controls(0, i) = pt.x;
-        m_segment_controls(1, i) = pt.y;
-        m_segment_controls(2, i) = pt.z;
+    for (size_t i = 0; i < 4; ++i) {
+        const auto& pt = curve_verts[start_idx + i].position;
+        m_segment_controls[i * 3 + 0] = pt.x;
+        m_segment_controls[i * 3 + 1] = pt.y;
+        m_segment_controls[i * 3 + 2] = pt.z;
     }
 
-    m_evaluator.evaluate(m_segment_controls, m_samples_per_segment, m_curve_primary);
+    m_evaluator.evaluate_planar(m_segment_controls, 3, m_samples_per_segment, m_curve_primary);
 
-    const Eigen::MatrixXd* curve = &m_curve_primary;
+    const std::vector<double>* curve = &m_curve_primary;
 
     if (m_arc_length_parameterization) {
-        m_evaluator.reparameterize(m_curve_primary, m_samples_per_segment, m_curve_secondary);
+        m_evaluator.reparameterize_planar(m_curve_primary, 3,
+            m_samples_per_segment, m_samples_per_segment, m_curve_secondary);
         curve = &m_curve_secondary;
     }
 
-    const Eigen::Index cols = curve->cols();
-    if (cols < 2) {
+    const auto count = static_cast<size_t>(m_samples_per_segment);
+    if (count < 2) {
         return;
     }
 
-    const double* base = curve->data();
-    const auto stride = static_cast<size_t>(curve->rows());
+    const double* x = curve->data();
+    const double* y = x + count;
+    const double* z = y + count;
 
-    for (Eigen::Index i = 0; i < cols - 1; ++i) {
-        const double* a = base + static_cast<size_t>(i) * stride;
-        const double* b = a + stride;
-
+    for (size_t i = 0; i < count - 1; ++i) {
         dst[i * 2].position = {
-            static_cast<float>(a[0]), static_cast<float>(a[1]), static_cast<float>(a[2])
+            static_cast<float>(x[i]), static_cast<float>(y[i]), static_cast<float>(z[i])
         };
         dst[i * 2 + 1].position = {
-            static_cast<float>(b[0]), static_cast<float>(b[1]), static_cast<float>(b[2])
+            static_cast<float>(x[i + 1]), static_cast<float>(y[i + 1]), static_cast<float>(z[i + 1])
         };
     }
 

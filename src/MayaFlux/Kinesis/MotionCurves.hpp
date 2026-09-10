@@ -90,47 +90,55 @@ MAYAFLUX_API Eigen::VectorXd interpolate(
 
 /**
  * @struct CurveChunk
- * @brief A contiguous run of samples evaluated by one matrix product.
+ * @brief A contiguous run of samples evaluated in one pass.
  *
  * Segments own disjoint, contiguous sample ranges because the segment
  * parameter is monotonic in the sample index. A segment longer than the
- * internal chunk size is split so the weight matrix stays cache resident.
+ * internal chunk size is split so the parameter buffer stays cache resident.
  */
 struct CurveChunk {
-    Eigen::Index start_col { 0 }; ///< First control point column of the owning segment.
-    Eigen::Index sample_begin { 0 }; ///< First output column.
-    Eigen::Index sample_count { 0 }; ///< Output column count.
-    bool clamp_t_high { false }; ///< Segment is pinned to t = 1 by the control clamp.
+    Eigen::Index segment { 0 }; ///< Owning segment index.
+    Eigen::Index start_col { 0 }; ///< First control point of the owning segment.
+    Eigen::Index sample_begin { 0 }; ///< First output sample.
+    Eigen::Index sample_count { 0 }; ///< Output sample count.
+    bool clamp_t_high { false }; ///< Segment pinned to t = 1 by the control clamp.
 };
 
 /**
  * @class CurveEvaluator
  * @brief Reusable interpolation state for callers evaluating many curves.
  *
- * Resolves mode and tension to a single basis matrix once, and retains the
- * extended control storage, chunk list and product scratch across calls.
- * Repeated evaluation at identical dimensions performs no heap allocation.
+ * The evaluation core operates on plain double buffers with no Eigen types
+ * and no allocation after the first call at given dimensions. Eigen appears
+ * only at the API boundary and in the basis matrix declarations.
  *
- * Every mode is expressed as basis * monomials, including LINEAR and
- * CUBIC_HERMITE. COSINE is the one exception and builds blend weights
- * directly. The basis is folded into the control block once per chunk, so
- * the per-sample cost is a rows x pps by pps x 1 product dispatched as one
- * rows x pps by pps x count product.
+ * ## Layouts
+ * Control points are point-major: the coordinate index varies fastest, so
+ * point q occupies `control_points[q * dim .. q * dim + dim)`. This matches
+ * the memory of a column-major Eigen matrix whose columns are control
+ * points, so `matrix.data()` can be passed directly.
  *
- * The free functions generate_interpolated_points and
- * reparameterize_by_arc_length construct one of these per call and are
- * appropriate for one-shot use. Callers in a per-frame or per-segment loop
- * should hold an instance instead.
+ * Planar output is coordinate-major: `out[d * num_samples + i]` is coordinate
+ * d of sample i. Consecutive samples of one coordinate are contiguous, which
+ * is what lets the sample axis occupy the SIMD lanes. Callers wanting an
+ * Eigen matrix pay one transpose in the boundary overloads.
+ *
+ * ## Evaluation
+ * Mode and tension resolve once to a single basis matrix, applied to the
+ * control block once per chunk rather than per sample. Each coordinate is
+ * then a Horner evaluation over the sample parameter, four samples per
+ * vector under AVX2 and two under NEON.
  *
  * Not thread safe. One instance per thread, or one per node.
  *
  * @code
  * Kinesis::CurveEvaluator eval(Kinesis::InterpolationMode::CATMULL_ROM, 0.5);
- * Eigen::MatrixXd out;
+ * std::vector<double> out;
  *
- * for (const auto& segment : segments) {
- *     eval.evaluate(segment, 32, out);
- * }
+ * eval.evaluate_planar(controls, 3, 32, out);
+ * const double* x = out.data();
+ * const double* y = x + 32;
+ * const double* z = y + 32;
  * @endcode
  */
 class MAYAFLUX_API CurveEvaluator {
@@ -158,12 +166,46 @@ public:
     [[nodiscard]] double tension() const { return m_tension; }
 
     /**
+     * @brief Evaluate a curve into a coordinate-major buffer.
+     * @param control_points Point-major, dim * control_count doubles.
+     * @param dim Coordinate count per point, at least 1.
+     * @param num_samples Output sample count, at least 2.
+     * @param out Resized to dim * num_samples, coordinate-major.
+     *
+     * @p control_points and @p out must not alias.
+     */
+    void evaluate_planar(
+        std::span<const double> control_points,
+        size_t dim,
+        Eigen::Index num_samples,
+        std::vector<double>& out);
+
+    /**
+     * @brief Resample a polyline to uniform arc length, coordinate-major.
+     * @param points Coordinate-major, dim * point_count doubles.
+     * @param dim Coordinate count per point, at least 1.
+     * @param point_count Input sample count.
+     * @param num_samples Output sample count, at least 2.
+     * @param out Resized to dim * num_samples, coordinate-major.
+     *
+     * @p points and @p out must not alias. A zero-length span between two
+     * consecutive points yields that span's start point rather than a
+     * division by zero.
+     */
+    void reparameterize_planar(
+        std::span<const double> points,
+        size_t dim,
+        Eigen::Index point_count,
+        Eigen::Index num_samples,
+        std::vector<double>& out);
+
+    /**
      * @brief Evaluate a curve into a caller-owned matrix.
      * @param control_points MxN matrix, columns are control points.
      * @param num_samples Output column count, at least 2.
      * @param out Resized to rows(control_points) x num_samples and overwritten.
      *
-     * @p control_points and @p out must not alias.
+     * Boundary overload. Wraps evaluate_planar and transposes the result.
      */
     void evaluate(
         const Eigen::MatrixXd& control_points,
@@ -176,9 +218,8 @@ public:
      * @param num_samples Output column count, at least 2.
      * @param out Resized to rows(points) x num_samples and overwritten.
      *
-     * @p points and @p out must not alias. A zero-length span between two
-     * consecutive points yields that span's start point rather than a
-     * division by zero.
+     * Boundary overload. Transposes in, wraps reparameterize_planar,
+     * transposes out.
      */
     void reparameterize(
         const Eigen::MatrixXd& points,
@@ -189,16 +230,20 @@ private:
     InterpolationMode m_mode;
     double m_tension;
 
-    Eigen::MatrixXd m_basis;
+    std::vector<double> m_basis;
     Eigen::Index m_points_per_segment { 0 };
     Eigen::Index m_overlap { 0 };
     bool m_supports_multi { false };
     bool m_trigonometric { false };
 
-    Eigen::MatrixXd m_extended;
-    Eigen::MatrixXd m_weights;
-    Eigen::MatrixXd m_folded;
-    Eigen::VectorXd m_arc;
+    std::vector<double> m_extended;
+    std::vector<double> m_folded;
+    std::vector<double> m_tbuf;
+    std::vector<double> m_arc;
+    std::vector<double> m_planar;
+    std::vector<double> m_planar_alt;
+    std::vector<size_t> m_lower;
+    std::vector<double> m_frac;
 
     std::vector<CurveChunk> m_chunks;
     std::vector<Eigen::Index> m_seg_first;
@@ -206,7 +251,10 @@ private:
 
     void rebuild_kernel();
 
-    const Eigen::MatrixXd* extend(const Eigen::MatrixXd& control_points, Eigen::Index& count);
+    const double* extend(
+        std::span<const double> control_points,
+        size_t dim,
+        Eigen::Index& count);
 
     void build_chunks(
         Eigen::Index num_samples,
