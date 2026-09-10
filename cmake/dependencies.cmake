@@ -99,11 +99,20 @@ target_include_directories(tinyexr INTERFACE
 )
 target_link_libraries(tinyexr INTERFACE miniz)
 
-add_library(tinyvdb STATIC ${CMAKE_SOURCE_DIR}/third_party/tinyvdb/tinyvdb_io.c)
+file(GLOB TINYVDB_SOURCES CONFIGURE_DEPENDS
+    ${CMAKE_SOURCE_DIR}/third_party/tinyvdb/*.c
+    ${CMAKE_SOURCE_DIR}/third_party/tinyvdb/*.cc
+)
+list(FILTER TINYVDB_SOURCES EXCLUDE REGEX "tinyvdb_gpu\\.c$")
+
+add_library(tinyvdb STATIC ${TINYVDB_SOURCES})
 set_target_properties(tinyvdb PROPERTIES
-    LINKER_LANGUAGE C
-    C_STANDARD 11
     POSITION_INDEPENDENT_CODE ON
+    C_STANDARD 11
+    CXX_STANDARD 17
+    C_VISIBILITY_PRESET hidden
+    CXX_VISIBILITY_PRESET hidden
+    VISIBILITY_INLINES_HIDDEN ON
 )
 target_compile_definitions(tinyvdb PRIVATE TVDB_NO_MMAP)
 target_include_directories(tinyvdb PUBLIC
