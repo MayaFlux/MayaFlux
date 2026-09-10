@@ -121,7 +121,16 @@ void PhysicsOperator::seed_from_upstream(const GraphicsOperator* upstream)
 
 void PhysicsOperator::process(float dt)
 {
+    uint32_t expected = 0;
+    while (!m_access_token.compare_exchange_weak(expected, 1,
+        std::memory_order_acquire, std::memory_order_relaxed)) {
+        if (m_shutdown.load(std::memory_order_relaxed))
+            return;
+        expected = 0;
+    }
+
     if (m_collections.empty()) {
+        m_access_token.store(0, std::memory_order_release);
         return;
     }
 
@@ -130,14 +139,6 @@ void PhysicsOperator::process(float dt)
     integrate(effective_dt);
     handle_boundary_conditions();
     sync_to_point_collection();
-
-    uint32_t expected = 0;
-    while (!m_access_token.compare_exchange_weak(expected, 1,
-        std::memory_order_acquire, std::memory_order_relaxed)) {
-        if (m_shutdown.load(std::memory_order_relaxed))
-            return;
-        expected = 0;
-    }
 
     for (auto& group : m_collections) {
         group.collection->compute_frame();
