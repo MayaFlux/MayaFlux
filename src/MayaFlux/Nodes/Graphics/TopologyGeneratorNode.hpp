@@ -1,7 +1,6 @@
 #pragma once
 
 #include "GeometryWriterNode.hpp"
-#include "MayaFlux/Transitive/Memory/RingBuffer.hpp"
 
 #include "MayaFlux/Kinesis/MotionCurves.hpp"
 #include "MayaFlux/Kinesis/Spatial/ProximityGraphs.hpp"
@@ -303,7 +302,15 @@ public:
 private:
     Kinesis::ProximityMode m_mode;
     CustomConnectionFunction m_custom_func;
-    Memory::HistoryBuffer<LineVertex> m_points;
+
+    /**
+     * @brief Points, newest first: index 0 is the most recently added.
+     *
+     * Capped at m_max_points; add_point(), add_points() and set_points()
+     * drop the oldest entries past that bound.
+     */
+    std::vector<LineVertex> m_points;
+    size_t m_max_points;
     std::vector<LineVertex> m_vertices;
     std::vector<std::pair<size_t, size_t>> m_connections;
 
@@ -327,7 +334,6 @@ private:
     Kinesis::CurveEvaluator m_evaluator;
 
     Eigen::MatrixXd m_positions;
-    std::vector<LineVertex> m_point_cache;
     std::vector<double> m_control_scratch;
     std::vector<double> m_curve_primary;
     std::vector<double> m_curve_secondary;
@@ -336,10 +342,7 @@ private:
     std::vector<LineVertex> m_expand_cache;
 #endif
 
-    /** @brief Refill m_point_cache from the ring buffer. */
-    void refresh_point_cache();
-
-    /** @brief Refill m_positions from the ring buffer, in place. */
+    /** @brief Refill m_positions from m_points, in place. */
     void refresh_positions();
 
     /** @brief Rewrite colour and thickness over existing positions. */

@@ -10,7 +10,7 @@ TopologyGeneratorNode::TopologyGeneratorNode(
     size_t max_points)
     : GeometryWriterNode(static_cast<uint32_t>(max_points * max_points))
     , m_mode(mode)
-    , m_points(max_points)
+    , m_max_points(max_points)
     , m_auto_connect(auto_connect)
 {
     const auto& stride = sizeof(LineVertex);
@@ -20,6 +20,7 @@ TopologyGeneratorNode::TopologyGeneratorNode(
     layout.vertex_count = 0;
     set_vertex_layout(layout);
 
+    m_points.reserve(max_points);
     m_vertices.reserve(max_points * max_points);
     m_connections.reserve(max_points * max_points);
 
@@ -35,7 +36,7 @@ TopologyGeneratorNode::TopologyGeneratorNode(
     : GeometryWriterNode(static_cast<uint32_t>(max_points * max_points))
     , m_mode(Kinesis::ProximityMode::CUSTOM)
     , m_custom_func(std::move(custom_func))
-    , m_points(max_points)
+    , m_max_points(max_points)
     , m_auto_connect(auto_connect)
 {
     const auto& stride = sizeof(LineVertex);
@@ -45,6 +46,7 @@ TopologyGeneratorNode::TopologyGeneratorNode(
     layout.vertex_count = 0;
     set_vertex_layout(layout);
 
+    m_points.reserve(max_points);
     m_vertices.reserve(max_points * max_points);
     m_connections.reserve(max_points * max_points);
 
@@ -52,19 +54,12 @@ TopologyGeneratorNode::TopologyGeneratorNode(
         "Created TopologyGeneratorNode with custom function");
 }
 
-void TopologyGeneratorNode::refresh_point_cache()
-{
-    auto view = m_points.linearized_view();
-    m_point_cache.assign(view.begin(), view.end());
-}
-
 void TopologyGeneratorNode::refresh_positions()
 {
-    auto view = m_points.linearized_view();
-    m_positions.resize(3, static_cast<Eigen::Index>(view.size()));
+    m_positions.resize(3, static_cast<Eigen::Index>(m_points.size()));
 
     Eigen::Index idx = 0;
-    for (const auto& point : view) {
+    for (const auto& point : m_points) {
         m_positions(0, idx) = point.position.x;
         m_positions(1, idx) = point.position.y;
         m_positions(2, idx) = point.position.z;
@@ -74,7 +69,10 @@ void TopologyGeneratorNode::refresh_positions()
 
 void TopologyGeneratorNode::add_point(const LineVertex& point)
 {
-    m_points.push(point);
+    m_points.insert(m_points.begin(), point);
+    if (m_points.size() > m_max_points) {
+        m_points.pop_back();
+    }
 
     if (m_auto_connect) {
         regenerate_topology();
@@ -91,7 +89,10 @@ void TopologyGeneratorNode::add_points(std::span<const LineVertex> points)
     }
 
     for (const auto& pt : points) {
-        m_points.push(pt);
+        m_points.insert(m_points.begin(), pt);
+        if (m_points.size() > m_max_points) {
+            m_points.pop_back();
+        }
     }
 
     if (m_auto_connect) {
@@ -140,17 +141,16 @@ void TopologyGeneratorNode::refresh_attributes()
         return;
     }
 
-    refresh_point_cache();
-    const size_t num_points = m_point_cache.size();
+    const size_t num_points = m_points.size();
 
     if (m_mode == Kinesis::ProximityMode::SEQUENTIAL
         && num_points >= 2
         && m_path_interpolation_mode != Kinesis::InterpolationMode::LINEAR) {
-        write_path_attributes(m_point_cache, num_points);
+        write_path_attributes(m_points, num_points);
         return;
     }
 
-    build_direct_connections(m_point_cache, num_points);
+    build_direct_connections(m_points, num_points);
 }
 
 void TopologyGeneratorNode::remove_point(size_t index)
@@ -161,13 +161,7 @@ void TopologyGeneratorNode::remove_point(size_t index)
         return;
     }
 
-    refresh_point_cache();
-    m_point_cache.erase(m_point_cache.begin() + static_cast<ptrdiff_t>(index));
-
-    m_points.reset();
-    for (const auto& pt : m_point_cache) {
-        m_points.push(pt);
-    }
+    m_points.erase(m_points.begin() + static_cast<std::ptrdiff_t>(index));
 
     if (m_auto_connect) {
         regenerate_topology();
@@ -185,7 +179,7 @@ void TopologyGeneratorNode::update_point(size_t index, const LineVertex& point)
         return;
     }
 
-    m_points.update(index, point);
+    m_points[index] = point;
 
     if (m_auto_connect) {
         regenerate_topology();
@@ -197,9 +191,11 @@ void TopologyGeneratorNode::update_point(size_t index, const LineVertex& point)
 
 void TopologyGeneratorNode::set_points(const std::vector<LineVertex>& points)
 {
-    m_points.reset();
-    for (const auto& pt : points) {
-        m_points.push(pt);
+    m_points.assign(points.rbegin(), points.rend());
+    if (m_points.size() > m_max_points) {
+        m_points.erase(
+            m_points.begin() + static_cast<std::ptrdiff_t>(m_max_points),
+            m_points.end());
     }
 
     if (m_auto_connect) {
@@ -212,7 +208,7 @@ void TopologyGeneratorNode::set_points(const std::vector<LineVertex>& points)
 
 void TopologyGeneratorNode::clear()
 {
-    m_points.reset();
+    m_points.clear();
     m_connections.clear();
     m_vertices.clear();
     m_geometry_dirty = true;
@@ -316,8 +312,7 @@ const LineVertex& TopologyGeneratorNode::get_point(size_t index) const
 
 std::vector<LineVertex> TopologyGeneratorNode::get_points() const
 {
-    auto view = m_points.linearized_view();
-    return { view.begin(), view.end() };
+    return m_points;
 }
 
 void TopologyGeneratorNode::set_path_interpolation_mode(Kinesis::InterpolationMode mode)
@@ -347,15 +342,14 @@ void TopologyGeneratorNode::build_vertex_buffer()
 {
     m_vertices.clear();
 
-    refresh_point_cache();
-    const size_t num_points = m_point_cache.size();
+    const size_t num_points = m_points.size();
 
     if (m_mode == Kinesis::ProximityMode::SEQUENTIAL
         && num_points >= 2
         && m_path_interpolation_mode != Kinesis::InterpolationMode::LINEAR) {
-        build_interpolated_path(m_point_cache, num_points);
+        build_interpolated_path(m_points, num_points);
     } else {
-        build_direct_connections(m_point_cache, num_points);
+        build_direct_connections(m_points, num_points);
     }
 }
 

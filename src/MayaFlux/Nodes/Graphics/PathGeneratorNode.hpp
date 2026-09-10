@@ -2,7 +2,6 @@
 
 #include "GeometryWriterNode.hpp"
 #include "MayaFlux/Kinesis/MotionCurves.hpp"
-#include "MayaFlux/Transitive/Memory/RingBuffer.hpp"
 
 namespace MayaFlux::Nodes::GpuSync {
 
@@ -241,7 +240,7 @@ public:
      * @brief Get maximum control point capacity
      * @return Maximum control points
      */
-    [[nodiscard]] size_t get_control_point_capacity() const { return m_control_points.capacity(); }
+    [[nodiscard]] size_t get_control_point_capacity() const { return m_max_control_points; }
 
     /**
      * @brief Get number of generated vertices
@@ -292,7 +291,15 @@ public:
 private:
     Kinesis::InterpolationMode m_mode;
     CustomPathFunction m_custom_func;
-    Memory::HistoryBuffer<LineVertex> m_control_points;
+
+    /**
+     * @brief Control points, newest first: index 0 is the most recently added.
+     *
+     * Capped at m_max_control_points; add_control_point() and
+     * set_control_points() drop the oldest entries past that bound.
+     */
+    std::vector<LineVertex> m_control_points;
+    size_t m_max_control_points;
     std::vector<LineVertex> m_vertices;
     std::vector<LineVertex> m_draw_vertices;
     std::vector<LineVertex> m_completed_draws;
@@ -309,7 +316,6 @@ private:
     Eigen::Index m_samples_per_segment;
     double m_tension;
 
-    std::vector<LineVertex> m_control_cache;
     std::vector<LineVertex> m_range_cache;
 
 #ifdef MAYAFLUX_PLATFORM_MACOS

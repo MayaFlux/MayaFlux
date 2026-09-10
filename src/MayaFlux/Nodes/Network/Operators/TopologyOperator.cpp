@@ -61,7 +61,7 @@ void TopologyOperator::add_topology(
         return;
     }
 
-    auto topology = std::make_shared<GpuSync::TopologyGeneratorNode>(mode, 1024);
+    auto topology = std::make_shared<GpuSync::TopologyGeneratorNode>(mode, true, 1024);
 
     topology->set_points(vertices);
     topology->compute_frame();
