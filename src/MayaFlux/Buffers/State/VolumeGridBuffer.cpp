@@ -198,6 +198,26 @@ VectorRef VolumeGridBuffer::declare_vector(std::string name, Kinesis::LatticeSem
     };
 }
 
+std::vector<std::string> VolumeGridBuffer::ensure_fields(const std::vector<FieldDecl>& decls)
+{
+    std::vector<std::string> declared;
+    declared.reserve(decls.size());
+
+    for (const auto& decl : decls) {
+        if (has_field(decl.name)) {
+            MF_DEBUG(Journal::Component::Buffers, Journal::Context::Init,
+                "VolumeGridBuffer::ensure_fields: '{}' already present, reused", decl.name);
+            continue;
+        }
+
+        if (allocate_field(decl.name, decl.stride_bytes, decl.double_buffered, decl.semantics)) {
+            declared.push_back(decl.name);
+        }
+    }
+
+    return declared;
+}
+
 void VolumeGridBuffer::setup_processors(ProcessingToken token)
 {
     auto chain = get_processing_chain();
