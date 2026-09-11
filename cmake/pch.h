@@ -124,8 +124,24 @@ concept SafeIntegerConversion = IntegerData<From> && IntegerData<To> && (sizeof(
 template <typename From, typename To>
 concept SafeDecimalConversion = DecimalData<From> && DecimalData<To> && (sizeof(From) <= sizeof(To));
 
+/**
+ * @brief Same-domain widening only: integer to a same-signedness,
+ *        no-narrower integer, or decimal to a no-narrower decimal.
+ *
+ * Deliberately excludes integer-to-decimal, which this concept used to
+ * include unconditionally regardless of width — int64_t -> float satisfied
+ * it despite being lossy for any value outside float's 24-bit mantissa
+ * range, and int32_t -> float satisfied it too despite being same-width
+ * rather than narrower, which is what the old sizeof(From) > sizeof(To)
+ * precision check downstream relied on to flag it and didn't. Both
+ * remaining disjuncts are provably lossless for every value of From, not
+ * just typical ones, which is the property that lets try_convert skip a
+ * runtime check for them entirely — nothing else in this codebase earns
+ * that shortcut, and int-to-decimal, decimal-to-int, and any narrowing or
+ * sign-mismatched pair all fall through to try_convert's general path.
+ */
 template <typename From, typename To>
-concept SafeArithmeticConversion = ArithmeticData<From> && ArithmeticData<To> && (SafeIntegerConversion<From, To> || SafeDecimalConversion<From, To> || (IntegerData<From> && DecimalData<To>));
+concept SafeArithmeticConversion = SafeIntegerConversion<From, To> || SafeDecimalConversion<From, To>;
 
 // === Safe Any Cast System ===
 
@@ -154,6 +170,22 @@ struct CastResult {
     }
 };
 
+/**
+ * @brief Convert value to To, reporting whether the round trip is exact.
+ *
+ * A SafeArithmeticConversion pair — same-domain widening, provably lossless
+ * for every value of From — skips the runtime check entirely and reports
+ * precision_loss = false unconditionally, since it is a compile-time fact
+ * rather than something any particular value could contradict. Every other
+ * arithmetic pair — narrowing, cross-domain (int to decimal or back), or
+ * sign-mismatched — is checked by converting to To and back to From and
+ * comparing against the original: a direction-agnostic check that replaces
+ * what used to be a sizeof(From) > sizeof(To) heuristic applied too broadly
+ * (int32_t -> float satisfied the old SafeArithmeticConversion despite
+ * being same-width, not narrower, and losing precision above 2^24) and a
+ * decimal-to-integer-only floor check that left decimal-to-decimal
+ * narrowing, including double -> float, unchecked entirely.
+ */
 template <typename To, typename From>
 CastResult<To> try_convert(const From& value)
 {
@@ -168,13 +200,10 @@ CastResult<To> try_convert(const From& value)
         result.value = value;
     } else if constexpr (SafeArithmeticConversion<From, To>) {
         result.value = static_cast<To>(value);
-        result.precision_loss = (sizeof(From) > sizeof(To));
     } else if constexpr (ArithmeticData<From> && ArithmeticData<To>) {
-        if constexpr (DecimalData<From> && IntegerData<To>) {
-            if (std::floor(value) != value)
-                result.precision_loss = true;
-        }
-        result.value = static_cast<To>(value);
+        const To converted = static_cast<To>(value);
+        result.value = converted;
+        result.precision_loss = (static_cast<From>(converted) != value);
     } else if constexpr (ComplexData<From> && ArithmeticData<To>) {
         result.value = static_cast<To>(std::abs(value));
         result.precision_loss = (std::imag(value) != 0);

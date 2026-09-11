@@ -241,22 +241,18 @@ std::optional<Kakshya::VolumeData> VolumeReader::materialize(
     for (size_t idx : indices) {
         const auto summary = m_archive->grid_summary(idx);
 
-        if (summary.narrowed) {
-            MF_WARN(Journal::Component::IO, Journal::Context::FileIO,
-                "VolumeReader: grid '{}' is not float/vec3f, narrowing to {}",
-                summary.name, summary.is_vector ? "vec3" : "float");
-        }
-
         Kakshya::VolumeField field;
         field.name = summary.name;
         field.semantics.value_class = class_from_token(m_archive->grid_metadata(idx, "class"));
+
+        bool precision_lost = false;
 
         if (summary.is_vector) {
             field.semantics.variance = variance_from_token(m_archive->grid_metadata(idx, "vector_type"));
 
             std::vector<glm::vec3> values;
             if (!m_archive->read_dense_vector(
-                    idx, region_min, lattice.resolution, summary.background_vector, values)) {
+                    idx, region_min, lattice.resolution, summary.background_vector, values, &precision_lost)) {
                 set_error(std::string(m_archive->last_error()));
                 return std::nullopt;
             }
@@ -264,11 +260,21 @@ std::optional<Kakshya::VolumeData> VolumeReader::materialize(
         } else {
             std::vector<float> values;
             if (!m_archive->read_dense_scalar(
-                    idx, region_min, lattice.resolution, summary.background_scalar, values)) {
+                    idx, region_min, lattice.resolution, summary.background_scalar, values, &precision_lost)) {
                 set_error(std::string(m_archive->last_error()));
                 return std::nullopt;
             }
             field.values = std::move(values);
+        }
+
+        if (precision_lost) {
+            MF_WARN(Journal::Component::IO, Journal::Context::FileIO,
+                "VolumeReader: grid '{}' is not float/vec3f, narrowing to {} lost precision in at least one value",
+                summary.name, summary.is_vector ? "vec3" : "float");
+        } else if (summary.narrowed) {
+            MF_WARN(Journal::Component::IO, Journal::Context::FileIO,
+                "VolumeReader: grid '{}' is not float/vec3f, narrowing to {} losslessly",
+                summary.name, summary.is_vector ? "vec3" : "float");
         }
 
         MF_DEBUG(Journal::Component::IO, Journal::Context::FileIO,

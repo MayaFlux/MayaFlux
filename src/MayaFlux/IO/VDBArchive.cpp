@@ -181,64 +181,105 @@ namespace {
         return f;
     }
 
-    float narrow_scalar(tvdb_value_type_t vt, const void* bytes)
+    /**
+     * @brief Convert one raw scalar element to float via MayaFlux::try_convert.
+     *
+     * HALF is the one source type try_convert cannot see: it is a bit
+     * pattern, not a type try_convert's arithmetic concepts recognise, so
+     * it keeps its own decode. It is also the one case with no precision
+     * question to answer — float has strictly more range and mantissa bits
+     * than half, so widening it is always exact.
+     */
+    CastResult<float> narrow_scalar(tvdb_value_type_t vt, const void* bytes)
     {
         switch (vt) {
         case TVDB_VALUE_FLOAT: {
             float v {};
             std::memcpy(&v, bytes, sizeof(v));
-            return v;
+            return try_convert<float>(v);
         }
         case TVDB_VALUE_DOUBLE: {
-            double v = {};
+            double v {};
             std::memcpy(&v, bytes, sizeof(v));
-            return static_cast<float>(v);
+            return try_convert<float>(v);
         }
         case TVDB_VALUE_INT32: {
             int32_t v {};
             std::memcpy(&v, bytes, sizeof(v));
-            return static_cast<float>(v);
+            return try_convert<float>(v);
         }
         case TVDB_VALUE_INT64: {
             int64_t v {};
             std::memcpy(&v, bytes, sizeof(v));
-            return static_cast<float>(v);
+            return try_convert<float>(v);
         }
         case TVDB_VALUE_BOOL: {
             uint8_t v {};
             std::memcpy(&v, bytes, sizeof(v));
-            return v != 0 ? 1.0F : 0.0F;
+            return try_convert<float>(v != 0);
         }
         case TVDB_VALUE_HALF: {
             uint16_t v {};
             std::memcpy(&v, bytes, sizeof(v));
-            return half_to_float(v);
+            CastResult<float> result;
+            result.value = half_to_float(v);
+            return result;
         }
-        default:
-            return 0.0F;
+        default: {
+            CastResult<float> result;
+            result.value = 0.0F;
+            return result;
+        }
         }
     }
 
-    glm::vec3 narrow_vector(tvdb_value_type_t vt, const void* bytes)
+    /**
+     * @brief narrow_vector's result: the converted glm::vec3 and whether
+     *        any of its three components lost precision.
+     *
+     * A plain glm::vec3 cannot also carry precision_loss, and
+     * try_convert does not itself understand GLM types (it
+     * converts one arithmetic scalar at a time) so this aggregates three
+     * per-component try_convert calls rather than making one call over the
+     * vector as a whole.
+     */
+    struct VectorNarrowResult {
+        glm::vec3 value { 0.0F };
+        bool precision_loss { false };
+    };
+
+    VectorNarrowResult narrow_vector(tvdb_value_type_t vt, const void* bytes)
     {
         switch (vt) {
         case TVDB_VALUE_VEC3F: {
             float v[3];
             std::memcpy(v, bytes, sizeof(v));
-            return { v[0], v[1], v[2] };
+            return { { v[0], v[1], v[2] }, false };
         }
         case TVDB_VALUE_VEC3D: {
             double v[3];
             std::memcpy(v, bytes, sizeof(v));
-            return { static_cast<float>(v[0]), static_cast<float>(v[1]), static_cast<float>(v[2]) };
+            const auto cx = try_convert<float>(v[0]);
+            const auto cy = try_convert<float>(v[1]);
+            const auto cz = try_convert<float>(v[2]);
+            return {
+                { cx.value.value_or(0.0F), cy.value.value_or(0.0F), cz.value.value_or(0.0F) },
+                cx.precision_loss || cy.precision_loss || cz.precision_loss,
+            };
         }
         case TVDB_VALUE_VEC3I: {
             int32_t v[3];
             std::memcpy(v, bytes, sizeof(v));
-            return { static_cast<float>(v[0]), static_cast<float>(v[1]), static_cast<float>(v[2]) };
+            const auto cx = try_convert<float>(v[0]);
+            const auto cy = try_convert<float>(v[1]);
+            const auto cz = try_convert<float>(v[2]);
+            return {
+                { cx.value.value_or(0.0F), cy.value.value_or(0.0F), cz.value.value_or(0.0F) },
+                cx.precision_loss || cy.precision_loss || cz.precision_loss,
+            };
         }
         default:
-            return glm::vec3(0.0F);
+            return {};
         }
     }
 
@@ -247,7 +288,11 @@ namespace {
      *
      * Root index 0 is not a convention this reader invents: tinyvdb's own
      * tvdb_grid_set_background writes through tree.nodes[0].u.root, so a
-     * well-formed grid always has its root there.
+     * well-formed grid always has its root there. Background precision loss
+     * is not tracked separately from the active-cell kind read_dense_scalar/
+     * read_dense_vector report; a lossy background is rare enough (it is one
+     * value, not a whole grid's worth) that this returns the converted value
+     * only.
      */
     float grid_background_scalar(const tvdb_grid_t& grid)
     {
@@ -255,7 +300,7 @@ namespace {
             return 0.0F;
         }
         const tvdb_value_t& bg = grid.tree.nodes[0].u.root.background;
-        return narrow_scalar(bg.type, &bg.u);
+        return narrow_scalar(bg.type, &bg.u).value.value_or(0.0F);
     }
 
     glm::vec3 grid_background_vector(const tvdb_grid_t& grid)
@@ -264,7 +309,7 @@ namespace {
             return glm::vec3(0.0F);
         }
         const tvdb_value_t& bg = grid.tree.nodes[0].u.root.background;
-        return narrow_vector(bg.type, &bg.u);
+        return narrow_vector(bg.type, &bg.u).value;
     }
 
     /**
@@ -301,13 +346,16 @@ namespace {
      *
      * region_max is exclusive. elem_size is the leaf's own on-disk element
      * width, used to stride into the raw byte buffer regardless of what
-     * that element narrows to.
+     * that element narrows to. precision_lost, when non-null, accumulates
+     * across every element the visit touches — set true the first time any
+     * one of them loses precision and left alone afterward.
      */
     struct DenseCtx {
         glm::ivec3 region_min;
         glm::ivec3 region_max;
         tvdb_value_type_t vt;
         size_t elem_size;
+        bool* precision_lost { nullptr };
     };
 
     struct DenseScalarCtx : DenseCtx {
@@ -351,7 +399,11 @@ namespace {
             }
             const glm::ivec3 local = world - ctx->region_min;
             const size_t index = (static_cast<size_t>(local.z) * res.y + local.y) * res.x + local.x;
-            (*ctx->out)[index] = narrow_scalar(ctx->vt, base + static_cast<size_t>(s) * ctx->elem_size);
+            const auto converted = narrow_scalar(ctx->vt, base + static_cast<size_t>(s) * ctx->elem_size);
+            (*ctx->out)[index] = converted.value.value_or(0.0F);
+            if (converted.precision_loss && ctx->precision_lost) {
+                *ctx->precision_lost = true;
+            }
         }
         return 0;
     }
@@ -374,7 +426,11 @@ namespace {
             }
             const glm::ivec3 local = world - ctx->region_min;
             const size_t index = (static_cast<size_t>(local.z) * res.y + local.y) * res.x + local.x;
-            (*ctx->out)[index] = narrow_vector(ctx->vt, base + static_cast<size_t>(s) * ctx->elem_size);
+            const auto converted = narrow_vector(ctx->vt, base + static_cast<size_t>(s) * ctx->elem_size);
+            (*ctx->out)[index] = converted.value;
+            if (converted.precision_loss && ctx->precision_lost) {
+                *ctx->precision_lost = true;
+            }
         }
         return 0;
     }
@@ -680,7 +736,8 @@ bool VDBArchive::read_dense_scalar(
     const glm::ivec3& region_min,
     const glm::uvec3& resolution,
     float background,
-    std::vector<float>& out) const
+    std::vector<float>& out,
+    bool* precision_lost) const
 {
     if (!m_state->read_file_open || index >= m_state->read_file.num_grids) {
         m_last_error = "read_dense_scalar: grid index out of range";
@@ -705,6 +762,10 @@ bool VDBArchive::read_dense_scalar(
         return false;
     }
 
+    if (precision_lost) {
+        *precision_lost = false;
+    }
+
     out.assign(static_cast<size_t>(resolution.x) * resolution.y * resolution.z, background);
 
     DenseScalarCtx ctx {};
@@ -712,6 +773,7 @@ bool VDBArchive::read_dense_scalar(
     ctx.region_max = region_min + glm::ivec3(resolution);
     ctx.vt = vt;
     ctx.elem_size = elem_size;
+    ctx.precision_lost = precision_lost;
     ctx.out = &out;
 
     tvdb_grid_visit_leaves(&grid, dense_scalar_visit, &ctx);
@@ -723,7 +785,8 @@ bool VDBArchive::read_dense_vector(
     const glm::ivec3& region_min,
     const glm::uvec3& resolution,
     const glm::vec3& background,
-    std::vector<glm::vec3>& out) const
+    std::vector<glm::vec3>& out,
+    bool* precision_lost) const
 {
     if (!m_state->read_file_open || index >= m_state->read_file.num_grids) {
         m_last_error = "read_dense_vector: grid index out of range";
@@ -748,6 +811,10 @@ bool VDBArchive::read_dense_vector(
         return false;
     }
 
+    if (precision_lost) {
+        *precision_lost = false;
+    }
+
     out.assign(static_cast<size_t>(resolution.x) * resolution.y * resolution.z, background);
 
     DenseVectorCtx ctx {};
@@ -755,6 +822,7 @@ bool VDBArchive::read_dense_vector(
     ctx.region_max = region_min + glm::ivec3(resolution);
     ctx.vt = vt;
     ctx.elem_size = elem_size;
+    ctx.precision_lost = precision_lost;
     ctx.out = &out;
 
     tvdb_grid_visit_leaves(&grid, dense_vector_visit, &ctx);

@@ -170,10 +170,18 @@ public:
      * resized to resolution.x*y*z elements and written x-fastest,
      * z-slowest, matching Lattice3D and VolumeField's convention.
      *
-     * A grid whose leaf value type is not float is converted per-element;
-     * check grid_summary().narrowed beforehand to know whether that
-     * happened.
+     * A grid whose leaf value type is not float is converted per-element via
+     * MayaFlux::try_convert; check grid_summary().narrowed beforehand to
+     * know whether that happened at all, or pass @p precision_lost to learn
+     * whether it happened losslessly. Every element that round-trips through
+     * float and back to the source type unchanged leaves it false; a single
+     * element that doesn't sets it true for the whole call. half is the one
+     * source type never marked lossy — float has strictly more precision in
+     * both exponent and mantissa, so widening it is always exact.
      *
+     * @param precision_lost Set to whether any narrowed element lost
+     *        precision. Cleared to false at the start of the call if
+     *        non-null; left untouched by a null pointer.
      * @return False if index is out of range, the grid is vector-typed, or
      *         resolution has a zero axis. Call last_error() for detail.
      */
@@ -182,13 +190,16 @@ public:
         const glm::ivec3& region_min,
         const glm::uvec3& resolution,
         float background,
-        std::vector<float>& out) const;
+        std::vector<float>& out,
+        bool* precision_lost = nullptr) const;
 
     /**
      * @brief Materialize a vector grid's cells over an explicit region.
      *
      * As read_dense_scalar, for a grid whose leaf value type is vec3f,
-     * vec3d or vec3i. Non-vec3f types are converted component-wise.
+     * vec3d or vec3i. Non-vec3f types are converted component-wise via
+     * MayaFlux::try_convert; @p precision_lost is set if any of the three
+     * components of any element lost precision.
      *
      * @return False if index is out of range, the grid is scalar-typed, or
      *         resolution has a zero axis. Call last_error() for detail.
@@ -198,7 +209,8 @@ public:
         const glm::ivec3& region_min,
         const glm::uvec3& resolution,
         const glm::vec3& background,
-        std::vector<glm::vec3>& out) const;
+        std::vector<glm::vec3>& out,
+        bool* precision_lost = nullptr) const;
 
 private:
     struct State;

@@ -88,12 +88,15 @@ struct VolumeReadOptions {
  *
  * VolumeData's variant holds float and glm::vec3 only. A grid whose leaf
  * value type is double, int32, int64, bool or half is narrowed to float; a
- * vec3d or vec3i grid is narrowed to glm::vec3. This is logged once per
- * grid at MF_WARN. Narrowing is lossy for a double or int64 grid whose
- * range exceeds float precision, which is uncommon for a value meant to
- * feed a float GPU field — the purpose this reader is built for — and
- * accepted as the cost of a single representable type rather than widening
- * VolumeData to carry every tinyvdb value type.
+ * vec3d or vec3i grid is narrowed to glm::vec3, via MayaFlux::try_convert
+ * per element (per component, for vectors). This is logged once per grid
+ * at MF_WARN, distinguishing a narrowing that round-tripped every element
+ * exactly from one where at least one element actually lost precision —
+ * the common case for a double or int64 grid whose range exceeds float,
+ * uncommon for a value meant to feed a float GPU field in the first place,
+ * which is the purpose this reader is built for. Accepted as the cost of a
+ * single representable type rather than widening VolumeData to carry every
+ * tinyvdb value type.
  */
 class MAYAFLUX_API VolumeReader : public FileReader {
 public:
