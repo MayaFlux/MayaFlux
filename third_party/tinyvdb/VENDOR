@@ -3,5 +3,6 @@ repo:     https://github.com/syoyo/tinyvdb.git
 ref:      main
 commit:   c0ecb7d0ea970c413b9a276c92568646e562ec12
 license:  Apache-2.0
-vendored: 2026-09-10
+vendored: 2026-09-11
 excluded: miniz (built from third_party/tinyexr)
+patched:   tinyvdb_sparse_tree.c

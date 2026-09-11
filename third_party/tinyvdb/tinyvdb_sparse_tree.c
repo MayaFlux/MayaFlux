@@ -1,3 +1,4 @@
+/* Modified by the MayaFlux project, 2026-09-11. Upstream baseline: c0ecb7d0ea970c413b9a276c92568646e562ec12. See scripts/vender_tinyvdb.sh. */
 #include "tinyvdb_sparse_tree.h"
 
 #include <stdio.h>
@@ -499,8 +500,6 @@ static bool dilate_step(const leaf_collect_t *leaves,
 
     // Per-leaf offset into current_values (if provided): leaves are stored in
     // the same order as `leaves->entries`; values are flat dim^3 per leaf.
-    const float *(get_data)(const leaf_collect_t *, size_t, const float *);
-    (void)get_data;
 
     for (size_t li = 0; li < leaves->count; ++li) {
         const leaf_entry_t *leaf = &leaves->entries[li];
