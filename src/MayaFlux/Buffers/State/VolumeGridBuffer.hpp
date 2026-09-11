@@ -499,6 +499,26 @@ public:
      */
     void read_field(const std::string& name, void* data, size_t size);
 
+    /**
+     * @brief Read several fields' current values into host memory at once.
+     *
+     * One staging buffer and one fence wait for the whole batch, rather
+     * than a full round trip per field. Prefer this over repeated
+     * read_field when more than one field is wanted from the same cycle,
+     * which is the ordinary case for interchange export.
+     *
+     * Reads from each field's current read slot, as read_field does.
+     * A name that is not declared, or a size that does not match that
+     * field, is logged and skipped; the rest of the batch proceeds.
+     *
+     * @param names Field names.
+     * @param dsts  Destination pointer and byte count per name, parallel
+     *              to @p names.
+     */
+    void read_fields(
+        const std::vector<std::string>& names,
+        const std::vector<std::pair<void*, size_t>>& dsts);
+
 private:
     struct Field {
         size_t stride_bytes;

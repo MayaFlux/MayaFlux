@@ -11,52 +11,6 @@
 
 namespace MayaFlux::IO {
 
-namespace {
-
-    /**
-     * @brief Read one field into the variant its stride implies.
-     * @return The populated field, or nullopt if the stride is
-     *         unrepresentable or the field is undeclared.
-     */
-    std::optional<Kakshya::VolumeField> download_field(
-        const std::shared_ptr<Buffers::VolumeGridBuffer>& volume,
-        const std::string& name)
-    {
-        const size_t stride = volume->get_field_stride(name);
-        const size_t cells = volume->get_lattice().cell_count();
-
-        Kakshya::VolumeField field;
-        field.name = name;
-        field.semantics = volume->get_field_semantics(name);
-
-        if (stride == sizeof(float)) {
-            std::vector<float> values(cells);
-            volume->read_field(name, values.data(), values.size() * sizeof(float));
-            field.values = std::move(values);
-            return field;
-        }
-
-        if (stride == sizeof(glm::vec4)) {
-            std::vector<glm::vec4> padded(cells);
-            volume->read_field(name, padded.data(), padded.size() * sizeof(glm::vec4));
-
-            std::vector<glm::vec3> values(cells);
-            for (size_t i = 0; i < cells; ++i) {
-                values[i] = glm::vec3(padded[i]);
-            }
-            field.values = std::move(values);
-            return field;
-        }
-
-        MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
-            "download_volume: field '{}' has stride {}, which VolumeData "
-            "cannot represent (expected {} or {})",
-            name, stride, sizeof(float), sizeof(glm::vec4));
-        return std::nullopt;
-    }
-
-} // namespace
-
 // ============================================================================
 // download_volume
 // ============================================================================
@@ -82,6 +36,16 @@ std::optional<Kakshya::VolumeData> download_volume(
     result.lattice = volume->get_lattice();
     result.fields.reserve(names.size());
 
+    const size_t cells = result.cell_count();
+
+    std::vector<std::string> batch_names;
+    std::vector<std::pair<void*, size_t>> batch_dsts;
+    std::vector<std::vector<glm::vec4>> padded;
+
+    batch_names.reserve(names.size());
+    batch_dsts.reserve(names.size());
+    padded.reserve(names.size());
+
     for (const auto& name : names) {
         if (!volume->has_field(name)) {
             MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
@@ -89,9 +53,47 @@ std::optional<Kakshya::VolumeData> download_volume(
             continue;
         }
 
-        auto field = download_field(volume, name);
-        if (field) {
-            result.fields.push_back(std::move(*field));
+        const size_t stride = volume->get_field_stride(name);
+
+        Kakshya::VolumeField field;
+        field.name = name;
+        field.semantics = volume->get_field_semantics(name);
+
+        if (stride == sizeof(float)) {
+            field.values = std::vector<float>(cells);
+            result.fields.push_back(std::move(field));
+            auto& values = *result.fields.back().as_scalar();
+            batch_names.push_back(name);
+            batch_dsts.emplace_back(values.data(), cells * sizeof(float));
+            continue;
+        }
+
+        if (stride == sizeof(glm::vec4)) {
+            field.values = std::vector<glm::vec3>(cells);
+            result.fields.push_back(std::move(field));
+            auto& scratch = padded.emplace_back(cells);
+            batch_names.push_back(name);
+            batch_dsts.emplace_back(scratch.data(), cells * sizeof(glm::vec4));
+            continue;
+        }
+
+        MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+            "download_volume: field '{}' has stride {}, which VolumeData "
+            "cannot represent (expected {} or {})",
+            name, stride, sizeof(float), sizeof(glm::vec4));
+    }
+
+    volume->read_fields(batch_names, batch_dsts);
+
+    size_t vector_index = 0;
+    for (auto& field : result.fields) {
+        auto* out = field.as_vector();
+        if (!out) {
+            continue;
+        }
+        const auto& src = padded[vector_index++];
+        for (size_t i = 0; i < cells; ++i) {
+            (*out)[i] = glm::vec3(src[i]);
         }
     }
 
