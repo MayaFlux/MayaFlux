@@ -2,6 +2,7 @@
 
 #include "CameraReader.hpp"
 #include "ImageWriter.hpp"
+#include "ModelWriter.hpp"
 #include "SoundFileWriter.hpp"
 #include "VideoFileReader.hpp"
 #include "VideoFileWriter.hpp"
@@ -528,6 +529,41 @@ public:
     load_mesh_network(
         const std::string& filepath,
         TextureResolver resolver = nullptr);
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Mesh - save
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * @brief Save a MeshBuffer's mesh data to disk via the ModelWriter registry.
+     *
+     * Synchronous: MeshData is always CPU-authoritative for MeshBuffer (every
+     * mutation path, set_vertex_data/set_index_data/set_mesh_data, writes
+     * the CPU copy first), so there is no GPU download step here, unlike
+     * save_image/save_volume. The extension of @p filepath selects the writer
+     * via ModelWriterRegistry.
+     *
+     * @param mesh_buffer Source mesh. Must have valid MeshData.
+     * @param filepath    Destination path with extension.
+     * @param options     Format-specific writer options.
+     * @return True on success. On failure the writer's own error is logged.
+     */
+    bool save_mesh(
+        const std::shared_ptr<Buffers::MeshBuffer>& mesh_buffer,
+        const std::string& filepath,
+        const IO::ModelWriteOptions& options = {});
+
+    /**
+     * @brief Save one or more meshes to disk via the ModelWriter registry.
+     *
+     * For callers that already have MeshData in hand (e.g. from
+     * IO::download_compute_mesh) rather than a MeshBuffer. Every entry must
+     * satisfy Kakshya::MeshData::is_valid().
+     */
+    bool save_mesh(
+        const std::vector<Kakshya::MeshData>& meshes,
+        const std::string& filepath,
+        const IO::ModelWriteOptions& options = {});
 
     // ─────────────────────────────────────────────────────────────────────────
     // Image — save

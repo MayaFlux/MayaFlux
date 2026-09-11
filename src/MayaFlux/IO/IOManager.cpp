@@ -25,8 +25,10 @@
 #include "MayaFlux/Registry/Service/AudioBackendService.hpp"
 #include "MayaFlux/Registry/Service/IOService.hpp"
 
+#include "AssimpModelWriter.hpp"
 #include "EXRWriter.hpp"
 #include "ImageExport.hpp"
+#include "ModelExport.hpp"
 #include "ModelReader.hpp"
 #include "STBImageWriter.hpp"
 #include "VDBWriter.hpp"
@@ -75,6 +77,7 @@ IOManager::IOManager(Core::GlobalStreamInfo& stream_info, uint32_t frame_rate, c
     STBImageWriter::register_with_registry();
     EXRWriter::register_with_registry();
     VDBWriter::register_with_registry();
+    AssimpModelWriter::register_with_registry();
 
     MF_INFO(Journal::Component::Core, Journal::Context::Init, "IOManager initialised");
 }
@@ -703,6 +706,37 @@ IOManager::load_mesh_network(const std::string& filepath, TextureResolver resolv
         std::filesystem::path(filepath).filename().string());
 
     return net;
+}
+
+bool IOManager::save_mesh(
+    const std::shared_ptr<Buffers::MeshBuffer>& mesh_buffer,
+    const std::string& filepath,
+    const IO::ModelWriteOptions& options)
+{
+    return IO::save_mesh(mesh_buffer, filepath, options);
+}
+
+bool IOManager::save_mesh(
+    const std::vector<Kakshya::MeshData>& meshes,
+    const std::string& filepath,
+    const IO::ModelWriteOptions& options)
+{
+    auto writer = IO::ModelWriterRegistry::instance().create_writer(filepath);
+    if (!writer) {
+        MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
+            "save_mesh: no writer registered for '{}'", filepath);
+        return false;
+    }
+
+    const bool ok = writer->write(filepath, meshes, options);
+    if (!ok) {
+        MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
+            "save_mesh: writer failed for '{}': {}", filepath, writer->get_last_error());
+    } else {
+        MF_INFO(Journal::Component::API, Journal::Context::FileIO,
+            "save_mesh: wrote '{}'", filepath);
+    }
+    return ok;
 }
 
 void IOManager::configure_frame_processor(
