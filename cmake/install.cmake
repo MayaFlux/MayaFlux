@@ -102,10 +102,12 @@ install(DIRECTORY ${CMAKE_SOURCE_DIR}/third_party/tinyvdb/
     FILES_MATCHING PATTERN "*.h"
 )
 
-install(FILES
-    ${CMAKE_SOURCE_DIR}/third_party/tinyvdb/NOTICE
-    DESTINATION share/MayaFlux/licenses/tinyvdb
-)
+# Apache-2.0 requires the NOTICE only if upstream ships one. tinyvdb does
+# not today, so the vendor script copies nothing and this stays silent.
+if(EXISTS ${CMAKE_SOURCE_DIR}/third_party/tinyvdb/NOTICE)
+    install(FILES ${CMAKE_SOURCE_DIR}/third_party/tinyvdb/NOTICE
+        DESTINATION share/MayaFlux/licenses/tinyvdb)
+endif()
 
 install(TARGETS tinyvdb
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
