@@ -118,10 +118,10 @@ namespace {
     /**
      * @brief World-space translation from a grid's transform.
      *
-     * AFFINE's translation is read from the last row, matching the
-     * row-major layout tvdb_transform_t documents; a column-major foreign
-     * writer would need this flipped, which is not detectable from the
-     * struct alone.
+     * AFFINE's translation is read from the last column, rows 0-2 — the
+     * standard [R | t; 0 0 0 1] row-major layout, confirmed directly
+     * against tinyvdb's own AffineMap read/write (tvdb->translation[i] =
+     * matrix[i][3], both directions), not assumed.
      */
     glm::vec3 grid_translation(const tvdb_transform_t& t)
     {
@@ -136,9 +136,9 @@ namespace {
             };
         case TVDB_TRANSFORM_AFFINE:
             return {
-                static_cast<float>(t.matrix[3][0]),
-                static_cast<float>(t.matrix[3][1]),
-                static_cast<float>(t.matrix[3][2]),
+                static_cast<float>(t.matrix[0][3]),
+                static_cast<float>(t.matrix[1][3]),
+                static_cast<float>(t.matrix[2][3]),
             };
         default:
             return glm::vec3(0.0F);
