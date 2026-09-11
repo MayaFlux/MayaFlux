@@ -12,6 +12,10 @@ namespace MayaFlux::Nodes::GpuSync {
 class MeshWriterNode;
 }
 
+namespace MayaFlux::Nodes::Network {
+class MeshNetwork;
+}
+
 namespace MayaFlux::IO {
 
 /**
@@ -50,6 +54,26 @@ namespace MayaFlux::IO {
  */
 [[nodiscard]] bool save_mesh(
     const std::shared_ptr<Buffers::MeshNetworkBuffer>& network_buffer,
+    const std::string& filepath,
+    const ModelWriteOptions& options = {});
+
+/**
+ * @brief Save a MeshNetwork's current slots to disk as one multi-mesh file.
+ *
+ * Same shape as the MeshNetworkBuffer overload (each slot's vertices baked
+ * into world space from its current world_transform), but works directly
+ * on the network: slot data lives on MeshNetwork itself, not on the GPU
+ * buffer, so a network never wrapped in a MeshNetworkBuffer, or not yet
+ * rendered, is still exportable. The MeshNetworkBuffer overload forwards
+ * here via get_network().
+ *
+ * @param network  Source network.
+ * @param filepath Destination path with extension.
+ * @param options  Format-specific writer options.
+ * @return True on success. Failure is logged.
+ */
+[[nodiscard]] bool save_mesh(
+    const std::shared_ptr<Nodes::Network::MeshNetwork>& network,
     const std::string& filepath,
     const ModelWriteOptions& options = {});
 
@@ -136,6 +160,15 @@ namespace MayaFlux::IO {
  */
 [[nodiscard]] bool save_mesh_snapshot(
     const std::shared_ptr<Buffers::MeshNetworkBuffer>& network_buffer,
+    const std::string& path_pattern,
+    const ModelWriteOptions& options = {});
+
+/**
+ * @brief Save a MeshNetwork with a millisecond epoch timestamp spliced into
+ *        the path. See the MeshBuffer overload's doc for the case this serves.
+ */
+[[nodiscard]] bool save_mesh_snapshot(
+    const std::shared_ptr<Nodes::Network::MeshNetwork>& network,
     const std::string& path_pattern,
     const ModelWriteOptions& options = {});
 

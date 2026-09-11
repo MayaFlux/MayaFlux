@@ -11,6 +11,7 @@
 
 #include "MayaFlux/Buffers/Geometry/MeshBuffer.hpp"
 #include "MayaFlux/Buffers/State/VolumeGridBuffer.hpp"
+#include "MayaFlux/IO/ModelWriter.hpp"
 #include "MayaFlux/IO/VolumeWriter.hpp"
 #include "MayaFlux/Nodes/Network/MeshNetwork.hpp"
 
@@ -62,6 +63,11 @@ namespace {
 
     const std::vector<Portal::System::Dialog::ChooserFilter> k_image_save_filters {
         { .name = "Image", .extensions = { "png", "jpg", "jpeg", "bmp", "tga", "exr", "hdr" } },
+        { .name = "All Files", .extensions = { "*" } }
+    };
+
+    const std::vector<Portal::System::Dialog::ChooserFilter> k_mesh_save_filters {
+        { .name = "3D Model", .extensions = { "gltf", "glb", "obj", "fbx", "ply", "stl", "dae", "3ds", "x3d" } },
         { .name = "All Files", .extensions = { "*" } }
     };
 
@@ -267,6 +273,68 @@ bool save_image(
         [](Core::SystemDialogError) { },
         suggested_name,
         k_image_save_filters);
+}
+
+bool save_mesh(
+    const std::shared_ptr<Buffers::MeshBuffer>& buffer,
+    const std::string& suggested_name)
+{
+    return save_mesh(buffer, suggested_name, IO::ModelWriteOptions {});
+}
+
+bool save_mesh(
+    const std::shared_ptr<Buffers::MeshBuffer>& buffer,
+    const std::string& suggested_name,
+    const IO::ModelWriteOptions& options)
+{
+    if (!require_portal("save_mesh"))
+        return false;
+
+    auto iom = get_io_manager();
+    if (!iom) {
+        MF_ERROR(Journal::Component::API, Journal::Context::Runtime,
+            "save_mesh: IOManager unavailable");
+        return false;
+    }
+
+    return Portal::System::Dialog::save_file<bool>(
+        [&iom, &buffer, &options](const fs::path& p) {
+            return iom->save_mesh(buffer, p.string(), options);
+        },
+        [](Core::SystemDialogError) { },
+        suggested_name,
+        k_mesh_save_filters);
+}
+
+bool save_mesh_network(
+    const std::shared_ptr<Nodes::Network::MeshNetwork>& network,
+    const std::string& suggested_name)
+{
+    return save_mesh_network(network, suggested_name, IO::ModelWriteOptions {});
+}
+
+bool save_mesh_network(
+    const std::shared_ptr<Nodes::Network::MeshNetwork>& network,
+    const std::string& suggested_name,
+    const IO::ModelWriteOptions& options)
+{
+    if (!require_portal("save_mesh_network"))
+        return false;
+
+    auto iom = get_io_manager();
+    if (!iom) {
+        MF_ERROR(Journal::Component::API, Journal::Context::Runtime,
+            "save_mesh_network: IOManager unavailable");
+        return false;
+    }
+
+    return Portal::System::Dialog::save_file<bool>(
+        [&iom, &network, &options](const fs::path& p) {
+            return iom->save_mesh_network(network, p.string(), options);
+        },
+        [](Core::SystemDialogError) { },
+        suggested_name,
+        k_mesh_save_filters);
 }
 
 bool save_volume(

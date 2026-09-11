@@ -118,6 +118,36 @@ bool save_mesh(
 }
 
 bool save_mesh(
+    const std::shared_ptr<Nodes::Network::MeshNetwork>& network,
+    const std::string& filepath,
+    const ModelWriteOptions& options)
+{
+    if (!network) {
+        MF_ERROR(Journal::Component::IO, Journal::Context::FileIO, "save_mesh: null network");
+        return false;
+    }
+
+    std::vector<Kakshya::MeshData> meshes;
+    meshes.reserve(network->slots().size());
+    for (const auto& slot : network->slots()) {
+        if (!slot.node) {
+            continue;
+        }
+        if (auto packed = pack_node(slot.node, slot.world_transform, slot.name)) {
+            meshes.push_back(std::move(*packed));
+        }
+    }
+
+    if (meshes.empty()) {
+        MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+            "save_mesh: no exportable slots in network");
+        return false;
+    }
+
+    return write_via_registry(filepath, meshes, options);
+}
+
+bool save_mesh(
     const std::shared_ptr<Buffers::MeshNetworkBuffer>& network_buffer,
     const std::string& filepath,
     const ModelWriteOptions& options)
@@ -134,24 +164,7 @@ bool save_mesh(
         return false;
     }
 
-    std::vector<Kakshya::MeshData> meshes;
-    meshes.reserve(net->slots().size());
-    for (const auto& slot : net->slots()) {
-        if (!slot.node) {
-            continue;
-        }
-        if (auto packed = pack_node(slot.node, slot.world_transform, slot.name)) {
-            meshes.push_back(std::move(*packed));
-        }
-    }
-
-    if (meshes.empty()) {
-        MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
-            "save_mesh: no exportable slots in network");
-        return false;
-    }
-
-    return write_via_registry(filepath, meshes, options);
+    return save_mesh(net, filepath, options);
 }
 
 bool save_mesh(
@@ -267,6 +280,14 @@ bool save_mesh_snapshot(
     const ModelWriteOptions& options)
 {
     return save_mesh(network_buffer, splice_timestamp(path_pattern), options);
+}
+
+bool save_mesh_snapshot(
+    const std::shared_ptr<Nodes::Network::MeshNetwork>& network,
+    const std::string& path_pattern,
+    const ModelWriteOptions& options)
+{
+    return save_mesh(network, splice_timestamp(path_pattern), options);
 }
 
 bool save_mesh_snapshot(

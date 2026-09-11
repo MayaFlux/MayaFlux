@@ -23,6 +23,7 @@ namespace IO {
     class IOManager;
     struct ImageWriteOptions;
     struct VolumeWriteOptions;
+    struct ModelWriteOptions;
     using TextureResolver = std::function<std::shared_ptr<Core::VKImage>(const std::string&)>; // add
 }
 
@@ -192,6 +193,68 @@ MAYAFLUX_API bool save_image(
     const std::shared_ptr<Buffers::TextureBuffer>& buffer,
     const std::string& suggested_name,
     const IO::ImageWriteOptions& options);
+
+/**
+ * @brief Present a native save-file dialog filtered to 3D model formats and
+ *        save @p buffer to the chosen path via IOManager::save_mesh().
+ *
+ * Blocks until the user confirms or cancels. Synchronous: MeshBuffer's
+ * mesh data is always CPU-resident, so there is no download step to queue,
+ * unlike save_image/save_volume. Returns false on cancellation, backend
+ * error, or if Portal::System is not initialized.
+ *
+ * @param buffer         Source MeshBuffer to encode.
+ * @param suggested_name Filename pre-filled in the dialog name field.
+ */
+MAYAFLUX_API bool save_mesh(
+    const std::shared_ptr<Buffers::MeshBuffer>& buffer,
+    const std::string& suggested_name = "output.gltf");
+
+/**
+ * @brief Present a native save-file dialog filtered to 3D model formats and
+ *        save @p buffer to the chosen path via IOManager::save_mesh().
+ *
+ * @param buffer         Source MeshBuffer to encode.
+ * @param suggested_name Filename pre-filled in the dialog name field.
+ * @param options        Format-specific writer options forwarded to IOManager.
+ */
+MAYAFLUX_API bool save_mesh(
+    const std::shared_ptr<Buffers::MeshBuffer>& buffer,
+    const std::string& suggested_name,
+    const IO::ModelWriteOptions& options);
+
+/**
+ * @brief Present a native save-file dialog filtered to 3D model formats and
+ *        save @p network to the chosen path via IOManager::save_mesh_network().
+ *
+ * Works directly on the MeshNetwork returned by choose_mesh_network(),
+ * whether or not it has ever been wrapped in a MeshNetworkBuffer or
+ * rendered: slot data lives on the network's own MeshWriterNodes. Each
+ * slot's vertices are baked into world space from its current
+ * world_transform, so an exploded or rotated network exports in the pose
+ * it is actually in. Blocks until the user confirms or cancels. Returns
+ * false on cancellation, backend error, or if Portal::System is not
+ * initialized.
+ *
+ * @param network        Source MeshNetwork to encode.
+ * @param suggested_name Filename pre-filled in the dialog name field.
+ */
+MAYAFLUX_API bool save_mesh_network(
+    const std::shared_ptr<Nodes::Network::MeshNetwork>& network,
+    const std::string& suggested_name = "output.gltf");
+
+/**
+ * @brief Present a native save-file dialog filtered to 3D model formats and
+ *        save @p network to the chosen path via IOManager::save_mesh_network().
+ *
+ * @param network        Source MeshNetwork to encode.
+ * @param suggested_name Filename pre-filled in the dialog name field.
+ * @param options        Format-specific writer options forwarded to IOManager.
+ */
+MAYAFLUX_API bool save_mesh_network(
+    const std::shared_ptr<Nodes::Network::MeshNetwork>& network,
+    const std::string& suggested_name,
+    const IO::ModelWriteOptions& options);
 
 /**
  * @brief Present a native save-file dialog filtered to volume formats and save

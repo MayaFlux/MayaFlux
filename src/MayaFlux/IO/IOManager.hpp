@@ -600,6 +600,24 @@ public:
         const std::string& path_pattern,
         const IO::ModelWriteOptions& options = {});
 
+    /**
+     * @brief Save a MeshNetwork's current slots to disk via the ModelWriter registry.
+     *
+     * Synchronous: slot data lives on MeshWriterNode, CPU-resident the same
+     * way MeshBuffer's is, whether or not the network is wrapped in a
+     * MeshNetworkBuffer or has ever been rendered. Each slot's vertices are
+     * baked into world space from its current world_transform.
+     *
+     * @param network  Source network.
+     * @param filepath Destination path with extension.
+     * @param options  Format-specific writer options.
+     * @return True on success. On failure the writer's own error is logged.
+     */
+    bool save_mesh_network(
+        const std::shared_ptr<Nodes::Network::MeshNetwork>& network,
+        const std::string& filepath,
+        const IO::ModelWriteOptions& options = {});
+
     // ─────────────────────────────────────────────────────────────────────────
     // Image — save
     // ─────────────────────────────────────────────────────────────────────────

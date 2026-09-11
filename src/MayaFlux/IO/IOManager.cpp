@@ -789,6 +789,14 @@ bool IOManager::save_compute_mesh_snapshot(
     return true;
 }
 
+bool IOManager::save_mesh_network(
+    const std::shared_ptr<Nodes::Network::MeshNetwork>& network,
+    const std::string& filepath,
+    const IO::ModelWriteOptions& options)
+{
+    return IO::save_mesh(network, filepath, options);
+}
+
 void IOManager::configure_frame_processor(
     const std::shared_ptr<Kakshya::VideoFileContainer>& container)
 {
