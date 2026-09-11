@@ -5,6 +5,7 @@
 #include "SoundFileWriter.hpp"
 #include "VideoFileReader.hpp"
 #include "VideoFileWriter.hpp"
+#include "VolumeReader.hpp"
 #include "VolumeTransfer.hpp"
 #include "VolumeWriter.hpp"
 
@@ -586,6 +587,46 @@ public:
     void wait_for_pending_saves();
 
     // ─────────────────────────────────────────────────────────────────────────
+    // Volume — load
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * @brief Load a volume file into a newly constructed VolumeGridBuffer.
+     *
+     * Opens the file via IO::VolumeReader, reads every selected grid into
+     * VolumeData, constructs a VolumeGridBuffer with one FieldDecl per
+     * field — name and semantics from the file, stride sizeof(float) for a
+     * scalar field or sizeof(glm::vec4) for a vector one, the GPU layout
+     * every vector field uses regardless of what VolumeData stores — over
+     * the file's own lattice, and seeds it via IO::upload_volume. Mirrors
+     * load_mesh: construction and GPU registration only, nothing about
+     * processing chain or rendering.
+     *
+     * setup_processors() and any simulation wiring via setup_flow() are
+     * left to the caller, as VolumeGridBuffer's own usage example assumes.
+     * Nothing about an imported file says whether the caller wants to keep
+     * simulating what it loaded, run it once as a mask, or read it once and
+     * discard the buffer — so nothing here decides that for them.
+     *
+     * The returned buffer is retained for the lifetime of IOManager; see
+     * get_loaded_volumes().
+     *
+     * @param filepath Path to the volume file (.vdb).
+     * @param options  Grid selection, forwarded to VolumeReader::load().
+     * @return Constructed and seeded VolumeGridBuffer, or nullptr on failure.
+     */
+    [[nodiscard]] std::shared_ptr<Buffers::VolumeGridBuffer>
+    load_volume(
+        const std::string& filepath,
+        const IO::VolumeReadOptions& options = {});
+
+    /**
+     * @brief Returns all VolumeGridBuffers created via load_volume().
+     */
+    [[nodiscard]] std::vector<std::shared_ptr<Buffers::VolumeGridBuffer>>
+    get_loaded_volumes() const { return m_loaded_volumes; }
+
+    // ─────────────────────────────────────────────────────────────────────────
     // Volume — save
     // ─────────────────────────────────────────────────────────────────────────
 
@@ -751,11 +792,12 @@ private:
 
     std::vector<std::shared_ptr<VideoFileWriter>> m_video_writers;
 
-    // ── Volume Capture ──────────────────────────────────────────────────────
+    // ── Volume ──────────────────────────────────────────────────────
 
     std::atomic<uint32_t> m_next_volume_capture_id { 1 };
     mutable std::mutex m_volume_captures_mutex;
     std::unordered_map<uint32_t, std::unique_ptr<IO::VolumeCapture>> m_volume_captures;
+    std::vector<std::shared_ptr<Buffers::VolumeGridBuffer>> m_loaded_volumes;
 
     // ── readers ──────────────────────────────────────────────────────
 
