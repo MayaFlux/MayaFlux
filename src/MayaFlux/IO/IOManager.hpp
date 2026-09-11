@@ -5,6 +5,8 @@
 #include "SoundFileWriter.hpp"
 #include "VideoFileReader.hpp"
 #include "VideoFileWriter.hpp"
+#include "VolumeExport.hpp"
+#include "VolumeWriter.hpp"
 
 #include <future>
 
@@ -31,6 +33,7 @@ class SoundContainerBuffer;
 class TextureBuffer;
 class TextBuffer;
 class MeshBuffer;
+class VolumeGridBuffer;
 class BufferManager;
 }
 
@@ -101,7 +104,7 @@ public:
      * Must be constructed before any VideoFileReader::load_into_container() call
      * that should participate in managed dispatch.
      */
-    IOManager(Core::GlobalStreamInfo& stream_info, uint32_t frame_rate, const std::shared_ptr<Buffers::BufferManager>& buffer_manager);
+    IOManager(Core::GlobalStreamInfo& stream_info, uint32_t frame_rate, const std::shared_ptr<Buffers::BufferManager>& buffer_manager, const std::shared_ptr<Vruta::TaskScheduler>& scheduler);
 
     /**
      * @brief Unregisters IOService, releases all owned readers, clears stored buffers.
@@ -583,8 +586,79 @@ public:
     void wait_for_pending_saves();
 
     // ─────────────────────────────────────────────────────────────────────────
-    // Image — save
+    // Volume — save
     // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * @brief Save an already-downloaded VolumeData to disk asynchronously.
+     *
+     * Purely CPU-bound from here, so no thread restrictions on the caller.
+     * Encode and disk flush are dispatched to a worker; failures are logged
+     * but do not block.
+     *
+     * There is deliberately no VolumeGridBuffer overload. read_field records
+     * a fenced device-to-host copy and needs command queue access, so unlike
+     * save_image(VKImage) the download cannot move into the task. Call
+     * IO::download_volume from a thread that has queue access, typically a
+     * GraphicsRoutine, then pass the result here.
+     *
+     * The extension of @p filepath selects the writer via
+     * VolumeWriterRegistry. For synchronous semantics use the
+     * IO::save_volume free function in VolumeExport.hpp, and for a numbered
+     * frame sequence use IO::VolumeCapture.
+     *
+     * @return True if the encode task was queued.
+     */
+    bool save_volume(
+        Kakshya::VolumeData data,
+        const std::string& filepath,
+        const IO::VolumeWriteOptions& options = {});
+
+    /**
+     * @brief Begin recording a numbered .vdb sequence from a volume.
+     *
+     * Constructs a VolumeCapture on the engine scheduler and retains it.
+     * The capture spawns a GraphicsRoutine that reads one frame and
+     * suspends on a FrameDelay, so it advances on the frame clock and
+     * resumes on the thread that has command queue access. Nothing polls
+     * it and nothing drives it.
+     *
+     * The readback stays on the graphics thread because it must. The
+     * encode is dispatched to the save task pool, so the per-frame cost on
+     * the graphics thread is the transfer alone.
+     *
+     * For a capture the caller owns and drives itself, construct
+     * IO::VolumeCapture directly.
+     *
+     * @param volume         Volume to record.
+     * @param path_pattern   Destination with one index field, such as
+     *                       "smoke.{:04}.vdb". Zero padding matters.
+     * @param field_names    Fields to record. Empty means all.
+     * @param options        Writer options, applied to every frame.
+     * @param max_frames     Stop after this many frames. Zero is unbounded.
+     * @param frame_interval Frames between captures.
+     * @return Capture handle for stop_volume_capture, or 0 on failure.
+     */
+    [[nodiscard]] uint32_t capture_volume(
+        const std::shared_ptr<Buffers::VolumeGridBuffer>& volume,
+        const std::string& path_pattern,
+        const std::vector<std::string>& field_names = {},
+        const IO::VolumeWriteOptions& options = {},
+        uint32_t max_frames = 0,
+        uint64_t frame_interval = 1);
+
+    /**
+     * @brief Stop a running volume capture and release it.
+     *
+     * Frames already queued for encode still complete. No-op with a
+     * warning if the id is unknown.
+     */
+    void stop_volume_capture(uint32_t capture_id);
+
+    /**
+     * @brief Returns all active volume capture IDs.
+     */
+    [[nodiscard]] std::vector<uint32_t> get_volume_capture_ids() const;
 
     /**
      * @brief Returns all active video reader IDs.
@@ -677,6 +751,12 @@ private:
 
     std::vector<std::shared_ptr<VideoFileWriter>> m_video_writers;
 
+    // ── Volume Capture ──────────────────────────────────────────────────────
+
+    std::atomic<uint32_t> m_next_volume_capture_id { 1 };
+    mutable std::mutex m_volume_captures_mutex;
+    std::unordered_map<uint32_t, std::unique_ptr<IO::VolumeCapture>> m_volume_captures;
+
     // ── readers ──────────────────────────────────────────────────────
 
     std::atomic<uint64_t> m_next_reader_id { 1 };
@@ -720,6 +800,8 @@ private:
         m_audio_buffers;
 
     std::shared_ptr<Buffers::BufferManager> m_buffer_manager;
+
+    std::shared_ptr<Vruta::TaskScheduler> m_scheduler;
 
     // ── IOService ──────────────────────────────────────────────────────────
 

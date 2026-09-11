@@ -83,6 +83,17 @@ bool save_volume(
 // ============================================================================
 
 /**
+ * @brief Where a captured frame goes.
+ *
+ * Takes ownership so an asynchronous writer can move the data onto a
+ * worker. Defaults to a synchronous save_volume on the capturing thread.
+ * A caller with a task pool supplies its own; nothing here needs to know
+ * such a pool exists.
+ */
+using VolumeWriteHook = std::function<bool(
+    Kakshya::VolumeData&&, const std::string&, const VolumeWriteOptions&)>;
+
+/**
  * @class VolumeCapture
  * @brief Records a numbered .vdb sequence from a running volume.
  *
@@ -118,13 +129,14 @@ public:
      *                     The extension selects the writer.
      * @param field_names  Fields to record. Empty means every declared field.
      * @param options      Writer options, applied to every frame.
+     * @param write        Optional hook to move the VolumeData onto a worker
      */
     VolumeCapture(
         Vruta::TaskScheduler& scheduler,
         std::shared_ptr<Buffers::VolumeGridBuffer> volume,
         std::string path_pattern,
         std::vector<std::string> field_names = {},
-        VolumeWriteOptions options = {});
+        VolumeWriteOptions options = {}, VolumeWriteHook write = nullptr);
 
     ~VolumeCapture();
 
@@ -164,9 +176,10 @@ private:
     VolumeWriteOptions m_options;
 
     std::string m_task_name;
-    uint32_t m_frame { 0 };
-    uint32_t m_max_frames { 0 };
-    bool m_recording { false };
+    uint32_t m_frame {};
+    uint32_t m_max_frames {};
+    bool m_recording {};
+    VolumeWriteHook m_write;
 };
 
 } // namespace MayaFlux::IO

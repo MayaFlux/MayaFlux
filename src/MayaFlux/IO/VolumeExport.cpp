@@ -166,12 +166,18 @@ VolumeCapture::VolumeCapture(
     std::shared_ptr<Buffers::VolumeGridBuffer> volume,
     std::string path_pattern,
     std::vector<std::string> field_names,
-    VolumeWriteOptions options)
+    VolumeWriteOptions options,
+    VolumeWriteHook write)
     : m_scheduler(scheduler)
     , m_volume(std::move(volume))
     , m_pattern(std::move(path_pattern))
     , m_fields(std::move(field_names))
     , m_options(std::move(options))
+    , m_write(write ? std::move(write)
+                    : [](Kakshya::VolumeData&& d, const std::string& p,
+                          const VolumeWriteOptions& o) {
+                          return save_volume(d, p, o);
+                      })
 {
 }
 
@@ -193,7 +199,7 @@ bool VolumeCapture::capture_frame()
         return false;
     }
 
-    if (!save_volume(*data, resolve_sequence_path(m_pattern, m_frame), m_options)) {
+    if (!m_write(std::move(*data), resolve_sequence_path(m_pattern, m_frame), m_options)) {
         MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
             "VolumeCapture: write failed at frame {}", m_frame);
         return false;
