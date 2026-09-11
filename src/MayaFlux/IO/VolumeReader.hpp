@@ -62,11 +62,15 @@ struct VolumeReadOptions {
  * Both paths assume every selected grid shares the first grid's voxel size
  * and translation. A file with per-grid transforms that actually differ is
  * not resampled into agreement — each grid's raw voxel indices are read
- * directly against the shared region, which silently misplaces that grid's
- * content relative to the others. This is a real limitation for a file
- * assembled by hand from mismatched sources; it is not a limitation for
- * output produced by a single simulation or DCC export, which is what this
- * reader exists to consume.
+ * directly against the shared region, which misplaces that grid's content
+ * relative to the others. materialize() logs an MF_WARN naming the
+ * mismatched grid so this is a loud failure rather than a silent one, but
+ * it does not correct it — actual per-grid resampling would need to
+ * materialize the mismatched grid separately in its own index space and
+ * interpolate into the shared lattice, which is not implemented. This is a
+ * real limitation for a file assembled by hand from mismatched sources; it
+ * is not a limitation for output produced by a single simulation or DCC
+ * export, which is what this reader exists to consume.
  *
  * ## Inactive cells
  *

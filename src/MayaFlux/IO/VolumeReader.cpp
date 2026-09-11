@@ -234,6 +234,26 @@ std::optional<Kakshya::VolumeData> VolumeReader::materialize(
     const glm::ivec3& region_min,
     const Kinesis::Lattice3D& lattice) const
 {
+    constexpr float k_transform_epsilon = 1e-5F;
+
+    const auto reference = m_archive->grid_summary(indices.front());
+    for (size_t idx : indices) {
+        if (idx == indices.front()) {
+            continue;
+        }
+        const auto summary = m_archive->grid_summary(idx);
+        const bool mismatched = glm::any(glm::greaterThan(
+                                     glm::abs(summary.voxel_size - reference.voxel_size), glm::vec3(k_transform_epsilon)))
+            || glm::any(glm::greaterThan(
+                glm::abs(summary.translation - reference.translation), glm::vec3(k_transform_epsilon)));
+        if (mismatched) {
+            MF_WARN(Journal::Component::IO, Journal::Context::FileIO,
+                "VolumeReader: grid '{}' has a different voxel size or translation than '{}', "
+                "its voxel indices are read directly against the shared region and will not be aligned",
+                summary.name, reference.name);
+        }
+    }
+
     Kakshya::VolumeData result;
     result.lattice = lattice;
     result.fields.reserve(indices.size());
