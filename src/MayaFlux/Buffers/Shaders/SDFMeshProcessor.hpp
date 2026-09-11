@@ -115,6 +115,17 @@ public:
     /** @brief The three axis colors currently written into vertex color. */
     [[nodiscard]] const std::array<glm::vec3, 3>& get_axis_palette() const { return m_palette; }
 
+    /**
+     * @brief Atomic vertex counter buffer, host-visible in both construction
+     *        modes: owned and zeroed here when this processor evaluates its
+     *        own field, or owned by SDFPrepProcessor and passed in for the
+     *        GPU-field construction mode. Read via get_mapped_ptr() for the
+     *        true live vertex count after a dispatch, which is the count a
+     *        readback of the owning VKBuffer must be sized to rather than
+     *        the buffer's own worst-case allocated capacity.
+     */
+    [[nodiscard]] std::shared_ptr<VKBuffer> counter_buf() const { return m_counter_buf; }
+
 protected:
     void on_attach(const std::shared_ptr<Buffer>& buffer) override;
     void on_descriptors_created() override;

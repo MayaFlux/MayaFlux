@@ -89,6 +89,19 @@ public:
         return m_field_processor;
     }
 
+    /**
+     * @brief The marching-cubes stage, valid after setup_processors().
+     *
+     * Holds the atomic vertex counter buffer (SDFMeshProcessor::counter_buf())
+     * a readback needs to size itself correctly, since this buffer's own
+     * get_size_bytes() reflects worst-case allocated capacity, not the live
+     * count from the most recent dispatch.
+     */
+    [[nodiscard]] std::shared_ptr<SDFMeshProcessor> get_mesh_processor() const
+    {
+        return m_sdf_processor;
+    }
+
     ~ComputeMeshBuffer() override = default;
 
     void setup_processors(ProcessingToken token) override;

@@ -5,6 +5,7 @@
 namespace MayaFlux::Buffers {
 class MeshBuffer;
 class MeshNetworkBuffer;
+class ComputeMeshBuffer;
 }
 
 namespace MayaFlux::Nodes::GpuSync {
@@ -67,6 +68,45 @@ namespace MayaFlux::IO {
 [[nodiscard]] bool save_mesh(
     const std::shared_ptr<Nodes::GpuSync::MeshWriterNode>& node,
     const std::string& filepath,
+    const ModelWriteOptions& options = {});
+
+/**
+ * @brief Download a ComputeMeshBuffer's current live geometry to CPU.
+ *
+ * ComputeMeshBuffer's own doc states its live rendering path never reads
+ * back vertex data; this is the deliberate, one-shot exception for export.
+ * Reads the true live vertex count off the atomic counter buffer's mapped
+ * pointer (host-visible, no transfer), then downloads exactly that many
+ * vertices from the buffer itself, not its worst-case allocated capacity.
+ * The result is non-indexed triangles, so a trivial sequential index array
+ * (0..N-1) is synthesized to satisfy Kakshya::MeshData's index requirement.
+ *
+ * @param buffer Source buffer. setup_processors() must have run.
+ * @return The current geometry, or nullopt if the buffer is null, has no
+ *         mesh processor yet, or the live vertex count is zero.
+ */
+[[nodiscard]] std::optional<Kakshya::MeshData> download_compute_mesh(
+    const std::shared_ptr<Buffers::ComputeMeshBuffer>& buffer);
+
+/**
+ * @brief Save a ComputeMeshBuffer's current live geometry to disk.
+ *
+ * Wraps download_compute_mesh() and write_via_registry() in one call. See
+ * download_compute_mesh's own doc for the one-shot readback this performs.
+ */
+[[nodiscard]] bool save_mesh(
+    const std::shared_ptr<Buffers::ComputeMeshBuffer>& buffer,
+    const std::string& filepath,
+    const ModelWriteOptions& options = {});
+
+/**
+ * @brief Save a ComputeMeshBuffer with a millisecond epoch timestamp
+ *        spliced into the path. See the MeshBuffer overload's doc for the
+ *        case this serves.
+ */
+[[nodiscard]] bool save_mesh_snapshot(
+    const std::shared_ptr<Buffers::ComputeMeshBuffer>& buffer,
+    const std::string& path_pattern,
     const ModelWriteOptions& options = {});
 
 /**

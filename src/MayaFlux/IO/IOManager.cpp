@@ -739,6 +739,56 @@ bool IOManager::save_mesh(
     return ok;
 }
 
+bool IOManager::save_compute_mesh(
+    const std::shared_ptr<Buffers::ComputeMeshBuffer>& buffer,
+    const std::string& filepath,
+    const IO::ModelWriteOptions& options)
+{
+    if (!buffer) {
+        MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
+            "save_compute_mesh: null buffer");
+        return false;
+    }
+
+    auto fut = std::async(std::launch::async,
+        [buffer, filepath, options]() -> bool {
+            return IO::save_mesh(buffer, filepath, options);
+        });
+
+    std::lock_guard lock(m_save_tasks_mutex);
+    m_save_tasks.push_back(std::move(fut));
+    std::erase_if(m_save_tasks, [](std::future<bool>& f) {
+        return f.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
+    });
+
+    return true;
+}
+
+bool IOManager::save_compute_mesh_snapshot(
+    const std::shared_ptr<Buffers::ComputeMeshBuffer>& buffer,
+    const std::string& path_pattern,
+    const IO::ModelWriteOptions& options)
+{
+    if (!buffer) {
+        MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
+            "save_compute_mesh_snapshot: null buffer");
+        return false;
+    }
+
+    auto fut = std::async(std::launch::async,
+        [buffer, path_pattern, options]() -> bool {
+            return IO::save_mesh_snapshot(buffer, path_pattern, options);
+        });
+
+    std::lock_guard lock(m_save_tasks_mutex);
+    m_save_tasks.push_back(std::move(fut));
+    std::erase_if(m_save_tasks, [](std::future<bool>& f) {
+        return f.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
+    });
+
+    return true;
+}
+
 void IOManager::configure_frame_processor(
     const std::shared_ptr<Kakshya::VideoFileContainer>& container)
 {

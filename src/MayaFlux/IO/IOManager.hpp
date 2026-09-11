@@ -35,6 +35,7 @@ class SoundContainerBuffer;
 class TextureBuffer;
 class TextBuffer;
 class MeshBuffer;
+class ComputeMeshBuffer;
 class VolumeGridBuffer;
 class BufferManager;
 }
@@ -563,6 +564,40 @@ public:
     bool save_mesh(
         const std::vector<Kakshya::MeshData>& meshes,
         const std::string& filepath,
+        const IO::ModelWriteOptions& options = {});
+
+    /**
+     * @brief Save a ComputeMeshBuffer's current live geometry to disk asynchronously.
+     *
+     * Unlike save_mesh(MeshBuffer), this genuinely needs the async task
+     * pool: ComputeMeshBuffer's geometry lives GPU-only, so retrieving it
+     * means a real device-to-host transfer (IO::download_compute_mesh), not
+     * a copy of data already resident on the CPU. Returns once the task is
+     * queued; readback or write failure is logged from the task and does
+     * not surface here, mirroring save_volume.
+     *
+     * @param buffer   Source buffer. setup_processors() must have run.
+     * @param filepath Destination path with extension.
+     * @param options  Format-specific writer options.
+     * @return True once the task is queued.
+     */
+    bool save_compute_mesh(
+        const std::shared_ptr<Buffers::ComputeMeshBuffer>& buffer,
+        const std::string& filepath,
+        const IO::ModelWriteOptions& options = {});
+
+    /**
+     * @brief Save a ComputeMeshBuffer with a millisecond epoch timestamp
+     *        spliced into the path, queued asynchronously.
+     *
+     * The timestamp is computed on the worker thread at the moment the
+     * readback actually runs, not at the moment this call returns, so
+     * repeated presses in quick succession still each land in their own
+     * file rather than racing on a single path computed up front.
+     */
+    bool save_compute_mesh_snapshot(
+        const std::shared_ptr<Buffers::ComputeMeshBuffer>& buffer,
+        const std::string& path_pattern,
         const IO::ModelWriteOptions& options = {});
 
     // ─────────────────────────────────────────────────────────────────────────
