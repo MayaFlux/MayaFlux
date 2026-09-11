@@ -95,6 +95,18 @@ public:
         return m_mesh_data.access();
     }
 
+    /**
+     * @brief Read-only access to the owning MeshData.
+     *
+     * For a caller that needs an owning copy (e.g. IO::ModelWriter, which
+     * takes MeshData rather than a non-owning view since it must outlive the
+     * synchronous export call). Prefer access() when a view suffices.
+     */
+    [[nodiscard]] const Kakshya::MeshData& get_mesh_data() const noexcept
+    {
+        return m_mesh_data;
+    }
+
     [[nodiscard]] uint32_t get_vertex_count() const noexcept
     {
         return m_mesh_data.vertex_count();
