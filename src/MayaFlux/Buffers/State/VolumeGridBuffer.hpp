@@ -441,6 +441,37 @@ public:
     VectorRef declare_vector(std::string name, Kinesis::LatticeSemantics semantics = {});
 
     /**
+     * @brief Declare whichever of @p decls are not already present.
+     *
+     * Built for a buffer whose fields were not all declared by the same
+     * call: IOManager::load_volume declares one field per grid a file
+     * reported, and a caller then wanting to run a simulation over that
+     * data needs velocity, pressure and the rest besides. Declaring those
+     * blind risks exactly what allocate_field already logs an error for —
+     * a name the file also happened to use, silently discarded, cascading
+     * into an empty-name ref everywhere that field is passed next. This
+     * checks first, so a name already present — whether reported by a
+     * loader or declared earlier by hand, nothing here distinguishes the
+     * two — is left alone rather than collided with.
+     *
+     * A caller who wants a ScalarRef/VectorRef for an entry already present
+     * builds one directly: `ScalarRef{name, owner}` from its own name and
+     * this buffer, the same way declare_scalar builds the ref for a field
+     * it also just allocated. This does not return refs itself, since
+     * FieldDecl does not distinguish scalar from vector cleanly enough to
+     * hand back a uniformly typed collection.
+     *
+     * @param decls Fields to ensure exist. Semantics and stride only take
+     *              effect for an entry actually declared here; an entry
+     *              already present keeps whatever it already has.
+     * @return Names of the entries actually declared — not already present,
+     *         and not rejected for the reasons allocate_field logs. A
+     *         caller seeding initial values should seed exactly these and
+     *         leave every other named field's existing data untouched.
+     */
+    std::vector<std::string> ensure_fields(const std::vector<FieldDecl>& decls);
+
+    /**
      * @brief Write initial values into a scalar field from a Kinesis field.
      * @param name Field name. Must have stride sizeof(float).
      * @param field Sampled at each cell centre in world space.

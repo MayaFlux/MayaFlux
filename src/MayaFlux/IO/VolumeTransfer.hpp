@@ -41,6 +41,43 @@ namespace MayaFlux::IO {
     const std::vector<std::string>& field_names = {});
 
 /**
+ * @brief Upload every field of a host VolumeData into a GPU-resident volume.
+ *
+ * The reverse of download_volume: for each field in @p data whose name is
+ * declared on @p volume, writes its bytes into the current write slot via
+ * VolumeGridBuffer::seed_raw. The calling thread must have command queue
+ * access, matching download_volume's requirement, since seed_raw records a
+ * transfer that must resolve before the next one can be issued.
+ *
+ * A scalar field (VolumeField holding vector<float>) uploads directly. A
+ * vector field is expanded from glm::vec3 to glm::vec4 first, zeroing the
+ * fourth component, because the GPU layout carries that padding and
+ * VolumeData does not — the inverse of the gather download_volume performs.
+ * That expansion costs an allocation at four thirds the input size.
+ *
+ * A field named in @p data but not declared on @p volume, or whose declared
+ * stride does not match what the field's variant implies (float for a
+ * scalar, vec4 for a vector), is skipped with an error; the rest of the
+ * upload proceeds. Neither VolumeData's lattice nor its cell count is
+ * checked against the volume's own — a mismatch surfaces as seed_raw's own
+ * size-mismatch error per field, not as a single upfront rejection.
+ *
+ * Each field is one seed_raw call rather than a batched transfer: simpler
+ * than building a seed_raw counterpart to read_fields' batching, at the
+ * cost of one staging round trip per field instead of one for the whole
+ * upload. Worth revisiting if upload_volume becomes a per-frame path rather
+ * than the one-shot load this exists for.
+ *
+ * @param data   Source, typically from IO::VolumeReader::load().
+ * @param volume Destination. Fields must already be declared; this call
+ *               never declares one.
+ * @return True if at least one field was uploaded.
+ */
+bool upload_volume(
+    const Kakshya::VolumeData& data,
+    const std::shared_ptr<Buffers::VolumeGridBuffer>& volume);
+
+/**
  * @brief Save a volume directly to disk via the VolumeWriter registry.
  *
  * Combines download_volume() with VolumeWriterRegistry::create_writer(). The

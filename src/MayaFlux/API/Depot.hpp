@@ -22,6 +22,7 @@ namespace Core {
 namespace IO {
     class IOManager;
     struct ImageWriteOptions;
+    struct VolumeWriteOptions;
     using TextureResolver = std::function<std::shared_ptr<Core::VKImage>(const std::string&)>; // add
 }
 
@@ -36,6 +37,7 @@ namespace Buffers {
     class SoundContainerBuffer;
     class TextureBuffer;
     class MeshBuffer;
+    class VolumeGridBuffer;
 }
 
 namespace Nodes::Network {
@@ -130,6 +132,15 @@ MAYAFLUX_API std::vector<std::shared_ptr<Buffers::MeshBuffer>> choose_mesh();
 MAYAFLUX_API std::shared_ptr<Nodes::Network::MeshNetwork>
 choose_mesh_network(IO::TextureResolver resolver = nullptr);
 
+/**
+ * @brief Present a native open-file dialog filtered to volume formats and
+ *        load the chosen file via IOManager::load_volume().
+ *
+ * Blocks until the user confirms or cancels. Returns nullptr on cancellation,
+ * backend error, or if Portal::System is not initialized.
+ */
+MAYAFLUX_API std::shared_ptr<Buffers::VolumeGridBuffer> choose_volume();
+
 // ─────────────────────────────────────────────────────────────────────────
 // Dialog-backed save
 // ─────────────────────────────────────────────────────────────────────────
@@ -181,6 +192,39 @@ MAYAFLUX_API bool save_image(
     const std::shared_ptr<Buffers::TextureBuffer>& buffer,
     const std::string& suggested_name,
     const IO::ImageWriteOptions& options);
+
+/**
+ * @brief Present a native save-file dialog filtered to volume formats and save
+ *        @p volume to the chosen path via IOManager::save_volume().
+ *
+ * Blocks until the user confirms or cancels. The download and encode task
+ * are queued asynchronously; this function returns once the path is chosen
+ * and the task is enqueued. Returns false on cancellation, backend error,
+ * or if Portal::System is not initialized.
+ *
+ * @param volume         Source VolumeGridBuffer to download and encode.
+ * @param suggested_name Filename pre-filled in the dialog name field.
+ */
+MAYAFLUX_API bool save_volume(
+    const std::shared_ptr<Buffers::VolumeGridBuffer>& volume,
+    const std::string& suggested_name = "output.vdb");
+
+/**
+ * @brief Present a native save-file dialog filtered to volume formats and save
+ *        @p volume to the chosen path via IOManager::save_volume().
+ *
+ * Blocks until the user confirms or cancels. The download and encode task
+ * are queued asynchronously. Returns false on cancellation, backend error,
+ * or if Portal::System is not initialized.
+ *
+ * @param volume         Source VolumeGridBuffer to download and encode.
+ * @param suggested_name Filename pre-filled in the dialog name field.
+ * @param options        Writer options forwarded to IOManager.
+ */
+MAYAFLUX_API bool save_volume(
+    const std::shared_ptr<Buffers::VolumeGridBuffer>& volume,
+    const std::string& suggested_name,
+    const IO::VolumeWriteOptions& options);
 
 /**
  * @brief Retrieves the global IOManager instance for file loading and buffer management

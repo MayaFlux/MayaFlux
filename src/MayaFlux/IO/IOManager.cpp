@@ -18,6 +18,7 @@
 #include "MayaFlux/Buffers/Textures/TextureBuffer.hpp"
 
 #include "MayaFlux/Buffers/Geometry/MeshBuffer.hpp"
+#include "MayaFlux/Buffers/State/VolumeGridBuffer.hpp"
 #include "MayaFlux/Buffers/Textures/TextBuffer.hpp"
 
 #include "MayaFlux/Registry/BackendRegistry.hpp"
@@ -1019,6 +1020,62 @@ bool IOManager::save_image(
     return true;
 }
 
+std::shared_ptr<Buffers::VolumeGridBuffer>
+IOManager::load_volume(const std::string& filepath, const IO::VolumeReadOptions& options)
+{
+    IO::VolumeReader reader;
+
+    if (!reader.can_read(filepath)) {
+        MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
+            "IOManager::load_volume: unsupported format '{}'", filepath);
+        return nullptr;
+    }
+
+    auto data = reader.load(filepath, options);
+    if (!data) {
+        MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
+            "IOManager::load_volume: failed to load '{}' — {}",
+            filepath, reader.get_last_error());
+        return nullptr;
+    }
+
+    std::vector<Buffers::VolumeGridBuffer::FieldDecl> decls;
+    decls.reserve(data->fields.size());
+    for (const auto& field : data->fields) {
+        decls.push_back({
+            .name = field.name,
+            .stride_bytes = field.is_vector() ? sizeof(glm::vec4) : sizeof(float),
+            .double_buffered = true,
+            .semantics = field.semantics,
+        });
+    }
+
+    auto buffer = m_buffer_manager->create_graphics_buffer<Buffers::VolumeGridBuffer>(
+        Buffers::ProcessingToken::GRAPHICS_BACKEND,
+        data->lattice, decls);
+
+    if (!buffer) {
+        MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
+            "IOManager::load_volume: failed to construct VolumeGridBuffer for '{}'", filepath);
+        return nullptr;
+    }
+
+    if (!IO::upload_volume(*data, buffer)) {
+        MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
+            "IOManager::load_volume: upload failed for '{}'", filepath);
+        return nullptr;
+    }
+
+    m_loaded_volumes.push_back(buffer);
+
+    MF_INFO(Journal::Component::API, Journal::Context::FileIO,
+        "IOManager::load_volume: {} field(s) from '{}'",
+        data->fields.size(),
+        std::filesystem::path(filepath).filename().string());
+
+    return buffer;
+}
+
 bool IOManager::save_volume(
     Kakshya::VolumeData data,
     const std::string& filepath,
@@ -1035,6 +1092,56 @@ bool IOManager::save_volume(
                 return false;
             }
             const bool ok = writer->write(filepath, data, options);
+            if (!ok) {
+                MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+                    "save_volume task: writer failed for '{}': {}",
+                    filepath, writer->get_last_error());
+            } else {
+                MF_INFO(Journal::Component::IO, Journal::Context::FileIO,
+                    "save_volume task: wrote '{}'", filepath);
+            }
+            return ok;
+        });
+
+    std::lock_guard lock(m_save_tasks_mutex);
+    m_save_tasks.push_back(std::move(fut));
+
+    std::erase_if(m_save_tasks, [](std::future<bool>& f) {
+        return f.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
+    });
+
+    return true;
+}
+
+bool IOManager::save_volume(
+    const std::shared_ptr<Buffers::VolumeGridBuffer>& volume,
+    const std::string& filepath,
+    const IO::VolumeWriteOptions& options,
+    const std::vector<std::string>& field_names)
+{
+    if (!volume) {
+        MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+            "save_volume: null volume");
+        return false;
+    }
+
+    auto fut = std::async(std::launch::async,
+        [volume, filepath, options, field_names]() -> bool {
+            auto data = IO::download_volume(volume, field_names);
+            if (!data) {
+                MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+                    "save_volume task: download failed for '{}'", filepath);
+                return false;
+            }
+
+            auto writer = IO::VolumeWriterRegistry::instance().create_writer(filepath);
+            if (!writer) {
+                MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+                    "save_volume task: no writer registered for '{}'", filepath);
+                return false;
+            }
+
+            const bool ok = writer->write(filepath, *data, options);
             if (!ok) {
                 MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
                     "save_volume task: writer failed for '{}': {}",

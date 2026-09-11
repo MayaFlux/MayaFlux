@@ -1,4 +1,4 @@
-#include "VolumeExport.hpp"
+#include "VolumeTransfer.hpp"
 
 #include "FileWriter.hpp"
 
@@ -115,6 +115,79 @@ std::optional<Kakshya::VolumeData> download_volume(
         result.lattice.resolution.z, result.fields.size(), names.size());
 
     return result;
+}
+
+// ============================================================================
+// upload_volume
+// ============================================================================
+
+bool upload_volume(
+    const Kakshya::VolumeData& data,
+    const std::shared_ptr<Buffers::VolumeGridBuffer>& volume)
+{
+    if (!volume) {
+        MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+            "upload_volume: null volume");
+        return false;
+    }
+
+    if (!data.is_consistent()) {
+        MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+            "upload_volume: VolumeData failed is_consistent()");
+        return false;
+    }
+
+    size_t uploaded = 0;
+
+    for (const auto& field : data.fields) {
+        if (!volume->has_field(field.name)) {
+            MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+                "upload_volume: no field named '{}' on this volume, skipped", field.name);
+            continue;
+        }
+
+        const size_t stride = volume->get_field_stride(field.name);
+
+        if (const auto* scalars = field.as_scalar()) {
+            if (stride != sizeof(float)) {
+                MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+                    "upload_volume: field '{}' has stride {}, but VolumeData holds a scalar "
+                    "(expected {}), skipped",
+                    field.name, stride, sizeof(float));
+                continue;
+            }
+            volume->seed_raw(field.name, scalars->data(), scalars->size() * sizeof(float));
+            ++uploaded;
+            continue;
+        }
+
+        const auto* vectors = field.as_vector();
+        if (stride != sizeof(glm::vec4)) {
+            MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+                "upload_volume: field '{}' has stride {}, but VolumeData holds a vector "
+                "(expected {}), skipped",
+                field.name, stride, sizeof(glm::vec4));
+            continue;
+        }
+
+        std::vector<glm::vec4> padded(vectors->size());
+        for (size_t i = 0; i < vectors->size(); ++i) {
+            padded[i] = glm::vec4((*vectors)[i], 0.0F);
+        }
+        volume->seed_raw(field.name, padded.data(), padded.size() * sizeof(glm::vec4));
+        ++uploaded;
+    }
+
+    if (uploaded == 0) {
+        MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+            "upload_volume: no field was uploaded");
+        return false;
+    }
+
+    MF_DEBUG(Journal::Component::IO, Journal::Context::FileIO,
+        "upload_volume: {} of {} fields", uploaded, data.fields.size());
+
+    return true;
 }
 
 // ============================================================================

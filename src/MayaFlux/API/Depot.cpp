@@ -10,6 +10,8 @@
 #include "MayaFlux/Kakshya/Source/SoundStreamContainer.hpp"
 
 #include "MayaFlux/Buffers/Geometry/MeshBuffer.hpp"
+#include "MayaFlux/Buffers/State/VolumeGridBuffer.hpp"
+#include "MayaFlux/IO/VolumeWriter.hpp"
 #include "MayaFlux/Nodes/Network/MeshNetwork.hpp"
 
 #include "MayaFlux/Portal/System/Dialog/Chooser.hpp"
@@ -60,6 +62,11 @@ namespace {
 
     const std::vector<Portal::System::Dialog::ChooserFilter> k_image_save_filters {
         { .name = "Image", .extensions = { "png", "jpg", "jpeg", "bmp", "tga", "exr", "hdr" } },
+        { .name = "All Files", .extensions = { "*" } }
+    };
+
+    const std::vector<Portal::System::Dialog::ChooserFilter> k_volume_filters {
+        { .name = "Volume", .extensions = { "vdb" } },
         { .name = "All Files", .extensions = { "*" } }
     };
 
@@ -176,6 +183,17 @@ std::shared_ptr<Nodes::Network::MeshNetwork> choose_mesh_network(IO::TextureReso
         k_mesh_filters);
 }
 
+std::shared_ptr<Buffers::VolumeGridBuffer> choose_volume()
+{
+    if (!require_portal("choose_volume"))
+        return nullptr;
+
+    return Portal::System::Dialog::open_file<std::shared_ptr<Buffers::VolumeGridBuffer>>(
+        [](const fs::path& p) { return get_io_manager()->load_volume(p.string()); },
+        [](Core::SystemDialogError) { },
+        k_volume_filters);
+}
+
 // ---------------------------------------------------------------------------
 // Dialog-backed save
 // ---------------------------------------------------------------------------
@@ -249,6 +267,53 @@ bool save_image(
         [](Core::SystemDialogError) { },
         suggested_name,
         k_image_save_filters);
+}
+
+bool save_volume(
+    const std::shared_ptr<Buffers::VolumeGridBuffer>& volume,
+    const std::string& suggested_name)
+{
+    if (!require_portal("save_volume"))
+        return false;
+
+    auto iom = get_io_manager();
+    if (!iom) {
+        MF_ERROR(Journal::Component::API, Journal::Context::Runtime,
+            "save_volume: IOManager unavailable");
+        return false;
+    }
+
+    return Portal::System::Dialog::save_file<bool>(
+        [&iom, &volume](const fs::path& p) {
+            return iom->save_volume(volume, p.string(), IO::VolumeWriteOptions {});
+        },
+        [](Core::SystemDialogError) { },
+        suggested_name,
+        k_volume_filters);
+}
+
+bool save_volume(
+    const std::shared_ptr<Buffers::VolumeGridBuffer>& volume,
+    const std::string& suggested_name,
+    const IO::VolumeWriteOptions& options)
+{
+    if (!require_portal("save_volume"))
+        return false;
+
+    auto iom = get_io_manager();
+    if (!iom) {
+        MF_ERROR(Journal::Component::API, Journal::Context::Runtime,
+            "save_volume: IOManager unavailable");
+        return false;
+    }
+
+    return Portal::System::Dialog::save_file<bool>(
+        [&iom, &volume, &options](const fs::path& p) {
+            return iom->save_volume(volume, p.string(), options);
+        },
+        [](Core::SystemDialogError) { },
+        suggested_name,
+        k_volume_filters);
 }
 
 // ---------------------------------------------------------------------------
