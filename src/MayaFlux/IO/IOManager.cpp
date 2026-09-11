@@ -1113,6 +1113,56 @@ bool IOManager::save_volume(
     return true;
 }
 
+bool IOManager::save_volume(
+    const std::shared_ptr<Buffers::VolumeGridBuffer>& volume,
+    const std::string& filepath,
+    const IO::VolumeWriteOptions& options,
+    const std::vector<std::string>& field_names)
+{
+    if (!volume) {
+        MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+            "save_volume: null volume");
+        return false;
+    }
+
+    auto fut = std::async(std::launch::async,
+        [volume, filepath, options, field_names]() -> bool {
+            auto data = IO::download_volume(volume, field_names);
+            if (!data) {
+                MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+                    "save_volume task: download failed for '{}'", filepath);
+                return false;
+            }
+
+            auto writer = IO::VolumeWriterRegistry::instance().create_writer(filepath);
+            if (!writer) {
+                MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+                    "save_volume task: no writer registered for '{}'", filepath);
+                return false;
+            }
+
+            const bool ok = writer->write(filepath, *data, options);
+            if (!ok) {
+                MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+                    "save_volume task: writer failed for '{}': {}",
+                    filepath, writer->get_last_error());
+            } else {
+                MF_INFO(Journal::Component::IO, Journal::Context::FileIO,
+                    "save_volume task: wrote '{}'", filepath);
+            }
+            return ok;
+        });
+
+    std::lock_guard lock(m_save_tasks_mutex);
+    m_save_tasks.push_back(std::move(fut));
+
+    std::erase_if(m_save_tasks, [](std::future<bool>& f) {
+        return f.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
+    });
+
+    return true;
+}
+
 uint32_t IOManager::capture_volume(
     const std::shared_ptr<Buffers::VolumeGridBuffer>& volume,
     const std::string& path_pattern,

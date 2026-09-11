@@ -637,12 +637,6 @@ public:
      * Encode and disk flush are dispatched to a worker; failures are logged
      * but do not block.
      *
-     * There is deliberately no VolumeGridBuffer overload. read_field records
-     * a fenced device-to-host copy and needs command queue access, so unlike
-     * save_image(VKImage) the download cannot move into the task. Call
-     * IO::download_volume from a thread that has queue access, typically a
-     * GraphicsRoutine, then pass the result here.
-     *
      * The extension of @p filepath selects the writer via
      * VolumeWriterRegistry. For synchronous semantics use the
      * IO::save_volume free function in VolumeTransfer.hpp, and for a numbered
@@ -654,6 +648,28 @@ public:
         Kakshya::VolumeData data,
         const std::string& filepath,
         const IO::VolumeWriteOptions& options = {});
+
+    /**
+     * @brief Download and save a GPU-resident volume to disk asynchronously.
+     *
+     * Mirrors save_image(VKImage): download, writer lookup and write all
+     * happen inside the dispatched task, so this returns as soon as the
+     * task is queued rather than blocking the caller. The future is tracked
+     * in the same pool as every other save task; wait_for_pending_saves()
+     * waits on it like any other.
+     *
+     * @param volume      Volume to read from.
+     * @param filepath    Destination path; extension selects the writer.
+     * @param options     Writer options.
+     * @param field_names Fields to save. Empty means every declared field.
+     * @return True once the task is queued. Download or write failure is
+     *         logged from the task and does not surface here.
+     */
+    bool save_volume(
+        const std::shared_ptr<Buffers::VolumeGridBuffer>& volume,
+        const std::string& filepath,
+        const IO::VolumeWriteOptions& options = {},
+        const std::vector<std::string>& field_names = {});
 
     /**
      * @brief Begin recording a numbered .vdb sequence from a volume.
