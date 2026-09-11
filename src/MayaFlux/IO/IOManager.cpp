@@ -28,6 +28,7 @@
 #include "ImageExport.hpp"
 #include "ModelReader.hpp"
 #include "STBImageWriter.hpp"
+#include "VDBWriter.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
@@ -50,10 +51,11 @@ namespace {
 
 }
 
-IOManager::IOManager(Core::GlobalStreamInfo& stream_info, uint32_t frame_rate, const std::shared_ptr<Buffers::BufferManager>& buffer_manager)
+IOManager::IOManager(Core::GlobalStreamInfo& stream_info, uint32_t frame_rate, const std::shared_ptr<Buffers::BufferManager>& buffer_manager, const std::shared_ptr<Vruta::TaskScheduler>& scheduler)
     : m_stream_info(stream_info)
     , m_frame_rate(frame_rate)
     , m_buffer_manager(buffer_manager)
+    , m_scheduler(scheduler)
 {
     m_io_service = std::make_shared<Registry::Service::IOService>();
 
@@ -71,6 +73,7 @@ IOManager::IOManager(Core::GlobalStreamInfo& stream_info, uint32_t frame_rate, c
 
     STBImageWriter::register_with_registry();
     EXRWriter::register_with_registry();
+    VDBWriter::register_with_registry();
 
     MF_INFO(Journal::Component::Core, Journal::Context::Init, "IOManager initialised");
 }
@@ -1014,6 +1017,106 @@ bool IOManager::save_image(
     });
 
     return true;
+}
+
+bool IOManager::save_volume(
+    Kakshya::VolumeData data,
+    const std::string& filepath,
+    const IO::VolumeWriteOptions& options)
+{
+    auto fut = std::async(std::launch::async,
+        [data = std::move(data),
+            filepath,
+            options]() -> bool {
+            auto writer = IO::VolumeWriterRegistry::instance().create_writer(filepath);
+            if (!writer) {
+                MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+                    "save_volume task: no writer registered for '{}'", filepath);
+                return false;
+            }
+            const bool ok = writer->write(filepath, data, options);
+            if (!ok) {
+                MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+                    "save_volume task: writer failed for '{}': {}",
+                    filepath, writer->get_last_error());
+            } else {
+                MF_INFO(Journal::Component::IO, Journal::Context::FileIO,
+                    "save_volume task: wrote '{}'", filepath);
+            }
+            return ok;
+        });
+
+    std::lock_guard lock(m_save_tasks_mutex);
+    m_save_tasks.push_back(std::move(fut));
+
+    std::erase_if(m_save_tasks, [](std::future<bool>& f) {
+        return f.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
+    });
+
+    return true;
+}
+
+uint32_t IOManager::capture_volume(
+    const std::shared_ptr<Buffers::VolumeGridBuffer>& volume,
+    const std::string& path_pattern,
+    const std::vector<std::string>& field_names,
+    const IO::VolumeWriteOptions& options,
+    uint32_t max_frames,
+    uint64_t frame_interval)
+{
+    if (!volume) {
+        MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+            "capture_volume: null volume");
+        return 0;
+    }
+
+    if (!m_scheduler) {
+        MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+            "capture_volume: TaskScheduler unavailable");
+        return 0;
+    }
+
+    auto capture = std::make_unique<IO::VolumeCapture>(
+        *m_scheduler, volume, path_pattern, field_names, options,
+        [this](Kakshya::VolumeData&& data,
+            const std::string& path,
+            const IO::VolumeWriteOptions& opts) {
+            return save_volume(std::move(data), path, opts);
+        });
+
+    capture->start(max_frames, frame_interval);
+
+    const uint32_t id = m_next_volume_capture_id.fetch_add(1, std::memory_order_relaxed);
+
+    std::lock_guard lock(m_volume_captures_mutex);
+    m_volume_captures.emplace(id, std::move(capture));
+    return id;
+}
+
+void IOManager::stop_volume_capture(uint32_t capture_id)
+{
+    std::unique_ptr<IO::VolumeCapture> capture;
+    {
+        std::lock_guard lock(m_volume_captures_mutex);
+        auto it = m_volume_captures.find(capture_id);
+        if (it == m_volume_captures.end()) {
+            MF_WARN(Journal::Component::IO, Journal::Context::FileIO,
+                "stop_volume_capture: unknown capture_id={}", capture_id);
+            return;
+        }
+        capture = std::move(it->second);
+        m_volume_captures.erase(it);
+    }
+}
+
+std::vector<uint32_t> IOManager::get_volume_capture_ids() const
+{
+    std::lock_guard lock(m_volume_captures_mutex);
+    std::vector<uint32_t> ids;
+    ids.reserve(m_volume_captures.size());
+    for (const auto& [id, _] : m_volume_captures)
+        ids.push_back(id);
+    return ids;
 }
 
 void IOManager::wait_for_pending_saves()

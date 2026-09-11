@@ -235,6 +235,19 @@ if(NOT TARGET tinyexr)
     )
 endif()
 
+if(NOT TARGET tinyvdb)
+    find_library(TINYVDB_LIB NAMES tinyvdb
+        PATHS "${_MAYAFLUX_LIBDIR}"
+        NO_DEFAULT_PATH
+    )
+    add_library(tinyvdb STATIC IMPORTED)
+    set_target_properties(tinyvdb PROPERTIES
+        IMPORTED_LOCATION "${TINYVDB_LIB}"
+        INTERFACE_INCLUDE_DIRECTORIES "${PACKAGE_PREFIX_DIR}/include/MayaFlux/thirdparty/tinyvdb"
+        INTERFACE_LINK_LIBRARIES "miniz"
+    )
+endif()
+
 if(NOT TARGET magic_enum)
     add_library(magic_enum INTERFACE IMPORTED)
     set_target_properties(magic_enum PROPERTIES
@@ -322,6 +335,7 @@ if(NOT TARGET MayaFlux::MayaFluxLib)
             avrt
             ole32
             tinyexr
+            tinyvdb
             magic_enum
             nlohmann_json::nlohmann_json
             freetype
@@ -348,6 +362,7 @@ if(NOT TARGET MayaFlux::MayaFluxLib)
             PkgConfig::UTF8PROC
             PkgConfig::nlohmann_json
             tinyexr
+            tinyvdb
             magic_enum
             glm::glm
             spirv-cross-core

@@ -99,6 +99,28 @@ target_include_directories(tinyexr INTERFACE
 )
 target_link_libraries(tinyexr INTERFACE miniz)
 
+file(GLOB TINYVDB_SOURCES CONFIGURE_DEPENDS
+    ${CMAKE_SOURCE_DIR}/third_party/tinyvdb/*.c
+    ${CMAKE_SOURCE_DIR}/third_party/tinyvdb/*.cc
+)
+list(FILTER TINYVDB_SOURCES EXCLUDE REGEX "tinyvdb_gpu\\.c$")
+
+add_library(tinyvdb STATIC ${TINYVDB_SOURCES})
+set_target_properties(tinyvdb PROPERTIES
+    POSITION_INDEPENDENT_CODE ON
+    C_STANDARD 11
+    CXX_STANDARD 17
+    C_VISIBILITY_PRESET hidden
+    CXX_VISIBILITY_PRESET hidden
+    VISIBILITY_INLINES_HIDDEN ON
+)
+target_compile_definitions(tinyvdb PRIVATE TVDB_NO_MMAP)
+target_include_directories(tinyvdb PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/third_party/tinyvdb>
+    $<INSTALL_INTERFACE:include/MayaFlux/thirdparty/tinyvdb>
+)
+target_link_libraries(tinyvdb PUBLIC miniz)
+
 add_library(magic_enum INTERFACE)
 target_include_directories(magic_enum INTERFACE
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/third_party/magic_enum>

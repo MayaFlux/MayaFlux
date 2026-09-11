@@ -141,6 +141,58 @@ MAYAFLUX_API void download_back_buffer(
     std::shared_ptr<VKBuffer>& staging);
 
 /**
+ * @brief Record a slot-to-staging copy without waiting for completion.
+ * @param slot Source slot, typically from VKBuffer::get_back_buffer().
+ * @param size Byte count to copy.
+ * @param staging Staging buffer, already large enough for
+ *        @p staging_offset + @p size. Not grown here: reallocating
+ *        mid-batch would orphan copies already recorded against the old
+ *        allocation. Size it with create_staging_buffer before the batch.
+ * @param staging_offset Byte offset within @p staging the copy lands at,
+ *        so several reads share one staging buffer and their transfers
+ *        overlap instead of serialising one round trip each.
+ * @return Handle to pass to resolve_back_buffer_read, or null for
+ *         host-visible slots where no transfer was recorded.
+ *
+ * Mirrors upload_back_buffer_async with the direction reversed, and with
+ * one asymmetry: an upload's memcpy precedes the fence, a download's
+ * follows it, so the host copy lives in resolve_back_buffer_read rather
+ * than here. download_back_buffer is the two called back to back.
+ *
+ * Note the naming clash with download_from_gpu_async, which is a
+ * different family: that one operates on a whole VKBuffer, waits
+ * internally, and means only that it avoids queue.waitIdle.
+ */
+MAYAFLUX_API TransferHandle download_back_buffer_async(
+    const VKBufferResources::GenerationSlot& slot,
+    size_t size,
+    std::shared_ptr<VKBuffer>& staging,
+    size_t staging_offset = 0);
+
+/**
+ * @brief Wait for a recorded download, then copy it out of staging.
+ * @param handle Handle from download_back_buffer_async. Nulled on return.
+ *        A null handle means the slot was host-visible; @p slot is read
+ *        directly in that case.
+ * @param slot Source slot, needed only for the host-visible path.
+ * @param data Destination pointer, at least @p size bytes.
+ * @param size Byte count.
+ * @param staging The same staging buffer the copy was recorded against.
+ * @param staging_offset The same offset it was recorded at.
+ *
+ * Issue every download_back_buffer_async in a batch before resolving any
+ * of them; resolving as you go reintroduces the serialisation the split
+ * exists to avoid.
+ */
+MAYAFLUX_API void resolve_back_buffer_read(
+    TransferHandle& handle,
+    const VKBufferResources::GenerationSlot& slot,
+    void* data,
+    size_t size,
+    std::shared_ptr<VKBuffer>& staging,
+    size_t staging_offset = 0);
+
+/**
  * @brief Upload raw data to GPU buffer (auto-detects host-visible vs device-local)
  * @param data Source data pointer
  * @param size Size in bytes

@@ -2,8 +2,6 @@
 
 #include "MayaFlux/Kakshya/Region/Region.hpp"
 
-#include "filesystem"
-
 namespace MayaFlux::Kakshya {
 
 class SignalSourceContainer;

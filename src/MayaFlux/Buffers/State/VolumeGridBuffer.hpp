@@ -2,6 +2,7 @@
 
 #include "MayaFlux/Buffers/VKBuffer.hpp"
 #include "MayaFlux/Kinesis/Spatial/Lattice.hpp"
+#include "MayaFlux/Kinesis/Spatial/LatticeSemantics.hpp"
 
 #include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
 
@@ -149,6 +150,7 @@ public:
         std::string name; ///< Lookup key, unique within the volume.
         size_t stride_bytes; ///< Bytes per cell.
         bool double_buffered = true; ///< False resolves read and write to one slot.
+        Kinesis::LatticeSemantics semantics {}; ///< What the values mean. Unused by this class.
     };
 
     /**
@@ -357,6 +359,21 @@ public:
     /** @brief Byte size of one slot of the named field, or 0 if undeclared. */
     [[nodiscard]] size_t get_field_bytes(const std::string& name) const;
 
+    /** @brief Bytes per cell of the named field, or 0 if undeclared. */
+    [[nodiscard]] size_t get_field_stride(const std::string& name) const;
+
+    /**
+     * @brief Interpretation declared for the named field.
+     * @param name Field name.
+     * @return The declared semantics, or a default-constructed value if
+     *         undeclared.
+     *
+     * Returned as declared. A scalar field's variance member is meaningless
+     * and is not zeroed here: a consumer that cares about the distinction
+     * reads get_field_stride() alongside this.
+     */
+    [[nodiscard]] Kinesis::LatticeSemantics get_field_semantics(const std::string& name) const;
+
     /** @brief Names of every declared field, in declaration order. */
     [[nodiscard]] std::vector<std::string> get_field_names() const;
 
@@ -390,14 +407,17 @@ public:
     /**
      * @brief Declare a double-buffered scalar field.
      * @param name Lookup key, unique within this volume.
+     * @param semantics What the values mean. Carried for consumers that
+     *        resample or write the field; nothing in this class reads it.
      * @return Ref naming the field, or a ref with an empty name if the
      *         declaration was rejected.
      */
-    ScalarRef declare_scalar(std::string name);
+    ScalarRef declare_scalar(std::string name, Kinesis::LatticeSemantics semantics = {});
 
     /**
      * @brief Declare a single-slot scalar field.
      * @param name Lookup key, unique within this volume.
+     * @param semantics What the values mean. A divergence field wants
      * @return Ref naming the field, or a ref with an empty name if the
      *         declaration was rejected.
      *
@@ -407,19 +427,18 @@ public:
      * neighbourhood of a field it also writes cannot use one of these,
      * and VolumeFieldProcessor rejects that arrangement at attach.
      */
-    ScalarRef declare_scratch(std::string name);
+    ScalarRef declare_scratch(std::string name, Kinesis::LatticeSemantics semantics = {});
 
     /**
      * @brief Declare a double-buffered vector field.
      * @param name Lookup key, unique within this volume.
+     * @param semantics What the values mean. A velocity field wants
+     *        VectorVariance::ContravariantRelative; the default assumes
+     *        three unrelated scalars.
      * @return Ref naming the field, or a ref with an empty name if the
      *         declaration was rejected.
-     *
-     * Vector fields are always double-buffered. The single-slot case
-     * saves one slot, a megabyte at 64 cubed, and every vector field in
-     * use is either advected or diffused, both of which require two.
      */
-    VectorRef declare_vector(std::string name);
+    VectorRef declare_vector(std::string name, Kinesis::LatticeSemantics semantics = {});
 
     /**
      * @brief Write initial values into a scalar field from a Kinesis field.
@@ -480,12 +499,33 @@ public:
      */
     void read_field(const std::string& name, void* data, size_t size);
 
+    /**
+     * @brief Read several fields' current values into host memory at once.
+     *
+     * One staging buffer and one fence wait for the whole batch, rather
+     * than a full round trip per field. Prefer this over repeated
+     * read_field when more than one field is wanted from the same cycle,
+     * which is the ordinary case for interchange export.
+     *
+     * Reads from each field's current read slot, as read_field does.
+     * A name that is not declared, or a size that does not match that
+     * field, is logged and skipped; the rest of the batch proceeds.
+     *
+     * @param names Field names.
+     * @param dsts  Destination pointer and byte count per name, parallel
+     *              to @p names.
+     */
+    void read_fields(
+        const std::vector<std::string>& names,
+        const std::vector<std::pair<void*, size_t>>& dsts);
+
 private:
     struct Field {
         size_t stride_bytes;
         uint32_t slot_a;
         uint32_t slot_b;
         bool read_is_a;
+        Kinesis::LatticeSemantics semantics;
     };
 
     /**
@@ -530,6 +570,20 @@ private:
      * @return Worst-case vertex bytes, or 1 when no surface is configured.
      */
     static size_t surface_storage_bytes(const std::optional<SurfaceConfig>& surface);
+
+    /**
+     * @brief Allocate one field's slots and register it.
+     * @param name Lookup key.
+     * @param stride_bytes Bytes per cell.
+     * @param double_buffered Whether to allocate a second slot.
+     * @param semantics What the values mean. Stored and never acted on.
+     * @return True if the field was registered.
+     */
+    bool allocate_field(
+        const std::string& name,
+        size_t stride_bytes,
+        bool double_buffered,
+        Kinesis::LatticeSemantics semantics);
 };
 
 } // namespace MayaFlux::Buffers

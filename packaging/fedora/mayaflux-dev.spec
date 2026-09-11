@@ -5,7 +5,7 @@ Version:        0.5.0
 Release:        dev.%{builddate}%{?dist}
 Summary:        Modern C++ framework for real-time graphics and audio with JIT compilation (Development Build)
 
-License:        GPLv3
+License:        GPLv3 and Apache-2.0 and BSD-3-Clause and MIT
 URL:            https://github.com/MayaFlux/MayaFlux
 Source0:        https://github.com/MayaFlux/MayaFlux/archive/refs/heads/main.tar.gz#/%{name}-%{version}.tar.gz
 
@@ -94,6 +94,10 @@ Requires:       alsa-lib-devel
 Requires:       json-devel
 
 Provides:       mayaflux = %{version}-%{release}
+Provides:       bundled(tinyvdb)
+Provides:       bundled(tinyexr)
+Provides:       bundled(miniz)
+Provides:       bundled(magic_enum)
 Conflicts:      mayaflux
 
 %description
@@ -152,6 +156,7 @@ EOF
 %{_libdir}/libMayaFluxHost.so*
 %{_libdir}/libLila.so*
 %{_libdir}/libminiz.a
+%{_libdir}/libtinyvdb.a
 %{_includedir}/MayaFlux/
 %{_includedir}/Lila/
 %{_datadir}/MayaFlux/

@@ -45,6 +45,31 @@ inline FileWriteOptions operator&(FileWriteOptions a, FileWriteOptions b)
 }
 
 /**
+ * @brief Substitute a frame index into a numbered output pattern.
+ *
+ * Wraps resolve_write_path, so the same directory rules apply and a bare
+ * pattern lands wherever a bare filename would.
+ *
+ * The pattern carries exactly one std::format replacement field, which the
+ * index is formatted into: "smoke.{:04}.vdb" at frame 7 gives
+ * "smoke.0007.vdb". Zero padding matters. A DCC reading a sequence matches
+ * on a fixed-width numeric suffix, so an unpadded pattern sorts frame 10
+ * before frame 2 and plays out of order.
+ *
+ * A pattern with no replacement field returns the same path every frame,
+ * which silently overwrites. A pattern with more than one, or with a field
+ * the index cannot format into, throws std::format_error.
+ *
+ * @param pattern Format string with one index field.
+ * @param frame   Zero-based frame index.
+ * @return Resolved absolute path.
+ */
+[[nodiscard]] inline std::string resolve_sequence_path(std::string_view pattern, uint64_t frame)
+{
+    return resolve_write_path(std::vformat(pattern, std::make_format_args(frame)));
+}
+
+/**
  * @class FileWriter
  * @brief Abstract base class for file writing operations
  *

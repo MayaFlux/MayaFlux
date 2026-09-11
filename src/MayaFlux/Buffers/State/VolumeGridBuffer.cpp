@@ -57,7 +57,10 @@ VolumeGridBuffer::~VolumeGridBuffer()
 }
 
 bool VolumeGridBuffer::allocate_field(
-    const std::string& name, size_t stride_bytes, bool double_buffered)
+    const std::string& name,
+    size_t stride_bytes,
+    bool double_buffered,
+    Kinesis::LatticeSemantics semantics)
 {
     if (name.empty()) {
         MF_ERROR(Journal::Component::Buffers, Journal::Context::Init,
@@ -106,6 +109,7 @@ bool VolumeGridBuffer::allocate_field(
         .slot_a = static_cast<uint32_t>(resources.back_buffers.size()),
         .slot_b = 0,
         .read_is_a = true,
+        .semantics = semantics,
     };
 
     for (uint32_t i = 0; i < slot_count; ++i) {
@@ -131,8 +135,9 @@ bool VolumeGridBuffer::allocate_field(
     m_field_order.push_back(name);
 
     MF_DEBUG(Journal::Component::Buffers, Journal::Context::Init,
-        "VolumeGridBuffer: field '{}', stride {}, {} slot(s), {} bytes",
-        name, stride_bytes, slot_count, field_bytes * slot_count);
+        "VolumeGridBuffer: field '{}', stride {}, {} slot(s), {} bytes, class {}",
+        name, stride_bytes, slot_count, field_bytes * slot_count,
+        Reflect::enum_to_string(semantics.value_class));
 
     return true;
 }
@@ -140,7 +145,7 @@ bool VolumeGridBuffer::allocate_field(
 void VolumeGridBuffer::allocate_fields(const std::vector<FieldDecl>& decls)
 {
     for (const auto& decl : decls) {
-        allocate_field(decl.name, decl.stride_bytes, decl.double_buffered);
+        allocate_field(decl.name, decl.stride_bytes, decl.double_buffered, decl.semantics);
     }
 
     if (m_fields.empty()) {
@@ -157,9 +162,9 @@ void VolumeGridBuffer::allocate_fields(const std::vector<FieldDecl>& decls)
         m_fields.size(), get_buffer_resources().back_buffers.size());
 }
 
-ScalarRef VolumeGridBuffer::declare_scalar(std::string name)
+ScalarRef VolumeGridBuffer::declare_scalar(std::string name, Kinesis::LatticeSemantics semantics)
 {
-    if (!allocate_field(name, sizeof(float), true)) {
+    if (!allocate_field(name, sizeof(float), true, semantics)) {
         return {};
     }
 
@@ -169,9 +174,9 @@ ScalarRef VolumeGridBuffer::declare_scalar(std::string name)
     };
 }
 
-ScalarRef VolumeGridBuffer::declare_scratch(std::string name)
+ScalarRef VolumeGridBuffer::declare_scratch(std::string name, Kinesis::LatticeSemantics semantics)
 {
-    if (!allocate_field(name, sizeof(float), false)) {
+    if (!allocate_field(name, sizeof(float), false, semantics)) {
         return {};
     }
 
@@ -181,9 +186,9 @@ ScalarRef VolumeGridBuffer::declare_scratch(std::string name)
     };
 }
 
-VectorRef VolumeGridBuffer::declare_vector(std::string name)
+VectorRef VolumeGridBuffer::declare_vector(std::string name, Kinesis::LatticeSemantics semantics)
 {
-    if (!allocate_field(name, sizeof(glm::vec4), true)) {
+    if (!allocate_field(name, sizeof(glm::vec4), true, semantics)) {
         return {};
     }
 
@@ -413,6 +418,24 @@ size_t VolumeGridBuffer::get_field_bytes(const std::string& name) const
     return static_cast<size_t>(get_cell_count()) * it->second.stride_bytes;
 }
 
+size_t VolumeGridBuffer::get_field_stride(const std::string& name) const
+{
+    auto it = m_fields.find(name);
+    if (it == m_fields.end()) {
+        return 0;
+    }
+    return it->second.stride_bytes;
+}
+
+Kinesis::LatticeSemantics VolumeGridBuffer::get_field_semantics(const std::string& name) const
+{
+    auto it = m_fields.find(name);
+    if (it == m_fields.end()) {
+        return {};
+    }
+    return it->second.semantics;
+}
+
 std::vector<std::string> VolumeGridBuffer::get_field_names() const
 {
     return m_field_order;
@@ -620,6 +643,74 @@ void VolumeGridBuffer::read_field(const std::string& name, void* data, size_t si
     const uint32_t slot = field->read_is_a ? field->slot_a : field->slot_b;
     resolve_transfer(m_pending_transfer);
     download_back_buffer(get_buffer_resources().back_buffers[slot], data, size, m_transfer_staging);
+}
+
+void VolumeGridBuffer::read_fields(
+    const std::vector<std::string>& names,
+    const std::vector<std::pair<void*, size_t>>& dsts)
+{
+    if (names.size() != dsts.size()) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferManagement,
+            "VolumeGridBuffer::read_fields: {} names against {} destinations",
+            names.size(), dsts.size());
+        return;
+    }
+
+    constexpr size_t k_alignment = 16;
+
+    auto& resources = get_buffer_resources();
+    std::vector<size_t> indices;
+    std::vector<size_t> offsets;
+    size_t total = 0;
+
+    for (size_t i = 0; i < names.size(); ++i) {
+        const auto* field = find_field(names[i], "read_fields");
+        if (!field) {
+            continue;
+        }
+
+        const size_t expected = static_cast<size_t>(get_cell_count()) * field->stride_bytes;
+        if (dsts[i].second != expected) {
+            MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferManagement,
+                "VolumeGridBuffer::read_fields: size {} does not match expected {} for '{}'",
+                dsts[i].second, expected, names[i]);
+            continue;
+        }
+
+        indices.push_back(i);
+        offsets.push_back(total);
+        total += (dsts[i].second + k_alignment - 1) & ~(k_alignment - 1);
+    }
+
+    if (indices.empty()) {
+        return;
+    }
+
+    resolve_transfer(m_pending_transfer);
+
+    if (!m_transfer_staging || m_transfer_staging->get_size_bytes() < total) {
+        m_transfer_staging = create_staging_buffer(total);
+    }
+
+    std::vector<TransferHandle> handles;
+    handles.reserve(indices.size());
+
+    for (size_t k = 0; k < indices.size(); ++k) {
+        const auto* field = find_field(names[indices[k]], "read_fields");
+        const uint32_t slot = field->read_is_a ? field->slot_a : field->slot_b;
+        handles.push_back(download_back_buffer_async(
+            resources.back_buffers[slot], dsts[indices[k]].second,
+            m_transfer_staging, offsets[k]));
+    }
+
+    for (size_t k = 0; k < indices.size(); ++k) {
+        const auto* field = find_field(names[indices[k]], "read_fields");
+        const uint32_t slot = field->read_is_a ? field->slot_a : field->slot_b;
+        resolve_back_buffer_read(
+            handles[k], resources.back_buffers[slot],
+            dsts[indices[k]].first, dsts[indices[k]].second,
+            m_transfer_staging, offsets[k]);
+    }
 }
 
 size_t VolumeGridBuffer::surface_storage_bytes(const std::optional<SurfaceConfig>& surface)
