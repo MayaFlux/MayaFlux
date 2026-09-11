@@ -5,7 +5,7 @@
 #include "SoundFileWriter.hpp"
 #include "VideoFileReader.hpp"
 #include "VideoFileWriter.hpp"
-#include "VolumeExport.hpp"
+#include "VolumeTransfer.hpp"
 #include "VolumeWriter.hpp"
 
 #include <future>
@@ -604,7 +604,7 @@ public:
      *
      * The extension of @p filepath selects the writer via
      * VolumeWriterRegistry. For synchronous semantics use the
-     * IO::save_volume free function in VolumeExport.hpp, and for a numbered
+     * IO::save_volume free function in VolumeTransfer.hpp, and for a numbered
      * frame sequence use IO::VolumeCapture.
      *
      * @return True if the encode task was queued.
