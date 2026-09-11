@@ -21,6 +21,10 @@ if(WIN32)
         set_target_properties(miniz PROPERTIES FOLDER "DEPS")
     endif()
 
+    if(TARGET tinyvdb)
+        set_target_properties(tinyvdb PROPERTIES FOLDER "DEPS")
+    endif()
+
     add_custom_target(regenerate_solution
         COMMAND powershell -ExecutionPolicy Bypass -File ${CMAKE_SOURCE_DIR}/scripts/win64/setup_visual_studio.ps1
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
