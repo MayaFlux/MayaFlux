@@ -139,6 +139,29 @@ public:
     }
 
     /**
+     * @brief Extra named, per-vertex attributes beyond position/color/size,
+     *        for an external cache/export consumer.
+     * @return One entry per attribute, in the same global vertex-index
+     *         order get_vertex_data() itself produces. Empty by default.
+     *
+     * Deliberately returns plain named Kakshya::DataVariant channels
+     * rather than anything IO- or Alembic-shaped: GraphicsOperator has no
+     * business depending on IO. A caller that does (e.g. a SpatialCache
+     * producer) wraps each entry itself.
+     */
+    [[nodiscard]] virtual std::vector<std::pair<std::string, Kakshya::DataVariant>>
+    extract_vertex_attributes() const { return {}; }
+
+    /**
+     * @brief Per-vertex velocity, for a consumer that wants to write it as
+     *        a native channel (e.g. Alembic Points' own .velocities)
+     *        rather than a generic attribute.
+     * @return One entry per vertex, in the same order as
+     *         extract_vertex_attributes(). Empty by default (no velocity).
+     */
+    [[nodiscard]] virtual std::vector<glm::vec3> extract_vertex_velocities() const { return {}; }
+
+    /**
      * @brief Apply ONE_TO_ONE parameter mapping
      *
      * Default implementation handles common graphics properties:
