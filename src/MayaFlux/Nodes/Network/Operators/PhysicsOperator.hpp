@@ -418,6 +418,16 @@ public:
     [[nodiscard]] std::vector<glm::vec3> extract_vertex_velocities() const override;
 
     /**
+     * @brief Forwards to the first collection's own get_primitive_topology().
+     * @return nullopt when there is no collection yet; otherwise
+     *         m_collections[0].collection->get_primitive_topology()
+     *         (PointCollectionNode's default, POINT_LIST). Same
+     *         first-element choice get_vertex_layout() already makes for
+     *         the aggregate.
+     */
+    [[nodiscard]] std::optional<Portal::Graphics::PrimitiveTopology> declared_topology() const override;
+
+    /**
      * @brief Apply ONE_TO_ONE parameter for physics-specific properties
      *
      * Supports:

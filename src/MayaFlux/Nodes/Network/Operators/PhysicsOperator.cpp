@@ -316,6 +316,14 @@ Kakshya::VertexLayout PhysicsOperator::get_vertex_layout() const
     return layout;
 }
 
+std::optional<Portal::Graphics::PrimitiveTopology> PhysicsOperator::declared_topology() const
+{
+    if (m_collections.empty()) {
+        return std::nullopt;
+    }
+    return m_collections[0].collection->get_primitive_topology();
+}
+
 size_t PhysicsOperator::get_vertex_count() const
 {
     size_t total = 0;

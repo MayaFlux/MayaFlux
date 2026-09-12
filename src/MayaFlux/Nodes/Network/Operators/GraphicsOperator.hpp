@@ -3,6 +3,10 @@
 #include "MayaFlux/Kakshya/NDData/VertexLayout.hpp"
 #include "NetworkOperator.hpp"
 
+namespace MayaFlux::Portal::Graphics {
+enum class PrimitiveTopology : uint8_t;
+}
+
 namespace MayaFlux::Nodes::Network {
 
 /**
@@ -160,6 +164,23 @@ public:
      *         extract_vertex_attributes(). Empty by default (no velocity).
      */
     [[nodiscard]] virtual std::vector<glm::vec3> extract_vertex_velocities() const { return {}; }
+
+    /**
+     * @brief Topology this operator's vertex data is authored for, if it
+     *        holds a node to ask.
+     * @return The (first) underlying node's own
+     *         GeometryWriterNode::get_primitive_topology(); nullopt when
+     *         this operator holds no node at all. Default nullopt, matching
+     *         every operator with no notion of a specific node (or that
+     *         never overrides this).
+     *
+     * get_vertex_count()/get_vertex_layout() describe the vertex record,
+     * not what the vertices mean as primitives, so a consumer choosing
+     * between an Alembic Points and Curves schema (or any other
+     * topology-shaped decision) needs this instead.
+     */
+    [[nodiscard]] virtual std::optional<Portal::Graphics::PrimitiveTopology>
+    declared_topology() const { return std::nullopt; }
 
     /**
      * @brief Apply ONE_TO_ONE parameter mapping

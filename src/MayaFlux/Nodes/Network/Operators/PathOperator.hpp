@@ -110,6 +110,15 @@ public:
     [[nodiscard]] std::vector<uint32_t> build_cluster_ids() const override;
 
     /**
+     * @brief Forwards to the first path's own get_primitive_topology().
+     * @return nullopt when there is no path yet; otherwise
+     *         m_paths[0]->get_primitive_topology() (PathGeneratorNode
+     *         defaults to LINE_STRIP). Same first-element choice
+     *         get_vertex_layout() already makes for the aggregate.
+     */
+    [[nodiscard]] std::optional<Portal::Graphics::PrimitiveTopology> declared_topology() const override;
+
+    /**
      * @brief Access a specific path node directly.
      * @param i Collection index.
      * @return Shared pointer to the PathGeneratorNode, or nullptr if out of range.

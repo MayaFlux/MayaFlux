@@ -17,15 +17,13 @@ namespace {
     /**
      * @brief Read every vertex, whole, into SpatialSample-ready columns.
      *
-     * A GraphicsOperator's raw vertex buffer is Kakshya::Vertex records
-     * (PointVertex/LineVertex/MeshVertex all share its exact 60-byte
-     * layout, and Vertex's own doc calls it "pipeline-ready" for exactly
-     * this): position, color, scalar, uv, normal, tangent, read directly by
-     * field rather than rediscovered attribute-by-attribute from
-     * VertexLayout metadata that only ever describes this same fixed shape.
-     * position becomes SpatialSample::positions; the rest become named
-     * attributes (scalar carries size/thickness/weight depending on the
-     * concrete vertex type, per Vertex's own doc).
+     * A GraphicsOperator's raw vertex buffer is Kakshya::Vertex records:
+     * PointVertex/LineVertex/MeshVertex all share its exact 60-byte layout,
+     * and Vertex's own doc calls it "pipeline-ready" for exactly this.
+     * position becomes SpatialSample::positions; color, scalar, uv, normal,
+     * and tangent each become their own named attribute (scalar carries
+     * size/thickness/weight depending on the concrete vertex type, per
+     * Vertex's own doc).
      *
      * @return False if @p layout is not this 60-byte record (no known
      *         GraphicsOperator today produces anything else); positions and
@@ -72,6 +70,52 @@ namespace {
             .values = Kakshya::DataVariant { std::move(tangents) } });
 
         return true;
+    }
+
+    /**
+     * @brief Chunk a curve topology's flat vertex array into per-curve
+     *        vertex counts.
+     * @param topology     LINE_STRIP or LINE_LIST. Any other value is a
+     *                      caller error (not asserted here; the caller
+     *                      only reaches this for those two).
+     * @param cluster_ids  build_cluster_ids()-shaped: one entry per vertex,
+     *                      contiguous runs of equal value in
+     *                      get_vertex_data() order.
+     * @return For LINE_STRIP, the run-length encoding of @p cluster_ids:
+     *         one curve per contiguous cluster run, matching how
+     *         PathOperator lays out each path as one such run (a single
+     *         continuous interpolated strip). For LINE_LIST, fixed pairs
+     *         (every count is 2), matching how TopologyOperator lays out
+     *         each graph as independent expanded edges rather than one
+     *         connected strip through the whole graph; cluster_ids is
+     *         unused in this case since edge boundaries do not follow
+     *         cluster boundaries. nullopt if @p vertex_count is odd for
+     *         LINE_LIST, which no known producer of that topology should
+     *         ever report.
+     */
+    std::optional<std::vector<int32_t>> curve_vertex_counts(
+        Portal::Graphics::PrimitiveTopology topology,
+        const std::vector<uint32_t>& cluster_ids,
+        size_t vertex_count)
+    {
+        if (topology == Portal::Graphics::PrimitiveTopology::LINE_STRIP) {
+            std::vector<int32_t> counts;
+            size_t i = 0;
+            while (i < cluster_ids.size()) {
+                size_t j = i + 1;
+                while (j < cluster_ids.size() && cluster_ids[j] == cluster_ids[i]) {
+                    ++j;
+                }
+                counts.push_back(static_cast<int32_t>(j - i));
+                i = j;
+            }
+            return counts;
+        }
+
+        if (vertex_count % 2 != 0) {
+            return std::nullopt;
+        }
+        return std::vector<int32_t>(vertex_count / 2, 2);
     }
 
 } // namespace
@@ -143,22 +187,25 @@ bool write_operator_sample(
         return false;
     }
 
-    std::vector<uint64_t> ids(vertex_count);
-    std::ranges::iota(ids, uint64_t { 0 });
-
-    std::vector<glm::vec3> velocities = op->extract_vertex_velocities();
-    if (!velocities.empty() && velocities.size() != vertex_count) {
-        MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
-            "write_operator_sample: extract_vertex_velocities() count mismatch");
-        return false;
-    }
-
     std::vector<uint32_t> cluster_ids = op->build_cluster_ids();
     if (cluster_ids.size() != vertex_count) {
         MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
             "write_operator_sample: build_cluster_ids() count mismatch");
         return false;
     }
+
+    const auto topology = op->declared_topology().value_or(Portal::Graphics::PrimitiveTopology::POINT_LIST);
+    std::optional<std::vector<int32_t>> vertex_counts_per_curve;
+    if (topology == Portal::Graphics::PrimitiveTopology::LINE_LIST
+        || topology == Portal::Graphics::PrimitiveTopology::LINE_STRIP) {
+        vertex_counts_per_curve = curve_vertex_counts(topology, cluster_ids, vertex_count);
+        if (!vertex_counts_per_curve) {
+            MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+                "write_operator_sample: {} vertices cannot form LINE_LIST pairs", vertex_count);
+            return false;
+        }
+    }
+
     attributes.push_back(SpatialAttribute {
         .name = "cluster",
         .scope = SpatialScope::Varying,
@@ -177,6 +224,25 @@ bool write_operator_sample(
             .values = std::move(values) });
     }
 
+    if (vertex_counts_per_curve) {
+        return cache.write(stream_name,
+            SpatialSample {
+                .topology = topology,
+                .positions = positions,
+                .vertex_counts_per_curve = *vertex_counts_per_curve,
+                .attributes = attributes });
+    }
+
+    std::vector<uint64_t> ids(vertex_count);
+    std::ranges::iota(ids, uint64_t { 0 });
+
+    std::vector<glm::vec3> velocities = op->extract_vertex_velocities();
+    if (!velocities.empty() && velocities.size() != vertex_count) {
+        MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+            "write_operator_sample: extract_vertex_velocities() count mismatch");
+        return false;
+    }
+
     return cache.write(stream_name,
         SpatialSample {
             .topology = Portal::Graphics::PrimitiveTopology::POINT_LIST,
@@ -192,13 +258,16 @@ namespace {
      * @brief GPU-authoritative path: download vertex bytes straight from the
      *        buffer itself, since NetworkGeometryBuffer is a VKBuffer.
      *
-     * Population size and record schema come from the still-CPU-tracked
-     * primary GraphicsOperator (get_vertex_count()/get_vertex_layout()
-     * describe the buffer's contract, not its live GPU bytes, so they stay
-     * valid even once a GpuFieldOperator owns those bytes). Attaches a
-     * "cluster" attribute from the declared hash_cluster_id state field
-     * when present; velocities and any other per-rule state are left out,
-     * since no name or shape for them is known generically here.
+     * Population size, record schema, and declared_topology() come from
+     * the still-CPU-tracked primary GraphicsOperator (these describe the
+     * buffer's contract, not its live GPU bytes, so they stay valid even
+     * once a GpuFieldOperator owns those bytes). A curve topology chunks
+     * on build_cluster_ids(), same as write_operator_sample(), since graph/
+     * path membership is structural and unaffected by what a GpuFieldOperator
+     * does to positions. Attaches a "cluster" attribute from the declared
+     * hash_cluster_id state field when present; velocities and any other
+     * per-rule state are left out, since no name or shape for them is known
+     * generically here.
      */
     bool write_network_geometry_buffer_gpu_sample(
         SpatialCache& cache,
@@ -232,8 +301,23 @@ namespace {
             return false;
         }
 
-        std::vector<uint64_t> ids(vertex_count);
-        std::ranges::iota(ids, uint64_t { 0 });
+        const auto topology = graphics_op->declared_topology().value_or(Portal::Graphics::PrimitiveTopology::POINT_LIST);
+        std::optional<std::vector<int32_t>> vertex_counts_per_curve;
+        if (topology == Portal::Graphics::PrimitiveTopology::LINE_LIST
+            || topology == Portal::Graphics::PrimitiveTopology::LINE_STRIP) {
+            std::vector<uint32_t> structural_cluster_ids = graphics_op->build_cluster_ids();
+            if (structural_cluster_ids.size() != vertex_count) {
+                MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+                    "write_network_geometry_buffer_sample: build_cluster_ids() count mismatch");
+                return false;
+            }
+            vertex_counts_per_curve = curve_vertex_counts(topology, structural_cluster_ids, vertex_count);
+            if (!vertex_counts_per_curve) {
+                MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+                    "write_network_geometry_buffer_sample: {} vertices cannot form LINE_LIST pairs", vertex_count);
+                return false;
+            }
+        }
 
         if (buffer->has_state("hash_cluster_id")
             && buffer->get_state_bytes("hash_cluster_id") == vertex_count * sizeof(uint32_t)) {
@@ -246,6 +330,18 @@ namespace {
                 .scope = SpatialScope::Varying,
                 .values = Kakshya::DataVariant { std::move(cluster_ids) } });
         }
+
+        if (vertex_counts_per_curve) {
+            return cache.write(stream_name,
+                SpatialSample {
+                    .topology = topology,
+                    .positions = positions,
+                    .vertex_counts_per_curve = *vertex_counts_per_curve,
+                    .attributes = attributes });
+        }
+
+        std::vector<uint64_t> ids(vertex_count);
+        std::ranges::iota(ids, uint64_t { 0 });
 
         return cache.write(stream_name,
             SpatialSample {

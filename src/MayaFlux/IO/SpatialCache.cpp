@@ -188,6 +188,19 @@ struct SpatialCache::Impl {
     std::unordered_map<std::string, std::unique_ptr<VertexStream>> vertex_streams;
     std::unordered_map<std::string, std::unique_ptr<CurvesStream>> curves_streams;
     std::unordered_map<std::string, MetaData> pending_metadata;
+
+    /**
+     * @brief Guards every access to the members above.
+     *
+     * write() always runs from whichever thread a SpatialCapture's
+     * coroutine happens to be resumed on (the graphics thread, by
+     * convention, but nothing enforces that); close() can be called from
+     * any thread, since a caller stopping a capture has no reason to be on
+     * that same thread. Lives in Impl, not directly on SpatialCache, so
+     * that SpatialCache's own defaulted move constructor keeps working:
+     * moving the unique_ptr<Impl> needs no lock of its own.
+     */
+    std::mutex mutex;
 };
 
 SpatialCache::SpatialCache()
@@ -312,6 +325,8 @@ bool SpatialCache::write_curves_sample(const std::string& stream_name, const Spa
 
 bool SpatialCache::write(const std::string& stream_name, const SpatialSample& sample)
 {
+    std::lock_guard lock(m_impl->mutex);
+
     if (!m_impl->archive) {
         set_error("write: archive not open");
         return false;
@@ -351,6 +366,8 @@ bool SpatialCache::write_metadata(
     const std::string& stream_name,
     const std::unordered_map<std::string, std::string>& tags)
 {
+    std::lock_guard lock(m_impl->mutex);
+
     if (m_impl->vertex_streams.contains(stream_name) || m_impl->curves_streams.contains(stream_name)) {
         set_error("write_metadata: stream '" + stream_name
             + "' already created; call write_metadata before its first write() call");
@@ -367,6 +384,8 @@ bool SpatialCache::write_metadata(
 
 void SpatialCache::close()
 {
+    std::lock_guard lock(m_impl->mutex);
+
     if (!m_impl->archive) {
         return;
     }

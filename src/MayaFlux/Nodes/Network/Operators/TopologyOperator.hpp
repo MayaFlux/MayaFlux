@@ -96,6 +96,17 @@ public:
     [[nodiscard]] std::vector<uint32_t> build_cluster_ids() const override;
 
     /**
+     * @brief Forwards to the first topology's own get_primitive_topology().
+     * @return nullopt when there is no topology yet; otherwise
+     *         m_topologies[0]->get_primitive_topology()
+     *         (TopologyGeneratorNode defaults to LINE_LIST: expanded edges,
+     *         not one continuous strip through the whole graph). Same
+     *         first-element choice get_vertex_layout() already makes for
+     *         the aggregate.
+     */
+    [[nodiscard]] std::optional<Portal::Graphics::PrimitiveTopology> declared_topology() const override;
+
+    /**
      * @brief Access a specific topology node directly.
      * @param i Collection index.
      * @return Shared pointer to the TopologyGeneratorNode, or nullptr if out of range.

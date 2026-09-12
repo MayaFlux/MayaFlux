@@ -194,6 +194,14 @@ Kakshya::VertexLayout PathOperator::get_vertex_layout() const
     return layout;
 }
 
+std::optional<Portal::Graphics::PrimitiveTopology> PathOperator::declared_topology() const
+{
+    if (m_paths.empty()) {
+        return std::nullopt;
+    }
+    return m_paths[0]->get_primitive_topology();
+}
+
 size_t PathOperator::get_vertex_count() const
 {
     size_t total = 0;

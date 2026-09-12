@@ -54,7 +54,8 @@ bool relaxation_grid_positions(
 
 /**
  * @brief Pack one GraphicsOperator's current vertex state into a
- *        SpatialCache stream as a POINT_LIST sample.
+ *        SpatialCache stream, as a Points or Curves sample depending on
+ *        what the operator declares.
  *
  * Reads op->get_vertex_data() as Kakshya::Vertex records: PointVertex,
  * LineVertex, and MeshVertex all share its exact 60-byte layout, so this
@@ -62,13 +63,24 @@ bool relaxation_grid_positions(
  * field comes along, not only position: color, scalar (size/thickness/
  * weight depending on the concrete type), uv, normal, and tangent each
  * become their own SpatialAttribute, so a vertex reaches the archive whole
- * rather than reduced to a coordinate. ids are the vertex's own index
- * within this operator, for cross-sample identity tracking. Always attaches
- * a "cluster" attribute from op->build_cluster_ids() (0 for every vertex on
- * an operator that never overrides it), plus one SpatialAttribute per
- * op->extract_vertex_attributes() entry (extra state beyond the vertex
- * record itself, e.g. PhysicsOperator's mass), and native velocities from
- * op->extract_vertex_velocities() when non-empty.
+ * rather than reduced to a coordinate. Always attaches a "cluster" attribute
+ * from op->build_cluster_ids() (0 for every vertex on an operator that never
+ * overrides it), plus one SpatialAttribute per op->extract_vertex_attributes()
+ * entry (extra state beyond the vertex record itself, e.g. PhysicsOperator's
+ * mass).
+ *
+ * op->declared_topology() decides the sample's shape:
+ *   - nullopt or POINT_LIST: the point path. ids are the vertex's own index
+ *     within this operator, for cross-sample identity tracking, and native
+ *     velocities come from op->extract_vertex_velocities() when non-empty.
+ *   - LINE_STRIP (PathOperator): one curve per contiguous build_cluster_ids()
+ *     run, matching one path per continuous interpolated strip.
+ *   - LINE_LIST (TopologyOperator): fixed 2-vertex curves, one per expanded
+ *     edge, since a graph's edges are independent segments, not one
+ *     connected strip through the whole graph.
+ *   Curve samples carry no ids/velocities (Alembic's Curves schema has
+ *   neither) and fail outright if declared_topology() reports LINE_LIST for
+ *   an odd vertex count, which no known producer of that topology should do.
  *
  * @param cache       Target cache, already open().
  * @param stream_name Stream to write.
@@ -77,9 +89,10 @@ bool relaxation_grid_positions(
  *                     (every GraphicsOperator does today).
  * @return False if op is null, reports zero vertices, its vertex layout is
  *         not a Kakshya::Vertex record, its vertex buffer is smaller than
- *         layout.stride_bytes * get_vertex_count(), or any
+ *         layout.stride_bytes * get_vertex_count(), any
  *         extract_vertex_attributes()/extract_vertex_velocities() entry
- *         disagrees with get_vertex_count() in size.
+ *         disagrees with get_vertex_count() in size, or a LINE_LIST
+ *         topology's vertex count is odd.
  */
 bool write_operator_sample(
     SpatialCache& cache,
@@ -98,19 +111,25 @@ bool write_operator_sample(
  * downloads the live vertex bytes straight from the buffer itself (it is a
  * VKBuffer, so the same download_from_gpu_async() pattern
  * download_compute_mesh() uses for ComputeMeshBuffer applies directly),
- * using the still-CPU-tracked get_vertex_count()/get_vertex_layout() for
- * population size and record schema, then reads the downloaded bytes as
- * Kakshya::Vertex records exactly as write_operator_sample() reads them
- * from CPU memory: color, scalar, uv, normal, and tangent all come along
- * with position, since the record schema is unchanged by which side owns
- * the bytes; only the transfer differs. Also attaches the declared
- * hash_cluster_id state field as a "cluster" attribute when present.
- * Written as a single stream named @p stream_name: once GPU-driven, the
- * buffer is one flat array and no longer separable by originating
- * operator. Velocities and any per-rule state beyond hash_cluster_id are
- * left out deliberately, the same way relaxation_grid_positions() leaves
- * per-cell state to the caller: a GpuFieldOperator's own bespoke state
- * fields have no shape this function can decode generically.
+ * using the still-CPU-tracked get_vertex_count()/get_vertex_layout()/
+ * declared_topology() for population size, record schema, and sample shape
+ * (these describe the buffer's contract, not its live GPU bytes, so they
+ * stay valid regardless of which side owns the vertex data), then reads the
+ * downloaded bytes as Kakshya::Vertex records exactly as
+ * write_operator_sample() reads them from CPU memory: color, scalar, uv,
+ * normal, and tangent all come along with position, since the record
+ * schema is unchanged by which side owns the bytes; only the transfer
+ * differs. A curve topology chunks on build_cluster_ids() the same way
+ * write_operator_sample() does, since graph/path membership is structural
+ * and unaffected by what a GpuFieldOperator does to positions. Also
+ * attaches the declared hash_cluster_id state field as a "cluster"
+ * attribute when present. Written as a single stream named @p stream_name:
+ * once GPU-driven, the buffer is one flat array and no longer separable by
+ * originating operator. Velocities and any per-rule state beyond
+ * hash_cluster_id are left out deliberately, the same way
+ * relaxation_grid_positions() leaves per-cell state to the caller: a
+ * GpuFieldOperator's own bespoke state fields have no shape this function
+ * can decode generically.
  *
  * Without a GpuFieldOperator, every GraphicsOperator on the network (its
  * primary operator plus any in get_operator_chain()) is CPU-readable and
