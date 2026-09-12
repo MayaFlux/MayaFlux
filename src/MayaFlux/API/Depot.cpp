@@ -12,6 +12,7 @@
 #include "MayaFlux/Buffers/Geometry/MeshBuffer.hpp"
 #include "MayaFlux/Buffers/State/VolumeGridBuffer.hpp"
 #include "MayaFlux/IO/ModelWriter.hpp"
+#include "MayaFlux/IO/SpatialTransfer.hpp"
 #include "MayaFlux/IO/VolumeWriter.hpp"
 #include "MayaFlux/Nodes/Network/MeshNetwork.hpp"
 
@@ -76,6 +77,11 @@ namespace {
         { .name = "All Files", .extensions = { "*" } }
     };
 
+    const std::vector<Portal::System::Dialog::ChooserFilter> k_spatial_filters {
+        { .name = "Alembic", .extensions = { "abc" } },
+        { .name = "All Files", .extensions = { "*" } }
+    };
+
     bool check_extension(const fs::path& filepath, const Portal::System::Dialog::ChooserFilter& filter)
     {
         if (!fs::exists(filepath) || !fs::is_regular_file(filepath))
@@ -86,7 +92,7 @@ namespace {
             return false;
 
         std::ranges::transform(ext, ext.begin(), [](unsigned char c) { return std::tolower(c); });
-        const std::string_view bare { ext.data() + 1, ext.size() - 1 }; // strip leading dot
+        const std::string_view bare { ext.data() + 1, ext.size() - 1 };
 
         return std::ranges::any_of(filter.extensions,
             [&](const std::string& e) { return e == bare; });
@@ -382,6 +388,29 @@ bool save_volume(
         [](Core::SystemDialogError) { },
         suggested_name,
         k_volume_filters);
+}
+
+bool save_spatial(
+    std::vector<IO::SpatialCaptureSource> sources,
+    const std::string& suggested_name)
+{
+    if (!require_portal("save_spatial"))
+        return false;
+
+    auto iom = get_io_manager();
+    if (!iom) {
+        MF_ERROR(Journal::Component::API, Journal::Context::Runtime,
+            "save_spatial: IOManager unavailable");
+        return false;
+    }
+
+    return Portal::System::Dialog::save_file<bool>(
+        [&iom, &sources](const fs::path& p) {
+            return iom->save_spatial_snapshot(std::move(sources), p.string());
+        },
+        [](Core::SystemDialogError) { },
+        suggested_name,
+        k_spatial_filters);
 }
 
 // ---------------------------------------------------------------------------

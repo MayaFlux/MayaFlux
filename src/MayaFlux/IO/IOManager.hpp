@@ -4,6 +4,7 @@
 #include "ImageWriter.hpp"
 #include "ModelWriter.hpp"
 #include "SoundFileWriter.hpp"
+#include "SpatialTransfer.hpp"
 #include "VideoFileReader.hpp"
 #include "VideoFileWriter.hpp"
 #include "VolumeReader.hpp"
@@ -111,6 +112,13 @@ public:
 
     /**
      * @brief Unregisters IOService, releases all owned readers, clears stored buffers.
+     *
+     * Also drains any still-running spatial captures through
+     * stop_spatial_capture() rather than leaving them to plain unique_ptr
+     * destruction, the same way active audio captures are drained above:
+     * an Ogawa archive left open is not a valid file, only a growing one,
+     * so a capture the caller never explicitly stopped must still be
+     * finalized here.
      */
     ~IOManager();
 
@@ -807,6 +815,71 @@ public:
      */
     [[nodiscard]] std::vector<uint32_t> get_volume_capture_ids() const;
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // Spatial — capture
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * @brief Begin (or join) recording time-sampled streams into an Alembic
+     *        archive.
+     *
+     * Resolves @p filepath to a shared SpatialCache: the first call for a
+     * given path opens it, and a later call passing the same path reuses the
+     * cache already open, so several independent captures can each record
+     * their own streams into one archive. Unlike capture_volume, nothing is
+     * numbered per frame: Alembic carries time natively, so every sample of
+     * every stream lands in the one file across the whole recording.
+     *
+     * Spawns a SpatialCapture on the engine scheduler and retains it, the
+     * same GraphicsRoutine/FrameDelay shape capture_volume uses. For a
+     * capture the caller owns and drives itself, construct IO::SpatialCapture
+     * directly against a SpatialCache of its own.
+     *
+     * @param filepath       Destination .abc path.
+     * @param sources        Streams to tick together every frame. Build one
+     *                       with IO::make_network_geometry_source() or a
+     *                       hand-written IO::SpatialCaptureSource.
+     * @param max_frames     Stop after this many frames. Zero is unbounded.
+     * @param frame_interval Frames between captures.
+     * @return Capture handle for stop_spatial_capture, or 0 on failure
+     *         (no sources, no scheduler, or the archive failed to open).
+     */
+    [[nodiscard]] uint32_t capture_spatial(
+        const std::string& filepath,
+        std::vector<IO::SpatialCaptureSource> sources,
+        uint32_t max_frames = 0,
+        uint64_t frame_interval = 1);
+
+    /**
+     * @brief Stop a running spatial capture and release it.
+     *
+     * Frames already written are kept. The underlying archive stays open and
+     * registered under its filepath as long as any other capture still
+     * shares it. No-op with a warning if the id is unknown.
+     */
+    void stop_spatial_capture(uint32_t capture_id);
+
+    /**
+     * @brief Returns all active spatial capture IDs.
+     */
+    [[nodiscard]] std::vector<uint32_t> get_spatial_capture_ids() const;
+
+    /**
+     * @brief Save every source once, as a single time sample, with a
+     *        millisecond epoch timestamp spliced into the path, queued
+     *        asynchronously.
+     *
+     * The timestamp is computed on the worker thread at the moment the
+     * write actually runs, mirroring save_mesh_snapshot, so repeated calls
+     * in quick succession still each land in their own file.
+     *
+     * @return True once the task is queued; open or write failure is
+     *         logged from the task and does not surface here.
+     */
+    bool save_spatial_snapshot(
+        std::vector<IO::SpatialCaptureSource> sources,
+        const std::string& path_pattern);
+
     /**
      * @brief Returns all active video reader IDs.
      */
@@ -914,6 +987,19 @@ private:
     mutable std::mutex m_volume_captures_mutex;
     std::unordered_map<uint32_t, std::unique_ptr<IO::VolumeCapture>> m_volume_captures;
     std::vector<std::shared_ptr<Buffers::VolumeGridBuffer>> m_loaded_volumes;
+
+    // ── Spatial ──────────────────────────────────────────────────────
+
+    struct SpatialCaptureEntry {
+        std::unique_ptr<IO::SpatialCapture> capture;
+        std::string filepath; ///< Keys m_spatial_cache_refcounts.
+    };
+
+    std::atomic<uint32_t> m_next_spatial_capture_id { 1 };
+    mutable std::mutex m_spatial_captures_mutex;
+    std::unordered_map<uint32_t, SpatialCaptureEntry> m_spatial_captures;
+    std::unordered_map<std::string, std::shared_ptr<IO::SpatialCache>> m_spatial_caches;
+    std::unordered_map<std::string, int> m_spatial_cache_refcounts; ///< Closes+erases a cache at zero.
 
     // ── readers ──────────────────────────────────────────────────────
 

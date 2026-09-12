@@ -190,15 +190,9 @@ struct SpatialCache::Impl {
     std::unordered_map<std::string, MetaData> pending_metadata;
 
     /**
-     * @brief Guards every access to the members above.
-     *
-     * write() always runs from whichever thread a SpatialCapture's
-     * coroutine happens to be resumed on (the graphics thread, by
-     * convention, but nothing enforces that); close() can be called from
-     * any thread, since a caller stopping a capture has no reason to be on
-     * that same thread. Lives in Impl, not directly on SpatialCache, so
-     * that SpatialCache's own defaulted move constructor keeps working:
-     * moving the unique_ptr<Impl> needs no lock of its own.
+     * @brief Guards the members above: write() and close() can run on
+     *        different threads. In Impl rather than on SpatialCache
+     *        directly so its defaulted move constructor still works.
      */
     std::mutex mutex;
 };

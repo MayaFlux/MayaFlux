@@ -24,7 +24,8 @@ namespace IO {
     struct ImageWriteOptions;
     struct VolumeWriteOptions;
     struct ModelWriteOptions;
-    using TextureResolver = std::function<std::shared_ptr<Core::VKImage>(const std::string&)>; // add
+    struct SpatialCaptureSource;
+    using TextureResolver = std::function<std::shared_ptr<Core::VKImage>(const std::string&)>;
 }
 
 namespace Kakshya {
@@ -288,6 +289,24 @@ MAYAFLUX_API bool save_volume(
     const std::shared_ptr<Buffers::VolumeGridBuffer>& volume,
     const std::string& suggested_name,
     const IO::VolumeWriteOptions& options);
+
+/**
+ * @brief Present a native save-file dialog filtered to Alembic and write
+ *        every source once via IOManager::save_spatial_snapshot().
+ *
+ * Blocks until the user confirms or cancels. The write itself is queued
+ * asynchronously; this function returns once the path is chosen and the
+ * task is enqueued. Returns false on cancellation, backend error, or if
+ * Portal::System is not initialized.
+ *
+ * @param sources        Streams to write once. Build with
+ *                        IO::make_network_geometry_source() or a
+ *                        hand-written IO::SpatialCaptureSource.
+ * @param suggested_name Filename pre-filled in the dialog name field.
+ */
+MAYAFLUX_API bool save_spatial(
+    std::vector<IO::SpatialCaptureSource> sources,
+    const std::string& suggested_name = "output.abc");
 
 /**
  * @brief Retrieves the global IOManager instance for file loading and buffer management
