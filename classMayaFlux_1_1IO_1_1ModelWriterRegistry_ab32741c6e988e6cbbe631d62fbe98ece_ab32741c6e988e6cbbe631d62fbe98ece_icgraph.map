@@ -1,0 +1,9 @@
+<map id="MayaFlux::IO::ModelWriterRegistry::instance" name="MayaFlux::IO::ModelWriterRegistry::instance">
+<area shape="rect" id="Node000001" title=" " alt="" coords="500,37,696,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1AssimpModelWriter_adbfb89dfca93ee24965f46ecda07ab24.html#adbfb89dfca93ee24965f46ecda07ab24" title="Register this writer with the ModelWriterRegistry." alt="" coords="240,5,452,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="486,46,452,41,453,36,487,41"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1IOManager_a9fca1b11b77c34c890e703aacbf8b582.html#a9fca1b11b77c34c890e703aacbf8b582" title="Save one or more meshes to disk asynchronously." alt="" coords="253,69,439,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="487,74,440,80,439,75,486,69"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1IOManager_af982f9c79ae012eccf9dc9c726bc754c.html#af982f9c79ae012eccf9dc9c726bc754c" title="Construct IOManager and register the IOService into BackendRegistry." alt="" coords="5,5,192,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="226,28,192,28,192,23,226,23"/>
+</map>

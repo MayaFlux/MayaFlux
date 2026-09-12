@@ -1,0 +1,11 @@
+<map id="MayaFlux::Kakshya::extract_processed_data" name="MayaFlux::Kakshya::extract_processed_data">
+<area shape="rect" id="Node000001" title="Extract one channel&#39;s samples from a processed dynamic data block." alt="" coords="544,91,721,131"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1SoundStreamReader_a561ff0506f9cf67a9a28221bc426e707.html#a561ff0506f9cf67a9a28221bc426e707" title="Extract channel data from the container into the output buffer." alt="" coords="287,44,496,99"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="530,97,496,91,497,86,531,92"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1StreamSliceProcessor_aeb52c4588f37dd76af5a2e8cb3722717.html#aeb52c4588f37dd76af5a2e8cb3722717" title="The core processing function that must be implemented by derived classes." alt="" coords="310,123,473,177"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="531,130,473,140,473,134,530,125"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1SoundStreamReader_ab6a94c7681a0c71da55d99b23e6b344e.html#ab6a94c7681a0c71da55d99b23e6b344e" title="Attach the adapter to an AudioBuffer." alt="" coords="33,5,211,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="273,57,211,48,212,43,273,52"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1SoundStreamReader_ad4011fce560f9b7db87e6e98d351d670.html#ad4011fce560f9b7db87e6e98d351d670" title="Extracts and processes data from the container into the target AudioBuffer." alt="" coords="5,84,239,139"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="274,91,239,97,238,91,273,86"/>
+</map>

@@ -1,0 +1,11 @@
+<map id="MayaFlux::Nodes::RootNode::preprocess" name="MayaFlux::Nodes::RootNode::preprocess">
+<area shape="rect" id="Node000001" title="Checks if the root node can process pending operations." alt="" coords="515,37,721,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1RootNode_a4e2e056d21673261a19294c42b11cb65.html#a4e2e056d21673261a19294c42b11cb65" title="Processes a single frame from all registered nodes." alt="" coords="260,5,467,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="501,45,467,41,467,36,502,40"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1RootNode_a919034f3da66aac25a12725b592bcf1b.html#a919034f3da66aac25a12725b592bcf1b" title="Processes a single sample from all registered nodes." alt="" coords="260,69,467,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="502,75,467,79,467,74,501,69"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1RootNode_ab5b73c4583a86786b22e2918f9f60b62.html#ab5b73c4583a86786b22e2918f9f60b62" title="Processes multiple frames from all registered nodes." alt="" coords="5,5,212,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="247,28,212,28,212,23,247,23"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1RootNode_aedc8fc75d7c7ca80e448f9949aad020a.html#aedc8fc75d7c7ca80e448f9949aad020a" title="Processes all registered nodes and combines their outputs." alt="" coords="5,69,212,109"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="247,92,212,92,212,87,247,87"/>
+</map>

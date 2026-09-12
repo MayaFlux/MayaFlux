@@ -1,0 +1,14 @@
+<map id="MayaFlux::Kakshya::VideoStreamContainer::get_frames_typed_as" name="MayaFlux::Kakshya::VideoStreamContainer::get_frames_typed_as">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,55,176,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_acd69a7c5e27cc6fd492c480c481ee9ea.html#acd69a7c5e27cc6fd492c480c481ee9ea" title="Total byte size of one frame: width * height * bytes_per_pixel." alt="" coords="473,5,643,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="169,52,224,39,346,27,460,26,460,31,346,33,224,45,171,57"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_a83a00cb3dafd4074c546e772072b9e0e.html#a83a00cb3dafd4074c546e772072b9e0e" title="Elements in one frame: width * height * channels." alt="" coords="224,55,425,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="176,79,210,79,210,85,176,85"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_a9e5b883b500963e343de6fe357520f45.html#a9e5b883b500963e343de6fe357520f45" title="Get raw pixel data for a single frame as a byte span." alt="" coords="240,133,409,188"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="174,107,231,126,229,131,172,112"/>
+<area shape="poly" id="edge4_Node000004_Node000002" title=" " alt="" coords="401,131,424,120,468,94,508,67,511,71,471,98,427,124,403,136"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_ac5764b3010fc7824fd6b5da810d65f50.html#ac5764b3010fc7824fd6b5da810d65f50" title=" " alt="" coords="473,116,643,171"/>
+<area shape="poly" id="edge5_Node000004_Node000005" title=" " alt="" coords="410,152,459,148,460,153,410,157"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Kakshya_a505a6355fca48fde66db9c0ca1e23a17.html#a505a6355fca48fde66db9c0ca1e23a17" title="Get a pointer to the raw bytes of a DataVariant and its size." alt="" coords="479,195,637,235"/>
+<area shape="poly" id="edge6_Node000004_Node000006" title=" " alt="" coords="411,178,466,191,465,196,409,183"/>
+</map>

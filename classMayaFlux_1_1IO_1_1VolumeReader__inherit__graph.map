@@ -1,0 +1,5 @@
+<map id="MayaFlux::IO::VolumeReader" name="MayaFlux::IO::VolumeReader">
+<area shape="rect" id="Node000001" title="tinyvdb&#45;backed loader for volumetric grid files." alt="" coords="5,373,208,739"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1FileReader.html" title="Abstract interface for reading various file formats into containers." alt="" coords="18,5,195,325"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="109,339,109,373,104,373,104,339"/>
+</map>

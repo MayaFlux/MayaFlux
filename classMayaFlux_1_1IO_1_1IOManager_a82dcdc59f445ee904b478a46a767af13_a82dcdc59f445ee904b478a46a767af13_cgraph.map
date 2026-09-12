@@ -1,0 +1,7 @@
+<map id="MayaFlux::IO::IOManager::stop_capture" name="MayaFlux::IO::IOManager::stop_capture">
+<area shape="rect" id="Node000001" title="Stop a running capture and finalise the file." alt="" coords="5,49,192,89"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_a0c7a59c0847791ed0915dcd64e8df783.html#a0c7a59c0847791ed0915dcd64e8df783" title="Query for a backend service." alt="" coords="257,5,424,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="192,52,243,44,244,50,193,57"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aa28c6f5592e5893508bafb62aefcc496.html#aa28c6f5592e5893508bafb62aefcc496" title="Get the global registry instance." alt="" coords="240,85,441,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="193,80,227,85,226,90,192,85"/>
+</map>

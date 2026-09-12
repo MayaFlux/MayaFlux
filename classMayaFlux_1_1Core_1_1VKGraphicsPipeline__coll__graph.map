@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::VKGraphicsPipeline" name="MayaFlux::Core::VKGraphicsPipeline">
+<area shape="rect" id="Node000001" title="Vulkan graphics pipeline wrapper." alt="" coords="8,548,208,1161"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Core_1_1GraphicsPipelineConfig.html" title="Configuration for creating a graphics pipeline." alt="" coords="5,5,211,485"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="111,486,111,531,105,531,105,486"/>
+</map>

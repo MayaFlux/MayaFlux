@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::jounce" name="MayaFlux::Kinesis::jounce">
+<area shape="rect" id="Node000001" title="Fourth difference: rate of change of jerk." alt="" coords="203,5,352,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_a252fa4e53101e6c6ddaa3c51d28ecb53.html#a252fa4e53101e6c6ddaa3c51d28ecb53" title="Convenience overload of jounce over a raw span, samples[0] newest." alt="" coords="5,5,155,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="189,28,155,28,155,23,189,23"/>
+</map>

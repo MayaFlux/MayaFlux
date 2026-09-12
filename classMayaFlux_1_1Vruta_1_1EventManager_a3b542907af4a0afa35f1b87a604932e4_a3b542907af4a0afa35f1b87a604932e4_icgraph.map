@@ -1,0 +1,17 @@
+<map id="MayaFlux::Vruta::EventManager::remove_event" name="MayaFlux::Vruta::EventManager::remove_event">
+<area shape="rect" id="Node000001" title="Remove an event by name." alt="" coords="764,101,995,141"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Vruta_1_1EventManager_ab03d9c23414e27d09de89a8d30ff475b.html#ab03d9c23414e27d09de89a8d30ff475b" title="Add a event to the manager." alt="" coords="485,101,716,141"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="750,124,716,124,716,119,750,119"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Context_ae213a276596a93e469537511b17630ee.html#ae213a276596a93e469537511b17630ee" title="Called repeatedly while a key is held and the element has focus." alt="" coords="245,5,427,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="538,99,436,60,401,48,403,43,438,55,540,94"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Context_a6b24723f98f3945cfda8b7552d61a38f.html#a6b24723f98f3945cfda8b7552d61a38f" title="Called when a key is pressed while the element has focus." alt="" coords="245,69,427,109"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="471,108,426,103,427,98,472,103"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Context_a0584762da2d28e2afc5375b2e08b2030.html#a0584762da2d28e2afc5375b2e08b2030" title="Called when a key is released while the element has focus." alt="" coords="245,133,427,173"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="472,140,427,145,426,140,471,134"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Context_aa42296d51149bf551f43678912150ef0.html#aa42296d51149bf551f43678912150ef0" title=" " alt="" coords="235,197,437,237"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="540,149,438,188,403,200,401,195,436,183,538,144"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Context_adf3083a490c76194f3d2d60c5210634d.html#adf3083a490c76194f3d2d60c5210634d" title="Attach key&#45;delta handlers to a Mapped&lt;float&gt; element." alt="" coords="5,5,187,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="232,28,187,28,187,23,232,23"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Context_a7287e64dcc62fe5f54a34e133c3b0332.html#a7287e64dcc62fe5f54a34e133c3b0332" title="Construct and immediately register event coroutines." alt="" coords="5,197,187,237"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="221,220,187,220,187,215,221,215"/>
+</map>

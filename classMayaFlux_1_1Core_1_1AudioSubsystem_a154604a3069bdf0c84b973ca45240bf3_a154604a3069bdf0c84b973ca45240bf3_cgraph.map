@@ -1,0 +1,9 @@
+<map id="MayaFlux::Core::AudioSubsystem::shutdown" name="MayaFlux::Core::AudioSubsystem::shutdown">
+<area shape="rect" id="Node000001" title="Shutdown and cleanup audio resources." alt="" coords="5,69,247,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aa28c6f5592e5893508bafb62aefcc496.html#aa28c6f5592e5893508bafb62aefcc496" title="Get the global registry instance." alt="" coords="315,5,516,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="217,67,310,46,312,51,218,72"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1AudioSubsystem_a1359ed9170dec500174dc53fde2579c1.html#a1359ed9170dec500174dc53fde2579c1" title="Stop audio processing and streaming." alt="" coords="295,69,536,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="247,87,281,87,281,92,247,92"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_af56fb38c9e3a502f619f6205beb49384.html#af56fb38c9e3a502f619f6205beb49384" title="Unregister a service." alt="" coords="309,134,521,189"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="208,107,296,129,295,134,207,112"/>
+</map>

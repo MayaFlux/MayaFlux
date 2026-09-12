@@ -1,0 +1,5 @@
+<map id="MayaFlux::unregister_audio_node" name="MayaFlux::unregister_audio_node">
+<area shape="rect" id="Node000001" title="Removes a node from the root node of a specific channel." alt="" coords="213,5,373,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_aa4c12145e393f66fe17cb79555f4a402.html#aa4c12145e393f66fe17cb79555f4a402" title="Removes a node from the root node from list of channels." alt="" coords="5,5,165,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="200,28,166,28,166,23,200,23"/>
+</map>

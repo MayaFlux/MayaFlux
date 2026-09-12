@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kinesis::Lattice2D::cell_center" name="MayaFlux::Kinesis::Lattice2D::cell_center">
+<area shape="rect" id="Node000001" title="Position of a cell&#39;s centre." alt="" coords="5,37,168,77"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kinesis_1_1Lattice2D_aeb58764db8b467fff043d9b38ee5018e.html#aeb58764db8b467fff043d9b38ee5018e" title="Edge length of one cell along each axis." alt="" coords="216,37,365,77"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="168,55,202,55,202,60,168,60"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kinesis_1_1AABB2D_a32bac0d1a4f876c992486eed5dc9fd6f.html#a32bac0d1a4f876c992486eed5dc9fd6f" title=" " alt="" coords="413,5,563,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="365,43,399,37,400,42,366,48"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Kinesis_1_1AABB2D_ab8e372add789f6bd44fa66a92618456a.html#ab8e372add789f6bd44fa66a92618456a" title=" " alt="" coords="413,69,563,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="366,67,400,72,399,78,365,72"/>
+</map>

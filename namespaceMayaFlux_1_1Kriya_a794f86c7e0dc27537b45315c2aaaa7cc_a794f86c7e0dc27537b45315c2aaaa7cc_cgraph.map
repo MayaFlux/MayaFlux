@@ -1,0 +1,8 @@
+<map id="MayaFlux::Kriya::sequence" name="MayaFlux::Kriya::sequence">
+<area shape="rect" id="Node000001" title="Creates a temporal sequence that executes callbacks at specified time offsets." alt="" coords="5,45,204,70"/>
+<area shape="poly" id="edge3_Node000001_Node000001" title=" " alt="" coords="65,46,57,36,61,26,78,20,105,18,139,22,149,27,152,32,148,35,145,31,138,27,105,23,79,25,65,30,62,36,69,43"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Vruta_aa9ec6c0df02f7be3eff1aa2d2a0020d4.html#aa9ec6c0df02f7be3eff1aa2d2a0020d4" title="Convert seconds to frames at a given frame rate." alt="" coords="252,5,443,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="201,42,238,37,239,42,202,47"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Vruta_a09f1b4929d6c87d96e68969b5c102ce9.html#a09f1b4929d6c87d96e68969b5c102ce9" title="Convert seconds to samples at a given sample rate." alt="" coords="252,69,443,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="202,67,239,72,238,78,201,73"/>
+</map>

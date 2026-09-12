@@ -1,0 +1,36 @@
+<map id="MayaFlux::Portal::Graphics::TextureLoom::get_bytes_per_pixel" name="MayaFlux::Portal::Graphics::TextureLoom::get_bytes_per_pixel">
+<area shape="rect" id="Node000001" title="Get bytes per pixel for a format." alt="" coords="793,438,991,493"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a26861705b8952f21e0b0c8363d6d43e2.html#a26861705b8952f21e0b0c8363d6d43e2" title="Calculate image data size." alt="" coords="543,158,741,213"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="856,430,666,215,670,211,860,426"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Buffers_1_1VideoStreamReader_a36eee8e181ec8802cd88f6382ce5a0b5.html#a36eee8e181ec8802cd88f6382ce5a0b5" title="Extract frame pixel data from processed_data into the TextureBuffer." alt="" coords="539,366,745,421"/>
+<area shape="poly" id="edge11_Node000001_Node000011" title=" " alt="" coords="783,437,737,423,738,418,784,432"/>
+<area shape="rect" id="Node000014" href="$namespaceMayaFlux_1_1Kakshya_a90d1905c27d4d5d050190af79cc25df7.html#a90d1905c27d4d5d050190af79cc25df7" title=" " alt="" coords="539,445,745,485"/>
+<area shape="poly" id="edge14_Node000001_Node000014" title=" " alt="" coords="780,468,745,468,745,463,780,463"/>
+<area shape="rect" id="Node000016" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_af0840fe84953c142ce0465be6378b959.html#af0840fe84953c142ce0465be6378b959" title="Allocate m_data[0] as a ring of ring_capacity frames." alt="" coords="557,510,727,565"/>
+<area shape="poly" id="edge16_Node000001_Node000016" title=" " alt="" coords="784,499,728,516,726,510,783,494"/>
+<area shape="rect" id="Node000017" href="$classMayaFlux_1_1Buffers_1_1TextureBuffer_ac591a11585eecc22824a7411e4f02dab.html#ac591a11585eecc22824a7411e4f02dab" title="Create texture buffer with dimensions." alt="" coords="540,589,744,629"/>
+<area shape="poly" id="edge17_Node000001_Node000017" title=" " alt="" coords="853,504,804,543,747,580,719,592,717,587,744,575,801,539,850,500"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a028cc0af273b37e3dadbdc908c67a7ed.html#a028cc0af273b37e3dadbdc908c67a7ed" title="Create a 2D texture from a DataVariant in one shot." alt="" coords="10,5,207,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="607,149,555,101,524,78,490,60,419,37,345,25,273,20,208,20,208,15,273,15,345,20,420,32,492,55,527,73,559,96,611,146"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_aaf5e48e2bb8325c1db70971a89cabec7.html#aaf5e48e2bb8325c1db70971a89cabec7" title="Create a 2D texture." alt="" coords="277,69,474,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="568,155,490,124,453,112,455,107,492,119,570,150"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a7657fd40adc1f7b7c82c8aca63f35a09.html#a7657fd40adc1f7b7c82c8aca63f35a09" title="Create a 2D texture array." alt="" coords="262,133,489,173"/>
+<area shape="poly" id="edge8_Node000002_Node000008" title=" " alt="" coords="529,175,489,170,489,164,530,169"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a7ac47f4e64fd980c46a937ca4c69a1d0.html#a7ac47f4e64fd980c46a937ca4c69a1d0" title="Create a 3D texture (volumetric)" alt="" coords="277,197,474,237"/>
+<area shape="poly" id="edge9_Node000002_Node000009" title=" " alt="" coords="530,201,475,208,474,203,529,196"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_ad61a4d872b3af82eb1af351bc6118126.html#ad61a4d872b3af82eb1af351bc6118126" title="Create a cubemap texture." alt="" coords="260,261,491,301"/>
+<area shape="poly" id="edge10_Node000002_Node000010" title=" " alt="" coords="570,221,492,252,455,264,453,259,490,247,568,216"/>
+<area shape="poly" id="edge4_Node000004_Node000003" title=" " alt="" coords="277,69,192,48,193,43,279,63"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1WindowContainer_a36dc887f4398346c40f92bd77b67025a.html#a36dc887f4398346c40f92bd77b67025a" title="Upload m_data[frame_index] to a new VKImage." alt="" coords="5,69,212,109"/>
+<area shape="poly" id="edge5_Node000004_Node000005" title=" " alt="" coords="263,92,212,92,212,87,263,87"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1WindowContainer_a54e6f5327b1e6000a2c148781a8f6717.html#a54e6f5327b1e6000a2c148781a8f6717" title="Crop a region from the last readback and upload it as a VKImage." alt="" coords="15,134,202,189"/>
+<area shape="poly" id="edge6_Node000004_Node000006" title=" " alt="" coords="288,116,203,139,202,134,287,110"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Kakshya_1_1WindowContainer_a31ff69a65227eb7c14504ae2c8ae5fe9.html#a31ff69a65227eb7c14504ae2c8ae5fe9" title="Upload the full surface readback to a new VKImage." alt="" coords="5,213,212,253"/>
+<area shape="poly" id="edge7_Node000004_Node000007" title=" " alt="" coords="269,118,262,123,246,142,238,161,231,182,214,202,192,216,189,211,210,198,226,179,233,159,241,139,258,119,266,114"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Buffers_1_1VideoStreamReader_a0e7ea4fbd08e01ae36c2430bb0cac90a.html#a0e7ea4fbd08e01ae36c2430bb0cac90a" title="Attach the reader to a TextureBuffer." alt="" coords="287,326,463,381"/>
+<area shape="poly" id="edge12_Node000011_Node000012" title=" " alt="" coords="525,378,463,369,464,364,525,373"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Buffers_1_1VideoStreamReader_a710016d4d616f77a1e99e1d599bbe62a.html#a710016d4d616f77a1e99e1d599bbe62a" title="Extract the current frame from the container into the TextureBuffer." alt="" coords="260,405,491,459"/>
+<area shape="poly" id="edge13_Node000011_Node000013" title=" " alt="" coords="526,413,491,418,490,413,525,408"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_a0fc9df1396ea9ef39f73e9e5719db550.html#a0fc9df1396ea9ef39f73e9e5719db550" title="Construct a VideoStreamContainer with specified parameters." alt="" coords="287,483,464,538"/>
+<area shape="poly" id="edge15_Node000014_Node000015" title=" " alt="" coords="526,488,465,498,464,493,525,482"/>
+</map>

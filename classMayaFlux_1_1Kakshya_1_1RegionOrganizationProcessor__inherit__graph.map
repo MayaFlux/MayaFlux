@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kakshya::RegionOrganizationProcessor" name="MayaFlux::Kakshya::RegionOrganizationProcessor">
+<area shape="rect" id="Node000001" title="Data&#45;driven processor for organizing and processing non&#45;linear audio regions." alt="" coords="5,736,235,1171"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1DynamicRegionProcessor.html" title="Extends RegionOrganizationProcessor with dynamic, runtime reorganization capabilities." alt="" coords="17,1219,223,1468"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="123,1185,123,1218,117,1218,117,1185"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1RegionProcessorBase.html" title="Base class for N&#45;dimensional region processors." alt="" coords="7,213,233,688"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="123,702,123,736,117,736,117,702"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1DataProcessor.html" title="Interface for processing data within SignalSourceContainer objects." alt="" coords="45,5,195,165"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="123,179,123,213,117,213,117,179"/>
+</map>

@@ -1,0 +1,9 @@
+<map id="MayaFlux::Nodes::Constant::process_batch" name="MayaFlux::Nodes::Constant::process_batch">
+<area shape="rect" id="Node000001" title="Fill a buffer with the constant value." alt="" coords="5,5,207,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Constant_aea6d3dad8ec45fd40b9c6be04a8c2726.html#aea6d3dad8ec45fd40b9c6be04a8c2726" title="Return the constant value, ignoring input." alt="" coords="255,5,456,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="207,23,241,23,241,28,207,28"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Constant_ac45c00a8a67f2bbc456542c15207b045.html#ac45c00a8a67f2bbc456542c15207b045" title="Fire all registered on_tick() and on_tick_if() callbacks." alt="" coords="504,5,705,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="456,23,490,23,490,28,456,28"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Constant_a0c3efdc4763b58247d6ff09f244afc77.html#a0c3efdc4763b58247d6ff09f244afc77" title="Update m_context with the latest value." alt="" coords="753,5,955,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="706,23,739,23,739,28,706,28"/>
+</map>

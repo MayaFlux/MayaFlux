@@ -1,0 +1,5 @@
+<map id="MayaFlux::IO::SoundFileReader::~SoundFileReader" name="MayaFlux::IO::SoundFileReader::~SoundFileReader">
+<area shape="rect" id="Node000001" title="Destroy the SoundFileReader object." alt="" coords="5,5,231,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1SoundFileReader_a0e013019828a35aee2ffdcd3cd8c2d98.html#a0e013019828a35aee2ffdcd3cd8c2d98" title="Close the currently open file and release resources." alt="" coords="279,5,504,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="231,23,265,23,265,28,231,28"/>
+</map>

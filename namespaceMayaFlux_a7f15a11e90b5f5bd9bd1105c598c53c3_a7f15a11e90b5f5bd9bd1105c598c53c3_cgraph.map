@@ -1,0 +1,5 @@
+<map id="MayaFlux::dynamic_range_global" name="MayaFlux::dynamic_range_global">
+<area shape="rect" id="Node000001" title="Calculate dynamic range across all channels (global min/max)" alt="" coords="5,5,200,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1OperationHelper_ad367bd6ef37555bb3918e5545cac03bd.html#ad367bd6ef37555bb3918e5545cac03bd" title="extract numeric data from single&#45;variant types" alt="" coords="248,5,463,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="200,23,234,23,234,28,200,28"/>
+</map>

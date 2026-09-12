@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Network::ResonatorNetwork::map_parameter" name="MayaFlux::Nodes::Network::ResonatorNetwork::map_parameter">
+<area shape="rect" id="Node000001" title="Map a scalar node output to a named networkparameter (BROADCAST)" alt="" coords="5,5,204,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ResonatorNetwork_a5c987ae541cf8288fc7ac723d0203a5d.html#a5c987ae541cf8288fc7ac723d0203a5d" title="Remove a parameter mapping by name." alt="" coords="252,5,456,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="204,30,239,30,239,35,204,35"/>
+</map>

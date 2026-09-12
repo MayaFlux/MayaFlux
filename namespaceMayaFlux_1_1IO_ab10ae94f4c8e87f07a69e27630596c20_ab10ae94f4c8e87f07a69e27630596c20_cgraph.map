@@ -1,0 +1,10 @@
+<map id="MayaFlux::IO::download_volume" name="MayaFlux::IO::download_volume">
+<area shape="rect" id="Node000001" title="Download named fields from a GPU&#45;resident volume into host VolumeData." alt="" coords="5,5,184,45"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kakshya_1_1VolumeData_ad18c3092c8a26b207df1a6ff8ad8bbef.html#ad18c3092c8a26b207df1a6ff8ad8bbef" title="Cells in the lattice, which every field&#39;s element_count() must equal." alt="" coords="475,5,651,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="184,20,232,19,427,19,461,19,461,25,427,24,232,24,184,25"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Kakshya_1_1VolumeData_a6eb5ed3d17b6580cc64d6a94088f8b5a.html#a6eb5ed3d17b6580cc64d6a94088f8b5a" title="Check that every field is densely populated over the lattice." alt="" coords="232,33,427,73"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="185,33,219,37,218,43,184,39"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kinesis_1_1Lattice3D_a544eb1555cf9cbaca83638e71bfb0395.html#a544eb1555cf9cbaca83638e71bfb0395" title="Total cell count." alt="" coords="699,5,857,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="651,23,685,23,685,28,651,28"/>
+<area shape="poly" id="edge4_Node000004_Node000002" title=" " alt="" coords="426,39,461,35,462,40,427,44"/>
+</map>

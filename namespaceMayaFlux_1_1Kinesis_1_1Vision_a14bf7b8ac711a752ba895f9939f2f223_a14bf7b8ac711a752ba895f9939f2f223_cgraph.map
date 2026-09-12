@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::Vision::erode" name="MayaFlux::Kinesis::Vision::erode">
+<area shape="rect" id="Node000001" title="Morphological erosion with square structuring element." alt="" coords="5,5,155,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_a2f151c2361da03554d3b5e7536b32994.html#a2f151c2361da03554d3b5e7536b32994" title="Erosion writing into dst." alt="" coords="203,5,352,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="155,23,189,23,189,28,155,28"/>
+</map>

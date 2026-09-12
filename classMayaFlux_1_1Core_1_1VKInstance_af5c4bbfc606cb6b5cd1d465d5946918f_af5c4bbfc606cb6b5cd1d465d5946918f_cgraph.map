@@ -1,0 +1,10 @@
+<map id="MayaFlux::Core::VKInstance::initialize" name="MayaFlux::Core::VKInstance::initialize">
+<area shape="rect" id="Node000001" title="Initialize Vulkan instance." alt="" coords="5,78,211,118"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1VKInstance_ab6d0d8e03bb2101a3e5203df7722def6.html#ab6d0d8e03bb2101a3e5203df7722def6" title="Check if requested validation layers are available." alt="" coords="259,5,464,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="186,75,245,60,246,65,187,81"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1VKInstance_afad35012d9953c1b64f68150632cec74.html#afad35012d9953c1b64f68150632cec74" title="Validation layer callback." alt="" coords="512,107,717,147"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="211,101,498,118,498,123,211,107"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1VKInstance_ac9a554cd2ed26a5a194ae795d0db1792.html#ac9a554cd2ed26a5a194ae795d0db1792" title="Setup debug messenger for validation layer output." alt="" coords="259,135,464,175"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="198,115,260,130,258,135,196,121"/>
+<area shape="poly" id="edge4_Node000004_Node000003" title=" " alt="" coords="464,141,498,138,499,143,465,147"/>
+</map>

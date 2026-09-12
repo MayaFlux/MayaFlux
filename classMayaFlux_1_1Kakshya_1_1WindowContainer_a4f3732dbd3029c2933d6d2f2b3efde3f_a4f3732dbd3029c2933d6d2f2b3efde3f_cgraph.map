@@ -1,0 +1,23 @@
+<map id="MayaFlux::Kakshya::WindowContainer::setup_dimensions" name="MayaFlux::Kakshya::WindowContainer::setup_dimensions">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,245,187,300"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_ac71c3404aadefac0fe97e641021e1eba.html#ac71c3404aadefac0fe97e641021e1eba" title="Create dimension descriptors for a data modality." alt="" coords="236,205,408,260"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="186,254,222,248,223,253,187,259"/>
+<area shape="rect" id="Node000011" href="$structMayaFlux_1_1Kakshya_1_1ContainerDataStructure_a3ec04f10c18dea5069c95665761cf183.html#a3ec04f10c18dea5069c95665761cf183" title="Create structure for interleaved image data." alt="" coords="235,284,409,339"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="187,286,222,291,221,297,186,291"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_aafb5f78e7e3682f8785ef62f77e5d77a.html#aafb5f78e7e3682f8785ef62f77e5d77a" title="Calculate memory strides based on shape and layout." alt="" coords="460,5,651,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="338,203,386,138,419,102,456,71,464,65,467,69,459,75,423,106,391,141,343,206"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_afae79b6c7314e95d426e396efe81787a.html#afae79b6c7314e95d426e396efe81787a" title="Convenience constructor for a channel dimension." alt="" coords="464,85,647,125"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="354,203,401,168,456,134,471,127,473,132,459,139,404,172,357,207"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_ab8dcc89c5d4c2095dcdc5ade1cd84848.html#ab8dcc89c5d4c2095dcdc5ade1cd84848" title="Convenience constructor for a depth dimension." alt="" coords="471,149,639,189"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="408,206,468,190,469,195,409,212"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_a6a1656bc7eafe4add39ec634481345a7.html#a6a1656bc7eafe4add39ec634481345a7" title="Convenience constructor for a frequency dimension." alt="" coords="457,213,653,253"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="409,230,443,230,443,235,409,235"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Kakshya_aedc3538e77f59c4a4d91df28e181d066.html#aedc3538e77f59c4a4d91df28e181d066" title="Convert DataModality enum to string representation." alt="" coords="476,277,635,317"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="409,254,469,270,468,275,408,259"/>
+<area shape="rect" id="Node000009" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_a54ded63656235da79ab98ef3a576d3d2.html#a54ded63656235da79ab98ef3a576d3d2" title="Convenience constructor for a spatial dimension." alt="" coords="468,341,643,381"/>
+<area shape="poly" id="edge8_Node000002_Node000009" title=" " alt="" coords="394,258,411,269,426,284,435,299,444,313,459,327,468,332,465,337,456,331,440,316,431,302,422,288,408,273,391,262"/>
+<area shape="rect" id="Node000010" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_aab0cac54b47602cb00e2fd99b50839c3.html#aab0cac54b47602cb00e2fd99b50839c3" title="Convenience constructor for a temporal (time) dimension." alt="" coords="475,405,636,445"/>
+<area shape="poly" id="edge9_Node000002_Node000010" title=" " alt="" coords="398,258,411,270,423,286,430,302,435,332,440,362,447,376,459,391,465,396,462,400,455,395,443,379,435,364,430,333,425,303,419,288,407,273,394,262"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Reflect_aad91118cbd25bd9e35a3ced9aa4e6dbd.html#aad91118cbd25bd9e35a3ced9aa4e6dbd" title="Universal enum to string converter using magic_enum (original case)" alt="" coords="701,277,848,317"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="635,294,687,294,687,299,635,299"/>
+</map>

@@ -1,0 +1,11 @@
+<map id="MayaFlux::Portal::Text::GlyphAtlas::pixel_size" name="MayaFlux::Portal::Text::GlyphAtlas::pixel_size">
+<area shape="rect" id="Node000001" title="Pixel size passed at construction." alt="" coords="633,69,807,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GlyphGeometryNode_a39969c549307dc7b874fb9e794b4fb16.html#a39969c549307dc7b874fb9e794b4fb16" title="Rebuild outline geometry from the current text and pen settings." alt="" coords="365,62,585,117"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="620,92,586,92,586,87,620,87"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GlyphGeometryNode_aa2c050b302cf38e5125047fd4f1cd6d7.html#aa2c050b302cf38e5125047fd4f1cd6d7" title="Construct from a UTF&#45;8 string with an explicit FontFace." alt="" coords="5,5,317,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="351,67,260,48,261,43,352,62"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GlyphGeometryNode_ae6d0646f782caeb8a210c8344e63130b.html#ae6d0646f782caeb8a210c8344e63130b" title="Construct from a UTF&#45;8 string using the default font." alt="" coords="5,69,317,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="352,92,317,92,317,87,352,87"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GlyphGeometryNode_ad5ec71c50169fad44dcd56ed9fc04bcf.html#ad5ec71c50169fad44dcd56ed9fc04bcf" title="Replace the text string and rebuild outlines." alt="" coords="47,133,275,173"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="352,117,261,136,260,131,351,112"/>
+</map>

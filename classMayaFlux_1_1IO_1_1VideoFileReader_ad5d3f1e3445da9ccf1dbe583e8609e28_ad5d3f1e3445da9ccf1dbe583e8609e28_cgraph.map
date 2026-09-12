@@ -1,0 +1,9 @@
+<map id="MayaFlux::IO::VideoFileReader::setup_io_service" name="MayaFlux::IO::VideoFileReader::setup_io_service">
+<area shape="rect" id="Node000001" title="Internal setup for IOService integration." alt="" coords="5,77,228,117"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aa28c6f5592e5893508bafb62aefcc496.html#aa28c6f5592e5893508bafb62aefcc496" title="Get the global registry instance." alt="" coords="287,5,488,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="192,75,297,46,299,52,193,80"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_a22c6ffe496c721c1bdfe28c9a86c1c4f.html#a22c6ffe496c721c1bdfe28c9a86c1c4f" title="Register a backend service capability." alt="" coords="289,70,485,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="228,95,276,95,276,100,228,100"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1VideoFileReader_ae4c26a9b2b2c5c3c883098d82fdbc3cd.html#ae4c26a9b2b2c5c3c883098d82fdbc3cd" title="Non&#45;blocking signal to the background decode thread." alt="" coords="276,149,499,189"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="193,115,299,143,297,148,192,120"/>
+</map>

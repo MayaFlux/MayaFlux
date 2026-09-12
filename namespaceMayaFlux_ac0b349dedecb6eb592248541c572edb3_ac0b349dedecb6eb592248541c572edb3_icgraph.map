@@ -1,0 +1,5 @@
+<map id="MayaFlux::on_network_message_from" name="MayaFlux::on_network_message_from">
+<area shape="rect" id="Node000001" title="Schedule an on_message_from handler with an existing NetworkSource." alt="" coords="224,5,395,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_a05ba8fc9dd9c5436e2bd90b9774bdf4a.html#a05ba8fc9dd9c5436e2bd90b9774bdf4a" title="Schedule an on_message_from handler, constructing the NetworkSource from config." alt="" coords="5,5,176,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="210,28,176,28,176,23,210,23"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::place" name="MayaFlux::Kinesis::place">
+<area shape="rect" id="Node000001" title="Compute a region of size (w, h) positioned relative to anchor." alt="" coords="203,5,352,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_a4dcf515e2d5cd037dbf1f22f85ca0a9f.html#a4dcf515e2d5cd037dbf1f22f85ca0a9f" title="place() accepting any HasBounds anchor." alt="" coords="5,5,155,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="189,28,155,28,155,23,189,23"/>
+</map>

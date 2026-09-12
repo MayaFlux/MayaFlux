@@ -1,0 +1,6 @@
+<map id="MayaFlux::save_mesh" name="MayaFlux::save_mesh">
+<area shape="rect" id="Node000001" title="Present a native save&#45;file dialog filtered to 3D model formats and save buffer to the chosen path via..." alt="" coords="221,29,389,55"/>
+<area shape="poly" id="edge1_Node000001_Node000001" title=" " alt="" coords="344,20,333,11,305,8,282,10,270,15,268,20,274,28,270,31,262,21,266,11,281,5,305,3,335,6,347,15"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_a3b39c561b5e0e9ab0b3cd84dea5339f2.html#a3b39c561b5e0e9ab0b3cd84dea5339f2" title="Present a native save&#45;file dialog filtered to 3D model formats and save network to the chosen path vi..." alt="" coords="5,29,173,55"/>
+<area shape="poly" id="edge2_Node000001_Node000002" title=" " alt="" coords="207,45,174,45,174,39,207,39"/>
+</map>

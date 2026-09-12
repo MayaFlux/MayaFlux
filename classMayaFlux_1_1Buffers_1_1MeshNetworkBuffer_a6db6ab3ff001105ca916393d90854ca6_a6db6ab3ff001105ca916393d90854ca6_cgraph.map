@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::MeshNetworkBuffer::MeshNetworkBuffer" name="MayaFlux::Buffers::MeshNetworkBuffer::MeshNetworkBuffer">
+<area shape="rect" id="Node000001" title="Construct from an existing MeshNetwork." alt="" coords="5,70,255,125"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_a9070538a7af526d6943272f4d6d842a4.html#a9070538a7af526d6943272f4d6d842a4" title=" " alt="" coords="303,5,487,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="230,67,307,46,308,52,232,72"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_acb563960a9f338d6e93cf7bae6f64f46.html#acb563960a9f338d6e93cf7bae6f64f46" title="Called by derived classes to set their context&#45;specific defaults." alt="" coords="315,70,475,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="255,95,301,95,301,100,255,100"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_a9ebe5522ca06eb7510f532f10ab56e88.html#a9ebe5522ca06eb7510f532f10ab56e88" title="Mark this buffer as requiring depth testing when rendered." alt="" coords="318,149,471,203"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="223,122,306,147,304,152,222,127"/>
+</map>

@@ -1,0 +1,3 @@
+<map id="MayaFlux::Memory::MPSCPolicy" name="MayaFlux::Memory::MPSCPolicy">
+<area shape="rect" id="Node000001" title="Lock&#45;free MPSC (Multi&#45;Producer Single&#45;Consumer) concurrency." alt="" coords="5,5,228,131"/>
+</map>

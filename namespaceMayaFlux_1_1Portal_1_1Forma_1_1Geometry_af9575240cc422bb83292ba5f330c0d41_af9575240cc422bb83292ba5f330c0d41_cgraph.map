@@ -1,0 +1,20 @@
+<map id="MayaFlux::Portal::Forma::Geometry::horizontal_fader" name="MayaFlux::Portal::Forma::Geometry::horizontal_fader">
+<area shape="rect" id="Node000001" title="Geometry function for a horizontal fader in NDC space." alt="" coords="5,148,213,188"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_ae687a3e71748420a79742caa31b35ece.html#ae687a3e71748420a79742caa31b35ece" title="Fraction along one axis of bounds, inverse to fader placement." alt="" coords="277,49,427,89"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="159,145,288,92,290,97,161,150"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kinesis_1_1AABB2D_a32bac0d1a4f876c992486eed5dc9fd6f.html#a32bac0d1a4f876c992486eed5dc9fd6f" title=" " alt="" coords="495,5,645,45"/>
+<area shape="poly" id="edge6_Node000001_Node000003" title=" " alt="" coords="124,146,179,88,217,58,260,35,316,19,374,11,430,9,482,11,481,16,430,14,374,16,317,24,262,40,220,62,183,92,128,150"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Kinesis_1_1AABB2D_ab8e372add789f6bd44fa66a92618456a.html#ab8e372add789f6bd44fa66a92618456a" title=" " alt="" coords="495,81,645,121"/>
+<area shape="poly" id="edge9_Node000001_Node000004" title=" " alt="" coords="213,150,481,111,482,117,214,156"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kinesis_ae7264d97a31a6219d1a0c63714eea28e.html#ae7264d97a31a6219d1a0c63714eea28e" title="Generate a filled TRIANGLE_STRIP quad from an AABB2D." alt="" coords="277,188,427,228"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="214,183,264,191,263,196,213,188"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Kakshya_af09aa07eacd20ac64c4d53ccfbf545e2.html#af09aa07eacd20ac64c4d53ccfbf545e2" title="Batch&#45;project raw Vertex vector to MeshVertex." alt="" coords="273,252,431,292"/>
+<area shape="poly" id="edge7_Node000001_Node000006" title=" " alt="" coords="151,186,262,238,280,245,278,250,260,242,149,190"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_af668d56bbf7441d552c3ee5c38c3ae62.html#af668d56bbf7441d552c3ee5c38c3ae62" title="Write a vertex array into a GeometryFn output buffer." alt="" coords="261,316,443,356"/>
+<area shape="poly" id="edge10_Node000001_Node000008" title=" " alt="" coords="130,186,186,243,223,274,263,302,274,308,271,312,260,306,220,278,182,247,126,190"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="426,52,481,40,483,46,427,57"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="427,78,482,86,481,91,426,83"/>
+<area shape="poly" id="edge5_Node000005_Node000005" title=" " alt="" coords="311,188,309,178,316,169,330,163,352,161,377,164,391,172,389,176,376,169,352,167,331,169,319,173,314,179,317,187"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Kakshya_a7aca11e65c3ec397c37645fe66faf18d.html#a7aca11e65c3ec397c37645fe66faf18d" title="Project raw Vertex to MeshVertex." alt="" coords="491,252,649,292"/>
+<area shape="poly" id="edge8_Node000006_Node000007" title=" " alt="" coords="432,269,477,269,477,275,432,275"/>
+</map>

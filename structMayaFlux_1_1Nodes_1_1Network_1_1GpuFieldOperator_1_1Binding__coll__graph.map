@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Network::GpuFieldOperator::Binding" name="MayaFlux::Nodes::Network::GpuFieldOperator::Binding">
+<area shape="rect" id="Node000001" title="One target and the field driving it." alt="" coords="5,228,199,368"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kinesis_1_1FieldSource.html" title="Parsed representation of a stringified field lambda." alt="" coords="31,5,173,165"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="105,165,105,212,99,212,99,165"/>
+</map>

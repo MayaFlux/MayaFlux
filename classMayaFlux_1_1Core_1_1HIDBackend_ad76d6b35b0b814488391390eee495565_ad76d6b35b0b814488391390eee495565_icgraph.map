@@ -1,0 +1,7 @@
+<map id="MayaFlux::Core::HIDBackend::stop" name="MayaFlux::Core::HIDBackend::stop">
+<area shape="rect" id="Node000001" title="Stop listening for input events." alt="" coords="523,5,733,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1HIDBackend_ac61b5edc20ed1e284d1fa583276c6bf9.html#ac61b5edc20ed1e284d1fa583276c6bf9" title="Shutdown and release all resources." alt="" coords="264,5,475,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="509,28,475,28,475,23,509,23"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1HIDBackend_a60638965e130f637aaf22e5d0fdbb079.html#a60638965e130f637aaf22e5d0fdbb079" title=" " alt="" coords="5,5,216,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="250,28,216,28,216,23,250,23"/>
+</map>

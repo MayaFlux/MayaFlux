@@ -1,0 +1,5 @@
+<map id="MayaFlux::reversed" name="MayaFlux::reversed">
+<area shape="rect" id="Node000001" title="Reverse time order of single&#45;channel data (non&#45;destructive)" alt="" coords="5,13,156,38"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_aa6dcc3c22e38342dd3e5aacdfe2f7b97.html#aa6dcc3c22e38342dd3e5aacdfe2f7b97" title="Reverse temporal order in&#45;place." alt="" coords="204,5,353,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="156,23,190,23,190,28,156,28"/>
+</map>

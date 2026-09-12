@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kriya::EventChain::repeat_count" name="MayaFlux::Kriya::EventChain::repeat_count">
+<area shape="rect" id="Node000001" title="Gets the repeat count for the entire chain." alt="" coords="264,5,475,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kriya_1_1EventChain_aeda4b3961ff90fdb74445d39f1fbadd1.html#aeda4b3961ff90fdb74445d39f1fbadd1" title="Starts executing the event chain." alt="" coords="5,5,216,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="250,28,216,28,216,23,250,23"/>
+</map>

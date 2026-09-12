@@ -1,0 +1,9 @@
+<map id="MayaFlux::Yantra::EnergyAnalyzer::analyze_energy" name="MayaFlux::Yantra::EnergyAnalyzer::analyze_energy">
+<area shape="rect" id="Node000001" title="Type&#45;safe energy analysis method." alt="" coords="587,41,777,81"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1EnergyAnalyzer_aecc4ab5034386f7a907c980901219bed.html#aecc4ab5034386f7a907c980901219bed" title=" " alt="" coords="338,5,529,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="573,48,528,42,529,36,574,43"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1Granular_1_1AttributeOp_a76fb1bc499ea5c2bd72510855b247c00.html#a76fb1bc499ea5c2bd72510855b247c00" title="Resolve and execute attribution for a single grain." alt="" coords="328,70,539,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="574,80,539,85,539,79,573,74"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1Granular_1_1AttributeOp_a3b8505dc9c46902e93719604cb89927c.html#a3b8505dc9c46902e93719604cb89927c" title=" " alt="" coords="5,77,280,117"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="314,100,280,100,280,95,314,95"/>
+</map>

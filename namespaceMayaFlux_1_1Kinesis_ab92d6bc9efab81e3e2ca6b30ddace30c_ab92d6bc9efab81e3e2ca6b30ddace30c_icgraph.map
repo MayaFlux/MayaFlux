@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kinesis::angle_fraction" name="MayaFlux::Kinesis::angle_fraction">
+<area shape="rect" id="Node000001" title="Fraction along an angular sweep about center." alt="" coords="235,37,384,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_ad9a6a0803dba351a84d3e0e0913c5640.html#ad9a6a0803dba351a84d3e0e0913c5640" title="angle_fraction centred on a region." alt="" coords="21,5,171,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="221,47,171,39,171,34,222,42"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_a099d788ec02e2ae8bd592b7ba0b5833e.html#a099d788ec02e2ae8bd592b7ba0b5833e" title="Geometry function for a radial indicator in NDC space." alt="" coords="5,69,187,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="221,73,187,78,187,73,220,68"/>
+</map>

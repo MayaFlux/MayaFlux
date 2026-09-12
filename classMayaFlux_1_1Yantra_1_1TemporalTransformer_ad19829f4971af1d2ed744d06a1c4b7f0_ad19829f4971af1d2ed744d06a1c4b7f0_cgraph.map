@@ -1,0 +1,12 @@
+<map id="MayaFlux::Yantra::TemporalTransformer::apply_per_channel" name="MayaFlux::Yantra::TemporalTransformer::apply_per_channel">
+<area shape="rect" id="Node000001" title="Extracts per&#45;channel spans, applies func to each, and reconstructs." alt="" coords="5,62,208,117"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1TemporalTransformer_a3a0a6da6a934dd790da7097f6293986f.html#a3a0a6da6a934dd790da7097f6293986f" title="Creates output with proper type conversion." alt="" coords="257,12,459,52"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="207,64,256,53,257,58,209,69"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1OperationHelper_a86f4c84e8740ec41db439c868a93454a.html#a86f4c84e8740ec41db439c868a93454a" title="Extract structured double data from Datum container or direct ComputeData with automatic container ha..." alt="" coords="508,69,751,109"/>
+<area shape="poly" id="edge4_Node000001_Node000004" title=" " alt="" coords="208,87,494,87,494,92,208,92"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1UniversalTransformer_a952e85a0a582c7ba24c8fa85e2490294.html#a952e85a0a582c7ba24c8fa85e2490294" title="Indicates whether the transformation modifies the input data directly." alt="" coords="256,127,460,167"/>
+<area shape="poly" id="edge5_Node000001_Node000005" title=" " alt="" coords="209,110,257,121,256,126,207,115"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1ComputeOperation_ac364bad27ce3e4d35add89333c9a24b8.html#ac364bad27ce3e4d35add89333c9a24b8" title="Convert processed double data back to OutputType using metadata and optional callback." alt="" coords="529,5,730,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="459,27,515,25,515,31,459,32"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="454,49,522,64,520,69,453,55"/>
+</map>

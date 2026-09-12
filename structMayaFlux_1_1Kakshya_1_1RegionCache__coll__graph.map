@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::RegionCache" name="MayaFlux::Kakshya::RegionCache">
+<area shape="rect" id="Node000001" title="Stores cached data for a region, with metadata for cache management." alt="" coords="5,508,156,688"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kakshya_1_1Region.html" title="Represents a point or span in N&#45;dimensional space." alt="" coords="5,5,156,445"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="83,446,83,492,78,492,78,446"/>
+</map>

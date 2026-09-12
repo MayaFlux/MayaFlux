@@ -1,0 +1,13 @@
+<map id="DelayAwaiters.cpp" name="DelayAwaiters.cpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="56,5,200,31"/>
+<area shape="rect" id="Node000002" href="$DelayAwaiters_8hpp.html" title=" " alt="" coords="55,79,201,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="131,31,131,65,125,65,125,31"/>
+<area shape="rect" id="Node000003" href="$GetPromise_8hpp.html" title=" " alt="" coords="65,152,191,177"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="131,104,131,138,125,138,125,104"/>
+<area shape="rect" id="Node000004" href="$Promise_8hpp.html" title=" " alt="" coords="23,225,233,251"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="131,178,131,212,125,212,125,178"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="5,306,88,331"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="118,253,70,298,67,295,114,249"/>
+<area shape="rect" id="Node000006" href="$ProcessingTokens_8hpp.html" title=" " alt="" coords="112,299,307,339"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="142,249,182,287,178,291,138,253"/>
+</map>

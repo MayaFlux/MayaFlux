@@ -1,0 +1,15 @@
+<map id="MayaFlux::Kakshya::MeshSubrange::to_region" name="MayaFlux::Kakshya::MeshSubrange::to_region">
+<area shape="rect" id="Node000001" title="Convert this subrange to a Region for use in RegionGroup." alt="" coords="757,73,944,113"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1ModelReader_a4caf9e31c81e7ac5b07078c38300a6ca.html#a4caf9e31c81e7ac5b07078c38300a6ca" title=" " alt="" coords="507,37,709,77"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="744,80,709,75,710,70,744,75"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Kakshya_1_1MeshInsertion_a264df1d91cfb1f929fb4d7134d2d7602.html#a264df1d91cfb1f929fb4d7134d2d7602" title="Append one submesh batch, accumulating into the shared buffers." alt="" coords="529,102,687,157"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="744,112,688,120,687,115,743,107"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1ModelReader_aa3ce0f7631753b15955e175c1855e7fc.html#aa3ce0f7631753b15955e175c1855e7fc" title="Construct a MeshNetwork from all meshes in the currently loaded scene." alt="" coords="256,5,459,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="493,45,458,41,459,36,493,40"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1ModelReader_a5a5995d155657e1b4f55d047efa2e442.html#a5a5995d155657e1b4f55d047efa2e442" title="Load all meshes after open() has already been called." alt="" coords="256,69,459,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="493,75,459,79,458,74,493,69"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1IO_1_1ModelReader_a82f82a404791ba9ad9838a1fc2774f32.html#a82f82a404791ba9ad9838a1fc2774f32" title="Construct one MeshBuffer per mesh in the currently loaded scene." alt="" coords="5,37,208,77"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="242,77,208,73,208,68,243,72"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1IO_1_1ModelReader_ad139ba0a544c0712059cc8913bb59bc5.html#ad139ba0a544c0712059cc8913bb59bc5" title="Load all meshes from a file in one call." alt="" coords="5,101,208,141"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="243,107,208,111,208,106,242,101"/>
+</map>

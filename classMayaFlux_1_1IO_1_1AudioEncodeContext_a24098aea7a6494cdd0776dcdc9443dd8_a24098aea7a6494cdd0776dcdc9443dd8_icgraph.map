@@ -1,0 +1,15 @@
+<map id="MayaFlux::IO::AudioEncodeContext::drain_packets" name="MayaFlux::IO::AudioEncodeContext::drain_packets">
+<area shape="rect" id="Node000001" title="Drain all packets currently available from the encoder into mux." alt="" coords="1035,35,1235,75"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1AudioEncodeContext_a3427a70cf468d913a2e05b481932e13e.html#a3427a70cf468d913a2e05b481932e13e" title="Flush the FIFO remainder and encoder internal delay to the mux." alt="" coords="539,5,739,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1021,51,739,34,739,29,1021,45"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1IO_1_1AudioEncodeContext_a539b4a1116c9c80e75b7d661de5a32f9.html#a539b4a1116c9c80e75b7d661de5a32f9" title="Pull one frame from the FIFO and send it to the encoder." alt="" coords="787,63,987,103"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="1022,70,987,74,987,69,1021,65"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1SoundFileWriter_afe05fe29e71e3b1f3f3c489669dab0eb.html#afe05fe29e71e3b1f3f3c489669dab0eb" title=" " alt="" coords="272,37,491,77"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="526,42,491,46,490,41,525,37"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1SoundFileWriter_a759a872c21f40482fee6d559b8b2567d.html#a759a872c21f40482fee6d559b8b2567d" title="Open the output file and spawn the worker thread." alt="" coords="5,37,224,77"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="258,60,224,60,224,55,258,55"/>
+<area shape="poly" id="edge5_Node000005_Node000002" title=" " alt="" coords="786,62,725,48,726,43,787,57"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1IO_1_1AudioEncodeContext_af4f3adaf13395558f0b8bbdf35a15787.html#af4f3adaf13395558f0b8bbdf35a15787" title="Encode a block of interleaved double&#45;precision PCM frames." alt="" coords="539,69,739,109"/>
+<area shape="poly" id="edge6_Node000005_Node000006" title=" " alt="" coords="773,88,739,89,739,84,773,83"/>
+<area shape="poly" id="edge7_Node000006_Node000003" title=" " alt="" coords="525,78,490,74,491,68,526,73"/>
+</map>

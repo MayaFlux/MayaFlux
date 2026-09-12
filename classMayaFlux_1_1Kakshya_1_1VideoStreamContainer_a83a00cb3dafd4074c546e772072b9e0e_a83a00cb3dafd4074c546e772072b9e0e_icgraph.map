@@ -1,0 +1,15 @@
+<map id="MayaFlux::Kakshya::VideoStreamContainer::get_frame_element_count" name="MayaFlux::Kakshya::VideoStreamContainer::get_frame_element_count">
+<area shape="rect" id="Node000001" title="Elements in one frame: width * height * channels." alt="" coords="529,149,731,203"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1CameraContainer_ad612bb1c55325c7292281a858d6e95f0.html#ad612bb1c55325c7292281a858d6e95f0" title="Construct a CameraContainer with specified resolution and format." alt="" coords="223,5,481,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="590,141,540,98,480,60,451,48,453,43,483,55,544,94,594,137"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_a1a6d4c70c4b6780e44a66ae5d06c0366.html#a1a6d4c70c4b6780e44a66ae5d06c0366" title=" " alt="" coords="267,70,437,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="519,147,436,124,438,119,521,142"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_aa9d69c16a95d55dfa40579981599e184.html#aa9d69c16a95d55dfa40579981599e184" title=" " alt="" coords="267,149,437,203"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="516,179,438,179,438,173,516,173"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_a26a6050617afdefdca5ca6cbf37c8d67.html#a26a6050617afdefdca5ca6cbf37c8d67" title="Type&#45;erased single&#45;element read." alt="" coords="267,227,437,282"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="521,210,438,233,436,228,519,205"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_a6f774e749355167e0065ef0368214600.html#a6f774e749355167e0065ef0368214600" title="Type&#45;erased single&#45;element write." alt="" coords="267,306,437,361"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="592,215,542,257,483,296,438,315,436,310,480,291,539,252,589,211"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_a3758d7fb4fa45808d8f9a97094e65422.html#a3758d7fb4fa45808d8f9a97094e65422" title="Implementation&#45;specific method to retrieve multiple frames." alt="" coords="5,149,175,203"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="253,179,175,179,175,173,253,173"/>
+</map>

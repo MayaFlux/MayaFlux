@@ -1,0 +1,14 @@
+<map id="MayaFlux::Core::WindowManager::process" name="MayaFlux::Core::WindowManager::process">
+<area shape="rect" id="Node000001" title="Process windows for one frame." alt="" coords="5,69,247,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1WindowManager_a9b4fbb193419543cd5aeeee7a4cc349a.html#a9b4fbb193419543cd5aeeee7a4cc349a" title="Destroys all windows that should close." alt="" coords="295,12,536,52"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="227,67,300,52,301,57,228,72"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Parallel_a5da0996dba37190dffba9510d880a0c9.html#a5da0996dba37190dffba9510d880a0c9" title=" " alt="" coords="913,69,1075,109"/>
+<area shape="poly" id="edge5_Node000001_Node000004" title=" " alt="" coords="247,87,899,87,899,92,247,92"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Core_1_1WindowManager_ae2bf872dfb35642436a0c088b7c0c9e2.html#ae2bf872dfb35642436a0c088b7c0c9e2" title="Gets number of active windows." alt="" coords="295,127,536,167"/>
+<area shape="poly" id="edge6_Node000001_Node000006" title=" " alt="" coords="228,107,301,121,300,127,227,112"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1WindowManager_aee2217ec1caa91ae8e6c976909661779.html#aee2217ec1caa91ae8e6c976909661779" title="Destroys a window by pointer." alt="" coords="584,12,825,52"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="536,29,570,29,570,35,536,35"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="807,49,899,68,898,73,806,55"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Core_1_1WindowManager_aa656d799b806fb38cac28a02f1048f2c.html#aa656d799b806fb38cac28a02f1048f2c" title="Removes window from lookup table." alt="" coords="873,5,1115,45"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="825,27,859,26,859,31,826,32"/>
+</map>

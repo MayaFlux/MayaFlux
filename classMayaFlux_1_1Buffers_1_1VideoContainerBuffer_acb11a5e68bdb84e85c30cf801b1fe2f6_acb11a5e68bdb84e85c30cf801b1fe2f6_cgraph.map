@@ -1,0 +1,13 @@
+<map id="MayaFlux::Buffers::VideoContainerBuffer::setup_processors" name="MayaFlux::Buffers::VideoContainerBuffer::setup_processors">
+<area shape="rect" id="Node000001" title="Override to wire VideoStreamReader as default and TextureProcessor as preprocessor." alt="" coords="5,149,167,204"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_ab5841c2fedf2144f9c3194d5597b3f82.html#ab5841c2fedf2144f9c3194d5597b3f82" title="Controls whether the buffer should use default processing." alt="" coords="233,5,423,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="113,147,158,108,213,70,227,63,229,68,216,75,162,112,117,151"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_a6cf409969c192851ab2cf7f0315d2a49.html#a6cf409969c192851ab2cf7f0315d2a49" title="Access the buffer&#39;s processing chain." alt="" coords="215,85,441,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="166,149,214,134,242,126,243,131,215,139,167,154"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_a6e843b1ce9e90e2df2501d28e60eab52.html#a6e843b1ce9e90e2df2501d28e60eab52" title="Set the buffer&#39;s default processor." alt="" coords="248,149,408,204"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="167,174,234,174,234,179,167,179"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_a93f1d139e1fc4ab7689f2a205bf76563.html#a93f1d139e1fc4ab7689f2a205bf76563" title="Replace the buffer&#39;s processing chain." alt="" coords="215,229,441,269"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="168,198,215,213,247,222,246,227,214,218,166,203"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1TextureBuffer_ad62923a39d1e68b0b7af5a8944f2c543.html#ad62923a39d1e68b0b7af5a8944f2c543" title="Allow inherited classes to set the TextureProcessor directly." alt="" coords="233,293,423,348"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="117,202,162,241,216,278,229,285,227,290,213,283,158,245,113,206"/>
+</map>

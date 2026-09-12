@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::Stochastic::gendy" name="MayaFlux::Kinesis::Stochastic::gendy">
+<area shape="rect" id="Node000001" title="Creates Gendy dynamic stochastic generator." alt="" coords="5,13,155,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kinesis_1_1Stochastic_1_1Stochastic_a3d9ccb5e9a02ac2382c8ba58c8e6f2cd.html#a3d9ccb5e9a02ac2382c8ba58c8e6f2cd" title="Configures algorithm&#45;specific parameters." alt="" coords="203,5,367,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="155,30,189,30,189,35,155,35"/>
+</map>

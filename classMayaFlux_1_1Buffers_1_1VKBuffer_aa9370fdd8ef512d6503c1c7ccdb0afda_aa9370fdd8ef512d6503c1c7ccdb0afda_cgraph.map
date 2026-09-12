@@ -1,0 +1,4 @@
+<map id="MayaFlux::Buffers::VKBuffer::apply_render_config" name="MayaFlux::Buffers::VKBuffer::apply_render_config">
+<area shape="rect" id="Node000001" title="Configure the internal m_render_processor from a RenderConfig." alt="" coords="5,29,177,84"/>
+<area shape="poly" id="edge1_Node000001_Node000001" title=" " alt="" coords="57,29,57,19,63,10,75,5,91,3,111,6,122,13,119,18,109,11,91,8,76,10,67,15,63,21,63,29"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::NetworkStateFieldProcessor::get_network_buffer" name="MayaFlux::Buffers::NetworkStateFieldProcessor::get_network_buffer">
+<area shape="rect" id="Node000001" title="The attached buffer, or null if attachment failed validation." alt="" coords="253,45,459,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1ClaimFlattenProcessor_ab2ab37d7d2a8e4f0b4b675853dd05c59.html#ab2ab37d7d2a8e4f0b4b675853dd05c59" title="Called after each iteration except the last." alt="" coords="21,5,190,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="239,57,190,49,191,44,240,52"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1ClaimAccumulateProcessor_a647d18931fa71b692f0ce0bb97b778ba.html#a647d18931fa71b692f0ce0bb97b778ba" title="Dispatch as usual, then conditionally read back the result." alt="" coords="5,84,205,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="240,93,206,99,205,93,239,88"/>
+</map>

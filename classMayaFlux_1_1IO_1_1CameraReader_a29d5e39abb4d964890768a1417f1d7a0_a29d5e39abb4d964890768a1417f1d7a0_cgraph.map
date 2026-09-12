@@ -1,0 +1,9 @@
+<map id="MayaFlux::IO::CameraReader::start_decode_thread" name="MayaFlux::IO::CameraReader::start_decode_thread">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,37,219,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1CameraReader_acd2e39cd757265017806bdd387e73be6.html#acd2e39cd757265017806bdd387e73be6" title=" " alt="" coords="267,5,480,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="219,42,253,37,253,43,219,47"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1CameraReader_ae5520e3cfd342a1da5ef8ec3f4a2e0f5.html#ae5520e3cfd342a1da5ef8ec3f4a2e0f5" title=" " alt="" coords="267,69,480,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="219,68,253,72,253,77,219,73"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1CameraReader_aceb647a569e2f50e85db159deb71464d.html#aceb647a569e2f50e85db159deb71464d" title="Decode one frame from the device into the container&#39;s m_data[0]." alt="" coords="528,5,741,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="480,23,514,23,514,28,480,28"/>
+</map>

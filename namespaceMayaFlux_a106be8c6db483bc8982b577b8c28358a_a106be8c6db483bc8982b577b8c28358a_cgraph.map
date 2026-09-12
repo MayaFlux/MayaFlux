@@ -1,0 +1,5 @@
+<map id="MayaFlux::bind_hid" name="MayaFlux::bind_hid">
+<area shape="rect" id="Node000001" title="Create binding for HID device by vendor/product ID." alt="" coords="5,13,155,38"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Core_1_1InputBinding_a005fa6bb0d79e0b4136f705e86a6b8d1.html#a005fa6bb0d79e0b4136f705e86a6b8d1" title="Bind to HID device by vendor/product ID." alt="" coords="203,5,417,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="155,23,189,23,189,28,155,28"/>
+</map>

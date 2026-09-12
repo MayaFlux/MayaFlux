@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::InputAudioBuffer::clear_listeners" name="MayaFlux::Buffers::InputAudioBuffer::clear_listeners">
+<area shape="rect" id="Node000001" title="Clears all registered listeners." alt="" coords="5,5,176,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1AudioBuffer_aebdf4558f0e3aa0fa1391cb376f16ef9.html#aebdf4558f0e3aa0fa1391cb376f16ef9" title="Gets the current default audio transformation processor." alt="" coords="224,5,404,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="176,30,210,30,210,35,176,35"/>
+</map>

@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::BufferAccessControl::get_graphics_buffers_by_usage" name="MayaFlux::Buffers::BufferAccessControl::get_graphics_buffers_by_usage">
+<area shape="rect" id="Node000001" title="Gets graphics buffers filtered by usage type." alt="" coords="5,77,171,146"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Buffers_1_1RootGraphicsUnit_a48b9b18d980ae62892623cfa96dbee07.html#a48b9b18d980ae62892623cfa96dbee07" title=" " alt="" coords="223,5,389,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="170,79,216,62,218,67,172,84"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1TokenUnitManager_ac67f221d25b3aff5146283dc5c78f20f.html#ac67f221d25b3aff5146283dc5c78f20f" title="Gets an existing graphics unit without creating if missing." alt="" coords="220,84,392,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="171,109,207,109,207,114,171,114"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1TokenUnitManager_adfa3bbc2ff0dea134e10dce005d61dee.html#adfa3bbc2ff0dea134e10dce005d61dee" title="Checks if a graphics unit exists for the given token." alt="" coords="219,163,393,217"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="172,139,218,155,216,160,170,144"/>
+</map>

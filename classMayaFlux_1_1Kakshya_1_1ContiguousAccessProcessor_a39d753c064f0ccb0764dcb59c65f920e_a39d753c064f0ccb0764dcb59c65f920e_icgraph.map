@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kakshya::ContiguousAccessProcessor::validate" name="MayaFlux::Kakshya::ContiguousAccessProcessor::validate">
+<area shape="rect" id="Node000001" title="Validate the container&#39;s structure and output configuration." alt="" coords="256,45,459,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1ContiguousAccessProcessor_a659411b73a8e35064a42df40e5743663.html#a659411b73a8e35064a42df40e5743663" title="Attach the processor to a signal source container." alt="" coords="5,5,208,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="242,57,208,51,209,46,243,52"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1ContiguousAccessProcessor_a004edfbf41a31559663ef2c48c84a205.html#a004edfbf41a31559663ef2c48c84a205" title="Set the output buffer size (shape) for each processing call." alt="" coords="5,84,208,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="243,93,209,98,208,93,242,88"/>
+</map>

@@ -1,0 +1,9 @@
+<map id="MayaFlux::std_dev_combined" name="MayaFlux::std_dev_combined">
+<area shape="rect" id="Node000001" title="Calculate standard deviation across all channels (mix then analyze)" alt="" coords="5,70,221,95"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1OperationHelper_ad367bd6ef37555bb3918e5545cac03bd.html#ad367bd6ef37555bb3918e5545cac03bd" title="extract numeric data from single&#45;variant types" alt="" coords="269,5,484,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="172,67,271,46,272,51,173,73"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_ac5d314d2c7c7550f063afda336d7a5c1.html#ac5d314d2c7c7550f063afda336d7a5c1" title="Calculate standard deviation of single&#45;channel data." alt="" coords="304,70,449,95"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="221,80,290,80,290,85,221,85"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_a77f68671e01a3f2027d7957dca5dc5dd.html#a77f68671e01a3f2027d7957dca5dc5dd" title="Calculate standard deviation per channel for multi&#45;channel data." alt="" coords="290,120,463,160"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="173,93,277,116,276,121,172,98"/>
+</map>

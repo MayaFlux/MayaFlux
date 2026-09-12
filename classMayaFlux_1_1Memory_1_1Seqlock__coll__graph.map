@@ -1,0 +1,3 @@
+<map id="MayaFlux::Memory::Seqlock" name="MayaFlux::Memory::Seqlock">
+<area shape="rect" id="Node000001" title="Single&#45;writer multiple&#45;reader sequence lock for fixed&#45;size data regions." alt="" coords="5,5,204,271"/>
+</map>

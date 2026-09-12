@@ -1,0 +1,13 @@
+<map id="MayaFlux::Kinesis::Vision::threshold_otsu" name="MayaFlux::Kinesis::Vision::threshold_otsu">
+<area shape="rect" id="Node000001" title="Otsu threshold writing into caller&#45;supplied buffer." alt="" coords="545,101,712,141"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kinesis_1_1Vision_1_1VisionExecutor_a6ea94c5c8d90c5890b7715a0e4ff2df5.html#a6ea94c5c8d90c5890b7715a0e4ff2df5" title="Execute a VisionSequence on one frame." alt="" coords="303,69,497,109"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="531,110,497,106,498,100,532,105"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_a9e9b980cacd24fbc6855c1d50925859b.html#a9e9b980cacd24fbc6855c1d50925859b" title="Otsu threshold: finds the optimal global threshold by maximising inter&#45;class variance,..." alt="" coords="317,133,483,173"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="532,138,484,144,483,139,531,132"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1VisionAnalyzer_a6894626eb161191d2811f594d04914bd.html#a6894626eb161191d2811f594d04914bd" title="Pure virtual analysis implementation &#45; derived classes implement this." alt="" coords="5,5,255,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="301,69,214,48,216,43,302,63"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1VisionProcessor_ab9b6b50546df64540aee0f0bbbb7939a.html#ab9b6b50546df64540aee0f0bbbb7939a" title="Execute the VisionSequence on processed_data[0]." alt="" coords="39,69,221,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="289,92,222,92,222,87,289,87"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1ImageCVProcessor_a03dd11926b797b52ccbdfa37c2b5e4e1.html#a03dd11926b797b52ccbdfa37c2b5e4e1" title="Download the current GPU image, run the VisionSequence, store the result." alt="" coords="19,134,241,189"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="312,116,234,137,232,131,310,110"/>
+</map>

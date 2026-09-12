@@ -1,0 +1,5 @@
+<map id="MayaFlux::Portal::Forma::Geometry::at" name="MayaFlux::Portal::Forma::Geometry::at">
+<area shape="rect" id="Node000001" title="Call a bounds&#45;taking factory with an anchor&#39;s region." alt="" coords="5,5,187,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_ac687cf683a7ae6a855597eeccd6ce6da.html#ac687cf683a7ae6a855597eeccd6ce6da" title="Extract the anchor region from any HasBounds object." alt="" coords="235,5,384,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="187,23,221,23,221,28,187,28"/>
+</map>

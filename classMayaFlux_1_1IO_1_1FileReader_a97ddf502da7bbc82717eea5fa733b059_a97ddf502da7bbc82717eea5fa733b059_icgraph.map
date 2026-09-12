@@ -1,0 +1,8 @@
+<map id="MayaFlux::IO::FileReader::regions_to_groups" name="MayaFlux::IO::FileReader::regions_to_groups">
+<area shape="rect" id="Node000001" title="Convert file regions to region groups." alt="" coords="549,35,735,75"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1SoundFileReader_a4f0317d6147160c47dbbc3c2663f1756.html#a4f0317d6147160c47dbbc3c2663f1756" title="Load file data into an existing SignalSourceContainer." alt="" coords="276,5,501,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="536,45,501,41,502,36,536,40"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1VideoFileReader_a78b6b19d6d9126250ded73ea4b7b6629.html#a78b6b19d6d9126250ded73ea4b7b6629" title="Load file data into an existing container." alt="" coords="5,35,228,75"/>
+<area shape="poly" id="edge3_Node000001_Node000003" title=" " alt="" coords="536,60,501,60,276,60,228,59,228,54,276,55,501,55,536,54"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="263,42,228,45,228,40,262,36"/>
+</map>

@@ -1,0 +1,13 @@
+<map id="MayaFlux::Kinesis::Stochastic::Stochastic::configure" name="MayaFlux::Kinesis::Stochastic::Stochastic::configure">
+<area shape="rect" id="Node000001" title="Configures algorithm&#45;specific parameters." alt="" coords="269,126,433,181"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Stochastic_ac949afab20cf23e4b1de8611c3a4d22b.html#ac949afab20cf23e4b1de8611c3a4d22b" title="Creates Brownian motion generator." alt="" coords="35,5,192,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="308,119,267,88,220,60,191,48,193,43,223,55,270,84,311,115"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_1_1Stochastic_ad90d8b0c2c7f0c5049e812c1e1f70199.html#ad90d8b0c2c7f0c5049e812c1e1f70199" title="Creates Gaussian random generator." alt="" coords="36,69,191,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="255,130,188,112,189,107,257,125"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_1_1Stochastic_a1285a3eaf5b217e6f812e24a3ca2d22f.html#a1285a3eaf5b217e6f812e24a3ca2d22f" title="Creates Gendy dynamic stochastic generator." alt="" coords="39,133,188,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="255,156,188,156,188,151,255,151"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kinesis_1_1Stochastic_a39e77cbf73cf8d58e561212826a88a06.html#a39e77cbf73cf8d58e561212826a88a06" title="Creates Perlin noise generator." alt="" coords="39,197,188,237"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="257,181,189,200,188,195,255,176"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Random_ad25d7cfadc8e56821294af559852c652.html#ad25d7cfadc8e56821294af559852c652" title="Sets the variance parameter for normal distribution." alt="" coords="5,261,221,301"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="311,192,270,223,223,252,194,264,192,259,220,247,267,219,308,187"/>
+</map>

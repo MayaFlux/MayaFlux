@@ -1,0 +1,10 @@
+<map id="VKComputePipeline.hpp" name="VKComputePipeline.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="111,5,290,31"/>
+<area shape="rect" id="Node000002" href="$VKDescriptorManager_8hpp.html" title=" " alt="" coords="5,79,196,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="186,33,130,73,127,68,183,29"/>
+<area shape="rect" id="Node000004" href="$VKShaderModule_8hpp.html" title=" " alt="" coords="220,79,381,104"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="218,29,275,68,272,73,215,33"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="131,152,271,177"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="118,102,175,142,172,146,115,106"/>
+<area shape="poly" id="edge4_Node000004_Node000003" title=" " alt="" coords="286,106,230,146,227,142,283,102"/>
+</map>

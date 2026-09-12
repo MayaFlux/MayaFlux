@@ -1,0 +1,11 @@
+<map id="MayaFlux::Nodes::Network::ResonatorNetwork::ResonatorNetwork" name="MayaFlux::Nodes::Network::ResonatorNetwork::ResonatorNetwork">
+<area shape="rect" id="Node000001" title="Construct a ResonatorNetwork with a formant preset." alt="" coords="5,91,285,131"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ResonatorNetwork_a775dd0f369c0a2565e43ce2e3261e990.html#a775dd0f369c0a2565e43ce2e3261e990" title="Initialise all resonators from a frequency/Q pair list." alt="" coords="354,5,553,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="224,89,339,59,341,64,225,94"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ResonatorNetwork_a74720b15173a892cbf43d8eb8f188991.html#a74720b15173a892cbf43d8eb8f188991" title="Translate a FormantPreset into parallel frequency/Q vectors." alt="" coords="353,84,553,139"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="285,109,340,109,340,114,285,114"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1Network_1_1NodeNetwork_afb34b572315180e465878f1de6f5bb1b.html#afb34b572315180e465878f1de6f5bb1b" title="Set the network&#39;s output routing mode." alt="" coords="333,163,573,203"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="232,129,354,158,353,163,231,134"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ResonatorNetwork_a47653e6f983490bb1a16698c723e9f93.html#a47653e6f983490bb1a16698c723e9f93" title="Compute RBJ biquad bandpass coefficients and push them into a resonator&#39;s IIR." alt="" coords="621,13,888,53"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="553,30,607,30,607,35,553,35"/>
+</map>

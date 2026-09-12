@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::TokenUnitManager::get_active_graphics_tokens" name="MayaFlux::Buffers::TokenUnitManager::get_active_graphics_tokens">
+<area shape="rect" id="Node000001" title="Gets all active graphics processing tokens." alt="" coords="247,5,428,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferAccessControl_a2e16fe266c665dec676dcb31768408a7.html#a2e16fe266c665dec676dcb31768408a7" title="Terminates all active Audio and VK buffers." alt="" coords="5,5,199,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="232,35,199,35,199,30,232,30"/>
+</map>

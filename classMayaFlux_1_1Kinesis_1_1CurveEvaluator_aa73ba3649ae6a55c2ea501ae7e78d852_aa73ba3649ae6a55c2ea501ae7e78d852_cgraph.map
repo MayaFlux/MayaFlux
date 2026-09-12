@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kinesis::CurveEvaluator::CurveEvaluator" name="MayaFlux::Kinesis::CurveEvaluator::CurveEvaluator">
+<area shape="rect" id="Node000001" title="Construct and resolve the evaluation kernel." alt="" coords="5,13,236,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kinesis_1_1CurveEvaluator_a4dbfeb2ee1be35f2a16fc72d4b009959.html#a4dbfeb2ee1be35f2a16fc72d4b009959" title=" " alt="" coords="284,5,459,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="236,30,270,30,270,35,236,35"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kinesis_1_1BasisMatrices_a818351b64ca1e3653ad9c97cca70e765.html#a818351b64ca1e3653ad9c97cca70e765" title=" " alt="" coords="507,5,677,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="459,30,493,30,493,35,459,35"/>
+</map>

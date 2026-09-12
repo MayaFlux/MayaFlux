@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nexus::remove_audio_sink" name="MayaFlux::Nexus::remove_audio_sink">
+<area shape="rect" id="Node000001" title="Unregister and destroy the audio sink on channel." alt="" coords="5,13,199,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferManager_ad22127b9243ca6e62b2464d6bb5e8f1a.html#ad22127b9243ca6e62b2464d6bb5e8f1a" title="Removes a buffer from a token." alt="" coords="247,5,423,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="199,30,233,30,233,35,199,35"/>
+</map>

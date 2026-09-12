@@ -1,0 +1,10 @@
+<map id="MayaFlux::Kinesis::distance" name="MayaFlux::Kinesis::distance">
+<area shape="rect" id="Node000001" title="Normalized distance from an anchor point using the specified metric." alt="" coords="245,69,395,109"/>
+<area shape="poly" id="edge1_Node000001_Node000001" title=" " alt="" coords="357,58,344,51,320,48,299,50,286,55,282,61,284,68,279,70,277,60,283,50,298,45,320,43,346,46,360,53"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_a90ccc81d51bc3635f09bcf74cf4d4c43.html#a90ccc81d51bc3635f09bcf74cf4d4c43" title="Project vertices onto plane defined by normal." alt="" coords="27,5,176,45"/>
+<area shape="poly" id="edge2_Node000001_Node000002" title=" " alt="" coords="237,68,169,48,171,43,239,63"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_a5a36f26c085444ed8511f50f6159d39b.html#a5a36f26c085444ed8511f50f6159d39b" title="Find the closest entity to a ray within a tolerance radius." alt="" coords="27,69,176,109"/>
+<area shape="poly" id="edge3_Node000001_Node000003" title=" " alt="" coords="231,92,176,92,176,87,231,87"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kinesis_1_1SpatialIndex_a7a2ef63924b4f11a3fcc19ce9ea7b03b.html#a7a2ef63924b4f11a3fcc19ce9ea7b03b" title="Construct a spatial index." alt="" coords="5,133,197,173"/>
+<area shape="poly" id="edge4_Node000001_Node000004" title=" " alt="" coords="239,116,171,136,169,131,237,111"/>
+</map>

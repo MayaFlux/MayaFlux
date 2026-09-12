@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::map_clamped" name="MayaFlux::Kinesis::map_clamped">
+<area shape="rect" id="Node000001" title="Map x from [in_lo, in_hi] to [out_lo, out_hi], clamped to [out_lo, out_hi]." alt="" coords="5,5,155,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_a9331558ac11dbe036cfa55b3f3f2f960.html#a9331558ac11dbe036cfa55b3f3f2f960" title="Map x from [in_lo, in_hi] to [out_lo, out_hi], unclamped." alt="" coords="203,13,381,38"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="155,23,189,23,189,28,155,28"/>
+</map>

@@ -1,0 +1,15 @@
+<map id="MayaFlux::Portal::Forma::Context::on_press" name="MayaFlux::Portal::Forma::Context::on_press">
+<area shape="rect" id="Node000001" title="Called when a key is pressed while the element has focus." alt="" coords="5,101,187,141"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Vruta_1_1EventManager_ab03d9c23414e27d09de89a8d30ff475b.html#ab03d9c23414e27d09de89a8d30ff475b" title="Add a event to the manager." alt="" coords="235,37,465,77"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="176,99,256,78,258,83,177,104"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Context_a596bf34ca3b7cc567afb21ccc48dcf59.html#a596bf34ca3b7cc567afb21ccc48dcf59" title=" " alt="" coords="247,101,453,141"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="187,119,233,119,233,124,187,124"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Kriya_a26ea8275b201cc7cf821b0fbde8d852d.html#a26ea8275b201cc7cf821b0fbde8d852d" title="Creates an Event coroutine that triggers on specific key press." alt="" coords="271,165,429,205"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="177,139,258,159,257,165,176,144"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Vruta_1_1EventManager_a57dfab40ee4b14db2bef10e6c4c5e9d2.html#a57dfab40ee4b14db2bef10e6c4c5e9d2" title="Generate automatic name for a event based on its type." alt="" coords="513,5,744,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="465,41,500,37,500,43,466,47"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Vruta_1_1EventManager_a3b542907af4a0afa35f1b87a604932e4.html#a3b542907af4a0afa35f1b87a604932e4" title="Remove an event by name." alt="" coords="513,69,744,109"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="466,68,500,72,500,77,465,73"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Vruta_1_1EventManager_ac3366b2763d938f824fa0c47b28c6bab.html#ac3366b2763d938f824fa0c47b28c6bab" title="Generates a unique event ID for new events." alt="" coords="792,5,1023,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="744,23,778,23,778,28,744,28"/>
+</map>

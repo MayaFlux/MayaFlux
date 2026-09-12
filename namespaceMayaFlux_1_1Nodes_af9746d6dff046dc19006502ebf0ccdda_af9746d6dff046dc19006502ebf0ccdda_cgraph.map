@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::safe_add_callback" name="MayaFlux::Nodes::safe_add_callback">
+<area shape="rect" id="Node000001" title="Adds a callback to the collection if an equivalent one is not already present." alt="" coords="5,5,176,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Nodes_a423e97549712577dcfb222a2abef6f23.html#a423e97549712577dcfb222a2abef6f23" title="Returns true if an equivalent callback is already present in the collection." alt="" coords="224,5,421,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="176,23,210,23,210,28,176,28"/>
+</map>

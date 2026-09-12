@@ -1,0 +1,5 @@
+<map id="MayaFlux::Memory::SeqlockWriteGuard" name="MayaFlux::Memory::SeqlockWriteGuard">
+<area shape="rect" id="Node000001" title="RAII guard that brackets a Seqlock write region." alt="" coords="5,333,204,513"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Memory_1_1Seqlock.html" title="Single&#45;writer multiple&#45;reader sequence lock for fixed&#45;size data regions." alt="" coords="5,5,204,271"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="107,271,107,317,102,317,102,271"/>
+</map>

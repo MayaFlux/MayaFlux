@@ -1,0 +1,13 @@
+<map id="MayaFlux::Kakshya::Region::get_attribute" name="MayaFlux::Kakshya::Region::get_attribute">
+<area shape="rect" id="Node000001" title="Get an attribute value by key, with type conversion support." alt="" coords="665,63,824,103"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Yantra_ab40b463e00cbdbf34a526725f04b2f78.html#ab40b463e00cbdbf34a526725f04b2f78" title="Infer structure from Region (placeholder since regions are markers)" alt="" coords="445,63,617,103"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="651,85,618,85,618,80,651,80"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Yantra_ad02f0b5a9c8eab6145265e09b8708cb3.html#ad02f0b5a9c8eab6145265e09b8708cb3" title="Infer structure from RegionGroup." alt="" coords="225,5,397,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="440,62,388,48,389,43,442,57"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Yantra_ae05845067871689b0b43d88e2b97b4f2.html#ae05845067871689b0b43d88e2b97b4f2" title="Infer dimensions and modality from any ComputeData type." alt="" coords="5,63,177,103"/>
+<area shape="poly" id="edge6_Node000002_Node000004" title=" " alt="" coords="432,85,178,85,178,80,432,80"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Yantra_ae36c08db5d8c73f6cab8feebfa5e58e0.html#ae36c08db5d8c73f6cab8feebfa5e58e0" title="Infer structure from RegionSegments." alt="" coords="225,120,397,160"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="442,109,389,123,388,117,440,104"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="222,51,169,65,168,60,220,46"/>
+<area shape="poly" id="edge5_Node000005_Node000004" title=" " alt="" coords="220,119,168,105,169,100,222,114"/>
+</map>

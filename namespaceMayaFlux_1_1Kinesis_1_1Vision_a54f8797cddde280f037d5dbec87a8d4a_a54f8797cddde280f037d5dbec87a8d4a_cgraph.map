@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::Vision::rgba_to_hsv" name="MayaFlux::Kinesis::Vision::rgba_to_hsv">
+<area shape="rect" id="Node000001" title="Convert RGBA to HSV." alt="" coords="5,5,155,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_a57396593f32b8db4bba3e15a75f39cf5.html#a57396593f32b8db4bba3e15a75f39cf5" title="Convert RGBA to HSV writing into caller&#45;supplied buffer." alt="" coords="203,5,352,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="155,23,189,23,189,28,155,28"/>
+</map>

@@ -1,0 +1,8 @@
+<map id="MayaFlux::Kakshya::ContainerDataStructure::get_width" name="MayaFlux::Kakshya::ContainerDataStructure::get_width">
+<area shape="rect" id="Node000001" title=" " alt="" coords="443,29,617,84"/>
+<area shape="poly" id="edge1_Node000001_Node000001" title=" " alt="" coords="566,18,553,11,530,8,511,10,498,15,492,21,492,29,487,29,487,19,495,10,509,5,530,3,555,6,569,14"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1FrameAccessProcessor_afdeaf68e904f0985902f0d5ac6f0c1b3.html#afdeaf68e904f0985902f0d5ac6f0c1b3" title="Cache dimension metadata and frame geometry from the container." alt="" coords="224,29,395,84"/>
+<area shape="poly" id="edge2_Node000001_Node000002" title=" " alt="" coords="429,59,395,59,395,54,429,54"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1FrameAccessProcessor_a878681828d551330d4d22f140ed1312b.html#a878681828d551330d4d22f140ed1312b" title="Attach the processor to a video container." alt="" coords="5,29,176,84"/>
+<area shape="poly" id="edge3_Node000002_Node000003" title=" " alt="" coords="210,59,176,59,176,54,210,54"/>
+</map>

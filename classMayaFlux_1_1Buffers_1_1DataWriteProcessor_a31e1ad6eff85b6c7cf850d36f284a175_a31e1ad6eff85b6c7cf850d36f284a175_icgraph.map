@@ -1,0 +1,10 @@
+<map id="MayaFlux::Buffers::DataWriteProcessor::is_vertex_modality" name="MayaFlux::Buffers::DataWriteProcessor::is_vertex_modality">
+<area shape="rect" id="Node000001" title=" " alt="" coords="419,71,577,125"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1DataWriteProcessor_aca8cf954a0c10aad3ed46ee95c2705d2.html#aca8cf954a0c10aad3ed46ee95c2705d2" title="Called when this processor is attached to a buffer." alt="" coords="212,5,371,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="405,71,370,60,372,55,406,66"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1DataWriteProcessor_a18dd4906836ca9a87f85379c327156e2.html#a18dd4906836ca9a87f85379c327156e2" title="The core processing function that must be implemented by derived classes." alt="" coords="5,104,164,159"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="405,108,164,128,164,122,405,103"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1DataWriteProcessor_aef00e0d69e0b2afcdf9cd0c1a7b6a3f5.html#aef00e0d69e0b2afcdf9cd0c1a7b6a3f5" title=" " alt="" coords="212,136,371,191"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="406,130,372,141,370,136,405,125"/>
+<area shape="poly" id="edge4_Node000004_Node000003" title=" " alt="" coords="198,152,164,146,164,141,199,146"/>
+</map>

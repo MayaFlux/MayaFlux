@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::DiffuseProcessor::on_iteration" name="MayaFlux::Buffers::DiffuseProcessor::on_iteration">
+<area shape="rect" id="Node000001" title="Write this pass&#39;s parity and first&#45;pass flag." alt="" coords="5,5,160,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VolumeFieldProcessor_a63b08bd79bb97b3a357bd865ad2938f7.html#a63b08bd79bb97b3a357bd865ad2938f7" title="Write word three of the shared prefix." alt="" coords="208,5,373,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="160,30,195,30,195,35,160,35"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a08f86ff68a93950b07208ee936badf8e.html#a08f86ff68a93950b07208ee936badf8e" title="Get current push constant data." alt="" coords="421,5,580,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="373,30,408,30,408,35,373,35"/>
+</map>

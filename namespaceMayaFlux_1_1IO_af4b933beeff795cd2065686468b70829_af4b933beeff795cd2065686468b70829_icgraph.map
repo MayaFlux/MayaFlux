@@ -1,0 +1,7 @@
+<map id="MayaFlux::IO::to_image_format" name="MayaFlux::IO::to_image_format">
+<area shape="rect" id="Node000001" title="Map an AVPixelFormat to the Portal ImageFormat backing it." alt="" coords="276,37,453,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1CameraReader_af036b882856dc4ec812210d9bc7adcb7.html#af036b882856dc4ec812210d9bc7adcb7" title="Create a CameraContainer sized to the negotiated device resolution." alt="" coords="10,5,223,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="262,47,223,42,224,36,263,42"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1VideoFileReader_a78b6b19d6d9126250ded73ea4b7b6629.html#a78b6b19d6d9126250ded73ea4b7b6629" title="Load file data into an existing container." alt="" coords="5,69,228,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="263,73,229,78,228,72,262,68"/>
+</map>

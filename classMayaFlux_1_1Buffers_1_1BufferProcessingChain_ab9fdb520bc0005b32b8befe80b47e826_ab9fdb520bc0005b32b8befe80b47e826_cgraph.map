@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::BufferProcessingChain::enforce_chain_token_on_processors" name="MayaFlux::Buffers::BufferProcessingChain::enforce_chain_token_on_processors">
+<area shape="rect" id="Node000001" title="Enforces the chain&#39;s preferred processing token on all processors." alt="" coords="5,5,173,75"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Buffers_a38e5853247532e5155b787a4d89b20cb.html#a38e5853247532e5155b787a4d89b20cb" title="Determines if two processing tokens are compatible for joint execution." alt="" coords="221,20,395,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="174,37,208,37,208,43,174,43"/>
+</map>

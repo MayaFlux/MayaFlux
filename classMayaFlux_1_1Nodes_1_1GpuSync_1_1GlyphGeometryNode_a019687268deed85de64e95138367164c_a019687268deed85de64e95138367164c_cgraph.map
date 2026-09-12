@@ -1,0 +1,9 @@
+<map id="MayaFlux::Nodes::GpuSync::GlyphGeometryNode::compute_frame" name="MayaFlux::Nodes::GpuSync::GlyphGeometryNode::compute_frame">
+<area shape="rect" id="Node000001" title="Upload cached vertex data if dirty." alt="" coords="5,53,284,93"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GlyphGeometryNode_a27d6f6164d242dadb7a991fab3e0566c.html#a27d6f6164d242dadb7a991fab3e0566c" title=" " alt="" coords="332,45,540,100"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="284,70,318,70,318,75,284,75"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GeometryWriterNode_a63a86ccaf0960a88deb0b99785b6eb30.html#a63a86ccaf0960a88deb0b99785b6eb30" title="Get cached vertex layout." alt="" coords="588,5,788,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="540,54,574,48,575,53,541,59"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GeometryWriterNode_a79b8530548d0f4b4c464071439faaac5.html#a79b8530548d0f4b4c464071439faaac5" title="Set cached vertex layout." alt="" coords="588,84,788,139"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="541,86,575,91,574,97,540,91"/>
+</map>

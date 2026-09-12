@@ -1,0 +1,24 @@
+<map id="MayaFlux::Core::from_vk_format" name="MayaFlux::Core::from_vk_format">
+<area shape="rect" id="Node000001" title="Reverse&#45;map a vk::Format to the nearest GraphicsSurfaceInfo::SurfaceFormat." alt="" coords="473,403,636,443"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kakshya_ae1dd319d71f7aa09fa3cca52132be64a.html#ae1dd319d71f7aa09fa3cca52132be64a" title="Query the actual vk::Format in use by the window&#39;s live swapchain, translated back to the MayaFlux su..." alt="" coords="260,299,425,339"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="500,400,383,342,386,337,502,395"/>
+<area shape="rect" id="Node000011" href="$namespaceMayaFlux_1_1Kakshya_adf1a57ec9fd544212ad62643faacc3c3.html#adf1a57ec9fd544212ad62643faacc3c3" title="Read a pixel rectangle from the last completed swapchain frame into a DataVariant whose element type ..." alt="" coords="263,435,422,475"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="460,440,422,446,422,441,459,435"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1WindowContainer_a239cd64486ad72edcffd9273322cdde9.html#a239cd64486ad72edcffd9273322cdde9" title="Portal ImageFormat corresponding to the live swapchain surface format." alt="" coords="25,5,192,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="330,287,313,240,289,183,254,125,234,98,210,75,191,61,194,56,214,71,238,95,259,122,293,181,318,238,335,285"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1WindowContainer_a36dc887f4398346c40f92bd77b67025a.html#a36dc887f4398346c40f92bd77b67025a" title="Upload m_data[frame_index] to a new VKImage." alt="" coords="5,85,212,125"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="324,288,306,253,280,213,248,173,210,139,190,127,193,122,214,135,252,169,284,210,310,250,329,286"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1WindowContainer_ac0a13fcbc68d4d5414efe31c5647f73b.html#ac0a13fcbc68d4d5414efe31c5647f73b" title="Upload m_data[frame_index] reusing a caller&#45;supplied staging buffer." alt="" coords="5,149,212,189"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="314,291,268,246,240,223,211,203,186,191,188,186,213,198,244,219,272,242,318,287"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1WindowAccessProcessor_aaf082c0521c39ed5dd7c6bb078b08a0f.html#aaf082c0521c39ed5dd7c6bb078b08a0f" title="Attach to a WindowContainer." alt="" coords="17,213,200,268"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="269,297,190,271,192,266,270,292"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Kakshya_1_1WindowAccessProcessor_aa8f3d77af39015f983f7e6d38e71a8d1.html#aa8f3d77af39015f983f7e6d38e71a8d1" title="Execute a full&#45;surface pixel readback." alt="" coords="17,500,200,555"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="319,352,262,425,241,459,230,474,214,489,194,502,191,498,210,485,226,470,236,456,258,422,315,349"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Kakshya_1_1WindowContainer_a54e6f5327b1e6000a2c148781a8f6717.html#a54e6f5327b1e6000a2c148781a8f6717" title="Crop a region from the last readback and upload it as a VKImage." alt="" coords="15,292,202,347"/>
+<area shape="poly" id="edge7_Node000002_Node000008" title=" " alt="" coords="246,322,202,322,202,317,246,317"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Kakshya_1_1WindowContainer_a31ff69a65227eb7c14504ae2c8ae5fe9.html#a31ff69a65227eb7c14504ae2c8ae5fe9" title="Upload the full surface readback to a new VKImage." alt="" coords="5,371,212,411"/>
+<area shape="poly" id="edge8_Node000002_Node000009" title=" " alt="" coords="265,346,175,374,174,369,263,341"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Kakshya_1_1WindowContainer_aa1f5046146a152b8287080c8c462bd43.html#aa1f5046146a152b8287080c8c462bd43" title="Upload the full surface readback to a new VKImage, reusing a caller&#45;supplied persistent staging buffe..." alt="" coords="5,435,212,475"/>
+<area shape="poly" id="edge9_Node000002_Node000010" title=" " alt="" coords="313,351,268,389,213,426,186,438,184,433,211,421,265,385,310,347"/>
+<area shape="poly" id="edge11_Node000011_Node000007" title=" " alt="" coords="265,482,199,503,197,497,263,477"/>
+</map>

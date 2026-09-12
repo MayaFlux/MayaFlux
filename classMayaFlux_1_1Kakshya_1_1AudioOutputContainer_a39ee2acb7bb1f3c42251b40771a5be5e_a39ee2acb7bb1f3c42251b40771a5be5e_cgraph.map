@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::AudioOutputContainer::AudioOutputContainer" name="MayaFlux::Kakshya::AudioOutputContainer::AudioOutputContainer">
+<area shape="rect" id="Node000001" title="Construct from stream configuration." alt="" coords="5,5,180,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1DynamicSoundStream_abd01dbb8d4cf699d16c1281ed9eb0f1d.html#abd01dbb8d4cf699d16c1281ed9eb0f1d" title="Enable or disable automatic capacity expansion during write operations." alt="" coords="228,5,403,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="180,30,214,30,214,35,180,35"/>
+</map>

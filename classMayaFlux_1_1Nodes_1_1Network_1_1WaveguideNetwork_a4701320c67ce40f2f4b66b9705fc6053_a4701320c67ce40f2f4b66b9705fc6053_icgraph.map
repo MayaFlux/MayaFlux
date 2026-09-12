@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Network::WaveguideNetwork::process_bidirectional" name="MayaFlux::Nodes::Network::WaveguideNetwork::process_bidirectional">
+<area shape="rect" id="Node000001" title=" " alt="" coords="312,5,527,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1WaveguideNetwork_a474473fbb4038d846ed350acbd7e7312.html#a474473fbb4038d846ed350acbd7e7312" title="Process the network for the given number of samples." alt="" coords="5,13,264,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="298,35,264,35,264,30,298,30"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Portal::Text::GlyphAtlas::line_height" name="MayaFlux::Portal::Text::GlyphAtlas::line_height">
+<area shape="rect" id="Node000001" title="Line advance in pixels for this atlas&#39;s pixel_size." alt="" coords="5,5,187,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Text_1_1FontFace_accda82c104b9bee41559e89f118f5e5f.html#accda82c104b9bee41559e89f118f5e5f" title="Raw FT_Face handle for use by GlyphAtlas." alt="" coords="235,5,401,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="187,23,221,23,221,28,187,28"/>
+</map>

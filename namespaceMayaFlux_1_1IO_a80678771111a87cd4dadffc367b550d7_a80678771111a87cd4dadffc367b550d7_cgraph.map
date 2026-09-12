@@ -1,0 +1,21 @@
+<map id="MayaFlux::IO::save_text_buffer" name="MayaFlux::IO::save_text_buffer">
+<area shape="rect" id="Node000001" title="Save a TextBuffer&#39;s rendered glyph texture to disk." alt="" coords="5,101,152,141"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1IO_a03a3f24fff1c3b2fc670ee5539f5ca80.html#a03a3f24fff1c3b2fc670ee5539f5ca80" title="Save a TextureBuffer&#39;s current GPU state to disk." alt="" coords="200,101,347,141"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="152,119,186,119,186,124,152,124"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1IO_a4f12c1b729a3d84c98e799a6af07ab19.html#a4f12c1b729a3d84c98e799a6af07ab19" title="Save a VKImage directly to disk via the ImageWriter registry." alt="" coords="395,101,541,141"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="347,119,381,119,381,124,347,124"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1ImageWriterRegistry_a2460e4fa98bf558cbbd92facd212b0a5.html#a2460e4fa98bf558cbbd92facd212b0a5" title=" " alt="" coords="589,37,787,77"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="537,99,605,79,607,84,538,104"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1IO_ae74e134903752924b1f4a6bda9732de8.html#ae74e134903752924b1f4a6bda9732de8" title="Download pixel data from a GPU&#45;resident VKImage into host ImageData." alt="" coords="599,101,777,141"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="542,119,585,119,585,124,542,124"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1IO_1_1ImageWriterRegistry_a25caa467f66d3d18650bdffcc77b8125.html#a25caa467f66d3d18650bdffcc77b8125" title=" " alt="" coords="589,165,787,205"/>
+<area shape="poly" id="edge9_Node000003_Node000010" title=" " alt="" coords="538,139,607,159,605,164,537,144"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1IO_1_1ImageData_ae98f576c9d2c433e1a321922f76795da.html#ae98f576c9d2c433e1a321922f76795da" title="Raw data pointer, dispatched on variant." alt="" coords="868,5,1056,45"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="757,99,785,87,809,71,833,55,854,47,856,52,836,60,812,75,788,92,759,104"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_aa0f056b6e351a1ef300e21cb51077dbe.html#aa0f056b6e351a1ef300e21cb51077dbe" title="Convert Vulkan format to Portal ImageFormat." alt="" coords="835,69,1089,109"/>
+<area shape="poly" id="edge6_Node000005_Node000007" title=" " alt="" coords="777,108,821,103,821,108,778,114"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a1d702ea8bef8765e8895776bd67b0cc8.html#a1d702ea8bef8765e8895776bd67b0cc8" title="Get the number of color channels for a given format." alt="" coords="840,133,1084,173"/>
+<area shape="poly" id="edge7_Node000005_Node000008" title=" " alt="" coords="778,129,827,135,826,140,777,134"/>
+<area shape="rect" id="Node000009" href="$structMayaFlux_1_1IO_1_1ImageData_a12afd81ebcc2660cfe912a96c5542dfc.html#a12afd81ebcc2660cfe912a96c5542dfc" title="Check that the active variant matches the declared format." alt="" coords="868,197,1056,237"/>
+<area shape="poly" id="edge8_Node000005_Node000009" title=" " alt="" coords="759,139,788,151,812,167,836,183,856,191,854,196,833,188,809,172,785,156,757,144"/>
+</map>

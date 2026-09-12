@@ -1,0 +1,9 @@
+<map id="MayaFlux::Core::InputSubsystem::get_hid_devices" name="MayaFlux::Core::InputSubsystem::get_hid_devices">
+<area shape="rect" id="Node000001" title="Get all HID devices." alt="" coords="484,35,721,75"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1InputSubsystem_a9691dec2357ac133ef21451749da1eac.html#a9691dec2357ac133ef21451749da1eac" title="Find HID device by vendor/product ID." alt="" coords="199,5,436,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="470,44,436,40,436,35,471,38"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_ab37da47c950ecc08197fd330d4c876ae.html#ab37da47c950ecc08197fd330d4c876ae" title="Get a list of connected HID devices." alt="" coords="218,70,417,95"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="471,70,417,76,417,70,470,65"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_a54a5a5560e601e4af07f6b935654e881.html#a54a5a5560e601e4af07f6b935654e881" title="Find a HID device by vendor and product ID." alt="" coords="5,5,151,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="185,28,151,28,151,23,185,23"/>
+</map>

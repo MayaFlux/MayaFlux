@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kinesis::FieldSource::valid" name="MayaFlux::Kinesis::FieldSource::valid">
+<area shape="rect" id="Node000001" title="Whether parsing produced a usable function definition." alt="" coords="248,37,397,77"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kinesis_1_1DualField_ae50f0020d84eaf591519a86b0864cc52.html#ae50f0020d84eaf591519a86b0864cc52" title="Whether the shader half parsed into a usable function definition." alt="" coords="21,5,185,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="234,47,185,40,185,35,235,42"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kinesis_1_1TemporalField_abe9e6c509618cddd00df54f842173bd0.html#abe9e6c509618cddd00df54f842173bd0" title="Whether the shader half parsed into a usable function definition." alt="" coords="5,69,200,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="235,73,201,78,200,73,234,68"/>
+</map>

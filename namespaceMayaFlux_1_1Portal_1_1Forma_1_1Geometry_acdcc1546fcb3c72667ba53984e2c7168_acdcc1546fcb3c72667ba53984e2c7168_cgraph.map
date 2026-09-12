@@ -1,0 +1,5 @@
+<map id="MayaFlux::Portal::Forma::Geometry::press_flip" name="MayaFlux::Portal::Forma::Geometry::press_flip">
+<area shape="rect" id="Node000001" title="Produce a Form::wire that registers a press flipping a bool state." alt="" coords="5,5,187,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Context_ad0761e5a7699167e0151d2a97fe89a2c.html#ad0761e5a7699167e0151d2a97fe89a2c" title="Called when a mouse button is pressed over an element." alt="" coords="235,5,416,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="187,23,221,23,221,28,187,28"/>
+</map>

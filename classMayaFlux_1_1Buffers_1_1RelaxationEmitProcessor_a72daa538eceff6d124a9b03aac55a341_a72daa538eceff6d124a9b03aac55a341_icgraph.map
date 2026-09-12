@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::RelaxationEmitProcessor::write_emit_constants" name="MayaFlux::Buffers::RelaxationEmitProcessor::write_emit_constants">
+<area shape="rect" id="Node000001" title="Size the push constant block to EmitParams and upload the current parameters." alt="" coords="239,84,424,139"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1RelaxationEmitProcessor_a567c9e68c3737a738f3676b330581070.html#a567c9e68c3737a738f3676b330581070" title="When attached to a RelaxationGridBuffer, sets up the dispatch configuration to cover the entire grid ..." alt="" coords="5,5,191,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="236,82,179,63,180,58,237,77"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1RelaxationEmitProcessor_a0709f67fca184c5a63f09dfa2a5a504f.html#a0709f67fca184c5a63f09dfa2a5a504f" title="Set the NDC half&#45;span the grid occupies." alt="" coords="5,84,191,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="225,114,191,114,191,109,225,109"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1RelaxationEmitProcessor_a57e98803f4c824f46f53b4ceb2742f0b.html#a57e98803f4c824f46f53b4ceb2742f0b" title="Set the per&#45;point size written to the vertex scalar field." alt="" coords="5,163,191,217"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="237,146,180,165,179,160,236,141"/>
+</map>

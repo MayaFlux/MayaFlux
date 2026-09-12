@@ -1,0 +1,7 @@
+<map id="MayaFlux::Portal::Forma::Collapsible" name="MayaFlux::Portal::Forma::Collapsible">
+<area shape="rect" id="Node000001" title="A collapsible header strip." alt="" coords="107,368,280,708"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Forma_1_1LayoutCursor.html" title="Reactive Y&#45;position accumulator for vertical primitive stacking." alt="" coords="5,5,179,305"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="134,305,147,352,142,353,129,306"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kinesis_1_1AABB2D.html" title="Axis&#45;aligned bounding rectangle in a 2D coordinate space." alt="" coords="203,15,389,295"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="261,296,246,353,241,351,256,295"/>
+</map>

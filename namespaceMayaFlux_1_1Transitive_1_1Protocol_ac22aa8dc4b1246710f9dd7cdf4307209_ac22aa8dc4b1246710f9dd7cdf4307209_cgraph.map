@@ -1,0 +1,5 @@
+<map id="MayaFlux::Transitive::Protocol::read_string" name="MayaFlux::Transitive::Protocol::read_string">
+<area shape="rect" id="Node000001" title="Read a null&#45;terminated string from a byte buffer." alt="" coords="5,5,169,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Transitive_1_1Protocol_ac36e4dc715dfd9e1c9d304a36e922a49.html#ac36e4dc715dfd9e1c9d304a36e922a49" title="Round len up to the next 4&#45;byte boundary." alt="" coords="217,5,389,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="170,23,203,23,203,28,170,28"/>
+</map>

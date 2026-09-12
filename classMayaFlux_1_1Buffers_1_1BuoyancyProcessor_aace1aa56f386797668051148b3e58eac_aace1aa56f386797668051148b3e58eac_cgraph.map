@@ -1,0 +1,23 @@
+<map id="MayaFlux::Buffers::BuoyancyProcessor::on_volume_ready" name="MayaFlux::Buffers::BuoyancyProcessor::on_volume_ready">
+<area shape="rect" id="Node000001" title="Raise the parameter block and write the tail." alt="" coords="5,107,179,161"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VolumeFieldProcessor_a3a29bb7895dbdfa59c2e4f1e6d649939.html#a3a29bb7895dbdfa59c2e4f1e6d649939" title="Raise the push constant block to at least this size." alt="" coords="253,17,419,72"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="167,104,247,74,249,79,169,109"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1VolumeFieldProcessor_ac6ae5f49e464b1eeb85c687e71b121d7.html#ac6ae5f49e464b1eeb85c687e71b121d7" title="Write the lattice dimensions and cell size into the staged push constant block, preserving word three..." alt="" coords="253,107,419,161"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="179,131,239,131,239,137,179,137"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Buffers_1_1BuoyancyProcessor_a99506cbb79a551fd36d12b0bde0cde7a.html#a99506cbb79a551fd36d12b0bde0cde7a" title="Write every parameter past the shared prefix." alt="" coords="227,207,445,247"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="165,159,271,200,269,205,163,164"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a85037a36fe7bced17fc296d213abcdff.html#a85037a36fe7bced17fc296d213abcdff" title="Set push constant size from type." alt="" coords="497,5,655,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="419,38,483,35,483,40,419,43"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Kinesis_1_1Lattice3D_a1c680e02cfe8a54011cb7538bf33f3ee.html#a1c680e02cfe8a54011cb7538bf33f3ee" title="Edge length of one cell along each axis." alt="" coords="501,85,651,125"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="419,121,487,113,488,118,420,126"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a08f86ff68a93950b07208ee936badf8e.html#a08f86ff68a93950b07208ee936badf8e" title="Get current push constant data." alt="" coords="707,200,865,255"/>
+<area shape="poly" id="edge6_Node000004_Node000007" title=" " alt="" coords="420,142,534,159,659,185,694,194,693,199,658,190,533,165,419,147"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Kinesis_1_1AABB3D_aeab9cee1b78baf556b0b7e14c99541c2.html#aeab9cee1b78baf556b0b7e14c99541c2" title=" " alt="" coords="711,85,861,125"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="651,102,698,102,698,107,651,107"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Buffers_1_1VolumeFieldProcessor_a4095b76d856fe604d407ff85813245d0.html#a4095b76d856fe604d407ff85813245d0" title="Write word seven of the parameter prefix, at byte offset 28." alt="" coords="493,200,659,255"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="446,225,480,225,480,230,446,230"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Buffers_1_1VolumeFieldProcessor_a31c30ba6b35e0eb1cab0490e7a4fc920.html#a31c30ba6b35e0eb1cab0490e7a4fc920" title="Write subclass parameters past the shared prefix." alt="" coords="493,279,659,333"/>
+<area shape="poly" id="edge10_Node000008_Node000010" title=" " alt="" coords="399,245,481,272,479,277,397,250"/>
+<area shape="poly" id="edge9_Node000009_Node000007" title=" " alt="" coords="659,225,693,225,693,230,659,230"/>
+<area shape="poly" id="edge11_Node000010_Node000007" title=" " alt="" coords="649,276,699,257,701,262,651,281"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::InputAudioBuffer::unregister_listener" name="MayaFlux::Buffers::InputAudioBuffer::unregister_listener">
+<area shape="rect" id="Node000001" title="Unregisters a listener buffer." alt="" coords="5,5,211,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1AudioBuffer_aebdf4558f0e3aa0fa1391cb376f16ef9.html#aebdf4558f0e3aa0fa1391cb376f16ef9" title="Gets the current default audio transformation processor." alt="" coords="259,5,439,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="211,30,245,30,245,35,211,35"/>
+</map>

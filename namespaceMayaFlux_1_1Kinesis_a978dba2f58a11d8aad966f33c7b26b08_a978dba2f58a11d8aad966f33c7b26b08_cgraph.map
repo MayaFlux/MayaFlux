@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kinesis::central_second_derivative" name="MayaFlux::Kinesis::central_second_derivative">
+<area shape="rect" id="Node000001" title="Convenience overload of central_second_derivative over a raw span." alt="" coords="5,37,199,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_aac11c244ed40273e47c8fe214bbad96d.html#aac11c244ed40273e47c8fe214bbad96d" title="Central difference approximation of the second derivative." alt="" coords="247,5,440,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="198,42,233,37,233,43,199,47"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_aae6dffc5cfe80ea00f71912d98c8c45e.html#aae6dffc5cfe80ea00f71912d98c8c45e" title="Build a HistoryBuffer&lt;T&gt; from a newest&#45;first span." alt="" coords="269,69,418,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="199,67,255,75,254,80,198,73"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Memory_1_1HistoryBuffer_a6f256636f3f3fc99269c77a8dc096b09.html#a6f256636f3f3fc99269c77a8dc096b09" title="Push new value to front of history." alt="" coords="488,69,691,109"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="418,87,474,87,474,92,418,92"/>
+</map>

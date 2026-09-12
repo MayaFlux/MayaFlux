@@ -1,0 +1,9 @@
+<map id="MayaFlux::Yantra::UniversalSorter::create_sorting_analysis" name="MayaFlux::Yantra::UniversalSorter::create_sorting_analysis">
+<area shape="rect" id="Node000001" title="Create detailed sorting analysis (override for custom analysis)" alt="" coords="5,37,228,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1UniversalSorter_a081720c4536a990ef303688f79c1153c.html#a081720c4536a990ef303688f79c1153c" title="Add sorting metadata to results (override for custom attribution)" alt="" coords="276,37,491,77"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="228,55,263,55,263,60,228,60"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1UniversalSorter_a7c66f7de91446f4feb79cba2177cc962.html#a7c66f7de91446f4feb79cba2177cc962" title="Get sorter&#45;specific name (derived classes override this)" alt="" coords="539,5,743,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="490,41,525,37,526,42,491,47"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1UniversalSorter_a34584a90d1c1c344727e8aa703b77247.html#a34584a90d1c1c344727e8aa703b77247" title="Gets the sorting type category for this sorter." alt="" coords="539,69,743,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="491,68,526,72,525,78,490,73"/>
+</map>

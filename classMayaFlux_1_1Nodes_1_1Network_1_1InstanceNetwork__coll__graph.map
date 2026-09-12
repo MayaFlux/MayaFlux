@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::Network::InstanceNetwork" name="MayaFlux::Nodes::Network::InstanceNetwork">
+<area shape="rect" id="Node000001" title="NodeNetwork whose slots are flat, peer GeometrySlots for instanced rendering." alt="" coords="9,1037,199,1337"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1NodeNetwork.html" title="Abstract base class for structured collections of nodes with defined relationships." alt="" coords="5,248,203,988"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="107,1002,107,1037,101,1037,101,1002"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Nodes_1_1RoutingState.html" title="Represents the state of routing transitions for a node." alt="" coords="11,5,197,185"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="107,185,107,231,101,231,101,185"/>
+</map>

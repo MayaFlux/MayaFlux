@@ -1,0 +1,11 @@
+<map id="MayaFlux::Core::WindowRenderContext::cleanup" name="MayaFlux::Core::WindowRenderContext::cleanup">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,37,236,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1VKContext_af845c6be15bdbecf3f0dd9a205df2d78.html#af845c6be15bdbecf3f0dd9a205df2d78" title="Destroy a specific surface Called when window is unregistered." alt="" coords="284,5,484,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="236,41,270,36,271,42,237,46"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1VKContext_a41228db586851246809c40f704b64292.html#a41228db586851246809c40f704b64292" title="Get logical device." alt="" coords="284,69,484,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="237,69,271,73,270,78,236,74"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1VKInstance_ad5009d0f849278358ae38dcc785627d6.html#ad5009d0f849278358ae38dcc785627d6" title="Get the Vulkan instance handle." alt="" coords="532,5,737,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="484,23,518,23,518,28,484,28"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Core_1_1VKDevice_ac91623c4b7b52f1f5f7460ef91021583.html#ac91623c4b7b52f1f5f7460ef91021583" title="Get logical device handle." alt="" coords="537,69,732,109"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="484,87,523,87,523,92,484,92"/>
+</map>

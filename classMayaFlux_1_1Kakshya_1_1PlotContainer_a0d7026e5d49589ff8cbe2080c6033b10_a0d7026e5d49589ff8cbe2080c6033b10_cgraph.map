@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kakshya::PlotContainer::ensure_processor" name="MayaFlux::Kakshya::PlotContainer::ensure_processor">
+<area shape="rect" id="Node000001" title="Return the PlotProcessor, creating and attaching it if absent." alt="" coords="5,5,168,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1PlotContainer_ab6f0eae594de9f6c525c0d1afd41d628.html#ab6f0eae594de9f6c525c0d1afd41d628" title="Create and configure a default processor for this container." alt="" coords="216,5,375,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="168,30,202,30,202,35,168,35"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1PlotContainer_abf2b2c76f1772c28f6934d73fcdeb138.html#abf2b2c76f1772c28f6934d73fcdeb138" title="Set the default data processor for this container." alt="" coords="423,5,613,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="375,30,409,30,409,35,375,35"/>
+</map>

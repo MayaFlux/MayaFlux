@@ -1,0 +1,5 @@
+<map id="MayaFlux::Portal::Forma::Plot::Series::AxisMapping" name="MayaFlux::Portal::Forma::Plot::Series::AxisMapping">
+<area shape="rect" id="Node000001" title="One or more roles mapped to a shared AxisRange and optional palette." alt="" coords="5,288,192,388"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Portal_1_1Forma_1_1Plot_1_1AxisRange.html" title="Scalar domain extent for one plot axis." alt="" coords="12,5,185,225"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="101,225,101,271,96,271,96,225"/>
+</map>

@@ -1,0 +1,13 @@
+<map id="MayaFlux::Buffers::upload_back_buffer" name="MayaFlux::Buffers::upload_back_buffer">
+<area shape="rect" id="Node000001" title="Upload host memory into a raw back_buffers slot." alt="" coords="695,91,844,131"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1NetworkGeometryBuffer_ae11739d15cdd3c11ab02fcc200b39b34.html#ae11739d15cdd3c11ab02fcc200b39b34" title="Ensure the hash_cluster_id state field exists, declaring and populating it from the network&#39;s own pri..." alt="" coords="456,5,637,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="698,89,624,63,626,58,700,84"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1ClaimAccumulateProcessor_a647d18931fa71b692f0ce0bb97b778ba.html#a647d18931fa71b692f0ce0bb97b778ba" title="Dispatch as usual, then conditionally read back the result." alt="" coords="447,84,647,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="681,114,647,114,647,109,681,109"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1NetworkGeometryBuffer_aaacb4c11779dc9cc883cf7425bc2e2c7.html#aaacb4c11779dc9cc883cf7425bc2e2c7" title="Find the first GpuFieldOperator in the network&#39;s operator chain and wire its compute stages: a Vertex..." alt="" coords="456,163,637,217"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="700,138,626,165,624,160,698,133"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1NetworkGeometryBuffer_ad2976671728be8e38c0768ea2571c4df.html#ad2976671728be8e38c0768ea2571c4df" title="Initialize the buffer and its processors." alt="" coords="217,163,399,217"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="442,193,399,193,399,187,442,187"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1NetworkTextureBuffer_a4bb2294612914bf39dca7b39bf148a3b.html#a4bb2294612914bf39dca7b39bf148a3b" title="Wire processors into the chain." alt="" coords="5,163,169,217"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="203,193,170,193,170,187,203,187"/>
+</map>

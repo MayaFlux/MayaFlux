@@ -1,0 +1,7 @@
+<map id="PixelOps.hpp" name="PixelOps.hpp">
+<area shape="rect" id="Node000001" title="Pointwise pixel operations for MayaFlux::Kinesis::Vision." alt="" coords="79,5,186,31"/>
+<area shape="rect" id="Node000002" href="$PixelOps_8cpp.html" title=" " alt="" coords="5,79,111,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="113,42,72,80,68,77,109,38"/>
+<area shape="rect" id="Node000003" href="$VisionExecutor_8cpp.html" title=" " alt="" coords="135,79,279,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="156,38,197,77,193,80,153,42"/>
+</map>

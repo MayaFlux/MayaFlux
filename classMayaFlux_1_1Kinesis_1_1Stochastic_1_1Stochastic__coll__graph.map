@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::Stochastic::Stochastic" name="MayaFlux::Kinesis::Stochastic::Stochastic">
+<area shape="rect" id="Node000001" title="Unified generative infrastructure for stochastic and procedural algorithms." alt="" coords="5,268,205,937"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kinesis_1_1Stochastic_1_1GeneratorState.html" title="Encapsulates internal state for stateful generators." alt="" coords="11,5,199,205"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="108,206,108,252,103,252,103,206"/>
+</map>

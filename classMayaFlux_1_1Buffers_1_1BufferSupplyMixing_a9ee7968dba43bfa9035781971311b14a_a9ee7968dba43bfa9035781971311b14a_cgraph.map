@@ -1,0 +1,20 @@
+<map id="MayaFlux::Buffers::BufferSupplyMixing::clone_audio_buffer_for_channels" name="MayaFlux::Buffers::BufferSupplyMixing::clone_audio_buffer_for_channels">
+<area shape="rect" id="Node000001" title="Clones an audio buffer for each channel in the specified list." alt="" coords="5,171,176,241"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferAccessControl_a6be98ac3f4f6e9111f4f13241e5fdefe.html#a6be98ac3f4f6e9111f4f13241e5fdefe" title="Adds an audio buffer to a token and channel." alt="" coords="235,100,388,155"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="175,173,221,157,222,162,177,178"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Buffers_1_1TokenUnitManager_a4d8b6658b8ba5a37086de5f4ddc07f88.html#a4d8b6658b8ba5a37086de5f4ddc07f88" title="Gets an existing audio unit without creating if missing (mutable)" alt="" coords="225,179,397,233"/>
+<area shape="poly" id="edge8_Node000001_Node000008" title=" " alt="" coords="176,203,212,203,212,209,176,209"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Buffers_1_1TokenUnitManager_a4531a511fff4b519167f92818c4e6ed6.html#a4531a511fff4b519167f92818c4e6ed6" title="Checks if an audio unit exists for the given token." alt="" coords="224,257,399,312"/>
+<area shape="poly" id="edge9_Node000001_Node000009" title=" " alt="" coords="177,234,222,250,220,255,175,239"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1BufferAccessControl_a4bc263b052de827013ed2117e56a58e5.html#a4bc263b052de827013ed2117e56a58e5" title="Ensures minimum number of audio channels exist for a token." alt="" coords="466,5,649,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="382,97,472,63,474,68,384,102"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1TokenUnitManager_ac9fd8c50e96db19443030c7582b9cc20.html#ac9fd8c50e96db19443030c7582b9cc20" title="Gets or creates a root audio unit for the specified token." alt="" coords="959,39,1131,93"/>
+<area shape="poly" id="edge7_Node000002_Node000005" title=" " alt="" coords="388,118,945,72,945,77,388,124"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Buffers_1_1RootAudioUnit_adab6da56d6eb5d1fc2606c8c1ab8e01f.html#adab6da56d6eb5d1fc2606c8c1ab8e01f" title=" " alt="" coords="464,135,651,175"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="389,133,450,141,450,146,388,139"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1TokenUnitManager_a7673914495c7a5a49599cbcc48f727fe.html#a7673914495c7a5a49599cbcc48f727fe" title="Acquires the manager&#39;s mutex for external synchronization." alt="" coords="447,199,668,239"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="373,152,448,185,470,193,468,198,446,190,371,157"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1TokenUnitManager_a07357824fe6b9475bda41f8b45668eb3.html#a07357824fe6b9475bda41f8b45668eb3" title="Ensures an audio unit exists and resizes it to the specified channel count." alt="" coords="716,5,911,60"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="649,30,702,30,702,35,649,35"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="911,44,945,49,944,54,911,49"/>
+</map>

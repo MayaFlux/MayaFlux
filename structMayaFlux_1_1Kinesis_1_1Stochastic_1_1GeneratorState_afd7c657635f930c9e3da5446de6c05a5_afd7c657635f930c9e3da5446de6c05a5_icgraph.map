@@ -1,0 +1,12 @@
+<map id="MayaFlux::Kinesis::Stochastic::GeneratorState::reset" name="MayaFlux::Kinesis::Stochastic::GeneratorState::reset">
+<area shape="rect" id="Node000001" title=" " alt="" coords="724,58,920,113"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kinesis_1_1Stochastic_1_1Stochastic_a842a1e7286485ab870a4cadca914d94e.html#a842a1e7286485ab870a4cadca914d94e" title="Resets internal state for stateful algorithms." alt="" coords="512,58,676,113"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="710,88,676,88,676,83,710,83"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kinesis_1_1Stochastic_1_1Stochastic_af516259acc6b739e58a2c89c6aaa0f23.html#af516259acc6b739e58a2c89c6aaa0f23" title="Seeds entropy source." alt="" coords="261,29,464,69"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="498,73,464,68,465,62,498,68"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kinesis_1_1Stochastic_1_1Stochastic_ab32c1610addd677ac3ec3e2ee1a23752.html#ab32c1610addd677ac3ec3e2ee1a23752" title="Changes active algorithm." alt="" coords="281,94,445,149"/>
+<area shape="poly" id="edge4_Node000002_Node000004" title=" " alt="" coords="498,103,445,111,445,106,498,98"/>
+<area shape="poly" id="edge3_Node000003_Node000003" title=" " alt="" coords="402,18,388,11,363,8,341,10,327,15,322,21,325,28,320,30,317,20,324,10,339,5,363,3,389,6,404,13"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Random_ada047020edee6fa69a337a3d0c7e2eee.html#ada047020edee6fa69a337a3d0c7e2eee" title="Changes the probability distribution type." alt="" coords="5,101,213,141"/>
+<area shape="poly" id="edge5_Node000004_Node000005" title=" " alt="" coords="267,124,214,124,214,119,267,119"/>
+</map>

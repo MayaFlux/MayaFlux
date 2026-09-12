@@ -1,0 +1,15 @@
+<map id="MayaFlux::Yantra::UniversalAnalyzer::get_analysis_type" name="MayaFlux::Yantra::UniversalAnalyzer::get_analysis_type">
+<area shape="rect" id="Node000001" title="Gets the analysis type category for this analyzer." alt="" coords="1041,35,1247,75"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1UniversalAnalyzer_a1b40c841dc4fd2a704a855ca99454c13.html#a1b40c841dc4fd2a704a855ca99454c13" title="Add attribution metadata to results (override for custom attribution)" alt="" coords="789,28,993,83"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1027,58,993,58,993,53,1027,53"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1UniversalAnalyzer_aa17041f06b3f457a9ce9a1262c07821f.html#aa17041f06b3f457a9ce9a1262c07821f" title="Apply granularity&#45;based output formatting." alt="" coords="263,28,467,83"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="790,27,741,18,678,10,628,8,578,10,515,18,453,30,452,25,514,13,578,5,628,3,678,5,742,13,791,22"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1UniversalAnalyzer_ad2bc166262ab4cac5580db3854c9a1af.html#ad2bc166262ab4cac5580db3854c9a1af" title="Create summary statistics from results (override for custom summaries)" alt="" coords="526,28,730,83"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="775,58,730,58,730,53,775,53"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Yantra_1_1UniversalAnalyzer_ab9a3fc19924f161a4371c3aec5c2f3fb.html#ab9a3fc19924f161a4371c3aec5c2f3fb" title="Organize results into hierarchical groups (override for custom grouping)" alt="" coords="515,107,741,147"/>
+<area shape="poly" id="edge6_Node000002_Node000006" title=" " alt="" coords="779,89,703,110,701,105,777,84"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1UniversalAnalyzer_a78f67235857df9ebbc5edfe0bdab8a95.html#a78f67235857df9ebbc5edfe0bdab8a95" title="Core analysis implementation &#45; must be overridden by derived classes." alt="" coords="5,35,215,75"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="249,58,215,58,215,53,249,53"/>
+<area shape="poly" id="edge5_Node000005_Node000003" title=" " alt="" coords="512,58,467,58,467,53,512,53"/>
+<area shape="poly" id="edge7_Node000006_Node000003" title=" " alt="" coords="540,106,464,85,466,80,542,101"/>
+</map>

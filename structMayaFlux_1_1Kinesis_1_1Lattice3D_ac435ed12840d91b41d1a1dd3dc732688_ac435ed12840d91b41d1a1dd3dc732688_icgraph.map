@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kinesis::Lattice3D::cell_center" name="MayaFlux::Kinesis::Lattice3D::cell_center">
+<area shape="rect" id="Node000001" title="World position of a cell&#39;s centre." alt="" coords="275,37,437,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VolumeGridBuffer_a773ec1e7a228ad23abc879801b7a283b.html#a773ec1e7a228ad23abc879801b7a283b" title="Add sampled values into a scalar field." alt="" coords="5,5,227,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="261,47,227,43,227,37,261,42"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VolumeGridBuffer_a63ecfa245dd0267774d87f711c1e50a0.html#a63ecfa245dd0267774d87f711c1e50a0" title="Write initial values into a scalar field from a Kinesis field." alt="" coords="28,69,204,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="261,73,204,80,204,75,261,67"/>
+</map>

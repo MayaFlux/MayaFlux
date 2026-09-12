@@ -1,0 +1,14 @@
+<map id="MayaFlux::Kinesis::Discrete::variance" name="MayaFlux::Kinesis::Discrete::variance">
+<area shape="rect" id="Node000001" title="Variance per window." alt="" coords="813,29,963,69"/>
+<area shape="poly" id="edge7_Node000001_Node000001" title=" " alt="" coords="921,18,910,11,888,8,869,10,858,15,854,21,856,28,851,30,849,20,854,11,868,5,888,3,911,6,924,13"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1StatisticalAnalyzer_ac6b9656bbc2b37d4603de52ef0115d85.html#ac6b9656bbc2b37d4603de52ef0115d85" title="Compute statistical values using span (zero&#45;copy processing)" alt="" coords="303,23,568,63"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="809,29,765,20,710,16,654,16,549,25,549,20,654,11,710,10,766,15,810,23"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1StatisticalAnalyzer_a853e8c531c62174e89938bf0eae8a7d9.html#a853e8c531c62174e89938bf0eae8a7d9" title="Create comprehensive analysis result." alt="" coords="319,87,552,127"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="806,75,766,84,656,98,552,106,552,100,656,93,765,79,805,70"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a39acf9fc192194350dfbe43ed87633b2.html#a39acf9fc192194350dfbe43ed87633b2" title="Standard deviation per window." alt="" coords="616,29,765,69"/>
+<area shape="poly" id="edge5_Node000001_Node000005" title=" " alt="" coords="799,52,766,52,766,47,799,47"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1StatisticalAnalyzer_ada59b9d30d969a895d8693fc96381700.html#ada59b9d30d969a895d8693fc96381700" title="Core analysis implementation &#45; creates analysis result AND pipeline output." alt="" coords="5,55,255,95"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="289,61,255,64,255,59,289,55"/>
+<area shape="poly" id="edge4_Node000004_Node000003" title=" " alt="" coords="304,96,255,90,255,85,305,90"/>
+<area shape="poly" id="edge6_Node000005_Node000002" title=" " alt="" coords="602,50,568,49,568,43,602,44"/>
+</map>

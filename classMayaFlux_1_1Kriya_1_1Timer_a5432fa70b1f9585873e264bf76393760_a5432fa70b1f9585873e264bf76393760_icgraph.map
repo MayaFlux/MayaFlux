@@ -1,0 +1,13 @@
+<map id="MayaFlux::Kriya::Timer::is_active" name="MayaFlux::Kriya::Timer::is_active">
+<area shape="rect" id="Node000001" title="Checks if a callback is currently scheduled." alt="" coords="529,101,704,141"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kriya_1_1TemporalActivation_aa48d4567cb873962947e3e270191b7d3.html#aa48d4567cb873962947e3e270191b7d3" title="Cancels any currently active node." alt="" coords="274,69,470,109"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="515,111,470,105,471,99,516,106"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kriya_1_1TimedAction_ab032014a45eb96c8b28d61cf9f95c01a.html#ab032014a45eb96c8b28d61cf9f95c01a" title="Checks if an action is currently in progress." alt="" coords="263,133,481,173"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="516,137,482,142,481,136,516,132"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kriya_1_1TemporalActivation_ab4f3737fb0465e8727586b7104b95fc2.html#ab4f3737fb0465e8727586b7104b95fc2" title="Activates a buffer for a specified duration." alt="" coords="12,5,208,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="275,69,192,48,193,43,277,63"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kriya_1_1TemporalActivation_a5472441ec2fd9cc067e55eb8f48f1a6d.html#a5472441ec2fd9cc067e55eb8f48f1a6d" title="Activates a node network for a specified duration." alt="" coords="5,69,215,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="260,92,215,92,215,87,260,87"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kriya_1_1TemporalActivation_ab218a3ead3d97c0a677ad3b3f0fad462.html#ab218a3ead3d97c0a677ad3b3f0fad462" title="Activates a node for a specified duration." alt="" coords="12,133,208,173"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="277,115,193,136,192,131,275,110"/>
+</map>

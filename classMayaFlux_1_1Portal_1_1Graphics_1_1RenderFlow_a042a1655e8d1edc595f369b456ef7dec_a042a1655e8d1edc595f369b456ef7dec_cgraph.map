@@ -1,0 +1,5 @@
+<map id="MayaFlux::Portal::Graphics::RenderFlow::bind_pipeline" name="MayaFlux::Portal::Graphics::RenderFlow::bind_pipeline">
+<area shape="rect" id="Node000001" title="Bind graphics pipeline." alt="" coords="5,5,207,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ab2be21f08a8e73058950c603e8a77020.html#ab2be21f08a8e73058950c603e8a77020" title="Get Vulkan command buffer handle from CommandBufferID." alt="" coords="255,5,527,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="207,23,241,23,241,28,207,28"/>
+</map>

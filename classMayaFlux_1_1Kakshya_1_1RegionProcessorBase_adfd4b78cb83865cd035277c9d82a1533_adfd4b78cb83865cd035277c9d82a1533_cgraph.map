@@ -1,0 +1,13 @@
+<map id="MayaFlux::Kakshya::RegionProcessorBase::on_attach" name="MayaFlux::Kakshya::RegionProcessorBase::on_attach">
+<area shape="rect" id="Node000001" title="Attach this processor to a signal source container." alt="" coords="5,45,168,100"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kakshya_1_1ContainerDataStructure_a3b75e366535f258e9eeea41e897693d2.html#a3b75e366535f258e9eeea41e897693d2" title="Extract the size of non time dimensions (channel, spatial, frequency)" alt="" coords="224,5,399,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="168,56,210,48,211,53,169,61"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1RegionProcessorBase_a20574208db40f323df3cf6ac9178ca79.html#a20574208db40f323df3cf6ac9178ca79" title="Organize container data into structured regions." alt="" coords="216,84,407,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="169,84,203,90,202,95,168,89"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kakshya_a6b9b1e820df114a20a5384233008e015.html#a6b9b1e820df114a20a5384233008e015" title="Advance current positions by a number of frames, with optional looping." alt="" coords="455,91,613,131"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="407,109,441,109,441,114,407,114"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Kakshya_1_1ContainerDataStructure_a27b9d48a60ea2512b02a8196c6581eec.html#a27b9d48a60ea2512b02a8196c6581eec" title="Extract channel count from dimensions." alt="" coords="666,40,841,95"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="613,93,652,85,653,90,614,98"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Kakshya_1_1ContainerDataStructure_a707364e4c5a8e950a981eaf7ff5edff6.html#a707364e4c5a8e950a981eaf7ff5edff6" title="Get samples per channel (time dimension only)." alt="" coords="661,119,845,189"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="614,124,648,131,647,136,613,129"/>
+</map>

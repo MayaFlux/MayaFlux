@@ -1,0 +1,5 @@
+<map id="MayaFlux::Vruta::TaskScheduler::current_units" name="MayaFlux::Vruta::TaskScheduler::current_units">
+<area shape="rect" id="Node000001" title="Get current processing units for a domain." alt="" coords="5,5,236,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_ae74f769a53c83a47360211ac21c2cbe2.html#ae74f769a53c83a47360211ac21c2cbe2" title="Gets the primary clock (audio domain for legacy compatibility)" alt="" coords="284,5,515,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="236,23,270,23,270,28,236,28"/>
+</map>

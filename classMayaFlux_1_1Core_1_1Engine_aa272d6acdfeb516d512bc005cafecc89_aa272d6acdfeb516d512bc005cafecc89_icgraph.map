@@ -1,0 +1,7 @@
+<map id="MayaFlux::Core::Engine::Pause" name="MayaFlux::Core::Engine::Pause">
+<area shape="rect" id="Node000001" title="Pauses all processing while maintaining system state." alt="" coords="409,5,585,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_a621f792c2b1f9e9d3f0d48c4cc7c2a4d.html#a621f792c2b1f9e9d3f0d48c4cc7c2a4d" title="Pauses audio processing on the default engine." alt="" coords="229,13,361,38"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="396,28,362,28,362,23,396,23"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1Engine_afd59a3875597f3a7f239764e40104b6c.html#afd59a3875597f3a7f239764e40104b6c" title=" " alt="" coords="5,5,181,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="216,28,182,28,182,23,216,23"/>
+</map>

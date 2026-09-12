@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::upload_host_visible" name="MayaFlux::Buffers::upload_host_visible">
+<area shape="rect" id="Node000001" title="Upload data to a host&#45;visible buffer." alt="" coords="5,85,156,125"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_a0c7a59c0847791ed0915dcd64e8df783.html#a0c7a59c0847791ed0915dcd64e8df783" title="Query for a backend service." alt="" coords="221,5,388,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="143,82,208,61,209,66,144,87"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1DataAccess_a7893291a314cd16a4086b4af5547be3b.html#a7893291a314cd16a4086b4af5547be3b" title="Get raw buffer info for GPU upload." alt="" coords="217,85,392,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="156,102,203,102,203,107,156,107"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aa28c6f5592e5893508bafb62aefcc496.html#aa28c6f5592e5893508bafb62aefcc496" title="Get the global registry instance." alt="" coords="204,149,405,189"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="152,122,222,142,220,147,151,127"/>
+</map>

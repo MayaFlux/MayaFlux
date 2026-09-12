@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kinesis::axis_fraction" name="MayaFlux::Kinesis::axis_fraction">
+<area shape="rect" id="Node000001" title="Fraction along one axis of bounds, inverse to fader placement." alt="" coords="261,37,411,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_af9575240cc422bb83292ba5f330c0d41.html#af9575240cc422bb83292ba5f330c0d41" title="Geometry function for a horizontal fader in NDC space." alt="" coords="5,5,213,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="247,48,213,43,214,37,248,42"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_aab6186aa8c9f492a422824eeaa6e118e.html#aab6186aa8c9f492a422824eeaa6e118e" title="Geometry function for a vertical fader in NDC space." alt="" coords="13,69,205,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="248,72,206,78,205,73,248,67"/>
+</map>

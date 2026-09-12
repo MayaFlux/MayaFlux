@@ -1,0 +1,5 @@
+<map id="MayaFlux::Vruta::FreeRoutine::try_resume_with_context" name="MayaFlux::Vruta::FreeRoutine::try_resume_with_context">
+<area shape="rect" id="Node000001" title="Attempts to resume the coroutine with explicit temporal context." alt="" coords="5,5,220,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Vruta_1_1FreeRoutine_a98ae408a3b899b0d435adef9199c882e.html#a98ae408a3b899b0d435adef9199c882e" title="Checks if the coroutine is still active." alt="" coords="268,5,483,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="220,23,254,23,254,28,220,28"/>
+</map>

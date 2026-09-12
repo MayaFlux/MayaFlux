@@ -1,0 +1,80 @@
+<map id="MayaFlux::Yantra::FeatureExtractor::extract_implementation" name="MayaFlux::Yantra::FeatureExtractor::extract_implementation">
+<area shape="rect" id="Node000001" title="Core extraction implementation &#45; delegates to ExtractionHelper." alt="" coords="5,561,252,601"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Yantra_a599f6157469391d88c0afdcc9c08d1d2.html#a599f6157469391d88c0afdcc9c08d1d2" title=" " alt="" coords="327,225,515,265"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="133,560,152,504,185,428,207,387,233,347,264,310,298,278,314,267,317,272,302,282,267,314,237,350,211,390,189,430,157,506,138,562"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_1_1Yantra_a6b2561cf59d7422a997753a425decd3b.html#a6b2561cf59d7422a997753a425decd3b" title=" " alt="" coords="327,433,515,473"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="159,559,222,521,299,483,320,475,322,480,301,488,224,525,162,563"/>
+<area shape="rect" id="Node000011" href="$namespaceMayaFlux_1_1Yantra_addfb108021a96dcae681d71feff6874a.html#addfb108021a96dcae681d71feff6874a" title=" " alt="" coords="327,360,515,400"/>
+<area shape="poly" id="edge14_Node000001_Node000011" title=" " alt="" coords="144,559,207,491,251,453,299,419,332,402,334,407,301,423,254,457,211,495,148,563"/>
+<area shape="rect" id="Node000013" href="$namespaceMayaFlux_1_1Yantra_a58a028aaf5f6d7c7f1cfc02ee3f42fa1.html#a58a028aaf5f6d7c7f1cfc02ee3f42fa1" title=" " alt="" coords="327,561,515,601"/>
+<area shape="poly" id="edge21_Node000001_Node000013" title=" " alt="" coords="252,578,313,578,313,584,252,584"/>
+<area shape="rect" id="Node000016" href="$namespaceMayaFlux_1_1Yantra_a33957cc2e40e2d6acc33295b88af9dee.html#a33957cc2e40e2d6acc33295b88af9dee" title=" " alt="" coords="327,292,515,332"/>
+<area shape="poly" id="edge28_Node000001_Node000016" title=" " alt="" coords="137,560,159,515,195,457,241,397,269,370,298,346,315,335,318,340,302,350,272,374,245,401,199,461,164,518,141,562"/>
+<area shape="rect" id="Node000017" href="$namespaceMayaFlux_1_1Yantra_ac5b7985ef9be7a05554490eb28c9f599.html#ac5b7985ef9be7a05554490eb28c9f599" title=" " alt="" coords="327,689,515,729"/>
+<area shape="poly" id="edge34_Node000001_Node000017" title=" " alt="" coords="162,599,224,637,301,675,322,682,320,687,299,680,222,642,159,604"/>
+<area shape="rect" id="Node000019" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_a2682c3a4f14c271b6718dcd9ba442afa.html#a2682c3a4f14c271b6718dcd9ba442afa" title="Extract peaks from a response map via non&#45;maximum suppression." alt="" coords="340,753,503,793"/>
+<area shape="poly" id="edge36_Node000001_Node000019" title=" " alt="" coords="147,599,210,668,253,706,301,739,328,751,326,756,299,743,250,710,206,672,144,603"/>
+<area shape="rect" id="Node000020" href="$namespaceMayaFlux_1_1Yantra_ab07fb437503db63bb9d4f60568389029.html#ab07fb437503db63bb9d4f60568389029" title=" " alt="" coords="327,497,515,537"/>
+<area shape="poly" id="edge37_Node000001_Node000020" title=" " alt="" coords="220,558,316,537,317,543,222,564"/>
+<area shape="rect" id="Node000021" href="$classMayaFlux_1_1Yantra_1_1OperationHelper_a86f4c84e8740ec41db439c868a93454a.html#a86f4c84e8740ec41db439c868a93454a" title="Extract structured double data from Datum container or direct ComputeData with automatic container ha..." alt="" coords="300,817,543,857"/>
+<area shape="poly" id="edge43_Node000001_Node000021" title=" " alt="" coords="142,600,165,643,200,698,246,755,273,781,302,803,311,809,309,813,298,807,269,785,242,758,196,701,160,646,137,603"/>
+<area shape="rect" id="Node000022" href="$namespaceMayaFlux_1_1Yantra_aa258cea8bd6a52e8800fb9104548220d.html#aa258cea8bd6a52e8800fb9104548220d" title=" " alt="" coords="327,625,515,665"/>
+<area shape="poly" id="edge44_Node000001_Node000022" title=" " alt="" coords="222,599,317,620,316,625,220,604"/>
+<area shape="rect" id="Node000024" href="$classMayaFlux_1_1Yantra_1_1FeatureExtractor_adc82a2dac01d6854b0d2107bf67c3000.html#adc82a2dac01d6854b0d2107bf67c3000" title="Convert extraction method enum to string." alt="" coords="320,953,523,993"/>
+<area shape="poly" id="edge50_Node000001_Node000024" title=" " alt="" coords="142,600,202,718,248,794,302,867,342,909,383,943,380,947,338,912,298,871,244,797,197,721,137,603"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a6e714cafd4d54be74cddd9f70b10b7f2.html#a6e714cafd4d54be74cddd9f70b10b7f2" title="Build [start, end) intervals from window start indices." alt="" coords="608,215,769,270"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="516,241,594,241,594,246,516,247"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_af50196710c144f7ee6c4ab9201202438.html#af50196710c144f7ee6c4ab9201202438" title="Arithmetic mean per window." alt="" coords="614,49,763,89"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="441,223,504,166,546,134,589,105,615,92,617,97,592,110,549,139,508,171,445,227"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_aa54c72a38f9a05432b827e1e0944cf79.html#aa54c72a38f9a05432b827e1e0944cf79" title="Merge overlapping or adjacent half&#45;open intervals." alt="" coords="593,497,784,537"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="517,259,544,278,560,297,569,316,574,353,576,392,582,412,593,433,618,462,646,487,643,491,614,466,588,436,577,414,571,392,568,354,564,317,556,300,541,282,514,264"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_ad2883aeb684971b088f71e1d858803bd.html#ad2883aeb684971b088f71e1d858803bd" title="Compute the number of analysis windows for a given data size." alt="" coords="835,298,1012,338"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="429,224,451,181,485,128,532,75,559,53,589,35,643,12,690,3,713,4,737,10,788,35,806,51,824,77,860,145,891,221,914,285,909,286,886,223,855,148,820,80,802,55,785,39,735,15,713,9,691,8,645,17,592,39,562,57,535,79,489,131,455,184,434,226"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a69f49533d37355b710cef50b84ad2ab3.html#a69f49533d37355b710cef50b84ad2ab3" title="Copy data from a set of half&#45;open intervals into a flat vector." alt="" coords="599,382,778,422"/>
+<area shape="poly" id="edge7_Node000002_Node000008" title=" " alt="" coords="517,261,544,278,563,301,569,324,576,347,593,369,599,373,595,377,589,372,571,349,564,326,558,303,541,282,514,266"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_ad2f0572dfef62bb7629c7ef74ff29449.html#ad2f0572dfef62bb7629c7ef74ff29449" title="Calculate mean of single&#45;channel data." alt="" coords="858,56,989,82"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="763,66,844,66,844,72,763,72"/>
+<area shape="poly" id="edge9_Node000009_Node000003" title=" " alt="" coords="510,431,541,410,553,394,560,379,565,347,569,315,576,298,589,281,595,275,598,279,593,284,581,300,574,316,570,348,565,380,558,397,544,414,513,435"/>
+<area shape="poly" id="edge10_Node000009_Node000006" title=" " alt="" coords="506,471,592,491,591,496,505,476"/>
+<area shape="poly" id="edge11_Node000009_Node000007" title=" " alt="" coords="516,462,578,464,647,462,718,452,786,432,818,415,848,393,895,347,899,351,851,397,821,420,788,437,719,457,647,467,578,470,515,467"/>
+<area shape="poly" id="edge13_Node000009_Node000008" title=" " alt="" coords="515,433,585,419,586,424,516,438"/>
+<area shape="rect" id="Node000010" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_ace9bc7c524eeeff35f5d23bf4b14a6ce.html#ace9bc7c524eeeff35f5d23bf4b14a6ce" title="RMS energy per window." alt="" coords="614,561,763,601"/>
+<area shape="poly" id="edge12_Node000009_Node000010" title=" " alt="" coords="517,469,544,483,561,499,569,516,577,532,592,547,603,554,600,558,589,551,573,535,565,518,556,502,541,487,515,474"/>
+<area shape="poly" id="edge15_Node000011_Node000003" title=" " alt="" coords="511,357,541,342,556,327,565,312,573,297,589,280,597,275,600,279,592,284,578,300,569,315,560,331,544,346,514,362"/>
+<area shape="poly" id="edge16_Node000011_Node000006" title=" " alt="" coords="492,397,544,419,602,452,652,487,649,491,599,457,541,423,490,402"/>
+<area shape="poly" id="edge17_Node000011_Node000007" title=" " alt="" coords="514,360,541,342,554,325,560,307,562,270,565,234,573,216,589,200,615,184,639,174,662,169,685,169,732,180,788,200,821,217,852,239,899,286,896,289,848,243,818,221,786,205,731,185,684,175,663,175,640,179,617,189,592,205,577,219,570,235,567,270,565,308,559,327,544,346,517,364"/>
+<area shape="poly" id="edge18_Node000011_Node000008" title=" " alt="" coords="516,385,586,391,585,396,515,390"/>
+<area shape="rect" id="Node000012" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a17e49f6396fb23a61d038d0d8f308666.html#a17e49f6396fb23a61d038d0d8f308666" title="Spectral energy per window using Hann&#45;windowed FFT." alt="" coords="595,318,783,358"/>
+<area shape="poly" id="edge19_Node000011_Node000012" title=" " alt="" coords="515,363,581,352,582,358,516,368"/>
+<area shape="poly" id="edge20_Node000012_Node000012" title=" " alt="" coords="645,319,642,309,649,299,665,294,689,292,716,295,731,302,729,307,715,300,689,297,666,299,652,304,647,310,650,317"/>
+<area shape="poly" id="edge22_Node000013_Node000006" title=" " alt="" coords="505,558,591,538,592,543,506,564"/>
+<area shape="poly" id="edge27_Node000013_Node000008" title=" " alt="" coords="515,561,541,547,557,533,566,518,575,502,589,483,648,429,652,433,593,487,579,505,571,521,561,536,544,551,517,565"/>
+<area shape="rect" id="Node000014" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_ab68557fff1f97b7705136ec0b678abac.html#ab68557fff1f97b7705136ec0b678abac" title="Sample indices of onsets detected via spectral flux." alt="" coords="595,700,782,740"/>
+<area shape="poly" id="edge23_Node000013_Node000014" title=" " alt="" coords="517,599,544,611,559,621,570,632,592,655,643,690,640,695,589,659,566,636,556,625,541,615,514,603"/>
+<area shape="rect" id="Node000015" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_abe045fa779e298177ec4365ef28e2848.html#abe045fa779e298177ec4365ef28e2848" title="Build [start, end) intervals centred on a set of positions." alt="" coords="597,764,781,819"/>
+<area shape="poly" id="edge26_Node000013_Node000015" title=" " alt="" coords="517,593,544,611,559,628,567,646,570,681,574,716,580,733,593,750,596,754,593,757,589,753,575,735,568,717,565,682,561,647,554,631,541,615,514,598"/>
+<area shape="poly" id="edge24_Node000014_Node000007" title=" " alt="" coords="731,697,760,679,785,655,812,618,835,577,873,492,898,413,913,351,918,352,903,414,878,494,840,580,816,621,789,659,763,683,734,702"/>
+<area shape="poly" id="edge25_Node000014_Node000014" title=" " alt="" coords="645,700,642,690,649,681,665,675,689,673,716,676,731,683,729,688,715,681,689,678,666,680,652,685,647,691,650,699"/>
+<area shape="poly" id="edge29_Node000016_Node000003" title=" " alt="" coords="499,289,594,264,595,269,500,294"/>
+<area shape="poly" id="edge30_Node000016_Node000004" title=" " alt="" coords="514,293,541,275,556,255,563,235,565,193,566,150,573,128,589,106,602,94,605,98,593,110,578,131,571,151,570,193,569,236,561,258,545,279,517,298"/>
+<area shape="poly" id="edge31_Node000016_Node000006" title=" " alt="" coords="517,329,544,346,563,367,572,388,579,409,593,433,620,462,650,487,646,491,617,466,589,436,574,411,567,390,558,370,541,350,514,334"/>
+<area shape="poly" id="edge32_Node000016_Node000007" title=" " alt="" coords="514,292,541,275,553,261,559,246,562,215,567,184,575,169,589,156,640,130,663,125,686,124,734,134,788,156,828,182,862,216,889,252,908,285,904,288,884,255,858,219,825,186,785,161,732,139,686,129,664,130,642,135,592,161,579,173,572,186,567,216,564,248,557,264,544,279,517,297"/>
+<area shape="poly" id="edge33_Node000016_Node000008" title=" " alt="" coords="497,329,544,345,592,368,611,375,609,380,590,373,542,350,495,334"/>
+<area shape="rect" id="Node000018" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a8e2428257475108fa15a808844391b53.html#a8e2428257475108fa15a808844391b53" title="Extract overlapping windows as a flat concatenated vector." alt="" coords="608,946,769,1000"/>
+<area shape="poly" id="edge35_Node000017_Node000018" title=" " alt="" coords="517,720,545,739,562,763,571,788,572,812,571,836,570,883,577,907,593,931,599,938,595,941,589,935,572,909,565,884,566,835,567,812,566,789,558,766,541,743,514,725"/>
+<area shape="poly" id="edge38_Node000020_Node000003" title=" " alt="" coords="514,501,541,483,558,459,566,435,568,410,566,386,563,360,564,334,572,308,589,281,595,274,599,278,593,284,576,310,570,335,569,360,571,385,573,410,572,436,563,461,545,487,517,506"/>
+<area shape="poly" id="edge39_Node000020_Node000006" title=" " alt="" coords="516,514,580,514,580,520,516,520"/>
+<area shape="poly" id="edge40_Node000020_Node000007" title=" " alt="" coords="517,533,544,547,560,564,568,581,576,598,592,611,645,634,691,643,713,641,735,636,785,611,816,586,842,555,864,520,881,484,904,411,916,352,921,353,909,412,886,486,868,523,847,558,820,590,788,615,737,641,713,647,690,648,643,639,589,615,572,601,563,584,556,567,541,551,515,538"/>
+<area shape="poly" id="edge42_Node000020_Node000008" title=" " alt="" coords="508,494,542,483,596,456,645,428,647,432,599,461,544,488,510,500"/>
+<area shape="poly" id="edge41_Node000020_Node000010" title=" " alt="" coords="506,535,601,557,600,563,505,540"/>
+<area shape="poly" id="edge45_Node000022_Node000006" title=" " alt="" coords="515,625,541,611,556,596,565,580,573,563,589,547,598,541,601,546,592,551,577,567,569,583,561,599,544,615,517,629"/>
+<area shape="poly" id="edge47_Node000022_Node000008" title=" " alt="" coords="514,628,541,611,554,596,562,582,568,552,572,520,578,502,588,484,615,454,644,429,647,433,618,457,593,487,583,504,577,521,573,553,567,584,558,599,544,615,517,632"/>
+<area shape="poly" id="edge46_Node000022_Node000015" title=" " alt="" coords="517,660,544,675,562,694,570,713,577,731,593,750,599,755,596,759,589,754,573,734,565,715,557,696,541,679,514,665"/>
+<area shape="rect" id="Node000023" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a3735f1ad5f405ceccbbe66cc73d4d3bd.html#a3735f1ad5f405ceccbbe66cc73d4d3bd" title="Sample indices of zero crossings in the full span." alt="" coords="602,867,775,922"/>
+<area shape="poly" id="edge48_Node000022_Node000023" title=" " alt="" coords="517,657,544,675,560,694,568,713,573,751,575,789,581,808,593,829,622,857,619,861,589,832,576,811,570,790,567,751,563,715,556,697,541,679,514,662"/>
+<area shape="poly" id="edge49_Node000023_Node000023" title=" " alt="" coords="643,867,643,857,651,848,667,842,689,840,715,844,730,851,728,856,714,849,689,846,668,848,654,852,648,859,648,867"/>
+<area shape="rect" id="Node000025" href="$namespaceMayaFlux_1_1Reflect_a33dff0234606d8a7a9b4b026a3874e0a.html#a33dff0234606d8a7a9b4b026a3874e0a" title="Universal enum to lowercase string converter using magic_enum." alt="" coords="591,1025,787,1065"/>
+<area shape="poly" id="edge51_Node000024_Node000025" title=" " alt="" coords="497,991,601,1019,600,1024,496,996"/>
+<area shape="rect" id="Node000026" href="$namespaceMayaFlux_1_1Reflect_ab5371cce72bc91cd1babe7826f27f39a.html#ab5371cce72bc91cd1babe7826f27f39a" title="Convert string to lowercase." alt="" coords="850,1025,997,1065"/>
+<area shape="poly" id="edge52_Node000025_Node000026" title=" " alt="" coords="787,1042,836,1042,836,1048,787,1048"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="MayaFlux::is_domain_valid" name="MayaFlux::is_domain_valid">
+<area shape="rect" id="Node000001" title="Checks if a domain is valid (all constituent tokens are compatible)" alt="" coords="5,37,167,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_af43881076f34e55001663ee06e4558dd.html#af43881076f34e55001663ee06e4558dd" title="Decomposes a Domain enum into its constituent ProcessingTokens." alt="" coords="215,5,384,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="167,43,201,37,201,43,167,48"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Buffers_a769af53675caeb565799a41ceab66823.html#a769af53675caeb565799a41ceab66823" title="Validates that a processing token has a valid, non&#45;conflicting configuration." alt="" coords="225,69,373,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="167,67,212,74,211,79,167,72"/>
+</map>

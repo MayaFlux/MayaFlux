@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::WindowManager::create_window" name="MayaFlux::Core::WindowManager::create_window">
+<area shape="rect" id="Node000001" title="Creates a new window." alt="" coords="5,5,247,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1WindowManager_a70ca15b7f426ce702541bb0651a11084.html#a70ca15b7f426ce702541bb0651a11084" title="Factory for creating backend&#45;specific windows." alt="" coords="295,5,536,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="247,23,281,23,281,28,247,28"/>
+</map>

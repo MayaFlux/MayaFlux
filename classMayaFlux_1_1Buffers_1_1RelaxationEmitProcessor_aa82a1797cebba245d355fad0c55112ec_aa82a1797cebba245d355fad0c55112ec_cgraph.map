@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::RelaxationEmitProcessor::on_before_execute" name="MayaFlux::Buffers::RelaxationEmitProcessor::on_before_execute">
+<area shape="rect" id="Node000001" title="Write the cell_state and vertices descriptor bindings for this cycle&#39;s dispatch." alt="" coords="5,41,191,96"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a9ae0c6aae9589585fd6f2e3fd3cea7bb.html#a9ae0c6aae9589585fd6f2e3fd3cea7bb" title="Check if descriptors are initialized." alt="" coords="258,5,417,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="190,52,244,44,245,49,191,57"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a715d57394465ff2924727d7c82d87e7b.html#a715d57394465ff2924727d7c82d87e7b" title="Get the global shader compiler instance." alt="" coords="239,85,436,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="191,80,225,85,225,90,190,85"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ab22eaae6b8210236918b85f409fc4c49.html#ab22eaae6b8210236918b85f409fc4c49" title=" " alt="" coords="484,85,681,125"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="436,102,470,102,470,107,436,107"/>
+</map>

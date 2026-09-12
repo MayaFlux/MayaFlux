@@ -1,0 +1,7 @@
+<map id="MayaFlux::Memory::seqlock_read_void" name="MayaFlux::Memory::seqlock_read_void">
+<area shape="rect" id="Node000001" title="Invoke a void read functor under a Seqlock with a bounded retry count." alt="" coords="5,37,211,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Memory_1_1Seqlock_a3a6f4f8e52fbcc9f996f77fa709d511d.html#a3a6f4f8e52fbcc9f996f77fa709d511d" title="Begin a read: spin until the counter is even, return the snapshot." alt="" coords="259,5,465,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="210,42,245,37,245,43,211,47"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Memory_1_1Seqlock_a87e708885aa87f042bc85d51d9f56ac2.html#a87e708885aa87f042bc85d51d9f56ac2" title="Check whether a write overlapped the read just completed." alt="" coords="259,69,465,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="211,68,245,72,245,77,210,73"/>
+</map>

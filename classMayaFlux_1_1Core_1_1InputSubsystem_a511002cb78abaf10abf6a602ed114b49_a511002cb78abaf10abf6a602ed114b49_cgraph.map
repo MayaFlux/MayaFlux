@@ -1,0 +1,17 @@
+<map id="MayaFlux::Core::InputSubsystem::initialize_hid_backend" name="MayaFlux::Core::InputSubsystem::initialize_hid_backend">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,133,243,173"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1InputSubsystem_a392f50d02d313ee019e64ec4aa4d1a68.html#a392f50d02d313ee019e64ec4aa4d1a68" title="Add a custom input backend." alt="" coords="291,69,528,109"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="213,131,306,110,307,115,215,136"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Core_1_1InputSubsystem_afc698feff083f6a1d22445cd612e7bde.html#afc698feff083f6a1d22445cd612e7bde" title="Get a backend by type." alt="" coords="291,133,528,173"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="243,151,277,151,277,156,243,156"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Core_1_1HIDBackend_a264e6881e95350659f7cf7ff8b0ce0eb.html#a264e6881e95350659f7cf7ff8b0ce0eb" title="Open a device for input." alt="" coords="304,197,515,237"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="215,171,307,192,306,197,213,176"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1InputSubsystem_aa39185dc1ba2417bbf7f877f4533ee8e.html#aa39185dc1ba2417bbf7f877f4533ee8e" title=" " alt="" coords="576,69,813,109"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="528,87,562,87,562,92,528,92"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1InputManagerHandle_a749e51b8d80f770e72fbad4982360609.html#a749e51b8d80f770e72fbad4982360609" title="enqueue input value to InputManager" alt="" coords="862,5,1085,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="782,67,872,46,873,51,783,72"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Core_1_1IInputBackend_a4cea806b061a5e1828d19d1f16fca168.html#a4cea806b061a5e1828d19d1f16fca168" title="Register callback for device connect/disconnect events." alt="" coords="861,69,1085,109"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="813,87,848,87,848,92,813,92"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Core_1_1IInputBackend_a604f7428339fce1bc3d9d7dd225ce9ce.html#a604f7428339fce1bc3d9d7dd225ce9ce" title="Register callback for input values." alt="" coords="861,133,1085,173"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="783,107,873,128,872,133,782,112"/>
+</map>

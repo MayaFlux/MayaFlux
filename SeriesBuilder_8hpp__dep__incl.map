@@ -1,0 +1,20 @@
+<map id="SeriesBuilder.hpp" name="SeriesBuilder.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="50,5,185,31"/>
+<area shape="rect" id="Node000002" href="$Plot_8cpp.html" title=" " alt="" coords="5,152,80,177"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="98,43,70,80,55,119,47,152,42,151,50,117,66,77,94,39"/>
+<area shape="rect" id="Node000003" href="$Plot_8hpp.html" title=" " alt="" coords="80,79,155,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="120,44,120,79,115,79,115,44"/>
+<area shape="rect" id="Node000009" href="$SeriesBuilder_8cpp.html" title=" " alt="" coords="179,79,314,104"/>
+<area shape="poly" id="edge9_Node000001_Node000009" title=" " alt="" coords="152,35,227,76,224,81,149,40"/>
+<area shape="poly" id="edge8_Node000003_Node000002" title=" " alt="" coords="97,115,57,154,53,150,94,111"/>
+<area shape="rect" id="Node000004" href="$Atelier_8hpp.html" title=" " alt="" coords="105,152,197,177"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="131,115,148,151,143,153,126,118"/>
+<area shape="rect" id="Node000005" href="$Atelier_8cpp.html" title=" " alt="" coords="48,225,139,251"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="135,190,105,227,101,224,131,186"/>
+<area shape="rect" id="Node000006" href="$Forma_8hpp.html" title="Factory free functions for the Forma surface system." alt="" coords="163,225,253,251"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="171,186,201,224,197,227,166,190"/>
+<area shape="rect" id="Node000007" href="$Engine_8cpp.html" title=" " alt="" coords="103,299,196,324"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="192,263,161,300,157,297,188,260"/>
+<area shape="rect" id="Node000008" href="$Forma_8cpp.html" title=" " alt="" coords="220,299,311,324"/>
+<area shape="poly" id="edge7_Node000006_Node000008" title=" " alt="" coords="228,260,258,297,254,300,224,263"/>
+</map>

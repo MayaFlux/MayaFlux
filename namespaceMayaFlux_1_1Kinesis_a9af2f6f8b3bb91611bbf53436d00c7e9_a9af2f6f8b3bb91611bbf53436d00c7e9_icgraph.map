@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::pop" name="MayaFlux::Kinesis::pop">
+<area shape="rect" id="Node000001" title="Sixth difference: rate of change of crackle." alt="" coords="227,5,400,31"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_a13d24c449623bf1503bb4e43b0161b0b.html#a13d24c449623bf1503bb4e43b0161b0b" title="Convenience overload of pop over a raw span, samples[0] newest." alt="" coords="5,5,179,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="213,21,179,21,179,15,213,15"/>
+</map>

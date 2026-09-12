@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nexus::State::FabricSchema" name="MayaFlux::Nexus::State::FabricSchema">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,457,175,597"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Nexus_1_1State_1_1RangeSet.html" title=" " alt="" coords="5,315,175,395"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="93,395,93,441,87,441,87,395"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Nexus_1_1State_1_1Range.html" title=" " alt="" coords="5,5,175,105"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="93,106,93,298,87,298,87,106"/>
+</map>

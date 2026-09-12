@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kinesis::CurveEvaluator::evaluate_planar" name="MayaFlux::Kinesis::CurveEvaluator::evaluate_planar">
+<area shape="rect" id="Node000001" title="Evaluate a curve into a coordinate&#45;major buffer." alt="" coords="5,41,192,96"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kinesis_1_1CurveEvaluator_a796b487bd268a58154a09c16f8e9bc7a.html#a796b487bd268a58154a09c16f8e9bc7a" title=" " alt="" coords="246,5,409,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="192,51,232,45,233,50,193,57"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kinesis_1_1CurveEvaluator_a60000384b7d908119e0d006f8e1f52b1.html#a60000384b7d908119e0d006f8e1f52b1" title=" " alt="" coords="240,85,415,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="193,81,227,86,226,91,192,86"/>
+</map>

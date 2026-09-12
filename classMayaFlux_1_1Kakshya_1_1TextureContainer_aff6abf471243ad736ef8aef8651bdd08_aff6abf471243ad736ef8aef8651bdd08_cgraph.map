@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::TextureContainer::has_data" name="MayaFlux::Kakshya::TextureContainer::has_data">
+<area shape="rect" id="Node000001" title="Check if the container currently holds any data." alt="" coords="5,5,205,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kakshya_a505a6355fca48fde66db9c0ca1e23a17.html#a505a6355fca48fde66db9c0ca1e23a17" title="Get a pointer to the raw bytes of a DataVariant and its size." alt="" coords="253,5,412,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="206,23,240,23,240,28,206,28"/>
+</map>

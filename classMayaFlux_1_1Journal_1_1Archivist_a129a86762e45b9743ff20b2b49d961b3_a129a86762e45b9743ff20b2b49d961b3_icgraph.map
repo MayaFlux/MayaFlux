@@ -1,0 +1,12 @@
+<map id="MayaFlux::Journal::Archivist::add_sink" name="MayaFlux::Journal::Archivist::add_sink">
+<area shape="rect" id="Node000001" title="Add a log sink for output." alt="" coords="551,37,697,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Config_acbb1cccf0d87301df74cdfbabd681ac9.html#acbb1cccf0d87301df74cdfbabd681ac9" title="Outputs journal entries to the console by adding a ConsoleSink to the Archivist NOTE: This records th..." alt="" coords="329,5,500,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="536,47,500,41,501,36,537,41"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Config_aaf8d14451b8ad0864f0c0d7ea315a2c9.html#aaf8d14451b8ad0864f0c0d7ea315a2c9" title="Stores journal entries to a file by adding a FileSink to the Archivist." alt="" coords="327,69,503,109"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="537,73,503,79,502,73,536,68"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Config_a926b14a6baa31cfcd77dcb32ca8a2417.html#a926b14a6baa31cfcd77dcb32ca8a2417" title="Load engine configuration from a JSON file, applying any present fields to the pre&#45;Init config struct..." alt="" coords="108,37,279,77"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="316,42,279,48,279,42,315,37"/>
+<area shape="rect" id="Node000004" href="$main_8cpp_a0ddf1224851353fc92bfbff6f499fa97.html#a0ddf1224851353fc92bfbff6f499fa97" title=" " alt="" coords="5,45,60,70"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="94,60,60,60,60,55,94,55"/>
+<area shape="poly" id="edge5_Node000005_Node000003" title=" " alt="" coords="313,77,279,72,279,67,313,72"/>
+</map>

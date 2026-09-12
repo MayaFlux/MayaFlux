@@ -1,0 +1,8 @@
+<map id="MayaFlux::Nodes::Input::TabletNode::fire" name="MayaFlux::Nodes::Input::TabletNode::fire">
+<area shape="rect" id="Node000001" title=" " alt="" coords="459,35,635,75"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Input_1_1TabletNode_a67eefda32fcf7bc6e3d3b0cfeb6a666a.html#a67eefda32fcf7bc6e3d3b0cfeb6a666a" title=" " alt="" coords="232,5,411,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="445,44,411,40,411,34,446,39"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Input_1_1TabletNode_a2e450a69e0de89a55176c521ca682220.html#a2e450a69e0de89a55176c521ca682220" title="Notify callbacks (minimal for InputNode)" alt="" coords="5,35,184,75"/>
+<area shape="poly" id="edge3_Node000001_Node000003" title=" " alt="" coords="445,60,411,60,232,60,184,59,184,54,232,55,411,55,445,54"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="219,41,185,46,184,40,218,36"/>
+</map>

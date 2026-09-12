@@ -1,0 +1,30 @@
+<map id="NetworkAwaiter.cpp" name="NetworkAwaiter.cpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="653,5,806,31"/>
+<area shape="rect" id="Node000002" href="$NetworkAwaiter_8hpp.html" title=" " alt="" coords="652,79,807,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="732,31,732,65,727,65,727,31"/>
+<area shape="rect" id="Node000003" href="$NetworkSource_8hpp.html" title=" " alt="" coords="311,247,567,273"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="711,106,472,243,469,238,708,102"/>
+<area shape="rect" id="Node000008" href="$EventAwaiter_8hpp.html" title=" " alt="" coords="767,152,953,192"/>
+<area shape="poly" id="edge7_Node000002_Node000008" title=" " alt="" coords="750,102,818,143,815,147,747,106"/>
+<area shape="rect" id="Node000004" href="$GlobalNetworkConfig_8hpp.html" title=" " alt="" coords="5,328,227,368"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="396,275,200,327,199,322,395,270"/>
+<area shape="rect" id="Node000006" href="$RingBuffer_8hpp.html" title=" " alt="" coords="251,328,429,368"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="427,275,374,321,370,317,424,271"/>
+<area shape="rect" id="Node000007" href="$EventSource_8hpp.html" title=" " alt="" coords="454,335,693,361"/>
+<area shape="poly" id="edge6_Node000003_Node000007" title=" " alt="" coords="458,271,545,326,542,330,455,275"/>
+<area shape="rect" id="Node000005" href="$Mirror_8hpp.html" title=" " alt="" coords="534,416,687,456"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="225,365,521,416,520,422,224,371"/>
+<area shape="rect" id="Node000009" href="$GlobalGraphicsInfo_8hpp.html" title=" " alt="" coords="994,328,1217,368"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="912,190,957,211,1003,238,1048,276,1084,315,1080,319,1044,280,1000,242,955,215,910,195"/>
+<area shape="rect" id="Node000010" href="$WindowEventSource_8hpp.html" title=" " alt="" coords="664,240,883,280"/>
+<area shape="poly" id="edge10_Node000008_Node000010" title=" " alt="" coords="843,194,804,232,800,228,839,190"/>
+<area shape="rect" id="Node000013" title=" " alt="" coords="907,247,989,273"/>
+<area shape="poly" id="edge15_Node000008_Node000013" title=" " alt="" coords="881,190,928,235,924,239,878,194"/>
+<area shape="poly" id="edge9_Node000009_Node000005" title=" " alt="" coords="997,371,702,422,701,416,996,365"/>
+<area shape="poly" id="edge11_Node000010_Node000007" title=" " alt="" coords="730,283,614,332,611,328,728,278"/>
+<area shape="poly" id="edge12_Node000010_Node000009" title=" " alt="" coords="847,277,1020,322,1019,327,846,283"/>
+<area shape="rect" id="Node000011" href="$Keys_8hpp.html" title=" " alt="" coords="803,335,970,361"/>
+<area shape="poly" id="edge13_Node000010_Node000011" title=" " alt="" coords="800,278,862,325,859,329,797,282"/>
+<area shape="rect" id="Node000012" title=" " alt="" coords="717,335,779,361"/>
+<area shape="poly" id="edge14_Node000010_Node000012" title=" " alt="" coords="770,281,758,323,753,321,765,280"/>
+</map>

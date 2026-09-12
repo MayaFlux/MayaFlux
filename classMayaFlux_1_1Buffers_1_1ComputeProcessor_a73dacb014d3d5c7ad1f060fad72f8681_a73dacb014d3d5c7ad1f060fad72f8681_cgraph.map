@@ -1,0 +1,27 @@
+<map id="MayaFlux::Buffers::ComputeProcessor::execute_shader" name="MayaFlux::Buffers::ComputeProcessor::execute_shader">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,240,208,295"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1ComputeProcessor_ae63c13a695732ad34d9213abb9751dd0.html#ae63c13a695732ad34d9213abb9751dd0" title="Calculate dispatch size from buffer." alt="" coords="256,5,467,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="120,238,172,157,210,111,254,71,263,65,266,69,258,75,214,114,177,160,125,241"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_af50ca0aa0cb7511c99eaf758430efdce.html#af50ca0aa0cb7511c99eaf758430efdce" title=" " alt="" coords="263,85,460,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="133,238,187,189,255,141,281,128,284,132,257,146,190,194,137,242"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a715d57394465ff2924727d7c82d87e7b.html#a715d57394465ff2924727d7c82d87e7b" title="Get the global shader compiler instance." alt="" coords="515,443,712,483"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="148,238,213,203,253,186,295,172,339,163,384,161,427,168,468,185,499,209,526,238,549,270,567,305,594,373,608,429,603,431,589,375,562,307,544,273,522,241,496,213,465,190,426,173,384,166,340,168,297,177,254,191,215,207,151,242"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a3cbf5a521d0f7612d2bb62a5d5dbc766.html#a3cbf5a521d0f7612d2bb62a5d5dbc766" title="Called after each process callback." alt="" coords="284,200,439,255"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="208,249,270,239,271,244,209,254"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a694e033fab8ccc2569ec3395bfb07737.html#a694e033fab8ccc2569ec3395bfb07737" title="Called before each process callback." alt="" coords="284,279,439,333"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="209,280,270,290,270,295,208,285"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Buffers_1_1ComputeProcessor_ad207e4b16e0758289d332de3f119d526.html#ad207e4b16e0758289d332de3f119d526" title="Called before each iteration&#39;s push constants and dispatch." alt="" coords="277,357,445,412"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="158,292,257,342,274,350,272,355,255,347,156,297"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Buffers_1_1ComputeProcessor_a0d2117ace2bb7bc3e1644cda84e8267a.html#a0d2117ace2bb7bc3e1644cda84e8267a" title="Called after each iteration except the last." alt="" coords="277,515,445,569"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="121,294,141,338,170,393,210,450,258,500,267,507,264,511,254,504,205,454,166,396,136,341,116,296"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a9f8085bcab80368986081fd7b1368a7e.html#a9f8085bcab80368986081fd7b1368a7e" title="Submit a recorded command buffer honoring the submission mode." alt="" coords="270,436,453,491"/>
+<area shape="poly" id="edge12_Node000001_Node000012" title=" " alt="" coords="130,293,184,357,219,391,258,421,267,427,265,432,254,426,215,395,180,361,126,297"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ComputePress_a89b259adf28ef041294928959e03fa9c.html#a89b259adf28ef041294928959e03fa9c" title=" " alt="" coords="515,85,712,125"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="460,102,501,102,501,107,460,107"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ab22eaae6b8210236918b85f409fc4c49.html#ab22eaae6b8210236918b85f409fc4c49" title=" " alt="" coords="760,443,957,483"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="712,461,746,461,746,466,712,466"/>
+<area shape="poly" id="edge11_Node000010_Node000005" title=" " alt="" coords="445,513,535,485,536,490,446,518"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_acbe00008128244bcb2902611e53eff80.html#acbe00008128244bcb2902611e53eff80" title="Insert buffer memory barrier." alt="" coords="515,515,712,569"/>
+<area shape="poly" id="edge10_Node000010_Node000011" title=" " alt="" coords="445,539,501,539,501,545,445,545"/>
+<area shape="poly" id="edge13_Node000012_Node000005" title=" " alt="" coords="453,461,501,461,501,466,453,466"/>
+</map>

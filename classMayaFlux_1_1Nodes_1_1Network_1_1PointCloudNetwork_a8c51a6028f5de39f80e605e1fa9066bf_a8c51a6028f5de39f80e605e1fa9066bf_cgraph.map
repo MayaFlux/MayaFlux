@@ -1,0 +1,11 @@
+<map id="MayaFlux::Nodes::Network::PointCloudNetwork::generate_initial_positions" name="MayaFlux::Nodes::Network::PointCloudNetwork::generate_initial_positions">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,30,227,85"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_a19d772e5e14361691bb1f8f259e2b6e5.html#a19d772e5e14361691bb1f8f259e2b6e5" title="Generate a batch of spatially distributed samples." alt="" coords="279,5,429,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="226,40,265,35,266,40,227,45"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kakshya_a7441ab81cd2158f91dfbf9d3e9c20bf9.html#a7441ab81cd2158f91dfbf9d3e9c20bf9" title="Batch&#45;project raw Vertex vector to LineVertex." alt="" coords="275,69,433,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="227,70,261,74,261,79,226,75"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_a11764146779557d4e4b46d9214f8637d.html#a11764146779557d4e4b46d9214f8637d" title="Generate a single sample at a specific index (for indexed/sequential modes)." alt="" coords="483,5,638,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="429,23,470,23,470,28,429,28"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kakshya_a6e9ffdf831c97227ffa4e4aa0c99a515.html#a6e9ffdf831c97227ffa4e4aa0c99a515" title="Project raw Vertex to LineVertex." alt="" coords="481,69,640,109"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="434,87,468,87,468,92,434,92"/>
+</map>

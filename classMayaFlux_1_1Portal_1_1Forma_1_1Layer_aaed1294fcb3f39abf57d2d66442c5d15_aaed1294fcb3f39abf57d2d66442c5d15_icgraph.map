@@ -1,0 +1,5 @@
+<map id="MayaFlux::Portal::Forma::Layer::hit_test_all" name="MayaFlux::Portal::Forma::Layer::hit_test_all">
+<area shape="rect" id="Node000001" title="Return all interactive, visible elements containing ndc, ordered back&#45;to&#45;front." alt="" coords="235,5,416,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Layer_ae12780ade5fb61070ffb1a5f33c31b1f.html#ae12780ade5fb61070ffb1a5f33c31b1f" title=" " alt="" coords="5,5,187,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="221,28,187,28,187,23,221,23"/>
+</map>

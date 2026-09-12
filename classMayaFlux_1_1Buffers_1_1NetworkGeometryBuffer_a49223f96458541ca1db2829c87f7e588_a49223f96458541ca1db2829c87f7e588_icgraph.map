@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::NetworkGeometryBuffer::declare_state" name="MayaFlux::Buffers::NetworkGeometryBuffer::declare_state">
+<area shape="rect" id="Node000001" title="Declare a named auxiliary state field alongside the vertex data." alt="" coords="235,5,416,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1NetworkGeometryBuffer_ae11739d15cdd3c11ab02fcc200b39b34.html#ae11739d15cdd3c11ab02fcc200b39b34" title="Ensure the hash_cluster_id state field exists, declaring and populating it from the network&#39;s own pri..." alt="" coords="5,5,187,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="221,35,187,35,187,30,221,30"/>
+</map>

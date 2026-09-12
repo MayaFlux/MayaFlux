@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::Lattice3D" name="MayaFlux::Kinesis::Lattice3D">
+<area shape="rect" id="Node000001" title="A regular subdivision of an AABB3D into a cell count per axis." alt="" coords="5,328,147,568"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kinesis_1_1AABB3D.html" title="Axis&#45;aligned bounding box in 3D world space." alt="" coords="5,5,147,265"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="79,265,79,311,73,311,73,265"/>
+</map>

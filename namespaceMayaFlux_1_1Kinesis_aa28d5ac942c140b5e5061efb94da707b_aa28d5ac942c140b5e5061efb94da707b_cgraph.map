@@ -1,0 +1,13 @@
+<map id="MayaFlux::Kinesis::straightness" name="MayaFlux::Kinesis::straightness">
+<area shape="rect" id="Node000001" title="Convenience overload of straightness over a raw span of positions, samples[0] newest." alt="" coords="5,101,155,141"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_a79d4803064cd455e5c26985bd5cd1e5c.html#a79d4803064cd455e5c26985bd5cd1e5c" title="Straightness of a path over a window, 1.0 is a straight line." alt="" coords="203,69,352,109"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="154,107,189,101,189,106,155,112"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kinesis_aae6dffc5cfe80ea00f71912d98c8c45e.html#aae6dffc5cfe80ea00f71912d98c8c45e" title="Build a HistoryBuffer&lt;T&gt; from a newest&#45;first span." alt="" coords="203,133,352,173"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="155,131,189,136,189,142,154,136"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_ac0b6f641188b419e3f83fd50065ad1af.html#ac0b6f641188b419e3f83fd50065ad1af" title="Net displacement across the newest window positions." alt="" coords="427,5,576,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="347,67,417,47,418,52,349,72"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_a92afb3885dcb5cf09f88a45ed8596503.html#a92afb3885dcb5cf09f88a45ed8596503" title="Path length accumulated across the newest window positions." alt="" coords="427,69,576,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="352,87,413,87,413,92,352,92"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Memory_1_1HistoryBuffer_a6f256636f3f3fc99269c77a8dc096b09.html#a6f256636f3f3fc99269c77a8dc096b09" title="Push new value to front of history." alt="" coords="400,133,603,173"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="352,151,386,151,386,156,352,156"/>
+</map>

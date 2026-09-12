@@ -1,0 +1,19 @@
+<map id="MayaFlux::Kinesis::Discrete::matched_filter" name="MayaFlux::Kinesis::Discrete::matched_filter">
+<area shape="rect" id="Node000001" title="Matched filter (normalised cross&#45;correlation)" alt="" coords="5,116,184,156"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a6999262b0f729dbdf1076f3a63355188.html#a6999262b0f729dbdf1076f3a63355188" title="Cross&#45;correlation via FFT." alt="" coords="232,116,415,156"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="184,133,219,133,219,139,184,139"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a42e1569c72d22f14f15ee3a52cb70496.html#a42e1569c72d22f14f15ee3a52cb70496" title="Core FFT convolution engine." alt="" coords="463,5,665,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="354,114,404,84,462,55,480,47,482,52,464,60,406,89,357,118"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_a878fe1820a72f64efebc516b1749f77d.html#a878fe1820a72f64efebc516b1749f77d" title="Normalize single&#45;channel data to specified peak level (in&#45;place)" alt="" coords="485,94,643,119"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="415,122,471,115,472,121,415,128"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a5970ee5660c02fb526cd5ad6f5895e4a.html#a5970ee5660c02fb526cd5ad6f5895e4a" title="Peak amplitude per window." alt="" coords="489,144,639,184"/>
+<area shape="poly" id="edge7_Node000002_Node000006" title=" " alt="" coords="415,144,476,151,475,156,415,149"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_a7b39444c54b065c1a57bbbd2b9338b43.html#a7b39444c54b065c1a57bbbd2b9338b43" title="Reverse time order of single&#45;channel data (non&#45;destructive)" alt="" coords="489,209,639,234"/>
+<area shape="poly" id="edge8_Node000002_Node000007" title=" " alt="" coords="367,154,464,193,493,203,492,208,462,199,365,159"/>
+<area shape="poly" id="edge6_Node000004_Node000004" title=" " alt="" coords="527,96,520,86,524,76,539,70,564,67,596,71,608,81,604,85,594,76,564,73,540,75,527,80,525,85,532,92"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a5de3d13e1b9ceb59d3acb04361e2a5e5.html#a5de3d13e1b9ceb59d3acb04361e2a5e5" title="Normalize to [target_min, target_max] in&#45;place Single&#45;pass min/max reduction followed by a single tra..." alt="" coords="713,87,863,127"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="643,113,700,113,700,118,643,118"/>
+<area shape="poly" id="edge5_Node000005_Node000004" title=" " alt="" coords="713,101,657,100,657,95,713,95"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_aa6dcc3c22e38342dd3e5aacdfe2f7b97.html#aa6dcc3c22e38342dd3e5aacdfe2f7b97" title="Reverse temporal order in&#45;place." alt="" coords="713,201,863,241"/>
+<area shape="poly" id="edge9_Node000007_Node000008" title=" " alt="" coords="640,219,700,219,700,224,640,224"/>
+</map>

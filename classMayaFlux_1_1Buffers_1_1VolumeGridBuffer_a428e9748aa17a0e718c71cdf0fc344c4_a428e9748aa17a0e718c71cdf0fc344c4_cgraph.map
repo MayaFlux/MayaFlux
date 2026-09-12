@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::VolumeGridBuffer::setup_flow" name="MayaFlux::Buffers::VolumeGridBuffer::setup_flow">
+<area shape="rect" id="Node000001" title="Build and append the incompressible flow stages." alt="" coords="5,37,220,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_a6cf409969c192851ab2cf7f0315d2a49.html#a6cf409969c192851ab2cf7f0315d2a49" title="Access the buffer&#39;s processing chain." alt="" coords="268,5,495,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="220,42,254,38,255,43,221,47"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VolumeGridBuffer_ad2ce68cbd0c2b9195eb814432dd9f61b.html#ad2ce68cbd0c2b9195eb814432dd9f61b" title="Whether a field of this name was declared." alt="" coords="280,69,483,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="221,67,267,73,266,78,220,73"/>
+</map>

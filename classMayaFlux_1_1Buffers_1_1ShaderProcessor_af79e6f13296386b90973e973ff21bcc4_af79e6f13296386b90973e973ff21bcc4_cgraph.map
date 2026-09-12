@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::ShaderProcessor::feed" name="MayaFlux::Buffers::ShaderProcessor::feed">
+<area shape="rect" id="Node000001" title="Supply a shader input from a callable, resolved by name." alt="" coords="5,5,172,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kakshya_a1a6f442f75e19775fcf77da154f74990.html#a1a6f442f75e19775fcf77da154f74990" title="Byte size of one element of a GpuDataFormat." alt="" coords="220,5,396,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="173,23,206,23,206,28,173,28"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::VolumeSurfaceProcessor::write_params" name="MayaFlux::Buffers::VolumeSurfaceProcessor::write_params">
+<area shape="rect" id="Node000001" title="Size the push constant block to at least SurfaceParams and write the lattice dimensions,..." alt="" coords="5,5,188,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a08f86ff68a93950b07208ee936badf8e.html#a08f86ff68a93950b07208ee936badf8e" title="Get current push constant data." alt="" coords="236,5,395,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="188,30,222,30,222,35,188,35"/>
+</map>

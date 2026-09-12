@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::MeshData::access" name="MayaFlux::Kakshya::MeshData::access">
+<area shape="rect" id="Node000001" title="Produce a non&#45;owning MeshAccess view over this data." alt="" coords="5,5,164,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kakshya_a14e84697e2ffc829dea40c40cb3f0dbe.html#a14e84697e2ffc829dea40c40cb3f0dbe" title="Construct a MeshAccess from two DataVariant instances." alt="" coords="212,5,371,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="164,23,198,23,198,28,164,28"/>
+</map>

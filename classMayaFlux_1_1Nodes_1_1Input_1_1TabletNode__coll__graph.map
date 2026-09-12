@@ -1,0 +1,25 @@
+<map id="MayaFlux::Nodes::Input::TabletNode" name="MayaFlux::Nodes::Input::TabletNode">
+<area shape="rect" id="Node000001" title="InputNode projecting one slot of a tablet frame." alt="" coords="197,1992,418,2492"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Input_1_1InputNode.html" title="Abstract base class for nodes that receive external input." alt="" coords="415,1409,583,1929"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="413,1934,394,1993,389,1991,408,1932"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Node.html" title="Base interface for all computational processing nodes." alt="" coords="689,617,886,1347"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="686,1324,676,1348,633,1440,586,1529,581,1526,628,1438,672,1346,681,1322"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Nodes_1_1RoutingState.html" title="Represents the state of routing transitions for a node." alt="" coords="696,183,881,363"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="791,363,791,601,785,601,786,363"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Nodes_1_1Input_1_1InputConfig.html" title="Configuration for InputNode behavior." alt="" coords="223,902,391,1062"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="330,1061,407,1346,420,1393,415,1394,402,1347,325,1063"/>
+<area shape="rect" id="Node000010" href="$structMayaFlux_1_1Nodes_1_1Input_1_1TabletConfig.html" title="Selects which part of a tablet frame becomes the node&#39;s scalar." alt="" coords="223,1489,391,1849"/>
+<area shape="poly" id="edge10_Node000010_Node000005" title=" " alt="" coords="310,1076,310,1489,305,1489,305,1076"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1Input_1_1InputContext.html" title="Context for InputNode callbacks &#45; provides input event access." alt="" coords="31,922,199,1042"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="117,1042,122,1111,137,1192,150,1233,166,1273,187,1311,213,1345,238,1364,262,1372,289,1375,323,1383,346,1388,366,1389,385,1394,405,1407,406,1408,402,1412,402,1411,383,1399,365,1395,346,1393,321,1388,288,1381,261,1377,235,1369,209,1349,183,1314,161,1276,145,1235,132,1193,117,1112,112,1042"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Nodes_1_1Input_1_1TabletContext.html" title="Node context carrying a full tablet frame alongside the scalar." alt="" coords="31,1589,199,1749"/>
+<area shape="poly" id="edge12_Node000011_Node000006" title=" " alt="" coords="118,1056,118,1589,113,1589,113,1056"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1NodeContext.html" title="Base context class for node callbacks." alt="" coords="5,210,225,335"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="118,349,118,922,113,922,113,349"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Memory_1_1RingBuffer.html" title=" " alt="" coords="416,722,663,1242"/>
+<area shape="poly" id="edge7_Node000002_Node000008" title=" " alt="" coords="527,1242,518,1393,513,1393,522,1242"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Memory_1_1RingBuffer.html" title="Policy&#45;driven unified circular buffer implementation." alt="" coords="405,5,671,540"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="541,554,542,722,536,722,536,554"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="310,1849,310,1975,305,1975,305,1849"/>
+<area shape="poly" id="edge11_Node000001_Node000011" title=" " alt="" coords="129,1749,150,1854,181,1967,193,2002,188,2004,175,1969,144,1855,124,1750"/>
+</map>

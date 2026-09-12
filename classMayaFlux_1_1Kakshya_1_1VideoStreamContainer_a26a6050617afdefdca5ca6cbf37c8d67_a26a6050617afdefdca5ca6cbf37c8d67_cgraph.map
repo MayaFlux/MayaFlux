@@ -1,0 +1,15 @@
+<map id="MayaFlux::Kakshya::VideoStreamContainer::get_value_impl" name="MayaFlux::Kakshya::VideoStreamContainer::get_value_impl">
+<area shape="rect" id="Node000001" title="Type&#45;erased single&#45;element read." alt="" coords="5,156,175,211"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_a33c68434e3b42116409b5c5842264cca.html#a33c68434e3b42116409b5c5842264cca" title="Value range declared on the component dimension, if any." alt="" coords="239,5,408,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="116,154,163,111,221,69,230,64,233,69,224,74,166,115,120,158"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_a83a00cb3dafd4074c546e772072b9e0e.html#a83a00cb3dafd4074c546e772072b9e0e" title="Elements in one frame: width * height * channels." alt="" coords="223,84,424,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="174,155,221,140,222,145,176,160"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kakshya_ab17cd47e64685d108e5346a0c237846b.html#ab17cd47e64685d108e5346a0c237846b" title=" " alt="" coords="244,163,403,203"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="175,181,230,181,230,186,175,186"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_ac5764b3010fc7824fd6b5da810d65f50.html#ac5764b3010fc7824fd6b5da810d65f50" title=" " alt="" coords="239,228,408,283"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="176,207,226,223,225,228,174,212"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Kakshya_a754a1820ba7e75c2c8e0717eabd4e574.html#a754a1820ba7e75c2c8e0717eabd4e574" title=" " alt="" coords="241,307,406,347"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="120,209,166,251,224,292,240,300,238,304,221,296,163,255,116,213"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kakshya_abf3a0bce0a09faa66e6e097d945a93bd.html#abf3a0bce0a09faa66e6e097d945a93bd" title=" " alt="" coords="472,163,631,203"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="403,181,458,181,458,186,403,186"/>
+</map>

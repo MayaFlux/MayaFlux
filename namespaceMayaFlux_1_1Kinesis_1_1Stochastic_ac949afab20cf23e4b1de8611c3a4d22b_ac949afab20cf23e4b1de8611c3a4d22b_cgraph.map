@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::Stochastic::brownian" name="MayaFlux::Kinesis::Stochastic::brownian">
+<area shape="rect" id="Node000001" title="Creates Brownian motion generator." alt="" coords="5,13,163,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kinesis_1_1Stochastic_1_1Stochastic_a3d9ccb5e9a02ac2382c8ba58c8e6f2cd.html#a3d9ccb5e9a02ac2382c8ba58c8e6f2cd" title="Configures algorithm&#45;specific parameters." alt="" coords="211,5,375,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="163,30,197,30,197,35,163,35"/>
+</map>

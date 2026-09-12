@@ -1,0 +1,5 @@
+<map id="MayaFlux::Portal::Graphics::ShaderSpec::Assemble::storage_image" name="MayaFlux::Portal::Graphics::ShaderSpec::Assemble::storage_image">
+<area shape="rect" id="Node000001" title="Declare a storage image binding (image2D)." alt="" coords="236,5,433,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1VisionGpuExecutor_a37b115d59dbe1593c58ef631942b363e.html#a37b115d59dbe1593c58ef631942b363e" title="GpuComputeConfig for a given VisionOp and its parameters." alt="" coords="5,13,188,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="222,35,188,35,188,30,222,30"/>
+</map>

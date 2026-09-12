@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::NodeTextureBuffer::NodeTextureBuffer" name="MayaFlux::Buffers::NodeTextureBuffer::NodeTextureBuffer">
+<area shape="rect" id="Node000001" title="Create texture staging buffer from generative node." alt="" coords="5,34,239,89"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_a9070538a7af526d6943272f4d6d842a4.html#a9070538a7af526d6943272f4d6d842a4" title=" " alt="" coords="287,5,471,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="238,42,273,37,274,43,239,48"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_acb563960a9f338d6e93cf7bae6f64f46.html#acb563960a9f338d6e93cf7bae6f64f46" title="Called by derived classes to set their context&#45;specific defaults." alt="" coords="299,70,459,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="239,75,285,82,285,87,238,80"/>
+</map>

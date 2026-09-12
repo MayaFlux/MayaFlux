@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::VKInstance::~VKInstance" name="MayaFlux::Core::VKInstance::~VKInstance">
+<area shape="rect" id="Node000001" title="Destructor to clean up Vulkan instance and debug messenger." alt="" coords="5,5,211,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1VKInstance_a136aad0427c8e257dcb540047c333cd6.html#a136aad0427c8e257dcb540047c333cd6" title="Cleanup Vulkan instance." alt="" coords="259,5,464,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="211,23,245,23,245,28,211,28"/>
+</map>

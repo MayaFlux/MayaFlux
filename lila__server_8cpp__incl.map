@@ -1,0 +1,21 @@
+<map id="lila_server.cpp" name="lila_server.cpp">
+<area shape="rect" id="Node000001" title="Entry point for the Lila live coding TCP server binary." alt="" coords="487,5,603,31"/>
+<area shape="rect" id="Node000002" href="$Commentator_8hpp.html" title=" " alt="" coords="97,79,264,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="487,33,253,79,252,73,486,28"/>
+<area shape="rect" id="Node000005" href="$Lila_8hpp.html" title=" " alt="" coords="288,79,388,104"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="512,33,385,77,384,72,511,28"/>
+<area shape="rect" id="Node000007" href="$EventBus_8hpp.html" title=" " alt="" coords="413,79,551,104"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="536,33,503,70,499,66,532,29"/>
+<area shape="rect" id="Node000008" title=" " alt="" coords="575,79,642,104"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="557,29,591,67,587,70,553,33"/>
+<area shape="rect" id="Node000009" title=" " alt="" coords="667,79,735,104"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="571,28,664,70,662,75,569,33"/>
+<area shape="rect" id="Node000010" title=" " alt="" coords="759,79,839,104"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="586,28,747,73,745,78,585,33"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="5,152,129,177"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="164,106,99,147,96,142,161,102"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="153,152,251,177"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="187,104,197,138,192,140,182,105"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="297,152,379,177"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="341,104,341,138,335,138,335,104"/>
+</map>

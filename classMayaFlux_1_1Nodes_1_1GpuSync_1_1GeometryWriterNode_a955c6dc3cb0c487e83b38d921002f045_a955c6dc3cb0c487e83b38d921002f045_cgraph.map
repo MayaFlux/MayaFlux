@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::GpuSync::GeometryWriterNode::clear_and_resize" name="MayaFlux::Nodes::GpuSync::GeometryWriterNode::clear_and_resize">
+<area shape="rect" id="Node000001" title="Clear vertex buffer and resize to specified count." alt="" coords="5,5,215,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GeometryWriterNode_ad5f8bb454545911e4cef60543eb8e6be.html#ad5f8bb454545911e4cef60543eb8e6be" title="Resize vertex buffer to hold specified number of vertices." alt="" coords="263,5,479,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="215,30,249,30,249,35,215,35"/>
+</map>

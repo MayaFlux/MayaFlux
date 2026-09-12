@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::NodeGraphManager::get_channel_count" name="MayaFlux::Nodes::NodeGraphManager::get_channel_count">
+<area shape="rect" id="Node000001" title="Get the number of active channels for a specific token." alt="" coords="5,5,221,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_af66db24c9857eda35165140aba740eb6.html#af66db24c9857eda35165140aba740eb6" title="Gets all channel indices for a given processing token." alt="" coords="269,5,485,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="221,23,256,23,256,28,221,28"/>
+</map>

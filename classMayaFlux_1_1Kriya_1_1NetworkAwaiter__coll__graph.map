@@ -1,0 +1,15 @@
+<map id="MayaFlux::Kriya::NetworkAwaiter" name="MayaFlux::Kriya::NetworkAwaiter">
+<area shape="rect" id="Node000001" title="Awaiter for suspending a coroutine until a network message arrives." alt="" coords="245,1657,428,1957"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kriya_1_1EventAwaiter.html" title="Abstract base for all event&#45;driven awaiters." alt="" coords="5,1292,220,1517"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="184,1528,256,1656,251,1658,179,1531"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Vruta_1_1NetworkSource.html" title="Awaitable broadcast message stream for a network endpoint." alt="" coords="245,1215,429,1595"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="339,1595,339,1641,334,1641,334,1595"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Vruta_1_1EventSource.html" title="Abstract base for all awaitable signal sources." alt="" coords="155,752,366,1017"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="285,1031,312,1214,306,1215,279,1031"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Memory_1_1RingBuffer.html" title=" " alt="" coords="390,617,646,1152"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="427,1153,411,1200,406,1198,422,1151"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Memory_1_1RingBuffer.html" title="Policy&#45;driven unified circular buffer implementation." alt="" coords="385,5,651,540"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="521,554,521,617,515,617,515,554"/>
+<area shape="rect" id="Node000007" href="$structMayaFlux_1_1Core_1_1NetworkMessage.html" title="A received datagram or framed message with sender metadata." alt="" coords="453,1352,690,1457"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="543,1459,435,1644,430,1642,539,1456"/>
+</map>

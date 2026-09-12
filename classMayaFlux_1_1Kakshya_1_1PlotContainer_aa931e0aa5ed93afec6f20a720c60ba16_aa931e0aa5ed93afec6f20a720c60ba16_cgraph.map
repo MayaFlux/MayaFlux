@@ -1,0 +1,11 @@
+<map id="MayaFlux::Kakshya::PlotContainer::process_default" name="MayaFlux::Kakshya::PlotContainer::process_default">
+<area shape="rect" id="Node000001" title="Process the container&#39;s data using the default processor." alt="" coords="5,70,173,125"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1PlotContainer_ae79377e5b02f3dcc622d61186437ae1c.html#ae79377e5b02f3dcc622d61186437ae1c" title="Check if the container is ready for processing." alt="" coords="221,30,395,85"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="173,79,207,73,208,78,174,85"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1PlotContainer_acdc3081c6086bc930cdce5403594c6af.html#acdc3081c6086bc930cdce5403594c6af" title="Update the processing state of the container." alt="" coords="227,109,389,163"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="174,110,213,117,212,122,173,115"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1PlotContainer_aed969816a160fa1040d1100a141d787e.html#aed969816a160fa1040d1100a141d787e" title="Get the current processing state of the container." alt="" coords="443,5,699,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="395,44,428,40,429,45,395,49"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1PlotContainer_a67f0fa3bbd8be4ae7425767e9b779346.html#a67f0fa3bbd8be4ae7425767e9b779346" title="Check if the container currently holds any data." alt="" coords="482,69,659,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="395,65,469,74,468,80,395,71"/>
+</map>

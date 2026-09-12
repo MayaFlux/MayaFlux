@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::Vision::apply_contour_mask" name="MayaFlux::Kinesis::Vision::apply_contour_mask">
+<area shape="rect" id="Node000001" title="Zero all pixels in pixels that fall outside contour." alt="" coords="300,5,505,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1VisionExtractor_a8e57a3a8b13e09eb599a4e4216351aad.html#a8e57a3a8b13e09eb599a4e4216351aad" title="Pure virtual extraction implementation &#45; derived classes implement this." alt="" coords="5,5,252,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="286,28,252,28,252,23,286,23"/>
+</map>

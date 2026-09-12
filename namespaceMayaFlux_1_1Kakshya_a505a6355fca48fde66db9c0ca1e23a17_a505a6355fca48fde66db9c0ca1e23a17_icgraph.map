@@ -1,0 +1,37 @@
+<map id="MayaFlux::Kakshya::variant_bytes" name="MayaFlux::Kakshya::variant_bytes">
+<area shape="rect" id="Node000001" title="Get a pointer to the raw bytes of a DataVariant and its size." alt="" coords="724,391,883,431"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_a9e5b883b500963e343de6fe357520f45.html#a9e5b883b500963e343de6fe357520f45" title="Get raw pixel data for a single frame as a byte span." alt="" coords="484,44,653,99"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="794,378,782,321,759,250,724,176,701,142,674,112,652,96,655,92,678,108,705,139,729,173,764,248,787,320,800,377"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1TextureContainer_aaed77e994404a1196ffacc80c2d733aa.html#aaed77e994404a1196ffacc80c2d733aa" title="Get a raw pointer to the underlying data storage." alt="" coords="487,123,650,177"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="789,379,772,336,748,286,715,235,674,191,649,174,652,170,678,187,720,232,753,283,777,334,794,377"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_a89fc9403642cd3af3db2c7fcea3cf86a.html#a89fc9403642cd3af3db2c7fcea3cf86a" title="Get a raw pointer to the underlying data storage." alt="" coords="484,201,653,256"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="779,381,735,325,706,295,674,270,652,257,655,252,678,265,710,291,739,321,784,378"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_a7981d89610650c9af324a71a7615451f.html#a7981d89610650c9af324a71a7615451f" title="Get data for a specific region." alt="" coords="484,280,653,335"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="752,387,675,350,645,337,647,332,677,345,754,382"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Kakshya_1_1TextureContainer_aff6abf471243ad736ef8aef8651bdd08.html#aff6abf471243ad736ef8aef8651bdd08" title="Check if the container currently holds any data." alt="" coords="469,359,669,399"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="710,401,669,396,669,390,710,396"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Kakshya_1_1TextureContainer_a7e2d3ad1dacc0f2676238095b7526f71.html#a7e2d3ad1dacc0f2676238095b7526f71" title="Read&#45;only byte&#45;level view over the pixel buffer." alt="" coords="461,423,676,463"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="710,427,676,431,676,426,710,421"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1Kakshya_1_1TextureContainer_a7fded276beb5da05c6a81e87ecb401a7.html#a7fded276beb5da05c6a81e87ecb401a7" title="Upload one layer to a new VKImage, reusing a caller&#45;supplied staging buffer." alt="" coords="467,487,670,527"/>
+<area shape="poly" id="edge13_Node000001_Node000014" title=" " alt="" coords="755,441,677,478,644,490,642,485,675,473,753,436"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1Kakshya_1_1TextureContainer_a1d48543b4ebdd95a507f375537567ee6.html#a1d48543b4ebdd95a507f375537567ee6" title="Upload the pixel buffer to a new VKImage via TextureLoom." alt="" coords="467,551,670,591"/>
+<area shape="poly" id="edge14_Node000001_Node000015" title=" " alt="" coords="781,444,736,494,708,520,677,542,653,554,651,549,675,537,705,516,733,490,777,441"/>
+<area shape="rect" id="Node000017" href="$classMayaFlux_1_1Kakshya_1_1TextureContainer_a6b1b2257bbb6d75e9d8494f0d0c51489.html#a6b1b2257bbb6d75e9d8494f0d0c51489" title="Upload all layers as a Vulkan 2D array texture." alt="" coords="489,616,648,671"/>
+<area shape="poly" id="edge16_Node000001_Node000017" title=" " alt="" coords="791,446,773,482,747,525,716,568,678,605,650,623,647,618,674,601,712,564,743,522,768,480,786,443"/>
+<area shape="rect" id="Node000018" href="$classMayaFlux_1_1Kakshya_1_1TextureContainer_a94b1ce9c37446c09e245dac1f3e67db9.html#a94b1ce9c37446c09e245dac1f3e67db9" title="Upload all layers as a Vulkan 2D array texture, reusing a staging buffer." alt="" coords="489,695,648,749"/>
+<area shape="poly" id="edge17_Node000001_Node000018" title=" " alt="" coords="798,445,784,497,760,562,725,627,703,658,678,685,650,704,647,699,674,681,699,655,721,625,755,559,779,496,793,444"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_a1a6d4c70c4b6780e44a66ae5d06c0366.html#a1a6d4c70c4b6780e44a66ae5d06c0366" title=" " alt="" coords="233,5,403,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="470,59,403,48,403,43,471,54"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_aa9d69c16a95d55dfa40579981599e184.html#aa9d69c16a95d55dfa40579981599e184" title=" " alt="" coords="233,84,403,139"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="471,90,404,100,403,95,470,84"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_a3758d7fb4fa45808d8f9a97094e65422.html#a3758d7fb4fa45808d8f9a97094e65422" title="Implementation&#45;specific method to retrieve multiple frames." alt="" coords="5,84,175,139"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="218,114,175,114,175,109,218,109"/>
+<area shape="rect" id="Node000011" href="$namespaceMayaFlux_1_1Portal_1_1Text_a17ac9505e8d9ad50aab019db4abf56f3.html#a17ac9505e8d9ad50aab019db4abf56f3" title="Write glyph quads into a caller&#45;provided RGBA8 pixel buffer." alt="" coords="235,423,401,463"/>
+<area shape="poly" id="edge10_Node000010_Node000011" title=" " alt="" coords="447,446,401,446,401,441,447,441"/>
+<area shape="rect" id="Node000012" href="$namespaceMayaFlux_1_1Portal_1_1Text_a0d14aca4c095ef9e0dffedca847b2b31.html#a0d14aca4c095ef9e0dffedca847b2b31" title="Append a UTF&#45;8 string into an existing TextBuffer at the current cursor." alt="" coords="7,391,173,431"/>
+<area shape="poly" id="edge11_Node000011_Node000012" title=" " alt="" coords="220,432,173,426,174,420,221,427"/>
+<area shape="rect" id="Node000013" href="$namespaceMayaFlux_1_1Portal_1_1Text_a3acee23cc9e5ee10e72b824533d41fb4.html#a3acee23cc9e5ee10e72b824533d41fb4" title="Rasterize a mutated quad span into an existing TextBuffer." alt="" coords="7,455,173,495"/>
+<area shape="poly" id="edge12_Node000011_Node000013" title=" " alt="" coords="221,460,174,466,173,461,220,454"/>
+<area shape="rect" id="Node000016" href="$classMayaFlux_1_1Yantra_1_1TextureExecutionContext_a900b552562b4745ff6a9cbf645b3f152.html#a900b552562b4745ff6a9cbf645b3f152" title="Stage a TextureContainer layer at the declared input image binding." alt="" coords="223,544,413,599"/>
+<area shape="poly" id="edge15_Node000015_Node000016" title=" " alt="" coords="454,574,413,574,413,569,454,569"/>
+</map>

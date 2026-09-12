@@ -1,0 +1,14 @@
+<map id="MayaFlux::Kinesis::Discrete::auto_correlate" name="MayaFlux::Kinesis::Discrete::auto_correlate">
+<area shape="rect" id="Node000001" title="Auto&#45;correlation via FFT." alt="" coords="5,87,184,127"/>
+<area shape="poly" id="edge2_Node000001_Node000001" title=" " alt="" coords="50,87,48,77,55,68,71,62,95,60,122,63,137,70,135,75,121,68,95,65,72,67,58,72,53,78,56,86"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a42e1569c72d22f14f15ee3a52cb70496.html#a42e1569c72d22f14f15ee3a52cb70496" title="Core FFT convolution engine." alt="" coords="232,5,435,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="149,84,231,55,254,47,256,52,233,60,151,89"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_a878fe1820a72f64efebc516b1749f77d.html#a878fe1820a72f64efebc516b1749f77d" title="Normalize single&#45;channel data to specified peak level (in&#45;place)" alt="" coords="254,94,413,119"/>
+<area shape="poly" id="edge3_Node000001_Node000003" title=" " alt="" coords="184,104,240,104,240,109,184,109"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_aeab6358bb22d5e99a73934d063aeb7ba.html#aeab6358bb22d5e99a73934d063aeb7ba" title="Find peak amplitude in single&#45;channel data." alt="" coords="270,143,397,169"/>
+<area shape="poly" id="edge7_Node000001_Node000005" title=" " alt="" coords="185,122,258,138,257,143,184,128"/>
+<area shape="poly" id="edge6_Node000003_Node000003" title=" " alt="" coords="297,96,289,86,293,76,308,70,333,67,365,71,377,81,374,85,363,76,333,73,309,75,297,80,294,85,301,92"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a5de3d13e1b9ceb59d3acb04361e2a5e5.html#a5de3d13e1b9ceb59d3acb04361e2a5e5" title="Normalize to [target_min, target_max] in&#45;place Single&#45;pass min/max reduction followed by a single tra..." alt="" coords="483,87,632,127"/>
+<area shape="poly" id="edge4_Node000003_Node000004" title=" " alt="" coords="413,113,469,113,469,118,413,118"/>
+<area shape="poly" id="edge5_Node000004_Node000003" title=" " alt="" coords="482,101,426,100,426,95,482,95"/>
+</map>

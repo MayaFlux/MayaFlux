@@ -1,0 +1,13 @@
+<map id="MayaFlux::IO::VolumeReader::materialize" name="MayaFlux::IO::VolumeReader::materialize">
+<area shape="rect" id="Node000001" title="Build VolumeData from selected grids over an explicit region." alt="" coords="5,69,216,109"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kakshya_1_1VolumeField_ae602611d173d3534b8ca0e0fe464fce5.html#ae602611d173d3534b8ca0e0fe464fce5" title="Number of cells represented, dispatched on variant." alt="" coords="266,5,473,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="192,67,274,46,276,51,193,72"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kakshya_1_1VolumeData_a6eb5ed3d17b6580cc64d6a94088f8b5a.html#a6eb5ed3d17b6580cc64d6a94088f8b5a" title="Check that every field is densely populated over the lattice." alt="" coords="272,69,467,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="216,87,258,87,258,92,216,92"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1IO_1_1VolumeReader_a3f50ca3b8122f3514a95e6be2f8f6460.html#a3f50ca3b8122f3514a95e6be2f8f6460" title=" " alt="" coords="264,133,475,173"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="193,107,276,127,274,133,192,112"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Kakshya_1_1VolumeData_ad18c3092c8a26b207df1a6ff8ad8bbef.html#ad18c3092c8a26b207df1a6ff8ad8bbef" title="Cells in the lattice, which every field&#39;s element_count() must equal." alt="" coords="523,69,699,109"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="467,87,509,87,509,92,467,92"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Kinesis_1_1Lattice3D_a544eb1555cf9cbaca83638e71bfb0395.html#a544eb1555cf9cbaca83638e71bfb0395" title="Total cell count." alt="" coords="747,69,905,109"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="699,87,733,87,733,92,699,92"/>
+</map>

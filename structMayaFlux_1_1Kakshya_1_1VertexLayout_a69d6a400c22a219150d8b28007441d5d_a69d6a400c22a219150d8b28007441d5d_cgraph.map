@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::VertexLayout::compute_stride" name="MayaFlux::Kakshya::VertexLayout::compute_stride">
+<area shape="rect" id="Node000001" title="Helper: compute stride from attributes if not explicitly set." alt="" coords="5,5,179,60"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kakshya_1_1VertexLayout_a544b48334c1b582e8bf50da8215d2095.html#a544b48334c1b582e8bf50da8215d2095" title="Get size in bytes for a given modality Mirrors VKBuffer::get_format() logic." alt="" coords="227,5,401,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="179,30,213,30,213,35,179,35"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::NodeGraphManager::ensure_token_exists" name="MayaFlux::Nodes::NodeGraphManager::ensure_token_exists">
+<area shape="rect" id="Node000001" title="Ensures that a processing token entry exists." alt="" coords="5,5,225,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_a9c43d6dbcd53013e4d61fa43f038384a.html#a9c43d6dbcd53013e4d61fa43f038384a" title="Ensures a root node exists for the given token and channel." alt="" coords="273,5,489,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="226,23,260,23,260,28,226,28"/>
+</map>

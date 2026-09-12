@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::BufferProcessingControl::remove_audio_processor_from_token" name="MayaFlux::Buffers::BufferProcessingControl::remove_audio_processor_from_token">
+<area shape="rect" id="Node000001" title="Removes a processor from all channels in an audio token." alt="" coords="5,38,199,107"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1TokenUnitManager_a4d8b6658b8ba5a37086de5f4ddc07f88.html#a4d8b6658b8ba5a37086de5f4ddc07f88" title="Gets an existing audio unit without creating if missing (mutable)" alt="" coords="248,5,420,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="199,53,234,47,235,52,200,59"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1TokenUnitManager_a4531a511fff4b519167f92818c4e6ed6.html#a4531a511fff4b519167f92818c4e6ed6" title="Checks if an audio unit exists for the given token." alt="" coords="247,84,421,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="200,86,234,92,233,97,199,91"/>
+</map>

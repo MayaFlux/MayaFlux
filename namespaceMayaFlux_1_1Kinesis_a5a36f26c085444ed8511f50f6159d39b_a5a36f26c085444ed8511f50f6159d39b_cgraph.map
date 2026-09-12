@@ -1,0 +1,8 @@
+<map id="MayaFlux::Kinesis::ray_cast" name="MayaFlux::Kinesis::ray_cast">
+<area shape="rect" id="Node000001" title="Find the closest entity to a ray within a tolerance radius." alt="" coords="5,61,155,101"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_aa7c4bdadf6a59ad467edbcc8b9b61c9d.html#aa7c4bdadf6a59ad467edbcc8b9b61c9d" title="Normalized distance from an anchor point using the specified metric." alt="" coords="211,29,361,69"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="154,67,197,60,198,66,155,72"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_a84fd0dc36dbb9b67b64eccf139f1b43a.html#a84fd0dc36dbb9b67b64eccf139f1b43a" title="Squared perpendicular distance from a point to an infinite ray." alt="" coords="203,93,369,133"/>
+<area shape="poly" id="edge3_Node000001_Node000003" title=" " alt="" coords="155,90,189,96,189,101,154,96"/>
+<area shape="poly" id="edge2_Node000002_Node000002" title=" " alt="" coords="247,30,245,20,251,11,265,5,286,3,310,6,323,13,321,18,308,11,286,8,266,10,255,15,250,21,252,28"/>
+</map>

@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::VolumeFieldProcessor::write_field_descriptors" name="MayaFlux::Buffers::VolumeFieldProcessor::write_field_descriptors">
+<area shape="rect" id="Node000001" title="Issue descriptor writes for every entry in the binding table." alt="" coords="481,45,659,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VolumeFieldProcessor_af214b56fb43b379afb2c9f62395289b9.html#af214b56fb43b379afb2c9f62395289b9" title="Write every binding in the table for the current slot assignment." alt="" coords="252,5,433,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="467,57,433,51,434,46,468,52"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VolumeFieldProcessor_a4b6c2bb138644003a801428ee64ed3d1.html#a4b6c2bb138644003a801428ee64ed3d1" title="Rewrite field descriptors, run the shader, then swap." alt="" coords="260,84,425,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="468,93,426,100,425,95,467,87"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1InfluxProcessor_aefba36ed55ddfe94f07ea9d85f8ddee7.html#aefba36ed55ddfe94f07ea9d85f8ddee7" title="The core processing function that must be implemented by derived classes." alt="" coords="5,84,204,139"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="246,114,204,114,204,109,246,109"/>
+</map>

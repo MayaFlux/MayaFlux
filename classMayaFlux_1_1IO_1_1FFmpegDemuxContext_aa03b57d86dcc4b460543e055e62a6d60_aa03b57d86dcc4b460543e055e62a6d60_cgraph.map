@@ -1,0 +1,7 @@
+<map id="MayaFlux::IO::FFmpegDemuxContext::open_device" name="MayaFlux::IO::FFmpegDemuxContext::open_device">
+<area shape="rect" id="Node000001" title="Open an FFmpeg device input (camera, screen capture, etc.)." alt="" coords="5,37,221,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1FFmpegDemuxContext_a7bc6b130783fca0eb12babe697acecf8.html#a7bc6b130783fca0eb12babe697acecf8" title="Close the format context and release all demux resources." alt="" coords="269,5,485,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="221,42,255,37,256,43,222,47"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1FFmpegDemuxContext_a8ea9c7c404909356ac05d7aa28270c3e.html#a8ea9c7c404909356ac05d7aa28270c3e" title="Initialise FFmpeg logging level once per process." alt="" coords="269,69,485,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="222,68,256,72,255,77,221,73"/>
+</map>

@@ -1,0 +1,8 @@
+<map id="MayaFlux::Portal::Forma::Bridge::cancel_inbound" name="MayaFlux::Portal::Forma::Bridge::cancel_inbound">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,29,187,69"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_aefd214af5e476f686dc86cc7d7220c96.html#aefd214af5e476f686dc86cc7d7220c96" title="Cancels and removes a task from the scheduler." alt="" coords="235,29,465,69"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="187,47,221,47,221,52,187,52"/>
+<area shape="poly" id="edge2_Node000002_Node000002" title=" " alt="" coords="303,30,300,20,308,10,324,5,350,3,379,6,395,13,393,18,378,11,350,8,325,10,311,15,305,21,308,28"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_afb823dfb8ca7ec5182cfaa8e3ee93649.html#afb823dfb8ca7ec5182cfaa8e3ee93649" title="Find task entry by routine pointer." alt="" coords="513,29,744,69"/>
+<area shape="poly" id="edge3_Node000002_Node000003" title=" " alt="" coords="466,47,500,47,500,52,466,52"/>
+</map>

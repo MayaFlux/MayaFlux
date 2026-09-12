@@ -1,0 +1,15 @@
+<map id="MayaFlux::IO::SpatialCache::write" name="MayaFlux::IO::SpatialCache::write">
+<area shape="rect" id="Node000001" title="Append one sample to a named stream." alt="" coords="5,59,207,99"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1SpatialCache_a76b7760ae664ada78f27312377790cf7.html#a76b7760ae664ada78f27312377790cf7" title=" " alt="" coords="504,27,705,67"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="141,56,193,31,254,12,321,4,390,4,455,11,513,21,512,26,454,16,389,10,322,9,255,17,195,36,143,61"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1SpatialCache_abaddd5694375dc2701c4e1fae7b45cec.html#abaddd5694375dc2701c4e1fae7b45cec" title=" " alt="" coords="504,91,705,131"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="143,96,195,121,255,140,322,148,389,148,454,141,512,131,513,136,455,146,390,153,321,153,254,145,193,126,141,101"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1SpatialCache_a56eebd45abf6d1b878966d70cc350872.html#a56eebd45abf6d1b878966d70cc350872" title=" " alt="" coords="255,27,456,67"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="207,63,241,59,241,64,207,68"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1IO_1_1SpatialCache_a749b6a053d761b36c218aa766cbaa769.html#a749b6a053d761b36c218aa766cbaa769" title=" " alt="" coords="255,91,456,131"/>
+<area shape="poly" id="edge6_Node000001_Node000005" title=" " alt="" coords="207,89,241,93,241,99,207,94"/>
+<area shape="poly" id="edge4_Node000004_Node000002" title=" " alt="" coords="456,44,490,44,490,49,456,49"/>
+<area shape="poly" id="edge5_Node000004_Node000003" title=" " alt="" coords="435,64,514,85,513,90,433,69"/>
+<area shape="poly" id="edge7_Node000005_Node000002" title=" " alt="" coords="433,88,513,67,514,73,435,93"/>
+<area shape="poly" id="edge8_Node000005_Node000003" title=" " alt="" coords="456,108,490,108,490,113,456,113"/>
+</map>

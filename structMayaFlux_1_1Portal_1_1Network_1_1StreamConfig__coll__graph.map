@@ -1,0 +1,5 @@
+<map id="MayaFlux::Portal::Network::StreamConfig" name="MayaFlux::Portal::Network::StreamConfig">
+<area shape="rect" id="Node000001" title="Full configuration for an outbound or bidirectional stream." alt="" coords="5,188,192,328"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Portal_1_1Network_1_1StreamEndpoint.html" title="Describes the remote (or local) side of a network stream." alt="" coords="5,5,192,125"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="101,126,101,172,96,172,96,126"/>
+</map>

@@ -1,0 +1,9 @@
+<map id="MayaFlux::Nodes::Network::ModalNetwork::update_mapped_parameters" name="MayaFlux::Nodes::Network::ModalNetwork::update_mapped_parameters">
+<area shape="rect" id="Node000001" title="Update mapped parameters before processing." alt="" coords="5,45,204,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ModalNetwork_a7872fe7bca886ea3f8d5656cdc3680df.html#a7872fe7bca886ea3f8d5656cdc3680df" title="Apply broadcast parameter to all modes." alt="" coords="252,5,492,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="204,55,238,50,239,55,205,60"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ModalNetwork_a3114da2133cf2be8051b4146a57803f5.html#a3114da2133cf2be8051b4146a57803f5" title="Apply one&#45;to&#45;one parameter from another network." alt="" coords="272,84,472,139"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="205,84,259,92,258,98,204,90"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ModalNetwork_a9bdd3fe841d3ba0849ea4cf32cab3f5c.html#a9bdd3fe841d3ba0849ea4cf32cab3f5c" title="Set base frequency (fundamental)" alt="" coords="540,13,783,53"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="492,30,526,30,526,35,492,35"/>
+</map>

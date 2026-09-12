@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kinesis::Vision::VisionPass&lt; Handle &gt;" name="MayaFlux::Kinesis::Vision::VisionPass&lt; Handle &gt;">
+<area shape="rect" id="Node000001" title="State threaded through one execution of a VisionSequence." alt="" coords="106,328,249,763"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kinesis_1_1Vision_1_1VisionSequence.html" title="Ordered sequence of VisionSteps describing a complete vision pipeline." alt="" coords="5,95,171,175"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="99,175,129,312,124,313,94,176"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kinesis_1_1Vision_1_1VisionResult.html" title="Result of executing a VisionSequence on one frame." alt="" coords="195,5,338,265"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="241,266,231,312,226,311,236,265"/>
+</map>

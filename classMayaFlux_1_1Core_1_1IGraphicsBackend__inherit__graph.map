@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::IGraphicsBackend" name="MayaFlux::Core::IGraphicsBackend">
+<area shape="rect" id="Node000001" title=" " alt="" coords="24,5,209,365"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1VulkanBackend.html" title="Vulkan implementation of the IGraphicsBackend interface." alt="" coords="5,413,228,893"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="119,379,119,413,114,413,114,379"/>
+</map>

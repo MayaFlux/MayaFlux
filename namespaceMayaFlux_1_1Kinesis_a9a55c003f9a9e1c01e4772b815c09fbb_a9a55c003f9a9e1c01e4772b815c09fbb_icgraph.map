@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::crackle" name="MayaFlux::Kinesis::crackle">
+<area shape="rect" id="Node000001" title="Fifth difference: rate of change of jounce." alt="" coords="203,5,352,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_a5d3eddbb445840f1222222bbab391708.html#a5d3eddbb445840f1222222bbab391708" title="Convenience overload of crackle over a raw span, samples[0] newest." alt="" coords="5,5,155,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="189,28,155,28,155,23,189,23"/>
+</map>

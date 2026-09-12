@@ -1,0 +1,9 @@
+<map id="MayaFlux::IO::IOManager::save_mesh_snapshot" name="MayaFlux::IO::IOManager::save_mesh_snapshot">
+<area shape="rect" id="Node000001" title="Save a ComputeMeshBuffer with a millisecond epoch timestamp spliced into the path,..." alt="" coords="5,37,192,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1IO_a58f1f8023fc20779c46e7038f127c999.html#a58f1f8023fc20779c46e7038f127c999" title="Save a ComputeMeshBuffer with a millisecond epoch timestamp spliced into the path." alt="" coords="260,5,407,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="192,42,246,34,247,40,192,47"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1IOManager_a0604e2f246faf9ae9d598cd28140d814.html#a0604e2f246faf9ae9d598cd28140d814" title="Queue a save task and prune finished ones, under one short lock." alt="" coords="240,69,427,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="192,67,227,72,226,77,192,73"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1IO_aa56677bfbd9cdeaea14715e9b2236754.html#aa56677bfbd9cdeaea14715e9b2236754" title="Save a MeshBuffer&#39;s current mesh data to disk via ModelWriterRegistry." alt="" coords="475,13,665,38"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="407,23,461,23,461,28,407,28"/>
+</map>

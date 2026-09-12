@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::SoundStreamReader::extract_channel_data" name="MayaFlux::Buffers::SoundStreamReader::extract_channel_data">
+<area shape="rect" id="Node000001" title="Extract channel data from the container into the output buffer." alt="" coords="5,5,215,60"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kakshya_ab234d163b33153f8df7e2a95f95f500e.html#ab234d163b33153f8df7e2a95f95f500e" title="Extract one channel&#39;s samples from a processed dynamic data block." alt="" coords="263,13,440,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="215,30,249,30,249,35,215,35"/>
+</map>

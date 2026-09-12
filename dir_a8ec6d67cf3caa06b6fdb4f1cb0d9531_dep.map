@@ -1,0 +1,48 @@
+<map id="Kinesis" name="Kinesis">
+<area shape="rect" id="node1" href="dir_98903ca72f3f031f88d95d1d2149bfa4.html" title="Kakshya" alt="" coords="54,136,133,161"/>
+<area shape="rect" id="node2" href="dir_ab78b5ea7d224bd3b6129089c2cbe6d1.html" title="Journal" alt="" coords="140,356,207,381"/>
+<area shape="rect" id="node3" href="dir_fa9701bc8dd421cc9c72fe138aba5a04.html" title="Transitive" alt="" coords="483,356,568,381"/>
+<area shape="rect" id="node4" href="dir_30c551cdb1b5e5e8d34a68131522bc06.html" title="IO" alt="" coords="434,283,473,308"/>
+<area shape="poly" id="edge3" href="dir_000036_000035.html" alt="" coords="175,90,122,130,119,125,172,86"/>
+<area shape="rect" id="edge3-headlabel" href="dir_000036_000035.html" title="11" alt="" coords="120,125,137,139"/>
+<area shape="poly" id="edge4" href="dir_000036_000034.html" alt="" coords="155,82,127,88,96,99,67,115,45,137,33,165,33,195,42,224,59,253,104,306,149,346,145,350,100,310,54,256,37,226,28,195,28,164,40,135,64,110,94,94,125,83,154,77"/>
+<area shape="rect" id="edge4-headlabel" href="dir_000036_000034.html" title="4" alt="" coords="144,331,153,345"/>
+<area shape="poly" id="edge5" href="dir_000036_000085.html" alt="" coords="223,86,327,131,389,166,446,207,480,241,505,281,517,312,524,342,519,343,512,314,500,284,476,244,442,211,386,170,325,136,221,90"/>
+<area shape="rect" id="edge5-headlabel" href="dir_000036_000085.html" title="19" alt="" coords="520,329,538,344"/>
+<area shape="rect" id="node7" href="dir_1173f6694d7d47f305ed76ee04f1f117.html" title="Spatial" alt="" coords="240,136,307,161"/>
+<area shape="poly" id="edge1" href="dir_000036_000072.html" alt="" coords="205,86,251,125,247,129,201,90"/>
+<area shape="rect" id="edge1-headlabel" href="dir_000036_000072.html" title="5" alt="" coords="246,110,256,125"/>
+<area shape="rect" id="node8" href="dir_724ada019f17bba9cf9d0e5db23b5794.html" title="Stochastic" alt="" coords="211,283,301,308"/>
+<area shape="poly" id="edge2" href="dir_000036_000077.html" alt="" coords="193,88,202,163,208,204,216,234,239,271,234,273,211,236,203,206,196,164,188,89"/>
+<area shape="rect" id="edge2-headlabel" href="dir_000036_000077.html" title="3" alt="" coords="235,256,244,270"/>
+<area shape="rect" id="node6" href="dir_08505309452268ce0ab74ecdbfb34fad.html" title="Discrete" alt="" coords="335,63,411,88"/>
+<area shape="poly" id="edge6" href="dir_000011_000085.html" alt="" coords="412,74,448,78,490,87,529,105,546,118,561,134,576,158,585,181,589,202,588,223,578,267,561,320,547,346,543,343,556,318,573,266,583,223,583,202,580,182,571,161,557,138,543,122,526,110,488,92,448,83,411,79"/>
+<area shape="rect" id="edge6-headlabel" href="dir_000011_000085.html" title="4" alt="" coords="550,339,559,354"/>
+<area shape="poly" id="edge8" href="dir_000072_000034.html" alt="" coords="259,163,237,184,216,211,200,245,189,280,178,343,173,342,184,279,195,243,211,208,233,180,256,159"/>
+<area shape="rect" id="edge8-headlabel" href="dir_000072_000034.html" title="2" alt="" coords="180,331,189,346"/>
+<area shape="poly" id="edge9" href="dir_000072_000085.html" alt="" coords="308,158,373,182,426,207,459,238,485,274,505,311,519,342,514,344,500,313,481,277,455,242,422,212,371,187,306,163"/>
+<area shape="rect" id="edge9-headlabel" href="dir_000072_000085.html" title="1" alt="" coords="518,328,527,343"/>
+<area shape="rect" id="node9" href="dir_17219ed2cd28ae564130a384b2de4d82.html" title="Tendency" alt="" coords="225,209,308,235"/>
+<area shape="poly" id="edge7" href="dir_000072_000081.html" alt="" coords="275,162,272,196,266,196,270,161"/>
+<area shape="rect" id="edge7-headlabel" href="dir_000072_000081.html" title="1" alt="" coords="273,185,283,199"/>
+<area shape="rect" id="node10" href="dir_ffc0cf4a5f0725f0d2ec931c81a54855.html" title="Viewport" alt="" coords="332,209,412,235"/>
+<area shape="poly" id="edge10" href="dir_000072_000087.html" alt="" coords="291,159,346,199,343,203,288,164"/>
+<area shape="rect" id="edge10-headlabel" href="dir_000072_000087.html" title="1" alt="" coords="341,184,351,199"/>
+<area shape="poly" id="edge11" href="dir_000077_000034.html" alt="" coords="244,310,199,349,196,345,241,306"/>
+<area shape="rect" id="edge11-headlabel" href="dir_000077_000034.html" title="1" alt="" coords="201,343,211,358"/>
+<area shape="poly" id="edge12" href="dir_000077_000085.html" alt="" coords="281,306,308,316,392,339,470,355,469,360,391,344,306,321,279,311"/>
+<area shape="rect" id="edge12-headlabel" href="dir_000077_000085.html" title="1" alt="" coords="461,341,471,356"/>
+<area shape="poly" id="edge13" href="dir_000081_000077.html" alt="" coords="268,235,262,270,257,269,262,235"/>
+<area shape="rect" id="edge13-headlabel" href="dir_000081_000077.html" title="1" alt="" coords="264,259,273,273"/>
+<area shape="poly" id="edge14" href="dir_000087_000032.html" alt="" coords="387,233,432,272,428,276,383,237"/>
+<area shape="rect" id="edge14-headlabel" href="dir_000087_000032.html" title="1" alt="" coords="427,257,437,272"/>
+<area shape="rect" id="node11" href="dir_86848c0fdea2557e75761ae588074688.html" title="Vision" alt="" coords="249,63,311,88"/>
+<area shape="poly" id="edge16" href="dir_000088_000035.html" alt="" coords="251,91,137,133,136,129,249,86"/>
+<area shape="rect" id="edge16-headlabel" href="dir_000088_000035.html" title="2" alt="" coords="139,130,148,145"/>
+<area shape="poly" id="edge17" href="dir_000088_000085.html" alt="" coords="312,82,325,85,357,91,387,92,440,90,465,91,489,98,512,111,534,134,549,159,558,187,561,216,561,245,551,300,538,343,533,342,546,299,555,244,556,216,553,188,544,161,530,138,508,116,487,103,464,97,440,95,387,97,357,96,323,91,311,88"/>
+<area shape="rect" id="edge17-headlabel" href="dir_000088_000085.html" title="9" alt="" coords="540,334,549,349"/>
+<area shape="poly" id="edge15" href="dir_000088_000072.html" alt="" coords="282,89,278,123,273,122,276,88"/>
+<area shape="rect" id="edge15-headlabel" href="dir_000088_000072.html" title="1" alt="" coords="280,111,289,126"/>
+<area shape="rect" id="clust2" href="dir_a8ec6d67cf3caa06b6fdb4f1cb0d9531.html" alt="" coords="144,52,423,319"/>
+<area shape="rect" id="clust1" href="dir_88f0f3329b8af1a7fcf314b32e6813e8.html" title="MayaFlux" alt="" coords="16,16,591,392"/>
+</map>

@@ -1,0 +1,8 @@
+<map id="MayaFlux::Yantra::SpectralTransformer::create_output" name="MayaFlux::Yantra::SpectralTransformer::create_output">
+<area shape="rect" id="Node000001" title="Creates output with proper type conversion." alt="" coords="491,46,689,86"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1SpectralTransformer_a03e7bf2e5c976222f2e376b55195170b.html#a03e7bf2e5c976222f2e376b55195170b" title="Extracts per&#45;channel spans, applies func to each, and reconstructs." alt="" coords="248,5,443,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="477,53,443,49,443,43,478,48"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1SpectralTransformer_a7823c1c101caf6098831e5ec802ebf19.html#a7823c1c101caf6098831e5ec802ebf19" title="Applies the configured spectral operation." alt="" coords="5,39,200,93"/>
+<area shape="poly" id="edge3_Node000001_Node000003" title=" " alt="" coords="477,73,443,74,248,74,200,73,200,67,248,69,443,69,477,68"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="235,51,201,55,200,50,234,45"/>
+</map>

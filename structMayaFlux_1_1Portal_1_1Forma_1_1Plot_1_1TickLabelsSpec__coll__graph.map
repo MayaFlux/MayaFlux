@@ -1,0 +1,7 @@
+<map id="MayaFlux::Portal::Forma::Plot::TickLabelsSpec" name="MayaFlux::Portal::Forma::Plot::TickLabelsSpec">
+<area shape="rect" id="Node000001" title="Config for generating numeric tick labels on one plot edge." alt="" coords="113,348,286,548"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kinesis_1_1AABB2D.html" title="Axis&#45;aligned bounding rectangle in a 2D coordinate space." alt="" coords="5,5,191,285"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="147,285,163,332,158,334,142,287"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Portal_1_1Forma_1_1Plot_1_1AxisRange.html" title="Scalar domain extent for one plot axis." alt="" coords="215,35,389,255"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="281,256,261,325,257,334,252,332,255,323,276,255"/>
+</map>

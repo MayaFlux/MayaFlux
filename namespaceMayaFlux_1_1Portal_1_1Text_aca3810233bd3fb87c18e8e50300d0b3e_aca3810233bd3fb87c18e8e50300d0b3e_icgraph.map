@@ -1,0 +1,5 @@
+<map id="MayaFlux::Portal::Text::get_default_atlas" name="MayaFlux::Portal::Text::get_default_atlas">
+<area shape="rect" id="Node000001" title="Return the default GlyphAtlas, or nullptr if set_default_font() has not been called successfully." alt="" coords="220,5,387,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Text_aa58f542a4328e23327442498ad154f55.html#aa58f542a4328e23327442498ad154f55" title="Lay out a UTF&#45;8 string into screen&#45;space glyph quads using the default atlas." alt="" coords="5,5,172,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="206,28,172,28,172,23,206,23"/>
+</map>

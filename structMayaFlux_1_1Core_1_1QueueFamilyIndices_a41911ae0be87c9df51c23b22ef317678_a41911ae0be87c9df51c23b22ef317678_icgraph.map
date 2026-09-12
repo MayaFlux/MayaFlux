@@ -1,0 +1,15 @@
+<map id="MayaFlux::Core::QueueFamilyIndices::can_present" name="MayaFlux::Core::QueueFamilyIndices::can_present">
+<area shape="rect" id="Node000001" title="Whether family index can present." alt="" coords="833,37,1051,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1VKDevice_a9209b1b553a580d2c39329529cc63864.html#a9209b1b553a580d2c39329529cc63864" title="Create the logical device and retrieve queue handles." alt="" coords="567,5,762,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="820,46,762,39,762,34,820,41"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Core_1_1QueueFamilyIndices_ab1a52c36355a94436e7a90be057597bf.html#ab1a52c36355a94436e7a90be057597bf" title="Family the engine presents on by default." alt="" coords="544,69,785,109"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="820,74,786,78,785,73,820,69"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1VKDevice_a6623efa4d01590e5d47522cae626d47a.html#a6623efa4d01590e5d47522cae626d47a" title="Select a physical device and create the logical device." alt="" coords="288,5,483,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="553,28,483,28,483,23,553,23"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1VKContext_abc215601510a7e2e54380a535f0718a2.html#abc215601510a7e2e54380a535f0718a2" title="Initialize Vulkan context." alt="" coords="16,5,216,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="274,28,216,28,216,23,274,23"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Core_1_1VKDevice_a702feebbf49ee57e90670e87a00caef2.html#a702feebbf49ee57e90670e87a00caef2" title="Queue for the preferred presentation family." alt="" coords="275,69,496,109"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="530,92,496,92,496,87,530,87"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Core_1_1VKContext_a56ed4e8311a116a915c14e40e4122a29.html#a56ed4e8311a116a915c14e40e4122a29" title="Queue for the preferred presentation family." alt="" coords="5,69,227,109"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="261,92,227,92,227,87,261,87"/>
+</map>

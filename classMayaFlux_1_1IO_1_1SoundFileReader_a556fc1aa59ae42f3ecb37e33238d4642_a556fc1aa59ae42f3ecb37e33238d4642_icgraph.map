@@ -1,0 +1,11 @@
+<map id="MayaFlux::IO::SoundFileReader::seek_internal" name="MayaFlux::IO::SoundFileReader::seek_internal">
+<area shape="rect" id="Node000001" title="Seek the demuxer and flush the codec to the given frame position." alt="" coords="552,69,777,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1SoundFileReader_a8bfd1aa043b76cab1172b2d00705066f.html#a8bfd1aa043b76cab1172b2d00705066f" title="Read a specific number of frames from the file." alt="" coords="279,37,504,77"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="538,77,504,73,504,68,539,72"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1IO_1_1SoundFileReader_acf94587cbb30d6a656daff698288498f.html#acf94587cbb30d6a656daff698288498f" title="Seek to a specific position in the file." alt="" coords="279,101,504,141"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="539,107,504,111,504,106,538,101"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1SoundFileReader_a52301b9864559415b9df442d6884d946.html#a52301b9864559415b9df442d6884d946" title="Load an audio file into a size&#45;bounded DynamicSoundStream." alt="" coords="5,5,231,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="265,45,230,41,231,36,265,40"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1SoundFileReader_a8b9c5ab6495003a5a1b17edaf5cc4e3f.html#a8b9c5ab6495003a5a1b17edaf5cc4e3f" title="Read a specific region from the file." alt="" coords="5,69,231,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="265,75,231,79,230,74,265,69"/>
+</map>

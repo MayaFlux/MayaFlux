@@ -1,0 +1,51 @@
+<map id="MayaFlux::Nodes::GpuSync::PathGeneratorNode::compute_frame" name="MayaFlux::Nodes::GpuSync::PathGeneratorNode::compute_frame">
+<area shape="rect" id="Node000001" title="Compute frame &#45; generates interpolated vertices from control points." alt="" coords="5,170,273,210"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GeometryWriterNode_a63a86ccaf0960a88deb0b99785b6eb30.html#a63a86ccaf0960a88deb0b99785b6eb30" title="Get cached vertex layout." alt="" coords="339,32,539,87"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="181,168,320,104,354,90,356,94,322,108,183,172"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1PathGeneratorNode_a34234edc16bd9e0f8f84a216ece5b013.html#a34234edc16bd9e0f8f84a216ece5b013" title="Rewrite colour and thickness over existing geometry, no curve evaluation." alt="" coords="889,5,1099,60"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="227,167,321,147,620,92,874,49,875,54,621,97,322,153,228,173"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1PathGeneratorNode_a3313b74451cb1153fa66e705c0bbffbc.html#a3313b74451cb1153fa66e705c0bbffbc" title=" " alt="" coords="321,163,557,217"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="274,187,307,187,307,193,274,193"/>
+<area shape="rect" id="Node000022" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GeometryWriterNode_ad5f8bb454545911e4cef60543eb8e6be.html#ad5f8bb454545911e4cef60543eb8e6be" title="Resize vertex buffer to hold specified number of vertices." alt="" coords="331,241,547,296"/>
+<area shape="poly" id="edge25_Node000001_Node000022" title=" " alt="" coords="217,207,322,235,320,240,216,213"/>
+<area shape="rect" id="Node000023" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GeometryWriterNode_a79b8530548d0f4b4c464071439faaac5.html#a79b8530548d0f4b4c464071439faaac5" title="Set cached vertex layout." alt="" coords="339,320,539,375"/>
+<area shape="poly" id="edge26_Node000001_Node000023" title=" " alt="" coords="168,208,236,256,323,306,336,312,334,317,320,311,234,261,165,213"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1PathGeneratorNode_a3589630da979f758a3bf60f9ac7f18e9.html#a3589630da979f758a3bf60f9ac7f18e9" title="Vertices emitted per four&#45;point window." alt="" coords="1160,203,1377,257"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="1093,58,1113,69,1151,97,1186,128,1241,190,1237,194,1182,132,1148,101,1111,74,1090,63"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1PathGeneratorNode_af397575bfc8596ee095c189f5e28c6ff.html#af397575bfc8596ee095c189f5e28c6ff" title="Write colour and thickness for one window, leaving positions intact." alt="" coords="1441,52,1641,107"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="1100,39,1427,67,1427,72,1099,44"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1PathGeneratorNode_a030dce2706986bc324777b42809fd022.html#a030dce2706986bc324777b42809fd022" title=" " alt="" coords="605,163,828,217"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="558,187,591,187,591,193,558,193"/>
+<area shape="rect" id="Node000021" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1PathGeneratorNode_adfc6ab294dc4986d84a68832608671c5.html#adfc6ab294dc4986d84a68832608671c5" title=" " alt="" coords="876,320,1112,375"/>
+<area shape="poly" id="edge22_Node000006_Node000021" title=" " alt="" coords="538,215,884,314,883,319,536,220"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1PathGeneratorNode_a1fa1d4b458196ccf55bb3524e7916444.html#a1fa1d4b458196ccf55bb3524e7916444" title=" " alt="" coords="883,84,1105,139"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="813,160,883,140,884,145,814,165"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1PathGeneratorNode_a8cc68b672e91088e02b9a020b0a80ae3.html#a8cc68b672e91088e02b9a020b0a80ae3" title=" " alt="" coords="883,163,1105,217"/>
+<area shape="poly" id="edge8_Node000007_Node000009" title=" " alt="" coords="828,187,869,187,869,193,828,193"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1PathGeneratorNode_af7678f1e765f09eee1c6221816b243f2.html#af7678f1e765f09eee1c6221816b243f2" title=" " alt="" coords="883,241,1105,296"/>
+<area shape="poly" id="edge9_Node000007_Node000010" title=" " alt="" coords="814,215,884,235,883,240,813,220"/>
+<area shape="poly" id="edge10_Node000010_Node000004" title=" " alt="" coords="1105,250,1146,245,1147,250,1106,256"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1PathGeneratorNode_a4c5763333ac9637a59711233243299ee.html#a4c5763333ac9637a59711233243299ee" title="Evaluate one window and write its vertices." alt="" coords="1169,281,1369,336"/>
+<area shape="poly" id="edge11_Node000010_Node000011" title=" " alt="" coords="1106,282,1155,289,1154,295,1105,288"/>
+<area shape="poly" id="edge21_Node000011_Node000005" title=" " alt="" coords="1358,279,1376,267,1393,246,1401,227,1409,205,1423,180,1456,144,1491,113,1494,117,1460,148,1427,184,1413,207,1406,228,1397,249,1379,271,1361,283"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Kinesis_1_1CurveEvaluator_af0a1a1c0dc991633d3ba834c2fbab4b4.html#af0a1a1c0dc991633d3ba834c2fbab4b4" title="Re&#45;resolve the kernel." alt="" coords="1445,194,1636,234"/>
+<area shape="poly" id="edge12_Node000011_Node000012" title=" " alt="" coords="1347,279,1468,236,1470,241,1349,284"/>
+<area shape="rect" id="Node000017" href="$classMayaFlux_1_1Kinesis_1_1CurveEvaluator_ae96b8e093c52b64e6a2d3124d0a1c5f3.html#ae96b8e093c52b64e6a2d3124d0a1c5f3" title="Evaluate a curve into a coordinate&#45;major buffer." alt="" coords="1447,281,1634,336"/>
+<area shape="poly" id="edge17_Node000011_Node000017" title=" " alt="" coords="1369,306,1433,306,1433,311,1369,311"/>
+<area shape="rect" id="Node000020" href="$classMayaFlux_1_1Kinesis_1_1CurveEvaluator_ad58cd64be0c18579e7d94bbec4313cac.html#ad58cd64be0c18579e7d94bbec4313cac" title="Resample a polyline to uniform arc length, coordinate&#45;major." alt="" coords="1425,360,1656,415"/>
+<area shape="poly" id="edge20_Node000011_Node000020" title=" " alt="" coords="1365,334,1433,353,1431,359,1363,339"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Kinesis_1_1CurveEvaluator_a3e0a731c84aedb639bbd49411e107423.html#a3e0a731c84aedb639bbd49411e107423" title="Currently configured mode." alt="" coords="1710,138,1877,178"/>
+<area shape="poly" id="edge13_Node000012_Node000013" title=" " alt="" coords="1631,191,1696,177,1697,182,1632,197"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1Kinesis_1_1CurveEvaluator_a4dbfeb2ee1be35f2a16fc72d4b009959.html#a4dbfeb2ee1be35f2a16fc72d4b009959" title=" " alt="" coords="1706,203,1881,257"/>
+<area shape="poly" id="edge14_Node000012_Node000014" title=" " alt="" coords="1636,217,1693,221,1692,226,1636,223"/>
+<area shape="rect" id="Node000016" href="$classMayaFlux_1_1Kinesis_1_1CurveEvaluator_a52d5987bbb35043a04636108c02583be.html#a52d5987bbb35043a04636108c02583be" title="Currently configured tension." alt="" coords="1704,74,1883,114"/>
+<area shape="poly" id="edge16_Node000012_Node000016" title=" " alt="" coords="1574,192,1633,158,1703,124,1719,117,1721,122,1705,128,1636,163,1577,196"/>
+<area shape="rect" id="Node000015" href="$structMayaFlux_1_1Kinesis_1_1BasisMatrices_a818351b64ca1e3653ad9c97cca70e765.html#a818351b64ca1e3653ad9c97cca70e765" title=" " alt="" coords="1931,203,2101,257"/>
+<area shape="poly" id="edge15_Node000014_Node000015" title=" " alt="" coords="1881,227,1917,227,1917,233,1881,233"/>
+<area shape="rect" id="Node000018" href="$classMayaFlux_1_1Kinesis_1_1CurveEvaluator_a796b487bd268a58154a09c16f8e9bc7a.html#a796b487bd268a58154a09c16f8e9bc7a" title=" " alt="" coords="1712,281,1875,336"/>
+<area shape="poly" id="edge18_Node000017_Node000018" title=" " alt="" coords="1634,306,1698,306,1698,311,1634,311"/>
+<area shape="rect" id="Node000019" href="$classMayaFlux_1_1Kinesis_1_1CurveEvaluator_a60000384b7d908119e0d006f8e1f52b1.html#a60000384b7d908119e0d006f8e1f52b1" title=" " alt="" coords="1706,361,1881,401"/>
+<area shape="poly" id="edge19_Node000017_Node000019" title=" " alt="" coords="1635,333,1710,354,1709,359,1633,338"/>
+<area shape="poly" id="edge23_Node000021_Node000004" title=" " alt="" coords="1088,317,1111,306,1134,287,1159,266,1169,261,1171,266,1161,271,1138,291,1113,311,1090,322"/>
+<area shape="poly" id="edge24_Node000021_Node000011" title=" " alt="" coords="1112,328,1155,322,1155,327,1113,333"/>
+</map>

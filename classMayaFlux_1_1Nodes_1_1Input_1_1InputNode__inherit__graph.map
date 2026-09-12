@@ -1,0 +1,13 @@
+<map id="MayaFlux::Nodes::Input::InputNode" name="MayaFlux::Nodes::Input::InputNode">
+<area shape="rect" id="Node000001" title="Abstract base class for nodes that receive external input." alt="" coords="311,803,479,1383"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Input_1_1HIDNode.html" title=" " alt="" coords="5,1601,173,1801"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="305,1228,244,1326,188,1432,151,1517,122,1601,117,1599,146,1516,183,1430,240,1324,301,1225"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Input_1_1MIDINode.html" title="Specialized InputNode for MIDI messages." alt="" coords="198,1531,386,1871"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="346,1397,323,1531,318,1530,341,1396"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1Input_1_1OSCNode.html" title="Specialized InputNode for OSC messages." alt="" coords="411,1581,587,1821"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="449,1396,481,1580,476,1581,444,1397"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1Input_1_1TabletNode.html" title="InputNode projecting one slot of a tablet frame." alt="" coords="611,1431,832,1971"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="488,1235,545,1330,601,1429,613,1452,608,1455,596,1432,541,1333,484,1238"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Node.html" title="Base interface for all computational processing nodes." alt="" coords="296,5,493,755"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="397,768,397,802,392,802,392,768"/>
+</map>

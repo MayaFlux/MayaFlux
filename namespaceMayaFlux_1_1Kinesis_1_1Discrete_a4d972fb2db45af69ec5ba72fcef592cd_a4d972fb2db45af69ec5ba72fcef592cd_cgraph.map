@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::Discrete::lagrange_delay" name="MayaFlux::Kinesis::Discrete::lagrange_delay">
+<area shape="rect" id="Node000001" title="Lagrange fractional&#45;delay FIR coefficients." alt="" coords="5,5,189,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a0cfec1af1622af88f33b6be6dd83303a.html#a0cfec1af1622af88f33b6be6dd83303a" title="Prepend delay_samples zero&#45;valued (or fill_value) samples, returning a new vector." alt="" coords="237,5,387,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="190,23,223,23,223,28,190,28"/>
+</map>

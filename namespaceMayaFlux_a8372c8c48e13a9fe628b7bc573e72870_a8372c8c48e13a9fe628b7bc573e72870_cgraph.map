@@ -1,0 +1,13 @@
+<map id="MayaFlux::apply_window_channels" name="MayaFlux::apply_window_channels">
+<area shape="rect" id="Node000001" title="Apply window function to multi&#45;channel data (in&#45;place)" alt="" coords="5,101,192,141"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_a985b4fbe457b036da9fbc809aed9aa3e.html#a985b4fbe457b036da9fbc809aed9aa3e" title="Apply window function to single&#45;channel data (in&#45;place)" alt="" coords="240,109,427,134"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="192,119,226,119,226,124,192,124"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a64811541d640c885290c697c60180d4b.html#a64811541d640c885290c697c60180d4b" title="Apply a Blackman taper in&#45;place without materialising coefficients." alt="" coords="480,5,671,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="359,106,474,55,494,47,496,52,476,60,361,111"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_ad084bd73d4e0b46ddab004a934281adc.html#ad084bd73d4e0b46ddab004a934281adc" title="Apply a Hamming taper in&#45;place without materialising coefficients." alt="" coords="481,69,670,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="427,106,467,101,467,106,427,112"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_aa9b9b8cb52552bdf3d4f33973fe7387d.html#aa9b9b8cb52552bdf3d4f33973fe7387d" title="Apply a Hann taper in&#45;place without materialising coefficients." alt="" coords="496,133,655,173"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="427,131,483,138,482,144,427,136"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_ad2df8ea473b432c02035c586da051df2.html#ad2df8ea473b432c02035c586da051df2" title="Apply a rectangular taper in&#45;place without materialising coefficients." alt="" coords="475,197,676,237"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="361,132,476,183,496,190,494,195,474,188,359,136"/>
+</map>

@@ -1,0 +1,18 @@
+<map id="MayaFlux::Core::vk_format_bytes_per_pixel" name="MayaFlux::Core::vk_format_bytes_per_pixel">
+<area shape="rect" id="Node000001" title="Byte width of a single pixel for a given Vulkan format." alt="" coords="579,169,761,209"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1BackendWindowHandler_a6517cf81648e9ebc3e026270f3b6a92a.html#a6517cf81648e9ebc3e026270f3b6a92a" title="Capture the current frame from a window&#39;s swapchain." alt="" coords="292,5,531,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="643,161,594,108,563,82,529,60,504,48,506,43,532,55,566,78,597,105,647,157"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1BackendWindowHandler_aed8743da5db1a5c179f593db0c891d41.html#aed8743da5db1a5c179f593db0c891d41" title="Ensure capture state is initialized for a window context." alt="" coords="292,69,531,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="620,165,530,124,494,112,495,107,532,119,622,160"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Core_1_1VKImage_a9f6b4f3ed0c080c1f92627173b0da2ec.html#a9f6b4f3ed0c080c1f92627173b0da2ec" title="Get total size in bytes (for memory allocation)" alt="" coords="316,133,507,173"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="565,177,507,169,507,164,566,172"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1WindowAccessProcessor_aaf082c0521c39ed5dd7c6bb078b08a0f.html#aaf082c0521c39ed5dd7c6bb078b08a0f" title="Attach to a WindowContainer." alt="" coords="320,198,503,253"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="565,207,503,215,503,210,565,201"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Kakshya_1_1WindowAccessProcessor_aa8f3d77af39015f983f7e6d38e71a8d1.html#aa8f3d77af39015f983f7e6d38e71a8d1" title="Execute a full&#45;surface pixel readback." alt="" coords="33,291,216,346"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="629,219,583,245,532,267,450,288,366,304,216,318,216,313,365,298,449,283,530,261,581,240,626,214"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Kakshya_adf1a57ec9fd544212ad62643faacc3c3.html#adf1a57ec9fd544212ad62643faacc3c3" title="Read a pixel rectangle from the last completed swapchain frame into a DataVariant whose element type ..." alt="" coords="332,328,491,368"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="643,221,594,267,532,312,490,330,488,326,529,307,591,263,639,217"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1BackendWindowHandler_aa812bf045d7548824a757d712b1b3e75.html#aa812bf045d7548824a757d712b1b3e75" title=" " alt="" coords="5,69,244,109"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="278,92,244,92,244,87,278,87"/>
+<area shape="poly" id="edge8_Node000008_Node000007" title=" " alt="" coords="318,341,216,331,216,325,319,336"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::MeshBuffer::setup_rendering" name="MayaFlux::Buffers::MeshBuffer::setup_rendering">
+<area shape="rect" id="Node000001" title="Attach a RenderProcessor targeting the given window." alt="" coords="224,13,433,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1RaymarchBuffer_a9729f336fed58e0730827ac7ecb8a564.html#a9729f336fed58e0730827ac7ecb8a564" title="Attach a RenderProcessor drawing the proxy box." alt="" coords="5,5,176,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="210,35,176,35,176,30,210,30"/>
+</map>

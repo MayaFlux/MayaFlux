@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::BufferUploadProcessor::ensure_staging_buffer" name="MayaFlux::Buffers::BufferUploadProcessor::ensure_staging_buffer">
+<area shape="rect" id="Node000001" title=" " alt="" coords="443,5,617,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferUploadProcessor_aa951d62989b4fcdd124c95c4bdb1d22e.html#aa951d62989b4fcdd124c95c4bdb1d22e" title=" " alt="" coords="224,5,395,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="429,35,395,35,395,30,429,30"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1BufferUploadProcessor_aa9bd8472b692e1942fc89e9d074bc030.html#aa9bd8472b692e1942fc89e9d074bc030" title="The core processing function that must be implemented by derived classes." alt="" coords="5,5,176,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="210,35,176,35,176,30,210,30"/>
+</map>

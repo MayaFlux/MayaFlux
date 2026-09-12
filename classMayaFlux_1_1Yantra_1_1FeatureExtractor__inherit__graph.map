@@ -1,0 +1,9 @@
+<map id="MayaFlux::Yantra::FeatureExtractor&lt; InputType, OutputType &gt;" name="MayaFlux::Yantra::FeatureExtractor&lt; InputType, OutputType &gt;">
+<area shape="rect" id="Node000001" title="Analyzer&#45;guided feature extractor with enum&#45;based configuration." alt="" coords="5,164,253,639"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1FeatureExtractor.html" title=" " alt="" coords="9,716,249,1205"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="132,653,132,716,127,716,127,653"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="14,5,245,115"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="132,128,132,164,127,164,127,128"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1Granular_1_1SegmentOp.html" title="Segments container audio into fixed hop&#45;size grain windows." alt="" coords="31,1255,227,1395"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="132,1219,132,1254,127,1254,127,1219"/>
+</map>

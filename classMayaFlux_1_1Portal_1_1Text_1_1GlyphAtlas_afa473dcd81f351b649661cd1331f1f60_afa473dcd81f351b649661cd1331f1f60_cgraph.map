@@ -1,0 +1,7 @@
+<map id="MayaFlux::Portal::Text::GlyphAtlas::GlyphAtlas" name="MayaFlux::Portal::Text::GlyphAtlas::GlyphAtlas">
+<area shape="rect" id="Node000001" title="Construct an atlas for a specific face and pixel size." alt="" coords="5,37,185,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Text_1_1GlyphAtlas_af19455784bf36672a17bfc98d23a9516.html#af19455784bf36672a17bfc98d23a9516" title="Atlas texture dimension (width == height == atlas_size)." alt="" coords="233,5,408,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="186,42,220,37,220,42,186,47"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Text_1_1FontFace_accda82c104b9bee41559e89f118f5e5f.html#accda82c104b9bee41559e89f118f5e5f" title="Raw FT_Face handle for use by GlyphAtlas." alt="" coords="237,69,404,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="186,68,224,73,223,78,186,73"/>
+</map>

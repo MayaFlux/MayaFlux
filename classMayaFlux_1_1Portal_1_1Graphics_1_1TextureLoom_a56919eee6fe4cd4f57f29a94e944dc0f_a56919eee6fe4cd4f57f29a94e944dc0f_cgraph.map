@@ -1,0 +1,21 @@
+<map id="MayaFlux::Portal::Graphics::TextureLoom::transition_layout" name="MayaFlux::Portal::Graphics::TextureLoom::transition_layout">
+<area shape="rect" id="Node000001" title="Transition a VKImage to a new Vulkan layout via an immediate submission." alt="" coords="5,59,237,99"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_af23625d18fe68e281f157b63a0466073.html#af23625d18fe68e281f157b63a0466073" title="Check if manager is initialized." alt="" coords="307,27,511,67"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="237,64,293,58,293,63,238,69"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1BackendResourceManager_ab9333b3ff9c0372c1bf8af57a449c3b0.html#ab9333b3ff9c0372c1bf8af57a449c3b0" title="Transition image layout using a pipeline barrier." alt="" coords="285,91,532,131"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="238,90,272,93,271,99,237,95"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1BackendResourceManager_a5dcf25547288ef33225a71929a05c358.html#a5dcf25547288ef33225a71929a05c358" title="Execute immediate command recording for buffer operations." alt="" coords="580,84,827,139"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="532,109,566,109,566,114,532,114"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Core_1_1VKCommandManager_a8e859b77baae66a4cad3578d2a863f76.html#a8e859b77baae66a4cad3578d2a863f76" title="Begin single&#45;time command (for transfers, etc.)" alt="" coords="875,5,1091,60"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="800,81,871,61,873,66,802,86"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Core_1_1VKCommandManager_a37f459a66acc77d0b833ab5a993f8253.html#a37f459a66acc77d0b833ab5a993f8253" title="End and submit single&#45;time command." alt="" coords="875,84,1091,139"/>
+<area shape="poly" id="edge6_Node000004_Node000007" title=" " alt="" coords="827,109,861,109,861,114,827,114"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Core_1_1VKContext_a87b4589aa8858027f09e7370552b4d50.html#a87b4589aa8858027f09e7370552b4d50" title="Get graphics queue." alt="" coords="883,163,1083,203"/>
+<area shape="poly" id="edge8_Node000004_Node000009" title=" " alt="" coords="811,136,892,157,891,162,809,141"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Core_1_1VKCommandManager_ab25f2104b7f013fca0c7876ade0632b5.html#ab25f2104b7f013fca0c7876ade0632b5" title="Allocate a command buffer with specified level." alt="" coords="1139,13,1395,53"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="1091,30,1125,30,1125,35,1091,35"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Core_1_1VKCommandManager_a59f7b69e5c3f53d77c1c5e8f2e206d89.html#a59f7b69e5c3f53d77c1c5e8f2e206d89" title="Free a command buffer back to the pool." alt="" coords="1151,91,1382,131"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="1091,109,1137,109,1137,114,1091,114"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Core_1_1VKDevice_af1941d43ae76316ef044a61450e7aa1c.html#af1941d43ae76316ef044a61450e7aa1c" title="Get graphics queue." alt="" coords="1169,163,1364,203"/>
+<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="1083,181,1156,181,1156,186,1083,186"/>
+</map>

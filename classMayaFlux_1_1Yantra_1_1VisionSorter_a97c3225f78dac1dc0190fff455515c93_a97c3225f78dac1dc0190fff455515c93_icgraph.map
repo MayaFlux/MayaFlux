@@ -1,0 +1,9 @@
+<map id="MayaFlux::Yantra::VisionSorter::key_for_contour" name="MayaFlux::Yantra::VisionSorter::key_for_contour">
+<area shape="rect" id="Node000001" title=" " alt="" coords="467,45,649,85"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1VisionSorter_a8a42138a6dec55875a6d7190191f0b26.html#a8a42138a6dec55875a6d7190191f0b26" title=" " alt="" coords="236,13,419,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="453,53,418,48,419,43,454,48"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1VisionSorter_abc242972d61b959ec4ccbc1a8471433b.html#abc242972d61b959ec4ccbc1a8471433b" title=" " alt="" coords="236,77,419,117"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="454,82,419,87,418,81,453,77"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1VisionSorter_a483c2ee16a7b5c7475d69842a4505c24.html#a483c2ee16a7b5c7475d69842a4505c24" title="Internal execution method &#45; ComputeMatrix can access this." alt="" coords="5,5,188,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="223,35,188,35,188,30,223,30"/>
+</map>

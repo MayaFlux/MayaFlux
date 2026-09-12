@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Network::ParticleNetwork::is_compatible" name="MayaFlux::Nodes::Network::ParticleNetwork::is_compatible">
+<area shape="rect" id="Node000001" title="Whether an operator can serve as this network&#39;s primary." alt="" coords="252,13,484,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ParticleNetwork_a3194e1c3764102f30ffece92df9fa8e6.html#a3194e1c3764102f30ffece92df9fa8e6" title="Set active operator (runtime switching)" alt="" coords="5,5,204,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="238,35,204,35,204,30,238,30"/>
+</map>

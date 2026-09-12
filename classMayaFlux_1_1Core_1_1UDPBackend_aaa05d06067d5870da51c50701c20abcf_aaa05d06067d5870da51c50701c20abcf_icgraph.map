@@ -1,0 +1,9 @@
+<map id="MayaFlux::Core::UDPBackend::start_receive_loop" name="MayaFlux::Core::UDPBackend::start_receive_loop">
+<area shape="rect" id="Node000001" title="Post the first async_receive_from for a newly bound socket." alt="" coords="531,37,745,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1UDPBackend_a3e9dececf9b1c5cd93c3f5bf293d7635.html#a3e9dececf9b1c5cd93c3f5bf293d7635" title="Get or create a socket bound to local_port." alt="" coords="268,5,483,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="517,45,483,41,483,36,518,40"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1UDPBackend_a09994a3efeb179e7d895adf8f8a2b5c8.html#a09994a3efeb179e7d895adf8f8a2b5c8" title="Completion handler for async_receive_from." alt="" coords="268,69,483,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="518,75,483,79,483,74,517,69"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1UDPBackend_a583ade68fa454bcb4e9fdc20b47de0fa.html#a583ade68fa454bcb4e9fdc20b47de0fa" title="Open a new endpoint." alt="" coords="5,5,220,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="255,28,220,28,220,23,255,23"/>
+</map>

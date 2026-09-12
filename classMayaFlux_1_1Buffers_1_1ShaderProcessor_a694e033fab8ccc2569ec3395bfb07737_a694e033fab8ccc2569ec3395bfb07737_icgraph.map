@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::ShaderProcessor::on_before_execute" name="MayaFlux::Buffers::ShaderProcessor::on_before_execute">
+<area shape="rect" id="Node000001" title="Called before each process callback." alt="" coords="261,45,416,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1ComputeProcessor_a73dacb014d3d5c7ad1f060fad72f8681.html#a73dacb014d3d5c7ad1f060fad72f8681" title=" " alt="" coords="8,5,211,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="247,59,210,53,211,48,248,54"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a89618010c366c34c7e4c7968750175ae.html#a89618010c366c34c7e4c7968750175ae" title="The core processing function that must be implemented by derived classes." alt="" coords="5,84,213,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="248,91,214,96,213,91,247,85"/>
+</map>

@@ -1,0 +1,29 @@
+<map id="MayaFlux::Kakshya::variant_bytes_mutable" name="MayaFlux::Kakshya::variant_bytes_mutable">
+<area shape="rect" id="Node000001" title="Get a mutable pointer to the raw bytes of a DataVariant and its size." alt="" coords="1356,220,1528,260"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1TextureContainer_a743c8eb163bc2f1f4b2d7144c5b7c636.html#a743c8eb163bc2f1f4b2d7144c5b7c636" title="Download pixel data from a VKImage, reusing a caller&#45;supplied persistent staging buffer." alt="" coords="1088,5,1308,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1423,209,1404,173,1378,133,1345,93,1306,60,1286,48,1288,43,1310,55,1349,90,1382,130,1408,171,1428,206"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1TextureContainer_af846db567bccbf9b74c0cbc0c406dc87.html#af846db567bccbf9b74c0cbc0c406dc87" title="Download pixel data from a VKImage into this container." alt="" coords="1088,69,1308,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="1412,212,1366,166,1337,143,1307,124,1281,112,1283,107,1309,119,1340,139,1369,162,1416,208"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1TextureContainer_a63aaa8f2c2773786001693a7da089cb9.html#a63aaa8f2c2773786001693a7da089cb9" title="Download each array layer of a Vulkan 2D array image into the corresponding layer slot." alt="" coords="1112,134,1284,189"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="1365,218,1283,191,1284,186,1367,213"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1TextureContainer_a9a8cbe115b3a38fb535f5655f888e0a9.html#a9a8cbe115b3a38fb535f5655f888e0a9" title="Download all array layers from a VKImage, reusing a caller&#45;supplied persistent staging buffer." alt="" coords="1112,213,1284,267"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="1342,243,1284,243,1284,237,1342,237"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1CameraContainer_a3d034660e3afa9b25cf278cde4c62a5b.html#a3d034660e3afa9b25cf278cde4c62a5b" title="Mutable pointer into m_data[0] for the caller to write decoded pixels." alt="" coords="1099,291,1297,346"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="1367,267,1284,294,1283,289,1365,262"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_a26041c92754b0feb5214c3b34c1f0765.html#a26041c92754b0feb5214c3b34c1f0765" title="Mutable pointer into m_data[0] for the decode thread to write into." alt="" coords="1113,370,1283,425"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="1415,272,1368,317,1309,361,1284,374,1282,369,1307,356,1365,313,1412,268"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Kakshya_1_1TextureContainer_adbcf090e9f3a00c470c6aebf9170f363.html#adbcf090e9f3a00c470c6aebf9170f363" title="Read&#45;write byte&#45;level view over the pixel buffer." alt="" coords="1091,449,1305,489"/>
+<area shape="poly" id="edge14_Node000001_Node000013" title=" " alt="" coords="1430,274,1411,312,1385,357,1351,401,1310,439,1289,451,1287,447,1306,435,1347,398,1380,354,1406,310,1425,271"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1IO_1_1VideoFileReader_a06dbdf6b0f46662e6787d74f094e96dd.html#a06dbdf6b0f46662e6787d74f094e96dd" title="Decode up to batch_size frames starting at m_decode_head." alt="" coords="817,377,1040,417"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="1099,400,1040,400,1040,395,1099,395"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1IO_1_1VideoFileReader_a954440a576c3a9d5ff91202c4c62fb2c.html#a954440a576c3a9d5ff91202c4c62fb2c" title=" " alt="" coords="547,377,769,417"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="804,400,770,400,770,395,804,395"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1IO_1_1VideoFileReader_a78b6b19d6d9126250ded73ea4b7b6629.html#a78b6b19d6d9126250ded73ea4b7b6629" title="Load file data into an existing container." alt="" coords="5,333,228,373"/>
+<area shape="poly" id="edge12_Node000008_Node000011" title=" " alt="" coords="829,377,769,368,623,356,477,351,228,352,228,347,477,346,623,351,770,363,830,372"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1IO_1_1VideoFileReader_a67253a8d5bd744aa898d4f44b6814c95.html#a67253a8d5bd744aa898d4f44b6814c95" title="Seek to a specific position in the file." alt="" coords="5,409,228,449"/>
+<area shape="poly" id="edge13_Node000008_Node000012" title=" " alt="" coords="831,423,770,432,623,442,477,445,228,439,228,433,477,439,623,437,769,427,831,417"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1IO_1_1VideoFileReader_a12ac2bea1489c574b3eedb216bb1d18c.html#a12ac2bea1489c574b3eedb216bb1d18c" title=" " alt="" coords="276,377,499,417"/>
+<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="533,400,499,400,499,395,533,395"/>
+<area shape="poly" id="edge10_Node000010_Node000011" title=" " alt="" coords="262,380,228,374,229,369,263,374"/>
+<area shape="poly" id="edge11_Node000010_Node000012" title=" " alt="" coords="263,415,228,419,228,414,262,409"/>
+</map>

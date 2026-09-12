@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::curvature" name="MayaFlux::Kinesis::curvature">
+<area shape="rect" id="Node000001" title="Signed curvature from velocity and acceleration." alt="" coords="5,5,155,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_a5a68bb1b00949f806902a3fd6db1dbd5.html#a5a68bb1b00949f806902a3fd6db1dbd5" title="2D scalar cross product, sign of turn direction" alt="" coords="203,5,352,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="155,23,189,23,189,28,155,28"/>
+</map>

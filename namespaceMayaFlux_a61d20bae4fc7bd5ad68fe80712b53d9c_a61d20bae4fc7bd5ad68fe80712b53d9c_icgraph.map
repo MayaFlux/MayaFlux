@@ -1,0 +1,5 @@
+<map id="MayaFlux::rms" name="MayaFlux::rms">
+<area shape="rect" id="Node000001" title="Calculate RMS (Root Mean Square) energy of single&#45;channel data." alt="" coords="244,5,363,31"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_a9ab298b5816aefaf4e1e6f8f076a82d9.html#a9ab298b5816aefaf4e1e6f8f076a82d9" title="Calculate RMS energy across all channels (mix then analyze)" alt="" coords="5,5,196,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="230,21,196,21,196,15,230,15"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Yantra::TextureExecutionContext::ImageSlot" name="MayaFlux::Yantra::TextureExecutionContext::ImageSlot">
+<area shape="rect" id="Node000001" title="One declared image binding: its GpuBufferBinding descriptor, the currently staged VKImage,..." alt="" coords="5,248,208,368"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Portal_1_1Graphics_1_1GpuBufferBinding.html" title="Declares a single storage buffer or image binding a compute shader expects." alt="" coords="12,5,201,185"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="109,186,109,232,104,232,104,186"/>
+</map>

@@ -1,0 +1,9 @@
+<map id="MayaFlux::Nodes::Generator::LogicContextGpu" name="MayaFlux::Nodes::Generator::LogicContextGpu">
+<area shape="rect" id="Node000001" title="GPU&#45;accelerated context for logic node callbacks." alt="" coords="135,627,335,707"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1LogicContext.html" title=" " alt="" coords="15,179,215,579"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="207,591,222,626,217,628,202,593"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1NodeContext.html" title="Base context class for node callbacks." alt="" coords="5,5,225,131"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="118,145,118,178,113,178,113,145"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1GpuVectorData.html" title="GPU&#45;uploadable 1D array data interface." alt="" coords="240,306,473,451"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="323,465,254,628,249,626,319,463"/>
+</map>

@@ -1,0 +1,18 @@
+<map id="MayaFlux::Buffers::VolumeGridBuffer::get_cell_count" name="MayaFlux::Buffers::VolumeGridBuffer::get_cell_count">
+<area shape="rect" id="Node000001" title="Total cell count." alt="" coords="555,142,721,197"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VolumeGridBuffer_a340225e4bfa6ab8c3620e1f5f4abdd70.html#a340225e4bfa6ab8c3620e1f5f4abdd70" title="Allocate one field&#39;s slots and register it." alt="" coords="275,5,507,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="600,134,557,95,505,60,479,48,481,43,508,55,560,91,604,130"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VolumeGridBuffer_aeb3c956e2f1d7c0e6cfc613e056f4b8f.html#aeb3c956e2f1d7c0e6cfc613e056f4b8f" title="Byte size of one slot of the named field, or 0 if undeclared." alt="" coords="307,70,474,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="541,144,474,124,475,119,542,139"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1VolumeGridBuffer_aa60ed3c879142afdc9251878925ddfe8.html#aa60ed3c879142afdc9251878925ddfe8" title="Copy the current read slot of a field to host memory." alt="" coords="286,149,495,189"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="541,172,496,172,496,167,541,167"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1VolumeGridBuffer_a21d2cb1113ad56dd1644e8ad49703aa2.html#a21d2cb1113ad56dd1644e8ad49703aa2" title="Read several fields&#39; current values into host memory at once." alt="" coords="303,214,478,269"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="542,200,479,219,477,213,541,195"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1VolumeGridBuffer_ae2929af740ac4ec6b8e076844ac64b2c.html#ae2929af740ac4ec6b8e076844ac64b2c" title="Write initial values into a field from raw host memory." alt="" coords="287,293,494,333"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="604,209,560,248,508,284,481,296,479,291,505,279,557,244,600,205"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1VolumeGridBuffer_a773ec1e7a228ad23abc879801b7a283b.html#a773ec1e7a228ad23abc879801b7a283b" title="Add sampled values into a scalar field." alt="" coords="5,189,227,229"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="272,189,227,196,227,191,272,184"/>
+<area shape="poly" id="edge7_Node000007_Node000005" title=" " alt="" coords="297,292,274,284,211,258,156,232,158,227,213,253,276,279,299,287"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Buffers_1_1VolumeGridBuffer_a63ecfa245dd0267774d87f711c1e50a0.html#a63ecfa245dd0267774d87f711c1e50a0" title="Write initial values into a scalar field from a Kinesis field." alt="" coords="28,293,204,333"/>
+<area shape="poly" id="edge8_Node000007_Node000008" title=" " alt="" coords="274,316,204,316,204,311,274,311"/>
+</map>

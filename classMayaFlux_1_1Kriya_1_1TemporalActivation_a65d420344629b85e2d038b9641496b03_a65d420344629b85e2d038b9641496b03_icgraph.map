@@ -1,0 +1,14 @@
+<map id="MayaFlux::Kriya::TemporalActivation::cleanup_current_operation" name="MayaFlux::Kriya::TemporalActivation::cleanup_current_operation">
+<area shape="rect" id="Node000001" title="Cleans up the current operation, disconnecting the entity and resetting state." alt="" coords="507,79,707,134"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kriya_1_1TemporalActivation_ab4f3737fb0465e8727586b7104b95fc2.html#ab4f3737fb0465e8727586b7104b95fc2" title="Activates a buffer for a specified duration." alt="" coords="12,5,208,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="539,76,499,60,458,48,394,36,328,29,208,25,208,20,329,24,395,31,459,43,501,55,541,71"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kriya_1_1TemporalActivation_a5472441ec2fd9cc067e55eb8f48f1a6d.html#a5472441ec2fd9cc067e55eb8f48f1a6d" title="Activates a node network for a specified duration." alt="" coords="5,73,215,113"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="493,112,459,112,361,114,263,112,215,108,215,103,263,107,361,109,459,107,493,106"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kriya_1_1TemporalActivation_ab218a3ead3d97c0a677ad3b3f0fad462.html#ab218a3ead3d97c0a677ad3b3f0fad462" title="Activates a node for a specified duration." alt="" coords="12,147,208,187"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="493,123,209,158,208,152,493,118"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kriya_1_1TemporalActivation_aa48d4567cb873962947e3e270191b7d3.html#aa48d4567cb873962947e3e270191b7d3" title="Cancels any currently active node." alt="" coords="263,57,459,97"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="493,96,459,92,459,86,493,90"/>
+<area shape="poly" id="edge5_Node000005_Node000002" title=" " alt="" coords="250,57,206,48,207,43,251,52"/>
+<area shape="poly" id="edge6_Node000005_Node000003" title=" " alt="" coords="249,87,215,89,215,84,249,82"/>
+<area shape="poly" id="edge7_Node000005_Node000004" title=" " alt="" coords="292,105,168,149,166,144,290,99"/>
+</map>

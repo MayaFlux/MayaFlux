@@ -1,0 +1,5 @@
+<map id="MayaFlux::Vruta::SampleClock::current_time" name="MayaFlux::Vruta::SampleClock::current_time">
+<area shape="rect" id="Node000001" title="Converts current sample position to seconds." alt="" coords="5,5,228,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Vruta_ae0c8dba07be9c5bb1de354a581570e64.html#ae0c8dba07be9c5bb1de354a581570e64" title="Convert processing units to seconds for any rate." alt="" coords="276,5,445,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="228,23,262,23,262,28,228,28"/>
+</map>

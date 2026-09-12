@@ -1,0 +1,17 @@
+<map id="MayaFlux::Buffers::download_back_buffer" name="MayaFlux::Buffers::download_back_buffer">
+<area shape="rect" id="Node000001" title="Download a raw back_buffers slot to host memory." alt="" coords="5,84,173,124"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Buffers_afbc1cfc7e56592011b485d85c5769d6f.html#afbc1cfc7e56592011b485d85c5769d6f" title="Record a slot&#45;to&#45;staging copy without waiting for completion." alt="" coords="221,40,435,80"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="173,86,207,79,208,84,174,91"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Buffers_ac7562e9a3e4bfeda5e4dce28876c09e2.html#ac7562e9a3e4bfeda5e4dce28876c09e2" title="Wait for a recorded download, then copy it out of staging." alt="" coords="483,140,672,180"/>
+<area shape="poly" id="edge7_Node000001_Node000006" title=" " alt="" coords="174,111,469,145,469,150,173,116"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Buffers_a64c6abe8842e398d178e4275a4d4b404.html#a64c6abe8842e398d178e4275a4d4b404" title="Create staging buffer for transfers." alt="" coords="496,25,659,65"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="435,51,482,48,483,53,435,56"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_a0c7a59c0847791ed0915dcd64e8df783.html#a0c7a59c0847791ed0915dcd64e8df783" title="Query for a backend service." alt="" coords="737,11,904,66"/>
+<area shape="poly" id="edge5_Node000002_Node000004" title=" " alt="" coords="381,37,429,22,482,10,535,4,577,3,672,10,724,17,723,22,672,16,577,8,536,9,483,16,431,27,382,42"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aa28c6f5592e5893508bafb62aefcc496.html#aa28c6f5592e5893508bafb62aefcc496" title="Get the global registry instance." alt="" coords="720,90,921,130"/>
+<area shape="poly" id="edge6_Node000002_Node000005" title=" " alt="" coords="435,69,483,74,706,97,706,102,482,80,435,74"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="659,40,723,38,723,44,659,45"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="654,63,733,84,732,89,652,68"/>
+<area shape="poly" id="edge8_Node000006_Node000004" title=" " alt="" coords="609,137,719,76,734,69,737,74,721,81,612,142"/>
+<area shape="poly" id="edge9_Node000006_Node000005" title=" " alt="" coords="672,138,708,130,709,136,673,143"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Vruta::WindowEventSource" name="MayaFlux::Vruta::WindowEventSource">
+<area shape="rect" id="Node000001" title="Awaitable stream of GLFW window input events." alt="" coords="5,319,224,779"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Vruta_1_1EventSource.html" title="Abstract base for all awaitable signal sources." alt="" coords="9,5,220,271"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="117,284,117,319,112,319,112,284"/>
+</map>

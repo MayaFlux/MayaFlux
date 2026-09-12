@@ -1,0 +1,25 @@
+<map id="MayaFlux::Buffers::RenderProcessor::cleanup" name="MayaFlux::Buffers::RenderProcessor::cleanup">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,100,196,140"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a5066b7ac50552a50869a303adcb41d84.html#a5066b7ac50552a50869a303adcb41d84" title=" " alt="" coords="248,100,437,140"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="196,117,234,117,234,123,196,123"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a715d57394465ff2924727d7c82d87e7b.html#a715d57394465ff2924727d7c82d87e7b" title="Get the global shader compiler instance." alt="" coords="735,5,932,45"/>
+<area shape="poly" id="edge12_Node000001_Node000005" title=" " alt="" coords="188,97,243,85,366,60,489,41,609,31,721,25,721,31,609,36,490,47,367,65,245,91,189,103"/>
+<area shape="rect" id="Node000010" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a54c4e0f2eb44a261d8463e8423e3746d.html#a54c4e0f2eb44a261d8463e8423e3746d" title="Get the global render flow instance." alt="" coords="244,200,441,240"/>
+<area shape="poly" id="edge10_Node000001_Node000010" title=" " alt="" coords="151,138,282,192,280,197,149,143"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_af50ca0aa0cb7511c99eaf758430efdce.html#af50ca0aa0cb7511c99eaf758430efdce" title=" " alt="" coords="489,172,687,212"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="412,137,507,166,505,171,411,143"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="410,97,489,77,608,55,720,37,721,43,609,60,490,83,412,103"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_ac38468f8a2f97593dd7b88fd31063bed.html#ac38468f8a2f97593dd7b88fd31063bed" title="Resolve an outstanding asynchronous submission." alt="" coords="495,93,681,147"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="437,117,481,117,481,123,437,123"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ComputePress_a89b259adf28ef041294928959e03fa9c.html#a89b259adf28ef041294928959e03fa9c" title=" " alt="" coords="735,228,932,268"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="677,209,733,222,731,228,676,215"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ab22eaae6b8210236918b85f409fc4c49.html#ab22eaae6b8210236918b85f409fc4c49" title=" " alt="" coords="980,5,1177,45"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="932,23,966,23,966,28,932,28"/>
+<area shape="poly" id="edge7_Node000007_Node000005" title=" " alt="" coords="649,90,734,55,755,47,757,52,736,60,651,95"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_ac68d47c3acf25f5a69dbba4fc6b82a7f.html#ac68d47c3acf25f5a69dbba4fc6b82a7f" title="True while an asynchronous submission is outstanding." alt="" coords="759,149,908,203"/>
+<area shape="poly" id="edge8_Node000007_Node000008" title=" " alt="" coords="682,139,746,153,745,159,681,144"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_ab674b8ea0cbd04326fcd10b02184ae56.html#ab674b8ea0cbd04326fcd10b02184ae56" title="Called once when an asynchronous submission is observed complete." alt="" coords="756,70,911,125"/>
+<area shape="poly" id="edge9_Node000007_Node000009" title=" " alt="" coords="681,109,742,103,743,108,682,114"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1RenderFlow_a427f34bcec94e920d4dbbb76ae7f175f.html#a427f34bcec94e920d4dbbb76ae7f175f" title=" " alt="" coords="489,236,687,276"/>
+<area shape="poly" id="edge11_Node000010_Node000011" title=" " alt="" coords="442,232,476,237,475,242,441,237"/>
+</map>

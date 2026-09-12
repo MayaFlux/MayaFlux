@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::VKBuffer::get_device_address" name="MayaFlux::Buffers::VKBuffer::get_device_address">
+<area shape="rect" id="Node000001" title="Get the Vulkan device address for this buffer (if applicable)" alt="" coords="5,77,164,132"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_a0c7a59c0847791ed0915dcd64e8df783.html#a0c7a59c0847791ed0915dcd64e8df783" title="Query for a backend service." alt="" coords="229,5,396,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="163,77,215,61,217,66,165,82"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aa28c6f5592e5893508bafb62aefcc496.html#aa28c6f5592e5893508bafb62aefcc496" title="Get the global registry instance." alt="" coords="212,85,413,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="164,102,198,102,198,107,164,107"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_ab2774aad8e6ca3ee02ff9b31c2f8f6f7.html#ab2774aad8e6ca3ee02ff9b31c2f8f6f7" title="Check whether Vulkan handles are present (buffer registered)" alt="" coords="228,149,397,189"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="165,124,228,142,227,147,163,129"/>
+</map>

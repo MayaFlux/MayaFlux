@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::VKContext::get_instance" name="MayaFlux::Core::VKContext::get_instance">
+<area shape="rect" id="Node000001" title="Get Vulkan instance." alt="" coords="5,5,205,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1VKInstance_ad5009d0f849278358ae38dcc785627d6.html#ad5009d0f849278358ae38dcc785627d6" title="Get the Vulkan instance handle." alt="" coords="253,5,459,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="205,23,240,23,240,28,205,28"/>
+</map>

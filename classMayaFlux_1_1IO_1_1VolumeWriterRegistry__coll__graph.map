@@ -1,0 +1,3 @@
+<map id="MayaFlux::IO::VolumeWriterRegistry" name="MayaFlux::IO::VolumeWriterRegistry">
+<area shape="rect" id="Node000001" title="Singleton registry dispatching volume writes by file extension." alt="" coords="5,5,216,145"/>
+</map>

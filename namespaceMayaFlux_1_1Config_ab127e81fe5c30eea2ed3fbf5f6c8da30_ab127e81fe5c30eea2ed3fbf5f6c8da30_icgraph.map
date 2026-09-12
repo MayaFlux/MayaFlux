@@ -1,0 +1,10 @@
+<map id="MayaFlux::Config::set_journal_severity" name="MayaFlux::Config::set_journal_severity">
+<area shape="rect" id="Node000001" title="Sets the minimum severity level for journal entries to be logged." alt="" coords="551,5,713,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Config_a926b14a6baa31cfcd77dcb32ca8a2417.html#a926b14a6baa31cfcd77dcb32ca8a2417" title="Load engine configuration from a JSON file, applying any present fields to the pre&#45;Init config struct..." alt="" coords="108,5,279,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="537,25,503,24,327,24,279,25,279,20,327,19,503,19,537,19"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Config_aaf8d14451b8ad0864f0c0d7ea315a2c9.html#aaf8d14451b8ad0864f0c0d7ea315a2c9" title="Stores journal entries to a file by adding a FileSink to the Archivist." alt="" coords="327,33,503,73"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="537,40,503,45,502,39,536,35"/>
+<area shape="rect" id="Node000003" href="$main_8cpp_a0ddf1224851353fc92bfbff6f499fa97.html#a0ddf1224851353fc92bfbff6f499fa97" title=" " alt="" coords="5,13,60,38"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="94,28,60,28,60,23,94,23"/>
+<area shape="poly" id="edge4_Node000004_Node000002" title=" " alt="" coords="313,43,279,39,279,33,313,38"/>
+</map>

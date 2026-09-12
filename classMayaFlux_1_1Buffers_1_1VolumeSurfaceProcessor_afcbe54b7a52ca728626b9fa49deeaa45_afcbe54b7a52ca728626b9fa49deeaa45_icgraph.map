@@ -1,0 +1,8 @@
+<map id="MayaFlux::Buffers::VolumeSurfaceProcessor::corner_count" name="MayaFlux::Buffers::VolumeSurfaceProcessor::corner_count">
+<area shape="rect" id="Node000001" title="Corner count of the grid, one greater per axis than the extraction resolution." alt="" coords="475,39,657,93"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VolumeSurfaceProcessor_a3f37e240eb92e4b3f89271ff27a4cb32.html#a3f37e240eb92e4b3f89271ff27a4cb32" title="Allocate the corner grid buffer for the current resolution." alt="" coords="244,5,427,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="461,54,426,48,427,43,462,48"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VolumeSurfaceProcessor_a8f0a252a3199565aeb2382371663e1dd.html#a8f0a252a3199565aeb2382371663e1dd" title="Construct a surface extraction bridge." alt="" coords="5,39,196,93"/>
+<area shape="poly" id="edge3_Node000001_Node000003" title=" " alt="" coords="461,73,427,74,244,74,196,73,196,67,244,69,427,69,461,68"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="231,50,197,55,196,50,230,45"/>
+</map>

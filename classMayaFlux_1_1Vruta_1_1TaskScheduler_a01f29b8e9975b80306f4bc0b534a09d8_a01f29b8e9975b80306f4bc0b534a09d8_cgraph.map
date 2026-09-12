@@ -1,0 +1,21 @@
+<map id="MayaFlux::Vruta::TaskScheduler::add_task" name="MayaFlux::Vruta::TaskScheduler::add_task">
+<area shape="rect" id="Node000001" title="Add a routine to the scheduler based on its processing token." alt="" coords="5,127,236,167"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a56a711df9c3a3f4e569e036ea6980559.html#a56a711df9c3a3f4e569e036ea6980559" title="Generate automatic name for a routine based on its type." alt="" coords="284,5,515,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="152,124,211,90,283,55,304,47,306,52,285,60,214,94,155,129"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a81c68c47d8ac2ce8f736f8d35f4fe20c.html#a81c68c47d8ac2ce8f736f8d35f4fe20c" title="Initialize a processing domain if it doesn&#39;t exist." alt="" coords="284,69,515,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="218,124,288,110,289,115,219,129"/>
+<area shape="rect" id="Node000006" href="$main_8cpp_a25a40b6614565f755233080a384c35f1.html#a25a40b6614565f755233080a384c35f1" title=" " alt="" coords="360,134,439,159"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="236,144,346,144,346,149,236,149"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a09eae60c02e878e614b69c8ead276f14.html#a09eae60c02e878e614b69c8ead276f14" title="Initialize a routine&#39;s state for a specific domain." alt="" coords="284,184,515,224"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="219,164,289,179,288,184,218,169"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a4346f248dffefc61f410100f2812553a.html#a4346f248dffefc61f410100f2812553a" title="Start the conditional task processing thread if not already running." alt="" coords="284,248,515,288"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="155,164,214,199,285,234,306,241,304,246,283,238,211,204,152,169"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a8c97edc92dee77f6fc9b6030a14637e7.html#a8c97edc92dee77f6fc9b6030a14637e7" title="Generates a unique task ID for new tasks." alt="" coords="563,5,793,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="515,23,549,23,549,28,515,28"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a219ff6ebd74ddb638ccf403556a0168c.html#a219ff6ebd74ddb638ccf403556a0168c" title="Get the default rate for a processing token." alt="" coords="563,69,793,109"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="515,87,549,87,549,92,515,92"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a5a9f9fef1e94f2fe4bbd01b9773dbf87.html#a5a9f9fef1e94f2fe4bbd01b9773dbf87" title="Pump the conditional task list in a separate thread." alt="" coords="563,248,793,288"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="515,265,549,265,549,271,515,271"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_af8c8a82e6c4d76ffd846dc4bef4d8301.html#af8c8a82e6c4d76ffd846dc4bef4d8301" title="Drain pending conditional task operations before processing." alt="" coords="841,248,1072,288"/>
+<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="794,265,828,265,828,271,794,271"/>
+</map>

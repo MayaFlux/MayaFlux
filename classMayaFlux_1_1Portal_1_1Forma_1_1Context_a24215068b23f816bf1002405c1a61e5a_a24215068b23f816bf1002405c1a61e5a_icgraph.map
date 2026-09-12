@@ -1,0 +1,5 @@
+<map id="MayaFlux::Portal::Forma::Context::wire_drag" name="MayaFlux::Portal::Forma::Context::wire_drag">
+<area shape="rect" id="Node000001" title="Register a drag handler receiving only the cursor position." alt="" coords="235,5,416,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_afe922a07ca998f1e8a4a280bf879c46e.html#afe922a07ca998f1e8a4a280bf879c46e" title="Register a drag handler writing a projected cursor position to state." alt="" coords="5,5,187,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="221,28,187,28,187,23,221,23"/>
+</map>

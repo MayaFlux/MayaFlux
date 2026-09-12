@@ -1,0 +1,9 @@
+<map id="MayaFlux::Core::VKDevice::get_preferred_present_queue" name="MayaFlux::Core::VKDevice::get_preferred_present_queue">
+<area shape="rect" id="Node000001" title="Queue for the preferred presentation family." alt="" coords="5,37,227,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1VKDevice_ae64dd96c03c88d3d48816511416f7726.html#ae64dd96c03c88d3d48816511416f7726" title="Queue for a presentation&#45;capable family." alt="" coords="298,5,493,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="226,42,284,35,285,41,227,47"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Core_1_1QueueFamilyIndices_ab1a52c36355a94436e7a90be057597bf.html#ab1a52c36355a94436e7a90be057597bf" title="Family the engine presents on by default." alt="" coords="275,69,516,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="227,67,261,71,261,77,226,73"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Core_1_1QueueFamilyIndices_a41911ae0be87c9df51c23b22ef317678.html#a41911ae0be87c9df51c23b22ef317678" title="Whether family index can present." alt="" coords="564,69,781,109"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="516,87,550,87,550,92,516,92"/>
+</map>

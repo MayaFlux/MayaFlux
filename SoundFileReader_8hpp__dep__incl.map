@@ -1,0 +1,23 @@
+<map id="SoundFileReader.hpp" name="SoundFileReader.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="314,5,473,31"/>
+<area shape="rect" id="Node000002" href="$SoundFileReader_8cpp.html" title=" " alt="" coords="225,79,383,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="370,41,320,81,317,76,367,37"/>
+<area shape="rect" id="Node000003" href="$VideoFileReader_8hpp.html" title=" " alt="" coords="407,79,561,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="420,37,471,76,468,81,417,41"/>
+<area shape="rect" id="Node000004" href="$IOManager_8hpp.html" title=" " alt="" coords="343,152,463,177"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="462,115,418,154,414,150,459,111"/>
+<area shape="rect" id="Node000011" href="$VideoFileReader_8cpp.html" title=" " alt="" coords="487,152,641,177"/>
+<area shape="poly" id="edge10_Node000003_Node000011" title=" " alt="" coords="509,111,553,150,549,154,505,115"/>
+<area shape="rect" id="Node000005" href="$BufferOperation_8cpp.html" title=" " alt="" coords="5,225,157,251"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="338,183,134,228,133,223,337,178"/>
+<area shape="rect" id="Node000006" href="$Creator_8cpp.html" title=" " alt="" coords="181,225,277,251"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="363,185,259,228,257,223,361,180"/>
+<area shape="rect" id="Node000007" href="$Depot_8cpp.html" title=" " alt="" coords="301,225,389,251"/>
+<area shape="poly" id="edge6_Node000004_Node000007" title=" " alt="" coords="387,190,357,227,353,224,383,186"/>
+<area shape="rect" id="Node000008" href="$Engine_8cpp.html" title=" " alt="" coords="413,225,507,251"/>
+<area shape="poly" id="edge7_Node000004_Node000008" title=" " alt="" coords="423,186,453,224,449,227,418,190"/>
+<area shape="rect" id="Node000009" href="$IOManager_8cpp.html" title=" " alt="" coords="531,225,650,251"/>
+<area shape="poly" id="edge8_Node000004_Node000009" title=" " alt="" coords="446,180,561,223,559,228,445,185"/>
+<area shape="rect" id="Node000010" href="$Rigs_8cpp.html" title=" " alt="" coords="673,225,751,251"/>
+<area shape="poly" id="edge9_Node000004_Node000010" title=" " alt="" coords="466,178,663,223,674,225,673,230,662,228,465,183"/>
+</map>

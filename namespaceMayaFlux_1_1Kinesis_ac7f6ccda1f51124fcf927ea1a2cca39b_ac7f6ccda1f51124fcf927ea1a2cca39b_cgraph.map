@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::angular_velocity" name="MayaFlux::Kinesis::angular_velocity">
+<area shape="rect" id="Node000001" title="Angular velocity from consecutive headings in a HistoryBuffer." alt="" coords="5,5,155,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_a24e6b15161d46e1f90ac3bce7c503498.html#a24e6b15161d46e1f90ac3bce7c503498" title="Shortest signed angular difference between two headings." alt="" coords="203,5,352,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="155,23,189,23,189,28,155,28"/>
+</map>

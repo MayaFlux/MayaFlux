@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kriya::BufferCapture::on_data_ready" name="MayaFlux::Kriya::BufferCapture::on_data_ready">
+<area shape="rect" id="Node000001" title="Set callback for when captured data is ready." alt="" coords="240,5,467,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kriya_1_1CaptureBuilder_a010bca41df27b5ee6cf40e87428fdc9b.html#a010bca41df27b5ee6cf40e87428fdc9b" title="Set data ready callback." alt="" coords="5,5,192,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="226,28,192,28,192,23,226,23"/>
+</map>

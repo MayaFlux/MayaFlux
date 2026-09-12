@@ -1,0 +1,5 @@
+<map id="MayaFlux::live_cast_impl" name="MayaFlux::live_cast_impl">
+<area shape="rect" id="Node000001" title="Internal implementation for live_cast." alt="" coords="205,5,393,31"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_a8096eed31bb3e0b19e7a7b65e84f11a2.html#a8096eed31bb3e0b19e7a7b65e84f11a2" title="Retrieves a live&#45;arena object by key as a shared_ptr&lt;T&gt;." alt="" coords="5,5,157,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="191,21,158,21,158,15,191,15"/>
+</map>

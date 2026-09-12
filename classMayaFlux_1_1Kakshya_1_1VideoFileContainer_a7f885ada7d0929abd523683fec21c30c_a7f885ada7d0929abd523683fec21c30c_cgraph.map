@@ -1,0 +1,11 @@
+<map id="MayaFlux::Kakshya::VideoFileContainer::get_duration_seconds" name="MayaFlux::Kakshya::VideoFileContainer::get_duration_seconds">
+<area shape="rect" id="Node000001" title="Total duration in seconds." alt="" coords="5,124,169,179"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_a431d4f8e552a9632e5f93cb90d3613bc.html#a431d4f8e552a9632e5f93cb90d3613bc" title="Get the number of frames in the primary (temporal) dimension." alt="" coords="228,5,397,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="127,122,216,69,227,63,230,68,219,74,130,126"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_ad3bf57ef175a27594bc76e90767acf59.html#ad3bf57ef175a27594bc76e90767acf59" title=" " alt="" coords="217,84,408,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="169,134,203,128,204,133,170,139"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_a5d3384d0e8be81255720b8733e49d47e.html#a5d3384d0e8be81255720b8733e49d47e" title="True if the container is operating in ring mode." alt="" coords="228,163,397,217"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="170,163,215,171,214,176,169,168"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_ab07295139e2fa383643236ab9b7df3f0.html#ab07295139e2fa383643236ab9b7df3f0" title="Convert from position units (e.g., frame/sample index) to time (seconds)." alt="" coords="228,241,397,296"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="133,177,219,226,232,233,230,238,216,231,130,181"/>
+</map>

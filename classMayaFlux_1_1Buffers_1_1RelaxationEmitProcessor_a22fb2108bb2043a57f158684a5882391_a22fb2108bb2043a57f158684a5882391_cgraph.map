@@ -1,0 +1,11 @@
+<map id="MayaFlux::Buffers::RelaxationEmitProcessor::processing_function" name="MayaFlux::Buffers::RelaxationEmitProcessor::processing_function">
+<area shape="rect" id="Node000001" title="Write the cell_state and vertices descriptors for the grid&#39;s current front generation,..." alt="" coords="5,77,191,132"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a9ae0c6aae9589585fd6f2e3fd3cea7bb.html#a9ae0c6aae9589585fd6f2e3fd3cea7bb" title="Check if descriptors are initialized." alt="" coords="261,5,419,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="190,75,247,57,249,63,191,80"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a715d57394465ff2924727d7c82d87e7b.html#a715d57394465ff2924727d7c82d87e7b" title="Get the global shader compiler instance." alt="" coords="241,85,439,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="191,102,228,102,228,107,191,107"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1BufferProcessor_affdb219994d3337c3deafa77e7bc4017.html#affdb219994d3337c3deafa77e7bc4017" title="The core processing function that must be implemented by derived classes." alt="" coords="239,149,441,204"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="191,130,236,143,234,148,190,135"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ab22eaae6b8210236918b85f409fc4c49.html#ab22eaae6b8210236918b85f409fc4c49" title=" " alt="" coords="489,85,687,125"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="439,102,475,102,475,107,439,107"/>
+</map>

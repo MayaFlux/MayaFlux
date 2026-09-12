@@ -1,0 +1,112 @@
+<map id="MayaFlux::Kinesis::Discrete::normalize" name="MayaFlux::Kinesis::Discrete::normalize">
+<area shape="rect" id="Node000001" title="Normalize to [target_min, target_max] in&#45;place Single&#45;pass min/max reduction followed by a single tra..." alt="" coords="1771,282,1920,322"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_a29087d569a277984911060e08c53ee50.html#a29087d569a277984911060e08c53ee50" title=" " alt="" coords="1198,5,1357,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1804,276,1730,226,1630,163,1514,99,1391,45,1354,33,1355,28,1393,39,1516,94,1633,159,1733,221,1807,272"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_a878fe1820a72f64efebc516b1749f77d.html#a878fe1820a72f64efebc516b1749f77d" title="Normalize single&#45;channel data to specified peak level (in&#45;place)" alt="" coords="1502,264,1661,289"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="1756,305,1636,292,1637,287,1757,299"/>
+<area shape="rect" id="Node000013" href="$namespaceMayaFlux_aa8d1afde2a88efd1d200471e4014d0cc.html#aa8d1afde2a88efd1d200471e4014d0cc" title=" " alt="" coords="1498,313,1665,339"/>
+<area shape="poly" id="edge18_Node000001_Node000013" title=" " alt="" coords="1757,313,1665,321,1665,316,1757,307"/>
+<area shape="rect" id="Node000014" href="$namespaceMayaFlux_ac8ded33a4e354a3259e25ea984c19053.html#ac8ded33a4e354a3259e25ea984c19053" title="Normalize single&#45;channel data (non&#45;destructive)" alt="" coords="1498,616,1665,641"/>
+<area shape="poly" id="edge19_Node000001_Node000014" title=" " alt="" coords="1821,335,1595,618,1591,614,1817,331"/>
+<area shape="rect" id="Node000051" href="$classMayaFlux_1_1Yantra_1_1MathematicalTransformer_a6e33d648c252e4cff7c42a3d50779efb.html#a6e33d648c252e4cff7c42a3d50779efb" title="Core transformation implementation." alt="" coords="1440,666,1723,706"/>
+<area shape="poly" id="edge59_Node000001_Node000051" title=" " alt="" coords="1845,336,1838,404,1819,490,1804,536,1783,580,1757,620,1724,656,1708,668,1705,664,1721,652,1753,617,1778,577,1799,534,1814,489,1833,403,1840,336"/>
+<area shape="poly" id="edge13_Node000003_Node000001" title=" " alt="" coords="1675,274,1771,284,1770,289,1675,280"/>
+<area shape="poly" id="edge12_Node000003_Node000002" title=" " alt="" coords="1554,257,1498,201,1438,130,1424,105,1417,83,1409,63,1390,44,1356,28,1358,23,1394,40,1413,60,1422,81,1429,103,1442,127,1502,198,1558,253"/>
+<area shape="poly" id="edge14_Node000003_Node000003" title=" " alt="" coords="1629,255,1626,250,1618,247,1581,243,1553,245,1538,250,1535,255,1543,262,1539,266,1529,256,1534,246,1552,239,1581,237,1619,241,1630,246,1633,252"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_a3921fb5f056354b7f6efe6eb10599c82.html#a3921fb5f056354b7f6efe6eb10599c82" title="Comprehensive multi&#45;channel analysis in single operation." alt="" coords="1172,55,1383,80"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="1557,255,1473,166,1427,123,1391,95,1360,83,1362,78,1393,90,1431,118,1477,162,1561,252"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a718383f1c65bd89371249e51a6170a28.html#a718383f1c65bd89371249e51a6170a28" title="Auto&#45;correlation via FFT." alt="" coords="1188,193,1367,233"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="1506,264,1366,234,1368,229,1507,259"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a6999262b0f729dbdf1076f3a63355188.html#a6999262b0f729dbdf1076f3a63355188" title="Cross&#45;correlation via FFT." alt="" coords="1186,105,1369,145"/>
+<area shape="poly" id="edge7_Node000003_Node000007" title=" " alt="" coords="1552,258,1481,209,1437,182,1391,159,1360,147,1362,142,1393,154,1439,178,1484,204,1555,254"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Nexus_1_1StateEncoder_ad8fc616eab6adf9f0af8ec03db3f3b3e.html#ad8fc616eab6adf9f0af8ec03db3f3b3e" title="Encode the given Fabric to {base_path}.exr and {base_path}.json." alt="" coords="1163,257,1392,297"/>
+<area shape="poly" id="edge11_Node000003_Node000009" title=" " alt="" coords="1488,279,1392,279,1392,274,1488,274"/>
+<area shape="rect" id="Node000010" href="$namespaceMayaFlux_1_1Kinesis_a269fc4f06783f4befa0c83bf8d565bcb.html#a269fc4f06783f4befa0c83bf8d565bcb" title="Normalize x in [lo, hi] to [0, 1], unclamped." alt="" coords="1203,321,1352,361"/>
+<area shape="poly" id="edge15_Node000003_Node000010" title=" " alt="" coords="1489,294,1441,303,1353,324,1352,319,1439,298,1488,289"/>
+<area shape="rect" id="Node000011" href="$namespaceMayaFlux_a6a020ef96480ab2d031f28a9d57a6626.html#a6a020ef96480ab2d031f28a9d57a6626" title="Normalize each channel independently to specified peak level (in&#45;place)" alt="" coords="1198,385,1357,425"/>
+<area shape="poly" id="edge16_Node000003_Node000011" title=" " alt="" coords="1489,284,1464,291,1442,303,1425,319,1418,337,1410,356,1394,375,1358,393,1356,388,1390,371,1406,353,1413,335,1421,316,1438,299,1462,287,1487,279"/>
+<area shape="rect" id="Node000012" href="$namespaceMayaFlux_ab68b941d16a78b529008447cb966a076.html#ab68b941d16a78b529008447cb966a076" title="Normalize each channel independently (non&#45;destructive)" alt="" coords="1194,449,1361,489"/>
+<area shape="poly" id="edge17_Node000003_Node000012" title=" " alt="" coords="1489,281,1464,289,1442,303,1428,318,1421,334,1418,368,1415,403,1408,421,1394,439,1362,458,1360,453,1390,435,1403,419,1410,402,1413,367,1416,333,1424,315,1438,299,1462,284,1488,276"/>
+<area shape="poly" id="edge5_Node000005_Node000005" title=" " alt="" coords="1326,181,1309,174,1277,171,1250,173,1233,178,1227,184,1230,191,1225,193,1221,183,1230,174,1249,168,1277,166,1310,169,1328,176"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Yantra_1_1ConvolutionTransformer_a9d070c72f78555559c94e86b6274fcab.html#a9d070c72f78555559c94e86b6274fcab" title="Applies the configured convolution operation." alt="" coords="536,135,819,175"/>
+<area shape="poly" id="edge6_Node000005_Node000006" title=" " alt="" coords="1174,212,1028,204,866,190,784,178,785,173,867,185,1029,199,1175,207"/>
+<area shape="poly" id="edge10_Node000007_Node000006" title=" " alt="" coords="1172,126,1115,126,990,122,936,122,867,126,778,138,777,133,866,121,936,117,991,117,1115,121,1172,121"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_af87d4b84d6d3f96cb339c7216db65678.html#af87d4b84d6d3f96cb339c7216db65678" title="Matched filter (normalised cross&#45;correlation)" alt="" coords="901,135,1080,175"/>
+<area shape="poly" id="edge8_Node000007_Node000008" title=" " alt="" coords="1173,138,1080,148,1080,143,1172,133"/>
+<area shape="poly" id="edge9_Node000008_Node000006" title=" " alt="" coords="888,158,819,158,819,153,888,153"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1Nodes_1_1Input_1_1HIDNode_aead79997c067cb55df35d99d61645983.html#aead79997c067cb55df35d99d61645983" title=" " alt="" coords="1176,641,1379,681"/>
+<area shape="poly" id="edge20_Node000014_Node000015" title=" " alt="" coords="1484,642,1379,653,1379,647,1484,636"/>
+<area shape="rect" id="Node000016" href="$classMayaFlux_1_1Nodes_1_1Input_1_1HIDNode_a9a5191762bc5b46f3fbfebdde29fb7a4.html#a9a5191762bc5b46f3fbfebdde29fb7a4" title="Parse axis value from HID report bytes." alt="" coords="903,698,1079,738"/>
+<area shape="poly" id="edge26_Node000014_Node000016" title=" " alt="" coords="1485,642,1441,656,1427,665,1418,676,1408,686,1393,695,1312,718,1229,730,1148,732,1079,730,1079,725,1148,727,1228,724,1311,713,1391,690,1405,682,1414,672,1424,661,1439,652,1484,637"/>
+<area shape="rect" id="Node000018" href="$classMayaFlux_1_1Nodes_1_1Network_1_1GraphicsOperator_a4ea0a4530c4a49dec79ca7c451d24cde.html#a4ea0a4530c4a49dec79ca7c451d24cde" title="Apply ONE_TO_ONE parameter mapping." alt="" coords="1178,763,1377,817"/>
+<area shape="poly" id="edge23_Node000014_Node000018" title=" " alt="" coords="1485,637,1462,645,1442,656,1425,675,1417,695,1410,716,1394,739,1356,765,1353,760,1390,735,1405,714,1412,693,1420,672,1438,652,1460,640,1484,632"/>
+<area shape="rect" id="Node000021" href="$classMayaFlux_1_1IO_1_1FileReader_a24d94d5bc8b4294d61f43ac86f933050.html#a24d94d5bc8b4294d61f43ac86f933050" title="Resolve a filepath against the project source root if not found as&#45;is." alt="" coords="1185,1145,1370,1185"/>
+<area shape="poly" id="edge27_Node000014_Node000021" title=" " alt="" coords="1486,634,1462,642,1442,656,1424,676,1413,695,1407,714,1405,734,1404,778,1395,831,1335,1014,1289,1145,1283,1144,1330,1012,1389,829,1398,777,1400,733,1402,713,1408,693,1420,673,1438,652,1460,638,1484,629"/>
+<area shape="rect" id="Node000036" href="$classMayaFlux_1_1IO_1_1JSONSerializer_aafeb5b85d67b9718834be8d6041d587b.html#aafeb5b85d67b9718834be8d6041d587b" title=" " alt="" coords="1173,513,1382,553"/>
+<area shape="poly" id="edge43_Node000014_Node000036" title=" " alt="" coords="1531,614,1391,567,1351,555,1353,550,1393,562,1533,609"/>
+<area shape="rect" id="Node000037" href="$namespaceMayaFlux_1_1IO_aebbe2b023d66faf2ca36cef8e2ae4d2a.html#aebbe2b023d66faf2ca36cef8e2ae4d2a" title="Anchor a relative output path to Config::SOURCE_DIR." alt="" coords="1195,577,1359,617"/>
+<area shape="poly" id="edge44_Node000014_Node000037" title=" " alt="" coords="1484,621,1359,608,1360,603,1485,616"/>
+<area shape="poly" id="edge21_Node000015_Node000016" title=" " alt="" coords="1164,686,1080,703,1078,698,1163,681"/>
+<area shape="rect" id="Node000017" href="$classMayaFlux_1_1Nodes_1_1Input_1_1HIDNode_a0c6611981fa29feaab354242db4daaf3.html#a0c6611981fa29feaab354242db4daaf3" title="Extract a scalar value from an InputValue." alt="" coords="585,698,770,738"/>
+<area shape="poly" id="edge22_Node000016_Node000017" title=" " alt="" coords="889,721,770,721,770,715,889,715"/>
+<area shape="rect" id="Node000019" href="$classMayaFlux_1_1Nodes_1_1Network_1_1FieldOperator_aac47a2995f142a435db51f45e6ad6a5f.html#aac47a2995f142a435db51f45e6ad6a5f" title="Apply ONE_TO_ONE parameter mapping (per&#45;point control)" alt="" coords="891,841,1090,896"/>
+<area shape="poly" id="edge24_Node000018_Node000019" title=" " alt="" coords="1165,823,1091,844,1089,839,1164,818"/>
+<area shape="rect" id="Node000020" href="$classMayaFlux_1_1Nodes_1_1Network_1_1PhysicsOperator_addc9c26308edc1971470b5ab9ac7e2ff.html#addc9c26308edc1971470b5ab9ac7e2ff" title="Apply ONE_TO_ONE parameter for physics&#45;specific properties." alt="" coords="891,763,1090,817"/>
+<area shape="poly" id="edge25_Node000018_Node000020" title=" " alt="" coords="1164,793,1090,793,1090,787,1164,787"/>
+<area shape="rect" id="Node000022" href="$classMayaFlux_1_1IO_1_1SoundFileReader_a55edd9ee43004846f85961b546c811c9.html#a55edd9ee43004846f85961b546c811c9" title="Check if this reader can open the given file." alt="" coords="878,1241,1103,1281"/>
+<area shape="poly" id="edge28_Node000021_Node000022" title=" " alt="" coords="1218,1192,1116,1231,1076,1243,1074,1238,1114,1226,1217,1187"/>
+<area shape="rect" id="Node000024" href="$classMayaFlux_1_1IO_1_1FileReaderRegistry_a1e0907a0a9bdbdbfe771c00b56a495ba.html#a1e0907a0a9bdbdbfe771c00b56a495ba" title="Create appropriate reader for a file based on extension." alt="" coords="898,1369,1083,1409"/>
+<area shape="poly" id="edge30_Node000021_Node000024" title=" " alt="" coords="1260,1198,1236,1236,1203,1279,1163,1322,1116,1359,1085,1374,1083,1369,1113,1354,1159,1318,1199,1276,1231,1233,1256,1195"/>
+<area shape="rect" id="Node000025" href="$classMayaFlux_1_1IO_1_1ImageReader_a2889b29418927a60ae1f8d574ae5895b.html#a2889b29418927a60ae1f8d574ae5895b" title="Load image from file (static utility)" alt="" coords="889,1433,1092,1473"/>
+<area shape="poly" id="edge31_Node000021_Node000025" title=" " alt="" coords="1267,1199,1246,1249,1214,1309,1171,1371,1145,1399,1116,1423,1093,1436,1091,1431,1113,1418,1141,1395,1167,1367,1209,1307,1241,1246,1262,1197"/>
+<area shape="rect" id="Node000026" href="$classMayaFlux_1_1IO_1_1ImageReader_ae660058c52405b4605ecce4c631a4b44.html#ae660058c52405b4605ecce4c631a4b44" title="Load image directly into GPU texture (static utility)" alt="" coords="889,921,1092,961"/>
+<area shape="poly" id="edge32_Node000021_Node000026" title=" " alt="" coords="1256,1134,1231,1097,1199,1054,1159,1011,1113,975,1090,963,1093,958,1116,970,1163,1007,1203,1050,1236,1094,1260,1131"/>
+<area shape="rect" id="Node000027" href="$classMayaFlux_1_1IO_1_1ImageReader_a6f7eb96fe2b0cf72967ed2263dcaa23a.html#a6f7eb96fe2b0cf72967ed2263dcaa23a" title="Open a file for reading." alt="" coords="889,985,1092,1025"/>
+<area shape="poly" id="edge33_Node000021_Node000027" title=" " alt="" coords="1245,1137,1187,1087,1151,1061,1113,1039,1085,1027,1087,1022,1116,1034,1154,1056,1190,1082,1248,1133"/>
+<area shape="rect" id="Node000028" href="$classMayaFlux_1_1IO_1_1ModelReader_aef5ccec4e2fe310509f07e4467f57dd2.html#aef5ccec4e2fe310509f07e4467f57dd2" title="Open a file for reading." alt="" coords="889,1049,1092,1089"/>
+<area shape="poly" id="edge34_Node000021_Node000028" title=" " alt="" coords="1217,1142,1114,1103,1074,1091,1076,1086,1116,1098,1218,1137"/>
+<area shape="rect" id="Node000030" href="$classMayaFlux_1_1IO_1_1SoundFileReader_a25d2ebc2d552f532a46fbb493f8d88d3.html#a25d2ebc2d552f532a46fbb493f8d88d3" title="Open an audio file for reading." alt="" coords="878,1113,1103,1153"/>
+<area shape="poly" id="edge36_Node000021_Node000030" title=" " alt="" coords="1171,1155,1103,1148,1104,1143,1171,1150"/>
+<area shape="rect" id="Node000031" href="$classMayaFlux_1_1IO_1_1VideoFileReader_a4fde32d3018bb43d67972a0ff5fc0965.html#a4fde32d3018bb43d67972a0ff5fc0965" title="Open a file for reading." alt="" coords="879,1177,1102,1217"/>
+<area shape="poly" id="edge38_Node000021_Node000031" title=" " alt="" coords="1171,1179,1102,1187,1102,1182,1171,1174"/>
+<area shape="rect" id="Node000032" href="$classMayaFlux_1_1IO_1_1VolumeReader_a870f414ddeb0bf93dafdcabfc33160d3.html#a870f414ddeb0bf93dafdcabfc33160d3" title="Open a file for reading." alt="" coords="885,1305,1096,1345"/>
+<area shape="poly" id="edge39_Node000021_Node000032" title=" " alt="" coords="1248,1196,1190,1247,1154,1273,1116,1295,1087,1307,1085,1302,1113,1290,1151,1268,1187,1243,1245,1192"/>
+<area shape="rect" id="Node000023" href="$classMayaFlux_1_1IO_1_1SoundFileReader_a52301b9864559415b9df442d6884d946.html#a52301b9864559415b9df442d6884d946" title="Load an audio file into a size&#45;bounded DynamicSoundStream." alt="" coords="565,1177,790,1217"/>
+<area shape="poly" id="edge29_Node000022_Node000023" title=" " alt="" coords="878,1240,775,1219,776,1214,879,1235"/>
+<area shape="rect" id="Node000029" href="$classMayaFlux_1_1IO_1_1ModelReader_ad139ba0a544c0712059cc8913bb59bc5.html#ad139ba0a544c0712059cc8913bb59bc5" title="Load all meshes from a file in one call." alt="" coords="576,1049,779,1089"/>
+<area shape="poly" id="edge35_Node000028_Node000029" title=" " alt="" coords="876,1071,779,1071,779,1066,876,1066"/>
+<area shape="poly" id="edge37_Node000030_Node000023" title=" " alt="" coords="879,1158,776,1179,775,1174,878,1153"/>
+<area shape="rect" id="Node000033" href="$classMayaFlux_1_1IO_1_1VolumeReader_ac7d1e975545d7a79d371af04e49fc1fc.html#ac7d1e975545d7a79d371af04e49fc1fc" title="Load every selected grid onto a caller&#45;supplied lattice." alt="" coords="572,1273,783,1313"/>
+<area shape="poly" id="edge40_Node000032_Node000033" title=" " alt="" coords="871,1315,782,1306,783,1301,872,1310"/>
+<area shape="rect" id="Node000034" href="$classMayaFlux_1_1IO_1_1VolumeReader_acb694bd5aa416bb2c8e96d869ccac0cd.html#acb694bd5aa416bb2c8e96d869ccac0cd" title="Load every selected grid from a file in one call." alt="" coords="572,1337,783,1377"/>
+<area shape="poly" id="edge41_Node000032_Node000034" title=" " alt="" coords="872,1339,783,1349,782,1343,871,1334"/>
+<area shape="rect" id="Node000035" href="$classMayaFlux_1_1IO_1_1IOManager_a8b66f9c5953bf2df92a20c61835783f5.html#a8b66f9c5953bf2df92a20c61835783f5" title="Load a volume file into a newly constructed VolumeGridBuffer." alt="" coords="285,1337,472,1377"/>
+<area shape="poly" id="edge42_Node000034_Node000035" title=" " alt="" coords="558,1359,472,1359,472,1354,558,1354"/>
+<area shape="rect" id="Node000038" href="$classMayaFlux_1_1IO_1_1SpatialCache_a7d53c246c7b2e8d6492b2d61286c860c.html#a7d53c246c7b2e8d6492b2d61286c860c" title="Open an Alembic archive for writing, Ogawa backend." alt="" coords="890,442,1091,482"/>
+<area shape="poly" id="edge45_Node000037_Node000038" title=" " alt="" coords="1181,578,1161,567,1144,549,1136,530,1129,513,1113,496,1091,484,1093,479,1116,492,1133,510,1141,528,1149,546,1164,563,1183,574"/>
+<area shape="rect" id="Node000041" href="$classMayaFlux_1_1IO_1_1FFmpegMuxContext_a4783fa9b9307e87ce7450d8f140be6b5.html#a4783fa9b9307e87ce7450d8f140be6b5" title="Allocate an output context and open the avio layer for writing." alt="" coords="867,378,1115,418"/>
+<area shape="poly" id="edge48_Node000037_Node000041" title=" " alt="" coords="1181,581,1161,567,1147,550,1140,532,1136,497,1133,464,1126,448,1113,432,1096,420,1100,416,1116,428,1131,445,1138,462,1141,497,1145,531,1151,547,1164,563,1184,576"/>
+<area shape="rect" id="Node000047" href="$namespaceMayaFlux_1_1IO_a7a8c537450f6ce9496ebbd1d5886cddb.html#a7a8c537450f6ce9496ebbd1d5886cddb" title="Substitute a frame index into a numbered output pattern." alt="" coords="909,506,1073,546"/>
+<area shape="poly" id="edge54_Node000037_Node000047" title=" " alt="" coords="1181,576,1072,549,1073,544,1183,571"/>
+<area shape="rect" id="Node000049" href="$classMayaFlux_1_1IO_1_1VDBWriter_a2dc093b8f4be20cfcddc455ec6fd402a.html#a2dc093b8f4be20cfcddc455ec6fd402a" title="Write volume data to disk." alt="" coords="899,570,1083,610"/>
+<area shape="poly" id="edge57_Node000037_Node000049" title=" " alt="" coords="1182,597,1083,595,1083,589,1182,592"/>
+<area shape="rect" id="Node000050" href="$classMayaFlux_1_1IO_1_1AssimpModelWriter_a521665c145001eec92299b736fdf57a2.html#a521665c145001eec92299b736fdf57a2" title="Write one or more meshes to disk as a single scene." alt="" coords="889,634,1093,674"/>
+<area shape="poly" id="edge58_Node000037_Node000050" title=" " alt="" coords="1182,618,1092,637,1091,631,1181,613"/>
+<area shape="rect" id="Node000039" href="$namespaceMayaFlux_1_1IO_a430ed054a912a2f2110723d9a5f9a0df.html#a430ed054a912a2f2110723d9a5f9a0df" title="Open a fresh SpatialCache, write every source once, then close it." alt="" coords="604,442,751,482"/>
+<area shape="poly" id="edge46_Node000038_Node000039" title=" " alt="" coords="876,465,751,465,751,459,876,459"/>
+<area shape="rect" id="Node000040" href="$classMayaFlux_1_1IO_1_1IOManager_a2d21d40e32848f18d7d7e9d4ed28e826.html#a2d21d40e32848f18d7d7e9d4ed28e826" title="Save every source once, as a single time sample, with a millisecond epoch timestamp spliced into the ..." alt="" coords="285,442,472,482"/>
+<area shape="poly" id="edge47_Node000039_Node000040" title=" " alt="" coords="591,465,472,465,472,459,591,459"/>
+<area shape="rect" id="Node000042" href="$classMayaFlux_1_1IO_1_1SoundFileWriter_afe05fe29e71e3b1f3f3c489669dab0eb.html#afe05fe29e71e3b1f3f3c489669dab0eb" title=" " alt="" coords="568,378,787,418"/>
+<area shape="poly" id="edge49_Node000041_Node000042" title=" " alt="" coords="853,401,787,401,787,395,853,395"/>
+<area shape="rect" id="Node000044" href="$classMayaFlux_1_1IO_1_1VideoFileWriter_a696c64fcff4d95462a6640f48495c71f.html#a696c64fcff4d95462a6640f48495c71f" title=" " alt="" coords="569,314,785,354"/>
+<area shape="poly" id="edge51_Node000041_Node000044" title=" " alt="" coords="878,378,775,357,776,351,879,373"/>
+<area shape="rect" id="Node000043" href="$classMayaFlux_1_1IO_1_1SoundFileWriter_a759a872c21f40482fee6d559b8b2567d.html#a759a872c21f40482fee6d559b8b2567d" title="Open the output file and spawn the worker thread." alt="" coords="269,378,488,418"/>
+<area shape="poly" id="edge50_Node000042_Node000043" title=" " alt="" coords="554,401,488,401,488,395,554,395"/>
+<area shape="rect" id="Node000045" href="$classMayaFlux_1_1IO_1_1VideoFileWriter_a2fd67ecbf341032261b25a5a835c288f.html#a2fd67ecbf341032261b25a5a835c288f" title=" " alt="" coords="271,314,487,354"/>
+<area shape="poly" id="edge52_Node000044_Node000045" title=" " alt="" coords="556,337,487,337,487,331,556,331"/>
+<area shape="rect" id="Node000046" href="$classMayaFlux_1_1IO_1_1VideoFileWriter_a65a25d8b5e52b1d9b54806c73b4d89aa.html#a65a25d8b5e52b1d9b54806c73b4d89aa" title=" " alt="" coords="5,314,221,354"/>
+<area shape="poly" id="edge53_Node000045_Node000046" title=" " alt="" coords="257,337,221,337,221,331,257,331"/>
+<area shape="poly" id="edge56_Node000047_Node000039" title=" " alt="" coords="895,509,751,480,752,474,896,504"/>
+<area shape="rect" id="Node000048" href="$classMayaFlux_1_1IO_1_1VolumeCapture_a419dead693181a9f096d878b65c2dfa3.html#a419dead693181a9f096d878b65c2dfa3" title="One frame&#39;s readback and write." alt="" coords="569,506,785,546"/>
+<area shape="poly" id="edge55_Node000047_Node000048" title=" " alt="" coords="895,529,785,529,785,523,895,523"/>
+</map>

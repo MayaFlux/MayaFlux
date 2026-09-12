@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::VolumeGridBuffer::FlowConfig" name="MayaFlux::Buffers::VolumeGridBuffer::FlowConfig">
+<area shape="rect" id="Node000001" title="Parameters for the incompressible flow stage arrangement." alt="" coords="59,237,269,417"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Buffers_1_1VectorRef.html" title="A vector field&#39;s name, issued by the volume that owns it." alt="" coords="5,5,152,160"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="108,160,130,221,125,223,103,161"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Buffers_1_1ScalarRef.html" title="A scalar field&#39;s name, issued by the volume that owns it." alt="" coords="176,5,323,160"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="225,161,203,223,198,221,220,160"/>
+</map>

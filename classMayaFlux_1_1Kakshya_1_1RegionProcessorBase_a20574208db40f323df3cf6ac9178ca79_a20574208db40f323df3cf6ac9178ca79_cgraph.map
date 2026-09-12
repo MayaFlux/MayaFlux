@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kakshya::RegionProcessorBase::organize_container_data" name="MayaFlux::Kakshya::RegionProcessorBase::organize_container_data">
+<area shape="rect" id="Node000001" title="Organize container data into structured regions." alt="" coords="5,49,196,104"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kakshya_a6b9b1e820df114a20a5384233008e015.html#a6b9b1e820df114a20a5384233008e015" title="Advance current positions by a number of frames, with optional looping." alt="" coords="244,57,403,97"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="197,74,230,74,230,79,197,79"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kakshya_1_1ContainerDataStructure_a27b9d48a60ea2512b02a8196c6581eec.html#a27b9d48a60ea2512b02a8196c6581eec" title="Extract channel count from dimensions." alt="" coords="455,5,630,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="402,58,441,50,442,56,403,63"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Kakshya_1_1ContainerDataStructure_a707364e4c5a8e950a981eaf7ff5edff6.html#a707364e4c5a8e950a981eaf7ff5edff6" title="Get samples per channel (time dimension only)." alt="" coords="451,85,635,154"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="403,89,437,96,436,101,402,95"/>
+</map>

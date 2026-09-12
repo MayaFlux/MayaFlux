@@ -1,0 +1,7 @@
+<map id="MayaFlux::IO::IOManager::configure_audio_processor" name="MayaFlux::IO::IOManager::configure_audio_processor">
+<area shape="rect" id="Node000001" title=" " alt="" coords="240,37,443,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1IOManager_af6ccd8ba0284c3a16baa8a1f02ac4fb5.html#af6ccd8ba0284c3a16baa8a1f02ac4fb5" title="Load an audio file into a SoundFileContainer." alt="" coords="5,5,192,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="226,45,192,40,193,35,227,40"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1IOManager_aedebfcd58bb09a60f74b2057eb959d20.html#aedebfcd58bb09a60f74b2057eb959d20" title="Load a video file into a VideoFileContainer." alt="" coords="5,69,192,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="227,75,193,80,192,74,226,70"/>
+</map>

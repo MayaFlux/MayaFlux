@@ -1,0 +1,8 @@
+<map id="MayaFlux::IO::SpatialCapture::stop" name="MayaFlux::IO::SpatialCapture::stop">
+<area shape="rect" id="Node000001" title="Request the capture routine stop." alt="" coords="5,29,217,69"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_aefd214af5e476f686dc86cc7d7220c96.html#aefd214af5e476f686dc86cc7d7220c96" title="Cancels and removes a task from the scheduler." alt="" coords="265,29,496,69"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="218,47,252,47,252,52,218,52"/>
+<area shape="poly" id="edge2_Node000002_Node000002" title=" " alt="" coords="331,30,328,20,336,10,354,5,381,3,412,5,429,13,427,18,411,11,381,8,355,10,339,15,333,21,336,28"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_afb823dfb8ca7ec5182cfaa8e3ee93649.html#afb823dfb8ca7ec5182cfaa8e3ee93649" title="Find task entry by routine pointer." alt="" coords="544,29,775,69"/>
+<area shape="poly" id="edge3_Node000002_Node000003" title=" " alt="" coords="496,47,530,47,530,52,496,52"/>
+</map>

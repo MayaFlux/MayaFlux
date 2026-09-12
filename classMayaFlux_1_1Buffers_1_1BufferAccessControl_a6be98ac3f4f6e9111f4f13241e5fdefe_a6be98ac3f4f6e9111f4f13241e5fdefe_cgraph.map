@@ -1,0 +1,14 @@
+<map id="MayaFlux::Buffers::BufferAccessControl::add_audio_buffer" name="MayaFlux::Buffers::BufferAccessControl::add_audio_buffer">
+<area shape="rect" id="Node000001" title="Adds an audio buffer to a token and channel." alt="" coords="5,100,159,155"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferAccessControl_a4bc263b052de827013ed2117e56a58e5.html#a4bc263b052de827013ed2117e56a58e5" title="Ensures minimum number of audio channels exist for a token." alt="" coords="226,5,409,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="150,97,235,63,237,68,152,102"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1TokenUnitManager_ac9fd8c50e96db19443030c7582b9cc20.html#ac9fd8c50e96db19443030c7582b9cc20" title="Gets or creates a root audio unit for the specified token." alt="" coords="719,39,891,93"/>
+<area shape="poly" id="edge6_Node000001_Node000004" title=" " alt="" coords="158,118,705,72,705,77,159,124"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Buffers_1_1RootAudioUnit_adab6da56d6eb5d1fc2606c8c1ab8e01f.html#adab6da56d6eb5d1fc2606c8c1ab8e01f" title=" " alt="" coords="224,135,411,175"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="159,134,210,140,210,145,159,139"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1TokenUnitManager_a7673914495c7a5a49599cbcc48f727fe.html#a7673914495c7a5a49599cbcc48f727fe" title="Acquires the manager&#39;s mutex for external synchronization." alt="" coords="207,199,428,239"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="136,152,208,185,229,193,227,198,206,190,134,157"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1TokenUnitManager_a07357824fe6b9475bda41f8b45668eb3.html#a07357824fe6b9475bda41f8b45668eb3" title="Ensures an audio unit exists and resizes it to the specified channel count." alt="" coords="476,5,671,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="409,30,462,30,462,35,409,35"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="671,44,705,49,704,54,671,49"/>
+</map>

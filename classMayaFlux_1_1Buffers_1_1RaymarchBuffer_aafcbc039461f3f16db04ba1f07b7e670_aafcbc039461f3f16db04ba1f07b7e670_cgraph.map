@@ -1,0 +1,12 @@
+<map id="MayaFlux::Buffers::RaymarchBuffer::setup_processors" name="MayaFlux::Buffers::RaymarchBuffer::setup_processors">
+<area shape="rect" id="Node000001" title="Attach MeshProcessor for upload and RaymarchProcessor for staging." alt="" coords="5,35,176,90"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_a6cf409969c192851ab2cf7f0315d2a49.html#a6cf409969c192851ab2cf7f0315d2a49" title="Access the buffer&#39;s processing chain." alt="" coords="489,5,716,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="176,54,475,32,476,37,176,59"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1MeshBuffer_a608249a2aedf62ad168381be3b93b79e.html#a608249a2aedf62ad168381be3b93b79e" title="Create and attach MeshProcessor as the default processor." alt="" coords="224,71,441,111"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="176,70,211,74,210,79,176,75"/>
+<area shape="poly" id="edge3_Node000003_Node000002" title=" " alt="" coords="415,68,506,46,507,51,417,73"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_a6e843b1ce9e90e2df2501d28e60eab52.html#a6e843b1ce9e90e2df2501d28e60eab52" title="Set the buffer&#39;s default processor." alt="" coords="523,70,683,125"/>
+<area shape="poly" id="edge4_Node000003_Node000004" title=" " alt="" coords="442,91,508,92,508,98,442,96"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_a93f1d139e1fc4ab7689f2a205bf76563.html#a93f1d139e1fc4ab7689f2a205bf76563" title="Replace the buffer&#39;s processing chain." alt="" coords="489,149,716,189"/>
+<area shape="poly" id="edge5_Node000003_Node000005" title=" " alt="" coords="401,108,490,135,518,143,517,148,489,140,399,113"/>
+</map>

@@ -1,0 +1,11 @@
+<map id="MayaFlux::apply_window" name="MayaFlux::apply_window">
+<area shape="rect" id="Node000001" title="Apply window function to single&#45;channel data (in&#45;place)" alt="" coords="5,109,192,134"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a64811541d640c885290c697c60180d4b.html#a64811541d640c885290c697c60180d4b" title="Apply a Blackman taper in&#45;place without materialising coefficients." alt="" coords="245,5,436,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="124,106,239,55,260,47,262,52,241,60,127,111"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_ad084bd73d4e0b46ddab004a934281adc.html#ad084bd73d4e0b46ddab004a934281adc" title="Apply a Hamming taper in&#45;place without materialising coefficients." alt="" coords="246,69,435,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="192,106,232,101,233,106,193,112"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_aa9b9b8cb52552bdf3d4f33973fe7387d.html#aa9b9b8cb52552bdf3d4f33973fe7387d" title="Apply a Hann taper in&#45;place without materialising coefficients." alt="" coords="261,133,420,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="193,131,248,138,247,144,192,136"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_ad2df8ea473b432c02035c586da051df2.html#ad2df8ea473b432c02035c586da051df2" title="Apply a rectangular taper in&#45;place without materialising coefficients." alt="" coords="240,197,441,237"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="127,132,241,183,262,190,260,195,239,188,124,136"/>
+</map>

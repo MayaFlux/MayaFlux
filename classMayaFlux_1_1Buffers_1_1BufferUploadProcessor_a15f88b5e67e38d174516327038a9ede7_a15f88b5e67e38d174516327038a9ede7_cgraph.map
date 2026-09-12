@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::BufferUploadProcessor::on_attach" name="MayaFlux::Buffers::BufferUploadProcessor::on_attach">
+<area shape="rect" id="Node000001" title="Called when this processor is attached to a buffer." alt="" coords="5,77,176,132"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_a0c7a59c0847791ed0915dcd64e8df783.html#a0c7a59c0847791ed0915dcd64e8df783" title="Query for a backend service." alt="" coords="241,5,408,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="175,76,227,60,229,65,177,81"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aa28c6f5592e5893508bafb62aefcc496.html#aa28c6f5592e5893508bafb62aefcc496" title="Get the global registry instance." alt="" coords="224,85,425,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="176,102,210,102,210,107,176,107"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1BufferUploadProcessor_af001eed23ab0c7a22124352e93ec6534.html#af001eed23ab0c7a22124352e93ec6534" title="Checks if this processor can handle the specified buffer type." alt="" coords="239,149,410,204"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="177,128,227,144,225,149,175,133"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nexus::Tapestry::all_expanses" name="MayaFlux::Nexus::Tapestry::all_expanses">
+<area shape="rect" id="Node000001" title="Read&#45;only view of all Expanses owned by this Tapestry." alt="" coords="283,5,481,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nexus_1_1StateEncoder_a14697ea6d42e4d8d0b00a882ae6eae77.html#a14697ea6d42e4d8d0b00a882ae6eae77" title="Encode all Fabrics in tapestry to base_dir." alt="" coords="5,5,235,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="269,28,235,28,235,23,269,23"/>
+</map>

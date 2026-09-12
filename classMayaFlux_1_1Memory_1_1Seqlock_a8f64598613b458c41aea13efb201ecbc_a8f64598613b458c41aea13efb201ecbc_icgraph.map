@@ -1,0 +1,5 @@
+<map id="MayaFlux::Memory::Seqlock::begin_write" name="MayaFlux::Memory::Seqlock::begin_write">
+<area shape="rect" id="Node000001" title="Begin a write: advances the counter to an odd value." alt="" coords="283,5,489,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Memory_1_1SeqlockWriteGuard_ab1f4106c2f2929a8c10f43330cd085f1.html#ab1f4106c2f2929a8c10f43330cd085f1" title=" " alt="" coords="5,5,235,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="269,28,235,28,235,23,269,23"/>
+</map>

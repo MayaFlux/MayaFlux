@@ -1,0 +1,9 @@
+<map id="MayaFlux::Nodes::Generator::GeneratorContextGpu" name="MayaFlux::Nodes::Generator::GeneratorContextGpu">
+<area shape="rect" id="Node000001" title=" " alt="" coords="135,372,335,452"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1GeneratorContext.html" title="Specialized context for generator node callbacks." alt="" coords="15,191,215,311"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="171,321,208,370,204,374,166,324"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1NodeContext.html" title="Base context class for node callbacks." alt="" coords="5,5,225,131"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="118,144,118,191,113,191,113,144"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1GpuVectorData.html" title="GPU&#45;uploadable 1D array data interface." alt="" coords="240,179,473,324"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="296,337,267,373,263,370,291,333"/>
+</map>

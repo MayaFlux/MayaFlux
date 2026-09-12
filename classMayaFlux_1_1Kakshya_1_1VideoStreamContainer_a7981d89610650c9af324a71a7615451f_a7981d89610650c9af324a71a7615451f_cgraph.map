@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kakshya::VideoStreamContainer::get_region_data" name="MayaFlux::Kakshya::VideoStreamContainer::get_region_data">
+<area shape="rect" id="Node000001" title="Get data for a specific region." alt="" coords="5,30,175,85"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kakshya_a754a1820ba7e75c2c8e0717eabd4e574.html#a754a1820ba7e75c2c8e0717eabd4e574" title=" " alt="" coords="223,5,388,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="174,42,209,37,210,42,175,47"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kakshya_a505a6355fca48fde66db9c0ca1e23a17.html#a505a6355fca48fde66db9c0ca1e23a17" title="Get a pointer to the raw bytes of a DataVariant and its size." alt="" coords="226,69,385,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="175,67,213,73,212,78,174,73"/>
+</map>

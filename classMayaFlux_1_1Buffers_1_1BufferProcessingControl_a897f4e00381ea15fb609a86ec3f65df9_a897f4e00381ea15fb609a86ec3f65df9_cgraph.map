@@ -1,0 +1,15 @@
+<map id="MayaFlux::Buffers::BufferProcessingControl::set_final_processor" name="MayaFlux::Buffers::BufferProcessingControl::set_final_processor">
+<area shape="rect" id="Node000001" title="Sets a final processor for a token (dispatches based on token)" alt="" coords="5,153,184,208"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingControl_a2978161965ef8e76efc0b7dabfda313a.html#a2978161965ef8e76efc0b7dabfda313a" title="Sets a final processor for an audio token (applied to all channels)" alt="" coords="241,96,440,151"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="184,157,227,147,228,152,185,162"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingControl_ab4afd1f54161fa5dd81de5e8c93f8d5e.html#ab4afd1f54161fa5dd81de5e8c93f8d5e" title="Sets a final processor for the graphics processing chain." alt="" coords="232,192,449,247"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="185,192,219,197,218,203,184,197"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1TokenUnitManager_a4d8b6658b8ba5a37086de5f4ddc07f88.html#a4d8b6658b8ba5a37086de5f4ddc07f88" title="Gets an existing audio unit without creating if missing (mutable)" alt="" coords="507,5,679,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="417,93,503,62,504,67,418,98"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Buffers_1_1RootAudioUnit_ab300ec63a12ad8cde8c5ef4e7092367b.html#ab300ec63a12ad8cde8c5ef4e7092367b" title=" " alt="" coords="497,85,688,125"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="440,113,483,110,484,115,440,119"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1TokenUnitManager_a4531a511fff4b519167f92818c4e6ed6.html#a4531a511fff4b519167f92818c4e6ed6" title="Checks if an audio unit exists for the given token." alt="" coords="505,149,680,204"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="441,142,492,153,491,158,440,147"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1TokenUnitManager_a0e7b0fe7658405d81011637c27121499.html#a0e7b0fe7658405d81011637c27121499" title="Gets an existing graphics unit without creating if missing (mutable)" alt="" coords="504,228,681,283"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="450,232,491,238,490,243,449,238"/>
+</map>

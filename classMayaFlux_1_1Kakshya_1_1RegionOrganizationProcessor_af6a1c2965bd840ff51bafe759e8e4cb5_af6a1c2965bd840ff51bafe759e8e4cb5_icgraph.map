@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kakshya::RegionOrganizationProcessor::process_region_segment" name="MayaFlux::Kakshya::RegionOrganizationProcessor::process_region_segment">
+<area shape="rect" id="Node000001" title="Process a single region segment." alt="" coords="764,5,977,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1RegionOrganizationProcessor_a5e871d9c925502ead2227e2c5669dab0.html#a5e871d9c925502ead2227e2c5669dab0" title="Process regions according to their selection pattern." alt="" coords="503,5,716,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="750,35,716,35,716,30,750,30"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1RegionOrganizationProcessor_a32049be6abe1a57f8bcadc6a5e58393a.html#a32049be6abe1a57f8bcadc6a5e58393a" title="Processes audio data according to the current region organization." alt="" coords="241,5,455,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="489,35,455,35,455,30,489,30"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1DynamicRegionProcessor_a11876d04bdc74ab49edcc80f38eab4e9.html#a11876d04bdc74ab49edcc80f38eab4e9" title="Processes audio, performing reorganization if needed." alt="" coords="5,5,193,60"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="228,35,193,35,193,30,228,30"/>
+</map>

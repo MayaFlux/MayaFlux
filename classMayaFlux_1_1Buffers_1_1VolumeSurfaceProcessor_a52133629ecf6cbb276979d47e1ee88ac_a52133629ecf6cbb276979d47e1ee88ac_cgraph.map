@@ -1,0 +1,17 @@
+<map id="MayaFlux::Buffers::VolumeSurfaceProcessor::on_attach" name="MayaFlux::Buffers::VolumeSurfaceProcessor::on_attach">
+<area shape="rect" id="Node000001" title="Validate the named field, bind the grid, and size the dispatch." alt="" coords="5,120,188,175"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_ae72d99984f65f41164441d313ae0af88.html#ae72d99984f65f41164441d313ae0af88" title="Bind a VKBuffer to a named shader descriptor." alt="" coords="244,41,411,96"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="177,117,233,98,235,103,179,122"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1BufferProcessor_aabc0443cf162db0fdca77c2f555a1920.html#aabc0443cf162db0fdca77c2f555a1920" title="Called when this processor is attached to a buffer." alt="" coords="253,120,401,175"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="188,145,239,145,239,150,188,150"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1VolumeSurfaceProcessor_af34ec040b2058144fc68af6c0fa94c5b.html#af34ec040b2058144fc68af6c0fa94c5b" title="Size the push constant block to at least SurfaceParams and write the lattice dimensions,..." alt="" coords="236,199,419,253"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="179,172,235,192,233,197,177,177"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VKBufferProcessor_ad871cad95dbb2a178d1752aa8573eabc.html#ad871cad95dbb2a178d1752aa8573eabc" title=" " alt="" coords="467,41,661,96"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="411,66,453,66,453,71,411,71"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_a0c7a59c0847791ed0915dcd64e8df783.html#a0c7a59c0847791ed0915dcd64e8df783" title="Query for a backend service." alt="" coords="727,5,893,60"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="661,52,713,44,714,49,662,57"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aa28c6f5592e5893508bafb62aefcc496.html#aa28c6f5592e5893508bafb62aefcc496" title="Get the global registry instance." alt="" coords="709,85,911,125"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="662,80,696,85,695,91,661,86"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a08f86ff68a93950b07208ee936badf8e.html#a08f86ff68a93950b07208ee936badf8e" title="Get current push constant data." alt="" coords="485,199,643,253"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="419,223,471,223,471,229,419,229"/>
+</map>

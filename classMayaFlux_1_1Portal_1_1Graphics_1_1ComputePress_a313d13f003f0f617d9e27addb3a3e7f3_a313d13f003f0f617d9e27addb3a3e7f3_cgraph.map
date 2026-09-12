@@ -1,0 +1,15 @@
+<map id="MayaFlux::Portal::Graphics::ComputePress::bind_all" name="MayaFlux::Portal::Graphics::ComputePress::bind_all">
+<area shape="rect" id="Node000001" title="All&#45;in&#45;one: bind pipeline + descriptors + push constants." alt="" coords="5,69,203,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ComputePress_a85438e9d6db2cc223c00c736f86661aa.html#a85438e9d6db2cc223c00c736f86661aa" title="Bind descriptor sets to active command buffer." alt="" coords="251,133,517,173"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="193,107,283,128,282,133,192,112"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ComputePress_a218fdd2df033d4258070a6e5079c46e2.html#a218fdd2df033d4258070a6e5079c46e2" title="Bind pipeline to active command buffer." alt="" coords="275,5,493,45"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="192,67,282,46,283,51,193,72"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ComputePress_a1fa102eb80c5e9b8008f485793dfe095.html#a1fa102eb80c5e9b8008f485793dfe095" title="Push constants to active command buffer." alt="" coords="267,69,501,109"/>
+<area shape="poly" id="edge6_Node000001_Node000006" title=" " alt="" coords="203,87,253,87,253,92,203,92"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ab2be21f08a8e73058950c603e8a77020.html#ab2be21f08a8e73058950c603e8a77020" title="Get Vulkan command buffer handle from CommandBufferID." alt="" coords="565,69,837,109"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="484,131,588,109,589,115,485,136"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_a02ee5b654b338c921a582effccfc085f.html#a02ee5b654b338c921a582effccfc085f" title="Get Vulkan descriptor set handle from DescriptorSetID." alt="" coords="574,133,829,173"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="517,151,560,151,560,156,517,156"/>
+<area shape="poly" id="edge5_Node000005_Node000003" title=" " alt="" coords="485,43,589,64,588,69,484,48"/>
+<area shape="poly" id="edge7_Node000006_Node000003" title=" " alt="" coords="501,87,551,87,551,92,501,92"/>
+</map>

@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::TransferProcessor::process_gpu_to_audio" name="MayaFlux::Buffers::TransferProcessor::process_gpu_to_audio">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,30,200,85"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Buffers_a7dbb34a80a731e87a2c34d293aaf691c.html#a7dbb34a80a731e87a2c34d293aaf691c" title="Download GPU buffer to AudioBuffer (expects double precision)" alt="" coords="248,37,445,77"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="200,55,234,55,234,60,200,60"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_aab0cac54b47602cb00e2fd99b50839c3.html#aab0cac54b47602cb00e2fd99b50839c3" title="Convenience constructor for a temporal (time) dimension." alt="" coords="493,5,655,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="446,41,479,36,480,41,446,46"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1DataAccess_a9af1792c7a75d3057e58142eeb094ec0.html#a9af1792c7a75d3057e58142eeb094ec0" title="Get explicit typed view of data." alt="" coords="495,69,653,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="446,69,481,74,481,79,446,74"/>
+</map>

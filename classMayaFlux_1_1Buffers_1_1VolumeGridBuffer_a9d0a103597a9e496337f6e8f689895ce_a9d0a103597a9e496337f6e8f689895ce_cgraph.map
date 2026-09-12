@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::VolumeGridBuffer::VolumeGridBuffer" name="MayaFlux::Buffers::VolumeGridBuffer::VolumeGridBuffer">
+<area shape="rect" id="Node000001" title="Construct a volume with no fields, to be declared after." alt="" coords="5,5,227,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_ae0727e84d97568acace892b473215dfa.html#ae0727e84d97568acace892b473215dfa" title="Set whether this buffer is for internal engine usage." alt="" coords="275,13,497,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="227,30,261,30,261,35,227,35"/>
+</map>

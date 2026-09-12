@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::VKDevice::create_logical_device" name="MayaFlux::Core::VKDevice::create_logical_device">
+<area shape="rect" id="Node000001" title="Create the logical device and retrieve queue handles." alt="" coords="5,5,200,45"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Core_1_1QueueFamilyIndices_a41911ae0be87c9df51c23b22ef317678.html#a41911ae0be87c9df51c23b22ef317678" title="Whether family index can present." alt="" coords="248,5,465,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="200,23,234,23,234,28,200,28"/>
+</map>

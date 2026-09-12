@@ -1,0 +1,15 @@
+<map id="MayaFlux::Kinesis::cross_2d" name="MayaFlux::Kinesis::cross_2d">
+<area shape="rect" id="Node000001" title="2D scalar cross product, sign of turn direction" alt="" coords="683,69,832,109"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_a69877f3808892dd6eb3786ccc5382a4c.html#a69877f3808892dd6eb3786ccc5382a4c" title="Signed curvature from velocity and acceleration." alt="" coords="485,69,635,109"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="669,92,635,92,635,87,669,87"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_a22c3c18bba7d6e741fea4cd7b0b5c64c.html#a22c3c18bba7d6e741fea4cd7b0b5c64c" title="Curvature helper for MotionChannel&lt;glm::vec2&gt;, self&#45;calibrating its min_speed guard from the channel&#39;..." alt="" coords="271,5,420,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="478,68,412,48,414,43,480,63"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_a960243de41470f0abbb319840ffbc76b.html#a960243de41470f0abbb319840ffbc76b" title="Compute curvature vectors along a path (2nd derivative approximation)" alt="" coords="253,69,437,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="472,92,438,92,438,87,472,87"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Kinesis_a3ae7bcc83a9bda52088000796547ea70.html#a3ae7bcc83a9bda52088000796547ea70" title="Signed curvature computed directly from a position HistoryBuffer." alt="" coords="258,135,433,175"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="481,116,413,137,411,132,480,111"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1LineSegmentsNode_adfafd2752d15bba15ad8dfa273d21c3b.html#adfafd2752d15bba15ad8dfa273d21c3b" title="Append curvature segments derived from a vertex path." alt="" coords="5,59,205,114"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="240,91,206,90,206,85,240,85"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Kinesis_a2fe94c0accd17b0621aef7262a7dfe5b.html#a2fe94c0accd17b0621aef7262a7dfe5b" title="Convenience overload of curvature_from_history over a raw span of positions, samples[0] newest." alt="" coords="18,139,193,179"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="244,159,193,160,193,155,244,154"/>
+</map>

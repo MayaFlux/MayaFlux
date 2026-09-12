@@ -1,0 +1,11 @@
+<map id="MayaFlux::Kriya::mouse_dragged" name="MayaFlux::Kriya::mouse_dragged">
+<area shape="rect" id="Node000001" title="Creates an Event coroutine that triggers on mouse drag with specific button." alt="" coords="485,63,665,103"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nexus_1_1Wiring_af32900423bc2e18633ca0f7dd74f051a.html#af32900423bc2e18633ca0f7dd74f051a" title="Apply the configured wiring." alt="" coords="243,5,429,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="477,62,419,48,421,43,479,57"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_a097a61a03c5e44546fd2aeae872ceb81.html#a097a61a03c5e44546fd2aeae872ceb81" title="Schedule a mouse drag handler." alt="" coords="237,70,435,95"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="472,85,435,85,435,80,472,80"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Context_aa42296d51149bf551f43678912150ef0.html#aa42296d51149bf551f43678912150ef0" title=" " alt="" coords="235,120,437,160"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="479,108,421,123,419,117,477,103"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Context_a7287e64dcc62fe5f54a34e133c3b0332.html#a7287e64dcc62fe5f54a34e133c3b0332" title="Construct and immediately register event coroutines." alt="" coords="5,120,187,160"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="221,143,187,143,187,137,221,137"/>
+</map>

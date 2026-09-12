@@ -1,0 +1,12 @@
+<map id="MayaFlux::Kinesis::Discrete::spectral_energy" name="MayaFlux::Kinesis::Discrete::spectral_energy">
+<area shape="rect" id="Node000001" title="Spectral energy per window using Hann&#45;windowed FFT." alt="" coords="547,49,735,89"/>
+<area shape="poly" id="edge5_Node000001_Node000001" title=" " alt="" coords="682,37,667,30,641,27,617,29,604,34,598,40,601,48,596,49,593,39,600,30,616,24,641,22,669,25,684,32"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1EnergyAnalyzer_aae10121eaa04e3e509079717b90890ef.html#aae10121eaa04e3e509079717b90890ef" title="Compute energy values using span (zero&#45;copy processing)" alt="" coords="303,5,499,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="533,55,499,50,499,45,534,50"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Yantra_addfb108021a96dcae681d71feff6874a.html#addfb108021a96dcae681d71feff6874a" title=" " alt="" coords="307,85,495,125"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="534,87,495,93,494,88,533,82"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1EnergyAnalyzer_a97561d0986bef72b733abe1670d3d6a7.html#a97561d0986bef72b733abe1670d3d6a7" title="Core analysis implementation &#45; creates analysis result AND pipeline output." alt="" coords="5,13,255,53"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="289,35,255,35,255,30,289,30"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1FeatureExtractor_a6625311b756518d90e3d5ef2e4125e10.html#a6625311b756518d90e3d5ef2e4125e10" title="Core extraction implementation &#45; delegates to ExtractionHelper." alt="" coords="7,85,253,125"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="293,107,253,107,253,102,293,102"/>
+</map>

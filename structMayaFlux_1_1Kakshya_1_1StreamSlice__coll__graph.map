@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::StreamSlice" name="MayaFlux::Kakshya::StreamSlice">
+<area shape="rect" id="Node000001" title="A bounded region of a DynamicSoundStream with associated playback parameters." alt="" coords="5,508,165,928"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kakshya_1_1Region.html" title="Represents a point or span in N&#45;dimensional space." alt="" coords="10,5,161,445"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="88,446,88,491,83,491,83,446"/>
+</map>

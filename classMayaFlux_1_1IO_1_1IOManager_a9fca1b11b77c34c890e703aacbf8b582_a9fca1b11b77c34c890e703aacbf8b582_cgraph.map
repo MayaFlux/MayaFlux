@@ -1,0 +1,9 @@
+<map id="MayaFlux::IO::IOManager::save_mesh" name="MayaFlux::IO::IOManager::save_mesh">
+<area shape="rect" id="Node000001" title="Save one or more meshes to disk asynchronously." alt="" coords="5,69,192,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1ModelWriterRegistry_a3cea5f5c6b320c434437a10f17619997.html#a3cea5f5c6b320c434437a10f17619997" title=" " alt="" coords="240,5,436,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="174,67,249,46,250,51,175,72"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1ModelWriterRegistry_ab32741c6e988e6cbbe631d62fbe98ece.html#ab32741c6e988e6cbbe631d62fbe98ece" title=" " alt="" coords="240,69,436,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="192,87,226,87,226,92,192,92"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1IOManager_a0604e2f246faf9ae9d598cd28140d814.html#a0604e2f246faf9ae9d598cd28140d814" title="Queue a save task and prune finished ones, under one short lock." alt="" coords="245,133,431,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="175,107,250,127,249,132,174,112"/>
+</map>

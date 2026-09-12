@@ -1,0 +1,15 @@
+<map id="MayaFlux::Portal::Graphics::SamplerForge::get_default_nearest" name="MayaFlux::Portal::Graphics::SamplerForge::get_default_nearest">
+<area shape="rect" id="Node000001" title="Get a default nearest sampler." alt="" coords="5,94,208,149"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1SamplerForge_ad25bae266361d43df981d38d888b013e.html#ad25bae266361d43df981d38d888b013e" title="Get or create a sampler with the given configuration." alt="" coords="256,101,473,141"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="208,119,242,119,242,124,208,124"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1SamplerForge_afa86f42384001799058f8318acca8434.html#afa86f42384001799058f8318acca8434" title=" " alt="" coords="521,37,751,77"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="450,99,537,78,538,83,451,104"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1SamplerForge_a90db6c9ddb1c049e8481bf49af7bea3e.html#a90db6c9ddb1c049e8481bf49af7bea3e" title=" " alt="" coords="533,101,739,141"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="473,119,520,119,520,124,473,124"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1SamplerForge_a15a0922824ec316d8aa5b8f8bb7e3e73.html#a15a0922824ec316d8aa5b8f8bb7e3e73" title="Check if factory is initialized." alt="" coords="531,165,741,205"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="451,139,538,160,537,165,450,144"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1SamplerForge_a3601257f00f541625ec136c52dd88ce5.html#a3601257f00f541625ec136c52dd88ce5" title=" " alt="" coords="799,5,1065,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="750,42,785,39,785,44,751,48"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1SamplerForge_a1f850f0d077848db00815e87087c3765.html#a1f850f0d077848db00815e87087c3765" title=" " alt="" coords="831,69,1033,109"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="751,67,818,74,817,80,750,72"/>
+</map>

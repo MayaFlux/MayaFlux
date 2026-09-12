@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::GpuSync::GeometryContext" name="MayaFlux::Nodes::GpuSync::GeometryContext">
+<area shape="rect" id="Node000001" title="Context for GeometryWriterNode &#45; provides vertex buffer access." alt="" coords="151,259,343,359"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1NodeContext.html" title="Base context class for node callbacks." alt="" coords="5,45,225,171"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="166,181,217,257,212,260,162,183"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1GpuStructuredData.html" title="GPU&#45;uploadable structured data (arrays of POD structs)" alt="" coords="250,5,509,211"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="306,224,282,260,278,257,302,221"/>
+</map>

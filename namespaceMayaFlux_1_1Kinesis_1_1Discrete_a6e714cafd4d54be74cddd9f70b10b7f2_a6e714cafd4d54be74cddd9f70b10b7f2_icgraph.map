@@ -1,0 +1,19 @@
+<map id="MayaFlux::Kinesis::Discrete::intervals_from_window_starts" name="MayaFlux::Kinesis::Discrete::intervals_from_window_starts">
+<area shape="rect" id="Node000001" title="Build [start, end) intervals from window start indices." alt="" coords="536,126,697,181"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Yantra_a599f6157469391d88c0afdcc9c08d1d2.html#a599f6157469391d88c0afdcc9c08d1d2" title=" " alt="" coords="300,5,488,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="573,119,532,88,487,60,461,48,463,43,489,55,535,84,576,115"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Yantra_a6b2561cf59d7422a997753a425decd3b.html#a6b2561cf59d7422a997753a425decd3b" title=" " alt="" coords="300,69,488,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="522,129,463,112,465,107,524,124"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Yantra_addfb108021a96dcae681d71feff6874a.html#addfb108021a96dcae681d71feff6874a" title=" " alt="" coords="300,133,488,173"/>
+<area shape="poly" id="edge5_Node000001_Node000005" title=" " alt="" coords="522,156,488,156,488,151,522,151"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Yantra_a33957cc2e40e2d6acc33295b88af9dee.html#a33957cc2e40e2d6acc33295b88af9dee" title=" " alt="" coords="300,197,488,237"/>
+<area shape="poly" id="edge7_Node000001_Node000006" title=" " alt="" coords="524,183,465,200,463,195,522,178"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Yantra_ab07fb437503db63bb9d4f60568389029.html#ab07fb437503db63bb9d4f60568389029" title=" " alt="" coords="300,261,488,301"/>
+<area shape="poly" id="edge9_Node000001_Node000007" title=" " alt="" coords="576,192,535,223,489,252,463,264,461,259,487,247,532,218,573,187"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1FeatureExtractor_a6625311b756518d90e3d5ef2e4125e10.html#a6625311b756518d90e3d5ef2e4125e10" title="Core extraction implementation &#45; delegates to ExtractionHelper." alt="" coords="5,133,252,173"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="318,53,301,60,226,98,163,135,160,131,223,94,299,55,316,48"/>
+<area shape="poly" id="edge4_Node000004_Node000003" title=" " alt="" coords="298,115,213,136,211,131,297,110"/>
+<area shape="poly" id="edge6_Node000005_Node000003" title=" " alt="" coords="286,156,252,156,252,151,286,151"/>
+<area shape="poly" id="edge8_Node000006_Node000003" title=" " alt="" coords="297,197,211,176,213,171,298,191"/>
+<area shape="poly" id="edge10_Node000007_Node000003" title=" " alt="" coords="316,259,299,252,223,213,160,176,163,171,226,208,301,247,318,254"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::FilterProcessor" name="MayaFlux::Buffers::FilterProcessor">
+<area shape="rect" id="Node000001" title="Buffer processor that applies filter nodes to audio data." alt="" coords="5,313,195,633"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferProcessor.html" title="Central computational transformation interface for continuous buffer processing." alt="" coords="10,5,190,265"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="103,279,103,313,97,313,97,279"/>
+</map>
