@@ -8,6 +8,7 @@
     "glm",
     "hidapi",
     "assimp",
+    "alembic",
     "asio",
     "stb",
     "utf8proc",

@@ -2,7 +2,9 @@
 
 #include "CameraReader.hpp"
 #include "ImageWriter.hpp"
+#include "ModelWriter.hpp"
 #include "SoundFileWriter.hpp"
+#include "SpatialTransfer.hpp"
 #include "VideoFileReader.hpp"
 #include "VideoFileWriter.hpp"
 #include "VolumeReader.hpp"
@@ -34,6 +36,7 @@ class SoundContainerBuffer;
 class TextureBuffer;
 class TextBuffer;
 class MeshBuffer;
+class ComputeMeshBuffer;
 class VolumeGridBuffer;
 class BufferManager;
 }
@@ -109,6 +112,13 @@ public:
 
     /**
      * @brief Unregisters IOService, releases all owned readers, clears stored buffers.
+     *
+     * Also drains any still-running spatial captures through
+     * stop_spatial_capture() rather than leaving them to plain unique_ptr
+     * destruction, the same way active audio captures are drained above:
+     * an Ogawa archive left open is not a valid file, only a growing one,
+     * so a capture the caller never explicitly stopped must still be
+     * finalized here.
      */
     ~IOManager();
 
@@ -530,6 +540,94 @@ public:
         TextureResolver resolver = nullptr);
 
     // ─────────────────────────────────────────────────────────────────────────
+    // Mesh - save
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * @brief Save a MeshBuffer's mesh data to disk asynchronously.
+     *
+     * MeshData is always CPU-authoritative for MeshBuffer, so there is no
+     * download to wait on, but the write itself (AssimpModelWriter ->
+     * Assimp::Exporter -> disk) is still blocking I/O; queuing it here keeps
+     * that off the caller's thread, the same reason save_image/save_volume
+     * do. Returns once the task is queued; write failure is logged from the
+     * task and does not surface here.
+     *
+     * @param mesh_buffer Source mesh. Must have valid MeshData.
+     * @param filepath    Destination path with extension.
+     * @param options     Format-specific writer options.
+     * @return True once the task is queued.
+     */
+    bool save_mesh(
+        const std::shared_ptr<Buffers::MeshBuffer>& mesh_buffer,
+        const std::string& filepath,
+        const IO::ModelWriteOptions& options = {});
+
+    /**
+     * @brief Save one or more meshes to disk asynchronously.
+     *
+     * For callers that already have MeshData in hand (e.g. from
+     * IO::download_compute_mesh) rather than a MeshBuffer. Every entry must
+     * satisfy Kakshya::MeshData::is_valid(). Returns once the task is queued.
+     */
+    bool save_mesh(
+        const std::vector<Kakshya::MeshData>& meshes,
+        const std::string& filepath,
+        const IO::ModelWriteOptions& options = {});
+
+    /**
+     * @brief Save a MeshNetwork's current slots to disk asynchronously.
+     *
+     * Slot data lives on MeshWriterNode, CPU-resident the same way
+     * MeshBuffer's is, whether or not the network is wrapped in a
+     * MeshNetworkBuffer or has ever been rendered. Each slot's vertices are
+     * baked into world space from its current world_transform. Returns
+     * once the task is queued.
+     *
+     * @param network  Source network.
+     * @param filepath Destination path with extension.
+     * @param options  Format-specific writer options.
+     * @return True once the task is queued.
+     */
+    bool save_mesh(
+        const std::shared_ptr<Nodes::Network::MeshNetwork>& network,
+        const std::string& filepath,
+        const IO::ModelWriteOptions& options = {});
+
+    /**
+     * @brief Save a ComputeMeshBuffer's current live geometry to disk asynchronously.
+     *
+     * ComputeMeshBuffer's geometry lives GPU-only, so this queues a real
+     * device-to-host transfer (IO::download_compute_mesh) on top of the
+     * disk write every overload above also queues. Returns once the task
+     * is queued; readback or write failure is logged from the task and
+     * does not surface here.
+     *
+     * @param buffer   Source buffer. setup_processors() must have run.
+     * @param filepath Destination path with extension.
+     * @param options  Format-specific writer options.
+     * @return True once the task is queued.
+     */
+    bool save_mesh(
+        const std::shared_ptr<Buffers::ComputeMeshBuffer>& buffer,
+        const std::string& filepath,
+        const IO::ModelWriteOptions& options = {});
+
+    /**
+     * @brief Save a ComputeMeshBuffer with a millisecond epoch timestamp
+     *        spliced into the path, queued asynchronously.
+     *
+     * The timestamp is computed on the worker thread at the moment the
+     * readback actually runs, not at the moment this call returns, so
+     * repeated presses in quick succession still each land in their own
+     * file rather than racing on a single path computed up front.
+     */
+    bool save_mesh_snapshot(
+        const std::shared_ptr<Buffers::ComputeMeshBuffer>& buffer,
+        const std::string& path_pattern,
+        const IO::ModelWriteOptions& options = {});
+
+    // ─────────────────────────────────────────────────────────────────────────
     // Image — save
     // ─────────────────────────────────────────────────────────────────────────
 
@@ -717,6 +815,71 @@ public:
      */
     [[nodiscard]] std::vector<uint32_t> get_volume_capture_ids() const;
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // Spatial — capture
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * @brief Begin (or join) recording time-sampled streams into an Alembic
+     *        archive.
+     *
+     * Resolves @p filepath to a shared SpatialCache: the first call for a
+     * given path opens it, and a later call passing the same path reuses the
+     * cache already open, so several independent captures can each record
+     * their own streams into one archive. Unlike capture_volume, nothing is
+     * numbered per frame: Alembic carries time natively, so every sample of
+     * every stream lands in the one file across the whole recording.
+     *
+     * Spawns a SpatialCapture on the engine scheduler and retains it, the
+     * same GraphicsRoutine/FrameDelay shape capture_volume uses. For a
+     * capture the caller owns and drives itself, construct IO::SpatialCapture
+     * directly against a SpatialCache of its own.
+     *
+     * @param filepath       Destination .abc path.
+     * @param sources        Streams to tick together every frame. Build one
+     *                       with IO::make_network_geometry_source() or a
+     *                       hand-written IO::SpatialCaptureSource.
+     * @param max_frames     Stop after this many frames. Zero is unbounded.
+     * @param frame_interval Frames between captures.
+     * @return Capture handle for stop_spatial_capture, or 0 on failure
+     *         (no sources, no scheduler, or the archive failed to open).
+     */
+    [[nodiscard]] uint32_t capture_spatial(
+        const std::string& filepath,
+        std::vector<IO::SpatialCaptureSource> sources,
+        uint32_t max_frames = 0,
+        uint64_t frame_interval = 1);
+
+    /**
+     * @brief Stop a running spatial capture and release it.
+     *
+     * Frames already written are kept. The underlying archive stays open and
+     * registered under its filepath as long as any other capture still
+     * shares it. No-op with a warning if the id is unknown.
+     */
+    void stop_spatial_capture(uint32_t capture_id);
+
+    /**
+     * @brief Returns all active spatial capture IDs.
+     */
+    [[nodiscard]] std::vector<uint32_t> get_spatial_capture_ids() const;
+
+    /**
+     * @brief Save every source once, as a single time sample, with a
+     *        millisecond epoch timestamp spliced into the path, queued
+     *        asynchronously.
+     *
+     * The timestamp is computed on the worker thread at the moment the
+     * write actually runs, mirroring save_mesh_snapshot, so repeated calls
+     * in quick succession still each land in their own file.
+     *
+     * @return True once the task is queued; open or write failure is
+     *         logged from the task and does not surface here.
+     */
+    bool save_spatial_snapshot(
+        std::vector<IO::SpatialCaptureSource> sources,
+        const std::string& path_pattern);
+
     /**
      * @brief Returns all active video reader IDs.
      */
@@ -778,6 +941,16 @@ private:
      */
     void dispatch_frame_request(uint64_t reader_id);
 
+    /**
+     * @brief Queue a save task and prune finished ones, under one short lock.
+     *
+     * The lock covers only the push_back and the erase_if scan against
+     * m_save_tasks itself; nothing about the task's own work (already
+     * running on its own thread via std::async before this is called)
+     * holds it.
+     */
+    void track_save_task(std::future<bool> fut);
+
     void configure_frame_processor(
         const std::shared_ptr<Kakshya::VideoFileContainer>& container);
 
@@ -814,6 +987,19 @@ private:
     mutable std::mutex m_volume_captures_mutex;
     std::unordered_map<uint32_t, std::unique_ptr<IO::VolumeCapture>> m_volume_captures;
     std::vector<std::shared_ptr<Buffers::VolumeGridBuffer>> m_loaded_volumes;
+
+    // ── Spatial ──────────────────────────────────────────────────────
+
+    struct SpatialCaptureEntry {
+        std::unique_ptr<IO::SpatialCapture> capture;
+        std::string filepath; ///< Keys m_spatial_cache_refcounts.
+    };
+
+    std::atomic<uint32_t> m_next_spatial_capture_id { 1 };
+    mutable std::mutex m_spatial_captures_mutex;
+    std::unordered_map<uint32_t, SpatialCaptureEntry> m_spatial_captures;
+    std::unordered_map<std::string, std::shared_ptr<IO::SpatialCache>> m_spatial_caches;
+    std::unordered_map<std::string, int> m_spatial_cache_refcounts; ///< Closes+erases a cache at zero.
 
     // ── readers ──────────────────────────────────────────────────────
 

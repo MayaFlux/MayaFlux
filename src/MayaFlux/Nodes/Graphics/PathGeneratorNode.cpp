@@ -63,6 +63,8 @@ PathGeneratorNode::PathGeneratorNode(
     , m_samples_per_segment(samples_per_segment)
     , m_tension(tension)
 {
+    m_primitive_topology = Portal::Graphics::PrimitiveTopology::LINE_STRIP;
+
     const auto& stride = sizeof(LineVertex);
     set_vertex_stride(stride);
 
@@ -89,6 +91,8 @@ PathGeneratorNode::PathGeneratorNode(
     , m_samples_per_segment(samples_per_segment)
     , m_tension(0.5)
 {
+    m_primitive_topology = Portal::Graphics::PrimitiveTopology::LINE_STRIP;
+
     const auto& stride = sizeof(LineVertex);
     set_vertex_stride(stride);
 

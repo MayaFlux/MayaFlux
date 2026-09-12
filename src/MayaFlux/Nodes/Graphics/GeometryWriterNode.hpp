@@ -372,16 +372,30 @@ public:
     void update_context(double value) override;
 
     /**
-     * @brief Get primitive topology for rendering
+     * @brief Primitive topology this node's vertex data represents.
      *
-     * Default is POINT_LIST, but operators can override for lines/triangles.
+     * Defaults to POINT_LIST. A subclass whose topology is fixed by what it
+     * is (LineSegmentsNode, MeshWriterNode) overrides this to a constant
+     * instead of exposing set_primitive_topology().
      */
     [[nodiscard]] virtual Portal::Graphics::PrimitiveTopology get_primitive_topology() const
     {
-        return Portal::Graphics::PrimitiveTopology::POINT_LIST;
+        return m_primitive_topology;
+    }
+
+    /**
+     * @brief Set the topology get_primitive_topology() reports.
+     * @param topology New value. No effect on a subclass that overrides
+     *                  get_primitive_topology() to a fixed constant.
+     */
+    void set_primitive_topology(Portal::Graphics::PrimitiveTopology topology)
+    {
+        m_primitive_topology = topology;
     }
 
 protected:
+    Portal::Graphics::PrimitiveTopology m_primitive_topology { Portal::Graphics::PrimitiveTopology::POINT_LIST };
+
 #ifdef MAYAFLUX_PLATFORM_MACOS
     /**
      * @brief Convert line segments (pairs of LineVertex) into triangle strip vertices

@@ -11,6 +11,8 @@
 
 #include "MayaFlux/Buffers/Geometry/MeshBuffer.hpp"
 #include "MayaFlux/Buffers/State/VolumeGridBuffer.hpp"
+#include "MayaFlux/IO/ModelWriter.hpp"
+#include "MayaFlux/IO/SpatialTransfer.hpp"
 #include "MayaFlux/IO/VolumeWriter.hpp"
 #include "MayaFlux/Nodes/Network/MeshNetwork.hpp"
 
@@ -65,8 +67,18 @@ namespace {
         { .name = "All Files", .extensions = { "*" } }
     };
 
+    const std::vector<Portal::System::Dialog::ChooserFilter> k_mesh_save_filters {
+        { .name = "3D Model", .extensions = { "gltf", "glb", "obj", "fbx", "ply", "stl", "dae", "3ds", "x3d" } },
+        { .name = "All Files", .extensions = { "*" } }
+    };
+
     const std::vector<Portal::System::Dialog::ChooserFilter> k_volume_filters {
         { .name = "Volume", .extensions = { "vdb" } },
+        { .name = "All Files", .extensions = { "*" } }
+    };
+
+    const std::vector<Portal::System::Dialog::ChooserFilter> k_spatial_filters {
+        { .name = "Alembic", .extensions = { "abc" } },
         { .name = "All Files", .extensions = { "*" } }
     };
 
@@ -80,7 +92,7 @@ namespace {
             return false;
 
         std::ranges::transform(ext, ext.begin(), [](unsigned char c) { return std::tolower(c); });
-        const std::string_view bare { ext.data() + 1, ext.size() - 1 }; // strip leading dot
+        const std::string_view bare { ext.data() + 1, ext.size() - 1 };
 
         return std::ranges::any_of(filter.extensions,
             [&](const std::string& e) { return e == bare; });
@@ -269,6 +281,68 @@ bool save_image(
         k_image_save_filters);
 }
 
+bool save_mesh(
+    const std::shared_ptr<Buffers::MeshBuffer>& buffer,
+    const std::string& suggested_name)
+{
+    return save_mesh(buffer, suggested_name, IO::ModelWriteOptions {});
+}
+
+bool save_mesh(
+    const std::shared_ptr<Buffers::MeshBuffer>& buffer,
+    const std::string& suggested_name,
+    const IO::ModelWriteOptions& options)
+{
+    if (!require_portal("save_mesh"))
+        return false;
+
+    auto iom = get_io_manager();
+    if (!iom) {
+        MF_ERROR(Journal::Component::API, Journal::Context::Runtime,
+            "save_mesh: IOManager unavailable");
+        return false;
+    }
+
+    return Portal::System::Dialog::save_file<bool>(
+        [&iom, &buffer, &options](const fs::path& p) {
+            return iom->save_mesh(buffer, p.string(), options);
+        },
+        [](Core::SystemDialogError) { },
+        suggested_name,
+        k_mesh_save_filters);
+}
+
+bool save_mesh(
+    const std::shared_ptr<Nodes::Network::MeshNetwork>& network,
+    const std::string& suggested_name)
+{
+    return save_mesh(network, suggested_name, IO::ModelWriteOptions {});
+}
+
+bool save_mesh(
+    const std::shared_ptr<Nodes::Network::MeshNetwork>& network,
+    const std::string& suggested_name,
+    const IO::ModelWriteOptions& options)
+{
+    if (!require_portal("save_mesh"))
+        return false;
+
+    auto iom = get_io_manager();
+    if (!iom) {
+        MF_ERROR(Journal::Component::API, Journal::Context::Runtime,
+            "save_mesh: IOManager unavailable");
+        return false;
+    }
+
+    return Portal::System::Dialog::save_file<bool>(
+        [&iom, &network, &options](const fs::path& p) {
+            return iom->save_mesh(network, p.string(), options);
+        },
+        [](Core::SystemDialogError) { },
+        suggested_name,
+        k_mesh_save_filters);
+}
+
 bool save_volume(
     const std::shared_ptr<Buffers::VolumeGridBuffer>& volume,
     const std::string& suggested_name)
@@ -314,6 +388,29 @@ bool save_volume(
         [](Core::SystemDialogError) { },
         suggested_name,
         k_volume_filters);
+}
+
+bool save_spatial(
+    std::vector<IO::SpatialCaptureSource> sources,
+    const std::string& suggested_name)
+{
+    if (!require_portal("save_spatial"))
+        return false;
+
+    auto iom = get_io_manager();
+    if (!iom) {
+        MF_ERROR(Journal::Component::API, Journal::Context::Runtime,
+            "save_spatial: IOManager unavailable");
+        return false;
+    }
+
+    return Portal::System::Dialog::save_file<bool>(
+        [&iom, &sources](const fs::path& p) {
+            return iom->save_spatial_snapshot(std::move(sources), p.string());
+        },
+        [](Core::SystemDialogError) { },
+        suggested_name,
+        k_spatial_filters);
 }
 
 // ---------------------------------------------------------------------------

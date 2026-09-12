@@ -400,6 +400,34 @@ public:
     [[nodiscard]] std::vector<uint32_t> build_cluster_ids() const override;
 
     /**
+     * @brief Adds "mass" (PhysicsState::mass) and "accreted_mass"
+     *        (get_accreted_mass_span()) as named float attributes, in the
+     *        same global vertex-index order get_vertex_data() produces.
+     *
+     * Cluster/collection membership is not repeated here: a consumer
+     * already gets that from build_cluster_ids(), which this class already
+     * overrides.
+     */
+    [[nodiscard]] std::vector<std::pair<std::string, Kakshya::DataVariant>>
+    extract_vertex_attributes() const override;
+
+    /**
+     * @brief Per-particle PhysicsState::velocity, in the same global
+     *        vertex-index order get_vertex_data() produces.
+     */
+    [[nodiscard]] std::vector<glm::vec3> extract_vertex_velocities() const override;
+
+    /**
+     * @brief Forwards to the first collection's own get_primitive_topology().
+     * @return nullopt when there is no collection yet; otherwise
+     *         m_collections[0].collection->get_primitive_topology()
+     *         (PointCollectionNode's default, POINT_LIST). Same
+     *         first-element choice get_vertex_layout() already makes for
+     *         the aggregate.
+     */
+    [[nodiscard]] std::optional<Portal::Graphics::PrimitiveTopology> declared_topology() const override;
+
+    /**
      * @brief Apply ONE_TO_ONE parameter for physics-specific properties
      *
      * Supports:

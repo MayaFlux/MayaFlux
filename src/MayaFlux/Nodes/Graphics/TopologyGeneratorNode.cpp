@@ -13,6 +13,8 @@ TopologyGeneratorNode::TopologyGeneratorNode(
     , m_max_points(max_points)
     , m_auto_connect(auto_connect)
 {
+    m_primitive_topology = Portal::Graphics::PrimitiveTopology::LINE_LIST;
+
     const auto& stride = sizeof(LineVertex);
     set_vertex_stride(stride);
 
@@ -39,6 +41,8 @@ TopologyGeneratorNode::TopologyGeneratorNode(
     , m_max_points(max_points)
     , m_auto_connect(auto_connect)
 {
+    m_primitive_topology = Portal::Graphics::PrimitiveTopology::LINE_LIST;
+
     const auto& stride = sizeof(LineVertex);
     set_vertex_stride(stride);
 

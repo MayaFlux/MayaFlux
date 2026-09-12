@@ -159,6 +159,14 @@ Kakshya::VertexLayout TopologyOperator::get_vertex_layout() const
     return layout;
 }
 
+std::optional<Portal::Graphics::PrimitiveTopology> TopologyOperator::declared_topology() const
+{
+    if (m_topologies.empty()) {
+        return std::nullopt;
+    }
+    return m_topologies[0]->get_primitive_topology();
+}
+
 size_t TopologyOperator::get_vertex_count() const
 {
     size_t total = 0;

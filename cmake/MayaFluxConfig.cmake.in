@@ -46,6 +46,7 @@ if(WIN32)
     find_dependency(hidapi CONFIG)
     find_dependency(asio CONFIG)
     find_dependency(assimp CONFIG)
+    find_dependency(Alembic CONFIG)
     find_dependency(freetype CONFIG)
     find_dependency(utf8proc CONFIG)
     find_dependency(nlohmann_json CONFIG)
@@ -193,6 +194,7 @@ else()
 
     find_dependency(LLVM CONFIG)
     find_dependency(Clang CONFIG)
+    find_dependency(Alembic CONFIG)
     find_dependency(glm)
     find_dependency(Freetype)
 
@@ -330,6 +332,7 @@ if(NOT TARGET MayaFlux::MayaFluxLib)
             hidapi::hidapi
             asio::asio
             assimp::assimp
+            Alembic::Alembic
             utf8proc::utf8proc
             winmm
             avrt
@@ -358,6 +361,7 @@ if(NOT TARGET MayaFlux::MayaFluxLib)
             PkgConfig::HIDAPI
             PkgConfig::Asio
             PkgConfig::Assimp
+            Alembic::Alembic
             Freetype::Freetype
             PkgConfig::UTF8PROC
             PkgConfig::nlohmann_json

@@ -316,6 +316,14 @@ Kakshya::VertexLayout PhysicsOperator::get_vertex_layout() const
     return layout;
 }
 
+std::optional<Portal::Graphics::PrimitiveTopology> PhysicsOperator::declared_topology() const
+{
+    if (m_collections.empty()) {
+        return std::nullopt;
+    }
+    return m_collections[0].collection->get_primitive_topology();
+}
+
 size_t PhysicsOperator::get_vertex_count() const
 {
     size_t total = 0;
@@ -781,6 +789,48 @@ void PhysicsOperator::apply_impulse(size_t index, const glm::vec3& impulse)
         }
         offset += group.collection->get_point_count();
     }
+}
+
+/**
+ * @brief Reads m_accreted_mass directly rather than calling
+ *        get_accreted_mass_span(), which is non-const (it lazily seeds
+ *        m_accreted_mass on first call): this override must stay const,
+ *        so that method's own default of 1.0F per particle before the
+ *        first sync_bonds_from_claims is replicated here instead.
+ */
+std::vector<std::pair<std::string, Kakshya::DataVariant>>
+PhysicsOperator::extract_vertex_attributes() const
+{
+    std::vector<float> mass;
+    mass.reserve(get_point_count());
+    for (const auto& group : m_collections) {
+        for (const auto& state : group.physics_state) {
+            mass.push_back(state.mass);
+        }
+    }
+
+    std::vector<std::pair<std::string, Kakshya::DataVariant>> attributes;
+    attributes.emplace_back("mass", std::move(mass));
+
+    std::vector<float> accreted(m_accreted_mass.empty() ? get_point_count() : m_accreted_mass.size(), 1.0F);
+    if (!m_accreted_mass.empty()) {
+        std::copy(m_accreted_mass.begin(), m_accreted_mass.end(), accreted.begin());
+    }
+    attributes.emplace_back("accreted_mass", std::move(accreted));
+
+    return attributes;
+}
+
+std::vector<glm::vec3> PhysicsOperator::extract_vertex_velocities() const
+{
+    std::vector<glm::vec3> velocities;
+    velocities.reserve(get_point_count());
+    for (const auto& group : m_collections) {
+        for (const auto& state : group.physics_state) {
+            velocities.push_back(state.velocity);
+        }
+    }
+    return velocities;
 }
 
 std::vector<uint32_t> PhysicsOperator::build_cluster_ids() const

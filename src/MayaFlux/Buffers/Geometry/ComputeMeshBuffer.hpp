@@ -89,6 +89,19 @@ public:
         return m_field_processor;
     }
 
+    /**
+     * @brief The marching-cubes stage, valid after setup_processors().
+     *
+     * Holds the atomic vertex counter buffer (SDFMeshProcessor::counter_buf())
+     * a readback needs to size itself correctly, since this buffer's own
+     * get_size_bytes() reflects worst-case allocated capacity, not the live
+     * count from the most recent dispatch.
+     */
+    [[nodiscard]] std::shared_ptr<SDFMeshProcessor> get_mesh_processor() const
+    {
+        return m_sdf_processor;
+    }
+
     ~ComputeMeshBuffer() override = default;
 
     void setup_processors(ProcessingToken token) override;
@@ -139,6 +152,12 @@ public:
     void set_texture(
         std::shared_ptr<Core::VKImage> image,
         std::string binding = "diffuseTex");
+
+    /** @brief Check if a diffuse texture is bound. */
+    [[nodiscard]] bool has_diffuse_texture() const noexcept { return m_diffuse_texture != nullptr; }
+
+    /** @brief Diffuse texture is optional, so may return nullptr. */
+    [[nodiscard]] std::shared_ptr<Core::VKImage> get_diffuse_texture() const noexcept { return m_diffuse_texture; }
 
 private:
     uint32_t m_res_x;

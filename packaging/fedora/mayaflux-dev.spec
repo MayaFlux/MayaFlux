@@ -35,6 +35,7 @@ BuildRequires:  vulkan-tools
 BuildRequires:  vulkan-validation-layers
 BuildRequires:  ffmpeg-free-devel
 BuildRequires:  assimp-devel
+BuildRequires:  alembic-devel
 BuildRequires:  stb-devel
 BuildRequires:  tbb-devel
 BuildRequires:  gtest-devel
@@ -76,6 +77,7 @@ Requires:       vulkan-tools
 Requires:       vulkan-validation-layers
 Requires:       ffmpeg-free-devel
 Requires:       assimp-devel
+Requires:       alembic-devel
 Requires:       stb-devel
 Requires:       tbb-devel
 Requires:       gtest-devel
@@ -104,9 +106,9 @@ Conflicts:      mayaflux
 MayaFlux is a modern C++23 framework for real-time graphics and audio processing.
 This is a DEVELOPMENT BUILD from the main branch (built on %(date -d '@%{builddate}' +'%Y-%m-%d %H:%M:%S UTC')).
 
-MayaFlux reimagines digital creative computing by moving beyond analog hardware 
-metaphors toward truly digital-first paradigms. It treats audio, visual, and 
-control data as unified numerical streams processed through lock-free node graphs, 
+MayaFlux reimagines digital creative computing by moving beyond analog hardware
+metaphors toward truly digital-first paradigms. It treats audio, visual, and
+control data as unified numerical streams processed through lock-free node graphs,
 C++20 coroutines for temporal coordination, and grammar-driven operation pipelines.
 
 Features:

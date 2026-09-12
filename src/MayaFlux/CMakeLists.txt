@@ -142,6 +142,7 @@ if(WIN32)
         hidapi::hidapi
         asio::asio
         assimp::assimp
+        Alembic::Alembic
         utf8proc::utf8proc
         tinyexr
         tinyvdb
@@ -187,6 +188,7 @@ else()
         PkgConfig::HIDAPI
         PkgConfig::Asio
         PkgConfig::Assimp
+        Alembic::Alembic
         PkgConfig::LIBAVCODEC
         PkgConfig::LIBAVFORMAT
         PkgConfig::LIBAVUTIL

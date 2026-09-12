@@ -126,6 +126,18 @@ public:
     }
 
     /**
+     * @brief Size in bytes of one cell's state, fixed at construction.
+     *
+     * A caller reinterpreting request_snapshot()/snapshot_source()'s raw
+     * bytes needs this to know how to slice them into individual cells:
+     * get_state_bytes() alone gives only the total, and state format
+     * genuinely varies by rule (a single float, a uint32 automaton state,
+     * a vec2 reaction-diffusion pair, or anything else a rule shader
+     * defines), so nothing here can infer it.
+     */
+    [[nodiscard]] size_t get_cell_stride_bytes() const { return m_cell_stride_bytes; }
+
+    /**
      * @brief Write initial state directly into the current front generation.
      * @param data Pointer to cell_count * cell_stride_bytes of state data.
      * @param size Byte count; must equal get_state_bytes().
@@ -178,6 +190,19 @@ public:
 
     /** @brief The attached emit-stage processor, valid after setup_processors(). */
     [[nodiscard]] std::shared_ptr<RelaxationEmitProcessor> emit_processor() const { return m_emit_processor; }
+
+    /**
+     * @brief The rule source this buffer was constructed with: either a
+     *        hand-written shader path or a generated ShaderSpec.
+     *
+     * For a caller building descriptive metadata (a rule name/identity
+     * tag) about a capture rather than for driving the pipeline itself,
+     * which goes through setup_processors() instead.
+     */
+    [[nodiscard]] const ShaderSource& rule_source() const { return m_rule_source; }
+
+    /** @brief The emit source this buffer was constructed with. See rule_source(). */
+    [[nodiscard]] const ShaderSource& emit_source() const { return m_emit_source; }
 
 private:
     friend class RelaxationStepProcessor;

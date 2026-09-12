@@ -25,8 +25,10 @@
 #include "MayaFlux/Registry/Service/AudioBackendService.hpp"
 #include "MayaFlux/Registry/Service/IOService.hpp"
 
+#include "AssimpModelWriter.hpp"
 #include "EXRWriter.hpp"
 #include "ImageExport.hpp"
+#include "ModelExport.hpp"
 #include "ModelReader.hpp"
 #include "STBImageWriter.hpp"
 #include "VDBWriter.hpp"
@@ -75,6 +77,7 @@ IOManager::IOManager(Core::GlobalStreamInfo& stream_info, uint32_t frame_rate, c
     STBImageWriter::register_with_registry();
     EXRWriter::register_with_registry();
     VDBWriter::register_with_registry();
+    AssimpModelWriter::register_with_registry();
 
     MF_INFO(Journal::Component::Core, Journal::Context::Init, "IOManager initialised");
 }
@@ -91,6 +94,18 @@ IOManager::~IOManager()
         }
         for (auto id : ids)
             stop_capture(id);
+    }
+
+    {
+        std::vector<uint32_t> ids;
+        {
+            std::lock_guard lock(m_spatial_captures_mutex);
+            ids.reserve(m_spatial_captures.size());
+            for (const auto& [id, _] : m_spatial_captures)
+                ids.push_back(id);
+        }
+        for (auto id : ids)
+            stop_spatial_capture(id);
     }
 
     for (auto& w : m_writers) {
@@ -705,6 +720,107 @@ IOManager::load_mesh_network(const std::string& filepath, TextureResolver resolv
     return net;
 }
 
+void IOManager::track_save_task(std::future<bool> fut)
+{
+    std::lock_guard lock(m_save_tasks_mutex);
+    m_save_tasks.push_back(std::move(fut));
+    std::erase_if(m_save_tasks, [](std::future<bool>& f) {
+        return f.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
+    });
+}
+
+bool IOManager::save_mesh(
+    const std::shared_ptr<Buffers::MeshBuffer>& mesh_buffer,
+    const std::string& filepath,
+    const IO::ModelWriteOptions& options)
+{
+    track_save_task(std::async(std::launch::async,
+        [mesh_buffer, filepath, options]() -> bool {
+            return IO::save_mesh(mesh_buffer, filepath, options);
+        }));
+
+    return true;
+}
+
+bool IOManager::save_mesh(
+    const std::vector<Kakshya::MeshData>& meshes,
+    const std::string& filepath,
+    const IO::ModelWriteOptions& options)
+{
+    track_save_task(std::async(std::launch::async,
+        [meshes, filepath, options]() -> bool {
+            auto writer = IO::ModelWriterRegistry::instance().create_writer(filepath);
+            if (!writer) {
+                MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
+                    "save_mesh: no writer registered for '{}'", filepath);
+                return false;
+            }
+
+            const bool ok = writer->write(filepath, meshes, options);
+            if (!ok) {
+                MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
+                    "save_mesh: writer failed for '{}': {}", filepath, writer->get_last_error());
+            } else {
+                MF_INFO(Journal::Component::API, Journal::Context::FileIO,
+                    "save_mesh: wrote '{}'", filepath);
+            }
+            return ok;
+        }));
+
+    return true;
+}
+
+bool IOManager::save_mesh(
+    const std::shared_ptr<Nodes::Network::MeshNetwork>& network,
+    const std::string& filepath,
+    const IO::ModelWriteOptions& options)
+{
+    track_save_task(std::async(std::launch::async,
+        [network, filepath, options]() -> bool {
+            return IO::save_mesh(network, filepath, options);
+        }));
+
+    return true;
+}
+
+bool IOManager::save_mesh(
+    const std::shared_ptr<Buffers::ComputeMeshBuffer>& buffer,
+    const std::string& filepath,
+    const IO::ModelWriteOptions& options)
+{
+    if (!buffer) {
+        MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
+            "save_mesh: null buffer");
+        return false;
+    }
+
+    track_save_task(std::async(std::launch::async,
+        [buffer, filepath, options]() -> bool {
+            return IO::save_mesh(buffer, filepath, options);
+        }));
+
+    return true;
+}
+
+bool IOManager::save_mesh_snapshot(
+    const std::shared_ptr<Buffers::ComputeMeshBuffer>& buffer,
+    const std::string& path_pattern,
+    const IO::ModelWriteOptions& options)
+{
+    if (!buffer) {
+        MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
+            "save_mesh_snapshot: null buffer");
+        return false;
+    }
+
+    track_save_task(std::async(std::launch::async,
+        [buffer, path_pattern, options]() -> bool {
+            return IO::save_mesh_snapshot(buffer, path_pattern, options);
+        }));
+
+    return true;
+}
+
 void IOManager::configure_frame_processor(
     const std::shared_ptr<Kakshya::VideoFileContainer>& container)
 {
@@ -1224,6 +1340,107 @@ std::vector<uint32_t> IOManager::get_volume_capture_ids() const
     for (const auto& [id, _] : m_volume_captures)
         ids.push_back(id);
     return ids;
+}
+
+uint32_t IOManager::capture_spatial(
+    const std::string& filepath,
+    std::vector<IO::SpatialCaptureSource> sources,
+    uint32_t max_frames,
+    uint64_t frame_interval)
+{
+    if (sources.empty()) {
+        MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+            "capture_spatial: no sources");
+        return 0;
+    }
+
+    if (!m_scheduler) {
+        MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+            "capture_spatial: TaskScheduler unavailable");
+        return 0;
+    }
+
+    std::shared_ptr<IO::SpatialCache> cache;
+    {
+        std::lock_guard lock(m_spatial_captures_mutex);
+        auto it = m_spatial_caches.find(filepath);
+        if (it != m_spatial_caches.end()) {
+            cache = it->second;
+        } else {
+            auto new_cache = std::make_shared<IO::SpatialCache>();
+            if (!new_cache->open(filepath)) {
+                MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+                    "capture_spatial: failed to open '{}': {}", filepath, new_cache->get_last_error());
+                return 0;
+            }
+            cache = new_cache;
+            m_spatial_caches.emplace(filepath, cache);
+        }
+        ++m_spatial_cache_refcounts[filepath];
+    }
+
+    auto capture = std::make_unique<IO::SpatialCapture>(*m_scheduler, cache, std::move(sources));
+    capture->start(max_frames, frame_interval);
+
+    const uint32_t id = m_next_spatial_capture_id.fetch_add(1, std::memory_order_relaxed);
+
+    std::lock_guard lock(m_spatial_captures_mutex);
+    m_spatial_captures.emplace(id, SpatialCaptureEntry { .capture = std::move(capture), .filepath = filepath });
+    return id;
+}
+
+void IOManager::stop_spatial_capture(uint32_t capture_id)
+{
+    std::unique_ptr<IO::SpatialCapture> capture;
+    std::shared_ptr<IO::SpatialCache> cache_to_close;
+    {
+        std::lock_guard lock(m_spatial_captures_mutex);
+        auto it = m_spatial_captures.find(capture_id);
+        if (it == m_spatial_captures.end()) {
+            MF_WARN(Journal::Component::IO, Journal::Context::FileIO,
+                "stop_spatial_capture: unknown capture_id={}", capture_id);
+            return;
+        }
+        capture = std::move(it->second.capture);
+        const std::string filepath = std::move(it->second.filepath);
+        m_spatial_captures.erase(it);
+
+        auto ref_it = m_spatial_cache_refcounts.find(filepath);
+        if (ref_it != m_spatial_cache_refcounts.end() && --ref_it->second <= 0) {
+            m_spatial_cache_refcounts.erase(ref_it);
+            auto cache_it = m_spatial_caches.find(filepath);
+            if (cache_it != m_spatial_caches.end()) {
+                cache_to_close = cache_it->second;
+                m_spatial_caches.erase(cache_it);
+            }
+        }
+    }
+
+    capture.reset();
+    if (cache_to_close) {
+        cache_to_close->close();
+    }
+}
+
+std::vector<uint32_t> IOManager::get_spatial_capture_ids() const
+{
+    std::lock_guard lock(m_spatial_captures_mutex);
+    std::vector<uint32_t> ids;
+    ids.reserve(m_spatial_captures.size());
+    for (const auto& [id, _] : m_spatial_captures)
+        ids.push_back(id);
+    return ids;
+}
+
+bool IOManager::save_spatial_snapshot(
+    std::vector<IO::SpatialCaptureSource> sources,
+    const std::string& path_pattern)
+{
+    track_save_task(std::async(std::launch::async,
+        [sources = std::move(sources), path_pattern]() -> bool {
+            return IO::save_spatial_snapshot(path_pattern, sources);
+        }));
+    return true;
 }
 
 void IOManager::wait_for_pending_saves()
