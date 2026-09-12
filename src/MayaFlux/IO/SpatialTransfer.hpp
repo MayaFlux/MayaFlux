@@ -4,6 +4,7 @@
 
 namespace MayaFlux::Buffers {
 class NetworkGeometryBuffer;
+class RelaxationGridBuffer;
 }
 
 namespace MayaFlux::Vruta {
@@ -135,6 +136,86 @@ private:
     std::shared_ptr<CaptureState> m_state;
 
     std::string m_task_name;
+};
+
+/**
+ * @class RelaxationGridCapture
+ * @brief Records time-sampled cell state from a RelaxationGridBuffer into an
+ *        Alembic archive.
+ *
+ * RelaxationGridBuffer::snapshot_source() is a single-consumer
+ * BroadcastSource (its own doc: one coroutine per instance, a second
+ * listener silently displaces the first), so this class does not subscribe
+ * to it itself and never will: the caller keeps whatever
+ * Kriya::on_signal(grid->snapshot_source(), ...) listener it already has
+ * and calls write_snapshot() from inside that same callback. This also
+ * keeps RelaxationGridBuffer itself untouched; everything here works from
+ * its existing public accessors.
+ *
+ * Positions and ids are fixed at construction via relaxation_grid_positions()
+ * and reused for every sample, matching that function's own guidance.
+ * Per-cell state format is rule-defined (a float, a uint32 automaton state,
+ * a vec2 reaction-diffusion pair, ...), so the caller supplies the one
+ * genuinely rule-specific piece: how to turn a snapshot's raw bytes into
+ * named attributes.
+ */
+class MAYAFLUX_API RelaxationGridCapture {
+public:
+    using ToAttributes = std::function<std::vector<SpatialAttribute>(std::span<const uint8_t>)>;
+
+    /**
+     * @param grid          Source grid. Held for the capture's lifetime.
+     * @param stream_name   Stream name within the target archive.
+     * @param extent        NDC half-span, forwarded to relaxation_grid_positions().
+     * @param to_attributes Converts one snapshot's raw bytes into named
+     *                      attributes. Called only from write_snapshot(),
+     *                      only while capturing.
+     */
+    RelaxationGridCapture(
+        std::shared_ptr<Buffers::RelaxationGridBuffer> grid,
+        std::string stream_name,
+        float extent,
+        ToAttributes to_attributes);
+
+    ~RelaxationGridCapture();
+
+    RelaxationGridCapture(const RelaxationGridCapture&) = delete;
+    RelaxationGridCapture& operator=(const RelaxationGridCapture&) = delete;
+    RelaxationGridCapture(RelaxationGridCapture&&) = delete;
+    RelaxationGridCapture& operator=(RelaxationGridCapture&&) = delete;
+
+    /**
+     * @brief Open the archive. Subsequent write_snapshot() calls append to it.
+     * @return False if SpatialCache::open() fails; not capturing in that case.
+     */
+    bool start(const std::string& filepath);
+
+    /**
+     * @brief Close the archive. No-op if not currently capturing.
+     */
+    void stop();
+
+    [[nodiscard]] bool is_capturing() const { return m_cache != nullptr; }
+
+    /**
+     * @brief Write one snapshot as a sample, if currently capturing.
+     * @param bytes One generation's raw cell state, exactly what the
+     *              caller's own snapshot_source() listener received.
+     * @return True if not currently capturing (a no-op still succeeds) or
+     *         the sample was written; false if to_attributes() or
+     *         SpatialCache::write() fails.
+     */
+    bool write_snapshot(std::span<const uint8_t> bytes);
+
+private:
+    std::shared_ptr<Buffers::RelaxationGridBuffer> m_grid;
+    std::string m_stream_name;
+    ToAttributes m_to_attributes;
+
+    std::vector<glm::vec3> m_positions;
+    std::vector<uint64_t> m_ids;
+
+    std::shared_ptr<SpatialCache> m_cache;
 };
 
 /**

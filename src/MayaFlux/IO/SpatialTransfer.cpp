@@ -4,6 +4,7 @@
 #include "SpatialExport.hpp"
 
 #include "MayaFlux/Buffers/Network/NetworkGeometryBuffer.hpp"
+#include "MayaFlux/Buffers/State/RelaxationGridBuffer.hpp"
 
 #include "MayaFlux/Kriya/Awaiters/DelayAwaiters.hpp"
 #include "MayaFlux/Vruta/Scheduler.hpp"
@@ -153,6 +154,65 @@ void SpatialCapture::stop()
     MF_INFO(Journal::Component::IO, Journal::Context::FileIO,
         "SpatialCapture: stop requested after {} frames",
         m_state->frame.load(std::memory_order_relaxed));
+}
+
+RelaxationGridCapture::RelaxationGridCapture(
+    std::shared_ptr<Buffers::RelaxationGridBuffer> grid,
+    std::string stream_name,
+    float extent,
+    ToAttributes to_attributes)
+    : m_grid(std::move(grid))
+    , m_stream_name(std::move(stream_name))
+    , m_to_attributes(std::move(to_attributes))
+{
+    relaxation_grid_positions(m_grid, extent, m_positions, m_ids);
+}
+
+RelaxationGridCapture::~RelaxationGridCapture()
+{
+    stop();
+}
+
+bool RelaxationGridCapture::start(const std::string& filepath)
+{
+    auto cache = std::make_shared<SpatialCache>();
+    if (!cache->open(filepath)) {
+        MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+            "RelaxationGridCapture: failed to open '{}': {}", filepath, cache->get_last_error());
+        return false;
+    }
+
+    m_cache = std::move(cache);
+    MF_INFO(Journal::Component::IO, Journal::Context::FileIO,
+        "RelaxationGridCapture: recording '{}' to '{}'", m_stream_name, filepath);
+    return true;
+}
+
+void RelaxationGridCapture::stop()
+{
+    if (!m_cache) {
+        return;
+    }
+
+    m_cache->close();
+    m_cache.reset();
+
+    MF_INFO(Journal::Component::IO, Journal::Context::FileIO,
+        "RelaxationGridCapture: stopped '{}'", m_stream_name);
+}
+
+bool RelaxationGridCapture::write_snapshot(std::span<const uint8_t> bytes)
+{
+    if (!m_cache) {
+        return true;
+    }
+
+    return m_cache->write(m_stream_name,
+        SpatialSample {
+            .topology = Portal::Graphics::PrimitiveTopology::POINT_LIST,
+            .positions = m_positions,
+            .ids = m_ids,
+            .attributes = m_to_attributes(bytes) });
 }
 
 bool save_spatial_snapshot(
