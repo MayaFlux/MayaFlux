@@ -708,12 +708,26 @@ IOManager::load_mesh_network(const std::string& filepath, TextureResolver resolv
     return net;
 }
 
+void IOManager::track_save_task(std::future<bool> fut)
+{
+    std::lock_guard lock(m_save_tasks_mutex);
+    m_save_tasks.push_back(std::move(fut));
+    std::erase_if(m_save_tasks, [](std::future<bool>& f) {
+        return f.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
+    });
+}
+
 bool IOManager::save_mesh(
     const std::shared_ptr<Buffers::MeshBuffer>& mesh_buffer,
     const std::string& filepath,
     const IO::ModelWriteOptions& options)
 {
-    return IO::save_mesh(mesh_buffer, filepath, options);
+    track_save_task(std::async(std::launch::async,
+        [mesh_buffer, filepath, options]() -> bool {
+            return IO::save_mesh(mesh_buffer, filepath, options);
+        }));
+
+    return true;
 }
 
 bool IOManager::save_mesh(
@@ -721,80 +735,78 @@ bool IOManager::save_mesh(
     const std::string& filepath,
     const IO::ModelWriteOptions& options)
 {
-    auto writer = IO::ModelWriterRegistry::instance().create_writer(filepath);
-    if (!writer) {
-        MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
-            "save_mesh: no writer registered for '{}'", filepath);
-        return false;
-    }
+    track_save_task(std::async(std::launch::async,
+        [meshes, filepath, options]() -> bool {
+            auto writer = IO::ModelWriterRegistry::instance().create_writer(filepath);
+            if (!writer) {
+                MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
+                    "save_mesh: no writer registered for '{}'", filepath);
+                return false;
+            }
 
-    const bool ok = writer->write(filepath, meshes, options);
-    if (!ok) {
-        MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
-            "save_mesh: writer failed for '{}': {}", filepath, writer->get_last_error());
-    } else {
-        MF_INFO(Journal::Component::API, Journal::Context::FileIO,
-            "save_mesh: wrote '{}'", filepath);
-    }
-    return ok;
+            const bool ok = writer->write(filepath, meshes, options);
+            if (!ok) {
+                MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
+                    "save_mesh: writer failed for '{}': {}", filepath, writer->get_last_error());
+            } else {
+                MF_INFO(Journal::Component::API, Journal::Context::FileIO,
+                    "save_mesh: wrote '{}'", filepath);
+            }
+            return ok;
+        }));
+
+    return true;
 }
 
-bool IOManager::save_compute_mesh(
+bool IOManager::save_mesh(
+    const std::shared_ptr<Nodes::Network::MeshNetwork>& network,
+    const std::string& filepath,
+    const IO::ModelWriteOptions& options)
+{
+    track_save_task(std::async(std::launch::async,
+        [network, filepath, options]() -> bool {
+            return IO::save_mesh(network, filepath, options);
+        }));
+
+    return true;
+}
+
+bool IOManager::save_mesh(
     const std::shared_ptr<Buffers::ComputeMeshBuffer>& buffer,
     const std::string& filepath,
     const IO::ModelWriteOptions& options)
 {
     if (!buffer) {
         MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
-            "save_compute_mesh: null buffer");
+            "save_mesh: null buffer");
         return false;
     }
 
-    auto fut = std::async(std::launch::async,
+    track_save_task(std::async(std::launch::async,
         [buffer, filepath, options]() -> bool {
             return IO::save_mesh(buffer, filepath, options);
-        });
-
-    std::lock_guard lock(m_save_tasks_mutex);
-    m_save_tasks.push_back(std::move(fut));
-    std::erase_if(m_save_tasks, [](std::future<bool>& f) {
-        return f.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
-    });
+        }));
 
     return true;
 }
 
-bool IOManager::save_compute_mesh_snapshot(
+bool IOManager::save_mesh_snapshot(
     const std::shared_ptr<Buffers::ComputeMeshBuffer>& buffer,
     const std::string& path_pattern,
     const IO::ModelWriteOptions& options)
 {
     if (!buffer) {
         MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
-            "save_compute_mesh_snapshot: null buffer");
+            "save_mesh_snapshot: null buffer");
         return false;
     }
 
-    auto fut = std::async(std::launch::async,
+    track_save_task(std::async(std::launch::async,
         [buffer, path_pattern, options]() -> bool {
             return IO::save_mesh_snapshot(buffer, path_pattern, options);
-        });
-
-    std::lock_guard lock(m_save_tasks_mutex);
-    m_save_tasks.push_back(std::move(fut));
-    std::erase_if(m_save_tasks, [](std::future<bool>& f) {
-        return f.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
-    });
+        }));
 
     return true;
-}
-
-bool IOManager::save_mesh_network(
-    const std::shared_ptr<Nodes::Network::MeshNetwork>& network,
-    const std::string& filepath,
-    const IO::ModelWriteOptions& options)
-{
-    return IO::save_mesh(network, filepath, options);
 }
 
 void IOManager::configure_frame_processor(

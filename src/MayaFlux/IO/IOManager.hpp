@@ -536,18 +536,19 @@ public:
     // ─────────────────────────────────────────────────────────────────────────
 
     /**
-     * @brief Save a MeshBuffer's mesh data to disk via the ModelWriter registry.
+     * @brief Save a MeshBuffer's mesh data to disk asynchronously.
      *
-     * Synchronous: MeshData is always CPU-authoritative for MeshBuffer (every
-     * mutation path, set_vertex_data/set_index_data/set_mesh_data, writes
-     * the CPU copy first), so there is no GPU download step here, unlike
-     * save_image/save_volume. The extension of @p filepath selects the writer
-     * via ModelWriterRegistry.
+     * MeshData is always CPU-authoritative for MeshBuffer, so there is no
+     * download to wait on, but the write itself (AssimpModelWriter ->
+     * Assimp::Exporter -> disk) is still blocking I/O; queuing it here keeps
+     * that off the caller's thread, the same reason save_image/save_volume
+     * do. Returns once the task is queued; write failure is logged from the
+     * task and does not surface here.
      *
      * @param mesh_buffer Source mesh. Must have valid MeshData.
      * @param filepath    Destination path with extension.
      * @param options     Format-specific writer options.
-     * @return True on success. On failure the writer's own error is logged.
+     * @return True once the task is queued.
      */
     bool save_mesh(
         const std::shared_ptr<Buffers::MeshBuffer>& mesh_buffer,
@@ -555,11 +556,11 @@ public:
         const IO::ModelWriteOptions& options = {});
 
     /**
-     * @brief Save one or more meshes to disk via the ModelWriter registry.
+     * @brief Save one or more meshes to disk asynchronously.
      *
      * For callers that already have MeshData in hand (e.g. from
      * IO::download_compute_mesh) rather than a MeshBuffer. Every entry must
-     * satisfy Kakshya::MeshData::is_valid().
+     * satisfy Kakshya::MeshData::is_valid(). Returns once the task is queued.
      */
     bool save_mesh(
         const std::vector<Kakshya::MeshData>& meshes,
@@ -567,21 +568,39 @@ public:
         const IO::ModelWriteOptions& options = {});
 
     /**
+     * @brief Save a MeshNetwork's current slots to disk asynchronously.
+     *
+     * Slot data lives on MeshWriterNode, CPU-resident the same way
+     * MeshBuffer's is, whether or not the network is wrapped in a
+     * MeshNetworkBuffer or has ever been rendered. Each slot's vertices are
+     * baked into world space from its current world_transform. Returns
+     * once the task is queued.
+     *
+     * @param network  Source network.
+     * @param filepath Destination path with extension.
+     * @param options  Format-specific writer options.
+     * @return True once the task is queued.
+     */
+    bool save_mesh(
+        const std::shared_ptr<Nodes::Network::MeshNetwork>& network,
+        const std::string& filepath,
+        const IO::ModelWriteOptions& options = {});
+
+    /**
      * @brief Save a ComputeMeshBuffer's current live geometry to disk asynchronously.
      *
-     * Unlike save_mesh(MeshBuffer), this genuinely needs the async task
-     * pool: ComputeMeshBuffer's geometry lives GPU-only, so retrieving it
-     * means a real device-to-host transfer (IO::download_compute_mesh), not
-     * a copy of data already resident on the CPU. Returns once the task is
-     * queued; readback or write failure is logged from the task and does
-     * not surface here, mirroring save_volume.
+     * ComputeMeshBuffer's geometry lives GPU-only, so this queues a real
+     * device-to-host transfer (IO::download_compute_mesh) on top of the
+     * disk write every overload above also queues. Returns once the task
+     * is queued; readback or write failure is logged from the task and
+     * does not surface here.
      *
      * @param buffer   Source buffer. setup_processors() must have run.
      * @param filepath Destination path with extension.
      * @param options  Format-specific writer options.
      * @return True once the task is queued.
      */
-    bool save_compute_mesh(
+    bool save_mesh(
         const std::shared_ptr<Buffers::ComputeMeshBuffer>& buffer,
         const std::string& filepath,
         const IO::ModelWriteOptions& options = {});
@@ -595,27 +614,9 @@ public:
      * repeated presses in quick succession still each land in their own
      * file rather than racing on a single path computed up front.
      */
-    bool save_compute_mesh_snapshot(
+    bool save_mesh_snapshot(
         const std::shared_ptr<Buffers::ComputeMeshBuffer>& buffer,
         const std::string& path_pattern,
-        const IO::ModelWriteOptions& options = {});
-
-    /**
-     * @brief Save a MeshNetwork's current slots to disk via the ModelWriter registry.
-     *
-     * Synchronous: slot data lives on MeshWriterNode, CPU-resident the same
-     * way MeshBuffer's is, whether or not the network is wrapped in a
-     * MeshNetworkBuffer or has ever been rendered. Each slot's vertices are
-     * baked into world space from its current world_transform.
-     *
-     * @param network  Source network.
-     * @param filepath Destination path with extension.
-     * @param options  Format-specific writer options.
-     * @return True on success. On failure the writer's own error is logged.
-     */
-    bool save_mesh_network(
-        const std::shared_ptr<Nodes::Network::MeshNetwork>& network,
-        const std::string& filepath,
         const IO::ModelWriteOptions& options = {});
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -866,6 +867,16 @@ private:
      * Non-blocking. Safe from any thread.
      */
     void dispatch_frame_request(uint64_t reader_id);
+
+    /**
+     * @brief Queue a save task and prune finished ones, under one short lock.
+     *
+     * The lock covers only the push_back and the erase_if scan against
+     * m_save_tasks itself; nothing about the task's own work (already
+     * running on its own thread via std::async before this is called)
+     * holds it.
+     */
+    void track_save_task(std::future<bool> fut);
 
     void configure_frame_processor(
         const std::shared_ptr<Kakshya::VideoFileContainer>& container);

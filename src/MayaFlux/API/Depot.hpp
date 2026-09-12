@@ -225,7 +225,7 @@ MAYAFLUX_API bool save_mesh(
 
 /**
  * @brief Present a native save-file dialog filtered to 3D model formats and
- *        save @p network to the chosen path via IOManager::save_mesh_network().
+ *        save @p network to the chosen path via IOManager::save_mesh().
  *
  * Works directly on the MeshNetwork returned by choose_mesh_network(),
  * whether or not it has ever been wrapped in a MeshNetworkBuffer or
@@ -239,19 +239,19 @@ MAYAFLUX_API bool save_mesh(
  * @param network        Source MeshNetwork to encode.
  * @param suggested_name Filename pre-filled in the dialog name field.
  */
-MAYAFLUX_API bool save_mesh_network(
+MAYAFLUX_API bool save_mesh(
     const std::shared_ptr<Nodes::Network::MeshNetwork>& network,
     const std::string& suggested_name = "output.gltf");
 
 /**
  * @brief Present a native save-file dialog filtered to 3D model formats and
- *        save @p network to the chosen path via IOManager::save_mesh_network().
+ *        save @p network to the chosen path via IOManager::save_mesh().
  *
  * @param network        Source MeshNetwork to encode.
  * @param suggested_name Filename pre-filled in the dialog name field.
  * @param options        Format-specific writer options forwarded to IOManager.
  */
-MAYAFLUX_API bool save_mesh_network(
+MAYAFLUX_API bool save_mesh(
     const std::shared_ptr<Nodes::Network::MeshNetwork>& network,
     const std::string& suggested_name,
     const IO::ModelWriteOptions& options);

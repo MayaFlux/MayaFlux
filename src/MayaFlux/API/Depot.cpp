@@ -306,31 +306,31 @@ bool save_mesh(
         k_mesh_save_filters);
 }
 
-bool save_mesh_network(
+bool save_mesh(
     const std::shared_ptr<Nodes::Network::MeshNetwork>& network,
     const std::string& suggested_name)
 {
-    return save_mesh_network(network, suggested_name, IO::ModelWriteOptions {});
+    return save_mesh(network, suggested_name, IO::ModelWriteOptions {});
 }
 
-bool save_mesh_network(
+bool save_mesh(
     const std::shared_ptr<Nodes::Network::MeshNetwork>& network,
     const std::string& suggested_name,
     const IO::ModelWriteOptions& options)
 {
-    if (!require_portal("save_mesh_network"))
+    if (!require_portal("save_mesh"))
         return false;
 
     auto iom = get_io_manager();
     if (!iom) {
         MF_ERROR(Journal::Component::API, Journal::Context::Runtime,
-            "save_mesh_network: IOManager unavailable");
+            "save_mesh: IOManager unavailable");
         return false;
     }
 
     return Portal::System::Dialog::save_file<bool>(
         [&iom, &network, &options](const fs::path& p) {
-            return iom->save_mesh_network(network, p.string(), options);
+            return iom->save_mesh(network, p.string(), options);
         },
         [](Core::SystemDialogError) { },
         suggested_name,
