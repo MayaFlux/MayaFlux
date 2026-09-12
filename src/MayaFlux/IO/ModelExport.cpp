@@ -1,6 +1,7 @@
 #include "ModelExport.hpp"
 
 #include "FileWriter.hpp"
+#include "ImageExport.hpp"
 
 #include "MayaFlux/Buffers/Geometry/ComputeMeshBuffer.hpp"
 #include "MayaFlux/Buffers/Geometry/MeshBuffer.hpp"
@@ -46,6 +47,63 @@ namespace {
     }
 
     /**
+     * @brief Download a bound diffuse texture and write it next to the model
+     *        file, so AssimpModelWriter's "diffuse_path" submesh attribute has
+     *        somewhere to point.
+     *
+     * Named "<model-stem>_diffuse.png", or "<model-stem>_<suffix>_diffuse.png"
+     * when more than one texture is being written alongside the same model
+     * file (one per MeshNetwork slot).
+     *
+     * @return The sibling path on success, empty string if there is nothing
+     *         to write or the download/encode fails.
+     */
+    std::string pack_diffuse_texture(
+        const std::shared_ptr<Core::VKImage>& texture,
+        const std::string& model_filepath,
+        const std::string& suffix)
+    {
+        if (!texture) {
+            return {};
+        }
+
+        const std::filesystem::path model_path(model_filepath);
+        std::string name = model_path.stem().string() + "_diffuse";
+        if (!suffix.empty()) {
+            name += "_" + suffix;
+        }
+        name += ".png";
+
+        const auto image_path = (model_path.parent_path() / name).string();
+        if (!save_image(texture, image_path)) {
+            MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+                "save_mesh: failed to write diffuse texture to '{}'", image_path);
+            return {};
+        }
+        return image_path;
+    }
+
+    /**
+     * @brief Give mesh_data a single full-mesh submesh Region if it has none,
+     *        so a caller-supplied diffuse_path has an attribute to attach to.
+     */
+    void ensure_submesh_region(Kakshya::MeshData& mesh_data, const std::string& name)
+    {
+        if (mesh_data.submeshes && !mesh_data.submeshes->regions.empty()) {
+            return;
+        }
+
+        Kakshya::MeshSubrange sub;
+        sub.index_start = 0;
+        sub.index_count = mesh_data.face_count() * 3;
+        sub.name = name;
+
+        Kakshya::RegionGroup rg("submeshes");
+        rg.add_region(sub.to_region());
+        mesh_data.submeshes = std::move(rg);
+    }
+
+    /**
      * @brief Pack one MeshWriterNode's current vertices/indices into a
      *        MeshData, baking @p world into position/normal/tangent.
      * @return nullopt if the node has no vertices yet, or insertion fails.
@@ -53,7 +111,8 @@ namespace {
     std::optional<Kakshya::MeshData> pack_node(
         const std::shared_ptr<Nodes::GpuSync::MeshWriterNode>& node,
         const glm::mat4& world,
-        const std::string& name)
+        const std::string& name,
+        const std::string& diffuse_path = {})
     {
         const auto& src_verts = node->get_mesh_vertices();
         const auto& indices = node->get_mesh_indices();
@@ -88,6 +147,7 @@ namespace {
         sub.index_start = 0;
         sub.index_count = static_cast<uint32_t>(indices.size());
         sub.name = name;
+        sub.diffuse_path = diffuse_path;
         Kakshya::RegionGroup rg("submeshes");
         rg.add_region(sub.to_region());
         mesh_data.submeshes = std::move(rg);
@@ -114,7 +174,17 @@ bool save_mesh(
         MF_ERROR(Journal::Component::IO, Journal::Context::FileIO, "save_mesh: null buffer");
         return false;
     }
-    return write_via_registry(filepath, { buffer->get_mesh_data() }, options);
+
+    auto mesh_data = buffer->get_mesh_data();
+    if (buffer->has_diffuse_texture()) {
+        const auto image_path = pack_diffuse_texture(buffer->get_diffuse_texture(), filepath, "");
+        if (!image_path.empty()) {
+            ensure_submesh_region(mesh_data, "mesh");
+            mesh_data.submeshes->regions.front().set_attribute("diffuse_path", image_path);
+        }
+    }
+
+    return write_via_registry(filepath, { mesh_data }, options);
 }
 
 bool save_mesh(
@@ -133,7 +203,12 @@ bool save_mesh(
         if (!slot.node) {
             continue;
         }
-        if (auto packed = pack_node(slot.node, slot.world_transform, slot.name)) {
+        std::string diffuse_path;
+        if (slot.diffuse_texture) {
+            const auto suffix = !slot.name.empty() ? slot.name : std::to_string(slot.index);
+            diffuse_path = pack_diffuse_texture(slot.diffuse_texture, filepath, suffix);
+        }
+        if (auto packed = pack_node(slot.node, slot.world_transform, slot.name, diffuse_path)) {
             meshes.push_back(std::move(*packed));
         }
     }
@@ -164,7 +239,32 @@ bool save_mesh(
         return false;
     }
 
-    return save_mesh(net, filepath, options);
+    std::vector<Kakshya::MeshData> meshes;
+    meshes.reserve(net->slots().size());
+    const std::string shared_diffuse_path = network_buffer->has_diffuse_texture()
+        ? pack_diffuse_texture(network_buffer->get_diffuse_texture(), filepath, "")
+        : std::string {};
+    for (const auto& slot : net->slots()) {
+        if (!slot.node) {
+            continue;
+        }
+        std::string diffuse_path = shared_diffuse_path;
+        if (slot.diffuse_texture) {
+            const auto suffix = !slot.name.empty() ? slot.name : std::to_string(slot.index);
+            diffuse_path = pack_diffuse_texture(slot.diffuse_texture, filepath, suffix);
+        }
+        if (auto packed = pack_node(slot.node, slot.world_transform, slot.name, diffuse_path)) {
+            meshes.push_back(std::move(*packed));
+        }
+    }
+
+    if (meshes.empty()) {
+        MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+            "save_mesh: no exportable slots in network");
+        return false;
+    }
+
+    return write_via_registry(filepath, meshes, options);
 }
 
 bool save_mesh(
@@ -255,6 +355,15 @@ bool save_mesh(
     if (!mesh_data) {
         return false;
     }
+
+    if (buffer->has_diffuse_texture()) {
+        const auto image_path = pack_diffuse_texture(buffer->get_diffuse_texture(), filepath, "");
+        if (!image_path.empty()) {
+            ensure_submesh_region(*mesh_data, "mesh");
+            mesh_data->submeshes->regions.front().set_attribute("diffuse_path", image_path);
+        }
+    }
+
     return write_via_registry(filepath, { *mesh_data }, options);
 }
 

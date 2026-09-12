@@ -153,6 +153,12 @@ public:
         std::shared_ptr<Core::VKImage> image,
         std::string binding = "diffuseTex");
 
+    /** @brief Check if a diffuse texture is bound. */
+    [[nodiscard]] bool has_diffuse_texture() const noexcept { return m_diffuse_texture != nullptr; }
+
+    /** @brief Diffuse texture is optional, so may return nullptr. */
+    [[nodiscard]] std::shared_ptr<Core::VKImage> get_diffuse_texture() const noexcept { return m_diffuse_texture; }
+
 private:
     uint32_t m_res_x;
     uint32_t m_res_y;
