@@ -6,9 +6,24 @@
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
+#ifdef MAYAFLUX_PLATFORM_WINDOWS
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#endif // MAYAFLUX_PLATFORM_WINDOWS
+
 #include <Alembic/Abc/All.h>
 #include <Alembic/AbcCoreOgawa/All.h>
 #include <Alembic/AbcGeom/All.h>
+
+#ifdef MAYAFLUX_PLATFORM_WINDOWS
+#ifdef ERROR
+#undef ERROR
+#endif // ERROR
+#endif // MAYAFLUX_PLATFORM_WINDOWS
 
 namespace MayaFlux::IO {
 

@@ -41,7 +41,7 @@ struct SpatialCaptureSource {
  * @param stream_name Stream name within the target archive.
  * @param buffer      Source buffer, held for the source's lifetime.
  */
-[[nodiscard]] SpatialCaptureSource make_network_geometry_source(
+[[nodiscard]] MAYAFLUX_API SpatialCaptureSource make_network_geometry_source(
     std::string stream_name,
     std::shared_ptr<Buffers::NetworkGeometryBuffer> buffer);
 
