@@ -51,6 +51,7 @@ install_arch() {
         "dbus"
         "ffmpeg"
         "assimp"
+        "alembic"
         "stb"
         "hidapi"
         "asio"
@@ -102,6 +103,7 @@ install_fedora() {
         "vulkan-validation-layers"
         "ffmpeg-free-devel"
         "assimp-devel"
+        "alembic-devel"
         "stb-devel"
         "tbb-devel"
         "gtest-devel"
@@ -157,7 +159,8 @@ install_ubuntu() {
         "libeigen3-dev"
         "libstb-dev"
         "ffmpeg"
-        "libassimp"-dev
+        "libassimp-dev"
+        "libalembic-graphics-dev"
         "libavcodec-dev"
         "libavformat-dev"
         "libswscale-dev"
@@ -187,6 +190,7 @@ install_opensuse() {
         "pkg-config"
         "vulkan-devel"
         "ffmpeg-devel"
+        "alembic-devel"
         "doxygen"
         "git"
     )

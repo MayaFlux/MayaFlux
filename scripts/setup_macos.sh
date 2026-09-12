@@ -28,7 +28,7 @@ brew install \
     ffmpeg glfw glm eigen onedpl googletest \
     vulkan-headers vulkan-loader vulkan-tools vulkan-validationlayers \
     vulkan-utility-libraries vulkan-extensionlayer spirv-tools spirv-cross \
-    spirv-headers shaderc glslang molten-vk hidapi asio freetype utf8proc nlohmann-json mayaflux/mayaflux/stb >/dev/null
+    spirv-headers shaderc glslang molten-vk hidapi asio assimp alembic freetype utf8proc nlohmann-json mayaflux/mayaflux/stb >/dev/null
 
 # --- 3) Gather Paths ----------------------------------------------------------
 LLVM_PREFIX="$(brew --prefix llvm)"

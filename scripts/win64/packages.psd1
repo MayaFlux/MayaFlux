@@ -49,6 +49,7 @@
         hidapi     = @{}
         asio       = @{}
         assimp     = @{}
+        alembic    = @{}
         freetype   = @{}
         utf8proc   = @{}
         "nlohmann-json" = @{}

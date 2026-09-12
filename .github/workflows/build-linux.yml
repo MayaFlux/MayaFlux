@@ -75,6 +75,7 @@ jobs:
             vulkan-validation-layers \
             ffmpeg-free-devel \
             assimp-devel \
+            alembic-devel \
             stb-devel \
             tbb-devel \
             gtest \
