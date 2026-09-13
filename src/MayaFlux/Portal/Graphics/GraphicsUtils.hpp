@@ -27,6 +27,23 @@ enum class PrimitiveTopology : uint8_t {
     TRIANGLE_FAN
 };
 
+/**
+ * @brief Whether two adjacent spans of this topology can be concatenated
+ *        without altering the primitives they assemble.
+ *
+ * List topologies assemble each primitive from its own fixed-size group of
+ * consecutive vertices, so appending one span to another adds primitives and
+ * leaves existing ones untouched. Strip and fan topologies assemble each
+ * primitive from vertices shared with its predecessor, so concatenation
+ * fabricates an extra primitive spanning the join.
+ */
+[[nodiscard]] constexpr bool is_concatenable_topology(PrimitiveTopology topology) noexcept
+{
+    return topology == PrimitiveTopology::POINT_LIST
+        || topology == PrimitiveTopology::LINE_LIST
+        || topology == PrimitiveTopology::TRIANGLE_LIST;
+}
+
 //============================================================================
 // Rasterization
 //============================================================================
@@ -325,6 +342,23 @@ struct RenderConfig {
     std::unordered_map<std::string, std::string> extra_string_params;
 
     bool operator==(const RenderConfig& other) const = default;
+};
+
+/**
+ * @struct DrawRun
+ * @brief One contiguous span of vertices to draw at a single primitive
+ *        topology.
+ *
+ * Consumed by any draw-recording processor that issues more than one draw
+ * per processing_function call (see MultiplexRenderProcessor). Carries no
+ * knowledge of what produced it: an operator's collections, an arena's
+ * per-element sub-ranges, or anything else. Producers build these; the
+ * processor only draws them.
+ */
+struct DrawRun {
+    PrimitiveTopology topology {};
+    uint32_t vertex_offset {};
+    uint32_t vertex_count {};
 };
 
 }

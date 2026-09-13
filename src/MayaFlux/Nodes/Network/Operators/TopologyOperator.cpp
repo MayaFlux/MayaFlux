@@ -211,19 +211,19 @@ std::vector<GraphicsOperator::DirtyVertexRange> TopologyOperator::dirty_vertex_r
     return ranges;
 }
 
-std::vector<TopologyRun> TopologyOperator::topology_runs() const
+std::vector<DrawRun> TopologyOperator::topology_runs() const
 {
-    std::vector<TopologyRun> runs;
+    std::vector<DrawRun> runs;
     uint32_t offset = 0;
 
     for (const auto& tp : m_topologies) {
         const auto count = static_cast<uint32_t>(tp->get_vertex_count());
         const auto topo = tp->get_primitive_topology();
 
-        if (!runs.empty() && runs.back().topology == topo) {
+        if (!runs.empty() && runs.back().topology == topo && is_concatenable_topology(topo)) {
             runs.back().vertex_count += count;
         } else {
-            runs.push_back(TopologyRun { .topology = topo, .vertex_offset = offset, .vertex_count = count });
+            runs.push_back(DrawRun { .topology = topo, .vertex_offset = offset, .vertex_count = count });
         }
 
         offset += count;

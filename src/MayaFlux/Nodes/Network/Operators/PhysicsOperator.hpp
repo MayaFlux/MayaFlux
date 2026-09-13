@@ -428,9 +428,11 @@ public:
     [[nodiscard]] std::optional<Portal::Graphics::PrimitiveTopology> declared_topology() const override;
 
     /**
-     * @brief Coalesces adjacent point collections sharing a topology into one run.
+     * @brief Coalesces adjacent point collections sharing a concatenable
+     *        topology into one run. Strip and fan collections are always
+     *        reported separately.
      */
-    std::vector<TopologyRun> topology_runs() const override;
+    std::vector<DrawRun> topology_runs() const override;
 
     /**
      * @brief Apply ONE_TO_ONE parameter for physics-specific properties

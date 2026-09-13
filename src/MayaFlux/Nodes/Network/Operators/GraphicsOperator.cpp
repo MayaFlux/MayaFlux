@@ -3,14 +3,12 @@
 #include "MayaFlux/Nodes/Graphics/VertexSpec.hpp"
 #include "MayaFlux/Nodes/Network/NodeNetwork.hpp"
 
-#include "MayaFlux/Portal/Graphics/GraphicsUtils.hpp"
-
 namespace MayaFlux::Nodes::Network {
 
-[[nodiscard]] std::vector<TopologyRun> GraphicsOperator::topology_runs() const
+[[nodiscard]] std::vector<DrawRun> GraphicsOperator::topology_runs() const
 {
     const auto topo = declared_topology().value_or(Portal::Graphics::PrimitiveTopology::POINT_LIST);
-    return { TopologyRun {
+    return { DrawRun {
         .topology = topo,
         .vertex_offset = 0,
         .vertex_count = static_cast<uint32_t>(get_vertex_count()) } };
