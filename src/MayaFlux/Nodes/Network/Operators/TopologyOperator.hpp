@@ -107,6 +107,11 @@ public:
     [[nodiscard]] std::optional<Portal::Graphics::PrimitiveTopology> declared_topology() const override;
 
     /**
+     * @brief Coalesces adjacent topology graphs sharing a topology into one run.
+     */
+    std::vector<TopologyRun> topology_runs() const override;
+
+    /**
      * @brief Access a specific topology node directly.
      * @param i Collection index.
      * @return Shared pointer to the TopologyGeneratorNode, or nullptr if out of range.

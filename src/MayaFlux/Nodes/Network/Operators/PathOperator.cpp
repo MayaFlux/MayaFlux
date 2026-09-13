@@ -246,6 +246,27 @@ std::vector<GraphicsOperator::DirtyVertexRange> PathOperator::dirty_vertex_range
     return ranges;
 }
 
+std::vector<TopologyRun> PathOperator::topology_runs() const
+{
+    std::vector<TopologyRun> runs;
+    uint32_t offset = 0;
+
+    for (const auto& path : m_paths) {
+        const auto count = static_cast<uint32_t>(path->get_vertex_count());
+        const auto topo = path->get_primitive_topology();
+
+        if (!runs.empty() && runs.back().topology == topo) {
+            runs.back().vertex_count += count;
+        } else {
+            runs.push_back(TopologyRun { .topology = topo, .vertex_offset = offset, .vertex_count = count });
+        }
+
+        offset += count;
+    }
+
+    return runs;
+}
+
 size_t PathOperator::get_point_count() const
 {
     size_t total = 0;

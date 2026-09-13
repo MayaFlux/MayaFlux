@@ -10,6 +10,16 @@ enum class PrimitiveTopology : uint8_t;
 namespace MayaFlux::Nodes::Network {
 
 /**
+ * @struct TopologyRun
+ * @brief One contiguous span of vertices sharing a primitive topology.
+ */
+struct TopologyRun {
+    Portal::Graphics::PrimitiveTopology topology {};
+    uint32_t vertex_offset {};
+    uint32_t vertex_count {};
+};
+
+/**
  * @class GraphicsOperator
  * @brief Operator that produces GPU-renderable geometry
  *
@@ -181,6 +191,25 @@ public:
      */
     [[nodiscard]] virtual std::optional<Portal::Graphics::PrimitiveTopology>
     declared_topology() const { return std::nullopt; }
+
+    /**
+     * @brief Contiguous vertex spans grouped by primitive topology.
+     * @return One run per maximal contiguous stretch of same-topology
+     *         collections, in the same concatenation order get_vertex_data()
+     *         produces. Default: a single run covering the whole operator at
+     *         get_primitive_topology()'s value -- meaning every
+     *         GraphicsOperator that has no notion of multiple collections, or
+     *         whose collections all declare the same topology, needs no
+     *         override at all.
+     *
+     * Adjacent collections of equal topology are coalesced into one run, so a
+     * PathOperator holding five LINE_STRIP paths back to back yields one run of
+     * five paths' worth of vertices, not five runs. A consumer draws each run
+     * as one draw call at that run's topology; sizing and ordering follow
+     * get_vertex_data() exactly, the same contract build_cluster_ids() and
+     * dirty_vertex_ranges() already keep.
+     */
+    [[nodiscard]] virtual std::vector<TopologyRun> topology_runs() const;
 
     /**
      * @brief Apply ONE_TO_ONE parameter mapping
