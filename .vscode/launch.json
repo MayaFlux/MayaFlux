@@ -22,6 +22,11 @@
           "description": "Set disassembly flavor to Intel",
           "text": "-gdb-set disassembly-flavor intel",
           "ignoreFailures": true
+        },
+        {
+          "description": "Disable debuginfod",
+          "text": "set debuginfod enabled off",
+          "ignoreFailures": true
         }
       ],
       "preLaunchTask": "Build MayaFlux (Debug)",
@@ -38,10 +43,10 @@
       }
     },
     {
-      "name": "Debug MayaFlux (Windows)",
+      "name": "Debug project_launcher (Windows, CMake preset)",
       "type": "cppvsdbg",
       "request": "launch",
-      "program": "${workspaceFolder}/build/Debug/MayaFlux.exe",
+      "program": "${workspaceFolder}/build/Debug/project_launcher.exe",
       "args": [],
       "stopAtEntry": false,
       "cwd": "${workspaceFolder}",
@@ -56,7 +61,7 @@
       "name": "Debug Tests (Linux/macOS)",
       "type": "cppdbg",
       "request": "launch",
-      "program": "${workspaceFolder}/build/tests/MayaFluxTests",
+      "program": "${workspaceFolder}/build/MayaFluxTests",
       "args": [],
       "stopAtEntry": false,
       "cwd": "${workspaceFolder}",
@@ -73,12 +78,17 @@
           "description": "Set disassembly flavor to Intel",
           "text": "-gdb-set disassembly-flavor intel",
           "ignoreFailures": true
+        },
+        {
+          "description": "Disable debuginfod",
+          "text": "set debuginfod enabled off",
+          "ignoreFailures": true
         }
       ],
       "preLaunchTask": "Build MayaFlux (Debug)",
       "osx": {
         "MIMode": "lldb",
-        "program": "${workspaceFolder}/build/tests/MayaFluxTests",
+        "program": "${workspaceFolder}/build/MayaFluxTests",
         "setupCommands": [
           {
             "description": "Enable pretty-printing for lldb",
@@ -107,8 +117,10 @@
       "name": "Debug Current Test File",
       "type": "cppdbg",
       "request": "launch",
-      "program": "${workspaceFolder}/build/tests/MayaFluxTests",
-      "args": ["--gtest_filter=*${fileBasenameNoExtension}*"],
+      "program": "${workspaceFolder}/build/MayaFluxTests",
+      "args": [
+        "--gtest_filter=*${fileBasenameNoExtension}*"
+      ],
       "stopAtEntry": false,
       "cwd": "${workspaceFolder}",
       "environment": [],
@@ -124,12 +136,17 @@
           "description": "Set disassembly flavor to Intel",
           "text": "-gdb-set disassembly-flavor intel",
           "ignoreFailures": true
+        },
+        {
+          "description": "Disable debuginfod",
+          "text": "set debuginfod enabled off",
+          "ignoreFailures": true
         }
       ],
       "preLaunchTask": "Build MayaFlux (Debug)",
       "osx": {
         "MIMode": "lldb",
-        "program": "${workspaceFolder}/build/tests/MayaFluxTests",
+        "program": "${workspaceFolder}/build/MayaFluxTests",
         "setupCommands": [
           {
             "description": "Enable pretty-printing for lldb",
@@ -175,6 +192,11 @@
         {
           "description": "Set disassembly flavor to Intel",
           "text": "-gdb-set disassembly-flavor intel",
+          "ignoreFailures": true
+        },
+        {
+          "description": "Disable debuginfod",
+          "text": "set debuginfod enabled off",
           "ignoreFailures": true
         }
       ],
@@ -224,6 +246,11 @@
           "description": "Set disassembly flavor to Intel",
           "text": "-gdb-set disassembly-flavor intel",
           "ignoreFailures": true
+        },
+        {
+          "description": "Disable debuginfod",
+          "text": "set debuginfod enabled off",
+          "ignoreFailures": true
         }
       ],
       "preLaunchTask": "Build MayaFlux (Debug)",
@@ -255,6 +282,11 @@
           "description": "Set disassembly flavor to Intel",
           "text": "-gdb-set disassembly-flavor intel",
           "ignoreFailures": true
+        },
+        {
+          "description": "Disable debuginfod",
+          "text": "set debuginfod enabled off",
+          "ignoreFailures": true
         }
       ],
       "osx": {
@@ -276,7 +308,10 @@
   "compounds": [
     {
       "name": "Debug All Tests",
-      "configurations": ["Debug Tests (Linux/macOS)", "Debug Tests (Windows)"]
+      "configurations": [
+        "Debug Tests (Linux/macOS)",
+        "Debug Tests (Windows)"
+      ]
     }
   ]
 }

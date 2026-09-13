@@ -5,9 +5,12 @@
       "label": "CMake Configure (Debug)",
       "type": "shell",
       "command": "cmake",
-      "args": ["-B", "build", "-S", ".", "-DMAYAFLUX_DEV=ON"],
+      "args": ["--preset", "unix-dev"],
       "windows": {
-        "args": ["-B", "build", "-S", ".", "-DCMAKE_BUILD_TYPE=Debug"]
+        "args": ["--preset", "windows-vs2026-dev"]
+      },
+      "osx": {
+        "args": ["--preset", "unix-dev"]
       },
       "group": "build",
       "problemMatcher": {
@@ -35,16 +38,12 @@
       "label": "CMake Configure (Release)",
       "type": "shell",
       "command": "cmake",
-      "args": [
-        "-B",
-        "build",
-        "-S",
-        ".",
-        "-DMAYAFLUX_DEV=ON",
-        "-DCMAKE_BUILD_TYPE=Release"
-      ],
+      "args": ["--preset", "linux-ship-rel"],
       "windows": {
-        "args": ["-B", "build", "-S", ".", "-DCMAKE_BUILD_TYPE=Release"]
+        "args": ["--preset", "windows-ship-rel"]
+      },
+      "osx": {
+        "args": ["--preset", "macos-ship-rel"]
       },
       "group": "build",
       "problemMatcher": {
@@ -72,13 +71,48 @@
       "label": "CMake Build",
       "type": "shell",
       "command": "cmake",
-      "args": [
-        "--build",
-        "build",
-        "--config",
-        "${input:buildType}",
-        "--parallel"
-      ],
+      "args": ["--build", "--preset", "unix-dev"],
+      "windows": {
+        "args": ["--build", "--preset", "win26-dev"]
+      },
+      "osx": {
+        "args": ["--build", "--preset", "unix-dev"]
+      },
+      "group": "build",
+      "problemMatcher": {
+        "owner": "cpp",
+        "fileLocation": ["relative", "${workspaceFolder}"],
+        "pattern": [
+          {
+            "regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
+            "file": 1,
+            "line": 2,
+            "column": 3,
+            "severity": 4,
+            "message": 5
+          }
+        ]
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": false
+      }
+    },
+    {
+      "label": "CMake Build (Release)",
+      "type": "shell",
+      "command": "cmake",
+      "args": ["--build", "--preset", "linux-ship-rel"],
+      "windows": {
+        "args": ["--build", "--preset", "windows-ship-rel"]
+      },
+      "osx": {
+        "args": ["--build", "--preset", "macos-ship-rel"]
+      },
       "group": "build",
       "problemMatcher": {
         "owner": "cpp",
@@ -132,14 +166,14 @@
     {
       "label": "Build MayaFlux (Release)",
       "dependsOrder": "sequence",
-      "dependsOn": ["CMake Configure (Release)", "CMake Build"],
+      "dependsOn": ["CMake Configure (Release)", "CMake Build (Release)"],
       "group": "build",
       "problemMatcher": []
     },
     {
       "label": "Run Tests",
       "type": "shell",
-      "command": "${workspaceFolder}/build/tests/MayaFluxTests",
+      "command": "${workspaceFolder}/build/MayaFluxTests",
       "windows": {
         "command": "${workspaceFolder}\\build\\tests\\Debug\\MayaFluxTests.exe"
       },
@@ -219,13 +253,6 @@
     }
   ],
   "inputs": [
-    {
-      "id": "buildType",
-      "type": "pickString",
-      "description": "Select the build type",
-      "options": ["Debug", "Release"],
-      "default": "Debug"
-    },
     {
       "id": "serverPort",
       "type": "promptString",

@@ -152,4 +152,4 @@ ctest --preset unix-dev
 
 ## Contributing
 
-See [CONTRIBUTING.md](../CONTRIBUTING.md) for workflow and PR conventions, [docs/StarterTasks.md](StarterTasks.md) for entry-level tasks, and [docs/BuildOps.md](BuildOps.md) if you are interested in CI, packaging, or distribution rather than the engine itself.
+See [CONTRIBUTING.md](../CONTRIBUTING.md) for contribution workflow, current priorities, and PR conventions.

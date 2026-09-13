@@ -461,7 +461,7 @@ Auto-generated docs:
 | BroadcastSource             | Stable      | Lock-free cross-thread signal delivery to coroutines                     |
 | Yantra Grammar System       | In Progress | Core framework stable; additional grammars planned for 0.4               |
 
-**Current version**: 0.5.0-dev  
+**Current version**: 0.5.0-dev
 **Trajectory**: 0.4 feature freeze approaching. Focus on Forma orchestration layer completion, documentation, contributor programs, and conference submissions (ICMC, NIME, CppCon, LAC).
 
 ---
@@ -566,7 +566,7 @@ See [LICENSE](LICENSE) for full terms.
 
 MayaFlux welcomes collaboration. See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
-New to MayaFlux? Start with [Starter Tasks](docs/StarterTasks.md) or [Build Operations](docs/BuildOps.md).
+New to MayaFlux? Start with [CONTRIBUTING.md](CONTRIBUTING.md) after reading the [developer setup guide](docs/Dev_Getting_Started.md).
 
 All contributors must follow [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
 
@@ -585,8 +585,8 @@ For authorship, project ownership, and ethical positioning, see [ETHICAL_DECLARA
 
 ## Contact
 
-**Research Collaboration**: Interested in joint research or academic partnerships  
-**Alpha Testing**: Want early access for production evaluation  
+**Research Collaboration**: Interested in joint research or academic partnerships
+**Alpha Testing**: Want early access for production evaluation
 **Technical Questions**: Architecture, design decisions, integration questions
 
 ---

@@ -68,6 +68,12 @@ This is not a "good first issue." It requires:
 * Willingness to own the backend going forward, not just land one PR and disappear
 * Real hardware to test on; a VM is not sufficient for this work
 
+## 🔎 Current Help Wanted
+
+The current general contributor task is [issue #172: Refactor `IOManager` by extracting internal helper utilities into `MayaFlux::IO::Detail`](https://github.com/MayaFlux/MayaFlux/issues/172).
+
+The issue defines the helper boundaries, API-stability requirements, implementation plan, and verification steps. Read it before starting work or claiming part of the refactor.
+
 ---
 
 ## 🚀 Contribution Areas
@@ -79,13 +85,11 @@ MayaFlux welcomes contributions across several domains:
 | **Core Development**                | Engine code, nodes, scheduling, DSP, graphics, runtime | Internal review required                       |
 | **macOS Platform**                  | Native windowing, CAMetal, Cocoa/AppKit; see above     | `platform-macos` issue label                   |
 | **Documentation & Tutorials**       | Guides, concept overviews, teaching materials          | `docs/`                                        |
-| **Starter Tasks**                   | Logging cleanup, context tagging, code modernization   | [`docs/StarterTasks.md`](docs/StarterTasks.md) — flagged for review, may be stale |
-| **Build Operations & Distribution** | CI/CD, installers, package manager recipes             | [`docs/BuildOps.md`](docs/BuildOps.md) — flagged for review, may be stale |
 | **Research & Theory**               | Algorithmic or conceptual proposals                    | Open issue → Discussion thread                 |
 
 ---
 
-**New to MayaFlux?** Start with [`docs/Dev_Getting_Started.md`](docs/Dev_Getting_Started.md) to get building, then look at open issues for current priorities. `StarterTasks.md` and `BuildOps.md` are under review and may not reflect current state.
+**New to MayaFlux?** Start with [`docs/Dev_Getting_Started.md`](docs/Dev_Getting_Started.md) to get building, then read this document for current contribution priorities and workflow.
 
 ---
 
@@ -154,7 +158,6 @@ If you're new, begin with:
 
 * [`docs/Dev_Getting_Started.md`](docs/Dev_Getting_Started.md) — build from source, targets, presets, the actual run loop
 * Open issues, especially [`platform-macos`](https://github.com/MayaFlux/MayaFlux/labels/platform-macos) if you have a Mac and want to own something real
-* [`docs/StarterTasks.md`](docs/StarterTasks.md) and [`docs/BuildOps.md`](docs/BuildOps.md) — under review, may be stale
 
 ---
 

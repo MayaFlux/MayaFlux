@@ -18,7 +18,6 @@
   "cmake.configureOnOpen": false,
   "cmake.buildDirectory": "${workspaceFolder}/build",
   "cmake.installPrefix": "${workspaceFolder}/install",
-  "cmake.generator": "Ninja",
   "cmake.parallelJobs": 0,
   "cmake.debugConfig": {
     "stopAtEntry": false,
@@ -28,6 +27,11 @@
       {
         "description": "Enable pretty-printing for gdb",
         "text": "-enable-pretty-printing",
+        "ignoreFailures": true
+      },
+      {
+        "description": "Disable debuginfod",
+        "text": "set debuginfod enabled off",
         "ignoreFailures": true
       }
     ]
