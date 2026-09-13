@@ -70,7 +70,6 @@ namespace {
         uint32_t stride_words;
         uint32_t position_offset;
         uint32_t scalar_offset;
-        uint32_t tangent_offset;
         uint32_t uv_offset;
         uint32_t mode;
         uint32_t synth_uv;
@@ -82,7 +81,7 @@ namespace {
         float eye_z;
     };
 
-    static_assert(sizeof(MillPC) == 15 * sizeof(uint32_t),
+    static_assert(sizeof(MillPC) == 14 * sizeof(uint32_t),
         "MillPC must be tightly packed 4-byte fields matching build_mill_spec's pc() list");
 
     void add_helpers(ShaderSpec::Assemble& assemble)
@@ -104,12 +103,6 @@ namespace {
         assemble.function("float", "read_extent", "uint v, uint sw, uint so, float fb",
             "    if (so == 0xffffffffu) { return fb; }\n"
             "    return uintBitsToFloat(src[v * sw + so]);\n");
-
-        assemble.function("vec3", "read_tangent", "uint v, uint sw, uint to",
-            "    if (to == 0xffffffffu) { return vec3(0.0); }\n"
-            "    uint b = v * sw + to;\n"
-            "    return vec3(uintBitsToFloat(src[b]), uintBitsToFloat(src[b + 1u]), "
-            "uintBitsToFloat(src[b + 2u]));\n");
 
         assemble.function("void", "copy_vertex", "uint d, uint s, uint sw",
             "    uint db = d * sw;\n"
@@ -134,21 +127,134 @@ namespace {
             "    return l < 1e-8 ? vec3(0.0, 0.0, 1.0) : n / l;\n");
 
         /**
-         * Side vector at one ribbon endpoint. Taken from the vertex's own
-         * tangent when it carries one, so two segments sharing a vertex agree
-         * and the ribbon joins without either reading its neighbour. Falls back
-         * to the segment direction, which gives butt ends.
+         * Direction arriving at vertex s from the nearest preceding vertex at a
+         * different position, within [lo, s]. Skipping coincident vertices lets
+         * one path serve both a true strip and a strip emitted as duplicated
+         * pairs. Zero when s starts the run.
          */
-        assemble.function("vec3", "side_at",
-            "vec3 p, vec3 t, vec3 seg, vec3 eye, float half_w, uint mode",
-            "    vec3 dir = length(t) < 1e-6 ? seg : t;\n"
-            "    float dl = length(dir);\n"
-            "    if (dl < 1e-8) { return vec3(0.0); }\n"
-            "    dir = dir / dl;\n"
-            "    vec3 s = mode == 1u ? vec3(-dir.y, dir.x, 0.0)\n"
-            "                        : cross(dir, view_normal(p, eye));\n"
-            "    float sl = length(s);\n"
-            "    return (sl < 1e-6 ? vec3(0.0, 1.0, 0.0) : s / sl) * half_w;\n");
+        assemble.function("vec3", "dir_in", "uint s, uint lo, uint sw, uint po",
+            "    vec3 p = read_pos(s, sw, po);\n"
+            "    uint c = s;\n"
+            "    for (uint k = 0u; k < 4u; ++k) {\n"
+            "        if (c <= lo) { break; }\n"
+            "        c = c - 1u;\n"
+            "        vec3 q = read_pos(c, sw, po);\n"
+            "        if (length(p - q) > 1e-6) { return normalize(p - q); }\n"
+            "    }\n"
+            "    return vec3(0.0);\n");
+
+        /** Direction leaving vertex s toward the next distinct vertex below hi. */
+        assemble.function("vec3", "dir_out", "uint s, uint hi, uint sw, uint po",
+            "    vec3 p = read_pos(s, sw, po);\n"
+            "    uint c = s;\n"
+            "    for (uint k = 0u; k < 4u; ++k) {\n"
+            "        c = c + 1u;\n"
+            "        if (c >= hi) { break; }\n"
+            "        vec3 q = read_pos(c, sw, po);\n"
+            "        if (length(q - p) > 1e-6) { return normalize(q - p); }\n"
+            "    }\n"
+            "    return vec3(0.0);\n");
+
+        /**
+         * Width at vertex s, averaged over every vertex sharing its position
+         * and the nearest distinct vertex on each side.
+         *
+         * A producer that emits each interior sample twice can give the two
+         * copies different thickness, which makes the ribbon step at a point
+         * where it should be continuous: one quad ends at one width and the
+         * next begins at another. Averaging over position rather than over
+         * vertex index makes both copies agree, and folding in the neighbours
+         * damps per-sample jitter that reads as serration once the ribbon is
+         * more than a pixel wide.
+         */
+        assemble.function("float", "extent_at",
+            "uint s, uint lo, uint hi, uint sw, uint po, uint so, float fb",
+            "    vec3 p = read_pos(s, sw, po);\n"
+            "    float sum = read_extent(s, sw, so, fb);\n"
+            "    float cnt = 1.0;\n"
+            "    uint c = s;\n"
+            "    for (uint k = 0u; k < 4u; ++k) {\n"
+            "        if (c <= lo) { break; }\n"
+            "        c = c - 1u;\n"
+            "        sum += read_extent(c, sw, so, fb);\n"
+            "        cnt += 1.0;\n"
+            "        if (length(read_pos(c, sw, po) - p) > 1e-6) { break; }\n"
+            "    }\n"
+            "    c = s;\n"
+            "    for (uint k = 0u; k < 4u; ++k) {\n"
+            "        c = c + 1u;\n"
+            "        if (c >= hi) { break; }\n"
+            "        sum += read_extent(c, sw, so, fb);\n"
+            "        cnt += 1.0;\n"
+            "        if (length(read_pos(c, sw, po) - p) > 1e-6) { break; }\n"
+            "    }\n"
+            "    return sum / cnt;\n");
+
+        /**
+         * Offset from vertex s to the ribbon edge, mitred.
+         *
+         * The side vector follows the bisector of the segments meeting at s,
+         * so both quads sharing s place their corners identically and the
+         * ribbon stays continuous. Scaling by the reciprocal of the bisector's
+         * projection onto the segment normal keeps the width constant through
+         * the turn; the clamp is the usual miter limit, past which a very sharp
+         * corner would otherwise throw the corner out to infinity.
+         */
+        assemble.function("vec3", "offset_from",
+            "vec3 p, vec3 din, vec3 dout, vec3 seg, vec3 eye, float half_w",
+            "    vec3 vn = view_normal(p, eye);\n"
+            "    vec3 ns = cross(seg, vn);\n"
+            "    float nsl = length(ns);\n"
+            "    if (nsl < 1e-6) { return vec3(0.0); }\n"
+            "    ns = ns / nsl;\n"
+            "    vec3 t = din + dout;\n"
+            "    float tl = length(t);\n"
+            "    if (tl < 1e-6) { return ns * half_w; }\n"
+            "    vec3 nm = cross(t / tl, vn);\n"
+            "    float nml = length(nm);\n"
+            "    if (nml < 1e-6) { return ns * half_w; }\n"
+            "    nm = nm / nml;\n"
+            "    float proj = dot(nm, ns);\n"
+            "    if (abs(proj) < 0.25) { return ns * half_w; }\n"
+            "    return nm * (half_w / proj);\n");
+
+        /**
+         * Direction of the segment preceding a LINE_LIST pair that starts at
+         * @p s, or zero when the previous pair ends somewhere else.
+         *
+         * Pairs that meet at a shared position are a polyline written as
+         * disconnected segments, which is what a path producer emits when it
+         * duplicates each interior sample. Pairs that do not meet are genuinely
+         * separate edges and must not be joined.
+         */
+        assemble.function("vec3", "pair_dir_in", "uint s, uint lo, uint sw, uint po",
+            "    if (s < lo + 2u) { return vec3(0.0); }\n"
+            "    vec3 p = read_pos(s, sw, po);\n"
+            "    vec3 b = read_pos(s - 1u, sw, po);\n"
+            "    if (length(b - p) > 1e-6) { return vec3(0.0); }\n"
+            "    vec3 a = read_pos(s - 2u, sw, po);\n"
+            "    vec3 d = b - a;\n"
+            "    float l = length(d);\n"
+            "    return l < 1e-6 ? vec3(0.0) : d / l;\n");
+
+        /** Direction of the segment following a LINE_LIST pair ending at s. */
+        assemble.function("vec3", "pair_dir_out", "uint s, uint hi, uint sw, uint po",
+            "    if (s + 2u >= hi) { return vec3(0.0); }\n"
+            "    vec3 p = read_pos(s, sw, po);\n"
+            "    vec3 a = read_pos(s + 1u, sw, po);\n"
+            "    if (length(a - p) > 1e-6) { return vec3(0.0); }\n"
+            "    vec3 b = read_pos(s + 2u, sw, po);\n"
+            "    vec3 d = b - a;\n"
+            "    float l = length(d);\n"
+            "    return l < 1e-6 ? vec3(0.0) : d / l;\n");
+
+        /** Width at s averaged with a coincident neighbour at @p o, if any. */
+        assemble.function("float", "pair_extent",
+            "uint s, uint o, uint lo, uint hi, uint sw, uint po, uint so, float fb",
+            "    float e = read_extent(s, sw, so, fb);\n"
+            "    if (o < lo || o >= hi) { return e; }\n"
+            "    if (length(read_pos(o, sw, po) - read_pos(s, sw, po)) > 1e-6) { return e; }\n"
+            "    return 0.5 * (e + read_extent(o, sw, so, fb));\n");
     }
 
     /**
@@ -178,7 +284,6 @@ namespace {
             .pc("stride_words", Kakshya::GpuDataFormat::UINT32)
             .pc("position_offset", Kakshya::GpuDataFormat::UINT32)
             .pc("scalar_offset", Kakshya::GpuDataFormat::UINT32)
-            .pc("tangent_offset", Kakshya::GpuDataFormat::UINT32)
             .pc("uv_offset", Kakshya::GpuDataFormat::UINT32)
             .pc("mode", Kakshya::GpuDataFormat::UINT32)
             .pc("synth_uv", Kakshya::GpuDataFormat::UINT32)
@@ -259,16 +364,43 @@ namespace {
         body += "    vec3 p0 = read_pos(s0, sw, po);\n";
         body += "    vec3 p1 = read_pos(s1, sw, po);\n";
         body += "    vec3 d = p1 - p0;\n";
-        body += "    if (length(d) < 1e-8) {\n";
+        body += "    if (length(d) < 1e-6) {\n";
         body += "        write_pos(i, sw, po, p0);\n";
         body += "        return;\n";
         body += "    }\n";
+        body += "    float dl = length(d);\n";
+        body += "    vec3 dn = d / dl;\n";
         body += "    float h0 = read_extent(s0, sw, scalar_offset, fallback_extent)\n";
         body += "            * width_scale * 0.5;\n";
         body += "    float h1 = read_extent(s1, sw, scalar_offset, fallback_extent)\n";
         body += "            * width_scale * 0.5;\n";
-        body += "    vec3 e0 = side_at(p0, read_tangent(s0, sw, tangent_offset), d, eye, h0, mode);\n";
-        body += "    vec3 e1 = side_at(p1, read_tangent(s1, sw, tangent_offset), d, eye, h1, mode);\n";
+        body += "    vec3 e0; vec3 e1;\n";
+        body += "    if (mode == 1u) {\n";
+        body += "        vec3 sv = vec3(-dn.y, dn.x, 0.0);\n";
+        body += "        e0 = sv * h0;\n";
+        body += "        e1 = sv * h1;\n";
+        body += "    } else {\n";
+        body += "        uint lo = voff;\n";
+        body += "        uint hi = voff + runs[rb + 2u];\n";
+        body += "        vec3 din; vec3 dout;\n";
+        body += "        if (topo == 2u) {\n";
+        body += "            din = dir_in(s0, lo, sw, po);\n";
+        body += "            dout = dir_out(s1, hi, sw, po);\n";
+        body += "            h0 = extent_at(s0, lo, hi, sw, po, scalar_offset, fallback_extent)\n";
+        body += "               * width_scale * 0.5;\n";
+        body += "            h1 = extent_at(s1, lo, hi, sw, po, scalar_offset, fallback_extent)\n";
+        body += "               * width_scale * 0.5;\n";
+        body += "        } else {\n";
+        body += "            din = pair_dir_in(s0, lo, sw, po);\n";
+        body += "            dout = pair_dir_out(s1, hi, sw, po);\n";
+        body += "            h0 = pair_extent(s0, s0 - 1u, lo, hi, sw, po, scalar_offset, fallback_extent)\n";
+        body += "               * width_scale * 0.5;\n";
+        body += "            h1 = pair_extent(s1, s1 + 1u, lo, hi, sw, po, scalar_offset, fallback_extent)\n";
+        body += "               * width_scale * 0.5;\n";
+        body += "        }\n";
+        body += "        e0 = offset_from(p0, din, dn, dn, eye, h0);\n";
+        body += "        e1 = offset_from(p1, dn, dout, dn, eye, h1);\n";
+        body += "    }\n";
         body += "    vec3 pos; uint pick;\n";
         body += "    if (corner == 0u) { pos = p0 - e0; pick = s0; uv = vec2(0.0, 1.0); }\n";
         body += "    else if (corner == 1u) { pos = p0 + e0; pick = s0; uv = vec2(0.0, 0.0); }\n";
@@ -297,8 +429,7 @@ namespace {
             .run_count = static_cast<uint32_t>(run_count),
             .stride_words = off.stride_words,
             .position_offset = off.position,
-            .scalar_offset = off.scalar,
-            .tangent_offset = off.tangent,
+            .scalar_offset = spec.use_vertex_extent ? off.scalar : ABSENT,
             .uv_offset = off.uv,
             .mode = spec.ribbon == MillSpec::Ribbon::WorldPlane ? 1U : 0U,
             .synth_uv = spec.synthesize_uv ? 1U : 0U,
@@ -459,11 +590,25 @@ void PrimitiveMill::write_descriptors(const std::shared_ptr<VKBuffer>& source)
     m_bound_source = source;
 }
 
+void PrimitiveMill::resolve_pending()
+{
+    if (m_pending_fence == INVALID_FENCE) {
+        return;
+    }
+
+    auto& foundry = get_shader_foundry();
+    foundry.wait_for_fence(m_pending_fence);
+    foundry.release_fence(m_pending_fence);
+    m_pending_fence = INVALID_FENCE;
+}
+
 uint32_t PrimitiveMill::mill(
     const std::shared_ptr<VKBuffer>& source,
     std::span<const DrawRun> runs,
     const MillView& view)
 {
+    resolve_pending();
+
     m_milled_count = 0;
 
     if (!source || runs.empty()) {
@@ -482,6 +627,20 @@ uint32_t PrimitiveMill::mill(
             "and an addressable position attribute",
             layout->stride_bytes);
         return 0;
+    }
+
+    const uint32_t source_vertices = layout->vertex_count;
+    for (const auto& run : runs) {
+        if (run.vertex_count == 0) {
+            continue;
+        }
+        if (run.vertex_offset > source_vertices
+            || run.vertex_count > source_vertices - run.vertex_offset) {
+            MF_RT_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
+                "PrimitiveMill: run [{}, {}) exceeds the source's {} vertices",
+                run.vertex_offset, run.vertex_offset + run.vertex_count, source_vertices);
+            return 0;
+        }
     }
 
     build_prefix(runs, m_prefix);
@@ -518,6 +677,14 @@ uint32_t PrimitiveMill::mill(
 
     auto cmd_id = foundry.begin_commands(ShaderFoundry::CommandBufferType::COMPUTE);
 
+    foundry.buffer_barrier(
+        cmd_id,
+        m_output->get_buffer(),
+        vk::AccessFlagBits::eVertexAttributeRead,
+        vk::AccessFlagBits::eShaderWrite,
+        vk::PipelineStageFlagBits::eVertexInput,
+        vk::PipelineStageFlagBits::eComputeShader);
+
     press.bind_all(cmd_id, m_pipeline, m_sets, &pc, sizeof(MillPC));
     press.dispatch(cmd_id, (total + WORKGROUP - 1) / WORKGROUP, 1, 1);
 
@@ -529,7 +696,12 @@ uint32_t PrimitiveMill::mill(
         vk::PipelineStageFlagBits::eComputeShader,
         vk::PipelineStageFlagBits::eVertexInput);
 
-    foundry.submit_and_wait(cmd_id);
+    m_pending_fence = foundry.submit_async(cmd_id);
+    if (m_pending_fence == INVALID_FENCE) {
+        MF_RT_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
+            "PrimitiveMill: dispatch submission failed");
+        return 0;
+    }
 
     m_milled_count = total;
 
@@ -541,6 +713,8 @@ uint32_t PrimitiveMill::mill(
 
 void PrimitiveMill::release()
 {
+    resolve_pending();
+
     auto& foundry = get_shader_foundry();
     auto& press = get_compute_press();
 
@@ -585,14 +759,6 @@ namespace {
             std::memcpy(&p.y, w + 1, sizeof(float));
             std::memcpy(&p.z, w + 2, sizeof(float));
             return p;
-        }
-
-        [[nodiscard]] glm::vec3 read_vec3(uint32_t v, uint32_t offset) const
-        {
-            if (offset == ABSENT) {
-                return glm::vec3(0.0F);
-            }
-            return read_pos(v, offset);
         }
 
         [[nodiscard]] float read_extent(uint32_t v, uint32_t so, float fb) const
@@ -641,13 +807,12 @@ namespace {
 
     glm::vec3 host_side_at(
         const glm::vec3& p,
-        const glm::vec3& t,
         const glm::vec3& seg,
         const glm::vec3& eye,
         float half_w,
         bool world_plane)
     {
-        glm::vec3 dir = glm::length(t) < 1e-6F ? seg : t;
+        glm::vec3 dir = seg;
         const float dl = glm::length(dir);
         if (dl < 1e-8F) {
             return glm::vec3(0.0F);
@@ -698,6 +863,7 @@ Kakshya::VertexLayout mill_on_host(
     };
 
     const bool world_plane = spec.ribbon == MillSpec::Ribbon::WorldPlane;
+    const uint32_t scalar_offset = spec.use_vertex_extent ? off.scalar : ABSENT;
 
     for (size_t r = 0; r < runs.size(); ++r) {
         const auto& run = runs[r];
@@ -737,7 +903,7 @@ Kakshya::VertexLayout mill_on_host(
             if (run.topology == PrimitiveTopology::POINT_LIST) {
                 const uint32_t s = voff + quad;
                 const glm::vec3 p = rec.read_pos(s, off.position);
-                const float h = rec.read_extent(s, off.scalar, spec.fallback_extent)
+                const float h = rec.read_extent(s, scalar_offset, spec.fallback_extent)
                     * spec.point_scale * 0.5F;
 
                 glm::vec3 rx;
@@ -793,20 +959,20 @@ Kakshya::VertexLayout mill_on_host(
             const glm::vec3 p1 = rec.read_pos(s1, off.position);
             const glm::vec3 d = p1 - p0;
 
-            if (glm::length(d) < 1e-8F) {
+            if (glm::length(d) < 1e-6F) {
                 rec.write_pos(out, off.position, p0);
                 continue;
             }
 
-            const float h0 = rec.read_extent(s0, off.scalar, spec.fallback_extent)
+            const float h0 = rec.read_extent(s0, scalar_offset, spec.fallback_extent)
                 * spec.width_scale * 0.5F;
-            const float h1 = rec.read_extent(s1, off.scalar, spec.fallback_extent)
+            const float h1 = rec.read_extent(s1, scalar_offset, spec.fallback_extent)
                 * spec.width_scale * 0.5F;
 
             const glm::vec3 e0 = host_side_at(
-                p0, rec.read_vec3(s0, off.tangent), d, view.eye, h0, world_plane);
+                p0, d, view.eye, h0, world_plane);
             const glm::vec3 e1 = host_side_at(
-                p1, rec.read_vec3(s1, off.tangent), d, view.eye, h1, world_plane);
+                p1, d, view.eye, h1, world_plane);
 
             glm::vec3 pos;
             uint32_t pick = s0;

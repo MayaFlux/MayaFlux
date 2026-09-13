@@ -202,8 +202,8 @@ public:
     /**
      * @brief Reduce supplied spans to triangles before drawing them.
      *
-     * When enabled, get_primitive_topology()'s value describes the spans given
-     * to set_runs() rather than the pipeline: the pipeline is built as
+     * When enabled, the topology given to set_primitive_topology() describes
+     * the spans handed to set_runs() rather than the pipeline: it is built as
      * TRIANGLE_LIST and no geometry stage is used. Points become quads and line
      * segments ribbons, all drawn by one non-indexed draw. The vertex layout is
      * preserved, so the vertex shader is unaffected.
@@ -216,7 +216,12 @@ public:
 
     /**
      * @brief Spans to draw on subsequent frames. Only used when triangulating.
-     * @param runs Spans in recording order. Empty suppresses the draw.
+     * @param runs Spans in recording order.
+     *
+     * Left empty, triangulation covers the whole buffer as one span at the
+     * topology given to set_primitive_topology(), honouring any range set by
+     * set_vertex_range(). Supplying spans is how a caller whose geometry mixes
+     * topologies overrides that.
      *
      * Not thread safe against a concurrent processing_function call; call from
      * the thread driving the graphics tick.

@@ -32,17 +32,44 @@ struct MillSpec {
     Ribbon ribbon { Ribbon::WorldFacing };
 
     /**
-     * @brief World units per unit of a vertex's own thickness.
+     * @brief World units of total ribbon width per unit of a vertex's own
+     *        thickness.
      *
      * Extent is per-vertex: the mill reads the layout's scalar attribute, which
      * is LineVertex::thickness and PointVertex::size. Those carry pixel-era
-     * values, so this maps them into world space. A caller whose scalars are
-     * already world-scale sets these to 1.
+     * values sized for setLineWidth and gl_PointSize, so this maps them into
+     * world space. A caller whose scalars are already world-scale sets these
+     * to 1.
+     *
+     * The default reproduces line.geom, which offsets by thickness * 0.005
+     * either side of the segment in NDC and so spans thickness * 0.01 in
+     * total. Under an identity view NDC and world units coincide, so the same
+     * figure here gives the same apparent width for the same thickness values.
+     *
+     * It cannot be right for every scene. A geometry shader expanding in NDC
+     * holds a constant pixel width at any camera distance; milling happens
+     * before projection, so width is fixed in world units and shrinks on
+     * screen as the camera pulls back. Scenes at other scales must set it.
      */
-    float width_scale { 0.005F };
+    /**
+     * @brief Take ribbon width and point size from each vertex's own scalar.
+     *
+     * On, the mill reads the layout's scalar attribute, which is
+     * LineVertex::thickness and PointVertex::size, so width follows the
+     * geometry. Off, every vertex uses fallback_extent and the ribbon has a
+     * constant width.
+     *
+     * A geometry shader expanding in NDC made per-vertex variation almost
+     * invisible at a pixel or two of width. Milling in world space makes the
+     * same variation an order of magnitude more prominent, so geometry whose
+     * thickness was authored as noise looks serrated rather than textured.
+     */
+    bool use_vertex_extent { true };
+
+    float width_scale { 0.01F };
 
     /** @brief World units per unit of a vertex's own size, on point spans. */
-    float point_scale { 0.002F };
+    float point_scale { 0.004F };
 
     /** @brief Extent used when the layout carries no scalar attribute. */
     float fallback_extent { 2.0F };
@@ -92,6 +119,29 @@ struct MillView {
  * correspondence back to the source, and it is not an export or readback
  * surface. The intended caller is a render processor resolving its geometry
  * immediately before recording.
+ *
+ * ## Known gaps
+ *
+ * Ribbon quality is not yet good enough for drawing work. Joins are mitred, so
+ * consecutive segments share their corners, but the result still shows visible
+ * unevenness along a curve. The remaining causes are not isolated: candidates
+ * are the miter limit falling back to the plain segment normal at moderate
+ * angles, width being resolved per vertex rather than along arc length, and the
+ * absence of any round join or cap.
+ *
+ * Width is fixed in world units. A geometry shader expanding after projection
+ * holds a constant pixel width at any camera distance; this cannot, so a ribbon
+ * thins on screen as the camera pulls back. Matching a screen-space width would
+ * require expanding after the vertex shader, which a compute prepass cannot do.
+ *
+ * mill_on_host has diverged and is no longer an oracle for the kernel. It
+ * implements the unjoined form only: no miter, no width averaging across shared
+ * positions. Treat it as a reference for span indexing and expansion counts,
+ * not for ribbon geometry, until it is brought back into step.
+ *
+ * A producer emitting a polyline as duplicated vertex pairs costs twice the
+ * milled vertices it needs, since every second segment is a zero-length seam
+ * that collapses. Detected and skipped, but still budgeted for.
  */
 class MAYAFLUX_API PrimitiveMill {
 public:
@@ -121,8 +171,18 @@ public:
      * @return Vertices written, or 0 when there was nothing to mill or the
      *         source could not be used.
      *
-     * Blocking: the dispatch is submitted and waited, so output() is a valid
-     * vertex source on return. The destination grows to fit and never shrinks.
+     * Does not wait on its own dispatch. It resolves the previous call's
+     * submission first, then submits this one and returns. output() is
+     * immediately valid to *record* a draw against, because the recorded
+     * barriers order the compute write against vertex input on the same queue;
+     * it is not valid to read from the host until a later mill() or release()
+     * has resolved the fence.
+     *
+     * Waiting on the previous dispatch is not optional: the run and prefix
+     * tables are host visible and rewritten here, so the prior dispatch must
+     * have finished reading them.
+     *
+     * The destination grows to fit and never shrinks.
      */
     uint32_t mill(
         const std::shared_ptr<Buffers::VKBuffer>& source,
@@ -157,6 +217,14 @@ private:
     /** @brief Points the descriptor set at the current buffer set. */
     void write_descriptors(const std::shared_ptr<Buffers::VKBuffer>& source);
 
+    /**
+     * @brief Wait on and reclaim the previous dispatch, if one is outstanding.
+     *
+     * Cheap in steady state: the work was submitted a frame earlier and has
+     * normally completed. Releases the fence and its command buffer.
+     */
+    void resolve_pending();
+
     MillSpec m_spec;
 
     ShaderID m_shader { INVALID_SHADER };
@@ -175,6 +243,9 @@ private:
 
     uint32_t m_milled_count { 0 };
     uint32_t m_output_capacity { 0 };
+
+    /// Outstanding dispatch, resolved at the start of the next mill().
+    FenceID m_pending_fence { INVALID_FENCE };
 };
 
 /**

@@ -522,26 +522,36 @@ bool RenderProcessor::mill_runs(const std::shared_ptr<VKBuffer>& buffer)
         return true;
     }
 
-    if (m_runs.empty()) {
-        return false;
+    std::span<const Portal::Graphics::DrawRun> runs = m_runs;
+
+    Portal::Graphics::DrawRun whole {};
+    if (runs.empty()) {
+        const auto layout = buffer->get_vertex_layout();
+        const uint32_t count = m_vertex_count > 0
+            ? m_vertex_count
+            : (layout.has_value() ? layout->vertex_count : 0U);
+
+        if (count == 0) {
+            return false;
+        }
+
+        whole = { .topology = m_primitive_topology,
+            .vertex_offset = m_first_vertex,
+            .vertex_count = count };
+        runs = { &whole, 1 };
     }
 
     if (!m_mill) {
         m_mill = std::make_unique<Portal::Graphics::PrimitiveMill>(m_mill_spec);
     }
 
-    const glm::mat4 inv_view = glm::inverse(published_view_transform().view);
-    const Portal::Graphics::MillView view { .eye = glm::vec3(inv_view[3]) };
+    const Portal::Graphics::MillView view {
+        .eye = m_view_transform_active
+            ? glm::vec3(glm::inverse(published_view_transform().view)[3])
+            : glm::vec3(0.0F, 0.0F, 1.0e4F)
+    };
 
-    const uint32_t milled = m_mill->mill(buffer, m_runs, view);
-    if (milled == 0) {
-        return false;
-    }
-
-    m_first_vertex = 0;
-    m_vertex_count = milled;
-
-    return true;
+    return m_mill->mill(buffer, runs, view) > 0;
 }
 
 std::shared_ptr<VKBuffer> RenderProcessor::draw_source(
@@ -706,8 +716,13 @@ void RenderProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
 
     flow.bind_vertex_buffers(cmd_id, { source });
 
+    const bool drawing_milled = m_triangulate && m_mill && m_mill->milled_count() > 0;
+    const uint32_t first_vertex = drawing_milled ? 0U : m_first_vertex;
+
     uint32_t draw_count = 0;
-    if (m_vertex_count > 0) {
+    if (drawing_milled) {
+        draw_count = m_mill->milled_count();
+    } else if (m_vertex_count > 0) {
         draw_count = m_vertex_count;
     } else {
         auto current_layout = source->get_vertex_layout();
@@ -725,7 +740,7 @@ void RenderProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
         flow.bind_index_buffer(cmd_id, source);
         flow.draw_indexed(cmd_id, index_count, m_instance_count, 0, 0, 0);
     } else {
-        flow.draw(cmd_id, draw_count, m_instance_count, m_first_vertex, 0);
+        flow.draw(cmd_id, draw_count, m_instance_count, first_vertex, 0);
     }
 
     foundry.end_commands(cmd_id);
