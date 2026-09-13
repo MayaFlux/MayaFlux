@@ -454,14 +454,23 @@ namespace {
 
 } // namespace
 
-PrimitiveMill::PrimitiveMill(MillSpec spec)
+PrimitiveMill::PrimitiveMill(MillSpec spec, uint32_t output_ring)
     : m_spec(spec)
+    , m_output_ring(std::max(output_ring, 1U))
 {
 }
 
 PrimitiveMill::~PrimitiveMill()
 {
     release();
+}
+
+std::shared_ptr<VKBuffer> PrimitiveMill::output() const
+{
+    if (m_outputs.empty()) {
+        return nullptr;
+    }
+    return m_outputs[m_output_slot];
 }
 
 uint32_t PrimitiveMill::milled_vertex_count(std::span<const DrawRun> runs)
@@ -529,23 +538,36 @@ bool PrimitiveMill::ensure_buffers(
         return false;
     }
 
-    if (total > m_output_capacity) {
+    if (total > m_output_capacity || m_outputs.size() != m_output_ring) {
+        const auto grown = static_cast<uint32_t>(static_cast<float>(total) * 1.5F);
+
         auto milled_layout = layout;
         milled_layout.vertex_count = total;
 
-        m_output = std::make_shared<VKBuffer>(
-            static_cast<size_t>(total) * layout.stride_bytes,
-            VKBuffer::Usage::VERTEX,
-            source->get_modality());
-        m_output->set_vertex_layout(milled_layout);
-        svc->initialize_buffer(m_output);
+        if (!m_outputs.empty()) {
+            get_shader_foundry().get_graphics_queue().waitIdle();
+        }
 
-        m_output_capacity = total;
+        m_outputs.assign(m_output_ring, nullptr);
+        for (auto& slot : m_outputs) {
+            slot = std::make_shared<VKBuffer>(
+                static_cast<size_t>(grown) * layout.stride_bytes,
+                VKBuffer::Usage::VERTEX,
+                source->get_modality());
+            slot->set_vertex_layout(milled_layout);
+            svc->initialize_buffer(slot);
+        }
+
+        m_output_capacity = grown;
+        m_output_slot = 0;
+        m_descriptors_written = false;
         m_bound_source.reset();
-    } else if (m_output) {
-        auto milled_layout = *m_output->get_vertex_layout();
-        milled_layout.vertex_count = total;
-        m_output->set_vertex_layout(milled_layout);
+    } else {
+        for (auto& slot : m_outputs) {
+            auto milled_layout = *slot->get_vertex_layout();
+            milled_layout.vertex_count = total;
+            slot->set_vertex_layout(milled_layout);
+        }
     }
 
     const auto run_bytes = std::max<size_t>(run_count * RUN_WORDS * sizeof(uint32_t), sizeof(uint32_t));
@@ -564,12 +586,13 @@ bool PrimitiveMill::ensure_buffers(
         m_bound_source.reset();
     }
 
-    return m_output && m_run_buf && m_prefix_buf;
+    return !m_outputs.empty() && m_run_buf && m_prefix_buf;
 }
 
 void PrimitiveMill::write_descriptors(const std::shared_ptr<VKBuffer>& source)
 {
-    if (m_bound_source.lock() == source) {
+    if (m_descriptors_written && m_bound_source.lock() == source
+        && m_bound_slot == m_output_slot) {
         return;
     }
 
@@ -585,9 +608,11 @@ void PrimitiveMill::write_descriptors(const std::shared_ptr<VKBuffer>& source)
     bind(0, source);
     bind(1, m_run_buf);
     bind(2, m_prefix_buf);
-    bind(3, m_output);
+    bind(3, m_outputs[m_output_slot]);
 
     m_bound_source = source;
+    m_bound_slot = m_output_slot;
+    m_descriptors_written = true;
 }
 
 void PrimitiveMill::resolve_pending()
@@ -653,6 +678,8 @@ uint32_t PrimitiveMill::mill(
         return 0;
     }
 
+    m_output_slot = (m_output_slot + 1) % m_outputs.size();
+
     auto* run_ptr = static_cast<uint32_t*>(m_run_buf->get_mapped_ptr());
     auto* prefix_ptr = static_cast<uint32_t*>(m_prefix_buf->get_mapped_ptr());
     if (!run_ptr || !prefix_ptr) {
@@ -675,11 +702,13 @@ uint32_t PrimitiveMill::mill(
     auto& foundry = get_shader_foundry();
     auto& press = get_compute_press();
 
-    auto cmd_id = foundry.begin_commands(ShaderFoundry::CommandBufferType::COMPUTE);
+    const auto destination = m_outputs[m_output_slot]->get_buffer();
+
+    auto cmd_id = foundry.begin_commands(ShaderFoundry::CommandBufferType::GRAPHICS);
 
     foundry.buffer_barrier(
         cmd_id,
-        m_output->get_buffer(),
+        destination,
         vk::AccessFlagBits::eVertexAttributeRead,
         vk::AccessFlagBits::eShaderWrite,
         vk::PipelineStageFlagBits::eVertexInput,
@@ -690,7 +719,7 @@ uint32_t PrimitiveMill::mill(
 
     foundry.buffer_barrier(
         cmd_id,
-        m_output->get_buffer(),
+        destination,
         vk::AccessFlagBits::eShaderWrite,
         vk::AccessFlagBits::eVertexAttributeRead,
         vk::PipelineStageFlagBits::eComputeShader,
@@ -730,7 +759,10 @@ void PrimitiveMill::release()
 
     m_sets.clear();
     m_bound_source.reset();
-    m_output.reset();
+    m_bound_slot = 0;
+    m_descriptors_written = false;
+    m_outputs.clear();
+    m_output_slot = 0;
     m_run_buf.reset();
     m_prefix_buf.reset();
     m_prefix.clear();

@@ -32,41 +32,25 @@ struct MillSpec {
     Ribbon ribbon { Ribbon::WorldFacing };
 
     /**
-     * @brief World units of total ribbon width per unit of a vertex's own
-     *        thickness.
+     * @brief Take ribbon width and point size from each vertex's own scalar
+     *        (LineVertex::thickness, PointVertex::size) rather than
+     *        fallback_extent.
      *
-     * Extent is per-vertex: the mill reads the layout's scalar attribute, which
-     * is LineVertex::thickness and PointVertex::size. Those carry pixel-era
-     * values sized for setLineWidth and gl_PointSize, so this maps them into
-     * world space. A caller whose scalars are already world-scale sets these
-     * to 1.
-     *
-     * The default reproduces line.geom, which offsets by thickness * 0.005
-     * either side of the segment in NDC and so spans thickness * 0.01 in
-     * total. Under an identity view NDC and world units coincide, so the same
-     * figure here gives the same apparent width for the same thickness values.
-     *
-     * It cannot be right for every scene. A geometry shader expanding in NDC
-     * holds a constant pixel width at any camera distance; milling happens
-     * before projection, so width is fixed in world units and shrinks on
-     * screen as the camera pulls back. Scenes at other scales must set it.
-     */
-    /**
-     * @brief Take ribbon width and point size from each vertex's own scalar.
-     *
-     * On, the mill reads the layout's scalar attribute, which is
-     * LineVertex::thickness and PointVertex::size, so width follows the
-     * geometry. Off, every vertex uses fallback_extent and the ribbon has a
-     * constant width.
-     *
-     * A geometry shader expanding in NDC made per-vertex variation almost
+     * A geometry shader expanding in NDC made per-vertex variation nearly
      * invisible at a pixel or two of width. Milling in world space makes the
-     * same variation an order of magnitude more prominent, so geometry whose
-     * thickness was authored as noise looks serrated rather than textured.
+     * same variation an order of magnitude more prominent, so thickness authored
+     * as noise reads as serration rather than texture.
      */
     bool use_vertex_extent { true };
 
-    float width_scale { 0.01F };
+    /**
+     * @brief World units of total ribbon width per unit of a vertex's scalar.
+     *
+     * Those scalars carry pixel-era values sized for setLineWidth, so this maps
+     * them into world space; a caller whose scalars are already world-scale sets
+     * it to 1. Scene dependent, since width does not track screen space.
+     */
+    float width_scale { 0.05F };
 
     /** @brief World units per unit of a vertex's own size, on point spans. */
     float point_scale { 0.004F };
@@ -77,10 +61,9 @@ struct MillSpec {
     /**
      * @brief Write 0..1 across each ribbon and quad rather than copying source.
      *
-     * Synthesised coordinates are what let a fragment shader run a gradient or
-     * a dash along a ribbon. Copying instead gives every corner of a segment
-     * the same value, which is occasionally what a caller wants.
-     * Ignored when the layout carries no texture coordinate attribute.
+     * What lets a fragment shader run a gradient, a dash, or line.frag's edge
+     * falloff along a ribbon. Copying instead gives every corner of a segment
+     * the same value. Ignored when the layout carries no texture coordinates.
      */
     bool synthesize_uv { true };
 };
@@ -107,7 +90,7 @@ struct MillView {
  * to, so a vertex shader written against the source layout consumes the result
  * unchanged.
  *
- * Owns its kernel, pipeline, descriptor sets and destination buffer, and
+ * Owns its kernel, pipeline, descriptor sets and destination buffers, and
  * dispatches through ComputePress directly. It is a dispatch driver in the
  * manner of Yantra's GPU executor, not a BufferProcessor: no processing token,
  * no attach, no chain membership, no per-cycle driver. Milling is demand driven
@@ -145,7 +128,18 @@ struct MillView {
  */
 class MAYAFLUX_API PrimitiveMill {
 public:
-    explicit PrimitiveMill(MillSpec spec = {});
+    /**
+     * @param spec Shaping parameters.
+     * @param output_ring Milled buffers to rotate between dispatches, at least
+     *        one.
+     *
+     * The ring is a latency knob, not a correctness one: the barriers mill()
+     * records hold at any depth, and a depth of one merely lets the leading one
+     * stall each dispatch behind the previous frame's reads. Each extra slot
+     * costs a full copy of the milled geometry, tens of megabytes for dense line
+     * work.
+     */
+    explicit PrimitiveMill(MillSpec spec = {}, uint32_t output_ring = 2);
     ~PrimitiveMill();
 
     PrimitiveMill(const PrimitiveMill&) = delete;
@@ -173,10 +167,16 @@ public:
      *
      * Does not wait on its own dispatch. It resolves the previous call's
      * submission first, then submits this one and returns. output() is
-     * immediately valid to *record* a draw against, because the recorded
-     * barriers order the compute write against vertex input on the same queue;
-     * it is not valid to read from the host until a later mill() or release()
-     * has resolved the fence.
+     * immediately valid to *record* a draw against; it is not valid to read from
+     * the host until a later mill() or release() has resolved the fence.
+     *
+     * Dispatched on the graphics queue, not a compute one, which is what makes
+     * the recorded barriers mean anything: submission order spans vkQueueSubmit
+     * calls to one queue, so the trailing barrier orders this write before the
+     * draw submitted afterwards and the leading one orders the previous frame's
+     * vertex fetch before this write. Neither reaches across queues, and the
+     * destination is SharingMode::eExclusive, so a dedicated compute queue would
+     * need a semaphore and a queue family ownership transfer instead.
      *
      * Waiting on the previous dispatch is not optional: the run and prefix
      * tables are host visible and rewritten here, so the prior dispatch must
@@ -189,8 +189,14 @@ public:
         std::span<const DrawRun> runs,
         const MillView& view);
 
-    /** @brief The milled triangles. Null before the first successful mill(). */
-    [[nodiscard]] const std::shared_ptr<Buffers::VKBuffer>& output() const { return m_output; }
+    /**
+     * @brief The milled triangles: the ring slot the last mill() wrote.
+     * @return Null before the first successful mill().
+     *
+     * Re-read after every mill(), never cached across one: a rotating ring
+     * hands back a different buffer each dispatch.
+     */
+    [[nodiscard]] std::shared_ptr<Buffers::VKBuffer> output() const;
 
     /** @brief Vertices written by the last mill(). */
     [[nodiscard]] uint32_t milled_count() const { return m_milled_count; }
@@ -207,14 +213,28 @@ private:
     /** @brief Compiles the kernel and allocates its descriptor sets, once. */
     bool ensure_kernel();
 
-    /** @brief Grows the destination, run and prefix buffers to fit. */
+    /**
+     * @brief Grows the destination ring, run and prefix buffers to fit.
+     *
+     * Every slot is replaced at once, so one capacity covers them all. Doing so
+     * frees buffers a recorded draw may still name, hence the graphics queue
+     * drain first, and hence the 1.5x headroom: geometry a caller is actively
+     * adding to would otherwise re-grow, and stall, on nearly every cycle.
+     */
     bool ensure_buffers(
         const std::shared_ptr<Buffers::VKBuffer>& source,
         const Kakshya::VertexLayout& layout,
         uint32_t total,
         size_t run_count);
 
-    /** @brief Points the descriptor set at the current buffer set. */
+    /**
+     * @brief Points the descriptor set at the current buffer set, on any change
+     *        of source or ring slot.
+     *
+     * Rewriting a shared set is safe here because resolve_pending() has already
+     * retired the only submission that reads it, and the draw takes the milled
+     * buffer as vertex input rather than through this set.
+     */
     void write_descriptors(const std::shared_ptr<Buffers::VKBuffer>& source);
 
     /**
@@ -232,7 +252,8 @@ private:
     std::vector<DescriptorSetID> m_sets;
     size_t m_push_constant_size { 0 };
 
-    std::shared_ptr<Buffers::VKBuffer> m_output;
+    /// Milled buffers rotated between dispatches, all at m_output_capacity.
+    std::vector<std::shared_ptr<Buffers::VKBuffer>> m_outputs;
     std::shared_ptr<Buffers::VKBuffer> m_run_buf;
     std::shared_ptr<Buffers::VKBuffer> m_prefix_buf;
 
@@ -240,6 +261,13 @@ private:
     std::weak_ptr<Buffers::VKBuffer> m_bound_source;
 
     std::vector<uint32_t> m_prefix;
+
+    uint32_t m_output_ring { 2 };
+    size_t m_output_slot { 0 };
+
+    /// Ring slot the descriptor set currently points at, for invalidation.
+    size_t m_bound_slot { 0 };
+    bool m_descriptors_written { false };
 
     uint32_t m_milled_count { 0 };
     uint32_t m_output_capacity { 0 };
