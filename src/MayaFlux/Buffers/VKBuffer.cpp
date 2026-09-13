@@ -353,6 +353,7 @@ void VKBuffer::apply_render_config(
         std::dynamic_pointer_cast<VKBuffer>(shared_from_this()));
 
     render_processor->set_primitive_topology(config.topology);
+    render_processor->set_triangulate(config.triangulate);
     render_processor->set_polygon_mode(config.polygon_mode);
     render_processor->set_cull_mode(config.cull_mode);
 

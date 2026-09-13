@@ -250,7 +250,7 @@ void RenderProcessor::initialize_pipeline(const std::shared_ptr<VKBuffer>& buffe
     pipeline_config.tess_control_shader = m_tess_control_shader_id;
     pipeline_config.tess_eval_shader = m_tess_eval_shader_id;
 
-    pipeline_config.topology = m_primitive_topology;
+    pipeline_config.topology = pipeline_topology();
     pipeline_config.rasterization.polygon_mode = m_polygon_mode;
     pipeline_config.rasterization.cull_mode = m_cull_mode;
 
@@ -481,13 +481,75 @@ const Kinesis::ViewTransform& RenderProcessor::publish_view_transform()
     return m_published_view_transform;
 }
 
-void RenderProcessor::on_before_record(const std::shared_ptr<VKBuffer>& /*buffer*/)
+void RenderProcessor::set_triangulate(bool enabled)
 {
+    if (m_triangulate == enabled) {
+        return;
+    }
+
+    m_triangulate = enabled;
+    m_needs_pipeline_rebuild = true;
 }
 
-std::shared_ptr<VKBuffer> RenderProcessor::vertex_source(
+void RenderProcessor::set_runs(std::vector<Portal::Graphics::DrawRun> runs)
+{
+    m_runs = std::move(runs);
+}
+
+void RenderProcessor::set_mill_spec(const Portal::Graphics::MillSpec& spec)
+{
+    m_mill_spec = spec;
+    if (m_mill) {
+        m_mill->set_spec(spec);
+    }
+}
+
+uint32_t RenderProcessor::milled_vertex_count() const
+{
+    return m_mill ? m_mill->milled_count() : 0U;
+}
+
+Portal::Graphics::PrimitiveTopology RenderProcessor::pipeline_topology() const
+{
+    return m_triangulate
+        ? Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST
+        : m_primitive_topology;
+}
+
+bool RenderProcessor::mill_runs(const std::shared_ptr<VKBuffer>& buffer)
+{
+    if (!m_triangulate) {
+        return true;
+    }
+
+    if (m_runs.empty()) {
+        return false;
+    }
+
+    if (!m_mill) {
+        m_mill = std::make_unique<Portal::Graphics::PrimitiveMill>(m_mill_spec);
+    }
+
+    const glm::mat4 inv_view = glm::inverse(published_view_transform().view);
+    const Portal::Graphics::MillView view { .eye = glm::vec3(inv_view[3]) };
+
+    const uint32_t milled = m_mill->mill(buffer, m_runs, view);
+    if (milled == 0) {
+        return false;
+    }
+
+    m_first_vertex = 0;
+    m_vertex_count = milled;
+
+    return true;
+}
+
+std::shared_ptr<VKBuffer> RenderProcessor::draw_source(
     const std::shared_ptr<VKBuffer>& attached) const
 {
+    if (m_triangulate && m_mill && m_mill->output()) {
+        return m_mill->output();
+    }
     return attached;
 }
 
@@ -531,7 +593,10 @@ void RenderProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
     }
 
     publish_view_transform();
-    on_before_record(buffer);
+
+    if (!mill_runs(buffer)) {
+        return;
+    }
 
     buffer->set_pipeline_window(m_pipeline_id, m_target_window);
 
@@ -637,7 +702,7 @@ void RenderProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
 
     on_before_execute(cmd_id, buffer);
 
-    const auto source = vertex_source(buffer);
+    const auto source = draw_source(buffer);
 
     flow.bind_vertex_buffers(cmd_id, { source });
 
@@ -737,6 +802,12 @@ void RenderProcessor::cleanup()
         foundry.destroy_shader(m_fragment_shader_id);
         m_fragment_shader_id = Portal::Graphics::INVALID_SHADER;
     }
+
+    if (m_mill) {
+        m_mill->release();
+        m_mill.reset();
+    }
+    m_runs.clear();
 
     m_view_transform_ubo.reset();
     m_view_transform_descriptor_set_id = Portal::Graphics::INVALID_DESCRIPTOR_SET;

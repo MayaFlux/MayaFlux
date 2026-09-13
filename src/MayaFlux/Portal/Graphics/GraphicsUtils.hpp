@@ -336,6 +336,20 @@ struct RenderConfig {
     PolygonMode polygon_mode { PolygonMode::FILL };
     CullMode cull_mode { CullMode::NONE };
 
+    /**
+     * @brief Reduce supplied spans to triangles before drawing them.
+     *
+     * When set, @c topology describes the spans handed to the processor rather
+     * than the pipeline: the pipeline is built as TRIANGLE_LIST, no geometry
+     * stage is used on any platform, and the processor mills each span into
+     * quads and ribbons before recording a single draw.
+     *
+     * This is resolved at configuration time rather than inferred from whether
+     * spans arrive, because shader, topology and geometry-stage selection all
+     * happen here while spans arrive per frame.
+     */
+    bool triangulate { false };
+
     std::vector<std::pair<std::string, std::shared_ptr<Core::VKImage>>> additional_textures;
 
     ///< For child-specific fields
@@ -346,14 +360,17 @@ struct RenderConfig {
 
 /**
  * @struct DrawRun
- * @brief One contiguous span of vertices to draw at a single primitive
- *        topology.
+ * @brief One contiguous span of vertices sharing a primitive topology.
  *
- * Consumed by any draw-recording processor that issues more than one draw
- * per processing_function call (see MultiplexRenderProcessor). Carries no
- * knowledge of what produced it: an operator's collections, an arena's
- * per-element sub-ranges, or anything else. Producers build these; the
- * processor only draws them.
+ * The topology declares how this span's vertices are ordered, not which
+ * pipeline draws it. A consumer configured to triangulate reduces every span to
+ * triangles and draws them all with one call, turning points into quads and
+ * line segments into ribbons, so a set of spans of differing topology still
+ * resolves to a single draw.
+ *
+ * Carries no knowledge of what produced it: an operator's collections, an
+ * arena's per-element sub-ranges, or anything else. Producers build these; the
+ * consumer shapes and draws them.
  */
 struct DrawRun {
     PrimitiveTopology topology {};

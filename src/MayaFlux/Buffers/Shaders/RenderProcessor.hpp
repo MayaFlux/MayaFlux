@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MayaFlux/Kinesis/Viewport/ViewTransform.hpp"
+#include "MayaFlux/Portal/Graphics/PrimitiveMill.hpp"
 #include "MayaFlux/Portal/Graphics/RenderFlow.hpp"
 #include "ShaderProcessor.hpp"
 
@@ -198,6 +199,40 @@ public:
     void set_instance_count(uint32_t count) { m_instance_count = count; }
     [[nodiscard]] uint32_t get_instance_count() const { return m_instance_count; }
 
+    /**
+     * @brief Reduce supplied spans to triangles before drawing them.
+     *
+     * When enabled, get_primitive_topology()'s value describes the spans given
+     * to set_runs() rather than the pipeline: the pipeline is built as
+     * TRIANGLE_LIST and no geometry stage is used. Points become quads and line
+     * segments ribbons, all drawn by one non-indexed draw. The vertex layout is
+     * preserved, so the vertex shader is unaffected.
+     *
+     * Resolved from RenderConfig::triangulate at configuration time, because
+     * shader and geometry-stage selection depend on it and happen there.
+     */
+    void set_triangulate(bool enabled);
+    [[nodiscard]] bool is_triangulate() const { return m_triangulate; }
+
+    /**
+     * @brief Spans to draw on subsequent frames. Only used when triangulating.
+     * @param runs Spans in recording order. Empty suppresses the draw.
+     *
+     * Not thread safe against a concurrent processing_function call; call from
+     * the thread driving the graphics tick.
+     */
+    void set_runs(std::vector<Portal::Graphics::DrawRun> runs);
+
+    /** @brief Spans as last supplied to set_runs(). */
+    [[nodiscard]] const std::vector<Portal::Graphics::DrawRun>& get_runs() const { return m_runs; }
+
+    /** @brief Shaping parameters for triangulation. Takes effect next frame. */
+    void set_mill_spec(const Portal::Graphics::MillSpec& spec);
+    [[nodiscard]] const Portal::Graphics::MillSpec& get_mill_spec() const { return m_mill_spec; }
+
+    /** @brief Vertices the last triangulation produced. Diagnostic only. */
+    [[nodiscard]] uint32_t milled_vertex_count() const;
+
 protected:
     void initialize_pipeline(const std::shared_ptr<VKBuffer>& buffer) override;
     void execute_shader(const std::shared_ptr<VKBuffer>& buffer) override;
@@ -211,10 +246,10 @@ protected:
      * @brief Resolve the active view transform and write it to the UBO.
      * @return The transform just published.
      *
-     * Host-side only, no command recording. Runs before on_before_record(),
-     * so a subclass dispatching there reads this frame's camera. Prefer
-     * pushing the returned value into a dispatch over binding the UBO, which
-     * has no per-frame-in-flight copies.
+     * Host-side only, no command recording. Runs before the triangulation
+     * dispatch so that reads this frame's camera. Prefer pushing the returned
+     * value into a dispatch over binding the UBO, which has no
+     * per-frame-in-flight copies.
      */
     const Kinesis::ViewTransform& publish_view_transform();
 
@@ -223,24 +258,6 @@ protected:
     {
         return m_published_view_transform;
     }
-
-    /**
-     * @brief Hook after the draw guards pass and the view transform is
-     *        published, before any recording. Default does nothing.
-     *
-     * A subclass that generates the geometry it draws dispatches it here.
-     */
-    virtual void on_before_record(const std::shared_ptr<VKBuffer>& buffer);
-
-    /**
-     * @brief Buffer the draw sources vertices and indices from.
-     *
-     * Defaults to @p attached. A subclass drawing geometry it generated
-     * returns that buffer instead; descriptor state, push constants and
-     * pipeline registration keep using @p attached.
-     */
-    [[nodiscard]] virtual std::shared_ptr<VKBuffer> vertex_source(
-        const std::shared_ptr<VKBuffer>& attached) const;
 
 private:
     struct VertexInfo {
@@ -285,6 +302,29 @@ private:
     std::optional<Kinesis::ViewTransform> m_view_transform;
     std::function<Kinesis::ViewTransform()> m_view_transform_source;
     Kinesis::ViewTransform m_published_view_transform {};
+
+    bool m_triangulate {};
+    std::vector<Portal::Graphics::DrawRun> m_runs;
+    Portal::Graphics::MillSpec m_mill_spec {};
+
+    /// Created on first triangulated frame, so a plain draw pays one pointer.
+    std::unique_ptr<Portal::Graphics::PrimitiveMill> m_mill;
+
+    /**
+     * @brief Topology the pipeline is built with, as opposed to the topology
+     *        m_runs are declared in.
+     */
+    [[nodiscard]] Portal::Graphics::PrimitiveTopology pipeline_topology() const;
+
+    /**
+     * @brief Mill m_runs into the private buffer and set the draw range.
+     * @return false when this frame has nothing to draw.
+     */
+    bool mill_runs(const std::shared_ptr<VKBuffer>& buffer);
+
+    /** @brief Buffer the draw sources vertices and indices from. */
+    [[nodiscard]] std::shared_ptr<VKBuffer> draw_source(
+        const std::shared_ptr<VKBuffer>& attached) const;
 
     const Kakshya::VertexLayout* get_or_cache_vertex_layout(
         std::unordered_map<std::shared_ptr<VKBuffer>, VertexInfo>& buffer_info,
