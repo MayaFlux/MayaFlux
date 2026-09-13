@@ -207,6 +207,41 @@ protected:
 
     void cleanup() override;
 
+    /**
+     * @brief Resolve the active view transform and write it to the UBO.
+     * @return The transform just published.
+     *
+     * Host-side only, no command recording. Runs before on_before_record(),
+     * so a subclass dispatching there reads this frame's camera. Prefer
+     * pushing the returned value into a dispatch over binding the UBO, which
+     * has no per-frame-in-flight copies.
+     */
+    const Kinesis::ViewTransform& publish_view_transform();
+
+    /** @brief Transform published for this frame by publish_view_transform(). */
+    [[nodiscard]] const Kinesis::ViewTransform& published_view_transform() const
+    {
+        return m_published_view_transform;
+    }
+
+    /**
+     * @brief Hook after the draw guards pass and the view transform is
+     *        published, before any recording. Default does nothing.
+     *
+     * A subclass that generates the geometry it draws dispatches it here.
+     */
+    virtual void on_before_record(const std::shared_ptr<VKBuffer>& buffer);
+
+    /**
+     * @brief Buffer the draw sources vertices and indices from.
+     *
+     * Defaults to @p attached. A subclass drawing geometry it generated
+     * returns that buffer instead; descriptor state, push constants and
+     * pipeline registration keep using @p attached.
+     */
+    [[nodiscard]] virtual std::shared_ptr<VKBuffer> vertex_source(
+        const std::shared_ptr<VKBuffer>& attached) const;
+
 private:
     struct VertexInfo {
         Kakshya::VertexLayout semantic_layout;
@@ -249,6 +284,7 @@ private:
 
     std::optional<Kinesis::ViewTransform> m_view_transform;
     std::function<Kinesis::ViewTransform()> m_view_transform_source;
+    Kinesis::ViewTransform m_published_view_transform {};
 
     const Kakshya::VertexLayout* get_or_cache_vertex_layout(
         std::unordered_map<std::shared_ptr<VKBuffer>, VertexInfo>& buffer_info,

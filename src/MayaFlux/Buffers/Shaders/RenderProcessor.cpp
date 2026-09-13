@@ -460,6 +460,37 @@ void RenderProcessor::set_buffer_vertex_layout(
     m_needs_pipeline_rebuild = true;
 }
 
+const Kinesis::ViewTransform& RenderProcessor::publish_view_transform()
+{
+    Kinesis::ViewTransform vt;
+    if (m_view_transform_active) {
+        vt = m_view_transform_source
+            ? m_view_transform_source()
+            : m_view_transform.value_or(Kinesis::ViewTransform {});
+    }
+
+    m_published_view_transform = vt;
+
+    if (m_view_transform_ubo && m_view_transform_ubo->get_mapped_ptr()) {
+        std::memcpy(
+            m_view_transform_ubo->get_mapped_ptr(),
+            &vt,
+            sizeof(Kinesis::ViewTransform));
+    }
+
+    return m_published_view_transform;
+}
+
+void RenderProcessor::on_before_record(const std::shared_ptr<VKBuffer>& /*buffer*/)
+{
+}
+
+std::shared_ptr<VKBuffer> RenderProcessor::vertex_source(
+    const std::shared_ptr<VKBuffer>& attached) const
+{
+    return attached;
+}
+
 bool RenderProcessor::on_before_execute(Portal::Graphics::CommandBufferID /*cmd_id*/, const std::shared_ptr<VKBuffer>& /*buffer*/)
 {
     if (!m_target_window) {
@@ -498,6 +529,9 @@ void RenderProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
             "VKBuffer has no vertex layout set. Use buffer->set_vertex_layout()");
         return;
     }
+
+    publish_view_transform();
+    on_before_record(buffer);
 
     buffer->set_pipeline_window(m_pipeline_id, m_target_window);
 
@@ -581,22 +615,6 @@ void RenderProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
         flow.bind_descriptor_sets(cmd_id, m_pipeline_id, m_descriptor_set_ids);
     }
 
-    {
-        Kinesis::ViewTransform vt;
-        if (m_view_transform_active) {
-            vt = m_view_transform_source
-                ? m_view_transform_source()
-                : m_view_transform.value_or(Kinesis::ViewTransform {});
-        }
-
-        if (m_view_transform_ubo && m_view_transform_ubo->get_mapped_ptr()) {
-            std::memcpy(
-                m_view_transform_ubo->get_mapped_ptr(),
-                &vt,
-                sizeof(Kinesis::ViewTransform));
-        }
-    }
-
     if (m_view_transform_descriptor_set_id != Portal::Graphics::INVALID_DESCRIPTOR_SET) {
         flow.bind_descriptor_sets(
             cmd_id, m_pipeline_id,
@@ -619,13 +637,15 @@ void RenderProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
 
     on_before_execute(cmd_id, buffer);
 
-    flow.bind_vertex_buffers(cmd_id, { buffer });
+    const auto source = vertex_source(buffer);
+
+    flow.bind_vertex_buffers(cmd_id, { source });
 
     uint32_t draw_count = 0;
     if (m_vertex_count > 0) {
         draw_count = m_vertex_count;
     } else {
-        auto current_layout = buffer->get_vertex_layout();
+        auto current_layout = source->get_vertex_layout();
         if (!current_layout.has_value() || current_layout->vertex_count == 0) {
             MF_RT_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
                 "Vertex layout has zero vertices, skipping draw");
@@ -634,10 +654,10 @@ void RenderProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
         draw_count = current_layout->vertex_count;
     }
 
-    if (buffer->has_index_buffer()) {
+    if (source->has_index_buffer()) {
         const auto index_count = static_cast<uint32_t>(
-            buffer->get_index_buffer_size() / sizeof(uint32_t));
-        flow.bind_index_buffer(cmd_id, buffer);
+            source->get_index_buffer_size() / sizeof(uint32_t));
+        flow.bind_index_buffer(cmd_id, source);
         flow.draw_indexed(cmd_id, index_count, m_instance_count, 0, 0, 0);
     } else {
         flow.draw(cmd_id, draw_count, m_instance_count, m_first_vertex, 0);
