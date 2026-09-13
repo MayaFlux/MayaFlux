@@ -408,7 +408,8 @@ void TopologyGeneratorNode::build_interpolated_path(
     const auto total_samples = static_cast<Eigen::Index>(
         1 + num_segments * (m_samples_per_segment - 1));
 
-    m_evaluator.evaluate_planar(m_control_scratch, 3, total_samples, m_curve_primary);
+    m_evaluator.evaluate_planar(
+        m_control_scratch, 3, total_samples, m_curve_primary, m_curve_tangents);
 
     const std::vector<double>* curve = &m_curve_primary;
 
@@ -429,13 +430,31 @@ void TopologyGeneratorNode::build_interpolated_path(
     const double* y = x + count;
     const double* z = y + count;
 
+    if (m_use_arc_length_reparameterization) {
+        Kinesis::central_difference_tangents(*curve, 3, count, m_curve_tangents);
+    }
+
+    const double* tx = m_curve_tangents.data();
+    const double* ty = tx + count;
+    const double* tz = ty + count;
+
+    const auto sample = [&](size_t s) {
+        return glm::vec3 {
+            static_cast<float>(x[s]), static_cast<float>(y[s]), static_cast<float>(z[s])
+        };
+    };
+
+    const auto tangent = [&](size_t s) {
+        return glm::vec3 {
+            static_cast<float>(tx[s]), static_cast<float>(ty[s]), static_cast<float>(tz[s])
+        };
+    };
+
     for (size_t i = 0; i + 1 < count; ++i) {
-        m_vertices[i * 2].position = {
-            static_cast<float>(x[i]), static_cast<float>(y[i]), static_cast<float>(z[i])
-        };
-        m_vertices[i * 2 + 1].position = {
-            static_cast<float>(x[i + 1]), static_cast<float>(y[i + 1]), static_cast<float>(z[i + 1])
-        };
+        m_vertices[i * 2].position = sample(i);
+        m_vertices[i * 2].tangent = tangent(i);
+        m_vertices[i * 2 + 1].position = sample(i + 1);
+        m_vertices[i * 2 + 1].tangent = tangent(i + 1);
     }
 
     write_path_attributes(points, num_points);
@@ -464,15 +483,19 @@ void TopologyGeneratorNode::build_direct_connections(
         float thick_a = m_force_uniform_thickness ? m_line_thickness : points[a].thickness;
         float thick_b = m_force_uniform_thickness ? m_line_thickness : points[b].thickness;
 
+        const glm::vec3 edge = points[b].position - points[a].position;
+
         m_vertices.emplace_back(LineVertex {
             .position = points[a].position,
             .color = color_a,
-            .thickness = thick_a });
+            .thickness = thick_a,
+            .tangent = edge });
 
         m_vertices.emplace_back(LineVertex {
             .position = points[b].position,
             .color = color_b,
-            .thickness = thick_b });
+            .thickness = thick_b,
+            .tangent = edge });
     }
 }
 

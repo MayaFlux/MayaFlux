@@ -166,7 +166,8 @@ void PathGeneratorNode::write_curve_segment(
         m_segment_controls[i * 3 + 2] = pt.z;
     }
 
-    m_evaluator.evaluate_planar(m_segment_controls, 3, m_samples_per_segment, m_curve_primary);
+    m_evaluator.evaluate_planar(
+        m_segment_controls, 3, m_samples_per_segment, m_curve_primary, m_curve_tangents);
 
     const std::vector<double>* curve = &m_curve_primary;
 
@@ -185,13 +186,31 @@ void PathGeneratorNode::write_curve_segment(
     const double* y = x + count;
     const double* z = y + count;
 
+    if (m_arc_length_parameterization) {
+        Kinesis::central_difference_tangents(*curve, 3, count, m_curve_tangents);
+    }
+
+    const double* tx = m_curve_tangents.data();
+    const double* ty = tx + count;
+    const double* tz = ty + count;
+
+    const auto sample = [&](size_t s) {
+        return glm::vec3 {
+            static_cast<float>(x[s]), static_cast<float>(y[s]), static_cast<float>(z[s])
+        };
+    };
+
+    const auto tangent = [&](size_t s) {
+        return glm::vec3 {
+            static_cast<float>(tx[s]), static_cast<float>(ty[s]), static_cast<float>(tz[s])
+        };
+    };
+
     for (size_t i = 0; i < count - 1; ++i) {
-        dst[i * 2].position = {
-            static_cast<float>(x[i]), static_cast<float>(y[i]), static_cast<float>(z[i])
-        };
-        dst[i * 2 + 1].position = {
-            static_cast<float>(x[i + 1]), static_cast<float>(y[i + 1]), static_cast<float>(z[i + 1])
-        };
+        dst[i * 2].position = sample(i);
+        dst[i * 2].tangent = tangent(i);
+        dst[i * 2 + 1].position = sample(i + 1);
+        dst[i * 2 + 1].tangent = tangent(i + 1);
     }
 
     write_segment_attributes(curve_verts, start_idx, dst);

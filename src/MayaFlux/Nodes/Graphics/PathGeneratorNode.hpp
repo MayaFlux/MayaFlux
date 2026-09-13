@@ -296,7 +296,7 @@ private:
     Kinesis::CurveEvaluator m_evaluator;
 
     std::array<double, 12> m_segment_controls;
-    std::vector<double> m_curve_primary, m_curve_secondary;
+    std::vector<double> m_curve_primary, m_curve_secondary, m_curve_tangents;
 
     Eigen::Index m_samples_per_segment;
     double m_tension;

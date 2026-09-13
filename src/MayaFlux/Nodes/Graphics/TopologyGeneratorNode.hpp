@@ -321,6 +321,7 @@ private:
     std::vector<double> m_control_scratch;
     std::vector<double> m_curve_primary;
     std::vector<double> m_curve_secondary;
+    std::vector<double> m_curve_tangents;
 
 #ifdef MAYAFLUX_PLATFORM_MACOS
     std::vector<LineVertex> m_expand_cache;

@@ -273,7 +273,88 @@ namespace {
         }
     }
 
+    /**
+     * @brief Derivative of the cosine blend with respect to the parameter.
+     *
+     * mu(t) = (1 - cos(pi t)) / 2, so d/dt of (1 - mu) a + mu b is
+     * (b - a) * pi * sin(pi t) / 2.
+     */
+    void evaluate_chunk_cosine_derivative(
+        const double* ctrl,
+        Eigen::Index start_col,
+        const double* params,
+        size_t dim,
+        size_t count,
+        double* dst,
+        size_t stride)
+    {
+        const double* c0 = ctrl + static_cast<size_t>(start_col) * dim;
+        const double* c1 = c0 + dim;
+
+        for (size_t d = 0; d < dim; ++d) {
+            double* row = dst + d * stride;
+            const double delta = c1[d] - c0[d];
+
+            for (size_t j = 0; j < count; ++j) {
+                row[j] = delta * M_PI * std::sin(params[j] * M_PI) * 0.5;
+            }
+        }
+    }
+
+    /**
+     * @brief Differentiate a folded coefficient block in place of a new one.
+     * @param folded dim * pps coefficients in descending power order.
+     * @param dim Coordinate count.
+     * @param pps Points per segment, giving degree pps - 1.
+     * @param dst dim * (pps - 1) output coefficients, descending power order.
+     *
+     * Horner stores the highest power first, so coefficient p carries power
+     * pps - 1 - p and differentiating is a scale by that power with the
+     * constant term dropped. The result feeds the same evaluate_rows kernel
+     * one degree lower.
+     */
+    void fold_derivative(
+        const double* folded,
+        size_t dim,
+        Eigen::Index pps,
+        double* dst)
+    {
+        const auto n = static_cast<size_t>(pps);
+        for (size_t d = 0; d < dim; ++d) {
+            const double* co = folded + d * n;
+            double* dco = dst + d * (n - 1);
+            for (size_t p = 0; p + 1 < n; ++p) {
+                dco[p] = co[p] * static_cast<double>(n - 1 - p);
+            }
+        }
+    }
+
 } // namespace
+
+void central_difference_tangents(
+    std::span<const double> points,
+    size_t dim,
+    size_t count,
+    std::vector<double>& tangents)
+{
+    if (dim == 0 || count < 2 || points.size() < dim * count) {
+        tangents.assign(dim * count, 0.0);
+        return;
+    }
+
+    tangents.resize(dim * count);
+
+    for (size_t d = 0; d < dim; ++d) {
+        const double* row = points.data() + d * count;
+        double* out = tangents.data() + d * count;
+
+        for (size_t i = 0; i < count; ++i) {
+            const size_t a = i == 0 ? 0 : i - 1;
+            const size_t b = i + 1 < count ? i + 1 : count - 1;
+            out[i] = row[b] - row[a];
+        }
+    }
+}
 
 // ===========================================================================
 // Single-sample entry points
@@ -618,7 +699,8 @@ void CurveEvaluator::evaluate_planar(
     std::span<const double> control_points,
     size_t dim,
     Eigen::Index num_samples,
-    std::vector<double>& out)
+    std::vector<double>& out,
+    std::vector<double>& tangents)
 {
     if (num_samples < 2) {
         error<std::invalid_argument>(
@@ -683,6 +765,7 @@ void CurveEvaluator::evaluate_planar(
 
     const auto stride = static_cast<size_t>(num_samples);
     out.resize(dim * stride);
+    tangents.resize(dim * stride);
 
     build_chunks(num_samples, num_segments, active_count);
 
@@ -690,6 +773,7 @@ void CurveEvaluator::evaluate_planar(
     const bool trig = m_trigonometric;
     const double* basis = m_basis.data();
     double* out_base = out.data();
+    double* tan_base = tangents.data();
 
     if (m_chunks.size() > 1 && num_samples >= k_parallel_min_samples) {
         P::for_each(P::par_unseq, m_chunks.begin(), m_chunks.end(),
@@ -698,11 +782,15 @@ void CurveEvaluator::evaluate_planar(
                 std::vector<double> params(count);
                 fill_parameters(params.data(), chunk, num_samples, num_segments);
 
-                double* dst = out_base + static_cast<size_t>(chunk.sample_begin);
+                const auto offset = static_cast<size_t>(chunk.sample_begin);
+                double* dst = out_base + offset;
+                double* tan = tan_base + offset;
 
                 if (trig) {
                     evaluate_chunk_cosine(active, chunk.start_col, params.data(),
                         dim, count, dst, stride);
+                    evaluate_chunk_cosine_derivative(active, chunk.start_col, params.data(),
+                        dim, count, tan, stride);
                     return;
                 }
 
@@ -711,6 +799,12 @@ void CurveEvaluator::evaluate_planar(
 
                 evaluate_chunk_polynomial(folded.data(), params.data(),
                     dim, pps, count, dst, stride);
+
+                std::vector<double> dfolded(dim * static_cast<size_t>(pps - 1));
+                fold_derivative(folded.data(), dim, pps, dfolded.data());
+
+                evaluate_chunk_polynomial(dfolded.data(), params.data(),
+                    dim, pps - 1, count, tan, stride);
             });
 
         return;
@@ -722,11 +816,15 @@ void CurveEvaluator::evaluate_planar(
         m_tbuf.resize(count);
         fill_parameters(m_tbuf.data(), chunk, num_samples, num_segments);
 
-        double* dst = out_base + static_cast<size_t>(chunk.sample_begin);
+        const auto offset = static_cast<size_t>(chunk.sample_begin);
+        double* dst = out_base + offset;
+        double* tan = tan_base + offset;
 
         if (trig) {
             evaluate_chunk_cosine(active, chunk.start_col, m_tbuf.data(),
                 dim, count, dst, stride);
+            evaluate_chunk_cosine_derivative(active, chunk.start_col, m_tbuf.data(),
+                dim, count, tan, stride);
             continue;
         }
 
@@ -735,6 +833,12 @@ void CurveEvaluator::evaluate_planar(
 
         evaluate_chunk_polynomial(m_folded.data(), m_tbuf.data(),
             dim, pps, count, dst, stride);
+
+        m_dfolded.resize(dim * static_cast<size_t>(pps - 1));
+        fold_derivative(m_folded.data(), dim, pps, m_dfolded.data());
+
+        evaluate_chunk_polynomial(m_dfolded.data(), m_tbuf.data(),
+            dim, pps - 1, count, tan, stride);
     }
 }
 
@@ -821,7 +925,7 @@ void CurveEvaluator::evaluate(
     evaluate_planar(
         std::span<const double>(control_points.data(),
             static_cast<size_t>(control_points.size())),
-        dim, num_samples, m_planar);
+        dim, num_samples, m_planar, m_planar_tangents);
 
     out.resize(control_points.rows(), num_samples);
 
