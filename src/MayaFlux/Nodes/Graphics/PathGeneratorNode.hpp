@@ -303,10 +303,6 @@ private:
 
     std::vector<LineVertex> m_range_cache;
 
-#ifdef MAYAFLUX_PLATFORM_MACOS
-    std::vector<LineVertex> m_expand_cache;
-#endif
-
     glm::vec3 m_current_color { 1.0F, 1.0F, 1.0F };
     float m_current_thickness { 2.0F };
 

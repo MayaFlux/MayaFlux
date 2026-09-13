@@ -121,12 +121,15 @@ void add_render_sink(
                 rc.vertex_shader = "line.vert.spv";
             if (rc.fragment_shader.empty())
                 rc.fragment_shader = "line.frag.spv";
-#ifndef MAYAFLUX_PLATFORM_MACOS
-            if (rc.geometry_shader.empty())
-                rc.geometry_shader = "line.geom.spv";
-#else
-            rc.topology = Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST;
+#ifdef MAYAFLUX_PLATFORM_MACOS
+            rc.triangulate = true;
 #endif
+
+            if (rc.triangulate) {
+                rc.geometry_shader.clear();
+            } else if (rc.geometry_shader.empty()) {
+                rc.geometry_shader = "line.geom.spv";
+            }
             break;
         case Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST:
         case Portal::Graphics::PrimitiveTopology::TRIANGLE_STRIP:
@@ -151,6 +154,7 @@ void add_render_sink(
         renderer->set_geometry_shader(rc.geometry_shader);
 
     renderer->set_primitive_topology(rc.topology);
+    renderer->set_triangulate(rc.triangulate);
     renderer->set_polygon_mode(rc.polygon_mode);
     renderer->set_cull_mode(rc.cull_mode);
 

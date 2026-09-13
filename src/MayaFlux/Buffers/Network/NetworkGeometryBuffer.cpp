@@ -55,12 +55,15 @@ namespace {
             if (config.fragment_shader.empty())
                 resolved_config.fragment_shader = "line.frag.spv";
 
-#ifndef MAYAFLUX_PLATFORM_MACOS
-            if (config.geometry_shader.empty())
+#ifdef MAYAFLUX_PLATFORM_MACOS
+            resolved_config.triangulate = true;
+#endif
+
+            if (resolved_config.triangulate) {
+                resolved_config.geometry_shader.clear();
+            } else if (config.geometry_shader.empty()) {
                 resolved_config.geometry_shader = "line.geom.spv";
-#else
-            resolved_config.topology = Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST;
-#endif // !MAYAFLUX_PLATFORM_MACOS
+            }
             break;
         case Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST:
         case Portal::Graphics::PrimitiveTopology::TRIANGLE_STRIP:

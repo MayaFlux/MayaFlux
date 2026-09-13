@@ -74,12 +74,15 @@ void FormaBuffer::setup_rendering(const RenderConfig& config)
             resolved.vertex_shader = "line.vert.spv";
         if (resolved.fragment_shader.empty())
             resolved.fragment_shader = "line.frag.spv";
-#ifndef MAYAFLUX_PLATFORM_MACOS
-        if (resolved.geometry_shader.empty())
-            resolved.geometry_shader = "line.geom.spv";
-#else
-        resolved.topology = Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST;
+#ifdef MAYAFLUX_PLATFORM_MACOS
+        resolved.triangulate = true;
 #endif
+
+        if (resolved.triangulate) {
+            resolved.geometry_shader.clear();
+        } else if (resolved.geometry_shader.empty()) {
+            resolved.geometry_shader = "line.geom.spv";
+        }
 
         break;
 

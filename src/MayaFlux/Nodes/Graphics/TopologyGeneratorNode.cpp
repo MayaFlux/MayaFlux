@@ -373,20 +373,11 @@ void TopologyGeneratorNode::compute_frame()
         return;
     }
 
-#ifdef MAYAFLUX_PLATFORM_MACOS
-    m_expand_cache = expand_lines_to_triangles(m_vertices);
-    set_vertices<LineVertex>(std::span { m_expand_cache.data(), m_expand_cache.size() });
-
-    auto layout = get_vertex_layout();
-    layout->vertex_count = static_cast<uint32_t>(m_expand_cache.size());
-    set_vertex_layout(*layout);
-#else
     set_vertices<LineVertex>(std::span { m_vertices.data(), m_vertices.size() });
 
     auto layout = get_vertex_layout();
     layout->vertex_count = static_cast<uint32_t>(m_vertices.size());
     set_vertex_layout(*layout);
-#endif
 
     m_vertex_data_dirty = false;
 }

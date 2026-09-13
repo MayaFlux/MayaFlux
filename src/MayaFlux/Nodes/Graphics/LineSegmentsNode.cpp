@@ -88,20 +88,11 @@ void LineSegmentsNode::compute_frame()
         return;
     }
 
-#ifdef MAYAFLUX_PLATFORM_MACOS
-    std::vector<LineVertex> expanded = expand_lines_to_triangles(m_segments);
-    set_vertices<LineVertex>(std::span { expanded.data(), expanded.size() });
-
-    auto layout = get_vertex_layout();
-    layout->vertex_count = static_cast<uint32_t>(expanded.size());
-    set_vertex_layout(*layout);
-#else
     set_vertices<LineVertex>(std::span { m_segments.data(), m_segments.size() });
 
     auto layout = get_vertex_layout();
     layout->vertex_count = static_cast<uint32_t>(m_segments.size());
     set_vertex_layout(*layout);
-#endif
 
     m_vertex_data_dirty = false;
 }
