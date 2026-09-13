@@ -15,6 +15,26 @@
 namespace MayaFlux::Buffers {
 
 namespace {
+    /**
+     * @brief Fill in the shaders a topology implies, and decide how line spans
+     *        get their width.
+     *
+     * Line topologies reach the screen one of two ways. Either line.geom expands
+     * each segment in NDC, which holds a constant pixel width but needs geometry
+     * shader support, or the spans are milled to triangles before the vertex
+     * stage, which needs none. The two are exclusive: a triangulating pipeline
+     * is built as TRIANGLE_LIST, and a `layout(lines) in` geometry shader cannot
+     * be bound to it.
+     *
+     * line.frag stays in both cases. It takes its alpha from the ribbon's own v
+     * coordinate, which is exactly what line.geom wrote and what MillSpec's
+     * synthesize_uv writes, so a milled ribbon keeps the soft edge rather than
+     * falling back to triangle.frag's hard one.
+     *
+     * The topology itself is left alone when triangulating. RenderProcessor
+     * forces the pipeline to TRIANGLE_LIST on its own, and reads the configured
+     * topology as a statement about how the spans are ordered.
+     */
     Portal::Graphics::RenderConfig resolve_config(const Portal::Graphics::RenderConfig& config)
     {
         VKBuffer::RenderConfig resolved_config = config;
@@ -225,11 +245,14 @@ void NetworkGeometryBuffer::update_chain_render_range(
     size_t index,
     uint32_t vertex_offset,
     uint32_t vertex_count,
-    const std::optional<Kakshya::VertexLayout>& layout)
+    const std::optional<Kakshya::VertexLayout>& layout,
+    std::vector<Portal::Graphics::DrawRun> runs)
 {
     if (index == 0) {
-        if (m_render_processor)
+        if (m_render_processor) {
             m_render_processor->set_vertex_range(vertex_offset, vertex_count);
+            m_render_processor->set_runs(std::move(runs));
+        }
         return;
     }
 
@@ -241,10 +264,18 @@ void NetworkGeometryBuffer::update_chain_render_range(
     entry.vertex_offset = vertex_offset;
     entry.vertex_count = vertex_count;
     entry.render_processor->set_vertex_range(vertex_offset, vertex_count);
+    entry.render_processor->set_runs(std::move(runs));
 
     if (layout) {
         auto self = std::dynamic_pointer_cast<VKBuffer>(shared_from_this());
         entry.render_processor->set_buffer_vertex_layout(self, *layout);
+    }
+}
+
+void NetworkGeometryBuffer::update_render_runs(std::vector<Portal::Graphics::DrawRun> runs)
+{
+    if (m_render_processor) {
+        m_render_processor->set_runs(std::move(runs));
     }
 }
 

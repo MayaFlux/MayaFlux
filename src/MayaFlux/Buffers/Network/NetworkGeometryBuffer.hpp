@@ -111,6 +111,14 @@ public:
     /**
      * @brief Setup rendering with RenderProcessor
      * @param config Rendering configuration
+     *
+     * Registers in the main process phase, after everything setup_processors
+     * wired, since the chain runs that phase in insertion order and
+     * setup_processors must precede this call for the chain to exist at all.
+     * Ordering matters more here than for a plain draw: a triangulating
+     * processor mills the vertex buffer into a copy at process time rather than
+     * recording a binding read at present time, so every pass that writes those
+     * vertices has to come first.
      */
     void setup_rendering(const RenderConfig& config);
 
@@ -120,6 +128,10 @@ public:
      *
      * This allows rendering different subsets of the network geometry with different pipelines.
      * Each chain index corresponds to a specific node/operator in the network.
+     *
+     * Each processor added here gets its own spans through
+     * update_chain_render_range, so one that triangulates mills only its own
+     * operator's slice.
      */
     void add_chain_operator_rendering(const RenderConfig& config);
 
@@ -138,15 +150,33 @@ public:
      * @param vertex_offset Starting vertex offset for this chain
      * @param vertex_count Number of vertices for this chain
      * @param layout Optional vertex layout for this chain (if different from primary)
+     * @param runs This operator's spans, in this buffer's vertex coordinates.
+     *        Consumed only by a triangulating processor; empty leaves it to
+     *        treat its whole range as one span.
      *
      * This allows the processor to push per-chain vertex ranges to the RenderProcessor,
      * enabling it to issue draw calls for specific subsets of the geometry.
+     *
+     * Offsets in @p runs must already be rebased off this operator's slice base:
+     * GraphicsOperator::topology_runs() reports operator-local offsets, and only
+     * whoever concatenated the slices knows where each one landed.
      */
     void update_chain_render_range(
         size_t index,
         uint32_t vertex_offset,
         uint32_t vertex_count,
-        const std::optional<Kakshya::VertexLayout>& layout);
+        const std::optional<Kakshya::VertexLayout>& layout,
+        std::vector<Portal::Graphics::DrawRun> runs = {});
+
+    /**
+     * @brief Hand the primary processor its spans, without touching its range.
+     * @param runs Spans in this buffer's vertex coordinates.
+     *
+     * For a network with no operator chain, where one producer owns the whole
+     * buffer and there is no slice table to rebase against. Inert on a processor
+     * that does not triangulate.
+     */
+    void update_render_runs(std::vector<Portal::Graphics::DrawRun> runs);
 
     //-------------------------------------------------------------------------
     // Auxiliary state

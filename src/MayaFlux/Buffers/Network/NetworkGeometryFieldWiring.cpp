@@ -38,6 +38,39 @@ namespace {
             || dynamic_cast<const Nodes::Network::PointCloudNetwork*>(network) != nullptr;
     }
 
+    /**
+     * @brief Adds the field pass to the chain on scope exit, after every spatial
+     *        stage the enclosing scope went on to add.
+     *
+     * The field pass must be the last stage to write vertex records, which is
+     * what the postprocess slot used to buy it. Expressing the same order in the
+     * flat process list means adding it after the hash, claim and population
+     * stages, and wire_field_operators leaves by several paths, most of which add
+     * no stages at all. Deferring to scope exit keeps one ordering rule true on
+     * all of them without splitting the wiring up.
+     *
+     * A null chain means no pass is wanted, which is the operator carrying no
+     * bindings to dispatch.
+     */
+    struct DeferredFieldPass {
+        BufferProcessingChain* chain;
+        std::shared_ptr<Nodes::Network::GpuFieldOperator> field_op;
+        std::shared_ptr<NetworkGeometryBuffer> buffer;
+
+        ~DeferredFieldPass()
+        {
+            if (!chain) {
+                return;
+            }
+            try {
+                chain->add_processor(std::make_shared<VertexFieldProcessor>(field_op), buffer);
+            } catch (const std::exception& e) {
+                MF_ERROR(Journal::Component::Buffers, Journal::Context::Init,
+                    "NetworkGeometryBuffer: field pass could not be wired: {}", e.what());
+            }
+        }
+    };
+
 } // namespace
 
 void NetworkGeometryBuffer::wire_field_operators()
@@ -70,9 +103,11 @@ void NetworkGeometryBuffer::wire_field_operators()
         return;
     }
 
-    if (field_op->binding_count() > 0) {
-        chain->add_postprocessor(std::make_shared<VertexFieldProcessor>(field_op), self);
-    }
+    const DeferredFieldPass field_pass {
+        .chain = field_op->binding_count() > 0 ? chain.get() : nullptr,
+        .field_op = field_op,
+        .buffer = self
+    };
 
     const auto& pconfig = field_op->get_field_config();
     if (!pconfig.absorb_radius.has_value() && !pconfig.density_color) {

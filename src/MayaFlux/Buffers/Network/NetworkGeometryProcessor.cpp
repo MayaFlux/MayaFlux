@@ -157,6 +157,11 @@ void NetworkGeometryProcessor::processing_function(const std::shared_ptr<Buffer>
             if (gpu_data.layout)
                 vk_buffer->set_vertex_layout(*gpu_data.layout);
 
+            if (auto ngb = std::dynamic_pointer_cast<NetworkGeometryBuffer>(buffer);
+                ngb && primary_op) {
+                ngb->update_render_runs(primary_op->topology_runs());
+            }
+
             binding.last_total_bytes = total;
 
             MF_RT_TRACE(Journal::Component::Buffers, Journal::Context::BufferProcessing,
@@ -169,25 +174,33 @@ void NetworkGeometryProcessor::processing_function(const std::shared_ptr<Buffer>
             std::span<const uint8_t> bytes;
             size_t vertex_count {};
             std::optional<Kakshya::VertexLayout> layout;
+            Nodes::Network::GraphicsOperator* op {};
         };
 
         std::vector<SliceData> slices;
         slices.reserve(1 + chain->size());
 
         auto primary = extract_network_gpu_data(binding.network, name);
-        slices.push_back({ .bytes = primary.vertex_data, .vertex_count = primary.vertex_count, .layout = primary.layout });
+        slices.push_back({ .bytes = primary.vertex_data,
+            .vertex_count = primary.vertex_count,
+            .layout = primary.layout,
+            .op = dynamic_cast<Nodes::Network::GraphicsOperator*>(
+                binding.network->get_operator()) });
 
         for (const auto& op : chain->operators()) {
             auto* gfx = dynamic_cast<Nodes::Network::GraphicsOperator*>(op.get());
             if (!gfx) {
-                slices.push_back({ .bytes = {}, .vertex_count = 0, .layout = std::nullopt });
+                slices.push_back({ .bytes = {}, .vertex_count = 0, .layout = std::nullopt, .op = nullptr });
                 continue;
             }
 
             if (!gfx->participates_in_rendering())
                 continue;
 
-            slices.push_back({ .bytes = gfx->get_vertex_data(), .vertex_count = gfx->get_vertex_count(), .layout = gfx->get_vertex_layout() });
+            slices.push_back({ .bytes = gfx->get_vertex_data(),
+                .vertex_count = gfx->get_vertex_count(),
+                .layout = gfx->get_vertex_layout(),
+                .op = gfx });
         }
 
         size_t total_bytes = 0;
@@ -233,9 +246,15 @@ void NetworkGeometryProcessor::processing_function(const std::shared_ptr<Buffer>
         ensure_staging(binding, total_bytes);
         upload_to_gpu(m_staging_aggregate.data(), total_bytes, vk_buffer, binding.staging_buffer);
 
+        size_t aggregate_vertices = 0;
+        for (const auto& s : slices)
+            aggregate_vertices += s.vertex_count;
+
         for (auto& slice : std::views::reverse(slices)) {
             if (slice.layout) {
-                vk_buffer->set_vertex_layout(*slice.layout);
+                auto aggregate = *slice.layout;
+                aggregate.vertex_count = static_cast<uint32_t>(aggregate_vertices);
+                vk_buffer->set_vertex_layout(aggregate);
                 break;
             }
         }
@@ -251,8 +270,18 @@ void NetworkGeometryProcessor::processing_function(const std::shared_ptr<Buffer>
                     ? static_cast<uint32_t>(byte_offset / stride)
                     : 0;
 
+                std::vector<Portal::Graphics::DrawRun> runs;
+                if (s.op) {
+                    for (auto run : s.op->topology_runs()) {
+                        if (run.vertex_count == 0)
+                            continue;
+                        run.vertex_offset += vert_offset;
+                        runs.push_back(run);
+                    }
+                }
+
                 ngb->update_chain_render_range(i, vert_offset,
-                    static_cast<uint32_t>(s.vertex_count), s.layout);
+                    static_cast<uint32_t>(s.vertex_count), s.layout, std::move(runs));
 
                 byte_offset += s.bytes.size();
             }
