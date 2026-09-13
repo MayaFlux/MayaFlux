@@ -361,4 +361,34 @@ struct DrawRun {
     uint32_t vertex_count {};
 };
 
+/**
+ * @brief Vertices a span of @p n at @p topology yields once reduced to a
+ *        TRIANGLE_LIST, with points becoming quads and line segments ribbons.
+ *
+ * Closed form, so a caller can size a destination or budget a dispatch without
+ * inspecting vertex data. Spans too short to assemble a primitive yield zero
+ * rather than underflowing, and list topologies floor to whole primitives, so
+ * an odd LINE_LIST count drops its dangling vertex instead of reading past the
+ * span.
+ */
+[[nodiscard]] constexpr uint32_t triangle_vertex_count(
+    PrimitiveTopology topology,
+    uint32_t n) noexcept
+{
+    switch (topology) {
+    case PrimitiveTopology::POINT_LIST:
+        return 6U * n;
+    case PrimitiveTopology::LINE_LIST:
+        return 6U * (n / 2U);
+    case PrimitiveTopology::LINE_STRIP:
+        return n < 2U ? 0U : 6U * (n - 1U);
+    case PrimitiveTopology::TRIANGLE_LIST:
+        return 3U * (n / 3U);
+    case PrimitiveTopology::TRIANGLE_STRIP:
+    case PrimitiveTopology::TRIANGLE_FAN:
+        return n < 3U ? 0U : 3U * (n - 2U);
+    }
+    return 0U;
+}
+
 }
