@@ -100,6 +100,11 @@ void WaylandWindow::destroy()
         m_repeat_fd = -1;
     }
 
+    if (m_text_repeat_fd >= 0) {
+        close(m_text_repeat_fd);
+        m_text_repeat_fd = -1;
+    }
+
     if (m_keyboard) {
         wl_keyboard_destroy(m_keyboard);
         m_keyboard = nullptr;
@@ -211,6 +216,17 @@ void WaylandWindow::poll()
                 rev.data = kd;
                 emit(rev);
             }
+        }
+    }
+
+    if (m_text_repeat_fd >= 0 && m_active_text_key) {
+        uint64_t expirations = 0;
+        if (read(m_text_repeat_fd, &expirations, sizeof(expirations)) == sizeof(expirations)
+            && expirations > 0) {
+            WindowEvent tev;
+            tev.type = WindowEventType::TEXT_INPUT;
+            tev.data = WindowEvent::TextData { .codepoint = m_active_text_key->second };
+            emit(tev);
         }
     }
 
@@ -537,9 +553,10 @@ void WaylandWindow::on_keyboard_key(void* data, wl_keyboard*,
     if (!self->m_xkb_state)
         return;
 
+    const xkb_keycode_t xkb_key = key + 8;
+
     IO::Keys mf_key = from_evdev_scancode(key);
     if (mf_key == IO::Keys::Unknown) {
-        xkb_keycode_t xkb_key = key + 8;
         xkb_keysym_t sym = xkb_state_key_get_one_sym(self->m_xkb_state, xkb_key);
         mf_key = from_xkb_keysym(sym);
     }
@@ -556,6 +573,31 @@ void WaylandWindow::on_keyboard_key(void* data, wl_keyboard*,
     if (state == WL_KEYBOARD_KEY_STATE_PRESSED) {
         ev.type = WindowEventType::KEY_PRESSED;
         self->emit(ev);
+
+        if (const uint32_t codepoint = xkb_state_key_get_utf32(self->m_xkb_state, xkb_key);
+            is_text_input_codepoint(codepoint)) {
+            WindowEvent tev;
+            tev.type = WindowEventType::TEXT_INPUT;
+            tev.data = WindowEvent::TextData { .codepoint = codepoint };
+            self->emit(tev);
+
+            self->m_active_text_key = { kd.key, codepoint };
+
+            if (self->m_text_repeat_fd < 0)
+                self->m_text_repeat_fd = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK | TFD_CLOEXEC);
+
+            const long t_delay_ns = static_cast<long>(self->m_key_repeat_config.text_initial_delay_ms) * 1'000'000L;
+            const long t_repeat_ns = self->m_key_repeat_config.text_interval_ms > 0
+                ? static_cast<long>(self->m_key_repeat_config.text_interval_ms) * 1'000'000L
+                : 33'333'333L;
+
+            itimerspec ts {};
+            ts.it_value.tv_sec = 0;
+            ts.it_value.tv_nsec = t_delay_ns;
+            ts.it_interval.tv_sec = 0;
+            ts.it_interval.tv_nsec = t_repeat_ns;
+            timerfd_settime(self->m_text_repeat_fd, 0, &ts, nullptr);
+        }
 
         self->m_held_keys[kd.key] = kd;
 
@@ -575,6 +617,14 @@ void WaylandWindow::on_keyboard_key(void* data, wl_keyboard*,
         timerfd_settime(self->m_repeat_fd, 0, &ts, nullptr);
 
     } else {
+        if (self->m_active_text_key && self->m_active_text_key->first == kd.key) {
+            self->m_active_text_key = std::nullopt;
+            if (self->m_text_repeat_fd >= 0) {
+                itimerspec ts {};
+                timerfd_settime(self->m_text_repeat_fd, 0, &ts, nullptr);
+            }
+        }
+
         self->m_held_keys.erase(kd.key);
 
         if (self->m_held_keys.empty() && self->m_repeat_fd >= 0) {
@@ -604,10 +654,14 @@ void WaylandWindow::on_keyboard_repeat_info(void* data, wl_keyboard*,
     if (!self->m_key_repeat_config.allow_compositor_override)
         return;
 
-    if (rate > 0)
+    if (rate > 0) {
         self->m_key_repeat_config.interval_ms = 1000U / static_cast<uint32_t>(rate);
-    if (delay > 0)
+        self->m_key_repeat_config.text_interval_ms = 1000U / static_cast<uint32_t>(rate);
+    }
+    if (delay > 0) {
         self->m_key_repeat_config.initial_delay_ms = static_cast<uint32_t>(delay);
+        self->m_key_repeat_config.text_initial_delay_ms = static_cast<uint32_t>(delay);
+    }
 }
 
 // ============================================================================

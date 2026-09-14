@@ -299,6 +299,12 @@ struct KeyRepeatConfig {
     /** @brief Interval between repeat events in milliseconds. */
     uint32_t interval_ms { 16 };
 
+    /** @brief Delay before text character repeat starts in milliseconds. */
+    uint32_t text_initial_delay_ms { 400 };
+
+    /** @brief Interval between repeated text character events in milliseconds. */
+    uint32_t text_interval_ms { 33 };
+
     /** @brief If true, compositor-reported repeat_info overrides these values. */
     bool allow_compositor_override { false };
 
@@ -307,6 +313,8 @@ struct KeyRepeatConfig {
         return std::make_tuple(
             Reflect::member("initial_delay_ms", &KeyRepeatConfig::initial_delay_ms),
             Reflect::member("interval_ms", &KeyRepeatConfig::interval_ms),
+            Reflect::member("text_initial_delay_ms", &KeyRepeatConfig::text_initial_delay_ms),
+            Reflect::member("text_interval_ms", &KeyRepeatConfig::text_interval_ms),
             Reflect::member("allow_compositor_override", &KeyRepeatConfig::allow_compositor_override));
     }
 };
@@ -588,6 +596,7 @@ enum class WindowEventType : uint8_t {
     KEY_PRESSED,
     KEY_RELEASED,
     KEY_REPEAT,
+    TEXT_INPUT,
     MOUSE_MOTION,
     MOUSE_BUTTON_PRESSED,
     MOUSE_BUTTON_RELEASED,
@@ -615,6 +624,10 @@ struct WindowEvent {
         int16_t key;
         int32_t scancode, mods;
     };
+    /// @brief Resolved Unicode codepoint, layout/shift/dead-key/IME composed.
+    struct TextData {
+        uint32_t codepoint;
+    };
     struct MousePosData {
         double x, y;
     };
@@ -630,6 +643,7 @@ struct WindowEvent {
         std::monostate,
         ResizeData,
         KeyData,
+        TextData,
         MousePosData,
         MouseButtonData,
         ScrollData,

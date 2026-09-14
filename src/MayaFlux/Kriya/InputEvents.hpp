@@ -71,6 +71,21 @@ namespace Kriya {
         std::function<void()> callback);
 
     /**
+     * @brief Creates an Event coroutine that triggers on resolved text input.
+     *
+     * Delivers composed Unicode codepoints (shift, layout, dead-key/compose,
+     * and IME already resolved by the backend), distinct from key_pressed's
+     * raw keycodes. See Core::WindowEventType::TEXT_INPUT.
+     *
+     * @param window   Window to listen to.
+     * @param callback Called with the resolved Unicode codepoint.
+     * @return Event coroutine that can be added to EventManager.
+     */
+    MAYAFLUX_API Vruta::Event text_input(
+        std::shared_ptr<Core::Window> window,
+        std::function<void(uint32_t)> callback);
+
+    /**
      * @brief Creates an Event coroutine that triggers on any key press
      * @param window Window to listen to
      * @param callback Function to call with key code when any key is pressed

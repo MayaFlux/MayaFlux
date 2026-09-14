@@ -45,6 +45,7 @@ public:
     using LeaveFn = std::function<void(uint32_t id)>;
     using ScrollFn = std::function<void(uint32_t id, glm::vec2 ndc, double dx, double dy)>;
     using KeyFn = std::function<void(uint32_t id)>;
+    using TextFn = std::function<void(uint32_t id, uint32_t codepoint)>;
 
     /**
      * @brief Construct and immediately register event coroutines.
@@ -167,6 +168,19 @@ public:
     void on_held(uint32_t id, IO::Keys key, KeyFn fn);
 
     /**
+     * @brief Called with each resolved Unicode codepoint while the element
+     *        has keyboard focus.
+     *
+     * Delivers composed text (shift, layout, dead-key/compose, IME already
+     * resolved by the backend), distinct from on_press/on_held's raw keycodes.
+     * Focus transfers on mouse press, same as the other keyboard callbacks.
+     *
+     * @param id  Element id to bind to.
+     * @param fn  Callback receiving element id and the resolved codepoint.
+     */
+    void on_text(uint32_t id, TextFn fn);
+
+    /**
      * @brief Called once when an element gains keyboard focus (via click).
      */
     void on_focus_gained(uint32_t id, EnterFn fn);
@@ -251,6 +265,7 @@ private:
 
         EnterFn focus_gained;
         LeaveFn focus_lost;
+        TextFn text;
     };
 
     struct KeyHandlerState {
@@ -281,6 +296,7 @@ private:
     void handle_key_press(IO::Keys key);
     void handle_key_release(IO::Keys key);
     void handle_key_held(IO::Keys key);
+    void handle_text(uint32_t codepoint);
 
     std::optional<uint32_t> m_dragging[3];
     std::optional<uint32_t> m_focused;

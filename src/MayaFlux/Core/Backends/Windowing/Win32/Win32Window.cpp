@@ -190,6 +190,39 @@ LRESULT CALLBACK Win32Window::wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp
         return 0;
     }
 
+    case WM_CHAR: {
+        const auto unit = static_cast<uint16_t>(wp);
+
+        if (unit >= 0xD800 && unit <= 0xDBFF) {
+            self->m_pending_high_surrogate = unit;
+            return 0;
+        }
+
+        uint32_t codepoint = unit;
+        if (unit >= 0xDC00 && unit <= 0xDFFF && self->m_pending_high_surrogate != 0) {
+            codepoint = 0x10000
+                + (static_cast<uint32_t>(self->m_pending_high_surrogate - 0xD800) << 10)
+                + (static_cast<uint32_t>(unit - 0xDC00));
+            self->m_pending_high_surrogate = 0;
+        } else if (unit >= 0xDC00 && unit <= 0xDFFF) {
+            self->m_pending_high_surrogate = 0;
+            return 0;
+        } else {
+            self->m_pending_high_surrogate = 0;
+        }
+
+        if (!is_text_input_codepoint(codepoint)) {
+            return 0;
+        }
+
+        WindowEvent ev;
+        ev.type = WindowEventType::TEXT_INPUT;
+        ev.timestamp = 0.0;
+        ev.data = WindowEvent::TextData { .codepoint = codepoint };
+        self->push_event(ev);
+        return 0;
+    }
+
     case WM_MOUSEMOVE: {
         WindowEvent ev;
         ev.type = WindowEventType::MOUSE_MOTION;

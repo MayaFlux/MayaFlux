@@ -105,6 +105,7 @@ private:
     std::unordered_map<int16_t, WindowEvent::KeyData> m_held_keys_ui;
     std::unordered_map<int16_t, WindowEvent::KeyData> m_held_keys;
     ULONGLONG m_repeat_next_tick { 0 };
+    uint16_t m_pending_high_surrogate { 0 };
 
     std::vector<std::weak_ptr<Buffers::VKBuffer>> m_rendering_buffers;
     std::vector<uint64_t> m_frame_commands;
