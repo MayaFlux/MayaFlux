@@ -142,6 +142,8 @@ void NetworkGeometryProcessor::processing_function(const std::shared_ptr<Buffer>
             if (gpu_data.vertex_data.empty() || gpu_data.vertex_count == 0) {
                 if (vk_buffer->is_host_visible())
                     vk_buffer->clear();
+                if (gpu_data.layout)
+                    vk_buffer->set_vertex_layout(*gpu_data.layout);
                 continue;
             }
 
@@ -210,6 +212,8 @@ void NetworkGeometryProcessor::processing_function(const std::shared_ptr<Buffer>
         if (total_bytes == 0) {
             if (vk_buffer->is_host_visible())
                 vk_buffer->clear();
+            if (primary.layout)
+                vk_buffer->set_vertex_layout(*primary.layout);
             continue;
         }
 

@@ -604,9 +604,7 @@ void RenderProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
 
     publish_view_transform();
 
-    if (!mill_runs(buffer)) {
-        return;
-    }
+    const bool has_milled_geometry = mill_runs(buffer);
 
     buffer->set_pipeline_window(m_pipeline_id, m_target_window);
 
@@ -716,31 +714,30 @@ void RenderProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
 
     flow.bind_vertex_buffers(cmd_id, { source });
 
-    const bool drawing_milled = m_triangulate && m_mill && m_mill->milled_count() > 0;
+    const bool drawing_milled = m_triangulate && has_milled_geometry;
     const uint32_t first_vertex = drawing_milled ? 0U : m_first_vertex;
 
     uint32_t draw_count = 0;
     if (drawing_milled) {
         draw_count = m_mill->milled_count();
-    } else if (m_vertex_count > 0) {
-        draw_count = m_vertex_count;
-    } else {
-        auto current_layout = source->get_vertex_layout();
-        if (!current_layout.has_value() || current_layout->vertex_count == 0) {
-            MF_RT_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-                "Vertex layout has zero vertices, skipping draw");
-            return;
+    } else if (!m_triangulate) {
+        if (m_vertex_count > 0) {
+            draw_count = m_vertex_count;
+        } else {
+            auto current_layout = source->get_vertex_layout();
+            draw_count = current_layout.has_value() ? current_layout->vertex_count : 0U;
         }
-        draw_count = current_layout->vertex_count;
     }
 
-    if (source->has_index_buffer()) {
-        const auto index_count = static_cast<uint32_t>(
-            source->get_index_buffer_size() / sizeof(uint32_t));
-        flow.bind_index_buffer(cmd_id, source);
-        flow.draw_indexed(cmd_id, index_count, m_instance_count, 0, 0, 0);
-    } else {
-        flow.draw(cmd_id, draw_count, m_instance_count, first_vertex, 0);
+    if (draw_count > 0) {
+        if (source->has_index_buffer()) {
+            const auto index_count = static_cast<uint32_t>(
+                source->get_index_buffer_size() / sizeof(uint32_t));
+            flow.bind_index_buffer(cmd_id, source);
+            flow.draw_indexed(cmd_id, index_count, m_instance_count, 0, 0, 0);
+        } else {
+            flow.draw(cmd_id, draw_count, m_instance_count, first_vertex, 0);
+        }
     }
 
     foundry.end_commands(cmd_id);

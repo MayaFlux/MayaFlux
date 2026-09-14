@@ -240,6 +240,18 @@ public:
 
 protected:
     void initialize_pipeline(const std::shared_ptr<VKBuffer>& buffer) override;
+
+    /**
+     * @brief Records and registers a secondary command buffer every call,
+     *        even with nothing to draw (a GraphicsOperator with zero items,
+     *        or a triangulated span nothing was milled from this cycle).
+     *
+     * RootGraphicsBuffer's present pass only acquires/presents a window
+     * once at least one of its buffers has a valid recorded command buffer;
+     * a buffer that never registers one (because it always bailed out
+     * early while empty) leaves that window permanently unpresented, not
+     * merely blank, for as long as it stays empty.
+     */
     void execute_shader(const std::shared_ptr<VKBuffer>& buffer) override;
     void initialize_descriptors(const std::shared_ptr<VKBuffer>& buffer) override;
 
