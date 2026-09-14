@@ -296,16 +296,12 @@ private:
     Kinesis::CurveEvaluator m_evaluator;
 
     std::array<double, 12> m_segment_controls;
-    std::vector<double> m_curve_primary, m_curve_secondary;
+    std::vector<double> m_curve_primary, m_curve_secondary, m_curve_tangents;
 
     Eigen::Index m_samples_per_segment;
     double m_tension;
 
     std::vector<LineVertex> m_range_cache;
-
-#ifdef MAYAFLUX_PLATFORM_MACOS
-    std::vector<LineVertex> m_expand_cache;
-#endif
 
     glm::vec3 m_current_color { 1.0F, 1.0F, 1.0F };
     float m_current_thickness { 2.0F };

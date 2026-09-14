@@ -119,6 +119,12 @@ public:
     [[nodiscard]] std::optional<Portal::Graphics::PrimitiveTopology> declared_topology() const override;
 
     /**
+     * @brief Coalesces adjacent paths sharing a concatenable topology into one
+     *        run. Strip and fan paths are always reported separately.
+     */
+    std::vector<DrawRun> topology_runs() const override;
+
+    /**
      * @brief Access a specific path node directly.
      * @param i Collection index.
      * @return Shared pointer to the PathGeneratorNode, or nullptr if out of range.

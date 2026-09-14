@@ -3,11 +3,16 @@
 #include "MayaFlux/Kakshya/NDData/VertexLayout.hpp"
 #include "NetworkOperator.hpp"
 
+#include "MayaFlux/Portal/Graphics/GraphicsUtils.hpp"
+
 namespace MayaFlux::Portal::Graphics {
 enum class PrimitiveTopology : uint8_t;
 }
 
 namespace MayaFlux::Nodes::Network {
+
+using DrawRun = Portal::Graphics::DrawRun;
+using Portal::Graphics::is_concatenable_topology;
 
 /**
  * @class GraphicsOperator
@@ -181,6 +186,29 @@ public:
      */
     [[nodiscard]] virtual std::optional<Portal::Graphics::PrimitiveTopology>
     declared_topology() const { return std::nullopt; }
+
+    /**
+     * @brief Contiguous vertex spans grouped by primitive topology.
+     * @return One run per maximal contiguous stretch of same-topology
+     *         collections whose topology permits concatenation, one run per
+     *         collection otherwise, in the order get_vertex_data()
+     *         produces. Default: a single run covering the whole operator at
+     *         get_primitive_topology()'s value -- meaning every
+     *         GraphicsOperator that has no notion of multiple collections, or
+     *         whose collections all declare the same topology, needs no
+     *         override at all.
+     *
+     * Adjacent collections of equal topology are coalesced into one run only
+     * when that topology is concatenable, meaning each primitive is assembled
+     * from its own group of consecutive vertices. Strip and fan collections are
+     * always reported separately, since concatenating two of them fabricates a
+     * primitive spanning the join: a PathOperator holding five LINE_STRIP paths
+     * back to back yields five runs, not one. A consumer draws each run as one
+     * draw call at that run's topology, or expands each run independently;
+     * sizing and ordering follow get_vertex_data() exactly, the same contract
+     * build_cluster_ids() and dirty_vertex_ranges() already keep.
+     */
+    [[nodiscard]] virtual std::vector<DrawRun> topology_runs() const;
 
     /**
      * @brief Apply ONE_TO_ONE parameter mapping

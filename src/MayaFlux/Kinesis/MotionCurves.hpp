@@ -89,6 +89,27 @@ MAYAFLUX_API Eigen::VectorXd interpolate(
     double tension = 0.5);
 
 /**
+ * @brief Tangents of a sampled curve by finite difference, coordinate-major.
+ * @param points Coordinate-major, dim * count doubles.
+ * @param dim Coordinate count per sample, at least 1.
+ * @param count Sample count, at least 2.
+ * @param tangents Resized to dim * count, coordinate-major.
+ *
+ * For curves whose samples did not come straight from CurveEvaluator's
+ * analytic derivative, most importantly after reparameterize_planar has
+ * resampled by arc length, which leaves analytic tangents attached to the
+ * original parameter values. Uniformly spaced samples make the central
+ * difference well conditioned; the endpoints take the one sided difference.
+ *
+ * Like the analytic tangents, these are directions and not rates.
+ */
+MAYAFLUX_API void central_difference_tangents(
+    std::span<const double> points,
+    size_t dim,
+    size_t count,
+    std::vector<double>& tangents);
+
+/**
  * @struct CurveChunk
  * @brief A contiguous run of samples evaluated in one pass.
  *
@@ -166,19 +187,33 @@ public:
     [[nodiscard]] double tension() const { return m_tension; }
 
     /**
-     * @brief Evaluate a curve into a coordinate-major buffer.
+     * @brief Evaluate a curve into coordinate-major position and tangent buffers.
      * @param control_points Point-major, dim * control_count doubles.
      * @param dim Coordinate count per point, at least 1.
      * @param num_samples Output sample count, at least 2.
      * @param out Resized to dim * num_samples, coordinate-major.
+     * @param tangents Resized to dim * num_samples, coordinate-major.
      *
-     * @p control_points and @p out must not alias.
+     * A sample's state is its position and its direction, so both are produced
+     * together: the basis fold already yields the polynomial coefficients, and
+     * differentiating them is a scale by power feeding the same Horner kernel
+     * one degree lower. Callers that ignore @p tangents pay one extra pass over
+     * the parameter buffer already in cache.
+     *
+     * @p tangents holds the derivative with respect to the segment parameter,
+     * so it is a direction and not a rate: its magnitude is not comparable
+     * across segments and changes under arc length reparameterization. At a
+     * cusp or a repeated control point the derivative is zero, and consumers
+     * must fall back to a difference of neighbouring positions there.
+     *
+     * @p control_points must not alias @p out or @p tangents.
      */
     void evaluate_planar(
         std::span<const double> control_points,
         size_t dim,
         Eigen::Index num_samples,
-        std::vector<double>& out);
+        std::vector<double>& out,
+        std::vector<double>& tangents);
 
     /**
      * @brief Resample a polyline to uniform arc length, coordinate-major.
@@ -238,9 +273,11 @@ private:
 
     std::vector<double> m_extended;
     std::vector<double> m_folded;
+    std::vector<double> m_dfolded;
     std::vector<double> m_tbuf;
     std::vector<double> m_arc;
     std::vector<double> m_planar;
+    std::vector<double> m_planar_tangents;
     std::vector<double> m_planar_alt;
     std::vector<size_t> m_lower;
     std::vector<double> m_frac;

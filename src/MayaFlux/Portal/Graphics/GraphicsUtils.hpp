@@ -27,6 +27,23 @@ enum class PrimitiveTopology : uint8_t {
     TRIANGLE_FAN
 };
 
+/**
+ * @brief Whether two adjacent spans of this topology can be concatenated
+ *        without altering the primitives they assemble.
+ *
+ * List topologies assemble each primitive from its own fixed-size group of
+ * consecutive vertices, so appending one span to another adds primitives and
+ * leaves existing ones untouched. Strip and fan topologies assemble each
+ * primitive from vertices shared with its predecessor, so concatenation
+ * fabricates an extra primitive spanning the join.
+ */
+[[nodiscard]] constexpr bool is_concatenable_topology(PrimitiveTopology topology) noexcept
+{
+    return topology == PrimitiveTopology::POINT_LIST
+        || topology == PrimitiveTopology::LINE_LIST
+        || topology == PrimitiveTopology::TRIANGLE_LIST;
+}
+
 //============================================================================
 // Rasterization
 //============================================================================
@@ -319,6 +336,31 @@ struct RenderConfig {
     PolygonMode polygon_mode { PolygonMode::FILL };
     CullMode cull_mode { CullMode::NONE };
 
+    /**
+     * @brief Reduce supplied spans to triangles before drawing them.
+     *
+     * @c topology describes span ordering, not the pipeline: it is always
+     * built TRIANGLE_LIST, no geometry stage on any platform, and each span
+     * is milled into quads/ribbons before one draw. Applies to any span
+     * shape on any platform; macOS additionally forces it on for
+     * LINE_LIST/LINE_STRIP since line.geom (NDC expansion) isn't available
+     * there.
+     *
+     * A custom vertex_shader is unchanged: same attributes, same transform
+     * to clip space. A custom fragment_shader needs one new thing: every
+     * span shares one fragment shader, so @c \#include "include/mill_shape.glsl"
+     * and check @c mill_is_point(in_uv) to tell a point quad from a
+     * ribbon/passthrough-triangle fragment. milled_shape.frag/_textured/_multi
+     * are reference implementations (the multi variant's array index shares
+     * MillSpec's per-vertex size slot -- set use_vertex_extent = false to
+     * decouple them).
+     *
+     * Resolved at configuration time, not inferred from spans arriving,
+     * since shader/topology/geometry-stage selection happen here while
+     * spans arrive per frame.
+     */
+    bool triangulate { false };
+
     std::vector<std::pair<std::string, std::shared_ptr<Core::VKImage>>> additional_textures;
 
     ///< For child-specific fields
@@ -326,5 +368,55 @@ struct RenderConfig {
 
     bool operator==(const RenderConfig& other) const = default;
 };
+
+/**
+ * @struct DrawRun
+ * @brief One contiguous span of vertices sharing a primitive topology.
+ *
+ * The topology declares how this span's vertices are ordered, not which
+ * pipeline draws it. A consumer configured to triangulate reduces every span to
+ * triangles and draws them all with one call, turning points into quads and
+ * line segments into ribbons, so a set of spans of differing topology still
+ * resolves to a single draw.
+ *
+ * Carries no knowledge of what produced it: an operator's collections, an
+ * arena's per-element sub-ranges, or anything else. Producers build these; the
+ * consumer shapes and draws them.
+ */
+struct DrawRun {
+    PrimitiveTopology topology {};
+    uint32_t vertex_offset {};
+    uint32_t vertex_count {};
+};
+
+/**
+ * @brief Vertices a span of @p n at @p topology yields once reduced to a
+ *        TRIANGLE_LIST, with points becoming quads and line segments ribbons.
+ *
+ * Closed form, so a caller can size a destination or budget a dispatch without
+ * inspecting vertex data. Spans too short to assemble a primitive yield zero
+ * rather than underflowing, and list topologies floor to whole primitives, so
+ * an odd LINE_LIST count drops its dangling vertex instead of reading past the
+ * span.
+ */
+[[nodiscard]] constexpr uint32_t triangle_vertex_count(
+    PrimitiveTopology topology,
+    uint32_t n) noexcept
+{
+    switch (topology) {
+    case PrimitiveTopology::POINT_LIST:
+        return 6U * n;
+    case PrimitiveTopology::LINE_LIST:
+        return 6U * (n / 2U);
+    case PrimitiveTopology::LINE_STRIP:
+        return n < 2U ? 0U : 6U * (n - 1U);
+    case PrimitiveTopology::TRIANGLE_LIST:
+        return 3U * (n / 3U);
+    case PrimitiveTopology::TRIANGLE_STRIP:
+    case PrimitiveTopology::TRIANGLE_FAN:
+        return n < 3U ? 0U : 3U * (n - 2U);
+    }
+    return 0U;
+}
 
 }

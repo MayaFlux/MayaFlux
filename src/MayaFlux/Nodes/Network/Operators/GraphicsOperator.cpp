@@ -5,6 +5,15 @@
 
 namespace MayaFlux::Nodes::Network {
 
+[[nodiscard]] std::vector<DrawRun> GraphicsOperator::topology_runs() const
+{
+    const auto topo = declared_topology().value_or(Portal::Graphics::PrimitiveTopology::POINT_LIST);
+    return { DrawRun {
+        .topology = topo,
+        .vertex_offset = 0,
+        .vertex_count = static_cast<uint32_t>(get_vertex_count()) } };
+}
+
 void GraphicsOperator::apply_one_to_one(
     std::string_view param,
     const std::shared_ptr<NodeNetwork>& source)

@@ -38,6 +38,7 @@ namespace Nodes {
         class PointCloudNetwork;
         class MeshNetwork;
         class InstanceNetwork;
+        class AssemblyNetwork;
     }
     namespace Input {
         class InputNode;
@@ -123,7 +124,8 @@ namespace IO {
     W(ParticleNetwork, MayaFlux::Nodes::Network::ParticleNetwork)     \
     W(PointCloudNetwork, MayaFlux::Nodes::Network::PointCloudNetwork) \
     W(InstanceNetwork, MayaFlux::Nodes::Network::InstanceNetwork)     \
-    W(MeshNetwork, MayaFlux::Nodes::Network::MeshNetwork)
+    W(MeshNetwork, MayaFlux::Nodes::Network::MeshNetwork)             \
+    W(AssemblyNetwork, MayaFlux::Nodes::Network::AssemblyNetwork)
 
 #define ALL_BUFFER_REGISTRATION                                            \
     B(AudioBuffer, MayaFlux::Buffers::AudioBuffer)                         \

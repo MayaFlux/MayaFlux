@@ -321,10 +321,7 @@ private:
     std::vector<double> m_control_scratch;
     std::vector<double> m_curve_primary;
     std::vector<double> m_curve_secondary;
-
-#ifdef MAYAFLUX_PLATFORM_MACOS
-    std::vector<LineVertex> m_expand_cache;
-#endif
+    std::vector<double> m_curve_tangents;
 
     /** @brief Refill m_positions from m_points, in place. */
     void refresh_positions();

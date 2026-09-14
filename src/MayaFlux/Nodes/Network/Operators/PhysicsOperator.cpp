@@ -324,6 +324,27 @@ std::optional<Portal::Graphics::PrimitiveTopology> PhysicsOperator::declared_top
     return m_collections[0].collection->get_primitive_topology();
 }
 
+std::vector<DrawRun> PhysicsOperator::topology_runs() const
+{
+    std::vector<DrawRun> runs;
+    uint32_t offset = 0;
+
+    for (const auto& points : m_collections) {
+        const auto count = static_cast<uint32_t>(points.collection->get_vertex_count());
+        const auto topo = points.collection->get_primitive_topology();
+
+        if (!runs.empty() && runs.back().topology == topo && is_concatenable_topology(topo)) {
+            runs.back().vertex_count += count;
+        } else {
+            runs.push_back(DrawRun { .topology = topo, .vertex_offset = offset, .vertex_count = count });
+        }
+
+        offset += count;
+    }
+
+    return runs;
+}
+
 size_t PhysicsOperator::get_vertex_count() const
 {
     size_t total = 0;

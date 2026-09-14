@@ -197,13 +197,20 @@ struct NetworkGpuData {
 /**
  * @brief Extract GPU geometry data from a NodeNetwork via its GraphicsOperator.
  *
- * Returns empty NetworkGpuData if the network has no operator, the operator
- * is not a GraphicsOperator, or the operator has no vertex data this frame.
- * Logs at TRACE level for empty/missing data, WARN for operator type mismatch.
+ * vertex_data/vertex_count are empty when the network has no operator, the
+ * operator is not a GraphicsOperator, or it has no vertex data this frame
+ * (e.g. an AssemblyOperator with zero items so far). layout is still
+ * populated whenever the operator can report one regardless of count, so a
+ * render pipeline can be built from it before any data exists -- an
+ * operator's attribute shape is not data-dependent even when its current
+ * vertex count is zero. Logs at TRACE level for empty/missing data, WARN
+ * for operator type mismatch.
  *
  * @param network  Network to extract from
  * @param name     Logical name used in log messages
- * @return Populated NetworkGpuData, or empty if not available
+ * @return Populated NetworkGpuData; vertex_data/vertex_count empty/zero if
+ *         there is nothing to upload this frame, layout set regardless when
+ *         the operator can provide one
  */
 MAYAFLUX_API NetworkGpuData extract_network_gpu_data(
     const std::shared_ptr<Nodes::Network::NodeNetwork>& network,

@@ -589,6 +589,7 @@ bool BackendWindowHandler::register_window(const std::shared_ptr<Window>& window
     if (!config.swapchain->create(m_context, surface, window->get_create_info())) {
         MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
             "Failed to create swapchain for window '{}'", window->get_create_info().title);
+        m_context.destroy_surface(surface);
         return false;
     }
 

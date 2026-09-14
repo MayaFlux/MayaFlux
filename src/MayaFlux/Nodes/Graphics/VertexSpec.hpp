@@ -4,6 +4,7 @@
 
 namespace MayaFlux::Nodes {
 
+using Vertex = Kakshya::Vertex;
 using PointVertex = Kakshya::PointVertex;
 using LineVertex = Kakshya::LineVertex;
 using MeshVertex = Kakshya::MeshVertex;

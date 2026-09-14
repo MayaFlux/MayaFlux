@@ -15,9 +15,43 @@
 namespace MayaFlux::Buffers {
 
 namespace {
+    /**
+     * @brief Fill in the shaders a config implies.
+     *
+     * Triangulating is orthogonal to topology, not a line-specific
+     * workaround: any span mills to the same TRIANGLE_LIST pipeline through
+     * milled_shape.vert/frag (see mill_shape.glsl), resolved first and
+     * unconditionally -- config.topology is span ordering under triangulate,
+     * not a pipeline selector.
+     *
+     * macOS forces it on for LINE_LIST/LINE_STRIP only, since that platform
+     * has no geometry shader for line.geom's NDC expansion. Everything else
+     * triangulates only when asked.
+     *
+     * Otherwise, point.vert/point.frag and line.vert/line.frag/line.geom
+     * stay the per-topology defaults: their built-ins
+     * (gl_PointSize/gl_PointCoord, `layout(lines) in`) only make sense for
+     * that native topology.
+     */
     Portal::Graphics::RenderConfig resolve_config(const Portal::Graphics::RenderConfig& config)
     {
         VKBuffer::RenderConfig resolved_config = config;
+
+#ifdef MAYAFLUX_PLATFORM_MACOS
+        if (config.topology == Portal::Graphics::PrimitiveTopology::LINE_LIST
+            || config.topology == Portal::Graphics::PrimitiveTopology::LINE_STRIP) {
+            resolved_config.triangulate = true;
+        }
+#endif
+
+        if (resolved_config.triangulate) {
+            if (config.vertex_shader.empty())
+                resolved_config.vertex_shader = "milled_shape.vert.spv";
+            if (config.fragment_shader.empty())
+                resolved_config.fragment_shader = "milled_shape.frag.spv";
+            resolved_config.geometry_shader.clear();
+            return resolved_config;
+        }
 
         switch (config.topology) {
         case Portal::Graphics::PrimitiveTopology::POINT_LIST:
@@ -28,19 +62,14 @@ namespace {
             break;
         case Portal::Graphics::PrimitiveTopology::LINE_LIST:
         case Portal::Graphics::PrimitiveTopology::LINE_STRIP:
-
             if (config.vertex_shader.empty())
                 resolved_config.vertex_shader = "line.vert.spv";
 
             if (config.fragment_shader.empty())
                 resolved_config.fragment_shader = "line.frag.spv";
 
-#ifndef MAYAFLUX_PLATFORM_MACOS
             if (config.geometry_shader.empty())
                 resolved_config.geometry_shader = "line.geom.spv";
-#else
-            resolved_config.topology = Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST;
-#endif // !MAYAFLUX_PLATFORM_MACOS
             break;
         case Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST:
         case Portal::Graphics::PrimitiveTopology::TRIANGLE_STRIP:
@@ -225,11 +254,14 @@ void NetworkGeometryBuffer::update_chain_render_range(
     size_t index,
     uint32_t vertex_offset,
     uint32_t vertex_count,
-    const std::optional<Kakshya::VertexLayout>& layout)
+    const std::optional<Kakshya::VertexLayout>& layout,
+    std::vector<Portal::Graphics::DrawRun> runs)
 {
     if (index == 0) {
-        if (m_render_processor)
+        if (m_render_processor) {
             m_render_processor->set_vertex_range(vertex_offset, vertex_count);
+            m_render_processor->set_runs(std::move(runs));
+        }
         return;
     }
 
@@ -241,10 +273,18 @@ void NetworkGeometryBuffer::update_chain_render_range(
     entry.vertex_offset = vertex_offset;
     entry.vertex_count = vertex_count;
     entry.render_processor->set_vertex_range(vertex_offset, vertex_count);
+    entry.render_processor->set_runs(std::move(runs));
 
     if (layout) {
         auto self = std::dynamic_pointer_cast<VKBuffer>(shared_from_this());
         entry.render_processor->set_buffer_vertex_layout(self, *layout);
+    }
+}
+
+void NetworkGeometryBuffer::update_render_runs(std::vector<Portal::Graphics::DrawRun> runs)
+{
+    if (m_render_processor) {
+        m_render_processor->set_runs(std::move(runs));
     }
 }
 

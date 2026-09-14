@@ -74,10 +74,20 @@ void GeometryBuffer::setup_rendering(const RenderConfig& config)
 
     switch (resolved_config.topology) {
     case Portal::Graphics::PrimitiveTopology::POINT_LIST:
-        if (config.vertex_shader.empty())
-            resolved_config.vertex_shader = "point.vert.spv";
-        if (config.fragment_shader.empty())
-            resolved_config.fragment_shader = "point.frag.spv";
+        if (resolved_config.triangulate) {
+            if (config.vertex_shader.empty())
+                resolved_config.vertex_shader = "milled_shape.vert.spv";
+            if (config.fragment_shader.empty()) {
+                resolved_config.fragment_shader = textured
+                    ? "milled_shape_textured.frag.spv"
+                    : "milled_shape.frag.spv";
+            }
+        } else {
+            if (config.vertex_shader.empty())
+                resolved_config.vertex_shader = "point.vert.spv";
+            if (config.fragment_shader.empty())
+                resolved_config.fragment_shader = "point.frag.spv";
+        }
         break;
 
     case Portal::Graphics::PrimitiveTopology::LINE_LIST:
@@ -89,12 +99,15 @@ void GeometryBuffer::setup_rendering(const RenderConfig& config)
         if (config.fragment_shader.empty())
             resolved_config.fragment_shader = "line.frag.spv";
 
-#ifndef MAYAFLUX_PLATFORM_MACOS
-        if (config.geometry_shader.empty())
-            resolved_config.geometry_shader = "line.geom.spv";
-#else
-        resolved_config.topology = Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST;
+#ifdef MAYAFLUX_PLATFORM_MACOS
+        resolved_config.triangulate = true;
 #endif
+
+        if (resolved_config.triangulate) {
+            resolved_config.geometry_shader.clear();
+        } else if (config.geometry_shader.empty()) {
+            resolved_config.geometry_shader = "line.geom.spv";
+        }
 
         break;
 
