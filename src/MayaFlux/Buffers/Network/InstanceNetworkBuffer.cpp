@@ -86,37 +86,45 @@ void InstanceNetworkBuffer::setup_rendering(const RenderConfig& config)
     for (const auto& [name, tex] : config.additional_textures)
         m_render_config.additional_textures.emplace_back(name, tex);
 
-    switch (m_render_config.topology) {
-    case Portal::Graphics::PrimitiveTopology::POINT_LIST:
-        if (m_render_config.vertex_shader.empty())
-            m_render_config.vertex_shader = "instance_point.vert.spv";
-        if (m_render_config.fragment_shader.empty())
-            m_render_config.fragment_shader = "point.frag.spv";
-        break;
-
-    case Portal::Graphics::PrimitiveTopology::LINE_LIST:
-    case Portal::Graphics::PrimitiveTopology::LINE_STRIP:
-        if (m_render_config.vertex_shader.empty())
-            m_render_config.vertex_shader = "instance_line.vert.spv";
-        if (m_render_config.fragment_shader.empty())
-            m_render_config.fragment_shader = "line.frag.spv";
 #ifdef MAYAFLUX_PLATFORM_MACOS
+    if (m_render_config.topology == Portal::Graphics::PrimitiveTopology::LINE_LIST
+        || m_render_config.topology == Portal::Graphics::PrimitiveTopology::LINE_STRIP) {
         m_render_config.triangulate = true;
+    }
 #endif
 
-        if (m_render_config.triangulate) {
-            m_render_config.geometry_shader.clear();
-        } else if (m_render_config.geometry_shader.empty()) {
-            m_render_config.geometry_shader = "line.geom.spv";
-        }
-        break;
-
-    default:
+    if (m_render_config.triangulate) {
         if (m_render_config.vertex_shader.empty())
-            m_render_config.vertex_shader = "instance.vert.spv";
+            m_render_config.vertex_shader = "instance_milled.vert.spv";
         if (m_render_config.fragment_shader.empty())
-            m_render_config.fragment_shader = "triangle.frag.spv";
-        break;
+            m_render_config.fragment_shader = "milled_shape.frag.spv";
+        m_render_config.geometry_shader.clear();
+    } else {
+        switch (m_render_config.topology) {
+        case Portal::Graphics::PrimitiveTopology::POINT_LIST:
+            if (m_render_config.vertex_shader.empty())
+                m_render_config.vertex_shader = "instance_point.vert.spv";
+            if (m_render_config.fragment_shader.empty())
+                m_render_config.fragment_shader = "point.frag.spv";
+            break;
+
+        case Portal::Graphics::PrimitiveTopology::LINE_LIST:
+        case Portal::Graphics::PrimitiveTopology::LINE_STRIP:
+            if (m_render_config.vertex_shader.empty())
+                m_render_config.vertex_shader = "instance_line.vert.spv";
+            if (m_render_config.fragment_shader.empty())
+                m_render_config.fragment_shader = "line.frag.spv";
+            if (m_render_config.geometry_shader.empty())
+                m_render_config.geometry_shader = "line.geom.spv";
+            break;
+
+        default:
+            if (m_render_config.vertex_shader.empty())
+                m_render_config.vertex_shader = "instance.vert.spv";
+            if (m_render_config.fragment_shader.empty())
+                m_render_config.fragment_shader = "triangle.frag.spv";
+            break;
+        }
     }
 
     ShaderConfig sc { m_render_config.vertex_shader };

@@ -139,10 +139,17 @@ void add_render_sink(
                 rc.fragment_shader = "triangle.frag.spv";
             break;
         default:
-            if (rc.vertex_shader.empty())
-                rc.vertex_shader = "point.vert.spv";
-            if (rc.fragment_shader.empty())
-                rc.fragment_shader = "point.frag.spv";
+            if (rc.triangulate) {
+                if (rc.vertex_shader.empty())
+                    rc.vertex_shader = "milled_shape.vert.spv";
+                if (rc.fragment_shader.empty())
+                    rc.fragment_shader = "milled_shape.frag.spv";
+            } else {
+                if (rc.vertex_shader.empty())
+                    rc.vertex_shader = "point.vert.spv";
+                if (rc.fragment_shader.empty())
+                    rc.fragment_shader = "point.frag.spv";
+            }
             break;
         }
     }

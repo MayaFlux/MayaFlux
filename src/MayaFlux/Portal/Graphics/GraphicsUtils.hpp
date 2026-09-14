@@ -339,14 +339,25 @@ struct RenderConfig {
     /**
      * @brief Reduce supplied spans to triangles before drawing them.
      *
-     * When set, @c topology describes the spans handed to the processor rather
-     * than the pipeline: the pipeline is built as TRIANGLE_LIST, no geometry
-     * stage is used on any platform, and the processor mills each span into
-     * quads and ribbons before recording a single draw.
+     * @c topology describes span ordering, not the pipeline: it is always
+     * built TRIANGLE_LIST, no geometry stage on any platform, and each span
+     * is milled into quads/ribbons before one draw. Applies to any span
+     * shape on any platform; macOS additionally forces it on for
+     * LINE_LIST/LINE_STRIP since line.geom (NDC expansion) isn't available
+     * there.
      *
-     * This is resolved at configuration time rather than inferred from whether
-     * spans arrive, because shader, topology and geometry-stage selection all
-     * happen here while spans arrive per frame.
+     * A custom vertex_shader is unchanged: same attributes, same transform
+     * to clip space. A custom fragment_shader needs one new thing: every
+     * span shares one fragment shader, so @c \#include "include/mill_shape.glsl"
+     * and check @c mill_is_point(in_uv) to tell a point quad from a
+     * ribbon/passthrough-triangle fragment. milled_shape.frag/_textured/_multi
+     * are reference implementations (the multi variant's array index shares
+     * MillSpec's per-vertex size slot -- set use_vertex_extent = false to
+     * decouple them).
+     *
+     * Resolved at configuration time, not inferred from spans arriving,
+     * since shader/topology/geometry-stage selection happen here while
+     * spans arrive per frame.
      */
     bool triangulate { false };
 

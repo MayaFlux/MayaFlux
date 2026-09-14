@@ -74,10 +74,20 @@ void GeometryBuffer::setup_rendering(const RenderConfig& config)
 
     switch (resolved_config.topology) {
     case Portal::Graphics::PrimitiveTopology::POINT_LIST:
-        if (config.vertex_shader.empty())
-            resolved_config.vertex_shader = "point.vert.spv";
-        if (config.fragment_shader.empty())
-            resolved_config.fragment_shader = "point.frag.spv";
+        if (resolved_config.triangulate) {
+            if (config.vertex_shader.empty())
+                resolved_config.vertex_shader = "milled_shape.vert.spv";
+            if (config.fragment_shader.empty()) {
+                resolved_config.fragment_shader = textured
+                    ? "milled_shape_textured.frag.spv"
+                    : "milled_shape.frag.spv";
+            }
+        } else {
+            if (config.vertex_shader.empty())
+                resolved_config.vertex_shader = "point.vert.spv";
+            if (config.fragment_shader.empty())
+                resolved_config.fragment_shader = "point.frag.spv";
+        }
         break;
 
     case Portal::Graphics::PrimitiveTopology::LINE_LIST:

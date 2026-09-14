@@ -61,9 +61,14 @@ struct MillSpec {
     /**
      * @brief Write 0..1 across each ribbon and quad rather than copying source.
      *
-     * What lets a fragment shader run a gradient, a dash, or line.frag's edge
-     * falloff along a ribbon. Copying instead gives every corner of a segment
-     * the same value. Ignored when the layout carries no texture coordinates.
+     * Lets a fragment shader run a gradient, dash, or edge falloff along a
+     * ribbon. Ignored when the layout carries no texture coordinates.
+     *
+     * A point corner's UV lands in [MILL_POINT_UV_MARKER, +1] instead of
+     * [0,1] (data/shaders/include/mill_shape.glsl) -- the only way a shared
+     * fragment shader tells a point quad from a ribbon or passthrough
+     * triangle. Use mill_is_point()/mill_point_local_uv() rather than
+     * re-deriving the threshold.
      */
     bool synthesize_uv { true };
 };

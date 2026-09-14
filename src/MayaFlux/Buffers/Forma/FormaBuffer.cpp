@@ -62,10 +62,24 @@ void FormaBuffer::setup_rendering(const RenderConfig& config)
 
     switch (resolved.topology) {
     case Portal::Graphics::PrimitiveTopology::POINT_LIST:
-        if (resolved.vertex_shader.empty())
-            resolved.vertex_shader = "point.vert.spv";
-        if (resolved.fragment_shader.empty())
-            resolved.fragment_shader = "point.frag.spv";
+        if (resolved.triangulate) {
+            if (resolved.vertex_shader.empty())
+                resolved.vertex_shader = "milled_shape.vert.spv";
+            if (resolved.fragment_shader.empty()) {
+                if (multi_tex) {
+                    resolved.fragment_shader = "milled_shape_multi.frag.spv";
+                } else if (single_tex) {
+                    resolved.fragment_shader = "milled_shape_textured.frag.spv";
+                } else {
+                    resolved.fragment_shader = "milled_shape.frag.spv";
+                }
+            }
+        } else {
+            if (resolved.vertex_shader.empty())
+                resolved.vertex_shader = "point.vert.spv";
+            if (resolved.fragment_shader.empty())
+                resolved.fragment_shader = "point.frag.spv";
+        }
         break;
 
     case Portal::Graphics::PrimitiveTopology::LINE_LIST:

@@ -347,12 +347,12 @@ namespace {
         body += "            ry = normalize(cross(n, rx)) * h;\n";
         body += "        }\n";
         body += "        vec3 o;\n";
-        body += "        if (corner == 0u) { o = -rx - ry; uv = vec2(0.0, 0.0); }\n";
-        body += "        else if (corner == 1u) { o = rx - ry; uv = vec2(1.0, 0.0); }\n";
-        body += "        else if (corner == 2u) { o = rx + ry; uv = vec2(1.0, 1.0); }\n";
-        body += "        else if (corner == 3u) { o = -rx - ry; uv = vec2(0.0, 0.0); }\n";
-        body += "        else if (corner == 4u) { o = rx + ry; uv = vec2(1.0, 1.0); }\n";
-        body += "        else { o = -rx + ry; uv = vec2(0.0, 1.0); }\n";
+        body += "        if (corner == 0u) { o = -rx - ry; uv = vec2(10.0, 10.0); }\n";
+        body += "        else if (corner == 1u) { o = rx - ry; uv = vec2(11.0, 10.0); }\n";
+        body += "        else if (corner == 2u) { o = rx + ry; uv = vec2(11.0, 11.0); }\n";
+        body += "        else if (corner == 3u) { o = -rx - ry; uv = vec2(10.0, 10.0); }\n";
+        body += "        else if (corner == 4u) { o = rx + ry; uv = vec2(11.0, 11.0); }\n";
+        body += "        else { o = -rx + ry; uv = vec2(10.0, 11.0); }\n";
         body += "        copy_vertex(i, s, sw);\n";
         body += "        write_pos(i, sw, po, p + o);\n";
         body += "        if (synth_uv == 1u) { write_uv(i, sw, uv_offset, uv); }\n";

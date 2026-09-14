@@ -16,28 +16,42 @@ namespace MayaFlux::Buffers {
 
 namespace {
     /**
-     * @brief Fill in the shaders a topology implies, and decide how line spans
-     *        get their width.
+     * @brief Fill in the shaders a config implies.
      *
-     * Line topologies reach the screen one of two ways. Either line.geom expands
-     * each segment in NDC, which holds a constant pixel width but needs geometry
-     * shader support, or the spans are milled to triangles before the vertex
-     * stage, which needs none. The two are exclusive: a triangulating pipeline
-     * is built as TRIANGLE_LIST, and a `layout(lines) in` geometry shader cannot
-     * be bound to it.
+     * Triangulating is orthogonal to topology, not a line-specific
+     * workaround: any span mills to the same TRIANGLE_LIST pipeline through
+     * milled_shape.vert/frag (see mill_shape.glsl), resolved first and
+     * unconditionally -- config.topology is span ordering under triangulate,
+     * not a pipeline selector.
      *
-     * line.frag stays in both cases. It takes its alpha from the ribbon's own v
-     * coordinate, which is exactly what line.geom wrote and what MillSpec's
-     * synthesize_uv writes, so a milled ribbon keeps the soft edge rather than
-     * falling back to triangle.frag's hard one.
+     * macOS forces it on for LINE_LIST/LINE_STRIP only, since that platform
+     * has no geometry shader for line.geom's NDC expansion. Everything else
+     * triangulates only when asked.
      *
-     * The topology itself is left alone when triangulating. RenderProcessor
-     * forces the pipeline to TRIANGLE_LIST on its own, and reads the configured
-     * topology as a statement about how the spans are ordered.
+     * Otherwise, point.vert/point.frag and line.vert/line.frag/line.geom
+     * stay the per-topology defaults: their built-ins
+     * (gl_PointSize/gl_PointCoord, `layout(lines) in`) only make sense for
+     * that native topology.
      */
     Portal::Graphics::RenderConfig resolve_config(const Portal::Graphics::RenderConfig& config)
     {
         VKBuffer::RenderConfig resolved_config = config;
+
+#ifdef MAYAFLUX_PLATFORM_MACOS
+        if (config.topology == Portal::Graphics::PrimitiveTopology::LINE_LIST
+            || config.topology == Portal::Graphics::PrimitiveTopology::LINE_STRIP) {
+            resolved_config.triangulate = true;
+        }
+#endif
+
+        if (resolved_config.triangulate) {
+            if (config.vertex_shader.empty())
+                resolved_config.vertex_shader = "milled_shape.vert.spv";
+            if (config.fragment_shader.empty())
+                resolved_config.fragment_shader = "milled_shape.frag.spv";
+            resolved_config.geometry_shader.clear();
+            return resolved_config;
+        }
 
         switch (config.topology) {
         case Portal::Graphics::PrimitiveTopology::POINT_LIST:
@@ -48,22 +62,14 @@ namespace {
             break;
         case Portal::Graphics::PrimitiveTopology::LINE_LIST:
         case Portal::Graphics::PrimitiveTopology::LINE_STRIP:
-
             if (config.vertex_shader.empty())
                 resolved_config.vertex_shader = "line.vert.spv";
 
             if (config.fragment_shader.empty())
                 resolved_config.fragment_shader = "line.frag.spv";
 
-#ifdef MAYAFLUX_PLATFORM_MACOS
-            resolved_config.triangulate = true;
-#endif
-
-            if (resolved_config.triangulate) {
-                resolved_config.geometry_shader.clear();
-            } else if (config.geometry_shader.empty()) {
+            if (config.geometry_shader.empty())
                 resolved_config.geometry_shader = "line.geom.spv";
-            }
             break;
         case Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST:
         case Portal::Graphics::PrimitiveTopology::TRIANGLE_STRIP:
