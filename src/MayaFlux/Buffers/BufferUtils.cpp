@@ -345,7 +345,7 @@ NetworkGpuData extract_network_gpu_data(
     if (vertex_data.empty() || vertex_count == 0) {
         MF_RT_TRACE(Journal::Component::Buffers, Journal::Context::BufferProcessing,
             "Network '{}' has no vertex data this frame", name);
-        return {};
+        return { .layout = graphics_op->get_vertex_layout() };
     }
 
     return {
