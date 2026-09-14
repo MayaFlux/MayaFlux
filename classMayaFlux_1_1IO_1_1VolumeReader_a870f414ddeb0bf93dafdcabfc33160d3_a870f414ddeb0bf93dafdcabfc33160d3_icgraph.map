@@ -1,0 +1,9 @@
+<map id="MayaFlux::IO::VolumeReader::open" name="MayaFlux::IO::VolumeReader::open">
+<area shape="rect" id="Node000001" title="Open a file for reading." alt="" coords="499,37,709,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1VolumeReader_ac7d1e975545d7a79d371af04e49fc1fc.html#ac7d1e975545d7a79d371af04e49fc1fc" title="Load every selected grid onto a caller&#45;supplied lattice." alt="" coords="240,5,451,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="485,45,450,41,451,36,485,40"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1VolumeReader_acb694bd5aa416bb2c8e96d869ccac0cd.html#acb694bd5aa416bb2c8e96d869ccac0cd" title="Load every selected grid from a file in one call." alt="" coords="240,69,451,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="485,75,451,79,450,74,485,69"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1IOManager_a8b66f9c5953bf2df92a20c61835783f5.html#a8b66f9c5953bf2df92a20c61835783f5" title="Load a volume file into a newly constructed VolumeGridBuffer." alt="" coords="5,69,192,109"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="226,92,192,92,192,87,226,87"/>
+</map>

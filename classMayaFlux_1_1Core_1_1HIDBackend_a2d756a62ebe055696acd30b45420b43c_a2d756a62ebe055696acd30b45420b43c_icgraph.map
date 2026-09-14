@@ -1,0 +1,9 @@
+<map id="MayaFlux::Core::HIDBackend::notify_input" name="MayaFlux::Core::HIDBackend::notify_input">
+<area shape="rect" id="Node000001" title=" " alt="" coords="781,5,992,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1HIDBackend_aa8bf4dd6b1508f3157ac522dcab69dd8.html#aa8bf4dd6b1508f3157ac522dcab69dd8" title=" " alt="" coords="523,5,733,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="768,28,733,28,733,23,768,23"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1HIDBackend_a7fa1f678f140a64df0eae495b48adde5.html#a7fa1f678f140a64df0eae495b48adde5" title=" " alt="" coords="264,5,475,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="509,28,475,28,475,23,509,23"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1HIDBackend_a4082146a078c2419ba7c71db0cec0c1f.html#a4082146a078c2419ba7c71db0cec0c1f" title="Start listening for input events." alt="" coords="5,5,216,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="250,28,216,28,216,23,250,23"/>
+</map>

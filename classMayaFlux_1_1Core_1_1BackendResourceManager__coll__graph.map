@@ -1,0 +1,25 @@
+<map id="MayaFlux::Core::BackendResourceManager" name="MayaFlux::Core::BackendResourceManager">
+<area shape="rect" id="Node000001" title="Manages Vulkan resources (buffers, images, samplers) for the graphics backend." alt="" coords="331,1543,577,1883"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1VKContext.html" title="High&#45;level wrapper for Vulkan instance and device." alt="" coords="238,1065,430,1345"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="370,1345,413,1526,407,1527,364,1346"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1VKInstance.html" title="Manages Vulkan instance creation and validation layers." alt="" coords="5,428,207,788"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="177,787,277,1049,272,1051,172,789"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1VKDevice.html" title="Manages Vulkan physical device selection and logical device creation." alt="" coords="231,348,437,868"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="337,868,337,1049,331,1049,331,868"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Core_1_1QueueFamilyIndices.html" title="Stores indices of queue families we need." alt="" coords="119,45,328,245"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="250,245,270,331,265,333,244,246"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Core_1_1GlobalGraphicsConfig.html" title=" " alt="" coords="677,548,900,668"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="708,670,645,721,575,783,505,855,444,932,411,990,384,1051,379,1049,406,987,440,929,501,851,571,780,641,717,705,666"/>
+<area shape="rect" id="Node000007" href="$structMayaFlux_1_1Core_1_1KeyRepeatConfig.html" title="Key repeat timing for native window backends." alt="" coords="353,85,558,205"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="499,204,584,322,738,533,733,536,580,326,495,207"/>
+<area shape="rect" id="Node000008" href="$structMayaFlux_1_1Core_1_1GraphicsSurfaceInfo.html" title="System&#45;wide configuration for visual stream processing." alt="" coords="582,25,779,265"/>
+<area shape="poly" id="edge7_Node000006_Node000008" title=" " alt="" coords="711,265,774,531,769,533,706,266"/>
+<area shape="rect" id="Node000009" href="$structMayaFlux_1_1Core_1_1GraphicsBackendInfo.html" title="Configuration for graphics API backend (Vulkan/OpenGL/etc.)" alt="" coords="803,5,987,285"/>
+<area shape="poly" id="edge8_Node000006_Node000009" title=" " alt="" coords="866,287,809,532,803,531,860,285"/>
+<area shape="rect" id="Node000010" href="$structMayaFlux_1_1Core_1_1GraphicsResourceLimits.html" title="Resource limits and budgets for graphics subsystem." alt="" coords="1011,55,1206,235"/>
+<area shape="poly" id="edge9_Node000006_Node000010" title=" " alt="" coords="1049,237,841,536,837,533,1045,234"/>
+<area shape="rect" id="Node000011" href="$structMayaFlux_1_1Core_1_1TextConfig.html" title="Default font configuration for Portal::Text." alt="" coords="1230,83,1422,208"/>
+<area shape="poly" id="edge10_Node000006_Node000011" title=" " alt="" coords="1286,210,1255,249,1220,287,1140,360,1055,428,897,541,893,537,1051,424,1136,356,1216,283,1251,246,1281,207"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Core_1_1VKCommandManager.html" title="Manages Vulkan command pools and command buffers." alt="" coords="454,931,691,1480"/>
+<area shape="poly" id="edge11_Node000001_Node000012" title=" " alt="" coords="511,1481,500,1527,495,1526,506,1479"/>
+</map>

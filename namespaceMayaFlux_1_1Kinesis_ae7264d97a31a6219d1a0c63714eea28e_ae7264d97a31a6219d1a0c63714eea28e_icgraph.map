@@ -1,0 +1,18 @@
+<map id="MayaFlux::Kinesis::filled_rect" name="MayaFlux::Kinesis::filled_rect">
+<area shape="rect" id="Node000001" title="Generate a filled TRIANGLE_STRIP quad from an AABB2D." alt="" coords="720,133,869,173"/>
+<area shape="poly" id="edge1_Node000001_Node000001" title=" " alt="" coords="833,122,820,115,795,112,773,114,760,119,755,125,757,132,752,134,750,124,757,114,772,109,795,107,821,110,836,117"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_af9575240cc422bb83292ba5f330c0d41.html#af9575240cc422bb83292ba5f330c0d41" title="Geometry function for a horizontal fader in NDC space." alt="" coords="464,5,672,45"/>
+<area shape="poly" id="edge2_Node000001_Node000002" title=" " alt="" coords="761,126,720,92,671,60,644,48,646,43,673,55,723,87,764,122"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_aba20b395ea8bf575aa0a4ae799e95c61.html#aba20b395ea8bf575aa0a4ae799e95c61" title="Geometry function for a level meter in NDC space." alt="" coords="477,69,659,109"/>
+<area shape="poly" id="edge3_Node000001_Node000003" title=" " alt="" coords="709,132,639,112,640,107,710,127"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Plot_aef7e0518151068c038cbcddd1916052d.html#aef7e0518151068c038cbcddd1916052d" title="Place a filled rectangle element onto surface using a pre&#45;built buffer." alt="" coords="477,133,659,173"/>
+<area shape="poly" id="edge4_Node000001_Node000004" title=" " alt="" coords="706,156,659,156,659,151,706,151"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_ab051017cfe38286c69770755b1c2d5af.html#ab051017cfe38286c69770755b1c2d5af" title="Geometry function for a boolean toggle in NDC space." alt="" coords="477,197,659,237"/>
+<area shape="poly" id="edge7_Node000001_Node000007" title=" " alt="" coords="710,180,640,200,639,195,709,175"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_aab6186aa8c9f492a422824eeaa6e118e.html#aab6186aa8c9f492a422824eeaa6e118e" title="Geometry function for a vertical fader in NDC space." alt="" coords="472,261,664,301"/>
+<area shape="poly" id="edge8_Node000001_Node000008" title=" " alt="" coords="764,185,723,219,673,252,646,264,644,259,671,247,720,215,761,181"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Forma_1_1internal_1_1Atelier_a88e3c1e6a8d3d5b535378537eb934326.html#a88e3c1e6a8d3d5b535378537eb934326" title="Create and place every adornment declared on spec." alt="" coords="235,126,416,181"/>
+<area shape="poly" id="edge5_Node000004_Node000005" title=" " alt="" coords="464,156,416,156,416,151,464,151"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Portal_1_1Forma_a0134941e72f794b2ad2318f03eacb98b.html#a0134941e72f794b2ad2318f03eacb98b" title="Create a live plot in a new window." alt="" coords="5,133,187,173"/>
+<area shape="poly" id="edge6_Node000005_Node000006" title=" " alt="" coords="221,156,187,156,187,151,221,151"/>
+</map>

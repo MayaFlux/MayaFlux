@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::VolumeData::cell_count" name="MayaFlux::Kakshya::VolumeData::cell_count">
+<area shape="rect" id="Node000001" title="Cells in the lattice, which every field&#39;s element_count() must equal." alt="" coords="5,5,181,45"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kinesis_1_1Lattice3D_a544eb1555cf9cbaca83638e71bfb0395.html#a544eb1555cf9cbaca83638e71bfb0395" title="Total cell count." alt="" coords="229,5,388,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="182,23,216,23,216,28,182,28"/>
+</map>

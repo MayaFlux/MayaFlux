@@ -1,0 +1,9 @@
+<map id="MayaFlux::IO::SoundFileReader::read_all" name="MayaFlux::IO::SoundFileReader::read_all">
+<area shape="rect" id="Node000001" title="Read the entire audio file into memory." alt="" coords="549,37,775,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1SoundFileReader_a52301b9864559415b9df442d6884d946.html#a52301b9864559415b9df442d6884d946" title="Load an audio file into a size&#45;bounded DynamicSoundStream." alt="" coords="276,5,501,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="535,45,501,41,502,36,536,40"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1SoundFileReader_a4f0317d6147160c47dbbc3c2663f1756.html#a4f0317d6147160c47dbbc3c2663f1756" title="Load file data into an existing SignalSourceContainer." alt="" coords="276,69,501,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="536,75,502,79,501,74,535,69"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1VideoFileReader_a78b6b19d6d9126250ded73ea4b7b6629.html#a78b6b19d6d9126250ded73ea4b7b6629" title="Load file data into an existing container." alt="" coords="5,69,228,109"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="262,92,228,92,228,87,262,87"/>
+</map>

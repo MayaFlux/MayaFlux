@@ -1,0 +1,13 @@
+<map id="MayaFlux::Buffers::BufferAccessControl::remove_graphics_buffer" name="MayaFlux::Buffers::BufferAccessControl::remove_graphics_buffer">
+<area shape="rect" id="Node000001" title="Removes a graphics buffer from a token." alt="" coords="5,163,192,217"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Buffers_1_1RootGraphicsUnit_a48b9b18d980ae62892623cfa96dbee07.html#a48b9b18d980ae62892623cfa96dbee07" title=" " alt="" coords="258,5,423,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="125,160,176,115,239,69,248,64,250,69,241,74,179,119,129,164"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1TokenUnitManager_a0e7b0fe7658405d81011637c27121499.html#a0e7b0fe7658405d81011637c27121499" title="Gets an existing graphics unit without creating if missing (mutable)" alt="" coords="252,84,429,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="183,160,242,140,244,146,184,165"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_a0c7a59c0847791ed0915dcd64e8df783.html#a0c7a59c0847791ed0915dcd64e8df783" title="Query for a backend service." alt="" coords="257,163,424,217"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="192,187,244,187,244,193,192,193"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1TokenUnitManager_adfa3bbc2ff0dea134e10dce005d61dee.html#adfa3bbc2ff0dea134e10dce005d61dee" title="Checks if a graphics unit exists for the given token." alt="" coords="253,241,428,296"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="184,215,244,234,242,240,183,220"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aa28c6f5592e5893508bafb62aefcc496.html#aa28c6f5592e5893508bafb62aefcc496" title="Get the global registry instance." alt="" coords="240,321,441,361"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="128,216,179,261,241,305,257,313,255,318,239,310,175,265,125,220"/>
+</map>

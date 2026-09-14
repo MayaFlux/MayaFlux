@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::RootAudioBuffer::resize" name="MayaFlux::Buffers::RootAudioBuffer::resize">
+<area shape="rect" id="Node000001" title="Resizes this buffer and all tributary buffers." alt="" coords="5,5,180,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1AudioBuffer_a5ad2d67ac40adb78ef0bc8feec00291f.html#a5ad2d67ac40adb78ef0bc8feec00291f" title="Adjusts the audio buffer&#39;s sample capacity." alt="" coords="228,5,376,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="180,23,214,23,214,28,180,28"/>
+</map>

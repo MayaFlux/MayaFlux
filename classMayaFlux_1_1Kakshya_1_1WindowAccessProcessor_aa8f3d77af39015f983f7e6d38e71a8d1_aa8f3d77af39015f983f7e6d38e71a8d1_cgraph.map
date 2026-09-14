@@ -1,0 +1,21 @@
+<map id="MayaFlux::Kakshya::WindowAccessProcessor::process" name="MayaFlux::Kakshya::WindowAccessProcessor::process">
+<area shape="rect" id="Node000001" title="Execute a full&#45;surface pixel readback." alt="" coords="5,158,188,213"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kakshya_a14b909289b9589d56c147151a04be3e0.html#a14b909289b9589d56c147151a04be3e0" title="Check whether a completed frame is currently available for readback." alt="" coords="236,5,403,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="120,156,170,105,201,79,235,55,245,49,248,54,237,60,205,83,174,109,124,159"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kakshya_a87d91e0185b07648b1da94f5ca1c5f7c.html#a87d91e0185b07648b1da94f5ca1c5f7c" title="Query the current pixel dimensions of the window&#39;s swapchain." alt="" coords="238,69,401,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="154,155,235,119,252,112,254,117,237,124,156,160"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kakshya_ae1dd319d71f7aa09fa3cca52132be64a.html#ae1dd319d71f7aa09fa3cca52132be64a" title="Query the actual vk::Format in use by the window&#39;s live swapchain, translated back to the MayaFlux su..." alt="" coords="237,133,402,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="188,170,223,165,223,170,189,175"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Kakshya_adf1a57ec9fd544212ad62643faacc3c3.html#adf1a57ec9fd544212ad62643faacc3c3" title="Read a pixel rectangle from the last completed swapchain frame into a DataVariant whose element type ..." alt="" coords="240,197,399,237"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="189,196,227,201,226,207,188,201"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Core_a78d9f935bef82a58cc0eedeb4fea4934.html#a78d9f935bef82a58cc0eedeb4fea4934" title="Byte width of a single pixel for a given Vulkan format." alt="" coords="451,261,633,301"/>
+<area shape="poly" id="edge10_Node000001_Node000008" title=" " alt="" coords="148,210,191,230,237,247,339,267,437,276,437,282,338,272,235,252,189,235,146,215"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_1_1Core_a54d468030300d13e49f95e8db19b6a70.html#a54d468030300d13e49f95e8db19b6a70" title=" " alt="" coords="247,312,392,352"/>
+<area shape="poly" id="edge9_Node000001_Node000009" title=" " alt="" coords="131,211,180,251,237,291,260,304,257,308,235,296,176,255,127,215"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Core_a536f388ac516606e0df343ebf0047db6.html#a536f388ac516606e0df343ebf0047db6" title="Reverse&#45;map a vk::Format to the nearest GraphicsSurfaceInfo::SurfaceFormat." alt="" coords="461,133,623,173"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="403,151,447,151,447,156,403,156"/>
+<area shape="poly" id="edge6_Node000006_Node000005" title=" " alt="" coords="389,195,458,175,459,180,390,200"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Core_a66e7e5fc1d7c3871957638e02a002aaf.html#a66e7e5fc1d7c3871957638e02a002aaf" title="Query DataVariant&#45;dispatch traits for a surface format." alt="" coords="457,197,627,237"/>
+<area shape="poly" id="edge7_Node000006_Node000007" title=" " alt="" coords="399,215,444,215,444,220,399,220"/>
+<area shape="poly" id="edge8_Node000006_Node000008" title=" " alt="" coords="390,235,459,255,458,260,389,240"/>
+</map>

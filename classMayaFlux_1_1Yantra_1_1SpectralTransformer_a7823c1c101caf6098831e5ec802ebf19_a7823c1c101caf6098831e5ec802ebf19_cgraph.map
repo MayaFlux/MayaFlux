@@ -1,0 +1,29 @@
+<map id="MayaFlux::Yantra::SpectralTransformer::transform_implementation" name="MayaFlux::Yantra::SpectralTransformer::transform_implementation">
+<area shape="rect" id="Node000001" title="Applies the configured spectral operation." alt="" coords="5,166,200,221"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1SpectralTransformer_a03e7bf2e5c976222f2e376b55195170b.html#a03e7bf2e5c976222f2e376b55195170b" title="Extracts per&#45;channel spans, applies func to each, and reconstructs." alt="" coords="254,62,449,117"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="163,164,247,127,265,119,267,124,249,132,165,168"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1SpectralTransformer_a42506575dea94bdb51d75731fe1fbdcb.html#a42506575dea94bdb51d75731fe1fbdcb" title="Creates output with proper type conversion." alt="" coords="505,8,704,48"/>
+<area shape="poly" id="edge7_Node000001_Node000003" title=" " alt="" coords="120,164,142,135,171,102,207,71,247,47,307,26,371,15,433,11,491,12,491,18,433,16,371,20,309,32,249,52,210,75,175,106,146,138,124,167"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a263b1692cd60aca7c49a65ab14e1560c.html#a263b1692cd60aca7c49a65ab14e1560c" title="Linear spectral tilt: scale each bin by a factor that rises linearly from 1 at bin 0 to enhancement_f..." alt="" coords="248,141,455,181"/>
+<area shape="poly" id="edge8_Node000001_Node000007" title=" " alt="" coords="200,178,234,174,235,179,201,183"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_afae8a2fd7fd1c88223908482042cfaa5.html#afae8a2fd7fd1c88223908482042cfaa5" title="Pitch&#45;shift by resampling around a phase vocoder stretch." alt="" coords="276,333,427,373"/>
+<area shape="poly" id="edge10_Node000001_Node000009" title=" " alt="" coords="130,219,182,270,215,296,249,319,265,327,262,331,247,324,211,301,179,274,127,223"/>
+<area shape="rect" id="Node000011" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a73b07fca8d027a71ba80fbbfdaad2f65.html#a73b07fca8d027a71ba80fbbfdaad2f65" title="Hard bandpass filter: zero all bins outside [lo_hz, hi_hz]." alt="" coords="265,205,438,245"/>
+<area shape="poly" id="edge12_Node000001_Node000011" title=" " alt="" coords="201,203,251,210,251,215,200,208"/>
+<area shape="rect" id="Node000012" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a6d215d96b4cc24a521bc46d5033d48fe.html#a6d215d96b4cc24a521bc46d5033d48fe" title="Hard spectral gate: zero bins whose magnitude is below the threshold." alt="" coords="265,269,437,309"/>
+<area shape="poly" id="edge14_Node000001_Node000012" title=" " alt="" coords="163,218,249,255,270,262,268,267,247,260,160,223"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="448,63,507,49,509,54,449,68"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1OperationHelper_a86f4c84e8740ec41db439c868a93454a.html#a86f4c84e8740ec41db439c868a93454a" title="Extract structured double data from Datum container or direct ComputeData with automatic container ha..." alt="" coords="755,69,997,109"/>
+<area shape="poly" id="edge5_Node000002_Node000005" title=" " alt="" coords="449,87,741,87,741,92,449,92"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Yantra_1_1UniversalTransformer_a952e85a0a582c7ba24c8fa85e2490294.html#a952e85a0a582c7ba24c8fa85e2490294" title="Indicates whether the transformation modifies the input data directly." alt="" coords="503,127,707,167"/>
+<area shape="poly" id="edge6_Node000002_Node000006" title=" " alt="" coords="449,109,503,121,502,126,448,114"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1ComputeOperation_ac364bad27ce3e4d35add89333c9a24b8.html#ac364bad27ce3e4d35add89333c9a24b8" title="Convert processed double data back to OutputType using metadata and optional callback." alt="" coords="775,5,977,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="704,24,761,24,761,29,704,30"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="695,45,774,64,773,69,693,51"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_ae52ef79f3e2cc917e53d0dd85c4534d8.html#ae52ef79f3e2cc917e53d0dd85c4534d8" title="Apply a per&#45;frame spectrum processor via WOLA analysis&#45;synthesis." alt="" coords="515,205,694,245"/>
+<area shape="poly" id="edge9_Node000007_Node000008" title=" " alt="" coords="432,179,512,199,511,205,431,184"/>
+<area shape="rect" id="Node000010" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a9dcbf0e6aadfb06635de4f4ed6938837.html#a9dcbf0e6aadfb06635de4f4ed6938837" title="Time&#45;stretch via phase vocoder analysis&#45;synthesis." alt="" coords="513,326,696,381"/>
+<area shape="poly" id="edge11_Node000009_Node000010" title=" " alt="" coords="427,351,500,351,500,356,427,356"/>
+<area shape="poly" id="edge13_Node000011_Node000008" title=" " alt="" coords="438,223,502,223,502,228,438,228"/>
+<area shape="poly" id="edge15_Node000012_Node000008" title=" " alt="" coords="431,267,511,246,512,251,432,272"/>
+</map>

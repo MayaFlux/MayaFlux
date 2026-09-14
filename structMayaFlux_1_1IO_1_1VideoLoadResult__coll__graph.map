@@ -1,0 +1,3 @@
+<map id="MayaFlux::IO::VideoLoadResult" name="MayaFlux::IO::VideoLoadResult">
+<area shape="rect" id="Node000001" title="Result of load_video() when audio extraction is requested via VideoReadOptions::EXTRACT_AUDIO." alt="" coords="5,5,223,91"/>
+</map>

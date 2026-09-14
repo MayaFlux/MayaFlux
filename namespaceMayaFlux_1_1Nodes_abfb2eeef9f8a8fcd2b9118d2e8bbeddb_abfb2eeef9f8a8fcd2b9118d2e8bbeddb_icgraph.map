@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::update_routing_state" name="MayaFlux::Nodes::update_routing_state">
+<area shape="rect" id="Node000001" title="Updates the routing state for a node based on its current channel usage." alt="" coords="269,13,457,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_a07665394de11cad64e2e9284c0ad3007.html#a07665394de11cad64e2e9284c0ad3007" title="Updates routing states for all nodes and networks for a given token." alt="" coords="5,5,221,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="256,35,222,35,222,30,256,30"/>
+</map>

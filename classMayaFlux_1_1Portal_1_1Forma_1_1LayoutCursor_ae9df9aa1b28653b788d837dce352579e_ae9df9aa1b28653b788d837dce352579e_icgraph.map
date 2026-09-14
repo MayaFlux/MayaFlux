@@ -1,0 +1,9 @@
+<map id="MayaFlux::Portal::Forma::LayoutCursor::x_min" name="MayaFlux::Portal::Forma::LayoutCursor::x_min">
+<area shape="rect" id="Node000001" title=" " alt="" coords="235,69,416,109"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Forma_aca02828791e663fec686efc8eacdb9bc.html#aca02828791e663fec686efc8eacdb9bc" title="make_value_group using the cursor&#39;s column extents." alt="" coords="5,5,187,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="239,68,167,48,169,43,241,63"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Forma_a448057e657efa9bca73a55bb430a8837.html#a448057e657efa9bca73a55bb430a8837" title="make_value_row using the cursor&#39;s column extents." alt="" coords="5,69,187,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="221,92,187,92,187,87,221,87"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Portal_1_1Forma_1_1Collapsible_a66377e7b9069cbc2e475264bb43bdff6.html#a66377e7b9069cbc2e475264bb43bdff6" title="Register the header element using the cursor&#39;s column extents." alt="" coords="5,133,187,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="241,116,169,136,167,131,239,110"/>
+</map>

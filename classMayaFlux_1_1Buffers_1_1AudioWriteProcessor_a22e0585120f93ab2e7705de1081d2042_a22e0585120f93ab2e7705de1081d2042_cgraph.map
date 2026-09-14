@@ -1,0 +1,15 @@
+<map id="MayaFlux::Buffers::AudioWriteProcessor::set_data" name="MayaFlux::Buffers::AudioWriteProcessor::set_data">
+<area shape="rect" id="Node000001" title="Supply data from any DataVariant — converted to double via EigenAccess." alt="" coords="5,163,163,217"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1EigenAccess_a57d47f4899fd8dc254d7b53a740a5495.html#a57d47f4899fd8dc254d7b53a740a5495" title="Convert DataVariant to Eigen matrix." alt="" coords="211,131,385,171"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="162,173,197,167,198,172,163,178"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1EigenAccess_a09e5c309b24fd567bcddab3ff3136894.html#a09e5c309b24fd567bcddab3ff3136894" title="Convert DataVariant to Eigen column vector." alt="" coords="212,202,384,242"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="163,199,199,204,198,210,162,204"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1EigenAccess_af525cecbdff773a0b47670c796f2567d.html#af525cecbdff773a0b47670c796f2567d" title=" " alt="" coords="433,5,600,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="330,129,432,69,442,64,444,69,435,74,333,133"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1EigenAccess_aa3282f64720442a23196b8c07c49bd61.html#aa3282f64720442a23196b8c07c49bd61" title=" " alt="" coords="437,84,596,139"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="385,133,423,126,424,131,386,138"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1EigenAccess_a88d43c5e9d4cd2a06d922f5c389e8257.html#a88d43c5e9d4cd2a06d922f5c389e8257" title=" " alt="" coords="437,163,596,217"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="386,164,424,171,423,176,385,169"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Kakshya_1_1EigenAccess_a9f0abf0a2e29fe0338333907b7e88869.html#a9f0abf0a2e29fe0338333907b7e88869" title=" " alt="" coords="437,241,596,296"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="385,238,425,246,423,252,384,243"/>
+</map>

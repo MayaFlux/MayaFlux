@@ -1,0 +1,9 @@
+<map id="MayaFlux::Nodes::Network::PointCloudNetwork::PointCloudNetwork" name="MayaFlux::Nodes::Network::PointCloudNetwork::PointCloudNetwork">
+<area shape="rect" id="Node000001" title="Create empty point cloud network." alt="" coords="5,34,239,89"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1NodeNetwork_afb34b572315180e465878f1de6f5bb1b.html#afb34b572315180e465878f1de6f5bb1b" title="Set the network&#39;s output routing mode." alt="" coords="287,5,527,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="239,44,273,40,273,45,239,49"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1PointCloudNetwork_a4faa751a13a983d1fbf6c5b1730ad5ea.html#a4faa751a13a983d1fbf6c5b1730ad5ea" title="Set the network&#39;s topology." alt="" coords="307,70,506,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="239,73,294,80,293,86,239,79"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Network_1_1NodeNetwork_a3f5fa1eb97ee35881f885abc96df3a99.html#a3f5fa1eb97ee35881f885abc96df3a99" title="Set the network&#39;s topology." alt="" coords="575,77,785,117"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="506,95,561,95,561,100,506,100"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::download_audio_from_gpu" name="MayaFlux::Buffers::download_audio_from_gpu">
+<area shape="rect" id="Node000001" title="Download GPU buffer to AudioBuffer (expects double precision)" alt="" coords="511,13,708,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1TransferProcessor_a9df8346f192d67c6c0f7f61ee19dfc56.html#a9df8346f192d67c6c0f7f61ee19dfc56" title=" " alt="" coords="268,5,463,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="497,35,463,35,463,30,497,30"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1TransferProcessor_a1aa8adc7dc5d176a81893bf932cb493f.html#a1aa8adc7dc5d176a81893bf932cb493f" title="The core processing function that must be implemented by derived classes." alt="" coords="5,5,220,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="254,35,220,35,220,30,254,30"/>
+</map>

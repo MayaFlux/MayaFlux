@@ -1,0 +1,16 @@
+<map id="MayaFlux::analyze_channels" name="MayaFlux::analyze_channels">
+<area shape="rect" id="Node000001" title="Comprehensive multi&#45;channel analysis in single operation." alt="" coords="5,67,216,92"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_aeeb5db3214dcd90b0778eea361e62276.html#aeeb5db3214dcd90b0778eea361e62276" title="Mix multiple data streams with equal weighting." alt="" coords="284,29,403,55"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="190,64,270,51,271,56,191,69"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_a878fe1820a72f64efebc516b1749f77d.html#a878fe1820a72f64efebc516b1749f77d" title="Normalize single&#45;channel data to specified peak level (in&#45;place)" alt="" coords="264,103,423,128"/>
+<area shape="poly" id="edge5_Node000001_Node000005" title=" " alt="" coords="194,89,251,98,250,104,193,95"/>
+<area shape="poly" id="edge4_Node000002_Node000002" title=" " alt="" coords="309,31,302,21,306,11,320,5,343,3,372,6,384,15,380,20,370,11,343,8,321,10,309,15,307,20,313,28"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_aec6eff0979aee0842a5ba73791661498.html#aec6eff0979aee0842a5ba73791661498" title="Apply gain to single&#45;channel data (in&#45;place)" alt="" coords="471,29,636,55"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="403,39,457,39,457,45,403,45"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_aee40e89d5a4f3c24d38829506034425d.html#aee40e89d5a4f3c24d38829506034425d" title="Linear map y = a*x + b applied in&#45;place." alt="" coords="684,22,833,62"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="637,39,670,39,670,45,637,45"/>
+<area shape="poly" id="edge8_Node000005_Node000005" title=" " alt="" coords="309,104,302,94,306,84,320,78,343,76,372,80,384,89,380,93,370,85,343,81,321,83,309,88,307,94,313,101"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a5de3d13e1b9ceb59d3acb04361e2a5e5.html#a5de3d13e1b9ceb59d3acb04361e2a5e5" title="Normalize to [target_min, target_max] in&#45;place Single&#45;pass min/max reduction followed by a single tra..." alt="" coords="479,95,628,135"/>
+<area shape="poly" id="edge6_Node000005_Node000006" title=" " alt="" coords="423,121,465,122,465,127,423,127"/>
+<area shape="poly" id="edge7_Node000006_Node000005" title=" " alt="" coords="479,109,436,109,436,104,479,104"/>
+</map>

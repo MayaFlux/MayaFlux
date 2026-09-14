@@ -1,0 +1,9 @@
+<map id="MayaFlux::Portal::Graphics::TextureLoom::create_sampler" name="MayaFlux::Portal::Graphics::TextureLoom::create_sampler">
+<area shape="rect" id="Node000001" title=" " alt="" coords="511,53,733,93"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a55f5ecf770be1229809e0d952b00b07c.html#a55f5ecf770be1229809e0d952b00b07c" title="Get or create a sampler with the given configuration." alt="" coords="252,45,463,100"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="497,75,463,75,463,70,497,70"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_aef1be7310a7c7aea5eec58158686a41a.html#aef1be7310a7c7aea5eec58158686a41a" title="Get a default linear sampler (for convenience)" alt="" coords="6,5,203,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="238,56,203,51,204,46,239,51"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a258143adccdc3d047a04e94acbff01f4.html#a258143adccdc3d047a04e94acbff01f4" title="Get a default nearest sampler (for pixel&#45;perfect sampling)" alt="" coords="5,84,204,139"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="239,93,204,99,204,94,238,88"/>
+</map>

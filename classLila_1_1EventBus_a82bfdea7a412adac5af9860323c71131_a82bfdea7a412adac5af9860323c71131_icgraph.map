@@ -1,0 +1,5 @@
+<map id="Lila::EventBus::subscribe" name="Lila::EventBus::subscribe">
+<area shape="rect" id="Node000001" title="Subscribe to an event type with a Subscription object." alt="" coords="237,5,421,31"/>
+<area shape="rect" id="Node000002" href="$classLila_1_1EventBus_aa75d754575c1460f776d41ab33f16ae6.html#aa75d754575c1460f776d41ab33f16ae6" title="Subscribe to an event type with a handler function." alt="" coords="5,5,189,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="223,21,190,21,190,15,223,15"/>
+</map>

@@ -1,0 +1,28 @@
+<map id="MayaFlux::Yantra::VisionAnalyzer::analyze_vision" name="MayaFlux::Yantra::VisionAnalyzer::analyze_vision">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,103,189,143"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1VisionAnalyzer_aaa86f0af44bc37b8d1f2084323a30744.html#aaa86f0af44bc37b8d1f2084323a30744" title="Type&#45;safe vision analysis." alt="" coords="237,103,421,143"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="190,120,223,120,223,125,190,125"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1UniversalAnalyzer_a602557feeb1ee9ba9ae252de2f693d31.html#a602557feeb1ee9ba9ae252de2f693d31" title="User&#45;facing analysis method &#45; returns analysis results directly." alt="" coords="475,71,679,111"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="421,108,461,103,462,108,422,114"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Yantra_1_1VisionAnalyzer_ab58fc7daa0cbcbbaae57c7ef81cd5556.html#ab58fc7daa0cbcbbaae57c7ef81cd5556" title="Get the last VisionAnalysis result." alt="" coords="469,135,684,175"/>
+<area shape="poly" id="edge13_Node000002_Node000011" title=" " alt="" coords="422,132,456,136,455,142,421,137"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1ComputeOperation_a59db75a0ca1fccad7c2487a5694a7973.html#a59db75a0ca1fccad7c2487a5694a7973" title="Public synchronous execution interface." alt="" coords="743,71,944,111"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="679,88,729,88,729,93,679,93"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1ComputeOperation_a7891a934373e8be42dfccfa74fae0385.html#a7891a934373e8be42dfccfa74fae0385" title="Internal execution method &#45; ComputeMatrix can access this." alt="" coords="1003,63,1204,118"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="944,88,989,88,989,93,944,93"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Yantra_1_1ComputeOperation_a370f2d70984f9e1d7d32a7e8abe8037d.html#a370f2d70984f9e1d7d32a7e8abe8037d" title=" " alt="" coords="1544,71,1745,111"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="1149,61,1197,38,1251,20,1320,7,1374,3,1428,7,1497,20,1552,38,1600,62,1598,67,1550,43,1495,25,1428,12,1374,8,1320,12,1253,25,1199,43,1152,66"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Yantra_1_1ComputeOperation_acb7801b59e928153ddb6d233faf92f7d.html#acb7801b59e928153ddb6d233faf92f7d" title="Optional async implementation &#45; default delegates to operation_function." alt="" coords="1252,35,1496,75"/>
+<area shape="poly" id="edge7_Node000005_Node000008" title=" " alt="" coords="1204,75,1238,70,1239,75,1204,80"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Yantra_1_1ComputeOperation_a9d0d62a8419923b6d573028400a1f9a8.html#a9d0d62a8419923b6d573028400a1f9a8" title="Optional chain&#45;aware implementation &#45; default delegates to operation_function." alt="" coords="1273,99,1475,154"/>
+<area shape="poly" id="edge9_Node000005_Node000009" title=" " alt="" coords="1204,101,1260,109,1259,114,1204,107"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Yantra_1_1ComputeOperation_afd858d2eb93439a899b1c30f0598e9f8.html#afd858d2eb93439a899b1c30f0598e9f8" title="Optional parallel&#45;aware implementation &#45; default delegates to operation_function." alt="" coords="1273,178,1475,233"/>
+<area shape="poly" id="edge11_Node000005_Node000010" title=" " alt="" coords="1154,116,1253,164,1269,171,1267,176,1251,169,1152,121"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Yantra_1_1ComputeOperation_a8f21d9df92876fb9a6e594cad9331ec8.html#a8f21d9df92876fb9a6e594cad9331ec8" title="Executes the computational transformation on the input data." alt="" coords="1793,71,2009,111"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="1746,88,1780,88,1780,93,1746,93"/>
+<area shape="poly" id="edge8_Node000008_Node000006" title=" " alt="" coords="1496,68,1531,73,1530,78,1496,74"/>
+<area shape="poly" id="edge10_Node000009_Node000006" title=" " alt="" coords="1474,111,1530,103,1531,109,1475,116"/>
+<area shape="poly" id="edge12_Node000010_Node000006" title=" " alt="" coords="1466,175,1495,164,1595,115,1598,120,1497,169,1468,180"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Yantra_1_1UniversalAnalyzer_a1419ca2f81544fa0c4e223730aaea180.html#a1419ca2f81544fa0c4e223730aaea180" title="Access cached analysis from last operation." alt="" coords="732,135,955,175"/>
+<area shape="poly" id="edge14_Node000011_Node000012" title=" " alt="" coords="684,152,718,152,718,157,684,157"/>
+</map>

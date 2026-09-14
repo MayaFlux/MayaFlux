@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::TabletBackend::shutdown" name="MayaFlux::Core::TabletBackend::shutdown">
+<area shape="rect" id="Node000001" title="Shutdown and release all resources." alt="" coords="5,5,232,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1TabletBackend_a00400ea1dc2c14c654270e0f7456a83a.html#a00400ea1dc2c14c654270e0f7456a83a" title="Stop listening for input events." alt="" coords="280,5,507,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="232,23,266,23,266,28,232,28"/>
+</map>

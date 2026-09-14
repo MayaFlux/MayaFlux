@@ -1,0 +1,5 @@
+<map id="MayaFlux::Portal::Forma::Context::on_held" name="MayaFlux::Portal::Forma::Context::on_held">
+<area shape="rect" id="Node000001" title="Called repeatedly while a key is held and the element has focus." alt="" coords="235,5,416,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Context_adf3083a490c76194f3d2d60c5210634d.html#adf3083a490c76194f3d2d60c5210634d" title="Attach key&#45;delta handlers to a Mapped&lt;float&gt; element." alt="" coords="5,5,187,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="221,28,187,28,187,23,221,23"/>
+</map>

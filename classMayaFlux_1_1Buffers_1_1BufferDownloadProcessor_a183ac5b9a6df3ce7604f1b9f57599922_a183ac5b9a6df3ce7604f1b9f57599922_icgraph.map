@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::BufferDownloadProcessor::is_compatible_with" name="MayaFlux::Buffers::BufferDownloadProcessor::is_compatible_with">
+<area shape="rect" id="Node000001" title="Checks if this processor can handle the specified buffer type." alt="" coords="243,5,432,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferDownloadProcessor_a3ef51a8b4d51a87935edcac28df1697e.html#a3ef51a8b4d51a87935edcac28df1697e" title="Called when this processor is attached to a buffer." alt="" coords="5,5,195,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="229,35,195,35,195,30,229,30"/>
+</map>

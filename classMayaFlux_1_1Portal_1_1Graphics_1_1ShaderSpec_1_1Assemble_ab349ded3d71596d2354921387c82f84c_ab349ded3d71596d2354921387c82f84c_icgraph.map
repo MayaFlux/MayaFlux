@@ -1,0 +1,13 @@
+<map id="MayaFlux::Portal::Graphics::ShaderSpec::Assemble::workgroup" name="MayaFlux::Portal::Graphics::ShaderSpec::Assemble::workgroup">
+<area shape="rect" id="Node000001" title="Override workgroup size." alt="" coords="275,134,472,189"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1GpuFieldOperator_a3ad4b99e462122dbf5f6b1c00d3632ff.html#a3ad4b99e462122dbf5f6b1c00d3632ff" title="Assemble the compute spec for the current bindings." alt="" coords="5,5,227,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="328,127,280,92,225,60,196,48,198,43,228,55,283,87,331,123"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1VisionGpuExecutor_a37b115d59dbe1593c58ef631942b363e.html#a37b115d59dbe1593c58ef631942b363e" title="GpuComputeConfig for a given VisionOp and its parameters." alt="" coords="25,69,207,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="261,133,188,112,189,107,263,128"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Buffers_1_1RelaxationSpecs_a1279de64ea64bd40c10f69e9d59dde46.html#a1279de64ea64bd40c10f69e9d59dde46" title="Binary state&#45;to&#45;vertex emit: nonzero state draws at full scale, zero state degenerates to a zero&#45;scal..." alt="" coords="32,134,200,189"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="261,164,200,164,200,159,261,159"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Buffers_1_1RelaxationSpecs_ab027146e5827d27be349ad597cbad520.html#ab027146e5827d27be349ad597cbad520" title="Scalar&#45;ramp state&#45;to&#45;vertex emit: float state value scaled and offset into a visible output range." alt="" coords="32,213,200,267"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="271,195,201,217,199,212,270,190"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Buffers_1_1RelaxationSpecs_a664b6d74405ef8f23d5954e4c9b46940.html#a664b6d74405ef8f23d5954e4c9b46940" title="Jacobi&#45;style diffusion rule: each cell blends toward the average of its 8 Moore neighbors at the give..." alt="" coords="27,291,205,346"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="335,200,286,242,228,281,202,294,200,289,225,276,283,238,332,196"/>
+</map>

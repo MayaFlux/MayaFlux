@@ -1,0 +1,25 @@
+<map id="MayaFlux::Nodes::GpuSync::GeometryWriterNode::get_vertex_layout" name="MayaFlux::Nodes::GpuSync::GeometryWriterNode::get_vertex_layout">
+<area shape="rect" id="Node000001" title="Get cached vertex layout." alt="" coords="1008,177,1208,232"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GeometryReadbackNode_a1a160703bce86c3ff56c0bc841c570eb.html#a1a160703bce86c3ff56c0bc841c570eb" title="Download vertex data from GPU to CPU." alt="" coords="726,5,926,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1072,169,1021,120,991,96,959,75,925,60,927,55,961,70,994,92,1025,116,1076,165"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1LineSegmentsNode_a5ca73acc3bd5b4278090772a1071bc1a.html#a5ca73acc3bd5b4278090772a1071bc1a" title="Pack accumulated segments into the GPU vertex buffer." alt="" coords="693,85,959,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="1041,174,959,139,920,127,922,122,961,134,1043,169"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1PathGeneratorNode_a0bb983c3a14dd53e111349bc461d1250.html#a0bb983c3a14dd53e111349bc461d1250" title="Compute frame &#45; generates interpolated vertices from control points." alt="" coords="692,149,960,189"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="994,193,960,188,961,183,995,188"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1PointCollectionNode_a89f1ca486920e33188f6cc4367186a2d.html#a89f1ca486920e33188f6cc4367186a2d" title="Compute frame &#45; uploads positions to vertex buffer." alt="" coords="726,213,926,268"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="994,222,926,231,926,225,994,217"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1TopologyGeneratorNode_a96d320f4747498573817af506e7b46b4.html#a96d320f4747498573817af506e7b46b4" title="Compute frame &#45; generates vertex data from points and connections." alt="" coords="726,292,926,347"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="1047,241,961,282,926,294,925,289,959,277,1045,236"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GlyphGeometryNode_a27d6f6164d242dadb7a991fab3e0566c.html#a27d6f6164d242dadb7a991fab3e0566c" title=" " alt="" coords="722,371,930,425"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="1082,244,1030,304,997,334,961,360,932,375,929,370,959,356,994,330,1026,300,1077,241"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GlyphGeometryNode_a019687268deed85de64e95138367164c.html#a019687268deed85de64e95138367164c" title="Upload cached vertex data if dirty." alt="" coords="365,342,644,382"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="708,387,644,380,644,375,708,382"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GlyphGeometryNode_a39969c549307dc7b874fb9e794b4fb16.html#a39969c549307dc7b874fb9e794b4fb16" title="Rebuild outline geometry from the current text and pen settings." alt="" coords="395,407,615,461"/>
+<area shape="poly" id="edge8_Node000007_Node000009" title=" " alt="" coords="709,414,615,424,614,419,708,409"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GlyphGeometryNode_aa2c050b302cf38e5125047fd4f1cd6d7.html#aa2c050b302cf38e5125047fd4f1cd6d7" title="Construct from a UTF&#45;8 string with an explicit FontFace." alt="" coords="5,350,317,390"/>
+<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="381,414,269,393,270,387,382,408"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GlyphGeometryNode_ae6d0646f782caeb8a210c8344e63130b.html#ae6d0646f782caeb8a210c8344e63130b" title="Construct from a UTF&#45;8 string using the default font." alt="" coords="5,414,317,454"/>
+<area shape="poly" id="edge10_Node000009_Node000011" title=" " alt="" coords="381,437,318,437,318,431,381,431"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GlyphGeometryNode_ad5ec71c50169fad44dcd56ed9fc04bcf.html#ad5ec71c50169fad44dcd56ed9fc04bcf" title="Replace the text string and rebuild outlines." alt="" coords="47,478,275,518"/>
+<area shape="poly" id="edge11_Node000009_Node000012" title=" " alt="" coords="382,460,270,481,269,475,381,454"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::NodeSourceProcessor" name="MayaFlux::Buffers::NodeSourceProcessor">
+<area shape="rect" id="Node000001" title="Processor that bridges computational nodes and data buffers." alt="" coords="5,313,192,553"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferProcessor.html" title="Central computational transformation interface for continuous buffer processing." alt="" coords="9,5,189,265"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="101,279,101,313,96,313,96,279"/>
+</map>

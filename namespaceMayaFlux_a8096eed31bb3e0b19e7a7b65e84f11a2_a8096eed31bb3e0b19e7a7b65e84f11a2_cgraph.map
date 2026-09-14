@@ -1,0 +1,9 @@
+<map id="MayaFlux::live_cast" name="MayaFlux::live_cast">
+<area shape="rect" id="Node000001" title="Retrieves a live&#45;arena object by key as a shared_ptr&lt;T&gt;." alt="" coords="5,49,157,74"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_a08d29324268998e88e89de586487e418.html#a08d29324268998e88e89de586487e418" title="Internal implementation for live_cast." alt="" coords="205,49,393,74"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="157,59,192,59,192,64,157,64"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1internal_a7b0204ba7b00dc8bba221e2cf70d7ff4.html#a7b0204ba7b00dc8bba221e2cf70d7ff4" title="Returns a pointer to the header block at the start of arena storage." alt="" coords="441,5,592,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="376,46,427,37,428,43,377,51"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1internal_a85302f1b81a282b37c86380ff47bbba7.html#a85302f1b81a282b37c86380ff47bbba7" title="Returns a pointer to the object region (immediately after the header)." alt="" coords="444,70,589,125"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="377,71,431,80,430,86,376,77"/>
+</map>

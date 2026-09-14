@@ -1,0 +1,19 @@
+<map id="MayaFlux::Kinesis::advance_navigation" name="MayaFlux::Kinesis::advance_navigation">
+<area shape="rect" id="Node000001" title="Advance eye position by held movement flags against elapsed time." alt="" coords="939,133,1092,173"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_a9c48c41e32b3a27a4602996f86b222ba.html#a9c48c41e32b3a27a4602996f86b222ba" title="Compute a ViewTransform from the current NavigationState." alt="" coords="703,101,891,141"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="925,143,891,138,891,132,925,138"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Nexus_1_1Locus_a8e9e5ff3ba69a3d52b5b4354b6b13c82.html#a8e9e5ff3ba69a3d52b5b4354b6b13c82" title="Perceive: run the user perception callable, then integrate the view." alt="" coords="707,165,887,205"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="925,169,887,175,886,170,925,164"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_afbca6a63a999ca7602156fffa2c7dcd3.html#afbca6a63a999ca7602156fffa2c7dcd3" title="Bind the fly navigation controller to a window and render processor." alt="" coords="492,37,637,77"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="710,100,637,80,638,75,711,95"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nexus_1_1Locus_a7c0b5ade3a05f7a0dd4087f27aa4cb46.html#a7c0b5ade3a05f7a0dd4087f27aa4cb46" title="Construct from a NavigationConfig with perception and influence functions." alt="" coords="475,101,655,141"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="688,124,655,124,655,119,688,119"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Nexus_1_1Locus_ac594c11c182537980b6511b2979f0d1a.html#ac594c11c182537980b6511b2979f0d1a" title="Construct from a NavigationConfig with named perception and influence functions." alt="" coords="475,165,655,205"/>
+<area shape="poly" id="edge7_Node000002_Node000008" title=" " alt="" coords="711,148,638,168,637,163,710,142"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_a32225e71700958f2fd21448719ab1ba1.html#a32225e71700958f2fd21448719ab1ba1" title="Bind the fly navigation controller to all RenderProcessors currently registered against a window." alt="" coords="261,5,406,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="478,48,406,38,407,33,478,43"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_a9be701daac0c0484aed1f9ad9f8d130e.html#a9be701daac0c0484aed1f9ad9f8d130e" title="Bind a navigation preset to a window and render processor using default settings." alt="" coords="240,69,427,109"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="479,72,427,79,426,74,478,67"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_af2205e6997a812a91f5c4b88a8beb585.html#af2205e6997a812a91f5c4b88a8beb585" title="Bind a navigation preset to all RenderProcessors currently registered against a window using default ..." alt="" coords="5,69,192,109"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="227,92,192,92,192,87,227,87"/>
+</map>

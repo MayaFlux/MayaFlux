@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::RenderProcessor::published_view_transform" name="MayaFlux::Buffers::RenderProcessor::published_view_transform">
+<area shape="rect" id="Node000001" title="Transform published for this frame by publish_view_transform()." alt="" coords="491,5,693,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_adc74692b3613a1bf0b3cfced4b15ee28.html#adc74692b3613a1bf0b3cfced4b15ee28" title="Mill m_runs into the private buffer and set the draw range." alt="" coords="244,13,443,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="477,35,443,35,443,30,477,30"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_acd3ee18a43b25af2aa06f17efacd6c5f.html#acd3ee18a43b25af2aa06f17efacd6c5f" title="Records and registers a secondary command buffer every call, even with nothing to draw (a GraphicsOpe..." alt="" coords="5,5,196,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="230,35,196,35,196,30,230,30"/>
+</map>

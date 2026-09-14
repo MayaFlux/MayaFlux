@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::VideoContainerBuffer::VideoContainerBuffer" name="MayaFlux::Buffers::VideoContainerBuffer::VideoContainerBuffer">
+<area shape="rect" id="Node000001" title="Construct a VideoContainerBuffer from a video container." alt="" coords="5,30,175,85"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1TextureBuffer_a9b95a2ec52e43046fbfb16db23ac9f1e.html#a9b95a2ec52e43046fbfb16db23ac9f1e" title=" " alt="" coords="223,5,409,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="175,43,209,38,210,43,176,48"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1TextureBuffer_a3a81f658a89643551b033fe1e0dd39c5.html#a3a81f658a89643551b033fe1e0dd39c5" title=" " alt="" coords="225,69,407,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="176,67,212,72,212,77,175,72"/>
+</map>

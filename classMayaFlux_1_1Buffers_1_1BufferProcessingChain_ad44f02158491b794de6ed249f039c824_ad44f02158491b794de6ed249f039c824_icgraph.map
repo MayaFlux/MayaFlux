@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::BufferProcessingChain::queue_pending_processor_op" name="MayaFlux::Buffers::BufferProcessingChain::queue_pending_processor_op">
+<area shape="rect" id="Node000001" title=" " alt="" coords="221,45,444,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingChain_a8a06f46d7b89b81b87a256f188b53c81.html#a8a06f46d7b89b81b87a256f188b53c81" title="Adds a processor to the transformation pipeline for a specific buffer." alt="" coords="5,5,173,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="208,55,173,49,174,44,208,50"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingChain_a9f8055bfaadaeaccacd1490883703e82.html#a9f8055bfaadaeaccacd1490883703e82" title="Removes a processor from the pipeline for a specific buffer." alt="" coords="5,84,173,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="208,95,174,101,173,95,208,90"/>
+</map>

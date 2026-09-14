@@ -1,0 +1,13 @@
+<map id="MayaFlux::Nodes::Network::GraphicsOperator::get_vertex_layout" name="MayaFlux::Nodes::Network::GraphicsOperator::get_vertex_layout">
+<area shape="rect" id="Node000001" title="Get vertex layout describing vertex structure." alt="" coords="755,84,953,139"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1NetworkGeometryProcessor_ac6c764a77a3082815a103b602eddaf77.html#ac6c764a77a3082815a103b602eddaf77" title="BufferProcessor interface &#45; aggregates and uploads network geometry." alt="" coords="501,5,707,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="752,82,691,63,692,58,754,77"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1FieldOperator_a37c560c008b5eb6cf3e143c664efca00.html#a37c560c008b5eb6cf3e143c664efca00" title="Seed vertex data from the upstream operator&#39;s current output." alt="" coords="505,84,703,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="741,114,704,114,704,109,741,109"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1IO_a3a1b54ced20c455280b3c44556e9826c.html#a3a1b54ced20c455280b3c44556e9826c" title="Pack one GraphicsOperator&#39;s current vertex state into a SpatialCache stream, as a Points or Curves sa..." alt="" coords="529,163,679,203"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="746,145,675,166,674,161,745,140"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1IO_abf3ff9b53394b31d75ac2980abc4ea2d.html#abf3ff9b53394b31d75ac2980abc4ea2d" title="Pack a NetworkGeometryBuffer&#39;s driving network into one or more SpatialCache streams,..." alt="" coords="256,156,453,211"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="516,186,454,186,454,181,516,181"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1IO_aff105666b9119fd8c7a0484e9a046b20.html#aff105666b9119fd8c7a0484e9a046b20" title="Build a SpatialCaptureSource that packs a NetworkGeometryBuffer&#39;s driving network through write_netwo..." alt="" coords="5,163,208,203"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="242,186,208,186,208,181,242,181"/>
+</map>

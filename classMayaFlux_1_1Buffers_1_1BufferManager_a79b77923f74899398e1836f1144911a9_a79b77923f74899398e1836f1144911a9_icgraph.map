@@ -1,0 +1,11 @@
+<map id="MayaFlux::Buffers::BufferManager::supply_buffer_to" name="MayaFlux::Buffers::BufferManager::supply_buffer_to">
+<area shape="rect" id="Node000001" title=" " alt="" coords="496,62,665,117"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kriya_1_1SamplingPipeline_a56375779c7b0e71e58a8eef5a3658119.html#a56375779c7b0e71e58a8eef5a3658119" title="Finalize configuration and start processing." alt="" coords="251,37,448,77"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="482,78,448,74,448,68,482,73"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kriya_1_1SamplingPipeline_a79b622257fc33fc7d37a3a7d9a5f0c86.html#a79b622257fc33fc7d37a3a7d9a5f0c86" title="Finalize configuration and start processing for a bounded duration." alt="" coords="251,101,448,141"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="482,106,448,110,448,105,482,100"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kriya_1_1SamplingPipeline_aa8ff758589f834bc07212fa7269567cb.html#aa8ff758589f834bc07212fa7269567cb" title="Load a slice into a voice slot and activate it immediately." alt="" coords="5,5,203,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="237,45,202,41,203,36,237,40"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kriya_1_1SamplingPipeline_aea487a28b92b82273e17245b86420227.html#aea487a28b92b82273e17245b86420227" title="Load a slice into a voice slot and activate it with looping enabled." alt="" coords="5,69,203,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="237,75,203,79,202,74,237,69"/>
+</map>

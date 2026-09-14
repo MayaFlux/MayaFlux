@@ -1,0 +1,19 @@
+<map id="MayaFlux::Buffers::ImageCVProcessor&lt; T &gt;" name="MayaFlux::Buffers::ImageCVProcessor&lt; T &gt;">
+<area shape="rect" id="Node000001" title="BufferProcessor executing a Kinesis::Vision pipeline on a GpuImageSource buffer." alt="" coords="212,1985,387,2425"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferProcessor.html" title="Central computational transformation interface for continuous buffer processing." alt="" coords="5,1493,185,1753"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="142,1765,207,1960,216,1984,211,1986,202,1962,137,1766"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kinesis_1_1Vision_1_1VisionSequence.html" title="Ordered sequence of VisionSteps describing a complete vision pipeline." alt="" coords="202,95,367,175"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="277,176,245,336,232,439,226,544,226,1624,229,1711,235,1800,257,1969,252,1970,230,1800,223,1711,221,1624,221,544,226,439,240,335,272,175"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Kinesis_1_1Vision_1_1VisionPass.html" title=" " alt="" coords="363,825,505,1260"/>
+<area shape="poly" id="edge5_Node000005_Node000003" title=" " alt="" coords="282,176,273,279,268,425,269,508,274,593,284,679,301,762,322,818,357,893,353,895,317,820,295,763,279,680,269,594,264,508,262,425,268,279,277,175"/>
+<area shape="rect" id="Node000007" href="$structMayaFlux_1_1Kinesis_1_1Vision_1_1VisionPass.html" title="State threaded through one execution of a VisionSequence." alt="" coords="387,328,529,763"/>
+<area shape="poly" id="edge8_Node000007_Node000003" title=" " alt="" coords="304,174,370,327,383,358,378,360,365,329,299,177"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kinesis_1_1Vision_1_1VisionExecutor.html" title="Stateful executor for a VisionSequence." alt="" coords="295,1323,453,1923"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="338,1923,332,1969,327,1968,333,1923"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="414,1260,409,1306,404,1306,409,1260"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Kinesis_1_1Vision_1_1VisionResult.html" title="Result of executing a VisionSequence on one frame." alt="" coords="507,5,649,265"/>
+<area shape="poly" id="edge10_Node000001_Node000006" title=" " alt="" coords="626,265,643,327,665,435,670,483,671,544,671,1624,664,1699,644,1772,614,1843,577,1909,534,1971,489,2027,401,2120,397,2116,485,2023,530,1967,572,1906,610,1840,639,1771,659,1698,666,1624,666,544,665,483,660,436,638,329,621,266"/>
+<area shape="poly" id="edge6_Node000005_Node000006" title=" " alt="" coords="585,266,584,374,579,499,567,632,545,763,514,868,509,866,539,762,561,631,574,499,579,374,580,266"/>
+<area shape="poly" id="edge9_Node000007_Node000006" title=" " alt="" coords="517,267,509,290,502,313,497,311,503,288,512,265"/>
+<area shape="poly" id="edge7_Node000005_Node000007" title=" " alt="" coords="450,777,447,825,442,825,444,776"/>
+</map>

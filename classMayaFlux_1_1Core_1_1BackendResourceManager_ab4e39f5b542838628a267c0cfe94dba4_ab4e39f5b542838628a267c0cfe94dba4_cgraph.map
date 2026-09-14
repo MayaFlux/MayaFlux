@@ -1,0 +1,7 @@
+<map id="MayaFlux::Core::BackendResourceManager::find_memory_type" name="MayaFlux::Core::BackendResourceManager::find_memory_type">
+<area shape="rect" id="Node000001" title="Find a suitable memory type for Vulkan buffer allocation." alt="" coords="5,5,252,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1VKContext_abb26eca0db297f0a9545aee095450aa1.html#abb26eca0db297f0a9545aee095450aa1" title="Get physical device." alt="" coords="300,5,500,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="252,23,286,23,286,28,252,28"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1VKDevice_a094d1ed720c72ced04293743f4b2a63e.html#a094d1ed720c72ced04293743f4b2a63e" title="Get physical device handle." alt="" coords="548,5,743,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="500,23,534,23,534,28,500,28"/>
+</map>

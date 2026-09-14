@@ -1,0 +1,14 @@
+<map id="MayaFlux::Yantra::infer_from_container" name="MayaFlux::Yantra::infer_from_container">
+<area shape="rect" id="Node000001" title="Infer structure from SignalSourceContainer." alt="" coords="665,149,837,189"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Yantra_ab40b463e00cbdbf34a526725f04b2f78.html#ab40b463e00cbdbf34a526725f04b2f78" title="Infer structure from Region (placeholder since regions are markers)" alt="" coords="445,92,617,132"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="660,148,608,135,609,129,662,143"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Yantra_ae05845067871689b0b43d88e2b97b4f2.html#ae05845067871689b0b43d88e2b97b4f2" title="Infer dimensions and modality from any ComputeData type." alt="" coords="5,92,177,132"/>
+<area shape="poly" id="edge7_Node000001_Node000004" title=" " alt="" coords="652,185,561,193,454,196,338,191,225,175,172,157,126,135,128,130,174,152,226,169,339,186,454,191,561,187,652,180"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Yantra_ad02f0b5a9c8eab6145265e09b8708cb3.html#ad02f0b5a9c8eab6145265e09b8708cb3" title="Infer structure from RegionGroup." alt="" coords="225,5,397,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="466,89,362,48,364,43,468,84"/>
+<area shape="poly" id="edge6_Node000002_Node000004" title=" " alt="" coords="432,111,397,111,225,111,178,112,178,106,225,105,397,105,432,106"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Yantra_ae36c08db5d8c73f6cab8feebfa5e58e0.html#ae36c08db5d8c73f6cab8feebfa5e58e0" title="Infer structure from RegionSegments." alt="" coords="225,120,397,160"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="432,127,398,132,397,126,431,122"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="248,53,144,94,142,89,246,48"/>
+<area shape="poly" id="edge5_Node000005_Node000004" title=" " alt="" coords="211,130,177,126,178,120,212,125"/>
+</map>

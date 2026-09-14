@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kinesis::path_length" name="MayaFlux::Kinesis::path_length">
+<area shape="rect" id="Node000001" title="Path length accumulated across the newest window positions." alt="" coords="400,37,549,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_aea27c6bbc0a6dad55beadaf148da1e49.html#aea27c6bbc0a6dad55beadaf148da1e49" title="Convenience overload of path_length over a raw span of positions, samples[0] newest." alt="" coords="203,5,352,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="386,46,352,40,353,35,387,40"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_a79d4803064cd455e5c26985bd5cd1e5c.html#a79d4803064cd455e5c26985bd5cd1e5c" title="Straightness of a path over a window, 1.0 is a straight line." alt="" coords="203,69,352,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="387,74,353,80,352,75,386,69"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_aa28d5ac942c140b5e5061efb94da707b.html#aa28d5ac942c140b5e5061efb94da707b" title="Convenience overload of straightness over a raw span of positions, samples[0] newest." alt="" coords="5,69,155,109"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="189,92,155,92,155,87,189,87"/>
+</map>

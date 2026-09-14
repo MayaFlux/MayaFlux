@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::validate_token" name="MayaFlux::Buffers::validate_token">
+<area shape="rect" id="Node000001" title="Validates that a processing token has a valid, non&#45;conflicting configuration." alt="" coords="215,41,363,81"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_a5cc265bf20e69f724523bc4955aeb017.html#a5cc265bf20e69f724523bc4955aeb017" title="Checks if a domain is valid (all constituent tokens are compatible)" alt="" coords="5,5,167,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="201,48,166,42,167,37,202,43"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1BufferProcessor_a61790c00b89f9dfd53646e8451ddb583.html#a61790c00b89f9dfd53646e8451ddb583" title="Gets the preferred processing backend for this processor." alt="" coords="10,70,162,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="202,79,163,87,162,81,201,74"/>
+</map>

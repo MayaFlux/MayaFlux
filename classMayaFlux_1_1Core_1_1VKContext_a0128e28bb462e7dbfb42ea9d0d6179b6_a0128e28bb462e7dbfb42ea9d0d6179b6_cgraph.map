@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::VKContext::graphics_family_can_present" name="MayaFlux::Core::VKContext::graphics_family_can_present">
+<area shape="rect" id="Node000001" title="Confirm the graphics family presents to a surface." alt="" coords="5,5,225,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1VKDevice_a313a02c0b6e01a6e4997505fc1787178.html#a313a02c0b6e01a6e4997505fc1787178" title="Confirm the graphics family presents to a concrete surface." alt="" coords="273,5,493,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="225,23,260,23,260,28,225,28"/>
+</map>

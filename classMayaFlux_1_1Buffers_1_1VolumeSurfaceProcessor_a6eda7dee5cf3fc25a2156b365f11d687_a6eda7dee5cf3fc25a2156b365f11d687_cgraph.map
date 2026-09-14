@@ -1,0 +1,13 @@
+<map id="MayaFlux::Buffers::VolumeSurfaceProcessor::on_descriptors_created" name="MayaFlux::Buffers::VolumeSurfaceProcessor::on_descriptors_created">
+<area shape="rect" id="Node000001" title="Write the field descriptor for the current slot assignment." alt="" coords="5,34,188,89"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VolumeSurfaceProcessor_a0e8197c3af15a8f3610001b9cfc5ddb3.html#a0e8197c3af15a8f3610001b9cfc5ddb3" title="Issue the direct ShaderFoundry descriptor write for the field read slot." alt="" coords="236,34,419,89"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="188,59,222,59,222,64,188,64"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a715d57394465ff2924727d7c82d87e7b.html#a715d57394465ff2924727d7c82d87e7b" title="Get the global shader compiler instance." alt="" coords="467,5,664,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="419,45,453,40,454,45,419,50"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_a719358a33a9349c7dd676ae673dabdd1.html#a719358a33a9349c7dd676ae673dabdd1" title="Update descriptor set with buffer binding." alt="" coords="467,70,664,125"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="419,73,454,78,453,83,419,78"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ab22eaae6b8210236918b85f409fc4c49.html#ab22eaae6b8210236918b85f409fc4c49" title=" " alt="" coords="716,5,913,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="664,23,702,23,702,28,664,28"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_a148fdbfbb76b1df59986ea791e772885.html#a148fdbfbb76b1df59986ea791e772885" title="Get logical device handle." alt="" coords="712,77,917,117"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="664,95,698,95,698,100,664,100"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::ClaimProcessor::on_buffer_ready" name="MayaFlux::Buffers::ClaimProcessor::on_buffer_ready">
+<area shape="rect" id="Node000001" title="Hook for subclass setup, called at the end of on_attach." alt="" coords="5,13,241,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1NetworkStateFieldProcessor_a91b95122c935ae7d97ec89ffbcbdb728.html#a91b95122c935ae7d97ec89ffbcbdb728" title="Configure manual dispatch for one thread per element, and stage the given push constant data." alt="" coords="289,5,495,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="241,30,275,30,275,35,241,35"/>
+</map>

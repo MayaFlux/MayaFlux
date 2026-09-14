@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::SoundStreamReader::extract_channel_data" name="MayaFlux::Buffers::SoundStreamReader::extract_channel_data">
+<area shape="rect" id="Node000001" title="Extract channel data from the container into the output buffer." alt="" coords="287,45,496,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1SoundStreamReader_ab6a94c7681a0c71da55d99b23e6b344e.html#ab6a94c7681a0c71da55d99b23e6b344e" title="Attach the adapter to an AudioBuffer." alt="" coords="33,5,211,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="273,58,211,49,212,43,273,52"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1SoundStreamReader_ad4011fce560f9b7db87e6e98d351d670.html#ad4011fce560f9b7db87e6e98d351d670" title="Extracts and processes data from the container into the target AudioBuffer." alt="" coords="5,84,239,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="274,92,239,97,238,92,273,87"/>
+</map>

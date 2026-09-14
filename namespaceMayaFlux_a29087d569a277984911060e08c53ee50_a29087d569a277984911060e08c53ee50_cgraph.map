@@ -1,0 +1,10 @@
+<map id="MayaFlux::normalize" name="MayaFlux::normalize">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,59,164,84"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a5de3d13e1b9ceb59d3acb04361e2a5e5.html#a5de3d13e1b9ceb59d3acb04361e2a5e5" title="Normalize to [target_min, target_max] in&#45;place Single&#45;pass min/max reduction followed by a single tra..." alt="" coords="212,22,361,62"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="164,57,198,52,199,57,165,62"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_a878fe1820a72f64efebc516b1749f77d.html#a878fe1820a72f64efebc516b1749f77d" title="Normalize single&#45;channel data to specified peak level (in&#45;place)" alt="" coords="409,29,568,55"/>
+<area shape="poly" id="edge5_Node000001_Node000003" title=" " alt="" coords="164,75,259,77,361,71,434,56,435,61,362,77,259,83,164,80"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="362,48,396,48,396,54,362,53"/>
+<area shape="poly" id="edge3_Node000003_Node000002" title=" " alt="" coords="409,36,375,36,375,30,409,31"/>
+<area shape="poly" id="edge4_Node000003_Node000003" title=" " alt="" coords="456,31,449,21,452,11,466,5,489,3,517,6,528,16,524,20,514,11,489,8,467,10,456,15,454,20,460,28"/>
+</map>

@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::download_from_gpu_async" name="MayaFlux::Buffers::download_from_gpu_async">
+<area shape="rect" id="Node000001" title="Download from a device&#45;local GPU buffer without stalling the graphics queue." alt="" coords="492,49,691,89"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GeometryReadbackNode_a1a160703bce86c3ff56c0bc841c570eb.html#a1a160703bce86c3ff56c0bc841c570eb" title="Download vertex data from GPU to CPU." alt="" coords="244,5,444,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="478,55,444,50,445,45,479,50"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1IO_ab08dc66f06b8fc0eff2b6628fabaa1a2.html#ab08dc66f06b8fc0eff2b6628fabaa1a2" title="Download a ComputeMeshBuffer&#39;s current live geometry to CPU." alt="" coords="255,85,433,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="479,88,434,94,433,89,478,82"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1IO_a341973f95e20aa0947d46ad98c793637.html#a341973f95e20aa0947d46ad98c793637" title="Save a ComputeMeshBuffer&#39;s current live geometry to disk." alt="" coords="5,92,196,117"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="241,107,196,107,196,102,241,102"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::WindowContainer::get_num_frames" name="MayaFlux::Kakshya::WindowContainer::get_num_frames">
+<area shape="rect" id="Node000001" title="Get the number of frames in the primary (temporal) dimension." alt="" coords="5,5,172,60"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kakshya_1_1ContainerDataStructure_a04ba106a40af90463702de9810eb6f6e.html#a04ba106a40af90463702de9810eb6f6e" title="Extract height from image/video dimensions." alt="" coords="220,5,395,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="172,30,206,30,206,35,172,35"/>
+</map>

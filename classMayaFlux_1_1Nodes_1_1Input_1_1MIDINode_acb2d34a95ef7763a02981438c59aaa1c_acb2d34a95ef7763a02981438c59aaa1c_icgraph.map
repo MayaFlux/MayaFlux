@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Input::MIDINode::matches_filters" name="MayaFlux::Nodes::Input::MIDINode::matches_filters">
+<area shape="rect" id="Node000001" title=" " alt="" coords="244,5,447,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Input_1_1MIDINode_a53e51aaf8495bc2e1e77e733d3d49f23.html#a53e51aaf8495bc2e1e77e733d3d49f23" title="Extract a scalar value from an InputValue." alt="" coords="5,5,196,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="230,28,196,28,196,23,230,23"/>
+</map>

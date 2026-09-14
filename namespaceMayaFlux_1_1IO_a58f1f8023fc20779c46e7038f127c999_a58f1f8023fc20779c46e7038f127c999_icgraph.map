@@ -1,0 +1,5 @@
+<map id="MayaFlux::IO::save_mesh_snapshot" name="MayaFlux::IO::save_mesh_snapshot">
+<area shape="rect" id="Node000001" title="Save a ComputeMeshBuffer with a millisecond epoch timestamp spliced into the path." alt="" coords="240,5,387,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1IOManager_aac730c67e44028579377a291c993c699.html#aac730c67e44028579377a291c993c699" title="Save a ComputeMeshBuffer with a millisecond epoch timestamp spliced into the path,..." alt="" coords="5,5,192,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="226,28,192,28,192,23,226,23"/>
+</map>

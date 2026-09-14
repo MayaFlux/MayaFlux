@@ -1,0 +1,19 @@
+<map id="MayaFlux::Nodes::Network::NodeNetwork" name="MayaFlux::Nodes::Network::NodeNetwork">
+<area shape="rect" id="Node000001" title="Abstract base class for structured collections of nodes with defined relationships." alt="" coords="829,5,1026,765"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1AssemblyNetwork.html" title="Holds hundreds or thousands of independent geometry items with no shared topology,..." alt="" coords="5,1021,196,1321"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="817,426,677,482,597,520,514,565,430,617,349,676,275,742,209,815,179,862,154,914,136,968,122,1021,117,1020,131,967,149,912,174,860,205,812,271,738,346,672,427,613,511,561,595,515,675,477,815,421"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1InstanceNetwork.html" title="NodeNetwork whose slots are flat, peer GeometrySlots for instanced rendering." alt="" coords="220,1021,411,1321"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="819,454,723,520,617,604,564,652,513,703,466,757,424,815,397,864,374,916,342,1021,337,1020,369,914,392,861,420,812,462,754,509,699,560,648,613,600,720,516,815,450"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Network_1_1MeshNetwork.html" title="NodeNetwork subclass whose nodes are named, hierarchically transformable mesh slots." alt="" coords="435,981,660,1361"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="823,548,747,677,675,814,640,897,608,981,603,979,635,895,670,812,742,674,819,546"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ModalNetwork.html" title="Network of resonant modes for modal synthesis." alt="" coords="685,841,917,1501"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="866,779,857,841,851,840,861,778"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ParticleNetwork.html" title="Motion&#45;focused point network with swappable operators." alt="" coords="941,921,1167,1421"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="993,779,1016,920,1011,921,988,779"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1Network_1_1PointCloudNetwork.html" title="Spatial relational network operating on unordered point sets." alt="" coords="1191,961,1416,1381"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="1036,547,1111,675,1182,812,1213,885,1241,960,1236,961,1208,887,1177,814,1106,678,1031,550"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ResonatorNetwork.html" title="Network of IIR biquad bandpass filters driven by external excitation." alt="" coords="1441,921,1673,1421"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="1039,453,1133,519,1238,603,1341,702,1388,756,1431,812,1462,864,1489,919,1484,921,1458,866,1426,815,1384,759,1337,705,1234,607,1130,524,1036,457"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Nodes_1_1Network_1_1WaveguideNetwork.html" title="Digital waveguide synthesis via uni&#45; and bidirectional delay&#45;line architectures." alt="" coords="1697,813,1929,1528"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="1040,419,1186,475,1270,513,1359,558,1448,610,1534,670,1615,737,1687,812,1698,826,1694,830,1683,815,1611,741,1531,674,1445,615,1356,563,1268,518,1184,480,1038,424"/>
+</map>

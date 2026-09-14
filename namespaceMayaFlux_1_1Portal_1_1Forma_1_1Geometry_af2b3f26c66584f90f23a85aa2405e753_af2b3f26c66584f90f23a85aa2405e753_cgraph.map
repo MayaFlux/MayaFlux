@@ -1,0 +1,23 @@
+<map id="MayaFlux::Portal::Forma::Geometry::drawable_canvas" name="MayaFlux::Portal::Forma::Geometry::drawable_canvas">
+<area shape="rect" id="Node000001" title="Geometry function for a drawable curve canvas in NDC space." alt="" coords="5,149,220,189"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kinesis_1_1AABB2D_a6244e0bb95e47c9914259ac9f60bbe01.html#a6244e0bb95e47c9914259ac9f60bbe01" title=" " alt="" coords="284,5,433,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="139,147,196,106,267,62,292,49,295,53,269,66,199,110,142,151"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kinesis_1_1AABB2D_a32bac0d1a4f876c992486eed5dc9fd6f.html#a32bac0d1a4f876c992486eed5dc9fd6f" title=" " alt="" coords="780,24,929,64"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="154,147,207,125,267,105,402,78,538,60,664,49,766,44,766,49,664,54,539,65,403,83,269,111,209,130,157,152"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_a7b39cfe6094211ccc1811a8e95355b81.html#a7b39cfe6094211ccc1811a8e95355b81" title="Produce a Form::wire that registers canvas painting over bounds." alt="" coords="268,120,449,160"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="220,154,254,150,254,155,220,159"/>
+<area shape="rect" id="Node000008" href="$structMayaFlux_1_1Kinesis_1_1AABB2D_ab8e372add789f6bd44fa66a92618456a.html#ab8e372add789f6bd44fa66a92618456a" title=" " alt="" coords="780,216,929,256"/>
+<area shape="poly" id="edge10_Node000001_Node000008" title=" " alt="" coords="221,176,766,225,766,231,220,182"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_1_1Kinesis_a41838c872de7478363ca82e83df687e8.html#a41838c872de7478363ca82e83df687e8" title="Containment test for a convex or concave polygon." alt="" coords="284,235,433,275"/>
+<area shape="poly" id="edge9_Node000001_Node000009" title=" " alt="" coords="172,187,288,228,287,233,170,192"/>
+<area shape="rect" id="Node000010" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_af668d56bbf7441d552c3ee5c38c3ae62.html#af668d56bbf7441d552c3ee5c38c3ae62" title="Write a vertex array into a GeometryFn output buffer." alt="" coords="268,299,449,339"/>
+<area shape="poly" id="edge11_Node000001_Node000010" title=" " alt="" coords="138,188,195,235,269,284,283,291,280,296,267,289,192,239,134,192"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_a93bc17f116ad6b024d7c2430c4ce8336.html#a93bc17f116ad6b024d7c2430c4ce8336" title="Wire drag interaction for a drawable canvas element." alt="" coords="497,120,716,160"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="450,137,484,137,484,143,450,143"/>
+<area shape="poly" id="edge5_Node000005_Node000003" title=" " alt="" coords="668,117,715,99,763,74,780,66,782,71,765,78,717,104,670,122"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Context_ad0e5f6b54a528262568438b0354769bd.html#ad0e5f6b54a528262568438b0354769bd" title="Called on each mouse&#45;move event while btn is held, tracking the element where the drag began even whe..." alt="" coords="764,88,945,128"/>
+<area shape="poly" id="edge6_Node000005_Node000006" title=" " alt="" coords="716,123,750,119,751,124,717,129"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Context_ace07c841c93ea1a4adfe4aa509335acb.html#ace07c841c93ea1a4adfe4aa509335acb" title="Called when a mouse button is released over an element." alt="" coords="764,152,945,192"/>
+<area shape="poly" id="edge7_Node000005_Node000007" title=" " alt="" coords="717,151,751,156,750,161,716,157"/>
+<area shape="poly" id="edge8_Node000005_Node000008" title=" " alt="" coords="670,158,717,176,765,202,782,209,780,214,763,206,715,181,668,163"/>
+</map>

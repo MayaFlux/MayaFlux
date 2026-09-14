@@ -1,0 +1,11 @@
+<map id="MayaFlux::add_processor" name="MayaFlux::add_processor">
+<area shape="rect" id="Node000001" title="Adds a processor to a specific buffer." alt="" coords="259,87,447,112"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_a35593715495ccb56d4cdae77b4a978ba.html#a35593715495ccb56d4cdae77b4a978ba" title="Creates a new processor and adds it to a buffer." alt="" coords="5,5,211,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="310,84,210,45,169,33,170,28,212,39,312,79"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_ae1e5a70f9fad7f4e1a95fc8fd90aac94.html#ae1e5a70f9fad7f4e1a95fc8fd90aac94" title=" " alt="" coords="5,55,211,80"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="245,88,205,83,206,77,246,83"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1DataProcessingChain_a94ba09b2c1cbc8dd03c218f49c4d49b1.html#a94ba09b2c1cbc8dd03c218f49c4d49b1" title=" " alt="" coords="24,104,192,159"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="245,116,192,123,192,118,245,111"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingControl_adcfa190d3e7daf83304304d055ad4ef7.html#adcfa190d3e7daf83304304d055ad4ef7" title=" " alt="" coords="9,183,207,237"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="316,121,212,172,182,185,180,180,210,168,314,116"/>
+</map>

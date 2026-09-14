@@ -1,0 +1,10 @@
+<map id="MayaFlux::Transitive::Protocol::write_int32" name="MayaFlux::Transitive::Protocol::write_int32">
+<area shape="rect" id="Node000001" title="Append a big&#45;endian int32." alt="" coords="699,5,863,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1OscParser_a7d6a1542c7d28669598cb7e3e11f7fdf.html#a7d6a1542c7d28669598cb7e3e11f7fdf" title="Serialize an OSC message to wire format." alt="" coords="248,5,444,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="685,25,651,24,492,24,444,25,444,20,492,19,651,19,685,19"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Transitive_1_1Protocol_a1598959b97b8dd4a66a8449ec76ec0da.html#a1598959b97b8dd4a66a8449ec76ec0da" title="Append a length&#45;prefixed blob padded to 4&#45;byte boundary." alt="" coords="492,33,651,73"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="685,41,651,45,650,40,685,35"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Network_aabc9bb62bb500595d574694238b7954b.html#aabc9bb62bb500595d574694238b7954b" title="Serialize an OSC message to wire bytes for sending via NetworkService." alt="" coords="5,5,200,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="234,28,200,28,200,23,234,23"/>
+<area shape="poly" id="edge4_Node000004_Node000002" title=" " alt="" coords="478,44,444,40,445,35,478,39"/>
+</map>

@@ -1,0 +1,18 @@
+<map id="MayaFlux::Portal::Forma::Geometry::toggle" name="MayaFlux::Portal::Forma::Geometry::toggle">
+<area shape="rect" id="Node000001" title="Geometry function for a boolean toggle in NDC space." alt="" coords="5,157,187,197"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kinesis_1_1AABB2D_a6244e0bb95e47c9914259ac9f60bbe01.html#a6244e0bb95e47c9914259ac9f60bbe01" title=" " alt="" coords="251,5,400,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="114,155,165,106,198,79,233,55,245,49,248,53,236,60,201,83,168,110,117,159"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_ae7264d97a31a6219d1a0c63714eea28e.html#ae7264d97a31a6219d1a0c63714eea28e" title="Generate a filled TRIANGLE_STRIP quad from an AABB2D." alt="" coords="251,93,400,133"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="168,155,240,134,241,140,169,160"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_acdcc1546fcb3c72667ba53984e2c7168.html#acdcc1546fcb3c72667ba53984e2c7168" title="Produce a Form::wire that registers a press flipping a bool state." alt="" coords="235,157,416,197"/>
+<area shape="poly" id="edge4_Node000001_Node000004" title=" " alt="" coords="187,175,221,175,221,180,187,180"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Kakshya_af09aa07eacd20ac64c4d53ccfbf545e2.html#af09aa07eacd20ac64c4d53ccfbf545e2" title="Batch&#45;project raw Vertex vector to MeshVertex." alt="" coords="246,221,405,261"/>
+<area shape="poly" id="edge6_Node000001_Node000006" title=" " alt="" coords="169,195,241,215,240,220,168,200"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_af668d56bbf7441d552c3ee5c38c3ae62.html#af668d56bbf7441d552c3ee5c38c3ae62" title="Write a vertex array into a GeometryFn output buffer." alt="" coords="235,285,416,325"/>
+<area shape="poly" id="edge8_Node000001_Node000008" title=" " alt="" coords="123,195,174,233,236,271,250,278,247,282,233,276,171,237,120,200"/>
+<area shape="poly" id="edge3_Node000003_Node000003" title=" " alt="" coords="282,94,280,84,287,74,302,69,325,67,352,70,367,77,364,82,351,75,325,72,303,74,290,79,285,85,288,92"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Context_ad0761e5a7699167e0151d2a97fe89a2c.html#ad0761e5a7699167e0151d2a97fe89a2c" title="Called when a mouse button is pressed over an element." alt="" coords="464,157,645,197"/>
+<area shape="poly" id="edge5_Node000004_Node000005" title=" " alt="" coords="416,175,450,175,450,180,416,180"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Kakshya_a7aca11e65c3ec397c37645fe66faf18d.html#a7aca11e65c3ec397c37645fe66faf18d" title="Project raw Vertex to MeshVertex." alt="" coords="475,221,634,261"/>
+<area shape="poly" id="edge7_Node000006_Node000007" title=" " alt="" coords="405,239,462,239,462,244,405,244"/>
+</map>

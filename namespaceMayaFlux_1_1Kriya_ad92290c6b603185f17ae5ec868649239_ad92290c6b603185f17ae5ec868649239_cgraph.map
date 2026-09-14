@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kriya::pattern" name="MayaFlux::Kriya::pattern">
+<area shape="rect" id="Node000001" title="Creates a generative algorithm that produces values based on a pattern function." alt="" coords="5,45,188,70"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Vruta_aa9ec6c0df02f7be3eff1aa2d2a0020d4.html#aa9ec6c0df02f7be3eff1aa2d2a0020d4" title="Convert seconds to frames at a given frame rate." alt="" coords="236,5,427,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="188,42,222,38,223,43,189,48"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Vruta_a09f1b4929d6c87d96e68969b5c102ce9.html#a09f1b4929d6c87d96e68969b5c102ce9" title="Convert seconds to samples at a given sample rate." alt="" coords="236,69,427,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="189,67,223,72,222,77,188,72"/>
+</map>

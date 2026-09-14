@@ -1,0 +1,33 @@
+<map id="MayaFlux::Kinesis::velocity" name="MayaFlux::Kinesis::velocity">
+<area shape="rect" id="Node000001" title="First difference: rate of change of position." alt="" coords="451,229,600,269"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_a3ae7bcc83a9bda52088000796547ea70.html#a3ae7bcc83a9bda52088000796547ea70" title="Signed curvature computed directly from a position HistoryBuffer." alt="" coords="228,5,403,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="509,217,492,181,468,139,438,96,401,59,383,48,386,43,404,55,442,93,472,136,496,178,513,215"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_a0036dc3dc5d6fa14087e19429a7ab253.html#a0036dc3dc5d6fa14087e19429a7ab253" title="Sign of a scalar first difference." alt="" coords="241,69,390,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="500,220,457,171,430,146,401,124,379,112,382,107,404,119,434,142,461,167,504,217"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Kinesis_ae96f96768aa0e321db381b827ab729b2.html#ae96f96768aa0e321db381b827ab729b2" title="Unit direction of a vec2 first difference." alt="" coords="241,133,390,173"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="476,225,402,188,373,176,375,171,404,183,478,220"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_1_1Kinesis_a1acf912cbb82682dd59c2824c3e2eb40.html#a1acf912cbb82682dd59c2824c3e2eb40" title="Unit direction of a vec3 first difference." alt="" coords="241,197,390,237"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="436,239,390,231,391,226,437,233"/>
+<area shape="rect" id="Node000010" href="$namespaceMayaFlux_1_1Kinesis_aa0b45e410cef99b85aef90ab5e2e6376.html#aa0b45e410cef99b85aef90ab5e2e6376" title="Absolute value of a scalar first difference." alt="" coords="241,261,390,301"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="437,265,391,273,390,267,436,260"/>
+<area shape="rect" id="Node000014" href="$namespaceMayaFlux_1_1Kinesis_af44055d5523229166f944d74c59dee0f.html#af44055d5523229166f944d74c59dee0f" title="Magnitude of a vec2 first difference." alt="" coords="241,325,390,365"/>
+<area shape="poly" id="edge13_Node000001_Node000014" title=" " alt="" coords="478,278,404,316,375,328,373,323,402,311,476,274"/>
+<area shape="rect" id="Node000015" href="$namespaceMayaFlux_1_1Kinesis_a360de4f8738ad40ff3e3e43336a97f40.html#a360de4f8738ad40ff3e3e43336a97f40" title="Magnitude of a vec3 first difference." alt="" coords="241,389,390,429"/>
+<area shape="poly" id="edge14_Node000001_Node000015" title=" " alt="" coords="504,282,461,331,434,357,404,380,382,392,379,387,401,375,430,353,457,328,500,278"/>
+<area shape="rect" id="Node000016" href="$namespaceMayaFlux_1_1Kinesis_a36308f3312d8bca49b3170168a8bf5d0.html#a36308f3312d8bca49b3170168a8bf5d0" title="Convenience overload of velocity over a raw span, samples[0] newest." alt="" coords="241,453,390,493"/>
+<area shape="poly" id="edge15_Node000001_Node000016" title=" " alt="" coords="513,284,496,320,472,363,442,406,404,443,386,455,383,451,401,439,438,402,468,360,492,318,509,281"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_a2fe94c0accd17b0621aef7262a7dfe5b.html#a2fe94c0accd17b0621aef7262a7dfe5b" title="Convenience overload of curvature_from_history over a raw span of positions, samples[0] newest." alt="" coords="5,5,180,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="214,28,180,28,180,23,214,23"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kinesis_a96a288234731ad25af349763d3bbea90.html#a96a288234731ad25af349763d3bbea90" title="Convenience overload of direction_sign over a raw span, samples[0] newest." alt="" coords="18,69,167,109"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="227,92,168,92,168,87,227,87"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Kinesis_a89b9d0bf4c776f9d442aef368bdee355.html#a89b9d0bf4c776f9d442aef368bdee355" title="Convenience overload of heading_vector(vec2) over a raw span, samples[0] newest." alt="" coords="18,133,167,173"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="227,156,168,156,168,151,227,151"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Kinesis_ac325f8d1f995308b31d57c40520096c5.html#ac325f8d1f995308b31d57c40520096c5" title="Convenience overload of heading_vector(vec3) over a raw span, samples[0] newest." alt="" coords="18,197,167,237"/>
+<area shape="poly" id="edge7_Node000006_Node000008" title=" " alt="" coords="233,180,164,200,162,195,231,175"/>
+<area shape="rect" id="Node000011" href="$namespaceMayaFlux_1_1Kinesis_a78d00906aadb427c971fd1ff13bb53af.html#a78d00906aadb427c971fd1ff13bb53af" title="Convenience overload of speed(double) over a raw span, samples[0] newest." alt="" coords="18,261,167,301"/>
+<area shape="poly" id="edge10_Node000010_Node000011" title=" " alt="" coords="227,284,168,284,168,279,227,279"/>
+<area shape="rect" id="Node000012" href="$namespaceMayaFlux_1_1Kinesis_a1e242a3a5f40763dfd60f93ec3a505cf.html#a1e242a3a5f40763dfd60f93ec3a505cf" title="Convenience overload of speed(vec2) over a raw span, samples[0] newest." alt="" coords="18,325,167,365"/>
+<area shape="poly" id="edge11_Node000010_Node000012" title=" " alt="" coords="233,308,164,328,162,323,231,303"/>
+<area shape="rect" id="Node000013" href="$namespaceMayaFlux_1_1Kinesis_aba09278d279e60c2e2d76d7c1616766c.html#aba09278d279e60c2e2d76d7c1616766c" title="Convenience overload of speed(vec3) over a raw span, samples[0] newest." alt="" coords="18,389,167,429"/>
+<area shape="poly" id="edge12_Node000010_Node000013" title=" " alt="" coords="237,310,230,315,215,331,206,347,198,363,182,379,162,391,159,387,178,375,193,360,202,344,210,328,226,311,234,306"/>
+</map>

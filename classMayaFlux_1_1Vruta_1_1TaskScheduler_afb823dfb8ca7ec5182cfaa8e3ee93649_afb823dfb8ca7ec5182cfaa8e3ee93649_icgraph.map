@@ -1,0 +1,60 @@
+<map id="MayaFlux::Vruta::TaskScheduler::find_task_by_routine" name="MayaFlux::Vruta::TaskScheduler::find_task_by_routine">
+<area shape="rect" id="Node000001" title="Find task entry by routine pointer." alt="" coords="1081,421,1312,461"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_aefd214af5e476f686dc86cc7d7220c96.html#aefd214af5e476f686dc86cc7d7220c96" title="Cancels and removes a task from the scheduler." alt="" coords="803,421,1033,461"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1068,444,1033,444,1033,439,1068,439"/>
+<area shape="poly" id="edge24_Node000002_Node000002" title=" " alt="" coords="964,410,948,403,918,400,892,402,876,407,870,413,873,420,868,422,865,412,873,402,891,397,918,395,949,397,966,405"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kriya_1_1EventChain_a4007c8306ef599d64df185fc86af0baf.html#a4007c8306ef599d64df185fc86af0baf" title="Cancels the event chain if it&#39;s currently executing." alt="" coords="541,133,752,173"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="902,410,881,360,849,300,806,239,781,212,753,187,734,176,736,171,756,183,785,208,810,236,853,297,886,358,907,408"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kriya_1_1Timer_af3c122d5e399123a2d7a58e23269e8ad.html#af3c122d5e399123a2d7a58e23269e8ad" title="Cancels any scheduled callback." alt="" coords="559,197,734,237"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="880,414,670,239,674,235,884,410"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Bridge_a5f483010f6e367397305db3d02398a0a.html#a5f483010f6e367397305db3d02398a0a" title=" " alt="" coords="556,325,737,365"/>
+<area shape="poly" id="edge15_Node000002_Node000012" title=" " alt="" coords="855,419,754,380,717,368,719,363,756,375,857,414"/>
+<area shape="rect" id="Node000018" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Bridge_ac14fb1d2e20704c4966cabc3c823d0aa.html#ac14fb1d2e20704c4966cabc3c823d0aa" title=" " alt="" coords="551,389,742,429"/>
+<area shape="poly" id="edge21_Node000002_Node000018" title=" " alt="" coords="788,429,742,423,743,418,789,423"/>
+<area shape="rect" id="Node000019" href="$classMayaFlux_1_1Nexus_1_1Fabric_a93d123620b94001b0e8b5982ed0342c1.html#a93d123620b94001b0e8b5982ed0342c1" title="Remove a registered object by id, cancelling any associated tasks." alt="" coords="556,453,737,493"/>
+<area shape="poly" id="edge25_Node000002_Node000019" title=" " alt="" coords="789,459,738,465,737,460,789,454"/>
+<area shape="rect" id="Node000020" href="$classMayaFlux_1_1IO_1_1SpatialCapture_ad67b576f8665ddb7d8e38aaefa9bcd13.html#ad67b576f8665ddb7d8e38aaefa9bcd13" title="Request the capture routine stop." alt="" coords="541,517,753,557"/>
+<area shape="poly" id="edge26_Node000002_Node000020" title=" " alt="" coords="857,469,756,508,719,520,717,515,754,503,855,464"/>
+<area shape="rect" id="Node000023" href="$classMayaFlux_1_1IO_1_1VolumeCapture_ae4b95e2cd76c86d19265638b2ec52180.html#ae4b95e2cd76c86d19265638b2ec52180" title="Cancel the capture routine." alt="" coords="539,581,755,621"/>
+<area shape="poly" id="edge29_Node000002_Node000023" title=" " alt="" coords="888,473,830,523,794,549,756,572,728,584,726,579,753,567,791,545,826,519,885,469"/>
+<area shape="rect" id="Node000026" href="$classMayaFlux_1_1Nexus_1_1Fabric_ae50d63571d93f05e1c6a27a3469391f4.html#ae50d63571d93f05e1c6a27a3469391f4" title=" " alt="" coords="556,645,737,685"/>
+<area shape="poly" id="edge32_Node000002_Node000026" title=" " alt="" coords="900,475,876,512,843,555,802,598,756,636,733,648,731,643,753,631,799,595,839,552,871,509,896,472"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kriya_1_1TimedAction_a659770ef2f803ee42cec4d2eba1ed20b.html#a659770ef2f803ee42cec4d2eba1ed20b" title="Cancels any active action." alt="" coords="272,197,491,237"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="546,220,491,220,491,215,546,215"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Kriya_1_1TemporalActivation_aa48d4567cb873962947e3e270191b7d3.html#aa48d4567cb873962947e3e270191b7d3" title="Cancels any currently active node." alt="" coords="283,69,479,109"/>
+<area shape="poly" id="edge6_Node000004_Node000007" title=" " alt="" coords="546,193,537,187,521,171,512,155,504,139,489,123,468,112,471,107,492,119,509,135,517,152,525,168,540,183,549,189"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Kriya_1_1Timer_acf410f70434e3f2a2e3ae063f2aab581.html#acf410f70434e3f2a2e3ae063f2aab581" title="Schedules a callback to execute after a delay." alt="" coords="294,133,469,173"/>
+<area shape="poly" id="edge10_Node000004_Node000011" title=" " alt="" coords="549,197,464,176,465,171,551,191"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kriya_1_1TimedAction_ac54f279dd2bd1e1b20e0f25a9d5dea5c.html#ac54f279dd2bd1e1b20e0f25a9d5dea5c" title="Executes a pair of functions with a time interval between them." alt="" coords="5,197,224,237"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="258,220,224,220,224,215,258,215"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Kriya_1_1TemporalActivation_ab4f3737fb0465e8727586b7104b95fc2.html#ab4f3737fb0465e8727586b7104b95fc2" title="Activates a buffer for a specified duration." alt="" coords="17,133,213,173"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="285,115,199,136,198,131,283,110"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Kriya_1_1TemporalActivation_a5472441ec2fd9cc067e55eb8f48f1a6d.html#a5472441ec2fd9cc067e55eb8f48f1a6d" title="Activates a node network for a specified duration." alt="" coords="10,5,219,45"/>
+<area shape="poly" id="edge8_Node000007_Node000009" title=" " alt="" coords="283,69,198,48,199,43,285,63"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Kriya_1_1TemporalActivation_ab218a3ead3d97c0a677ad3b3f0fad462.html#ab218a3ead3d97c0a677ad3b3f0fad462" title="Activates a node for a specified duration." alt="" coords="17,69,213,109"/>
+<area shape="poly" id="edge9_Node000007_Node000010" title=" " alt="" coords="270,92,213,92,213,87,270,87"/>
+<area shape="poly" id="edge14_Node000011_Node000006" title=" " alt="" coords="285,179,199,200,198,195,283,174"/>
+<area shape="poly" id="edge11_Node000011_Node000008" title=" " alt="" coords="280,156,213,156,213,151,280,151"/>
+<area shape="poly" id="edge12_Node000011_Node000009" title=" " alt="" coords="280,130,270,123,254,107,246,91,238,75,222,59,201,48,204,43,226,55,242,71,250,88,258,104,274,119,283,125"/>
+<area shape="poly" id="edge13_Node000011_Node000010" title=" " alt="" coords="283,133,198,112,199,107,285,127"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Bridge_aa516a463d14336a20319caa9b3b8b3d1.html#aa516a463d14336a20319caa9b3b8b3d1" title=" " alt="" coords="291,261,472,301"/>
+<area shape="poly" id="edge16_Node000012_Node000013" title=" " alt="" coords="549,325,464,304,465,299,551,319"/>
+<area shape="rect" id="Node000016" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Bridge_a367d65aefbad4e7a1d844a1a9be38d1a.html#a367d65aefbad4e7a1d844a1a9be38d1a" title="Cancel all inbound and outbound bindings for an element." alt="" coords="291,325,472,365"/>
+<area shape="poly" id="edge19_Node000012_Node000016" title=" " alt="" coords="542,348,472,348,472,343,542,343"/>
+<area shape="rect" id="Node000017" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Bridge_aadb281b88d67a45aae2377bc344ee500.html#aadb281b88d67a45aae2377bc344ee500" title=" " alt="" coords="291,389,472,429"/>
+<area shape="poly" id="edge20_Node000012_Node000017" title=" " alt="" coords="551,371,465,392,464,387,549,366"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Bridge_a0b311b1aa395034f6d660d0f152f4d70.html#a0b311b1aa395034f6d660d0f152f4d70" title="Drive element value from an arbitrary per&#45;frame callable." alt="" coords="24,261,205,301"/>
+<area shape="poly" id="edge17_Node000013_Node000014" title=" " alt="" coords="277,284,206,284,206,279,277,279"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Bridge_a962f9a886b75c40d6a018dbd2271bae6.html#a962f9a886b75c40d6a018dbd2271bae6" title="Drive element value from a Node&#39;s output each frame." alt="" coords="24,325,205,365"/>
+<area shape="poly" id="edge18_Node000013_Node000015" title=" " alt="" coords="285,307,199,328,198,323,283,302"/>
+<area shape="poly" id="edge22_Node000018_Node000016" title=" " alt="" coords="549,389,464,368,465,363,551,383"/>
+<area shape="poly" id="edge23_Node000018_Node000017" title=" " alt="" coords="538,412,472,412,472,407,538,407"/>
+<area shape="rect" id="Node000021" href="$classMayaFlux_1_1IO_1_1SpatialCapture_a8bf68068a2d7df8627f87157ff18f1ac.html#a8bf68068a2d7df8627f87157ff18f1ac" title="Spawn the capture routine, resetting the frame counter." alt="" coords="275,453,487,493"/>
+<area shape="poly" id="edge27_Node000020_Node000021" title=" " alt="" coords="549,517,464,496,465,491,551,511"/>
+<area shape="rect" id="Node000022" href="$classMayaFlux_1_1IO_1_1SpatialCapture_a9274827d2e9acad29b575af1535b05ac.html#a9274827d2e9acad29b575af1535b05ac" title=" " alt="" coords="275,517,487,557"/>
+<area shape="poly" id="edge28_Node000020_Node000022" title=" " alt="" coords="527,540,487,540,487,535,527,535"/>
+<area shape="rect" id="Node000024" href="$classMayaFlux_1_1IO_1_1VolumeCapture_aabbce744bd0328d8c55c5812650da488.html#aabbce744bd0328d8c55c5812650da488" title="Spawn the capture routine, resetting the frame counter." alt="" coords="273,581,489,621"/>
+<area shape="poly" id="edge30_Node000023_Node000024" title=" " alt="" coords="525,604,489,604,489,599,525,599"/>
+<area shape="rect" id="Node000025" href="$classMayaFlux_1_1IO_1_1VolumeCapture_a564d65131faaa738b51dd1d02138bce6.html#a564d65131faaa738b51dd1d02138bce6" title=" " alt="" coords="273,645,489,685"/>
+<area shape="poly" id="edge31_Node000023_Node000025" title=" " alt="" coords="551,627,465,648,464,643,549,622"/>
+</map>

@@ -1,0 +1,9 @@
+<map id="MayaFlux::Yantra::UniversalAnalyzer::store_current_analysis" name="MayaFlux::Yantra::UniversalAnalyzer::store_current_analysis">
+<area shape="rect" id="Node000001" title=" " alt="" coords="303,62,507,117"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1EnergyAnalyzer_a97561d0986bef72b733abe1670d3d6a7.html#a97561d0986bef72b733abe1670d3d6a7" title="Core analysis implementation &#45; creates analysis result AND pipeline output." alt="" coords="5,5,255,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="289,65,216,48,217,43,290,60"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1StatisticalAnalyzer_ada59b9d30d969a895d8693fc96381700.html#ada59b9d30d969a895d8693fc96381700" title="Core analysis implementation &#45; creates analysis result AND pipeline output." alt="" coords="5,69,255,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="289,92,255,92,255,87,289,87"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1VisionAnalyzer_a6894626eb161191d2811f594d04914bd.html#a6894626eb161191d2811f594d04914bd" title="Pure virtual analysis implementation &#45; derived classes implement this." alt="" coords="5,133,255,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="290,119,217,136,216,131,289,114"/>
+</map>

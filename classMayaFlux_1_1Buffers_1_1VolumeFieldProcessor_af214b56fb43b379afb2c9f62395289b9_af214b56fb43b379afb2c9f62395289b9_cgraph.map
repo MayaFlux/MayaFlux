@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::VolumeFieldProcessor::on_descriptors_created" name="MayaFlux::Buffers::VolumeFieldProcessor::on_descriptors_created">
+<area shape="rect" id="Node000001" title="Write every binding in the table for the current slot assignment." alt="" coords="5,5,187,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VolumeFieldProcessor_a9458aa2101ee0edf2bf69ec89d9484db.html#a9458aa2101ee0edf2bf69ec89d9484db" title="Issue descriptor writes for every entry in the binding table." alt="" coords="235,5,412,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="187,30,221,30,221,35,187,35"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a715d57394465ff2924727d7c82d87e7b.html#a715d57394465ff2924727d7c82d87e7b" title="Get the global shader compiler instance." alt="" coords="460,13,657,53"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="413,30,446,30,446,35,413,35"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ab22eaae6b8210236918b85f409fc4c49.html#ab22eaae6b8210236918b85f409fc4c49" title=" " alt="" coords="705,13,903,53"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="658,30,692,30,692,35,658,35"/>
+</map>

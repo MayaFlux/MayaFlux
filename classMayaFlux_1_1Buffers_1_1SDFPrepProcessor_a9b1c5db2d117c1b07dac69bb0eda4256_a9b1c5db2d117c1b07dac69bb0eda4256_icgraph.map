@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::SDFPrepProcessor::rebuild_buffers" name="MayaFlux::Buffers::SDFPrepProcessor::rebuild_buffers">
+<area shape="rect" id="Node000001" title=" " alt="" coords="221,45,415,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1SDFPrepProcessor_a2bef649b10d7d21ac51375dd996f01d3.html#a2bef649b10d7d21ac51375dd996f01d3" title="Called when this processor is attached to a buffer." alt="" coords="7,5,171,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="207,56,171,50,172,44,208,51"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1SDFPrepProcessor_a67d94be13d83a0bc64a3b02760ffd1c1.html#a67d94be13d83a0bc64a3b02760ffd1c1" title="Rebuild owned buffers to match a new resolution." alt="" coords="5,84,173,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="208,94,174,100,173,95,207,89"/>
+</map>

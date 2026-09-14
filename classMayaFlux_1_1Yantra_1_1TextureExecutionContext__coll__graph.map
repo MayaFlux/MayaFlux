@@ -1,0 +1,16 @@
+<map id="MayaFlux::Yantra::TextureExecutionContext" name="MayaFlux::Yantra::TextureExecutionContext">
+<area shape="rect" id="Node000001" title="GpuExecutionContext specialisation for image compute shaders." alt="" coords="224,1935,433,2589"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1GpuExecutionContext.html" title=" " alt="" coords="124,1603,347,1872"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="264,1885,273,1934,268,1935,259,1886"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1GpuDispatchCore.html" title="Non&#45;template base that owns all type&#45;independent GPU dispatch logic." alt="" coords="107,408,353,1221"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="235,1235,237,1602,232,1602,230,1235"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Yantra_1_1GpuExecutionContext.html" title="Type&#45;parameterised shell over GpuDispatchCore." alt="" coords="251,1271,491,1511"/>
+<area shape="poly" id="edge6_Node000006_Node000003" title=" " alt="" coords="336,1234,345,1270,339,1271,331,1235"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1GpuResourceManager.html" title="Encapsulates all Vulkan resource lifecycle behind Portal facades." alt="" coords="5,5,225,345"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="148,345,157,391,151,392,143,346"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Portal_1_1Graphics_1_1GpuComputeConfig.html" title="Plain&#45;data description of the compute shader to dispatch." alt="" coords="250,105,439,245"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="335,246,309,392,303,391,330,245"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="322,1524,291,1603,286,1601,317,1522"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="371,1705,473,1770"/>
+<area shape="poly" id="edge7_Node000001_Node000007" title=" " alt="" coords="419,1771,392,1919,387,1918,414,1770"/>
+</map>

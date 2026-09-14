@@ -1,0 +1,5 @@
+<map id="MayaFlux::Yantra::transform_outliers" name="MayaFlux::Yantra::transform_outliers">
+<area shape="rect" id="Node000001" title="Statistical outlier transformation using existing StatisticalAnalyzer (OUT&#45;OF&#45;PLACE)" alt="" coords="5,5,212,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1OperationHelper_ab87e318fc808c4e06d895135af6097e2.html#ab87e318fc808c4e06d895135af6097e2" title="Setup operation buffer from Datum or ComputeData type." alt="" coords="260,5,483,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="212,23,246,23,246,28,212,28"/>
+</map>

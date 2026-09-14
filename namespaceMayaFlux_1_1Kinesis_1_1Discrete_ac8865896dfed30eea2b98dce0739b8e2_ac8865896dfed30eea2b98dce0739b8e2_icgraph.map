@@ -1,0 +1,11 @@
+<map id="MayaFlux::Kinesis::Discrete::skewness" name="MayaFlux::Kinesis::Discrete::skewness">
+<area shape="rect" id="Node000001" title="Skewness (standardised third central moment) per window." alt="" coords="616,37,765,77"/>
+<area shape="poly" id="edge5_Node000001_Node000001" title=" " alt="" coords="734,26,719,19,691,16,666,18,651,23,646,29,649,36,644,38,641,28,648,18,665,13,691,11,720,14,736,21"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1StatisticalAnalyzer_ac6b9656bbc2b37d4603de52ef0115d85.html#ac6b9656bbc2b37d4603de52ef0115d85" title="Compute statistical values using span (zero&#45;copy processing)" alt="" coords="303,5,568,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="602,49,568,45,569,39,603,44"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1StatisticalAnalyzer_a853e8c531c62174e89938bf0eae8a7d9.html#a853e8c531c62174e89938bf0eae8a7d9" title="Create comprehensive analysis result." alt="" coords="319,69,552,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="603,71,552,77,552,72,602,66"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1StatisticalAnalyzer_ada59b9d30d969a895d8693fc96381700.html#ada59b9d30d969a895d8693fc96381700" title="Core analysis implementation &#45; creates analysis result AND pipeline output." alt="" coords="5,37,255,77"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="289,43,255,47,255,42,289,38"/>
+<area shape="poly" id="edge4_Node000004_Node000003" title=" " alt="" coords="304,78,255,73,255,68,305,73"/>
+</map>

@@ -1,0 +1,19 @@
+<map id="MayaFlux::IO::VolumeWriterRegistry::instance" name="MayaFlux::IO::VolumeWriterRegistry::instance">
+<area shape="rect" id="Node000001" title=" " alt="" coords="504,101,709,141"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1VDBWriter_aed319657fc39741ca2b77078537e3b37.html#aed319657fc39741ca2b77078537e3b37" title="Register this writer with the VolumeWriterRegistry." alt="" coords="271,5,455,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="547,98,455,60,423,48,425,43,457,55,549,93"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1IO_a3c707cb01c75c23609f44b322ad0d596.html#a3c707cb01c75c23609f44b322ad0d596" title="Save already&#45;downloaded VolumeData to disk via the registry." alt="" coords="289,69,436,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="490,109,436,102,437,96,491,103"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1IO_1_1IOManager_ad018092eb065937d11a691d891b139fc.html#ad018092eb065937d11a691d891b139fc" title="Download and save a GPU&#45;resident volume to disk asynchronously." alt="" coords="269,133,456,173"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="491,139,457,144,456,138,490,134"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1IO_1_1IOManager_add7c3d0e36556c60f2a8b5e221c1b677.html#add7c3d0e36556c60f2a8b5e221c1b677" title="Save an already&#45;downloaded VolumeData to disk asynchronously." alt="" coords="269,197,456,237"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="549,149,457,188,425,200,423,195,455,183,547,144"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1IOManager_af982f9c79ae012eccf9dc9c726bc754c.html#af982f9c79ae012eccf9dc9c726bc754c" title="Construct IOManager and register the IOService into BackendRegistry." alt="" coords="20,5,207,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="257,28,207,28,207,23,257,23"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1IO_abe34ed6ba5fcb4c267a579a2792bc5cf.html#abe34ed6ba5fcb4c267a579a2792bc5cf" title="Save a volume directly to disk via the VolumeWriter registry." alt="" coords="40,69,187,109"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="276,92,187,92,187,87,276,87"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1IO_1_1VolumeCapture_a6fd1859939243d21f87169e2ee950637.html#a6fd1859939243d21f87169e2ee950637" title=" " alt="" coords="5,133,221,173"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="277,114,193,136,191,131,275,109"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1IO_1_1IOManager_af3d6ec863b643aadf95baeb7c8121e49.html#af3d6ec863b643aadf95baeb7c8121e49" title="Begin recording a numbered .vdb sequence from a volume." alt="" coords="20,197,207,237"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="256,220,207,220,207,215,256,215"/>
+</map>

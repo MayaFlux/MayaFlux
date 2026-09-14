@@ -1,0 +1,29 @@
+<map id="MayaFlux::Buffers::RenderProcessor::execute_shader" name="MayaFlux::Buffers::RenderProcessor::execute_shader">
+<area shape="rect" id="Node000001" title="Records and registers a secondary command buffer every call, even with nothing to draw (a GraphicsOpe..." alt="" coords="5,284,196,339"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_acdda7ec3c07aa256570f414773f31f74.html#acdda7ec3c07aa256570f414773f31f74" title="Buffer the draw sources vertices and indices from." alt="" coords="258,5,429,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="109,283,127,237,156,180,194,121,217,94,242,69,247,65,250,70,246,73,221,97,198,124,160,183,132,240,114,285"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_adb455998d45b8c874249dc2920ab1a2b.html#adb455998d45b8c874249dc2920ab1a2b" title=" " alt="" coords="251,84,435,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="118,282,170,216,204,181,242,149,251,143,254,148,246,153,208,185,174,220,123,285"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a54c4e0f2eb44a261d8463e8423e3746d.html#a54c4e0f2eb44a261d8463e8423e3746d" title="Get the global render flow instance." alt="" coords="245,163,442,203"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="135,282,185,247,243,213,259,206,261,211,245,218,187,251,138,286"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a715d57394465ff2924727d7c82d87e7b.html#a715d57394465ff2924727d7c82d87e7b" title="Get the global shader compiler instance." alt="" coords="245,227,442,267"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="195,284,253,268,254,274,197,289"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_adc74692b3613a1bf0b3cfced4b15ee28.html#adc74692b3613a1bf0b3cfced4b15ee28" title="Mill m_runs into the private buffer and set the draw range." alt="" coords="244,291,443,331"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="196,309,230,309,230,314,196,314"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_a48a13b34e7cf44301f4df7e8b124eb78.html#a48a13b34e7cf44301f4df7e8b124eb78" title="Called before each process callback." alt="" coords="266,356,421,411"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="194,336,253,354,252,359,193,341"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_acdee805b97990f3a7a66b39ebb2b8f3d.html#acdee805b97990f3a7a66b39ebb2b8f3d" title="Resolve the active view transform and write it to the UBO." alt="" coords="250,435,437,489"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="134,337,185,378,245,420,257,426,255,431,243,424,181,383,131,341"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a1fd501788f3b88dcf76ff38d6812e81b.html#a1fd501788f3b88dcf76ff38d6812e81b" title="Resolve logical descriptor set index to actual index." alt="" coords="250,513,437,568"/>
+<area shape="poly" id="edge11_Node000001_Node000012" title=" " alt="" coords="119,337,169,416,204,460,246,499,253,504,250,508,242,503,200,464,164,419,114,340"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_afc29bda3c0abfd76a1c160ccfcc62d8b.html#afc29bda3c0abfd76a1c160ccfcc62d8b" title="This processor&#39;s push constant data with buffer&#45;staged fragments overlaid at their declared offsets." alt="" coords="250,592,437,647"/>
+<area shape="poly" id="edge12_Node000001_Node000013" title=" " alt="" coords="112,338,129,389,156,453,195,520,219,551,246,579,250,582,246,586,242,583,215,555,191,523,152,456,124,391,107,340"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1RenderFlow_a427f34bcec94e920d4dbbb76ae7f175f.html#a427f34bcec94e920d4dbbb76ae7f175f" title=" " alt="" coords="493,163,691,203"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="442,181,480,181,480,186,442,186"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ab22eaae6b8210236918b85f409fc4c49.html#ab22eaae6b8210236918b85f409fc4c49" title=" " alt="" coords="493,227,691,267"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="442,245,480,245,480,250,442,250"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_a40a3821e512edfa42f0b0a56c6218646.html#a40a3821e512edfa42f0b0a56c6218646" title="Transform published for this frame by publish_view_transform()." alt="" coords="491,292,693,347"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="443,312,477,313,477,318,443,317"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a497f347216f8aef622a7974cc4760eb9.html#a497f347216f8aef622a7974cc4760eb9" title="Byte width of this processor&#39;s push constant block, extended to cover any fragment staged on the buff..." alt="" coords="499,592,685,647"/>
+<area shape="poly" id="edge13_Node000013_Node000014" title=" " alt="" coords="437,617,485,617,485,622,437,622"/>
+</map>

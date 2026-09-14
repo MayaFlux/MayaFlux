@@ -1,0 +1,9 @@
+<map id="MayaFlux::Nodes::GpuSync::LineSegmentsNode::append_pairs" name="MayaFlux::Nodes::GpuSync::LineSegmentsNode::append_pairs">
+<area shape="rect" id="Node000001" title=" " alt="" coords="295,85,545,125"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1LineSegmentsNode_adfafd2752d15bba15ad8dfa273d21c3b.html#adfafd2752d15bba15ad8dfa273d21c3b" title="Append curvature segments derived from a vertex path." alt="" coords="26,5,226,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="324,84,226,60,227,55,325,79"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1LineSegmentsNode_a4c3385f2505656733cc217ffeb601d33.html#a4c3385f2505656733cc217ffeb601d33" title="Append normal segments derived from a vertex path." alt="" coords="5,85,247,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="281,107,247,107,247,102,281,102"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1LineSegmentsNode_afdb5dc53b08a1b43054b4b80361893af.html#afdb5dc53b08a1b43054b4b80361893af" title="Append tangent segments derived from a vertex path." alt="" coords="26,149,226,204"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="325,131,227,155,226,150,324,125"/>
+</map>

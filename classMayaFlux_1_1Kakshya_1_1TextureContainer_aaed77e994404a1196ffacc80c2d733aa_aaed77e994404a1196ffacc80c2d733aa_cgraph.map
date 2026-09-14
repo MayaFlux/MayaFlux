@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::TextureContainer::get_raw_data" name="MayaFlux::Kakshya::TextureContainer::get_raw_data">
+<area shape="rect" id="Node000001" title="Get a raw pointer to the underlying data storage." alt="" coords="5,5,168,60"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kakshya_a505a6355fca48fde66db9c0ca1e23a17.html#a505a6355fca48fde66db9c0ca1e23a17" title="Get a pointer to the raw bytes of a DataVariant and its size." alt="" coords="216,13,375,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="168,30,202,30,202,35,168,35"/>
+</map>

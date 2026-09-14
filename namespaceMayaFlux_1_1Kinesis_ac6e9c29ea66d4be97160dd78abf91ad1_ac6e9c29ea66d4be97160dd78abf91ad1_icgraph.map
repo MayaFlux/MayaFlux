@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::compute_path_normals" name="MayaFlux::Kinesis::compute_path_normals">
+<area shape="rect" id="Node000001" title="Compute normal vectors along a piecewise&#45;linear path." alt="" coords="295,5,469,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1LineSegmentsNode_a4c3385f2505656733cc217ffeb601d33.html#a4c3385f2505656733cc217ffeb601d33" title="Append normal segments derived from a vertex path." alt="" coords="5,5,247,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="281,28,247,28,247,23,281,23"/>
+</map>

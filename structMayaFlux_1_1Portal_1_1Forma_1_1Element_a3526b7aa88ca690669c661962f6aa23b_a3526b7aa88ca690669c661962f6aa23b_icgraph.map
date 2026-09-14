@@ -1,0 +1,12 @@
+<map id="MayaFlux::Portal::Forma::Element::non_interactive" name="MayaFlux::Portal::Forma::Element::non_interactive">
+<area shape="rect" id="Node000001" title="Exclude from hit testing." alt="" coords="693,37,887,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Plot_ac76725b0c967171fcbaa2ccb619fb6d7.html#ac76725b0c967171fcbaa2ccb619fb6d7" title="Place a text label element onto surface using a pre&#45;built buffer." alt="" coords="464,5,645,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="679,45,645,40,646,35,680,40"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Plot_aef7e0518151068c038cbcddd1916052d.html#aef7e0518151068c038cbcddd1916052d" title="Place a filled rectangle element onto surface using a pre&#45;built buffer." alt="" coords="464,69,645,109"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="680,75,646,80,645,74,679,70"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Forma_1_1internal_1_1Atelier_a88e3c1e6a8d3d5b535378537eb934326.html#a88e3c1e6a8d3d5b535378537eb934326" title="Create and place every adornment declared on spec." alt="" coords="235,30,416,85"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="451,42,417,47,416,42,450,37"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Portal_1_1Forma_a0134941e72f794b2ad2318f03eacb98b.html#a0134941e72f794b2ad2318f03eacb98b" title="Create a live plot in a new window." alt="" coords="5,37,187,77"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="221,60,187,60,187,55,221,55"/>
+<area shape="poly" id="edge5_Node000005_Node000003" title=" " alt="" coords="450,77,416,73,417,67,451,72"/>
+</map>

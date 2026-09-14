@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::VulkanBackend::register_backend_services" name="MayaFlux::Core::VulkanBackend::register_backend_services">
+<area shape="rect" id="Node000001" title=" " alt="" coords="284,5,515,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1VulkanBackend_a6e30dbdc07803bccbcf0f235ca620cc4.html#a6e30dbdc07803bccbcf0f235ca620cc4" title="Initialize the graphics backend with global configuration." alt="" coords="5,5,236,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="270,28,236,28,236,23,270,23"/>
+</map>

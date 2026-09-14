@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::VKShaderModule::read_spirv_file" name="MayaFlux::Core::VKShaderModule::read_spirv_file">
+<area shape="rect" id="Node000001" title="Read binary file into vector." alt="" coords="276,5,471,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1VKShaderModule_a77fa0fbf0086facdad539470581c844d.html#a77fa0fbf0086facdad539470581c844d" title="Create shader module from SPIR&#45;V file." alt="" coords="5,5,228,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="262,28,228,28,228,23,262,23"/>
+</map>

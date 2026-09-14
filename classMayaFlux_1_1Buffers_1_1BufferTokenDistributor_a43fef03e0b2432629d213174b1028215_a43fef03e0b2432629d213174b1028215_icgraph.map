@@ -1,0 +1,14 @@
+<map id="MayaFlux::Buffers::BufferTokenDistributor::has_frame_rate" name="MayaFlux::Buffers::BufferTokenDistributor::has_frame_rate">
+<area shape="rect" id="Node000001" title=" " alt="" coords="883,45,1049,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferTokenDistributor_ab405da6eb10db723c3611288b56f7703.html#ab405da6eb10db723c3611288b56f7703" title=" " alt="" coords="453,5,620,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="869,66,620,43,620,38,869,61"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1BufferTokenDistributor_a60fe6d82588287e9af8033ffa2c5bf71.html#a60fe6d82588287e9af8033ffa2c5bf71" title=" " alt="" coords="668,77,835,132"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="869,90,835,95,835,90,868,85"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1BufferTokenDistributor_a770e555396476661ff11b14431c183f4.html#a770e555396476661ff11b14431c183f4" title="Distribute a buffer based on its type and requested token." alt="" coords="239,45,405,100"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="440,53,406,60,405,55,439,48"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1BufferTokenDistributor_ad7575e0fb09c136cb890d448bbe486ac.html#ad7575e0fb09c136cb890d448bbe486ac" title="Distribute with optional transfer target (for cross&#45;domain routing)" alt="" coords="5,45,191,100"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="225,75,191,75,191,70,225,70"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1BufferTokenDistributor_ae4591636f9d2f46974bff1efe9eaf033.html#ae4591636f9d2f46974bff1efe9eaf033" title=" " alt="" coords="453,84,620,139"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="654,110,620,111,620,106,654,105"/>
+<area shape="poly" id="edge6_Node000006_Node000003" title=" " alt="" coords="439,96,405,90,406,85,440,91"/>
+</map>

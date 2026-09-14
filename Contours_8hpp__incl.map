@@ -1,0 +1,23 @@
+<map id="Contours.hpp" name="Contours.hpp">
+<area shape="rect" id="Node000001" title="Contour extraction from binary float masks." alt="" coords="314,5,422,31"/>
+<area shape="rect" id="Node000002" href="$Features_8hpp.html" title=" " alt="" coords="315,79,421,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="371,31,371,65,365,65,365,31"/>
+<area shape="rect" id="Node000003" href="$Bounds_8hpp.html" title=" " alt="" coords="275,152,461,192"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="371,104,371,138,365,138,365,104"/>
+<area shape="rect" id="Node000004" href="$HitTest_8hpp.html" title=" " alt="" coords="321,240,415,265"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="371,192,371,226,365,226,365,192"/>
+<area shape="rect" id="Node000005" href="$SpatialIndex_8hpp.html" title=" " alt="" coords="208,321,339,346"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="356,268,300,314,296,310,352,263"/>
+<area shape="rect" id="Node000010" href="$ViewTransform_8hpp.html" title=" " alt="" coords="363,313,562,353"/>
+<area shape="poly" id="edge9_Node000004_Node000010" title=" " alt="" coords="384,263,431,302,427,306,380,268"/>
+<area shape="rect" id="Node000006" href="$TendencyFactories_8hpp.html" title=" " alt="" coords="5,401,208,441"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="252,349,157,397,154,393,250,344"/>
+<area shape="rect" id="Node000009" title=" " alt="" coords="233,409,325,434"/>
+<area shape="poly" id="edge8_Node000005_Node000009" title=" " alt="" coords="277,346,280,395,274,395,271,346"/>
+<area shape="rect" id="Node000007" href="$Tendency_8hpp.html" title=" " alt="" coords="52,489,161,515"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="109,442,109,475,104,475,104,442"/>
+<area shape="rect" id="Node000008" title=" " alt="" coords="55,563,159,588"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="109,515,109,549,104,549,104,515"/>
+<area shape="rect" id="Node000011" title=" " alt="" coords="354,409,571,434"/>
+<area shape="poly" id="edge10_Node000010_Node000011" title=" " alt="" coords="465,354,465,395,460,395,460,354"/>
+</map>

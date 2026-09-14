@@ -1,0 +1,23 @@
+<map id="MayaFlux::Yantra::EnergyAnalyzer::compute_energy_values" name="MayaFlux::Yantra::EnergyAnalyzer::compute_energy_values">
+<area shape="rect" id="Node000001" title="Compute energy values using span (zero&#45;copy processing)" alt="" coords="5,277,201,332"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1EnergyAnalyzer_a0489dcae47a0c85ad99ac2f458a49ae4.html#a0489dcae47a0c85ad99ac2f458a49ae4" title="Calculate number of windows for given data size." alt="" coords="259,5,446,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="113,276,132,232,161,177,200,120,248,71,254,66,257,70,251,75,204,124,166,180,137,234,117,278"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a61b99c5f7e008674f3514a3dc30c0934.html#a61b99c5f7e008674f3514a3dc30c0934" title="Dynamic range in dB per window." alt="" coords="261,85,445,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="119,276,171,205,207,167,248,134,258,128,261,133,251,139,210,171,175,209,123,279"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a03f2f03915592b851e8b24778c4b814b.html#a03f2f03915592b851e8b24778c4b814b" title="Low&#45;frequency spectral energy per window." alt="" coords="263,173,442,228"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="164,275,248,238,267,231,269,236,250,243,166,280"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a5970ee5660c02fb526cd5ad6f5895e4a.html#a5970ee5660c02fb526cd5ad6f5895e4a" title="Peak amplitude per window." alt="" coords="278,253,427,293"/>
+<area shape="poly" id="edge5_Node000001_Node000005" title=" " alt="" coords="201,289,264,281,264,287,202,295"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a2fe753ad61d3b9669d7fcf5369bcb700.html#a2fe753ad61d3b9669d7fcf5369bcb700" title="Power (sum of squares) per window." alt="" coords="278,317,427,357"/>
+<area shape="poly" id="edge6_Node000001_Node000006" title=" " alt="" coords="202,315,264,323,264,328,201,320"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_ace9bc7c524eeeff35f5d23bf4b14a6ce.html#ace9bc7c524eeeff35f5d23bf4b14a6ce" title="RMS energy per window." alt="" coords="278,381,427,421"/>
+<area shape="poly" id="edge7_Node000001_Node000007" title=" " alt="" coords="164,330,250,366,271,374,270,379,248,371,161,334"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a17e49f6396fb23a61d038d0d8f308666.html#a17e49f6396fb23a61d038d0d8f308666" title="Spectral energy per window using Hann&#45;windowed FFT." alt="" coords="259,469,447,509"/>
+<area shape="poly" id="edge8_Node000001_Node000008" title=" " alt="" coords="134,330,186,379,251,430,299,460,297,465,248,435,183,383,130,334"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_acdf5fda9e4de1ead09e1b29a4fecd411.html#acdf5fda9e4de1ead09e1b29a4fecd411" title="Zero&#45;crossing rate per window." alt="" coords="249,533,456,573"/>
+<area shape="poly" id="edge10_Node000001_Node000009" title=" " alt="" coords="118,331,138,373,167,423,205,475,251,519,259,524,256,528,248,523,201,478,162,426,133,375,113,333"/>
+<area shape="poly" id="edge4_Node000004_Node000004" title=" " alt="" coords="304,173,305,163,313,154,329,149,353,147,381,150,397,158,394,162,379,155,353,152,330,154,316,159,310,165,310,173"/>
+<area shape="poly" id="edge9_Node000008_Node000008" title=" " alt="" coords="307,469,304,459,311,450,328,444,353,442,381,445,397,452,395,457,380,450,353,447,329,449,314,454,309,460,312,468"/>
+<area shape="rect" id="Node000010" href="$namespaceMayaFlux_a22c2d3948659bbf41f4f49b7ae524f35.html#a22c2d3948659bbf41f4f49b7ae524f35" title="Calculate zero crossing rate for single&#45;channel data." alt="" coords="504,540,720,565"/>
+<area shape="poly" id="edge11_Node000009_Node000010" title=" " alt="" coords="456,550,490,550,490,555,456,555"/>
+</map>

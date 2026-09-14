@@ -1,0 +1,15 @@
+<map id="SoundFileWriter.hpp" name="SoundFileWriter.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="328,5,480,31"/>
+<area shape="rect" id="Node000002" href="$NDData_8hpp.html" title=" " alt="" coords="17,79,218,119"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="363,33,200,78,198,73,362,28"/>
+<area shape="rect" id="Node000005" href="$RingBuffer_8hpp.html" title=" " alt="" coords="243,79,421,119"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="395,33,361,70,357,67,391,29"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="445,86,507,111"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="417,29,458,74,454,77,413,33"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="531,86,693,111"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="435,28,570,79,568,84,433,33"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="5,167,109,192"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="105,121,77,157,72,154,101,117"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="134,167,221,192"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="134,117,162,154,158,157,130,121"/>
+</map>

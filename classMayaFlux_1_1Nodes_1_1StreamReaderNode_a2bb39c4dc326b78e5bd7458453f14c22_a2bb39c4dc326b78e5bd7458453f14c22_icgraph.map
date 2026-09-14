@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::StreamReaderNode::process_sample" name="MayaFlux::Nodes::StreamReaderNode::process_sample">
+<area shape="rect" id="Node000001" title="Processes a single data sample." alt="" coords="289,5,525,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1StreamReaderNode_a2ef646b54745e14b8496d9d8bbb6958b.html#a2ef646b54745e14b8496d9d8bbb6958b" title="Processes multiple samples at once." alt="" coords="5,5,241,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="275,28,242,28,242,23,275,23"/>
+</map>

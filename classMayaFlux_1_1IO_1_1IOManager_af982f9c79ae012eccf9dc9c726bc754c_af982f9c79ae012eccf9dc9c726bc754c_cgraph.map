@@ -1,0 +1,26 @@
+<map id="MayaFlux::IO::IOManager::IOManager" name="MayaFlux::IO::IOManager::IOManager">
+<area shape="rect" id="Node000001" title="Construct IOManager and register the IOService into BackendRegistry." alt="" coords="5,241,192,281"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1IOManager_ab3c791e9b3209336155f92070f3efb3f.html#ab3c791e9b3209336155f92070f3efb3f" title="IOService::request_decode target — shared&#45;lock lookup + signal_decode()." alt="" coords="254,5,449,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="106,240,124,201,153,151,191,99,238,55,247,49,250,54,242,59,195,103,157,154,129,203,111,242"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1IOManager_a4400ee4a8190b5d6f87d5265e0ff65cf.html#a4400ee4a8190b5d6f87d5265e0ff65cf" title="IOService::request_frame target — shared&#45;lock lookup + pull_frame_all()." alt="" coords="258,69,445,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="113,239,164,180,199,147,239,119,251,112,254,117,241,124,203,151,168,184,117,243"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aa28c6f5592e5893508bafb62aefcc496.html#aa28c6f5592e5893508bafb62aefcc496" title="Get the global registry instance." alt="" coords="251,133,452,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="131,239,181,211,239,183,259,175,261,180,241,188,183,215,134,243"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_a22c6ffe496c721c1bdfe28c9a86c1c4f.html#a22c6ffe496c721c1bdfe28c9a86c1c4f" title="Register a backend service capability." alt="" coords="253,198,449,253"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="192,245,239,239,240,244,192,251"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1IO_1_1AssimpModelWriter_adbfb89dfca93ee24965f46ecda07ab24.html#adbfb89dfca93ee24965f46ecda07ab24" title="Register this writer with the ModelWriterRegistry." alt="" coords="245,277,457,317"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="192,272,232,278,231,283,192,277"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1IO_1_1EXRWriter_ae62981d034721e6360f5862dfa89a904.html#ae62981d034721e6360f5862dfa89a904" title="Register this writer with the ImageWriterRegistry." alt="" coords="260,341,443,381"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="138,279,241,327,263,335,261,340,239,332,136,284"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1IO_1_1STBImageWriter_a4e56a08f32dfab67d4017344543ba601.html#a4e56a08f32dfab67d4017344543ba601" title="Register this writer with the ImageWriterRegistry." alt="" coords="240,405,463,445"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="118,280,169,335,204,365,241,391,254,398,252,402,239,396,200,369,165,339,114,283"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1IO_1_1VDBWriter_aed319657fc39741ca2b77078537e3b37.html#aed319657fc39741ca2b77078537e3b37" title="Register this writer with the VolumeWriterRegistry." alt="" coords="259,469,443,509"/>
+<area shape="poly" id="edge11_Node000001_Node000011" title=" " alt="" coords="111,280,130,318,159,365,196,414,242,455,250,461,247,465,238,459,192,417,154,368,125,320,106,283"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1IO_1_1ModelWriterRegistry_ab32741c6e988e6cbbe631d62fbe98ece.html#ab32741c6e988e6cbbe631d62fbe98ece" title=" " alt="" coords="515,277,711,317"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="457,295,502,295,502,300,457,300"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1IO_1_1ImageWriterRegistry_a25caa467f66d3d18650bdffcc77b8125.html#a25caa467f66d3d18650bdffcc77b8125" title=" " alt="" coords="515,373,712,413"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="443,370,501,377,501,382,443,375"/>
+<area shape="poly" id="edge10_Node000010_Node000009" title=" " alt="" coords="463,409,501,404,501,410,463,414"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1IO_1_1VolumeWriterRegistry_adc3507552119815aa23dba68658ff78c.html#adc3507552119815aa23dba68658ff78c" title=" " alt="" coords="511,469,716,509"/>
+<area shape="poly" id="edge12_Node000011_Node000012" title=" " alt="" coords="443,487,497,487,497,492,443,492"/>
+</map>

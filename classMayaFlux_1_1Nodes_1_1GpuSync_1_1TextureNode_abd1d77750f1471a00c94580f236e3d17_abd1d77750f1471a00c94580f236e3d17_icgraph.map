@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::GpuSync::TextureNode::set_pixel" name="MayaFlux::Nodes::GpuSync::TextureNode::set_pixel">
+<area shape="rect" id="Node000001" title="Set pixel color at (x, y)" alt="" coords="253,5,453,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1TextureNode_ab35bda6b220c56329eb641d6f2f01701.html#ab35bda6b220c56329eb641d6f2f01701" title="Fill entire texture with solid color." alt="" coords="5,5,205,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="240,28,206,28,206,23,240,23"/>
+</map>

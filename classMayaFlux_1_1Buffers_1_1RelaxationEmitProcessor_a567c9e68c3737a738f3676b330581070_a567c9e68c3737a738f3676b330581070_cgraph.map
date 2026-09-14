@@ -1,0 +1,17 @@
+<map id="MayaFlux::Buffers::RelaxationEmitProcessor::on_attach" name="MayaFlux::Buffers::RelaxationEmitProcessor::on_attach">
+<area shape="rect" id="Node000001" title="When attached to a RelaxationGridBuffer, sets up the dispatch configuration to cover the entire grid ..." alt="" coords="5,163,191,217"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferProcessor_aabc0443cf162db0fdca77c2f555a1920.html#aabc0443cf162db0fdca77c2f555a1920" title="Called when this processor is attached to a buffer." alt="" coords="257,5,405,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="125,160,175,115,237,69,245,64,248,69,240,74,178,119,128,164"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1ComputeProcessor_ad0a4f166e8f9ed24f91e590f737a717f.html#ad0a4f166e8f9ed24f91e590f737a717f" title="Set dispatch mode." alt="" coords="245,84,417,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="179,160,236,141,238,146,181,165"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1ComputeProcessor_adaaeab4489b75f391e28461fe22613ba.html#adaaeab4489b75f391e28461fe22613ba" title="Set manual dispatch group counts." alt="" coords="245,163,417,217"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="191,187,232,187,232,193,191,193"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1ComputeProcessor_a2776695f20a3c672920a889373444840.html#a2776695f20a3c672920a889373444840" title="Set workgroup size (should match shader local_size)" alt="" coords="245,241,417,296"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="181,215,238,234,236,239,179,220"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1RelaxationEmitProcessor_a72daa538eceff6d124a9b03aac55a341.html#a72daa538eceff6d124a9b03aac55a341" title="Size the push constant block to EmitParams and upload the current parameters." alt="" coords="239,320,424,375"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="129,216,179,260,240,305,251,311,248,316,237,310,176,264,126,220"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a08f86ff68a93950b07208ee936badf8e.html#a08f86ff68a93950b07208ee936badf8e" title="Get current push constant data." alt="" coords="472,280,631,335"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="424,328,458,322,459,327,425,333"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a85037a36fe7bced17fc296d213abcdff.html#a85037a36fe7bced17fc296d213abcdff" title="Set push constant size from type." alt="" coords="472,359,631,413"/>
+<area shape="poly" id="edge7_Node000006_Node000008" title=" " alt="" coords="425,361,459,367,458,372,424,366"/>
+</map>

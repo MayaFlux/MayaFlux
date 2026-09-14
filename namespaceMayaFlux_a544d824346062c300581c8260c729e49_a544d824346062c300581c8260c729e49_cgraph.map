@@ -1,0 +1,5 @@
+<map id="MayaFlux::to_double_vector" name="MayaFlux::to_double_vector">
+<area shape="rect" id="Node000001" title="Convert DataVariant to vector&lt;double&gt; if possible." alt="" coords="5,5,164,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1OperationHelper_ad367bd6ef37555bb3918e5545cac03bd.html#ad367bd6ef37555bb3918e5545cac03bd" title="extract numeric data from single&#45;variant types" alt="" coords="212,5,427,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="165,23,198,23,198,28,165,28"/>
+</map>

@@ -1,0 +1,6 @@
+<map id="MayaFlux::Kinesis::Vision::gaussian_blur" name="MayaFlux::Kinesis::Vision::gaussian_blur">
+<area shape="rect" id="Node000001" title="Gaussian blur writing into caller&#45;supplied buffers." alt="" coords="5,29,165,69"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_a1856299c33e154b079ba24386240e112.html#a1856299c33e154b079ba24386240e112" title="Apply a separable 2D filter via two 1D passes." alt="" coords="213,29,384,69"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="166,47,200,47,200,52,166,52"/>
+<area shape="poly" id="edge2_Node000002_Node000002" title=" " alt="" coords="259,30,256,20,263,10,277,5,299,3,324,6,337,13,335,18,322,11,299,8,278,10,266,15,261,21,264,28"/>
+</map>

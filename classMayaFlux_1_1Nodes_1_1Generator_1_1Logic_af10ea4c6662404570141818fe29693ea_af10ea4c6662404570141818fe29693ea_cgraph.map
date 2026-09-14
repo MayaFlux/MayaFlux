@@ -1,0 +1,9 @@
+<map id="MayaFlux::Nodes::Generator::Logic::notify_tick" name="MayaFlux::Nodes::Generator::Logic::notify_tick">
+<area shape="rect" id="Node000001" title="Notifies all registered callbacks about a new sample." alt="" coords="5,37,213,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Logic_a5d9eb9e8a257bccb93937782b284884e.html#a5d9eb9e8a257bccb93937782b284884e" title="Retrieves the last created context object." alt="" coords="261,5,469,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="213,42,247,37,248,43,214,47"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Logic_a24fe3adaafc789f42b92eb0294f9575e.html#a24fe3adaafc789f42b92eb0294f9575e" title="Updates the context with the latest sample value." alt="" coords="261,69,469,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="214,68,248,72,247,77,213,73"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Logic_ad95a9cc80e842eb783fc2e9063c9990d.html#ad95a9cc80e842eb783fc2e9063c9990d" title=" " alt="" coords="517,69,744,109"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="469,87,504,87,504,92,469,92"/>
+</map>

@@ -1,0 +1,16 @@
+<map id="SortingHelper.hpp" name="SortingHelper.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="144,5,283,31"/>
+<area shape="rect" id="Node000002" href="$UniversalSorter_8hpp.html" title="Modern, digital&#45;first universal sorting framework for Maya Flux." alt="" coords="138,79,289,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="216,44,216,79,211,79,211,44"/>
+<area shape="rect" id="Node000003" href="$GpuSorter_8hpp.html" title=" " alt="" coords="5,225,120,251"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="184,113,130,154,96,192,72,226,68,223,92,189,126,150,180,109"/>
+<area shape="rect" id="Node000005" href="$StandardSorter_8hpp.html" title="Example concrete implementation of UniversalSorter." alt="" coords="140,152,287,177"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="216,118,216,152,211,152,211,118"/>
+<area shape="rect" id="Node000007" href="$VisionSorter_8hpp.html" title=" " alt="" coords="311,152,439,177"/>
+<area shape="poly" id="edge7_Node000002_Node000007" title=" " alt="" coords="253,107,349,149,347,154,251,112"/>
+<area shape="rect" id="Node000004" href="$GranularWorkflow_8cpp.html" title=" " alt="" coords="62,299,226,324"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="88,258,132,296,129,300,84,262"/>
+<area shape="rect" id="Node000006" href="$GranularWorkflow_8hpp.html" title=" " alt="" coords="144,225,309,251"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="221,191,227,225,222,226,215,192"/>
+<area shape="poly" id="edge6_Node000006_Node000004" title=" " alt="" coords="205,262,159,300,156,296,201,258"/>
+</map>

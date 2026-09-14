@@ -1,0 +1,17 @@
+<map id="MayaFlux::Yantra::UniversalExtractor::apply_scope_filtering" name="MayaFlux::Yantra::UniversalExtractor::apply_scope_filtering">
+<area shape="rect" id="Node000001" title="Apply scope filtering to results." alt="" coords="1041,69,1268,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1UniversalExtractor_a2774b38e0d56c189256584b0187ea5df.html#a2774b38e0d56c189256584b0187ea5df" title="Core operation implementation &#45; called by ComputeOperation interface." alt="" coords="783,69,993,109"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1027,92,994,92,994,87,1027,87"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1UniversalExtractor_a5181ece0b87181664eb848538f39c73d.html#a5181ece0b87181664eb848538f39c73d" title="Type&#45;safe extraction method." alt="" coords="531,69,735,109"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="769,92,735,92,735,87,769,87"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1UniversalExtractor_a5056026e97d548e149fd073736f82815.html#a5056026e97d548e149fd073736f82815" title="Batch extraction for multiple inputs." alt="" coords="273,5,477,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="538,69,456,48,457,43,539,63"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Yantra_1_1UniversalExtractor_a7fdcd5a77f26c9a7b38f40899157c0d6.html#a7fdcd5a77f26c9a7b38f40899157c0d6" title=" " alt="" coords="273,69,477,109"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="517,92,478,92,478,87,517,87"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Yantra_1_1UniversalExtractor_ae9db9d88a82929d50b83d9412ef8c100.html#ae9db9d88a82929d50b83d9412ef8c100" title="Extract with specific scope." alt="" coords="268,133,483,173"/>
+<area shape="poly" id="edge6_Node000003_Node000007" title=" " alt="" coords="539,115,457,136,456,131,538,110"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1UniversalExtractor_a1e05b2c99c977c84bab6d9c93730c3ca.html#a1e05b2c99c977c84bab6d9c93730c3ca" title=" " alt="" coords="11,5,215,45"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="260,28,215,28,215,23,260,23"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Yantra_1_1UniversalExtractor_a5df5bc4b4c95a80b37ef715dbf8ae44b.html#a5df5bc4b4c95a80b37ef715dbf8ae44b" title=" " alt="" coords="5,133,220,173"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="255,156,220,156,220,151,255,151"/>
+</map>

@@ -1,0 +1,29 @@
+<map id="MayaFlux::Buffers::VolumeFieldProcessor::on_attach" name="MayaFlux::Buffers::VolumeFieldProcessor::on_attach">
+<area shape="rect" id="Node000001" title="Cache and validate the volume, size the dispatch, write the shared parameter prefix,..." alt="" coords="5,203,171,257"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferProcessor_aabc0443cf162db0fdca77c2f555a1920.html#aabc0443cf162db0fdca77c2f555a1920" title="Called when this processor is attached to a buffer." alt="" coords="228,5,376,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="104,201,151,136,182,101,217,69,223,65,226,69,220,73,186,105,155,140,109,204"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VolumeFieldProcessor_a9c50be2774a8e61d5981575da3a72d09.html#a9c50be2774a8e61d5981575da3a72d09" title="Hook for subclass parameters, called at the end of on_attach." alt="" coords="219,84,385,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="130,200,217,148,227,143,230,147,220,152,133,205"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1VolumeFieldProcessor_a3a29bb7895dbdfa59c2e4f1e6d649939.html#a3a29bb7895dbdfa59c2e4f1e6d649939" title="Raise the push constant block to at least this size." alt="" coords="219,163,385,217"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="171,212,205,205,206,211,172,217"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1VolumeFieldProcessor_a430b9dce7ab960e2ec311f081d0873a9.html#a430b9dce7ab960e2ec311f081d0873a9" title="Size the manual dispatch to cover the lattice." alt="" coords="219,241,385,296"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="172,242,206,249,205,254,171,248"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Buffers_1_1VolumeFieldProcessor_a322f83e2b8391fcfc6c08b275df7c114.html#a322f83e2b8391fcfc6c08b275df7c114" title="Check every named field exists and that read&#45;write fields carry two slots." alt="" coords="219,320,385,375"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="134,255,220,305,232,312,230,316,217,310,132,260"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Buffers_1_1VolumeFieldProcessor_ac6ae5f49e464b1eeb85c687e71b121d7.html#ac6ae5f49e464b1eeb85c687e71b121d7" title="Write the lattice dimensions and cell size into the staged push constant block, preserving word three..." alt="" coords="219,399,385,453"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="109,256,156,319,186,353,220,384,227,389,224,393,217,388,183,357,151,322,105,259"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a85037a36fe7bced17fc296d213abcdff.html#a85037a36fe7bced17fc296d213abcdff" title="Set push constant size from type." alt="" coords="440,85,599,140"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="379,160,428,142,430,147,381,165"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1ComputeProcessor_ad0a4f166e8f9ed24f91e590f737a717f.html#ad0a4f166e8f9ed24f91e590f737a717f" title="Set dispatch mode." alt="" coords="433,164,605,219"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="379,239,428,221,430,226,381,244"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Buffers_1_1ComputeProcessor_adaaeab4489b75f391e28461fe22613ba.html#adaaeab4489b75f391e28461fe22613ba" title="Set manual dispatch group counts." alt="" coords="433,243,605,297"/>
+<area shape="poly" id="edge7_Node000006_Node000008" title=" " alt="" coords="385,267,420,267,420,272,385,272"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Buffers_1_1ComputeProcessor_a2776695f20a3c672920a889373444840.html#a2776695f20a3c672920a889373444840" title="Set workgroup size (should match shader local_size)" alt="" coords="433,321,605,376"/>
+<area shape="poly" id="edge8_Node000006_Node000009" title=" " alt="" coords="378,294,432,314,431,319,376,299"/>
+<area shape="rect" id="Node000012" href="$structMayaFlux_1_1Kinesis_1_1Lattice3D_a1c680e02cfe8a54011cb7538bf33f3ee.html#a1c680e02cfe8a54011cb7538bf33f3ee" title="Edge length of one cell along each axis." alt="" coords="445,403,594,443"/>
+<area shape="poly" id="edge11_Node000011_Node000012" title=" " alt="" coords="386,422,431,422,431,427,386,428"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a08f86ff68a93950b07208ee936badf8e.html#a08f86ff68a93950b07208ee936badf8e" title="Get current push constant data." alt="" coords="440,468,599,523"/>
+<area shape="poly" id="edge13_Node000011_Node000014" title=" " alt="" coords="387,450,428,463,426,468,385,455"/>
+<area shape="rect" id="Node000013" href="$structMayaFlux_1_1Kinesis_1_1AABB3D_aeab9cee1b78baf556b0b7e14c99541c2.html#aeab9cee1b78baf556b0b7e14c99541c2" title=" " alt="" coords="653,403,803,443"/>
+<area shape="poly" id="edge12_Node000012_Node000013" title=" " alt="" coords="594,421,639,421,639,426,594,426"/>
+</map>

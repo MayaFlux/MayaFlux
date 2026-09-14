@@ -1,0 +1,18 @@
+<map id="MayaFlux::IO::save_volume" name="MayaFlux::IO::save_volume">
+<area shape="rect" id="Node000001" title="Save a volume directly to disk via the VolumeWriter registry." alt="" coords="5,65,152,105"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1IO_ab10ae94f4c8e87f07a69e27630596c20.html#ab10ae94f4c8e87f07a69e27630596c20" title="Download named fields from a GPU&#45;resident volume into host VolumeData." alt="" coords="200,33,379,73"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="152,72,186,66,187,72,153,77"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1IO_a3c707cb01c75c23609f44b322ad0d596.html#a3c707cb01c75c23609f44b322ad0d596" title="Save already&#45;downloaded VolumeData to disk via the registry." alt="" coords="216,97,363,137"/>
+<area shape="poly" id="edge6_Node000001_Node000006" title=" " alt="" coords="153,94,203,102,202,107,152,99"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kakshya_1_1VolumeData_ad18c3092c8a26b207df1a6ff8ad8bbef.html#ad18c3092c8a26b207df1a6ff8ad8bbef" title="Cells in the lattice, which every field&#39;s element_count() must equal." alt="" coords="680,5,856,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="362,31,426,19,551,12,666,15,666,20,551,17,427,24,363,36"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Kakshya_1_1VolumeData_a6eb5ed3d17b6580cc64d6a94088f8b5a.html#a6eb5ed3d17b6580cc64d6a94088f8b5a" title="Check that every field is densely populated over the lattice." alt="" coords="432,33,627,73"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="379,51,418,51,418,56,379,56"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Kinesis_1_1Lattice3D_a544eb1555cf9cbaca83638e71bfb0395.html#a544eb1555cf9cbaca83638e71bfb0395" title="Total cell count." alt="" coords="904,5,1063,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="856,23,890,23,890,28,856,28"/>
+<area shape="poly" id="edge5_Node000005_Node000003" title=" " alt="" coords="627,39,666,35,667,40,627,45"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1IO_1_1VolumeWriterRegistry_ad701539bfc38373a435eda9b99a20ba1.html#ad701539bfc38373a435eda9b99a20ba1" title=" " alt="" coords="427,97,632,137"/>
+<area shape="poly" id="edge7_Node000006_Node000007" title=" " alt="" coords="363,115,413,115,413,120,363,120"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1IO_1_1VolumeWriterRegistry_adc3507552119815aa23dba68658ff78c.html#adc3507552119815aa23dba68658ff78c" title=" " alt="" coords="427,161,632,201"/>
+<area shape="poly" id="edge8_Node000006_Node000008" title=" " alt="" coords="364,134,441,155,440,160,362,139"/>
+</map>

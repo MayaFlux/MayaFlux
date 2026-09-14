@@ -1,0 +1,20 @@
+<map id="ImageReader.hpp" name="ImageReader.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="156,5,292,31"/>
+<area shape="rect" id="Node000002" href="$FileReader_8hpp.html" title=" " alt="" coords="11,86,215,111"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="209,33,143,80,140,76,206,29"/>
+<area shape="rect" id="Node000007" href="$TextureLoom_8hpp.html" title=" " alt="" coords="245,79,435,119"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="243,29,302,69,299,73,240,33"/>
+<area shape="rect" id="Node000003" href="$Region_8hpp.html" title=" " alt="" coords="5,167,200,207"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="115,112,109,153,104,152,109,111"/>
+<area shape="rect" id="Node000004" href="$NDData_8hpp.html" title=" " alt="" coords="69,255,270,295"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="120,205,148,242,144,245,115,209"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="57,343,161,368"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="157,297,129,333,124,330,153,293"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="186,343,273,368"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="186,293,214,330,210,333,182,297"/>
+<area shape="poly" id="edge9_Node000007_Node000004" title=" " alt="" coords="318,121,265,169,195,246,191,242,261,165,315,117"/>
+<area shape="rect" id="Node000008" title=" " alt="" coords="275,174,415,199"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="344,119,346,160,341,160,339,119"/>
+<area shape="rect" id="Node000009" href="$GraphicsUtils_8hpp.html" title=" " alt="" coords="439,174,577,199"/>
+<area shape="poly" id="edge8_Node000007_Node000009" title=" " alt="" coords="378,116,475,165,472,170,376,121"/>
+</map>

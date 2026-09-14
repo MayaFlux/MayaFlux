@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kinesis::Stochastic::Estimate::reset" name="MayaFlux::Kinesis::Stochastic::Estimate::reset">
+<area shape="rect" id="Node000001" title="Resets internal state." alt="" coords="5,41,160,96"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kinesis_1_1Stochastic_1_1EstimateState_ad820d871631f8c60e32279cb123ddcea.html#ad820d871631f8c60e32279cb123ddcea" title=" " alt="" coords="215,5,404,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="160,54,200,47,201,53,161,59"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Memory_1_1HistoryBuffer_a8803d9de8c837825b2421712933ce827.html#a8803d9de8c837825b2421712933ce827" title="Reset buffer to initial state (all zeros)" alt="" coords="208,85,411,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="161,78,195,84,194,89,160,84"/>
+</map>

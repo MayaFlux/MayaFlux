@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::RenderProcessor::mill_runs" name="MayaFlux::Buffers::RenderProcessor::mill_runs">
+<area shape="rect" id="Node000001" title="Mill m_runs into the private buffer and set the draw range." alt="" coords="5,13,204,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_a40a3821e512edfa42f0b0a56c6218646.html#a40a3821e512edfa42f0b0a56c6218646" title="Transform published for this frame by publish_view_transform()." alt="" coords="252,5,455,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="204,30,239,30,239,35,204,35"/>
+</map>

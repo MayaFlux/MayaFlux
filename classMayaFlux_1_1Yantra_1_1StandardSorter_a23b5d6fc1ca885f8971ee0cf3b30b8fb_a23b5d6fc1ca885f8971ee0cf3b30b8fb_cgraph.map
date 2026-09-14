@@ -1,0 +1,31 @@
+<map id="MayaFlux::Yantra::StandardSorter::sort_chunked" name="MayaFlux::Yantra::StandardSorter::sort_chunked">
+<area shape="rect" id="Node000001" title="Chunked sorting implementation." alt="" coords="5,101,205,141"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1StandardSorter_af4e5f28000163cedbc0fda0a1696f344.html#af4e5f28000163cedbc0fda0a1696f344" title=" " alt="" coords="269,133,481,173"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="206,131,255,136,254,142,205,136"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Yantra_1_1OperationHelper_a86f4c84e8740ec41db439c868a93454a.html#a86f4c84e8740ec41db439c868a93454a" title="Extract structured double data from Datum container or direct ComputeData with automatic container ha..." alt="" coords="253,69,496,109"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="205,107,239,103,240,108,206,112"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Yantra_1_1StandardSorter_ad0f3d15e5826ab75d2b6765c14b6148a.html#ad0f3d15e5826ab75d2b6765c14b6148a" title="Merge chunks back to single result." alt="" coords="261,197,489,237"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="149,139,254,183,279,191,277,196,252,188,147,144"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Yantra_1_1StandardSorter_a4354ccfd82da15a220f84dc53a5676e0.html#a4354ccfd82da15a220f84dc53a5676e0" title="Sort data with copy semantics." alt="" coords="275,5,475,45"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="147,99,252,55,277,47,279,52,254,60,149,104"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1UniversalSorter_ad0c240a1fcea4c743508eb14c938b30d.html#ad0c240a1fcea4c743508eb14c938b30d" title=" " alt="" coords="549,72,753,112"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="465,131,547,112,548,118,466,136"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a9349c772343fcafbd79eeedb913199ae.html#a9349c772343fcafbd79eeedb913199ae" title="Sort a single span in&#45;place." alt="" coords="1077,71,1227,111"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="481,153,594,153,732,149,881,139,1029,121,1075,112,1076,117,1030,127,881,145,732,154,594,158,481,158"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_aa24f42ad7fac830cc8ebd7d7f8c9c839.html#aa24f42ad7fac830cc8ebd7d7f8c9c839" title="Direction&#45;based comparator for doubles." alt="" coords="1275,39,1485,79"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="1227,78,1261,73,1261,78,1227,83"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_ac31338d47679ac6672a20b378ed0e6ee.html#ac31338d47679ac6672a20b378ed0e6ee" title="Execute a sorting algorithm on an iterator range." alt="" coords="1305,103,1455,143"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="1227,99,1292,108,1291,113,1227,104"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Yantra_1_1ComputeOperation_ac364bad27ce3e4d35add89333c9a24b8.html#ac364bad27ce3e4d35add89333c9a24b8" title="Convert processed double data back to OutputType using metadata and optional callback." alt="" coords="551,259,752,299"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="466,235,548,253,547,258,465,240"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Yantra_1_1OperationHelper_ad367bd6ef37555bb3918e5545cac03bd.html#ad367bd6ef37555bb3918e5545cac03bd" title="extract numeric data from single&#45;variant types" alt="" coords="544,195,759,235"/>
+<area shape="poly" id="edge9_Node000008_Node000010" title=" " alt="" coords="489,214,530,213,530,218,489,219"/>
+<area shape="poly" id="edge11_Node000011_Node000003" title=" " alt="" coords="459,43,555,66,554,71,458,48"/>
+<area shape="rect" id="Node000012" href="$namespaceMayaFlux_1_1Yantra_aefd8d29775269d3755674992909e379f.html#aefd8d29775269d3755674992909e379f" title="Universal sort function &#45; returns sorted copy." alt="" coords="564,8,739,48"/>
+<area shape="poly" id="edge12_Node000011_Node000012" title=" " alt="" coords="475,24,550,24,550,30,475,29"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Yantra_1_1OperationHelper_ab87e318fc808c4e06d895135af6097e2.html#ab87e318fc808c4e06d895135af6097e2" title="Setup operation buffer from Datum or ComputeData type." alt="" coords="807,72,1029,112"/>
+<area shape="poly" id="edge13_Node000012_Node000013" title=" " alt="" coords="736,45,822,66,820,71,735,51"/>
+<area shape="rect" id="Node000014" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_ac7f402db2f5f9039a9ccbb276a39d30a.html#ac7f402db2f5f9039a9ccbb276a39d30a" title="Sort all channels in&#45;place." alt="" coords="831,8,1005,48"/>
+<area shape="poly" id="edge14_Node000012_Node000014" title=" " alt="" coords="739,25,817,25,817,31,739,31"/>
+<area shape="poly" id="edge15_Node000014_Node000004" title=" " alt="" coords="994,45,1064,65,1063,70,992,51"/>
+</map>

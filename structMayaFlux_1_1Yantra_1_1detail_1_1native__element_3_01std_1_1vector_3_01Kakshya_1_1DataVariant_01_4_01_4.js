@@ -1,0 +1,4 @@
+var structMayaFlux_1_1Yantra_1_1detail_1_1native__element_3_01std_1_1vector_3_01Kakshya_1_1DataVariant_01_4_01_4 =
+[
+    [ "type", "structMayaFlux_1_1Yantra_1_1detail_1_1native__element_3_01std_1_1vector_3_01Kakshya_1_1DataVariant_01_4_01_4_a1ea197b27dfb9f7c92e5d71a6667aab6.html#a1ea197b27dfb9f7c92e5d71a6667aab6", null ]
+];

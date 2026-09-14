@@ -1,0 +1,13 @@
+<map id="MayaFlux::Portal::Forma::Geometry::paint_over" name="MayaFlux::Portal::Forma::Geometry::paint_over">
+<area shape="rect" id="Node000001" title="Produce a Form::wire that registers canvas painting over bounds." alt="" coords="5,101,187,141"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_a93bc17f116ad6b024d7c2430c4ce8336.html#a93bc17f116ad6b024d7c2430c4ce8336" title="Wire drag interaction for a drawable canvas element." alt="" coords="235,101,453,141"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="187,119,221,119,221,124,187,124"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kinesis_1_1AABB2D_a32bac0d1a4f876c992486eed5dc9fd6f.html#a32bac0d1a4f876c992486eed5dc9fd6f" title=" " alt="" coords="517,5,667,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="392,99,500,55,520,48,522,53,502,60,394,104"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Context_ad0e5f6b54a528262568438b0354769bd.html#ad0e5f6b54a528262568438b0354769bd" title="Called on each mouse&#45;move event while btn is held, tracking the element where the drag began even whe..." alt="" coords="501,69,683,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="453,105,487,100,488,105,454,110"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Context_ace07c841c93ea1a4adfe4aa509335acb.html#ace07c841c93ea1a4adfe4aa509335acb" title="Called when a mouse button is released over an element." alt="" coords="501,133,683,173"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="454,133,488,137,487,143,453,138"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Kinesis_1_1AABB2D_ab8e372add789f6bd44fa66a92618456a.html#ab8e372add789f6bd44fa66a92618456a" title=" " alt="" coords="517,197,667,237"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="394,139,502,183,522,190,520,195,500,188,392,144"/>
+</map>
