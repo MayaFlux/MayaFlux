@@ -191,4 +191,88 @@ struct CopiedText {
     size_t a,
     size_t b);
 
+/**
+ * @struct PenPosition
+ * @brief Pen coordinates returned by x_at(), in the same space as GlyphQuad.
+ */
+struct PenPosition {
+    float x { 0.F };
+    float y { 0.F };
+};
+
+/**
+ * @brief Byte offset of the codepoint boundary nearest a screen-space point.
+ *
+ * Scans layout.quads for the line whose quads sit closest to @p y, then
+ * within that line for the ink quad @p x falls into (resolving to its left
+ * or right half), or, failing that, for the two quads bracketing @p x.
+ * lay_out() never emits a quad for a space, tab, or newline, so a point
+ * landing in the gap between two quads - or before the first / after the
+ * last quad on a line - has no ink to test against directly: that gap is
+ * resolved exactly by walking its few codepoint boundaries through x_at()
+ * (same pen_x/pen_y/wrap_w/tab_width as the original lay_out() call) and
+ * keeping whichever pen position lands closest to @p x, rather than
+ * guessing from ink edges that were never meant to mark it.
+ *
+ * A line with no quads at all (blank, or entirely whitespace) has nothing
+ * for the first scan to anchor on and is still not distinguishable from an
+ * adjacent line by this function - a real, if narrower, residual gap.
+ * Empty layout.quads (the whole text is blank or all-whitespace) returns 0.
+ *
+ * @param text        Source UTF-8 string layout was produced from.
+ * @param layout      LayoutResult to hit-test against.
+ * @param atlas       GlyphAtlas layout was produced with.
+ * @param x           Screen-space x coordinate, same space as layout's quads.
+ * @param y           Screen-space y coordinate, same space as layout's quads.
+ * @param pen_x       Pen origin x, matching the original lay_out() call.
+ * @param pen_y       Pen origin y, matching the original lay_out() call.
+ * @param wrap_w      Wrap column, matching the original lay_out() call.
+ * @param tab_width   Tab stop width, matching the original lay_out() call.
+ * @return            Byte offset of the nearest codepoint boundary.
+ */
+[[nodiscard]] MAYAFLUX_API size_t index_at(
+    std::string_view text,
+    const LayoutResult& layout,
+    GlyphAtlas& atlas,
+    float x,
+    float y,
+    float pen_x = 0.F,
+    float pen_y = 0.F,
+    uint32_t wrap_w = 0,
+    uint32_t tab_width = 4);
+
+/**
+ * @brief Pen position immediately before @p byte_offset, in lay_out()'s space.
+ *
+ * Re-lays-out the text up to @p byte_offset (clamped to text.size()) with
+ * the same pen origin, wrap_w, and tab_width the caller used to produce the
+ * original layout, and returns the resulting final_pen_x/final_pen_y. Wrap
+ * decisions before a given offset only depend on codepoints before it, so
+ * this reproduces the exact pen position lay_out() would have held at that
+ * point in the original call - including on a space, tab, newline, wrapped
+ * line start, or the very end of the text, none of which index_at()'s
+ * quad-based sibling has a quad to answer from.
+ *
+ * This re-walks the prefix on every call rather than caching intermediate
+ * pen positions; fine for interactive caret placement, not meant for a tight
+ * per-frame loop over long text.
+ *
+ * @param text        Source UTF-8 string to re-lay-out a prefix of.
+ * @param atlas       GlyphAtlas to query (same one the original layout used).
+ * @param byte_offset Codepoint-boundary byte offset to resolve.
+ * @param pen_x       Pen origin x, matching the original lay_out() call.
+ * @param pen_y       Pen origin y, matching the original lay_out() call.
+ * @param wrap_w      Wrap column, matching the original lay_out() call.
+ * @param tab_width   Tab stop width, matching the original lay_out() call.
+ * @return            Pen position immediately before byte_offset.
+ */
+[[nodiscard]] MAYAFLUX_API PenPosition x_at(
+    std::string_view text,
+    GlyphAtlas& atlas,
+    size_t byte_offset,
+    float pen_x = 0.F,
+    float pen_y = 0.F,
+    uint32_t wrap_w = 0,
+    uint32_t tab_width = 4);
+
 } // namespace MayaFlux::Portal::Text

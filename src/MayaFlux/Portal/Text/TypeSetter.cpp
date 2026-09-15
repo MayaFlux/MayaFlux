@@ -235,4 +235,125 @@ CopiedText copy(std::string_view text, const LayoutResult& layout, size_t a, siz
     return out;
 }
 
+namespace {
+    float abs_f(float v) { return v < 0.F ? -v : v; }
+} // namespace
+
+size_t index_at(
+    std::string_view text,
+    const LayoutResult& layout,
+    GlyphAtlas& atlas,
+    float x,
+    float y,
+    float pen_x,
+    float pen_y,
+    uint32_t wrap_w,
+    uint32_t tab_width)
+{
+    if (layout.quads.empty()) {
+        return 0;
+    }
+
+    const auto line_h = static_cast<float>(atlas.line_height());
+
+    float line_y = layout.quads.front().y0;
+    float best_line_dy = abs_f(line_y - y);
+    for (const auto& q : layout.quads) {
+        const float dy = abs_f(q.y0 - y);
+        if (dy < best_line_dy) {
+            best_line_dy = dy;
+            line_y = q.y0;
+        }
+    }
+
+    const GlyphQuad* left = nullptr;
+    const GlyphQuad* right = nullptr;
+
+    for (const auto& q : layout.quads) {
+        if (abs_f(q.y0 - line_y) > line_h * 0.5F) {
+            continue;
+        }
+
+        if (x >= q.x0 && x <= q.x1) {
+            return x > (q.x0 + q.x1) * 0.5F
+                ? next_codepoint_offset(text, q.byte_offset)
+                : q.byte_offset;
+        }
+        if (q.x1 <= x && (!left || q.x1 > left->x1)) {
+            left = &q;
+        }
+        if (q.x0 >= x && (!right || q.x0 < right->x0)) {
+            right = &q;
+        }
+    }
+
+    const GlyphQuad* anchor = left ? left : right;
+    const float pen_line_y = x_at(text, atlas, anchor->byte_offset, pen_x, pen_y, wrap_w, tab_width).y;
+
+    const auto same_line = [&](size_t offset) {
+        return x_at(text, atlas, offset, pen_x, pen_y, wrap_w, tab_width).y == pen_line_y;
+    };
+
+    size_t bracket_start = 0;
+    if (left) {
+        bracket_start = next_codepoint_offset(text, left->byte_offset);
+    } else {
+        bracket_start = right->byte_offset;
+        while (bracket_start > 0) {
+            const size_t prev = previous_codepoint_offset(text, bracket_start);
+            if (!same_line(prev)) {
+                break;
+            }
+            bracket_start = prev;
+        }
+    }
+
+    size_t bracket_end = text.size();
+    if (right) {
+        bracket_end = right->byte_offset;
+    } else {
+        bracket_end = next_codepoint_offset(text, left->byte_offset);
+        while (bracket_end < text.size()) {
+            const size_t next = next_codepoint_offset(text, bracket_end);
+            if (!same_line(next)) {
+                break;
+            }
+            bracket_end = next;
+        }
+    }
+
+    if (bracket_start >= bracket_end) {
+        return bracket_start;
+    }
+
+    size_t best_offset = bracket_start;
+    float best_dx = abs_f(x_at(text, atlas, bracket_start, pen_x, pen_y, wrap_w, tab_width).x - x);
+
+    for (size_t off = bracket_start; off < bracket_end;) {
+        const size_t next = next_codepoint_offset(text, off);
+        const float dx = abs_f(x_at(text, atlas, next, pen_x, pen_y, wrap_w, tab_width).x - x);
+        if (dx < best_dx) {
+            best_dx = dx;
+            best_offset = next;
+        }
+        off = next;
+    }
+
+    return best_offset;
+}
+
+PenPosition x_at(
+    std::string_view text,
+    GlyphAtlas& atlas,
+    size_t byte_offset,
+    float pen_x,
+    float pen_y,
+    uint32_t wrap_w,
+    uint32_t tab_width)
+{
+    const size_t clamped = std::min(byte_offset, text.size());
+    const LayoutResult prefix = lay_out(text.substr(0, clamped), atlas, pen_x, pen_y, wrap_w, tab_width);
+    return { .x = prefix.final_pen_x, .y = prefix.final_pen_y };
+}
+
 } // namespace MayaFlux::Portal::Text
