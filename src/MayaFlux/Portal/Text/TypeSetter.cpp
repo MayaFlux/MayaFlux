@@ -57,6 +57,7 @@ LayoutResult lay_out(
     utf8proc_ssize_t offset = 0;
 
     while (offset < remaining) {
+        const auto codepoint_start = static_cast<size_t>(offset);
         utf8proc_int32_t codepoint = 0;
         const utf8proc_ssize_t n = utf8proc_iterate(bytes + offset, remaining - offset, &codepoint);
 
@@ -120,6 +121,7 @@ LayoutResult lay_out(
             q.uv_x1 = m->uv_x1;
             q.codepoint = static_cast<uint32_t>(codepoint);
             q.uv_y1 = m->uv_y1;
+            q.byte_offset = codepoint_start;
             out.quads.push_back(q);
         }
 

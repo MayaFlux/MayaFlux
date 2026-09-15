@@ -21,6 +21,7 @@ struct GlyphQuad {
     float uv_x0, uv_y0; ///< Top-left UV in atlas space.
     float uv_x1, uv_y1; ///< Bottom-right UV in atlas space.
     uint32_t codepoint { 0 }; ///< Unicode codepoint that produced this quad.
+    size_t byte_offset { 0 }; ///< Byte offset of codepoint's first byte in the source text passed to lay_out().
 };
 
 /**
@@ -67,6 +68,10 @@ struct LayoutResult {
  * Bidirectional reordering and shaping are not performed. HarfBuzz slots in
  * before the glyph index step when needed; the quad assembly loop and
  * GlyphAtlas remain unchanged.
+ *
+ * Each quad's byte_offset is the position of its codepoint's first byte in
+ * @p text, letting a caller correlate a quad back to source text (styling,
+ * hit-testing, extraction) without re-decoding UTF-8 itself.
  *
  * @param text       UTF-8 encoded input string.
  * @param atlas      GlyphAtlas to query and populate. May be modified (dirty

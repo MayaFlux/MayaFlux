@@ -18,7 +18,7 @@ enum class RedrawPolicy : uint8_t {
 /**
  * @brief Result of an impress() call.
  *
- * Ok and Overflow are both success states from the caller's perspective --
+ * Ok and Overflow are both success states from the caller's perspective:
  * the text was composited in both cases. Overflow additionally signals that
  * the vertical budget was exceeded, the texture was reallocated, and all
  * previous content has been cleared. The caller is responsible for
@@ -27,6 +27,23 @@ enum class RedrawPolicy : uint8_t {
 enum class ImpressResult : uint8_t {
     Ok, ///< Run composited at cursor. No GPU state change.
     Overflow ///< Vertical budget exceeded. Texture reallocated. Previous content cleared.
+};
+
+/**
+ * @brief A colored byte range within the text passed to a composite call.
+ *
+ * start/end are byte offsets into that call's own text argument, matching
+ * GlyphQuad::byte_offset as produced by lay_out() for that same text, not
+ * offsets into any longer accumulated history. Quads whose byte_offset falls
+ * in [min(start,end), max(start,end)) are rasterized in this span's color
+ * instead of the call's base color. Spans may overlap; where they do, the
+ * later entry in the vector wins for the overlapping quads. Quads matched by
+ * no span keep the call's base color.
+ */
+struct StyleSpan {
+    size_t start;
+    size_t end;
+    glm::vec4 color;
 };
 
 /**
@@ -41,7 +58,7 @@ enum class ImpressResult : uint8_t {
  * content height to reduce early vertical reallocation under growing text.
  * Set to a concrete value to skip the heuristic and allocate exactly.
  *
- * Width is always allocated to render_bounds.x -- the layout engine wraps
+ * Width is always allocated to render_bounds.x, since the layout engine wraps
  * at that boundary, so no content can ever exceed it and a narrower
  * horizontal allocation serves no purpose.
  */
@@ -49,7 +66,7 @@ struct PressParams {
     /// @brief Glyph atlas to use. Null selects the TypeFaceFoundry default at call time.
     GlyphAtlas* atlas { nullptr };
 
-    /// @brief RGBA color applied to all glyphs.
+    /// @brief RGBA color applied to all glyphs not covered by a span in `spans`.
     glm::vec4 color { 1.F, 1.F, 1.F, 1.F };
 
     /// @brief Hard render bounds in pixels.
@@ -58,6 +75,9 @@ struct PressParams {
 
     /// @brief Initial vertical budget in pixels. Zero applies the grow heuristic.
     uint32_t budget_h { 0 };
+
+    /// @brief Optional per-byte-range color overrides. Empty applies `color` uniformly.
+    std::vector<StyleSpan> spans;
 };
 
 /**
@@ -156,15 +176,17 @@ MAYAFLUX_API void ink_quads(
  *
  * @param target  Existing TextBuffer to write into.
  * @param text    UTF-8 string to composite.
- * @param color   RGBA glyph color.
+ * @param color   RGBA glyph color for any byte not covered by @p spans.
  * @param policy  Controls reallocation behaviour when text exceeds budget.
+ * @param spans   Optional per-byte-range color overrides, offsets into @p text.
  * @return        True on success.
  */
 MAYAFLUX_API bool repress(
     const std::shared_ptr<Buffers::TextBuffer>& target,
     std::string_view text,
     glm::vec4 color = { 1.F, 1.F, 1.F, 1.F },
-    RedrawPolicy policy = RedrawPolicy::Clip);
+    RedrawPolicy policy = RedrawPolicy::Clip,
+    std::span<const StyleSpan> spans = {});
 
 /**
  * @brief Re-composite a UTF-8 string into an existing GPU texture.
@@ -204,14 +226,22 @@ MAYAFLUX_API bool repress(
  * was used at press() time, impress() will use the default instead. Mixing
  * atlases on the same TextBuffer is undefined behaviour.
  *
+ * @p spans is offsets into this call's @p text, matching the byte_offset
+ * lay_out() assigns for this run. On the Overflow-and-regrow path the full
+ * accumulated text is recomposited using @p color and @p spans from this
+ * call alone; prior runs' own colors/spans are not retained, the same
+ * pre-existing limitation @p color already has on that path.
+ *
  * @param target  Existing TextBuffer to append into.
  * @param text    UTF-8 string to composite.
- * @param color   RGBA glyph color.
+ * @param color   RGBA glyph color for any byte not covered by @p spans.
+ * @param spans   Optional per-byte-range color overrides, offsets into @p text.
  * @return        ImpressResult::Ok or ImpressResult::Overflow.
  */
 MAYAFLUX_API ImpressResult impress(
     const std::shared_ptr<Buffers::TextBuffer>& target,
     std::string_view text,
-    glm::vec4 color = { 1.F, 1.F, 1.F, 1.F });
+    glm::vec4 color = { 1.F, 1.F, 1.F, 1.F },
+    std::span<const StyleSpan> spans = {});
 
 } // namespace MayaFlux::Portal::Text

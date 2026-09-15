@@ -32,6 +32,61 @@ namespace {
     };
 
     /**
+     * @brief Rasterize quads in per-span colors, falling back to a base color.
+     *
+     * Empty @p spans is the flat-color fast path (one rasterize_quads call).
+     * Otherwise each span is rasterized as its own subset -- quads whose
+     * byte_offset falls in [min(start,end), max(start,end)) -- in that
+     * span's color; later spans in the vector paint over earlier ones where
+     * ranges overlap, since rasterize_quads writes pixels rather than
+     * blending. Quads matched by no span are rasterized last in the base
+     * color, so spans always take visual precedence over the fallback.
+     */
+    void rasterize_styled(
+        std::span<const GlyphQuad> quads,
+        GlyphAtlas& atlas,
+        glm::vec4 base_color,
+        std::span<const StyleSpan> spans,
+        uint8_t* dst,
+        uint32_t buf_w,
+        uint32_t buf_h)
+    {
+        if (spans.empty()) {
+            rasterize_quads(quads, atlas, base_color, dst, buf_w, buf_h);
+            return;
+        }
+
+        std::vector<bool> covered(quads.size(), false);
+        std::vector<GlyphQuad> bucket;
+
+        for (const auto& span : spans) {
+            const size_t lo = std::min(span.start, span.end);
+            const size_t hi = std::max(span.start, span.end);
+
+            bucket.clear();
+            for (size_t i = 0; i < quads.size(); ++i) {
+                if (quads[i].byte_offset >= lo && quads[i].byte_offset < hi) {
+                    bucket.push_back(quads[i]);
+                    covered[i] = true;
+                }
+            }
+            if (!bucket.empty()) {
+                rasterize_quads(bucket, atlas, span.color, dst, buf_w, buf_h);
+            }
+        }
+
+        bucket.clear();
+        for (size_t i = 0; i < quads.size(); ++i) {
+            if (!covered[i]) {
+                bucket.push_back(quads[i]);
+            }
+        }
+        if (!bucket.empty()) {
+            rasterize_quads(bucket, atlas, base_color, dst, buf_w, buf_h);
+        }
+    }
+
+    /**
      * @brief Resolve atlas pointer: use provided atlas or fall back to foundry default.
      * @return Non-null pointer on success, nullptr if no atlas is available.
      */
@@ -57,9 +112,10 @@ namespace {
      *
      * @param text   UTF-8 string.
      * @param atlas  Source atlas.
-     * @param color  Glyph color.
+     * @param color  Base glyph color for any byte not covered by @p spans.
      * @param buf_w  Buffer width and wrap boundary in pixels.
      * @param buf_h  Buffer height (allocated budget) in pixels.
+     * @param spans  Optional per-byte-range color overrides, offsets into @p text.
      * @return       CompositeResult, or nullopt when no glyphs are produced.
      */
     std::optional<CompositeResult> composite(
@@ -68,7 +124,8 @@ namespace {
         glm::vec4 color,
         uint32_t buf_w,
         uint32_t buf_h,
-        float pen_y_start = 0.F)
+        float pen_y_start = 0.F,
+        std::span<const StyleSpan> spans = {})
     {
         const LayoutResult layout = lay_out(text, atlas, 0.F, pen_y_start, buf_w);
         if (layout.quads.empty()) {
@@ -89,7 +146,7 @@ namespace {
         result.cursor_y = static_cast<uint32_t>(std::ceil(layout.final_pen_y));
         result.pixels.resize(static_cast<size_t>(buf_w) * dst_h * 4, 0);
 
-        rasterize_quads(layout.quads, atlas, color, result.pixels.data(), buf_w, dst_h);
+        rasterize_styled(layout.quads, atlas, color, spans, result.pixels.data(), buf_w, dst_h);
 
         return result;
     }
@@ -246,7 +303,7 @@ std::shared_ptr<Buffers::TextBuffer> press(
     const uint32_t buf_w = params.render_bounds.x;
 
     const auto result = composite(text, *atlas, params.color, buf_w, params.render_bounds.y,
-        static_cast<float>(atlas->line_height()));
+        static_cast<float>(atlas->line_height()), params.spans);
     if (!result) {
         MF_WARN(Journal::Component::Portal, Journal::Context::API,
             "press: no glyphs produced for '{}'", std::string(text));
@@ -275,7 +332,7 @@ std::shared_ptr<Core::VKImage> press(
         static_cast<uint32_t>(atlas->line_height()));
 
     const auto result = composite(text, *atlas, params.color, buf_w, composite_h,
-        static_cast<float>(atlas->ascender()));
+        static_cast<float>(atlas->ascender()), params.spans);
 
     if (!result) {
         MF_WARN(Journal::Component::Portal, Journal::Context::API,
@@ -317,7 +374,8 @@ bool repress(
     const std::shared_ptr<Buffers::TextBuffer>& target,
     std::string_view text,
     glm::vec4 color,
-    RedrawPolicy policy)
+    RedrawPolicy policy,
+    std::span<const StyleSpan> spans)
 {
     if (!target) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::API,
@@ -338,7 +396,7 @@ bool repress(
     const uint32_t bound_h = target->get_render_bounds_h();
 
     const auto result = composite(text, *atlas, color, buf_w, bound_h,
-        static_cast<float>(atlas->line_height()));
+        static_cast<float>(atlas->line_height()), spans);
     if (!result) {
         MF_WARN(Journal::Component::Portal, Journal::Context::API,
             "repress: no glyphs produced for '{}'", std::string(text));
@@ -406,7 +464,7 @@ bool repress(
         static_cast<uint32_t>(atlas->line_height()));
 
     const auto result = composite(text, *atlas, params.color, buf_w, composite_h,
-        static_cast<float>(atlas->ascender()));
+        static_cast<float>(atlas->ascender()), params.spans);
     if (!result) {
         MF_WARN(Journal::Component::Portal, Journal::Context::API,
             "repress(VKImage): no glyphs produced for '{}'", std::string(text));
@@ -464,7 +522,8 @@ bool repress(
 ImpressResult impress(
     const std::shared_ptr<Buffers::TextBuffer>& target,
     std::string_view text,
-    glm::vec4 color)
+    glm::vec4 color,
+    std::span<const StyleSpan> spans)
 {
     if (!target) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::API,
@@ -505,7 +564,7 @@ ImpressResult impress(
         const uint32_t new_h = std::min(content_h * k_grow_height_multiplier, bound_h);
         const std::string accumulated = target->get_accumulated_text();
 
-        const auto full = composite(accumulated, *atlas, color, buf_w, new_h);
+        const auto full = composite(accumulated, *atlas, color, buf_w, new_h, 0.F, spans);
         if (!full) {
             return ImpressResult::Overflow;
         }
@@ -535,7 +594,7 @@ ImpressResult impress(
     }
 
     auto& pixel_data = target->get_pixel_data_mutable();
-    rasterize_quads(layout.quads, *atlas, color, pixel_data.data(), buf_w, buf_h);
+    rasterize_styled(layout.quads, *atlas, color, spans, pixel_data.data(), buf_w, buf_h);
     target->mark_pixels_dirty();
     target->get_cursor_x() = static_cast<uint32_t>(std::ceil(layout.final_pen_x));
     target->get_cursor_y() = new_cursor_y;
