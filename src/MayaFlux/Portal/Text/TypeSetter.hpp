@@ -152,4 +152,43 @@ struct LayoutResult {
  */
 [[nodiscard]] MAYAFLUX_API size_t previous_codepoint_offset(std::string_view text, size_t byte_offset);
 
+/**
+ * @struct CopiedText
+ * @brief Result of copy(): a byte range's text plus the quads that render it.
+ */
+struct CopiedText {
+    std::string text; ///< Substring of the source text in [start, end).
+    size_t start { 0 }; ///< Normalized, clamped byte range actually used.
+    size_t end { 0 };
+    std::vector<GlyphQuad> quads; ///< Matching quads, at their original layout positions.
+};
+
+/**
+ * @brief Copy a byte range: the text it spans, and the quads that render it.
+ *
+ * start/end are normalized (min/max) and clamped to [0, text.size()]. Both
+ * are assumed to already be codepoint boundaries, the same assumption
+ * next_codepoint_offset()/previous_codepoint_offset() maintain for a
+ * caller's cursor; this does not re-snap them to one.
+ *
+ * Quads are taken from @p layout, matched by GlyphQuad::byte_offset falling
+ * in the normalized range, at whatever position they were laid out at.
+ * Shift them yourself if the copy needs to be positioned relative to its
+ * own origin rather than the source layout's. @p layout must be the result
+ * of laying out this same @p text (or one whose byte offsets line up with
+ * it); passing a layout for unrelated text returns a meaningless, but not
+ * unsafe, quads list.
+ *
+ * @param text    Source UTF-8 string the byte range indexes into.
+ * @param layout  LayoutResult produced from that same text.
+ * @param a       One end of the byte range.
+ * @param b       The other end of the byte range.
+ * @return        The extracted text, its normalized range, and matching quads.
+ */
+[[nodiscard]] MAYAFLUX_API CopiedText copy(
+    std::string_view text,
+    const LayoutResult& layout,
+    size_t a,
+    size_t b);
+
 } // namespace MayaFlux::Portal::Text

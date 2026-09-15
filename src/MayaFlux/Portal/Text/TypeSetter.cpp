@@ -214,4 +214,25 @@ size_t previous_codepoint_offset(std::string_view text, size_t byte_offset)
     return pos;
 }
 
+CopiedText copy(std::string_view text, const LayoutResult& layout, size_t a, size_t b)
+{
+    CopiedText out;
+    out.start = std::min(std::min(a, b), text.size());
+    out.end = std::min(std::max(a, b), text.size());
+
+    if (out.start >= out.end) {
+        return out;
+    }
+
+    out.text = std::string(text.substr(out.start, out.end - out.start));
+
+    for (const auto& q : layout.quads) {
+        if (q.byte_offset >= out.start && q.byte_offset < out.end) {
+            out.quads.push_back(q);
+        }
+    }
+
+    return out;
+}
+
 } // namespace MayaFlux::Portal::Text
