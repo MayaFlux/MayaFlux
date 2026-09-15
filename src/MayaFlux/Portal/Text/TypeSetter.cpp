@@ -40,6 +40,18 @@ LayoutResult lay_out(
     const bool has_kerning = FT_HAS_KERNING(face) != 0;
     FT_UInt prev_glyph_index = 0;
 
+    constexpr float k_wrap_margin = 1.5F;
+
+    const auto apply_wrap = [&](float upcoming_width) -> bool {
+        if (wrap_w > 0 && pen_x + upcoming_width * k_wrap_margin > static_cast<float>(wrap_w)) {
+            pen_x = origin_x;
+            pen_y += static_cast<float>(atlas.line_height());
+            prev_glyph_index = 0;
+            return true;
+        }
+        return false;
+    };
+
     const auto* bytes = reinterpret_cast<const utf8proc_uint8_t*>(text.data());
     auto remaining = static_cast<utf8proc_ssize_t>(text.size());
     utf8proc_ssize_t offset = 0;
@@ -71,6 +83,7 @@ LayoutResult lay_out(
 
                 if (stop_width > 0.F) {
                     pen_x = (std::floor((pen_x - origin_x) / stop_width) + 1.F) * stop_width + origin_x;
+                    apply_wrap(0.F);
                 }
             } else if (codepoint == '\n') {
                 pen_x = origin_x;
@@ -87,6 +100,8 @@ LayoutResult lay_out(
             prev_glyph_index = 0;
             continue;
         }
+
+        apply_wrap(static_cast<float>(m->advance_x));
 
         if (has_kerning && prev_glyph_index != 0 && glyph_index != 0) {
             FT_Vector delta {};
@@ -109,14 +124,7 @@ LayoutResult lay_out(
         }
 
         pen_x += static_cast<float>(m->advance_x);
-
-        if (wrap_w > 0 && static_cast<uint32_t>(std::ceil(pen_x)) > wrap_w) {
-            pen_x = 0.F;
-            pen_y += static_cast<float>(atlas.line_height());
-            prev_glyph_index = 0;
-        } else {
-            prev_glyph_index = glyph_index;
-        }
+        prev_glyph_index = glyph_index;
     }
 
     out.final_pen_x = pen_x;

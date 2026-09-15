@@ -52,6 +52,18 @@ struct LayoutResult {
  * any control codepoint and across a wrap-induced line break, so kerning
  * never applies between glyphs that end up on different visual lines.
  *
+ * Wrapping at wrap_w is a pure render-bounds guarantee, not word-aware line
+ * breaking: it breaks mid-word freely, with no whitespace lookback. This is
+ * deliberate - correctness here means no glyph ever renders past wrap_w, not
+ * that words stay intact. Each glyph is checked before it is placed, against
+ * its own advance width times a 1.5x margin, so the decision to wrap accounts
+ * for the glyph about to be drawn rather than reacting one glyph late to
+ * cumulative pen_x history - the margin absorbs the gap between a glyph's
+ * advance and its true rendered width so a glyph is never placed half past
+ * the boundary. A tab is checked the same way against its own tab-stop
+ * advance (no margin, since it draws nothing itself) immediately after
+ * computing its destination, not deferred to the next glyph's turn.
+ *
  * Bidirectional reordering and shaping are not performed. HarfBuzz slots in
  * before the glyph index step when needed; the quad assembly loop and
  * GlyphAtlas remain unchanged.
