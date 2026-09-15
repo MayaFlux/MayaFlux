@@ -6,12 +6,26 @@
 
 namespace MayaFlux::Portal::Text {
 
+bool is_control(uint32_t codepoint) noexcept
+{
+    switch (utf8proc_category(static_cast<utf8proc_int32_t>(codepoint))) {
+    case UTF8PROC_CATEGORY_CC:
+    case UTF8PROC_CATEGORY_CF:
+    case UTF8PROC_CATEGORY_CS:
+    case UTF8PROC_CATEGORY_CO:
+        return true;
+    default:
+        return false;
+    }
+}
+
 LayoutResult lay_out(
     std::string_view text,
     GlyphAtlas& atlas,
     float pen_x,
     float pen_y,
-    uint32_t wrap_w)
+    uint32_t wrap_w,
+    uint32_t tab_width)
 {
     if (text.empty()) {
         return { .quads = {}, .final_pen_x = pen_x, .final_pen_y = pen_y };
@@ -21,6 +35,10 @@ LayoutResult lay_out(
     out.quads.reserve(text.size());
 
     const float origin_x = 0.F;
+
+    FT_Face face = atlas.get_face().get_face();
+    const bool has_kerning = FT_HAS_KERNING(face) != 0;
+    FT_UInt prev_glyph_index = 0;
 
     const auto* bytes = reinterpret_cast<const utf8proc_uint8_t*>(text.data());
     auto remaining = static_cast<utf8proc_ssize_t>(text.size());
@@ -44,19 +62,36 @@ LayoutResult lay_out(
             continue;
         }
 
-        if (codepoint == '\n') {
-            pen_x = origin_x;
-            pen_y += static_cast<float>(atlas.line_height());
+        if (is_control(static_cast<uint32_t>(codepoint))) {
+            if (codepoint == '\t' && tab_width > 0) {
+                const GlyphMetrics* space = atlas.get_or_rasterize(static_cast<FT_ULong>(' '));
+                const float stop_width = space && space->advance_x > 0
+                    ? static_cast<float>(space->advance_x) * static_cast<float>(tab_width)
+                    : 0.F;
+
+                if (stop_width > 0.F) {
+                    pen_x = (std::floor((pen_x - origin_x) / stop_width) + 1.F) * stop_width + origin_x;
+                }
+            } else if (codepoint == '\n') {
+                pen_x = origin_x;
+                pen_y += static_cast<float>(atlas.line_height());
+            }
+
+            prev_glyph_index = 0;
             continue;
         }
 
-        if (codepoint == '\r') {
-            continue;
-        }
-
+        const FT_UInt glyph_index = FT_Get_Char_Index(face, static_cast<FT_ULong>(codepoint));
         const GlyphMetrics* m = atlas.get_or_rasterize(static_cast<FT_ULong>(codepoint));
         if (!m) {
+            prev_glyph_index = 0;
             continue;
+        }
+
+        if (has_kerning && prev_glyph_index != 0 && glyph_index != 0) {
+            FT_Vector delta {};
+            FT_Get_Kerning(face, prev_glyph_index, glyph_index, FT_KERNING_DEFAULT, &delta);
+            pen_x += static_cast<float>(delta.x >> 6);
         }
 
         if (m->width > 0 && m->height > 0) {
@@ -78,6 +113,9 @@ LayoutResult lay_out(
         if (wrap_w > 0 && static_cast<uint32_t>(std::ceil(pen_x)) > wrap_w) {
             pen_x = 0.F;
             pen_y += static_cast<float>(atlas.line_height());
+            prev_glyph_index = 0;
+        } else {
+            prev_glyph_index = glyph_index;
         }
     }
 

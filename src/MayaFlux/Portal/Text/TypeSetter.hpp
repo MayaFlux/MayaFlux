@@ -40,27 +40,53 @@ struct LayoutResult {
 /**
  * @brief Lay out a UTF-8 string into a sequence of screen-space quads.
  *
- * Handles \n (advance pen_y by atlas.line_height(), reset pen_x to the
- * initial value) and \r (consumed silently). All other control codepoints
- * with no glyph in the face are skipped without advancing the pen.
+ * Every codepoint for which is_control() is true is never rasterized or
+ * counted as printable content. Among those, \t advances pen_x to the next
+ * tab stop and \n advances pen_y by atlas.line_height() and resets pen_x;
+ * every other control codepoint (including \r) is skipped with no side
+ * effect. This is the same is_control() identification raw-string text
+ * handling uses; only the reaction to it differs here.
+ *
+ * Consecutive non-control glyphs are kerned via FT_Get_Kerning() when the
+ * face has a kerning table. The previous glyph index resets to none across
+ * any control codepoint and across a wrap-induced line break, so kerning
+ * never applies between glyphs that end up on different visual lines.
  *
  * Bidirectional reordering and shaping are not performed. HarfBuzz slots in
  * before the glyph index step when needed; the quad assembly loop and
  * GlyphAtlas remain unchanged.
  *
- * @param text   UTF-8 encoded input string.
- * @param atlas  GlyphAtlas to query and populate. May be modified (dirty flag
- *               set) if new glyphs are rasterized.
- * @param pen_x  Starting horizontal pen position in pixels.
- * @param pen_y  Starting vertical pen position in pixels (baseline).
- * @return       LayoutResult containing quads and final pen position.
+ * @param text       UTF-8 encoded input string.
+ * @param atlas      GlyphAtlas to query and populate. May be modified (dirty
+ *                   flag set) if new glyphs are rasterized.
+ * @param pen_x      Starting horizontal pen position in pixels.
+ * @param pen_y      Starting vertical pen position in pixels (baseline).
+ * @param wrap_w     Column to wrap at in pixels, or 0 to disable wrapping.
+ * @param tab_width  Tab stop width in space-glyph-widths.
+ * @return           LayoutResult containing quads and final pen position.
  */
 [[nodiscard]] LayoutResult lay_out(
     std::string_view text,
     GlyphAtlas& atlas,
     float pen_x = 0.F,
     float pen_y = 0.F,
-    uint32_t wrap_w = 0);
+    uint32_t wrap_w = 0,
+    uint32_t tab_width = 4);
+
+/**
+ * @brief True if a codepoint must never be rasterized or treated as
+ *        printable content.
+ *
+ * Covers Unicode categories Cc (control), Cf (format), Cs (surrogate), and
+ * Co (private use) via utf8proc_category(). This is the one fact every
+ * Portal::Text consumer (layout, raw-string editing) shares about a
+ * codepoint; what each does in response - skip, reposition a pen, refuse an
+ * insertion - is theirs to decide.
+ *
+ * @param codepoint  Unicode codepoint to classify.
+ * @return           true if the codepoint must never produce a glyph.
+ */
+[[nodiscard]] MAYAFLUX_API bool is_control(uint32_t codepoint) noexcept;
 
 /**
  * @brief Encode a Unicode codepoint as a UTF-8 byte sequence.
