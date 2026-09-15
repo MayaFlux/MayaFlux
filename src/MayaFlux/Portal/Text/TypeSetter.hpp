@@ -62,4 +62,41 @@ struct LayoutResult {
     float pen_y = 0.F,
     uint32_t wrap_w = 0);
 
+/**
+ * @brief Encode a Unicode codepoint as a UTF-8 byte sequence.
+ *
+ * Counterpart to the decode step lay_out() performs via utf8proc_iterate.
+ * Invalid codepoints (surrogates, > 0x10FFFF) return an empty string.
+ *
+ * @param codepoint  Unicode codepoint to encode.
+ * @return           1-4 byte UTF-8 sequence, or empty on invalid input.
+ */
+[[nodiscard]] MAYAFLUX_API std::string encode_utf8(uint32_t codepoint);
+
+/**
+ * @brief Byte offset of the codepoint boundary after @p byte_offset.
+ *
+ * Steps forward exactly one codepoint using the same utf8proc decode lay_out()
+ * uses, so malformed sequences are skipped identically rather than by a
+ * separate continuation-byte mask. Returns text.size() if already at or past
+ * the end.
+ *
+ * @param text         UTF-8 encoded string.
+ * @param byte_offset  Current byte offset, must be a codepoint boundary.
+ * @return             Byte offset of the next codepoint boundary.
+ */
+[[nodiscard]] MAYAFLUX_API size_t next_codepoint_offset(std::string_view text, size_t byte_offset);
+
+/**
+ * @brief Byte offset of the codepoint boundary before @p byte_offset.
+ *
+ * Walks backward over continuation-pattern bytes to the start of the
+ * preceding codepoint. Returns 0 if @p byte_offset is already 0.
+ *
+ * @param text         UTF-8 encoded string.
+ * @param byte_offset  Current byte offset, must be a codepoint boundary.
+ * @return             Byte offset of the previous codepoint boundary.
+ */
+[[nodiscard]] MAYAFLUX_API size_t previous_codepoint_offset(std::string_view text, size_t byte_offset);
+
 } // namespace MayaFlux::Portal::Text

@@ -86,4 +86,55 @@ LayoutResult lay_out(
     return out;
 }
 
+std::string encode_utf8(uint32_t codepoint)
+{
+    if (!utf8proc_codepoint_valid(static_cast<utf8proc_int32_t>(codepoint))) {
+        return {};
+    }
+
+    std::array<utf8proc_uint8_t, 4> buf {};
+    const utf8proc_ssize_t n = utf8proc_encode_char(
+        static_cast<utf8proc_int32_t>(codepoint), buf.data());
+
+    if (n <= 0) {
+        return {};
+    }
+
+    return { reinterpret_cast<const char*>(buf.data()), static_cast<size_t>(n) };
+}
+
+size_t next_codepoint_offset(std::string_view text, size_t byte_offset)
+{
+    if (byte_offset >= text.size()) {
+        return text.size();
+    }
+
+    const auto* bytes = reinterpret_cast<const utf8proc_uint8_t*>(text.data());
+    const auto remaining = static_cast<utf8proc_ssize_t>(text.size() - byte_offset);
+
+    utf8proc_int32_t codepoint = 0;
+    const utf8proc_ssize_t n = utf8proc_iterate(bytes + byte_offset, remaining, &codepoint);
+
+    return byte_offset + static_cast<size_t>(n > 0 ? n : 1);
+}
+
+size_t previous_codepoint_offset(std::string_view text, size_t byte_offset)
+{
+    if (byte_offset == 0) {
+        return 0;
+    }
+
+    size_t pos = byte_offset - 1;
+    constexpr size_t max_continuation_bytes = 3;
+    size_t steps = 0;
+
+    while (pos > 0 && steps < max_continuation_bytes
+        && (static_cast<uint8_t>(text[pos]) & 0xC0) == 0x80) {
+        --pos;
+        ++steps;
+    }
+
+    return pos;
+}
+
 } // namespace MayaFlux::Portal::Text
