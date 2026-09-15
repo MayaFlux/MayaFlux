@@ -41,12 +41,40 @@ bool TypeFaceFoundry::set_default_font(const std::string& font_path, uint32_t pi
     }
 
     auto atlas = std::make_unique<GlyphAtlas>(*face, pixel_size, atlas_size);
+    for (const auto& fallback : m_fallback_faces) {
+        if (fallback && fallback->is_loaded()) {
+            atlas->add_fallback(*fallback);
+        }
+    }
 
     m_default_atlas = std::move(atlas);
     m_default_face = std::move(face);
 
     MF_INFO(Journal::Component::Portal, Journal::Context::API,
         "Default font set: '{}' {}px atlas {}px", font_path, pixel_size, atlas_size);
+    return true;
+}
+
+bool TypeFaceFoundry::add_fallback_font(const std::string& font_path)
+{
+    if (!m_default_atlas) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::API,
+            "add_fallback_font: call set_default_font first");
+        return false;
+    }
+
+    auto face = std::make_unique<FontFace>();
+    if (!face->load(font_path)) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::API,
+            "add_fallback_font: failed to load '{}'", font_path);
+        return false;
+    }
+
+    m_default_atlas->add_fallback(*face);
+    m_fallback_faces.push_back(std::move(face));
+
+    MF_INFO(Journal::Component::Portal, Journal::Context::API,
+        "Fallback font added: '{}'", font_path);
     return true;
 }
 
@@ -58,6 +86,11 @@ void TypeFaceFoundry::shutdown()
 
     if (m_default_face) {
         m_default_face->unload();
+    }
+    for (const auto& fallback : m_fallback_faces) {
+        if (fallback) {
+            fallback->unload();
+        }
     }
 
     FT_Done_FreeType(m_library);

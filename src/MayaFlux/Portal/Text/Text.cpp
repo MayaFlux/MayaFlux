@@ -102,6 +102,25 @@ bool set_default_font(const std::string& path, uint32_t pixel_size, uint32_t atl
     return TypeFaceFoundry::instance().set_default_font(path, pixel_size, atlas_size);
 }
 
+bool add_fallback_font(const std::string& font_path)
+{
+    return TypeFaceFoundry::instance().add_fallback_font(font_path);
+}
+
+bool add_fallback_font(std::string_view family, std::string_view style)
+{
+    const auto path = find_font(family, style);
+    if (!path) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::API,
+            "add_fallback_font: could not locate '{}{}{}' on this system",
+            family,
+            style.empty() ? "" : " ",
+            style);
+        return false;
+    }
+    return add_fallback_font(*path);
+}
+
 GlyphAtlas& get_default_atlas()
 {
     GlyphAtlas* atlas = TypeFaceFoundry::instance().get_default_glyph_atlas();

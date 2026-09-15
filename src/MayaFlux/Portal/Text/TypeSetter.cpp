@@ -36,9 +36,34 @@ LayoutResult lay_out(
 
     const float origin_x = 0.F;
 
-    FT_Face face = atlas.get_face().get_face();
-    const bool has_kerning = FT_HAS_KERNING(face) != 0;
+    {
+        const auto* prewarm_bytes = reinterpret_cast<const utf8proc_uint8_t*>(text.data());
+        auto prewarm_remaining = static_cast<utf8proc_ssize_t>(text.size());
+        utf8proc_ssize_t prewarm_offset = 0;
+
+        while (prewarm_offset < prewarm_remaining) {
+            utf8proc_int32_t prewarm_codepoint = 0;
+            const utf8proc_ssize_t n = utf8proc_iterate(
+                prewarm_bytes + prewarm_offset, prewarm_remaining - prewarm_offset, &prewarm_codepoint);
+
+            if (n <= 0) {
+                prewarm_offset += 1;
+                continue;
+            }
+            prewarm_offset += n;
+
+            if (prewarm_codepoint >= 0 && !is_control(static_cast<uint32_t>(prewarm_codepoint))) {
+                atlas.get_or_rasterize(static_cast<FT_ULong>(prewarm_codepoint));
+            }
+        }
+
+        if (tab_width > 0) {
+            atlas.get_or_rasterize(static_cast<FT_ULong>(' '));
+        }
+    }
+
     FT_UInt prev_glyph_index = 0;
+    const FontFace* prev_face = nullptr;
 
     constexpr float k_wrap_margin = 1.5F;
 
@@ -47,6 +72,7 @@ LayoutResult lay_out(
             pen_x = origin_x;
             pen_y += static_cast<float>(atlas.line_height());
             prev_glyph_index = 0;
+            prev_face = nullptr;
             return true;
         }
         return false;
@@ -92,21 +118,23 @@ LayoutResult lay_out(
             }
 
             prev_glyph_index = 0;
+            prev_face = nullptr;
             continue;
         }
 
-        const FT_UInt glyph_index = FT_Get_Char_Index(face, static_cast<FT_ULong>(codepoint));
         const GlyphMetrics* m = atlas.get_or_rasterize(static_cast<FT_ULong>(codepoint));
         if (!m) {
             prev_glyph_index = 0;
+            prev_face = nullptr;
             continue;
         }
 
         apply_wrap(static_cast<float>(m->advance_x));
 
-        if (has_kerning && prev_glyph_index != 0 && glyph_index != 0) {
+        if (prev_face == m->face && prev_glyph_index != 0 && m->glyph_index != 0
+            && m->face && FT_HAS_KERNING(m->face->get_face())) {
             FT_Vector delta {};
-            FT_Get_Kerning(face, prev_glyph_index, glyph_index, FT_KERNING_DEFAULT, &delta);
+            FT_Get_Kerning(m->face->get_face(), prev_glyph_index, m->glyph_index, FT_KERNING_DEFAULT, &delta);
             pen_x += static_cast<float>(delta.x >> 6);
         }
 
@@ -126,7 +154,8 @@ LayoutResult lay_out(
         }
 
         pen_x += static_cast<float>(m->advance_x);
-        prev_glyph_index = glyph_index;
+        prev_glyph_index = m->glyph_index;
+        prev_face = m->face;
     }
 
     out.final_pen_x = pen_x;

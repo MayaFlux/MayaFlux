@@ -7,10 +7,6 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
-#include <cstdint>
-#include <memory>
-#include <unordered_map>
-
 namespace MayaFlux::Portal::Text {
 
 /**
@@ -19,6 +15,12 @@ namespace MayaFlux::Portal::Text {
  *
  * UV coordinates are in normalised [0, 1] atlas space.
  * Bearing and size are in pixels at the atlas's declared pixel_size.
+ *
+ * face and glyph_index identify which FontFace actually produced this
+ * glyph (the primary face, or a fallback on a primary miss) and its glyph
+ * index within that specific face. Glyph indices are only meaningful
+ * relative to the face that produced them: a consumer doing anything
+ * face-sensitive (kerning) must compare face identity, not just index.
  *
  * When HarfBuzz is introduced it will supply glyph_index and position
  * offsets directly; this struct remains the downstream currency.
@@ -34,6 +36,9 @@ struct GlyphMetrics {
     uint32_t width { 0 }; ///< Glyph bitmap width in pixels.
     uint32_t height { 0 }; ///< Glyph bitmap height in pixels.
     int32_t advance_x { 0 }; ///< Horizontal advance in pixels (26.6 fixed-point >> 6).
+
+    const FontFace* face { nullptr }; ///< Face that produced this glyph (primary or fallback).
+    FT_UInt glyph_index { 0 }; ///< Glyph index within `face` (from FT_Get_Char_Index).
 };
 
 /**
@@ -44,12 +49,22 @@ struct GlyphMetrics {
  * texture is R8 (single-channel coverage); colour is applied in the shader.
  *
  * Glyphs are rasterized on first request via get_or_rasterize() and packed
- * into the atlas using a simple shelf packing algorithm.  The atlas texture
- * is rebuilt whenever a new glyph causes a shelf overflow.
+ * into the atlas using a simple shelf packing algorithm. On shelf overflow
+ * the atlas texture doubles in size and every previously cached glyph is
+ * re-rasterized into the new texture from its owning face; rasterization
+ * never permanently refuses for lack of room.
  *
- * The atlas is keyed on FT_UInt glyph index, not Unicode codepoint.
- * Callers obtain glyph indices via FT_Get_Char_Index on the FontFace.
- * This keeps the path open for HarfBuzz, which outputs glyph indices directly.
+ * The primary face is fixed at construction. A codepoint the primary face
+ * lacks is looked up in the fallback chain (add_fallback()), in order, and
+ * the first face reporting a glyph produces it; a codepoint absent from
+ * every face fails as before. The atlas's cache is keyed on (face,
+ * glyph_index) rather than glyph_index alone, since glyph indices are only
+ * unique within the face that assigned them: the same numeric index from
+ * two different faces names two unrelated glyphs.
+ *
+ * Callers obtain glyph indices via FT_Get_Char_Index on the FontFace. This
+ * keeps the path open for HarfBuzz, which outputs glyph indices directly
+ * (against the primary face; HarfBuzz does not participate in fallback).
  *
  * Thread safety: not thread-safe.  Rasterization must occur on the thread
  * that owns the FontFace.
@@ -93,13 +108,24 @@ public:
     /**
      * @brief Convenience: look up by Unicode codepoint.
      *
-     * Calls FT_Get_Char_Index internally.  Prefer the glyph_index overload
-     * when integrating with HarfBuzz output.
+     * Tries the primary face first, then each fallback face in registration
+     * order, returning the first hit. Prefer the glyph_index overload when
+     * integrating with HarfBuzz output (primary face only, no fallback).
      *
      * @param codepoint  Unicode codepoint (e.g. U+0041 for 'A').
-     * @return Pointer to cached GlyphMetrics, or nullptr on failure.
+     * @return Pointer to cached GlyphMetrics, or nullptr if no face (primary
+     *         or fallback) has this codepoint.
      */
     const GlyphMetrics* get_or_rasterize(FT_ULong codepoint);
+
+    /**
+     * @brief Register a fallback face, tried in order after the primary on a miss.
+     *
+     * @param face  Loaded FontFace. Must outlive this atlas. Sized to this
+     *              atlas's pixel_size lazily, on first use, same as the
+     *              primary face.
+     */
+    void add_fallback(FontFace& face);
 
     /**
      * @brief The atlas texture as a TextureContainer (R8, atlas_size x atlas_size).
@@ -145,15 +171,22 @@ public:
     [[nodiscard]] uint32_t ascender() const;
 
 private:
-    bool rasterize(FT_UInt glyph_index);
+    const GlyphMetrics* get_or_rasterize_from(FontFace& face, FT_UInt glyph_index);
+    bool rasterize(FontFace& face, FT_UInt glyph_index);
+
+    /// @brief Double the atlas texture and re-rasterize every cached glyph into it.
+    void grow();
 
     FontFace& m_face;
+    std::vector<FontFace*> m_fallbacks;
     uint32_t m_pixel_size;
     uint32_t m_atlas_size;
 
     std::unique_ptr<Kakshya::TextureContainer> m_texture;
 
-    std::unordered_map<FT_UInt, GlyphMetrics> m_cache;
+    /// @brief Per-face glyph cache. Outer key is the producing FontFace,
+    ///        since glyph indices are only unique within one face.
+    std::unordered_map<FontFace*, std::unordered_map<FT_UInt, GlyphMetrics>> m_cache;
 
     uint32_t m_cursor_x { 0 };
     uint32_t m_cursor_y { 0 };

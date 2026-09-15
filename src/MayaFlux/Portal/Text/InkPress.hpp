@@ -124,14 +124,25 @@ MAYAFLUX_API void rasterize_quads(
  * Portal::Text::ink_quads(text_buf, layout->quads, color);
  * @endcode
  *
+ * @p quads' UV coordinates are only meaningful against the atlas they were
+ * laid out from. @p atlas null (the default) resolves to whatever the
+ * TypeFaceFoundry default atlas is *at this call*, not at layout time: if
+ * something else has called set_default_font() since, or the atlas has
+ * grown, a held LayoutResult's quads will sample the wrong texture. Pass
+ * the same atlas the quads were laid out against explicitly whenever it
+ * might not still be the current default by the time this runs.
+ *
  * @param target  TextBuffer to write into. Dimensions are read from the buffer.
  * @param quads   Quads produced by create_layout(), optionally mutated by the caller.
  * @param color   RGBA glyph color in [0, 1].
+ * @param atlas   Atlas the quads' UVs are relative to. Null selects the
+ *                TypeFaceFoundry default at call time.
  */
 MAYAFLUX_API void ink_quads(
     const std::shared_ptr<Buffers::TextBuffer>& target,
     std::span<const GlyphQuad> quads,
-    glm::vec4 color);
+    glm::vec4 color,
+    GlyphAtlas* atlas = nullptr);
 
 /**
  * @brief Composite a UTF-8 string into a new TextBuffer.

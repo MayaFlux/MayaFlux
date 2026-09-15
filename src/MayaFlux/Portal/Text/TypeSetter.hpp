@@ -41,6 +41,13 @@ struct LayoutResult {
 /**
  * @brief Lay out a UTF-8 string into a sequence of screen-space quads.
  *
+ * Every codepoint this text needs is rasterized (cached, if not already)
+ * before any quad is emitted, so a GlyphAtlas growth triggered partway
+ * through this text cannot invalidate the UV coordinates already baked into
+ * quads emitted earlier in the same call. This guarantee is per-call only:
+ * a LayoutResult held across later, unrelated lay_out() calls on the same
+ * atlas is not protected if the atlas grows afterward from something else.
+ *
  * Every codepoint for which is_control() is true is never rasterized or
  * counted as printable content. Among those, \t advances pen_x to the next
  * tab stop and \n advances pen_y by atlas.line_height() and resets pen_x;
@@ -49,9 +56,12 @@ struct LayoutResult {
  * handling uses; only the reaction to it differs here.
  *
  * Consecutive non-control glyphs are kerned via FT_Get_Kerning() when the
- * face has a kerning table. The previous glyph index resets to none across
- * any control codepoint and across a wrap-induced line break, so kerning
- * never applies between glyphs that end up on different visual lines.
+ * producing face (GlyphMetrics::face) has a kerning table. The previous
+ * glyph index resets to none across any control codepoint, across a
+ * wrap-induced line break, and whenever the producing face changes between
+ * consecutive glyphs: a glyph index is only meaningful within the face
+ * that assigned it, so a codepoint resolved through GlyphAtlas's fallback
+ * chain never gets kerned against a glyph from a different face.
  *
  * Wrapping at wrap_w is a pure render-bounds guarantee, not word-aware line
  * breaking: it breaks mid-word freely, with no whitespace lookback. This is

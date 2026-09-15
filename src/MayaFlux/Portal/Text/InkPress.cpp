@@ -35,8 +35,8 @@ namespace {
      * @brief Rasterize quads in per-span colors, falling back to a base color.
      *
      * Empty @p spans is the flat-color fast path (one rasterize_quads call).
-     * Otherwise each span is rasterized as its own subset -- quads whose
-     * byte_offset falls in [min(start,end), max(start,end)) -- in that
+     * Otherwise each span is rasterized as its own subset (quads whose
+     * byte_offset falls in [min(start,end), max(start,end))) in that
      * span's color; later spans in the vector paint over earlier ones where
      * ranges overlap, since rasterize_quads writes pixels rather than
      * blending. Quads matched by no span are rasterized last in the base
@@ -98,7 +98,7 @@ namespace {
         GlyphAtlas* def = TypeFaceFoundry::instance().get_default_glyph_atlas();
         if (!def) {
             MF_ERROR(Journal::Component::Portal, Journal::Context::API,
-                "InkPress: no atlas available -- call set_default_font first");
+                "InkPress: no atlas available, call set_default_font first");
         }
         return def;
     }
@@ -263,7 +263,8 @@ void rasterize_quads(
 void ink_quads(
     const std::shared_ptr<Buffers::TextBuffer>& target,
     std::span<const GlyphQuad> quads,
-    glm::vec4 color)
+    glm::vec4 color,
+    GlyphAtlas* atlas_hint)
 {
     if (!target) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::API,
@@ -271,7 +272,7 @@ void ink_quads(
         return;
     }
 
-    GlyphAtlas* atlas = resolve_atlas(nullptr);
+    GlyphAtlas* atlas = resolve_atlas(atlas_hint);
     if (!atlas) {
         return;
     }

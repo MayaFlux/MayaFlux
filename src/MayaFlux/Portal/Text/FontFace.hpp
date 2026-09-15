@@ -17,7 +17,7 @@ namespace MayaFlux::Portal::Text {
  * The face index parameter handles font collections (.ttc, .otc); pass
  * 0 for single-face files.
  *
- * FontFace does not call FT_Set_Pixel_Sizes -- that is GlyphAtlas's
+ * FontFace does not call FT_Set_Pixel_Sizes; that is GlyphAtlas's
  * responsibility immediately before each rasterization call, ensuring
  * the face is configured for the atlas's declared size.
  */
