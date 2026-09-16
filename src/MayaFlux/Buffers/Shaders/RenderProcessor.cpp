@@ -491,6 +491,29 @@ void RenderProcessor::set_triangulate(bool enabled)
     m_needs_pipeline_rebuild = true;
 }
 
+vk::Rect2D RenderProcessor::resolve_scissor_rect(uint32_t width, uint32_t height) const noexcept
+{
+    if (!m_scissor) {
+        return { { 0, 0 }, { width, height } };
+    }
+
+    const auto& bounds = m_scissor->bounds;
+    const auto fw = static_cast<float>(width);
+    const auto fh = static_cast<float>(height);
+
+    const float x0 = std::clamp((bounds.min.x * 0.5F + 0.5F) * fw, 0.F, fw);
+    const float x1 = std::clamp((bounds.max.x * 0.5F + 0.5F) * fw, 0.F, fw);
+    const float y0 = std::clamp((1.F - bounds.max.y) * 0.5F * fh, 0.F, fh);
+    const float y1 = std::clamp((1.F - bounds.min.y) * 0.5F * fh, 0.F, fh);
+
+    const auto px = static_cast<int32_t>(x0);
+    const auto py = static_cast<int32_t>(y0);
+    const auto pw = static_cast<uint32_t>(x1 - x0);
+    const auto ph = static_cast<uint32_t>(y1 - y0);
+
+    return { { px, py }, { pw, ph } };
+}
+
 void RenderProcessor::set_runs(std::vector<Portal::Graphics::DrawRun> runs)
 {
     m_runs = std::move(runs);
@@ -637,7 +660,7 @@ void RenderProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
         };
         cmd.setViewport(0, 1, &viewport);
 
-        vk::Rect2D scissor { { 0, 0 }, { width, height } };
+        const vk::Rect2D scissor = resolve_scissor_rect(width, height);
         cmd.setScissor(0, 1, &scissor);
     }
 

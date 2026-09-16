@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Kinesis/Viewport/Scissor.hpp"
 #include "MayaFlux/Kinesis/Viewport/ViewTransform.hpp"
 #include "MayaFlux/Portal/Graphics/PrimitiveMill.hpp"
 #include "MayaFlux/Portal/Graphics/RenderFlow.hpp"
@@ -215,6 +216,17 @@ public:
     [[nodiscard]] bool is_triangulate() const { return m_triangulate; }
 
     /**
+     * @brief Clip this buffer's draws to an NDC region instead of the full framebuffer.
+     *
+     * Resolved from RenderConfig::scissor at configuration time. Unset means
+     * the full framebuffer, unchanged from before this existed. The pixel
+     * rect is recomputed from live swapchain dimensions every frame in
+     * execute_shader, so a set scissor stays correct across a resize.
+     */
+    void set_scissor(std::optional<Kinesis::Scissor> scissor) { m_scissor = scissor; }
+    [[nodiscard]] const std::optional<Kinesis::Scissor>& get_scissor() const { return m_scissor; }
+
+    /**
      * @brief Spans to draw on subsequent frames. Only used when triangulating.
      * @param runs Spans in recording order.
      *
@@ -276,6 +288,9 @@ protected:
         return m_published_view_transform;
     }
 
+    /** @brief Resolve the active scissor against a live framebuffer size. Full framebuffer when unset. */
+    [[nodiscard]] vk::Rect2D resolve_scissor_rect(uint32_t width, uint32_t height) const noexcept;
+
 private:
     struct VertexInfo {
         Kakshya::VertexLayout semantic_layout;
@@ -321,6 +336,7 @@ private:
     Kinesis::ViewTransform m_published_view_transform {};
 
     bool m_triangulate {};
+    std::optional<Kinesis::Scissor> m_scissor;
     std::vector<Portal::Graphics::DrawRun> m_runs;
     Portal::Graphics::MillSpec m_mill_spec {};
 
