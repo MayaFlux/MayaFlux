@@ -2,7 +2,7 @@
 
 #include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
 
-#include "MayaFlux/Kakshya/NDData/VertexLayout.hpp"
+#include "MayaFlux/Kakshya/NDData/VertexFormats.hpp"
 
 #include "MayaFlux/Portal/Forma/Surface.hpp"
 #include "MayaFlux/Portal/Text/InkPress.hpp"
@@ -16,40 +16,23 @@ namespace MayaFlux::Portal::Forma {
 
 namespace {
 
-    void write_row_quad(
-        std::vector<uint8_t>& bytes,
-        float x_min, float x_max, float bot, float top,
-        glm::vec3 bg)
+    /// @brief A fully-textured TRIANGLE_LIST quad, weight=1 so forma_multi.frag
+    ///        samples textures[0]. The row's background now lives in that
+    ///        texture's own pixels (Portal::Text::PressParams::background),
+    ///        not a separate vertex layer.
+    std::array<Kakshya::MeshVertex, 6> textured_quad(Kinesis::AABB2D region)
     {
-        const uint32_t stride = Kakshya::VertexLayout::for_meshes().stride_bytes;
-
-        const glm::vec3 bl { x_min, bot, 0.F };
-        const glm::vec3 br { x_max, bot, 0.F };
-        const glm::vec3 tl { x_min, top, 0.F };
-        const glm::vec3 tr { x_max, top, 0.F };
-        constexpr glm::vec3 white { 1.F, 1.F, 1.F };
-
-        auto write = [&](size_t i, glm::vec3 p, glm::vec3 c, float w, glm::vec2 uv) {
-            auto* v = bytes.data() + i * stride;
-            std::memcpy(v, &p, 12);
-            std::memcpy(v + 12, &c, 12);
-            std::memcpy(v + 24, &w, 4);
-            std::memcpy(v + 28, &uv, 8);
-        };
-
-        write(0, bl, bg, 0.F, {});
-        write(1, br, bg, 0.F, {});
-        write(2, tl, bg, 0.F, {});
-        write(3, br, bg, 0.F, {});
-        write(4, tr, bg, 0.F, {});
-        write(5, tl, bg, 0.F, {});
-
-        write(6, bl, white, 1.F, { 0.F, 1.F });
-        write(7, br, white, 1.F, { 1.F, 1.F });
-        write(8, tl, white, 1.F, { 0.F, 0.F });
-        write(9, br, white, 1.F, { 1.F, 1.F });
-        write(10, tr, white, 1.F, { 1.F, 0.F });
-        write(11, tl, white, 1.F, { 0.F, 0.F });
+        using V = Kakshya::MeshVertex;
+        const glm::vec2 mn = region.min;
+        const glm::vec2 mx = region.max;
+        return { {
+            V { .position = { mn.x, mn.y, 0.F }, .weight = 1.F, .uv = { 0.F, 1.F } },
+            V { .position = { mx.x, mn.y, 0.F }, .weight = 1.F, .uv = { 1.F, 1.F } },
+            V { .position = { mn.x, mx.y, 0.F }, .weight = 1.F, .uv = { 0.F, 0.F } },
+            V { .position = { mx.x, mn.y, 0.F }, .weight = 1.F, .uv = { 1.F, 1.F } },
+            V { .position = { mx.x, mx.y, 0.F }, .weight = 1.F, .uv = { 1.F, 0.F } },
+            V { .position = { mn.x, mx.y, 0.F }, .weight = 1.F, .uv = { 0.F, 0.F } },
+        } };
     }
 
 } // namespace
@@ -81,21 +64,17 @@ Entry make_entry(
     float x_min, float x_max, float row_h,
     glm::vec3 bg)
 {
-    const float top = cursor.y();
-    const float bot = top - row_h;
-    cursor.advance(row_h);
-    const Kinesis::AABB2D row_rect { .min = { x_min, bot }, .max = { x_max, top } };
+    const Kinesis::AABB2D advanced = cursor.advance(row_h);
+    const Kinesis::AABB2D row_rect { .min = { x_min, advanced.min.y }, .max = { x_max, advanced.max.y } };
 
-    const uint32_t stride = Kakshya::VertexLayout::for_meshes().stride_bytes;
-    std::vector<uint8_t> bytes(static_cast<size_t>(12) * stride, 0);
-    write_row_quad(bytes, x_min, x_max, bot, top, bg);
-    row_buf.buf->submit(bytes);
+    row_buf.buf->submit(textured_quad(row_rect));
 
     auto staging = Buffers::create_image_staging_buffer(
         row_buf.text_image->get_size_bytes());
 
     Portal::Text::PressParams params {
         .color = { 1.F, 1.F, 1.F, 1.F },
+        .background = { bg, 1.F },
     };
 
     Element el;
@@ -105,22 +84,22 @@ Entry make_entry(
     el.name = spec.label;
     const uint32_t id = surface.layer().add(el);
 
-    Link link(
-        [] { },
-        [reader = spec.reader,
-            label = spec.label,
-            text_image = row_buf.text_image,
-            buf = row_buf.buf,
-            staging,
-            params]() mutable {
-            if (!buf || !reader)
-                return;
+    auto compose = [reader = spec.reader,
+                        label = spec.label,
+                        text_image = row_buf.text_image,
+                        buf = row_buf.buf,
+                        staging,
+                        params]() mutable {
+        if (!buf || !reader)
+            return;
 
-            Portal::Text::repress(text_image,
-                label + ": " + reader(),
-                params, staging);
-            buf->bind_texture(0, text_image);
-        });
+        Portal::Text::repress(text_image,
+            label + ": " + reader(),
+            params, staging);
+        buf->bind_texture(0, text_image);
+    };
+
+    Link link(compose, compose);
 
     return Entry {
         .element_id = id,

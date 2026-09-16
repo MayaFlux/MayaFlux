@@ -69,6 +69,20 @@ struct PressParams {
     /// @brief RGBA color applied to all glyphs not covered by a span in `spans`.
     glm::vec4 color { 1.F, 1.F, 1.F, 1.F };
 
+    /**
+     * @brief RGBA fill composited beneath every glyph. Default fully
+     *        transparent, matching behavior before this field existed.
+     *
+     * Stored on the resulting TextBuffer (TextBuffer::set_background) at
+     * press() time, the same way atlas and render bounds persist:
+     * repress(TextBuffer&, ...) and impress() read it back automatically on
+     * every subsequent call, so a caller sets it once. The VKImage-returning
+     * overloads (press(text, render_bounds, params), repress(VKImage&, ...))
+     * have no buffer to persist it on, so those read background fresh from
+     * @p params on every call instead.
+     */
+    glm::vec4 background { 0.F, 0.F, 0.F, 0.F };
+
     /// @brief Hard render bounds in pixels.
     ///        impress() wraps at x and returns Overflow when y is exhausted.
     glm::uvec2 render_bounds { 1280, 720 };
@@ -83,9 +97,14 @@ struct PressParams {
 /**
  * @brief Write glyph quads into a caller-provided RGBA8 pixel buffer.
  *
- * Applies coverage-multiplied alpha blend per glyph cell. The destination
- * buffer must be row-major RGBA8 with stride == buf_w * 4 bytes. Quads
- * that fall outside [0, buf_w) x [0, buf_h) are clipped per pixel.
+ * Applies coverage-multiplied alpha blend per glyph cell, compositing over
+ * whatever is already in @p dst rather than overwriting it - a glyph's
+ * bounding box includes its own zero-coverage interior (the hole in an
+ * 'o' or 'e'), so composited blending is what keeps a pre-filled
+ * background intact under that hole instead of a low-coverage pixel
+ * punching it transparent. The destination buffer must be row-major RGBA8
+ * with stride == buf_w * 4 bytes. Quads that fall outside
+ * [0, buf_w) x [0, buf_h) are clipped per pixel.
  *
  * The typical usage pattern is:
  * @code
@@ -112,10 +131,11 @@ MAYAFLUX_API void rasterize_quads(
 /**
  * @brief Rasterize a mutated quad span into an existing TextBuffer.
  *
- * Clears the buffer's pixel region, rasterizes @p quads via rasterize_quads(),
- * and marks the buffer dirty for GPU upload. The scratch pixel buffer is
- * thread-local and reused across calls, so no heap allocation occurs after
- * the first call at a given buffer size.
+ * Clears the buffer's pixel region to target->get_background(), rasterizes
+ * @p quads via rasterize_quads(), and marks the buffer dirty for GPU
+ * upload. The scratch pixel buffer is thread-local and reused across
+ * calls, so no heap allocation occurs after the first call at a given
+ * buffer size.
  *
  * Typical usage:
  * @code
@@ -180,10 +200,10 @@ MAYAFLUX_API void ink_quads(
 /**
  * @brief Re-composite a UTF-8 string into an existing TextBuffer.
  *
- * Always clears the buffer before compositing. Render bounds and atlas are
- * read from the target buffer. When the target has a pre-allocated vertical
- * budget the compositing bounds are the budget dimensions, so no VKImage
- * rebuild occurs as long as content fits.
+ * Always clears the buffer to target->get_background() before compositing.
+ * Render bounds and atlas are read from the target buffer. When the target
+ * has a pre-allocated vertical budget the compositing bounds are the budget
+ * dimensions, so no VKImage rebuild occurs as long as content fits.
  *
  * @param target  Existing TextBuffer to write into.
  * @param text    UTF-8 string to composite.
@@ -226,9 +246,9 @@ MAYAFLUX_API bool repress(
  *
  * When the run would push the cursor past the vertical budget the texture
  * is grown by k_grow_height_multiplier, the full accumulated text is
- * recomposited, and ImpressResult::Overflow is returned. The caller is
- * responsible for rebuilding prior content after an overflow if accumulated
- * state is not sufficient.
+ * recomposited against target->get_background(), and ImpressResult::Overflow
+ * is returned. The caller is responsible for rebuilding prior content after
+ * an overflow if accumulated state is not sufficient.
  *
  * When the cursor would exceed render_bounds_h the run is rejected and
  * ImpressResult::Overflow is returned without reallocation.

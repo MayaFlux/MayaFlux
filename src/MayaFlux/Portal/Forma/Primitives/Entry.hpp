@@ -97,10 +97,20 @@ struct EntryGroup {
 /**
  * @brief Construct one labeled entry row, advance the cursor, and return it.
  *
- * The returned row's link reads @p spec.reader each tick, represses
- * "label: entry" into the text image, and binds the image to the row's
- * FormaBuffer. The buffer and text image are pre-created by the caller
- * and travel together as @p row_buf.
+ * The row is a single fully-textured quad: @p bg is composited as the fill
+ * beneath the text (Portal::Text::PressParams::background), not a separate
+ * vertex layer, so one texture carries both. The link's compose function
+ * runs immediately (establish) so the row shows correctly from the first
+ * frame, and again on every subsequent link.tap(), representing "label:
+ * entry" into the text image and binding it to the row's FormaBuffer. The
+ * buffer and text image are pre-created by the caller and travel together
+ * as @p row_buf.
+ *
+ * Bounds come from cursor.advance()'s return (scroll-offset aware, per
+ * LayoutCursor::bind_scroll), with x_min/x_max substituted in afterward for
+ * this call's own column override - not from cursor.y() read directly, so
+ * a row placed through a scroll-bound cursor lands at the correct position
+ * immediately.
  *
  * @param spec     Label and reader for the row.
  * @param row_buf  Pre-created buffer and bound text image.
@@ -109,7 +119,7 @@ struct EntryGroup {
  * @param x_min    Left edge in NDC.
  * @param x_max    Right edge in NDC.
  * @param row_h    Row height in NDC units.
- * @param bg       Background color for the row quad.
+ * @param bg       Background fill composited beneath the row's text.
  */
 [[nodiscard]] Entry make_entry(
     const EntrySpec& spec,

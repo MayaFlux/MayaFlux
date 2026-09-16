@@ -87,6 +87,38 @@ namespace {
     }
 
     /**
+     * @brief Fill an existing RGBA8 buffer in place with a solid color.
+     *
+     * @p color's default, fully transparent black, writes bytes identical
+     * to a zero-initialized buffer, so every call site converted to this
+     * helper with its background defaulted keeps prior behavior exactly.
+     */
+    void fill_bytes(uint8_t* dst, size_t byte_count, glm::vec4 color)
+    {
+        const auto r = static_cast<uint8_t>(std::clamp(color.r, 0.F, 1.F) * 255.F);
+        const auto g = static_cast<uint8_t>(std::clamp(color.g, 0.F, 1.F) * 255.F);
+        const auto b = static_cast<uint8_t>(std::clamp(color.b, 0.F, 1.F) * 255.F);
+        const auto a = static_cast<uint8_t>(std::clamp(color.a, 0.F, 1.F) * 255.F);
+
+        for (size_t i = 0; i + 3 < byte_count; i += 4) {
+            dst[i + 0] = r;
+            dst[i + 1] = g;
+            dst[i + 2] = b;
+            dst[i + 3] = a;
+        }
+    }
+
+    /**
+     * @brief Allocate a fresh RGBA8 pixel buffer pre-filled with a solid color.
+     */
+    std::vector<uint8_t> make_filled(size_t byte_count, glm::vec4 color)
+    {
+        std::vector<uint8_t> buf(byte_count);
+        fill_bytes(buf.data(), byte_count, color);
+        return buf;
+    }
+
+    /**
      * @brief Resolve atlas pointer: use provided atlas or fall back to foundry default.
      * @return Non-null pointer on success, nullptr if no atlas is available.
      */
@@ -110,13 +142,14 @@ namespace {
      * exactly buf_w (== render bounds width). Content that wraps beyond
      * buf_h is clipped by composite_into().
      *
-     * @param text   UTF-8 string.
-     * @param atlas  Source atlas.
-     * @param color  Base glyph color for any byte not covered by @p spans.
-     * @param buf_w  Buffer width and wrap boundary in pixels.
-     * @param buf_h  Buffer height (allocated budget) in pixels.
-     * @param spans  Optional per-byte-range color overrides, offsets into @p text.
-     * @return       CompositeResult, or nullopt when no glyphs are produced.
+     * @param text       UTF-8 string.
+     * @param atlas      Source atlas.
+     * @param color      Base glyph color for any byte not covered by @p spans.
+     * @param buf_w      Buffer width and wrap boundary in pixels.
+     * @param buf_h      Buffer height (allocated budget) in pixels.
+     * @param spans      Optional per-byte-range color overrides, offsets into @p text.
+     * @param background Fill composited beneath the glyphs. Default fully transparent.
+     * @return           CompositeResult, or nullopt when no glyphs are produced.
      */
     std::optional<CompositeResult> composite(
         std::string_view text,
@@ -125,7 +158,8 @@ namespace {
         uint32_t buf_w,
         uint32_t buf_h,
         float pen_y_start = 0.F,
-        std::span<const StyleSpan> spans = {})
+        std::span<const StyleSpan> spans = {},
+        glm::vec4 background = { 0.F, 0.F, 0.F, 0.F })
     {
         const LayoutResult layout = lay_out(text, atlas, 0.F, pen_y_start, buf_w);
         if (layout.quads.empty()) {
@@ -144,7 +178,7 @@ namespace {
         result.h = content_h;
         result.cursor_x = static_cast<uint32_t>(std::ceil(layout.final_pen_x));
         result.cursor_y = static_cast<uint32_t>(std::ceil(layout.final_pen_y));
-        result.pixels.resize(static_cast<size_t>(buf_w) * dst_h * 4, 0);
+        result.pixels = make_filled(static_cast<size_t>(buf_w) * dst_h * 4, background);
 
         rasterize_styled(layout.quads, atlas, color, spans, result.pixels.data(), buf_w, dst_h);
 
@@ -155,25 +189,29 @@ namespace {
      * @brief Allocate a TextBuffer from a CompositeResult.
      *
      * The GPU texture is always buf_w x budget_h. Content rows from result
-     * are copied in; remaining rows are zero (transparent).
+     * are copied in; remaining rows are filled with @p background. The
+     * buffer's own background is set to @p background so repress()/impress()
+     * pick it up automatically on later calls.
      *
      * @param result        Output of composite().
      * @param buf_w         Texture width == render bounds width.
      * @param budget_h      Allocated texture height (>= result.h).
      * @param render_bounds Hard render bounds stored on the buffer.
      * @param text          Accumulated text string seeded on the buffer.
+     * @param background    Fill for rows beyond the composited content.
      */
     std::shared_ptr<Buffers::TextBuffer> make_buffer(
         const CompositeResult& result,
         uint32_t buf_w,
         uint32_t budget_h,
         glm::uvec2 render_bounds,
-        std::string_view text)
+        std::string_view text,
+        glm::vec4 background)
     {
         budget_h = std::max(budget_h, result.h);
 
         const size_t budget_bytes = static_cast<size_t>(buf_w) * budget_h * 4;
-        std::vector<uint8_t> pixels(budget_bytes, 0);
+        std::vector<uint8_t> pixels = make_filled(budget_bytes, background);
 
         const uint32_t copy_h = std::min(result.h,
             static_cast<uint32_t>(result.pixels.size() / (static_cast<size_t>(buf_w) * 4)));
@@ -191,6 +229,7 @@ namespace {
 
         buf->set_budget(buf_w, budget_h);
         buf->set_render_bounds(render_bounds.x, render_bounds.y);
+        buf->set_background(background);
         buf->set_accumulated_text(text);
         buf->get_cursor_x() = result.cursor_x;
         buf->get_cursor_y() = result.cursor_y;
@@ -247,14 +286,25 @@ void rasterize_quads(
                 }
 
                 const uint8_t coverage = src_row[col];
-                const auto alpha = static_cast<uint8_t>(
-                    (static_cast<uint32_t>(coverage) * static_cast<uint32_t>(ca)) / 255U);
+                const uint32_t src_a = (static_cast<uint32_t>(coverage) * static_cast<uint32_t>(ca)) / 255U;
 
                 uint8_t* px = dst_row_ptr + static_cast<size_t>(dst_col) * 4;
-                px[0] = cr;
-                px[1] = cg;
-                px[2] = cb;
-                px[3] = alpha;
+
+                const uint32_t dst_a = px[3];
+                const uint32_t blended_dst_a = (dst_a * (255U - src_a)) / 255U;
+                const uint32_t out_a = src_a + blended_dst_a;
+
+                if (out_a == 0U) {
+                    px[0] = 0;
+                    px[1] = 0;
+                    px[2] = 0;
+                    px[3] = 0;
+                } else {
+                    px[0] = static_cast<uint8_t>((cr * src_a + px[0] * blended_dst_a) / out_a);
+                    px[1] = static_cast<uint8_t>((cg * src_a + px[1] * blended_dst_a) / out_a);
+                    px[2] = static_cast<uint8_t>((cb * src_a + px[2] * blended_dst_a) / out_a);
+                    px[3] = static_cast<uint8_t>(out_a);
+                }
             }
         }
     }
@@ -282,7 +332,8 @@ void ink_quads(
     const size_t buf_bytes = static_cast<size_t>(buf_w) * buf_h * 4;
 
     thread_local std::vector<uint8_t> pixels;
-    pixels.assign(buf_bytes, 0);
+    pixels.resize(buf_bytes);
+    fill_bytes(pixels.data(), buf_bytes, target->get_background());
 
     rasterize_quads(quads, *atlas, color, pixels.data(), buf_w, buf_h);
     target->set_pixel_data(pixels.data(), buf_bytes);
@@ -304,7 +355,7 @@ std::shared_ptr<Buffers::TextBuffer> press(
     const uint32_t buf_w = params.render_bounds.x;
 
     const auto result = composite(text, *atlas, params.color, buf_w, params.render_bounds.y,
-        static_cast<float>(atlas->line_height()), params.spans);
+        static_cast<float>(atlas->line_height()), params.spans, params.background);
     if (!result) {
         MF_WARN(Journal::Component::Portal, Journal::Context::API,
             "press: no glyphs produced for '{}'", std::string(text));
@@ -315,7 +366,7 @@ std::shared_ptr<Buffers::TextBuffer> press(
         ? std::max(params.budget_h, result->h)
         : std::min(result->h * k_grow_height_multiplier, params.render_bounds.y);
 
-    return make_buffer(*result, buf_w, budget_h, params.render_bounds, text);
+    return make_buffer(*result, buf_w, budget_h, params.render_bounds, text, params.background);
 }
 
 std::shared_ptr<Core::VKImage> press(
@@ -333,7 +384,7 @@ std::shared_ptr<Core::VKImage> press(
         static_cast<uint32_t>(atlas->line_height()));
 
     const auto result = composite(text, *atlas, params.color, buf_w, composite_h,
-        static_cast<float>(atlas->ascender()), params.spans);
+        static_cast<float>(atlas->ascender()), params.spans, params.background);
 
     if (!result) {
         MF_WARN(Journal::Component::Portal, Journal::Context::API,
@@ -344,7 +395,7 @@ std::shared_ptr<Core::VKImage> press(
     const uint32_t budget_h = composite_h;
 
     const size_t budget_bytes = static_cast<size_t>(buf_w) * budget_h * 4;
-    std::vector<uint8_t> pixels(budget_bytes, 0);
+    std::vector<uint8_t> pixels = make_filled(budget_bytes, params.background);
 
     const auto copy_h = static_cast<uint32_t>(
         result->pixels.size() / (static_cast<size_t>(buf_w) * 4));
@@ -395,9 +446,10 @@ bool repress(
     const uint32_t buf_w = target->get_budget_width();
     const uint32_t buf_h = target->get_budget_height();
     const uint32_t bound_h = target->get_render_bounds_h();
+    const glm::vec4 background = target->get_background();
 
     const auto result = composite(text, *atlas, color, buf_w, bound_h,
-        static_cast<float>(atlas->line_height()), spans);
+        static_cast<float>(atlas->line_height()), spans, background);
     if (!result) {
         MF_WARN(Journal::Component::Portal, Journal::Context::API,
             "repress: no glyphs produced for '{}'", std::string(text));
@@ -419,7 +471,7 @@ bool repress(
     }
 
     const size_t buf_bytes = static_cast<size_t>(buf_w) * buf_h * 4;
-    std::vector<uint8_t> cleared(buf_bytes, 0);
+    std::vector<uint8_t> cleared = make_filled(buf_bytes, background);
 
     const uint32_t copy_h = std::min(result->h, buf_h);
     for (uint32_t row = 0; row < copy_h; ++row) {
@@ -465,7 +517,7 @@ bool repress(
         static_cast<uint32_t>(atlas->line_height()));
 
     const auto result = composite(text, *atlas, params.color, buf_w, composite_h,
-        static_cast<float>(atlas->ascender()), params.spans);
+        static_cast<float>(atlas->ascender()), params.spans, params.background);
     if (!result) {
         MF_WARN(Journal::Component::Portal, Journal::Context::API,
             "repress(VKImage): no glyphs produced for '{}'", std::string(text));
@@ -478,7 +530,7 @@ bool repress(
     const bool needs_realloc = composite_h != buf_h || buf_w != target->get_width();
 
     const size_t buf_bytes = static_cast<size_t>(buf_w) * new_h * 4;
-    std::vector<uint8_t> pixels(buf_bytes, 0);
+    std::vector<uint8_t> pixels = make_filled(buf_bytes, params.background);
 
     const uint32_t copy_h = std::min(result->h, new_h);
     for (uint32_t row = 0; row < copy_h; ++row) {
@@ -564,8 +616,9 @@ ImpressResult impress(
     if (content_h > buf_h) {
         const uint32_t new_h = std::min(content_h * k_grow_height_multiplier, bound_h);
         const std::string accumulated = target->get_accumulated_text();
+        const glm::vec4 background = target->get_background();
 
-        const auto full = composite(accumulated, *atlas, color, buf_w, new_h, 0.F, spans);
+        const auto full = composite(accumulated, *atlas, color, buf_w, new_h, 0.F, spans, background);
         if (!full) {
             return ImpressResult::Overflow;
         }
@@ -574,7 +627,7 @@ ImpressResult impress(
         target->set_budget(buf_w, new_h);
 
         const size_t buf_bytes = static_cast<size_t>(buf_w) * new_h * 4;
-        std::vector<uint8_t> pixels(buf_bytes, 0);
+        std::vector<uint8_t> pixels = make_filled(buf_bytes, background);
         const uint32_t copy_h = std::min(full->h, new_h);
         for (uint32_t row = 0; row < copy_h; ++row) {
             std::memcpy(

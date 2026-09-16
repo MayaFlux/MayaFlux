@@ -78,8 +78,8 @@ Collapsible& Collapsible::place(
 {
     buf = std::move(in_buf);
 
-    const float y_top = cursor.y();
-    cursor.advance(row_h);
+    const Kinesis::AABB2D advanced = cursor.advance(row_h);
+    const float y_top = advanced.max.y;
 
     auto open_state = std::make_shared<MappedState<bool>>();
     open_state->write(m_initially_open);
@@ -90,7 +90,7 @@ Collapsible& Collapsible::place(
         y_top, x_min, x_max, row_h, m_color_closed, m_color_open, m_label != nullptr);
     mapped.element.buffer = buf;
     mapped.element.bounds_hint = Kinesis::AABB2D {
-        .min = { x_min, cursor.y() },
+        .min = { x_min, advanced.min.y },
         .max = { x_max, y_top },
     };
 
@@ -109,7 +109,7 @@ Collapsible& Collapsible::place(
         });
 
     header_bounds = Kinesis::AABB2D {
-        .min = { x_min, cursor.y() },
+        .min = { x_min, advanced.min.y },
         .max = { x_max, y_top },
     };
 
