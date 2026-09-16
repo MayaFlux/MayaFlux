@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Portal/Text/TextEdit.hpp"
 #include "MayaFlux/Portal/Text/TypeSetter.hpp"
 
 namespace MayaFlux::Core {
