@@ -82,14 +82,88 @@ namespace {
     }
 
     /// @brief Re-rasterize text content. Skip for a pure cursor move
-    ///        (Left/Right): content is unchanged, only render_geometry()
-    ///        (the caret) needs to run.
+    ///        (Left/Right/Up/Down/click): content is unchanged, only
+    ///        render_geometry() (the caret) needs to run.
     void render_text(
         Element& el,
         const Portal::Text::EditableText& edit,
         const Portal::Text::PressParams& params)
     {
         el.set_text(edit.text, params);
+    }
+
+    /// @brief lay_out() at the same pen origin caret_ndc()/x_at() already
+    ///        use, for index_at()'s benefit (Up/Down, click-to-position).
+    Portal::Text::LayoutResult layout_for(
+        const Portal::Text::EditableText& edit,
+        const Portal::Text::PressParams& params,
+        Portal::Text::GlyphAtlas& atlas)
+    {
+        return Portal::Text::lay_out(
+            edit.text, atlas, 0.F, static_cast<float>(atlas.ascender()),
+            params.render_bounds.x, 4);
+    }
+
+    /**
+     * @brief Move the cursor to the nearest codepoint boundary one line
+     *        above (line_delta = -1) or below (+1) its current line, at
+     *        the same x position it currently sits at.
+     *
+     * x_at() gives the cursor's current pen position; index_at() resolves
+     * a point back to a byte offset. Asking it for (current x, current y
+     * shifted by one line_height()) is the whole trick - both already
+     * exist in Portal::Text for other reasons (copy()'s round-trip,
+     * caret_ndc() itself), so nothing new was needed there. A target y
+     * past the first/last line still resolves to the nearest real line,
+     * since that is index_at()'s own behavior for an out-of-range y.
+     */
+    void move_vertical(
+        Portal::Text::EditableText& edit,
+        const Portal::Text::PressParams& params,
+        int line_delta)
+    {
+        auto& atlas = resolve_atlas(params);
+        const auto pen = Portal::Text::x_at(
+            edit.text, atlas, edit.cursor,
+            0.F, static_cast<float>(atlas.ascender()),
+            params.render_bounds.x, 4);
+
+        const float target_y = pen.y + static_cast<float>(line_delta) * static_cast<float>(atlas.line_height());
+        const auto layout = layout_for(edit, params, atlas);
+
+        edit.cursor = Portal::Text::index_at(
+            edit.text, layout, atlas, pen.x, target_y,
+            0.F, static_cast<float>(atlas.ascender()),
+            params.render_bounds.x, 4);
+    }
+
+    /// @brief Inverse of caret_ndc()'s pixel-to-NDC mapping: an NDC point
+    ///        (a mouse click) back into the same pixel space x_at()/
+    ///        index_at() work in.
+    glm::vec2 pixel_at(glm::vec2 ndc, Kinesis::AABB2D field_bounds, glm::uvec2 render_bounds)
+    {
+        return {
+            (ndc.x - field_bounds.min.x) / field_bounds.width() * static_cast<float>(render_bounds.x),
+            (field_bounds.max.y - ndc.y) / field_bounds.height() * static_cast<float>(render_bounds.y)
+        };
+    }
+
+    /// @brief Move the cursor to the codepoint boundary nearest an NDC
+    ///        click position.
+    void move_to_click(
+        Portal::Text::EditableText& edit,
+        const Portal::Text::PressParams& params,
+        Kinesis::AABB2D field_bounds,
+        glm::vec2 ndc)
+    {
+        auto& atlas = resolve_atlas(params);
+        const glm::vec2 px = pixel_at(ndc, field_bounds, params.render_bounds);
+        const auto layout = layout_for(edit, params, atlas);
+
+        edit.cursor = Portal::Text::index_at(
+            edit.text, layout, atlas, px.x, px.y,
+            0.F, static_cast<float>(atlas.ascender()),
+            params.render_bounds.x, 4);
     }
 
 } // namespace
@@ -184,6 +258,28 @@ void TextField::wire(Context& ctx)
         s->write(edit);
         render_geometry(*b, edit, *p, *fb);
     });
+
+    ctx.press_and_hold(element_id, IO::Keys::Up, [s = state, p = params, b = buf, fb = m_live_bounds](uint32_t) mutable {
+        Portal::Text::EditableText edit = s->value;
+        move_vertical(edit, *p, -1);
+        s->write(edit);
+        render_geometry(*b, edit, *p, *fb);
+    });
+
+    ctx.press_and_hold(element_id, IO::Keys::Down, [s = state, p = params, b = buf, fb = m_live_bounds](uint32_t) mutable {
+        Portal::Text::EditableText edit = s->value;
+        move_vertical(edit, *p, 1);
+        s->write(edit);
+        render_geometry(*b, edit, *p, *fb);
+    });
+
+    ctx.on_press(element_id, IO::MouseButtons::Left,
+        [s = state, p = params, b = buf, fb = m_live_bounds](uint32_t, glm::vec2 ndc) mutable {
+            Portal::Text::EditableText edit = s->value;
+            move_to_click(edit, *p, *fb, ndc);
+            s->write(edit);
+            render_geometry(*b, edit, *p, *fb);
+        });
 }
 
 TextField& TextField::scrollable(
@@ -207,6 +303,8 @@ TextField& TextField::scrollable(
         element_id, content_bounds,
         [field](Kinesis::AABB2D shifted) mutable { field.reposition(shifted); },
         buf);
+
+    surface.ctx().on_scroll(element_id, scroller.wheel_handler(surface));
 
     return *this;
 }

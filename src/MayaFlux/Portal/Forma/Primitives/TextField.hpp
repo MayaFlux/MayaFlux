@@ -34,6 +34,14 @@ class Surface;
  * It does not manage focus visuals; wire on_focus_gained/on_focus_lost
  * separately, same as any other Forma element.
  *
+ * Cursor movement beyond Left/Right/character-count needed no new
+ * Portal::Text API: Up/Down resolve via x_at() (current pen position) and
+ * index_at() (nearest byte at that x, one line_height() away) - the exact
+ * idiom test_text_input() (test_8.hpp) already used to verify x_at()/
+ * index_at() round-trip. A mouse click does the same, with the click's NDC
+ * position mapped into pixel space first (the inverse of the mapping
+ * caret_ndc() itself uses).
+ *
  * A caret rides in the same buf as the text quad rather than owning a
  * buffer, Element, or Layer entry of its own: it is a second
  * Kakshya::MeshVertex quad (Kinesis::textured_mesh_rect at weight 0, a
@@ -157,6 +165,13 @@ struct TextField {
      * not have to repeat it - nothing about the viewport, its buffer, or
      * any indicator passes through this call, because Scrollable already
      * owns all of that.
+     *
+     * Also wires scroller.wheel_handler() onto this field's own element:
+     * the field sits on top of the viewport and is added to the Layer
+     * after it, so it hit-tests first, and Context::handle_scroll only
+     * ever dispatches to the topmost element under the cursor - without
+     * this, the wheel would do nothing while the cursor sits directly over
+     * the field's own text instead of the viewport's empty margin.
      *
      * @param in_buf              Pre-created buffer for the field's text quad.
      * @param surface             Surface to register the field's element on -

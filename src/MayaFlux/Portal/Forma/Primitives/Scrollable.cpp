@@ -73,17 +73,21 @@ Scrollable& Scrollable::place(
     cursor_out = LayoutCursor(viewport.max.y, viewport.min.x, viewport.max.x);
     cursor_out.bind_scroll(offset);
 
-    const float speed = m_wheel_speed;
-
-    surface.ctx().on_scroll(viewport_id,
-        [scroll_state = scroll, scroll_offset = offset, tracked = m_tracked, indicator = m_indicator, surface, speed](
-            uint32_t, glm::vec2, double dx, double dy) mutable {
-            Kinesis::apply_scroll(*scroll_state,
-                glm::vec2(static_cast<float>(dx), static_cast<float>(dy)) * speed);
-            reflow(*scroll_state, *scroll_offset, *tracked, surface.layer(), indicator.get());
-        });
+    surface.ctx().on_scroll(viewport_id, wheel_handler(surface));
 
     return *this;
+}
+
+std::function<void(uint32_t, glm::vec2, double, double)>
+Scrollable::wheel_handler(Surface& surface) const
+{
+    return [scroll_state = scroll, scroll_offset = offset, tracked = m_tracked,
+               indicator = m_indicator, surface, speed = m_wheel_speed](
+               uint32_t, glm::vec2, double dx, double dy) mutable {
+        Kinesis::apply_scroll(*scroll_state,
+            glm::vec2(static_cast<float>(dx), static_cast<float>(dy)) * speed);
+        reflow(*scroll_state, *scroll_offset, *tracked, surface.layer(), indicator.get());
+    };
 }
 
 Scrollable& Scrollable::track(

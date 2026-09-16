@@ -200,6 +200,32 @@ struct Scrollable {
     MAYAFLUX_API void scroll_by(Layer& layer, glm::vec2 delta);
 
     /**
+     * @brief A self-contained wheel-scroll handler bound to this
+     *        Scrollable's own state.
+     *
+     * place() wires exactly this behind the viewport's own on_scroll, but
+     * Context::handle_scroll dispatches to only the topmost element under
+     * the cursor (Layer::hit_test), so content drawn on top of the
+     * viewport - anything track()ed, since it registers after and so hit-
+     * tests first - never reaches the viewport's own on_scroll while the
+     * cursor sits over it. A caller in that position (TextField::
+     * scrollable() is exactly this case) registers the returned function
+     * on its own element's on_scroll instead of duplicating the wheel-
+     * delta-to-content-delta conversion by hand.
+     *
+     * Captures only this Scrollable's own shared state (scroll, offset,
+     * the tracked list, the indicator), the same shared_ptrs place()'s own
+     * wiring captures - safe to keep registered after this Scrollable
+     * value itself is destroyed, same as every other Context callback this
+     * struct wires.
+     *
+     * @param surface Surface owning the same Layer/Context place() used.
+     * @return A Context::ScrollFn-shaped callable, ready for on_scroll.
+     */
+    [[nodiscard]] MAYAFLUX_API std::function<void(uint32_t, glm::vec2, double, double)>
+    wheel_handler(Surface& surface) const;
+
+    /**
      * @brief Attach a caller-built element as a live, draggable scroll
      *        indicator.
      *
