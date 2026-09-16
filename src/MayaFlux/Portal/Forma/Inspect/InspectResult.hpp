@@ -1,18 +1,20 @@
 #pragma once
 
-#include "QueryUtils.hpp"
+#include "MayaFlux/Portal/Forma/Primitives/Entry.hpp"
 
 namespace MayaFlux::Portal::Forma {
+
+constexpr float k_inspect_indent = 0.03F;
 
 /**
  * @brief Result of an introspect call.
  *
- * Owns the ValueGroup (header collapsible + value rows) and nested
+ * Owns the EntryGroup (header collapsible + entry rows) and nested
  * InspectResults for sub-objects. The caller's only per-tick obligation
  * is tap_all() from a GraphicsRoutine.
  */
 struct InspectResult {
-    ValueGroup group;
+    EntryGroup group;
     std::vector<InspectResult> children;
 
     /**

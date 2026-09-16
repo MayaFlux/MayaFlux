@@ -18,22 +18,22 @@ InspectResult Inspector::inspect_task(
     auto routine = entry.routine;
     const std::string name = entry.name;
 
-    std::vector<ValueSpec> values {
-        ValueSpec {
+    std::vector<EntrySpec> entrys {
+        EntrySpec {
             .label = "name",
             .reader = [name] { return name.empty() ? "(unnamed)" : name; },
         },
-        ValueSpec {
+        EntrySpec {
             .label = "token",
             .reader = [routine] {
                 return std::string(Reflect::enum_to_string(routine->get_processing_token()));
             },
         },
-        ValueSpec {
+        EntrySpec {
             .label = "active",
             .reader = [routine] { return routine->is_active() ? "true" : "false"; },
         },
-        ValueSpec {
+        EntrySpec {
             .label = "delay",
             .reader = [routine] {
                 return std::string(Reflect::enum_to_string(routine->get_delay_context()));
@@ -43,12 +43,12 @@ InspectResult Inspector::inspect_task(
 
     const auto dims = row_pixel_dims(surface.window(), x_min, x_max, row_h);
     auto hbuf = make_row_buffer(surface.window(), Reflect::short_dynamic_type_name(*entry.routine), dims);
-    std::vector<RowBuffer> rbufs;
-    rbufs.reserve(values.size());
-    for (const auto& spec : values)
+    std::vector<EntryBuffer> rbufs;
+    rbufs.reserve(entrys.size());
+    for (const auto& spec : entrys)
         rbufs.push_back(make_row_buffer(surface.window(), spec.label, dims));
 
-    auto group = make_value_group(values, std::move(hbuf), rbufs,
+    auto group = make_entry_group(entrys, std::move(hbuf), rbufs,
         surface, cursor, x_min, x_max, row_h, false);
 
     InspectResult result;
@@ -65,8 +65,8 @@ InspectResult& Inspector::scheduler(
         return *s_scheduler_result;
     }
 
-    const std::vector<ValueSpec> root_values {
-        ValueSpec {
+    const std::vector<EntrySpec> root_entrys {
+        EntrySpec {
             .label = "tasks",
             .reader = [&m_sched = m_sched] {
                 return std::to_string(m_sched.get_all_tasks().size());
@@ -76,11 +76,11 @@ InspectResult& Inspector::scheduler(
 
     const auto dims = row_pixel_dims(surface.window(), x_min, x_max, row_h);
     auto hbuf = make_row_buffer(surface.window(), "TaskScheduler", dims);
-    std::vector<RowBuffer> rbufs;
-    rbufs.reserve(root_values.size());
-    for (const auto& spec : root_values)
+    std::vector<EntryBuffer> rbufs;
+    rbufs.reserve(root_entrys.size());
+    for (const auto& spec : root_entrys)
         rbufs.push_back(make_row_buffer(surface.window(), spec.label, dims));
-    auto root_group = make_value_group(root_values, std::move(hbuf), rbufs,
+    auto root_group = make_entry_group(root_entrys, std::move(hbuf), rbufs,
         surface, cursor, x_min, x_max, row_h, true);
 
     InspectResult& result = s_scheduler_result.emplace();
@@ -113,7 +113,7 @@ InspectResult Inspector::tasks(
 
     const auto dims = row_pixel_dims(surface.window(), x_min, x_max, row_h);
     auto hbuf = make_row_buffer(surface.window(), header_label, dims);
-    auto root_group = make_value_group({}, std::move(hbuf), {},
+    auto root_group = make_entry_group({}, std::move(hbuf), {},
         surface, cursor, x_min, x_max, row_h, true);
 
     InspectResult result;

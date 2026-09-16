@@ -1,4 +1,4 @@
-#include "QueryUtils.hpp"
+#include "Entry.hpp"
 
 #include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
 
@@ -73,9 +73,9 @@ glm::uvec2 row_pixel_dims(
     return { std::max(w, 1U), std::max(h, min_h) };
 }
 
-ValueRow make_value_row(
-    const ValueSpec& spec,
-    RowBuffer row_buf,
+Entry make_entry(
+    const EntrySpec& spec,
+    EntryBuffer row_buf,
     Surface& surface,
     LayoutCursor& cursor,
     float x_min, float x_max, float row_h,
@@ -122,7 +122,7 @@ ValueRow make_value_row(
             buf->bind_texture(0, text_image);
         });
 
-    return ValueRow {
+    return Entry {
         .element_id = id,
         .buf = std::move(row_buf.buf),
         .text = std::move(row_buf.text_image),
@@ -131,22 +131,22 @@ ValueRow make_value_row(
     };
 }
 
-ValueRow make_value_row(
-    const ValueSpec& spec,
-    RowBuffer row_buf,
+Entry make_entry(
+    const EntrySpec& spec,
+    EntryBuffer row_buf,
     Surface& surface,
     LayoutCursor& cursor,
     float row_h,
     glm::vec3 bg)
 {
-    return make_value_row(spec, std::move(row_buf), surface, cursor,
+    return make_entry(spec, std::move(row_buf), surface, cursor,
         cursor.x_min(), cursor.x_max(), row_h, bg);
 }
 
-ValueGroup make_value_group(
-    std::span<const ValueSpec> values,
-    RowBuffer header_buf,
-    std::span<const RowBuffer> row_bufs,
+EntryGroup make_entry_group(
+    std::span<const EntrySpec> entrys,
+    EntryBuffer header_buf,
+    std::span<const EntryBuffer> row_bufs,
     Surface& surface,
     LayoutCursor& cursor,
     float x_min, float x_max, float row_h,
@@ -159,32 +159,32 @@ ValueGroup make_value_group(
                       .label(header_buf.text_image)
                       .place(std::move(header_buf.buf), surface, cursor, x_min, x_max, row_h);
 
-    std::vector<ValueRow> rows;
-    rows.reserve(values.size());
-    for (size_t i = 0; i < values.size(); ++i) {
-        auto row = make_value_row(values[i], row_bufs[i], surface, cursor, x_min, x_max, row_h);
+    std::vector<Entry> rows;
+    rows.reserve(entrys.size());
+    for (size_t i = 0; i < entrys.size(); ++i) {
+        auto row = make_entry(entrys[i], row_bufs[i], surface, cursor, x_min, x_max, row_h);
         header.attach(surface.layer(), row.element_id);
         rows.push_back(std::move(row));
     }
 
     header.cursor_out = cursor;
 
-    return ValueGroup {
+    return EntryGroup {
         .header = std::move(header),
         .rows = std::move(rows),
     };
 }
 
-ValueGroup make_value_group(
-    std::span<const ValueSpec> values,
-    RowBuffer header_buf,
-    std::span<const RowBuffer> row_bufs,
+EntryGroup make_entry_group(
+    std::span<const EntrySpec> entrys,
+    EntryBuffer header_buf,
+    std::span<const EntryBuffer> row_bufs,
     Surface& surface,
     LayoutCursor& cursor,
     float row_h,
     bool initially_open)
 {
-    return make_value_group(values, std::move(header_buf), row_bufs,
+    return make_entry_group(entrys, std::move(header_buf), row_bufs,
         surface, cursor, cursor.x_min(), cursor.x_max(), row_h, initially_open);
 }
 

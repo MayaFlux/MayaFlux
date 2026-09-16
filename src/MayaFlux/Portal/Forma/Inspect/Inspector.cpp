@@ -10,7 +10,7 @@ std::optional<InspectResult> Inspector::s_buffer_result;
 std::optional<InspectResult> Inspector::s_scheduler_result;
 std::optional<InspectResult> Inspector::s_event_result;
 
-RowBuffer Inspector::make_row_buffer(
+EntryBuffer Inspector::make_row_buffer(
     const std::shared_ptr<Core::Window>& window,
     std::string_view text,
     glm::uvec2 pixel_dims) const

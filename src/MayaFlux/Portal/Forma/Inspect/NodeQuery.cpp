@@ -45,8 +45,8 @@ InspectResult Inspector::inspect_modulator_tree(
         + ": " + Reflect::short_dynamic_type_name(*tree.node);
 
     auto node_ref = tree.node;
-    std::vector<ValueSpec> values {
-        ValueSpec {
+    std::vector<EntrySpec> entrys {
+        EntrySpec {
             .label = "out",
             .reader = [node_ref] { return std::to_string(node_ref->get_last_output()); },
         },
@@ -54,12 +54,12 @@ InspectResult Inspector::inspect_modulator_tree(
 
     const auto dims = row_pixel_dims(surface.window(), ind, x_max, row_h);
     auto hbuf = make_row_buffer(surface.window(), header_label, dims);
-    std::vector<RowBuffer> rbufs;
-    rbufs.reserve(values.size());
-    for (const auto& spec : values)
+    std::vector<EntryBuffer> rbufs;
+    rbufs.reserve(entrys.size());
+    for (const auto& spec : entrys)
         rbufs.push_back(make_row_buffer(surface.window(), spec.label, dims));
 
-    auto group = make_value_group(values, std::move(hbuf), rbufs,
+    auto group = make_entry_group(entrys, std::move(hbuf), rbufs,
         surface, cursor, ind, x_max, row_h, false);
 
     InspectResult result;
@@ -92,8 +92,8 @@ InspectResult Inspector::node(
     const std::string header_label = Reflect::short_dynamic_type_name(*n);
 
     auto node_ref = n;
-    std::vector<ValueSpec> values {
-        ValueSpec {
+    std::vector<EntrySpec> entrys {
+        EntrySpec {
             .label = "out",
             .reader = [node_ref] { return std::to_string(node_ref->get_last_output()); },
         },
@@ -101,12 +101,12 @@ InspectResult Inspector::node(
 
     const auto dims = row_pixel_dims(surface.window(), ind, x_max, row_h);
     auto hbuf = make_row_buffer(surface.window(), header_label, dims);
-    std::vector<RowBuffer> rbufs;
-    rbufs.reserve(values.size());
-    for (const auto& spec : values)
+    std::vector<EntryBuffer> rbufs;
+    rbufs.reserve(entrys.size());
+    for (const auto& spec : entrys)
         rbufs.push_back(make_row_buffer(surface.window(), spec.label, dims));
 
-    auto group = make_value_group(values, std::move(hbuf), rbufs,
+    auto group = make_entry_group(entrys, std::move(hbuf), rbufs,
         surface, cursor, ind, x_max, row_h, false);
 
     InspectResult result;
@@ -142,8 +142,8 @@ InspectResult Inspector::root_node(
         ? "root [ch " + std::to_string(channel) + "]"
         : "root";
 
-    std::vector<ValueSpec> values {
-        ValueSpec {
+    std::vector<EntrySpec> entrys {
+        EntrySpec {
             .label = "nodes",
             .reader = [&root] { return std::to_string(root.get_node_size()); },
         },
@@ -151,12 +151,12 @@ InspectResult Inspector::root_node(
 
     const auto dims = row_pixel_dims(surface.window(), ind, x_max, row_h);
     auto hbuf = make_row_buffer(surface.window(), header_label, dims);
-    std::vector<RowBuffer> rbufs;
-    rbufs.reserve(values.size());
-    for (const auto& spec : values)
+    std::vector<EntryBuffer> rbufs;
+    rbufs.reserve(entrys.size());
+    for (const auto& spec : entrys)
         rbufs.push_back(make_row_buffer(surface.window(), spec.label, dims));
 
-    auto group = make_value_group(values, std::move(hbuf), rbufs,
+    auto group = make_entry_group(entrys, std::move(hbuf), rbufs,
         surface, cursor, ind, x_max, row_h, false);
 
     InspectResult result;
@@ -216,16 +216,16 @@ InspectResult Inspector::node_network(
         + std::string(Reflect::enum_to_string(net->get_output_mode()));
 
     auto net_ref = net;
-    std::vector<ValueSpec> values {
-        ValueSpec {
+    std::vector<EntrySpec> entrys {
+        EntrySpec {
             .label = "nodes",
             .reader = [net_ref] { return std::to_string(net_ref->get_node_count()); },
         },
-        ValueSpec {
+        EntrySpec {
             .label = "enabled",
             .reader = [net_ref] { return net_ref->is_enabled() ? "true" : "false"; },
         },
-        ValueSpec {
+        EntrySpec {
             .label = "channels",
             .reader = [net_ref] {
                 const auto ch = net_ref->get_registered_channels();
@@ -242,12 +242,12 @@ InspectResult Inspector::node_network(
 
     const auto dims = row_pixel_dims(surface.window(), ind, x_max, row_h);
     auto hbuf = make_row_buffer(surface.window(), header_label, dims);
-    std::vector<RowBuffer> rbufs;
-    rbufs.reserve(values.size());
-    for (const auto& spec : values)
+    std::vector<EntryBuffer> rbufs;
+    rbufs.reserve(entrys.size());
+    for (const auto& spec : entrys)
         rbufs.push_back(make_row_buffer(surface.window(), spec.label, dims));
 
-    auto group = make_value_group(values, std::move(hbuf), rbufs,
+    auto group = make_entry_group(entrys, std::move(hbuf), rbufs,
         surface, cursor, ind, x_max, row_h, false);
 
     InspectResult result;
@@ -275,8 +275,8 @@ InspectResult& Inspector::node_graph_manager(
         + (tokens.size() == 1 ? "" : "s") + "]";
 
     auto& ngm = m_ngm;
-    std::vector<ValueSpec> root_values {
-        ValueSpec {
+    std::vector<EntrySpec> root_entrys {
+        EntrySpec {
             .label = "tokens",
             .reader = [&ngm] { return std::to_string(ngm.get_active_tokens().size()); },
         },
@@ -284,12 +284,12 @@ InspectResult& Inspector::node_graph_manager(
 
     const auto dims = row_pixel_dims(surface.window(), x_min, x_max, row_h);
     auto hbuf = make_row_buffer(surface.window(), root_label, dims);
-    std::vector<RowBuffer> rbufs;
-    rbufs.reserve(root_values.size());
-    for (const auto& spec : root_values)
+    std::vector<EntryBuffer> rbufs;
+    rbufs.reserve(root_entrys.size());
+    for (const auto& spec : root_entrys)
         rbufs.push_back(make_row_buffer(surface.window(), spec.label, dims));
 
-    auto root_group = make_value_group(root_values, std::move(hbuf), rbufs,
+    auto root_group = make_entry_group(root_entrys, std::move(hbuf), rbufs,
         surface, cursor, x_min, x_max, row_h, false);
 
     InspectResult& result = s_node_graph_result.emplace();
@@ -302,12 +302,12 @@ InspectResult& Inspector::node_graph_manager(
         if (multichannel)
             std::ranges::sort(channels);
 
-        std::vector<ValueSpec> tok_values {
-            ValueSpec {
+        std::vector<EntrySpec> tok_entrys {
+            EntrySpec {
                 .label = "nodes",
                 .reader = [&ngm, tok] { return std::to_string(ngm.get_node_count(tok)); },
             },
-            ValueSpec {
+            EntrySpec {
                 .label = "networks",
                 .reader = [&ngm, tok] { return std::to_string(ngm.get_network_count(tok)); },
             },
@@ -315,12 +315,12 @@ InspectResult& Inspector::node_graph_manager(
 
         const auto tok_dims = row_pixel_dims(surface.window(), x_min + k_inspect_indent, x_max, row_h);
         auto tok_hbuf = make_row_buffer(surface.window(), tok_label, tok_dims);
-        std::vector<RowBuffer> tok_rbufs;
-        tok_rbufs.reserve(tok_values.size());
-        for (const auto& spec : tok_values)
+        std::vector<EntryBuffer> tok_rbufs;
+        tok_rbufs.reserve(tok_entrys.size());
+        for (const auto& spec : tok_entrys)
             tok_rbufs.push_back(make_row_buffer(surface.window(), spec.label, tok_dims));
 
-        auto tok_group = make_value_group(tok_values, std::move(tok_hbuf), tok_rbufs,
+        auto tok_group = make_entry_group(tok_entrys, std::move(tok_hbuf), tok_rbufs,
             surface, cursor, x_min + k_inspect_indent, x_max, row_h, false);
 
         InspectResult tok_result;
@@ -331,7 +331,7 @@ InspectResult& Inspector::node_graph_manager(
         {
             const auto net_dims = row_pixel_dims(surface.window(), x_min + 2.F * k_inspect_indent, x_max, row_h);
             auto net_hbuf = make_row_buffer(surface.window(), "Networks", net_dims);
-            auto net_group = make_value_group({}, std::move(net_hbuf), {},
+            auto net_group = make_entry_group({}, std::move(net_hbuf), {},
                 surface, cursor, x_min + 2.F * k_inspect_indent, x_max, row_h, false);
 
             InspectResult net_section;
@@ -342,7 +342,7 @@ InspectResult& Inspector::node_graph_manager(
                 for (const auto ch : channels) {
                     const auto ch_dims = row_pixel_dims(surface.window(), x_min + 3.F * k_inspect_indent, x_max, row_h);
                     auto ch_hbuf = make_row_buffer(surface.window(), "ch " + std::to_string(ch), ch_dims);
-                    auto ch_group = make_value_group({}, std::move(ch_hbuf), {},
+                    auto ch_group = make_entry_group({}, std::move(ch_hbuf), {},
                         surface, cursor, x_min + 3.F * k_inspect_indent, x_max, row_h, false);
 
                     InspectResult ch_result;
@@ -376,7 +376,7 @@ InspectResult& Inspector::node_graph_manager(
         {
             const auto nodes_dims = row_pixel_dims(surface.window(), x_min + 2.F * k_inspect_indent, x_max, row_h);
             auto nodes_hbuf = make_row_buffer(surface.window(), "Nodes", nodes_dims);
-            auto nodes_group = make_value_group({}, std::move(nodes_hbuf), {},
+            auto nodes_group = make_entry_group({}, std::move(nodes_hbuf), {},
                 surface, cursor, x_min + 2.F * k_inspect_indent, x_max, row_h, false);
 
             InspectResult nodes_section;
