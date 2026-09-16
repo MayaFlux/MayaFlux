@@ -2,6 +2,7 @@
 
 #include "Internal/Atelier.hpp"
 #include "Primitives/Geometry.hpp"
+#include "Primitives/TextField.hpp"
 
 namespace MayaFlux::Vruta {
 class Event;
@@ -333,6 +334,49 @@ template <typename T>
     return internal::atelier().create_element<T>(
         surface, std::move(geom), std::move(initial), topology, std::move(project));
 }
+
+// =============================================================================
+// Text field
+// =============================================================================
+
+/**
+ * @brief Build a text-capable FormaBuffer, register a TextField, and wire
+ *        text editing onto it in one call.
+ *
+ * The one-call convenience over TextField::place() - same split
+ * Portal::Forma::create<T> already has with a bare Form<T>: this builds
+ * the buffer (create_buffer, which TextField.cpp itself may never call -
+ * see TextField.hpp) and delegates. Build the buffer and TextField by hand
+ * instead for anything needing a non-default buffer setup (a shared
+ * texture slot alongside a background quad, for instance).
+ *
+ * @p scrollable composes a second primitive in, the same way: false (the
+ * default) matches every prior call exactly - @p bounds is the field's own
+ * region. True builds a plain Scrollable (Scrollable::place(), @p bounds as
+ * its viewport) and calls TextField::scrollable() instead of place() - the
+ * same composition test_text_input() (test_8.hpp) once wired by hand, now
+ * living at the TextField primitive level; this is only the one-call
+ * convenience over it. That Scrollable is local to this call and not
+ * returned, so no indicator is added and nothing else can be tracked into
+ * the same viewport - build the Scrollable yourself and call
+ * TextField::scrollable() directly (or place() + Scrollable::track() by
+ * hand) for either of those.
+ *
+ * @param surface      Surface whose window, layer, and context own the field.
+ * @param bounds       NDC region for both hit testing and the text quad -
+ *                     or, when scrollable, the fixed clipped viewport.
+ * @param params       Shared render params. A default-constructed one is
+ *                     allocated if null.
+ * @param initial_text Starting text. Cursor starts at its end.
+ * @param scrollable   When true, wraps the field in a Scrollable viewport.
+ * @return Registered, wired TextField.
+ */
+[[nodiscard]] MAYAFLUX_API TextField create_text_field(
+    Surface& surface,
+    Kinesis::AABB2D bounds,
+    std::shared_ptr<Portal::Text::PressParams> params = nullptr,
+    std::string initial_text = {},
+    bool scrollable = false);
 
 /**
  * @brief Create a live plot in a new window.
