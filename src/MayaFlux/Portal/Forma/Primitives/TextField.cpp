@@ -18,12 +18,13 @@ namespace {
 } // namespace
 
 TextField& TextField::place(
-    std::shared_ptr<Buffers::FormaBuffer> buf,
+    std::shared_ptr<Buffers::FormaBuffer> in_buf,
     Surface& surface,
     Kinesis::AABB2D bounds,
     std::shared_ptr<Portal::Text::PressParams> in_params,
     std::string initial_text)
 {
+    buf = std::move(in_buf);
     field_bounds = bounds;
 
     params = std::move(in_params);
@@ -33,7 +34,7 @@ TextField& TextField::place(
     m_element = Element {}
                     .with_name("text_field")
                     .with_bounds(bounds)
-                    .with_buffer(std::move(buf))
+                    .with_buffer(buf)
                     .with_text(initial_text, *params, bounds);
 
     element_id = surface.layer().add(m_element);
@@ -101,6 +102,12 @@ void TextField::wire(Context& ctx)
         Portal::Text::move(edit, 1);
         s->write(edit);
     });
+}
+
+void TextField::reposition(Kinesis::AABB2D new_bounds)
+{
+    m_element.retarget(new_bounds);
+    field_bounds = new_bounds;
 }
 
 } // namespace MayaFlux::Portal::Forma

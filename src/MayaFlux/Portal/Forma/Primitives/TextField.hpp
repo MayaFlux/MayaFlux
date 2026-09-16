@@ -40,6 +40,12 @@ class Surface;
  * focus-driven background color) and have every subsequent keystroke see
  * it, without re-wiring anything.
  *
+ * buf is exposed (same convention Scrollable/Collapsible use) so a field
+ * can be clipped or scrolled with no TextField-specific plumbing: pass it
+ * directly as Scrollable::track()'s clip_buf to get scissor-to-viewport
+ * clipping for free, and wire reposition() as the track() reposition
+ * callback to move the field on scroll:
+ *
  * @code
  * auto buf = Portal::Forma::create_buffer(
  *     window, Graphics::PrimitiveTopology::TRIANGLE_LIST,
@@ -49,6 +55,11 @@ class Surface;
  *     Portal::Text::PressParams { .color = { 0.9F, 0.9F, 0.9F, 1.F }, .render_bounds = { 800, 64 } });
  *
  * auto field = TextField {}.place(buf, surface, bounds, params, "hello");
+ *
+ * // Living inside a Scrollable:
+ * panel.track(field.element_id, field.bounds(),
+ *     [field](Kinesis::AABB2D shifted) mutable { field.reposition(shifted); },
+ *     field.buf);
  * @endcode
  */
 struct TextField {
@@ -67,6 +78,11 @@ struct TextField {
     ///        subsequent keystroke see it. Valid after place().
     std::shared_ptr<Portal::Text::PressParams> params;
 
+    /// @brief FormaBuffer backing the text quad. Valid after place(). Pass
+    ///        directly as Scrollable::track()'s clip_buf for scissor
+    ///        clipping - no separate scissor call needed.
+    std::shared_ptr<Buffers::FormaBuffer> buf;
+
     /// @brief NDC region occupied by the field. Valid after place().
     Kinesis::AABB2D field_bounds {};
 
@@ -80,7 +96,7 @@ struct TextField {
     /**
      * @brief Register the text field element and wire text editing onto it.
      *
-     * @param buf          Pre-created buffer for the text quad - must have
+     * @param in_buf       Pre-created buffer for the text quad - must have
      *                     an additional_textures slot at index 0
      *                     (Element::with_text's requirement).
      * @param surface      Surface to register the element on.
@@ -91,11 +107,30 @@ struct TextField {
      * @return *this, with results populated.
      */
     MAYAFLUX_API TextField& place(
-        std::shared_ptr<Buffers::FormaBuffer> buf,
+        std::shared_ptr<Buffers::FormaBuffer> in_buf,
         Surface& surface,
         Kinesis::AABB2D bounds,
         std::shared_ptr<Portal::Text::PressParams> in_params,
         std::string initial_text = {});
+
+    // =========================================================================
+    // Post-placement
+    // =========================================================================
+
+    /**
+     * @brief Move the field to a new NDC region, keeping content and the
+     *        bound texture unchanged.
+     *
+     * The visual half of a scroll reflow - resubmits the quad via
+     * Element::retarget(), nothing else. Wire directly as a
+     * Scrollable::track() reposition callback (see the class doc example);
+     * Scrollable's own reflow() already pushes the matching bounds_hint to
+     * the Layer, so hit-testing stays correct without this needing a
+     * Layer of its own.
+     *
+     * @param new_bounds Shifted NDC region.
+     */
+    MAYAFLUX_API void reposition(Kinesis::AABB2D new_bounds);
 
 private:
     Element m_element;
