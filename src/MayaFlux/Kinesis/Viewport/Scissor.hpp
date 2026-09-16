@@ -14,10 +14,10 @@ namespace MayaFlux::Kinesis {
  * Not a rendering-backend type and not Forma-specific: it lives in Kinesis
  * because anything with a spatial footprint can produce one. A 2D bounds
  * region converts directly; anything exposing bounds() (Portal::Forma's
- * Mapped<T>, Collapsible, ValueRow, ValueGroup, and so on) converts through
- * the same HasBounds mechanism place() already uses; a 3D world-space
- * AABB3D converts by projecting through a ViewTransform. Portal::Graphics::
- * RenderConfig holds one as std::optional<Scissor>, and
+ * Mapped<T>, Collapsible, Scrollable, ValueRow, ValueGroup, and so on)
+ * converts through the same HasBounds mechanism place() already uses; a
+ * 3D world-space AABB3D converts by projecting through a ViewTransform.
+ * Portal::Graphics::RenderConfig holds one as std::optional<Scissor>, and
  * Buffers::RenderProcessor resolves it to a backend rect (Vulkan's
  * vk::Rect2D) fresh every frame.
  *
@@ -39,7 +39,7 @@ struct Scissor {
         return { .bounds = ndc_bounds };
     }
 
-    /// @brief Construct from anything exposing bounds(): Mapped<T>, Collapsible, ValueRow, ValueGroup, and so on.
+    /// @brief Construct from anything exposing bounds(): Mapped<T>, Collapsible, Scrollable, ValueRow, ValueGroup, and so on.
     template <HasBounds T>
     [[nodiscard]] static Scissor from(const T& anchor) noexcept
     {

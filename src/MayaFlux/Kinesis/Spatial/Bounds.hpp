@@ -600,9 +600,9 @@ enum class Align : uint8_t {
 /**
  * @brief Any type carrying a spatial footprint usable as a placement anchor.
  *
- * Satisfied by Portal::Forma::Mapped<T>, Collapsible, ValueGroup, and
- * ValueRow. AABB2D itself does not satisfy it, so the overloads below never
- * collide with the AABB2D-taking primaries.
+ * Satisfied by Portal::Forma::Mapped<T>, Collapsible, Scrollable, ValueGroup,
+ * and ValueRow. AABB2D itself does not satisfy it, so the overloads below
+ * never collide with the AABB2D-taking primaries.
  */
 template <typename T>
 concept HasBounds = requires(const T& t) {
