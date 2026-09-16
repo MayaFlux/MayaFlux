@@ -146,12 +146,16 @@ struct EntryGroup {
 /**
  * @brief Construct a collapsible header followed by N entry rows under it.
  *
- * The header and all row buffers are pre-created by the caller. Once
- * expanded, all rows in @p entrys become visible via the relation cascade.
- * Visibility tracks the header's open state.
+ * The header composites @p header_label itself (Collapsible::label),
+ * background included, so header_buf needs only a "text" additional_textures
+ * slot, not a pre-pressed image - unlike row_bufs, whose entries still carry
+ * their own pre-pressed text images for make_entry(). Once expanded, all
+ * rows in @p entrys become visible via the relation cascade. Visibility
+ * tracks the header's open state.
  *
  * @param entrys         Specs for each body row. Order is preserved top-to-bottom.
- * @param header_buf     Pre-created buffer and text image for the header strip.
+ * @param header_label   Text composited into the header strip.
+ * @param header_buf     Pre-created buffer for the header strip, "text" slot empty.
  * @param row_bufs       Pre-created buffers and text images, one per entry in @p entrys.
  * @param surface        Surface to register the header and rows on.
  * @param cursor         Layout cursor. Advanced across header and all rows on return.
@@ -162,7 +166,8 @@ struct EntryGroup {
  */
 [[nodiscard]] EntryGroup make_entry_group(
     std::span<const EntrySpec> entrys,
-    EntryBuffer header_buf,
+    std::string_view header_label,
+    std::shared_ptr<Buffers::FormaBuffer> header_buf,
     std::span<const EntryBuffer> row_bufs,
     Surface& surface,
     LayoutCursor& cursor,
@@ -177,7 +182,8 @@ struct EntryGroup {
  */
 [[nodiscard]] EntryGroup make_entry_group(
     std::span<const EntrySpec> entrys,
-    EntryBuffer header_buf,
+    std::string_view header_label,
+    std::shared_ptr<Buffers::FormaBuffer> header_buf,
     std::span<const EntryBuffer> row_bufs,
     Surface& surface,
     LayoutCursor& cursor,

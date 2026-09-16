@@ -33,6 +33,20 @@ EntryBuffer Inspector::make_row_buffer(
     return { .buf = std::move(buf), .text_image = std::move(text_image) };
 }
 
+std::shared_ptr<Buffers::FormaBuffer> Inspector::make_header_buffer(
+    const std::shared_ptr<Core::Window>& window) const
+{
+    const size_t cap = static_cast<size_t>(6) * Kakshya::VertexLayout::for_meshes().stride_bytes;
+    auto buf = std::make_shared<Buffers::FormaBuffer>(
+        cap, Graphics::PrimitiveTopology::TRIANGLE_LIST);
+    m_bm.add_buffer(buf, Buffers::ProcessingToken::GRAPHICS_BACKEND);
+    buf->setup_rendering({
+        .target_window = window,
+        .additional_textures = { { "text", nullptr } },
+    });
+    return buf;
+}
+
 void Inspector::destroy(InspectResult& result)
 {
     if (s_node_graph_result && &result == &*s_node_graph_result) {

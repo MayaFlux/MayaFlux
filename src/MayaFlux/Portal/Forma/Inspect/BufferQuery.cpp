@@ -75,13 +75,13 @@ InspectResult Inspector::buffer(
     }
 
     const auto dims = row_pixel_dims(surface.window(), ind, x_max, row_h);
-    auto hbuf = make_row_buffer(surface.window(), header_label, dims);
+    auto hbuf = make_header_buffer(surface.window());
     std::vector<EntryBuffer> rbufs;
     rbufs.reserve(entrys.size());
 
     for (const auto& spec : entrys)
         rbufs.push_back(make_row_buffer(surface.window(), spec.label, dims));
-    auto group = make_entry_group(entrys, std::move(hbuf), rbufs,
+    auto group = make_entry_group(entrys, header_label, std::move(hbuf), rbufs,
         surface, cursor, ind, x_max, row_h, false);
 
     InspectResult result;
@@ -117,12 +117,12 @@ InspectResult Inspector::root_audio_buffer(
     };
 
     const auto dims = row_pixel_dims(surface.window(), ind, x_max, row_h);
-    auto hbuf = make_row_buffer(surface.window(), header_label, dims);
+    auto hbuf = make_header_buffer(surface.window());
     std::vector<EntryBuffer> rbufs;
     rbufs.reserve(entrys.size());
     for (const auto& spec : entrys)
         rbufs.push_back(make_row_buffer(surface.window(), spec.label, dims));
-    auto group = make_entry_group(entrys, std::move(hbuf), rbufs,
+    auto group = make_entry_group(entrys, header_label, std::move(hbuf), rbufs,
         surface, cursor, ind, x_max, row_h, false);
 
     InspectResult result;
@@ -170,12 +170,12 @@ InspectResult Inspector::root_audio_buffer(
     };
 
     const auto dims = row_pixel_dims(surface.window(), ind, x_max, row_h);
-    auto hbuf = make_row_buffer(surface.window(), header_label, dims);
+    auto hbuf = make_header_buffer(surface.window());
     std::vector<EntryBuffer> rbufs;
     rbufs.reserve(entrys.size());
     for (const auto& spec : entrys)
         rbufs.push_back(make_row_buffer(surface.window(), spec.label, dims));
-    auto group = make_entry_group(entrys, std::move(hbuf), rbufs,
+    auto group = make_entry_group(entrys, header_label, std::move(hbuf), rbufs,
         surface, cursor, ind, x_max, row_h, false);
 
     InspectResult result;
@@ -218,12 +218,12 @@ InspectResult Inspector::root_graphics_buffer(
     };
 
     const auto dims = row_pixel_dims(surface.window(), ind, x_max, row_h);
-    auto hbuf = make_row_buffer(surface.window(), header_label, dims);
+    auto hbuf = make_header_buffer(surface.window());
     std::vector<EntryBuffer> rbufs;
     rbufs.reserve(entrys.size());
     for (const auto& spec : entrys)
         rbufs.push_back(make_row_buffer(surface.window(), spec.label, dims));
-    auto group = make_entry_group(entrys, std::move(hbuf), rbufs,
+    auto group = make_entry_group(entrys, header_label, std::move(hbuf), rbufs,
         surface, cursor, ind, x_max, row_h, false);
 
     InspectResult result;
@@ -275,13 +275,13 @@ InspectResult& Inspector::buffer_manager(
     };
 
     const auto dims = row_pixel_dims(surface.window(), x_min, x_max, row_h);
-    auto hbuf = make_row_buffer(surface.window(), header_label, dims);
+    auto hbuf = make_header_buffer(surface.window());
     std::vector<EntryBuffer> rbufs;
     rbufs.reserve(entrys.size());
     for (const auto& spec : entrys)
         rbufs.push_back(make_row_buffer(surface.window(), spec.label, dims));
 
-    auto group = make_entry_group(entrys, std::move(hbuf), rbufs,
+    auto group = make_entry_group(entrys, header_label, std::move(hbuf), rbufs,
         surface, cursor, x_min, x_max, row_h, false);
 
     InspectResult& result = s_buffer_result.emplace();
@@ -299,9 +299,8 @@ InspectResult& Inspector::buffer_manager(
 
     if (in_count > 0) {
         const std::string in_label = "inputs [" + std::to_string(in_count) + "]";
-        const auto in_dims = row_pixel_dims(surface.window(), x_min + k_inspect_indent, x_max, row_h);
-        auto in_hbuf = make_row_buffer(surface.window(), in_label, in_dims);
-        auto in_group = make_entry_group({}, std::move(in_hbuf), {},
+        auto in_hbuf = make_header_buffer(surface.window());
+        auto in_group = make_entry_group({}, in_label, std::move(in_hbuf), {},
             surface, cursor, x_min + k_inspect_indent, x_max, row_h, false);
 
         InspectResult in_result;

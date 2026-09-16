@@ -30,13 +30,13 @@ InspectResult Inspector::event(
     };
 
     const auto dims = row_pixel_dims(surface.window(), x_min, x_max, row_h);
-    auto hbuf = make_row_buffer(surface.window(), header_label, dims);
+    auto hbuf = make_header_buffer(surface.window());
     std::vector<EntryBuffer> rbufs;
     rbufs.reserve(entrys.size());
     for (const auto& spec : entrys)
         rbufs.push_back(make_row_buffer(surface.window(), spec.label, dims));
 
-    auto group = make_entry_group(entrys, std::move(hbuf), rbufs,
+    auto group = make_entry_group(entrys, header_label, std::move(hbuf), rbufs,
         surface, cursor, x_min, x_max, row_h, false);
 
     InspectResult result;
@@ -59,13 +59,13 @@ InspectResult& Inspector::event_manager(
     };
 
     const auto dims = row_pixel_dims(surface.window(), x_min, x_max, row_h);
-    auto hbuf = make_row_buffer(surface.window(), "EventManager", dims);
+    auto hbuf = make_header_buffer(surface.window());
     std::vector<EntryBuffer> rbufs;
     rbufs.reserve(root_entrys.size());
     for (const auto& spec : root_entrys)
         rbufs.push_back(make_row_buffer(surface.window(), spec.label, dims));
 
-    auto root_group = make_entry_group(root_entrys, std::move(hbuf), rbufs,
+    auto root_group = make_entry_group(root_entrys, "EventManager", std::move(hbuf), rbufs,
         surface, cursor, x_min, x_max, row_h, true);
 
     InspectResult& result = s_event_result.emplace();
@@ -93,13 +93,13 @@ InspectResult& Inspector::event_manager(
         };
 
         const auto ev_dims = row_pixel_dims(surface.window(), x_min, x_max, row_h);
-        auto ev_hbuf = make_row_buffer(surface.window(), header_label, ev_dims);
+        auto ev_hbuf = make_header_buffer(surface.window());
         std::vector<EntryBuffer> ev_rbufs;
         ev_rbufs.reserve(entrys.size());
         for (const auto& spec : entrys)
             ev_rbufs.push_back(make_row_buffer(surface.window(), spec.label, ev_dims));
 
-        auto ev_group = make_entry_group(entrys, std::move(ev_hbuf), ev_rbufs,
+        auto ev_group = make_entry_group(entrys, header_label, std::move(ev_hbuf), ev_rbufs,
             surface, cursor, x_min, x_max, row_h, false);
 
         InspectResult ev_result;

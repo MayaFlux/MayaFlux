@@ -53,13 +53,13 @@ InspectResult Inspector::inspect_modulator_tree(
     };
 
     const auto dims = row_pixel_dims(surface.window(), ind, x_max, row_h);
-    auto hbuf = make_row_buffer(surface.window(), header_label, dims);
+    auto hbuf = make_header_buffer(surface.window());
     std::vector<EntryBuffer> rbufs;
     rbufs.reserve(entrys.size());
     for (const auto& spec : entrys)
         rbufs.push_back(make_row_buffer(surface.window(), spec.label, dims));
 
-    auto group = make_entry_group(entrys, std::move(hbuf), rbufs,
+    auto group = make_entry_group(entrys, header_label, std::move(hbuf), rbufs,
         surface, cursor, ind, x_max, row_h, false);
 
     InspectResult result;
@@ -100,13 +100,13 @@ InspectResult Inspector::node(
     };
 
     const auto dims = row_pixel_dims(surface.window(), ind, x_max, row_h);
-    auto hbuf = make_row_buffer(surface.window(), header_label, dims);
+    auto hbuf = make_header_buffer(surface.window());
     std::vector<EntryBuffer> rbufs;
     rbufs.reserve(entrys.size());
     for (const auto& spec : entrys)
         rbufs.push_back(make_row_buffer(surface.window(), spec.label, dims));
 
-    auto group = make_entry_group(entrys, std::move(hbuf), rbufs,
+    auto group = make_entry_group(entrys, header_label, std::move(hbuf), rbufs,
         surface, cursor, ind, x_max, row_h, false);
 
     InspectResult result;
@@ -150,13 +150,13 @@ InspectResult Inspector::root_node(
     };
 
     const auto dims = row_pixel_dims(surface.window(), ind, x_max, row_h);
-    auto hbuf = make_row_buffer(surface.window(), header_label, dims);
+    auto hbuf = make_header_buffer(surface.window());
     std::vector<EntryBuffer> rbufs;
     rbufs.reserve(entrys.size());
     for (const auto& spec : entrys)
         rbufs.push_back(make_row_buffer(surface.window(), spec.label, dims));
 
-    auto group = make_entry_group(entrys, std::move(hbuf), rbufs,
+    auto group = make_entry_group(entrys, header_label, std::move(hbuf), rbufs,
         surface, cursor, ind, x_max, row_h, false);
 
     InspectResult result;
@@ -241,13 +241,13 @@ InspectResult Inspector::node_network(
     };
 
     const auto dims = row_pixel_dims(surface.window(), ind, x_max, row_h);
-    auto hbuf = make_row_buffer(surface.window(), header_label, dims);
+    auto hbuf = make_header_buffer(surface.window());
     std::vector<EntryBuffer> rbufs;
     rbufs.reserve(entrys.size());
     for (const auto& spec : entrys)
         rbufs.push_back(make_row_buffer(surface.window(), spec.label, dims));
 
-    auto group = make_entry_group(entrys, std::move(hbuf), rbufs,
+    auto group = make_entry_group(entrys, header_label, std::move(hbuf), rbufs,
         surface, cursor, ind, x_max, row_h, false);
 
     InspectResult result;
@@ -283,13 +283,13 @@ InspectResult& Inspector::node_graph_manager(
     };
 
     const auto dims = row_pixel_dims(surface.window(), x_min, x_max, row_h);
-    auto hbuf = make_row_buffer(surface.window(), root_label, dims);
+    auto hbuf = make_header_buffer(surface.window());
     std::vector<EntryBuffer> rbufs;
     rbufs.reserve(root_entrys.size());
     for (const auto& spec : root_entrys)
         rbufs.push_back(make_row_buffer(surface.window(), spec.label, dims));
 
-    auto root_group = make_entry_group(root_entrys, std::move(hbuf), rbufs,
+    auto root_group = make_entry_group(root_entrys, root_label, std::move(hbuf), rbufs,
         surface, cursor, x_min, x_max, row_h, false);
 
     InspectResult& result = s_node_graph_result.emplace();
@@ -314,13 +314,13 @@ InspectResult& Inspector::node_graph_manager(
         };
 
         const auto tok_dims = row_pixel_dims(surface.window(), x_min + k_inspect_indent, x_max, row_h);
-        auto tok_hbuf = make_row_buffer(surface.window(), tok_label, tok_dims);
+        auto tok_hbuf = make_header_buffer(surface.window());
         std::vector<EntryBuffer> tok_rbufs;
         tok_rbufs.reserve(tok_entrys.size());
         for (const auto& spec : tok_entrys)
             tok_rbufs.push_back(make_row_buffer(surface.window(), spec.label, tok_dims));
 
-        auto tok_group = make_entry_group(tok_entrys, std::move(tok_hbuf), tok_rbufs,
+        auto tok_group = make_entry_group(tok_entrys, tok_label, std::move(tok_hbuf), tok_rbufs,
             surface, cursor, x_min + k_inspect_indent, x_max, row_h, false);
 
         InspectResult tok_result;
@@ -329,9 +329,8 @@ InspectResult& Inspector::node_graph_manager(
 
         // ----- Networks section -----
         {
-            const auto net_dims = row_pixel_dims(surface.window(), x_min + 2.F * k_inspect_indent, x_max, row_h);
-            auto net_hbuf = make_row_buffer(surface.window(), "Networks", net_dims);
-            auto net_group = make_entry_group({}, std::move(net_hbuf), {},
+            auto net_hbuf = make_header_buffer(surface.window());
+            auto net_group = make_entry_group({}, "Networks", std::move(net_hbuf), {},
                 surface, cursor, x_min + 2.F * k_inspect_indent, x_max, row_h, false);
 
             InspectResult net_section;
@@ -340,9 +339,8 @@ InspectResult& Inspector::node_graph_manager(
 
             if (multichannel) {
                 for (const auto ch : channels) {
-                    const auto ch_dims = row_pixel_dims(surface.window(), x_min + 3.F * k_inspect_indent, x_max, row_h);
-                    auto ch_hbuf = make_row_buffer(surface.window(), "ch " + std::to_string(ch), ch_dims);
-                    auto ch_group = make_entry_group({}, std::move(ch_hbuf), {},
+                    auto ch_hbuf = make_header_buffer(surface.window());
+                    auto ch_group = make_entry_group({}, "ch " + std::to_string(ch), std::move(ch_hbuf), {},
                         surface, cursor, x_min + 3.F * k_inspect_indent, x_max, row_h, false);
 
                     InspectResult ch_result;
@@ -374,9 +372,8 @@ InspectResult& Inspector::node_graph_manager(
 
         // ----- Nodes section -----
         {
-            const auto nodes_dims = row_pixel_dims(surface.window(), x_min + 2.F * k_inspect_indent, x_max, row_h);
-            auto nodes_hbuf = make_row_buffer(surface.window(), "Nodes", nodes_dims);
-            auto nodes_group = make_entry_group({}, std::move(nodes_hbuf), {},
+            auto nodes_hbuf = make_header_buffer(surface.window());
+            auto nodes_group = make_entry_group({}, "Nodes", std::move(nodes_hbuf), {},
                 surface, cursor, x_min + 2.F * k_inspect_indent, x_max, row_h, false);
 
             InspectResult nodes_section;

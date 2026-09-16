@@ -272,6 +272,15 @@ private:
         std::string_view text,
         glm::uvec2 pixel_dims) const;
 
+    /**
+     * @brief A "text"-slotted buffer for make_entry_group's header, no
+     *        pre-pressed image. Collapsible::place() presses the header
+     *        label itself, so unlike make_row_buffer's rows this needs no
+     *        text or pixel_dims argument.
+     */
+    [[nodiscard]] std::shared_ptr<Buffers::FormaBuffer> make_header_buffer(
+        const std::shared_ptr<Core::Window>& window) const;
+
     InspectResult inspect_modulator_tree(
         const Nodes::ModulatorTree& tree,
         Surface& surface,

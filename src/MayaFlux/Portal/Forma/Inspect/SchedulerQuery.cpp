@@ -42,13 +42,13 @@ InspectResult Inspector::inspect_task(
     };
 
     const auto dims = row_pixel_dims(surface.window(), x_min, x_max, row_h);
-    auto hbuf = make_row_buffer(surface.window(), Reflect::short_dynamic_type_name(*entry.routine), dims);
+    auto hbuf = make_header_buffer(surface.window());
     std::vector<EntryBuffer> rbufs;
     rbufs.reserve(entrys.size());
     for (const auto& spec : entrys)
         rbufs.push_back(make_row_buffer(surface.window(), spec.label, dims));
 
-    auto group = make_entry_group(entrys, std::move(hbuf), rbufs,
+    auto group = make_entry_group(entrys, Reflect::short_dynamic_type_name(*entry.routine), std::move(hbuf), rbufs,
         surface, cursor, x_min, x_max, row_h, false);
 
     InspectResult result;
@@ -75,12 +75,12 @@ InspectResult& Inspector::scheduler(
     };
 
     const auto dims = row_pixel_dims(surface.window(), x_min, x_max, row_h);
-    auto hbuf = make_row_buffer(surface.window(), "TaskScheduler", dims);
+    auto hbuf = make_header_buffer(surface.window());
     std::vector<EntryBuffer> rbufs;
     rbufs.reserve(root_entrys.size());
     for (const auto& spec : root_entrys)
         rbufs.push_back(make_row_buffer(surface.window(), spec.label, dims));
-    auto root_group = make_entry_group(root_entrys, std::move(hbuf), rbufs,
+    auto root_group = make_entry_group(root_entrys, "TaskScheduler", std::move(hbuf), rbufs,
         surface, cursor, x_min, x_max, row_h, true);
 
     InspectResult& result = s_scheduler_result.emplace();
@@ -111,9 +111,8 @@ InspectResult Inspector::tasks(
     const std::string header_label = "TaskScheduler ["
         + std::string(Reflect::enum_to_string(token)) + "]";
 
-    const auto dims = row_pixel_dims(surface.window(), x_min, x_max, row_h);
-    auto hbuf = make_row_buffer(surface.window(), header_label, dims);
-    auto root_group = make_entry_group({}, std::move(hbuf), {},
+    auto hbuf = make_header_buffer(surface.window());
+    auto root_group = make_entry_group({}, header_label, std::move(hbuf), {},
         surface, cursor, x_min, x_max, row_h, true);
 
     InspectResult result;

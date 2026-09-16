@@ -124,7 +124,8 @@ Entry make_entry(
 
 EntryGroup make_entry_group(
     std::span<const EntrySpec> entrys,
-    EntryBuffer header_buf,
+    std::string_view header_label,
+    std::shared_ptr<Buffers::FormaBuffer> header_buf,
     std::span<const EntryBuffer> row_bufs,
     Surface& surface,
     LayoutCursor& cursor,
@@ -135,8 +136,8 @@ EntryGroup make_entry_group(
                       .initially_open(initially_open)
                       .closed_color(glm::vec3(0.25F))
                       .open_color(glm::vec3(0.35F))
-                      .label(header_buf.text_image)
-                      .place(std::move(header_buf.buf), surface, cursor, x_min, x_max, row_h);
+                      .label(std::string(header_label))
+                      .place(std::move(header_buf), surface, cursor, x_min, x_max, row_h);
 
     std::vector<Entry> rows;
     rows.reserve(entrys.size());
@@ -156,14 +157,15 @@ EntryGroup make_entry_group(
 
 EntryGroup make_entry_group(
     std::span<const EntrySpec> entrys,
-    EntryBuffer header_buf,
+    std::string_view header_label,
+    std::shared_ptr<Buffers::FormaBuffer> header_buf,
     std::span<const EntryBuffer> row_bufs,
     Surface& surface,
     LayoutCursor& cursor,
     float row_h,
     bool initially_open)
 {
-    return make_entry_group(entrys, std::move(header_buf), row_bufs,
+    return make_entry_group(entrys, header_label, std::move(header_buf), row_bufs,
         surface, cursor, cursor.x_min(), cursor.x_max(), row_h, initially_open);
 }
 

@@ -4,7 +4,6 @@
 
 namespace MayaFlux::Core {
 class Window;
-class VKImage;
 }
 
 namespace MayaFlux::Buffers {
@@ -30,7 +29,7 @@ class Surface;
  * auto col = Collapsible{}
  *     .initially_open(false)
  *     .closed_color({ 0.2F, 0.2F, 0.2F })
- *     .label(header_img)
+ *     .label("Oscillator")
  *     .place(window, layer, ctx, cursor, x_min, x_max, row_h);
  *
  * col.attach(layer, body_id);
@@ -72,8 +71,11 @@ struct Collapsible {
     /// @brief Background color when open. Default: glm::vec3(0.35F).
     glm::vec3 m_color_open { 0.35F };
 
-    /// @brief Optional GPU image overlaid as a text label. nullptr = color only.
-    std::shared_ptr<Core::VKImage> m_label;
+    /// @brief Text label composited over the header. Empty = color only.
+    std::string m_label_text;
+
+    /// @brief Label text color. Default opaque white.
+    glm::vec4 m_label_color { 1.F, 1.F, 1.F, 1.F };
 
     // =========================================================================
     // Configuration setters
@@ -98,15 +100,29 @@ struct Collapsible {
     }
 
     /**
-     * @brief Attach a GPU image overlaid on the header as a text label.
+     * @brief Composite a text label over the header, background included.
      *
-     * When set, the FormaBuffer is created with a "text" texture binding
-     * and the geometry emits 12 vertices (background + overlay quad).
-     * When null (default), a plain color-only buffer is used with 6 vertices.
+     * When set, place() presses @p text with the current open/closed color
+     * as Portal::Text::PressParams::background into one texture, and every
+     * toggle re-presses it with the new color - background and label are
+     * one composited image, not a separate vertex layer, so they can never
+     * drift out of sync the way two independent draws could. When empty
+     * (default), the header stays a plain color-only quad with no text
+     * machinery at all.
+     *
+     * @p buf passed to place() still needs the "text" additional_textures
+     * slot when a label is set, same as Element::with_text.
      */
-    Collapsible& label(std::shared_ptr<Core::VKImage> img)
+    Collapsible& label(std::string text)
     {
-        m_label = std::move(img);
+        m_label_text = std::move(text);
+        return *this;
+    }
+
+    /// @brief Label text color. Only meaningful when label() is non-empty.
+    Collapsible& label_color(glm::vec4 c)
+    {
+        m_label_color = c;
         return *this;
     }
 
@@ -189,6 +205,6 @@ struct Collapsible {
     bool initially_open = true,
     glm::vec3 color_closed = glm::vec3(0.25F),
     glm::vec3 color_open = glm::vec3(0.35F),
-    std::shared_ptr<Core::VKImage> label = nullptr);
+    std::string label = {});
 
 } // namespace MayaFlux::Portal::Forma
