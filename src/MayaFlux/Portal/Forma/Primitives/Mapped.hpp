@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MayaFlux/Portal/Forma/Element.hpp"
+#include "MayaFlux/Portal/Forma/Layer.hpp"
 
 namespace MayaFlux::Buffers {
 class VKBuffer;
@@ -118,16 +118,28 @@ struct Mapped {
     }
 
     /**
-     * @brief Call once per graphics tick.
+     * @brief Call whenever state may have changed: once per graphics tick
+     *        for a continuously-changing source with no discrete trigger
+     *        (Bridge::bind's GraphicsRoutine does this), or directly from
+     *        the event handler that changed state->value when the trigger
+     *        is already known (a click, a scroll, a key) - no polling
+     *        needed for the latter, same as Collapsible's own on_press
+     *        calling sync() straight from the handler.
      *
      * If state->version has advanced since last_version, invokes geometry_fn
      * with the current value into a local byte buffer, then passes the result
      * to VKBuffer::set_data so the existing upload path handles GPU transfer.
      *
-     * The caller is responsible for driving the graphics tick — Mapped does
-     * not register itself with any scheduler.
+     * @param layer Optional. Layer::add() stored a separate copy of element
+     *              when this Mapped was registered, so a geometry_fn that
+     *              updates element.bounds_hint/contains (a fader's handle,
+     *              a radial indicator) only changes this Mapped's own copy
+     *              unless that copy is pushed back. Passing the Layer this
+     *              element was registered on does that push after
+     *              geometry_fn runs, keeping hit-testing correct past the
+     *              first frame instead of just the rendered buffer.
      */
-    void sync()
+    void sync(Layer* layer = nullptr)
     {
         if (!state || !geometry_fn || !element.buffer)
             return;
@@ -137,6 +149,13 @@ struct Mapped {
         geometry_fn(state->value, m_bytes, element);
         element.buffer->submit(m_bytes);
         last_version = state->version;
+
+        if (layer) {
+            if (element.bounds_hint)
+                layer->set_bounds(element.id, *element.bounds_hint);
+            if (element.contains)
+                layer->set_contains(element.id, element.contains);
+        }
     }
 
 private:

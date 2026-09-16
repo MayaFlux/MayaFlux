@@ -285,11 +285,7 @@ template <typename T>
         std::move(form.geometry), std::move(initial),
         form.topology, form.capacity, std::move(project));
 
-    mapped.sync();
-    if (mapped.element.bounds_hint)
-        surface.layer().set_bounds(mapped.element.id, *mapped.element.bounds_hint);
-    if (mapped.element.contains)
-        surface.layer().set_contains(mapped.element.id, mapped.element.contains);
+    mapped.sync(&surface.layer());
 
     if (form.wire)
         form.wire(surface.ctx(), mapped.element.id, mapped.state);
