@@ -104,6 +104,31 @@ void TextField::wire(Context& ctx)
     });
 }
 
+TextField& TextField::scrollable(
+    std::shared_ptr<Buffers::FormaBuffer> in_buf,
+    Surface& surface,
+    Scrollable& scroller,
+    std::shared_ptr<Portal::Text::PressParams> in_params,
+    std::string initial_text,
+    float content_multiplier)
+{
+    const Kinesis::AABB2D viewport = scroller.bounds();
+    const Kinesis::AABB2D content_bounds {
+        .min = glm::vec2(viewport.min.x, viewport.max.y - viewport.height() * content_multiplier),
+        .max = glm::vec2(viewport.max.x, viewport.max.y)
+    };
+
+    place(std::move(in_buf), surface, content_bounds, std::move(in_params), std::move(initial_text));
+
+    TextField field = *this;
+    scroller.track(
+        element_id, content_bounds,
+        [field](Kinesis::AABB2D shifted) mutable { field.reposition(shifted); },
+        buf);
+
+    return *this;
+}
+
 void TextField::reposition(Kinesis::AABB2D new_bounds)
 {
     m_element.retarget(new_bounds);

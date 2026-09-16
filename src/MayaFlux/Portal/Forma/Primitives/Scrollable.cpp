@@ -86,14 +86,14 @@ Scrollable& Scrollable::place(
     return *this;
 }
 
-void Scrollable::track(
+Scrollable& Scrollable::track(
     uint32_t id,
     Kinesis::AABB2D base_bounds,
     std::function<void(Kinesis::AABB2D)> reposition,
     const std::shared_ptr<Buffers::FormaBuffer>& clip_buf)
 {
     if (!scroll || !m_tracked)
-        return;
+        return *this;
 
     base_bounds = base_bounds.translated(-scroll->offset);
 
@@ -109,6 +109,8 @@ void Scrollable::track(
         m_indicator->state->write(scroll_extent(*scroll));
         m_indicator->sync();
     }
+
+    return *this;
 }
 
 void Scrollable::scroll_by(Layer& layer, glm::vec2 delta)
@@ -120,10 +122,10 @@ void Scrollable::scroll_by(Layer& layer, glm::vec2 delta)
     reflow(*scroll, *offset, *m_tracked, layer, m_indicator.get());
 }
 
-void Scrollable::indicator(Surface& surface, Mapped<glm::vec2> el, Kinesis::AABB2D track)
+Scrollable& Scrollable::indicator(Surface& surface, Mapped<glm::vec2> el, Kinesis::AABB2D track)
 {
     if (!scroll || !offset || !m_tracked || !m_indicator)
-        return;
+        return *this;
 
     *m_indicator = std::move(el);
     m_indicator->state->write(scroll_extent(*scroll));
@@ -147,6 +149,8 @@ void Scrollable::indicator(Surface& surface, Mapped<glm::vec2> el, Kinesis::AABB
             Kinesis::apply_scroll(*scroll_state, { 0.F, target - scroll_state->offset.y });
             reflow(*scroll_state, *scroll_offset, *tracked, surface.layer(), ind.get());
         });
+
+    return *this;
 }
 
 Scrollable make_scrollable(

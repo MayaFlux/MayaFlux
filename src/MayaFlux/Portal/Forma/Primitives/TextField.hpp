@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Mapped.hpp"
+#include "Scrollable.hpp"
 
 #include "MayaFlux/Portal/Text/InkPress.hpp"
 #include "MayaFlux/Portal/Text/TextEdit.hpp"
@@ -56,11 +56,23 @@ class Surface;
  *
  * auto field = TextField {}.place(buf, surface, bounds, params, "hello");
  *
- * // Living inside a Scrollable:
+ * // Living inside a Scrollable, composed by hand:
+ * auto panel = Scrollable {}.place(viewport_buf, surface, viewport_bounds);
  * panel.track(field.element_id, field.bounds(),
  *     [field](Kinesis::AABB2D shifted) mutable { field.reposition(shifted); },
  *     field.buf);
  * @endcode
+ *
+ * scrollable() is the fluent equivalent of that same composition, for the
+ * common single-field case - but the Scrollable itself is entirely the
+ * caller's: build and configure it however (place(), indicator(),
+ * background_color(), wheel_speed() - all fluent) before calling
+ * scrollable(), which only needs a buffer for itself, that already-placed
+ * Scrollable to track into, and how tall to grow relative to its viewport.
+ * Everything Scrollable already owns (the viewport buffer, its bounds, any
+ * indicator) stays there - this struct has no reason to know about it a
+ * second time. Portal::Forma::create_text_field(..., scrollable=true) in
+ * Forma.hpp is nothing more than a call to this.
  */
 struct TextField {
     // =========================================================================
@@ -112,6 +124,46 @@ struct TextField {
         Kinesis::AABB2D bounds,
         std::shared_ptr<Portal::Text::PressParams> in_params,
         std::string initial_text = {});
+
+    /**
+     * @brief Fluent creator: place this field inside an already-placed
+     *        Scrollable, growing itself taller than its viewport and
+     *        track()ing itself in, wired to scroll past a fixed clip.
+     *
+     * scroller is entirely the caller's: build and configure it first -
+     * Scrollable::place(), and optionally indicator()/background_color()/
+     * wheel_speed(), all fluent - then pass it here by reference. This
+     * method reads scroller.bounds() for the viewport region, places this
+     * field at a content region content_multiplier times that viewport's
+     * height (top-aligned, same width), and calls scroller.track() with
+     * this field's own buf as clip_buf and reposition() as the reflow
+     * callback. The same three-call composition shown in the class doc,
+     * done once here so callers building the common single-field case do
+     * not have to repeat it - nothing about the viewport, its buffer, or
+     * any indicator passes through this call, because Scrollable already
+     * owns all of that.
+     *
+     * @param in_buf              Pre-created buffer for the field's text quad.
+     * @param surface             Surface to register the field's element on -
+     *                            must be the same Surface scroller was placed on.
+     * @param scroller            Already-placed Scrollable to grow and track into.
+     * @param in_params           Shared render params. A default-constructed
+     *                            one is allocated if null.
+     * @param initial_text        Starting text. Cursor starts at its end.
+     * @param content_multiplier  Content height as a multiple of scroller's
+     *                            viewport height. Default 3x: enough headroom
+     *                            to type past the viewport before hitting the
+     *                            limit, not so much that most content sits
+     *                            unreachable below a near-empty field.
+     * @return *this, with results populated.
+     */
+    MAYAFLUX_API TextField& scrollable(
+        std::shared_ptr<Buffers::FormaBuffer> in_buf,
+        Surface& surface,
+        Scrollable& scroller,
+        std::shared_ptr<Portal::Text::PressParams> in_params,
+        std::string initial_text = {},
+        float content_multiplier = 3.F);
 
     // =========================================================================
     // Post-placement

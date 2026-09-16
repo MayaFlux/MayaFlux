@@ -175,8 +175,11 @@ struct Scrollable {
      * @param clip_buf    Optional. When given, Kinesis::Scissor::from(viewport_bounds)
      *                    is set on its render processor immediately, so the
      *                    element is clipped to the viewport from the start.
+     * @return *this, so place()/track()/indicator() can chain into one
+     *         expression for the common case of a single tracked item -
+     *         see Portal::Forma::TextField::scrollable() for exactly that.
      */
-    MAYAFLUX_API void track(
+    MAYAFLUX_API Scrollable& track(
         uint32_t id,
         Kinesis::AABB2D base_bounds,
         std::function<void(Kinesis::AABB2D)> reposition,
@@ -231,8 +234,9 @@ struct Scrollable {
      *                surface's Layer.
      * @param track   NDC region the drag is measured against; its full
      *                height maps to the full scrollable range.
+     * @return *this, for chaining - see track()'s @return.
      */
-    MAYAFLUX_API void indicator(Surface& surface, Mapped<glm::vec2> el, Kinesis::AABB2D track);
+    MAYAFLUX_API Scrollable& indicator(Surface& surface, Mapped<glm::vec2> el, Kinesis::AABB2D track);
 
 private:
     std::shared_ptr<std::vector<Tracked>> m_tracked;
