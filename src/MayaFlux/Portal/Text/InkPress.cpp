@@ -162,9 +162,6 @@ namespace {
         glm::vec4 background = { 0.F, 0.F, 0.F, 0.F })
     {
         const LayoutResult layout = lay_out(text, atlas, 0.F, pen_y_start, buf_w);
-        if (layout.quads.empty()) {
-            return std::nullopt;
-        }
 
         const auto content_h = static_cast<uint32_t>(std::ceil(layout.final_pen_y))
             + atlas.line_height();
