@@ -14,10 +14,10 @@ class Layer;
 class Surface;
 
 /**
- * @struct ScrollableChild
- * @brief One element tracked by a Scrollable for reflow on scroll.
+ * @struct Tracked
+ * @brief One element registered with a Scrollable for reflow on scroll.
  */
-struct ScrollableChild {
+struct Tracked {
     uint32_t id {};
     Kinesis::AABB2D base_bounds {};
     std::function<void(Kinesis::AABB2D)> reposition;
@@ -37,16 +37,19 @@ struct ScrollableChild {
  * live scroll offset via LayoutCursor::bind_scroll, so content placed
  * through it lands at the correct on-screen position immediately, scrolled
  * or not. It does not own or know what kind of content is placed inside
- * it: track() registers a child id plus the caller's own reposition
- * callback, invoked with the child's scrolled bounds on every scroll. This
- * is the same shape as Collapsible::attach(): Scrollable moves bounds and
- * asks the caller's callback to keep visuals in sync, it does not reach
- * into arbitrary geometry functions to do that itself.
+ * it: track() registers an element id plus the caller's own reposition
+ * callback, invoked with that element's scrolled bounds on every scroll.
+ * This is the same shape as Collapsible::attach(): Scrollable moves bounds
+ * and asks the caller's callback to keep visuals in sync, it does not
+ * reach into arbitrary geometry functions to do that itself. indicator()
+ * follows the same principle for a scroll readout: Scrollable computes the
+ * two numbers (position, extent) and drives sync() on the caller's own
+ * element, but draws nothing itself.
  *
  * Wheel input over the viewport is wired by place() as the default
  * trigger, but scroll_by() is a plain method: any other input source (a
- * dragged scrollbar thumb, a key, MIDI, anything) can drive scrolling by
- * calling it directly, with no dependency on Context::on_scroll at all.
+ * dragged indicator, a key, MIDI, anything) can drive scrolling by calling
+ * it directly, with no dependency on Context::on_scroll at all.
  *
  * @code
  * auto panel = Scrollable {}
@@ -131,7 +134,7 @@ struct Scrollable {
      * @param surface  Surface to register the viewport on.
      * @param viewport NDC region: hit-test bounds, wheel-scroll trigger
      *                 region, background quad, and the Scissor clip every
-     *                 track()ed child with a buffer gets.
+     *                 track()ed element with a buffer gets.
      * @return *this, with results populated.
      */
     MAYAFLUX_API Scrollable& place(
@@ -144,57 +147,96 @@ struct Scrollable {
     // =========================================================================
 
     /**
-     * @brief Register a child element for scroll reflow.
+     * @brief Register an element for scroll reflow.
      *
      * Expands scroll->content_bounds to include base_bounds, so the clamp
      * in scroll_by() always reflects everything tracked so far - no manual
-     * content-height bookkeeping needed. On every scroll, this child's
+     * content-height bookkeeping needed. On every scroll, this element's
      * bounds_hint is updated to base_bounds.translated(offset) and
      * reposition is called with that same shifted region: reposition owns
      * whatever resubmission its own content needs (a raw buffer resubmit,
      * rebuilding a Mapped<T>'s geometry, anything). Scrollable does not
-     * inspect or constrain what kind of content child_id is.
+     * inspect or constrain what kind of content id is.
      *
      * base_bounds is normalized against the current offset before it is
      * stored, so it is always safe to pass cursor_out.advance()'s return
      * directly - that return is already shifted by whatever offset is
      * live right now (that is the whole point of LayoutCursor::bind_scroll:
-     * a child placed after scrolling already happened lands in the right
-     * spot immediately). Without this normalization a child tracked while
-     * scrolled would have that offset baked into its anchor and drift
-     * further out of place on every scroll after.
+     * an element placed after scrolling already happened lands in the right
+     * spot immediately). Without this normalization an element tracked
+     * while scrolled would have that offset baked into its anchor and
+     * drift further out of place on every scroll after.
      *
-     * @param child_id    Element id, already registered on the same Layer
+     * @param id          Element id, already registered on the same Layer
      *                    place() used.
-     * @param base_bounds This child's current on-screen NDC bounds - the
+     * @param base_bounds This element's current on-screen NDC bounds - the
      *                    direct return of cursor_out.advance(), scrolled or not.
      * @param reposition  Called with the scrolled bounds on every scroll.
      * @param clip_buf    Optional. When given, Kinesis::Scissor::from(viewport_bounds)
      *                    is set on its render processor immediately, so the
-     *                    child is clipped to the viewport from the start.
+     *                    element is clipped to the viewport from the start.
      */
     MAYAFLUX_API void track(
-        uint32_t child_id,
+        uint32_t id,
         Kinesis::AABB2D base_bounds,
         std::function<void(Kinesis::AABB2D)> reposition,
         const std::shared_ptr<Buffers::FormaBuffer>& clip_buf = nullptr);
 
     /**
-     * @brief Apply a scroll delta and reflow every tracked child.
+     * @brief Apply a scroll delta and reflow every tracked element.
      *
      * The input-agnostic core: place() wires wheel input to this by
      * default, but any other trigger can call it directly with its own
      * delta - nothing here assumes the source.
      *
-     * @param layer Layer the viewport and every tracked child were
+     * @param layer Layer the viewport and every tracked element were
      *              registered on.
      * @param delta Content-space scroll delta, added to the current
      *              offset and clamped to scroll->content_bounds.
      */
     MAYAFLUX_API void scroll_by(Layer& layer, glm::vec2 delta);
 
+    /**
+     * @brief Attach a caller-built element as a live, draggable scroll
+     *        indicator.
+     *
+     * Scrollable draws nothing itself. Build whatever Mapped<glm::vec2>
+     * your own geometry function produces - a bar, a squiggle, a sampled
+     * texture, anything computable from (position_frac, extent_frac) - via
+     * Portal::Forma::create<glm::vec2>, register it, and hand it here.
+     * position_frac is 0 at the top of content_bounds and 1 at the fully
+     * scrolled bottom; extent_frac is the viewport/content height ratio
+     * (how much of the content is visible at once), so a geometry function
+     * can size its own drawing without asking Scrollable anything further.
+     *
+     * On every scroll - wheel (place()'s default wiring), scroll_by(), or
+     * dragging this same element - the live fraction pair is written to
+     * el.state and el.sync() is called, the same "call sync() straight
+     * from the handler that changed the value, no polling" idiom
+     * Collapsible's own on_press already uses. track() also refreshes
+     * extent_frac (without a Layer, so el's hit region only, not
+     * bounds_hint, can lag very slightly until the next scroll -
+     * self-corrects on the first interaction after).
+     *
+     * Also wires on_drag on el.element.id: dragging maps the cursor's NDC
+     * y absolutely onto content offset within @p track, the same
+     * inverse-mapping idiom Geometry::vertical_fader uses for its own
+     * handle, routed through scroll_by() so drag and wheel scrolling stay
+     * in sync through one path. No handle-size compensation is applied,
+     * unlike vertical_fader - an indicator has no fixed rendered size for
+     * Scrollable to know about.
+     *
+     * @param surface Surface owning the same Layer/Context place() used.
+     * @param el      Caller's Mapped<glm::vec2>, already registered on
+     *                surface's Layer.
+     * @param track   NDC region the drag is measured against; its full
+     *                height maps to the full scrollable range.
+     */
+    MAYAFLUX_API void indicator(Surface& surface, Mapped<glm::vec2> el, Kinesis::AABB2D track);
+
 private:
-    std::shared_ptr<std::vector<ScrollableChild>> m_children;
+    std::shared_ptr<std::vector<Tracked>> m_tracked;
+    std::shared_ptr<Mapped<glm::vec2>> m_indicator;
 };
 
 // =============================================================================
