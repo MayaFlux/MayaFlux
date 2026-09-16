@@ -175,6 +175,13 @@ Context& Context::key_step(
     return *this;
 }
 
+Context& Context::press_and_hold(uint32_t id, IO::Keys key, KeyFn fn)
+{
+    on_press(id, key, fn);
+    on_held(id, key, std::move(fn));
+    return *this;
+}
+
 Context& Context::wire_drag(
     uint32_t id,
     std::function<void(glm::vec2)> sink,
