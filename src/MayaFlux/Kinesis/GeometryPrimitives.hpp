@@ -316,14 +316,20 @@ struct QuadGeometry {
  * @p weight is written through unchanged, defaulting to MeshVertex's own
  * neutral default (0). What it means - a blend factor, a sampler
  * selector, anything - is entirely the caller's domain; this function has
- * no opinion on it.
+ * no opinion on it. @p color is likewise written through unchanged,
+ * defaulting to MeshVertex's own neutral default (white) - at weight >= 1
+ * a caller-side shader convention may read it as a texture tint; at
+ * weight <= 0 the same convention may render it as a flat fill with no
+ * texture read at all. Either reading is the caller's domain.
  *
  * @param region NDC axis-aligned bounds.
  * @param weight Per-vertex weight value, written through as-is.
+ * @param color  Per-vertex color value, written through as-is.
  */
 [[nodiscard]] MAYAFLUX_API std::array<Kakshya::MeshVertex, 6> textured_mesh_rect(
     Kinesis::AABB2D region,
-    float weight = 0.F);
+    float weight = 0.F,
+    glm::vec3 color = glm::vec3(1.F));
 
 // ------------------------------------------------------------
 // 3D wireframe shapes

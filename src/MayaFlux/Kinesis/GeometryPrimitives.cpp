@@ -705,18 +705,18 @@ std::array<Kakshya::TextureQuadVertex, 4> textured_rect(Kinesis::AABB2D region)
     } };
 }
 
-std::array<Kakshya::MeshVertex, 6> textured_mesh_rect(Kinesis::AABB2D region, float weight)
+std::array<Kakshya::MeshVertex, 6> textured_mesh_rect(Kinesis::AABB2D region, float weight, glm::vec3 color)
 {
     using V = Kakshya::MeshVertex;
     const glm::vec2 mn = region.min;
     const glm::vec2 mx = region.max;
     return { {
-        V { .position = { mn.x, mn.y, 0.F }, .weight = weight, .uv = { 0.F, 1.F } },
-        V { .position = { mx.x, mn.y, 0.F }, .weight = weight, .uv = { 1.F, 1.F } },
-        V { .position = { mn.x, mx.y, 0.F }, .weight = weight, .uv = { 0.F, 0.F } },
-        V { .position = { mx.x, mn.y, 0.F }, .weight = weight, .uv = { 1.F, 1.F } },
-        V { .position = { mx.x, mx.y, 0.F }, .weight = weight, .uv = { 1.F, 0.F } },
-        V { .position = { mn.x, mx.y, 0.F }, .weight = weight, .uv = { 0.F, 0.F } },
+        V { .position = { mn.x, mn.y, 0.F }, .color = color, .weight = weight, .uv = { 0.F, 1.F } },
+        V { .position = { mx.x, mn.y, 0.F }, .color = color, .weight = weight, .uv = { 1.F, 1.F } },
+        V { .position = { mn.x, mx.y, 0.F }, .color = color, .weight = weight, .uv = { 0.F, 0.F } },
+        V { .position = { mx.x, mn.y, 0.F }, .color = color, .weight = weight, .uv = { 1.F, 1.F } },
+        V { .position = { mx.x, mx.y, 0.F }, .color = color, .weight = weight, .uv = { 1.F, 0.F } },
+        V { .position = { mn.x, mx.y, 0.F }, .color = color, .weight = weight, .uv = { 0.F, 0.F } },
     } };
 }
 

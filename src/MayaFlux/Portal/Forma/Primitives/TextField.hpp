@@ -30,10 +30,25 @@ class Surface;
  *
  * Editing state lives in a Portal::Text::EditableText, mutated through
  * Portal::Text::move()/erase()/insert_codepoint()/insert_literal() - this
- * struct only wires Context callbacks to those operations and re-renders
- * via Element::set_text. It does not manage focus visuals; wire
- * on_focus_gained/on_focus_lost separately, same as any other Forma
- * element.
+ * struct only wires Context callbacks to those operations and re-renders.
+ * It does not manage focus visuals; wire on_focus_gained/on_focus_lost
+ * separately, same as any other Forma element.
+ *
+ * A caret rides in the same buf as the text quad rather than owning a
+ * buffer, Element, or Layer entry of its own: it is a second
+ * Kakshya::MeshVertex quad (Kinesis::textured_mesh_rect at weight 0, a
+ * flat fill - forma_multi.frag already branches per-vertex on weight, so
+ * weight<=0 draws that vertex's own color with no texture read at all)
+ * appended after the text quad's 6 vertices in the same buf->submit()
+ * call. Every keystroke and every reposition() therefore resubmits both
+ * quads together (12 MeshVertex, 720 bytes) rather than only the one that
+ * actually moved - FormaBuffer::submit() has no partial-range write, so
+ * this is the whole buffer either way, and at this size it costs nothing
+ * to send it whole. Caret pixel position comes from Portal::Text::x_at()
+ * plus GlyphAtlas::ascender()/line_height(), matching the same pen_x=0,
+ * pen_y=ascender(), wrap_w=render_bounds.x origin press()/repress()
+ * already rasterize text at internally - Portal::Text needed no new API
+ * for this.
  *
  * params is a shared, mutable Portal::Text::PressParams: every keystroke's
  * re-render reads *params fresh, so a caller can change it once (e.g. a
@@ -173,12 +188,13 @@ struct TextField {
      * @brief Move the field to a new NDC region, keeping content and the
      *        bound texture unchanged.
      *
-     * The visual half of a scroll reflow - resubmits the quad via
-     * Element::retarget(), nothing else. Wire directly as a
-     * Scrollable::track() reposition callback (see the class doc example);
-     * Scrollable's own reflow() already pushes the matching bounds_hint to
-     * the Layer, so hit-testing stays correct without this needing a
-     * Layer of its own.
+     * The visual half of a scroll reflow - resubmits the text quad and the
+     * caret quad together at the new region (see the class doc's note on
+     * why both are always resubmitted together), nothing else. Wire
+     * directly as a Scrollable::track() reposition callback (see the class
+     * doc example); Scrollable's own reflow() already pushes the matching
+     * bounds_hint to the Layer, so hit-testing stays correct without this
+     * needing a Layer of its own.
      *
      * @param new_bounds Shifted NDC region.
      */
@@ -186,6 +202,12 @@ struct TextField {
 
 private:
     Element m_element;
+
+    /// @brief Same value as field_bounds, behind a shared_ptr so wire()'s
+    ///        already-captured Context closures see a reposition() that
+    ///        happens after they were registered - the same reason params
+    ///        is a shared_ptr instead of a captured-by-value copy.
+    std::shared_ptr<Kinesis::AABB2D> m_live_bounds;
 
     void wire(Context& ctx);
 };
