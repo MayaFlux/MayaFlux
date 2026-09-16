@@ -432,4 +432,25 @@ void wire_canvas_drag(
     });
 }
 
+Form<glm::vec2> scroll_indicator(
+    Kinesis::AABB2D track,
+    glm::vec3 color)
+{
+    GeometryFn<glm::vec2> fn = [track, color](
+                                    glm::vec2 extent, std::vector<uint8_t>& out, Element& el) {
+        const float len = std::clamp(extent.y, 0.F, 1.F) * track.height();
+        const float top = track.max.y - std::clamp(extent.x, 0.F, 1.F) * (track.height() - len);
+        const Kinesis::AABB2D bar { .min = { track.min.x, top - len }, .max = { track.max.x, top } };
+
+        write_verts(out, Kakshya::to_mesh_vertices(Kinesis::filled_rect(bar, color)));
+
+        el.bounds_hint = track;
+        el.contains = {};
+    };
+
+    return { std::move(fn),
+        Graphics::PrimitiveTopology::TRIANGLE_STRIP,
+        static_cast<size_t>(4) * sizeof(Kakshya::MeshVertex) };
+}
+
 } // namespace MayaFlux::Portal::Forma::Geometry
