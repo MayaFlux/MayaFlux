@@ -121,18 +121,19 @@ MAYAFLUX_API void Pause();
 MAYAFLUX_API void Resume();
 
 /**
- * @brief Blocks launcher until user input (optional convenience function)
+ * @brief Blocks launcher until Ctrl-C is pressed (optional convenience function)
  *
  * Use this only in launcher applications that need to block the main
  * thread until shutdown is requested.
  *
- * On macOS: Spawns input thread and allow GLFW to run on main thread
- * On Linux/Windows: Simple blocking cin.get()
+ * Gates on SIGINT (Ctrl-C) alone, on every platform. Never reads or
+ * consumes stdin, so stdin-driven backends (unix pipe, fileio) remain free
+ * to use it while this call blocks.
  *
  * Usage (optional):
  * ```cpp
  * engine->start_graphics();
- * std::cout << "Press Enter to stop...\n";
+ * std::cout << "Press Ctrl-C to stop...\n";
  * MayaFlux::Await();  // Blocks here (optional)
  * engine->stop_graphics();
  * ```
