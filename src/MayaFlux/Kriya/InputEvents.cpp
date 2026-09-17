@@ -76,6 +76,29 @@ Vruta::Event key_held(
     }
 }
 
+Vruta::Event text_input(
+    std::shared_ptr<Core::Window> window,
+    std::function<void(uint32_t)> callback)
+{
+    auto& promise = co_await GetEventPromise {};
+    auto& source = window->get_event_source();
+
+    Vruta::WindowEventFilter filter;
+    filter.event_type = Core::WindowEventType::TEXT_INPUT;
+
+    while (true) {
+        if (promise.should_terminate) {
+            break;
+        }
+
+        auto event = co_await WindowEventAwaiter(source, filter);
+
+        if (auto* text_data = std::get_if<Core::WindowEvent::TextData>(&event.data)) {
+            callback(text_data->codepoint);
+        }
+    }
+}
+
 Vruta::Event any_key(
     std::shared_ptr<Core::Window> window,
     std::function<void(IO::Keys)> callback)

@@ -76,6 +76,15 @@ Surface create_surface(std::shared_ptr<Core::Window> window, std::string name)
     return internal::atelier().create_surface(std::move(window), std::move(name));
 }
 
+void destroy(Surface& surface, uint32_t id)
+{
+    for (uint32_t cid : surface.layer().closure(id)) {
+        surface.ctx().unbind(cid);
+        bridge().unbind(cid);
+    }
+    surface.layer().remove(id);
+}
+
 // =============================================================================
 // Standalone buffer
 // =============================================================================
@@ -97,6 +106,42 @@ std::shared_ptr<Buffers::FormaBuffer> create_buffer(
     return internal::atelier().create_buffer(
         std::move(window), internal::k_capacity_bytes, topology, {},
         std::move(additional_textures));
+}
+
+// =============================================================================
+// Text field
+// =============================================================================
+
+namespace {
+
+    std::shared_ptr<Buffers::FormaBuffer> make_text_buffer(Surface& surface)
+    {
+        return create_buffer(
+            surface.window(),
+            Graphics::PrimitiveTopology::TRIANGLE_LIST,
+            std::vector<std::pair<std::string, std::shared_ptr<Core::VKImage>>> {
+                { "text", nullptr } });
+    }
+
+} // namespace
+
+TextField create_text_field(
+    Surface& surface,
+    Kinesis::AABB2D bounds,
+    std::shared_ptr<Portal::Text::PressParams> params,
+    std::string initial_text,
+    bool scrollable)
+{
+    if (!scrollable) {
+        return TextField {}.place(
+            make_text_buffer(surface), surface, bounds, std::move(params), std::move(initial_text));
+    }
+
+    auto viewport_buf = create_buffer(surface.window(), Graphics::PrimitiveTopology::TRIANGLE_STRIP);
+    auto viewport = Scrollable {}.place(std::move(viewport_buf), surface, bounds);
+
+    return TextField {}.scrollable(
+        make_text_buffer(surface), surface, viewport, std::move(params), std::move(initial_text));
 }
 
 // =============================================================================

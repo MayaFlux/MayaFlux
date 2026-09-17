@@ -15,11 +15,26 @@ Layer::Slot Layer::add(Element element)
 
 bool Layer::remove(uint32_t id)
 {
-    auto it = std::ranges::find_if(m_elements,
-        [id](const Element& e) { return e.id == id; });
-    if (it == m_elements.end())
+    if (!get(id))
         return false;
-    m_elements.erase(it);
+
+    const std::vector<uint32_t> ids = closure(id);
+
+    for (uint32_t cid : ids) {
+        if (auto* el = get(cid); el && el->buffer)
+            el->buffer->mark_for_removal();
+        std::erase_if(m_elements, [cid](const Element& e) { return e.id == cid; });
+    }
+
+    for (uint32_t cid : ids)
+        m_relations.erase(cid);
+
+    for (auto& [primary_id, related] : m_relations) {
+        for (uint32_t cid : ids)
+            std::erase(related, cid);
+    }
+    std::erase_if(m_relations, [](const auto& kv) { return kv.second.empty(); });
+
     return true;
 }
 
@@ -85,6 +100,12 @@ bool Layer::bring_to_front(uint32_t id)
                 [rel_id](const Element& e) { return e.id == rel_id; });
             if (it != m_elements.end())
                 std::rotate(it, it + 1, m_elements.end());
+
+            if (auto* rel_el = get(rel_id); rel_el && rel_el->buffer) {
+                auto config = rel_el->buffer->get_render_config();
+                config.draw_priority = ++m_next_front_priority;
+                rel_el->buffer->set_render_config(config);
+            }
         }
     }
     auto it = std::ranges::find_if(m_elements,
@@ -92,6 +113,13 @@ bool Layer::bring_to_front(uint32_t id)
     if (it == m_elements.end())
         return false;
     std::rotate(it, it + 1, m_elements.end());
+
+    if (auto* el = get(id); el && el->buffer) {
+        auto config = el->buffer->get_render_config();
+        config.draw_priority = ++m_next_front_priority;
+        el->buffer->set_render_config(config);
+    }
+
     return true;
 }
 
@@ -107,6 +135,13 @@ bool Layer::send_to_back(uint32_t id)
     if (it == m_elements.end())
         return false;
     std::rotate(m_elements.begin(), it, it + 1);
+
+    if (auto* el = get(id); el && el->buffer) {
+        auto config = el->buffer->get_render_config();
+        config.draw_priority = --m_next_back_priority;
+        el->buffer->set_render_config(config);
+    }
+
     return true;
 }
 
@@ -186,6 +221,23 @@ std::vector<uint32_t> Layer::related_ids(uint32_t primary_id) const
 {
     auto it = m_relations.find(primary_id);
     return it != m_relations.end() ? it->second : std::vector<uint32_t> {};
+}
+
+std::vector<uint32_t> Layer::closure(uint32_t id) const
+{
+    std::vector<uint32_t> result { id };
+
+    for (size_t i = 0; i < result.size(); ++i) {
+        auto it = m_relations.find(result[i]);
+        if (it == m_relations.end())
+            continue;
+        for (uint32_t rel_id : it->second) {
+            if (std::ranges::find(result, rel_id) == result.end())
+                result.push_back(rel_id);
+        }
+    }
+
+    return result;
 }
 
 // =============================================================================

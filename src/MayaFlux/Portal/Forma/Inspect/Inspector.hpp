@@ -50,8 +50,8 @@ public:
     /**
      * @brief Inspect a single Node and its full modulator tree.
      *
-     * Builds a ValueGroup whose header is the node's short type name and
-     * whose body rows expose the node's runtime values (output, role for
+     * Builds a EntryGroup whose header is the node's short type name and
+     * whose body rows expose the node's runtime entrys (output, role for
      * modulators, etc.). Modulator children are recursively expanded as
      * nested InspectResults related to this node's header.
      */
@@ -91,7 +91,7 @@ public:
     /**
      * @brief Inspect a NodeNetwork and its per-network metadata.
      *
-     * Builds a collapsible ValueGroup whose header is the network's topology
+     * Builds a collapsible EntryGroup whose header is the network's topology
      * and output mode, with body rows for node count and enabled state.
      * Intended to be nested inside node_graph_manager() but callable
      * independently when the caller already holds a network reference.
@@ -267,10 +267,19 @@ private:
     Vruta::TaskScheduler& m_sched;
     Vruta::EventManager& m_event_mgr;
 
-    [[nodiscard]] RowBuffer make_row_buffer(
+    [[nodiscard]] EntryBuffer make_row_buffer(
         const std::shared_ptr<Core::Window>& window,
         std::string_view text,
         glm::uvec2 pixel_dims) const;
+
+    /**
+     * @brief A "text"-slotted buffer for make_entry_group's header, no
+     *        pre-pressed image. Collapsible::place() presses the header
+     *        label itself, so unlike make_row_buffer's rows this needs no
+     *        text or pixel_dims argument.
+     */
+    [[nodiscard]] std::shared_ptr<Buffers::FormaBuffer> make_header_buffer(
+        const std::shared_ptr<Core::Window>& window) const;
 
     InspectResult inspect_modulator_tree(
         const Nodes::ModulatorTree& tree,

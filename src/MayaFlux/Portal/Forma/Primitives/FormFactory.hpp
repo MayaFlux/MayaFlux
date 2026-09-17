@@ -407,4 +407,37 @@ template <typename T>
     glm::vec3 color = glm::vec3(0.8F),
     float thickness = 1.5F);
 
+// =============================================================================
+// Scroll indicator
+//
+// Value type: glm::vec2, matching Scrollable::indicator()'s
+// (position_frac, extent_frac) contract exactly - x is 0 at the top of
+// content, 1 at the fully scrolled bottom; y is the viewport/content
+// height ratio. Renders a single filled bar within track: length is
+// extent_frac of track's height, position slides from track's top to its
+// bottom as position_frac goes 0 -> 1.
+//
+// bounds_hint is the full, fixed track rather than the (small, moving)
+// bar itself, so Scrollable::indicator()'s drag wiring accepts a grab
+// anywhere along the track, not just precisely on the current bar.
+//
+// The obvious default, not a privileged one: any GeometryFn<glm::vec2>
+// reacting to the same pair works identically with
+// Scrollable::indicator() - a squiggle, a sampled texture, anything
+// computable.
+//
+// Topology: TRIANGLE_STRIP (4 MeshVertex via to_mesh_vertices).
+// =============================================================================
+
+/**
+ * @brief Geometry function for Scrollable's default scroll indicator visual.
+ *
+ * @param track NDC region the bar travels within - the same region passed
+ *              to Scrollable::indicator()'s own track parameter.
+ * @param color Bar fill color.
+ */
+[[nodiscard]] MAYAFLUX_API Form<glm::vec2> scroll_indicator(
+    Kinesis::AABB2D track,
+    glm::vec3 color = glm::vec3(0.5F, 0.5F, 0.55F));
+
 } // namespace MayaFlux::Portal::Forma::Geometry

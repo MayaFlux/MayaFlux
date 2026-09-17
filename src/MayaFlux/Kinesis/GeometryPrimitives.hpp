@@ -303,6 +303,34 @@ struct QuadGeometry {
 [[nodiscard]] MAYAFLUX_API std::array<Kakshya::TextureQuadVertex, 4> textured_rect(
     Kinesis::AABB2D region);
 
+/**
+ * @brief Generate a UV-mapped TRIANGLE_LIST quad (6 vertices, 2 triangles)
+ *        from an AABB2D, as Kakshya::MeshVertex.
+ *
+ * UV origin is bottom-left (0,1), same convention as textured_rect(). Use
+ * this instead of textured_rect() when the target pipeline expects the
+ * full MeshVertex layout (color/weight/normal/tangent) rather than
+ * texture.vert.spv's plain position+texcoord input - textured_rect()'s
+ * TextureQuadVertex is not wire-compatible with a MeshVertex shader input.
+ *
+ * @p weight is written through unchanged, defaulting to MeshVertex's own
+ * neutral default (0). What it means - a blend factor, a sampler
+ * selector, anything - is entirely the caller's domain; this function has
+ * no opinion on it. @p color is likewise written through unchanged,
+ * defaulting to MeshVertex's own neutral default (white) - at weight >= 1
+ * a caller-side shader convention may read it as a texture tint; at
+ * weight <= 0 the same convention may render it as a flat fill with no
+ * texture read at all. Either reading is the caller's domain.
+ *
+ * @param region NDC axis-aligned bounds.
+ * @param weight Per-vertex weight value, written through as-is.
+ * @param color  Per-vertex color value, written through as-is.
+ */
+[[nodiscard]] MAYAFLUX_API std::array<Kakshya::MeshVertex, 6> textured_mesh_rect(
+    Kinesis::AABB2D region,
+    float weight = 0.F,
+    glm::vec3 color = glm::vec3(1.F));
+
 // ------------------------------------------------------------
 // 3D wireframe shapes
 // ------------------------------------------------------------

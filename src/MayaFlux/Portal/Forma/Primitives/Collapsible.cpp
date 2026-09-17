@@ -1,8 +1,14 @@
 #include "Collapsible.hpp"
+#include "Entry.hpp"
 
 #include "MayaFlux/Portal/Forma/Surface.hpp"
 
+#include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
+#include "MayaFlux/Kakshya/NDData/VertexFormats.hpp"
 #include "MayaFlux/Kakshya/NDData/VertexLayout.hpp"
+#include "MayaFlux/Portal/Text/InkPress.hpp"
+
+#include "MayaFlux/Core/Backends/Graphics/Vulkan/VKImage.hpp"
 
 namespace MayaFlux::Portal::Forma {
 
@@ -14,54 +20,58 @@ namespace {
         float x_max,
         float row_h,
         glm::vec3 color_closed,
-        glm::vec3 color_open,
-        bool has_label)
+        glm::vec3 color_open)
     {
-        return [y_top, x_min, x_max, row_h, color_closed, color_open, has_label](
+        return [y_top, x_min, x_max, row_h, color_closed, color_open](
                    bool open, std::vector<uint8_t>& out, Element& el) {
             const float bot = y_top - row_h;
             const glm::vec3 col = open ? color_open : color_closed;
 
             const size_t stride = Kakshya::VertexLayout::for_meshes().stride_bytes;
-            const size_t vertex_count = has_label ? 12 : 6;
-
-            out.assign(vertex_count * stride, 0);
+            out.assign(static_cast<size_t>(6) * stride, 0);
 
             const glm::vec3 bl { x_min, bot, 0.F };
             const glm::vec3 br { x_max, bot, 0.F };
             const glm::vec3 tl { x_min, y_top, 0.F };
             const glm::vec3 tr { x_max, y_top, 0.F };
-            constexpr glm::vec3 white { 1.F, 1.F, 1.F };
 
-            auto write = [&](size_t idx, glm::vec3 pos, glm::vec3 c, float w, glm::vec2 uv) {
+            auto write = [&](size_t idx, glm::vec3 pos) {
                 auto* v = out.data() + idx * stride;
                 std::memcpy(v, &pos, 12);
-                std::memcpy(v + 12, &c, 12);
-                std::memcpy(v + 24, &w, 4);
-                std::memcpy(v + 28, &uv, 8);
+                std::memcpy(v + 12, &col, 12);
             };
 
-            write(0, bl, col, 0.F, {});
-            write(1, br, col, 0.F, {});
-            write(2, tl, col, 0.F, {});
-            write(3, br, col, 0.F, {});
-            write(4, tr, col, 0.F, {});
-            write(5, tl, col, 0.F, {});
-
-            if (has_label) {
-                write(6, bl, white, 1.F, { 0.F, 1.F });
-                write(7, br, white, 1.F, { 1.F, 1.F });
-                write(8, tl, white, 1.F, { 0.F, 0.F });
-                write(9, br, white, 1.F, { 1.F, 1.F });
-                write(10, tr, white, 1.F, { 1.F, 0.F });
-                write(11, tl, white, 1.F, { 0.F, 0.F });
-            }
+            write(0, bl);
+            write(1, br);
+            write(2, tl);
+            write(3, br);
+            write(4, tr);
+            write(5, tl);
 
             el.bounds_hint = Kinesis::AABB2D {
                 .min = { x_min, bot },
                 .max = { x_max, y_top },
             };
         };
+    }
+
+    /// @brief A fully-textured TRIANGLE_LIST quad, weight=1 so forma_multi.frag
+    ///        samples textures[0]. Matches Entry.cpp's own helper of the same
+    ///        shape; not shared across files, same as Element.cpp's private
+    ///        textured_mesh_rect isn't either.
+    std::array<Kakshya::MeshVertex, 6> textured_quad(Kinesis::AABB2D region)
+    {
+        using V = Kakshya::MeshVertex;
+        const glm::vec2 mn = region.min;
+        const glm::vec2 mx = region.max;
+        return { {
+            V { .position = { mn.x, mn.y, 0.F }, .weight = 1.F, .uv = { 0.F, 1.F } },
+            V { .position = { mx.x, mn.y, 0.F }, .weight = 1.F, .uv = { 1.F, 1.F } },
+            V { .position = { mn.x, mx.y, 0.F }, .weight = 1.F, .uv = { 0.F, 0.F } },
+            V { .position = { mx.x, mn.y, 0.F }, .weight = 1.F, .uv = { 1.F, 1.F } },
+            V { .position = { mx.x, mx.y, 0.F }, .weight = 1.F, .uv = { 1.F, 0.F } },
+            V { .position = { mn.x, mx.y, 0.F }, .weight = 1.F, .uv = { 0.F, 0.F } },
+        } };
     }
 
 } // namespace
@@ -78,41 +88,73 @@ Collapsible& Collapsible::place(
 {
     buf = std::move(in_buf);
 
-    const float y_top = cursor.y();
-    cursor.advance(row_h);
+    const Kinesis::AABB2D advanced = cursor.advance(row_h);
+    const float y_top = advanced.max.y;
+    const Kinesis::AABB2D row_rect { .min = { x_min, advanced.min.y }, .max = { x_max, y_top } };
 
     auto open_state = std::make_shared<MappedState<bool>>();
     open_state->write(m_initially_open);
 
-    Mapped<bool> mapped;
-    mapped.state = open_state;
-    mapped.geometry_fn = collapsible_header_geom(
-        y_top, x_min, x_max, row_h, m_color_closed, m_color_open, m_label != nullptr);
-    mapped.element.buffer = buf;
-    mapped.element.bounds_hint = Kinesis::AABB2D {
-        .min = { x_min, cursor.y() },
-        .max = { x_max, y_top },
-    };
+    uint32_t hid = 0;
 
-    const uint32_t hid = surface.layer().add(mapped.element);
-    mapped.element.id = hid;
-    open_state->id = hid;
-    mapped.sync();
+    if (m_label_text.empty()) {
+        Mapped<bool> mapped;
+        mapped.state = open_state;
+        mapped.geometry_fn = collapsible_header_geom(y_top, x_min, x_max, row_h, m_color_closed, m_color_open);
+        mapped.element.buffer = buf;
+        mapped.element.bounds_hint = row_rect;
 
-    surface.ctx().on_press(hid, IO::MouseButtons::Left,
-        [m = std::move(mapped), open = open_state, surface, hid](uint32_t, glm::vec2) mutable {
-            const bool next = !open->value;
-            open->write(next);
-            for (auto rel_id : surface.layer().related_ids(hid))
-                surface.layer().set_visible(rel_id, next);
-            m.sync();
-        });
+        hid = surface.layer().add(mapped.element);
+        mapped.element.id = hid;
+        open_state->id = hid;
+        mapped.sync();
 
-    header_bounds = Kinesis::AABB2D {
-        .min = { x_min, cursor.y() },
-        .max = { x_max, y_top },
-    };
+        surface.ctx().on_press(hid, IO::MouseButtons::Left,
+            [m = std::move(mapped), open = open_state, surface, hid](uint32_t, glm::vec2) mutable {
+                const bool next = !open->value;
+                open->write(next);
+                for (auto rel_id : surface.layer().related_ids(hid))
+                    surface.layer().set_visible(rel_id, next);
+                m.sync();
+            });
+    } else {
+        buf->submit(textured_quad(row_rect));
 
+        const glm::uvec2 dims = row_pixel_dims(surface.window(), x_min, x_max, row_h);
+        auto label_image = Portal::Text::press(m_label_text, dims,
+            { .color = m_label_color,
+                .background = { m_initially_open ? m_color_open : m_color_closed, 1.F } });
+        buf->bind_texture(0, label_image);
+
+        Element el;
+        el.buffer = buf;
+        el.bounds_hint = row_rect;
+
+        hid = surface.layer().add(el);
+        open_state->id = hid;
+
+        const std::string label_text = m_label_text;
+        const glm::vec4 label_color = m_label_color;
+        const glm::vec3 color_closed = m_color_closed;
+        const glm::vec3 color_open = m_color_open;
+
+        surface.ctx().on_press(hid, IO::MouseButtons::Left,
+            [buf = buf, open = open_state, surface, hid, label_image,
+                label_text, label_color, color_closed, color_open](uint32_t, glm::vec2) mutable {
+                const bool next = !open->value;
+                open->write(next);
+                for (auto rel_id : surface.layer().related_ids(hid))
+                    surface.layer().set_visible(rel_id, next);
+
+                auto staging = Buffers::create_image_staging_buffer(label_image->get_size_bytes());
+                Portal::Text::repress(label_image, label_text,
+                    { .color = label_color, .background = { next ? color_open : color_closed, 1.F } },
+                    staging);
+                buf->bind_texture(0, label_image);
+            });
+    }
+
+    header_bounds = row_rect;
     header_id = hid;
     open = open_state;
     cursor_out = cursor;
@@ -148,12 +190,14 @@ Collapsible make_collapsible(
     float row_h,
     bool initially_open,
     glm::vec3 color_closed,
-    glm::vec3 color_open)
+    glm::vec3 color_open,
+    std::string label)
 {
     return Collapsible {}
         .initially_open(initially_open)
         .closed_color(color_closed)
         .open_color(color_open)
+        .label(std::move(label))
         .place(std::move(buf), surface, cursor, x_min, x_max, row_h);
 }
 

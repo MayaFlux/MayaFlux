@@ -45,6 +45,7 @@ public:
     using LeaveFn = std::function<void(uint32_t id)>;
     using ScrollFn = std::function<void(uint32_t id, glm::vec2 ndc, double dx, double dy)>;
     using KeyFn = std::function<void(uint32_t id)>;
+    using TextFn = std::function<void(uint32_t id, uint32_t codepoint)>;
 
     /**
      * @brief Construct and immediately register event coroutines.
@@ -129,6 +130,10 @@ public:
 
     /**
      * @brief Remove all callbacks registered for an element id.
+     *
+     * Also clears m_hovered/m_dragging entries pointing at @p id, so a
+     * removed element cannot be left as the stale current hover or drag
+     * target.
      */
     void unbind(uint32_t id);
 
@@ -165,6 +170,19 @@ public:
      * @param fn  Callback receiving element id, fired on press and each repeat.
      */
     void on_held(uint32_t id, IO::Keys key, KeyFn fn);
+
+    /**
+     * @brief Called with each resolved Unicode codepoint while the element
+     *        has keyboard focus.
+     *
+     * Delivers composed text (shift, layout, dead-key/compose, IME already
+     * resolved by the backend), distinct from on_press/on_held's raw keycodes.
+     * Focus transfers on mouse press, same as the other keyboard callbacks.
+     *
+     * @param id  Element id to bind to.
+     * @param fn  Callback receiving element id and the resolved codepoint.
+     */
+    void on_text(uint32_t id, TextFn fn);
 
     /**
      * @brief Called once when an element gains keyboard focus (via click).
@@ -211,6 +229,29 @@ public:
         float clamp_max = 1.0F);
 
     /**
+     * @brief Register a key handler that fires on the initial press and on
+     *        every repeat, with a deterministic first event.
+     *
+     * WindowEventSource pops events from one shared pending-event queue,
+     * and dispatch() lets every registered waiter for a key race to pop
+     * the same KEY_PRESSED. on_held's filter alone would still catch that
+     * first press if it were the only waiter on the key, but once another
+     * waiter for the same key exists on this Context, whichever registered
+     * first wins the race and the other sees nothing for that tick.
+     * Registering on_press before on_held, as this does, makes the outcome
+     * deterministic: on_press claims the initial KEY_PRESSED and on_held is
+     * then only ever resumed by the KEY_REPEAT events that follow. One fire
+     * per physical press, a clean repeat cadence after, no double count.
+     *
+     * @param id  Element id to bind to.
+     * @param key The key to listen for.
+     * @param fn  Callback receiving element id, fired once on press and
+     *            again on each repeat tick.
+     * @return *this for chaining.
+     */
+    Context& press_and_hold(uint32_t id, IO::Keys key, KeyFn fn);
+
+    /**
      * @brief Register a drag handler receiving only the cursor position.
      *
      * Thin composition over on_drag for callers that already know the element
@@ -235,6 +276,16 @@ public:
 
     [[nodiscard]] const Vruta::WindowEventSource& event_source() const;
 
+    /**
+     * @brief Rect of pixel size (@p w, @p h) at pixel position (@p x, @p y),
+     *        top-left origin, converted to NDC from the window's current
+     *        dimensions.
+     *
+     * Reads window state live at call time via to_ndc() - call again after
+     * a resize for that size's new NDC bounds.
+     */
+    [[nodiscard]] Kinesis::AABB2D to_ndc_rect(double x, double y, double w, double h) const noexcept;
+
 private:
     struct ElementCallbacks {
         std::unordered_map<int, PressFn> press;
@@ -251,6 +302,7 @@ private:
 
         EnterFn focus_gained;
         LeaveFn focus_lost;
+        TextFn text;
     };
 
     struct KeyHandlerState {
@@ -281,6 +333,7 @@ private:
     void handle_key_press(IO::Keys key);
     void handle_key_release(IO::Keys key);
     void handle_key_held(IO::Keys key);
+    void handle_text(uint32_t codepoint);
 
     std::optional<uint32_t> m_dragging[3];
     std::optional<uint32_t> m_focused;

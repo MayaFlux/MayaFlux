@@ -177,11 +177,7 @@ namespace internal {
                 std::move(geom), std::move(initial),
                 topology, k_capacity_bytes, std::move(project));
 
-            mapped.sync();
-            if (mapped.element.bounds_hint)
-                surface.layer().set_bounds(mapped.element.id, *mapped.element.bounds_hint);
-            if (mapped.element.contains)
-                surface.layer().set_contains(mapped.element.id, mapped.element.contains);
+            mapped.sync(&surface.layer());
 
             return mapped;
         }

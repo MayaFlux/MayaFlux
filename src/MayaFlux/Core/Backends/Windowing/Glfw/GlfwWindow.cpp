@@ -149,6 +149,7 @@ void GlfwWindow::setup_callbacks()
     glfwSetWindowFocusCallback(m_window, glfw_window_focus_callback);
     glfwSetFramebufferSizeCallback(m_window, glfw_framebuffer_size_callback);
     glfwSetKeyCallback(m_window, glfw_key_callback);
+    glfwSetCharCallback(m_window, glfw_char_callback);
     glfwSetCursorPosCallback(m_window, glfw_cursor_pos_callback);
     glfwSetMouseButtonCallback(m_window, glfw_mouse_button_callback);
     glfwSetScrollCallback(m_window, glfw_scroll_callback);
@@ -316,6 +317,26 @@ void GlfwWindow::glfw_key_callback(GLFWwindow* window, int key, int scancode, in
         .key = static_cast<int16_t>(key),
         .scancode = scancode,
         .mods = mods
+    };
+
+    win->m_event_source.signal(event);
+
+    if (win->m_event_callback) {
+        win->m_event_callback(event);
+    }
+}
+
+void GlfwWindow::glfw_char_callback(GLFWwindow* window, unsigned int codepoint)
+{
+    auto* win = static_cast<GlfwWindow*>(glfwGetWindowUserPointer(window));
+    if (!win || !is_text_input_codepoint(codepoint))
+        return;
+
+    WindowEvent event;
+    event.type = WindowEventType::TEXT_INPUT;
+    event.timestamp = glfwGetTime();
+    event.data = WindowEvent::TextData {
+        .codepoint = static_cast<uint32_t>(codepoint)
     };
 
     win->m_event_source.signal(event);

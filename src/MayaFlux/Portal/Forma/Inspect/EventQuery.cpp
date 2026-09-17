@@ -16,27 +16,27 @@ InspectResult Inspector::event(
 {
     const std::string header_label = name.empty() ? "(unnamed)" : std::string(name);
 
-    std::vector<ValueSpec> values {
-        ValueSpec {
+    std::vector<EntrySpec> entrys {
+        EntrySpec {
             .label = "token",
             .reader = [ev] {
                 return std::string(Reflect::enum_to_string(ev->get_processing_token()));
             },
         },
-        ValueSpec {
+        EntrySpec {
             .label = "active",
             .reader = [ev] { return ev->is_active() ? "true" : "false"; },
         },
     };
 
     const auto dims = row_pixel_dims(surface.window(), x_min, x_max, row_h);
-    auto hbuf = make_row_buffer(surface.window(), header_label, dims);
-    std::vector<RowBuffer> rbufs;
-    rbufs.reserve(values.size());
-    for (const auto& spec : values)
+    auto hbuf = make_header_buffer(surface.window());
+    std::vector<EntryBuffer> rbufs;
+    rbufs.reserve(entrys.size());
+    for (const auto& spec : entrys)
         rbufs.push_back(make_row_buffer(surface.window(), spec.label, dims));
 
-    auto group = make_value_group(values, std::move(hbuf), rbufs,
+    auto group = make_entry_group(entrys, header_label, std::move(hbuf), rbufs,
         surface, cursor, x_min, x_max, row_h, false);
 
     InspectResult result;
@@ -49,8 +49,8 @@ InspectResult& Inspector::event_manager(
     LayoutCursor& cursor,
     float x_min, float x_max, float row_h)
 {
-    const std::vector<ValueSpec> root_values {
-        ValueSpec {
+    const std::vector<EntrySpec> root_entrys {
+        EntrySpec {
             .label = "events",
             .reader = [&m_event_mgr = m_event_mgr] {
                 return std::to_string(m_event_mgr.get_all_events().size());
@@ -59,13 +59,13 @@ InspectResult& Inspector::event_manager(
     };
 
     const auto dims = row_pixel_dims(surface.window(), x_min, x_max, row_h);
-    auto hbuf = make_row_buffer(surface.window(), "EventManager", dims);
-    std::vector<RowBuffer> rbufs;
-    rbufs.reserve(root_values.size());
-    for (const auto& spec : root_values)
+    auto hbuf = make_header_buffer(surface.window());
+    std::vector<EntryBuffer> rbufs;
+    rbufs.reserve(root_entrys.size());
+    for (const auto& spec : root_entrys)
         rbufs.push_back(make_row_buffer(surface.window(), spec.label, dims));
 
-    auto root_group = make_value_group(root_values, std::move(hbuf), rbufs,
+    auto root_group = make_entry_group(root_entrys, "EventManager", std::move(hbuf), rbufs,
         surface, cursor, x_min, x_max, row_h, true);
 
     InspectResult& result = s_event_result.emplace();
@@ -85,21 +85,21 @@ InspectResult& Inspector::event_manager(
             }
         }
 
-        std::vector<ValueSpec> values {
-            ValueSpec {
+        std::vector<EntrySpec> entrys {
+            EntrySpec {
                 .label = "active",
                 .reader = [ev] { return ev->is_active() ? "true" : "false"; },
             },
         };
 
         const auto ev_dims = row_pixel_dims(surface.window(), x_min, x_max, row_h);
-        auto ev_hbuf = make_row_buffer(surface.window(), header_label, ev_dims);
-        std::vector<RowBuffer> ev_rbufs;
-        ev_rbufs.reserve(values.size());
-        for (const auto& spec : values)
+        auto ev_hbuf = make_header_buffer(surface.window());
+        std::vector<EntryBuffer> ev_rbufs;
+        ev_rbufs.reserve(entrys.size());
+        for (const auto& spec : entrys)
             ev_rbufs.push_back(make_row_buffer(surface.window(), spec.label, ev_dims));
 
-        auto ev_group = make_value_group(values, std::move(ev_hbuf), ev_rbufs,
+        auto ev_group = make_entry_group(entrys, header_label, std::move(ev_hbuf), ev_rbufs,
             surface, cursor, x_min, x_max, row_h, false);
 
         InspectResult ev_result;

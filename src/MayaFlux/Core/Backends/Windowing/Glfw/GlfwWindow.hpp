@@ -163,6 +163,7 @@ private:
     static void glfw_window_focus_callback(GLFWwindow* window, int focused);
     static void glfw_framebuffer_size_callback(GLFWwindow* window, int width, int height);
     static void glfw_key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
+    static void glfw_char_callback(GLFWwindow* window, unsigned int codepoint);
     static void glfw_cursor_pos_callback(GLFWwindow* window, double xpos, double ypos);
     static void glfw_mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
     static void glfw_scroll_callback(GLFWwindow* window, double xoffset, double yoffset);

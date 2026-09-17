@@ -113,6 +113,11 @@ void Context::on_held(uint32_t id, IO::Keys key, KeyFn fn)
     }
 }
 
+void Context::on_text(uint32_t id, TextFn fn)
+{
+    m_callbacks[id].text = std::move(fn);
+}
+
 void Context::on_focus_gained(uint32_t id, EnterFn fn)
 {
     m_callbacks[id].focus_gained = std::move(fn);
@@ -142,6 +147,14 @@ void Context::unbind(uint32_t id)
         m_focused = std::nullopt;
     }
 
+    if (m_hovered && *m_hovered == id)
+        m_hovered = std::nullopt;
+
+    for (auto& dragging : m_dragging) {
+        if (dragging && *dragging == id)
+            dragging = std::nullopt;
+    }
+
     m_callbacks.erase(id);
 }
 
@@ -167,6 +180,13 @@ Context& Context::key_step(
         state->write(std::clamp(state->value + delta, clamp_min, clamp_max));
     });
 
+    return *this;
+}
+
+Context& Context::press_and_hold(uint32_t id, IO::Keys key, KeyFn fn)
+{
+    on_press(id, key, fn);
+    on_held(id, key, std::move(fn));
     return *this;
 }
 
@@ -237,6 +257,12 @@ void Context::register_handlers()
             Kriya::mouse_scrolled(m_window,
                 [this](double dx, double dy) { handle_scroll(dx, dy); })),
         m_name + "_scroll");
+
+    m_event_manager.add_event(
+        std::make_shared<Vruta::Event>(
+            Kriya::text_input(m_window,
+                [this](uint32_t codepoint) { handle_text(codepoint); })),
+        m_name + "_text");
 }
 
 void Context::cancel_handlers()
@@ -245,7 +271,7 @@ void Context::cancel_handlers()
              "_move",
              "_press_left", "_release_left",
              "_press_right", "_release_right",
-             "_scroll",
+             "_scroll", "_text",
              "_drag_left", "_drag_right" }) {
         m_event_manager.cancel_event(m_name + suffix);
     }
@@ -272,6 +298,11 @@ glm::vec2 Context::to_ndc(double px, double py) const noexcept
         (static_cast<float>(px) / static_cast<float>(s.current_width)) * 2.0F - 1.0F,
         1.0F - (static_cast<float>(py) / static_cast<float>(s.current_height)) * 2.0F
     };
+}
+
+Kinesis::AABB2D Context::to_ndc_rect(double x, double y, double w, double h) const noexcept
+{
+    return { .min = to_ndc(x, y + h), .max = to_ndc(x + w, y) };
 }
 
 void Context::handle_move(double px, double py)
@@ -431,6 +462,18 @@ void Context::handle_key_held(IO::Keys key)
     auto key_it = it->second.key_held.find(key_code);
     if (key_it != it->second.key_held.end())
         key_it->second(*m_focused);
+}
+
+void Context::handle_text(uint32_t codepoint)
+{
+    if (!m_focused)
+        return;
+
+    auto it = m_callbacks.find(*m_focused);
+    if (it == m_callbacks.end() || !it->second.text)
+        return;
+
+    it->second.text(*m_focused, codepoint);
 }
 
 } // namespace MayaFlux::Portal::Forma

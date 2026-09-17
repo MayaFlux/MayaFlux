@@ -1,5 +1,7 @@
 #pragma once
 
+#include "MayaFlux/Kinesis/Viewport/Scissor.hpp"
+
 namespace MayaFlux::Core {
 class Window;
 class VKImage;
@@ -363,8 +365,21 @@ struct RenderConfig {
 
     std::vector<std::pair<std::string, std::shared_ptr<Core::VKImage>>> additional_textures;
 
+    /**
+     * @brief Clip this buffer's draws to an NDC region.
+     *
+     * Unset means the full framebuffer, matching the behavior before this
+     * field existed. Set via Kinesis::Scissor::from(bounds), from(anchor)
+     * for anything exposing bounds(), or from(aabb3d, view_transform) to
+     * project a world-space box.
+     */
+    std::optional<Kinesis::Scissor> scissor;
+
     ///< For child-specific fields
     std::unordered_map<std::string, std::string> extra_string_params;
+
+    /// @brief Draw-order priority. Higher sorts later (drawn on top). Default 0.
+    int64_t draw_priority {};
 
     bool operator==(const RenderConfig& other) const = default;
 };

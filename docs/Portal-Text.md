@@ -96,55 +96,31 @@ With `render_bounds = {400, 50}` and `scale = {ndc_w, ndc_h}` sized to match:
 
 ## Placing text at a specific pixel position
 
-`set_position` takes the **centre** of the quad in NDC. To place the
-**top-left corner** of the text at pixel `(px, py)`:
+`set_position` takes the **centre** of the quad in NDC, `set_scale` its full
+NDC extent. Converting both corners of the target pixel rect gives you both
+in one step, with no separate ratio math or sign-sensitive half-extent shift:
 
 ```cpp
-// 1. decide the pixel footprint of the text
 uint32_t rw = 400, rh = 50;
+uint32_t px = 20, py = 20; // top-left of the pixel rect
 
-// 2. compute NDC scale from pixel footprint
-glm::vec2 ndc_scale = {
-    (static_cast<float>(rw) / static_cast<float>(win_w)) * 2.f,
-    (static_cast<float>(rh) / static_cast<float>(win_h)) * 2.f,
-};
-
-// 3. press with tight render_bounds
 auto text_buf = Portal::Text::press("Hello", {
     .color = { 1.f, 1.f, 1.f, 1.f },
     .render_bounds = { rw, rh },
 }) | Graphics;
 text_buf->setup_rendering({ .target_window = window });
-text_buf->set_scale(ndc_scale.x, ndc_scale.y);
 
-// 4. convert the desired top-left pixel to NDC, then shift by half-extent
-//    to get the quad centre (NDC +Y is up, so half-extent subtracts in Y)
 auto tl = normalize_coords(px, py, win_w, win_h);
-text_buf->set_position(tl.x + ndc_scale.x * 0.5f,
-                       tl.y - ndc_scale.y * 0.5f);
+auto br = normalize_coords(px + rw, py + rh, win_w, win_h);
+text_buf->set_scale(br.x - tl.x, tl.y - br.y); // NDC +Y is up, so tl.y > br.y
+text_buf->set_position((tl.x + br.x) * 0.5f, (tl.y + br.y) * 0.5f);
 ```
 
-### Common placements
-
-```cpp
-// top-left of screen with 20px margin
-auto tl = normalize_coords(20, 20, win_w, win_h);
-text_buf->set_position(tl.x + ndc_scale.x * 0.5f,
-                       tl.y - ndc_scale.y * 0.5f);
-
-// screen centre
-text_buf->set_position(0.f, 0.f);
-
-// bottom-left with 20px margin (bottom in pixels = win_h - rh - 20)
-auto bl = normalize_coords(20, win_h - rh - 20, win_w, win_h);
-text_buf->set_position(bl.x + ndc_scale.x * 0.5f,
-                       bl.y - ndc_scale.y * 0.5f);
-
-// right-aligned, 20px from right edge
-auto tr = normalize_coords(win_w - rw - 20, 20, win_w, win_h);
-text_buf->set_position(tr.x + ndc_scale.x * 0.5f,
-                       tr.y - ndc_scale.y * 0.5f);
-```
+Any pixel rect placement (top-left margin, bottom-left, right-aligned, ...)
+is just a different `(px, py, rw, rh)` fed through the same two conversions -
+screen centre alone needs neither, since `set_position(0.f, 0.f)` already is
+NDC centre. `Portal::Forma::Context::to_ndc_rect` does this same two-corner
+conversion for callers already inside a Forma `Surface`.
 
 ---
 
@@ -155,7 +131,7 @@ not known at compile time or when supporting resize:
 
 ```cpp
 auto tl = normalize_coords(20.0, 20.0, window);
-auto px_dims = normalized_size_to_pixels({ ndc_scale.x, ndc_scale.y }, window);
+auto br = normalize_coords(20.0 + rw, 20.0 + rh, window);
 ```
 
 ---
@@ -210,6 +186,105 @@ Portal::Text::impress(text_buf, " appended", { 0.8f, 0.8f, 0.8f, 1.f });
 `impress` returns `ImpressResult::Overflow` when the vertical budget is
 exhausted. The texture is reallocated and all previous content is cleared.
 Rebuild from `get_accumulated_text()` if continuity is required.
+
+`repress` takes an optional `RedrawPolicy` (default `Clip`, which truncates
+text that exceeds the existing budget; `Fit` reallocates the GPU texture
+instead) and an optional `std::span<const StyleSpan>` for per-byte-range
+color overrides:
+
+```cpp
+Portal::Text::repress(text_buf, "Updated string", { 1.f, 1.f, 1.f, 1.f },
+    Portal::Text::RedrawPolicy::Fit);
+```
+
+`impress` takes the same `spans` argument, offset into the string passed to
+that call (not the buffer's accumulated history).
+
+---
+
+## Background fill
+
+`PressParams::background` (default fully transparent) is composited beneath
+every glyph and persists on the `TextBuffer` across `repress()`/`impress()`
+calls, so it only needs to be set once at `press()` time:
+
+```cpp
+auto text_buf = Portal::Text::press("Hello", {
+    .color = { 1.f, 1.f, 1.f, 1.f },
+    .background = { 0.1f, 0.1f, 0.1f, 0.8f },
+}) | Graphics;
+```
+
+The `VKImage`-returning `press`/`repress` overloads have no buffer to persist
+it on, so those read `background` fresh from `PressParams` every call.
+
+---
+
+## Per-range color styling
+
+`StyleSpan { start, end, color }` overrides the base color for a byte range
+of the string passed to that call (`start`/`end` are byte offsets, matching
+`GlyphQuad::byte_offset`). Later entries win where spans overlap:
+
+```cpp
+Portal::Text::repress(text_buf, "ERROR: disk full", { 1.f, 1.f, 1.f, 1.f },
+    Portal::Text::RedrawPolicy::Clip,
+    { { .start = 0, .end = 5, .color = { 1.f, 0.2f, 0.2f, 1.f } } });
+```
+
+---
+
+## Hit-testing and extraction
+
+`create_layout()` returns a `LayoutResult` whose `GlyphQuad`s carry the byte
+offset each quad was produced from. Three functions resolve between screen
+position, byte offset, and substrings against that layout:
+
+- `x_at(text, atlas, byte_offset, ...)` returns the pen position immediately
+  before a byte offset. Used for caret placement.
+- `index_at(text, layout, atlas, x, y, ...)` returns the nearest byte offset
+  to a screen-space point. Used for click-to-position and Up/Down cursor movement.
+- `copy(text, layout, a, b)` extracts the substring and matching quads for a
+  byte range, for selection or clipboard use.
+
+All three take the same `pen_x`/`pen_y`/`wrap_w`/`tab_width` arguments the
+original `lay_out()`/`create_layout()` call used, since the answer depends on
+where wrapping happened.
+
+```cpp
+auto layout = Portal::Text::create_layout(text, 0.F, 0.F, wrap_w);
+size_t byte_off = Portal::Text::index_at(text, *layout,
+    Portal::Text::get_default_atlas(), click_x, click_y, 0.F, 0.F, wrap_w);
+auto pen = Portal::Text::x_at(text, Portal::Text::get_default_atlas(), byte_off,
+    0.F, 0.F, wrap_w);
+```
+
+---
+
+## Editable text buffers
+
+`EditableText { text; cursor; }` pairs a mutable UTF-8 string with a
+byte-offset cursor that is always kept on a codepoint boundary. Operations
+are built on `is_control()`/`encode_utf8()`/`next_codepoint_offset()`/
+`previous_codepoint_offset()`, with no atlas or layout dependency:
+
+```cpp
+Portal::Text::EditableText edit { .text = "hello", .cursor = 5 };
+Portal::Text::insert_codepoint(edit, U'!');   // "hello!" cursor=6
+Portal::Text::move(edit, -3);                 // cursor=3
+Portal::Text::erase(edit, -1);                // "helo!" cursor=2
+```
+
+`move`/`erase` take a signed codepoint count: positive moves/erases toward
+the end, negative toward the start, clamped at whichever text boundary is
+reached first. `insert_literal` takes a raw ASCII control byte (`\t`, `\n`)
+for cases that never reach `WindowEventType::TEXT_INPUT` and so cannot go
+through `insert_codepoint`.
+
+Wiring `EditableText` up to keystrokes, a caret quad, click/wheel/Up-Down
+input, and scroll clipping is exactly what `Portal::Forma::TextField` does -
+see `Portal-Forma.md` for the ready-made widget instead of rebuilding this
+by hand.
 
 ---
 

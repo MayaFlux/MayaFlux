@@ -162,8 +162,9 @@ public:
     [[nodiscard]] Slot add(Element element);
 
     /**
-     * @brief Remove an element by id.
-     * @return True if found and removed.
+     * @brief Remove an element by id, cascading to every related id.
+     *        Marks each removed element's buffer for removal.
+     * @return True if @p id was found.
      */
     bool remove(uint32_t id);
 
@@ -192,12 +193,14 @@ public:
     bool set_visible(uint32_t id, bool visible);
 
     /**
-     * @brief Move element to the top of the hit-test order (drawn last).
+     * @brief Move element to the top of the hit-test and paint order
+     *        (drawn last), cascading to every related element.
      */
     bool bring_to_front(uint32_t id);
 
     /**
-     * @brief Move element to the bottom of the hit-test order (drawn first).
+     * @brief Move element to the bottom of the hit-test and paint order
+     *        (drawn first), cascading to every related element.
      */
     bool send_to_back(uint32_t id);
 
@@ -265,6 +268,11 @@ public:
      */
     [[nodiscard]] std::vector<uint32_t> related_ids(uint32_t primary_id) const;
 
+    /**
+     * @brief Return @p id plus every id transitively related to it.
+     */
+    [[nodiscard]] std::vector<uint32_t> closure(uint32_t id) const;
+
     // =========================================================================
     // Introspection
     // =========================================================================
@@ -279,6 +287,9 @@ public:
 private:
     std::vector<Element> m_elements;
     uint32_t m_next_id { 1 };
+
+    int64_t m_next_front_priority {};
+    int64_t m_next_back_priority {};
 
     std::unordered_map<uint32_t, std::vector<uint32_t>> m_relations;
 

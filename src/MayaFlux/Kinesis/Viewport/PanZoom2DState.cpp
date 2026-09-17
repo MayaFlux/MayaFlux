@@ -1,5 +1,7 @@
 #include "PanZoom2DState.hpp"
 
+#include "ScrollState.hpp"
+
 namespace MayaFlux::Kinesis {
 
 PanZoom2DState make_pan_zoom_state(const PanZoom2DConfig& config)
@@ -32,8 +34,13 @@ void apply_pan_zoom_pan(PanZoom2DState& st, float dx, float dy,
     float viewport_width, float viewport_height)
 {
     const float aspect = viewport_width / viewport_height;
-    st.pan.x -= (dx / viewport_width) * (2.0F * st.zoom * aspect);
-    st.pan.y += (dy / viewport_height) * (2.0F * st.zoom);
+    const glm::vec2 delta = drag_to_offset_delta(
+        { dx, dy },
+        { 2.0F * st.zoom * aspect, 2.0F * st.zoom },
+        { viewport_width, viewport_height });
+
+    st.pan.x -= delta.x;
+    st.pan.y += delta.y;
 }
 
 void apply_pan_zoom_scroll(PanZoom2DState& st, float ticks)

@@ -26,8 +26,8 @@ InspectResult Inspector::buffer(
     const float ind = x_min + static_cast<float>(depth) * k_inspect_indent;
     const std::string header_label = Reflect::short_dynamic_type_name(*buf);
 
-    std::vector<ValueSpec> values {
-        ValueSpec {
+    std::vector<EntrySpec> entrys {
+        EntrySpec {
             .label = "default_proc",
             .reader = [buf] {
                 auto p = buf->get_default_processor();
@@ -39,7 +39,7 @@ InspectResult Inspector::buffer(
     auto chain = buf->get_processing_chain();
     if (chain) {
         auto pre = chain->get_preprocessor(buf);
-        values.push_back(ValueSpec {
+        entrys.push_back(EntrySpec {
             .label = "pre",
             .reader = [pre] {
                 return pre ? std::string(Reflect::short_dynamic_type_name(*pre)) : "-";
@@ -49,7 +49,7 @@ InspectResult Inspector::buffer(
         const auto& processors = chain->get_processors(buf);
         for (size_t i = 0; i < processors.size(); ++i) {
             auto p = processors[i];
-            values.push_back(ValueSpec {
+            entrys.push_back(EntrySpec {
                 .label = "chain[" + std::to_string(i) + "]",
                 .reader = [p] {
                     return p ? std::string(Reflect::short_dynamic_type_name(*p)) : "-";
@@ -58,7 +58,7 @@ InspectResult Inspector::buffer(
         }
 
         auto post = chain->get_postprocessor(buf);
-        values.push_back(ValueSpec {
+        entrys.push_back(EntrySpec {
             .label = "post",
             .reader = [post] {
                 return post ? std::string(Reflect::short_dynamic_type_name(*post)) : "-";
@@ -66,7 +66,7 @@ InspectResult Inspector::buffer(
         });
 
         auto final_p = chain->get_final_processor(buf);
-        values.push_back(ValueSpec {
+        entrys.push_back(EntrySpec {
             .label = "final",
             .reader = [final_p] {
                 return final_p ? std::string(Reflect::short_dynamic_type_name(*final_p)) : "-";
@@ -75,13 +75,13 @@ InspectResult Inspector::buffer(
     }
 
     const auto dims = row_pixel_dims(surface.window(), ind, x_max, row_h);
-    auto hbuf = make_row_buffer(surface.window(), header_label, dims);
-    std::vector<RowBuffer> rbufs;
-    rbufs.reserve(values.size());
+    auto hbuf = make_header_buffer(surface.window());
+    std::vector<EntryBuffer> rbufs;
+    rbufs.reserve(entrys.size());
 
-    for (const auto& spec : values)
+    for (const auto& spec : entrys)
         rbufs.push_back(make_row_buffer(surface.window(), spec.label, dims));
-    auto group = make_value_group(values, std::move(hbuf), rbufs,
+    auto group = make_entry_group(entrys, header_label, std::move(hbuf), rbufs,
         surface, cursor, ind, x_max, row_h, false);
 
     InspectResult result;
@@ -105,24 +105,24 @@ InspectResult Inspector::root_audio_buffer(
     const float ind = x_min + static_cast<float>(depth) * k_inspect_indent;
     const std::string header_label = "ch " + std::to_string(channel);
 
-    std::vector<ValueSpec> values {
-        ValueSpec {
+    std::vector<EntrySpec> entrys {
+        EntrySpec {
             .label = "samples",
             .reader = [root] { return std::to_string(root->get_num_samples()); },
         },
-        ValueSpec {
+        EntrySpec {
             .label = "children",
             .reader = [root] { return std::to_string(root->get_num_children()); },
         },
     };
 
     const auto dims = row_pixel_dims(surface.window(), ind, x_max, row_h);
-    auto hbuf = make_row_buffer(surface.window(), header_label, dims);
-    std::vector<RowBuffer> rbufs;
-    rbufs.reserve(values.size());
-    for (const auto& spec : values)
+    auto hbuf = make_header_buffer(surface.window());
+    std::vector<EntryBuffer> rbufs;
+    rbufs.reserve(entrys.size());
+    for (const auto& spec : entrys)
         rbufs.push_back(make_row_buffer(surface.window(), spec.label, dims));
-    auto group = make_value_group(values, std::move(hbuf), rbufs,
+    auto group = make_entry_group(entrys, header_label, std::move(hbuf), rbufs,
         surface, cursor, ind, x_max, row_h, false);
 
     InspectResult result;
@@ -162,20 +162,20 @@ InspectResult Inspector::root_audio_buffer(
         + " [" + std::to_string(ch_count) + " ch]";
 
     auto& bm = m_bm;
-    std::vector<ValueSpec> values {
-        ValueSpec {
+    std::vector<EntrySpec> entrys {
+        EntrySpec {
             .label = "channels",
             .reader = [&bm, token] { return std::to_string(bm.get_num_channels(token)); },
         },
     };
 
     const auto dims = row_pixel_dims(surface.window(), ind, x_max, row_h);
-    auto hbuf = make_row_buffer(surface.window(), header_label, dims);
-    std::vector<RowBuffer> rbufs;
-    rbufs.reserve(values.size());
-    for (const auto& spec : values)
+    auto hbuf = make_header_buffer(surface.window());
+    std::vector<EntryBuffer> rbufs;
+    rbufs.reserve(entrys.size());
+    for (const auto& spec : entrys)
         rbufs.push_back(make_row_buffer(surface.window(), spec.label, dims));
-    auto group = make_value_group(values, std::move(hbuf), rbufs,
+    auto group = make_entry_group(entrys, header_label, std::move(hbuf), rbufs,
         surface, cursor, ind, x_max, row_h, false);
 
     InspectResult result;
@@ -210,20 +210,20 @@ InspectResult Inspector::root_graphics_buffer(
     const std::string header_label = "graphics ["
         + std::string(Reflect::enum_to_string(token)) + "]";
 
-    std::vector<ValueSpec> values {
-        ValueSpec {
+    std::vector<EntrySpec> entrys {
+        EntrySpec {
             .label = "vk_buffers",
             .reader = [root] { return std::to_string(root->get_buffer_count()); },
         },
     };
 
     const auto dims = row_pixel_dims(surface.window(), ind, x_max, row_h);
-    auto hbuf = make_row_buffer(surface.window(), header_label, dims);
-    std::vector<RowBuffer> rbufs;
-    rbufs.reserve(values.size());
-    for (const auto& spec : values)
+    auto hbuf = make_header_buffer(surface.window());
+    std::vector<EntryBuffer> rbufs;
+    rbufs.reserve(entrys.size());
+    for (const auto& spec : entrys)
         rbufs.push_back(make_row_buffer(surface.window(), spec.label, dims));
-    auto group = make_value_group(values, std::move(hbuf), rbufs,
+    auto group = make_entry_group(entrys, header_label, std::move(hbuf), rbufs,
         surface, cursor, ind, x_max, row_h, false);
 
     InspectResult result;
@@ -263,25 +263,25 @@ InspectResult& Inspector::buffer_manager(
     const uint32_t in_count = m_bm.get_num_input_channels();
     const std::string header_label = "BufferManager";
     auto& bm = m_bm;
-    std::vector<ValueSpec> values {
-        ValueSpec {
+    std::vector<EntrySpec> entrys {
+        EntrySpec {
             .label = "tokens",
             .reader = [&bm] { return std::to_string(bm.get_active_tokens().size()); },
         },
-        ValueSpec {
+        EntrySpec {
             .label = "inputs",
             .reader = [&bm] { return std::to_string(bm.get_num_input_channels()); },
         },
     };
 
     const auto dims = row_pixel_dims(surface.window(), x_min, x_max, row_h);
-    auto hbuf = make_row_buffer(surface.window(), header_label, dims);
-    std::vector<RowBuffer> rbufs;
-    rbufs.reserve(values.size());
-    for (const auto& spec : values)
+    auto hbuf = make_header_buffer(surface.window());
+    std::vector<EntryBuffer> rbufs;
+    rbufs.reserve(entrys.size());
+    for (const auto& spec : entrys)
         rbufs.push_back(make_row_buffer(surface.window(), spec.label, dims));
 
-    auto group = make_value_group(values, std::move(hbuf), rbufs,
+    auto group = make_entry_group(entrys, header_label, std::move(hbuf), rbufs,
         surface, cursor, x_min, x_max, row_h, false);
 
     InspectResult& result = s_buffer_result.emplace();
@@ -299,9 +299,8 @@ InspectResult& Inspector::buffer_manager(
 
     if (in_count > 0) {
         const std::string in_label = "inputs [" + std::to_string(in_count) + "]";
-        const auto in_dims = row_pixel_dims(surface.window(), x_min + k_inspect_indent, x_max, row_h);
-        auto in_hbuf = make_row_buffer(surface.window(), in_label, in_dims);
-        auto in_group = make_value_group({}, std::move(in_hbuf), {},
+        auto in_hbuf = make_header_buffer(surface.window());
+        auto in_group = make_entry_group({}, in_label, std::move(in_hbuf), {},
             surface, cursor, x_min + k_inspect_indent, x_max, row_h, false);
 
         InspectResult in_result;

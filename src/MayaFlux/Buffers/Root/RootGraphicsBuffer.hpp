@@ -196,6 +196,18 @@ private:
         m_renderable_buffers.push_back(info);
     }
 
+    /**
+     * @brief Stable-sort the collected renderable buffers by each buffer's
+     *        RenderConfig::draw_priority, lowest first.
+     */
+    void sort_renderable_buffers()
+    {
+        std::ranges::stable_sort(m_renderable_buffers, {},
+            [](const RenderableBufferInfo& info) {
+                return info.buffer ? info.buffer->get_render_config().draw_priority : int64_t {};
+            });
+    }
+
     std::vector<RenderableBufferInfo> m_renderable_buffers;
 
     /**

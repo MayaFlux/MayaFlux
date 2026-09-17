@@ -20,10 +20,10 @@ namespace MayaFlux::Buffers {
  *
  * When constructed with a budget (via Portal::Text::press overload accepting
  * budget_width/budget_height), the GPU texture is allocated at the budget
- * dimensions and the unused region is zero-filled (fully transparent).
- * Subsequent Portal::Text::repress calls composite into the allocated region
- * without reallocating unless the new content exceeds the budget and the
- * policy is RedrawPolicy::Fit.
+ * dimensions and the unused region is filled with get_background() (fully
+ * transparent by default). Subsequent Portal::Text::repress calls composite
+ * into the allocated region without reallocating unless the new content
+ * exceeds the budget and the policy is RedrawPolicy::Fit.
  *
  * Prefer pre-allocating a budget and using Portal::Text::impress for
  * incremental text updates. RedrawPolicy::Fit on every repress call
@@ -119,6 +119,17 @@ public:
     void set_accumulated_text(std::string_view s) { m_accumulated_text = s; }
 
     /**
+     * @brief RGBA fill composited beneath every glyph. Set at press() time
+     *        (Portal::Text::PressParams::background), fixed for the life of
+     *        this buffer the same way atlas and render bounds are: repress()
+     *        and impress() read it automatically, no per-call argument.
+     *        Default is fully transparent, matching this buffer's behavior
+     *        before this field existed.
+     */
+    void set_background(glm::vec4 color) { m_background = color; }
+    [[nodiscard]] glm::vec4 get_background() const { return m_background; }
+
+    /**
      * @brief Delegates to TextureBuffer::setup_rendering, then enables
      *        streaming mode on the TextureProcessor and alpha blending
      *        on the RenderProcessor.
@@ -139,6 +150,7 @@ private:
     uint32_t m_render_bounds_w { 1280 };
     uint32_t m_render_bounds_h { 720 };
     std::string m_accumulated_text;
+    glm::vec4 m_background { 0.F, 0.F, 0.F, 0.F };
 };
 
 } // namespace MayaFlux::Buffers

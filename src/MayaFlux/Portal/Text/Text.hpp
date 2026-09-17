@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Portal/Text/TextEdit.hpp"
 #include "MayaFlux/Portal/Text/TypeSetter.hpp"
 
 namespace MayaFlux::Core {
@@ -68,6 +69,30 @@ MAYAFLUX_API bool set_default_font(
     std::string_view style,
     uint32_t pixel_size,
     uint32_t atlas_size = 512);
+
+/**
+ * @brief Load a font file and register it as a fallback on the default atlas.
+ *
+ * Tried, in registration order, whenever the default font lacks a codepoint.
+ * Must be called after set_default_font(); survives a later call to
+ * set_default_font() (re-registered on the atlas it constructs).
+ *
+ * @param font_path  Path to a TTF or OTF file.
+ * @return true on success.
+ */
+MAYAFLUX_API bool add_fallback_font(const std::string& font_path);
+
+/**
+ * @brief Locate a system font by family and style, then register it as a fallback.
+ *
+ * Delegates font path resolution to find_font, then calls the path-based
+ * overload.
+ *
+ * @param family  Font family name, e.g. "Noto Sans CJK".
+ * @param style   Style hint, e.g. "Regular".
+ * @return true on success.
+ */
+MAYAFLUX_API bool add_fallback_font(std::string_view family, std::string_view style);
 
 /**
  * @brief Lay out a UTF-8 string into screen-space glyph quads using the default atlas.

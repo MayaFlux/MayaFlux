@@ -111,7 +111,9 @@ private:
     double m_pointer_y {};
 
     int m_repeat_fd { -1 };
+    int m_text_repeat_fd { -1 };
     std::unordered_map<int16_t, WindowEvent::KeyData> m_held_keys;
+    std::optional<std::pair<int16_t, uint32_t>> m_active_text_key;
 
     // -------------------------------------------------------------------------
     // Window state

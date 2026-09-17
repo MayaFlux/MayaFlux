@@ -2,6 +2,7 @@
 
 #include "Internal/Atelier.hpp"
 #include "Primitives/Geometry.hpp"
+#include "Primitives/TextField.hpp"
 
 namespace MayaFlux::Vruta {
 class Event;
@@ -285,11 +286,7 @@ template <typename T>
         std::move(form.geometry), std::move(initial),
         form.topology, form.capacity, std::move(project));
 
-    mapped.sync();
-    if (mapped.element.bounds_hint)
-        surface.layer().set_bounds(mapped.element.id, *mapped.element.bounds_hint);
-    if (mapped.element.contains)
-        surface.layer().set_contains(mapped.element.id, mapped.element.contains);
+    mapped.sync(&surface.layer());
 
     if (form.wire)
         form.wire(surface.ctx(), mapped.element.id, mapped.state);
@@ -337,6 +334,74 @@ template <typename T>
     return internal::atelier().create_element<T>(
         surface, std::move(geom), std::move(initial), topology, std::move(project));
 }
+
+/**
+ * @brief Tear down an element and everything related to it.
+ *
+ * The symmetric counterpart to create_element/create<T>/create_text_field:
+ * walks surface.layer().closure(id) (id plus every id transitively
+ * related via Layer::relate, e.g. a Collapsible's attached body, a
+ * Scrollable's tracked rows, or a TextField's Scrollable viewport), calls
+ * Context::unbind and Bridge::unbind on each id in that closure, then
+ * Layer::remove(id) - which itself cascades the Layer-side removal
+ * (buffer mark_for_removal, m_elements erase, m_relations cleanup) across
+ * the same closure.
+ *
+ * This is the one call callers should use to tear down a composed Forma
+ * element. Layer::remove(id) alone is still available for callers that
+ * only need the Layer-side cascade with no Context/Bridge involvement.
+ *
+ * @param surface Surface owning the Layer, Context, and (via the module
+ *                Bridge) the bindings @p id may participate in.
+ * @param id      Element id to remove, as returned by layer().add()/Slot::id().
+ */
+MAYAFLUX_API void destroy(Surface& surface, uint32_t id);
+
+// =============================================================================
+// Text field
+// =============================================================================
+
+/**
+ * @brief Build a text-capable FormaBuffer, register a TextField, and wire
+ *        text editing onto it in one call.
+ *
+ * The one-call convenience over TextField::place() - same split
+ * Portal::Forma::create<T> already has with a bare Form<T>: this builds
+ * the buffer (create_buffer, which TextField.cpp itself may never call -
+ * see TextField.hpp) and delegates. Build the buffer and TextField by hand
+ * instead for anything needing a non-default buffer setup (a shared
+ * texture slot alongside a background quad, for instance).
+ *
+ * @p scrollable composes a second primitive in, the same way: false (the
+ * default) matches every prior call exactly - @p bounds is the field's own
+ * region. True builds a plain Scrollable (Scrollable::place(), @p bounds as
+ * its viewport) and calls TextField::scrollable() instead of place() - the
+ * same composition test_text_input() (test_8.hpp) once wired by hand, now
+ * living at the TextField primitive level; this is only the one-call
+ * convenience over it. That Scrollable is local to this call and not
+ * returned, so no indicator is added and nothing else can be tracked into
+ * the same viewport - build the Scrollable yourself and call
+ * TextField::scrollable() directly (or place() + Scrollable::track() by
+ * hand) for either of those.
+ *
+ * @param surface      Surface whose window, layer, and context own the field.
+ * @param bounds       NDC region for both hit testing and the text quad -
+ *                     or, when scrollable, the fixed clipped viewport.
+ * @param params       Shared render params. A default-constructed one is
+ *                     allocated if null.
+ * @param initial_text Starting text. Cursor starts at its end.
+ * @param scrollable   When true, wraps the field in a Scrollable viewport.
+ * @return Registered, wired TextField. Portal::Forma::destroy(surface,
+ *         field.element_id) is sufficient to tear the whole thing down,
+ *         scrollable viewport included when @p scrollable is true - no
+ *         manual multi-id cleanup needed.
+ */
+[[nodiscard]] MAYAFLUX_API TextField create_text_field(
+    Surface& surface,
+    Kinesis::AABB2D bounds,
+    std::shared_ptr<Portal::Text::PressParams> params = nullptr,
+    std::string initial_text = {},
+    bool scrollable = false);
 
 /**
  * @brief Create a live plot in a new window.

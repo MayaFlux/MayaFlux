@@ -73,6 +73,8 @@ void GraphicsBatchProcessor::processing_function(const std::shared_ptr<Buffer>& 
                 "Error processing graphics buffer: {}", e.what());
         }
     }
+
+    root_buf->sort_renderable_buffers();
 }
 
 void GraphicsBatchProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)

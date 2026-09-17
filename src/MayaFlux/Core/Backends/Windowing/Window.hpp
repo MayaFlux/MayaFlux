@@ -194,4 +194,24 @@ public:
      */
     [[nodiscard]] virtual std::vector<std::shared_ptr<Buffers::VKBuffer>> get_rendering_buffers() const = 0;
 };
+
+/**
+ * @brief Check if a Unicode codepoint is valid for text input
+ * @param codepoint Unicode codepoint to check
+ * @return true if valid, false otherwise
+ *
+ * Valid codepoints are:
+ * - >= 0x20 (space) and <= 0x10FFFF (max Unicode)
+ * - Not 0x7F (DEL)
+ * - Not in the surrogate range 0xD800-0xDFFF
+ */
+[[nodiscard]] inline constexpr bool is_text_input_codepoint(
+    uint32_t codepoint) noexcept
+{
+    return codepoint >= 0x20
+        && codepoint != 0x7F
+        && (codepoint < 0xD800 || codepoint > 0xDFFF)
+        && codepoint <= 0x10FFFF;
 }
+
+} // namespace MayaFlux::Core

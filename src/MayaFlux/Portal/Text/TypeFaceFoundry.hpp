@@ -78,6 +78,20 @@ public:
      */
     [[nodiscard]] FontFace* get_default_face() const { return m_default_face.get(); }
 
+    /**
+     * @brief Load a font file and register it as a fallback on the default atlas.
+     *
+     * Tried, in registration order, whenever the default atlas's primary
+     * face lacks a codepoint. Requires set_default_font() to have been
+     * called first. Fallback faces are retained across a later
+     * set_default_font() call and re-registered on whatever new atlas that
+     * call constructs, so a font switch doesn't silently drop them.
+     *
+     * @param font_path  Path to a TTF or OTF file.
+     * @return true on success.
+     */
+    bool add_fallback_font(const std::string& font_path);
+
 private:
     TypeFaceFoundry();
     ~TypeFaceFoundry();
@@ -86,6 +100,7 @@ private:
 
     std::unique_ptr<FontFace> m_default_face;
     std::unique_ptr<GlyphAtlas> m_default_atlas;
+    std::vector<std::unique_ptr<FontFace>> m_fallback_faces;
 };
 
 } // namespace MayaFlux::Portal::Text

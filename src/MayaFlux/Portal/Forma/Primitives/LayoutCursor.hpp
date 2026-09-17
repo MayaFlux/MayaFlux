@@ -55,6 +55,42 @@ public:
     [[nodiscard]] float x_max() const noexcept { return m_x_max; }
 
     /**
+     * @brief Bind a live scroll offset. advance() folds its current value
+     *        into every bounds it returns from this point on.
+     *
+     * The offset itself is Kinesis::ScrollState's concern (content bounds,
+     * clamping, wheel/drag input); this only consumes the resulting value.
+     * Binding does not retroactively shift bounds already handed out by
+     * earlier advance() calls - those were snapshots, same as advance()
+     * has always returned. A geometry function that needs those existing
+     * placements to reflow live as the user scrolls (not just new ones
+     * placed after a scroll already happened) should close over
+     * scroll_offset() itself and add it to its own captured bounds inside
+     * the GeometryFn body, the same reflow-via-shared-state idiom every
+     * other Mapped<T> primitive already uses for its own value.
+     *
+     * @param offset Shared scroll offset, written elsewhere (typically from
+     *               Kinesis::apply_scroll/apply_wheel_scroll via an
+     *               on_scroll callback).
+     */
+    void bind_scroll(std::shared_ptr<MappedState<glm::vec2>> offset)
+    {
+        m_scroll_offset = std::move(offset);
+    }
+
+    /**
+     * @brief The bound scroll offset, or nullptr if none was bound.
+     *
+     * Exposed so a geometry function can close over the same live value
+     * advance() itself reads, for reflowing bounds placed before scrolling
+     * began.
+     */
+    [[nodiscard]] const std::shared_ptr<MappedState<glm::vec2>>& scroll_offset() const
+    {
+        return m_scroll_offset;
+    }
+
+    /**
      * @brief Reset both cursors to the lower of their two current Y values.
      *
      * Used after a row spanning several columns so that independent column
@@ -81,7 +117,11 @@ public:
         const float top = m_state->value;
         const float bot = top - height;
         m_state->write(bot);
-        return Kinesis::AABB2D { .min = { m_x_min, bot }, .max = { m_x_max, top } };
+
+        Kinesis::AABB2D bounds { .min = { m_x_min, bot }, .max = { m_x_max, top } };
+        if (m_scroll_offset)
+            bounds = bounds.translated(m_scroll_offset->value);
+        return bounds;
     }
 
     /**
@@ -97,6 +137,7 @@ public:
 
 private:
     std::shared_ptr<MappedState<float>> m_state;
+    std::shared_ptr<MappedState<glm::vec2>> m_scroll_offset;
     float m_x_min { -1.F };
     float m_x_max { 1.F };
 };

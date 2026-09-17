@@ -241,6 +241,19 @@ struct MAYAFLUX_API Element {
      */
     void set_text(std::string_view text, std::optional<Portal::Text::PressParams> params);
 
+    /**
+     * @brief Resubmit the textured quad at a new NDC region, keeping the
+     *        bound texture unchanged.
+     *
+     * The geometry-only half of a scroll reflow: with_texture()/with_text()
+     * both write a UV quad over some region and bind a texture; this
+     * rewrites only the quad, at @p region, without re-pressing or
+     * rebinding anything. No-op when buffer is null.
+     *
+     * @param region New NDC quad extent.
+     */
+    Element& retarget(Kinesis::AABB2D region);
+
     // =========================================================================
     // Flags
     // =========================================================================
