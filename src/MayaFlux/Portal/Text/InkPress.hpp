@@ -190,12 +190,20 @@ MAYAFLUX_API void ink_quads(
  * @param text          UTF-8 string to composite.
  * @param render_bounds Texture dimensions and wrap boundary in pixels.
  * @param params        atlas, color, budget_h. render_bounds field ignored.
+ * @param staging       Persistent host-visible staging buffer to upload
+ *                       through. Sized by the caller beforehand (e.g. via
+ *                       Buffers::ensure_image_staging_capacity()) and passed
+ *                       again on every call for the same label/texture to
+ *                       avoid allocating a fresh one each time; nullptr
+ *                       falls back to an internal one-shot staging
+ *                       allocation (the prior behaviour).
  * @return              GPU-resident VKImage, or nullptr on failure.
  */
 [[nodiscard]] MAYAFLUX_API std::shared_ptr<Core::VKImage> press(
     std::string_view text,
     glm::uvec2 render_bounds,
-    const PressParams& params = {});
+    const PressParams& params = {},
+    const std::shared_ptr<Buffers::VKBuffer>& staging = nullptr);
 
 /**
  * @brief Re-composite a UTF-8 string into an existing TextBuffer.
@@ -228,7 +236,12 @@ MAYAFLUX_API bool repress(
  * @param target  VKImage to update. May be replaced on reallocation.
  * @param text    UTF-8 string to composite.
  * @param params  render_bounds, atlas, color.
- * @param staging  Optional staging buffer for GPU upload.
+ * @param staging Persistent host-visible staging buffer to upload through.
+ *                Sized by the caller beforehand (e.g. via
+ *                Buffers::ensure_image_staging_capacity()) and passed again
+ *                on every call for the same @p target to avoid allocating a
+ *                fresh one each time; nullptr falls back to an internal
+ *                one-shot staging allocation (the prior behaviour).
  * @return        True on success.
  */
 MAYAFLUX_API bool repress(

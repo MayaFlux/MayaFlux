@@ -14,6 +14,11 @@ namespace MayaFlux::Portal::Forma {
 
 namespace {
 
+    /// @brief Headroom on the label's staging buffer so a later resize
+    ///        within this margin reuses it instead of falling back to an
+    ///        internal one-shot allocation for that call.
+    constexpr size_t k_staging_margin = 2;
+
     [[nodiscard]] GeometryFn<bool> collapsible_header_geom(
         float y_top,
         float x_min,
@@ -121,10 +126,13 @@ Collapsible& Collapsible::place(
         buf->submit(textured_quad(row_rect));
 
         const glm::uvec2 dims = row_pixel_dims(surface.window(), x_min, x_max, row_h);
+        auto staging = Buffers::create_image_staging_buffer(
+            static_cast<size_t>(dims.x) * dims.y * 4 * k_staging_margin);
         auto image_slot = std::make_shared<std::shared_ptr<Core::VKImage>>(
             Portal::Text::press(m_label_text, dims,
                 { .color = m_label_color,
-                    .background = { m_initially_open ? m_color_open : m_color_closed, 1.F } }));
+                    .background = { m_initially_open ? m_color_open : m_color_closed, 1.F } },
+                staging));
         buf->bind_texture(0, *image_slot);
 
         Element el;
@@ -140,28 +148,30 @@ Collapsible& Collapsible::place(
         const glm::vec3 color_open = m_color_open;
 
         surface.ctx().on_press(hid, IO::MouseButtons::Left,
-            [buf = buf, open = open_state, surface, hid, image_slot,
+            [buf = buf, open = open_state, surface, hid, image_slot, staging,
                 label_text, label_color, color_closed, color_open](uint32_t, glm::vec2) mutable {
                 const bool next = !open->value;
                 open->write(next);
                 for (auto rel_id : surface.layer().related_ids(hid))
                     surface.layer().set_visible(rel_id, next);
 
-                auto staging = Buffers::create_image_staging_buffer((*image_slot)->get_size_bytes());
+                const bool fits = (*image_slot)->get_size_bytes() <= staging->get_size_bytes();
                 Portal::Text::repress(*image_slot, label_text,
                     { .color = label_color, .background = { next ? color_open : color_closed, 1.F } },
-                    staging);
+                    fits ? staging : nullptr);
                 buf->bind_texture(0, *image_slot);
             });
 
         surface.ctx().on_resize(hid,
-            [buf = buf, surface, image_slot, open = open_state,
+            [buf = buf, surface, image_slot, staging, open = open_state,
                 label_text, label_color, color_closed, color_open,
                 x_min, x_max, row_h](uint32_t, uint32_t) {
                 const glm::uvec2 new_dims = row_pixel_dims(surface.window(), x_min, x_max, row_h);
+                const bool fits = static_cast<size_t>(new_dims.x) * new_dims.y * 4 <= staging->get_size_bytes();
                 *image_slot = Portal::Text::press(label_text, new_dims,
                     { .color = label_color,
-                        .background = { open->value ? color_open : color_closed, 1.F } });
+                        .background = { open->value ? color_open : color_closed, 1.F } },
+                    fits ? staging : nullptr);
                 buf->bind_texture(0, *image_slot);
             });
     }

@@ -3,6 +3,7 @@
 #include "TypeFaceFoundry.hpp"
 #include "TypeSetter.hpp"
 
+#include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
 #include "MayaFlux/Kakshya/Source/TextureContainer.hpp"
 #include "MayaFlux/Portal/Graphics/GraphicsUtils.hpp"
 
@@ -369,7 +370,8 @@ std::shared_ptr<Buffers::TextBuffer> press(
 std::shared_ptr<Core::VKImage> press(
     std::string_view text,
     glm::uvec2 render_bounds,
-    const PressParams& params)
+    const PressParams& params,
+    const std::shared_ptr<Buffers::VKBuffer>& staging)
 {
     GlyphAtlas* atlas = resolve_atlas(params.atlas);
     if (!atlas)
@@ -405,8 +407,17 @@ std::shared_ptr<Core::VKImage> press(
     }
 
     auto& loom = Portal::Graphics::get_texture_manager();
-    auto image = loom.create_2d(buf_w, budget_h, Portal::Graphics::ImageFormat::RGBA8,
-        pixels.data(), 1);
+
+    std::shared_ptr<Core::VKImage> image;
+    if (staging) {
+        image = loom.create_2d_uninitialized(buf_w, budget_h, Portal::Graphics::ImageFormat::RGBA8, 1);
+        if (!image)
+            return nullptr;
+        loom.upload_data(image, pixels.data(), budget_bytes, staging, true);
+    } else {
+        image = loom.create_2d(buf_w, budget_h, Portal::Graphics::ImageFormat::RGBA8,
+            pixels.data(), 1);
+    }
 
     MF_DEBUG(Journal::Component::Portal, Journal::Context::API,
         "press(AsTexture): {}x{} content in {}x{} texture",
@@ -538,8 +549,7 @@ bool repress(
     }
 
     if (needs_realloc) {
-        target = loom.create_2d(buf_w, new_h, Portal::Graphics::ImageFormat::RGBA8,
-            nullptr, 1);
+        target = loom.create_2d_uninitialized(buf_w, new_h, Portal::Graphics::ImageFormat::RGBA8, 1);
         if (!target)
             return false;
         if (staging) {
@@ -554,7 +564,7 @@ bool repress(
     }
 
     if (staging) {
-        loom.upload_data(target, pixels.data(), buf_bytes, staging);
+        loom.upload_data(target, pixels.data(), buf_bytes, staging, true);
     } else {
         loom.upload_data(target, pixels.data(), buf_bytes);
     }

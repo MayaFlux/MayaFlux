@@ -123,6 +123,39 @@ std::shared_ptr<Core::VKImage> TextureLoom::create_2d(
     return image;
 }
 
+std::shared_ptr<Core::VKImage> TextureLoom::create_2d_uninitialized(
+    uint32_t width, uint32_t height,
+    ImageFormat format, uint32_t mip_levels)
+{
+    if (!is_initialized()) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
+            "TextureLoom not initialized");
+        return nullptr;
+    }
+
+    auto vk_format = to_vulkan_format(format);
+    auto image = std::make_shared<Core::VKImage>(
+        width, height, 1, vk_format,
+        Core::VKImage::Usage::TEXTURE_2D,
+        Core::VKImage::Type::TYPE_2D,
+        mip_levels, 1,
+        Kakshya::DataModality::IMAGE_COLOR);
+
+    m_resource_manager->initialize_image(image);
+
+    if (!image->is_initialized()) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
+            "Failed to initialize VKImage");
+        return nullptr;
+    }
+
+    m_textures.push_back(image);
+    MF_INFO(Journal::Component::Portal, Journal::Context::ImageProcessing,
+        "Created 2D texture (uninitialized): {}x{}, format: {}, mips: {}",
+        width, height, vk::to_string(vk_format), mip_levels);
+    return image;
+}
+
 std::shared_ptr<Core::VKImage> TextureLoom::create_3d(
     uint32_t width, uint32_t height, uint32_t depth,
     ImageFormat format, const void* data)

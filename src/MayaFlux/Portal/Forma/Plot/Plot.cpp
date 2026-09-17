@@ -1,5 +1,6 @@
 #include "Plot.hpp"
 
+#include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
 #include "MayaFlux/Core/Backends/Windowing/Window.hpp"
 #include "MayaFlux/Kinesis/GeometryPrimitives.hpp"
 #include "MayaFlux/Portal/Forma/Plot/SeriesBuilder.hpp"
@@ -7,6 +8,15 @@
 #include "MayaFlux/Portal/Text/InkPress.hpp"
 
 namespace MayaFlux::Portal::Forma::Plot {
+
+namespace {
+
+    /// @brief Headroom on a label's staging buffer so a later resize within
+    ///        this margin reuses it instead of falling back to an internal
+    ///        one-shot allocation for that call.
+    constexpr size_t k_staging_margin = 2;
+
+} // namespace
 
 // =============================================================================
 // place_label
@@ -46,13 +56,18 @@ uint32_t place_label(
         surface.layer().relate(relate_to, id);
 
     if (auto_render_bounds) {
+        auto staging = Buffers::create_image_staging_buffer(
+            static_cast<size_t>(render_bounds.x) * render_bounds.y * 4 * k_staging_margin);
+
         surface.ctx().on_resize(id,
-            [buf, surface, text = spec.text, color = spec.color, bounds = spec.bounds](uint32_t, uint32_t) {
+            [buf, surface, text = spec.text, color = spec.color, bounds = spec.bounds,
+                staging](uint32_t, uint32_t) {
                 const auto dims = Kinesis::ndc_size_to_pixels(
                     { bounds.width(), bounds.height() },
                     surface.window()->get_state().current_width,
                     surface.window()->get_state().current_height);
-                auto image = Portal::Text::press(text, dims, { .color = color });
+                const bool fits = static_cast<size_t>(dims.x) * dims.y * 4 <= staging->get_size_bytes();
+                auto image = Portal::Text::press(text, dims, { .color = color }, fits ? staging : nullptr);
                 buf->bind_texture(0, image);
             });
     }
