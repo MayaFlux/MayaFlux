@@ -81,7 +81,7 @@ class Surface;
  *
  * // Living inside a Scrollable, composed by hand:
  * auto panel = Scrollable {}.place(viewport_buf, surface, viewport_bounds);
- * panel.track(field.element_id, field.bounds(),
+ * panel.track(surface.layer(), field.element_id, field.bounds(),
  *     [field](Kinesis::AABB2D shifted) mutable { field.reposition(shifted); },
  *     field.buf);
  * @endcode
@@ -172,6 +172,11 @@ struct TextField {
      * ever dispatches to the topmost element under the cursor - without
      * this, the wheel would do nothing while the cursor sits directly over
      * the field's own text instead of the viewport's empty margin.
+     *
+     * Also relate()s element_id under scroller.viewport_id, so
+     * Portal::Forma::destroy(surface, element_id) tears down the
+     * scroller's viewport too, even though scroller itself is never owned
+     * or stored here - only its Layer-side element needs freeing this way.
      *
      * @param in_buf              Pre-created buffer for the field's text quad.
      * @param surface             Surface to register the field's element on -

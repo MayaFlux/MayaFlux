@@ -63,7 +63,7 @@ struct Tracked {
  * const uint32_t id = surface.layer().add(
  *     Element {}.with_bounds(bounds).with_buffer(row_buf).non_interactive());
  *
- * panel.track(id, bounds,
+ * panel.track(surface.layer(), id, bounds,
  *     [row_buf, color](Kinesis::AABB2D shifted) {
  *         row_buf->submit(Kinesis::filled_rect(shifted, color));
  *     },
@@ -167,6 +167,10 @@ struct Scrollable {
      * while scrolled would have that offset baked into its anchor and
      * drift further out of place on every scroll after.
      *
+     * @param layer       Layer both the viewport and @p id were registered
+     *                    on. relate()s id under viewport_id so a cascading
+     *                    Layer::remove(viewport_id) tears this element down
+     *                    too - no separate tracked-ids bookkeeping needed.
      * @param id          Element id, already registered on the same Layer
      *                    place() used.
      * @param base_bounds This element's current on-screen NDC bounds - the
@@ -180,6 +184,7 @@ struct Scrollable {
      *         see Portal::Forma::TextField::scrollable() for exactly that.
      */
     MAYAFLUX_API Scrollable& track(
+        Layer& layer,
         uint32_t id,
         Kinesis::AABB2D base_bounds,
         std::function<void(Kinesis::AABB2D)> reposition,

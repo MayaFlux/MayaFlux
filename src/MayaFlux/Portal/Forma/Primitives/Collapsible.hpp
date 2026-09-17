@@ -178,6 +178,11 @@ struct Collapsible {
      * @brief Relate a body element to this collapsible and sync its visibility
      *        to the current open state.
      *
+     * This is the only bookkeeping Collapsible does for an attached body -
+     * everything else lives in Layer::m_relations, keyed by header_id. That
+     * means Portal::Forma::destroy(surface, header_id) tears down every
+     * attached body for free, with no Collapsible-specific teardown code.
+     *
      * @param layer   Layer the body element lives on.
      * @param body_id Element id returned from layer.add(...).
      */

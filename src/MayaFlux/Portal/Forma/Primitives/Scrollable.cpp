@@ -91,6 +91,7 @@ Scrollable::wheel_handler(Surface& surface) const
 }
 
 Scrollable& Scrollable::track(
+    Layer& layer,
     uint32_t id,
     Kinesis::AABB2D base_bounds,
     std::function<void(Kinesis::AABB2D)> reposition,
@@ -106,6 +107,8 @@ Scrollable& Scrollable::track(
 
     if (clip_buf)
         clip_buf->get_render_processor()->set_scissor(Kinesis::Scissor::from(viewport_bounds));
+
+    layer.relate(viewport_id, id);
 
     m_tracked->push_back({ .id = id, .base_bounds = base_bounds, .reposition = std::move(reposition) });
 

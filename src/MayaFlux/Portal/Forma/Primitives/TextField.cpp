@@ -300,10 +300,11 @@ TextField& TextField::scrollable(
 
     TextField field = *this;
     scroller.track(
-        element_id, content_bounds,
+        surface.layer(), element_id, content_bounds,
         [field](Kinesis::AABB2D shifted) mutable { field.reposition(shifted); },
         buf);
 
+    surface.layer().relate(element_id, scroller.viewport_id);
     surface.ctx().on_scroll(element_id, scroller.wheel_handler(surface));
 
     return *this;

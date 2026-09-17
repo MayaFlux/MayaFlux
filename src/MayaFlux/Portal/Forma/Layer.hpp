@@ -162,8 +162,14 @@ public:
     [[nodiscard]] Slot add(Element element);
 
     /**
-     * @brief Remove an element by id.
-     * @return True if found and removed.
+     * @brief Remove an element by id, cascading to every related id.
+     *
+     * Removes @p id plus closure(id): each removed element's buffer (if
+     * any) is marked_for_removal(), erased from the layer, and scrubbed
+     * out of m_relations both as a primary key and wherever it appears in
+     * another primary's related list.
+     *
+     * @return True if @p id was found.
      */
     bool remove(uint32_t id);
 
@@ -264,6 +270,16 @@ public:
      * @brief Return the ids related to @p primary_id, or empty if none.
      */
     [[nodiscard]] std::vector<uint32_t> related_ids(uint32_t primary_id) const;
+
+    /**
+     * @brief Return @p id plus every id transitively related to it.
+     *
+     * Breadth-first walk of relate()'s graph starting at @p id, used by
+     * remove() to know the full set an id's teardown must cascade to, and
+     * by Surface::destroy() to know which ids need Context::unbind and
+     * Bridge::unbind alongside the Layer-level removal.
+     */
+    [[nodiscard]] std::vector<uint32_t> closure(uint32_t id) const;
 
     // =========================================================================
     // Introspection

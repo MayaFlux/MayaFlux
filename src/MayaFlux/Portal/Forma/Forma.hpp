@@ -335,6 +335,28 @@ template <typename T>
         surface, std::move(geom), std::move(initial), topology, std::move(project));
 }
 
+/**
+ * @brief Tear down an element and everything related to it.
+ *
+ * The symmetric counterpart to create_element/create<T>/create_text_field:
+ * walks surface.layer().closure(id) (id plus every id transitively
+ * related via Layer::relate, e.g. a Collapsible's attached body, a
+ * Scrollable's tracked rows, or a TextField's Scrollable viewport), calls
+ * Context::unbind and Bridge::unbind on each id in that closure, then
+ * Layer::remove(id) - which itself cascades the Layer-side removal
+ * (buffer mark_for_removal, m_elements erase, m_relations cleanup) across
+ * the same closure.
+ *
+ * This is the one call callers should use to tear down a composed Forma
+ * element. Layer::remove(id) alone is still available for callers that
+ * only need the Layer-side cascade with no Context/Bridge involvement.
+ *
+ * @param surface Surface owning the Layer, Context, and (via the module
+ *                Bridge) the bindings @p id may participate in.
+ * @param id      Element id to remove, as returned by layer().add()/Slot::id().
+ */
+MAYAFLUX_API void destroy(Surface& surface, uint32_t id);
+
 // =============================================================================
 // Text field
 // =============================================================================
@@ -369,7 +391,10 @@ template <typename T>
  *                     allocated if null.
  * @param initial_text Starting text. Cursor starts at its end.
  * @param scrollable   When true, wraps the field in a Scrollable viewport.
- * @return Registered, wired TextField.
+ * @return Registered, wired TextField. Portal::Forma::destroy(surface,
+ *         field.element_id) is sufficient to tear the whole thing down,
+ *         scrollable viewport included when @p scrollable is true - no
+ *         manual multi-id cleanup needed.
  */
 [[nodiscard]] MAYAFLUX_API TextField create_text_field(
     Surface& surface,

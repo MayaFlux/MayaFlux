@@ -147,6 +147,14 @@ void Context::unbind(uint32_t id)
         m_focused = std::nullopt;
     }
 
+    if (m_hovered && *m_hovered == id)
+        m_hovered = std::nullopt;
+
+    for (auto& dragging : m_dragging) {
+        if (dragging && *dragging == id)
+            dragging = std::nullopt;
+    }
+
     m_callbacks.erase(id);
 }
 

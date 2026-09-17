@@ -76,6 +76,15 @@ Surface create_surface(std::shared_ptr<Core::Window> window, std::string name)
     return internal::atelier().create_surface(std::move(window), std::move(name));
 }
 
+void destroy(Surface& surface, uint32_t id)
+{
+    for (uint32_t cid : surface.layer().closure(id)) {
+        surface.ctx().unbind(cid);
+        bridge().unbind(cid);
+    }
+    surface.layer().remove(id);
+}
+
 // =============================================================================
 // Standalone buffer
 // =============================================================================

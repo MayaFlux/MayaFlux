@@ -15,11 +15,26 @@ Layer::Slot Layer::add(Element element)
 
 bool Layer::remove(uint32_t id)
 {
-    auto it = std::ranges::find_if(m_elements,
-        [id](const Element& e) { return e.id == id; });
-    if (it == m_elements.end())
+    if (!get(id))
         return false;
-    m_elements.erase(it);
+
+    const std::vector<uint32_t> ids = closure(id);
+
+    for (uint32_t cid : ids) {
+        if (auto* el = get(cid); el && el->buffer)
+            el->buffer->mark_for_removal();
+        std::erase_if(m_elements, [cid](const Element& e) { return e.id == cid; });
+    }
+
+    for (uint32_t cid : ids)
+        m_relations.erase(cid);
+
+    for (auto& [primary_id, related] : m_relations) {
+        for (uint32_t cid : ids)
+            std::erase(related, cid);
+    }
+    std::erase_if(m_relations, [](const auto& kv) { return kv.second.empty(); });
+
     return true;
 }
 
@@ -186,6 +201,23 @@ std::vector<uint32_t> Layer::related_ids(uint32_t primary_id) const
 {
     auto it = m_relations.find(primary_id);
     return it != m_relations.end() ? it->second : std::vector<uint32_t> {};
+}
+
+std::vector<uint32_t> Layer::closure(uint32_t id) const
+{
+    std::vector<uint32_t> result { id };
+
+    for (size_t i = 0; i < result.size(); ++i) {
+        auto it = m_relations.find(result[i]);
+        if (it == m_relations.end())
+            continue;
+        for (uint32_t rel_id : it->second) {
+            if (std::ranges::find(result, rel_id) == result.end())
+                result.push_back(rel_id);
+        }
+    }
+
+    return result;
 }
 
 // =============================================================================

@@ -130,6 +130,10 @@ public:
 
     /**
      * @brief Remove all callbacks registered for an element id.
+     *
+     * Also clears m_hovered/m_dragging entries pointing at @p id, so a
+     * removed element cannot be left as the stale current hover or drag
+     * target.
      */
     void unbind(uint32_t id);
 
