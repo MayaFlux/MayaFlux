@@ -276,6 +276,16 @@ public:
 
     [[nodiscard]] const Vruta::WindowEventSource& event_source() const;
 
+    /**
+     * @brief Rect of pixel size (@p w, @p h) at pixel position (@p x, @p y),
+     *        top-left origin, converted to NDC from the window's current
+     *        dimensions.
+     *
+     * Reads window state live at call time via to_ndc() - call again after
+     * a resize for that size's new NDC bounds.
+     */
+    [[nodiscard]] Kinesis::AABB2D to_ndc_rect(double x, double y, double w, double h) const noexcept;
+
 private:
     struct ElementCallbacks {
         std::unordered_map<int, PressFn> press;

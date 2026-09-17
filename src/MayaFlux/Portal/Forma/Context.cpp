@@ -300,6 +300,11 @@ glm::vec2 Context::to_ndc(double px, double py) const noexcept
     };
 }
 
+Kinesis::AABB2D Context::to_ndc_rect(double x, double y, double w, double h) const noexcept
+{
+    return { .min = to_ndc(x, y + h), .max = to_ndc(x + w, y) };
+}
+
 void Context::handle_move(double px, double py)
 {
     const glm::vec2 ndc = to_ndc(px, py);
