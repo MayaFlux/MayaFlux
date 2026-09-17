@@ -89,13 +89,17 @@ Entry make_entry(
                         text_image = row_buf.text_image,
                         buf = row_buf.buf,
                         staging,
-                        params]() mutable {
+                        params,
+                        last = std::optional<std::string> {}]() mutable {
         if (!buf || !reader)
             return;
 
-        Portal::Text::repress(text_image,
-            label + ": " + reader(),
-            params, staging);
+        std::string text = label + ": " + reader();
+        if (last && *last == text)
+            return;
+        last = text;
+
+        Portal::Text::repress(text_image, text, params, staging);
         buf->bind_texture(0, text_image);
     };
 
