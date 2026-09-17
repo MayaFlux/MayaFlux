@@ -262,7 +262,7 @@ auto meter = Portal::Forma::create(surface, Geometry::at(fader, Geometry::level_
 ```
 
 `at` works for any factory, including yours. Anything exposing `bounds()`
-serves as the anchor: `Mapped<T>`, `Collapsible`, `ValueRow`, `ValueGroup`.
+serves as the anchor: `Mapped<T>`, `Collapsible`, `Scrollable`, `Entry`, `EntryGroup`.
 
 ---
 
@@ -481,9 +481,9 @@ const uint32_t id = surface.layer().add(
 Available mutations: `relate_to(parent_id)`, `hidden()`, `non_interactive()`,
 `to_front()`, `to_back()`.
 
-**`relate_to`**: visibility, z-order, and remove operations on the parent
-cascade to this element. Used to group labels, backgrounds, or body panels
-under a controlling element.
+**`relate_to`**: visibility, z-order, and removal on the parent cascade to
+this element via `Layer::closure`. Used to group labels, backgrounds, or
+body panels under a controlling element.
 
 ```cpp
 const uint32_t geo_id = surface.layer().add(
@@ -495,7 +495,12 @@ const uint32_t geo_id = surface.layer().add(
     .id();
 ```
 
-Hiding or removing `bg_id` now cascades to `geo_id`.
+Hiding `bg_id` now cascades to `geo_id`. To remove the whole group, call
+`Portal::Forma::destroy(surface, bg_id)` rather than `surface.layer().remove(bg_id)`
+directly: `destroy` walks the same closure but also unbinds each id's
+`Context`/`Bridge` state first, so a torn-down element can't be left as a
+stale hover/drag target or a dangling inbound/outbound binding. `Layer::remove`
+alone only clears the `Layer` side.
 
 ---
 
@@ -678,39 +683,40 @@ auto el = Portal::Forma::create(
 
 ### Labeled interactive button
 
+`PressParams::background` composites a fill colour beneath the text into one
+texture, so a label and its own state-colored background no longer need two
+elements. This is the same trick `Collapsible::label()` uses internally.
+Re-pressing with a new `background` on state change replaces the old
+separate background-quad-plus-overlay pattern:
+
 ```cpp
 constexpr Kinesis::AABB2D box { glm::vec2(-0.3F, -0.1F), glm::vec2(0.3F, 0.1F) };
-constexpr glm::vec3 k_rest  { 0.2F, 0.2F, 0.2F };
-constexpr glm::vec3 k_hover { 0.4F, 0.4F, 0.4F };
-constexpr glm::vec3 k_press { 0.8F, 0.3F, 0.2F };
-
-auto bg_buf = Portal::Forma::create_buffer(window,
-    Kinesis::filled_rect(box, k_rest),
-    Portal::Graphics::PrimitiveTopology::TRIANGLE_STRIP);
-
-const uint32_t bg_id = surface.layer().add(
-    Portal::Forma::Element {}
-        .with_rect(box.min, box.max)
-        .with_buffer(bg_buf)).id();
+constexpr glm::vec4 k_rest  { 0.2F, 0.2F, 0.2F, 1.F };
+constexpr glm::vec4 k_hover { 0.4F, 0.4F, 0.4F, 1.F };
+constexpr glm::vec4 k_press { 0.8F, 0.3F, 0.2F, 1.F };
 
 auto text_buf = Portal::Forma::create_buffer(
     window,
     Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST,
     std::vector{ std::pair{ std::string("text"), std::shared_ptr<Core::VKImage>{} } });
 
-surface.layer().add(
-    Portal::Forma::Element {}
-        .non_interactive()
-        .with_buffer(text_buf)
-        .with_text("Click me",
-            Portal::Text::PressParams { .color = { 1.F, 1.F, 1.F, 1.F }, .render_bounds = { 256, 48 } },
-            box))
-    .relate_to(bg_id);
+auto el = Portal::Forma::Element {}
+    .with_bounds(box)
+    .with_buffer(text_buf)
+    .with_text("Click me",
+        Portal::Text::PressParams { .color = { 1.F, 1.F, 1.F, 1.F }, .background = k_rest, .render_bounds = { 256, 48 } },
+        box);
 
-surface.ctx().on_press  (bg_id, IO::MouseButtons::Left, [bg_buf, box](uint32_t, glm::vec2) { bg_buf->submit(Kinesis::filled_rect(box, k_press)); });
-surface.ctx().on_release(bg_id, IO::MouseButtons::Left, [bg_buf, box](uint32_t, glm::vec2) { bg_buf->submit(Kinesis::filled_rect(box, k_rest)); });
-surface.ctx().on_enter  (bg_id, [bg_buf, box](uint32_t) { bg_buf->submit(Kinesis::filled_rect(box, k_hover)); });
-surface.ctx().on_leave  (bg_id, [bg_buf, box](uint32_t) { bg_buf->submit(Kinesis::filled_rect(box, k_rest)); });
+const uint32_t id = surface.layer().add(el).id();
+
+auto paint = [el](glm::vec4 bg) mutable {
+    el.set_text("Click me", Portal::Text::PressParams { .background = bg, .render_bounds = { 256, 48 } });
+};
+
+surface.ctx().on_press  (id, IO::MouseButtons::Left, [paint](uint32_t, glm::vec2) mutable { paint(k_press); });
+surface.ctx().on_release(id, IO::MouseButtons::Left, [paint](uint32_t, glm::vec2) mutable { paint(k_rest); });
+surface.ctx().on_enter  (id, [paint](uint32_t) mutable { paint(k_hover); });
+surface.ctx().on_leave  (id, [paint](uint32_t) mutable { paint(k_rest); });
 ```
 
 ---

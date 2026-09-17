@@ -44,49 +44,12 @@ widgets. You write a value and the geometry function reacts.
 
 ## Layout
 
-ImGui handles cursor advancement internally. Forma uses `LayoutCursor`.
-
-`LayoutCursor` holds a shared `MappedState<float>` carrying the current NDC Y
-baseline. NDC Y runs +1 (top) to -1 (bottom). `advance(height)` subtracts
-height and returns the AABB just occupied.
-
-```cpp
-LayoutCursor cursor;             // starts at y = 1.0 (top), full NDC width
-cursor.skip(0.02F);              // padding
-
-const auto row0 = cursor.advance(0.06F);
-const auto row1 = cursor.advance(0.06F);
-```
-
-For columnar layouts, construct one cursor per column with its own x extent.
-Each advances independently, and `sync_to` brings both back to a common
-baseline after a row that spans them:
-
-```cpp
-LayoutCursor left  { 1.F, -0.95F, -0.05F };
-LayoutCursor right { 1.F,  0.05F,  0.95F };
-
-const auto fader_bounds = left.advance(0.08F);
-const auto meter_bounds = right.advance(0.08F);
-
-left.sync_to(right);
-```
-
-To place one region against another rather than advancing a baseline, use
-`Kinesis::place`:
-
-```cpp
-const auto label = Kinesis::place(fader_bounds, Kinesis::Side::Below,
-    0.F, 0.05F, 0.01F, Kinesis::Align::Span);
-```
-
-`Surface` supplies named screen regions so a panel needs no NDC arithmetic at
-all:
-
-```cpp
-const auto panel = surface.top_left(0.35F, 0.8F);
-LayoutCursor cursor { panel.max.y, panel.min.x, panel.max.x };
-```
+ImGui handles cursor advancement internally. Forma uses `LayoutCursor` to
+advance a baseline, `Kinesis::place` to position one region against another,
+and `Surface` named regions (`top_left`, `bottom_strip`, ...) for screen
+anchors with no NDC arithmetic. See [Portal-Forma.md](Portal-Forma.md)'s "Layout" section for
+the full API. From ImGui's perspective the shift is that layout happens once
+at construction, not every frame.
 
 ---
 
@@ -124,14 +87,16 @@ el.set_text(std::format("Cutoff: {:.2f} Hz", freq),
     Portal::Text::PressParams { .render_bounds = { 512, 48 } });
 ```
 
-For live-updating readouts driven by a reader function, `make_value_row`
-(from `Inspect/QueryUtils.hpp`) does the repress loop for you:
+For live-updating readouts driven by a reader function, `make_entry` (from
+`Primitives/Entry.hpp`) does the repress loop for you. The row is one
+fully-textured quad, with background and label composited together using the
+`PressParams::background` trick above.
 
 ```cpp
 auto row_buf = Inspector::make_row_buffer(window, "Cutoff", row_pixel_dims(window, cursor, row_h));
 
-auto row = make_value_row(
-    ValueSpec {
+auto row = make_entry(
+    EntrySpec {
         .label = "Cutoff",
         .reader = [&freq] { return std::format("{:.2f} Hz", freq.load()); },
     },
@@ -153,41 +118,39 @@ if (ImGui::Button("Trigger")) { fire(); }
 ```
 
 Forma: element + `on_press` callback. State lives in your code, not in Forma.
+A labeled button is one element, not two: `with_text`'s `PressParams::background`
+composites the fill colour beneath the label into the same texture, so state
+changes are one `set_text` call, not a separate quad submit plus an overlay
+relate.
 
 ```cpp
-constexpr glm::vec3 k_rest  { 0.2F, 0.2F, 0.2F };
-constexpr glm::vec3 k_press { 0.7F, 0.3F, 0.2F };
+constexpr glm::vec4 k_rest  { 0.2F, 0.2F, 0.2F, 1.F };
+constexpr glm::vec4 k_press { 0.7F, 0.3F, 0.2F, 1.F };
+constexpr glm::vec4 k_hover { 0.35F, 0.35F, 0.35F, 1.F };
 
 auto buf = Portal::Forma::create_buffer(
     window,
-    Kinesis::filled_rect(box, k_rest),
-    Portal::Graphics::PrimitiveTopology::TRIANGLE_STRIP);
+    Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST,
+    std::vector{ std::pair{ std::string("text"), std::shared_ptr<Core::VKImage>{} } });
 
-const uint32_t id = surface.layer().add(
-    Portal::Forma::Element {}
-        .with_bounds(box)
-        .with_buffer(buf));
+auto el = Portal::Forma::Element {}
+    .with_bounds(box)
+    .with_buffer(buf)
+    .with_text("Trigger",
+        Portal::Text::PressParams { .color = { 1.F, 1.F, 1.F, 1.F }, .background = k_rest, .render_bounds = { 256, 48 } },
+        box);
 
-surface.ctx().on_press  (id, IO::MouseButtons::Left,
-    [buf, box](uint32_t, glm::vec2) {
-        buf->submit(Kinesis::filled_rect(box, k_press));
-        fire();
-    });
-surface.ctx().on_release(id, IO::MouseButtons::Left,
-    [buf, box](uint32_t, glm::vec2) {
-        buf->submit(Kinesis::filled_rect(box, k_rest));
-    });
-surface.ctx().on_enter  (id, [buf, box](uint32_t) {
-    buf->submit(Kinesis::filled_rect(box, { 0.35F, 0.35F, 0.35F }));
-});
-surface.ctx().on_leave  (id, [buf, box](uint32_t) {
-    buf->submit(Kinesis::filled_rect(box, k_rest));
-});
+const uint32_t id = surface.layer().add(el).id();
+
+auto paint = [el](glm::vec4 bg) mutable {
+    el.set_text("Trigger", Portal::Text::PressParams { .background = bg, .render_bounds = { 256, 48 } });
+};
+
+surface.ctx().on_press  (id, IO::MouseButtons::Left, [paint](uint32_t, glm::vec2) mutable { paint(k_press); fire(); });
+surface.ctx().on_release(id, IO::MouseButtons::Left, [paint](uint32_t, glm::vec2) mutable { paint(k_rest); });
+surface.ctx().on_enter  (id, [paint](uint32_t) mutable { paint(k_hover); });
+surface.ctx().on_leave  (id, [paint](uint32_t) mutable { paint(k_rest); });
 ```
-
-This is the pattern that has not shrunk. A button is one element for the
-background plus one for the label plus four handlers, and the text buffer
-still needs its `additional_textures` slot declared by hand.
 
 ---
 
@@ -317,6 +280,7 @@ auto col = Collapsible {}
     .initially_open(true)
     .closed_color({ 0.2F, 0.2F, 0.22F })
     .open_color({ 0.28F, 0.28F, 0.32F })
+    .label("Oscillator")
     .place(std::move(hbuf), surface, cursor, row_h);
 
 auto fader_el = Portal::Forma::create(
@@ -343,24 +307,26 @@ LayoutCursor cursor { 1.F, -0.95F, 0.95F };
 
 const glm::uvec2 dims = row_pixel_dims(window, cursor, row_h);
 
-// Pre-create one RowBuffer per data field
+// Pre-create one EntryBuffer per data field. The header needs only a plain
+// buffer, since Collapsible::label() composites its own text and needs no
+// pre-pressed image.
 auto freq_buf  = Inspector::make_row_buffer(window, "Freq",  dims);
 auto amp_buf   = Inspector::make_row_buffer(window, "Amp",   dims);
 auto phase_buf = Inspector::make_row_buffer(window, "Phase", dims);
-auto hdr_buf   = Inspector::make_row_buffer(window, "Oscillator", dims);
+auto hdr_buf   = Inspector::make_header_buffer(window);
 
-std::array<RowBuffer, 3> row_bufs {
+std::array<EntryBuffer, 3> row_bufs {
     std::move(freq_buf), std::move(amp_buf), std::move(phase_buf)
 };
 
-std::array<ValueSpec, 3> specs { {
+std::array<EntrySpec, 3> specs { {
     { "Freq",  [&] { return std::format("{:.1f} Hz", freq.load()); } },
     { "Amp",   [&] { return std::format("{:.3f}",    amp.load());  } },
     { "Phase", [&] { return std::format("{:.2f} rad", ph.load());  } },
 } };
 
-auto group = make_value_group(
-    specs, std::move(hdr_buf), row_bufs,
+auto group = make_entry_group(
+    specs, "Oscillator", std::move(hdr_buf), row_bufs,
     surface, cursor, row_h, true);
 
 // Each graphics tick - tap all links to repress live values
@@ -371,7 +337,7 @@ schedule_metro(1.0 / 30.0, [g = std::move(group)]() mutable {
 ```
 
 For deeply nested trees (node graph inspection, buffer chains), use
-`InspectResult` which nests `ValueGroup` recursively and exposes `tap_all()`.
+`InspectResult` which nests `EntryGroup` recursively and exposes `tap_all()`.
 
 ---
 
@@ -456,7 +422,9 @@ surface.layer().set_visible(id, true);
 // Cascades to all related children automatically when using relate_to:
 surface.layer().set_visible(parent_id, false);  // hides all attached children
 
-// Z-order
+// Z-order now also reorders paint order (RootGraphicsBuffer draw_priority),
+// not just hit-test order, and it cascades to every related() element the
+// same way visibility does.
 surface.layer().send_to_back(id);
 surface.layer().bring_to_front(id);
 ```
@@ -465,31 +433,41 @@ surface.layer().bring_to_front(id);
 
 ## Scrollable regions
 
-Forma has no built-in scroll container. The pattern is a `LayoutCursor` with a
-float offset applied to all bounds, driven by scroll events on a background
-hit region:
+`Scrollable` is a clipped, scroll-offset viewport over content taller than
+it: a background/hit-test element, wheel input wired by default, and a
+`LayoutCursor` (`cursor_out`) already bound to the live offset, so content
+placed through it lands correctly whether or not a scroll already happened.
+It does not know what kind of content lives inside it. `track()` registers an
+element id plus your own reposition callback, invoked with that element's
+scrolled bounds on every scroll, the same shape as `Collapsible::attach()`.
 
 ```cpp
-auto scroll_offset = make_persistent(0.F);
-constexpr float scroll_speed = 0.04F;
+auto buf = Portal::Forma::create_buffer(window, Portal::Graphics::PrimitiveTopology::TRIANGLE_STRIP);
 
-// Interactive backdrop: scroll routes through hover, so the region must hit-test
-const uint32_t panel_id = surface.layer().add(
-    Portal::Forma::Element {}.with_bounds(panel_bounds)).to_back().id();
+auto panel = Scrollable {}
+    .background_color({ 0.08F, 0.08F, 0.1F })
+    .place(buf, surface, viewport_bounds);
 
-surface.ctx().on_scroll(panel_id,
-    [&scroll_offset](uint32_t, glm::vec2, double, double dy) {
-        scroll_offset = std::clamp(
-            scroll_offset + static_cast<float>(dy) * scroll_speed, -8.F, 0.F);
-    });
+const auto row_bounds = panel.cursor_out.advance(row_h);
+auto row_buf = Portal::Forma::create_buffer(
+    window, Kinesis::filled_rect(row_bounds, color),
+    Portal::Graphics::PrimitiveTopology::TRIANGLE_STRIP);
+const uint32_t row_id = surface.layer().add(
+    Portal::Forma::Element {}.with_bounds(row_bounds).with_buffer(row_buf).non_interactive());
+
+panel.track(surface.layer(), row_id, row_bounds,
+    [row_buf, color](Kinesis::AABB2D shifted) {
+        row_buf->submit(Kinesis::filled_rect(shifted, color));
+    },
+    row_buf); // clip_buf: same buffer, scissored to the viewport
 ```
 
-Full scrollable panels require re-placing elements at new bounds when the
-offset changes. `LayoutCursor` holds its baseline in a shared
-`MappedState<float>`, so a geometry function closing over `cursor.state()`
-would reflow on `state()->write(new_y)`. No shipped geometry function does
-this: every factory captures its bounds by value at construction. Reflow is
-available to geometry you write yourself.
+`indicator()` attaches a caller-drawn `Mapped<glm::vec2>` as a live, draggable
+scrollbar. Scrollable drives it with `(position_frac, extent_frac)` and draws
+nothing itself; `Geometry::scroll_indicator(track, color)` is the ready-made
+bar. `scroll_by(layer, delta)` is the input-agnostic core wheel input already
+calls, so any other source (a dragged indicator, a key, MIDI) can drive the
+same viewport directly.
 
 ---
 
@@ -504,7 +482,7 @@ available to geometry you write yourself.
 | `SliderFloat` with press+drag implicit            | `on_drag` callback - no press flag                                                                     |
 | No keyboard routing to widgets                    | Per-element key focus: `on_press(key)`, `on_held(key)`, `on_release(key)`                              |
 | Style stack                                       | Per-element color/geometry at construction                                                             |
-| Docking, tables, scroll built-in                  | Build from primitives; no built-in containers                                                          |
+| Docking, tables built-in                          | Build from primitives; no built-in containers. `Scrollable` ships a scroll viewport                    |
 | Thread: main/render thread only                   | Callbacks on graphics thread; writes from any thread                                                   |
 | Immediate feedback                                | Geometry updates on next `sync()` after `write()`                                                      |
 | No curve/array editor primitive                   | `drawable_canvas` + `wire_canvas_drag`: drawn curve routes directly to audio or any N-element consumer |
