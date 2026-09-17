@@ -46,6 +46,7 @@ public:
     using ScrollFn = std::function<void(uint32_t id, glm::vec2 ndc, double dx, double dy)>;
     using KeyFn = std::function<void(uint32_t id)>;
     using TextFn = std::function<void(uint32_t id, uint32_t codepoint)>;
+    using ResizeFn = std::function<void(uint32_t width, uint32_t height)>;
 
     /**
      * @brief Construct and immediately register event coroutines.
@@ -200,6 +201,23 @@ public:
     void clear_focus();
 
     /**
+     * @brief Called on every window resize.
+     *
+     * Per-element like the other callbacks, so more than one bound id (e.g.
+     * several pixel-anchored TextFields on the same Context) can each react
+     * independently. Cleared by unbind(id) same as every other callback.
+     *
+     * Hit-test-driven placement (to_ndc() at event time) already tracks
+     * resize for free; this is for callers anchored by a fixed pixel rect
+     * via to_ndc_rect(), which must be recomputed explicitly when the
+     * window's dimensions change.
+     *
+     * @param id Element id to bind to.
+     * @param fn Callback receiving the new (width, height).
+     */
+    void on_resize(uint32_t id, ResizeFn fn);
+
+    /**
      * @brief Get currently focused element, if any.
      */
     [[nodiscard]] std::optional<uint32_t> focused() const { return m_focused; }
@@ -303,6 +321,7 @@ private:
         EnterFn focus_gained;
         LeaveFn focus_lost;
         TextFn text;
+        ResizeFn resize;
     };
 
     struct KeyHandlerState {
@@ -334,6 +353,7 @@ private:
     void handle_key_release(IO::Keys key);
     void handle_key_held(IO::Keys key);
     void handle_text(uint32_t codepoint);
+    void handle_resize(uint32_t width, uint32_t height);
 
     std::optional<uint32_t> m_dragging[3];
     std::optional<uint32_t> m_focused;

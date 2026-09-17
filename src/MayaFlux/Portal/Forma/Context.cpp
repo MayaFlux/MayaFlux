@@ -128,6 +128,11 @@ void Context::on_focus_lost(uint32_t id, LeaveFn fn)
     m_callbacks[id].focus_lost = std::move(fn);
 }
 
+void Context::on_resize(uint32_t id, ResizeFn fn)
+{
+    m_callbacks[id].resize = std::move(fn);
+}
+
 void Context::clear_focus()
 {
     if (m_focused) {
@@ -263,6 +268,12 @@ void Context::register_handlers()
             Kriya::text_input(m_window,
                 [this](uint32_t codepoint) { handle_text(codepoint); })),
         m_name + "_text");
+
+    m_event_manager.add_event(
+        std::make_shared<Vruta::Event>(
+            Kriya::window_resized(m_window,
+                [this](uint32_t w, uint32_t h) { handle_resize(w, h); })),
+        m_name + "_resize");
 }
 
 void Context::cancel_handlers()
@@ -271,7 +282,7 @@ void Context::cancel_handlers()
              "_move",
              "_press_left", "_release_left",
              "_press_right", "_release_right",
-             "_scroll", "_text",
+             "_scroll", "_text", "_resize",
              "_drag_left", "_drag_right" }) {
         m_event_manager.cancel_event(m_name + suffix);
     }
@@ -474,6 +485,14 @@ void Context::handle_text(uint32_t codepoint)
         return;
 
     it->second.text(*m_focused, codepoint);
+}
+
+void Context::handle_resize(uint32_t width, uint32_t height)
+{
+    for (auto& [id, callbacks] : m_callbacks) {
+        if (callbacks.resize)
+            callbacks.resize(width, height);
+    }
 }
 
 } // namespace MayaFlux::Portal::Forma

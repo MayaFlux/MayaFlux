@@ -241,4 +241,27 @@ Vruta::Event mouse_scrolled(
     }
 }
 
+Vruta::Event window_resized(
+    std::shared_ptr<Core::Window> window,
+    std::function<void(uint32_t, uint32_t)> callback)
+{
+    auto& promise = co_await GetEventPromise {};
+    auto& source = window->get_event_source();
+
+    Vruta::WindowEventFilter filter;
+    filter.event_type = Core::WindowEventType::WINDOW_RESIZED;
+
+    while (true) {
+        if (promise.should_terminate) {
+            break;
+        }
+
+        auto event = co_await WindowEventAwaiter(source, filter);
+
+        if (auto* resize_data = std::get_if<Core::WindowEvent::ResizeData>(&event.data)) {
+            callback(resize_data->width, resize_data->height);
+        }
+    }
+}
+
 } // namespace MayaFlux::Kriya

@@ -192,20 +192,24 @@ void* GlfwWindow::get_native_handle() const
 void GlfwWindow::glfw_window_size_callback(GLFWwindow* window, int width, int height)
 {
     auto* win = static_cast<GlfwWindow*>(glfwGetWindowUserPointer(window));
-    if (win && win->m_event_callback) {
-        win->m_state.current_width = width;
-        win->m_state.current_height = height;
+    if (!win)
+        return;
 
-        if (win->m_event_callback) {
-            WindowEvent event;
-            event.type = WindowEventType::WINDOW_RESIZED;
-            event.timestamp = glfwGetTime();
-            event.data = WindowEvent::ResizeData {
-                .width = static_cast<uint32_t>(width),
-                .height = static_cast<uint32_t>(height)
-            };
-            win->m_event_callback(event);
-        }
+    win->m_state.current_width = width;
+    win->m_state.current_height = height;
+
+    WindowEvent event;
+    event.type = WindowEventType::WINDOW_RESIZED;
+    event.timestamp = glfwGetTime();
+    event.data = WindowEvent::ResizeData {
+        .width = static_cast<uint32_t>(width),
+        .height = static_cast<uint32_t>(height)
+    };
+
+    win->m_event_source.signal(event);
+
+    if (win->m_event_callback) {
+        win->m_event_callback(event);
     }
 }
 
