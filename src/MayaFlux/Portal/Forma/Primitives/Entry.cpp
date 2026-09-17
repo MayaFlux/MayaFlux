@@ -84,9 +84,11 @@ Entry make_entry(
     el.name = spec.label;
     const uint32_t id = surface.layer().add(el);
 
+    auto image_slot = std::make_shared<std::shared_ptr<Core::VKImage>>(row_buf.text_image);
+
     auto compose = [reader = spec.reader,
                         label = spec.label,
-                        text_image = row_buf.text_image,
+                        image_slot,
                         buf = row_buf.buf,
                         staging,
                         params,
@@ -99,9 +101,20 @@ Entry make_entry(
             return;
         last = text;
 
-        Portal::Text::repress(text_image, text, params, staging);
-        buf->bind_texture(0, text_image);
+        Portal::Text::repress(*image_slot, text, params, staging);
+        buf->bind_texture(0, *image_slot);
     };
+
+    surface.ctx().on_resize(id,
+        [buf = row_buf.buf, surface, image_slot, label = spec.label,
+            reader = spec.reader, params, x_min, x_max, row_h](uint32_t, uint32_t) {
+            const glm::uvec2 new_dims = row_pixel_dims(surface.window(), x_min, x_max, row_h);
+            Portal::Text::PressParams resize_params = params;
+            resize_params.budget_h = new_dims.y;
+            const std::string text = reader ? (label + ": " + reader()) : label;
+            *image_slot = Portal::Text::press(text, new_dims, resize_params);
+            buf->bind_texture(0, *image_slot);
+        });
 
     Link link(compose, compose);
 

@@ -110,6 +110,23 @@ LRESULT CALLBACK Win32Window::wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp
         PostQuitMessage(0);
         return 0;
 
+    case WM_ENTERSIZEMOVE:
+        self->m_in_size_move.store(true, std::memory_order_release);
+        return 0;
+
+    case WM_EXITSIZEMOVE: {
+        self->m_in_size_move.store(false, std::memory_order_release);
+        WindowEvent ev;
+        ev.type = WindowEventType::WINDOW_RESIZED;
+        ev.timestamp = 0.0;
+        ev.data = WindowEvent::ResizeData {
+            .width = static_cast<uint32_t>(self->m_state.current_width),
+            .height = static_cast<uint32_t>(self->m_state.current_height)
+        };
+        self->push_event(ev);
+        return 0;
+    }
+
     case WM_SIZE: {
         auto w = static_cast<uint32_t>(LOWORD(lp));
         auto h = static_cast<uint32_t>(HIWORD(lp));
@@ -309,7 +326,10 @@ void Win32Window::poll()
     }
 
     while (auto ev = m_event_queue.pop()) {
-        m_event_source.signal(*ev);
+        const bool suppress_signal = ev->type == WindowEventType::WINDOW_RESIZED
+            && m_in_size_move.load(std::memory_order_acquire);
+        if (!suppress_signal)
+            m_event_source.signal(*ev);
         if (m_event_callback)
             m_event_callback(*ev);
     }
