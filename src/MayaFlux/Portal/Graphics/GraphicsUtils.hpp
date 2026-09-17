@@ -378,6 +378,9 @@ struct RenderConfig {
     ///< For child-specific fields
     std::unordered_map<std::string, std::string> extra_string_params;
 
+    /// @brief Draw-order priority. Higher sorts later (drawn on top). Default 0.
+    int64_t draw_priority {};
+
     bool operator==(const RenderConfig& other) const = default;
 };
 

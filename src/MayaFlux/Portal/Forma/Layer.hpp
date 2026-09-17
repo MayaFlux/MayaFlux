@@ -163,12 +163,7 @@ public:
 
     /**
      * @brief Remove an element by id, cascading to every related id.
-     *
-     * Removes @p id plus closure(id): each removed element's buffer (if
-     * any) is marked_for_removal(), erased from the layer, and scrubbed
-     * out of m_relations both as a primary key and wherever it appears in
-     * another primary's related list.
-     *
+     *        Marks each removed element's buffer for removal.
      * @return True if @p id was found.
      */
     bool remove(uint32_t id);
@@ -198,12 +193,14 @@ public:
     bool set_visible(uint32_t id, bool visible);
 
     /**
-     * @brief Move element to the top of the hit-test order (drawn last).
+     * @brief Move element to the top of the hit-test and paint order
+     *        (drawn last), cascading to every related element.
      */
     bool bring_to_front(uint32_t id);
 
     /**
-     * @brief Move element to the bottom of the hit-test order (drawn first).
+     * @brief Move element to the bottom of the hit-test and paint order
+     *        (drawn first), cascading to every related element.
      */
     bool send_to_back(uint32_t id);
 
@@ -273,11 +270,6 @@ public:
 
     /**
      * @brief Return @p id plus every id transitively related to it.
-     *
-     * Breadth-first walk of relate()'s graph starting at @p id, used by
-     * remove() to know the full set an id's teardown must cascade to, and
-     * by Surface::destroy() to know which ids need Context::unbind and
-     * Bridge::unbind alongside the Layer-level removal.
      */
     [[nodiscard]] std::vector<uint32_t> closure(uint32_t id) const;
 
@@ -295,6 +287,9 @@ public:
 private:
     std::vector<Element> m_elements;
     uint32_t m_next_id { 1 };
+
+    int64_t m_next_front_priority {};
+    int64_t m_next_back_priority {};
 
     std::unordered_map<uint32_t, std::vector<uint32_t>> m_relations;
 

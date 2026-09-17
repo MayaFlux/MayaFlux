@@ -100,6 +100,12 @@ bool Layer::bring_to_front(uint32_t id)
                 [rel_id](const Element& e) { return e.id == rel_id; });
             if (it != m_elements.end())
                 std::rotate(it, it + 1, m_elements.end());
+
+            if (auto* rel_el = get(rel_id); rel_el && rel_el->buffer) {
+                auto config = rel_el->buffer->get_render_config();
+                config.draw_priority = ++m_next_front_priority;
+                rel_el->buffer->set_render_config(config);
+            }
         }
     }
     auto it = std::ranges::find_if(m_elements,
@@ -107,6 +113,13 @@ bool Layer::bring_to_front(uint32_t id)
     if (it == m_elements.end())
         return false;
     std::rotate(it, it + 1, m_elements.end());
+
+    if (auto* el = get(id); el && el->buffer) {
+        auto config = el->buffer->get_render_config();
+        config.draw_priority = ++m_next_front_priority;
+        el->buffer->set_render_config(config);
+    }
+
     return true;
 }
 
@@ -122,6 +135,13 @@ bool Layer::send_to_back(uint32_t id)
     if (it == m_elements.end())
         return false;
     std::rotate(m_elements.begin(), it, it + 1);
+
+    if (auto* el = get(id); el && el->buffer) {
+        auto config = el->buffer->get_render_config();
+        config.draw_priority = --m_next_back_priority;
+        el->buffer->set_render_config(config);
+    }
+
     return true;
 }
 
