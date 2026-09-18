@@ -28,6 +28,15 @@ namespace {
     constexpr uint32_t k_inspect_w = 480;
     constexpr uint32_t k_inspect_h = 900;
 
+    void discard_inspect_surface(std::optional<Surface>& surface)
+    {
+        if (!surface)
+            return;
+
+        surface->layer().clear();
+        surface.reset();
+    }
+
 } // namespace
 
 // =============================================================================
@@ -202,12 +211,20 @@ plot(
 
 void inspect_node_graph()
 {
-    if (g_inspect_nodes_surface && g_inspect_nodes_surface->window()) {
+    auto& atelier = internal::atelier();
+
+    if (g_inspect_nodes_surface && g_inspect_nodes_surface->window()
+        && !g_inspect_nodes_surface->window()->should_close()) {
         g_inspect_nodes_surface->window()->show();
         return;
     }
 
-    auto& atelier = internal::atelier();
+    if (g_inspect_nodes_surface) {
+        LayoutCursor cursor;
+        atelier.inspector().destroy(
+            atelier.inspector().node_graph_manager(*g_inspect_nodes_surface, cursor));
+        discard_inspect_surface(g_inspect_nodes_surface);
+    }
 
     auto window = atelier.create_window(
         Core::WindowCreateInfo { .title = "NodeGraphManager", .width = k_inspect_w, .height = k_inspect_h });
@@ -222,12 +239,20 @@ void inspect_node_graph()
 
 void inspect_buffers()
 {
-    if (g_inspect_buffers_surface && g_inspect_buffers_surface->window()) {
+    auto& atelier = internal::atelier();
+
+    if (g_inspect_buffers_surface && g_inspect_buffers_surface->window()
+        && !g_inspect_buffers_surface->window()->should_close()) {
         g_inspect_buffers_surface->window()->show();
         return;
     }
 
-    auto& atelier = internal::atelier();
+    if (g_inspect_buffers_surface) {
+        LayoutCursor cursor;
+        atelier.inspector().destroy(
+            atelier.inspector().buffer_manager(*g_inspect_buffers_surface, cursor));
+        discard_inspect_surface(g_inspect_buffers_surface);
+    }
 
     auto window = atelier.create_window(
         Core::WindowCreateInfo { .title = "BufferManager", .width = k_inspect_w, .height = k_inspect_h });
@@ -242,12 +267,20 @@ void inspect_buffers()
 
 void inspect_scheduler()
 {
-    if (g_inspect_scheduler_surface && g_inspect_scheduler_surface->window()) {
+    auto& atelier = internal::atelier();
+
+    if (g_inspect_scheduler_surface && g_inspect_scheduler_surface->window()
+        && !g_inspect_scheduler_surface->window()->should_close()) {
         g_inspect_scheduler_surface->window()->show();
         return;
     }
 
-    auto& atelier = internal::atelier();
+    if (g_inspect_scheduler_surface) {
+        LayoutCursor cursor;
+        atelier.inspector().destroy(
+            atelier.inspector().scheduler(*g_inspect_scheduler_surface, cursor));
+        discard_inspect_surface(g_inspect_scheduler_surface);
+    }
 
     auto window = atelier.create_window(
         Core::WindowCreateInfo { .title = "TaskScheduler", .width = k_inspect_w, .height = k_inspect_h });
@@ -262,12 +295,15 @@ void inspect_scheduler()
 
 void inspect_events()
 {
-    if (g_inspect_events_surface && g_inspect_events_surface->window()) {
+    auto& atelier = internal::atelier();
+
+    if (g_inspect_events_surface && g_inspect_events_surface->window()
+        && !g_inspect_events_surface->window()->should_close()) {
         g_inspect_events_surface->window()->show();
         return;
     }
 
-    auto& atelier = internal::atelier();
+    discard_inspect_surface(g_inspect_events_surface);
 
     auto window = atelier.create_window(
         Core::WindowCreateInfo { .title = "EventManager", .width = k_inspect_w, .height = k_inspect_h });
