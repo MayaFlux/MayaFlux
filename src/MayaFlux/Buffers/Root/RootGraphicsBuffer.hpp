@@ -177,6 +177,44 @@ public:
         m_renderable_buffers.clear();
     }
 
+    /**
+     * @brief Request presentation even if the window has no draw commands.
+     * @param window Window whose rendered composition has changed.
+     *
+     * The next presentation clears the window and draws its collected renderables.
+     * GraphicsBatchProcessor records retained visible geometry for this window
+     * even when buffer processing is paused. An empty draw list requests a
+     * clear-only frame. Ordinary processing inactivity does not request a refresh.
+     */
+    void request_presentation_refresh(const std::shared_ptr<Core::Window>& window)
+    {
+        if (window)
+            m_pending_presentation_refreshes.insert(window);
+    }
+
+    /**
+     * @brief Get explicit refresh requests, retained independently of frame draws.
+     */
+    const std::unordered_set<std::shared_ptr<Core::Window>>& get_pending_presentation_refreshes() const
+    {
+        return m_pending_presentation_refreshes;
+    }
+
+    /**
+     * @brief Consume a refresh after submission, or discard it for a closed window.
+     */
+    void clear_presentation_refresh(const std::shared_ptr<Core::Window>& window)
+    {
+        m_pending_presentation_refreshes.erase(window);
+    }
+
+    /**
+     * @brief Stop all render processors from presenting to a window.
+     *
+     * Child buffers and non-render processors remain attached to this root.
+     */
+    void detach_window(const std::shared_ptr<Core::Window>& window);
+
 private:
     friend class GraphicsBatchProcessor;
 
@@ -209,6 +247,7 @@ private:
     }
 
     std::vector<RenderableBufferInfo> m_renderable_buffers;
+    std::unordered_set<std::shared_ptr<Core::Window>> m_pending_presentation_refreshes;
 
     /**
      * @brief Optional final processor (rarely used in graphics)

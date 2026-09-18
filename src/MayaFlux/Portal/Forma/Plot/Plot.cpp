@@ -1,5 +1,6 @@
 #include "Plot.hpp"
 
+#include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
 #include "MayaFlux/Core/Backends/Windowing/Window.hpp"
 #include "MayaFlux/Kinesis/GeometryPrimitives.hpp"
 #include "MayaFlux/Portal/Forma/Plot/SeriesBuilder.hpp"
@@ -7,6 +8,15 @@
 #include "MayaFlux/Portal/Text/InkPress.hpp"
 
 namespace MayaFlux::Portal::Forma::Plot {
+
+namespace {
+
+    /// @brief Headroom on a label's staging buffer so a later resize within
+    ///        this margin reuses it instead of falling back to an internal
+    ///        one-shot allocation for that call.
+    constexpr size_t k_staging_margin = 2;
+
+} // namespace
 
 // =============================================================================
 // place_label
@@ -18,15 +28,17 @@ uint32_t place_label(
     const LabelSpec& spec,
     uint32_t relate_to)
 {
-    const auto render_bounds = spec.render_bounds.x > 0 && spec.render_bounds.y > 0
-        ? spec.render_bounds
-        : Kinesis::ndc_size_to_pixels(
+    const bool auto_render_bounds = !(spec.render_bounds.x > 0 && spec.render_bounds.y > 0);
+
+    const auto render_bounds = auto_render_bounds
+        ? Kinesis::ndc_size_to_pixels(
               { spec.bounds.width(), spec.bounds.height() },
               surface.window()->get_state().current_width,
-              surface.window()->get_state().current_height);
+              surface.window()->get_state().current_height)
+        : spec.render_bounds;
 
     Element el;
-    el.with_buffer(std::move(buf))
+    el.with_buffer(buf)
         .with_bounds(spec.bounds)
         .with_name(spec.name)
         .with_text(spec.text,
@@ -42,6 +54,30 @@ uint32_t place_label(
     const uint32_t id = surface.layer().add(std::move(el));
     if (relate_to != 0)
         surface.layer().relate(relate_to, id);
+
+    if (auto_render_bounds) {
+        auto staging = Buffers::create_image_staging_buffer(
+            static_cast<size_t>(render_bounds.x) * render_bounds.y * 4 * k_staging_margin);
+
+        surface.ctx().on_resize(id,
+            [buf, surface, text = spec.text, color = spec.color, bounds = spec.bounds,
+                staging](uint32_t, uint32_t) {
+                const auto dims = Kinesis::ndc_size_to_pixels(
+                    { bounds.width(), bounds.height() },
+                    surface.window()->get_state().current_width,
+                    surface.window()->get_state().current_height);
+
+                const size_t required_bytes = static_cast<size_t>(dims.x) * dims.y * 4;
+
+                if (required_bytes > staging->get_size_bytes()) {
+                    staging->resize(required_bytes * 2, false);
+                }
+
+                auto image = Portal::Text::press(
+                    text, dims, { .color = color }, staging);
+                buf->bind_texture(0, image);
+            });
+    }
 
     return id;
 }

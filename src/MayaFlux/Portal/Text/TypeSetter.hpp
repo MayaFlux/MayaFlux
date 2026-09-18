@@ -92,7 +92,7 @@ struct LayoutResult {
  * @param tab_width  Tab stop width in space-glyph-widths.
  * @return           LayoutResult containing quads and final pen position.
  */
-[[nodiscard]] LayoutResult lay_out(
+[[nodiscard]] MAYAFLUX_API LayoutResult lay_out(
     std::string_view text,
     GlyphAtlas& atlas,
     float pen_x = 0.F,

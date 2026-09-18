@@ -58,6 +58,12 @@ void BufferProcessingHandle::process_channel_with_node_data(
     m_manager->process_channel(m_token, channel, processing_units, node_data);
 }
 
+void BufferProcessingHandle::destroy_window(const std::shared_ptr<Core::Window>& window)
+{
+    ensure_valid();
+    m_manager->get_root_graphics_buffer(m_token)->detach_window(window);
+}
+
 void BufferProcessingHandle::process_input(double* input_data, uint32_t num_channels, uint32_t num_frames)
 {
     m_manager->process_input(input_data, num_channels, num_frames);

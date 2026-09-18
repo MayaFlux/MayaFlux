@@ -128,6 +128,28 @@ void Context::on_focus_lost(uint32_t id, LeaveFn fn)
     m_callbacks[id].focus_lost = std::move(fn);
 }
 
+void Context::on_resize(uint32_t id, ResizeFn fn)
+{
+    m_callbacks[id].resize = std::move(fn);
+}
+
+void Context::detach_window(bool cancel_close)
+{
+    cancel_handlers(cancel_close);
+    m_window.reset();
+    m_hovered.reset();
+    m_focused.reset();
+    for (auto& drag : m_dragging)
+        drag.reset();
+    m_registered_keys.clear();
+    m_callbacks.clear();
+}
+
+void Context::on_close(uint32_t id, CloseFn fn)
+{
+    m_callbacks[id].close = std::move(fn);
+}
+
 void Context::clear_focus()
 {
     if (m_focused) {
@@ -263,18 +285,33 @@ void Context::register_handlers()
             Kriya::text_input(m_window,
                 [this](uint32_t codepoint) { handle_text(codepoint); })),
         m_name + "_text");
+
+    m_event_manager.add_event(
+        std::make_shared<Vruta::Event>(
+            Kriya::window_resized(m_window,
+                [this](uint32_t w, uint32_t h) { handle_resize(w, h); })),
+        m_name + "_resize");
+
+    m_event_manager.add_event(
+        std::make_shared<Vruta::Event>(
+            Kriya::window_closed(m_window,
+                [this]() { handle_close(); })),
+        m_name + "_close");
 }
 
-void Context::cancel_handlers()
+void Context::cancel_handlers(bool cancel_close)
 {
     for (const char* suffix : {
              "_move",
              "_press_left", "_release_left",
              "_press_right", "_release_right",
-             "_scroll", "_text",
+             "_scroll", "_text", "_resize",
              "_drag_left", "_drag_right" }) {
         m_event_manager.cancel_event(m_name + suffix);
     }
+
+    if (cancel_close)
+        m_event_manager.cancel_event(m_name + "_close");
 
     for (const auto& [key_code, handlers] : m_registered_keys) {
         const std::string key_name = std::to_string(key_code);
@@ -474,6 +511,33 @@ void Context::handle_text(uint32_t codepoint)
         return;
 
     it->second.text(*m_focused, codepoint);
+}
+
+void Context::handle_resize(uint32_t width, uint32_t height)
+{
+    for (auto& [id, callbacks] : m_callbacks) {
+        if (callbacks.resize)
+            callbacks.resize(width, height);
+    }
+}
+
+void Context::handle_close()
+{
+    auto* event_source = &m_window->get_event_source();
+    const std::string close_event_name = m_name + "_close";
+
+    for (auto& [id, callbacks] : m_callbacks) {
+        if (callbacks.close)
+            callbacks.close();
+        if (callbacks.focus_lost)
+            callbacks.focus_lost(id);
+    }
+    m_focused = std::nullopt;
+    detach_window(false);
+    event_source->defer([event_manager = &m_event_manager,
+                            name = std::move(close_event_name)]() {
+        event_manager->cancel_event(name);
+    });
 }
 
 } // namespace MayaFlux::Portal::Forma

@@ -80,12 +80,7 @@ public:
      */
     Surface(std::shared_ptr<Core::Window> window,
         std::shared_ptr<Layer> layer,
-        std::shared_ptr<Context> ctx)
-        : m_window(std::move(window))
-        , m_layer(std::move(layer))
-        , m_ctx(std::move(ctx))
-    {
-    }
+        std::shared_ptr<Context> ctx);
 
     ~Surface() = default;
 
@@ -125,7 +120,7 @@ public:
      */
     [[nodiscard]] const std::shared_ptr<Core::Window>& window() const noexcept
     {
-        return m_window;
+        return m_window_ownership->window;
     }
 
     /**
@@ -156,6 +151,12 @@ public:
      * without forcing the caller to reach through layer() at every step.
      */
     Layer::Slot add(Element element) { return m_layer->add(std::move(element)); }
+
+    /**
+     * @brief Forward an id to layer().remove().
+     * @param id Element id to remove from the layer.
+     */
+    void remove(uint32_t id) { m_layer->remove(id); }
 
     // =========================================================================
     // Named regions
@@ -243,7 +244,16 @@ public:
     }
 
 private:
-    std::shared_ptr<Core::Window> m_window;
+    struct WindowOwnership {
+        explicit WindowOwnership(std::shared_ptr<Core::Window> value)
+            : window(std::move(value))
+        {
+        }
+
+        std::shared_ptr<Core::Window> window;
+    };
+
+    std::shared_ptr<WindowOwnership> m_window_ownership;
     std::shared_ptr<Layer> m_layer;
     std::shared_ptr<Context> m_ctx;
 };

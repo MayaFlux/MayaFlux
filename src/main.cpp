@@ -79,7 +79,7 @@ int main(int argc, char* argv[])
 
         run();
 
-        std::cout << "Press Enter [Return] to stop...\n";
+        std::cout << "Press Ctrl-C to stop...\n";
         MayaFlux::Await();
 
         MayaFlux::End();

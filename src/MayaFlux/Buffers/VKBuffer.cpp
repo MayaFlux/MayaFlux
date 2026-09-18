@@ -10,6 +10,7 @@
 #include "MayaFlux/Registry/BackendRegistry.hpp"
 #include "MayaFlux/Registry/Service/BufferService.hpp"
 #include "MayaFlux/Registry/Service/ComputeService.hpp"
+#include "MayaFlux/Registry/Service/DisplayService.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
@@ -178,6 +179,18 @@ void VKBuffer::resize(size_t new_size, bool preserve_data)
             "Preserved {} bytes of old buffer data", copy_size);
     }
 
+    auto display_service = Registry::BackendRegistry::instance()
+                               .get_service<Registry::Service::DisplayService>();
+
+    if (!display_service) {
+        error<std::runtime_error>(
+            Journal::Component::Buffers,
+            Journal::Context::BufferManagement,
+            std::source_location::current(),
+            "Cannot resize buffer: BufferService not available");
+    }
+
+    display_service->wait_idle();
     buffer_service->destroy_buffer(shared_from_this());
 
     m_resources.buffer = vk::Buffer {};
@@ -336,6 +349,62 @@ void VKBuffer::infer_dimensions_from_data(size_t byte_count)
 void VKBuffer::apply_render_config(const RenderConfig& config, const ShaderConfig& shader_config)
 {
     apply_render_config(m_render_processor, config, shader_config);
+}
+
+std::shared_ptr<RenderProcessor> VKBuffer::get_render_processor(RenderPipelineID id)
+{
+    auto default_render = std::dynamic_pointer_cast<RenderProcessor>(m_default_processor);
+    if (default_render && default_render->get_render_pipeline_id() == id)
+        return default_render;
+
+    if (!m_processing_chain)
+        return nullptr;
+
+    auto buffer = shared_from_this();
+    for (const auto& processor : m_processing_chain->get_processors(buffer)) {
+        auto render = std::dynamic_pointer_cast<RenderProcessor>(processor);
+        if (render && render->get_render_pipeline_id() == id)
+            return render;
+    }
+
+    for (const auto& processor : {
+             m_processing_chain->get_preprocessor(buffer),
+             m_processing_chain->get_postprocessor(buffer),
+             m_processing_chain->get_final_processor(buffer) }) {
+        auto render = std::dynamic_pointer_cast<RenderProcessor>(processor);
+        if (render && render->get_render_pipeline_id() == id)
+            return render;
+    }
+    return nullptr;
+}
+
+std::vector<std::shared_ptr<RenderProcessor>> VKBuffer::get_additional_render_processors()
+{
+    std::vector<std::shared_ptr<RenderProcessor>> render_processors;
+    auto primary = get_render_processor();
+
+    auto add_processor = [&render_processors, &primary](const std::shared_ptr<BufferProcessor>& processor) {
+        auto render = std::dynamic_pointer_cast<RenderProcessor>(processor);
+        if (!render || render == primary
+            || std::ranges::find(render_processors, render) != render_processors.end()) {
+            return;
+        }
+        render_processors.push_back(std::move(render));
+    };
+
+    add_processor(m_default_processor);
+
+    if (m_processing_chain) {
+        auto buffer = shared_from_this();
+        for (const auto& processor : m_processing_chain->get_processors(buffer))
+            add_processor(processor);
+
+        add_processor(m_processing_chain->get_preprocessor(buffer));
+        add_processor(m_processing_chain->get_postprocessor(buffer));
+        add_processor(m_processing_chain->get_final_processor(buffer));
+    }
+
+    return render_processors;
 }
 
 void VKBuffer::apply_render_config(

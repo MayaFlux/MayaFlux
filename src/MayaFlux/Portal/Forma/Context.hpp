@@ -46,6 +46,8 @@ public:
     using ScrollFn = std::function<void(uint32_t id, glm::vec2 ndc, double dx, double dy)>;
     using KeyFn = std::function<void(uint32_t id)>;
     using TextFn = std::function<void(uint32_t id, uint32_t codepoint)>;
+    using ResizeFn = std::function<void(uint32_t width, uint32_t height)>;
+    using CloseFn = std::function<void()>;
 
     /**
      * @brief Construct and immediately register event coroutines.
@@ -200,9 +202,33 @@ public:
     void clear_focus();
 
     /**
+     * @brief Called on every window resize.
+     *
+     * Per-element like the other callbacks, so more than one bound id (e.g.
+     * several pixel-anchored TextFields on the same Context) can each react
+     * independently. Cleared by unbind(id) same as every other callback.
+     *
+     * Hit-test-driven placement (to_ndc() at event time) already tracks
+     * resize for free; this is for callers anchored by a fixed pixel rect
+     * via to_ndc_rect(), which must be recomputed explicitly when the
+     * window's dimensions change.
+     *
+     * @param id Element id to bind to.
+     * @param fn Callback receiving the new (width, height).
+     */
+    void on_resize(uint32_t id, ResizeFn fn);
+
+    /**
      * @brief Get currently focused element, if any.
      */
     [[nodiscard]] std::optional<uint32_t> focused() const { return m_focused; }
+
+    /**
+     * @brief Register a callback invoked when the Context window closes.
+     * @param id Element id associated with the callback.
+     * @param fn Callback invoked during close handling.
+     */
+    void on_close(uint32_t id, CloseFn fn);
 
     /**
      * @brief Attach key-delta handlers to a Mapped<float> element.
@@ -303,6 +329,8 @@ private:
         EnterFn focus_gained;
         LeaveFn focus_lost;
         TextFn text;
+        ResizeFn resize;
+        CloseFn close;
     };
 
     struct KeyHandlerState {
@@ -321,7 +349,7 @@ private:
     std::unordered_map<uint32_t, ElementCallbacks> m_callbacks;
 
     void register_handlers();
-    void cancel_handlers();
+    void cancel_handlers(bool cancel_close = true);
 
     [[nodiscard]] glm::vec2 to_ndc(double px, double py) const noexcept;
 
@@ -334,6 +362,9 @@ private:
     void handle_key_release(IO::Keys key);
     void handle_key_held(IO::Keys key);
     void handle_text(uint32_t codepoint);
+    void handle_resize(uint32_t width, uint32_t height);
+    void handle_close();
+    void detach_window(bool cancel_close = true);
 
     std::optional<uint32_t> m_dragging[3];
     std::optional<uint32_t> m_focused;

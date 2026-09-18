@@ -330,6 +330,7 @@ void GraphicsSubsystem::cleanup_closed_windows()
 {
     for (auto& window : m_registered_windows) {
         if (window->should_close() && window->is_graphics_registered()) {
+            m_handle->buffers.destroy_window(window);
             m_backend->unregister_window(window);
             window->set_graphics_registered(false);
         }

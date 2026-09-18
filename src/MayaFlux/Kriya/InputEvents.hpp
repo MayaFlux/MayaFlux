@@ -199,5 +199,31 @@ namespace Kriya {
         std::shared_ptr<Core::Window> window,
         std::function<void(double, double)> callback);
 
+    /**
+     * @brief Creates an Event coroutine that triggers on window resize.
+     *
+     * Delivers the new logical window size (Core::WindowEventType::WINDOW_RESIZED),
+     * the same event the Vulkan backend uses to flag swapchain recreation. Not the
+     * framebuffer pixel size (Core::WindowEventType::FRAMEBUFFER_RESIZED).
+     *
+     * @param window   Window to listen to.
+     * @param callback Called with the new (width, height).
+     * @return Event coroutine that can be added to EventManager.
+     */
+    MAYAFLUX_API Vruta::Event window_resized(
+        std::shared_ptr<Core::Window> window,
+        std::function<void(uint32_t, uint32_t)> callback);
+
+    /**
+     * @brief Creates an Event coroutine that triggers on window close.
+     *
+     * @param window   Window to listen to.
+     * @param callback Called when the window is closed.
+     * @return Event coroutine that can be added to EventManager.
+     */
+    MAYAFLUX_API Vruta::Event window_closed(
+        std::shared_ptr<Core::Window> window,
+        std::function<void()> callback);
+
 } // namespace Kriya
 } // namespace MayaFlux

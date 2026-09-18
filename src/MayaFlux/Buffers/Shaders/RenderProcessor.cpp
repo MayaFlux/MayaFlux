@@ -12,24 +12,17 @@
 
 namespace MayaFlux::Buffers {
 
-const Kakshya::VertexLayout* RenderProcessor::get_or_cache_vertex_layout(
-    std::unordered_map<std::shared_ptr<VKBuffer>, RenderProcessor::VertexInfo>& buffer_info,
-    const std::shared_ptr<VKBuffer>& buffer)
+RenderProcessor::BufferState* RenderProcessor::get_or_cache_buffer_state(const std::shared_ptr<VKBuffer>& buffer)
 {
-    auto info_it = buffer_info.find(buffer);
-    if (info_it == buffer_info.end()) {
-        if (buffer->has_vertex_layout()) {
-            auto vertex_layout = buffer->get_vertex_layout();
-            if (vertex_layout.has_value()) {
-                buffer_info[buffer] = { .semantic_layout = vertex_layout.value(), .use_reflection = false };
-                info_it = buffer_info.find(buffer);
-            }
-        }
-        if (info_it == buffer_info.end()) {
+    auto info_it = m_buffer_info.find(buffer);
+    if (info_it == m_buffer_info.end()) {
+        const auto layout = buffer->get_vertex_layout();
+        if (!layout)
             return nullptr;
-        }
+        info_it = m_buffer_info.try_emplace(buffer).first;
+        info_it->second.semantic_layout = *layout;
     }
-    return &info_it->second.semantic_layout;
+    return &info_it->second;
 }
 
 RenderProcessor::RenderProcessor(const ShaderConfig& config)
@@ -71,6 +64,29 @@ void RenderProcessor::set_target_window(const std::shared_ptr<Core::Window>& win
 {
     m_target_window = window;
     window->register_rendering_buffer(buffer);
+}
+
+void RenderProcessor::set_visible(bool visible, const std::shared_ptr<VKBuffer>& buffer)
+{
+    if (!buffer)
+        return;
+
+    const auto it = std::ranges::find(m_hidden_buffers, buffer.get());
+    if (visible) {
+        if (it == m_hidden_buffers.end())
+            return;
+        m_hidden_buffers.erase(it);
+    } else {
+        if (it != m_hidden_buffers.end())
+            return;
+        m_hidden_buffers.push_back(buffer.get());
+    }
+    buffer->request_presentation_refresh(m_target_window);
+}
+
+bool RenderProcessor::is_visible(const std::shared_ptr<VKBuffer>& buffer) const
+{
+    return std::ranges::find(m_hidden_buffers, buffer.get()) == m_hidden_buffers.end();
 }
 
 void RenderProcessor::enable_alpha_blending()
@@ -262,27 +278,15 @@ void RenderProcessor::initialize_pipeline(const std::shared_ptr<VKBuffer>& buffe
 
     pipeline_config.depth_stencil = m_depth_stencil;
 
-    if (m_buffer_info.find(buffer) == m_buffer_info.end()) {
-        if (buffer->has_vertex_layout()) {
-            auto vertex_layout = buffer->get_vertex_layout();
-            if (vertex_layout.has_value()) {
-                m_buffer_info[buffer] = {
-                    .semantic_layout = vertex_layout.value(),
-                    .use_reflection = false
-                };
-            }
-        }
-    }
-
-    const Kakshya::VertexLayout* local_layout = get_or_cache_vertex_layout(m_buffer_info, buffer);
-    if (!local_layout) {
+    const auto* state = get_or_cache_buffer_state(buffer);
+    if (!state) {
         MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
             "initialize_pipeline: layout not yet available, deferring");
         return;
     }
 
-    pipeline_config.semantic_vertex_layout = *local_layout;
-    pipeline_config.use_vertex_shader_reflection = m_buffer_info[buffer].use_reflection;
+    pipeline_config.semantic_vertex_layout = state->semantic_layout;
+    pipeline_config.use_vertex_shader_reflection = state->use_reflection;
 
     pipeline_config.push_constant_size = resolve_push_constant_size(buffer);
 
@@ -453,10 +457,9 @@ void RenderProcessor::set_buffer_vertex_layout(
     const std::shared_ptr<VKBuffer>& buffer,
     const Kakshya::VertexLayout& layout)
 {
-    m_buffer_info[buffer] = {
-        .semantic_layout = layout,
-        .use_reflection = false
-    };
+    auto& state = m_buffer_info[buffer];
+    state.semantic_layout = layout;
+    state.use_reflection = false;
     m_needs_pipeline_rebuild = true;
 }
 
@@ -522,14 +525,15 @@ void RenderProcessor::set_runs(std::vector<Portal::Graphics::DrawRun> runs)
 void RenderProcessor::set_mill_spec(const Portal::Graphics::MillSpec& spec)
 {
     m_mill_spec = spec;
-    if (m_mill) {
-        m_mill->set_spec(spec);
+    for (auto& [buffer, state] : m_buffer_info) {
+        if (state.mill)
+            state.mill->set_spec(spec);
     }
 }
 
 uint32_t RenderProcessor::milled_vertex_count() const
 {
-    return m_mill ? m_mill->milled_count() : 0U;
+    return m_last_milled_vertex_count;
 }
 
 Portal::Graphics::PrimitiveTopology RenderProcessor::pipeline_topology() const
@@ -539,12 +543,8 @@ Portal::Graphics::PrimitiveTopology RenderProcessor::pipeline_topology() const
         : m_primitive_topology;
 }
 
-bool RenderProcessor::mill_runs(const std::shared_ptr<VKBuffer>& buffer)
+uint32_t RenderProcessor::mill_runs(const std::shared_ptr<VKBuffer>& buffer, Portal::Graphics::PrimitiveMill& mill)
 {
-    if (!m_triangulate) {
-        return true;
-    }
-
     std::span<const Portal::Graphics::DrawRun> runs = m_runs;
 
     Portal::Graphics::DrawRun whole {};
@@ -555,7 +555,7 @@ bool RenderProcessor::mill_runs(const std::shared_ptr<VKBuffer>& buffer)
             : (layout.has_value() ? layout->vertex_count : 0U);
 
         if (count == 0) {
-            return false;
+            return 0;
         }
 
         whole = { .topology = m_primitive_topology,
@@ -564,30 +564,54 @@ bool RenderProcessor::mill_runs(const std::shared_ptr<VKBuffer>& buffer)
         runs = { &whole, 1 };
     }
 
-    if (!m_mill) {
-        m_mill = std::make_unique<Portal::Graphics::PrimitiveMill>(m_mill_spec);
-    }
-
     const Portal::Graphics::MillView view {
         .eye = m_view_transform_active
             ? glm::vec3(glm::inverse(published_view_transform().view)[3])
             : glm::vec3(0.0F, 0.0F, 1.0e4F)
     };
 
-    return m_mill->mill(buffer, runs, view) > 0;
+    return mill.mill(buffer, runs, view);
 }
 
-std::shared_ptr<VKBuffer> RenderProcessor::draw_source(
-    const std::shared_ptr<VKBuffer>& attached) const
+void RenderProcessor::prepare_geometry(const std::shared_ptr<VKBuffer>& buffer, BufferState& state)
 {
-    if (m_triangulate && m_mill && m_mill->output()) {
-        return m_mill->output();
+    state.geometry_prepared = false;
+    state.first_vertex = m_first_vertex;
+    state.vertex_count = 0;
+    state.index_count = 0;
+
+    if (m_triangulate) {
+        if (!state.mill)
+            state.mill = std::make_unique<Portal::Graphics::PrimitiveMill>(m_mill_spec);
+        state.vertex_count = mill_runs(buffer, *state.mill);
+        m_last_milled_vertex_count = state.vertex_count;
+        state.first_vertex = 0;
+        if (state.vertex_count > 0) {
+            state.draw_source = state.mill->output();
+        } else if (state.draw_source != buffer) {
+            state.draw_source = buffer;
+        }
+    } else {
+        if (state.draw_source != buffer)
+            state.draw_source = buffer;
+        if (m_vertex_count > 0) {
+            state.vertex_count = m_vertex_count;
+        } else {
+            const auto layout = buffer->get_vertex_layout();
+            state.vertex_count = layout ? layout->vertex_count : 0U;
+        }
     }
-    return attached;
+
+    if (state.vertex_count > 0 && state.draw_source->has_index_buffer())
+        state.index_count = static_cast<uint32_t>(state.draw_source->get_index_buffer_size() / sizeof(uint32_t));
+    state.geometry_prepared = true;
 }
 
-bool RenderProcessor::on_before_execute(Portal::Graphics::CommandBufferID /*cmd_id*/, const std::shared_ptr<VKBuffer>& /*buffer*/)
+bool RenderProcessor::on_before_execute(Portal::Graphics::CommandBufferID /*cmd_id*/, const std::shared_ptr<VKBuffer>& buffer)
 {
+    if (!is_visible(buffer))
+        return false;
+
     if (!m_target_window) {
         MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
             "Target window not set");
@@ -598,19 +622,8 @@ bool RenderProcessor::on_before_execute(Portal::Graphics::CommandBufferID /*cmd_
 
 void RenderProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
 {
-    if (m_buffer_info.find(buffer) == m_buffer_info.end()) {
-        if (buffer->has_vertex_layout()) {
-            auto vertex_layout = buffer->get_vertex_layout();
-            if (vertex_layout.has_value()) {
-                m_buffer_info[buffer] = {
-                    .semantic_layout = vertex_layout.value(),
-                    .use_reflection = false
-                };
-            }
-        }
-    }
-
-    if (!m_target_window->is_graphics_registered()) {
+    if (!is_visible(buffer) || !m_target_window
+        || !m_target_window->is_graphics_registered()) {
         return;
     }
 
@@ -618,17 +631,33 @@ void RenderProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
         return;
     }
 
-    const Kakshya::VertexLayout* local_layout = get_or_cache_vertex_layout(m_buffer_info, buffer);
-    if (!local_layout) {
+    auto* state = get_or_cache_buffer_state(buffer);
+    if (!state) {
         MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
             "VKBuffer has no vertex layout set. Use buffer->set_vertex_layout()");
         return;
     }
 
     publish_view_transform();
+    prepare_geometry(buffer, *state);
+    record_draw(buffer, *state);
+}
 
-    const bool has_milled_geometry = mill_runs(buffer);
+void RenderProcessor::record_draw(const std::shared_ptr<VKBuffer>& buffer)
+{
+    if (!m_initialized || !is_visible(buffer) || !m_target_window
+        || !m_target_window->is_graphics_registered()
+        || m_pipeline_id == Portal::Graphics::INVALID_RENDER_PIPELINE)
+        return;
 
+    const auto it = m_buffer_info.find(buffer);
+    if (it == m_buffer_info.end() || !it->second.geometry_prepared)
+        return;
+    record_draw(buffer, it->second);
+}
+
+void RenderProcessor::record_draw(const std::shared_ptr<VKBuffer>& buffer, const BufferState& state)
+{
     buffer->set_pipeline_window(m_pipeline_id, m_target_window);
 
     auto& foundry = Portal::Graphics::get_shader_foundry();
@@ -733,33 +762,14 @@ void RenderProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
 
     on_before_execute(cmd_id, buffer);
 
-    const auto source = draw_source(buffer);
+    flow.bind_vertex_buffers(cmd_id, { state.draw_source });
 
-    flow.bind_vertex_buffers(cmd_id, { source });
-
-    const bool drawing_milled = m_triangulate && has_milled_geometry;
-    const uint32_t first_vertex = drawing_milled ? 0U : m_first_vertex;
-
-    uint32_t draw_count = 0;
-    if (drawing_milled) {
-        draw_count = m_mill->milled_count();
-    } else if (!m_triangulate) {
-        if (m_vertex_count > 0) {
-            draw_count = m_vertex_count;
+    if (state.vertex_count > 0) {
+        if (state.draw_source->has_index_buffer()) {
+            flow.bind_index_buffer(cmd_id, state.draw_source);
+            flow.draw_indexed(cmd_id, state.index_count, m_instance_count, 0, 0, 0);
         } else {
-            auto current_layout = source->get_vertex_layout();
-            draw_count = current_layout.has_value() ? current_layout->vertex_count : 0U;
-        }
-    }
-
-    if (draw_count > 0) {
-        if (source->has_index_buffer()) {
-            const auto index_count = static_cast<uint32_t>(
-                source->get_index_buffer_size() / sizeof(uint32_t));
-            flow.bind_index_buffer(cmd_id, source);
-            flow.draw_indexed(cmd_id, index_count, m_instance_count, 0, 0, 0);
-        } else {
-            flow.draw(cmd_id, draw_count, m_instance_count, first_vertex, 0);
+            flow.draw(cmd_id, state.vertex_count, m_instance_count, state.first_vertex, 0);
         }
     }
 
@@ -794,7 +804,9 @@ void RenderProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
                 vertex_layout->attributes.size());
 
             m_needs_pipeline_rebuild = true;
-            m_buffer_info[vk_buffer] = { .semantic_layout = vertex_layout.value(), .use_reflection = false };
+            auto& state = m_buffer_info[vk_buffer];
+            state.semantic_layout = vertex_layout.value();
+            state.use_reflection = false;
         }
     }
 
@@ -806,6 +818,47 @@ void RenderProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
         m_display_service = Registry::BackendRegistry::instance()
                                 .get_service<Registry::Service::DisplayService>();
     }
+}
+
+void RenderProcessor::on_detach(const std::shared_ptr<Buffer>& buffer)
+{
+    auto vk_buffer = std::dynamic_pointer_cast<VKBuffer>(buffer);
+    if (!vk_buffer)
+        return;
+
+    vk_buffer->remove_pipeline_window(m_pipeline_id);
+
+    if (m_target_window) {
+        bool has_other_pipeline = false;
+        for (const auto& [id, window] : vk_buffer->get_render_pipelines()) {
+            if (window == m_target_window) {
+                has_other_pipeline = true;
+                break;
+            }
+        }
+
+        if (!has_other_pipeline) {
+            auto primary = vk_buffer->get_render_processor();
+            has_other_pipeline = primary && primary.get() != this
+                && primary->get_target_window() == m_target_window;
+
+            if (!has_other_pipeline) {
+                for (const auto& render : vk_buffer->get_additional_render_processors()) {
+                    if (render.get() != this && render->get_target_window() == m_target_window) {
+                        has_other_pipeline = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (!has_other_pipeline)
+            m_target_window->unregister_rendering_buffer(vk_buffer);
+    }
+
+    std::erase(m_hidden_buffers, vk_buffer.get());
+    m_buffer_info.erase(vk_buffer);
+    ShaderProcessor::on_detach(buffer);
 }
 
 void RenderProcessor::cleanup()
@@ -838,10 +891,15 @@ void RenderProcessor::cleanup()
         m_fragment_shader_id = Portal::Graphics::INVALID_SHADER;
     }
 
-    if (m_mill) {
-        m_mill->release();
-        m_mill.reset();
+    for (auto& [buffer, state] : m_buffer_info) {
+        state.geometry_prepared = false;
+        state.draw_source.reset();
+        state.mill.reset();
+        state.first_vertex = 0;
+        state.vertex_count = 0;
+        state.index_count = 0;
     }
+    m_last_milled_vertex_count = 0;
     m_runs.clear();
 
     m_view_transform_ubo.reset();

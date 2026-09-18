@@ -113,6 +113,12 @@ public:
         uint32_t processing_units,
         const std::vector<double>& node_data);
 
+    /**
+     * @brief Detach graphics presentation for a window in this token domain.
+     * @param window Window whose render processors should be detached
+     */
+    void destroy_window(const std::shared_ptr<Core::Window>& window);
+
     /** @brienf Process Input from backend into buffer manager */
     void process_input(double* input_data, uint32_t num_channels, uint32_t num_frames);
 

@@ -16,6 +16,7 @@
 
 #ifdef MAYAFLUX_PLATFORM_MACOS
 #include <CoreFoundation/CoreFoundation.h>
+#include <csignal>
 #include <unistd.h>
 #endif
 
@@ -25,6 +26,7 @@
 
 #ifdef MAYAFLUX_PLATFORM_LINUX
 #include <csignal>
+#include <pthread.h>
 #endif
 
 namespace MayaFlux::Core {
@@ -203,68 +205,45 @@ void Engine::await_shutdown()
 #ifdef MAYAFLUX_PLATFORM_MACOS
     run_macos_event_loop();
 #elif defined(MAYAFLUX_PLATFORM_WINDOWS)
-    static std::atomic<bool> s_signal_received { false };
-    s_signal_received.store(false, std::memory_order_relaxed);
+    static HANDLE s_shutdown_event = CreateEventW(nullptr, TRUE, FALSE, nullptr);
+    if (!s_shutdown_event) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::Runtime,
+            "Failed to create shutdown event (GetLastError={}), cannot await Ctrl-C", GetLastError());
+        return;
+    }
+    ResetEvent(s_shutdown_event);
 
     SetConsoleCtrlHandler([](DWORD type) -> BOOL {
         if (type == CTRL_C_EVENT || type == CTRL_BREAK_EVENT || type == CTRL_CLOSE_EVENT) {
-            s_signal_received.store(true, std::memory_order_release);
+            SetEvent(s_shutdown_event);
             return TRUE;
         }
         return FALSE;
     },
         TRUE);
 
-    HANDLE h_stdin = GetStdHandle(STD_INPUT_HANDLE);
-    bool has_console = h_stdin != INVALID_HANDLE_VALUE && GetFileType(h_stdin) == FILE_TYPE_CHAR;
-
-    if (has_console) {
-        while (!s_signal_received.load(std::memory_order_acquire)
-            && !m_should_shutdown.load(std::memory_order_acquire)) {
-            if (WaitForSingleObject(h_stdin, 100) == WAIT_OBJECT_0) {
-                INPUT_RECORD rec {};
-                DWORD read {};
-                if (ReadConsoleInputW(h_stdin, &rec, 1, &read) && read > 0
-                    && rec.EventType == KEY_EVENT
-                    && rec.Event.KeyEvent.bKeyDown
-                    && rec.Event.KeyEvent.wVirtualKeyCode == VK_RETURN) {
-                    break;
-                }
-            }
-        }
-    } else {
-        m_should_shutdown.wait(false);
-    }
+    WaitForSingleObject(s_shutdown_event, INFINITE);
 #else
     static std::atomic<bool> s_signal_received { false };
     s_signal_received.store(false, std::memory_order_relaxed);
 
+    sigset_t block_mask, orig_mask;
+    sigemptyset(&block_mask);
+    sigaddset(&block_mask, SIGINT);
+    sigaddset(&block_mask, SIGTERM);
+    pthread_sigmask(SIG_BLOCK, &block_mask, &orig_mask);
+
     struct sigaction sa {};
+    sigemptyset(&sa.sa_mask);
     sa.sa_handler = [](int) { s_signal_received.store(true, std::memory_order_release); };
     sigaction(SIGINT, &sa, nullptr);
     sigaction(SIGTERM, &sa, nullptr);
 
-    bool has_tty = isatty(STDIN_FILENO);
-    if (has_tty) {
-        while (!s_signal_received.load(std::memory_order_acquire)) {
-            fd_set fds;
-            FD_ZERO(&fds);
-            FD_SET(STDIN_FILENO, &fds);
-            timeval tv { .tv_sec = 0, .tv_usec = 100000 };
-            if (select(1, &fds, nullptr, nullptr, &tv) > 0) {
-                char c {};
-                if (read(STDIN_FILENO, &c, 1) > 0 && c == '\n')
-                    break;
-            }
-        }
-    } else {
-        sigset_t mask;
-        sigfillset(&mask);
-        sigdelset(&mask, SIGINT);
-        sigdelset(&mask, SIGTERM);
-        sigsuspend(&mask);
+    while (!s_signal_received.load(std::memory_order_acquire)) {
+        sigsuspend(&orig_mask);
     }
 
+    pthread_sigmask(SIG_SETMASK, &orig_mask, nullptr);
 #endif
 
     m_should_shutdown.store(true, std::memory_order_release);
@@ -292,21 +271,31 @@ void Engine::run_macos_event_loop()
 {
     CFRunLoopRef runLoop = CFRunLoopGetMain();
 
-    dispatch_source_t stdinSource = dispatch_source_create(
-        DISPATCH_SOURCE_TYPE_READ,
-        STDIN_FILENO,
+    signal(SIGINT, SIG_IGN);
+    signal(SIGTERM, SIG_IGN);
+
+    dispatch_source_t sigintSource = dispatch_source_create(
+        DISPATCH_SOURCE_TYPE_SIGNAL,
+        SIGINT,
         0,
         dispatch_get_main_queue());
 
-    dispatch_source_set_event_handler(stdinSource, ^{
-        char buf[1024];
-        ssize_t bytes_read = read(STDIN_FILENO, buf, sizeof(buf));
-        if (bytes_read > 0) {
-            request_shutdown();
-        }
+    dispatch_source_t sigtermSource = dispatch_source_create(
+        DISPATCH_SOURCE_TYPE_SIGNAL,
+        SIGTERM,
+        0,
+        dispatch_get_main_queue());
+
+    dispatch_source_set_event_handler(sigintSource, ^{
+        request_shutdown();
     });
 
-    dispatch_resume(stdinSource);
+    dispatch_source_set_event_handler(sigtermSource, ^{
+        request_shutdown();
+    });
+
+    dispatch_resume(sigintSource);
+    dispatch_resume(sigtermSource);
 
     double timeout_seconds = 1.0 / static_cast<double>(m_graphics_config.target_frame_rate);
 
@@ -318,8 +307,10 @@ void Engine::run_macos_event_loop()
         CFRunLoopRunInMode(kCFRunLoopDefaultMode, timeout_seconds, false);
     }
 
-    dispatch_source_cancel(stdinSource);
-    dispatch_release(stdinSource);
+    dispatch_source_cancel(sigintSource);
+    dispatch_release(sigintSource);
+    dispatch_source_cancel(sigtermSource);
+    dispatch_release(sigtermSource);
 
     MF_INFO(Journal::Component::Core, Journal::Context::Runtime,
         "Main thread event loop exiting");

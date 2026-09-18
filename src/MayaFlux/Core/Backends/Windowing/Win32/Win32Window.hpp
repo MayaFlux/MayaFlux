@@ -88,6 +88,7 @@ private:
     std::atomic<bool> m_hwnd_ready { false };
     std::atomic<bool> m_should_close { false };
     std::atomic<bool> m_capture_enabled { false };
+    std::atomic<bool> m_in_size_move { false };
 
     static constexpr size_t EVENT_QUEUE_CAPACITY = 256;
 

@@ -85,6 +85,13 @@ public:
     void signal(Core::WindowEvent event);
 
     /**
+     * @brief Run an action after the active outermost window-event dispatch.
+     * @param action Action to run after event waiters, or immediately when
+     *               the source is idle.
+     */
+    void defer(std::function<void()> action);
+
+    /**
      * @brief Creates an awaiter that resumes on the next event of any type.
      */
     Kriya::WindowEventAwaiter next_event();
@@ -122,6 +129,8 @@ private:
     std::unordered_map<int, bool> m_button_states;
     double m_mouse_x {};
     double m_mouse_y {};
+    std::vector<std::function<void()>> m_deferred_actions;
+    size_t m_signal_depth {};
 
     /**
      * @brief Removes and returns the first pending event matching the filter.

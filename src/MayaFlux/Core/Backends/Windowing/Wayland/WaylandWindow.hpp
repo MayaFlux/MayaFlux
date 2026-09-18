@@ -129,6 +129,7 @@ private:
     std::atomic<bool> m_should_close { false };
     std::atomic<bool> m_graphics_registered { false };
     std::atomic<bool> m_pending_configure { false };
+    bool m_resizing { false };
     std::atomic<bool> m_capture_enabled { false };
     uint32_t m_pending_width {};
     uint32_t m_pending_height {};

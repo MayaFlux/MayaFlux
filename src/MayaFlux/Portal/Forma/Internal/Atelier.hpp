@@ -172,10 +172,13 @@ namespace internal {
             Graphics::PrimitiveTopology topology = Graphics::PrimitiveTopology::TRIANGLE_STRIP,
             std::function<float(T)> project = {})
         {
-            auto mapped = create_element<T>(
-                surface.layer(), surface.window(),
-                std::move(geom), std::move(initial),
-                topology, k_capacity_bytes, std::move(project));
+            auto buf = create_buffer(
+                surface.window(), k_capacity_bytes, topology);
+            auto mapped = make_mapped<T>(
+                std::move(initial), std::move(geom), std::move(buf));
+            mapped.element.id = surface.layer().add(mapped.element);
+            bridge().register_element(
+                surface.layer(), mapped, std::move(project));
 
             mapped.sync(&surface.layer());
 

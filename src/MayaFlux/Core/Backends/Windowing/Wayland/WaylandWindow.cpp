@@ -420,26 +420,49 @@ void WaylandWindow::on_xdg_surface_configure(void* data, xdg_surface* surf, uint
 // ============================================================================
 
 void WaylandWindow::on_toplevel_configure(void* data, xdg_toplevel*,
-    int32_t w, int32_t h, wl_array*)
+    int32_t w, int32_t h, wl_array* states)
 {
     auto* self = static_cast<WaylandWindow*>(data);
+
+    bool now_resizing = false;
+    const auto* state_begin = static_cast<const uint32_t*>(states->data);
+    const auto* state_end = reinterpret_cast<const uint32_t*>(
+        static_cast<const uint8_t*>(states->data) + states->size);
+    for (const auto* state = state_begin; state != state_end; ++state) {
+        if (*state == XDG_TOPLEVEL_STATE_RESIZING) {
+            now_resizing = true;
+            break;
+        }
+    }
+    const bool gesture_ended = self->m_resizing && !now_resizing;
+    self->m_resizing = now_resizing;
+
     if (w <= 0 || h <= 0)
         return;
 
-    if (static_cast<uint32_t>(w) == self->m_state.current_width && static_cast<uint32_t>(h) == self->m_state.current_height)
+    const bool size_changed = static_cast<uint32_t>(w) != self->m_state.current_width
+        || static_cast<uint32_t>(h) != self->m_state.current_height;
+
+    if (!size_changed && !gesture_ended)
         return;
 
     self->m_state.current_width = static_cast<uint32_t>(w);
     self->m_state.current_height = static_cast<uint32_t>(h);
     self->m_create_info.width = static_cast<uint32_t>(w);
     self->m_create_info.height = static_cast<uint32_t>(h);
+
     WindowEvent ev;
     ev.type = WindowEventType::WINDOW_RESIZED;
     ev.data = WindowEvent::ResizeData {
         .width = static_cast<uint32_t>(w),
         .height = static_cast<uint32_t>(h)
     };
-    self->emit(ev);
+
+    if (self->m_event_callback)
+        self->m_event_callback(ev);
+
+    if (!now_resizing)
+        self->m_event_source.signal(ev);
 }
 
 void WaylandWindow::on_toplevel_close(void* data, xdg_toplevel*)

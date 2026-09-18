@@ -10,8 +10,10 @@ void EventSource::dispatch(const void* event)
         return;
 
     auto waiters = m_waiters;
-    for (auto* w : waiters)
-        w->try_resume(event);
+    for (auto* waiter : waiters) {
+        if (std::ranges::find(m_waiters, waiter) != m_waiters.end())
+            waiter->try_resume(event);
+    }
 }
 
 void EventSource::register_waiter(Kriya::EventAwaiter* awaiter)

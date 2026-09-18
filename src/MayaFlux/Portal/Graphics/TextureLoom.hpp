@@ -117,6 +117,34 @@ public:
         uint32_t mip_levels = 1);
 
     /**
+     * @brief Allocate a 2D texture without uploading data or transitioning
+     *        its layout - left VK_IMAGE_LAYOUT_UNDEFINED.
+     *
+     * Every create_2d*() overload above performs (and blocks on) an initial
+     * layout transition or upload of its own, even when called with no
+     * data - create_2d(w, h, format, nullptr) still does a blocking
+     * transition to eShaderReadOnlyOptimal before returning. Use this
+     * instead when the caller is about to record its own upload right
+     * after (e.g. upload_data(image, data, size, staging, true) with
+     * deferred=true), so the whole undefined -> transfer-dst -> copy ->
+     * shader-read sequence is recorded once into a deferred command batch instead of
+     * paying for a separate blocking queue.waitIdle() first.
+     *
+     * @param width      Width in pixels.
+     * @param height     Height in pixels.
+     * @param format     Image format (default RGBA8).
+     * @param mip_levels Number of mipmap levels (1 = no mipmaps).
+     * @return           VKImage with device memory allocated, still in
+     *                   VK_IMAGE_LAYOUT_UNDEFINED, or nullptr on failure.
+     *                   The caller owns transitioning it before use.
+     */
+    [[nodiscard]] std::shared_ptr<Core::VKImage> create_2d_uninitialized(
+        uint32_t width,
+        uint32_t height,
+        ImageFormat format = ImageFormat::RGBA8,
+        uint32_t mip_levels = 1);
+
+    /**
      * @brief Create a 3D texture (volumetric)
      * @param width Width in pixels
      * @param height Height in pixels

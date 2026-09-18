@@ -1,5 +1,7 @@
 #include "Layer.hpp"
 
+#include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
+
 namespace MayaFlux::Portal::Forma {
 
 // =============================================================================
@@ -82,14 +84,23 @@ bool Layer::set_visible(uint32_t id, bool visible)
         return false;
 
     root->visible = visible;
-    if (root->buffer)
-        root->buffer->mark_for_processing(visible);
+    if (root->buffer) {
+        if (auto render = root->buffer->get_render_processor())
+            render->set_visible(visible, root->buffer);
+    }
 
     if (auto it = m_relations.find(id); it != m_relations.end()) {
         for (uint32_t rel_id : it->second)
             set_visible(rel_id, visible);
     }
     return true;
+}
+
+void Layer::set_all_visible(bool visible)
+{
+    for (const auto& el : m_elements) {
+        set_visible(el.id, visible);
+    }
 }
 
 bool Layer::bring_to_front(uint32_t id)
@@ -196,8 +207,10 @@ bool Layer::relate(uint32_t primary_id, uint32_t related_id)
         rel.push_back(related_id);
 
     r->visible = p->visible;
-    if (r->buffer)
-        r->buffer->mark_for_processing(p->visible);
+    if (r->buffer) {
+        if (auto render = r->buffer->get_render_processor())
+            render->set_visible(p->visible, r->buffer);
+    }
 
     return true;
 }

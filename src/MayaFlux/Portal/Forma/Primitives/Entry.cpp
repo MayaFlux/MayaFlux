@@ -16,6 +16,11 @@ namespace MayaFlux::Portal::Forma {
 
 namespace {
 
+    /// @brief Headroom on a row's staging buffer so a later resize within
+    ///        this margin reuses it instead of falling back to an internal
+    ///        one-shot allocation for that call.
+    constexpr size_t k_staging_margin = 2;
+
     /// @brief A fully-textured TRIANGLE_LIST quad, weight=1 so forma_multi.frag
     ///        samples textures[0]. The row's background now lives in that
     ///        texture's own pixels (Portal::Text::PressParams::background),
@@ -70,7 +75,7 @@ Entry make_entry(
     row_buf.buf->submit(textured_quad(row_rect));
 
     auto staging = Buffers::create_image_staging_buffer(
-        row_buf.text_image->get_size_bytes());
+        row_buf.text_image->get_size_bytes() * k_staging_margin);
 
     Portal::Text::PressParams params {
         .color = { 1.F, 1.F, 1.F, 1.F },
@@ -84,11 +89,13 @@ Entry make_entry(
     el.name = spec.label;
     const uint32_t id = surface.layer().add(el);
 
+    auto image_slot = std::make_shared<std::shared_ptr<Core::VKImage>>(row_buf.text_image);
+
     auto compose = [reader = spec.reader,
                         label = spec.label,
-                        text_image = row_buf.text_image,
-                        buf = row_buf.buf,
+                        image_slot,
                         staging,
+                        buf = row_buf.buf,
                         params,
                         last = std::optional<std::string> {}]() mutable {
         if (!buf || !reader)
@@ -99,9 +106,22 @@ Entry make_entry(
             return;
         last = text;
 
-        Portal::Text::repress(text_image, text, params, staging);
-        buf->bind_texture(0, text_image);
+        const bool fits = (*image_slot)->get_size_bytes() <= staging->get_size_bytes();
+        Portal::Text::repress(*image_slot, text, params, fits ? staging : nullptr);
+        buf->bind_texture(0, *image_slot);
     };
+
+    surface.ctx().on_resize(id,
+        [buf = row_buf.buf, surface, image_slot, staging, label = spec.label,
+            reader = spec.reader, params, x_min, x_max, row_h](uint32_t, uint32_t) {
+            const glm::uvec2 new_dims = row_pixel_dims(surface.window(), x_min, x_max, row_h);
+            Portal::Text::PressParams resize_params = params;
+            resize_params.budget_h = new_dims.y;
+            const std::string text = reader ? (label + ": " + reader()) : label;
+            const bool fits = static_cast<size_t>(new_dims.x) * new_dims.y * 4 <= staging->get_size_bytes();
+            *image_slot = Portal::Text::press(text, new_dims, resize_params, fits ? staging : nullptr);
+            buf->bind_texture(0, *image_slot);
+        });
 
     Link link(compose, compose);
 
