@@ -66,8 +66,15 @@ uint32_t place_label(
                     { bounds.width(), bounds.height() },
                     surface.window()->get_state().current_width,
                     surface.window()->get_state().current_height);
-                const bool fits = static_cast<size_t>(dims.x) * dims.y * 4 <= staging->get_size_bytes();
-                auto image = Portal::Text::press(text, dims, { .color = color }, fits ? staging : nullptr);
+
+                const size_t required_bytes = static_cast<size_t>(dims.x) * dims.y * 4;
+
+                if (required_bytes > staging->get_size_bytes()) {
+                    staging->resize(required_bytes * 2, false);
+                }
+
+                auto image = Portal::Text::press(
+                    text, dims, { .color = color }, staging);
                 buf->bind_texture(0, image);
             });
     }

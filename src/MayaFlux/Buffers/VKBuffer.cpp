@@ -10,6 +10,7 @@
 #include "MayaFlux/Registry/BackendRegistry.hpp"
 #include "MayaFlux/Registry/Service/BufferService.hpp"
 #include "MayaFlux/Registry/Service/ComputeService.hpp"
+#include "MayaFlux/Registry/Service/DisplayService.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
@@ -178,6 +179,18 @@ void VKBuffer::resize(size_t new_size, bool preserve_data)
             "Preserved {} bytes of old buffer data", copy_size);
     }
 
+    auto display_service = Registry::BackendRegistry::instance()
+                               .get_service<Registry::Service::DisplayService>();
+
+    if (!display_service) {
+        error<std::runtime_error>(
+            Journal::Component::Buffers,
+            Journal::Context::BufferManagement,
+            std::source_location::current(),
+            "Cannot resize buffer: BufferService not available");
+    }
+
+    display_service->wait_idle();
     buffer_service->destroy_buffer(shared_from_this());
 
     m_resources.buffer = vk::Buffer {};
