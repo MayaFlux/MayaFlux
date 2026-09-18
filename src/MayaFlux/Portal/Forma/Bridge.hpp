@@ -352,6 +352,27 @@ public:
         spawn_sync(mapped.element.id, [m = std::move(mapped)]() mutable { m.sync(); });
     }
 
+    /**
+     * @brief Register a Mapped element and scope its presentation sync to a Layer.
+     *
+     * The Layer scope is used only for stopping presentation sync when its
+     * Surface closes. Existing id-based bindings remain independent.
+     *
+     * @param layer   Layer owning the element.
+     * @param mapped  Fully constructed Mapped element.
+     * @param project Optional T to float projection for outbound readers.
+     */
+    template <typename T>
+    void register_element(
+        Layer& layer,
+        Mapped<T> mapped,
+        std::function<float(T)> project = {})
+    {
+        register_element(mapped.state, mapped.element.id, mapped.element.buffer, std::move(project));
+        spawn_sync(layer, mapped.element.id,
+            [m = std::move(mapped)]() mutable { m.sync(); });
+    }
+
     // =========================================================================
     // Binding lifecycle
     // =========================================================================
@@ -361,6 +382,15 @@ public:
      *        The element remains in its layer.
      */
     void unbind(uint32_t id);
+
+    /**
+     * @brief Stop presentation sync tasks owned by a Layer.
+     *
+     * Other Bridge bindings associated with the element ids remain active.
+     *
+     * @param layer Layer whose presentation sync tasks should stop.
+     */
+    void stop_sync(Layer& layer);
 
     template <typename T>
     void unbind(std::shared_ptr<MappedState<T>> state)
@@ -508,6 +538,14 @@ public:
      */
     void spawn_sync(uint32_t id, std::function<void()> sync_fn);
 
+    /**
+     * @brief Spawn a presentation sync task scoped to a Layer.
+     * @param layer Layer that owns the task.
+     * @param id Element id used for task naming and diagnostics.
+     * @param sync_fn Function invoked once per graphics frame.
+     */
+    void spawn_sync(Layer& layer, uint32_t id, std::function<void()> sync_fn);
+
 private:
     struct ElementRecord {
         std::shared_ptr<Buffers::FormaBuffer> buffer;
@@ -525,6 +563,7 @@ private:
     mutable uint32_t m_next_id { 0 };
 
     std::unordered_map<uint32_t, ElementRecord> m_records;
+    std::unordered_map<const Layer*, std::vector<std::string>> m_sync_tasks;
 
     std::string make_task_name(uint32_t id, const char* suffix) const;
     void cancel_inbound(ElementRecord& rec);

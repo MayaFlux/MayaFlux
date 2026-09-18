@@ -47,6 +47,7 @@ public:
     using KeyFn = std::function<void(uint32_t id)>;
     using TextFn = std::function<void(uint32_t id, uint32_t codepoint)>;
     using ResizeFn = std::function<void(uint32_t width, uint32_t height)>;
+    using CloseFn = std::function<void()>;
 
     /**
      * @brief Construct and immediately register event coroutines.
@@ -223,6 +224,13 @@ public:
     [[nodiscard]] std::optional<uint32_t> focused() const { return m_focused; }
 
     /**
+     * @brief Register a callback invoked when the Context window closes.
+     * @param id Element id associated with the callback.
+     * @param fn Callback invoked during close handling.
+     */
+    void on_close(uint32_t id, CloseFn fn);
+
+    /**
      * @brief Attach key-delta handlers to a Mapped<float> element.
      *
      * Binds key handlers that adjust the element's state by a delta on each
@@ -322,6 +330,7 @@ private:
         LeaveFn focus_lost;
         TextFn text;
         ResizeFn resize;
+        CloseFn close;
     };
 
     struct KeyHandlerState {
@@ -354,6 +363,8 @@ private:
     void handle_key_held(IO::Keys key);
     void handle_text(uint32_t codepoint);
     void handle_resize(uint32_t width, uint32_t height);
+    void handle_close();
+    void detach_window();
 
     std::optional<uint32_t> m_dragging[3];
     std::optional<uint32_t> m_focused;

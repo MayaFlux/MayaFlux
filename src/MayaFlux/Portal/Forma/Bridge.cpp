@@ -29,6 +29,11 @@ Bridge::~Bridge()
         cancel_inbound(rec);
         cancel_outbound(rec);
     }
+
+    for (auto& [layer, tasks] : m_sync_tasks) {
+        for (const auto& name : tasks)
+            m_scheduler.cancel_task(name);
+    }
 }
 
 // =============================================================================
@@ -339,6 +344,18 @@ void Bridge::unbind(uint32_t id)
     cancel_outbound(it->second);
 }
 
+void Bridge::stop_sync(Layer& layer)
+{
+    auto it = m_sync_tasks.find(&layer);
+    if (it == m_sync_tasks.end())
+        return;
+
+    for (const auto& name : it->second)
+        m_scheduler.cancel_task(name);
+
+    m_sync_tasks.erase(it);
+}
+
 // =============================================================================
 // Private
 // =============================================================================
@@ -369,6 +386,26 @@ void Bridge::spawn_sync(uint32_t id, std::function<void()> sync_fn)
 {
     auto name = make_task_name(id, "sync");
     m_records[id].outbound_tasks.push_back(name);
+
+    auto routine = [](Vruta::TaskScheduler&,
+                       std::function<void()> fn) -> Vruta::GraphicsRoutine {
+        auto& p = co_await Kriya::GetGraphicsPromise {};
+        while (!p.should_terminate) {
+            fn();
+            co_await Kriya::FrameDelay { .frames_to_wait = 1 };
+        }
+    };
+
+    m_scheduler.add_task(
+        std::make_shared<Vruta::GraphicsRoutine>(
+            routine(m_scheduler, std::move(sync_fn))),
+        name, false);
+}
+
+void Bridge::spawn_sync(Layer& layer, uint32_t id, std::function<void()> sync_fn)
+{
+    auto name = make_task_name(id, "sync");
+    m_sync_tasks[&layer].push_back(name);
 
     auto routine = [](Vruta::TaskScheduler&,
                        std::function<void()> fn) -> Vruta::GraphicsRoutine {

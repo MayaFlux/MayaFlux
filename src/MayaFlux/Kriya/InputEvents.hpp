@@ -214,5 +214,16 @@ namespace Kriya {
         std::shared_ptr<Core::Window> window,
         std::function<void(uint32_t, uint32_t)> callback);
 
+    /**
+     * @brief Creates an Event coroutine that triggers on window close.
+     *
+     * @param window   Window to listen to.
+     * @param callback Called when the window is closed.
+     * @return Event coroutine that can be added to EventManager.
+     */
+    MAYAFLUX_API Vruta::Event window_closed(
+        std::shared_ptr<Core::Window> window,
+        std::function<void()> callback);
+
 } // namespace Kriya
 } // namespace MayaFlux

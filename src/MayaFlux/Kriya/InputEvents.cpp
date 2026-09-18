@@ -264,4 +264,23 @@ Vruta::Event window_resized(
     }
 }
 
+Vruta::Event window_closed(
+    std::shared_ptr<Core::Window> window,
+    std::function<void()> callback)
+{
+    auto& promise = co_await GetEventPromise {};
+    auto& source = window->get_event_source();
+
+    Vruta::WindowEventFilter filter;
+    filter.event_type = Core::WindowEventType::WINDOW_CLOSED;
+
+    while (true) {
+        if (promise.should_terminate)
+            break;
+
+        co_await WindowEventAwaiter(source, filter);
+        callback();
+    }
+}
+
 } // namespace MayaFlux::Kriya
