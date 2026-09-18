@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Network::NodeNetwork::request_reset_from_channel" name="MayaFlux::Nodes::Network::NodeNetwork::request_reset_from_channel">
+<area shape="rect" id="Node000001" title="Request a reset from a specific channel." alt="" coords="5,5,204,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1NodeNetwork_a63c14feabc1e4951d10e26fdb33447d8.html#a63c14feabc1e4951d10e26fdb33447d8" title="Mark network as processed this cycle (lock&#45;free)" alt="" coords="252,13,487,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="204,30,238,30,238,35,204,35"/>
+</map>

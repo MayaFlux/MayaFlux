@@ -1,0 +1,7 @@
+<map id="MayaFlux::Journal::Archivist::scribe_rt" name="MayaFlux::Journal::Archivist::scribe_rt">
+<area shape="rect" id="Node000001" title="Log a message from a real&#45;time context with the specified severity, component, and context." alt="" coords="200,37,347,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Journal_a55905cf9a4b2c222aec06a4101daac87.html#a55905cf9a4b2c222aec06a4101daac87" title="printf&#45;style overload of scribe_rt()." alt="" coords="5,5,152,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="186,46,152,40,153,35,187,40"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Journal_aedb55c653f251a4e8e38b111a9240ca0.html#aedb55c653f251a4e8e38b111a9240ca0" title="Log a message in a real&#45;time context with automatic source location." alt="" coords="5,69,152,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="187,74,153,80,152,75,186,69"/>
+</map>

@@ -1,0 +1,44 @@
+<map id="MayaFlux::Kakshya::MeshInsertion::insert_flat" name="MayaFlux::Kakshya::MeshInsertion::insert_flat">
+<area shape="rect" id="Node000001" title="Insert a single flat mesh (no submesh tracking)." alt="" coords="757,341,944,381"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1IO_ab08dc66f06b8fc0eff2b6628fabaa1a2.html#ab08dc66f06b8fc0eff2b6628fabaa1a2" title="Download a ComputeMeshBuffer&#39;s current live geometry to CPU." alt="" coords="519,5,697,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="841,328,826,270,800,198,761,123,736,89,708,59,691,48,694,43,711,55,741,86,766,121,805,196,831,269,846,327"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1ModelReader_a4caf9e31c81e7ac5b07078c38300a6ca.html#a4caf9e31c81e7ac5b07078c38300a6ca" title=" " alt="" coords="507,69,709,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="836,329,818,283,791,227,754,171,732,146,708,123,689,112,692,107,711,119,736,142,758,168,795,225,823,281,841,327"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_1_1Kinesis_a4e5867137f37ff91f68ef6bf61629654.html#a4e5867137f37ff91f68ef6bf61629654" title="Generate a solid box as an indexed TRIANGLE_LIST mesh." alt="" coords="533,157,683,197"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="826,331,776,270,744,239,708,212,682,198,684,194,711,207,747,235,780,267,830,328"/>
+<area shape="rect" id="Node000010" href="$namespaceMayaFlux_1_1Kinesis_ab23ffa53708f2903b6f805bb744b715c.html#ab23ffa53708f2903b6f805bb744b715c" title="Generate a subdivided flat grid in the XZ plane." alt="" coords="533,245,683,285"/>
+<area shape="poly" id="edge10_Node000001_Node000010" title=" " alt="" coords="796,338,708,300,675,288,677,283,710,295,798,333"/>
+<area shape="rect" id="Node000011" href="$namespaceMayaFlux_1_1Kinesis_a38c8da81c6ffbf158376510daf401646.html#a38c8da81c6ffbf158376510daf401646" title=" " alt="" coords="529,334,687,389"/>
+<area shape="poly" id="edge12_Node000001_Node000011" title=" " alt="" coords="744,364,688,364,688,359,744,359"/>
+<area shape="rect" id="Node000012" href="$namespaceMayaFlux_1_1Kinesis_a19a034c900f0c7451f6c8ca338d010d8.html#a19a034c900f0c7451f6c8ca338d010d8" title=" " alt="" coords="531,437,685,477"/>
+<area shape="poly" id="edge14_Node000001_Node000012" title=" " alt="" coords="788,389,661,440,659,435,786,384"/>
+<area shape="rect" id="Node000013" href="$namespaceMayaFlux_1_1Kinesis_aae90616312e63c025dfc44f6245c3b43.html#aae90616312e63c025dfc44f6245c3b43" title="Extract an isosurface from a scalar field using marching cubes." alt="" coords="533,501,683,541"/>
+<area shape="poly" id="edge16_Node000001_Node000013" title=" " alt="" coords="825,394,775,444,744,469,711,492,685,504,682,499,708,487,741,465,772,440,821,390"/>
+<area shape="rect" id="Node000018" href="$namespaceMayaFlux_1_1Kinesis_af98d70db04213f524fce198807321678.html#af98d70db04213f524fce198807321678" title=" " alt="" coords="533,589,683,629"/>
+<area shape="poly" id="edge21_Node000001_Node000018" title=" " alt="" coords="834,395,784,472,750,516,711,555,684,575,656,591,654,587,681,571,708,551,746,512,780,469,830,392"/>
+<area shape="rect" id="Node000019" href="$classMayaFlux_1_1Buffers_1_1MeshBuffer_a952adb7d8c6fc079a3031c7db7bd2ff7.html#a952adb7d8c6fc079a3031c7db7bd2ff7" title="Construct from a MeshWriterNode." alt="" coords="519,653,697,693"/>
+<area shape="poly" id="edge23_Node000001_Node000019" title=" " alt="" coords="844,396,828,449,802,516,763,584,739,616,711,643,693,656,690,651,708,639,735,612,759,581,797,514,823,448,839,394"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1IO_a341973f95e20aa0947d46ad98c793637.html#a341973f95e20aa0947d46ad98c793637" title="Save a ComputeMeshBuffer&#39;s current live geometry to disk." alt="" coords="262,13,453,38"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="505,28,453,28,453,23,505,23"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1IO_1_1ModelReader_aa3ce0f7631753b15955e175c1855e7fc.html#aa3ce0f7631753b15955e175c1855e7fc" title="Construct a MeshNetwork from all meshes in the currently loaded scene." alt="" coords="256,67,459,107"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="493,91,459,90,459,85,493,85"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1IO_1_1ModelReader_a5a5995d155657e1b4f55d047efa2e442.html#a5a5995d155657e1b4f55d047efa2e442" title="Load all meshes after open() has already been called." alt="" coords="256,131,459,171"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="513,115,440,133,439,128,512,110"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1IO_1_1ModelReader_a82f82a404791ba9ad9838a1fc2774f32.html#a82f82a404791ba9ad9838a1fc2774f32" title="Construct one MeshBuffer per mesh in the currently loaded scene." alt="" coords="5,99,208,139"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="242,139,208,134,208,129,243,133"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1IO_1_1ModelReader_ad139ba0a544c0712059cc8913bb59bc5.html#ad139ba0a544c0712059cc8913bb59bc5" title="Load all meshes from a file in one call." alt="" coords="5,163,208,203"/>
+<area shape="poly" id="edge7_Node000006_Node000008" title=" " alt="" coords="243,168,208,172,208,167,242,163"/>
+<area shape="poly" id="edge9_Node000009_Node000009" title=" " alt="" coords="649,146,635,139,608,136,585,138,570,143,565,149,568,156,563,158,560,148,567,138,583,133,608,131,636,134,652,141"/>
+<area shape="poly" id="edge11_Node000010_Node000010" title=" " alt="" coords="649,234,635,227,608,224,585,226,570,231,565,237,568,244,563,246,560,236,567,226,583,221,608,219,636,222,652,229"/>
+<area shape="poly" id="edge13_Node000011_Node000011" title=" " alt="" coords="649,323,634,316,608,313,586,315,572,319,566,326,566,334,561,334,561,324,569,315,585,309,608,307,635,310,651,318"/>
+<area shape="poly" id="edge15_Node000012_Node000012" title=" " alt="" coords="649,426,635,419,608,416,585,418,570,423,565,429,568,436,563,438,560,428,567,418,583,413,608,411,636,414,652,421"/>
+<area shape="rect" id="Node000014" href="$namespaceMayaFlux_1_1Kinesis_a065fdfe764dace0ba9ea5c0c20311aed.html#a065fdfe764dace0ba9ea5c0c20311aed" title="Extract an isosurface mesh from a scalar field over a lattice." alt="" coords="282,469,433,509"/>
+<area shape="poly" id="edge17_Node000013_Node000014" title=" " alt="" coords="519,513,432,502,433,496,519,507"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1SDFNode_a3b05244a99b639a2b98cf60744654a2b.html#a3b05244a99b639a2b98cf60744654a2b" title=" " alt="" coords="257,533,457,573"/>
+<area shape="poly" id="edge18_Node000013_Node000015" title=" " alt="" coords="519,535,458,543,457,538,519,530"/>
+<area shape="rect" id="Node000016" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1SDFNode_a8d93283e3887f0b2a717c407a008d703.html#a8d93283e3887f0b2a717c407a008d703" title="Re&#45;extract the isosurface if dirty, then upload via parent." alt="" coords="6,501,207,541"/>
+<area shape="poly" id="edge19_Node000015_Node000016" title=" " alt="" coords="243,541,207,537,208,532,244,536"/>
+<area shape="rect" id="Node000017" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1SDFNode_a61950494104522a83fb51c0149ea3345.html#a61950494104522a83fb51c0149ea3345" title="Construct and evaluate the initial isosurface." alt="" coords="7,565,207,605"/>
+<area shape="poly" id="edge20_Node000015_Node000017" title=" " alt="" coords="244,570,207,575,206,570,244,565"/>
+<area shape="poly" id="edge22_Node000018_Node000018" title=" " alt="" coords="649,578,635,571,608,568,585,570,570,575,565,581,568,588,563,590,560,580,567,570,583,565,608,563,636,566,652,573"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::TCPBackend::shutdown" name="MayaFlux::Core::TCPBackend::shutdown">
+<area shape="rect" id="Node000001" title="Release all resources, close all endpoints." alt="" coords="5,5,216,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1TCPBackend_aafb6210c45d90a054138e85b7fea8efd.html#aafb6210c45d90a054138e85b7fea8efd" title="Stop receive threads without releasing resources." alt="" coords="264,5,475,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="216,23,251,23,251,28,216,28"/>
+</map>

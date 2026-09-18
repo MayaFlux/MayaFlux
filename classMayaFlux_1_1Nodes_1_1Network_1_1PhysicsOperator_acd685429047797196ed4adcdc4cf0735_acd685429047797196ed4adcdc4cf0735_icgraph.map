@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::Network::PhysicsOperator::clear_bonds" name="MayaFlux::Nodes::Network::PhysicsOperator::clear_bonds">
+<area shape="rect" id="Node000001" title="Drop every adopted bond." alt="" coords="288,41,511,81"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1PhysicsOperator_a45a13b0d96ce6af147a339a61aed615c.html#a45a13b0d96ce6af147a339a61aed615c" title="Enable or disable adopting bonds from sync_bonds_from_claims." alt="" coords="5,5,240,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="274,48,240,43,241,38,275,42"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1ClaimAccumulateProcessor_a647d18931fa71b692f0ce0bb97b778ba.html#a647d18931fa71b692f0ce0bb97b778ba" title="Dispatch as usual, then conditionally read back the result." alt="" coords="23,70,223,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="274,80,223,87,223,82,274,75"/>
+</map>

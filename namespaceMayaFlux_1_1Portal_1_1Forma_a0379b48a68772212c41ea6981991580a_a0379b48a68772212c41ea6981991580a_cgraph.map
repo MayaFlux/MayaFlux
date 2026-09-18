@@ -1,0 +1,36 @@
+<map id="MayaFlux::Portal::Forma::destroy" name="MayaFlux::Portal::Forma::destroy">
+<area shape="rect" id="Node000001" title="Tear down an element and everything related to it." alt="" coords="5,216,187,256"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Forma_acd944a5f64ed887bcb7bab38ee13f093.html#acd944a5f64ed887bcb7bab38ee13f093" title="Return the application&#45;level Bridge instance." alt="" coords="235,37,416,77"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="111,214,162,156,196,123,233,94,255,81,257,86,236,98,199,127,165,160,115,218"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Layer_a5ef0a8c9d5e0d9c5bc88b344fd4fe86f.html#a5ef0a8c9d5e0d9c5bc88b344fd4fe86f" title="Return id plus every id transitively related to it." alt="" coords="469,159,650,199"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="116,214,166,172,199,152,234,137,267,129,301,125,370,127,435,137,491,152,490,157,434,143,370,132,302,131,268,135,236,143,201,157,169,177,119,218"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Surface_a59632cf950ca32272134390bb45ee7ab.html#a59632cf950ca32272134390bb45ee7ab" title="Access the event router." alt="" coords="235,152,416,192"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="168,213,240,193,241,198,169,218"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Surface_a75c1be61d11b8a157158eee48c4e5992.html#a75c1be61d11b8a157158eee48c4e5992" title="Access the spatial registry." alt="" coords="235,216,416,256"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="187,233,221,233,221,239,187,239"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Layer_a94ec57826c7fb864846696d2c1ce0fde.html#a94ec57826c7fb864846696d2c1ce0fde" title="Remove an element by id, cascading to every related id." alt="" coords="235,280,416,320"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="169,254,241,274,240,279,168,259"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Bridge_a367d65aefbad4e7a1d844a1a9be38d1a.html#a367d65aefbad4e7a1d844a1a9be38d1a" title="Cancel all inbound and outbound bindings for an element." alt="" coords="235,344,416,384"/>
+<area shape="poly" id="edge11_Node000001_Node000011" title=" " alt="" coords="123,254,174,292,236,330,250,336,247,341,233,334,171,296,120,258"/>
+<area shape="rect" id="Node000016" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Context_a7582469623030bcf42989c0d1f9451b7.html#a7582469623030bcf42989c0d1f9451b7" title="Remove all callbacks registered for an element id." alt="" coords="235,408,416,448"/>
+<area shape="poly" id="edge18_Node000001_Node000016" title=" " alt="" coords="112,255,161,322,196,361,236,394,245,399,242,404,233,398,193,364,157,326,107,258"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1internal_abdc2f8c3b42bcb7e0e99aae7e15a4615.html#abdc2f8c3b42bcb7e0e99aae7e15a4615" title="Accessor for the process&#45;wide Atelier." alt="" coords="469,5,650,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="416,42,455,37,455,42,416,48"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Forma_1_1internal_1_1Atelier_ae6a68b62f4ba807365f83dc74b9671dd.html#ae6a68b62f4ba807365f83dc74b9671dd" title="Bridge instance constructed during initialize." alt="" coords="469,69,650,109"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="416,67,455,72,455,78,416,72"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Forma_1_1internal_1_1Atelier_ad532f0c0c5f3b22f4c31e182c127b3df.html#ad532f0c0c5f3b22f4c31e182c127b3df" title=" " alt="" coords="721,5,915,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="650,23,707,23,707,28,650,28"/>
+<area shape="poly" id="edge9_Node000009_Node000006" title=" " alt="" coords="387,277,415,266,469,235,518,204,520,209,472,240,417,270,389,282"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Layer_a6a279bbd434c7f805d6d21f4bf1e2155.html#a6a279bbd434c7f805d6d21f4bf1e2155" title=" " alt="" coords="469,280,650,320"/>
+<area shape="poly" id="edge10_Node000009_Node000010" title=" " alt="" coords="416,297,455,297,455,303,416,303"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Bridge_a5f483010f6e367397305db3d02398a0a.html#a5f483010f6e367397305db3d02398a0a" title=" " alt="" coords="469,344,650,384"/>
+<area shape="poly" id="edge12_Node000011_Node000012" title=" " alt="" coords="416,361,455,361,455,367,416,367"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Bridge_ac14fb1d2e20704c4966cabc3c823d0aa.html#ac14fb1d2e20704c4966cabc3c823d0aa" title=" " alt="" coords="464,408,655,448"/>
+<area shape="poly" id="edge16_Node000011_Node000015" title=" " alt="" coords="400,382,473,402,472,407,399,387"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_aefd214af5e476f686dc86cc7d7220c96.html#aefd214af5e476f686dc86cc7d7220c96" title="Cancels and removes a task from the scheduler." alt="" coords="703,376,933,416"/>
+<area shape="poly" id="edge13_Node000012_Node000013" title=" " alt="" coords="651,373,689,377,689,383,650,378"/>
+<area shape="poly" id="edge14_Node000013_Node000013" title=" " alt="" coords="770,376,767,366,775,357,792,351,818,349,848,352,864,359,862,364,847,357,818,355,793,357,778,361,772,367,775,375"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_afb823dfb8ca7ec5182cfaa8e3ee93649.html#afb823dfb8ca7ec5182cfaa8e3ee93649" title="Find task entry by routine pointer." alt="" coords="981,376,1212,416"/>
+<area shape="poly" id="edge15_Node000013_Node000014" title=" " alt="" coords="934,393,968,393,968,399,934,399"/>
+<area shape="poly" id="edge17_Node000015_Node000013" title=" " alt="" coords="655,414,689,409,689,415,655,419"/>
+</map>

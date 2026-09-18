@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::GraphicsSubsystem::graphics_thread_loop" name="MayaFlux::Core::GraphicsSubsystem::graphics_thread_loop">
+<area shape="rect" id="Node000001" title="Graphics thread main loop." alt="" coords="243,5,484,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1GraphicsSubsystem_a34118595a38cba09a09a08824f4d0283.html#a34118595a38cba09a09a08824f4d0283" title="Start the subsystem&#39;s processing/event loops." alt="" coords="5,5,195,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="229,28,195,28,195,23,229,23"/>
+</map>

@@ -1,0 +1,13 @@
+<map id="MayaFlux::IO::ImageReader::load" name="MayaFlux::IO::ImageReader::load">
+<area shape="rect" id="Node000001" title="Load image from file (static utility)" alt="" coords="5,22,208,62"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1FileReader_a24d94d5bc8b4294d61f43ac86f933050.html#a24d94d5bc8b4294d61f43ac86f933050" title="Resolve a filepath against the project source root if not found as&#45;is." alt="" coords="256,22,441,62"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="208,39,242,39,242,45,208,45"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_ac8ded33a4e354a3259e25ea984c19053.html#ac8ded33a4e354a3259e25ea984c19053" title="Normalize single&#45;channel data (non&#45;destructive)" alt="" coords="489,29,656,55"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="442,39,476,39,476,45,442,45"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a5de3d13e1b9ceb59d3acb04361e2a5e5.html#a5de3d13e1b9ceb59d3acb04361e2a5e5" title="Normalize to [target_min, target_max] in&#45;place Single&#45;pass min/max reduction followed by a single tra..." alt="" coords="704,22,853,62"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="656,39,690,39,690,45,656,45"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_a878fe1820a72f64efebc516b1749f77d.html#a878fe1820a72f64efebc516b1749f77d" title="Normalize single&#45;channel data to specified peak level (in&#45;place)" alt="" coords="901,29,1060,55"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="854,48,888,48,888,54,854,53"/>
+<area shape="poly" id="edge5_Node000005_Node000004" title=" " alt="" coords="901,36,867,36,867,30,901,31"/>
+<area shape="poly" id="edge6_Node000005_Node000005" title=" " alt="" coords="948,31,941,21,944,11,958,5,981,3,1009,6,1020,16,1016,20,1006,11,981,8,959,10,948,15,946,20,952,28"/>
+</map>

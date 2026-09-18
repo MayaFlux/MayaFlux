@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Network::ResonatorNetwork::set_frequency" name="MayaFlux::Nodes::Network::ResonatorNetwork::set_frequency">
+<area shape="rect" id="Node000001" title="Set centre frequency of a single resonator and recompute its coefficients." alt="" coords="5,5,204,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ResonatorNetwork_a47653e6f983490bb1a16698c723e9f93.html#a47653e6f983490bb1a16698c723e9f93" title="Compute RBJ biquad bandpass coefficients and push them into a resonator&#39;s IIR." alt="" coords="252,13,519,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="204,30,238,30,238,35,204,35"/>
+</map>

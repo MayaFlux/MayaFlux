@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::update_buffer_with_node_data" name="MayaFlux::Buffers::update_buffer_with_node_data">
+<area shape="rect" id="Node000001" title="Apply node output to an existing buffer with mixing." alt="" coords="216,13,439,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1NodeSourceProcessor_abb9c8186748067cf20214a1f01b1575d.html#abb9c8186748067cf20214a1f01b1575d" title="Captures node computation output into a buffer." alt="" coords="5,5,168,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="202,35,168,35,168,30,202,30"/>
+</map>

@@ -1,0 +1,14 @@
+<map id="MayaFlux::Buffers::ShaderProcessor::set_deferred_submission" name="MayaFlux::Buffers::ShaderProcessor::set_deferred_submission">
+<area shape="rect" id="Node000001" title="Submit asynchronously and resolve at the top of a later cycle." alt="" coords="5,43,171,97"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_ac68d47c3acf25f5a69dbba4fc6b82a7f.html#ac68d47c3acf25f5a69dbba4fc6b82a7f" title="True while an asynchronous submission is outstanding." alt="" coords="477,5,627,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="171,61,463,37,464,42,171,66"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_ac38468f8a2f97593dd7b88fd31063bed.html#ac38468f8a2f97593dd7b88fd31063bed" title="Resolve an outstanding asynchronous submission." alt="" coords="219,75,405,129"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="172,79,205,84,205,89,171,84"/>
+<area shape="poly" id="edge5_Node000003_Node000002" title=" " alt="" coords="405,73,463,55,465,61,406,78"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a715d57394465ff2924727d7c82d87e7b.html#a715d57394465ff2924727d7c82d87e7b" title="Get the global shader compiler instance." alt="" coords="453,85,651,125"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="405,100,440,101,440,106,405,106"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_ab674b8ea0cbd04326fcd10b02184ae56.html#ab674b8ea0cbd04326fcd10b02184ae56" title="Called once when an asynchronous submission is observed complete." alt="" coords="475,149,629,204"/>
+<area shape="poly" id="edge6_Node000003_Node000006" title=" " alt="" coords="401,127,462,146,461,151,400,132"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ab22eaae6b8210236918b85f409fc4c49.html#ab22eaae6b8210236918b85f409fc4c49" title=" " alt="" coords="699,85,896,125"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="651,102,685,102,685,107,651,107"/>
+</map>

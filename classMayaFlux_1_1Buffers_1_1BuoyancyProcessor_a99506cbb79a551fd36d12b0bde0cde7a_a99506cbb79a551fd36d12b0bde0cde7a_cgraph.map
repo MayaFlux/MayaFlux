@@ -1,0 +1,10 @@
+<map id="MayaFlux::Buffers::BuoyancyProcessor::write_tail" name="MayaFlux::Buffers::BuoyancyProcessor::write_tail">
+<area shape="rect" id="Node000001" title="Write every parameter past the shared prefix." alt="" coords="5,53,224,93"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VolumeFieldProcessor_a4095b76d856fe604d407ff85813245d0.html#a4095b76d856fe604d407ff85813245d0" title="Write word seven of the parameter prefix, at byte offset 28." alt="" coords="272,5,437,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="224,52,258,46,259,51,225,57"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1VolumeFieldProcessor_a31c30ba6b35e0eb1cab0490e7a4fc920.html#a31c30ba6b35e0eb1cab0490e7a4fc920" title="Write subclass parameters past the shared prefix." alt="" coords="272,84,437,139"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="225,88,259,93,258,98,224,93"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a08f86ff68a93950b07208ee936badf8e.html#a08f86ff68a93950b07208ee936badf8e" title="Get current push constant data." alt="" coords="485,45,644,100"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="438,46,472,52,471,58,437,51"/>
+<area shape="poly" id="edge4_Node000004_Node000003" title=" " alt="" coords="437,94,471,87,472,92,438,99"/>
+</map>

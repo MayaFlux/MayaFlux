@@ -1,0 +1,25 @@
+<map id="MayaFlux::Buffers::RenderProcessor" name="MayaFlux::Buffers::RenderProcessor">
+<area shape="rect" id="Node000001" title=" " alt="" coords="817,1672,1027,2407"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor.html" title="Abstract base class for shader&#45;based buffer processing." alt="" coords="320,751,519,1609"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="527,1596,534,1608,563,1658,596,1706,670,1798,746,1879,818,1947,814,1951,743,1883,666,1801,592,1709,559,1661,529,1611,523,1599"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VKBufferProcessor.html" title=" " alt="" coords="215,491,408,625"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="328,639,347,750,342,751,323,639"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1BufferProcessor.html" title="Central computational transformation interface for continuous buffer processing." alt="" coords="5,55,185,315"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="178,326,200,364,274,489,269,492,196,367,174,329"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Registry_1_1Service_1_1BufferService.html" title="Backend buffer management service interface." alt="" coords="210,5,413,365"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="314,366,314,474,309,474,309,366"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Registry_1_1Service_1_1ComputeService.html" title="Backend compute shader and pipeline service interface." alt="" coords="437,95,644,275"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="512,277,484,342,447,406,435,418,423,430,379,480,375,476,419,426,431,415,443,402,479,339,508,275"/>
+<area shape="rect" id="Node000007" href="$structMayaFlux_1_1Buffers_1_1ShaderConfig.html" title=" " alt="" coords="433,428,622,688"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="508,688,499,735,494,734,502,688"/>
+<area shape="rect" id="Node000008" href="$structMayaFlux_1_1Registry_1_1Service_1_1DisplayService.html" title="Backend display and presentation service interface." alt="" coords="543,1018,741,1342"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="645,1342,651,1414,660,1492,674,1571,695,1647,718,1708,746,1767,810,1878,805,1880,742,1769,713,1710,690,1649,669,1572,655,1493,645,1415,640,1342"/>
+<area shape="rect" id="Node000009" title=" " alt="" coords="765,1147,895,1213"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="830,1213,823,1398,825,1522,834,1648,835,1655,830,1656,829,1648,819,1522,818,1398,825,1213"/>
+<area shape="rect" id="Node000010" href="$structMayaFlux_1_1Portal_1_1Graphics_1_1DepthStencilConfig.html" title="Depth and stencil test configuration." alt="" coords="919,1110,1109,1250"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="1014,1250,1005,1431,987,1648,986,1656,981,1655,982,1648,1000,1430,1009,1250"/>
+<area shape="rect" id="Node000011" href="$structMayaFlux_1_1Kinesis_1_1ViewTransform.html" title="View and projection matrices as a named push constant slot." alt="" coords="1133,1130,1274,1230"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="1202,1231,1192,1312,1175,1418,1148,1534,1111,1649,1037,1819,1032,1816,1106,1647,1143,1533,1169,1417,1187,1311,1196,1230"/>
+<area shape="rect" id="Node000012" href="$structMayaFlux_1_1Portal_1_1Graphics_1_1MillSpec.html" title="How a PrimitiveMill shapes spans." alt="" coords="1319,1090,1509,1270"/>
+<area shape="poly" id="edge11_Node000001_Node000012" title=" " alt="" coords="1414,1271,1406,1354,1390,1452,1363,1553,1344,1602,1322,1649,1294,1695,1262,1740,1191,1823,1115,1895,1042,1955,1039,1951,1111,1891,1187,1819,1258,1737,1289,1692,1317,1647,1339,1600,1358,1551,1385,1450,1401,1354,1409,1270"/>
+</map>

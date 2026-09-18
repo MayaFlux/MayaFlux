@@ -1,0 +1,11 @@
+<map id="MayaFlux::Core::UDPBackend::open_endpoint" name="MayaFlux::Core::UDPBackend::open_endpoint">
+<area shape="rect" id="Node000001" title="Open a new endpoint." alt="" coords="5,69,220,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1UDPBackend_a3e9dececf9b1c5cd93c3f5bf293d7635.html#a3e9dececf9b1c5cd93c3f5bf293d7635" title="Get or create a socket bound to local_port." alt="" coords="268,5,483,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="195,67,279,46,280,51,196,72"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1UDPBackend_a299959f5517f8a74bf4f2a4aa71ec40d.html#a299959f5517f8a74bf4f2a4aa71ec40d" title="Decrement ref_count for a socket." alt="" coords="268,69,483,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="220,87,254,87,254,92,220,92"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Core_1_1UDPBackend_a01631612c559cf572e99f26a8e9ac41b.html#a01631612c559cf572e99f26a8e9ac41b" title=" " alt="" coords="268,133,483,173"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="196,107,280,127,279,133,195,112"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1UDPBackend_aaa05d06067d5870da51c50701c20abcf.html#aaa05d06067d5870da51c50701c20abcf" title="Post the first async_receive_from for a newly bound socket." alt="" coords="531,5,745,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="483,23,517,23,517,28,483,28"/>
+</map>

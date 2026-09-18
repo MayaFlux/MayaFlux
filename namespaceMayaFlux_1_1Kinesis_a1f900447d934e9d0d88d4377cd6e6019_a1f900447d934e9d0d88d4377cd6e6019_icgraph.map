@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kinesis::centroid" name="MayaFlux::Kinesis::centroid">
+<area shape="rect" id="Node000001" title="Mean position across a window." alt="" coords="400,37,549,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_aaf3816fbfdfd47516d9c0d8887e93065.html#aaf3816fbfdfd47516d9c0d8887e93065" title="Convenience overload of centroid over a raw span of positions, samples[0] newest." alt="" coords="203,5,352,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="386,46,352,40,353,35,387,40"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_a3a1cf9a988f068a15b3d2a91730aa20f.html#a3a1cf9a988f068a15b3d2a91730aa20f" title="Bounding radius of a window around its centroid." alt="" coords="203,69,352,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="387,74,353,80,352,75,386,69"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_a621cb2f284e450173d116808db50e2c1.html#a621cb2f284e450173d116808db50e2c1" title="Convenience overload of spread_radius over a raw span of positions, samples[0] newest." alt="" coords="5,69,155,109"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="189,92,155,92,155,87,189,87"/>
+</map>

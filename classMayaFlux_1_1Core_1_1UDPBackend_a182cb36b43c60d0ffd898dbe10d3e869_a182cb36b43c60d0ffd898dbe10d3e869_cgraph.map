@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::UDPBackend::close_endpoint" name="MayaFlux::Core::UDPBackend::close_endpoint">
+<area shape="rect" id="Node000001" title="Close an endpoint and release its resources." alt="" coords="5,5,220,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1UDPBackend_a299959f5517f8a74bf4f2a4aa71ec40d.html#a299959f5517f8a74bf4f2a4aa71ec40d" title="Decrement ref_count for a socket." alt="" coords="268,5,483,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="220,23,254,23,254,28,220,28"/>
+</map>

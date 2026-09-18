@@ -1,0 +1,23 @@
+<map id="AudioBackend.hpp" name="AudioBackend.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="417,5,559,31"/>
+<area shape="rect" id="Node000002" href="$AudioBackendFactory_8cpp.html" title=" " alt="" coords="5,79,192,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="413,36,162,81,161,76,412,30"/>
+<area shape="rect" id="Node000003" href="$AudioSubsystem_8hpp.html" title=" " alt="" coords="217,79,375,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="445,38,328,81,326,76,443,33"/>
+<area shape="rect" id="Node000006" href="$CoreAudioBackend_8hpp.html" title=" " alt="" coords="402,79,574,104"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="491,44,491,79,485,79,485,44"/>
+<area shape="rect" id="Node000008" href="$PipewireBackend_8hpp.html" title=" " alt="" coords="598,79,759,104"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="532,33,648,76,647,81,531,38"/>
+<area shape="rect" id="Node000010" href="$WasapiBackend_8hpp.html" title=" " alt="" coords="784,79,936,104"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="562,31,800,76,799,81,561,36"/>
+<area shape="rect" id="Node000004" href="$AudioSubsystem_8cpp.html" title=" " alt="" coords="21,152,179,177"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="253,111,133,154,131,149,251,106"/>
+<area shape="rect" id="Node000005" href="$SubsystemManager_8cpp.html" title=" " alt="" coords="203,152,381,177"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="297,118,295,152,290,152,292,118"/>
+<area shape="rect" id="Node000007" href="$CoreAudioBackend_8cpp.html" title=" " alt="" coords="405,152,576,177"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="492,118,493,152,488,152,486,118"/>
+<area shape="rect" id="Node000009" href="$PipewireBackend_8cpp.html" title=" " alt="" coords="600,152,760,177"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="682,118,682,152,677,152,676,118"/>
+<area shape="rect" id="Node000011" href="$WasapiBackend_8cpp.html" title=" " alt="" coords="785,152,935,177"/>
+<area shape="poly" id="edge10_Node000010_Node000011" title=" " alt="" coords="863,118,863,152,857,152,857,118"/>
+</map>

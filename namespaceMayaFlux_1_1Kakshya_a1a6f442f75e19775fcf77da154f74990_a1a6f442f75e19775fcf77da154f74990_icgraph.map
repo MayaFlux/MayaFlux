@@ -1,0 +1,21 @@
+<map id="MayaFlux::Kakshya::gpu_data_format_bytes" name="MayaFlux::Kakshya::gpu_data_format_bytes">
+<area shape="rect" id="Node000001" title="Byte size of one element of a GpuDataFormat." alt="" coords="548,328,724,368"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderSpec_1_1Assemble_a44f5c516ff6ccfe853b704dffbdd1749.html#a44f5c516ff6ccfe853b704dffbdd1749" title="Finalise and return the ShaderSpec." alt="" coords="281,181,500,221"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="589,323,424,224,427,219,591,319"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a4035b660b0531f6a27af86c892df6b49.html#a4035b660b0531f6a27af86c892df6b49" title="Byte width of one GpuBufferBinding::ElementType element." alt="" coords="292,328,489,368"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="534,351,489,351,489,345,534,345"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_af79e6f13296386b90973e973ff21bcc4.html#af79e6f13296386b90973e973ff21bcc4" title="Supply a shader input from a callable, resolved by name." alt="" coords="307,392,474,432"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="546,374,469,395,467,389,545,369"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1GpuFieldOperator_a3ad4b99e462122dbf5f6b1c00d3632ff.html#a3ad4b99e462122dbf5f6b1c00d3632ff" title="Assemble the compute spec for the current bindings." alt="" coords="9,5,230,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="362,172,306,115,270,85,232,60,206,48,208,43,235,55,274,81,310,111,366,169"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1VisionGpuExecutor_a37b115d59dbe1593c58ef631942b363e.html#a37b115d59dbe1593c58ef631942b363e" title="GpuComputeConfig for a given VisionOp and its parameters." alt="" coords="28,69,211,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="342,177,290,150,232,124,198,112,200,107,234,119,292,145,344,172"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Buffers_1_1RelaxationSpecs_a1279de64ea64bd40c10f69e9d59dde46.html#a1279de64ea64bd40c10f69e9d59dde46" title="Binary state&#45;to&#45;vertex emit: nonzero state draws at full scale, zero state degenerates to a zero&#45;scal..." alt="" coords="35,134,203,189"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="267,186,203,176,204,171,268,181"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Buffers_1_1RelaxationSpecs_ab027146e5827d27be349ad597cbad520.html#ab027146e5827d27be349ad597cbad520" title="Scalar&#45;ramp state&#45;to&#45;vertex emit: float state value scaled and offset into a visible output range." alt="" coords="35,213,203,267"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="268,221,204,231,203,225,267,216"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Buffers_1_1RelaxationSpecs_a664b6d74405ef8f23d5954e4c9b46940.html#a664b6d74405ef8f23d5954e4c9b46940" title="Jacobi&#45;style diffusion rule: each cell blends toward the average of its 8 Moore neighbors at the give..." alt="" coords="31,291,208,346"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="341,230,234,281,203,294,201,289,232,276,339,225"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Yantra_1_1GpuResourceManager_ad3b5f42928f36785bf91ab452c421a38.html#ad3b5f42928f36785bf91ab452c421a38" title=" " alt="" coords="5,371,233,411"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="279,368,234,375,233,370,278,363"/>
+</map>

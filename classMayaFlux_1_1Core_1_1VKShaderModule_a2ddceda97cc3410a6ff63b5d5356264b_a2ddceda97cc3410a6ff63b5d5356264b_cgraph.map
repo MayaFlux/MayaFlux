@@ -1,0 +1,17 @@
+<map id="MayaFlux::Core::VKShaderModule::create_from_glsl_file" name="MayaFlux::Core::VKShaderModule::create_from_glsl_file">
+<area shape="rect" id="Node000001" title="Create shader module from GLSL file." alt="" coords="5,109,220,149"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1VKShaderModule_a2e97ca8110a506203fb1319d9bab4009.html#a2e97ca8110a506203fb1319d9bab4009" title="Create shader module from GLSL source string." alt="" coords="271,37,465,77"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="184,107,283,79,284,84,185,112"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Core_1_1VKShaderModule_a34479b0a46b0aa6b144ddcf62a3e38cb.html#a34479b0a46b0aa6b144ddcf62a3e38cb" title="Auto&#45;detect shader stage from file extension." alt="" coords="268,102,468,157"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="220,127,254,127,254,132,220,132"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Core_1_1VKShaderModule_a928f2b3f426ce066b3fc95cd95702bbe.html#a928f2b3f426ce066b3fc95cd95702bbe" title="Read text file into string." alt="" coords="271,181,465,221"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="185,147,284,175,283,180,184,152"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1VKShaderModule_a8caeba784cdc334e0164efa94ee66314.html#a8caeba784cdc334e0164efa94ee66314" title="Compile GLSL to SPIR&#45;V using shaderc." alt="" coords="516,5,735,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="465,43,502,38,503,43,466,48"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1VKShaderModule_a547d3afa17397c3b9ba00ca3c9365b3a.html#a547d3afa17397c3b9ba00ca3c9365b3a" title="Create shader module from SPIR&#45;V binary." alt="" coords="527,69,723,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="466,67,514,73,513,78,465,72"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Core_1_1VKShaderModule_a470641752e868e1fa799222f8cfeda08.html#a470641752e868e1fa799222f8cfeda08" title="Perform reflection on SPIR&#45;V bytecode." alt="" coords="783,69,977,109"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="723,87,769,87,769,92,723,92"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Core_1_1VKShaderModule_ac3b05876cd970dd20d077537a52a5a6f.html#ac3b05876cd970dd20d077537a52a5a6f" title="Convert SPIRV&#45;Cross type to Vulkan vertex attribute format." alt="" coords="1025,62,1220,117"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="978,87,1011,87,1011,92,978,92"/>
+</map>

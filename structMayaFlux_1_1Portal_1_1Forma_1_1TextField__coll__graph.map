@@ -1,0 +1,7 @@
+<map id="MayaFlux::Portal::Forma::TextField" name="MayaFlux::Portal::Forma::TextField">
+<area shape="rect" id="Node000001" title="An editable text region: keyboard/text&#45;input wiring over an Element the caller already has a buffer f..." alt="" coords="113,568,286,808"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kinesis_1_1AABB2D.html" title="Axis&#45;aligned bounding rectangle in a 2D coordinate space." alt="" coords="5,115,191,395"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="133,395,170,551,165,553,128,396"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Portal_1_1Forma_1_1Element.html" title="A bounded, renderable region on a window surface." alt="" coords="215,5,389,505"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="280,506,270,545,267,553,262,552,265,543,274,505"/>
+</map>

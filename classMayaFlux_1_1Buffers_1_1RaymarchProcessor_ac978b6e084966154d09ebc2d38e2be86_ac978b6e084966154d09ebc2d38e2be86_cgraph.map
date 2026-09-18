@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::RaymarchProcessor::RaymarchProcessor" name="MayaFlux::Buffers::RaymarchProcessor::RaymarchProcessor">
+<area shape="rect" id="Node000001" title="Construct a march staging processor." alt="" coords="5,5,231,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1RaymarchProcessor_ae645fb2782b6bd4c94a3bf4b4c46c16d.html#ae645fb2782b6bd4c94a3bf4b4c46c16d" title="Write the lattice&#45;derived words of the parameter block." alt="" coords="279,5,471,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="231,30,265,30,265,35,231,35"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kinesis_1_1Lattice3D_a1c680e02cfe8a54011cb7538bf33f3ee.html#a1c680e02cfe8a54011cb7538bf33f3ee" title="Edge length of one cell along each axis." alt="" coords="519,13,668,53"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="471,30,505,30,505,35,471,35"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Kinesis_1_1AABB3D_aeab9cee1b78baf556b0b7e14c99541c2.html#aeab9cee1b78baf556b0b7e14c99541c2" title=" " alt="" coords="716,13,865,53"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="668,30,702,30,702,35,668,35"/>
+</map>

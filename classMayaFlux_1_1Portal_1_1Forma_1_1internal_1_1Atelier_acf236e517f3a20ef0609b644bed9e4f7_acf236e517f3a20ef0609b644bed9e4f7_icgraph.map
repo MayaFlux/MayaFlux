@@ -1,0 +1,29 @@
+<map id="MayaFlux::Portal::Forma::internal::Atelier::inspector" name="MayaFlux::Portal::Forma::internal::Atelier::inspector">
+<area shape="rect" id="Node000001" title="Inspector instance constructed during initialize." alt="" coords="464,267,663,307"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Forma_ab3e026869fd591493f2f89ca4f152dc1.html#ab3e026869fd591493f2f89ca4f152dc1" title="Open a dedicated window inspecting a single Buffer and its processing chain." alt="" coords="5,5,187,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="549,254,530,209,502,156,463,104,440,81,415,62,360,37,301,23,241,18,187,18,187,13,242,12,302,18,362,32,417,58,444,77,467,100,506,153,535,207,554,252"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Forma_a375aa9c35d0d0831a7d4e0ea7107b227.html#a375aa9c35d0d0831a7d4e0ea7107b227" title="Open a dedicated window inspecting a NodeNetwork." alt="" coords="5,77,187,117"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="546,255,527,215,498,170,461,127,439,109,415,94,386,82,355,74,291,68,229,71,173,80,172,75,228,66,291,63,356,69,387,77,417,90,442,105,464,123,502,167,531,213,551,253"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Portal_1_1Forma_adfbdd6c42f9561d725521af7689c221b.html#adfbdd6c42f9561d725521af7689c221b" title="Open a dedicated window inspecting a single Node and its modulator tree." alt="" coords="235,128,416,168"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="524,261,473,225,415,189,376,170,379,166,417,184,476,220,527,256"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Portal_1_1Forma_a9f9e5f02ae1d8a9a827ca06994151d60.html#a9f9e5f02ae1d8a9a827ca06994151d60" title="Open a dedicated window inspecting a single Event." alt="" coords="5,157,187,197"/>
+<area shape="poly" id="edge8_Node000001_Node000005" title=" " alt="" coords="503,264,415,233,297,207,187,190,187,185,298,202,417,228,505,259"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Portal_1_1Forma_a037879cc8c63869664d3b6c8e1e32973.html#a037879cc8c63869664d3b6c8e1e32973" title="Open or show the BufferManager inspection window." alt="" coords="235,267,416,307"/>
+<area shape="poly" id="edge9_Node000001_Node000006" title=" " alt="" coords="451,289,416,289,416,284,451,284"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Portal_1_1Forma_af41897be30156c06741f924722e654f5.html#af41897be30156c06741f924722e654f5" title="Open or show the EventManager inspection window." alt="" coords="235,355,416,395"/>
+<area shape="poly" id="edge11_Node000001_Node000007" title=" " alt="" coords="496,314,381,357,379,352,495,309"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Portal_1_1Forma_a9563fe8292595a238e507c2ff54f787e.html#a9563fe8292595a238e507c2ff54f787e" title="Open or show the NodeGraphManager inspection window." alt="" coords="235,443,416,483"/>
+<area shape="poly" id="edge13_Node000001_Node000008" title=" " alt="" coords="531,318,418,409,362,445,359,440,414,405,527,314"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_1_1Portal_1_1Forma_abb516f8bf31335193993acea55db7843.html#abb516f8bf31335193993acea55db7843" title="Open or show the TaskScheduler inspection window." alt="" coords="235,531,416,571"/>
+<area shape="poly" id="edge15_Node000001_Node000009" title=" " alt="" coords="547,320,495,404,459,452,418,497,393,516,367,533,365,528,390,512,414,493,454,449,490,401,543,317"/>
+<area shape="rect" id="Node000010" href="$namespaceMayaFlux_1_1Portal_1_1Forma_aa57203d856d9d8dc6dadc05566634f31.html#aa57203d856d9d8dc6dadc05566634f31" title="Access the Forma introspection subsystem." alt="" coords="235,595,416,635"/>
+<area shape="poly" id="edge17_Node000001_Node000010" title=" " alt="" coords="557,321,540,377,512,448,472,521,447,555,418,585,400,597,397,592,414,581,443,551,468,518,508,446,535,376,552,319"/>
+<area shape="poly" id="edge4_Node000004_Node000002" title=" " alt="" coords="280,123,185,68,144,48,146,43,188,63,283,118"/>
+<area shape="poly" id="edge5_Node000004_Node000003" title=" " alt="" coords="221,128,186,120,188,115,222,122"/>
+<area shape="poly" id="edge6_Node000004_Node000004" title=" " alt="" coords="364,116,351,109,325,107,303,109,290,113,285,119,288,127,282,128,280,118,287,109,302,103,325,101,352,104,367,111"/>
+<area shape="poly" id="edge7_Node000004_Node000005" title=" " alt="" coords="221,164,187,168,187,163,221,159"/>
+<area shape="poly" id="edge10_Node000006_Node000006" title=" " alt="" coords="364,255,351,248,325,245,303,247,290,252,285,258,288,266,282,267,280,257,287,248,302,242,325,240,352,243,367,250"/>
+<area shape="poly" id="edge12_Node000007_Node000007" title=" " alt="" coords="364,343,351,336,325,333,303,335,290,340,285,346,288,354,282,355,280,345,287,336,302,330,325,328,352,331,367,338"/>
+<area shape="poly" id="edge14_Node000008_Node000008" title=" " alt="" coords="364,431,351,424,325,421,303,423,290,428,285,434,288,442,282,443,280,433,287,424,302,418,325,416,352,419,367,426"/>
+<area shape="poly" id="edge16_Node000009_Node000009" title=" " alt="" coords="364,519,351,512,325,509,303,511,290,516,285,522,288,530,282,531,280,521,287,512,302,506,325,504,352,507,367,514"/>
+</map>

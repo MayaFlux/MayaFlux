@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Network::GpuFieldOperator::needs_cluster_id" name="MayaFlux::Nodes::Network::GpuFieldOperator::needs_cluster_id">
+<area shape="rect" id="Node000001" title="Whether build_spec() needs a per&#45;vertex cluster id this cycle." alt="" coords="275,5,473,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1GpuFieldOperator_a3ad4b99e462122dbf5f6b1c00d3632ff.html#a3ad4b99e462122dbf5f6b1c00d3632ff" title="Assemble the compute spec for the current bindings." alt="" coords="5,13,227,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="261,35,227,35,227,30,261,30"/>
+</map>

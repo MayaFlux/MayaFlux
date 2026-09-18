@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::ImageCVProcessor::on_detach" name="MayaFlux::Buffers::ImageCVProcessor::on_detach">
+<area shape="rect" id="Node000001" title="Clear state and reset executor." alt="" coords="5,5,173,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kinesis_1_1Vision_1_1VisionExecutor_a359ccf1b01d2241f6865f860c7565de5.html#a359ccf1b01d2241f6865f860c7565de5" title="Clear stored inter&#45;frame state." alt="" coords="221,5,388,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="173,30,207,30,207,35,173,35"/>
+</map>

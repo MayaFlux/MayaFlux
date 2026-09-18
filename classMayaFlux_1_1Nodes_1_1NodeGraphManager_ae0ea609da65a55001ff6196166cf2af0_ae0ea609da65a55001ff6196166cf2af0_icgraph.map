@@ -1,0 +1,14 @@
+<map id="MayaFlux::Nodes::NodeGraphManager::get_active_tokens" name="MayaFlux::Nodes::NodeGraphManager::get_active_tokens">
+<area shape="rect" id="Node000001" title="Gets all currently active processing tokens (domains)" alt="" coords="545,101,761,141"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Inspector_a47b36fa77f82dfbb6031c649b54101b0.html#a47b36fa77f82dfbb6031c649b54101b0" title="Inspect the full NodeGraphManager state across all active tokens." alt="" coords="299,22,480,77"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="565,100,480,77,481,71,567,95"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_a749bef701cfc06a93ce3c4a6c3ef3d07.html#a749bef701cfc06a93ce3c4a6c3ef3d07" title="Process all active tokens sequentially." alt="" coords="281,101,497,141"/>
+<area shape="poly" id="edge4_Node000001_Node000004" title=" " alt="" coords="532,124,497,124,497,119,532,119"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_a0c180caaaa076b2a2609bc1d1f9258ea.html#a0c180caaaa076b2a2609bc1d1f9258ea" title="Terminates all active processing across all tokens and channels." alt="" coords="281,166,497,221"/>
+<area shape="poly" id="edge5_Node000001_Node000005" title=" " alt="" coords="567,148,491,169,489,163,566,142"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Forma_a9563fe8292595a238e507c2ff54f787e.html#a9563fe8292595a238e507c2ff54f787e" title="Open or show the NodeGraphManager inspection window." alt="" coords="29,29,210,69"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="285,52,210,52,210,47,285,47"/>
+<area shape="poly" id="edge3_Node000003_Node000003" title=" " alt="" coords="165,18,149,11,119,8,93,10,77,15,72,21,75,28,69,30,66,20,75,10,92,5,119,3,151,5,168,13"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_ac72e466978d6713dfcbc620c50567363.html#ac72e466978d6713dfcbc620c50567363" title="Destroys the NodeGraphManager." alt="" coords="5,173,233,213"/>
+<area shape="poly" id="edge6_Node000005_Node000006" title=" " alt="" coords="268,196,233,196,233,191,268,191"/>
+</map>

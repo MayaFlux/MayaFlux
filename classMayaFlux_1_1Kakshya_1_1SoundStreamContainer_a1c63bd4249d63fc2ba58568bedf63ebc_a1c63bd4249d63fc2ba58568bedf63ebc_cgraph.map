@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::SoundStreamContainer::set_looping" name="MayaFlux::Kakshya::SoundStreamContainer::set_looping">
+<area shape="rect" id="Node000001" title="Enable or disable looping behavior for the stream." alt="" coords="5,5,177,60"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kakshya_1_1Region_a1b041dac695640864ce6456f0815df4c.html#a1b041dac695640864ce6456f0815df4c" title="Create a Region representing a time span (e.g., a segment of frames)." alt="" coords="225,13,384,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="178,30,212,30,212,35,178,35"/>
+</map>

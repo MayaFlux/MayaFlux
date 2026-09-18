@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::VKSwapchain::create" name="MayaFlux::Core::VKSwapchain::create">
+<area shape="rect" id="Node000001" title="Create swapchain for the given surface using VKContext." alt="" coords="273,5,493,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1VKSwapchain_a77fe883ab4d94277b8d68aac94c9d76c.html#a77fe883ab4d94277b8d68aac94c9d76c" title="Recreate swapchain (for window resize)" alt="" coords="5,5,225,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="260,28,226,28,226,23,260,23"/>
+</map>

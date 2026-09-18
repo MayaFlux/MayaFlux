@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kakshya::advance_position" name="MayaFlux::Kakshya::advance_position">
+<area shape="rect" id="Node000001" title="Advance current positions by specified frames per channel, with optional looping." alt="" coords="5,57,164,97"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kakshya_1_1ContainerDataStructure_a27b9d48a60ea2512b02a8196c6581eec.html#a27b9d48a60ea2512b02a8196c6581eec" title="Extract channel count from dimensions." alt="" coords="217,5,391,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="164,58,202,50,204,56,165,63"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kakshya_1_1ContainerDataStructure_a707364e4c5a8e950a981eaf7ff5edff6.html#a707364e4c5a8e950a981eaf7ff5edff6" title="Get samples per channel (time dimension only)." alt="" coords="212,85,396,154"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="165,89,199,96,198,101,164,95"/>
+</map>

@@ -1,0 +1,11 @@
+<map id="MayaFlux::Nodes::Input::HIDNode::apply_deadzone" name="MayaFlux::Nodes::Input::HIDNode::apply_deadzone">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,22,208,62"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_ac8ded33a4e354a3259e25ea984c19053.html#ac8ded33a4e354a3259e25ea984c19053" title="Normalize single&#45;channel data (non&#45;destructive)" alt="" coords="256,29,423,55"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="208,39,242,39,242,45,208,45"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a5de3d13e1b9ceb59d3acb04361e2a5e5.html#a5de3d13e1b9ceb59d3acb04361e2a5e5" title="Normalize to [target_min, target_max] in&#45;place Single&#45;pass min/max reduction followed by a single tra..." alt="" coords="471,22,620,62"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="423,39,457,39,457,45,423,45"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_a878fe1820a72f64efebc516b1749f77d.html#a878fe1820a72f64efebc516b1749f77d" title="Normalize single&#45;channel data to specified peak level (in&#45;place)" alt="" coords="668,29,827,55"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="620,48,655,48,655,54,620,53"/>
+<area shape="poly" id="edge4_Node000004_Node000003" title=" " alt="" coords="668,36,634,36,634,30,668,31"/>
+<area shape="poly" id="edge5_Node000004_Node000004" title=" " alt="" coords="714,31,707,21,711,11,725,5,747,3,775,6,786,16,783,20,773,11,747,8,726,10,715,15,713,20,719,28"/>
+</map>

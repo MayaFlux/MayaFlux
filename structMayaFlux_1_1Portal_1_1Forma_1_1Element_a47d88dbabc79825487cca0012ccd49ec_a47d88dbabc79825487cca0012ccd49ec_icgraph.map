@@ -1,0 +1,15 @@
+<map id="MayaFlux::Portal::Forma::Element::with_text" name="MayaFlux::Portal::Forma::Element::with_text">
+<area shape="rect" id="Node000001" title="Press text into a new GPU texture and bind it to the attached FormaBuffer." alt="" coords="693,93,875,133"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Portal_1_1Forma_1_1TextField_a20b101aef26d8710a14abb0b3c705f4c.html#a20b101aef26d8710a14abb0b3c705f4c" title="Register the text field element and wire text editing onto it." alt="" coords="464,57,645,97"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="679,100,645,94,646,89,680,94"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Plot_ac76725b0c967171fcbaa2ccb619fb6d7.html#ac76725b0c967171fcbaa2ccb619fb6d7" title="Place a text label element onto surface using a pre&#45;built buffer." alt="" coords="464,125,645,165"/>
+<area shape="poly" id="edge6_Node000001_Node000005" title=" " alt="" coords="680,130,646,135,645,130,679,125"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Forma_a4d8d6a3f54c57284141331e37153b682.html#a4d8d6a3f54c57284141331e37153b682" title="Build a text&#45;capable FormaBuffer, register a TextField, and wire text editing onto it in one call." alt="" coords="5,29,187,69"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="467,57,416,48,297,42,187,45,187,39,297,36,416,43,468,52"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Portal_1_1Forma_1_1TextField_ab37d173483ea4e704f5c55865e384d72.html#ab37d173483ea4e704f5c55865e384d72" title="Fluent creator: place this field inside an already&#45;placed Scrollable, growing itself taller than its ..." alt="" coords="235,57,416,97"/>
+<area shape="poly" id="edge4_Node000002_Node000004" title=" " alt="" coords="450,80,416,80,416,75,450,75"/>
+<area shape="poly" id="edge3_Node000003_Node000003" title=" " alt="" coords="135,18,121,11,96,8,74,10,61,15,56,21,58,28,53,30,51,20,57,10,73,5,96,3,123,6,137,13"/>
+<area shape="poly" id="edge5_Node000004_Node000003" title=" " alt="" coords="221,67,187,63,187,58,221,62"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Portal_1_1Forma_1_1internal_1_1Atelier_a88e3c1e6a8d3d5b535378537eb934326.html#a88e3c1e6a8d3d5b535378537eb934326" title="Create and place every adornment declared on spec." alt="" coords="235,122,416,177"/>
+<area shape="poly" id="edge7_Node000005_Node000006" title=" " alt="" coords="450,150,416,150,416,145,450,144"/>
+</map>

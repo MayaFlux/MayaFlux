@@ -1,0 +1,6 @@
+<map id="MayaFlux::Kakshya::EigenAccess::is_structured" name="MayaFlux::Kakshya::EigenAccess::is_structured">
+<area shape="rect" id="Node000001" title="Check if data contains GLM types." alt="" coords="203,29,397,69"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_ad749165fadbbc95da3bed4335964be7d.html#ad749165fadbbc95da3bed4335964be7d" title="Process DataVariant through interpolation." alt="" coords="5,29,155,69"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="189,52,155,52,155,47,189,47"/>
+<area shape="poly" id="edge2_Node000002_Node000002" title=" " alt="" coords="117,18,104,11,80,8,59,10,46,15,42,21,44,28,39,30,37,20,43,10,58,5,80,3,106,6,120,13"/>
+</map>

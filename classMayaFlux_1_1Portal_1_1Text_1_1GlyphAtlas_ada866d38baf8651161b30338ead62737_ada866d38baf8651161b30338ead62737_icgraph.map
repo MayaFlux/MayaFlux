@@ -1,0 +1,17 @@
+<map id="MayaFlux::Portal::Text::GlyphAtlas::get_or_rasterize_from" name="MayaFlux::Portal::Text::GlyphAtlas::get_or_rasterize_from">
+<area shape="rect" id="Node000001" title=" " alt="" coords="912,101,1164,141"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Text_1_1GlyphAtlas_acd3a40ac86a5630200940400072dccfa.html#acd3a40ac86a5630200940400072dccfa" title="Return metrics for a glyph, rasterizing it into the atlas if needed." alt="" coords="649,69,864,109"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="898,108,864,104,865,99,899,103"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Portal_1_1Text_1_1GlyphAtlas_a5b62e3553d97e69c47ec1cdefa6c716a.html#a5b62e3553d97e69c47ec1cdefa6c716a" title="Convenience: look up by Unicode codepoint." alt="" coords="649,133,864,173"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="899,140,865,144,864,138,898,135"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Text_a46e835caa5f4e88b555fa5d15282f7a5.html#a46e835caa5f4e88b555fa5d15282f7a5" title="Lay out a UTF&#45;8 string into a sequence of screen&#45;space quads." alt="" coords="435,69,601,109"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="636,92,602,92,602,87,636,87"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Portal_1_1Text_aa58f542a4328e23327442498ad154f55.html#aa58f542a4328e23327442498ad154f55" title="Lay out a UTF&#45;8 string into screen&#45;space glyph quads using the default atlas." alt="" coords="220,5,387,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="436,68,370,48,372,43,438,63"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Portal_1_1Text_a3978afa16e6b0b30f1118db6aee010a4.html#a3978afa16e6b0b30f1118db6aee010a4" title="Append a UTF&#45;8 string into an existing TextBuffer at the current cursor." alt="" coords="220,69,387,109"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="421,92,387,92,387,87,421,87"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Portal_1_1Text_a824658103dd6662ae8197c3cdbe40172.html#a824658103dd6662ae8197c3cdbe40172" title="Pen position immediately before byte_offset, in lay_out()&#39;s space." alt="" coords="220,133,387,173"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="438,116,372,136,370,131,436,111"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Portal_1_1Text_ad8d4f282a04b651d4497bd3b62413f8c.html#ad8d4f282a04b651d4497bd3b62413f8c" title="Byte offset of the codepoint boundary nearest a screen&#45;space point." alt="" coords="5,133,172,173"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="206,156,172,156,172,151,206,151"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Yantra::GpuSorter::GpuSorter" name="MayaFlux::Yantra::GpuSorter::GpuSorter">
+<area shape="rect" id="Node000001" title="Construct with a configured GpuExecutionContext." alt="" coords="5,5,212,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1ComputeOperation_a5b4ee9d2f049b786379fe621e2f099fa.html#a5b4ee9d2f049b786379fe621e2f099fa" title="Attach a GPU execution backend." alt="" coords="260,5,467,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="212,23,246,23,246,28,212,28"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::Network::GraphicsOperator::topology_runs" name="MayaFlux::Nodes::Network::GraphicsOperator::topology_runs">
+<area shape="rect" id="Node000001" title="Contiguous vertex spans grouped by primitive topology." alt="" coords="5,53,249,93"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1GraphicsOperator_a8abd4d8f5aada515a7cf488e28fbf0e8.html#a8abd4d8f5aada515a7cf488e28fbf0e8" title="Topology this operator&#39;s vertex data is authored for, if it holds a node to ask." alt="" coords="297,5,505,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="249,52,283,47,284,52,250,57"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1GraphicsOperator_a69fdd53be349dd3486aded46d215a9a1.html#a69fdd53be349dd3486aded46d215a9a1" title="Get number of vertices (may differ from point count for topology/path)" alt="" coords="302,84,501,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="250,87,288,93,288,98,249,93"/>
+</map>

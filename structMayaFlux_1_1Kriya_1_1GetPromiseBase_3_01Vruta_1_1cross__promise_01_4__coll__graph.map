@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kriya::GetPromiseBase&lt; Vruta::cross_promise &gt;" name="MayaFlux::Kriya::GetPromiseBase&lt; Vruta::cross_promise &gt;">
+<area shape="rect" id="Node000001" title="Promise accessor specialization for cross_promise." alt="" coords="5,1060,219,1200"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Vruta_1_1cross__promise.html" title="Coroutine promise for routines resumed by more than one clock." alt="" coords="23,757,201,997"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="115,997,115,1044,109,1044,109,997"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Vruta_1_1routine__promise.html" title=" " alt="" coords="13,388,211,708"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="115,722,115,757,109,757,109,722"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Vruta_1_1routine__promise.html" title="Base coroutine promise type for audio processing tasks." alt="" coords="13,5,211,325"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="115,339,115,388,109,388,109,339"/>
+</map>

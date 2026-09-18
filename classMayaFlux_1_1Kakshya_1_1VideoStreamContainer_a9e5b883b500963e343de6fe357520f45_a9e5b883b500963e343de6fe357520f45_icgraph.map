@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kakshya::VideoStreamContainer::get_frame_pixels" name="MayaFlux::Kakshya::VideoStreamContainer::get_frame_pixels">
+<area shape="rect" id="Node000001" title="Get raw pixel data for a single frame as a byte span." alt="" coords="441,45,611,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_a1a6d4c70c4b6780e44a66ae5d06c0366.html#a1a6d4c70c4b6780e44a66ae5d06c0366" title=" " alt="" coords="223,5,393,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="427,57,392,51,393,46,428,52"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_aa9d69c16a95d55dfa40579981599e184.html#aa9d69c16a95d55dfa40579981599e184" title=" " alt="" coords="223,84,393,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="428,93,394,99,393,94,427,87"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_a3758d7fb4fa45808d8f9a97094e65422.html#a3758d7fb4fa45808d8f9a97094e65422" title="Implementation&#45;specific method to retrieve multiple frames." alt="" coords="5,84,175,139"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="209,114,175,114,175,109,209,109"/>
+</map>

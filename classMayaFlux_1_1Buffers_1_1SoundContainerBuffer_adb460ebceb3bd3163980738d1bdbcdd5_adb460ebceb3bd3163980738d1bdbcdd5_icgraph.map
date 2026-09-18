@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::SoundContainerBuffer::get_container" name="MayaFlux::Buffers::SoundContainerBuffer::get_container">
+<area shape="rect" id="Node000001" title="Get the backing StreamContainer." alt="" coords="224,5,388,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1SoundFileBridge_a3a43b63b870c20526d908c5bc296b8ba.html#a3a43b63b870c20526d908c5bc296b8ba" title="Setup the processing chain with automatic input/output." alt="" coords="5,5,176,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="210,35,176,35,176,30,210,30"/>
+</map>

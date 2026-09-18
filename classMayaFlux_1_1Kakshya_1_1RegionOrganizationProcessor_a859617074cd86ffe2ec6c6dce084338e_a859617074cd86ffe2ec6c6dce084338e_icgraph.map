@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kakshya::RegionOrganizationProcessor::organize_container_data" name="MayaFlux::Kakshya::RegionOrganizationProcessor::organize_container_data">
+<area shape="rect" id="Node000001" title="Organize the container&#39;s data into regions and segments." alt="" coords="528,5,741,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1RegionOrganizationProcessor_a53ac8aa1aa08e4214a8f1783ef1e68d6.html#a53ac8aa1aa08e4214a8f1783ef1e68d6" title="Refresh the internal organization of regions." alt="" coords="267,5,480,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="514,35,480,35,480,30,514,30"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1RegionOrganizationProcessor_a179ac2634df01daa1487358870042997.html#a179ac2634df01daa1487358870042997" title="Creates a new region group for organizing related regions." alt="" coords="5,5,219,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="253,35,219,35,219,30,253,30"/>
+</map>

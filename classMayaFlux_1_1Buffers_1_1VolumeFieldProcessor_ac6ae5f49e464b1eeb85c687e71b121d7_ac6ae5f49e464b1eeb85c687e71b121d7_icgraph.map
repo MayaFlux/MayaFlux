@@ -1,0 +1,11 @@
+<map id="MayaFlux::Buffers::VolumeFieldProcessor::write_lattice_params" name="MayaFlux::Buffers::VolumeFieldProcessor::write_lattice_params">
+<area shape="rect" id="Node000001" title="Write the lattice dimensions and cell size into the staged push constant block, preserving word three..." alt="" coords="227,124,393,179"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VolumeFieldProcessor_a85ff1d8555f41d205e6cf9d622cf2b74.html#a85ff1d8555f41d205e6cf9d622cf2b74" title="Cache and validate the volume, size the dispatch, write the shared parameter prefix,..." alt="" coords="9,5,175,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="254,119,177,74,155,62,157,58,180,69,256,114"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1AdvectProcessor_a0c6b57249714b70c283637ab685668ef.html#a0c6b57249714b70c283637ab685668ef" title="Reserve the full parameter block and write the step and dissipation words." alt="" coords="15,84,169,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="213,136,169,128,170,123,214,131"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1BuoyancyProcessor_aace1aa56f386797668051148b3e58eac.html#aace1aa56f386797668051148b3e58eac" title="Raise the parameter block and write the tail." alt="" coords="5,163,179,217"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="214,171,179,177,178,172,213,166"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1InfluxProcessor_a32ce482fadb6758138f24c1e77f96f41.html#a32ce482fadb6758138f24c1e77f96f41" title="Raise the parameter block and write everything past the prefix." alt="" coords="18,241,166,296"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="255,188,180,231,155,244,153,239,177,226,252,184"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::VideoStreamReader::extract_frame_data" name="MayaFlux::Buffers::VideoStreamReader::extract_frame_data">
+<area shape="rect" id="Node000001" title="Extract frame pixel data from processed_data into the TextureBuffer." alt="" coords="5,5,212,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a1a8ce2b9ced17d9ff6137c563c58a0e0.html#a1a8ce2b9ced17d9ff6137c563c58a0e0" title="Get bytes per pixel for a format." alt="" coords="260,5,457,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="212,30,247,30,247,35,212,35"/>
+</map>

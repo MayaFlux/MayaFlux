@@ -1,0 +1,13 @@
+<map id="MayaFlux::Portal::Text::decompose_glyph" name="MayaFlux::Portal::Text::decompose_glyph">
+<area shape="rect" id="Node000001" title="Decompose a Unicode codepoint into a tessellated polyline outline." alt="" coords="633,41,800,81"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Text_aacc529c8024423e6c622d8a59fd02be1.html#aacc529c8024423e6c622d8a59fd02be1" title="Decompose a Unicode codepoint using the default atlas pixel size." alt="" coords="392,5,559,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="619,50,559,40,559,35,620,44"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GlyphGeometryNode_a39969c549307dc7b874fb9e794b4fb16.html#a39969c549307dc7b874fb9e794b4fb16" title="Rebuild outline geometry from the current text and pen settings." alt="" coords="365,70,585,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="620,78,586,84,585,78,619,73"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GlyphGeometryNode_aa2c050b302cf38e5125047fd4f1cd6d7.html#aa2c050b302cf38e5125047fd4f1cd6d7" title="Construct from a UTF&#45;8 string with an explicit FontFace." alt="" coords="5,13,317,53"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="351,75,260,56,261,51,352,70"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GlyphGeometryNode_ae6d0646f782caeb8a210c8344e63130b.html#ae6d0646f782caeb8a210c8344e63130b" title="Construct from a UTF&#45;8 string using the default font." alt="" coords="5,77,317,117"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="352,100,317,100,317,95,352,95"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GlyphGeometryNode_ad5ec71c50169fad44dcd56ed9fc04bcf.html#ad5ec71c50169fad44dcd56ed9fc04bcf" title="Replace the text string and rebuild outlines." alt="" coords="47,141,275,181"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="352,125,261,144,260,139,351,120"/>
+</map>

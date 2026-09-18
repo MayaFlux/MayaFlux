@@ -1,0 +1,15 @@
+<map id="MayaFlux::IO::AssimpModelWriter::write" name="MayaFlux::IO::AssimpModelWriter::write">
+<area shape="rect" id="Node000001" title="Write one or more meshes to disk as a single scene." alt="" coords="5,54,209,94"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1IO_aebbe2b023d66faf2ca36cef8e2ae4d2a.html#aebbe2b023d66faf2ca36cef8e2ae4d2a" title="Anchor a relative output path to Config::SOURCE_DIR." alt="" coords="277,22,441,62"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="209,58,263,51,264,57,210,64"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1IO_1_1AssimpModelWriter_ae6f4b90714589e9f2069a8376c18e7fb.html#ae6f4b90714589e9f2069a8376c18e7fb" title=" " alt="" coords="257,86,461,126"/>
+<area shape="poly" id="edge7_Node000001_Node000006" title=" " alt="" coords="210,84,244,89,243,94,209,90"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_ac8ded33a4e354a3259e25ea984c19053.html#ac8ded33a4e354a3259e25ea984c19053" title="Normalize single&#45;channel data (non&#45;destructive)" alt="" coords="509,29,676,55"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="441,39,496,39,496,45,441,45"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a5de3d13e1b9ceb59d3acb04361e2a5e5.html#a5de3d13e1b9ceb59d3acb04361e2a5e5" title="Normalize to [target_min, target_max] in&#45;place Single&#45;pass min/max reduction followed by a single tra..." alt="" coords="724,22,873,62"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="676,39,710,39,710,45,676,45"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_a878fe1820a72f64efebc516b1749f77d.html#a878fe1820a72f64efebc516b1749f77d" title="Normalize single&#45;channel data to specified peak level (in&#45;place)" alt="" coords="921,29,1080,55"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="874,48,908,48,908,54,874,53"/>
+<area shape="poly" id="edge5_Node000005_Node000004" title=" " alt="" coords="921,36,887,36,887,30,921,31"/>
+<area shape="poly" id="edge6_Node000005_Node000005" title=" " alt="" coords="968,31,961,21,964,11,978,5,1001,3,1029,6,1040,16,1036,20,1026,11,1001,8,979,10,968,15,966,20,972,28"/>
+</map>

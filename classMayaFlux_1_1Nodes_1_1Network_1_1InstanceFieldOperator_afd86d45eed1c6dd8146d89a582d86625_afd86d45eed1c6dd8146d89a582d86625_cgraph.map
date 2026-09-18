@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Network::InstanceFieldOperator::process" name="MayaFlux::Nodes::Network::InstanceFieldOperator::process">
+<area shape="rect" id="Node000001" title="Process for one batch cycle." alt="" coords="5,5,204,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1InstanceOperator_a31ae71dfbd39f72bb34367a756a7f5b4.html#a31ae71dfbd39f72bb34367a756a7f5b4" title="Process for one batch cycle." alt="" coords="252,13,452,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="204,30,238,30,238,35,204,35"/>
+</map>

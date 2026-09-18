@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kakshya::VideoStreamContainer::get_frame_pixels" name="MayaFlux::Kakshya::VideoStreamContainer::get_frame_pixels">
+<area shape="rect" id="Node000001" title="Get raw pixel data for a single frame as a byte span." alt="" coords="5,84,175,139"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_acd69a7c5e27cc6fd492c480c481ee9ea.html#acd69a7c5e27cc6fd492c480c481ee9ea" title="Total byte size of one frame: width * height * bytes_per_pixel." alt="" coords="223,5,392,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="165,81,217,62,219,67,167,86"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_ac5764b3010fc7824fd6b5da810d65f50.html#ac5764b3010fc7824fd6b5da810d65f50" title=" " alt="" coords="223,84,392,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="175,109,209,109,209,114,175,114"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kakshya_a505a6355fca48fde66db9c0ca1e23a17.html#a505a6355fca48fde66db9c0ca1e23a17" title="Get a pointer to the raw bytes of a DataVariant and its size." alt="" coords="228,163,387,203"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="174,136,234,156,232,161,172,141"/>
+</map>

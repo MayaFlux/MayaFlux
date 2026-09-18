@@ -1,0 +1,8 @@
+<map id="MayaFlux::Portal::Forma::Inspector::tasks" name="MayaFlux::Portal::Forma::Inspector::tasks">
+<area shape="rect" id="Node000001" title="Inspect tasks for a specific processing token." alt="" coords="464,29,645,69"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Inspector_aca4b73c0629b03f894065c7a777a240c.html#aca4b73c0629b03f894065c7a777a240c" title="Inspect the full TaskScheduler state." alt="" coords="235,29,416,69"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="450,52,416,52,416,47,450,47"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Forma_abb516f8bf31335193993acea55db7843.html#abb516f8bf31335193993acea55db7843" title="Open or show the TaskScheduler inspection window." alt="" coords="5,29,187,69"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="221,52,187,52,187,47,221,47"/>
+<area shape="poly" id="edge3_Node000003_Node000003" title=" " alt="" coords="135,18,121,11,96,8,74,10,61,15,56,21,58,28,53,30,51,20,57,10,73,5,96,3,123,6,137,13"/>
+</map>

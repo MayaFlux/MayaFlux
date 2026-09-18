@@ -1,0 +1,32 @@
+<map id="MayaFlux::IO::FileReader::resolve_path" name="MayaFlux::IO::FileReader::resolve_path">
+<area shape="rect" id="Node000001" title="Resolve a filepath against the project source root if not found as&#45;is." alt="" coords="787,261,972,301"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1SoundFileReader_a55edd9ee43004846f85961b546c811c9.html#a55edd9ee43004846f85961b546c811c9" title="Check if this reader can open the given file." alt="" coords="513,5,739,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="864,250,845,206,818,155,782,103,737,59,717,48,720,43,740,55,786,100,823,152,850,204,869,247"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1FileReaderRegistry_a1e0907a0a9bdbdbfe771c00b56a495ba.html#a1e0907a0a9bdbdbfe771c00b56a495ba" title="Create appropriate reader for a file based on extension." alt="" coords="533,69,719,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="856,251,807,186,774,152,737,124,715,112,717,107,740,119,778,148,811,182,861,248"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1IO_1_1ImageReader_a2889b29418927a60ae1f8d574ae5895b.html#a2889b29418927a60ae1f8d574ae5895b" title="Load image from file (static utility)" alt="" coords="525,133,727,173"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="842,255,794,220,738,188,708,176,710,171,740,183,797,216,845,251"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1IO_1_1ImageReader_ae660058c52405b4605ecce4c631a4b44.html#ae660058c52405b4605ecce4c631a4b44" title="Load image directly into GPU texture (static utility)" alt="" coords="525,197,727,237"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="786,260,705,240,706,235,787,255"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1IO_1_1ImageReader_a6f7eb96fe2b0cf72967ed2263dcaa23a.html#a6f7eb96fe2b0cf72967ed2263dcaa23a" title="Open a file for reading." alt="" coords="525,261,727,301"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="773,284,728,284,728,279,773,279"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1IO_1_1ModelReader_aef5ccec4e2fe310509f07e4467f57dd2.html#aef5ccec4e2fe310509f07e4467f57dd2" title="Open a file for reading." alt="" coords="525,389,727,429"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="845,312,797,347,740,380,710,392,708,387,738,375,794,343,842,308"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1IO_1_1SoundFileReader_a25d2ebc2d552f532a46fbb493f8d88d3.html#a25d2ebc2d552f532a46fbb493f8d88d3" title="Open an audio file for reading." alt="" coords="513,325,739,365"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="787,307,706,328,705,323,786,302"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1IO_1_1VideoFileReader_a4fde32d3018bb43d67972a0ff5fc0965.html#a4fde32d3018bb43d67972a0ff5fc0965" title="Open a file for reading." alt="" coords="515,453,737,493"/>
+<area shape="poly" id="edge11_Node000001_Node000011" title=" " alt="" coords="861,315,811,380,778,414,740,444,717,456,715,451,737,439,774,410,807,377,856,312"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1IO_1_1VolumeReader_a870f414ddeb0bf93dafdcabfc33160d3.html#a870f414ddeb0bf93dafdcabfc33160d3" title="Open a file for reading." alt="" coords="521,517,731,557"/>
+<area shape="poly" id="edge12_Node000001_Node000012" title=" " alt="" coords="869,315,850,359,823,411,786,463,740,507,720,520,717,515,737,503,782,459,818,408,845,356,864,313"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1SoundFileReader_a52301b9864559415b9df442d6884d946.html#a52301b9864559415b9df442d6884d946" title="Load an audio file into a size&#45;bounded DynamicSoundStream." alt="" coords="240,165,465,205"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="530,53,515,60,473,85,435,114,376,167,372,163,431,109,470,80,512,55,528,48"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1IO_1_1ModelReader_ad139ba0a544c0712059cc8913bb59bc5.html#ad139ba0a544c0712059cc8913bb59bc5" title="Load all meshes from a file in one call." alt="" coords="251,389,454,429"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="511,412,454,412,454,407,511,407"/>
+<area shape="poly" id="edge10_Node000010_Node000003" title=" " alt="" coords="528,323,512,316,470,290,431,261,372,208,376,204,435,257,473,286,515,311,530,318"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1IO_1_1VolumeReader_ac7d1e975545d7a79d371af04e49fc1fc.html#ac7d1e975545d7a79d371af04e49fc1fc" title="Load every selected grid onto a caller&#45;supplied lattice." alt="" coords="247,485,458,525"/>
+<area shape="poly" id="edge13_Node000012_Node000013" title=" " alt="" coords="507,526,458,520,459,515,507,521"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1IO_1_1VolumeReader_acb694bd5aa416bb2c8e96d869ccac0cd.html#acb694bd5aa416bb2c8e96d869ccac0cd" title="Load every selected grid from a file in one call." alt="" coords="247,549,458,589"/>
+<area shape="poly" id="edge14_Node000012_Node000014" title=" " alt="" coords="507,554,459,560,458,554,507,549"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1IO_1_1IOManager_a8b66f9c5953bf2df92a20c61835783f5.html#a8b66f9c5953bf2df92a20c61835783f5" title="Load a volume file into a newly constructed VolumeGridBuffer." alt="" coords="5,549,192,589"/>
+<area shape="poly" id="edge15_Node000014_Node000015" title=" " alt="" coords="234,572,192,572,192,567,234,567"/>
+</map>

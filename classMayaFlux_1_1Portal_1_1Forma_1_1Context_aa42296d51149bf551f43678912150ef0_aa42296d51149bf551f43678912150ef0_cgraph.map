@@ -1,0 +1,41 @@
+<map id="MayaFlux::Portal::Forma::Context::register_handlers" name="MayaFlux::Portal::Forma::Context::register_handlers">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,421,208,461"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Vruta_1_1EventManager_ab03d9c23414e27d09de89a8d30ff475b.html#ab03d9c23414e27d09de89a8d30ff475b" title="Add a event to the manager." alt="" coords="256,37,487,77"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="108,421,119,356,144,267,164,218,188,170,218,126,254,87,260,83,263,87,258,91,222,129,192,173,168,220,149,268,124,358,113,422"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Context_a9c51f612c11cca83101ec54bf0e15d73.html#a9c51f612c11cca83101ec54bf0e15d73" title=" " alt="" coords="281,101,462,141"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="110,420,125,366,153,294,172,255,195,217,223,182,254,151,267,143,270,147,258,155,227,185,200,220,177,258,158,296,130,368,115,422"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Context_a3f274bdbf59765de10aec161fce804c8.html#a3f274bdbf59765de10aec161fce804c8" title=" " alt="" coords="281,165,462,205"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="113,420,132,377,162,322,203,264,227,238,254,215,267,207,270,212,258,219,231,242,207,268,167,325,137,380,118,422"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Context_adb7623e29d1be03ce5a1d5d1ed564f7f.html#adb7623e29d1be03ce5a1d5d1ed564f7f" title=" " alt="" coords="281,229,462,269"/>
+<area shape="poly" id="edge9_Node000001_Node000009" title=" " alt="" coords="119,420,172,351,211,312,255,279,266,273,269,277,257,284,214,316,176,354,123,423"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Context_a7fbcf04fbb64e37f9a70f7358eb645d9.html#a7fbcf04fbb64e37f9a70f7358eb645d9" title=" " alt="" coords="277,293,465,333"/>
+<area shape="poly" id="edge11_Node000001_Node000010" title=" " alt="" coords="132,419,187,381,255,343,273,336,275,340,257,348,190,385,135,423"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Context_adca335b78b305d3041e53f59eb12a7c6.html#adca335b78b305d3041e53f59eb12a7c6" title=" " alt="" coords="281,357,462,397"/>
+<area shape="poly" id="edge13_Node000001_Node000011" title=" " alt="" coords="190,419,274,398,276,403,191,424"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Context_ae6ed06ae5127e6ddfe2aa747e33441cc.html#ae6ed06ae5127e6ddfe2aa747e33441cc" title=" " alt="" coords="281,421,462,461"/>
+<area shape="poly" id="edge15_Node000001_Node000012" title=" " alt="" coords="208,439,267,439,267,444,208,444"/>
+<area shape="rect" id="Node000013" href="$namespaceMayaFlux_1_1Kriya_a97655abaacba4b18fa5d36cb2afececd.html#a97655abaacba4b18fa5d36cb2afececd" title="Creates an Event coroutine that triggers on mouse drag with specific button." alt="" coords="281,485,461,525"/>
+<area shape="poly" id="edge16_Node000001_Node000013" title=" " alt="" coords="191,459,276,480,274,485,190,464"/>
+<area shape="rect" id="Node000014" href="$namespaceMayaFlux_1_1Kriya_a3865277b1ccf9ef433f9797fc4bb70cb.html#a3865277b1ccf9ef433f9797fc4bb70cb" title="Creates an Event coroutine that triggers on mouse movement." alt="" coords="281,549,461,589"/>
+<area shape="poly" id="edge17_Node000001_Node000014" title=" " alt="" coords="135,459,190,497,257,535,275,542,273,547,255,540,187,502,132,464"/>
+<area shape="rect" id="Node000015" href="$namespaceMayaFlux_1_1Kriya_a61d0d58f158de776ac8a832d194e31bd.html#a61d0d58f158de776ac8a832d194e31bd" title="Creates an Event coroutine that triggers on specific mouse button press." alt="" coords="281,613,461,653"/>
+<area shape="poly" id="edge18_Node000001_Node000015" title=" " alt="" coords="123,460,176,528,214,567,257,599,270,606,267,610,255,604,211,571,172,532,119,463"/>
+<area shape="rect" id="Node000016" href="$namespaceMayaFlux_1_1Kriya_a55759930e6bca7daaa6ab7c21107a325.html#a55759930e6bca7daaa6ab7c21107a325" title="Creates an Event coroutine that triggers on specific mouse button release." alt="" coords="281,677,461,717"/>
+<area shape="poly" id="edge19_Node000001_Node000016" title=" " alt="" coords="118,460,137,503,167,558,207,615,231,641,258,663,270,671,267,676,254,667,227,645,203,618,162,561,132,505,113,463"/>
+<area shape="rect" id="Node000017" href="$namespaceMayaFlux_1_1Kriya_a454b114a833332a3d166874f702a0908.html#a454b114a833332a3d166874f702a0908" title="Creates an Event coroutine that triggers on mouse scroll." alt="" coords="281,741,461,781"/>
+<area shape="poly" id="edge20_Node000001_Node000017" title=" " alt="" coords="115,461,130,515,158,587,177,625,200,662,227,697,258,727,271,736,268,741,254,731,223,701,195,666,172,628,153,589,125,516,110,462"/>
+<area shape="rect" id="Node000018" href="$namespaceMayaFlux_1_1Kriya_adca430571f9bdbee5414093b615bdd32.html#adca430571f9bdbee5414093b615bdd32" title="Creates an Event coroutine that triggers on resolved text input." alt="" coords="290,805,453,845"/>
+<area shape="poly" id="edge21_Node000001_Node000018" title=" " alt="" coords="113,461,124,525,149,614,168,662,192,710,222,753,258,791,279,805,276,810,254,795,218,757,188,712,164,665,144,616,119,526,108,462"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Vruta_1_1EventManager_a57dfab40ee4b14db2bef10e6c4c5e9d2.html#a57dfab40ee4b14db2bef10e6c4c5e9d2" title="Generate automatic name for a event based on its type." alt="" coords="535,5,765,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="487,41,521,37,521,43,487,47"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Vruta_1_1EventManager_a3b542907af4a0afa35f1b87a604932e4.html#a3b542907af4a0afa35f1b87a604932e4" title="Remove an event by name." alt="" coords="535,69,765,109"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="487,68,521,72,521,77,487,73"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Vruta_1_1EventManager_ac3366b2763d938f824fa0c47b28c6bab.html#ac3366b2763d938f824fa0c47b28c6bab" title="Generates a unique event ID for new events." alt="" coords="813,5,1044,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="766,23,800,23,800,28,766,28"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Context_abf2f431507680fecfe7de1fe4522958e.html#abf2f431507680fecfe7de1fe4522958e" title=" " alt="" coords="559,229,741,269"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="455,139,488,151,553,184,610,219,607,224,551,189,486,156,454,144"/>
+<area shape="poly" id="edge8_Node000008_Node000007" title=" " alt="" coords="460,203,550,224,548,229,459,208"/>
+<area shape="poly" id="edge10_Node000009_Node000007" title=" " alt="" coords="462,247,545,247,545,252,462,252"/>
+<area shape="poly" id="edge12_Node000010_Node000007" title=" " alt="" coords="459,291,548,270,550,275,460,296"/>
+<area shape="poly" id="edge14_Node000011_Node000007" title=" " alt="" coords="454,355,486,343,551,310,607,275,610,279,553,314,488,348,455,360"/>
+</map>

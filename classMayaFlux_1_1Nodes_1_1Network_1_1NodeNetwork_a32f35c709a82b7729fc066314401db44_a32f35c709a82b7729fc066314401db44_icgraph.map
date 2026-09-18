@@ -1,0 +1,9 @@
+<map id="MayaFlux::Nodes::Network::NodeNetwork::apply_output_scale" name="MayaFlux::Nodes::Network::NodeNetwork::apply_output_scale">
+<area shape="rect" id="Node000001" title="Apply m_output_scale to m_last_audio_buffer." alt="" coords="312,69,565,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ModalNetwork_a0a7a7f26a40306a856e5be65c610f1a7.html#a0a7a7f26a40306a856e5be65c610f1a7" title="Process the network for the given number of samples." alt="" coords="21,5,248,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="329,69,230,48,231,43,330,64"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ResonatorNetwork_ab3fa42f883efda46b4961b24c3654c2f.html#ab3fa42f883efda46b4961b24c3654c2f" title="Processes num_samples through all resonators and accumulates output." alt="" coords="9,69,261,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="298,92,261,92,261,87,298,87"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Network_1_1WaveguideNetwork_a474473fbb4038d846ed350acbd7e7312.html#a474473fbb4038d846ed350acbd7e7312" title="Process the network for the given number of samples." alt="" coords="5,133,264,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="330,115,231,136,230,131,329,110"/>
+</map>

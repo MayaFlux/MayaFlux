@@ -1,0 +1,12 @@
+<map id="MayaFlux::Kakshya::from_eigen_matrix" name="MayaFlux::Kakshya::from_eigen_matrix">
+<area shape="rect" id="Node000001" title="Convenience function for direct conversion." alt="" coords="5,39,164,79"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1EigenInsertion_afae4fdb884bcfc31ef058a55e18ab229.html#afae4fdb884bcfc31ef058a55e18ab229" title="Insert Eigen matrix with automatic interpretation." alt="" coords="212,31,372,86"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="165,56,198,56,198,61,165,61"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Reflect_aad91118cbd25bd9e35a3ced9aa4e6dbd.html#aad91118cbd25bd9e35a3ced9aa4e6dbd" title="Universal enum to string converter using magic_enum (original case)" alt="" coords="650,5,797,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="372,50,636,29,637,35,373,55"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1EigenInsertion_ae3c16477974cf354497bad6e2ba47932.html#ae3c16477974cf354497bad6e2ba47932" title=" " alt="" coords="420,63,596,118"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="373,68,407,73,406,78,372,73"/>
+<area shape="poly" id="edge4_Node000004_Node000003" title=" " alt="" coords="596,61,643,47,645,52,597,66"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1EigenInsertion_a01143be19f9ec5a48a84add79e896c48.html#a01143be19f9ec5a48a84add79e896c48" title=" " alt="" coords="644,70,803,125"/>
+<area shape="poly" id="edge5_Node000004_Node000005" title=" " alt="" coords="597,91,630,92,630,97,596,96"/>
+</map>

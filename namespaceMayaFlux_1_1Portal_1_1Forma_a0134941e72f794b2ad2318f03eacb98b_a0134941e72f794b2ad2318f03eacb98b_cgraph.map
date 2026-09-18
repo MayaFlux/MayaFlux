@@ -1,0 +1,18 @@
+<map id="MayaFlux::Portal::Forma::plot" name="MayaFlux::Portal::Forma::plot">
+<area shape="rect" id="Node000001" title="Create a live plot in a new window." alt="" coords="5,131,187,171"/>
+<area shape="poly" id="edge8_Node000001_Node000001" title=" " alt="" coords="53,132,51,122,57,112,73,107,96,105,123,108,137,115,135,120,121,113,96,110,74,112,61,117,56,123,58,130"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Forma_1_1internal_1_1Atelier_a1598e74d6908e54150354b29dd891edd.html#a1598e74d6908e54150354b29dd891edd" title="Capacity&#45;explicit FormaBuffer construction." alt="" coords="235,5,416,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="128,129,233,69,245,63,247,68,236,74,131,133"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Forma_1_1internal_1_1Atelier_a8995b53bc75ed95d2da1d116478b8fb5.html#a8995b53bc75ed95d2da1d116478b8fb5" title="Build a FormaBuffer, construct a Mapped&lt;T&gt;, register the element on layer, and register it with the B..." alt="" coords="235,84,416,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="186,133,221,127,222,132,187,138"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Forma_1_1internal_1_1Atelier_ad9fe6834e2c324c3cca619340a09ab0d.html#ad9fe6834e2c324c3cca619340a09ab0d" title="create_layer plus ownership of the window, as a Surface." alt="" coords="235,163,416,217"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="187,164,221,170,221,175,186,169"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Portal_1_1Forma_1_1internal_1_1Atelier_a806d0c28fa7673aab9b61e9a134221a1.html#a806d0c28fa7673aab9b61e9a134221a1" title="Create a window through the stored WindowManager and show it." alt="" coords="235,241,416,296"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="133,169,236,226,250,233,247,238,233,231,130,174"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Forma_1_1internal_1_1Atelier_af684f6f03bb9a9bcb744e2134e6f9769.html#af684f6f03bb9a9bcb744e2134e6f9769" title="Construct a Layer and a Context wired to window." alt="" coords="464,170,684,210"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="416,187,450,187,450,193,416,193"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_a04fb0b546bfa364a04dfe6f609f8b769.html#a04fb0b546bfa364a04dfe6f609f8b769" title="Transfer ownership of an existing object to the persistent store for process lifetime." alt="" coords="732,177,859,203"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="684,187,718,187,718,193,684,193"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1internal_ac26a7a92aa4af34c366aad03b68ea71e.html#ac26a7a92aa4af34c366aad03b68ea71e" title=" " alt="" coords="907,170,1051,210"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="859,187,893,187,893,193,859,193"/>
+</map>

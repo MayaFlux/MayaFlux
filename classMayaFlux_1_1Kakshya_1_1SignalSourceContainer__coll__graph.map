@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kakshya::SignalSourceContainer" name="MayaFlux::Kakshya::SignalSourceContainer">
+<area shape="rect" id="Node000001" title="Data&#45;driven interface for managing arbitrary processable signal sources." alt="" coords="113,428,324,708"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1NDDataContainer.html" title="Abstract interface for N&#45;dimensional data containers." alt="" coords="5,5,187,380"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="164,392,176,427,170,429,159,394"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="211,153,471,233"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="327,247,267,429,262,427,322,245"/>
+</map>

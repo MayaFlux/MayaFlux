@@ -1,0 +1,9 @@
+<map id="MayaFlux::bind_orbit_preset" name="MayaFlux::bind_orbit_preset">
+<area shape="rect" id="Node000001" title="Bind the orbit navigation controller to a window and render processor." alt="" coords="475,37,633,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_a48c5b40b6bfbe03a5edbe73ca9e305c8.html#a48c5b40b6bfbe03a5edbe73ca9e305c8" title="Bind the orbit navigation controller to all RenderProcessors currently registered against a window." alt="" coords="254,5,413,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="461,47,413,39,413,34,462,41"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_a9be701daac0c0484aed1f9ad9f8d130e.html#a9be701daac0c0484aed1f9ad9f8d130e" title="Bind a navigation preset to a window and render processor using default settings." alt="" coords="240,69,427,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="462,73,427,78,426,73,461,68"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_af2205e6997a812a91f5c4b88a8beb585.html#af2205e6997a812a91f5c4b88a8beb585" title="Bind a navigation preset to all RenderProcessors currently registered against a window using default ..." alt="" coords="5,69,192,109"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="227,92,192,92,192,87,227,87"/>
+</map>

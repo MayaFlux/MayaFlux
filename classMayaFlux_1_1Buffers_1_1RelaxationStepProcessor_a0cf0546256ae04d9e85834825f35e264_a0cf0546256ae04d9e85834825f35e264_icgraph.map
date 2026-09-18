@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::RelaxationStepProcessor::write_state_descriptors" name="MayaFlux::Buffers::RelaxationStepProcessor::write_state_descriptors">
+<area shape="rect" id="Node000001" title="Issue direct ShaderFoundry descriptor writes for state_in and state_out against the grid&#39;s current fr..." alt="" coords="237,45,421,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1RelaxationStepProcessor_ae2551eeda163cb6f226b078b57efca45.html#ae2551eeda163cb6f226b078b57efca45" title="Write the state_in / state_out descriptor bindings for the current front/back assignment." alt="" coords="5,5,189,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="223,57,189,51,190,46,224,52"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1RelaxationStepProcessor_acd95f1f30127b73b53fcdf5461ce6f7d.html#acd95f1f30127b73b53fcdf5461ce6f7d" title="Write the state descriptors for the current front/back assignment, then run the normal shader process..." alt="" coords="5,84,189,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="224,93,190,99,189,93,223,88"/>
+</map>

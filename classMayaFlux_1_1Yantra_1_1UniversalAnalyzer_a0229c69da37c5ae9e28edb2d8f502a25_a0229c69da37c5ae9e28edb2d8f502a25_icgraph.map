@@ -1,0 +1,9 @@
+<map id="MayaFlux::Yantra::UniversalAnalyzer::set_analysis_parameter" name="MayaFlux::Yantra::UniversalAnalyzer::set_analysis_parameter">
+<area shape="rect" id="Node000001" title="Analysis&#45;specific parameter handling (override for custom parameters)" alt="" coords="512,37,755,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1UniversalAnalyzer_a4a53048a2fa21b022ac3f4ca4cebed86.html#a4a53048a2fa21b022ac3f4ca4cebed86" title="Type&#45;safe parameter management with analysis&#45;specific defaults." alt="" coords="260,37,464,77"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="498,60,464,60,464,55,498,55"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1StatisticalAnalyzer_ae495a508ec11a4109e31fdc92b255581.html#ae495a508ec11a4109e31fdc92b255581" title="Set method by string name." alt="" coords="5,5,212,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="246,45,212,41,213,36,247,40"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1StatisticalAnalyzer_ad1f110732d9dd25cc17f63fe22993735.html#ad1f110732d9dd25cc17f63fe22993735" title="Set statistical analysis method." alt="" coords="5,69,212,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="247,75,213,79,212,74,246,69"/>
+</map>

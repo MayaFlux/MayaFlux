@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::Vision::threshold_adaptive" name="MayaFlux::Kinesis::Vision::threshold_adaptive">
+<area shape="rect" id="Node000001" title="Adaptive threshold writing into caller&#45;supplied buffer." alt="" coords="5,5,200,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_ad2f0572dfef62bb7629c7ef74ff29449.html#ad2f0572dfef62bb7629c7ef74ff29449" title="Calculate mean of single&#45;channel data." alt="" coords="248,13,379,38"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="200,23,234,23,234,28,200,28"/>
+</map>

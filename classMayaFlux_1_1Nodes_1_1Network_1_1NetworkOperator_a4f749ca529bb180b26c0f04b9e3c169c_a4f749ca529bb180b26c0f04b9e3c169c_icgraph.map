@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Network::NetworkOperator::process" name="MayaFlux::Nodes::Network::NetworkOperator::process">
+<area shape="rect" id="Node000001" title="Process for one batch cycle." alt="" coords="252,5,452,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1OperatorChain_a56c1bc20b2f5b3c15bbcd556b3e16b37.html#a56c1bc20b2f5b3c15bbcd556b3e16b37" title="Call process(dt) on each operator in insertion order." alt="" coords="5,5,204,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="238,28,204,28,204,23,238,23"/>
+</map>

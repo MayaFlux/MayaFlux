@@ -1,0 +1,7 @@
+<map id="MayaFlux::IO::IOManager::save_volume" name="MayaFlux::IO::IOManager::save_volume">
+<area shape="rect" id="Node000001" title="Save an already&#45;downloaded VolumeData to disk asynchronously." alt="" coords="5,37,192,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1VolumeWriterRegistry_ad701539bfc38373a435eda9b99a20ba1.html#ad701539bfc38373a435eda9b99a20ba1" title=" " alt="" coords="240,5,445,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="192,42,226,38,227,43,193,48"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1VolumeWriterRegistry_adc3507552119815aa23dba68658ff78c.html#adc3507552119815aa23dba68658ff78c" title=" " alt="" coords="240,69,445,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="193,67,227,71,226,77,192,72"/>
+</map>

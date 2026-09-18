@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::GraphicsSubsystem::register_frame_processor" name="MayaFlux::Core::GraphicsSubsystem::register_frame_processor">
+<area shape="rect" id="Node000001" title="Register custom frame processor with scheduler." alt="" coords="5,5,204,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1GraphicsSubsystem_a6d5c2853927ddaeb939e61bd95758d7c.html#a6d5c2853927ddaeb939e61bd95758d7c" title="Process all FRAME_ACCURATE coroutines for given frames." alt="" coords="252,5,451,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="204,30,238,30,238,35,204,35"/>
+</map>

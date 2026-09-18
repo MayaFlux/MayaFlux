@@ -1,0 +1,47 @@
+<map id="MayaFlux::Kinesis::AABB2D::width" name="MayaFlux::Kinesis::AABB2D::width">
+<area shape="rect" id="Node000001" title=" " alt="" coords="791,412,940,452"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_ae687a3e71748420a79742caa31b35ece.html#ae687a3e71748420a79742caa31b35ece" title="Fraction along one axis of bounds, inverse to fader placement." alt="" coords="559,73,708,113"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="856,399,844,343,822,275,788,203,766,170,741,140,724,127,704,116,707,111,727,122,745,137,771,167,793,201,827,273,849,342,861,397"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_af9575240cc422bb83292ba5f330c0d41.html#af9575240cc422bb83292ba5f330c0d41" title="Geometry function for a horizontal fader in NDC space." alt="" coords="268,9,476,49"/>
+<area shape="poly" id="edge10_Node000001_Node000003" title=" " alt="" coords="862,398,857,326,840,234,825,186,804,140,776,98,741,63,712,44,680,29,646,19,611,12,541,8,476,12,476,7,541,3,612,7,648,14,682,24,714,39,744,59,780,95,809,137,830,184,845,233,862,325,867,398"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_aab6186aa8c9f492a422824eeaa6e118e.html#aab6186aa8c9f492a422824eeaa6e118e" title="Geometry function for a vertical fader in NDC space." alt="" coords="276,73,468,113"/>
+<area shape="poly" id="edge21_Node000001_Node000004" title=" " alt="" coords="854,399,840,352,818,296,785,239,764,213,741,191,704,176,634,156,466,116,467,111,636,150,706,171,744,187,768,210,789,236,822,293,845,350,859,398"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Kinesis_1_1Lattice2D_aeb58764db8b467fff043d9b38ee5018e.html#aeb58764db8b467fff043d9b38ee5018e" title="Edge length of one cell along each axis." alt="" coords="559,201,708,241"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="847,401,805,331,775,294,741,262,707,243,709,238,744,258,779,290,809,328,851,398"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_af2b3f26c66584f90f23a85aa2405e753.html#af2b3f26c66584f90f23a85aa2405e753" title="Geometry function for a drawable curve canvas in NDC space." alt="" coords="5,576,220,616"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="843,402,801,349,773,325,742,306,683,286,635,281,585,289,525,306,461,331,398,364,339,401,285,441,194,519,135,577,131,574,190,515,282,437,336,397,396,359,458,327,523,301,584,283,635,276,684,281,744,301,776,320,805,346,847,398"/>
+<area shape="rect" id="Node000010" href="$namespaceMayaFlux_1_1Kinesis_abc59d91d88838500d16ba9119a0d77a8.html#abc59d91d88838500d16ba9119a0d77a8" title="Filled rounded rectangle as a TRIANGLE_LIST mesh." alt="" coords="559,316,708,356"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="817,407,742,370,708,358,709,353,744,365,820,403"/>
+<area shape="rect" id="Node000011" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_aba20b395ea8bf575aa0a4ae799e95c61.html#aba20b395ea8bf575aa0a4ae799e95c61" title="Geometry function for a level meter in NDC space." alt="" coords="543,380,724,420"/>
+<area shape="poly" id="edge11_Node000001_Node000011" title=" " alt="" coords="776,422,724,415,725,410,777,417"/>
+<area shape="rect" id="Node000012" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Plot_ac76725b0c967171fcbaa2ccb619fb6d7.html#ac76725b0c967171fcbaa2ccb619fb6d7" title="Place a text label element onto surface using a pre&#45;built buffer." alt="" coords="543,444,724,484"/>
+<area shape="poly" id="edge12_Node000001_Node000012" title=" " alt="" coords="777,447,725,454,724,449,776,441"/>
+<area shape="rect" id="Node000014" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Plot_aac533d08ddacadad23403aac38083d7f.html#aac533d08ddacadad23403aac38083d7f" title="GeometryFn&lt;float&gt; for a cursor or playhead line within a plot area." alt="" coords="543,508,724,548"/>
+<area shape="poly" id="edge14_Node000001_Node000014" title=" " alt="" coords="820,461,744,498,711,510,709,505,742,493,817,456"/>
+<area shape="rect" id="Node000015" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Plot_a1f159007a817afbf90d036dc7e065453.html#a1f159007a817afbf90d036dc7e065453" title="LINE_LIST grid geometry for a plot area." alt="" coords="543,572,724,612"/>
+<area shape="poly" id="edge15_Node000001_Node000015" title=" " alt="" coords="844,465,801,515,774,540,744,562,720,574,717,569,741,557,771,536,798,511,840,461"/>
+<area shape="rect" id="Node000016" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Plot_a86b3ba731aaa5f791a0b73238a460a83.html#a86b3ba731aaa5f791a0b73238a460a83" title="Generate construction&#45;free tick label specs." alt="" coords="543,636,724,676"/>
+<area shape="poly" id="edge16_Node000001_Node000016" title=" " alt="" coords="854,466,837,503,814,546,782,589,744,626,724,638,721,633,741,622,778,586,809,543,833,501,849,464"/>
+<area shape="rect" id="Node000018" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_a64e0c3d5506ac104d4e7ea2dfd3ccb4b.html#a64e0c3d5506ac104d4e7ea2dfd3ccb4b" title="Geometry function for a 2D position picker in NDC space." alt="" coords="533,700,733,740"/>
+<area shape="poly" id="edge19_Node000001_Node000018" title=" " alt="" coords="860,466,847,515,824,576,790,637,769,665,744,690,726,702,724,697,741,686,765,662,786,634,819,573,841,514,855,464"/>
+<area shape="rect" id="Node000019" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_a099d788ec02e2ae8bd592b7ba0b5833e.html#a099d788ec02e2ae8bd592b7ba0b5833e" title="Geometry function for a radial indicator in NDC space." alt="" coords="543,764,724,804"/>
+<area shape="poly" id="edge20_Node000001_Node000019" title=" " alt="" coords="864,466,854,527,833,604,818,645,798,684,774,721,744,754,726,767,723,763,741,750,770,718,793,682,813,643,828,603,848,526,858,465"/>
+<area shape="rect" id="Node000020" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_a93bc17f116ad6b024d7c2430c4ce8336.html#a93bc17f116ad6b024d7c2430c4ce8336" title="Wire drag interaction for a drawable canvas element." alt="" coords="524,828,743,868"/>
+<area shape="poly" id="edge22_Node000001_Node000020" title=" " alt="" coords="866,465,860,538,842,632,826,682,805,731,779,777,745,818,729,830,726,825,741,814,774,774,801,729,821,680,837,631,855,537,861,465"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="545,74,454,52,455,47,546,69"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="545,96,468,96,468,90,545,90"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Kinesis_1_1Lattice2D_a0a98902208e14719e48645a831df0564.html#a0a98902208e14719e48645a831df0564" title="Cell containing a position, clamped to the lattice." alt="" coords="297,137,447,177"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="545,202,446,178,448,173,546,197"/>
+<area shape="rect" id="Node000007" href="$structMayaFlux_1_1Kinesis_1_1Lattice2D_ab40bae776681909e546dcd96e7ab4f20.html#ab40bae776681909e546dcd96e7ab4f20" title="Position of a cell&#39;s centre." alt="" coords="291,201,453,241"/>
+<area shape="poly" id="edge6_Node000005_Node000007" title=" " alt="" coords="545,224,454,224,454,218,545,218"/>
+<area shape="rect" id="Node000008" href="$structMayaFlux_1_1Kinesis_1_1Lattice2D_af59b8c792c157814997ee4ca18b41c42.html#af59b8c792c157814997ee4ca18b41c42" title="Position of a lattice corner." alt="" coords="276,265,468,305"/>
+<area shape="poly" id="edge7_Node000005_Node000008" title=" " alt="" coords="546,245,455,268,454,263,545,240"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Portal_1_1Forma_1_1internal_1_1Atelier_a88e3c1e6a8d3d5b535378537eb934326.html#a88e3c1e6a8d3d5b535378537eb934326" title="Create and place every adornment declared on spec." alt="" coords="281,496,463,551"/>
+<area shape="poly" id="edge13_Node000012_Node000013" title=" " alt="" coords="533,490,463,506,462,500,532,484"/>
+<area shape="poly" id="edge17_Node000016_Node000013" title=" " alt="" coords="540,633,523,626,460,591,407,553,410,549,463,586,525,621,542,628"/>
+<area shape="rect" id="Node000017" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Plot_a14eb276ddce86a7cebee214434871e73.html#a14eb276ddce86a7cebee214434871e73" title="Convenience overload for generating tick label specs directly." alt="" coords="281,636,463,676"/>
+<area shape="poly" id="edge18_Node000016_Node000017" title=" " alt="" coords="529,658,463,658,463,653,529,653"/>
+<area shape="rect" id="Node000021" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_a7b39cfe6094211ccc1811a8e95355b81.html#a7b39cfe6094211ccc1811a8e95355b81" title="Produce a Form::wire that registers canvas painting over bounds." alt="" coords="281,764,463,804"/>
+<area shape="poly" id="edge23_Node000020_Node000021" title=" " alt="" coords="537,827,454,806,455,801,538,822"/>
+<area shape="poly" id="edge24_Node000021_Node000009" title=" " alt="" coords="330,758,140,618,143,614,334,753"/>
+</map>

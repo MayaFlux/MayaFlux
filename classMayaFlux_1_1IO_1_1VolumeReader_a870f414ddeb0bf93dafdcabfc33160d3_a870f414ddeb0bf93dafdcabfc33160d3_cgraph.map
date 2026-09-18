@@ -1,0 +1,19 @@
+<map id="MayaFlux::IO::VolumeReader::open" name="MayaFlux::IO::VolumeReader::open">
+<area shape="rect" id="Node000001" title="Open a file for reading." alt="" coords="5,101,216,141"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1VolumeReader_a8235bd25a8e9730a69092812171ff116.html#a8235bd25a8e9730a69092812171ff116" title="Check if a file can be read by this reader." alt="" coords="264,5,475,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="156,99,263,55,286,47,287,52,265,60,158,104"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1VolumeReader_acdd35fcfabdd57bf47dbf009ef42937c.html#acdd35fcfabdd57bf47dbf009ef42937c" title="Close the currently open file." alt="" coords="264,69,475,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="216,106,250,101,251,107,216,111"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1FileReader_a24d94d5bc8b4294d61f43ac86f933050.html#a24d94d5bc8b4294d61f43ac86f933050" title="Resolve a filepath against the project source root if not found as&#45;is." alt="" coords="277,133,462,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="216,132,263,138,263,143,216,137"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1IO_1_1VolumeReader_a3f50ca3b8122f3514a95e6be2f8f6460.html#a3f50ca3b8122f3514a95e6be2f8f6460" title=" " alt="" coords="264,197,475,237"/>
+<area shape="poly" id="edge9_Node000001_Node000008" title=" " alt="" coords="158,139,265,183,287,191,286,196,263,188,156,144"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_ac8ded33a4e354a3259e25ea984c19053.html#ac8ded33a4e354a3259e25ea984c19053" title="Normalize single&#45;channel data (non&#45;destructive)" alt="" coords="523,141,689,166"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="462,151,509,151,509,156,462,156"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a5de3d13e1b9ceb59d3acb04361e2a5e5.html#a5de3d13e1b9ceb59d3acb04361e2a5e5" title="Normalize to [target_min, target_max] in&#45;place Single&#45;pass min/max reduction followed by a single tra..." alt="" coords="737,133,887,173"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="689,151,723,151,723,156,689,156"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_a878fe1820a72f64efebc516b1749f77d.html#a878fe1820a72f64efebc516b1749f77d" title="Normalize single&#45;channel data to specified peak level (in&#45;place)" alt="" coords="935,141,1093,166"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="887,159,921,160,921,165,887,165"/>
+<area shape="poly" id="edge7_Node000007_Node000006" title=" " alt="" coords="935,147,901,147,901,142,935,142"/>
+<area shape="poly" id="edge8_Node000007_Node000007" title=" " alt="" coords="981,142,974,132,978,122,991,116,1014,114,1042,118,1053,127,1050,131,1040,123,1014,119,993,121,982,126,979,132,985,139"/>
+</map>

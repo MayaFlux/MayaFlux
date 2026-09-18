@@ -1,0 +1,25 @@
+<map id="MayaFlux::Portal::Text::is_control" name="MayaFlux::Portal::Text::is_control">
+<area shape="rect" id="Node000001" title="True if a codepoint must never be rasterized or treated as printable content." alt="" coords="1137,92,1304,132"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Text_a5859703926d829ad74bc4d0259e7242c.html#a5859703926d829ad74bc4d0259e7242c" title="Insert one codepoint at the cursor, advancing it past the insert." alt="" coords="923,44,1089,84"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1123,93,1089,85,1090,80,1124,88"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Portal_1_1Text_a46e835caa5f4e88b555fa5d15282f7a5.html#a46e835caa5f4e88b555fa5d15282f7a5" title="Lay out a UTF&#45;8 string into a sequence of screen&#45;space quads." alt="" coords="923,124,1089,164"/>
+<area shape="poly" id="edge8_Node000001_Node000007" title=" " alt="" coords="1124,129,1090,134,1089,129,1123,124"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Portal_1_1Forma_1_1TextField_abae518577372556cbec65a69bb2d26a3.html#abae518577372556cbec65a69bb2d26a3" title=" " alt="" coords="693,28,875,68"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="909,60,875,57,875,52,909,54"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Portal_1_1Forma_1_1TextField_a20b101aef26d8710a14abb0b3c705f4c.html#a20b101aef26d8710a14abb0b3c705f4c" title="Register the text field element and wire text editing onto it." alt="" coords="464,28,645,68"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="679,51,646,51,646,45,679,45"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Portal_1_1Forma_a4d8d6a3f54c57284141331e37153b682.html#a4d8d6a3f54c57284141331e37153b682" title="Build a text&#45;capable FormaBuffer, register a TextField, and wire text editing onto it in one call." alt="" coords="5,29,187,69"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="450,48,416,48,235,48,187,49,187,44,235,43,416,43,450,43"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Portal_1_1Forma_1_1TextField_ab37d173483ea4e704f5c55865e384d72.html#ab37d173483ea4e704f5c55865e384d72" title="Fluent creator: place this field inside an already&#45;placed Scrollable, growing itself taller than its ..." alt="" coords="235,57,416,97"/>
+<area shape="poly" id="edge6_Node000004_Node000006" title=" " alt="" coords="451,64,417,68,416,63,450,59"/>
+<area shape="poly" id="edge5_Node000005_Node000005" title=" " alt="" coords="135,18,121,11,96,8,74,10,61,15,56,21,58,28,53,30,51,20,57,10,73,5,96,3,123,6,137,13"/>
+<area shape="poly" id="edge7_Node000006_Node000005" title=" " alt="" coords="221,67,187,63,187,58,221,62"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Portal_1_1Text_aa58f542a4328e23327442498ad154f55.html#aa58f542a4328e23327442498ad154f55" title="Lay out a UTF&#45;8 string into screen&#45;space glyph quads using the default atlas." alt="" coords="701,92,867,132"/>
+<area shape="poly" id="edge9_Node000007_Node000008" title=" " alt="" coords="909,133,867,127,868,121,910,127"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_1_1Portal_1_1Text_a3978afa16e6b0b30f1118db6aee010a4.html#a3978afa16e6b0b30f1118db6aee010a4" title="Append a UTF&#45;8 string into an existing TextBuffer at the current cursor." alt="" coords="701,156,867,196"/>
+<area shape="poly" id="edge10_Node000007_Node000009" title=" " alt="" coords="910,161,868,167,867,161,909,155"/>
+<area shape="rect" id="Node000010" href="$namespaceMayaFlux_1_1Portal_1_1Text_a824658103dd6662ae8197c3cdbe40172.html#a824658103dd6662ae8197c3cdbe40172" title="Pen position immediately before byte_offset, in lay_out()&#39;s space." alt="" coords="701,220,867,260"/>
+<area shape="poly" id="edge11_Node000007_Node000010" title=" " alt="" coords="956,173,876,210,845,222,843,217,874,206,953,168"/>
+<area shape="rect" id="Node000011" href="$namespaceMayaFlux_1_1Portal_1_1Text_ad8d4f282a04b651d4497bd3b62413f8c.html#ad8d4f282a04b651d4497bd3b62413f8c" title="Byte offset of the codepoint boundary nearest a screen&#45;space point." alt="" coords="471,220,638,260"/>
+<area shape="poly" id="edge12_Node000010_Node000011" title=" " alt="" coords="687,243,638,243,638,237,687,237"/>
+</map>

@@ -1,0 +1,11 @@
+<map id="MayaFlux::Kakshya::FileContainer" name="MayaFlux::Kakshya::FileContainer">
+<area shape="rect" id="Node000001" title="Marker interface for containers backed by file storage (in&#45;memory only)." alt="" coords="138,1084,299,1264"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1StreamContainer.html" title="Data&#45;driven interface for temporal stream containers with navigable read position." alt="" coords="124,756,313,1036"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="221,1050,221,1084,216,1084,216,1050"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1SignalSourceContainer.html" title="Data&#45;driven interface for managing arbitrary processable signal sources." alt="" coords="113,428,324,708"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="221,722,221,756,216,756,216,722"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1NDDataContainer.html" title="Abstract interface for N&#45;dimensional data containers." alt="" coords="5,5,187,380"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="164,392,176,427,170,429,159,394"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="211,153,471,233"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="327,247,267,429,262,427,322,245"/>
+</map>

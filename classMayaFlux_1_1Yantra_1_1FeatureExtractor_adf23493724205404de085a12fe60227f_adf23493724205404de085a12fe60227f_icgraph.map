@@ -1,0 +1,7 @@
+<map id="MayaFlux::Yantra::FeatureExtractor::string_to_method" name="MayaFlux::Yantra::FeatureExtractor::string_to_method">
+<area shape="rect" id="Node000001" title="Convert string to extraction method enum." alt="" coords="292,41,495,81"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1FeatureExtractor_ae637b8d4940625649e64f8ff4a4a995a.html#ae637b8d4940625649e64f8ff4a4a995a" title="Set extraction method using string (case&#45;insensitive)" alt="" coords="5,5,244,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="278,49,244,44,245,39,279,43"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1FeatureExtractor_a614a55344ebf3593f97f8c7919453a6a.html#a614a55344ebf3593f97f8c7919453a6a" title="Handle extractor&#45;specific parameters." alt="" coords="29,70,220,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="279,79,221,87,220,82,278,74"/>
+</map>

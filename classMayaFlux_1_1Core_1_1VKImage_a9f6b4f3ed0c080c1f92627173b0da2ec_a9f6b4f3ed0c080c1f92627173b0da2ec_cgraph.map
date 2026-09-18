@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::VKImage::get_size_bytes" name="MayaFlux::Core::VKImage::get_size_bytes">
+<area shape="rect" id="Node000001" title="Get total size in bytes (for memory allocation)" alt="" coords="5,5,196,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Core_a78d9f935bef82a58cc0eedeb4fea4934.html#a78d9f935bef82a58cc0eedeb4fea4934" title="Byte width of a single pixel for a given Vulkan format." alt="" coords="244,5,427,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="196,23,231,23,231,28,196,28"/>
+</map>

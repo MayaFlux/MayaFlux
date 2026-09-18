@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::central_second_derivative" name="MayaFlux::Kinesis::central_second_derivative">
+<area shape="rect" id="Node000001" title="Central difference approximation of the second derivative." alt="" coords="247,5,440,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_a978dba2f58a11d8aad966f33c7b26b08.html#a978dba2f58a11d8aad966f33c7b26b08" title="Convenience overload of central_second_derivative over a raw span." alt="" coords="5,5,199,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="233,28,199,28,199,23,233,23"/>
+</map>

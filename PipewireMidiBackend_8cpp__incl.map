@@ -1,0 +1,27 @@
+<map id="PipewireMidiBackend.cpp" name="PipewireMidiBackend.cpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="297,5,485,31"/>
+<area shape="rect" id="Node000002" href="$PipewireMidiBackend_8hpp.html" title=" " alt="" coords="181,79,371,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="374,33,308,74,305,69,371,28"/>
+<area shape="rect" id="Node000007" href="$Archivist_8hpp.html" title=" " alt="" coords="428,79,652,104"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="416,28,504,70,502,75,414,33"/>
+<area shape="rect" id="Node000003" href="$InputBackend_8hpp.html" title=" " alt="" coords="139,152,277,177"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="267,106,231,144,227,140,263,102"/>
+<area shape="rect" id="Node000004" href="$GlobalInputConfig_8hpp.html" title=" " alt="" coords="74,225,273,265"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="205,179,190,214,185,212,200,176"/>
+<area shape="rect" id="Node000005" href="$InputBinding_8hpp.html" title=" " alt="" coords="5,313,163,353"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="155,268,116,306,112,302,152,264"/>
+<area shape="rect" id="Node000006" href="$Mirror_8hpp.html" title=" " alt="" coords="187,313,341,353"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="195,264,236,302,232,306,192,268"/>
+<area shape="rect" id="Node000008" href="$JournalEntry_8hpp.html" title=" " alt="" coords="477,152,603,177"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="543,104,543,138,537,138,537,104"/>
+<area shape="rect" id="Node000013" title=" " alt="" coords="628,152,695,177"/>
+<area shape="poly" id="edge12_Node000007_Node000013" title=" " alt="" coords="561,102,631,143,629,147,558,106"/>
+<area shape="rect" id="Node000009" href="$EnumReflect_8hpp.html" title=" " alt="" coords="297,225,482,265"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="519,180,439,221,436,217,517,175"/>
+<area shape="rect" id="Node000010" title=" " alt="" coords="507,233,573,258"/>
+<area shape="poly" id="edge9_Node000008_Node000010" title=" " alt="" coords="543,178,543,219,537,219,537,178"/>
+<area shape="rect" id="Node000011" title=" " alt="" coords="598,233,722,258"/>
+<area shape="poly" id="edge10_Node000008_Node000011" title=" " alt="" coords="559,175,632,223,629,227,556,180"/>
+<area shape="rect" id="Node000012" title=" " alt="" coords="746,233,843,258"/>
+<area shape="poly" id="edge11_Node000008_Node000012" title=" " alt="" coords="578,175,735,223,746,226,744,231,734,228,577,180"/>
+</map>

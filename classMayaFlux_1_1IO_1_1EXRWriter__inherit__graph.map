@@ -1,0 +1,5 @@
+<map id="MayaFlux::IO::EXRWriter" name="MayaFlux::IO::EXRWriter">
+<area shape="rect" id="Node000001" title="ImageWriter implementation backed by tinyexr." alt="" coords="5,199,215,424"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1ImageWriter.html" title="Abstract base for image format writers." alt="" coords="5,5,215,151"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="113,164,113,199,107,199,107,164"/>
+</map>

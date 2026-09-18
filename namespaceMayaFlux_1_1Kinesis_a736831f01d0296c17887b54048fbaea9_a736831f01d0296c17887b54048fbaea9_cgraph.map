@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::apply_pan_zoom_pan" name="MayaFlux::Kinesis::apply_pan_zoom_pan">
+<area shape="rect" id="Node000001" title="Pan by a pixel delta, scaled to world units by the current zoom level." alt="" coords="5,5,168,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_acd6f7338fc7ef1d3068a6d32f40c7647.html#acd6f7338fc7ef1d3068a6d32f40c7647" title="Convert a pixel&#45;space drag delta into a content&#45;space delta." alt="" coords="216,5,371,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="168,23,202,23,202,28,168,28"/>
+</map>

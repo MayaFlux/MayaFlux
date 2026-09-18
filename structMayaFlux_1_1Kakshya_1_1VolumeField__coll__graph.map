@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::VolumeField" name="MayaFlux::Kakshya::VolumeField">
+<area shape="rect" id="Node000001" title="One named quantity sampled over a lattice, held in host memory." alt="" coords="5,168,156,408"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kinesis_1_1LatticeSemantics.html" title="Interpretation attached to one named quantity sampled over a lattice." alt="" coords="10,5,151,105"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="83,105,83,151,78,151,78,105"/>
+</map>

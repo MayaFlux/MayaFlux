@@ -1,0 +1,21 @@
+<map id="MayaFlux::Kinesis::AABB2D::translated" name="MayaFlux::Kinesis::AABB2D::translated">
+<area shape="rect" id="Node000001" title=" " alt="" coords="1168,89,1319,129"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Portal_1_1Forma_1_1Scrollable_ae6e4bb4eb7b365b8e6d1f596a3117d89.html#ae6e4bb4eb7b365b8e6d1f596a3117d89" title="Register an element for scroll reflow." alt="" coords="939,89,1120,129"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1154,112,1120,112,1120,107,1154,107"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Portal_1_1Forma_1_1Scrollable_a78c4cc52dcb09498fa60a905b57bcf8d.html#a78c4cc52dcb09498fa60a905b57bcf8d" title="Attach a caller&#45;built element as a live, draggable scroll indicator." alt="" coords="709,60,891,100"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="925,99,891,94,891,89,925,93"/>
+<area shape="rect" id="Node000008" href="$structMayaFlux_1_1Portal_1_1Forma_1_1TextField_ab37d173483ea4e704f5c55865e384d72.html#ab37d173483ea4e704f5c55865e384d72" title="Fluent creator: place this field inside an already&#45;placed Scrollable, growing itself taller than its ..." alt="" coords="235,117,416,157"/>
+<area shape="poly" id="edge11_Node000002_Node000008" title=" " alt="" coords="925,116,416,136,416,131,925,111"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Portal_1_1Forma_1_1Scrollable_a197b5073f36918705a3ccfa42f25cc53.html#a197b5073f36918705a3ccfa42f25cc53" title="A self&#45;contained wheel&#45;scroll handler bound to this Scrollable&#39;s own state." alt="" coords="464,60,661,100"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="696,83,661,83,661,77,696,77"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Portal_1_1Forma_1_1Scrollable_a35235f112f4f9f9eead110668fca88f7.html#a35235f112f4f9f9eead110668fca88f7" title="Register the viewport element, wire wheel scrolling, and populate scroll, offset, buf,..." alt="" coords="235,53,416,93"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="450,80,416,79,416,73,451,74"/>
+<area shape="poly" id="edge9_Node000004_Node000008" title=" " alt="" coords="467,106,409,120,408,115,466,101"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Portal_1_1Forma_a4d8d6a3f54c57284141331e37153b682.html#a4d8d6a3f54c57284141331e37153b682" title="Build a text&#45;capable FormaBuffer, register a TextField, and wire text editing onto it in one call." alt="" coords="5,117,187,157"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="241,100,169,120,167,115,239,94"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Portal_1_1Forma_aef42f7d8c0db50373605643eb762a89a.html#aef42f7d8c0db50373605643eb762a89a" title="Construct a scrollable viewport." alt="" coords="5,29,187,69"/>
+<area shape="poly" id="edge7_Node000005_Node000007" title=" " alt="" coords="221,65,187,61,187,56,221,60"/>
+<area shape="poly" id="edge6_Node000006_Node000006" title=" " alt="" coords="135,106,121,99,96,96,74,98,61,103,56,109,58,116,53,118,51,108,57,98,73,93,96,91,123,94,137,101"/>
+<area shape="poly" id="edge8_Node000007_Node000007" title=" " alt="" coords="135,18,121,11,96,8,74,10,61,15,56,21,58,28,53,30,51,20,57,10,73,5,96,3,123,6,137,13"/>
+<area shape="poly" id="edge10_Node000008_Node000006" title=" " alt="" coords="221,140,187,140,187,135,221,135"/>
+</map>

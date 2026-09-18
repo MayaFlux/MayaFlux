@@ -1,0 +1,13 @@
+<map id="MayaFlux::Nexus::Locus::invoke_influence" name="MayaFlux::Nexus::Locus::invoke_influence">
+<area shape="rect" id="Node000001" title="Influence: run the user influence callable, then push the current view to every view target." alt="" coords="5,45,185,85"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nexus_1_1Agent_a1d9dc25a849e8f3e6e70b8953a208189.html#a1d9dc25a849e8f3e6e70b8953a208189" title="Invoke the influence function with the supplied context." alt="" coords="233,45,415,85"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="185,62,220,62,220,67,185,67"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Nexus_aca257ba0c1936bef2205e72ed369964d.html#aca257ba0c1936bef2205e72ed369964d" title="For each sink that has a producer fn, call it and push the result." alt="" coords="463,13,661,53"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="415,50,449,45,450,50,415,55"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Nexus_ac24bca091d8c076d66b372d5b1fb999f.html#ac24bca091d8c076d66b372d5b1fb999f" title="For each sink that has a producer fn, call it and push the result." alt="" coords="463,77,661,117"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="415,74,450,79,449,84,415,79"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1EigenAccess_a09e5c309b24fd567bcddab3ff3136894.html#a09e5c309b24fd567bcddab3ff3136894" title="Convert DataVariant to Eigen column vector." alt="" coords="709,13,881,53"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="661,30,695,30,695,35,661,35"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1EigenAccess_a9f0abf0a2e29fe0338333907b7e88869.html#a9f0abf0a2e29fe0338333907b7e88869" title=" " alt="" coords="929,5,1088,60"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="882,30,916,30,916,35,882,35"/>
+</map>

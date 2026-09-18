@@ -1,0 +1,9 @@
+<map id="MayaFlux::IO::IOManager::capture_volume" name="MayaFlux::IO::IOManager::capture_volume">
+<area shape="rect" id="Node000001" title="Begin recording a numbered .vdb sequence from a volume." alt="" coords="5,37,192,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1IOManager_add7c3d0e36556c60f2a8b5e221c1b677.html#add7c3d0e36556c60f2a8b5e221c1b677" title="Save an already&#45;downloaded VolumeData to disk asynchronously." alt="" coords="240,37,427,77"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="192,55,226,55,226,60,192,60"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1VolumeWriterRegistry_ad701539bfc38373a435eda9b99a20ba1.html#ad701539bfc38373a435eda9b99a20ba1" title=" " alt="" coords="475,5,680,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="427,42,461,38,461,43,427,48"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1VolumeWriterRegistry_adc3507552119815aa23dba68658ff78c.html#adc3507552119815aa23dba68658ff78c" title=" " alt="" coords="475,69,680,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="427,67,461,71,461,77,427,72"/>
+</map>

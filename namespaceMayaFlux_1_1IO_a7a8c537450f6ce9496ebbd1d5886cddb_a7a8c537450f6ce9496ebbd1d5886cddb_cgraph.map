@@ -1,0 +1,13 @@
+<map id="MayaFlux::IO::resolve_sequence_path" name="MayaFlux::IO::resolve_sequence_path">
+<area shape="rect" id="Node000001" title="Substitute a frame index into a numbered output pattern." alt="" coords="5,22,169,62"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1IO_aebbe2b023d66faf2ca36cef8e2ae4d2a.html#aebbe2b023d66faf2ca36cef8e2ae4d2a" title="Anchor a relative output path to Config::SOURCE_DIR." alt="" coords="217,22,381,62"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="170,39,204,39,204,45,170,45"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_ac8ded33a4e354a3259e25ea984c19053.html#ac8ded33a4e354a3259e25ea984c19053" title="Normalize single&#45;channel data (non&#45;destructive)" alt="" coords="429,29,596,55"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="382,39,416,39,416,45,382,45"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a5de3d13e1b9ceb59d3acb04361e2a5e5.html#a5de3d13e1b9ceb59d3acb04361e2a5e5" title="Normalize to [target_min, target_max] in&#45;place Single&#45;pass min/max reduction followed by a single tra..." alt="" coords="644,22,793,62"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="596,39,630,39,630,45,596,45"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_a878fe1820a72f64efebc516b1749f77d.html#a878fe1820a72f64efebc516b1749f77d" title="Normalize single&#45;channel data to specified peak level (in&#45;place)" alt="" coords="841,29,1000,55"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="794,48,828,48,828,54,794,53"/>
+<area shape="poly" id="edge5_Node000005_Node000004" title=" " alt="" coords="841,36,807,36,807,30,841,31"/>
+<area shape="poly" id="edge6_Node000005_Node000005" title=" " alt="" coords="888,31,881,21,884,11,898,5,921,3,949,6,960,16,956,20,946,11,921,8,899,10,888,15,886,20,892,28"/>
+</map>

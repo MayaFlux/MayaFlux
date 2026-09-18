@@ -1,0 +1,9 @@
+<map id="MayaFlux::Nodes::GpuSync::LineSegmentsNode::compute_frame" name="MayaFlux::Nodes::GpuSync::LineSegmentsNode::compute_frame">
+<area shape="rect" id="Node000001" title="Pack accumulated segments into the GPU vertex buffer." alt="" coords="5,91,272,131"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GeometryWriterNode_a63a86ccaf0960a88deb0b99785b6eb30.html#a63a86ccaf0960a88deb0b99785b6eb30" title="Get cached vertex layout." alt="" coords="328,5,528,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="212,89,314,61,316,66,214,94"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GeometryWriterNode_ad5f8bb454545911e4cef60543eb8e6be.html#ad5f8bb454545911e4cef60543eb8e6be" title="Resize vertex buffer to hold specified number of vertices." alt="" coords="320,84,536,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="272,109,306,109,306,114,272,114"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GeometryWriterNode_a79b8530548d0f4b4c464071439faaac5.html#a79b8530548d0f4b4c464071439faaac5" title="Set cached vertex layout." alt="" coords="328,163,528,217"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="214,129,316,157,314,162,212,134"/>
+</map>

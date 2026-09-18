@@ -1,0 +1,8 @@
+<map id="MayaFlux::Kinesis::Vision::canny" name="MayaFlux::Kinesis::Vision::canny">
+<area shape="rect" id="Node000001" title="Canny edge detector." alt="" coords="5,61,155,101"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_aabf55f6ea7ae15d5c5e05e27075aa54b.html#aabf55f6ea7ae15d5c5e05e27075aa54b" title="Separable Gaussian blur." alt="" coords="203,29,363,69"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="154,67,189,61,190,67,155,72"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_a68bd62ba0feea86a92e8dca22a3da0c0.html#a68bd62ba0feea86a92e8dca22a3da0c0" title="Sobel gradient writing dx and dy into caller&#45;supplied buffers." alt="" coords="208,93,357,133"/>
+<area shape="poly" id="edge3_Node000001_Node000003" title=" " alt="" coords="155,90,195,97,194,102,154,96"/>
+<area shape="poly" id="edge2_Node000002_Node000002" title=" " alt="" coords="244,30,242,20,248,11,262,5,283,3,306,6,319,13,317,18,305,11,283,8,263,10,252,15,247,21,250,28"/>
+</map>

@@ -1,0 +1,11 @@
+<map id="MayaFlux::Kakshya::SoundStreamContainer::get_frames_impl" name="MayaFlux::Kakshya::SoundStreamContainer::get_frames_impl">
+<area shape="rect" id="Node000001" title="Implementation&#45;specific method to retrieve multiple frames." alt="" coords="5,41,177,96"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_a06171d2f25b9f808a57fbacab24899a5.html#a06171d2f25b9f808a57fbacab24899a5" title=" " alt="" coords="225,41,397,96"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="178,66,212,66,212,71,178,71"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_a042de125fda620e471fd2a02de28805a.html#a042de125fda620e471fd2a02de28805a" title="Get the audio data as a specific type." alt="" coords="445,41,617,96"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="398,66,432,66,432,71,398,71"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_a2321cbc62aa5f61be7f780c2c8735fcc.html#a2321cbc62aa5f61be7f780c2c8735fcc" title="Get the cached spans for each channel, recomputing if dirty." alt="" coords="665,5,837,60"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="618,52,652,46,653,52,618,57"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kakshya_aabeece17084e84e555c71c127aa66eb2.html#aabeece17084e84e555c71c127aa66eb2" title="Interleave multiple channels of data into a single vector." alt="" coords="672,85,831,125"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="618,80,659,87,658,92,618,85"/>
+</map>

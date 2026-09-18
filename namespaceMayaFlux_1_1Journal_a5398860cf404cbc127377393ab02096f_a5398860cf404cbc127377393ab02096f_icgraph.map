@@ -1,0 +1,5 @@
+<map id="MayaFlux::Journal::error_rethrow" name="MayaFlux::Journal::error_rethrow">
+<area shape="rect" id="Node000001" title="Catch and log an exception, then rethrow it." alt="" coords="200,5,347,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Journal_a476f6cea5798ab5bc457b722cbc99d72.html#a476f6cea5798ab5bc457b722cbc99d72" title="fmt&#45;style overload of error_rethrow()." alt="" coords="5,5,152,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="186,28,152,28,152,23,186,23"/>
+</map>

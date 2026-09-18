@@ -1,0 +1,13 @@
+<map id="MayaFlux::Yantra::UniversalSorter::add_sorting_metadata" name="MayaFlux::Yantra::UniversalSorter::add_sorting_metadata">
+<area shape="rect" id="Node000001" title="Add sorting metadata to results (override for custom attribution)" alt="" coords="780,25,995,65"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1UniversalSorter_a337dd62431974606d8c4aa24d483bfb2.html#a337dd62431974606d8c4aa24d483bfb2" title="Apply granularity&#45;based output formatting." alt="" coords="257,18,461,72"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="791,25,732,16,621,8,510,16,462,23,461,18,509,10,621,3,732,10,792,20"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1UniversalSorter_a8a16a889677633008d422778bc29417f.html#a8a16a889677633008d422778bc29417f" title="Create detailed sorting analysis (override for custom analysis)" alt="" coords="509,25,732,65"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="766,48,732,48,732,42,766,42"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1UniversalSorter_a0f4d353575d7e6457d58ed5eb5c875b6.html#a0f4d353575d7e6457d58ed5eb5c875b6" title="Organize results into hierarchical groups (override for custom grouping)" alt="" coords="517,89,725,129"/>
+<area shape="poly" id="edge5_Node000001_Node000005" title=" " alt="" coords="791,71,705,92,704,87,789,66"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1UniversalSorter_aa5089c6b4964c3e22584acb413b331b2.html#aa5089c6b4964c3e22584acb413b331b2" title="Core operation implementation &#45; called by ComputeOperation interface." alt="" coords="5,25,209,65"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="244,48,210,48,210,42,244,42"/>
+<area shape="poly" id="edge4_Node000004_Node000002" title=" " alt="" coords="496,48,462,48,462,42,496,42"/>
+<area shape="poly" id="edge6_Node000005_Node000002" title=" " alt="" coords="524,88,461,73,462,67,526,83"/>
+</map>

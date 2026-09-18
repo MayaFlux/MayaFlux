@@ -1,0 +1,21 @@
+<map id="MayaFlux::Vruta::TaskScheduler::drain_pending_tasks" name="MayaFlux::Vruta::TaskScheduler::drain_pending_tasks">
+<area shape="rect" id="Node000001" title="Drain pending task operations (additions/removals) before processing." alt="" coords="1021,124,1252,164"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a64c2a1b202d3cf66d57f633a383640fe.html#a64c2a1b202d3cf66d57f633a383640fe" title="Get all tasks for inspection/debugging." alt="" coords="743,28,973,68"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1075,121,972,83,934,71,936,66,974,77,1077,116"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a3d807500ea3763052cc87093f29a8a7e.html#a3d807500ea3763052cc87093f29a8a7e" title=" " alt="" coords="743,92,973,132"/>
+<area shape="poly" id="edge7_Node000001_Node000006" title=" " alt="" coords="1007,132,973,128,974,123,1008,127"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a6b76571ac0c940a558211257a9d3da34.html#a6b76571ac0c940a558211257a9d3da34" title="Process all tasks for a specific processing domain." alt="" coords="743,156,973,196"/>
+<area shape="poly" id="edge8_Node000001_Node000007" title=" " alt="" coords="1008,161,974,165,973,160,1007,156"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_adf322ebacbad357c80f88e737737e9f6.html#adf322ebacbad357c80f88e737737e9f6" title="Terminate and clear all tasks." alt="" coords="743,220,973,260"/>
+<area shape="poly" id="edge10_Node000001_Node000009" title=" " alt="" coords="1077,172,974,211,936,222,934,217,972,205,1075,167"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Inspector_aca4b73c0629b03f894065c7a777a240c.html#aca4b73c0629b03f894065c7a777a240c" title="Inspect the full TaskScheduler state." alt="" coords="235,29,416,69"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="729,48,695,48,464,48,416,49,416,44,464,43,695,43,729,43"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Inspector_a0f4d0d547948a4c7024fdadb1ebcef90.html#a0f4d0d547948a4c7024fdadb1ebcef90" title="Inspect tasks for a specific processing token." alt="" coords="489,57,670,97"/>
+<area shape="poly" id="edge5_Node000002_Node000005" title=" " alt="" coords="729,64,671,70,670,65,729,59"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Portal_1_1Forma_abb516f8bf31335193993acea55db7843.html#abb516f8bf31335193993acea55db7843" title="Open or show the TaskScheduler inspection window." alt="" coords="5,29,187,69"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="221,52,187,52,187,47,221,47"/>
+<area shape="poly" id="edge4_Node000004_Node000004" title=" " alt="" coords="135,18,121,11,96,8,74,10,61,15,56,21,58,28,53,30,51,20,57,10,73,5,96,3,123,6,137,13"/>
+<area shape="poly" id="edge6_Node000005_Node000003" title=" " alt="" coords="475,69,416,62,417,57,475,63"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_ab4f0590e96fb38d2e245b164007ad1fd.html#ab4f0590e96fb38d2e245b164007ad1fd" title="Process all active domains." alt="" coords="464,156,695,196"/>
+<area shape="poly" id="edge9_Node000007_Node000008" title=" " alt="" coords="729,179,695,179,695,173,729,173"/>
+</map>

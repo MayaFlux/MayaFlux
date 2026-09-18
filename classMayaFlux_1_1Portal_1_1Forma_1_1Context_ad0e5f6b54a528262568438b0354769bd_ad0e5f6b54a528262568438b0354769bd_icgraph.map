@@ -1,0 +1,28 @@
+<map id="MayaFlux::Portal::Forma::Context::on_drag" name="MayaFlux::Portal::Forma::Context::on_drag">
+<area shape="rect" id="Node000001" title="Called on each mouse&#45;move event while btn is held, tracking the element where the drag began even whe..." alt="" coords="1009,157,1191,197"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Portal_1_1Forma_1_1Scrollable_a78c4cc52dcb09498fa60a905b57bcf8d.html#a78c4cc52dcb09498fa60a905b57bcf8d" title="Attach a caller&#45;built element as a live, draggable scroll indicator." alt="" coords="761,93,943,133"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1008,156,929,136,931,131,1009,151"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_a93bc17f116ad6b024d7c2430c4ce8336.html#a93bc17f116ad6b024d7c2430c4ce8336" title="Wire drag interaction for a drawable canvas element." alt="" coords="743,157,961,197"/>
+<area shape="poly" id="edge10_Node000001_Node000008" title=" " alt="" coords="995,180,961,180,961,175,995,175"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Context_a24215068b23f816bf1002405c1a61e5a.html#a24215068b23f816bf1002405c1a61e5a" title="Register a drag handler receiving only the cursor position." alt="" coords="761,221,943,261"/>
+<area shape="poly" id="edge13_Node000001_Node000011" title=" " alt="" coords="1009,203,931,224,929,219,1008,198"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Portal_1_1Forma_1_1Scrollable_a197b5073f36918705a3ccfa42f25cc53.html#a197b5073f36918705a3ccfa42f25cc53" title="A self&#45;contained wheel&#45;scroll handler bound to this Scrollable&#39;s own state." alt="" coords="497,93,695,133"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="747,116,695,116,695,111,747,111"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Portal_1_1Forma_1_1Scrollable_a35235f112f4f9f9eead110668fca88f7.html#a35235f112f4f9f9eead110668fca88f7" title="Register the viewport element, wire wheel scrolling, and populate scroll, offset, buf,..." alt="" coords="251,93,433,133"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="484,116,433,116,433,111,484,111"/>
+<area shape="rect" id="Node000007" href="$structMayaFlux_1_1Portal_1_1Forma_1_1TextField_ab37d173483ea4e704f5c55865e384d72.html#ab37d173483ea4e704f5c55865e384d72" title="Fluent creator: place this field inside an already&#45;placed Scrollable, growing itself taller than its ..." alt="" coords="251,29,433,69"/>
+<area shape="poly" id="edge8_Node000003_Node000007" title=" " alt="" coords="502,92,421,72,423,67,503,87"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Portal_1_1Forma_a4d8d6a3f54c57284141331e37153b682.html#a4d8d6a3f54c57284141331e37153b682" title="Build a text&#45;capable FormaBuffer, register a TextField, and wire text editing onto it in one call." alt="" coords="5,29,187,69"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="251,92,173,72,174,67,252,87"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Portal_1_1Forma_aef42f7d8c0db50373605643eb762a89a.html#aef42f7d8c0db50373605643eb762a89a" title="Construct a scrollable viewport." alt="" coords="5,117,187,157"/>
+<area shape="poly" id="edge6_Node000004_Node000006" title=" " alt="" coords="238,126,187,131,186,126,237,121"/>
+<area shape="poly" id="edge5_Node000005_Node000005" title=" " alt="" coords="138,18,123,11,96,8,72,10,58,15,53,21,55,28,50,30,48,20,55,10,71,5,96,3,125,6,140,13"/>
+<area shape="poly" id="edge7_Node000006_Node000006" title=" " alt="" coords="138,106,123,99,96,96,72,98,58,103,53,109,55,116,50,118,48,108,55,98,71,93,96,91,125,94,140,101"/>
+<area shape="poly" id="edge9_Node000007_Node000005" title=" " alt="" coords="238,52,187,52,187,47,238,47"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_a7b39cfe6094211ccc1811a8e95355b81.html#a7b39cfe6094211ccc1811a8e95355b81" title="Produce a Form::wire that registers canvas painting over bounds." alt="" coords="505,157,687,197"/>
+<area shape="poly" id="edge11_Node000008_Node000009" title=" " alt="" coords="729,180,687,180,687,175,729,175"/>
+<area shape="rect" id="Node000010" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_af2b3f26c66584f90f23a85aa2405e753.html#af2b3f26c66584f90f23a85aa2405e753" title="Geometry function for a drawable curve canvas in NDC space." alt="" coords="235,157,449,197"/>
+<area shape="poly" id="edge12_Node000009_Node000010" title=" " alt="" coords="491,180,450,180,450,175,491,175"/>
+<area shape="rect" id="Node000012" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_afe922a07ca998f1e8a4a280bf879c46e.html#afe922a07ca998f1e8a4a280bf879c46e" title="Register a drag handler writing a projected cursor position to state." alt="" coords="505,221,687,261"/>
+<area shape="poly" id="edge14_Node000011_Node000012" title=" " alt="" coords="747,244,687,244,687,239,747,239"/>
+</map>

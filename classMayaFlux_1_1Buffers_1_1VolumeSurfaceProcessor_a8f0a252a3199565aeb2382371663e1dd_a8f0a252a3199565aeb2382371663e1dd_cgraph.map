@@ -1,0 +1,16 @@
+<map id="MayaFlux::Buffers::VolumeSurfaceProcessor::VolumeSurfaceProcessor" name="MayaFlux::Buffers::VolumeSurfaceProcessor::VolumeSurfaceProcessor">
+<area shape="rect" id="Node000001" title="Construct a surface extraction bridge." alt="" coords="5,121,196,176"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VolumeSurfaceProcessor_afcbe54b7a52ca728626b9fa49deeaa45.html#afcbe54b7a52ca728626b9fa49deeaa45" title="Corner count of the grid, one greater per axis than the extraction resolution." alt="" coords="484,5,667,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="140,119,188,90,243,66,300,51,360,41,470,31,471,36,360,46,302,56,245,71,190,95,142,123"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VolumeSurfaceProcessor_a3f37e240eb92e4b3f89271ff27a4cb32.html#a3f37e240eb92e4b3f89271ff27a4cb32" title="Allocate the corner grid buffer for the current resolution." alt="" coords="244,81,427,136"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="196,130,230,124,231,129,196,135"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1ComputeProcessor_ad0a4f166e8f9ed24f91e590f737a717f.html#ad0a4f166e8f9ed24f91e590f737a717f" title="Set dispatch mode." alt="" coords="249,160,421,215"/>
+<area shape="poly" id="edge6_Node000001_Node000006" title=" " alt="" coords="196,162,236,168,235,174,196,167"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1ComputeProcessor_adaaeab4489b75f391e28461fe22613ba.html#adaaeab4489b75f391e28461fe22613ba" title="Set manual dispatch group counts." alt="" coords="249,239,421,293"/>
+<area shape="poly" id="edge7_Node000001_Node000007" title=" " alt="" coords="150,174,245,225,257,230,254,235,243,230,147,178"/>
+<area shape="poly" id="edge3_Node000003_Node000002" title=" " alt="" coords="422,79,475,62,476,67,423,84"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_a0c7a59c0847791ed0915dcd64e8df783.html#a0c7a59c0847791ed0915dcd64e8df783" title="Query for a backend service." alt="" coords="492,84,659,139"/>
+<area shape="poly" id="edge4_Node000003_Node000004" title=" " alt="" coords="427,107,478,108,478,113,427,112"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aa28c6f5592e5893508bafb62aefcc496.html#aa28c6f5592e5893508bafb62aefcc496" title="Get the global registry instance." alt="" coords="475,163,676,203"/>
+<area shape="poly" id="edge5_Node000003_Node000005" title=" " alt="" coords="424,134,498,157,497,162,423,139"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::Discrete::mean" name="MayaFlux::Kinesis::Discrete::mean">
+<area shape="rect" id="Node000001" title="Arithmetic mean per window." alt="" coords="5,5,155,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_ad2f0572dfef62bb7629c7ef74ff29449.html#ad2f0572dfef62bb7629c7ef74ff29449" title="Calculate mean of single&#45;channel data." alt="" coords="203,13,333,38"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="155,23,189,23,189,28,155,28"/>
+</map>

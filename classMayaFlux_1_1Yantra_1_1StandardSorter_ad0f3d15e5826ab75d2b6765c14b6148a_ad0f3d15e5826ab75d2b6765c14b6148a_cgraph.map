@@ -1,0 +1,7 @@
+<map id="MayaFlux::Yantra::StandardSorter::merge_chunks_to_result" name="MayaFlux::Yantra::StandardSorter::merge_chunks_to_result">
+<area shape="rect" id="Node000001" title="Merge chunks back to single result." alt="" coords="5,37,233,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1ComputeOperation_ac364bad27ce3e4d35add89333c9a24b8.html#ac364bad27ce3e4d35add89333c9a24b8" title="Convert processed double data back to OutputType using metadata and optional callback." alt="" coords="288,5,489,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="233,41,274,36,275,42,234,46"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1OperationHelper_ad367bd6ef37555bb3918e5545cac03bd.html#ad367bd6ef37555bb3918e5545cac03bd" title="extract numeric data from single&#45;variant types" alt="" coords="281,69,496,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="234,68,268,72,267,78,233,74"/>
+</map>

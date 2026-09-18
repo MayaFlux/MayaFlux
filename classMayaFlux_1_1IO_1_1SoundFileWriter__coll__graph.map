@@ -1,0 +1,3 @@
+<map id="MayaFlux::IO::SoundFileWriter" name="MayaFlux::IO::SoundFileWriter">
+<area shape="rect" id="Node000001" title="Asynchronous audio file encoder with a lock&#45;free work queue." alt="" coords="5,5,216,571"/>
+</map>

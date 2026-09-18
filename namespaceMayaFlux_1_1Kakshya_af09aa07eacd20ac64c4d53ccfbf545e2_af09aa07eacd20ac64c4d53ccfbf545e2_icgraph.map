@@ -1,0 +1,13 @@
+<map id="MayaFlux::Kakshya::to_mesh_vertices" name="MayaFlux::Kakshya::to_mesh_vertices">
+<area shape="rect" id="Node000001" title="Batch&#45;project raw Vertex vector to MeshVertex." alt="" coords="261,133,420,173"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_af9575240cc422bb83292ba5f330c0d41.html#af9575240cc422bb83292ba5f330c0d41" title="Geometry function for a horizontal fader in NDC space." alt="" coords="5,5,213,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="306,126,263,92,212,60,185,48,187,43,215,55,266,87,309,122"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_aba20b395ea8bf575aa0a4ae799e95c61.html#aba20b395ea8bf575aa0a4ae799e95c61" title="Geometry function for a level meter in NDC space." alt="" coords="19,69,200,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="254,132,181,112,183,107,255,127"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_a440b8c775977cbf08adbd1068d0cbca3.html#a440b8c775977cbf08adbd1068d0cbca3" title="Geometry function for Scrollable&#39;s default scroll indicator visual." alt="" coords="9,133,210,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="248,156,210,156,210,151,248,151"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_ab051017cfe38286c69770755b1c2d5af.html#ab051017cfe38286c69770755b1c2d5af" title="Geometry function for a boolean toggle in NDC space." alt="" coords="19,197,200,237"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="255,180,183,200,181,195,254,174"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_aab6186aa8c9f492a422824eeaa6e118e.html#aab6186aa8c9f492a422824eeaa6e118e" title="Geometry function for a vertical fader in NDC space." alt="" coords="13,261,205,301"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="309,185,266,219,215,252,187,264,185,259,212,247,263,215,306,181"/>
+</map>

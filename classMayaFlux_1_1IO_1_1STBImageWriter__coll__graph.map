@@ -1,0 +1,5 @@
+<map id="MayaFlux::IO::STBImageWriter" name="MayaFlux::IO::STBImageWriter">
+<area shape="rect" id="Node000001" title="ImageWriter implementation backed by stb_image_write." alt="" coords="5,199,220,484"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1ImageWriter.html" title="Abstract base for image format writers." alt="" coords="8,5,217,151"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="115,165,115,199,110,199,110,165"/>
+</map>

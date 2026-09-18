@@ -1,0 +1,15 @@
+<map id="MayaFlux::Kakshya::VolumeField::element_count" name="MayaFlux::Kakshya::VolumeField::element_count">
+<area shape="rect" id="Node000001" title="Number of cells represented, dispatched on variant." alt="" coords="1016,37,1223,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1VolumeReader_a7d7eb40bd71849fb7e37e7bdf42f42ae.html#a7d7eb40bd71849fb7e37e7bdf42f42ae" title="Build VolumeData from selected grids over an explicit region." alt="" coords="757,37,968,77"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1002,60,968,60,968,55,1002,55"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1VolumeReader_af855bacc96d8828d09422c37abfed059.html#af855bacc96d8828d09422c37abfed059" title="Extract every selected grid onto a caller&#45;supplied lattice." alt="" coords="499,5,709,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="743,45,709,41,710,36,744,40"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1VolumeReader_adaa55771cd8cc310eeb25d033bf0cda0.html#adaa55771cd8cc310eeb25d033bf0cda0" title="Extract every selected grid after open() has already been called." alt="" coords="499,69,709,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="744,75,710,79,709,74,743,69"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1IO_1_1VolumeReader_ac7d1e975545d7a79d371af04e49fc1fc.html#ac7d1e975545d7a79d371af04e49fc1fc" title="Load every selected grid onto a caller&#45;supplied lattice." alt="" coords="240,37,451,77"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="485,77,450,73,451,68,485,72"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1IO_1_1VolumeReader_acb694bd5aa416bb2c8e96d869ccac0cd.html#acb694bd5aa416bb2c8e96d869ccac0cd" title="Load every selected grid from a file in one call." alt="" coords="240,101,451,141"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="485,107,451,111,450,106,485,101"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1IO_1_1IOManager_a8b66f9c5953bf2df92a20c61835783f5.html#a8b66f9c5953bf2df92a20c61835783f5" title="Load a volume file into a newly constructed VolumeGridBuffer." alt="" coords="5,101,192,141"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="226,124,192,124,192,119,226,119"/>
+</map>
