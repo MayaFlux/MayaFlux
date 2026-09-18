@@ -147,7 +147,7 @@ size_t WindowManager::destroy_closed_windows()
     }
 
     for (auto& window : to_destroy) {
-        destroy_window(window);
+        destroy_window(window, true);
         destroyed_count++;
     }
 
